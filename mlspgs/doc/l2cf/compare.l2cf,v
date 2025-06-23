@@ -1,0 +1,137 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.8
+	cfm-single-freq-0-1:1.1.0.6
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.4
+	mus-emls-1-70:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2018.06.22.23.24.09;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@First commit
+@
+text
+@;; An example showing how to set a Boolean to tell
+;; whether we are scanning Up or Down
+;; and whether our scan ht is invalid
+;; We'll use this info to correctly Fill the Magnetic Field
+;; This shows how to use 
+;;           --- Compare ---
+begin Construct
+  ScanningUp: Boolean, formula="false"
+  ScanningDown: Boolean, formula="false"
+  ScanningUpXorDown: Boolean, formula="false"
+  GHzScanHeightInvalid: Boolean, formula="false"
+  testout: Boolean, formula="false"
+  MinTooLow: Boolean, formula="false"
+  MinTooHigh: Boolean, formula="false"
+  MaxTooLow: Boolean, formula="false"
+  MaxTooHigh: Boolean, formula="false"
+  MinOutOfRange: Boolean, formula="false"
+  MaxOutOfRange: Boolean, formula="false"
+end Construct
+;; The second will generate a Warning message because
+;; explicitValues has too few elements
+begin Fill
+  ;; The first Compares the height at mif28 with 70km
+  ;; If the height is above => we are scanning Up
+  Compare, a=GHzHeights.GHzScanHeightMif28, c=70000, formula="any a > c",$
+           Boolean=ScanningUp
+  Dump, Boolean=ScanningUp
+  ;; The second Compares the height at mif2 with 70km
+  ;; If the height is above => we are scanning Down
+  Compare, a=GHzHeights.GHzScanHeightMif2, c=70000, formula="any a > c",$
+           Boolean=ScanningDown
+  Dump, Boolean=ScanningDown
+end Fill
+begin Fill
+   Skip, formula="ScanningUp and ScanningDown"
+   Skip, formula="(not ScanningUp) and (not ScanningDown)"
+   Reevaluate, Boolean=ScanningUpXorDown, formula="True"        
+end Fill
+begin Fill
+  Dump, Boolean=ScanningUpXorDown
+end Fill
+
+;; Now a section in which multiple Compares determine whether
+;; GHz Scan Height is Invalid
+begin Fill 
+  Compare, a=apriori.tngtGeodAltGHz, c= -20000, formula="any a < c", $
+    Boolean=MinTooLow
+  Dump, Boolean=MinTooLow
+  
+  Compare, a=apriori.tngtGeodAltGHz, c= 20000, formula="all a > c", $
+    Boolean=MinTooHigh
+  Dump, Boolean=MinTooHigh
+  
+  Compare, a=apriori.tngtGeodAltGHz, c= 70000, formula="all a < c", $
+    Boolean=MaxTooLow
+   Dump, Boolean=MaxTooLow
+  
+  Compare, a=apriori.tngtGeodAltGHz, c= 110000, formula="any a > c", $
+    Boolean=MaxTooHigh
+  Dump, Boolean=MaxTooHigh
+  
+  Reevaluate, Boolean=MinOutOfRange, formula="MinTooLow or MinTooHigh"
+  Reevaluate, Boolean=MaxOutOfRange, formula="MaxTooLow or MaxTooHigh"
+  Reevaluate, Boolean=GHzScanHeightInvalid, formula="MinOutOfRange or MaxOutOfRange"
+  Reevaluate, Boolean=GHzScanHeightInvalid, formula="GHzScanHeightInvalid or (not ScanningUpXorDown)"
+
+  Dump, Boolean=GHzScanHeightInvalid
+end Fill
+
+begin Fill
+ Skip, formula="ScanningUp or (not ScanningDown)"
+ ;only do this if ScanningDown and not ScanningUp
+ dump, text='Automatically filling magnetic field using referenceMif=2'
+  Fill, quantity=GHzHeights.referenceMIF, method=explicit, $
+    explicitValues=2
+  Fill, quantity=apriori.magneticField, method=magneticModel, $
+    scVelECR=apriori.scVelECR, geocAltitudeQuantity=apriori.tngtGeocAltGHz, $
+    /regular, referenceMIF=2
+end Fill
+begin Fill
+  Skip, formula="ScanningDown or (not ScanningUp)"
+ ;only do this if ScanningUp and not ScanningDown
+ dump, text='Automatically filling magnetic field using referenceMif=28'
+  Fill, quantity=GHzHeights.referenceMIF, method=explicit, $
+    explicitValues=28
+  Fill, quantity=apriori.magneticField, method=magneticModel, $
+    scVelECR=apriori.scVelECR, geocAltitudeQuantity=apriori.tngtGeocAltGHz, $
+    /regular, referenceMIF=28
+end Fill
+;; It's tiresome to cover all possible uses of Compare
+;; Its general form is
+;;           Compare, a=a.qty, [b=b.qty], [c=c], formula="formula", Boolean="name"
+;; where "formula" can be
+;;           "flattening a op [b][c]"
+;; and "flattening" can be any of
+;;            "any", "all", "min", "max", "mean", or "median"
+;;
+;; E.g., to return "true" only if all(a.qty%values > b.qty%values)
+;; use
+;;            formula = "all a > b"
+@

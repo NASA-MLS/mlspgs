@@ -1,0 +1,280 @@
+head	1.5;
+access;
+symbols
+	V4-21:1.4.0.2
+	V4-13:1.4
+	V4-12:1.4
+	V4-11:1.4
+	V4-10:1.4
+	V3-43:1.2
+	M4-00:1.4
+	V3-41:1.2
+	V3-40-PlusGM57:1.2.0.2
+	V3-33:1.3
+	V3-31:1.3
+	V3-30-NRT-05:1.3
+	cfm-01-00:1.3
+	V3-30:1.2
+	V3-20:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.5
+date	2015.08.11.16.33.08;	author pwagner;	state dead;
+branches;
+next	1.4;
+
+1.4
+date	2011.05.25.20.34.42;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2010.06.30.22.07.46;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2010.01.06.17.35.48;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2010.01.05.19.21.26;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.5
+log
+@Replaced with Makefile
+@
+text
+@# "$Id: MakeFC,v 1.4 2011/05/25 20:34:42 pwagner Exp $"
+#	Makefile
+#
+# Copyright 2009, by the California Institute of Technology. ALL
+# RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+# commercial use must be negotiated with the Office of Technology Transfer
+# at the California Institute of Technology.
+
+# This software may be subject to U.S. export control laws. By accepting this
+# software, the user agrees to comply with all applicable U.S. export laws and
+# regulations. User has the responsibility to obtain export licenses, or other
+# export authority as may be required before exporting such information to
+# foreign countries or providing access to foreign persons.
+
+# ---------------------- The name of this file (is the right-hand-side below)
+MakeFName = MakeFC
+# If the right-hand-side is not Makefile
+# then to make mls with this file you must instead  of bare "make" use
+#     make -f $(MakeFName)
+
+# where to store .configure; 
+CONFDIR=../..
+
+UTILDIR=$(CONFDIR)/util
+
+# reecho.sh can filter out globbed file expansions that fail
+# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
+REECHO=$(UTILDIR)/reecho.sh
+
+# Most source files match one of the following patterns
+f9h_sources := $(shell ${REECHO} *.f9*)
+tex_sources := $(shell ${REECHO} *.tex)
+
+# Set paths for finding source files
+
+DVIDIR = ./dvi/
+LOGDIR = ./log/
+PDFDIR = ./pdf/
+AUX=cfm.aux
+BIB=cfmbib.bib
+BBL=cfm.bbl
+
+vpath %.f9h ./
+vpath %.tex ./
+vpath %.dvi $(DVIDIR)
+vpath %.l2cf $(CONFDIR)/l2/l2cf/lib
+vpath %.log $(LOGDIR)
+vpath %.pdf $(PDFDIR)
+
+# Define some suffix rules
+
+.SUFFIXES:
+.SUFFIXES: .tex .dvi .pdf
+.tex.dvi:
+	latex $<
+	latex $<
+	mv $@@ $(DVIDIR)
+	mv $*.log $(LOGDIR)
+
+.dvi.pdf:
+	dvipdf $(DVIDIR)/$<
+	mv $@@ $(PDFDIR)
+
+# Bugs and limitations:
+# (1) We are assuming latex and dvipdf are both available
+# An alternative approach would skip building dvi files; e.g.
+#   pdflatex cfm
+#   bibtex cfm
+#   pdflatex cfm
+#   pdflatex cfm
+# (2) Dependencies can be traced from .tex file using makemake.sh
+# It cannot track .f9h nor .f90 files yet, which is why we use the 
+# f9h_sources mechanism
+# (3) Nor can it handle .bib files, and thus we resort to the BIB mechanism
+
+cfm:
+
+-include Makefile.dep
+
+all: cfm
+
+cfm: ${NEAROBJS} ${OBJS} ${BBL}
+	date > cfm; echo $(OBJS) >> cfm; \
+   touch ${BBL}; touch $(DVIDIR)/*; touch $(PDFDIR)/*
+
+${AUX}: cfm.tex
+	latex cfm
+
+${BBL}: ${BIB} ${AUX}
+	bibtex cfm
+
+${NEAROBJS}: ${BBL} ${f9h_sources}
+# ========================================================================
+
+clean:
+	rm -fr *.dvi *.pdf $(DVIDIR) $(PDFDIR) ${AUX} ${BBL} cfm
+
+depends:
+	$(MAKE) -f $(MakeFName) internalupdate
+	$(UTILDIR)/makemakedep.sh -s tex -o dvi -p Makefile.dep.1 -S cfm.tex \
+     -i '\\input\{([^)]+)}' \
+     $(OMIT_PREFXD) $(OMIT_PREFXD_REV)
+	sed 's/OBJS =/NEAROBJS =/' Makefile.dep.1 > Makefile.dep.2
+	$(UTILDIR)/makemakedep.sh -s tex -o pdf -p Makefile.dep.1 -S cfm.tex \
+     -i '\\input\{([^)]+)}' \
+     $(OMIT_PREFXD) $(OMIT_PREFXD_REV)
+	cat Makefile.dep.1 Makefile.dep.2 > Makefile.dep
+	if [ ! -d $(DVIDIR) ] ; then \
+	  		mkdir $(DVIDIR) ;\
+			fi ; \
+	if [ ! -d $(PDFDIR) ] ; then \
+	  		mkdir $(PDFDIR) ;\
+			fi ; \
+	if [ ! -d $(LOGDIR) ] ; then \
+	  		mkdir $(LOGDIR) ;\
+			fi
+internalupdate:
+	cp MakeFC Makefile
+	rm -f *.toc
+
+tar:
+	rm -f cfm.tgz
+	tar hcvzf cfm.tgz * --exclude \*.dvi --exclude \*.pdf --exclude cfm
+
+update: internalupdate
+	$(MAKE) -f $(MakeFName) depends
+
+.PHONY: all clean depends internalupdate tar update cfm \
+
+# ========================================================================
+# $Log: MakeFC,v $
+# Revision 1.4  2011/05/25 20:34:42  pwagner
+# CONFDIR reverted to point to grandparent directory
+#
+# Revision 1.3  2010/06/30 22:07:46  pwagner
+# make update removes sometimes troublesome .toc file
+#
+# Revision 1.2  2010/01/06 17:35:48  pwagner
+# Does a better job of building only when it must
+#
+# Revision 1.1  2010/01/05 19:21:26  pwagner
+# First commit
+#
+@
+
+
+1.4
+log
+@CONFDIR reverted to point to grandparent directory
+@
+text
+@d1 1
+a1 1
+# "$Id: MakeFC,v 1.3 2010/06/30 22:07:46 pwagner Exp $"
+d132 3
+@
+
+
+1.3
+log
+@make update removes sometimes troublesome .toc file
+@
+text
+@d1 1
+a1 1
+# "$Id: MakeFC,v 1.2 2010/01/06 17:35:48 pwagner Exp $"
+d22 1
+a22 1
+CONFDIR=${HOME}/mlspgs
+d132 3
+@
+
+
+1.2
+log
+@Does a better job of building only when it must
+@
+text
+@d1 1
+a1 1
+# "$Id: MakeFC,v 1.1 2010/01/05 19:21:26 pwagner Exp $"
+d55 2
+a56 2
+	echo "\end" | latex $<
+	echo "\end" | latex $<
+d119 1
+d132 3
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d1 1
+a1 1
+# "$Id: MakeFC,v 1.4 2009/12/16 19:33:44 pwagner Exp $"
+a27 1
+# However we will be using it just to prefix any unprefixed preset paths
+d30 3
+a32 5
+# Errors in the .tex sources require us to omit the following
+OMIT_SRCS := wvs-010.tex wvs-074.tex wvs-051-neural_body.tex
+OMIT_PREFXD := $(shell ${REECHO} -prefix=-d $(OMIT_SRCS))
+OMIT_SRCS_REV := 'wvs-004\*.tex' 'wvs-051\*.tex' 'wvs-063\*.tex'
+OMIT_PREFXD_REV := $(shell ${REECHO} -prefix=-d -escape -nlast $(OMIT_SRCS_REV))
+d64 12
+d83 2
+a84 1
+	date > cfm; echo $(OBJS) >> cfm
+d92 1
+a92 1
+${NEAROBJS}: ${BBL}
+d96 1
+a96 1
+	rm -fr *.dvi *.pdf $(DVIDIR) $(PDFDIR)
+d125 1
+a125 1
+	$(MAKE) depends
+d131 3
+@
+

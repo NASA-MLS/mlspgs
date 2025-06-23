@@ -1,0 +1,104 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.12
+	cfm-single-freq-0-1:1.1.0.10
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.8
+	mus-emls-1-70:1.1.0.6
+	rel-1-0-englocks-work:1.1.0.4
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.2
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	M4-00:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2012.04.04.00.45.04;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@First commit
+@
+text
+@# "$Id: IFC.Linux,v 1.11 2007/04/13 23:49:22 pwagner Exp $"
+
+#	special options for compiling some modules--override .f90 rules
+
+# Should put this elsewhere--but in a hurry
+TABLES_DIR=../../tables
+
+# split_path.sh can split off a file name from any prefixed paths
+SPLIT_PATH=$(UTILDIR)/split_path.sh
+
+# FC_NAME may be something like f95 if we need a real compiler, or
+# mark_as_uptodate.sh if we're being asked just to touch targets
+FC_NAME := $(shell ${SPLIT_PATH} -f $(FC))
+
+BUGGY := $(shell echo ${FOPTS} | sed 's/-O[0-9]*//')
+DUSTIER := $(DUSTY)
+
+# Where we and the configuration-specific files that include us are to be
+custom = $(CONFDIR)/customblds
+
+include $(custom)/Makefile.h
+
+# $Log: IFC.Linux,v $
+# Revision 1.11  2007/04/13 23:49:22  pwagner
+# restored apparently needed ieee stuff
+#
+# Revision 1.10  2007/04/13 20:15:34  pwagner
+# Changes in line with Intel v9.1
+#
+# Revision 1.9  2006/04/03 22:12:40  pwagner
+# Uniform changes to accommodate buggy Lahey optimizer in l1
+#
+# Revision 1.8  2005/09/08 00:25:01  pwagner
+# Fixed bug is build command for l1/EngTbls.o
+#
+# Revision 1.7  2004/08/19 00:07:46  pwagner
+# Fixed missing mod dependencies for machine.o
+#
+# Revision 1.6  2004/05/20 22:58:55  pwagner
+# Added build rules for ieee-arithmetic module for mod-variant depends
+#
+# Revision 1.5  2003/10/08 21:13:15  pwagner
+# Changed options to sort to tolerate duplicate entries
+#
+# Revision 1.4  2003/09/29 18:23:34  pwagner
+# Fixed problem with level 1 dependencies
+#
+# Revision 1.3  2003/05/21 17:46:02  pwagner
+# Commands to build mol_...f9h now formatted correctly
+#
+# Revision 1.2  2003/05/17 00:04:52  pwagner
+# Now create mol_.. files in lib to be used by Molecules.f90 there
+#
+# Revision 1.1  2003/04/01 23:21:19  pwagner
+# First commit
+#
+@

@@ -1,0 +1,310 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.14
+	cfm-single-freq-0-1:1.1.0.12
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.10
+	mus-emls-1-70:1.1.0.8
+	rel-1-0-englocks-work:1.1.0.6
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2008.06.11.20.14.53;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9.2in
+
+\newcommand{\docname}{\bf wvs-044}
+\newcommand{\docdate}{27 September 2006}
+
+\usepackage{longtable}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill\\
+Subject: \>What to do in {\tt metrics\_m}\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-20pt}
+
+The primary present purpose of {\tt metrics\_m} is to compute height ($H$) and
+$\phi$ values corresponding to the $\zeta$ values along the line of sight,
+given height values tabulated on a preselected grid of $\zeta$ and temperature
+basis $\phi$.
+
+This is presently done by guessing a $\phi$ value for each $\zeta$ (initially
+$\phi$ at the tangent point), using the guessed value to interpolate in the
+height reference grid, computing $\phi = \cos^{-1} H_t / H$ from the
+interpolated heights ($H_t$ is the tangent height), using the new $\phi$ values
+to interpolate again, etc.  This doesn't always converge, so a fallback
+involving linear interpolation is provided.  If that fails, the next fallback
+is a 1-D assumption.
+
+There are several related projects concerning {\tt metrics\_m} underway.
+
+The first project is an improved initial guess for the $H$ -- $\phi$ iteration,
+based on the assumption that $H$ and $\zeta$ are nearly linearly related.  It
+appeared at one time that we might be able to carry out the $H$ -- $\phi$
+iteration entirely in $H$ co{\"o}rdinates, using the geometric relation $H =
+H_t \sec \phi$ (i.e., it would become an $H$ iteration alone), thereby
+essentially always converging in one iteration, but the refractive correction
+may make this impossible.  Experiments with this new calculation (not including
+refractive correction) lead to differences of $H$ compared to the previous
+method of up to 70 meters.  The ``iteration'' is quite simple:
+
+{\tt\begin{verbatim}
+  compute H_Basis = H_t / cos(phi_basis)
+  compute H corresponding to zeta using the approximately-linear assumption
+  do
+    use H_Basis and H to interpolate in H_ref giving a new H
+  until H doesn't change much
+\end{verbatim}}
+
+Even if the revised ($H$-only) iteration doesn't work, a revised initial guess
+for $\phi$, calculated from $\phi = \cos^{-1} H_t/H$ using the revised initial
+guess for $H$, should result in much faster convergence of the original $H$ --
+$\phi$ iteration.
+
+Another project is to separate metric calculations on the coarse grid from
+calculations on the fine grid.  This is largely completed, including changes in
+the full forward model to accomodate it, although more changes might arise from
+considerations discussed below.
+
+The reason for the second project is the third project, \emph{viz.} to add
+calculation points along the line of sight, both to improve accuracy and
+convergence of the $H$ -- $\phi$ iteration, and accuracy of the line-of-sight
+integration in the full forward model.  The new values are added to the
+``coarse'' grid, i.e., the grid used for trapezoidal integration along the line
+of sight.  After this is done, Gauss-Legendre points are added to the coarse
+grid.  It has proven to be substantially more difficult than originally
+envisioned to add the new points.
+
+The first points to be added are the temperature basis $\phi$ points.  This
+seems straightforward, until one realizes that the $\phi$ are to be fixed, and
+might shift position among the values computed by the $H$ -- $\phi$ iteration,
+in order to keep the $\phi$ values in order, and the heights arising from the
+fixed $\phi$ values have to be corrected for refraction, as opposed to
+correcting calculated $\phi$ values for refraction.  The relation between $H$
+and $\phi$ in atmosphere instead of vacuum is
+
+\begin{equation}
+\frac{\text{d} \phi}{\text{d} H} =
+ \frac1H \frac{\mathcal{N}_t H_t}
+         {\sqrt{\mathcal{N}^2 H^2 - \mathcal{N}_t^2 H_t^2}}
+\end{equation}
+
+where $\mathcal{N}$ and $H$ are tabulated as functions of $\zeta$.  Given
+$\mathcal{N}$ and $H$, computing $\phi$ is just a quadrature, admittedly in
+$\zeta$:
+
+\begin{equation}
+\phi = \int \text{d}\zeta \frac{\text{d}H}{\text{d}\zeta} \,
+ \frac1H \frac{\mathcal{N}_t H_t}
+                     {\sqrt{\mathcal{N}^2 H^2 - \mathcal{N}_t^2 H_t^2}}\,.
+\end{equation}
+
+Since we have $\phi$ and $H$ as functions of $\zeta$ from the initial
+iteration, we assume $\mathcal{N}$ is a function of $H$ instead of $\zeta$, and
+instead compute a correction to the geometric relation $\phi = \cos^{-1}
+H_t/H$:
+
+\begin{equation}\label{delta phi}
+\phi_{i+1} = \cos^{-1} \frac{H_t}{H_{i+1}} + \int_{H_i}^{H_{i+1}} \text{d}H \,
+ \frac1H \left[ \frac{\mathcal{N}_t H_t}
+                     {\sqrt{\mathcal{N}^2 H^2 - \mathcal{N}_t^2 H_t^2}} -
+                \frac{H_t}{\sqrt{H^2-H_t^2}} \right]\,.
+\end{equation}
+
+The correction goes to zero when $\mathcal{N}$ goes to 1, as expected, since
+the second term in the integrand, when integrated, is simply $\cos H_t/H_{i+1}
+- \cos^{-1} H_t/H_i$.  This is all straightforward.  When given $\phi$ and
+needing to calculate $H$, we have instead
+
+\begin{equation}
+\frac{\text{d} H}{\text{d} \phi} =
+ H \frac{\sqrt{\mathcal{N}^2 H^2 - \mathcal{N}_t^2 H_t^2}}
+        {\mathcal{N}_t H_t} \text{ or }
+\frac{\text{d} \hat H}{\text{d} \phi} =
+ \hat H \sqrt{\mathcal{\hat N}^2 \hat H^2 - 1}\,, \text{ where }
+\hat H = \frac{H}{H_t} \text{ and }
+\mathcal{\hat N} = \frac{\mathcal{N}}{\mathcal{N}_t}\,,
+\end{equation}
+
+where again $\mathcal{N}$ and $H$ are given on a $\zeta$ grid.  Unfortunately,
+this is a differential equation, not simply a quadrature, and, worse yet, the
+derivative is zero at the starting point ($H = H_t$ and $\mathcal{N} =
+\mathcal{N}_t$, or equivalently $\hat H = \mathcal{\hat N} = 1$), where it also
+has a square root singularity.  This leads one to consider the variable $y =
+\mathcal{\hat N} \hat H$.  Then
+
+\begin{equation}
+\frac{\text{d} y}{\text{d}\phi} =
+ \mathcal{\hat N} \frac{\text{d} \hat H}{\text{d} \phi} +
+ \frac{\text{d} \mathcal{\hat N}}{\text{d} \phi} \hat H =
+ \mathcal{\hat N} \hat H \sqrt{\mathcal{\hat N}^2 \hat H^2 -1} +
+ \frac{\hat H}{\mathcal{\hat N}}
+   \frac{\text{d} \mathcal{\hat N}}{\text{d} \phi} =
+   y \sqrt{y^2-1} + y \frac{\text{d} \ln \mathcal{\hat N}}{\text{d} \phi}\,.
+\end{equation}
+
+Not having the derivatives of $\mathcal{\hat N}$, we can use an interpolated,
+perhaps piecewise linear, approximation developed from the tabulated values of
+$\mathcal{N}$.  Since we don't have a functional form for $\mathcal{\hat N}$,
+but rather tabulated values, we could either fit $\mathcal{\hat N}$ with a
+spline and use a method of higher order on a grid finer than the $\zeta$ grid,
+or use an implicit trapezoidal rule.  Since we don't need high accuracy, the
+latter is probably adequate.  Fred helped quite a bit with this development.
+
+Once we have $H$ values corresponding to the temperature basis $\phi$ values,
+the next problem is to get corresponding $\zeta$ values.  At present, we have
+
+\begin{equation}\begin{split}\label{one}
+\int_{H_i}^{H_m} Z \text{d} H =\,&
+ \int_{\zeta_i}^{\zeta_m} (T_i + \Gamma(\zeta-\zeta_i)) \text{d} \zeta =\\
+Z(H_m-H_i) =\,& T_i(\zeta_m-\zeta_i) + \frac12\Gamma (\zeta_m^2-\zeta_i^2)
+  - \Gamma \zeta_i ( \zeta_m-\zeta_i )
+\end{split}\end{equation}
+
+where $H_m$ and $\zeta_m$ correspond to the temperature basis $\phi_m$ and
+
+\begin{equation}
+\Gamma = \frac{T_{i+1}-T_i}{\zeta_{i+1}-\zeta_i} \text{ and }
+Z = \frac{(T_i+T_{i+1})(\zeta_{i+1}-\zeta_i)}{2(H_{i+1}-H_i)}\,.
+\end{equation}
+
+Solving Equation (\ref{one}) for $\zeta_m$ we have
+
+\begin{equation}\label{zeta}
+\zeta_m = \frac{\Gamma\zeta_i - T_i + \sqrt{T_i^2 + 2 \Gamma Z (H_m-H_i)}}\Gamma =
+\frac{\Gamma\zeta_i - T_i + \sqrt{T_i^2 + (T_{i+1}^2-T_i^2)\frac{H_m-H_i}{H_{i+1}-H_i}}}\Gamma
+\end{equation}
+
+(see wvs-038).  Unfortunately, this is singular in a locally isothermal ($T_i =
+T_{i+1}$) atmosphere, i.e., $\Gamma = 0$, so some more work is needed in this
+area.  Since we have the reference $H$ and $\frac{\text{d} H}{\text{d} \zeta}$
+on the same reference $\zeta$ and temperature basis $\phi$ grids, we could
+construct Hermite interpolating polynomials and compute $\zeta$ from $H$ using
+inverse interpolation.
+
+The second set of values to be added to the $H$ -- $\phi$ grid correspond to
+the maximum pressure (eqv. minimum $\zeta$) along the line of sight.  In this
+case, we have $\frac{\text{d} H}{\text{d} \zeta}$ and the reference $H$ grid on
+the same reference $\zeta$ and temperature basis $\phi$ grids, from which we
+can construct Hermite interpolating polynomials and solve for $H$ at which the
+minimum $\zeta$ occurs. Once we have $H$ we can compute $\phi = \cos^{-1}
+H_t/H$ and then correct for refraction using Equation (\ref{delta phi}).
+
+Ultimately, we have to bring together three sets of ``coarse grid'' points
+along the line of sight, that is, the grid on which the radiance is computed
+using trapezoidal quadrature, in $\phi$ order:  Those with pre-specified
+$\zeta$, those with pre-specified $\phi$, and those with pre-specified $H$
+(arising from minimum $\zeta$).
+
+The reference $H$ grid (on $\zeta$ and temperature basis $\phi$) is computed by
+the {\tt hydrostatic} routine from the ``preselected $\zeta$ integration grid''
+(PSIG), which is the union of the $\zeta$ surface values for the temperature
+grid, the tangent grid, and every species in the state vector.  Presently, the
+full forward model adds Gauss-Legendre (GL) points to the PSIG and then repeats
+the hydrostatic and metrics calculations.  Presumably, after the PSIG is
+augmented as explained above, the GL points should be added to the augmented
+grid, else the only benefit of augmenting the PSIG will be to improve the
+convergence and accuracy of the $H$ -- $\phi$ iteration in {\tt metrics\_m}. 
+This brings the hydrostatic calculation inside the pointing loop since the
+temperature and pressure could be different along each pointing, therefore
+$\mathcal{N}$ and the point of minimum $\zeta$ will also be different,
+therefore the augmented PSIG will be different.
+
+Assuming the GL points are added to the augmented PSIG, should the metrics
+calculations be repeated on the GL grid, or should $H$ and $\phi$ be
+interpolated from the augmented PSIG to the GL grid?  Assuming the metrics
+calculation should be repeated on the fine grid, should the $\phi$ values that
+arose from the temperature basis, and the $H$ values corresponding to the
+minimum $\zeta$ be ``locked,'' or should they be allowed to vary during the $H$
+-- $\phi$ iteration?  If the former, things get quite complicated, as
+newly-computed $\phi$ values could need to move across ``locked'' ones in the
+grid in order to keep $\phi$ values in order.  I don't know what to do if a GL
+point moves across a PSIG point.
+
+In any case, once we have a consistent set of $H$, $\zeta$ and $\phi$ on the GL
+grid, the remaining calculations that {\tt metrics\_m} does could be done as
+they're now done.  Some complications remain, as some of the arrays necessary to
+these calculations are computed by the hydrostatic routine before the PSIG is
+augmented, and therefore have the same size as the original PSIG, not the
+augmented one.
+
+\label{lastpage}
+\end{document}
+% $Id: $
+@

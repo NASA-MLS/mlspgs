@@ -1,0 +1,214 @@
+head	1.5;
+access;
+symbols
+	v5-02-NRT-19:1.5
+	v6-00:1.5
+	v5-02-NRT-18:1.5
+	v5-02:1.5
+	v5-01-NRT-17:1.5
+	v5-01-NRT-16:1.5
+	v5-01-NRT-15:1.5
+	v5-01-NRT-14:1.5
+	neuralnetworks-1-0:1.5.0.6
+	cfm-single-freq-0-1:1.5.0.4
+	v5-01:1.5
+	v5-00:1.5
+	v4-23-TA133:1.5.0.2
+	mus-emls-1-70:1.4.0.8
+	rel-1-0-englocks-work:1.4.0.6
+	VUMLS1-00:1.4
+	VPL1-00:1.4
+	V4-22-NRT-08:1.4
+	VAM1-00:1.4
+	V4-21:1.4.0.4
+	V4-13:1.4
+	V4-12:1.4
+	V4-11:1.4
+	V4-10:1.4
+	V3-43:1.4
+	M4-00:1.4
+	V3-41:1.4
+	V3-40-PlusGM57:1.4.0.2
+	V2-24-NRT-04:1.4
+	V3-33:1.4
+	V2-24:1.4
+	V3-31:1.4
+	V3-30-NRT-05:1.4
+	cfm-01-00:1.4
+	V3-30:1.4
+	V3-20:1.4
+	V3-10:1.4
+	V2-23-NRT-02:1.4
+	V2-23:1.4
+	V2-22-NRT-01:1.4
+	V2-22:1.4
+	V2-21:1.4
+	V2-20:1.4
+	V2-11:1.4
+	V2-10:1.4
+	V2-00:1.4
+	V1-51:1.3
+	V1-50:1.3
+	V1-45:1.3
+	V1-44:1.3
+	V1-43:1.3
+	V1-42:1.3
+	V1-41:1.3
+	V1-32:1.3
+	V1-40:1.3
+	V1-31:1.3
+	V1-30:1.3
+	V1-13:1.3
+	V1-12:1.3
+	V1-11:1.3
+	V1-10:1.3
+	newfwm-feb03:1.3.0.2;
+locks; strict;
+comment	@ * @;
+
+
+1.5
+date	2018.08.13.23.04.04;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2005.06.23.22.22.04;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2003.01.21.19.03.29;	author livesey;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2003.01.21.18.54.49;	author livesey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2003.01.17.17.56.08;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.5
+log
+@No longer hardcodes where you put pvm3.h
+@
+text
+@/*
+ * Copyright 2005, by the California Institute of Technology. ALL
+ * RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+ * commercial use must be negotiated with the Office of Technology Transfer
+ * at the California Institute of Technology.
+
+ * This software may be subject to U.S. export control laws. By accepting this
+ * software, the user agrees to comply with all applicable U.S. export laws and
+ * regulations. User has the responsibility to obtain export licenses, or other
+ * export authority as may be required before exporting such information to
+ * foreign countries or providing access to foreign persons.
+ */
+/* $Id */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <pvm3.h> 
+/* "/usr/share/pvm3/include/pvm3.h" */
+
+/* Compile me with:
+cc -o machineok machineok.c -L/usr/share/pvm3/lib/LINUX -lpvm3
+*/
+
+main ( int argc, void *argv[] )
+{
+  int tid;
+  int bufID;
+  int info;
+  int len;
+  const int zeroseven[2] = { 0, 7 };
+
+  if ( argc != 3 ) {
+    printf ( "Usage: machineok <tid> <machine-name>\n" );
+    return;
+  }
+
+  tid = (int) strtod ( argv[1], NULL );
+  printf ( "Telling task 0x%x that %s is fixed.\n", tid, argv[2] );
+  bufID = pvm_initsend ( PvmDataDefault );
+  info = pvm_pkint ( zeroseven, 2, 1);
+  len = (int) strlen ( argv[2] );
+  info = pvm_pkint ( &len, 1, 1);
+  info = pvm_pkstr ( argv[2] );
+  info = pvm_send ( tid, 800 );
+}
+
+/*
+$Log: machineok.c,v $
+Revision 1.4  2005/06/23 22:22:04  pwagner
+Reworded Copyright statement
+
+Revision 1.3  2003/01/21 19:03:29  livesey
+More bug fixes, now sends length
+
+Revision 1.2  2003/01/21 18:54:49  livesey
+Bug fix.
+
+Revision 1.1  2003/01/17 17:56:08  livesey
+First version
+
+*/
+@
+
+
+1.4
+log
+@Reworded Copyright statement
+@
+text
+@d17 2
+a18 1
+#include "/usr/share/pvm3/include/pvm3.h"
+d49 3
+@
+
+
+1.3
+log
+@More bug fixes, now sends length
+@
+text
+@d1 12
+d48 3
+@
+
+
+1.2
+log
+@Bug fix.
+@
+text
+@d16 1
+d27 3
+a29 1
+  info = pvm_pkint ( &zeroseven, 2, 1);
+d36 3
+@
+
+
+1.1
+log
+@First version
+@
+text
+@d32 5
+a36 2
+$Log$
+/*
+@
+

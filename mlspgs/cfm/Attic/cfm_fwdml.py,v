@@ -1,0 +1,205 @@
+head	1.1;
+access;
+symbols
+	cfm-single-freq-0-1:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2021.08.16.22.31.44;	author whdaffer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2021.08.16.22.31.45;	author whdaffer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@file cfm_fwdml.py was initially added on branch cfm-single-freq-0-1.
+@
+text
+@@
+
+
+1.1.2.1
+log
+@Initial revision
+@
+text
+@a0 165
+# Good code examples here.
+# https://www.tutorialspoint.com/python3/python_classes_objects.htm
+#import subprocess as sp
+#import glob
+
+# Good python info here
+# https://www.python-course.eu/python3_sets_frozensets.php
+
+class cfm_fwmdl():
+  '''A Class to handle all the various types of fields in a ForwardModel 
+  declaration in a MLS L2 L2CF file.'''
+
+  def __init__(self,
+               signal=None,
+               radiometer=None,
+               spectrometerType=None,
+               band=None,
+               channels=None):
+      self.signal=signal
+      self.radiometer=radiometer
+      self.spectrometerType=spectrometerType
+      self.band=band
+      self.channels=chanlles
+      
+    # end __init__
+      
+    def binSelectors(self):
+        pass
+    # end binSelectors
+    def cloud_der(self):
+        pass
+    # end 
+    def i_saturation(self):
+        pass
+    # end 
+    def integrationGrid(self):
+        pass
+    # end 
+    def MIFTangent(self):
+        pass
+    # end MIFTangent
+    def module(self):
+        pass
+    # end module
+    def signals(self):
+        pass
+    # end signals
+    def specificQuantities(self):
+        pass
+    # end specificQuantities
+    def tangentGrid(self):
+        pass
+  # end
+  def trapezoid(self):
+      pass
+  # end
+  def type(self):
+      pass
+  # end
+  def xStar(self):
+      pass
+  # end
+  def yStar(self):
+      pass
+  # end
+  def phiWindow(self):
+      pass
+  # end
+  def prompt_for_array(verbose=False):
+    '''Function that handles prompting for array-like data (e.g. molecule = [...])
+    Such data may have arrays within arrays, e.g. 
+    
+    molecules = [ EXTINCTIONV2, $                         
+    [ HNO3, HNO3, HNO3_V7, HNO3_V9 ], $
+    [ O2, O_18_O ], $
+    [ O3, O3, O3_V1_3, O3_V2, O3_ASYM_O_18, O3_SYM_O_18 ], $
+    [ SO2, S_32_O2 ] ] 
+    
+    The function returns a list: (True|False, string). The first element
+    is True if the parsing worked, False otherwise.The second element is
+    the string you would append to the statement 'molecule = ' in the
+    forwardModel line
+    
+    '''
+    if verbose:
+      multiLineString="Enter the *interior* of array, that is, \n" \
+        " start at the first square bracket.\n " \
+        "Typing 'ctrl-d' at any time will abort *all* input (that is\n" \
+        "all input is lost and you will return to the step immediately prior \n" \
+        "to when you started inputting the array.\n\n" \
+        "Use two <returns> in a row to indicate that you're done with\n" \
+        "your input. \n\n" \
+        "The entry must begin with an open square bracket ('[') and \n" \
+        "end with a closing bracket in such a way that all sub-arrays are closed.\n"\
+        "The prompts will change as you add input to indicate what the parser is expecting\n" \
+        "depending on whether you have a 'hanging' \n" \
+        "closing bracket needed.\n" \
+        "For example, if you've typed in the following\n\n" \
+
+        "[ EXTINCTIONV2, [ HNO3, HNO3, HNO3_V7,<return>\n" \
+        "the prompt will change from \n" \
+          "'] :?'\n to \n" \
+          "']] : ?' to indicate that you now have two subarrays you need to close by typing\n"\
+          "two close brackets\n\n"\
+          "If you're in a (sub)?array you can only exit the input process by hitting 1\n"\
+          "(or more) close brackets. \n"\
+          "The only other way to exit the input process is to nuke it completely \n"\
+          "By using  Ctrl-d\n\n"\
+
+        "Inside the (sub-)array, you nust pass lists of comma-separated values\n"\
+        "Nothing is checked (except that they're comma-separated!)\n" \
+              "this routine gives you the rope to hang yourself\n\n" \
+        "Use <return><return> to signal that you're done\n" \
+        "If you get a "']: ?'" prompt you haven't closed the whole construct\n" \
+          "type a ']' and hit return, then <return><return>\n" \
+
+        haveSeenEOM = False
+        haveSeen2LFs = False 
+        openSqBrktRE = re.compile('^\s*\[')
+        closeSqBrktRE = re.compile('^\s*\[')
+        commaSepRE  = re.compile("^[^,](\w+,)+(\w+)[^,]$")
+
+        print("Start with '['..., comma-seperated lists thereafter")
+        try: 
+            text=input("Start array/molecule entry: ")
+        except EOFError:
+            print("\nInput aborted by user!\n")
+            return((False,''))
+        # end except of try-block
+
+        # keep track of the closed brackets we need.  Update with one ']'
+        # for every unmatched '[' we see in the input. decrement as needed
+        waitingOn=[]
+
+
+        # accumulate parts of the molecules = string
+        array=[]
+        last2=[]
+        cnt=0
+        array.append(text)
+        while not haveSeen2LFs:
+            try: 
+                text=input("... ")
+            except EOFError:
+                # the user has pressed 'ctrl-d' to exit
+                returnString = ""
+                retVal=False
+                # end try
+            if cnt > 1:
+                lastSeen.pop(0)
+                array.append(text.rstrip("\n"))
+                lastSee.append(text)
+                test="".lastSeen 
+                if len(test) == 0:
+                    # <<< start here >>>
+                    # end of input
+                    returnString="".join(array)
+                    haveSeen2LFs=True
+                #end if
+            #end if 
+      # endwhile
+      return( (retVal,returnString) )
+  # end cfm_ml_prompt_for_array
+
+# end cfm_fwmdl
+@
+

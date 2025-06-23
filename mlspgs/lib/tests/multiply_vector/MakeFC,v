@@ -1,0 +1,241 @@
+head	1.3;
+access;
+symbols
+	v5-02-NRT-19:1.3
+	v6-00:1.3
+	v5-02-NRT-18:1.3
+	v5-02:1.3
+	v5-01-NRT-17:1.3
+	v5-01-NRT-16:1.3
+	v5-01-NRT-15:1.3
+	v5-01-NRT-14:1.3
+	neuralnetworks-1-0:1.3.0.18
+	cfm-single-freq-0-1:1.3.0.16
+	v5-01:1.3
+	v5-00:1.3
+	v4-23-TA133:1.3.0.14
+	mus-emls-1-70:1.3.0.12
+	rel-1-0-englocks-work:1.3.0.10
+	VUMLS1-00:1.3
+	VPL1-00:1.3
+	V4-22-NRT-08:1.3
+	VAM1-00:1.3
+	V4-21:1.3.0.8
+	V4-13:1.3
+	V4-12:1.3
+	V4-11:1.3
+	V4-10:1.3
+	V3-43:1.3
+	M4-00:1.3
+	V3-41:1.3
+	V3-40-PlusGM57:1.3.0.6
+	V2-24-NRT-04:1.3
+	V3-33:1.3
+	V2-24:1.3
+	V3-31:1.3
+	V3-30-NRT-05:1.3
+	cfm-01-00:1.3
+	V3-30:1.3
+	V3-20:1.3
+	V3-10:1.3
+	V2-23-NRT-02:1.3
+	V2-23:1.3
+	V2-22-NRT-01:1.3
+	V2-22:1.3
+	V2-21:1.3
+	V2-20:1.3
+	V2-11:1.3
+	V2-10:1.3
+	V2-00:1.3
+	V1-51:1.3
+	V1-50:1.3
+	V1-45:1.3
+	V1-44:1.3
+	V1-43:1.3
+	V1-42:1.3
+	V1-41:1.3
+	V1-32:1.3
+	V1-40:1.3
+	V1-31:1.3
+	V1-30:1.3
+	V1-13:1.3
+	V1-12:1.3
+	V1-11:1.3
+	V1-10:1.3
+	newfwm-feb03:1.3.0.4
+	V1-04:1.3
+	V1-03:1.3
+	V1-02:1.3
+	V1-00:1.3
+	newfwm-sep01:1.3.0.2
+	V0-7:1.3
+	V0-5-Level2:1.3
+	V0-5-SIPS:1.3;
+locks; strict;
+comment	@# @;
+
+
+1.3
+date	2000.11.20.19.11.50;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2000.11.11.00.19.06;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2000.11.09.17.26.43;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@No target with *.f90 to confuse sun
+@
+text
+@#	Makefile
+#	targets: configure and depends and clean
+#	true targets: $(MLSCONFG)/Makefile and $(MLSCONFG)/test
+#
+#special case:
+#the 1st time through, before .configure exists yet,
+#execute $(MLSBIN)/configure to create .configure
+
+#i.e., if you are building this test
+#by calling make with a different Makefile name,
+#say: make -f MakeFC
+#then rename the Makefiles in /l2 and /lib also MakeFC
+
+# "$Id: MakeFC,v 1.2 2000/11/11 00:19:06 pwagner Exp $"
+
+MakeFName = MakeFC
+
+#Assume we are currently at mlspgs/lib/tests/test_cf_parser
+# where to store .configure
+CONFDIR=../../..
+
+# where configure and makemakedep.sh are stored
+MLSBIN=../../../util
+
+# where the platforms directory is
+PLATFORMS = .
+
+# This will set our MLS platform, compiler. etc.
+# w/o complaining if it does not exist yet
+-include $(CONFDIR)/.configure
+
+SHELL = /bin/sh
+
+# where sources for libmls.a are stored
+libmls_sources=../../../lib
+
+# where objects and libmls.a are stored
+libmls_objs=$(libmls_sources)/$(MLSCONFG)
+
+libmls_f90 := $(wildcard $(libmls_sources)/*.f90)
+
+PROG=test_multiply_vector
+
+TESTOUTPUT=out.test
+
+$(PROG): $(CONFDIR)/.configure $(PLATFORMS)/$(MLSCONFG) $(libmls_objs)/libmls.a
+	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG)
+
+$(libmls_objs)/libmls.a: $(libmls_f90)
+	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
+
+output: $(CONFDIR)/.configure $(PLATFORMS)/$(MLSCONFG)
+	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(TESTOUTPUT)
+
+.PHONY: configure depends clean
+
+configure:
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)"
+
+$(CONFDIR)/.configure:
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)"
+
+$(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/.configure
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -nc
+
+depends:
+	$(MLSBIN)/makemakedep.sh $(libmls_sources)
+
+clean:
+	@@echo "Cleaning directory $(MLSCONFG)" ; \
+	if [ "$(MLSCONFG)" != "" ] ; then  \
+		echo "Deleting $(MLSCONFG) files" ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/*.[ao] ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/*.mod ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/$(PROG) ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/Makefile ; \
+	fi ; \
+	if [ -d "$(PLATFORMS)/$(MLSCONFG)" ] ; then  \
+		echo "Deleting $(MLSCONFG) directory" ; \
+		rmdir $(PLATFORMS)/$(MLSCONFG) ; \
+	fi
+# $Log: MakeFC,v $
+# Revision 1.2  2000/11/11 00:19:06  pwagner
+# rebuilds both tests/* and libmls.a
+#
+# Revision 1.1  2000/11/09 17:26:43  pwagner
+# First commit
+#
+
+
+@
+
+
+1.2
+log
+@rebuilds both tests/* and libmls.a
+@
+text
+@d14 1
+a14 1
+# "$Id: MakeFC,v 1.1 2000/11/09 17:26:43 pwagner Exp $"
+d40 2
+d49 1
+a49 1
+$(libmls_objs)/libmls.a: $(libmls_sources)/*.f90
+d86 3
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d14 1
+a14 1
+# "$Id: MakeFC,v 1.1 2000/10/24 20:59:56 pwagner Exp $"
+d34 6
+d44 1
+a44 1
+$(PROG): $(CONFDIR)/.configure $(PLATFORMS)/$(MLSCONFG)
+d47 3
+d68 1
+a68 1
+	$(MLSBIN)/makemakedep.sh
+d84 1
+a84 7
+# Revision 1.1  2000/10/24 20:59:56  pwagner
+# first commit
+#
+# Revision 1.1  2000/10/20 23:35:50  pwagner
+# first commit
+#
+# Revision 2.1  2000/10/18 21:58:16  pwagner
+@
+

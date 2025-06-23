@@ -1,0 +1,715 @@
+head	2.9;
+access;
+symbols
+	v5-02-NRT-19:2.9
+	v6-00:2.9
+	v5-02-NRT-18:2.9
+	v5-02:2.9
+	v5-01-NRT-17:2.9
+	v5-01-NRT-16:2.9
+	v5-01-NRT-15:2.9
+	v5-01-NRT-14:2.9
+	neuralnetworks-1-0:2.9.0.12
+	cfm-single-freq-0-1:2.9.0.10
+	v5-01:2.9
+	v5-00:2.9
+	v4-23-TA133:2.9.0.8
+	mus-emls-1-70:2.9.0.6
+	rel-1-0-englocks-work:2.9.0.4
+	VUMLS1-00:2.9
+	VPL1-00:2.9
+	V4-22-NRT-08:2.9
+	VAM1-00:2.9
+	V4-21:2.9.0.2
+	V4-13:2.9
+	V4-12:2.9
+	V4-11:2.9
+	V4-10:2.9
+	V3-43:2.8
+	M4-00:2.8
+	V3-41:2.8
+	V3-40-PlusGM57:2.8.0.2
+	V2-24-NRT-04:2.6
+	V3-33:2.8
+	V2-24:2.6
+	V3-31:2.8
+	V3-30-NRT-05:2.8
+	cfm-01-00:2.8
+	V3-30:2.8
+	V3-20:2.8
+	V3-10:2.7
+	V2-23-NRT-02:2.6
+	V2-23:2.6
+	V2-22-NRT-01:2.6
+	V2-22:2.6
+	V2-21:2.4
+	V2-20:2.4
+	V2-11:2.4
+	V2-10:2.4
+	V2-00:2.4
+	V1-51:2.3
+	V1-50:2.3
+	V1-45:2.3
+	V1-44:2.3
+	V1-43:2.3
+	V1-32:2.3
+	V1-31:2.3
+	V1-30:2.1
+	V1-13:2.1
+	V1-12:2.1
+	V1-11:2.1
+	V1-10:2.1
+	newfwm-feb03:2.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+2.9
+date	2013.06.12.02.20.35;	author vsnyder;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2010.02.04.23.09.28;	author vsnyder;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2009.06.23.18.26.10;	author pwagner;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2007.10.06.00.00.17;	author vsnyder;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2007.06.21.00.52.54;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2005.06.22.18.08.19;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2003.10.09.16.24.05;	author jonathan;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2003.10.09.16.21.48;	author jonathan;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2003.01.31.18.35.55;	author jonathan;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.9
+log
+@Cruft removal
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module MieTheory
+
+! -------------------------------------------------------------------------
+! COMPUTE MIE EFFICIENCIES
+! -------------------------------------------------------------------------
+
+   use MLSKinds, only: r8
+   USE MLSMessageModule, only: MLSMessage, MLSMSG_Error
+   use RefractiveIndex, only: UKSUB, UKISUB
+   implicit none
+
+   private
+   public :: MieCoeff
+
+   ! These are legal values of ispi
+   integer, parameter, public :: ice = 1
+   integer, parameter, public :: water = ice + 1
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: MieTheory.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  subroutine MieCoeff ( ISPI, f, t, nr, r, a, b, nab, nabr, bc )
+
+    use constants, only: Pi
+
+   ! Arguments
+    integer, intent(in) :: ISPI            ! cloud type (1=ICE, 2=WATER)
+    real(r8), intent(in) :: f              ! frequency in GHz
+    real(r8), intent(in) :: t              ! Temperature in K
+    integer, intent(in) :: nr              ! no of particle size
+    integer, intent(in) :: nab             ! no of a/b terms
+    real(r8), intent(in) :: r(nr)          ! particle radius
+    integer, intent(out) :: nabr(nr)       ! truncation number for a and b
+                                           ! 10um ---> 5; 2000 um ---> 20.
+    complex(r8), intent(out) :: a(nr,nab),b(nr,nab) ! Mie coefficients
+    real(r8), intent(out) :: bc(3,nr)      ! single particle Mie
+   ! Internal variables                          efficiencies (abs,scat,ext)
+    real(r8) :: wl                         ! wavelength in meters
+    complex(r8) :: m                       ! refractive index
+    complex(r8) :: a0,a1,w9,w0,w1,p1,p2,mx,mx1
+    real(r8) :: x, x1
+    real(r8) :: ab_err                     ! relative error in Mie efficiency
+    parameter(ab_err = 1.e-3)
+    real(r8) :: dab1, dab2                 ! a/b contribution to bc at i term
+    integer :: i,j
+
+!... initialization
+    wl=0.3_r8/f
+    a = 0.0
+    b = 0.0
+
+  part_size_loop: do j = 1, nr
+
+      if ( ISPI == ice ) then
+        call ukisub ( f, t, m )
+      else if ( ISPI == water ) then
+        call uksub ( f, t, m )
+      else
+        CALL MLSMessage ( MLSMSG_Error, ModuleName, &
+          & ' Unrecognized ispi parameter--ice==1, water==2 ' )
+      end if
+
+      x=real(2.*pi*r(j)/wl)*1.d-6
+
+      bc(2,j) =0.
+      bc(3,j) =0.
+
+      !... default of nabr is nab, the largest possible
+      nabr(j)=nab
+
+      !... x1 is 1/x
+      x1=real(0.5*wl/pi/r(j))*1.d6
+      mx=cmplx(m)*x
+      mx1=1.0/mx
+
+      ! ....... for CGI     !JJ
+      !        w9=dcmplx(dcos(x),-dsin(x))
+      !        w0=dcmplx(dsin(x),dcos(x))
+      !        a0=cdcos(mx)/cdsin(mx)
+
+      ! ....   for f95
+      w9=cmplx(cos(x),-sin(x),kind=r8)
+      w0=cmplx(sin(x),cos(x),kind=r8)
+      a0=cos(mx)/sin(mx)
+
+      do i=1, nab
+
+        w1=(2.0*i-1.)*x1*w0-w9
+        a1=-i*mx1+1.0/(i*mx1-a0)
+        p1=a1/m+i*x1
+        p2=m*a1+i*x1
+
+        a(j,i) = cmplx( (p1*real(w1)-real(w0))/(p1*w1-w0) )
+        b(j,i) = cmplx( (p2*real(w1)-real(w0))/(p2*w1-w0) )
+
+        ! ... the factor of 2./x^2 is left out in dab since nabr is usually
+        !  important for large x. For x<0.1, usually, nabr=2 is enough.
+             dab1=(2.*i+1.)*((abs(a(j,i)))**2+(abs(b(j,i)))**2)
+             dab2=(2.*i+1.)*real(a(j,i)+b(j,i))
+             bc(2,j)=bc(2,j)+dab1
+             bc(3,j)=bc(3,j)+dab2
+
+        ! ... determine cutoff no. for higher order terms
+             if ( i >= 2 ) then
+               dab1=dab1/bc(2,j)
+               dab2=dab2/bc(3,j)
+               if ( abs(dab1) < ab_err .and. abs(dab2) < ab_err ) then
+                  nabr(j) = i
+                  exit ! goto 11     ! stop looping and use i as nabr
+               end if
+             end if
+
+        a0=a1
+        w9=w0
+        w0=w1
+
+      end do
+      ! 11   bc(2,j)=bc(2,j)*2/x/x
+      bc(2,j)=bc(2,j)*2/x/x
+      bc(3,j)=bc(3,j)*2/x/x
+
+    end do part_size_loop
+
+  end subroutine MieCoeff
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: MieTheory.f90,v 2.8 2010/02/04 23:09:28 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module MieTheory
+
+! $Log: MieTheory.f90,v $
+! Revision 2.8  2010/02/04 23:09:28  vsnyder
+! Use kind= in CMPLX
+!
+! Revision 2.7  2009/06/23 18:26:10  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.6  2007/10/06 00:00:17  vsnyder
+! Modernization, polishing
+!
+! Revision 2.5  2007/06/21 00:52:54  vsnyder
+! Remove tabs, which are not part of the Fortran standard
+!
+! Revision 2.4  2005/06/22 18:08:19  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.3  2003/10/09 16:24:05  jonathan
+! some cleaning
+!
+! Revision 2.2  2003/10/09 16:21:48  jonathan
+! some changes
+!
+! Revision 2.1  2003/01/31 18:35:55  jonathan
+! moved from cldfwm
+!
+! Revision 1.5  2003/01/30 22:01:14  pwagner
+! Cosmetic changes
+!
+! Revision 1.4  2002/10/08 17:08:07  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 1.3  2001/09/21 15:51:37  jonathan
+! modified F95 version
+!
+@
+
+
+2.8
+log
+@Use kind= in CMPLX
+@
+text
+@d40 1
+a40 3
+    real, parameter :: pi=3.1415926
+    real(r8), parameter :: re=6370000.0 ! earth radius
+    integer, parameter :: nu0=128       ! max dimension for u
+d145 1
+a145 1
+       "$Id: MieTheory.f90,v 2.7 2009/06/23 18:26:10 pwagner Exp $"
+d155 3
+@
+
+
+2.7
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d32 1
+a32 1
+       "$RCSfile: $"
+d100 2
+a101 2
+      w9=cmplx(cos(x),-sin(x))
+      w0=cmplx(sin(x),cos(x))
+d147 1
+a147 1
+       "$Id: read_apriori.f90 is it here $"
+d157 3
+@
+
+
+2.6
+log
+@Modernization, polishing
+@
+text
+@d32 2
+a33 2
+       "$RCSfile: MieTheory.f90,v $"
+  private :: not_used_here
+d144 1
+a145 1
+!---------------------------- RCS Ident Info -------------------------------
+d147 2
+a148 3
+       "$Id: MieTheory.f90,v 2.5 2007/06/21 00:52:54 vsnyder Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d150 1
+d152 1
+d157 3
+@
+
+
+2.5
+log
+@Remove tabs, which are not part of the Fortran standard
+@
+text
+@d14 2
+a15 3
+! -------------------------------------------------------------------------  
+! MODULE TO COMPUTE MIE EFFICIENCIES
+! (Used for what? By what other modules?)
+d18 1
+a18 1
+   use MLSCommon, only: r8
+d23 6
+a28 2
+   Private
+   Public :: MieCoeff
+d33 1
+a33 1
+  private :: not_used_here 
+d35 1
+a35 1
+      
+d38 5
+a42 1
+        SUBROUTINE MieCoeff(ISPI, f, t, nr, r, a, b, nab, nabr, bc)
+a43 7
+        real :: pi
+        parameter (pi=3.1415926)
+        real(r8) :: re          ! earth radius
+        parameter (re=6370000.)
+        integer :: nu0          ! max dimension for u
+        parameter (nu0=128)
+          
+d45 10
+a54 10
+        integer, intent(in) :: ISPI            ! cloud type (1=ICE, 2=WATER)
+        real(r8), intent(in) :: f              ! frequency in GHz
+        real(r8), intent(in) :: t              ! Temperature in K 
+        integer, intent(in) :: nr              ! no of particle size
+        integer, intent(in) :: nab             ! no of a/b terms
+        real(r8), intent(in) :: r(nr)          ! particle radius
+        integer, intent(out) :: nabr(nr)       ! truncation number for a and b
+                                               ! 10um ---> 5; 2000 um ---> 20.
+        complex(r8), intent(out) :: a(nr,nab),b(nr,nab) ! Mie coefficients
+        real(r8), intent(out) :: bc(3,nr)      ! single particle Mie 
+d56 8
+a63 11
+        real(r8) :: wl                         ! wavelength in meters
+        complex(r8) :: m                       ! refractive index
+   complex(r8) :: a0,a1,w9,w0,w1,p1,p2,mx,mx1
+   real(r8) :: x, x1
+        real(r8) :: ab_err                     ! relative error in Mie efficiency
+        parameter(ab_err = 1.e-3)
+        real(r8) :: dab1, dab2                 ! a/b contribution to bc at i term
+   ! These are legal values of ispi
+        integer, parameter :: ice = 1
+        integer, parameter :: water = ice + 1
+        integer :: i,j
+d66 77
+a142 81
+        wl=0.3_r8/f
+        do i=1,nr
+          do j=1,nab
+             a(i,j)=cmplx(0.0)
+             b(i,j)=cmplx(0.0)
+          end do
+        end do
+   
+        part_size_loop: do j=1, nr
+
+         if(ISPI == ice) then
+           call ukisub(f,t,m)                                      
+         elseif(ISPI == water) then
+           call uksub(f,t,m)                                       
+         else
+           CALL MLSMessage(MLSMSG_Error, ModuleName, &
+             & ' Unrecognized ispi parameter--ice==1, water==2 ')
+         endif
+
+              x=real(2.*pi*r(j)/wl)*1.d-6                                           
+
+              bc(2,j) =0.                                                           
+              bc(3,j) =0.                                                           
+
+         !... default of nabr is nab, the largest possible                     
+         nabr(j)=nab                                                      
+                                                                               
+         !... x1 is 1/x                                                        
+              x1=real(0.5*wl/pi/r(j))*1.d6                                          
+              mx=cmplx(m)*x                                                         
+         mx1=1.0/mx                                                       
+
+         ! ....... for CGI     !JJ                                             
+         !        w9=dcmplx(dcos(x),-dsin(x))                                  
+         !        w0=dcmplx(dsin(x),dcos(x))                                   
+         !        a0=cdcos(mx)/cdsin(mx)                                       
+
+         ! ....   for f95                                                  
+              w9=cmplx(cos(x),-sin(x))                                              
+              w0=cmplx(sin(x),cos(x))                                               
+              a0=cos(mx)/sin(mx)                                                    
+
+         do i=1, nab                                                           
+
+           w1=(2.0*i-1.)*x1*w0-w9                                              
+           a1=-i*mx1+1.0/(i*mx1-a0)                                            
+           p1=a1/m+i*x1                                                        
+           p2=m*a1+i*x1                                                        
+
+           a(j,i) = cmplx( (p1*real(w1)-real(w0))/(p1*w1-w0) )                 
+           b(j,i) = cmplx( (p2*real(w1)-real(w0))/(p2*w1-w0) )                 
+
+           ! ... the factor of 2./x^2 is left out in dab since nabr is usually 
+           !  important for large x. For x<0.1, usually, nabr=2 is enough.     
+                dab1=(2.*i+1.)*((abs(a(j,i)))**2+(abs(b(j,i)))**2)                  
+                dab2=(2.*i+1.)*real(a(j,i)+b(j,i))                                  
+                bc(2,j)=bc(2,j)+dab1                                                
+                bc(3,j)=bc(3,j)+dab2                                                
+
+           ! ... determine cutoff no. for higher order terms                   
+                if(i .ge. 2 ) then                                                  
+                  dab1=dab1/bc(2,j)                                                 
+                  dab2=dab2/bc(3,j)                                                 
+                  if(abs(dab1) .lt. ab_err .and. abs(dab2) .lt. ab_err) then        
+                     nabr(j) = i                                                    
+                     exit ! goto 11     ! stop looping and use i as nabr                   
+                  endif                                                             
+                endif                                                               
+
+           a0=a1                                                               
+           w9=w0                                                               
+           w0=w1                                                               
+
+          enddo                                                                
+         ! 11   bc(2,j)=bc(2,j)*2/x/x                                            
+         bc(2,j)=bc(2,j)*2/x/x                                            
+         bc(3,j)=bc(3,j)*2/x/x                                               
+
+        end do part_size_loop
+ 
+  END SUBROUTINE MieCoeff
+d147 1
+a147 1
+       "$Id: MieTheory.f90,v 2.4 2005/06/22 18:08:19 pwagner Exp $"
+d156 3
+@
+
+
+2.4
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d22 1
+a22 1
+	implicit none
+d29 1
+a29 1
+       "$RCSfile: $"
+d35 1
+a35 1
+	SUBROUTINE MieCoeff(ISPI, f, t, nr, r, a, b, nab, nabr, bc)
+d45 10
+a54 10
+        integer, intent(in) :: ISPI	       ! cloud type (1=ICE, 2=WATER)
+	real(r8), intent(in) :: f 	       ! frequency in GHz
+	real(r8), intent(in) :: t 	       ! Temperature in K 
+        integer, intent(in) :: nr	       ! no of particle size
+	integer, intent(in) :: nab	       ! no of a/b terms
+	real(r8), intent(in) :: r(nr)	       ! particle radius
+	integer, intent(out) :: nabr(nr)       ! truncation number for a and b
+				               ! 10um ---> 5; 2000 um ---> 20.
+	complex(r8), intent(out) :: a(nr,nab),b(nr,nab)	! Mie coefficients
+	real(r8), intent(out) :: bc(3,nr)      ! single particle Mie 
+d56 2
+a57 2
+	real(r8) :: wl 	                       ! wavelength in meters
+	complex(r8) :: m		       ! refractive index
+d60 3
+a62 3
+	real(r8) :: ab_err	               ! relative error in Mie efficiency
+	parameter(ab_err = 1.e-3)
+	real(r8) :: dab1, dab2	               ! a/b contribution to bc at i term
+d66 1
+a66 1
+	integer :: i,j
+d76 1
+a76 1
+	   
+d88 4
+a91 4
+	      x=real(2.*pi*r(j)/wl)*1.d-6                                           
+	
+	      bc(2,j) =0.                                                           
+	      bc(3,j) =0.                                                           
+d97 2
+a98 2
+	      x1=real(0.5*wl/pi/r(j))*1.d6                                          
+	      mx=cmplx(m)*x                                                         
+d107 1
+a107 1
+	      w9=cmplx(cos(x),-sin(x))                                              
+d123 4
+a126 4
+	        dab1=(2.*i+1.)*((abs(a(j,i)))**2+(abs(b(j,i)))**2)                  
+	        dab2=(2.*i+1.)*real(a(j,i)+b(j,i))                                  
+	        bc(2,j)=bc(2,j)+dab1                                                
+	        bc(3,j)=bc(3,j)+dab2                                                
+d129 8
+a136 8
+	        if(i .ge. 2 ) then                                                  
+	          dab1=dab1/bc(2,j)                                                 
+	          dab2=dab2/bc(3,j)                                                 
+	          if(abs(dab1) .lt. ab_err .and. abs(dab2) .lt. ab_err) then        
+	             nabr(j) = i                                                    
+	             exit ! goto 11     ! stop looping and use i as nabr                   
+	          endif                                                             
+	        endif                                                               
+d139 2
+a140 2
+	        w9=w0                                                               
+	        w0=w1                                                               
+d154 1
+a154 1
+       "$Id: $"
+d163 3
+@
+
+
+2.3
+log
+@some cleaning
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d27 3
+a29 6
+ !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm =                          &
+    "$Id: MieTheory.f90,v 2.2 2003/10/09 16:21:48 jonathan Exp $"
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName=                       &
+    "$RCSfile: MieTheory.f90,v $"
+d31 1
+a31 1
+ !---------------------------------------------------------------------------
+d152 5
+d163 3
+@
+
+
+2.2
+log
+@some changes
+@
+text
+@d21 1
+a21 1
+    "$Id: MieTheory.f90,v 2.1 2003/01/31 18:35:55 jonathan Exp $"
+d101 1
+a101 1
+         ! ....   for zvi f95                                                  
+d103 2
+a104 2
+         w0=cmplx(sin(x),cos(x))                                               
+         a0=cos(mx)/sin(mx)                                                    
+d153 3
+@
+
+
+2.1
+log
+@moved from cldfwm
+@
+text
+@d21 1
+a21 1
+    "$Id: MieTheory.f90,v 1.5 2003/01/30 22:01:14 pwagner Exp $"
+a31 2
+!	include 'constants.f9h'
+
+d40 4
+a43 4
+   integer, intent(in) :: ISPI	    ! cloud type (1=ICE, 2=WATER)
+	real(r8), intent(in) :: f 		    ! frequency in GHz
+	real(r8), intent(in) :: t 		    ! Temperature in K 
+   integer, intent(in) :: nr	       ! no of particle size
+d45 3
+a47 3
+	real(r8), intent(in) :: r(nr)	    ! particle radius
+	integer, intent(out) :: nabr(nr)	 ! truncation number for a and b
+				                ! 10um ---> 5; 2000 um ---> 20.
+d49 4
+a52 4
+	real(r8), intent(out) :: bc(3,nr)	! single particle Mie 
+   ! Internal variables                    efficiencies (abs,scat,ext)
+	real(r8) :: wl 	                  ! wavelength in meters
+	complex(r8) :: m		               ! refractive index
+d55 1
+a55 1
+	real(r8) :: ab_err	                ! relative error in Mie efficiency
+d57 1
+a57 1
+	real(r8) :: dab1, dab2	! a/b contribution to bc at i term
+d59 2
+a60 2
+   integer, parameter :: ice = 1
+   integer, parameter :: water = ice + 1
+d64 7
+a70 7
+       wl=0.3_r8/f
+       do i=1,nr
+         do j=1,nab
+          a(i,j)=cmplx(0.0)
+          b(i,j)=cmplx(0.0)
+         end do
+       end do
+d72 1
+a72 2
+       part_size_loop: do j=1, nr
+       ! do 12 j=1,nr
+a81 1
+         ! x=dreal(2.*pi*r(j)/wl)*1.d-6    !jj                                 
+a91 1
+         !        x1=dreal(0.5d0*wl/pi/r(j))*1.d6    !jj                       
+a92 2
+
+         !        mx=dcmplx(m)*x     !jj                                       
+d107 1
+a107 1
+           !do 10 i=1,nab                                                      
+d136 1
+a136 1
+           !10    continue                                                     
+a140 2
+       ! 12    continue                                                        
+       end do part_size_loop
+d142 2
+d153 3
+@
+

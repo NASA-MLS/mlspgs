@@ -1,0 +1,356 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.14
+	cfm-single-freq-0-1:1.1.0.12
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.10
+	mus-emls-1-70:1.1.0.8
+	rel-1-0-englocks-work:1.1.0.6
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2008.06.11.20.14.50;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.25in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9.0in
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+%\settowidth{\hW}{\bf wvs-007}
+\settowidth{\hW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    17 May 2000\hfill\parbox[t]{\hW}{{\bf wvs-007}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Dave, Nathaniel, Ted, Lori, Vince\\
+Subject: \>Changes in the {\tt MLSCF} module\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 3pt
+\vspace{-20pt}
+
+\section{Changes in the text of the {\tt MLSCF} module}
+
+\begin{itemize}
+\item The most substantial change is that the procedure {\tt
+  Read\_Parse\_L2CF} has been replaced by an extensive collection
+  ($\sim 16$) of other modules, developed using traditional compiler
+  construction methodology.  The specifications and a superficial
+  description of this subsystem are contained in {\tt wvs-004} (current
+  revision).
+\item There are two new components {\tt NoSectionDefs} and {\tt Cells} in
+  {\tt MlscfSection\_T}.  The former is an integer giving the number of
+  effective elements of the latter, which is of type {\tt MlscfCell\_T}.
+  These are to accomodate entries of the type {\tt NAME~=} \emph{expr}.
+\item There is a new character component {\tt MlscfLabelName} in {\tt
+  MlscfEntry\_T}. This contains the name before the ``:'' in the new
+  syntax for an entry. Formerly, this was done using a {\tt Cell} with a
+  {\tt Keyword} component equal to {\tt NAME}.
+\item The {\tt Units} component of {\tt MlscfCell\_T} has been changed to an
+  integer.  The values are given in the {\tt Units} module.
+\item The {\tt RangeLowerBound} component has been deleted from {\tt
+  MlscfCell\_T}.  In the case of a range, the {\tt RealValue} component
+  is used for the lower bound.
+\item There is a new integer component {\tt Type} in {\tt MlscfCell\_T}. 
+  The values are the same as for the {\tt Type} component of a
+  declaration (type {\tt Decls}) and are given in the {\tt
+  declaration\_table} module.
+\item There is a new character component {\tt CharRangeUpperBound} in {\tt
+  MlscfCell\_T}.  This has two uses:\begin{enumerate}
+  \item In the case of a range (indicated by ``:'') applied to string
+    values (usually dates in CCSDS format), the lower bound is in {\tt
+    CharValue} and the upper bound is in {\tt CharRangeUpperBound}, and
+  \item In the case of a qualified label ({\tt section.label}) the
+    section name is  in {\tt CharValue} and the label in that section is
+    in {\tt CharRangeUpperBound}.
+  \end{enumerate}
+\item The {\tt IntValue} component has been deleted from {\tt
+  MlscfCell\_T}.  All numeric values are put into the {\tt RealValue}
+  component.  This is exact for integer values up to {\tt
+  1.0/EPSI\-LON( RealValue~)}, or about $10^{16}$.
+\item The type {\tt MlscfKey\_T} isn't used, but it's still there.  If it
+  isn't actually used anywhere, it could be deleted, along with the {\tt
+  MaxTypeLen} parameter.
+\item The opening and closing of the {\tt l2cf} file have been moved into
+  procedures {\tt Start\_MLScf} and {\tt Fin\-ish\_MLScf}.  There is also
+  a new procedure {\tt Al\-lo\-cate\_MLScf}.
+\end{itemize}
+
+\section{Usage of the revised L2CF parser}
+
+Usage of the L2CF parser consists of several steps.
+
+\begin{enumerate}
+\item Open the input file, presumably using the procedure {\tt
+  Start\_MLScf} from the {\tt MLSCF} module.  Put the input file's unit
+  number in the {\tt INUNIT} public variable accessed from the {\tt
+  String\_Table} module.  If you want the input listed with line numbers,
+  set the variable {\tt Do\_Listing} accessed from the {\tt
+  String\_Table} module to {\tt .true.}  If you don't do anything, its
+  default value is {\tt .false.}
+
+\item Call the following procedures, from the indicated modules:
+
+\begin{tabular}{|l|l|}
+\hline
+  Procedure & Module \\
+\hline
+\hline
+  call init\_lexer ( nChars, nStrings, nHash, status ) & Lexer\_Core \\
+\hline
+  call allocate\_decl ( nDecls ) & Declaration\_Table \\
+\hline
+  call allocate\_tree ( nTreeNodes ) & Tree \\
+\hline
+  call init\_units ( declare, units\_name ) & Units \\
+\hline
+  call init\_tables & Init\_Tables\_Module \\
+\hline
+\end{tabular}
+
+The actual arguments {\tt nChars, nStrings, nHash, nDecls} and {\tt
+nTreeNodes} can be constants, parameters or variables.  Reasonable values
+are 10000, 1000, 1003, 1000 and 10000, respectively.  {\tt nHash} should
+not have any factors less than about 20, and should be larger than {\tt
+nStrings}.  If you don't allow for enough characters, strings or
+declarations, the tables expand automatically.  The hash table doesn't
+expand automatically, and it would be a bit of work to make it do so. 
+The tree doesn't expand automatically, but it wouldn't be much work to
+make it do so.  A rough estimate for the size of the tree is the number
+of operands and operators appearing in the input, where punctuation such
+as ``,'' and ``='' are counted as operators, plus a few hundred elements
+to represent built-in information such as what specifications can appear
+in what sections.
+
+The actual argument {\tt status} output from {\tt init\_lexer} is nonzero
+if something went wrong.
+
+The actual arguments {\tt declare} and {\tt units\_name} are accessed from
+the {\tt Declaration\_Table} module.  This is done to avoid a circular
+dependency between the {\tt Units} and {\tt Dec\-lara\-tion\_Table} modules.
+
+\item There is an array {\tt Toggle} accessible from the {\tt Toggles}
+  module that contains switches used by components of the lexer, parser,
+  tree checker, table generator, string and symbol tables and declaration
+  table to decide whether to output information about what is being done.
+  There is no need to set any of these, but the output can be useful (or
+  interesting).  There are parameters e.g. {\tt Lex}, in the {\tt
+  Toggles} module that are useful for subscripts of the array.  The lexer
+  also can invert toggles if it sees ``@@$<$letter$>$'' in the input. The
+  correspondence between letters and subscripts is given in the {\tt
+  Toggles} module.
+
+\item Call the procedure {\tt Configuration} accessed from the {\tt
+  Parser} module with a single argument, say {\tt Root}, of type integer.
+  If {\tt Root} is returned negative it means an error occurred during
+  parsing, and the program should be terminated.  Otherwise,  {\tt Root}
+  is the index of the root of the tree that will be output by the parser,
+  as explained in wvs-004 (current revision).
+
+\item Close the input file, presumably using the procedure {\tt
+  Finish\_MLScf} from the {\tt MLSCF} module.
+
+\item Call the procedure {\tt Check\_Tree} accessed from the {\tt
+  Tree\_Checker} module with integer arguments {\tt Root,
+  How\_Many\_Sections} and {\tt Error}.  This makes sure the type and
+  other rules are followed.  {\tt Error} is returned non-zero if an error
+  occurred, in which case the program should be terminated.  The {\tt
+  How\_Many\_Sections} argument indicates how many sections were noticed
+  in the input.
+
+\item Call the procedure {\tt Generate\_Table} accessed from the {\tt
+  Table\_Generator} module with integer arguments {\tt Root} and {\tt
+  How\_Many\_Sections} and an argument of type {\tt Mlscf\_T} (accessed
+  from the {\tt MLSCF} module), say {\tt L2cf\_Data}.
+
+\item If you want a printed display of the generated table, call the
+  procedure {\tt Dump\_Table} accessed from the module {\tt Table\_Dumper}
+  with the argument {\tt L2cf\_Data} output from the previous step.
+
+\end{enumerate}
+
+All of this is done in the main program {\tt Test} that was used as a test
+harness during development; it is shown in section \ref{test}.
+
+Ultimately, the L2 program would be cleaner if the procedure {\tt
+Generate\_Table} were replaced by using the tree output by the parser
+directly in the various subsystems of the program, e.g. {\tt
+ScanAndDivide}, etc., instead of going through the {\tt Generate\_Table}
+step.  When it is appropriate to make a change, a memorandum will be
+forthcoming that describes the access procedures for the tree and
+declaration table, and strategies to use the tree.  Meanwhile, the
+curious can peruse the modules {\tt Tree\_Checker, \tt
+Table\_Generator, Tree} and {\tt Declaration\_Table}.
+
+\section{Changes needed to integrate the new parser}
+
+In order to integrate the new parser into the L2 program, a few small
+changes will be needed in it:
+\begin{itemize}
+
+\item My copy of the {\tt MLSCF} module has all of the accesses to the SDP
+  toolkit commented out, because it isn't available for Linux yet.  These
+  will need to be put back in a production version.
+
+\item There is a module {\tt Output\_m} that contains several procedures
+  used for output.  These procedures all use Fortran {\tt write}
+  statements, with the unit given by the public integer {\tt PRUNIT} in
+  that module if it is nonnegative, or else the unit ``*''.  Presumably,
+  these {\tt write} statements should eventually be replaced by calls to
+  the MLS Messages procedures.
+
+\end{itemize}
+
+\section{The main program {\tt Test}}\label{test}
+{\tt\small\begin{verbatim}
+program TEST
+  use DECLARATION_TABLE, only: ALLOCATE_DECL, DECLARE, &
+                               UNITS_NAME, DUMP_DECL
+  use INIT_TABLES_MODULE, only: INIT_TABLES
+  use LEXER_CORE, only: INIT_LEXER
+  use MACHINE, only: HP ! for command lines
+  use MLSCF, only: MLSCF_T
+  use OUTPUT_M, only: OUTPUT
+  use PARSER, only: CONFIGURATION
+  use STRING_TABLE, only: DO_LISTING
+  use TABLE_DUMPER, only: DUMP_TABLE                 ! For debugging
+  use TABLE_GENERATOR, only: GENERATE_TABLE
+  use TREE_CHECKER, only: CHECK_TREE
+  use TOGGLES, only: CON, GEN, LEX, PAR, SYN, TOGGLE
+  use TREE, only: ALLOCATE_TREE, PRINT_SUBTREE
+  use UNITS, only: INIT_UNITS
+
+  logical :: DO_DUMP = .false.     ! Dump declaration table
+  logical :: DUMP_TREE = .false.   ! Dump tree after parsing
+  integer :: ERROR                 ! Error flag from check_tree
+  integer :: HOW_MANY_SECTIONS
+  integer :: I      ! counter for command line arguments
+  integer :: J      ! index within option
+  type(mlscf_t) :: L2CF_DATA
+  character(len=80) :: LINE
+  integer :: ROOT   ! of the abstract syntax tree
+  integer :: STATUS ! from init_lexer
+
+  call init_lexer ( 10000, 1000, 1003, status )
+  call allocate_decl ( 1000 )
+  call allocate_tree ( 10000 )
+  call init_units ( declare, units_name )
+  call init_tables
+
+  i = 1+hp
+  do ! Process the command line options to set toggles
+    call getarg ( i, line )
+    if ( line(1:1) == '-' ) then
+      do j = 2, len(line)
+        if ( line(j:j) == 'c' ) then
+          toggle(con) = .true.
+        else if ( line(j:j) == 'g' ) then
+          toggle(gen) = .true.
+        else if ( line(j:j) == 'l' ) then
+          toggle(lex) = .true.
+        else if ( line(j:j) == 'p' ) then
+          toggle(par) = .true.
+        else if ( line(j:j) == 'a' ) then
+          toggle(syn) = .true.
+        else if ( line(j:j) == 'A' ) then
+          dump_tree = .true.
+        else if ( line(j:j) == 'd' ) then
+          do_dump = .true.
+        else if ( line(j:j) == 'v' ) then
+          do_listing = .true.
+        end if
+      end do
+    else    
+  exit
+    end if
+    i = i + 1
+  end do
+
+  call configuration ( root )
+  if ( root > 0 ) then
+    if ( dump_tree ) call print_subtree ( root, 0 )
+    call check_tree ( root, how_many_sections, error )
+    if ( toggle(syn) ) then
+      call output ( 'Begin abstract syntax tree:', advance='yes' )
+      call print_subtree ( root, 0 )
+      call output ( 'End abstract syntax tree', advance='yes' )
+    end if
+    if ( error == 0 ) then
+      if ( do_dump ) call dump_decl
+      call generate_table ( root, how_many_sections, l2cf_data )
+      call dump_table ( l2cf_data )
+    end if
+  else
+    call output ( &
+      'A syntax error occurred -- there is no abstract syntax tree', &
+      advance='yes' )
+  end if
+end program TEST
+\end{verbatim}}
+\label{lastpage}
+\end{document}
+% $Id: $
+@

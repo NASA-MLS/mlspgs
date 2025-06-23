@@ -1,0 +1,719 @@
+head	2.12;
+access;
+symbols
+	rel-1-0-englocks-work:2.11.0.2
+	VUMLS1-00:2.7;
+locks; strict;
+comment	@# @;
+
+
+2.12
+date	2018.05.14.23.26.39;	author vsnyder;	state dead;
+branches;
+next	2.11;
+
+2.11
+date	2018.01.03.23.48.54;	author vsnyder;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2017.09.20.00.05.15;	author vsnyder;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2017.08.28.20.27.47;	author livesey;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2017.08.09.19.51.15;	author vsnyder;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2017.02.07.03.49.00;	author vsnyder;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2017.01.28.02.47.48;	author vsnyder;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2017.01.27.02.43.40;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2017.01.14.01.51.17;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2016.12.02.02.03.54;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2016.11.23.20.07.10;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2016.11.23.00.05.47;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.12
+log
+@Change to sparse eta representation
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! subroutine Eta_List_1D_* ( Basis, Grid, Eta, Row1, RowN, Sorted )
+
+! Compute Eta for linear interpolation from Basis to Grid. Basis is assumed
+! to be sorted.  Grid is sorted here if Sorted is present and false.
+! If Row1 is absent, 1 is assumed.  If RowN is absent, size(Grid) is assumed.
+! Elements min(row1,rowN) .. max(row1,rowN) are computed.
+
+! real(rk), intent(in) :: Basis(:)
+! real(rk), intent(in) :: Grid(:)
+! type(value_1D_list_t(rk)), intent(out) :: Eta(:) ! size(grid)
+! logical, intent(in), optional :: Sorted ! "Grid is sorted" -- default true
+
+  real(rk) :: Del_Basis
+  integer :: I, J, MyRow1, MyRowN, MySkip, MyTan_pt
+  logical :: MySorted
+  integer :: N_Basis, N_Grid
+  logical, parameter :: CheckSorted = .false. ! Check whether Grid is sorted
+
+  n_grid = size(grid)
+  if ( n_grid == 0 ) return
+  n_basis = size(basis)
+
+  mySorted = .true.
+  if ( present(sorted) ) mySorted = sorted
+
+  myRow1 = 1
+  myRowN = n_grid
+  if ( present(row1) ) myRow1 = min(row1,n_grid)
+  if ( present(rowN) ) myRowN = min(rowN,n_grid)
+
+  myTan_pt = n_grid + 1
+  if ( present(tan_pt) ) myTan_pt = tan_pt
+  mySkip = 0
+  if ( present(skip) ) mySkip = skip
+
+  if ( mySorted ) then
+    if ( grid(myRow1) > grid(myRowN) ) then ! Grid is in the opposite order
+      i = myRow1
+      myRow1 = myRowN
+      myRowN = i
+    end if
+
+    if ( checkSorted ) then
+      block
+        use Dump_0, only: Dump
+        use MLSMessageModule, only: MLSMessage, MLSMSG_Crash
+        use Output_m, only: Output
+        j = sign(1,myRowN-myRow1)
+        do i = myRow1, myRowN-j, j
+          if ( grid(i) > grid(i+j) ) then
+            call dump ( grid(min(myRow1,myRowN):max(myRow1,myRowN)), 'Grid', &
+              & lBound=min(myRow1,myRowN) )
+            call output ( i, before='Grid(' )
+            call output ( grid(i), before=' ) = ' )
+            call output ( i+j, before=' < Grid(' )
+            call output ( grid(i+j), before=' ) = ', advance='yes' )
+            call MLSMessage ( MLSMSG_Crash, moduleName, &
+              & "You lied!  Grid is claimed to be sorted, but it isn't" )
+          end if
+        end do
+      end block
+    end if
+
+    if ( myRow1 <= myRowN ) then
+      ! Coefficients below Basis(1) are all 1.0
+      do i = myRow1, myRowN
+        if ( i > myTan_pt .and. i <= myTan_pt + mySkip ) cycle
+        if ( grid(i) > basis(1) ) exit
+  !       eta(i) = value_1D_list_t(rk)(n=1,v=[value_1d_t(rk)(n=1,v=1.0_rk), &
+  !                                         & value_1d_t(rk)(n=0,v=0.0_rk)])
+        eta(i) = value_1D_list_t(n=1,v=[value_1d_t(j=1,v=1.0_rk), &
+                                      & value_1d_t(j=0,v=0.0_rk)])
+      end do
+      ! Coefficients between Basis(1) and Basis(n_basis) are "hat" functions
+      do j = 2, n_basis
+        del_basis = 1.0_rk / ( basis(j) - basis(j-1) )
+        do while ( i <= myRowN )
+          if ( grid(i) > basis(j) ) exit
+          if ( i <= myTan_pt .or. i > myTan_pt + mySkip ) then
+            if ( basis(j-1) < grid(i) ) then
+  !             eta(i) = value_1D_list_t(rk)(n=2, &
+  !               v=[value_1d_t(rk)(n=j-1,v=(basis(j)-grid(i)) * del_basis), &
+  !                & value_1d_t(rk)(n=j,v=(grid(i)-basis(j-1)) * del_basis) ] )
+              eta(i) = value_1D_list_t(n=2, &
+                v=[value_1d_t(j=j-1,v=(basis(j)-grid(i)) * del_basis), &
+                 & value_1d_t(j=j,v=(grid(i)-basis(j-1)) * del_basis) ] )
+              if ( eta(i)%v(1)%v == 0.0 ) & ! eta(i)%v(2)%v cannot be zero because
+                                            ! basis(j-1) < grid(i)
+!                 & eta(i) = value_1D_list_t(rk)(n=1, &
+!                   & v=[eta(i)%v(2),value_1d_t(rk)(n=0,v=0.0_rk)])
+                & eta(i) = value_1D_list_t(n=1, &
+                  & v=[eta(i)%v(2),value_1d_t(j=0,v=0.0_rk)])
+            end if
+          end if
+          i = i + 1
+        end do
+      end do
+      ! Coefficients above Basis(n_basis) are all 1.0
+      do i = myRowN, i, -1
+        if ( i > myTan_pt .and. i <= myTan_pt + mySkip ) cycle
+        if ( basis(n_basis) > grid(i) ) exit
+  !       eta(i) = value_1D_list_t(rk)(n=1,v=[value_1d_t(rk)(n=n_basis,v=1.0_rk), &
+  !                                         & value_1d_t(rk)(n=0,v=0.0_rk)])
+        eta(i) = value_1D_list_t(n=1,v=[value_1d_t(j=n_basis,v=1.0_rk), &
+                                      & value_1d_t(j=0,v=0.0_rk)])
+      end do
+    else ! myRow1 > myRowN, process in the opposite order
+      ! Coefficients below Basis(1) are all 1.0
+      do i = myRow1, myRowN, -1
+        if ( i > myTan_pt .and. i <= myTan_pt + mySkip ) cycle
+        if ( grid(i) > basis(1) ) exit
+  !       eta(i) = value_1D_list_t(rk)(n=1,v=[value_1d_t(rk)(n=1,v=1.0_rk), &
+  !                                         & value_1d_t(rk)(n=0,v=0.0_rk)])
+        eta(i) = value_1D_list_t(n=1,v=[value_1d_t(j=1,v=1.0_rk), &
+                                      & value_1d_t(j=0,v=0.0_rk)])
+      end do
+      ! Coefficients between Basis(1) and Basis(n_basis) are "hat" functions
+      do j = 2, n_basis
+        del_basis = 1.0_rk / ( basis(j) - basis(j-1) )
+        do while ( i > myRowN )
+          if ( grid(i) > basis(j) ) exit
+          if ( i <= myTan_pt .or. i > myTan_pt + mySkip ) then
+            if ( basis(j-1) < grid(i) ) then
+  !             eta(i) = value_1D_list_t(rk)(n=2, &
+  !               v=[value_1d_t(rk)(n=j-1,v=(basis(j)-grid(i)) * del_basis), &
+  !                & value_1d_t(rk)(n=j,v=(grid(i)-basis(j-1)) * del_basis) ] )
+              eta(i) = value_1D_list_t(n=2, &
+                v=[value_1d_t(j=j-1,v=(basis(j)-grid(i)) * del_basis), &
+                 & value_1d_t(j=j,v=(grid(i)-basis(j-1)) * del_basis) ] )
+              if ( eta(i)%v(1)%v == 0.0 ) & ! eta(i)%v(2)%v cannot be zero because
+                                            ! basis(j-1) < grid(i)
+!                 & eta(i) = value_1D_list_t(rk)(n=1, &
+!                   & v=[eta(i)%v(2),value_1d_t(rk)(n=0,v=0.0_rk)])
+                & eta(i) = value_1D_list_t(n=1, &
+                  & v=[eta(i)%v(2),value_1d_t(j=0,v=0.0_rk)])
+            end if
+          end if
+          i = i - 1
+        end do
+      end do
+      ! Coefficients above Basis(n_basis) are all 1.0
+      do i = myRowN, i
+        if ( i > myTan_pt .and. i <= myTan_pt + mySkip ) cycle
+        if ( basis(n_basis) > grid(i) ) exit
+  !       eta(i) = value_1D_list_t(rk)(n=1,v=[value_1d_t(rk)(n=n_basis,v=1.0_rk), &
+  !                                         & value_1d_t(rk)(n=0,v=0.0_rk)])
+        eta(i) = value_1D_list_t(n=1,v=[value_1d_t(j=n_basis,v=1.0_rk), &
+                                      & value_1d_t(j=0,v=0.0_rk)])
+      end do
+    end if
+  else ! Grid needs to be sorted
+    block
+      use Sort_m, only: SortP
+      integer :: P(n_grid), IP
+      call sortp ( grid, 1, n_grid, p ) ! grid(p(:)) are now sorted
+      ! Coefficients below Basis(1) are all 1.0
+      if ( myRow1 > myRown ) then
+        i = myRow1
+        myRow1 = myRowN
+        myRowN = i
+      end if
+      do i = myRow1, myRowN
+        if ( i > myTan_pt .and. i <= myTan_pt + mySkip ) cycle
+        ip = p(i)
+        if ( grid(ip) > basis(1) ) exit
+!         eta(ip) = value_1D_list_t(rk)(n=1,v=[value_1d_t(rk)(j=1,v=1.0_rk), &
+!                                            & value_1d_t(rk)(j=0,v=0.0_rk)])
+        eta(ip) = value_1D_list_t(n=1,v=[value_1d_t(j=1,v=1.0_rk), &
+                                       & value_1d_t(j=0,v=0.0_rk)])
+      end do
+      ! Coefficients between Basis(1) and Basis(n_basis) are "hat" functions
+      do j = 2, n_basis
+        del_basis = 1.0_rk / ( basis(j) - basis(j-1) )
+        do while ( i <= myRowN )
+          ip = p(i)
+          if ( grid(ip) > basis(j) ) exit
+          if ( i <= myTan_pt .or. i > myTan_pt + mySkip ) then
+            if ( basis(j-1) < grid(ip) ) then
+!               eta(ip) = value_1D_list_t(rk)(n=2, &
+!                 v=[value_1d_t(rk)(j=j-1,v=(basis(j)-grid(ip)) * del_basis), &
+!                  & value_1d_t(rk)(j=j,v=(grid(ip)-basis(j-1)) * del_basis) ] )
+              eta(ip) = value_1D_list_t(n=2, &
+                v=[value_1d_t(j=j-1,v=(basis(j)-grid(ip)) * del_basis), &
+                 & value_1d_t(j=j,v=(grid(ip)-basis(j-1)) * del_basis) ] )
+              if ( eta(ip)%v(1)%v == 0.0 ) & ! eta(i)%v(2)%v cannot be zero because
+                                            ! basis(j-1) < grid(i)
+!                 & eta(ip) = value_1D_list_t(rk)(j=1, &
+!                   & v=[eta(ip)%v(2),value_1d_t(rk)(j=0,v=0.0_rk)])
+                & eta(ip) = value_1D_list_t(n=1, &
+                  & v=[eta(ip)%v(2),value_1d_t(j=0,v=0.0_rk)])
+            end if
+          end if
+          i = i + 1
+        end do
+      end do
+      ! Coefficients above Basis(n_basis) are all 1.0
+      do i = myRowN, i, -1
+        if ( i > myTan_pt .and. i <= myTan_pt + mySkip ) cycle
+        ip = p(i)
+        if ( basis(n_basis) >= grid(ip) ) exit
+!         eta(ip) = value_1D_list_t(rk)(n=1,v=[value_1d_t(rk)(n=n_basis,v=1.0_rk), &
+!                                     & value_1d_t(rk)(n=0,v=0.0_rk)])
+        eta(ip) = value_1D_list_t(n=1,v=[value_1d_t(j=n_basis,v=1.0_rk), &
+                                       & value_1d_t(j=0,v=0.0_rk)])
+      end do
+    end block
+  end if
+
+  if ( present(rev) ) then
+    ! Basis list was reversed because it was in descending order.  Invert
+    ! the list indices in Eta to correspond to the original basis list.
+    if ( rev ) call invert_list_index ( eta, n_basis )
+  end if
+
+! $Log: Eta_List_1D.f9h,v $
+! Revision 2.11  2018/01/03 23:48:54  vsnyder
+! Use MySkip because Skip might not be present
+!
+! Revision 2.10  2017/09/20 00:05:15  vsnyder
+! Add check for under control of logical parameter
+!
+! Revision 2.9  2017/08/28 20:27:47  livesey
+! Changed the n,nf,np,nz elements to j,jf,...
+!
+! Revision 2.8  2017/08/09 19:51:15  vsnyder
+! Spiff some comments
+!
+! Revision 2.7  2017/02/07 03:49:00  vsnyder
+! Add support for inverted basis
+!
+! Revision 2.6  2017/01/28 02:47:48  vsnyder
+! Correct descending order case
+!
+! Revision 2.5  2017/01/27 02:43:40  vsnyder
+! Handle the one-element case
+!
+! Revision 2.4  2017/01/14 01:51:17  vsnyder
+! Add Row1 and RowN arguments
+!
+! Revision 2.3  2016/12/02 02:03:54  vsnyder
+! Move dummy argument declarations from include files to Indexed_Values_m
+!
+! Revision 2.2  2016/11/23 20:07:10  vsnyder
+! Correct reported index, add component names to constructors
+!
+! Revision 2.1  2016/11/23 00:05:47  vsnyder
+! Initial commit
+!
+@
+
+
+2.11
+log
+@Use MySkip because Skip might not be present
+@
+text
+@d227 3
+@
+
+
+2.10
+log
+@Add check for under control of logical parameter
+@
+text
+@d25 1
+a25 1
+  integer :: I, J, MyRow1, MyRowN
+d42 5
+d78 1
+d90 15
+a104 13
+          if ( basis(j-1) < grid(i) ) then
+  !           eta(i) = value_1D_list_t(rk)(n=2, &
+  !             v=[value_1d_t(rk)(n=j-1,v=(basis(j)-grid(i)) * del_basis), &
+  !              & value_1d_t(rk)(n=j,v=(grid(i)-basis(j-1)) * del_basis) ] )
+            eta(i) = value_1D_list_t(n=2, &
+              v=[value_1d_t(j=j-1,v=(basis(j)-grid(i)) * del_basis), &
+               & value_1d_t(j=j,v=(grid(i)-basis(j-1)) * del_basis) ] )
+            if ( eta(i)%v(1)%v == 0.0 ) & ! eta(i)%v(2)%v cannot be zero because
+                                          ! basis(j-1) < grid(i)
+!               & eta(i) = value_1D_list_t(rk)(n=1, &
+!                 & v=[eta(i)%v(2),value_1d_t(rk)(n=0,v=0.0_rk)])
+              & eta(i) = value_1D_list_t(n=1, &
+                & v=[eta(i)%v(2),value_1d_t(j=0,v=0.0_rk)])
+d111 1
+d121 1
+d133 15
+a147 13
+          if ( basis(j-1) < grid(i) ) then
+  !           eta(i) = value_1D_list_t(rk)(n=2, &
+  !             v=[value_1d_t(rk)(n=j-1,v=(basis(j)-grid(i)) * del_basis), &
+  !              & value_1d_t(rk)(n=j,v=(grid(i)-basis(j-1)) * del_basis) ] )
+            eta(i) = value_1D_list_t(n=2, &
+              v=[value_1d_t(j=j-1,v=(basis(j)-grid(i)) * del_basis), &
+               & value_1d_t(j=j,v=(grid(i)-basis(j-1)) * del_basis) ] )
+            if ( eta(i)%v(1)%v == 0.0 ) & ! eta(i)%v(2)%v cannot be zero because
+                                          ! basis(j-1) < grid(i)
+!               & eta(i) = value_1D_list_t(rk)(n=1, &
+!                 & v=[eta(i)%v(2),value_1d_t(rk)(n=0,v=0.0_rk)])
+              & eta(i) = value_1D_list_t(n=1, &
+                & v=[eta(i)%v(2),value_1d_t(j=0,v=0.0_rk)])
+d154 1
+d174 1
+d188 15
+a202 13
+          if ( basis(j-1) < grid(ip) ) then
+!             eta(ip) = value_1D_list_t(rk)(n=2, &
+!               v=[value_1d_t(rk)(j=j-1,v=(basis(j)-grid(ip)) * del_basis), &
+!                & value_1d_t(rk)(j=j,v=(grid(ip)-basis(j-1)) * del_basis) ] )
+            eta(ip) = value_1D_list_t(n=2, &
+              v=[value_1d_t(j=j-1,v=(basis(j)-grid(ip)) * del_basis), &
+               & value_1d_t(j=j,v=(grid(ip)-basis(j-1)) * del_basis) ] )
+            if ( eta(ip)%v(1)%v == 0.0 ) & ! eta(i)%v(2)%v cannot be zero because
+                                          ! basis(j-1) < grid(i)
+!               & eta(ip) = value_1D_list_t(rk)(j=1, &
+!                 & v=[eta(ip)%v(2),value_1d_t(rk)(j=0,v=0.0_rk)])
+              & eta(ip) = value_1D_list_t(n=1, &
+                & v=[eta(ip)%v(2),value_1d_t(j=0,v=0.0_rk)])
+d209 1
+d227 3
+@
+
+
+2.9
+log
+@Changed the n,nf,np,nz elements to j,jf,...
+@
+text
+@d28 1
+d49 21
+d109 1
+a109 1
+    else
+d163 2
+a164 2
+!         eta(ip) = value_1D_list_t(rk)(n=1,v=[value_1d_t(rk)(n=1,v=1.0_rk), &
+!                                     & value_1d_t(rk)(n=0,v=0.0_rk)])
+d166 1
+a166 1
+                                & value_1d_t(j=0,v=0.0_rk)])
+d176 2
+a177 2
+!               v=[value_1d_t(rk)(n=j-1,v=(basis(j)-grid(ip)) * del_basis), &
+!                & value_1d_t(rk)(n=j,v=(grid(ip)-basis(j-1)) * del_basis) ] )
+d183 2
+a184 2
+!               & eta(ip) = value_1D_list_t(rk)(n=1, &
+!                 & v=[eta(ip)%v(2),value_1d_t(rk)(n=0,v=0.0_rk)])
+d198 1
+a198 1
+                                & value_1d_t(j=0,v=0.0_rk)])
+d210 3
+@
+
+
+2.8
+log
+@Spiff some comments
+@
+text
+@d54 2
+a55 2
+        eta(i) = value_1D_list_t(n=1,v=[value_1d_t(n=1,v=1.0_rk), &
+                                      & value_1d_t(n=0,v=0.0_rk)])
+d67 2
+a68 2
+              v=[value_1d_t(n=j-1,v=(basis(j)-grid(i)) * del_basis), &
+               & value_1d_t(n=j,v=(grid(i)-basis(j-1)) * del_basis) ] )
+d74 1
+a74 1
+                & v=[eta(i)%v(2),value_1d_t(n=0,v=0.0_rk)])
+d84 2
+a85 2
+        eta(i) = value_1D_list_t(n=1,v=[value_1d_t(n=n_basis,v=1.0_rk), &
+                                      & value_1d_t(n=0,v=0.0_rk)])
+d93 2
+a94 2
+        eta(i) = value_1D_list_t(n=1,v=[value_1d_t(n=1,v=1.0_rk), &
+                                      & value_1d_t(n=0,v=0.0_rk)])
+d106 2
+a107 2
+              v=[value_1d_t(n=j-1,v=(basis(j)-grid(i)) * del_basis), &
+               & value_1d_t(n=j,v=(grid(i)-basis(j-1)) * del_basis) ] )
+d113 1
+a113 1
+                & v=[eta(i)%v(2),value_1d_t(n=0,v=0.0_rk)])
+d123 2
+a124 2
+        eta(i) = value_1D_list_t(n=1,v=[value_1d_t(n=n_basis,v=1.0_rk), &
+                                      & value_1d_t(n=0,v=0.0_rk)])
+d143 2
+a144 2
+        eta(ip) = value_1D_list_t(n=1,v=[value_1d_t(n=1,v=1.0_rk), &
+                                & value_1d_t(n=0,v=0.0_rk)])
+d157 2
+a158 2
+              v=[value_1d_t(n=j-1,v=(basis(j)-grid(ip)) * del_basis), &
+               & value_1d_t(n=j,v=(grid(ip)-basis(j-1)) * del_basis) ] )
+d164 1
+a164 1
+                & v=[eta(ip)%v(2),value_1d_t(n=0,v=0.0_rk)])
+d175 2
+a176 2
+        eta(ip) = value_1D_list_t(n=1,v=[value_1d_t(n=n_basis,v=1.0_rk), &
+                                & value_1d_t(n=0,v=0.0_rk)])
+d188 3
+@
+
+
+2.7
+log
+@Add support for inverted basis
+@
+text
+@d69 6
+a74 2
+            if ( eta(i)%v(1)%v == 0.0 ) &
+              & eta(i) = value_1D_list_t(n=1,v=[eta(i)%v(2),value_1d_t()])
+d108 6
+a113 2
+            if ( eta(i)%v(1)%v == 0.0 ) &
+              & eta(i) = value_1D_list_t(n=1,v=[eta(i)%v(2),value_1d_t()])
+d159 6
+a164 2
+            if ( eta(ip)%v(1)%v == 0.0 ) &
+              & eta(ip) = value_1D_list_t(n=1,v=[eta(ip)%v(2),value_1d_t()])
+d188 3
+@
+
+
+2.6
+log
+@Correct descending order case
+@
+text
+@d169 6
+d176 3
+@
+
+
+2.5
+log
+@Handle the one-element case
+@
+text
+@d107 1
+a107 1
+          i = i + 1
+d170 3
+@
+
+
+2.4
+log
+@Add Row1 and RowN arguments
+@
+text
+@d48 1
+a48 1
+    if ( myRow1 < myRowN ) then
+d170 3
+@
+
+
+2.3
+log
+@Move dummy argument declarations from include files to Indexed_Values_m
+@
+text
+@d12 1
+a12 1
+! subroutine Eta_List_1D_* ( Basis, Grid, Eta, Sorted )
+d14 4
+a17 1
+  ! Compute Eta for linear interpolation from Basis to Grid
+d22 1
+a22 1
+! logical, intent(in), optional :: Sorted ! "Basis is sorted" -- default true
+d25 1
+a25 1
+  integer :: I, J
+d29 4
+d36 4
+a39 2
+  n_basis = size(basis)
+  n_grid = size(grid)
+d42 48
+a89 45
+    ! Coefficients below Basis(1) are all 1.0
+    do i = 1, n_grid
+      if ( grid(i) > basis(1) ) exit
+!       eta(i) = value_1D_list_t(rk)(n=1,v=[value_1d_t(rk)(n=1,v=1.0_rk), &
+!                                         & value_1d_t(rk)(n=0,v=0.0_rk)])
+      eta(i) = value_1D_list_t(n=1,v=[value_1d_t(n=1,v=1.0_rk), &
+                                    & value_1d_t(n=0,v=0.0_rk)])
+    end do
+    ! Coefficients between Basis(1) and Basis(n_basis) are "hat" functions
+    do j = 2, n_basis
+      del_basis = 1.0_rk / ( basis(j) - basis(j-1) )
+      do while ( i <= n_grid )
+        if ( grid(i) > basis(j) ) exit
+        if ( basis(j-1) < grid(i) ) then
+!           eta(i) = value_1D_list_t(rk)(n=2, &
+!             v=[value_1d_t(rk)(n=j-1,v=(basis(j)-grid(i)) * del_basis), &
+!              & value_1d_t(rk)(n=j,v=(grid(i)-basis(j-1)) * del_basis) ] )
+          eta(i) = value_1D_list_t(n=2, &
+            v=[value_1d_t(n=j-1,v=(basis(j)-grid(i)) * del_basis), &
+             & value_1d_t(n=j,v=(grid(i)-basis(j-1)) * del_basis) ] )
+          if ( eta(i)%v(1)%v == 0.0 ) &
+            & eta(i) = value_1D_list_t(n=1,v=[eta(i)%v(2),value_1d_t()])
+        end if
+        i = i + 1
+      end do
+    end do
+    ! Coefficients above Basis(n_basis) are all 1.0
+    do i = n_grid, i, -1
+      if ( basis(n_basis) >= grid(i) ) exit
+!       eta(i) = value_1D_list_t(rk)(n=1,v=[value_1d_t(rk)(n=n_basis,v=1.0_rk), &
+!                                         & value_1d_t(rk)(n=0,v=0.0_rk)])
+      eta(i) = value_1D_list_t(n=1,v=[value_1d_t(n=n_basis,v=1.0_rk), &
+                                    & value_1d_t(n=0,v=0.0_rk)])
+    end do
+  else
+    block
+      use Sort_m, only: SortP
+      integer :: P(size(basis))
+      call sortp ( grid, 1, n_grid, p ) ! grid(p(:)) are now sorted
+      ! Coefficients below Basis(p(1)) are all 1.0
+      do i = 1, n_grid
+        if ( grid(i) > basis(p(1)) ) exit
+!         eta(i) = value_1D_list_t(rk)(n=1,v=[value_1d_t(rk)(n=p(1),v=1.0_rk), &
+!                                           & value_1d_t(rk)(n=0,v=0.0_rk)])
+        eta(i) = value_1D_list_t(n=1,v=[value_1d_t(n=p(1),v=1.0_rk), &
+d92 1
+a92 1
+      ! Coefficients between Basis(p(1)) and Basis(p(n_basis)) are "hat" functions
+d94 7
+a100 7
+        del_basis = 1.0_rk / ( basis(p(j)) - basis(j-1) )
+        do while ( i <= n_grid )
+          if ( grid(i) > basis(p(j)) ) exit
+          if ( basis(p(j-1)) < grid(i) ) then
+!             eta(i) = value_1D_list_t(rk)(n=2, &
+!               v=[value_1d_t(rk)(n=p(j-1),v=(basis(p(j))-grid(i)) * del_basis), &
+!                & value_1d_t(rk)(n=p(j),v=(grid(i)-basis(p(j-1))) * del_basis) ] )
+d102 2
+a103 2
+              v=[value_1d_t(n=p(j-1),v=(basis(p(j))-grid(i)) * del_basis), &
+               & value_1d_t(n=p(j),v=(grid(i)-basis(p(j-1))) * del_basis) ] )
+d110 6
+a115 6
+      ! Coefficients above Basis(p(n_basis)) are all 1.0
+      do i = n_grid, i, -1
+        if ( basis(p(n_basis)) >= grid(i) ) exit
+!         eta(i) = value_1D_list_t(rk)(n=1,v=[value_1d_t(rk)(n=p(n_basis),v=1.0_rk), &
+!                                           & value_1d_t(rk)(n=0,v=0.0_rk)])
+        eta(i) = value_1D_list_t(n=1,v=[value_1d_t(n=p(n_basis),v=1.0_rk), &
+d118 48
+d170 3
+@
+
+
+2.2
+log
+@Correct reported index, add component names to constructors
+@
+text
+@d16 4
+a19 5
+  real(rk), intent(in) :: Basis(:)
+  real(rk), intent(in) :: Grid(:)
+!   type(value_1D_list_t(rk)), intent(out) :: Eta(:) ! size(grid)
+  type(value_1D_list_t), intent(out) :: Eta(:) ! size(grid)
+  logical, intent(in), optional :: Sorted ! "Basis is sorted" -- default true
+d110 3
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d37 4
+a40 4
+!       eta(i) = value_1D_list_t(rk)(n=1,v=[value_1d_t(rk)(1,1.0_rk), &
+!                                         & value_1d_t(rk)(0,0.0_rk)])
+      eta(i) = value_1D_list_t(n=1,v=[value_1d_t(1,1.0_rk), &
+                                    & value_1d_t(0,0.0_rk)])
+d49 2
+a50 2
+!             v=[value_1d_t(rk)(j,(basis(j)-grid(i)) * del_basis), &
+!              & value_1d_t(rk)(j-1,(grid(i)-basis(j-1)) * del_basis) ] )
+d52 4
+a55 2
+            v=[value_1d_t(j,(basis(j)-grid(i)) * del_basis), &
+             & value_1d_t(j-1,(grid(i)-basis(j-1)) * del_basis) ] )
+d63 4
+a66 4
+!       eta(i) = value_1D_list_t(rk)(n=1,v=[value_1d_t(rk)(n_basis,1.0_rk), &
+!                                         & value_1d_t(rk)(0,0.0_rk)])
+      eta(i) = value_1D_list_t(n=1,v=[value_1d_t(n_basis,1.0_rk), &
+                                    & value_1d_t(0,0.0_rk)])
+d76 4
+a79 4
+!         eta(i) = value_1D_list_t(rk)(n=1,v=[value_1d_t(rk)(p(1),1.0_rk), &
+!                                           & value_1d_t(rk)(0,0.0_rk)])
+        eta(i) = value_1D_list_t(n=1,v=[value_1d_t(p(1),1.0_rk), &
+                                      & value_1d_t(0,0.0_rk)])
+d88 2
+a89 2
+!               v=[value_1d_t(rk)(p(j),(basis(p(j))-grid(i)) * del_basis), &
+!                & value_1d_t(rk)(p(j-1),(grid(i)-basis(p(j-1))) * del_basis) ] )
+d91 4
+a94 2
+              v=[value_1d_t(p(j),(basis(p(j))-grid(i)) * del_basis), &
+               & value_1d_t(p(j-1),(grid(i)-basis(p(j-1))) * del_basis) ] )
+d102 4
+a105 4
+!         eta(i) = value_1D_list_t(rk)(n=1,v=[value_1d_t(rk)(p(n_basis),1.0_rk), &
+!                                           & value_1d_t(rk)(0,0.0_rk)])
+        eta(i) = value_1D_list_t(n=1,v=[value_1d_t(p(n_basis),1.0_rk), &
+                                      & value_1d_t(0,0.0_rk)])
+d110 4
+a113 1
+! $Log: $
+@
+

@@ -1,0 +1,882 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.14
+	cfm-single-freq-0-1:1.1.0.12
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.10
+	mus-emls-1-70:1.1.0.8
+	rel-1-0-englocks-work:1.1.0.6
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2008.06.11.20.14.50;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.25in
+\usepackage{epsfig}
+\usepackage{longtable}
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9.00in
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+%\settowidth{\hW}{\bf wvs-004r5}
+\settowidth{\hW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    9 June 2000\hfill\parbox[t]{\hW}{{\bf wvs-004r5}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\setlongtables
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Dave, Nathaniel\\
+Subject: \>Parsing the L2CF (Formerly ``Grammar for the L2CF'')\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 3pt
+\vspace{-20pt}
+
+\section{Crash course in language analysis}
+
+An \emph{alphabet} is a set of symbols.  We will use upper-case letters
+from the second half of the Latin alphabet, e.g. $T$, to denote these sets.
+
+A \emph{language over an alphabet}, or more simply a \emph{language} is a
+set of sequences of symbols from that alphabet.  A \emph{sentence} is a
+sequence in the language.  A language may or may not contain the sequence
+consisting of zero symbols -- the empty sequence -- which is variously
+denoted by $\lambda$ and $\epsilon$.  We will use $\lambda$.  If a
+language contains $\lambda$, it is said to be \emph{nullable}.
+
+The \emph{concatenation} $xy$ of two sequences $x$ and $y$ is a sequence
+that consists of the first sequence $x$ followed immediately by the
+second sequence $y$.  The empty sequence $\lambda$ is the identity element
+for concatenation, i.e. $x\lambda = x = {\lambda}x$ for all $x$.
+
+Let $P$ and $Q$ be sets of sequences (i.e. languages).  The
+\emph{concatenation} $PQ$ of two sets $P$ and $Q$ is defined to be $\{ \
+xy \mid x \in P \wedge y \in Q\ \}$.
+
+The simplest language, containing all others, is the reflexive and
+transitive closure of the alphabet.  It contains all possible sequences,
+including $\lambda$.  The reflexive and transitive closure is denoted by
+a postfix superscript asterisk, e.g. $T^*$.  $T^*$ is the solution of the
+equation $T^* = \{ \lambda \} \cup T T^*$.  (Don't try to solve this by
+fixed-point iteration -- if T is not empty, the solution is infinite.)
+
+A \emph{grammar} is a set of rules for producing a language. 
+Mathematically, a grammar $G$ is a 4-tuple $G = (T,N,P,S)$, in which $T$
+and $N$ are alphabets, $P$ is a set of productions (to be described below)
+and $S \in N$ is a distinguished symbol called the \emph{starting symbol}.
+
+We will use the following notational conventions:
+\begin{itemize}
+\item Upper-case letters from the beginning of the Latin alphabet
+ (and $S$\,) denote symbols from $N$.
+\item Lower-case letters from the beginning of the Latin alphabet denote
+  symbols from $T$.
+\item Lower-case letters from the end of the Latin alphabet denote
+  sequences from $T^*$.
+\item Lower-case letters from the Greek alphabet denote
+  sequences from $(T \cup N)^*$.
+\end{itemize}
+
+A \emph{production} is a statement of the form $A \rightarrow \alpha$.
+If one has a sequence of symbols from $(T \cup N)^*$ in which $A$ appears,
+the production $A \rightarrow \alpha$ indicates that it is permissible to
+replace $A$ by $\alpha$.
+
+A \emph{derivation} consists of this replacement.  It is denoted by the
+$\Rightarrow$ symbol.  Thus the definition of a production is ``If $A
+\rightarrow \alpha \in P$ then $\beta A \gamma \Rightarrow \beta \alpha
+\gamma$ is a derivation permitted by the grammar.''  $A$ ``produces''
+$\alpha$ in the derivation, hence the term ``production.''
+
+A \emph{derivation sequence} consists of a sequence of zero or more
+derivations.  It is denoted by $\Rightarrow^*$.
+
+A \emph{leftmost derivation sequence} is a derivation sequence in which
+the leftmost nonterminal is chosen for replacement at every step.
+
+A \emph{sentential form} is a sequence $\xi \in (T \cup N)^*$ such that
+$S \Rightarrow^* \xi$.  A sentence is a sentential form consisting only
+of symbols from $T$.  Thus, the definition of the language generated by a
+grammar is $L(G) = \{ x \mid S \Rightarrow^* x \wedge x \in T^* \}$.
+
+If a symbol $A \in N$ appears in a sentential form, and $A \rightarrow
+\alpha \in P$, $A$ can be replaced by $\alpha$.  That is, symbols from
+$N$ do not terminate the replacement process.  Thus, the set $N$ is
+called the set of \emph{nonterminal symbols} of the grammar.  If a symbol
+$a \in T$ appears in a sentential form, it cannot be replaced.  Therefore
+the set $T$ is called the set of \emph{terminal symbols} of the grammar. 
+Terminal symbols are also called ``tokens.'' The set of tokens is called
+the \emph{lexicon} (defined below).  The grouping of characters into
+tokens is deduced by a procedure called the ``Lexer.''  The lexer also
+skips comments (which begin with a semicolon and continue to the end of
+the line), and produces tokens for things that aren't character
+sequences, e.g. end-of-statement if there is no continuation mark (\$),
+and end-of-file.
+
+\section{Lexicon}
+
+\subsection{Notation for the lexicon}
+
+A \emph{regular expression} is a way of defining a language with a
+particularly simple structure.  Let $a$, $p$ and $q$ be regular
+expressions.  Then:
+
+\begin{tabular}{|c|c|l|}
+     \hline
+{\bf Regular expression} & {\bf Set it denotes} & {\bf Description} \\
+     \hline
+     \hline
+$\emptyset$ & $\emptyset$     & The empty set\\
+     \hline
+$\lambda$   & \{ $\lambda$ \} & The set consisting of the empty sequence\\
+     \hline
+$a$         & \{ $a$ \}       & The symbol $a$ from the alphabet\\
+     \hline
+$p \mid q$  & $P \cup Q$      & Any sequence in either $P$ or $Q$\\
+     \hline
+$pq$        & $PQ$            & The concatentation of $P$ and $Q$\\
+     \hline
+$p^*$       & $P^*$           & The reflexive and transitive closure of $P$\\
+     \hline
+$p^+$       & $P P^*$         & The transitive closure of $P$\\
+     \hline
+$p?$        & $P \cup \{ \lambda \}$ & $P$ or the empty sequence\\
+     \hline
+\end{tabular}
+
+Parentheses are used for grouping.\\
+
+\subsection{Symbols in the lexicon}
+
+The end-of-line is not to appear within any symbol in the lexicon.
+
+Terminal symbols in the grammar, except those given here, are to appear
+in the input literally as they are written in the grammar (except that
+they are not case sensitive).
+
+Three terminal symbols do not necessarily appear literally as they are
+written here.  They are defined by regular expressions.  Let $L$ be the
+set of letters (upper and lower case), and $D$ be the set of decimal
+digits.
+
+`name' $ = L ( \{ \text{`\_'} \} \cup L \cup D )^*$
+
+`number' $= D^+ ( \text{`.'} D^* ) ? ( \{ \text{`D' `E' `d` `e'} \ \}
+            \{ \ \text{`+' `-'} \ \}? D^+) ?$
+
+Let $\text{not}(b)$ denote the alphabet without the symbol $b$.
+
+`string' $= (\{\ ' \ \} ( (\text{not}(')^*) \mid ({'} {'}) )^* \{\ ' \ \} )
+       \mid (\{\ " \ \} ( (\text{not}(")^*) \mid (" ") )^* \{\ " \ \} ) $
+
+That is, strings are surrounded by apostrophes or quotes.  In the first
+case, an apostrophe within the string is indicated by a double
+apostrophe, while in the second case a quote within the string is
+indicated by a double quote.
+
+These symbols are called \emph{pseudo-terminal} because they have an
+internal structure, but one determined by the lexicon, not the grammar.
+
+\section{The grammar}\label{gram}
+
+This grammar is organized in a form that is nearly suitable to design a
+parser, as described in following sections.  The grammar in section
+\ref{alt} is not suitable for construction of a parser using the methods
+discussed here, but may be easier to read.
+
+\begin{tabular}{|l|}
+     \hline
+{\bf Productions} $P$ \\
+     \hline
+     \hline
+cf $\rightarrow$ one\_cf + `EOF' \\
+     \hline
+one\_cf $\rightarrow$ ( `begin' `name' `EOS' spec + `end' `name' ) ? `EOS' \\
+     \hline
+spec $\rightarrow$ ( `name' spec\_rest ) ? `EOS' \\
+     \hline
+spec\_rest $\rightarrow \lambda$ \\
+     \phantom{spec\_rest}
+          $\rightarrow$ `=' expr + \\
+     \phantom{spec\_rest}
+          $\rightarrow$ ( `:' `name' ) ? ( `,' field\_list ) + \\
+     \hline
+field\_list $\rightarrow$ expr ( `=' expr + ) ? \\
+     \phantom{field\_list}
+          $\rightarrow$ `/' `name' \\
+     \hline
+expr $\rightarrow$ limit ( `:' limit ) ? \\
+     \hline
+limit $\rightarrow$ lterm ( `or' lterm ) * \\
+     \hline
+lterm $\rightarrow$ lfactor ( `and' lfactor ) * \\
+     \hline
+lfactor $\rightarrow$ term ( ( `+' $\mid$ `$-$' ) term ) * \\
+     \hline
+term $\rightarrow$ factor ( ( `*' $\mid$ `/' ) factor ) * \\
+     \hline
+factor $\rightarrow$ ( `+' $\mid$ `$-$' ) ? primary \\
+     \hline
+primary $\rightarrow$ `name' ( `.' `name' ) ? \\
+     \phantom{primary}
+        $\rightarrow$ `number' `unit' ? \\
+     \phantom{primary}
+        $\rightarrow$ `string' \\
+     \phantom{primary}
+        $\rightarrow$ `.' `name' `.' \\
+     \phantom{primary}
+        $\rightarrow$ `(' expr `)' \\
+     \hline
+\end{tabular}
+
+\vskip 5pt
+
+$T$ = \{ `begin' `EOF' `EOS' `end' `name' `number' `string' `unit' `(' `)'
+         `+' `$-$' `*' `/' `.' `:' `=' \}
+
+$N$ = \{ cf one\_cf spec spec\_rest field\_list expr value limit lterm
+         lfactor term factor primary \}
+
+$S$ = cf.
+
+It is customary to put the production having the starting symbol on its
+left-hand side first.  We put quotation marks around terminal symbols. 
+Thus, it isn't necessary explicitly to give $T$, $N$ and $S$, and in
+following grammars, we will not do so.
+
+\section{Organization of the Parser}
+
+The parser reads a sequence of tokens, deduces that they constitute a
+sentence in the language, and produces a (perhaps preliminary) translation
+of the sequence of tokens into a form more suitable for subsequent
+analysis.
+
+The parser described here consists of a collection of potentially
+recursive procedures.  There are other parsing strategies that are not
+described here.
+
+There is one procedure for each nonterminal symbol in the grammar shown in
+section \ref{gram}.
+
+Within each procedure, there is a selection process:  If the next token
+is within the selection set for a production with a left-hand side
+nonterminal symbol that corresponds to that procedure, that production is
+applied.  If the next token is not within the selection set for any
+production with a left-hand side symbol that corresponds to that
+procedure, an error is announced.
+
+``Applying'' a production consists of executing the procedures that
+correspond to nonterminal symbols encountered in the right-hand side, or
+``consuming'' the next token if the next symbol in the right-hand side is
+a terminal symbol, in the order these entities appear.
+
+``Consuming'' a token consists of testing whether it represents the next
+terminal symbol, fetching a new token if so, and announcing an error
+otherwise.
+
+A grammar that permits a parser to be implemented in this way is called
+$LL(1)$.  The first $L$ means that the input is examined left-to-right. 
+The second $L$ means that a leftmost derivation sequence is traced out. 
+The $(1)$ means that one can decide what to do by looking at one symbol
+from the unconsumed input.
+
+The \emph{selection set} for a production is the set of symbols that
+unambiguously indicate that the production should be applied at a certain
+instant during the analysis.  We need to define two functions on sequences
+in order to proceed:
+
+The \emph{first set} of a sequence is the set of terminal symbols that
+can appear as the first symbol of a sentence derivable from that
+sequence.  Mathematically, $\text{First}(\alpha) = \{ a \mid \alpha
+\Rightarrow^* ax \}.$  For a set $P$, $\text{First}(P) = \cup_{x \in P}
+\text{First}(x)$.
+
+The \emph{follow set} of a nonterminal symbol is the set of terminal
+symbols that can appear immediately after that symbol in a sentential
+form.  Mathematically, $\text{Follow}(A) = \{ a \mid S \Rightarrow^* \beta
+A a \gamma \}$.
+
+Taking the liberty of concatenating a set with a sequence to generate a
+set of sequences, we have $\text{Select}( A \rightarrow \alpha) =
+\text{First}( \alpha \text{Follow}( A ) )$.  If the selection sets for
+all the productions with a given left-hand side are disjoint, the grammar
+ls LL(1).  The $\text{Follow}(A)$ part comes from wanting to apply $A
+\rightarrow \alpha$ if $\alpha \Rightarrow^* \lambda$.  The
+$\text{First}(\alpha)$ part comes from wanting to apply $A \rightarrow
+\alpha$ otherwise.
+
+\section{Extended form of the grammar}\label{extend}
+
+In the abbreviated form of the grammar in section \ref{gram}, the * turns
+into {\tt do while}, the + turns into {\tt do until}, and the ? and
+$\mid$ turn into {\tt if}.
+
+It is necessary to have a selection process for these optional or
+repeated parts within the right-hand side.  These selection sets are
+derived by transforming the grammar so as not to include regular right
+parts.
+
+The selection sets for the transformed grammar are tabulated below.  The
+correspondence between selection sets for productions here and the
+selection sets for optional or repeated parts within the right-hand sides
+of the grammar in section \ref{gram} should be obvious.
+
+\begin{longtable}{|l|l|}
+     \hline
+{\bf Productions} $P$ & {\bf Selection Sets} \\
+     \hline
+\endfirsthead
+     \hline
+{\bf Productions} $P$ (cont.)                   & {\bf Selection Sets} (cont.) \\
+     \hline
+\endhead
+     \hline
+     \multicolumn{2}{|l|}{(cont.)} \\
+     \hline
+\endfoot
+     \hline
+\endlastfoot
+     \hline
+cf $\rightarrow$ one\_cf more\_cfs `EOF'         & `begin' \\
+     \hline
+more\_cfs $\rightarrow \lambda$                  & `EOF' \\
+     \phantom{more\_cfs}
+         $\rightarrow$ one\_cf                   & `begin' \\
+     \hline
+one\_cf $\rightarrow$ `EOS'                      & `EOS' \\
+      \phantom{one\_cf}
+        $\rightarrow$ `begin' `name' `EOS'       & \\
+      \phantom{one\_cf $\rightarrow$ }
+                      spec specs
+                      `end' `name' `EOS'         & `begin' \\
+     \hline
+specs $\rightarrow \lambda$                      & `end' \\
+     \phantom{specs}
+      $\rightarrow$ spec specs                   & `name' \\
+     \hline
+spec $\rightarrow$ 'EOS'                         & `EOS'  \\
+     \phantom{spec}
+     $\rightarrow$ `name' spec\_rest `EOS'       & `name' \\
+     \hline
+spec\_rest $\rightarrow \lambda$                 & `EOS' \\
+     \phantom{spec\_rest}
+          $\rightarrow$ `=' expr exprs           & `=' \\
+     \phantom{spec\_rest}
+          $\rightarrow$ `:' `name' `,' field\_list more\_specs     & `:' \\
+     \phantom{spec\_rest}
+          $\rightarrow$ `,' field\_list more\_specs     & `,' \\
+     \hline
+more\_specs $\rightarrow \lambda$                & `EOS' \\
+     \phantom{more\_specs}
+            $\rightarrow$ `,' field\_list more\_specs     & `,' \\
+     \hline
+field\_list $\rightarrow$ `name' more\_field\_list & `name' \\
+     \phantom{field\_list}
+          $\rightarrow$ `/' `name'               & `/' \\
+     \hline
+more\_field\_list $\rightarrow \lambda$          & \{ `,' `EOS' \} \\
+     \phantom{more\_field\_list}
+                 $\rightarrow$ `=' expr exprs    & `=' \\
+     \hline
+expr $\rightarrow$ `string' strings              & `string' \\
+     \phantom{expr}
+     $\rightarrow$ value                         & \{ `name' `number' `(' `.'
+                                                      `+' `$-$' \} \\
+     \hline
+strings $\rightarrow \lambda$                    & \{ `,' `EOS' \} \\
+     \phantom{strings}
+        $\rightarrow$ `string'                   & `string' \\
+     \hline
+value $\rightarrow$ limit range                  & \{ `name', `number', `(' `.'
+                                                      `+' `$-$' \}\\
+     \hline
+range $\rightarrow \lambda$                      & \{ `,' `EOS' ')' \} \\
+     \phantom{range}
+      $\rightarrow$ `:' limit                    & \{ `name', `number', `(' `.'
+                                                      `+' `$-$' \} \\
+     \hline
+limit $\rightarrow$ lterm lterm\_list            & \{ `name', `number', `(' `.'
+                                                      `+' `$-$' \} \\
+     \hline
+lterm\_list $\rightarrow \lambda$                & \{ `:' `,' `EOS' ')' \} \\
+     \phantom{lterm\_list}
+           $\rightarrow$ `or' lterm lterm\_list  & `or' \\
+     \hline
+lterm $\rightarrow$ lfactor lfactor\_list        & \{ `name', `number', `('
+                                                     `+' `$-$'  `.'\} \\
+     \hline
+lfactor\_list $\rightarrow \lambda$              & \{ `+' `$-$' `:' `,'
+                                                      `EOS' ')' \}\\
+     \phantom{lfactor\_list}
+              $\rightarrow$ `and' lfactor lfactor\_list & `and' \\
+     \hline
+lfactor $\rightarrow$ term term\_list            & \{ `name', `number', `(' `.'
+                                                      `+' `$-$' \} \\
+     \hline
+term\_list $\rightarrow \lambda$                 & \{ `:' `,' `EOS' ')' \} \\
+     \phantom{term\_list}
+           $\rightarrow$ ( `+' $\mid$ `$-$' ) term term\_list & \{ `+' `$-$' \} \\
+     \hline
+term $\rightarrow$ factor factor\_list           & \{ `name', `number', `('
+                                                     `+' `$-$'  `.'\} \\
+     \hline
+factor\_list $\rightarrow \lambda$               & \{ `+' `$-$' `:' `,'
+                                                      `EOS' ')' \}\\
+     \phantom{factor\_list}
+              $\rightarrow$ ( `*' $\mid$ `/' ) factor & \{ `*' `/' \} \\
+     \hline
+factor $\rightarrow$ ( `+' $\mid$ `$-$' ) ? primary & \{ `name', `number', `('
+                                                     `+' `$-$'  `.'\} \\
+     \hline
+primary $\rightarrow$ `name' field               & `name' \\
+     \phantom{primary}
+        $\rightarrow$ `number' `unit' ?          & `number' \\
+     \phantom{primary}
+        $\rightarrow$ `.' `name' `.'             & `.` \\
+     \phantom{primary}
+        $\rightarrow$ `(' expr `)'               & `(' \\
+     \hline
+field $\rightarrow \lambda$                      & \{  `*' `/' `+' `$-$' `:'
+                                                       `,' `EOS' ')'\} \\
+     \phantom{field}
+      $\rightarrow$ `.' `name'                   & `.' \\
+     \hline
+\end{longtable}
+
+\section{Output of the Parser}
+
+A form of output from the parser that is particularly tractable for
+subsequent analysis is an \emph{abstract syntax tree}.  This is a tree
+that represents the input, it is related to the syntax, but it does not
+include all the details of the spelling of the input (hence the
+\emph{abstract} part).
+
+The grammar in section \ref{gram} is augmented with \emph{tree generation
+rules} in order to produce the abstract syntax tree:
+
+\begin{longtable}{|l|}
+     \hline
+{\bf Productions} $P$ \\
+     \hline
+\endfirsthead
+     \hline
+{\bf Productions} $P$ (cont.) \\
+     \hline
+\endhead
+     \hline
+     (cont.) \\
+     \hline
+\endfoot
+     \hline
+\endlastfoot
+     \hline
+cf$_x$ $\rightarrow$ one\_cf$_z$ + `EOF'
+       \{ $x \leftarrow < \text{n\_cfs} $ list of $z$'s $>$ \} \\
+     \hline
+one\_cf$_x$ $\rightarrow$ block$_y$ \{ $x \leftarrow y$ \} \\
+     \phantom{one\_cf$_x$} `EOS` \{ $x \leftarrow \lambda$ \} \\
+     \hline
+block$_x$ $\rightarrow$ `begin' `name'$_y$ `EOS' spec$_z$ + `end' `name'$_w$
+     `EOS` \\
+     \phantom{block$_x$} \{ $x \leftarrow < \text{n\_cf} \ y $ list of $z$'s $w \ >$ \} \\
+     \hline
+spec$_x$ $\rightarrow$ one\_spec$_{y}$ `EOS' \{ $x \leftarrow y$ \} \\
+     \phantom{spec$_x$} $\rightarrow$ `EOS' \{ $x \leftarrow \lambda$ \} \\
+     \hline
+one\_spec$_x$ $\rightarrow$ 
+     `name'$_y$ spec\_rest$_{yz}$ \{ $x \leftarrow z$ \} `EOS' \\
+     \hline
+spec\_rest$_{xy}$ $\rightarrow \lambda$ \{ $ y \leftarrow x$ \} \\
+     \phantom{spec\_rest}
+          $\rightarrow$ `=' expr$_z$ +
+            \{ $y \leftarrow < \ \text{n\_asg} \ x $ list of $z$'s $>$ \}\\
+     \phantom{spec\_rest}
+          $\rightarrow$ `:' `name'$_v$ spec\_list$_{xw}$
+            \{$y \leftarrow < \ \text{n\_named} \ v \ w \ >$ \} \\
+     \phantom{spec\_rest}
+          $\rightarrow$ spec\_list$_{xw}$ \{ $y \leftarrow w $ \} \\
+     \hline
+spec\_list$_{xy}$ $\rightarrow$ ( `,' field\_list$_z$ ) + 
+            \{ $y \leftarrow < \ \text{n\_spec\_args} \ x $ list of $z$'s $>$ \}\\
+     \hline
+field\_list$_x$ $\rightarrow$ expr$_y$ spec\_value$_{yz}$
+      \{ $x \leftarrow z$ \} \\
+     \phantom{field\_list}
+          $\rightarrow$ `/' `name'$_z$
+          \{ $x \leftarrow < \ \text{n\_set\_one} \ z \ >$ \} \\
+     \hline
+spec\_value$_{xy}$ $\rightarrow \lambda$ \{ $y \leftarrow x$ \} \\
+     \phantom{spec\_value$_{xy}$} $\rightarrow$
+       `=' expr$_z$ + \{ $y \leftarrow < \text{n\_equal} \ x $ list of $z$'s
+       $>$ \} \\
+     \hline
+expr$_x$ $\rightarrow$ `string'$_z$ + \{ $x \leftarrow$ list of the $z$'s \} \\
+     \phantom{expr$_x$}
+     $\rightarrow$ value$_z$ + \{ $x \leftarrow$ list of the $z$'s \} \\
+     \hline
+value$_z$ $\rightarrow$ limit$_x$ range$_{xy}$ \{ $ z \leftarrow y$ \} \\
+     \hline
+range$_{xy}$ $\rightarrow \lambda$ \{ $y \leftarrow x$ \} \\
+     \phantom{range$_{xy}$} $\rightarrow$ `:' limit$_z$ ;
+        $ y \leftarrow < \ \text{n\_colon} \ x \ z \ > $ \\
+     \hline
+limit$_z$ $\rightarrow$ lterm$_x$ lterm\_list$_{xy}$ \{
+                        $z \leftarrow y$ \} \\
+     \hline
+cont... \\
+     \hline
+lterm\_list$_{xy}$ $\rightarrow \lambda$ \{ $y \leftarrow x$ \} \\
+     \phantom{lterm\_list$_{xy}$}
+            $\rightarrow$ `or' lterm$_z$
+              \{ $v \leftarrow < \ \text{n\_or} \ x \ z \ >$ \}
+            lterm\_list $_{vw}$ \{ $y \leftarrow w$ \} \\
+     \hline
+lterm$_z$ $\rightarrow$ lfactor$_x$ lfactor\_list$_{xy}$ \{
+                        $z \leftarrow y$ \} \\
+     \hline
+lfactor\_list$_{xy}$ $\rightarrow \lambda$ \{ $y \leftarrow x$ \} \\
+     \phantom{lfactor\_list$_{xy}$}
+            $\rightarrow$ `and' lfactor$_z$
+              \{ $v \leftarrow < \ \text{n\_or} \ x \ z \ >$ \}
+            lfactor\_list $_{vw}$ \{ $y \leftarrow w$ \} \\
+     \hline
+lfactor$_z$ $\rightarrow$ term$_x$ ( pterm\_list$_{xy}$ $\mid$
+                                   mterm\_list$_{xy}$ ) \{
+                        $z \leftarrow y$ \} \\
+     \hline
+pterm\_list$_{xy}$ $\rightarrow$ $\lambda$ \{ $y \leftarrow x$ \} \\
+     \phantom{pterm\_list$_{xy}$}
+            $\rightarrow$ `+' term$_z$
+              \{ $v \leftarrow < \ \text{n\_plus} \ x \ z \ >$ \}
+            ( pterm\_list$_{vw}$ $\mid$ pterm\_list$_{vw}$ ) \\
+     \phantom{pterm\_list$_{xy}$} \{ $y \leftarrow w$ \} \\
+     \hline
+mterm\_list$_{xy}$ $\rightarrow$ $\lambda$ \{ $y \leftarrow x$ \} \\
+     \phantom{mterm\_list$_{xy}$}
+            $\rightarrow$ `$-$' term$_z$
+              \{ $v \leftarrow < \ \text{n\_minus} \ x \ z \ >$ \}
+            ( mterm\_list$_{vw}$ $\mid$ mterm\_list$_{vw}$ ) \\
+     \phantom{mterm\_list$_{xy}$} \{ $y \leftarrow w$ \} \\
+     \hline
+term$_z$ $\rightarrow$ factor$_x$ ( mpri\_list$_{xy}$ $\mid$
+                                     dpri\_list$_{xy}$ ) \{
+                                     $z \leftarrow y$ \} \\
+     \hline
+mpri\_list$_{xy}$  $\rightarrow \lambda$ \{ $y \leftarrow x$ \} \\
+     \phantom{mpri\_list$_{xy}$} $\rightarrow$ `*` factor$_z$
+        \{ $v \leftarrow < \ \text{n\_mult} \ x \ z \ >$ \}
+        ( mpri\_list$_{vw}$ $\mid$ dpri\_list$_{vw}$ ) \\
+      \phantom{mpri\_list$_{xy}$} \{ $y \leftarrow w$ \} \\
+     \hline
+dpri\_list$_{xy}$  $\rightarrow$ $\lambda$ \{ $y \leftarrow x$ \} \\
+     \phantom{dpri\_list$_{xy}$} $\rightarrow$ `/` factor$_z$
+        \{ $v \leftarrow < \ \text{n\_div} \ x \ z \ >$ \}
+        ( dpri\_list$_{vw}$ $\mid$ dpri\_list$_{vw}$ ) \\
+     \phantom{dpri\_list$_{xy}$} \{ $y \leftarrow w$ \} \\
+     \hline
+factor$_z$ $\rightarrow$ `+' primary$_x$
+           \{ $z \leftarrow < \ \text{n\_plus} \ x \ >$ \} \\
+     \phantom{factor$_z$}
+       $\rightarrow$ `$-$' primary$_x$
+           \{ $z \leftarrow < \ \text{n\_minus} \ x \ >$ \} \\
+     \phantom{factor$_z$}
+       $\rightarrow$ primary$_x$ \{ $z \leftarrow x$ \} \\
+     \hline
+primary$_z$ $\rightarrow$ `name'$_x$ stru\_comp$_{xy}$
+            \{ $ z \leftarrow y$ \}\\
+     \phantom{primary$_z$}
+        $\rightarrow$ `number'$_x$ unit$_{xy}$ \{ $ z \leftarrow y$ \} \\
+     \phantom{primary$_z$}
+        $\rightarrow$ `.' `name'$_x$ `.'
+          \{ $ z \leftarrow \text{logical}(x)$ (Turn $x$ into a logical
+          literal) \} \\
+     \phantom{primary$_z$}
+        $\rightarrow$ `(' value$_x$ `)' \{ $ z \leftarrow x$ \} \\
+     \hline
+stru\_comp$_{xy}$ $\rightarrow \lambda$ \{ $y \leftarrow x$ \} \\
+     \phantom{stru\_comp$_{xy}$} $\rightarrow$ `.' `name'$_z$
+     \{ $y \leftarrow < \ \text{n\_dot} \ x \ z \ > $ \}\\
+     \hline
+unit$_{xy}$ $\rightarrow \lambda$ \{ $y \leftarrow x$ \} \\
+     \phantom{unit$_{xy}$} $\rightarrow$ `unit'$_z$
+     \{ $y \leftarrow < \ \text{n\_unit} \ x \ z \ > $ \} \\
+     \hline
+\end{longtable}
+
+This form of grammar is called an \emph{attribute grammar}.  The
+subscripts are attributes.  Unless otherwise specified, subscripts that
+have the same name are copied from left-to-right.  Parts within \{ and \}
+are actions.  The $\leftarrow$ symbol is the assignment operator.  The
+notation $< \ x \ y \ z $ ... $>$ means ``make a tree node with $x$ at
+the root, and sons $y$, $z$, ..., in that order.
+
+\section{An alternative parsing method}\label{alt}
+
+There is a more powerful class of grammars and their associated parsers,
+known as $LR(1)$.  The $L$ means that the input is examined
+left-to-right.  The $R$ means that the reverse of a rightmost derivation
+is traced out.  The $(1)$ means that at most one symbol of lookahead~--
+beyond the current point of analysis~-- is used.  When parsing using
+$LL(1)$, one must decide which production to apply by looking at the
+first terminal symbol in its selection set.  $LR(1)$ parsers are more
+powerful because one can postpone deciding which production to apply
+until the entire right-hand side, plus one more symbol, have been input.
+
+If the MLS configuration file parser were to be an $LR$ parser, the
+grammar would be organized somewhat differently.  The notation is
+augmented by allowing actions at the end of a production.  An action
+consisting of a \emph{node\_id} means ``build a tree node \emph{node\_id}
+subsuming the trees associated with every symbol in the right-hand side
+of the production, and associate the resulting tree with the left-hand
+side of the production.''  If the \emph{node\_id} is followed by a
+question mark it means ``do it only if the tree node would have more than
+one son.''  Pseudo-terminal symbols create tree nodes consisting of
+themselves.  Other (non-pseudo) terminal symbols do not create tree nodes.
+
+\begin{longtable}{|l|l|}
+     \hline
+{\bf Productions} $P$                           & {\bf Actions}\\
+     \hline
+\endfirsthead
+     \hline
+{\bf Productions} $P$ (cont.)                   & {\bf Actions} (cont.) \\
+     \hline
+\endhead
+     \hline
+     \multicolumn{2}{|l|}{(cont.)} \\
+     \hline
+\endfoot
+     \hline
+\endlastfoot
+     \hline
+cf $\rightarrow$ one\_cf + `EOF'                & n\_cfs \\
+     \hline
+one\_cf $\rightarrow$ ( `begin' `name' `EOS' spec + `end' `name' ) ? `EOS'
+                                                & n\_cf \\
+     \hline
+spec $\rightarrow$ `name' = expr                & n\_equal \\
+     \phantom{spec $\rightarrow$} (`name' `:') ? spec\_rest & n\_named ? \\
+     \hline
+spec\_rest $\rightarrow$ 
+       `name' (`,' field\_list ) +  & n\_spec\_args \\
+     \hline
+field\_list $\rightarrow$ `name' `=' expr +     & n\_asg \\
+     \phantom{field\_list}
+          $\rightarrow$ `/' `name'              & n\_set\_one \\
+     \hline
+expr $\rightarrow$ limit ( `:' limit ) ?        & n\_colon ? \\
+     \hline
+limit $\rightarrow$ lterm                       & \\
+     \phantom{limit}
+     $\rightarrow$ limit `or' lterm             & n\_or \\
+     \hline
+lterm $\rightarrow$ lfactor                     & \\
+     \phantom{lterm}
+      $\rightarrow$ lterm `and' lfactor         & n\_and \\
+     \hline
+lfactor $\rightarrow$ term                      & \\
+     \phantom{lfactor}
+     $\rightarrow$ lfactor `+' term             & n\_plus \\
+     \phantom{lfactor}
+     $\rightarrow$ lfactor `$-$' term           & n\_minus \\
+     \hline
+term $\rightarrow$ factor                       & \\
+     \phantom{term}
+     $\rightarrow$ term `*' factor              & n\_mult \\
+     \phantom{term}
+     $\rightarrow$ term `/' factor              & n\_div \\
+     \hline
+factor $\rightarrow$ `+' primary                & n\_plus \\
+     \phantom{factor}
+     $\rightarrow$ `$-$' primary                & n\_minus \\
+     \phantom{factor}
+     $\rightarrow$ primary                      & \\
+     \hline
+primary $\rightarrow$ `name' ( `.' `name' ) ?   & n\_dot? \\
+     \phantom{primary}
+        $\rightarrow$ `number' `unit' ?         & n\_unit?\\
+     \phantom{primary}
+        $\rightarrow$ `string'                  & \\
+     \phantom{primary}
+        $\rightarrow$ `.' `name' `.'            & n\_logconst \\
+     \phantom{primary}
+        $\rightarrow$ `(' expr `)'              & \\
+     \hline
+\end{longtable}
+
+Notice that some nonterminal symbols have sets of productions beginning
+with the same terminal symbol, and some productions are \emph{left
+recursive}~-- meaning that the right-hand side begins with the
+nonterminal symbol that appears on the left-hand side.  This makes the
+grammar easier to read, but a quick calculation shows that the selection
+sets used for decision-making in an $LL$ parser would intersect.
+
+Determining the decisions that an $LR$ parser is to take requires a
+tedious and error-prone calculation.  It is therefore usually carried out
+by a program called a \emph{parser generator}.  If we were to use an $LR$
+parser for MLS, it would be necessary to include the parser generator as
+part of the program set.  I have an $LR$ parser generator, written in
+Fortran.  I began some time ago to convert it to Fortran 90, but set
+aside the project before completing it.  At least two work weeks would be
+required to complete it.
+
+There are several advantages of using an $LR$ grammar and parser.  First,
+the set of languages representable by $LR$ grammars is a strict superset
+of the set of languages representable by $LL$ grammars.  Second, by using
+a parser generator, modifications are somewhat easier~-- one needs only
+to change the grammar and re-run the parser generator, rather than
+changing the grammar, and then changing the parser procedure.  The latter
+is tedious and error-prone.  Third, some of the burden of checking for
+correct structure is put back into the parser, instead of the subsequent
+analysis.  Notice, for example, that the field\_list production in
+section \ref{gram} allows \emph{expr~= expr}.  This is not the
+grammatical generality we want, but allowing it to pass through the
+parser and catching it in subsequent analysis greatly simplifies the
+grammar, and therefore the parser.  When using an automatically generated
+$LR$ parser, the parser procedure is a table interpreter that is
+independent of the grammar.  The structure of the grammar is encoded by
+tables produced by the parser generator.  A more complex grammar results
+in a bigger (but still automatically generated) table, not a more complex
+parser procedure.
+
+The disadvantages are that one needs a parser generator, and that error
+messages and error recovery are generally not as good as one gets with
+$LL$ parsers, unless substantial effort is invested.  (Tom Pennello's
+master's degree thesis at UC Santa Cruz dealt with automatic error
+recovery for $LR$ parsers, so at least the solution to the problem of
+$LR$ error recovery is known.  Even so, the procedure that interprets the
+tables produced by the parser generator becomes quite a bit larger in
+order to carry out the error recovery.)
+
+\section{The Declaration table}
+
+There is a table, indexed by the string index of a pseudo-terminal tree
+node, that contains declarations.  The declaration table has several
+fields.  The uses of the fields depends on the value of the {\tt type}
+field.
+
+\begin{tabular}{|l|l|l|l|l|}
+\hline
+Type field   & Units field & Defined in    & Value field & Tree field \\
+\hline
+\hline
+{\tt enum\_value} & enum index & {\tt init\_tables} &    & son of {\tt dt\_def}\\
+{\tt exprn}  &             &               &             & unevaluated expr \\
+{\tt field}  & field index & {\tt symbol\_types} &       & {\tt spec\_def} node \\
+{\tt label}  &             &               &             & {\tt named node} \\
+{\tt log\_value} &         &               & 0 = .false. & \\
+{\tt num\_value} & units index & {\tt units} & value     & \\
+{\tt section}    & section index & {\tt symbol\_types} & & {\tt section node} \\
+{\tt section\_node} & section index & {\tt symbol\_types} & & {\tt one\_cf node} \\
+{\tt str\_value} &         &               &             & {\tt string} node \\
+{\tt spec}   & spec index  & {\tt symbol\_types} &       & {\tt spec\_def} node \\
+{\tt tree\_node} & node index & {\tt tree\_types} &      & \\
+{\tt undeclared} &         &               &             & \\
+{\tt units\_name} & units index & {\tt units} & scale    & \\
+\hline
+\end{tabular}
+
+Several declarations are allowed for each symbol.  They can be
+distinguished by \emph{type} or by \emph{type} and \emph{units}.
+
+\section{Some of the type checking}
+
+In expressions, if values are literal numbers or names that have gotten
+numeric values by previous assignments of the form {\tt name~=}
+\emph{expr}, terms that are added are required to have the same units,
+while at least one of factors that are multiplied are required to be
+unitless.  In a quotient, the denominator is required to be unitless.
+
+The relation between sections and the specifications they can have in
+them, the relation between specifications and the named fields they can
+have in them, and the types of values in fields is checked.  These
+relations are spelled out in the \emph{EOS MLS Software documentation
+series, Quick reference for the syntax of the L2CF}, document number TBD.
+
+These relations are encoded by putting trees that describe them into the
+parser's tree space before the parser is run. These are shown in section
+\ref{trees}.
+
+The type checking is carried out by a set of recursive procedures that
+examines the tree produced by the parser.  During the examination,
+relations are added to the tree.  These relations are almost always
+indices of other parts of the tree.  In the program, they are called
+\emph{decorations}.  Some of the decorations are used to encode
+information used for type checking, and some are put into the tree in the
+expectation that they will be useful for generating the ultimate output. 
+If the ultimate output can be generated in the same pass as the type
+checking, these decorations may not be needed.
+
+\section{Some pictures of trees}\label{trees}
+
+\epsfig{file=cf/tree.2.eps}
+\epsfig{file=cf/tree.1.eps}
+
+\label{lastpage}
+\end{document}
+% $Id: $
+@

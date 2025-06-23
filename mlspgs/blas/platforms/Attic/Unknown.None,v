@@ -1,0 +1,120 @@
+head	1.2;
+access;
+symbols
+	V2-21:1.1
+	V2-20:1.1
+	V2-11:1.1
+	V2-10:1.1
+	V2-00:1.1
+	V1-51:1.1
+	V1-50:1.1
+	V1-45:1.1
+	V1-44:1.1
+	V1-43:1.1
+	V1-42:1.1
+	V1-41:1.1
+	V1-32:1.1
+	V1-40:1.1
+	V1-31:1.1
+	V1-30:1.1
+	V1-13:1.1
+	V1-12:1.1
+	V1-11:1.1
+	V1-10:1.1
+	newfwm-feb03:1.1.0.2
+	V1-04:1.1
+	V1-03:1.1
+	V1-02:1.1
+	V1-00:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2007.06.07.19.58.19;	author pwagner;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2001.11.13.23.01.42;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@compiler-specific pieces removed from platforms directory
+@
+text
+@#a file full of macros to be included by a Makefile
+#to compile a Fortran 9x program or library
+
+# "$Id: Unknown.None,v 1.1 2001/11/13 23:01:42 pwagner Exp $"
+
+SHELL = /bin/sh
+
+## Path to source files:
+S = ..
+
+# include files %.f9h shared by l2, lib are in $(srclib)
+srclib = ../../srclib
+
+# Set paths for finding source files (different from .o and .mod)
+
+# Set paths for finding source files (different from .o and .mod)
+
+vpath %.o ./
+vpath %.f90 ../
+vpath %.f9h ../ $(srclib)
+vpath %.f ../ $(PGSINC)
+vpath %.c ../
+
+FC = f95
+
+DUSTY = $(FOPTS) -dusty
+
+# Use the lib directory, too
+libdir = ../../lib/$(MLSCONFG)
+
+# All the paths to supply .mod and INCLUDE files used in compiling %.f90
+# Precede each path by "-I "
+INC_PATHS = $(EXTRA_PATHS) -I $(PGSINC) -I $(srclib) -I $S 
+
+# Define some suffix rules
+
+.SUFFIXES:
+.SUFFIXES: .o .dbg.o .f90 .f
+.f90.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
+
+.f90.dbg.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< -o $*.dbg.o $(FAFTER)
+
+.f.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
+
+.c.o:
+	$(CC) -c ${INC_PATHS} -DNAGf90Fortran $<
+
+# $Log: Unknown.None,v $
+# Revision 1.1  2001/11/13 23:01:42  pwagner
+# First commit
+#
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d4 1
+a4 1
+# "$Id: Unknown.None,v 1.12 2001/11/02 01:03:30 pwagner Exp $"
+d52 3
+@
+

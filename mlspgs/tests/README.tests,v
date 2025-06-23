@@ -1,0 +1,532 @@
+head	1.9;
+access;
+symbols
+	v5-02-NRT-19:1.9
+	v6-00:1.9
+	v5-02-NRT-18:1.9
+	v5-02:1.9
+	v5-01-NRT-17:1.9
+	v5-01-NRT-16:1.9
+	v5-01-NRT-15:1.9
+	v5-01-NRT-14:1.9
+	neuralnetworks-1-0:1.9.0.14
+	cfm-single-freq-0-1:1.9.0.12
+	v5-01:1.9
+	v5-00:1.9
+	v4-23-TA133:1.9.0.10
+	mus-emls-1-70:1.9.0.8
+	rel-1-0-englocks-work:1.9.0.6
+	VUMLS1-00:1.9
+	VPL1-00:1.9
+	V4-22-NRT-08:1.9
+	VAM1-00:1.9
+	V4-21:1.9.0.4
+	V4-13:1.9
+	V4-12:1.9
+	V4-11:1.9
+	V4-10:1.9
+	V3-43:1.9
+	M4-00:1.9
+	V3-41:1.9
+	V3-40-PlusGM57:1.9.0.2
+	V2-24-NRT-04:1.9
+	V3-33:1.9
+	V2-24:1.9
+	V3-31:1.9
+	V3-30-NRT-05:1.9
+	cfm-01-00:1.9
+	V3-30:1.9
+	V3-20:1.9
+	V3-10:1.9
+	V2-23-NRT-02:1.9
+	V2-23:1.9
+	V2-22-NRT-01:1.9
+	V2-22:1.9
+	V2-21:1.9
+	V2-20:1.9
+	V2-11:1.9
+	V2-10:1.9
+	V2-00:1.9
+	V1-51:1.9
+	V1-50:1.9
+	V1-45:1.9
+	V1-44:1.9
+	V1-43:1.9
+	V1-42:1.9
+	V1-41:1.9
+	V1-32:1.9
+	V1-40:1.9
+	V1-31:1.9
+	V1-30:1.9
+	V1-13:1.8
+	V1-12:1.8
+	V1-11:1.8
+	V1-10:1.8
+	newfwm-feb03:1.8.0.2
+	V1-04:1.7
+	V1-03:1.7
+	V1-02:1.7
+	V1-00:1.7
+	newfwm-sep01:1.6.0.2
+	V0-7:1.6
+	V0-5-Level2:1.2
+	V0-5-SIPS:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.9
+date	2003.05.01.23.35.30;	author pwagner;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2003.02.06.21.36.07;	author pwagner;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2002.02.21.21.58.52;	author pwagner;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2001.08.16.17.19.50;	author pwagner;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2001.07.24.23.05.29;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.07.16.20.57.46;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2001.05.19.00.06.25;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.03.06.18.17.57;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.02.01.23.09.33;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.9
+log
+@Step (5) now simpler make update
+@
+text
+@#!/bin/sh
+#    README.tests        Instructions about building the mls software
+# Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+# "$Id: README.tests,v 1.8 2003/02/06 21:36:07 pwagner Exp $"
+# A self-reading guide to testing the mls software;
+# usage: README.tests
+# related documents:
+#  ../README.MakeFC     a self-reading guide to building the software
+#  ../BEFORE.mls        a self-reading guide to prerequisites to the software
+
+        more << EOF
+tests--A set of subdirectories for testing the different levels of the mls
+software during development. Also a special subdirectory misc to allow you to
+build and run stand-alone software without reference to the mls software.
+
+As with the misc subdirectory, you may find it handy to build a utility that
+USEs parts of the mlspgs software, e.g. to read/write l2gp files, writing a
+driver for that purpose. This allows you to easily compile and link your
+utility w/o having to copy parts of the mlspgs software to someplace new and
+writing your own makefile.
+
+SUMMARY
+The subdirectories under the one containing this README are used auotmatically
+by the Makefiles to carry out some normal functions. They may also be used by
+you during development to test changes before cvs committing them by running
+them in conjunction with a small testdriver program instead of the whole
+toolkit, pcf, and lcf panoply.
+
+To test the mls software first make sure that you have properly built each of
+the levels with the following set of names: {l1 l2 l3 l3m fwdmdl cloudfwdm lib}.
+These are the subdirectories in the parent directory to tests, which is the one
+where you are reading this. For more information on building the mls software,
+enter ../README.MakeFC. Sub-directories with the same set of names are
+contained in tests, and they are intended to allow easy testing of the
+corresponding level of the mls software.
+
+INTRODUCTION
+During development it may be necessary to test portions of the mls software
+apart from its driver, PCF files, or other complicating circumstances that may
+prevent a clear picture of where a problem is occurring. For example, a simple
+case might be to test reading a L2GP vector from a template file using the
+modules in lib. Another example might be to test coordination among the parts
+of the retrieval algorithm with the modules in fwdmdl.
+
+To make this easy, most of the steps have been automated, so you are required
+to do only the following:
+
+METHOD
+(1) Choose which of the levels {l1 l2 l3 l3m fwdmdl cloudfwdm lib} contains what
+    needs to be tested; call this _level_
+
+(2) Write a test program that USEs the modules of _level_ to be tested
+
+(3) Copy that test program to tests/_level_ 
+    (if there are any sources there already, hide or remove them)
+
+(4) cd tests/_level_
+
+(5) make update
+
+(6) make
+
+and run the resulting test program with suitable data.
+
+MISC
+If instead you simply wish to build and test stand-alone software, such as a
+small utility, or a program that doesn't USE any of the mls modules, copy the
+program's source(s) into tests/misc (after hiding or removing any sources
+already there) and carry out (4)-(6) above. Note that from misc you can access
+the toolkit and its full panoply. You will not "see" any of the mls lib or any
+other level, however. If you need any modules out of any mls level, you should
+probably be building in the tests counterpart of that level.
+
+An alternative and even more automated way to build such a utility is the
+script build_f90_in_misc.sh, which despite its name allows you to build a
+program from a heterogeneous mix of {.f90 .f .c} source files. To see how to
+use it, consider the following lines from the Makefile, which cause the command
+'make hl' to trigger the compiling, linking and installation of the
+highlighting utility hl in INSTALLDIR using the source file hl.c found in the
+util directory:
+	   util/build_f90_in_misc.sh -d $INSTALLDIR -t ./tests \
+      -c $MLSCONFG -p hl util/hl.c
+where I have substituted values for some of the Makefile variables. Before
+issuing this command you would still need to assign values to the remaining
+two variables, MLSCONFG and INSTALLDIR, via e.g.
+   set MLSCONFG=NAG.Linux
+   set INSTALLDIR=bin/NAG.Linux
+
+BUGS
+A general shortcoming of the automatic Makefiles emerges whenever two modules
+in different directories have the same name. For example, this will cause
+trouble if you wish to try an alternate test module to one in the main mlspgs/*
+levels by putting it in with a driver in the corresponding tests level. All the
+other modules up in the main levels that USEd the test module were compiled
+with interfaces and defined types as they were found in the main level, not in
+the tests level. This can and probably will create strange errors if the
+interfaces or user-defined types differ in any way between the two versions.
+
+WARNINGS
+Since the modules of level to be USE'd by test will not include _level_'s own
+driver, any internal subprograms inside that driver may have to be copied to the
+test program if they are needed during the test. Don't forget to make any
+needed declarations, assignments, allocations, and so on.
+
+No debugging flags have been set among the the compiler switches. Setting them
+for the test program might not accomplish what is really desired, anyway, which
+might be intermediate data within a module of _level_. For a future refinement
+of this automatic build and test procedure, a debug option may be set during
+configuration which would facilitate obtaining the immediate results upon
+passing steps defined as milestones in the course of computation.
+
+The lib test requires a special word of warning. A copy of init_tables_module
+is required to link properly with the test program and modules in the source
+library. By default, this copy of init_tables_module is taken from l2. If not
+appropriate for the test case you are considering, you have two choices:
+(1) Carry out the test in another level, i.e. l1 or l3
+
+(2) Edit the file tests/lib/platforms/\$(MLSCONFG)
+at the following lines: (line 27)
+
+  # This is the directory name from which we will get init_tables_module
+  # (one of l1, l2, or l3)
+  init_m_dir = l2
+
+and change the assignment to l1 or l3. Then 
+	make mostlyclean 
+to remake the file tests/lib/\$(MLSCONFG)/Makefile in accord with this change,
+and then
+	make
+
+Similar warnings and procedures apply to fwdmdl and cloudfwdm. l3m gets its
+init_tables_module from mlspgs/l3, just like its counterpart mlspgs/l3m.
+
+What about testing a new init_tables_module? Say you want to get the
+init_tables_module, not from init_m_dir but from tests/_level_ itself? I
+haven't tested this yet. In general, substituting a much-USEd module for the
+original in mlspgs/_level_ is unsafe because the modules that USE it are
+not being recompiled. Rather than a mere warning, this last point is a special
+case of the remarks made above under BUGS..
+
+-pw                           2001-Feb-01 to 2003-May-01
+EOF
+exit
+# $Log: README.tests,v $
+# Revision 1.8  2003/02/06 21:36:07  pwagner
+# Added BUGS heading and paragraph concerning synonymous modules
+#
+# Revision 1.7  2002/02/21 21:58:52  pwagner
+# Small language corrections
+#
+# Revision 1.6  2001/08/16 17:19:50  pwagner
+# Mentions build_f90_in_misc.sh
+#
+# Revision 1.5  2001/07/24 23:05:29  pwagner
+# Notes about l3m, bug in substituting modules
+#
+# Revision 1.4  2001/07/16 20:57:46  pwagner
+# Mentions tests/misc
+#
+# Revision 1.3  2001/05/19 00:06:25  pwagner
+# Changes to reflect new ways to invoke MakeFC
+#
+# Revision 1.2  2001/03/06 18:17:57  pwagner
+# clean more amitious--rms * from MLSCONFGl[13]/MakeFC
+#
+# Revision 1.1  2001/02/01 23:09:33  pwagner
+# First commit
+#
+@
+
+
+1.8
+log
+@Added BUGS heading and paragraph concerning synonymous modules
+@
+text
+@d6 1
+a6 1
+# "$Id: README.tests,v 1.7 2002/02/21 21:58:52 pwagner Exp $"
+d10 2
+a11 2
+#  README.MakeFC     a self-reading guide to building the software
+#  BEFORE.mls        a self-reading guide to prerequisites to the software
+d18 6
+d61 1
+a61 1
+(5) make depends ghostbuster
+d143 1
+a143 1
+-pw                           2001-Feb-01 to 2003-Feb-06
+d147 3
+@
+
+
+1.7
+log
+@Small language corrections
+@
+text
+@d3 1
+a3 1
+# Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+d6 1
+a6 1
+# "$Id: README.tests,v 1.6 2001/08/16 17:19:50 pwagner Exp $"
+d19 6
+d61 1
+d85 10
+d134 2
+a135 2
+not being recompiled. Rather than a mere warning, this last point should
+perhaps be elevated to being a bug.
+d137 1
+a137 1
+-pw                           2001-Feb-01 to 2001-Aug-16
+d141 3
+@
+
+
+1.6
+log
+@Mentions build_f90_in_misc.sh
+@
+text
+@d6 1
+a6 1
+# "$Id: README.tests,v 1.5 2001/07/24 23:05:29 pwagner Exp $"
+d42 1
+a42 1
+(2) Write a test program that USE's the modules of _level_ to be tested
+d60 1
+a60 1
+other level, however If you need any modules out of any mls level, you should
+d80 1
+a80 1
+driver, any internal subprograms inside that driver may have to copied to the
+d124 3
+@
+
+
+1.5
+log
+@Notes about l3m, bug in substituting modules
+@
+text
+@d6 1
+a6 1
+# "$Id: README.tests,v 1.4 2001/07/16 20:57:46 pwagner Exp $"
+d55 22
+a76 6
+If instead you simply wish to build and test stand-alone software, copy the
+sources into tests/misc (after hiding or removing any sources already there)
+and carry out (4)-(6) above. Note that from misc you can access the toolkit and
+its full panoply. You will not "see" any of the mls lib or any other level,
+however If you need any modules out of any mls level, you should probably be
+building in the tests counterpart of that level.
+d120 1
+a120 1
+-pw                           2001-Feb-01 to 2001-July-24
+d124 3
+@
+
+
+1.4
+log
+@Mentions tests/misc
+@
+text
+@d6 1
+a6 1
+# "$Id: README.tests,v 1.3 2001/05/19 00:06:25 pwagner Exp $"
+d15 2
+a16 2
+software during development. Also a special subdirectory misc which will allow
+you to build and run stand-alone software without reference to the mls software.
+d20 1
+a20 1
+the levels with the following set of names: {l1 l2 l3 fwdmdl cloudfwdm lib}.
+d39 1
+a39 1
+(1) Choose which of the levels {l1 l2 l3 fwdmdl cloudfwdm lib} contains what
+d45 1
+a45 1
+    (if there were already sources there, hide or remove them)
+d57 4
+a60 1
+and carry out (4)-(6) above.
+d65 2
+a66 3
+test program if they are needed during the test. That due care is shown to
+needed declarations, assignments, allocations, and so on need not be elaborated
+but neither can it be overemphasized.
+d85 1
+a85 1
+  # (either l1, l2, or l3)
+d93 12
+a104 2
+	
+-pw                           2001-Feb-01 to 2001-May-18
+d108 3
+a118 1
+#
+@
+
+
+1.3
+log
+@Changes to reflect new ways to invoke MakeFC
+@
+text
+@d6 1
+a6 1
+# "$Id: README.tests,v 1.2 2001/03/06 18:17:57 pwagner Exp $"
+d15 2
+a16 1
+software during development.
+d20 6
+a25 6
+the levels with the following set of names: {l1 l2 l3 fwdmdl lib}. These are
+the subdirectories in the parent directory to tests, which is the one where you
+are reading this. For more information on building the mls software, enter
+../README.MakeFC. Sub-directories with the same set of names are contained in
+tests, and they are intended to allow easy testing of the corresponding level
+of the mls software.
+d39 2
+a40 2
+(1) Choose which of the levels {l1 l2 l3 fwdmdl lib} contains what needs to be
+tested; call this _level_
+d55 4
+d96 3
+@
+
+
+1.2
+log
+@clean more amitious--rms * from MLSCONFGl[13]/MakeFC
+@
+text
+@d3 1
+a3 1
+# Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+d6 1
+a6 1
+# "$Id: README.tests,v 1.1 2001/02/01 23:09:33 pwagner Exp $"
+d14 2
+a15 1
+tests--A set of subdirectories for testing the mls software
+d28 5
+a32 5
+apart from its driver, PCF files, or other complicating circumstances that
+may prevent a clear picture of where a problem is occurring. For example,
+a simple case might be to test reading a L2GP vector from a template file
+using the modules in lib. Another example might be to test coordination among
+the parts of the retrieval algorithm with the modules in fwdmdl.
+d34 2
+a35 2
+In attempting to make this easy, most of the steps have been automated, so you
+are required to do only the following:
+d44 1
+d48 1
+a48 1
+(5) make -f MakeFC depends
+d50 1
+a50 1
+(6) make -f MakeFC
+d82 4
+a85 3
+	make -f MakeFC clean to remake
+the file tests/lib/\$(MLSCONFG)/Makefile in accord with this change, and
+	make -f MakeFC.
+d87 1
+a87 1
+-pw                           2001-Feb-01 to 2001-Feb-01
+d91 3
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d6 1
+a6 1
+# "$Id: README.tests,v 1.9 2001/01/16 21:31:19 pwagner Exp $"
+d14 1
+a14 1
+tests--A set of sub-directories for testing the mls software
+d20 1
+a20 1
+are reading this one. For more information on building the mls software, enter
+d22 2
+a23 2
+tests, and they allow easy testing of the corresponding level of the mls
+software.
+d88 3
+@
+

@@ -1,0 +1,171 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.14
+	cfm-single-freq-0-1:1.1.0.12
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.10
+	mus-emls-1-70:1.1.0.8
+	rel-1-0-englocks-work:1.1.0.6
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2008.06.11.20.14.51;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.25in
+
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9.00in
+
+\newcommand{\docname}{\bf wvs-024r1}
+\newcommand{\docdate}{3 October 2005}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill\\
+Subject: \>PFA derivatives\\
+From: \>Van Snyder\\
+Reference: \>wvs-017r4\\
+\end{tabbing}
+
+\parindent 0pt \parskip 3pt
+\vspace{-20pt}
+
+For non-PFA radiances for a particular channel $c$, we have
+
+\begin{equation}\label{lbl}
+I_c \approx \sum_{n=1}^{N_f} \phi_n \Delta \nu_n
+               \sum_{i=1}^{N_p} \Delta B_{in} \tau^s_{in}
+\end{equation}
+
+where $N_f$ is the number of frequencies in the channel, $\phi$ is the
+channel's filter function, $N_p$ is line-of-sight path length, and $s$
+indicates ``Strong (line-by-line) calculation.''
+
+To combine PFA and non-PFA radiances for a particular channel $c$, we use
+
+\begin{equation}\label{combined}
+I_c \approx \sum_{n=1}^{N_f} \phi_n \Delta \nu_n
+               \sum_{i=1}^{N_p} \Delta B_{ic} \tau^s_{in} \tau^w_{ic}
+\end{equation}
+
+where $w$ indicates ``Weak-line (PFA) calculation''.  Approximating
+$\Delta B_{in}$ by $\Delta B_{ic}$, where $\Delta B_{ic}$ is evaluated at
+the channel center frequency, is acceptable because the change in
+frequency across a channel is negligible compared to the channel center
+frequency.
+
+Observing that $\tau_{in}^s = \exp(-\sum_{j=1}^i\delta_{jn}^s)$ and
+differentiating Equation (\ref{lbl}), we have
+
+\begin{equation}
+\begin{split}
+\frac{\partial I_c}{\partial x} \approx\,&
+ \sum_{n=1}^{N_f} \phi_n \Delta \nu_n
+  \sum_{i=1}^{N_p} \frac{\partial \Delta B_{in}}{\partial x} \tau^s_{in} +
+  \Delta B_{in} \frac{\partial \tau^s_{in}}{\partial x} \\
+=\,&
+ \sum_{n=1}^{N_f} \phi_n \Delta \nu_n
+  \sum_{i=1}^{N_p} \left( \frac{\partial B_{in}}{\partial x} - \Delta B_{in}
+   \sum_{j=1}^i \frac{\partial \delta^s_{jn}}{\partial x} \right ) \tau^s_{in}
+\end{split}
+\end{equation}
+
+To combine PFA and non-PFA derivatives we use a similar definition for
+$\tau_{jc}^w$ and differentiate Equation (\ref{combined}):
+
+\begin{equation}\label{final}
+\begin{split}
+\frac{\partial I_c}{\partial x}
+\approx\,& \sum_{n=1}^{N_f} \phi_n \Delta \nu_n \sum_{i=1}^{N_p}
+  \frac{\partial \Delta B_{ic}}{\partial x} \tau^s_{in} \tau^w_{ic} +
+  \Delta B_{ic} \frac{\partial \tau^s_{in}}{\partial x} \tau^w_{ic} +
+  \Delta B_{ic} \tau^s_{in} \frac{\partial \tau^w_{ic}}{\partial x} \\
+=\,& \sum_{n=1}^{N_f} \phi_n \Delta \nu_n \sum_{i=1}^{N_p}
+ \left(
+  \frac{\partial \Delta B_{ic}}{\partial x} -
+  \Delta B_{ic}
+   \sum_{j=1}^i \left( \frac{\partial \delta^s_{jn}}{\partial x} +
+                      \frac{\partial \delta^w_{jc}}{\partial x}
+                \right)
+  \right) \tau^s_{in} \tau^w_{ic}
+\end{split}
+\end{equation}
+
+In Equations (\ref{combined}) and (\ref{final}) it is acceptable to
+include $\tau^w_{ic}$ and $\frac{\partial \delta^w_{jc}}{\partial x}$
+within the frequency averaging, even though they are already averages for
+a channel, because $\sum_{n=1}^{N_f} \phi_n = 1$.
+
+\label{lastpage}
+\end{document}
+% $Id: $
+@

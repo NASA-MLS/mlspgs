@@ -1,0 +1,393 @@
+head	1.14;
+access;
+symbols
+	newfwm-sep01:1.13.0.2
+	V0-7:1.13;
+locks; strict;
+comment	@# @;
+
+
+1.14
+date	2001.09.20.16.37.13;	author jonathan;	state dead;
+branches;
+next	1.13;
+
+1.13
+date	2001.08.08.00.18.42;	author jonathan;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2001.08.07.23.03.32;	author jonathan;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2001.08.07.17.45.23;	author jonathan;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2001.08.03.18.50.02;	author jonathan;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2001.08.03.18.18.44;	author jonathan;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2001.08.03.16.03.08;	author jonathan;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2001.08.03.00.38.07;	author dwu;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2001.08.01.21.03.06;	author dwu;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2001.08.01.20.54.50;	author jonathan;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.08.01.00.20.22;	author dwu;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2001.07.27.15.17.58;	author jonathan;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.07.25.23.44.00;	author jonathan;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.07.25.17.59.34;	author jonathan;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.14
+log
+@remove
+@
+text
+@
+      SUBROUTINE CLEAR_SKY(L,NU,TS,S,LORS,WIND,XZ,XP,XT,XQ,VMR, NS, &
+                 &         F,RS,U,T,TAU,Z,TAU100)
+
+!======================================================
+!     >>>>>>>>CLEAR-SKY RADIATION SCHEME<<<<<<<<<<
+!
+!     CALCULATE BACKGROUND ATMOSPHERIC RADIATION
+!     LATEST UPDATE, J.JIANG, MAY 18, 2001
+!======================================================
+
+      use MLSCommon, only: r8
+      INCLUDE 'spectra.f9h' 
+
+!-------------------------------------------------
+!     ATMOSPHERIC PROFILE PARAMETERS
+!-------------------------------------------------
+
+      INTEGER :: L, NU, I, LORS, NS
+      REAL(r8) :: RS(NU/2),T(L),TAU(L),U(NU),Z(L),TAU100(L)
+      REAL(r8) :: XZ(L+1),XP(L+1),XT(L+1),XQ(L+1)
+      REAL(r8) :: VMR(NS,L+1),VMR1(NS)
+      REAL(r8) :: DQ, P, DR, TS, S, WIND, F
+
+!-------------------------------------------------
+!     SURFACE REFLECTIVITY
+!-------------------------------------------------
+! local variables
+      REAL(r8):: RH(NU)                   ! HORIZONTAL
+      REAL(r8):: RV(NU)                   ! VERTICAL
+      REAL(r8):: X(NU)                    ! SCATTERING ANGLES
+
+!------------------------------------------------------------------------
+      CALL HEADER(2)
+      
+      CALL SETUP_SPECTRA(QLG,V0,GSE,IST,WTH,NTH,DELTA,N1,   &
+                  &      GAMMA,N2,MOL,NMOL,NCNT)
+
+!-------------------------------------------------
+!     GET SURFACE REFLECTIVITY
+!-------------------------------------------------
+
+      DO I=1,NU/2
+         X(I)=U(I)
+      ENDDO
+
+      CALL SURFACE(F,TS,LORS,S,WIND,X,NU/2,NU,RH,RV)
+      DO I=1,NU/2
+         RS(I)=RH(I)
+      ENDDO
+
+      DO I=1,L
+
+         Z(I)=XZ(I+1)-XZ(I)
+         T(I)=(XT(I+1)+XT(I))*0.5
+
+         P=(LOG10(XP(I+1))+LOG10(XP(I)))*0.5     !!! NEED TO CHANGE TO P(I)
+         P=10**P
+
+!         DQ=(XQ(I+1)+XQ(I))*0.5
+
+         DQ=(LOG10( max(1.e-39_r8, XQ(I+1)) )+ &
+         &         LOG10( max(1.e-39_r8, XQ(I)) ) )*0.5
+         DQ= 10**DQ
+
+         DO J=1,NS
+            VMR1(J)=(LOG10( max(1.e-29_r8, VMR(J,I+1)) )+ &
+                   & LOG10( max(1.e-29_r8, VMR(J,I))  )  )*0.5   !vmr cannot be zero
+            VMR1(J)=10**VMR1(J)
+         ENDDO
+
+         CALL GET_BETA(QLG,V0,GSE,IST,WTH,NTH,DELTA,N1,GAMMA,N2,  &
+              &        MOL,NMOL,NCNT,T(I),P,F,DQ,VMR1,DR,NS)   
+                                             ! HERE DQ IS H2O MIXING RATIO
+         TAU(I)=DR*Z(I)
+
+         CALL GET_BETA(QLG,V0,GSE,IST,WTH,NTH,DELTA,N1,GAMMA,N2,  &
+              &        MOL,NMOL,NCNT,T(I),P,F,100._r8,VMR1,DR,NS) 
+                                             ! HERE DQ IS RELATIVE HUMIDITY!
+         TAU100(I)=DR*Z(I)
+
+      ENDDO
+
+      RETURN
+      END
+
+! $Log: Clear_sky.f90,v      
+
+@
+
+
+1.13
+log
+@*** empty log message ***
+@
+text
+@@
+
+
+1.12
+log
+@*** empty log message ***
+@
+text
+@d62 2
+a63 2
+         DQ=(LOG10( max(1.e-19_r8, XQ(I+1)) )+ &
+         &         LOG10( max(1.e-19_r8, XQ(I)) ) )*0.5
+d67 2
+a68 2
+            VMR1(J)=(LOG10( max(1.e-19_r8, VMR(J,I+1)) )+ &
+                   & LOG10( max(1.e-19_r8, VMR(J,I))  )  )*0.5   !vmr cannot be zero
+@
+
+
+1.11
+log
+@*** empty log message ***
+@
+text
+@d56 1
+d62 3
+a64 2
+         DQ=(LOG10( max(1.e-29_r8, XQ(I+1)) )+ &
+         &         LOG10( max(1.e-29_r8, XQ(I)) ) )*0.5
+@
+
+
+1.10
+log
+@*** empty log message ***
+@
+text
+@d58 5
+a62 1
+         DQ=(XQ(I+1)+XQ(I))*0.5
+@
+
+
+1.9
+log
+@*** empty log message ***
+@
+text
+@d61 3
+a63 3
+!            VMR1(J)=(LOG10(VMR(J,I+1))+LOG10(VMR(J,I)))*0.5   !vmr may be zero
+!            VMR1(J)=10**VMR1(J)
+           VMR1(J)=(VMR(J,I+1)+VMR(J,I))*0.5
+@
+
+
+1.8
+log
+@*** empty log message ***
+@
+text
+@d61 3
+a63 2
+            VMR1(J)=(LOG10(VMR(J,I+1))+LOG10(VMR(J,I)))*0.5
+            VMR1(J)=10**VMR1(J)
+@
+
+
+1.7
+log
+@*** empty log message ***
+@
+text
+@a81 3
+
+
+
+@
+
+
+1.6
+log
+@rm np=800
+@
+text
+@d56 2
+a57 1
+         P=(XP(I+1)+XP(I))*0.5               !!! NEED TO CHANGE TO P(I)
+d61 2
+a62 1
+            VMR1(J)=(VMR(J,I+1)+VMR(J,I))*0.5
+d84 1
+@
+
+
+1.5
+log
+@jonathan
+@
+text
+@d19 1
+a19 1
+      INTEGER :: L, NU, NP, I, LORS, NS
+d28 4
+a31 5
+
+      PARAMETER(NP=800)                   ! DEMENSION OF WORKING ARRAYS
+      REAL(r8):: RH(NP)                   ! HORIZONTAL
+      REAL(r8):: RV(NP)                   ! VERTICAL
+      REAL(r8):: X(NP)                    ! SCATTERING ANGLES
+d47 1
+a47 1
+      CALL SURFACE(F,TS,LORS,S,WIND,X,NU/2,NP,RH,RV)
+@
+
+
+1.4
+log
+@add Jacobian -Jonathan/Wu
+@
+text
+@a47 2
+      wind=0._r8
+
+@
+
+
+1.3
+log
+@First Successful f90 runs
+@
+text
+@d47 3
+@
+
+
+1.2
+log
+@new f90 version of cloudfwm, jonathan
+@
+text
+@d2 1
+a2 1
+      SUBROUTINE CLEAR_SKY(L,NU,TS,S,LORS,SWIND,XZ,XP,XT,XQ,VMR, &
+d19 1
+a19 1
+      INTEGER :: L, NU, NP, I
+d22 2
+a23 2
+      REAL(r8) :: VMR(2,L+1),VMR1(5)
+      REAL(r8) :: DQ, P, DR
+d59 1
+a59 1
+         DO J=1,5
+d64 1
+a64 1
+              &        MOL,NMOL,NCNT,T(I),P,F,DQ,VMR1,DR)   
+d69 1
+a69 1
+              &        MOL,NMOL,NCNT,T(I),P,F,100._r8,VMR1,DR) 
+@
+
+
+1.1
+log
+@new .f90 version, jonathan
+@
+text
+@d12 3
+d19 5
+a23 24
+!      INCLUDE 'spectra.h' !---------------------------------------------
+!... spectral header file 
+	integer no_line		! max no. of lines for all species
+	integer no_mol		! max no. of molecules
+	parameter (no_line= 1000, no_mol = 20)
+	real*8 v0(no_line)
+	real*4 gse(no_line)
+	real*4 ist(no_line)
+	real*4 wth(no_line)
+	real*4 nth(no_line)
+	real*4 qlg(3,no_line)
+	real*4 delta(no_line)
+	real*4 n1(no_line)
+	real*4 gamma(no_line)
+	real*4 n2(no_line)
+	integer mol		! molecule mass number
+
+	integer nmol		! no. of molecules
+	integer ncnt(no_mol)	! no. of lines used for each molecule
+! -----------------------------------------------------------------
+      INTEGER L,NU,NP,I
+      REAL RS(NU/2),T(L),TAU(L),U(NU),Z(L),TAU100(L)
+      REAL XZ(L+1),XP(L+1),XT(L+1),XQ(L+1)
+      REAL VMR(2,L+1),VMR1(5)
+d30 3
+a32 3
+      REAL RH(NP)                         ! HORIZONTAL
+      REAL RV(NP)                         ! VERTICAL
+      REAL X(NP)                          ! SCATTERING ANGLES
+d69 1
+a69 1
+              &        MOL,NMOL,NCNT,T(I),P,F,100.,VMR1,DR) 
+d78 1
+a78 1
+! $Log: Clear_sky.f,v      
+@
+

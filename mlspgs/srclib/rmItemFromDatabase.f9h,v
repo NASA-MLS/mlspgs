@@ -1,0 +1,426 @@
+head	1.7;
+access;
+symbols
+	v5-02-NRT-19:1.7
+	v6-00:1.7
+	v5-02-NRT-18:1.7
+	v5-02:1.7
+	v5-01-NRT-17:1.7
+	v5-01-NRT-16:1.7
+	v5-01-NRT-15:1.7
+	v5-01-NRT-14:1.7
+	neuralnetworks-1-0:1.7.0.8
+	cfm-single-freq-0-1:1.7.0.6
+	v5-01:1.7
+	v5-00:1.7
+	v4-23-TA133:1.7.0.4
+	mus-emls-1-70:1.7.0.2
+	rel-1-0-englocks-work:1.6.0.2
+	VUMLS1-00:1.6
+	VPL1-00:1.6
+	V4-22-NRT-08:1.6
+	VAM1-00:1.6
+	V4-21:1.5.0.2
+	V4-13:1.5
+	V4-12:1.4
+	V4-11:1.4
+	V4-10:1.4
+	V3-43:1.4
+	M4-00:1.4
+	V3-41:1.4
+	V3-40-PlusGM57:1.4.0.2
+	V2-24-NRT-04:1.4
+	V3-33:1.4
+	V2-24:1.4
+	V3-31:1.4
+	V3-30-NRT-05:1.4
+	cfm-01-00:1.4
+	V3-30:1.4
+	V3-20:1.4
+	V3-10:1.4
+	V2-23-NRT-02:1.4
+	V2-23:1.4
+	V2-22-NRT-01:1.4
+	V2-22:1.4
+	V2-21:1.4
+	V2-20:1.4
+	V2-11:1.4
+	V2-10:1.4
+	V2-00:1.4
+	V1-51:1.3
+	V1-50:1.3
+	V1-45:1.3
+	V1-44:1.3
+	V1-43:1.3
+	V1-42:1.3
+	V1-41:1.3
+	V1-32:1.3
+	V1-40:1.3
+	V1-31:1.3
+	V1-30:1.3
+	V1-13:1.3
+	V1-12:1.3
+	V1-11:1.3
+	V1-10:1.3
+	newfwm-feb03:1.3.0.2
+	V1-04:1.2
+	V1-03:1.2
+	V1-02:1.2
+	V1-00:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.7
+date	2018.04.11.22.50.12;	author vsnyder;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2015.03.28.00.54.34;	author vsnyder;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2014.09.04.23.55.17;	author vsnyder;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2005.06.22.20.03.56;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2002.10.02.16.00.33;	author bwknosp;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.09.20.20.55.48;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.09.19.23.39.16;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.7
+log
+@Compute address for logging
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id: rmItemFromDatabase.f9h,v 1.6 2015/03/28 00:54:34 vsnyder Exp $
+
+  ! Similar (in fact based on) addItemToDatabase.f9h
+  ! but for the opposite purpose
+  !
+  ! The subprogram that includes this file must declare:
+  ! database(:)         the existing database that will be shrunk by one
+  ! tempDatabase(:)     workspace, the same user-defined type as database
+  ! Item                the item to be removed, also the same user type
+  ! okToDeallocEmptyDB  a logical param: set to FALSE if you prefer
+  !                      to deallocate the database yourself resulting
+  !                      if Item should be the only one in database
+  
+  ! Assumption: the user-defined type must have a component 'name'
+  ! that is a scalar and unique for each item in the database
+  ! e.g. an integer id
+  !   (This assumption could be relaxed by 
+  !   forcing the subprogram to find rmItemNumber itself prior)
+    integer :: newSize, oldSize, status
+    integer :: rmItemNumber, i
+    character(127) :: ERMSG
+
+    ! Executable code
+
+    ! What is the rmItemNumber corresponding to Item ?
+    rmItemNumber = 0
+    do i=1, SIZE(database)
+      if( Item%name == database(i)%name ) rmItemNumber=i
+    end do
+
+    block
+      use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+      integer(C_Intptr_t) :: Addr
+      newSize=0
+      if ( .not. associated(database) ) then
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & "Attempt to remove item from an empty database")
+      else if ( size(database) < rmItemNumber .or. rmItemNumber < 1) then
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & "Attempt to remove an item not found database")
+      else if ( size(database) == 1) then
+        if ( okToDeallocEmptyDB ) then
+          oldSize = size(database) * storage_size(database) / 8
+          addr = 0
+          if ( oldSize > 0 ) addr = transfer ( c_loc ( database(1) ), addr )
+          deallocate ( database, STAT=status, ERRMSG=ermsg )
+          call test_deallocate ( status, ModuleName, "database", oldSize, &
+            & ermsg=ermsg, address=addr )
+        end if
+      else
+        allocate ( tempDatabase(SIZE(database)-1), STAT=status, ERRMSG=ermsg )
+        addr = 0
+        if ( status == 0 ) then
+          if ( size(tempDatabase) > 0 ) addr = transfer ( c_loc ( tempDatabase(1) ), addr )
+        end if
+        call test_allocate ( status, ModuleName, "tempDatabase", &
+          uBounds = SIZE(database)-1, elementSize = storage_size(tempDatabase) / 8, &
+          ermsg=ermsg, address=addr )
+        do i=1, SIZE(database)
+          if (i /= rmItemNumber) then
+            newSize = newSize+1
+            tempDatabase(newSize) = database(i)
+          end if
+        end do
+        oldSize = size(database) * storage_size(database) / 8
+        deallocate ( database, STAT=status, ERRMSG=ermsg )
+        addr = 0
+        if ( oldSize > 0 ) addr = transfer ( c_loc ( database(1) ), addr )
+        call test_deallocate ( status, ModuleName, "database", oldSize, &
+          & ermsg=ermsg, address=addr )
+        database => tempDatabase
+      end if
+    end block
+
+! $Log: rmItemFromDatabase.f9h,v $
+! Revision 1.6  2015/03/28 00:54:34  vsnyder
+! Stuff to trace allocate/deallocate addresses -- mostly commented out
+! because NAG build 1017 doesn't yet allow arrays as arguments to C_LOC.
+!
+! Revision 1.5  2014/09/04 23:55:17  vsnyder
+! Add allocate/deallocate size tracking
+!
+! Revision 1.4  2005/06/22 20:03:56  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 1.3  2002/10/02 16:00:33  bwknosp
+! Added Id and RCS info
+!
+! Revision 1.2  2001/09/20 20:55:48  pwagner
+! Tweaked some things
+!
+! Revision 1.1  2001/09/19 23:39:16  pwagner
+! First commit
+!
+@
+
+
+1.6
+log
+@Stuff to trace allocate/deallocate addresses -- mostly commented out
+because NAG build 1017 doesn't yet allow arrays as arguments to C_LOC.
+@
+text
+@d12 1
+a12 1
+! $Id: rmItemFromDatabase.f9h,v 1.5 2014/09/04 23:55:17 vsnyder Exp $
+a31 1
+    integer(selected_int_kind(18)) :: Addr
+d42 3
+a44 5
+!     block
+!       Intel ifort 15.0 doesn't allow USE inside BLOCK, so put it in
+!       every subprogram that includes this file, at least for now (2015/02/13).
+!       use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+!       integer(C_Intptr_t) :: Addr
+d57 1
+a57 1
+          deallocate ( database, stat=status, ERRMSG=ERMSG )
+d59 1
+a59 1
+            & ERMSG=ERMSG, address=addr )
+d62 1
+a62 1
+        allocate ( tempDatabase(SIZE(database)-1), STAT=status, ERRMSG=ERMSG )
+d69 1
+a69 1
+          ERMSG=ERMSG, address=addr )
+d77 1
+a77 1
+        deallocate ( database, stat=status, ERRMSG=ERMSG )
+d81 1
+a81 1
+          & ERMSG=ERMSG, address=addr )
+d84 1
+a84 1
+!     end block
+d87 4
+@
+
+
+1.5
+log
+@Add allocate/deallocate size tracking
+@
+text
+@d12 1
+a12 1
+! $Id: rmItemFromDatabase.f9h,v 1.4 2005/06/22 20:03:56 pwagner Exp $
+d31 3
+a33 1
+    integer ::                                rmItemNumber, i
+d43 36
+a78 9
+    newSize=0
+    if ( .not. associated(database) ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & "Attempt to remove item from an empty database")
+    else if ( size(database) < rmItemNumber .or. rmItemNumber < 1) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & "Attempt to remove an item not found database")
+    else if ( size(database) == 1) then
+      if ( okToDeallocEmptyDB ) then
+d80 6
+a85 2
+        deallocate ( database, stat=status )
+        call test_deallocate ( status, ModuleName, "database", oldSize )
+d87 1
+a87 15
+    else
+      allocate(tempDatabase(SIZE(database)-1), STAT=status)
+      call test_allocate ( status, ModuleName, "tempDatabase", &
+        uBounds = SIZE(database)-1, elementSize = storage_size(tempDatabase) / 8 )
+      do i=1, SIZE(database)
+        if (i /= rmItemNumber) then
+          newSize = newSize+1
+          tempDatabase(newSize) = database(i)
+        end if
+      end do
+      oldSize = size(database) * storage_size(database) / 8
+      deallocate ( database, stat=status )
+      call test_deallocate ( status, ModuleName, "database", oldSize )
+      database => tempDatabase
+    end if
+d90 3
+@
+
+
+1.4
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d12 1
+a12 1
+! $Id: HuntArray.f9h,v 1.6 2005/01/19 01:08:22 pwagner Exp $
+d30 1
+a30 1
+    integer :: newSize, status
+d39 1
+a39 1
+    enddo
+d45 1
+a45 1
+    elseif ( size(database) < rmItemNumber .or. rmItemNumber < 1) then
+d48 1
+a48 1
+    elseif ( size(database) == 1) then
+d50 1
+d52 2
+a53 3
+        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & MLSMSG_DeAllocate // "database" )
+      endif
+d56 2
+a57 2
+      if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_Allocate // "tempDatabase")
+d62 3
+a64 2
+        endif
+      enddo
+d66 1
+a66 2
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_DeAllocate // "database" )
+d71 3
+@
+
+
+1.3
+log
+@Added Id and RCS info
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d12 1
+a12 7
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id: rmItemFromDatabase.f9h,v 1.3 2002/09/13 22:47:14 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName= &
+       "$RCSfile: rmItemFromDatabase.f9h,v $"
+!---------------------------------------------------------------------------
+d71 3
+@
+
+
+1.2
+log
+@Tweaked some things
+@
+text
+@d4 7
+a10 5
+  !---------------------------- RCS Ident Info -------------------------------
+    character(len=*), parameter :: IdParm = &
+      & "$Id: rmItemFromDatabase.f9h,v 1.1 2001/09/19 23:39:16 pwagner Exp $"
+    character(len=len(idParm)) :: Id = idParm
+  !---------------------------------------------------------------------------
+d69 3
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d6 1
+a6 1
+      & "$Id: rmItemFromDatabase.f9h,v 1.4 2001/06/07 21:56:55 pwagner Exp $"
+d9 17
+d37 4
+a40 7
+    if ( .not. associated(database) ) then ! tree_checker prevents duplicate names
+      newSize=0
+    elseif ( size(database) == 1) then
+      newSize=0
+      deallocate ( database, stat=status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_DeAllocate // "database" )
+d43 7
+a49 1
+        & "Attempt to remove illegal item number from database")
+d51 1
+a51 2
+      newSize = SIZE(database)-1
+      allocate(tempDatabase(newSize),STAT=status)
+a53 1
+      newSize = 0
+d67 3
+@
+

@@ -1,0 +1,3224 @@
+head	2.18;
+access;
+symbols
+	V1-51:2.16
+	V1-50:2.16
+	V1-45:2.16
+	V1-44:2.16
+	V1-43:2.16
+	V1-32:2.14
+	V1-31:2.14
+	V1-30:2.14
+	V1-13:2.14
+	V1-12:2.14
+	V1-11:2.14
+	V1-10:2.14
+	newfwm-feb03:2.14.0.2
+	V1-04:2.0
+	V1-03:2.0
+	V1-02:2.0
+	JointForwardModel:2.3.0.2
+	V1-00:2.0
+	newfwm-sep01:1.12.0.2
+	V0-7:1.12
+	V0-5-Level2:1.12
+	V0-5-SIPS:1.11
+	V0_1:1.1;
+locks; strict;
+comment	@# @;
+
+
+2.18
+date	2005.07.06.02.15.29;	author vsnyder;	state dead;
+branches;
+next	2.17;
+
+2.17
+date	2005.06.22.18.08.18;	author pwagner;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2004.02.12.02.20.07;	author vsnyder;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2004.01.29.18.49.03;	author vsnyder;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2003.02.07.00.05.38;	author bill;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2002.11.29.22.46.06;	author livesey;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2002.11.23.02.49.07;	author vsnyder;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2002.10.10.19.36.22;	author vsnyder;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2002.10.08.17.08.03;	author pwagner;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2002.10.02.21.07.00;	author vsnyder;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2002.09.07.00.53.25;	author vsnyder;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2002.09.05.20.48.29;	author livesey;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2002.08.02.00.12.19;	author bill;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2002.07.08.17.45.40;	author zvi;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2002.06.28.11.06.48;	author zvi;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2002.06.19.11.00.32;	author zvi;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2002.06.17.16.31.21;	author bill;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2002.06.07.23.02.03;	author bill;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2001.09.17.20.26.26;	author livesey;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2001.05.02.20.49.23;	author zvi;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2001.04.10.01.16.34;	author livesey;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2001.04.09.23.32.29;	author zvi;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2001.04.06.01.37.58;	author zvi;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2001.04.05.22.54.39;	author vsnyder;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2001.03.31.23.40.55;	author zvi;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2001.03.29.08.51.01;	author zvi;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2001.02.26.09.01.16;	author zvi;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.01.31.23.57.43;	author zvi;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2001.01.31.22.40.12;	author zvi;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2000.11.22.23.07.26;	author zvi;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2000.05.04.18.12.05;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.18
+log
+@Replaced by FOV_Convolve_m.f90
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Fov_Convolve_m
+ 
+  implicit NONE
+  private
+  public :: Fov_Convolve, Fov_Convolve_Old
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: fov_convolve_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+ contains
+! =================================================  Fov_Convolve  =====
+! Add the effects of antenna smearing to the radiance.
+
+  subroutine Fov_Convolve ( AntennaPattern, chi_in, rad_in, chi_out,   &     
+           & rad_out, req, rsc, earth_frac, surf_angle, di_dt, dx_dt,  &     
+           & ddx_dxdt, dx_dt_out, di_dt_flag, drad_dt_out, di_df,      &     
+           & di_df_flag,  drad_df_out, drad_dx_out )
+
+    use AntennaPatterns_m, only: AntennaPattern_T
+    use DFFT_M, only: DRFT1
+    use MLSNumerics, only: Coefficients=>Coefficients_r8, Hunt, &
+      & InterpolateArraySetup, InterpolateArrayTeardown, InterpolateValues
+    use MLSCommon, only: I4, R8, Rp
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+
+! inputs
+
+    type(antennapattern_t), intent(in) :: AntennaPattern
+
+    real(rp), intent(in) :: chi_in(:)! inputted pointing angles radians
+    real(rp), intent(in) :: rad_in(:)! inputted radiances
+    real(rp), intent(in) :: chi_out(:)! outputted pointing angles radians
+
+    real(rp), optional, intent(in) :: req ! equivalent earth radius
+    real(rp), optional, intent(in) :: rsc ! spacecraft radius
+    real(rp), optional, intent(in) :: earth_frac ! fraction of earth in total
+!                                   filled out pattern
+! note req, rsc and earth_frac are non critical parameters and don't
+! really need to be supplied externally. They are used to partition the
+! full fft field between earth and space components.
+! stuff for temperature derivatives
+
+    real(rp), optional, intent(in) :: surf_angle ! An angle that defines the
+!                                     Earth surface.
+    real(rp), optional, intent(in) :: di_dt(:,:) ! derivative of radiance wrt
+!                                     temperature on chi_in
+    real(rp), optional, intent(in) :: dx_dt(:,:) ! derivative of angle wrt
+!                                     temperature on chi_in
+    real(rp), optional, intent(in) :: ddx_dxdt(:,:) ! 2nd derivative wrt angle
+!                                     temperature on chi_in
+    real(rp), optional, intent(in) :: dx_dt_out(:,:) ! derivative of angle wrt
+!                                     temperature on chi_out
+    logical, optional, intent(in) :: di_dt_flag(:) ! Indicates whether to accumulate
+!                                     di_dt.  Assumed true if absent.
+    real(rp), optional, intent(in) :: di_df(:,:) ! mixing ratio derivatives or
+!                                     any parameter where a simple convolution
+!                                     will suffice
+    logical, optional, intent(in) :: di_df_flag(:) ! Flag to indicate which of the 
+!                                     above are to be calculated
+
+! outputs
+
+    real(rp), intent(out) :: rad_out(:) ! outputted radiances
+    real(rp), optional, intent(out) :: drad_dx_out(:) ! outputted derivative 
+!                                      of radiance wrt to Chi_out
+    real(rp), optional, intent(out) :: drad_dt_out(:,:) ! outputted radiance
+!                                      derivatives wrt temperature.
+    real(rp), optional, intent(out) :: drad_df_out(:,:) ! outputted radiance
+!                                      derivatives for inputted di_df.
+! Internal stuff
+
+    INTEGER(i4) :: i, j, k, ffth, n_coeffs, zero_out_s, zero_out_t
+
+    real(r8) :: r_eq, r_sc, e_frac, init_angle, aaap_step, ang_step
+
+    type(coefficients) :: Coeffs_1 ! for chi_in-init_angle -> angles(ffth+zero_out_s+1:no_fft)
+    type(coefficients) :: Coeffs_2 ! for chi_in-init_angle -> angles(ffth:no_fft)
+    type(coefficients) :: Coeffs_3 ! for angles(ffth:no_fft)-ang_step -> chi_out-init_angle
+
+! some clunky stuff
+
+    integer, parameter :: pwr=12, no_fft=2**pwr
+    integer(i4), save :: INIT = 0, MS = 0
+
+    real(r8), dimension(no_fft) :: p, dp, angles, rad_fft, rad_fft1
+
+
+    real(r8) :: drad_dt_temp(size(chi_out))
+
+    r_eq = 6371.0_rp
+    r_sc = r_eq + 705.0_rp
+    e_frac = 0.185
+    if ( present(req)) r_eq = req
+    if ( present(rsc)) r_sc = rsc
+    if ( present(earth_frac)) e_frac = earth_frac / 2.0
+
+! load up the antenna pattern
+
+    p = 0.0_r8
+    dp = 0.0_r8
+    aaap_step = antennaPattern%lambda
+    ang_step = 1.0_r8 / (no_fft * aaap_step)
+    j = min(no_fft,size(antennaPattern%aaap))
+    p(1:j) = antennaPattern%aaap(1:j)
+    dp(1:j) = antennaPattern%d1aap(1:j)
+
+! p & dp are really complex numbers masquerading as real ones
+
+! construct the angles
+
+    ffth = no_fft / 2
+    angles = (/(i*ang_step,i=1,no_fft)/)
+    angles = angles - angles(ffth+1)
+    init_angle = asin((r_eq - e_frac*sqrt(r_sc**2-r_eq**2)/aaap_step)/r_sc)
+
+! set up for interpolations
+
+    if ( present(drad_dt_out) ) then
+      ! find the surface dimension
+      call hunt ( angles(ffth:no_fft), surf_angle-init_angle, zero_out_s )
+      call hunt ( angles(ffth:no_fft), chi_in(SIZE(chi_in))-init_angle, &
+    &             zero_out_t )
+      call interpolateArraySetup ( chi_in-init_angle, &
+        & angles(ffth+zero_out_s+1:no_fft), &
+        & METHOD='S', coeffs=coeffs_1, EXTRAPOLATE='C' )
+    end if
+
+    call interpolateArraySetup ( chi_in-init_angle, angles(ffth:no_fft), &
+      & METHOD='S', coeffs=coeffs_2, EXTRAPOLATE='C' )
+    call interpolateArraySetup ( angles(ffth:no_fft)-ang_step, chi_out-init_angle, &
+      & METHOD='S', coeffs=coeffs_3, EXTRAPOLATE='C', dyByDx=.true. )
+
+! set up the radiance array
+
+    call interpolateValues ( coeffs_2, chi_in-init_angle, rad_in, angles(ffth:no_fft),  &
+       & rad_fft(ffth:no_fft), METHOD='S', EXTRAPOLATE='C' )
+
+! mirror reflect this
+
+    rad_fft(1:ffth-1) = rad_fft(no_fft-1:no_fft-ffth+1:-1)
+
+! I don't know if this step is truly necessary but it rephases the radiances
+! identically to the prototype code
+
+    rad_fft = cshift(rad_fft,-1)
+
+! take fft of radiance array
+
+    if ( init > 0 .and. init /= no_fft ) ms=0
+    call drft1_t ( rad_fft, 'a' )
+
+! apply convolution theorem
+
+    rad_fft1(1:2) = rad_fft(1:2) * p(1:2)
+    do i = 3, no_fft - 1, 2
+      rad_fft1(i+1) = rad_fft(i) * p(i+1)
+      rad_fft1(i)   = rad_fft(i) * p(i)
+    end do
+
+    call drft1_t ( rad_fft1, 's' )
+
+! interpolate to output grid
+
+    if ( present(drad_dx_out) ) then
+      call interpolateValues ( coeffs_3, angles(ffth:no_fft)-ang_step, &
+         & rad_fft1(ffth:no_fft), chi_out-init_angle, rad_out, &
+         & METHOD='S', EXTRAPOLATE='C', dyByDx=drad_dx_out )
+    else
+      call interpolateValues ( coeffs_3, angles(ffth:no_fft)-ang_step, &
+         & rad_fft1(ffth:no_fft), chi_out-init_angle, rad_out, &
+         & METHOD='S', EXTRAPOLATE='C' )
+    end if
+
+! determine if temperature derivatives are desired
+
+    if ( present(drad_dt_out) ) then
+
+! temperature derivatives calculation
+! compute the antenna derivative function
+
+      n_coeffs = size(di_dt,dim=2)
+
+! third term first (its fft is coefficient independent)
+! apply convolution theorem
+
+      rad_fft1(1:2) = 0.0_rp
+      do i = 3, no_fft-1, 2
+        rad_fft1(i+1) = rad_fft(i) * dp(i+1)
+        rad_fft1(i)   = rad_fft(i) * dp(i)
+      end do
+
+      call drft1_t ( rad_fft1, 's' )
+
+! interpolate to output grid
+
+      call interpolateValues ( coeffs_3, angles(ffth:no_fft)-ang_step, &
+         & rad_fft1(ffth:no_fft), chi_out-init_angle, drad_dt_temp, &
+         & METHOD='S', EXTRAPOLATE='C' )
+
+      do i = 1, n_coeffs
+
+        if ( present(di_dt_flag) ) then
+          if ( .not. di_dt_flag(i) ) cycle
+        end if
+
+! estimate the error compensation
+
+        k = maxloc(ddx_dxdt(:,i),1)
+
+! do i*ddx_dxdt piece
+
+        call interpolateValues ( coeffs_1, chi_in-init_angle, &
+        &    (rad_in-rad_in(k)) * ddx_dxdt(:,i), &
+        &    angles(ffth+zero_out_s+1:no_fft), &
+        &    rad_fft(ffth+zero_out_s+1:no_fft), METHOD='S',  &
+        &    EXTRAPOLATE='C' )
+
+! zero out the subsurface stuff
+
+        rad_fft(ffth:ffth+zero_out_s) = 0.0_rp
+
+
+! add in di_dt part
+
+        call interpolateValues ( coeffs_2, chi_in-init_angle, di_dt(:, i), &
+           & angles(ffth:no_fft), rad_fft1(ffth:no_fft), &
+           & METHOD='S', EXTRAPOLATE='C' )
+
+        rad_fft(ffth:no_fft) = rad_fft(ffth:no_fft) + rad_fft1(ffth:no_fft)
+
+! zero out this array above toa
+
+        rad_fft(ffth+zero_out_t + 1:no_fft) = 0.0_rp
+
+! resymetrize
+
+        rad_fft(1:ffth-1) = rad_fft(no_fft-1:no_fft-ffth+1:-1)
+
+! I don't know if this step is truly necessary but it rephases the radiances
+! identically to the prototype code
+
+        rad_fft = cshift(rad_fft,-1)
+
+! take fft of radiance array
+
+        call drft1_t ( rad_fft, 'a' )
+
+! do the rad_in * dx_dt term
+
+        call interpolateValues ( coeffs_1, chi_in-init_angle, &
+         &   (rad_in-rad_in(k))*dx_dt(:,i),angles(ffth+zero_out_s+1:no_fft), &
+         &   rad_fft1(ffth+zero_out_s+1:no_fft), METHOD='S', EXTRAPOLATE='C' )
+
+! zero out array below surf_angle
+
+        rad_fft1(ffth:ffth+zero_out_s) = 0.0_rp
+
+! resymetrize
+
+        rad_fft1(1:ffth-1) = rad_fft1(no_fft-1:no_fft-ffth+1:-1)
+
+! I don't know if this step is truly necessary but it rephases the radiances
+! identically to the prototype code
+
+        rad_fft1 = cshift(rad_fft1,-1)
+
+! take fft of radiance array
+
+        call drft1_t ( rad_fft1, 'a' )
+
+! apply convolution theorem
+
+        rad_fft(1:2) = rad_fft(1:2) * p(1:2)
+        do j = 3, no_fft-1, 2
+          rad_fft(j+1) = rad_fft(j) * p(j+1) - rad_fft1(j) * dp(j+1)
+          rad_fft(j)   = rad_fft(j) * p(j)   - rad_fft1(j) * dp(j)
+        end do
+
+! interplolate to chi_out
+
+        call drft1_t ( rad_fft, 's' )
+
+        call interpolateValues ( coeffs_3, angles(ffth:no_fft)-ang_step, &
+           & rad_fft(ffth:no_fft), chi_out-init_angle, drad_dt_out(:, i), &
+           & METHOD='S', EXTRAPOLATE='C' )
+
+! compute final result
+
+        drad_dt_out(:,i) = drad_dt_out(:,i) + dx_dt_out(:,i)*drad_dt_temp
+
+      end do               ! On i = 1, n_coeffs
+
+    end if
+
+    if ( present(drad_df_out) ) then
+
+! nominally the mixing ratio derivatives but can be used for any
+! quantity requiring a simple convolution.
+
+      n_coeffs = size(di_df,dim=2)
+
+      do i = 1, n_coeffs
+        if ( .not. di_df_flag(i) ) cycle
+        call interpolateValues ( coeffs_2, chi_in-init_angle, di_df(:, i), &
+        & angles(ffth:no_fft), rad_fft(ffth:no_fft), METHOD='S', &
+        & EXTRAPOLATE='C' )
+
+! mirror reflect this
+
+        rad_fft(1:ffth-1) = rad_fft(no_fft-1:no_fft-ffth+1:-1)
+
+! I don't know if this step is truly necessary but it rephases the radiances
+! identically to the prototype code
+
+        rad_fft = cshift(rad_fft,-1)
+
+! take fft of radiance array
+
+        call drft1_t ( rad_fft, 'a' )
+         
+
+! apply convolution theorem
+
+        rad_fft1(1:2) = rad_fft(1:2) * p(1:2)
+        do j = 3, no_fft-1, 2
+          rad_fft1(j+1) = rad_fft(j) * p(j+1)
+          rad_fft1(j)   = rad_fft(j) * p(j)
+        end do
+
+        call drft1_t ( rad_fft1, 's' )
+
+! interpolate to output grid
+
+        call interpolateValues ( coeffs_3, angles(ffth:no_fft)-ang_step, &
+        & rad_fft1(ffth:no_fft), chi_out-init_angle, drad_df_out(:, i), &
+        & METHOD='S', EXTRAPOLATE='C' )
+
+      end do
+
+    end if
+
+    init = no_fft
+
+    call interpolateArrayTeardown ( coeffs_1 )
+    call interpolateArrayTeardown ( coeffs_2 )
+    call interpolateArrayTeardown ( coeffs_3 )
+
+  contains
+
+    subroutine DRFT1_T ( A, Mode )
+    ! Call DRFT1 and test its status flag
+      use SineTables_m, only: CreateSineTable, LogSize_SineTable_R8, &
+        & SineTable_R8
+      real(r8) :: A(:)
+      character :: Mode
+      call createSineTable ( pwr - 2 )
+      call drft1 ( a, mode, pwr, logSize_SineTable_R8, sineTable_R8 )
+      if ( ms == -2 ) then
+        init = 0
+        call MLSMessage ( MLSMSG_Error, ModuleName, "Error in drft1" )
+      end if
+    end subroutine DRFT1_T
+
+  end subroutine Fov_Convolve
+
+! ===========================================     FOV_CONVOLVE_OLD  =====
+! Add the effects of antenna smearing to the radiance.
+
+  subroutine FOV_CONVOLVE_OLD ( EIL_ANGLE, RADIANCE, DELTA0, ITYPE, NP, &
+    &                           M, AntennaPattern, IER )
+
+    use AntennaPatterns_m, only: AntennaPattern_T
+    use MLSCommon, only: I4, R8
+
+    Integer(i4), intent(in) :: ITYPE, NP, M
+
+    Real(r8), intent(inout) :: EIL_ANGLE(:)
+    Real(r8), intent(inout) :: RADIANCE(:)
+    Real(r8), intent(in) :: DELTA0
+    type(antennaPattern_T), intent(in) :: AntennaPattern
+
+    Integer(i4), intent(out) :: IER
+
+    Integer(i4) :: I, J, NTR, IAS
+
+    ias = size(antennaPattern%aaap)/2
+
+    ntr = 2**m
+    call ftgrid ( eil_angle, radiance, delta0, antennaPattern%lambda, np, ntr )
+
+    j = ntr/2 + 2
+    do i = j, ntr
+      radiance(i) = radiance(ntr-i+2)
+    end do
+
+    i = itype - 1
+    if ( i  ==  0 ) then                               ! Straight data
+      call convolve ( Radiance, AntennaPattern%AAAP, M, Ias, ier )
+    else if ( i  ==  1 ) then                          ! First derivative
+      call convolve ( Radiance, AntennaPattern%D1AAP, M, Ias, ier )
+    else if ( i  ==  2 ) then                          ! Second derivative
+      call convolve ( Radiance, AntennaPattern%D2AAP, M, Ias, ier )
+    end if
+
+    return
+  contains
+! -----------------------------------------------     CONVOLVE     -----
+! This subroutine applies the convolution theorem
+
+    Subroutine CONVOLVE ( RADIANCE, AAAP, M, IAS, IERR )
+
+      use DFFT_M, only: DRFT1
+
+      real(r8), intent(inout) :: RADIANCE(:)
+      real(r8), intent(in) :: AAAP(*)
+      integer(i4), intent(in) :: M, IAS
+      integer(i4), intent(out) :: IERR
+      Integer, parameter :: MAXP=12, MAX2P=2**MAXP
+
+      Integer(i4), save :: INIT = 0, MS = 0
+      Integer(i4) :: ISTOP, M4, NTR, NTRH, I, J
+      Real(r8) :: CR, CI, DBLRAD(MAX2P)
+      Real(r8), save :: S(MAX2P)
+
+      ierr = 2
+      if ( maxp < m) return
+
+
+      m4 = m
+      ierr = 0
+      ntr = 2**m
+      ntrh = ntr / 2
+      dblrad(:ntr) = radiance(:ntr)
+      if ( init > 0 .and. init /= m) ms=0
+      call drft1 ( dblrad, 'a', m4, ms, s )
+      if ( ms == -2 ) then
+        init = 0
+        ierr=5
+      else
+        istop = min(ntrh,ias)
+        do i = 2, istop
+          j = 2*i-1
+          cr = dblrad(j)*aaap(j) -   dblrad(j+1)*aaap(j+1)
+          ci = dblrad(j)*aaap(j+1) + dblrad(j+1)*aaap(j)
+          dblrad(j) = cr
+          dblrad(j+1) = ci
+        end do
+        if ( ntrh > ias ) then
+          do i = ias+1,ntrh
+            j = 2*i-1
+            dblrad(j) = 0.0d0
+            dblrad(j+1) = 0.0d0
+          end do
+        end if
+        dblrad(1) = dblrad(1)*aaap(1)
+        dblrad(2) = dblrad(2)*aaap(2)
+        call drft1 ( dblrad, 's', m4, ms, s )
+        if ( ms == -2 ) then
+          init = 0
+          ierr = 6
+        else
+          init=m
+          radiance(:ntr) = dblrad(:ntr)
+        end if
+      end if
+
+      return
+
+    End subroutine CONVOLVE
+
+  ! -------------------------------------------------     FTGRID     -----
+  ! This subroutine performs the interpolation onto the computational grid
+  ! it uses cubic splines
+
+    subroutine FTGRID ( EIL_ANGLE, RADIANCE, DELTA0, XLAMDA, NP, NTR )
+
+      use D_CSPLINE_M, only: CSPLINE
+
+      Real(r8), intent(inout) :: EIL_ANGLE(:)
+      Real(r8), intent(inout) :: RADIANCE(:)
+      Real(r8), intent(in) :: DELTA0, XLAMDA
+      Integer(i4), intent(in) :: NP, NTR
+
+      Integer(i4) :: I, K1, KN, N, MP
+
+      Real(r8) :: X1, XN, R1,RN, V, OOX, PP, DEL
+      Real(r8) :: X(np), R(np)
+
+  !  Make sure the EIL_ANGLE is a Monotonically increasing array:
+
+      mp = 1
+      r(1) = radiance(1)
+      x(1) = eil_angle(1)
+      do i = 2, np
+        xn = eil_angle(i)
+        if ( xn > x(mp) ) then
+          mp = mp + 1
+          x(mp) = xn
+          r(mp) = radiance(i)
+        end if
+      end do
+
+      oox = 1.0_r8 / xlamda
+      pp = 0.185_r8 * oox
+      del = oox / ntr
+
+      do i = 1, ntr
+        v = delta0 - pp + del * (i - 1)            ! new code
+        eil_angle(i) = v
+        radiance(i) = 0.0
+      end do
+
+      k1 = 1
+      r1 = r(1)
+      x1 = x(1)
+      do while ( eil_angle(k1) <= x1 .and. k1 < ntr )
+        radiance(k1) = r1
+        k1 = k1 + 1
+      end do
+
+      kn = ntr
+      rn = r(mp)
+      xn = x(mp)
+      do while ( eil_angle(kn) >= xn .and. kn > 1 )
+        radiance(kn) = rn
+        kn = kn - 1
+      end do
+
+      n = kn - k1 + 1
+      call cspline ( x, eil_angle(k1:kn), r, radiance(k1:kn), mp, n )
+
+      return
+    end subroutine FTGRID
+  end subroutine FOV_CONVOLVE_OLD
+
+  logical function not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id: fov_convolve_m.f90,v 2.17 2005/06/22 18:08:18 pwagner Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
+end module Fov_Convolve_m
+! $Log: fov_convolve_m.f90,v $
+! Revision 2.17  2005/06/22 18:08:18  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.16  2004/02/12 02:20:07  vsnyder
+! Use SineTables_m for sine tables for FFTs
+!
+! Revision 2.15  2004/01/29 18:49:03  vsnyder
+! Change A from assumed-size to assumed-shape array
+!
+! Revision 2.14  2003/02/07 00:05:38  bill
+! fixed temperature derivative spike at high alitudes
+!
+! Revision 2.13  2002/11/29 22:46:06  livesey
+! Incorporated Van's bug fixes
+!
+! Revision 2.12  2002/11/23 02:49:07  vsnyder
+! Use pre-computed interpolation coefficients
+!
+! Revision 2.11  2002/10/10 19:36:22  vsnyder
+! Add di_dt_flag
+!
+! Revision 2.10  2002/10/08 17:08:03  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.9  2002/10/02 21:07:00  vsnyder
+! Use subscript section notation to get rid of a few array constructors
+!
+! Revision 2.8  2002/09/07 00:53:25  vsnyder
+! Move FFT code to dfft_m.  Move convolve and ftgrid inside of fov_convolve_old.
+! Move USEs from module scope to procedure scope.  Cosmetic changes.
+! Copyright notice.
+!
+! Revision 2.7  2002/09/05 20:48:29  livesey
+! Fixed (i.e. added) handling of vmr derivative flags.
+!
+! Revision 2.6  2002/08/02 00:12:19  bill
+! just testing
+!
+! Revision 2.5  2002/07/08 17:45:40  zvi
+! Replace local pointers by automatic arrays
+!
+! Revision 2.4  2002/06/28 11:06:48  zvi
+! Add computing of dI/d(Chi) on output grid
+!
+! Revision 2.3  2002/06/19 11:00:32  zvi
+! Some cosmetic corrections
+!
+! Revision 2.2 2002/06/17 16:31:21 bill
+! Add zvis modification, rename module
+!
+! Revision 2.0  2001/09/17 20:26:26  livesey
+! New forward model
+!
+! Revision 1.12  2001/05/02 20:49:23  zvi
+! Cleaning up code
+!
+! Revision 1.11  2001/04/10 01:16:34  livesey
+! Tidied up convolution
+!
+! Revision 1.10  2001/04/09 23:32:29  zvi
+! Correcting a small error in radiances folding code
+!
+! Revision 1.9  2001/04/06 01:37:58  zvi
+! Put (*) (Assume size) status on CONVOLVE & DFFT arrays..
+!
+! Revision 1.8  2001/04/05 22:54:39  vsnyder
+! Use AntennaPatterns_M
+!
+! Revision 1.7  2001/03/31 23:40:55  zvi
+! Eliminate l2pcdim (dimension parameters) move to allocatable ..
+!
+! Revision 1.6  2001/03/29 08:51:01  zvi
+! Changing the (*) toi (:) everywhere
+!
+! Revision 1.5  2001/02/26 09:01:16  zvi
+! New version - Using "Super-Structures"
+!
+! Revision 1.1  2000/05/04 18:12:05  vsnyder
+! Initial conversion to Fortran 90
+@
+
+
+2.17
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d20 1
+a20 1
+       "$RCSfile: $"
+d552 1
+a552 1
+       "$Id: $"
+d560 3
+@
+
+
+2.16
+log
+@Use SineTables_m for sine tables for FFTs
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d18 3
+a20 6
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+    & "$Id: fov_convolve_m.f90,v 2.15 2004/01/29 18:49:03 vsnyder Exp $"
+  character(len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName = &
+    & "$RCSfile: fov_convolve_m.f90,v $"
+d550 5
+d560 3
+@
+
+
+2.15
+log
+@Change A from assumed-size to assumed-shape array
+@
+text
+@d12 1
+a12 1
+    & "$Id: fov_convolve_m.f90,v 2.14 2003/02/07 00:05:38 bill Exp $"
+a91 1
+    real(r8), save :: S(no_fft)
+d360 2
+d364 2
+a365 1
+      call drft1 ( a, mode, pwr, ms, s )
+d550 3
+@
+
+
+2.14
+log
+@fixed temperature derivative spike at high alitudes
+@
+text
+@d12 1
+a12 1
+    & "$Id: fov_convolve_m.f90,v 2.13 2002/11/29 22:46:06 livesey Exp $"
+d361 1
+a361 1
+      real(r8) :: A(*)
+d548 3
+@
+
+
+2.13
+log
+@Incorporated Van's bug fixes
+@
+text
+@d12 1
+a12 1
+    & "$Id: fov_convolve_m.f90,v 2.12 2002/11/23 02:49:07 vsnyder Exp $"
+d80 1
+a80 1
+    integer(i4) :: i, j, k, ffth, n_coeffs, zero_out
+d84 1
+a84 1
+    type(coefficients) :: Coeffs_1 ! for chi_in-init_angle -> angles(ffth+zero_out+1:no_fft)
+d129 5
+a133 2
+      call hunt ( angles(ffth:no_fft), surf_angle-init_angle, zero_out )
+      call interpolateArraySetup ( chi_in-init_angle, angles(ffth+zero_out+1:no_fft), &
+d221 5
+a225 3
+        call interpolateValues ( coeffs_1, chi_in-init_angle, (rad_in-rad_in(k)) * &
+        &    ddx_dxdt(:,i), angles(ffth+zero_out+1:no_fft), &
+        &    rad_fft(ffth+zero_out+1:no_fft), METHOD='S', EXTRAPOLATE='C' )
+d229 2
+a230 1
+        rad_fft(ffth:ffth+zero_out) = 0.0_rp
+d235 2
+a236 2
+           & angles(ffth:no_fft), rad_fft1(ffth:no_fft), METHOD='S', &
+           & EXTRAPOLATE='C' )
+d240 4
+d259 3
+a261 3
+        call interpolateValues ( coeffs_1, chi_in-init_angle, (rad_in-rad_in(k)) * &
+         &   dx_dt(:,i), angles(ffth+zero_out+1:no_fft), &
+         &   rad_fft1(ffth+zero_out+1:no_fft), METHOD='S', EXTRAPOLATE='C' )
+d265 1
+a265 1
+        rad_fft1(ffth:ffth+zero_out) = 0.0_rp
+d329 1
+d548 3
+@
+
+
+2.12
+log
+@Use pre-computed interpolation coefficients
+@
+text
+@d12 1
+a12 1
+    & "$Id: fov_convolve_m.f90,v 2.11 2002/10/10 19:36:22 vsnyder Exp $"
+d127 7
+a133 2
+    call interpolateArraySetup ( chi_in-init_angle, angles(ffth+zero_out+1:no_fft), &
+      & METHOD='S', coeffs=coeffs_1, EXTRAPOLATE='C' )
+a188 4
+! find the surface dimension
+
+      call hunt ( angles(ffth:no_fft), surf_angle-init_angle, zero_out )
+
+d537 3
+@
+
+
+2.11
+log
+@Add di_dt_flag
+@
+text
+@d12 1
+a12 1
+    & "$Id: fov_convolve_m.f90,v 2.10 2002/10/08 17:08:03 pwagner Exp $"
+d22 4
+a25 4
+    subroutine Fov_Convolve ( AntennaPattern, chi_in, rad_in, chi_out,   &     
+             & rad_out, req, rsc, earth_frac, surf_angle, di_dt, dx_dt,  &     
+             & ddx_dxdt, dx_dt_out, di_dt_flag, drad_dt_out, di_df,      &     
+             & di_df_flag,  drad_df_out, drad_dx_out )
+a27 1
+    use D_CSPLINE_M, only: CSPLINE
+d29 3
+a31 2
+    use MLSNumerics, only: interpolateValues, hunt
+    use MLSCommon, only: I4, r4, R8, rp
+d84 4
+d125 9
+d136 1
+a136 1
+    call interpolateValues ( chi_in-init_angle, rad_in, angles(ffth:no_fft),  &
+d166 1
+a166 1
+      call interpolateValues ( angles(ffth:no_fft)-ang_step, &
+d170 1
+a170 1
+      call interpolateValues ( angles(ffth:no_fft)-ang_step, &
+d201 1
+a201 1
+      call interpolateValues ( angles(ffth:no_fft)-ang_step, &
+d217 1
+a217 1
+        call interpolateValues ( chi_in-init_angle, (rad_in-rad_in(k)) * &
+d227 1
+a227 1
+        call interpolateValues ( chi_in-init_angle, di_dt(:, i), &
+d248 1
+a248 1
+        call interpolateValues ( chi_in-init_angle, (rad_in-rad_in(k)) * &
+d281 1
+a281 1
+        call interpolateValues ( angles(ffth:no_fft)-ang_step, &
+d302 1
+a302 1
+        call interpolateValues ( chi_in-init_angle, di_df(:, i), &
+d331 1
+a331 1
+        call interpolateValues ( angles(ffth:no_fft)-ang_step, &
+d341 4
+d536 3
+@
+
+
+2.10
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d12 1
+a12 1
+    & "$Id: fov_convolve_m.f90,v 2.9 2002/10/02 21:07:00 vsnyder Exp $"
+d22 4
+a25 4
+    subroutine Fov_Convolve ( AntennaPattern, chi_in, rad_in, chi_out, rad_out, &
+             & req, rsc, earth_frac, surf_angle, di_dt, dx_dt, ddx_dxdt,        &
+             & dx_dt_out, drad_dt_out, di_df, di_df_flag, drad_df_out,          &
+             & drad_dx_out )
+d61 2
+d194 4
+d519 3
+@
+
+
+2.9
+log
+@Use subscript section notation to get rid of a few array constructors
+@
+text
+@d12 1
+a12 1
+    & "$Id: fov_convolve_m.f90,v 2.8 2002/09/07 00:53:25 vsnyder Exp $"
+d16 1
+d507 4
+d513 3
+@
+
+
+2.8
+log
+@Move FFT code to dfft_m.  Move convolve and ftgrid inside of fov_convolve_old.
+Move USEs from module scope to procedure scope.  Cosmetic changes.
+Copyright notice.
+@
+text
+@d12 1
+a12 1
+    & "$Id: fov_convolve_m.f90,v 2.7 2002/09/05 20:48:29 livesey Exp $"
+d19 1
+a19 1
+! This subprogram adds the effects of antenna smearing to the radiance.
+d90 1
+a90 1
+    real(r8) :: drad_dt_temp(SIZE(chi_out))
+d105 1
+a105 1
+    j = MIN(no_fft,SIZE(antennaPattern%aaap))
+d116 1
+a116 1
+    init_angle = ASIN((r_eq - e_frac*SQRT(r_sc**2-r_eq**2)/aaap_step)/r_sc)
+d125 1
+a125 1
+    rad_fft(1:ffth-1) = (/(rad_fft(no_fft-i),i = 1, ffth-1)/)
+d166 1
+a166 1
+      n_coeffs = SIZE(di_dt,dim=2)
+d215 1
+a215 1
+        rad_fft(1:ffth-1) = (/(rad_fft(no_fft-i),i = 1, ffth-1)/)
+d238 1
+a238 1
+        rad_fft1(1:ffth-1) = (/(rad_fft1(no_fft-i),i=1,ffth-1)/)
+d278 1
+a278 1
+      n_coeffs = SIZE(di_df,dim=2)
+d288 1
+a288 1
+        rad_fft(1:ffth-1) = (/(rad_fft(no_fft-i),i=1, ffth-1)/)
+d337 1
+a337 1
+! This subprogram adds the effects of antenna smearing to the radiance.
+d508 5
+@
+
+
+2.7
+log
+@Fixed (i.e. added) handling of vmr derivative flags.
+@
+text
+@d1 4
+a4 1
+MODULE fov_convolve_m
+d6 4
+a9 7
+  USE AntennaPatterns_m, only: AntennaPattern_T
+  USE D_CSPLINE_M, only: CSPLINE
+  USE MLSNumerics, ONLY: interpolatevalues, hunt
+  USE MLSCommon, ONLY: I4, r4, R8, rp
+  USE MLSMessageModule, only: MLSMessage, MLSMSG_Error
+ 
+  IMPLICIT none
+d11 5
+a15 4
+  CHARACTER (LEN=256) :: Id = &
+     "$Id: fov_convolve_m.f90,v 2.6 2002/08/02 00:12:19 bill Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName = &
+     "$RCSfile: fov_convolve_m.f90,v $"
+d17 2
+a18 2
+ CONTAINS
+! ============================================  fov_convolve =====
+d20 13
+a32 5
+!
+  SUBROUTINE fov_convolve(AntennaPattern,chi_in,rad_in,chi_out,rad_out, &
+           & req,rsc,earth_frac,surf_angle,di_dt,dx_dt,ddx_dxdt,dx_dt_out, &
+           & drad_dt_out,di_df,di_df_flag,drad_df_out,drad_dx_out)
+!
+d34 10
+a43 10
+!
+  Type(antennaPattern_T), intent(in) :: AntennaPattern
+!
+  REAL(rp), INTENT(in) :: chi_in(:)! inputted pointing angles radians
+  REAL(rp), INTENT(in) :: rad_in(:)! inputted radiances
+  REAL(rp), INTENT(in) :: chi_out(:)! outputted pointing angles radians
+!
+  REAL(rp), OPTIONAL, INTENT(in) :: req ! equivalent earth radius
+  REAL(rp), OPTIONAL, INTENT(in) :: rsc ! spacecraft radius
+  REAL(rp), OPTIONAL, INTENT(in) :: earth_frac ! fraction of earth in total
+d49 17
+a65 17
+!
+  REAL(rp), OPTIONAL, INTENT(in) :: surf_angle ! An angle that defines the
+!                                   Earth surface.
+  REAL(rp), OPTIONAL, INTENT(in) :: di_dt(:,:) ! derivative of radiance wrt
+!                                   temperature on chi_in
+  REAL(rp), OPTIONAL, INTENT(in) :: dx_dt(:,:) ! derivative of angle wrt
+!                                   temperature on chi_in
+  REAL(rp), OPTIONAL, INTENT(in) :: ddx_dxdt(:,:) ! 2nd derivative wrt angle
+!                                   temperature on chi_in
+  REAL(rp), OPTIONAL, INTENT(in) :: dx_dt_out(:,:) ! derivative of angle wrt
+!                                   temperature on chi_out
+  REAL(rp), OPTIONAL, INTENT(in) :: di_df(:,:) ! mixing ratio derivatives or
+!                                   any parameter where a simple convolution
+!                                   will suffice
+  logical, optional, intent(in) :: di_df_flag(:) ! Flag to indicate which of the 
+!                                   above are to be calculated
+!
+d67 8
+a74 8
+!
+  REAL(rp), INTENT(out) :: rad_out(:) ! outputted radiances
+  REAL(rp), OPTIONAL, INTENT(out) :: drad_dx_out(:) ! outputted derivative 
+!                                    of radiance wrt to Chi_out
+  REAL(rp), OPTIONAL, INTENT(out) :: drad_dt_out(:,:) ! outputted radiance
+!                                    derivatives wrt temperature.
+  REAL(rp), OPTIONAL, INTENT(out) :: drad_df_out(:,:) ! outputted radiance
+!                                    derivatives for inputted di_df.
+d76 5
+a80 6
+!
+  INTEGER(i4) :: i, j, k, ffth, n_coeffs, zero_out
+  INTEGER(i4) :: peak_grad(1)
+!
+  REAL(r8) :: r_eq, r_sc, e_frac, init_angle, aaap_step, ang_step
+!
+a81 4
+!
+  INTEGER, PARAMETER :: pwr=12, no_fft=2**pwr
+  INTEGER(i4), SAVE :: INIT = 0, MS = 0
+  REAL(r8), SAVE :: S(no_fft)
+d83 15
+a97 2
+  REAL(r8), DIMENSION(no_fft) :: p, dp, angles, rad_fft, rad_fft1
+  
+a98 9
+  REAL(r8) :: drad_dt_temp(SIZE(chi_out))
+!
+  r_eq = 6371.0_rp
+  r_sc = r_eq + 705.0_rp
+  e_frac = 0.185
+  IF (PRESENT(req)) r_eq = req
+  IF (PRESENT(rsc)) r_sc = rsc
+  IF (PRESENT(earth_frac)) e_frac = earth_frac / 2.0
+!
+d100 11
+a110 11
+!
+  p = 0.0_r8
+  dp = 0.0_r8
+  aaap_step = antennaPattern%lambda
+  ang_step = 1.0_r8 / (no_fft * aaap_step)
+  j = MIN(no_fft,SIZE(antennaPattern%aaap))
+  p(1:j) = antennaPattern%aaap(1:j)
+  dp(1:j) = antennaPattern%d1aap(1:j)
+!
+! p & dp are really a complex numbers masquerading as a real ones
+!
+d112 6
+a117 6
+!
+  ffth = no_fft / 2
+  angles = (/(i*ang_step,i=1,no_fft)/)
+  angles = angles - angles(ffth+1)
+  init_angle = ASIN((r_eq - e_frac*SQRT(r_sc**2-r_eq**2)/aaap_step)/r_sc)
+!
+d119 4
+a122 4
+!
+  CALL interpolatevalues(chi_in-init_angle,rad_in,angles(ffth:no_fft), &
+     & rad_fft(ffth:no_fft),METHOD='S',EXTRAPOLATE='C')
+!
+d124 3
+a126 3
+!
+  rad_fft(1:ffth-1) = (/(rad_fft(no_fft-i),i = 1, ffth-1)/)
+!
+d129 3
+a131 3
+!
+  rad_fft = CSHIFT(rad_fft,-1)
+!
+d133 4
+a136 8
+!
+  IF (init > 0 .and. init /= no_fft) ms=0
+  CALL drft1(rad_fft,'a',pwr,ms,s)
+  if(ms == -2) then
+    init=0
+    call MLSMessage ( MLSMSG_Error, ModuleName,"Error in drft1")
+  endif
+!
+d138 9
+a146 13
+!
+  rad_fft1(1:2) = rad_fft(1:2) * p(1:2)
+  DO i = 3, no_fft - 1, 2
+    rad_fft1(i+1) = rad_fft(i) * p(i+1)
+    rad_fft1(i)   = rad_fft(i) * p(i)
+  end do
+!
+  CALL drft1(rad_fft1,'s',pwr,ms,s)
+  if(ms == -2) then
+    init=0
+    call MLSMessage ( MLSMSG_Error, ModuleName,"Error in drft1")
+  endif
+!
+d148 11
+a158 11
+!
+  IF ( PRESENT(drad_dx_out) ) THEN
+    CALL interpolatevalues(angles(ffth:no_fft)-ang_step, &
+       & rad_fft1(ffth:no_fft),chi_out-init_angle,rad_out,&
+       & METHOD='S',EXTRAPOLATE='C',dyByDx=drad_dx_out)
+  ELSE
+    CALL interpolatevalues(angles(ffth:no_fft)-ang_step, &
+       & rad_fft1(ffth:no_fft),chi_out-init_angle,rad_out,&
+       & METHOD='S',EXTRAPOLATE='C')
+  ENDIF
+!
+d160 3
+a162 3
+!
+  IF (PRESENT(drad_dt_out)) THEN
+!
+d165 3
+a167 3
+!
+    n_coeffs = SIZE(di_dt,dim=2)
+!
+d169 3
+a171 3
+!
+    CALL hunt(angles(ffth:no_fft),surf_angle-init_angle,zero_out)
+!
+d174 9
+a182 13
+!
+    rad_fft1(1:2) = 0.0_rp
+    DO i = 3, no_fft-1, 2
+      rad_fft1(i+1) = rad_fft(i) * dp(i+1)
+      rad_fft1(i)   = rad_fft(i) * dp(i)
+    end do
+!
+    CALL drft1(rad_fft1,'s',pwr,ms,s)
+    if(ms == -2) then
+      init=0
+      call MLSMessage ( MLSMSG_Error, ModuleName,"Error in drft1")
+    endif
+!
+d184 7
+a190 7
+!
+    CALL interpolatevalues(angles(ffth:no_fft)-ang_step, &
+       & rad_fft1(ffth:no_fft), chi_out-init_angle,drad_dt_temp, &
+       & METHOD='S',EXTRAPOLATE='C')
+!
+    DO i = 1, n_coeffs
+!
+d192 3
+a194 4
+!
+      peak_grad = MAXLOC(ddx_dxdt(:,i))
+      k = peak_grad(1)
+!
+d196 5
+a200 5
+!
+      CALL interpolatevalues(chi_in-init_angle,(rad_in-rad_in(k)) * &
+      &    ddx_dxdt(:,i), angles(ffth+zero_out+1:no_fft),  &
+      &    rad_fft(ffth+zero_out+1:no_fft), METHOD='S',EXTRAPOLATE='C')
+!
+d202 3
+a204 3
+!
+      rad_fft(ffth:ffth+zero_out) = 0.0_rp
+!
+d206 7
+a212 7
+!
+      CALL interpolatevalues(chi_in-init_angle, di_dt(:,i), &
+         & angles(ffth:no_fft), rad_fft1(ffth:no_fft), METHOD='S', &
+         & EXTRAPOLATE='C')
+!
+      rad_fft(ffth:no_fft) = rad_fft(ffth:no_fft) + rad_fft1(ffth:no_fft)
+!
+d214 3
+a216 3
+!
+      rad_fft(1:ffth-1) = (/(rad_fft(no_fft-i),i = 1, ffth-1)/)
+!
+d219 3
+a221 3
+!
+      rad_fft = CSHIFT(rad_fft,-1)
+!
+d223 3
+a225 7
+!
+      CALL drft1(rad_fft,'a',pwr,ms,s)
+      if(ms == -2) then
+        init=0
+        call MLSMessage ( MLSMSG_Error, ModuleName,"Error in drft1")
+      endif
+!
+d227 5
+a231 5
+!
+      CALL interpolatevalues(chi_in-init_angle,(rad_in-rad_in(k)) * &
+       &   dx_dt(:,i), angles(ffth+zero_out+1:no_fft), &
+       &   rad_fft1(ffth+zero_out+1:no_fft), METHOD='S', EXTRAPOLATE='C')
+!
+d233 3
+a235 3
+!
+      rad_fft1(ffth:ffth+zero_out) = 0.0_rp
+!
+d237 3
+a239 3
+!
+      rad_fft1(1:ffth-1) = (/(rad_fft1(no_fft-i),i=1,ffth-1)/)
+!
+d242 3
+a244 3
+!
+      rad_fft1 = CSHIFT(rad_fft1,-1)
+!
+d246 3
+a248 7
+!
+      CALL drft1(rad_fft1,'a',pwr,ms,s)
+      if(ms == -2) then
+        init=0
+        call MLSMessage ( MLSMSG_Error, ModuleName,"Error in drft1")
+      endif
+!
+d250 7
+a256 7
+!
+      rad_fft(1:2) = rad_fft(1:2) * p(1:2)
+      DO j = 3, no_fft-1, 2
+        rad_fft(j+1) = rad_fft(j) * p(j+1) - rad_fft1(j) * dp(j+1)
+        rad_fft(j)   = rad_fft(j) * p(j)   - rad_fft1(j) * dp(j)
+      end do
+!
+d258 7
+a264 11
+!
+      CALL drft1(rad_fft,'s',pwr,ms,s)
+      if(ms == -2) then
+        init=0
+        call MLSMessage ( MLSMSG_Error, ModuleName,"Error in drft1")
+      endif
+ 
+      CALL interpolatevalues(angles(ffth:no_fft)-ang_step, &
+         & rad_fft(ffth:no_fft), chi_out-init_angle, drad_dt_out(:,i), &
+         & METHOD='S',EXTRAPOLATE='C')
+!
+d266 9
+a274 9
+!
+      drad_dt_out(:,i) = drad_dt_out(:,i) + dx_dt_out(:,i)*drad_dt_temp
+!
+    end do               ! On i = 1, n_coeffs
+!
+  ENDIF
+!
+  IF (PRESENT(drad_df_out)) THEN
+!
+d277 9
+a285 9
+!
+    n_coeffs = SIZE(di_df,dim=2)
+!
+    DO i = 1, n_coeffs
+      if ( .not. di_df_flag(i) ) cycle
+      CALL interpolatevalues(chi_in-init_angle,di_df(:,i), &
+      & angles(ffth:no_fft), rad_fft(ffth:no_fft),METHOD='S', &
+      & EXTRAPOLATE='C')
+!
+d287 3
+a289 3
+!
+      rad_fft(1:ffth-1) = (/(rad_fft(no_fft-i),i=1, ffth-1)/)
+!
+d292 3
+a294 3
+!
+      rad_fft = CSHIFT(rad_fft,-1)
+!
+d296 3
+a298 3
+!
+      CALL drft1(rad_fft,'a',pwr,ms,s)
+!
+d300 15
+a314 5
+!
+      rad_fft1(1:2) = rad_fft(1:2) * p(1:2)
+      DO j = 3, no_fft-1, 2
+        rad_fft1(j+1) = rad_fft(j) * p(j+1)
+        rad_fft1(j)   = rad_fft(j) * p(j)
+d316 19
+a334 16
+!
+      CALL drft1(rad_fft1,'s',pwr,ms,s)
+!
+! interpolate to output grid
+!
+      CALL interpolatevalues(angles(ffth:no_fft)-ang_step, &
+      & rad_fft1(ffth:no_fft), chi_out-init_angle,drad_df_out(:,i), &
+      & METHOD='S',EXTRAPOLATE='C')
+!
+    end do
+!
+  ENDIF
+!
+  init = no_fft
+ 
+ END SUBROUTINE fov_convolve
+d338 7
+a344 4
+!
+  SUBROUTINE FOV_CONVOLVE_OLD(EIL_ANGLE, RADIANCE, DELTA0, ITYPE, NP, &
+ &                        M, AntennaPattern, IER )
+!
+d357 1
+a357 1
+!
+d359 2
+a360 2
+    call ftgrid(eil_angle,radiance,delta0,antennaPattern%lambda,np,ntr)
+!
+d365 1
+a365 1
+!
+d367 6
+a372 6
+    if (i  ==  0) then                               ! Straight data
+      call convolve(Radiance,AntennaPattern%AAAP,M,Ias,ier)
+    else if (i  ==  1) then                          ! First derivative
+      call convolve(Radiance,AntennaPattern%D1AAP,M,Ias,ier)
+    else if (i  ==  2) then                          ! Second derivative
+      call convolve(Radiance,AntennaPattern%D2AAP,M,Ias,ier)
+d374 3
+a376 5
+!
+    Return
+  End subroutine FOV_CONVOLVE_OLD
+! *****     Private procedures     *************************************
+!
+a378 16
+!
+  Subroutine CONVOLVE ( RADIANCE, AAAP, M, IAS, IERR )
+    real(r8), intent(inout) :: RADIANCE(:)
+    real(r8), intent(in) :: AAAP(*)
+    integer(i4), intent(in) :: M, IAS
+    integer(i4), intent(out) :: IERR
+    Integer, parameter :: MAXP=12, MAX2P=2**MAXP
+!
+    Integer(i4), save :: INIT = 0, MS = 0
+    Integer(i4) :: ISTOP, M4, NTR, NTRH, I, J
+    Real(r8) :: CR, CI, DBLRAD(MAX2P)
+    Real(r8), save :: S(MAX2P)
+!
+    ierr = 2
+    if(maxp < m) return
+!
+d380 32
+a411 21
+    m4 = m
+    ierr = 0
+    ntr = 2**m
+    ntrh = ntr / 2
+    dblrad(:ntr) = radiance(:ntr)
+    if (init > 0 .and. init /= m) ms=0
+    call drft1 ( dblrad, 'a', m4, ms, s )
+    if(ms == -2) then
+      init=0
+      ierr=5
+    else
+      istop = min(ntrh,ias)
+      do i = 2, istop
+        j = 2*i-1
+        cr = dblrad(j)*aaap(j) -   dblrad(j+1)*aaap(j+1)
+        ci = dblrad(j)*aaap(j+1) + dblrad(j+1)*aaap(j)
+        dblrad(j) = cr
+        dblrad(j+1) = ci
+      end do
+      if(ntrh > ias) then
+        do i = ias+1,ntrh
+d413 4
+a416 2
+          dblrad(j) = 0.0d0
+          dblrad(j+1) = 0.0d0
+d418 72
+a489 14
+      endif
+      dblrad(1) = dblrad(1)*aaap(1)
+      dblrad(2) = dblrad(2)*aaap(2)
+      call drft1 ( dblrad, 's', m4, ms, s )
+      if(ms == -2) then
+        init=0
+        ierr = 6
+      else
+        init=m
+        radiance(:ntr) = dblrad(:ntr)
+      endif
+    endif
+!
+    Return
+d491 7
+a497 7
+  End subroutine CONVOLVE
+!
+! -------------------------------------------------     FTGRID     -----
+! This subroutine performs the interpolation onto the computational grid
+! it uses cubic splines
+!
+  Subroutine FTGRID ( EIL_ANGLE, RADIANCE, DELTA0, XLAMDA, NP, NTR )
+d499 2
+a500 4
+    Real(r8), intent(inout) :: EIL_ANGLE(:)
+    Real(r8), intent(inout) :: RADIANCE(:)
+    Real(r8), intent(in) :: DELTA0, XLAMDA
+    Integer(i4), intent(in) :: NP, NTR
+d502 3
+a504 50
+    Integer(i4) :: I, K1, KN, N, MP
+!
+    Real(r8) :: X1, XN, R1,RN, V, OOX, PP, DEL
+    Real(r8) :: X(np), R(np)
+!
+!  Make sure the EIL_ANGLE is a Monotonically increasing array:
+!
+    mp = 1
+    r(1) = radiance(1)
+    x(1) = eil_angle(1)
+    do i = 2, np
+      xn = eil_angle(i)
+      if(xn > x(mp)) then
+        mp = mp + 1
+        x(mp) = xn
+        r(mp) = radiance(i)
+      endif
+    end do
+!
+    oox = 1.0_r8 / xlamda
+    pp = 0.185_r8 * oox
+    del = oox / ntr
+!
+    do i = 1, ntr
+      v = delta0 - pp + del * (i - 1)            ! new code
+      eil_angle(i) = v
+      radiance(i) = 0.0
+    end do
+!
+    k1 = 1
+    r1 = r(1)
+    x1 = x(1)
+    do while ( eil_angle(k1) <= x1 .and. k1 < ntr )
+      radiance(k1) = r1
+      k1 = k1 + 1
+    end do
+!
+    kn = ntr
+    rn = r(mp)
+    xn = x(mp)
+    do while ( eil_angle(kn) >= xn.and.kn > 1 )
+      radiance(kn) = rn
+      kn = kn - 1
+    end do
+!
+    n = kn - k1 + 1
+    call cspline(x, eil_angle(k1:kn), r, radiance(k1:kn), mp, n)
+!
+    return
+  End subroutine FTGRID
+d506 4
+a510 535
+!=====================================================================
+!=================== Coversion of the f77 fft.f to f90 ===============
+!  The JPL Double Precision FFT Package.
+!---------------------------------------------------------------------
+!
+      SUBROUTINE DRFT1 (A,MODE,M,MS,S)
+!
+!>> 1994-11-11 DRFT1  Krogh   Declared all vars.
+!>> 1994-10-20 DRFT1 Krogh  Changes to use M77CON
+!>> 1989-05-07 DRFT1 FTK & CLL
+!>> 1989-04-21 FTK & CLL
+!     .  Copyright (C) 1989, California Institute of Technology.
+!     .  U. S. Government sponsorship under
+!     .  NASA contract NAS7-918 is acknowledged.
+!
+!     This subroutine computes Fourier transforms of real data using
+!     the Cooley-Tukey fast Fourier transform.
+!
+!     Variables in the calling sequence have the following types
+      DOUBLE PRECISION A(*), S(*)
+      INTEGER          M, MS
+      CHARACTER        MODE
+!
+!     Programmed by Fred T. Krogh at the Jet Propulsion Laboratory,
+!     Pasadena, Calif.   August 1, 1969.
+!     Revised for portability by Krogh -- January 22, 1988
+!
+!     In describing the usage the following notation is used
+!     N = 2 ** M
+!     W = EXP(2*PI*I/N), where I = SQRT(-1) and PI = 3.14159...
+!
+!     The usage is as follows
+!
+! A() is an array of function values if one is doing Fourier analysis,
+!  and is an array of Fourier coefficients if one is doing Fourier
+!  synthesis.  In our description here we assume that A is a real
+!  array with dimension A(N) when A contains the real data, X, and
+!  that A is a complex array with dimension A(N/2) when A contains
+!  complex Fourier coefficients, C.  (C(k) for k > N/2 need not be
+!  saved since for 0 < k < N, C(N-k) = conjugate of C(k).  It is
+!  assumed that the imaginary part of a complex number is stored
+!  in the cell immediately following its real part, except that
+!  A(1) = C(0), and A(2) = C(N/2).  This is possible since these
+!  values of C are real and by doing this both X and C require the
+!  same storage in A. Of course the storage required for A can be
+!  reserved by the user in any way that works.
+!
+! MODE  Selects Synthesis or Analysis.
+!  If MODE = 'A' or 'a', do Fourier analysis, which amounts to setting
+!  C(k) = sum for j=0 to N-1 of X(j)*T(M,j,k), for k = 0, N/2
+!  with  T(M,j,k) = (1/N) * W ** (-j*k).
+!  If MODE = 'S' or 's', do Fourier synthesis, which amounts to setting
+!  X(j) = sum for k=0 to N-1 of C(k)*T(M,j,k), for j = 0, N - 1
+!  with  T(M,j,k) = W ** (j*k)
+!  (Recall that C(N-k) is the conjugate of C(k).)
+!
+! M is used to indicate N = 2**M, the number of real points.  The
+!  number of points must satisfy 1 .le. N .le. 2**21.
+!  M = 0 gives an immediate return.
+!
+! MS gives the state of the sine table.  If MS > 0, there are NT =
+!    2 ** (MS-2) good entries in the sine table.  On the initial call,
+!    MS must be set to 0, and when the return is made, it will be set
+!    to M, which is the value of MS required for computing a
+!    transform of size N.  If MS = -1, the sine table will be computed
+!    as for the case MS = 0, and THEN a return to the user will be made
+!    with MS set as before, but no transform will be computed.  This
+!    option is useful if the user would like access to the sine table
+!    before computing the FFT.
+!    On detected errors the error message subrs are called and
+!    execution stops.  If the user overrides the stop to cause
+!    continuation, THEN this subr will return with MS = -2.
+!
+! S() is a vector, S(j) = sin(pi*j/2*NT)), j = 1, 2, ..., NT-1, where
+!  NT is defined in the description of MS above.  S is computed by the
+!  subroutine if M .gt. MS.  (If S is altered, set MS=0 so that S
+!  is recomputed.)
+!
+!     ------------------------------------------------------------------
+!                Notes on COMMON, PARAMETER's, and local variables
+!
+!     MMAX is the largest value allowed for M
+!     The dimension of KE must be at least as large as MMAX-1.
+!     The named common CDFFTC is used for communication between this
+!     subroutine and the subroutine DFFT which computes a one
+!     dimensional complex Fourier transform and computes the sine table.
+!     The use of the variables in CDFFTC is contained in the listing
+!     of DFFT.
+!
+!     ANAL = .TRUE. when doing Fourier analysis, and .false. otherwise.
+!
+!     N1 = 2 ** M
+!     ------------------------------------------------------------------
+!--D replaces "?": ?RFT1, ?FFT, C?FFTC
+!     Both versions use ERMSG, IERM1
+!     and need ERFIN, IERV1
+!     ------------------------------------------------------------------
+      INTEGER MMAX
+      INTEGER I, II, II1, II2, IR, IR1, IR2
+      INTEGER J, JDIF, JJ
+      INTEGER K1, K1N, KN2
+      INTEGER L
+      INTEGER MA, MSI
+      INTEGER N1, N1P, KEDIM
+ 
+      DOUBLE PRECISION FN, HALF
+      DOUBLE PRECISION T, TI, TT, TTI, TWO, WI, WR
+ 
+      LOGICAL ANAL
+ 
+      PARAMETER (TWO = 2.0D0)
+      PARAMETER (HALF = 0.5D0)
+      EQUIVALENCE (ILAST, N1)
+! Common variables
+      PARAMETER (KEDIM=20)
+      LOGICAL NEEDST
+      INTEGER MT, NT, MM, KS, ILAST, KE(KEDIM), KEE(KEDIM+1)
+! Note that KEE(1) is equivalent to ILAST.
+      EQUIVALENCE (KE(1), KEE(2))
+      COMMON /CDFFTC/ NEEDST, MT, NT, MM, KS, ILAST, KE
+      SAVE /CDFFTC/
+      PARAMETER (MMAX = KEDIM+1)
+!     ------------------------------------------------------------------
+!
+      if( MODE .eq. 'A' .or. MODE .eq. 'a') THEN
+         ANAL = .true.
+      elseif( MODE .eq. 'S' .or. MODE .eq. 's') THEN
+         ANAL = .false.
+      else
+         Print *,'** Fatal error in DRFT1 **'
+         Print *,'   Bad MODE.  MODE = ',MODE
+         MS = -2
+         return
+      endif
+      MA = M
+      MSI = MS
+      NEEDST = MA .GT. MSI
+      IF(NEEDST) THEN
+         IF(MA .GT. MMAX .or. MA .lt. 0) THEN
+!                               Fatal error, default is to stop in IERM1
+            Print *,'** Fatal error in DRFT1 **'
+            Print *,'   Require (0 .le. M .le. 21), M=',M
+            MS = -2
+            RETURN
+         ENDIF
+         MS = MA
+         MT = MA - 2
+         CALL DFFT (A, A, S)
+         IF(MSI .EQ. -1) RETURN
+      ENDIF
+      IF(MA .NE. 0) THEN
+         MM = MA - 1
+         N1 = 2 ** MA
+         N1P = N1 + 2
+         KN2 = N1 / 2
+         JDIF = (4 * NT) / N1
+         KS = 2
+         IF(ANAL) THEN
+!                               Set flags for Fourier analysis
+            IR = 2
+            II = 1
+            FN = HALF / DBLE(N1)
+!           Doing Fourier analysis, so multiply by 2 ** M
+            DO 10 I = 1, N1
+               A(I) = A(I) * FN
+   10       CONTINUE
+         ELSE
+!                              Set flags for Fourier synthesis
+            IR = 1
+            II = 2
+            GOTO 40
+         ENDIF
+ 
+!                              Compute complex Fourier transform
+   20    DO 30 L = 1, MM
+            KEE(L+1) = KEE(L) / 2
+   30    CONTINUE
+!
+         CALL DFFT (A(IR), A(II), S)
+!                              End of computing complex transform
+!
+         IF(.NOT. ANAL) RETURN
+!
+!        Beginning of calculations relating coefficients of real data
+!        with coefficients of associated complex data
+!
+!        Special case --  K1 = 0
+   40    T = A(1) + A(2)
+         TI = A(1) - A(2)
+         IF(ANAL) THEN
+            T = TWO * T
+            TI = TWO * TI
+         ENDIF
+         A(1) = T
+         A(2) = TI
+         IF(MM .GT. 0) THEN
+!                           Special kase -- K1 = N1 / 4
+            A(KN2+1) = TWO * A(KN2+1)
+            A(KN2+2) = -TWO * A(KN2+2)
+            IF(MM .GT. 1) THEN
+               J = 0
+               DO 50 K1 = 3, KN2, 2
+                  K1N = N1P - K1
+                  IF(ANAL) THEN
+                     IR1 = K1N
+                     IR2 = K1
+                  ELSE
+                     IR1 = K1
+                     IR2 = K1N
+                  ENDIF
+                  II2 = IR2 + 1
+                  II1 = IR1 + 1
+                  J = J + JDIF
+                  WI = S(J)
+                  JJ = NT - J
+                  WR = S(JJ)
+                  T = A(IR1) - A(IR2)
+                  TI = A(II1) + A(II2)
+                  TT = T * WI + TI * WR
+                  TTI = T * WR - TI * WI
+                  T = A(IR1) + A(IR2)
+                  TI = A(II1) - A(II2)
+                  A(IR1) = T - TT
+                  A(IR2) = T + TT
+                  A(II1) = TTI + TI
+                  A(II2) = TTI - TI
+   50          CONTINUE
+            ENDIF
+         ENDIF
+         IF(.NOT. ANAL) GOTO 20
+      ENDIF
+!
+      RETURN
+!
+      END SUBROUTINE DRFT1
+!
+!==========================================================================
+!
+      SUBROUTINE DFFT(AR, AI, S)
+!
+!>> 1994-11-11 DFFT  Krogh   Declared all vars.
+!>> 1994-10-20 DFFT  Krogh  Changes to use M77CON
+!>> 1989-08-15 DFFT  FTK -- Parameter constants given to more precision.
+!>> 1989-04-21 DFFT  FTK & CLL
+!     .  Copyright (C) 1989, California Institute of Technology.
+!     .  All rights reserved.  U. S. Government sponsorship under
+!     .  NASA contract NAS7-918 is acknowledged..
+!
+!     This subroutine computes one dimensional complex Fourier
+!     transforms using the Cooley-Tukey algorithm. It is used by a
+!     number of subroutines which compute Fourier transforms.
+!
+!     Programmed by Fred T. Krogh at the Jet Propulsion Laboratory,
+!     Pasadena, Calif.   August 1, 1969.
+!     Revised by Krogh at JPL -- January 19, 1988 -- For portability
+!
+      DOUBLE PRECISION AR(*), AI(*), S(*)
+!     Minimum dimensions are AR(ILAST), AI(ILAST), S(NT-1), where ILAST
+!     and NT are defined in the common block below.
+!
+! AR and AI give the arrays used to hold the real and imaginary parts of
+!     the Fourier coefficients and data.
+! S   contains the sine table required in the calculations.
+!
+!     -----------------------------------------------------------------
+!                Notes on COMMON, PARAMETER's, and local variables
+!
+!     SPI4 = SIN(PI/4) = 0.5 * SQRT(2)
+!     PI4 = PI / 4
+!     THE DIMENSION OF KE MUST BE AS LARGE AS THE MAXIMUM VALUE
+!     PERMITTED FOR MM.
+!
+!     WHERE
+!     NEEDST= .TRUE. if the sine table must be computed.
+!     MT    = base 2 log(NT)
+!     NT    = number of entries in the sine table
+!     MM    = base 2 log(number of complex fourier coefficients)
+!     KS    = distance in memory between successive points.  The i-th
+!             coefficient, a(i) is given by AR((I+1)*KS)+AI((I+1)*KS)*
+!             sqrt(-1), i=0, 1, ..., (2**MM)-1.
+!     ILAST = KS * 2**MM
+!     KE(L) = KS * 2**(MM-L), L=1, 2, ..., MM
+!     -----------------------------------------------------------------
+!--D replaces "?": ?FFT, C?FFTC
+!     -----------------------------------------------------------------
+      INTEGER I, I1, I2, I3, IJ
+      INTEGER J, JDIF, JGO, JI, JI2, JJ, JR
+      INTEGER K, KSI
+      INTEGER L, L1, L4, LJ, LL
+      INTEGER MTC
+ 
+      DOUBLE PRECISION HALF, PI4, SPI4
+      DOUBLE PRECISION T, T1, T1I, T2, T2I, T3, T3I, THETA
+      DOUBLE PRECISION TI, TP, TP1, TP1I, TPI
+      DOUBLE PRECISION WI1, WI2, WI3, WR1, WR2, WR3
+ 
+      PARAMETER (SPI4 = 0.7071067811865475244008443621048490D0)
+      PARAMETER (PI4 = 0.7853981633974483096156608458198757D0)
+      PARAMETER (HALF = 0.5D0)
+ 
+! Common variables
+      INTEGER KEDIM
+      PARAMETER (KEDIM=20)
+      LOGICAL NEEDST
+      INTEGER MT, NT, MM, KS, ILAST, KE(KEDIM), KEE(KEDIM+1)
+! Note that KEE(1) is equivalent to ILAST.
+      EQUIVALENCE (KE(1), KEE(2))
+      COMMON /CDFFTC/ NEEDST, MT, NT, MM, KS, ILAST, KE
+      SAVE /CDFFTC/
+!     -----------------------------------------------------------------
+!
+      IF(NEEDST) THEN
+!                      Compute the sine table
+         NEEDST = .FALSE.
+         MTC = MT
+         NT = 2**MTC
+         IF(MTC .GT. 0) THEN
+!                            SET FOR L=1
+            J = NT
+            JJ = J / 2
+            S(JJ) = SPI4
+            IF(MTC .GT. 1) THEN
+               THETA = PI4
+               DO 20 L = 2, MTC
+                  THETA = HALF * THETA
+                  K = J
+                  J = JJ
+                  JJ = JJ / 2
+!                       At this point J = 2**(MT-L+1) and JJ = 2**(MT-L)
+                  S(JJ) = SIN(THETA)
+                  L1 = NT - JJ
+                  S(L1) = COS(THETA)
+                  LL = NT - K
+                  IF(LL .GE. J) THEN
+                     DO 10 I = J, LL, J
+                        I1 = NT - I
+                        I2 = I + JJ
+                        S(I2) = S(I) * S(L1) + S(JJ) * S(I1)
+   10                CONTINUE
+                  ENDIF
+   20          CONTINUE
+            ENDIF
+         ENDIF
+      ELSE
+!                      Compute the transform
+!                           Scramble A
+!
+         IJ = 1
+         JI = 1
+         L1 = KS
+         IF(MM .GT. 1) THEN
+   30       IJ = IJ + L1
+            DO 40 I = 1, MM
+               JI = JI + KE(I)
+               KE(I) = -KE(I)
+               IF(KE(I) .LT. 0) THEN
+                  IF(IJ .LT. JI) THEN
+!                       INTERCHANGE THE IJ-TH COEFFICIENT WITH THE JI-TH
+                     T = AR(IJ)
+                     AR(IJ) = AR(JI)
+                     AR(JI) = T
+                     T = AI(IJ)
+                     AI(IJ) = AI(JI)
+                     AI(JI) = T
+                  ENDIF
+                  GOTO 30
+               ENDIF
+   40       CONTINUE
+         ENDIF
+!                          END OF SCRAMBLING A
+         JDIF = NT
+         IF(MOD(MM, 2) .NE. 0) THEN
+!                    SPECIAL CASE -- L = 1,  MM ODD  (RADIX 2 ALGORITHM)
+            L1 = L1 + L1
+            DO 50 I = 1, ILAST, L1
+               KSI = I + KS
+               T = AR(I)
+               AR(I) = T + AR(KSI)
+               AR(KSI) = T - AR(KSI)
+               T = AI(I)
+               AI(I) = T + AI(KSI)
+               AI(KSI) = T - AI(KSI)
+   50       CONTINUE
+            JDIF = JDIF / 2
+         ENDIF
+!
+         DO 140 L = 2, MM, 2
+            L4 = 4 * L1
+            LJ = L1 / 2
+            J = 0
+            JI = 0
+!
+!           ASSIGN 70 TO JGO
+            JGO = 70
+!
+!           START OF I LOOP  (RADIX 4 ALGORITHM)
+   60       IJ = J + 1
+            DO 120 I = IJ, ILAST, L4
+               I1 = I + L1
+               I2 = I1 + L1
+               I3 = I2 + L1
+!
+!              GOTO JGO, (70, 80, 90)
+!
+               if(JGO.eq.70) then
+                 goto 70
+               else if(JGO.eq.80) then
+                 goto 80
+               else if(JGO.eq.90) then
+                 goto 90
+               endif
+!
+!              SPECIAL CASE -- J = 0
+   70          T = AR(I) + AR(I1)
+               T1 = AR(I) - AR(I1)
+               TI = AI(I) + AI(I1)
+               T1I = AI(I) - AI(I1)
+               T2 = AR(I2) + AR(I3)
+               T3 = AR(I2) - AR(I3)
+               T2I = AI(I2) + AI(I3)
+               T3I = AI(I2) - AI(I3)
+               GOTO 110
+!
+!              SPECIAL CASE -- J = L1 / 2
+   80          T2 = SPI4 * AR(I2)
+               T2I = SPI4 * AI(I2)
+               T3 = SPI4 * AR(I3)
+               T3I = SPI4 * AI(I3)
+               TP = T2 - T2I
+               TPI = T2 + T2I
+               TP1 = -T3 - T3I
+               TP1I = T3 - T3I
+               T = AR(I) - AI(I1)
+               T1 = AR(I) + AI(I1)
+               TI = AI(I) + AR(I1)
+               T1I = AI(I) - AR(I1)
+               GOTO 100
+!
+!              USUAL CASE -- J .NE. 0  AND  J .NE. L1 / 2
+!
+!              WRK AND WIK (K = 1, 2, 3) ARE THE REAL AND IMAGINARY PART
+!              RESP. OF EXP(SQRT(-1) * PI * K*(2**(-L-MOD(MM, 2)))*J/KS)
+!                             =EXP(SQRT(-1) * PI * K * (J / (4 * L1)))
+!
+   90          T2 = WR2 * AR(I1) - WI2 * AI(I1)
+               T2I = WI2 * AR(I1) + WR2 * AI(I1)
+               T = AR(I) + T2
+               T1 = AR(I) - T2
+               TI = AI(I) + T2I
+               T1I = AI(I) - T2I
+               TP = WR1 * AR(I2) - WI1 * AI(I2)
+               TPI = WI1 * AR(I2) + WR1 * AI(I2)
+               TP1 = WR3 * AR(I3) - WI3 * AI(I3)
+               TP1I = WI3 * AR(I3) + WR3 * AI(I3)
+  100          T2 = TP + TP1
+               T3 = TP - TP1
+               T2I = TPI + TP1I
+               T3I = TPI - TP1I
+  110          AR(I) = T + T2
+               AI(I) = TI + T2I
+               AR(I1) = T1 - T3I
+               AI(I1) = T1I + T3
+               AR(I2) = T - T2
+               AI(I2) = TI - T2I
+               AR(I3) = T1 + T3I
+               AI(I3) = T1I - T3
+  120       CONTINUE
+!           END OF I LOOP
+!
+            IF(J .LT. LJ) THEN
+               IF(J .EQ. 0) THEN
+!                 ASSIGN 90 TO JGO
+                  JGO = 90
+                  J = KS
+               ELSE
+                  J = L1 - J
+!                 COMPUTE WR-S AND WI-S FOR J REPLACED BY L1 - J
+                  T = WI1
+                  WI1 = WR1
+                  WR1 = T
+                  WR2 = -WR2
+                  T = -WI3
+                  WI3 = -WR3
+                  WR3 = T
+                  GOTO 60
+               ENDIF
+            ELSE IF(J .EQ. LJ) THEN
+               GOTO 130
+            ELSE
+               J = L1 - J + KS
+            ENDIF
+            IF(J .LT. LJ) THEN
+!                              COMPUTE WR-S AND WI-S
+               JI = JI + JDIF
+               JR = NT - JI
+               WR1 = S(JR)
+               WI1 = S(JI)
+               JI2 = JI + JI
+               WI2 = S(JI2)
+               JR = NT - JI2
+               WR2 = S(JR)
+               JI2 = JI + JI2
+               IF(JI2 .LE. NT) THEN
+                  JR = NT - JI2
+                  WR3 = S(JR)
+                  WI3 = S(JI2)
+                  GOTO 60
+               ENDIF
+               JR = JI2 - NT
+               JI2 = NT - JR
+               WI3 = S(JI2)
+               WR3 = -S(JR)
+               GOTO 60
+            ELSE IF(J .EQ. LJ) THEN
+!                                    SET FOR J = L1 / 2
+!              ASSIGN 80 TO JGO
+               JGO = 80
+               GOTO 60
+            ENDIF
+!           END OF COMPUTING WR-S AND WI-S
+!
+  130       L1 = L4
+            JDIF = JDIF / 4
+  140    CONTINUE
+!        END OF L LOOP
+      ENDIF
+!
+      RETURN
+ 
+      END SUBROUTINE DFFT
+!
+!=====================================================================
+!
+END MODULE fov_convolve_m
+! $Log: fov_convolve_m.f90,v $
+@
+
+
+2.6
+log
+@just testing
+@
+text
+@d12 1
+a12 1
+     "$Id: fov_convolve_m.f90,v 2.5 2002/07/08 17:45:40 zvi Exp $"
+d22 1
+a22 1
+           & drad_dt_out,di_df,drad_df_out,drad_dx_out)
+d54 2
+d298 1
+d1039 3
+@
+
+
+2.5
+log
+@Replace local pointers by automatic arrays
+@
+text
+@d12 1
+a12 1
+     "$Id: fov_convolve_m.f90,v 2.4 2002/06/28 11:06:48 zvi Exp $"
+d78 1
+d1036 3
+@
+
+
+2.4
+log
+@Add computing of dI/d(Chi) on output grid
+@
+text
+@a2 1
+  USE Allocate_Deallocate, only: allocate_test, deallocate_test
+d12 1
+a12 1
+     "$Id: fov_convolve_m.f90,v 2.3 2002/06/19 11:00:32 zvi Exp $"
+a70 7
+  REAL(r8), POINTER :: p(:)
+  REAL(r8), POINTER :: dp(:)
+  REAL(r8), POINTER :: drad_dt_temp(:)
+  REAL(r8), POINTER :: angles(:)
+  REAL(r8), POINTER :: rad_fft(:)
+  REAL(r8), POINTER :: rad_fft1(:)
+!
+d76 4
+a87 4
+! nullify stuff
+!
+  NULLIFY(p,dp,drad_dt_temp,angles,rad_fft,rad_fft1)
+!
+a89 3
+  CALL allocate_test(p,no_fft,'p',modulename)
+  CALL allocate_test(dp,no_fft,'dp',modulename)
+!
+a102 1
+  CALL allocate_test(angles,no_fft,'angles',modulename)
+a108 2
+  CALL allocate_test(rad_fft,no_fft,'rad_fft',modulename)
+  CALL allocate_test(rad_fft1,no_fft,'rad_fft1',modulename)
+a168 2
+    CALL allocate_test(drad_dt_temp,SIZE(chi_out),'drad_dt_temp',modulename)
+!
+a284 2
+    CALL deallocate_test(drad_dt_temp,'drad_dt_temp',modulename)
+!
+a333 6
+  CALL deallocate_test(p,'p',modulename)
+  CALL deallocate_test(dp,'dp',modulename)
+  CALL deallocate_test(angles,'angles',modulename)
+  CALL deallocate_test(rad_fft,'rad_fft',modulename)
+  CALL deallocate_test(rad_fft1,'rad_fft1',modulename)
+!
+d1035 3
+@
+
+
+2.3
+log
+@Some cosmetic corrections
+@
+text
+@d13 1
+a13 1
+     "$Id: fov_convolve_m.f90,v 2.2 2002/06/17 16:31:21 bill Exp $"
+d23 1
+a23 1
+           & drad_dt_out,di_df,drad_df_out)
+d59 2
+d160 9
+a168 2
+  CALL interpolatevalues(angles(ffth:no_fft)-ang_step,rad_fft1(ffth:no_fft),&
+     & chi_out-init_angle,rad_out,METHOD='S',EXTRAPOLATE='C')
+d1059 3
+@
+
+
+2.2
+log
+@inc zvis changes--wgr
+@
+text
+@d13 1
+a13 1
+     "$Id: new_fov_convolve_m.f90,v 2.3 2002/06/13 22:40:19 bill Exp $"
+d15 1
+a15 1
+     "$RCSfile: new_fov_convolve_m.f90,v $"
+d18 1
+a18 1
+! ============================================  new_fov_convolve =====
+d114 1
+a114 1
+  angles = angles - angles(ffth + 1)
+d251 1
+a251 1
+      rad_fft1(1:ffth-1) = (/(rad_fft1(no_fft-i),i = 1, ffth-1)/)
+d310 1
+a310 1
+      rad_fft(1:ffth-1) = (/(rad_fft(no_fft-i),i = 1, ffth - 1)/)
+d324 1
+a324 1
+      DO j = 3, no_fft - 1, 2
+d1049 33
+@
+
+
+2.1
+log
+@debugging study--wgr
+@
+text
+@d1 10
+a10 7
+module FOV_CONVOLVE_M
+  use AntennaPatterns_m, only: AntennaPattern_T
+  use MLSCommon, only: I4, R8
+  use D_CSPLINE_M, only: CSPLINE
+  implicit NONE
+!  private
+  public :: FOV_CONVOLVE
+d13 1
+a13 1
+       "$Id: fov_convolve_m.f90,v 2.0 2001/09/17 20:26:26 livesey Exp $"
+d15 1
+a15 1
+       "$RCSfile: fov_convolve_m.f90,v $"
+d17 2
+a18 2
+contains
+! ===========================================     FOV_CONVOLVE     =====
+d21 334
+a354 1
+  SUBROUTINE FOV_CONVOLVE(EIL_ANGLE, RADIANCE, DELTA0, ITYPE, NP, &
+d388 1
+a388 1
+  End subroutine FOV_CONVOLVE
+d504 244
+a747 3
+      radiance(kn) = rn
+      kn = kn - 1
+    end do
+d749 1
+a749 2
+    n = kn - k1 + 1
+    call cspline(x, eil_angle(k1:kn), r, radiance(k1:kn), mp, n)
+d751 1
+a751 5
+    return
+  End subroutine FTGRID
+!=====================================================================
+!=================== Coversion of the f77 fft.f to f90 ===============
+!  The JPL Double Precision FFT Package.
+d805 1
+a805 1
+
+d810 1
+a810 1
+
+d814 1
+a814 1
+
+d1043 1
+a1045 233
+!---------------------------------------------------------------------
+!
+      SUBROUTINE DRFT1 (A,MODE,M,MS,S)
+!
+!>> 1994-11-11 DRFT1  Krogh   Declared all vars.
+!>> 1994-10-20 DRFT1 Krogh  Changes to use M77CON
+!>> 1989-05-07 DRFT1 FTK & CLL
+!>> 1989-04-21 FTK & CLL
+!     .  Copyright (C) 1989, California Institute of Technology.
+!     .  U. S. Government sponsorship under
+!     .  NASA contract NAS7-918 is acknowledged.
+!
+!     This subroutine computes Fourier transforms of real data using
+!     the Cooley-Tukey fast Fourier transform.
+!
+!     Variables in the calling sequence have the following types
+      DOUBLE PRECISION A(*), S(*)
+      INTEGER          M, MS
+      CHARACTER        MODE
+!
+!     Programmed by Fred T. Krogh at the Jet Propulsion Laboratory,
+!     Pasadena, Calif.   August 1, 1969.
+!     Revised for portability by Krogh -- January 22, 1988
+!
+!     In describing the usage the following notation is used
+!     N = 2 ** M
+!     W = EXP(2*PI*I/N), where I = SQRT(-1) and PI = 3.14159...
+!
+!     The usage is as follows
+!
+! A() is an array of function values if one is doing Fourier analysis,
+!  and is an array of Fourier coefficients if one is doing Fourier
+!  synthesis.  In our description here we assume that A is a real
+!  array with dimension A(N) when A contains the real data, X, and
+!  that A is a complex array with dimension A(N/2) when A contains
+!  complex Fourier coefficients, C.  (C(k) for k > N/2 need not be
+!  saved since for 0 < k < N, C(N-k) = conjugate of C(k).  It is
+!  assumed that the imaginary part of a complex number is stored
+!  in the cell immediately following its real part, except that
+!  A(1) = C(0), and A(2) = C(N/2).  This is possible since these
+!  values of C are real and by doing this both X and C require the
+!  same storage in A. Of course the storage required for A can be
+!  reserved by the user in any way that works.
+!
+! MODE  Selects Synthesis or Analysis.
+!  If MODE = 'A' or 'a', do Fourier analysis, which amounts to setting
+!  C(k) = sum for j=0 to N-1 of X(j)*T(M,j,k), for k = 0, N/2
+!  with  T(M,j,k) = (1/N) * W ** (-j*k).
+!  If MODE = 'S' or 's', do Fourier synthesis, which amounts to setting
+!  X(j) = sum for k=0 to N-1 of C(k)*T(M,j,k), for j = 0, N - 1
+!  with  T(M,j,k) = W ** (j*k)
+!  (Recall that C(N-k) is the conjugate of C(k).)
+!
+! M is used to indicate N = 2**M, the number of real points.  The
+!  number of points must satisfy 1 .le. N .le. 2**21.
+!  M = 0 gives an immediate return.
+!
+! MS gives the state of the sine table.  If MS > 0, there are NT =
+!    2 ** (MS-2) good entries in the sine table.  On the initial call,
+!    MS must be set to 0, and when the return is made, it will be set
+!    to M, which is the value of MS required for computing a
+!    transform of size N.  If MS = -1, the sine table will be computed
+!    as for the case MS = 0, and THEN a return to the user will be made
+!    with MS set as before, but no transform will be computed.  This
+!    option is useful if the user would like access to the sine table
+!    before computing the FFT.
+!    On detected errors the error message subrs are called and
+!    execution stops.  If the user overrides the stop to cause
+!    continuation, THEN this subr will return with MS = -2.
+!
+! S() is a vector, S(j) = sin(pi*j/2*NT)), j = 1, 2, ..., NT-1, where
+!  NT is defined in the description of MS above.  S is computed by the
+!  subroutine if M .gt. MS.  (If S is altered, set MS=0 so that S
+!  is recomputed.)
+!
+!     ------------------------------------------------------------------
+!                Notes on COMMON, PARAMETER's, and local variables
+!
+!     MMAX is the largest value allowed for M
+!     The dimension of KE must be at least as large as MMAX-1.
+!     The named common CDFFTC is used for communication between this
+!     subroutine and the subroutine DFFT which computes a one
+!     dimensional complex Fourier transform and computes the sine table.
+!     The use of the variables in CDFFTC is contained in the listing
+!     of DFFT.
+!
+!     ANAL = .TRUE. when doing Fourier analysis, and .false. otherwise.
+!
+!     N1 = 2 ** M
+!     ------------------------------------------------------------------
+!--D replaces "?": ?RFT1, ?FFT, C?FFTC
+!     Both versions use ERMSG, IERM1
+!     and need ERFIN, IERV1
+!     ------------------------------------------------------------------
+      INTEGER MMAX
+      INTEGER I, II, II1, II2, IR, IR1, IR2
+      INTEGER J, JDIF, JJ
+      INTEGER K1, K1N, KN2
+      INTEGER L
+      INTEGER MA, MSI
+      INTEGER N1, N1P, KEDIM
+
+      DOUBLE PRECISION FN, HALF
+      DOUBLE PRECISION T, TI, TT, TTI, TWO, WI, WR
+
+      LOGICAL ANAL
+
+      PARAMETER (TWO = 2.0D0)
+      PARAMETER (HALF = 0.5D0)
+      EQUIVALENCE (ILAST, N1)
+! Common variables
+      PARAMETER (KEDIM=20)
+      LOGICAL NEEDST
+      INTEGER MT, NT, MM, KS, ILAST, KE(KEDIM), KEE(KEDIM+1)
+! Note that KEE(1) is equivalent to ILAST.
+      EQUIVALENCE (KE(1), KEE(2))
+      COMMON /CDFFTC/ NEEDST, MT, NT, MM, KS, ILAST, KE
+      SAVE /CDFFTC/
+      PARAMETER (MMAX = KEDIM+1)
+!     ------------------------------------------------------------------
+!
+      if( MODE .eq. 'A' .or. MODE .eq. 'a') THEN
+         ANAL = .true.
+      elseif( MODE .eq. 'S' .or. MODE .eq. 's') THEN
+         ANAL = .false.
+      else
+         Print *,'** Fatal error in DRFT1 **'
+         Print *,'   Bad MODE.  MODE = ',MODE
+         MS = -2
+         return
+      endif
+      MA = M
+      MSI = MS
+      NEEDST = MA .GT. MSI
+      IF(NEEDST) THEN
+         IF(MA .GT. MMAX .or. MA .lt. 0) THEN
+!                               Fatal error, default is to stop in IERM1
+            Print *,'** Fatal error in DRFT1 **'
+            Print *,'   Require (0 .le. M .le. 21), M=',M
+            MS = -2
+            RETURN
+         ENDIF
+         MS = MA
+         MT = MA - 2
+         CALL DFFT (A, A, S)
+         IF(MSI .EQ. -1) RETURN
+      ENDIF
+      IF(MA .NE. 0) THEN
+         MM = MA - 1
+         N1 = 2 ** MA
+         N1P = N1 + 2
+         KN2 = N1 / 2
+         JDIF = (4 * NT) / N1
+         KS = 2
+         IF(ANAL) THEN
+!                               Set flags for Fourier analysis
+            IR = 2
+            II = 1
+            FN = HALF / DBLE(N1)
+!           Doing Fourier analysis, so multiply by 2 ** M
+            DO 10 I = 1, N1
+               A(I) = A(I) * FN
+   10       CONTINUE
+         ELSE
+!                              Set flags for Fourier synthesis
+            IR = 1
+            II = 2
+            GOTO 40
+         ENDIF
+
+!                              Compute complex Fourier transform
+   20    DO 30 L = 1, MM
+            KEE(L+1) = KEE(L) / 2
+   30    CONTINUE
+!
+         CALL DFFT (A(IR), A(II), S)
+!                              End of computing complex transform
+!
+         IF(.NOT. ANAL) RETURN
+!
+!        Beginning of calculations relating coefficients of real data
+!        with coefficients of associated complex data
+!
+!        Special case --  K1 = 0
+   40    T = A(1) + A(2)
+         TI = A(1) - A(2)
+         IF(ANAL) THEN
+            T = TWO * T
+            TI = TWO * TI
+         ENDIF
+         A(1) = T
+         A(2) = TI
+         IF(MM .GT. 0) THEN
+!                           Special kase -- K1 = N1 / 4
+            A(KN2+1) = TWO * A(KN2+1)
+            A(KN2+2) = -TWO * A(KN2+2)
+            IF(MM .GT. 1) THEN
+               J = 0
+               DO 50 K1 = 3, KN2, 2
+                  K1N = N1P - K1
+                  IF(ANAL) THEN
+                     IR1 = K1N
+                     IR2 = K1
+                  ELSE
+                     IR1 = K1
+                     IR2 = K1N
+                  ENDIF
+                  II2 = IR2 + 1
+                  II1 = IR1 + 1
+                  J = J + JDIF
+                  WI = S(J)
+                  JJ = NT - J
+                  WR = S(JJ)
+                  T = A(IR1) - A(IR2)
+                  TI = A(II1) + A(II2)
+                  TT = T * WI + TI * WR
+                  TTI = T * WR - TI * WI
+                  T = A(IR1) + A(IR2)
+                  TI = A(II1) - A(II2)
+                  A(IR1) = T - TT
+                  A(IR2) = T + TT
+                  A(II1) = TTI + TI
+                  A(II2) = TTI - TI
+   50          CONTINUE
+            ENDIF
+         ENDIF
+         IF(.NOT. ANAL) GOTO 20
+      ENDIF
+!
+      RETURN
+!
+      END SUBROUTINE DRFT1
+
+a1046 29
+
+end module FOV_CONVOLVE_M
+! $Log: fov_convolve_m.f90,v $
+! Revision 2.0  2001/09/17 20:26:26  livesey
+! New forward model
+!
+! Revision 1.12  2001/05/02 20:49:23  zvi
+! Cleaning up code
+!
+! Revision 1.11  2001/04/10 01:16:34  livesey
+! Tidied up convolution
+!
+! Revision 1.10  2001/04/09 23:32:29  zvi
+! Correcting a small error in radiances folding code
+!
+! Revision 1.9  2001/04/06 01:37:58  zvi
+! Put (*) (Assume size) status on CONVOLVE & DFFT arrays..
+!
+! Revision 1.8  2001/04/05 22:54:39  vsnyder
+! Use AntennaPatterns_M
+!
+! Revision 1.7  2001/03/31 23:40:55  zvi
+! Eliminate l2pcdim (dimension parameters) move to allocatable ..
+!
+! Revision 1.6  2001/03/29 08:51:01  zvi
+! Changing the (*) toi (:) everywhere
+!
+! Revision 1.5  2001/02/26 09:01:16  zvi
+! New version - Using "Super-Structures"
+d1048 1
+a1048 2
+! Revision 1.1  2000/05/04 18:12:05  vsnyder
+! Initial conversion to Fortran 90
+@
+
+
+2.0
+log
+@New forward model
+@
+text
+@d6 1
+a6 1
+  private
+d10 1
+a10 1
+       "$Id: fov_convolve_m.f90,v 1.12 2001/05/02 20:49:23 zvi Exp $"
+d710 3
+@
+
+
+1.12
+log
+@Cleaning up code
+@
+text
+@d10 1
+a10 1
+       "$Id: fov_convolve_m.f90,v 1.11 2001/04/10 01:16:34 livesey Exp $"
+d710 3
+@
+
+
+1.11
+log
+@Tidied up convolution
+@
+text
+@d10 1
+a10 1
+       "$Id: fov_convolve_m.f90,v 1.10 2001/04/09 23:32:29 zvi Exp $"
+d30 1
+a30 1
+    Integer(i4) :: I, J, IND, NTR, IAS
+d710 3
+@
+
+
+1.10
+log
+@Correcting a small error in radiances folding code
+@
+text
+@d10 1
+a10 1
+       "$Id: fov_convolve_m.f90,v 1.9 2001/04/06 01:37:58 zvi Exp $"
+d18 2
+a19 2
+  SUBROUTINE FOV_CONVOLVE(EIL_ANGLE, RADIANCE, DELTA0, ITYPE, NP, MBAND, &
+ &                        M, AntennaPattern, IAS, IER )
+d21 1
+a21 1
+    Integer(i4), intent(in) :: ITYPE, NP, MBAND, M, IAS
+d30 3
+a32 2
+    Integer(i4) :: I, J, IND, NTR
+    real(r8) :: X
+d710 3
+@
+
+
+1.9
+log
+@Put (*) (Assume size) status on CONVOLVE & DFFT arrays..
+@
+text
+@d10 1
+a10 1
+       "$Id: fov_convolve_m.f90,v 1.8 2001/04/05 22:54:39 vsnyder Exp $"
+a40 3
+    x = mband - 1
+    ind = 1 + sqrt(x)
+!
+d43 1
+a43 1
+      call convolve(Radiance, AntennaPattern%AAAP(:,1),M,Ias,ind,ier)
+d45 1
+a45 1
+      call convolve(Radiance,AntennaPattern%D1AAP(:,1),M,Ias,ind,ier)
+d47 1
+a47 1
+      call convolve(Radiance,AntennaPattern%D2AAP(:,1),M,Ias,ind,ier)
+d57 1
+a57 1
+  Subroutine CONVOLVE ( RADIANCE, AAAP, M, IAS, IND, IERR )
+d60 1
+a60 1
+    integer(i4), intent(in) :: M, IAS, IND
+d65 1
+a65 1
+    Integer(i4) :: ISTOP, M4, NTR, NTRH, I, J, K
+d72 1
+d87 2
+a88 3
+        k = 2*ias*(ind-1)+j
+        cr = dblrad(j)*aaap(k)-dblrad(j+1)*aaap(k+1)
+        ci = dblrad(j)*aaap(k+1)+dblrad(j+1)*aaap(k)
+d99 2
+a100 3
+      k = 2*ias*(ind-1)+1
+      dblrad(1) = dblrad(1)*aaap(k)
+      dblrad(2) = dblrad(2)*aaap(k+1)
+d111 2
+a112 1
+    return
+d709 3
+@
+
+
+1.8
+log
+@Use AntennaPatterns_M
+@
+text
+@d10 1
+a10 1
+       "$Id: fov_convolve_m.f90,v 1.7 2001/03/31 23:40:55 zvi Exp $"
+d62 1
+a62 1
+    real(r8), intent(in) :: AAAP(:)
+d201 1
+a201 1
+      DOUBLE PRECISION AR(:), AI(:), S(:)
+d491 1
+a491 1
+      DOUBLE PRECISION A(:), S(:)
+d650 1
+a650 1
+         CALL DFFT (A(IR:N1), A(II:N1), S)
+d712 3
+@
+
+
+1.7
+log
+@Eliminate l2pcdim (dimension parameters) move to allocatable ..
+@
+text
+@d2 1
+d10 1
+a10 1
+       "$Id: fov_convolve_m.f90,v 1.6 2001/03/29 08:51:01 zvi Exp $"
+d16 1
+a16 1
+! This subprogram adds the effects antenna smearing to the radiance
+d19 1
+a19 1
+ &                        M, XLAMDA, AAAP, D1AAP, D2AAP, IAS, IER )
+d25 2
+a26 2
+    Real(r8), intent(in) :: DELTA0, XLAMDA
+    Real(r8), intent(in) :: AAAP(2**M,3),D1AAP(2**M,3),D2AAP(2**M,3)
+d34 1
+a34 1
+    call ftgrid(eil_angle,radiance,delta0,xlamda,np,ntr)
+d46 1
+a46 1
+      call convolve(Radiance, AAAP,M,Ias,ind,ier)
+d48 1
+a48 1
+      call convolve(Radiance,D1AAP,M,Ias,ind,ier)
+d50 2
+a51 2
+      call convolve(Radiance,D2AAP,M,Ias,ind,ier)
+    endif
+d62 1
+a62 1
+    real(r8), intent(in) :: AAAP(*)
+d79 1
+a79 1
+    dblrad(:ntr) = dble(radiance(:ntr))
+d201 1
+a201 1
+      DOUBLE PRECISION AR(*), AI(*), S(*)
+d491 1
+a491 1
+      DOUBLE PRECISION A(*), S(*)
+d650 1
+a650 1
+         CALL DFFT (A(IR), A(II), S)
+d712 3
+@
+
+
+1.6
+log
+@Changing the (*) toi (:) everywhere
+@
+text
+@a1 1
+  use L2PCdim, only: NLVL
+d9 1
+a9 1
+       "$Id: fov_convolve_m.f90,v 1.5 2001/02/26 09:01:16 zvi Exp $"
+d33 1
+a33 2
+    call ftgrid(eil_angle,radiance,delta0,xlamda,np,ntr,ier)
+    if(ier /= 0) return
+d121 1
+a121 1
+  Subroutine FTGRID ( EIL_ANGLE, RADIANCE, DELTA0, XLAMDA, NP, NTR, IERR )
+a126 1
+    Integer(i4), intent(out) :: IERR
+d130 2
+a131 6
+    Real(r8) :: X1, XN, R1,RN
+    Real(r8) :: X(Nlvl), R(Nlvl)
+    Real(r8) :: V, W, OOX, PP, DEL
+!
+    ierr = 0
+    if (nlvl > np) then
+d135 11
+a145 11
+      mp = 1
+      r(1) = radiance(1)
+      x(1) = eil_angle(1)
+      do i = 2, np
+        xn = eil_angle(i)
+        if(xn > x(mp)) then
+          mp = mp + 1
+          x(mp) = xn
+          r(mp) = radiance(i)
+        endif
+      end do
+d147 9
+a155 11
+      v = dble(xlamda)
+      w = dble(delta0)
+      oox = 1.0 / v
+      pp = 0.185_r8 * oox
+      del = oox / ntr
+!
+      do i = 1, ntr
+        v = w - pp + del * (i - 1)             ! new code
+        eil_angle(i) = v
+        radiance(i) = 0.0
+      end do
+d157 7
+a163 7
+      k1 = 1
+      r1 = r(1)
+      x1 = x(1)
+      do while ( eil_angle(k1) <= x1 .and. k1 < ntr )
+        radiance(k1) = r1
+        k1 = k1 + 1
+      end do
+d165 7
+a171 16
+      kn = ntr
+      rn = r(mp)
+      xn = x(mp)
+      do while ( eil_angle(kn) >= xn.and.kn > 1 )
+        radiance(kn) = rn
+        kn = kn - 1
+      end do
+!
+      n = kn - k1 + 1
+      call cspline(x, eil_angle(k1:kn), r, radiance(k1:kn), mp, n)
+!
+    else
+!
+      ierr = 4
+      Print *,'** Errro in FTGRID subroutine'
+      Print *,'   MAXP < = NP (NP too big)'
+d173 2
+a174 1
+    endif
+d711 3
+@
+
+
+1.5
+log
+@New version - Using "Super-Structures"
+@
+text
+@d10 1
+a10 1
+       "$Id: fov_convolve_m.f90,v 1.1 2000/05/04 18:12:05 vsnyder Exp $"
+d23 2
+a24 2
+    Real(r8), intent(inout) :: EIL_ANGLE(*)
+    Real(r8), intent(inout) :: RADIANCE(*)
+d62 1
+a62 1
+    real(r8), intent(inout) :: RADIANCE(*)
+d125 2
+a126 2
+    Real(r8), intent(inout) :: EIL_ANGLE(*)
+    Real(r8), intent(inout) :: RADIANCE(*)
+d228 1
+a228 1
+!     SPI4 = SIN(PI/4) = .5 * SQRT(2)
+d728 3
+@
+
+
+1.4
+log
+@Various changes..
+@
+text
+@d2 2
+a3 3
+  use L2PCdim, only: MAXFFT, NLVL
+  use MACHINE, only: IO_ERROR
+  use MLSCommon, only: I4, R4, R8
+d10 3
+a12 2
+       "$Id: fov_convolve_m.f90,v 1.3 2001/01/31 22:40:12 zvi Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile: fov_convolve_m.f90,v $"
+d18 2
+a19 2
+  SUBROUTINE FOV_CONVOLVE( EIL_ANGLE, RADIANCE, DELTA0, ITYPE, NP, &
+ &                         MBAND, M, InDir, AntN, IER )
+d21 2
+d25 3
+a27 3
+    Real(r8), intent(in) :: DELTA0
+    Integer(i4), intent(in) :: ITYPE, NP, MBAND, M
+    Character(len=*), intent(in) :: InDir, AntN
+d29 2
+a30 5
+    Real(r8), save :: AAAP(maxfft,3) = 0.0_r4, D1AAP(maxfft,3)=0.0_r4, &
+                      D2AAP(maxfft,3) = 0.0_r4
+    Character(len=132) Fn
+    integer(i4), save :: IAS, INIT = 0
+    Integer(i4) :: I, J, IND, LA, LF, NTR
+a31 12
+    real(r8), save :: XLAMDA
+!
+    if ( init == 0 ) then
+      fn(1:) = ' '
+      la = len_trim(antn)
+      lf = len_trim(InDir)
+      fn = InDir(1:lf)//antn(1:la)
+      lf = len_trim(fn)
+      call antenna ( fn(1:lf), m, xlamda, aaap, d1aap, d2aap, ias, ier )
+      if (ier /= 0) return
+      init = m
+    endif
+d47 1
+a47 1
+      call convolve(radiance, aaap,m,ias,ind,ier)
+d49 1
+a49 1
+      call convolve(radiance,d1aap,m,ias,ind,ier)
+d51 1
+a51 1
+      call convolve(radiance,d2aap,m,ias,ind,ier)
+a56 111
+! ------------------------------------------------     ANTENNA     -----
+! This subroutine reads an external antenna aperture autocorrelation
+! file
+!
+  Subroutine ANTENNA ( Fn, M, XLAMDA, AAAP, D1AAP, D2AAP, IAS, IERR )
+    use GET_LUN, only: AAAP_UNIT
+    Integer(i4), parameter :: MaxV= 2048
+!
+    Real(r8), intent(out) :: AAAP(*),D1AAP(*),D2AAP(*),XLAMDA
+    integer(i4), intent(out) :: IAS, IERR
+!
+    Integer(i4) :: M, k, lf, I, J, NTR, L, N
+    REAL(r8) :: V(6), VALL(MaxV, 6), dx2p, Q, Q2
+!
+    Character*(*) Fn
+!
+    ierr = 0
+    lf = len_trim(Fn)
+    OPEN(aaap_unit,FILE=Fn(1:lf),action='READ',STATUS='OLD',iostat=k)
+    if(k /= 0) then
+      ierr = 1
+      Print *,'** File: ',Fn(1:lf)
+!     Call ErrMsg('** From ANTENNA subroutine',k)
+      call io_error ('Opening file in FOV_CONVOLVE%ANTENNA', k, Fn(1:lf) )
+      goto 20
+    endif
+!
+    READ(aaap_unit,*,iostat=k) XLAMDA
+    if(k /= 0) then
+      ierr = 1
+      Print *,'** Reading error in file: ',Fn(1:lf)
+!     Call ErrMsg('** From ANTENNA subroutine',k)
+      call io_error ( 'Reading file in FOV_CONVOLVE%ANTENNA', k, Fn(1:lf) )
+      goto 20
+    endif
+!
+    dx2p = 6.28318530717959_r8 * Xlamda         ! 2 * Pi * Lambda
+!
+    i = 0
+    k = 0
+!
+    do while(k == 0)
+!
+! This loop MUST exit on an end of file condition
+!
+      read(aaap_unit,*,iostat=k) v
+      if(k == -1) exit
+      if(k == 0) then
+        if(I == MaxV) then
+          ierr = 1
+          Print *,'** Error in ANTENNA subroutine !!'
+          Print *,'   Too many lines in: ',Fn(1:lf)
+          Print *,'   Maximum allowed is:',MaxV
+          goto 20
+        endif
+        i = i + 1
+        vall(i,:) = v
+      else
+        ierr = 1
+        Print *,'** Reading error in file: ',Fn(1:lf)
+!       Call ErrMsg('** From ANTENNA subroutine',k)
+        call io_error ( 'Reading file in FOV_CONVOLVE%ANTENNA', k, Fn(1:lf) )
+        goto 20
+      endif
+!
+    end do
+!
+    ias = i
+    ntr = 2**m
+!
+    do i = 1, ias
+!
+      j = 2 * i - 1
+      l = 2 * ias + j
+      n = 4 * ias + j
+!
+      v = vall(i,:)
+!
+      aaap(j)   = v(1)
+      aaap(j+1) = v(2)
+      aaap(l)   = v(3)
+      aaap(l+1) = v(4)
+      aaap(n)   = v(5)
+      aaap(n+1) = v(6)
+!
+! Below is the  first derivative field:     ! i*Q * F(S), i = Sqrt(-1)
+!
+      q = (i - 1) * dx2p
+      d1aap(j)    = -v(2) * q
+      d1aap(j+1)  =  v(1) * q
+      d1aap(l)    = -v(4) * q
+      d1aap(l+1)  =  v(3) * q
+      d1aap(n)    = -v(6) * q
+      d1aap(n+1)  =  v(5) * q
+!
+! Below is the second derivative field:     ! (i*Q)**2 * F(S), i = Sqrt(-1)
+!
+      q2 = -q * q                         ! (i*q)**2 = -q*q
+      d2aap(j)    =  v(1) * q2
+      d2aap(j+1)  =  v(2) * q2
+      d2aap(l)    =  v(3) * q2
+      d2aap(l+1)  =  v(4) * q2
+      d2aap(n)    =  v(5) * q2
+      d2aap(n+1)  =  v(6) * q2
+!
+    end do
+!
+20  close(aaap_unit,iostat=k)
+!
+    Return
+  End subroutine ANTENNA
+d124 1
+d130 1
+a727 3
+! Revision 1.3  2001/01/31 22:40:12  zvi
+! Add new version
+!
+@
+
+
+1.3
+log
+@Add new version
+@
+text
+@d11 1
+a11 1
+       "$Id: fov_convolve_m.f90,v 1.1 2000/05/04 18:12:05 vsnyder Exp $"
+d75 1
+a75 1
+    use UNITS, only: AAAP_UNIT
+d850 3
+@
+
+
+1.2
+log
+@New version
+@
+text
+@a1 1
+  use D_FFT, only: RFT1
+d5 1
+a5 1
+  use S_CSPLINE_M, only: CSPLINE
+a8 1
+
+a13 1
+
+a14 1
+
+d21 3
+a23 5
+    Integer, parameter :: mx3 = 3*maxfft
+!
+    Real(r4), intent(inout) :: EIL_ANGLE(*)
+    Real(r4), intent(inout) :: RADIANCE(*)
+    Real(r4), intent(in) :: DELTA0
+d27 1
+a27 2
+
+    Real(r4), save :: AAAP(maxfft,3) = 0.0_r4, D1AAP(maxfft,3)=0.0_r4, &
+d32 3
+a34 3
+    real(r4) :: X
+    real(r4), save :: XLAMDA
+
+d38 2
+a39 2
+      lf = len_trim(indir)
+      fn = indir(1:lf)//antn(1:la)
+d50 2
+a51 2
+    j = ntr / 2 + 2
+    do i = j,ntr
+a68 1
+
+a75 1
+
+d78 1
+a78 1
+    Real(r4), intent(out) :: AAAP(*),D1AAP(*),D2AAP(*),XLAMDA
+d186 2
+a187 3
+
+    real(r4), intent(inout) :: RADIANCE(*)
+    real(r4), intent(in) :: AAAP(*)
+a189 1
+
+d206 1
+a206 1
+    call rft1 ( dblrad, 'a', m4, ms, s )
+d230 1
+a230 1
+      call rft1 ( dblrad, 's', m4, ms, s )
+d248 3
+a250 4
+
+    Real(r4), intent(inout) :: EIL_ANGLE(*)
+    Real(r4), intent(inout) :: RADIANCE(*)
+    Real(r4), intent(in) :: DELTA0, XLAMDA
+d255 2
+a256 2
+    Real(r4) :: X1, XN, R1,RN
+    Real(r4) :: X(Nlvl), R(Nlvl)
+a304 1
+!     CALL S_LINTRP(X, EIL_ANGLE(K1), R, RADIANCE(K1), MP, N)
+d317 531
+a848 1
+
+a851 1
+!
+@
+
+
+1.1
+log
+@Initial conversion to Fortran 90
+@
+text
+@d13 1
+a13 1
+       "$Id: FOV_CONVOLVE_M,v 1.12 2000/02/08 19:54:57 vsnyder Exp $"
+d332 4
+a335 1
+! $Log: FOV_CONVOLVE_M,v $
+@
+

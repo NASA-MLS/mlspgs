@@ -1,0 +1,160 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.14
+	cfm-single-freq-0-1:1.1.0.12
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.10
+	mus-emls-1-70:1.1.0.8
+	rel-1-0-englocks-work:1.1.0.6
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2008.06.11.20.14.53;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9.25in
+
+\newcommand{\docname}{\bf wvs-053}
+\newcommand{\docdate}{30 January 2007}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill\\
+Subject: \>Alternative minimum $\zeta$ calculation\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-20pt}
+
+We have $H$ tabulated on a $(\phi,\zeta)$ grid.  (Below, I assume $\phi$ means
+$\phi - \phi_t$.)  We could in principle approximate $H(\phi,\zeta)$ using a
+bicubic spline, but for simplicity, within the grid cell having a lower left
+corner $(\phi_i,\zeta_j)$ approximate it instead by the bilinear function
+
+\begin{equation}\label{H}
+H(\phi,\zeta) = H(\phi_i,\zeta_j) +
+ a(\phi-\phi_i) + b(\zeta-\zeta_j) + c\,(\phi-\phi_i)(\zeta-\zeta_j)
+\end{equation}
+
+Since we want $H(\phi,\zeta)$ to interpolate the corners of the grid cell
+exactly, we have
+
+\begin{equation}\begin{split}
+a =\,& \frac{H(\phi_{i+1},\zeta_j)-H(\phi_i,\zeta_j)}{\phi_{i+1}-\phi_i}
+  \approx \frac{\partial H}{\partial \phi}\\
+b =\,& \frac{H(\phi_i,\zeta_{j+1})-H(\phi_i,\zeta_j)}{\zeta_{j+1}-\zeta_j}
+  \approx \frac{\partial H}{\partial \zeta}\\
+c =\,& \frac{H(\phi_{i+1},\zeta_{j+1})-H(\phi_{i+1},\zeta_j) -
+             H(\phi_i,\zeta_{j+1})-H(\phi_i,\zeta_j)}
+            {(\phi_{i+1}-\phi_i)(\zeta_{j+1}-\zeta_j)}
+  \approx \frac{\partial^2 H}{\partial \phi \partial \zeta}
+\end{split}\end{equation}
+
+Solving Equation (\ref{H}) for $\zeta$ within the $(i,j)$ grid cell, we have
+
+\begin{equation}
+\zeta = \frac{H(\phi,\zeta)-H(\phi_i,\zeta_j) + a \phi}{b + c \phi}
+\end{equation}
+
+Substituting the line of sight $H(\phi,\zeta) = H_t \sec \phi$ were $H_t$ is the
+tangent height we have
+
+\begin{equation}\label{zeta}
+\zeta = \frac{H_t \sec \phi - H(\phi_i,\zeta_j) + a \phi}{b + c \phi}
+\end{equation}
+
+\renewcommand{\d}{\text{d}}
+
+Setting $\frac{\d \zeta}{\d \phi}=0$ and taking the numerator, we need to solve
+
+\begin{equation}
+(c \phi + b) H_t \sin \phi + (c H(\phi_i,\zeta_j) + a b ) \cos^2 \phi
+ -c H_t \cos \phi = 0
+\end{equation}
+
+for $\phi_i\leq\phi\leq\phi_{i+1}$, from which Equation (\ref{zeta}) gives us
+the minimum $\zeta$.  Since $\zeta_i < \zeta_{i+1}$, this solution is
+interesting only if $\zeta < \zeta_i$.  Since the minimum $\zeta$ is unlikely
+to occur far from the tangent, we only need to consider $\phi_{i-1} < \phi <
+\phi_{i+1}$ where we choose $i$ to maximize the minimum of
+$\{\phi_t-\phi_{i-1}, \phi_{i+1}-\phi_t\}$ where $\phi_t$ is the tangent
+$\phi$, unless $\phi_t \approx \frac12 (\phi_i+\phi_{i+1})$ for some $i$, in
+which case we may need to consider $\phi_{i-1} < \phi < \phi_{i+2}$ if
+$\phi_{i+1}-\phi_i$ is small, or only $\phi_i < \phi < \phi_{i+1}$ if
+$\phi_{i+1}-\phi_i$ is large.
+
+\label{lastpage}
+\end{document}
+% $Id: $
+@

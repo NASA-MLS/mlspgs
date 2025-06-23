@@ -1,0 +1,171 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.12
+	cfm-single-freq-0-1:1.2.0.10
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.8
+	mus-emls-1-70:1.2.0.6
+	rel-1-0-englocks-work:1.2.0.4
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.2
+	V4-21:1.2.0.2
+	V4-13:1.2
+	V4-12:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2014.09.04.23.53.05;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2014.07.25.21.43.30;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Change local pointer to allocatable
+@
+text
+@! Copyright 2014, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id: ReadNumFromBaseN.f9h,v 1.1 2014/07/25 21:43:30 pwagner Exp $
+
+!  subroutine readIntFromBaseN ( STR, K, N, OPTIONS )
+    ! returns an integer from a string
+    ! using poorly-tested but hopefully non-critical code
+
+    !--------Argument--------!
+    ! character (len=*), intent(in)           ::   str
+    ! integer, intent(out)                    ::   k ! integer result
+    ! integer, intent(in)                     ::   N ! the base
+    ! character(len=*), optional, intent(in)  ::   options
+    ! Internal variables
+    integer, dimension(:), allocatable      :: C
+    logical                                 :: compressed
+    integer                                 :: i
+    integer                                 :: i1
+    integer                                 :: i2
+    integer                                 :: j
+    integer                                 :: m
+    character(len=8)                        :: myOptions
+    integer                                 :: status
+    character(len=8)                        :: substr
+    character(len=1)                        :: subsub
+    character(len=*), parameter             :: xtended = &
+      & '0123456789abcdefghijklmnopqrstuvwxyz;''[]ABCDEFGHIJKLMNOPQRSTUVWXYZ:"{}'
+    ! Executable
+    k = 0
+    if ( N < 2 .or. len_trim(str) < 1 ) return
+    myOptions = ' '
+    if ( present(options) ) myOptions = options
+    compressed = index( myOptions, 'c' ) > 0
+    ! First we must obtain m
+    if ( compressed ) then
+      m = len_trim(str) - 1
+    else
+      m = ncopies( trim(str), ' ' )
+    end if
+    allocate ( C(0:m), stat=status )
+    i2 = 1
+    do j=m, 0, -1
+      i1 = i2
+      if ( compressed ) then
+        substr = str(i1:i2)
+        i2 = i2 + 1
+      else
+        i2 = FindNext( str, ' ', i1 )
+        substr = str(i1:i2)
+        i1 = i2
+      end if
+      ! Read each substr as an integer
+      if ( index(myOptions, 'a') > 0 .or. index(myOptions, 'A') > 0 ) then
+        ! We won't bother coding this case--it would be ridiculous anyway
+        stop
+      else if ( compressed .or. index(myOptions, 'x') > 0 ) then
+        ! 'Extended' hexadecimal
+        subsub = adjustl(substr)
+        C(j) = FindFirst( (/ (xtended(i:i), i=1, len(xtended)) /) == subsub )
+        C(j) = max(0, C(j) - 1)
+      else
+        ! Plain vanilla decimal integers
+        call readIntsFromChars( substr, C(j) )
+      end if
+    end do
+    ! call dump(C, 'coefficients')
+    k = 0
+    do j=m, 0, -1
+      k = N*k + C(j)
+    end do
+    deallocate ( C, stat=status )
+!  end subroutine readIntFromBaseN
+! $Log: ReadNumFromBaseN.f9h,v $
+! Revision 1.1  2014/07/25 21:43:30  pwagner
+! First commit
+!
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d12 1
+a12 1
+! $Id: EmbedExtract_2d.f9h,v 1.2 2013/09/18 16:22:01 pwagner Exp $
+d24 1
+a24 1
+    integer, dimension(:), pointer          :: C => null()
+d48 2
+a49 2
+    endif
+    allocate( C(0:m), stat=status )
+d60 1
+a60 1
+      endif
+d65 1
+a65 1
+      elseif ( compressed .or. index(myOptions, 'x') > 0 ) then
+d73 2
+a74 2
+      endif
+    enddo
+d79 2
+a80 2
+    enddo
+    deallocate( C, stat=status )
+d82 4
+a85 1
+! $Log: EmbedExtract_2d.f9h,v $
+@
+

@@ -1,0 +1,506 @@
+head	1.9;
+access;
+symbols
+	newfwm-sep01:1.8.0.2
+	V0-7:1.8
+	V0-5-Level2:1.7
+	V0-5-SIPS:1.7;
+locks; strict;
+comment	@# @;
+
+
+1.9
+date	2001.09.17.20.26.27;	author livesey;	state dead;
+branches;
+next	1.8;
+
+1.8
+date	2001.06.07.23.30.34;	author pwagner;	state Exp;
+branches
+	1.8.2.1;
+next	1.7;
+
+1.7
+date	2001.03.30.20.28.21;	author zvi;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2001.03.28.19.55.26;	author vsnyder;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2001.03.28.00.40.01;	author zvi;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.03.27.19.48.00;	author vsnyder;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2001.03.20.23.22.40;	author zvi;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.03.20.11.03.15;	author zvi;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.01.31.22.40.12;	author zvi;	state Exp;
+branches;
+next	;
+
+1.8.2.1
+date	2001.09.10.10.00.31;	author zvi;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.9
+log
+@New forward model
+@
+text
+@! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+module GEOC_GEOD_CONV_M
+  use MLSCommon, only: R8
+  use Geometry, only: GeodToGeocLat
+  use UNITS, only: DEG2RAD, RAD2DEG
+  use L2PC_PFA_STRUCTURES, only: EARTH_MAJOR, EARTH_MINOR
+  use ELLIPSE_M, only: ELLIPSE
+  implicit NONE
+  private
+  public :: GEOC_GEOD_CONV
+
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id: geoc_geod_conv_m.f90,v 1.8 2001/06/07 23:30:34 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName= &
+       "$RCSfile: geoc_geod_conv_m.f90,v $"
+!---------------------------------------------------------------------------
+contains
+
+  ! ------------------------------------- --------  GEOC_GEOD_CONV  -----
+  subroutine GEOC_GEOD_CONV (elvar,BETA_INC,PHI_TAN,GEOD_LAT,GEOC_LAT,Rp)
+
+    real(r8), intent(in) :: BETA_INC    ! In Degrees
+    real(r8), intent(in) :: PHI_TAN     ! In Radians
+    real(r8), intent(in) :: GEOD_LAT    ! In Radians
+    
+    type(ELLIPSE), intent(in out) :: elvar
+
+    real(r8), intent(out) :: GEOC_LAT   ! In Radians
+
+    real(r8), intent(out) :: RP         ! In Kilometers
+
+    real(r8) :: CW, INCL, SW, r
+!   real(r8), parameter :: B2 = real(earth_minor,r8) ** 2 ! Doesn't work
+    real(r8), parameter :: B2 = (earth_minor + 0.0_r8) ** 2
+
+! Fill in some variables in the Ellipse module
+
+    elvar%a2 = real(earth_major,r8) ** 2
+
+    incl = (beta_inc - 90.0_r8) * deg2rad
+!   r = tan(incl) ** 2
+
+! c is the Minor axis for 2D ellipse, c2 = c * c
+! c2oa2 is c**2 / a**2
+
+    elvar%c2oa2 = b2/(elvar%a2 * cos(incl)**2 + b2 * sin(incl)**2 )
+!   c2oa2 = (1.0_r8+r)*b2/(a2+b2*r)
+
+    elvar%c2 = elvar%a2 * elvar%c2oa2
+
+    elvar%phi_tan = Phi_tan
+    elvar%spt = sin(Phi_tan)
+    elvar%cpt = cos(Phi_tan)
+    sw = elvar%spt * elvar%spt
+    cw = elvar%cpt * elvar%cpt
+
+    elvar%nphi_tan = elvar%a2 / sqrt(elvar%c2*sw + elvar%a2*cw)
+
+!  Compute Radius of Curvature Circle (RoC) and its center coordinates:
+
+    elvar%RoC = elvar%nphi_tan * sqrt(sw + elvar%c2oa2**2 * cw)
+    elvar%XoC = (elvar%nphi_tan - elvar%RoC) * elvar%cpt
+    elvar%YoC = (elvar%c2oa2 * elvar%nphi_tan - elvar%RoC) * elvar%spt
+
+! Get the Geocentric Lat. (geoc_lat) from the Geodetic Lat.
+
+    geoc_lat = GeodToGeocLat ( geod_lat * rad2deg )
+
+!  Compute Earth Radius (Elliptical)
+
+    r = elvar%a2*cw + b2*sw
+    Rp = sqrt( ((elvar%a2*elvar%a2)*cw + (b2*b2)*sw) / r)
+
+    return
+
+  end subroutine GEOC_GEOD_CONV
+
+end module GEOC_GEOD_CONV_M
+
+! $Log: geoc_geod_conv_m.f90,v $
+! Revision 1.8  2001/06/07 23:30:34  pwagner
+! Added Copyright statement
+!
+! Revision 1.7  2001/03/30 20:28:21  zvi
+! General fix-up to get rid of COMMON BLOCK (ELLIPSE)
+!
+! Revision 1.6  2001/03/28 19:55:26  vsnyder
+! Revised some computations to make them more stable.
+! Corrected units on call to GeodToGeocLat.
+!
+! Revision 1.4  2001/03/27 19:48:00  vsnyder
+! Get Deg2Rad from Units, add some comments, make everything but
+! geoc_geod_conv private, make constants _r8 instead of d0, cosmetic changes
+!
+! Revision 1.3  2001/03/20 23:22:40  zvi
+! Change to new geoc_geod routine..
+!
+! Revision 1.2  2001/03/20 11:03:15  zvi
+! Fixing code for "real" data run, increase dim. etc.
+!
+! Revision 1.1  2001/01/31 22:40:12  zvi
+! Add new version
+!
+! Revision 1.1  2000/06/21 21:56:13  zvi
+! First version D.P.
+!
+! Revision 1.1 2000/06/09 00:08:13  Z.Shippony
+! Initial conversion to Fortran 90
+@
+
+
+1.8
+log
+@Added Copyright statement
+@
+text
+@d16 1
+a16 1
+       "$Id: geoc_geod_conv_m.f90,v 1.7 2001/03/30 20:28:21 zvi Exp $"
+d85 3
+@
+
+
+1.8.2.1
+log
+@*** empty log message ***
+@
+text
+@d16 1
+a16 1
+       "$Id: geoc_geod_conv_m.f90,v 1.8 2001/06/07 23:30:34 pwagner Exp $"
+a84 3
+! Revision 1.8  2001/06/07 23:30:34  pwagner
+! Added Copyright statement
+!
+@
+
+
+1.7
+log
+@General fix-up to get rid of COMMON BLOCK (ELLIPSE)
+@
+text
+@d1 3
+d16 1
+a16 1
+       "$Id: geoc_geod_conv_m.f90,v 1.6 2001/03/28 19:55:26 vsnyder Exp $"
+d85 3
+@
+
+
+1.6
+log
+@Revised some computations to make them more stable.
+Corrected units on call to GeodToGeocLat.
+@
+text
+@d6 1
+a6 2
+  use ELLIPSE, only: A2, C2, C2OA2, CPT, SPT, NPHI_TAN, ROC, XOC, YOC
+
+d13 1
+a13 1
+       "$Id: geoc_geod_conv_m.f90,v 1.4 2001/03/27 19:48:00 vsnyder Exp $"
+d20 2
+a21 2
+  ! ---------------------------------------------  GEOC_GEOD_CONV  -----
+  subroutine GEOC_GEOD_CONV ( BETA_INC, PHI_TAN, GEOD_LAT, GEOC_LAT, Rp)
+d26 2
+d33 1
+a33 1
+    real(r8) :: CW, INCL, SW
+d39 1
+a39 1
+    a2 = real(earth_major,r8) ** 2
+d47 1
+a47 1
+    c2oa2 = b2/(a2 * cos(incl)**2 + b2 * sin(incl)**2 )
+d50 1
+a50 1
+    c2 = a2 * c2oa2
+d52 5
+a56 4
+    spt = sin(Phi_tan)
+    cpt = cos(Phi_tan)
+    sw = spt * spt
+    cw = cpt * cpt
+d58 1
+a58 1
+    nphi_tan = a2 / sqrt(c2*sw + a2*cw)
+d62 3
+a64 3
+    RoC = nphi_tan * sqrt(sw + c2oa2**2 * cw)
+    XoC = (nphi_tan - RoC) * cpt
+    YoC = (c2oa2 * nphi_tan - RoC) * spt
+d72 2
+a73 1
+    Rp = sqrt( ((a2*a2)*cw + (b2*b2)*sw) / (a2*cw + b2*sw) )
+d82 4
+@
+
+
+1.5
+log
+@Fixing up convolution code, some minor changes in geoc_geod
+@
+text
+@d4 1
+a4 2
+  use STRINGS, only: STRLWR
+  use UNITS, only: DEG2RAD
+d6 1
+a6 2
+  use ELLIPSE, only: A2, C2, C2OA2, CPT, SPT, CPS, SPS, CPTS, SPTS, &
+                     NPHI_TAN, ROC, XOC, YOC
+d32 3
+a34 1
+    real(r8) :: q, r, incl, cw, sw, b2
+d36 1
+a36 2
+    q = real(earth_major,r8)
+    a2 = q * q
+d38 1
+a38 2
+    r = real(earth_minor,r8)
+    b2 = r * r
+d41 1
+a41 2
+    q = tan(incl)
+    r = q * q
+d44 1
+d46 2
+a47 1
+    c2 = (1.0_r8+r)*a2*b2/(a2+b2*r)
+d49 1
+a49 3
+    c2oa2 = c2 / a2
+!
+! Get the Geocentric Lat. (geoc_lat) from the Geodetic Lat.
+a50 2
+    geoc_lat = GeodToGeocLat(geod_lat)
+!
+d56 1
+a56 1
+    nphi_tan = a2 / sqrt(c2-(c2-a2)*cw)
+d60 1
+a60 3
+    r = c2 * cpt / a2
+    q = spt * spt + r * r
+    RoC = nphi_tan * sqrt(q)
+d64 4
+d70 1
+a70 2
+    q = ((a2*a2)*cw+(b2*b2)*sw)/(a2*cw+b2*sw)
+    Rp = sqrt(q)
+d72 1
+a72 1
+    Return
+d74 1
+a74 1
+  End subroutine GEOC_GEOD_CONV
+@
+
+
+1.4
+log
+@Get Deg2Rad from Units, add some comments, make everything but
+geoc_geod_conv private, make constants _r8 instead of d0, cosmetic changes
+@
+text
+@d16 1
+a16 1
+       "$Id: geoc_geod_conv_m.f90,v 1.3 2001/03/20 23:22:40 zvi Exp $"
+d59 1
+a59 1
+    cw = 1.0_r8 - sw
+d76 1
+a76 1
+    return
+d78 1
+a78 1
+  end subroutine GEOC_GEOD_CONV
+d83 4
+@
+
+
+1.3
+log
+@Change to new geoc_geod routine..
+@
+text
+@d3 1
+a3 1
+  use Geometry  !  , only: GeodToGeocLat
+d5 1
+a5 1
+  use L2PC_FILE_PARAMETERS, only: DEG2RAD
+d9 1
+d11 3
+d15 4
+a18 3
+  CHARACTER (LEN=256) :: Id = &
+       "$Id: geoc_geod_conv_m.f90,v 1.2 2001/03/20 11:03:15 zvi Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= &
+d23 2
+a24 3
+!---------------------------------------------------------------------
+
+SUBROUTINE geoc_geod_conv(beta_inc,phi_tan,geod_lat,geoc_lat,Rp)
+d26 3
+a28 3
+Real(r8), INTENT(IN) :: beta_inc                ! In Degrees
+Real(r8), INTENT(IN) :: phi_tan                 ! In Radians
+Real(r8), INTENT(IN) :: geod_lat                ! In Radians
+d30 1
+a30 1
+Real(r8), INTENT(OUT) :: geoc_lat               ! In Radians
+d32 1
+a32 1
+Real(r8), INTENT(OUT) :: rp
+d34 1
+a34 1
+Real(r8) :: q,r,incl,cw,sw,b2
+d36 2
+a37 2
+  q = Real(earth_major,r8)
+  a2 = q * q
+d39 2
+a40 2
+  r = Real(earth_minor,r8)
+  b2 = r * r
+d42 3
+a44 3
+  incl = (beta_inc - 90.0D0) * deg2rad
+  q = TAN(incl)
+  r = q * q
+d48 1
+a48 1
+  c2 = (1.0D0+r)*a2*b2/(a2+b2*r)
+d50 1
+a50 1
+  c2oa2 = c2 / a2
+d54 1
+a54 1
+  geoc_lat = GeodToGeocLat(geod_lat)
+d56 4
+a59 4
+  spt = SIN(Phi_tan)
+  cpt = COS(Phi_tan)
+  sw = spt * spt
+  cw = 1.0d0 - sw
+d61 1
+a61 1
+  nphi_tan = a2 / SQRT(c2-(c2-a2)*cw)
+d65 5
+a69 5
+  r = c2 * cpt / a2
+  q = spt * spt + r * r
+  RoC = nphi_tan * SQRT(q)
+  XoC = (nphi_tan - RoC) * cpt
+  YoC = (c2oa2 * nphi_tan - RoC) * spt
+d71 1
+a71 1
+!  Compure Earth Radius (Elliptical)
+d73 2
+a74 2
+  q = ((a2*a2)*cw+(b2*b2)*sw)/(a2*cw+b2*sw)
+  Rp = SQRT(q)
+d76 1
+a76 1
+  Return
+d78 3
+a80 1
+ END SUBROUTINE geoc_geod_conv
+a81 1
+End module GEOC_GEOD_CONV_M
+d83 3
+@
+
+
+1.2
+log
+@Fixing code for "real" data run, increase dim. etc.
+@
+text
+@d3 1
+d12 1
+a12 1
+       "$Id: geoc_geod_conv_m.f90,v 1.1 2001/01/31 22:40:12 zvi Exp $"
+d20 1
+a20 1
+SUBROUTINE geoc_geod_conv(beta_inc,phi_tan,geoc_lat,Rp)
+d24 1
+d26 1
+a26 1
+Real(r8), INTENT(IN OUT) :: geoc_lat            ! In Degrees
+d48 3
+a50 1
+! Get the Geocentric Lat. (geoc_lat) from the Tangent Phi
+a55 12
+  r = a2*a2*cw +b2*b2*sw
+
+! q = spt*b2/Sqrt(r)/COS(incl)
+  q = spt*b2/Sqrt(r)
+
+  if(q > 1.0) then
+    Print *,'** Error in geoc_geod_conv routine ...'
+    Print *,'   Trying to take ArcSin(arg) for arg > 1.0'
+    Stop
+  endif
+
+  geoc_lat = DASIN(q)                  ! In Radians
+d78 3
+@
+
+
+1.1
+log
+@Add new version
+@
+text
+@d11 1
+a11 1
+       "$Id: geoc_geod_conv_m.f90,v 1.1 2000/06/21 21:56:13 zvi Exp $"
+d53 10
+a62 1
+  q = spt*b2/Sqrt(r)/COS(incl)
+d86 3
+@
+

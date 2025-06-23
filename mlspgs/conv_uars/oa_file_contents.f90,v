@@ -1,0 +1,224 @@
+head	1.3;
+access;
+symbols
+	v5-02-NRT-19:1.3
+	v6-00:1.3
+	v5-02-NRT-18:1.3
+	v5-02:1.3
+	v5-01-NRT-17:1.3
+	v5-01-NRT-16:1.3
+	v5-01-NRT-15:1.3
+	v5-01-NRT-14:1.3
+	neuralnetworks-1-0:1.3.0.12
+	cfm-single-freq-0-1:1.3.0.10
+	v5-01:1.3
+	v5-00:1.3
+	v4-23-TA133:1.3.0.8
+	mus-emls-1-70:1.3.0.6
+	rel-1-0-englocks-work:1.3.0.4
+	VUMLS1-00:1.3
+	VPL1-00:1.3
+	V4-22-NRT-08:1.3
+	VAM1-00:1.3
+	V4-21:1.3.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.3
+date	2015.01.22.02.18.56;	author vsnyder;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2014.12.11.00.48.51;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2014.06.17.17.40.27;	author perun;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@PGS_Interfaces.f90
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+MODULE oa_file_contents
+
+  use MLSKinds, only: R8
+
+  IMPLICIT NONE
+
+  TYPE emls_oa_t
+     sequence
+
+     ! for satellite:
+
+     real :: sc_orbincl(32)
+     real :: sc_geoclat(32)         ! Geocentric latitude, degrees
+     real :: sc_geodlat(32)         ! Geodetic latitude, degrees
+     real :: sc_lon(32)             ! Longitude, degrees
+     real(r8) :: sc_geocalt(32)     ! Geocentric altitude, meters
+     real(r8) :: sc_geodalt(32)     ! Geodetic height, meters
+     real(r8) :: sc_MIF_TAI(32)
+     real(r8) :: sc_ECI(3,32)       ! ECI position, meters
+     real(r8) :: sc_ECR(3,32)       ! ECR position, meters
+     real(r8) :: sc_VelECI(3,32)    ! ECI velocity, meters/second
+     real(r8) :: sc_VelECR(3,32)    ! ECR velocity, meters/second
+     real(r8) :: sc_ypr(3,32)
+     real(r8) :: sc_ypr_rate(3,32)
+
+     ! for instrument:
+
+     real(r8) :: geoc_alt(32)       ! Geocentric altitude, meters
+     real(r8) :: geod_alt(32)       ! Geodetic height, meters
+     real :: azimAngle(32)
+     real :: geoc_lat(32)           ! Geocentric latitude, degrees
+     real :: geod_lat(32)           ! Geodetic latitude, degrees
+     real :: geod_ang(32)           ! Orbit angle, degrees
+     real :: lon(32)                ! longitude, degrees
+     real :: scanAngle(32)
+     real :: solartime(32)
+     real :: solarzenith(32)
+     integer :: bo_stat(32)
+     real(r8) :: MAFStartTimeTAI
+     real(r8) :: ECI(3,32)          ! ECI position, meters
+     real(r8) :: ECR(3,32)          ! ECR position, meters
+     real(r8) :: ECRtoFOV(9,32)
+     real(r8) :: LosAngle(32)
+     real(r8) :: LosVel(32)         ! Line-of-sight velocity, meters/second
+     real(r8) :: OrbY(32)
+
+  END TYPE
+
+END MODULE oa_file_contents
+
+! $Log: oa_file_contents.f90,v $
+! Revision 1.2  2014/12/11 00:48:51  vsnyder
+! Move external procedures into modules.  Add copyright and CVS lines.
+! Compute MIF geolocation (except height) for SC.  Compute MIF-resolved
+! SC velocity.  Some cannonball polishing.
+!
+@
+
+
+1.2
+log
+@Move external procedures into modules.  Add copyright and CVS lines.
+Compute MIF geolocation (except height) for SC.  Compute MIF-resolved
+SC velocity.  Some cannonball polishing.
+@
+text
+@d24 5
+a28 5
+     real :: sc_geoclat(32)
+     real :: sc_geodlat(32)
+     real :: sc_lon(32)
+     real(r8) :: sc_geocalt(32)
+     real(r8) :: sc_geodalt(32)
+d30 4
+a33 4
+     real(r8) :: sc_ECI(3,32)
+     real(r8) :: sc_ECR(3,32)
+     real(r8) :: sc_VelECI(3,32)
+     real(r8) :: sc_VelECR(3,32)
+d39 2
+a40 2
+     real(r8) :: geoc_alt(32)
+     real(r8) :: geod_alt(32)
+d42 4
+a45 4
+     real :: geoc_lat(32)
+     real :: geod_lat(32)
+     real :: geod_ang(32)
+     real :: lon(32)
+d51 2
+a52 2
+     real(r8) :: ECI(3,32)
+     real(r8) :: ECR(3,32)
+d55 1
+a55 1
+     real(r8) :: LosVel(32)
+d62 6
+a67 1
+! $Log: $
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d1 11
+d14 3
+a16 1
+IMPLICIT NONE
+d18 2
+a19 39
+TYPE emls_oa_t
+   sequence
+   
+   ! for satellite:
+
+   real :: sc_orbincl(32)
+   real :: sc_geoclat(32)
+   real :: sc_geodlat(32)
+   real :: sc_lon(32)
+   real*8 :: sc_geocalt(32)
+   real*8 :: sc_geodalt(32)
+   real*8 :: sc_MIF_TAI(32)
+   real*8 :: sc_ECI(3,32)
+   real*8 :: sc_ECR(3,32)
+   real*8 :: sc_VelECI(3,32)
+   real*8 :: sc_VelECR(3,32)
+   real*8 :: sc_ypr(3,32)
+   real*8 :: sc_ypr_rate(3,32)
+
+   ! for instrument:
+
+   real*8 :: geoc_alt(32)
+   real*8 :: geod_alt(32)
+   real :: azimAngle(32)
+   real :: geoc_lat(32)
+   real :: geod_lat(32)
+   real :: geod_ang(32)
+   real :: lon(32)
+   real :: scanAngle(32)
+   real :: solartime(32)
+   real :: solarzenith(32)
+   integer :: bo_stat(32)
+   real*8 :: MAFStartTimeTAI
+   real*8 :: ECI(3,32)
+   real*8 :: ECR(3,32)
+   real*8 :: ECRtoFOV(9,32)
+   real*8 :: LosAngle(32)
+   real*8 :: LosVel(32)
+   real*8 :: OrbY(32)
+d21 1
+a21 1
+END TYPE
+d23 36
+a58 1
+TYPE (emls_oa_t) :: emls_oa
+d61 2
+@
+

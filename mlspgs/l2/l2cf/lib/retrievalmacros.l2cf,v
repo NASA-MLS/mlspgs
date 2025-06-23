@@ -1,0 +1,7042 @@
+head	1.164;
+access;
+symbols
+	v5-02-NRT-19:1.164
+	v6-00:1.164
+	v5-02-NRT-18:1.162
+	v5-02:1.160
+	v5-01-NRT-17:1.162
+	v5-01-NRT-16:1.162
+	v5-01-NRT-15:1.162
+	v5-01-NRT-14:1.162
+	neuralnetworks-1-0:1.162.0.4
+	cfm-single-freq-0-1:1.162.0.2
+	v5-01:1.160
+	v5-00:1.160
+	v4-23-TA133:1.159.0.6
+	mus-emls-1-70:1.159.0.4
+	rel-1-0-englocks-work:1.159.0.2
+	VUMLS1-00:1.157
+	VPL1-00:1.156
+	V4-22-NRT-08:1.155
+	VAM1-00:1.155
+	V4-21:1.155.0.2
+	V4-13:1.154
+	V4-12:1.154
+	V4-11:1.154
+	V4-10:1.154
+	V3-43:1.142
+	M4-00:1.152
+	V3-41:1.142
+	V3-40-PlusGM57:1.142.0.2
+	V2-24-NRT-04:1.126
+	V3-33:1.144
+	V2-24:1.126
+	V3-31:1.144
+	V3-30-NRT-05:1.144
+	cfm-01-00:1.143
+	V3-30:1.142
+	V3-20:1.142
+	V3-10:1.141
+	V2-23-NRT-02:1.126
+	V2-23:1.126
+	V2-22-NRT-01:1.126
+	V2-22:1.126
+	V2-21:1.126
+	V2-20:1.126
+	V2-11:1.119
+	V2-10:1.119
+	V2-00:1.111
+	V1-51:1.103
+	V1-50:1.102
+	V1-45:1.98
+	V1-44:1.98
+	V1-43:1.96
+	V1-32:1.75
+	V1-31:1.75
+	V1-30:1.72
+	V1-13:1.40
+	V1-12:1.40
+	V1-11:1.40
+	V1-10:1.39
+	newfwm-feb03:1.39.0.2
+	V1-04:1.1
+	V1-03:1.1
+	V1-02:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.164
+date	2024.02.02.21.41.05;	author pwagner;	state Exp;
+branches;
+next	1.163;
+
+1.163
+date	2024.01.18.23.32.37;	author pwagner;	state Exp;
+branches;
+next	1.162;
+
+1.162
+date	2019.12.13.00.08.56;	author pwagner;	state Exp;
+branches;
+next	1.161;
+
+1.161
+date	2019.10.16.21.01.17;	author pwagner;	state Exp;
+branches;
+next	1.160;
+
+1.160
+date	2019.08.22.16.53.02;	author pwagner;	state Exp;
+branches;
+next	1.159;
+
+1.159
+date	2017.12.01.18.21.35;	author pwagner;	state Exp;
+branches;
+next	1.158;
+
+1.158
+date	2017.11.17.17.34.12;	author pwagner;	state Exp;
+branches;
+next	1.157;
+
+1.157
+date	2016.12.06.19.56.53;	author pwagner;	state Exp;
+branches;
+next	1.156;
+
+1.156
+date	2016.09.14.20.10.04;	author pwagner;	state Exp;
+branches;
+next	1.155;
+
+1.155
+date	2014.12.10.23.05.47;	author pwagner;	state Exp;
+branches;
+next	1.154;
+
+1.154
+date	2014.04.07.18.14.54;	author pwagner;	state Exp;
+branches;
+next	1.153;
+
+1.153
+date	2013.10.15.17.41.33;	author pwagner;	state Exp;
+branches;
+next	1.152;
+
+1.152
+date	2012.12.04.18.45.12;	author pwagner;	state Exp;
+branches;
+next	1.151;
+
+1.151
+date	2012.12.04.18.11.01;	author pwagner;	state Exp;
+branches;
+next	1.150;
+
+1.150
+date	2012.10.09.00.33.08;	author pwagner;	state Exp;
+branches;
+next	1.149;
+
+1.149
+date	2012.06.19.20.12.51;	author pwagner;	state Exp;
+branches;
+next	1.148;
+
+1.148
+date	2012.04.05.19.09.43;	author pwagner;	state Exp;
+branches;
+next	1.147;
+
+1.147
+date	2012.02.24.18.36.44;	author wgread;	state Exp;
+branches;
+next	1.146;
+
+1.146
+date	2012.02.22.00.08.15;	author wgread;	state Exp;
+branches;
+next	1.145;
+
+1.145
+date	2011.10.20.20.20.54;	author pwagner;	state Exp;
+branches;
+next	1.144;
+
+1.144
+date	2010.07.22.18.54.46;	author pwagner;	state Exp;
+branches;
+next	1.143;
+
+1.143
+date	2010.04.28.18.23.37;	author pwagner;	state Exp;
+branches;
+next	1.142;
+
+1.142
+date	2009.10.13.00.17.42;	author pwagner;	state Exp;
+branches;
+next	1.141;
+
+1.141
+date	2009.07.31.17.18.03;	author pwagner;	state Exp;
+branches;
+next	1.140;
+
+1.140
+date	2009.05.15.20.25.52;	author pwagner;	state Exp;
+branches;
+next	1.139;
+
+1.139
+date	2009.05.14.14.44.11;	author honghanh;	state Exp;
+branches;
+next	1.138;
+
+1.138
+date	2009.05.08.19.28.44;	author honghanh;	state Exp;
+branches;
+next	1.137;
+
+1.137
+date	2009.05.07.18.17.43;	author honghanh;	state Exp;
+branches;
+next	1.136;
+
+1.136
+date	2009.05.06.00.21.36;	author pwagner;	state Exp;
+branches;
+next	1.135;
+
+1.135
+date	2009.04.30.20.11.23;	author pwagner;	state Exp;
+branches;
+next	1.134;
+
+1.134
+date	2009.04.28.20.05.53;	author pwagner;	state Exp;
+branches;
+next	1.133;
+
+1.133
+date	2009.04.16.21.51.51;	author pwagner;	state Exp;
+branches;
+next	1.132;
+
+1.132
+date	2009.04.09.20.38.25;	author pwagner;	state Exp;
+branches;
+next	1.131;
+
+1.131
+date	2009.03.14.02.47.33;	author honghanh;	state Exp;
+branches;
+next	1.130;
+
+1.130
+date	2009.01.28.01.15.17;	author pwagner;	state Exp;
+branches;
+next	1.129;
+
+1.129
+date	2008.10.07.18.12.54;	author pwagner;	state Exp;
+branches;
+next	1.128;
+
+1.128
+date	2008.06.06.21.23.38;	author michael;	state Exp;
+branches;
+next	1.127;
+
+1.127
+date	2008.05.27.16.59.49;	author pwagner;	state Exp;
+branches;
+next	1.126;
+
+1.126
+date	2006.10.19.19.41.55;	author pwagner;	state Exp;
+branches;
+next	1.125;
+
+1.125
+date	2006.10.18.00.06.13;	author pwagner;	state Exp;
+branches;
+next	1.124;
+
+1.124
+date	2006.10.11.23.02.18;	author pwagner;	state Exp;
+branches;
+next	1.123;
+
+1.123
+date	2006.10.04.16.50.40;	author pwagner;	state Exp;
+branches;
+next	1.122;
+
+1.122
+date	2006.10.03.20.26.55;	author pwagner;	state Exp;
+branches;
+next	1.121;
+
+1.121
+date	2006.09.22.18.54.36;	author pwagner;	state Exp;
+branches;
+next	1.120;
+
+1.120
+date	2006.08.08.22.27.07;	author pwagner;	state Exp;
+branches;
+next	1.119;
+
+1.119
+date	2006.07.29.04.56.03;	author dwu;	state Exp;
+branches;
+next	1.118;
+
+1.118
+date	2006.07.29.01.19.34;	author pwagner;	state Exp;
+branches;
+next	1.117;
+
+1.117
+date	2006.07.29.00.30.04;	author pwagner;	state Exp;
+branches;
+next	1.116;
+
+1.116
+date	2006.07.27.22.41.28;	author pwagner;	state Exp;
+branches;
+next	1.115;
+
+1.115
+date	2006.07.25.21.37.45;	author pwagner;	state Exp;
+branches;
+next	1.114;
+
+1.114
+date	2006.07.24.23.14.56;	author pwagner;	state Exp;
+branches;
+next	1.113;
+
+1.113
+date	2006.07.11.00.06.32;	author pwagner;	state Exp;
+branches;
+next	1.112;
+
+1.112
+date	2006.07.07.23.14.12;	author pwagner;	state Exp;
+branches;
+next	1.111;
+
+1.111
+date	2006.06.09.20.47.54;	author pwagner;	state Exp;
+branches;
+next	1.110;
+
+1.110
+date	2006.05.11.20.16.36;	author pwagner;	state Exp;
+branches;
+next	1.109;
+
+1.109
+date	2006.05.11.04.33.33;	author dwu;	state Exp;
+branches;
+next	1.108;
+
+1.108
+date	2006.05.08.21.32.50;	author bill;	state Exp;
+branches;
+next	1.107;
+
+1.107
+date	2006.05.04.19.51.59;	author bill;	state Exp;
+branches;
+next	1.106;
+
+1.106
+date	2006.04.26.18.27.50;	author pwagner;	state Exp;
+branches;
+next	1.105;
+
+1.105
+date	2005.10.28.23.29.04;	author pwagner;	state Exp;
+branches;
+next	1.104;
+
+1.104
+date	2005.07.21.23.47.14;	author pwagner;	state Exp;
+branches;
+next	1.103;
+
+1.103
+date	2005.01.27.18.36.13;	author pwagner;	state Exp;
+branches;
+next	1.102;
+
+1.102
+date	2004.11.29.21.54.08;	author livesey;	state Exp;
+branches;
+next	1.101;
+
+1.101
+date	2004.10.30.00.04.20;	author livesey;	state Exp;
+branches;
+next	1.100;
+
+1.100
+date	2004.10.28.22.51.29;	author dwu;	state Exp;
+branches;
+next	1.99;
+
+1.99
+date	2004.09.12.22.13.25;	author pwagner;	state Exp;
+branches;
+next	1.98;
+
+1.98
+date	2004.06.26.00.57.14;	author livesey;	state Exp;
+branches;
+next	1.97;
+
+1.97
+date	2004.06.22.18.36.06;	author pwagner;	state Exp;
+branches;
+next	1.96;
+
+1.96
+date	2004.05.04.20.38.27;	author livesey;	state Exp;
+branches;
+next	1.95;
+
+1.95
+date	2004.04.28.00.31.36;	author livesey;	state Exp;
+branches;
+next	1.94;
+
+1.94
+date	2004.04.27.23.41.48;	author livesey;	state Exp;
+branches;
+next	1.93;
+
+1.93
+date	2004.04.27.23.02.11;	author livesey;	state Exp;
+branches;
+next	1.92;
+
+1.92
+date	2004.04.24.00.24.32;	author pwagner;	state Exp;
+branches;
+next	1.91;
+
+1.91
+date	2004.04.19.19.24.23;	author livesey;	state Exp;
+branches;
+next	1.90;
+
+1.90
+date	2004.04.16.00.45.55;	author livesey;	state Exp;
+branches;
+next	1.89;
+
+1.89
+date	2004.04.14.23.07.22;	author livesey;	state Exp;
+branches;
+next	1.88;
+
+1.88
+date	2004.04.08.22.42.23;	author livesey;	state Exp;
+branches;
+next	1.87;
+
+1.87
+date	2004.04.06.01.18.07;	author livesey;	state Exp;
+branches;
+next	1.86;
+
+1.86
+date	2004.04.02.01.08.41;	author livesey;	state Exp;
+branches;
+next	1.85;
+
+1.85
+date	2004.03.27.00.16.34;	author livesey;	state Exp;
+branches;
+next	1.84;
+
+1.84
+date	2004.03.17.17.13.54;	author livesey;	state Exp;
+branches;
+next	1.83;
+
+1.83
+date	2004.03.12.00.18.27;	author livesey;	state Exp;
+branches;
+next	1.82;
+
+1.82
+date	2004.03.10.23.00.29;	author pwagner;	state Exp;
+branches;
+next	1.81;
+
+1.81
+date	2004.02.13.21.12.23;	author livesey;	state Exp;
+branches;
+next	1.80;
+
+1.80
+date	2004.02.12.02.06.33;	author livesey;	state Exp;
+branches;
+next	1.79;
+
+1.79
+date	2004.02.11.21.41.58;	author livesey;	state Exp;
+branches;
+next	1.78;
+
+1.78
+date	2004.02.03.21.43.56;	author livesey;	state Exp;
+branches;
+next	1.77;
+
+1.77
+date	2004.01.24.03.23.19;	author livesey;	state Exp;
+branches;
+next	1.76;
+
+1.76
+date	2004.01.16.15.55.36;	author mjf;	state Exp;
+branches;
+next	1.75;
+
+1.75
+date	2003.11.15.00.23.06;	author livesey;	state Exp;
+branches;
+next	1.74;
+
+1.74
+date	2003.11.14.00.12.39;	author livesey;	state Exp;
+branches;
+next	1.73;
+
+1.73
+date	2003.10.15.23.33.24;	author pwagner;	state Exp;
+branches;
+next	1.72;
+
+1.72
+date	2003.09.05.23.26.28;	author pwagner;	state Exp;
+branches;
+next	1.71;
+
+1.71
+date	2003.09.02.22.48.43;	author pwagner;	state Exp;
+branches;
+next	1.70;
+
+1.70
+date	2003.09.02.22.25.25;	author pwagner;	state Exp;
+branches;
+next	1.69;
+
+1.69
+date	2003.09.02.20.52.09;	author pwagner;	state Exp;
+branches;
+next	1.68;
+
+1.68
+date	2003.08.28.23.52.59;	author livesey;	state Exp;
+branches;
+next	1.67;
+
+1.67
+date	2003.08.28.16.30.25;	author livesey;	state Exp;
+branches;
+next	1.66;
+
+1.66
+date	2003.08.27.22.23.58;	author livesey;	state Exp;
+branches;
+next	1.65;
+
+1.65
+date	2003.08.14.20.26.34;	author livesey;	state Exp;
+branches;
+next	1.64;
+
+1.64
+date	2003.08.06.17.49.31;	author livesey;	state Exp;
+branches;
+next	1.63;
+
+1.63
+date	2003.07.24.22.13.28;	author livesey;	state Exp;
+branches;
+next	1.62;
+
+1.62
+date	2003.07.11.01.23.05;	author livesey;	state Exp;
+branches;
+next	1.61;
+
+1.61
+date	2003.07.09.19.41.54;	author livesey;	state Exp;
+branches;
+next	1.60;
+
+1.60
+date	2003.07.09.17.58.01;	author livesey;	state Exp;
+branches;
+next	1.59;
+
+1.59
+date	2003.07.08.20.03.56;	author livesey;	state Exp;
+branches;
+next	1.58;
+
+1.58
+date	2003.07.08.00.50.43;	author livesey;	state Exp;
+branches;
+next	1.57;
+
+1.57
+date	2003.07.08.00.17.20;	author livesey;	state Exp;
+branches;
+next	1.56;
+
+1.56
+date	2003.06.05.23.39.39;	author livesey;	state Exp;
+branches;
+next	1.55;
+
+1.55
+date	2003.06.04.17.14.07;	author livesey;	state Exp;
+branches;
+next	1.54;
+
+1.54
+date	2003.05.29.16.41.17;	author livesey;	state Exp;
+branches;
+next	1.53;
+
+1.53
+date	2003.05.12.02.07.56;	author livesey;	state Exp;
+branches;
+next	1.52;
+
+1.52
+date	2003.05.11.22.39.07;	author livesey;	state Exp;
+branches;
+next	1.51;
+
+1.51
+date	2003.05.11.22.35.54;	author livesey;	state Exp;
+branches;
+next	1.50;
+
+1.50
+date	2003.05.11.06.12.20;	author livesey;	state Exp;
+branches;
+next	1.49;
+
+1.49
+date	2003.05.11.00.17.46;	author livesey;	state Exp;
+branches;
+next	1.48;
+
+1.48
+date	2003.05.10.23.51.43;	author livesey;	state Exp;
+branches;
+next	1.47;
+
+1.47
+date	2003.05.10.23.38.57;	author livesey;	state Exp;
+branches;
+next	1.46;
+
+1.46
+date	2003.05.10.22.22.17;	author livesey;	state Exp;
+branches;
+next	1.45;
+
+1.45
+date	2003.05.10.20.47.08;	author livesey;	state Exp;
+branches;
+next	1.44;
+
+1.44
+date	2003.05.10.00.57.53;	author livesey;	state Exp;
+branches;
+next	1.43;
+
+1.43
+date	2003.05.08.21.08.02;	author livesey;	state Exp;
+branches;
+next	1.42;
+
+1.42
+date	2003.05.08.20.49.21;	author livesey;	state Exp;
+branches;
+next	1.41;
+
+1.41
+date	2003.03.22.01.18.24;	author livesey;	state Exp;
+branches;
+next	1.40;
+
+1.40
+date	2003.02.27.00.39.38;	author livesey;	state Exp;
+branches;
+next	1.39;
+
+1.39
+date	2002.12.16.16.24.51;	author mjf;	state Exp;
+branches;
+next	1.38;
+
+1.38
+date	2002.11.26.23.38.20;	author livesey;	state Exp;
+branches;
+next	1.37;
+
+1.37
+date	2002.11.21.18.24.11;	author livesey;	state Exp;
+branches;
+next	1.36;
+
+1.36
+date	2002.11.21.01.24.01;	author livesey;	state Exp;
+branches;
+next	1.35;
+
+1.35
+date	2002.11.21.01.19.18;	author livesey;	state Exp;
+branches;
+next	1.34;
+
+1.34
+date	2002.11.20.19.59.37;	author mjf;	state Exp;
+branches;
+next	1.33;
+
+1.33
+date	2002.10.25.23.56.45;	author livesey;	state Exp;
+branches;
+next	1.32;
+
+1.32
+date	2002.10.25.22.25.59;	author livesey;	state Exp;
+branches;
+next	1.31;
+
+1.31
+date	2002.10.25.01.10.33;	author livesey;	state Exp;
+branches;
+next	1.30;
+
+1.30
+date	2002.10.17.18.24.40;	author livesey;	state Exp;
+branches;
+next	1.29;
+
+1.29
+date	2002.10.17.18.19.50;	author livesey;	state Exp;
+branches;
+next	1.28;
+
+1.28
+date	2002.10.16.20.21.11;	author mjf;	state Exp;
+branches;
+next	1.27;
+
+1.27
+date	2002.10.11.19.39.21;	author livesey;	state Exp;
+branches;
+next	1.26;
+
+1.26
+date	2002.10.11.19.29.29;	author livesey;	state Exp;
+branches;
+next	1.25;
+
+1.25
+date	2002.10.09.00.48.23;	author livesey;	state Exp;
+branches;
+next	1.24;
+
+1.24
+date	2002.10.03.21.36.00;	author livesey;	state Exp;
+branches;
+next	1.23;
+
+1.23
+date	2002.10.03.16.18.24;	author livesey;	state Exp;
+branches;
+next	1.22;
+
+1.22
+date	2002.10.03.05.41.41;	author livesey;	state Exp;
+branches;
+next	1.21;
+
+1.21
+date	2002.10.02.23.22.47;	author livesey;	state Exp;
+branches;
+next	1.20;
+
+1.20
+date	2002.10.02.23.06.01;	author pwagner;	state Exp;
+branches;
+next	1.19;
+
+1.19
+date	2002.10.01.18.33.36;	author mjf;	state Exp;
+branches;
+next	1.18;
+
+1.18
+date	2002.08.26.20.27.07;	author livesey;	state Exp;
+branches;
+next	1.17;
+
+1.17
+date	2002.08.23.23.26.29;	author livesey;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2002.08.15.22.46.00;	author livesey;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2002.08.05.17.20.23;	author livesey;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2002.08.04.16.18.47;	author mjf;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2002.07.23.23.47.28;	author livesey;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2002.07.22.20.34.17;	author livesey;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2002.07.20.00.54.56;	author livesey;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2002.07.18.06.30.55;	author livesey;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2002.07.17.19.30.10;	author livesey;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2002.07.06.21.18.48;	author livesey;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2002.07.05.21.46.36;	author livesey;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2002.07.05.21.37.02;	author livesey;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2002.07.05.17.46.38;	author livesey;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2002.06.24.17.24.47;	author livesey;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2002.05.29.00.08.23;	author livesey;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2002.05.28.22.36.14;	author livesey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2002.04.29.21.54.59;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.164
+log
+@Use DT33-based flagging for Clouds
+@
+text
+@!divert(-1)
+; $Id: retrievalmacros.l2cf,v 1.163 2024/01/18 23:32:37 pwagner Exp $
+
+; This l2cf fragment defines macros we're going to use a lot
+; in doing phased retrievals
+
+; ------------------------------------------------------- Derived flags
+
+;; Setup some flags based on other flags
+!ifdef(flagComputeAvks,{!define(flagDontDestroyVectors,1)})
+!ifdef(flagComputeSout,{!define(flagDontDestroyVectors,1)})
+
+; ------------------------------------------------------- Instrument information
+
+; Define some macros we need for various quantities
+!defunlessdef(allRadiometers,{R1A,R1B,R2,R3,R4,R5H,R5V})
+!define(allDACS,{DACS22,DACS23,DACS24,DACS25,DACS26})
+!define(allMBs,{MB27,MB28,MB29,MB30,MB31})
+!define(allBands,{!forloop({i},1,33,{!i, })34}) ; 1,2,3..34
+!define(allBandLSBs,{!makelist({},{L},!allBands)})
+!define(allBandUSBs,{!forloop({i},2,20,{!i{}U,})23U,24U,25U,!forloop({i},27,31,{!i{}U,})33U})
+!define(allspecFBs,{Band7,Band8,Band9,Band33})
+!define(baselineMIFBands,{Band7,Band8,Band9,Band33,Band17})
+
+; These will be used if we set status bits for too few radiances by Band number
+; Note that we reserve and use macros named MRn where n is the band number
+; Do not use identically-named macros for any other purpose
+; (1) If we compare total valid radiances against a threshold getMinRadsByBand
+!define(setMinRadsByBand,{!dnl
+!ProcessParVal(MR,$@@)!dnl
+})
+!setMinRadsByBand(1=1700,2=440,3=650,4=1300,5=1100,6=1300,7=500,8=1200,9=1200,10=900)
+!setMinRadsByBand(11=800,12=900,13=900,14=900,15=500,16=500,17=500,18=500,19=500,20=500)
+!setMinRadsByBand(21=500,22=5400,23=290,24=750,25=1000,26=500,27=325,28=500,29=400,30=500)
+!setMinRadsByBand(31=500,32=100,33=55,34=100)
+; each call to setMinRadsByBand may contain one or more args
+; each arg is of the form "band_number=min_radiances"
+; where band_number is any of 1..34, and min_radiances is an appropriate
+; threshold
+; Note that as the instrument ages we may have to relax some thresholds
+; to avoid too many failed statuses
+
+!define(getMinRadsByBand,{!MR$1})
+
+; (2) If we compare max % valid radiances against a threshold pctMinRads
+!defunlessdef(pctMinRads,60)
+
+;; This macro is used in sids runs to get the band number part of a band
+;; specifier (i.e. strip off the sideband if it is present)
+!define(getBandNumber,{!regexp({$1},{[0-9]+},{\&})})
+;; Some other low level macros
+!define(systemp,{!systemp$1})
+!define(nbw,{!nbw$1})
+
+; ------------------------------------Install pTop pBottom for some products
+!define(setPTopBySpecies,{!dnl
+!ProcessParValCS(pTop,$@@)!dnl
+})
+!define(setPBottomBySpecies,{!dnl
+!ProcessParValCS(pBottom,$@@)!dnl
+})
+
+!setPTopBySpecies(Temperature=0.000464mb, GPH=0.000464mb)
+!setPBottomBySpecies(Temperature=383mb, GPH=383mb)
+
+; Macros used by other macros
+;; We may optionally count valid radiances as % of those available
+!ifdef(flagNoRadsAsPct,{!dnl
+!define(asPercentage,{, /asPercentage})
+!define(noRadsBinMethod,{binMax})
+},{!dnl
+!define(asPercentage,{})
+!define(noRadsBinMethod,{binTotal})
+})
+; ------------------------------------------------------- Product information
+
+; These macros define the MLS standard products
+; IWC is somewhat special
+; Theses may be overridden in the usual way, but beware of side-effects
+; especially if they are inconsistent with constructstandardspecies.l2cf
+!defunlessdef(allStandardProductsWithColumns,{BrO,CH3Cl,CH3CN,CH3OH,CH3COCH3,ClO,CO,H2O,HCl,HCN,HNO3,HO2,HOCl,N2O,O3,O3_HR,OH,SO2})
+!defunlessdef(allStandardProductsWithoutColumns,{Temperature,GPH,RHI,UTRHI})
+!define(allStandardProducts,{!tidyList(!allStandardProductsWithColumns, $
+  !allStandardProductsWithoutColumns)})
+!defunlessdef(allHiResProducts,{Temperature_HR,H2O_HR,RHI_HR,GPH_HR})
+
+; ------------------------------------------------------- File IO information
+
+;; These macros define the format of our output files
+!defunlessdef(hdfVersion,5)
+
+;; These macros define our standard output filenames
+;; They depend on whether mlsl2 is run using a PCF
+!ifdef(flagUsingPCF, {
+!define(l2gpFileName,{L2GP-$1})
+!define(DGGFileName,{DGG})
+!define(l2auxFileName,{L2AUX-$1})
+!define(DGMFileName,{L2AUX-DGM})
+!define(CloudFilename,{L2AUX-Cloud})
+!define(l2fwmFileName,{$1})
+},{
+!define(l2gpFileName,{!outpathl2gp/MLS-Aura_L2GP-$1_!l2version_!day.he!hdfVersion})
+!define(DGGFileName,{!outpathl2gp/MLS-Aura_L2GP-DGG_!l2version_!day.he!hdfVersion})
+!define(l2auxFileName,{!outpathl2aux/MLS-Aura_L2AUX-$1_!l2version_!day.h!hdfVersion})
+!define(DGMFileName,{!outpathl2aux/MLS-Aura_L2AUX-DGM_!l2version_!day.h!hdfVersion})
+!define(CloudFilename,{!outpathl2aux/MLS-Aura_L2AUX-Cloud_!l2version_!day.h!hdfVersion})
+!define(l2fwmFileName,{!outpathl2gp/MLS-Aura_L2FWM-$1_!l2version_!day.h!hdfVersion})
+})
+
+;; DGG/DGM DirectWrite command may or may not include file name
+;; depending on whether we set flag to automatically split sources
+!define(DirectWriteDGGCommand, !dnl
+{!ifdef(flagAutoSplitSources,{DirectWrite},!dnl
+{DirectWrite, file='!DGGFileName'})})
+!define(DirectWriteDGMCommand, !dnl
+{!ifdef(flagAutoSplitSources,{DirectWrite},!dnl
+{DirectWrite, file='!DGMFileName'})})
+
+; -------------------------------------------------------- Phase related macros
+
+;; This macro is called at the start of each phase to setup its
+;; vectors and matrices.
+!define(setupPhase,{!dnl
+begin Fill
+  ;; Define state related vectors
+  x$1: Vector, template=x$1Template
+  a$1: Vector, template=x$1Template
+  vr$1: Vector, template=x$1Template
+  hr$1: Vector, template=x$1Template
+  sdIn$1: Vector, template=x$1Template
+  sdOut$1: Vector, template=x$1Template
+  lb$1: Vector, template=x$1Template
+  hb$1: Vector, template=x$1template
+  !ifdef(flagGotTruth,{t$1: Vector, template=x$1template})
+
+  ;; Define measurement related vectors
+  y$1: Vector, template=y$1Template
+  yNoise$1: Vector, template=y$1Template
+  f$1: Vector, template=y$1Template
+  od$1: Vector, template=od$1Template
+  ;; Define retrieval diagnostics vector
+  diag$1: Vector, template=retrievalDiagnosticsTemplate
+  ;; Fill state related vectors
+  Transfer, source=state, destination=x$1
+  Transfer, source=apriori, destination=a$1
+  Transfer, source=aprioriPrecision, destination=sdIn$1
+  Transfer, source=vReg, destination=vr$1
+  Transfer, source=hReg, destination=hr$1
+  Transfer, source=lowBound, destination=lb$1
+  Transfer, source=highBound, destination=hb$1
+  !ifdef(flagGotTruth,{Transfer, source=truth, destination=t$1})
+
+  ;; Construct and fill state covariance
+  Sa$1: matrix, columns=a$1, type=spd
+  FillCovariance, matrix=Sa$1, diagonal=sdIn$1, /invert
+
+  ;; Other matrices
+  !ifdef(flagComputeAvks,{avk$1: matrix, rows=a$1, $
+    !ifdef(flagGotTruth,{columns=t$1},{columns=a$1})})
+  !ifdef(flagComputeSout,{Sout$1: matrix, columns=x$1, type=spd})
+
+  ;; Fill radiance related vectors
+  Transfer, source=measurement, destination=y$1
+  Transfer, source=measurementNoise, destination=yNoise$1
+end Fill
+})
+; end definition of setupPhase
+
+
+;; This form depends on whether the output diagnostics are to
+;; written to the dgg or dgm file
+!define(joinOneDiagnostic, !dnl
+  {!ifdef(flagOutputDiagnosticsDGG,{!joinOneDiagDGG($1)}, {!joinOneDiagDGM($1)})})
+!define(directWriteOneDiagnostic, !dnl
+  {!ifdef(flagOutputDiagnosticsDGG,{!directWriteOneDiagDGG($1)}, {!directWriteOneDiagDGM($1)})})
+
+;; This macro is called at the end of a retrieval phase to store the
+;; results back.
+!define(completePhase,{!dnl
+;; Set default values for some parameters
+begin Fill
+  ;; Put state etc. back
+  Transfer, source=x$1, destination=state
+  Transfer, source=sdOut$1, destination=outputPrecision
+
+  ;; FM output will be turned on again, sometime, for the PEs
+  !ifdef(flagPrecisionEstimates,{},{Transfer, source=f$1, destination=fwm})
+  ;; Clean up dead vectors and matrices
+  Destroy, matrix=Sa$1
+  !ifdef(flagDontDestroyVectors,{},{
+  Destroy, vector=x$1
+  Destroy, vector=a$1
+  Destroy, vector=vr$1
+  Destroy, vector=hr$1
+  Destroy, vector=sdIn$1
+  Destroy, vector=sdOut$1
+  Destroy, vector=lb$1
+  Destroy, vector=hb$1
+  Destroy, vector=y$1
+  Destroy, vector=yNoise$1
+  Destroy, vector=f$1
+  !ifdef(flagGotTruth,{Destroy, vector=t$1})
+  Destroy, vector=od$1})
+  ;; Compute new full GPH profile
+  Fill, quantity=state.gph, method=hydrostatic, $
+    refGPHquantity=state.refGPH, temperatureQuantity=state.temperature
+  ;; And GPH precision
+  Fill, quantity=outputPrecision.gph, method=gphPrecision, $
+    refGPHPrecisionquantity=outputPrecision.refGPH, $
+    tempPrecisionQuantity=outputPrecision.temperature
+  ;; Set precision -ve when worse than 50% apriori precision
+  NegativePrecision, precision=outputPrecision, aprioriPrecision=aprioriPrecision
+  ;; Compute chi^2 ratio as measure of convergence
+  Fill, quantity=diag$1.dnwt_chisqratio, method=chiSqRatio, $
+    normQty= diag$1.dnwt_chisqnorm, minNormQty=diag$1.dnwt_chisqminNorm, $
+    flags=diag$1.dnwt_flag
+end Fill
+
+!ifdef(flagBeExtraVerbose,{
+;;
+;; We do this after every phase whether that phase recomputed
+;; Ptan or not. A more selective approach would aim for the 
+;;   !directWriteDGM(ptanGHz,GHz.ptan-!phase) and
+;;   !directWriteDGM(ptanGHz,THz.ptan-!phase) macros
+})
+!ifdef(flagSetPtanPrecPositive,{
+begin Fill
+  Fill, quantity=outputPrecision.ptanGHZ, method=manipulate, $
+    a=outputPrecision.ptanGHZ, manipulation='abs(a)', $
+    c=999.98
+  Fill, quantity=outputPrecision.ptanTHZ, method=manipulate, $
+    a=outputPrecision.ptanTHZ, manipulation='abs(a)', $
+    c=999.98
+end Fill
+})
+
+!ifdef(flagSuppressRegularOutput,{
+  !define(flagSkipWritingDiagnostics,{yes})
+})
+
+!ifdef(flagSkipWritingDiagnostics,{},{
+begin Join 
+!ifdef(flagAvoidDirectWrite,{
+    !forall(joinOneDiagnostic,!outputRetrievalDiagnostics)
+},{
+    !forall(directWriteOneDiagnostic,!outputRetrievalDiagnostics)
+})
+end Join
+})
+})
+; end definition of completePhase
+
+; ------------------------------------------------------------- High resolution
+
+;; This macro initialises the _HR species with interpolations of their
+;; standard resolution equivalents
+!define(oneHiResTransfer,{Fill, quantity=state.$1, method=vector, $
+  sourceQuantity=state.!trimHR($1), /interpolate!nl})
+!define(initHiRes,{
+begin Fill
+  Fill, quantity=state.Temperature_HR, method=vector, $
+    sourceQuantity=state.Temperature, /interpolate
+  !forall(oneHiResTransfer,!allHiResMolecules)
+end Fill
+})
+
+; ------------------------------------------------------------- Diversions
+
+;; These macros define the various diverts we're going to get going
+!define(joinedDGGDivert,1)
+!define(joinedDGMDivert,2)
+!define(matrixDivert,3)
+!define(directDGGDivert,4)
+!define(directDGMDivert,5)
+!define(directCloudDivert,6)
+
+; ------------------------------------------------------------- Direct write
+
+;; This macro is used to note a matrix to be output later
+!define(noteMatrix,{!ifdef(flagGotMatrices,{!divert(!matrixDivert),!divert})!dnl
+!define(flagGotMatrices,{Yes})!divert(!matrixDivert)$1!divert})
+
+;; These macros are used to note a new directWrite DGG or DGM at a
+;; rather low level.
+!define(noteDirectDGG,{!dnl
+  !ifdef(flagAvoidDirectWrite,{!dnl
+    !M4Error({You are supposed to be avoiding direct writes})})!dnl
+  !ifdef(flagGotDirectDGGs,{!divert(!directDGGDivert),!divert})!dnl
+  !define(flagGotDirectDGGs,{Yes})!divert(!directDGGDivert)$1!divert})
+
+!define(noteDirectDGM,{!dnl
+  !ifdef(flagAvoidDirectWrite,{!dnl
+    !M4Error({You are supposed to be avoiding direct writes})})!dnl
+  !ifdef(flagGotDirectDGMs,{!divert(!directDGMDivert),!divert})!dnl
+  !define(flagGotDirectDGMs,{Yes})!divert(!directDGMDivert)$1!divert})
+
+!define(noteDirectCloud,{!ifdef(flagGotDirectClouds,{!divert(!directCloudDivert),!divert})!dnl
+!define(flagGotDirectClouds,{Yes})!divert(!directCloudDivert)$1!divert})
+
+;; This macro is used to write one DGG species complete with precision
+;; The quantity is in state/outputPrecision.$1 and the label is in $2
+;; other arguments can be optionally present (e.g. prefix signal) and
+;; are applied to the label command
+!define(directWriteDGG,{!dnl
+Label, quantity=state.$1, label='$2'!ifelse($#,2,{},{,!shift(!shift($*))})!dnl
+!noteDirectDGG({source=state.$1,precision=outputPrecision.$1,status=otherDiagnostics.status$1, quality=otherDiagnostics.quality$1, convergence=otherDiagnostics.convergence$1})})
+;; This macro is similar except that it skips status and quality
+!define(directWriteDGGNoDiag,{!dnl
+Label, quantity=state.$1, label='$2'!ifelse($#,2,{},{,!shift(!shift($*))})!dnl
+!noteDirectDGG({source=state.$1,precision=outputPrecision.$1})})
+
+;; This macro is similar to the above except for the case where
+;; the vector name should be included in $1
+!define(directWriteDGGNotState,{!dnl
+Label, quantity=$1, label=$3!ifelse($#,3,{},{,!shift(!shift(!shift($*)))})!dnl
+!noteDirectDGG({source=$1,precision=$2})})
+;; This macro is similar to the above except for the case where there
+;; is no precision quantity
+!define(directWriteDGGNoPrecisionNotState,{!dnl
+Label, quantity=$1, label=$2!ifelse($#,2,{},{,!shift(!shift($*))})!dnl
+!noteDirectDGG({source=$1})})
+
+;; This macro is used to write one DGM species.  The quantity is in $1
+;; (including the vector), and the label is in $2
+!define(directWriteDGM,{!dnl
+Label, quantity=state.$1, label='$2'!ifelse($#,2,{},{,!shift(!shift($*))})
+Label, quantity=outputPrecision.$1, $
+  label='$2 precision'!ifelse($#,2,{},{,!shift(!shift($*))})!dnl
+!noteDirectDGM({source=state.$1,source=outputPrecision.$1})})
+!define(directWriteDGMNotState,{!dnl
+Label, quantity=$1, label=$2!ifelse($#,2,{},{,!shift(!shift($*))})!dnl
+!noteDirectDGM({source=$1})})
+
+;; This macro is used to write one Cloud species.  The quantity is in $1
+;; (including the vector), and the label is in $2
+!define(directWriteCloud,{!dnl
+Label, quantity=$1, label=$2!ifelse($#,2,{},{,!shift(!shift($*))})!dnl
+!noteDirectCloud({source=$1})})
+
+;; This macro is used to spit out all the accumulated DGM/DGGs
+!ifdef(flagSuppressRegularOutput,
+{!define(flushDGGDGMFiles,{!dnl
+  !clearDivert(!directDGGDivert,!directDGMDivert,!directCloudDivert)})},
+{!define(flushDGGDGMFiles,{!dnl
+;; First do the DGGs
+!ifdef(flagGotDirectDGGs,{!dnl
+!DirectWriteDGGCommand, hdfVersion=!hdfVersion, $
+  type=l2dgg, !undivert(!directDGGDivert)})
+;; Now the DGMs
+!ifdef(flagGotDirectDGMs,{!dnl
+!DirectWriteDGMCommand, hdfVersion=!hdfVersion, $
+  type=l2aux, !undivert(!directDGMDivert)})
+;; Now the cloud stuff
+!ifdef(flagGotDirectClouds,{!dnl
+DirectWrite, file='!CloudFilename', hdfVersion=!hdfVersion, $
+  type=l2aux, !undivert(!directCloudDivert)})
+;; Clear our macros
+!undefine(flagGotDirectDGGs)!undefine(flagGotDirectDGMs)!undefine(flagGotDirectClouds)})})
+
+;; These macros are associated with the direct write code.  It writes a
+;; set of radiances $2... into the L2FWM-$1 file.
+!define(labelOneFwmRad,{label, quantity=fwm.band$1, /prefixSignal, label=' !phase'!nl})
+!define(oneFwmRadTerm,{source=fwm.band$1,})
+
+!ifdef(flagSuppressRegularOutput,
+{!define(directWriteFwmRad,{})},
+{!define(directWriteFwmRad,{!dnl
+!forall(labelOneFwmRad,!tidyList(!shift($*)))!dnl
+  DirectWrite, !forall(oneFwmRadTerm,!tidyList(!shift($*))) type=l2fwm, $
+  file='!l2fwmFileName($1)', $
+  hdfVersion=!hdfVersion})})
+
+;; These macros allow output of the uncompreseded radiance vector as if a fwm quantity
+!define(labelOneUncompRad,{label, quantity=measurement.band$1, /prefixSignal, label=' Uncompressed'!nl})
+!define(oneUncompRadTerm,{source=measurement.band$1,})
+
+!ifdef(flagSuppressRegularOutput,
+{!define(directWriteUncompressedRad,{})},
+{!define(directWriteUncompressedRad,{!dnl
+!forall(labelOneUncompRad,!tidyList(!shift($*)))!dnl
+  DirectWrite, !forall(oneUncompRadTerm,!tidyList(!shift($*))) type=l2fwm, $
+  file='!l2fwmFileName($1)', $
+  hdfVersion=!hdfVersion})})
+
+!ifdef(flagSuppressRegularOutput,
+{!define(directWriteScanResidual,{})},
+{!define(directWriteScanResidual,{!dnl
+Label, quantity=fwm.scanResidual$1, label='$1.scanResidual-!phase'
+!noteDirectDGM(source=fwm.scanResidual$1)})})
+
+;; This macro writes radiance diagnostics
+!define(directWriteRadianceDiagnostics,{!dnl
+ !directWriteDGMNotState(minorFrameDiagnostics.chisqMMAF$1,' chisqMMAF !phase', /prefixSignal)
+ !directWriteDGMNotState(minorFrameDiagnostics.chisqMMIF$1,' chisqMMIF !phase', /prefixSignal)
+ !directWriteDGMNotState(minorFrameDiagnostics.chisqChan$1,' chisqChan !phase', /prefixSignal)
+ !directWriteDGMNotState(minorFrameDiagnostics.noRadsPerMIF$1,' noRadsPerMIF !phase',/prefixSignal)
+
+ !directWriteDGGNotState(mappedChisqMean.chisqBinned$1,mappedChisqMax.chisqBinned$1,!dnl
+   ' chisqBinned !phase',/prefixSignal)
+ !directWriteDGGNoPrecisionNotState(otherDiagnostics.noRadsBinned$1,!dnl
+   ' noRadsBinned !phase',/prefixSignal)!nl})
+
+;; This macro writes the misc. diagnostics
+!define(directWriteOneDiagDGG,{!directWriteDGGNoPrecisionNotState(diag!phase.$1,'!translit($1,{_},{-})-!phase')!nl})
+;; This macro writes the misc. diagnostics
+!define(directWriteOneDiagDGM,{!directWriteDGMNotState(diag!phase.$1,'!translit($1,{_},{-})-!phase')!nl})
+
+; ------------------------------------------------------------- Join
+
+;; These macros are used to note the joined DGM/DGGs
+!define(storeJoinedDGG,{!ifdef(flagAvoidDirectWrite,{},{!dnl
+!M4Error({You should set flagAvoidDirectWrite to use joinDGG})})!dnl
+!ifdef(flagGotJoinedDGGs,{!divert(!joinedDGGDivert),!divert})!dnl
+!define(flagGotJoinedDGGs,{Yes})!divert(!joinedDGGDivert)$1!divert})
+
+!define(storeJoinedDGM,{!ifdef(flagAvoidDirectWrite,{},{!dnl
+!M4Error({You should set flagAvoidDirectWrite to use joinDGM})})!dnl
+!ifdef(flagGotJoinedDGMs,{!divert(!joinedDGMDivert),!divert})!dnl
+!define(flagGotJoinedDGMs,{Yes})!divert(!joinedDGMDivert)$1!divert})
+
+!define(joinDGG,{!dnl
+!storeJoinedDGG(joinedDGG_$1_!phase)!dnl
+joinedDGG_$1_!phase: l2gp, source=state.$1, precision=outputPrecision.$1, swath='$2'
+})
+
+!define(joinDGM,{!dnl
+!storeJoinedDGM(joinedDGM_$1_!phase)!storeJoinedDGM(joinedDGM_$1_!phase_precision)!dnl
+joinedDGM_$1_!phase: l2aux, source=state.$1, sdName='$2'
+joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 precision'
+})
+
+;; This macro joins the above filled quantities
+!define(joinRadianceDiagnostics,{!dnl
+   joinedDGM_chisqMMAF$1_!phase: l2aux, source=minorFrameDiagnostics.chisqMMAF$1, $
+     /prefixSignal, sdName=' chisqMMAF !phase'
+   joinedDGM_chisqMMIF$1_!phase: l2aux, source=minorFrameDiagnostics.chisqMMIF$1, $
+     /prefixSignal, sdName=' chisqMMIF !phase'
+   joinedDGM_chisqChan$1_!phase: l2aux, source=minorFrameDiagnostics.chisqChan$1, $
+     /prefixSignal, sdName=' chisqChan !phase'
+   joinedDGM_noRadsPerMIF$1_!phase: l2aux, source=minorFrameDiagnostics.noRadsPerMIF$1, $
+     /prefixSignal, sdName=' noRadsPerMIF !phase'
+
+   joinedDGG_chisqBinned$1_!phase: l2gp, $
+     source=mappedChiSqMean.chisqBinned$1, $
+     precision=mappedChisqMax.chisqBinned$1, $
+     /prefixSignal, swath=' chisqBinned !phase'
+   joinedDGG_noRadsBinned$1_!phase: l2gp, $
+     source=minorFrameDiagnostics.noRadsBinned$1, $
+     /prefixSignal, swath=' noRadsBinned !phase'
+
+   !storeJoinedDGM(joinedDGM_chisqMMAF$1_!phase)!dnl
+   !storeJoinedDGM(joinedDGM_chisqMMIF$1_!phase)!dnl
+   !storeJoinedDGM(joinedDGM_chisqChan$1_!phase)!dnl
+   !storeJoinedDGM(joinedDGM_noRadsPerMIF$1_!phase)!dnl
+
+   !storeJoinedDGG(joinedDGG_chisqBinned$1_!phase)
+   !storeJoinedDGG(joinedDGG_noRadsBinned$1_!phase)
+})
+
+;; This macro uses the joinDGG (for the moment, will use DGM when we
+;; got to hdf5) to join the diagnostics stuff
+!define(joinOneDiagDGG,{!storeJoinedDGG(joinedDGG_$1_!phase)!dnl
+  joinedDGG_$1_!phase: l2gp, source=diag!phase.$1, $
+    swath='!translit($1,{_},{-})-!phase'!nl})
+
+;; This macro uses the joinDGM to join the diagnostics stuff
+!define(joinOneDiagDGM,{!storeJoinedDGM(joinedDGM_$1_!phase)!dnl
+  joinedDGM_$1_!phase: l2aux, source=diag!phase.$1, $
+    swath='!translit($1,{_},{-})-!phase'!nl})
+
+; --------------------------------------------------------------- Filling diagnostics
+;; This macro is used to fill radiance chi squares
+!define(fillMinorFrameDiagnostics,{!dnl
+   Fill, quantity=minorFrameDiagnostics.chisqMMAF$1, method=chisqMMAF, $
+     measurements=y!phase.band$1, model=f!phase.band$1, $
+     noise=yNoise!phase.band$1, /ignoreZero, /ignoreNegative
+   Fill, quantity=minorFrameDiagnostics.chisqMMIF$1, method=chisqMMIF, $
+     measurements=y!phase.band$1, model=f!phase.band$1, $
+     noise=yNoise!phase.band$1, /ignoreZero, /ignoreNegative
+   Fill, quantity=minorFrameDiagnostics.chisqChan$1, method=chisqChan, $
+     measurements=y!phase.band$1, model=f!phase.band$1, $
+     noise=yNoise!phase.band$1, /ignoreZero, /ignoreNegative
+   Fill, quantity=minorFrameDiagnostics.noRadsPerMIF$1, method=noRadsPerMIF, $
+     measurements=y!phase.band$1!asPercentage!nl})
+
+!define(fillMappedDiagnostics,{!dnl
+   Fill, quantity=mappedChisqMean.chisqBinned$1, method=binmean, $
+     sourceQuantity=minorFrameDiagnostics.chisqMMIF$1, $
+     ptanQuantity=state.ptan!moduleForBand($1)
+   Fill, quantity=mappedChisqMax.chisqBinned$1, method=binmax, $
+     sourceQuantity=minorFrameDiagnostics.chisqMMIF$1, $
+     ptanQuantity=state.ptan!moduleForBand($1)
+   Fill, quantity=otherDiagnostics.chisqProfile$1, method=binmean, $
+     sourceQuantity=minorFrameDiagnostics.chisqMMIF$1, $
+     ptanQuantity=state.ptan!moduleForBand($1)
+   Fill, quantity=otherDiagnostics.noRadsBinned$1, method=!noRadsBinMethod, $
+     sourceQuantity=minorFrameDiagnostics.noRadsPerMIF$1, $
+     ptanQuantity=state.ptan!moduleForBand($1)
+   Fill, quantity=otherDiagnostics.noRadsProfile$1, method=!noRadsBinMethod, $
+     sourceQuantity=minorFrameDiagnostics.noRadsPerMIF$1, $
+     ptanQuantity=state.ptan!moduleForBand($1)!nl})
+
+;; This macro writes the above diagnostics
+!define(doRadianceDiagnostics,{!dnl
+   begin Fill
+     !forall(fillMinorFrameDiagnostics,$*)
+     !forall(fillMappedDiagnostics,$*)
+   end Fill
+   !ifdef(flagSkipWritingDiagnostics, {}, 
+   {
+   begin Join !dnl
+     !nl!ifdef(flagAvoidDirectWrite,
+       {!forall(joinRadianceDiagnostics,$*)},
+       {!forall(directWriteRadianceDiagnostics,$*)})
+   end Join
+   })
+   !nl})
+
+
+; --------------------------------------------------------------- Offseting radiances
+
+;; This macro is used to offset the forward model radiances
+;; It is called inside a Fill statement.  Note it takes !phase as a
+;; 'global' parameter.
+!define(offsetRadiance,{!dnl
+   Fill, quantity=f!phase.band$1, radianceQuantity=y!phase.band$1, method=offsetRadiance!nl})
+!define(offsetRadiances,{!dnl
+   begin Fill
+   !forall(offsetRadiance,$*)
+   end Fill})
+
+; -------------------------------------------------------------- Retrievals
+
+;; This macro puts all the boring stuff in the Retrieve command line
+;; that we're used to seeing
+;;  will add FM output to PEs later
+
+!ifdef(flagPrecisionEstimates,{!dnl
+  !define(retrievalArguments,{$
+    state=x$1, fwdModelExtra=state, $
+    measurements=y$1, measurementSD=yNoise$1, $
+    apriori=a$1, covariance=Sa$1, $
+    outputSD=sdOut$1, $
+    !ifdef(flagComputeAvks,{average=Avk$1,!noteMatrix(Avk$1)}) $
+    vRegWeightVec=vr$1!ifelse(!dimension,1D,{},{, hRegWeightVec=hr$1})})},!dnl
+{ !define(retrievalArguments,{$
+  state=x$1, fwdModelExtra=state, $
+  measurements=y$1, measurementSD=yNoise$1, $
+  apriori=a$1, covariance=Sa$1, $
+  outputSD=sdOut$1, fwdModelOut=f$1, $
+  vRegWeightVec=vr$1, hRegWeightVec=hr$1, $
+  !ifdef(flagComputeAvks,{average=Avk$1,!noteMatrix(Avk$1)})!dnl
+  !ifdef(flagComputeSout,{outputCovariance=Sout$1,!noteMatrix(Sout$1)})!dnl
+  lowBound=lb$1, highBound=hb$1, diagnostics=diag$1})})
+
+; ---------------------------------------------------------------- Standard products
+
+;; These macros are used to transfer a product into the 'standard
+;; products' vector
+!define(makeStandardProduct,{!dnl
+  Fill, quantity=standardProducts.$1, method=vector, sourceQuantity=state.$1
+  Fill, quantity=standardPrecision.$1, method=vector, sourceQuantity=outputPrecision.$1
+  Fill, quantity=standardDiagnostics.status$1, method=vector, sourceQuantity=otherDiagnostics.status$1
+  Fill, quantity=standardDiagnostics.quality$1, method=vector, sourceQuantity=otherDiagnostics.quality$1
+  Fill, quantity=standardDiagnostics.convergence$1, method=vector, sourceQuantity=otherDiagnostics.convergence$1
+})
+!define(makeStandardProductMergeDiag,{!dnl
+  Fill, quantity=standardProducts.$1, method=vector, sourceQuantity=state.$1
+  Fill, quantity=standardPrecision.$1, method=vector, sourceQuantity=outputPrecision.$1
+  ;;;Fill, quantity=standardDiagnostics.status$1, method=manipulate, $
+  ;;;  a=standardDiagnostics.status$1, b=otherDiagnostics.status$1, $
+  ;;;  manipulation='a|b'
+  ;;;Fill, quantity=standardDiagnostics.quality$1, method=manipulate, $
+  ;;;  a=standardDiagnostics.quality$1, b=otherDiagnostics.quality$1, $
+  ;;;  manipulation='a<b'
+  ;;;Fill, quantity=standardDiagnostics.convergence$1, method=manipulate, $
+  ;;;  a=standardDiagnostics.convergence$1, b=otherDiagnostics.convergence$1, $
+  ;;;  manipulation='a>b'
+})
+!define(makeStandardProductNoDiag,{!dnl
+  Fill, quantity=standardProducts.$1, method=vector, sourceQuantity=state.$1
+  Fill, quantity=standardPrecision.$1, method=vector, sourceQuantity=outputPrecision.$1
+})
+
+;; These macros relate to storing standard products
+;; Special cases are handled by lists ending with 'StdProds' mostly
+;; Some are stored at high resolution: HiResStdProds
+;; Some are stored accompanied by a column abundance: ColumnStdProds
+;; In particular, this overrides the outmoded macros
+;; storeStandardProductWith[out]Column
+!ifdef(HiResStdProds, {}, {!define(HiResStdProds,{H2O, Temperature, RHI, GPH})})!dnl
+;;  !define(ColumnStdProds,{O3,CO,SO2,HNO3,H2O,HCN,CH3CN,BrO,ClO,HCl,HO2,HOCl,N2O,OH})!dnl
+;; We're planning on only O3 accompanying its column
+!ifdef(ColumnStdProds,{},{!define(ColumnStdProds,{O3})})!dnl
+
+!define(storeStandardProduct,{!dnl
+!ifelse(!index(!defn(ColumnStdProds),$1),{-1}, {!dnl
+!storeThisProductWithoutColumn($1)!dnl
+},{!dnl
+!storeThisProductWithColumn($1)!dnl
+})
+})
+
+!define(storeStandardProductWithColumn,{!dnl
+!storeStandardProduct($1)!dnl
+})
+!define(storeStandardProductWithoutColumn,{!dnl
+!storeStandardProduct($1)!dnl
+})
+;; These macros are used to fill a standard product's column abundance
+;; (if required) and then directWrite both to the split DGG file for
+;; later copying and reordering/repair
+;; As a special case, the H2O standard product will be stored at high resolution
+!define(storeThisProductWithColumn,{!dnl
+!ifelse(!index(!defn(HiResStdProds),$1),{-1},{
+!define(theQuantity,{$1})
+},{!dnl
+!define(theQuantity,{$1_hr})
+})
+!ifelse($1,{O3}, {
+!define(theUnits,{, unit=DU})
+!ifdef(flagHiResO3inCPR3,{!define(theQuantity,{$1_hr})})
+},{!dnl
+!define(theUnits,{})
+})
+Begin Fill
+
+  ;; Get our standard products back
+  Transfer, source=standardProducts, destination=tempVectorState
+  Transfer, source=standardPrecision, destination=tempVectorPrecision
+  Transfer, source=standardDiagnostics, destination=tempVectorDiagnostics
+
+; ------------------------------------------------- Fill, column abundances -----
+;; --------------------------------------------- tpPressure (using MLS profiles)
+  
+  Fill, quantity=tempVectorState.tpPressure, method=wmoTropopause, $
+    temperatureQuantity=tempVectorState.temperature_hr, refGPHQuantity=tempVectorState.refGPH, $
+    internalVgrid=vGridWMO
+  Fill, quantity=standardProducts.!theQuantity, method=vector, sourceQuantity=tempVectorState.!theQuantity
+  Fill, quantity=standardPrecision.!theQuantity, method=vector, sourceQuantity=tempVectorPrecision.!theQuantity
+  Fill, quantity=tempVectorState.column_$1, method=columnAbundance, vmrQuantity=tempVectorState.!theQuantity, $
+    boundaryPressure=tempVectorState.tpPressure !theUnits
+  Fill, quantity=tempVectorPrecision.column_$1, method=columnAbundance, vmrQuantity=tempVectorPrecision.!theQuantity, $
+    boundaryPressure=tempVectorState.tpPressure !theUnits
+
+!ifdef(pTop$1, {!dnl
+  Fill, quantity=tempVectorPrecision.!theQuantity, method=manipulate, $
+    height=!pTop$1, heightRange="above", a=tempVectorPrecision.!theQuantity, $
+    c= -1, manipulation="c*abs(a)"
+})
+!ifdef(pBottom$1, {!dnl
+  Fill, quantity=tempVectorPrecision.!theQuantity, height=!pBottom$1, heightRange="below", $
+    method=manipulate, a=tempVectorPrecision.!theQuantity, c= -1, manipulation='c*abs(a)'
+})
+
+End Fill
+
+!ifdef(flagUseGEOS5PTrop,
+{!dnl
+begin Join
+  Label, quantity=tempVectorState.!theQuantity, label='$1-StdProd'
+  Label, quantity=tempVectorState.column_$1, label='$1-StdProd column-MLS'
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+    source=tempVectorState.!theQuantity, precision=tempVectorPrecision.!theQuantity, $
+    status=tempVectorDiagnostics.status!theQuantity, quality=tempVectorDiagnostics.quality!theQuantity, $
+    convergence=tempVectorDiagnostics.convergence!theQuantity, $
+    source=tempVectorState.column_$1, precision=tempVectorPrecision.column_$1
+End Join
+;; Store chunk overlaps as diagnostics if flags are set
+!ifdef(flagDWLowerOverlap, {!dnl
+Begin Join
+  Label, quantity=tempVectorState.!theQuantity, label='lowerOverlap-$1-StdProd'
+  Label, quantity=tempVectorState.column_$1, label='lowerOverlap-$1-StdProd column-MLS'
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+    source=tempVectorState.!theQuantity, precision=tempVectorPrecision.!theQuantity, $
+    status=tempVectorDiagnostics.status!theQuantity, quality=tempVectorDiagnostics.quality!theQuantity, $
+    convergence=tempVectorDiagnostics.convergence!theQuantity, $
+    source=tempVectorState.column_$1, precision=tempVectorPrecision.column_$1, /lowerOverlap
+End Join
+})
+!ifdef(flagDWUpperOverlap, {!dnl
+Begin Join
+  Label, quantity=tempVectorState.!theQuantity, label='upperOverlap-$1-StdProd'
+  Label, quantity=tempVectorState.column_$1, label='upperOverlap-$1-StdProd column-MLS'
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+    source=tempVectorState.!theQuantity, precision=tempVectorPrecision.!theQuantity, $
+    status=tempVectorDiagnostics.status!theQuantity, quality=tempVectorDiagnostics.quality!theQuantity, $
+    convergence=tempVectorDiagnostics.convergence!theQuantity, $
+    source=tempVectorState.column_$1, precision=tempVectorPrecision.column_$1, /upperOverlap
+End Join
+})
+
+Begin Fill
+;; ------------------------------------------ tpPressure (using GEOS5 grids)
+  Fill, quantity=tempVectorState.tpPressure, method=gridded, $
+    sourceGrid=geos5EtaWMOPTrop
+  Fill, quantity=tempVectorState.column_$1, method=columnAbundance, vmrQuantity=tempVectorState.!theQuantity, $
+    boundaryPressure=tempVectorState.tpPressure !theUnits
+  Fill, quantity=tempVectorPrecision.column_$1, method=columnAbundance, vmrQuantity=tempVectorPrecision.!theQuantity, $
+    boundaryPressure=tempVectorState.tpPressure !theUnits
+End Fill
+Begin Join
+  Label, quantity=tempVectorState.column_$1, label='$1-StdProd column-GEOS5'
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+    source=tempVectorState.column_$1, precision=tempVectorPrecision.column_$1
+End Join
+;; Store chunk overlaps as diagnostics if flags are set
+!ifdef(flagDWLowerOverlap, {!dnl
+Begin Join
+  Label, quantity=tempVectorState.column_$1, label='lowerOverlap-$1-StdProd column-GEOS5'
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+    source=tempVectorState.column_$1, precision=tempVectorPrecision.column_$1, /lowerOverlap
+End Join
+})
+!ifdef(flagDWUpperOverlap, {!dnl
+Begin Join
+  Label, quantity=tempVectorState.column_$1, label='upperOverlap-$1-StdProd column-GEOS5'
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+    source=tempVectorState.column_$1, precision=tempVectorPrecision.column_$1, /upperOverlap
+End Join
+})
+
+},{!dnl
+begin Join
+  Label, quantity=tempVectorState.!theQuantity, label='$1-StdProd'
+  Label, quantity=tempVectorState.column_$1, label='$1-StdProd column'
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+    source=tempVectorState.!theQuantity, precision=tempVectorPrecision.!theQuantity, $
+    status=tempVectorDiagnostics.status!theQuantity, quality=tempVectorDiagnostics.quality!theQuantity, $
+    convergence=tempVectorDiagnostics.convergence!theQuantity, $
+    source=tempVectorState.column_$1, precision=tempVectorPrecision.column_$1
+End Join
+;; Store chunk overlaps as diagnostics if flags are set
+!ifdef(flagDWLowerOverlap, {!dnl
+Begin Join
+  Label, quantity=tempVectorState.!theQuantity, label='lowerOverlap-$1-StdProd'
+  Label, quantity=tempVectorState.column_$1, label='lowerOverlap-$1-StdProd column'
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+    source=tempVectorState.!theQuantity, precision=tempVectorPrecision.!theQuantity, $
+    status=tempVectorDiagnostics.status!theQuantity, quality=tempVectorDiagnostics.quality!theQuantity, $
+    convergence=tempVectorDiagnostics.convergence!theQuantity, $
+    source=tempVectorState.column_$1, precision=tempVectorPrecision.column_$1, /lowerOverlap
+End Join
+})
+!ifdef(flagDWUpperOverlap, {!dnl
+Begin Join
+  Label, quantity=tempVectorState.!theQuantity, label='upperOverlap-$1-StdProd'
+  Label, quantity=tempVectorState.column_$1, label='upperOverlap-$1-StdProd column'
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+    source=tempVectorState.!theQuantity, precision=tempVectorPrecision.!theQuantity, $
+    status=tempVectorDiagnostics.status!theQuantity, quality=tempVectorDiagnostics.quality!theQuantity, $
+    convergence=tempVectorDiagnostics.convergence!theQuantity, $
+    source=tempVectorState.column_$1, precision=tempVectorPrecision.column_$1, /upperOverlap
+End Join
+})
+})
+})
+
+;; Perhaps all these special cases below means we shouldn't be
+;; relying on a single definition here
+;;
+;; Certain standard products without columns will be stored
+;; at high resolutions
+;; in fact every one except IWC
+!define(storeThisProductWithoutColumn,{!dnl
+!ifelse(!index(!defn(HiResStdProds),$1),{-1},{
+!define(theQuantity,{$1})
+},{!dnl
+!define(theQuantity,{$1_hr})
+})
+!dnl
+Begin Fill
+
+  ;; Get our standard products back
+  Transfer, source=standardProducts, destination=tempVectorState
+  Transfer, source=standardPrecision, destination=tempVectorPrecision
+  Transfer, source=standardDiagnostics, destination=tempVectorDiagnostics
+
+; ---------------------------------------------- Perhaps do fancy stuff ----- 
+!ifelse($1,{GPH}, {
+!ifdef(flagSkipGPHNeedsFancyThings, {},
+{
+  ;; Do fancy things to make the GPH agree with the temperature
+  Fill, quantity=tempVectorState.!theQuantity, method=hydrostatic, $
+    refGPHQuantity=standardProducts.refGPH, temperatureQuantity=tempVectorState.temperature_hr
+  ;; Copy the flags over from temperature to GPH
+  Fill, quantity=standardDiagnostics.status!theQuantity, method=vector, $
+    sourceQuantity=standardDiagnostics.statusTemperature_hr, /ignoreTemplate
+  Fill, quantity=standardDiagnostics.quality!theQuantity, method=vector, $
+    sourceQuantity=standardDiagnostics.qualityTemperature_hr, /ignoreTemplate
+End Fill
+
+;; Because we clobbered our outputPrecision.gph, let's fill it again
+;; (But did we clobber outputPrecision.gph_hr? Why not?)
+Begin Fill
+  Fill, quantity=tempVectorPrecision.!theQuantity, method=gphPrecision, $
+    refGPHPrecisionquantity=tempVectorPrecision.refGPH, $
+    tempPrecisionQuantity=tempVectorPrecision.temperature_hr
+;; and make this the new standardPrecision
+  Fill, quantity=standardPrecision.!theQuantity, method=vector, $
+    sourceQuantity=tempVectorPrecision.!theQuantity
+})    
+;; Do we correct for the Geoid offset w.r.t the reference ellipsoid?
+!ifdef(flagCorrectGPHForGeoid, {
+end Fill
+begin Join
+  ;; GPH relative to reference ellipsoid
+  Label, quantity=tempVectorState.!theQuantity, label='GPH-Ellipsoid'
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+    source=tempVectorState.!theQuantity, precision=tempVectorPrecision.!theQuantity, $
+    status=tempVectorDiagnostics.status!theQuantity, quality=tempVectorDiagnostics.quality!theQuantity, $
+    convergence=tempVectorDiagnostics.convergence!theQuantity
+end Join
+begin Fill
+  ;; reference ellipsoid offset from geoid
+  Fill, quantity=standardProducts.!theQuantity, method=geoidData
+end Fill
+begin Join
+  Label, quantity=standardProducts.!theQuantity, label='Ellipsoid-Geoid'
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+    source=standardProducts.!theQuantity, precision=tempVectorPrecision.!theQuantity, $
+    status=tempVectorDiagnostics.status!theQuantity, quality=tempVectorDiagnostics.quality!theQuantity, $
+    convergence=tempVectorDiagnostics.convergence!theQuantity
+end Join
+begin Fill
+  ;; GPH relative to geoid
+  Fill, quantity=standardProducts.!theQuantity, gphQuantity=tempVectorState.!theQuantity, $
+    method=gphResetToGeoid
+end Fill
+begin Join
+  Label, quantity=standardProducts.!theQuantity, label='GPH-Geoid'
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+    source=standardProducts.!theQuantity, precision=tempVectorPrecision.!theQuantity, $
+    status=tempVectorDiagnostics.status!theQuantity, quality=tempVectorDiagnostics.quality!theQuantity, $
+    convergence=tempVectorDiagnostics.convergence!theQuantity
+end Join
+begin Fill
+  ;; copy this to tempVectorState
+  Fill, quantity=tempVectorState.!theQuantity, sourceQuantity=standardProducts.!theQuantity, $
+    method=vector
+})
+}, $1,{RHI}, {
+  ;; Do fancy things to make RHI agree with H2O and temperature
+  Fill, quantity=tempVectorState.!theQuantity, h2oQuantity=tempVectorState.h2o_hr, $
+    temperatureQuantity=tempVectorState.temperature_hr, method=RHIFromH2O
+  ;; And RHI precision
+  Fill, quantity=tempVectorPrecision.!theQuantity, $
+    h2oPrecisionQuantity=tempVectorPrecision.h2o_hr, $
+    tempPrecisionQuantity=tempVectorPrecision.temperature_hr, $
+    h2oQuantity=tempVectorState.h2o_hr, temperatureQuantity=tempVectorState.temperature_hr, $
+    method=RHIPrecisionFromH2O
+  ;; Keep the status and quality as they are, they should be identical
+  ;; to those of H2O-190 which should be fine.
+
+  ;; we want to overwrite RHi precision at pressures > 464mb with RHiVmr values
+  Subset, quantity=tempVectorPrecision.!theQuantity, mask=fill, height=[ 1000mb : 383mb ]
+  Fill, quantity=tempVectorPrecision.!theQuantity, sourceQuantity=tempVectorPrecision.RHiVmr, $
+    method=vector,/ignoreTemplate ,/interpolate
+  Subset, quantity=tempVectorPrecision.!theQuantity, mask=fill, /reset
+
+})
+
+!ifdef(pTop$1, {!dnl
+  Fill, quantity=tempVectorPrecision.!theQuantity, method=manipulate, $
+    height=!pTop$1, heightRange="above", a=tempVectorPrecision.!theQuantity, $
+    c= -1, manipulation="c*abs(a)"
+})
+!ifdef(pBottom$1, {!dnl
+  Fill, quantity=tempVectorPrecision.!theQuantity, height=!pBottom$1, heightRange="below", $
+    method=manipulate, a=tempVectorPrecision.!theQuantity, c= -1, manipulation='c*abs(a)'
+})
+End Fill
+
+begin Join
+!ifelse($1,{O3_HR}, {!dnl
+  Label, quantity=tempVectorState.O3_HR, label='O3-StdProd'
+},{!dnl
+  Label, quantity=tempVectorState.!theQuantity, label='$1-StdProd'!dnl
+})
+!ifelse($1,{Temperature}, {!dnl
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+    source=tempVectorState.!theQuantity, precision=tempVectorPrecision.!theQuantity, $
+    status=tempVectorDiagnostics.status!theQuantity, quality=tempVectorDiagnostics.quality!theQuantity, $
+    convergence=tempVectorDiagnostics.convergence!theQuantity
+End Join
+;; Store chunk overlaps as diagnostics if flags are set
+!ifdef(flagDWLowerOverlap, {!dnl
+Begin Join
+  Label, quantity=tempVectorState.!theQuantity, label='lowerOverlap-$1-StdProd'
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+    source=tempVectorState.!theQuantity, precision=tempVectorPrecision.!theQuantity, $
+    status=tempVectorDiagnostics.status!theQuantity, quality=tempVectorDiagnostics.quality!theQuantity, $
+    convergence=tempVectorDiagnostics.convergence!theQuantity, /lowerOverlap
+End Join
+})
+!ifdef(flagDWUpperOverlap, {!dnl
+Begin Join
+  Label, quantity=tempVectorState.!theQuantity, label='upperOverlap-$1-StdProd'
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+    source=tempVectorState.!theQuantity, precision=tempVectorPrecision.!theQuantity, $
+    status=tempVectorDiagnostics.status!theQuantity, quality=tempVectorDiagnostics.quality!theQuantity, $
+    convergence=tempVectorDiagnostics.convergence!theQuantity, /upperOverlap
+End Join
+})
+
+Begin Fill
+  ;; Also tpPressure; later to be copied into the temperature file
+  Fill, quantity=tempVectorState.tpPressure, method=wmoTropopause, $
+    temperatureQuantity=tempVectorState.temperature_hr, refGPHQuantity=tempVectorState.refGPH, $
+    internalVgrid=vGridWMO
+End Fill
+
+!ifdef(flagSkipPTrop, {}, {
+!ifdef(flagUseGEOS5PTrop,
+{!dnl
+Begin Join
+  Label, quantity=tempVectorState.tpPressure, label='WMOTPPressure-StdProd-MLS'
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+    source=tempVectorState.tpPressure
+End Join
+;; Store chunk overlaps as diagnostics if flags are set
+!ifdef(flagDWLowerOverlap, {!dnl
+Begin Join
+  Label, quantity=tempVectorState.tpPressure, label='lowerOverlap-WMOTPPressure-StdProd-MLS'
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+    source=tempVectorState.tpPressure, /lowerOverlap
+End Join
+})
+!ifdef(flagDWUpperOverlap, {!dnl
+Begin Join
+  Label, quantity=tempVectorState.tpPressure, label='upperOverlap-WMOTPPressure-StdProd-MLS'
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+    source=tempVectorState.tpPressure, /upperOverlap
+End Join
+})
+
+Begin Fill
+;; ------------------------------------------ tpPressure (using GEOS5 grids)
+  Fill, quantity=tempVectorState.tpPressure, method=gridded, $
+    sourceGrid=geos5EtaWMOPTrop
+End Fill
+Begin Join
+  Label, quantity=tempVectorState.tpPressure, label='WMOTPPressure-StdProd-GEOS5'
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+    source=tempVectorState.tpPressure
+End Join
+;; Store chunk overlaps as diagnostics if flags are set
+!ifdef(flagDWLowerOverlap, {!dnl
+Begin Join
+  Label, quantity=tempVectorState.tpPressure, label='lowerOverlap-WMOTPPressure-StdProd-GEOS5'
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+    source=tempVectorState.tpPressure, /lowerOverlap
+End Join
+})
+!ifdef(flagDWUpperOverlap, {!dnl
+Begin Join
+;; Store chunk overlaps as diagnostics if flags are set
+  Label, quantity=tempVectorState.tpPressure, label='upperOverlap-WMOTPPressure-StdProd-GEOS5'
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+    source=tempVectorState.tpPressure, /upperOverlap
+End Join
+})
+},{!dnl
+Begin Join
+  Label, quantity=tempVectorState.tpPressure, label='WMOTPPressure-StdProd'
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+    source=tempVectorState.tpPressure
+End Join
+;; Store chunk overlaps as diagnostics if flags are set
+!ifdef(flagDWLowerOverlap, {!dnl
+Begin Join
+  Label, quantity=tempVectorState.tpPressure, label='lowerOverlap-WMOTPPressure-StdProd'
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+    source=tempVectorState.tpPressure, /lowerOverlap
+End Join
+})
+!ifdef(flagDWUpperOverlap, {!dnl
+Begin Join
+  Label, quantity=tempVectorState.tpPressure, label='upperOverlap-WMOTPPressure-StdProd'
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+    source=tempVectorState.tpPressure, /upperOverlap
+End Join
+})
+})
+})
+
+}, $1,{Temperature_HR}, {
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+    source=tempVectorState.$1, precision=tempVectorPrecision.$1, $
+    status=tempVectorDiagnostics.status$1, quality=tempVectorDiagnostics.quality$1,$
+    convergence=tempVectorDiagnostics.convergence!theQuantity
+End Join
+;; Store chunk overlaps as diagnostics if flags are set
+!ifdef(flagDWLowerOverlap, {!dnl
+Begin Join
+;; Store chunk overlaps as diagnostics if flags are set
+  Label, quantity=tempVectorState.!theQuantity, label='lowerOverlap-$1-StdProd'
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+    source=tempVectorState.$1, precision=tempVectorPrecision.$1, $
+    status=tempVectorDiagnostics.status$1, quality=tempVectorDiagnostics.quality$1,$
+    convergence=tempVectorDiagnostics.convergence!theQuantity, /lowerOverlap
+End Join
+})
+!ifdef(flagDWUpperOverlap, {!dnl
+Begin Join
+;; Store chunk overlaps as diagnostics if flags are set
+  Label, quantity=tempVectorState.!theQuantity, label='upperOverlap-$1-StdProd'
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+    source=tempVectorState.$1, precision=tempVectorPrecision.$1, $
+    status=tempVectorDiagnostics.status$1, quality=tempVectorDiagnostics.quality$1,$
+    convergence=tempVectorDiagnostics.convergence!theQuantity, /upperOverlap
+End Join
+})
+}, $1,{IWC}, {
+; IWC is somewhat special
+  Label, quantity=tempVectorState.iwp, label='IWP-StdProd'
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+    source=tempVectorState.iwc, precision=tempVectorPrecision.iwc, $
+    status=tempVectorDiagnostics.statusiwc, quality=tempVectorDiagnostics.qualityiwc, $
+    convergence=tempVectorDiagnostics.convergenceiwc, $
+    source=tempVectorState.iwp, precision=tempVectorPrecision.iwp, $
+    status=tempVectorDiagnostics.statusiwp, quality=tempVectorDiagnostics.qualityiwp, $
+    convergence=tempVectorDiagnostics.convergenceiwp
+End Join
+;; Store chunk overlaps as diagnostics if flags are set
+!ifdef(flagDWLowerOverlap, {!dnl
+Begin Join
+  Label, quantity=tempVectorState.iwc, label='lowerOverlap-IWC-StdProd'
+  Label, quantity=tempVectorState.iwp, label='lowerOverlap-IWP-StdProd'
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+    source=tempVectorState.iwc, precision=tempVectorPrecision.iwc, $
+    status=tempVectorDiagnostics.statusiwc, quality=tempVectorDiagnostics.qualityiwc, $
+    convergence=tempVectorDiagnostics.convergenceiwc, $
+    source=tempVectorState.iwp, precision=tempVectorPrecision.iwp, $
+    status=tempVectorDiagnostics.statusiwp, quality=tempVectorDiagnostics.qualityiwp, $
+    convergence=tempVectorDiagnostics.convergenceiwp, /lowerOverlap
+End Join
+})
+!ifdef(flagDWUpperOverlap, {!dnl
+Begin Join
+;; Store chunk overlaps as diagnostics if flags are set
+  Label, quantity=tempVectorState.iwc, label='upperOverlap-IWC-StdProd'
+  Label, quantity=tempVectorState.iwp, label='upperOverlap-IWP-StdProd'
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+    source=tempVectorState.iwc, precision=tempVectorPrecision.iwc, $
+    status=tempVectorDiagnostics.statusiwc, quality=tempVectorDiagnostics.qualityiwc, $
+    convergence=tempVectorDiagnostics.convergenceiwc, $
+    source=tempVectorState.iwp, precision=tempVectorPrecision.iwp, $
+    status=tempVectorDiagnostics.statusiwp, quality=tempVectorDiagnostics.qualityiwp, $
+    convergence=tempVectorDiagnostics.convergenceiwp, /upperOverlap
+End Join
+})
+},{
+; RHI is the only normal stdProd without columns, which makes it special
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+    source=tempVectorState.!theQuantity, precision=tempVectorPrecision.!theQuantity, $
+    status=tempVectorDiagnostics.status!theQuantity, quality=tempVectorDiagnostics.quality!theQuantity, $
+    convergence=tempVectorDiagnostics.convergence!theQuantity
+End Join
+;; Store chunk overlaps as diagnostics if flags are set
+!ifdef(flagDWLowerOverlap, {!dnl
+Begin Join
+  Label, quantity=tempVectorState.!theQuantity, label='lowerOverlap-$1-StdProd'
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+    source=tempVectorState.!theQuantity, precision=tempVectorPrecision.!theQuantity, $
+    status=tempVectorDiagnostics.status!theQuantity, quality=tempVectorDiagnostics.quality!theQuantity, $
+    convergence=tempVectorDiagnostics.convergence!theQuantity, /lowerOverlap
+End Join
+})
+!ifdef(flagDWUpperOverlap, {!dnl
+Begin Join
+  Label, quantity=tempVectorState.!theQuantity, label='upperOverlap-$1-StdProd'
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+    source=tempVectorState.!theQuantity, precision=tempVectorPrecision.!theQuantity, $
+    status=tempVectorDiagnostics.status!theQuantity, quality=tempVectorDiagnostics.quality!theQuantity, $
+    convergence=tempVectorDiagnostics.convergence!theQuantity, /upperOverlap
+End Join
+})
+})
+})
+
+; ---------------------------------------------------- Status flag bits
+
+;; Bit 0 - Do not use this profile
+  !define(statusDoNotUse,1)
+;; Bit 1 - Be careful with this profile                            
+  !define(statusBeWary,2)
+;; Bit 2 - FYI                            
+  !define(statusInform,4)
+;; Bit 3 - Empty for now
+;; Bit 4 - This profile may have been affected by high altitude clouds
+  !define(statusHighCloud,16)
+;; Bit 5 - This profile may have been affected by low altitude clouds
+  !define(statusLowCloud,32)
+;; Bit 6 - Missing gmao--fallback to climatology
+  !define(statusMissingGMAO,64)
+;; Bit 7 - The retrieval was abandoned du to a numerical problem
+  !define(statusAbandonedRtrvl,128)
+;; Bit 8 - This profile is based on too few radiances
+  !define(statusTooFewRadiances,256)
+;; Bit 9 - This level 2 run tasked with this profile crashed
+  !define(statusL2Crashed,512)
+
+; --------------------------------------------- Cloud specific stuff
+
+!define(computeDT,{!dnl
+Fill, quantity=cloudOutput.DTband$1, method=manipulate, $
+  a=measurement.band$1, b=cloudOutput.band$1, manipulation='a-b'!nl})
+
+; ------------------ High level macros for status and quality filling
+;; ( HRQuantity same as MFproduct except for 3 _hr )
+!define(addInOneChisq,{!dnl
+Fill, quantity=temporaryDiagnostics.chisqTmp, method=manipulate, manipulation='a+b', $
+  a=temporaryDiagnostics.chisqTmp, b=otherDiagnostics.chisqProfile$1, /ignoreTemplate !nl})
+!define(addInOneNoRads,{!dnl
+Fill, quantity=temporaryDiagnostics.noRadsTmp, method=manipulate, manipulation='a+b', $
+  a=temporaryDiagnostics.noRadsTmp, b=otherDiagnostics.noRadsProfile$1, /ignoreTemplate !nl})
+; !define(addInOneHighCloudContam,{!dnl
+; Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, status=!statusHighCloud+!statusBeWary, $
+;   sourceQuantity=otherDiagnostics.highCloudSummary$1, maxValue=!MFcloudmax, /additional!nl})
+; !define(addInOneLowCloudContam,{!dnl
+; Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, status=!statusLowCloud+!statusBeWary, $
+;   sourceQuantity=otherDiagnostics.lowCloudSummary$1, minValue=!MFcloudmin, /additional!nl})
+
+; The new way of setting Cloud status bits
+; *CloudSummaryDT33 will be 0 (if not set) or 1 (if set)
+; Using the Fill method 'status', this translates to setting the status bit
+; whenever the CloudSummary is > 0
+!define(addInOneHighCloudContam,{!dnl
+Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, status=!statusHighCloud+!statusBeWary, $
+  sourceQuantity=CloudDT33Diagnostics.highCloudSummaryDT33, maxValue=0K, /additional!nl})
+!define(addInOneLowCloudContam,{!dnl
+Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, status=!statusLowCloud+!statusBeWary, $
+  sourceQuantity=CloudDT33Diagnostics.lowCloudSummaryDT33, maxValue=0K, /additional!nl
+  Dump, text='!HRQuantity status (high+low)'
+  Dump, options='-1', quantity=otherDiagnostics.status!HRQuantity
+})
+!define(sumTooFewRads,{!dnl
+;; too few radiances summed over all Bands
+Fill, quantity=temporaryDiagnostics.noRadsTmp, method=explicit, explicitValues=0, /spread
+!forall(addInOneNoRads,!flaggingBands)
+;; Run a boxcar over this
+Fill, quantity=temporaryDiagnostics.noRadsTmp, method=boxcar, sourceQuantity=temporaryDiagnostics.noRadsTmp, $
+  boxCarMethod=min, width=3
+;; Set status based on this
+Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
+  status=!statusTooFewRadiances+!statusDoNotUse, $
+  sourceQuantity=temporaryDiagnostics.noRadsTmp, minValue=!MFminrads, /additional
+})
+!define(isTooFewRads,{!dnl
+;; too few radiances in this Band
+Fill, quantity=temporaryDiagnostics.noRadsTmp, method=explicit, explicitValues=0, /spread
+!addInOneNoRads($1)
+;; Run a boxcar over this
+Fill, quantity=temporaryDiagnostics.noRadsTmp, method=boxcar, sourceQuantity=temporaryDiagnostics.noRadsTmp, $
+  boxCarMethod=min, width=3
+;; Set status based on this
+!ifdef(flagNoRadsAsPct,{!dnl
+Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
+  status=!statusTooFewRadiances+!statusDoNotUse, $
+  sourceQuantity=temporaryDiagnostics.noRadsTmp, minValue=!pctMinRads, /additional
+},{!dnl
+Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
+  status=!statusTooFewRadiances+!statusDoNotUse, $
+  sourceQuantity=temporaryDiagnostics.noRadsTmp, minValue=!getMinRadsByBand($1), /additional
+})
+})
+!define(anyTooFewRads,{!dnl
+!forall(isTooFewRads,!flaggingBands)
+})
+;; Fill Quality fields, plus set status bit based on too few radiances
+!define(makeQualityForOneProduct,{!dnl
+!undefine(MFproduct)!dnl
+!undefine(MFchisqscale)!dnl
+!undefine(MFminrads)!dnl
+!undefine(MFcloudmax)!dnl
+!undefine(MFcloudmin)!dnl
+!ProcessParVal(MF,$@@)!dnl
+!undefine(HRQuantity)!dnl
+!ifelse(!MFproduct,{H2O}, {!dnl
+!define(HRQuantity,{!MFproduct_hr})!dnl
+}, !MFproduct,{GPH}, {!dnl
+!define(HRQuantity,{!MFproduct_hr})!dnl
+}, !MFproduct,{RHI}, {!dnl
+!define(HRQuantity,{!MFproduct_hr})!dnl
+}, !MFproduct,{Temperature}, {!dnl
+!define(HRQuantity,{!MFproduct_hr})!dnl
+},{!dnl
+!define(HRQuantity,{!MFproduct})!dnl
+})!dnl
+;; Quality
+Fill, quantity=temporaryDiagnostics.chisqTmp, method=explicit, explicitValues=0, /spread
+!forall(addInOneChisq,!flaggingBands)
+Fill, quantity=temporaryDiagnostics.chisqTmp, method=manipulate, manipulation='a/c', $
+  a=temporaryDiagnostics.chisqTmp, c=!nargs(!flaggingBands)
+;; Run a boxcar over this
+Fill, quantity=temporaryDiagnostics.chisqTmp, method=boxcar, sourceQuantity=temporaryDiagnostics.chisqTmp, $
+  boxCarMethod=max, width=3
+;; Now fill quality from this.
+Fill, quantity=otherDiagnostics.quality!HRQuantity, method=quality, $
+  sourceQuantity=temporaryDiagnostics.chisqTmp, scale=!MFchisqscale
+
+!divert(-1)
+; ----------- Phase name vs. retrieval name
+; Some phase(s) may not have Retrieve sections
+; and so we'll need to know the last one
+; (We may end up putting this in core*flags.l2cf)
+; !undefine(retrophase)!dnl
+; !ifelse(!phase,{Core}, {
+; !define(retrophase,{InitUTH})!dnl
+; },{!dnl
+; !define(retrophase,{!phase})!dnl
+; })
+
+!divert!dnl
+;; Convergence Ratio
+Fill, quantity=otherDiagnostics.convergence!HRQuantity, method=convergenceRatio, $
+  sourceQuantity=diag!retrophase.dnwt_chisqRatio, scale=!MFchisqscale
+
+;; Status
+Fill, quantity=otherDiagnostics.status!HRQuantity, method=explicit, explicitValues=0, /spread
+
+Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
+  status=!statusMissingGMAO+!statusInform, $
+  /additional, /ifMissingGMAO
+
+!ifdef(MFminrads,{
+!ifdef(flagTooFewRadsByBand,{
+!anyTooFewRads
+},{
+!sumTooFewRads
+})
+;; Set status bit for abandoned retrieval
+Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
+  status=!statusAbandonedRtrvl+!statusDoNotUse, $
+  sourceQuantity=diag!retrophase.dnwt_abandoned, maxValue=0, /additional, /exact, /ignoreTemplate
+
+})
+
+})
+
+;; Set status bits based on clouds contaminating radiances in selected radiometers
+!define(makeStatusForOneProduct,{!dnl
+!undefine(MFproduct)!dnl
+!undefine(MFchisqscale)!dnl
+!undefine(MFminrads)!dnl
+!undefine(MFcloudmax)!dnl
+!undefine(MFcloudmin)!dnl
+!ProcessParVal(MF,$@@)!dnl
+!undefine(HRQuantity)!dnl
+!ifelse(!MFproduct,{H2O}, {!dnl
+!define(HRQuantity,{!MFproduct_hr})!dnl
+}, !MFproduct,{GPH}, {!dnl
+!define(HRQuantity,{!MFproduct_hr})!dnl
+}, !MFproduct,{RHI}, {!dnl
+!define(HRQuantity,{!MFproduct_hr})!dnl
+}, !MFproduct,{Temperature}, {!dnl
+!define(HRQuantity,{!MFproduct_hr})!dnl
+},{!dnl
+!define(HRQuantity,{!MFproduct})!dnl
+})!dnl
+!dnl
+;; Status - cloudy radiances - don't do a boxcar.
+; In our new DT33-based cloud flagging, we don't loop over flagging radiometers
+; but instead rely solely upon R3
+; !ifdef(MFcloudmax,{!dnl
+; !forall(addInOneHighCloudContam,!flaggingRadiometers)
+; })
+!ifdef(MFcloudmax,{!dnl
+!addInOneHighCloudContam}!dnl
+)
+; !ifdef(MFcloudmin,{!dnl
+; !forall(addInOneLowCloudContam,!flaggingRadiometers)!dnl
+; })
+!ifdef(MFcloudmin,{!dnl
+!addInOneLowCloudContam}!dnl
+)!dnl
+})
+
+; $Log: retrievalmacros.l2cf,v $
+; Revision 1.163  2024/01/18 23:32:37  pwagner
+; Put in place new way of setting Cloud Status bits based on DT33
+;
+; Revision 1.162  2019/12/13 00:08:56  pwagner
+; May override more default settings with macros
+;
+; Revision 1.161  2019/10/16 21:01:17  pwagner
+; May SetPtanPrecPositive as part of each completePhase macro
+;
+; Revision 1.160  2019/08/22 16:53:02  pwagner
+; Add a new flagSkipGPHNeedsFancyThings
+;
+; Revision 1.159  2017/12/01 18:21:35  pwagner
+; Overwrite GPH standardPrecision whenever it is recalculated (before, it was always apriori)
+;
+; Revision 1.158  2017/11/17 17:34:12  pwagner
+; May prefine macors HiResStdProds, flagSkipPTrop
+;
+; Revision 1.157  2016/12/06 19:56:53  pwagner
+; Repaired errors introduced with flagSkipWritingDiagnostics
+;
+; Revision 1.156  2016/09/14 20:10:04  pwagner
+; Implement flagSkipWritingDiagnostics
+;
+; Revision 1.155  2014/12/10 23:05:47  pwagner
+; Correct erroneous calculation of AscDescMode; now based on geodAngle
+;
+; Revision 1.154  2014/04/07 18:14:54  pwagner
+; Added stuff for writing Ascending/Descending Mode flags
+;
+; Revision 1.153  2013/10/15 17:41:33  pwagner
+; May correct GPH for Geoid offset
+;
+; Revision 1.152  2012/12/04 18:45:12  pwagner
+; Added allspecFBs
+;
+; Revision 1.151  2012/12/04 18:11:01  pwagner
+; Added baselineMIFBands
+;
+; Revision 1.150  2012/10/09 00:33:08  pwagner
+; Consistent with new use force field
+;
+; Revision 1.149  2012/06/19 20:12:51  pwagner
+; storeStandardProduct(O3_HR) names swath simply 'O3-StdProd'
+;
+; Revision 1.148  2012/04/05 19:09:43  pwagner
+; ColumnSrdProds macro default can be overriden
+;
+; Revision 1.147  2012/02/24 18:36:44  wgread
+; wgr--removed retrieverstate etc.
+;
+; Revision 1.146  2012/02/22 00:08:15  wgread
+; wgr--added mif extinction
+;
+; Revision 1.145  2011/10/20 20:20:54  pwagner
+; DirectWrite diagnostic fields for IWC, IWP
+;
+; Revision 1.144  2010/07/22 18:54:46  pwagner
+; Replaced method=special fills with unique names
+;
+; Revision 1.143  2010/04/28 18:23:37  pwagner
+; May set too few radiances status by percentage
+;
+; Revision 1.142  2009/10/13 00:17:42  pwagner
+; Reduced minRads for Bands 15, 16, 18, 19 because of v3.1 OH issue (item 18)
+;
+; Revision 1.141  2009/07/31 17:18:03  pwagner
+; No longer automatically set O3 pricision negative at 316 and below
+;
+; Revision 1.140  2009/05/15 20:25:52  pwagner
+; Fixed bug causing O3 and IWC overlaps to overwrite std prods
+;
+; Revision 1.139  2009/05/14 14:44:11  honghanh
+; Add ProcessParValCS (or ProcessParVal case-sensitive) in m4defs.l2cf to support product-dependent pTop / pBottom implemented in retrievalmacros.l2cf
+;
+; Revision 1.138  2009/05/08 19:28:44  honghanh
+; Implement pTop, pBottom mechanism for HNO3, O3, CO, SO2 as well as Temperature
+;
+; Revision 1.137  2009/05/07 18:17:43  honghanh
+; Add/Modify pTop pBottom
+;
+; Revision 1.136  2009/05/06 00:21:36  pwagner
+; Added saving chunk overlaps as diagnostics
+;
+; Revision 1.135  2009/04/30 20:11:23  pwagner
+; Removed last /dontMask from H2O to RHi conversions
+;
+; Revision 1.134  2009/04/28 20:05:53  pwagner
+; Removed autoatic Fills of Rhi from completephase macro
+;
+; Revision 1.133  2009/04/16 21:51:51  pwagner
+; Fixed bug where abandoned status bit wipes out radiance bit
+;
+; Revision 1.132  2009/04/09 20:38:25  pwagner
+; May set Status bits for too few radiances by Band
+;
+; Revision 1.131  2009/03/14 02:47:33  honghanh
+; Add dnwt_abandoned
+;
+; Revision 1.130  2009/01/28 01:15:17  pwagner
+; Changed quantity name of hires ozone
+;
+; Revision 1.129  2008/10/07 18:12:54  pwagner
+; Added O3_R3
+;
+; Revision 1.128  2008/06/06 21:23:38  michael
+; Allow saving of uncompressed radiances in forwardmodel file.
+;
+; Revision 1.127  2008/05/27 16:59:49  pwagner
+; Added new methyl molecules
+;
+; Revision 1.126  2006/10/19 19:41:55  pwagner
+; Easier to switch Columns and hi-res on/off
+;
+; Revision 1.125  2006/10/18 00:06:13  pwagner
+; Quality, Status, Convergence for Merged Product all come from later phase (Core+R3)
+;
+; Revision 1.124  2006/10/11 23:02:18  pwagner
+; Do Convergence Ratio Fill when filling Quality; write results to l2gp
+;
+; Revision 1.123  2006/10/04 16:50:40  pwagner
+; May set status bits based on cloud-contaminated radiances from multiple radiometers
+;
+; Revision 1.122  2006/10/03 20:26:55  pwagner
+; Added dnwt_chiSqRatio as measure of convergence
+;
+; Revision 1.121  2006/09/22 18:54:36  pwagner
+; StoreStandardProduct macro should not clobber state vector
+;
+; Revision 1.120  2006/08/08 22:27:07  pwagner
+; Fills Quality, Status for Temperature, GPH; needs revision before v2.20
+;
+; Revision 1.119  2006/07/29 04:56:03  dwu
+; merge RHi precision from RHiVmr at pressures > 383hPa
+;
+; Revision 1.118  2006/07/29 01:19:34  pwagner
+; Treat rhi quality like H2O quality
+;
+; Revision 1.117  2006/07/29 00:30:04  pwagner
+; More fixes for H2O being _hr; corrected adding up quality by bands
+;
+; Revision 1.116  2006/07/27 22:41:28  pwagner
+; Specify unit=DU for O3; be consistent in using temperature_hr to compute PTrop
+;
+; Revision 1.115  2006/07/25 21:37:45  pwagner
+; Do not write (currently unused) IWC3 swath
+;
+; Revision 1.114  2006/07/24 23:14:56  pwagner
+; Repaired bug preventing copying IWP swath to IWC file
+;
+; Revision 1.113  2006/07/11 00:06:32  pwagner
+; Some standard products now stored at _hr; ptrop computed using Temperature_hr
+;
+; Revision 1.112  2006/07/07 23:14:12  pwagner
+; With flagUseGEOS5PTrop can directwrite two columns per speciesWithColumn
+;
+; Revision 1.111  2006/06/09 20:47:54  pwagner
+; Added SO2 to standard products (perhaps should be controlled by a flag)
+;
+; Revision 1.110  2006/05/11 20:16:36  pwagner
+; Added special case for DirectWriteDGG of Temperature_HR
+;
+; Revision 1.109  2006/05/11 04:33:33  dwu
+; add rhi_hr in the completePhase
+;
+; Revision 1.108  2006/05/08 21:32:50  bill
+; added mb baselines
+;
+; Revision 1.107  2006/05/04 19:51:59  bill
+; added DACS baselines
+;
+; Revision 1.106  2006/04/26 18:27:50  pwagner
+; Recalculate outputPrecision.gph before outputting it
+;
+; Revision 1.105  2005/10/28 23:29:04  pwagner
+; Added macros for storing standard products to the split dgg files
+;
+; Revision 1.104  2005/07/21 23:47:14  pwagner
+; Added statusInform statusMissingGMAO bits; fill status if missingGMAO
+;
+; Revision 1.103  2005/01/27 18:36:13  pwagner
+; Removed SO2 from allStandardProductsWithColumns
+;
+; Revision 1.102  2004/11/29 21:54:08  livesey
+; Changed chisqProfile to be mean not max chi squared in the MAF.  It's
+; used in deriving quality.
+;
+; Revision 1.101  2004/10/30 00:04:20  livesey
+; Added bit 9 for status (never actually used as such).
+;
+; Revision 1.100  2004/10/28 22:51:29  dwu
+; add SO2 as a standard species
+;
+; Revision 1.99  2004/09/12 22:13:25  pwagner
+; Directwrite of fwmrads and scan residuals independent of whether l2version defined
+;
+; Revision 1.98  2004/06/26 00:57:14  livesey
+; Added macros to write scan residual
+;
+; Revision 1.97  2004/06/22 18:36:06  pwagner
+; defaults to writing retrieval diagnostics to l2aux instead of dgg
+;
+; Revision 1.96  2004/05/04 20:38:27  livesey
+; Changed a comment
+;
+; Revision 1.95  2004/04/28 00:31:36  livesey
+; Bug fix in lowcloud flagging
+;
+; Revision 1.94  2004/04/27 23:41:48  livesey
+; Simplified the status/quality flagging by changing diagTmp
+;
+; Revision 1.93  2004/04/27 23:02:11  livesey
+; Added makeStandardProductMergeDiag and removed flagBand32Clouds (should
+; be done by parent l2cf now).
+;
+; Revision 1.92  2004/04/24 00:24:32  pwagner
+; Prefixes L2GP- to l2gpFileName if using PCF
+;
+; Revision 1.91  2004/04/19 19:24:23  livesey
+; Slight changes to L2AUX handling.
+;
+; Revision 1.90  2004/04/16 00:45:55  livesey
+; New approach to cloud flagging etc.
+;
+; Revision 1.89  2004/04/14 23:07:22  livesey
+; Moved cloud output to L2AUX-Cloud
+;
+; Revision 1.88  2004/04/08 22:42:23  livesey
+; More agile flagging for R5 case.
+;
+; Revision 1.87  2004/04/06 01:18:07  livesey
+; Bug fix in status no-radiance flag.
+;
+; Revision 1.86  2004/04/02 01:08:41  livesey
+; Bug fixes and added cloudmin option to the flagging macro
+;
+; Revision 1.85  2004/03/27 00:16:34  livesey
+; Added high level macros for status/quality filling.
+;
+; Revision 1.84  2004/03/17 17:13:54  livesey
+; Added some status flag bit constants and more stuff for diagnostic
+; precursors.
+;
+; Revision 1.83  2004/03/12 00:18:27  livesey
+; Now defaults to hdf 5
+;
+; Revision 1.82  2004/03/10 23:00:29  pwagner
+; Exclude file field from dgg/dgm directwrites if flagAutoSplitSources
+;
+; Revision 1.81  2004/02/13 21:12:23  livesey
+; Added allHiResProducts
+;
+; Revision 1.80  2004/02/12 02:06:33  livesey
+; Various bug fixes and additions
+;
+; Revision 1.79  2004/02/11 21:41:58  livesey
+; Added output of status and quality and tidied up
+;
+; Revision 1.78  2004/02/03 21:43:56  livesey
+; Updated handling of chisqBinned stuff
+;
+; Revision 1.77  2004/01/24 03:23:19  livesey
+; Now uses truth for edge of averaging kernels if available.
+;
+; Revision 1.76  2004/01/16 15:55:36  mjf
+; Some updates for precision estimates and 1D cases.
+;
+; Revision 1.75  2003/11/15 00:23:06  livesey
+; Now automagically defines flagDontDestroyVectors
+;
+; Revision 1.74  2003/11/14 00:12:39  livesey
+; Added ability to automatically produce averaging kernels and output
+; covariances on request.  Also support for flagSuppressRegularOutput
+;
+; Revision 1.73  2003/10/15 23:33:24  pwagner
+; Made l2fwm file name sensitive to usingPCF
+;
+; Revision 1.72  2003/09/05 23:26:28  pwagner
+; Switched fwoward model radiance DirectWrite type from l2aux to l2fwm
+;
+; Revision 1.71  2003/09/02 22:48:43  pwagner
+; Tweaked the defines to make the quotes come out right
+;
+; Revision 1.70  2003/09/02 22:25:25  pwagner
+; Output/DirectWrite to abbreviated fileNames only if usingPCF
+;
+; Revision 1.69  2003/09/02 20:52:09  pwagner
+; CloudFilename same as DGMFilename if usingPCF
+;
+; Revision 1.68  2003/08/28 23:52:59  livesey
+; Tried to bring directWriteDGG/DGM and joinDGG/DGM more in line with each
+; other.
+;
+; Revision 1.67  2003/08/28 16:30:25  livesey
+; More changes to join vs. directWrite to bring them closer together.
+;
+; Revision 1.66  2003/08/27 22:23:58  livesey
+; Moved error messages in joining
+;
+; Revision 1.65  2003/08/14 20:26:34  livesey
+; Removed tropH2O stuff
+;
+; Revision 1.64  2003/08/06 17:49:31  livesey
+; Changed output of matrices
+;
+; Revision 1.63  2003/07/24 22:13:28  livesey
+; Changed type for DGG file
+;
+; Revision 1.62  2003/07/11 01:23:05  livesey
+; Made it more backwards compatible
+;
+; Revision 1.61  2003/07/09 19:41:54  livesey
+; Bug fix in cloud filename
+;
+; Revision 1.60  2003/07/09 17:58:01  livesey
+; Added cloud file.
+;
+; Revision 1.59  2003/07/08 20:03:56  livesey
+; New handling of hdf version stuff
+;
+; Revision 1.58  2003/07/08 00:50:43  livesey
+; Better handling of l2fwm files
+;
+; Revision 1.57  2003/07/08 00:17:20  livesey
+; New approach to output with directWrite being used most places
+;
+; Revision 1.56  2003/06/05 23:39:39  livesey
+; IWC no longer a standard product
+;
+; Revision 1.55  2003/06/04 17:14:07  livesey
+; Added filename stuff to directWrite
+;
+; Revision 1.54  2003/05/29 16:41:17  livesey
+; Made allBandUSBs skip the upper sidebands in R1A/R1B
+;
+; Revision 1.53  2003/05/12 02:07:56  livesey
+; Output subset of retrieval diagnostics, and drop precisions.
+;
+; Revision 1.52  2003/05/11 22:39:07  livesey
+; Added ignore zero / negative flags.
+;
+; Revision 1.51  2003/05/11 22:35:54  livesey
+; Restored the binned quantities, worked out what was wrong with them.
+;
+; Revision 1.50  2003/05/11 06:12:20  livesey
+; Temporarily removed the binned stuff
+;
+; Revision 1.49  2003/05/11 00:17:46  livesey
+; Reverted to previous version.  Couldn't merge two fields (yet).
+;
+; Revision 1.47  2003/05/10 23:38:57  livesey
+; Various bug fixes etc.
+;
+; Revision 1.46  2003/05/10 22:22:17  livesey
+; New approach to standard products, joining, output, columns etc.
+;
+; Revision 1.45  2003/05/10 20:47:08  livesey
+; Bug fixes
+;
+; Revision 1.44  2003/05/10 00:57:53  livesey
+; More chi squared etc. stuff
+;
+; Revision 1.43  2003/05/08 21:08:02  livesey
+; Various bug fixes and tidies
+;
+; Revision 1.42  2003/05/08 20:49:21  livesey
+; Various tidyups and changes
+;
+; Revision 1.41  2003/03/22 01:18:24  livesey
+; Added initHiRes
+;
+; Revision 1.40  2003/02/27 00:39:38  livesey
+; General tidy up and dead wood removal
+;
+; Revision 1.39  2002/12/16 16:24:51  mjf
+; HiRes and columns
+;
+; Revision 1.38  2002/11/26 23:38:20  livesey
+; Added radiance diagnostics
+;
+; Revision 1.37  2002/11/21 18:24:11  livesey
+; Refined Avk stuff
+;
+; Revision 1.36  2002/11/21 01:24:01  livesey
+; Add transfer of outputPrecision.tropH2O if requested
+;
+; Revision 1.35  2002/11/21 01:19:18  livesey
+; Added call to NegativePrecision command
+;
+; Revision 1.34  2002/11/20 19:59:37  mjf
+; Fill columns to be added, but might break the retrieval, so commented
+; out for just now.
+;
+; Revision 1.33  2002/10/25 23:56:45  livesey
+; Minor changes in the diagnostics, added the offsetRadiances stuff
+;
+; Revision 1.32  2002/10/25 22:25:59  livesey
+; Added the retrieval diagnostics stuff
+;
+; Revision 1.31  2002/10/25 01:10:33  livesey
+; Added the tropH2O option to completephase
+;
+; Revision 1.30  2002/10/17 18:24:40  livesey
+; Typo
+;
+; Revision 1.29  2002/10/17 18:19:50  livesey
+; Added low/high bound to retrieval
+;
+; Revision 1.28  2002/10/16 20:21:11  mjf
+; Added GPH precision.
+;
+; Revision 1.27  2002/10/11 19:39:21  livesey
+; Bug fix
+;
+; Revision 1.26  2002/10/11 19:29:29  livesey
+; Added 1D forward models.
+;
+; Revision 1.25  2002/10/09 00:48:23  livesey
+; Split forward models into simple and otherwise
+;
+; Revision 1.24  2002/10/03 21:36:00  livesey
+; Changed forward models to use simplerMolecules lists
+;
+; Revision 1.23  2002/10/03 16:18:24  livesey
+; Changed temperaturePrecisionQuantity to tempPrecisionQuantity for Mark
+;
+; Revision 1.22  2002/10/03 05:41:41  livesey
+; Added baseline to forward models
+;
+; Revision 1.21  2002/10/02 23:22:47  livesey
+; New definitions of the joinDGG/DGM stuff.  Also added forward model
+; construction stuff.
+;
+; Revision 1.20  2002/10/02 23:06:01  pwagner
+; RHI now separate fill methods
+;
+; Revision 1.19  2002/10/01 18:33:36  mjf
+; New Fill for RHi precision.  Need gotAK defined for AK output.
+; RetrivalArguments depends on precisionEstimates.
+;
+; Revision 1.18  2002/08/26 20:27:07  livesey
+; New regularization (horizontal and vetical)
+;
+; Revision 1.17  2002/08/23 23:26:29  livesey
+; Made the FWM rad stuff report the actual signal
+;
+; Revision 1.16  2002/08/15 22:46:00  livesey
+; Added regularization vector
+;
+; Revision 1.15  2002/08/05 17:20:23  livesey
+; Added code to convert H2O back to RHI at the end of each phase
+;
+; Revision 1.14  2002/08/04 16:18:47  mjf
+; Some things switched off for precision estimates.
+;
+; Revision 1.13  2002/07/23 23:47:28  livesey
+; Added some macros for sids
+;
+; Revision 1.12  2002/07/22 20:34:17  livesey
+; Tidied up bug with subsetState
+;
+; Revision 1.11  2002/07/20 00:54:56  livesey
+; Added more subsetting stuff
+;
+; Revision 1.10  2002/07/18 06:30:55  livesey
+; Added the radianceSubset stuff
+;
+; Revision 1.9  2002/07/17 19:30:10  livesey
+; Fill GPH
+;
+; Revision 1.8  2002/07/06 21:18:48  livesey
+; Made sure the direct writes for forward model radiances are only done if
+; l2version is defined.
+;
+; Revision 1.7  2002/07/05 21:46:36  livesey
+; Put in the configInfo information
+;
+; Revision 1.6  2002/07/05 21:37:02  livesey
+; New (working) DGM/DGG handling
+;
+; Revision 1.5  2002/07/05 17:46:38  livesey
+; New work for multiphase retrievals
+;
+; Revision 1.4  2002/06/24 17:24:47  livesey
+; Bug in doNoise macro.
+;
+; Revision 1.3  2002/05/29 00:08:23  livesey
+; Typo fix
+;
+; Revision 1.2  2002/05/28 22:36:14  livesey
+; Semi freeze of version
+;
+; Revision 1.1  2002/04/29 21:54:59  pwagner
+; First commit
+;
+!divert!dnl
+@
+
+
+1.163
+log
+@Put in place new way of setting Cloud Status bits based on DT33
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.162 2019/12/13 00:08:56 pwagner Exp $
+d1130 1
+a1130 1
+Fill, quantity=standardDiagnostics.status!HRQuantity, method=status, status=!statusHighCloud+!statusBeWary, $
+d1133 5
+a1137 3
+Fill, quantity=standardDiagnostics.status!HRQuantity, method=status, status=!statusLowCloud+!statusBeWary, $
+  sourceQuantity=CloudDT33Diagnostics.lowCloudSummaryDT33, maxValue=0K, /additional!nl})
+
+d1264 5
+d1270 8
+a1277 1
+!forall(addInOneHighCloudContam,!flaggingRadiometers)
+a1278 3
+!ifdef(MFcloudmin,{!dnl
+!forall(addInOneLowCloudContam,!flaggingRadiometers)!dnl
+})})
+d1281 3
+@
+
+
+1.162
+log
+@May override more default settings with macros
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.161 2019/10/16 21:01:17 pwagner Exp $
+d1118 11
+d1130 2
+a1131 2
+Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, status=!statusHighCloud+!statusBeWary, $
+  sourceQuantity=otherDiagnostics.highCloudSummary$1, maxValue=!MFcloudmax, /additional!nl})
+d1133 2
+a1134 2
+Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, status=!statusLowCloud+!statusBeWary, $
+  sourceQuantity=otherDiagnostics.lowCloudSummary$1, minValue=!MFcloudmin, /additional!nl})
+d1270 3
+@
+
+
+1.161
+log
+@May SetPtanPrecPositive as part of each completePhase macro
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.160 2019/08/22 16:53:02 pwagner Exp $
+d16 1
+a16 2
+!ifdef(allRadiometers, {},
+{!define(allRadiometers,{R1A,R1B,R2,R3,R4,R5H,R5V})})
+d36 6
+d46 1
+a46 1
+!ifdef(pctMinRads,{},{!define(pctMinRads,60)})
+d79 4
+a82 2
+!define(allStandardProductsWithColumns,{BrO,CH3Cl,CH3CN,CH3OH,CH3COCH3,ClO,CO,H2O,HCl,HCN,HNO3,HO2,HOCl,N2O,O3,O3_HR,OH,SO2})
+!define(allStandardProductsWithoutColumns,{Temperature,GPH,RHI,UTRHI})
+d85 1
+a85 1
+!define(allHiResProducts,{Temperature_HR,H2O_HR,RHI_HR,GPH_HR})
+d90 1
+a90 1
+!ifdef(hdfVersion,{},{!define(hdfVersion,5)})
+d93 16
+a108 15
+!define(l2gpFileName, !dnl
+{!ifdef(flagUsingPCF,{L2GP-$1},!dnl
+{!outpathl2gp/MLS-Aura_L2GP-$1_!l2version_!day.he!hdfVersion})})
+!define(DGGFileName, !dnl
+{!ifdef(flagUsingPCF,{DGG},!dnl
+{!outpathl2gp/MLS-Aura_L2GP-DGG_!l2version_!day.he!hdfVersion})})
+!define(l2auxFileName, !dnl
+{!ifdef(flagUsingPCF,{L2AUX-$1},!dnl
+{!outpathl2aux/MLS-Aura_L2AUX-$1_!l2version_!day.h!hdfVersion})})
+!define(DGMFileName, !dnl
+{!ifdef(flagUsingPCF,{L2AUX-DGM},!dnl
+{!outpathl2aux/MLS-Aura_L2AUX-DGM_!l2version_!day.h!hdfVersion})})
+!define(CloudFilename, !dnl
+{!ifdef(flagUsingPCF,{L2AUX-Cloud},!dnl
+{!outpathl2aux/MLS-Aura_L2AUX-Cloud_!l2version_!day.h!hdfVersion})})
+a118 5
+;; Filename for forward model radiance output
+!define(l2fwmFileName, !dnl
+{!ifdef(flagUsingPCF,{$1},!dnl
+{!outpathl2gp/MLS-Aura_L2FWM-$1_!l2version_!day.h!hdfVersion})})
+
+d1259 3
+@
+
+
+1.160
+log
+@Add a new flagSkipGPHNeedsFancyThings
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.159 2017/12/01 18:21:35 pwagner Exp $
+d216 18
+d1256 3
+@
+
+
+1.159
+log
+@Overwrite GPH standardPrecision whenever it is recalculated (before, it was always apriori)
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.158 2017/11/17 17:34:12 pwagner Exp $
+d760 2
+d781 1
+d1238 3
+@
+
+
+1.158
+log
+@May prefine macors HiResStdProds, flagSkipPTrop
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.157 2016/12/06 19:56:53 pwagner Exp $
+d776 3
+a778 1
+
+d1235 3
+@
+
+
+1.157
+log
+@Repaired errors introduced with flagSkipWritingDiagnostics
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.156 2016/09/14 20:10:04 pwagner Exp $
+d570 1
+a570 1
+!define(HiResStdProds,{H2O, Temperature, RHI, GPH})!dnl
+d886 2
+d959 2
+d1233 3
+@
+
+
+1.156
+log
+@Implement flagSkipWritingDiagnostics
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.155 2014/12/10 23:05:47 pwagner Exp $
+d162 3
+a164 1
+end Fill})
+d219 3
+d223 3
+a225 1
+  !define(flagSkipWritingDiagnostics,{yes})
+d227 1
+a227 6
+
+!ifdef(flagSkipWritingDiagnostics,{},{
+  begin Join 
+    {!forall(joinOneDiagnostic,!outputRetrievalDiagnostics)},
+    {!forall(directWriteOneDiagnostic,!outputRetrievalDiagnostics)}
+  end Join
+d230 1
+d238 2
+a239 1
+!define(initHiRes,{begin Fill
+d243 2
+a244 1
+end Fill})
+d1229 3
+@
+
+
+1.155
+log
+@Correct erroneous calculation of AscDescMode; now based on geodAngle
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.154 2014/04/07 18:14:54 pwagner Exp $
+d214 9
+a222 4
+!ifdef(flagSuppressRegularOutput,{},{
+!ifdef(flagPrecisionEstimates,{},{
+  begin Join !dnl
+    !nl!ifdef(flagAvoidDirectWrite,
+d224 1
+a224 1
+    {!forall(directWriteOneDiagnostic,!outputRetrievalDiagnostics)})
+d226 1
+a226 1
+})})
+d483 2
+d489 3
+a491 1
+   end Join!nl})
+d1224 3
+@
+
+
+1.154
+log
+@Added stuff for writing Ascending/Descending Mode flags
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.153 2013/10/15 17:41:33 pwagner Exp $
+d316 1
+a316 1
+!DirectWriteDGGCommand, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+d628 1
+a628 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+d639 1
+a639 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+d650 1
+a650 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+d669 1
+a669 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+d676 1
+a676 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+d683 1
+a683 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+d692 1
+a692 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+d703 1
+a703 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+d714 1
+a714 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+d769 1
+a769 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+d780 1
+a780 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+d792 1
+a792 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+d841 1
+a841 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+d850 1
+a850 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+d859 1
+a859 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+d876 1
+a876 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+d883 1
+a883 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+d890 1
+a890 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+d902 1
+a902 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+d909 1
+a909 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+d917 1
+a917 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+d924 1
+a924 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+d931 1
+a931 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+d938 1
+a938 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+d944 1
+a944 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+d954 1
+a954 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+d964 1
+a964 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+d973 1
+a973 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+d986 1
+a986 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+d1000 1
+a1000 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+d1011 1
+a1011 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+d1020 1
+a1020 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+d1029 1
+a1029 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+d1215 3
+@
+
+
+1.153
+log
+@May correct GPH for Geoid offset
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.152 2012/12/04 18:45:12 pwagner Exp $
+d24 1
+a24 1
+!define(baselineMIFBands,{Band7,Band8,Band9,Band33})
+d206 1
+a206 1
+  ;; Set precision -ve when wose than 50% apriori precision
+d316 1
+a316 1
+!DirectWriteDGGCommand, hdfVersion=!hdfVersion, $
+d628 1
+a628 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+d639 1
+a639 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+d650 1
+a650 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+d669 1
+a669 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+d676 1
+a676 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+d683 1
+a683 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+d692 1
+a692 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+d703 1
+a703 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+d714 1
+a714 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+d769 1
+a769 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+d780 1
+a780 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+d792 1
+a792 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+d841 1
+a841 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+d850 1
+a850 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+d859 1
+a859 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+d876 1
+a876 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+d883 1
+a883 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+d890 1
+a890 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+d902 1
+a902 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+d909 1
+a909 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+d917 1
+a917 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+d924 1
+a924 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+d931 1
+a931 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+d938 1
+a938 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+d944 1
+a944 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+d954 1
+a954 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+d964 1
+a964 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+d973 1
+a973 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+d986 1
+a986 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+d1000 1
+a1000 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+d1011 1
+a1011 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+d1020 1
+a1020 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+d1029 1
+a1029 1
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+d1215 3
+@
+
+
+1.152
+log
+@Added allspecFBs
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.151 2012/12/04 18:11:01 pwagner Exp $
+d763 39
+d1215 3
+@
+
+
+1.151
+log
+@Added baselineMIFBands
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.150 2012/10/09 00:33:08 pwagner Exp $
+d23 1
+d1176 3
+@
+
+
+1.150
+log
+@Consistent with new use force field
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.149 2012/06/19 20:12:51 pwagner Exp $
+d23 1
+d1175 3
+@
+
+
+1.149
+log
+@storeStandardProduct(O3_HR) names swath simply 'O3-StdProd'
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.148 2012/04/05 19:09:43 pwagner Exp $
+d749 1
+a749 1
+    sourceQuantity=standardDiagnostics.statusTemperature_hr, /force
+d751 1
+a751 1
+    sourceQuantity=standardDiagnostics.qualityTemperature_hr, /force
+d777 1
+a777 1
+    method=vector,/force,/interpolate
+d1029 1
+a1029 1
+  a=temporaryDiagnostics.chisqTmp, b=otherDiagnostics.chisqProfile$1, /force!nl})
+d1032 1
+a1032 1
+  a=temporaryDiagnostics.noRadsTmp, b=otherDiagnostics.noRadsProfile$1, /force!nl})
+d1138 1
+a1138 1
+  sourceQuantity=diag!retrophase.dnwt_abandoned, maxValue=0, /additional, /exact, /force
+d1174 3
+@
+
+
+1.148
+log
+@ColumnSrdProds macro default can be overriden
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.147 2012/02/24 18:36:44 wgread Exp $
+d794 5
+a798 1
+  Label, quantity=tempVectorState.!theQuantity, label='$1-StdProd'
+d1174 3
+@
+
+
+1.147
+log
+@wgr--removed retrieverstate etc.
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.146 2012/02/22 00:08:15 wgread Exp $
+d557 1
+a557 1
+!define(ColumnStdProds,{O3})!dnl
+d1170 3
+@
+
+
+1.146
+log
+@wgr--added mif extinction
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.145 2011/10/20 20:20:54 pwagner Exp $
+a161 66
+!define(setupPhaseMIF,{!dnl
+begin Fill
+  ;; Define state related vectors
+  x$1: Vector, template=x$1Template
+  a$1: Vector, template=x$1Template
+  vr$1: Vector, template=x$1Template
+  hr$1: Vector, template=x$1Template
+  sdIn$1: Vector, template=x$1Template
+  sdOut$1: Vector, template=x$1Template
+  lb$1: Vector, template=x$1Template
+  hb$1: Vector, template=x$1template
+  !ifdef(flagGotTruth,{t$1: Vector, template=x$1template})
+  ;; add mifextinction quantities
+  amif$1: Vector, template=x$1MIFTemplate
+  xmif$1: Vector, template=x$1MIFTemplate
+  sdOutmif$1: Vector, template=x$1MIFTemplate
+  lbmif$1: Vector, template=x$1MIFTemplate
+  hbmif$1: Vector, template=x$1MIFTemplate
+  sdInmif$1: Vector, template=x$1MIFTemplate
+  vrmif$1: Vector, template=x$1MIFTemplate
+  hrmif$1: Vector, template=x$1MIFTemplate
+
+  ;; Define measurement related vectors
+  y$1: Vector, template=y$1Template
+  yNoise$1: Vector, template=y$1Template
+  f$1: Vector, template=y$1Template
+  od$1: Vector, template=od$1Template
+  ;; Define retrieval diagnostics vector
+  diag$1: Vector, template=retrievalDiagnosticsTemplate
+  ;; Fill state related vectors
+  Transfer, source=state, destination=x$1
+  Transfer, source=apriori, destination=a$1
+  Transfer, source=aprioriPrecision, destination=sdIn$1
+  Transfer, source=vReg, destination=vr$1
+  Transfer, source=hReg, destination=hr$1
+  Transfer, source=lowBound, destination=lb$1
+  Transfer, source=highBound, destination=hb$1
+  !ifdef(flagGotTruth,{Transfer, source=truth, destination=t$1})
+
+  ;; Fill MIFExtinction apriori, etc
+  Transfer, source=apriori, destination=amif$1
+  Transfer, source=lowBound, destination=lbmif$1
+  Transfer, source=highBound, destination=hbmif$1
+  Transfer, source=aprioriPrecision, destination=sdInmif$1
+  Transfer, source=vReg, destination=vrmif$1
+  Transfer, source=hReg, destination=hrmif$1
+
+  Transfer, source=retrieverState, destination=xmif$1
+
+  ;; Construct and fill state covariance
+  Sa$1: matrix, columns=a$1, type=spd
+  FillCovariance, matrix=Sa$1, diagonal=sdIn$1, /invert
+
+  ;; Construct and fill MIFExtinction state covariance
+  Samif$1: matrix, columns=amif$1, type=spd
+  FillCovariance, matrix=Samif$1, diagonal=sdInmif$1, /invert
+
+  ;; Other matrices
+  !ifdef(flagComputeAvks,{avk$1: matrix, rows=a$1, $
+    !ifdef(flagGotTruth,{columns=t$1},{columns=a$1})})
+  !ifdef(flagComputeSout,{Sout$1: matrix, columns=x$1, type=spd})
+
+  ;; Fill radiance related vectors
+  Transfer, source=measurement, destination=y$1
+  Transfer, source=measurementNoise, destination=yNoise$1
+end Fill})
+a221 60
+!define(completePhaseMIF,{!dnl
+;; Set default values for some parameters
+begin Fill
+  ;; Put state etc. back
+  Transfer, source=xmif$1, destination=retrieverstate
+  Transfer, source=sdOutmif$1, destination=outputPrecision
+
+  ;; FM output will be turned on again, sometime, for the PEs
+  !ifdef(flagPrecisionEstimates,{},{Transfer, source=f$1, destination=fwm})
+  ;; Clean up dead vectors and matrices
+  Destroy, matrix=Sa$1
+  Destroy, matrix=Samif$1
+  !ifdef(flagDontDestroyVectors,{},{
+  Destroy, vector=x$1
+  Destroy, vector=a$1
+  Destroy, vector=vr$1
+  Destroy, vector=hr$1
+  Destroy, vector=sdIn$1
+  Destroy, vector=sdOut$1
+  Destroy, vector=lb$1
+  Destroy, vector=hb$1
+  Destroy, vector=y$1
+  Destroy, vector=yNoise$1
+  Destroy, vector=f$1
+  !ifdef(flagGotTruth,{Destroy, vector=t$1})
+; do the same for mif quantities
+  Destroy, vector=xmif$1
+  Destroy, vector=amif$1
+  Destroy, vector=vrmif$1
+  Destroy, vector=hrmif$1
+  Destroy, vector=sdInmif$1
+  Destroy, vector=sdOutmif$1
+  Destroy, vector=lbmif$1
+  Destroy, vector=hbmif$1
+  Destroy, vector=od$1})
+  ;; Compute new full GPH profile
+  Fill, quantity=state.gph, method=hydrostatic, $
+    refGPHquantity=state.refGPH, temperatureQuantity=state.temperature
+  ;; And GPH precision
+  Fill, quantity=outputPrecision.gph, method=gphPrecision, $
+    refGPHPrecisionquantity=outputPrecision.refGPH, $
+    tempPrecisionQuantity=outputPrecision.temperature
+  ;; Set precision -ve when wose than 50% apriori precision
+  NegativePrecision, precision=outputPrecision, aprioriPrecision=aprioriPrecision
+  ;; Compute chi^2 ratio as measure of convergence
+  Fill, quantity=diag$1.dnwt_chisqratio, method=chiSqRatio, $
+    normQty= diag$1.dnwt_chisqnorm, minNormQty=diag$1.dnwt_chisqminNorm, $
+    flags=diag$1.dnwt_flag
+end Fill
+
+!ifdef(flagSuppressRegularOutput,{},{
+!ifdef(flagPrecisionEstimates,{},{
+  begin Join !dnl
+    !nl!ifdef(flagAvoidDirectWrite,
+    {!forall(joinOneDiagnostic,!outputRetrievalDiagnostics)},
+    {!forall(directWriteOneDiagnostic,!outputRetrievalDiagnostics)})
+  end Join
+})})
+})
+
+a501 18
+  !define(retrievalArgumentsMIF,{$
+    state=xmif$1, fwmState=x$1, fwdModelExtra=state, $
+    measurements=y$1, measurementSD=yNoise$1, $
+    apriori=amif$1, covariance=Samif$1, $
+    outputSD=sdOutmif$1, $
+    !ifdef(flagComputeAvks,{average=Avk$1,!noteMatrix(Avk$1)}) $
+    vRegWeightVec=vrmif$1!ifelse(!dimension,1D,{},{, hRegWeightVec=hrmif$1})})},!dnl
+{ !define(retrievalArgumentsMIF,{$
+  state=xmif$1, fwmState=x$1, fwdModelExtra=state, $
+  measurements=y$1, measurementSD=yNoise$1, $
+  apriori=amif$1, covariance=Samif$1, $
+  outputSD=sdOutmif$1, fwdModelOut=f$1, $
+  vRegWeightVec=vrmif$1, hRegWeightVec=hrmif$1, $
+  !ifdef(flagComputeAvks,{average=Avk$1,!noteMatrix(Avk$1)})!dnl
+  !ifdef(flagComputeSout,{outputCovariance=Soutmif$1,!noteMatrix(Soutmif$1)})!dnl
+  lowBound=lbmif$1, highBound=hbmif$1, diagnostics=diag$1})})
+
+!ifdef(flagPrecisionEstimates,{!dnl
+d1170 3
+@
+
+
+1.145
+log
+@DirectWrite diagnostic fields for IWC, IWP
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.144 2010/07/22 18:54:46 pwagner Exp $
+d130 54
+d200 11
+d215 4
+d288 60
+d626 19
+d1314 3
+@
+
+
+1.144
+log
+@Replaced method=special fills with unique names
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.143 2010/04/28 18:23:37 pwagner Exp $
+d926 5
+a930 1
+    source=tempVectorState.iwp, precision=tempVectorPrecision.iwp
+d939 5
+a943 1
+    source=tempVectorState.iwp, precision=tempVectorPrecision.iwp, /lowerOverlap
+d953 5
+a957 1
+    source=tempVectorState.iwp, precision=tempVectorPrecision.iwp, /upperOverlap
+d1166 3
+@
+
+
+1.143
+log
+@May set too few radiances status by percentage
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.142 2009/10/13 00:17:42 pwagner Exp $
+d438 1
+a438 1
+   Fill, quantity=minorFrameDiagnostics.chisqMMAF$1, method=special, $
+d441 1
+a441 1
+   Fill, quantity=minorFrameDiagnostics.chisqMMIF$1, method=special, $
+d444 1
+a444 1
+   Fill, quantity=minorFrameDiagnostics.chisqChan$1, method=special, $
+d447 1
+a447 1
+   Fill, quantity=minorFrameDiagnostics.noRadsPerMIF$1, method=special, $
+d600 1
+a600 1
+  Fill, quantity=tempVectorState.column_$1, method=special, vmrQuantity=tempVectorState.!theQuantity, $
+d602 1
+a602 1
+  Fill, quantity=tempVectorPrecision.column_$1, method=special, vmrQuantity=tempVectorPrecision.!theQuantity, $
+d656 1
+a656 1
+  Fill, quantity=tempVectorState.column_$1, method=special, vmrQuantity=tempVectorState.!theQuantity, $
+d658 1
+a658 1
+  Fill, quantity=tempVectorPrecision.column_$1, method=special, vmrQuantity=tempVectorPrecision.!theQuantity, $
+d1154 3
+@
+
+
+1.142
+log
+@Reduced minRads for Bands 15, 16, 18, 19 because of v3.1 OH issue (item 18)
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.141 2009/07/31 17:18:03 pwagner Exp $
+d16 2
+a17 1
+!define(allRadiometers,{R1A,R1B,R2,R3,R4,R5H,R5V})
+d27 1
+d37 4
+d58 10
+a435 1
+
+d448 1
+a448 1
+     measurements=y!phase.band$1!nl})
+d460 1
+a460 1
+   Fill, quantity=otherDiagnostics.noRadsBinned$1, method=binTotal, $
+d463 1
+a463 1
+   Fill, quantity=otherDiagnostics.noRadsProfile$1, method=binTotal, $
+d1040 5
+d1049 1
+d1154 3
+@
+
+
+1.141
+log
+@No longer automatically set O3 pricision negative at 316 and below
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.140 2009/05/15 20:25:52 pwagner Exp $
+d30 1
+a30 1
+!setMinRadsByBand(11=800,12=900,13=900,14=900,15=1500,16=1500,17=500,18=1500,19=1500,20=500)
+d1133 3
+@
+
+
+1.140
+log
+@Fixed bug causing O3 and IWC overlaps to overwrite std prods
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.139 2009/05/14 14:44:11 honghanh Exp $
+d51 1
+a51 1
+!setPBottomBySpecies(Temperature=383mb, GPH=383mb, O3=316mb)
+d1133 3
+@
+
+
+1.139
+log
+@Add ProcessParValCS (or ProcessParVal case-sensitive) in m4defs.l2cf to support product-dependent pTop / pBottom implemented in retrievalmacros.l2cf
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.138 2009/05/08 19:28:44 honghanh Exp $
+d57 1
+a57 1
+!define(allStandardProductsWithoutColumns,{Temperature,GPH,RHI})
+d616 1
+d627 1
+d680 1
+d691 1
+d916 1
+d926 1
+d1133 3
+@
+
+
+1.138
+log
+@Implement pTop, pBottom mechanism for HNO3, O3, CO, SO2 as well as Temperature
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.137 2009/05/07 18:17:43 honghanh Exp $
+a21 1
+!define(restrictedSpecies, {O3,CO,HNO3,SO2,Temperature})
+d42 10
+d590 1
+a590 3
+!ifelse(!index(!defn(restrictedSpecies),$1),{-1},{!dnl
+}, {!dnl
+!ifdef(pTop, {!dnl
+d592 1
+a592 1
+    height=!pTop, heightRange="above", a=tempVectorPrecision.!theQuantity, $
+d595 2
+a596 2
+!ifdef(pBottom, {!dnl
+  Fill, quantity=tempVectorPrecision.!theQuantity, height=!pBottom, heightRange="below", $
+a598 1
+})
+d759 1
+a759 3
+!ifelse(!index(!defn(restrictedSpecies),$1),{-1},{!dnl
+}, {!dnl
+!ifdef(pTop, {!dnl
+d761 1
+a761 1
+    height=!pTop, heightRange="above", a=tempVectorPrecision.!theQuantity, $
+d764 2
+a765 2
+!ifdef(pBottom, {!dnl
+  Fill, quantity=tempVectorPrecision.!theQuantity, height=!pBottom, heightRange="below", $
+a767 1
+})
+d1127 3
+@
+
+
+1.137
+log
+@Add/Modify pTop pBottom
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.136 2009/05/06 00:21:36 pwagner Exp $
+d22 1
+d580 14
+a731 9
+}, $1,{Temperature}, {
+  !ifdef(pTop, {!dnl
+    Fill, quantity=tempVectorPrecision.!theQuantity, height=!pTop, heightRange="above", $
+    method=manipulate, a=tempVectorPrecision.!theQuantity, c=-1, manipulation='c*abs(a)'
+  })
+  !ifdef(pBottom, {!dnl
+    Fill, quantity=tempVectorPrecision.!theQuantity, height=!pBottom, heightRange="below", $
+    method=manipulate, a=tempVectorPrecision.!theQuantity, c=-1, manipulation='c*abs(a)'
+  })
+d752 13
+d1124 3
+@
+
+
+1.136
+log
+@Added saving chunk overlaps as diagnostics
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.134 2009/04/28 20:05:53 pwagner Exp $
+d717 9
+d1105 3
+@
+
+
+1.135
+log
+@Removed last /dontMask from H2O to RHi conversions
+@
+text
+@d535 2
+a536 1
+})})
+d592 22
+d623 1
+a623 1
+begin Join
+d628 16
+d654 21
+d747 20
+a772 1
+begin Join
+d775 1
+d780 16
+d801 1
+a801 1
+begin Join
+d805 17
+d823 1
+d827 16
+d849 22
+d877 19
+a895 1
+
+d902 10
+a911 1
+
+d913 7
+d922 2
+d1096 3
+@
+
+
+1.134
+log
+@Removed autoatic Fills of Rhi from completephase macro
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.133 2009/04/16 21:51:51 pwagner Exp $
+d660 1
+a660 1
+    temperatureQuantity=tempVectorState.temperature_hr, method=RHIFromH2O, /dontMask
+d666 1
+a666 1
+    method=RHIPrecisionFromH2O, /dontMask
+d908 3
+@
+
+
+1.133
+log
+@Fixed bug where abandoned status bit wipes out radiance bit
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.132 2009/04/09 20:38:25 pwagner Exp $
+a174 16
+  ;; Compute RHI from H2O
+  Fill, quantity=state.rhi_hr, h2oQuantity=state.h2o_hr, $
+    temperatureQuantity=state.temperature_hr, method=RHIFromH2O, /dontMask
+  Fill, quantity=state.rhi, h2oQuantity=state.h2o, $
+    temperatureQuantity=state.temperature, method=RHIFromH2O, /dontMask
+  ;; And RHI precision
+  Fill, quantity=outputPrecision.rhi_hr, $
+    h2oPrecisionQuantity=outputPrecision.h2o_hr, $
+    tempPrecisionQuantity=outputPrecision.temperature_hr, $
+    h2oQuantity=state.h2o_hr, temperatureQuantity=state.temperature_hr, $
+    method=RHIPrecisionFromH2O, /dontMask
+  Fill, quantity=outputPrecision.rhi, $
+    h2oPrecisionQuantity=outputPrecision.h2o, $
+    tempPrecisionQuantity=outputPrecision.temperature, $
+    h2oQuantity=state.h2o, temperatureQuantity=state.temperature, $
+    method=RHIPrecisionFromH2O, /dontMask
+d908 3
+@
+
+
+1.132
+log
+@May set Status bits for too few radiances by Band
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.131 2009/03/14 02:47:33 honghanh Exp $
+d888 1
+a888 1
+  sourceQuantity=diag!retrophase.dnwt_abandoned, maxValue=0, /force
+d924 3
+@
+
+
+1.131
+log
+@Add dnwt_abandoned
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.130 2009/01/28 01:15:17 pwagner Exp $
+d23 12
+d796 27
+d880 5
+a884 11
+;; too few radiances
+Fill, quantity=temporaryDiagnostics.noRadsTmp, method=explicit, explicitValues=0, /spread
+!forall(addInOneNoRads,!flaggingBands)
+;; Run a boxcar over this
+Fill, quantity=temporaryDiagnostics.noRadsTmp, method=boxcar, sourceQuantity=temporaryDiagnostics.noRadsTmp, $
+  boxCarMethod=min, width=3
+;; Set status based on this
+Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
+  status=!statusTooFewRadiances+!statusDoNotUse, $
+  sourceQuantity=temporaryDiagnostics.noRadsTmp, minValue=!MFminrads, /additional})
+
+d892 2
+d924 3
+@
+
+
+1.130
+log
+@Changed quantity name of hires ozone
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.129 2008/10/07 18:12:54 pwagner Exp $
+d756 2
+a757 1
+;; Bit 7 - Empty for now
+d852 5
+d889 3
+@
+
+
+1.129
+log
+@Added O3_R3
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.128 2008/06/06 21:23:38 michael Exp $
+d34 1
+a34 1
+!define(allStandardProductsWithColumns,{BrO,CH3Cl,CH3CN,CH3OH,CH3COCH3,ClO,CO,H2O,HCl,HCN,HNO3,HO2,HOCl,N2O,O3,O3_R3,OH,SO2})
+d559 1
+a559 1
+!ifdef(flagHiResO3inCPR3,{!define(theQuantity,{$1_r3})})
+d883 3
+@
+
+
+1.128
+log
+@Allow saving of uncompressed radiances in forwardmodel file.
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.127 2008/05/27 16:59:49 pwagner Exp $
+d34 1
+a34 1
+!define(allStandardProductsWithColumns,{BrO,CH3Cl,CH3CN,CH3OH,CH3COCH3,ClO,CO,H2O,HCl,HCN,HNO3,HO2,HOCl,N2O,O3,OH,SO2})
+d559 1
+d883 3
+@
+
+
+1.127
+log
+@Added new methyl molecules
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.126 2006/10/19 19:41:55 pwagner Exp $
+d315 12
+d882 3
+@
+
+
+1.126
+log
+@Easier to switch Columns and hi-res on/off
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.125 2006/10/18 00:06:13 pwagner Exp $
+d34 1
+a34 1
+!define(allStandardProductsWithColumns,{BrO,CH3CN,ClO,CO,H2O,HCl,HCN,HNO3,HO2,HOCl,N2O,O3,OH,SO2})
+d870 3
+@
+
+
+1.125
+log
+@Quality, Status, Convergence for Merged Product all come from later phase (Core+R3)
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.124 2006/10/11 23:02:18 pwagner Exp $
+d511 24
+d539 4
+a542 2
+!define(storeStandardProductWithColumn,{!dnl
+!ifelse($1,{H2O}, {
+a543 2
+},{!dnl
+!define(theQuantity,{$1})
+a544 1
+
+d615 3
+a617 3
+!define(storeStandardProductWithoutColumn,{!dnl
+!ifelse($1,{IWC}, {
+!define(theQuantity,{iwc})
+d621 1
+d870 3
+@
+
+
+1.124
+log
+@Do Convergence Ratio Fill when filling Quality; write results to l2gp
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.123 2006/10/04 16:50:40 pwagner Exp $
+d496 9
+a504 6
+  Fill, quantity=standardDiagnostics.status$1, method=manipulate, $
+    a=standardDiagnostics.status$1, b=otherDiagnostics.status$1, $
+    manipulation='a|b'
+  Fill, quantity=standardDiagnostics.quality$1, method=manipulate, $
+    a=standardDiagnostics.quality$1, b=otherDiagnostics.quality$1, $
+    manipulation='a<b'
+d846 3
+@
+
+
+1.123
+log
+@May set status bits based on cloud-contaminated radiances from multiple radiometers
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.122 2006/10/03 20:26:55 pwagner Exp $
+d248 1
+a248 1
+!noteDirectDGG({source=state.$1,precision=outputPrecision.$1,status=otherDiagnostics.status$1, quality=otherDiagnostics.quality$1})})
+d491 1
+d553 1
+d577 1
+d648 2
+a649 1
+    status=tempVectorDiagnostics.status!theQuantity, quality=tempVectorDiagnostics.quality!theQuantity
+d681 2
+a682 1
+    status=tempVectorDiagnostics.status$1, quality=tempVectorDiagnostics.quality$1
+d694 2
+a695 1
+    status=tempVectorDiagnostics.status!theQuantity, quality=tempVectorDiagnostics.quality!theQuantity
+d775 17
+d843 3
+@
+
+
+1.122
+log
+@Added dnwt_chiSqRatio as measure of convergence
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.121 2006/09/22 18:54:36 pwagner Exp $
+d730 6
+d737 2
+a738 1
+!define(makeFlagsForOneProduct,{!dnl
+a739 1
+!undefine(MFradiometer)!dnl
+a787 4
+!ifdef(MFcloudmax,{
+;; Status - cloudy radiances - don't do a box car.
+Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, status=!statusHighCloud+!statusBeWary, $
+  sourceQuantity=otherDiagnostics.highCloudSummary!MFradiometer, maxValue=!MFcloudmax, /additional
+d789 22
+a810 1
+!ifdef(MFcloudmin,{
+d812 5
+a816 2
+Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, status=!statusLowCloud+!statusBeWary, $
+  sourceQuantity=otherDiagnostics.lowCloudSummary!MFradiometer, minValue=!MFcloudmin, /additional
+d820 3
+@
+
+
+1.121
+log
+@StoreStandardProduct macro should not clobber state vector
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.120 2006/08/08 22:27:07 pwagner Exp $
+d181 4
+d794 3
+@
+
+
+1.120
+log
+@Fills Quality, Status for Temperature, GPH; needs revision before v2.20
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.119 2006/07/29 04:56:03 dwu Exp $
+d522 3
+a524 3
+  Transfer, source=standardProducts, destination=state
+  Transfer, source=standardPrecision, destination=outputPrecision
+  Transfer, source=standardDiagnostics, destination=otherDiagnostics
+d529 2
+a530 2
+  Fill, quantity=state.tpPressure, method=wmoTropopause, $
+    temperatureQuantity=state.temperature_hr, refGPHQuantity=state.refGPH, $
+d532 6
+a537 6
+  Fill, quantity=standardProducts.!theQuantity, method=vector, sourceQuantity=state.!theQuantity
+  Fill, quantity=standardPrecision.!theQuantity, method=vector, sourceQuantity=outputPrecision.!theQuantity
+  Fill, quantity=state.column_$1, method=special, vmrQuantity=state.!theQuantity, $
+    boundaryPressure=state.tpPressure !theUnits
+  Fill, quantity=outputPrecision.column_$1, method=special, vmrQuantity=outputPrecision.!theQuantity, $
+    boundaryPressure=state.tpPressure !theUnits
+d543 2
+a544 2
+  Label, quantity=state.!theQuantity, label='$1-StdProd'
+  Label, quantity=state.column_$1, label='$1-StdProd column-MLS'
+d546 3
+a548 3
+    source=state.!theQuantity, precision=outputPrecision.!theQuantity, $
+    status=otherDiagnostics.status!theQuantity, quality=otherDiagnostics.quality!theQuantity, $
+    source=state.column_$1, precision=outputPrecision.column_$1
+d552 1
+a552 1
+  Fill, quantity=state.tpPressure, method=gridded, $
+d554 4
+a557 4
+  Fill, quantity=state.column_$1, method=special, vmrQuantity=state.!theQuantity, $
+    boundaryPressure=state.tpPressure !theUnits
+  Fill, quantity=outputPrecision.column_$1, method=special, vmrQuantity=outputPrecision.!theQuantity, $
+    boundaryPressure=state.tpPressure !theUnits
+d560 1
+a560 1
+  Label, quantity=state.column_$1, label='$1-StdProd column-GEOS5'
+d562 1
+a562 1
+    source=state.column_$1, precision=outputPrecision.column_$1
+d566 2
+a567 2
+  Label, quantity=state.!theQuantity, label='$1-StdProd'
+  Label, quantity=state.column_$1, label='$1-StdProd column'
+d569 3
+a571 3
+    source=state.!theQuantity, precision=outputPrecision.!theQuantity, $
+    status=otherDiagnostics.status!theQuantity, quality=otherDiagnostics.quality!theQuantity, $
+    source=state.column_$1, precision=outputPrecision.column_$1
+d591 3
+a593 3
+  Transfer, source=standardProducts, destination=state
+  Transfer, source=standardPrecision, destination=outputPrecision
+  Transfer, source=standardDiagnostics, destination=otherDiagnostics
+d598 2
+a599 2
+  Fill, quantity=state.!theQuantity, method=hydrostatic, $
+    refGPHQuantity=standardProducts.refGPH, temperatureQuantity=state.temperature_hr
+d610 3
+a612 3
+  Fill, quantity=outputPrecision.!theQuantity, method=gphPrecision, $
+    refGPHPrecisionquantity=outputPrecision.refGPH, $
+    tempPrecisionQuantity=outputPrecision.temperature_hr
+d616 2
+a617 2
+  Fill, quantity=state.!theQuantity, h2oQuantity=state.h2o_hr, $
+    temperatureQuantity=state.temperature_hr, method=RHIFromH2O, /dontMask
+d619 4
+a622 4
+  Fill, quantity=outputPrecision.!theQuantity, $
+    h2oPrecisionQuantity=outputPrecision.h2o_hr, $
+    tempPrecisionQuantity=outputPrecision.temperature_hr, $
+    h2oQuantity=state.h2o_hr, temperatureQuantity=state.temperature_hr, $
+d628 2
+a629 2
+  Subset, quantity=outputPrecision.!theQuantity, mask=fill, height=[ 1000mb : 383mb ]
+  Fill, quantity=outputPrecision.!theQuantity, sourceQuantity=outputPrecision.RHiVmr, $
+d631 1
+a631 1
+  Subset, quantity=outputPrecision.!theQuantity, mask=fill, /reset
+d637 1
+a637 1
+  Label, quantity=state.!theQuantity, label='$1-StdProd'
+d640 2
+a641 2
+    source=state.!theQuantity, precision=outputPrecision.!theQuantity, $
+    status=otherDiagnostics.status!theQuantity, quality=otherDiagnostics.quality!theQuantity
+d645 2
+a646 2
+  Fill, quantity=state.tpPressure, method=wmoTropopause, $
+    temperatureQuantity=state.temperature_hr, refGPHQuantity=state.refGPH, $
+d652 1
+a652 1
+  Label, quantity=state.tpPressure, label='WMOTPPressure-StdProd-MLS'
+d654 1
+a654 1
+    source=state.tpPressure
+d658 1
+a658 1
+  Fill, quantity=state.tpPressure, method=gridded, $
+d662 1
+a662 1
+  Label, quantity=state.tpPressure, label='WMOTPPressure-StdProd-GEOS5'
+d664 1
+a664 1
+    source=state.tpPressure
+d666 1
+a666 1
+  Label, quantity=state.tpPressure, label='WMOTPPressure-StdProd'
+d668 1
+a668 1
+    source=state.tpPressure
+d672 2
+a673 2
+    source=state.$1, precision=outputPrecision.$1, $
+    status=otherDiagnostics.status$1, quality=otherDiagnostics.quality$1
+d676 1
+a676 2
+  ;;;Label, quantity=state.iwcFine, label='IWC3-StdProd'
+  Label, quantity=state.iwp, label='IWP-StdProd'
+d678 2
+a679 2
+    source=state.iwc, precision=outputPrecision.iwc, $
+    source=state.iwp, precision=outputPrecision.iwp
+a680 2
+    ;;;source=state.iwcFine, precision=outputPrecision.iwcFine, $
+    ;;;source=state.iwp, precision=outputPrecision.iwp
+d684 2
+a685 2
+    source=state.!theQuantity, precision=outputPrecision.!theQuantity, $
+    status=otherDiagnostics.status!theQuantity, quality=otherDiagnostics.quality!theQuantity
+d790 3
+@
+
+
+1.119
+log
+@merge RHi precision from RHiVmr at pressures > 383hPa
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.118 2006/07/29 01:19:34 pwagner Exp $
+d722 1
+a722 1
+;; ( HRQuantity same as MFproduct except for H2O which is which is H2O_hr )
+d741 2
+d745 2
+d793 3
+@
+
+
+1.118
+log
+@Treat rhi quality like H2O quality
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.117 2006/07/29 00:30:04 pwagner Exp $
+d626 7
+d789 3
+@
+
+
+1.117
+log
+@More fixes for H2O being _hr; corrected adding up quality by bands
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.116 2006/07/27 22:41:28 pwagner Exp $
+d734 2
+d782 3
+@
+
+
+1.116
+log
+@Specify unit=DU for O3; be consistent in using temperature_hr to compute PTrop
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.115 2006/07/25 21:37:45 pwagner Exp $
+d715 1
+d717 1
+a717 1
+Fill, quantity=temporaryDiagnostics.chisqTmp, method=manipulate, manipulation='(a+b)/2', $
+d731 6
+d740 2
+d746 1
+a746 1
+Fill, quantity=otherDiagnostics.quality!MFproduct, method=quality, $
+d750 1
+a750 1
+Fill, quantity=otherDiagnostics.status!MFproduct, method=explicit, explicitValues=0, /spread
+d752 1
+a752 1
+Fill, quantity=otherDiagnostics.status!MFproduct, method=status, $
+d764 1
+a764 1
+Fill, quantity=otherDiagnostics.status!MFproduct, method=status, $
+d770 1
+a770 1
+Fill, quantity=otherDiagnostics.status!MFproduct, method=status, status=!statusHighCloud+!statusBeWary, $
+d775 1
+a775 1
+Fill, quantity=otherDiagnostics.status!MFproduct, method=status, status=!statusLowCloud+!statusBeWary, $
+d780 3
+@
+
+
+1.115
+log
+@Do not write (currently unused) IWC3 swath
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.114 2006/07/24 23:14:56 pwagner Exp $
+d513 6
+d530 1
+a530 1
+    temperatureQuantity=state.temperature, refGPHQuantity=state.refGPH, $
+d535 1
+a535 1
+    boundaryPressure=state.tpPressure
+d537 1
+a537 1
+    boundaryPressure=state.tpPressure
+d555 1
+a555 1
+    boundaryPressure=state.tpPressure
+d557 1
+a557 1
+    boundaryPressure=state.tpPressure
+d771 3
+@
+
+
+1.114
+log
+@Repaired bug preventing copying IWP swath to IWC file
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.113 2006/07/11 00:06:32 pwagner Exp $
+d663 1
+a663 1
+  Label, quantity=state.iwcFine, label='IWC3-StdProd'
+a666 1
+    source=state.iwcFine, precision=outputPrecision.iwcFine, $
+d668 3
+d765 3
+@
+
+
+1.113
+log
+@Some standard products now stored at _hr; ptrop computed using Temperature_hr
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.112 2006/07/07 23:14:12 pwagner Exp $
+d664 1
+d667 2
+a668 1
+    source=state.iwcFine, precision=outputPrecision.iwcFine
+d763 3
+@
+
+
+1.112
+log
+@With flagUseGEOS5PTrop can directwrite two columns per speciesWithColumn
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.111 2006/06/09 20:47:54 pwagner Exp $
+d506 1
+d508 5
+d526 3
+a528 3
+  Fill, quantity=standardProducts.$1, method=vector, sourceQuantity=state.$1
+  Fill, quantity=standardPrecision.$1, method=vector, sourceQuantity=outputPrecision.$1
+  Fill, quantity=state.column_$1, method=special, vmrQuantity=state.$1, $
+d530 1
+a530 1
+  Fill, quantity=outputPrecision.column_$1, method=special, vmrQuantity=outputPrecision.$1, $
+d537 1
+a537 1
+  Label, quantity=state.$1, label='$1-StdProd'
+d540 2
+a541 2
+    source=state.$1, precision=outputPrecision.$1, $
+    status=otherDiagnostics.status$1, quality=otherDiagnostics.quality$1, $
+d548 1
+a548 1
+  Fill, quantity=state.column_$1, method=special, vmrQuantity=state.$1, $
+d550 1
+a550 1
+  Fill, quantity=outputPrecision.column_$1, method=special, vmrQuantity=outputPrecision.$1, $
+d560 1
+a560 1
+  Label, quantity=state.$1, label='$1-StdProd'
+d563 2
+a564 2
+    source=state.$1, precision=outputPrecision.$1, $
+    status=otherDiagnostics.status$1, quality=otherDiagnostics.quality$1, $
+d572 4
+d577 5
+d592 2
+a593 2
+  Fill, quantity=state.gph, method=hydrostatic, $
+    refGPHQuantity=standardProducts.refGPH, temperatureQuantity=state.temperature
+d595 4
+a598 4
+  Fill, quantity=standardDiagnostics.statusGPH, method=vector, $
+    sourceQuantity=standardDiagnostics.statusTemperature, /force
+  Fill, quantity=standardDiagnostics.qualityGPH, method=vector, $
+    sourceQuantity=standardDiagnostics.qualityTemperature, /force
+d602 1
+d604 1
+a604 1
+  Fill, quantity=outputPrecision.gph, method=gphPrecision, $
+d606 1
+a606 1
+    tempPrecisionQuantity=outputPrecision.temperature
+d610 2
+a611 2
+  Fill, quantity=state.rhi, h2oQuantity=state.h2o, $
+    temperatureQuantity=state.temperature, method=RHIFromH2O, /dontMask
+d613 4
+a616 4
+  Fill, quantity=outputPrecision.rhi, $
+    h2oPrecisionQuantity=outputPrecision.h2o, $
+    tempPrecisionQuantity=outputPrecision.temperature, $
+    h2oQuantity=state.h2o, temperatureQuantity=state.temperature, $
+d624 1
+a624 1
+  Label, quantity=state.$1, label='$1-StdProd'
+d627 2
+a628 2
+    source=state.$1, precision=outputPrecision.$1, $
+    status=otherDiagnostics.status$1, quality=otherDiagnostics.quality$1
+d633 1
+a633 1
+    temperatureQuantity=state.temperature, refGPHQuantity=state.refGPH, $
+d670 2
+a671 2
+    source=state.$1, precision=outputPrecision.$1, $
+    status=otherDiagnostics.status$1, quality=otherDiagnostics.quality$1
+d761 3
+@
+
+
+1.111
+log
+@Added SO2 to standard products (perhaps should be controlled by a flag)
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.110 2006/05/11 20:16:36 pwagner Exp $
+d515 1
+a515 1
+;; --------------------------------------------- tpPressure
+d528 25
+d562 1
+d609 1
+a609 5
+
+!ifelse($1,{Temperature}, {
+
+  ;; Also tpPressure; later to be copied into the temperature file
+  Label, quantity=state.tpPressure, label='TPPressureWMO-StdProd'
+d613 21
+d636 5
+a657 1
+
+d745 3
+@
+
+
+1.110
+log
+@Added special case for DirectWriteDGG of Temperature_HR
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.109 2006/05/11 04:33:33 dwu Exp $
+d34 1
+a34 1
+!define(allStandardProductsWithColumns,{BrO,CH3CN,ClO,CO,H2O,HCl,HCN,HNO3,HO2,HOCl,N2O,O3,OH})
+d698 3
+@
+
+
+1.109
+log
+@add rhi_hr in the completePhase
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.108 2006/05/08 21:32:50 bill Exp $
+d593 4
+d698 3
+@
+
+
+1.108
+log
+@added mb baselines
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.107 2006/05/04 19:51:59 bill Exp $
+d164 2
+d169 5
+d694 3
+@
+
+
+1.107
+log
+@added DACS baselines
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.106 2006/04/26 18:27:50 pwagner Exp $
+d18 1
+d687 3
+@
+
+
+1.106
+log
+@Recalculate outputPrecision.gph before outputting it
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.105 2005/10/28 23:29:04 pwagner Exp $
+d17 1
+d686 3
+@
+
+
+1.105
+log
+@Added macros for storing standard products to the split dgg files
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.104 2005/07/21 23:47:14 pwagner Exp $
+d549 8
+d685 3
+@
+
+
+1.104
+log
+@Added statusInform statusMissingGMAO bits; fill status if missingGMAO
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.103 2005/01/27 18:36:13 pwagner Exp $
+d494 99
+d677 3
+@
+
+
+1.103
+log
+@Removed SO2 from allStandardProductsWithColumns
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.102 2004/11/29 21:54:08 livesey Exp $
+d500 2
+a501 1
+;; Bit 2 - Empty for now
+d507 2
+a508 1
+;; Bit 6 - Empty for now
+d549 5
+a576 1
+
+d578 3
+@
+
+
+1.102
+log
+@Changed chisqProfile to be mean not max chi squared in the MAF.  It's
+used in deriving quality.
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.101 2004/10/30 00:04:20 livesey Exp $
+d32 1
+a32 1
+!define(allStandardProductsWithColumns,{BrO,CH3CN,ClO,CO,H2O,HCl,HCN,HNO3,HO2,HOCl,N2O,O3,OH,SO2})
+d572 4
+@
+
+
+1.101
+log
+@Added bit 9 for status (never actually used as such).
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.100 2004/10/28 22:51:29 dwu Exp $
+d411 1
+a411 1
+   Fill, quantity=otherDiagnostics.chisqProfile$1, method=binmax, $
+d521 1
+a521 1
+Fill, quantity=temporaryDiagnostics.chisqTmp, method=manipulate, manipulation='a>b', $
+d572 3
+@
+
+
+1.100
+log
+@add SO2 as a standard species
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.99 2004/09/12 22:13:25 pwagner Exp $
+d510 2
+d572 3
+@
+
+
+1.99
+log
+@Directwrite of fwmrads and scan residuals independent of whether l2version defined
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.98 2004/06/26 00:57:14 livesey Exp $
+d32 1
+a32 1
+!define(allStandardProductsWithColumns,{BrO,CH3CN,ClO,CO,H2O,HCl,HCN,HNO3,HO2,HOCl,N2O,O3,OH})
+d570 3
+@
+
+
+1.98
+log
+@Added macros to write scan residual
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.97 2004/06/22 18:36:06 pwagner Exp $
+d296 1
+a296 1
+{!define(directWriteFwmRad,{!ifdef(l2version,{!dnl
+d300 1
+a300 1
+  hdfVersion=!hdfVersion})})})
+d304 1
+a304 1
+{!define(directWriteScanResidual,{!ifdef(l2version,{!dnl
+d306 1
+a306 1
+!noteDirectDGM(source=fwm.scanResidual$1)})})})
+d570 3
+@
+
+
+1.97
+log
+@defaults to writing retrieval diagnostics to l2aux instead of dgg
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.96 2004/05/04 20:38:27 livesey Exp $
+d302 6
+d570 3
+@
+
+
+1.96
+log
+@Changed a comment
+@
+text
+@d1 2
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.95 2004/04/28 00:31:36 livesey Exp $
+d120 7
+d176 4
+a179 4
+  begin Join
+    !ifdef(flagAvoidDirectWrite,
+    {!forall(joinOneDiagDGG,!outputRetrievalDiagnostics)},
+    {!forall(directWriteOneDiagDGG,!outputRetrievalDiagnostics)})
+d260 1
+a260 1
+Label, quantity=$1, label=$2!ifelse($#,2,{},{,!shift(!shift($*))})
+d316 2
+d377 5
+d421 2
+a422 2
+   begin Join
+     !ifdef(flagAvoidDirectWrite,
+d564 3
+d857 1
+@
+
+
+1.95
+log
+@Bug fix in lowcloud flagging
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.94 2004/04/27 23:41:48 livesey Exp $
+d537 1
+a537 1
+;; Status - cloudy radiances - already had the box car run on it.
+d542 1
+a542 1
+;; Status - cloudy radiances - already had the box car run on it.
+d549 3
+@
+
+
+1.94
+log
+@Simplified the status/quality flagging by changing diagTmp
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.93 2004/04/27 23:02:11 livesey Exp $
+d543 1
+a543 1
+Fill, quantity=otherDiagnostics.status!MFproduct, method=status, status=!statusHighCloud+!statusBeWary, $
+d549 3
+@
+
+
+1.93
+log
+@Added makeStandardProductMergeDiag and removed flagBand32Clouds (should
+be done by parent l2cf now).
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.92 2004/04/24 00:24:32 pwagner Exp $
+d498 2
+a499 2
+Fill, quantity=diag!MFradiometer.chisqTmp, method=manipulate, manipulation='a>b', $
+  a=diag!MFradiometer.chisqTmp, b=otherDiagnostics.chisqProfile$1, /force!nl})
+d501 2
+a502 2
+Fill, quantity=diag!MFradiometer.noRadsTmp, method=manipulate, manipulation='a+b', $
+  a=diag!MFradiometer.noRadsTmp, b=otherDiagnostics.noRadsProfile$1, /force!nl})
+d513 1
+a513 1
+Fill, quantity=diag!MFradiometer.chisqTmp, method=explicit, explicitValues=0, /spread
+d516 1
+a516 1
+Fill, quantity=diag!MFradiometer.chisqTmp, method=boxcar, sourceQuantity=diag!MFradiometer.chisqTmp, $
+d520 1
+a520 1
+  sourceQuantity=diag!MFradiometer.chisqTmp, scale=!MFchisqscale
+d526 1
+a526 1
+Fill, quantity=diag!MFradiometer.noRadsTmp, method=explicit, explicitValues=0, /spread
+d529 1
+a529 1
+Fill, quantity=diag!MFradiometer.noRadsTmp, method=boxcar, sourceQuantity=diag!MFradiometer.noRadsTmp, $
+d534 1
+a534 1
+  sourceQuantity=diag!MFradiometer.noRadsTmp, minValue=!MFminrads, /additional})
+d549 4
+@
+
+
+1.92
+log
+@Prefixes L2GP- to l2gpFileName if using PCF
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.91 2004/04/19 19:24:23 livesey Exp $
+d450 2
+a451 2
+;; This macro is used to transfer a product into the 'standard products'
+;; vector
+d458 10
+a495 9
+!define(flagBand32Clouds,{!dnl
+  FlagCloud, quantity=y!phase.band32, ptanQuantity=state.ptanGHz, $ 
+    height = [ 4000mb : 150mb ], cloudChannels=[ 1 ], cloudHeight=[ 1000mb : 700mb ],$
+    cloudRadiance=cloudOutput.DTband5, cloudRadianceCutoff= -10K, mask=[ cloud, linAlg ]
+  FlagCloud, quantity=y!phase.band32, ptanQuantity=state.ptanGHz, $
+    height = [ 150mb : 46mb ], cloudChannels=[ 1 ], mask=[ cloud, linAlg ], $
+    cloudRadiance=cloudOutput.DTband5, cloudRadianceCutoff=2K
+})
+
+d549 3
+@
+
+
+1.91
+log
+@Slight changes to L2AUX handling.
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.90 2004/04/16 00:45:55 livesey Exp $
+d44 1
+a44 1
+{!ifdef(flagUsingPCF,{$1},!dnl
+d548 3
+@
+
+
+1.90
+log
+@New approach to cloud flagging etc.
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.89 2004/04/14 23:07:22 livesey Exp $
+d49 3
+a54 2
+;;;!define(DGGFilename,{'!outpathl2gp/MLS-Aura_L2GP-DGG_!l2version_!day.he!hdfVersion'})
+;;;!define(DGMFilename,{'!outpathl2aux/MLS-Aura_L2AUX-DGM_!l2version_!day.h!hdfVersion'})
+d548 3
+@
+
+
+1.89
+log
+@Moved cloud output to L2AUX-Cloud
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.88 2004/04/08 22:42:23 livesey Exp $
+d457 4
+a504 1
+!undefine(MFradiometername)!dnl
+a509 1
+!ifdef(MFradiometername,{},{!define(MFradiometername,{!MFradiometer})})
+d537 1
+a537 1
+  sourceQuantity=otherDiagnostics.highCloudSummary!MFradiometername, maxValue=!MFcloudmax, /additional
+d542 1
+a542 1
+  sourceQuantity=otherDiagnostics.lowCloudSummary!MFradiometername, minValue=!MFcloudmin, /additional
+d547 3
+@
+
+
+1.88
+log
+@More agile flagging for R5 case.
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.87 2004/04/06 01:18:07 livesey Exp $
+d55 1
+a55 1
+{!ifdef(flagUsingPCF,{L2AUX-DGM},!dnl
+d545 3
+@
+
+
+1.87
+log
+@Bug fix in status no-radiance flag.
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.86 2004/04/02 01:08:41 livesey Exp $
+d501 1
+d507 1
+d535 1
+a535 1
+  sourceQuantity=otherDiagnostics.highCloudSummary!MFradiometer, maxValue=!MFcloudmax, /additional
+d540 1
+a540 1
+  sourceQuantity=otherDiagnostics.lowCloudSummary!MFradiometer, minValue=!MFcloudmin, /additional
+d545 3
+@
+
+
+1.86
+log
+@Bug fixes and added cloudmin option to the flagging macro
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.85 2004/03/27 00:16:34 livesey Exp $
+d495 1
+a495 1
+Fill, quantity=diag!MFradiometer.noRadsTmp, method=manipulate, manipulation='a>b', $
+d543 3
+@
+
+
+1.85
+log
+@Added high level macros for status/quality filling.
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.84 2004/03/17 17:13:54 livesey Exp $
+d504 1
+d533 6
+a538 1
+  sourceQuantity=otherDiagnostics.highCloudSummary!MFradiometer, maxValue=30K, /additional
+d543 3
+@
+
+
+1.84
+log
+@Added some status flag bit constants and more stuff for diagnostic
+precursors.
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.83 2004/03/12 00:18:27 livesey Exp $
+d490 46
+d537 4
+@
+
+
+1.83
+log
+@Now defaults to hdf 5
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.82 2004/03/10 23:00:29 pwagner Exp $
+d389 3
+d394 3
+d458 32
+d491 3
+@
+
+
+1.82
+log
+@Exclude file field from dgg/dgm directwrites if flagAutoSplitSources
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.81 2004/02/13 21:12:23 livesey Exp $
+d40 1
+a40 1
+!ifdef(hdfVersion,{},{!define(hdfVersion,4)})
+d453 3
+@
+
+
+1.81
+log
+@Added allHiResProducts
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.80 2004/02/12 02:06:33 livesey Exp $
+d58 9
+d267 1
+a267 1
+DirectWrite, file='!DGGFileName', hdfVersion=!hdfVersion, $
+d271 1
+a271 1
+DirectWrite, file='!DGMFileName', hdfVersion=!hdfVersion, $
+d453 3
+@
+
+
+1.80
+log
+@Various bug fixes and additions
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.79 2004/02/11 21:41:58 livesey Exp $
+d35 1
+d444 3
+@
+
+
+1.79
+log
+@Added output of status and quality and tidied up
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.78 2004/02/03 21:43:56 livesey Exp $
+d43 1
+a43 1
+{!ifdef(usingPCF,{$1},!dnl
+d46 1
+a46 1
+{!ifdef(usingPCF,{DGG},!dnl
+d49 1
+a49 1
+{!ifdef(usingPCF,{L2AUX-DGM},!dnl
+d54 1
+a54 1
+{!ifdef(usingPCF,{L2AUX-DGM},!dnl
+d59 1
+a59 1
+{!ifdef(usingPCF,{$1},!dnl
+d217 5
+d443 3
+@
+
+
+1.78
+log
+@Updated handling of chisqBinned stuff
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.77 2004/01/24 03:23:19 livesey Exp $
+d6 8
+d20 9
+d36 2
+d57 4
+a60 6
+;; This macro is used in sids runs to get the band number part of a band
+;; specifier (i.e. strip off the sideband if it is present)
+!define(getBandNumber,{!regexp({$1},{[0-9]+},{\&})})
+;; Some other low level macros
+!define(systemp,{!systemp$1})
+!define(nbw,{!nbw$1})
+d62 1
+a62 3
+;; Setup some flags based on other flags
+!ifdef(flagComputeAvks,{!define(flagDontDestroyVectors,1)})
+!ifdef(flagComputeSout,{!define(flagDontDestroyVectors,1)})
+d165 2
+d177 2
+d187 2
+d216 1
+a216 1
+!noteDirectDGG({source=state.$1,precision=outputPrecision.$1})})
+a266 4
+!define(l2fwmFileName, !dnl
+{!ifdef(usingPCF,{$1},!dnl
+{!outpathl2gp/MLS-Aura_L2FWM-$1_!l2version_!day.h!hdfVersion})})
+
+d278 17
+a316 37
+;; This macro is used to fill radiance chi squares
+!define(fillMinorFrameDiagnostics,{!dnl
+   Fill, quantity=minorFrameDiagnostics.chisqMMAF$1, method=special, $
+     measurements=y!phase.band$1, model=f!phase.band$1, $
+     noise=yNoise!phase.band$1, /ignoreZero, /ignoreNegative
+   Fill, quantity=minorFrameDiagnostics.chisqMMIF$1, method=special, $
+     measurements=y!phase.band$1, model=f!phase.band$1, $
+     noise=yNoise!phase.band$1, /ignoreZero, /ignoreNegative
+   Fill, quantity=minorFrameDiagnostics.chisqChan$1, method=special, $
+     measurements=y!phase.band$1, model=f!phase.band$1, $
+     noise=yNoise!phase.band$1, /ignoreZero, /ignoreNegative
+   Fill, quantity=minorFrameDiagnostics.noRadsPerMIF$1, method=special, $
+     measurements=y!phase.band$1!nl})
+
+!define(fillMappedDiagnostics,{!dnl
+   Fill, quantity=mappedChisqMean.chisqBinned$1, method=binmean, $
+     sourceQuantity=minorFrameDiagnostics.chisqMMIF$1, $
+     ptanQuantity=state.ptan!moduleForBand($1)
+   Fill, quantity=mappedChisqMax.chisqBinned$1, method=binmax, $
+     sourceQuantity=minorFrameDiagnostics.chisqMMIF$1, $
+     ptanQuantity=state.ptan!moduleForBand($1)
+   Fill, quantity=otherDiagnostics.noRadsBinned$1, method=binTotal, $
+     sourceQuantity=minorFrameDiagnostics.noRadsPerMIF$1, $
+     ptanQuantity=state.ptan!moduleForBand($1)!nl})
+
+;; This macro direct writes the above filled quantities
+!define(directWriteRadianceDiagnostics,{!dnl
+ !directWriteDGMNotState(minorFrameDiagnostics.chisqMMAF$1,' chisqMMAF !phase', /prefixSignal)
+ !directWriteDGMNotState(minorFrameDiagnostics.chisqMMIF$1,' chisqMMIF !phase', /prefixSignal)
+ !directWriteDGMNotState(minorFrameDiagnostics.chisqChan$1,' chisqChan !phase', /prefixSignal)
+ !directWriteDGMNotState(minorFrameDiagnostics.noRadsPerMIF$1,' noRadsPerMIF !phase',/prefixSignal)
+
+ !directWriteDGGNotState(mappedChisqMean.chisqBinned$1,mappedChisqMax.chisqBinned$1,!dnl
+   ' chisqBinned !phase',/prefixSignal)
+ !directWriteDGGNoPrecisionNotState(otherDiagnostics.noRadsBinned$1,!dnl
+   ' noRadsBinned !phase',/prefixSignal)!nl})
+
+d345 34
+a378 1
+;; This macro is the composite of the two above
+a389 5
+;; This macro uses the joinDGG (for the moment, will use DGM when we
+;; got to hdf5) to join the diagnostics stuff
+!define(joinOneDiagDGG,{!storeJoinedDGG(joinedDGG_$1_!phase)!dnl
+  joinedDGG_$1_!phase: l2gp, source=diag!phase.$1, $
+    swath='!translit($1,{_},{-})-!phase'!nl})
+d391 1
+d403 1
+a403 2
+;; This macro writes the misc. diagnostics
+!define(directWriteOneDiagDGG,{!directWriteDGGNoPrecisionNotState(diag!phase.$1,'!translit($1,{_},{-})-!phase')!nl})
+d426 2
+d432 4
+a435 1
+  Fill, quantity=standardPrecision.$1, method=vector, sourceQuantity=outputPrecision.$1!nl})
+d438 3
+@
+
+
+1.77
+log
+@Now uses truth for edge of averaging kernels if available.
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.76 2004/01/16 15:55:36 mjf Exp $
+d196 5
+d202 2
+a203 2
+;; is no precision quantity, and the vector name should be included in $1
+!define(directWriteDGGNoPrecision,{!dnl
+d284 2
+a285 2
+!define(fillRadianceDiagnostics,{!dnl
+   Fill, quantity=radianceDiagnostics.chisqMMAF$1, method=special, $
+d288 1
+a288 1
+   Fill, quantity=radianceDiagnostics.chisqMMIF$1, method=special, $
+d291 1
+a291 1
+   Fill, quantity=radianceDiagnostics.chisqChan$1, method=special, $
+d294 9
+a302 4
+   Fill, quantity=radianceDiagnostics.noRadsPerMIF$1, method=special, $
+     measurements=y!phase.band$1
+   Fill, quantity=radianceDiagnostics.chisqBinned$1, method=binmax, $
+     sourceQuantity=radianceDiagnostics.chisqMMIF$1, $
+d304 2
+a305 2
+   Fill, quantity=radianceDiagnostics.noRadsBinned$1, method=binTotal, $
+     sourceQuantity=radianceDiagnostics.noRadsPerMIF$1, $
+d310 9
+a318 9
+ !directWriteDGMNotState(radianceDiagnostics.chisqMMAF$1,' chisqMMAF !phase', /prefixSignal)
+ !directWriteDGMNotState(radianceDiagnostics.chisqMMIF$1,' chisqMMIF !phase', /prefixSignal)
+ !directWriteDGMNotState(radianceDiagnostics.chisqChan$1,' chisqChan !phase', /prefixSignal)
+ !directWriteDGMNotState(radianceDiagnostics.noRadsPerMIF$1,' noRadsPerMIF !phase',/prefixSignal)
+
+ !directWriteDGGNoPrecision(radianceDiagnostics.chisqBinned$1,!dnl
+   ' chisqBinned !phase', /prefixSignal)
+ !directWriteDGGNoPrecision( radianceDiagnostics.noRadsBinned$1,!dnl
+   ' noRadsBinned !phase', /prefixSignal)!nl})
+d322 1
+a322 1
+   joinedDGM_chisqMMAF$1_!phase: l2aux, source=radianceDiagnostics.chisqMMAF$1, $
+d324 1
+a324 1
+   joinedDGM_chisqMMIF$1_!phase: l2aux, source=radianceDiagnostics.chisqMMIF$1, $
+d326 1
+a326 1
+   joinedDGM_chisqChan$1_!phase: l2aux, source=radianceDiagnostics.chisqChan$1, $
+d328 1
+a328 1
+   joinedDGM_noRadsPerMIF$1_!phase: l2aux, source=radianceDiagnostics.noRadsPerMIF$1, $
+d330 4
+a333 1
+   joinedDGG_chisqBinned$1_!phase: l2gp, source=radianceDiagnostics.chisqBinned$1, $
+d335 2
+a336 1
+   joinedDGG_noRadsBinned$1_!phase: l2gp, source=radianceDiagnostics.noRadsBinned$1, $
+d338 1
+d343 1
+d351 2
+a352 1
+     !forall(fillRadianceDiagnostics,$*)
+d378 1
+a378 1
+!define(directWriteOneDiagDGG,{!directWriteDGGNoPrecision(diag!phase.$1,'!translit($1,{_},{-})-!phase')!nl})
+d408 3
+@
+
+
+1.76
+log
+@Some updates for precision estimates and 1D cases.
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.75 2003/11/15 00:23:06 livesey Exp $
+d62 1
+d78 1
+d84 2
+a85 1
+  !ifdef(flagComputeAvks,{avk$1: matrix, columns=x$1, rows=x$1})
+d118 1
+d391 3
+@
+
+
+1.75
+log
+@Now automagically defines flagDontDestroyVectors
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.74 2003/11/14 00:12:39 livesey Exp $
+d66 1
+a66 2
+  ;; Optical depth may be turned on again, sometime, for the PEs
+  !ifdef(flagPrecisionEstimates,{},{od$1: Vector, template=od$1Template})
+d115 1
+a115 1
+  !ifdef(flagPrecisionEstimates,{},{Destroy, vector=od$1})})
+d368 2
+a369 1
+    vRegWeightVec=vr$1, hRegWeightVec=hr$1})},!dnl
+d387 3
+@
+
+
+1.74
+log
+@Added ability to automatically produce averaging kernels and output
+covariances on request.  Also support for flagSuppressRegularOutput
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.73 2003/10/15 23:33:24 pwagner Exp $
+d45 4
+d387 4
+@
+
+
+1.73
+log
+@Made l2fwm file name sensitive to usingPCF
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.72 2003/09/05 23:26:28 pwagner Exp $
+d78 4
+d133 1
+d139 2
+a140 1
+  end Join})
+d213 4
+a216 1
+!define(flushDGGDGMFiles,{!dnl
+d230 1
+a230 1
+!undefine(flagGotDirectDGGs)!undefine(flagGotDirectDGMs)!undefine(flagGotDirectClouds)})
+d237 1
+d240 4
+a243 1
+!define(directWriteFwmRad,{!ifdef(l2version,{!dnl
+d247 1
+a247 1
+  hdfVersion=!hdfVersion})})
+d372 2
+d383 3
+@
+
+
+1.72
+log
+@Switched fwoward model radiance DirectWrite type from l2aux to l2fwm
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.71 2003/09/02 22:48:43 pwagner Exp $
+d225 3
+d233 1
+a233 1
+  file='!outpathl2fwm/MLS-Aura_L2FWM-$1_!l2version_!day.h!hdfVersion', $
+d368 3
+@
+
+
+1.71
+log
+@Tweaked the defines to make the quotes come out right
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.70 2003/09/02 22:25:25 pwagner Exp $
+d229 1
+a229 1
+  DirectWrite, !forall(oneFwmRadTerm,!tidyList(!shift($*))) type=l2aux, $
+d365 3
+@
+
+
+1.70
+log
+@Output/DirectWrite to abbreviated fileNames only if usingPCF
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.69 2003/09/02 20:52:09 pwagner Exp $
+d35 2
+a36 2
+{!ifdef(usingPCF,{'L2AUX-DGM'},!dnl
+{'!outpathl2aux/MLS-Aura_L2AUX-Cloud_!l2version_!day.h!hdfVersion'})})
+d210 1
+a210 1
+DirectWrite, file=!DGGFilename, hdfVersion=!hdfVersion, $
+d214 1
+a214 1
+DirectWrite, file=!DGMFilename, hdfVersion=!hdfVersion, $
+d218 1
+a218 1
+DirectWrite, file=!CloudFilename, hdfVersion=!hdfVersion, $
+d365 3
+@
+
+
+1.69
+log
+@CloudFilename same as DGMFilename if usingPCF
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.68 2003/08/28 23:52:59 livesey Exp $
+d23 14
+a36 5
+!define(DGGFilename,{'!outpathl2gp/MLS-Aura_L2GP-DGG_!l2version_!day.he!hdfVersion'})
+!define(DGMFilename,{'!outpathl2aux/MLS-Aura_L2AUX-DGM_!l2version_!day.h!hdfVersion'})
+!define(CloudFilename,{!dnl
+  !ifdef(usingPCF,{!DGMFilename},!dnl
+  {'!outpathl2aux/MLS-Aura_L2AUX-Cloud_!l2version_!day.h!hdfVersion'})})
+d365 3
+@
+
+
+1.68
+log
+@Tried to bring directWriteDGG/DGM and joinDGG/DGM more in line with each
+other.
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.67 2003/08/28 16:30:25 livesey Exp $
+d25 3
+a27 1
+!define(CloudFilename,{'!outpathl2aux/MLS-Aura_L2AUX-Cloud_!l2version_!day.h!hdfVersion'})
+d356 4
+@
+
+
+1.67
+log
+@More changes to join vs. directWrite to bring them closer together.
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.66 2003/08/27 22:23:58 livesey Exp $
+d175 1
+a175 1
+Label, quantity=$1, label='$2'!ifelse($#,2,{},{,!shift(!shift($*))})!dnl
+d185 3
+d266 4
+a269 4
+ !directWriteDGM(radianceDiagnostics.chisqMMAF$1,' chisqMMAF !phase', /prefixSignal)
+ !directWriteDGM(radianceDiagnostics.chisqMMIF$1,' chisqMMIF !phase', /prefixSignal)
+ !directWriteDGM(radianceDiagnostics.chisqChan$1,' chisqChan !phase', /prefixSignal)
+ !directWriteDGM(radianceDiagnostics.noRadsPerMIF$1,' noRadsPerMIF !phase', /prefixSignal)
+d354 3
+@
+
+
+1.66
+log
+@Moved error messages in joining
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.65 2003/08/14 20:26:34 livesey Exp $
+d170 1
+a170 1
+Label, quantity=state.$1, label=$2!ifelse($#,2,{},{,!shift(!shift($*))})!dnl
+d175 1
+a175 1
+Label, quantity=$1, label=$2!ifelse($#,2,{},{,!shift(!shift($*))})!dnl
+d181 4
+a184 2
+Label, quantity=$1, label=$2!ifelse($#,2,{},{,!shift(!shift($*))})!dnl
+!noteDirectDGM({source=$1})})
+d351 3
+@
+
+
+1.65
+log
+@Removed tropH2O stuff
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.64 2003/08/06 17:49:31 livesey Exp $
+d218 3
+a220 1
+!define(storeJoinedDGG,{!ifdef(flagGotJoinedDGGs,{!divert(!joinedDGGDivert),!divert})!dnl
+d223 3
+a225 1
+!define(storeJoinedDGM,{!ifdef(flagGotJoinedDGMs,{!divert(!joinedDGMDivert),!divert})!dnl
+a228 2
+!ifdef(flagAvoidDirectWrite,{},{!dnl
+  !M4Error({You should set flagAvoidDirectWrite to use joinDGG})})!dnl
+a233 2
+!ifdef(flagAvoidDirectWrite,{},{!dnl
+  !M4Error({You should set flagAvoidDirectWrite to use joinDGM})})!dnl
+d349 3
+@
+
+
+1.64
+log
+@Changed output of matrices
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.63 2003/07/24 22:13:28 livesey Exp $
+a75 2
+!undefine(completePhasetroph2o)
+!ProcessParVal({completePhase},!shift($@@))
+a79 7
+  !ifdef(completePhasetroph2o,{!dnl
+    ;; In this case copy TropH2O into H2O as requested
+    Fill, quantity=state.h2o, sourceQuantity=state.tropH2O, $
+      method=vector, /interpolate
+    ;; And its precision
+    Fill, quantity=outputPrecision.h2o, sourceQuantity=outputPrecision.tropH2O, $
+      method=vector, /interpolate})
+d349 3
+@
+
+
+1.63
+log
+@Changed type for DGG file
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.62 2003/07/11 01:23:05 livesey Exp $
+d64 3
+a66 9
+  myCovariance$1: matrix, columns=a$1, type=spd
+  FillCovariance, matrix=myCovariance$1, diagonal=sdIn$1, /invert
+  ;; Construct averaging kernel matrix
+  !ifdef(flagGotAK,{!dnl
+  akOut$1: Matrix, columns=x$1, rows=x$1
+  !ifdef(flagGotAnyAKs,{!dnl
+  !divert(!AVKDivert), akOut$1!divert},{!dnl
+  !divert(!AVKDivert)akOut$1!divert})
+  !define(flagGotAnyAKs,{Yes})})
+d93 2
+a94 1
+  Destroy, matrix=myCovariance$1
+d106 1
+a106 1
+  !ifdef(flagPrecisionEstimates,{},{Destroy, vector=od$1})
+d148 1
+a148 1
+!define(AVKDivert,3)
+d153 3
+a155 3
+;; This macro is used to note an averaging kernel to be output later
+!define(storeAVK,{!ifdef(flagGotAVKs,{!divert(!AVKDivert),!divert})!dnl
+!define(flagGotAVKs,{Yes})!divert(!AVKDivert)$1!divert})
+d338 1
+a338 1
+  !ifdef(flagGotAK,{average=akOut$1,}) state=x$1, fwdModelExtra=state, $
+d340 1
+a340 1
+    apriori=a$1, covariance=myCovariance$1, $
+d344 1
+a344 1
+  !ifdef(flagGotAK,{average=akOut$1,}) state=x$1, fwdModelExtra=state, $
+d346 1
+a346 1
+  apriori=a$1, covariance=myCovariance$1, $
+d358 3
+@
+
+
+1.62
+log
+@Made it more backwards compatible
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.61 2003/07/09 19:41:54 livesey Exp $
+d209 1
+a209 1
+  type=l2gp, !undivert(!directDGGDivert)})
+d363 3
+@
+
+
+1.61
+log
+@Bug fix in cloud filename
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.60 2003/07/09 17:58:01 livesey Exp $
+d134 3
+a136 1
+    !forall(directWriteOneDiagDGG,!outputRetrievalDiagnostics)
+a137 3
+;;  begin Fill
+;;    Destroy, vector=diag$1
+;;  end Fill
+d151 6
+a156 4
+!define(directDGGDivert,1)
+!define(directDGMDivert,2)
+!define(directCloudDivert,3)
+!define(AVKDivert,4)
+d164 11
+a174 5
+!define(noteDirectDGG,{!ifdef(flagGotDirectDGGs,{!divert(!directDGGDivert),!divert})!dnl
+!define(flagGotDirectDGGs,{Yes})!divert(!directDGGDivert)$1!divert})
+
+!define(noteDirectDGM,{!ifdef(flagGotDirectDGMs,{!divert(!directDGMDivert),!divert})!dnl
+!define(flagGotDirectDGMs,{Yes})!divert(!directDGMDivert)$1!divert})
+d231 22
+d273 2
+a274 2
+;; This macro joins the above filled quantities
+!define(joinRadianceDiagnostics,{!dnl
+d285 23
+d313 3
+a315 1
+     !forall(joinRadianceDiagnostics,$*)
+d318 7
+d363 3
+@
+
+
+1.60
+log
+@Added cloud file.
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.59 2003/07/08 20:03:56 livesey Exp $
+d25 1
+a25 1
+!define(CloudFilename,{'!outpathl2aux/MLS-Aura_L2AUX_Cloud_!l2version_!day.h!hdfVersion'})
+d302 3
+@
+
+
+1.59
+log
+@New handling of hdf version stuff
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.58 2003/07/08 00:50:43 livesey Exp $
+d24 2
+a25 1
+!define(DGMFilename,{'!outpathl2gp/MLS-Aura_L2AUX-DGM_!l2version_!day.h!hdfVersion'})
+d154 2
+a155 1
+!define(AVKDivert,3)
+d169 3
+d191 6
+d207 4
+d212 1
+a212 1
+!undefine(flagGotDirectDGGs)!undefine(flagGotDirectDGMs)})
+d302 3
+@
+
+
+1.58
+log
+@Better handling of l2fwm files
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.57 2003/07/08 00:17:20 livesey Exp $
+d19 3
+d23 2
+a24 2
+!define(DGGFilename,{'!outpathl2gp/MLS-Aura_L2GP-DGG_!l2version_!day.he4'})
+!define(DGMFilename,{'!outpathl2gp/MLS-Aura_L2AUX-DGM_!l2version_!day.h4'})
+d190 2
+a191 1
+DirectWrite, file=!DGGFilename, hdfVersion=4, type=l2gp, !undivert(!directDGGDivert)})
+d194 2
+a195 1
+DirectWrite, file=!DGMFilename, hdfVersion=4, type=l2aux, !undivert(!directDGMDivert)})
+d206 2
+a207 3
+  file='!outpathl2fwm/MLS-Aura_L2FWM-$1_!l2version_!day.h4', $
+  hdfVersion=4})})
+
+d287 3
+@
+
+
+1.57
+log
+@New approach to output with directWrite being used most places
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.56 2003/06/05 23:39:39 livesey Exp $
+d194 2
+a195 3
+;; This macro is used to invoke direct writes to store forward model
+;; radiances.  The band is $1, and a suffix for the sd name is given
+;; in $2
+d199 3
+a201 3
+!forall(labelOneFwmRad,!tidyList($*))!dnl
+  DirectWrite, !forall(oneFwmRadTerm,!tidyList($*)) type=l2aux, $
+  file='!outpathl2fwm/MLS-Aura_L2FWM-!moduleForRadiometer(!radiometerForBand($1))_!l2version_!day.h4', $
+d283 3
+@
+
+
+1.56
+log
+@IWC no longer a standard product
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.55 2003/06/04 17:14:07 livesey Exp $
+d16 6
+a21 1
+!define(allStandardProducts,{!allStandardProductsWithColumns,!allStandardProductsWithoutColumns})
+d130 1
+a130 1
+    !forall(joinOneDiagDGG,!outputRetrievalDiagnostics)
+d132 3
+a134 3
+  begin Fill
+    Destroy, vector=diag$1
+  end Fill
+d147 3
+a149 5
+;; These macros are used to accumulate quantities destined for the DGM
+;; or DGG file.  $1 is the quantity within state, and $2 is the swath/sd
+;; name.  The variable is joined into joinedDG?_$1_!phase to avoid confusion
+!define(DGGDivert,1)
+!define(DGMDivert,2)
+d152 1
+a152 6
+!define(storeDGG,{!ifdef(flagGotDGGs,{!divert(!DGGDivert),!divert})!dnl
+!define(flagGotDGGs,{Yes})!divert(!DGGDivert)$1!divert})
+
+!define(storeDGM,{!ifdef(flagGotDGMs,{!divert(!DGMDivert),!divert})!dnl
+!define(flagGotDGMs,{Yes})!divert(!DGMDivert)$1!divert})
+
+d156 48
+a203 4
+!define(joinDGG,{!dnl
+!storeDGG(joinedDGG_$1_!phase)!dnl
+joinedDGG_$1_!phase: l2gp, source=state.$1, precision=outputPrecision.$1, swath='$2'
+})
+a204 5
+!define(joinDGM,{!dnl
+!storeDGM(joinedDGM_$1_!phase)!storeDGM(joinedDGM_$1_!phase_precision)!dnl
+joinedDGM_$1_!phase: l2aux, source=state.$1, sdName='$2'
+joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 precision'
+})
+d228 9
+a236 19
+   joinedDGM_chisqMMAF$1_!phase: l2aux, source=radianceDiagnostics.chisqMMAF$1, $
+     /prefixSignal, sdName=' chisqMMAF !phase'
+   joinedDGM_chisqMMIF$1_!phase: l2aux, source=radianceDiagnostics.chisqMMIF$1, $
+     /prefixSignal, sdName=' chisqMMIF !phase'
+   joinedDGM_chisqChan$1_!phase: l2aux, source=radianceDiagnostics.chisqChan$1, $
+     /prefixSignal, sdName=' chisqChan !phase'
+   joinedDGM_noRadsPerMIF$1_!phase: l2aux, source=radianceDiagnostics.noRadsPerMIF$1, $
+     /prefixSignal, sdName=' noRadsPerMIF !phase'
+   joinedDGG_chisqBinned$1_!phase: l2gp, source=radianceDiagnostics.chisqBinned$1, $
+     /prefixSignal, swath=' chisqBinned !phase'
+   joinedDGG_noRadsBinned$1_!phase: l2gp, source=radianceDiagnostics.noRadsBinned$1, $
+     /prefixSignal, swath=' noRadsBinned !phase'
+   !storeDGM(joinedDGM_chisqMMAF$1_!phase)!dnl
+   !storeDGM(joinedDGM_chisqMMIF$1_!phase)!dnl
+   !storeDGM(joinedDGM_chisqChan$1_!phase)!dnl
+   !storeDGM(joinedDGM_noRadsPerMIF$1_!phase)!dnl
+   !storeDGG(joinedDGG_chisqBinned$1_!phase)
+   !storeDGG(joinedDGG_noRadsBinned$1_!phase)
+})
+d256 2
+a257 12
+;; This macro is used to invoke direct writes to store forward model
+;; radiances.  The band is $1, and a suffix for the sd name is given
+;; in $2
+!define(directWriteFwmRad,{
+  !ifdef(l2version,{directWrite, source=fwm.band$1, /prefixSignal, $
+  sdName=' model $2', file='!outpathl2fwm/MLS-Aura_L2FWM-$3_!l2version_!day.h4'})})
+
+;; This macro uses the joinDGG (for the moment, will use DGM when we
+;; got to hdf5) to join the diagnostics stuff
+!define(joinOneDiagDGG,{!storeDGG(joinedDGG_$1_!phase)!dnl
+  joinedDGG_$1_!phase: l2gp, source=diag!phase.$1, $
+    swath='!translit($1,{_},{-})-!phase'!nl})
+d261 1
+a261 1
+;  will add FM output to PEs later
+d284 3
+@
+
+
+1.55
+log
+@Added filename stuff to directWrite
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.54 2003/05/29 16:41:17 livesey Exp $
+d13 1
+d15 1
+a15 1
+!define(allStandardProductsWithoutColumns,{Temperature,GPH,RHI,IWC})
+d267 3
+@
+
+
+1.54
+log
+@Made allBandUSBs skip the upper sidebands in R1A/R1B
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.53 2003/05/12 02:07:56 livesey Exp $
+d14 1
+a14 1
+!define(allStandardProductsWithoutColumns,{Temperature,GPH,RHI})
+a30 1
+  t$1: Vector, template=x$1Template
+d88 1
+a88 1
+  ;; Clean up
+d90 12
+d126 3
+d183 1
+a183 1
+     ptanQuantity=state.ptanGHz
+d186 1
+a186 1
+     ptanQuantity=state.ptanGHz!nl})
+d233 1
+a233 1
+  sdName=' model $2', file='!outpathl2fwm/MLS-Aura_L2FWM-Full_!l2version_!day.h4'})})
+d259 6
+d266 3
+@
+
+
+1.53
+log
+@Output subset of retrieval diagnostics, and drop precisions.
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.52 2003/05/11 22:39:07 livesey Exp $
+d10 1
+a10 1
+!define(allBandUSBs,{!makelist({},{U},!allBands)})
+d246 3
+@
+
+
+1.52
+log
+@Added ignore zero / negative flags.
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.51 2003/05/11 22:35:54 livesey Exp $
+d113 1
+a113 1
+    !forall(joinOneDiagDGG,!allRetrievalDiagnostics)
+d224 1
+a224 1
+  joinedDGG_$1_!phase: l2gp, source=diag!phase.$1, precision=diag!phase.$1, $
+d246 3
+@
+
+
+1.51
+log
+@Restored the binned quantities, worked out what was wrong with them.
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.50 2003/05/11 06:12:20 livesey Exp $
+d158 1
+a158 1
+     noise=yNoise!phase.band$1
+d161 1
+a161 1
+     noise=yNoise!phase.band$1
+d164 1
+a164 1
+     noise=yNoise!phase.band$1
+d246 3
+@
+
+
+1.50
+log
+@Temporarily removed the binned stuff
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.49 2003/05/11 00:17:46 livesey Exp $
+d192 2
+a193 2
+;    !storeDGG(joinedDGG_chisqBinned$1_!phase)
+;    !storeDGG(joinedDGG_noRadsBinned$1_!phase)
+d246 3
+@
+
+
+1.49
+log
+@Reverted to previous version.  Couldn't merge two fields (yet).
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.47 2003/05/10 23:38:57 livesey Exp $
+d192 3
+a194 2
+   !storeDGG(joinedDGG_chisqBinned$1_!phase)
+   !storeDGG(joinedDGG_noRadsBinned$1_!phase)})
+d246 3
+@
+
+
+1.48
+log
+@Collapsed noRadsBinned into precision field for chisqBinned
+@
+text
+@d184 1
+a184 3
+   joinedDGG_chisqBinned$1_!phase: l2gp, $
+     source=radianceDiagnostics.chisqBinned$1, $
+     precision=radianceDiagnostics.noRadsBinned$1, $
+d186 2
+d192 2
+a193 1
+   !storeDGG(joinedDGG_chisqBinned$1_!phase)})
+@
+
+
+1.47
+log
+@Various bug fixes etc.
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.46 2003/05/10 22:22:17 livesey Exp $
+d184 3
+a186 1
+   joinedDGG_chisqBinned$1_!phase: l2gp, source=radianceDiagnostics.chisqBinned$1, $
+a187 2
+   joinedDGG_noRadsBinned$1_!phase: l2gp, source=radianceDiagnostics.noRadsBinned$1, $
+     /prefixSignal, swath=' noRadsBinned !phase'
+d192 1
+a192 2
+   !storeDGG(joinedDGG_chisqBinned$1_!phase)
+   !storeDGG(joinedDGG_noRadsBinned$1_!phase)})
+d244 3
+@
+
+
+1.46
+log
+@New approach to standard products, joining, output, columns etc.
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.45 2003/05/10 20:47:08 livesey Exp $
+d168 2
+a169 1
+     sourceQuantity=radianceDiagnostics.chisqMMIF$1
+d171 2
+a172 1
+     sourceQuantity=radianceDiagnostics.noRadsPerMIF$1!nl})
+d184 1
+a184 1
+   joinedDGG_chisqBinned$1_!phase: l2gp, radianceDiagnostics.chisqBinned$1, $
+d186 1
+a186 1
+   joinedDGG_noRadsBinned$1_!phase: l2gp, radianceDiagnostics.noRadsBinned$1, $
+d245 3
+@
+
+
+1.45
+log
+@Bug fixes
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.44 2003/05/10 00:57:53 livesey Exp $
+d12 5
+d243 3
+@
+
+
+1.44
+log
+@More chi squared etc. stuff
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.43 2003/05/08 21:08:02 livesey Exp $
+d160 1
+a160 1
+   Fill, quantity=radianceDiagnostics.noRadsPerMIF, method=species, $
+d165 1
+a165 1
+     sourceQuantity=radianceDiagnostics.noBandsPerMIF$1!nl})
+d238 3
+@
+
+
+1.43
+log
+@Various bug fixes and tidies
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.42 2003/05/08 20:49:21 livesey Exp $
+d150 2
+a151 2
+!define(fillBandsRadianceChisq,{!dnl
+   Fill, quantity=radianceChisq.chisqMMAF$1, method=special, $
+d154 1
+a154 1
+   Fill, quantity=radianceChisq.chisqMMIF$1, method=special, $
+d157 1
+a157 1
+   Fill, quantity=radianceChisq.chisqChan$1, method=special, $
+d160 6
+a165 2
+   Fill, quantity=radianceChisq.chisqBinned$1, method=binmax, $
+     sourceQuantity=radianceChisq.chisqMMIF$1!nl})
+d168 2
+a169 2
+!define(joinBandsRadianceChisq,{!dnl
+   joinedDGM_chisqMMAF$1_!phase: l2aux, source=radianceChisq.chisqMMAF$1, $
+d171 1
+a171 1
+   joinedDGM_chisqMMIF$1_!phase: l2aux, source=radianceChisq.chisqMMIF$1, $
+d173 1
+a173 1
+   joinedDGM_chisqChan$1_!phase: l2aux, source=radianceChisq.chisqChan$1, $
+d175 3
+a177 1
+   joinedDGG_chisqBinned$1_!phase: l2gp, radianceChisq.chisqBinned$1, $
+d179 2
+d184 3
+a186 1
+   !storeDGG(joinedDGG_chisqBinned$1_!phase)})
+d190 1
+a190 1
+     !forall(fillBandsRadianceChisq,$*)
+d193 1
+a193 1
+     !forall(joinBandsRadianceChisq,$*)
+d203 1
+a203 1
+   !forall(offsetRadiance,$1)
+d238 3
+@
+
+
+1.42
+log
+@Various tidyups and changes
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.41 2003/03/22 01:18:24 livesey Exp $
+d69 1
+a69 1
+!processparval({completePhase},!shift($@@))
+d144 1
+a144 1
+!storeDGM(joindDGM_$1_!phase)!storeDGM(joindDGM_$1_!phase_precision)!dnl
+d173 4
+a176 4
+   !storeDGM(joindDGM_chisqMMAF$1_!phase)!dnl
+   !storeDGM(joindDGM_chisqMMIF$1_!phase)!dnl
+   !storeDGM(joindDGM_chisqChan$1_!phase)!dnl
+   !storeDGG(joindDGG_chisqBinned$1_!phase)})
+d205 1
+a205 1
+!define(joinOneDiagDGG,{!storeDGG(joindDGG_$1_!phase)!dnl
+d228 3
+@
+
+
+1.41
+log
+@Added initHiRes
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.40 2003/02/27 00:39:38 livesey Exp $
+d38 1
+a38 1
+  !ifdef(precisionEstimates,{},{od$1: Vector, template=od$1Template})
+d53 1
+a53 1
+  !ifdef(gotAK,{!dnl
+d55 1
+a55 1
+  !ifdef(gotAnyAKs,{!dnl
+d58 1
+a58 1
+  !define(gotAnyAKs,{Yes})})
+d76 1
+a76 1
+    Fill, quantity=state.h2o!res, sourceQuantity=state.tropH2O!res, $
+d79 1
+a79 1
+    Fill, quantity=outputPrecision.h2o!res, sourceQuantity=outputPrecision.tropH2O!res, $
+d83 1
+a83 1
+  !ifdef(precisionEstimates,{},{Transfer, source=f$1, destination=fwm})
+d87 2
+a88 2
+  Fill, quantity=state.gph!res, method=hydrostatic, $
+    refGPHquantity=state.refGPH, temperatureQuantity=state.temperature!res
+d90 1
+a90 1
+  Fill, quantity=outputPrecision.gph!res, method=gphPrecision, $
+d92 1
+a92 1
+    tempPrecisionQuantity=outputPrecision.temperature!res
+d94 2
+a95 2
+  Fill, quantity=state.rhi!res, h2oQuantity=state.h2o!res, $
+    temperatureQuantity=state.temperature!res, method=RHIFromH2O, /dontMask
+d97 4
+a100 4
+  Fill, quantity=outputPrecision.rhi!res, $
+    h2oPrecisionQuantity=outputPrecision.h2o!res, $
+    tempPrecisionQuantity=outputPrecision.temperature!res, $
+    h2oQuantity=state.h2o!res, temperatureQuantity=state.temperature!res, $
+d106 1
+a106 3
+!include(fillcolumns.l2cf)
+
+!ifdef(precisionEstimates,{},{
+d116 1
+a116 2
+!define(initHiRes,{!ifdef(skipHiRes,{},{
+begin Fill
+d120 1
+a120 2
+end Fill
+})})
+d129 11
+a139 1
+!define(joinDGG,{
+a140 5
+  !ifdef(gotDGGs,{!divert(!DGGDivert),!divert})!define(gotDGGs,{Yes})
+  !divert(!DGGDivert)joinedDGG_$1_!phase!divert
+{
+; --ConfigInfo-- DGG: $2
+}
+d142 3
+a144 1
+!define(joinDGM,{
+a146 4
+!ifdef(gotDGMs,{!divert(!DGMDivert),!divert})!define(gotDGMs,{Yes})
+  !divert(!DGMDivert)joinedDGM_$1_!phase, joinedDGM_$1_!phase_precision!divert
+{;} --ConfigInfo-- DGM: $2
+{;} --ConfigInfo-- DGM: $2 precision
+d159 4
+a162 1
+     noise=yNoise!phase.band$1!nl})
+d171 7
+a177 2
+   !ifdef(gotDGMs,{!divert(!DGMDivert),!divert})!define(gotDGMs,{Yes})
+   !divert(!DGMDivert)joinedDGM_chisqMMAF$1_!phase, joinedDGM_chisqMMIF$1_!phase, joinedDGM_chisqChan$1_!phase!divert})
+d201 1
+a201 3
+  sdName=' model $2', file='!outpathl2fwm/MLS-Aura_L2FWM-Full_!l2version_!day.h4'})
+{;} --ConfigInfo-- FWM: !TrimQ(!signal($1)) model $2
+})
+d205 1
+a205 1
+!define(joinOneDiagDGG,{
+d207 1
+a207 5
+    swath='!translit($1,{_},{-})-!phase'
+  !ifdef(gotDGGs,{!divert(!DGGDivert),!divert})!define(gotDGGs,{Yes})
+  !divert(!DGGDivert)joinedDGG_$1_!phase!divert!dnl
+{;} --ConfigInfo-- DGG: !translit($1,{_},{-})-!phase
+})
+d212 1
+a212 1
+!ifdef(precisionEstimates,{!dnl
+d214 1
+a214 1
+  !ifdef(gotAK,{average=akOut$1,}) state=x$1, fwdModelExtra=state, $
+d220 1
+a220 1
+  !ifdef(gotAK,{average=akOut$1,}) state=x$1, fwdModelExtra=state, $
+d228 3
+@
+
+
+1.40
+log
+@General tidy up and dead wood removal
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.39 2002/12/16 16:24:51 mjf Exp $
+d7 1
+a7 1
+!define(allRadiometers,{R1A, R1B, R2, R3, R4, R5H, R5V})
+d12 7
+d76 2
+a77 1
+    Fill, quantity=state.h2o!res, sourceQuantity=state.tropH2O!res, method=vector, /interpolate
+d114 11
+a124 8
+;; This macro deals with the radiance subsetting in an easy manner.
+;; $1 is the phase name, $2 the band, $3 the height range and $4 the depth limit
+!define(subsetGHzRadiance,{!dnl
+Subset, quantity=y$1.band$2, height=$3, ptanQuantity=state.ptanGHz, $
+  opticalDepth=od$1.depth$2, opticalDepthCutoff=$4!nl})
+!define(subsetTHzRadiance,{!dnl
+Subset, quantity=y$1.band$2, height=$3, ptanQuantity=state.ptanTHz, $
+  opticalDepth=od$1.depth$2, opticalDepthCutoff=$4!nl})
+a225 6
+;; This macro is used in sids runs to get the band number part of a band
+;; specifier (i.e. strip off the sideband if it is present)
+!define(getBandNumber,{!regexp({$1},{[0-9]+},{\&})})
+!define(systemp,{!systemp$1})
+!define(nbw,{!nbw$1})
+
+d227 3
+@
+
+
+1.39
+log
+@HiRes and columns
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.38 2002/11/26 23:38:20 livesey Exp $
+a19 1
+  l$1: Vector, template=x$1Template
+a37 1
+  Transfer, source=length, destination=l$1
+d44 1
+a44 1
+  FillCovariance, matrix=myCovariance$1, diagonal=sdIn$1, /invert, lengthScale=l$1
+a105 10
+;; This macro deals with the state subsetting for quantity $1
+!define(subsetSpecies,{!dnl
+!ifdef($1Range,{
+Subset, quantity=state.$1, height=!$1Range
+Subset, quantity=state.$1, height=!$1Range, mask=Tikhonov
+Subset, quantity=length.$1, height=!$1Range})!nl})
+!define(subsetState,{!dnl
+!forall({subsetSpecies},!allMolecules)
+!subsetSpecies(Temperature)!nl})
+
+d222 3
+@
+
+
+1.38
+log
+@Added radiance diagnostics
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.37 2002/11/21 18:24:11 livesey Exp $
+d71 1
+a71 1
+    Fill, quantity=state.h2o, sourceQuantity=state.tropH2O, method=vector, /interpolate
+d73 1
+a73 1
+    Fill, quantity=outputPrecision.h2o, sourceQuantity=outputPrecision.tropH2O, $
+d81 2
+a82 2
+  Fill, quantity=state.gph, method=hydrostatic, $
+    refGPHquantity=state.refGPH, temperatureQuantity=state.temperature
+d84 1
+a84 1
+  Fill, quantity=outputPrecision.gph, method=gphPrecision, $
+d86 1
+a86 1
+    tempPrecisionQuantity=outputPrecision.temperature
+d88 2
+a89 2
+  Fill, quantity=state.rhi, h2oQuantity=state.h2o, $
+    temperatureQuantity=state.temperature, method=RHIFromH2O, /dontMask
+d91 4
+a94 4
+  Fill, quantity=outputPrecision.rhi, $
+    h2oPrecisionQuantity=outputPrecision.h2o, $
+    tempPrecisionQuantity=outputPrecision.temperature, $
+    h2oQuantity=state.h2o, temperatureQuantity=state.temperature, $
+a95 1
+;  !include(fillcolumns.l2cf)
+d99 8
+a106 3
+begin Join
+!forall(joinOneDiagDGG,!allRetrievalDiagnostics)
+end Join})
+d213 2
+a214 1
+  !define(retrievalArguments,{state=x$1, fwdModelExtra=state, $
+d234 3
+@
+
+
+1.37
+log
+@Refined Avk stuff
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.36 2002/11/21 01:24:01 livesey Exp $
+d132 2
+a133 4
+!ifdef(gotDGGs,{!dnl
+  !divert(!DGGDivert), joinedDGG_$1_!phase!divert},{!dnl
+  !divert(!DGGDivert)joinedDGG_$1_!phase!divert})
+!define(gotDGGs,{Yes})
+d141 2
+a142 4
+!ifdef(gotDGMs,{!dnl
+  !divert(!DGMDivert), joinedDGM_$1_!phase, joinedDGM_$1_!phase_precision!divert},{!dnl
+  !divert(!DGMDivert)joinedDGM_$1_!phase, joinedDGM_$1_!phase_precision!divert})
+!define(gotDGMs,{Yes})
+d147 29
+d200 2
+a201 4
+!ifdef(gotDGGs,{!dnl
+  !divert(!DGGDivert), joinedDGG_$1_!phase!divert},{!dnl
+  !divert(!DGGDivert)joinedDGG_$1_!phase!divert})!dnl
+!define(gotDGGs,{Yes})!dnl
+a227 137
+;; This macro defines a set of full forward models under a given name
+;; $1, for band $2, signal $3.
+;; -------------------------- 2D forward models
+!define(makeSimpleFwm,{!dnl
+  $1: ForwardModel, type=full, $
+    signals=$3, $
+    phiWindow=4.0, $
+    molecules = !simplerMolecules($2), $
+    moleculeDerivatives = !simplerMoleculeFamilies($2), $
+    integrationGrid=vGridTangent, $
+    tangentGrid=vGridTangent, $
+    /do_conv, /do_freq_avg, /atmos_der, /temp_der, /do_baseline
+  $1_mono: ForwardModel, type=full, $
+    signals=$3, $
+    phiWindow=4.0, $
+    molecules = !simplerMolecules($2), $
+    moleculeDerivatives = !simplerMoleculeFamilies($2), $
+    integrationGrid=vGridTangent, $
+    tangentGrid=vGridTangent, $
+    /do_conv, /atmos_der, /temp_der, /do_baseline
+  $1_notd: ForwardModel, type=full, $
+    signals=$3, $
+    phiWindow=4.0, $
+    molecules = !simplerMolecules($2), $
+    moleculeDerivatives = !simplerMoleculeFamilies($2), $
+    integrationGrid=vGridTangent, $
+    tangentGrid=vGridTangent, $
+    /do_conv, /do_freq_avg, /atmos_der, /do_baseline
+  $1_mono_notd: ForwardModel, type=full, $
+    signals=$3, $
+    phiWindow=4.0, $
+    molecules = !simplerMolecules($2), $
+    moleculeDerivatives = !simplerMoleculeFamilies($2), $
+    integrationGrid=vGridTangent, $
+    tangentGrid=vGridTangent, $
+    /do_conv, /atmos_der, /do_baseline})
+!define(makeFwm,{!dnl
+  $1: ForwardModel, type=full, $
+    signals=$3, $
+    phiWindow=4.0, $
+    molecules = !molecules($2), $
+    moleculeDerivatives = !moleculeFamilies($2), $
+    integrationGrid=vGridTangent, $
+    tangentGrid=vGridTangent, $
+    /do_conv, /do_freq_avg, /atmos_der, /temp_der, /do_baseline
+  $1_mono: ForwardModel, type=full, $
+    signals=$3, $
+    phiWindow=4.0, $
+    molecules = !molecules($2), $
+    moleculeDerivatives = !moleculeFamilies($2), $
+    integrationGrid=vGridTangent, $
+    tangentGrid=vGridTangent, $
+    /do_conv, /atmos_der, /temp_der, /do_baseline
+  $1_notd: ForwardModel, type=full, $
+    signals=$3, $
+    phiWindow=4.0, $
+    molecules = !molecules($2), $
+    moleculeDerivatives = !moleculeFamilies($2), $
+    integrationGrid=vGridTangent, $
+    tangentGrid=vGridTangent, $
+    /do_conv, /do_freq_avg, /atmos_der, /do_baseline
+  $1_mono_notd: ForwardModel, type=full, $
+    signals=$3, $
+    phiWindow=4.0, $
+    molecules = !molecules($2), $
+    moleculeDerivatives = !moleculeFamilies($2), $
+    integrationGrid=vGridTangent, $
+    tangentGrid=vGridTangent, $
+    /do_conv, /atmos_der, /do_baseline})
+; ------------------ 1D forward models
+!define(makeSimpleFwm1d,{!dnl
+  $1_1d: ForwardModel, type=full, $
+    signals=$3, $
+    phiWindow=0.0, $
+    molecules = !simplerMolecules($2), $
+    moleculeDerivatives = !simplerMoleculeFamilies($2), $
+    integrationGrid=vGridTangent, $
+    tangentGrid=vGridTangent, $
+    /do_conv, /do_freq_avg, /atmos_der, /temp_der, /do_baseline
+  $1_mono_1d: ForwardModel, type=full, $
+    signals=$3, $
+    phiWindow=0.0, $
+    molecules = !simplerMolecules($2), $
+    moleculeDerivatives = !simplerMoleculeFamilies($2), $
+    integrationGrid=vGridTangent, $
+    tangentGrid=vGridTangent, $
+    /do_conv, /atmos_der, /temp_der, /do_baseline
+  $1_notd_1d: ForwardModel, type=full, $
+    signals=$3, $
+    phiWindow=0.0, $
+    molecules = !simplerMolecules($2), $
+    moleculeDerivatives = !simplerMoleculeFamilies($2), $
+    integrationGrid=vGridTangent, $
+    tangentGrid=vGridTangent, $
+    /do_conv, /do_freq_avg, /atmos_der, /do_baseline
+  $1_mono_notd_1d: ForwardModel, type=full, $
+    signals=$3, $
+    phiWindow=0.0, $
+    molecules = !simplerMolecules($2), $
+    moleculeDerivatives = !simplerMoleculeFamilies($2), $
+    integrationGrid=vGridTangent, $
+    tangentGrid=vGridTangent, $
+    /do_conv, /atmos_der, /do_baseline})
+!define(makeFwm1d,{!dnl
+  $1_1d: ForwardModel, type=full, $
+    signals=$3, $
+    phiWindow=0.0, $
+    molecules = !molecules($2), $
+    moleculeDerivatives = !moleculeFamilies($2), $
+    integrationGrid=vGridTangent, $
+    tangentGrid=vGridTangent, $
+    /do_conv, /do_freq_avg, /atmos_der, /temp_der, /do_baseline
+  $1_mono_1d: ForwardModel, type=full, $
+    signals=$3, $
+    phiWindow=0.0, $
+    molecules = !molecules($2), $
+    moleculeDerivatives = !moleculeFamilies($2), $
+    integrationGrid=vGridTangent, $
+    tangentGrid=vGridTangent, $
+    /do_conv, /atmos_der, /temp_der, /do_baseline
+  $1_notd_1d: ForwardModel, type=full, $
+    signals=$3, $
+    phiWindow=0.0, $
+    molecules = !molecules($2), $
+    moleculeDerivatives = !moleculeFamilies($2), $
+    integrationGrid=vGridTangent, $
+    tangentGrid=vGridTangent, $
+    /do_conv, /do_freq_avg, /atmos_der, /do_baseline
+  $1_mono_notd_1d: ForwardModel, type=full, $
+    signals=$3, $
+    phiWindow=0.0, $
+    molecules = !molecules($2), $
+    moleculeDerivatives = !moleculeFamilies($2), $
+    integrationGrid=vGridTangent, $
+    tangentGrid=vGridTangent, $
+    /do_conv, /atmos_der, /do_baseline})
+
+d229 3
+@
+
+
+1.36
+log
+@Add transfer of outputPrecision.tropH2O if requested
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.35 2002/11/21 01:19:18 livesey Exp $
+d48 6
+a53 1
+  !ifdef(gotAK,{akOut$1: Matrix, columns=x$1, rows=x$1},{})
+d128 1
+d191 7
+a197 6
+{ !define(retrievalArguments,{state=x$1, fwdModelExtra=state, $
+    measurements=y$1, measurementSD=yNoise$1, $
+    apriori=a$1, covariance=myCovariance$1, $
+    outputSD=sdOut$1, fwdModelOut=f$1, $
+    vRegWeightVec=vr$1, hRegWeightVec=hr$1, $
+    lowBound=lb$1, highBound=hb$1, diagnostics=diag$1})})
+d343 3
+@
+
+
+1.35
+log
+@Added call to NegativePrecision command
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.34 2002/11/20 19:59:37 mjf Exp $
+d66 5
+a70 1
+    Fill, quantity=state.h2o, sourceQuantity=state.tropH2O, method=vector, /interpolate})
+d92 1
+d336 3
+@
+
+
+1.34
+log
+@Fill columns to be added, but might break the retrieval, so commented
+out for just now.
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.33 2002/10/25 23:56:45 livesey Exp $
+d88 1
+d331 4
+@
+
+
+1.33
+log
+@Minor changes in the diagnostics, added the offsetRadiances stuff
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.32 2002/10/25 22:25:59 livesey Exp $
+d87 1
+d330 3
+@
+
+
+1.32
+log
+@Added the retrieval diagnostics stuff
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.31 2002/10/25 01:10:33 livesey Exp $
+d134 2
+a135 4
+{
+; --ConfigInfo-- DGM: $2
+; --ConfigInfo-- DGM: $2 precision
+}
+d138 10
+d160 2
+a161 1
+   joinedDGG_$1_!phase: l2gp, source=diag!phase.$1, precision=diag!phase.$1, swath='$1-!phase'
+d166 1
+a166 3
+{
+; --ConfigInfo-- DGG: $1-!phase
+}
+d329 3
+@
+
+
+1.31
+log
+@Added the tropH2O option to completephase
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.30 2002/10/17 18:24:40 livesey Exp $
+d31 1
+a31 1
+  ; Optical depth may be turned on again, sometime, for the PEs
+d33 2
+d87 4
+a90 1
+end Fill})
+d149 13
+d176 1
+a176 1
+    lowBound=lb$1, highBound=hb$1})})
+d322 3
+@
+
+
+1.30
+log
+@Typo
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.29 2002/10/17 18:19:50 livesey Exp $
+d55 3
+d62 4
+a65 1
+  ; FM output will be turned on again, sometime, for the PEs
+d76 1
+a76 1
+  ;; Compute rhi from h2o
+d79 1
+a79 2
+;   Fill, quantity=outputPrecision.rhi, h2oQuantity=outputPrecision.h2o, $
+;     temperatureQuantity=state.temperature, method=special, /dontMask
+d304 3
+@
+
+
+1.29
+log
+@Added low/high bound to retrieval
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.28 2002/10/16 20:21:11 mjf Exp $
+d26 1
+a26 1
+  hb$1: Vector, templtae=x$1template
+d299 3
+@
+
+
+1.28
+log
+@Added GPH precision.
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.27 2002/10/11 19:39:21 livesey Exp $
+d25 2
+d40 2
+d152 2
+a153 1
+    vRegWeightVec=vr$1, hRegWeightVec=hr$1})})
+d299 3
+@
+
+
+1.27
+log
+@Bug fix
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.26 2002/10/11 19:29:29 livesey Exp $
+d62 4
+d294 3
+@
+
+
+1.26
+log
+@Added 1D forward models.
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.25 2002/10/09 00:48:23 livesey Exp $
+d255 1
+a255 1
+!define(makeFwm,{!dnl
+d290 3
+@
+
+
+1.25
+log
+@Split forward models into simple and otherwise
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.24 2002/10/03 21:36:00 livesey Exp $
+d154 1
+d221 67
+d290 3
+@
+
+
+1.24
+log
+@Changed forward models to use simplerMolecules lists
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.23 2002/10/03 16:18:24 livesey Exp $
+d154 1
+a154 1
+!define(makeFwm,{!dnl
+d187 33
+d222 3
+@
+
+
+1.23
+log
+@Changed temperaturePrecisionQuantity to tempPrecisionQuantity for Mark
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.22 2002/10/03 05:41:41 livesey Exp $
+d157 3
+a159 2
+    molecules = !molecules($2), $
+    moleculeDerivatives = !moleculeFamilies($2), $
+d165 3
+a167 2
+    molecules = !molecules($2), $
+    moleculeDerivatives = !moleculeFamilies($2), $
+d173 3
+a175 2
+    molecules = !molecules($2), $
+    moleculeDerivatives = !moleculeFamilies($2), $
+d181 3
+a183 2
+    molecules = !molecules($2), $
+    moleculeDerivatives = !moleculeFamilies($2), $
+d189 3
+@
+
+
+1.22
+log
+@Added baseline to forward models
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.21 2002/10/02 23:22:47 livesey Exp $
+d69 1
+a69 1
+    temperaturePrecisionQuantity=outputPrecision.temperature, $
+d185 3
+@
+
+
+1.21
+log
+@New definitions of the joinDGG/DGM stuff.  Also added forward model
+construction stuff.
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.20 2002/10/02 23:06:01 pwagner Exp $
+d161 1
+a161 1
+    /do_conv, /do_freq_avg, /atmos_der, /temp_der
+d168 1
+a168 1
+    /do_conv, /atmos_der, /temp_der
+d175 1
+a175 1
+    /do_conv, /do_freq_avg, /atmos_der
+d182 1
+a182 1
+    /do_conv, /atmos_der})
+d185 4
+@
+
+
+1.20
+log
+@RHI now separate fill methods
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.19 2002/10/01 18:33:36 mjf Exp $
+d94 2
+a95 3
+;; or DGG file.  $1 is the quantity within state, $2 is the name to
+;; give the internal l2gp item (to avoid confusion with the 'main'
+;; one), and $3 is the swath name.
+d100 1
+a100 1
+joinedDGG_$2: l2gp, source=state.$1, precision=outputPrecision.$1, swath='$3'
+d102 2
+a103 2
+  !divert(!DGGDivert), joinedDGG_$2!divert},{!dnl
+  !divert(!DGGDivert)joinedDGG_$2!divert})
+d106 1
+a106 1
+; --ConfigInfo-- DGG: $3
+d110 2
+a111 2
+joinedDGM_$2: l2aux, source=state.$1, sdName='$3'
+joinedDGM_$2_precision: l2aux, source=outputPrecision.$1, sdName='$3 precision'
+d113 2
+a114 2
+  !divert(!DGMDivert), joinedDGM_$2, joinedDGM_$2_precision!divert},{!dnl
+  !divert(!DGMDivert)joinedDGM_$2, joinedDGM_$2_precision!divert})
+d117 2
+a118 2
+; --ConfigInfo-- DGM: $3
+; --ConfigInfo-- DGM: $3 precision
+d152 32
+d185 3
+@
+
+
+1.19
+log
+@New Fill for RHi precision.  Need gotAK defined for AK output.
+RetrivalArguments depends on precisionEstimates.
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.18 2002/08/26 20:27:07 livesey Exp $
+d64 1
+a64 1
+    temperatureQuantity=state.temperature, method=special, /dontMask
+d71 1
+a71 1
+    method=special, /dontMask
+d154 4
+@
+
+
+1.18
+log
+@New regularization (horizontal and vetical)
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.17 2002/08/23 23:26:29 livesey Exp $
+d29 1
+a29 1
+  ; Optical depth will be turned on again, sometime, for the PEs
+d42 1
+a42 1
+  !ifdef(precisionEstimates,{},{akOut$1: Matrix, columns=x$1, rows=x$1})
+d65 7
+a71 2
+  Fill, quantity=outputPrecision.rhi, h2oQuantity=outputPrecision.h2o, $
+    temperatureQuantity=state.temperature, method=special, /dontMask
+d134 12
+a145 5
+!define(retrievalArguments,{state=x$1, fwdModelExtra=state, $
+  measurements=y$1, measurementSD=yNoise$1, $
+  apriori=a$1, covariance=myCovariance$1, $
+  outputSD=sdOut$1, fwdModelOut=f$1, $
+  vRegWeightVec=vr$1, hRegWeightVec=hr$1})
+d154 3
+@
+
+
+1.17
+log
+@Made the FWM rad stuff report the actual signal
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.16 2002/08/15 22:46:00 livesey Exp $
+d21 2
+a22 1
+  r$1: Vector, template=x$1Template
+d36 2
+a37 1
+  Transfer, source=reg, destination=r$1
+d132 2
+a133 1
+  outputSD=sdOut$1, fwdModelOut=f$1})
+d142 3
+@
+
+
+1.16
+log
+@Added regularization vector
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.15 2002/08/05 17:20:23 livesey Exp $
+d122 1
+a122 3
+{
+; --ConfigInfo-- FWM: band $1 model $2
+}
+d139 3
+@
+
+
+1.15
+log
+@Added code to convert H2O back to RHI at the end of each phase
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.14 2002/08/04 16:18:47 mjf Exp $
+d21 1
+d35 1
+d69 3
+a71 1
+!ifdef($1Range,{Subset, quantity=state.$1, height=!$1Range
+d141 3
+@
+
+
+1.14
+log
+@Some things switched off for precision estimates.
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.13 2002/07/23 23:47:28 livesey Exp $
+d58 5
+d137 3
+@
+
+
+1.13
+log
+@Added some macros for sids
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.12 2002/07/22 20:34:17 livesey Exp $
+d27 2
+a28 1
+  od$1: Vector, template=od$1Template
+d37 2
+d51 2
+a52 1
+  Transfer, source=f$1, destination=fwm
+d132 3
+@
+
+
+1.12
+log
+@Tidied up bug with subsetState
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.11 2002/07/20 00:54:56 livesey Exp $
+d121 6
+d128 3
+@
+
+
+1.11
+log
+@Added more subsetting stuff
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.10 2002/07/18 06:30:55 livesey Exp $
+d61 1
+a61 1
+!forall( {subsetSpecies}, !allMolecules )
+d122 3
+@
+
+
+1.10
+log
+@Added the radianceSubset stuff
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.9 2002/07/17 19:30:10 livesey Exp $
+d56 8
+d122 3
+@
+
+
+1.9
+log
+@Fill GPH
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.8 2002/07/06 21:18:48 livesey Exp $
+d56 9
+d114 3
+@
+
+
+1.8
+log
+@Made sure the direct writes for forward model radiances are only done if
+l2version is defined.
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.7 2002/07/05 21:46:36 livesey Exp $
+d45 1
+d49 1
+d51 3
+d105 4
+@
+
+
+1.7
+log
+@Put in the configInfo information
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.6 2002/07/05 21:37:02 livesey Exp $
+d85 2
+a86 2
+  directWrite, source=fwm.band$1, /prefixSignal, $
+  sdName=' model $2', file='!outpathl2fwm/MLS-Aura_L2FWM-Full_!l2version_!day.h4'
+d100 3
+@
+
+
+1.6
+log
+@New (working) DGM/DGG handling
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.5 2002/07/05 17:46:38 livesey Exp $
+d64 3
+d75 4
+d84 7
+a90 2
+!define(directWriteFwmRad,{directWrite, source=fwm.band$1, /prefixSignal, $
+  sdName=' model $2', file='!outpathl2fwm/MLS-Aura_L2FWM-Full_!l2version_!day.h4'})
+d100 3
+@
+
+
+1.5
+log
+@New work for multiphase retrievals
+@
+text
+@d1 1
+a1 1
+; $Id: retrievalmacros.l2cf,v 1.4 2002/06/24 17:24:47 livesey Exp $
+d55 3
+d60 4
+a63 3
+!ifdef(DGGQuantities,
+  !define(DGGQuantities,{!DGGQuantities,joinedDGG_$2}),
+  !define(DGGQuantities,{joinedDGG_$2}))
+d68 4
+a71 3
+!ifdef(DGMQuantities,
+  !define(DGMQuantities,{!DGMQuantities, joinedDGM_$2, joinedDGM_$2_precision}),
+  !define(DGMQuantities,{joinedDGM_$2, joinedDGM_$2_precision}))
+d88 3
+@
+
+
+1.4
+log
+@Bug in doNoise macro.
+@
+text
+@d1 1
+a1 2
+!divert(-1)
+; $Id: retrievalmacros.l2cf,v 1.3 2002/05/29 00:08:23 livesey Exp $
+d12 2
+d16 1
+d23 2
+a24 2
+  
+  yClean$1: Vector, template=y$1Template
+a25 1
+  y$1: Vector, template=y$1Template
+d28 1
+a28 1
+
+d33 1
+a33 1
+
+d36 3
+d41 2
+d45 4
+a48 3
+   Transfer, source=x$1, destination=state
+   Transfer, source=sdOut$1, destination=outputPrecision
+   Destroy, matrix=myCovariance$1
+d51 31
+a81 17
+!define(readRadiances,{!dnl
+  Fill, quantity=yNoise$1.band$2, method=l1b, /isPrecision
+  Fill, quantity=y$1.band$2, method=l1b, precision=yNoise$1.band$2})
+
+!define(readCleanRadiances,{!dnl
+  Fill, quantity=yNoise$1.band$2, method=l1b, /isPrecision
+  Fill, quantity=yClean$1.band$2, method=l1b, precision=yNoise$1.band$2})
+
+!define(addNoise,{!dnl
+  Fill, quantity=y$1.band$2, method=addNoise, sourceQuantity=yClean$1.band$2, $
+    noise=yNoise$1.band$2, seed=$3})
+
+!define(doNoise,{!dnl
+Fill, quantity=yNoise$1.band$2, radianceQuantity=yClean$1.band$2, $
+  systemTemperature=state.systemTemperature!band, integrationTime=0.16 s, $
+  method=estimatedNoise
+!addNoise($1,$2,$3)})
+d83 3
+a94 1
+!divert!dnl
+@
+
+
+1.3
+log
+@Typo fix
+@
+text
+@d2 1
+a2 1
+; $Id: retrievalmacros.l2cf,v 1.2 2002/05/28 22:36:14 livesey Exp $
+d58 1
+a58 1
+  systemTemperature=!systemp$2, integrationTime=0.16 s, $
+d62 3
+@
+
+
+1.2
+log
+@Semi freeze of version
+@
+text
+@d1 2
+a2 2
+X!divert(-1)
+; $Id: retrievalmacros.l2cf,v 1.1 2002/04/29 21:54:59 pwagner Exp $
+d62 3
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d1 2
+a2 2
+!divert(-1)
+; $Id$
+d7 6
+d26 1
+d61 4
+a64 1
+; $Log: retrievalmacros.pm4,v $
+@
+

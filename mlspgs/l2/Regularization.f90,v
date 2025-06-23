@@ -1,0 +1,3164 @@
+head	2.43;
+access;
+symbols
+	v5-02-NRT-19:2.43
+	v6-00:2.43
+	v5-02-NRT-18:2.43
+	v5-02:2.43
+	v5-01-NRT-17:2.43
+	v5-01-NRT-16:2.43
+	v5-01-NRT-15:2.43
+	v5-01-NRT-14:2.43
+	neuralnetworks-1-0:2.43.0.12
+	cfm-single-freq-0-1:2.43.0.10
+	v5-01:2.43
+	v5-00:2.43
+	v4-23-TA133:2.43.0.8
+	mus-emls-1-70:2.43.0.6
+	rel-1-0-englocks-work:2.43.0.4
+	VUMLS1-00:2.43
+	VPL1-00:2.43
+	V4-22-NRT-08:2.43
+	VAM1-00:2.43
+	V4-21:2.43.0.2
+	V4-13:2.43
+	V4-12:2.43
+	V4-11:2.43
+	V4-10:2.43
+	V3-43:2.40
+	M4-00:2.41
+	V3-41:2.40
+	V3-40-PlusGM57:2.40.0.2
+	V2-24-NRT-04:2.39
+	V3-33:2.40
+	V2-24:2.39
+	V3-31:2.40
+	V3-30-NRT-05:2.40
+	cfm-01-00:2.40
+	V3-30:2.40
+	V3-20:2.40
+	V3-10:2.40
+	V2-23-NRT-02:2.39
+	V2-23:2.39
+	V2-22-NRT-01:2.39
+	V2-22:2.39
+	V2-21:2.38
+	V2-20:2.38
+	V2-11:2.37
+	V2-10:2.37
+	V2-00:2.37
+	V1-51:2.36
+	V1-50:2.36
+	V1-45:2.36
+	V1-44:2.36
+	V1-43:2.36
+	V1-32:2.36
+	V1-31:2.36
+	V1-30:2.36
+	V1-13:2.34
+	V1-12:2.34
+	V1-11:2.34
+	V1-10:2.34
+	newfwm-feb03:2.34.0.2
+	V1-04:2.9
+	V1-03:2.9
+	V1-02:2.9
+	JointForwardModel:2.12.0.2
+	V1-00:2.9
+	newfwm-sep01:2.7.0.2
+	V0-7:2.7;
+locks; strict;
+comment	@# @;
+
+
+2.43
+date	2014.02.28.01.12.21;	author vsnyder;	state Exp;
+branches;
+next	2.42;
+
+2.42
+date	2013.09.24.23.47.22;	author vsnyder;	state Exp;
+branches;
+next	2.41;
+
+2.41
+date	2012.07.11.20.02.54;	author pwagner;	state Exp;
+branches;
+next	2.40;
+
+2.40
+date	2009.06.23.18.46.18;	author pwagner;	state Exp;
+branches;
+next	2.39;
+
+2.39
+date	2006.11.29.01.07.31;	author vsnyder;	state Exp;
+branches;
+next	2.38;
+
+2.38
+date	2006.08.02.19.54.15;	author vsnyder;	state Exp;
+branches;
+next	2.37;
+
+2.37
+date	2005.06.22.18.57.02;	author pwagner;	state Exp;
+branches;
+next	2.36;
+
+2.36
+date	2003.06.20.19.38.26;	author pwagner;	state Exp;
+branches;
+next	2.35;
+
+2.35
+date	2003.05.16.02.57.13;	author vsnyder;	state Exp;
+branches;
+next	2.34;
+
+2.34
+date	2003.01.10.02.46.40;	author livesey;	state Exp;
+branches;
+next	2.33;
+
+2.33
+date	2002.11.20.21.04.08;	author livesey;	state Exp;
+branches;
+next	2.32;
+
+2.32
+date	2002.10.30.00.09.25;	author vsnyder;	state Exp;
+branches;
+next	2.31;
+
+2.31
+date	2002.10.22.19.23.28;	author livesey;	state Exp;
+branches;
+next	2.30;
+
+2.30
+date	2002.10.21.22.27.44;	author vsnyder;	state Exp;
+branches;
+next	2.29;
+
+2.29
+date	2002.10.08.17.36.22;	author pwagner;	state Exp;
+branches;
+next	2.28;
+
+2.28
+date	2002.10.03.16.13.23;	author livesey;	state Exp;
+branches;
+next	2.27;
+
+2.27
+date	2002.10.02.19.24.48;	author livesey;	state Exp;
+branches;
+next	2.26;
+
+2.26
+date	2002.09.23.22.08.20;	author vsnyder;	state Exp;
+branches;
+next	2.25;
+
+2.25
+date	2002.08.29.16.18.39;	author livesey;	state Exp;
+branches;
+next	2.24;
+
+2.24
+date	2002.08.28.01.31.23;	author vsnyder;	state Exp;
+branches;
+next	2.23;
+
+2.23
+date	2002.08.28.00.51.04;	author vsnyder;	state Exp;
+branches;
+next	2.22;
+
+2.22
+date	2002.08.28.00.01.04;	author vsnyder;	state Exp;
+branches;
+next	2.21;
+
+2.21
+date	2002.08.24.01.38.28;	author vsnyder;	state Exp;
+branches;
+next	2.20;
+
+2.20
+date	2002.08.23.19.03.48;	author vsnyder;	state Exp;
+branches;
+next	2.19;
+
+2.19
+date	2002.08.20.19.54.19;	author vsnyder;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2002.08.16.21.33.02;	author livesey;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2002.08.15.22.45.05;	author livesey;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2002.08.08.22.02.05;	author vsnyder;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2002.08.03.01.15.36;	author vsnyder;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2002.07.30.23.20.20;	author vsnyder;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2002.07.02.01.45.56;	author vsnyder;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2002.05.22.19.15.06;	author vsnyder;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2002.05.11.01.10.16;	author vsnyder;	state Exp;
+branches
+	2.11.2.1;
+next	2.10;
+
+2.10
+date	2002.05.07.01.03.36;	author vsnyder;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2002.02.01.00.48.26;	author vsnyder;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2001.10.09.20.36.04;	author vsnyder;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2001.06.28.20.42.42;	author vsnyder;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2001.06.26.20.16.41;	author vsnyder;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2001.06.26.20.13.24;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2001.06.26.19.01.00;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2001.06.22.00.41.54;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2001.06.02.16.58.46;	author livesey;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.06.02.01.40.29;	author vsnyder;	state Exp;
+branches;
+next	;
+
+2.11.2.1
+date	2002.05.22.23.14.51;	author jonathan;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.43
+log
+@Remove TYPE argument from calls to EXPR because the value wasn't used
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=============================================================================
+module Regularization
+!=============================================================================
+
+! Apply Tikhonov regularization to the matrix of the least-squares
+! problem for retrieval.
+  implicit none
+  private
+
+  public :: Regularize
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: Regularization.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+  integer, public :: MaxNumAnnouncements = 10
+  ! Error message codes
+  ! We do not always halt after these errors, so they are more like
+  ! warnings, or at least some of them are
+  ! We used to print every time, but that was tedious, so we max out
+  ! each condition after MaxNumAnnouncements of them
+  ! If you want to 
+  !   resume printing every time   set MaxNumAnnouncements to -1
+  !   reset the counters           set RegAnnouncements    to 0
+  integer, parameter :: FieldSizes = 1   ! size(regOrders) /= size(regQuants)
+  integer, parameter :: NotRegularized = FieldSizes + 1
+  integer, parameter :: OrderTooBig = NotRegularized + 1
+  integer, parameter :: RegQuantsReq = OrderTooBig + 1 ! RegQuants required
+  integer, parameter :: RegTemplate = RegQuantsReq + 1 ! Weight /= column of J
+  integer, parameter :: Unitless = RegTemplate + 1     ! Orders must be unitless
+
+  integer :: Error               ! non-zero if an error occurs
+  integer, public, dimension(FieldSizes:Unitless), save :: RegAnnouncements = 0
+
+contains
+
+  ! -------------------------------------------------  Regularize  -----
+  subroutine Regularize ( A, Orders, Quants, Weights, WeightVec, Rows, Horiz )
+
+  !{Compute the matrix $\mathbf{R}$ for Tikhonov regularization.  Tikhonov
+  ! regularization consists of adding least-squares conditions of the form
+  ! $\mathbf{R x}_n \simeq 0$ to the least-squares problem.  Since we want to
+  ! solve for $\delta \mathbf{x} = \mathbf{x}_{n+1}-\mathbf{x}_n$, where $n$
+  ! is the iteration number of the Newton iteration, this becomes $\mathbf{R}
+  ! \delta \mathbf{x} \simeq -\mathbf{R} \mathbf{x}_n$, where $\mathbf{R} = w
+  ! \mathbf{W} \mathbf{\Delta}^k$.  The quantities $w$, $\mathbf{W}$ and
+  ! $\mathbf{\Delta}^k$ are described below.  Blocks of $\mathbf{R}$ are
+  ! stored in {\tt A}.
+  !
+  ! $\mathbf{\Delta}^k$ is the central difference operator of order $k$.  The
+  ! $j^{\text{th}}$ row of $\mathbf{\Delta}^k$ has $(-1)^i C_i^k / 2^k$
+  ! beginning in column j, where $C_i^k$ are binomial coefficients; the sum
+  ! of the absolute values of the coefficients in each row is therefore one. 
+  ! For each block of {\tt A}, $(-1)^i C_i^k$ is stored in the $(j,j+i)$
+  ! element of that block.  $\mathbf{\Delta}^k$ has $N-k$ rows, where $N$ is
+  ! the number of columns.
+  !
+  ! The order $k$ is given by the {\tt Orders} argument, which is the index in
+  ! the tree of the {\tt regOrders} field of the {\tt retrieve} specification.
+  ! If one value is supplied for {\tt regOrders} it applies to all quantities.
+  ! If several values are supplied, the {\tt regWeights} (if present) and {\tt
+  ! regQuants} fields must have the same number of values, and corresponding
+  ! elements of the {\tt regOrders} and {\tt regWeights} fields apply to the
+  ! quantity specified by the corresponding element of the {\tt regQuants}
+  ! field.
+  !
+  ! The {\tt Quants} argument is the index in the tree of the {\tt regQuants}
+  ! field. The values of the {\tt regQuants} field are quantity type names.
+  ! If no {\tt regQuants} field is given, all quantities are regularized, and
+  ! only one value may be given for each of the {\tt regOrders} and {\tt
+  ! regWeights} fields.
+  !
+  ! The {\tt Weights} argument is the index in the tree of the {\tt
+  ! regWeights} field.  It gives a weight $w$ for the regularization.  If one
+  ! value is given, the rows of the regularization matrix for every quantity
+  ! are multiplied by this value.  If several are given, the number given must
+  ! be the same as the number of quantities, and corresponding weights are
+  ! applied to corresponding quantities.  If it is not given, $w = 1$.  The
+  ! argument {\tt WeightVec}, if present, must have the same template as the
+  ! column template for A.  For each quantity, the weight vector is averaged
+  ! to the number of rows of regularization (i.e., (number of columns)~- $k$)
+  ! using $|\mathbf{\Delta}^k|$.  Then it is used as the diagonal of the
+  ! row-scaling matrix $\mathbf{W}$.  If {\tt WeightVec} is absent, one is
+  ! used.
+
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use EXPR_M, only: EXPR
+    use MATRIXMODULE_0, only: CREATEBLOCK, M_BANDED, M_FULL, &
+      & MATRIXELEMENT_T, SPARSIFY
+    use MATRIXMODULE_1, only: MATRIX_T
+    use MLSKINDS, only: R8
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
+    use OUTPUT_M, only: NEWLINE, OUTPUT
+    use TREE, only: DECORATION, NSONS, SUBTREE
+    use VECTORSMODULE, only: M_TIKHONOV, VECTOR_T
+
+    type(matrix_T), intent(inout) :: A
+    integer, intent(in) :: Orders
+    integer, intent(in) :: Quants
+    integer, intent(in) :: Weights
+    type(vector_T), pointer :: WeightVec
+    integer, intent(out) :: Rows   ! Last row used; ultimately, number of rows
+    logical, intent(in), optional :: Horiz   ! "Do horizontal regularization"
+
+    integer, parameter :: MaxRegOrd = 56 ! Maximum regularization
+    ! order.  26!/(13!)**2 < 1/EPSILON(0.0E0) < 27!/(13!)**2 for 24-bit fraction.
+    !         56!/(28!)**2 < 1/EPSILON(0.0D0) < 57!/(28!**2) for 53-bit fraction.
+
+    logical :: MyHoriz             ! Copy of Horiz if present, else .false.
+
+    error = 0
+    myHoriz = .false.
+    if ( present(horiz) ) myHoriz = horiz
+
+    ! Check relations between weights, quants, and orders fields in the
+    ! Retrieve spec.
+    if ( nsons(orders) /= 2 ) then
+      if ( quants == 0 ) then
+        call announceError ( regQuantsReq, orders )
+      else if ( nsons(orders) /= nsons(quants) ) then
+        call announceError ( fieldSizes, orders )
+      end if
+    end if
+    if ( weights /= 0 ) then
+      if ( nsons(weights) /= 2 ) then
+        if ( quants == 0 ) then
+          call announceError ( regQuantsReq, weights )
+        else if ( nsons(weights) /= nsons(quants) ) then
+          call announceError ( fieldSizes, weights )
+        end if
+      end if
+    end if
+    if ( associated(weightVec) ) then
+      if ( weightVec%template%name /= a%col%vec%template%name ) &
+        & call announceError ( regTemplate, orders )
+    end if
+
+    if ( error == 0 ) then
+
+      if ( myHoriz ) then
+        call horizReg ( a, orders, quants, weights, weightVec, rows )
+      else
+        call vertReg ( a, orders, quants, weights, weightVec, rows )
+      end if
+
+    else   ! error /= 0
+      call MLSMessage ( MLSMSG_Error, moduleName, "Regularization failed." )
+    end if ! error == 0
+
+  contains
+
+    ! --------------------------------------------  AnnounceError  -----
+    subroutine AnnounceError ( code, where )
+      use Lexer_Core, only: PRINT_SOURCE
+      use Tree, only: Where_At => Where
+
+      integer, intent(in) :: Code    ! The message number
+      integer, intent(in) :: Where   ! Where in the tree
+      logical :: LASTTIME
+
+      error = max(error,1)
+      LASTTIME = .false.
+      if ( code > 0 )then
+        RegAnnouncements(code) = &
+          & min(RegAnnouncements(code), MaxNumAnnouncements) + 1
+        LASTTIME = ( RegAnnouncements(code) + 1 > MaxNumAnnouncements )
+        if ( RegAnnouncements(code) > MaxNumAnnouncements ) return ! Suppressed
+      endif
+      call output ( '***** At or near ' )
+      call print_source ( where_at(where) )
+      call output ( ', Regularization complained: ' )
+      select case ( code )
+      case ( fieldSizes )       ! size(regOrders) /= size(regQuants)
+        call output ( "Number of values of regOrders or regWeights shall be 1 " )
+        call output ( "or the same as for regQuants.", advance="no" )
+      case ( notRegularized )
+        call output ( "Some blocks or quantities not regularized, or " )
+        call output ( "regularized at lower order than requested", advance="no" )
+      case ( orderTooBig )
+        call output ( "Regularization order exceeds " )
+        call output ( maxRegOrd, advance="no" )
+      case ( regQuantsReq )     ! RegQuants required if size(regOrders) /= 1
+        call output ( "The regQuants field is required if more than one order " )
+        call output ( "is specified.", advance="no" )
+      case ( regTemplate )
+        call output ( "The template for the regularization weights vector is " )
+        call output ( "not the same as for the columns of the Jacobian matrix.", &
+          & advance='yes' )
+      case ( unitless )         ! regOrders must be unitless
+        call output ( "The orders shall be unitless.", advance="no" )
+      end select
+      if ( LASTTIME ) call output( '(Suppressing further notice of this)' )
+      call newLine
+
+    end subroutine AnnounceError
+
+    ! ---------------------------------------------------  Coeffs  -----
+    subroutine Coeffs ( Ord, Wt, C, WtVec, N )
+    !{ Calculate binomial coefficients with alternating sign,
+    ! $(-1)^i C_i^n = (-1)^i \frac{n!}{i! (n-i)!}$
+    !  by the recursion
+    !  $C_0^n = 1\text{, } C_i^n = -(n-i+1) C_{i-1}^n / i$.
+    ! Notice that $C_i^n = -1^n C_{n-i}^n$, so we only need
+    ! to go halfway through the array.
+      integer, intent(in) :: Ord
+      real(r8), intent(in) :: Wt                    ! Weight for all coeffs
+      real(r8), intent(out) :: C(0:)
+      real(r8), intent(inout), optional :: WtVec(:) ! Weights vector
+      integer, intent(in), optional :: N            ! Useful elements of WtVec
+
+      integer :: I, J                   ! Subscripts, Loop inductors
+      integer :: S                      ! Sign of regularization coefficient.
+
+      s = 1 - 2*mod(ord,2) ! +1 for even order, -1 for odd order
+      c(0) = wt * 0.5 ** ord
+      c(ord) = s * c(0)
+      do i = 1, ord / 2
+        c(i) = ( -(ord-i+1) * c(i-1) ) / i
+        c(ord-i) = s * c(i)
+      end do
+
+      ! If there is a weight vector, it's the same length as the number
+      ! of columns.  But we want to weight the rows.  So construct a new
+      ! weight vector that is the same length as the number of rows, i.e.,
+      ! (number of columns) - (order), by averaging using the absolute
+      ! value of the coefficients.
+
+      if ( present(wtVec) ) then
+        do i = 1, n - ord
+          j = min(i+ord,n)
+          wtVec(i) = dot_product(wtVec(i:j),abs(c(0:j-i)))
+        end do
+      end if
+    end subroutine Coeffs
+
+    ! ------------------------------------------------  FillBlock  -----
+    subroutine FillBlock ( B, Ord, Rows, C1, C2, noChans, noSurfs, Wt, WtVec )
+    ! Fill the block B with regularization coefficients starting at row Rows+1
+    ! and columns C1 to C2.  Update Rows to the last row filled.
+      type(matrixElement_T), intent(inout) :: B   ! Block to fill
+      integer, intent(in) :: Ord        ! Order of regularization operator
+      integer, intent(inout) :: Rows    ! Last row used
+      integer, intent(in) :: C1, C2     ! Columns to fill
+      integer, intent(in) :: noChans    ! Number of channels
+      integer, intent(in) :: noSurfs    ! Number of surfaces
+      real(r8), intent(in) :: Wt        ! Scalar weight for coefficients
+      real(r8), intent(inout), optional :: WtVec(:) ! Weights vector
+
+      real(r8), dimension(0:maxRegOrd) :: C ! Binomial regularization
+      ! coefficients in reverse order.
+      integer :: I, J                   ! Subscripts, Loop inductors
+      integer :: K                      ! Column being filled
+      integer :: MaxRow                 ! Maximum row to bed = ncol - ord
+      integer :: MyOrd                  ! min(Ord, C2-C1)
+      integer :: Ncol                   ! Number of columns -- C2 - C1 + 1
+      integer :: Nv                     ! Next element in VALUES component
+
+      myOrd = min(ord,(c2-c1)/noChans)
+      ncol = ( c2 - c1 ) / noChans + 1
+      maxRow = ncol - myOrd
+
+      call coeffs ( myOrd, wt, c, wtVec, ncol ) ! Compute regularization operator
+
+      ! Each row has the binomial coefficients.  Therefore, each column
+      ! has the binomial coefficients in reverse order (which wouldn't
+      ! matter if the signs didn't alternate).  Except the first and
+      ! last myOrd columns have 1, 2, ..., myOrd and myOrd, myOrd-1, ..., 1
+      ! elements.  E.g., for order three, the first four rows look like:
+
+      !  1  -3   3  -1
+      !      1  -3   3  -1
+      !          1  -3   3  -1
+      !              1  -3   3  -1
+      ! (assuming there are at least seven columns)
+
+
+      ! There is a twist on that for multi-channel cases, here we store (e.g.
+      ! for three channels:
+      !  1  0  0 -3  0  0  3  0  0  -1
+      !           1  0  0 -3  0  0   3  0  0 -1
+      !                    1  0  0  -3  0  0  3  0  0 -1
+      !                              1  0  0 -3  0  0  3  0  0  -1
+      ! This routine is called multiple times, once for each channel. For
+      ! simplicity such matrices are created full and later sparsified, as any
+      ! other approach proves very difficult, which is not obvious by looking
+      ! at this routine alone, but in context when one realizes that the masks
+      ! may be different from channel to channel.
+
+      ! I think I'll split the two possibilities out at the top level, rather
+      ! than interspersing lots of if statements in the code
+
+      if ( noChans == 1 ) then 
+        k = c1
+        ! Make sure that r2 is legal so far
+        ! Fill in coefficients from the end of C(:myOrd) (but no more than
+        ! maxRow-1 of them)
+        do i = 1, myOrd + 1
+          nv = b%r2(k-1) + 1
+          j = min(i,maxRow) ! Number of coefficients
+          b%r1(k) = c1
+          b%r2(k) = nv + j - 1
+          if ( present(wtVec) ) then
+            b%values(nv:nv+j-1,1) = - c(myOrd-i+1:myOrd-i+j) * wtVec(i:i+j-1)
+          else
+            b%values(nv:nv+j-1,1) = - c(myOrd-i+1:myOrd-i+j)
+          end if
+          k = k + 1
+        end do
+        ! Fill in coefficients from all of C(:myOrd)
+        do i = myOrd+2, maxRow
+          nv = b%r2(k-1) + 1
+          b%r1(k) = c1 - 1 + i - myOrd
+          b%r2(k) = nv + myOrd
+          if ( present(wtVec) ) then
+            b%values(nv:nv+myOrd,1) = - c(0:myOrd) * wtVec(i:i+myOrd)
+          else
+            b%values(nv:nv+myOrd,1) = - c(0:myOrd)
+          end if
+          k = k + 1
+        end do
+        ! Fill in coefficients from the beginning of C(:myOrd) (but no more
+        ! than maxRow-1 of them)
+        j = min(maxrow-1,myOrd) - 1 ! Index of last coefficient
+        do i = max(myOrd+2,maxRow+1), ncol
+          nv = b%r2(k-1) + 1
+          b%r1(k) = c1 -1 + i - myOrd
+          b%r2(k) = nv + j
+          if ( present(wtVec) ) then
+            b%values(nv:nv+j,1) = - c(0:j) * wtVec(ncol-j:ncol)
+          else
+            b%values(nv:nv+j,1) = - c(0:j)
+          end if
+          j = j - 1
+          k = k + 1
+        end do
+        ! Put the last value in all the later r2's.  Granted later
+        ! calls may overwrite these, but even so.
+        do i = k, b%nCols
+          b%r2(i) = b%r2(k-1)
+          b%r1(i) = b%nRows + 1 ! Shouldn't matter, but CheckInterity fussy
+        end do
+      else
+        ! Here, because the matrix is full I can create it by
+        ! row rather than column, which makes life much easier
+        ! j is our actual channel number (deduced)
+        j = mod ( c1-1, noChans ) + 1
+        ! k is our actual surface number (deduced)
+        k = ( c1-1 ) / noChans + 1
+
+        if ( present(wtVec) ) then
+          do i = 1, maxRow
+            b%values ( i+k-1+(j-1)*noSurfs, &
+              & c1+(i-1)*noChans : c1+(i-1+myord)*noChans : noChans ) = &
+              & - c(0:myord) * wtVec ( i : i+myOrd )
+          end do
+        else
+          do i = 1, maxRow
+            b%values ( i+k-1+(j-1)*noSurfs, &
+              & c1+(i-1)*noChans : c1+(i-1+myord)*noChans : noChans ) = &
+              & - c(0:myord)
+          end do
+        end if
+      end if
+      rows = rows + maxRow
+    end subroutine FillBlock
+
+    ! ------------------------------------------  GetOrdAndWeight  -----
+    subroutine GetOrdAndWeight ( Orders, Quants, Weights, TheQuant, Ord, Wt )
+      ! Get the regularization order and weight for a quantity
+      integer, intent(in) :: Orders, Quants, Weights   ! Tree node indices
+      integer, intent(in) :: TheQuant   ! The interesting quantity
+      integer, intent(out) :: Ord       ! Order for TheQuant
+      real(r8), intent(out) :: Wt       ! Weight for TheQuant
+
+      integer :: I                 ! Subscript, Loop inductor
+      integer :: Units(2)          ! Units of value returned by EXPR
+      double precision :: Value(2) ! Value returned by EXPR
+
+      ord = 0
+      wt = 1.0_r8
+      if ( quants == 0 ) then ! only one order and weight allowed
+        call expr ( subtree(2,orders), units, value )
+        ord = nint(value(1))
+        if ( weights /= 0 ) then
+          call expr ( subtree(2,weights), units, value )
+          wt = value(1)
+        end if
+      else
+        do i = 2, nsons(quants)
+          if ( decoration(decoration(subtree(i,quants))) == theQuant ) then
+            call expr ( subtree(min(i,nsons(orders)),orders), units, value )
+            ord = nint(value(1))
+            if ( weights /= 0 ) then
+              call expr ( subtree(min(i,nsons(weights)),weights), units, value )
+              wt = value(1)
+            end if
+            return
+          end if
+        end do
+      end if
+    end subroutine GetOrdAndWeight
+
+    ! -------------------------------------------------  HorizReg  -----
+    subroutine HorizReg ( A, Orders, Quants, Weights, WeightVec, Rows )
+
+      ! Each block of A corresponds to a profile.  Therefore, each horizontal
+      ! regularization operator is spread out over all of the blocks for a
+      ! given quantity, occupying the diagonal elements of those blocks.  If
+      ! there is a mask that excludes some altitudes/channels from 
+      ! the solution, it will not appear in every block.
+
+      ! Note that, unlike the vertical regularization, no additional thought
+      ! is required to handle the multi-channel quantities.
+
+      use MatrixModule_0, only: M_Absent, UpdateDiagonal
+
+      type(matrix_T), intent(inout) :: A
+      integer, intent(in) :: Orders, Quants, Weights ! Tree node indices
+      type(vector_T), pointer :: WeightVec
+      integer, intent(out) :: Rows ! Last row used; ultimately, number of rows
+
+
+      real(r8) :: C(0:maxRegOrd)   ! Binomial regularization coefficients
+      integer :: C1, C2            ! Column boundaries, esp. if a mask is used.
+      integer :: H                 ! Index for a height / channel
+      integer :: I, J              ! Subscripts, Loop inductors
+      integer :: IB                ! Which block is being regularized
+      integer :: II                ! Index of an instance
+
+                                   ! Which blocks are instances of this quantity?
+      integer :: Insts(maxVal(a%col%vec%quantities%template%noInstances))
+
+      integer :: IQ                ! Index of a quantity
+      integer :: MyOrd             ! Temporary, ord or less
+      logical :: Need(a%col%nb)    ! "Need to do the quantity in this block of A"
+      integer :: NB                ! Number of column blocks of A
+      integer :: NI                ! Number of instances of this quantity
+      integer :: NQ                ! The quantity index in the col vector
+      integer :: Ord               ! Order for the current block
+      logical :: Warn              ! Send warning message to MLSMessage
+      real(r8) :: Wt               ! The weight for the current block
+      real(r8) :: WtVec(size(insts)) ! In case there is a weight vector
+
+      nb = a%col%nb
+      need = .true.                ! All blocks needed
+      rows = 0
+      warn = .false.
+      wt = 1.0
+
+      do ib = 1, nb
+        nq = a%col%quant(ib)
+        if ( need(ib) ) then
+          if ( quants == 0 ) then
+            need(ib) = .false.     ! Going to do it
+          else
+            do i = 2, nsons(quants)
+              if ( decoration(decoration(subtree(i,quants))) == &
+                & a%col%vec%template%quantities(nq) ) then
+                need(ib) = .false. ! Going to do it
+              end if
+            end do
+          end if
+          if ( need(ib) ) cycle    ! Not going to do it, and not coming back
+          ni = a%col%vec%quantities(nq)%template%noInstances
+          j = 0
+          do i = ib, nb            ! Enumerate the blocks for this quantity
+            if ( a%col%quant(i) == nq ) then
+              j = j + 1
+              insts(j) = i
+            end if
+          end do
+          if ( j /= ni ) stop "!!! WHOOPS !!!"
+          need(insts(:ni)) = .false.    ! Remember that we've done them
+        end if
+
+        call getOrdAndWeight ( orders, quants, weights, &
+          & a%col%vec%template%quantities(nq), ord, wt )
+
+        if ( ord > ni-1 ) then
+          warn = .true.
+          ord = ni - 1
+        end if
+        if ( ord > maxRegOrd ) then
+          call announceError ( orderTooBig, orders )
+          ord = maxRegOrd
+        end if
+        if ( error /= 0 ) warn = .true.
+        if ( ord /= 0 .and. wt > 0.0_r8 .and. error == 0 ) then
+          do h = 1, a%block(1,insts(1))%nCols ! for each height / channel.
+            ! Scan for blocks of consecutive zero values of M_Tikhonov bits.
+            c2 = 1
+o:          do while ( c2 <= ni )
+              c1 = c2
+              do ! look for a zero to start
+                iq = a%col%quant(insts(c1))
+                if ( .not. associated(a%col%vec%quantities(iq)%mask) ) exit
+                ii = a%col%inst(insts(c1))
+                if ( iand(ichar(a%col%vec%quantities(iq)%mask(h,ii)),M_Tikhonov) &
+                  & == 0 ) exit
+                if ( c1 >= ni ) exit o
+                c1 = c1 + 1
+              end do
+              c2 = c1
+              do ! look for a one (or the end) to end
+                c2 = c2 + 1
+                if ( c2 > ni ) exit
+                iq = a%col%quant(insts(c2))
+                if ( .not. associated(a%col%vec%quantities(iq)%mask) ) cycle
+                ii = a%col%inst(insts(c2))
+                if ( iand(ichar(a%col%vec%quantities(iq)%mask(h,ii)),M_Tikhonov) &
+                  & /= 0 ) exit
+              end do
+
+              ! Compute regularization operator
+              myOrd = min(ord,c2-c1)
+              if ( myOrd < ord ) warn = .true.
+              if ( myOrd <= 1 ) cycle
+              if ( associated(weightVec) ) then
+                do j = c1, c2-1
+                  i = insts(j)
+                  iq = a%col%quant(i)
+                  ii = a%col%inst(i)
+                  if ( weightVec%quantities(iq)%values(h,ii) /= 0.0 ) then
+                    wtVec(j) = 1.0 / weightVec%quantities(iq)%values(h,ii)
+                  else
+                    wtVec(j) = 0.0
+                  end if
+                end do
+                call coeffs ( myOrd, wt, c, wtVec(c1:c2-1), c2-c1 )
+              else
+                call coeffs ( myOrd, wt, c )
+                wtVec = 1.0_r8
+              end if
+
+              ! Plug it in
+              do i = c1, c2 - 1 - myOrd
+                do j = i, i + myOrd
+                  if ( a%block(insts(i),insts(j))%kind == m_absent ) &
+                    & call updateDiagonal ( a%block(insts(i),insts(j)), 0.0_r8 )
+                  a%block(insts(i),insts(j))%values(h,1) = c(j-i) * wtVec(i)
+                end do
+              end do
+            end do o
+          end do ! h
+        end if
+
+      end do
+
+      if ( warn ) call announceError ( notRegularized, orders )
+
+    end subroutine HorizReg
+
+    ! --------------------------------------------------  VertReg  -----
+    subroutine VertReg ( A, Orders, Quants, Weights, WeightVec, Rows )
+
+      ! Each block of A corresponds to a profile.  Therefore, each vertical
+      ! regularization operator is contained entirely within a block.  If
+      ! there is a mask that excludes some altitudes from the solution, it
+      ! will not fill the block.
+
+      type(matrix_T), intent(inout) :: A
+      integer, intent(in) :: Orders, Quants, Weights ! Tree node indices
+      type(vector_T), pointer :: WeightVec
+      integer, intent(out) :: Rows ! Last row used; ultimately, number of rows
+
+      integer :: C1, C2            ! Column boundaries, esp. if a mask is used.
+      integer :: CHAN              ! Channel
+      integer :: I                 ! Subscript, Loop inductor
+      integer :: IB                ! Which block is being regularized
+      integer :: MaxCols           ! Columns in block with with max cols.
+      integer :: NB                ! Number of column blocks of A
+      integer :: NCOL              ! Number of columns in a block of A
+      integer :: NI, NQ            ! Indices for instance and quantity
+      integer :: NOCHANS           ! Number of channels
+      integer :: NOSURFS           ! Number of surfaces
+      integer :: NROW              ! Number of rows in a block of A
+      integer :: Ord               ! Order for the current block
+      logical :: Warn              ! Send warning message to MLSMessage
+      real(r8) :: Wt               ! The weight for the current block
+      real(r8), pointer :: WtVec(:)! In case a quantity has a vector weight
+
+      nb = a%col%nb
+      rows = 0
+      warn = .false.
+      wt = 1.0
+
+      if ( quants == 0 ) then ! Doing all of the blocks
+        maxCols = maxval(a%col%nelts)
+      else
+        maxCols = 0
+        do ib = 1, nb ! Find number of columns in widest block
+          do i = 2, nsons(quants)
+            if ( decoration(decoration(subtree(i,quants))) == &
+              & a%col%vec%template%quantities(a%col%quant(ib)) ) then
+                maxCols = max(maxCols, a%col%nelts(ib))
+                exit
+            end if
+          end do
+        end do
+      end if
+      nullify ( wtVec )
+      call allocate_test ( wtVec, maxCols, "Weight vector", moduleName )
+
+      do ib = 1, nb             ! Loop over matrix blocks = quantities
+        ni = a%col%inst(ib)
+        nq = a%col%quant(ib)
+        call getOrdAndWeight ( orders, quants, weights, &
+          & a%col%vec%template%quantities(nq), ord, wt )
+        ncol = a%col%nelts(ib)
+        nrow = a%row%nelts(ib)
+        noChans = a%col%vec%quantities(nq)%template%noChans
+        noSurfs = a%col%vec%quantities(nq)%template%noSurfs
+        if ( ord*noChans > ncol-1 ) then
+          warn = .true.
+          ord = ncol/noChans - 1
+        end if
+        if ( ord > maxRegOrd ) then
+          call announceError ( orderTooBig, orders )
+          ord = maxRegOrd
+        end if
+        if ( error /= 0 ) warn = .true.
+        if ( ord /= 0 .and. wt > 0.0_r8 .and. error == 0 ) then
+          if ( noChans == 1 ) then
+            call createBlock ( a%block(ib,ib), nrow, ncol, m_banded, &
+              & (ncol-ord)*(ord+1), forWhom="Regularization" )
+            a%block(ib,ib)%r1 = 0         ! in case there's a mask
+            a%block(ib,ib)%r2 = 0
+          else
+            call createBlock ( a%block(ib,ib), nrow, ncol, m_full, forWhom="Regularization" )
+          end if
+          a%block(ib,ib)%values = 0.0_r8
+
+          rows = rows + noChans
+          if ( associated ( weightVec ) ) then
+            wtVec(1:weightVec%quantities(nq)%template%instanceLen) = 0.0
+            where ( weightVec%quantities(nq)%values(:,ni) /= 0.0 )
+              wtVec(1:weightVec%quantities(nq)%template%instanceLen) = &
+                & 1.0 / weightVec%quantities(nq)%values(:,ni)
+            end where
+          end if
+
+          if ( .not. associated(a%col%vec%quantities(nq)%mask) ) then
+            if ( associated(weightVec) ) then
+              do chan = 1, noChans
+                call fillBlock ( a%block(ib,ib), ord, rows, chan, &
+                  & ncol, noChans, noSurfs, wt, wtVec(1:ncol:noChans) )
+              end do
+            else
+              do chan = 1, noChans
+                call fillBlock ( a%block(ib,ib), ord, rows, chan, &
+                  & ncol, noChans, noSurfs, wt )
+              end do
+            end if
+          else
+            ! Scan for blocks of consecutive zero values of M_Tikhonov bits.
+            do chan = 1, noChans
+              c2 = chan
+              o: do while ( c2 <= a%block(ib,ib)%ncols )
+                c1 = c2
+                do while ( iand(ichar(a%col%vec%quantities(nq)%mask(c1,ni)),M_Tikhonov) &
+                  & /= 0 )
+                  c1 = c1 + noChans
+                  if ( c1 >= a%block(ib,ib)%ncols ) exit o
+                end do
+                c2 = c1 + noChans
+                do while ( iand(ichar(a%col%vec%quantities(nq)%mask(c2,ni)),M_Tikhonov) &
+                  & == 0 )
+                  c2 = c2 + noChans
+                  if ( c2 > a%block(ib,ib)%ncols ) exit
+                end do
+                if ( associated(weightVec) ) then
+                  call fillBlock ( a%block(ib,ib), ord, rows, c1, c2-1, noChans, &
+                    & noSurfs, wt, wtVec(c1:c2-noChans:noChans) )
+                else
+                  call fillBlock ( a%block(ib,ib), ord, rows, c1, c2-1, noChans, &
+                    & noSurfs, wt )
+                end if
+              end do o
+            end do
+          end if
+          error = 0
+          
+          ! Now if block created full, sparsify it in place
+          call Sparsify ( a%block(ib,ib) )
+        end if
+      
+      end do
+      call deallocate_test ( wtVec, "Weight vector", moduleName )
+      if ( warn ) call announceError ( notRegularized, orders )
+    end subroutine VertReg
+
+  end subroutine Regularize
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: Regularization.f90,v 2.42 2013/09/24 23:47:22 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Regularization
+
+! $Log: Regularization.f90,v $
+! Revision 2.42  2013/09/24 23:47:22  vsnyder
+! Use Where instead of Source_Ref for messages
+!
+! Revision 2.41  2012/07/11 20:02:54  pwagner
+! Suppress annoying messages after 10
+!
+! Revision 2.40  2009/06/23 18:46:18  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.39  2006/11/29 01:07:31  vsnyder
+! Fix up some comments
+!
+! Revision 2.38  2006/08/02 19:54:15  vsnyder
+! Tell CreateBlock it's regularization needing one for leak tracking
+!
+! Revision 2.37  2005/06/22 18:57:02  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.36  2003/06/20 19:38:26  pwagner
+! Allows direct writing of output products
+!
+! Revision 2.35  2003/05/16 02:57:13  vsnyder
+! Removed USE's for unreferenced symbols
+!
+! Revision 2.34  2003/01/10 02:46:40  livesey
+! Various bug fixes, and now handles multi-channel quantities vertically
+! (horizontally always worked, but made that clear in comments).
+!
+! Revision 2.33  2002/11/20 21:04:08  livesey
+! Bug fix in horiztonal regularization of unmasked quantities (only worked
+! for quantities which had masks upto now).
+!
+! Revision 2.32  2002/10/30 00:09:25  vsnyder
+! Fix bugs in handling wtVec -- hopefully without introducing new ones
+!
+! Revision 2.31  2002/10/22 19:23:28  livesey
+! Fixed the bug with hRegVweightVec not being reciprocated.
+!
+! Revision 2.30  2002/10/21 22:27:44  vsnyder
+! Update comments to reflect reality
+!
+! Revision 2.29  2002/10/08 17:36:22  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.28  2002/10/03 16:13:23  livesey
+! Fixed some blunders in my previous commit.  Mainly due to indexing
+! col%vec%quantities wrongly.
+!
+! Revision 2.27  2002/10/02 19:24:48  livesey
+! Changed regWeightVec to be a reciprocal, changed regQuants to choose
+! based on quantityTemplate rather than quantityType.
+!
+! Revision 2.26  2002/09/23 22:08:20  vsnyder
+! Fixed the error messages to say Regularization instead of RetrievalModule
+!
+! Revision 2.25  2002/08/29 16:18:39  livesey
+! Bug fix in horizontal regularization
+!
+! Revision 2.24  2002/08/28 01:31:23  vsnyder
+! Yet more blunders in horizontal Tikhonov regularization
+!
+! Revision 2.23  2002/08/28 00:51:04  vsnyder
+! Correct more blunders in Tikhonov regularization
+!
+! Revision 2.22  2002/08/28 00:01:04  vsnyder
+! Correct two blunders in GetOrdAndWeight
+!
+! Revision 2.21  2002/08/24 01:38:28  vsnyder
+! Implement horizontal regularization
+!
+! Revision 2.20  2002/08/23 19:03:48  vsnyder
+! Fix a bug in row indexing; pave the way for horizontal regularization
+!
+! Revision 2.19  2002/08/20 19:54:19  vsnyder
+! Re-arrange to use a matrix with the same row and column vector definitions.
+! Don't try to put all of the regularization into one block.  Instead, fill
+! each diagonal block of the matrix with regularization for that quantity
+! and instance.
+!
+! Revision 2.18  2002/08/16 21:33:02  livesey
+! Bug fix in tooFewRows message
+!
+! Revision 2.17  2002/08/15 22:45:05  livesey
+! Lots of array bounds/indexing changes (fixes hopefully).
+!
+! Revision 2.16  2002/08/08 22:02:05  vsnyder
+! Implement mask and weight vector.  Make AnnounceError an internal subroutine
+! instead of a module subroutine.  Move USE statements into subroutines.
+!
+! Revision 2.15  2002/08/03 01:15:36  vsnyder
+! Fixed the comment about row sizes
+!
+! Revision 2.14  2002/07/30 23:20:20  vsnyder
+! Use order ncol-1 instead of zero for narrow blocks, Warn if ord < ncol-1.
+! Use the weight (duh!). Use the row block with the most rows.
+!
+! Revision 2.13  2002/07/02 01:45:56  vsnyder
+! Regularization.f90
+!
+! Revision 2.12  2002/05/22 19:15:06  vsnyder
+! Output the number of rows used for regularization conditions
+!
+! Revision 2.11  2002/05/11 01:10:16  vsnyder
+! Big revision... Maybe it's right this time.
+!
+! Revision 2.10  2002/05/07 01:03:36  vsnyder
+! Allow different weight for each quantity, or one weight for the whole
+! shebang.  Don't regularize a block if its weight is <= zero.
+!
+! Revision 2.9  2002/02/01 00:48:26  vsnyder
+! Get rid of 'extra' field of RC_Info
+!
+! Revision 2.8  2001/10/09 20:36:04  vsnyder
+! Repair calculation of banded representation
+!
+! Revision 2.7  2001/06/28 20:42:42  vsnyder
+! Update comments
+!
+! Revision 2.6  2001/06/26 20:16:41  vsnyder
+! Don't look at nsons(0)
+!
+! Revision 2.5  2001/06/26 20:13:24  vsnyder
+! Fixed a blunder -- call call announceError
+!
+! Revision 2.4  2001/06/26 19:01:00  vsnyder
+! Specify regularization orders according to quantities
+!
+! Revision 2.3  2001/06/22 00:41:54  vsnyder
+! Replace use of SBINOM by in-line calculation of binomial coefficients
+!
+! Revision 2.2  2001/06/02 16:58:46  livesey
+! Temporary fix to let it compile before Paul has a go.
+! (commented out interface to sbinom and wrote empty routine instead).
+!
+! Revision 2.1  2001/06/02 01:40:29  vsnyder
+! Initial commit
+!
+@
+
+
+2.42
+log
+@Use Where instead of Source_Ref for messages
+@
+text
+@a388 1
+      integer :: Type              ! Type of value returned by EXPR
+d395 1
+a395 1
+        call expr ( subtree(2,orders), units, value, type )
+d398 1
+a398 1
+          call expr ( subtree(2,weights), units, value, type )
+d404 1
+a404 1
+            call expr ( subtree(min(i,nsons(orders)),orders), units, value, type )
+d407 1
+a407 1
+              call expr ( subtree(min(i,nsons(weights)),weights), units, value, type )
+d710 1
+a710 1
+       "$Id: Regularization.f90,v 2.41 2012/07/11 20:02:54 pwagner Exp $"
+d720 3
+@
+
+
+2.41
+log
+@Suppress annoying messages after 10
+@
+text
+@d168 1
+a168 1
+      use Tree, only: SOURCE_REF
+d183 1
+a183 1
+      call print_source ( source_ref(where) )
+d711 1
+a711 1
+       "$Id: Regularization.f90,v 2.40 2009/06/23 18:46:18 pwagner Exp $"
+d721 3
+@
+
+
+2.40
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d25 1
+a25 1
+       "$RCSfile: $"
+d29 19
+d99 10
+a108 10
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+    use Expr_M, only: EXPR
+    use MatrixModule_0, only: CreateBlock, M_Banded, M_Full, &
+      & MatrixElement_T, Sparsify
+    use MatrixModule_1, only: Matrix_T
+    use MLSCommon, only: R8
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use Output_M, only: Output
+    use Tree, only: DECORATION, NSONS, SUBTREE
+    use VectorsModule, only: M_Tikhonov, Vector_T
+a121 10
+    ! Error message codes
+    integer, parameter :: FieldSizes = 1   ! size(regOrders) /= size(regQuants)
+    integer, parameter :: NotRegularized = FieldSizes + 1
+    integer, parameter :: OrderTooBig = NotRegularized + 1
+    integer, parameter :: RegQuantsReq = OrderTooBig + 1 ! RegQuants required
+    integer, parameter :: RegTemplate = RegQuantsReq + 1 ! Weight /= column of J
+    integer, parameter :: Unitless = RegTemplate + 1     ! Orders must be unitless
+
+    integer :: Error               ! non-zero if an error occurs
+
+d167 1
+a167 1
+      use Lexer_Core, only: Print_Source
+d172 1
+d175 7
+d188 1
+a188 1
+        call output ( "or the same as for regQuants.", advance="yes" )
+d191 1
+a191 1
+        call output ( "regularized at lower order than requested", advance="yes" )
+d194 1
+a194 1
+        call output ( maxRegOrd, advance="yes" )
+d197 1
+a197 1
+        call output ( "is specified.", advance="yes" )
+d203 1
+a203 1
+        call output ( "The orders shall be unitless.", advance="yes" )
+d205 2
+d711 1
+a711 1
+       "$Id: read_apriori.f90 is it here $"
+d721 3
+@
+
+
+2.39
+log
+@Fix up some comments
+@
+text
+@d25 1
+a25 1
+       "$RCSfile: Regularization.f90,v $"
+d689 1
+a690 1
+!---------------------------- RCS Ident Info -------------------------------
+d692 2
+a693 3
+       "$Id: Regularization.f90,v 2.38 2006/08/02 19:54:15 vsnyder Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d695 1
+d697 1
+d702 3
+@
+
+
+2.38
+log
+@Tell CreateBlock it's regularization needing one for leak tracking
+@
+text
+@d77 2
+a78 1
+  ! row-scaling matrix $W$.  If {\tt WeightVec} is absent, one is used.
+d277 4
+a280 4
+      ! This routine is called multiple times, once for each channel.
+      ! For simplicity such matrices are created full and later sparsified
+      ! any other approach prooves very difficult, not obvious by looking at
+      ! this routine alone, but in context when one realizes that the masks
+d692 1
+a692 1
+       "$Id: Regularization.f90,v 2.37 2005/06/22 18:57:02 pwagner Exp $"
+d701 3
+@
+
+
+2.37
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d25 1
+a25 1
+       "$RCSfile: $"
+d619 1
+a619 1
+              & (ncol-ord)*(ord+1) )
+d623 1
+a623 1
+            call createBlock ( a%block(ib,ib), nrow, ncol, m_full )
+d691 1
+a691 1
+       "$Id: $"
+d700 3
+@
+
+
+2.36
+log
+@Allows direct writing of output products
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d23 1
+a23 4
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
+       "$Id: Regularization.f90,v 2.35 2003/05/16 02:57:13 vsnyder Exp $"
+  character (len=len(idParm)), private :: Id = idParm
+d25 1
+a25 1
+       "$RCSfile: Regularization.f90,v $"
+d689 5
+d700 3
+@
+
+
+2.35
+log
+@Removed USE's for unreferenced symbols
+@
+text
+@d17 1
+a17 1
+       "$Id: Regularization.f90,v 2.34 2003/01/10 02:46:40 livesey Exp $"
+d132 1
+a132 1
+      if ( weightVec%template%id /= a%col%vec%template%id ) &
+d690 3
+@
+
+
+2.34
+log
+@Various bug fixes, and now handles multi-channel quantities vertically
+(horizontally always worked, but made that clear in comments).
+@
+text
+@d17 1
+a17 1
+       "$Id: Regularization.f90,v 2.33 2002/11/20 21:04:08 livesey Exp $"
+d76 1
+a76 1
+    use MatrixModule_0, only: CreateBlock, M_Absent, M_Banded, M_Full, &
+d690 4
+@
+
+
+2.33
+log
+@Bug fix in horiztonal regularization of unmasked quantities (only worked
+for quantities which had masks upto now).
+@
+text
+@d10 1
+a10 1
+
+d17 1
+a17 1
+       "$Id: Regularization.f90,v 2.32 2002/10/30 00:09:25 vsnyder Exp $"
+d76 2
+a77 2
+    use MatrixModule_0, only: CreateBlock, M_Absent, M_Banded, &
+      & MatrixElement_T
+d225 1
+a225 1
+    subroutine FillBlock ( B, Ord, Rows, C1, C2, Wt, WtVec )
+d232 2
+d246 3
+a248 2
+      myOrd = min(ord,c2-c1)
+      ncol = c2 - c1 + 1
+d262 2
+d265 72
+a336 1
+      ! (assuming there are at least seven columns)
+a337 9
+      k = c1
+      maxRow = ncol - myOrd
+      ! Fill in coefficients from the end of C(:myOrd) (but no more than
+      ! maxRow-1 of them)
+      do i = 1, myOrd + 1
+        nv = b%r2(k-1) + 1
+        j = min(i,maxRow) ! Number of coefficients
+        b%r1(k) = i
+        b%r2(k) = nv + j - 1
+d339 5
+a343 1
+          b%values(nv:nv+j-1,1) = - c(myOrd-i+1:myOrd-i+j) * wtVec(i:i+j-1)
+d345 5
+a349 1
+          b%values(nv:nv+j-1,1) = - c(myOrd-i+1:myOrd-i+j)
+d351 1
+a351 29
+        k = k + 1
+      end do
+      ! Fill in coefficients from all of C(:myOrd)
+      do i = myOrd+2, maxRow
+        nv = b%r2(k-1) + 1
+        b%r1(k) = i
+        b%r2(k) = nv + myOrd
+        if ( present(wtVec) ) then
+          b%values(nv:nv+myOrd,1) = - c(0:myOrd) * wtVec(i:i+myOrd)
+        else
+          b%values(nv:nv+myOrd,1) = - c(0:myOrd)
+        end if
+        k = k + 1
+      end do
+      ! Fill in coefficients from the beginning of C(:myOrd) (but no more
+      ! than maxRow-1 of them)
+      j = min(maxrow-1,myOrd) - 1 ! Index of last coefficient
+      do i = max(myOrd+2,maxRow+1), ncol
+        nv = b%r2(k-1) + 1
+        b%r1(k) = i
+        b%r2(k) = nv + j
+        if ( present(wtVec) ) then
+          b%values(nv:nv+j,1) = - c(0:j) * wtVec(ncol-j:ncol)
+        else
+          b%values(nv:nv+j,1) = - c(0:j)
+        end if
+        j = j - 1
+        k = k + 1
+      end do
+d398 5
+a402 2
+      ! there is a mask that excludes some altitudes from the solution, it
+      ! will not appear in every block.
+d414 1
+a414 1
+      integer :: H                 ! Index for a height
+d478 1
+a478 1
+          do h = 1, a%block(1,insts(1))%nCols ! for each height...
+d556 1
+d563 2
+d600 3
+a602 1
+        if ( ord > ncol-1 ) then
+d604 1
+a604 1
+          ord = ncol - 1
+d612 8
+a619 4
+          call createBlock ( a%block(ib,ib), nrow, ncol, m_banded, &
+            & (ncol-ord)*(ord+1) )
+          a%block(ib,ib)%r1 = 0         ! in case there's a mask
+          a%block(ib,ib)%r2 = 0
+d622 8
+a629 1
+          rows = rows + 1
+a631 2
+            c1 = 1
+            c2 = ncol
+d633 4
+a636 6
+              wtVec(1:weightVec%quantities(nq)%template%instanceLen) = 0.0
+              where ( weightVec%quantities(nq)%values(:,ni) /= 0.0 )
+                wtVec(1:weightVec%quantities(nq)%template%instanceLen) = &
+                  & 1.0 / weightVec%quantities(nq)%values(:,ni)
+              end where
+              call fillBlock ( a%block(ib,ib), ord, rows, 1, ncol, wt, wtVec )
+d638 4
+a641 1
+              call fillBlock ( a%block(ib,ib), ord, rows, 1, ncol, wt )
+d645 5
+a649 4
+            c2 = 1
+o:          do while ( c2 <= a%block(ib,ib)%ncols )
+              c1 = c2
+              do while ( iand(ichar(a%col%vec%quantities(nq)%mask(c1,ni)),M_Tikhonov) &
+d651 5
+a655 5
+                if ( c1 >= a%block(ib,ib)%ncols ) exit o
+                c1 = c1 + 1
+              end do
+              c2 = c1 + 1
+              do while ( iand(ichar(a%col%vec%quantities(nq)%mask(c2,ni)),M_Tikhonov) &
+d657 12
+a668 13
+                c2 = c2 + 1
+                if ( c2 > a%block(ib,ib)%ncols ) exit
+              end do
+              if ( associated(weightVec) ) then
+                wtVec = 0.0_r8
+                where ( weightVec%quantities(nq)%values(c1:c2-1,ni) /= 0.0 )
+                  wtVec ( c1 : c2-1 ) = 1.0 / weightVec%quantities(nq)%values(c1:c2-1,ni)
+                end where
+                call fillBlock ( a%block(ib,ib), ord, rows, c1, c2-1, wt, wtVec(c1:c2-1) )
+              else
+                call fillBlock ( a%block(ib,ib), ord, rows, c1, c2-1, wt )
+              end if
+            end do o
+d670 4
+a673 1
+
+d675 1
+a675 2
+        error = 0
+
+d690 4
+@
+
+
+2.32
+log
+@Fix bugs in handling wtVec -- hopefully without introducing new ones
+@
+text
+@d17 1
+a17 1
+       "$Id: Regularization.f90,v 2.31 2002/10/22 19:23:28 livesey Exp $"
+d447 1
+a447 1
+                if ( .not. associated(a%col%vec%quantities(iq)%mask) ) exit
+d623 3
+@
+
+
+2.31
+log
+@Fixed the bug with hRegVweightVec not being reciprocated.
+@
+text
+@d17 1
+a17 1
+       "$Id: Regularization.f90,v 2.30 2002/10/21 22:27:44 vsnyder Exp $"
+d217 1
+a217 1
+        do i = 1, n
+d239 1
+a239 1
+      integer :: MaxRow                 ! Maximum row to be filled = ncol - ord
+d463 1
+a463 1
+                    wtVec(j-c1+1) = 1.0 / weightVec%quantities(iq)%values(h,ii)
+d465 1
+a465 1
+                    wtVec(j-c1+1) = 0.0
+d479 1
+a479 1
+                  a%block(insts(i),insts(j))%values(h,1) = c(j-i) * wtVec(j)
+d599 1
+a599 1
+                call fillBlock ( a%block(ib,ib), ord, rows, c1, c2-1, wt, wtVec )
+d623 3
+@
+
+
+2.30
+log
+@Update comments to reflect reality
+@
+text
+@d17 1
+a17 1
+       "$Id: Regularization.f90,v 2.29 2002/10/08 17:36:22 pwagner Exp $"
+d463 1
+a463 1
+                    wtVec(j-c1+1) = weightVec%quantities(iq)%values(h,ii)
+d623 3
+@
+
+
+2.29
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d17 1
+a17 1
+       "$Id: Regularization.f90,v 2.28 2002/10/03 16:13:23 livesey Exp $"
+d29 17
+a45 5
+  !{Apply Tikhonov regularization conditions of the form $\Delta^k \delta
+  ! \bf{x} \simeq 0$ to the blocks of A, where $\Delta^k$ is the central
+  ! difference operator of order $k$.  $\Delta^k$ has binomial
+  ! coefficients with alternating sign.  The operator is normalized so that
+  ! the sum of the coefficients is one.
+d62 4
+a65 3
+  ! The {\tt Weights} argument is the index in the tree of the {\tt regWeights}
+  ! field.  It gives a weight for the regularization.  If one value is given,
+  ! it is used for every quantity.  If several are given, the number given must
+d67 6
+a72 14
+  ! applied to corresponding quantities.  The weights can also be given by {\tt
+  ! WeightVec}, which if present must have the same template as the column
+  ! template for A.  For each quantity, the weight vector is averaged to the
+  ! number of rows of regularization (i.e., (number of columns)~- (order of
+  ! regularization operator)) using the absolute value of the regularization
+  ! operator.  If both {\tt regWeights} and {\tt regWeightVec} are provided,
+  ! their product is used.
+  !
+  ! It is necessary that the number of rows in the row block of A that has
+  ! the most rows be large enough to accomodate the regularization~--
+  ! roughly at least (number of columns of a)~- min(order)).  If the
+  ! regularization order for a block is less than one less than the number of
+  ! columns of that block, the regularization order is set to one less than
+  ! the number of columns for that block, and a warning message is emitted.
+d623 3
+@
+
+
+2.28
+log
+@Fixed some blunders in my previous commit.  Mainly due to indexing
+col%vec%quantities wrongly.
+@
+text
+@d17 1
+a17 1
+       "$Id: Regularization.f90,v 2.27 2002/10/02 19:24:48 livesey Exp $"
+d21 1
+d611 4
+d618 4
+@
+
+
+2.27
+log
+@Changed regWeightVec to be a reciprocal, changed regQuants to choose
+based on quantityTemplate rather than quantityType.
+@
+text
+@d17 1
+a17 1
+       "$Id: Regularization.f90,v 2.26 2002/09/23 22:08:20 vsnyder Exp $"
+d364 1
+a364 1
+      integer :: Insts(maxVal(a%col%vec%quantities(a%col%quant)%template%noInstances))
+d371 1
+d384 1
+d391 1
+a391 1
+                & a%col%vec%template%quantities(ib) ) then
+d397 1
+a397 1
+          ni = a%col%vec%quantities(a%col%quant(ib))%template%noInstances
+d400 1
+a400 1
+            if ( a%col%quant(ib) == a%col%quant(i) ) then
+d410 1
+a410 1
+          & a%col%vec%template%quantities(ib), ord, wt )
+d524 1
+a524 1
+              & a%col%vec%template%quantities(ib) ) then
+d535 2
+d538 1
+a538 1
+          & a%col%vec%template%quantities(ib), ord, wt )
+a558 2
+          ni = a%col%inst(ib)
+          nq = a%col%quant(ib)
+d613 4
+@
+
+
+2.26
+log
+@Fixed the error messages to say Regularization instead of RetrievalModule
+@
+text
+@d17 1
+a17 1
+       "$Id: Regularization.f90,v 2.25 2002/08/29 16:18:39 livesey Exp $"
+d326 1
+a326 1
+          if ( decoration(subtree(i,quants)) == theQuant ) then
+d388 2
+a389 2
+              if ( decoration(subtree(i,quants)) == &
+                & a%col%vec%quantities(a%col%quant(ib))%template%quantityType ) then
+d408 1
+a408 2
+          & a%col%vec%quantities(a%col%quant(ib))%template%quantityType, &
+          & ord, wt )
+d454 5
+a458 1
+                  wtVec(j-c1+1) = weightVec%quantities(iq)%values(h,ii)
+d521 2
+a522 2
+            if ( decoration(subtree(i,quants)) == &
+              & a%col%vec%quantities(a%col%quant(ib))%template%quantityType ) then
+d534 1
+a534 2
+          & a%col%vec%quantities(a%col%quant(ib))%template%quantityType, &
+          & ord, wt )
+d561 5
+a565 2
+              wtVec(1:weightVec%quantities(nq)%template%instanceLen) = &
+                & weightVec%quantities(nq)%values(:,ni)
+d588 3
+a590 1
+                wtVec ( c1 : c2-1 ) = weightVec%quantities(nq)%values(c1:c2-1,ni)
+d611 3
+@
+
+
+2.25
+log
+@Bug fix in horizontal regularization
+@
+text
+@d17 1
+a17 1
+       "$Id: Regularization.f90,v 2.24 2002/08/28 01:31:23 vsnyder Exp $"
+d155 1
+a155 1
+      call output ( ' RetrievalModule complained: ' )
+d604 3
+@
+
+
+2.24
+log
+@Yet more blunders in horizontal Tikhonov regularization
+@
+text
+@d17 1
+a17 1
+       "$Id: Regularization.f90,v 2.23 2002/08/28 00:51:04 vsnyder Exp $"
+d398 1
+a398 2
+            if ( a%col%vec%quantities(a%col%quant(ib))%template%quantityType == &
+               & a%col%vec%quantities(a%col%quant(i))%template%quantityType ) then
+d604 3
+@
+
+
+2.23
+log
+@Correct more blunders in Tikhonov regularization
+@
+text
+@d17 1
+a17 1
+       "$Id: Regularization.f90,v 2.22 2002/08/28 00:01:04 vsnyder Exp $"
+d427 1
+a427 1
+              do
+d436 4
+a439 2
+              c2 = c1 + 1
+              do
+a444 2
+                c2 = c2 + 1
+                if ( c2 > ni ) exit
+d605 3
+@
+
+
+2.22
+log
+@Correct two blunders in GetOrdAndWeight
+@
+text
+@d17 1
+a17 1
+       "$Id: Regularization.f90,v 2.21 2002/08/24 01:38:28 vsnyder Exp $"
+d367 1
+a402 1
+            if ( j /= ni ) stop "!!! WHOOPS !!!"
+d404 1
+d432 1
+a432 1
+                  & /= 0 ) exit
+d442 1
+a442 1
+                  & == 0 ) exit
+d448 3
+d452 1
+a452 1
+                do j = c1, c2
+d456 1
+a456 1
+                  wtVec(i-c1+1) = weightVec%quantities(iq)%values(h,ii)
+d458 1
+a458 1
+                call coeffs ( ord, wt, c, wtVec(c1:c2), c2-c1+1 )
+d460 1
+a460 1
+                call coeffs ( ord, wt, c )
+d465 2
+a466 2
+              do i = c1, c2 - ord
+                do j = i, i+ord
+d605 3
+@
+
+
+2.21
+log
+@Implement horizontal regularization
+@
+text
+@d17 1
+a17 1
+       "$Id: Regularization.f90,v 2.20 2002/08/23 19:03:48 vsnyder Exp $"
+d315 2
+a336 2
+      ord = 0
+      wt = 0.0_r8
+d601 3
+@
+
+
+2.20
+log
+@Fix a bug in row indexing; pave the way for horizontal regularization
+@
+text
+@d17 1
+a17 1
+       "$Id: Regularization.f90,v 2.19 2002/08/20 19:54:19 vsnyder Exp $"
+d74 1
+a74 1
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+d76 1
+a76 2
+    use Toggles, only: Switches
+    use Tree, only: DECORATION, NSONS, SOURCE_REF, SUBTREE
+d93 2
+a94 1
+    integer, parameter :: OrderTooBig = FieldSizes + 1
+d97 1
+a97 2
+    integer, parameter :: TooFewRows = RegTemplate + 1   ! Won't fit
+    integer, parameter :: Unitless = TooFewRows + 1      ! Orders must be unitless
+d147 1
+d160 3
+a172 3
+      case ( tooFewRows )
+        call output ( "Not enough rows in the matrix to do regularization.", &
+          & advance="yes" )
+d179 13
+a191 10
+    ! ------------------------------------------------  FillBlock  -----
+    subroutine FillBlock ( B, Ord, Rows, C1, C2, Wt, WtVec )
+    ! Fill the block B with regularization coefficients starting at row Rows+1
+    ! and columns C1 to C2.  Update Rows to the last row filled.
+      type(matrixElement_T), intent(inout) :: B   ! Block to fill
+      integer, intent(in) :: Ord        ! Order of regularization operator
+      integer, intent(inout) :: Rows    ! Last row used
+      integer, intent(in) :: C1, C2     ! Columns to fill
+      real(r8), intent(in) :: Wt        ! Scalar weight for coefficients
+      real(r8), intent(inout), dimension(:), optional :: WtVec ! Weights vector
+a192 2
+      real(r8), dimension(0:maxRegOrd) :: C ! Binomial regularization
+      ! coefficients in reverse order.
+a193 4
+      integer :: K                      ! Column being filled
+      integer :: MaxRow                 ! Maximum row to be filled = ncol - ord
+      integer :: NCOL                   ! Number of columns -- C2 - C1 + 1
+      integer :: NV                     ! Next element in VALUES component
+a195 8
+      ncol = c2 - c1 + 1
+
+      !{ Calculate binomial coefficients with alternating sign,
+      ! $(-1)^i C_i^n = (-1)^i \frac{n!}{i! (n-i)!}$
+      !  by the recursion
+      !  $C_0^n = 1\text{, } C_i^n = -(n-i+1) C_{i-1}^n / i$.
+      ! Notice that $C_i^n = -1^n C_{n-i}^n$, so we only need
+      ! to go halfway through the array.
+d197 2
+a198 2
+      c(0) = s
+      c(ord) = 1
+a202 1
+      c(0:ord) = ( wt * 0.5_r8 ** ord ) * c(0:ord)
+d211 2
+a212 2
+        do i = 1, ncol
+          j = min(i+ord,ncol)
+d216 26
+d246 1
+a246 1
+      ! last ord columns have 1, 2, ..., ord and ord, ord-1, ..., 1
+d257 2
+a258 2
+      maxRow = ncol - ord
+      ! Fill in coefficients from the end of C(:Ord) (but no more than
+d260 1
+a260 1
+      do i = 1, ord + 1
+d266 1
+a266 1
+          b%values(nv:nv+j-1,1) = c(ord-i+1:ord-i+j) * wtVec(i:i+j-1)
+d268 1
+a268 1
+          b%values(nv:nv+j-1,1) = c(ord-i+1:ord-i+j)
+d272 2
+a273 2
+      ! Fill in coefficients from all of C(:Ord)
+      do i = ord+2, maxRow
+d276 1
+a276 1
+        b%r2(k) = nv + ord
+d278 1
+a278 1
+          b%values(nv:nv+ord,1) = c(0:ord) * wtVec(i:i+ord)
+d280 1
+a280 1
+          b%values(nv:nv+ord,1) = c(0:ord)
+d284 1
+a284 1
+      ! Fill in coefficients from the beginning of C(:Ord) (but no more
+d286 2
+a287 2
+      j = min(maxrow-1,ord) - 1 ! Index of last coefficient
+      do i = max(ord+2,maxRow+1), ncol
+d292 1
+a292 1
+          b%values(nv:nv+j,1) = c(0:j) * wtVec(ncol-j:ncol)
+d294 1
+a294 1
+          b%values(nv:nv+j,1) = c(0:j)
+d302 37
+d341 9
+d355 22
+d378 98
+d480 6
+d492 1
+a492 1
+      integer :: I, J              ! Subscripts, Loop inductors
+a499 3
+      integer :: Type              ! Type of value returned by EXPR
+      integer :: Units(2)          ! Units of value returned by EXPR
+      double precision :: Value(2) ! Value returned by EXPR
+d508 1
+a524 5
+        if ( index(switches,'reg') /= 0 ) then
+          call output ( 'Allocated ' )
+          call output ( maxCols )
+          call output ( '-element vector for weights.', advance='yes' )
+        end if
+d527 3
+a529 24
+        ord = 0
+        if ( quants == 0 ) then ! only one order and weight allowed
+          call expr ( subtree(2,orders), units, value, type )
+          ord = value(1)
+          if ( weights /= 0 ) then
+            call expr ( subtree(2,weights), units, value, type )
+            wt = value(1)
+          end if
+        else
+          do i = 2, nsons(quants)
+            if ( decoration(subtree(i,quants)) == &
+              & a%col%vec%quantities(a%col%quant(ib))%template%quantityType ) then
+              j = min(i,nsons(orders))
+              call expr ( subtree(j,orders), units, value, type )
+              ord = nint(value(1))
+              if ( weights /= 0 ) then
+                j = min(i,nsons(weights))
+                call expr ( subtree(j,weights), units, value, type )
+                wt = value(1)
+              end if
+              exit
+            end if
+          end do
+        end if
+d536 3
+a538 3
+        if ( ncol - ord > a%row%nelts(ib) ) then
+          print *, 'ncol, ord, nb, a%row%nelts(ib) =', ncol, ord, nb, a%row%nelts(ib)
+          call announceError ( tooFewRows, orders )
+a539 1
+        if ( ord > maxRegOrd ) call announceError ( orderTooBig, orders )
+d593 1
+a593 2
+      if ( warn ) call MLSMessage ( MLSMSG_Warning, moduleName, &
+        & "Some blocks not regularized, or at lower order than requested" )
+d601 3
+@
+
+
+2.19
+log
+@Re-arrange to use a matrix with the same row and column vector definitions.
+Don't try to put all of the regularization into one block.  Instead, fill
+each diagonal block of the matrix with regularization for that quantity
+and instance.
+@
+text
+@d17 1
+a17 1
+       "$Id: Regularization.f90,v 2.18 2002/08/16 21:33:02 livesey Exp $"
+d26 1
+a26 1
+  subroutine Regularize ( A, Orders, Quants, Weights, WeightVec, Rows )
+d80 1
+a80 1
+    type(Matrix_T), intent(inout) :: A
+d86 1
+d102 1
+a102 15
+    integer :: C1, C2              ! Column boundaries, esp. if a mask is used.
+    integer :: I, J                ! Subscripts, Loop inductors
+    integer :: IB                  ! Which block is being regularized
+    integer :: MaxCols             ! Columns in block with with max cols.
+    integer :: NB                  ! Number of column blocks of A
+    integer :: NCOL                ! Number of columns in a block of A
+    integer :: NI, NQ              ! Indices for instance and quantity
+    integer :: NROW                ! Number of rows in first row block of A
+    integer :: Ord                 ! Order for the current block
+    integer :: Type                ! Type of value returned by EXPR
+    integer :: Units(2)            ! Units of value returned by EXPR
+    double precision :: Value(2)   ! Value returned by EXPR
+    logical :: Warn                ! Send warning message to MLSMessage
+    real(r8) :: Wt                 ! The weight for the current block
+    real(r8), pointer :: WtVec(:)  ! In case a quantity has a vector weight
+d105 5
+a109 3
+    nb = a%col%nb
+    rows = 0
+    warn = .false.
+d117 7
+a123 7
+    if ( weights == 0 ) then
+      wt = 1.0
+    else if ( nsons(weights) /= 2 ) then
+      if ( quants == 0 ) then
+        call announceError ( regQuantsReq, weights )
+      else if ( nsons(weights) /= nsons(quants) ) then
+        call announceError ( fieldSizes, weights )
+d133 5
+a137 105
+      maxCols = 0
+      do ib = 1, a%col%nb ! Find number of columns in widest block
+        if ( quants == 0 ) then ! Doing all of the blocks
+          maxCols = max(maxCols, a%col%nelts(ib))
+        else
+          do i = 2, nsons(quants)
+            if ( decoration(subtree(i,quants)) == &
+              & a%col%vec%quantities(a%col%quant(ib))%template%quantityType ) then
+                maxCols = max(maxCols, a%col%nelts(ib))
+                exit
+            end if
+          end do
+        end if
+      end do
+      nullify ( wtVec )
+      call allocate_test ( wtVec, maxCols, "Weight vector", moduleName )
+        if ( index(switches,'reg') /= 0 ) then
+          call output ( 'Allocated ' )
+          call output ( maxCols )
+          call output ( '-element vector for weights.', advance='yes' )
+        end if
+
+      do ib = 1, nb             ! Loop over matrix blocks = quantities
+        ord = 0
+        if ( quants == 0 ) then ! only one order and weight allowed
+          call expr ( subtree(2,orders), units, value, type )
+          ord = value(1)
+          if ( weights /= 0 ) then
+            call expr ( subtree(2,weights), units, value, type )
+            wt = value(1)
+          end if
+        else
+          do i = 2, nsons(quants)
+            if ( decoration(subtree(i,quants)) == &
+              & a%col%vec%quantities(a%col%quant(ib))%template%quantityType ) then
+              j = min(i,nsons(orders))
+              call expr ( subtree(j,orders), units, value, type )
+              ord = value(1)
+              if ( weights /= 0 ) then
+                j = min(i,nsons(weights))
+                call expr ( subtree(j,weights), units, value, type )
+                wt = value(1)
+              end if
+              exit
+            end if
+          end do
+        end if
+        ncol = a%col%nelts(ib)
+        nrow = a%row%nelts(ib)
+        if ( ord > ncol-1 ) then
+          warn = .true.
+          ord = ncol - 1
+        end if
+        if ( ncol - ord > a%row%nelts(ib) ) then
+          print *, 'ncol, ord, nb, a%row%nelts(ib) =', ncol, ord, nb, a%row%nelts(ib)
+          call announceError ( tooFewRows, orders )
+        end if
+        if ( ord > maxRegOrd ) call announceError ( orderTooBig, orders )
+        if ( error /= 0 ) warn = .true.
+        if ( ord /= 0 .and. wt > 0.0_r8 .and. error == 0 ) then
+          call createBlock ( a%block(ib,ib), nrow, ncol, m_banded, &
+            & (ncol-ord)*(ord+1) )
+          a%block(ib,ib)%r1 = 0         ! in case there's a mask
+          a%block(ib,ib)%r2 = 0
+          a%block(ib,ib)%values = 0.0_r8
+
+          rows = rows + 1
+
+          ni = a%col%inst(ib)
+          nq = a%col%quant(ib)
+          if ( .not. associated(a%col%vec%quantities(nq)%mask) ) then
+            c1 = 1
+            c2 = ncol
+            if ( associated(weightVec) ) then
+              wtVec(1:weightVec%quantities(nq)%template%instanceLen) = &
+                & weightVec%quantities(nq)%values(:,ni)
+              call fillBlock ( a%block(ib,ib), ord, rows, 1, ncol, wt, wtVec )
+            else
+              call fillBlock ( a%block(ib,ib), ord, rows, 1, ncol, wt )
+            end if
+          else
+            ! Scan for blocks of consecutive zero values of M_Tikhonov bits.
+            c2 = 1
+o:          do while ( c2 <= a%block(ib,ib)%ncols )
+              c1 = c2
+              do while ( iand(ichar(a%col%vec%quantities(nq)%mask(c1,ni)),M_Tikhonov) &
+                  & /= 0 )
+                if ( c1 >= a%block(ib,ib)%ncols ) exit o
+                c1 = c1 + 1
+              end do
+              c2 = c1 + 1
+              do while ( iand(ichar(a%col%vec%quantities(nq)%mask(c2,ni)),M_Tikhonov) &
+                  & == 0 )
+                c2 = c2 + 1
+                if ( c2 > a%block(ib,ib)%ncols ) exit
+              end do
+              if ( associated(weightVec) ) then
+                wtVec = 0.0_r8
+                wtVec ( c1 : c2-1 ) = weightVec%quantities(nq)%values(c1:c2-1,ni)
+                call fillBlock ( a%block(ib,ib), ord, rows, c1, c2-1, wt, wtVec )
+              else
+                call fillBlock ( a%block(ib,ib), ord, rows, c1, c2-1, wt )
+              end if
+            end do o
+          end if
+d139 1
+a139 8
+        end if
+        error = 0
+
+      end do
+      call deallocate_test ( wtVec, "Weight vector", moduleName )
+      if ( warn ) call MLSMessage ( MLSMSG_Warning, moduleName, &
+        & "Some blocks not regularized, or at lower order than requested" )
+    else
+d145 1
+d179 1
+d214 1
+a214 1
+      c(0:ord) = wt * c(0:ord) / 2.0_r8 ** ord
+d261 1
+a261 1
+        b%r1(k) = i - ord
+d275 1
+a275 1
+        b%r1(k) = i - ord
+d288 152
+d445 6
+@
+
+
+2.18
+log
+@Bug fix in tooFewRows message
+@
+text
+@d17 1
+a17 1
+       "$Id: Regularization.f90,v 2.17 2002/08/15 22:45:05 livesey Exp $"
+d70 1
+a70 1
+    use MatrixModule_0, only: CreateBlock, Dump, M_Absent, M_Banded, &
+d99 1
+a99 1
+    integer :: Error       ! non-zero if an error occurs
+a109 1
+    integer :: R                   ! Row block with most rows
+a143 10
+    rows = 0
+      r = 1
+      nrow = a%row%nelts(r)
+      do ib = 2, a%row%nb ! Find the block with the most rows
+        if ( a%row%nelts(ib) > nrow ) then
+          r = ib
+          nrow = a%row%nelts(r)
+        end if
+      end do
+
+d192 1
+d197 4
+a200 2
+        if ( rows + ncol - ord - 1 > a%row%nelts(ib) ) &
+          & call announceError ( tooFewRows, orders )
+d203 2
+a204 5
+        if ( ord == 0 .or. wt <= 0.0_r8 .or. error /= 0 ) then
+          call createBlock ( a%block(r,ib), nrow, ncol,  m_absent )
+          error = 0
+        else
+          call createBlock ( a%block(r,ib), nrow, ncol, m_banded, &
+d206 3
+a208 3
+          a%block(r,ib)%r1 = 0          ! in case there's a mask
+          a%block(r,ib)%r2 = 0
+          a%block(r,ib)%values = 0.0_r8
+d220 1
+a220 1
+              call fillBlock ( a%block(r,ib), ord, rows, 1, ncol, wt, wtVec )
+d222 1
+a222 1
+              call fillBlock ( a%block(r,ib), ord, rows, 1, ncol, wt )
+d227 1
+a227 1
+o:          do while ( c2 <= a%block(r,ib)%ncols )
+d231 1
+a231 1
+                if ( c1 >= a%block(r,ib)%ncols ) exit o
+d238 1
+a238 1
+                if ( c2 > a%block(r,ib)%ncols ) exit
+d243 1
+a243 1
+                call fillBlock ( a%block(r,ib), ord, rows, c1, c2-1, wt, wtVec )
+d245 1
+a245 1
+                call fillBlock ( a%block(r,ib), ord, rows, c1, c2-1, wt )
+d251 1
+a251 3
+
+        if ( index(switches,'reg') /= 0 ) &
+          & call dump ( a%block(r,ib), name='Tikhonov', details=2 )
+d351 4
+a354 4
+      !  1  -1   3  -1
+      !      1  -1   3  -1
+      !          1  -1   3  -1
+      !              1  -1   3  -1
+d365 1
+a365 1
+        b%r1(k) = rows
+d377 1
+a377 2
+        rows = rows + 1
+        b%r1(k) = rows
+d391 1
+a391 2
+        rows = rows + 1
+        b%r1(k) = rows
+d401 1
+d409 3
+@
+
+
+2.17
+log
+@Lots of array bounds/indexing changes (fixes hopefully).
+@
+text
+@d17 1
+a17 1
+       "$Id: Regularization.f90,v 2.16 2002/08/08 22:02:05 vsnyder Exp $"
+d207 1
+a207 1
+        if ( rows + ncol - ord - 1 > a%row%nelts(1) ) &
+d423 3
+@
+
+
+2.16
+log
+@Implement mask and weight vector.  Make AnnounceError an internal subroutine
+instead of a module subroutine.  Move USE statements into subroutines.
+@
+text
+@d17 1
+a17 1
+       "$Id: Regularization.f90,v 2.15 2002/08/03 01:15:36 vsnyder Exp $"
+d229 2
+a230 1
+              wtVec = weightVec%quantities(nq)%values(:,ni)
+d252 2
+a253 1
+                wtVec = weightVec%quantities(nq)%values(c1:c2-1,ni)
+d262 4
+a269 2
+        if ( index(switches,'reg') /= 0 ) &
+          & call dump ( a%block(r,ib), name='Tikhonov', details=2 )
+d353 2
+a354 1
+          wtVec(i) = dot_product(wtVec(i:i+ord),abs(c))
+d381 1
+a381 1
+          b%values(nv:nv+j-1,1) = c(ord-i+1:ord-i+j) * wtVec(i:j)
+d394 1
+a394 1
+          b%values(nv:nv+ord,1) = c(0:ord) * wtVec(i:j+ord)
+d423 4
+@
+
+
+2.15
+log
+@Fixed the comment about row sizes
+@
+text
+@d11 1
+a11 9
+  use Expr_M, only: EXPR
+  use Intrinsic, only: PHYQ_DIMENSIONLESS
+  use Lexer_Core, only: Print_Source
+  use MatrixModule_0, only: M_Absent, M_Banded, MatrixElement_T, CreateBlock
+  use MatrixModule_1, only: Matrix_T, CreateBlock
+  use MLSCommon, only: R8
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+  use Output_M, only: Output
+  use Tree, only: DECORATION, NSONS, SOURCE_REF, SUBTREE
+d13 1
+a13 1
+  private
+d17 1
+a17 1
+       "$Id: Regularization.f90,v 2.14 2002/07/30 23:20:20 vsnyder Exp $"
+a22 14
+  integer, parameter, public :: MaxRegOrd = 33 ! Maximum regularization
+  ! order.  33!/(16!)**2 < HUGE(0) < 34!/(17!)**2 for 31-bit integers.
+  !         66!/(33!)**2 < HUGE(0) < 67!/(34!**2) for 63-bit integers.
+
+  public :: Regularize
+
+  integer, parameter :: FieldSizes = 1   ! size(regOrders) /= size(regQuants)
+  integer, parameter :: OrderTooBig = FieldSizes + 1
+  integer, parameter :: RegQuantsReq = OrderTooBig + 1 ! RegQuants required
+  integer, parameter :: TooFewRows = RegQuantsReq + 1  ! Won't fit
+  integer, parameter :: Unitless = TooFewRows + 1      ! Orders must be unitless
+
+  integer :: Error       ! non-zero if an error occurs
+
+d26 1
+a26 1
+  subroutine Regularize ( A, Orders, Quants, Weights, Rows )
+d31 11
+a41 1
+  ! coefficients with alternating sign.
+d43 17
+a59 12
+  ! $k$ is given by the {\tt Orders} argument, which is the index in the tree
+  ! of the {\tt regOrders} field of the {\tt retrieve} specification. The
+  ! {\tt Weights} argument is the index in the tree of the {\tt regWeights}
+  ! field.  It gives a weight for the regularization. The {\tt Quants}
+  ! argument is the index in the tree of the {\tt regQuants} field. The
+  ! values of the {\tt regQuants} field are quantity type names.   The number
+  ! of values of {\tt regOrders} and {\tt regWeights} shall be one (in which
+  ! case they apply to all quants), or the same as the number of {\tt
+  ! regQuants}, in which case the corresponding order or weight applies to
+  ! the corresponding quantity.  If a column block of the A matrix is of a
+  ! quantity type that is not represented in the {\tt regQuants} field, no
+  ! regularization is applied to that block.
+d68 12
+d84 1
+d87 15
+a101 3
+    integer, dimension(0:maxRegOrd) :: C ! Binomial regularization coefficients
+    ! The regularization order is never going to be so large that
+    ! the coefficients cannot be represented by integers.
+d104 1
+a104 1
+    integer :: MaxRow              ! Maximum row to be filled = ncol - ord
+d107 1
+a108 1
+    integer :: NV                  ! Next element in VALUES component
+a110 1
+    integer :: S                   ! Sign of regularization coefficient.
+d116 1
+d119 2
+a121 1
+    nb = a%col%nb
+d129 3
+a131 1
+    if ( nsons(weights) /= 2 ) then
+d138 4
+a141 1
+    rows = 0
+d144 2
+d154 23
+d182 4
+a185 2
+          call expr ( subtree(2,weights), units, value, type )
+          wt = value(1)
+d193 5
+a197 3
+              j = min(i,nsons(weights))
+              call expr ( subtree(j,weights), units, value, type )
+              wt = value(1)
+d217 4
+d223 35
+a257 14
+          !{ Calculate binomial coefficients with alternating sign,
+          ! $(-1)^i C_i^n = (-1)^i \frac{n!}{i! (n-i)!}$
+          !  by the recursion
+          !  $C_0^n = 1\text{, } C_i^n = -(n-i+1) C_{i-1}^n / i$.
+          ! Notice that $C_i^n = C_{n-i}^n$, so we only need
+          ! to go halfway through the array.
+          s = 1 - 2*mod(ord,2) ! +1 for even order, -1 for odd order
+          c(0) = s
+          c(ord) = 1
+          do i = 1, ord / 2
+            c(i) = ( -(ord-i+1) * c(i-1) ) / i
+            c(ord-i) = s * c(i)
+          end do
+          c(0:ord) = wt * c(0:ord)
+a258 35
+          ! Each row has the binomial coefficients.  Therefore, each column
+          ! has the binomial coefficients in reverse order (which wouldn't
+          ! matter if the signs didn't alternate).  Except the first and
+          ! last ord columns have 1, 2, ..., ord + 1 and ord, ord-1, ..., 1
+          ! elements.
+
+          maxRow = ncol - ord
+          ! Fill in coefficients from the end of C(:Ord) (but no more than
+          ! maxRow-1 of them)
+          do i = 1, ord+1
+            nv = a%block(r,ib)%r2(i-1) + 1
+            j = min(i,maxRow) ! Number of coefficients
+            a%block(r,ib)%r1(i) = rows
+            a%block(r,ib)%r2(i) = nv+j-1
+            a%block(r,ib)%values(nv:nv+j-1,1) = c(ord-i+1:ord-i+j)
+          end do
+          ! Fill in coefficients from all of C(:Ord)
+          do i = ord+2, maxRow
+            nv = a%block(r,ib)%r2(i-1) + 1
+            rows = rows + 1
+            a%block(r,ib)%r1(i) = rows
+            a%block(r,ib)%r2(i) = nv+ord
+            a%block(r,ib)%values(nv:nv+ord,1) = c(0:ord)
+          end do
+          ! Fill in coefficients from the beginning of C(:Ord) (but no more
+          ! than maxRow-1 of them)
+          j = min(maxrow-1,ord) - 1 ! Index of last coefficient
+          do i = max(ord+2,maxRow+1), ncol
+            nv = a%block(r,ib)%r2(i-1) + 1
+            rows = rows + 1
+            a%block(r,ib)%r1(i) = rows
+            a%block(r,ib)%r2(i) = nv+j
+            a%block(r,ib)%values(nv:nv+j,1) = c(0:j)
+            j = j - 1
+          end do
+d261 1
+d264 2
+a268 1
+  end subroutine Regularize
+d270 82
+a351 24
+  subroutine AnnounceError ( code, where )
+    integer, intent(in) :: Code    ! The message number
+    integer, intent(in) :: Where   ! Where in the tree
+
+    error = max(error,1)
+    call output ( '***** At ' )
+    call print_source ( source_ref(where) )
+    call output ( ' RetrievalModule complained: ' )
+    select case ( code )
+    case ( fieldSizes )       ! size(regOrders) /= size(regQuants)
+      call output ( "Number of values of regOrders or regWeights shall be 1 " )
+      call output ( "or the same as for regQuants.", advance="yes" )
+    case ( orderTooBig )
+      call output ( "Regularization order exceeds " )
+      call output ( maxRegOrd, advance="yes" )
+    case ( regQuantsReq )     ! RegQuants required if size(regOrders) /= 1
+      call output ( "The regQuants field is required if more than one order " )
+      call output ( "is specified.", advance="yes" )
+    case ( tooFewRows )
+      call output ( "Not enough rows in the matrix to do regularization.", &
+        & advance="yes" )
+    case ( unitless )         ! regOrders must be unitless
+      call output ( "The orders shall be unitless.", advance="yes" )
+    end select
+d353 61
+a413 1
+  end subroutine AnnounceError
+d418 3
+@
+
+
+2.14
+log
+@Use order ncol-1 instead of zero for narrow blocks, Warn if ord < ncol-1.
+Use the weight (duh!). Use the row block with the most rows.
+@
+text
+@d25 1
+a25 1
+       "$Id: Regularization.f90,v 2.13 2002/07/02 01:45:56 vsnyder Exp $"
+d68 6
+a73 5
+  ! It is necessary that the total number of rows in the first row block of
+  ! A be large enough to accomodate the regularization~-- roughly at least
+  ! (number of columns of a)~- min(order)).  The number of columns of each
+  ! block shall be at least one more than the regularization order for that
+  ! block.
+d255 4
+@
+
+
+2.13
+log
+@Regularization.f90
+@
+text
+@d17 1
+a17 1
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+d25 1
+a25 1
+       "$Id: Regularization.f90,v 2.12 2002/05/22 19:15:06 vsnyder Exp $"
+d91 1
+d96 1
+d100 1
+d119 8
+a126 1
+      nrow = a%row%nelts(1)
+d149 4
+a154 1
+        if ( ncol < ord+1 ) cycle
+d156 1
+d158 2
+a159 1
+          call createBlock ( a%block(1,ib), nrow, ncol,  m_absent )
+d161 1
+a161 1
+          call createBlock ( a%block(1,ib), nrow, ncol, m_banded, &
+d178 1
+d183 2
+a184 2
+          ! last ord columns have 1, 2, ..., ord + 1 (or less if ncol-ord <
+          ! ord) and ord, ord-1, ..., 1 elements.
+d187 2
+a188 2
+          ! Fill in coefficients from the end of Ord (but no more than
+          ! maxRow of them)
+d190 1
+a190 1
+            nv = a%block(1,ib)%r2(i-1) + 1
+d192 3
+a194 3
+            a%block(1,ib)%r1(i) = rows
+            a%block(1,ib)%r2(i) = nv+j-1
+            a%block(1,ib)%values(nv:nv+j-1,1) = c(ord-i+1:ord-i+j)
+d196 1
+a196 1
+          ! Fill in coefficients from all of Ord
+d198 1
+a198 1
+            nv = a%block(1,ib)%r2(i-1) + 1
+d200 3
+a202 3
+            a%block(1,ib)%r1(i) = rows
+            a%block(1,ib)%r2(i) = nv+ord
+            a%block(1,ib)%values(nv:nv+ord,1) = c(0:ord)
+d204 2
+a205 1
+          ! Fill in coefficients from the beginning of Ord
+d208 1
+a208 1
+            nv = a%block(1,ib)%r2(i-1) + 1
+d210 3
+a212 3
+            a%block(1,ib)%r1(i) = rows
+            a%block(1,ib)%r2(i) = nv+j
+            a%block(1,ib)%values(nv:nv+j,1) = c(0:j)
+d216 5
+a220 1
+      end do  
+a221 2
+    if ( error /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+      & "Regularization failed." )
+d254 3
+@
+
+
+2.12
+log
+@Output the number of rows used for regularization conditions
+@
+text
+@d25 1
+a25 1
+       "$Id: Regularization.f90,v 2.11 2002/05/11 01:10:16 vsnyder Exp $"
+d40 1
+a40 2
+  integer, parameter :: TooFewCols = RegQuantsReq + 1  ! Won't fit
+  integer, parameter :: TooFewRows = TooFewCols + 1    ! Won't fit
+d141 1
+a141 1
+        if ( ncol < ord+1 ) call announceError ( tooFewCols, orders )
+a222 3
+    case ( tooFewCols )
+      call output ( "Not enough columns for specified regularization order.", &
+        & advance="yes" )
+d235 3
+@
+
+
+2.11
+log
+@Big revision... Maybe it's right this time.
+@
+text
+@d25 1
+a25 1
+       "$Id: Regularization.f90,v 2.10 2002/05/07 01:03:36 vsnyder Exp $"
+d49 1
+a49 1
+  subroutine Regularize ( A, Orders, Quants, Weights )
+d79 1
+a91 1
+    integer :: Rows                ! Next row to use
+d114 1
+d118 1
+a118 2
+      rows = 0
+o:    do ib = 1, nb             ! Loop over matrix blocks = quantities
+d200 1
+a200 1
+      end do o
+d239 3
+@
+
+
+2.11.2.1
+log
+@*** empty log message ***
+@
+text
+@d25 1
+a25 1
+       "$Id: Regularization.f90,v 2.12 2002/05/22 19:15:06 vsnyder Exp $"
+d49 1
+a49 1
+  subroutine Regularize ( A, Orders, Quants, Weights, Rows )
+a78 1
+    integer, intent(out) :: Rows   ! Last row used; ultimately, number of rows
+d91 1
+a113 1
+    rows = 0
+d117 2
+a118 1
+      do ib = 1, nb             ! Loop over matrix blocks = quantities
+d200 1
+a200 1
+      end do  
+a238 6
+! Revision 2.12  2002/05/22 19:15:06  vsnyder
+! Output the number of rows used for regularization conditions
+!
+! Revision 2.11  2002/05/11 01:10:16  vsnyder
+! Big revision... Maybe it's right this time.
+!
+@
+
+
+2.10
+log
+@Allow different weight for each quantity, or one weight for the whole
+shebang.  Don't regularize a block if its weight is <= zero.
+@
+text
+@d25 1
+a25 1
+       "$Id: Regularization.f90,v 2.9 2002/02/01 00:48:26 vsnyder Exp $"
+d85 1
+d117 2
+a118 2
+      rows = 1
+o:    do ib = 1, nb
+d142 3
+a144 1
+        if ( ord == 0 .or. wt <= 0.0_r8) then
+d147 6
+a152 4
+          if ( ncol < ord+1 ) call announceError ( tooFewCols, orders )
+          if ( ord > maxRegOrd ) call announceError ( orderTooBig, orders )
+          if ( error > 0 ) exit o
+          !{ Calculate binomial coefficients $C_i^n = \frac{n!}{i! (n-i)!}$
+d154 1
+a154 1
+          !  $C_0^n = 1\text{, } C_i^n = (n-i+1) C_{i-1}^n / i$.
+d157 2
+a158 1
+          c(0) = 1
+d161 2
+a162 2
+            c(i) = ( (ord-i+1) * c(i-1) ) / i
+            c(ord-i) = c(i)
+a163 7
+          s = -1
+          do i = 0, ord ! Now alternate the signs
+            c(i) = s * c(i)
+            s = -s
+          end do
+          call createBlock ( a%block(1,ib), nrow, ncol, m_banded, &
+            & (ncol-ord)*(ord+1) )
+d167 10
+a176 5
+          ! matter if the signs didn't alternate).  Except the first and last
+          ! ord columns have 1, 2, ..., ord and ord, ord-1, ..., 1 elements.
+
+          nv = 1
+          do i = 1, ord
+d178 2
+a179 3
+            a%block(1,ib)%r2(i) = nv+i-1
+            a%block(1,ib)%values(nv:nv+i-1,1) = wt * c(ord-i+1:ord)
+            nv = nv + i
+d181 4
+a184 1
+          do i = ord+1, ncol-ord
+d187 6
+a192 2
+            a%block(1,ib)%values(nv:nv+ord,1) = wt * c(0:ord)
+            nv = nv + ord + 1
+d194 1
+a194 4
+          end do
+          j = ord-1
+          do i = ncol-ord+1, ncol
+            a%block(1,ib)%r1(i) = a%block(1,ib)%r1(i-1)+1
+d196 1
+a196 2
+            a%block(1,ib)%values(nv:nv+j,1) = wt * c(0:j)
+            nv = nv + j + 1
+a199 1
+        rows = rows + ord
+d239 4
+@
+
+
+2.9
+log
+@Get rid of 'extra' field of RC_Info
+@
+text
+@d25 1
+a25 1
+       "$Id: Regularization.f90,v 2.8 2001/10/09 20:36:04 vsnyder Exp $"
+d49 1
+a49 1
+  subroutine Regularize ( A, Orders, Quants, Weight )
+d56 12
+a67 10
+  ! $k$ is given by the {\tt Orders} argument, which is the index in the
+  ! tree of the {\tt regOrders} field of the {\tt retrieve} specification.
+  ! The {\tt Quants} argument is the index in the tree of the {\tt
+  ! regQuants} field. The values of the {\tt regQuants} field are quantity
+  ! type names, to which the corresponding order applies.   The number of
+  ! values of {\tt regOrders} shall be one (in which case it applies to
+  ! all quants), or the same as the number of {\tt regQuants}.  If a
+  ! column block of the A matrix is of a quantity type that is not
+  ! represented in the {\tt regQuants} field, no regularization is applied
+  ! to that block.
+d71 1
+a71 1
+  ! (number of columns of a)~- min(order).  The number of columns of each
+a73 3
+  !
+  ! The {\tt Weight} argument is a scalar that multiplies the regularization
+  ! matrix.  It is taken from the {\tt regWeight} field.
+d78 1
+a78 1
+    real(r8), intent(in) :: Weight
+d95 1
+d106 7
+d119 1
+a119 1
+        if ( nsons(orders) == 2 ) then
+d122 2
+d127 3
+a129 2
+              & a%col%vec%quantities(a%col%quant(i))%template%quantityType ) then
+              call expr ( subtree(i,orders), units, value, type )
+d131 3
+d141 1
+a141 1
+        if ( ord == 0 ) then
+d175 1
+a175 1
+            a%block(1,ib)%values(nv:nv+i-1,1) = weight * c(ord-i+1:ord)
+d181 1
+a181 1
+            a%block(1,ib)%values(nv:nv+ord,1) = weight * c(0:ord)
+d189 1
+a189 1
+            a%block(1,ib)%values(nv:nv+j,1) = weight * c(0:j)
+d211 2
+a212 2
+      call output ( "Number of values of regOrders shall be 1 or the same as " )
+      call output ( "for regQuants.", advance="yes" )
+d234 3
+@
+
+
+2.8
+log
+@Repair calculation of banded representation
+@
+text
+@d25 1
+a25 1
+       "$Id: Regularization.f90,v 2.7 2001/06/28 20:42:42 vsnyder Exp $"
+a98 1
+    if ( a%col%extra ) nb = nb - 1
+a185 2
+    if ( a%col%extra ) &
+      & call createBlock ( a%block(1,a%col%nb), nrow, 1,  m_absent )
+d221 3
+@
+
+
+2.7
+log
+@Update comments
+@
+text
+@d25 1
+a25 1
+       "$Id: Regularization.f90,v 2.6 2001/06/26 20:16:41 vsnyder Exp $"
+d162 1
+a162 1
+            a%block(1,ib)%r2(i) = nv
+d168 2
+a169 2
+            a%block(1,ib)%r2(i) = nv
+            a%block(1,ib)%values(nv:nv+ord,1) = weight * c
+d176 1
+a176 1
+            a%block(1,ib)%r2(i) = nv
+d179 1
+d182 1
+a182 1
+        rows = rows + ncol - ord
+d224 3
+@
+
+
+2.6
+log
+@Don't look at nsons(0)
+@
+text
+@d25 1
+a25 1
+       "$Id: Regularization.f90,v 2.5 2001/06/26 20:13:24 vsnyder Exp $"
+d51 3
+a53 4
+  !{Apply Tikhonov regularization conditions of the form ``Differences of
+  ! degree Order in dX are approximately zero'' to the blocks of A, where
+  ! Order is the order of a polynomial.  The regularization condition is
+  ! imposed by an Order'th degree difference operator, which has binomial
+d56 10
+a65 8
+  ! The Orders argument is the index in the tree of the orders field.
+  ! The Quants argument is the index in the tree of the quants field.
+  ! The values of the quants field are quantity type names, to which the
+  ! corresponding order applies.   The number of orders shall be one (in
+  ! which case it applies to all quants), or the same as the number of
+  ! quants.  If a column block of the A matrix is of a quantity type that
+  ! is not represented in the quants field, no regularization is applied
+  ! to that block/
+d73 2
+a74 2
+  ! The Weight argument is a scalar that multiplies the regularization
+  ! matrix.
+d223 3
+@
+
+
+2.5
+log
+@Fixed a blunder -- call call announceError
+@
+text
+@d25 1
+a25 1
+       "$Id: Regularization.f90,v 2.4 2001/06/26 19:01:00 vsnyder Exp $"
+d100 5
+a104 3
+      if ( quants == 0 ) call announceError ( regQuantsReq, orders )
+      if ( nsons(orders) /= nsons(quants) ) &
+        & call announceError ( fieldSizes, orders )
+d222 3
+@
+
+
+2.4
+log
+@Specify regularization orders according to quantities
+@
+text
+@d25 1
+a25 1
+       "$Id: Regularization.f90,v 2.3 2001/06/22 00:41:54 vsnyder Exp $"
+d100 1
+a100 1
+      if ( quants == 0 ) call call announceError ( regQuantsReq, orders )
+d220 3
+@
+
+
+2.3
+log
+@Replace use of SBINOM by in-line calculation of binomial coefficients
+@
+text
+@d11 3
+d16 1
+d18 4
+d25 1
+a25 1
+       "$Id: Regularization.f90,v 2.2 2001/06/02 16:58:46 livesey Exp $"
+d35 11
+d49 2
+a50 1
+  subroutine Regularize ( A, Order )
+d52 2
+a53 2
+  ! degree Order in dX are approximately zero'' to the blocks of A. Order
+  ! specifies the order of polynomial.  The regularization condition is
+d55 19
+a73 7
+  ! coefficients with alternating sign.  If size(Order) == 1, it applies to
+  ! all of the blocks of A.  Otherwise, size(Order) shall equal A\%col\%nb
+  ! (except the extra block, if present, is set to zero). It is necessary
+  ! that the total number of rows in the first row block of A be large
+  ! enough to accomodate the regularization~-- roughly at least (number of
+  ! columns of a)~- min(order).  The number of columns of each block shall
+  ! be at least one more than the regularization order for that block.
+d76 3
+a78 1
+    integer, intent(in), dimension(:) :: Order
+d81 2
+a84 1
+    character(len=2) :: MSG        ! In case of an error message
+d92 3
+d96 1
+a96 3
+    ! The regularization order is never going to be so large that
+    ! the coefficients cannot be represented by integers.
+
+d99 78
+a176 21
+    if ( size(order) /= 1 .and. size(order) /= nb ) &
+      & call MLSMessage ( MLSMSG_Error, moduleName, "Wrong size for Order" )
+
+    nrow = a%row%nelts(1)
+    rows = 1
+    do ib = 1, nb
+      ord = order(1)
+      if ( size(order) > 1 ) ord = order(ib)
+      ncol = a%col%nelts(ib)
+      if ( rows + ncol - ord - 1 > a%row%nelts(1) ) &
+        & call MLSMessage ( MLSMSG_Error, moduleName, &
+        & "Not enough rows in the matrix to do regularization" )
+      if ( ord == 0 ) then
+        call createBlock ( a%block(1,ib), nrow, ncol,  m_absent )
+      else
+        if ( ncol < ord+1 ) call MLSMessage ( MLSMSG_Error, &
+          & moduleName, "Not enough columns for specified regularization order" )
+        if ( ord > maxRegOrd ) then
+          write ( msg, '(i2)' ) maxRegOrd
+          call MLSMessage ( MLSMSG_Error, moduleName, &
+            & "Regularization order exceeds " // trim(adjustl(msg)) )
+d178 5
+a182 48
+        !{ Calculate binomial coefficients $C_i^n = \frac{n!}{i! (n-i)!}$
+        !  by the recursion
+        !  $C_0^n = 1\text{, } C_i^n = (n-i+1) C_{i-1}^n / i$.
+        ! Notice that $C_i^n = C_{n-i}^n$, so we only need
+        ! to go halfway through the array.
+        c(0) = 1
+        c(ord) = 1
+        do i = 1, ord / 2
+          c(i) = ( (ord-i+1) * c(i-1) ) / i
+          c(ord-i) = c(i)
+        end do
+        s = -1
+        do i = 0, ord ! Now alternate the signs
+          c(i) = s * c(i)
+          s = -s
+        end do
+        call createBlock ( a%block(1,ib), nrow, ncol, m_banded, &
+          & (ncol-ord)*(ord+1) )
+
+        ! Each row has the binomial coefficients.  Therefore, each column
+        ! has the binomial coefficients in referse order (which wouldn't
+        ! matter if the signs didn't alternate).  Except the first and last
+        ! ord columns have 1, 2, ..., ord and ord, ord-1, ..., 1 elements.
+
+        nv = 1
+        do i = 1, ord
+          a%block(1,ib)%r1(i) = rows
+          a%block(1,ib)%r2(i) = nv
+          a%block(1,ib)%values(nv:nv+i-1,1) = c(ord-i+1:ord)
+          nv = nv + i
+        end do
+        do i = ord+1, ncol-ord
+          a%block(1,ib)%r1(i) = rows
+          a%block(1,ib)%r2(i) = nv
+          a%block(1,ib)%values(nv:nv+ord,1) = c
+          nv = nv + ord + 1
+          rows = rows + 1
+        end do
+        j = ord-1
+        do i = ncol-ord+1, ncol
+          a%block(1,ib)%r1(i) = a%block(1,ib)%r1(i-1)+1
+          a%block(1,ib)%r2(i) = nv
+          a%block(1,ib)%values(nv:nv+j,1) = c(0:j)
+          nv = nv + j + 1
+        end do
+      end if
+      rows = rows + ncol - ord
+    end do
+d187 30
+d220 3
+@
+
+
+2.2
+log
+@Temporary fix to let it compile before Paul has a go.
+(commented out interface to sbinom and wrote empty routine instead).
+@
+text
+@d8 1
+a8 1
+! Apply a regularization condition to the Jacobian of the least-squares
+a10 1
+  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+a12 1
+  use MLSCommon, only: R8
+d17 1
+a17 1
+       "$Id: Regularization.f90,v 2.1 2001/06/02 01:40:29 vsnyder Exp $"
+d23 4
+d31 11
+a41 10
+  ! Apply regularization conditions of the form "Differences of degree
+  ! Order in dX are approximately zero" to the blocks of A.
+  ! Order specifies the order of polynomial.  If size(Order) == 1, it
+  ! applies to all of the blocks of A.  Otherwise, size(Order) shall
+  ! equal A%col%nb (except the extra block, if present, is set to zero).
+  ! It is necessary that the total number of rows in the first row block
+  ! of A be large enough to accomodate the regularization -- roughly at
+  ! least (number of columns of a) - min(order).  The number of columns
+  ! of each block shall be at least one more than the regularization
+  ! order for that block.
+d46 1
+d49 1
+a54 1
+    real(r8), pointer, dimension(:) :: Pascal ! Regularization coefficients
+d56 1
+a56 1
+    real :: S ! NOT R8!            ! Sign of regularization coefficient.
+d59 1
+a59 6
+    ! SBINOM cannot calculate coefficients.
+!     interface
+!       real function SBINOM ( N, K )
+!         integer, intent(in) :: N, K
+!       end function SBINOM
+!     end interface
+d80 20
+a99 7
+        ! Construct regularization coefficients using Pascal's triangle
+        call allocate_test ( Pascal, ord, "Pascal's triangle", moduleName, &
+          & lowBound=0 )
+        s = -1.0
+        do i = 0, ord
+          pascal(i) = s * sbinom(ord,i)
+          s = - s
+d113 1
+a113 1
+          a%block(1,ib)%values(nv:nv+i-1,1) = pascal(ord-i+1:ord)
+d119 1
+a119 1
+          a%block(1,ib)%values(nv:nv+ord,1) = pascal
+d127 1
+a127 1
+          a%block(1,ib)%values(nv:nv+j,1) = pascal(0:j)
+a129 1
+        call deallocate_test ( Pascal, "Pascal's triangle", moduleName )
+a136 4
+  real function SBINOM ( N, K )
+    integer, intent(in) :: N, K
+  end function SBINOM
+
+a138 2
+
+
+d140 4
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d12 2
+a13 2
+  use MatrixModule_0, only: M_Absent, M_Banded, MatrixElement_T
+  use MatrixModule_1, only: Matrix_T
+d19 1
+a19 1
+       "$Id: $"
+d22 1
+a22 1
+       "$RCSfile: $"
+d56 5
+a60 5
+    interface
+      real function SBINOM ( N, K )
+        integer, intent(in) :: N, K
+      end function SBINOM
+    end interface
+d126 4
+d132 6
+a137 1
+! $Log: $
+@
+

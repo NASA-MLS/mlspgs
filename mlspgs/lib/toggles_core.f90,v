@@ -1,0 +1,330 @@
+head	2.7;
+access;
+symbols
+	v5-02-NRT-19:2.7
+	v6-00:2.7
+	v5-02-NRT-18:2.7
+	v5-02:2.7
+	v5-01-NRT-17:2.7
+	v5-01-NRT-16:2.7
+	v5-01-NRT-15:2.7
+	v5-01-NRT-14:2.7
+	neuralnetworks-1-0:2.7.0.12
+	cfm-single-freq-0-1:2.7.0.10
+	v5-01:2.7
+	v5-00:2.7
+	v4-23-TA133:2.7.0.8
+	mus-emls-1-70:2.7.0.6
+	rel-1-0-englocks-work:2.7.0.4
+	VUMLS1-00:2.7
+	VPL1-00:2.7
+	V4-22-NRT-08:2.7
+	VAM1-00:2.7
+	V4-21:2.7.0.2
+	V4-13:2.7
+	V4-12:2.7
+	V4-11:2.7
+	V4-10:2.7
+	V3-43:2.6
+	M4-00:2.7
+	V3-41:2.6
+	V3-40-PlusGM57:2.6.0.2
+	V2-24-NRT-04:2.5
+	V3-33:2.6
+	V2-24:2.5
+	V3-31:2.6
+	V3-30-NRT-05:2.6
+	cfm-01-00:2.6
+	V3-30:2.6
+	V3-20:2.6
+	V3-10:2.6
+	V2-23-NRT-02:2.5
+	V2-23:2.5
+	V2-22-NRT-01:2.5
+	V2-22:2.5
+	V2-21:2.5
+	V2-20:2.5
+	V2-11:2.5
+	V2-10:2.5
+	V2-00:2.5
+	V1-51:2.4
+	V1-50:2.4
+	V1-45:2.4
+	V1-44:2.4
+	V1-43:2.4
+	V1-42:2.4
+	V1-41:2.4
+	V1-32:2.4
+	V1-40:2.4
+	V1-31:2.4
+	V1-30:2.4
+	V1-13:2.4
+	V1-12:2.4
+	V1-11:2.4
+	V1-10:2.4
+	newfwm-feb03:2.4.0.2
+	V1-04:2.3
+	V1-03:2.3
+	V1-02:2.3
+	V1-00:2.3
+	newfwm-sep01:2.3.0.2
+	V0-7:2.3
+	V0-5-Level2:2.3
+	V0-5-SIPS:2.2;
+locks; strict;
+comment	@# @;
+
+
+2.7
+date	2012.06.06.20.42.50;	author vsnyder;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2009.06.23.18.25.44;	author pwagner;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2005.06.22.17.25.51;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2002.10.08.00.09.15;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2001.04.24.22.35.01;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2001.03.16.21.25.39;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2000.10.11.18.33.25;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.7
+log
+@Make switches variable longer
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module TOGGLES
+
+  implicit NONE
+  public
+
+  ! Toggle indices.  The parser uses PAR, and the symbol/declaration
+  ! table software uses TAB, but they can have any values.
+  integer, parameter :: CON = 1    ! Trace constrainers visitation of tree
+                                   ! nodes, inverted by @@C
+  integer, parameter :: EMIT = 2   ! Trace code emitting, inverted by @@E
+  integer, parameter :: GEN = 3    ! Trace code generator, inverted by @@G
+  integer, parameter :: LEX = 4    ! Print each token as lexer finishes,
+                                   ! inverted by @@L
+  integer, parameter :: PAR = 5    ! Trace parser actions, inverted by @@P
+  integer, parameter :: SYN = 6    ! Print abstract syntax tree, inverted
+                                   ! by @@A
+  integer, parameter :: TAB = 7    ! Trace symbol/declaration table
+                                   ! activity, inverted by @@S
+
+  ! Toggles:
+  logical, save :: TOGGLE(con:tab) = .false.
+
+  ! In case you want to have levels of output (not used in the parser):
+  integer, save :: LEVELS(con:tab) = 0
+
+  ! Some switches that anybody can look at (not used in the parser):
+  character(len=256), save :: Switches = ' '
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: toggles_core.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  subroutine INIT_TOGGLE
+    levels = 0
+    toggle = .false.
+    switches = ' '
+  end subroutine INIT_TOGGLE
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: toggles_core.f90,v 2.6 2009/06/23 18:25:44 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module TOGGLES
+
+! $Log: toggles_core.f90,v $
+! Revision 2.6  2009/06/23 18:25:44  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.5  2005/06/22 17:25:51  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.4  2002/10/08 00:09:15  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.3  2001/04/24 22:35:01  vsnyder
+! Make module variables SAVE, initialize 'levels'
+!
+! Revision 2.2  2001/03/16 21:25:39  vsnyder
+! Add character switches
+!
+! Revision 2.1  2000/10/11 18:33:25  vsnyder
+! Move from lib/cf_parser to lib; insert copyright notice
+!
+! Revision 2.0  2000/09/05 17:41:51  dcuddy
+! Change revision to 2.0
+!
+! Revision 1.2  2000/08/01 01:01:45  vsnyder
+! Added "levels" for those who want to control the amount of output.
+!
+@
+
+
+2.6
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d38 1
+a38 1
+  character(len=80), save :: Switches = ' '
+d42 1
+a42 1
+       "$RCSfile: $"
+d57 1
+a57 1
+       "$Id: read_apriori.f90 is it here $"
+d67 3
+@
+
+
+2.5
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d54 1
+a55 1
+!---------------------------- RCS Ident Info -------------------------------
+d57 2
+a58 3
+       "$Id: $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d60 1
+d62 1
+d67 3
+@
+
+
+2.4
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d40 1
+a40 4
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
+       "$Id: toggles_core.f90,v 2.3 2001/04/24 22:35:01 vsnyder Exp $"
+  character (len=len(idParm)), private :: Id = idParm
+d42 1
+a42 1
+       "$RCSfile: toggles_core.f90,v $"
+d55 5
+d66 3
+@
+
+
+2.3
+log
+@Make module variables SAVE, initialize 'levels'
+@
+text
+@d34 1
+a34 1
+       "$Id: $"
+d37 2
+a38 1
+       "$RCSfile: $"
+d49 4
+d56 3
+@
+
+
+2.2
+log
+@Add character switches
+@
+text
+@d24 1
+a24 1
+  logical :: TOGGLE(con:tab) = .false.
+d27 1
+a27 1
+  integer :: LEVELS(con:tab) = 0
+d30 1
+a30 1
+  character(len=80) :: Switches = ' '
+d33 3
+a35 2
+  character (len=256), private :: Id = &
+       "$Id: toggles_core.f90,v 2.1 2000/10/11 18:33:25 vsnyder Exp $"
+d37 1
+a37 1
+       "$RCSfile: toggles_core.f90,v $"
+d43 1
+d51 3
+@
+
+
+2.1
+log
+@Move from lib/cf_parser to lib; insert copyright notice
+@
+text
+@d29 3
+d34 1
+a34 1
+       "$Id: toggles_core.f90,v 2.0 2000/09/05 17:41:51 dcuddy Exp $"
+d43 1
+d49 3
+@
+

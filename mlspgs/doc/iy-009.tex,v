@@ -1,0 +1,122 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.12
+	cfm-single-freq-0-1:1.2.0.10
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.8
+	mus-emls-1-70:1.2.0.6
+	rel-1-0-englocks-work:1.2.0.4
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.2
+	V4-21:1.2.0.2
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	M4-00:1.1
+	V3-33:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.2
+date	2014.11.25.02.28.30;	author yanovsky;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2011.03.17.20.58.23;	author yanovsky;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Corrected path to texmacros.tex
+@
+text
+@\documentclass[fleqn,10pt]{article}
+
+\setlength{\topmargin}{-1.5cm}
+\setlength{\headheight}{0.5cm}
+\setlength{\headsep}{0.7cm}
+\setlength{\topskip}{0.5cm}
+\setlength{\textheight}{23.0cm}
+\setlength{\footskip}{0.5cm}
+\setlength{\oddsidemargin}{0.5cm}
+\setlength{\evensidemargin}{0.5cm}
+\setlength{\textwidth}{14.5cm}
+
+%\input {../../Math/texmacros}
+\input {texmacros}
+
+% For pasting into PPT presentation: 
+%\setlength{\textwidth}{10.5cm}
+
+
+
+
+\setcounter{tocdepth}{5}
+
+
+
+%\numberwithin{equation}{section}
+
+%\pagestyle{headings}
+%\markboth{Igor}{Yanovsky}
+
+
+
+
+
+
+\begin{document}
+
+\title{Mixing Ratio First and Second Derivatives in Linear and Logarithmic Basis}
+\author{Igor Yanovsky \\
+iy-009}
+
+\date{}
+
+\maketitle
+
+
+\input{iy-009-01} 
+
+
+
+\bibliographystyle{ieee}
+\bibliography{/Users/yanovsky/Igor/papers/refslib/yanovsky}
+
+
+\end{document}
+
+% $Id:  $@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d13 2
+a14 1
+\input {../../Math/texmacros}
+@
+

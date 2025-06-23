@@ -1,0 +1,148 @@
+head	1.3;
+access;
+symbols
+	V1-45:1.2
+	V1-44:1.2
+	V1-43:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.3
+date	2004.09.21.23.02.42;	author livesey;	state dead;
+branches;
+next	1.2;
+
+1.2
+date	2004.04.30.21.40.57;	author livesey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.04.30.21.01.38;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@No longer needed
+@
+text
+@; $Id: coreplusr2flagstight.l2cf,v 1.2 2004/04/30 21:40:57 livesey Exp $
+
+; This l2cf fragment does all the quality flagging for the Core+R2
+; products.
+
+
+begin Fill
+  ;; ------------------------------------- H2O-190
+  !define(flaggingBands,{2,3,4,5,6,23})
+  !makeFlagsForOneProduct(product=H2O,radiometer=R2,chisqScale=100.0,minRads=6500,cloudMax=2K,cloudMin= -10K)
+
+  ;; --------------------------------------- N2O-190
+  !define(flaggingBands,{3})
+  !makeFlagsForOneProduct(product=N2O,radiometer=R2,chisqScale=50.0,minRads=1000,cloudMax=2K,cloudMin= -10K)
+
+  ;; ---------------------------------------- HNO3-190
+  !define(flaggingBands,{4,6})
+  !makeFlagsForOneProduct(product=HNO3,radiometer=R2,chisqScale=10.0,minRads=2500,cloudMax=2K,cloudMin= -10K)
+
+  ;; ----------------------------------------- ClO-190
+  !define(flaggingBands,{5})
+  !makeFlagsForOneProduct(product=ClO,radiometer=R2,chisqScale=10.0,minRads=1200,cloudMax=2K,cloudMin= -10K)
+
+  ;; ----------------------------------------- O3-190
+  !define(flaggingBands,{6})
+  !makeFlagsForOneProduct(product=O3,radiometer=R2,chisqScale=10.0,minRads=1200,cloudMax=2K,cloudMin= -10K)
+
+  ;; ----------------------------------------- HCN-190
+  !define(flaggingBands,{6,27})
+  !makeFlagsForOneProduct(product=HCN,radiometer=R2,chisqScale=10.0,minRads=1400,cloudMax=2K,cloudMin= -10K)
+
+  ;; ----------------------------------------- CH3CN-190
+  !define(flaggingBands,{2,3,4,5})
+  !makeFlagsForOneProduct(product=CH3CN,radiometer=R2,chisqScale=500.0,minRads=4500,cloudMax=2K,cloudMin= -10K)
+
+  ;; ------------------------------------- Temperature-CorePlusR2
+  !define(flaggingBands,{1,22,32})
+  !makeFlagsForOneProduct(product=Temperature,radiometer=R2,chisqScale=10.0,minRads=1500,cloudMax=2K,cloudMin= -10K)
+
+  ;; ------------------------------------- GPH-CorePlusR2
+  !define(flaggingBands,{1,22,32})
+  !makeFlagsForOneProduct(product=GPH,radiometer=R2,chisqScale=10.0,minRads=1500,cloudMax=2K,cloudMin= -10K)
+
+end Fill
+
+; $Log: coreplusr2flagstight.l2cf,v $
+; Revision 1.2  2004/04/30 21:40:57  livesey
+; Updated for tests
+;
+; Revision 1.8  2004/04/28 23:06:33  livesey
+; Changes to cloud flagging.
+;
+; Revision 1.7  2004/04/28 00:31:57  livesey
+; Bug fix
+;
+; Revision 1.6  2004/04/27 23:50:01  livesey
+; Added low cloud flagging
+;
+@
+
+
+1.2
+log
+@Updated for tests
+@
+text
+@d1 1
+a1 1
+; $Id: coreplusr2flags.l2cf,v 1.8 2004/04/28 23:06:33 livesey Exp $
+d46 4
+a49 1
+; $Log: coreplusr2flags.l2cf,v $
+@
+
+
+1.1
+log
+@Brought over for a while, should go away soon
+@
+text
+@d1 1
+a1 1
+; $Id: coreplusr2flags.l2cf,v 1.7 2004/04/28 00:31:57 livesey Exp $
+d10 1
+a10 1
+  !makeFlagsForOneProduct(product=H2O,radiometer=R2,chisqScale=100.0,minRads=6500,cloudMax=30K,cloudMin= -20K)
+d14 1
+a14 1
+  !makeFlagsForOneProduct(product=N2O,radiometer=R2,chisqScale=50.0,minRads=1000,cloudMax=5K,cloudMin= -20K)
+d18 1
+a18 1
+  !makeFlagsForOneProduct(product=HNO3,radiometer=R2,chisqScale=10.0,minRads=2500,cloudMax=5K,cloudMin= -20K)
+d22 1
+a22 1
+  !makeFlagsForOneProduct(product=ClO,radiometer=R2,chisqScale=10.0,minRads=1200,cloudMax=5K,cloudMin= -20K)
+d26 1
+a26 1
+  !makeFlagsForOneProduct(product=O3,radiometer=R2,chisqScale=10.0,minRads=1200,cloudMax=5K,cloudMin= -20K)
+d30 1
+a30 1
+  !makeFlagsForOneProduct(product=HCN,radiometer=R2,chisqScale=10.0,minRads=1400,cloudMax=5K,cloudMin= -20K)
+d34 1
+a34 1
+  !makeFlagsForOneProduct(product=CH3CN,radiometer=R2,chisqScale=500.0,minRads=4500,cloudMax=5K,cloudMin= -20K)
+d38 1
+a38 1
+  !makeFlagsForOneProduct(product=Temperature,radiometer=R2,chisqScale=10.0,minRads=1500,cloudMax=2K,cloudMin= -20K)
+d42 1
+a42 1
+  !makeFlagsForOneProduct(product=GPH,radiometer=R2,chisqScale=10.0,minRads=1500,cloudMax=2K,cloudMin= -20K)
+d47 3
+@
+

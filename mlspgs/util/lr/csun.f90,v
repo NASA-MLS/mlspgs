@@ -1,0 +1,176 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.12
+	cfm-single-freq-0-1:1.2.0.10
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.8
+	mus-emls-1-70:1.2.0.6
+	rel-1-0-englocks-work:1.2.0.4
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.2
+	V4-21:1.2.0.2
+	V4-13:1.2
+	V4-12:1.2
+	V4-11:1.2
+	V4-10:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2014.01.14.00.11.42;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2013.10.24.22.41.14;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Revised LR completely
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Union
+
+  implicit NONE
+  private
+  public ::CSUN
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: csun.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  subroutine CSUN ( IPTR1, IPTR2, CHANGE )
+
+    use Delete, only: DELCS
+    use LISTS, only: ADDLTL, COPYL, LIST
+    use New_Context_Set, only: NEWCS
+
+    implicit NONE
+
+  ! Union the contexts sets pointed to by IPTR1 and IPTR2, leaving the
+  ! result in IPTR2.   CHANGE is returned true iff there are any
+  ! elements of IPTR1 that are not members of IPTR2.
+
+    integer, intent(in) :: IPTR1
+    integer, intent(inout) :: IPTR2
+    logical, intent(out) :: CHANGE
+
+  ! *****     External References     ********************************
+
+  ! ADDLTL  adds the elements of one list to another.
+  ! COPYL   copies a list.
+  ! DELCS   deletes a context set.
+  ! NEWCS   creates a new context set.
+
+  ! *****     Local Variables     ************************************
+
+  ! HEAD    is the head of a the list that represents the union of IPTR1
+  !         and IPTR2.
+
+    integer head
+
+  !     *****     Procedures     *****************************************
+
+    change = .false.
+    if (iptr1 /= iptr2) then
+      call copyl ( list(iptr2)%next, head )
+      call addltl ( list(iptr1)%next, head, change )
+      call delcs ( iptr2 )
+      call newcs ( head, iptr2 )
+    end if
+
+    return
+
+  end subroutine CSUN
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: csun.f90,v 1.1 2013/10/24 22:41:14 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Union
+
+! $Log: csun.f90,v $
+! Revision 1.1  2013/10/24 22:41:14  vsnyder
+! Initial commit
+!
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d20 1
+a20 1
+       "$RCSfile: parser.f90,v $"
+d26 1
+a26 1
+  subroutine CSUN (IPTR1, IPTR2, ICH)
+d29 1
+a29 1
+    use LISTS, only: ADDLTL, COPYL, NEXT
+d35 1
+a35 1
+  ! result in IPTR2.   ICH is returned non-zero iff there are any
+d40 1
+a40 1
+    integer, intent(out) :: ICH
+d58 1
+a58 1
+    ich = 0
+d60 4
+a63 4
+      call copyl (next(iptr2), head)
+      call addltl (next(iptr1), head, ich)
+      call delcs (iptr2)
+      call newcs (head, iptr2)
+d73 1
+a73 1
+       "$Id: parser.f90,v 2.29 2013/10/02 01:35:46 vsnyder Exp $"
+d82 4
+a85 1
+! $Log: $
+@
+

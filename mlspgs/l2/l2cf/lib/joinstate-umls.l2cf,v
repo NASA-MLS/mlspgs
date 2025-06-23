@@ -1,0 +1,161 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.6
+	cfm-single-freq-0-1:1.2.0.4
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.2
+	mus-emls-1-70:1.1.0.4
+	rel-1-0-englocks-work:1.1.0.2
+	VUMLS1-00:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2019.01.31.20.02.42;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2017.03.09.01.31.47;	author mjschwar;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Removed commentd-out stuff
+@
+text
+@;; $Id: joinstate-umls.l2cf,v 1.35 2015/12/01 21:46:32 pwagner Exp $
+
+;; In the future the following may be moved to a separate l2cf fragment
+;; e.g., writephasetiming.l2cf
+!ifdef(flagAvoidDirectWrite,{},{
+begin Fill
+  timing: Vector, template=timingTemplate
+  Fill, quantity=timing.phaseTiming, method=phaseTiming
+  Fill, quantity=timing.sectionTiming, method=sectionTiming
+  Fill, quantity=timing.chunkNumMMAF,    method=geoLocation, manipulation='chunk'
+  Fill, quantity=timing.geodLatMMAF,     method=geoLocation, manipulation='geodlat'
+  Fill, quantity=timing.solarZenithMMAF, method=geoLocation, manipulation='solarzenith'
+  Fill, quantity=timing.profileNum, method=geoLocation, manipulation='profile', $
+        hGrid=hGridStandard
+end Fill
+
+begin Join
+  Label, quantity=timing.phaseTiming,     label='phase timing'
+  Label, quantity=timing.sectionTiming,   label='section timing'
+  Label, quantity=timing.chunkNumMMAF,    label='chunk number'
+  Label, quantity=timing.geodLatMMAF,     label='geod lat'
+  Label, quantity=timing.solarZenithMMAF, label='solar zenith'
+  Label, quantity=timing.profileNum,      label='nearest profile'
+  DirectWrite, hdfVersion=5, $
+  type=l2aux, $
+    source=timing.phaseTiming, source=timing.sectionTiming, $
+    source=timing.chunkNumMMAF, source=timing.geodLatMMAF, $
+    source=timing.solarZenithMMAF, source=timing.profileNum
+end Join
+})
+; $Log: joinstate-umls.l2cf,v $
+@
+
+
+1.1
+log
+@pared down joinstate for umls
+@
+text
+@d1 1
+a1 74
+;; $Id: joinstate.l2cf,v 1.35 2015/12/01 21:46:32 pwagner Exp $
+
+;; begin Join
+
+;; !ifdef(flagSuppressRegularOutput,{},{
+;;   !ifdef(flagAvoidDirectWrite,{
+;;   ;; Join the tropopause pressure
+;;   joined_tpPressure: l2gp, source=state.tpPressure, swath='TPPressureWMO-DGG'
+;;   !storeJoinedDGG(joined_tpPressure)
+
+;;   !define(joinStandardProduct,{joined_$1: l2gp, source=state.$1, $
+;;     precision=outputPrecision.$1, swath='$1'!nl})
+;;   !forall(joinStandardProduct,!allStandardProducts)
+
+;;   ;; Join the columns
+;;   !define(joinStandardColumn,{joined_$1_column: l2gp, source=state.column_$1, $
+;;     precision=outputPrecision.column_$1, swath='$1 Column wmo'!nl})
+;;   !forall(joinStandardColumn,!allStandardProductsWithColumns)
+
+;;   ;; IWC is a special case
+;;   joined_iwc: l2gp, source=state.iwc, precision=outputPrecision.iwc, $
+;;     swath='IWC'
+;;   joined_iwp: l2gp, source=state.iwp, precision=outputPrecision.iwp, $
+;;     swath='IWP'
+;;   joined_iwcFine: l2gp, source=state.iwcFine, precision=outputPrecision.iwcFine, $
+;;   swath='IWC-fine'
+;; },{
+
+;;   ;; First the species with columns
+;;   !define(writeStandardProductWithColumn,{
+;;   Label, quantity=state.$1, label='$1'
+;;   Label, quantity=state.column_$1, label='$1 column'
+;;   DirectWrite, type=l2gp, hdfVersion=!hdfVersion, $
+;;     file='!l2gpFileName($1)', $
+;;     source=state.$1, precision=outputPrecision.$1, $
+;;     status=otherDiagnostics.status$1, quality=otherDiagnostics.quality$1, $
+;;     source=state.column_$1, precision=outputPrecision.column_$1!nl})
+;; !ifdef(flagCopyStandardProducts,{
+;; },{
+;;   !forall(writeStandardProductWithColumn,!allStandardProductsWithColumns)
+;; })
+
+;;   ;; Now the species without columns
+;;   !define(writeStandardProductWithoutColumn,{
+;;   Label, quantity=state.$1, label='$1'
+;;   DirectWrite, type=l2gp, hdfVersion=!hdfVersion, $
+;;     file='!l2gpFileName($1)', $
+;;     source=state.$1, precision=outputPrecision.$1, $
+;;     status=otherDiagnostics.status$1,quality=otherDiagnostics.quality$1!nl})
+;; !ifdef(flagCopyStandardProducts,{
+;; },{
+;;   !forall(writeStandardProductWithoutColumn,!allStandardProductsWithoutColumns)
+;;   ;; IWC is a special case
+;;   Label, quantity=state.iwc, label='IWC'
+;;   Label, quantity=state.iwp, label='IWP'
+;;   ;;;Label, quantity=state.iwcFine, label='IWC3'
+;;   DirectWrite, type=l2gp, hdfVersion=!hdfVersion, $
+;;     file='!l2gpFileName(IWC)', $
+;;     source=state.iwc, precision=outputPrecision.iwc, $
+;;     source=state.iwp, precision=outputPrecision.iwp
+
+;;     ;;;source=state.iwp, precision=outputPrecision.iwp, $
+;;     ;;;source=state.iwcFine, precision=outputPrecision.iwcFine
+
+;;   ;; Also put tpPressure in the temperature file
+;;   Label, quantity=state.tpPressure, label='TPPressureWMO'
+;;   DirectWrite, type=l2gp, hdfVersion=!hdfVersion, $
+;;     file='!l2gpFileName(Temperature)', source=state.tpPressure
+
+;; })
+
+;;   !flushDGGDGMFiles
+;; })})
+;; end Join
+d31 1
+@
+

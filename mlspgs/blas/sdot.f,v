@@ -1,0 +1,208 @@
+head	1.3;
+access;
+symbols
+	v5-02-NRT-19:1.3
+	v6-00:1.3
+	v5-02-NRT-18:1.3
+	v5-02:1.3
+	v5-01-NRT-17:1.3
+	v5-01-NRT-16:1.3
+	v5-01-NRT-15:1.3
+	v5-01-NRT-14:1.3
+	neuralnetworks-1-0:1.3.0.14
+	cfm-single-freq-0-1:1.3.0.12
+	v5-01:1.3
+	v5-00:1.3
+	v4-23-TA133:1.3.0.10
+	mus-emls-1-70:1.3.0.8
+	rel-1-0-englocks-work:1.3.0.6
+	VUMLS1-00:1.3
+	VPL1-00:1.3
+	V4-22-NRT-08:1.3
+	VAM1-00:1.3
+	V4-21:1.3.0.4
+	V4-13:1.3
+	V4-12:1.3
+	V4-11:1.3
+	V4-10:1.3
+	V3-43:1.3
+	M4-00:1.3
+	V3-41:1.3
+	V3-40-PlusGM57:1.3.0.2
+	V2-24-NRT-04:1.3
+	V3-33:1.3
+	V2-24:1.3
+	V3-31:1.3
+	V3-30-NRT-05:1.3
+	cfm-01-00:1.3
+	V3-30:1.3
+	V3-20:1.3
+	V3-10:1.3
+	V2-23-NRT-02:1.3
+	V2-23:1.3
+	V2-22-NRT-01:1.3
+	V2-22:1.3
+	V2-21:1.3
+	V2-20:1.3
+	V2-11:1.3
+	V2-10:1.3
+	V2-00:1.3
+	V1-51:1.2
+	V1-50:1.2
+	V1-45:1.2
+	V1-44:1.2
+	V1-43:1.2
+	V1-42:1.2
+	V1-41:1.2
+	V1-32:1.2
+	V1-40:1.2
+	V1-31:1.2
+	V1-30:1.2
+	V1-13:1.2
+	V1-12:1.2
+	V1-11:1.2
+	V1-10:1.2
+	newfwm-feb03:1.2.0.2
+	V1-04:1.1
+	V1-03:1.1
+	V1-02:1.1
+	V1-00:1.1
+	newfwm-sep01:1.1.0.2
+	V0-7:1.1
+	V0-5-Level2:1.1
+	V0-5-SIPS:1.1;
+locks; strict;
+comment	@c @;
+
+
+1.3
+date	2005.06.22.19.45.19;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2002.10.10.23.48.57;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.02.07.19.07.46;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id: updatediagonalvec_0.f9h,v 2.3 2005/06/22 17:44:11 pwagner Exp $
+
+C === (start of toc) ===
+C sdot      Returns dot product of two single-precision vectors
+C === (end of toc) ===
+
+C === (start of api) ===
+C real sdot ( int n, real x(:), int incx, real y(:), int incy )
+C === (end of api) ===
+
+      REAL             FUNCTION SDOT(N,X,INCX,Y,INCY)
+C>> 1994-11-11 SDOT  Krogh   Declared all vars.
+c>> 1994-10-20 SDOT   Krogh  Changes to use M77CON
+c>> 1994-04-19 SDOT   Krogh   Minor -- Made code versions line up.
+C>> 1985-08-02 SDOT   Lawson  Initial code.
+c--S replaces "?": ?DOT
+C
+C     RETURNS THE DOT PRODUCT OF X AND Y.
+C     SDOT = SUM FOR I = 0 TO N-1 OF  X(LX+I*INCX) * Y(LY+I*INCY),
+C     WHERE LX = 1 IF INCX .GE. 0, ELSE LX = (-INCX)*N, AND LY IS
+C     DEFINED IN A SIMILAR WAY USING INCY.
+C
+      INTEGER N, INCX, INCY, IX, IY, I, M, MP1, NS
+      REAL             X(*),Y(*)
+      SDOT = 0.0E0
+      IF(N.LE.0)RETURN
+      IF(INCX.EQ.INCY) IF(INCX-1) 5,20,60
+    5 CONTINUE
+C
+C         CODE FOR UNEQUAL OR NONPOSITIVE INCREMENTS.
+C
+      IX = 1
+      IY = 1
+      IF(INCX.LT.0)IX = (-N+1)*INCX + 1
+      IF(INCY.LT.0)IY = (-N+1)*INCY + 1
+      DO 10 I = 1,N
+         SDOT = SDOT + X(IX)*Y(IY)
+        IX = IX + INCX
+        IY = IY + INCY
+   10 CONTINUE
+      RETURN
+C
+C        CODE FOR BOTH INCREMENTS EQUAL TO 1.
+C
+C
+C        CLEAN-UP LOOP SO REMAINING VECTOR LENGTH IS A MULTIPLE OF 5.
+C
+   20 M = MOD(N,5)
+      IF( M .EQ. 0 ) GO TO 40
+      DO 30 I = 1,M
+         SDOT = SDOT + X(I)*Y(I)
+   30 CONTINUE
+      IF( N .LT. 5 ) RETURN
+   40 MP1 = M + 1
+      DO 50 I = MP1,N,5
+         SDOT = SDOT + X(I)*Y(I) + X(I+1)*Y(I+1) +
+     $   X(I + 2)*Y(I + 2) + X(I + 3)*Y(I + 3) + X(I + 4)*Y(I + 4)
+   50 CONTINUE
+      RETURN
+C
+C         CODE FOR POSITIVE EQUAL INCREMENTS .NE.1.
+C
+   60 CONTINUE
+      NS = N*INCX
+          DO 70 I=1,NS,INCX
+          SDOT = SDOT + X(I)*Y(I)
+   70     CONTINUE
+      RETURN
+      END
+! $Log: ddot.f,v $
+@
+
+
+1.2
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d1 12
+a12 3
+C     .  Copyright (C) 1989-1999, California Institute of Technology.
+C     .  U. S. Government sponsorship under
+C     .  NASA contract NAS7-918 is acknowledged.
+d81 1
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d5 8
+@
+

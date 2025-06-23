@@ -1,0 +1,50 @@
+head	1.2;
+access;
+symbols
+	V1-04:1.1
+	V1-03:1.1
+	V1-02:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2002.05.13.17.24.25;	author livesey;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2002.04.29.21.54.59;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Getting close to being ready
+@
+text
+@101|ProductMetadataFile|100:1
+2000|InputVersion|!INPUTVERSION
+2001|PGEVersion|!PGEVERSION
+2002|Cycle|!CYCLE
+2003|Processing CCSDS Start Time|!DATE{T}!STARTTIME.000000Z
+2004|Processing CCSDS End Time|!DATE{T}!ENDTIME.000000Z
+2005|L2 Species Name Keys|temp,gph,h2o,hno3,o3,hcl,clo,co,n2o,oh,rhi,so2,ho2,bro,hocl,hcn,cirrus-ice,others
+2006|L2 Species Name Hash|t,z,h2o,hno3,o3,hcl,clo,co,n2o,oh,rhi,so2,ho2,bro,hocl,hcn,ice,oth
+2007|L2 Runtime Switches|
+#
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@@
+

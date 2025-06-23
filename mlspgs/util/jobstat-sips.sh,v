@@ -1,0 +1,404 @@
+head	1.4;
+access;
+symbols
+	v5-02-NRT-19:1.4
+	v6-00:1.4
+	v5-02-NRT-18:1.4
+	v5-02:1.4
+	v5-01-NRT-17:1.4
+	v5-01-NRT-16:1.4
+	v5-01-NRT-15:1.4
+	v5-01-NRT-14:1.4
+	neuralnetworks-1-0:1.4.0.10
+	cfm-single-freq-0-1:1.4.0.8
+	v5-01:1.4
+	v5-00:1.4
+	v4-23-TA133:1.4.0.6
+	mus-emls-1-70:1.4.0.4
+	rel-1-0-englocks-work:1.4.0.2
+	VUMLS1-00:1.4
+	VPL1-00:1.4
+	V4-22-NRT-08:1.4
+	VAM1-00:1.3
+	V4-21:1.3.0.2
+	V4-13:1.3
+	V4-12:1.3
+	V4-11:1.3
+	V4-10:1.3
+	V3-43:1.1
+	M4-00:1.2
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V2-24-NRT-04:1.1
+	V3-33:1.1
+	V2-24:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1
+	V2-23-NRT-02:1.1
+	V2-23:1.1
+	V2-22-NRT-01:1.1
+	V2-22:1.1
+	V2-21:1.1
+	V2-20:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.4
+date	2015.12.04.20.02.59;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2013.12.05.00.24.03;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2012.07.03.15.20.41;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2006.10.19.18.32.03;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.4
+log
+@Accounts for notes files left by slaves in pvmdirr subdirectory
+@
+text
+@#!/bin/sh
+#	jobstat-sips.sh				Author P.A. Wagner (JPL)
+# --------------- jobstat help
+# Prepares a progress table of the chunks for a sips-like run of mlsl2
+# during or after run
+# Usage:
+# jobstat [options] log_dir l2cf masterlog
+# where log_dir is the directory holding all the log files from the run
+# l2cf is the l2cf controlling the run
+# and masterlog is the log file from the master task
+#
+#     O p t i o n s
+#  -S scan-sript     Use scan-sript instead of mlsqlog-scan-sips.py
+#  -t split-sript    Use split-sript instead of split_path.sh
+#  -dryrun           Don't execute commands, just echo them
+#  -v                verbose; print extra
+#  -h[elp]           Show this help message
+#  -vers number      The mlsl2 was version number (default is v2.2)
+
+# Notes:
+# (1) Requires the python script mlsqlog-scan-sips.py be in your PATH
+#   (unless you override it by a command-line option)
+# (2) if the log files have already been catenated into a single file
+#    we will split them (temporarily)
+#    (a) Assumes the files all started with the same or a similar line; e.g.
+#     "#/users/pwagner/l2tests/v2.1/2006d121/pvmlog/riverrun.11864.log mlsl2.log"
+#    (b) Requires the script split_path.sh be in your PATH
+#      (unless you override it by a command-line option)
+# (3) for mlsl2 versions prior to 2.2, a different format of the masterlog
+#     is assumed to extract the name of the l2cf; version 2.2 or later share
+#     a common format as far as extracting that name is concerned
+#
+# --------------- End jobstat help
+# Copyright 2005, by the California Institute of Technology. ALL
+# RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+# commercial use must be negotiated with the Office of Technology Transfer
+# at the California Institute of Technology.
+
+# This software may be subject to U.S. export control laws. By accepting this
+# software, the user agrees to comply with all applicable U.S. export laws and
+# regulations. User has the responsibility to obtain export licenses, or other
+# export authority as may be required before exporting such information to
+# foreign countries or providing access to foreign persons.
+
+# "$Id: jobstat-sips.sh,v 1.3 2013/12/05 00:24:03 pwagner Exp $"
+
+#---------------------------- get_unique_name
+#
+# Function returns a unique name based on arg, PID and HOSTNAME
+# e.g.,
+#           temp_file_name=`get_unique_name foo`
+#           echo $temp_file_name
+# might print foo.colossus.21455
+# if no arg, defaults to "temp" (very original name)
+# if two args present, assumes second is punctuation to
+# use in pace of "."
+
+get_unique_name()
+{
+
+   # How many args?
+      if [ $# -gt 1 ]
+      then
+        pt="$2"
+        temp="$1"
+      elif [ $# -gt 0 ]
+      then
+        pt="."
+        temp="$1"
+      else
+        pt="."
+        temp="temp"
+      fi
+   # Is $HOST defined?
+      if [ "$HOST" != "" ]
+      then
+         our_host_name="$HOST"
+      elif [ "$HOSTNAME" != "" ]
+      then
+         our_host_name="$HOSTNAME"
+      else
+         our_host_name="host"
+      fi
+    #  echo $our_host_name
+   # if in form host.moon.planet.star.. extract host
+      our_host_name=`echo $our_host_name | sed 's/\./,/g'`
+      our_host_name=`perl -e '@@parts=split(",","$ARGV[0]"); print $parts[0]' $our_host_name`
+      echo $temp${pt}$our_host_name${pt}$$
+}
+
+#---------------------------- uncat_logs
+#
+# Function reverses the catenation performed on log files
+uncat_logs()
+{
+#tempdir=$HOME/uncattemp
+tempdir=$HOME/`get_unique_name uncat`
+#the_splitter="`echo $0 | sed 's/'$I'/split_path/'`"
+# $mkpath is mkpath with me's path prepended
+# mkpath="`echo $0 | sed 's/'$I'/mkpath/'`"
+# $reecho is reecho with me's path prepended
+# reecho="`echo $0 | sed 's/'$I'/reecho/'`"
+DEEBUG=off
+
+if [ "$tempdir" = "$HOME/" -o "$tempdir" = "/" ]
+then
+  echo "Problem forming tempdir"
+  exit 1
+fi
+
+mkdir $tempdir
+#echo "args: $@@"
+#echo sed -n '2,$ p' $1 | grep 'mlsl2.log' | awk '{print $1}'
+p=`sed -n '2,$ p' $1 | grep 'mlsl2.log' | awk '{print $1}'`
+lastq=`sed -n '2,$ p' $1 | grep 'mlsl2.log' | tail -1 | awk '{print $1}'`
+prevq=""
+for q in $p
+do
+  # echo $q
+  qname=`$the_splitter -f $q`
+  # echo $qname
+  if [ "$prevq" != "" ]
+  then
+    sed -n '/'$prevq'/,/'$qname'/ p' $1 | sed '$ d' > $tempdir/$prevq
+  fi
+  prevq=$qname
+done
+sed -n '/'$prevq'/,$ p' $1 > $tempdir/$prevq
+echo $tempdir
+
+}      
+
+#---------------------------- execute
+#
+# Function either executes or else echoes a command
+# depending on value of dryrun
+execute()
+{
+  if [ "$dryrun" = "yes" ]
+  then
+    echo $@@
+  elif [ "$verbose" = "yes" ]
+  then
+    echo $@@
+    $@@
+  else
+    $@@
+  fi
+}
+#------------------------------- Main Program ------------
+
+#****************************************************************
+#                                                               *
+#                  * * * Main Program  * * *                    *
+#                                                               *
+#                                                               *
+#	The entry point where control is given to the script         *
+#****************************************************************
+me="$0"
+my_name=jobstat
+I=uncat
+TIDYUPAFTER=1
+#           ^----- Set this to 1 to rm any temp files we create
+dryrun="no"
+verbose="no"
+SCANNER="mlsqlog-scan-sips.py"
+the_splitter=split_path.sh
+version=2.2
+
+more_opts="yes"
+while [ "$more_opts" = "yes" ] ; do
+
+    case "$1" in
+
+    -S )
+       shift
+       SCANNER="$1"
+       shift
+       ;;
+    -t )
+       shift
+       the_splitter="$1"
+       shift
+       ;;
+    -v )
+       verbose="yes"
+       shift
+       ;;
+    -vers )
+       shift
+       version="$1"
+       shift
+       ;;
+    -dryrun )
+       dryrun="yes"
+       shift
+       ;;
+    -h | -help )
+       sed -n '/'$my_name' help/,/End '$my_name' help/ p' $me \
+           | sed -n 's/^.//p' | sed '1 d; $ d'
+       exit
+	     ;;
+    * )
+       more_opts="no"
+       ;;
+    esac
+done
+
+# Do we need to split the log files?
+nlogs=`echo $1/*.log | wc -w`
+if [ "$verbose" = "yes" ]
+then
+  echo "number of log files $nlogs"
+fi
+
+if [ "$nlogs" = 1 -a "$1/*.log" = "$1/mlsl2.log" ]
+then
+  echo "Splitting already-catenated logfiles $1/*.log"
+  ls $1
+  time usedir=`uncat_logs $1/*.log`
+  execute $SCANNER $usedir xxx $2 $3 $version
+  if [ "$TIDYUPAFTER" = "1" ]
+  then
+    echo /bin/rm -fr $usedir
+    /bin/rm -fr $usedir
+  fi
+else
+  execute $SCANNER $1 xxx $2 $3 $version
+fi
+exit 0
+# $Log: jobstat-sips.sh,v $
+# Revision 1.3  2013/12/05 00:24:03  pwagner
+# Added verbose option; explain why mlsl2 version matters
+#
+# Revision 1.2  2012/07/03 15:20:41  pwagner
+# Fixed bug confusing single chunk with result of cat
+#
+# Revision 1.1  2006/10/19 18:32:03  pwagner
+# First commit
+#
+@
+
+
+1.3
+log
+@Added verbose option; explain why mlsl2 version matters
+@
+text
+@d45 1
+a45 1
+# "$Id: jobstat-sips.sh,v 1.2 2012/07/03 15:20:41 pwagner Exp $"
+d210 1
+a210 1
+nlogs=`echo $1/* | wc -w`
+d216 1
+a216 1
+if [ "$nlogs" = 1 -a "$1/*" = "$1/mlsl2.log" ]
+d218 1
+a218 1
+  echo "Splitting already-catenated logfiles $1/*"
+d220 1
+a220 1
+  time usedir=`uncat_logs $1/*`
+d232 3
+@
+
+
+1.2
+log
+@Fixed bug confusing single chunk with result of cat
+@
+text
+@d16 1
+d29 3
+d45 1
+a45 1
+# "$Id: jobstat-sips.sh,v 1.1 2006/10/19 18:32:03 pwagner Exp $"
+d142 4
+a161 1
+NORMAL_STATUS=0
+d165 1
+d176 1
+a176 1
+	    shift
+d181 1
+a181 1
+	    shift
+d185 4
+d190 1
+a190 1
+	    shift
+a209 4
+# ls $1/*
+# ls $1
+# echo '$1/*', $1/*
+# echo $1/* | wc -w
+d211 4
+a220 2
+  # echo mlsqlog-scan-sips.py $usedir xxx $2 $3
+  # mlsqlog-scan-sips.py $usedir xxx $2 $3
+a227 2
+  # echo mlsqlog-scan-sips.py $1 xxx $2 $3
+  # mlsqlog-scan-sips.py $1 xxx $2 $3
+d232 3
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d41 1
+a41 1
+# "$Id: jobstat-sips.sh,v 1.10 2006/07/29 00:18:06 pwagner Exp $"
+d108 2
+d204 1
+a204 1
+if [ "$nlogs" = 1 ]
+d223 4
+a226 1
+# $Log: clusterstatus.sh,v $
+@
+

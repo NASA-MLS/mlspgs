@@ -1,0 +1,113 @@
+head	1.6;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.6
+date	2003.08.21.22.33.05;	author livesey;	state dead;
+branches;
+next	1.5;
+
+1.5
+date	2003.05.30.00.57.10;	author livesey;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2003.05.29.16.38.41;	author livesey;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2003.05.27.19.07.05;	author livesey;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2003.05.27.19.06.33;	author livesey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2003.05.20.22.08.50;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.6
+log
+@Deleted
+@
+text
+@!define(signalsL2cf,{!calpath/MLS-Aura_L2Cal-Signals_v1-2-1_0000d000.l2cf})
+!define(spectroscopyL2cf,{!calpath/MLS-Aura_L2Cal-Spectroscopy_v1-2-0_0000d000.l2cf})
+!define(sidebandL2cf,{!calpath/MLS-Aura_L2Cal-SBFraction_v1-2-0_0000d000.l2cf})
+!define(systempL2cf,{!calpath/MLS-Aura_L2Cal-Tsys_v1-0-0_0000d000.l2cf})
+!define(nbwL2cf,{!calpath/MLS-Aura_L2Cal-NBW_v1-0-0_0000d000.l2cf})
+!define(lossesL2cf,{!calpath/MLS-Aura_L2Cal-Antenna-Losses_v1-2-0_0000d000.l2cf})
+; The next lot are arguments to fowardModelGlobal, so quoted.
+!define(antennaFile,{'!calpath/MLS-Aura_L2Cal-AAAP_v1-2-0_0000d000.txt'})
+!define(climatologyFile,{'!inpathcli/MLS-Aura_L2Cal-Climatologies_v1-2-0_0000d000.txt'})
+!define(filterFile,{'!calpath/MLS-Aura_L2Cal-Filters_v1-2-0_0000d000.txt'})
+!define(pfgFile,{'!calpath/MLS-Aura_L2Cal-PFG_v1-2-1_0000d000.txt'})
+@
+
+
+1.5
+log
+@Added climatology file.
+@
+text
+@@
+
+
+1.4
+log
+@New SBfraction file
+@
+text
+@d6 1
+d8 2
+a9 1
+!define(antennaFile,{'!calpath/MLS-Aura_L2Cal-AAAP_v1-0-0_0000d000.txt'})
+@
+
+
+1.3
+log
+@New pfg file.
+@
+text
+@d3 1
+a3 1
+!define(sidebandL2cf,{!calpath/MLS-Aura_L2Cal-SBRatio_v1-0-0_0000d000.l2cf})
+@
+
+
+1.2
+log
+@New signals file
+@
+text
+@d9 1
+a9 1
+!define(pfgFile,{'!calpath/MLS-Aura_L2Cal-PFG_v1-2-0_0000d000.txt'})
+@
+
+
+1.1
+log
+@First version.
+@
+text
+@d1 1
+a1 1
+!define(signalsL2cf,{!calpath/MLS-Aura_L2Cal-Signals_v1-2-0_0000d000.l2cf})
+@
+

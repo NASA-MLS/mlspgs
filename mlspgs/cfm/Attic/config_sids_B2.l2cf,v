@@ -1,0 +1,56 @@
+head	1.1;
+access;
+symbols
+	cfm-single-freq-0-1:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2021.08.16.23.09.09;	author whdaffer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2021.08.16.23.09.09;	author whdaffer;	state Exp;
+branches;
+next	;
+
+
+desc
+@SIDS l2cf from Bill Read
+@
+
+
+1.1
+log
+@file config_sids_B2.l2cf was initially added on branch cfm-single-freq-0-1.
+@
+text
+@@
+
+
+1.1.2.1
+log
+@Initial revision
+@
+text
+@a0 15
+begin GlobalSettings
+    vGridTangentSids: vGrid, type=Logarithmic, coordinate=Zeta, $
+       start=1000mb, formula=[37:12,24:6,3:3]
+    sidsFwm: forwardModel, type=full,  $
+    signals = ['R2:190.B2F:H2O.C1:23'], $
+    molecules = [[O3, O3, O3_V2, O3_V1_3, O3_ASYM_O_18, O3_SYM_O_18 ], $
+                 [N2O, N2O], [HNO3, HNO3],  [ SO2, S_32_O2 ], O2, N2, $
+                 [H2O, H2O, H2O_R2]],$
+    LSBlblMolecules = [N2, O3, O2, H2O, H2O_R2],$
+    USBlblMolecules = [N2, O3, O2, H2O, H2O_R2, N2O],$
+    phiWindow=0 degrees, /skipOverlaps, $
+    integrationGrid=vGridTangentSids, tangentGrid=vGridTangentSids, $
+    /do_conv, /do_freq_avg, $
+    /allLinesForRadiometer
+end GlobalSettings
+@
+

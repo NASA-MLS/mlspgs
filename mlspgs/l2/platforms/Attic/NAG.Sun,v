@@ -1,0 +1,695 @@
+head	1.20;
+access;
+symbols
+	V2-21:1.19
+	V2-20:1.19
+	V2-11:1.19
+	V2-10:1.19
+	V2-00:1.19
+	V1-51:1.19
+	V1-50:1.19
+	V1-45:1.19
+	V1-44:1.19
+	V1-43:1.19
+	V1-32:1.19
+	V1-31:1.19
+	V1-30:1.19
+	V1-13:1.19
+	V1-12:1.19
+	V1-11:1.19
+	V1-10:1.19
+	newfwm-feb03:1.19.0.2
+	V1-04:1.16
+	V1-03:1.16
+	V1-02:1.16
+	V1-00:1.16
+	newfwm-sep01:1.14.0.2
+	V0-7:1.14
+	V0-5-Level2:1.12
+	V0-5-SIPS:1.12;
+locks; strict;
+comment	@# @;
+
+
+1.20
+date	2007.06.07.19.57.47;	author pwagner;	state dead;
+branches;
+next	1.19;
+
+1.19
+date	2002.07.01.17.32.22;	author pwagner;	state Exp;
+branches;
+next	1.18;
+
+1.18
+date	2002.06.21.23.24.09;	author pwagner;	state Exp;
+branches;
+next	1.17;
+
+1.17
+date	2002.06.21.00.16.43;	author pwagner;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2002.01.31.00.33.13;	author pwagner;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2001.11.15.00.07.57;	author pwagner;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2001.08.15.21.03.28;	author pwagner;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2001.05.31.23.31.36;	author pwagner;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2001.04.10.18.01.31;	author pwagner;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2001.04.01.00.20.08;	author pwagner;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2001.03.12.23.57.46;	author pwagner;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2001.03.08.00.53.21;	author pwagner;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2001.03.05.21.49.28;	author pwagner;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2001.02.26.21.14.38;	author pwagner;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2001.02.05.23.12.30;	author pwagner;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2000.11.18.00.16.39;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2000.11.16.22.55.21;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2000.11.03.18.18.41;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2000.11.02.23.27.37;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2000.10.21.00.22.12;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.20
+log
+@compiler-specific pieces removed from platforms directory
+@
+text
+@#a file full of macros to be included by a Makefile
+#to compile a Fortran 9x program or library
+
+# "$Id: NAG.Sun,v 1.19 2002/07/01 17:32:22 pwagner Exp $"
+
+SHELL = /bin/sh
+
+# Path to source files:
+S = ..
+# Path to root directory of l2, lib, etc.:
+CONFDIR=../..
+
+# Use the libmls.a directory, libdir, for .mod files
+# dir1 is the path prepended to its .o files in dependency lists
+libdir = $(CONFDIR)/lib/$(MLSCONFG)
+
+dir1 = $(libdir)/
+
+# sources shared by l2, l3 are in $(srclib)
+# these USE init_tables_module, which is different for l2 from the l3 version
+# while l2 and l3 use the same sources in srclib they do
+# require different objects--thus a source library instead of an object
+# library (such as libmls.a)
+# therefore we will tell make to add srclib to directories searched for .f90
+# while dir2, the path prepended to its .o files in dependency lists, is empty
+# so that its object files share the current working directory with those of l2
+srclib = $(CONFDIR)/srclib
+
+dir2 =
+
+# Use the libmlspack.a directory, blaslib, for .mod files
+blaslib = $(CONFDIR)/blas/$(MLSCONFG)
+
+UTILDIR=$(CONFDIR)/util
+
+# reecho.sh can filter out globbed file expansions that fail
+# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
+# However we will be using it just to prefix any unprefixed preset paths
+REECHO=$(UTILDIR)/reecho.sh
+
+# Set paths for finding source files (different from .o and .mod)
+
+vpath %.mod ./
+vpath %.o ./
+vpath %.f90 ../ $(srclib)
+vpath %.f9h ../ $(srclib)
+vpath %.f ../
+vpath %.c ../
+
+FC = f95
+
+DUSTY = $(FOPTS) -dusty
+
+# Use the fwdmdl directory, fwdmdldir, for more .mod files
+# dir3 is the path prepended to its .o files in dependency lists
+fwdmdldir = $(CONFDIR)/fwdmdl/$(MLSCONFG)
+
+dir3 = $(fwdmdldir)/
+
+# Use the cloud directory, clouddir, for more .mod files
+# dir4 is the path prepended to its .o files in dependency lists
+clouddir = $(CONFDIR)/cloudfwdm/$(MLSCONFG)
+
+dir4 = $(clouddir)/
+
+# All the paths to supply .mod and INCLUDE files used in compiling %.f90
+# Precede each path by "-I "
+PATHS_PREFXD := $(shell ${REECHO} -d -prefix=-I $(UNPREFXDPTHS))
+INC_PATHS = $(EXTRA_PATHS) $(PATHS_PREFXD) \
+     -I $(PGSINC) -I $(srclib) -I $S -I $(libdir) \
+     -I $(fwdmdldir) -I $(clouddir) -I $(blaslib)
+
+# Define some suffix rules
+
+.SUFFIXES:
+.SUFFIXES: .o .dbg.o .f90 .f .c
+.f90.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
+
+.f90.dbg.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< -o $*.dbg.o $(FAFTER)
+
+.f.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
+
+.c.o:
+	$(CC) -c ${INC_PATHS} -DNAGf90Fortran $<
+
+#Special load libraries
+l_specials = -lnsl -lsocket
+
+# $Log: NAG.Sun,v $
+# Revision 1.19  2002/07/01 17:32:22  pwagner
+# No longer compiles some sources twice
+#
+# Revision 1.18  2002/06/21 23:24:09  pwagner
+# More steps enroute to ending cascades of recompiles
+#
+# Revision 1.17  2002/06/21 00:16:43  pwagner
+# Enroute to ending cascading recompiles
+#
+# Revision 1.16  2002/01/31 00:33:13  pwagner
+# Prefixes preset paths just like forwaard model
+#
+# Revision 1.15  2001/11/15 00:07:57  pwagner
+# Now works with new libmlspack.a and .mod files in blas
+#
+# Revision 1.14  2001/08/15 21:03:28  pwagner
+# Default rules for .f and .c; EXTRA_PATHS added to INC_PATHS
+#
+# Revision 1.13  2001/05/31 23:31:36  pwagner
+# Added clouddir to INC_PATHS
+#
+# Revision 1.12  2001/04/10 18:01:31  pwagner
+# Added -lsocket to special load line
+#
+# Revision 1.11  2001/04/01 00:20:08  pwagner
+# Bug fixes plus allows untargeted make inside MLSCONFG
+#
+# Revision 1.10  2001/03/12 23:57:46  pwagner
+# New FAFTER, LAFTER flags to postprocess compile & link steps
+#
+# Revision 1.9  2001/03/08 00:53:21  pwagner
+# l2_NEEDS_fwdmdl now set by default
+#
+# Revision 1.8  2001/03/05 21:49:28  pwagner
+# fwdmdl searched for dependencies if l2_NEEDS_fwdmdl
+#
+# Revision 1.7  2001/02/26 21:14:38  pwagner
+# Commented out FOPTS assignment; now part of .configure setting
+#
+# Revision 1.6  2001/02/05 23:12:30  pwagner
+# DUSTY now based directly on FOPTS
+#
+# Revision 1.5  2000/11/18 00:16:39  pwagner
+# Now links on sun (pencil)
+#
+# Revision 1.4  2000/11/16 22:55:21  pwagner
+# Looks for %.f9h in srclib
+#
+# Revision 1.3  2000/11/03 18:18:41  pwagner
+# Shares sources in srclib
+#
+# Revision 1.2  2000/11/02 23:27:37  pwagner
+# Dependencies may cross directories
+#
+# Revision 1.1  2000/10/21 00:22:12  pwagner
+# First commit
+#
+# Revision 1.1  2000/10/18 22:08:01  pwagner
+# First commit
+#
+@
+
+
+1.19
+log
+@No longer compiles some sources twice
+@
+text
+@d4 1
+a4 1
+# "$Id: NAG.Sun,v 1.18 2002/06/21 23:24:09 pwagner Exp $"
+d93 3
+@
+
+
+1.18
+log
+@More steps enroute to ending cascades of recompiles
+@
+text
+@d4 1
+a4 1
+# "$Id: NAG.Sun,v 1.17 2002/06/21 00:16:43 pwagner Exp $"
+a91 32
+# Custom build commands for some modules
+# This keeps switch_usage up-to-date with notes/switches
+# (and similarly for options)
+ifdef CASCADE
+MLSL2.o: $(CONFDIR)/notes/switches $(CONFDIR)/notes/options $(S)/MLSL2.f90
+else
+.mod MLSL2.o: $(CONFDIR)/notes/switches $(CONFDIR)/notes/options $(S)/MLSL2.f90
+endif
+	@@rm -f MLSL2.f90 part_1 part_2 part_3 ; \
+	sed -n '1,/=== (start of automatic usage lines) ===/ p' $(S)/MLSL2.f90 > part_1 ; \
+	sed -n '/=== (end of automatic usage lines) ===/,$$ p' $(S)/MLSL2.f90 > part_3 ; \
+	sed -n '/mlsl2 =========/,/mlsl2 ========/p' $(CONFDIR)/notes/switches > part_2 ; \
+	sed '1 d; $$ d' part_2 > MLSL2.f90 ; \
+	mv MLSL2.f90 part_2 ; \
+	sed -n -f $(CONFDIR)/notes/switch_usage.sed part_2 > MLSL2.f90 ; \
+	mv MLSL2.f90 part_2 ; \
+	cat part_1 part_2 part_3 > MLSL2.f90 ; \
+	rm -f part_1 part_2 part_3 ; \
+	sed -n '1,/=== (start of automatic option lines) ===/ p' MLSL2.f90 > part_1 ; \
+	sed -n '/=== (end of automatic option lines) ===/,$$ p' MLSL2.f90 > part_3 ; \
+	sed -n '/mlsl2 =========/,/mlsl2 ========/p' $(CONFDIR)/notes/options > part_2 ; \
+	sed '1 d; $$ d' part_2 > MLSL2.f90 ; \
+	mv MLSL2.f90 part_2 ; \
+	sed -n -f $(CONFDIR)/notes/switch_usage.sed part_2 > MLSL2.f90 ; \
+	mv MLSL2.f90 part_2 ; \
+	cat part_1 part_2 part_3 > MLSL2.f90
+	$(FC) -c $(FOPTS) $(INC_PATHS) MLSL2.f90 $(FAFTER)
+	rm -f MLSL2.f90 part_1 part_2 part_3
+
+tree_checker.mod: init_tables_module.mod
+	$(UTILDIR)/newAifBdiff.sh -a tree_checker.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(srclib)/tree_checker.f90 $(FAFTER)
+
+d93 3
+@
+
+
+1.17
+log
+@Enroute to ending cascading recompiles
+@
+text
+@d4 1
+a4 1
+# "$Id: NAG.Sun,v 1.16 2002/01/31 00:33:13 pwagner Exp $"
+d95 1
+d97 3
+d125 3
+@
+
+
+1.16
+log
+@Prefixes preset paths just like forwaard model
+@
+text
+@d4 1
+a4 1
+# "$Id: NAG.Sun,v 1.15 2001/11/15 00:07:57 pwagner Exp $"
+d10 2
+d15 1
+a15 1
+libdir = ../../lib/$(MLSCONFG)
+d27 1
+a27 1
+srclib = ../../srclib
+d32 1
+a32 1
+blaslib = ../../blas/$(MLSCONFG)
+d34 1
+a34 1
+UTILDIR=../../util
+d43 1
+d56 1
+a56 1
+fwdmdldir = ../../fwdmdl/$(MLSCONFG)
+d62 1
+a62 1
+clouddir = ../../cloudfwdm/$(MLSCONFG)
+d92 28
+d121 3
+@
+
+
+1.15
+log
+@Now works with new libmlspack.a and .mod files in blas
+@
+text
+@d4 1
+a4 1
+# "$Id: NAG.Sun,v 1.14 2001/08/15 21:03:28 pwagner Exp $"
+d32 7
+d65 3
+a67 2
+
+INC_PATHS = $(EXTRA_PATHS) -I $(PGSINC) -I $(srclib) -I $S -I $(libdir) \
+d90 3
+@
+
+
+1.14
+log
+@Default rules for .f and .c; EXTRA_PATHS added to INC_PATHS
+@
+text
+@d4 1
+a4 1
+# "$Id: NAG.Sun,v 1.13 2001/05/31 23:31:36 pwagner Exp $"
+d29 3
+d60 1
+a60 1
+     -I $(fwdmdldir) -I $(clouddir)
+d82 3
+@
+
+
+1.13
+log
+@Added clouddir to INC_PATHS
+@
+text
+@d4 1
+a4 1
+# "$Id: NAG.Sun,v 1.12 2001/04/10 18:01:31 pwagner Exp $"
+d34 2
+a38 3
+# Compiler options:
+#FOPTS = -g -C=all
+
+d56 1
+a56 1
+INC_PATHS = -I $(PGSINC) -I $(srclib) -I $S -I $(libdir) \
+d62 1
+a62 1
+.SUFFIXES: .o .dbg.o .f90
+d69 6
+d79 3
+@
+
+
+1.12
+log
+@Added -lsocket to special load line
+@
+text
+@d4 1
+a4 1
+# "$Id: NAG.Sun,v 1.11 2001/04/01 00:20:08 pwagner Exp $"
+d42 1
+a42 10
+#PGSINC = /software/SRC/TOOLKIT-5.2.6v1.00.NAG/include
+
+# Beginning of path to libraries:
+#L = /nas/software/SRC/TOOLKIT-5.2.6v1.00
+#L = /nas/software/SRC/TOOLKIT-5.2.6v1.00.NAG
+
+# Beginning of path to HDFEOS  libraries:
+#E = /van1/opt/TOOLKIT
+
+# Use the fwdmdl directory, libdir, for more .mod files
+d48 6
+d57 2
+a58 8
+# In the long run just evict the stuff that assumes l2_NEEDS_fwdmdl is undefined
+l2_NEEDS_fwdmdl = true
+
+ifdef l2_NEEDS_fwdmdl
+     INC_PATHS = -I $(PGSINC) -I $(srclib) -I $S -I $(libdir) -I $(fwdmdldir)
+else
+     INC_PATHS = -I $(PGSINC) -I $(srclib) -I $S -I $(libdir)
+endif
+a69 22
+#SDP =SDPToolkitSubstitute.o
+#GD=GDapi.o
+
+#These are the locations of the libraries
+#
+#  Name                 Default value
+#  PGSTK                 $(PGSLIB)
+# HDFEOS                 $(HDFEOS_LIB)
+#   HDF                  $(HDFLIB)
+#  GCTP                  $(HDEOS_LIB)
+#
+#PGSTK =$(PGSLIB)
+#HDFEOS =$(HDFEOS_LIB)
+#HDF =$(HDFLIB)
+#GCTP =$(HDFEOS_LIB)
+#The following can be uncommented to override the defaults
+
+#PGSTK =$(HOME)/TOOLKIT/NAG
+#HDFEOS =$(HOME)/TOOLKIT
+#HDF =/software/SRC/TOOLKIT-5.2.6v1.00.NAG/hdf/linux/HDF4.1r3/lib
+#GCTP =/software/SRC/TOOLKIT-5.2.6v1.00.NAG/hdfeos/lib/linux
+
+d74 3
+@
+
+
+1.11
+log
+@Bug fixes plus allows untargeted make inside MLSCONFG
+@
+text
+@d4 1
+a4 1
+# "$Id: NAG.Sun,v 1.10 2001/03/12 23:57:46 pwagner Exp $"
+d102 1
+a102 1
+l_specials = -lnsl
+d105 3
+@
+
+
+1.10
+log
+@New FAFTER, LAFTER flags to postprocess compile & link steps
+@
+text
+@d4 1
+a4 1
+# "$Id: NAG.Sun,v 1.9 2001/03/08 00:53:21 pwagner Exp $"
+a63 1
+l2: fwdmdl
+d105 3
+@
+
+
+1.9
+log
+@l2_NEEDS_fwdmdl now set by default
+@
+text
+@d4 1
+a4 1
+# "$Id: NAG.Sun,v 1.8 2001/03/05 21:49:28 pwagner Exp $"
+d75 1
+a75 1
+	$(FC) -c $(FOPTS) $(INC_PATHS) $<
+d78 1
+a78 1
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< -o $*.dbg.o
+d106 3
+@
+
+
+1.8
+log
+@fwdmdl searched for dependencies if l2_NEEDS_fwdmdl
+@
+text
+@d4 1
+a4 1
+# "$Id: NAG.Sun,v 1.7 2001/02/26 21:14:38 pwagner Exp $"
+d60 3
+d106 3
+@
+
+
+1.7
+log
+@Commented out FOPTS assignment; now part of .configure setting
+@
+text
+@d4 1
+a4 1
+# "$Id: NAG.Sun,v 1.6 2001/02/05 23:12:30 pwagner Exp $"
+d51 6
+d59 7
+a65 1
+INC_PATHS = -I $(PGSINC) -I $(srclib) -I $S -I $(libdir)
+d103 3
+@
+
+
+1.6
+log
+@DUSTY now based directly on FOPTS
+@
+text
+@d4 1
+a4 1
+# "$Id: NAG.Sun,v 1.5 2000/11/18 00:16:39 pwagner Exp $"
+d38 1
+a38 1
+FOPTS = -g -C=all
+d91 3
+@
+
+
+1.5
+log
+@Now links on sun (pencil)
+@
+text
+@d4 1
+a4 1
+# "$Id: NAG.Sun,v 1.4 2000/11/16 22:55:21 pwagner Exp $"
+d40 1
+a40 1
+DUSTY = -g -dusty
+d91 3
+@
+
+
+1.4
+log
+@Looks for %.f9h in srclib
+@
+text
+@d4 1
+a4 1
+# "$Id: NAG.Sun,v 1.3 2000/11/03 18:18:41 pwagner Exp $"
+d87 3
+d91 3
+@
+
+
+1.3
+log
+@Shares sources in srclib
+@
+text
+@d4 1
+a4 1
+# "$Id: NAG.Sun,v 1.2 2000/11/02 23:27:37 pwagner Exp $"
+d33 1
+a33 1
+vpath %.f9h ../
+d51 4
+d60 1
+a60 1
+	$(FC) -c $(FOPTS) -I $(PGSINC) -I $S -I $(libdir) $<
+d63 1
+a63 1
+	$(FC) -c $(FOPTS) -I $(PGSINC) -I $S -I $(libdir) $< -o $*.dbg.o
+d88 3
+@
+
+
+1.2
+log
+@Dependencies may cross directories
+@
+text
+@d4 1
+a4 1
+# "$Id: NAG.Sun,v 1.1 2000/10/21 00:22:12 pwagner Exp $"
+d11 2
+a12 1
+# Use the lib directory, too
+d17 12
+d32 1
+a32 1
+vpath %.f90 ../
+d84 3
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d4 1
+a4 1
+# "$Id: NAG.Linux,v 1.1 2000/10/18 22:08:01 pwagner Exp $"
+d11 5
+a37 3
+# Use the lib directory, too
+libdir = ../../lib/$(MLSCONFG)
+
+d70 4
+a73 1
+# $Log: NAG.Linux,v $
+@
+

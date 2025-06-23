@@ -1,0 +1,923 @@
+head	1.22;
+access;
+symbols
+	v5-02-NRT-19:1.22
+	v6-00:1.22
+	v5-02-NRT-18:1.22
+	v5-02:1.22
+	v5-01-NRT-17:1.22
+	v5-01-NRT-16:1.22
+	v5-01-NRT-15:1.22
+	v5-01-NRT-14:1.22
+	neuralnetworks-1-0:1.22.0.10
+	cfm-single-freq-0-1:1.22.0.8
+	v5-01:1.22
+	v5-00:1.22
+	v4-23-TA133:1.22.0.6
+	mus-emls-1-70:1.22.0.4
+	rel-1-0-englocks-work:1.22.0.2
+	VUMLS1-00:1.22
+	VPL1-00:1.21
+	V4-22-NRT-08:1.21
+	VAM1-00:1.21
+	V4-21:1.21.0.4
+	V4-13:1.21
+	V4-12:1.21
+	V4-11:1.21
+	V4-10:1.21
+	V3-43:1.21
+	M4-00:1.21
+	V3-41:1.21
+	V3-40-PlusGM57:1.21.0.2
+	V2-24-NRT-04:1.20
+	V3-33:1.21
+	V2-24:1.20
+	V3-31:1.21
+	V3-30-NRT-05:1.21
+	cfm-01-00:1.21
+	V3-30:1.21
+	V3-20:1.21
+	V3-10:1.21
+	V2-23-NRT-02:1.20
+	V2-23:1.20
+	V2-22-NRT-01:1.20
+	V2-22:1.20
+	V2-21:1.19
+	V2-20:1.19
+	V2-11:1.19
+	V2-10:1.19
+	V2-00:1.19
+	V1-51:1.17
+	V1-50:1.17
+	V1-45:1.17
+	V1-44:1.17
+	V1-43:1.17
+	V1-42:1.16
+	V1-41:1.16
+	V1-32:1.16
+	V1-40:1.16
+	V1-31:1.16
+	V1-30:1.16
+	V1-13:1.16
+	V1-12:1.16
+	V1-11:1.16
+	V1-10:1.15
+	newfwm-feb03:1.15.0.2
+	V1-04:1.10
+	V1-03:1.10
+	V1-02:1.10
+	V1-00:1.8
+	newfwm-sep01:1.3.0.2
+	V0-7:1.3;
+locks; strict;
+comment	@# @;
+
+
+1.22
+date	2016.10.11.23.17.24;	author pwagner;	state Exp;
+branches;
+next	1.21;
+
+1.21
+date	2009.07.17.20.27.32;	author pwagner;	state Exp;
+branches;
+next	1.20;
+
+1.20
+date	2007.05.29.17.42.19;	author pwagner;	state Exp;
+branches;
+next	1.19;
+
+1.19
+date	2006.06.15.19.31.05;	author pwagner;	state Exp;
+branches;
+next	1.18;
+
+1.18
+date	2005.03.04.19.13.31;	author pwagner;	state Exp;
+branches;
+next	1.17;
+
+1.17
+date	2004.03.17.19.06.45;	author pwagner;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2003.02.28.18.56.09;	author pwagner;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2002.11.25.21.21.02;	author pwagner;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2002.09.06.00.09.08;	author pwagner;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2002.08.05.18.07.46;	author pwagner;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2002.07.16.18.46.34;	author pwagner;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2002.06.06.22.02.50;	author pwagner;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2002.04.26.23.37.47;	author pwagner;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2002.04.18.20.55.28;	author pwagner;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2002.02.08.18.34.52;	author pwagner;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2001.11.21.00.25.34;	author pwagner;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2001.11.07.01.14.30;	author pwagner;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2001.11.07.00.31.44;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.10.11.18.15.29;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2001.07.16.18.00.21;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.06.14.23.04.16;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.06.14.22.36.31;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.22
+log
+@May build without all the toolkit libs if DONT_LINK_TOOLKIT=yes
+@
+text
+@# "$Id: targets,v 1.21 2009/07/17 20:27:32 pwagner Exp $"
+SHELL = /bin/sh
+
+# Path to source files:
+S = ..
+
+CONFDIR=../../..
+
+# Use the libmls.a directory, libdir, for .mod files
+# dir1 is the path prepended to its .o files in dependency lists
+libdir = ../../../lib/$(MLSCONFG)
+
+dir1 = $(libdir)/
+
+# sources shared by l2, l3 are in $(srclib)
+# these USE init_tables_module, which is different for l2 from the l3 version
+# while l2 and l3 use the same sources in srclib they do
+# require different objects--thus a source library instead of an object
+# library (such as libmls.a)
+# therefore we will tell make to add srclib to directories searched for .f90
+# while dir2, the path prepended to its .o files in dependency lists, is empty
+# so that its object files share the current working directory with those of l2
+srclib = ../../../srclib
+
+# This is the directory name from which we will get init_tables_module
+# (either l1, l2, or l3)
+init_m_dir = l1
+
+itmdir=../../../$(init_m_dir)/$(MLSCONFG)
+
+dir2 = $(itmdir)/
+
+# Do the load options include garbage collection?
+# The answer  will determine what we do to the machine.f90 file from
+MACH_DIR=../../../lib/machines/$(MLSCONFG)
+
+MODPATHS =
+
+UTILDIR=../../../util
+
+# reecho.sh can filter out globbed file expansions that fail
+# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
+# However we will be using it just to create lapack_linker_line 
+# where LIB_LAPACK may contain multiple libraries
+REECHO=$(UTILDIR)/reecho.sh
+
+# Set paths for finding source files (different from .o and .mod)
+
+vpath %.o ./
+vpath %.f90 ../ $(MACH_DIR)
+vpath %.f9h ../ $(srclib)
+vpath %.f ../ $(PGSINC)
+vpath %.c ../
+
+include $(srclib)/$(MLSF95).$(MLSPLAT)
+# All the paths to supply .mod and INCLUDE files used in compiling %.f90
+# Precede each path by "-I "
+INC_PATHS := $(EXTRA_PATHS) \
+  $(shell ${REECHO} ${PATH_OPTS} \
+  $(UNPREFXDPTHS) $(MODPATHS) $S $(PGSINC))
+
+# Define some suffix rules
+
+.SUFFIXES:
+.SUFFIXES: .o .dbg.o .f90 .f .c
+.f90.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
+
+.f90.dbg.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< -o $*.dbg.o $(FAFTER)
+
+.f.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
+
+.c.o:
+	$(CC) -c $(COPTS) ${INC_PATHS} -DNAGf90Fortran $<
+
+# This is the default name of the configure file
+# It may be overridden for multiple platforms, special options, etc.
+ifdef HOSTMLSCFILE
+   MLSCFILE=$(HOSTMLSCFILE)
+else
+   MLSCFILE=.configure
+endif
+
+include ../Makefile.dep
+
+# ========================================================================
+# An automatically constructed Makefile
+# This file was built by mlsconfigure
+# by catenating three files:
+# (1) .configure -- a file of mls settings: compiler, platform, etc.
+# (2) common     -- a file of macros specific for this directory, e.g. paths
+#                   these might be compiler switches, 
+# (3) targets    -- a file of targets with instructions how to build them
+#                    (except for .f90.o rules which are still in MLSCONFG)
+
+# Other files referred to by means of "include" statements:
+#   srclib/$(MLSF95).$(MLSPLAT) -- macros specific for the 
+#         compiler.platform combo; e.g., NAG.Sun
+#   Makefile.dep -- dependencies among the primary Fortran modules
+#   srclib/Makefile.dep -- dependencies among the shared Fortran modules
+#   srclib/targets.h -- linker lines whenever building an executable
+
+# ========================================================================
+ifdef MLSINSTALLDIR
+   INSTALLDIR:=$(MLSINSTALLDIR)
+else
+ifndef INSTALLDIR
+   INSTALLDIR:=$(CONFDIR)/bin/$(MLSCONFG)
+endif
+endif
+# ========================================================================
+ifndef NO_MACHINE
+${OBJS}: machine.o
+ALLOBJS = $(OBJS) machine.o
+else
+ALLOBJS = $(OBJS)
+endif
+
+ifndef LDMISC
+LDMISC=$(FC)
+endif
+
+ifndef DONT_LINK_TOOLKIT
+TOOLKIT_LIBS=$(tk_linker_line) \
+        -L${HDFEOS} -lhdfeos \
+        $(hdfeos5_linker_line) \
+        $(hdf5_linker_line) \
+		-L${HDF} -lmfhdf \
+        -ldf \
+        -lz \
+        -ljpeg -lsz \
+		-L${GCTP} -lGctp \
+        $(pvm_linker_line)
+endif
+
+PROG_NAME=test
+
+STATIC_LINK := $(shell echo $(LDOPTS) | grep -e "-static")
+
+include $(srclib)/targets.h
+
+# ========================================================================
+$(PROG_NAME): $(ALLOBJS) $(CONFDIR)/$(MLSCFILE)
+		@@echo "$(pvm_message)"
+		@@echo "$(blas_message)"
+		@@echo "$(lapack_message)"
+		@@echo "$(hdf5_message)"
+		$(LDMISC) $(LDOPTS) -o $(PROG_NAME) $(ALLOBJS)  \
+		$(TOOLKIT_LIBS) \
+        $(blas_linker_line) \
+        $(lapack_linker_line) \
+        $(l_specials) $(LAFTER) \
+
+libmisc.a: $(ALLOBJS)
+	ar ru $@@ $?
+	ar d $@@ $(PROG_NAME).o
+# ========================================================================
+
+# Custom build commands for some modules
+
+machine.o: $(MACH_DIR)/machine.f90
+	rm -f machine.f90 ; \
+	sed '/Start $(BAD_MATCH)/,/End $(BAD_MATCH)/ d' $(MACH_DIR)/machine.f90 \
+     > machine.f90
+	$(FC) -c $(FOPTS) $(INC_PATHS) machine.f90 $(FAFTER)
+	rm -f machine.f90
+
+# ========================================================================
+
+clean:
+	rm -f *.o *.mod $(PROG_NAME)
+
+tar:
+	rm -f misctest.tgz
+	tar hcvzf misctest.tgz * --exclude \*.o --exclude \*.mod --exclude $(PROG_NAME)
+
+# ========================================================================
+# $Log: targets,v $
+# Revision 1.21  2009/07/17 20:27:32  pwagner
+# Added COPTS as cc options
+#
+# Revision 1.20  2007/05/29 17:42:19  pwagner
+# compiler-specific settings now in srclib, not platforms
+#
+# Revision 1.19  2006/06/15 19:31:05  pwagner
+# Now links szlib; comtaible with toolkit 5.2.14.A
+#
+# Revision 1.18  2005/03/04 19:13:31  pwagner
+# Utilizes targets.h from srclib
+#
+# Revision 1.17  2004/03/17 19:06:45  pwagner
+# Extra static object to fix building static Lahey executables when Red Hat>8
+#
+# Revision 1.16  2003/02/28 18:56:09  pwagner
+# May need at some point to define INSTALLDIR
+#
+# Revision 1.15  2002/11/25 21:21:02  pwagner
+# gcc_version to allow building with Lahey on gcc post 2.96
+#
+# Revision 1.14  2002/09/06 00:09:08  pwagner
+# BLAS can now bring in more than a single
+#
+# Revision 1.13  2002/08/05 18:07:46  pwagner
+# turns main to MAIN__ if MLSF95 is Lahey
+#
+# Revision 1.12  2002/07/16 18:46:34  pwagner
+# Works with latest Lahey and lf95-toolkit (hopefully)
+#
+# Revision 1.11  2002/06/06 22:02:50  pwagner
+# Attempts to link w/o toolkit if PGSTK not defined
+#
+# Revision 1.10  2002/04/26 23:37:47  pwagner
+# Changes to allow building libs, too
+#
+# Revision 1.9  2002/04/18 20:55:28  pwagner
+# .configure now a prerequisite for executable
+#
+# Revision 1.8  2002/02/08 18:34:52  pwagner
+# Custom build for machine.o depends on whether collecting garbage
+#
+# Revision 1.7  2001/11/21 00:25:34  pwagner
+# Added hdfeos5_linker_line
+#
+# Revision 1.6  2001/11/07 01:14:30  pwagner
+# lapack message refers to this case, not mlsl2
+#
+# Revision 1.5  2001/11/07 00:31:44  pwagner
+# Added lapack linker line and msg
+#
+# Revision 1.4  2001/10/11 18:15:29  pwagner
+# Allows PROG_NAME variable to specify name of executable built
+#
+# Revision 1.3  2001/07/16 18:00:21  pwagner
+# Builds correctly with hdf5 on new and older Linux
+#
+# Revision 1.2  2001/06/14 23:04:16  pwagner
+# Now builds f90tex from util successfully
+#
+# Revision 1.1  2001/06/14 22:36:31  pwagner
+# First commit
+#
+@
+
+
+1.21
+log
+@Added COPTS as cc options
+@
+text
+@d1 1
+a1 1
+# "$Id: targets,v 1.20 2007/05/29 17:42:19 pwagner Exp $"
+d125 13
+d151 1
+a151 10
+		$(tk_linker_line) \
+        -L${HDFEOS} -lhdfeos \
+        $(hdfeos5_linker_line) \
+        $(hdf5_linker_line) \
+		-L${HDF} -lmfhdf \
+        -ldf \
+        -lz \
+        -ljpeg -lsz \
+		-L${GCTP} -lGctp \
+        $(pvm_linker_line) \
+d181 3
+@
+
+
+1.20
+log
+@compiler-specific settings now in srclib, not platforms
+@
+text
+@d1 1
+a1 1
+# "$Id: common,v 1.49 2006/06/15 19:31:35 pwagner Exp $"
+d76 1
+a76 1
+	$(CC) -c ${INC_PATHS} -DNAGf90Fortran $<
+d177 3
+@
+
+
+1.19
+log
+@Now links szlib; comtaible with toolkit 5.2.14.A
+@
+text
+@d1 77
+a85 1
+CONFDIR=../../..
+a87 2
+# "$Id: targets,v 1.18 2005/03/04 19:13:31 pwagner Exp $"
+
+d93 1
+a93 2
+# (2) MLSCONFG   -- a file of macros specific for the compiler.platform combo
+#                   e.g., NAG.Sun
+d99 5
+a103 23
+#   ../Makefile.dep -- dependencies among the primary Fortran modules
+
+# Special areas:
+# PVM
+# If it is desired to link the executable with PVM support,
+# the variables PVM_PATH, PVM_ARCH should be defined
+# e.g. in .configure
+
+# LAPACK
+# If it is desired to link the executable with external LAPACK support,
+# the variable LAPACK should be defined
+# e.g. in the make statement: make LAPACK=/my_path/to_lapack_library
+# If this is done, i.e., LAPACK is defined, then 
+
+# BLAS
+# If it is desired to link the executable with external BLAS support,
+# the variable BLAS should be defined
+# e.g. in the make statement: make BLAS=/my_path/to_BLAS_library
+# If this is done, i.e., BLAS is defined, then blas_objs will
+# be blank
+# Otherwise, i.e. if BLAS is left undefined, then blas_objs will
+# depend on LIB_BLAS:
+# if LIB_BLAS is f95, then blas will be supported by f95 intrinsics
+a126 7
+UTILDIR=../../../util
+
+# reecho.sh can filter out globbed file expansions that fail
+# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
+# However we will be using it just to create lapack_linker_line 
+# where LIB_LAPACK may contain multiple libraries
+REECHO=$(UTILDIR)/reecho.sh
+d177 3
+@
+
+
+1.18
+log
+@Utilizes targets.h from srclib
+@
+text
+@d12 1
+a12 1
+# "$Id: targets,v 1.17 2004/03/17 19:06:45 pwagner Exp $"
+d97 1
+a97 1
+        -ljpeg \
+d129 3
+@
+
+
+1.17
+log
+@Extra static object to fix building static Lahey executables when Red Hat>8
+@
+text
+@d12 1
+a12 1
+# "$Id: targets,v 1.16 2003/02/28 18:56:09 pwagner Exp $"
+d81 1
+a81 80
+PVM_PATH = ${PVM_ROOT}/lib/${PVM_ARCH}
+
+ifdef PVM_ROOT
+   pvm_linker_line=-L${PVM_PATH} -lfpvm3 -lgpvm3 -lpvm3
+   pvm_message=Building $(PROG_NAME) with PVM support
+   PVM_OBJS=
+else
+   pvm_linker_line=
+   pvm_message=Building $(PROG_NAME) without PVM support
+   PVM_OBJS=
+endif
+
+ifdef BLAS
+ifdef LIB_BLAS
+    blas_linker_line := $(shell ${REECHO} -dir ${BLAS} -prefixn=-l -lib ${LIB_BLAS})
+    blas_linker_line := -L${BLAS} ${blas_linker_line}
+else
+   blas_linker_line=-L${BLAS} -lblas
+endif
+   blas_message=Building $(PROG_NAME) with externally-supplied BLAS
+else
+   blas_linker_line=
+   blas_message=Building $(PROG_NAME) with internally-supplied BLAS
+endif
+
+ifdef LAPACK
+ifdef LIB_LAPACK
+    lapack_linker_line := $(shell ${REECHO} -dir ${LAPACK} -prefixn=-l -lib ${LIB_LAPACK})
+    lapack_linker_line := -L${LAPACK} ${lapack_linker_line}
+else
+   lapack_linker_line=-L${LAPACK} -llapack
+endif
+   lapack_message=Building $(PROG_NAME) with externally-supplied LAPACK
+else
+   lapack_linker_line=
+   lapack_message=Building $(PROG_NAME) with internally-supplied LAPACK
+endif
+
+ifdef PGSTK
+   tk_message=Building mlslib with toolkit
+   tk_linker_line=-L${PGSTK} -lPGSTK
+else
+   tk_message=Building mlslib without toolkit; using SDPToolkitSubstitute
+   tk_linker_line=
+endif
+
+ifdef HDF5
+ifeq ($(MLSPLAT),Sun)
+   hdf5_linker_line=-L${HDF5} -lhdf5_fortran -lhdf5 -R${HDF5}
+else
+#   hdf5_linker_line=-L${HDF5} -lhdf5_fortran -lhdf5 -Xlinker -rpath=${HDF5} \
+#    -lssl -lz
+   hdf5_linker_line=-L${HDF5} -lhdf5_fortran -lhdf5 
+   l_specials := $(l_specials) -lz
+endif
+ifdef HDFEOS5
+   hdfeos5_linker_line=-L${HDFEOS5} -lhe5_hdfeos
+ifeq ($(MLSF95),LF95)
+   gcc_version=$(shell ${UTILDIR}/which_fftw.sh -gcc)
+   static_object=$(shell ${UTILDIR}/which_fftw.sh -static)
+ifdef STATIC_LINK
+   l_specials=-lz -L/usr/lib/gcc-lib/i386-redhat-linux/${gcc_version} -lgcc \
+     ${static_object}
+else
+   l_specials=-lz -L/usr/lib/gcc-lib/i386-redhat-linux/${gcc_version} -lgcc
+endif
+endif
+ifeq ($(MLSF95),IFC)
+   gcc_version=$(shell ${UTILDIR}/which_fftw.sh -gcc)
+   l_specials=-lz -L/usr/lib/gcc-lib/i386-redhat-linux/${gcc_version} -lgcc
+endif
+else
+   hdfeos5_linker_line=
+endif
+   hdf5_message=Building $(PROG_NAME) with hdf5
+else
+   hdf5_linker_line=
+   hdfeos5_linker_line=
+   hdf5_message=Building $(PROG_NAME) without hdf5
+endif
+d129 3
+@
+
+
+1.16
+log
+@May need at some point to define INSTALLDIR
+@
+text
+@d12 1
+a12 1
+# "$Id: targets,v 1.15 2002/11/25 21:21:02 pwagner Exp $"
+d79 1
+d140 10
+d208 3
+@
+
+
+1.15
+log
+@gcc_version to allow building with Lahey on gcc post 2.96
+@
+text
+@d12 1
+a12 1
+# "$Id: targets,v 1.14 2002/09/06 00:09:08 pwagner Exp $"
+d51 8
+d197 3
+@
+
+
+1.14
+log
+@BLAS can now bring in more than a single
+@
+text
+@d12 1
+a12 1
+# "$Id: targets,v 1.13 2002/08/05 18:07:46 pwagner Exp $"
+d130 2
+a131 1
+   l_specials=-L/usr/lib/gcc-lib/i386-redhat-linux/2.96 -lgcc
+d189 3
+@
+
+
+1.13
+log
+@turns main to MAIN__ if MLSF95 is Lahey
+@
+text
+@d12 1
+a12 1
+# "$Id: targets,v 1.12 2002/07/16 18:46:34 pwagner Exp $"
+d86 2
+a87 1
+   blas_linker_line=-L${BLAS} -l${LIB_BLAS}
+d188 3
+@
+
+
+1.12
+log
+@Works with latest Lahey and lf95-toolkit (hopefully)
+@
+text
+@d12 1
+a12 1
+# "$Id: targets,v 1.11 2002/06/06 22:02:50 pwagner Exp $"
+d51 1
+d53 4
+d58 3
+a60 1
+ALLOBJS = $(OBJS) machine.o
+d147 1
+a147 1
+		$(FC) $(LDOPTS) -o $(PROG_NAME) $(ALLOBJS)  \
+d187 3
+@
+
+
+1.11
+log
+@Attempts to link w/o toolkit if PGSTK not defined
+@
+text
+@d12 1
+a12 1
+# "$Id: targets,v 1.10 2002/04/26 23:37:47 pwagner Exp $"
+d121 3
+d144 1
+a152 1
+        $(hdf5_linker_line) \
+d180 3
+@
+
+
+1.10
+log
+@Changes to allow building libs, too
+@
+text
+@d12 1
+a12 1
+# "$Id: targets,v 1.9 2002/04/18 20:55:28 pwagner Exp $"
+d102 8
+d138 1
+a138 1
+		-L${PGSTK} -lPGSTK \
+d177 3
+@
+
+
+1.9
+log
+@.configure now a prerequisite for executable
+@
+text
+@d12 1
+a12 1
+# "$Id: targets,v 1.8 2002/02/08 18:34:52 pwagner Exp $"
+d144 3
+d169 3
+@
+
+
+1.8
+log
+@Custom build for machine.o depends on whether collecting garbage
+@
+text
+@d1 9
+d12 1
+a12 1
+# "$Id: targets,v 1.7 2001/11/21 00:25:34 pwagner Exp $"
+d124 1
+a124 1
+$(PROG_NAME): $(ALLOBJS)
+d166 3
+@
+
+
+1.7
+log
+@Added hdfeos5_linker_line
+@
+text
+@d3 1
+a3 1
+# "$Id: targets,v 1.6 2001/11/07 01:14:30 pwagner Exp $"
+d137 11
+d157 3
+@
+
+
+1.6
+log
+@lapack message refers to this case, not mlsl2
+@
+text
+@d3 1
+a3 1
+# "$Id: targets,v 1.5 2001/11/07 00:31:44 pwagner Exp $"
+d123 1
+d146 3
+@
+
+
+1.5
+log
+@Added lapack linker line and msg
+@
+text
+@d3 1
+a3 1
+# "$Id: targets,v 1.4 2001/10/11 18:15:29 pwagner Exp $"
+d87 1
+a87 1
+   lapack_message=Building mlsl2 with externally-supplied LAPACK
+d90 1
+a90 1
+   lapack_message=Building mlsl2 with internally-supplied LAPACK
+d145 3
+@
+
+
+1.4
+log
+@Allows PROG_NAME variable to specify name of executable built
+@
+text
+@d3 1
+a3 1
+# "$Id: targets,v 1.3 2001/07/16 18:00:21 pwagner Exp $"
+d25 6
+d34 6
+a39 1
+# e.g. in the make staement: make -f MakeFC BLAS=/my_path/to_BLAS_library
+d48 8
+d80 13
+d118 1
+d130 1
+d145 3
+@
+
+
+1.3
+log
+@Builds correctly with hdf5 on new and older Linux
+@
+text
+@d3 1
+a3 1
+# "$Id: targets,v 1.2 2001/06/14 23:04:16 pwagner Exp $"
+d35 2
+d41 1
+a41 1
+   pvm_message=Building misc test with PVM support
+d45 1
+a45 1
+   pvm_message=Building misc test without PVM support
+d55 1
+a55 1
+   blas_message=Building misc test with externally-supplied BLAS
+d58 1
+a58 1
+   blas_message=Building misc test with internally-supplied BLAS
+d75 1
+a75 1
+   hdf5_message=Building misc test with hdf5
+d79 1
+a79 1
+   hdf5_message=Building misc test without hdf5
+d83 1
+a83 1
+test: $(ALLOBJS)
+d87 1
+a87 1
+		$(FC) $(LDOPTS) -o test $(ALLOBJS)  \
+d103 1
+a103 1
+	rm -f *.o *.mod test
+d107 1
+a107 1
+	tar hcvzf misctest.tgz * --exclude \*.o --exclude \*.mod --exclude test
+d111 3
+@
+
+
+1.2
+log
+@Now builds f90tex from util successfully
+@
+text
+@d3 1
+a3 1
+# "$Id: targets,v 1.1 2001/06/14 22:36:31 pwagner Exp $"
+d48 3
+d52 1
+d63 9
+a71 1
+   hdf5_linker_line=-L${HDF5} -lhdf5_fortran -lhdf5 -Xlinker -rpath=${HDF5}
+d76 1
+d104 2
+a105 2
+	rm -f libtest.tgz
+	tar hcvzf libtest.tgz * --exclude \*.o --exclude \*.mod --exclude test
+d109 3
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d3 1
+a3 1
+# "$Id: targets,v 1.7 2001/06/06 23:51:27 pwagner Exp $"
+d31 3
+a33 1
+ALLOBJS = $(OBJS)
+d96 3
+@
+

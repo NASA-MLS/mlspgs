@@ -1,0 +1,349 @@
+head	2.3;
+access;
+symbols
+	v5-02-NRT-19:2.3
+	v6-00:2.3
+	v5-02-NRT-18:2.3
+	v5-02:2.3
+	v5-01-NRT-17:2.3
+	v5-01-NRT-16:2.3
+	v5-01-NRT-15:2.3
+	v5-01-NRT-14:2.3
+	neuralnetworks-1-0:2.3.0.14
+	cfm-single-freq-0-1:2.3.0.12
+	v5-01:2.3
+	v5-00:2.3
+	v4-23-TA133:2.3.0.10
+	mus-emls-1-70:2.3.0.8
+	rel-1-0-englocks-work:2.3.0.6
+	VUMLS1-00:2.3
+	VPL1-00:2.3
+	V4-22-NRT-08:2.3
+	VAM1-00:2.3
+	V4-21:2.3.0.4
+	V4-13:2.3
+	V4-12:2.3
+	V4-11:2.3
+	V4-10:2.3
+	V3-43:2.3
+	M4-00:2.3
+	V3-41:2.3
+	V3-40-PlusGM57:2.3.0.2
+	V2-24-NRT-04:2.2
+	V3-33:2.3
+	V2-24:2.2
+	V3-31:2.3
+	V3-30-NRT-05:2.3
+	cfm-01-00:2.3
+	V3-30:2.3
+	V3-20:2.3
+	V3-10:2.3
+	V2-23-NRT-02:2.2
+	V2-23:2.2
+	V2-22-NRT-01:2.2
+	V2-22:2.2
+	V2-21:2.2
+	V2-20:2.2
+	V2-11:2.2
+	V2-10:2.2
+	V2-00:2.2
+	V1-51:2.1
+	V1-50:2.1
+	V1-45:2.1
+	V1-44:2.1
+	V1-43:2.1
+	V1-32:2.1
+	V1-31:2.1
+	V1-30:2.1
+	newfwm-feb03:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+2.3
+date	2009.06.23.18.26.11;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2005.06.22.18.08.20;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2003.05.05.23.00.26;	author livesey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2003.04.30.01.46.29;	author vsnyder;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2003.04.30.01.46.29;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.3
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module SINHZ_Z_M
+
+  implicit NONE
+  private
+  public SINHZ_Z, D_SINHZ_Z3
+
+  interface SINHZ_Z; module procedure D_SINHZ_Z, S_SINHZ_Z; end interface
+  interface D_SINHZ_Z3; module procedure D_D_SINHZ_Z3, S_D_SINHZ_Z3; end interface
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  ! --------------------------------------------------  D_SINHZ_Z  -----
+  pure function D_SINHZ_Z ( Z ) result ( SINHZ_Z )
+  ! Compute sinh(z)/z, taking care when Z gets near zero.
+  ! Write sinh(z)/z as exp(-z) (exp(2*z)-1)/z.
+
+    use CRREXP_M, only: CRREXP
+    integer, parameter :: RK = kind(0.0d0)
+
+    complex(rk), intent(in) :: Z
+    complex(rk) :: SINHZ_Z
+
+    sinhz_z = exp(-z) * crrexp(z+z)
+  end function D_SINHZ_Z
+
+  ! --------------------------------------------------  S_SINHZ_Z  -----
+  pure function S_SINHZ_Z ( Z ) result ( SINHZ_Z )
+  ! Compute sinh(z)/z, taking care when Z gets near zero.
+  ! Write sinh(z)/z as exp(-z) (exp(2*z)-1)/z.
+
+    use CRREXP_M, only: CRREXP
+    integer, parameter :: RK = kind(0.0e0)
+
+    complex(rk), intent(in) :: Z
+    complex(rk) :: SINHZ_Z
+
+    sinhz_z = exp(-z) * crrexp(z+z)
+  end function S_SINHZ_Z
+
+  ! -----------------------------------------------  D_D_SINHZ_Z3  -----
+  pure function D_D_SINHZ_Z3 ( Z ) result ( D_SINHZ_Z3 )
+  ! Compute the derivative of sinh(z)/z, divided by z, which is
+  ! (z cosh(z) - sinh(z)) / z**3, taking care when |Z| is small.
+
+    integer, parameter :: RK = kind(0.0d0)
+    complex(rk), intent(in) :: Z
+    complex(rk) :: D_SINHZ_Z3
+
+    include 'd_sinhz_z3.f9h'
+
+  end function D_D_SINHZ_Z3
+
+  ! -----------------------------------------------  S_D_SINHZ_Z3  -----
+  pure function S_D_SINHZ_Z3 ( Z ) result ( D_SINHZ_Z3 )
+  ! Compute the derivative of sinh(z)/z, divided by z, which is
+  ! (z cosh(z) - sinh(z)) / z**3, taking care when |Z| is small.
+
+    integer, parameter :: RK = kind(0.0e0)
+    complex(rk), intent(in) :: Z
+    complex(rk) :: D_SINHZ_Z3
+
+    include 'd_sinhz_z3.f9h'
+
+  end function S_D_SINHZ_Z3
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: read_apriori.f90 is it here $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module SINHZ_Z_M
+
+! $Log: sinhz_z_m.f90,v $
+! Revision 2.2  2005/06/22 18:08:20  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.1  2003/05/05 23:00:26  livesey
+! Merged in feb03 newfwm branch
+!
+! Revision 1.1.2.1  2003/04/30 01:46:29  vsnyder
+! Initial commit
+!
+@
+
+
+2.2
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d83 1
+a84 1
+!---------------------------- RCS Ident Info -------------------------------
+d86 2
+a87 3
+       "$Id: $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d89 1
+d91 1
+d96 3
+@
+
+
+2.1
+log
+@Merged in feb03 newfwm branch
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d21 3
+a23 6
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+    &  "$Id$"
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName= &
+    &  "$RCSfile$"
+d84 5
+d94 4
+a97 1
+! $Log$
+@
+
+
+1.1
+log
+@file sinhz_z_m.f90 was initially added on branch newfwm-feb03.
+@
+text
+@d1 87
+@
+
+
+1.1.2.1
+log
+@Initial commit
+@
+text
+@a0 84
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+module SINHZ_Z_M
+
+  implicit NONE
+  private
+  public SINHZ_Z, D_SINHZ_Z3
+
+  interface SINHZ_Z; module procedure D_SINHZ_Z, S_SINHZ_Z; end interface
+  interface D_SINHZ_Z3; module procedure D_D_SINHZ_Z3, S_D_SINHZ_Z3; end interface
+
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+    &  "$Id: $"
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName= &
+    &  "$RCSfile: $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  ! --------------------------------------------------  D_SINHZ_Z  -----
+  pure function D_SINHZ_Z ( Z ) result ( SINHZ_Z )
+  ! Compute sinh(z)/z, taking care when Z gets near zero.
+  ! Write sinh(z)/z as exp(-z) (exp(2*z)-1)/z.
+
+    use CRREXP_M, only: CRREXP
+    integer, parameter :: RK = kind(0.0d0)
+
+    complex(rk), intent(in) :: Z
+    complex(rk) :: SINHZ_Z
+
+    sinhz_z = exp(-z) * crrexp(z+z)
+  end function D_SINHZ_Z
+
+  ! --------------------------------------------------  S_SINHZ_Z  -----
+  pure function S_SINHZ_Z ( Z ) result ( SINHZ_Z )
+  ! Compute sinh(z)/z, taking care when Z gets near zero.
+  ! Write sinh(z)/z as exp(-z) (exp(2*z)-1)/z.
+
+    use CRREXP_M, only: CRREXP
+    integer, parameter :: RK = kind(0.0e0)
+
+    complex(rk), intent(in) :: Z
+    complex(rk) :: SINHZ_Z
+
+    sinhz_z = exp(-z) * crrexp(z+z)
+  end function S_SINHZ_Z
+
+  ! -----------------------------------------------  D_D_SINHZ_Z3  -----
+  pure function D_D_SINHZ_Z3 ( Z ) result ( D_SINHZ_Z3 )
+  ! Compute the derivative of sinh(z)/z, divided by z, which is
+  ! (z cosh(z) - sinh(z)) / z**3, taking care when |Z| is small.
+
+    integer, parameter :: RK = kind(0.0d0)
+    complex(rk), intent(in) :: Z
+    complex(rk) :: D_SINHZ_Z3
+
+    include 'd_sinhz_z3.f9h'
+
+  end function D_D_SINHZ_Z3
+
+  ! -----------------------------------------------  S_D_SINHZ_Z3  -----
+  pure function S_D_SINHZ_Z3 ( Z ) result ( D_SINHZ_Z3 )
+  ! Compute the derivative of sinh(z)/z, divided by z, which is
+  ! (z cosh(z) - sinh(z)) / z**3, taking care when |Z| is small.
+
+    integer, parameter :: RK = kind(0.0e0)
+    complex(rk), intent(in) :: Z
+    complex(rk) :: D_SINHZ_Z3
+
+    include 'd_sinhz_z3.f9h'
+
+  end function S_D_SINHZ_Z3
+
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
+end module SINHZ_Z_M
+
+! $Log: $
+@
+

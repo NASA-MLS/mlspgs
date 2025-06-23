@@ -1,0 +1,469 @@
+head	2.9;
+access;
+symbols
+	v5-02-NRT-19:2.9
+	v6-00:2.9
+	v5-02-NRT-18:2.9
+	v5-02:2.9
+	v5-01-NRT-17:2.9
+	v5-01-NRT-16:2.9
+	v5-01-NRT-15:2.9
+	v5-01-NRT-14:2.9
+	neuralnetworks-1-0:2.9.0.12
+	cfm-single-freq-0-1:2.9.0.10
+	v5-01:2.9
+	v5-00:2.9
+	v4-23-TA133:2.9.0.8
+	mus-emls-1-70:2.9.0.6
+	rel-1-0-englocks-work:2.9.0.4
+	VUMLS1-00:2.9
+	VPL1-00:2.9
+	V4-22-NRT-08:2.9
+	VAM1-00:2.9
+	V4-21:2.9.0.2
+	V4-13:2.9
+	V4-12:2.9
+	V4-11:2.9
+	V4-10:2.9
+	V3-43:2.8
+	M4-00:2.9
+	V3-41:2.8
+	V3-40-PlusGM57:2.8.0.2
+	V2-24-NRT-04:2.5
+	V3-33:2.8
+	V2-24:2.5
+	V3-31:2.8
+	V3-30-NRT-05:2.8
+	cfm-01-00:2.8
+	V3-30:2.8
+	V3-20:2.8
+	V3-10:2.8
+	V2-23-NRT-02:2.5
+	V2-23:2.5
+	V2-22-NRT-01:2.5
+	V2-22:2.5
+	V2-21:2.5
+	V2-20:2.5
+	V2-11:2.5
+	V2-10:2.5
+	V2-00:2.5
+	V1-51:2.4
+	V1-50:2.4
+	V1-45:2.4
+	V1-44:2.4
+	V1-43:2.4
+	V1-42:2.1
+	V1-41:2.1
+	V1-32:2.1
+	V1-40:2.1
+	V1-31:2.1
+	V1-30:2.1
+	newfwm-feb03:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+2.9
+date	2011.11.01.21.03.39;	author vsnyder;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2009.06.23.18.25.43;	author pwagner;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2007.12.19.04.01.38;	author vsnyder;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2007.12.19.03.59.39;	author vsnyder;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2005.06.22.17.25.50;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2004.04.02.18.23.36;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2004.04.01.23.59.37;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2004.03.20.04.05.02;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2003.05.05.23.00.05;	author livesey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2003.04.16.20.11.30;	author vsnyder;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2003.04.16.20.11.30;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.9
+log
+@Update constants to NIST 2010 values
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module PHYSICS
+! Physical constants
+  use MLSKinds, only: R8, RP
+  use Constants, only: LN10
+  implicit NONE
+  public
+
+  ! NIST as of 2004-04-01: http://physics.nist.gov/cuu/Constants/index.html
+  real(r8), parameter :: Avogadro = 6.02214129e23_r8 ! #/mol ± 27e15 NIST 2010
+  real(r8), parameter :: Bohr = 1.399624555_r8       ! MHz/Gauss, ± 31e-9 NIST 2010
+                                                     ! Bohr magneton
+  real(r8), parameter :: G_E = 2.00231930436153_r8   ! Unitless, ± 53e-14 NIST 2010
+                                                     ! Electron g factor
+  real(rp), parameter :: MMM = 0.028964_rp           ! Kg/mol, Mean molecular mass of atmosphere kg/mol
+  real(r8), parameter :: H = 6.62606947e-34_r8       ! J s, ± 29e-42 NIST 2010
+  real(r8), parameter :: K = 1.3806488e-23_r8        ! J/K, ± 13e-30 NIST 2010
+  real(r8), parameter :: H_OVER_K = H / K * 1.0e6_r8 ! \nu in MHz
+! real(r8), parameter :: H_OVER_K = 4.799243276e-5_r8 ! using H and K above
+! real(r8), parameter :: H_OVER_K = 4.7992157e-5_r8  ! Zvi's original
+  real(rp), parameter :: Boltz = Avogadro * k * ln10 / mmm ! m^2/(K s^2),
+! real(rp), parameter :: Boltz = 660.9853899_rp      ! Using above values
+! real(rp), parameter :: Boltz = 660.988_rp          ! Zvi's original
+  real(r8), parameter :: SpeedOfLight = 299792458.0_r8 ! M/s, exact NIST 2010
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: physics.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+contains 
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: physics.f90,v 2.8 2009/06/23 18:25:43 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module PHYSICS
+! $Log: physics.f90,v $
+! Revision 2.8  2009/06/23 18:25:43  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.7  2007/12/19 04:01:38  vsnyder
+! Get R8 and RP from MLSKinds instead of MLSCommon
+!
+! Revision 2.6  2007/12/19 03:59:39  vsnyder
+! Get LN10 from Constants instead of from Units
+!
+! Revision 2.5  2005/06/22 17:25:50  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.4  2004/04/02 18:23:36  vsnyder
+! Changed a few comments
+!
+! Revision 2.3  2004/04/01 23:59:37  vsnyder
+! Get latest values from NIST, add Bohr and G_e
+!
+! Revision 2.2  2004/03/20 04:05:02  vsnyder
+! Add Avogadro and MMM.  Move SpeedOfLight from units.  Define Boltz in terms
+! of Avogadro, MMM, k and ln10 (instead of just typing it in).
+!
+! Revision 2.1  2003/05/05 23:00:05  livesey
+! Merged in feb03 newfwm branch
+!
+! Revision 1.1.2.1  2003/04/16 20:11:30  vsnyder
+! Moved from ../fwdmdl
+!
+! Revision 2.1  2002/10/08 17:08:05  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.0  2001/09/17 20:26:27  livesey
+! New forward model
+!
+! Revision 1.5  2001/06/07 23:39:31  pwagner
+! Added Copyright statement
+!
+! Revision 1.4  2001/01/31 01:08:48  zvi
+! New version of forward model
+!
+! Revision 1.1  2000/05/04 18:12:06  vsnyder
+! Initial conversion to Fortran 90
+!
+@
+
+
+2.8
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d20 5
+a24 3
+  real(r8), parameter :: Avogadro = 6.0221415e23_r8  ! #/mol ± 10e16 NIST 2004
+  real(r8), parameter :: Bohr = 1.39962458_r8        ! MHz/Gauss, ± 12e-8 NIST 2004
+  real(r8), parameter :: G_E = 2.0023193043718_r8    ! Unitless, ± 75e-13 NIST 2004
+d26 2
+a27 2
+  real(r8), parameter :: H = 6.62606931e-34_r8       ! J s, ± 11e-41 NIST 2004
+  real(r8), parameter :: K = 1.3806505e-23_r8        ! J/K, ± 24e-20 NIST 2004
+d29 1
+a29 1
+! real(r8), parameter :: H_OVER_K = 4.79923752e-5_r8 ! using H and K above
+d34 1
+a34 1
+  real(r8), parameter :: SpeedOfLight = 299792458.0_r8 ! M/s, exact NIST 2004
+d38 1
+a38 1
+       "$RCSfile: $"
+d45 1
+a45 1
+       "$Id: read_apriori.f90 is it here $"
+d54 3
+@
+
+
+2.7
+log
+@Get R8 and RP from MLSKinds instead of MLSCommon
+@
+text
+@d36 1
+a36 1
+       "$RCSfile: physics.f90,v $"
+d40 1
+a41 1
+!---------------------------- RCS Ident Info -------------------------------
+d43 2
+a44 3
+       "$Id: physics.f90,v 2.6 2007/12/19 03:59:39 vsnyder Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d46 1
+d48 1
+d52 3
+@
+
+
+2.6
+log
+@Get LN10 from Constants instead of from Units
+@
+text
+@d14 1
+a14 1
+  use MLSCommon, only: R8, RP
+d43 1
+a43 1
+       "$Id: physics.f90,v 2.5 2005/06/22 17:25:50 pwagner Exp $"
+d51 3
+@
+
+
+2.5
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d15 1
+a15 1
+  use Units, only: LN10
+d36 1
+a36 1
+       "$RCSfile: $"
+d43 1
+a43 1
+       "$Id: $"
+d51 3
+@
+
+
+2.4
+log
+@Changed a few comments
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d34 3
+a36 5
+!---------------------------- RCS Ident Info -------------------------------
+  private :: Id, IdParm, ModuleName
+  character(len=*), parameter :: IdParm = "$Id: physics.f90,v 2.3 2004/04/01 23:59:37 vsnyder Exp $"
+  character (len=256) :: Id = idParm
+  character (len=*), parameter :: ModuleName= "$RCSfile: physics.f90,v $"
+d41 5
+d51 3
+@
+
+
+2.3
+log
+@Get latest values from NIST, add Bohr and G_e
+@
+text
+@d14 1
+a14 1
+  real(r8), parameter :: G_E = 2.0023193043718_r8    ! ± 75e-13 NIST 2004
+d17 1
+a17 1
+  real(r8), parameter :: K = 1.3806505e-23_r8        ! J/K ± 24e-20, NIST 2004
+d19 1
+a19 1
+! real(r8), parameter :: H_OVER_K = 4.7992377e-5_r8  ! using H and K above
+d22 1
+a22 1
+! real(rp), parameter :: Boltz = 660.9852945_rp      ! Using above values
+d24 1
+a24 1
+  real(r8), parameter :: SpeedOfLight = 299792458.0_r8 ! M/s, NIST 2004
+d28 1
+a28 1
+  character(len=*), parameter :: IdParm = "$Id: physics.f90,v 2.2 2004/03/20 04:05:02 vsnyder Exp $"
+d40 3
+@
+
+
+2.2
+log
+@Add Avogadro and MMM.  Move SpeedOfLight from units.  Define Boltz in terms
+of Avogadro, MMM, k and ln10 (instead of just typing it in).
+@
+text
+@d11 7
+a17 4
+  real(r8), parameter :: Avogadro = 6.0221415e23_r8  ! #/mol NIST web site 2004
+  real(rp), parameter :: MMM = 0.028964_rp           ! Mean molecular mass of atmosphere kg/mol
+  real(r8), parameter :: H = 6.62606891e-34_r8       ! J s Physics News, 1998
+  real(r8), parameter :: K = 1.3806503e-23_r8        ! J/K NIST, 1998
+d24 1
+a24 1
+  real(r8), parameter :: SpeedOfLight = 299792458.3_r8 ! Meters/Second
+d28 1
+a28 1
+  character(len=*), parameter :: IdParm = "$Id: $"
+d40 4
+@
+
+
+2.1
+log
+@Merged in feb03 newfwm branch
+@
+text
+@d6 2
+a7 1
+  use MLSCommon, only: R8
+d10 13
+a22 5
+  Real(r8), Parameter :: H = 6.62606891e-34_r8 ! Physics News, 1998
+  Real(r8), Parameter :: K = 1.3806503e-23_r8  ! NIST, 1998
+  Real(r8), Parameter :: H_OVER_K = H / K * 1.0e6_r8 ! \nu in MHz
+! Real(r8), Parameter :: H_OVER_K = 4.7992377e-5_r8 ! using H and K above
+! Real(r8), Parameter :: H_OVER_K = 4.7992157e-5_r8 ! Zvi's original
+d24 4
+a27 4
+  private :: Id, ModuleName
+  CHARACTER (LEN=256) :: Id = &
+       "$Id: physics.f90,v 1.1.2.1 2003/04/16 20:11:30 vsnyder Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile: physics.f90,v $"
+d37 3
+@
+
+
+1.1
+log
+@file physics.f90 was initially added on branch newfwm-feb03.
+@
+text
+@d1 45
+@
+
+
+1.1.2.1
+log
+@Moved from ../fwdmdl
+@
+text
+@a0 42
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+module PHYSICS
+! Physical constants
+  use MLSCommon, only: R8
+  implicit NONE
+  public
+  Real(r8), Parameter :: H = 6.62606891e-34_r8 ! Physics News, 1998
+  Real(r8), Parameter :: K = 1.3806503e-23_r8  ! NIST, 1998
+  Real(r8), Parameter :: H_OVER_K = H / K * 1.0e6_r8 ! \nu in MHz
+! Real(r8), Parameter :: H_OVER_K = 4.7992377e-5_r8 ! using H and K above
+! Real(r8), Parameter :: H_OVER_K = 4.7992157e-5_r8 ! Zvi's original
+!---------------------------- RCS Ident Info -------------------------------
+  private :: Id, ModuleName
+  CHARACTER (LEN=256) :: Id = &
+       "$Id: physics.f90,v 2.1 2002/10/08 17:08:05 pwagner Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile: physics.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+contains 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
+end module PHYSICS
+! $Log: physics.f90,v $
+! Revision 2.1  2002/10/08 17:08:05  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.0  2001/09/17 20:26:27  livesey
+! New forward model
+!
+! Revision 1.5  2001/06/07 23:39:31  pwagner
+! Added Copyright statement
+!
+! Revision 1.4  2001/01/31 01:08:48  zvi
+! New version of forward model
+!
+! Revision 1.1  2000/05/04 18:12:06  vsnyder
+! Initial conversion to Fortran 90
+!
+@
+

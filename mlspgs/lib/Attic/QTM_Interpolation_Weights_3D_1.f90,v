@@ -1,0 +1,396 @@
+head	2.6;
+access;
+symbols
+	rel-1-0-englocks-work:2.5.0.2
+	VUMLS1-00:2.4
+	VPL1-00:2.1
+	V4-22-NRT-08:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.6
+date	2018.05.14.23.26.39;	author vsnyder;	state dead;
+branches;
+next	2.5;
+
+2.5
+date	2017.08.28.20.27.47;	author livesey;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2016.11.23.00.10.47;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2016.11.02.22.57.30;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2016.10.25.18.23.48;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2016.04.16.02.04.59;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.6
+log
+@Change to sparse eta representation
+@
+text
+@! Copyright 2015, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=============================================================================
+module QTM_Interpolation_Weights_3D_1
+!=============================================================================
+
+  implicit NONE
+  private
+
+  ! Get interpolation weights from QTM_Interpolation_Weights_3D_m and put
+  ! them into a column-sparse matrix.  This is in a different module from
+  ! QTM_Interpolation_Weights_3D_m so that the latter does not depend upon
+  ! either Allocate_Deallocate, MatrixModule_0, or MLSMessageModule.
+
+  public :: Fill_Matrix_From_Weights, QTM_Interpolation_Weights
+
+  interface QTM_Interpolation_Weights
+    module procedure &
+      & QTM_Interpolation_Weights_Geo_3D_Incoherent_Line_Matrix, &
+      & QTM_Interpolation_Weights_Geo_3D_Line_Matrix
+  end interface QTM_Interpolation_Weights
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: QTM_Interpolation_Weights_3D_1.f90,v $"
+  private :: not_used_here
+!---------------------------------------------------------------------------
+
+contains
+
+  subroutine Fill_Matrix_From_Weights ( Weights, Matrix )
+    ! Create a column-sparse matrix block from Weights and N_Weights
+
+    use Indexed_Values_m, only: Value_QTM_2D_List_t
+    use MatrixModule_0, only: CreateBlock, M_Column_Sparse, MatrixElement_t
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+
+!     type(Value_QTM_2D_List_t(rg)), intent(in) :: Weights(:)
+    type(Value_QTM_2D_List_t), intent(in) :: Weights(:)
+    type(matrixElement_t), intent(inout) :: Matrix
+
+    integer :: I, J
+    integer :: NCols                     ! from Matrix
+    logical :: New                       ! Re-create the matrix block
+    integer :: NNZ                       ! Number of nonzeroes in Weights
+    integer :: NRows                     ! from Matrix
+    integer :: NVal                      ! Number of values so far
+
+    nCols = matrix%nCols
+    nRows = matrix%nRows
+    if ( size(weights) > nCols ) call MLSMessage ( MLSMSG_Error, moduleName, &
+      & "Matrix has fewer columns than line has points" )
+
+    nnz = sum(weights%n)
+    ! Re-create the matrix block as column sparse with the appropriate number
+    ! of nonzeroes.
+    new = matrix%kind /= m_column_sparse
+    if ( associated(matrix%r2) ) new = size(matrix%r2) < nnz
+    if ( associated(matrix%value1) ) new = size(matrix%value1) < nnz
+    if ( new ) then
+      call createBlock ( matrix, nRows, nCols, m_column_sparse, nnz, &
+        & forWhom="Fill_Matrix_From_Weights" )
+    else
+      matrix%r2(nnz+1:) = 0
+    end if
+    nVal = 0
+
+    ! Fill the nonzeroes locators (matrix%r2 and matrix%r1) and the values
+    do i = 1, nCols
+      do j = 1, weights(i)%n
+        matrix%r2(nVal+1:nVal+j) = weights(i)%v(j)%j
+        matrix%value1(nVal+1:nVal+j) = weights(i)%v(j)%v
+      end do
+      nVal = nVal + weights(i)%n
+      matrix%r1(i) = nVal
+    end do
+
+  end subroutine Fill_Matrix_From_Weights
+
+  subroutine QTM_Interpolation_Weights_Geo_3D_Incoherent_Line_Matrix ( QTM_Tree, &
+                         & Heights, Line, Points, Matrix )
+
+    ! Construct interpolation weights and positions for a point in a 3D grid
+    ! for which the horizontal grid is QTM.  The 3D grid is assumed to be
+    ! stacked but not necessarily coherent.  The positions are array element
+    ! order positions, which can be converted to 2D subscripts (QTM serial
+    ! number, height) by the Subscripts function in the Array_Stuff module.
+
+    use Generate_QTM_m, only: QTM_Tree_t
+    use Geolocation_0, only: ECR_t, RG
+    use Indexed_Values_m, only: Value_QTM_2D_List_t
+    use MatrixModule_0, only: MatrixElement_T
+    use QTM_Interpolation_Weights_3D_m, only: QTM_Interpolation_Weights, S_QTM_T
+
+    type(QTM_tree_t), intent(in) :: QTM_Tree
+    real(rg), intent(in) :: Heights(:,:) ! Extents are (heights, QTM_Tree%N_In)
+                                         ! Assume Heights and QTM_Tree came from
+                                         ! the same Geolocation_t structure
+                                         ! (see Geolocation_m).
+    type(ECR_t), intent(inout) :: Line(2) ! Vector to a point on the line,
+                                         ! vector along the line.  Line(2) is
+                                         ! made an unit vector here, just in
+                                         ! case it wasn't on input.
+    type(S_QTM_t), intent(in) :: Points(:) ! Points along Line
+    type(matrixElement_t), intent(inout), optional :: Matrix ! Weights
+
+!     type(Value_QTM_2D_List_t(rg)) :: Weights(size(points))
+    type(Value_QTM_2D_List_t) :: Weights(size(points))
+
+    if ( size(heights,2) == 1 ) then ! Coherent heights
+      call QTM_Interpolation_Weights ( QTM_Tree, Heights(:,1), &
+                                     & Line, Points, Matrix )
+      return
+    end if
+
+    call QTM_interpolation_weights ( QTM_Tree, &
+                         & heights, line, points, weights )
+
+    call fill_matrix_from_weights ( weights, matrix )
+
+  end subroutine QTM_Interpolation_Weights_Geo_3D_Incoherent_Line_Matrix
+
+  subroutine QTM_Interpolation_Weights_Geo_3D_Line_Matrix ( QTM_Tree, &
+                         & Heights, Line, Points, Matrix )
+
+    ! Construct interpolation weights and positions for a point in a 3D grid
+    ! for which the horizontal grid is QTM.  The 3D grid is assumed to be
+    ! stacked but not necessarily coherent.  The positions are array element
+    ! order positions, which can be converted to 2D subscripts (QTM serial
+    ! number, height) by the Subscripts func
+
+    use Generate_QTM_m, only: QTM_Tree_t
+    use Geolocation_0, only: ECR_t, RG
+    use Indexed_Values_m, only: Value_QTM_2D_List_t
+    use MatrixModule_0, only: MatrixElement_T
+    use QTM_Interpolation_Weights_3D_m, only: QTM_Interpolation_Weights, S_QTM_T
+  
+    type(QTM_tree_t), intent(in) :: QTM_Tree
+    real(rg), intent(in) :: Heights(:)   ! Extents are (heights, QTM_Tree%N_In)
+                                         ! Assume Heights and QTM_Tree came from
+                                         ! the same Geolocation_t structure
+                                         ! (see Geolocation_m).
+    type(ECR_t), intent(inout) :: Line(2) ! Vector to a point on the line,
+                                         ! vector along the line.  Line(2) is
+                                         ! made an unit vector here, just in
+                                         ! case it wasn't on input.
+    type(S_QTM_t), intent(in) :: Points(:) ! Points along Line
+    type(matrixElement_t), intent(inout), optional :: Matrix ! Weights
+
+!     type(Value_QTM_2D_List_t(rg)) :: Weights(size(points))
+    type(Value_QTM_2D_List_t) :: Weights(size(points))
+
+    call QTM_interpolation_weights ( QTM_Tree, &
+                         & heights, line, points, weights )
+
+    call fill_matrix_from_weights ( weights, matrix )
+
+  end subroutine QTM_Interpolation_Weights_Geo_3D_Line_Matrix
+
+!=============================================================================
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: QTM_Interpolation_Weights_3D_1.f90,v 2.5 2017/08/28 20:27:47 livesey Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module QTM_Interpolation_Weights_3D_1
+
+! $Log: QTM_Interpolation_Weights_3D_1.f90,v $
+! Revision 2.5  2017/08/28 20:27:47  livesey
+! Changed the n,nf,np,nz elements to j,jf,...
+!
+! Revision 2.4  2016/11/23 00:10:47  vsnyder
+! Use types from Indexed_Values_m instead of Weights_ZQ_t
+!
+! Revision 2.3  2016/11/02 22:57:30  vsnyder
+! New name for weight component of Weights_ZQ_t
+!
+! Revision 2.2  2016/10/25 18:23:48  vsnyder
+! Inching toward 3D-QTM forward model support
+!
+! Revision 2.1  2016/04/16 02:04:59  vsnyder
+! Initial commit
+!
+@
+
+
+2.5
+log
+@Changed the n,nf,np,nz elements to j,jf,...
+@
+text
+@d173 1
+a173 1
+       "$Id: QTM_Interpolation_Weights_3D_1.f90,v 2.4 2016/11/23 00:10:47 vsnyder Exp $"
+d183 3
+@
+
+
+2.4
+log
+@Use types from Indexed_Values_m instead of Weights_ZQ_t
+@
+text
+@d80 1
+a80 1
+        matrix%r2(nVal+1:nVal+j) = weights(i)%v(j)%n
+d173 1
+a173 1
+       "$Id: QTM_Interpolation_Weights_3D_1.f90,v 2.3 2016/11/02 22:57:30 vsnyder Exp $"
+d183 3
+@
+
+
+2.3
+log
+@New name for weight component of Weights_ZQ_t
+@
+text
+@d43 1
+a45 1
+    use QTM_Interpolation_Weights_3D_m, only: Weight_ZQ_t
+d47 2
+a48 1
+    type(weight_ZQ_t), intent(in) :: Weights(:)
+d80 2
+a81 2
+        matrix%r2(nVal+1:nVal+j) = weights(i)%w(j)%n
+        matrix%value1(nVal+1:nVal+j) = weights(i)%w(j)%v
+d100 1
+d102 1
+a102 2
+    use QTM_Interpolation_Weights_3D_m, only: QTM_Interpolation_Weights, S_QTM_T, &
+      & Weight_ZQ_t
+d116 2
+a117 1
+    type(weight_ZQ_t) :: Weights(size(points))
+d143 1
+d145 1
+a145 2
+    use QTM_Interpolation_Weights_3D_m, only: QTM_Interpolation_Weights, S_QTM_T, &
+      & Weight_ZQ_t
+d159 2
+a160 1
+    type(weight_ZQ_t) :: Weights(size(points))
+d173 1
+a173 1
+       "$Id: QTM_Interpolation_Weights_3D_1.f90,v 2.2 2016/10/25 18:23:48 vsnyder Exp $"
+d183 3
+@
+
+
+2.2
+log
+@Inching toward 3D-QTM forward model support
+@
+text
+@d79 2
+a80 2
+        matrix%r2(nVal+1:nVal+j) = weights(i)%w(j)%which
+        matrix%value1(nVal+1:nVal+j) = weights(i)%w(j)%weight
+d170 1
+a170 1
+       "$Id: QTM_Interpolation_Weights_3D_1.f90,v 2.1 2016/04/16 02:04:59 vsnyder Exp $"
+d180 3
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d34 1
+a34 1
+       "$RCSfile: QTM_Interpolation_Weights_3D_m.f90,v $"
+d40 1
+a40 1
+  subroutine Fill_Matrix_From_Weights ( Weights, N_Weights, Matrix )
+d45 1
+a45 1
+    use QTM_Interpolation_Weights_3D_m, only: Weight_t
+d47 1
+a47 2
+    type(weight_t), intent(in) :: Weights (:,:)
+    integer, intent(in) :: N_Weights(:)
+d50 1
+a50 1
+    integer :: I
+d59 1
+a59 1
+    if ( size(n_weights) > nCols ) call MLSMessage ( MLSMSG_Error, moduleName, &
+d62 1
+a62 1
+    nnz = sum(n_weights)
+d78 5
+a82 3
+      matrix%r2(nVal+1:nVal+n_weights(i)) = weights(1:n_weights(i),i)%which
+      matrix%value1(nVal+1:nVal+n_weights(i)) = weights(1:n_weights(i),i)%weight
+      nVal = nVal + n_weights(i)
+d101 1
+a101 1
+      & Weight_t
+d115 1
+a115 2
+    integer :: N_Weights(size(points))
+    type(weight_t) :: Weights(6,size(points))
+d124 1
+a124 1
+                         & heights, line, points, weights, n_weights )
+d126 1
+a126 1
+    call fill_matrix_from_weights ( weights, n_weights, matrix )
+d143 1
+a143 1
+      & Weight_t
+d157 1
+a157 2
+    integer :: N_Weights(size(points))
+    type(weight_t) :: Weights(6,size(points))
+d160 1
+a160 1
+                         & heights, line, points, weights, n_weights )
+d162 1
+a162 1
+    call fill_matrix_from_weights ( weights, n_weights, matrix )
+d170 1
+a170 1
+       "$Id: QTM_Interpolation_Weights_3D_m.f90,v 2.3 2016/03/30 01:42:02 vsnyder Exp $"
+d180 3
+@
+

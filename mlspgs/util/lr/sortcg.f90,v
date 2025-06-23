@@ -1,0 +1,335 @@
+head	1.3;
+access;
+symbols
+	v5-02-NRT-19:1.3
+	v6-00:1.3
+	v5-02-NRT-18:1.3
+	v5-02:1.3
+	v5-01-NRT-17:1.3
+	v5-01-NRT-16:1.3
+	v5-01-NRT-15:1.3
+	v5-01-NRT-14:1.3
+	neuralnetworks-1-0:1.3.0.4
+	cfm-single-freq-0-1:1.3.0.2
+	v5-01:1.3
+	v5-00:1.3
+	v4-23-TA133:1.2.0.8
+	mus-emls-1-70:1.2.0.6
+	rel-1-0-englocks-work:1.2.0.4
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.2
+	V4-21:1.2.0.2
+	V4-13:1.2
+	V4-12:1.2
+	V4-11:1.2
+	V4-10:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.3
+date	2019.07.31.20.11.36;	author vsnyder;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2014.01.14.00.11.42;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2013.10.24.22.41.14;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@Make Items a dummy argument instead of using SCRTCH in Complt
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Sort_Configurations
+
+  implicit NONE
+  private
+  public :: Sortcg
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: sortcg.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  subroutine Sortcg ( Items )
+
+    use Basis_m, only: Item_t
+    use Tables, only: PRDIND => Prod_Ind, PRODCN => Productions
+    use Toggles, only: Gen, Levels
+    use Trace, only: Trace_Begin, Trace_End
+
+    ! Sort the NSETS configurations in the scratch array.  Put reducing
+    ! configurations after transitioning configurations.  Order transitioning
+    ! configurations according to the symbol after the dot.  For
+    ! reducing configurations, or transitioning configurations having the
+    ! same symbol after the dot, order according to production number.
+
+    type(item_t), intent(inout) :: Items(:)
+
+    !     *****     Local Variables     ************************************
+
+    ! H       is the increment separating sorted elements.
+    ! I       is a loop induction variable and subscript.
+    ! IP      is the pointer to the symbol the I iterator is examining.
+    !         IP is also used as a temporary variable while exchanging
+    !         configurations.
+    ! ISYM    is the symbol after the dot in the production at Items(I).
+    ! J       is a loop induction variable and subscript.
+    ! JP      is the pointer to the symbol the J iterator is examining.
+    ! JSYM    is the symbol after the dot in the production at Items(J).
+    ! NSets   is the number of elements in Items
+    ! V       is the I'th item during sorting
+    ! W       is the (J-H)'th item during sorting
+
+    integer H, I, IP, ISym, J, JP, JSym, NSets
+    type(item_t) :: V, W
+
+    ! *****     Procedures     *********************************************
+
+    ! Use a shellsort algorithm.
+
+    if ( levels(gen) > 1 ) call trace_begin ( 'SORTCG' )
+
+    nsets = size(items)
+    if ( nsets <= 1 ) go to 9
+    h = 1
+    do while ( h <= nsets )
+      h = 3*h + 1
+    end do
+    do while (h > 1)
+      h = h/3
+      do i = h+1, nsets
+        v = items(i)
+        ip = prdind(v%prod)
+        if ( v%dot >= prdind(v%prod+1) - ip) then
+        ! The I'th configuration is a reducing configuration.
+        ! Pretend the symbol after the dot is HUGE.
+          isym = huge(1)
+        else
+          isym = prodcn(ip+v%dot)
+        end if
+        j = i
+        do while ( j > h )
+          w = items(j-h)
+          jp = prdind(w%prod)
+          if ( w%dot >= prdind(w%prod+1) - jp ) then
+          ! The J'th configuration is a reducing configuration.
+          ! Pretend the symbol after the dot is HUGE.
+            jsym = huge(1)
+          else
+            jsym = prodcn(jp+w%dot)
+          end if
+          if ( jsym < isym ) exit
+          if ( jsym == isym ) then
+          ! The symbols after the dot are equal.  Order the
+          ! configurations according to the production number.
+            if ( w%prod <= v%prod ) exit
+          end if
+          items(j) = w
+          j = j - h
+        end do
+        items(j) = v
+      end do
+    end do
+
+  9 if ( levels(gen) > 1 ) call trace_end ( 'SORTCG' )
+
+  end subroutine Sortcg
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: sortcg.f90,v 1.2 2014/01/14 00:11:42 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Sort_Configurations
+
+! $Log: sortcg.f90,v $
+! Revision 1.2  2014/01/14 00:11:42  vsnyder
+! Revised LR completely
+!
+! Revision 1.1  2013/10/24 22:41:14  vsnyder
+! Initial commit
+!
+@
+
+
+1.2
+log
+@Revised LR completely
+@
+text
+@d16 1
+a16 1
+  public :: SORTCG
+d26 1
+a26 1
+  subroutine SORTCG ( NSETS )
+a28 1
+    use Complete, only: SCRTCH
+d39 1
+a39 1
+    integer, intent(in) :: NSETS
+d48 1
+a48 1
+    ! ISYM    is the symbol after the dot in the production at SCRTCH(I).
+d51 2
+a52 1
+    ! JSYM    is the symbol after the dot in the production at SCRTCH(J).
+d56 1
+a56 1
+    integer H, I, IP, ISym, J, JP, JSym
+d65 1
+d74 1
+a74 1
+        v = scrtch(i)
+d85 1
+a85 1
+          w = scrtch(j-h)
+d100 1
+a100 1
+          scrtch(j) = w
+d103 1
+a103 1
+        scrtch(j) = v
+d109 1
+a109 1
+  end subroutine SORTCG
+d114 1
+a114 1
+       "$Id: sortcg.f90,v 1.1 2013/10/24 22:41:14 vsnyder Exp $"
+d124 3
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d20 1
+a20 1
+       "$RCSfile: parser.f90,v $"
+d26 7
+a32 5
+  subroutine SORTCG (NSETS)
+    use SIZES, only: MAXSHD
+    use SCRCOM
+    use S3, only: PRDIND, PRODCN
+    implicit NONE
+d35 1
+a35 1
+    ! configurations after transiting configurations.  Order transiting
+d37 1
+a37 1
+    ! reducing configurations, or transiting configurations having the
+a44 1
+    ! H3      is 3*H.
+a48 1
+    ! IS      is SCRTCH(I) (the production number).
+a49 2
+    ! IS1     is SCRTCH(I+1) (the dot position).
+    ! IS2     is SCRTCH(I+2) (the context list pointer).
+a51 1
+    ! JS      is SCRTCH(J) (the production number).
+d53 2
+a54 1
+    ! JS1     is SCRTCH(J+1) (the dot position).
+d56 2
+a57 1
+    integer H, H3, I, IP, IS, ISYM, IS1, IS2, J, JP, JS, JSYM, JS1
+d63 3
+a65 1
+    if (nsets <= 3) return
+d67 1
+a67 1
+    do while (h <= nsets)
+d72 4
+a75 7
+      h3 = 3*h
+      do i = h3+1, nsets, 3
+        is = scrtch(i)
+        is1 = scrtch(i+1)
+        is2 = scrtch(i+2)
+        ip = prdind(is)
+        if (is1 .ge. prdind(is+1) - ip) then
+d77 2
+a78 2
+        ! Pretend the symbol after the dot is MAXSHD+1.
+          isym = maxshd + 1
+d80 1
+a80 1
+          isym = prodcn(ip+is1)
+d83 4
+a86 5
+        do while (j > h3)
+          js = scrtch(j-h3)
+          js1 = scrtch(j-h3+1)
+          jp = prdind(js)
+          if (js1 .ge. prdind(js+1) - jp) then
+d88 2
+a89 2
+          ! Pretend the symbol after the dot is MAXSHD+1.
+            jsym = maxshd + 1
+d91 1
+a91 1
+            jsym = prodcn(jp+js1)
+d93 2
+a94 2
+          if (jsym .lt. isym) exit
+          if (jsym .eq. isym) then
+d97 1
+a97 1
+            if (js .le. is) exit
+d99 2
+a100 4
+          scrtch(j) = scrtch(j-h3)
+          scrtch(j+1) = scrtch(j-h3+1)
+          scrtch(j+2) = scrtch(j-h3+2)
+          j = j - h3
+d102 1
+a102 3
+        scrtch(j) = is
+        scrtch(j+1) = is1
+        scrtch(j+2) = is2
+d106 2
+d113 1
+a113 1
+       "$Id: parser.f90,v 2.29 2013/10/02 01:35:46 vsnyder Exp $"
+d122 4
+a125 1
+! $Log: $
+@
+

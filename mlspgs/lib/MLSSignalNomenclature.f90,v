@@ -1,0 +1,4930 @@
+head	2.16;
+access;
+symbols
+	v5-02-NRT-19:2.16
+	v6-00:2.16
+	v5-02-NRT-18:2.16
+	v5-02:2.16
+	v5-01-NRT-17:2.16
+	v5-01-NRT-16:2.16
+	v5-01-NRT-15:2.16
+	v5-01-NRT-14:2.16
+	neuralnetworks-1-0:2.16.0.10
+	cfm-single-freq-0-1:2.16.0.8
+	v5-01:2.16
+	v5-00:2.16
+	v4-23-TA133:2.16.0.6
+	mus-emls-1-70:2.16.0.4
+	rel-1-0-englocks-work:2.16.0.2
+	VUMLS1-00:2.16
+	VPL1-00:2.15
+	V4-22-NRT-08:2.15
+	VAM1-00:2.14
+	V4-21:2.13.0.2
+	V4-13:2.13
+	V4-12:2.9
+	V4-11:2.9
+	V4-10:2.9
+	V3-43:2.7
+	M4-00:2.7
+	V3-41:2.7
+	V3-40-PlusGM57:2.7.0.2
+	V2-24-NRT-04:2.6
+	V3-33:2.7
+	V2-24:2.6
+	V3-31:2.7
+	V3-30-NRT-05:2.7
+	cfm-01-00:2.7
+	V3-30:2.7
+	V3-20:2.7
+	V3-10:2.7
+	V2-23-NRT-02:2.6
+	V2-23:2.6
+	V2-22-NRT-01:2.6
+	V2-22:2.6
+	V2-21:2.6
+	V2-20:2.6
+	V2-11:2.6
+	V2-10:2.6
+	V2-00:2.6
+	V1-51:2.5
+	V1-50:2.5
+	V1-45:2.5
+	V1-44:2.5
+	V1-43:2.4
+	V1-42:2.4
+	V1-41:2.4
+	V1-32:2.4
+	V1-40:2.4
+	V1-31:2.4
+	V1-30:2.4
+	V1-13:2.4
+	V1-12:2.4
+	V1-11:2.4
+	V1-10:2.4
+	newfwm-feb03:2.4.0.2
+	V1-04:2.3
+	V1-03:2.3
+	V1-02:2.3
+	V1-00:2.3
+	newfwm-sep01:2.3.0.2
+	V0-7:2.3
+	V0-5-Level2:2.3
+	V0-5-SIPS:2.3
+	V0_1:1.21;
+locks; strict;
+comment	@# @;
+
+
+2.16
+date	2017.01.04.17.35.32;	author pwagner;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2016.03.08.21.08.18;	author pwagner;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2015.03.28.01.18.07;	author vsnyder;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2014.09.30.16.31.02;	author pwagner;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2014.09.29.22.50.26;	author vsnyder;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2014.09.05.21.58.20;	author pwagner;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2014.09.05.00.09.45;	author vsnyder;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2013.06.13.21.04.58;	author vsnyder;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2013.06.12.02.12.07;	author vsnyder;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2009.06.23.18.25.42;	author pwagner;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2005.06.22.17.25.50;	author pwagner;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2004.08.04.23.19.01;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2002.10.08.00.09.12;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2001.03.30.19.51.49;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2001.03.28.19.05.11;	author vsnyder;	state dead;
+branches;
+next	2.1;
+
+2.1
+date	2001.02.09.00.38.56;	author livesey;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2000.09.05.17.41.06;	author dcuddy;	state Exp;
+branches;
+next	1.21;
+
+1.21
+date	2000.06.30.00.59.38;	author lungu;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	99.11.09.16.48.28;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.16
+log
+@Pre-nullify pointer components of MLSSignalsDatabase_T to avoid crashes during addItem ..
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=============================================================================
+module MLSSignalNomenclature    ! Dealing with MLS rad.band etc. specifiers
+!=============================================================================
+
+  use Allocate_Deallocate, only: Allocate_Test, Deallocate_test, &
+    & Test_Allocate, Test_Deallocate
+  use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+  use MLSCommon, only: NameLen
+  use MLSKinds, only: R8
+  use MLSStrings, only: Capitalize, LinearSearchStringArray, &
+    & ReadCompleteLineWithoutComments, splitWords
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+
+  implicit none
+  private
+
+  public :: MLSSignal_T, ParseMLSSignalRequest, DestroyMLSSignalsInfo,&
+       & ConcatenateMLSSignalsInfo, UnionMLSSignalsInfo, &
+       & IntersectionMLSSignalsInfo, GetFullMLSSignalName, &
+       & ReadSignalsDatabase, DestroySignalsDatabase, &
+       & GetMLSRadiometerNames, GetMLSBandNames
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: MLSSignalNomenclature.f90,v $"
+  private :: not_used_here
+!---------------------------------------------------------------------------
+
+  ! The same as 2.1 before being removed (see log below)
+
+  ! This module contains all the functionality required for dealing with the
+  ! standard MLS signal nomenclature.  The instrument configuration is read
+  ! from a file (e.g. emls-signals.dat). The user can request information about
+  ! a signal or set of signals by name.
+
+  ! This datatype describes a valid radiometer/switch/band/spectrometer
+  ! combination.  It is the one most used by calling code.  For this reason I
+  ! have put it first.  Some of the information given is duplicated in later
+  ! structures but they are typically only internally used by this module.
+
+  type MLSSignal_T
+
+     ! First we have a set of indices into arrays.  These are used a lot in the
+     ! module.  But the calling code may also find them useful for issues such
+     ! as: Does signal A come from the same radiometer as signal B?
+
+     integer :: signalDatabaseIndex ! Index into rad.band.s.spec combination
+     integer :: instrumentModule ! Module in the instrument (EMLS:1=GHz, 2=THz)
+     integer :: radiometerIndex ! Index into array of radiometerInfos
+     integer :: bandIndex       ! Index into array of bandInfos
+     integer :: switchIndex     ! Index into array of switch names
+     integer :: spectrometerIndex ! Index into spectrometer array
+     integer :: upperLower      ! -1=Lower, 1=Upper, 0=Folded
+     logical :: notCopy         ! If set POINTER arrays below are not copies
+
+     ! For an explanation of the notCopy parameter see the
+     ! ParseMLSSignalRequest routine.
+
+     ! Now we have detailed information on the radiometer
+
+     character (len=NameLen) :: radiometerName   ! e.g. R1A:118
+     character (len=NameLen) :: radiometerPrefix ! e.g. R1A
+     character (len=NameLen) :: radiometerSuffix ! e.g. 118
+     integer :: radiometerNumber                    ! e.g. 1
+     character (len=1) :: radiometerModifier        ! e.g. A
+     real(r8) :: lo                         ! MHz
+
+     ! Now we have detailed information on the band
+
+     character (len=NameLen) :: bandName    ! e.g. B1F:PT
+     character (len=NameLen) :: bandSuffix  ! e.g. PT
+     character (len=1) :: spectrometerFamily   ! e.g. F
+     real(r8) :: bandCenterFreqIF      ! MHz
+
+     ! Now we have information on the switch
+
+     character (len=NameLen) :: switch
+
+     ! Now information on the spectrometers
+
+     character (len=NameLen) :: spectrometerName
+     character (len=NameLen) :: fullSpectrometerFamily ! e.g. FB25
+     integer :: spectrometerFamilyIndex ! Index into array of spec. fams.
+     integer :: spectrometerNumber ! Note count from one for this.
+
+     ! Now information the channels in the whole band
+
+     integer :: firstChannelInBand
+     integer :: lastChannelInBand
+     integer :: noChannelsInBand
+
+     ! Now this particular signal may be a subset of all the channels so
+     ! detail what we have.
+
+     integer :: noChannelsIncluded
+     logical, dimension(:), pointer :: channelIncluded
+     real(r8), dimension(:), pointer :: channelPosition ! i.f. space
+     real(r8), dimension(:), pointer :: channelWidth ! i.f. space
+
+  end type MLSSignal_T
+
+  ! ----------------------------------------------------------------------
+
+  ! The remaining datatypes are somewhat more private.
+
+  ! This datatype describes a radiometer
+  type SDBRadiometerInfo_T
+     character (len=nameLen) :: name   ! e.g. R1A:118
+     character (len=nameLen) :: prefix ! e.g. R1A
+     character (len=nameLen) :: suffix ! e.g. 118
+     integer :: number                     ! e.g. 1
+     character(len=1) :: modifier          ! e.g. A/B or H/V for R5 (emls)
+     real(r8) :: lo                ! Local oscillator /MHz
+     integer :: instrumentModule ! Module in instrument GHz/THz
+  end type SDBRadiometerInfo_T
+
+  ! This datatype describes a band
+  type SDBBandInfo_T
+     character (len=NameLen) :: name      ! e.g. B1F:PT
+     character (len=NameLen) :: suffix    ! e.g. PT
+     integer :: number                       ! e.g. 1
+     character (len=1) :: spectrometerFamily ! e.g. F
+     integer :: spectrometerFamilyIndex      ! Index into array of next type
+     real(r8) :: centerFreqIF        ! Center i.f. frequency (MHz)
+  end type SDBBandInfo_T
+
+  ! This datatype describes a spectrometer family
+  type SDBSpectrometerFamilyInfo_T
+     character (len=NameLen) :: name ! Name of family e.g. FB25
+     integer :: noSpectrometers ! Number of spectrometers in this family
+     integer :: noChannels      ! Number of channels in family
+     integer :: firstChannel    ! First channel number (e.g. 1)
+     integer :: lastChannel     ! Last channel number (e.g. 25)
+     logical :: individual      ! If set have discrete freqs. e.g. wf4 series
+
+     ! These two arrays are the position and width of the channels wrt. the if
+     ! The arrays are actually dimensioned firstChannel:lastChannel.
+     ! Units are MHz
+
+     real(r8), dimension(:), pointer :: position
+     real(r8), dimension(:), pointer :: width
+  end type SDBSpectrometerFamilyInfo_T
+
+  ! This small datatype describes a spectrometer
+  type SDBSpectrometerInfo_T
+     character (len=NameLen) :: name ! Name of spectrometer
+     character (len=NameLen) :: fullFamily ! Full name of family eg FB25
+     character (len=1) :: family ! Single character family id e.g. F
+     integer :: familyIndex     ! Index into familyInfo database
+     integer :: number          ! Number within family
+  end type SDBSpectrometerInfo_T
+
+  ! This datatype is an amalgam of the above and is the database that is filled
+  type MLSSignalsDatabase_T
+     integer :: noRadiometers   ! Including redundant etc.
+     integer :: noBands         ! Accross the whole instrument
+     integer :: noSwitches      ! No. vald S0, S1 etc. fields
+     integer :: noSpectrometers ! No. spectrometers in whole instrument
+     integer :: noSpectrometerFamilies
+     integer :: noValidSignals    ! Number of valid Signal combinations
+
+     type (SDBRadiometerInfo_T), dimension(:), pointer :: radiometerInfo => null()
+          ! Actually dimensioned (noRadiometers)
+     type (SDBBandInfo_T), dimension(:), pointer :: bandInfo => null()
+          ! Actually dimensioned (noBands)
+     character (len=NameLen), dimension(:), pointer :: switches => null()
+          ! Actually dimensioned (noSwitches)
+     type (SDBSpectrometerInfo_T), dimension(:), pointer :: spectrometerInfo => null()
+     type (SDBSpectrometerFamilyInfo_T), dimension(:), pointer :: &
+          & spectrometerFamilyInfo => null()
+          ! Actually dimensioned (noSpectrometerFamilies)
+     type (MLSSignal_T), dimension(:), pointer :: validSignals => null()
+          ! Valid Signal combinations
+          ! Actually dimensioned (noValidSignals)
+  end type MLSSignalsDatabase_T
+
+  ! Local, private variables
+
+  type (MLSSignalsDatabase_T) :: database
+
+contains
+
+  ! ====================================================================
+
+  ! -------------------------------------  ParseRadiometerRequest  -----
+
+  subroutine ParseRadiometerRequest ( request, matches )
+
+    ! Parse a request for a particular radiometer
+    ! and return an array of flags indicating which radiometers match
+
+    ! Dummy arguments
+    character (len=*), intent(in) :: request
+
+    logical, dimension(:) :: matches ! Result (database%noRadiometers)
+
+    ! Local variables
+    character (len=len(request)) :: prefix, suffix
+    character (len=1) :: modifierRequested
+    integer :: numberRequested, hasModifier, prefixLen, radiometer
+
+    ! Executable code
+
+    call SplitWords(request,prefix,suffix,delimiter=':')
+    prefix=Capitalize(prefix)
+    suffix=Capitalize(suffix)
+
+    if (prefix(1:1)/="R") call MLSMessage ( MLSMSG_Error, ModuleName, &
+         & "R expected in radiometer specifier" )
+
+    ! Now parse the rest of the prefix.
+    ! The format of the field is R<number><modifier>, where modifier may be
+    ! omitted or set to *. Also R* is valid, or just R!
+
+    prefixLen = LEN_TRIM(prefix)
+    numberRequested = 0
+    modifierRequested = "*"
+    hasModifier = 1
+
+    ! First we'll look for the modifier, look at the last characater.  If it's
+    ! numerical set the modifier to "*"
+
+    if ( prefixLen>1 ) then
+       modifierRequested=prefix(prefixLen:prefixLen)
+       if ( (LGE(modifierRequested,"0")).AND.(LLE(modifierRequested,"9")) ) then
+          hasModifier=0
+          modifierRequested="*"
+       end if
+
+       ! Now we look at the numeric field if there is one.
+
+       if ( prefixLen-hasModifier > 1 ) &
+            & read (UNIT=prefix(2:prefixLen-hasModifier),FMT=*) numberRequested
+    end if
+
+    ! Now we have the requsted number (or 0 if dont care) and requested
+    ! modifier (or * if dont care)
+
+    if ( size(matches) /= database%noRadiometers) call MLSMessage ( &
+         MLSMSG_Error, ModuleName, "Result is wrong size" )
+
+    matches= &
+         & ( (numberRequested == database%radiometerInfo%number) .OR. &
+         &   (numberRequested == 0) ) .AND. &
+         & ( (modifierRequested == database%radiometerInfo%modifier) .OR. &
+         &   (modifierRequested == "*") )
+
+    ! To match the suffix we have to be a little more old fasioned because we
+    ! want to use trim.
+
+    if ( suffix /= "" ) then
+       do radiometer = 1, database%noRadiometers
+          matches(radiometer) = matches(radiometer).AND.&
+            & (trim(suffix) == trim(database%radiometerInfo(radiometer)%suffix))
+       end do
+    end if
+
+  end subroutine ParseRadiometerRequest
+
+  ! -------------------------------------------  ParseBandRequest  -----
+
+  ! This function is similar to the above one, except that more can be omitted
+  ! (e.g. the spectrometer type etc.) Also the user can specify a request for
+  ! upper/lower sideband.  This is reflected in the upper/lower value
+  ! -1=lower, 1=upper, 0=folded.
+
+  subroutine ParseBandRequest ( request, matches, upperLower )
+
+    ! Dummy arguements
+    character (len=*), intent(in) :: request
+    logical, dimension(:) :: matches ! Result (database%noBands)
+    integer, intent(out), optional :: upperLower
+
+    ! Local variables
+    character (len=len(request)) :: prefix, suffix
+    character (len=1) :: thisChar, spectrometerFamilyRequested
+    integer :: upperLowerRequested
+    integer :: pos, bandNumberRequested, prefixLen, band
+    logical :: bandStarRequested
+
+    ! Executable code
+
+    call SplitWords ( request, prefix, suffix, delimiter=":" )
+    prefix = Capitalize(prefix)
+    suffix = Capitalize(suffix)
+    thisChar = prefix(1:1)
+    if ( thisChar /= "B" ) call MLSMessage(MLSMSG_Error,ModuleName, &
+         & "B expected in band specifier")
+
+    ! Start with a clean slate, the user is not fussy
+
+    upperLowerRequested = 0
+    spectrometerFamilyRequested = "*"
+    bandNumberRequested = 0
+    bandStarRequested = .FALSE.
+
+    prefixLen = len_trim(prefix)
+    if ( prefixLen>1 ) then
+
+       ! OK so it's not just B: something, it's more complicated
+
+       ! Look at the second character, it's either a number or a *
+       thisChar = prefix(2:2)
+       if ( thisChar == "*" ) bandStarRequested = .TRUE.
+
+       ! Now loop in from the back end to take the prefix apart
+       pos = prefixLen
+       ParseBandRequestParse: do
+          thisChar = prefix(pos:pos)
+          if ( LGE(thisChar,"0").AND.(LLE(thisChar,"9")) ) &
+               & exit ParseBandRequestParse
+          select case (thisChar)
+          case ("*")
+             if ( bandStarRequested.AND.(pos==2) ) exit ParseBandRequestParse
+             ! Otherwise it's a spectrometer family request, which is already
+             ! set to * so there's nothing to do.
+          case ("U")
+             upperLowerRequested = 1
+          case ("L")
+             upperLowerRequested = -1
+          case default
+             spectrometerFamilyRequested = thisChar
+          end select
+          pos = pos-1
+          if (pos == 1) EXIT ParseBandRequestParse
+       end do ParseBandRequestParse
+       if ( pos==1 ) CALL MLSMessage ( MLSMSG_Error, ModuleName, &
+            & "Bad band request: "//TRIM(request) )
+
+       ! Now read the band number from prefix
+
+       if (.NOT. bandStarRequested) read (UNIT=prefix(2:pos),FMT=*) &
+            & bandNumberRequested
+
+    end if                       ! Not just B:...
+
+    ! Now we have bandNumberRequested or 0 for don't care,
+    ! UpperLower selected and spectrometerFamilyRequest
+    ! Find all the bands that match our criteria.
+
+    if ( size(matches) /= database%noBands ) call MLSMessage ( &
+         & MLSMSG_Error, ModuleName, "Result wrong size" )
+
+    matches= &
+         & ( (bandNumberRequested == database%bandInfo%number) .OR. &
+         &   (bandNumberRequested == 0) ) .AND. &
+         & ( (spectrometerFamilyRequested == &
+         &       database%bandInfo%spectrometerFamily) .OR. &
+         &   (spectrometerFamilyRequested == "*") )
+
+    ! For the suffix we have to be a little more old fasioned because we can't
+    ! do a `ragged' trim
+
+    if ( suffix /= "") then
+       do band = 1, database%noBands
+          matches(band) = matches(band) .AND. &
+               & (TRIM(suffix) == TRIM(database%bandInfo(band)%suffix))
+       end do
+    end if
+
+    if (present(upperLower)) upperLower = upperLowerRequested
+
+  end subroutine ParseBandRequest
+
+  ! -----------------------------------------  ParseSwitchRequest  -----
+
+  ! This routine parses a switch request
+
+  subroutine ParseSwitchRequest ( request, matches )
+
+    ! Dummy arguments
+    character (len=*), intent(in) :: request
+    logical, dimension(:) :: matches ! (database%noSwitches)
+
+    ! Local variables
+    integer :: switch
+    character (len=len(request)) :: capRequest
+
+    ! Executable code
+
+    capRequest=Capitalize(request)
+    if (capRequest(1:1) /= "S") call MLSMessage ( MLSMSG_Error, ModuleName, &
+         & "S expected for switch spec")
+    if (size(matches) /= database%noSwitches) call MLSMessage( &
+         MLSMSG_Error,ModuleName,"Result wrong size")
+
+    do switch = 1, database%noSwitches
+       matches(switch) = (capRequest==database%switches(switch))
+    end do
+  end subroutine ParseSwitchRequest
+
+  ! -----------------------------------  ParseSpectrometerRequest  -----
+
+  ! This routine parses a spectrometer request. There's no need for wildcards
+  ! here that make any sense.
+
+  subroutine ParseSpectrometerRequest(request,matches)
+
+    ! Dummy arguments
+    character (len=*), intent(in) :: request
+    logical, dimension(:) :: matches ! (database%noSpectrometers)
+
+    ! Local variables
+    character (len=len(request)) :: capRequest
+    integer :: spectrometer
+
+    ! Executable code
+
+    if ( size(matches) /= database%noSpectrometers ) call MLSMessage( &
+         & MLSMSG_Error, ModuleName, "Result wrong size" )
+
+    capRequest = Capitalize(request)
+    do spectrometer = 1, database%noSpectrometers
+       matches(spectrometer) = (TRIM(capRequest) == &
+            & TRIM(database%spectrometerInfo(spectrometer)%name))
+    end do
+
+  end subroutine ParseSpectrometerRequest
+
+  ! ----------------------------------------  ParseChannelRequest  -----
+
+  ! This function parses a channel request.  The form is
+  ! C[<spec>+<spec>+<spec>] etc. where <spec> is n or m:n
+
+  subroutine ParseChannelRequest ( request,firstChannel,lastChannel, &
+    & channelIncluded )
+
+    ! Dummy arguments
+    character (len=*), intent(in) :: request
+    integer, intent(in) :: firstChannel, lastChannel
+    logical, dimension(:), pointer :: channelIncluded
+
+    ! Local variables
+    character (len=len(request)) :: field, remainder, newRemainder, &
+      & firstStr, lastStr
+    integer :: highestChannel, firstInRange, lastInRange
+    integer :: requestLen
+    character (len=1) :: keyChar ! Needed due to absoft bug
+
+    ! Executable code
+
+    highestChannel = firstChannel-1
+    keyChar = request(1:1)
+    if ( (keyChar/="C").AND.(keyChar/="c") ) call MLSMessage ( MLSMSG_Error, &
+         & ModuleName, "C expected in channel specifier" )
+    keyChar = request(2:2)
+    if ( keyChar/="[" ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+         & "[ expected in channel specifier" )
+    requestLen = len_trim(request)
+    keyChar = request(requestLen:requestLen)
+    if (keyChar/="]") call MLSMessage(MLSMSG_Error,ModuleName, &
+         & "] expected in channel specifier")
+
+    remainder = Capitalize(request(3:requestLen-1))
+    call allocate_test ( channelIncluded, lastChannel, "channelIncluded", &
+      & ModuleName, lowBound = firstChannel, fill=.false. )
+
+    ParseChannelParseLoop: do
+       call SplitWords ( remainder, field, newRemainder, delimiter="+" )
+       remainder = newRemainder
+       if ( field == "" ) exit ParseChannelParseLoop
+
+       ! See if this is a range or just a single channel
+       if (index(field,":")/=0) then
+          ! It's a range
+          call SplitWords ( field, firstStr, lastStr, delimiter=":" )
+
+          if ( firstStr == "" ) then
+             firstInRange = firstChannel
+          else
+             read (UNIT=firstStr,FMT=*) firstInRange
+          end if
+
+          IF ( lastStr == "" ) then
+             lastInRange = lastChannel
+          else
+             read (UNIT=lastStr,FMT=*) lastInRange
+          endif
+       else
+          ! It's just a single channel
+          read (UNIT=field,FMT=*) firstInRange
+          lastInRange = firstInRange
+       end if
+
+       if ( firstInRange<=highestChannel ) call MLSMessage( MLSMSG_Error, &
+            & ModuleName, "Channel specifier out of order" )
+       channelIncluded(firstInRange:lastInRange) = .TRUE.
+       highestChannel = lastInRange
+    end do ParseChannelParseLoop
+
+  end subroutine ParseChannelRequest
+
+  ! ---------------------------------  TurnMLSChannelInfoIntoCopy  -----
+
+  ! This routine makes sure that the channel information in a signal is a copy
+  ! of the original, and doesn't merely point to it.
+
+  subroutine TurnMLSChannelInfoIntoCopy(signals)
+
+    ! Dummy argument
+    type (MLSSignal_T), dimension(:), intent(inout) :: signals
+
+    ! Local variables
+    integer :: signal
+    real(r8), dimension(:), pointer :: tempPosition, tempWidth
+    logical, dimension(:), pointer :: tempIncluded
+
+    do signal = 1, SIZE(signals)
+       tempPosition => signals(signal)%channelPosition
+       tempWidth => signals(signal)%channelWidth
+       tempIncluded => signals(signal)%channelIncluded
+
+       ! Don't clobber the existing one, in case it's a pointer to
+       ! another signal.  Cross your fingers and hope it is; otherwise,
+       ! this routine causes a memory leak.
+       nullify ( signals(signal)%channelPosition, &
+               & signals(signal)%channelWidth, &
+               & signals(signal)%channelIncluded )
+
+       call allocate_test ( signals(signal)%channelPosition, &
+         & signals(signal)%lastChannelInBand, "channelPosition", ModuleName, &
+         & lowBound = signals(signal)%firstChannelInBand )
+       call allocate_test ( signals(signal)%channelWidth, &
+         & signals(signal)%lastChannelInBand, "channelWidth", ModuleName, &
+         & lowBound = signals(signal)%firstChannelInBand )
+       call allocate_test ( signals(signal)%channelIncluded, &
+         & signals(signal)%lastChannelInBand, "channelIncluded", ModuleName, &
+         & lowBound = signals(signal)%firstChannelInBand )
+
+       signals(signal)%channelPosition=tempPosition
+       signals(signal)%channelWidth=tempWidth
+       signals(signal)%channelIncluded=tempIncluded
+    end do
+  end subroutine TurnMLSChannelInfoIntoCopy
+
+  ! --------------------------------------  ParseMLSSignalRequest  -----
+
+  ! This subroutine takes a full request and returns an index or set of
+  ! indices into the valid signals data structure, along with an indication of
+  ! upper/lower sideband if relevant.  Also returned is a list of channels.
+
+  subroutine ParseMLSSignalRequest ( request, signals, noCopy )
+
+    ! Dummy arguments
+    character (len=*), intent(in) :: request
+    type (MLSSignal_T), dimension(:), pointer :: signals
+    logical, optional, intent(in) :: noCopy ! Don't copy data, point to it
+
+    ! Local paramters
+    character (len=*), parameter :: OutOfOrder="Signal designation out of order"
+
+    ! Local variables
+
+    integer(c_intptr_t) :: Addr         ! For tracing
+    integer :: upperLower
+    integer :: mostAdvancedField
+    character (len=len(request)) :: remainder,newRemainder,field, &
+         & channelString
+    logical :: radiometerMatches(database%noRadiometers), &
+             & bandMatches(database%noBands), &
+             & switchMatches(database%noSwitches), &
+             & spectrometerMatches(database%noSpectrometers), &
+             & allMatch(database%noValidSignals)
+    integer :: noMatches, status, signal
+
+    logical, dimension(:), pointer :: channelIncluded
+    logical :: uniqueSpectrometerFamilyRequest
+    character (len=1) :: spectrometerFamily
+    logical :: useNoCopy
+    character (len=1) :: keyChar ! Needed due to absoft bug
+
+    ! Executable code
+
+    radiometerMatches = .TRUE.
+    bandMatches = .TRUE.
+    switchMatches = .TRUE.
+    spectrometerMatches = .TRUE.
+
+    if ( present(noCopy) ) then
+       useNoCopy = noCopy
+    else
+       useNoCopy = .FALSE.
+    end if
+
+    mostAdvancedField = 0
+    channelString = ""
+
+    remainder = Capitalize(request)
+
+    ! We go through and parse the string piece by piece
+
+    ParseMLSSignalRequestWordLoop: do
+       call SplitWords ( remainder, field, newRemainder, delimiter='.' )
+       if ( field == "" ) exit ParseMLSSignalRequestWordLoop
+       keyChar = field(1:1)
+       remainder = newRemainder
+       select case ( keyChar )
+       case ('R')
+          IF ( mostAdvancedField /= 0 ) &
+               & call MLSMessage ( MLSMSG_Error, ModuleName, &
+               & OutOfOrder//TRIM(request))
+          call ParseRadiometerRequest ( field, radiometerMatches )
+          mostAdvancedField = 1
+       case ('B')
+          IF ( mostAdvancedField > 2 ) &
+               & call MLSMessage ( MLSMSG_Error, ModuleName, &
+               & OutOfOrder//TRIM(request))
+          call ParseBandRequest ( field, bandMatches, &
+               & upperLower = upperLower)
+          mostAdvancedField=2
+       case ('S')
+          if ( mostAdvancedField > 3 ) &
+               & call MLSMessage ( MLSMSG_Error,ModuleName, &
+               & OutOfOrder//TRIM(request) )
+          call ParseSwitchRequest ( field, switchMatches )
+          mostAdvancedField = 3
+       case ('C')
+          channelString = field
+          mostAdvancedField = 5
+       case default             ! Must be spectrometer or wrong
+          if ( mostAdvancedField > 4 ) &
+               & call MLSMessage ( MLSMSG_Error, ModuleName, &
+               & OutOfOrder//TRIM(request) )
+          call ParseSpectrometerRequest ( field, spectrometerMatches )
+          mostAdvancedField = 4
+       end select
+    end do ParseMLSSignalRequestWordLoop
+
+    ! Now we know what they've asked for look for complete matches
+
+    do signal = 1, database%noValidSignals
+
+       allMatch(signal) = &
+            & radiometerMatches(database%validSignals(signal)%radiometerIndex) &
+            &     .AND. &
+            & bandMatches(database%validSignals(signal)%bandIndex) .AND. &
+            & switchMatches(database%validSignals(signal)%switchIndex) .AND. &
+            & spectrometerMatches(database%validSignals(signal)%spectrometerIndex)
+    end do
+
+    noMatches = COUNT(allMatch)
+    if ( noMatches==0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+         & "No matching signal:"//TRIM(request) )
+
+    ! Now create the result, if it's alread allocated that's an error
+
+    if ( associated(signals) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+         & "Signals already allocated" )
+    allocate ( signals(noMatches),STAT=status )
+    addr = 0
+    if ( status == 0 ) then
+      if ( noMatches > 0 ) addr = transfer(c_loc(signals(1)), addr)
+    end if
+    call test_allocate ( status, ModuleName, "signals", uBounds = noMatches, &
+      & elementSize = storage_size(signals) / 8, address=addr )
+
+    signals = pack(database%validSignals,allMatch)
+    signals%upperLower = upperLower
+    signals%notCopy = useNoCopy
+
+    if ( .NOT. useNoCopy ) call TurnMLSChannelInfoIntoCopy(signals)
+
+    ! At this point we deal with the channel specifier
+
+    if ( trim(channelString ) /= "") then
+       if ( useNoCopy ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+         & "Cannot use no Copy with specific channels" )
+
+       ! Also can't request specific channels when spanning more than one
+       ! spectrometer type.
+
+       if ( noMatches>1 ) then
+          uniqueSpectrometerFamilyRequest = .TRUE.
+          spectrometerFamily = signals(1)%spectrometerFamily
+          do signal = 2, noMatches
+             if ( spectrometerFamily /= signals(signal)%spectrometerFamily ) &
+                  & uniqueSpectrometerFamilyRequest = .FALSE.
+          end do
+          if ( .NOT. uniqueSpectrometerFamilyRequest ) call MLSMessage ( &
+               & MLSMSG_Error, ModuleName, &
+               & "Cannot give specific channels accross multiple "// &
+               & "spectrometer families" )
+       end if
+
+       call ParseChannelRequest ( channelString, &
+            & signals(1)%firstchannelInBand, signals(1)%lastChannelInBand, &
+            & channelIncluded )
+       do signal = 1, noMatches
+          signals(signal)%channelIncluded = channelIncluded
+          signals(signal)%noChannelsIncluded = COUNT(channelIncluded)
+       end do
+       call deallocate_test ( channelIncluded, "channelIncluded", ModuleName )
+    end if
+
+  end subroutine ParseMLSSignalRequest
+
+  ! --------------------------------------  DestroyMLSSignalsInfo  -----
+
+  ! This routine destroys a signal or signal array as created by the
+  ! ParseMLSSignalRequest routine.
+
+  subroutine DestroyMLSSignalsInfo(signals,noError)
+
+    ! Dummy arguments
+    type (MLSSignal_T), dimension(:), pointer :: Signals
+    logical, intent(in), optional :: NoError
+
+    ! Local variables
+    integer(c_intptr_t) :: Addr         ! For tracing
+    integer :: s, signal, status
+    logical :: useNoError
+
+    ! Executable code
+
+    if ( present(noError) ) then
+       useNoError = noError
+    else
+       useNoError = .FALSE.
+    endif
+
+    if ( associated(signals) ) then
+       do signal = 1, SIZE(signals)
+          if ( .NOT. signals(signal)%notCopy ) then
+             call deallocate_test ( signals(signal)%channelIncluded, &
+               & "signals(signal)%channelIncluded", ModuleName )
+             call deallocate_test ( signals(signal)%channelPosition, &
+               & "signals(signal)%channelPosition", ModuleName )
+             call deallocate_test ( signals(signal)%channelWidth, &
+               & "signals(signal)%channelWidth", ModuleName )
+          end if
+       end do
+       s = size(signals) * storage_size(signals) / 8
+       addr = 0
+       if ( s > 0 ) addr = transfer(c_loc(signals(1)), addr)
+       deallocate (signals, stat=status)
+       call test_deallocate ( status, ModuleName, "signals", s, address=addr )
+    else
+       if ( .NOT. useNoError ) call MLSMessage(MLSMSG_Error,ModuleName, &
+            & "This signal not allocted" )
+    end if
+
+  end subroutine DestroyMLSSignalsInfo
+
+  ! ----------------------------------------  UnionMLSSignalsInfo  -----
+
+  ! This subroutine combines two sets of signal lists in a set union type of
+  ! operation.  Thus duplication is avoided. Note that the result must be
+  ! undefined on entry. Also note, we don't consider duplication within a or b
+
+  subroutine UnionMLSSignalsInfo ( signalsA, signalsB, signalsUnion )
+
+    ! Dummy arguments
+    type (MLSSignal_T), dimension(:), intent(in) :: signalsA
+    type (MLSSignal_T), dimension(:), intent(in) :: signalsB
+    type (MLSSignal_T), dimension(:), pointer    :: signalsUnion
+
+    ! Local variables
+    integer(c_intptr_t) :: Addr         ! For tracing
+    integer :: sizeA,sizeB,noSignalsInUnion
+    logical :: presentInA(size(signalsB))
+    integer :: status
+    integer :: noRepeats
+
+    integer :: indexA,indexB,indexUnion
+
+    ! Executable code
+    ! First work out which are the unique signals
+
+    sizeA = SIZE(signalsA)
+    sizeB = SIZE(signalsB)
+
+    presentInA = .FALSE.
+
+    do indexA = 1, sizeA
+       presentInA = presentInA .OR. (signalsA(indexA)%signalDatabaseIndex == &
+            & signalsB%signalDatabaseIndex)
+    end do
+
+    noRepeats = COUNT(presentInA)
+    noSignalsInUnion = sizeA+sizeB-noRepeats
+
+    ! Now allocate the result
+
+    if ( associated(signalsUnion) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+         & "Result already allocated" )
+    allocate ( signalsUnion(noSignalsInUnion), stat=status )
+    addr = 0
+    if ( status == 0 ) then
+      if ( noSignalsInUnion > 0 ) addr = transfer(c_loc(signalsUnion(1)), addr)
+    end if
+    call test_allocate ( status, ModuleName, "signalsUnion", &
+      & uBounds = noSignalsInUnion, elementSize = storage_size(signalsUnion) / 8, &
+      & address=addr )
+
+    ! Now fill up the result
+
+    signalsUnion(1:sizeA) = signalsA
+    if ( noRepeats < sizeB ) signalsUnion(sizeA+1:noSignalsInUnion) = &
+         & PACK(signalsB,(.NOT. presentInA))
+
+    ! Copy channel info over rather than point to it
+
+    call TurnMLSChannelInfoIntoCopy ( signalsUnion )
+
+    ! Now we need to union any channel information. We do this using a loop,
+    ! but we only need to go to sizeA
+
+    do indexUnion = 1, sizeA
+       presentInA = (signalsUnion(indexUnion)%signalDatabaseIndex == &
+            & signalsB%signalDatabaseIndex)
+       if ( count(presentInA) == 1 ) then
+          indexB = 1
+          IndexBHunt: do while ( .not. presentInA(indexB) )
+             indexB = indexB + 1
+          end do IndexBHunt
+          signalsUnion(indexUnion)%channelIncluded = &
+               & signalsUnion(indexUnion)%channelIncluded .OR. &
+               & signalsB(indexB)%channelIncluded
+       end if
+    end do
+
+  end subroutine UnionMLSSignalsInfo
+
+  ! ----------------------------------  ConcatenateMLSSignalsInfo  -----
+
+  ! This subroutine uses the one above to concatenate two lists of signals,
+  ! adding signalsB into signalsA. Note that this also allows signalsA to be
+  ! unallocated, in which case signalsB is just copied.
+
+  subroutine ConcatenateMLSSignalsInfo(signalsA,signalsB)
+
+    ! Dummy arguments
+    type (MLSSignal_T), dimension(:), pointer    :: SignalsA
+    type (MLSSignal_T), dimension(:), intent(in) :: SignalsB
+
+    ! Local variables
+    type (MLSSignal_T), dimension(:), pointer :: tempSignals
+    integer(c_intptr_t) :: Addr         ! For tracing
+    integer :: status
+
+    ! Executable code
+
+    if ( .NOT. associated(signalsA) ) then
+       allocate ( signalsA(lbound(signalsB,1):ubound(signalsB,1)),stat=status )
+       addr = 0
+       if ( status == 0 ) then
+         if ( size(signalsA) > 0 ) addr = transfer(c_loc(signalsA(lbound(signalsB,1))), addr)
+       end if
+       call test_allocate ( status, ModuleName, "signalsA", &
+         & lBounds = lbound(signalsB,1), uBounds = ubound(signalsB,1), &
+         & elementSize = storage_size(signalsA) / 8, address=addr )
+       call TurnMLSChannelInfoIntoCopy(signalsA)
+    else
+       nullify ( tempSignals )
+       call UnionMLSSignalsInfo ( signalsA, signalsB, tempSignals )
+       call DestroyMLSSignalsInfo ( signalsA )
+       signalsA => tempSignals
+    end if
+  end subroutine ConcatenateMLSSignalsInfo
+
+  ! ---------------------------------  IntersectionMLSSignalsInfo  -----
+
+  ! This subroutine is like the union one above, but this time provides the
+  ! intersection.
+
+  subroutine IntersectionMLSSignalsInfo ( signalsA, signalsB, signalsIntersection )
+
+    ! Dummy arguments
+    type (MLSSignal_T), dimension(:), pointer :: signalsA
+    type (MLSSignal_T), dimension(:), pointer :: signalsB
+    type (MLSSignal_T), dimension(:), pointer :: signalsIntersection
+
+    ! Local variables
+    integer :: indexA, indexB, sizeA, sizeB, status
+    logical :: PresentInA(size(signalsB))
+    logical, dimension(:), allocatable :: channelIncluded
+
+    ! Executable code
+
+    sizeA = SIZE(signalsA)
+    sizeB = SIZE(signalsB)
+
+    IF ( associated(signalsIntersection) ) call MLSMessage( &
+         & MLSMSG_Error,ModuleName,"Result already allocated")
+
+    ! Unlike the union routine this one has to be a little more do loop
+    ! orientated, due to the use of channels
+
+    do indexA = 1, sizeA
+       presentInA = (signalsA(indexA)%signalDatabaseIndex == &
+                   & signalsB%signalDatabaseIndex)
+       if ( count(presentInA) /= 0 ) then
+          indexB = 1
+          IndexBHunt: do while ( .not. presentInA(indexB) )
+             indexB=indexB+1
+          end do IndexBHunt
+
+          ! Now look at the channels
+
+          allocate ( channelIncluded( &
+               & signalsA(indexA)%firstChannelInBand: &
+               & signalsA(indexA)%lastChannelInBand),STAT=status)
+          call test_allocate ( status, ModuleName, "channelIncluded" )
+
+          channelIncluded=signalsA(indexA)%channelIncluded .AND. &
+               & signalsB(indexB)%channelIncluded
+
+          if (count(channelIncluded) /= 0) then
+             call ConcatenateMLSSignalsInfo(signalsIntersection, &
+                  & signalsA(indexA:indexA))
+             signalsIntersection(ubound(signalsIntersection,1))% &
+                  & channelIncluded = channelIncluded
+          end if
+          deallocate ( channelIncluded, stat=status )
+          call test_deallocate ( status, ModuleName, "channelIncluded" )
+       end if
+    end do
+
+  end subroutine IntersectionMLSSignalsInfo
+
+  ! ---------------------------------------  GetFullMLSSignalName  -----
+
+  ! This subroutine gives the full name for an MLS signal
+
+  subroutine GetFullMLSSignalName ( signal, fullName, rbOnly, showChannel )
+
+    ! Dummy arguments
+    type (MLSSignal_T), intent(in) :: signal
+    character (len=*), intent(out) :: fullName
+    logical, optional, intent(in) :: rbOnly ! Only show radiometer and band
+    logical, optional, intent(in) :: showChannel ! Only show radiometer and band
+
+    ! Local variables
+    logical :: useRBOnly
+    logical :: useShowChannel
+    logical :: previousChanIncluded,thisChanIncluded
+    integer :: channel,firstChannelInRange,rangeLen
+    logical :: firstEntry
+    character (len=32) :: word
+
+    ! Executable code
+
+    fullName=trim(signal%radiometerName)//"."//trim(signal%bandName)
+
+    if ( present(rbOnly) ) then
+       useRBOnly = rbOnly
+    else
+       useRBOnly = .FALSE.
+    end if
+
+    if ( present(showChannel) ) then
+       useShowChannel = showChannel
+    else
+       useShowChannel = .FALSE.
+    end if
+
+    if ( .not. useRBOnly ) then
+       fullName = trim(fullName)//"."//trim(signal%switch)//"."// &
+            trim(signal%spectrometerName)
+    end if
+
+    if ( useShowChannel ) then
+       fullName = trim(fullName)//".C["
+       firstEntry = .TRUE.
+       channel = signal%firstChannelInBand-1
+       previousChanIncluded = .FALSE.
+       ShowChannelLoop: do
+          channel = channel+1
+          if ( channel<=signal%noChannelsInBand ) then
+             thisChanIncluded = signal%channelIncluded(channel)
+          else
+             thisChanIncluded = .FALSE.
+          end if
+
+          if ( thisChanIncluded.NEQV.previousChanIncluded ) then
+             ! We have a transition of some kind
+             if ( thisChanIncluded ) then ! Begining of a new range
+                firstChannelInRange = channel
+                write (unit=word,fmt='(i0)') firstChannelInRange
+                if ( .not. firstEntry ) fullName=trim(fullName)//"+"
+                firstEntry = .FALSE.
+                fullName = trim(fullName)//word
+             else               ! The end of a range or of array
+                rangeLen = channel-firstChannelInRange
+                if ( rangeLen>1 ) then
+                   write (unit=word,fmt='(i0)') channel-1
+                   if (rangeLen==2) then
+                      fullName = trim(fullName)//"+"//word
+                   else
+                      fullName = trim(fullName)//":"//word
+                   end if
+                end if
+             end if
+          end if
+          if ( channel==signal%lastChannelInBand+1 ) exit ShowChannelLoop
+          previousChanIncluded = thisChanIncluded
+       end do ShowChannelLoop
+       fullName = trim(fullName)//"]"
+    end if
+
+    ! We might put channel stuff here later
+
+  end subroutine GetFullMLSSignalName
+
+  ! ----------------------------------------  ReadSignalsDatabase  -----
+
+  ! This routine reads the signals database file and fills the data structure
+  ! The routine doesn't do very much error checking as this file is assumed not
+  ! to change very often.
+
+  subroutine ReadSignalsDatabase ( unit )
+
+    use Intrinsic, only: L_None
+    use MLSStringLists, only: GetUniqueStrings
+
+    ! Arguments and result
+
+    integer, intent(in) :: unit
+
+    ! Local parameters ------------------------------
+
+    integer, parameter :: SDBLineLen=132
+    character (len=*), parameter :: EOFMessage= &
+         & "Unexpected EOF on signals database file"
+
+    ! Some low level variables ----------------------
+
+    character (len=SDBLineLen) :: line, first, last, rest
+    integer(c_intptr_t) :: Addr         ! For tracing
+    logical :: eof
+    integer :: no               ! Temporary array index
+    integer :: signal           ! Loop counters
+    integer :: radiometer, band, switch, spectrometer, channel ! Loop counters
+    integer :: firstChannel, lastChannel, noChannels
+    integer :: spectrometerFamily ! Another loop counter
+    integer :: wordLen          ! Length of word
+    integer :: hasModifier      ! Flag
+    integer :: s                ! Size in bytes of an object to deallocate
+    integer :: status           ! From allocate
+    integer :: index            ! General array index
+
+    integer :: evenNo           ! For `even' channels
+    real(r8) :: evenStart,evenSpacing,evenWidth ! For `even' channels
+
+    type (MLSSignal_T), dimension(:), pointer :: tempSignal=>null()
+
+    ! These variables are intermediate arrays to allow our database to `grow'
+
+    type (SDBSpectrometerFamilyInfo_T) :: tempSpectrometerFamilyInfo
+    character (len=SDBLineLen), dimension(:), pointer :: &
+         validSignalNames
+
+    ! These strings are a breakdown of the valid signals strings
+
+    character (len=NameLen), dimension(:), allocatable :: validRadiometer, &
+         & validBand, validSwitch, validSpectrometer
+    character (len=NameLen), dimension(:), allocatable :: radiometerNames, &
+         & bandNames, switchNames, spectrometerNames
+
+    character (len=1), dimension(:), allocatable :: &
+         & spectrometerFamilyChars
+
+    integer, parameter :: MLSInstrumentNoModules=2
+
+    character (len=3),  dimension(MLSInstrumentNoModules) :: &
+       & MLSInstrumentModuleNames= (/ &
+       & "GHz", &
+       & "THz"/)
+
+    ! Executable code ----------------------------------------------------
+    nullify ( validSignalNames )
+
+    ! The first section in the signals file describes the various types
+    ! of spectrometer there can be.  First, we read a line and expect it to be
+    ! `spectrometers'
+
+    MLSInstrumentModuleNames(1)='GHz'
+    MLSInstrumentModuleNames(2)='THz'
+    !for God's sake!
+
+    call ReadCompleteLineWithoutComments(unit,line,eof=eof)
+    if (eof.OR.(Capitalize(TRIM(line))/="SPECTROMETERS")) &
+         & call MLSMessage(MLSMSG_Error,ModuleName, &
+         & "SPECTROMETERS expected in signals database file")
+
+    ! Now we go through and read the family descriptions
+
+    database%noSpectrometerFamilies=0
+    SpectrometerFamilyLoop: DO
+       ! Read the line
+       call ReadCompleteLineWithoutComments ( unit, line, eof=eof )
+       if ( eof ) call MLSMessage ( MLSMSG_Error, ModuleName, EOFMessage )
+       if ( Capitalize(line)=="END" ) exit SpectrometerFamilyLoop
+
+       ! Now parse the line
+
+       call SplitWords ( line, first, rest, last, threeWay=.TRUE., delimiter=" " )
+       tempSpectrometerFamilyInfo%name = first
+       read (UNIT=rest,FMT=*) tempSpectrometerFamilyInfo%firstChannel
+       read (UNIT=last,FMT=*) tempSpectrometerFamilyInfo%lastChannel
+       tempSpectrometerFamilyInfo%noChannels =  &
+            & tempSpectrometerFamilyInfo%lastChannel - &
+            & tempSpectrometerFamilyInfo%firstChannel + 1
+
+       database%noSpectrometerFamilies = addSpectrometerInfoToDatabase ( &
+         & database%spectrometerFamilyInfo, tempSpectrometerFamilyInfo )
+
+    end do SpectrometerFamilyLoop
+
+    ! The next section in the file is the list of all the valid signals
+    ! We'll just read these in for the moment, and parse them in the next
+    ! section
+
+    call ReadCompleteLineWithoutComments ( unit, line, eof=eof )
+    if ( eof ) call MLSMessage ( MLSMSG_Error, ModuleName, EOFMessage )
+    if ( Capitalize(line)/="VALID SIGNALS" ) call MLSMessage ( &
+         & MLSMSG_Error, ModuleName, "Valid signals expected" )
+
+    database%noValidSignals = 0
+    ValidSignalsReadingLoop: DO
+       ! Read the line
+       call ReadCompleteLineWithoutComments ( unit, line, eof=eof )
+       if ( eof ) call MLSMessage ( MLSMSG_Error, ModuleName, EOFMessage )
+       if ( Capitalize(line)=="END" ) exit ValidSignalsReadingLoop
+
+       database%noValidSignals = AddValidSignalNamesToDatabase ( &
+         & validSignalNames, line )
+
+    end do ValidSignalsReadingLoop
+
+    ! The remainder of the file talks about lo frequencies etc.  We'll handle
+    ! all that stuff in a minute.  First we'll take apart that information we
+    ! got
+
+    allocate ( validRadiometer(database%noValidSignals), STAT=status )
+    call test_allocate ( status, ModuleName, "validRadiometer", &
+      & uBounds = database%noValidSignals, &
+      & elementSize = storage_size(validRadiometer) / 8 )
+    allocate ( validBand(database%noValidSignals), STAT=status )
+    call test_allocate ( status, ModuleName, "validBand", &
+      & uBounds = database%noValidSignals, &
+      & elementSize = storage_size(validBand) / 8 )
+    allocate ( validSwitch(database%noValidSignals), STAT=status )
+    call test_allocate ( status, ModuleName, "validSwitch", &
+      & uBounds = database%noValidSignals, &
+      & elementSize = storage_size(validSwitch) / 8 )
+    allocate ( validSpectrometer(database%noValidSignals), STAT=status )
+    call test_allocate ( status, ModuleName, "validSpectrometer", &
+      & uBounds = database%noValidSignals, &
+      & elementSize = storage_size(validSpectrometer) / 8 )
+
+    allocate ( radiometerNames(database%noValidSignals), STAT=status )
+    call test_allocate ( status, ModuleName, "radiometerNames", &
+      & uBounds = database%noValidSignals, &
+      & elementSize = storage_size(radiometerNames) / 8 )
+    allocate ( bandNames(database%noValidSignals), STAT=status )
+    call test_allocate ( status, ModuleName, "bandNames", &
+      & uBounds = database%noValidSignals, &
+      & elementSize = storage_size(bandNames) / 8 )
+    allocate ( switchNames(database%noValidSignals), STAT=status )
+    call test_allocate ( status, ModuleName, "switchNames", &
+      & uBounds = database%noValidSignals, &
+      & elementSize = storage_size(switchNames) / 8 )
+    allocate ( spectrometerNames(database%noValidSignals), STAT=status )
+    call test_allocate ( status, ModuleName, "spectrometerNames", &
+      & uBounds = database%noValidSignals, &
+      & elementSize = storage_size(spectrometerNames) / 8 )
+
+    do signal = 1, database%noValidSignals
+       ! First split into radiometer,rest,spectrometer
+       call SplitWords ( validSignalNames(signal), &
+            & validRadiometer(signal), rest, validSpectrometer(signal), &
+            & delimiter='.',threeWay=.TRUE. )
+       ! Now split rest into band,switch
+       call SplitWords ( rest, validBand(signal), validSwitch(signal), &
+            & delimiter='.')
+    end do
+
+    ! Now we find the unique ones of each of these and enter them in our
+    ! database.
+
+    call GetUniqueStrings ( validRadiometer, radiometerNames, &
+         & database%noRadiometers )
+    call GetUniqueStrings ( validBand, bandNames, database%noBands )
+    call GetUniqueStrings ( validSwitch, switchNames, database%noSwitches )
+    call GetUniqueStrings ( validSpectrometer, spectrometerNames, &
+         & database%noSpectrometers )
+
+    ! Now fill up our database element by element
+
+    ! We'll go through the radiometers and fill up the radiometerInfo
+
+    allocate ( database%radiometerInfo(database%noRadiometers), STAT=status )
+    addr = 0
+    if ( status == 0 ) then
+      if ( database%noRadiometers > 0 ) addr = transfer(c_loc(database%radiometerInfo(1)), addr)
+    end if
+    call test_allocate ( status, ModuleName, "database%radiometerInfo", &
+      & uBounds = database%noRadiometers, &
+      & elementSize = storage_size(database%radiometerInfo) / 8, address=addr )
+
+    do radiometer = 1, database%noRadiometers
+       database%radiometerInfo(radiometer)%name = radiometerNames(radiometer)
+       call SplitWords ( radiometerNames(radiometer), &
+            & first, &
+            & database%radiometerInfo(radiometer)%suffix, &
+            & delimiter=':' )
+       database%radiometerInfo(radiometer)%prefix = first
+
+       ! We've filled the name, prefix and suffix.  Now parse the prefix into
+       ! number and an optional modifer
+
+       wordLen = LEN_TRIM(first)
+       last = first(wordLen:wordLen)
+       hasModifier = 0
+       if ( LLT(last,"0").OR.(LGT(last,"9")) ) hasModifier=1
+       read (UNIT=first(2:wordLen-hasModifier),FMT=*) &
+            & database%radiometerInfo(radiometer)%number
+       if ( hasModifier == 1 ) then
+          database%radiometerInfo(radiometer)%modifier = last
+       else
+          database%radiometerInfo(radiometer)%modifier = ""
+       end if
+    end do
+
+    ! Now, we similarly go through the bands and fill up that info
+
+    allocate ( database%bandInfo(database%noBands), STAT=status )
+    addr = 0
+    if ( status == 0 ) then
+      if ( database%noBands > 0 ) addr = transfer(c_loc(database%bandInfo(1)), addr)
+    end if
+    call test_allocate ( status, ModuleName, "database%bandInfo", &
+      & uBounds = database%noBands, &
+      & elementSize = storage_size(database%bandInfo) / 8, address=addr )
+
+    do band = 1, database%noBands
+       database%bandInfo(band)%name = bandNames(band)
+       call SplitWords ( bandNames(band), &
+            & first, &
+            & database%bandInfo(band)%suffix, &
+            & delimiter=':' )
+
+       ! Now we parse the prefix section.  This is a B followed by a number
+       ! then a spectrometer type
+
+       wordLen = LEN_TRIM(first)
+       database%bandInfo(band)%spectrometerFamily = first(wordLen:wordLen)
+       read (UNIT=first(2:wordLen-1),FMT=*) &
+            database%bandInfo(band)%number
+    end do ! We'll sort out the spectrometer family index later
+
+    ! Sorting out the switch settings is easy.
+
+    allocate ( database%switches(database%noSwitches), STAT=status )
+    addr = 0
+    if ( status == 0 ) then
+!       if ( database%noSwitches > 0 ) addr = transfer(c_loc(database%switches(1)), addr)
+    end if
+    call test_allocate ( status, ModuleName, "database%switches", &
+      & uBounds = database%noSwitches, &
+      & elementSize = storage_size(database%switches) / 8, address=addr )
+    database%switches = switchNames(1:database%noSwitches)
+
+    ! Finally we do the spectrometers
+
+    allocate ( database%spectrometerInfo(database%noSpectrometers), &
+         &  STAT=status )
+    addr = 0
+    if ( status == 0 ) then
+      if ( database%noSpectrometers > 0 ) addr = &
+        & transfer(c_loc(database%spectrometerInfo(1)), addr)
+    end if
+    call test_allocate ( status, ModuleName, "database%spectrometerInfo", &
+      & uBounds = database%noSpectrometers, &
+      & elementSize = storage_size(database%spectrometerInfo) / 8, address=addr )
+    do spectrometer = 1, database%noSpectrometers
+       database%spectrometerInfo(spectrometer)%name = &
+            & spectrometerNames(spectrometer)
+       call SplitWords ( spectrometerNames(spectrometer), &
+            & database%spectrometerInfo(spectrometer)%fullFamily, &
+            rest,delimiter="-" )
+       read (UNIT=rest,FMT=*) &
+            database%spectrometerInfo(spectrometer)%number
+       database%spectrometerInfo(spectrometer)%family = &
+            spectrometerNames(spectrometer)(1:1)
+    end do
+
+    ! Now as a final tidy up, we go through and fill in the family index
+    ! variables in both the spectrometerInfo and bandInfo database entries.
+
+    allocate ( spectrometerFamilyChars(database%noSpectrometerFamilies), &
+         &  STAT=status )
+    addr = 0
+    if ( status == 0 ) then
+!       if ( database%noSpectrometerFamilies > 0 ) addr = &
+!         & transfer(c_loc(spectrometerFamilyChars(1)), addr)
+    end if
+    call test_allocate ( status, ModuleName, "spectrometerFamilyChars", &
+      & uBounds = database%noSpectrometerFamilies, &
+      & elementSize = storage_size(spectrometerFamilyChars) / 8, address=addr )
+
+    do spectrometerFamily = 1, database%noSpectrometerFamilies
+       spectrometerFamilyChars(spectrometerFamily) = &
+            & database%spectrometerFamilyInfo(spectrometerFamily)%name(1:1)
+    end do
+
+    do spectrometer = 1, database%noSpectrometers
+       database%spectrometerInfo(spectrometer)%familyIndex = &
+            & LinearSearchStringArray(database%spectrometerFamilyInfo%name, &
+            & database%spectrometerInfo(spectrometer)%fullFamily)
+    end do
+
+    do band = 1, database%noBands
+       database%bandInfo(band)%spectrometerFamilyIndex = &
+            & LinearSearchStringArray(spectrometerFamilyChars, &
+            & database%bandInfo(band)%spectrometerFamily)
+    end do
+
+    ! That's basically the valid signals database filled up, no we go on and
+    ! read the rest of the file which contains frequency information etc.
+
+    ! The next section descusses the radiometer frequencies
+
+    call ReadCompleteLineWithoutComments ( unit, line, eof=eof )
+    if ( eof.OR.(Capitalize(line)/="RADIOMETER FREQUENCIES") ) &
+         & call MLSMessage ( MLSMSG_Error, ModuleName, &
+         & "RADIOMETER FREQUENCIES expected in database" )
+
+    ! Now this section is just a list of names followed by lo's
+
+    database%radiometerInfo%lo=0.0D0
+
+    RadiometerFrequencyLoop: DO
+       call ReadCompleteLineWithoutComments ( unit, line, eof=eof )
+       if ( eof ) call MLSMessage ( MLSMSG_Error, ModuleName, EOFMessage )
+       if ( Capitalize(line)=="END" ) exit RadiometerFrequencyLoop
+       call SplitWords ( line, first, rest, last, delimiter=' ', threeWay=.TRUE. )
+       radiometer = LinearSearchStringArray ( database%radiometerInfo%name, &
+            & first, caseInsensitive=.TRUE. )
+       if ( radiometer == 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & "No such radiometer: "//TRIM(first) )
+       read (unit=rest,FMT=*) database%radiometerInfo(radiometer)%lo
+       database%radiometerInfo(radiometer)%instrumentModule = &
+!           & LinearSearchStringArray(MLSInstrumentModuleNames(:),last,&
+            & LinearSearchStringArray(MLSInstrumentModuleNames,last,&
+            & caseInsensitive=.TRUE.)
+
+       if ( database%radiometerInfo(radiometer)%instrumentModule == &
+            & L_None ) call MLSMessage ( MLSMSG_Error, &
+            & ModuleName, "Unrecognised instrument module: "//last )
+    end do RadiometerFrequencyLoop
+
+    if ( MINVAL(database%radiometerInfo%lo) <= 0.0D0 ) call MLSMessage ( &
+         & MLSMSG_Error, ModuleName, "Not all radiometer LOs assigned" )
+
+    ! Now the next section is a set of similar information for the bands
+
+    call ReadCompleteLineWithoutComments( unit, line, eof=eof )
+    if ( eof.OR.(Capitalize(line)/="BAND FREQUENCIES") ) &
+         & call MLSMessage ( MLSMSG_Error, ModuleName, &
+         & "BAND FREQUENCIES expected in database" )
+
+    ! Now this section is just a list of names followed by center frequencies
+
+    database%bandInfo%centerFreqIF = 0.0D0
+
+    BandFrequencyLoop: do
+       call ReadCompleteLineWithoutComments ( unit, line, eof=eof )
+       if ( eof ) call MLSMessage ( MLSMSG_Error, ModuleName, EOFMessage )
+       if (Capitalize(line)=="END" ) exit BandFrequencyLoop
+       call SplitWords ( line, first, rest, delimiter=" " )
+       band = LinearSearchStringArray(database%bandInfo%name, &
+            & first, caseInsensitive=.TRUE.)
+       if ( band == 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & "No such band: "//first )
+       read (unit=rest,FMT=*) database%bandInfo(band)%centerFreqIF
+    end do BandFrequencyLoop
+
+    ! Don't check here for all allocated as the WF type filters are listed
+    ! seperately.
+
+    ! Now we have the section giving the frequencies and widths of all the
+    ! spectrometer channels.
+
+    call ReadCompleteLineWithoutComments ( unit, line, eof=eof )
+    if ( eof.OR.(Capitalize(TRIM(line))/="SPECTROMETER FREQUENCIES") ) &
+         & call MLSMessage ( MLSMSG_Error, ModuleName, &
+         & "SPECTROMETER FREQUENCIES expected in database" )
+
+    SpectrometerFrequencyLoop: do
+       call ReadCompleteLineWithoutComments ( unit, line, eof=eof )
+       if ( eof ) call MLSMessage ( MLSMSG_Error, ModuleName, EOFMessage )
+       if (Capitalize(line)=="END" ) exit SpectrometerFrequencyLoop
+
+       ! Each spectrometer family has a line describing it with a set of
+       ! instructions as to how to assign the channels
+
+       call SplitWords ( line, first, rest, delimiter=" " )
+       index = LinearSearchStringArray( &
+            & database%spectrometerFamilyInfo%name,first, &
+            & caseInsensitive=.TRUE.)
+       if ( index == 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & "No such spectrometer family: "//first )
+
+       ! Here we'll allocate the arrays for size and posiiton.  Note for the WF
+       ! filters this is unneccessary, and we'll deallocate them later.
+       ! But to make the code more readable I'm allocating them first.
+
+       allocate ( database%spectrometerFamilyInfo(index)%position(&
+            & database%spectrometerFamilyInfo(index)%firstChannel:&
+            & database%spectrometerFamilyInfo(index)%lastChannel),&
+            & STAT=status )
+       addr = 0
+       if ( status == 0 ) then
+         if ( size(database%spectrometerFamilyInfo(index)%position) > 0 ) addr = &
+           & transfer(c_loc(database%spectrometerFamilyInfo(index)%position( &
+             & database%spectrometerFamilyInfo(index)%firstChannel)), addr)
+       end if
+       call test_allocate ( status, ModuleName, "position", &
+         & lBounds = database%spectrometerFamilyInfo(index)%firstChannel, &
+         & uBounds = database%spectrometerFamilyInfo(index)%lastChannel, &
+         & elementSize = storage_size(database%spectrometerFamilyInfo(index)%position) / 8, &
+         & address=addr )
+
+       allocate ( database%spectrometerFamilyInfo(index)%width(&
+            & database%spectrometerFamilyInfo(index)%firstChannel:&
+            & database%spectrometerFamilyInfo(index)%lastChannel),&
+            & STAT=status )
+       addr = 0
+       if ( status == 0 ) then
+         if ( size(database%spectrometerFamilyInfo(index)%width) > 0 ) addr = &
+           & transfer(c_loc(database%spectrometerFamilyInfo(index)%width( &
+             & database%spectrometerFamilyInfo(index)%firstChannel)), addr)
+       end if
+       call test_allocate ( status, ModuleName, "width", &
+         & lBounds = database%spectrometerFamilyInfo(index)%firstChannel, &
+         & uBounds = database%spectrometerFamilyInfo(index)%lastChannel, &
+         & elementSize = storage_size(database%spectrometerFamilyInfo(index)%width) / 8, &
+         & address=addr )
+
+       database%spectrometerFamilyInfo(index)%individual=.FALSE.
+
+       select case (Capitalize(rest))
+       case ('LIST') ! Positions and widths given on next lines
+          read (UNIT=unit, FMT=*) &
+               & database%spectrometerFamilyInfo(index)%position
+          read (UNIT=unit, FMT=*) &
+               & database%spectrometerFamilyInfo(index)%width
+
+       case ('EVEN') ! No chans, start Freq, spacing and widths
+          read (UNIT=unit, FMT=*) evenNo,evenStart,evenSpacing,evenWidth
+          if ( evenNo /= database%spectrometerFamilyInfo(index)%noChannels ) &
+               & call MLSMessage ( MLSMSG_Error, ModuleName, &
+               & "Wrong number of channels for "//first )
+          ! Loop and fill information
+          database%spectrometerFamilyInfo(index)%width = evenWidth
+          do evenNo = database%spectrometerFamilyInfo(index)%firstChannel, &
+               & database%spectrometerFamilyInfo(index)%lastChannel
+             database%spectrometerFamilyInfo(index)%position(evenNo) = &
+                  & evenStart+evenNo*evenSpacing
+          end do
+
+       case ('INDIVIDUAL')
+          database%spectrometerFamilyInfo(index)%individual=.TRUE.
+          s = size(database%spectrometerFamilyInfo(index)%position) * &
+            & storage_size(database%spectrometerFamilyInfo(index)%position) / 8
+          addr = 0
+          if ( s > 0 ) addr = transfer(c_loc( &
+            & database%spectrometerFamilyInfo(index)%position(database%spectrometerFamilyInfo(index)%firstChannel)), addr)
+          deallocate ( database%spectrometerFamilyInfo(index)%position, stat=status )
+          call test_deallocate ( status, ModuleName, "position", s, address=addr )
+          s = size(database%spectrometerFamilyInfo(index)%width) * &
+            & storage_size(database%spectrometerFamilyInfo(index)%width) / 8
+          addr = 0
+          if ( s > 0 ) addr = transfer(c_loc( &
+            & database%spectrometerFamilyInfo(index)%width( &
+             & database%spectrometerFamilyInfo(index)%firstChannel)), addr)
+          deallocate ( database%spectrometerFamilyInfo(index)%width, stat=status )
+          call test_deallocate ( status, ModuleName, "width", s, address=addr )
+
+       case default
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
+               & "Unrecognized spectrometer family: "//first )
+       end select
+    end do SpectrometerFrequencyLoop
+
+    ! The final section of the file is the section dealing with specific
+    ! channels. Here, having built up most of the database, we can find the
+    ! relevant data using our standard parse routines.
+
+    ! Now we have read all the gory information from our database
+    ! we need to fill up our valid signals database
+
+    allocate ( database%validSignals(database%noValidSignals),STAT=status )
+    addr = 0
+    if ( status == 0 ) then
+      if ( database%noValidSignals > 0 ) addr = &
+        & transfer(c_loc(database%validSignals(1)), addr)
+    end if
+    call test_allocate ( status, ModuleName, "database%validSignals", &
+      & uBounds = database%noValidSignals, &
+      & elementSize = storage_size(database%validSignals) / 8, address=addr )
+
+    do signal=1,database%noValidSignals
+
+       database%validSignals(signal)%signalDatabaseIndex=signal
+
+       ! Deal with radiometer info first.
+
+       radiometer = LinearSearchStringArray( &
+            & database%radiometerInfo%name,validRadiometer(signal))
+       database%validSignals(signal)%radiometerIndex = radiometer
+       database%validSignals(signal)%instrumentModule = &
+            & database%radiometerInfo(radiometer)%instrumentModule
+       database%validSignals(signal)%radiometerName = &
+            & database%radiometerInfo(radiometer)%name
+       database%validSignals(signal)%radiometerPrefix = &
+            & database%radiometerInfo(radiometer)%prefix
+       database%validSignals(signal)%radiometerSuffix = &
+            & database%radiometerInfo(radiometer)%suffix
+       database%validSignals(signal)%radiometerNumber = &
+            & database%radiometerInfo(radiometer)%number
+       database%validSignals(signal)%radiometerModifier = &
+            & database%radiometerInfo(radiometer)%modifier
+       database%validSignals(signal)%lo = &
+            & database%radiometerInfo(radiometer)%lo
+
+       ! Now the band info
+
+       band = LinearSearchStringArray(database%bandInfo%name,validBand(signal))
+       database%validSignals(signal)%bandIndex = band
+       database%validSignals(signal)%bandName = database%bandInfo(band)%name
+       database%validSignals(signal)%bandSuffix = database%bandInfo(band)%suffix
+       database%validSignals(signal)%spectrometerFamily = &
+            & database%bandInfo(band)%spectrometerFamily
+       database%validSignals(signal)%bandCenterFreqIF = &
+            & database%bandInfo(band)%centerFreqIF
+
+       ! Now the switch info
+
+       switch = LinearSearchStringArray(database%switches,validSwitch(signal))
+       database%validSignals(signal)%switchIndex = switch
+       database%validSignals(signal)%switch = database%switches(switch)
+
+       ! Now the spectrometer info
+
+       spectrometer = LinearSearchStringArray(database%spectrometerInfo%name, &
+            & validSpectrometer(signal))
+       spectrometerFamily = database%spectrometerInfo(spectrometer)%familyIndex
+
+       database%validSignals(signal)%spectrometerIndex = spectrometer
+       database%validSignals(signal)%spectrometerFamilyIndex = spectrometerFamily
+
+       database%validSignals(signal)%spectrometerName = &
+            & database%spectrometerInfo(spectrometer)%name
+       database%validSignals(signal)%fullSpectrometerFamily = &
+            & database%spectrometerInfo(spectrometer)%fullFamily
+       database%validSignals(signal)%spectrometerNumber = &
+            & database%spectrometerInfo(spectrometer)%number
+
+       ! Now the information on the channels
+
+       firstChannel = database% &
+            & spectrometerFamilyInfo(spectrometerFamily)%firstChannel
+       lastChannel = database% &
+            & spectrometerFamilyInfo(spectrometerFamily)%lastChannel
+       noChannels = database% &
+            & spectrometerFamilyInfo(spectrometerFamily)%noChannels
+
+       ! Now we compute the channel positions in IF space
+
+       database%validSignals(signal)%firstChannelInBand = firstChannel
+       database%validSignals(signal)%lastChannelInBand = lastChannel
+       database%validSignals(signal)%noChannelsInBand = noChannels
+
+       allocate ( database%validSignals(signal)%channelPosition &
+            & (firstChannel:lastChannel),STAT=status )
+       addr = 0
+       if ( status == 0 ) then
+         if ( size(database%validSignals(signal)%channelPosition) > 0 ) addr = &
+           & transfer(c_loc(database%validSignals(signal)%channelPosition(firstChannel)), addr)
+       end if
+       call test_allocate ( status, ModuleName, "channelPosition", &
+         & lBounds = firstChannel, uBounds = lastChannel, &
+         & elementSize = storage_size(database%validSignals(signal)%channelPosition) / 8, &
+         & address=addr )
+
+       allocate ( database%validSignals(signal)%channelWidth &
+            & (firstChannel:lastChannel),STAT=status )
+       addr = 0
+       if ( status == 0 ) then
+         if ( size(database%validSignals(signal)%channelWidth) > 0 ) addr = &
+           & transfer(c_loc(database%validSignals(signal)%channelWidth(firstChannel)), addr)
+       end if
+       call test_allocate ( status, ModuleName, "channelWidth", &
+         & lBounds = firstChannel, uBounds = lastChannel, &
+         & elementSize = storage_size(database%validSignals(signal)%channelWidth) / 8, &
+         & address=addr )
+
+       allocate ( database%validSignals(signal)%channelIncluded &
+            & (firstChannel:lastChannel),STAT=status )
+       addr = 0
+       if ( status == 0 ) then
+         if ( size(database%validSignals(signal)%channelIncluded) > 0 ) addr = &
+           & transfer(c_loc(database%validSignals(signal)%channelIncluded(firstChannel)), addr)
+       end if
+       call test_allocate ( status, ModuleName, "channelIncluded", &
+         & lBounds = firstChannel, uBounds = lastChannel, &
+         & elementSize = storage_size(database%validSignals(signal)%channelIncluded) / 8, &
+         & address=addr )
+
+       database%validSignals(signal)%channelIncluded = .TRUE.
+
+       do channel = firstChannel, lastChannel
+          ! We'll have to defer dealing with the individual channels
+          if ( .NOT. database%spectrometerFamilyInfo(spectrometerFamily)% &
+               & individual ) then
+             database%validSignals(signal)%channelPosition(channel) = &
+                  & database%validSignals(signal)%bandCenterFreqIF + &
+                  & database%spectrometerFamilyInfo(spectrometerFamily)% &
+                  & position(channel)
+             database%validSignals(signal)%channelWidth(channel) = &
+                  & database%spectrometerFamilyInfo(spectrometerFamily)% &
+                  & width(channel)
+          end if
+       end do                   ! Channel loop
+    end do                      ! Signal loop
+
+    ! The next section of the file deals with the WF type channels.  This is
+    ! actually very easy.  We simply read the spec and parse it as we've done
+    ! others and store it in our database, making use of the
+    ! ParseMLSSignalRequest routine which now works because we've fill up the
+    ! daabase.
+
+    call ReadCompleteLineWithoutComments ( unit, line, eof=eof )
+    if ( eof.OR.(Capitalize(line)/="SPECIFIC CHANNELS") ) &
+         & call MLSMessage ( MLSMSG_Error, ModuleName, &
+         & "SPECIFIC CHANNELS expected in database" )
+
+    SpecificChannelLoop: do
+       call ReadCompleteLineWithoutComments ( unit, line, eof=eof )
+       if ( eof ) call MLSMessage ( MLSMSG_Error, ModuleName, EOFMessage )
+
+       ! This line will either be END or a spec followed by the word 'List'
+       line = Capitalize(line)
+       if ( line=="END" ) exit SpecificChannelLoop
+
+       call SplitWords ( line, first, last, delimiter=" " )
+       if ( last/="LIST") call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & "List expected for specific channel information" )
+
+       ! This will be followed by a list of positions and widths, we'll read
+       ! this directory into our database by using the noCopy option.
+
+       call ParseMLSSignalRequest ( first, tempSignal, noCopy=.TRUE. )
+       if ( SIZE(tempSignal)/=1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & "Ambiguous spec.:"//first )
+
+       read (UNIT=unit,FMT=*) tempSignal(1)%channelPosition, &
+            & tempSignal(1)%channelWidth
+
+       ! Now destroy this temporary information
+
+       call DestroyMLSSignalsInfo ( tempSignal )
+
+    end do SpecificChannelLoop
+
+    ! Now we tidy up our arrays and exit
+
+    s = size(validSignalNames) * storage_size(validSignalNames) / 8
+    addr = 0
+!     if ( s > 0 ) addr = transfer(c_loc(validSignalNames(1)), addr)
+    deallocate( validSignalNames, stat=status )
+    call test_deallocate ( status, ModuleName, "validSignalNames", s, address=addr )
+    s = size(radiometerNames) * storage_size(radiometerNames) / 8
+    deallocate ( radiometerNames, stat=status )
+    call test_deallocate ( status, ModuleName, "radiometerNames", s )
+    s = size(bandNames) * storage_size(bandNames) / 8
+    deallocate ( bandNames, stat=status )
+    call test_deallocate ( status, ModuleName, "bandNames", s )
+    s = size(switchNames) * storage_size(switchNames) / 8
+    deallocate ( switchNames, stat=status )
+    call test_deallocate ( status, ModuleName, "switchNames", s )
+    s = size(spectrometerNames) * storage_size(switchNames) / 8
+    deallocate ( spectrometerNames, stat=status )
+    call test_deallocate ( status, ModuleName, "spectrometerNames", s )
+    s = size(spectrometerFamilyChars) * storage_size(spectrometerFamilyChars) / 8
+    deallocate ( spectrometerFamilyChars, stat=status )
+    call test_deallocate ( status, ModuleName, "spectrometerFamilyChars", s )
+
+  contains
+
+    integer function AddSpectrometerInfoToDatabase ( Database, Item )
+      use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+
+      ! Dummy arguments
+      type (SDBSpectrometerFamilyInfo_T), dimension(:), pointer :: DATABASE
+      type (SDBSpectrometerFamilyInfo_T), intent(in) :: ITEM
+
+      ! Local variables
+      type (SDBSpectrometerFamilyInfo_T), dimension(:), pointer :: tempDatabase
+
+      include "addItemToDatabase.f9h" 
+
+      addSpectrometerInfoToDatabase = newSize
+
+    end function AddSpectrometerInfoToDatabase
+
+    integer function AddValidSignalNamesToDatabase ( Database, Item )
+      use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+
+      ! Dummy arguments
+      character (len=SDBLineLen), dimension(:), pointer :: DATABASE
+      character (len=SDBLineLen), intent(in) :: ITEM
+
+      ! Local variables
+      character (len=SDBLineLen), dimension(:), pointer :: tempDatabase
+
+      include "addItemToDatabase.f9h" 
+
+      addValidSignalNamesToDatabase = newSize
+
+    end function AddValidSignalNamesToDatabase
+
+  end subroutine ReadSignalsDatabase
+
+  ! -------------------------------------  DestroySignalsDatabase  -----
+
+  ! This routine deallocates all the information dealing with the signals
+  ! database
+
+  subroutine DestroySignalsDatabase
+
+   ! Local variable
+
+    integer(c_intptr_t) :: Addr         ! For tracing
+    integer :: i, s, status
+
+    ! Executable code
+
+    database%noRadiometers = 0
+    database%noBands = 0
+    database%noSwitches = 0
+    database%noSpectrometers = 0
+    database%noSpectrometerFamilies = 0
+    database%noValidSignals = 0
+
+    s = size(database%radiometerInfo) * storage_size(database%radiometerInfo) / 8
+    addr = 0
+    if ( s > 0 ) addr = transfer(c_loc(database%radiometerInfo(1)), addr)
+    deallocate ( database%radiometerInfo, stat=status )
+    call test_deallocate ( status, ModuleName, "database%radiometerInfo", s, &
+      & address=addr )
+    s = size(database%bandInfo) * storage_size(database%bandInfo) / 8
+    addr = 0
+    if ( s > 0 ) addr = transfer(c_loc(database%bandInfo(1)), addr)
+    deallocate ( database%bandInfo, stat=status )
+    call test_deallocate ( status, ModuleName, "database%bandInfo", s, &
+      & address=addr )
+    s = size(database%switches) * storage_size(database%switches) / 8
+!     if ( s > 0 ) addr = transfer(c_loc(database%switches(1)), addr)
+    deallocate ( database%switches, stat=status )
+    call test_deallocate ( status, ModuleName, "database%switches", s, &
+      & address=addr )
+    s = size(database%spectrometerInfo) * storage_size(database%spectrometerInfo) / 8
+    if ( s > 0 ) addr = transfer(c_loc(database%spectrometerInfo(1)), addr)
+    deallocate ( database%spectrometerInfo, stat=status )
+    call test_deallocate ( status, ModuleName, "database%spectrometerInfo", s, &
+      & address=addr )
+
+    do i = 1, database%noSpectrometerFamilies
+       s = size(database%spectrometerFamilyInfo(i)%position) * &
+         & storage_size(database%spectrometerFamilyInfo(i)%position) / 8
+       addr = 0
+       if ( s > 0 ) addr = transfer(c_loc( &
+         & database%spectrometerFamilyInfo(i)%position(database%spectrometerFamilyInfo(i)%firstChannel)), addr)
+       deallocate ( database%spectrometerFamilyInfo(i)%position, stat=status )
+       call test_deallocate ( status, ModuleName, &
+         & "database%spectrometerFamilyInfo(i)%position", s, address=addr )
+       s = size(database%spectrometerFamilyInfo(i)%width) * &
+         & storage_size(database%spectrometerFamilyInfo(i)%width) / 8
+       addr = 0
+       if ( s > 0 ) addr = transfer(c_loc( &
+         & database%spectrometerFamilyInfo(i)%width(database%spectrometerFamilyInfo(i)%firstChannel)), addr)
+       deallocate ( database%spectrometerFamilyInfo(i)%width, stat=status )
+       call test_deallocate ( status, ModuleName, &
+         & "database%spectrometerFamilyInfo(i)%width", s, address=addr )
+    end do
+    s = size(database%spectrometerFamilyInfo) * &
+      & storage_size(database%spectrometerFamilyInfo) / 8
+    addr = 0
+    if ( s > 0 ) addr = transfer(c_loc( &
+      & database%spectrometerFamilyInfo(i)%width(database%spectrometerFamilyInfo(i)%firstChannel)), addr)
+    deallocate ( database%spectrometerFamilyInfo, stat=status)
+    call test_deallocate ( status, ModuleName, "database%spectrometerFamilyInfo", s, &
+      & address=addr )
+
+    do i = 1, database%noValidSignals
+       s = size(database%validSignals(i)%channelIncluded) * &
+         & storage_size(database%validSignals(i)%channelIncluded) / 8
+       addr = 0
+       if ( s > 0 ) addr = transfer(c_loc( &
+         & database%validSignals(i)%channelIncluded(lbound(database%validSignals(i)%channelIncluded,1))),addr)
+       deallocate ( database%validSignals(i)%channelIncluded, stat=status )
+       call test_deallocate ( status, ModuleName, &
+         & "database%validSignals(i)%channelIncluded", s, address=addr )
+       s = size(database%validSignals(i)%channelPosition) * &
+         & storage_size(database%validSignals(i)%channelPosition) / 8
+       addr = 0
+       if ( s > 0 ) addr = transfer(c_loc( &
+         & database%validSignals(i)%channelPosition(lbound(database%validSignals(i)%channelPosition,1))),addr)
+       deallocate ( database%validSignals(i)%channelPosition, stat=status )
+       call test_deallocate ( status, ModuleName, &
+         & "database%validSignals(i)%channelPosition", s, address=addr )
+       s = size(database%validSignals(i)%channelWidth) * &
+         & storage_size(database%validSignals(i)%channelWidth) / 8
+       addr = 0
+       if ( s > 0 ) addr = transfer(c_loc( &
+         & database%validSignals(i)%channelWidth(lbound(database%validSignals(i)%channelWidth,1))),addr)
+       deallocate ( database%validSignals(i)%channelWidth, stat=status )
+       call test_deallocate ( status, ModuleName, &
+         & "database%validSignals(i)%channelWidth", s, address=addr )
+    end do
+    s = size(database%validSignals) * &
+      & storage_size(database%validSignals) / 8
+    addr = 0
+    if ( s > 0 ) addr = transfer(c_loc(database%validSignals(1)), addr)
+    deallocate ( database%validSignals, stat=status )
+    call test_deallocate ( status, ModuleName, "database%validSignals", s, address=addr )
+
+  end subroutine DestroySignalsDatabase
+
+  ! --------------------------------------  GetMLSRadiometerNames  -----
+
+  ! This routine returns an array of the MLS radiometer names from the database
+
+  subroutine GetMLSRadiometerNames ( names )
+
+    ! Dummy arguments
+    character (len=NameLen), dimension(:), pointer :: names
+
+    ! Local variables
+    integer :: status
+
+    ! Executable code
+
+    call allocate_test ( names, database%noRadiometers, "MLSRadiometerNames", &
+      & moduleName )
+
+    names = database%radiometerInfo%name
+  end subroutine GetMLSRadiometerNames
+
+  ! --------------------------------------------  GetMLSBandNames  -----
+
+  ! This routine returns an array of names of bands in MLS from the database.
+
+  subroutine GetMLSBandNames ( names )
+
+    ! Dummy arguments
+    character (len=NameLen), dimension(:), pointer :: names
+
+    ! Local variables
+    integer :: status
+
+    ! Executable code
+
+    call allocate_test ( names, database%noBands, "MLSBandNames", moduleName )
+
+    names = database%bandInfo%name
+  end subroutine GetMLSBandNames
+
+!=============================================================================
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: MLSSignalNomenclature.f90,v 2.15 2016/03/08 21:08:18 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module MLSSignalNomenclature
+!=============================================================================
+
+!
+! $Log: MLSSignalNomenclature.f90,v $
+! Revision 2.15  2016/03/08 21:08:18  pwagner
+! Fixed two errors causing some crashes
+!
+! Revision 2.14  2015/03/28 01:18:07  vsnyder
+! Some spiffing.  Some reorganization.
+! Added stuff to trace allocate/deallocate addresses -- some commented out
+! because NAG build 1017 doesn't yet allow arrays as arguments to C_LOC.
+!
+! Revision 2.13  2014/09/30 16:31:02  pwagner
+! Uses Allocate_test, etc. from Allocate_Deallocate, back to module-wise scope
+!
+! Revision 2.12  2014/09/29 22:50:26  vsnyder
+! Add ONLY clause to USEs, move some down to subprogram scope
+!
+! Revision 2.11  2014/09/05 21:58:20  pwagner
+! Remove wrong call to allocate_test with signals array
+!
+! Revision 2.10  2014/09/05 00:09:45  vsnyder
+! More complete and accurate allocate/deallocate size tracking.
+! Convert some local pointer temps to automatic.  Some cannonball polishing.
+!
+! Revision 2.9  2013/06/13 21:04:58  vsnyder
+! Don't look at noError without checking whether it's present
+!
+! Revision 2.8  2013/06/12 02:12:07  vsnyder
+! Cruft removal
+!
+! Revision 2.7  2009/06/23 18:25:42  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.6  2005/06/22 17:25:50  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.5  2004/08/04 23:19:01  pwagner
+! Much moved from MLSStrings to MLSStringLists
+!
+! Revision 2.4  2002/10/08 00:09:12  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.3  2001/03/30 19:51:49  pwagner
+! *** empty log message ***
+!
+! Revision 2.1  2001/02/09 00:38:56  livesey
+! Various changes
+!
+! Revision 2.0  2000/09/05 17:41:06  dcuddy
+! Change revision to 2.0
+!
+! Revision 1.21  2000/06/30 00:59:38  lungu
+! Initialized tempsignal, tempsignals=>null()
+! Changed switchNames to switchNames(1:database%noSwitches)
+! so that a "shape error" is avoided.
+!
+@
+
+
+2.15
+log
+@Fixed two errors causing some crashes
+@
+text
+@d173 1
+a173 1
+     type (SDBRadiometerInfo_T), dimension(:), pointer :: radiometerInfo
+d175 1
+a175 1
+     type (SDBBandInfo_T), dimension(:), pointer :: bandInfo
+d177 1
+a177 1
+     character (len=NameLen), dimension(:), pointer :: switches
+d179 1
+a179 1
+     type (SDBSpectrometerInfo_T), dimension(:), pointer :: spectrometerInfo
+d181 1
+a181 1
+          & spectrometerFamilyInfo
+d183 1
+a183 1
+     type (MLSSignal_T), dimension(:), pointer :: validSignals
+d1888 1
+a1888 1
+       "$Id: MLSSignalNomenclature.f90,v 2.14 2015/03/28 01:18:07 vsnyder Exp $"
+d1900 3
+@
+
+
+2.14
+log
+@Some spiffing.  Some reorganization.
+Added stuff to trace allocate/deallocate addresses -- some commented out
+because NAG build 1017 doesn't yet allow arrays as arguments to C_LOC.
+@
+text
+@d1062 1
+a1062 1
+         validSignalNames, tempValidSignalNames
+d1082 1
+d1488 1
+a1488 1
+            & database%spectrometerFamilyInfo(index)%position( &
+d1888 1
+a1888 1
+       "$Id: MLSSignalNomenclature.f90,v 2.13 2014/09/30 16:31:02 pwagner Exp $"
+d1900 5
+@
+
+
+2.13
+log
+@Uses Allocate_test, etc. from Allocate_Deallocate, back to module-wise scope
+@
+text
+@d18 1
+d565 1
+d661 4
+d666 1
+a666 1
+      & elementSize = storage_size(signals) / 8 )
+d720 1
+d744 2
+d747 1
+a747 1
+       call test_deallocate ( status, ModuleName, "signals", s )
+d769 1
+d798 4
+d803 2
+a804 1
+      & uBounds = noSignalsInUnion, elementSize = storage_size(signalsUnion) / 8 )
+d849 1
+d856 4
+d862 1
+a862 1
+         & elementSize = storage_size(signalsA) / 8 )
+d1040 1
+d1060 1
+a1060 2
+    type (SDBSpectrometerFamilyInfo_T), dimension(:), pointer :: &
+         & tempSpectrometerFamilyInfo
+d1068 1
+a1068 1
+    character (len=NameLen), dimension(:), pointer :: radiometerNames, &
+d1074 6
+a1085 6
+    integer, parameter :: MLSInstrumentNoModules=2
+    character (len=3),  dimension(MLSInstrumentNoModules) :: &
+       & MLSInstrumentModuleNames= (/ &
+       & "GHz", &
+       & "THz"/)
+
+d1105 1
+a1105 16
+       database%noSpectrometerFamilies=database%noSpectrometerFamilies+1
+       no = database%noSpectrometerFamilies
+       if ( no==1 ) then
+          allocate(database%spectrometerFamilyInfo(no),STAT=status)
+          call test_allocate ( status, ModuleName, "database%spectrometerFamilyInfo", &
+            & uBounds = no, elementSize = storage_size(database%spectrometerFamilyInfo) / 8 )
+       else
+          allocate ( tempSpectrometerFamilyInfo(no), STAT=status )
+          call test_allocate ( status, ModuleName, "tempSpectrometerFamilyInfo", &
+            & uBounds = no, elementSize = storage_size(tempSpectrometerFamilyInfo) / 8 )
+          tempSpectrometerFamilyInfo(1:no-1) = database%spectrometerFamilyInfo
+          s = size(database%spectrometerFamilyInfo) * &
+            & storage_size(database%spectrometerFamilyInfo) / 8
+          deallocate ( database%spectrometerFamilyInfo, stat=status )
+          call test_deallocate ( status, ModuleName, &
+            & "database%spectrometerFamilyInfo", s )
+d1107 7
+a1113 2
+          database%spectrometerFamilyInfo => tempSpectrometerFamilyInfo
+       end if
+d1115 2
+a1116 1
+       ! Now parse the line
+a1117 7
+       call SplitWords ( line, first, rest, last, threeWay=.TRUE., delimiter=" " )
+       database%spectrometerFamilyInfo(no)%name = first
+       read (UNIT=rest,FMT=*) database%spectrometerFamilyInfo(no)%firstChannel
+       read (UNIT=last,FMT=*) database%spectrometerFamilyInfo(no)%lastChannel
+       database%spectrometerFamilyInfo(no)%noChannels =  &
+            & database%spectrometerFamilyInfo(no)%lastChannel- &
+            & database%spectrometerFamilyInfo(no)%firstChannel+1
+d1136 3
+a1138 17
+       database%noValidSignals = database%noValidSignals+1
+       no = database%noValidSignals
+       IF ( no==1 ) THEN
+          allocate ( validSignalNames(no), STAT=status )
+          call test_allocate ( status, ModuleName, "validSignalNames", &
+            & uBounds = no, elementSize = storage_size(validSignalNames) / 8 )
+       else
+          allocate ( tempValidSignalNames(no), STAT=status )
+          call test_allocate ( status, ModuleName, "tempValidSignalNames", &
+            & uBounds = no, elementSize = storage_size(tempValidSignalNames) / 8 )
+          tempValidSignalNames(1:no-1) = validSignalNames
+          s = size(validSignalNames) * storage_size(validSignalNames) / 8
+          deallocate ( validSignalNames, stat=status )
+          call test_deallocate ( status, ModuleName, "validSignalNames", s )
+          validSignalNames => tempValidSignalNames
+       end if
+       validSignalNames(no) = line
+d1179 1
+a1179 1
+    do signal=1,database%noValidSignals
+d1204 4
+d1210 1
+a1210 1
+      & elementSize = storage_size(database%radiometerInfo) / 8 )
+d1239 4
+d1245 1
+a1245 1
+      & elementSize = storage_size(database%bandInfo) / 8 )
+d1266 4
+d1272 1
+a1272 1
+      & elementSize = storage_size(database%switches) / 8 )
+d1279 5
+d1286 1
+a1286 1
+      & elementSize = storage_size(database%spectrometerInfo) / 8 )
+d1304 5
+d1311 1
+a1311 1
+      & elementSize = storage_size(spectrometerFamilyChars) / 8 )
+d1424 6
+d1433 2
+a1434 1
+         & elementSize = storage_size(database%spectrometerFamilyInfo(index)%position) / 8 )
+d1440 6
+d1449 2
+a1450 1
+         & elementSize = storage_size(database%spectrometerFamilyInfo(index)%width) / 8 )
+d1454 1
+a1454 1
+       SELECT CASE (Capitalize(rest))
+d1478 3
+d1482 1
+a1482 1
+          call test_deallocate ( status, ModuleName, "position", s )
+d1485 4
+d1490 1
+a1490 1
+          call test_deallocate ( status, ModuleName, "width", s )
+d1506 5
+d1513 1
+a1513 1
+      & elementSize = storage_size(database%validSignals) / 8 )
+d1589 5
+d1596 2
+a1597 1
+         & elementSize = storage_size(database%validSignals(signal)%channelPosition) / 8 )
+d1601 5
+d1608 2
+a1609 1
+         & elementSize = storage_size(database%validSignals(signal)%channelWidth) / 8 )
+d1613 5
+d1620 2
+a1621 1
+         & elementSize = storage_size(database%validSignals(signal)%channelIncluded) / 8 )
+d1682 2
+d1685 1
+a1685 1
+    call test_deallocate ( status, ModuleName, "validSignalNames", s )
+d1702 34
+d1745 1
+a1745 1
+    ! Local variable
+d1747 1
+d1760 2
+d1763 2
+a1764 1
+    call test_deallocate ( status, ModuleName, "database%radiometerInfo", s )
+d1766 2
+d1769 2
+a1770 1
+    call test_deallocate ( status, ModuleName, "database%bandInfo", s )
+d1772 1
+d1774 2
+a1775 1
+    call test_deallocate ( status, ModuleName, "database%switches", s )
+d1777 1
+d1779 2
+a1780 1
+    call test_deallocate ( status, ModuleName, "database%spectrometerInfo", s )
+d1785 3
+d1790 1
+a1790 1
+         & "database%spectrometerFamilyInfo(i)%position", s )
+d1793 3
+d1798 1
+a1798 1
+         & "database%spectrometerFamilyInfo(i)%width", s )
+d1802 6
+a1807 2
+    deallocate (database%spectrometerFamilyInfo, stat=status)
+    call test_deallocate ( status, ModuleName, "database%spectrometerFamilyInfo", s )
+d1812 3
+d1817 1
+a1817 1
+         & "database%validSignals(i)%channelIncluded", s )
+d1820 3
+d1825 1
+a1825 1
+         & "database%validSignals(i)%channelPosition", s )
+d1828 3
+d1833 1
+a1833 1
+         & "database%validSignals(i)%channelWidth", s )
+d1837 2
+d1840 1
+a1840 1
+    call test_deallocate ( status, ModuleName, "database%validSignals", s )
+d1858 2
+a1859 3
+    allocate ( names(database%noRadiometers),STAT=status )
+    call test_allocate ( status, ModuleName, "names", &
+      & uBounds = database%noRadiometers, elementSize = storage_size(names) / 8 )
+d1878 1
+a1878 3
+    allocate ( names(database%noBands),STAT=status )
+    call test_allocate ( status, ModuleName, "names", &
+      & uBounds = database%noBands, elementSize = storage_size(names) / 8 )
+d1887 1
+a1887 1
+       "$Id: MLSSignalNomenclature.f90,v 2.12 2014/09/29 22:50:26 vsnyder Exp $"
+d1899 3
+@
+
+
+2.12
+log
+@Add ONLY clause to USEs, move some down to subprogram scope
+@
+text
+@d16 2
+a437 2
+    use Allocate_Deallocate, only: Allocate_Test
+
+a509 2
+    use Allocate_Deallocate, only: Allocate_Test
+
+a553 2
+    use Allocate_Deallocate, only: Test_Allocate
+
+a753 2
+    use Allocate_Deallocate, only: Test_Allocate
+
+a827 2
+    use Allocate_Deallocate, only: Test_Allocate
+
+a1003 1
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+a1725 2
+    use Allocate_Deallocate, only: Test_Allocate
+
+a1746 2
+    use Allocate_Deallocate, only: Test_Allocate
+
+d1766 1
+a1766 1
+       "$Id: MLSSignalNomenclature.f90,v 2.11 2014/09/05 21:58:20 pwagner Exp $"
+d1778 3
+@
+
+
+2.11
+log
+@Remove wrong call to allocate_test with signals array
+@
+text
+@d16 2
+a17 3
+  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test, &
+    & Test_Allocate, Test_Deallocate
+  use MLSCommon
+d20 1
+a20 3
+  use MLSStringLists, only: GetUniqueStrings
+  use MLSMessageModule
+  use Intrinsic, only: L_None
+d34 1
+a34 1
+  private :: not_used_here 
+d122 1
+a122 1
+     integer :: instrumentModule ! Module in instrument GHz/THz 
+d337 1
+a337 1
+       
+d339 1
+a339 1
+       
+d427 1
+a427 1
+  
+d430 1
+a430 1
+  ! This function parses a channel request.  The form is 
+d436 2
+d478 1
+a478 1
+          if ( firstStr == "" ) then 
+d510 2
+d556 2
+d604 1
+a604 1
+    
+d653 1
+a653 1
+       
+d659 1
+a659 1
+    
+d749 1
+a749 1
+ 
+d758 2
+d827 1
+a827 1
+  
+d834 2
+d925 1
+a925 1
+    
+d1012 4
+d1298 1
+a1298 1
+            spectrometerNames(spectrometer)(1:1)       
+d1468 1
+a1468 1
+       case default 
+d1508 1
+a1508 1
+            & database%radiometerInfo(radiometer)%lo      
+d1553 1
+a1553 1
+       
+d1557 1
+a1557 1
+       
+d1735 2
+d1758 2
+d1779 1
+a1779 1
+       "$Id: MLSSignalNomenclature.f90,v 2.10 2014/09/05 00:09:45 vsnyder Exp $"
+d1791 3
+@
+
+
+2.10
+log
+@More complete and accurate allocate/deallocate size tracking.
+Convert some local pointer temps to automatic.  Some cannonball polishing.
+@
+text
+@d16 2
+a438 1
+    use Allocate_Deallocate, only: Allocate_Test
+a510 2
+    use Allocate_Deallocate, only: Allocate_Test
+
+a554 2
+    use Allocate_Deallocate, only: Deallocate_Test, Test_Allocate
+
+a658 1
+    call allocate_test ( signals, noMatches, "signals", ModuleName )
+a709 2
+    use Allocate_Deallocate, only: Deallocate_Test, Test_Deallocate
+
+a754 2
+    use Allocate_Deallocate, only: Test_Allocate
+
+a828 2
+    use Allocate_Deallocate, only: Test_Allocate
+
+a859 2
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+
+a1004 2
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+
+a1723 2
+    use Allocate_Deallocate, only: Test_Allocate
+
+a1744 2
+    use Allocate_Deallocate, only: Test_Allocate
+
+d1764 1
+a1764 1
+       "$Id: MLSSignalNomenclature.f90,v 2.9 2013/06/13 21:04:58 vsnyder Exp $"
+d1776 4
+@
+
+
+2.9
+log
+@Don't look at noError without checking whether it's present
+@
+text
+@d13 1
+a13 1
+MODULE MLSSignalNomenclature    ! Dealing with MLS rad.band etc. specifiers
+d16 2
+a17 2
+  USE MLSCommon
+  USE MLSStrings, only: Capitalize, LinearSearchStringArray, &
+d19 3
+a21 3
+  USE MLSStringLists, only: GetUniqueStrings
+  USE MLSMessageModule
+  USE Intrinsic, ONLY: L_None
+d23 2
+a24 2
+  IMPLICIT NONE
+  PRIVATE
+d26 1
+a26 1
+  PUBLIC :: MLSSignal_T, ParseMLSSignalRequest, DestroyMLSSignalsInfo,&
+d50 1
+a50 1
+  TYPE MLSSignal_T
+d56 8
+a63 8
+     INTEGER :: signalDatabaseIndex ! Index into rad.band.s.spec combination
+     INTEGER :: instrumentModule ! Module in the instrument (EMLS:1=GHz, 2=THz)
+     INTEGER :: radiometerIndex ! Index into array of radiometerInfos
+     INTEGER :: bandIndex       ! Index into array of bandInfos
+     INTEGER :: switchIndex     ! Index into array of switch names
+     INTEGER :: spectrometerIndex ! Index into spectrometer array
+     INTEGER :: upperLower      ! -1=Lower, 1=Upper, 0=Folded
+     LOGICAL :: notCopy         ! If set POINTER arrays below are not copies
+d70 6
+a75 6
+     CHARACTER (LEN=NameLen) :: radiometerName   ! e.g. R1A:118
+     CHARACTER (LEN=NameLen) :: radiometerPrefix ! e.g. R1A
+     CHARACTER (LEN=NameLen) :: radiometerSuffix ! e.g. 118
+     INTEGER :: radiometerNumber                    ! e.g. 1
+     CHARACTER (LEN=1) :: radiometerModifier        ! e.g. A
+     REAL(r8) :: lo                         ! MHz
+d79 4
+a82 4
+     CHARACTER (LEN=NameLen) :: bandName    ! e.g. B1F:PT
+     CHARACTER (LEN=NameLen) :: bandSuffix  ! e.g. PT
+     CHARACTER (LEN=1) :: spectrometerFamily   ! e.g. F
+     REAL(r8) :: bandCenterFreqIF      ! MHz
+d86 1
+a86 1
+     CHARACTER (LEN=NameLen) :: switch
+d90 4
+a93 4
+     CHARACTER (LEN=NameLen) :: spectrometerName
+     CHARACTER (LEN=NameLen) :: fullSpectrometerFamily ! e.g. FB25
+     INTEGER :: spectrometerFamilyIndex ! Index into array of spec. fams.
+     INTEGER :: spectrometerNumber ! Note count from one for this.
+d97 3
+a99 3
+     INTEGER :: firstChannelInBand
+     INTEGER :: lastChannelInBand
+     INTEGER :: noChannelsInBand
+d104 4
+a107 4
+     INTEGER :: noChannelsIncluded
+     LOGICAL, DIMENSION(:), POINTER :: channelIncluded
+     REAL(r8), DIMENSION(:), POINTER :: channelPosition ! i.f. space
+     REAL(r8), DIMENSION(:), POINTER :: channelWidth ! i.f. space
+d109 1
+a109 1
+  END TYPE MLSSignal_T
+d116 9
+a124 9
+  TYPE SDBRadiometerInfo_T
+     CHARACTER (LEN=NameLen) :: name   ! e.g. R1A:118
+     CHARACTER (LEN=NameLen) :: prefix ! e.g. R1A
+     CHARACTER (LEN=NameLen) :: suffix ! e.g. 118
+     INTEGER :: number                     ! e.g. 1
+     CHARACTER(LEN=1) :: modifier          ! e.g. A/B or H/V for R5 (emls)
+     REAL(r8) :: lo                ! Local oscillator /MHz
+     INTEGER :: instrumentModule ! Module in instrument GHz/THz 
+  END TYPE SDBRadiometerInfo_T
+d127 8
+a134 8
+  TYPE SDBBandInfo_T
+     CHARACTER (LEN=NameLen) :: name      ! e.g. B1F:PT
+     CHARACTER (LEN=NameLen) :: suffix    ! e.g. PT
+     INTEGER :: number                       ! e.g. 1
+     CHARACTER (LEN=1) :: spectrometerFamily ! e.g. F
+     INTEGER :: spectrometerFamilyIndex      ! Index into array of next type
+     REAL(r8) :: centerFreqIF        ! Center i.f. frequency (MHz)
+  END TYPE SDBBandInfo_T
+d137 7
+a143 7
+  TYPE SDBSpectrometerFamilyInfo_T
+     CHARACTER (LEN=NameLen) :: name ! Name of family e.g. FB25
+     INTEGER :: noSpectrometers ! Number of spectrometers in this family
+     INTEGER :: noChannels      ! Number of channels in family
+     INTEGER :: firstChannel    ! First channel number (e.g. 1)
+     INTEGER :: lastChannel     ! Last channel number (e.g. 25)
+     LOGICAL :: individual      ! If set have discrete freqs. e.g. wf4 series
+d149 3
+a151 3
+     REAL(r8), DIMENSION(:), POINTER :: position
+     REAL(r8), DIMENSION(:), POINTER :: width
+  END TYPE SDBSpectrometerFamilyInfo_T
+d154 7
+a160 7
+  TYPE SDBSpectrometerInfo_T
+     CHARACTER (LEN=NameLen) :: name ! Name of spectrometer
+     CHARACTER (LEN=NameLen) :: fullFamily ! Full name of family eg FB25
+     CHARACTER (LEN=1) :: family ! Single character family id e.g. F
+     INTEGER :: familyIndex     ! Index into familyInfo database
+     INTEGER :: number          ! Number within family
+  END TYPE SDBSpectrometerInfo_T
+d163 7
+a169 7
+  TYPE MLSSignalsDatabase_T
+     INTEGER :: noRadiometers   ! Including redundant etc.
+     INTEGER :: noBands         ! Accross the whole instrument
+     INTEGER :: noSwitches      ! No. vald S0, S1 etc. fields
+     INTEGER :: noSpectrometers ! No. spectrometers in whole instrument
+     INTEGER :: noSpectrometerFamilies
+     INTEGER :: noValidSignals    ! Number of valid Signal combinations
+d171 1
+a171 1
+     TYPE (SDBRadiometerInfo_T), DIMENSION(:), POINTER :: radiometerInfo
+d173 1
+a173 1
+     TYPE (SDBBandInfo_T), DIMENSION(:), POINTER :: bandInfo
+d175 1
+a175 1
+     CHARACTER (LEN=NameLen), DIMENSION(:), POINTER :: switches
+d177 2
+a178 2
+     TYPE (SDBSpectrometerInfo_T), DIMENSION(:), POINTER :: spectrometerInfo
+     TYPE (SDBSpectrometerFamilyInfo_T), DIMENSION(:), POINTER :: &
+d181 1
+a181 1
+     TYPE (MLSSignal_T), DIMENSION(:), POINTER :: validSignals
+d184 1
+a184 1
+  END TYPE MLSSignalsDatabase_T
+d188 1
+a188 1
+  TYPE (MLSSignalsDatabase_T) :: database
+d190 1
+a190 1
+CONTAINS
+d196 1
+a196 1
+  SUBROUTINE ParseRadiometerRequest (request,matches)
+d202 1
+a202 1
+    CHARACTER (LEN=*), INTENT(IN) :: request
+d204 1
+a204 1
+    LOGICAL, DIMENSION(:) :: matches ! Result (database%noRadiometers)
+d207 3
+a209 3
+    CHARACTER (LEN=LEN(request)) :: prefix,suffix
+    CHARACTER (LEN=1) :: modifierRequested
+    INTEGER :: numberRequested,hasModifier,prefixLen,radiometer
+d213 1
+a213 1
+    CALL SplitWords(request,prefix,suffix,delimiter=':')
+d217 2
+a218 2
+    IF (prefix(1:1)/="R") CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & "R expected in radiometer specifier")
+d224 5
+a228 5
+    prefixLen=LEN_TRIM(prefix)
+    numberRequested=0
+    modifierRequested="*"
+    hasModifier=1
+    
+d232 1
+a232 1
+    IF (prefixLen>1) THEN
+d234 1
+a234 1
+       IF ((LGE(modifierRequested,"0")).AND.(LLE(modifierRequested,"9"))) THEN
+d237 1
+a237 1
+       ENDIF
+d241 3
+a243 3
+       IF (prefixLen-hasModifier > 1) &
+            & READ (UNIT=prefix(2:prefixLen-hasModifier),FMT=*) numberRequested
+    ENDIF
+d248 2
+a249 2
+    IF (SIZE(matches) /= database%noRadiometers) CALL MLSMessage( &
+         MLSMSG_Error,ModuleName,"Result is wrong size")
+d260 2
+a261 2
+    IF (TRIM(suffix) /= "") THEN
+       DO radiometer=1,database%noRadiometers
+d263 3
+a265 3
+            & (TRIM(suffix) ==TRIM(database%radiometerInfo(radiometer)%suffix))
+       ENDDO
+    ENDIF
+d267 1
+a267 1
+  END SUBROUTINE ParseRadiometerRequest
+d276 1
+a276 1
+  SUBROUTINE ParseBandRequest (request,matches,upperLower)
+d279 3
+a281 3
+    CHARACTER (LEN=*), INTENT(IN) :: request
+    LOGICAL, DIMENSION(:) :: matches ! Result (database%noBands)
+    INTEGER, INTENT(OUT), OPTIONAL :: upperLower
+d284 5
+a288 5
+    CHARACTER (LEN=LEN(request)) :: prefix,suffix
+    CHARACTER (LEN=1) :: thisChar, spectrometerFamilyRequested
+    INTEGER :: upperLowerRequested
+    INTEGER :: pos,bandNumberRequested,prefixLen,band
+    LOGICAL :: bandStarRequested
+d292 5
+a296 5
+    CALL SplitWords(request,prefix,suffix,delimiter=":")
+    prefix=Capitalize(prefix)
+    suffix=Capitalize(suffix)
+    thisChar=prefix(1:1)
+    IF (thisChar /= "B") CALL MLSMessage(MLSMSG_Error,ModuleName, &
+d301 4
+a304 4
+    upperLowerRequested=0
+    spectrometerFamilyRequested="*"
+    bandNumberRequested=0
+    bandStarRequested=.FALSE.
+d306 2
+a307 2
+    prefixLen=LEN_TRIM(prefix)
+    IF (prefixLen>1) THEN
+d312 2
+a313 2
+       thisChar=prefix(2:2)
+       IF (thisChar == "*") bandStarRequested=.TRUE.
+d316 8
+a323 8
+       pos=prefixLen
+       ParseBandRequestParse: DO
+          thisChar=prefix(pos:pos)
+          IF (LGE(thisChar,"0").AND.(LLE(thisChar,"9"))) &
+               & EXIT ParseBandRequestParse
+          SELECT CASE (thisChar)
+          CASE ("*")
+             IF (bandStarRequested.AND.(pos==2)) EXIT ParseBandRequestParse
+d326 12
+a337 12
+          CASE ("U")
+             upperLowerRequested=1
+          CASE ("L")
+             upperLowerRequested=-1
+          CASE DEFAULT
+             spectrometerFamilyRequested=thisChar
+          END SELECT
+          pos=pos-1
+          IF (pos == 1) EXIT ParseBandRequestParse
+       END DO ParseBandRequestParse
+       IF (pos==1) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+            & "Bad band request: "//TRIM(request))
+d341 1
+a341 1
+       IF (.NOT. bandStarRequested) READ (UNIT=prefix(2:pos),FMT=*) &
+d344 1
+a344 1
+    ENDIF                       ! Not just B:...
+d350 2
+a351 2
+    IF (SIZE(matches) /= database%noBands) CALL MLSMessage(&
+         & MLSMSG_Error,ModuleName,"Result wrong size")
+d363 3
+a365 3
+    IF (TRIM(suffix) /= "") THEN
+       DO band=1,database%noBands
+          matches(band)=matches(band) .AND. &
+d367 2
+a368 2
+       ENDDO
+    ENDIF
+d370 3
+a372 2
+    IF (PRESENT(upperLower)) upperLower=upperLowerRequested
+  END SUBROUTINE ParseBandRequest
+d378 1
+a378 1
+  SUBROUTINE ParseSwitchRequest(request,matches)
+d381 2
+a382 2
+    CHARACTER (LEN=*), INTENT(IN) :: request
+    LOGICAL, DIMENSION(:) :: matches ! (database%noSwitches)
+d385 2
+a386 2
+    INTEGER :: switch
+    CHARACTER (LEN=LEN(request)) :: capRequest
+d391 1
+a391 1
+    IF (capRequest(1:1) /= "S") CALL MLSMessage(MLSMSG_Error,ModuleName, &
+d393 1
+a393 1
+    IF (SIZE(matches) /= database%noSwitches) CALL MLSMessage( &
+d396 4
+a399 4
+    DO switch=1,database%noSwitches
+       matches(switch)=(capRequest==database%switches(switch))
+    ENDDO
+  END SUBROUTINE ParseSwitchRequest
+d406 1
+a406 1
+  SUBROUTINE ParseSpectrometerRequest(request,matches)
+d409 2
+a410 2
+    CHARACTER (LEN=*), INTENT(IN) :: request
+    LOGICAL, DIMENSION(:) :: matches ! (database%noSpectrometers)
+d413 2
+a414 2
+    CHARACTER (LEN=LEN(request)) :: capRequest
+    INTEGER :: spectrometer
+d418 2
+a419 2
+    IF (SIZE(matches) /= database%noSpectrometers) CALL MLSMessage( &
+         & MLSMSG_Error,ModuleName,"Result wrong size")
+d421 2
+a422 2
+    capRequest=Capitalize(request)
+    DO spectrometer=1,database%noSpectrometers
+d425 1
+a425 1
+    ENDDO
+d427 1
+a427 1
+  END SUBROUTINE ParseSpectrometerRequest
+d434 1
+a434 1
+  SUBROUTINE ParseChannelRequest ( request,firstChannel,lastChannel, &
+d437 1
+d439 3
+a441 3
+    CHARACTER (LEN=*), INTENT(IN) :: request
+    INTEGER, INTENT(IN) :: firstChannel, lastChannel
+    LOGICAL, DIMENSION(:), POINTER :: channelIncluded
+d444 1
+a444 1
+    CHARACTER (LEN=LEN(request)) :: field, remainder, newRemainder, &
+d446 3
+a448 3
+    INTEGER :: highestChannel, firstInRange, lastInRange, channel
+    INTEGER :: status, requestLen
+    CHARACTER (LEN=1) :: keyChar ! Needed due to absoft bug
+d452 10
+a461 10
+    highestChannel=firstChannel-1
+    keyChar=request(1:1)
+    IF ((keyChar/="C").AND.(keyChar/="c")) CALL MLSMessage(MLSMSG_Error, &
+         & ModuleName,"C expected in channel specifier")
+    keyChar=request(2:2)
+    IF (keyChar/="[") CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & "[ expected in channel specifier")
+    requestLen=LEN_TRIM(request)
+    keyChar=request(requestLen:requestLen)
+    IF (keyChar/="]") CALL MLSMessage(MLSMSG_Error,ModuleName, &
+d464 8
+a471 10
+    remainder=Capitalize(request(3:requestLen-1))
+    ALLOCATE(channelIncluded(firstChannel:lastChannel),STAT=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & "Allocate failed for channelIncluded")
+    channelIncluded=.FALSE.
+
+    ParseChannelParseLoop: DO
+       CALL SplitWords(remainder,field,newRemainder,delimiter="+")
+       remainder=newRemainder
+       IF (TRIM(field)=="") EXIT ParseChannelParseLoop
+d474 1
+a474 1
+       IF (INDEX(field,":")/=0) THEN
+d476 1
+a476 1
+          CALL SplitWords(field,firstStr,lastStr,delimiter=":")
+d478 12
+a489 12
+          IF (TRIM(firstStr)=="") THEN 
+             firstInRange=firstChannel
+          ELSE
+             READ (UNIT=firstStr,FMT=*) firstInRange
+          ENDIF
+
+          IF (TRIM(lastStr)=="") THEN
+             lastInRange=lastChannel
+          ELSE
+             READ (UNIT=lastStr,FMT=*) lastInRange
+          ENDIF
+       ELSE
+d491 9
+a499 11
+          READ (UNIT=field,FMT=*) firstInRange
+          lastInRange=firstInRange
+       ENDIF
+
+       IF (firstInRange<=highestChannel) CALL MLSMessage(MLSMSG_Error, &
+            & ModuleName, "Channel specifier out of order")
+       DO channel=firstInRange,lastInRange
+          channelIncluded(channel)=.TRUE.
+       ENDDO
+       highestChannel=lastInRange
+    END DO ParseChannelParseLoop
+d501 1
+a501 1
+  END SUBROUTINE ParseChannelRequest
+d508 3
+a510 1
+  SUBROUTINE TurnMLSChannelInfoIntoCopy(signals)
+d513 1
+a513 1
+    TYPE (MLSSignal_T), DIMENSION(:), INTENT(INOUT) :: signals
+d516 25
+a540 24
+    INTEGER :: status, signal
+    REAL(r8), DIMENSION(:), POINTER :: tempPosition, tempWidth
+    LOGICAL, DIMENSION(:), POINTER :: tempIncluded
+
+    DO signal=1,SIZE(signals)
+       tempPosition=>signals(signal)%channelPosition
+       tempWidth=>signals(signal)%channelWidth
+       tempIncluded=>signals(signal)%channelIncluded
+       
+       ALLOCATE(signals(signal)%channelPosition( &
+            & signals(signal)%firstChannelInBand: &
+            & signals(signal)%lastChannelInBand),STAT=status)
+       IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+            & MLSMSG_Allocate//"channelPosition")
+       ALLOCATE(signals(signal)%channelWidth( &
+            & signals(signal)%firstChannelInBand: &
+            & signals(signal)%lastChannelInBand),STAT=status)
+       IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+            & MLSMSG_Allocate//"channelWidth")
+       ALLOCATE(signals(signal)%channelIncluded( &
+            & signals(signal)%firstChannelInBand: &
+            & signals(signal)%lastChannelInBand),STAT=status)
+       IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+            & MLSMSG_Allocate//"channelIncluded")
+d545 2
+a546 2
+    END DO
+  END SUBROUTINE TurnMLSChannelInfoIntoCopy
+d554 3
+a556 2
+  SUBROUTINE ParseMLSSignalRequest(request, &
+       & signals,noCopy)
+d559 3
+a561 3
+    CHARACTER (LEN=*), INTENT(IN) :: request
+    TYPE (MLSSignal_T), DIMENSION(:), POINTER :: signals
+    LOGICAL, OPTIONAL, INTENT(IN) :: noCopy ! Don't copy data, point to it
+d564 1
+a564 1
+    CHARACTER (LEN=*), PARAMETER :: OutOfOrder="Signal designation out of order"
+d568 3
+a570 3
+    INTEGER :: upperLower
+    INTEGER :: mostAdvancedField
+    CHARACTER (LEN=LEN(request)) :: remainder,newRemainder,field, &
+d572 12
+a583 10
+    LOGICAL, DIMENSION(:), ALLOCATABLE :: &
+         & radiometerMatches, bandMatches, switchMatches, &
+         & spectrometerMatches, allMatch
+    INTEGER :: noMatches,status,signal
+
+    LOGICAL, DIMENSION(:), POINTER :: channelIncluded
+    LOGICAL :: uniqueSpectrometerFamilyRequest
+    CHARACTER (LEN=1) :: spectrometerFamily
+    LOGICAL :: useNoCopy
+    CHARACTER (LEN=1) :: keyChar ! Needed due to absoft bug
+d587 10
+a596 23
+    ALLOCATE (radiometerMatches(database%noRadiometers),STAT=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"radiometerMatches")
+    ALLOCATE (bandMatches(database%noBands))
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"bandMatches")
+    ALLOCATE (switchMatches(database%noSwitches))
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"switchMatches")
+    ALLOCATE (spectrometerMatches(database%noSpectrometers))
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"spectrometerMatches")
+
+    radiometerMatches=.TRUE.
+    bandMatches=.TRUE.
+    switchMatches=.TRUE.
+    spectrometerMatches=.TRUE.
+
+    IF (PRESENT(noCopy)) THEN
+       useNoCopy=noCopy
+    ELSE
+       useNoCopy=.FALSE.
+    ENDIF
+d598 2
+a599 2
+    mostAdvancedField=0
+    channelString=""
+d601 1
+a601 1
+    remainder=Capitalize(request)
+d605 9
+a613 9
+    ParseMLSSignalRequestWordLoop: DO
+       CALL SplitWords(remainder,field,newRemainder,delimiter='.')
+       IF (TRIM(field)=="") EXIT ParseMLSSignalRequestWordLoop
+       keyChar=field(1:1)
+       remainder=newRemainder
+       SELECT CASE (keyChar)
+       CASE ('R')
+          IF (mostAdvancedField /= 0) &
+               & CALL MLSMessage(MLSMSG_Error,ModuleName, &
+d615 5
+a619 5
+          CALL ParseRadiometerRequest(field,radiometerMatches)
+          mostAdvancedField=1
+       CASE ('B')
+          IF (mostAdvancedField > 2) &
+               & CALL MLSMessage(MLSMSG_Error,ModuleName, &
+d621 2
+a622 2
+          CALL ParseBandRequest(field,bandMatches, &
+               & upperLower=upperLower)
+d624 17
+a640 17
+       CASE ('S')
+          IF (mostAdvancedField > 3) &
+               & CALL MLSMessage(MLSMSG_Error,ModuleName, &
+               & OutOfOrder//TRIM(request))
+          CALL ParseSwitchRequest(field,switchMatches)
+          mostAdvancedField=3
+       CASE ('C')
+          channelString=field
+          mostAdvancedField=5
+       CASE DEFAULT             ! Must be spectrometer or wrong
+          IF (mostAdvancedField > 4) &
+               & CALL MLSMessage(MLSMSG_Error,ModuleName, &
+               & OutOfOrder//TRIM(request))
+          CALL ParseSpectrometerRequest(field,spectrometerMatches)
+          mostAdvancedField=4
+       END SELECT
+    END DO ParseMLSSignalRequestWordLoop
+d644 1
+a644 4
+    ALLOCATE (allMatch(database%noValidSignals))
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"allMatch")
+    DO signal=1,database%noValidSignals
+d646 1
+a646 1
+       allMatch(signal)= &
+d652 1
+a652 1
+    ENDDO
+d654 3
+a656 3
+    noMatches=COUNT(allMatch)
+    IF (noMatches==0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & "No matching signal:"//TRIM(request))
+d660 10
+a669 9
+    IF (ASSOCIATED(signals)) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & "Signals already allocated")
+    ALLOCATE(signals(noMatches),STAT=status)
+    IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"signals")
+
+    signals=PACK(database%validSignals,allMatch)
+    signals%upperLower=upperLower
+    signals%notCopy=useNoCopy
+d671 1
+a671 1
+    IF (.NOT. useNoCopy) CALL TurnMLSChannelInfoIntoCopy(signals)
+d675 3
+a677 3
+    IF (TRIM(channelString) /= "") THEN
+       IF (useNoCopy) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & "Cannot use no Copy with specific channels")
+d682 9
+a690 9
+       IF (noMatches>1) THEN
+          uniqueSpectrometerFamilyRequest=.TRUE.
+          spectrometerFamily=signals(1)%spectrometerFamily
+          DO signal=2,noMatches
+             IF (spectrometerFamily /= signals(signal)%spectrometerFamily) &
+                  & uniqueSpectrometerFamilyRequest=.FALSE.
+          ENDDO
+          IF (.NOT. uniqueSpectrometerFamilyRequest) CALL MLSMessage( &
+               & MLSMSG_Error,ModuleName, &
+d692 2
+a693 2
+               & "spectrometer families")
+       ENDIF
+d695 1
+a695 1
+       CALL ParseChannelRequest(channelString, &
+d697 9
+a705 26
+            & channelIncluded)
+       DO signal=1,noMatches
+          signals(signal)%channelIncluded=channelIncluded
+          signals(signal)%noChannelsIncluded=COUNT(channelIncluded)
+       ENDDO
+       DEALLOCATE(channelIncluded, stat=status)
+       IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"channelIncluded")          
+    ENDIF
+
+    DEALLOCATE (radiometerMatches, stat=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"radiometerMatches")
+    DEALLOCATE (bandMatches, stat=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"bandMatches")
+    DEALLOCATE (switchMatches, stat=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"switchMatches")
+    DEALLOCATE (spectrometerMatches, stat=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"spectrometerMatches")
+    DEALLOCATE (allMatch, stat=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"allMatch")
+  END SUBROUTINE ParseMLSSignalRequest
+d712 3
+a714 1
+  SUBROUTINE DestroyMLSSignalsInfo(signals,noError)
+d717 2
+a718 2
+    TYPE (MLSSignal_T), DIMENSION(:), POINTER :: signals
+    LOGICAL, INTENT(IN), OPTIONAL :: noError
+d721 2
+a722 2
+    INTEGER :: signal, status
+    LOGICAL :: useNoError
+d726 26
+a751 28
+    IF (PRESENT(noError)) THEN
+       useNoError=noError
+    ELSE
+       useNoError=.FALSE.
+    ENDIF
+
+    IF (ASSOCIATED(signals)) THEN
+       DO signal=1,SIZE(signals)
+          IF (.NOT. signals(signal)%notCopy) THEN
+             DEALLOCATE(signals(signal)%channelIncluded, stat=status)
+             IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+                 & MLSMSG_DeAllocate//"signals(signal)%channelIncluded")
+             DEALLOCATE(signals(signal)%channelPosition, stat=status)
+             IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+                 & MLSMSG_DeAllocate//"signals(signal)%channelPosition")
+             DEALLOCATE(signals(signal)%channelWidth, stat=status)
+             IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+                 & MLSMSG_DeAllocate//"signals(signal)%channelWidth")
+          ENDIF
+       END DO
+       DEALLOCATE (signals, stat=status)
+       IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"signals")
+    ELSE
+       IF (.NOT. useNoError) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+            & "This signal not allocted")
+    ENDIF
+  END SUBROUTINE DestroyMLSSignalsInfo
+d759 3
+a761 1
+  SUBROUTINE UnionMLSSignalsInfo(signalsA,signalsB,signalsUnion)
+d764 3
+a766 3
+    TYPE (MLSSignal_T), DIMENSION(:), INTENT(IN) :: signalsA
+    TYPE (MLSSignal_T), DIMENSION(:), INTENT(IN) :: signalsB
+    TYPE (MLSSignal_T), DIMENSION(:), POINTER :: signalsUnion
+d769 4
+a772 4
+    INTEGER :: sizeA,sizeB,noSignalsInUnion
+    LOGICAL, DIMENSION(:), ALLOCATABLE :: presentInA ! (sizeB)
+    INTEGER :: status
+    INTEGER :: noRepeats
+d774 1
+a774 1
+    INTEGER :: indexA,indexB,indexUnion
+d779 2
+a780 2
+    sizeA=SIZE(signalsA)
+    sizeB=SIZE(signalsB)
+d782 1
+a782 4
+    ALLOCATE (presentInA(sizeB),STAT=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"presentInA")
+    presentInA=.FALSE.
+d784 2
+a785 2
+    DO indexA=1,sizeA
+       presentInA=presentInA .OR. (signalsA(indexA)%signalDatabaseIndex == &
+d787 1
+a787 1
+    ENDDO
+d789 2
+a790 2
+    noRepeats=COUNT(presentInA)
+    noSignalsInUnion=sizeA+sizeB-noRepeats
+d794 5
+a798 5
+    IF (ASSOCIATED(signalsUnion)) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & "Result already allocated")
+    ALLOCATE (signalsUnion(noSignalsInUnion),STAT=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName,&
+         & MLSMSG_Allocate//"signalsUnion")
+d802 2
+a803 2
+    signalsUnion(1:sizeA)=signalsA
+    IF (noRepeats < sizeB) signalsUnion(sizeA+1:noSignalsInUnion) = &
+d808 1
+a808 1
+    CALL TurnMLSChannelInfoIntoCopy(signalsUnion)
+d813 2
+a814 2
+    DO indexUnion=1,sizeA
+       presentInA=(signalsUnion(indexUnion)%signalDatabaseIndex == &
+d816 6
+a821 7
+       IF (COUNT(presentInA) == 1) THEN
+          indexB=1
+          IndexBHunt: DO
+             IF (presentInA(indexB)) EXIT IndexBHunt
+             indexB=indexB+1
+          END DO IndexBHunt
+          signalsUnion(indexUnion)%channelIncluded= &
+d824 2
+a825 2
+       ENDIF
+    ENDDO
+d827 1
+a827 5
+    DEALLOCATE (presentInA, stat=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"presentInA") 
+
+  END SUBROUTINE UnionMLSSignalsInfo
+d835 3
+a837 1
+  SUBROUTINE ConcatenateMLSSignalsInfo(signalsA,signalsB)
+d840 2
+a841 2
+    TYPE (MLSSignal_T), DIMENSION(:), POINTER :: signalsA
+    TYPE (MLSSignal_T), DIMENSION(:), INTENT(IN) :: signalsB
+d844 2
+a845 2
+    TYPE (MLSSignal_T), DIMENSION(:), POINTER :: tempSignals=>null()
+    INTEGER :: status
+d849 13
+a861 12
+    IF (.NOT. ASSOCIATED(signalsA)) THEN
+       ALLOCATE(signalsA(LBOUND(signalsB,1):UBOUND(signalsB,1)),STAT=status)
+       IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+            & MLSMSG_Allocate//"signalsA")
+       signalsA=signalsB
+       CALL TurnMLSChannelInfoIntoCopy(signalsA)
+    ELSE
+       CALL UnionMLSSignalsInfo(signalsA,signalsB,tempSignals)
+       CALL DestroyMLSSignalsInfo(signalsA)
+       signalsA=>tempSignals
+    ENDIF
+  END SUBROUTINE ConcatenateMLSSignalsInfo
+d868 3
+a870 1
+  SUBROUTINE IntersectionMLSSignalsInfo(signalsA,signalsB,signalsIntersection)
+d873 3
+a875 3
+    TYPE (MLSSignal_T), DIMENSION(:), POINTER :: signalsA
+    TYPE (MLSSignal_T), DIMENSION(:), POINTER :: signalsB
+    TYPE (MLSSignal_T), DIMENSION(:), POINTER :: signalsIntersection
+d878 3
+a880 2
+    INTEGER :: indexA,indexB,sizeA,sizeB,status
+    LOGICAL, DIMENSION(:), POINTER :: presentInA,channelIncluded
+d884 2
+a885 5
+    sizeA=SIZE(signalsA)
+    sizeB=SIZE(signalsB)
+    ALLOCATE (presentInA(sizeB),STAT=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName,&
+         & MLSMSG_Allocate//"presentInA")
+d887 1
+a887 1
+    IF (ASSOCIATED(signalsIntersection)) CALL MLSMessage( &
+d893 6
+a898 7
+    DO indexA=1,sizeA
+       presentInA= (signalsA(indexA)%signalDatabaseIndex == &
+            & signalsB%signalDatabaseIndex)
+       IF (COUNT(presentInA) /= 0) THEN
+          indexB=1
+          IndexBHunt: DO
+             IF (presentInA(indexB)) EXIT IndexBHunt
+d900 1
+a900 1
+          END DO IndexBHunt
+d904 1
+a904 1
+          ALLOCATE(channelIncluded( &
+d907 2
+a908 3
+          IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+               & "Allocation failed for channelIncluded")
+          
+d912 2
+a913 2
+          IF (COUNT(channelIncluded) /= 0) THEN
+             CALL ConcatenateMLSSignalsInfo(signalsIntersection, &
+d915 1
+a915 1
+             signalsIntersection(UBOUND(signalsIntersection,1))% &
+d917 7
+a923 11
+          ENDIF
+          DEALLOCATE (channelIncluded, stat=status)       
+          IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+              & MLSMSG_DeAllocate//"channelIncluded")
+       ENDIF
+    ENDDO
+
+    DEALLOCATE (presentInA, stat=status)       
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"presentInA")
+  END SUBROUTINE IntersectionMLSSignalsInfo
+d929 1
+a929 1
+  SUBROUTINE GetFullMLSSignalName(signal,fullName,rbOnly,showChannel)
+d932 4
+a935 4
+    TYPE (MLSSignal_T), INTENT(IN) :: signal
+    CHARACTER (LEN=*), INTENT(OUT) :: fullName
+    LOGICAL, OPTIONAL, INTENT(IN) :: rbOnly ! Only show radiometer and band
+    LOGICAL, OPTIONAL, INTENT(IN) :: showChannel ! Only show radiometer and band
+d938 6
+a943 6
+    LOGICAL :: useRBOnly
+    LOGICAL :: useShowChannel
+    LOGICAL :: previousChanIncluded,thisChanIncluded
+    INTEGER :: channel,firstChannelInRange,rangeLen
+    LOGICAL :: firstEntry
+    CHARACTER (LEN=32) :: word
+d947 1
+a947 1
+    fullName=TRIM(signal%radiometerName)//"."//TRIM(signal%bandName)
+d949 29
+a977 29
+    IF (PRESENT(rbOnly)) THEN
+       useRBOnly=rbOnly
+    ELSE
+       useRBOnly=.FALSE.
+    ENDIF
+
+    IF (PRESENT(showChannel)) THEN
+       useShowChannel=showChannel
+    ELSE
+       useShowChannel=.FALSE.
+    ENDIF
+
+    IF (.NOT. useRBOnly) THEN
+       fullName=TRIM(fullName)//"."//TRIM(signal%switch)//"."// &
+            TRIM(signal%spectrometerName)
+    ENDIF
+
+    IF (useShowChannel) THEN
+       fullName=TRIM(fullName)//".C["
+       firstEntry=.TRUE.
+       channel=signal%firstChannelInBand-1
+       previousChanIncluded=.FALSE.
+       ShowChannelLoop: DO
+          channel=channel+1
+          IF (channel<=signal%noChannelsInBand) THEN
+             thisChanIncluded=signal%channelIncluded(channel)
+          ELSE
+             thisChanIncluded=.FALSE.
+          ENDIF
+d979 1
+a979 1
+          IF (thisChanIncluded.NEQV.previousChanIncluded) THEN
+d981 23
+a1003 23
+             IF (thisChanIncluded) THEN ! Begining of a new range
+                firstChannelInRange=channel
+                WRITE (UNIT=word,FMT=*) firstChannelInRange
+                IF (.NOT. firstEntry) fullName=TRIM(fullName)//"+"
+                firstEntry=.FALSE.
+                fullName=TRIM(fullName)//TRIM(ADJUSTL(word))
+             ELSE               ! The end of a range or of array
+                rangeLen=channel-firstChannelInRange
+                IF (rangeLen>1) THEN
+                   WRITE (UNIT=word,FMT=*) channel-1
+                   IF (rangeLen==2) THEN
+                      fullName=TRIM(fullName)//"+"//TRIM(ADJUSTL(word))
+                   ELSE
+                      fullName=TRIM(fullName)//":"//TRIM(ADJUSTL(word))
+                   ENDIF
+                ENDIF
+             ENDIF
+          ENDIF
+          IF (channel==signal%lastChannelInBand+1) EXIT ShowChannelLoop
+          previousChanIncluded=thisChanIncluded
+       END DO ShowChannelLoop
+       fullName=TRIM(fullName)//"]"
+    ENDIF
+d1007 1
+a1007 1
+  END SUBROUTINE GetFullMLSSignalName
+d1015 3
+a1017 1
+  SUBROUTINE ReadSignalsDatabase(unit)
+d1021 1
+a1021 1
+    INTEGER, INTENT(IN) :: unit
+d1025 2
+a1026 2
+    INTEGER, PARAMETER :: SDBLineLen=132
+    CHARACTER (LEN=*), PARAMETER :: EOFMessage= &
+d1031 12
+a1042 11
+    CHARACTER (LEN=SDBLineLen) :: line, first, last, rest
+    LOGICAL :: eof
+    INTEGER :: no               ! Temporary array index
+    INTEGER :: signal           ! Loop counters
+    INTEGER :: radiometer, band, switch, spectrometer, channel ! Loop counters
+    INTEGER :: firstChannel, lastChannel, noChannels
+    INTEGER :: spectrometerFamily ! Another loop counter
+    INTEGER :: wordLen          ! Length of word
+    INTEGER :: hasModifier      ! Flag
+    INTEGER :: status           ! From allocate
+    INTEGER :: index            ! General array index
+d1044 2
+a1045 2
+    INTEGER :: evenNo           ! For `even' channels
+    REAL(r8) :: evenStart,evenSpacing,evenWidth ! For `even' channels
+d1047 1
+a1047 1
+    TYPE (MLSSignal_T), DIMENSION(:), POINTER :: tempSignal=>null()
+d1051 1
+a1051 1
+    TYPE (SDBSpectrometerFamilyInfo_T), DIMENSION(:), POINTER :: &
+d1053 1
+a1053 1
+    CHARACTER (LEN=SDBLineLen), DIMENSION(:), POINTER :: &
+d1058 1
+a1058 1
+    CHARACTER (LEN=NameLen), DIMENSION(:), ALLOCATABLE :: validRadiometer, &
+d1060 1
+a1060 1
+    CHARACTER (LEN=NameLen), DIMENSION(:), POINTER :: radiometerNames, &
+d1063 1
+a1063 1
+    CHARACTER (LEN=1), DIMENSION(:), ALLOCATABLE :: &
+d1072 2
+a1073 2
+    INTEGER, PARAMETER :: MLSInstrumentNoModules=2
+    CHARACTER (LEN=3),  DIMENSION(MLSInstrumentNoModules) :: &
+d1083 3
+a1085 3
+    CALL ReadCompleteLineWithoutComments(unit,line,eof=eof)
+    IF (eof.OR.(Capitalize(TRIM(line))/="SPECTROMETERS")) &
+         & CALL MLSMessage(MLSMSG_Error,ModuleName, &
+d1093 3
+a1095 3
+       CALL ReadCompleteLineWithoutComments(unit,line,eof=eof)
+       IF (eof) CALL MLSMessage(MLSMSG_Error,ModuleName,EOFMessage)
+       IF (Capitalize(TRIM(line))=="END") EXIT SpectrometerFamilyLoop
+d1098 15
+a1112 13
+       no=database%noSpectrometerFamilies
+       IF (no==1) THEN
+          ALLOCATE(database%spectrometerFamilyInfo(no),STAT=status)
+          IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+               & MLSMSG_Allocate//"database%spectrometerFamilyInfo")
+       ELSE
+          ALLOCATE(tempSpectrometerFamilyInfo(no),STAT=status)
+          IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+               & MLSMSG_Allocate//"tempSpectrometerFamilyInfo")
+          tempSpectrometerFamilyInfo(1:no-1)=database%spectrometerFamilyInfo
+          DEALLOCATE(database%spectrometerFamilyInfo, stat=status)
+          IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+             & MLSMSG_DeAllocate//"database%spectrometerFamilyInfo")
+d1114 2
+a1115 2
+          database%spectrometerFamilyInfo=>tempSpectrometerFamilyInfo
+       ENDIF
+d1119 5
+a1123 5
+       CALL SplitWords(line,first,rest,last,threeWay=.TRUE.,delimiter=" ")
+       database%spectrometerFamilyInfo(no)%name=TRIM(first)
+       READ (UNIT=rest,FMT=*) database%spectrometerFamilyInfo(no)%firstChannel
+       READ (UNIT=last,FMT=*) database%spectrometerFamilyInfo(no)%lastChannel
+       database%spectrometerFamilyInfo(no)%noChannels= &
+d1126 1
+a1126 1
+    END DO SpectrometerFamilyLoop
+d1132 4
+a1135 4
+    CALL ReadCompleteLineWithoutComments(unit,line,eof=eof)
+    IF (eof) CALL MLSMessage(MLSMSG_Error,ModuleName,EOFMessage)
+    IF (Capitalize(TRIM(line))/="VALID SIGNALS") CALL MLSMessage( &
+         & MLSMSG_Error,ModuleName,"Valid signals expected")
+d1137 1
+a1137 1
+    database%noValidSignals=0
+d1140 22
+a1161 22
+       CALL ReadCompleteLineWithoutComments(unit,line,eof=eof)
+       IF (eof) CALL MLSMessage(MLSMSG_Error,ModuleName,EOFMessage)
+       IF (Capitalize(TRIM(line))=="END") EXIT ValidSignalsReadingLoop
+
+       database%noValidSignals=database%noValidSignals+1
+       no=database%noValidSignals
+       IF (no==1) THEN
+          ALLOCATE(validSignalNames(no),STAT=status)
+          IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+               & MLSMSG_Allocate//"validSignalNames")
+       ELSE
+          ALLOCATE(tempValidSignalNames(no),STAT=status)
+          IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+               & MLSMSG_Allocate//"tempValidSignalNames")
+          tempValidSignalNames(1:no-1)=validSignalNames
+          DEALLOCATE(validSignalNames, stat=status)
+          IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+             & MLSMSG_DeAllocate//"validSignalNames")
+          validSignalNames=>tempValidSignalNames
+       ENDIF
+       validSignalNames(no)=line
+    END DO ValidSignalsReadingLoop
+d1167 33
+a1199 25
+    ALLOCATE(validRadiometer(database%noValidSignals),STAT=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName,MLSMSG_Allocate//&
+         & "validRadiometer")
+    ALLOCATE(validBand(database%noValidSignals),STAT=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName,MLSMSG_Allocate//&
+         & "validBand")
+    ALLOCATE(validSwitch(database%noValidSignals),STAT=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName,MLSMSG_Allocate//&
+         & "validSwitch")
+    ALLOCATE(validSpectrometer(database%noValidSignals),STAT=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName,MLSMSG_Allocate//&
+         & "validSpectrometer")
+
+    ALLOCATE(radiometerNames(database%noValidSignals),STAT=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName,MLSMSG_Allocate//&
+         & "radiometerNames")
+    ALLOCATE(bandNames(database%noValidSignals),STAT=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName,MLSMSG_Allocate//&
+         & "bandNames")
+    ALLOCATE(switchNames(database%noValidSignals),STAT=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName,MLSMSG_Allocate//&
+         & "switchNames")
+    ALLOCATE(spectrometerNames(database%noValidSignals),STAT=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName,MLSMSG_Allocate//&
+         & "spectrometerNames")
+d1201 1
+a1201 1
+    DO signal=1,database%noValidSignals
+d1203 1
+a1203 1
+       CALL SplitWords(validSignalNames(signal), &
+d1205 1
+a1205 1
+            & delimiter='.',threeWay=.TRUE.)
+d1207 1
+a1207 1
+       CALL SplitWords(rest,validBand(signal),validSwitch(signal), &
+d1209 1
+a1209 1
+    END DO
+d1214 6
+a1219 6
+    CALL GetUniqueStrings(validRadiometer,radiometerNames, &
+         & database%noRadiometers)
+    CALL GetUniqueStrings(validBand,bandNames,database%noBands)
+    CALL GetUniqueStrings(validSwitch,switchNames,database%noSwitches)
+    CALL GetUniqueStrings(validSpectrometer,spectrometerNames, &
+         & database%noSpectrometers)
+d1225 8
+a1232 7
+    ALLOCATE(database%radiometerInfo(database%noRadiometers),STAT=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate // "database%radiometerInfo")
+
+    DO radiometer=1,database%noRadiometers
+       database%radiometerInfo(radiometer)%name=radiometerNames(radiometer)
+       CALL SplitWords(radiometerNames(radiometer), &
+d1235 2
+a1236 2
+            & delimiter=':')
+       database%radiometerInfo(radiometer)%prefix=first
+d1241 5
+a1245 5
+       wordLen=LEN_TRIM(first)
+       last=first(wordLen:wordLen)
+       hasModifier=0
+       IF (LLT(last,"0").OR.(LGT(last,"9"))) hasModifier=1
+       READ (UNIT=first(2:wordLen-hasModifier),FMT=*) &
+d1247 6
+a1252 6
+       IF (hasModifier == 1) THEN
+          database%radiometerInfo(radiometer)%modifier=last
+       ELSE
+          database%radiometerInfo(radiometer)%modifier=""
+       END IF
+    END DO
+d1256 8
+a1263 7
+    ALLOCATE(database%bandInfo(database%noBands),STAT=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"database%bandInfo")
+
+    DO band=1,database%noBands
+       database%bandInfo(band)%name=bandNames(band)
+       CALL SplitWords(bandNames(band), &
+d1266 1
+a1266 1
+            & delimiter=':')
+d1271 3
+a1273 3
+       wordLen=LEN_TRIM(first)
+       database%bandInfo(band)%spectrometerFamily=first(wordLen:wordLen)
+       READ (UNIT=first(2:wordLen-1),FMT=*) &
+d1275 1
+a1275 1
+    END DO ! We'll sort out the spectrometer family index later
+d1279 5
+a1283 4
+    ALLOCATE ( database%switches(database%noSwitches), STAT=status )
+    IF ( status /= 0 ) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"database%switches")
+    database%switches=switchNames(1:database%noSwitches)
+d1287 7
+a1293 6
+    ALLOCATE (database%spectrometerInfo(database%noSpectrometers), &
+         &  STAT=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"database%spectrometerInfo")
+    DO spectrometer=1,database%noSpectrometers
+       database%spectrometerInfo(spectrometer)%name= &
+d1295 1
+a1295 1
+       CALL SplitWords(spectrometerNames(spectrometer), &
+d1297 2
+a1298 2
+            rest,delimiter="-")
+       READ (UNIT=rest,FMT=*) &
+d1300 1
+a1300 1
+       database%spectrometerInfo(spectrometer)%family= &
+d1302 1
+a1302 1
+    END DO
+d1307 5
+a1311 1
+    ALLOCATE (spectrometerFamilyChars(database%noSpectrometerFamilies))
+d1313 2
+a1314 2
+    DO spectrometerFamily=1,database%noSpectrometerFamilies
+       spectrometerFamilyChars(spectrometerFamily)= &
+d1316 1
+a1316 1
+    END DO
+d1318 2
+a1319 2
+    DO spectrometer=1,database%noSpectrometers
+       database%spectrometerInfo(spectrometer)%familyIndex= &
+d1322 1
+a1322 1
+    END DO
+d1324 2
+a1325 2
+    DO band=1,database%noBands
+       database%bandInfo(band)%spectrometerFamilyIndex= &
+d1328 1
+a1328 1
+    END DO
+d1335 4
+a1338 4
+    CALL ReadCompleteLineWithoutComments(unit,line,eof=eof)
+    IF (eof.OR.(Capitalize(TRIM(line))/="RADIOMETER FREQUENCIES")) &
+         & CALL MLSMessage(MLSMSG_Error,ModuleName,&
+         & "RADIOMETER FREQUENCIES expected in database")
+d1345 10
+a1354 10
+       CALL ReadCompleteLineWithoutComments(unit,line,eof=eof)
+       IF (eof) CALL MLSMessage(MLSMSG_Error,ModuleName,EOFMessage)
+       IF (Capitalize(TRIM(line))=="END") EXIT RadiometerFrequencyLoop
+       CALL SplitWords(line,first,rest,last,delimiter=' ',threeWay=.TRUE.)
+       radiometer=LinearSearchStringArray(database%radiometerInfo%name, &
+            & first, caseInsensitive=.TRUE.)
+       IF (radiometer == 0) CALL MLSMessage(MLSMSG_Error,ModuleName,&
+            & "No such radiometer: "//TRIM(first))
+       READ (unit=rest,FMT=*) database%radiometerInfo(radiometer)%lo
+       database%radiometerInfo(radiometer)%instrumentModule=&
+d1359 4
+a1362 4
+       IF (database%radiometerInfo(radiometer)%instrumentModule==&
+            & L_None) CALL MLSMessage(MLSMSG_Error,&
+            & ModuleName,"Unrecognised instrument module: "//last)
+    END DO RadiometerFrequencyLoop
+d1364 2
+a1365 2
+    IF (MINVAL(database%radiometerInfo%lo) <= 0.0D0) CALL MLSMessage(&
+         & MLSMSG_Error,ModuleName,"Not all radiometer LOs assigned")
+d1369 4
+a1372 4
+    CALL ReadCompleteLineWithoutComments(unit,line,eof=eof)
+    IF (eof.OR.(Capitalize(TRIM(line))/="BAND FREQUENCIES")) &
+         & CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & "BAND FREQUENCIES expected in database")
+d1376 1
+a1376 1
+    database%bandInfo%centerFreqIF=0.0D0
+d1378 6
+a1383 6
+    BandFrequencyLoop: DO
+       CALL ReadCompleteLineWithoutComments(unit,line,eof=eof)
+       IF (eof) CALL MLSMessage(MLSMSG_Error,ModuleName,EOFMessage)
+       IF (Capitalize(TRIM(line))=="END") EXIT BandFrequencyLoop
+       CALL SplitWords(line,first,rest,delimiter=" ")
+       band=LinearSearchStringArray(database%bandInfo%name, &
+d1385 4
+a1388 4
+       IF (band == 0) CALL MLSMessage(MLSMSG_Error,ModuleName,&
+            & "No such band: "//first)
+       READ (unit=rest,FMT=*) database%bandInfo(band)%centerFreqIF
+    END DO BandFrequencyLoop
+d1396 9
+a1404 9
+    CALL ReadCompleteLineWithoutComments(unit,line,eof=eof)
+    IF (eof.OR.(Capitalize(TRIM(line))/="SPECTROMETER FREQUENCIES")) &
+         & CALL MLSMessage(MLSMSG_Error,ModuleName,&
+         & "SPECTROMETER FREQUENCIES expected in database")
+
+    SpectrometerFrequencyLoop: DO
+       CALL ReadCompleteLineWithoutComments(unit,line,eof=eof)
+       IF (eof) CALL MLSMessage(MLSMSG_Error,ModuleName,EOFMessage)
+       IF (Capitalize(TRIM(line))=="END") EXIT SpectrometerFrequencyLoop
+d1409 2
+a1410 2
+       CALL SplitWords(line,first,rest,delimiter=" ")
+       index=LinearSearchStringArray( &
+d1413 2
+a1414 2
+       IF (index == 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+            & "No such spectrometer family: "//first)
+d1420 1
+a1420 1
+       ALLOCATE (database%spectrometerFamilyInfo(index)%position(&
+d1423 5
+a1427 3
+            & STAT=status)
+       IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+            & MLSMSG_Allocate//first//" position")
+d1429 1
+a1429 1
+       ALLOCATE (database%spectrometerFamilyInfo(index)%width(&
+d1432 5
+a1436 3
+            & STAT=status)
+       IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+            & MLSMSG_Allocate//first//" width")
+d1440 3
+a1442 3
+       SELECT CASE (Capitalize(TRIM(rest)))
+       CASE ('LIST') ! Positions and widths given on next lines
+          READ (UNIT=unit, FMT=*) &
+d1444 1
+a1444 1
+          READ (UNIT=unit, FMT=*) &
+d1447 5
+a1451 5
+       CASE ('EVEN') ! No chans, start Freq, spacing and widths
+          READ (UNIT=unit, FMT=*) evenNo,evenStart,evenSpacing,evenWidth
+          IF (evenNo /= database%spectrometerFamilyInfo(index)%noChannels) &
+               & CALL MLSMessage(MLSMSG_Error,ModuleName, &
+               & "Wrong number of channels for "//first)
+d1453 2
+a1454 2
+          database%spectrometerFamilyInfo(index)%width=evenWidth
+          DO evenNo=database%spectrometerFamilyInfo(index)%firstChannel, &
+d1456 1
+a1456 1
+             database%spectrometerFamilyInfo(index)%position(evenNo)= &
+d1458 1
+a1458 1
+          END DO
+d1460 1
+a1460 1
+       CASE ('INDIVIDUAL')
+d1462 14
+a1475 12
+          DEALLOCATE(database%spectrometerFamilyInfo(index)%position, stat=status)
+          IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+             &MLSMSG_DeAllocate//"database%spectrometerFamilyInfo(index)%position") 
+          DEALLOCATE(database%spectrometerFamilyInfo(index)%width, stat=status)
+          IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+             &MLSMSG_DeAllocate//"database%spectrometerFamilyInfo(index)%width")
+
+       CASE DEFAULT 
+          CALL MLSMessage(MLSMSG_Error,ModuleName, &
+               & "Unrecognized spectrometer family: "//first)
+       END SELECT
+    END DO SpectrometerFrequencyLoop
+d1484 4
+a1487 3
+    ALLOCATE (database%validSignals(database%noValidSignals),STAT=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName,&
+         & MLSMSG_Allocate//"database%validSignals")
+d1489 1
+a1489 1
+    DO signal=1,database%noValidSignals
+d1495 1
+a1495 1
+       radiometer=LinearSearchStringArray( &
+d1497 2
+a1498 2
+       database%validSignals(signal)%radiometerIndex=radiometer
+       database%validSignals(signal)%instrumentModule=&
+d1500 1
+a1500 1
+       database%validSignals(signal)%radiometerName= &
+d1502 1
+a1502 1
+       database%validSignals(signal)%radiometerPrefix= &
+d1504 1
+a1504 1
+       database%validSignals(signal)%radiometerSuffix= &
+d1506 1
+a1506 1
+       database%validSignals(signal)%radiometerNumber= &
+d1508 1
+a1508 1
+       database%validSignals(signal)%radiometerModifier= &
+d1510 1
+a1510 1
+       database%validSignals(signal)%lo= &
+d1515 5
+a1519 5
+       band=LinearSearchStringArray(database%bandInfo%name,validBand(signal))
+       database%validSignals(signal)%bandIndex=band
+       database%validSignals(signal)%bandName=database%bandInfo(band)%name
+       database%validSignals(signal)%bandSuffix=database%bandInfo(band)%suffix
+       database%validSignals(signal)%spectrometerFamily= &
+d1521 1
+a1521 1
+       database%validSignals(signal)%bandCenterFreqIF= &
+d1526 3
+a1528 3
+       switch=LinearSearchStringArray(database%switches,validSwitch(signal))
+       database%validSignals(signal)%switchIndex=switch
+       database%validSignals(signal)%switch=database%switches(switch)
+d1532 1
+a1532 1
+       spectrometer=LinearSearchStringArray(database%spectrometerInfo%name, &
+d1534 1
+a1534 1
+       spectrometerFamily=database%spectrometerInfo(spectrometer)%familyIndex
+d1536 2
+a1537 2
+       database%validSignals(signal)%spectrometerIndex=spectrometer
+       database%validSignals(signal)%spectrometerFamilyIndex=spectrometerFamily
+d1539 1
+a1539 1
+       database%validSignals(signal)%spectrometerName= &
+d1541 1
+a1541 1
+       database%validSignals(signal)%fullSpectrometerFamily= &
+d1543 1
+a1543 1
+       database%validSignals(signal)%spectrometerNumber= &
+d1548 1
+a1548 1
+       firstChannel=database% &
+d1550 1
+a1550 1
+       lastChannel=database% &
+d1552 1
+a1552 1
+       noChannels=database% &
+d1557 3
+a1559 3
+       database%validSignals(signal)%firstChannelInBand=firstChannel
+       database%validSignals(signal)%lastChannelInBand=lastChannel
+       database%validSignals(signal)%noChannelsInBand=noChannels
+d1561 17
+a1577 14
+       ALLOCATE (database%validSignals(signal)%channelPosition &
+            & (firstChannel:lastChannel),STAT=status)
+       IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+            & MLSMSG_Allocate//"channelPosition")
+
+       ALLOCATE (database%validSignals(signal)%channelWidth &
+            & (firstChannel:lastChannel),STAT=status)
+       IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+            & MLSMSG_Allocate//"channelWidth")
+
+       ALLOCATE (database%validSignals(signal)%channelIncluded &
+            & (firstChannel:lastChannel),STAT=status)
+       IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+            & MLSMSG_Allocate//"channelIncluded")
+d1579 1
+a1579 1
+       database%validSignals(signal)%channelIncluded=.TRUE.
+d1581 1
+a1581 1
+       DO channel=firstChannel,lastChannel
+d1583 3
+a1585 3
+          IF (.NOT. database%spectrometerFamilyInfo(spectrometerFamily)% &
+               & individual) THEN
+             database%validSignals(signal)%channelPosition(channel)= &
+d1589 1
+a1589 1
+             database%validSignals(signal)%channelWidth(channel)= &
+d1592 3
+a1594 3
+          ENDIF
+       END DO                   ! Channel loop
+    END DO                      ! Signal loop
+d1602 8
+a1609 8
+    CALL ReadCompleteLineWithoutComments(unit,line,eof=eof)
+    IF (eof.OR.(Capitalize(TRIM(line))/="SPECIFIC CHANNELS")) &
+         & CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & "SPECIFIC CHANNELS expected in database")
+
+    SpecificChannelLoop: DO
+       CALL ReadCompleteLineWithoutComments(unit,line,eof=eof)
+       IF (eof) CALL MLSMessage(MLSMSG_Error,ModuleName,EOFMessage)
+d1612 2
+a1613 2
+       line=Capitalize(line)
+       IF (TRIM(line)=="END") EXIT SpecificChannelLoop
+d1615 3
+a1617 3
+       CALL SplitWords(line,first,last,delimiter=" ")
+       IF (TRIM(last)/="LIST") CALL MLSMessage(MLSMSG_Error,ModuleName, &
+            & "List expected for specific channel information")
+d1622 3
+a1624 3
+       CALL ParseMLSSignalRequest(first,tempSignal,noCopy=.TRUE.)
+       IF (SIZE(tempSignal)/=1) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+            & "Ambiguous spec.:"//first)
+d1626 1
+a1626 1
+       READ (UNIT=unit,FMT=*) tempSignal(1)%channelPosition, &
+d1631 3
+a1633 3
+       CALL DestroyMLSSignalsInfo(tempSignal)
+    END DO SpecificChannelLoop
+       
+a1634 1
+          
+d1637 20
+a1656 19
+    DEALLOCATE(validSignalNames, stat=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+             &MLSMSG_DeAllocate//"validSignalNames")
+    DEALLOCATE(radiometerNames, stat=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+             &MLSMSG_DeAllocate//"radiometerNames")
+    DEALLOCATE(bandNames, stat=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+             &MLSMSG_DeAllocate//"bandNames")
+    DEALLOCATE(switchNames, stat=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+             &MLSMSG_DeAllocate//"switchNames")
+    DEALLOCATE(spectrometerNames, stat=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+             &MLSMSG_DeAllocate//"spectrometerNames")
+    DEALLOCATE(spectrometerFamilyChars, stat=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+             &MLSMSG_DeAllocate//"spectrometerFamilyChars")
+  END SUBROUTINE ReadSignalsDatabase
+d1663 1
+a1663 1
+  SUBROUTINE DestroySignalsDatabase
+d1667 1
+a1667 1
+    INTEGER :: i, status
+d1671 58
+a1728 46
+    database%noRadiometers=0
+    database%noBands=0
+    database%noSwitches=0
+    database%noSpectrometers=0
+    database%noSpectrometerFamilies=0
+    database%noValidSignals=0
+
+    DEALLOCATE (database%radiometerInfo, stat=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+             &MLSMSG_DeAllocate//"database%radiometerInfo")
+    DEALLOCATE (database%bandInfo, stat=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+             &MLSMSG_DeAllocate//"database%bandInfo")
+    DEALLOCATE (database%switches, stat=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+             &MLSMSG_DeAllocate//"database%switches")
+    DEALLOCATE (database%spectrometerInfo, stat=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+             &MLSMSG_DeAllocate//"database%spectrometerInfo")
+
+    DO i=1,database%noSpectrometerFamilies
+       DEALLOCATE (database%spectrometerFamilyInfo(i)%position, stat=status)
+       IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+             &MLSMSG_DeAllocate//"database%spectrometerFamilyInfo(i)%position")
+       DEALLOCATE (database%spectrometerFamilyInfo(i)%width, stat=status)
+       IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+             &MLSMSG_DeAllocate//"database%spectrometerFamilyInfo(i)%width")
+    END DO
+    DEALLOCATE (database%spectrometerFamilyInfo, stat=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+             &MLSMSG_DeAllocate//"database%spectrometerFamilyInfo")
+
+    DO i=1,database%noValidSignals
+       DEALLOCATE (database%validSignals(i)%channelIncluded, stat=status)
+       IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+             &MLSMSG_DeAllocate//"database%validSignals(i)%channelIncluded")
+       DEALLOCATE (database%validSignals(i)%channelPosition, stat=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+             &MLSMSG_DeAllocate//"database%validSignals(i)%channelPosition")
+       DEALLOCATE (database%validSignals(i)%channelWidth, stat=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+             &MLSMSG_DeAllocate//"database%validSignals(i)%channelWidth")
+    END DO
+    DEALLOCATE (database%validSignals, stat=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+             &MLSMSG_DeAllocate//"database%validSignals")
+d1730 1
+a1730 1
+  END SUBROUTINE DestroySignalsDatabase
+d1736 3
+a1738 1
+  SUBROUTINE GetMLSRadiometerNames(names)
+d1741 1
+a1741 1
+    CHARACTER (LEN=NameLen), DIMENSION(:), POINTER :: names
+d1744 1
+a1744 1
+    INTEGER :: status
+d1748 3
+a1750 3
+    ALLOCATE(names(database%noRadiometers),STAT=status)
+    IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,MLSMSG_Allocate//&
+         & "names")
+d1752 2
+a1753 2
+    names=database%radiometerInfo%name
+  END SUBROUTINE GetMLSRadiometerNames
+d1759 3
+a1761 1
+  SUBROUTINE GetMLSBandNames(names)
+d1764 1
+a1764 1
+    CHARACTER (LEN=NameLen), DIMENSION(:), POINTER :: names
+d1767 1
+a1767 1
+    INTEGER :: status
+d1771 3
+a1773 3
+    ALLOCATE(names(database%noBands),STAT=status)
+    IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,MLSMSG_Allocate//&
+         & "names")
+d1775 2
+a1776 2
+    names=database%bandInfo%name
+  END SUBROUTINE GetMLSBandNames
+d1782 1
+a1782 1
+       "$Id: MLSSignalNomenclature.f90,v 2.8 2013/06/12 02:12:07 vsnyder Exp $"
+d1794 3
+@
+
+
+2.8
+log
+@Cruft removal
+@
+text
+@d192 1
+a192 1
+  ! ===================================================================
+d194 1
+a194 2
+  ! The first routine parses a request for a particular radiometer
+  ! and returns an array of flags indicating which radiometers match
+d198 3
+d269 1
+a269 1
+  ! -------------------------------------------------------------------
+d373 1
+a373 1
+  ! -------------------------------------------------------------------
+d400 1
+a400 1
+  ! -------------------------------------------------------------------
+d428 1
+a428 1
+  ! -------------------------------------------------------------------
+d505 1
+a505 1
+  ! -------------------------------------------------------------------
+d547 1
+a547 1
+  ! -------------------------------------------------------------------
+a567 1
+    INTEGER :: spectrometerIndex
+a607 1
+    spectrometerIndex=0
+d663 1
+a663 2
+            & spectrometerMatches(database%validSignals(signal)% &
+            &    spectrometerIndex)
+d735 1
+a735 1
+  ! -------------------------------------------------------------------
+d776 1
+a776 1
+       IF (.NOT. noError) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+d781 1
+a781 1
+  ! -------------------------------------------------------------------
+d863 1
+a863 1
+  ! -------------------------------------------------------------------
+d894 1
+a894 1
+  ! -------------------------------------------------------------------
+d962 1
+a962 1
+  ! -------------------------------------------------------------------
+d1046 1
+a1046 1
+  ! -------------------------------------------------------------------
+d1664 1
+a1664 1
+  ! -------------------------------------------------------------------
+d1726 1
+a1726 1
+  ! -------------------------------------------------------------------
+d1747 1
+a1747 1
+  ! -------------------------------------------------------------------
+d1772 1
+a1772 1
+       "$Id: MLSSignalNomenclature.f90,v 2.7 2009/06/23 18:25:42 pwagner Exp $"
+d1784 3
+@
+
+
+2.7
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d34 1
+a34 1
+       "$RCSfile: $"
+d566 1
+a566 1
+    INTEGER :: radiometerIndex,bandIndex,switchIndex,spectrometerIndex
+a606 3
+    radiometerIndex=0
+    bandIndex=0
+    switchIndex=0
+d659 2
+a660 2
+            & radiometerMatches(database%validSignals(signal)% &
+            &    radiometerIndex) .AND. &
+d1773 1
+a1773 1
+       "$Id: read_apriori.f90 is it here $"
+d1785 3
+@
+
+
+2.6
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d1773 1
+a1774 1
+!---------------------------- RCS Ident Info -------------------------------
+d1776 2
+a1777 3
+       "$Id: $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d1779 1
+d1781 1
+d1788 3
+@
+
+
+2.5
+log
+@Much moved from MLSStrings to MLSStringLists
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 1999, California Institute of Technology. ALL RIGHTS RESERVED.
+! U.S. Government sponsorship under NASA Contract NAS7407 is acknowledged.
+d32 3
+a34 4
+  !------------------------------- RCS Ident Info ------------------------------
+  CHARACTER(LEN=130) :: id = & 
+       "$Id: MLSSignalNomenclature.f90,v 2.4 2002/10/08 00:09:12 pwagner Exp $"
+  CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile: MLSSignalNomenclature.f90,v $"
+d36 1
+a36 1
+  !-----------------------------------------------------------------------------
+d1774 5
+d1787 3
+@
+
+
+2.4
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d9 3
+a11 1
+  USE MLSStrings
+d26 1
+a26 1
+       "$Id: MLSSignalNomenclature.f90,v 2.3 2001/03/30 19:51:49 pwagner Exp $"
+d1775 3
+@
+
+
+2.3
+log
+@*** empty log message ***
+@
+text
+@d24 1
+a24 1
+       "$Id: MLSSignalNomenclature.f90,v 2.1 2001/02/09 00:38:56 livesey Exp $"
+d26 1
+d1764 5
+a1768 1
+END MODULE MLSSignalNomenclature
+d1773 3
+@
+
+
+2.2
+log
+@Replaced by MLSSignals module
+@
+text
+@d28 1
+@
+
+
+2.1
+log
+@Various changes
+@
+text
+@d24 1
+a24 1
+       "$Id: MLSSignalNomenclature.f90,v 2.0 2000/09/05 17:41:06 dcuddy Exp $"
+d1767 3
+@
+
+
+2.0
+log
+@Change revision to 2.0
+@
+text
+@d11 1
+d24 1
+a24 1
+       "$Id: MLSSignalNomenclature.f90,v 1.21 2000/06/30 00:59:38 lungu Exp $"
+d1099 1
+d1369 1
+a1369 1
+            & MLSInstrumentModule_Invalid) CALL MLSMessage(MLSMSG_Error,&
+d1767 3
+@
+
+
+1.21
+log
+@Initialized tempsignal, tempsignals=>null()
+Changed switchNames to switchNames(1:database%noSwitches)
+so that a "shape error" is avoided.
+@
+text
+@d23 1
+a23 1
+       "$Id: MLSSignalNomenclature.f90,v 1.21 2000/06/30 00:59:38 lungu Exp $"
+d1765 3
+a1771 62
+!
+! Revision 1.20  2000/06/29 23:33:26  vsnyder
+! Added status check for allocate of database%noSwitches
+!
+! Revision 1.19  2000/06/23 01:08:48  vsnyder
+! Delete unused variables (except ID) to keep NAG f95 happy
+!
+! Revision 1.18  2000/06/19 23:11:59  lungu
+! Added status check for every DEALLOCATE.
+!
+! Revision 1.17  2000/02/15 16:25:42  livesey
+! Removed initial deallocates in GetMLSRadiometer/BandNames
+!
+! Revision 1.16  2000/02/14 17:03:05  livesey
+! Made the GetMLSRadiometer/BandNames routines public (whoops!)
+!
+! Revision 1.15  2000/02/14 17:02:03  livesey
+! Added get GetMLSRadiometer/BandNames routines, and removed SDBNameLen, now
+! using the NameLen constant from MLSCommon.
+!
+! Revision 1.14  2000/01/12 21:42:36  livesey
+! Modified to make the signals database a local, private quantity rather
+! than a parameter kicked around by all the routines.
+!
+! Revision 1.13  1999/12/17 21:44:35  livesey
+! Removed diagnostic print statements
+!
+! Revision 1.12  1999/12/17 00:59:31  livesey
+! Nightly checkin
+!
+! Revision 1.11  1999/12/14 00:54:38  livesey
+! Changed DOUBLE PRECISION to REAL(r8)
+!
+! Revision 1.10  1999/12/01 23:01:40  livesey
+! Before renaming things to upper/lower case
+!
+! Revision 1.9  1999/11/24 23:07:12  livesey
+! Fixed bug with noError
+!
+! Revision 1.8  1999/11/24 17:54:50  livesey
+! Updated the comments at the beginning.
+!
+! Revision 1.7  1999/11/12 01:05:09  livesey
+! Changed to use fewer pointers
+!
+! Revision 1.6  1999/11/11 21:05:58  livesey
+! Before I started to think more carefully about pointers!
+!
+! Revision 1.5  1999/11/11 01:37:26  livesey
+! Allowed for the use of wildcards in specifiers.
+!
+! Revision 1.4  1999/11/10 23:02:30  livesey
+! Changed arrays to 1:n rather than 0:n-1
+!
+! Revision 1.3  1999/11/10 03:39:31  livesey
+! Fixed some bugs and made to work under absoft f90
+!
+! Revision 1.2  1999/11/10 01:52:00  livesey
+! Transfer to home
+!
+! Revision 1.1  1999/11/09 16:48:28  livesey
+! Renamed signalsfile to mlssignalnomenclature
+@
+
+
+1.1
+log
+@Renamed signalsfile to mlssignalnomenclature
+@
+text
+@d2 1
+a2 1
+! U.S. Government sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d7 2
+a8 1
+  
+d10 2
+a11 1
+  
+d13 8
+a20 3
+  PUBLIC
+  
+  PRIVATE :: id
+d23 2
+a24 1
+     "$Id: MLSSignalNomenclature.f90,v 1.1 1999/11/09 16:48:28 livesey Exp $"
+a25 8
+  
+  
+  ! This module reads and parses the file describing the valid signals for the
+  ! MLS instrument, currently this is called emls-signals.dat, but the name may
+  ! change of course.
+  
+  ! First we define the global parameters and data types, we'll prefix these
+  ! all with SDB for Signals Database.
+d27 75
+a101 1
+  INTEGER, PARAMETER :: SDB_NameLen=10
+d104 4
+a107 4
+  TYPE SDB_RadiometerInfo_T
+     CHARACTER (LEN=SDB_NameLen) :: name   ! e.g. R1A:118
+     CHARACTER (LEN=SDB_NameLen) :: prefix ! e.g. R1A
+     CHARACTER (LEN=SDB_NameLen) :: suffix ! e.g. 118
+d110 3
+a112 2
+     DOUBLE PRECISION :: lo                ! Local oscillator /MHz
+  END TYPE SDB_RadiometerInfo_T
+d115 3
+a117 3
+  TYPE SDB_BandInfo_T
+     CHARACTER (LEN=SDB_NameLen) :: name     ! e.g. B1F:PT
+     CHARACTER (LEN=SDB_NameLen) :: suffix   ! e.g. PT
+d121 2
+a122 3
+     INTEGER :: individualChannelIndex       ! Index into array for WF4 chans
+     DOUBLE PRECISION :: centerFreqIF        ! Center i.f. frequency (MHz)
+  END TYPE SDB_BandInfo_T
+d125 2
+a126 2
+  TYPE SDB_SpectrometerFamilyInfo_T
+     CHARACTER (LEN=SDB_NameLen) :: name ! Name of family e.g. FB25
+d137 3
+a139 3
+     DOUBLE PRECISION, DIMENSION(:), POINTER :: position
+     DOUBLE PRECISION, DIMENSION(:), POINTER :: width
+  END TYPE SDB_SpectrometerFamilyInfo_T
+d142 3
+a144 3
+  TYPE SDB_SpectrometerInfo_T
+     CHARACTER (LEN=SDB_NameLen) :: name ! Name of spectrometer
+     CHARACTER (LEN=SDB_NameLen) :: fullFamily ! Full name of family eg FB25
+d148 1
+a148 12
+  END TYPE SDB_SpectrometerInfo_T
+
+  ! This datatype describes a valid radiometer/switch/band/spectrometer
+  ! combination
+  TYPE SDB_ValidSignal_T
+     INTEGER :: radiometerIndex ! Index into array of radiometerInfos
+     INTEGER :: bandIndex       ! Index into array of bandInfos
+     INTEGER :: switchIndex     ! Index into array of switch names
+     INTEGER :: spectrometerIndex ! Index into spectrometer array
+     INTEGER :: spectrometerFamilyIndex ! Index into array of spec. fams.
+     INTEGER :: spectrometerNumber ! Note count from *one* for this!
+  END TYPE SDB_ValidSignal_T
+d151 1
+a151 1
+  TYPE MLS_SignalsDatabase_T
+d158 19
+a176 22
+     INTEGER :: noIndividualChannels ! Total no. channels in WF4 type specs.
+     
+     TYPE (SDB_RadiometerInfo_T), DIMENSION(:), POINTER :: radiometerInfo
+                                ! Actually dimensioned (0:noRadiometers-1)
+     TYPE (SDB_BandInfo_T), DIMENSION(:), POINTER :: bandInfo
+                                ! Actually dimensioned (0:noBands-1)
+     CHARACTER (LEN=SDB_NameLen), DIMENSION(:), POINTER :: switches
+                                ! Actually dimensioned (0:noSwitches-1)
+     TYPE (SDB_SpectrometerInfo_T), DIMENSION(:), POINTER :: spectrometerInfo
+     TYPE (SDB_SpectrometerFamilyInfo_T), DIMENSION(:), POINTER :: &
+          & spectrometerFamilies
+             ! Actually dimensioned (0:noSpectrometerFamilies-1)
+     TYPE (SDB_ValidSignal_T), DIMENSION(:), POINTER :: validSignals
+                                ! Valid Signal combinations
+                                ! Actually dimensioned (0:noValidSignals-1)
+
+     ! These two are for `individual' channels, they describe their position and
+     ! width in i.f. space in MHz.
+     DOUBLE PRECISION, DIMENSION(:), POINTER :: individualPosition, &
+          & individualWidth
+                            ! Actually dimensioned (0:noIndividualChannels-1)
+  END TYPE MLS_SignalsDatabase_T
+d180 858
+d1044 1
+a1044 1
+  SUBROUTINE ReadSignalsDatabase(unit,database)
+a1048 1
+    TYPE (MLS_SignalsDatabase_T), INTENT(OUT) :: database
+d1052 1
+a1052 1
+    INTEGER, PARAMETER :: SDB_LineLen=132
+a1054 4
+    CHARACTER (LEN=*), PARAMETER :: AllocateMessage= &
+         & "ALLOCATE failed on: "
+    CHARACTER (LEN=*), PARAMETER :: DeallocateMessage= &
+         & "DEALLOCATE failed on: "
+d1058 1
+a1058 1
+    CHARACTER (LEN=SDB_LineLen) :: line,first,last,rest,section
+d1061 3
+a1063 2
+    INTEGER :: signal,testSignal ! Loop counters
+    INTEGER :: radiometer, band, switch, spectrometer ! More loop counters
+d1070 5
+d1077 3
+a1079 3
+    TYPE (SDB_SpectrometerFamilyInfo_T), DIMENSION(:), POINTER :: &
+         & tempSpectrometerFamilies
+    CHARACTER (LEN=SDB_LineLen), DIMENSION(:), POINTER :: &
+d1084 1
+a1084 1
+    CHARACTER (LEN=SDB_NameLen), DIMENSION(:), ALLOCATABLE :: validRadiometer, &
+d1086 1
+a1086 1
+    CHARACTER (LEN=SDB_NameLen), DIMENSION(:), POINTER :: radiometerNames, &
+d1092 1
+a1092 3
+    INTEGER :: evenNo           ! For `even' channels
+    DOUBLE PRECISION :: evenStart,evenSpacing,evenWidth ! For `even' channels
+    
+d1098 9
+d1110 2
+a1111 2
+         & CALL MLSMessage('SPECTROMETERS expected in signals database file', &
+         & error=.TRUE.)
+d1119 1
+a1119 1
+       IF (eof) CALL MLSMessage(EOFMessage,error=.TRUE.)
+d1121 1
+a1121 1
+       
+d1125 3
+a1127 3
+          ALLOCATE(database%spectrometerFamilies(0:no-1),STAT=status)
+          IF (status/=0) CALL MLSMessage(AllocateMessage // &
+               & "database%spectrometerFamilies",error=.TRUE.)
+d1129 9
+a1137 6
+          ALLOCATE(tempSpectrometerFamilies(0:no-1),STAT=status)
+          IF (status/=0) CALL MLSMessage(AllocateMessage // &
+               & "tempSpectrometerFamilies",error=.TRUE.)
+          tempSpectrometerFamilies(0:no-2)=database%spectrometerFamilies
+          DEALLOCATE(database%spectrometerFamilies)
+          database%spectrometerFamilies=>tempSpectrometerFamilies
+d1139 1
+a1139 1
+       
+d1143 6
+a1148 6
+       database%spectrometerFamilies(no-1)%name=TRIM(first)
+       READ (UNIT=rest,FMT=*) database%spectrometerFamilies(no-1)%firstChannel
+       READ (UNIT=last,FMT=*) database%spectrometerFamilies(no-1)%lastChannel
+       database%spectrometerFamilies(no-1)%noChannels= &
+            & database%spectrometerFamilies(no-1)%lastChannel- &
+            & database%spectrometerFamilies(no-1)%firstChannel+1
+d1156 1
+a1156 1
+    IF (eof) CALL MLSMessage(EOFMessage,error=.TRUE.)
+d1158 2
+a1159 2
+         & "Valid signals expected",error=.TRUE.)
+    
+d1164 1
+a1164 1
+       IF (eof) CALL MLSMessage(EOFMessage,error=.TRUE.)
+d1166 1
+a1166 1
+       
+d1170 3
+a1172 3
+          ALLOCATE(validSignalNames(0:no-1),STAT=status)
+          IF (status /= 0) CALL MLSMessage(AllocateMessage // &
+               & "validSignalNames",error=.TRUE.)
+d1174 7
+a1180 5
+          ALLOCATE(tempValidSignalNames(0:no-1),STAT=status)
+          IF (status /= 0) CALL MLSMessage(AllocateMessage // &
+               & "tempValidSignalNames",error=.TRUE.)
+          tempValidSignalNames(0:no-2)=validSignalNames
+          DEALLOCATE(validSignalNames)
+d1183 1
+a1183 1
+       validSignalNames(no-1)=line
+d1190 27
+a1216 27
+    ALLOCATE(validRadiometer(0:database%noValidSignals-1),STAT=status)
+    IF (status /= 0) CALL MLSMessage(AllocateMessage // &
+         & "validRadiometer",error=.TRUE.)
+    ALLOCATE(validBand(0:database%noValidSignals-1),STAT=status)
+    IF (status /= 0) CALL MLSMessage(AllocateMessage // &
+         & "validBand",error=.TRUE.)
+    ALLOCATE(validSwitch(0:database%noValidSignals-1),STAT=status)
+    IF (status /= 0) CALL MLSMessage(AllocateMessage // &
+         & "validSwitch",error=.TRUE.)
+    ALLOCATE(validSpectrometer(0:database%noValidSignals-1),STAT=status)
+    IF (status /= 0) CALL MLSMessage(AllocateMessage // &
+         & "validSpectrometer",error=.TRUE.)
+
+    ALLOCATE(radiometerNames(0:database%noValidSignals-1),STAT=status)
+    IF (status /= 0) CALL MLSMessage(AllocateMessage // &
+         & "radiometerNames",error=.TRUE.)
+    ALLOCATE(bandNames(0:database%noValidSignals-1),STAT=status)
+    IF (status /= 0) CALL MLSMessage(AllocateMessage // &
+         & "bandNames",error=.TRUE.)
+    ALLOCATE(switchNames(0:database%noValidSignals-1),STAT=status)
+    IF (status /= 0) CALL MLSMessage(AllocateMessage // &
+         & "switchNames",error=.TRUE.)
+    ALLOCATE(spectrometerNames(0:database%noValidSignals-1),STAT=status)
+    IF (status /= 0) CALL MLSMessage(AllocateMessage // &
+         & "spectrometerNames",error=.TRUE.)
+    
+    DO signal=0,database%noValidSignals-1
+d1240 3
+a1242 3
+    ALLOCATE(database%radiometerInfo(0:database%noRadiometers-1),STAT=status)
+    IF (status /= 0) CALL MLSMessage(AllocateMessage // &
+         & "database%radiometerInfo",error=.TRUE.)
+d1244 1
+a1244 1
+    DO radiometer=0,database%noRadiometers-1
+d1251 1
+a1251 1
+       
+d1270 3
+a1272 3
+    ALLOCATE(database%bandInfo(0:database%noBands-1),STAT=status)
+    IF (status /= 0) CALL MLSMessage(AllocateMessage // &
+         & "database%bandInfo",error=.TRUE.)
+d1274 1
+a1274 1
+    DO band=0,database%noBands-1
+d1283 1
+a1283 1
+       
+d1292 4
+a1295 2
+    ALLOCATE (database%switches(0:database%noSwitches-1))
+    database%switches=switchNames
+d1299 1
+a1299 1
+    ALLOCATE (database%spectrometerInfo(0:database%noSpectrometers-1), &
+d1301 3
+a1303 3
+    IF (status /= 0) CALL MLSMessage( &
+         & AllocateMessage//"database%spectrometerInfo",error=.TRUE.)
+    DO spectrometer=0,database%noSpectrometers-1
+d1318 1
+a1318 1
+    ALLOCATE (spectrometerFamilyChars(0:database%noSpectrometerFamilies-1))
+d1320 1
+a1320 1
+    DO spectrometerFamily=0,database%noSpectrometerFamilies-1
+d1322 1
+a1322 1
+            & database%spectrometerFamilies(spectrometerFamily)%name(1:1)
+d1325 1
+a1325 1
+    DO spectrometer=0,database%noSpectrometers-1
+d1327 2
+a1328 2
+            & LinearSearchStringArray(database%spectrometerFamilies%name, &
+            & database%spectrometerInfo(spectrometer)%fullFamily)-1          
+d1331 1
+a1331 1
+    DO band=0,database%noBands-1
+d1341 1
+a1341 1
+    
+d1344 2
+a1345 2
+         & CALL MLSMessage("RADIOMETER FREQUENCIES expected in database", &
+         & error=.TRUE.)
+d1353 1
+a1353 1
+       IF (eof) CALL MLSMessage(EOFMessage,error=.TRUE.)
+d1355 1
+a1355 1
+       CALL SplitWords(line,first,rest,delimiter=' ')
+d1357 3
+a1359 4
+            & first, caseInsensitive=.TRUE.)-1
+       ! Note the -1 due to parameter paassing.
+       IF (radiometer == -1) CALL MLSMessage("No such radiometer: "//first, &
+            & error=.TRUE.)
+d1361 8
+d1371 2
+a1372 2
+    IF (MINVAL(database%radiometerInfo%lo) <= 0.0D0) CALL MLSMessage( &
+         & "Not all radiometer LOs assigned",error=.TRUE.)
+d1378 2
+a1379 2
+         & CALL MLSMessage("BAND FREQUENCIES expected in database", &
+         & error=.TRUE.)
+d1387 1
+a1387 1
+       IF (eof) CALL MLSMessage(EOFMessage,error=.TRUE.)
+d1391 3
+a1393 4
+            & first, caseInsensitive=.TRUE.)-1
+       ! Note -1 due to parameter passing
+       IF (band == -1) CALL MLSMessage("No such band: "//first, &
+            & error=.TRUE.)
+d1405 2
+a1406 2
+         & CALL MLSMessage("SPECTROMETER FREQUENCIES expected in database", &
+         & error=.TRUE.)
+d1410 1
+a1410 1
+       IF (eof) CALL MLSMessage(EOFMessage,error=.TRUE.)
+d1418 4
+a1421 5
+            & database%spectrometerFamilies%name,first, &
+            & caseInsensitive=.TRUE.)-1
+       ! Note the -1 due to parameter passing
+       IF (index == -1) CALL MLSMessage( &
+            & "No such spectrometer family: "//first,error=.TRUE.)
+d1427 13
+a1439 11
+       ALLOCATE (database%spectrometerFamilies(index)%position(&
+        & database%spectrometerFamilies(index)%firstChannel:&
+        & database%spectrometerFamilies(index)%lastChannel),&
+        & STAT=status)
+       IF (status /= 0) CALL MLSMessage(AllocateMessage//first//" position")
+
+       ALLOCATE (database%spectrometerFamilies(index)%width(&
+        & database%spectrometerFamilies(index)%firstChannel:&
+        & database%spectrometerFamilies(index)%lastChannel),&
+        & STAT=status)
+       IF (status /= 0) CALL MLSMessage(AllocateMessage//first//" width")
+d1441 1
+a1441 1
+       database%spectrometerFamilies(index)%individual=.FALSE.
+d1444 31
+a1474 28
+
+          CASE ('LIST') ! Positions and widths given on next lines
+             READ (UNIT=unit, FMT=*) &
+                  & database%spectrometerFamilies(index)%position
+             READ (UNIT=unit, FMT=*) &
+                  & database%spectrometerFamilies(index)%width
+
+          CASE ('EVEN') ! No chans, start Freq, spacing and widths
+             READ (UNIT=unit, FMT=*) evenNo,evenStart,evenSpacing,evenWidth
+             IF (evenNo /= database%spectrometerFamilies(index)%noChannels) &
+                  & CALL MLSMessage("Wrong number of channels for "//first, &
+                  & error=.TRUE.)
+             ! Loop and fill information
+             database%spectrometerFamilies(index)%width=evenWidth
+             DO evenNo=database%spectrometerFamilies(index)%firstChannel, &
+                   & database%spectrometerFamilies(index)%lastChannel
+                database%spectrometerFamilies(index)%position= &
+                     & evenStart+evenNo*evenSpacing
+             END DO
+
+             CASE ('INDIVIDUAL')
+                database%spectrometerFamilies(index)%individual=.FALSE.
+                DEALLOCATE(database%spectrometerFamilies(index)%position)
+                DEALLOCATE(database%spectrometerFamilies(index)%width)
+
+             CASE DEFAULT 
+                CALL MLSMessage("Unrecognized spectrometer family: "//first, &
+                     & error=.TRUE.)
+d1485 58
+a1542 24
+    ALLOCATE (database%validSignals(0:database%noValidSignals-1),STAT=status)
+    IF (status /= 0) CALL MLSMessage(AllocateMessage//"database%validSignals", &
+         & error=.TRUE.)
+
+    DO signal=0,database%noValidSignals-1
+       ! Note here we have to -1 in each case because of the parameter passing
+       ! issue.
+
+       database%validSignals(signal)%radiometerIndex=LinearSearchStringArray( &
+            & database%radiometerInfo%name,validRadiometer(signal))-1
+
+       database%validSignals(signal)%bandIndex=LinearSearchStringArray( &
+            & database%bandInfo%name,validBand(signal))-1
+
+       database%validSignals(signal)%switchIndex=LinearSearchStringArray( &
+            & database%switches,validSwitch(signal))
+
+       ! For the spectrometers we need to do more
+       index=LinearSearchStringArray(database%spectrometerInfo%name, &
+            & validSpectrometer(signal))-1
+
+       database%validSignals(signal)%spectrometerIndex=index
+       database%validSignals(signal)%spectrometerFamilyIndex= &
+            & database%spectrometerInfo(index)%familyIndex
+d1544 87
+a1630 2
+            & database%spectrometerInfo(index)%number
+    END DO
+d1632 1
+d1635 18
+a1652 6
+    DEALLOCATE(validSignalNames)
+    DEALLOCATE(radiometerNames)
+    DEALLOCATE(bandNames)
+    DEALLOCATE(switchNames)
+    DEALLOCATE(spectrometerNames)
+    DEALLOCATE(spectrometerFamilyChars)
+d1660 1
+a1660 1
+  SUBROUTINE DestroySignalsDatabase(database)
+a1661 4
+    ! Argument
+
+    TYPE (MLS_SignalsDatabase_T), INTENT(INOUT) :: database
+    
+d1664 1
+a1664 1
+    INTEGER :: i
+a1673 1
+    database%noIndividualChannels=0
+d1675 20
+a1694 8
+    DEALLOCATE (database%radiometerInfo)
+    DEALLOCATE (database%bandInfo)
+    DEALLOCATE (database%switches)
+    DEALLOCATE (database%spectrometerInfo)
+
+    DO i=0,database%noSpectrometerFamilies-1
+       DEALLOCATE (database%spectrometerFamilies(i)%position)
+       DEALLOCATE (database%spectrometerFamilies(i)%width)
+d1696 24
+a1719 1
+    DEALLOCATE (database%spectrometerFamilies)
+d1721 9
+a1729 3
+    DEALLOCATE (database%validSignals)
+    DEALLOCATE (database%individualPosition)
+    DEALLOCATE (database%individualWidth)
+d1731 27
+a1757 1
+  END SUBROUTINE DestroySignalsDatabase
+d1760 1
+a1760 1
+END MODULE SignalsFile
+d1765 64
+a1831 1
+! 
+@
+
+

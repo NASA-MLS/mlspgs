@@ -1,0 +1,204 @@
+head	2.4;
+access;
+symbols
+	v5-02-NRT-19:2.4
+	v6-00:2.4
+	v5-02-NRT-18:2.4
+	v5-02:2.4
+	v5-01-NRT-17:2.4
+	v5-01-NRT-16:2.4
+	v5-01-NRT-15:2.4
+	v5-01-NRT-14:2.4
+	neuralnetworks-1-0:2.4.0.14
+	cfm-single-freq-0-1:2.4.0.12
+	v5-01:2.4
+	v5-00:2.4
+	v4-23-TA133:2.4.0.10
+	mus-emls-1-70:2.4.0.8
+	rel-1-0-englocks-work:2.4.0.6
+	VUMLS1-00:2.4
+	VPL1-00:2.4
+	V4-22-NRT-08:2.4
+	VAM1-00:2.4
+	V4-21:2.4.0.4
+	V4-13:2.4
+	V4-12:2.4
+	V4-11:2.4
+	V4-10:2.4
+	V3-43:2.4
+	M4-00:2.4
+	V3-41:2.4
+	V3-40-PlusGM57:2.4.0.2
+	V2-24-NRT-04:2.3
+	V3-33:2.4
+	V2-24:2.3
+	V3-31:2.4
+	V3-30-NRT-05:2.4
+	cfm-01-00:2.4
+	V3-30:2.4
+	V3-20:2.4
+	V3-10:2.4
+	V2-23-NRT-02:2.3
+	V2-23:2.3
+	V2-22-NRT-01:2.3
+	V2-22:2.3
+	V2-21:2.3
+	V2-20:2.3
+	V2-11:2.3
+	V2-10:2.3
+	V2-00:2.3
+	V1-51:2.1
+	V1-50:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.4
+date	2007.11.01.23.29.26;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2006.03.08.01.13.38;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2005.06.22.17.44.11;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2004.09.13.20.40.38;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.4
+log
+@Added mlscount function
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id: stats0.f9h,v 2.3 2006/03/08 01:13:38 pwagner Exp $
+      ! ------------------- mlsmin -----------------------
+      ! function mlsmin(values, fillValue) result(rValue)
+      !  integer, parameter                             :: KINDVALUE = r4
+      !  integer, parameter                             :: FN = FN_MIN
+      !  ! Args
+      !  real(KINDVALUE), dimension(:), intent(in)      :: values
+      real(KINDVALUE)                                   :: rValue
+      real(KINDVALUE), optional                         :: FillValue
+      real(KINDVALUE)                                   :: min
+      real(KINDVALUE)                                   :: max
+      real(KINDVALUE)                                   :: mean
+      real(KINDVALUE)                                   :: stddev
+      real(KINDVALUE)                                   :: rms
+      real(KINDVALUE)                                   :: median
+      integer                                           :: count
+      integer                                           :: fillcount
+      ! Executable
+      call allstats( values, fillValue=fillValue, &
+        & count=count, fillcount=fillcount, &
+        & min=min, max=max, mean=mean, stddev=stddev, rms=rms, median=median )
+      select case (FN)
+      case (FN_MIN)
+        rValue = min
+      case (FN_MAX)
+        rValue = max
+      case (FN_MEAN)
+        rValue = mean
+      case (FN_STDDEV)
+        rValue = stddev
+      case (FN_RMS)
+        rValue = rms
+      case (FN_MEDIAN)
+        rValue = median
+      case (FN_COUNT)
+        rValue = count
+      case (FN_FILLCOUNT)
+        rValue = fillcount
+      case (FN_COUNT_TOT)
+        rValue = count + fillcount
+      case default
+        ! We should never come here--coding error
+      end select
+      ! end function mlsmin
+!
+! $Log: stats0.f9h,v $
+! Revision 2.3  2006/03/08 01:13:38  pwagner
+! Added median as statistical component
+!
+! Revision 2.2  2005/06/22 17:44:11  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.1  2004/09/13 20:40:38  pwagner
+! First commit
+!
+@
+
+
+2.3
+log
+@Added median as statistical component
+@
+text
+@d12 1
+a12 1
+! $Id: stats0.f9h,v 2.2 2005/06/22 17:44:11 pwagner Exp $
+d27 2
+d31 1
+d46 6
+d58 3
+@
+
+
+2.2
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d12 1
+a12 1
+! $Id: stats0.f9h,v 2.1 2004/09/13 20:40:38 pwagner Exp $
+d26 1
+d28 2
+a29 2
+      call allstats(values, fillValue=fillValue, &
+        & min=min, max=max, mean=mean, stddev=stddev, rms=rms)
+d41 2
+d49 3
+@
+
+
+2.1
+log
+@First commit
+@
+text
+@d1 4
+a4 2
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d6 7
+a12 1
+! $Id: l3ascii_interp_field.f9h,v 2.2 2003/02/28 02:26:59 livesey Exp $
+d45 4
+a48 1
+! $Log: L2GPData.f90,v $
+@
+

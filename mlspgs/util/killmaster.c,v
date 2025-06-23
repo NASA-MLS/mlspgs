@@ -1,0 +1,211 @@
+head	1.7;
+access;
+symbols
+	v5-02-NRT-19:1.7
+	v6-00:1.7
+	v5-02-NRT-18:1.7
+	v5-02:1.7
+	v5-01-NRT-17:1.7
+	v5-01-NRT-16:1.7
+	v5-01-NRT-15:1.7
+	v5-01-NRT-14:1.7
+	neuralnetworks-1-0:1.7.0.6
+	cfm-single-freq-0-1:1.7.0.4
+	v5-01:1.7
+	v5-00:1.7
+	v4-23-TA133:1.7.0.2
+	mus-emls-1-70:1.6.0.8
+	rel-1-0-englocks-work:1.6.0.6
+	VUMLS1-00:1.6
+	VPL1-00:1.6
+	V4-22-NRT-08:1.6
+	VAM1-00:1.6
+	V4-21:1.6.0.4
+	V4-13:1.6
+	V4-12:1.6
+	V4-11:1.6
+	V4-10:1.6
+	V3-43:1.6
+	M4-00:1.6
+	V3-41:1.6
+	V3-40-PlusGM57:1.6.0.2
+	V2-24-NRT-04:1.6
+	V3-33:1.6
+	V2-24:1.6
+	V3-31:1.6
+	V3-30-NRT-05:1.6
+	cfm-01-00:1.6
+	V3-30:1.6
+	V3-20:1.6
+	V3-10:1.6
+	V2-23-NRT-02:1.6
+	V2-23:1.6
+	V2-22-NRT-01:1.6
+	V2-22:1.6
+	V2-21:1.6
+	V2-20:1.6
+	V2-11:1.6
+	V2-10:1.6
+	V2-00:1.5
+	V1-51:1.4
+	V1-50:1.4
+	V1-45:1.4
+	V1-44:1.4
+	V1-43:1.4
+	V1-42:1.4
+	V1-41:1.4
+	V1-32:1.4
+	V1-40:1.4
+	V1-31:1.4
+	V1-30:1.4
+	V1-13:1.4
+	V1-12:1.4
+	V1-11:1.4
+	V1-10:1.4
+	newfwm-feb03:1.4.0.2;
+locks; strict;
+comment	@ * @;
+
+
+1.7
+date	2018.08.13.23.04.04;	author pwagner;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2006.06.22.16.07.26;	author lambert;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2005.06.23.22.22.04;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2002.11.08.19.22.41;	author livesey;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2002.11.08.19.09.16;	author livesey;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2002.11.08.19.08.51;	author livesey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2002.11.08.19.07.16;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.7
+log
+@No longer hardcodes where you put pvm3.h
+@
+text
+@/*
+ * Copyright 2005, by the California Institute of Technology. ALL
+ * RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+ * commercial use must be negotiated with the Office of Technology Transfer
+ * at the California Institute of Technology.
+
+ * This software may be subject to U.S. export control laws. By accepting this
+ * software, the user agrees to comply with all applicable U.S. export laws and
+ * regulations. User has the responsibility to obtain export licenses, or other
+ * export authority as may be required before exporting such information to
+ * foreign countries or providing access to foreign persons.
+ */
+#include <stdlib.h>
+#include <pvm3.h>
+
+/* Compile me with:
+cc -o killmaster killmaster.c -L/usr/share/pvm3/lib/LINUX -L/usr/share/pvm3/lib/LINUXI386 -lpvm3
+invoke as 'killmaster 0x<tid>' where the master <tid> is obtained from the pvm "ps -a" command 
+*/
+
+main ( int argc, void *argv[] )
+{
+  int tid;
+  int bufID;
+  int info;
+
+  tid = (int) strtod ( argv[1], NULL );
+  printf ( "Task id is:%x\n", tid );
+  bufID = pvm_initsend ( PvmDataDefault );
+  info = pvm_pkint ( &tid, 1, 1);
+  info = pvm_send ( tid, 999 );
+}
+@
+
+
+1.6
+log
+@added usage info
+@
+text
+@d14 1
+a14 1
+#include "/usr/share/pvm3/include/pvm3.h"
+@
+
+
+1.5
+log
+@Reworded Copyright statement
+@
+text
+@d17 2
+a18 1
+cc -o killmaster killmaster.c -L/usr/share/pvm3/lib/LINUX -lpvm3
+@
+
+
+1.4
+log
+@Finally got it working
+@
+text
+@d1 12
+@
+
+
+1.3
+log
+@Bug fix
+@
+text
+@d1 1
+d14 2
+a15 1
+  tid = atoi ( argv[1] );
+@
+
+
+1.2
+log
+@Added a pack
+@
+text
+@d15 1
+a15 1
+  info = pvm_pkbyte ( &tid, 1, 1);
+@
+
+
+1.1
+log
+@First version
+@
+text
+@d15 1
+@
+

@@ -1,0 +1,138 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.14
+	cfm-single-freq-0-1:1.2.0.12
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.10
+	mus-emls-1-70:1.2.0.8
+	rel-1-0-englocks-work:1.2.0.6
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.2
+	V4-21:1.2.0.4
+	V4-13:1.2
+	V4-12:1.2
+	V4-11:1.2
+	V4-10:1.2
+	V3-43:1.2
+	M4-00:1.2
+	V3-41:1.2
+	V3-40-PlusGM57:1.2.0.2
+	V3-33:1.2
+	V3-31:1.2
+	V3-30-NRT-05:1.2
+	cfm-01-00:1.2
+	V3-30:1.2
+	V3-20:1.2
+	V3-10:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2010.02.17.22.29.25;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2008.09.03.20.08.46;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Corrected error mesg
+@
+text
+@! Copyright 2008, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id: GatherScatter_3d.f9h,v 1.1 2008/09/03 20:08:46 pwagner Exp $
+
+    ! Dummy args
+    real(rk), dimension(:,:,:), pointer :: bloc
+    real(rk), dimension(:,:,:), pointer :: array ! The larger array
+    integer, dimension(:), intent(in)     :: which1
+    integer, dimension(:), intent(in)     :: which2
+    integer, dimension(:), intent(in)     :: which3
+    character(len=*), intent(in), optional :: options
+    ! Local variables
+    integer :: i, j, k
+    character(len=4) :: myOptions
+    integer :: status
+    ! Executable
+    myOptions = ''
+    if ( present(options) ) myOptions = options
+    
+    select case(direction)
+    case('s') ! scattering
+      do k=1,size(which3)
+        do j=1,size(which2)
+          do i=1,size(which1)
+            array( which1(i), which2(j), which3(k) ) = bloc( i , j , k  )
+          enddo
+        enddo
+      enddo
+    case('g') ! gathering
+      ! Do we need to allocate bloc first?
+      if ( index(myOptions, 'a') > 0 ) then
+        allocate(bloc(size(which1), size(which2), size(which3)), stat=status)
+        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, &
+          & ModuleName, "unable to allocate 3-d bloc before extracting" )
+      endif
+      do k=1,size(which3)
+        do j=1,size(which2)
+          do i=1,size(which1)
+           bloc( i , j , k ) = array( which1(i), which2(j), which3(k) )
+          enddo
+        enddo
+      enddo
+    case default
+      call MLSMessage ( MLSMSG_Error, &
+      & ModuleName, "direction neither gathering nor extracting" )
+    end select
+! $Log: GatherScatter_3d.f9h,v $
+! Revision 1.1  2008/09/03 20:08:46  pwagner
+! First commit
+!
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d12 1
+a12 1
+! $Id: GatherScatter_3d.f9h,v 1.1 2006/01/14 00:48:25 pwagner Exp $
+d54 1
+a54 1
+      & ModuleName, "direction neither embedding nor extracting" )
+d57 3
+@
+

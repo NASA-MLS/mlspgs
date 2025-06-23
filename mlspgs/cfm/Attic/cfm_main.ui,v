@@ -1,0 +1,1068 @@
+head	1.1;
+access;
+symbols
+	cfm-single-freq-0-1:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2021.07.13.15.16.50;	author whdaffer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2021.07.13.15.16.51;	author whdaffer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2021.07.19.20.24.17;	author whdaffer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@file cfm_main.ui was initially added on branch cfm-single-freq-0-1.
+@
+text
+@@
+
+
+1.1.2.1
+log
+@Continuing work
+@
+text
+@a0 391
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1124</width>
+    <height>1111</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <widget class="QGroupBox" name="groupBox">
+    <property name="geometry">
+     <rect>
+      <x>30</x>
+      <y>10</y>
+      <width>941</width>
+      <height>151</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>GroupBox</string>
+    </property>
+    <widget class="QLabel" name="label">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>30</y>
+       <width>91</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Signal Name: </string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_2">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>60</y>
+       <width>81</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Radiometer:</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_3">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>90</y>
+       <width>121</width>
+       <height>21</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Spectrometer Type:</string>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="SpectrometerType">
+     <property name="geometry">
+      <rect>
+       <x>140</x>
+       <y>90</y>
+       <width>761</width>
+       <height>21</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="SignalName">
+     <property name="geometry">
+      <rect>
+       <x>100</x>
+       <y>30</y>
+       <width>821</width>
+       <height>21</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="Radiometer">
+     <property name="geometry">
+      <rect>
+       <x>110</x>
+       <y>60</y>
+       <width>811</width>
+       <height>21</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QCheckBox" name="SpectrometerTypeAddChannelsButton">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>120</y>
+       <width>111</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Add Channels</string>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QScrollArea" name="scrollArea">
+    <property name="geometry">
+     <rect>
+      <x>40</x>
+      <y>170</y>
+      <width>1051</width>
+      <height>881</height>
+     </rect>
+    </property>
+    <property name="widgetResizable">
+     <bool>true</bool>
+    </property>
+    <widget class="QWidget" name="scrollAreaWidgetContents">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>0</y>
+       <width>1049</width>
+       <height>879</height>
+      </rect>
+     </property>
+     <widget class="QScrollArea" name="scrollArea_2">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>10</y>
+        <width>1001</width>
+        <height>201</height>
+       </rect>
+      </property>
+      <property name="widgetResizable">
+       <bool>true</bool>
+      </property>
+      <widget class="QWidget" name="scrollAreaWidgetContents_2">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>0</y>
+         <width>999</width>
+         <height>199</height>
+        </rect>
+       </property>
+       <widget class="QLabel" name="label_4">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>10</y>
+          <width>71</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Booleans:</string>
+        </property>
+       </widget>
+       <widget class="QCheckBox" name="do_conv">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>30</y>
+          <width>111</width>
+          <height>20</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>do_conv</string>
+        </property>
+       </widget>
+      </widget>
+     </widget>
+     <widget class="QScrollArea" name="scrollArea_3">
+      <property name="geometry">
+       <rect>
+        <x>20</x>
+        <y>230</y>
+        <width>1001</width>
+        <height>371</height>
+       </rect>
+      </property>
+      <property name="widgetResizable">
+       <bool>true</bool>
+      </property>
+      <widget class="QWidget" name="scrollAreaWidgetContents_3">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>0</y>
+         <width>999</width>
+         <height>369</height>
+        </rect>
+       </property>
+       <widget class="QLabel" name="label_5">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>10</y>
+          <width>201</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Keywords Requiring Quantities:</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_7">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>40</y>
+          <width>60</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>freqTol:</string>
+        </property>
+       </widget>
+       <widget class="QLineEdit" name="freqTolEntry">
+        <property name="geometry">
+         <rect>
+          <x>70</x>
+          <y>40</y>
+          <width>113</width>
+          <height>21</height>
+         </rect>
+        </property>
+       </widget>
+      </widget>
+     </widget>
+     <widget class="QScrollArea" name="scrollArea_4">
+      <property name="geometry">
+       <rect>
+        <x>20</x>
+        <y>630</y>
+        <width>1011</width>
+        <height>231</height>
+       </rect>
+      </property>
+      <property name="widgetResizable">
+       <bool>true</bool>
+      </property>
+      <widget class="QWidget" name="scrollAreaWidgetContents_4">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>0</y>
+         <width>1009</width>
+         <height>229</height>
+        </rect>
+       </property>
+       <widget class="QLabel" name="label_6">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>10</y>
+          <width>171</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Keywords that take Arrays:</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_8">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>40</y>
+          <width>81</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Molecules:</string>
+        </property>
+       </widget>
+       <widget class="QScrollArea" name="MoleculeEntry">
+        <property name="geometry">
+         <rect>
+          <x>90</x>
+          <y>30</y>
+          <width>341</width>
+          <height>141</height>
+         </rect>
+        </property>
+        <property name="toolTip">
+         <string>Enter Molecule arrays here, e.g. [[O3,N02,...]]</string>
+        </property>
+        <property name="widgetResizable">
+         <bool>true</bool>
+        </property>
+        <widget class="QWidget" name="scrollAreaWidgetContents_5">
+         <property name="geometry">
+          <rect>
+           <x>0</x>
+           <y>0</y>
+           <width>339</width>
+           <height>139</height>
+          </rect>
+         </property>
+        </widget>
+       </widget>
+       <widget class="QScrollBar" name="verticalScrollBar_4">
+        <property name="geometry">
+         <rect>
+          <x>450</x>
+          <y>30</y>
+          <width>16</width>
+          <height>160</height>
+         </rect>
+        </property>
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+       </widget>
+      </widget>
+     </widget>
+     <widget class="QScrollBar" name="verticalScrollBar">
+      <property name="geometry">
+       <rect>
+        <x>1020</x>
+        <y>40</y>
+        <width>16</width>
+        <height>160</height>
+       </rect>
+      </property>
+      <property name="orientation">
+       <enum>Qt::Vertical</enum>
+      </property>
+     </widget>
+     <widget class="QScrollBar" name="verticalScrollBar_2">
+      <property name="geometry">
+       <rect>
+        <x>1020</x>
+        <y>330</y>
+        <width>16</width>
+        <height>160</height>
+       </rect>
+      </property>
+      <property name="orientation">
+       <enum>Qt::Vertical</enum>
+      </property>
+     </widget>
+     <widget class="QScrollBar" name="verticalScrollBar_3">
+      <property name="geometry">
+       <rect>
+        <x>1030</x>
+        <y>650</y>
+        <width>16</width>
+        <height>160</height>
+       </rect>
+      </property>
+      <property name="orientation">
+       <enum>Qt::Vertical</enum>
+      </property>
+     </widget>
+    </widget>
+   </widget>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1124</width>
+     <height>24</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuCFM_L2CF_main_Gui">
+    <property name="title">
+     <string>CFM_L2CF main Gui</string>
+    </property>
+   </widget>
+   <addaction name="menuCFM_L2CF_main_Gui"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
+@
+
+
+1.1.2.2
+log
+@continuing work
+@
+text
+@d9 2
+a10 2
+    <width>1216</width>
+    <height>1213</height>
+d17 95
+d115 4
+a118 4
+      <x>10</x>
+      <y>0</y>
+      <width>1201</width>
+      <height>1171</height>
+d129 2
+a130 2
+       <width>1199</width>
+       <height>1169</height>
+d133 1
+a133 1
+     <widget class="QTabWidget" name="MainTabWidget">
+d136 4
+a139 4
+        <x>0</x>
+        <y>20</y>
+        <width>1171</width>
+        <height>381</height>
+d142 2
+a143 2
+      <property name="currentIndex">
+       <number>0</number>
+d145 10
+a154 8
+      <widget class="QWidget" name="RadiometerTab">
+       <attribute name="title">
+        <string>Radiometer</string>
+       </attribute>
+       <attribute name="toolTip">
+        <string>Emter Information about the Radiometer here</string>
+       </attribute>
+       <widget class="QLabel" name="RadiometerNameLabel">
+d157 1
+a157 1
+          <x>10</x>
+d159 1
+a159 1
+          <width>60</width>
+d164 1
+a164 1
+         <string>Name: </string>
+d167 1
+a167 1
+       <widget class="QLineEdit" name="RadiometerNameLineEdit">
+d170 4
+a173 23
+          <x>70</x>
+          <y>10</y>
+          <width>1071</width>
+          <height>21</height>
+         </rect>
+        </property>
+        <property name="toolTip">
+         <string>Enter Radiometer Name (e.g. 'R1A')</string>
+        </property>
+        <property name="statusTip">
+         <string>Radiometer name</string>
+        </property>
+        <property name="placeholderText">
+         <string>And Radiometer name here (e.g. R1A)</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="RadiometerSuffixLabel">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>40</y>
+          <width>41</width>
+          <height>16</height>
+d177 1
+a177 49
+         <string>Suffix:</string>
+        </property>
+       </widget>
+       <widget class="QLineEdit" name="RadiometerSuffixLineEdit">
+        <property name="geometry">
+         <rect>
+          <x>70</x>
+          <y>40</y>
+          <width>1061</width>
+          <height>21</height>
+         </rect>
+        </property>
+        <property name="toolTip">
+         <string>Enter Radiometer Suffix (e.g. &quot;118&quot;)</string>
+        </property>
+        <property name="statusTip">
+         <string>Radiometer Suffix</string>
+        </property>
+        <property name="placeholderText">
+         <string>Enter Radiometer suffix (e.g. 118)</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="RadiometerModuleLabel">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>70</y>
+          <width>60</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Module:</string>
+        </property>
+       </widget>
+       <widget class="QLineEdit" name="RadiometerModuleLineEdit">
+        <property name="geometry">
+         <rect>
+          <x>90</x>
+          <y>70</y>
+          <width>351</width>
+          <height>21</height>
+         </rect>
+        </property>
+        <property name="toolTip">
+         <string>Enter the Module this Radiometer is in (must be one of GHz, THz or SC)</string>
+        </property>
+        <property name="placeholderText">
+         <string>Enter the Module this Radiometer is in: GHz, THz or SC.</string>
+d181 23
+a203 131
+      <widget class="QWidget" name="SpectrometerTypeTab">
+       <attribute name="title">
+        <string>SpectrometerType</string>
+       </attribute>
+       <attribute name="toolTip">
+        <string>Enter Information for the Spectrometer Type</string>
+       </attribute>
+       <widget class="QGroupBox" name="SpectrometerTypeGroupBox">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>20</y>
+          <width>1181</width>
+          <height>331</height>
+         </rect>
+        </property>
+        <property name="title">
+         <string>SpectrometerType Info</string>
+        </property>
+        <widget class="QLabel" name="label">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>20</y>
+           <width>161</width>
+           <height>16</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>SpectrometerType Name:</string>
+         </property>
+        </widget>
+        <widget class="QLineEdit" name="SpectrometerTypeName">
+         <property name="geometry">
+          <rect>
+           <x>170</x>
+           <y>20</y>
+           <width>1001</width>
+           <height>21</height>
+          </rect>
+         </property>
+         <property name="toolTip">
+          <string>Enter SpectrometerType name here</string>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+         <property name="placeholderText">
+          <string>Enter SpectrometerType name here</string>
+         </property>
+        </widget>
+        <widget class="QLabel" name="label_2">
+         <property name="geometry">
+          <rect>
+           <x>20</x>
+           <y>50</y>
+           <width>41</width>
+           <height>16</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>First:</string>
+         </property>
+        </widget>
+        <widget class="QLineEdit" name="SpectrometerTypeFirstEntryBox">
+         <property name="geometry">
+          <rect>
+           <x>60</x>
+           <y>50</y>
+           <width>221</width>
+           <height>21</height>
+          </rect>
+         </property>
+         <property name="toolTip">
+          <string>Enter value for SpectrometerType `First' keyword</string>
+         </property>
+         <property name="statusTip">
+          <string>SpectrometerType `First' keyword</string>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+         <property name="placeholderText">
+          <string>Enter Value for the 'first' keyword</string>
+         </property>
+        </widget>
+        <widget class="QLabel" name="label_3">
+         <property name="geometry">
+          <rect>
+           <x>20</x>
+           <y>80</y>
+           <width>301</width>
+           <height>16</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Channels Info: [ center units: width units, ...]</string>
+         </property>
+        </widget>
+        <widget class="QTextEdit" name="ChannelsTextBox">
+         <property name="geometry">
+          <rect>
+           <x>140</x>
+           <y>120</y>
+           <width>991</width>
+           <height>171</height>
+          </rect>
+         </property>
+         <property name="toolTip">
+          <string>Enter Channel information here, as in, e.g. [-79.0 MHz: 32.0 MHz, ]</string>
+         </property>
+         <property name="statusTip">
+          <string>Channel information</string>
+         </property>
+         <property name="horizontalScrollBarPolicy">
+          <enum>Qt::ScrollBarAlwaysOff</enum>
+         </property>
+         <property name="placeholderText">
+          <string>May be an array explicitly giving the channels and the widths in the form of [-79.0 MHz: 32 MHz, ...], or a psuedo-numpy array, as in [-575MHz:-303MHz:96MHz] for three the three channels -575MHz, -471MHz, -383MHz, each 96MHz wide</string>
+         </property>
+        </widget>
+       </widget>
+      </widget>
+      <widget class="QWidget" name="BandTab">
+       <attribute name="title">
+        <string>Band</string>
+       </attribute>
+       <attribute name="toolTip">
+        <string>Enter information about the Band here.</string>
+       </attribute>
+       <widget class="QLabel" name="BandLabel">
+d208 1
+a208 1
+          <width>81</width>
+d213 1
+a213 14
+         <string>Band Name:</string>
+        </property>
+       </widget>
+       <widget class="QLineEdit" name="BandNameLineEdit">
+        <property name="geometry">
+         <rect>
+          <x>120</x>
+          <y>10</y>
+          <width>1011</width>
+          <height>21</height>
+         </rect>
+        </property>
+        <property name="placeholderText">
+         <string>Band name (e.g. B1F)</string>
+d216 1
+a216 1
+       <widget class="QLabel" name="BandSuffixLabel">
+d221 1
+a221 1
+          <width>81</width>
+d226 1
+a226 1
+         <string>Band Suffix:</string>
+d229 1
+a229 1
+       <widget class="QLineEdit" name="BAndSuffixLineEdit">
+d232 1
+a232 1
+          <x>120</x>
+d234 1
+a234 1
+          <width>1001</width>
+a237 102
+        <property name="toolTip">
+         <string>Enter band suffix here</string>
+        </property>
+        <property name="statusTip">
+         <string>Band suffix</string>
+        </property>
+        <property name="placeholderText">
+         <string>Enter band suffix (e.g. 'PT')</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="BandRadiometerLabel">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>70</y>
+          <width>121</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Band Radiometer: </string>
+        </property>
+       </widget>
+       <widget class="QLineEdit" name="BandRadiometerLineEdit">
+        <property name="geometry">
+         <rect>
+          <x>140</x>
+          <y>70</y>
+          <width>971</width>
+          <height>21</height>
+         </rect>
+        </property>
+        <property name="toolTip">
+         <string>Enter band radiometer here</string>
+        </property>
+        <property name="placeholderText">
+         <string>enter band radiometer here (e.g. R1A)</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_4">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>100</y>
+          <width>101</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Spectrometer:</string>
+        </property>
+       </widget>
+       <widget class="QLineEdit" name="BandSpectrometerLineEdit">
+        <property name="geometry">
+         <rect>
+          <x>140</x>
+          <y>100</y>
+          <width>971</width>
+          <height>21</height>
+         </rect>
+        </property>
+        <property name="toolTip">
+         <string>enter the radiometer for this band</string>
+        </property>
+        <property name="statusTip">
+         <string>band radiometer</string>
+        </property>
+        <property name="placeholderText">
+         <string>Enter the radiometer for this band (e.g. FB25)</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="BandCenterFrequencyLabel">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>130</y>
+          <width>121</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Center Frequency:</string>
+        </property>
+       </widget>
+       <widget class="QLineEdit" name="BandCenterFrequentyLineEdit">
+        <property name="geometry">
+         <rect>
+          <x>140</x>
+          <y>130</y>
+          <width>371</width>
+          <height>21</height>
+         </rect>
+        </property>
+        <property name="toolTip">
+         <string>Enter the center frequency for this band, with units!</string>
+        </property>
+        <property name="statusTip">
+         <string>Band center frequency</string>
+        </property>
+        <property name="placeholderText">
+         <string>Enter band center frequency, with units (e.g. 8.04667 GHz)</string>
+        </property>
+d240 23
+a262 8
+      <widget class="QWidget" name="SignalTab">
+       <attribute name="title">
+        <string>Signal</string>
+       </attribute>
+       <attribute name="toolTip">
+        <string>Enter information about the Signal (much will be filled out from previous tabs)</string>
+       </attribute>
+       <widget class="QLabel" name="SignalBandNameLabel">
+d266 2
+a267 2
+          <y>20</y>
+          <width>91</width>
+d272 1
+a272 20
+         <string>Band:</string>
+        </property>
+       </widget>
+       <widget class="QLineEdit" name="SignalBandNameLineEdit">
+        <property name="geometry">
+         <rect>
+          <x>120</x>
+          <y>20</y>
+          <width>981</width>
+          <height>21</height>
+         </rect>
+        </property>
+        <property name="toolTip">
+         <string>Enter band name for this signal</string>
+        </property>
+        <property name="statusTip">
+         <string>Band name</string>
+        </property>
+        <property name="placeholderText">
+         <string>Enter Band Name (e.g. B25F). Should match what's in the band tab</string>
+d275 1
+a275 1
+       <widget class="QLabel" name="SignalGSNSwitchLabel">
+d279 2
+a280 2
+          <y>60</y>
+          <width>91</width>
+d285 1
+a285 1
+         <string>GSN switch:</string>
+d288 1
+a288 1
+       <widget class="QSpinBox" name="SignalGSNSwitchSpinBox">
+d291 4
+a294 4
+          <x>120</x>
+          <y>60</y>
+          <width>48</width>
+          <height>24</height>
+d298 1
+a298 1
+         <string>Select GSN switch (0=N/A, 1-5 otherwise)</string>
+d300 2
+a301 2
+        <property name="maximum">
+         <number>5</number>
+d303 10
+d314 1
+a314 1
+       <widget class="QLabel" name="SignalSpectrometerNumberLabel">
+d317 4
+a320 4
+          <x>190</x>
+          <y>60</y>
+          <width>151</width>
+          <height>16</height>
+d323 2
+a324 53
+        <property name="text">
+         <string>Spectrometer Number:</string>
+        </property>
+       </widget>
+       <widget class="QSpinBox" name="SignalSpectrometerNumberSpinBox">
+        <property name="geometry">
+         <rect>
+          <x>340</x>
+          <y>60</y>
+          <width>71</width>
+          <height>24</height>
+         </rect>
+        </property>
+        <property name="toolTip">
+         <string>Select Spectrometer Number</string>
+        </property>
+        <property name="maximum">
+         <number>19</number>
+        </property>
+       </widget>
+       <widget class="QLabel" name="SignalDirectionLabel">
+        <property name="geometry">
+         <rect>
+          <x>440</x>
+          <y>60</y>
+          <width>71</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Direction:</string>
+        </property>
+       </widget>
+       <widget class="QSpinBox" name="SignalDirectionSpinBox">
+        <property name="geometry">
+         <rect>
+          <x>520</x>
+          <y>60</y>
+          <width>48</width>
+          <height>24</height>
+         </rect>
+        </property>
+        <property name="toolTip">
+         <string>Select direction (-1,0,1)</string>
+        </property>
+        <property name="statusTip">
+         <string>Signal direction</string>
+        </property>
+        <property name="minimum">
+         <number>-1</number>
+        </property>
+        <property name="maximum">
+         <number>1</number>
+d328 39
+a366 5
+      <widget class="QWidget" name="ModuleTab">
+       <attribute name="title">
+        <string>ModuleTab</string>
+       </attribute>
+      </widget>
+d376 1
+a376 1
+     <width>1216</width>
+d380 1
+a380 1
+   <widget class="QMenu" name="menucfm_main">
+d382 1
+a382 1
+     <string>File</string>
+a383 2
+    <addaction name="FileOpen"/>
+    <addaction name="FileSave"/>
+d385 1
+a385 1
+   <addaction name="menucfm_main"/>
+a387 22
+  <action name="FileOpen">
+   <property name="text">
+    <string>Open</string>
+   </property>
+   <property name="toolTip">
+    <string>Open a CFM pickle file</string>
+   </property>
+   <property name="statusTip">
+    <string>Open File</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+O</string>
+   </property>
+  </action>
+  <action name="FileSave">
+   <property name="text">
+    <string>Save</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
+   </property>
+  </action>
+d390 1
+a390 50
+ <connections>
+  <connection>
+   <sender>RadiometerNameLineEdit</sender>
+   <signal>returnPressed()</signal>
+   <receiver>MainTabWidget</receiver>
+   <slot>update()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>619</x>
+     <y>91</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>596</x>
+     <y>235</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>RadiometerSuffixLineEdit</sender>
+   <signal>returnPressed()</signal>
+   <receiver>MainTabWidget</receiver>
+   <slot>update()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>614</x>
+     <y>121</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>596</x>
+     <y>235</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>RadiometerModuleLineEdit</sender>
+   <signal>returnPressed()</signal>
+   <receiver>MainTabWidget</receiver>
+   <slot>update()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>279</x>
+     <y>151</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>596</x>
+     <y>235</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+@
+
+

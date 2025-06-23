@@ -1,0 +1,1068 @@
+head	1.37;
+access;
+symbols
+	v5-02-NRT-19:1.37
+	v6-00:1.37
+	v5-02-NRT-18:1.37
+	v5-02:1.37
+	v5-01-NRT-17:1.37
+	v5-01-NRT-16:1.37
+	v5-01-NRT-15:1.37
+	v5-01-NRT-14:1.37
+	neuralnetworks-1-0:1.37.0.10
+	cfm-single-freq-0-1:1.37.0.8
+	v5-01:1.37
+	v5-00:1.37
+	v4-23-TA133:1.37.0.6
+	mus-emls-1-70:1.37.0.4
+	rel-1-0-englocks-work:1.37.0.2
+	VUMLS1-00:1.37
+	VPL1-00:1.36
+	V4-22-NRT-08:1.36
+	VAM1-00:1.36
+	V4-21:1.35.0.2
+	V4-13:1.34
+	V4-12:1.34
+	V4-11:1.34
+	V4-10:1.34
+	V3-43:1.34
+	M4-00:1.34
+	V3-41:1.34
+	V3-40-PlusGM57:1.34.0.2
+	V2-24-NRT-04:1.30
+	V3-33:1.34
+	V2-24:1.30
+	V3-31:1.34
+	V3-30-NRT-05:1.34
+	cfm-01-00:1.34
+	V3-30:1.34
+	V3-20:1.34
+	V3-10:1.34
+	V2-23-NRT-02:1.30
+	V2-23:1.30
+	V2-22-NRT-01:1.30
+	V2-22:1.30
+	V2-21:1.30
+	V2-20:1.30
+	V2-11:1.30
+	V2-10:1.30
+	V2-00:1.30
+	V1-51:1.26
+	V1-50:1.26
+	V1-45:1.23
+	V1-44:1.23
+	V1-43:1.20
+	V1-32:1.15
+	V1-31:1.15
+	V1-30:1.14
+	V1-13:1.4
+	V1-12:1.4
+	V1-11:1.4
+	V1-10:1.4
+	newfwm-feb03:1.4.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.37
+date	2017.03.01.03.06.28;	author mjschwar;	state Exp;
+branches;
+next	1.36;
+
+1.36
+date	2015.03.27.17.57.59;	author pwagner;	state Exp;
+branches;
+next	1.35;
+
+1.35
+date	2015.02.27.21.37.33;	author pwagner;	state Exp;
+branches;
+next	1.34;
+
+1.34
+date	2009.07.28.20.02.53;	author pwagner;	state Exp;
+branches;
+next	1.33;
+
+1.33
+date	2009.06.23.17.29.34;	author pwagner;	state Exp;
+branches;
+next	1.32;
+
+1.32
+date	2009.05.15.20.24.17;	author pwagner;	state Exp;
+branches;
+next	1.31;
+
+1.31
+date	2008.07.31.23.54.53;	author pwagner;	state Exp;
+branches;
+next	1.30;
+
+1.30
+date	2006.05.19.21.59.27;	author lambert;	state Exp;
+branches;
+next	1.29;
+
+1.29
+date	2006.05.18.23.19.17;	author dwu;	state Exp;
+branches;
+next	1.28;
+
+1.28
+date	2006.05.04.19.50.40;	author bill;	state Exp;
+branches;
+next	1.27;
+
+1.27
+date	2006.04.27.23.19.35;	author lambert;	state Exp;
+branches;
+next	1.26;
+
+1.26
+date	2004.11.24.21.59.05;	author livesey;	state Exp;
+branches;
+next	1.25;
+
+1.25
+date	2004.11.17.00.24.56;	author livesey;	state Exp;
+branches;
+next	1.24;
+
+1.24
+date	2004.10.29.23.38.45;	author dwu;	state Exp;
+branches;
+next	1.23;
+
+1.23
+date	2004.07.28.23.01.31;	author cvuu;	state Exp;
+branches;
+next	1.22;
+
+1.22
+date	2004.06.22.22.43.26;	author pwagner;	state Exp;
+branches;
+next	1.21;
+
+1.21
+date	2004.06.22.18.35.04;	author pwagner;	state Exp;
+branches;
+next	1.20;
+
+1.20
+date	2004.05.04.01.05.29;	author livesey;	state Exp;
+branches;
+next	1.19;
+
+1.19
+date	2004.04.28.23.06.13;	author livesey;	state Exp;
+branches;
+next	1.18;
+
+1.18
+date	2004.04.16.00.45.14;	author livesey;	state Exp;
+branches;
+next	1.17;
+
+1.17
+date	2004.03.17.17.13.03;	author livesey;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2004.02.07.00.46.50;	author livesey;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2003.10.15.11.00.15;	author mjf;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2003.08.14.20.25.58;	author livesey;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2003.08.13.21.04.46;	author livesey;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2003.08.06.17.49.20;	author livesey;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2003.05.27.20.57.15;	author livesey;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2003.05.27.20.01.00;	author livesey;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2003.05.20.18.25.46;	author dwu;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2003.05.16.19.55.09;	author dwu;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2003.05.16.19.48.31;	author dwu;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2003.05.10.00.57.33;	author livesey;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2003.03.22.01.16.51;	author livesey;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2003.01.24.00.16.10;	author livesey;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2003.01.07.23.48.14;	author livesey;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2002.12.19.11.54.29;	author livesey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2002.12.05.20.41.56;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.37
+log
+@Added vGridRefGPHumls
+@
+text
+@!divert(-1)
+; $Id: constructstandardgrids.l2cf,v 1.36 2015/03/27 17:57:59 pwagner Exp $
+
+; This is a new l2cf fragement that defines all the (mainly vertical)
+; grids.
+
+!divert!dnl
+!ifdef(flagSkipVGridStandard,{},{
+vGridStandard: vGrid, type=Logarithmic, coordinate=Zeta, $
+  start=1000mb, formula=[25:6,12:3]})
+!ifdef(flagVGridHiResExtended,{
+vGridHiRes: vGrid, type=Logarithmic, coordinate=Zeta, $
+  start=1000mb, formula=[37:12,6:6,12:3]
+},{
+vGridHiRes: vGrid, type=Logarithmic, coordinate=Zeta, $
+  start=1000mb, formula=[21:12,14:6,12:3]
+})
+vGridrhisngllyr: vGrid, type=Logarithmic, coordinate=Zeta, $
+  start=100mb, formula=[2:6]
+vGridutrhi: vGrid, type=Logarithmic, coordinate=Zeta, $
+  start=100mb, formula=[1:1]
+vGridrhiprfl: vGrid, type=Logarithmic, coordinate=Zeta, $
+  start=316.2278mb, formula=[22:6]
+
+vGridBaseline: vGrid, type=Logarithmic, coordinate=Zeta, $
+  start=1000mb, formula=[25:12,4:1]
+vGridMAFBaseline: vGrid, type=Logarithmic, coordinate=Zeta, $
+  start=1mb, formula=[1:1]
+vGridExtinction: vGrid, type=Logarithmic, coordinate=Zeta, $
+  start=1000mb, formula=[21:12,14:6,12:3]
+vGridRefGPHumls: vGrid, type=Explicit, coordinate=Zeta, values=10mb
+vGridRefGPH: vGrid, type=Explicit, coordinate=Zeta, values=100mb
+vGridRefIWC: vGrid, type=Explicit, coordinate=Zeta, values=32mb
+vGridRefIWP: vGrid, type=Explicit, coordinate=Zeta, values=650mb
+vGridOH: vGrid, type=Logarithmic, coordinate=Zeta, $
+  start=1000mb, formula=[49:6]
+
+!ifdef(flagPrecisionEstimates,{
+  vGridTangent: vGrid, type=Logarithmic, coordinate=Zeta, $
+    start=1000mb, formula=[73:12]
+},{
+  vGridTangent: vGrid, type=Logarithmic, coordinate=Zeta, $
+    start=1000mb, formula=[2:6,12:12,41:6]
+})
+vGridTangentSids: vGrid, type=Logarithmic, coordinate=Zeta, $
+  start=1000mb, formula=[19:12]
+vGridDiag: vGrid, type=Logarithmic, coordinate=Zeta, $
+  start=1000mb, formula=[10:1]
+
+;; These ones are specifically for diagnostic quantities.
+vGridGlobal: vGrid, type=Explicit, coordinate=Zeta, values=1000mb
+
+vGridLowCloudR1A:  vGrid, type=Explicit, coordinate=Zeta, values=[1000mb,700mb]
+vGridHighCloudR1A: vGrid, type=Explicit, coordinate=Zeta, values=[215mb, 46mb], resolution=6
+vGridLowCloudR1B:  vGrid, type=Explicit, coordinate=Zeta, values=[1000mb,700mb]
+vGridHighCloudR1B: vGrid, type=Explicit, coordinate=Zeta, values=[215mb, 46mb], resolution=6
+
+vGridLowCloudR2:   vGrid, type=Explicit, coordinate=Zeta, values=[1000mb,700mb]
+vGridHighCloudR2:  vGrid, type=Explicit, coordinate=Zeta, values=[215mb, 46mb], resolution=6
+
+vGridLowCloudR3:   vGrid, type=Explicit, coordinate=Zeta, values=[316mb,215mb], resolution=6
+vGridHighCloudR3:  vGrid, type=Explicit, coordinate=Zeta, values=[316mb, 46mb], resolution=6
+
+vGridLowCloudR4:   vGrid, type=Explicit, coordinate=Zeta, values=[1000mb,146mb], resolution=6
+vGridHighCloudR4:  vGrid, type=Explicit, coordinate=Zeta, values=[146mb, 46mb], resolution=6
+
+vGridLowCloudR5H:  vGrid, type=Explicit, coordinate=Zeta, values=[1000mb,68mb], resolution=6
+vGridHighCloudR5H: vGrid, type=Explicit, coordinate=Zeta, values=[68mb,46mb], resolution=6
+vGridLowCloudR5V:  vGrid, type=Explicit, coordinate=Zeta, values=[1000mb,68mb], resolution=6
+vGridHighCloudR5V: vGrid, type=Explicit, coordinate=Zeta, values=[68mb,46mb], resolution=6
+
+!define(allIterationLevels,{!forloop({i},1,19,{!i, })20}) ; 1,2,3..20
+!define(allPhaseLevels,{!forloop({i},1,99,{!i, })100}) ; 1,2,3..100
+                                                                                
+vGridIterations: vGrid, type=Explicit, coordinate=Integer, $
+    values=[!allIterationLevels]
+vGridPhases: vGrid, type=Explicit, coordinate=Integer, $
+    values=[!allPhaseLevels]
+
+;!ifdef(flagMagneticFieldOnHeightGrid,{!dnl
+!ifelse(!substr(!MagneticFieldGrid,0,3), {Alt},
+{!dnl
+vGridMag: vGrid, type=Linear, coordinate=geodAltitude, $
+  start=-10 km, stop=150 km, number=17
+})
+sGridStandard:  vGrid, type=Explicit,   $
+       values=[20,40,60,80,100,120,140,160,180,200,$
+               220,240,260,280,300,320,340,360,380,400,420,440,460,480,500,$
+               520,540,560,580,600,620,640,660,680,700,720,740,760,780,800]
+vGridIWC: vGrid, type=Logarithmic, coordinate=Zeta, $
+  start= 464.158872744048438mb, formula=[7:6]
+
+vGridWMO: VGrid, type=Logarithmic, coordinate=Zeta, $
+  start=1000mb, formula=[97:48]
+!divert(-1)
+
+; $Log: constructstandardgrids.l2cf,v $
+; Revision 1.36  2015/03/27 17:57:59  pwagner
+; repaired error in prior commit
+;
+; Revision 1.35  2015/02/27 21:37:33  pwagner
+; Changes needed when Magnetic Field on Height Grid
+;
+; Revision 1.34  2009/07/28 20:02:53  pwagner
+; reduced num of levels in vGridrhiprfl
+;
+; Revision 1.33  2009/06/23 17:29:34  pwagner
+; Adjusted vGridrhiprfl
+;
+; Revision 1.32  2009/05/15 20:24:17  pwagner
+; Added UTRHi as quantity and standard product
+;
+; Revision 1.31  2008/07/31 23:54:53  pwagner
+; Added flag extending HiRes VGrid to 1hPa
+;
+; Revision 1.30  2006/05/19 21:59:27  lambert
+; updates for OH
+;
+; Revision 1.29  2006/05/18 23:19:17  dwu
+; add vGrid for IWP
+;
+; Revision 1.28  2006/05/04 19:50:40  bill
+; added DACS and MAF baselines and totalextinction species
+;
+; Revision 1.27  2006/04/27 23:19:35  lambert
+; additions for RHi
+;
+; Revision 1.26  2004/11/24 21:59:05  livesey
+; Added flagSkipVGridStandard
+;
+; Revision 1.25  2004/11/17 00:24:56  livesey
+; Reworked the High/Low cloud grids
+;
+; Revision 1.24  2004/10/29 23:38:45  dwu
+; add vGridRefIWC
+;
+; Revision 1.23  2004/07/28 23:01:31  cvuu
+; Increase vGridPhases to 100
+;
+; Revision 1.22  2004/06/22 22:43:26  pwagner
+; Increased diagnostic vGrid noSurfs to 20
+;
+; Revision 1.21  2004/06/22 18:35:04  pwagner
+; defaults to writing retrieval diagnostics to l2aux instead of dgg
+;
+; Revision 1.20  2004/05/04 01:05:29  livesey
+; Changed the R1 grids (never used) and low cloud grids for R2.
+;
+; Revision 1.19  2004/04/28 23:06:13  livesey
+; Changed the cloud flagging height grids
+;
+; Revision 1.18  2004/04/16 00:45:14  livesey
+; New approach to cloud flagging
+;
+; Revision 1.17  2004/03/17 17:13:03  livesey
+; Added vGridGlobal and the vGridLow/HighCloudRn for diagnostic
+; precursors.
+;
+; Revision 1.16  2004/02/07 00:46:50  livesey
+; Tidied up extinction.
+;
+; Revision 1.15  2003/10/15 11:00:15  mjf
+; Higher resolution vGridTangents for PEs (does FM fix this up anyway?).
+;
+; Revision 1.14  2003/08/14 20:25:58  livesey
+; Higher resolution vGridBaseline, also removed flagSingleBaseline.
+;
+; Revision 1.13  2003/08/13 21:04:46  livesey
+; Now optionally goes back to old baseline vGrid
+;
+; Revision 1.12  2003/08/06 17:49:20  livesey
+; New baseline grid
+;
+; Revision 1.11  2003/05/27 20:57:15  livesey
+; New approach to extending grid
+;
+; Revision 1.10  2003/05/27 20:01:00  livesey
+; New vGrid for temperature
+;
+; Revision 1.9  2003/05/20 18:25:46  dwu
+; change sGridStandard
+;
+; Revision 1.8  2003/05/16 19:55:09  dwu
+; del hGridFine
+;
+; Revision 1.7  2003/05/16 19:48:31  dwu
+; add hGridFine
+;
+; Revision 1.6  2003/05/10 00:57:33  livesey
+; Added vGridWMO
+;
+; Revision 1.5  2003/03/22 01:16:51  livesey
+; Added vGridExtinctionHiRes
+;
+; Revision 1.4  2003/01/24 00:16:10  livesey
+; Added vGridTangentSids (not used as yet in the sids l2cfs but will be
+; one day).
+;
+; Revision 1.3  2003/01/07 23:48:14  livesey
+; New basis for tropH2O
+;
+; Revision 1.2  2002/12/19 11:54:29  livesey
+; Added vGridTropH2OHiRes
+;
+; Revision 1.1  2002/12/05 20:41:56  livesey
+; First version
+;
+!divert!dnl
+@
+
+
+1.36
+log
+@repaired error in prior commit
+@
+text
+@d2 1
+a2 1
+; $Id: constructstandardgrids.l2cf,v 1.35 2015/02/27 21:37:33 pwagner Exp $
+d31 1
+d80 3
+a82 1
+!ifdef(flagMagneticFieldOnHeightGrid,{!dnl
+d98 3
+@
+
+
+1.35
+log
+@Changes needed when Magnetic Field on Height Grid
+@
+text
+@d2 1
+a2 1
+; $Id: constructstandardgrids.l2cf,v 1.34 2009/07/28 20:02:53 pwagner Exp $
+d79 1
+a79 1
+!ifdef(flagMagneticFieldOnHeightGrid,!dnl
+a81 2
+CrossGrid: hGrid, type=explicit, $
+  geodangle=[-3.0 degrees, -1.5 degrees, 0 degrees, 1.5 degrees, 3.0 degrees]
+d95 3
+@
+
+
+1.34
+log
+@reduced num of levels in vGridrhiprfl
+@
+text
+@d2 1
+a2 1
+; $Id: constructstandardgrids.l2cf,v 1.33 2009/06/23 17:29:34 pwagner Exp $
+d79 6
+d97 3
+@
+
+
+1.33
+log
+@Adjusted vGridrhiprfl
+@
+text
+@d2 1
+a2 1
+; $Id: constructstandardgrids.l2cf,v 1.32 2009/05/15 20:24:17 pwagner Exp $
+d23 1
+a23 1
+  start=316.2278mb, formula=[22:6,12:3]
+d91 3
+@
+
+
+1.32
+log
+@Added UTRHi as quantity and standard product
+@
+text
+@d1 2
+a2 1
+; $Id: constructstandardgrids.l2cf,v 1.31 2008/07/31 23:54:53 pwagner Exp $
+d7 1
+d23 1
+a23 1
+  start=681.2915mb, formula=[24:6,12:3]
+d88 1
+d91 3
+d189 1
+@
+
+
+1.31
+log
+@Added flag extending HiRes VGrid to 1hPa
+@
+text
+@d1 1
+a1 1
+; $Id: constructstandardgrids.l2cf,v 1.30 2006/05/19 21:59:27 lambert Exp $
+d18 2
+d88 3
+@
+
+
+1.30
+log
+@updates for OH
+@
+text
+@d1 1
+a1 1
+; $Id: constructstandardgrids.l2cf,v 1.29 2006/05/18 23:19:17 dwu Exp $
+d9 4
+d15 1
+d86 3
+@
+
+
+1.29
+log
+@add vGrid for IWP
+@
+text
+@d1 1
+a1 1
+; $Id: constructstandardgrids.l2cf,v 1.28 2006/05/04 19:50:40 bill Exp $
+d25 2
+a31 2
+;  vGridTangent: vGrid, type=Logarithmic, coordinate=Zeta, $
+;    start=1000mb, formula=[3:6,10:12]
+d81 3
+@
+
+
+1.28
+log
+@added DACS and MAF baselines and totalextinction species
+@
+text
+@d1 1
+a1 1
+; $Id: constructstandardgrids.l2cf,v 1.27 2006/04/27 23:19:35 lambert Exp $
+d24 1
+d81 3
+@
+
+
+1.27
+log
+@additions for RHi
+@
+text
+@d1 1
+a1 1
+; $Id: constructstandardgrids.l2cf,v 1.26 2004/11/24 21:59:05 livesey Exp $
+d18 2
+d29 2
+d32 1
+a32 1
+    start=1000mb, formula=[3:6,10:12]
+d80 3
+@
+
+
+1.26
+log
+@Added flagSkipVGridStandard
+@
+text
+@d1 1
+a1 1
+; $Id: constructstandardgrids.l2cf,v 1.25 2004/11/17 00:24:56 livesey Exp $
+d11 4
+d76 3
+@
+
+
+1.25
+log
+@Reworked the High/Low cloud grids
+@
+text
+@d1 1
+a1 1
+; $Id: constructstandardgrids.l2cf,v 1.24 2004/10/29 23:38:45 dwu Exp $
+d6 1
+d8 1
+a8 1
+  start=1000mb, formula=[25:6,12:3]
+d72 3
+@
+
+
+1.24
+log
+@add vGridRefIWC
+@
+text
+@d1 1
+a1 1
+; $Id: constructstandardgrids.l2cf,v 1.23 2004/07/28 23:01:31 cvuu Exp $
+d33 4
+a36 2
+vGridLowCloudR1:  vGrid, type=Explicit, coordinate=Zeta, values=[1000mb,700mb]
+vGridHighCloudR1: vGrid, type=Explicit, coordinate=Zeta, values=[215mb, 46mb], resolution=6
+d47 4
+a50 2
+vGridLowCloudR5:  vGrid, type=Explicit, coordinate=Zeta, values=[1000mb,68mb], resolution=6
+vGridHighCloudR5: vGrid, type=Explicit, coordinate=Zeta, values=[68mb,46mb], resolution=6
+d71 3
+@
+
+
+1.23
+log
+@Increase vGridPhases to 100
+@
+text
+@d1 1
+a1 1
+; $Id: constructstandardgrids.l2cf,v 1.22 2004/06/22 22:43:26 pwagner Exp $
+d16 1
+d67 3
+@
+
+
+1.22
+log
+@Increased diagnostic vGrid noSurfs to 20
+@
+text
+@d1 1
+a1 1
+; $Id: constructstandardgrids.l2cf,v 1.21 2004/06/22 18:35:04 pwagner Exp $
+d47 3
+d51 1
+a51 1
+    values=[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]
+d53 1
+a53 1
+    values=[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]
+d66 3
+@
+
+
+1.21
+log
+@defaults to writing retrieval diagnostics to l2aux instead of dgg
+@
+text
+@d1 1
+a1 1
+; $Id: constructstandardgrids.l2cf,v 1.20 2004/05/04 01:05:29 livesey Exp $
+d47 4
+a50 2
+vGridIterations: vGrid, type=Explicit, coordinate=Integer, values=[1,20]
+vGridPhases: vGrid, type=Explicit, coordinate=Integer, values=[1,20]
+d63 3
+@
+
+
+1.20
+log
+@Changed the R1 grids (never used) and low cloud grids for R2.
+@
+text
+@d1 1
+a1 1
+; $Id: constructstandardgrids.l2cf,v 1.19 2004/04/28 23:06:13 livesey Exp $
+d47 3
+d61 3
+@
+
+
+1.19
+log
+@Changed the cloud flagging height grids
+@
+text
+@d1 1
+a1 1
+; $Id: constructstandardgrids.l2cf,v 1.18 2004/04/16 00:45:14 livesey Exp $
+d32 4
+a35 3
+vGridLowCloudR1:  vGrid, type=Explicit, coordinate=Zeta, values=[316mb,146mb], resolution=6
+vGridHighCloudR1: vGrid, type=Explicit, coordinate=Zeta, values=[146mb, 46mb], resolution=6
+vGridLowCloudR2:   vGrid, type=Explicit, coordinate=Zeta, values=[316mb,215mb], resolution=6
+d37 1
+d40 1
+d43 1
+d58 3
+@
+
+
+1.18
+log
+@New approach to cloud flagging
+@
+text
+@d1 1
+a1 1
+; $Id: constructstandardgrids.l2cf,v 1.17 2004/03/17 17:13:03 livesey Exp $
+d32 1
+a32 1
+vGridLowCloudR1:  vGrid, type=Explicit, coordinate=Zeta, values=[1000mb,146mb], resolution=6
+d34 1
+a34 1
+vGridLowCloudR2:   vGrid, type=Explicit, coordinate=Zeta, values=[1000mb,215mb], resolution=6
+d36 2
+a37 2
+vGridLowCloudR3:   vGrid, type=Explicit, coordinate=Zeta, values=[1000mb,215mb], resolution=6
+vGridHighCloudR3:  vGrid, type=Explicit, coordinate=Zeta, values=[215mb, 46mb], resolution=6
+d54 3
+@
+
+
+1.17
+log
+@Added vGridGlobal and the vGridLow/HighCloudRn for diagnostic
+precursors.
+@
+text
+@d1 1
+a1 1
+; $Id: constructstandardgrids.l2cf,v 1.16 2004/02/07 00:46:50 livesey Exp $
+d32 2
+a33 4
+vGridLowCloudR1A:  vGrid, type=Explicit, coordinate=Zeta, values=[1000mb,146mb], resolution=6
+vGridHighCloudR1A: vGrid, type=Explicit, coordinate=Zeta, values=[146mb, 46mb], resolution=6
+vGridLowCloudR1B:  vGrid, type=Explicit, coordinate=Zeta, values=[1000mb,146mb], resolution=6
+vGridHighCloudR1B: vGrid, type=Explicit, coordinate=Zeta, values=[146mb, 46mb], resolution=6
+d40 2
+a41 4
+vGridLowCloudR5H:  vGrid, type=Explicit, coordinate=Zeta, values=[1000mb,68mb], resolution=6
+vGridHighCloudR5H: vGrid, type=Explicit, coordinate=Zeta, values=[68mb,46mb], resolution=6
+vGridLowCloudR5V:  vGrid, type=Explicit, coordinate=Zeta, values=[1000mb,68mb], resolution=6
+vGridHighCloudR5V: vGrid, type=Explicit, coordinate=Zeta, values=[68mb,46mb], resolution=6
+d54 4
+@
+
+
+1.16
+log
+@Tidied up extinction.
+@
+text
+@d1 1
+a1 1
+; $Id: constructstandardgrids.l2cf,v 1.15 2003/10/15 11:00:15 mjf Exp $
+d29 18
+d58 3
+@
+
+
+1.15
+log
+@Higher resolution vGridTangents for PEs (does FM fix this up anyway?).
+@
+text
+@d1 1
+a1 1
+; $Id: constructstandardgrids.l2cf,v 1.14 2003/08/14 20:25:58 livesey Exp $
+d14 1
+a14 3
+  start=1000mb, formula=[25:6,9:3]
+vGridExtinctionHiRes: vGrid, type=Logarithmic, coordinate=Zeta, $
+  start=1000mb, formula=[21:12,14:6,9:3]
+d40 3
+@
+
+
+1.14
+log
+@Higher resolution vGridBaseline, also removed flagSingleBaseline.
+@
+text
+@d1 1
+a1 1
+; $Id: constructstandardgrids.l2cf,v 1.13 2003/08/13 21:04:46 livesey Exp $
+d19 7
+a25 2
+vGridTangent: vGrid, type=Logarithmic, coordinate=Zeta, $
+  start=1000mb, formula=[3:6,10:12]
+d42 3
+@
+
+
+1.13
+log
+@Now optionally goes back to old baseline vGrid
+@
+text
+@d1 1
+a1 1
+; $Id: constructstandardgrids.l2cf,v 1.12 2003/08/06 17:49:20 livesey Exp $
+d11 2
+a12 8
+!ifdef(flagSingleBaseline,
+{vGridBaseline: vGrid, type=explicit, coordinate=Zeta, values=100mb},
+{vGridBaseline: vGrid, type=Logarithmic, coordinate=Zeta, $
+  start=1000mb, formula=[13:6,4:1]})
+vGridTropH2O: vGrid, type=Logarithmic, coordinate=Zeta, $
+  start= 1000mb, formula=[2:3,5:6]
+vGridTropH2OHiRes: vGrid, type=Logarithmic, coordinate=Zeta, $
+  start= 1000mb, formula=[2:3,11:12]
+d37 3
+@
+
+
+1.12
+log
+@New baseline grid
+@
+text
+@d1 1
+a1 1
+; $Id: constructstandardgrids.l2cf,v 1.11 2003/05/27 20:57:15 livesey Exp $
+a5 6
+!ifdef(flagOldGrids,{
+vGridStandard: vGrid, type=Logarithmic, coordinate=Zeta, $
+  start=1000mb, formula=[25:6,9:3]
+vGridHiRes: vGrid, type=Logarithmic, coordinate=Zeta, $
+  start=1000mb, formula=[21:12,14:6,9:3]
+},{
+d9 1
+a9 1
+  start=1000mb, formula=[21:12,14:6,12:3]})
+d11 4
+a14 2
+vGridBaseline: vGrid, type=Logarithmic, coordinate=Zeta, $
+  start=1000mb, formula=[13:6,4:1]
+d43 3
+@
+
+
+1.11
+log
+@New approach to extending grid
+@
+text
+@d1 1
+a1 1
+; $Id: constructstandardgrids.l2cf,v 1.10 2003/05/27 20:01:00 livesey Exp $
+d17 2
+a18 1
+vGridBaseline: vGrid, type=Explicit, coordinate=Zeta, values=100mb
+d47 3
+@
+
+
+1.10
+log
+@New vGrid for temperature
+@
+text
+@d1 1
+a1 1
+; $Id: constructstandardgrids.l2cf,v 1.9 2003/05/20 18:25:46 dwu Exp $
+d6 1
+d9 4
+a12 1
+vGridTemperature: vGrid, type=Logarithmic, coordinate=Zeta, $
+d15 2
+a16 3
+  start=1000mb, formula=[21:12,14:6,9:3]
+vGridTemperatureHiRes: vGrid, type=Logarithmic, coordinate=Zeta, $
+  start=1000mb, formula=[21:12,14:6,12:3]
+d46 3
+@
+
+
+1.9
+log
+@change sGridStandard
+@
+text
+@d1 1
+a1 1
+; $Id: constructstandardgrids.l2cf,v 1.8 2003/05/16 19:55:09 dwu Exp $
+d8 2
+d12 2
+d43 3
+@
+
+
+1.8
+log
+@del hGridFine
+@
+text
+@d1 1
+a1 1
+; $Id: constructstandardgrids.l2cf,v 1.7 2003/05/16 19:48:31 dwu Exp $
+d29 3
+a31 1
+  values=[50,100,150,200,250,300,350,400,450,500,550] ;km
+d39 3
+@
+
+
+1.7
+log
+@add hGridFine
+@
+text
+@d1 1
+a1 1
+; $Id: constructstandardgrids.l2cf,v 1.6 2003/05/10 00:57:33 livesey Exp $
+a29 2
+hGridFine: hGrid, type=height, height=0km, module=GHz, interpolationFactor=4.,$
+    origin=0 degrees, /forbidOverspill, /insetOverlaps
+d37 3
+@
+
+
+1.6
+log
+@Added vGridWMO
+@
+text
+@d1 1
+a1 1
+; $Id: constructstandardgrids.l2cf,v 1.5 2003/03/22 01:16:51 livesey Exp $
+d30 2
+d39 3
+@
+
+
+1.5
+log
+@Added vGridExtinctionHiRes
+@
+text
+@d1 1
+a1 1
+; $Id: constructstandardgrids.l2cf,v 1.4 2003/01/24 00:16:10 livesey Exp $
+d33 3
+d37 3
+@
+
+
+1.4
+log
+@Added vGridTangentSids (not used as yet in the sids l2cfs but will be
+one day).
+@
+text
+@d1 1
+a1 1
+; $Id: constructstandardgrids.l2cf,v 1.3 2003/01/07 23:48:14 livesey Exp $
+d17 2
+d34 4
+@
+
+
+1.3
+log
+@New basis for tropH2O
+@
+text
+@d1 1
+a1 1
+; $Id: constructstandardgrids.l2cf,v 1.2 2002/12/19 11:54:29 livesey Exp $
+d21 2
+d32 3
+@
+
+
+1.2
+log
+@Added vGridTropH2OHiRes
+@
+text
+@d1 1
+a1 1
+; $Id: constructstandardgrids.l2cf,v 1.1 2002/12/05 20:41:56 livesey Exp $
+d10 5
+d17 2
+a20 6
+vGridRefGPH: vGrid, type=Explicit, coordinate=Zeta, values=100mb
+vGridBaseline: vGrid, type=Explicit, coordinate=Zeta, values=100mb
+vGridTropH2O: vGrid, type=Logarithmic, coordinate=Zeta, $
+  start= 464.158872744048438mb, formula=[6:6]
+vGridTropH2OHiRes: vGrid, type=Logarithmic, coordinate=Zeta, $
+  start= 464.158872744048438mb, formula=[11:12]
+d23 1
+d27 1
+a27 1
+    start= 464.158872744048438mb, formula=[7:6]
+d30 3
+@
+
+
+1.1
+log
+@First version
+@
+text
+@d1 1
+a1 1
+; $Id$
+d18 2
+d27 4
+a30 1
+; $Log$
+@
+

@@ -1,0 +1,5633 @@
+head	1.28;
+access;
+symbols
+	v5-02-NRT-19:1.28
+	v6-00:1.28
+	v5-02-NRT-18:1.28
+	v5-02:1.28
+	v5-01-NRT-17:1.28
+	v5-01-NRT-16:1.28
+	v5-01-NRT-15:1.28
+	v5-01-NRT-14:1.28
+	neuralnetworks-1-0:1.28.0.16
+	cfm-single-freq-0-1:1.28.0.14
+	v5-01:1.28
+	v5-00:1.28
+	v4-23-TA133:1.28.0.12
+	mus-emls-1-70:1.28.0.10
+	rel-1-0-englocks-work:1.28.0.8
+	VUMLS1-00:1.28
+	VPL1-00:1.28
+	V4-22-NRT-08:1.28
+	VAM1-00:1.28
+	V4-21:1.28.0.6
+	V4-13:1.28
+	V4-12:1.28
+	V4-11:1.28
+	V4-10:1.28
+	V3-43:1.28
+	M4-00:1.28
+	V3-41:1.28
+	V3-40-PlusGM57:1.28.0.4
+	V2-24-NRT-04:1.28
+	V3-33:1.28
+	V2-24:1.28
+	V3-31:1.28
+	V3-30-NRT-05:1.28
+	cfm-01-00:1.28
+	V3-30:1.28
+	V3-20:1.28
+	V3-10:1.28
+	V2-23-NRT-02:1.28
+	V2-23:1.28
+	V2-22-NRT-01:1.28
+	V2-22:1.28
+	V2-21:1.28
+	V2-20:1.28
+	V2-11:1.28
+	V2-10:1.28
+	V2-00:1.28
+	V1-51:1.28
+	V1-50:1.28
+	V1-45:1.28
+	V1-44:1.28
+	V1-43:1.28
+	V1-32:1.28
+	V1-31:1.28
+	V1-13:1.28
+	V1-12:1.28
+	V1-11:1.28
+	V1-10:1.28
+	newfwm-feb03:1.28.0.2
+	V1-04:1.18
+	V1-03:1.18
+	V1-02:1.18
+	V1-00:1.16
+	newfwm-sep01:1.8.0.2
+	V0-7:1.8
+	V0-5-Level2:1.6
+	V0-5-SIPS:1.5;
+locks; strict;
+comment	@# @;
+
+
+1.28
+date	2003.01.30.00.58.53;	author pwagner;	state Exp;
+branches;
+next	1.27;
+
+1.27
+date	2003.01.15.23.23.34;	author pwagner;	state Exp;
+branches;
+next	1.26;
+
+1.26
+date	2003.01.15.19.13.30;	author pwagner;	state Exp;
+branches;
+next	1.25;
+
+1.25
+date	2003.01.15.00.05.34;	author pwagner;	state Exp;
+branches;
+next	1.24;
+
+1.24
+date	2003.01.09.01.02.27;	author pwagner;	state Exp;
+branches;
+next	1.23;
+
+1.23
+date	2002.10.25.15.21.05;	author hcp;	state Exp;
+branches;
+next	1.22;
+
+1.22
+date	2002.10.23.16.59.14;	author hcp;	state Exp;
+branches;
+next	1.21;
+
+1.21
+date	2002.10.09.14.05.30;	author hcp;	state Exp;
+branches;
+next	1.20;
+
+1.20
+date	2002.08.15.22.26.22;	author pwagner;	state Exp;
+branches;
+next	1.19;
+
+1.19
+date	2002.06.10.12.00.43;	author hcp;	state Exp;
+branches;
+next	1.18;
+
+1.18
+date	2002.05.01.13.05.53;	author hcp;	state Exp;
+branches;
+next	1.17;
+
+1.17
+date	2002.05.01.09.28.10;	author hcp;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2002.03.15.23.02.29;	author pwagner;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2002.02.01.21.32.34;	author pwagner;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2002.01.29.23.47.21;	author pwagner;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2002.01.29.00.48.43;	author pwagner;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2002.01.26.00.18.05;	author pwagner;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2001.11.29.10.07.13;	author pumphrey;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2001.11.28.17.46.28;	author pumphrey;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2001.11.28.16.17.16;	author pumphrey;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2001.07.31.11.26.19;	author archie;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2001.07.11.19.01.16;	author pumphrey;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2001.04.27.07.48.54;	author pumphrey;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2001.04.06.20.16.38;	author pumphrey;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.03.29.17.33.27;	author pumphrey;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2001.03.20.14.00.30;	author pumphrey;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.02.23.13.33.14;	author pumphrey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2000.12.22.15.55.53;	author pumphrey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.28
+log
+@Writing first attributes for hdfeos5
+@
+text
+@! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+!=============================================================================
+module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
+!=============================================================================
+  use Allocate_Deallocate, only: Allocate_test, Deallocate_test
+  use DUMP_0, only: DUMP
+  use Hdf, only: DFNT_CHAR8, DFNT_FLOAT32, DFNT_INT32, DFNT_FLOAT64
+!  use HDF5_params
+  use HDFEOS!, only: SWATTACH, SWCREATE, SWDEFDFLD, SWDEFDIM, SWDEFGFLD, &
+     !& SWDETACH
+!  use HDFEOS5
+!  use HE5_SWAPI 
+  use MLSCommon, only: R4, R8
+  use MLSFiles, only: HDFVERSION_4, HDFVERSION_5
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
+       & MLSMSG_Error, MLSMSG_Warning, MLSMSG_Debug
+  use MLSStrings, only: ints2Strings, strings2Ints
+  use OUTPUT_M, only: OUTPUT
+  use STRING_TABLE, only: DISPLAY_STRING
+  use SWAPI, only: SWWRFLD, SWRDFLD
+
+  implicit none
+
+  private
+  public :: L2GPData_T
+  public :: L2GPNameLen
+  public :: AddL2GPToDatabase,  DestroyL2GPContents,  DestroyL2GPDatabase, &
+    & Dump, ExpandL2GPDataInPlace, AppendL2GPData, &
+    & ReadL2GPData, SetupNewL2GPRecord,  WriteL2GPData
+
+  !---------------------------- RCS Ident Info -------------------------------
+  character(len=256), private :: Id = &
+       & "$Id: L2GPData.f90,v 1.27 2003/01/15 23:23:34 pwagner Exp $"
+  character(len=*), parameter, private :: ModuleName = &
+       & "$RCSfile: L2GPData.f90,v $"
+  !---------------------------------------------------------------------------
+
+  interface DUMP !And this does WTF? On-the-fly dumps; see l2/tree_walker.f90
+    module procedure DUMP_L2GP
+    module procedure DUMP_L2GP_DataBase
+  end interface
+
+  ! This module defines datatypes and gives basic routines for storing and
+  ! manipulating L2GP data.
+  ! It is prepared to handle io for both file versions: hdfeos2 and hdfeos5
+
+!     c o n t e n t s
+!     - - - - - - - -
+
+! L2GPData_T              The l2gp data type; holds all data for one swath
+
+! AddL2GPToDatabase       Adds an l2gp data type to a database
+! DestroyL2GPContents     Deallocates all the arrays allocated for an L2GP
+! DestroyL2GPDatabase     Destroys an L2GP database
+! Dump                    Reveals info about an L2GP or a database of L2GP
+!                            to any desired level of detail
+! ExpandL2GPDataInPlace   Adds more profiles to an existing L2GP
+! AppendL2GPData          Appends L2GP onto end of existing swath file
+! ReadL2GPData            Reads L2GP from existing swath file
+! SetupNewL2GPRecord      Allocates arrays for a new L2GP
+! WriteL2GPData           Writes an L2GP into a swath file
+
+  ! First some local parameters
+  ! (This 1st one enables some changes *not* made by paw zeroing out frequency)
+  logical, private, parameter :: MONKEYAROUND = .FALSE. ! If true, then ???
+
+
+  ! Assume L2GP files w/o explicit hdfVersion field are this
+  ! 4 corresponds to hdf4, 5 to hdf5 in L2GP, L2AUX, etc. 
+  integer, parameter :: L2GPDEFAULT_HDFVERSION = HDFVERSION_4
+
+  ! r4 corresponds to sing. prec. :: same as stored in files
+  integer, parameter :: rgp = r4
+
+  integer, parameter :: L2GPNameLen = 80
+
+   character (len=*), parameter :: DATA_FIELD1 = 'L2gpValue'
+   character (len=*), parameter :: DATA_FIELD2 = 'L2gpPrecision'
+   character (len=*), parameter :: DATA_FIELD3 = 'Status'
+   character (len=*), parameter :: DATA_FIELD4 = 'Quality'
+
+   character (len=*), parameter :: GEO_FIELD1 = 'Latitude'
+   character (len=*), parameter :: GEO_FIELD2 = 'Longitude'
+   character (len=*), parameter :: GEO_FIELD3 = 'Time'
+   character (len=*), parameter :: GEO_FIELD4 = 'LocalSolarTime'
+   character (len=*), parameter :: GEO_FIELD5 = 'SolarZenithAngle'
+   character (len=*), parameter :: GEO_FIELD6 = 'LineOfSightAngle'
+   character (len=*), parameter :: GEO_FIELD7 = 'OrbitGeodeticAngle'
+   character (len=*), parameter :: GEO_FIELD8 = 'ChunkNumber'
+   character (len=*), parameter :: GEO_FIELD9 = 'Pressure'
+   character (len=*), parameter :: GEO_FIELD10= 'Frequency'
+
+   character (len=*), parameter :: DIM_NAME1 = 'nTimes'
+   character (len=*), parameter :: DIM_NAME2 = 'nLevels'
+   character (len=*), parameter :: DIM_NAME3 = 'nFreqs'
+   character (len=*), parameter :: DIM_NAME12 = 'nLevels,nTimes'
+   character (len=*), parameter :: DIM_NAME123 = 'nFreqs,nLevels,nTimes'
+   ! These are for the new max_dimlist parameter added to  SWdefgfld.
+   ! this one is for non-extendible dimensions
+   character (len=*), parameter :: MAX_DIML = ' '
+   character (len=*), parameter :: UNLIM = 'Unlim'
+   ! This is for cases where the time dimension is extendible
+   character (len=*), parameter :: MAX_DIML1 = UNLIM
+   character (len=*), parameter :: MAX_DIML12 = 'nLevels,Unlim'
+   character (len=*), parameter :: MAX_DIML123 = 'nFreqs,nLevels,Unlim'
+
+!   INTEGER,PARAMETER::CHUNKFREQS=13,CHUNKLEVELS=17,CHUNKTIMES=9,CHUNK4=1
+
+   integer, parameter :: HDFE_AUTOMERGE = 1     ! MERGE FIELDS WITH SHARE DIM
+   integer, parameter :: HDFE_NOMERGE = 0       ! don't merge
+  ! The following, if true, says to encode strings as ints
+  ! before swapi write; also decode ints to strings after read
+  ! otherwise, try swapi read, write directly with strings
+  logical, parameter :: USEINTS4STRINGS = .false.  
+  
+  ! So far, the nameIndex component of the main data type is never set
+  logical, parameter :: NAMEINDEXEVERSET = .false.  
+  ! This datatype is the main one, it simply defines one l2gp swath
+  ! It is used for 
+  ! (1) normal swaths, which have geolocations along nTimes
+  !     vertical coordinates called "surfaces" dimensioned by pressures
+  !     and at nTimes horizontal "instances" dimensioned by 
+  !     latitudes and longitudes
+  ! (2) column abundances which are  integrated amounts and therefore 
+  !     the vertical coordinate is suppressed; instead we set nLevels=1
+  !     and store the tropopause in pressures(1)
+  type L2GPData_T
+
+     ! First some variables we use for book keeping
+
+     character (LEN=L2GPNameLen) :: name ! Typically the swath name.
+     integer :: nameIndex       ! Used by the parser to keep track of the data
+
+     ! Now the dimensions of the data
+
+     integer :: nTimes          ! Total number of profiles
+     integer :: nLevels         ! Total number of surfaces (==1 for col. abund)
+     integer :: nFreqs          ! Number of frequencies in breakdown
+
+     ! Now we store the geolocation fields, first the vertical one:
+     ! (The following has the tropopause if the swath is a column abundance)
+     real (rgp), pointer, dimension(:) :: pressures=>NULL() ! Vertical coords (nLevels)
+
+     ! Now the horizontal geolocation information. Dimensioned (nTimes)
+     real (rgp), pointer, dimension(:) :: latitude => NULL()
+     real (rgp), pointer, dimension(:) :: longitude => NULL()
+     real (rgp), pointer, dimension(:) :: solarTime => NULL()
+     real (rgp), pointer, dimension(:) :: solarZenith => NULL()
+     real (rgp), pointer, dimension(:) :: losAngle => NULL()
+     real (rgp), pointer, dimension(:) :: geodAngle => NULL()
+     real (r8 ), pointer, dimension(:) :: time => NULL()   ! dble prec.
+
+     integer, pointer, dimension(:) :: chunkNumber=>NULL()
+
+     ! Now we store the `frequency' geolocation field
+
+     real (rgp), pointer, dimension(:) :: frequency=>NULL()
+     !        dimensioned (nFreqs)
+
+     ! Finally we store the data fields
+
+     real (rgp), pointer, dimension(:,:,:) :: l2gpValue=>NULL()
+     real (rgp), pointer, dimension(:,:,:) :: l2gpPrecision=>NULL()
+     ! dimensioned (nFreqs, nLevels, nTimes)
+
+     character (len=1), pointer, dimension(:) :: status=>NULL()
+     !                (status is a reserved word in F90)
+     real (rgp), pointer, dimension(:) :: quality=>NULL()
+     ! Both the above dimensioned (nTimes)
+
+  end type L2GPData_T
+
+contains ! =====     Public Procedures     =============================
+
+  !------------------------------------------  SetupNewL2GPRecord  -----
+  subroutine SetupNewL2GPRecord ( l2gp, nFreqs, nLevels, nTimes)
+
+    ! This routine sets up the arrays for an l2gp datatype.
+
+    ! Dummy arguments
+    type (L2GPData_T), intent(out)  :: l2gp
+    integer, intent(in), optional :: nFreqs            ! Dimensions
+    integer, intent(in), optional :: nLevels           ! Dimensions
+    integer, intent(in), optional :: nTimes            ! Dimensions
+
+    ! Local variables
+    integer :: useNFreqs, useNLevels, useNTimes
+
+    if (present(nFreqs)) then
+       useNFreqs=nFreqs
+    else
+       useNFreqs=0
+    endif
+
+    if (present(nLevels)) then
+       useNLevels=nLevels
+    else
+       useNLevels=0
+    endif
+
+    if (present(nTimes)) then
+       useNTimes=nTimes
+    else
+       useNTimes=0              ! Default to empty l2gp
+    endif
+
+    ! Store the dimensionality
+
+    l2gp%nTimes = useNTimes
+    l2gp%nLevels = useNLevels
+    l2gp%nFreqs = useNFreqs
+
+    ! But allocate to at least one for times, freqs
+
+    useNTimes=max(useNTimes,1)
+    useNLevels=max(useNLevels,1)
+    useNFreqs=max(useNFreqs,1)    
+
+    ! Allocate the frequency coordinate
+
+    call allocate_test ( l2gp%pressures, useNLevels, "l2gp%pressures", &
+         & ModuleName )
+
+    ! Allocate the vertical coordinate
+
+    call allocate_test ( l2gp%frequency, useNFreqs, "l2gp%frequency", ModuleName)
+
+    ! Allocate the horizontal coordinates
+
+    call allocate_test(l2gp%latitude,   useNTimes, "l2gp%latitude",   ModuleName)
+    call allocate_test(l2gp%longitude,  useNTimes, "l2gp%longitude",  ModuleName)
+    call allocate_test(l2gp%solarTime,  useNTimes, "l2gp%solarTime",  ModuleName)
+    call allocate_test(l2gp%solarZenith,useNTimes, "l2gp%solarZenith",ModuleName)
+    call allocate_test(l2gp%losAngle,   useNTimes, "l2gp%losAngle",   ModuleName)
+    call allocate_test(l2gp%geodAngle,  useNTimes, "l2gp%geodAngle",  ModuleName)
+    call allocate_test(l2gp%time,       useNTimes, "l2gp%time",       ModuleName)
+    call allocate_test(l2gp%chunkNumber,useNTimes, "l2gp%chunkNumber",ModuleName)
+
+    ! Allocate the data fields
+
+    call allocate_test(l2gp%l2gpValue,useNFreqs,useNLevels,&
+      & useNTimes,"l2gp%l2gpValue", ModuleName)
+    call allocate_test(l2gp%l2gpPrecision,useNFreqs,useNLevels,&
+      & useNTimes,"l2gp%l2gpPrecision", ModuleName)
+
+    call allocate_test(l2gp%status, useNTimes,"l2gp%status", ModuleName)
+    call allocate_test(l2gp%quality,useNTimes,"l2gp%quality",ModuleName)
+
+  end subroutine SetupNewL2GPRecord
+
+  !-----------------------------------------  DestroyL2GPContents  -----
+  subroutine DestroyL2GPContents ( L2GP )
+
+    ! This routine deallocates all the arrays allocated above.
+
+    ! Dummy arguments
+    type (L2GPData_T), intent(inout) :: L2GP
+
+    ! Executable code
+
+    call deallocate_test ( l2gp%pressures,    "l2gp%pressures",    ModuleName )
+    call deallocate_test ( l2gp%latitude,     "l2gp%latitude",     ModuleName )
+    call deallocate_test ( l2gp%longitude,    "l2gp%longitude",    ModuleName )
+    call deallocate_test ( l2gp%solarTime,    "l2gp%solarTime",    ModuleName )
+    call deallocate_test ( l2gp%solarZenith,  "l2gp%solarZenith",  ModuleName )
+    call deallocate_test ( l2gp%losAngle,     "l2gp%losAngle",     ModuleName )
+    call deallocate_test ( l2gp%losAngle,     "l2gp%losAngle",     ModuleName )
+    call deallocate_test ( l2gp%geodAngle,    "l2gp%geodAngle",    ModuleName )
+    call deallocate_test ( l2gp%chunkNumber,  "l2gp%chunkNumber",  ModuleName )
+    call deallocate_test ( l2gp%time,         "l2gp%time",         ModuleName )
+    call deallocate_test ( l2gp%frequency,    "l2gp%frequency",    ModuleName )
+    call deallocate_test ( l2gp%l2gpValue,    "l2gp%l2gpValue",    ModuleName )
+    call deallocate_test ( l2gp%l2gpPrecision,"l2gp%l2gpPrecision",ModuleName )
+    call deallocate_test ( l2gp%status,       "l2gp%status",       ModuleName )
+    call deallocate_test ( l2gp%quality,      "l2gp%quality",      ModuleName )
+    l2gp%nTimes = 0
+    l2gp%nLevels = 0
+    l2gp%nFreqs = 0
+  end subroutine DestroyL2GPContents
+
+  !---------------------------------------  ExpandL2GPDataInPlace  -----
+  subroutine ExpandL2GPDataInPlace ( l2gp, newNTimes )
+
+    ! This subroutine expands an L2GPData_T in place allowing the user to
+    ! (1) add more profiles to it; or [or? or WTF?]
+
+    ! Dummy arguments
+    type (L2GPData_T), intent(inout) :: l2gp
+    integer, optional, intent(in) :: newNTimes
+
+    ! Local variables
+    type (L2GPData_T) :: tempL2gp       ! For copying data around
+    integer :: myNTimes
+    ! Executable code
+
+   if(present(newNTimes)) then
+      myNTimes = newNTimes
+   else
+      myNTimes = l2gp%nTimes
+   endif
+
+    ! First do a sanity check
+
+
+    if ( myNTimes<l2gp%nTimes ) &
+         & call MLSMessage ( MLSMSG_Error, ModuleName, &
+         & "The number of profiles requested is fewer than those already present" )
+
+    tempL2gp = l2gp ! Copy the pointers to the old information
+
+    ! Now recreate l2gp with the new size.
+    ! First, nullify all of the pointers in l2gp, so that a deallocate_test
+    ! won't delete them.  After all, we just went to the trouble to preserve
+    ! them in TempL2GP!
+    nullify ( l2gp%pressures, l2gp%latitude, l2gp%longitude, l2gp%solarTime, &
+      & l2gp%solarZenith, l2gp%losAngle, l2gp%losAngle, l2gp%geodAngle, &
+      & l2gp%chunkNumber, l2gp%time, l2gp%frequency, l2gp%l2gpValue, &
+      & l2gp%l2gpPrecision, l2gp%status, l2gp%quality )
+    call SetupNewL2GPRecord( l2gp, nFreqs=l2gp%nFreqs, nLevels=l2gp%nLevels, &
+      & nTimes=myNTimes)
+
+    ! Don't forget the `global' stuff
+    l2gp%pressures=templ2gp%pressures
+
+    ! Now go through the parameters one by one, and copy the previous contents
+    l2gp%latitude(1:templ2gp%nTimes) = templ2gp%latitude(1:templ2gp%nTimes)
+    l2gp%longitude(1:templ2gp%nTimes) = templ2gp%longitude(1:templ2gp%nTimes)
+    l2gp%solarTime(1:templ2gp%nTimes) = templ2gp%solarTime(1:templ2gp%nTimes)
+    l2gp%solarZenith(1:templ2gp%nTimes) = templ2gp%solarZenith(1:templ2gp%nTimes)
+    l2gp%losAngle(1:templ2gp%nTimes) = templ2gp%losAngle(1:templ2gp%nTimes)
+    l2gp%geodAngle(1:templ2gp%nTimes) = templ2gp%geodAngle(1:templ2gp%nTimes)
+    l2gp%time(1:templ2gp%nTimes) = templ2gp%time(1:templ2gp%nTimes)
+    l2gp%chunkNumber(1:templ2gp%nTimes) = templ2gp%chunkNumber(1:templ2gp%nTimes)
+
+    l2gp%l2gpValue(:,:,1:templ2gp%nTimes) = templ2gp%l2gpValue(:,:,1:templ2gp%nTimes)
+    l2gp%l2gpPrecision(:,:,1:templ2gp%nTimes) = &
+         templ2gp%l2gpPrecision(:,:,1:templ2gp%nTimes)
+    
+    l2gp%status(1:templ2gp%nTimes) = templ2gp%status(1:templ2gp%nTimes)
+    l2gp%quality(1:templ2gp%nTimes) = templ2gp%quality(1:templ2gp%nTimes)
+
+    ! Deallocate the old arrays
+    call DestroyL2GPContents(templ2gp)
+
+  end subroutine ExpandL2GPDataInPlace
+
+  !-------------------------------------------  AddL2GPToDatabase  -----
+  integer function AddL2GPToDatabase( DATABASE, ITEM )
+
+    ! This function adds an l2gp data type to a database of said types,
+    ! creating a new database if it doesn't exist.  The result value is
+    ! the size -- where L2gp is put.
+
+    ! Dummy arguments
+    type (l2gpdata_t), dimension(:), pointer :: DATABASE
+    type (l2gpdata_t), intent(in) :: ITEM
+
+    ! Local variables
+    type (L2GPData_T), dimension(:), pointer :: tempDatabase
+    !This include causes real trouble if you are compiling in a different 
+    !directory.
+    include "addItemToDatabase.f9h" 
+
+    AddL2GPToDatabase = newSize
+  end function AddL2GPToDatabase
+
+  ! --------------------------------------------------------------------------
+
+  ! This subroutine destroys an L2GP database
+
+  subroutine DestroyL2GPDatabase ( DATABASE )
+
+    ! Dummy argument
+    type (L2GPData_T), dimension(:), pointer :: DATABASE
+
+    ! Local variables
+    integer :: l2gpIndex, status
+
+    if ( associated(database)) then
+       do l2gpIndex = 1, size(database)
+          call DestroyL2GPContents ( database(l2gpIndex) )
+       end do
+       deallocate ( database, stat=status )
+       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & MLSMSG_deallocate // "database" )
+    end if
+  end subroutine DestroyL2GPDatabase
+
+  ! ---------------------- ReadL2GPData  -----------------------------
+
+  subroutine ReadL2GPData(L2FileHandle, swathname, l2gp, numProfs, &
+       firstProf, lastProf, hdfVersion)
+    !------------------------------------------------------------------------
+
+    ! This routine reads an L2GP file, in either hdfVersion,
+    ! returning a filled data structure and the !
+    ! number of profiles read.
+
+    ! Arguments
+
+    character (len=*), intent(in) :: swathname ! Name of swath
+    integer, intent(in) :: L2FileHandle ! Returned by swopen
+    integer, intent(in), optional :: firstProf, lastProf ! Defaults to first and last
+    type( l2GPData_T ), intent(out) :: l2gp ! Result
+    integer, intent(out), optional :: numProfs ! Number actually read
+    integer, optional, intent(in) :: hdfVersion
+
+    ! Local
+    integer :: myhdfVersion
+    
+    ! Executable code
+    if (present(hdfVersion)) then
+      myhdfVersion = hdfVersion
+    else
+      myhdfVersion = L2GPDEFAULT_HDFVERSION
+    endif
+    !print*,"In readl2gpdata: first/last prof=",firstProf, lastProf
+    if (myhdfVersion == HDFVERSION_4) then
+      call ReadL2GPData_hdf4(L2FileHandle, swathname, l2gp, numProfs, &
+       firstProf, lastProf)
+    elseif (myhdfVersion /= HDFVERSION_5) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & "Unrecognized hdfVersion passed to ReadL2GPData" )
+    else
+      call ReadL2GPData_hdf5(L2FileHandle, swathname, l2gp, numProfs, &
+       firstProf, lastProf)
+!       call MLSMessage ( MLSMSG_Error, ModuleName, &
+!            & 'This version of L2GPData not yet ready for hdf5' )
+    endif
+    !print*,"In readl2gpdata: first/last/read prof=",firstProf,&
+    !  lastProf,numProfs
+  end subroutine ReadL2GPData
+
+  ! ---------------------- ReadL2GPData_hdf4  -----------------------------
+
+  subroutine ReadL2GPData_hdf4(L2FileHandle, swathname, l2gp, numProfs, &
+       firstProf, lastProf)
+    !------------------------------------------------------------------------
+
+    ! This routine reads an L2GP file, assuming it is hdfeos2 format
+    ! (i.e. hdf4) returning a filled data structure and the
+    ! number of profiles read.
+
+    ! Arguments
+
+    character (len=*), intent(in) :: swathname ! Name of swath
+    integer, intent(in) :: L2FileHandle ! Returned by swopen
+    integer, intent(in), optional :: firstProf, lastProf ! Defaults to first and last
+    type( l2GPData_T ), intent(out) :: l2gp ! Result
+    integer, intent(out), optional :: numProfs ! Number actually read
+
+    ! Local Parameters
+    character (len=*), parameter :: SZ_ERR = 'Failed to get size of &
+         &dimension '
+    character (len=*), parameter :: MLSMSG_INPUT = 'Error in input argument '
+    character (len=*), parameter :: MLSMSG_L2GPRead = 'Unable to read L2GP &
+                                                     &field:'
+
+    ! Local Variables
+    character (len=80) :: list
+    character (len=480) :: msr
+
+    integer :: alloc_err, first, freq, lev, nDims, size, swid, status
+    integer :: start(3), stride(3), edge(3), dims(3)
+    integer :: nFreqs, nLevels, nTimes, nFreqsOr1, nLevelsOr1, myNumProfs
+    logical :: firstCheck, lastCheck
+
+    real, allocatable :: realFreq(:), realSurf(:), realProf(:), real3(:,:,:)
+!  How to deal with status and columnTypes? swrfld fails
+!  with char data on Linux
+!  Have recourse to ints2Strings and strings2Ints if USEINTS4STRINGS
+!    character (LEN=8), allocatable :: the_status_buffer(:)
+!    character (LEN=L2GPNameLen), allocatable :: the_status_buffer(:)
+    integer, allocatable, dimension(:,:) :: string_buffer
+
+    ! Attach to the swath for reading
+
+    l2gp%Name = swathname
+
+    swid = swattach(L2FileHandle, TRIM(l2gp%Name))
+    if ( swid == -1) call MLSMessage ( MLSMSG_Error, ModuleName, 'Failed to &
+         &attach to swath interface for reading.')
+
+    ! Get dimension information
+
+    lev = 0
+    freq = 0
+
+    nDims = swinqdims(swid, list, dims)
+    if ( nDims == -1) call MLSMessage ( MLSMSG_Error, ModuleName, 'Failed to &
+         &get dimension information.')
+    if ( INDEX(list,'nLevels') /= 0 ) lev = 1
+    if ( INDEX(list,'Freq') /= 0 ) freq = 1
+
+    size = swdiminfo(swid, DIM_NAME1)
+    if ( size == -1 ) then
+       msr = SZ_ERR // DIM_NAME1
+       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+    l2gp%nTimes = size
+    nTimes=size
+    if ( lev == 0 ) then
+       nLevels = 0
+    else
+       size = swdiminfo(swid, DIM_NAME2)
+       if ( size == -1 ) then
+          msr = SZ_ERR // DIM_NAME2
+          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+       nLevels = size
+
+    end if
+
+    if ( freq == 1 ) then
+       size = swdiminfo(swid, DIM_NAME3)
+       if ( size == -1 ) then
+          msr = SZ_ERR // DIM_NAME3
+          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+       nFreqs = size
+    else
+       nFreqs = 0
+    end if
+
+    ! Check optional input arguments
+
+    firstCheck = present(firstProf)
+    lastCheck = present(lastProf)
+
+    if ( firstCheck ) then
+
+       if ( (firstProf >= l2gp%nTimes) .OR. (firstProf < 0) ) then
+          msr = MLSMSG_INPUT // 'firstProf'
+          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       else
+          first = firstProf
+       end if
+
+    else
+
+       first = 0
+
+    end if
+
+    if ( lastCheck ) then
+
+       if ( lastProf < first ) then
+          msr = MLSMSG_INPUT // 'lastProf'
+          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+
+       if ( lastProf >= nTimes ) then
+          myNumProfs = nTimes - first
+       else
+          myNumProfs = lastProf - first + 1
+       end if
+
+    else
+
+       myNumProfs = nTimes - first
+
+    end if
+
+    ! Allocate result
+
+    call SetupNewL2GPRecord ( l2gp, nFreqs=nFreqs, nLevels=nLevels, &
+    & nTimes=myNumProfs )
+
+    ! Allocate temporary arrays
+
+    nFreqsOr1=MAX(nFreqs,1)
+    nLevelsOr1=MAX(nLevels, 1)
+    allocate ( realProf(myNumProfs), realSurf(l2gp%nLevels), &
+      &   string_buffer(1,myNumProfs), &
+      &   realFreq(l2gp%nFreqs), &
+      &   real3(nFreqsOr1,nLevelsOr1,myNumProfs), STAT=alloc_err )
+    if ( alloc_err /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate//' various things in ReadL2GPData' )
+
+    ! Read the horizontal geolocation fields
+
+    start(1) = 0
+    start(2) = 0
+    start(3) = first
+    stride = 1
+    edge(1) = nFreqsOr1
+    edge(2) = nLevelsOr1
+    edge(3) = myNumProfs
+    status=0
+
+    status = swrdfld(swid, GEO_FIELD1, start(3:3), stride(3:3), edge(3:3), &
+      &    realProf)
+    if ( status == -1 ) then
+       msr = MLSMSG_L2GPRead // GEO_FIELD1
+       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+    l2gp%latitude = realProf
+
+    status = swrdfld(swid, GEO_FIELD2, start(3:3), stride(3:3), edge(3:3), &
+      &    realProf)
+    if ( status == -1 ) then
+       msr = MLSMSG_L2GPRead // GEO_FIELD2
+       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+    l2gp%longitude = realProf
+
+    status = swrdfld(swid, GEO_FIELD3, start(3:3), stride(3:3), edge(3:3), &
+      &    l2gp%time)
+    if ( status == -1 ) then
+       msr = MLSMSG_L2GPRead // GEO_FIELD3
+       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+
+    status = swrdfld(swid, GEO_FIELD4, start(3:3), stride(3:3), edge(3:3), &
+      &    realProf)
+    if ( status == -1 ) then
+       msr = MLSMSG_L2GPRead // GEO_FIELD4
+       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+    l2gp%solarTime = realProf
+
+    status = swrdfld(swid, GEO_FIELD5, start(3:3), stride(3:3), edge(3:3), &
+      &    realProf)
+    if ( status == -1 ) then
+       msr = MLSMSG_L2GPRead // GEO_FIELD5
+       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+    l2gp%solarZenith = realProf
+
+    status = swrdfld(swid, GEO_FIELD6, start(3:3), stride(3:3), edge(3:3), &
+      &    realProf)
+    if ( status == -1 ) then
+       msr = MLSMSG_L2GPRead // GEO_FIELD6
+       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+    l2gp%losAngle = realProf
+
+    status = swrdfld(swid, GEO_FIELD7, start(3:3), stride(3:3), edge(3:3), &
+      &    realProf)
+    if ( status == -1 ) then
+       msr = MLSMSG_L2GPRead // GEO_FIELD7
+       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+    l2gp%geodAngle = realProf
+
+    status = swrdfld(swid, GEO_FIELD8, start(3:3), stride(3:3), edge(3:3), &
+      &    l2gp%chunkNumber)
+    if ( status == -1 ) then
+       msr = MLSMSG_L2GPRead // GEO_FIELD8
+       call MLSMessage ( MLSMSG_Warning, ModuleName, msr )
+    end if
+
+    ! Read the pressures vertical geolocation field, if it exists
+
+    if ( lev /= 0 ) then
+
+       status = swrdfld(swid, GEO_FIELD9, start(2:2), stride(2:2), edge(2:2), &
+         & realSurf)
+       if ( status == -1 ) then
+          msr = MLSMSG_L2GPRead // GEO_FIELD9
+          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+
+       l2gp%pressures = realSurf
+
+    end if
+
+    ! Read the frequency geolocation field, if it exists
+
+    if ( freq == 1 ) then
+
+       edge(1) = l2gp%nFreqs
+
+       status = swrdfld(swid, GEO_FIELD10, start(1:1), stride(1:1), edge(1:1), &
+         & realFreq)
+       if ( status == -1 ) then
+          msr = MLSMSG_L2GPRead // GEO_FIELD10
+          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+       l2gp%frequency = realFreq
+
+    end if
+
+    ! Read the data fields that may have 1-3 dimensions
+
+    if ( freq == 1 ) then
+
+       status = swrdfld(swid, DATA_FIELD1, start, stride, edge, real3)
+       if ( status == -1 ) then
+          msr = MLSMSG_L2GPRead // DATA_FIELD1
+          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+       l2gp%l2gpValue = real3
+
+       status = swrdfld(swid, DATA_FIELD2, start, stride, edge, real3)
+       if ( status == -1 ) then
+          msr = MLSMSG_L2GPRead // DATA_FIELD2
+          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+       l2gp%l2gpPrecision = real3
+
+    else if ( lev == 1 ) then
+
+      status = swrdfld( swid, DATA_FIELD1, start(2:3), stride(2:3), &
+        &   edge(2:3), real3(1,:,:) )
+      if ( status == -1 ) then
+        msr = MLSMSG_L2GPRead // DATA_FIELD1
+        call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+      end if
+      l2gp%l2gpValue = real3
+      
+      status = swrdfld( swid, DATA_FIELD2, start(2:3), stride(2:3), &
+        & edge(2:3), real3(1,:,:) )
+      if ( status == -1 ) then
+        msr = MLSMSG_L2GPRead // DATA_FIELD2
+        call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+      end if
+      l2gp%l2gpPrecision = real3
+      
+    else
+
+       status = swrdfld( swid, DATA_FIELD1, start(3:3), stride(3:3), edge(3:3), &
+         &   real3(1,1,:) )
+       if ( status == -1 ) then
+          msr = MLSMSG_L2GPRead // DATA_FIELD1
+          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+       l2gp%l2gpValue = real3
+
+       status = swrdfld( swid, DATA_FIELD2, start(3:3), stride(3:3), edge(3:3), &
+            real3(1,1,:) )
+       if ( status == -1 ) then
+          msr = MLSMSG_L2GPRead // DATA_FIELD2
+          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+       l2gp%l2gpPrecision = real3
+
+    end if
+
+    ! Read the data fields that are 1-dimensional
+
+!??? There appears to be a problem with reading character data using
+!??? HDF-EOS.  HDF_EOS's swrdfld expects a C void* pointer, no matter what
+!??? the type of object.  Burkhard Burow's cfortran macros need to be told
+!??? whether the argument is character, because compilers represent character
+!??? arguments in various ways, usually different from non-character arguments.
+!??? I.e., never the twain shall meet.
+!    status = swrdfld(swid, DATA_FIELD3,start(3:3),stride(3:3),edge(3:3),&
+!      l2gp%status)
+!    status = swrdfld(swid, DATA_FIELD3,start(3:3),stride(3:3),edge(3:3),&
+!      the_status_buffer)
+! These lines commented out as they make NAG core dump on the deallocate statement.
+! below.
+!    if ( status == -1 ) then
+!      msr = MLSMSG_L2GPRead // DATA_FIELD3
+!      call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+!    end if
+!    l2gp%status = the_status_buffer(:)(1:1)
+
+
+    l2gp%status = ' ' ! So it has a value.
+
+   if(USEINTS4STRINGS) then
+       status = swrdfld(swid, DATA_FIELD3,start(3:3),stride(3:3),edge(3:3),&
+         string_buffer)
+       if ( status == -1 ) then
+         msr = MLSMSG_L2GPRead // DATA_FIELD3
+         call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+       call ints2Strings(string_buffer, l2gp%status)
+    end if
+
+    status = swrdfld(swid, DATA_FIELD4, start(3:3), stride(3:3), edge(3:3), &
+      &   realProf)
+    if ( status == -1 ) then
+       msr = MLSMSG_L2GPRead // DATA_FIELD4
+       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+    l2gp%quality = realProf
+
+    ! Deallocate local variables
+
+    deallocate ( realFreq, realSurf, realProf, real3, STAT=alloc_err )
+    if ( alloc_err /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+         'Failed deallocation of local real variables.' )
+
+    deallocate ( string_buffer, STAT=alloc_err )
+    if ( alloc_err /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+         'Failed deallocation of status buffer.' )
+
+    !  After reading, detach from swath interface
+
+    status = swdetach(swid)
+    if ( status == -1) call MLSMessage ( MLSMSG_Error, ModuleName, &
+         & 'Failed to detach from swath interface after reading.' )
+
+    ! Set numProfs if wanted
+    if ( present(numProfs) ) numProfs=myNumProfs
+
+    !-----------------------------
+  end subroutine ReadL2GPData_hdf4
+  !-----------------------------
+
+  ! ------------------- ReadL2GPData_hdf5 ----------------
+
+  subroutine ReadL2GPData_hdf5(L2FileHandle, swathname, l2gp, numProfs, &
+       firstProf, lastProf)
+  use HDFEOS5
+  use HE5_SWAPI 
+    !------------------------------------------------------------------------
+
+    ! This routine reads an L2GP file, returning a filled data structure and the !
+    ! number of profiles read.
+
+    ! Arguments
+
+    character (LEN=*), intent(IN) :: swathname ! Name of swath
+    integer, intent(IN) :: L2FileHandle ! Returned by swopen
+    integer, intent(IN), optional :: firstProf, lastProf ! Defaults to first and last
+    type( L2GPData_T ), intent(OUT) :: l2gp ! Result
+    integer, intent(OUT),optional :: numProfs ! Number actually read
+
+    ! Local Parameters
+    character (LEN=*), parameter :: SZ_ERR = 'Failed to get size of &
+         &dimension '
+    character (LEN=*), parameter :: MLSMSG_INPUT = 'Error in input argument '
+    character (LEN=*), parameter :: MLSMSG_L2GPRead = 'Unable to read L2GP &
+                                                     &field:'
+    ! Local Variables
+    character (LEN=80) :: list
+    character (LEN=480) :: msr
+
+    integer :: alloc_err, first, freq, lev, nDims, size, ulsize, swid, status
+    integer :: start(3), stride(3), edge(3), dims(3)
+    integer :: nFreqs, nLevels, nTimes, nFreqsOr1, nLevelsOr1, myNumProfs
+    logical :: firstCheck, lastCheck, timeIsUnlim
+
+    real, allocatable :: realFreq(:), realSurf(:), realProf(:), real3(:,:,:)
+!  How to deal with status and columnTypes? swrfld fails
+!  with char data on Linux with HDF4. With HDF5 we may or may not need to
+!  Have recourse to ints2Strings and strings2Ints if USEINTS4STRINGS
+!    character (LEN=8), allocatable :: the_status_buffer(:)
+!    character (LEN=L2GPNameLen), allocatable :: the_status_buffer(:)
+    integer, allocatable, dimension(:,:) :: string_buffer
+
+    ! Attach to the swath for reading
+    !print*," in readl2gpdata_hdf5: first/last=",firstprof,lastprof
+    l2gp%Name = swathname
+    
+    swid = HE5_SWattach(L2FileHandle, l2gp%Name)
+    if (swid == -1) call MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
+         &attach to swath interface for reading.')
+
+    ! Get dimension information
+
+    lev = 0
+    freq = 0
+
+    nDims = HE5_SWinqdims(swid, list, dims)
+    !print*,"just called inqdims: nDims=",ndims,"list=",list,"dims=",dims
+    if (nDims == -1) call MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
+         &get dimension information.')
+    if ( index(list,'nLevels') /= 0 ) lev = 1
+    if ( index(list,'Freq') /= 0 ) freq = 1
+!    if ( index(list,'Unlim') /= 0 ) then 
+!      timeIsUnlim = .TRUE.
+!    else
+!      timeIsUnlim = .FALSE.
+!    endif
+
+    size = HE5_SWdiminfo(swid, DIM_NAME1)
+    !print*,"Got dims for ",DIM_NAME1," it was",size
+    if (size == -1) then
+       msr = SZ_ERR // DIM_NAME1
+       call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+    ! This will be wrong if timeIsUnlim .eq. .TRUE. . 
+    ! HE5_SWdiminfo returns 1 instead of the right answer.
+      
+    l2gp%nTimes = size
+    nTimes=size
+
+    if (lev == 0) then
+       nLevels = 0
+    else
+      size = HE5_SWdiminfo(swid, DIM_NAME2)
+      !print*,"Got dims for ",DIM_NAME2," it was",size
+       size = HE5_SWdiminfo(swid, DIM_NAME2)
+       if (size == -1) then
+          msr = SZ_ERR // DIM_NAME2
+          call MLSMessage(MLSMSG_Error, ModuleName, msr)
+       endif
+       nLevels = size
+
+    endif
+
+    if (freq == 1) then
+      size = HE5_SWdiminfo(swid, DIM_NAME3)
+      !print*,"Got dims for ",DIM_NAME3," it was",size
+       size = HE5_SWdiminfo(swid, DIM_NAME3)
+       if (size == -1) then
+          msr = SZ_ERR // DIM_NAME3
+          call MLSMessage(MLSMSG_Error, ModuleName, msr)
+       endif
+       nFreqs = size
+    else
+       nFreqs = 0
+    endif
+
+    ! Check optional input arguments
+
+    firstCheck = present(firstProf)
+    lastCheck = present(lastProf)
+
+    if (firstCheck) then
+      ! Note that if time is an umlimited dimension, HDF-EOS won't 
+      ! nTimes is wrong.
+       if ( (firstProf >= l2gp%nTimes) &
+         .or. (firstProf < 0) ) then
+          msr = MLSMSG_INPUT // 'firstProf'
+          call MLSMessage(MLSMSG_Error, ModuleName, msr)
+       else
+          first = firstProf
+       endif
+
+    else
+
+       first = 0
+
+    endif
+
+    if (lastCheck) then
+
+       if (lastProf < first) then
+          msr = MLSMSG_INPUT // 'lastProf'
+          call MLSMessage(MLSMSG_Error, ModuleName, msr)
+       endif
+
+       ! If user has supplied "last" _and_ time is unlimited, we have
+       ! to believe the user about how many profiles there are.
+       ! This is _crap_ and is a temporary workaround. 
+!       if(timeIsUnlim) then
+!         myNumProfs = lastProf - first + 1
+!         nTimes=lastprof-first+1
+!         l2gp%nTimes=nTimes
+!       endif
+       if (lastProf >= nTimes) then
+          myNumProfs = nTimes - first
+       else
+          myNumProfs = lastProf - first + 1
+       endif
+
+    else
+
+       myNumProfs = nTimes - first
+
+    endif
+
+    ! Allocate result
+
+    call SetupNewL2GPRecord (l2gp, nFreqs=nFreqs, nLevels=nLevels, &
+      &  nTimes=mynumProfs)
+
+    ! Allocate temporary arrays
+
+    nFreqsOr1=max(nFreqs,1)
+    nLevelsOr1=max(nLevels, 1)
+    allocate(realProf(myNumProfs), realSurf(l2gp%nLevels), &
+      &   realFreq(l2gp%nFreqs), &
+      &   string_buffer(1,myNumProfs), &
+      &   real3(nFreqsOr1,nLevelsOr1,myNumProfs), STAT=alloc_err)
+    if ( alloc_err /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate//' various things in ReadL2GPData' )
+
+    ! Read the horizontal geolocation fields
+
+    start(1) = 0
+    start(2) = 0
+    start(3) = first
+    stride = 1
+    edge(1) = nFreqsOr1
+    edge(2) = nLevelsOr1
+    edge(3) = myNumProfs
+    status=0
+
+    status = HE5_SWrdfld(swid, GEO_FIELD1, start(3:3), stride(3:3), &
+      edge(3:3), realProf)
+    if (status == -1) then
+       msr = MLSMSG_L2GPRead // GEO_FIELD1
+       call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+    l2gp%latitude = realProf
+
+    status = HE5_SWrdfld(swid, GEO_FIELD2, start(3:3), stride(3:3), edge(3:3),&
+      &    realProf)
+    if (status == -1) then
+       msr = MLSMSG_L2GPRead // GEO_FIELD2
+       call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+    l2gp%longitude = realProf
+
+    status = HE5_SWrdfld(swid, GEO_FIELD3, start(3:3), stride(3:3), edge(3:3),&
+      &    l2gp%time)
+    if (status == -1) then
+       msr = MLSMSG_L2GPRead // GEO_FIELD3
+       call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+
+    status = HE5_SWrdfld(swid, GEO_FIELD4, start(3:3), stride(3:3), edge(3:3),&
+      &    realProf)
+    if (status == -1) then
+       msr = MLSMSG_L2GPRead // GEO_FIELD4
+       call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+    l2gp%solarTime = realProf
+
+    status = HE5_SWrdfld(swid, GEO_FIELD5, start(3:3), stride(3:3), edge(3:3),&
+      &    realProf)
+    if (status == -1) then
+       msr = MLSMSG_L2GPRead // GEO_FIELD5
+       call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+    l2gp%solarZenith = realProf
+
+    status = HE5_SWrdfld(swid, GEO_FIELD6, start(3:3), stride(3:3), edge(3:3),&
+      &    realProf)
+    if (status == -1) then
+       msr = MLSMSG_L2GPRead // GEO_FIELD6
+       call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+    l2gp%losAngle = realProf
+
+    status = HE5_SWrdfld(swid, GEO_FIELD7, start(3:3), stride(3:3), edge(3:3),&
+      &   realProf)
+    if (status == -1) then
+       msr = MLSMSG_L2GPRead // GEO_FIELD7
+       call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+    l2gp%geodAngle = realProf
+
+    status = HE5_SWrdfld(swid, GEO_FIELD8, start(3:3), stride(3:3), edge(3:3),&
+      &    l2gp%chunkNumber)
+    if (status == -1) then
+       msr = MLSMSG_L2GPRead // GEO_FIELD8
+       call MLSMessage(MLSMSG_Warning, ModuleName, msr)
+    endif
+
+    ! Read the pressures vertical geolocation field, if it exists
+
+    if (lev /= 0) then
+
+       status = HE5_SWrdfld(swid,GEO_FIELD9,start(2:2),stride(2:2), edge(2:2),&
+         & realSurf)
+       if (status == -1) then
+          msr = MLSMSG_L2GPRead // GEO_FIELD9
+          call MLSMessage(MLSMSG_Error, ModuleName, msr)
+       endif
+
+       l2gp%pressures = realSurf
+
+    endif
+
+    ! Read the frequency geolocation field, if it exists
+
+    if (freq == 1) then
+
+       edge(1) = l2gp%nFreqs
+
+       status = HE5_SWrdfld(swid,GEO_FIELD10,start(1:1),stride(1:1),edge(1:1),&
+         & realFreq)
+       if (status == -1) then
+          msr = MLSMSG_L2GPRead // GEO_FIELD10
+          call MLSMessage(MLSMSG_Error, ModuleName, msr)
+       endif
+       l2gp%frequency = realFreq
+
+    endif
+
+    ! Read the data fields that may have 1-3 dimensions
+
+    if ( freq == 1) then
+
+       status = HE5_SWrdfld(swid, DATA_FIELD1, start, stride, edge, real3)
+       if (status == -1) then
+          msr = MLSMSG_L2GPRead // DATA_FIELD1
+          call MLSMessage(MLSMSG_Error, ModuleName, msr)
+       endif
+       l2gp%l2gpValue = real3
+
+       status = HE5_SWrdfld(swid, DATA_FIELD2, start, stride, edge, real3)
+       if (status == -1) then
+          msr = MLSMSG_L2GPRead // DATA_FIELD2
+          call MLSMessage(MLSMSG_Error, ModuleName, msr)
+       endif
+       l2gp%l2gpPrecision = real3
+
+    else if ( lev == 1) then
+
+       status = HE5_SWrdfld( swid, DATA_FIELD1, start(2:3), stride(2:3), &
+            edge(2:3), real3 )
+!            edge(2:3), real3(1,:,:) )
+       if (status == -1) then
+          msr = MLSMSG_L2GPRead // DATA_FIELD1
+          call MLSMessage(MLSMSG_Error, ModuleName, msr)
+       endif
+       l2gp%l2gpValue = real3
+
+       status = HE5_SWrdfld( swid, DATA_FIELD2, start(2:3), stride(2:3), &
+            edge(2:3), real3(1,:,:) )
+       if (status == -1) then
+          msr = MLSMSG_L2GPRead // DATA_FIELD2
+          call MLSMessage(MLSMSG_Error, ModuleName, msr)
+       endif
+       l2gp%l2gpPrecision = real3
+
+    else
+
+       status = HE5_SWrdfld(swid,DATA_FIELD1,start(3:3),stride(3:3),edge(3:3),&
+         &   real3(1,1,:) )
+       if (status == -1) then
+          msr = MLSMSG_L2GPRead // DATA_FIELD1
+          call MLSMessage(MLSMSG_Error, ModuleName, msr)
+       endif
+       l2gp%l2gpValue = real3
+
+       status = HE5_SWrdfld( swid, DATA_FIELD2, start(3:3), stride(3:3), edge(3:3), &
+            real3(1,1,:) )
+       if (status == -1) then
+          msr = MLSMSG_L2GPRead // DATA_FIELD2
+          call MLSMessage(MLSMSG_Error, ModuleName, msr)
+       endif
+       l2gp%l2gpPrecision = real3
+
+    endif
+    
+    ! Read the data fields that are 1-dimensional
+
+!??? There appears to be a problem with reading character data using
+!??? HDF-EOS.  HDF_EOS's swrdfld expects a C void* pointer, no matter what
+!??? the type of object.  Burkhard Burow's cfortran macros need to be told
+!??? whether the argument is character, because compilers represent character
+!??? arguments in various ways, usually different from non-character arguments.
+!??? I.e., never the twain shall meet.
+!    status = swrdfld(swid, DATA_FIELD3,start(3:3),stride(3:3),edge(3:3),&
+!      l2gp%status)
+!    status = swrdfld(swid, DATA_FIELD3,start(3:3),stride(3:3),edge(3:3),&
+!      the_status_buffer)
+! These lines commented out as they make NAG core dump on the deallocate statement.
+! below.
+!    if ( status == -1 ) then
+!      msr = MLSMSG_L2GPRead // DATA_FIELD3
+!      call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+!    end if
+!    l2gp%status = the_status_buffer(:)(1:1)
+    
+    !   The above note was copied direct from the HDF4 version. The HDF5
+    ! version has similar problems so these lines are commented too.
+    !         status = HE5_SWrdfld(swid, DATA_FIELD3,start(3:3),&
+    !    stride(3:3),edge(3:3), l2gp%status)
+
+    l2gp%status = ' ' ! So it has a value.
+
+   if(USEINTS4STRINGS) then
+       status = HE5_swrdfld(swid,DATA_FIELD3,start(3:3),stride(3:3),edge(3:3),&
+         string_buffer)
+       if ( status == -1 ) then
+         msr = MLSMSG_L2GPRead // DATA_FIELD3
+         call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+       call ints2Strings(string_buffer, l2gp%status)
+    else
+      call MLSMessage(MLSMSG_Debug, ModuleName, &
+        "reading of status field disabled")
+      status=0
+    end if
+
+    status = HE5_SWrdfld(swid, DATA_FIELD4, start(3:3), stride(3:3),&
+      edge(3:3),realProf)
+    if (status == -1) then
+       msr = MLSMSG_L2GPRead // DATA_FIELD4
+       call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+    l2gp%quality = realProf
+
+    ! Deallocate local variables
+
+    deallocate(realFreq, realSurf, realProf, real3, STAT=alloc_err)
+    if ( alloc_err /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
+         'Failed deallocation of local real variables.')
+
+    deallocate ( string_buffer, STAT=alloc_err )
+    if ( alloc_err /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+         'Failed deallocation of status buffer.' )
+
+    !  After reading, detach from HE5_SWath interface
+
+    status = HE5_SWdetach(swid)
+    if (status == -1) call MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
+         &detach from swath interface after reading.')
+    !print*," leaving readl2gpdata_hdf5: first/last/read=",&
+    !  firstprof,lastprof,myNumProfs
+    ! Set numProfs if wanted
+    if (present(numProfs)) numProfs=myNumProfs
+
+
+    !-----------------------------
+  end subroutine ReadL2GPData_hdf5
+  !-----------------------------
+
+  ! --------------------------------------  OutputL2GP_createFile_hdf4  -----
+  subroutine OutputL2GP_createFile_hdf4 (l2gp, L2FileHandle, swathName)
+
+    ! Brief description of subroutine
+    ! This subroutine sets up the structural definitions in an empty L2GP file.
+
+    ! Arguments
+
+    integer, intent(in) :: L2FileHandle ! From swopen
+    type( l2GPData_T ), intent(inout) :: l2gp
+    character (len=*), optional, intent(in) :: swathName ! Defaults to l2gp%swathName
+
+    ! Parameters
+
+    character (len=*), parameter :: DIM_ERR = 'Failed to define dimension '
+    character (len=*), parameter :: GEO_ERR = &
+         & 'failed to define geolocation field '
+    character (len=*), parameter :: DAT_ERR = 'Failed to define data field '
+
+    ! Variables
+
+    character (len=480) :: MSR
+    character (len=132) :: NAME   ! From l2gp%name
+
+    integer :: SWID, STATUS
+
+    if ( present(swathName) ) then
+       name=swathName
+    else
+       name=l2gp%name
+    end if
+
+    ! Create the swath within the file
+
+    swid = swcreate(L2FileHandle, TRIM(name))
+    if ( swid == -1 ) then
+       msr = 'Failed to create swath ' // TRIM(name) &
+        & // ' (maybe has the same name as another swath in this file?)'
+    end if
+
+    ! Define dimensions
+
+    status = swdefdim(swid, DIM_NAME1, l2gp%nTimes)
+    if ( status == -1 ) then
+       msr = DIM_ERR // DIM_NAME1
+       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+
+    if ( l2gp%nLevels > 0 ) then
+       status = swdefdim(swid, DIM_NAME2, l2gp%nLevels)
+       if ( status == -1 ) then
+          msr = DIM_ERR // DIM_NAME2
+          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+    end if
+
+    if ( l2gp%nFreqs > 1 ) then
+       status = swdefdim(swid, DIM_NAME3, l2gp%nFreqs)
+       if ( status == -1 ) then
+          msr = DIM_ERR // DIM_NAME3
+          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+    end if
+
+    ! Define horizontal geolocation fields using above dimensions
+
+    status = swdefgfld(swid, GEO_FIELD1, DIM_NAME1, DFNT_FLOAT32, &
+         HDFE_NOMERGE)
+    if ( status == -1 ) then
+       msr = GEO_ERR // GEO_FIELD1
+       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+
+    status = swdefgfld(swid, GEO_FIELD2, DIM_NAME1, DFNT_FLOAT32, &
+         HDFE_NOMERGE)
+    if ( status == -1 ) then
+       msr = GEO_ERR // GEO_FIELD2
+       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+
+    status = swdefgfld(swid, GEO_FIELD3, DIM_NAME1, DFNT_FLOAT64, &
+         HDFE_NOMERGE)
+    if ( status == -1 ) then
+       msr = GEO_ERR // GEO_FIELD3
+       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+
+    status = swdefgfld(swid, GEO_FIELD4, DIM_NAME1, DFNT_FLOAT32, &
+         HDFE_NOMERGE)
+    if ( status == -1 ) then
+       msr = GEO_ERR // GEO_FIELD4
+       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+
+    status = swdefgfld(swid, GEO_FIELD5, DIM_NAME1, DFNT_FLOAT32, &
+         HDFE_NOMERGE)
+    if ( status == -1 ) then
+       msr = GEO_ERR // GEO_FIELD5
+       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+
+    status = swdefgfld(swid, GEO_FIELD6, DIM_NAME1, DFNT_FLOAT32, &
+         HDFE_NOMERGE)
+    if ( status == -1 ) then
+       msr = GEO_ERR // GEO_FIELD6
+       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+
+    status = swdefgfld(swid, GEO_FIELD7, DIM_NAME1, DFNT_FLOAT32, &
+         HDFE_NOMERGE)
+    if ( status == -1 ) then
+       msr = GEO_ERR // GEO_FIELD7
+       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+
+    status = swdefgfld(swid, GEO_FIELD8, DIM_NAME1, DFNT_INT32, &
+         HDFE_NOMERGE)
+    if ( status == -1 ) then
+       msr = GEO_ERR // GEO_FIELD8
+       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+
+    if ( l2gp%nLevels > 0 ) then
+       status = swdefgfld(swid, GEO_FIELD9, DIM_NAME2, DFNT_FLOAT32, &
+            HDFE_NOMERGE)
+       if ( status == -1 ) then
+          msr = GEO_ERR // GEO_FIELD9
+          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+    end if
+
+    if ( l2gp%nFreqs > 0 ) then
+       status = swdefgfld(swid, GEO_FIELD10, DIM_NAME3, DFNT_FLOAT32, &
+            HDFE_NOMERGE)
+       if ( status == -1 ) then
+          msr = GEO_ERR // GEO_FIELD10
+          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+    end if
+
+    ! Define data fields using above dimensions
+
+    if ( (l2gp%nFreqs > 0) .AND. (l2gp%nLevels > 0) ) then
+
+       status = swdefdfld(swid, DATA_FIELD1, DIM_NAME123, DFNT_FLOAT32, &
+            HDFE_NOMERGE)
+
+       if ( status == -1 ) then
+          msr = DAT_ERR // DATA_FIELD1 // ' for 3D quantity.'
+          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+
+
+       status = swdefdfld(swid, DATA_FIELD2, DIM_NAME123, DFNT_FLOAT32, &
+            HDFE_NOMERGE)
+
+       if ( status == -1 ) then
+          msr = DAT_ERR // DATA_FIELD2 // ' for 3D quantity.'
+          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+
+
+    else if ( l2gp%nLevels > 0 ) then
+
+       status = swdefdfld(swid, DATA_FIELD1, DIM_NAME12, DFNT_FLOAT32, &
+            HDFE_NOMERGE)
+
+       if ( status == -1 ) then
+          msr = DAT_ERR // DATA_FIELD1 //  ' for 2D quantity.'
+          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+
+       status = swdefdfld(swid, DATA_FIELD2, DIM_NAME12, DFNT_FLOAT32, &
+            HDFE_NOMERGE)
+
+       if ( status == -1 ) then
+          msr = DAT_ERR // DATA_FIELD2 //  ' for 2D quantity.'
+          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+
+    else
+
+       status = swdefdfld(swid, DATA_FIELD1, DIM_NAME1, DFNT_FLOAT32, &
+            HDFE_NOMERGE)
+
+       if ( status == -1 ) then
+          msr = DAT_ERR // DATA_FIELD1 // ' for 1D quantity.'
+          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+
+       status = swdefdfld(swid, DATA_FIELD2, DIM_NAME1, DFNT_FLOAT32, &
+            HDFE_NOMERGE)
+
+       if ( status == -1 ) then
+          msr = DAT_ERR // DATA_FIELD2 // ' for 1D quantity.'
+          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+
+    end if
+
+    status = swdefdfld(swid, DATA_FIELD3, DIM_NAME1, DFNT_CHAR8, &
+         HDFE_NOMERGE)
+    if ( status == -1 ) then
+       msr = DAT_ERR // DATA_FIELD3
+       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+
+    status = swdefdfld(swid, DATA_FIELD4, DIM_NAME1, DFNT_FLOAT32, &
+         HDFE_NOMERGE)
+    if ( status == -1 ) then
+       msr = DAT_ERR // DATA_FIELD4
+       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+
+    ! Detach from the swath interface.  This stores the swath info within the
+    ! file and must be done before writing or reading data to or from the
+    ! swath.
+
+    status = swdetach(swid)
+    if ( status == -1 ) then
+       call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'Failed to detach from swath interface after definition.' )
+    end if
+
+    !--------------------------------------
+  end subroutine OutputL2GP_createFile_hdf4
+  !--------------------------------------
+
+  !-----------------------------------------  OutputL2GP_writeGeo_hdf4  -----
+  subroutine OutputL2GP_writeGeo_hdf4 (l2gp, l2FileHandle, swathName, offset)
+
+    ! Brief description of subroutine
+    ! This subroutine writes the geolocation fields to an L2GP output file.
+
+    ! Arguments
+
+    type( l2GPData_T ), intent(inout) :: l2gp
+    integer, intent(in) :: l2FileHandle ! From swopen
+    character (len=*), intent(in), optional :: swathName ! Defaults to l2gp%name
+    integer,intent(IN),optional::offset
+
+    ! Parameters
+
+    character (len=*), parameter :: WR_ERR = &
+         & 'Failed to write geolocation field '
+
+    ! Variables
+
+    character (len=480) :: msr
+    character (len=132) :: name ! Either swathName or l2gp%name
+
+    integer :: status, swid,myOffset
+    integer :: start(2), stride(2), edge(2)
+
+    ! Begin
+    if (present(offset)) then
+       myOffset=offset
+    else
+       myOffset=0
+    endif
+
+    if ( present(swathName) ) then
+       name=swathName
+    else
+       name=l2gp%name
+    end if
+
+    swid = swattach (l2FileHandle, name)
+
+    ! Write data to the fields
+
+    stride = 1
+    start = myOffset
+    edge(1) = l2gp%nTimes
+
+    status = swwrfld(swid, GEO_FIELD1, start, stride, edge, &
+         real(l2gp%latitude))
+    if ( status == -1 ) then
+       msr = WR_ERR // GEO_FIELD1
+       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+
+    status = swwrfld(swid, GEO_FIELD2, start, stride, edge, &
+         real(l2gp%longitude))
+    if ( status == -1 ) then
+       msr = WR_ERR // GEO_FIELD2
+       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+
+    status = swwrfld(swid, GEO_FIELD3, start, stride, edge, &
+         l2gp%time)
+    if ( status == -1 ) then
+       msr = WR_ERR // GEO_FIELD3
+       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+
+    status = swwrfld(swid, GEO_FIELD4, start, stride, edge, &
+        real(l2gp%solarTime))
+    if ( status == -1 ) then
+       msr = WR_ERR // GEO_FIELD4
+       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+
+    status = swwrfld(swid, GEO_FIELD5, start, stride, edge, &
+         real(l2gp%solarZenith))
+    if ( status == -1 ) then
+       msr = WR_ERR // GEO_FIELD5
+       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+
+    status = swwrfld(swid, GEO_FIELD6, start, stride, edge, &
+         real(l2gp%losAngle))
+    if ( status == -1 ) then
+       msr = WR_ERR // GEO_FIELD6
+       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+
+    status = swwrfld(swid, GEO_FIELD7, start, stride, edge, &
+         real(l2gp%geodAngle))
+    if ( status == -1 ) then
+       msr = WR_ERR // GEO_FIELD7
+       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+
+    status = swwrfld(swid, GEO_FIELD8, start, stride, edge, &
+         l2gp%chunkNumber)
+    if ( status == -1 ) then
+       msr = WR_ERR // GEO_FIELD8
+       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+
+    if ( l2gp%nLevels > 0 ) then
+       edge(1) = l2gp%nLevels
+       start(1)=0 ! needed because offset may have made this /=0
+       status = swwrfld(swid, GEO_FIELD9, start, stride, edge, &
+            real(l2gp%pressures))
+       if ( status == -1 ) then
+          msr = WR_ERR // GEO_FIELD9
+          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+    end if
+
+    if ( l2gp%nFreqs > 0 ) then
+       edge(1) = l2gp%nFreqs
+       start(1)=0 ! needed because offset may have made this /=0
+       if (MONKEYAROUND) then
+         l2gp%frequency = 0
+       endif
+       status = swwrfld(swid, GEO_FIELD10, start, stride, edge, &
+            real(l2gp%frequency))
+       if ( status == -1 ) then
+          msr = WR_ERR // GEO_FIELD10
+          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+    end if
+
+    ! Detach from the swath interface.  
+
+    status = swdetach(swid)
+
+    if ( status == -1 ) then
+       call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            & 'Failed to detach from swath interface' )
+    end if
+
+    !------------------------------------
+  end subroutine OutputL2GP_writeGeo_hdf4
+  !------------------------------------
+
+  !----------------------------------------  OutputL2GP_writeData_hdf4  -----
+  subroutine OutputL2GP_writeData_hdf4(l2gp, l2FileHandle, swathName, offset)
+
+    ! Brief description of subroutine
+    ! This subroutine writes the data fields to an L2GP output file.
+
+    ! Arguments
+
+    type( l2GPData_T ), intent(inout) :: l2gp
+    integer, intent(in) :: l2FileHandle ! From swopen
+    character (len=*), intent(in), optional :: swathName ! Defaults to l2gp%name
+    integer,intent(IN),optional::offset
+
+    ! Parameters
+
+    character (len=*), parameter :: WR_ERR = 'Failed to write data field '
+
+    ! Variables
+
+    character (len=480) :: msr
+    character (len=132) :: name     ! Either swathName or l2gp%name
+
+    integer :: status, myOffset
+    integer :: start(3), stride(3), edge(3)
+    integer :: swid
+
+!  How to deal with status and columnTypes? swrfld fails
+!  with char data on Linux
+!  Have recourse to ints2Strings and strings2Ints if USEINTS4STRINGS
+!    character (LEN=8), allocatable :: the_status_buffer(:)
+!    character (LEN=L2GPNameLen), allocatable :: the_status_buffer(:)
+    integer, allocatable, dimension(:,:) :: string_buffer
+
+    ! Begin
+    if (present(offset)) then
+       myOffset=offset
+    else
+       myOffset=0
+    endif
+    if ( present(swathName) ) then
+       name=swathName
+    else
+       name=l2gp%name
+    end if
+    ! Write data to the fields
+
+    start = 0
+    stride = 1
+    start(3)= myOffset
+    edge(1) = l2gp%nFreqs
+    edge(2) = l2gp%nLevels
+    edge(3) = l2gp%nTimes
+    swid = swattach (l2FileHandle, name)
+    if ( l2gp%nFreqs > 0 ) then
+       ! Value and Precision are 3-D fields
+
+       status = swwrfld(swid, DATA_FIELD1, start, stride, edge, &
+            & RESHAPE(real(l2gp%l2gpValue), (/SIZE(l2gp%l2gpValue)/)) )
+       if ( status == -1 ) then
+          msr = WR_ERR // DATA_FIELD1
+          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+       status = swwrfld(swid, DATA_FIELD2, start, stride, edge, &
+            & RESHAPE(real(l2gp%l2gpPrecision), (/SIZE(l2gp%l2gpPrecision)/)) )
+       if ( status == -1 ) then
+          msr = WR_ERR // DATA_FIELD2
+          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+
+    else if ( l2gp%nLevels > 0 ) then
+       ! Value and Precision are 2-D fields
+
+       status = swwrfld( swid, DATA_FIELD1, start(2:3), stride(2:3), &
+            edge(2:3), real(l2gp%l2gpValue(1,:,:)) )
+
+       if ( status == -1 ) then
+          msr = WR_ERR // DATA_FIELD1
+          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+       status = swwrfld( swid, DATA_FIELD2, start(2:3), stride(2:3), &
+            edge(2:3), real(l2gp%l2gpPrecision(1,:,:) ))
+       if ( status == -1 ) then
+          msr = WR_ERR // DATA_FIELD2
+          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+    else
+
+       ! Value and Precision are 1-D fields
+       status = swwrfld( swid, DATA_FIELD1, start(3:3), stride(3:3), edge(3:3), &
+            real(l2gp%l2gpValue(1,1,:) ))
+       if ( status == -1 ) then
+          msr = WR_ERR // DATA_FIELD1
+          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+       status = swwrfld( swid, DATA_FIELD2, start(3:3), stride(3:3), edge(3:3), &
+            real(l2gp%l2gpPrecision(1,1,:) ))
+       if ( status == -1 ) then
+          msr = WR_ERR // DATA_FIELD2
+          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+    end if
+
+    ! 1-D status & quality fields
+
+   if(USEINTS4STRINGS) then
+      allocate(string_buffer(1,l2gp%nTimes))
+      call strings2Ints(l2gp%status, string_buffer)
+      status = swwrfld(swid, DATA_FIELD3, start(3:3), stride(3:3), edge(3:3), &
+           string_buffer)
+      if ( status == -1 ) then
+         msr = WR_ERR // DATA_FIELD3
+         call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+      end if
+      deallocate(string_buffer)
+   else
+      status = swwrfld(swid, DATA_FIELD3, start(3:3), stride(3:3), edge(3:3), &
+           l2gp%status)
+      if ( status == -1 ) then
+         msr = WR_ERR // DATA_FIELD3
+         call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+      end if
+   end if
+    !  l2gp%quality = 0 !??????? Why was this here !??? NJL
+    status = swwrfld(swid, DATA_FIELD4, start(3:3), stride(3:3), edge(3:3), &
+         real(l2gp%quality))
+    if ( status == -1 ) then
+       msr = WR_ERR // DATA_FIELD4
+       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+
+    !     Detach from the swath interface.
+
+    status = swdetach(swid)
+    if ( status == -1 ) then
+       call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            & 'Failed to detach  from swath interface' )
+    end if
+
+    !-------------------------------------
+  end subroutine OutputL2GP_writeData_hdf4
+  !-------------------------------------
+
+  ! --------------------------------------  OutputL2GP_createFile_hdf5  -----
+  subroutine OutputL2GP_createFile_hdf5 (l2gp, L2FileHandle, swathName,nLevels)
+
+  use HDFEOS5
+  use HE5_SWAPI 
+    ! Brief description of subroutine
+    ! This subroutine sets up the structural definitions in an empty L2GP file.
+
+    ! Arguments
+
+    integer, intent(in) :: L2FileHandle ! From swopen
+    type( L2GPData_T ), intent(inout) :: l2gp
+    character (LEN=*), optional, intent(IN) :: swathName ! Defaults to l2gp%swathName
+    integer,optional::nLevels
+    ! Parameters
+
+    character (len=*), parameter :: DIM_ERR = 'Failed to define dimension '
+    character (len=*), parameter :: GEO_ERR = &
+         & 'Failed to define geolocation field '
+    character (len=*), parameter :: DAT_ERR = 'Failed to define data field '
+
+    ! Variables
+
+    character (len=480) :: MSR
+    character (len=132) :: NAME   ! From l2gp%name
+
+    ! THESE ARE HDF5 CHUNKS, _NOT_ MLS ALONG-TRACK PROCESSING CHUNKS 
+    integer,dimension(7)::CHUNK_DIMS
+    integer::CHUNK_RANK
+    integer::CHUNKTIMES,CHUNKFREQS,CHUNKLEVELS
+
+    integer :: SWID, STATUS
+
+    if (present(swathName)) then
+       name=swathName
+    else
+       name=l2gp%name
+    endif
+    chunktimes=1
+    chunkfreqs=1 ! better as nFreqs, but I have yet to see a case with nfreqs>1
+    if(present(nLevels))then
+       chunklevels=nLevels
+    else
+       chunklevels=5
+    endif
+    
+    ! Create the swath within the file
+    !print*,"Creating swath called ",name
+    swid = HE5_SWcreate(L2FileHandle, trim(name))
+    !print*,"Swath ",name,"has SW id :",swid
+    if ( swid == -1 ) then
+       msr = 'Failed to create swath ' // TRIM(name) &
+        & // ' (maybe has the same name as another swath in this file?)'
+    end if
+
+    ! Define dimensions
+
+    ! Defining special "unlimited dimension called UNLIM
+    !print*,"Defined Unlim with size", HE5S_UNLIMITED
+    status = HE5_SWdefdim(swid, UNLIM, HE5S_UNLIMITED_F)
+
+    !print*,"Defining dimension ", DIM_NAME1," with size",l2gp%nTimes
+    status = HE5_SWdefdim(swid, DIM_NAME1, l2gp%nTimes)
+    if ( status == -1 ) then
+       msr = DIM_ERR // DIM_NAME1
+       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+
+    if ( l2gp%nLevels > 0 ) then
+      !print*,"Defining dimension ", DIM_NAME2," with size",l2gp%nLevels
+       status = HE5_SWdefdim(swid, DIM_NAME2, l2gp%nLevels)
+       if ( status == -1 ) then
+          msr = DIM_ERR // DIM_NAME2
+          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+    end if
+
+    if ( l2gp%nFreqs > 0 ) then
+       !print*,"Defining dimension ", DIM_NAME3," with size",l2gp%nFreqs
+       status = HE5_SWdefdim(swid, DIM_NAME3, l2gp%nFreqs)
+       if ( status == -1 ) then
+          msr = DIM_ERR // DIM_NAME3
+          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+    end if
+
+    ! Define horizontal geolocation fields using above dimensions
+
+!    print*,"Defining geolocation field ",GEO_FIELD1," of dim. ", DIM_NAME1
+!    print*,"... and of type ",HE5T_NATIVE_FLOAT
+    chunk_rank=1
+    chunk_dims=1
+    chunk_dims(1)=CHUNKTIMES
+    status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
+!    print*,"Set chunking -- status=",status
+    status = HE5_SWdefgfld(swid, GEO_FIELD1, DIM_NAME1,MAX_DIML1,&
+         HE5T_NATIVE_FLOAT , 0)
+    if ( status == -1 ) then
+       msr = GEO_ERR // GEO_FIELD1
+       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+!    print*,"Defined geolocation field ",GEO_FIELD1,"of dim.", DIM_NAME1
+!    print*,"... and of type ",HE5T_NATIVE_FLOAT
+
+    status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
+
+    status = HE5_SWdefgfld(swid, GEO_FIELD2, DIM_NAME1, MAX_DIML1,&
+         HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
+    if ( status == -1 ) then
+       msr = GEO_ERR // GEO_FIELD2
+       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+
+    status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
+    status = HE5_SWdefgfld(swid, GEO_FIELD3, DIM_NAME1, MAX_DIML1, &
+    HE5T_NATIVE_DOUBLE, HDFE_NOMERGE)
+    if ( status == -1 ) then
+       msr = GEO_ERR // GEO_FIELD3
+       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+
+    status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
+    status = HE5_SWdefgfld(swid, GEO_FIELD4, DIM_NAME1,MAX_DIML1,&
+         HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
+    if ( status == -1 ) then
+       msr = GEO_ERR // GEO_FIELD4
+       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+
+    status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
+    status = HE5_SWdefgfld(swid, GEO_FIELD5, DIM_NAME1, MAX_DIML1, &
+         HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
+    if ( status == -1 ) then
+       msr = GEO_ERR // GEO_FIELD5
+       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+
+    status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
+    status = HE5_SWdefgfld(swid, GEO_FIELD6, DIM_NAME1,MAX_DIML1,&
+         HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
+    if ( status == -1 ) then
+       msr = GEO_ERR // GEO_FIELD6
+       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+
+    status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
+    status = HE5_SWdefgfld(swid, GEO_FIELD7, DIM_NAME1, MAX_DIML1,&
+    HE5T_NATIVE_FLOAT,   HDFE_NOMERGE)
+    if ( status == -1 ) then
+       msr = GEO_ERR // GEO_FIELD7
+       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+
+    status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
+    status = HE5_SWdefgfld(swid, GEO_FIELD8, DIM_NAME1, MAX_DIML1,&
+         HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
+    if ( status == -1 ) then
+       msr = GEO_ERR // GEO_FIELD8
+       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+
+    if ( l2gp%nLevels > 0 ) then
+
+       status = HE5_SWdefgfld(swid, GEO_FIELD9, DIM_NAME2,MAX_DIML,&
+            HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
+       if ( status == -1 ) then
+          msr = GEO_ERR // GEO_FIELD9
+          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+    end if
+
+    if ( l2gp%nFreqs > 0 ) then
+
+       status = HE5_SWdefgfld(swid, GEO_FIELD10, DIM_NAME3,MAX_DIML,&
+            HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
+       if ( status == -1 ) then
+          msr = GEO_ERR // GEO_FIELD10
+          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+    end if
+
+    ! Define data fields using above dimensions
+
+    if ( (l2gp%nFreqs > 0) .and. (l2gp%nLevels > 0) ) then
+       chunk_rank=3
+       chunk_dims(1:3)=(/ CHUNKFREQS,CHUNKLEVELS,CHUNKTIMES /)
+       status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
+
+       status = HE5_SWdefdfld(swid, DATA_FIELD1, DIM_NAME123, MAX_DIML123,&
+       HE5T_NATIVE_FLOAT,HDFE_NOMERGE)
+
+       if ( status == -1 ) then
+          msr = DAT_ERR // DATA_FIELD1 // ' for 3D quantity.'
+          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+
+
+       status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
+       status = HE5_SWdefdfld(swid, DATA_FIELD2, DIM_NAME123, MAX_DIML123,&
+            HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
+
+       if ( status == -1 ) then
+          msr = DAT_ERR // DATA_FIELD2 // ' for 3D quantity.'
+          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+
+
+    else if ( l2gp%nLevels > 0 ) then
+       chunk_rank=2
+       chunk_dims(1:7)=(/ CHUNKLEVELS,CHUNKTIMES,37,38,39,47,49/)
+       status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
+       !print*,"Set chunking with status=",status
+       !print*,"chunking=",chunk_dims
+       !print*,"About to define 2-D extendible field"
+
+       !print*,"Calling SWdefdfld with args ",swid, DATA_FIELD1, &
+       !      DIM_NAME12, MAX_DIML12, HE5T_NATIVE_FLOAT, HDFE_NOMERGE
+       status = HE5_SWdefdfld(swid, DATA_FIELD1, DIM_NAME12, MAX_DIML12, &
+            HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
+       !print*,"Defined 2-D extendible field"
+
+       if ( status == -1 ) then
+          msr = DAT_ERR // DATA_FIELD1 //  ' for 2D quantity.'
+          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+
+           status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
+           status = HE5_SWdefdfld(swid, DATA_FIELD2, DIM_NAME12, MAX_DIML12,&
+            HE5T_NATIVE_FLOAT,HDFE_NOMERGE)
+
+       if ( status == -1 ) then
+          msr = DAT_ERR // DATA_FIELD2 //  ' for 2D quantity.'
+          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+
+    else
+       chunk_rank=1
+       chunk_dims(1)=CHUNKTIMES
+       status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
+    
+       status = HE5_SWdefdfld(swid, DATA_FIELD1, DIM_NAME1,MAX_DIML1,&
+            HE5T_NATIVE_FLOAT,HDFE_NOMERGE)
+
+       if ( status == -1 ) then
+          msr = DAT_ERR // DATA_FIELD1 // ' for 1D quantity.'
+          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+
+       status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
+       status = HE5_SWdefdfld(swid, DATA_FIELD2, DIM_NAME1, MAX_DIML1,&
+       HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
+
+       if ( status == -1 ) then
+          msr = DAT_ERR // DATA_FIELD2 // ' for 1D quantity.'
+          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+
+    end if
+
+!    print*,"Defining data field ",DATA_FIELD3,"of dim.", DIM_NAME1
+!    print*,"... and of type ",HE5T_NATIVE_CHAR
+
+!    status = HE5_SWdefdfld(swid, DATA_FIELD3, DIM_NAME1,MAX_DIML1,&
+!         HE5T_NATIVE_CHAR, HDFE_NOMERGE)
+!    IF ( status == -1 ) THEN
+!       msr = DAT_ERR // DATA_FIELD3
+!       CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
+!    END IF
+
+!    print*,"Defined data field ",DATA_FIELD3,"of dim.", DIM_NAME1
+    chunk_rank=1
+    chunk_dims(1)=CHUNKTIMES
+    status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
+
+    status = HE5_SWdefdfld(swid, DATA_FIELD4, DIM_NAME1,MAX_DIML1,&
+         HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
+    if ( status == -1 ) then
+       msr = DAT_ERR // DATA_FIELD4
+       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+
+    ! Detach from the HE5_SWath interface.This stores the swath info within the
+    ! file and must be done before writing or reading data to or from the
+    ! swath. (May be un-necessary for HDF5 -- test program works OK without.)
+    ! 
+    status = HE5_SWdetach(swid)
+    if ( status == -1 ) then
+       call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'Failed to detach from swath interface after definition.' )
+    end if
+
+    !--------------------------------------
+  end subroutine OutputL2GP_createFile_hdf5
+  !--------------------------------------
+
+  !-----------------------------------------  OutputL2GP_writeGeo_hdf5  -----
+  subroutine OutputL2GP_writeGeo_hdf5 (l2gp, l2FileHandle, swathName,offset)
+
+  use HDFEOS5
+  use HE5_SWAPI 
+    ! Brief description of subroutine
+    ! This subroutine writes the geolocation fields to an L2GP output file.
+
+    ! Arguments
+
+    type( L2GPData_T ), intent(inout) :: l2gp
+    integer, intent(in) :: l2FileHandle ! From swopen
+    character (len=*), intent(IN), optional :: swathName ! Defaults->l2gp%name
+    integer,intent(IN),optional::offset
+    ! Parameters
+
+    character (len=*), parameter :: WR_ERR = &
+         & 'Failed to write geolocation field '
+    
+    ! Variables
+
+    character (len=480) :: msr
+    character (len=132) :: name ! Either swathName or l2gp%name
+    
+    integer :: status, swid,myOffset
+    integer :: start(2), stride(2), edge(2)
+
+    ! Begin
+    if (present(offset)) then
+       myOffset=offset
+    else
+       myOffset=0
+    endif
+
+    if (present(swathName)) then
+       name=swathName
+    else
+       name=l2gp%name
+    endif
+
+    swid = HE5_SWattach (l2FileHandle, name)
+
+    ! Write data to the fields
+
+    stride = 1
+    start = myOffset
+    edge(1) = l2gp%nTimes
+    !print*,"writeGeo Attached swath ",name," with SW ID=",swid
+    !print*,"About to write latitude with offset=",myoffset
+    status = HE5_SWwrfld(swid, GEO_FIELD1, start, stride, edge, &
+         real(l2gp%latitude))
+    !print*,"wrote latitude, maybe"
+    if ( status == -1 ) then
+       msr = WR_ERR // GEO_FIELD1
+       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+
+    status = HE5_SWwrfld(swid, GEO_FIELD2, start, stride, edge, &
+         real(l2gp%longitude))
+    if ( status == -1 ) then
+       msr = WR_ERR // GEO_FIELD2
+       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+
+    status = HE5_SWwrfld(swid, GEO_FIELD3, start, stride, edge, &
+         l2gp%time)
+    if ( status == -1 ) then
+       msr = WR_ERR // GEO_FIELD3
+       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+
+
+    !print*,"writing ", REAL(l2gp%solarZenith)," as SZA"
+    status = HE5_SWwrfld(swid, GEO_FIELD5, start, stride, edge, &
+         real(l2gp%solarZenith))
+    !print*,"just wrote ", REAL(l2gp%solarZenith)," as SZA"
+    if ( status == -1 ) then
+       msr = WR_ERR // GEO_FIELD5
+       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+
+    status = HE5_SWwrfld(swid, GEO_FIELD4, start, stride, edge, &
+        real(l2gp%solarTime))
+    if ( status == -1 ) then
+       msr = WR_ERR // GEO_FIELD4
+       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+
+
+    status = HE5_SWwrfld(swid, GEO_FIELD6, start, stride, edge, &
+         real(l2gp%losAngle))
+    if ( status == -1 ) then
+       msr = WR_ERR // GEO_FIELD6
+       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+
+    status = HE5_SWwrfld(swid, GEO_FIELD7, start, stride, edge, &
+         real(l2gp%geodAngle))
+    if ( status == -1 ) then
+       msr = WR_ERR // GEO_FIELD7
+       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+
+    status = HE5_SWwrfld(swid, GEO_FIELD8, start, stride, edge, &
+         l2gp%chunkNumber)
+    if ( status == -1 ) then
+       msr = WR_ERR // GEO_FIELD8
+       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+
+    if ( l2gp%nLevels > 0 ) then
+       edge(1) = l2gp%nLevels
+       start(1)=0 ! needed because offset may have made this /=0
+       status = HE5_SWwrfld(swid, GEO_FIELD9, start, stride, edge, &
+            real(l2gp%pressures))
+       if ( status == -1 ) then
+          msr = WR_ERR // GEO_FIELD9
+          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+    end if
+
+    if ( l2gp%nFreqs > 0 ) then
+       edge(1) = l2gp%nFreqs
+       start(1)=0 ! needed because offset may have made this /=0
+       if (MONKEYAROUND) l2gp%frequency = 0
+       status = HE5_SWwrfld(swid, GEO_FIELD10, start, stride, edge, &
+            real(l2gp%frequency))
+       if ( status == -1 ) then
+          msr = WR_ERR // GEO_FIELD10
+          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+    end if
+
+    ! Detach from the swath interface.  
+
+    status = HE5_SWdetach(swid)
+    !print*,"Detatched from swath -- error=",status
+    if ( status == -1 ) then
+       call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            & 'Failed to detach from swath interface' )
+    end if
+
+    !------------------------------------
+  end subroutine OutputL2GP_writeGeo_hdf5
+  !------------------------------------
+
+  !----------------------------------------  OutputL2GP_writeData_hdf5  -----
+  subroutine OutputL2GP_writeData_hdf5(l2gp, l2FileHandle, swathName,offset)
+
+  use HDFEOS5
+  use HE5_SWAPI 
+    ! Brief description of subroutine
+    ! This subroutine writes the data fields to an L2GP output file.
+    ! For now, you have to write all of l2gp, but you can choose to write
+    ! it at some offset into the file
+    ! Arguments
+
+    type( L2GPData_T ), intent(inout) :: l2gp
+    integer, intent(in) :: l2FileHandle ! From swopen
+    character (len=*), intent(IN), optional :: swathName ! Defaults->l2gp%name
+    integer,intent(IN),optional::offset
+    ! Parameters
+
+    character (len=*), parameter :: WR_ERR = 'Failed to write data field '
+
+    ! Variables
+
+    character (len=480) :: msr
+    character (len=132) :: name     ! Either swathName or l2gp%name
+
+    integer :: status,myOffset
+    integer :: start(3), stride(3), edge(3)
+    integer :: swid
+    
+!  How to deal with status and columnTypes? swrfld fails
+!  with char data on Linux
+!  Have recourse to ints2Strings and strings2Ints if USEINTS4STRINGS
+!    character (LEN=8), allocatable :: the_status_buffer(:)
+!    character (LEN=L2GPNameLen), allocatable :: the_status_buffer(:)
+    integer, allocatable, dimension(:,:) :: string_buffer
+
+    ! Begin
+    if (present(offset)) then
+       myOffset=offset
+    else
+       myOffset=0
+    endif
+
+    if (present(swathName)) then
+       name=swathName
+    else
+       name=l2gp%name
+    endif
+
+    !print*,"OutputL2GP_writeData -- name=",name
+    ! Write data to the fields
+
+    start = 0
+    stride = 1
+    start(3)= myOffset
+    edge(1) = l2gp%nFreqs
+    edge(2) = l2gp%nLevels
+    edge(3) = l2gp%nTimes
+    swid = HE5_SWattach (l2FileHandle, name)
+    !print*," attached swath with swid=",swid," filehandle=",l2FileHandle
+    if ( l2gp%nFreqs > 0 ) then
+       !print*,"Writing 3D field"
+       ! Value and Precision are 3-D fields
+       status = HE5_SWwrfld(swid, DATA_FIELD1, start, stride, edge, &
+            & reshape(real(l2gp%l2gpValue), (/size(l2gp%l2gpValue)/)) )
+       if ( status == -1 ) then
+          msr = WR_ERR // DATA_FIELD1
+          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+       status = HE5_SWwrfld(swid, DATA_FIELD2, start, stride, edge, &
+            & reshape(real(l2gp%l2gpPrecision), (/size(l2gp%l2gpPrecision)/)) )
+       if ( status == -1 ) then
+          msr = WR_ERR // DATA_FIELD2
+          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+
+    else if ( l2gp%nLevels > 0 ) then
+       !Print*,"Writing 2-d field"
+       ! Value and Precision are 2-D fields
+     ! print*,"About to write data with offset=",myOffset
+      
+       status = HE5_SWwrfld( swid, DATA_FIELD1, start(2:3), stride(2:3), &
+            edge(2:3), real(l2gp%l2gpValue(1,:,:) ))
+       !print*,"Status of write was ",status
+       if ( status == -1 ) then
+          msr = WR_ERR // DATA_FIELD1
+          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+       status = HE5_SWwrfld( swid, DATA_FIELD2, start(2:3), stride(2:3), &
+            edge(2:3), real(l2gp%l2gpPrecision(1,:,:) ))
+       if ( status == -1 ) then
+          msr = WR_ERR // DATA_FIELD2
+          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+    else
+
+       ! Value and Precision are 1-D fields
+       !Print*,"Writing 1-D field"
+       status = HE5_SWwrfld( swid, DATA_FIELD1, start(3:3), stride(3:3), edge(3:3), &
+            real(l2gp%l2gpValue(1,1,:) ))
+       if ( status == -1 ) then
+          msr = WR_ERR // DATA_FIELD1
+          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+       status = HE5_SWwrfld( swid, DATA_FIELD2, start(3:3), stride(3:3), edge(3:3), &
+            real(l2gp%l2gpPrecision(1,1,:) ))
+       if ( status == -1 ) then
+          msr = WR_ERR // DATA_FIELD2
+          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+    end if
+
+    ! 1-D status & quality fields
+
+    !HDF-EOS5 won't write a dataset of chars from FORTRAN
+
+   if(USEINTS4STRINGS) then
+      allocate(string_buffer(1,l2gp%nTimes))
+      call strings2Ints(l2gp%status, string_buffer)
+      status = HE5_swwrfld(swid,DATA_FIELD3,start(3:3),stride(3:3),edge(3:3),&
+           string_buffer)
+      if ( status == -1 ) then
+         msr = WR_ERR // DATA_FIELD3
+         call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+      end if
+      deallocate(string_buffer)
+    else
+      !    status = HE5_SWwrfld(swid, DATA_FIELD3, start(3:3), stride(3:3),&
+      !        edge(3:3), l2gp%status) ! 
+      status=0
+      call MLSMessage(MLSMSG_Debug, ModuleName, &
+        "writing of status field disabled")
+
+      if ( status == -1 ) then
+         msr = WR_ERR // DATA_FIELD3
+         call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+      end if
+    end if
+    !  l2gp%quality = 0 !??????? Why was this here !??? NJL
+    !                   ! Beats me. Evil bug gnomes, probably. HCP 
+    status = HE5_SWwrfld(swid, DATA_FIELD4, start(3:3), stride(3:3), edge(3:3), &
+         real(l2gp%quality))
+    if ( status == -1 ) then
+       msr = WR_ERR // DATA_FIELD4
+       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+
+    !     Detach from the swath interface.
+
+    status = HE5_SWdetach(swid)
+    !print*,"Detatched from swath -- error=",status
+    if ( status == -1 ) then
+       call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            & 'Failed to detach  from swath interface' )
+    end if
+
+
+    !-------------------------------------
+  end subroutine OutputL2GP_writeData_hdf5
+  !-------------------------------------
+
+  !----------------------------------------  OutputL2GP_attributes_hdf5  -----
+  subroutine OutputL2GP_attributes_hdf5(l2gp, l2FileHandle, swathName)
+
+  use HDFEOS5, only: HE5_SWattach, HE5_SWdetach
+  use PCFHdr, only:  sw_writeglobalattr
+    ! Brief description of subroutine
+    ! This subroutine writes the data fields to an L2GP output file.
+    ! For now, you have to write all of l2gp, but you can choose to write
+    ! it at some offset into the file
+    ! Arguments
+
+    type( L2GPData_T ), intent(inout) :: l2gp
+    integer, intent(in) :: l2FileHandle ! From swopen
+    character (len=*), intent(IN), optional :: swathName ! Defaults->l2gp%name
+    ! Parameters
+
+    character (len=*), parameter :: WR_ERR = 'Failed to write attribute field '
+
+    ! Variables
+
+    character (len=480) :: msr
+    character (len=132) :: name     ! Either swathName or l2gp%name
+
+    integer :: status
+    integer :: swid
+    
+    ! Begin
+    if (present(swathName)) then
+       name=swathName
+    else
+       name=l2gp%name
+    endif
+
+    swid = HE5_SWattach (l2FileHandle, name)
+    !print*," attached swath with swid=",swid," filehandle=",l2FileHandle
+    !status = he5_swwrattr(swid, 'Instrument Name', H5T_NATIVE_CHARACTER, &
+    !  & 1, 'MLS Aura')
+    ! if ( status == -1 ) then
+    !   call MLSMessage ( MLSMSG_Warning, ModuleName, &
+    !        & 'Failed to write swath attribute' )
+    !     Detach from the swath interface.
+    call sw_writeglobalattr(swid)
+
+    status = HE5_SWdetach(swid)
+    !print*,"Detatched from swath -- error=",status
+    if ( status == -1 ) then
+       call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            & 'Failed to detach  from swath interface' )
+    end if
+
+
+    !-------------------------------------
+  end subroutine OutputL2GP_attributes_hdf5
+  !-------------------------------------
+
+  ! --------------------------------------------------------------------------
+
+  ! This subroutine is an amalgamation of the last three
+  ! Should be renamed CreateAndWriteL2GPData
+  subroutine WriteL2GPData(l2gp,l2FileHandle,swathName, hdfVersion)
+
+    ! Arguments
+
+    integer, intent(IN) :: l2FileHandle ! From swopen
+    type (L2GPData_T), intent(INOUT) :: l2gp
+    character (LEN=*), optional, intent(IN) ::swathName!default->l2gp%swathName
+    integer, optional, intent(in) :: hdfVersion
+    ! Exectuable code
+
+    ! Local
+    integer :: myhdfVersion
+
+    ! Executable code
+    if (present(hdfVersion)) then
+      myhdfVersion = hdfVersion
+    else
+      myhdfVersion = L2GPDEFAULT_HDFVERSION
+    endif
+
+    if (myhdfVersion == HDFVERSION_4) then
+      call OutputL2GP_createFile_hdf4 (l2gp, l2FileHandle, swathName)
+      call OutputL2GP_writeGeo_hdf4 (l2gp, l2FileHandle, swathName)
+      call OutputL2GP_writeData_hdf4 (l2gp, l2FileHandle, swathName)
+    elseif (myhdfVersion /= HDFVERSION_5) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & "Unrecognized hdfVersion passed to WriteL2GPData" )
+    else
+      call OutputL2GP_createFile_hdf5 (l2gp, l2FileHandle, swathName)
+      call OutputL2GP_writeGeo_hdf5 (l2gp, l2FileHandle, swathName)
+      call OutputL2GP_writeData_hdf5 (l2gp, l2FileHandle, swathName)
+      call OutputL2GP_attributes_hdf5 (l2gp, l2FileHandle, swathName)
+    endif
+
+  end subroutine WriteL2GPData
+  !-------------------------------------------------------------
+
+
+  subroutine AppendL2GPData(l2gp,l2FileHandle,swathName,offset, hdfVersion)
+    ! sticks l2gp into the swath swathName in the file pointed at by
+    ! l2FileHandle,starting at the profile number "offset" (First profile
+    ! in the file has offset==0). If this runs off the end of the swath, 
+    ! it is lengthened automagically. 
+    ! Arguments
+
+    integer, intent(IN) :: l2FileHandle ! From swopen
+    type (L2GPData_T), intent(INOUT) :: l2gp
+    character (LEN=*), optional, intent(IN) ::swathName!default->l2gp%swathName
+    integer,intent(IN),optional::offset
+    integer, optional, intent(in) :: hdfVersion
+    ! Local
+    integer :: myhdfVersion
+
+    ! Executable code
+    if (present(hdfVersion)) then
+      myhdfVersion = hdfVersion
+    else
+      myhdfVersion = L2GPDEFAULT_HDFVERSION
+    endif
+
+    if (myhdfVersion == HDFVERSION_4) then
+      call OutputL2GP_writeGeo_hdf4 (l2gp, l2FileHandle, swathName, offset)
+      call OutputL2GP_writeData_hdf4 (l2gp, l2FileHandle, swathName, offset)
+    elseif (myhdfVersion /= HDFVERSION_5) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & "Unrecognized hdfVersion passed to AppendL2GPData" )
+    else
+      call OutputL2GP_writeGeo_hdf5 (l2gp, l2FileHandle, swathName, offset)
+      call OutputL2GP_writeData_hdf5 (l2gp, l2FileHandle, swathName, offset)
+    endif
+
+  end subroutine AppendL2GPData
+
+  ! ------------------------------------------ DUMP_L2GP_DATABASE ------------
+
+  subroutine DUMP_L2GP_DATABASE ( L2gp, Name, ColumnsOnly, Details )
+
+    ! Dummy arguments
+    type (l2gpData_T), intent(in) ::          L2GP(:)
+    character(len=*), intent(in), optional :: Name
+    logical, intent(in), optional ::          ColumnsOnly ! if true, dump only with columns
+    integer, intent(in), optional :: DETAILS
+
+    ! Local variables
+    integer :: i
+    call output ( '============ L2GP Data Base ============', advance='yes' )
+    call output ( ' ', advance='yes' )
+    if ( present(name) ) then
+      call output ( 'L2GP Database name: ', advance='no' )
+      call output ( name, advance='yes' )
+    endif
+    if ( size(l2gp) < 1 ) then
+      call output ( '**** L2GP Database empty ****', advance='yes' )
+      return
+    endif
+    do i = 1, size(l2gp)
+      call dump(l2gp(i), ColumnsOnly, Details)
+    end do
+      
+  end subroutine DUMP_L2GP_DATABASE
+
+  ! ------------------------------------------ DUMP_L2GP ------------
+
+
+  subroutine Dump_L2GP ( L2gp, ColumnsOnly, Details )
+
+    ! Dummy arguments
+    type (l2gpData_T), intent(in) ::          L2GP
+    logical, intent(in), optional ::          ColumnsOnly ! if true, dump only with columns
+    integer, intent(in), optional :: DETAILS ! <=0 => Don't dump multidim arrays
+    !                                        ! -1 Skip even 1-d arrays
+    !                                        ! -2 Skip all but name
+    !                                        ! >0 Dump even multi-dim arrays
+    !                                        ! Default 1
+
+    ! Local variables
+    integer :: ierr
+    logical :: myColumnsOnly
+    integer :: MYDETAILS
+
+    ! Executable code
+    myDetails = 1
+    if ( present(details) ) myDetails = details
+    
+    if( present(ColumnsOnly)) then
+      myColumnsOnly = ColumnsOnly
+    else
+      myColumnsOnly = .false.
+    endif
+
+      if ( myColumnsOnly .and. l2gp%nLevels > 1 ) return
+
+      call output ( 'L2GP Data: (swath name) ')
+      call output ( trim(l2gp%name) )
+      if ( NAMEINDEXEVERSET ) then
+        call output ( ', (parser name) ')
+        if(l2gp%nameIndex > 0) then
+          call display_string ( l2gp%nameIndex, advance='yes', IERR=ierr)
+          if ( ierr /= 0 ) call output ( '(not found in string table)', &
+           & advance='yes')
+        else
+          call output ( '(the nameIndex was 0) ', advance='yes')
+        endif
+      else
+        call output ( ' ', advance='yes')
+      endif
+      if ( myDetails < -1 ) return
+      call output ( 'nTimes: ')
+      call output ( l2gp%nTimes, 5)
+      call output ( '  nLevels: ')
+      call output ( l2gp%nLevels, 3)
+      call output ( '  nFreqs: ')
+      call output ( l2gp%nFreqs, 3, advance='yes')
+      if ( myDetails < 0 ) return
+      call dump ( l2gp%pressures, 'Pressures:' )
+      
+      call dump ( l2gp%latitude, 'Latitude:' )
+      
+      call dump ( l2gp%longitude, 'Longitude:' )
+      
+      call dump ( l2gp%solarTime, 'SolarTime:' )
+      
+      call dump ( l2gp%solarZenith, 'SolarZenith:' )
+      
+      call dump ( l2gp%losAngle, 'LOSAngle:' )
+      
+      call dump ( l2gp%geodAngle, 'geodAngle:' )
+      
+      call dump ( l2gp%time, 'Time:' )
+      
+      call dump ( l2gp%chunkNumber, 'ChunkNumber:' )
+      
+      if ( associated(l2gp%frequency) ) &
+        & call dump ( l2gp%frequency, 'Frequencies:' )
+      
+      if ( myDetails < 1 ) return
+      call dump ( real(l2gp%l2gpValue, r8), 'L2GPValue:' )
+      
+      call dump ( real(l2gp%l2gpPrecision, r8), 'L2GPPrecision:' )
+      
+      !    call dump ( l2gp%status, 'Status:' )
+      
+      call dump ( l2gp%quality, 'Quality:' )
+      
+  end subroutine Dump_L2GP
+    
+
+  !=============================================================================
+end module L2GPData
+!=============================================================================
+
+!
+! $Log: L2GPData.f90,v $
+! Revision 1.27  2003/01/15 23:23:34  pwagner
+! data types for L2GPData_T now adjustable
+!
+! Revision 1.26  2003/01/15 19:13:30  pwagner
+! Smane no monkeying fix, but for hdf5
+!
+! Revision 1.25  2003/01/15 00:05:34  pwagner
+! Now can write L2GPData w/o monkeying around
+!
+! Revision 1.24  2003/01/09 01:02:27  pwagner
+! Moved some use statements in attempt to work around Lahey long compile time bug
+!
+! Revision 1.23  2002/10/25 15:21:05  hcp
+! Nasty hack for unlimited swaths removed. Local requirement for this worked
+! around in a different way. HDF-EOS5 team admit that problem is really
+! caused by a bug in HDF-EOS5 so it should get fixed sometime anyway.
+!
+! Revision 1.22  2002/10/23 16:59:14  hcp
+! Added _VERY_ cheesy work-around for reading files where the time
+! dimension is unlimited.  This should not have any effect on files where
+! the time dimension is not an unlimited dimension.  This is a
+! work-around for some pathetically poor behaviour in HDF-EOS5.
+!
+! Revision 1.21  2002/10/09 14:05:30  hcp
+! replaced HE5S_UNLIMITED with   HE5S_UNLIMITED_F
+!
+! Revision 1.20  2002/08/15 22:26:22  pwagner
+! Added he5_swdefchunk to .._createFile_hdf5
+!
+! Revision 1.19  2002/06/10 12:00:43  hcp
+! Removed use hdf5_params as hdf-eos5 now has an include file with the
+! parameters you need ready-defined. References to various types changed
+! to be consistent with that.
+!
+! Revision 1.18  2002/05/01 13:05:53  hcp
+! Changed a warning to a debug so I didn't have to see it
+!
+! Revision 1.17  2002/05/01 09:28:10  hcp
+! Some print statements commented
+!
+! Revision 1.16  2002/03/15 23:02:29  pwagner
+! Gets HDFVERSION_4 and 5 from MLSFiles; checks for illegal hdfversions
+!
+! Revision 1.15  2002/02/01 21:32:34  pwagner
+! offset treated properly for appendl2gp for hdf4; untested
+!
+! Revision 1.14  2002/01/29 23:47:21  pwagner
+! Repaired bugs relating to hdf4 compatibility
+!
+! Revision 1.13  2002/01/29 00:48:43  pwagner
+! Now should handle both hdfVersions; not tested yet
+!
+! Revision 1.12  2002/01/26 00:18:05  pwagner
+! (Read)(Write)L2GPData accepts optional hdfVersion arg
+!
+! Revision 1.11  2001/11/29 10:07:13  pumphrey
+! L2GPData (HDF-EOS5 version) brought up to date with HDF-EOS4 version
+!
+! Revision 1.10  2001/11/28 17:46:28  pumphrey
+! In the middle of syncing up l2gpdata with HDF4 version in lib.
+! Compiles, but not tested. Hack to write char swaths cut-n-pasted but not
+! examined for sanity
+!
+! Revision 1.9  2001/11/28 16:17:16  pumphrey
+! Syncing prior to major re-sync with HDF4 version.
+!
+! Revision 1.8  2001/07/31 11:26:19  archie
+! Corrected case for ChunkNumber
+! .
+!
+! Revision 1.7  2001/07/11 19:01:16  pumphrey
+! quality->Quality, status->Status.
+!
+! Revision 1.6  2001/04/27 07:48:54  pumphrey
+! Many nested loops in l3ascii replaced with array ops. Small fixes
+! (e.g. spelling mistakes) in other modules.
+!
+! Revision 1.5  2001/04/06 20:16:38  pumphrey
+! Not much, just keeping in sync
+!
+! Revision 1.4  2001/03/29 17:33:27  pumphrey
+! Huge changes to L2GPData to sync with the HDF4 version and add unlimited
+! dimension along the track
+!
+! Revision 1.3  2001/03/20 14:00:30  pumphrey
+! fixing inconsistencies -- nothing important
+!
+! Revision 1.2  2001/02/23 13:33:14  pumphrey
+! Fixed type definition for L2GPData_T so all the pointers are => NULL()
+! This error was detected by nagf95 on Solaris but not on Linux. Odd.
+!
+! Revision 1.1  2000/12/22 15:55:53  pumphrey
+! Initial commit of HDF-EOS5 versions of L2GP interface.
+!
+! Revision 2.8  2000/12/04 23:43:59  vsnyder
+! Move more of addItemToDatabase into the include
+!
+! Revision 2.7  2000/09/22 14:29:42  pumphrey
+! OutputL2GP_createFile was setting LocalSolarTime as byte (should be
+! REAL)  and Time as REAL (should be Double prec.). Fixed.
+!
+! Revision 2.6  2000/09/21 13:48:18  pumphrey
+! fixed a bug in the write routine.
+!
+! Revision 2.5  2000/09/19 12:42:11  pumphrey
+! added chunkNumber to SetupNewL2GPRecord and other bug fixes
+!
+! Revision 2.4  2000/09/18 10:19:49  pumphrey
+! Removed some debugging statements.
+!
+! Revision 2.1  2000/09/15 21:50:18  livesey
+! New version of L2GP data, moved some stuff from l2 to lib
+!
+! Revision 2.0  2000/09/05 18:57:03  ahanzel
+! Changing file revision to 2.0.
+!
+! Revision 1.1  2000/09/02 02:05:04  vsnyder
+! Initial entry
+!
+@
+
+
+1.27
+log
+@data types for L2GPData_T now adjustable
+@
+text
+@d35 1
+a35 1
+       & "$Id: L2GPData.f90,v 1.26 2003/01/15 19:13:30 pwagner Exp $"
+d2324 55
+d2414 1
+d2576 3
+@
+
+
+1.26
+log
+@Smane no monkeying fix, but for hdf5
+@
+text
+@d15 1
+a15 1
+  use MLSCommon, only: R8
+d35 1
+a35 1
+       & "$Id: L2GPData.f90,v 1.25 2003/01/15 00:05:34 pwagner Exp $"
+d74 3
+d144 1
+a144 1
+     real (r8), pointer, dimension(:) :: pressures=>NULL() ! Vertical coords (nLevels)
+d147 7
+a153 7
+     real (r8), pointer, dimension(:) :: latitude => NULL()
+     real (r8), pointer, dimension(:) :: longitude => NULL()
+     real (r8), pointer, dimension(:) :: solarTime => NULL()
+     real (r8), pointer, dimension(:) :: solarZenith => NULL()
+     real (r8), pointer, dimension(:) :: losAngle => NULL()
+     real (r8), pointer, dimension(:) :: geodAngle => NULL()
+     real (r8), pointer, dimension(:) :: time => NULL()
+d159 1
+a159 1
+     real (r8), pointer, dimension(:) :: frequency=>NULL()
+d164 2
+a165 2
+     real (r8), pointer, dimension(:,:,:) :: l2gpValue=>NULL()
+     real (r8), pointer, dimension(:,:,:) :: l2gpPrecision=>NULL()
+d170 1
+a170 1
+     real (r8), pointer, dimension(:) :: quality=>NULL()
+d2503 1
+a2503 1
+      call dump ( l2gp%l2gpValue, 'L2GPValue:' )
+d2505 1
+a2505 1
+      call dump ( l2gp%l2gpPrecision, 'L2GPPrecision:' )
+d2520 3
+@
+
+
+1.25
+log
+@Now can write L2GPData w/o monkeying around
+@
+text
+@d35 1
+a35 1
+       & "$Id: L2GPData.f90,v 1.23 2002/10/25 15:21:05 hcp Exp $"
+d66 1
+a66 1
+  ! (This 1st one enables some changes *not* made by paw)
+d1553 1
+a1554 1
+         start(1)=0 ! needed because offset may have made this /=0
+d2139 1
+a2139 1
+       l2gp%frequency = 0
+d2224 1
+a2224 1
+            & reshape(l2gp%l2gpValue, (/size(l2gp%l2gpValue)/)) )
+d2517 3
+@
+
+
+1.24
+log
+@Moved some use statements in attempt to work around Lahey long compile time bug
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+d66 3
+d1553 4
+a1556 2
+       start(1)=0 ! needed because offset may have made this /=0
+       l2gp%frequency = 0
+d1635 1
+a1635 1
+            & RESHAPE(l2gp%l2gpValue, (/SIZE(l2gp%l2gpValue)/)) )
+d2366 1
+a2366 1
+    ! it is lengthend automagically. 
+d2517 3
+@
+
+
+1.23
+log
+@Nasty hack for unlimited swaths removed. Local requirement for this worked
+around in a different way. HDF-EOS5 team admit that problem is really
+caused by a bug in HDF-EOS5 so it should get fixed sometime anyway.
+@
+text
+@d13 2
+a14 2
+  use HDFEOS5
+  use HE5_SWAPI 
+d35 1
+a35 1
+       & "$Id: L2GPData.f90,v 1.22 2002/10/23 16:59:14 hcp Exp $"
+d804 2
+d1718 2
+d2013 2
+d2159 2
+d2512 5
+@
+
+
+1.22
+log
+@Added _VERY_ cheesy work-around for reading files where the time
+dimension is unlimited.  This should not have any effect on files where
+the time dimension is not an unlimited dimension.  This is a
+work-around for some pathetically poor behaviour in HDF-EOS5.
+@
+text
+@d35 1
+a35 1
+       & "$Id: L2GPData.f90,v 1.21 2002/10/09 14:05:30 hcp Exp $"
+d859 5
+a863 5
+    if ( index(list,'Unlim') /= 0 ) then 
+      timeIsUnlim = .TRUE.
+    else
+      timeIsUnlim = .FALSE.
+    endif
+d912 1
+a912 1
+       if ( (timeIsUnlim .and. firstProf >= l2gp%nTimes) &
+d936 5
+a940 5
+       if(timeIsUnlim) then
+         myNumProfs = lastProf - first + 1
+         nTimes=lastprof-first+1
+         l2gp%nTimes=nTimes
+       endif
+d2504 6
+@
+
+
+1.21
+log
+@replaced HE5S_UNLIMITED with   HE5S_UNLIMITED_F
+@
+text
+@d35 1
+a35 1
+       & "$Id: L2GPData.f90,v 1.20 2002/08/15 22:26:22 pwagner Exp $"
+d406 1
+a406 1
+
+d413 1
+a413 1
+
+d426 2
+a427 1
+
+d827 1
+a827 1
+    integer :: alloc_err, first, freq, lev, nDims, size, swid, status
+d830 1
+a830 1
+    logical :: firstCheck, lastCheck
+d841 1
+a841 1
+
+d854 1
+d859 5
+d866 1
+d871 3
+d876 1
+d880 2
+d892 2
+d910 4
+a913 2
+
+       if ( (firstProf >= l2gp%nTimes) .or. (firstProf < 0) ) then
+d933 8
+d1194 2
+a1195 1
+
+d1199 1
+d1789 1
+a1789 1
+       print*,"Defining dimension ", DIM_NAME3," with size",l2gp%nFreqs
+d2504 3
+@
+
+
+1.20
+log
+@Added he5_swdefchunk to .._createFile_hdf5
+@
+text
+@d35 1
+a35 1
+       & "$Id: L2GPData.f90,v 1.19 2002/06/10 12:00:43 hcp Exp $"
+d1742 1
+a1742 1
+    status = HE5_SWdefdim(swid, UNLIM, HE5S_UNLIMITED)
+d2476 3
+@
+
+
+1.19
+log
+@Removed use hdf5_params as hdf-eos5 now has an include file with the
+parameters you need ready-defined. References to various types changed
+to be consistent with that.
+@
+text
+@d35 1
+a35 1
+       & "$Id: L2GPData.f90,v 1.18 2002/05/01 13:05:53 hcp Exp $"
+d1931 1
+d2476 5
+@
+
+
+1.18
+log
+@Changed a warning to a debug so I didn't have to see it
+@
+text
+@d10 1
+a10 1
+  use HDF5_params
+d35 1
+a35 1
+       & "$Id: L2GPData.f90,v 1.17 2002/05/01 09:28:10 hcp Exp $"
+d1741 2
+a1742 2
+    !print*,"Defined Unlim with size", H5S_UNLIMITED
+    status = HE5_SWdefdim(swid, UNLIM, H5S_UNLIMITED)
+d1772 1
+a1772 1
+!    print*,"... and of type ",H5T_NATIVE_FLOAT
+d1779 1
+a1779 1
+         H5T_NATIVE_FLOAT , 0)
+d1785 1
+a1785 1
+!    print*,"... and of type ",H5T_NATIVE_FLOAT
+d1790 1
+a1790 1
+         H5T_NATIVE_FLOAT, HDFE_NOMERGE)
+d1798 1
+a1798 1
+    H5T_NATIVE_DOUBLE, HDFE_NOMERGE)
+d1806 1
+a1806 1
+         H5T_NATIVE_FLOAT, HDFE_NOMERGE)
+d1814 1
+a1814 1
+         H5T_NATIVE_FLOAT, HDFE_NOMERGE)
+d1822 1
+a1822 1
+         H5T_NATIVE_FLOAT, HDFE_NOMERGE)
+d1830 1
+a1830 1
+    H5T_NATIVE_FLOAT,   HDFE_NOMERGE)
+d1838 1
+a1838 1
+         H5T_NATIVE_FLOAT, HDFE_NOMERGE)
+d1847 1
+a1847 1
+            H5T_NATIVE_FLOAT, HDFE_NOMERGE)
+d1857 1
+a1857 1
+            H5T_NATIVE_FLOAT, HDFE_NOMERGE)
+d1872 1
+a1872 1
+       H5T_NATIVE_FLOAT,HDFE_NOMERGE)
+d1882 1
+a1882 1
+            H5T_NATIVE_FLOAT, HDFE_NOMERGE)
+d1899 1
+a1899 1
+       !      DIM_NAME12, MAX_DIML12, H5T_NATIVE_FLOAT, HDFE_NOMERGE
+d1901 1
+a1901 1
+            H5T_NATIVE_FLOAT, HDFE_NOMERGE)
+d1911 1
+a1911 1
+            H5T_NATIVE_FLOAT,HDFE_NOMERGE)
+d1924 1
+a1924 1
+            H5T_NATIVE_FLOAT,HDFE_NOMERGE)
+d1932 1
+a1932 1
+       H5T_NATIVE_FLOAT, HDFE_NOMERGE)
+d1942 1
+a1942 1
+!    print*,"... and of type ",H5T_NATIVE_CHAR
+d1945 1
+a1945 1
+!         H5T_NATIVE_CHAR, HDFE_NOMERGE)
+d1957 1
+a1957 1
+         H5T_NATIVE_FLOAT, HDFE_NOMERGE)
+d2475 3
+@
+
+
+1.17
+log
+@Some print statements commented
+@
+text
+@d18 1
+a18 1
+       & MLSMSG_Error, MLSMSG_Warning
+d35 1
+a35 1
+       & "$Id: L2GPData.f90,v 1.16 2002/03/15 23:02:29 pwagner Exp $"
+d1140 2
+a1141 1
+      print*,"Warning: reading of status field disabled"
+d2248 3
+a2250 1
+      print*,"Warning. Writing of status field disabled"
+d2475 3
+@
+
+
+1.16
+log
+@Gets HDFVERSION_4 and 5 from MLSFiles; checks for illegal hdfversions
+@
+text
+@d35 1
+a35 1
+       & "$Id: L2GPData.f90,v 1.15 2002/02/01 21:32:34 pwagner Exp $"
+d1893 3
+a1895 3
+       print*,"Set chunking with status=",status
+       print*,"chunking=",chunk_dims
+       print*,"About to define 2-D extendible field"
+d1897 2
+a1898 2
+       print*,"Calling SWdefdfld with args ",swid, DATA_FIELD1, &
+            DIM_NAME12, MAX_DIML12, H5T_NATIVE_FLOAT, HDFE_NOMERGE
+d1901 2
+a1902 2
+       print*,"Defined 2-D extendible field"
+    
+d2265 1
+a2265 1
+    print*,"Detatched from swath -- error=",status
+d2472 3
+@
+
+
+1.15
+log
+@offset treated properly for appendl2gp for hdf4; untested
+@
+text
+@d15 2
+a18 1
+  use MLSCommon, only: R8
+d21 1
+a22 1
+  use STRING_TABLE, only: DISPLAY_STRING
+d35 1
+a35 1
+       & "$Id: L2GPData.f90,v 1.14 2002/01/29 23:47:21 pwagner Exp $"
+d40 1
+a40 1
+  interface DUMP !And this does WTF? 
+d69 1
+a69 1
+  integer, parameter :: L2GPDEFAULT_HDFVERSION = 4            
+d414 1
+a414 1
+    if (myhdfVersion == 4) then
+d417 3
+d1211 2
+a1212 2
+       msr = 'Failed to create swath ' // TRIM(name)
+       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+d1733 2
+a1734 2
+       msr = 'Failed to create swath ' // trim(name)
+       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+d2300 1
+a2300 1
+    if (myhdfVersion == 4) then
+d2304 3
+d2339 1
+a2339 1
+    if (myhdfVersion == 4) then
+d2342 3
+d2472 3
+@
+
+
+1.14
+log
+@Repaired bugs relating to hdf4 compatibility
+@
+text
+@d19 1
+a19 1
+  use OUTPUT_M, only: OUTPUT ! Added as HDF4 version uses it
+d30 2
+a31 4
+    & ReadL2GPData, SetupNewL2GPRecord,  WriteL2GPData !, &
+!    & OutputL2GP_createFile, OutputL2GP_writeData,  OutputL2GP_writeGeo
+  !INTEGER:: HE5_SWRDFLD
+  !EXTERNAL HE5_SWRDFLD !Should USE HE5_SWAPI
+d34 1
+a34 1
+       & "$Id: L2GPData.f90,v 1.13 2002/01/29 00:48:43 pwagner Exp $"
+d46 17
+a181 1
+    integer :: freqsArrayLen, status, surfsArrayLen
+a252 3
+    ! Local variables
+
+    integer status
+a286 1
+    integer :: status                   ! From ALLOCATE
+d288 1
+a288 1
+    integer :: myNTimes, myNColms
+d364 1
+a364 1
+  ! This subroutine destroys a quantity template database
+a456 3
+    integer :: nColumns
+    integer :: col_start(2), col_stride(2), col_edge(2)
+
+a824 3
+    integer :: nColumns
+    integer :: col_start(2), col_stride(2), col_edge(2)
+
+d1400 1
+a1400 1
+  subroutine OutputL2GP_writeGeo_hdf4 (l2gp, l2FileHandle, swathName)
+d1410 1
+d1422 1
+a1422 1
+    integer :: status, swid
+d1425 7
+d1442 2
+a1443 2
+    stride(1) = 1
+    start(1) = 0
+d1504 1
+d1515 1
+d1539 1
+a1539 1
+  subroutine OutputL2GP_writeData_hdf4(l2gp, l2FileHandle, swathName)
+d1549 1
+d1560 1
+a1560 1
+    integer :: status
+d1571 6
+d1586 1
+d1997 1
+a2003 1
+
+d2148 2
+d2167 1
+a2167 1
+    start(3)=myOffset
+a2321 2
+    !----Local variable
+    integer::myOffset
+a2331 6
+    ! ----Executable code---
+    if (present(offset)) then
+       myOffset=offset
+    else
+       myOffset=0
+    endif
+d2333 2
+a2334 2
+      call OutputL2GP_writeGeo_hdf4 (l2gp, l2FileHandle, swathName)
+      call OutputL2GP_writeData_hdf4 (l2gp, l2FileHandle, swathName)
+d2336 2
+a2337 2
+      call OutputL2GP_writeGeo_hdf5 (l2gp, l2FileHandle, swathName,myOffset)
+      call OutputL2GP_writeData_hdf5 (l2gp, l2FileHandle, swathName,myOffset)
+d2385 1
+a2385 1
+    integer :: i, ierr
+d2462 3
+@
+
+
+1.13
+log
+@Now should handle both hdfVersions; not tested yet
+@
+text
+@d29 1
+a29 1
+    & Dump, ExpandL2GPDataInPlace,  &
+d36 1
+a36 1
+       & "$Id: L2GPData.f90,v 1.12 2002/01/26 00:18:05 pwagner Exp $"
+d2286 1
+a2286 1
+  subroutine AppendL2GPData(l2gp,l2FileHandle,swathName,offset)
+d2297 1
+d2300 10
+d2316 7
+a2322 2
+    call OutputL2GP_writeGeo (l2gp, l2FileHandle, swathName,myOffset)
+    call OutputL2GP_writeData (l2gp, l2FileHandle, swathName,myOffset)
+d2446 3
+@
+
+
+1.12
+log
+@(Read)(Write)L2GPData accepts optional hdfVersion arg
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+d9 6
+a18 4
+  use HDF5_params
+  use HDFEOS5
+  use HE5_SWAPI 
+
+d20 1
+d30 2
+a31 4
+    & OutputL2GP_createFile, OutputL2GP_writeData,  OutputL2GP_writeGeo, &
+    & ReadL2GPData, SetupNewL2GPRecord,  WriteL2GPData, AppendL2GPData
+
+
+d36 1
+a36 1
+       & "$Id: L2GPData.f90,v 1.11 2001/11/29 10:07:13 pumphrey Exp $"
+a40 1
+
+d51 4
+d374 1
+a374 1
+  ! -------------------------------------------------------------------------
+d380 2
+a381 1
+    ! This routine reads an L2GP file, returning a filled data structure and the !
+d386 5
+a390 5
+    character (LEN=*), intent(IN) :: swathname ! Name of swath
+    integer, intent(IN) :: L2FileHandle ! Returned by swopen
+    integer, intent(IN), optional :: firstProf, lastProf ! Defaults to first and last
+    type( L2GPData_T ), intent(OUT) :: l2gp ! Result
+    integer, intent(OUT),optional :: numProfs ! Number actually read
+d393 40
+d434 1
+a434 1
+    character (LEN=*), parameter :: SZ_ERR = 'Failed to get size of &
+d436 2
+a437 2
+    character (LEN=*), parameter :: MLSMSG_INPUT = 'Error in input argument '
+    character (LEN=*), parameter :: MLSMSG_L2GPRead = 'Unable to read L2GP &
+d439 1
+d441 2
+a442 2
+    character (LEN=80) :: list
+    character (LEN=480) :: msr
+d454 1
+a454 1
+!  with char data on Linux with HDF4. With HDF5 we may or may not need to
+d463 3
+a465 3
+    
+    swid = HE5_SWattach(L2FileHandle, l2gp%Name)
+    if (swid == -1) call MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
+d473 2
+a474 2
+    nDims = HE5_SWinqdims(swid, list, dims)
+    if (nDims == -1) call MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
+d476 2
+a477 2
+    if ( index(list,'nLevels') /= 0 ) lev = 1
+    if ( index(list,'Freq') /= 0 ) freq = 1
+d479 2
+a480 2
+    size = HE5_SWdiminfo(swid, DIM_NAME1)
+    if (size == -1) then
+d482 2
+a483 2
+       call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+d486 1
+a486 1
+    if (lev == 0) then
+d489 2
+a490 2
+       size = HE5_SWdiminfo(swid, DIM_NAME2)
+       if (size == -1) then
+d492 2
+a493 2
+          call MLSMessage(MLSMSG_Error, ModuleName, msr)
+       endif
+d496 1
+a496 1
+    endif
+d498 3
+a500 3
+    if (freq == 1) then
+       size = HE5_SWdiminfo(swid, DIM_NAME3)
+       if (size == -1) then
+d502 2
+a503 2
+          call MLSMessage(MLSMSG_Error, ModuleName, msr)
+       endif
+d507 1
+a507 1
+    endif
+d514 1
+a514 1
+    if (firstCheck) then
+d516 1
+a516 1
+       if ( (firstProf >= l2gp%nTimes) .or. (firstProf < 0) ) then
+d518 1
+a518 1
+          call MLSMessage(MLSMSG_Error, ModuleName, msr)
+d521 1
+a521 1
+       endif
+d527 1
+a527 1
+    endif
+d529 1
+a529 1
+    if (lastCheck) then
+d531 1
+a531 1
+       if (lastProf < first) then
+d533 2
+a534 2
+          call MLSMessage(MLSMSG_Error, ModuleName, msr)
+       endif
+d536 1
+a536 1
+       if (lastProf >= nTimes) then
+d540 1
+a540 1
+       endif
+d546 1
+a546 1
+    endif
+d550 2
+a551 2
+    call SetupNewL2GPRecord (l2gp, nFreqs=nFreqs, nLevels=nLevels, &
+      &  nTimes=mynumProfs)
+d555 4
+a558 3
+    nFreqsOr1=max(nFreqs,1)
+    nLevelsOr1=max(nLevels, 1)
+    allocate(realProf(myNumProfs), realSurf(l2gp%nLevels), &
+d560 1
+a560 2
+      &   string_buffer(1,myNumProfs), &
+      &   real3(nFreqsOr1,nLevelsOr1,myNumProfs), STAT=alloc_err)
+d575 3
+a577 3
+    status = HE5_SWrdfld(swid, GEO_FIELD1, start(3:3), stride(3:3), &
+      edge(3:3), realProf)
+    if (status == -1) then
+d579 2
+a580 2
+       call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+d583 1
+a583 1
+    status = HE5_SWrdfld(swid, GEO_FIELD2, start(3:3), stride(3:3), edge(3:3),&
+d585 1
+a585 1
+    if (status == -1) then
+d587 2
+a588 2
+       call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+d591 1
+a591 1
+    status = HE5_SWrdfld(swid, GEO_FIELD3, start(3:3), stride(3:3), edge(3:3),&
+d593 1
+a593 1
+    if (status == -1) then
+d595 2
+a596 2
+       call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+d598 1
+a598 1
+    status = HE5_SWrdfld(swid, GEO_FIELD4, start(3:3), stride(3:3), edge(3:3),&
+d600 1
+a600 1
+    if (status == -1) then
+d602 2
+a603 2
+       call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+d606 1
+a606 1
+    status = HE5_SWrdfld(swid, GEO_FIELD5, start(3:3), stride(3:3), edge(3:3),&
+d608 1
+a608 1
+    if (status == -1) then
+d610 2
+a611 2
+       call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+d614 1
+a614 1
+    status = HE5_SWrdfld(swid, GEO_FIELD6, start(3:3), stride(3:3), edge(3:3),&
+d616 1
+a616 1
+    if (status == -1) then
+d618 2
+a619 2
+       call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+d622 3
+a624 3
+    status = HE5_SWrdfld(swid, GEO_FIELD7, start(3:3), stride(3:3), edge(3:3),&
+      &   realProf)
+    if (status == -1) then
+d626 363
+d991 491
+a1481 1
+    l2gp%geodAngle = realProf
+d1483 6
+a1488 6
+    status = HE5_SWrdfld(swid, GEO_FIELD8, start(3:3), stride(3:3), edge(3:3),&
+      &    l2gp%chunkNumber)
+    if (status == -1) then
+       msr = MLSMSG_L2GPRead // GEO_FIELD8
+       call MLSMessage(MLSMSG_Warning, ModuleName, msr)
+    endif
+d1490 9
+a1498 1
+    ! Read the pressures vertical geolocation field, if it exists
+d1500 10
+a1509 1
+    if (lev /= 0) then
+d1511 1
+a1511 6
+       status = HE5_SWrdfld(swid,GEO_FIELD9,start(2:2),stride(2:2), edge(2:2),&
+         & realSurf)
+       if (status == -1) then
+          msr = MLSMSG_L2GPRead // GEO_FIELD9
+          call MLSMessage(MLSMSG_Error, ModuleName, msr)
+       endif
+d1513 1
+a1513 1
+       l2gp%pressures = realSurf
+d1515 4
+a1518 1
+    endif
+d1520 3
+a1522 1
+    ! Read the frequency geolocation field, if it exists
+d1524 2
+a1525 1
+    if (freq == 1) then
+d1527 2
+a1528 1
+       edge(1) = l2gp%nFreqs
+d1530 1
+a1530 7
+       status = HE5_SWrdfld(swid,GEO_FIELD10,start(1:1),stride(1:1),edge(1:1),&
+         & realFreq)
+       if (status == -1) then
+          msr = MLSMSG_L2GPRead // GEO_FIELD10
+          call MLSMessage(MLSMSG_Error, ModuleName, msr)
+       endif
+       l2gp%frequency = realFreq
+d1532 3
+a1534 1
+    endif
+d1536 1
+a1536 1
+    ! Read the data fields that may have 1-3 dimensions
+d1538 1
+a1538 1
+    if ( freq == 1) then
+d1540 1
+a1540 6
+       status = HE5_SWrdfld(swid, DATA_FIELD1, start, stride, edge, real3)
+       if (status == -1) then
+          msr = MLSMSG_L2GPRead // DATA_FIELD1
+          call MLSMessage(MLSMSG_Error, ModuleName, msr)
+       endif
+       l2gp%l2gpValue = real3
+d1542 2
+a1543 6
+       status = HE5_SWrdfld(swid, DATA_FIELD2, start, stride, edge, real3)
+       if (status == -1) then
+          msr = MLSMSG_L2GPRead // DATA_FIELD2
+          call MLSMessage(MLSMSG_Error, ModuleName, msr)
+       endif
+       l2gp%l2gpPrecision = real3
+d1545 3
+a1547 1
+    else if ( lev == 1) then
+d1549 6
+a1554 16
+       status = HE5_SWrdfld( swid, DATA_FIELD1, start(2:3), stride(2:3), &
+            edge(2:3), real3 )
+!            edge(2:3), real3(1,:,:) )
+       if (status == -1) then
+          msr = MLSMSG_L2GPRead // DATA_FIELD1
+          call MLSMessage(MLSMSG_Error, ModuleName, msr)
+       endif
+       l2gp%l2gpValue = real3
+
+       status = HE5_SWrdfld( swid, DATA_FIELD2, start(2:3), stride(2:3), &
+            edge(2:3), real3(1,:,:) )
+       if (status == -1) then
+          msr = MLSMSG_L2GPRead // DATA_FIELD2
+          call MLSMessage(MLSMSG_Error, ModuleName, msr)
+       endif
+       l2gp%l2gpPrecision = real3
+d1556 2
+d1559 3
+d1563 8
+a1570 7
+       status = HE5_SWrdfld(swid,DATA_FIELD1,start(3:3),stride(3:3),edge(3:3),&
+         &   real3(1,1,:) )
+       if (status == -1) then
+          msr = MLSMSG_L2GPRead // DATA_FIELD1
+          call MLSMessage(MLSMSG_Error, ModuleName, msr)
+       endif
+       l2gp%l2gpValue = real3
+d1572 12
+a1583 7
+       status = HE5_SWrdfld( swid, DATA_FIELD2, start(3:3), stride(3:3), edge(3:3), &
+            real3(1,1,:) )
+       if (status == -1) then
+          msr = MLSMSG_L2GPRead // DATA_FIELD2
+          call MLSMessage(MLSMSG_Error, ModuleName, msr)
+       endif
+       l2gp%l2gpPrecision = real3
+d1585 2
+a1586 26
+    endif
+    
+    ! Read the data fields that are 1-dimensional
+
+!??? There appears to be a problem with reading character data using
+!??? HDF-EOS.  HDF_EOS's swrdfld expects a C void* pointer, no matter what
+!??? the type of object.  Burkhard Burow's cfortran macros need to be told
+!??? whether the argument is character, because compilers represent character
+!??? arguments in various ways, usually different from non-character arguments.
+!??? I.e., never the twain shall meet.
+!    status = swrdfld(swid, DATA_FIELD3,start(3:3),stride(3:3),edge(3:3),&
+!      l2gp%status)
+!    status = swrdfld(swid, DATA_FIELD3,start(3:3),stride(3:3),edge(3:3),&
+!      the_status_buffer)
+! These lines commented out as they make NAG core dump on the deallocate statement.
+! below.
+!    if ( status == -1 ) then
+!      msr = MLSMSG_L2GPRead // DATA_FIELD3
+!      call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+!    end if
+!    l2gp%status = the_status_buffer(:)(1:1)
+    
+    !   The above note was copied direct from the HDF4 version. The HDF5
+    ! version has similar problems so these lines are commented too.
+    !         status = HE5_SWrdfld(swid, DATA_FIELD3,start(3:3),&
+    !    stride(3:3),edge(3:3), l2gp%status)
+d1588 2
+a1589 1
+    l2gp%status = ' ' ! So it has a value.
+a1590 3
+   if(USEINTS4STRINGS) then
+       status = HE5_swrdfld(swid,DATA_FIELD3,start(3:3),stride(3:3),edge(3:3),&
+         string_buffer)
+d1592 8
+a1599 2
+         msr = MLSMSG_L2GPRead // DATA_FIELD3
+         call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+a1600 1
+       call ints2Strings(string_buffer, l2gp%status)
+d1602 14
+a1615 2
+      print*,"Warning: reading of status field disabled"
+      status=0
+d1618 1
+a1618 7
+    status = HE5_SWrdfld(swid, DATA_FIELD4, start(3:3), stride(3:3),&
+      edge(3:3),realProf)
+    if (status == -1) then
+       msr = MLSMSG_L2GPRead // DATA_FIELD4
+       call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+    l2gp%quality = realProf
+d1620 25
+a1644 1
+    ! Deallocate local variables
+d1646 1
+a1646 3
+    deallocate(realFreq, realSurf, realProf, real3, STAT=alloc_err)
+    if ( alloc_err /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
+         'Failed deallocation of local real variables.')
+d1648 5
+a1652 3
+    deallocate ( string_buffer, STAT=alloc_err )
+    if ( alloc_err /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+         'Failed deallocation of status buffer.' )
+d1654 3
+a1656 12
+    !  After reading, detach from HE5_SWath interface
+
+    status = HE5_SWdetach(swid)
+    if (status == -1) call MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
+         &detach from swath interface after reading.')
+
+    ! Set numProfs if wanted
+    if (present(numProfs)) numProfs=myNumProfs
+
+    !-----------------------------
+  end subroutine ReadL2GPData
+  !-----------------------------
+d1658 2
+a1659 2
+  ! --------------------------------------  OutputL2GP_createFile  -----
+  subroutine OutputL2GP_createFile (l2gp, L2FileHandle, swathName,nLevels)
+d1947 1
+a1947 1
+  end subroutine OutputL2GP_createFile
+d1950 2
+a1951 2
+  !-----------------------------------------  OutputL2GP_writeGeo  -----
+  subroutine OutputL2GP_writeGeo (l2gp, l2FileHandle, swathName,offset)
+d2091 1
+a2091 1
+  end subroutine OutputL2GP_writeGeo
+d2094 2
+a2095 2
+  !----------------------------------------  OutputL2GP_writeData  -----
+  subroutine OutputL2GP_writeData(l2gp, l2FileHandle, swathName,offset)
+d2245 1
+a2245 1
+  end subroutine OutputL2GP_writeData
+d2262 19
+a2280 3
+    call OutputL2GP_createFile (l2gp, l2FileHandle, swathName)
+    call OutputL2GP_writeGeo (l2gp, l2FileHandle, swathName)
+    call OutputL2GP_writeData (l2gp, l2FileHandle, swathName)
+d2430 3
+@
+
+
+1.11
+log
+@L2GPData (HDF-EOS5 version) brought up to date with HDF-EOS4 version
+@
+text
+@d35 1
+a35 1
+       & "$Id: L2GPData.f90,v 1.10 2001/11/28 17:46:28 pumphrey Exp $"
+d373 1
+a373 1
+       firstProf, lastProf)
+d386 1
+d417 1
+a417 1
+
+d1344 1
+a1344 1
+  subroutine WriteL2GPData(l2gp,l2FileHandle,swathName)
+d1351 1
+d1506 3
+@
+
+
+1.10
+log
+@In the middle of syncing up l2gpdata with HDF4 version in lib.
+Compiles, but not tested. Hack to write char swaths cut-n-pasted but not
+examined for sanity
+@
+text
+@d35 1
+a35 1
+       & "$Id: L2GPData.f90,v 1.9 2001/11/28 16:17:16 pumphrey Exp $"
+d1259 1
+a1259 1
+      print*,"About to write data with offset=",myOffset
+d1295 20
+a1314 7
+    !    status = HE5_SWwrfld(swid, DATA_FIELD3, start(3:3), stride(3:3),&
+    !        edge(3:3), l2gp%status) ! 
+    status=0
+    print*,"Warning. Writing of status field disabled"
+    if ( status == -1 ) then
+       msr = WR_ERR // DATA_FIELD3
+       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+d1316 2
+a1317 1
+    l2gp%quality = 0
+d1363 1
+a1363 1
+    ! in the file has offset==0). If this runs off the end ofthe swath, 
+d1504 5
+@
+
+
+1.9
+log
+@Syncing prior to major re-sync with HDF4 version.
+@
+text
+@d5 1
+a5 1
+MODULE L2GPData                 ! Creation, manipulation and I/O for L2GP Data
+d7 3
+a9 3
+  USE Allocate_Deallocate, ONLY: Allocate_test, Deallocate_test
+  USE DUMP_0, only: DUMP
+  USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
+d11 8
+a18 1
+  USE MLSCommon, ONLY: R8
+d20 9
+a28 3
+  use HDF5_params
+  USE HDFEOS5
+  USE HE5_SWAPI 
+a29 2
+  USE OUTPUT_M, only: OUTPUT ! Added as HDF4 version uses it
+  USE STRING_TABLE, only: DISPLAY_STRING
+a30 1
+  IMPLICIT NONE
+d34 3
+a36 3
+  CHARACTER(len=256), PRIVATE :: Id = &
+       & "$Id: L2GPData.f90,v 1.8 2001/07/31 11:26:19 archie Exp $"
+  CHARACTER(len=*), PARAMETER, PRIVATE :: ModuleName = &
+d43 1
+d51 1
+a51 1
+  INTEGER, PARAMETER :: L2GPNameLen = 80
+d53 21
+a73 21
+   CHARACTER (len=*), PARAMETER :: DATA_FIELD1 = 'L2gpValue'
+   CHARACTER (len=*), PARAMETER :: DATA_FIELD2 = 'L2gpPrecision'
+   CHARACTER (len=*), PARAMETER :: DATA_FIELD3 = 'Status'
+   CHARACTER (len=*), PARAMETER :: DATA_FIELD4 = 'Quality'
+
+   CHARACTER (len=*), PARAMETER :: GEO_FIELD1 = 'Latitude'
+   CHARACTER (len=*), PARAMETER :: GEO_FIELD2 = 'Longitude'
+   CHARACTER (len=*), PARAMETER :: GEO_FIELD3 = 'Time'
+   CHARACTER (len=*), PARAMETER :: GEO_FIELD4 = 'LocalSolarTime'
+   CHARACTER (len=*), PARAMETER :: GEO_FIELD5 = 'SolarZenithAngle'
+   CHARACTER (len=*), PARAMETER :: GEO_FIELD6 = 'LineOfSightAngle'
+   CHARACTER (len=*), PARAMETER :: GEO_FIELD7 = 'OrbitGeodeticAngle'
+   CHARACTER (len=*), PARAMETER :: GEO_FIELD8 = 'ChunkNumber'
+   CHARACTER (len=*), PARAMETER :: GEO_FIELD9 = 'Pressure'
+   CHARACTER (len=*), PARAMETER :: GEO_FIELD10= 'frequency'
+
+   CHARACTER (len=*), PARAMETER :: DIM_NAME1 = 'nTimes'
+   CHARACTER (len=*), PARAMETER :: DIM_NAME2 = 'nLevels'
+   CHARACTER (len=*), PARAMETER :: DIM_NAME3 = 'nFreqs'
+   CHARACTER (len=*), PARAMETER :: DIM_NAME12 = 'nLevels,nTimes'
+   CHARACTER (len=*), PARAMETER :: DIM_NAME123 = 'nFreqs,nLevels,nTimes'
+d76 2
+a77 2
+   CHARACTER (len=*), PARAMETER :: MAX_DIML = ' '
+   CHARACTER (len=*), PARAMETER :: UNLIM = 'Unlim'
+d79 3
+a81 3
+   CHARACTER (len=*), PARAMETER :: MAX_DIML1 = UNLIM
+   CHARACTER (len=*), PARAMETER :: MAX_DIML12 = 'nLevels,Unlim'
+   CHARACTER (len=*), PARAMETER :: MAX_DIML123 = 'nFreqs,nLevels,Unlim'
+d85 9
+a93 3
+   INTEGER, PARAMETER :: HDFE_AUTOMERGE = 1     ! MERGE FIELDS WITH SHARE DIM
+   INTEGER, PARAMETER :: HDFE_NOMERGE = 0       ! don't merge
+
+d95 9
+a103 2
+
+  TYPE L2GPData_T
+d107 2
+a108 2
+     CHARACTER (LEN=L2GPNameLen) :: name ! Typically the swath name.
+     INTEGER :: nameIndex       ! Used by the parser to keep track of the data
+d112 3
+a114 3
+     INTEGER :: nTimes          ! Total number of profiles
+     INTEGER :: nLevels         ! Total number of surfaces
+     INTEGER :: nFreqs          ! Number of frequencies in breakdown
+d117 2
+a118 1
+     REAL (r8), POINTER, DIMENSION(:) :: pressures=>NULL() ! Vertical coords (nLevels)
+d121 7
+a127 7
+     REAL (r8), POINTER, DIMENSION(:) :: latitude => NULL()
+     REAL (r8), POINTER, DIMENSION(:) :: longitude => NULL()
+     REAL (r8), POINTER, DIMENSION(:) :: solarTime => NULL()
+     REAL (r8), POINTER, DIMENSION(:) :: solarZenith => NULL()
+     REAL (r8), POINTER, DIMENSION(:) :: losAngle => NULL()
+     REAL (r8), POINTER, DIMENSION(:) :: geodAngle => NULL()
+     REAL (r8), POINTER, DIMENSION(:) :: time => NULL()
+d129 1
+a129 1
+     INTEGER, POINTER, DIMENSION(:) :: chunkNumber=>NULL()
+d133 1
+a133 1
+     REAL (r8), POINTER, DIMENSION(:) :: frequency=>NULL()
+d138 2
+a139 2
+     REAL (r8), POINTER, DIMENSION(:,:,:) :: l2gpValue=>NULL()
+     REAL (r8), POINTER, DIMENSION(:,:,:) :: l2gpPrecision=>NULL()
+d142 1
+a142 1
+     CHARACTER (len=1), POINTER, DIMENSION(:) :: status=>NULL()
+d144 1
+a144 1
+     REAL (r8), POINTER, DIMENSION(:) :: quality=>NULL()
+d147 1
+a147 1
+  END TYPE L2GPData_T
+d149 1
+a149 1
+CONTAINS ! =====     Public Procedures     =============================
+d152 1
+a152 1
+  SUBROUTINE SetupNewL2GPRecord ( l2gp, nFreqs, nLevels, nTimes)
+d157 4
+a160 2
+    TYPE (L2GPData_T), INTENT(out)  :: l2gp
+    INTEGER, INTENT(in), OPTIONAL :: nFreqs, nLevels, nTimes ! Dimensions
+d163 2
+a164 2
+    INTEGER :: freqsArrayLen, status, surfsArrayLen
+    INTEGER :: useNFreqs, useNLevels, useNTimes
+d166 1
+a166 1
+    IF (PRESENT(nFreqs)) THEN
+d168 1
+a168 1
+    ELSE
+d170 1
+a170 1
+    ENDIF
+d172 1
+a172 1
+    IF (PRESENT(nLevels)) THEN
+d174 1
+a174 1
+    ELSE
+d176 1
+a176 1
+    ENDIF
+d178 1
+a178 1
+    IF (PRESENT(nTimes)) THEN
+d180 1
+a180 1
+    ELSE
+d182 1
+a182 1
+    ENDIF
+d192 3
+a194 3
+    useNTimes=MAX(useNTimes,1)
+    useNLevels=MAX(useNLevels,1)
+    useNFreqs=MAX(useNFreqs,1)    
+d198 1
+a198 1
+    CALL allocate_test ( l2gp%pressures, useNLevels, "l2gp%pressures", &
+d203 1
+a203 1
+    CALL allocate_test ( l2gp%frequency, useNFreqs, "l2gp%frequency", ModuleName)
+d207 8
+a214 8
+    CALL allocate_test(l2gp%latitude,   useNTimes, "l2gp%latitude",   ModuleName)
+    CALL allocate_test(l2gp%longitude,  useNTimes, "l2gp%longitude",  ModuleName)
+    CALL allocate_test(l2gp%solarTime,  useNTimes, "l2gp%solarTime",  ModuleName)
+    CALL allocate_test(l2gp%solarZenith,useNTimes, "l2gp%solarZenith",ModuleName)
+    CALL allocate_test(l2gp%losAngle,   useNTimes, "l2gp%losAngle",   ModuleName)
+    CALL allocate_test(l2gp%geodAngle,  useNTimes, "l2gp%geodAngle",  ModuleName)
+    CALL allocate_test(l2gp%time,       useNTimes, "l2gp%time",       ModuleName)
+    CALL allocate_test(l2gp%chunkNumber,useNTimes, "l2gp%chunkNumber",ModuleName)
+d218 4
+a221 2
+    CALL allocate_test(l2gp%l2gpValue,useNFreqs,useNLevels,useNTimes,"l2gp%l2gpValue", ModuleName)
+    CALL allocate_test(l2gp%l2gpPrecision,useNFreqs,useNLevels,useNTimes,"l2gp%l2gpPrecision", ModuleName)
+d223 2
+a224 2
+    CALL allocate_test(l2gp%status, useNTimes,"l2gp%status", ModuleName)
+    CALL allocate_test(l2gp%quality,useNTimes,"l2gp%quality",ModuleName)
+d226 1
+a226 1
+  END SUBROUTINE SetupNewL2GPRecord
+d229 1
+a229 1
+  SUBROUTINE DestroyL2GPContents ( L2GP )
+d234 1
+a234 1
+    TYPE (L2GPData_T), INTENT(inout) :: L2GP
+d237 1
+a237 1
+    INTEGER status
+d241 15
+a255 15
+    CALL deallocate_test ( l2gp%pressures,    "l2gp%pressures",    ModuleName )
+    CALL deallocate_test ( l2gp%latitude,     "l2gp%latitude",     ModuleName )
+    CALL deallocate_test ( l2gp%longitude,    "l2gp%longitude",    ModuleName )
+    CALL deallocate_test ( l2gp%solarTime,    "l2gp%solarTime",    ModuleName )
+    CALL deallocate_test ( l2gp%solarZenith,  "l2gp%solarZenith",  ModuleName )
+    CALL deallocate_test ( l2gp%losAngle,     "l2gp%losAngle",     ModuleName )
+    CALL deallocate_test ( l2gp%losAngle,     "l2gp%losAngle",     ModuleName )
+    CALL deallocate_test ( l2gp%geodAngle,    "l2gp%geodAngle",    ModuleName )
+    CALL deallocate_test ( l2gp%chunkNumber,  "l2gp%chunkNumber",  ModuleName )
+    CALL deallocate_test ( l2gp%time,         "l2gp%time",         ModuleName )
+    CALL deallocate_test ( l2gp%frequency,    "l2gp%frequency",    ModuleName )
+    CALL deallocate_test ( l2gp%l2gpValue,    "l2gp%l2gpValue",    ModuleName )
+    CALL deallocate_test ( l2gp%l2gpPrecision,"l2gp%l2gpPrecision",ModuleName )
+    CALL deallocate_test ( l2gp%status,       "l2gp%status",       ModuleName )
+    CALL deallocate_test ( l2gp%quality,      "l2gp%quality",      ModuleName )
+d259 1
+a259 1
+  END SUBROUTINE DestroyL2GPContents
+d262 1
+a262 1
+  SUBROUTINE ExpandL2GPDataInPlace ( l2gp, newNTimes )
+d264 2
+a265 2
+    ! This subroutine expands an L2GPData_T in place allowing the user to add
+    ! more profiles to it.
+d268 2
+a269 2
+    TYPE (L2GPData_T), INTENT(inout) :: l2gp
+    INTEGER, INTENT(in) :: newNTimes
+d272 10
+a281 2
+    INTEGER :: status                   ! From ALLOCATE
+    TYPE (L2GPData_T) :: tempL2gp       ! For copying data around
+a282 1
+    ! Executable code
+d285 3
+a287 2
+    IF ( newNTimes<l2gp%nTimes ) &
+         & CALL MLSMessage ( MLSMSG_Error, ModuleName, &
+d300 3
+a302 2
+    CALL SetupNewL2GPRecord( l2gp, nFreqs=l2gp%nFreqs, nLevels=l2gp%nLevels, &
+      & nTimes=newNTimes)
+d324 1
+a324 1
+    CALL DestroyL2GPContents(templ2gp)
+d326 1
+a326 1
+  END SUBROUTINE ExpandL2GPDataInPlace
+d329 1
+a329 1
+  INTEGER FUNCTION AddL2GPToDatabase( DATABASE, ITEM )
+d336 2
+a337 2
+    TYPE (l2gpdata_t), DIMENSION(:), POINTER :: DATABASE
+    TYPE (l2gpdata_t), INTENT(in) :: ITEM
+d340 1
+a340 1
+    TYPE (L2GPData_T), DIMENSION(:), POINTER :: tempDatabase
+d343 1
+a343 1
+    INCLUDE "addItemToDatabase.f9h" 
+d346 1
+a346 1
+  END FUNCTION AddL2GPToDatabase
+d352 1
+a352 1
+  SUBROUTINE DestroyL2GPDatabase ( DATABASE )
+d355 1
+a355 1
+    TYPE (L2GPData_T), DIMENSION(:), POINTER :: DATABASE
+d358 1
+a358 1
+    INTEGER :: l2gpIndex, status
+d360 6
+a365 6
+    IF ( ASSOCIATED(database)) THEN
+       DO l2gpIndex = 1, SIZE(database)
+          CALL DestroyL2GPContents ( database(l2gpIndex) )
+       END DO
+       DEALLOCATE ( database, stat=status )
+       IF ( status /= 0 ) CALL MLSMessage ( MLSMSG_Error, ModuleName, &
+d367 2
+a368 2
+    END IF
+  END SUBROUTINE DestroyL2GPDatabase
+d372 1
+a372 1
+  SUBROUTINE ReadL2GPData(L2FileHandle, swathname, l2gp, numProfs, &
+d381 5
+a385 5
+    CHARACTER (LEN=*), INTENT(IN) :: swathname ! Name of swath
+    INTEGER, INTENT(IN) :: L2FileHandle ! Returned by swopen
+    INTEGER, INTENT(IN), OPTIONAL :: firstProf, lastProf ! Defaults to first and last
+    TYPE( L2GPData_T ), INTENT(OUT) :: l2gp ! Result
+    INTEGER, INTENT(OUT),OPTIONAL :: numProfs ! Number actually read
+d387 2
+a388 3
+    ! Parameters
+
+    CHARACTER (LEN=*), PARAMETER :: SZ_ERR = 'Failed to get size of &
+d390 2
+a391 2
+    CHARACTER (LEN=*), PARAMETER :: MLSMSG_INPUT = 'Error in input argument '
+    CHARACTER (LEN=*), PARAMETER :: MLSMSG_L2GPRead = 'Unable to read L2GP &
+d394 2
+a395 6
+    CHARACTER (LEN=80) :: list
+    CHARACTER (LEN=480) :: msr
+
+    INTEGER :: alloc_err, first, freq, lev, nDims, size, swid, status
+    INTEGER :: start(3), stride(3), edge(3), dims(3)
+    INTEGER :: nFreqs, nLevels, nTimes, nFreqsOr1, nLevelsOr1, myNumProfs
+d397 15
+a411 3
+    LOGICAL :: firstCheck, lastCheck
+
+    REAL, ALLOCATABLE :: realFreq(:), realSurf(:), realProf(:), real3(:,:,:)
+d418 1
+a418 1
+    IF (swid == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
+d427 1
+a427 1
+    IF (nDims == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
+d429 2
+a430 2
+    IF ( INDEX(list,'nLevels') /= 0 ) lev = 1
+    IF ( INDEX(list,'Freq') /= 0 ) freq = 1
+d433 1
+a433 1
+    IF (size == -1) THEN
+d435 2
+a436 2
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+d439 1
+a439 1
+    IF (lev == 0) THEN
+d441 1
+a441 1
+    ELSE
+d443 1
+a443 1
+       IF (size == -1) THEN
+d445 2
+a446 2
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+       ENDIF
+d449 1
+a449 1
+    ENDIF
+d451 1
+a451 1
+    IF (freq == 1) THEN
+d453 1
+a453 1
+       IF (size == -1) THEN
+d455 2
+a456 2
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+       ENDIF
+d458 1
+a458 1
+    ELSE
+d460 1
+a460 1
+    ENDIF
+d464 2
+a465 2
+    firstCheck = PRESENT(firstProf)
+    lastCheck = PRESENT(lastProf)
+d467 1
+a467 1
+    IF (firstCheck) THEN
+d469 1
+a469 1
+       IF ( (firstProf >= l2gp%nTimes) .OR. (firstProf < 0) ) THEN
+d471 2
+a472 2
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+       ELSE
+d474 1
+a474 1
+       ENDIF
+d476 1
+a476 1
+    ELSE
+d480 1
+a480 1
+    ENDIF
+d482 1
+a482 1
+    IF (lastCheck) THEN
+d484 1
+a484 1
+       IF (lastProf < first) THEN
+d486 2
+a487 2
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+       ENDIF
+d489 1
+a489 1
+       IF (lastProf >= nTimes) THEN
+d491 1
+a491 1
+       ELSE
+d493 1
+a493 1
+       ENDIF
+d495 1
+a495 1
+    ELSE
+d499 1
+a499 1
+    ENDIF
+d503 2
+a504 1
+    CALL SetupNewL2GPRecord (l2gp, nFreqs=nFreqs, nLevels=nLevels, nTimes=mynumProfs)
+d508 8
+a515 5
+    nFreqsOr1=MAX(nFreqs,1)
+    nLevelsOr1=MAX(nLevels, 1)
+    ALLOCATE(realProf(myNumProfs), realSurf(l2gp%nLevels), &
+         realFreq(l2gp%nFreqs), &
+         real3(nFreqsOr1,nLevelsOr1,myNumProfs), STAT=alloc_err)
+d526 2
+a527 4
+    print*,char(15)
+!    print*,"Reading lats: start=",start
+!    print*,"Stride=",stride
+!    print*,"Edge=",edge
+d529 6
+a534 3
+         edge(3:3), realProf)
+
+    !print*,"Lats:",realProf( (/1,2,numProfs-1,numProfs /) )
+d536 3
+a538 9
+    IF (status == -1) THEN
+       msr = MLSMSG_L2GPRead // GEO_FIELD1
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+    l2gp%latitude = DBLE(realProf)
+
+    status = HE5_SWrdfld(swid, GEO_FIELD2, start(3:3), stride(3:3), edge(3:3), &
+         realProf)
+    IF (status == -1) THEN
+d540 3
+a542 3
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+    l2gp%longitude = DBLE(realProf)
+d544 3
+a546 3
+    status = HE5_SWrdfld(swid, GEO_FIELD3, start(3:3), stride(3:3), edge(3:3), &
+         l2gp%time)
+    IF (status == -1) THEN
+d548 2
+a549 2
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+d551 3
+a553 3
+    status = HE5_SWrdfld(swid, GEO_FIELD4, start(3:3), stride(3:3), edge(3:3), &
+         realProf)
+    IF (status == -1) THEN
+d555 3
+a557 2
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+d559 3
+a561 4
+    l2gp%solarTime = DBLE(realProf)
+    status = HE5_SWrdfld(swid, GEO_FIELD5, start(3:3), stride(3:3), edge(3:3), &
+         realProf)
+    IF (status == -1) THEN
+d563 7
+a569 7
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+    l2gp%solarZenith = DBLE(realProf)
+
+    status = HE5_SWrdfld(swid, GEO_FIELD6, start(3:3), stride(3:3), edge(3:3), &
+         realProf)
+    IF (status == -1) THEN
+d571 7
+a577 7
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+    l2gp%losAngle = DBLE(realProf)
+
+    status = HE5_SWrdfld(swid, GEO_FIELD7, start(3:3), stride(3:3), edge(3:3), &
+         realProf)
+    IF (status == -1) THEN
+d579 3
+a581 3
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+    l2gp%geodAngle = DBLE(realProf)
+d583 3
+a585 3
+    status = HE5_SWrdfld(swid, GEO_FIELD8, start(3:3), stride(3:3), edge(3:3), &
+         l2gp%chunkNumber)
+    IF (status == -1) THEN
+d587 2
+a588 2
+       CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
+    ENDIF
+d592 1
+a592 1
+    IF (lev /= 0) THEN
+d594 3
+a596 3
+       status = HE5_SWrdfld(swid, GEO_FIELD9, start(2:2), stride(2:2), edge(2:2), &
+            realSurf)
+       IF (status == -1) THEN
+d598 2
+a599 2
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+       ENDIF
+d601 1
+a601 1
+       l2gp%pressures = DBLE(realSurf)
+d603 1
+a603 1
+    ENDIF
+d607 1
+a607 1
+    IF (freq == 1) THEN
+d611 3
+a613 3
+       status = HE5_SWrdfld(swid, GEO_FIELD10, start(1:1), stride(1:1), edge(1:1), &
+            realFreq)
+       IF (status == -1) THEN
+d615 3
+a617 3
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+       ENDIF
+       l2gp%frequency = DBLE(realFreq)
+d619 1
+a619 1
+    ENDIF
+d623 1
+a623 1
+    IF ( freq == 1) THEN
+d626 1
+a626 1
+       IF (status == -1) THEN
+d628 3
+a630 3
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+       ENDIF
+       l2gp%l2gpValue = DBLE(real3)
+d633 1
+a633 1
+       IF (status == -1) THEN
+d635 3
+a637 3
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+       ENDIF
+       l2gp%l2gpPrecision = DBLE(real3)
+d639 1
+a639 1
+    ELSE IF ( lev == 1) THEN
+d644 1
+a644 1
+       IF (status == -1) THEN
+d646 3
+a648 3
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+       ENDIF
+       l2gp%l2gpValue = DBLE(real3)
+d652 1
+a652 1
+       IF (status == -1) THEN
+d654 3
+a656 3
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+       ENDIF
+       l2gp%l2gpPrecision = DBLE(real3)
+d658 1
+a658 1
+    ELSE
+d660 3
+a662 3
+       status = HE5_SWrdfld( swid, DATA_FIELD1, start(3:3), stride(3:3), edge(3:3), &
+            real3(1,1,:) )
+       IF (status == -1) THEN
+d664 3
+a666 3
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+       ENDIF
+       l2gp%l2gpValue = DBLE(real3)
+d670 1
+a670 1
+       IF (status == -1) THEN
+d672 3
+a674 3
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+       ENDIF
+       l2gp%l2gpPrecision = DBLE(real3)
+d676 1
+a676 1
+    ENDIF
+d680 20
+d702 16
+a717 7
+    print*,"Warning: reading of status field disabled"
+    status=0
+    IF (status == -1) THEN
+       msr = MLSMSG_L2GPRead // DATA_FIELD3
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+         
+d719 2
+a720 2
+         edge(3:3),realProf)
+    IF (status == -1) THEN
+d722 3
+a724 3
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+    l2gp%quality = DBLE(realProf)
+d728 2
+a729 2
+    DEALLOCATE(realFreq, realSurf, realProf, real3, STAT=alloc_err)
+    IF ( alloc_err /= 0 ) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+d732 4
+d739 1
+a739 1
+    IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
+d743 1
+a743 1
+    IF (PRESENT(numProfs)) numProfs=myNumProfs
+d746 1
+a746 1
+  END SUBROUTINE ReadL2GPData
+d750 1
+a750 1
+  SUBROUTINE OutputL2GP_createFile (l2gp, L2FileHandle, swathName,nLevels)
+d757 4
+a760 4
+    INTEGER, INTENT(in) :: L2FileHandle ! From swopen
+    TYPE( L2GPData_T ), INTENT(inout) :: l2gp
+    CHARACTER (LEN=*), OPTIONAL, INTENT(IN) :: swathName ! Defaults to l2gp%swathName
+    INTEGER,optional::nLevels
+d763 2
+a764 2
+    CHARACTER (len=*), PARAMETER :: DIM_ERR = 'Failed to define dimension '
+    CHARACTER (len=*), PARAMETER :: GEO_ERR = &
+d766 1
+a766 1
+    CHARACTER (len=*), PARAMETER :: DAT_ERR = 'Failed to define data field '
+d770 2
+a771 2
+    CHARACTER (len=480) :: MSR
+    CHARACTER (len=132) :: NAME   ! From l2gp%name
+d774 7
+a780 7
+    INTEGER,DIMENSION(7)::CHUNK_DIMS
+    INTEGER::CHUNK_RANK
+    INTEGER::CHUNKTIMES,CHUNKFREQS,CHUNKLEVELS
+
+    INTEGER :: SWID, STATUS
+    character(len=1)::poop
+    IF (PRESENT(swathName)) THEN
+d782 1
+a782 1
+    ELSE
+d784 1
+a784 1
+    ENDIF
+d794 7
+a800 7
+    print*,"Creating swath called ",name
+    swid = HE5_SWcreate(L2FileHandle, TRIM(name))
+    print*,"Swath ",name,"has SW id :",swid
+    IF ( swid == -1 ) THEN
+       msr = 'Failed to create swath ' // TRIM(name)
+       CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    END IF
+d805 1
+a805 1
+    print*,"Defined Unlim with size", H5S_UNLIMITED
+d808 1
+a808 1
+    print*,"Defining dimension ", DIM_NAME1," with size",l2gp%nTimes
+d810 1
+a810 3
+
+
+    IF ( status == -1 ) THEN
+d812 2
+a813 2
+       CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    END IF
+d815 2
+a816 3
+    IF ( l2gp%nLevels > 0 ) THEN
+       
+       print*,"Defining dimension ", DIM_NAME2," with size",l2gp%nLevels
+d818 1
+a818 1
+       IF ( status == -1 ) THEN
+d820 3
+a822 3
+          CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       END IF
+    END IF
+d824 1
+a824 1
+    IF ( l2gp%nFreqs > 0 ) THEN
+d827 1
+a827 1
+       IF ( status == -1 ) THEN
+d829 3
+a831 3
+          CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       END IF
+    END IF
+d835 2
+a836 2
+    print*,"Defining geolocation field ",GEO_FIELD1," of dim. ", DIM_NAME1
+    print*,"... and of type ",H5T_NATIVE_FLOAT
+d841 1
+a841 1
+    print*,"Set chunking -- status=",status
+d844 1
+a844 1
+    IF ( status == -1 ) THEN
+d846 4
+a849 4
+       CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    END IF
+    print*,"Defined geolocation field ",GEO_FIELD1,"of dim.", DIM_NAME1
+    print*,"... and of type ",H5T_NATIVE_FLOAT
+d855 1
+a855 1
+    IF ( status == -1 ) THEN
+d857 2
+a858 2
+       CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    END IF
+d863 1
+a863 1
+    IF ( status == -1 ) THEN
+d865 2
+a866 2
+       CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    END IF
+d871 1
+a871 1
+    IF ( status == -1 ) THEN
+d873 2
+a874 2
+       CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    END IF
+d879 1
+a879 1
+    IF ( status == -1 ) THEN
+d881 2
+a882 2
+       CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    END IF
+d887 1
+a887 1
+    IF ( status == -1 ) THEN
+d889 2
+a890 2
+       CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    END IF
+d895 1
+a895 1
+    IF ( status == -1 ) THEN
+d897 2
+a898 2
+       CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    END IF
+d903 1
+a903 1
+    IF ( status == -1 ) THEN
+d905 2
+a906 2
+       CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    END IF
+d908 1
+a908 1
+    IF ( l2gp%nLevels > 0 ) THEN
+d912 1
+a912 1
+       IF ( status == -1 ) THEN
+d914 3
+a916 3
+          CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       END IF
+    END IF
+d918 1
+a918 1
+    IF ( l2gp%nFreqs > 0 ) THEN
+d922 1
+a922 1
+       IF ( status == -1 ) THEN
+d924 3
+a926 3
+          CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       END IF
+    END IF
+d930 1
+a930 1
+    IF ( (l2gp%nFreqs > 0) .AND. (l2gp%nLevels > 0) ) THEN
+d938 1
+a938 1
+       IF ( status == -1 ) THEN
+d940 2
+a941 2
+          CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       END IF
+d948 1
+a948 1
+       IF ( status == -1 ) THEN
+d950 2
+a951 2
+          CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       END IF
+d954 1
+a954 1
+    ELSE IF ( l2gp%nLevels > 0 ) THEN
+a960 2
+       !read(*,'(a1)')poop
+       !print*,poop
+a966 2
+       !read(*,'(a1)')poop
+       !print*,poop
+d968 1
+a968 1
+       IF ( status == -1 ) THEN
+d970 2
+a971 2
+          CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       END IF
+d977 1
+a977 1
+       IF ( status == -1 ) THEN
+d979 2
+a980 2
+          CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       END IF
+d982 1
+a982 1
+    ELSE
+d990 1
+a990 1
+       IF ( status == -1 ) THEN
+d992 2
+a993 2
+          CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       END IF
+d998 1
+a998 1
+       IF ( status == -1 ) THEN
+d1000 2
+a1001 2
+          CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       END IF
+d1003 1
+a1003 1
+    END IF
+d1022 1
+a1022 1
+    IF ( status == -1 ) THEN
+d1024 2
+a1025 2
+       CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    END IF
+d1032 2
+a1033 2
+    IF ( status == -1 ) THEN
+       CALL MLSMessage ( MLSMSG_Error, ModuleName, &
+d1035 1
+a1035 1
+    END IF
+d1038 1
+a1038 1
+  END SUBROUTINE OutputL2GP_createFile
+d1042 1
+a1042 1
+  SUBROUTINE OutputL2GP_writeGeo (l2gp, l2FileHandle, swathName,offset)
+d1049 4
+a1052 4
+    TYPE( L2GPData_T ), INTENT(inout) :: l2gp
+    INTEGER, INTENT(in) :: l2FileHandle ! From swopen
+    CHARACTER (len=*), INTENT(IN), OPTIONAL :: swathName ! Defaults->l2gp%name
+    INTEGER,INTENT(IN),OPTIONAL::offset
+d1055 1
+a1055 1
+    CHARACTER (len=*), PARAMETER :: WR_ERR = &
+d1060 2
+a1061 2
+    CHARACTER (len=480) :: msr
+    CHARACTER (len=132) :: name ! Either swathName or l2gp%name
+d1063 2
+a1064 2
+    INTEGER :: status, swid,myOffset
+    INTEGER :: start(2), stride(2), edge(2)
+d1066 1
+a1066 1
+    IF (PRESENT(offset)) THEN
+d1068 1
+a1068 1
+    ELSE
+d1070 1
+a1070 1
+    ENDIF
+d1073 1
+a1073 1
+    IF (PRESENT(swathName)) THEN
+d1075 1
+a1075 1
+    ELSE
+d1077 1
+a1077 1
+    ENDIF
+d1086 2
+a1087 2
+    print*,"writeGeo Attached swath ",name," with SW ID=",swid
+    print*,"About to write latitude with offset=",myoffset
+d1089 3
+a1091 3
+         REAL(l2gp%latitude))
+    print*,"wrote latitude, maybe"
+    IF ( status == -1 ) THEN
+d1093 2
+a1094 2
+       CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    END IF
+d1097 2
+a1098 2
+         REAL(l2gp%longitude))
+    IF ( status == -1 ) THEN
+d1100 2
+a1101 2
+       CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    END IF
+d1105 1
+a1105 1
+    IF ( status == -1 ) THEN
+d1107 2
+a1108 2
+       CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    END IF
+d1113 1
+a1113 1
+         REAL(l2gp%solarZenith))
+d1115 1
+a1115 1
+    IF ( status == -1 ) THEN
+d1117 2
+a1118 2
+       CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    END IF
+d1121 2
+a1122 2
+        REAL(l2gp%solarTime))
+    IF ( status == -1 ) THEN
+d1124 2
+a1125 2
+       CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    END IF
+d1129 2
+a1130 2
+         REAL(l2gp%losAngle))
+    IF ( status == -1 ) THEN
+d1132 2
+a1133 2
+       CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    END IF
+d1136 2
+a1137 2
+         REAL(l2gp%geodAngle))
+    IF ( status == -1 ) THEN
+d1139 2
+a1140 2
+       CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    END IF
+d1144 1
+a1144 1
+    IF ( status == -1 ) THEN
+d1146 2
+a1147 2
+       CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    END IF
+d1149 1
+a1149 1
+    IF ( l2gp%nLevels > 0 ) THEN
+d1153 2
+a1154 2
+            REAL(l2gp%pressures))
+       IF ( status == -1 ) THEN
+d1156 3
+a1158 3
+          CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       END IF
+    END IF
+d1160 1
+a1160 1
+    IF ( l2gp%nFreqs > 0 ) THEN
+d1165 2
+a1166 2
+            REAL(l2gp%frequency))
+       IF ( status == -1 ) THEN
+d1168 3
+a1170 3
+          CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       END IF
+    END IF
+d1175 3
+a1177 3
+    print*,"Detatched from swath -- error=",status
+    IF ( status == -1 ) THEN
+       CALL MLSMessage ( MLSMSG_Warning, ModuleName, &
+d1179 1
+a1179 1
+    END IF
+d1182 1
+a1182 1
+  END SUBROUTINE OutputL2GP_writeGeo
+d1186 1
+a1186 1
+  SUBROUTINE OutputL2GP_writeData(l2gp, l2FileHandle, swathName,offset)
+d1194 4
+a1197 4
+    TYPE( L2GPData_T ), INTENT(inout) :: l2gp
+    INTEGER, INTENT(in) :: l2FileHandle ! From swopen
+    CHARACTER (len=*), INTENT(IN), OPTIONAL :: swathName ! Defaults->l2gp%name
+    INTEGER,INTENT(IN),OPTIONAL::offset
+d1200 1
+a1200 1
+    CHARACTER (len=*), PARAMETER :: WR_ERR = 'Failed to write data field '
+d1204 2
+a1205 2
+    CHARACTER (len=480) :: msr
+    CHARACTER (len=132) :: name     ! Either swathName or l2gp%name
+d1207 3
+a1209 3
+    INTEGER :: status,myOffset
+    INTEGER :: start(3), stride(3), edge(3)
+    INTEGER :: swid
+d1211 7
+a1217 1
+    IF (PRESENT(offset)) THEN
+d1219 1
+a1219 1
+    ELSE
+d1221 1
+a1221 1
+    ENDIF
+d1223 1
+a1223 1
+    IF (PRESENT(swathName)) THEN
+d1225 1
+a1225 1
+    ELSE
+d1227 1
+a1227 1
+    ENDIF
+d1240 1
+a1240 1
+    IF ( l2gp%nFreqs > 0 ) THEN
+d1244 2
+a1245 2
+            & RESHAPE(l2gp%l2gpValue, (/SIZE(l2gp%l2gpValue)/)) )
+       IF ( status == -1 ) THEN
+d1247 2
+a1248 2
+          CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       END IF
+d1250 2
+a1251 2
+            & RESHAPE(REAL(l2gp%l2gpPrecision), (/SIZE(l2gp%l2gpPrecision)/)) )
+       IF ( status == -1 ) THEN
+d1253 2
+a1254 2
+          CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       END IF
+d1256 1
+a1256 1
+    ELSE IF ( l2gp%nLevels > 0 ) THEN
+d1262 1
+a1262 1
+            edge(2:3), REAL(l2gp%l2gpValue(1,:,:) ))
+d1264 1
+a1264 1
+       IF ( status == -1 ) THEN
+d1266 2
+a1267 2
+          CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       END IF
+d1269 2
+a1270 2
+            edge(2:3), REAL(l2gp%l2gpPrecision(1,:,:) ))
+       IF ( status == -1 ) THEN
+d1272 3
+a1274 3
+          CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       END IF
+    ELSE
+d1279 2
+a1280 2
+            REAL(l2gp%l2gpValue(1,1,:) ))
+       IF ( status == -1 ) THEN
+d1282 2
+a1283 2
+          CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       END IF
+d1285 2
+a1286 2
+            REAL(l2gp%l2gpPrecision(1,1,:) ))
+       IF ( status == -1 ) THEN
+d1288 3
+a1290 3
+          CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       END IF
+    END IF
+d1299 1
+a1299 1
+    IF ( status == -1 ) THEN
+d1301 2
+a1302 2
+       CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    END IF
+d1305 2
+a1306 2
+         REAL(l2gp%quality))
+    IF ( status == -1 ) THEN
+d1308 2
+a1309 2
+       CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    END IF
+d1315 2
+a1316 2
+    IF ( status == -1 ) THEN
+       CALL MLSMessage ( MLSMSG_Warning, ModuleName, &
+d1318 1
+a1318 1
+    END IF
+d1322 1
+a1322 1
+  END SUBROUTINE OutputL2GP_writeData
+d1329 1
+a1329 1
+  SUBROUTINE WriteL2GPData(l2gp,l2FileHandle,swathName)
+d1333 3
+a1335 3
+    INTEGER, INTENT(IN) :: l2FileHandle ! From swopen
+    TYPE (L2GPData_T), INTENT(INOUT) :: l2gp
+    CHARACTER (LEN=*), OPTIONAL, INTENT(IN) ::swathName!default->l2gp%swathName
+d1338 3
+a1340 3
+    CALL OutputL2GP_createFile (l2gp, l2FileHandle, swathName)
+    CALL OutputL2GP_writeGeo (l2gp, l2FileHandle, swathName)
+    CALL OutputL2GP_writeData (l2gp, l2FileHandle, swathName)
+d1342 1
+a1342 1
+  END SUBROUTINE WriteL2GPData
+d1346 1
+a1346 1
+  SUBROUTINE AppendL2GPData(l2gp,l2FileHandle,swathName,offset)
+d1353 4
+a1356 4
+    INTEGER, INTENT(IN) :: l2FileHandle ! From swopen
+    TYPE (L2GPData_T), INTENT(INOUT) :: l2gp
+    CHARACTER (LEN=*), OPTIONAL, INTENT(IN) ::swathName!default->l2gp%swathName
+    INTEGER,INTENT(IN),OPTIONAL::offset
+d1358 1
+a1358 1
+    INTEGER::myOffset
+d1360 1
+a1360 1
+    IF (PRESENT(offset)) THEN
+d1362 1
+a1362 1
+    ELSE
+d1364 5
+a1368 3
+    ENDIF
+    CALL OutputL2GP_writeGeo (l2gp, l2FileHandle, swathName,myOffset)
+    CALL OutputL2GP_writeData (l2gp, l2FileHandle, swathName,myOffset)
+d1370 1
+a1370 1
+  END SUBROUTINE AppendL2GPData
+d1372 1
+d1374 23
+d1400 2
+a1401 1
+  subroutine Dump_L2GP ( L2gp, Name )
+d1404 7
+a1410 2
+    type (l2gpData_T), intent(in) :: L2GP(:)
+    character(len=*), optional :: Name
+d1413 15
+a1427 1
+    integer :: i
+d1429 15
+a1443 4
+    if ( present(name) ) call output ( name, advance='yes' )
+    do i = 1, size(l2gp)
+      call output ( 'L2GP Data: ')
+      call display_string ( l2gp(i)%nameIndex, advance='yes' )
+d1445 1
+a1445 1
+      call output ( l2gp(i)%nTimes, 5)
+d1447 1
+a1447 1
+      call output ( l2gp(i)%nLevels, 3)
+d1449 3
+a1451 1
+      call output ( l2gp(i)%nFreqs, 3, advance='yes')
+d1453 1
+a1453 1
+      call dump ( l2gp(i)%pressures, 'Pressures:' )
+d1455 1
+a1455 1
+      call dump ( l2gp(i)%latitude, 'Latitude:' )
+d1457 1
+a1457 1
+      call dump ( l2gp(i)%longitude, 'Longitude:' )
+d1459 1
+a1459 1
+      call dump ( l2gp(i)%solarTime, 'SolarTime:' )
+d1461 1
+a1461 1
+      call dump ( l2gp(i)%solarZenith, 'SolarZenith:' )
+d1463 1
+a1463 1
+      call dump ( l2gp(i)%losAngle, 'LOSAngle:' )
+d1465 1
+a1465 1
+      call dump ( l2gp(i)%geodAngle, 'geodAngle:' )
+d1467 1
+a1467 1
+      call dump ( l2gp(i)%time, 'Time:' )
+d1469 2
+a1470 1
+      call dump ( l2gp(i)%chunkNumber, 'ChunkNumber:' )
+d1472 2
+a1473 2
+      if ( associated(l2gp(i)%frequency) ) &
+        & call dump ( l2gp(i)%frequency, 'Frequencies:' )
+d1475 1
+a1475 1
+      call dump ( l2gp(i)%l2gpValue, 'L2GPValue:' )
+d1477 1
+a1477 1
+      call dump ( l2gp(i)%l2gpPrecision, 'L2GPPrecision:' )
+d1479 1
+a1479 1
+      !    call dump ( l2gp(i)%status, 'Status:' )
+a1480 3
+      call dump ( l2gp(i)%quality, 'Quality:' )
+
+    end do
+d1482 1
+a1482 1
+
+d1485 1
+a1485 1
+END MODULE L2GPData
+d1490 3
+@
+
+
+1.8
+log
+@Corrected case for ChunkNumber
+.
+@
+text
+@d25 1
+a25 1
+       & "$Id: L2GPData.f90,v 1.7 2001/07/11 19:01:16 pumphrey Exp $"
+d598 2
+a599 1
+            edge(2:3), real3(1,:,:) )
+d959 2
+a960 2
+    ! swath. (May be un-necessary for HDF5 -- someone check sometime.)
+
+d1016 2
+a1017 1
+    print*,"About to write latitude"
+d1041 1
+a1041 1
+    print*,"writing ", REAL(l2gp%solarZenith)," as SZA"
+d1044 1
+a1044 1
+    print*,"just wrote ", REAL(l2gp%solarZenith)," as SZA"
+d1105 1
+a1105 1
+
+a1166 1
+
+d1183 2
+a1184 1
+
+d1238 1
+d1357 4
+@
+
+
+1.7
+log
+@quality->Quality, status->Status.
+@
+text
+@d25 1
+a25 1
+       & "$Id: L2GPData.f90,v 1.6 2001/04/27 07:48:54 pumphrey Exp $"
+d54 1
+a54 1
+   CHARACTER (len=*), PARAMETER :: GEO_FIELD8 = 'chunkNumber'
+d1354 3
+@
+
+
+1.6
+log
+@Many nested loops in l3ascii replaced with array ops. Small fixes
+(e.g. spelling mistakes) in other modules.
+@
+text
+@d25 1
+a25 1
+       & "$Id: L2GPData.f90,v 1.5 2001/04/06 20:16:38 pumphrey Exp $"
+d44 2
+a45 2
+   CHARACTER (len=*), PARAMETER :: DATA_FIELD3 = 'status'
+   CHARACTER (len=*), PARAMETER :: DATA_FIELD4 = 'quality'
+d1354 4
+@
+
+
+1.5
+log
+@Not much, just keeping in sync
+@
+text
+@d25 1
+a25 1
+       & "$Id: L2GPData.f90,v 1.4 2001/03/29 17:33:27 pumphrey Exp $"
+d72 1
+a72 1
+   INTEGER,PARAMETER::CHUNKFREQS=13,CHUNKLEVELS=17,CHUNKTIMES=9,CHUNK4=1
+d672 1
+a672 1
+  SUBROUTINE OutputL2GP_createFile (l2gp, L2FileHandle, swathName)
+d682 1
+a682 1
+
+d698 1
+d707 8
+a714 1
+
+a1037 6
+    status = HE5_SWwrfld(swid, GEO_FIELD4, start, stride, edge, &
+        REAL(l2gp%solarTime))
+    IF ( status == -1 ) THEN
+       msr = WR_ERR // GEO_FIELD4
+       CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    END IF
+d1039 1
+a1039 1
+    
+d1048 8
+d1354 3
+@
+
+
+1.4
+log
+@Huge changes to L2GPData to sync with the HDF4 version and add unlimited
+dimension along the track
+@
+text
+@a14 1
+
+d25 1
+a25 1
+       & "$Id: L2GPData.f90,v 1.3 2001/03/20 14:00:30 pumphrey Exp $"
+d513 1
+a514 1
+
+d978 1
+a978 1
+
+d983 1
+a983 1
+
+d1037 1
+d1040 1
+d1344 4
+@
+
+
+1.3
+log
+@fixing inconsistencies -- nothing important
+@
+text
+@d6 1
+a6 2
+  !=============================================================================
+
+d8 1
+a12 4
+  !This module is supplied with the HDF5 Fortran 90 interface.
+!  USE Hdf5, ONLY: H5T_NATIVE_CHARACTER,H5T_NATIVE_FLOAT,H5T_NATIVE_INTEGER, &
+!      H5T_NATIVE_DOUBLE
+
+a13 1
+  
+d15 1
+d17 4
+a20 1
+  
+d26 1
+a26 1
+       & "$Id: L2GPData.f90,v 1.2 2001/02/23 13:33:14 pumphrey Exp $"
+d32 4
+d64 2
+a65 1
+   ! This is for the new max_dimlist parameter added to  SWdefgfld.
+d67 5
+d73 1
+d97 9
+a105 5
+     REAL (r8), POINTER, DIMENSION(:) :: latitude=>NULL(), longitude=>NULL(),&
+          solarTime=>NULL(), &
+          & solarZenith=>NULL(), losAngle=>NULL(), geodAngle=>NULL()
+     REAL (r8), POINTER, DIMENSION(:) :: time=>NULL()
+     INTEGER, POINTER, DIMENSION(:) :: chunkNumber=>NULL() !
+d165 2
+a166 1
+ 
+d257 11
+a267 2
+
+    CALL SetupNewL2GPRecord( l2gp, nFreqs=l2gp%nFreqs, nLevels=l2gp%nLevels, nTimes=newNTimes)
+d270 15
+a284 17
+
+    l2gp%latitude(1:l2gp%nTimes) = templ2gp%latitude
+    l2gp%longitude(1:l2gp%nTimes) = templ2gp%longitude
+    l2gp%solarTime(1:l2gp%nTimes) = templ2gp%solarTime
+    l2gp%solarZenith(1:l2gp%nTimes) = templ2gp%solarZenith
+    l2gp%losAngle(1:l2gp%nTimes) = templ2gp%losAngle
+    l2gp%geodAngle(1:l2gp%nTimes) = templ2gp%geodAngle
+    l2gp%time(1:l2gp%nTimes) = templ2gp%time
+    l2gp%chunkNumber(1:l2gp%nTimes) = templ2gp%chunkNumber
+
+    l2gp%l2gpValue(:,:,1:l2gp%nTimes) = templ2gp%l2gpValue
+    l2gp%l2gpPrecision(:,:,1:l2gp%nTimes) = templ2gp%l2gpPrecision
+
+    l2gp%status(1:l2gp%nTimes) = templ2gp%status
+    l2gp%quality(1:l2gp%nTimes) = templ2gp%quality
+
+    l2gp%nTimes=newNTimes
+a286 1
+
+d348 1
+a348 1
+    INTEGER, INTENT(OUT) :: numProfs ! Number actually read
+d357 1
+a357 7
+
+    ! Functions
+
+    !INTEGER, EXTERNAL :: swattach, HE5_SWdetach, HE5_SWdiminfo, HE5_SWinqdims, HE5_SWrdfld
+
+    ! Variables
+
+d363 1
+a363 1
+    INTEGER :: nFreqs, nLevels, nTimes, nFreqsOr1, nLevelsOr1
+d446 1
+a446 1
+          numProfs = nTimes - first
+d448 1
+a448 1
+          numProfs = lastProf - first + 1
+d453 1
+a453 1
+       numProfs = nTimes - first
+d459 1
+a459 1
+    CALL SetupNewL2GPRecord (l2gp, nFreqs=nFreqs, nLevels=nLevels, nTimes=numProfs)
+d465 1
+a465 1
+    ALLOCATE(realProf(numProfs), realSurf(l2gp%nLevels), &
+d467 1
+a467 1
+         real3(nFreqsOr1,nLevelsOr1,numProfs), STAT=alloc_err)
+d477 1
+a477 1
+    edge(3) = numProfs
+d665 3
+d696 4
+d701 1
+a701 1
+
+d710 1
+a710 1
+    swid = HE5_SWcreate(L2FileHandle, name)
+d713 1
+a713 1
+       msr = 'Failed to create swath ' // name
+d719 4
+d725 2
+d733 1
+d752 2
+a753 3
+    !Instant seggie occurs in next line. GEO_FIELD1='Latitude'
+    !DIM_NAME1='nTimes',
+    print*,"Defining geolocation field ",GEO_FIELD1,"of dim.", DIM_NAME1
+d755 6
+a760 1
+    status = HE5_SWdefgfld(swid, GEO_FIELD1, DIM_NAME1,MAX_DIML,&
+d768 4
+a771 1
+    status = HE5_SWdefgfld(swid, GEO_FIELD2, DIM_NAME1, MAX_DIML,&
+d778 2
+a779 1
+    status = HE5_SWdefgfld(swid, GEO_FIELD3, DIM_NAME1, MAX_DIML, &
+d786 2
+a787 1
+    status = HE5_SWdefgfld(swid, GEO_FIELD4, DIM_NAME1,MAX_DIML,&
+d794 2
+a795 1
+    status = HE5_SWdefgfld(swid, GEO_FIELD5, DIM_NAME1, MAX_DIML, &
+d802 2
+a803 1
+    status = HE5_SWdefgfld(swid, GEO_FIELD6, DIM_NAME1,MAX_DIML,&
+d810 2
+a811 1
+    status = HE5_SWdefgfld(swid, GEO_FIELD7, DIM_NAME1, MAX_DIML,&
+d818 2
+a819 1
+    status = HE5_SWdefgfld(swid, GEO_FIELD8, DIM_NAME1, MAX_DIML,&
+d827 1
+d837 1
+d849 3
+d853 1
+a853 1
+       status = HE5_SWdefdfld(swid, DATA_FIELD1, DIM_NAME123, MAX_DIML,&
+d862 2
+a863 1
+       status = HE5_SWdefdfld(swid, DATA_FIELD2, DIM_NAME123, MAX_DIML,&
+d873 12
+a884 2
+
+       status = HE5_SWdefdfld(swid, DATA_FIELD1, DIM_NAME12, MAX_DIML, &
+d886 4
+a889 1
+
+d895 2
+a896 1
+       status = HE5_SWdefdfld(swid, DATA_FIELD2, DIM_NAME12, MAX_DIML,&
+d905 5
+a909 2
+
+       status = HE5_SWdefdfld(swid, DATA_FIELD1, DIM_NAME1,MAX_DIML,&
+d917 1
+a917 1
+       status = HE5_SWdefdfld(swid, DATA_FIELD2, DIM_NAME1, MAX_DIML,&
+d930 1
+a930 1
+!    status = HE5_SWdefdfld(swid, DATA_FIELD3, DIM_NAME1,MAX_DIML,&
+d938 3
+d942 1
+a942 1
+    status = HE5_SWdefdfld(swid, DATA_FIELD4, DIM_NAME1,MAX_DIML,&
+d951 1
+a951 1
+    ! swath.
+d964 1
+a964 1
+  SUBROUTINE OutputL2GP_writeGeo (l2gp, l2FileHandle, swathName)
+d973 2
+a974 2
+    CHARACTER (len=*), INTENT(IN), OPTIONAL :: swathName ! Defaults to l2gp%name
+
+d985 1
+a985 1
+    INTEGER :: status, swid
+d988 7
+d1005 2
+a1006 2
+    stride(1) = 1
+    start(1) = 0
+d1008 1
+a1008 1
+
+d1011 1
+d1068 1
+d1079 1
+d1103 1
+a1103 1
+  SUBROUTINE OutputL2GP_writeData(l2gp, l2FileHandle, swathName)
+d1107 2
+a1108 1
+
+d1113 2
+a1114 2
+    CHARACTER (len=*), INTENT(IN), OPTIONAL :: swathName ! Defaults to l2gp%name
+
+d1124 1
+a1124 1
+    INTEGER :: status
+d1127 6
+d1139 1
+d1145 1
+d1238 1
+a1238 1
+
+d1245 1
+a1245 2
+    CHARACTER (LEN=*), OPTIONAL, INTENT(IN) :: swathName ! (defaults to l2gp%swathName)
+
+d1253 83
+d1343 3
+@
+
+
+1.2
+log
+@Fixed type definition for L2GPData_T so all the pointers are => NULL()
+This error was detected by nagf95 on Solaris but not on Linux. Odd.
+@
+text
+@d27 1
+a27 1
+       & "$Id: L2GPData.f90,v 1.1 2000/12/22 15:55:53 pumphrey Exp $"
+d463 8
+a471 2
+    status = HE5_SWrdfld(swid, GEO_FIELD1, start(3:3), stride(3:3), edge(3:3), &
+         realProf)
+d1174 4
+@
+
+
+1.1
+log
+@Initial commit of HDF-EOS5 versions of L2GP interface.
+@
+text
+@d27 1
+a27 1
+       & "$Id: L2GPData.f90,v 2.8 2000/12/04 23:43:59 vsnyder Exp $"
+d84 1
+a84 1
+     REAL (r8), POINTER, DIMENSION(:) :: pressures ! Vertical coords (nLevels)
+d87 5
+a91 4
+     REAL (r8), POINTER, DIMENSION(:) :: latitude, longitude, solarTime, &
+          & solarZenith, losAngle, geodAngle
+     REAL (r8), POINTER, DIMENSION(:) :: time
+     INTEGER, POINTER, DIMENSION(:) :: chunkNumber !
+d95 1
+a95 1
+     REAL (r8), POINTER, DIMENSION(:) :: frequency
+d100 2
+a101 2
+     REAL (r8), POINTER, DIMENSION(:,:,:) :: l2gpValue
+     REAL (r8), POINTER, DIMENSION(:,:,:) :: l2gpPrecision
+d104 1
+a104 1
+     CHARACTER (len=1), POINTER, DIMENSION(:) :: status
+d106 1
+a106 1
+     REAL (r8), POINTER, DIMENSION(:) :: quality
+d1168 3
+@
+

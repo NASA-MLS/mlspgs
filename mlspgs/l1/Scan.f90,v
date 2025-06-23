@@ -1,0 +1,749 @@
+head	2.9;
+access;
+symbols
+	v5-02-NRT-19:2.9
+	v6-00:2.9
+	v5-02-NRT-18:2.9
+	v5-02:2.9
+	v5-01-NRT-17:2.9
+	v5-01-NRT-16:2.9
+	v5-01-NRT-15:2.9
+	v5-01-NRT-14:2.9
+	neuralnetworks-1-0:2.9.0.10
+	cfm-single-freq-0-1:2.9.0.8
+	v5-01:2.9
+	v5-00:2.9
+	v4-23-TA133:2.9.0.6
+	mus-emls-1-70:2.9.0.4
+	rel-1-0-englocks-work:2.9.0.2
+	VUMLS1-00:2.9
+	VPL1-00:2.9
+	V4-22-NRT-08:2.9
+	whdrel10_merged_to_here:2.9
+	merge_whdrel10_from_here:2.8.2.1
+	TAG_TRUNK_AFTER_PW_CHANGES:2.8
+	TAG_TRUNK_BEFORE_PW_CHANGES:2.8
+	VAM1-00:2.8
+	whd-rel-1-0:2.8.0.2
+	V4-21:2.7.0.2
+	V4-13:2.5
+	V4-12:2.5
+	V4-11:2.5
+	V4-10:2.5
+	V3-43:2.5
+	M4-00:2.5
+	V3-41:2.5
+	V3-40-PlusGM57:2.5.0.2
+	V2-24-NRT-04:2.5
+	V3-33:2.5
+	V2-24:2.5
+	V3-31:2.5
+	V3-30-NRT-05:2.5
+	cfm-01-00:2.5
+	V3-30:2.5
+	V3-20:2.5
+	V3-10:2.5
+	V2-23-NRT-02:2.5
+	V2-23:2.5
+	V2-22-NRT-01:2.5
+	V2-22:2.5
+	V2-21:2.4
+	V2-20:2.4
+	V2-11:2.4
+	V2-10:2.4
+	V2-00:2.4
+	V1-51:2.2
+	V1-50:2.2
+	V1-45:2.2
+	V1-44:2.2
+	V1-43:2.1
+	V1-42:2.1
+	V1-41:2.1
+	V1-32:2.1
+	V1-40:2.1
+	V1-31:2.1
+	V1-30:2.1
+	V1-13:2.0
+	V1-12:2.0
+	V1-11:2.0
+	V1-10:2.0
+	newfwm-feb03:2.0.0.4
+	V1-04:2.0
+	V1-03:2.0
+	V1-02:2.0
+	V1-00:2.0
+	newfwm-sep01:2.0.0.2
+	V0-7:2.0
+	V0-5-Level2:2.0
+	V0-5-SIPS:2.0
+	V0_1:1.1;
+locks; strict;
+comment	@# @;
+
+
+2.9
+date	2016.03.15.22.17.59;	author whdaffer;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2015.04.17.22.54.37;	author pwagner;	state Exp;
+branches
+	2.8.2.1;
+next	2.7;
+
+2.7
+date	2015.01.23.17.50.17;	author pwagner;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2015.01.22.23.34.04;	author vsnyder;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2007.04.05.13.59.57;	author perun;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2005.12.14.17.01.03;	author perun;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2005.06.23.18.41.36;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2004.08.16.17.26.58;	author perun;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2003.08.15.14.25.04;	author perun;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2000.09.05.18.55.15;	author ahanzel;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2000.02.10.16.54.27;	author nakamura;	state Exp;
+branches;
+next	;
+
+2.8.2.1
+date	2015.10.09.10.21.38;	author whdaffer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.9
+log
+@Merged whd-rel-1-0 back onto main branch. Most changes
+are to comments, but there's some modification to Calibration.f90
+and MLSL1Common to support some new modules: MLSL1Debug and SnoopMLSL1.
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!===============================================================================
+MODULE Scan
+!===============================================================================
+
+   use MLSCommon, only: r8
+   use MLSMessageModule, only: MLSMessage, MLSMSG_Warning, ReportTKStatus
+   use SDPToolkit, only: spacecraftid, earthModel, &
+     & Pgs_csc_eciToECR, &
+     & Pgs_csc_geoToECR, Pgs_csc_ecrToECI
+
+   implicit none
+
+   private
+
+   PUBLIC :: Scan_guess, Scan_start
+
+!---------------------------- RCS Module Info ------------------------------
+  CHARACTER (len=*), PRIVATE, PARAMETER :: ModuleName= &
+       "$RCSfile: Scan.f90,v $"
+  PRIVATE :: not_used_here 
+!---------------------------------------------------------------------------
+
+  CHARACTER (len=*), PARAMETER :: errmsg = "Check LogStatus file for error(s)"
+
+! Contents:
+
+! Subroutines -- Scan_guess
+!                Scan_start
+! 
+
+! Remarks:  This module contains parameters and subroutines needed to model the
+!           MLS scan programs.
+
+CONTAINS
+
+!===============================================================================
+   SUBROUTINE Scan_guess (asciiUTC, viewECR)
+!===============================================================================
+
+  use Constants, only: Deg2Rad
+
+! Brief description of subroutine
+! This subroutine calculates the initial guess for the starting view vector
+! of a scan.
+
+! Arguments
+
+      CHARACTER (LEN=27), INTENT(IN) :: asciiUTC
+
+      REAL(r8), INTENT(OUT) :: viewECR(3)
+
+! Parameters
+
+      INTEGER, PARAMETER :: numValues = 1
+
+      REAL(r8), Dimension(1), PARAMETER :: time_offset = 0.0
+
+! Functions
+
+      INTEGER :: Pgs_csc_scToECI
+
+! Variables
+
+      INTEGER :: returnStatus
+
+      REAL(r8) :: angle
+      REAL(r8) :: eci(3), sc(3)
+      REAL(r8) :: eciV(6), ecrV(6)
+
+      !<whd> 
+      ! 
+      ! Take an arbitrary vector in SC coordinates (here, it's
+      ! one which makes a 30deg angle with the X-axis of the SC in the
+      ! XZ plane. I have _no_ idea why that's useful unless the antenna
+      ! scans in the XZ plane, but that's what the code does
+      ! below. Rick Cofield confirms that the antenna scans in the XZ
+      ! plane of the spacecraft.
+      ! </whd>
+
+      angle = Deg2Rad * 30
+
+      sc(1) = COS(angle)
+      sc(2) = 0.0
+      sc(3) = SIN(angle)
+
+      !<whd>Convert to ECI (Earth Centered Inertial)</whd>
+      returnStatus = Pgs_csc_scToECI (spacecraftid, numValues, asciiUTC, &
+           time_offset, sc, eci)
+      CALL ReportTKStatus (returnStatus, ModuleName, errmsg)
+
+      eciV(1:3) = eci
+      eciV(4:6) = 0.0
+
+      !<whd>Convert ECI to ECR (Earth Centered Rotating)</whd>
+      returnStatus = Pgs_csc_eciToECR (numValues, asciiUTC, time_offset, &
+           eciV, ecrV)
+      CALL ReportTKStatus (returnStatus, ModuleName, errmsg)
+
+! Truncate velocity portion of ECR view vector
+
+      !<whd> The PGS returns 6 component vectors, the first 3 of which
+      !are postion and the last velocity. Here we don't care about
+      !velocity </whd>
+      viewECR = ecrV(1:3)
+
+   END SUBROUTINE Scan_guess
+
+!===============================================================================
+   SUBROUTINE Scan_start (initAlt, posECR, asciiUTC, initRay, startAngle)
+!===============================================================================
+
+  use Constants, only: Rad2Deg
+! Brief description of subroutine
+! This subroutine takes an initial-guess view vector and iteratively runs the
+! toolkit GrazingRay routine to find the actual view vector for a given
+! tangent height.  The returned value is the view vector angle in degrees.
+
+! Arguments
+
+      CHARACTER(LEN=27), INTENT(IN) :: asciiUTC
+
+      REAL(r8), INTENT(IN) :: initAlt
+      REAL(r8), INTENT(IN) :: initRay(3), posECR(3)
+
+      REAL(r8), INTENT(OUT) :: startAngle
+
+! Parameters
+
+      INTEGER, PARAMETER :: numValues = 1
+
+      REAL(r8), Dimension(1), PARAMETER :: time_offset = 0.0
+
+! Functions
+
+      INTEGER :: Pgs_csc_grazingRay
+      INTEGER :: Pgs_csc_eciToSc
+
+! Variables
+
+      INTEGER :: i, returnStatus, converge
+
+      REAL(r8) :: latitude, longitude, missAltitude, slantRange
+      REAL(r8) :: ecr(3), eci(3), finalRay(3), posNear(3), posSurf(3), ray(3)
+      REAL(r8) :: ecrV(6), eciV(6)
+
+! Initial guess tangent height
+
+      returnStatus = Pgs_csc_grazingRay (earthModel, posECR, initRay, &
+           latitude, longitude, missAltitude, slantRange, posNear, posSurf)
+      CALL ReportTKStatus (returnStatus, ModuleName, errmsg)
+
+! Iterations on view vector to see given tangent height
+
+      converge = -1
+
+      DO i = 1, 8
+
+         IF (ABS(missAltitude - initAlt) < 1.0) THEN
+           !<whd> Missed by less than 1 meter! Done! </whd>
+            converge = 1
+            EXIT
+         ENDIF
+
+         returnStatus = Pgs_csc_geoToECR (longitude, latitude, initAlt, &
+              earthModel, ecr)
+         CALL ReportTKStatus (returnStatus, ModuleName, errmsg)
+
+         !<whd> Calculate new guess for the line-of-sight vector </whd>
+         ray = ecr - posECR
+
+         !<whd> Calculate new grazing ray and missAltitude</whd>
+         returnStatus = Pgs_csc_grazingRay(earthModel, posECR, ray, &
+              latitude, longitude, missAltitude, slantRange, posNear, posSurf)
+         CALL ReportTKStatus (returnStatus, ModuleName, errmsg)
+
+      ENDDO
+
+! Check that exit caused by height convergence, rather than loop timing out
+
+      IF (converge /= 1) CALL MLSMessage (MLSMSG_Warning, ModuleName, &
+           'Iterations timed out before height converged.')
+
+! Convert final view vector from ECR (to ECI) to SC
+
+      ecrV(1:3) = ray
+      ecrV(4:6) = 0.0
+
+      returnStatus = Pgs_csc_ecrToECI (numValues, asciiUTC, time_offset, ecrV, &
+           eciV)
+      CALL ReportTKStatus (returnStatus, ModuleName, errmsg)
+
+      eci = eciV(1:3)
+
+      returnStatus = Pgs_csc_eciToSc (spacecraftid, numValues, asciiUTC, &
+           time_offset, eci, finalRay)
+      CALL ReportTKStatus (returnStatus, ModuleName, errmsg)
+
+      startAngle = Rad2Deg * ACOS (MAX(MIN(finalRay(1), 1.0d0), -1.0d0))
+
+   END SUBROUTINE Scan_start
+
+!==============
+  LOGICAL FUNCTION not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  CHARACTER (len=*), PARAMETER :: IdParm = &
+       "$Id: Scan.f90,v 2.8.2.1 2015/10/09 10:21:38 whdaffer Exp $"
+  CHARACTER (len=LEN(idParm)), SAVE :: Id = idParm
+!---------------------------------------------------------------------------
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  END FUNCTION not_used_here
+END MODULE Scan
+!==============
+
+! $Log: Scan.f90,v $
+! Revision 2.8.2.1  2015/10/09 10:21:38  whdaffer
+! checkin of continuing work on branch whd-rel-1-0
+!
+! Revision 2.8  2015/04/17 22:54:37  pwagner
+! Fixed small number of interface errors NAG complained about
+!
+! Revision 2.7  2015/01/23 17:50:17  pwagner
+! SDPToolkit indispensible for level 1; why not use it instead of Constants?
+!
+! Revision 2.6  2015/01/22 23:34:04  vsnyder
+! Get constants from Constants module instead of SDPToolkit
+!
+! Revision 2.5  2007/04/05 13:59:57  perun
+! Protect ACOS from crashes
+!
+! Revision 2.4  2005/12/14 17:01:03  perun
+! Incorporate ReportTKStatus call for reporting errors
+!
+! Revision 2.3  2005/06/23 18:41:36  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.2  2004/08/16 17:26:58  perun
+! Comment out returnStatus check for initial guess
+!
+! Revision 2.1  2003/08/15 14:25:04  perun
+! Version 1.2 commit
+!
+! Revision 2.0  2000/09/05 18:55:15  ahanzel
+! Changing file revision to 2.0.
+!
+! Revision 1.1  2000/02/10 16:54:27  nakamura
+! Module that models the MLS scan program.
+!
+@
+
+
+2.8
+log
+@Fixed small number of interface errors NAG complained about
+@
+text
+@d81 10
+d97 1
+d105 1
+d112 3
+d170 1
+d179 1
+d182 1
+d217 1
+a217 1
+       "$Id: Scan.f90,v 2.7 2015/01/23 17:50:17 pwagner Exp $"
+d226 6
+@
+
+
+2.8.2.1
+log
+@checkin of continuing work on branch whd-rel-1-0
+@
+text
+@a80 10
+      !<whd> 
+      ! 
+      ! Take an arbitrary vector in SC coordinates (here, it's
+      ! one which makes a 30deg angle with the X-axis of the SC in the
+      ! XZ plane. I have _no_ idea why that's useful unless the antenna
+      ! scans in the XZ plane, but that's what the code does
+      ! below. Rick Cofield confirms that the antenna scans in the XZ
+      ! plane of the spacecraft.
+      ! </whd>
+
+a86 1
+      !<whd>Convert to ECI (Earth Centered Inertial)</whd>
+a93 1
+      !<whd>Convert ECI to ECR (Earth Centered Rotating)</whd>
+a99 3
+      !<whd> The PGS returns 6 component vectors, the first 3 of which
+      !are postion and the last velocity. Here we don't care about
+      !velocity </whd>
+a154 1
+           !<whd> Missed by less than 1 meter! Done! </whd>
+a162 1
+         !<whd> Calculate new guess for the line-of-sight vector </whd>
+a164 1
+         !<whd> Calculate new grazing ray and missAltitude</whd>
+d199 1
+a199 1
+       "$Id: Scan.f90,v 2.8 2015/04/17 22:54:37 pwagner Exp $"
+a207 3
+! Revision 2.8  2015/04/17 22:54:37  pwagner
+! Fixed small number of interface errors NAG complained about
+!
+@
+
+
+2.7
+log
+@SDPToolkit indispensible for level 1; why not use it instead of Constants?
+@
+text
+@d16 5
+a20 3
+   USE MLSCommon
+   USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Warning, ReportTKStatus
+   USE SDPToolkit, only: spacecraftid, earthModel
+d22 1
+a22 1
+   IMPLICIT NONE
+d24 1
+a24 1
+   PRIVATE
+d67 1
+a67 1
+      REAL(r8), PARAMETER :: time_offset = 0.0
+d71 1
+a71 1
+      INTEGER :: Pgs_csc_scToECI, Pgs_csc_eciToECR
+d127 1
+a127 1
+      REAL(r8), PARAMETER :: time_offset = 0.0
+d132 1
+a132 1
+      INTEGER :: Pgs_csc_geoToECR, Pgs_csc_ecrToECI, Pgs_csc_eciToSc
+d199 1
+a199 1
+       "$Id: Scan.f90,v 2.6 2015/01/22 23:34:04 vsnyder Exp $"
+d208 3
+@
+
+
+2.6
+log
+@Get constants from Constants module instead of SDPToolkit
+@
+text
+@d18 1
+a18 1
+   USE SDPToolkit
+d197 1
+a197 1
+       "$Id: Scan.f90,v 2.5 2007/04/05 13:59:57 perun Exp $"
+d206 3
+@
+
+
+2.5
+log
+@Protect ACOS from crashes
+@
+text
+@d49 2
+d106 1
+d197 1
+a197 1
+       "$Id: Scan.f90,v 2.4 2005/12/14 17:01:03 perun Exp $"
+d206 3
+@
+
+
+2.4
+log
+@Incorporate ReportTKStatus call for reporting errors
+@
+text
+@d186 1
+a186 1
+      startAngle = Rad2Deg * ACOS (finalRay(1))
+d194 1
+a194 1
+       "$Id: Scan.f90,v 2.3 2005/06/23 18:41:36 pwagner Exp $"
+d203 3
+@
+
+
+2.3
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d17 1
+a17 1
+   USE MLSMessageModule
+d27 3
+a29 3
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: $"
+  private :: not_used_here 
+d32 2
+d45 1
+a45 1
+!------------------------------------------
+d47 1
+a47 1
+!------------------------------------------
+d85 1
+d92 1
+a97 1
+!---------------------------
+a98 1
+!---------------------------
+d100 1
+a100 1
+!-----------------------------------------------------------------------
+d102 1
+a102 1
+!-----------------------------------------------------------------------
+a130 3
+      CHARACTER (LEN=32) :: mnemonic
+      CHARACTER (LEN=480) :: msg, msr
+
+d141 1
+a141 6
+
+!!$      IF (returnStatus /= PGS_S_SUCCESS) THEN
+!!$         CALL Pgs_smf_getMsg(returnStatus, mnemonic, msg)
+!!$         msr = mnemonic // ':  ' // msg
+!!$         CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
+!!$      ENDIF
+d149 1
+a149 1
+         IF ( ABS(missAltitude - initAlt) < 1.0 ) THEN
+d156 1
+d162 1
+d168 1
+a168 1
+      IF ( converge /= 1 ) CALL MLSMessage (MLSMSG_Warning, ModuleName, &
+d178 1
+d184 1
+a187 1
+!---------------------------
+a188 2
+!---------------------------
+
+d191 1
+a191 1
+  logical function not_used_here()
+d193 3
+a195 3
+  character (len=*), parameter :: IdParm = &
+       "$Id: $"
+  character (len=len(idParm)), save :: Id = idParm
+d198 1
+a198 1
+  end function not_used_here
+d203 3
+@
+
+
+2.2
+log
+@Comment out returnStatus check for initial guess
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d26 5
+a30 5
+!------------------- RCS Ident Info -----------------------
+   CHARACTER(LEN=130) :: Id = &
+   "$Id: Scan.f90,v 2.1 2003/08/15 14:25:04 perun Exp $"
+   CHARACTER (LEN=*), PARAMETER :: ModuleName="$RCSfile: Scan.f90,v $"
+!----------------------------------------------------------
+d196 8
+d208 3
+@
+
+
+2.1
+log
+@Version 1.2 commit
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+d20 1
+a20 1
+   "$Id: Scan.f90,v 2.0 2000/09/05 18:55:15 ahanzel Exp $"
+d36 1
+a36 1
+   SUBROUTINE Scan_guess(asciiUTC, viewECR)
+d73 2
+a74 2
+      returnStatus = Pgs_csc_scToECI(spacecraftid, numValues, asciiUTC, &
+                                     time_offset, sc, eci)
+d79 2
+a80 2
+      returnStatus = Pgs_csc_eciToECR(numValues, asciiUTC, time_offset, &
+                                      eciV, ecrV)
+d91 1
+a91 1
+   SUBROUTINE Scan_start(initAlt, posECR, asciiUTC, initRay, startAngle)
+d132 8
+a139 8
+      returnStatus = Pgs_csc_grazingRay(earthModel, posECR, initRay, &
+                                        latitude, longitude, missAltitude, &
+                                        slantRange, posNear, posSurf)
+      IF (returnStatus /= PGS_S_SUCCESS) THEN
+         CALL Pgs_smf_getMsg(returnStatus, mnemonic, msg)
+         msr = mnemonic // ':  ' // msg
+         CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
+      ENDIF
+d152 2
+a153 2
+         returnStatus = Pgs_csc_geoToECR(longitude, latitude, initAlt, &
+                                         earthModel, ecr)
+d158 1
+a158 2
+                                       latitude, longitude, missAltitude, &
+                                       slantRange, posNear, posSurf)
+d164 2
+a165 2
+      IF ( converge /= 1 ) CALL MLSMessage(MLSMSG_Warning, ModuleName, &
+                          'Iterations timed out before height converged.')
+d172 2
+a173 2
+      returnStatus = Pgs_csc_ecrToECI(numValues, asciiUTC, time_offset, ecrV, &
+                                      eciV)
+d177 2
+a178 2
+      returnStatus = Pgs_csc_eciToSc(spacecraftid, numValues, asciiUTC, &
+                                     time_offset, eci, finalRay)
+d180 1
+a180 1
+      startAngle = Rad2Deg * ACOS( finalRay(1) )
+d192 3
+@
+
+
+2.0
+log
+@Changing file revision to 2.0.
+@
+text
+@d1 1
+a1 2
+
+! Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
+d11 1
+a12 1
+   PUBLIC
+d14 3
+a16 1
+   PRIVATE :: ID, ModuleName
+d20 1
+a20 1
+   "$Id: Scan.f90,v 1.1 2000/02/10 16:54:27 nakamura Exp $"
+d61 1
+a61 1
+      INTEGER :: i, returnStatus
+d193 3
+@
+
+
+1.1
+log
+@Module that models the MLS scan program.
+@
+text
+@d19 1
+a19 1
+   "$Id: Scan.f90,v 1.1 2000/02/10 16:54:27 nakamura Exp $"
+d192 3
+@
+
+

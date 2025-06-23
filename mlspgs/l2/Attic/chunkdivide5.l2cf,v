@@ -1,0 +1,45 @@
+head	2.2;
+access;
+symbols
+	V1-04:2.1
+	V1-03:2.1
+	V1-02:2.1
+	V1-00:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.2
+date	2002.05.22.00.50.15;	author livesey;	state dead;
+branches;
+next	2.1;
+
+2.1
+date	2001.11.20.00.50.00;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.2
+log
+@L2CFs no longer belong in l2
+@
+text
+@; --------------------------------------------- ChunkDivide ----
+begin ChunkDivide
+  ChunkDivide, method=fixed, maxLength=5 MAFs, overlap=0 MAFs, noChunks=1
+end ChunkDivide
+@
+
+
+2.1
+log
+@New versions for new ChunkDivide
+@
+text
+@@
+

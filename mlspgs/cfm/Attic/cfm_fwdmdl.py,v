@@ -1,0 +1,413 @@
+head	1.1;
+access;
+symbols
+	cfm-single-freq-0-1:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2021.08.17.15.45.32;	author whdaffer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2021.08.17.15.45.32;	author whdaffer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2021.08.17.20.28.58;	author whdaffer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@file cfm_fwdmdl.py was initially added on branch cfm-single-freq-0-1.
+@
+text
+@@
+
+
+1.1.2.1
+log
+@Initial revision (based on the renamed cfm_fwdml.py)
+@
+text
+@a0 185
+# Good code examples here.
+# https://www.tutorialspoint.com/python3/python_classes_objects.htm
+#import subprocess as sp
+#import glob
+
+# Good python info here
+# https://www.python-course.eu/python3_sets_frozensets.php
+
+class cfm_fwdmdl():
+    '''A Class to handle all the various types of fields in a ForwardModel 
+    declaration in a MLS L2 L2CF file.
+
+    The fields `signal',`radiometer',`spectrometerType',`band', and
+    `channels' are handled slightly differently, depending on how the
+    attribute `overwrite' is set.  See the note for the `setArgs'
+    method.
+
+    '''
+
+    def __init__(self,
+                 configFile=None,
+                 config=None,
+                 signal=None,
+                 radiometer=None,
+                 spectrometerType=None,
+                 band=None,
+                 channels=None,
+                 overwrite=False,
+                 verbose=False):
+        self.signal=signal
+        self.radiometer=radiometer
+        self.spectrometerType=spectrometerType
+        self.band=band
+        self.channels=channels
+        self.config=None # the pickle dictionary
+        self.verbose=verbose
+        self.overwrite=overwrite
+        if configFile != None:
+            self.loadConfigFile(configFile)
+        elif config != None:
+            self.setConfig(config)
+
+    # end __init__
+
+    def setConfig(self,config):
+        for key, val in config.items():
+            setattr(self,key,val)
+    # end setConfig
+
+    
+    def loadConfigFile(self,configFile):
+        import pickle
+        try:
+            config=pickle.load(open(configFile,'rb'))
+            self.setConfig(config)
+        except:
+            print(f"Couldn't load {configFile}")
+            
+            
+    # end loadConfigFile
+    def printConfig(self,showTrue=False):
+        print("\n************************* Current configutation *************************")
+        for k,v in self.__dict__.items():
+            if showTrue and v == False:
+                continue
+            print(f"{k}={v}")
+        # end for k,v
+        print("\n************************* end configutation *************************\n")
+    # end printConfig
+    
+    def setArgs(self,argsDict):
+        '''Given a dictionary whose keys are the names of attributes of
+        arguments passed to the caller and whose values are their
+        values, either set or create those attributes in self.
+
+        Be careful for the arguments
+        `signal','radiometer','spectrometerType', 'band' and
+        'channels'. If they are already present in `self', prompt for
+        confirmation unless `overwrite' is set. In that case, simply
+        overwrite their contents with what was passed in (which
+        defaults to `None' if nothing was passed in) after issuing a
+        message.
+
+        '''
+
+        # Before checking for protected values, pop and set verbose and overwrite
+        self.overwrite=argsDict.pop('overwrite')
+        self.verbose=argsDict.pop('verbose')
+        
+        protected=['signal','radiometer','spectrometerType', 'band','channels']
+        for k,v in argsDict.items():
+            if not k in protected:
+                setattr(self,k,v)
+            else:
+                currentValue=getattr(self,k)
+                if currentValue == v:
+                    setattr(self,k,v)
+                else:
+                    if self.overwrite:
+                        print(f"**************************")
+                        print(f"overwrite is set!")
+                        print(f"Overwriting `{k}' (which currently has the value `{currentValue}'")
+                        print(f"with `{v}'")
+                        print(f"**************************")
+                        yesno='y'
+                    else:
+                        yesno=self.YesNo([k,currentValue,v])
+                    if yesno == 'y':
+                        if self.verbose:
+                            print(f"Setting {k} to {v}")
+                        setattr(self,k,v)
+                    # end if yesno=='y'
+                # end if currenValue == v block
+            # end if k not in protected block
+        # end for
+    # end setArgs
+    
+    def YesNo(self,items):
+        print(f"You're about to overwrite '{items[0]}'")
+        print(f"It currently has the value {items[1]}")
+        print(f"You're about to set it to {items[2]}")
+        YesNo=input(f"Is this okay: y/[n]? ")
+        return(YesNo)
+    # end yes_or_no
+
+    def constructL2CFString(self):
+        pass
+    # end constructL2CFString
+    def binSelectors(self):
+        pass
+      # end binSelectors
+    def cloud_der(self):
+        pass
+      # end 
+    def i_saturation(self):
+        pass
+      # end 
+    def integrationGrid(self):
+        pass
+      # end 
+    def MIFTangent(self):
+        pass
+      # end MIFTangent
+    def module(self):
+        pass
+      # end module
+    def signals(self):
+        pass
+      # end signals
+    def specificQuantities(self):
+        pass
+      # end specificQuantities
+    def tangentGrid(self):
+        pass
+      # end
+    def trapezoid(self):
+        pass
+      # end
+    def type(self):
+        pass
+      # end
+    def xStar(self):
+        pass
+      # end
+    def yStar(self):
+        pass
+      # end
+    def phiWindow(self):
+        pass
+      # end
+    def prompt_for_array(verbose=False):
+      '''Function that handles prompting for array-like data (e.g. molecule = [...])
+      Enter all data at one time. Can be multi-line.'''
+      retStr=None
+      print("Start with '['..., comma-seperated lists thereafter")
+      try: 
+        retStr=input("Start array/molecule entry: ")
+        retVal=True
+      except EOFError:
+        print("\nInput aborted by user!\n")
+        retVal=False
+        # end except
+      return( (retVal,retStr) )
+    #end prompt_for_array
+# end cfm_fwmdl
+@
+
+
+1.1.2.2
+log
+@Continuing work. Almost there.
+@
+text
+@a7 1
+import re
+d11 9
+a19 2
+    declaration in a MLS L2 L2CF file.'''
+    
+d21 1
+a21 2
+                 designation=None,
+                 type=None,
+d23 1
+a23 1
+                 signals=None,
+a27 2
+                 configFile=None,
+                 l2cfFile=None,
+d30 1
+a30 3
+        self.designation=designation
+        self.type=type
+        self.signals=signals
+a37 3
+        self.ignoreTheseWhenWritingL2CF = ['config','configFile',
+                                           'pickleFile','l2cfFile','overwrite',
+                                           'verbose','ignoreTheseWhenWritingL2CF']
+d77 1
+a77 1
+        `signals','radiometer','spectrometerType', 'band' and
+d86 1
+a86 3
+        # Before checking for protected values, pop and set `verbose'
+        # and `overwrite'. This may have already been set, but just to
+        # be sure.
+d90 1
+a90 1
+        protected=['signals','radiometer','spectrometerType', 'band','channels']
+d105 1
+a105 1
+                        yesno=True
+d107 2
+a108 5
+                        
+                        prompts=[f"You're about to overwrite `{k}', setting it to `{v}'",
+                                 f"It currently has the value `{currentValue}'"]
+                        yesno=self.YesNo(prompts)
+                    if yesno:
+d118 5
+a122 16
+    def YesNo(self,prompts):
+        '''Prompts for a yes/no question. Defaults to no. 
+        Returns True if the answer has a 'y' at the beginning, 
+        False otherwise'''
+
+        if isinstance(prompts,list):
+            for p in prompts:
+                print(p)
+        else:
+            if isinstance(prompts,str):
+                print(prompts)
+
+        YesNo=False
+        answer =input(f"Is this okay: y/[n]? ")
+        if re.compile('^y',re.IGNORECASE).search(answer):
+            YesNo=True
+d127 1
+a127 36
+        errors=0
+        l2cfString=''
+        retVal=False
+        if self.designation==None:
+            print("Can't write file with the ForwardModel quantity `designation'!")
+            errors += 1
+        if self.type == None:
+            print("Can't write file with the ForwardModel quantity `type'!")
+            errors += 1
+        if self.signals == None:
+            print("Can't write file with the ForwardModel quantity `signals'!")
+            errors += 1
+
+        if errors == 0:
+            alreadySeen=['designation','type','signals']
+            l2cfString=f"{self.designation}: forwardModel, type={self.type}"
+            for item in ['signals','molecules',
+                         'LSBlblMolecules','USBlblMolecules']:
+                alreadySeen.append(item)
+                value=getattr(self,item)
+                if value != None:
+                    l2cfString += f", {item} = {value} "
+            # end for item in...
+            ignoreThese=self.ignoreTheseWhenWritingL2CF
+            
+            for k,v in self.__dict__.items():
+                if k in alreadySeen or \
+                   v == False or v == None or \
+                   k in ignoreThese:
+                    continue
+                l2cfString += f", {k} = {v}"
+            # end for k,v in self.__dict__
+            retVal = True
+        else:
+            print(f"Too many failures {errors}. Aborting!")
+        return(retVal,l2cfString)
+a128 29
+    
+    def writePicklefile(self):
+        picklFile=self.pickleFile
+        try:
+            pickle.dump(self.config,open(pickleFile,"wb"))
+        except:
+            print(f"Error writing {pickleFile}. Aborting!")
+            sys.exit(1)
+    # end writePicklefile
+    
+    def writeL2CFFile(self):
+        (retVal,l2cfString) = self.constructL2CFString()
+        if retVal==False:
+            print("Error constructing L2CF string!")
+        else:
+            if self.verbose:
+                print("\n**************************************************************\n")
+                print("l2cfString = ")
+                print(l2cfString)
+                print("\n**************************************************************\n")
+        #
+        fd=open(self.l2cfFile,'w')
+        for line in l2cfString:
+            fd.write(line)
+        #
+        fd.close()
+        
+    # end writeL2CFFile
+
+d131 1
+a131 1
+    # end binSelectors
+d134 1
+a134 1
+    # end 
+d137 1
+a137 1
+    # end 
+d140 1
+a140 1
+    # end 
+d143 1
+a143 1
+    # end MIFTangent
+d146 1
+a146 1
+    # end module
+d149 1
+a149 1
+    # end signals
+d152 1
+a152 1
+    # end specificQuantities
+d155 1
+a155 1
+    # end
+d158 1
+a158 1
+    # end
+d161 1
+a161 1
+    # end
+d164 1
+a164 1
+    # end
+d167 1
+a167 1
+    # end
+d170 1
+a170 1
+    # end
+@
+
+

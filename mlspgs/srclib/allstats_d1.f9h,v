@@ -1,0 +1,713 @@
+head	1.13;
+access;
+symbols
+	v5-02-NRT-19:1.13
+	v6-00:1.13
+	v5-02-NRT-18:1.13
+	v5-02:1.13
+	v5-01-NRT-17:1.13
+	v5-01-NRT-16:1.13
+	v5-01-NRT-15:1.13
+	v5-01-NRT-14:1.13
+	neuralnetworks-1-0:1.13.0.10
+	cfm-single-freq-0-1:1.13.0.8
+	v5-01:1.13
+	v5-00:1.13
+	v4-23-TA133:1.13.0.6
+	mus-emls-1-70:1.13.0.4
+	rel-1-0-englocks-work:1.13.0.2
+	VUMLS1-00:1.12
+	VPL1-00:1.12
+	V4-22-NRT-08:1.12
+	VAM1-00:1.12
+	V4-21:1.12.0.2
+	V4-13:1.12
+	V4-12:1.12
+	V4-11:1.12
+	V4-10:1.12
+	V3-43:1.10
+	M4-00:1.12
+	V3-41:1.10
+	V3-40-PlusGM57:1.10.0.2
+	V2-24-NRT-04:1.8
+	V3-33:1.10
+	V2-24:1.8
+	V3-31:1.10
+	V3-30-NRT-05:1.10
+	cfm-01-00:1.10
+	V3-30:1.10
+	V3-20:1.10
+	V3-10:1.10
+	V2-23-NRT-02:1.8
+	V2-23:1.8
+	V2-22-NRT-01:1.8
+	V2-22:1.8
+	V2-21:1.5
+	V2-20:1.4
+	V2-11:1.3
+	V2-10:1.3
+	V2-00:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.13
+date	2017.10.24.23.37.23;	author pwagner;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2012.06.22.20.27.44;	author pwagner;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2011.07.27.00.04.11;	author pwagner;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2007.10.24.23.56.11;	author pwagner;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2007.10.24.00.19.06;	author pwagner;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2007.08.23.22.15.40;	author pwagner;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2007.07.18.00.07.46;	author pwagner;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2007.03.07.21.00.34;	author pwagner;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2007.02.06.17.52.21;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2006.08.22.00.04.25;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2006.07.11.00.25.44;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2006.03.08.17.10.48;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2006.02.01.23.43.24;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.13
+log
+@Removed 2 unused pointers
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id: allstats_d1.f9h,v 1.12 2012/06/22 20:27:44 pwagner Exp $
+!   subroutine allstats*( values, &
+!        & nbins, bounds, addedData, fillValue, precision, &
+!        & count, fillcount, min, max, mean, stddev, rms, median, &
+!        & bincount, indexing, doDump )
+        ! Args
+        real(rk), dimension(:), intent(in)             :: values
+        integer, optional, intent(in)                  :: nbins
+        real(rk), dimension(2), optional, intent(in)   :: bounds
+        logical, optional, intent(in)                  :: addeddata
+        real(rk), optional, intent(in)                 :: fillValue
+        real(rk), dimension(:), optional, intent(in)   :: precision
+        integer, optional, intent(inout)               :: count
+        integer, optional, intent(inout)               :: fillcount
+        real(rk), optional, intent(out)                :: min
+        real(rk), optional, intent(out)                :: max
+        real(rk), optional, intent(out)                :: mean
+        real(rk), optional, intent(out)                :: stddev
+        real(rk), optional, intent(out)                :: rms
+        real(rk), optional, intent(out)                :: median
+        integer, dimension(:), optional, intent(out)   :: bincount
+        integer, dimension(3), optional, intent(out)   :: indexing
+        logical , optional, intent(in)                 :: doDump
+        ! Internal variables
+        character(len=64)                              :: fields
+        logical                                        :: myAddedData
+        logical                                        :: myDump
+        real(rk)                                       :: myRMS
+        integer                                        :: ncells
+        integer                                        :: n
+        integer                                        :: nx
+        real(rk), dimension(FN_STDDEV)                 :: stats
+        real(rk)                                       :: x1, x2
+        real(rk), dimension(:), pointer                :: xtab => null()
+        real(rk)                                       :: absMu, sigma
+!        logical, parameter :: DEEBUG = .true.
+        ! Executable
+        myDump = .false.
+        if ( present(doDump) ) myDump = doDump
+        ncells = 1
+        if ( present(nbins) .and. present(bincount) ) ncells = nbins
+        x1 = 1.
+        x2 = 1.
+        if ( present(bounds) ) then
+          x1 = bounds(1)
+          x2 = bounds(2)
+        endif
+        myAddedData = .false.
+        if ( present(addedData) ) myAddedData = addedData
+        if ( myAddedData ) then
+          stats(FN_COUNT ) = MLSStat%count
+          stats(FN_MIN   ) = MLSStat%min
+          stats(FN_MAX   ) = MLSStat%max
+          stats(FN_MEAN  ) = MLSStat%mean
+          stats(FN_STDDEV) = MLSStat%stddev
+          if ( DEEBUG ) then
+          call output('Merging with existing stats count min max mean stddev ', advance='yes')
+          call output(stats, advance='yes')
+          endif
+        else
+          stats = 0  ! Reset count to start again
+          MLSStat%Count = 0
+          MLSStat%fillCount = 0
+          if ( DEEBUG ) call output('Resetting counts to 0', advance='yes')
+        endif
+        if ( present(fillValue) ) then
+          call filterValues(values, XTAB, NX, fillValue=fillValue)
+          if ( DEEBUG ) then
+            call outputNamedValue( 'shape(values)', shape(values) )
+            call outputNamedValue( 'shape(xtab)', shape(xtab) )
+            call outputNamedValue( 'nx', nx )
+            call outputNamedValue( 'fillvalue', fillvalue )
+            call outputNamedValue( 'fillvaluerelation', fillvaluerelation )
+            call outputNamedValue( 'max(values)', maxval(values) )
+            call outputNamedValue( 'min(values)', minval(values) )
+            call outputNamedValue( 'count(values == fillvalue)', shcount(values == fillvalue) )
+            call outputNamedValue( 'count(values /= fillvalue)', shcount(values /= fillvalue) )
+          endif
+          call STAT1(XTAB, NX, STATS, bincount, NCELLS, X1, X2)
+          if ( DEEBUG ) call output('Back from stat1 with fillvalue', advance='yes')
+          MLSStat%fillCount = MLSStat%fillCount + size(values) - size(XTAB)
+          ! Find median (only if not adding data)
+          if ( .not. myAddedData ) call FindMedian( XTAB, NX, MLSStat%median )
+          call Deallocate_test ( XTAB, 'XTAB', ModuleName )
+        elseif ( present(precision) ) then
+          call filterValues(values, XTAB, NX, precision=precision)
+          call STAT1(XTAB, NX, STATS, bincount, NCELLS, X1, X2)
+          if ( DEEBUG ) call output('Back from stat1 with precision', advance='yes')
+          MLSStat%fillCount = MLSStat%fillCount + size(values) - size(XTAB)
+          ! Find median (only if not adding data)
+          if ( .not. myAddedData ) call FindMedian( XTAB, NX, MLSStat%median )
+          call Deallocate_test ( XTAB, 'XTAB', ModuleName )
+        else
+          call STAT1(values, size(values), STATS, bincount, NCELLS, X1, X2)
+          if ( DEEBUG ) call output('Back from stat1', advance='yes')
+          ! Find median (only if not adding data)
+          if ( .not. myAddedData ) call FindMedian( values, size(values), MLSStat%median )
+        endif
+        ! Side calculation in case we need rms
+        n = stats(1)
+        absMu = ABS(stats(4))
+        sigma = stats(5)
+        if ( n == 0 .or. (absMu == 0. .and. sigma == 0.) ) then
+          myRMS = 0.
+        elseif ( sigma < absMu ) then
+          myRMS = absMu*sqrt( ((n-1.)/n)*(sigma/absMu)**2 + 1. )
+        else
+          myRMS = sigma*sqrt( ((n-1.)/n) + (absMu/sigma)**2 )
+        endif
+        if ( DEEBUG ) then
+          call output( 'stats: ', advance='no' )
+          call output( stats, advance='yes' )
+        endif
+        MLSStat%count  = stats(FN_COUNT )
+        MLSStat%min    = stats(FN_MIN   )
+        MLSStat%max    = stats(FN_MAX   )
+        MLSStat%mean   = stats(FN_MEAN  )
+        MLSStat%stddev = stats(FN_STDDEV)
+        MLSStat%rms    = myRMS
+        if ( .not. myAddedData ) then
+          if ( DEEBUG ) then
+            call output( 'shape(values) ', advance='no' )
+            call output( shape(values), advance='yes' )
+            call output( 'shape(indexing) ', advance='no' )
+            call output( shape(MLSStat%indexing), advance='yes' )
+          endif
+          MLSStat%indexing(1) = FindFirst( values == stats(3) )
+          MLSStat%indexing(2) = FindFirst( values == stats(2) )
+          MLSStat%indexing(3) = FindFirst( values == real(MLSStat%median,rk) )
+          if ( DEEBUG ) then
+            call output( 'locations of max, min, median: ', advance='no' )
+            call output( MLSStat%indexing, advance='yes' )
+          endif
+        endif
+        if ( present(fillcount) ) fillcount = MLSStat%fillcount
+        if ( present(count ) ) count  = stats(FN_COUNT )
+        if ( present(min   ) ) min    = stats(FN_MIN   )
+        if ( present(max   ) ) max    = stats(FN_MAX   )
+        if ( present(mean  ) ) mean   = stats(FN_MEAN  )
+        if ( present(stddev) ) stddev = stats(FN_STDDEV)
+        if ( present(rms   ) ) rms    = myRMS
+        if ( present(median) ) median = MLSStat%median
+        if ( present(indexing) ) indexing = MLSStat%indexing
+        ! Have we been asked to dump the calculated stats?
+        if ( .not. myDump ) return
+        call output('Combined statistics', advance='no' )
+        if ( present(fillValue) ) then
+          call output(' (ignoring any fill values ', advance='no' )
+          call output(fillvaluerelation // ' ', advance='no' )
+          call output(fillValue, advance='no' )
+          call output(')', advance='no' )
+        endif
+        if ( present(precision) ) then
+          call output(' (ignoring any values where supplied precision < 0', advance='no' )
+        endif
+        call newline
+        fields = ' '
+        if ( present(count ) ) fields = catLists(fields, 'count')
+        if ( present(min   ) ) fields = catLists(fields, 'min  ')
+        if ( present(max   ) ) fields = catLists(fields, 'max  ')
+        if ( present(mean  ) ) fields = catLists(fields, 'mean ')
+        if ( present(stddev) ) fields = catLists(fields, 'stddev')
+        if ( present(rms   ) ) fields = catLists(fields, 'rms  ')
+        if ( present(median) ) fields = catLists(fields, 'median')
+        if ( present(bincount) ) fields = catLists(fields, 'bin')
+        if ( present(indexing) ) fields = catLists(fields, 'indexing')
+        if ( present(fillcount) ) fields = catLists(fields, 'fillcount')
+        ! call output('fields: ' // trim(fields), advance='yes')
+        call dump( MLSStat, fields )
+contains
+  subroutine FindMedian( array, N, median )
+    ! Find the median of the values contained in array(1:N)
+    ! Method:
+    ! sort he array, then choose its middle element
+    
+    ! Dummy args
+    real(rk), dimension(:), intent(in) :: array
+    integer, intent(in)                :: N
+    real(r8), intent(out)              :: median
+    ! Local variables
+    real(rk), dimension(n)             :: sorted
+    ! Executable
+    if ( size(array) < 1 ) then
+      return
+    elseif ( size(array) < 3 .or. N < 3 ) then
+      median = array(1)
+      return
+    endif
+    sorted = array(1:n)
+    call sort(sorted, 1, n)
+    ! The index should be the middle element if n is odd
+    ! and the smaller of the two middle elements if n is even
+    ! E.g., the median of [1,2,..,99] is 50
+    ! ans so is the median of [1,2,..,100] (and not 50.5 or 51 or ..]
+    median = sorted( (n+1)/2  )
+  end subroutine FindMedian
+! end subroutine sllstats*
+
+! $Log: allstats_d1.f9h,v $
+! Revision 1.12  2012/06/22 20:27:44  pwagner
+! Specify advance arg because we may now set default to 'yes'
+!
+! Revision 1.11  2011/07/27 00:04:11  pwagner
+! Removed obsolete code; use FN_names to enumerate stats array
+!
+! Revision 1.10  2007/10/24 23:56:11  pwagner
+! Changed name of component to 'indexing'
+!
+! Revision 1.9  2007/10/24 00:19:06  pwagner
+! Added mindexes component to MLSStat to hold index of max, min, median
+!
+! Revision 1.8  2007/08/23 22:15:40  pwagner
+! Fixed another bug in median computation
+!
+! Revision 1.7  2007/07/18 00:07:46  pwagner
+! Fixed bug afflicting median when array has length 1
+!
+! Revision 1.6  2007/03/07 21:00:34  pwagner
+! Some small changes unrelated to real bugs elsewhere
+!
+! Revision 1.5  2007/02/06 17:52:21  pwagner
+! Correctly tracks fillcount
+!
+! Revision 1.4  2006/08/22 00:04:25  pwagner
+! speedier median algorithm
+!
+! Revision 1.3  2006/07/11 00:25:44  pwagner
+! Show relation of ignored fill values
+!
+! Revision 1.2  2006/03/08 17:10:48  pwagner
+! Now finds median, too
+!
+! Revision 1.1  2006/02/01 23:43:24  pwagner
+! First commit
+!
+@
+
+
+1.12
+log
+@Specify advance arg because we may now set default to 'yes'
+@
+text
+@d12 1
+a12 1
+! $Id: allstats_d1.f9h,v 1.11 2011/07/27 00:04:11 pwagner Exp $
+a45 2
+        real(rk), dimension(:), pointer                :: xmed1 => null()
+        real(rk), dimension(:), pointer                :: xmed2 => null()
+d211 3
+@
+
+
+1.11
+log
+@Removed obsolete code; use FN_names to enumerate stats array
+@
+text
+@d12 1
+a12 1
+! $Id: allstats_d1.f9h,v 1.10 2007/10/24 23:56:11 pwagner Exp $
+d159 1
+a159 1
+        call output('Combined statistics')
+d161 4
+a164 4
+          call output(' (ignoring any fill values ')
+          call output(fillvaluerelation // ' ')
+          call output(fillValue)
+          call output(')')
+d167 1
+a167 1
+          call output(' (ignoring any values where supplied precision < 0')
+d213 3
+@
+
+
+1.10
+log
+@Changed name of component to 'indexing'
+@
+text
+@d12 1
+a12 1
+! $Id: allstats_d1.f9h,v 1.9 2007/10/24 00:19:06 pwagner Exp $
+d43 1
+a43 1
+        real(rk), dimension(5)                         :: stats
+d64 5
+a68 5
+          stats(1) = MLSStat%count
+          stats(2) = MLSStat%min
+          stats(3) = MLSStat%max
+          stats(4) = MLSStat%mean
+          stats(5) = MLSStat%stddev
+d127 5
+a131 5
+        MLSStat%count  = stats(1)
+        MLSStat%min    = stats(2)
+        MLSStat%max    = stats(3)
+        MLSStat%mean   = stats(4)
+        MLSStat%stddev = stats(5)
+a147 1
+        if ( present(count ) ) count  = stats(1)
+d149 5
+a153 4
+        if ( present(min   ) ) min    = stats(2)
+        if ( present(max   ) ) max    = stats(3)
+        if ( present(mean  ) ) mean   = stats(4)
+        if ( present(stddev) ) stddev = stats(5)
+d185 1
+a185 59
+    ! Find the median of the values contained in array
+    ! By either of two methods:
+    ! (1) deleting both max and mins on successive paths; or
+    ! (2) sorting the array
+    ! Dummy args
+    real(rk), dimension(:), intent(in) :: array
+    integer, intent(in)                :: N
+    real(r8), intent(out)              :: median
+    ! Executable
+    if ( medianmethod == 1 ) then
+      call FindMedian_1( array, N, median )
+    else
+      call FindMedian_2( array, N, median )
+    endif
+  end subroutine FindMedian
+
+  subroutine FindMedian_1( array, N, median )
+    ! Find the median of the values contained in array
+    ! Method:
+    ! At each step, delete the high and low values of the array
+    ! Until left with an array of length either 2 or 1
+    ! (depending on whether the starting length was even or odd)
+    ! The 1st element of this shrunken array is our median
+    
+    ! (If even, would you prefer to split: median = (x1 +x2)/2?)
+    ! No, because then the median value wouldn't actually be in the array
+    
+    ! This method is so slow it's been superseded by method 2
+
+    ! Dummy args
+    real(rk), dimension(:), intent(in) :: array
+    integer, intent(in)                :: N
+    real(r8), intent(out)              :: median
+    ! Local variables
+    logical :: done
+    integer, dimension(1) :: low, high
+    integer :: newsize
+    ! Executable
+    nullify(xmed1, xmed2)
+    call allocate_test( xmed1, N, 'xmed1', trim(Modulename) // '/FindMedian' )
+    call allocate_test( xmed2, N, 'xmed2', trim(Modulename) // '/FindMedian' )
+    xmed1(1:N) = array(1:N)
+    newsize = N
+    done = (N < 3)
+    do
+      if ( done ) exit
+      low = minloc( xmed1(1:newsize) )
+      high = maxloc( xmed1(1:newsize) )
+      newsize = shrinkArray( xmed1(1:newsize), (/ low(1), high(1) /), xmed2 )
+      xmed1 = xmed2
+      done = (newsize < 3)
+    enddo
+    median = xmed1(1)
+    call deallocate_test(xmed1, 'xmed1', trim(Modulename) // '/FindMedian' )
+    call deallocate_test(xmed2, 'xmed2', trim(Modulename) // '/FindMedian' )
+  end subroutine FindMedian_1
+
+  subroutine FindMedian_2( array, N, median )
+    ! Find the median of the values contained in array
+d198 1
+a198 1
+    elseif ( size(array) < 3 ) then
+d209 1
+a209 1
+  end subroutine FindMedian_2
+d213 3
+@
+
+
+1.9
+log
+@Added mindexes component to MLSStat to hold index of max, min, median
+@
+text
+@d12 1
+a12 1
+! $Id: allstats_d1.f9h,v 1.8 2007/08/23 22:15:40 pwagner Exp $
+d16 1
+a16 1
+!        & bincount, mindexes, doDump )
+d33 1
+a33 1
+        integer, dimension(3), optional, intent(out)   :: mindexes
+d137 2
+a138 2
+            call output( 'shape(mindexes) ', advance='no' )
+            call output( shape(MLSStat%mindexes), advance='yes' )
+d140 3
+a142 3
+          MLSStat%mindexes(1) = FindFirst( values == stats(3) )
+          MLSStat%mindexes(2) = FindFirst( values == stats(2) )
+          MLSStat%mindexes(3) = FindFirst( values == real(MLSStat%median,rk) )
+d145 1
+a145 1
+            call output( MLSStat%mindexes, advance='yes' )
+d156 1
+a156 1
+        if ( present(mindexes) ) mindexes = MLSStat%mindexes
+d179 1
+a179 1
+        if ( present(mindexes) ) fields = catLists(fields, 'mindexes')
+d271 3
+@
+
+
+1.8
+log
+@Fixed another bug in median computation
+@
+text
+@d12 1
+a12 1
+! $Id: allstats_d1.f9h,v 1.7 2007/07/18 00:07:46 pwagner Exp $
+d15 2
+a16 2
+!        & count, fillcount, min, max, mean, stddev, rms, median, bincount, &
+!        & doDump )
+d33 1
+d49 1
+a49 1
+        ! logical, parameter :: DEEBUG = .true.
+a126 8
+!         call output('n: ')
+!         call output(n, advance='yes')
+!         call output('absMu: ')
+!         call output(absMu, advance='yes')
+!         call output('sigma: ')
+!         call output(sigma, advance='yes')
+!         call output('rms: ')
+!         call output(myRMS, advance='yes')
+d133 15
+d156 1
+d179 1
+d271 3
+@
+
+
+1.7
+log
+@Fixed bug afflicting median when array has length 1
+@
+text
+@d12 1
+a12 1
+! $Id: allstats_d1.f9h,v 1.6 2007/03/07 21:00:34 pwagner Exp $
+d252 5
+a256 1
+    median = sorted(n/2)
+d261 3
+@
+
+
+1.6
+log
+@Some small changes unrelated to real bugs elsewhere
+@
+text
+@d12 1
+a12 1
+! $Id: allstats_d1.f9h,v 1.5 2007/02/06 17:52:21 pwagner Exp $
+d248 1
+d257 3
+@
+
+
+1.5
+log
+@Correctly tracks fillcount
+@
+text
+@d12 1
+a12 1
+! $Id: allstats_d1.f9h,v 1.4 2006/08/22 00:04:25 pwagner Exp $
+d48 1
+d73 2
+a74 1
+          stats(1) = 0  ! Reset count to start again
+d80 11
+d92 1
+d100 1
+d107 1
+d122 4
+d256 3
+@
+
+
+1.4
+log
+@speedier median algorithm
+@
+text
+@d12 1
+a12 1
+! $Id: allstats_d1.f9h,v 1.3 2006/07/11 00:25:44 pwagner Exp $
+d15 2
+a16 1
+!        & count, min, max, mean, stddev, rms, median, bincount, doDump )
+d25 1
+d73 2
+a74 1
+          if ( DEEBUG ) call output('Resetting count to 0', advance='yes')
+d121 1
+d137 3
+d150 1
+d182 2
+d236 3
+@
+
+
+1.3
+log
+@Show relation of ignored fill values
+@
+text
+@d12 1
+a12 1
+! $Id: allstats_d1.f9h,v 1.2 2006/03/08 17:10:48 pwagner Exp $
+d148 17
+d200 23
+a222 1
+  end subroutine FindMedian
+d226 3
+@
+
+
+1.2
+log
+@Now finds median, too
+@
+text
+@d12 1
+a12 1
+! $Id: allstats_d1.f9h,v 1.1 2006/02/01 23:43:24 pwagner Exp $
+d128 2
+a129 1
+          call output(' (ignoring any fill values of ')
+d187 3
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d12 1
+a12 1
+! $Id: allstats_d1.f9h,v 1.3 2005/08/15 20:37:07 pwagner Exp $
+d15 1
+a15 1
+!        & count, min, max, mean, stddev, rms, bincount, doDump )
+d29 1
+d43 2
+d77 2
+d84 2
+d89 2
+d123 1
+d140 1
+d144 39
+d186 3
+@
+

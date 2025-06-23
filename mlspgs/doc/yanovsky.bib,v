@@ -1,0 +1,63 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.4
+	cfm-single-freq-0-1:1.1.0.2
+	v5-01:1.1
+	v5-00:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2019.09.04.16.03.06;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@First commit
+@
+text
+@@@Article{Brent:1973,
+ author     ={Richard P. Brent},
+ title      ={Reducing the Time of Scatter Storage Techniques},
+ journal    ={Communications of the {ACM}},
+ volume     =16,
+ number     =2,
+ month      ="February",
+ year       =1973
+}
+
+@@Book{Knuth:1973,
+ author     ={Donald E. Knuth},
+ title      ={The Art of Computer Programming. Volume 3: Sorting and Searching},
+ publisher  ={Addison-Wesley},
+ year       =1973
+}
+
+@@Article{Vitter:1982,
+ author     ={Jeffrey S. Vitter},
+ title      ={Implementations for Coalesced Hashing},
+ journal    ={Communications of the {ACM}},
+ volume     =25,
+ number     =12,
+ month      ="December",
+ year       =1982
+}
+
+% $Log: wvs-149.bib,v $
+@

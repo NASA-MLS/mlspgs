@@ -1,0 +1,406 @@
+head	1.5;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.5
+date	2000.01.21.21.00.53;	author livesey;	state dead;
+branches;
+next	1.4;
+
+1.4
+date	2000.01.07.23.53.35;	author livesey;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2000.01.07.23.12.21;	author livesey;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	99.12.28.21.34.22;	author nakamura;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	99.12.17.18.21.08;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.5
+log
+@No longer necessary
+@
+text
+@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+!===============================================================================
+MODULE Temporary_types
+!===============================================================================
+
+!   USE L1BData
+!   USE L2GP
+   USE MLSCommon
+   IMPLICIT NONE
+   PUBLIC
+
+   PRIVATE :: ID
+
+!------------------- RCS Ident Info -----------------------
+   CHARACTER(LEN=130) :: Id = &
+   "$Id: Temporary_types.f90,v 1.4 2000/01/07 23:53:35 livesey Exp $"
+!----------------------------------------------------------
+
+! Contents:
+
+! ProfileGrid_T
+! L2cf
+! L2cfEntry
+! L2cfCell
+
+! Remarks:  This module contains derived types which are used by L2 but are
+!           currently not attached to any module.
+
+! Parameters used by derived types
+
+   INTEGER, PARAMETER :: L2cfEntryLen = 64
+   INTEGER, PARAMETER :: MaxKeyLen = 64
+   INTEGER, PARAMETER :: MaxCharValueLen = 64
+   INTEGER, PARAMETER :: UnitsLen = 64
+
+! This Fortran 90 data type defines a horizontal profile grid upon which the
+! retrievals are to be performed.
+
+   TYPE ProfileGrid_T
+      CHARACTER (LEN=30) :: name	! Name for this profile grid
+      INTEGER :: chunkNo		! Chunk that grid refers to
+      INTEGER :: l2gpStart		! Profile # of chunk start in L2GP data
+      INTEGER :: noProfs		! # of profiles in the chunk
+      INTEGER :: firstNonOverlap	! Index of first non-overlapped profile
+      INTEGER :: lastNonOverlap		! Index of last non-overlapped profile
+
+! Geolocation information, dimensioned (noProfs)
+
+      REAL(r8), DIMENSION(:), POINTER :: latitude, longitude, time, &
+                         solarTime, solarZenith, losAngle, geodAngle
+
+      INTEGER, DIMENSION(:), POINTER :: profMIF
+
+! dimensioned (CCSDS_LEN,noProfs)
+
+      CHARACTER, DIMENSION(:,:), POINTER :: ccsdsTime
+
+   END TYPE ProfileGrid_T
+
+! This datatype defines the l2cf and its sections
+
+!    TYPE L2cf
+
+! ! For each section:
+
+!       INTEGER :: NoGlobalSettingsEntries
+! 		! Number of entries within section
+
+!       TYPE (L2cfEntry), DIMENSION(:), POINTER :: GlobalSettings
+! 		! The actual entries, dimensioned (NoGlobalSettingsEntries)
+
+!       INTEGER :: NoReadAprioriEntries
+!       TYPE (L2cfEntry), DIMENSION(:), POINTER :: ReadApriori
+
+!       INTEGER :: NoMergeAprioriEntries
+!       TYPE (L2cfEntry), DIMENSION(:), POINTER :: MergeApriori
+
+!       INTEGER :: NoChunkDivideEntries
+!       TYPE (L2cfEntry), DIMENSION(:), POINTER :: ChunkDivide
+
+!       INTEGER :: NoProfileLayoutEntries
+!       TYPE (L2cfEntry), DIMENSION(:), POINTER :: ProfileLayout
+
+!       INTEGER :: NoConstructEntries
+!       TYPE (L2cfEntry), DIMENSION(:), POINTER :: Construct
+
+!       INTEGER :: NoFillEntries
+!       TYPE (L2cfEntry), DIMENSION(:), POINTER :: Fill
+
+!       INTEGER :: NoJoinEntries
+!       TYPE (L2cfEntry), DIMENSION(:), POINTER :: Join
+
+!       INTEGER :: NoOutputEntries
+!       TYPE (L2cfEntry), DIMENSION(:), POINTER :: Output
+
+!    END TYPE l2cf
+
+! ! This datatype defines an L2cf entry, i.e. a name followed by a list of 
+! ! "keyword=value" cells
+
+!    TYPE L2cfEntry
+
+! ! Entry name, e.g. aprioriTemp
+
+!       CHARACTER (len=L2cfEntryLen) :: L2cfEntryName
+
+! ! Number of "keyword=value" cells
+
+!       INTEGER :: L2cfEntryNoKeys
+
+! ! Cell holder, dimensioned (L2cfEntryNoKeys)
+
+!       TYPE (L2cfCell), DIMENSION(:), POINTER :: Cells
+
+!    END TYPE L2cfEntry
+
+! ! This datatype defines a L2cf "cell", i.e. a contruction of type:
+! ! "keyword=value" or "keyword=LowerBound..UpperBound[units]"
+
+!    TYPE L2cfCell
+
+! ! First the "keyword" holder:
+
+!       CHARACTER (len=MaxKeyLen) :: Keyword
+
+! ! Value holder for "real" type
+
+!       REAL(r8) :: RealValue
+
+! ! Value holder for integer type
+
+!       INTEGER :: IntValue
+
+! ! Value holder for "character" type
+
+!       CHARACTER (len= MaxCharValueLen) :: CharValue
+
+! ! Value holder for "units" field
+
+!       CHARACTER (len=UnitsLen) :: Units
+
+! ! Value holder for upper and lower bounds fields
+
+!       REAL(r8) :: RangeLowerBound
+!       REAL(r8) :: RangeUpperBound
+
+!    END TYPE L2cfCell
+
+TYPE GriddedData_T
+   INTEGER :: dummy
+END TYPE GriddedData_T
+
+!=========================
+END MODULE Temporary_types
+!=========================
+
+!# $Log: Temporary_types.f90,v $
+!# Revision 1.4  2000/01/07 23:53:35  livesey
+!# Nearly integrated, just a few tweaks.
+!#
+!# Revision 1.3  2000/01/07 23:12:21  livesey
+!# Commented out l2cf related stuff as now have read_parse_l2cf
+!#
+!# Revision 1.2  1999/12/28 21:34:22  nakamura
+!# Changed DOUBLE PRECISION to REAL(r8).
+!#
+!# Revision 1.1  1999/12/17 18:21:08  livesey
+!# Moved from l2
+!#
+!# Revision 1.2  1999/12/14 22:56:18  livesey
+!# Regular commit
+!#
+!# Revision 1.1  1999/12/06 21:28:01  nakamura
+!# Definitions for derived types not currently attached to any module.
+!#
+@
+
+
+1.4
+log
+@Nearly integrated, just a few tweaks.
+@
+text
+@d19 1
+a19 1
+   "$Id: Temporary_types.f90,v 1.3 2000/01/07 23:12:21 livesey Exp $"
+d161 3
+@
+
+
+1.3
+log
+@Commented out l2cf related stuff as now have read_parse_l2cf
+@
+text
+@d19 1
+a19 1
+   "$Id: Temporary_types.f90,v 1.2 1999/12/28 21:34:22 nakamura Exp $"
+d152 4
+d161 3
+@
+
+
+1.2
+log
+@Changed DOUBLE PRECISION to REAL(r8).
+@
+text
+@d11 1
+d19 1
+a19 1
+   "$Id: Temporary_types.f90,v 1.1 1999/12/17 18:21:08 livesey Exp $"
+d65 1
+a65 1
+   TYPE L2cf
+d67 1
+a67 1
+! For each section:
+d69 2
+a70 2
+      INTEGER :: NoGlobalSettingsEntries
+		! Number of entries within section
+d72 2
+a73 2
+      TYPE (L2cfEntry), DIMENSION(:), POINTER :: GlobalSettings
+		! The actual entries, dimensioned (NoGlobalSettingsEntries)
+d75 2
+a76 2
+      INTEGER :: NoReadAprioriEntries
+      TYPE (L2cfEntry), DIMENSION(:), POINTER :: ReadApriori
+d78 2
+a79 2
+      INTEGER :: NoMergeAprioriEntries
+      TYPE (L2cfEntry), DIMENSION(:), POINTER :: MergeApriori
+d81 2
+a82 2
+      INTEGER :: NoChunkDivideEntries
+      TYPE (L2cfEntry), DIMENSION(:), POINTER :: ChunkDivide
+d84 2
+a85 2
+      INTEGER :: NoProfileLayoutEntries
+      TYPE (L2cfEntry), DIMENSION(:), POINTER :: ProfileLayout
+d87 2
+a88 2
+      INTEGER :: NoConstructEntries
+      TYPE (L2cfEntry), DIMENSION(:), POINTER :: Construct
+d90 2
+a91 2
+      INTEGER :: NoFillEntries
+      TYPE (L2cfEntry), DIMENSION(:), POINTER :: Fill
+d93 2
+a94 2
+      INTEGER :: NoJoinEntries
+      TYPE (L2cfEntry), DIMENSION(:), POINTER :: Join
+d96 2
+a97 2
+      INTEGER :: NoOutputEntries
+      TYPE (L2cfEntry), DIMENSION(:), POINTER :: Output
+d99 1
+a99 1
+   END TYPE l2cf
+d101 2
+a102 2
+! This datatype defines an L2cf entry, i.e. a name followed by a list of 
+! "keyword=value" cells
+d104 1
+a104 1
+   TYPE L2cfEntry
+d106 1
+a106 1
+! Entry name, e.g. aprioriTemp
+d108 1
+a108 1
+      CHARACTER (len=L2cfEntryLen) :: L2cfEntryName
+d110 1
+a110 1
+! Number of "keyword=value" cells
+d112 1
+a112 1
+      INTEGER :: L2cfEntryNoKeys
+d114 1
+a114 1
+! Cell holder, dimensioned (L2cfEntryNoKeys)
+d116 1
+a116 1
+      TYPE (L2cfCell), DIMENSION(:), POINTER :: Cells
+d118 1
+a118 1
+   END TYPE L2cfEntry
+d120 2
+a121 2
+! This datatype defines a L2cf "cell", i.e. a contruction of type:
+! "keyword=value" or "keyword=LowerBound..UpperBound[units]"
+d123 1
+a123 1
+   TYPE L2cfCell
+d125 1
+a125 1
+! First the "keyword" holder:
+d127 1
+a127 1
+      CHARACTER (len=MaxKeyLen) :: Keyword
+d129 1
+a129 1
+! Value holder for "real" type
+d131 1
+a131 1
+      REAL(r8) :: RealValue
+d133 1
+a133 1
+! Value holder for integer type
+d135 1
+a135 1
+      INTEGER :: IntValue
+d137 1
+a137 1
+! Value holder for "character" type
+d139 1
+a139 1
+      CHARACTER (len= MaxCharValueLen) :: CharValue
+d141 1
+a141 1
+! Value holder for "units" field
+d143 1
+a143 1
+      CHARACTER (len=UnitsLen) :: Units
+d145 1
+a145 1
+! Value holder for upper and lower bounds fields
+d147 2
+a148 2
+      REAL(r8) :: RangeLowerBound
+      REAL(r8) :: RangeUpperBound
+d150 1
+a150 1
+   END TYPE L2cfCell
+d157 3
+@
+
+
+1.1
+log
+@Moved from l2
+@
+text
+@d18 1
+a18 1
+   "$Id: Temporary_types.f90,v 1.2 1999/12/14 22:56:18 livesey Exp $"
+d51 1
+a51 1
+      DOUBLE PRECISION, DIMENSION(:), POINTER :: latitude, longitude, time, &
+d130 1
+a130 1
+      DOUBLE PRECISION :: RealValue
+d146 2
+a147 2
+      DOUBLE PRECISION :: RangeLowerBound
+      DOUBLE PRECISION :: RangeUpperBound
+d156 3
+@
+

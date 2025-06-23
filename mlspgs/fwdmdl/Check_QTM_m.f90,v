@@ -1,0 +1,380 @@
+head	2.7;
+access;
+symbols
+	v5-02-NRT-19:2.7
+	v6-00:2.7
+	v5-02-NRT-18:2.7
+	v5-02:2.7
+	v5-01-NRT-17:2.7
+	v5-01-NRT-16:2.7
+	v5-01-NRT-15:2.7
+	v5-01-NRT-14:2.7
+	neuralnetworks-1-0:2.7.0.4
+	cfm-single-freq-0-1:2.7.0.2
+	v5-01:2.7
+	v5-00:2.7
+	v4-23-TA133:2.6.0.6
+	mus-emls-1-70:2.6.0.4
+	rel-1-0-englocks-work:2.6.0.2
+	VUMLS1-00:2.5;
+locks; strict;
+comment	@# @;
+
+
+2.7
+date	2019.05.07.23.06.07;	author vsnyder;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2017.03.11.00.50.20;	author vsnyder;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2016.10.05.20.44.58;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2016.10.01.01.37.47;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2016.09.13.00.30.44;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2016.09.12.23.51.40;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2016.09.12.23.49.51;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.7
+log
+@Handle no-species case
+@
+text
+@! Copyright 2015, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=============================================================================
+module Check_QTM_m
+!=============================================================================
+
+
+  implicit NONE
+
+  private
+
+  public :: Check_QTM
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: Check_QTM_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  ! --------------------------------------------------  Check_QTM  -----
+  subroutine Check_QTM ( FwdModelConf, QTM_HGrid, UsingQTM )
+    ! Check whether temperature and all species either all have QTM HGrid,
+    ! or none do.  If they all do, set UsingQTM and find the QTM HGrid with
+    ! the finest resolution and associate it with QTM_HGrid.  At least for now,
+    ! require all the QTM grids to have the same resolution.
+
+    use ForwardModelConfig, only: ForwardModelConfig_T, QtyStuff_T
+    use HGridsDatabase, only: HGrid_T
+    use Intrinsic, only: Lit_Indices, L_Temperature
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use Output_m, only: NewLine, Output
+    use String_Table, only: Display_String
+    use Toggles, only: Emit, Levels, Toggle
+    use Trace_M, only: Trace_Begin, Trace_End
+
+    type(forwardModelConfig_T), intent(in) :: FwdModelConf
+    type (HGrid_T), pointer, intent(out) :: QTM_HGrid ! HGrid that has finest QTM resolution.
+    logical, intent(out) :: UsingQTM         ! Temperature and all species have QTM hGrids
+
+    integer :: I, K     ! Loop indices
+    integer :: Me = -1  ! String index for trace
+    integer :: Pos
+    type (qtyStuff_t), pointer :: QtyStuff(:)
+    logical :: QTM_fail
+    logical :: SpsQTM   ! Species being examined has QTM hGrid
+    integer, parameter :: Width = 100 ! of line for list of quantities
+
+    call trace_begin ( me, 'ForwardModel.Check_QTM', &
+      & cond=toggle(emit) .and. levels(emit) > 0  )
+
+    ! Verify that temperature and all the species either all have QTM hGrids
+    ! or none do.  If they all do, set QTM_HGrid to the one with the finest
+    ! resolution.
+    QTM_hGrid => fwdModelConf%temp%qty%template%the_hGrid
+    usingQTM = fwdModelConf%temp%qty%template%isQTM()
+    if ( associated(fwdModelConf%beta_group) ) then
+      qtyStuff => fwdModelConf%beta_group%qty
+      QTM_fail = .false.
+      do k = 1, size(qtyStuff)
+        spsQTM = qtyStuff(k)%qty%template%isQTM()
+        QTM_fail = QTM_fail .or. ( spsQTM .neqv. usingQTM )
+        if ( .not. QTM_fail .and. spsQTM ) then
+          QTM_fail = QTM_fail .or. QTM_hGrid%QTM_tree%level /= &
+                   & qtyStuff(k)%qty%template%the_hGrid%QTM_tree%level
+          if ( QTM_hGrid%QTM_tree%level < &
+             & qtyStuff(k)%qty%template%the_hGrid%QTM_tree%level ) &
+             & QTM_hGrid => qtyStuff(k)%qty%template%the_hGrid
+        end if
+      end do
+      if ( QTM_fail ) then
+        do i = 1, 2 ! 1 = with QTM, 2 = without QTM
+          call output ( 'Quantities with' // trim(merge('   ','out',i==1)) // &
+                      & ' QTM HGrids:', advance='yes' )
+          pos = 0
+          if ( i == 1 .eqv. usingQTM ) call display_string ( &
+            & lit_indices(l_temperature), before=' ', pos=pos, width=width )
+          do k = 1, size(qtyStuff)
+            spsQTM = qtyStuff(k)%qty%template%isQTM()
+            if ( i == 1 .eqv. spsQTM ) call display_string ( &
+              & lit_indices(qtyStuff(k)%qty%template%quantityType), &
+              & before=' ', pos=pos, width=width )
+          end do
+          call newLine
+        end do
+        call MLSMessage ( MLSMSG_Error, moduleName, &
+          & 'Some quantities have QTM hGrids but some do not, ' // &
+          & 'or QTM resolutions are different.' )
+      end if
+    ! else
+      ! No species, maybe doing a hydrostatic fill
+    end if
+
+    if ( .not. usingQTM ) nullify ( QTM_HGrid )
+
+    call trace_end ( 'ForwardModel.Check_QTM', &
+      & cond=toggle(emit) .and. levels(emit) > 0  )
+
+  end subroutine Check_QTM
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: Check_QTM_m.f90,v 2.6 2017/03/11 00:50:20 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Check_QTM_m
+
+! $Log: Check_QTM_m.f90,v $
+! Revision 2.6  2017/03/11 00:50:20  vsnyder
+! Use forward model config instead of Grids_F and Grids_Tmp
+!
+! Revision 2.5  2016/10/05 20:44:58  vsnyder
+! Require all QTM grids to have the same resolution
+!
+! Revision 2.4  2016/10/01 01:37:47  vsnyder
+! Make QTM_Tree component of HGrid_t allocatable
+!
+! Revision 2.3  2016/09/13 00:30:44  vsnyder
+! Missed out one use name
+!
+! Revision 2.2  2016/09/12 23:51:40  vsnyder
+! Delete unused VectorValue_T
+!
+! Revision 2.1  2016/09/12 23:49:51  vsnyder
+! Initial commit
+!
+@
+
+
+2.6
+log
+@Use forward model config instead of Grids_F and Grids_Tmp
+@
+text
+@a61 3
+    QTM_fail = .false.  ! Assume no errors
+    qtyStuff => fwdModelConf%beta_group%qty
+
+d67 32
+a98 9
+    do k = 1, size(qtyStuff)
+      spsQTM = qtyStuff(k)%qty%template%isQTM()
+      QTM_fail = QTM_fail .or. ( spsQTM .neqv. usingQTM )
+      if ( .not. QTM_fail .and. spsQTM ) then
+        QTM_fail = QTM_fail .or. QTM_hGrid%QTM_tree%level /= &
+                 & qtyStuff(k)%qty%template%the_hGrid%QTM_tree%level
+        if ( QTM_hGrid%QTM_tree%level < &
+           & qtyStuff(k)%qty%template%the_hGrid%QTM_tree%level ) &
+           & QTM_hGrid => qtyStuff(k)%qty%template%the_hGrid
+d100 2
+a101 19
+    end do
+    if ( QTM_fail ) then
+      do i = 1, 2 ! 1 = with QTM, 2 = without QTM
+        call output ( 'Quantities with' // trim(merge('   ','out',i==1)) // &
+                    & ' QTM HGrids:', advance='yes' )
+        pos = 0
+        if ( i == 1 .eqv. usingQTM ) call display_string ( &
+          & lit_indices(l_temperature), before=' ', pos=pos, width=width )
+        do k = 1, size(qtyStuff)
+          spsQTM = qtyStuff(k)%qty%template%isQTM()
+          if ( i == 1 .eqv. spsQTM ) call display_string ( &
+            & lit_indices(qtyStuff(k)%qty%template%quantityType), &
+            & before=' ', pos=pos, width=width )
+        end do
+        call newLine
+      end do
+      call MLSMessage ( MLSMSG_Error, moduleName, &
+        & 'Some quantities have QTM hGrids but some do not, ' // &
+        & 'or QTM resolutions are different.' )
+d114 1
+a114 1
+       "$Id: Check_QTM_m.f90,v 2.5 2016/10/05 20:44:58 vsnyder Exp $"
+d124 3
+@
+
+
+2.5
+log
+@Require all QTM grids to have the same resolution
+@
+text
+@d32 1
+a32 1
+  subroutine Check_QTM ( Grids_Tmp, Grids_f, QTM_HGrid, UsingQTM )
+d38 1
+a40 1
+    use Load_SPS_Data_M, only: Grids_T
+d47 1
+a47 2
+    type (Grids_T), intent(in) :: Grids_Tmp  ! All the coordinates for Temperature
+    type (Grids_T), intent(in) :: Grids_f    ! All the coordinates for VMR
+d54 1
+d56 1
+a56 1
+    logical :: SpsQTM   ! Species being examined in Grids_F has QTM hGrid
+d63 1
+d68 4
+a71 4
+    QTM_hGrid => grids_tmp%qtyStuff(1)%qty%template%the_hGrid
+    usingQTM = grids_tmp%isQTM(1)
+    do k = 1, size(grids_f%qtyStuff)
+      spsQTM = grids_f%isQTM(k)
+d73 1
+a73 1
+      if ( .not. QTM_fail .and. usingQTM .and. spsQTM ) then
+d75 1
+a75 1
+                 & grids_f%qtyStuff(k)%qty%template%the_hGrid%QTM_tree%level
+d77 2
+a78 2
+           & grids_f%qtyStuff(k)%qty%template%the_hGrid%QTM_tree%level ) &
+           & QTM_hGrid => grids_f%qtyStuff(k)%qty%template%the_hGrid
+d88 2
+a89 2
+        do k = 1, size(grids_f%qtyStuff)
+          spsQTM = grids_f%isQTM(k)
+d91 1
+a91 1
+            & lit_indices(grids_f%qtyStuff(k)%qty%template%quantityType), &
+d103 1
+a103 1
+    call trace_end ( 'ForwardModel.Both_Sidebands_Setup', &
+d111 1
+a111 1
+       "$Id: Check_QTM_m.f90,v 2.4 2016/10/01 01:37:47 vsnyder Exp $"
+d121 3
+@
+
+
+2.4
+log
+@Make QTM_Tree component of HGrid_t allocatable
+@
+text
+@d35 2
+a36 1
+    ! the finest resolution and associate it with QTM_HGrid.
+d73 2
+d96 2
+a97 1
+        & 'Some quantities have QTM hGrids but some do not.' )
+d110 1
+a110 1
+       "$Id: Check_QTM_m.f90,v 2.3 2016/09/13 00:30:44 vsnyder Exp $"
+d120 3
+@
+
+
+2.3
+log
+@Missed out one use name
+@
+text
+@d71 1
+a71 1
+      if ( .not. QTM_fail ) then
+d106 1
+a106 1
+       "$Id: Check_QTM_m.f90,v 2.2 2016/09/12 23:51:40 vsnyder Exp $"
+d116 3
+@
+
+
+2.2
+log
+@Delete unused VectorValue_T
+@
+text
+@d41 1
+a41 1
+    use Output_m, only: Output
+d106 1
+a106 1
+       "$Id: Check_QTM_m.f90,v 2.1 2016/09/12 23:49:51 vsnyder Exp $"
+d116 3
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d25 1
+a25 1
+       "$RCSfile: Metrics_3D_m.f90,v $"
+a44 1
+    use VectorsModule, only: VectorValue_T
+d106 1
+a106 1
+       "$Id: Metrics_3D_m.f90,v 2.2 2016/05/10 00:13:59 vsnyder Exp $"
+d115 4
+a118 1
+! $Log: Metrics_3D_m.f90,v $
+@
+

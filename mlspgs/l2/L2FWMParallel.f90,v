@@ -1,0 +1,2089 @@
+head	2.28;
+access;
+symbols
+	v5-02-NRT-19:2.28
+	v6-00:2.28
+	v5-02-NRT-18:2.28
+	v5-02:2.28
+	v5-01-NRT-17:2.28
+	v5-01-NRT-16:2.28
+	v5-01-NRT-15:2.28
+	v5-01-NRT-14:2.28
+	neuralnetworks-1-0:2.28.0.10
+	cfm-single-freq-0-1:2.28.0.8
+	v5-01:2.28
+	v5-00:2.28
+	v4-23-TA133:2.28.0.6
+	mus-emls-1-70:2.28.0.4
+	rel-1-0-englocks-work:2.28.0.2
+	VUMLS1-00:2.28
+	VPL1-00:2.28
+	V4-22-NRT-08:2.28
+	VAM1-00:2.27
+	V4-21:2.27.0.2
+	V4-13:2.27
+	V4-12:2.27
+	V4-11:2.27
+	V4-10:2.27
+	V3-43:2.25
+	M4-00:2.26
+	V3-41:2.25
+	V3-40-PlusGM57:2.25.0.2
+	V2-24-NRT-04:2.22
+	V3-33:2.25
+	V2-24:2.22
+	V3-31:2.25
+	V3-30-NRT-05:2.25
+	cfm-01-00:2.25
+	V3-30:2.25
+	V3-20:2.25
+	V3-10:2.25
+	V2-23-NRT-02:2.22
+	V2-23:2.22
+	V2-22-NRT-01:2.22
+	V2-22:2.22
+	V2-21:2.21
+	V2-20:2.21
+	V2-11:2.20
+	V2-10:2.20
+	V2-00:2.20
+	V1-51:2.18
+	V1-50:2.18
+	V1-45:2.18
+	V1-44:2.18
+	V1-43:2.16
+	V1-32:2.16
+	V1-31:2.16
+	V1-30:2.16
+	V1-13:2.15
+	V1-12:2.15
+	V1-11:2.15
+	V1-10:2.15
+	newfwm-feb03:2.15.0.2;
+locks; strict;
+comment	@# @;
+
+
+2.28
+date	2016.02.29.19.50.06;	author pwagner;	state Exp;
+branches;
+next	2.27;
+
+2.27
+date	2013.08.12.23.49.41;	author pwagner;	state Exp;
+branches;
+next	2.26;
+
+2.26
+date	2011.05.09.18.20.21;	author pwagner;	state Exp;
+branches;
+next	2.25;
+
+2.25
+date	2009.06.23.18.46.18;	author pwagner;	state Exp;
+branches;
+next	2.24;
+
+2.24
+date	2008.05.02.00.34.35;	author vsnyder;	state Exp;
+branches;
+next	2.23;
+
+2.23
+date	2007.10.24.00.16.12;	author pwagner;	state Exp;
+branches;
+next	2.22;
+
+2.22
+date	2007.06.29.19.32.07;	author vsnyder;	state Exp;
+branches;
+next	2.21;
+
+2.21
+date	2006.08.05.02.12.27;	author vsnyder;	state Exp;
+branches;
+next	2.20;
+
+2.20
+date	2005.06.22.18.57.02;	author pwagner;	state Exp;
+branches;
+next	2.19;
+
+2.19
+date	2005.03.15.23.50.15;	author pwagner;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2004.06.10.00.58.45;	author vsnyder;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2004.05.19.19.16.11;	author vsnyder;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2003.06.20.19.38.25;	author pwagner;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2003.01.13.20.59.02;	author livesey;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2003.01.13.20.15.49;	author livesey;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2002.12.11.02.14.08;	author livesey;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2002.12.11.02.08.17;	author livesey;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2002.12.11.01.59.27;	author livesey;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2002.12.06.18.43.26;	author livesey;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2002.12.05.02.21.29;	author livesey;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2002.10.08.20.34.02;	author livesey;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2002.10.08.17.40.35;	author livesey;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2002.10.08.17.36.21;	author pwagner;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2002.10.07.01.23.51;	author livesey;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2002.10.06.22.22.20;	author livesey;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2002.10.06.02.04.31;	author livesey;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2002.10.06.01.10.31;	author livesey;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2002.10.05.02.06.28;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.28
+log
+@Usleep got from machine module instead of being an external
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module L2FWMParallel
+  ! This module is an alternative approach to parallel processing in
+  ! mlsl2.  The idea is that the user can run a single chunk with
+  ! different slave tasks computing the forward model for different mafs
+
+  ! In general as this is for online studies, it does not need to be as robust
+  ! as the main parallel method, so I've put in less stuff to check for tasks
+  ! dying etc.
+
+  implicit none
+  private
+
+  public :: LaunchFWMSlaves, L2FWMSlaveTask, SetupFWMSlaves, TriggerSlaveRun
+  public :: RequestSlavesOutput, ReceiveSlavesOutput
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: L2FWMParallel.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+  ! Local parameters
+  ! These are the three vectors / templates we're after
+  integer, parameter :: FWMIN = 1
+  integer, parameter :: FWMEXTRA = FWMIn + 1
+  integer, parameter :: FWMOUT = FWMExtra + 1
+  integer, parameter :: NOVECTORS = 3
+
+  ! We keep a record of the slaves
+  integer, pointer, dimension(:), save :: slaveTIDs => NULL()
+
+  ! Need a global flag here as the slave is called many times
+  logical, save :: finished = .false.
+
+contains
+  
+  ! --------------------------------------------  LaunchFwmSlaves  -----
+  subroutine LaunchFWMSlaves ( Chunk )
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use CHUNKS_M, only: MLSCHUNK_T
+    use L2PARINFO, only: PARALLEL, GETMACHINENAMES, MACHINENAMELEN, &
+      & SIG_REGISTER, NOTIFYTAG, GETNICETIDSTRING
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, PVMERRORMESSAGE
+    use MLSFINDS, only: FINDFIRST
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use OUTPUT_M, only: OUTPUT
+    use PVM, only: INFOTAG, MYPVMSPAWN, PVMFCATCHOUT, &
+      & PVMFBUFINFO, PVMF90UNPACK, &
+      & PVMTASKHOST, PVMTASKEXIT
+    use TOGGLES, only: SWITCHES
+    ! Dummy arguments
+    type (MLSChunk_T), intent(in) :: CHUNK ! The chunk we're processing
+
+    ! Local variables
+    integer :: BUFFERID                 ! From PVM
+    integer :: BYTES                    ! Used for call to bufinfo
+    integer :: INFO                     ! Flag from PVM
+    integer :: MAF                      ! Loop counter
+    integer :: MACHINEIND                  ! Loop counter
+    integer :: MSGTAG                   ! Message tag
+    integer :: NOMACHINES               ! Number of machines
+    integer :: NOMAFS                   ! Number of MAFs to process
+    integer :: NOTASKS                  ! min ( noMachines, noMAFs )
+    integer :: SIGNAL                   ! Flag from slave
+    integer :: SLAVETID                 ! ID of one slave
+
+    logical :: USINGSUBMIT              ! Set if using a submit mechanism
+
+    integer, dimension(1) :: TID1       ! For MyPVMSpawn
+    logical, pointer, dimension(:) :: HEARDFROMSLAVE ! Which slaves have we heard from
+
+    character(len=2048) :: COMMANDLINE
+    character(len=MachineNameLen), dimension(:), pointer :: MACHINENAMES
+
+    ! Executable code
+    usingSubmit = trim ( parallel%submit ) /= ''
+    if ( usingSubmit ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Cannot use submit in fwmParallel mode' )
+    noMAFs = chunk%lastMAFIndex - chunk%firstMAFIndex + 1
+
+    ! Work out the information on our virtual machine
+    nullify ( machineNames )
+    call GetMachineNames ( machineNames )
+    noMachines = size(machineNames)
+    nullify ( slaveTids, heardFromSlave )
+    noTasks = min ( noMAFs, noMachines )
+    parallel%noFWMSlaves = noTasks
+    call Allocate_test ( slaveTids, noMAFs, 'slaveTids', ModuleName )
+    call Allocate_test ( heardFromSlave, noTasks, 'heardFromSlave', ModuleName )
+    
+    if ( switchDetail ( switches, 'mas' ) > -1 ) &
+      & call output ( 'Launching forward model slaves', advance='yes' )
+    ! Now we're going to launch the slaves
+    commandLine = trim ( parallel%executable )
+    if ( switchDetail(switches,'slv') > -1 ) then
+      call PVMFCatchOut ( 1, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "calling catchout" )
+    end if
+    do machineInd = 1, noTasks
+      info = myPVMSpawn ( trim(commandLine), PvmTaskHost, &
+        trim(machineNames(machineInd)), 1, tid1 )
+      ! Did this launch work
+      if ( info /= 1 ) then
+        call PVMErrorMessage ( tid1(1), &
+          & 'Unable to launch fwmSlave on '//trim(machineNames(machineInd)) )
+      end if
+      slaveTids ( machineInd ) = tid1(1)
+    end do
+    do maf = noTasks+1, noMAFs
+      slaveTids ( maf ) = slaveTids ( mod ( maf-1, noTasks ) + 1 )
+    end do
+    
+    ! Now wait for them to get in touch, we behave differntly in the different
+    ! modes (using submit or not)
+    heardFromSlave = .false.
+    if ( switchDetail ( switches, 'mas' ) > -1 ) &
+      & call output ( 'Waiting to hear from slaves', advance='yes' )
+    contactLoop: do
+      call IntelligentPVMFRecv ( -1, InfoTag, bufferID )
+      ! Got a message who sent this
+      call PVMFBufInfo ( bufferID, bytes, msgTag, slaveTid, info )
+      if ( info /= 0 ) &
+        & call PVMErrorMessage ( info, "calling PVMFBufInfo" )
+      call PVMF90Unpack ( signal, info )
+      if ( info /= 0 ) then
+        call PVMErrorMessage ( info, "unpacking signal" )
+      endif
+      if ( signal /= sig_register ) call MLSMessage ( MLSMSG_Error, &
+        & ModuleName, 'Expected registration message from fwmSlave' )
+      machineInd = FindFirst ( slaveTids, slaveTid )
+      if ( machineInd == 0 ) call MLSMessage ( MLSMSG_Error, &
+        & ModuleName, 'Heard from an unknown forward model slave' )
+      heardFromSlave ( machineInd ) = .true.
+      if ( switchDetail ( switches, 'mas' ) > -1 ) then
+        call output ( 'Heard from ' )
+        call output ( trim ( GetNiceTidString ( slaveTid ) ) )
+        call output ( ', now heard from ' )
+        call output ( count ( heardFromSlave ) )
+        call output ( ' / ' )
+        call output ( noTasks, advance='yes' )
+      end if
+      call PVMFNotify ( PVMTaskExit, NotifyTag, 1, (/ slaveTids(machineInd) /), info )
+      if ( all ( heardFromSlave ) ) exit contactLoop
+    end do contactLoop
+
+    if ( switchDetail ( switches, 'mas' ) > -1 ) &
+      & call output ( 'All slaves started', advance='yes' )
+
+    call Deallocate_test ( machineNames, 'MachineNames', ModuleName )
+    call Deallocate_test ( heardFromSlave, 'heardFromSlave', ModuleName )
+
+  end subroutine LaunchFWMSlaves
+
+  ! ------------------------------------------------ L2FWMSlaveTask -----
+  subroutine L2FWMSlaveTask ( mifGeolocation )
+    ! This is the core routine for the 'slave mode' of the L2Fwm parallel stuff
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST
+    use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T, DESTROYQUANTITYTEMPLATEDATABASE, &
+      & INFLATEQUANTITYTEMPLATEDATABASE
+    use VECTORSMODULE, only: VECTORTEMPLATE_T, VECTOR_T, DESTROYVECTORDATABASE, &
+      & DESTROYVECTORTEMPLATEDATABASE, CREATEVECTOR, CREATEMASK, &
+      & CONSTRUCTVECTORTEMPLATE
+    use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T, DESTROYFWMCONFIGDATABASE, &
+      & PVMUNPACKFWMCONFIG
+    use FORWARDMODELINTERMEDIATE, only: FORWARDMODELSTATUS_T
+    use L2PARINFO, only: PARALLEL, SIG_FINISHED, SIG_NEWSETUP, SIG_RUNMAF, &
+      & SIG_SENDRESULTS
+    use MOREPVM, only: PVMUNPACKSTRINGINDEX
+    use PVM, only: INFOTAG, PVMFINITSEND, &
+      & PVMF90UNPACK, PVMRAW, PVMFFREEBUF
+    use PVMIDL, only: PVMIDLUNPACK, PVMIDLPACK
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_ALLOCATE, &
+      & PVMERRORMESSAGE
+    use MATRIXMODULE_0, only: M_ABSENT, M_BANDED, M_COLUMN_SPARSE, MATRIXELEMENT_T
+    use MATRIXMODULE_1, only: MATRIX_T, CREATEEMPTYMATRIX, CLEARMATRIX, &
+      & DESTROYMATRIX
+    use QUANTITYPVM, only: PVMRECEIVEQUANTITY
+    use FORWARDMODELWRAPPERS, only: FORWARDMODEL
+    use SCANMODELMODULE, only: DESTROYFORWARDMODELINTERMEDIATE
+    use OUTPUT_M, only: OUTPUT
+
+    ! Dummy argument
+    type (QuantityTemplate_T), dimension(:), pointer :: mifGeolocation
+
+    ! Local variables
+    integer :: I,J                      ! Loop counters
+    integer :: INFO                     ! From pvm
+    integer :: NAME                     ! An enumerated name
+    integer :: NOFWMCONFIGS             ! Number of forward model confis
+    integer :: NOQUANTITIES             ! Number of quantity templates we'll need
+    integer :: NOQUANTITIESINVECTOR     ! Number of quantities in the vector
+    integer :: RECVBUFFERID             ! For pvm
+    integer :: SENDBUFFERID             ! For pvm
+    integer :: SIGNAL                   ! Signal code from master
+    logical :: FLAG                     ! A flag sent via pvm
+    logical, dimension(2) :: L2         ! Two flags sent by pvm
+    integer, dimension(:), pointer :: QTINDS ! Index of relevant quantities
+
+    type (ForwardModelStatus_T) :: FMSTAT
+    type (QuantityTemplate_T), dimension(:), pointer :: QUANTITIES
+    type (VectorTemplate_T), dimension(:), pointer :: VECTORTEMPLATES
+    type (Vector_T), dimension(:), pointer :: VECTORS
+    type (ForwardModelConfig_T), dimension(:), pointer :: FWMCONFIGS
+    type (Matrix_T) :: JACOBIAN
+    type (MatrixElement_T), pointer :: B ! A block from the jacobian matrix
+
+    ! Executable code
+
+    ! If the finished flag is set (by an earlier call to this routine) exit
+    if ( finished ) return
+
+    ! Some setup
+    nullify ( quantities, vectorTemplates, vectors, fwmConfigs, qtInds )
+
+    mainLoop: do
+      ! We'll actually do a non-blocking check here to listen out for
+      ! dead masters
+      call IntelligentPVMFrecv ( parallel%masterTid, InfoTag, recvBufferId )
+
+      ! We get from this just an integer (at least at first), based on which we do
+      ! various tasks
+      call PVMF90Unpack ( signal, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, 'Unpacking signal from master' )
+
+      ! There are three possible signals
+      ! SIG_NewSetup - a new set of state vectors and measurement vectors are to be used
+      ! SIG_RunMAF - run a forward model for a given MAF and a given set of values of the
+      !              state vector.
+      ! SIG_Finished - That's all we require
+      select case ( signal )
+      case ( SIG_Finished )
+        finished = .true.
+      case ( SIG_NewSetup )
+        ! For this we have to get the templates for the main state and
+        ! measurement vectors, and the complete values for the auxilliary
+        ! state vector.  We also get all the forward model configurations.
+        ! First destroy all our old information
+        call ClearSetup
+
+        ! Get the forward model configs we'll need
+        call PVMIDLUnpack ( noFWMConfigs, info )
+        if ( info /= 0 ) call PVMErrorMessage ( info, 'Unpacking noFwmConfigs' )
+        ! Setup the structure for them
+        allocate ( fwmConfigs ( noFwmConfigs ), STAT=info )
+        if ( info /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & MLSMSG_Allocate//'fwmConfigs' )
+        do i = 1, noFwmConfigs
+          call PVMUnpackFWMConfig ( fwmConfigs(i) )
+        end do
+
+        ! Now get all the quantity templates we'll need
+        call PVMIDLUnpack ( noQuantities, info )
+        if ( info /= 0 ) call PVMErrorMessage ( info, 'Unpacking noQuantities' )
+        info = InflateQuantityTemplateDatabase ( quantities, noQuantities )
+        do i = 1, noQuantities
+          ! Unpack a flag, if true this quantity is worth getting
+          call PVMIDLUnpack ( flag, info )
+          if ( info /= 0 ) call PVMErrorMessage ( info, 'Unpacking quantity relevant flag' )
+          if ( flag ) then
+            call PVMReceiveQuantity ( quantities(i), justUnpack=.true., &
+              & mifGeolocation=mifGeolocation )
+          end if
+        end do
+
+        ! Allocate the vector templates and vectors
+        allocate ( vectorTemplates ( noVectors ), STAT=info )
+        if ( info /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & MLSMSG_Allocate//'vectorTemplates' )
+        allocate ( vectors ( noVectors ), STAT=info )
+        if ( info /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & MLSMSG_Allocate//'vectors' )
+
+        ! Now get the three vector templates and vectors
+        do i = 1, noVectors
+          call PVMIDLUnpack ( noQuantitiesInVector, info )
+          if ( info /= 0 ) call PVMErrorMessage ( info, 'noQuantitiesInVector' )
+          call Allocate_Test ( qtInds, noQuantitiesInVector, 'qtInds', ModuleName )
+          call PVMIDLUnpack ( qtInds, info )
+          if ( info /= 0 ) call PVMErrorMessage ( info, 'qtInds' )
+          call PVMUnpackStringIndex ( name, info )
+          if ( info /= 0 ) call PVMErrorMessage ( info, 'vector template name' )
+          call ConstructVectorTemplate ( name, quantities, qtInds, &
+            & vectorTemplates ( i ), forWhom=moduleName )
+          ! Create the vector
+          call PVMUnpackStringIndex ( name, info )
+          if ( info /= 0 ) call PVMErrorMessage ( info, 'vector name' )
+          vectors ( i ) = CreateVector ( name, vectorTemplates(i), &
+            & quantities )
+          ! Get the vector values in some circumstances
+          if ( i == FWMExtra .or. i == FWMOut ) then
+            do j = 1, noQuantitiesInVector
+              if ( i == FWMExtra ) then
+                call PVMIDLUnpack ( vectors(i)%quantities(j)%values, info )
+                if ( info /= 0 ) call PVMErrorMessage ( info, 'extra/out vector values' )
+              end if
+              call PVMIDLUnpack ( flag, info )
+              if ( info /= 0 ) call PVMErrorMessage ( info, 'extra/out vector mask flag' )
+              if ( flag ) then
+                call CreateMask ( vectors(i)%quantities(j) )
+                call PVMIDLUnpack ( vectors(i)%quantities(j)%mask, info )
+                if ( info /= 0 ) call PVMErrorMessage ( info, 'extra/out vector mask' )
+              end if
+            end do
+          end if
+        end do
+
+        ! OK, we now have vectors and vector templates for fwmIn, fwmExtra and fwmOut
+        ! We have also filled fwmExtra and got the forward model configs.
+        ! Create a jacobian, get its information from the master
+        call PVMIDLUnpack ( l2, info )
+        if ( info /= 0 ) call PVMErrorMessage ( info, '2 logical flags' )
+        call CreateEmptyMatrix ( jacobian, 0, vectors(fwmOut), vectors(fwmIn), &
+          & .not. l2(1), .not. l2(2) )
+        call Allocate_test ( fmStat%rows, jacobian%row%nb, 'fmStat%rows', ModuleName )
+
+        ! Free up this rather bulky receive buffer
+        call PVMFFreeBuf ( recvBufferID, info )
+        if ( info /= 0 ) call PVMErrorMessage ( info, 'Freeing receive buffer' )
+
+      case ( SIG_RunMAF )
+        ! Get the state vector for this iteration
+        do j = 1, size ( vectors(fwmIn)%quantities )
+          call PVMIDLUnpack ( vectors(fwmIn)%quantities(j)%values, info )
+          if ( info /= 0 ) call PVMErrorMessage ( info, 'state vector values' )
+          call PVMIDLUnpack ( flag, info )
+          if ( info /= 0 ) call PVMErrorMessage ( info, 'state vector mask flag' )
+          if ( flag ) then
+            call CreateMask ( vectors(fwmIn)%quantities(j) )
+            call PVMIDLUnpack ( vectors(fwmIn)%quantities(j)%mask, info )
+            if ( info /= 0 ) call PVMErrorMessage ( info, 'state vector mask' )
+          end if
+        end do
+        ! Setup the fmStat stuff
+        call PVMIDLUnpack ( fmStat%maf, info )
+        if ( info /= 0 ) call PVMErrorMessage ( info, 'fmStat%maf' )
+
+        ! Loop over the configs and call the forward model
+        fmStat%rows = .false.
+        do i = 1, size ( fwmConfigs )
+          call ForwardModel ( fwmConfigs(i), &
+            & vectors(fwmIn), vectors(fwmExtra), vectors(fwmOut), fmStat, jacobian )
+        end do
+        call DestroyForwardModelIntermediate ! in case scan model got used
+        fmStat%newScanHydros = .true.
+
+        ! Pack up our results in anticipation of sending them off
+        call PVMFInitSend ( PVMRAW, sendBufferID )
+        if ( sendBufferID <= 0 ) &
+          & call PVMErrorMessage ( sendBufferID, 'Setting up results buffer' )
+        call PVMIDLPack ( fmStat%rows, info ) 
+        if ( info /= 0 ) call PVMErrorMessage ( info, 'fmStat%rows' )
+        do i = 1, jacobian%row%nb
+          ! Send corresponding values of fwmOut
+          if ( fmStat%rows ( i ) ) then
+            call PVMIDLPack ( vectors(fwmOut)%quantities ( &
+              & jacobian%row%quant(i) ) % values ( :, &
+              & jacobian%row%inst(i) ), info )
+            if ( info /= 0 ) call PVMErrorMessage ( info, 'row of fwmOut' )
+            ! Send non empty blocks of jacobian
+            do j = 1, jacobian%col%nb
+              b => jacobian%block ( i, j )
+              call PVMIDLPack ( b%kind, info )
+              if ( info /= 0 ) call PVMErrorMessage ( info, 'b%kind' )
+              if ( b%kind == M_Banded .or. b%kind == M_Column_sparse ) then
+                call PVMIDLPack ( size ( b%values, 1 ), info )
+                if ( info /= 0 ) call PVMErrorMessage ( info, 'noValues for block' )
+                call PVMIDLPack ( b%r1, info )
+                if ( info /= 0 ) call PVMErrorMessage ( info, 'b%r1' )
+                call PVMIDLPack ( b%r2, info )
+                if ( info /= 0 ) call PVMErrorMessage ( info, 'b%r2' )
+              end if
+              if ( b%kind /= M_Absent ) then
+                call PVMIDLPack ( b%values, info )
+                if ( info /= 0 ) call PVMErrorMessage ( info, 'b%values' )
+              end if
+            end do
+          end if                      ! Any rows here?
+        end do
+
+        ! OK, now wait patiently for the request to send the results off
+        call IntelligentPVMFrecv ( parallel%masterTid, infoTag, recvBufferID )
+        if ( recvBufferID <= 0 ) &
+          & call PVMErrorMessage ( recvBufferID, 'Receiveing go-ahead from master' )
+        call PVMF90Unpack ( signal, info )
+        if ( info /= 0 ) call PVMErrorMessage ( info, 'Unpacking signal from master' )
+        if ( signal == SIG_SendResults ) then
+          ! OK, now send the results off
+          call PVMFSend ( parallel%masterTid, InfoTag, info )
+          if ( info /= 0 ) call PVMErrorMessage ( info, 'Sending results' )
+          ! OK, now free up the send buffer to save space
+          call PVMFFreeBuf ( sendBufferID, info )
+          if ( info /= 0 ) call PVMErrorMessage ( info, 'Freeing up send buffer' )
+        else if ( signal == SIG_Finished ) then
+          finished = .true.
+        else
+          call output ( 'Signal: ' )
+          call output ( signal, advance='yes' )
+          call MLSMessage ( MLSMSG_Error, ModuleName, 'Got unexpected message from master' )
+        end if
+        ! OK, we've run our forward models and sent our results
+        call ClearMatrix ( jacobian )
+      end select
+      if ( finished ) exit mainLoop
+    end do mainLoop
+
+    ! Finished, tidy up
+    call PVMFFreeBuf ( sendBufferID, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'Freeing up send buffer' )
+    call ClearSetup
+  contains
+
+    subroutine ClearSetup
+      call DestroyMatrix ( jacobian )
+      call DestroyFWMConfigDatabase ( fwmConfigs, deep=.true. )
+      call DestroyVectorDatabase ( vectors )
+      call DestroyVectorTemplateDatabase ( vectorTemplates )
+      call DestroyQuantityTemplateDatabase ( quantities )
+    end subroutine ClearSetup
+
+  end subroutine L2FWMSlaveTask
+
+  ! ------------------------------------------------ ReceiveSlavesOutput ---
+  subroutine ReceiveSlavesOutput ( outVector, fmStat, jacobian )
+    ! The master uses this routine to get the output from each forward model
+    ! slave.
+    use VECTORSMODULE, only: VECTOR_T
+    use FORWARDMODELINTERMEDIATE, only: FORWARDMODELSTATUS_T
+    use MATRIXMODULE_1, only: MATRIX_T
+    use MLSMESSAGEMODULE, only: PVMERRORMESSAGE
+    use PVM, only: INFOTAG, PVMFFREEBUF
+    use PVMIDL, only: PVMIDLUNPACK
+    use L2PARINFO, only: GETNICETIDSTRING
+    use MATRIXMODULE_1, only: CREATEBLOCK
+    use MATRIXMODULE_0, only: M_ABSENT, M_BANDED, M_COLUMN_SPARSE, MATRIXELEMENT_T
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use TOGGLES, only: SWITCHES
+    use OUTPUT_M, only: OUTPUT
+    type (Vector_T), intent(inout) :: OUTVECTOR
+    type (ForwardModelStatus_T), intent(inout) :: FMSTAT
+    type (Matrix_T), intent(inout) :: JACOBIAN
+    ! Local variables
+    integer :: KIND                     ! Kind for block
+    integer :: NOVALUES                 ! Number of values for banded/sparse
+    integer :: BUFFERID                 ! From PVM
+    integer :: INFO                     ! Flag from PVM
+    integer :: I, J                     ! Loop counters
+    type ( MatrixElement_T), pointer :: B ! A block from the jacobian
+
+    ! Executable code
+    if ( switchDetail ( switches, 'mas' ) > -1 ) then
+      call output ( 'Recieving results packet from ' )
+      call output ( trim ( GetNiceTidString ( slaveTids(fmStat%maf) ) ) )
+      call output ( ' MAF ' )
+      call output ( fmStat%maf )
+      call output ( ' ...' )
+    end if
+    call IntelligentPVMFrecv ( slaveTids ( fmStat%maf ), infoTag, bufferID )
+    if ( bufferID <= 0 ) &
+      & call PVMErrorMessage ( bufferID, 'Receiveing results from slave' )
+    if ( switchDetail ( switches, 'mas' ) > -1 ) &
+      & call output ( ' Done', advance='yes' )
+    call PVMIDLUnpack ( fmStat%rows, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'Unpacking fmStat%rows' )
+    do i = 1, jacobian%row%nb
+      if ( fmStat%rows(i) ) then
+        call PVMIDLUnpack ( outVector%quantities ( &
+          & jacobian%row%quant(i) ) % values ( :, &
+          & jacobian%row%inst(i) ), info )
+        if ( info /= 0 ) call PVMErrorMessage ( info, 'unpacking values for fwmOut' )
+        ! Get blocks of jacobian
+        do j = 1, jacobian%col%nb
+          call PVMIDLUnpack ( kind, info )
+          if ( info /= 0 ) call PVMErrorMessage ( info, 'unpacking block kind' )
+          if ( kind == M_Banded .or. kind == M_Column_sparse ) then
+            call PVMIDLUnpack ( noValues, info )
+            if ( info /= 0 ) call PVMErrorMessage ( info, 'unpacking noValues for block' )
+          else
+            noValues = 1                ! Not really used
+          end if
+          call CreateBlock ( jacobian, i, j, kind, noValues )
+          b => jacobian%block ( i, j )
+          if ( kind == M_Banded .or. kind == M_Column_sparse ) then
+            call PVMIDLUnpack ( b%r1, info )
+            if ( info /= 0 ) call PVMErrorMessage ( info, 'unpacking b%r1' )
+            call PVMIDLUnpack ( b%r2, info )
+            if ( info /= 0 ) call PVMErrorMessage ( info, 'unpacking b%r2' )
+          end if
+          if ( b%kind /= M_Absent ) then
+            call PVMIDLUnpack ( b%values, info )
+            if ( info /= 0 ) call PVMErrorMessage ( info, 'unpacking b%values' )
+          end if
+        end do
+      end if
+    end do
+    ! Now free up our buffer to save space
+    call PVMFFreeBuf ( bufferID, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'freeing receive buffer' )
+
+  end subroutine ReceiveSlavesOutput
+
+  ! ----------------------------------------------- RequestSlavesOutput ---
+  subroutine RequestSlavesOutput ( maf )
+    ! The master uses this routine to ask a slave to pack its output up
+    use MLSMESSAGEMODULE, only: PVMERRORMESSAGE
+    use PVM, only: INFOTAG, PVMFINITSEND, PVMF90PACK, PVMFSEND, &
+      & PVMRAW
+    use L2PARINFO, only: SIG_SENDRESULTS, GETNICETIDSTRING
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use TOGGLES, only: SWITCHES
+    use OUTPUT_M, only: OUTPUT
+    integer, intent(in) :: MAF
+    ! Local variables
+    integer :: INFO
+    integer :: BUFFERID
+    ! Executable code
+    if ( switchDetail ( switches, 'mas' ) > -1 ) then 
+      call output ( 'Requesting output from ' )
+      call output ( trim(GetNiceTidString ( slaveTids(maf) ) ) )
+      call output ( ' MAF ' )
+      call output ( maf, advance='yes' )
+    end if
+    call PVMFInitSend ( PVMRAW, bufferID )
+    if ( bufferID <= 0 ) call PVMErrorMessage ( info, 'Setting up output request' )
+    call PVMF90Pack ( SIG_SendResults, info )
+    if ( bufferID <= 0 ) call PVMErrorMessage ( info, 'Packing output request signal' )
+    call PVMFSend ( slaveTIDs ( maf ), InfoTag, info )
+    if ( bufferID <= 0 ) call PVMErrorMessage ( info, 'Sending output request' )
+  end subroutine RequestSlavesOutput
+
+  ! ------------------------------------------------ SetupFWMSlaves ----
+  subroutine SetupFWMSlaves ( configs, inVector, extraVector, outVector, jacobian )
+    ! The master uses this routine to send the core information on the
+    ! state vector layout etc. to each forward model slave.
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST
+    use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T, PVMPACKFWMCONFIG
+    use VECTORSMODULE, only: VECTOR_T
+    use MLSMESSAGEMODULE, only: PVMERRORMESSAGE
+    use PVM, only: INFOTAG, PVMFINITSEND, PVMF90PACK, &
+      & PVMFBCAST, PVMRAW, PVMFFREEBUF
+    use PVMIDL, only: PVMIDLPACK
+    use L2PARINFO, only: SIG_NEWSETUP, FWMSLAVEGROUP
+    use QUANTITYPVM, only: PVMSENDQUANTITY
+    use MOREPVM, only: PVMPACKSTRINGINDEX
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use TOGGLES, only: SWITCHES
+    use OUTPUT_M, only: OUTPUT
+    use MATRIXMODULE_1, only: MATRIX_T
+    type (ForwardModelConfig_T), dimension(:), intent(in) :: CONFIGS
+    type (Vector_T), target, intent(in) :: INVECTOR
+    type (Vector_T), target, intent(in) :: EXTRAVECTOR
+    type (Vector_T), target, intent(in) :: OUTVECTOR
+    type (Matrix_T), intent(in) :: JACOBIAN
+
+    ! Local variables
+    integer :: BUFFERID                 ! For PVM
+    integer :: INFO                     ! Flag from PVM
+    integer :: NOQUANTITIES             ! Number of quantities that are relevant
+    integer :: I,J                      ! Loop counters
+    integer, dimension(:), pointer :: VECINDS
+    integer, dimension(:), pointer :: QTYINDS
+    type (Vector_T), pointer :: V
+
+    ! Executable code
+    if ( switchDetail ( switches, 'mas' ) > -1 ) &
+      & call output ( 'Setting up forward model slaves', advance='yes' )
+    call PVMFInitSend ( PVMRaw, bufferID )
+    if ( bufferID <= 0 ) &
+      & call PVMErrorMessage ( bufferID, 'Setting up buffer for FWMSlaveSetup' )
+    call PVMF90Pack ( SIG_NewSetup, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'Packing signal for FWMSlaveSetup' )
+
+    ! Now we send the forward model configs
+    call PVMIDLPack ( size ( configs ), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'Packing no fwm configs' )
+    do i = 1, size ( configs )
+      call PVMPackFWMConfig ( configs ( i ) )
+    end do
+
+    ! Now we work out how many quantities are relevant
+    noQuantities = max ( &
+      & maxval ( inVector%template%quantities ), &
+      & maxval ( extraVector%template%quantities ), &
+      & maxval ( outVector%template%quantities ) )
+    nullify ( vecInds, qtyInds )
+    call Allocate_test ( vecInds, noQuantities, 'vecInds', ModuleName )
+    call Allocate_test ( qtyInds, noQuantities, 'qtyInds', ModuleName )
+    vecInds = 0
+    qtyInds = 0
+    ! Note that some quantities may be in two vectors, it doesn't
+    ! matter as long as the slave gets the template from somewhere
+    do i = 1, noVectors
+      select case ( i )
+      case ( FWMIn )
+        v => inVector
+      case ( FWMExtra )
+        v => extraVector
+      case  ( FWMOut )
+        v => outVector
+      end select
+      do j = 1, size ( v%quantities )
+        vecInds ( v%template%quantities(j) ) = i
+        qtyInds ( v%template%quantities(j) ) = j
+      end do
+    end do
+    ! Now pack up the relevant ones.
+    call PVMIDLpack ( noQuantities, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'packing noQuantities' )
+    do j = 1, noQuantities
+      call PVMIDLPack ( vecInds ( j ) /= 0 , info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, 'Packing quantity relevant flag' )
+      if ( vecInds ( j ) /= 0 ) then
+        select case ( vecInds(j) )
+        case ( FWMIn )
+          v => inVector
+        case ( FWMExtra )
+          v => extraVector
+        case  ( FWMOut )
+          v => outVector
+        end select
+        call PVMSendQuantity ( v%quantities(qtyInds(j)), justPack=.true., &
+          & noValues=.true., noMask=.true., skipMIFGeolocation=.true. )
+      end if
+    end do
+
+    ! Now send the three templates, and the vector values in some circumstances
+    do i = 1, noVectors
+      select case ( i )
+      case ( FWMIn )
+        v => inVector
+      case ( FWMExtra )
+        v => extraVector
+      case  ( FWMOut )
+        v => outVector
+      end select
+      ! Send the vector template information
+      call PVMIDLPack ( size ( v%quantities ), info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, 'packing size(quantities)' )
+      call PVMIDLPack ( v%template%quantities, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, 'packing template%quantities' )
+      call PVMPackStringIndex ( v%template%name, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, 'packing vector template name' )
+      ! Send the vector information
+      call PVMPackStringIndex ( v%name, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, 'packing vector name' )
+      ! Pack the vector values in some circumstances
+      if ( i == FWMExtra .or. i == FWMOut ) then
+        do j = 1, size ( v%quantities )
+          if ( i == FWMExtra ) then
+            call PVMIDLPack ( v%quantities(j)%values, info )
+            if ( info /= 0 ) call PVMErrorMessage ( info, 'packing vector values' )
+          end if
+          call PVMIDLPack ( associated ( v%quantities(j)%mask ), &
+            & info )
+          if ( info /= 0 ) call PVMErrorMessage ( info, 'packing quantity mask flag' )
+          if ( associated ( v%quantities(j)%mask ) ) then
+            call PVMIDLPack ( v%quantities(j)%mask, info )
+            if ( info /= 0 ) call PVMErrorMessage ( info, 'packing quantity mask' )
+          end if                        ! Send mask?
+        end do                          ! Loop over quantities
+      end if                            ! Extra or output
+    end do                              ! Loop over vectors
+
+    ! Finally, just send the 'instance first' flags
+    call PVMIDLPack ( (/ jacobian%row%instFirst, jacobian%col%instFirst /), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, &
+      & 'packing jacobian instance first flags' )
+
+    ! That's it, let's get this information sent off
+    call PVMFBcast ( FWMSlaveGroup, InfoTag, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'Broadcasting setup information' )
+
+    ! Free up the send buffer
+    call PVMFFreeBuf ( bufferID, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'freeing send buffer' )
+      
+  end subroutine SetupFWMSlaves
+
+  ! ------------------------------------------------ TriggerSlaveRun ---
+  subroutine TriggerSlaveRun ( state, maf )
+    ! This routine is used by the master to launch one run
+    use VECTORSMODULE, only: VECTOR_T
+    use MLSMESSAGEMODULE, only: PVMERRORMESSAGE
+    use PVM, only: INFOTAG, PVMFINITSEND, PVMFSEND, PVMRAW, PVMF90PACK
+    use PVMIDL, only: PVMIDLPACK
+    use L2PARINFO, only: SIG_RUNMAF, GETNICETIDSTRING
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use TOGGLES, only: SWITCHES
+    use OUTPUT_M, only: OUTPUT
+    type (Vector_T), intent(in) :: STATE
+    integer, intent(in) :: MAF
+    ! Local variables
+    integer :: BUFFERID                 ! From PVM
+    integer :: INFO                     ! Flag from PVM
+    integer :: J                        ! Loop counter
+    integer :: TASK                     ! Task index
+
+    ! Executable code
+    call PVMFInitSend ( PVMRaw, bufferID )
+    if ( bufferID <= 0 ) call PVMErrorMessage ( bufferID, &
+      & 'Setting up buffer for TriggerSlaveRun' )
+    call PVMF90Pack ( SIG_RunMAF, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'Packing sig_RunMAF' )
+    ! Send the state vector values
+    do j = 1, size ( state%quantities )
+      call PVMIDLPack ( state%quantities(j)%values, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, &
+        & 'Packing state quantity values' )
+      call PVMIDLPack ( associated ( state%quantities(j)%mask ), info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, &
+        & 'Packing state quantity mask flag' )
+      if ( associated ( state%quantities(j)%mask ) ) then
+        call PVMIDLPack ( state%quantities(j)%mask, info )
+        if ( info /= 0 ) call PVMErrorMessage ( info, &
+          & 'Packing state quantity mask' )
+      end if
+    end do
+    ! Send the fmStat stuff
+    call PVMIDLPack ( maf, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'packing maf' )
+    ! OK, send this off
+    task = mod ( maf-1, size(slaveTids) ) + 1
+    if ( switchDetail ( switches, 'mas' ) > -1 ) then
+      call output ( 'Triggering ' // trim ( GetNiceTidString(slaveTids(task)) ) )
+      call output ( ' to do MAF ' )
+      call output ( task, advance='yes' )
+    end if
+      
+    call PVMFSend ( slaveTids ( task ), InfoTag, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'Sending trigger packet' )
+  end subroutine TriggerSlaveRun
+
+  ! ================================================ Private procedures
+
+  subroutine IntelligentPVMFRecv ( tid, tag, bufferID )
+    use L2PARINFO, only: NOTIFYTAG
+    use machine, only: USleep
+    use MLSMessageModule, only: MLSMSG_ERROR, MLSMESSAGE, PVMERRORMESSAGE
+    ! Dummy arguments
+    integer, intent(in) :: TID
+    integer, intent(in) :: TAG
+    integer, intent(out) :: BUFFERID
+    ! Parameters etc.
+    integer, parameter :: DELAY = 200000  ! For Usleep, no. microsecs
+
+    ! Local variables
+    listenLoop: do
+      call PVMFNRecv ( -1, NotifyTag, bufferID )
+      if ( bufferID > 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'A task in the pvm system died' )
+      call PVMFNRecv ( tid, tag, bufferID )
+      if ( bufferID > 0 ) exit listenLoop
+      if ( bufferID < 0 ) call PVMErrorMessage ( bufferID, 'Listening for message' )
+      call usleep ( delay )
+    end do listenLoop
+  end subroutine IntelligentPVMFRecv
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: L2FWMParallel.f90,v 2.27 2013/08/12 23:49:41 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module L2FWMParallel
+
+! $Log: L2FWMParallel.f90,v $
+! Revision 2.27  2013/08/12 23:49:41  pwagner
+! FindSomethings moved to MLSFinds module
+!
+! Revision 2.26  2011/05/09 18:20:21  pwagner
+! Converted to using switchDetail
+!
+! Revision 2.25  2009/06/23 18:46:18  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.24  2008/05/02 00:34:35  vsnyder
+! Delete unused symbol
+!
+! Revision 2.23  2007/10/24 00:16:12  pwagner
+! Removed unused declarations
+!
+! Revision 2.22  2007/06/29 19:32:07  vsnyder
+! Make ForwardModelIntermediate_t private to ScanModelModule
+!
+! Revision 2.21  2006/08/05 02:12:27  vsnyder
+! Add ForWhom argument to ConstructVectorTemplate
+!
+! Revision 2.20  2005/06/22 18:57:02  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.19  2005/03/15 23:50:15  pwagner
+! PVMERRORMESSAGE now part of MLSMessageModule
+!
+! Revision 2.18  2004/06/10 00:58:45  vsnyder
+! Move FindFirst, FindNext from MLSCommon to MLSSets
+!
+! Revision 2.17  2004/05/19 19:16:11  vsnyder
+! Move MLSChunk_t to Chunks_m
+!
+! Revision 2.16  2003/06/20 19:38:25  pwagner
+! Allows direct writing of output products
+!
+! Revision 2.15  2003/01/13 20:59:02  livesey
+! Added calls to PVMFFreeBuf
+!
+! Revision 2.14  2003/01/13 20:15:49  livesey
+! Slight changes to slave launching, uses parllel%executable
+!
+! Revision 2.13  2002/12/11 02:14:08  livesey
+! Removed extra dumps/outputs
+!
+! Revision 2.12  2002/12/11 02:08:17  livesey
+! Bug fix with handling of fmStat%rows?
+!
+! Revision 2.11  2002/12/11 01:59:27  livesey
+! Slightly new approach, also some extra diagnostics that will have to go soon
+!
+! Revision 2.10  2002/12/06 18:43:26  livesey
+! New approach to sharing out the work load.  Doesn't require there to be
+! a full complement of 'machines' one for each MAF
+!
+! Revision 2.9  2002/12/05 02:21:29  livesey
+! Changes to improve performance (hopefully)
+!
+! Revision 2.8  2002/10/08 20:34:02  livesey
+! Added notify stuff for fwm parallel
+!
+! Revision 2.7  2002/10/08 17:40:35  livesey
+! Lots of debugging
+!
+! Revision 2.6  2002/10/08 17:36:21  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.5  2002/10/07 01:23:51  livesey
+! OK, all the code written and compiles, but not tested.
+!
+! Revision 2.4  2002/10/06 22:22:20  livesey
+! Nearly all routines filled out now, only one more to go
+!
+! Revision 2.3  2002/10/06 02:04:31  livesey
+! More progress all routines at least stubbed out.
+!
+! Revision 2.2  2002/10/06 01:10:31  livesey
+! More code added, still not complete.
+!
+! Revision 2.1  2002/10/05 02:06:28  livesey
+! First version, should have checked in earlier
+!
+@
+
+
+2.27
+log
+@FindSomethings moved to MLSFinds module
+@
+text
+@d747 1
+a754 1
+    external :: USLEEP
+d771 1
+a771 1
+       "$Id: L2FWMParallel.f90,v 2.26 2011/05/09 18:20:21 pwagner Exp $"
+d781 3
+@
+
+
+2.26
+log
+@Converted to using switchDetail
+@
+text
+@d55 1
+a55 1
+    use MLSSETS, only: FINDFIRST
+d771 1
+a771 1
+       "$Id: L2FWMParallel.f90,v 2.25 2009/06/23 18:46:18 pwagner Exp $"
+d781 3
+@
+
+
+2.25
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d29 1
+a29 1
+       "$RCSfile: $"
+d50 3
+a52 3
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_test
+    use Chunks_m, only: MLSChunk_T
+    use L2ParInfo, only: PARALLEL, GETMACHINENAMES, MACHINENAMELEN, &
+d54 4
+a57 3
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, PVMERRORMESSAGE
+    use MLSSets, only: FINDFIRST
+    use Output_m, only: Output
+d61 1
+a61 1
+    use Toggles, only: SWITCHES
+d102 1
+a102 1
+    if ( index ( switches, 'mas' ) /= 0 ) &
+d106 1
+a106 1
+    if ( index(switches,'slv') /= 0 ) then
+d127 1
+a127 1
+    if ( index ( switches, 'mas' ) /= 0 ) &
+d145 1
+a145 1
+      if ( index ( switches, 'mas' ) /= 0 ) then
+d157 1
+a157 1
+    if ( index ( switches, 'mas' ) /= 0 ) &
+d168 2
+a169 2
+    use Allocate_Deallocate, only: ALLOCATE_TEST
+    use QuantityTemplates, only: QUANTITYTEMPLATE_T, DESTROYQUANTITYTEMPLATEDATABASE, &
+d171 1
+a171 1
+    use VectorsModule, only: VECTORTEMPLATE_T, VECTOR_T, DESTROYVECTORDATABASE, &
+d174 1
+a174 1
+    use ForwardModelConfig, only: FORWARDMODELCONFIG_T, DESTROYFWMCONFIGDATABASE, &
+d176 2
+a177 2
+    use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T
+    use L2ParInfo, only: PARALLEL, SIG_FINISHED, SIG_NEWSETUP, SIG_RUNMAF, &
+d179 1
+a179 1
+    use MorePVM, only: PVMUNPACKSTRINGINDEX
+d183 1
+a183 1
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate, &
+d185 2
+a186 2
+    use MatrixModule_0, only: M_Absent, M_Banded, M_Column_Sparse, MatrixElement_T
+    use MatrixModule_1, only: Matrix_T, CREATEEMPTYMATRIX, CLEARMATRIX, &
+d188 4
+a191 4
+    use QuantityPVM, only: PVMRECEIVEQUANTITY
+    use ForwardModelWrappers, only: FORWARDMODEL
+    use ScanModelModule, only: DestroyForwardModelIntermediate
+    use Output_M, only: OUTPUT
+d437 4
+a440 4
+    use VectorsModule, only: VECTOR_T
+    use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T
+    use MatrixModule_1, only: MATRIX_T
+    use MLSMessageModule, only: PVMERRORMESSAGE
+d443 6
+a448 5
+    use L2ParInfo, only: GETNICETIDSTRING
+    use MatrixModule_1, only: CREATEBLOCK
+    use MatrixModule_0, only: M_ABSENT, M_BANDED, M_COLUMN_SPARSE, MATRIXELEMENT_T
+    use Toggles, only: SWITCHES
+    use Output_m, only: OUTPUT
+d461 1
+a461 1
+    if ( index ( switches, 'mas' ) /= 0 ) then
+d471 1
+a471 1
+    if ( index ( switches, 'mas' ) /= 0 ) &
+d515 1
+a515 1
+    use MLSMessageModule, only: PVMERRORMESSAGE
+d518 4
+a521 3
+    use L2ParInfo, only: SIG_SENDRESULTS, GETNICETIDSTRING
+    use Toggles, only: SWITCHES
+    use Output_m, only: OUTPUT
+d527 1
+a527 1
+    if ( index ( switches, 'mas' ) /= 0 ) then 
+d545 4
+a548 4
+    use Allocate_Deallocate, only: ALLOCATE_TEST
+    use ForwardModelConfig, only: FORWARDMODELCONFIG_T, PVMPACKFWMCONFIG
+    use VectorsModule, only: VECTOR_T
+    use MLSMessageModule, only: PVMERRORMESSAGE
+d552 7
+a558 6
+    use L2ParInfo, only: SIG_NEWSETUP, FWMSLAVEGROUP
+    use QuantityPVM, only: PVMSENDQUANTITY
+    use MorePVM, only: PVMPACKSTRINGINDEX
+    use Toggles, only: SWITCHES
+    use Output_m, only: OUTPUT
+    use MatrixModule_1, only: MATRIX_T
+d575 1
+a575 1
+    if ( index ( switches, 'mas' ) /= 0 ) &
+d692 2
+a693 2
+    use VectorsModule, only: VECTOR_T
+    use MLSMessageModule, only: PVMERRORMESSAGE
+d696 4
+a699 3
+    use L2ParInfo, only: SIG_RUNMAF, GETNICETIDSTRING
+    use Toggles, only: SWITCHES
+    use Output_m, only: OUTPUT
+d733 1
+a733 1
+    if ( index ( switches, 'mas' ) /= 0 ) then
+d771 1
+a771 1
+       "$Id: read_apriori.f90 is it here $"
+d781 3
+@
+
+
+2.24
+log
+@Delete unused symbol
+@
+text
+@d29 1
+a29 1
+       "$RCSfile: L2FWMParallel.f90,v $"
+d763 1
+a764 1
+!---------------------------- RCS Ident Info -------------------------------
+d766 2
+a767 3
+       "$Id: L2FWMParallel.f90,v 2.23 2007/10/24 00:16:12 pwagner Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d769 1
+d771 1
+d776 3
+@
+
+
+2.23
+log
+@Removed unused declarations
+@
+text
+@a216 2
+    type (Vector_T), pointer :: V
+
+a284 1
+          v => vectors ( i )
+d766 1
+a766 1
+       "$Id: L2FWMParallel.f90,v 2.22 2007/06/29 19:32:07 vsnyder Exp $"
+d775 3
+@
+
+
+2.22
+log
+@Make ForwardModelIntermediate_t private to ScanModelModule
+@
+text
+@d53 1
+a53 2
+      & SLAVEARGUMENTS, SIG_REGISTER, NOTIFYTAG, GETNICETIDSTRING
+    use Machine, only: SHELL_COMMAND
+d58 2
+a59 2
+      & PVMFBUFINFO, PVMF90UNPACK, PVMFINITSEND, PVMFSEND, PVMF90PACK, &
+      & PVMTASKHOST, PVMTASKEXIT, PVMRAW
+a166 1
+    use Dump_0, only: Dump
+d177 1
+a177 1
+      & SIG_SENDRESULTS, NOTIFYTAG
+d184 1
+a184 1
+    use MatrixModule_0, only: M_Absent, M_Banded, M_Column_Sparse, M_Full, MatrixElement_T
+a189 1
+    use String_table, only: DISPLAY_STRING
+d519 1
+a519 1
+    use L2ParInfo, only: PARALLEL, SIG_SENDRESULTS, GETNICETIDSTRING
+d545 1
+a545 1
+    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+d551 1
+a551 1
+    use PVMIDL, only: PVMIDLPACK, PVMIDLUNPACK
+a745 1
+    use PVM, only: PVMFRECV
+d769 1
+a769 1
+       "$Id: L2FWMParallel.f90,v 2.21 2006/08/05 02:12:27 vsnyder Exp $"
+d778 3
+@
+
+
+2.21
+log
+@Add ForWhom argument to ConstructVectorTemplate
+@
+text
+@d177 1
+a177 1
+    use ForwardModelIntermediate, only: FORWARDMODELINTERMEDIATE_T, FORWARDMODELSTATUS_T
+d191 1
+a211 1
+    type (ForwardModelIntermediate_T) :: FMW
+d357 1
+a357 1
+            & vectors(fwmIn), vectors(fwmExtra), vectors(fwmOut), fmw, fmStat, jacobian )
+d359 2
+d773 1
+a773 1
+       "$Id: L2FWMParallel.f90,v 2.20 2005/06/22 18:57:02 pwagner Exp $"
+d782 3
+@
+
+
+2.20
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d29 1
+a29 1
+       "$RCSfile: $"
+d299 1
+a299 1
+            & vectorTemplates ( i ) )
+d771 1
+a771 1
+       "$Id: $"
+d780 3
+@
+
+
+2.19
+log
+@PVMERRORMESSAGE now part of MLSMessageModule
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
+d27 1
+a27 4
+  !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
+    "$Id: L2FWMParallel.f90,v 2.18 2004/06/10 00:58:45 vsnyder Exp $"
+  character (len=len(idParm)), private :: Id = idParm
+d29 1
+a29 1
+    "$RCSfile: L2FWMParallel.f90,v $"
+d31 1
+a31 1
+  !---------------------------------------------------------------------------
+d769 5
+d780 3
+@
+
+
+2.18
+log
+@Move FindFirst, FindNext from MLSCommon to MLSSets
+@
+text
+@d1 2
+a2 2
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d21 1
+a21 1
+    "$Id: L2FWMParallel.f90,v 2.17 2004/05/19 19:16:11 vsnyder Exp $"
+d48 1
+a48 1
+      & SLAVEARGUMENTS, SIG_REGISTER, INFOTAG, NOTIFYTAG, GETNICETIDSTRING
+d50 1
+a50 1
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+d53 1
+a53 1
+    use PVM, only: MYPVMSPAWN, PVMFCATCHOUT, PVMERRORMESSAGE, &
+d173 1
+a173 1
+    use L2ParInfo, only: PARALLEL, SIG_FINISHED, SIG_NEWSETUP, SIG_RUNMAF, INFOTAG, &
+d176 1
+a176 1
+    use PVM, only: PVMERRORMESSAGE, PVMFINITSEND, &
+d179 2
+a180 1
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate
+d438 2
+a439 1
+    use PVM, only: PVMERRORMESSAGE, PVMFFREEBUF
+d441 1
+a441 1
+    use L2ParInfo, only: INFOTAG, GETNICETIDSTRING
+d512 4
+a515 3
+    use PVM, only: PVMFINITSEND, PVMF90PACK, PVMFSEND, &
+      & PVMERRORMESSAGE, PVMRAW
+    use L2ParInfo, only: PARALLEL, SIG_SENDRESULTS, INFOTAG, GETNICETIDSTRING
+d544 2
+a545 1
+    use PVM, only: PVMFINITSEND, PVMERRORMESSAGE, PVMF90PACK, &
+d548 1
+a548 1
+    use L2ParInfo, only: SIG_NEWSETUP, FWMSLAVEGROUP, INFOTAG
+d688 2
+a689 2
+    use PVM, only: PVMFINITSEND, PVMFSEND, PVMRAW, PVMF90PACK, &
+      & PVMErrorMessage
+d691 1
+a691 1
+    use L2ParInfo, only: SIG_RUNMAF, INFOTAG, GETNICETIDSTRING
+a739 1
+    use PVM, only: PVMFRECV, PVMERRORMESSAGE
+d741 2
+a742 1
+    use MLSMessageModule, only: MLSMSG_ERROR, MLSMESSAGE
+d770 3
+@
+
+
+2.17
+log
+@Move MLSChunk_t to Chunks_m
+@
+text
+@d21 1
+a21 1
+    "$Id: L2FWMParallel.f90,v 2.16 2003/06/20 19:38:25 pwagner Exp $"
+d43 3
+a45 2
+  ! ------------------------------------------- LaunchFwmSlaves ----
+  subroutine LaunchFWMSlaves ( chunk )
+a46 3
+    use Output_m, only: Output
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_test
+    use Machine, only: SHELL_COMMAND
+d49 1
+a49 1
+    use MLSCommon, only: FINDFIRST
+d51 2
+a52 1
+    use Toggles, only: SWITCHES
+d56 1
+d136 1
+a136 1
+      machineInd = FindFirst ( slaveTids == slaveTid )
+d766 3
+@
+
+
+2.16
+log
+@Allows direct writing of output products
+@
+text
+@d21 1
+a21 1
+    "$Id: L2FWMParallel.f90,v 2.15 2003/01/13 20:59:02 livesey Exp $"
+d45 1
+a48 1
+    use MLSCommon, only: MLSChunk_T
+d766 3
+@
+
+
+2.15
+log
+@Added calls to PVMFFreeBuf
+@
+text
+@d21 1
+a21 1
+    "$Id: L2FWMParallel.f90,v 2.14 2003/01/13 20:15:49 livesey Exp $"
+d425 1
+a425 2
+      call DestroyQuantityTemplateDatabase ( quantities, &
+        & ignoreMinorFrame=.true. )
+d766 3
+@
+
+
+2.14
+log
+@Slight changes to slave launching, uses parllel%executable
+@
+text
+@d21 1
+a21 1
+    "$Id: L2FWMParallel.f90,v 2.13 2002/12/11 02:14:08 livesey Exp $"
+d177 1
+a177 1
+      & PVMF90UNPACK, PVMRAW
+d181 2
+a182 1
+    use MatrixModule_1, only: Matrix_T, CREATEEMPTYMATRIX, CLEARMATRIX
+d192 1
+d194 1
+a194 2
+    integer :: BUFFERID                 ! For pvm
+    integer :: SIGNAL                   ! Signal code from master
+d198 3
+a200 2
+    integer :: I,J                      ! Loop counters
+    integer :: NAME                     ! An enumerated name
+d227 1
+a227 1
+      call IntelligentPVMFrecv ( parallel%masterTid, InfoTag, bufferId )
+d247 1
+a247 5
+        call DestroyFWMConfigDatabase ( fwmConfigs, deep=.true. )
+        call DestroyVectorDatabase ( vectors )
+        call DestroyVectorTemplateDatabase ( vectorTemplates )
+        call DestroyQuantityTemplateDatabase ( quantities, &
+          & ignoreMinorFrame=.true. )
+d326 3
+a328 1
+        ! OK, I think we're ready to go
+d355 3
+a357 3
+        call PVMFInitSend ( PVMRAW, bufferID )
+        if ( bufferID <= 0 ) &
+          & call PVMErrorMessage ( bufferID, 'Setting up results buffer' )
+d389 3
+a391 3
+        call IntelligentPVMFrecv ( parallel%masterTid, infoTag, bufferID )
+        if ( bufferID <= 0 ) &
+          & call PVMErrorMessage ( bufferID, 'Receiveing go-ahead from master' )
+d398 3
+a402 4
+          ! Might as well clear our send buffer then.
+          call PVMFInitSend ( PVMRAW, bufferID )
+          if ( bufferID <= 0 ) &
+            & call PVMErrorMessage ( bufferID, 'Clearing out results buffer' )
+a407 1
+
+d413 16
+d438 1
+a438 1
+    use PVM, only: PVMERRORMESSAGE
+d502 3
+d543 1
+a543 1
+      & PVMFBCAST, PVMRAW
+d674 4
+d767 3
+@
+
+
+2.13
+log
+@Removed extra dumps/outputs
+@
+text
+@d21 1
+a21 1
+    "$Id: L2FWMParallel.f90,v 2.12 2002/12/11 02:08:17 livesey Exp $"
+d100 1
+a100 1
+    commandLine = 'mlsl2'
+d110 1
+a110 1
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+d746 3
+@
+
+
+2.12
+log
+@Bug fix with handling of fmStat%rows?
+@
+text
+@d21 1
+a21 1
+    "$Id: L2FWMParallel.f90,v 2.11 2002/12/11 01:59:27 livesey Exp $"
+a362 6
+            call dump ( vectors(fwmOut)%quantities ( &
+              & jacobian%row%quant(i) ) % values, 'value' )
+            call output ( 'Packing total radiances:' )
+            call output ( sum ( vectors(fwmOut)%quantities ( &
+              & jacobian%row%quant(i) ) % values ( :, &
+              & jacobian%row%inst(i) ) ), advance='yes' )
+a381 2
+                call output ( 'Packing block total:' )
+                call output ( sum (b%values), advance='yes' ) 
+d746 3
+@
+
+
+2.11
+log
+@Slightly new approach, also some extra diagnostics that will have to go soon
+@
+text
+@d21 1
+a21 1
+    "$Id: L2FWMParallel.f90,v 2.10 2002/12/06 18:43:26 livesey Exp $"
+d348 1
+d754 3
+@
+
+
+2.10
+log
+@New approach to sharing out the work load.  Doesn't require there to be
+a full complement of 'machines' one for each MAF
+@
+text
+@d17 1
+a17 1
+  public :: RequestSlavesOutput, ReceiveSlavesOutput, GetNoSlaves
+d21 1
+a21 1
+    "$Id: L2FWMParallel.f90,v 2.9 2002/12/05 02:21:29 livesey Exp $"
+d50 1
+a50 1
+      & SLAVEARGUMENTS, SIG_REGISTER, INFOTAG, NOTIFYTAG
+d65 1
+d69 1
+d83 2
+d88 8
+a95 10
+    if ( .not. usingSubmit ) then
+      nullify ( machineNames )
+      call GetMachineNames ( machineNames )
+      noMachines = size(machineNames)
+    else
+      noMachines = 0
+    end if
+    call Allocate_test ( slaveTids, noMAFS, 'slaveTids', ModuleName )
+    nullify ( heardFromSlave )
+    call Allocate_test ( heardFromSlave, noMAFS, 'heardFromSlave', ModuleName )
+d100 12
+a111 13
+    if ( usingSubmit ) then ! --------------------- Using a batch system
+      commandLine = &
+        & trim(parallel%submit) // ' ' // &
+        & trim(parallel%executable) // ' ' // &
+        & trim(slaveArguments)
+      do maf = 1, noMAFs
+        call shell_command ( trim(commandLine) )
+      end do
+    else ! ----------------------------------------- Start job using pvmspawn
+      commandLine = 'mlsl2'
+      if ( index(switches,'slv') /= 0 ) then
+        call PVMFCatchOut ( 1, info )
+        if ( info /= 0 ) call PVMErrorMessage ( info, "calling catchout" )
+d113 6
+a118 12
+      do maf = 1, noMAFs
+        info = myPVMSpawn ( trim(commandLine), PvmTaskHost, &
+          trim(machineNames(maf)), 1, tid1 )
+        slaveTids(maf) = tid1(1)
+        ! Did this launch work
+        if ( info /= 1 ) then
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'Unable to launch fwmSlave on '//trim(machineNames(maf)) )
+        end if
+      end do
+    end if
+
+a120 1
+    if ( usingSubmit ) maf = 1
+d136 11
+a146 5
+      if ( usingSubmit ) then
+        slaveTids ( maf ) = slaveTid
+        maf = maf + 1
+      else
+        maf = FindFirst ( slaveTids == slaveTid )
+d148 1
+a148 2
+      heardFromSlave ( maf ) = .true.
+      call PVMFNotify ( PVMTaskExit, NotifyTag, 1, (/ slaveTids(maf) /), info )
+d163 1
+a332 2
+          call output ( "Getting values for state quantity " )
+          call output ( j, advance='yes' )
+d362 6
+d387 2
+d412 2
+a423 5
+  ! ------------------------------------------------ GetNoSlaves
+  integer function GetNoSlaves ()
+    GetNoSlaves = size ( slaveTids )
+  end function GetNoSlaves
+
+d433 1
+a433 1
+    use L2ParInfo, only: INFOTAG
+d451 3
+a453 1
+      call output ( 'Recieving results packet from slave ' )
+d503 1
+a503 1
+    use L2ParInfo, only: PARALLEL, SIG_SENDRESULTS, INFOTAG
+d512 3
+a514 1
+      call output ( 'Requesting output from slave ' )
+d674 1
+a674 1
+    use L2ParInfo, only: SIG_RUNMAF, INFOTAG
+d710 6
+d753 4
+@
+
+
+2.9
+log
+@Changes to improve performance (hopefully)
+@
+text
+@d17 1
+a17 1
+  public :: RequestSlavesOutput, ReceiveSlavesOutput
+d21 1
+a21 1
+    "$Id: L2FWMParallel.f90,v 2.8 2002/10/08 20:34:02 livesey Exp $"
+a87 2
+      if ( noMachines < noMAFs ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Too few machines for fwmParallel mode' )
+d416 5
+d676 1
+d702 2
+a703 1
+    call PVMFSend ( slaveTids ( maf ), InfoTag, info )
+d740 3
+@
+
+
+2.8
+log
+@Added notify stuff for fwm parallel
+@
+text
+@d21 1
+a21 1
+    "$Id: L2FWMParallel.f90,v 2.7 2002/10/08 17:40:35 livesey Exp $"
+d54 1
+a54 1
+    use PVM, only: PVMDATADEFAULT, MYPVMSPAWN, PVMFCATCHOUT, PVMERRORMESSAGE, &
+d56 1
+a56 1
+      & PVMTASKHOST, PVMTASKEXIT
+d178 2
+a179 2
+    use PVM, only: PVMERRORMESSAGE, PVMDATADEFAULT, PVMFINITSEND, &
+      & PVMF90UNPACK
+d357 35
+a391 1
+        ! Now we sit patiently and wait for an instruction to 'dump' our results
+a397 32
+          call PVMFInitSend ( PVMDataDefault, bufferID )
+          if ( bufferID <= 0 ) &
+            & call PVMErrorMessage ( bufferID, 'Setting up results buffer' )
+          call PVMIDLPack ( fmStat%rows, info ) 
+          if ( info /= 0 ) call PVMErrorMessage ( info, 'fmStat%rows' )
+          do i = 1, jacobian%row%nb
+            ! Send corresponding values of fwmOut
+            if ( fmStat%rows ( i ) ) then
+              call PVMIDLPack ( vectors(fwmOut)%quantities ( &
+                & jacobian%row%quant(i) ) % values ( :, &
+                & jacobian%row%inst(i) ), info )
+              if ( info /= 0 ) call PVMErrorMessage ( info, 'row of fwmOut' )
+              ! Send non empty blocks of jacobian
+              do j = 1, jacobian%col%nb
+                b => jacobian%block ( i, j )
+                call PVMIDLPack ( b%kind, info )
+                if ( info /= 0 ) call PVMErrorMessage ( info, 'b%kind' )
+                if ( b%kind == M_Banded .or. b%kind == M_Column_sparse ) then
+                  call PVMIDLPack ( size ( b%values, 1 ), info )
+                  if ( info /= 0 ) call PVMErrorMessage ( info, 'noValues for block' )
+                  call PVMIDLPack ( b%r1, info )
+                  if ( info /= 0 ) call PVMErrorMessage ( info, 'b%r1' )
+                  call PVMIDLPack ( b%r2, info )
+                  if ( info /= 0 ) call PVMErrorMessage ( info, 'b%r2' )
+                end if
+                if ( b%kind /= M_Absent ) then
+                  call PVMIDLPack ( b%values, info )
+                  if ( info /= 0 ) call PVMErrorMessage ( info, 'b%values' )
+                end if
+              end do
+            end if                      ! Any rows here?
+          end do
+d403 4
+d493 2
+a494 2
+    use PVM, only: PVMFINITSEND, PVMF90PACK, PVMFSEND, PVMDATADEFAULT, &
+      & PVMERRORMESSAGE
+d507 1
+a507 1
+    call PVMFInitSend ( PVMDataDefault, bufferID )
+d522 2
+a523 2
+    use PVM, only: PVMFINITSEND, PVMDATADEFAULT, PVMERRORMESSAGE, PVMF90PACK, &
+      & PVMFBCAST
+d549 1
+a549 1
+    call PVMFInitSend ( PVMDataDefault, bufferID )
+d661 1
+a661 1
+    use PVM, only: PVMFINITSEND, PVMFSEND, PVMDATADEFAULT, PVMF90PACK, &
+d675 1
+a675 1
+    call PVMFInitSend ( PVMDataDefault, bufferID )
+d735 3
+@
+
+
+2.7
+log
+@Lots of debugging
+@
+text
+@d21 1
+a21 1
+    "$Id: L2FWMParallel.f90,v 2.6 2002/10/08 17:36:21 pwagner Exp $"
+d50 1
+a50 1
+      & SLAVEARGUMENTS, SIG_REGISTER, INFOTAG
+d55 2
+a56 2
+      & PVMFRECV, PVMFBUFINFO, PVMF90UNPACK, PVMFINITSEND, PVMFSEND, PVMF90PACK, &
+      & PVMTASKHOST
+d133 1
+a133 1
+      call PVMFRecv ( -1, InfoTag, bufferID )
+d151 1
+d176 1
+a176 1
+      & SIG_SENDRESULTS
+d178 1
+a178 1
+    use PVM, only: PVMFRECV, PVMERRORMESSAGE, PVMDATADEFAULT, PVMFINITSEND, &
+d188 1
+d225 3
+a228 4
+      ! We basically wait for some communication from the master task.
+      call PVMFrecv ( parallel%masterTid, InfoTag, bufferID )
+      if ( bufferID <= 0 ) &
+        & call PVMErrorMessage ( bufferID, 'Receiveing information from master' )
+d358 1
+a358 1
+        call PVMFrecv ( parallel%masterTid, infoTag, bufferID )
+d419 1
+a419 1
+    use PVM, only: PVMFRECV, PVMERRORMESSAGE
+d443 1
+a443 1
+    call PVMFrecv ( slaveTids ( fmStat%maf ), infoTag, bufferID )
+d696 26
+d729 3
+@
+
+
+2.6
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d21 1
+a21 1
+    "$Id: L2FWMParallel.f90,v 2.5 2002/10/07 01:23:51 livesey Exp $"
+d51 1
+d55 2
+a56 1
+      & PVMFRECV, PVMFBUFINFO, PVMF90UNPACK, PVMFINITSEND, PVMFSEND, PVMF90PACK
+a67 1
+    integer :: PVMTASKHOST              ! For bufInfo
+d147 2
+a149 1
+      ! Otherwise, we know who this is.
+d151 1
+d155 1
+a155 1
+      & call output ( 'All slaves ready', advance='yes' )
+d185 2
+d307 1
+a307 1
+                if ( info /= 0 ) call PVMErrorMessage ( info, 'vector values' )
+d310 1
+a310 1
+              if ( info /= 0 ) call PVMErrorMessage ( info, 'vector mask flag' )
+d314 1
+a314 1
+                if ( info /= 0 ) call PVMErrorMessage ( info, 'vector mask' )
+d326 1
+a326 1
+          & l2(1), l2(2) )
+d334 2
+d337 1
+a337 1
+          if ( info /= 0 ) call PVMErrorMessage ( info, 'vector values' )
+d339 1
+a339 1
+          if ( info /= 0 ) call PVMErrorMessage ( info, 'vector mask flag' )
+d343 1
+a343 1
+            if ( info /= 0 ) call PVMErrorMessage ( info, 'vector mask' )
+d423 2
+d437 5
+d445 2
+d459 1
+a459 1
+          if ( b%kind == M_Banded .or. b%kind == M_Column_sparse ) then
+d462 2
+d489 2
+d496 4
+d509 1
+a509 1
+  subroutine SetupFWMSlaves ( configs, inVector, extraVector, outVector )
+d521 3
+d528 1
+d540 2
+d582 2
+d614 1
+a614 1
+      call PVMIDLUnpack ( v%template%quantities, info )
+d639 5
+d658 2
+d702 3
+@
+
+
+2.5
+log
+@OK, all the code written and compiles, but not tested.
+@
+text
+@d21 1
+a21 1
+    "$Id: L2FWMParallel.f90,v 2.4 2002/10/06 22:22:20 livesey Exp $"
+d25 1
+d656 4
+d663 3
+@
+
+
+2.4
+log
+@Nearly all routines filled out now, only one more to go
+@
+text
+@d21 1
+a21 1
+    "$Id: L2FWMParallel.f90,v 2.3 2002/10/06 02:04:31 livesey Exp $"
+d410 5
+d418 44
+d592 1
+a592 1
+            call PVMPack ( v%quantities(j)%values, info )
+d616 3
+a618 1
+    use PVM, only: PVMFINITSEND, PVMFSEND, PVMDATADEFAULT, PVMF90PACK
+d658 3
+@
+
+
+2.3
+log
+@More progress all routines at least stubbed out.
+@
+text
+@d21 1
+a21 1
+    "$Id: L2FWMParallel.f90,v 2.2 2002/10/06 01:10:31 livesey Exp $"
+d49 1
+a49 1
+      & SLAVEARGUMENTS, SIG_REGISTER, INFOTAG, MAFTAG
+a73 1
+    character(len=16) :: MAFNOSTR       ! MAF number as a string
+d99 4
+a103 6
+        write ( mafNoStr, '(i0)' ) maf
+        commandLine = &
+          & trim(parallel%submit) // ' ' // &
+          & trim(parallel%executable) // ' ' // &
+          & ' --slaveMAF ' // trim(mafNoStr) // ' ' // &
+          & trim(slaveArguments)
+a147 9
+      ! Send back the maf number as a confirmation.
+      call PVMFinitSend ( PVMDataDefault, bufferID )
+      call PVMF90Pack ( maf, info )
+      if ( info /= 0 ) &
+        & call PVMErrorMessage ( info, 'packing maf' )
+      call PVMFSend ( slaveTid, MAFTag, info )
+      if ( info /= 0 ) &
+        & call PVMErrorMessage ( info, 'sending maf' )
+      if ( all ( heardFromSlave ) ) exit contactLoop
+a278 1
+
+d438 9
+a446 2
+    use ForwardModelConfig, only: ForwardModelConfig_T
+    use VectorsModule, only: Vector_T
+d448 113
+a560 3
+    type (Vector_T), intent(in) :: INVECTOR
+    type (Vector_T), intent(in) :: EXTRAVECTOR
+    type (Vector_T), intent(in) :: OUTVECTOR
+d566 3
+a568 1
+    use VectorsModule, only: Vector_T
+d571 31
+d607 3
+@
+
+
+2.2
+log
+@More code added, still not complete.
+@
+text
+@d16 2
+a17 1
+  public :: LaunchFWMSlaves, L2FWMSlaveTask
+d21 1
+a21 1
+    "$Id: L2FWMParallel.f90,v 2.1 2002/10/05 02:06:28 livesey Exp $"
+d177 2
+a178 1
+      & DESTROYVECTORTEMPLATEDATABASE, CREATEVECTOR, CREATEMASK
+d400 3
+a410 1
+
+a411 1
+
+a413 1
+    
+d416 51
+d470 3
+@
+
+
+2.1
+log
+@First version, should have checked in earlier
+@
+text
+@d20 1
+a20 1
+    "$Id: L2Parallel.f90,v 2.37 2002/08/20 04:31:39 livesey Exp $"
+d23 1
+a23 1
+    "$RCSfile: L2Parallel.f90,v $"
+d26 7
+a32 1
+  integer, pointer, dimension(:), private, save :: slaveTIDs => NULL()
+d34 4
+d171 21
+a191 1
+    use QuantityTemplates, only: QUANTITYTEMPLATE_T
+d193 219
+d416 4
+a419 1
+! $Log$
+@
+

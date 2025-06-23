@@ -1,0 +1,668 @@
+head	1.8;
+access;
+symbols
+	V2-21:1.6
+	V2-20:1.6
+	V2-11:1.5
+	V2-10:1.5
+	V2-00:1.5
+	V1-51:1.3
+	V1-50:1.3;
+locks; strict;
+comment	@# @;
+
+
+1.8
+date	2007.01.18.23.49.27;	author pwagner;	state dead;
+branches;
+next	1.7;
+
+1.7
+date	2007.01.18.23.48.33;	author pwagner;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2006.11.01.20.48.52;	author pwagner;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2005.09.23.20.45.41;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2005.09.15.00.14.31;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2004.10.13.22.58.00;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2004.10.12.23.42.29;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.10.11.23.57.18;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.8
+log
+@Moved to util
+@
+text
+@!=================================
+PROGRAM dateconverter
+!=================================
+
+   use dates_module, ONLY: addhourstoutc, &
+     & dai_to_yyyymmdd, reFormatDate, yyyymmdd_to_dai
+   use MACHINE, only: FILSEP, HP, IO_ERROR, GETARG
+   use MLSStringLists, ONLY: StringElement
+   use MLSStrings, ONLY: lowerCase, readIntsFromChars
+
+   IMPLICIT NONE
+
+!------------------- RCS Ident Info -----------------------
+   CHARACTER(LEN=130) :: Id = &                                                    
+   "$Id: dateconverter.f90,v 1.7 2007/01/18 23:48:33 pwagner Exp $"
+   CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile: dateconverter.f90,v $"
+!----------------------------------------------------------
+
+! Brief description of program
+! This program converts an input date to a different format
+
+! E.g., given "2004d274" it will output "2004 September 30"
+! Useful only because possibly one will use doy 
+! while the other uses month-and-day
+! Useful also in automatically computing gmao entries in PCF
+
+  type options_T
+    integer     :: offset = 0                  ! How many days to add/subtract
+    integer     :: hoursOffset = 0             ! How many hours to add/subtract
+    logical     :: verbose = .false.
+    character(len=255) :: outputFormat= ' '    ! output format
+    character(len=255) :: inputFormat= ' '     ! input format
+    character(len=255) :: inputTime= ' '       ! input time
+  end type options_T
+
+  type ( options_T ) :: options
+! To use this, copy it into
+! mlspgs/tests/lib
+! then enter "make depends" followed by "make"
+
+
+! Then run it, entering quote-surrounded strings of chars; a blank line terminates
+
+! Variables
+
+   ! The following arrays contains the maximum permissible day for each month
+   ! where month=-1 means the whole year, month=1..12 means Jan, .., Dec
+   integer, dimension(-1:12), parameter :: DAYMAXLY = (/ &
+     & 366, 0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 &
+     & /)
+   integer, dimension(-1:12), parameter :: DAYMAXNY = (/ &
+     & 365, 0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 &
+     & /)
+  character(len=*), dimension(12), parameter :: MONTHNAME = (/ &
+    & 'January  ', 'February ', 'March    ', 'April    ', 'May      ', &
+    & 'June     ', 'July     ', 'August   ', 'September', 'October  ', &
+    & 'November ', 'December '/)
+
+   integer, parameter :: MAXLISTLENGTH=24
+   integer, parameter ::          MAXDATES = 100
+   character (LEN=MAXLISTLENGTH) :: converted_date
+   character (LEN=MAXLISTLENGTH) :: converted_time
+   character (LEN=MAXLISTLENGTH) :: date
+   character (LEN=MAXLISTLENGTH) :: intermediate_date
+   character(len=MAXLISTLENGTH), dimension(MAXDATES) :: dates
+   character (LEN=MAXLISTLENGTH) :: fromForm
+   character (LEN=*), parameter  :: intermediateForm = 'yyyymmdd'
+   character (LEN=MAXLISTLENGTH) :: time
+   character (LEN=MAXLISTLENGTH) :: toForm
+   character(len=*), parameter   :: MFORMAT = 'yyyy M dd'
+   character(len=*), parameter   :: DOYFORMAT = 'yyyy-doy'
+   integer                       :: dai
+   integer                       :: i
+   integer                       :: n_dates = 0
+  ! Executable
+  do      ! Loop over options
+     call get_date(date, n_dates, options)
+     if ( index('-+', date(1:1)) > 0 ) cycle
+     if ( date == ' ' ) exit
+     if ( options%inputFormat /= ' ' ) then
+       ! Because the internal dateForm will not be needed
+     elseif ( index(dateForm(date), 'yyyy') == 0 ) then
+       print *, 'Sorry--date format not found: ', trim(date)
+       cycle
+     endif
+     n_dates = n_dates + 1
+     dates(n_dates) = date
+  enddo
+  do i=1, n_dates
+    date = dates(i)
+    fromForm = options%inputFormat
+    if ( len_trim(options%inputFormat) < 1 ) fromForm = dateForm(date)
+    ! Figure out logical format to convert it to
+    if ( options%outputFormat /= ' ' ) then
+      toForm = options%outputFormat
+    elseif ( index(lowercase(fromForm), 'doy') > 0 ) then
+      toForm = MFORMAT
+    else
+      toForm = DOYFORMAT
+    endif
+    if ( options%verbose ) then
+      print *, 'Input was ', trim(date)
+      print *, 'Input format was ', trim(fromForm)
+      print *, 'Output format is ', trim(toForm)
+      print *, 'input time is ', trim(options%inputTime)
+      print *, 'Offset days is ', options%offset
+      print *, 'Offset hours is ', options%hoursoffset
+    endif
+    
+    ! Process date
+    if ( options%offset /= 0 ) then
+      intermediate_date = reFormatDate(date, &
+        & fromForm=trim(fromForm), toForm=intermediateForm)
+      ! print *, 'intermediate_date', intermediate_date
+      call yyyymmdd_to_dai(intermediate_date, dai)
+      ! print *, 'dai', dai
+      dai = dai + options%offset
+      call dai_to_yyyymmdd(dai, intermediate_date)
+      converted_date = reFormatDate(intermediate_date, &
+        fromForm=intermediateForm, toForm=trim(toForm))
+    elseif ( options%hoursoffset /= 0 ) then
+      converted_date = reFormatDate( date, &
+        & fromForm=trim(fromForm), toForm='yyyy-mm-dd' )
+      ! if ( options%verbose ) print *, '1st date: ', trim(converted_date)
+      if ( options%inputTime == ' ' ) options%inputTime = '00:00:00'
+      ! Mash date and time together in unholy union
+      intermediate_date = trim(converted_date) // 'T' // &
+        & adjustl(options%inputTime)
+      ! if ( options%verbose ) print *, 'mash date: ', trim(intermediate_date)
+      converted_date = addhourstoutc( intermediate_date, options%hoursoffset )
+      if ( options%verbose ) print *, 'advanced date: ', trim(converted_date)
+      ! Now split them asunder
+      intermediate_date = StringElement( converted_date, 1, countEmpty=.true., &
+        & inseparator='T' )
+      converted_time = StringElement( converted_date, 2, countEmpty=.true., &
+        & inseparator='T' )
+      converted_date = reFormatDate(intermediate_date, &
+        fromForm='yyyy-mm-dd', toForm=trim(toForm))
+    else
+      converted_date = reFormatDate(date, &
+        & fromForm=trim(fromForm), toForm=trim(toForm))
+    endif
+    if ( options%inputTime /= ' ' ) then
+      call print_string( trim(converted_date) // ' ' // trim(converted_time) )
+    else
+      call print_string( trim(converted_date) )
+    endif
+   enddo
+contains
+  subroutine advance ( values, dvalues )
+    integer, dimension(8), intent(inout) :: values
+    integer, dimension(8), intent(in)    :: dvalues
+    integer, dimension(8), parameter     :: lolimits = &
+      & (/1,     1,  1, 0,  0, 0,   0,  0/)
+    integer, dimension(8), parameter     :: uplimits = &
+      & (/2000, 12, -1, 0, 23, 59, 59, 999/)
+    integer :: hindx
+    integer :: indx
+    integer :: limit
+    integer, dimension(-1:12) :: DAYMAX
+    if ( leapyear(values(1)) ) then
+      DAYMAX = DAYMAXLY
+    else
+      DAYMAX = DAYMAXNY
+    endif
+    values = values + dvalues
+    do indx = 8, 2, -1
+      limit = uplimits(indx)
+      if ( limit == 0 ) cycle
+      if ( uplimits(indx-1) > 0 ) then
+        hindx = indx-1
+      else
+        hindx = indx-2
+      endif
+      if ( limit < 0 ) then
+        limit = DAYMAX(values(2))
+      endif
+      if ( values(indx) > limit ) then
+        values(hindx) = values(hindx) + 1
+        values(indx) = values(indx) - (limit+1) + lolimits(indx)
+      endif
+    enddo
+  end subroutine advance
+  logical function leapyear(year)
+    integer,intent(in) :: year
+     ! This is to capture rule that centuries are leap only
+     ! if divisible by 400
+     ! Otherwise, as prehaps you knew, leapyears are those years divisible by 4
+     if ( 100 * (year/100) >= year ) then
+       leapyear = ( 400 * (year/400) >= year )
+     else
+       leapyear = ( 4 * (year/4) >= year )
+     endif
+  end function leapyear
+  
+  function dateForm(date) result(form)
+    ! Determine what format the date is in
+    ! E.g., given '2004-d271' returns 'yyyy-doy'
+    ! Args
+    character(len=*), intent(in) :: date
+    character(len=len(date)+8) :: form
+    ! Internal variables
+    integer :: i
+    integer :: j
+    integer :: month
+    character(len=1)            :: s  ! The expected date field
+    character(len=1), parameter :: y = 'y'
+    character(len=1), parameter :: m = 'm'
+    character(len=1), parameter :: d = 'd'
+    ! Executable
+    form = 'unknown format'
+    if ( len_trim(date) < 1 ) return
+    form = ' '
+    s = 'y'
+    i = 0
+    j = 0
+    do
+      if ( j >= len_trim(date) ) exit
+      i = i + 1
+      j = j + 1
+      select case (date(j:j))
+      case ('d')
+        form(i:i+2) = 'doy'
+        i = i + 3
+        j = j + 3
+        ! print *, 'After d field: ', form
+      case ('J', 'F', 'M', 'A', 'S', 'O', 'N', 'D')
+        month = monthNameToNumber(date(j:))
+        if ( month < 1 .or. month > 12 ) then
+          form = 'month name uncrecognized in ' // trim(date(j:))
+          return
+        endif
+        j = j + len_trim(MONTHNAME(month)) - 1
+        form(i:i) = 'M'
+        s = 'd'
+        ! write(tempFormat(5:6),'(i2.2)') month
+        ! print *, 'After M field: ', form
+      case ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9')
+        select case (s)
+        case ('m')
+          ! Was yyyy, now mm
+          form(i:i+1) = 'mm'
+          s = 'd'
+          i = i + 1
+          j = j + 1
+          ! print *, 'After 0-9  m field: ', form
+        case ('d')
+          ! Was mm, now dd
+          form(i:i+1) = 'dd'
+          s = ' '
+          i = i + 1
+          j = j + 1
+          ! print *, 'After 0-9  d field: ', form
+        case ('y')
+          ! yyyy
+          form(i:i+3) = 'yyyy'
+          s = 'm'
+          i = i + 3
+          j = j + 3
+          ! print *, 'After 0-9  y field: ', form
+        case default
+          ! Huh? Already finished with dd
+          if ( options%verbose ) print *, 'Unexpected digit in dateForm'
+        end select
+      case default
+        form(i:i) = date(j:j)
+        ! print *, 'After default field: ', form
+      end select
+    enddo
+  end function dateForm
+  function monthNameToNumber(name) result(number)
+    ! Convert month name to corresponding number
+    ! E.g., given 'March', returns 3
+    ! As a courtesy, name may be case-insensitive
+    ! As a further courtesy, name may be followed by any junk you like
+    ! Thus 'March 23, 2004 01:59:59.999' still returns 3
+    ! If no such month is found, returns -1
+    ! Args
+    character(len=*), intent(in)             :: name
+    integer                                  :: number
+    do number=1, size(MONTHNAME)
+      if ( index(lowerCase(name), lowercase(trim(MONTHNAME(number)))) > 0 ) return
+    enddo
+    number = -1
+  end function monthNameToNumber
+
+!------------------------- get_date ---------------------
+    subroutine get_date(date, n_dates, options)
+    ! Added for command-line processing
+     character(LEN=255), intent(out) :: date          ! date
+     integer, intent(in)             :: n_dates
+     type ( options_T ), intent(inout) :: options
+     ! Local variables
+     character(LEN=255) ::              arg
+     integer ::                         error = 1
+     integer, save ::                   i = 1
+  ! Get inputfile name, process command-line args
+  ! (which always start with -)
+    do
+      call getarg ( i+hp, date )
+      ! print *, i, ' th Arg: ', trim(date)
+      error = 0
+      if ( index('-+', date(1:1)) < 1 ) exit
+      if ( date(1:3) == '-h ' ) then
+        call print_help
+      elseif ( date(1:3) == '-H ' ) then
+        call getarg ( i+1+hp, arg )
+        call readIntsFromChars(arg, options%hoursOffset)
+        options%hoursOffset = - options%hoursOffset ! Because we will subtract
+        i = i + 1
+        exit
+      elseif ( date(1:3) == '+H ' ) then
+        call getarg ( i+1+hp, arg )
+        call readIntsFromChars(arg, options%hoursOffset)
+        i = i + 1
+        exit
+      elseif ( date(1:3) == '-i ' ) then
+        call getarg ( i+1+hp, options%inputFormat )
+        i = i + 1
+        exit
+      elseif ( date(1:3) == '-t ' ) then
+        call getarg ( i+1+hp, options%inputTime )
+        i = i + 1
+        exit
+      elseif ( date(1:3) == '-o ' ) then
+        call getarg ( i+1+hp, options%outputFormat )
+        i = i + 1
+        exit
+      elseif ( date(1:3) == '-v ' ) then
+        options%verbose = .true.
+        exit
+      elseif ( index('0123456789', date(2:2)) > 0 ) then
+        call readIntsFromChars(date, options%offset)
+        exit
+      else
+        call print_help
+      end if
+      i = i + 1
+    end do
+    if ( error /= 0 ) then
+      call print_help
+    endif
+    i = i + 1
+    if (trim(date) == ' ' .and. n_dates == 0) then
+
+    ! Last chance to enter date
+      ! print *,  "Enter the date you wish to convert."
+      read(*,'(a)') date
+    endif
+    
+  end subroutine get_date
+!------------------------- print_help ---------------------
+  subroutine print_help
+  ! Print brief but helpful message
+      write (*,*) &
+      & 'Usage:dateconverter [options] [dates]'
+      write (*,*) &
+      & ' If no dates supplied, you will be prompted to supply one'
+      write (*,*) &
+      & ' If no time-of-day supplied, none will be output'
+      write (*,*) ' Options: -o format   => output format to use (e.g. yyyymmdd)'
+      write (*,*) '                        by default output will complement input'
+      write (*,*) '                        e.g., "2004 October 01" <=> 2004-d275'
+      write (*,*) '          -i format   => input format'
+      write (*,*) '                        by default attempt to auto-recognize'
+      write (*,*) '          -t time     => optional time-of-day (military-style)'
+      write (*,*) '                        e.g., "06:53:10"'
+      write (*,*) '          -number     => subtract "number" days'
+      write (*,*) '          +number     => add "number" days'
+      write (*,*) '          -H number   => subtract "number" hours'
+      write (*,*) '          +H number   => add "number" hours'
+      write (*,*) '          -v          => switch on verbose mode'
+      write (*,*) '          -h          => print brief help'
+      stop
+  end subroutine print_help
+!------------------------- print_string ---------------------
+  subroutine print_string(string)
+    character(len=*), intent(in) :: string
+    write(*,'(a)') trim(string)
+  end subroutine print_string
+
+!==================
+END PROGRAM dateconverter
+!==================
+
+! $Log: dateconverter.f90,v $
+! Revision 1.7  2007/01/18 23:48:33  pwagner
+! Last commit--about to move to util
+!
+! Revision 1.6  2006/11/01 20:48:52  pwagner
+! Should not prompt for stdin; messes up comd sub; but maybe should remove stdin altogether?
+!
+! Revision 1.5  2005/09/23 20:45:41  pwagner
+! Changes to conform with dates_module
+!
+! Revision 1.4  2005/09/15 00:14:31  pwagner
+! +/-number option added
+!
+! Revision 1.3  2004/10/13 22:58:00  pwagner
+! Fixed bug in date_format; added -i option
+!
+! Revision 1.2  2004/10/12 23:42:29  pwagner
+! Suitable for shell substitution tasks now
+!
+@
+
+
+1.7
+log
+@Last commit--about to move to util
+@
+text
+@d15 1
+a15 1
+   "$Id: dateconverter.f90,v 1.6 2006/11/01 20:48:52 pwagner Exp $"
+d387 3
+@
+
+
+1.6
+log
+@Should not prompt for stdin; messes up comd sub; but maybe should remove stdin altogether?
+@
+text
+@d5 2
+a6 1
+   use dates_module, ONLY: reFormatDate, dai_to_yyyymmdd, yyyymmdd_to_dai
+d8 1
+d15 1
+a15 1
+   "$Id: dateconverter.f90,v 1.5 2005/09/23 20:45:41 pwagner Exp $"
+d29 1
+d33 1
+d62 1
+d68 1
+d101 1
+a101 1
+    if ( options%verbose) then
+d105 3
+a107 1
+      print *, 'Offset is ', options%offset
+d121 18
+d143 5
+a147 1
+    call print_string(trim(converted_date))
+d294 1
+d306 11
+d321 4
+d359 2
+d366 2
+d370 2
+d387 3
+@
+
+
+1.5
+log
+@Changes to conform with dates_module
+@
+text
+@d13 1
+a13 1
+   "$Id: dateconverter.f90,v 1.4 2005/09/15 00:14:31 pwagner Exp $"
+d301 1
+a301 1
+      print *,  "Enter the date you wish to convert."
+d335 3
+@
+
+
+1.4
+log
+@+/-number option added
+@
+text
+@d5 1
+d7 1
+a7 2
+   USE MLSStrings, ONLY: lowerCase, readIntsFromChars, reFormatDate
+   USE MLSStringLists, ONLY: dai_to_yyyymmdd, yyyymmdd_to_dai
+d13 1
+a13 1
+   "$Id: dateconverter.f90,v 1.3 2004/10/13 22:58:00 pwagner Exp $"
+d23 1
+d26 1
+a26 1
+    integer     :: offset = 0                      ! How many days to add/subtract
+d28 2
+a29 2
+    character(len=255) :: outputFormat= ' '        ! output format
+    character(len=255) :: inputFormat= ' '         ! input format
+d42 1
+a42 1
+   ! The following arrys contains the maximum permissible day for each month
+d74 3
+a76 1
+     if ( index(dateForm(date), 'yyyy') == 0 ) then
+d85 2
+a86 2
+    fromForm = dateForm(date)
+    if ( len_trim(options%inputFormat) > 0 ) fromForm = options%inputFormat
+d233 1
+a233 1
+          print *, 'Unexpected digit in dateForm'
+a262 2
+     ! character(LEN=*), intent(inout) :: outputFile        ! output date
+     ! logical, intent(inout)          :: verbose
+d335 3
+@
+
+
+1.3
+log
+@Fixed bug in date_format; added -i option
+@
+text
+@d6 2
+a7 1
+   USE MLSStrings , ONLY: lowerCase, reFormatDate
+d13 1
+a13 1
+   "$Id: dateconverter.f90,v 1.2 2004/10/12 23:42:29 pwagner Exp $"
+d25 1
+d54 1
+a54 1
+   INTEGER, PARAMETER :: MAXLISTLENGTH=24
+d56 3
+a58 2
+	CHARACTER (LEN=MAXLISTLENGTH) :: converted_date
+	CHARACTER (LEN=MAXLISTLENGTH) :: date
+d60 3
+a62 2
+	CHARACTER (LEN=MAXLISTLENGTH) :: toForm
+	CHARACTER (LEN=MAXLISTLENGTH) :: fromForm
+d65 1
+d71 1
+a71 1
+     if ( date(1:1) == '-' ) cycle
+d96 1
+d100 14
+a113 3
+    converted_date = reFormatDate(date, &
+      & fromForm=trim(fromForm), toForm=trim(toForm))
+
+d271 1
+a271 1
+      if ( date(1:1) /= '-' ) exit
+d285 3
+d317 2
+d334 3
+@
+
+
+1.2
+log
+@Suitable for shell substitution tasks now
+@
+text
+@d12 2
+a13 2
+   "$Id: hhmmss_value_text.f90,v 1.1 2002/02/19 23:28:19 pwagner Exp $"
+   CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile: hhmmss_value_text.f90,v $"
+d26 1
+d77 2
+a78 1
+    fromForm = trim(dateForm(date))
+d82 1
+a82 1
+    elseif ( index(fromForm, 'doy') > 0 ) then
+d168 1
+a168 1
+      if ( i >= len_trim(date) ) exit
+d176 1
+d178 1
+a178 1
+        month = monthNameToNumber(date(i:))
+d180 1
+a180 1
+          form = 'month name uncrecognized in ' // trim(date(i:))
+d187 1
+d196 1
+d203 1
+d210 1
+d217 1
+d257 4
+d295 2
+d311 4
+a314 1
+! $Log: hhmmss_value_text.f90,v $
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d95 1
+a95 1
+    print *, trim(converted_date)
+d281 2
+d287 5
+@
+

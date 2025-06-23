@@ -1,0 +1,129 @@
+head	1.3;
+access;
+symbols
+	v5-02-NRT-19:1.3
+	v6-00:1.3
+	v5-02-NRT-18:1.3
+	v5-02:1.3
+	v5-01-NRT-17:1.3
+	v5-01-NRT-16:1.3
+	v5-01-NRT-15:1.3
+	v5-01-NRT-14:1.3
+	neuralnetworks-1-0:1.3.0.6
+	cfm-single-freq-0-1:1.3.0.4
+	v5-01:1.3
+	v5-00:1.3
+	v4-23-TA133:1.3.0.2
+	mus-emls-1-70:1.2.0.4
+	rel-1-0-englocks-work:1.2.0.2
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.3
+date	2019.02.05.16.33.51;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2017.11.07.21.25.31;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2015.11.18.18.36.30;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@Added Band22 to help catch faulty runs that omit DACs file
+@
+text
+@!divert(-1)
+; $Id: coreflags-MUSTARD-Aura.l2cf,v 1.2 2017/11/07 21:25:31 pwagner Exp $
+
+; ----------- Phase name vs. retrieval name
+; Some phase(s) may not have Retrieve sections
+; and so we'll need to know the last one
+; Actually, this is now the FinalPtan phase--we eliminated Core
+; Should we rename this file accordingly?
+!define(retrophase,{FinalPtan})
+
+!divert!dnl
+; This l2cf fragment does all the quality flagging for the FinalPtan
+; products
+
+begin Fill
+  ;; ------------------------------------ Temperature-FinalPtan
+  !define(flaggingBands,{1,22})
+  !define(flaggingRadiometers,{R1A,R1B})!dnl
+  !makeQualityForOneProduct(product=Temperature,chisqScale=1.0,minRads=150,cloudMax=30K,cloudMin= -4K)
+  !makeStatusForOneProduct(product=Temperature,chisqScale=1.0,minRads=150,cloudMax=30K,cloudMin= -4K)
+
+  ;; ------------------------------------ GPH-FinalPtan
+  !define(flaggingBands,{1,22})
+  !define(flaggingRadiometers,{R1A,R1B})!dnl
+  !makeQualityForOneProduct(product=GPH,chisqScale=1.0,minRads=150,cloudMax=30K,cloudMin= -4K)
+  !makeStatusForOneProduct(product=GPH,chisqScale=1.0,minRads=150,cloudMax=30K,cloudMin= -4K)
+
+  ;; ------------------------------------ O3-FinalPtan
+  !define(flaggingBands,{1,22})
+  !define(flaggingRadiometers,{R1A,R1B})!dnl
+  !makeQualityForOneProduct(product=O3,chisqScale=1.0,minRads=150,cloudMax=30K,cloudMin= -4K)
+  !makeStatusForOneProduct(product=O3,chisqScale=1.0,minRads=150,cloudMax=30K,cloudMin= -4K)
+
+end Fill
+
+; $Log: coreflags-MUSTARD-Aura.l2cf,v $
+; Revision 1.2  2017/11/07 21:25:31  pwagner
+; Added flagging for ozone of this phase
+;
+; Revision 1.1  2015/11/18 18:36:30  pwagner
+; Added for vam1.00
+;
+@
+
+
+1.2
+log
+@Added flagging for ozone of this phase
+@
+text
+@d2 1
+a2 1
+; $Id: coreflags-MUSTARD-Aura.l2cf,v 1.1 2015/11/18 18:36:30 pwagner Exp $
+d17 1
+a17 1
+  !define(flaggingBands,{1})
+d23 1
+a23 1
+  !define(flaggingBands,{1})
+d29 1
+a29 1
+  !define(flaggingBands,{1})
+d37 3
+@
+
+
+1.1
+log
+@Added for vam1.00
+@
+text
+@d2 1
+a2 1
+; $Id: coreflags-MUSTARD-Aura.l2cf,v 1.14 2013/05/28 20:36:26 pwagner Exp $
+d28 6
+d37 3
+@
+

@@ -1,0 +1,540 @@
+head	2.9;
+access;
+symbols
+	V3-43:2.8
+	V3-41:2.8
+	V3-40-PlusGM57:2.8.0.2
+	V2-24-NRT-04:2.8
+	V3-33:2.8
+	V2-24:2.8
+	V3-31:2.8
+	V3-30-NRT-05:2.8
+	cfm-01-00:2.8
+	V3-30:2.8
+	V3-20:2.8
+	V3-10:2.8
+	V2-23-NRT-02:2.8
+	V2-23:2.8
+	V2-22-NRT-01:2.8
+	V2-22:2.8
+	V2-21:2.8
+	V2-20:2.8
+	V2-11:2.8
+	V2-10:2.8
+	V2-00:2.8
+	V1-51:2.6
+	V1-50:2.6
+	V1-45:2.6
+	V1-44:2.6
+	V1-43:2.6
+	V1-32:2.6
+	V1-31:2.6
+	V1-30:2.4
+	V1-13:2.4
+	V1-12:2.4
+	V1-11:2.4
+	V1-10:2.4
+	newfwm-feb03:2.4.0.2
+	V1-04:2.1
+	V1-03:2.1
+	V1-02:2.1
+	JointForwardModel:2.2.0.2
+	V1-00:2.0
+	newfwm-sep01:1.4.0.2
+	V0-7:1.4
+	V0-5-Level2:1.3
+	V0-5-SIPS:1.3
+	V0_1:1.1;
+locks; strict;
+comment	@# @;
+
+
+2.9
+date	2011.08.26.00.30.00;	author pwagner;	state dead;
+branches;
+next	2.8;
+
+2.8
+date	2005.06.22.18.20.14;	author pwagner;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2005.06.22.18.14.01;	author pwagner;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2003.11.08.02.17.30;	author vsnyder;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2003.09.16.00.05.41;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2002.10.04.23.26.25;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2002.10.02.15.49.26;	author bwknosp;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2002.05.08.08.53.45;	author zvi;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2002.04.18.10.46.23;	author zvi;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2001.09.17.20.26.26;	author livesey;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.06.07.23.43.53;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2000.11.22.23.10.02;	author zvi;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2000.11.22.23.07.24;	author zvi;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2000.05.05.00.04.02;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.9
+log
+@Moved to lib or combined with MLSNumerics module
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! subroutine ?CSPLINE_DER ( XIN, XOUT, YIN, YOUT, DYOUT, NIN, NOUT, YMIN, YMAX )
+
+!  Given arrays XIN & YIN of lenght NIN containing a tabulated function,
+!  with XIN ordered, and given the (ordered) array XOUT of length NOUT,
+!  this subroutine Returns the array YOUT, which is the cubic-spline
+!  interpolation of (XIN,YIN) computed for each XOUT, and the array DYOUT,
+!  which is the derivative of YOUT w.r.t. X evaluated at XOUT.
+
+    integer, intent(in) :: NIN, NOUT
+    real(rk), intent(in) :: XIN(abs(nin)), XOUT(nout), YIN(abs(nin))
+    real(rk), optional, intent(in) :: YMIN, YMAX
+
+    real(rk), intent(out) :: YOUT(nout), DYOUT(nout)
+
+    integer :: JIN, I, KLO, KHI, KPL
+    real(rk) :: COEFF(4, abs(nin)), X_IN(abs(nin))
+    real(rk) :: X, Y, XL, XH, YL, YH, DY, YLIN, DYDX, H
+
+    if ( all(yin(2:) == yin(1)) ) then
+      yout = yin(1)
+      dyout = 0.0
+      return
+    end if
+
+    jin = abs(nin)
+
+    if ( xin(jin) > xin(1) ) then
+      x_in = xin
+      coeff(1,:) = yin
+    else
+      x_in = xin(jin:1:-1)
+      coeff(1,:) = yin(jin:1:-1)
+    end if
+
+    coeff(2,1) = 0.0
+    coeff(2,jin) = 0.0
+
+    call pcspl ( x_in, coeff, jin, 0, 0 )
+
+    klo = -1
+    kpl = -2
+    do i = 1, nout
+
+      x = xout(i)
+      call hunt ( x, x_in, jin, klo, khi )
+      if ( klo /= kpl ) then
+        kpl = klo
+        xl = x_in(klo)
+        xh = x_in(khi)
+        yl = coeff(1,klo)
+        yh = coeff(1,khi)
+        dydx = (yh-yl)/(xh-xl)
+      end if
+
+      h = x - xl
+      ylin = yl + dydx * h
+
+      y = yl + h * (coeff(2,klo) + h * (coeff(3,klo) + h * coeff(4,klo) ) )
+      dy = coeff(2,klo) + h * ( 2.0 * coeff(3,klo) + h * 3.0 * coeff(4,klo) )
+
+! Decide whether to revert back to linear interpolation:
+
+      if ( abs(y-ylin) > 0.25 * abs(ylin) ) then
+        y = ylin
+        dy = dydx
+      else if ( present(ymin) .and. present(ymax) ) then
+        if ( y < ymin .or. y > ymax ) then
+          y = ylin
+          dy = dydx
+        end if
+      end if
+
+      yout(i) = y
+      dyout(i) = dy
+
+    end do
+
+! end subroutine ?CSPLINE_DER
+
+! $Log: cspline_der.f9h,v $
+! Revision 2.8  2005/06/22 18:20:14  pwagner
+! Cant have access declared outside module scope
+!
+! Revision 2.7  2005/06/22 18:14:01  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.6  2003/11/08 02:17:30  vsnyder
+! Simplification, polishing
+!
+! Revision 2.5  2003/09/16 00:05:41  vsnyder
+! Remove unused local variable
+!
+! Revision 2.4  2002/10/04 23:26:25  vsnyder
+! Fix a bug in the x-descending case
+!
+! Revision 2.3  2002/10/02 15:49:26  bwknosp
+! Added Id and RCS info
+!
+@
+
+
+2.8
+log
+@Cant have access declared outside module scope
+@
+text
+@d92 3
+@
+
+
+2.7
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@a13 6
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+d92 3
+@
+
+
+2.6
+log
+@Simplification, polishing
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d14 4
+a17 6
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+    &  "$Id: cspline_der.f9h,v 2.5 2003/09/16 00:05:41 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName = &
+    & "$RCSfile: cspline_der.f9h,v $"
+d98 3
+@
+
+
+2.5
+log
+@Remove unused local variable
+@
+text
+@d8 1
+a8 1
+    &  "$Id: cspline_der.f9h,v 2.4 2002/10/04 23:26:25 vsnyder Exp $"
+d26 1
+a26 1
+    integer :: JIN, I, J, KLO, KHI, KPL
+d28 1
+a28 1
+    real(rk) :: X, Y, XL, XH, YL, YH, DY, YLIN, DYDX, DP, H
+d30 2
+a31 4
+    jin = abs(nin)
+
+    if ( all(yin == 0.0) ) then
+      yout = 0.0
+d36 2
+d69 2
+a70 8
+      y = 0.0
+      dy = 0.0
+      do j = 4, 1, -1
+        y = (y/j)*h + coeff(j,klo)
+        if ( j < 4 ) then
+          dy = (dy/j)*h + coeff(j+1,klo)
+        end if
+      end do
+d74 1
+a74 3
+      dp = 100.0 * abs(y-ylin) / (abs(ylin) + epsilon(ylin))
+
+      if ( dp > 25.0 ) then
+d78 1
+a78 1
+        if ( y < ymin  .or. y > ymax ) then
+d92 3
+@
+
+
+2.4
+log
+@Fix a bug in the x-descending case
+@
+text
+@d8 1
+a8 1
+    &  "$Id: $"
+d11 1
+a11 1
+    & "$RCSfile: $"
+d28 1
+a28 1
+    real(rk) :: X, Y, XL, XH, YL, YH, DY, YLIN, DYDX, DP, H, TOL
+d78 1
+a78 2
+! If spline is more than 'TOL' different from linear, revert back to
+! linear interpolation:
+d100 3
+@
+
+
+2.3
+log
+@Added Id and RCS info
+@
+text
+@d1 4
+a4 2
+! subroutine ?CSPLINE_DER ( XIN, XOUT, YIN, YOUT, DYOUT, NIN, NOUT,YMIN,YMAX)
+!
+d7 5
+a11 3
+  CHARACTER (LEN=256) :: Id = &
+       "$Id: cspline_der.f9h,v 2.1 2002/04/18 10:46:24 zvi Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile: cspline_der.f9h,v $"
+d14 6
+a19 6
+!  Given arrays xin & yin of lenght nin containing a tabulated function,
+!  with xin ordered, and given the (ordered) array: xout of length: nout,
+!  this subroutine Returns the array: yout which is the cubic-spline
+!  interpolation of (xin,yin) computed for each: xout, and the array: dyout
+!  which is the derivative of yout.
+!
+d22 1
+a22 1
+    real(rk), OPTIONAL, intent(in) :: YMIN, YMAX
+d29 1
+a29 1
+!
+d31 1
+a31 1
+!
+d37 2
+a38 2
+!
+    if (xin(jin) > xin(1)) then
+d42 1
+a42 1
+      x_in = xin(1:jin)
+d45 1
+a45 1
+!
+d48 1
+a48 1
+!
+d50 1
+a50 1
+!
+d54 1
+a54 1
+!
+d57 1
+a57 1
+      if (klo /= kpl) then
+d65 1
+a65 1
+!
+d68 1
+a68 1
+!
+d73 1
+a73 1
+        if (j < 4) then
+d77 2
+a78 2
+!
+! If spline is more the 'TOL' different from linear, revert back to
+d80 1
+a80 1
+!
+d83 1
+a83 1
+      if(dp > 25.0) then
+d86 2
+a87 2
+      else if (PRESENT(YMIN) .AND. PRESENT(YMAX) ) then
+        if(y < YMIN  .OR. y > YMAX) then
+d90 3
+a92 3
+        endif
+      endif
+!
+d95 1
+a95 1
+!
+d97 1
+a97 1
+!
+d101 3
+@
+
+
+2.2
+log
+@Set limits on extrapolation
+@
+text
+@d3 7
+d95 2
+@
+
+
+2.1
+log
+@Adding optional limits
+@
+text
+@d70 2
+a71 2
+      h = MAX(abs(y),abs(ylin))
+      dp = 100.0 * abs(y-ylin) / (h + epsilon(ylin))
+@
+
+
+2.0
+log
+@New forward model
+@
+text
+@d1 1
+a1 4
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+! subroutine ?CSPLINE_DER ( XIN, XOUT, YIN, YOUT, DYOUT, NIN, NOUT )
+d11 2
+d14 1
+d17 1
+a17 1
+    real(rk) :: X, Y, XL, XH, YL, YH, DY, YLIN, DYDX, DP,H
+d67 1
+a67 1
+! If spline is more the 25% different from linear, revert back to
+d70 11
+a80 1
+      dp = 1.0e2_rk * abs(y-ylin) / (abs(ylin)+epsilon(ylin))
+d82 2
+a83 7
+      if (dp < 25.0) then         ! spline ok
+        yout(i) = y
+        dyout(i) = dy
+      else                        ! use linear
+        yout(i) = ylin
+        dyout(i) = dydx
+      end if
+@
+
+
+1.4
+log
+@Added Copyright statement
+@
+text
+@@
+
+
+1.3
+log
+@Re-add basic stuff
+@
+text
+@d1 3
+@
+
+
+1.2
+log
+@New version
+@
+text
+@d12 1
+a12 2
+
+    integer :: JIN, I, J, K, KLO, KHI, KPL
+d14 1
+a14 1
+    real(rk) :: X, Y, XL, XH, YL, YH, DY, YLIN, YSPL, DYDX, DP,H
+@
+
+
+1.1
+log
+@Initial conversion to Fortran 90
+@
+text
+@@
+

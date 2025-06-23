@@ -1,0 +1,161 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.14
+	cfm-single-freq-0-1:1.2.0.12
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.10
+	mus-emls-1-70:1.2.0.8
+	rel-1-0-englocks-work:1.2.0.6
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.2
+	V4-21:1.2.0.4
+	V4-13:1.2
+	V4-12:1.2
+	V4-11:1.2
+	V4-10:1.2
+	V3-43:1.2
+	M4-00:1.2
+	V3-41:1.2
+	V3-40-PlusGM57:1.2.0.2
+	V2-24-NRT-04:1.2
+	V3-33:1.2
+	V2-24:1.2
+	V3-31:1.2
+	V3-30-NRT-05:1.2
+	cfm-01-00:1.2
+	V3-30:1.2
+	V3-20:1.2
+	V3-10:1.2
+	V2-23-NRT-02:1.2
+	V2-23:1.2
+	V2-22-NRT-01:1.2
+	V2-22:1.2
+	V2-21:1.2
+	V2-20:1.2
+	V2-11:1.2
+	V2-10:1.2
+	V2-00:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2006.02.28.21.39.21;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.12.23.03.09.33;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Removed useless setting to FillValue when already FillValue
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id: FilterValues_1d.f9h,v 1.1 2005/12/23 03:09:33 vsnyder Exp $
+
+    real(rk), dimension(:), intent(in)           :: a
+    real(rk), dimension(:), intent(in)           :: b
+    real(rk), dimension(:), intent(out)          :: atab
+    real(rk), dimension(:), intent(out)          :: btab
+    logical, intent(out)                         :: warn
+    real(rk), optional, intent(in)               :: fillValue
+    real(rk), dimension(:), optional, intent(in) :: precision
+    ! Internal variables
+    integer                                      :: i
+    real(rk)                                     :: myFillValue
+    integer                                      :: n
+    ! Executable
+    myFillValue = 0.0_rk
+    if ( present(FillValue) ) myFillValue = FillValue
+    warn = .false.
+    n=size(a)
+    if ( n /= size(b) ) then
+      call announce_error('a and b different sizes', n, size(b))
+    else if ( n /= size(atab) ) then
+      call announce_error('a and atab different sizes', n, size(b))
+    else if ( n /= size(btab) ) then
+      call announce_error('a and btab different sizes', n, size(b))
+    else if ( DEEBUG ) then
+      call output('Filtering 1-d '//p, advance='yes')
+    end if
+    atab = a
+    btab = b
+    do i=1, N
+      if ( .not. ieee_is_finite(a(i)) .or. .not. ieee_is_finite(b(i)) ) then
+        atab(i) = myFillValue
+        btab(i) = myFillValue
+        warn = warn .or. ieee_is_finite(a(i)) .or. ieee_is_finite(b(i))
+      end if
+    end do
+    if ( present(precision) ) then
+      do i=1, N
+        if ( (precision(i) < 0.0_rk) ) then
+          atab(i) = myFillValue
+          btab(i) = myFillValue
+        end if
+      end do
+    end if
+
+! $Log: FilterValues_1d.f9h,v $
+! Revision 1.1  2005/12/23 03:09:33  vsnyder
+! Initial commit
+!
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d12 1
+a12 1
+! $Id: $
+a37 2
+      !call dump_name_v_pairs( (/n, size(b), size(atab), size(btab) /), &
+      !  & 'size(a), size(b), size(atab), size(btab)', width=4)
+a47 8
+    if ( present(fillValue) ) then
+      do i=1, N
+        if ( isFillValue(a(i), FillValue) .or. isFillValue(b(i), FillValue) ) then
+          atab(i) = myFillValue
+          btab(i) = myFillValue
+        end if
+      end do
+    end if
+d57 4
+a60 1
+! $Log: $
+@
+

@@ -1,0 +1,81 @@
+head	1.1;
+access;
+symbols
+	cfm-single-freq-0-1:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2020.10.29.16.43.26;	author whdaffer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2020.10.29.16.43.26;	author whdaffer;	state Exp;
+branches;
+next	;
+
+
+desc
+@various versions of the config.l2cf, including the unmodified original
+@
+
+
+1.1
+log
+@file config-single-freq-band7.l2cf was initially added on branch cfm-single-freq-0-1.
+@
+text
+@@
+
+
+1.1.2.1
+log
+@various versions of the config.l2cf, including the unmodified original
+@
+text
+@a0 40
+begin GlobalSettings
+
+  vGridTangent: vGrid, type=Logarithmic, coordinate=Zeta, $
+    start=1000mb, formula=[2:6,12:12,41:6]
+
+  ;; Setup the particular forward model we're going to use
+  ;; in computing analytical second derivatives
+
+  ;;<whd> single-frequency-work
+  analyticalL2pcFwm: forwardModel, type=full,  $
+  signals = 'R3:240.B7F:O3', $ ;<--- original. I'm assuming the 240 and the O3 are extraneous
+  ;signals='R1000Custom:dummy.B1000F:dummy', $
+    Molecules = [ [ HNO3, HNO3, HNO3_V7, HNO3_V9 ], $
+                  [ O2, O_18_O ], $
+                  [ O3, O3,  O3_V1_3, O3_V2, O3_ASYM_O_18, O3_SYM_O_18 ], $
+                  [ SO2, S_32_O2 ] ], $
+    ;; LSBlblMolecules = [EXTINCTIONV2,O3,O3_
+    ;; USBlblMolecules = [EXTINCTIONV2,O3,O3_V2],$
+                                   ;; removed extinctionv2
+  moleculederivatives = [ O3 ], $
+   ;;specificQuantities=[temperature_HR, h2o_HR], $
+   ;;                                   specificQuantities=[EXTINCTIONV2R3], $
+    phiWindow=0 degrees, $
+    /skipOverlaps, $
+     integrationGrid=vGridTangent, tangentGrid=vGridTangent, $
+    ;;/do_conv, $
+   ;;/do_freq_avg, $
+    ;;/temp_der, $
+    /atmos_der, $
+    ;;tolerance= -1K, $
+    ;;/allLinesForRadiometer, $
+  ;;
+  /allLinesInCatalog
+
+end GlobalSettings
+;;+ Removed extinctionv2 because of test 15
+;; Log:
+;;
+;; 2020/09/23 : commented out /allLinesForRadiometer and added
+;; allLinesInCatelog on advice from NJL.
+@
+

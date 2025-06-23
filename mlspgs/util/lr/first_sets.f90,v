@@ -1,0 +1,251 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.12
+	cfm-single-freq-0-1:1.2.0.10
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.8
+	mus-emls-1-70:1.2.0.6
+	rel-1-0-englocks-work:1.2.0.4
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.2
+	V4-21:1.2.0.2
+	V4-13:1.2
+	V4-12:1.2
+	V4-11:1.2
+	V4-10:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2014.01.14.00.11.42;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2013.10.24.22.41.14;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Revised LR completely
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module FIRST_SETS
+
+  implicit NONE
+  private
+
+  integer, public, allocatable, save :: FIRST_PT(:) ! pointer to first set
+  public :: FIND_FIRST
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: first_sets.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  subroutine FIND_FIRST            ! find FIRST sets for nonterminal symbols
+
+    use Error_m, only: Error
+    use LISTS, only: ADDLTL, LCOMPR, LIST, NEW, REL
+    use NULLABLE_M, only: NULLABLE
+    use Tables, only: NTERMS, NUMPRD, NVOC, PRDIND => Prod_Ind, &
+      & PRODCN => Productions
+
+    logical :: ADD_CHANGE          ! "ADDLTL changed a list"
+    logical :: CHANGE              ! "a first set changed"
+    integer :: I, J, K             ! subscripts and loop inductors
+    logical :: RESET(NTERMS+1:NVOC) ! "FIRST_PT(i) has been destroyed"
+
+    allocate ( first_pt (nvoc) , stat=i )
+    if ( i /= 0 ) call error &
+      ( 'FIND_FIRST-E- Unable to allocate FIRST_PT, STAT =', 2 )
+
+    ! Compute the first sets
+    first_pt(nterms+1:nvoc) = 0    ! nonterminal first sets start empty
+    do i = 1, nterms
+      call new ( first_pt(i) )
+      list(first_pt(i))%item = i        ! terminal first set is the terminal
+    end do
+
+    change = .true.
+    do while ( change )
+      change = .false.
+      do i = 1, numprd             ! all the productions
+        j = prdind(i)              ! beginning of i'th production
+        do k = j+1, prdind(i+1)-1  ! all of i'th production's RHS
+          if ( prodcn(k) /= prodcn(j) ) then ! j'th RHS symbol /= LHS
+            call addltl ( first_pt(prodcn(k)), first_pt(prodcn(j)), add_change )
+            if ( add_change ) change = .true.
+          end if
+          if ( .not. nullable(prodcn(k)) ) exit
+        end do
+      end do
+    end do
+
+    ! Now pack up the sets.  If two sets are identical they will be
+    ! shared.  This is OK because the THEAD sets never change once
+    ! generated.
+
+    reset = first_pt(nterms+1:nvoc) == 0
+    do i = nterms+1, nvoc-1
+      if ( .not. reset(i) ) then
+        do j = i+1, nvoc
+          if ( .not. reset(j) ) then
+            if ( lcompr(first_pt(i), first_pt(j)) ) then ! Sets equal?
+              call rel (first_pt(j))    ! release one
+              first_pt(j) = first_pt(i) ! use the other one
+              reset(j) = .true.         ! indicate released one destroyed
+            end if
+          end if
+        end do
+      end if
+    end do
+
+    call print_first
+
+  end subroutine FIND_FIRST
+
+  subroutine PRINT_FIRST
+
+    use Output_m, only: OUTPUT
+    use Print_List, only: PNTLST
+    use Processor_Dependent, only: NewPage
+    use String_Table, only: Display_String, String_Length
+    use Tables, only: First_Nonterminal, Last_Nonterminal, Vocab
+    use TOGGLES_LR
+
+    integer :: I, K                ! subscripts, loop inductors
+
+    if (toggle(iachar('2')) /= 0) then
+    ! Print the FIRST sets.
+      call output ( newPage, dont_asciify=.true. )
+      call output ( 'FIRST SETS:', advance='yes' )
+      do k = First_Nonterminal, Last_Nonterminal
+        if (first_pt(k) /= 0) then
+          call display_string ( vocab(k), before='    ' )
+          call output ( ': ' )
+          i = string_length(vocab(k)) + 6
+          call pntlst (first_pt(k), i, 10)
+        end if
+      end do
+    end if
+
+  end subroutine PRINT_FIRST
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: first_sets.f90,v 1.1 2013/10/24 22:41:14 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module FIRST_SETS
+
+! $Log: first_sets.f90,v $
+! Revision 1.1  2013/10/24 22:41:14  vsnyder
+! Initial commit
+!
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d22 1
+a22 1
+       "$RCSfile: parser.f90,v $"
+d30 2
+a31 2
+    use Error_Handler, only: Error
+    use LISTS, only: ADDLTL, ITEM, LCOMPR, NEW, REL
+d33 2
+a34 2
+    use S3, only: PRDIND, PRODCN
+    use TABCOM, only: NTERMS, NUMPRD, NVOC
+d36 1
+a38 1
+    integer :: ICHN                ! /=0 => ADDLTL changed a list
+d49 1
+a49 1
+      item(first_pt(i)) = i        ! terminal first set is the terminal
+d52 2
+a53 1
+    do ! until ( .not. change )
+d59 2
+a60 2
+            call addltl ( first_pt(prodcn(k)), first_pt(prodcn(j)), ichn )
+            if ( ichn /= 0 ) change = .true.
+a64 1
+      if ( .not. change ) exit     ! no change after checking all productions
+d92 1
+a92 1
+    use IO, only: OUTPUT
+d94 4
+a97 4
+    use S1, only: MOVSTR
+    use S3, only: VOCAB
+    use TABCOM, only: NTERMS, NVOC
+    use TOGGLES
+a99 1
+    character(len=120) :: LINE
+d101 1
+a101 1
+    if (toggle(ichar('2')) /= 0) then
+d103 3
+a105 3
+      line = '1FIRST SETS:'
+      call output (line(1:12))
+      do k = nterms+1, nvoc
+d107 4
+a110 5
+          i = 4
+          call movstr (vocab(k), line, i, 120)
+          line(i:i)=':'
+          i = i + 2
+          call pntlst (first_pt(k), line, i, 10)
+d120 1
+a120 1
+       "$Id: parser.f90,v 2.29 2013/10/02 01:35:46 vsnyder Exp $"
+d129 4
+a132 1
+! $Log: $
+@
+

@@ -1,0 +1,120 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.12
+	cfm-single-freq-0-1:1.2.0.10
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.8
+	mus-emls-1-70:1.2.0.6
+	rel-1-0-englocks-work:1.2.0.4
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.2
+	V4-21:1.2.0.2
+	V4-13:1.2
+	V4-12:1.2
+	V4-11:1.2
+	V4-10:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2013.12.11.23.50.57;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2013.10.18.22.49.38;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Must be able to unsplit dgg/dgm files if we created any
+@
+text
+@!divert(-1)
+; $Id: outputstdprods.l2cf,v 1.1 2013/10/18 22:49:38 pwagner Exp $
+;; For special sids or l2pc runs, Output Joined standard products 
+;; to individual files.
+!divert!dnl
+
+begin Output
+
+;; We might make up a bunch of m4 flags to control the next two things
+Sleep, time=10000us
+Catenate
+;; --------------------------------- Standard product L2GP files ---
+;; First those with columns
+!define(outputStandardProductWithColumn, {Output, $
+  quantities=[joined_$1,joined_$1_column], type=l2gp, $
+  hdfVersion=!hdfVersion, $
+  file='!l2gpFileName($1)'!nl})
+!forall(outputStandardProductWithColumn,!allStandardProductsWithColumns)
+
+;; Now those without columns
+!define(outputStandardProductWithoutColumn, {Output, $
+  quantities=[joined_$1], type=l2gp, $
+  hdfVersion=!hdfVersion, $
+  file='!l2gpFileName($1)'!nl})
+!forall(outputStandardProductWithoutColumn,!allStandardProductsWithoutColumns)
+
+;; --------------------------------- Other files ---
+;; The IWC file is a somewhat special case
+;;;Output, quantities=[joined_iwc, joined_iwp, joined_iwcFine], type=l2gp, $
+Output, quantities=[joined_iwc, joined_iwp], type=l2gp, $
+  hdfVersion=!hdfVersion, $
+  file='!l2gpFileName(IWC)'
+
+;; Now output the joined DGG file.
+!ifdef(flagGotJoinedDGGs,{
+Output, quantities=[ !undivert(!joinedDGGDivert) ], type=l2dgg, $
+  hdfVersion=!hdfVersion, $
+  file='!DGGFileName'})
+
+;; Now output the joined DGM file
+!ifdef(flagGotJoinedDGMs,{
+Output, quantities=[ !undivert(!joinedDGMDivert) ], type=l2aux, $
+  hdfVersion=!hdfVersion, $
+  file='!DGMFileName'})
+
+end Output
+!divert(-1)
+; $Log: outputstdprods.l2cf,v $
+; Revision 1.1  2013/10/18 22:49:38  pwagner
+; Split outputstate.l2cf into 3 files
+;
+!divert!dnl
+@
+
+
+1.1
+log
+@Split outputstate.l2cf into 3 files
+@
+text
+@d2 1
+a2 1
+; $Id: outputstdprods.l2cf,v 1.51 2013/10/17 22:33:03 pwagner Exp $
+d8 4
+d48 4
+a51 1
+; $Log: outputstate.l2cf,v $
+@
+

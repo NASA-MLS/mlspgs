@@ -1,0 +1,508 @@
+head	2.8;
+access;
+symbols
+	v5-02-NRT-19:2.8
+	v6-00:2.8
+	v5-02-NRT-18:2.8
+	v5-02:2.8
+	v5-01-NRT-17:2.8
+	v5-01-NRT-16:2.8
+	v5-01-NRT-15:2.8
+	v5-01-NRT-14:2.8
+	neuralnetworks-1-0:2.8.0.14
+	cfm-single-freq-0-1:2.8.0.12
+	v5-01:2.8
+	v5-00:2.8
+	v4-23-TA133:2.8.0.10
+	mus-emls-1-70:2.8.0.8
+	rel-1-0-englocks-work:2.8.0.6
+	VUMLS1-00:2.8
+	VPL1-00:2.8
+	V4-22-NRT-08:2.8
+	whdrel10_merged_to_here:2.8
+	merge_whdrel10_from_here:2.8
+	TAG_TRUNK_AFTER_PW_CHANGES:2.8
+	TAG_TRUNK_BEFORE_PW_CHANGES:2.8
+	VAM1-00:2.8
+	whd-rel-1-0:2.8.0.4
+	V4-21:2.8.0.2
+	V4-13:2.6
+	V4-12:2.6
+	V4-11:2.6
+	V4-10:2.6
+	V3-43:2.6
+	M4-00:2.6
+	V3-41:2.6
+	V3-40-PlusGM57:2.6.0.2
+	V2-24-NRT-04:2.6
+	V3-33:2.6
+	V2-24:2.6
+	V3-31:2.6
+	V3-30-NRT-05:2.6
+	cfm-01-00:2.6
+	V3-30:2.6
+	V3-20:2.6
+	V3-10:2.6
+	V2-23-NRT-02:2.6
+	V2-23:2.6
+	V2-22-NRT-01:2.6
+	V2-22:2.6
+	V2-21:2.6
+	V2-20:2.6
+	V2-11:2.6
+	V2-10:2.6
+	V2-00:2.6
+	V1-51:2.5
+	V1-50:2.5
+	V1-45:2.5
+	V1-44:2.5
+	V1-43:2.5
+	V1-42:2.4
+	V1-41:2.4
+	V1-32:2.4
+	V1-40:2.4
+	V1-31:2.4
+	V1-30:2.4
+	V1-13:2.4
+	V1-12:2.4
+	V1-11:2.4
+	V1-10:2.4
+	newfwm-feb03:2.4.0.2
+	V1-04:2.2
+	V1-03:2.2
+	V1-02:2.2
+	V1-00:2.2
+	newfwm-sep01:2.1.0.2
+	V0-7:2.1
+	V0-5-Level2:2.1
+	V0-5-SIPS:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.8
+date	2015.01.21.19.30.38;	author pwagner;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2015.01.13.18.40.43;	author pwagner;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2005.06.23.18.41.36;	author pwagner;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2004.05.14.15.59.11;	author perun;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2003.01.31.18.13.34;	author perun;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2002.10.03.17.32.06;	author jdone;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2002.03.29.20.18.34;	author perun;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.02.23.20.52.08;	author perun;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.8
+log
+@Gets isNaN from MLSFillValues
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=============================================================================
+MODULE MLSL1Utils              ! Common utilities for the MLSL1 program
+!=============================================================================
+
+  use MLSFillValues, only: isNaN
+  implicit none
+
+  PRIVATE
+
+  PUBLIC :: BigEndianStr, ExtractBigEndians, SwapBytes, QNan, Finite, &
+       GetIndexedAvg
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: MLSL1Utils.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+  INTERFACE Finite
+     MODULE PROCEDURE Finite_S, Finite_D
+  END INTERFACE
+
+  ! This module contains utility routines for the MLSL1 program
+
+CONTAINS
+
+  FUNCTION BigEndianStr (str) RESULT (number)
+
+    !! Extracts BIG ENDIAN string into integer (MSB first)
+    !! Note: will use only a maximum of the first 4 characters
+
+    CHARACTER (LEN=*), INTENT(IN) :: str
+
+    INTEGER :: number
+
+    INTEGER, PARAMETER :: factor = 256
+    INTEGER :: i, slen
+
+    slen = MIN (LEN (str), 4)   ! allow only 4 chars MAX
+
+    number = ICHAR (str(1:1))
+    DO i = 2, slen
+       number = number * factor + ICHAR (str(i:i))
+    ENDDO
+
+  END FUNCTION BigEndianStr
+
+  SUBROUTINE ExtractBigEndians (str, ibige)
+
+    !! Returns array of integers converted from Big Endian string array
+
+    CHARACTER (LEN=*), DIMENSION (:), INTENT(IN) :: str
+    INTEGER, DIMENSION(:), POINTER  :: ibige
+
+    INTEGER :: i
+
+    IF (.NOT. ASSOCIATED (ibige)) THEN
+       ALLOCATE (ibige(SIZE(str)))     ! Allocate the needed space
+    ENDIF
+
+    !! Consider reallocating receiving array to be the exact size?
+
+    DO i = 1, (MIN (SIZE(ibige), SIZE(str)))
+       ibige(i) = BigEndianStr (str(i))
+    ENDDO
+
+  END SUBROUTINE ExtractBigEndians
+
+  SUBROUTINE SwapBytes (source, dest)
+
+    !! Swaps consecutive bytes in a character string
+
+    CHARACTER (len=*), INTENT (IN) :: source
+    CHARACTER (len=*), INTENT (OUT) :: dest
+
+    CHARACTER (len=1) :: temp
+    INTEGER :: i, slen
+
+    slen = MIN (LEN(source), LEN(dest))
+    IF (slen == 1) THEN
+       dest(1:1) = source(1:1)  !! What else can be done?!
+       RETURN
+    ENDIF
+    DO i = 1, (slen-1), 2
+       temp = source(i:i)   ! in case dest = source
+       dest(i:i) = source(i+1:i+1)
+       dest(i+1:i+1) = temp
+    ENDDO
+    dest(slen:slen) = source(slen:slen)  ! Last character (for odd slen)
+
+  END SUBROUTINE SwapBytes
+
+  FUNCTION QNan () RESULT (xnan)
+
+    USE ieee_arithmetic, ONLY: ieee_value, ieee_quiet_nan
+
+    !! Return a quiet NaN for marking missing/undefined data
+
+    REAL :: xnan
+
+    xnan = ieee_value (0.0, ieee_quiet_nan)
+
+  END FUNCTION QNan
+
+  FUNCTION Finite_S (s) RESULT (is_finite)
+
+    USE ieee_arithmetic, ONLY: ieee_is_finite
+
+    !! Return whether or not input number is finite
+
+    REAL :: s
+    LOGICAL :: is_finite
+
+    is_finite = ieee_is_finite (s)
+
+  END FUNCTION Finite_S
+
+  FUNCTION Finite_D (d) RESULT (is_finite)
+
+    USE ieee_arithmetic, ONLY: ieee_is_finite
+
+    !! Return whether or not input number is finite
+
+    DOUBLE PRECISION :: d
+    LOGICAL :: is_finite
+
+    is_finite = ieee_is_finite (d)
+
+  END FUNCTION Finite_D
+
+  FUNCTION GetIndexedAvg (value, indx, debug) RESULT (avg)
+
+    !! Return average of indexed value array
+
+    REAL, DIMENSION(:) :: value
+    INTEGER, DIMENSION (:) :: indx  ! Indexes for "value"
+    logical, optional, intent(in) :: debug
+
+    REAL :: avg
+
+    INTEGER :: i, navg, low, high
+    REAL :: sum
+    logical :: myDebug
+
+    low = LBOUND (value, 1)
+    high = UBOUND (value, 1)
+    myDebug = .false.
+    if ( present(debug) ) myDebug = debug
+
+    navg = 0
+    sum = 0.0
+    DO i = 1, SIZE (indx)
+       IF (indx(i) >= low .AND. indx(i) <= high) THEN
+          IF (Finite(value(indx(i)))) THEN
+             navg = navg + 1
+             sum = sum + value(indx(i))
+             if ( myDebug .and. isNaN(value(indx(i))) ) then
+               print *, 'i, indx(i), value(indx(i)) ', i, indx(i), value(indx(i))
+             endif
+          elseif ( myDebug ) then
+             print *, 'i, indx(i), value(indx(i)) ', i, indx(i), value(indx(i))
+          ENDIF
+       elseif ( myDebug ) then
+           print *, 'i, indx(i), low, high ', i, indx(i), low, high
+       ENDIF
+    ENDDO
+
+    IF (navg > 0) THEN
+       avg = sum / navg
+    ELSE
+       avg = Qnan()
+       if ( myDebug ) print *, 'navg = 0, so returning NaN'
+    ENDIF
+
+  END FUNCTION GetIndexedAvg
+
+!=============================================================================
+  logical function not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id: MLSL1Utils.f90,v 2.7 2015/01/13 18:40:43 pwagner Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+END MODULE MLSL1Utils
+!=============================================================================
+
+! $Log: MLSL1Utils.f90,v $
+! Revision 2.7  2015/01/13 18:40:43  pwagner
+! Can warn if producing a NaN
+!
+! Revision 2.6  2005/06/23 18:41:36  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.5  2004/05/14 15:59:11  perun
+! Version 1.43 commit
+!
+! Revision 2.4  2003/01/31 18:13:34  perun
+! Version 1.1 commit
+!
+! Revision 2.2  2002/03/29 20:18:34  perun
+! Version 1.0 commit
+!
+! Revision 2.1  2001/02/23 20:52:08  perun
+! Version 0.5 commit
+!
+@
+
+
+2.7
+log
+@Can warn if producing a NaN
+@
+text
+@d16 2
+a17 1
+  IMPLICIT NONE
+d192 1
+a192 1
+       "$Id: MLSL1Utils.f90,v 2.6 2005/06/23 18:41:36 pwagner Exp $"
+d201 3
+@
+
+
+2.6
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d25 1
+a25 1
+       "$RCSfile: $"
+d141 1
+a141 1
+  FUNCTION GetIndexedAvg (value, indx) RESULT (avg)
+d147 1
+d153 1
+d157 2
+d167 5
+d173 2
+d182 1
+d191 1
+a191 1
+       "$Id: $"
+d200 3
+@
+
+
+2.5
+log
+@Version 1.43 commit
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d23 5
+a27 5
+  !---------------------------- RCS Ident Info -------------------------------
+  CHARACTER (LEN=256) :: Id = &
+       "$Id: MLSL1Utils.f90,v 2.4 2003/01/31 18:13:34 perun Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSFile: $"
+  !---------------------------------------------------------------------------
+d176 8
+d188 3
+@
+
+
+2.4
+log
+@Version 1.1 commit
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
+d17 1
+a17 1
+       "$Id: MLSL1Utils.f90,v 2.2 2002/03/29 20:18:34 perun Exp $"
+d21 4
+d107 14
+a120 1
+  FUNCTION Finite (x) RESULT (is_finite)
+d126 1
+a126 1
+    REAL :: x
+d129 1
+a129 1
+    is_finite = ieee_is_finite (x)
+d131 1
+a131 1
+  END FUNCTION Finite
+d172 3
+@
+
+
+2.3
+log
+@Reduce exponentiation to multiplication
+@
+text
+@d10 5
+a14 1
+  PRIVATE :: Id, ModuleName
+d33 1
+d39 3
+a41 4
+    number = 0
+
+    DO i = 1, slen
+      number = number*factor + ICHAR (str(i:i))
+a92 1
+!    USE, INTRINSIC :: ieee_arithmetic, ONLY: ieee_value, ieee_quiet_nan
+a104 1
+!    USE, INTRINSIC :: ieee_arithmetic, ONLY: ieee_is_finite
+@
+
+
+2.2
+log
+@Version 1.0 commit
+@
+text
+@d13 1
+a13 1
+       "$Id: MLSL1Utils.f90,v 2.1 2001/02/23 20:52:08 perun Exp $"
+a28 1
+
+d35 1
+d37 1
+a37 1
+       number = number + factor**(slen-i) * ICHAR (str(i:i))
+d89 2
+a90 1
+    USE, INTRINSIC :: ieee_arithmetic, ONLY: ieee_value, ieee_quiet_nan
+d102 2
+a103 1
+    USE, INTRINSIC :: ieee_arithmetic, ONLY: ieee_is_finite
+d153 3
+@
+
+
+2.1
+log
+@Version 0.5 commit
+@
+text
+@d13 2
+a14 2
+       "$Id:$"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSFile:$"
+d34 1
+d89 1
+a89 1
+    USE ieee_arithmetic, ONLY: ieee_value, ieee_quiet_nan
+d101 1
+a101 1
+    USE ieee_arithmetic, ONLY: ieee_is_finite
+d150 4
+a153 1
+! $Log:$
+@
+

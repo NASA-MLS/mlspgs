@@ -1,0 +1,307 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.12
+	cfm-single-freq-0-1:1.1.0.10
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.8
+	mus-emls-1-70:1.1.0.6
+	rel-1-0-englocks-work:1.1.0.4
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.2
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2013.10.08.00.42.13;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9in
+
+\newcommand{\docname}{wvs-116}
+\newcommand{\docdate}{7 October 2013}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Nathaniel, Bill, Paul, Alyn, Ryan\\
+Subject: \>Using Fortran's C interoperability features for IDL CALL_EXTERNAL\\
+From: \>Van Snyder\\
+%Reference: \> \\
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-10pt}
+
+The CALL_EXTERNAL function in IDL assumes the called procedure is a C
+function having a prototype
+
+{\tt
+\emph{return_type} \emph{function-name} ( int argc; void *argv [] );
+}
+
+where {\tt\emph{return-type}} is one of the data types that CALL_EXTERNAL
+may return.  If this return type is not IDL_LONG, a keyword must be used
+in the CALL_EXTERNAL reference to indicate the type of the result.
+
+Since Fortran 2003, it is no longer necessary to write the function in C,
+and then figure out how to call Fortran from C.  Fortran now includes
+facilities for C interoperability that can be used to write Fortran
+functions that are directly accessible from IDL using CALL_EXTERNAL.
+
+A Fortran function to be used from IDL would begin
+
+\begin{alltt}
+  \emph{result_type} FUNCTION \emph{function_name} ( ARGC, ARGV ) \&
+    \& BIND(C,NAME=\emph{string})
+  use, intrinsic :: ISO_C_BINDING
+  integer(c_int), intent(in) :: ARGC
+  type(c_ptr), intent(in) :: ARGV(*)
+  \dots
+\end{alltt}
+
+or
+
+\begin{alltt}
+  FUNCTION \emph{function_name} ( ARGC, ARGV ) BIND(C,NAME=\emph{string})
+  use, intrinsic :: ISO_C_BINDING
+  \emph{result_type} :: \emph{function_name}
+  integer(c_int), intent(in) :: ARGC
+  type(c_ptr), intent(in) :: ARGV(*)
+  \dots
+\end{alltt}
+
+where {\tt NAME=\emph{string}} is optional.  If omitted, it is the same as
+{\tt\emph{function_name}}, all in lower case.
+
+The referenced procedure is not required to be a function; it could be a
+subroutine.  In this case, the result value of CALL_EXTERNAL might be
+undefined.  A Fortran subroutine to be used from IDL would begin
+
+\begin{alltt}
+  SUBROUTINE \emph{subroutine_name} ( ARGC, ARGV ) BIND(C,NAME=\emph{string})
+  use, intrinsic :: ISO_C_BINDING
+  integer(c_int), intent(in) :: ARGC
+  type(c_ptr), intent(in) :: ARGV(*)
+  \dots
+\end{alltt}
+Most of the facilities for C interoperability are described in Clause 15
+of the Fortran standard, which is available under my home directory as
+
+\begin{alltt}
+  /users/vsnyder/f2000/stds/f08_std.pdf
+\end{alltt}
+
+The ISO_C_BINDING module provides type parameters for Fortran intrinsic
+types that correspond to all types in the C standard.  These are described
+in subclause 15.3.
+
+The BIND attribute for functions and subroutines is described in
+subclauses 12.6.2.2 and 12.6.2.3.
+
+A Fortran structure can have the BIND attribute if it is necessary for it
+to interoperate with a C {\tt struct}.  This is described in subclause
+4.5.2.1.
+
+In order to access the arguments, C pointers need to be converted to
+Fortran pointers.  This can be accomplished using the C_F_POINTER
+subroutine, described in subclause 15.2.3.3.
+
+One would first declare a Fortran pointer to be of a type, and with kind
+parameters, that make it interoperable with a C type, as described in
+subclause 15.3.  It can be either scalar or an array.  If it is a scalar,
+one can associate it with the same target as a C pointer in ARGV using
+
+\begin{alltt}
+  call c_f_pointer ( ARGV(\emph{i}), \emph{fptr} )
+\end{alltt}
+
+where {\tt\emph{i}} is the argument index in the IDL CALL_EXTERNAL
+function, with \#1 being the first one after the function name, and
+{\tt\emph{fptr}} is the Fortran pointer name.  Thereafter,
+{\tt\emph{fptr}} can be accessed as an ordinary Fortran variable (unlike
+C, Fortran does not require special syntax for pointer dereferencing).
+
+If it is an array, one can associate it with the same target as a C
+pointer in ARGV, and specify its upper bounds (the lower bounds are
+assumed all to be 1), using
+
+\begin{alltt}
+  call c_f_pointer ( ARGV(\emph{i}), \emph{fptr}, \emph{shape} )
+\end{alltt}
+
+where {\tt\emph{shape}} is an array giving the upper bounds.  This can be
+an array variable, or an array constructor of the form
+
+\begin{alltt}
+  [ \emph{e}$_1$, \emph{e}$_2$, \dots ]
+\end{alltt}
+
+where each $e_i$ is a scalar integer expression.  The value of $e_i$ can
+depend upon other arguments (which will have to be accessed using Fortran
+pointers, as described here).  The number of expressions $e_i$ is required
+to be the same as the number of declared dimensions of {\tt\emph{fptr}}.
+
+All input and output should be done in IDL, else random crashes can occur.
+
+Here is an example to compute the sum of elements of a single-precision
+floating point array.  The function returns a single-precision floating
+point value.
+
+\begin{alltt}
+  function SUM ( ARGC, ARGV ) BIND ( C ) RESULT ( TOTAL )
+    use, intrinsic :: ISO_C_BINDING
+    real(c_float) :: SUM
+    integer(c_int), intent(in) :: ARGC
+    type(c_ptr), intent(in) :: ARGV(*)
+    integer, pointer :: N
+    real(c_float), pointer :: Array(:)
+    call c_f_pointer ( argv(1), n )
+    call c_f_pointer ( argc(2), array, [n] )
+    total = sum ( array )
+  end function SUM
+\end{alltt}
+
+This might be invoked using
+
+\begin{alltt}
+  X = FINDGEN(10) ; make an array
+  S = CALL_EXTERNAL ( 'example.so', 'sum', n_elements(x), x, /f_value )
+\end{alltt}
+
+Here is another example to compute the sum of elements of a
+single-precision floating point array.  The result is returned in the
+third argument.
+
+\begin{alltt}
+  subroutine SUM ( ARGC, ARGV ) BIND ( C )
+    use, intrinsic :: ISO_C_BINDING
+    real(c_float) :: SUM
+    integer(c_int), intent(in) :: ARGC
+    type(c_ptr), intent(in) :: ARGV(*)
+    integer, pointer :: N
+    real(c_float), pointer :: Array(:)
+    real(c_float), pointer :: Total
+    call c_f_pointer ( argv(1), n )
+    call c_f_pointer ( argc(2), array, [n] )
+    call c_f_pointer ( argc(3), total )
+    total = sum ( array )
+  end subroutine SUM
+\end{alltt}
+
+This might be invoked using
+
+\begin{alltt}
+  X = FINDGEN(10) ; make an array
+  SUM = 0.0       ; make a floating-point value
+  S = CALL_EXTERNAL ( 'example.so', 'sum', n_elements(x), x, sum )
+\end{alltt}
+
+Notice that {\tt ARGV} is declared with a dimension of (*).  This means
+``{\tt ARGC} is a one-dimensional array, but I don't know the size.'' 
+{\tt Array} is declared with a dimension of (:).  This is required for
+pointers.  It means ``{\tt Array} is a one-dimensional array, and I will
+eventually specify the size.''
+
+\label{lastpage}
+\end{document}
+
+% $Id: wvs-115.tex,v 1.1 2013/08/16 02:59:12 vsnyder Exp $
+
+% $Log: $
+@

@@ -1,0 +1,172 @@
+head	1.2;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2014.01.14.00.09.32;	author vsnyder;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2013.10.24.22.41.14;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Revised LR doesn't need it
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Grounded
+
+  implicit NONE
+  private
+  public :: GROUND
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: ground.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  subroutine GROUND
+
+    use Error_Handler, only: Error
+    use S1, only: MOVSTR
+    use S3, only: FRSPRD, PRDIND, PRODCN, VOCAB
+    use TABCOM, only: NTERMS, NVOC
+
+    implicit NONE
+
+    ! Make sure all nonterminals are grounded (derive at least one
+    ! sentence consisting of terminal symbols).  Print any ungrounded
+    ! nonterminals.
+
+    ! *****     External References     ********************************
+
+    ! ERROR   prints error messages.
+    ! MOVSTR  moves a string from the symbol table.
+
+    ! *****     Local Variables     ************************************
+
+    ! CHANGE  indicates whether a new grounded symbol was found during a
+    !         loop iteration.
+    ! GRNDED  is an array used to indicate whether symbols are grounded.
+    ! I       is a loop induction variable and subscript.
+    ! J       is a loop induction variable and subscript.
+    ! LINE    is used for message assembly.
+
+    integer CHANGE, GRNDED(NVOC), I, J, K
+    character(len=120) :: LINE
+
+    ! *****     Procedures     *****************************************
+
+    ! Mark all terminals grounded, all nonterminals ungrounded.
+
+    grnded(1:nterms) = 1
+    grnded(nterms+1:nvoc) = 0
+
+    ! Mark all grounded nonterminals.  A nonterminal is grounded if some
+    ! production having that nonterminal as a left hand side has a right
+    ! hand side consisting of grounded symbols.  Thus to discover
+    ! grounded nonterminals, cycle through ungrounded nonterminals
+    ! searching for one that is the left side of a production for which
+    ! the right side consists of grounded symbols.  Mark the left side
+    ! grounded and indicate a change occurred.  Continue until no change
+    ! takes place.
+
+    do
+       change = 0
+  o:   do i = nterms+1, nvoc
+         if (grnded(i) == 0) then
+           j = frsprd(i)
+           if ( j <= 0 ) then
+             k = 1
+             call movstr (vocab(i), line, k, 100)
+             line(k:k+27) = ' Is not a vocabulary symbol'
+             call error (line(1:k+27),1)
+           else
+  in:        do while (prodcn(prdind(j)) == i)
+               if (any(grnded(prodcn(prdind(j)+1:prdind(j+1)-1)) == 0) ) then
+                 j = j + 1
+                 cycle in
+               end if
+               grnded(i) = 1
+               change = 1
+               cycle o
+             end do in
+           end if
+         end if
+       end do o
+       if ( change == 0 ) exit
+    end do
+
+    ! Print the ungrounded symbols.
+
+    do i = nterms+1, nvoc
+      if (grnded(i) == 0) then
+        j = 1
+        call movstr (vocab(i), line, j, 100)
+        line(j:j+12) = ' Not grounded'
+        call error (line(1:j+12),1)
+      end if
+    end do
+
+  end subroutine GROUND
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: ground.f90,v 1.1 2013/10/24 22:41:14 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Grounded
+
+! $Log: ground.f90,v $
+! Revision 1.1  2013/10/24 22:41:14  vsnyder
+! Initial commit
+!
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d20 1
+a20 1
+       "$RCSfile: parser.f90,v $"
+d114 1
+a114 1
+       "$Id: parser.f90,v 2.29 2013/10/02 01:35:46 vsnyder Exp $"
+d123 4
+a126 1
+! $Log: $
+@
+

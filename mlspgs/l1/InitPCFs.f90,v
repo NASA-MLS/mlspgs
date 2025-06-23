@@ -1,0 +1,550 @@
+head	2.9;
+access;
+symbols
+	v5-02-NRT-19:2.9
+	v6-00:2.9
+	v5-02-NRT-18:2.9
+	v5-02:2.8
+	v5-01-NRT-17:2.8
+	v5-01-NRT-16:2.8
+	v5-01-NRT-15:2.8
+	v5-01-NRT-14:2.8
+	neuralnetworks-1-0:2.8.0.10
+	cfm-single-freq-0-1:2.8.0.8
+	v5-01:2.8
+	v5-00:2.8
+	v4-23-TA133:2.8.0.6
+	mus-emls-1-70:2.8.0.4
+	rel-1-0-englocks-work:2.8.0.2
+	VUMLS1-00:2.7
+	VPL1-00:2.7
+	V4-22-NRT-08:2.7
+	whdrel10_merged_to_here:2.7
+	merge_whdrel10_from_here:2.6.6.1
+	TAG_TRUNK_AFTER_PW_CHANGES:2.6
+	TAG_TRUNK_BEFORE_PW_CHANGES:2.6
+	VAM1-00:2.6
+	whd-rel-1-0:2.6.0.6
+	V4-21:2.6.0.4
+	V4-13:2.6
+	V4-12:2.6
+	V4-11:2.6
+	V4-10:2.6
+	V3-43:2.6
+	M4-00:2.6
+	V3-41:2.6
+	V3-40-PlusGM57:2.6.0.2
+	V2-24-NRT-04:2.6
+	V3-33:2.6
+	V2-24:2.6
+	V3-31:2.6
+	V3-30-NRT-05:2.6
+	cfm-01-00:2.6
+	V3-30:2.6
+	V3-20:2.6
+	V3-10:2.6
+	V2-23-NRT-02:2.6
+	V2-23:2.6
+	V2-22-NRT-01:2.6
+	V2-22:2.6
+	V2-21:2.6
+	V2-20:2.6
+	V2-11:2.6
+	V2-10:2.6
+	V2-00:2.6
+	V1-51:2.4
+	V1-50:2.4
+	V1-45:2.4
+	V1-44:2.4
+	V1-43:2.4
+	V1-42:2.4
+	V1-41:2.4
+	V1-32:2.4
+	V1-40:2.4
+	V1-31:2.4
+	V1-30:2.4
+	V1-13:2.4
+	V1-12:2.4
+	V1-11:2.4
+	V1-10:2.4
+	newfwm-feb03:2.4.0.2
+	V1-04:2.3
+	V1-03:2.3
+	V1-02:2.2
+	V1-00:2.2
+	newfwm-sep01:2.2.0.2
+	V0-7:2.2
+	V0-5-Level2:2.2
+	V0-5-SIPS:2.2;
+locks; strict;
+comment	@# @;
+
+
+2.9
+date	2023.06.06.22.36.04;	author pwagner;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2017.03.24.22.57.06;	author pwagner;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2016.03.15.22.17.59;	author whdaffer;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2006.04.05.18.11.02;	author perun;	state Exp;
+branches
+	2.6.6.1;
+next	2.5;
+
+2.5
+date	2005.06.23.18.41.35;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2003.01.31.18.13.34;	author perun;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2002.07.17.15.25.42;	author perun;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2001.03.12.16.15.12;	author perun;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.02.23.20.44.56;	author perun;	state Exp;
+branches;
+next	;
+
+2.6.6.1
+date	2015.10.09.10.21.38;	author whdaffer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.9
+log
+@May crash with walkback if appropriate
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=============================================================================
+MODULE InitPCFs ! Init PCF data used by MLSL1 program
+!=============================================================================
+
+  use SDPToolkit, ONLY: PGS_S_SUCCESS
+  use MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Info, &
+    & MLSMessageConfig
+  use MLSL1Common, ONLY : FileNameLen
+  use Machine, ONLY : NeverCrash
+  implicit none
+
+  private
+
+  public :: L1PCF, PCFData_T, GetPCFParameters
+
+  ! -------------------------------------------------------------------
+  ! The next parameter optionally sets level 1 to crash with a walkback
+  ! if it logs a message containing a fatal string
+  ! E.g., put the next line in your PCF
+  ! 1005|CrashMsg|Drop. Dead.
+  ! and your run will automatically crash at the point where it logs
+  ! any message containing the string "Drop. Dead."
+  
+  integer, parameter :: mlspcf_l1_param_CrashMsg = 1005
+  ! -------------------------------------------------------------------
+  
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: InitPCFs.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+  
+! This data type is used to store User-defined Runtime Parameters and other
+! information taken from the PCF.
+
+   TYPE PCFData_T
+      CHARACTER(LEN=27) :: StartUTC
+      CHARACTER(LEN=27) :: EndUTC
+      CHARACTER(LEN=80) :: OutputVersion
+      CHARACTER(LEN=80) :: Cycle
+      CHARACTER(LEN=FileNameLen) :: PCF_filename
+      CHARACTER(LEN=FileNameLen) :: L1CF_filename
+   END TYPE PCFData_T
+
+   TYPE (PCFData_T) :: L1PCF
+
+CONTAINS
+
+!------------------------------------
+   SUBROUTINE GetPCFParameters
+!------------------------------------
+
+   use MLSPCF1, only: MLSPcf_L1_Param_StartUTC, MLSPcf_L1_Param_EndUTC, &
+     & MLSPcf_L1_Param_OutputVersion, MLSPcf_L1_Param_Cycle
+
+! This subroutine retrieves the User-Defined Runtime Parameters from the PCF
+! and stores them in variables used in the MLSL1 code.
+
+! Parameters
+     
+     CHARACTER (LEN=*), PARAMETER :: UDRP_ERR = 'Failed to get runtime &
+          &parameter from PCF:  '
+
+! Functions
+     
+     INTEGER, EXTERNAL :: PGS_PC_GetConfigData
+     
+! Variables
+
+     CHARACTER (LEN=480) :: msr
+     INTEGER :: returnStatus
+     INTEGER :: msgStatus
+
+     returnStatus = PGS_PC_GetConfigData (mlspcf_l1_param_startUTC, &
+          L1PCF%startUTC)
+     IF (returnStatus /= PGS_S_SUCCESS) THEN
+        msgStatus=MLSMSG_Error
+        msr = UDRP_ERR // 'startUTC'
+     ELSE
+        msgStatus=MLSMSG_Info
+        msr = 'Start UTC : '//L1PCF%startUTC
+     ENDIF 
+     CALL MLSMessage (msgStatus, ModuleName, msr)
+     
+     returnStatus = PGS_PC_GetConfigData (mlspcf_l1_param_endUTC, L1PCF%endUTC)
+     IF (returnStatus /= PGS_S_SUCCESS) THEN
+        msr = UDRP_ERR // 'endUTC'
+        msgStatus=MLSMSG_Error
+     ELSE
+        msgStatus=MLSMSG_Info
+        msr = 'End UTC   : '//L1PCF%endUTC
+     ENDIF
+     CALL MLSMessage (msgStatus, ModuleName, msr)
+     
+     returnStatus = PGS_PC_GetConfigData (mlspcf_l1_param_OutputVersion, &
+          L1PCF%OutputVersion)
+     IF (returnStatus /= PGS_S_SUCCESS) THEN
+        msr = UDRP_ERR // 'OutputVersion'
+        CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
+     ENDIF
+     
+     returnStatus = PGS_PC_GetConfigData (mlspcf_l1_param_Cycle, L1PCF%Cycle)
+     IF (returnStatus /= PGS_S_SUCCESS) THEN
+        msr = UDRP_ERR // 'Cycle'
+        CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
+     ENDIF
+
+     ! -----------------------------------------------------------------
+     ! These next relate to message logging and to whether level 1
+     ! will be peermitted to crash with walkback on any error
+     ! -----------------------------------------------------------------
+     ! Default settings (not yet configurable by the user)
+     NeverCrash                       = .false.
+     MLSMessageConfig%crashOnAnyError = .true.
+     returnStatus = PGS_PC_GetConfigData ( mlspcf_l1_param_CrashMsg, msr )
+     ! We'll allow you to either omit the PCFid or leave it blank
+     ! to side-step this hair-trigger option
+     IF ( returnStatus /= PGS_S_SUCCESS ) return
+     if ( len_trim(msr) < 1 ) return
+     NeverCrash = .false.
+     MLSMessageConfig%CrashIfMsgSays = msr
+     ! -----------------------------------------------------------------
+
+   END SUBROUTINE GetPCFParameters
+
+  logical function not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id: InitPCFs.f90,v 2.8 2017/03/24 22:57:06 pwagner Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+END MODULE InitPCFs
+
+! $Log: InitPCFs.f90,v $
+! Revision 2.8  2017/03/24 22:57:06  pwagner
+! Made new PCFid 1005 that tells level 1 to crash with walkback if special msg logged
+!
+! Revision 2.7  2016/03/15 22:17:59  whdaffer
+! Merged whd-rel-1-0 back onto main branch. Most changes
+! are to comments, but there's some modification to Calibration.f90
+! and MLSL1Common to support some new modules: MLSL1Debug and SnoopMLSL1.
+!
+! Revision 2.6.6.1  2015/10/09 10:21:38  whdaffer
+! checkin of continuing work on branch whd-rel-1-0
+!
+! Revision 2.6  2006/04/05 18:11:02  perun
+! Remove unused variables
+!
+! Revision 2.5  2005/06/23 18:41:35  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.4  2003/01/31 18:13:34  perun
+! Version 1.1 commit
+!
+! Revision 2.3  2002/07/17 15:25:42  perun
+! Increase length of outputversion and cycle
+!
+! Revision 2.2  2001/03/12 16:15:12  perun
+! Add OutputVersion and Cycle parameters
+!
+! Revision 2.1  2001/02/23 20:44:56  perun
+! Version 0.5 commit
+!
+@
+
+
+2.8
+log
+@Made new PCFid 1005 that tells level 1 to crash with walkback if special msg logged
+@
+text
+@d119 7
+d133 1
+d140 1
+a140 1
+       "$Id: InitPCFs.f90,v 2.7 2016/03/15 22:17:59 whdaffer Exp $"
+d148 3
+@
+
+
+2.7
+log
+@Merged whd-rel-1-0 back onto main branch. Most changes
+are to comments, but there's some modification to Calibration.f90
+and MLSL1Common to support some new modules: MLSL1Debug and SnoopMLSL1.
+@
+text
+@d16 21
+a36 8
+  USE SDPToolkit, ONLY: PGS_S_SUCCESS
+  USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Info
+  USE MLSL1Common, ONLY : FileNameLen
+  IMPLICIT NONE
+
+  PRIVATE
+
+  PUBLIC :: L1PCF, PCFData_T, GetPCFParameters
+d64 2
+a65 2
+     USE MLSPCF1, ONLY: mlspcf_l1_param_StartUTC, mlspcf_l1_param_EndUTC, &
+          mlspcf_l1_param_OutputVersion, mlspcf_l1_param_Cycle
+d119 8
+d132 1
+a132 1
+       "$Id: InitPCFs.f90,v 2.6.6.1 2015/10/09 10:21:38 whdaffer Exp $"
+d140 5
+@
+
+
+2.6
+log
+@Remove unused variables
+@
+text
+@d17 2
+a18 2
+  USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error
+
+d39 2
+a40 2
+      CHARACTER(LEN=132) :: PCF_filename
+      CHARACTER(LEN=132) :: L1CF_filename
+d65 1
+a65 1
+
+d70 2
+a71 1
+     
+d75 1
+d77 5
+a81 2
+        CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
+     ENDIF
+d86 4
+a89 1
+        CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
+d91 1
+d111 1
+a111 1
+       "$Id: InitPCFs.f90,v 2.5 2005/06/23 18:41:35 pwagner Exp $"
+d119 6
+@
+
+
+2.6.6.1
+log
+@checkin of continuing work on branch whd-rel-1-0
+@
+text
+@d17 2
+a18 2
+  USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Info
+  USE MLSL1Common, ONLY : FileNameLen
+d39 2
+a40 2
+      CHARACTER(LEN=FileNameLen) :: PCF_filename
+      CHARACTER(LEN=FileNameLen) :: L1CF_filename
+d65 1
+a65 1
+     
+d70 1
+a70 2
+     INTEGER :: msgStatus
+
+a73 1
+        msgStatus=MLSMSG_Error
+d75 2
+a76 5
+     ELSE
+        msgStatus=MLSMSG_Info
+        msr = 'Start UTC : '//L1PCF%startUTC
+     ENDIF 
+     CALL MLSMessage (msgStatus, ModuleName, msr)
+d81 1
+a81 4
+        msgStatus=MLSMSG_Error
+     ELSE
+        msgStatus=MLSMSG_Info
+        msr = 'End UTC   : '//L1PCF%endUTC
+a82 1
+     CALL MLSMessage (msgStatus, ModuleName, msr)
+d102 1
+a102 1
+       "$Id: InitPCFs.f90,v 2.6 2006/04/05 18:11:02 perun Exp $"
+a109 3
+! Revision 2.6  2006/04/05 18:11:02  perun
+! Remove unused variables
+!
+@
+
+
+2.5
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d16 1
+a16 1
+  USE SDPToolkit, ONLY: PGS_PC_GetReference, PGS_S_SUCCESS
+d27 1
+a27 1
+       "$RCSfile: $"
+d102 1
+a102 1
+       "$Id: $"
+d110 3
+@
+
+
+2.4
+log
+@Version 1.1 commit
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d25 5
+a29 5
+  !------------------------------- RCS Ident Info ------------------------------
+  CHARACTER(LEN=130) :: id = &
+       "$Id: InitPCFs.f90,v 2.3 2002/07/17 15:25:42 perun Exp $"
+  CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile: InitPCFs.f90,v $"
+  !-----------------------------------------------------------------------------
+d99 8
+d110 3
+@
+
+
+2.3
+log
+@Increase length of outputversion and cycle
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+d13 4
+a16 1
+  PRIVATE :: Id, ModuleName
+d19 1
+a19 1
+       "$Id: InitPCFs.f90,v 2.2 2001/03/12 16:15:12 perun Exp $"
+d31 2
+d94 3
+@
+
+
+2.2
+log
+@Add OutputVersion and Cycle parameters
+@
+text
+@d16 1
+a16 1
+       "$Id: InitPCFs.f90,v 2.1 2001/02/23 20:44:56 perun Exp $"
+d26 2
+a27 2
+      CHARACTER(LEN=5) :: OutputVersion
+      CHARACTER(LEN=5) :: Cycle
+d89 3
+@
+
+
+2.1
+log
+@Version 0.5 commit
+@
+text
+@d16 2
+a17 2
+       "$Id: $"
+  CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile: $"
+a19 5
+  ! Parameter PCFs
+
+  INTEGER, PARAMETER :: Param_StartUTC = 1001
+  INTEGER, PARAMETER :: Param_EndUTC = 1002
+  
+d26 2
+d38 3
+d58 2
+a59 1
+     returnStatus = PGS_PC_GetConfigData (param_startUTC, L1PCF%startUTC)
+d65 1
+a65 1
+     returnStatus = PGS_PC_GetConfigData (param_endUTC, L1PCF%endUTC)
+d70 13
+d88 4
+a91 1
+! $Log: $
+@
+

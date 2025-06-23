@@ -1,0 +1,189 @@
+head	2.4;
+access;
+symbols
+	v5-02-NRT-19:2.4
+	v6-00:2.4
+	v5-02-NRT-18:2.4
+	v5-02:2.4
+	v5-01-NRT-17:2.4
+	v5-01-NRT-16:2.4
+	v5-01-NRT-15:2.4
+	v5-01-NRT-14:2.4
+	neuralnetworks-1-0:2.4.0.10
+	cfm-single-freq-0-1:2.4.0.8
+	v5-01:2.4
+	v5-00:2.4
+	v4-23-TA133:2.4.0.6
+	mus-emls-1-70:2.4.0.4
+	rel-1-0-englocks-work:2.4.0.2
+	VUMLS1-00:2.4
+	VPL1-00:2.4
+	V4-22-NRT-08:2.3
+	VAM1-00:2.3
+	V4-21:2.3.0.4
+	V4-13:2.3
+	V4-12:2.3
+	V4-11:2.3
+	V4-10:2.3
+	V3-43:2.3
+	M4-00:2.3
+	V3-41:2.3
+	V3-40-PlusGM57:2.3.0.2
+	V3-33:2.3
+	V3-31:2.3
+	V3-30-NRT-05:2.3
+	cfm-01-00:2.3
+	V3-30:2.3
+	V3-20:2.3
+	V3-10:2.3;
+locks; strict;
+comment	@# @;
+
+
+2.4
+date	2016.07.30.00.50.57;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2009.06.23.18.25.42;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2007.12.19.03.58.48;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2007.12.06.20.36.27;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.4
+log
+@Add Ln2
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Constants
+
+! Provide several numerical constants.
+
+  use MLSKinds, only: R8
+
+  implicit NONE
+  public
+
+  real(r8), parameter :: Ln2 = 0.6931471805599453094172321214581765680755_r8
+  real(r8), parameter :: Ln10 = 2.302585092994045684017991454684364207601_r8
+  real(r8), parameter :: Pi = 3.141592653589793238462643383279502884197_r8
+  real(r8), parameter :: Deg2Rad = Pi/180.0_r8 ! Degrees-to-Radians
+  real(r8), parameter :: Rad2Deg = 180.0_r8/Pi ! Radians-to-Degrees
+  real(r8), parameter :: Sqrtln2 = 0.8325546111576977563531646448952010476306_r8
+  real(r8), parameter :: SqrtPi = 1.772453850905516027298167483341145182798_r8
+  real(r8), parameter :: Sqrt2 = 1.414213562373095048801688724209698078569_r8
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: Constants.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: Constants.f90,v 2.3 2009/06/23 18:25:42 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Constants
+
+! $Log: Constants.f90,v $
+! Revision 2.3  2009/06/23 18:25:42  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.2  2007/12/19 03:58:48  vsnyder
+! Add Sqrt2
+!
+! Revision 2.1  2007/12/06 20:36:27  vsnyder
+! Initial commit
+!
+@
+
+
+2.3
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d21 1
+d32 1
+a32 1
+       "$RCSfile: $"
+d41 1
+a41 1
+       "$Id: read_apriori.f90 is it here $"
+d51 3
+@
+
+
+2.2
+log
+@Add Sqrt2
+@
+text
+@d31 1
+a31 1
+       "$RCSfile: Constants.f90,v $"
+d37 1
+a38 1
+!---------------------------- RCS Ident Info -------------------------------
+d40 2
+a41 3
+       "$Id: Constants.f90,v 2.1 2007/12/06 20:36:27 vsnyder Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d43 1
+d45 1
+d50 3
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d27 1
+d31 1
+a31 1
+       "$RCSfile: units.f90,v $"
+d40 1
+a40 1
+       "$Id: units.f90,v 2.28 2006/01/26 00:30:35 pwagner Exp $"
+d48 4
+a51 1
+! $Log: $
+@
+

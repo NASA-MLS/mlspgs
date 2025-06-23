@@ -1,0 +1,1468 @@
+head	2.30;
+access;
+symbols
+	v5-02-NRT-19:2.30
+	v6-00:2.30
+	v5-02-NRT-18:2.30
+	v5-02:2.30
+	v5-01-NRT-17:2.30
+	v5-01-NRT-16:2.30
+	v5-01-NRT-15:2.30
+	v5-01-NRT-14:2.30
+	neuralnetworks-1-0:2.30.0.8
+	cfm-single-freq-0-1:2.30.0.6
+	v5-01:2.30
+	v5-00:2.30
+	v4-23-TA133:2.30.0.4
+	mus-emls-1-70:2.30.0.2
+	rel-1-0-englocks-work:2.29.0.2
+	VUMLS1-00:2.28
+	VPL1-00:2.28
+	V4-22-NRT-08:2.28
+	VAM1-00:2.28
+	V4-21:2.27.0.2
+	V4-13:2.27
+	V4-12:2.26
+	V4-11:2.26
+	V4-10:2.26
+	V3-43:2.26
+	M4-00:2.26
+	V3-41:2.26
+	V3-40-PlusGM57:2.26.0.2
+	V2-24-NRT-04:2.22
+	V3-33:2.26
+	V2-24:2.22
+	V3-31:2.26
+	V3-30-NRT-05:2.26
+	cfm-01-00:2.26
+	V3-30:2.26
+	V3-20:2.26
+	V3-10:2.26
+	V2-23-NRT-02:2.22
+	V2-23:2.22
+	V2-22-NRT-01:2.22
+	V2-22:2.22
+	V2-21:2.22
+	V2-20:2.22
+	V2-11:2.22
+	V2-10:2.22
+	V2-00:2.22
+	V1-51:2.15
+	V1-50:2.15
+	V1-45:2.14
+	V1-44:2.14
+	V1-43:2.10
+	V1-42:2.10
+	V1-41:2.10
+	V1-32:2.10
+	V1-40:2.10
+	V1-31:2.10
+	V1-30:2.9
+	V1-13:2.7
+	V1-12:2.7
+	V1-11:2.7
+	V1-10:2.7
+	newfwm-feb03:2.7.0.2
+	V1-04:2.3
+	V1-03:2.3
+	V1-02:2.3
+	V1-00:2.3
+	newfwm-sep01:2.3.0.2
+	V0-7:2.3
+	V0-5-Level2:2.3
+	V0-5-SIPS:2.2;
+locks; strict;
+comment	@# @;
+
+
+2.30
+date	2018.04.19.02.00.36;	author vsnyder;	state Exp;
+branches;
+next	2.29;
+
+2.29
+date	2017.11.03.20.02.31;	author pwagner;	state Exp;
+branches;
+next	2.28;
+
+2.28
+date	2015.03.28.01.43.46;	author vsnyder;	state Exp;
+branches;
+next	2.27;
+
+2.27
+date	2014.09.05.00.19.47;	author vsnyder;	state Exp;
+branches;
+next	2.26;
+
+2.26
+date	2009.06.23.18.25.43;	author pwagner;	state Exp;
+branches;
+next	2.25;
+
+2.25
+date	2008.08.27.19.58.30;	author vsnyder;	state Exp;
+branches;
+next	2.24;
+
+2.24
+date	2008.06.06.22.52.21;	author pwagner;	state Exp;
+branches;
+next	2.23;
+
+2.23
+date	2008.06.06.01.54.43;	author vsnyder;	state Exp;
+branches;
+next	2.22;
+
+2.22
+date	2006.05.02.18.59.50;	author pwagner;	state Exp;
+branches;
+next	2.21;
+
+2.21
+date	2006.02.08.21.34.46;	author vsnyder;	state Exp;
+branches;
+next	2.20;
+
+2.20
+date	2005.06.03.01.54.36;	author vsnyder;	state Exp;
+branches;
+next	2.19;
+
+2.19
+date	2005.04.19.20.23.57;	author livesey;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2005.03.15.23.48.55;	author pwagner;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2005.01.12.03.06.08;	author vsnyder;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2005.01.07.00.38.53;	author vsnyder;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2004.12.13.20.29.36;	author vsnyder;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2004.06.17.22.35.10;	author pwagner;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2004.06.03.22.57.48;	author vsnyder;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2004.05.29.02.46.39;	author vsnyder;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2004.05.22.02.27.07;	author vsnyder;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2003.09.15.23.19.04;	author vsnyder;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2003.08.16.00.32.50;	author vsnyder;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2003.06.20.19.33.53;	author pwagner;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2002.11.22.12.55.12;	author mjf;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2002.10.08.00.09.15;	author pwagner;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2002.10.05.00.41.12;	author livesey;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2002.08.20.19.19.32;	author livesey;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2001.04.26.02.33.03;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2001.04.11.00.03.52;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.04.07.01.54.08;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.30
+log
+@Compute address for allocate/deallocate tracking.  Remove USE statements for
+unused names.
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=============================================================================
+module VGridsDatabase
+!=============================================================================
+
+  use Allocate_Deallocate, only: Deallocate_Test
+  use HyperSlabs, only: EssentiallyEqual
+  use Intrinsic, only: L_Angle, L_Eta, L_Geodaltitude, L_Gph, L_Integer, &
+    & L_None, L_Pressure, L_Theta, L_Zeta, &
+    & PHYQ_Dimensionless, PHYQ_Pressure, PHYQ_Zeta, PHYQ_Temperature, &
+    & PHYQ_Length, PHYQ_Angle, PHYQ_Invalid
+  use MLSKinds, only: RS => R8 ! Real Kind For Surfs
+  use MLSMessageModule, only: & ! Message Logging
+    & MLSMessage, MLSMSG_Error, &
+    & PVMErrorMessage
+
+  implicit none
+  private
+
+  ! Define the vGrid data type.  This is used to store all the vGrid
+  ! information. Note that this is only relevant for coherent quantities.
+  ! Incoherent ones deal with vGrids seperately.
+
+  type, public :: VGrid_T
+    integer:: Name                 ! String index of name
+    integer :: VerticalCoordinate  ! One of t_vGridCoordinate's literals, or
+                                   ! 0 if empty
+    integer :: NoSurfs             ! Number of surfaces
+    real(rs), dimension(:,:), pointer :: Surfs => NULL()  ! Array of surfaces
+                                   ! (actually dimensioned (1:noSurfs,1))
+  end type VGrid_T
+
+  ! The VGrids database:
+  type(VGrid_t), pointer, save, public :: VGrids(:) => NULL()
+
+  ! Public procedures:
+  interface ConvertVGrid
+    module procedure ConvertVGrid_inout, ConvertVGrid_sngl, ConvertVGrid_dbl
+  end interface ConvertVGrid
+
+  interface DoVGridsMatch
+    module procedure DoVGridsMatch_VG
+  end interface
+
+  interface Dump
+    module procedure Dump_VGrids, Dump_a_VGrid
+  end interface Dump
+
+  public :: AddVgridIfNecessary, AddVGridToDatabase
+  public :: ConvertVGrid
+  public :: DestroyVGridContents, DestroyVGridDatabase
+  public :: DoVGridsMatch, DoVGridsMatch_VG
+  public :: Dump, Dump_a_VGrid, Dump_VGrids, GetUnitForVerticalCoordinate
+  public :: NullifyVGrid
+  public :: PVMPackVGrid, PVMUnpackVGrid
+  public :: RS
+
+  !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter, private :: ModuleName= &
+    & "$RCSfile: VGridsDatabase.f90,v $"
+  private :: not_used_here
+  !---------------------------------------------------------------------------
+
+contains
+
+
+  !-----------------------------------------  AddVGridIfNecessary  -----
+  integer function AddVgridIfNecessary ( VGrid, RelErr )
+    type(vGrid_t), intent(inout) :: VGrid
+    real(rs), intent(in), optional :: RelErr
+    ! If there is a vGrid in vGrids that matches vGrid according to
+    ! doVGridsMatch, destroy vGrid and return the index of the matching one.
+    ! Otherwise, add VGrid to the database of VGrids and return the index
+    ! of the added one.
+
+    integer :: I
+
+    if ( associated ( vGrids ) ) then
+      do i = 1, size(vGrids)
+        if ( doVGridsMatch(vGrid,vGrids(i),relerr) ) then
+          call destroyVGridContents ( vGrid )
+          addVgridIfNecessary = i
+          return
+        end if
+      end do
+    end if
+
+    addVgridIfNecessary = addVGridToDatabase ( vGrids, vGrid )
+
+  end function AddVgridIfNecessary
+
+  !------------------------------------------  AddVGridToDatabase  -----
+  integer function AddVGridToDatabase ( DATABASE, ITEM )
+
+  ! This routine adds a vGrid to a database of vGrids, creating the database
+  ! if necessary.
+
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+
+    ! Dummy arguments
+    type (VGrid_T), dimension(:), pointer :: DATABASE
+    type (VGrid_T), intent(in) :: ITEM
+
+    ! Local variables
+    type (VGrid_T), dimension(:), pointer :: tempDatabase
+
+    include "addItemToDatabase.f9h"
+
+    AddVGridToDatabase = newSize
+  end function AddVGridToDatabase
+
+  !----------------------------------------  DestroyVGridContents  -----
+  subroutine DestroyVGridContents ( vGrid )
+
+  ! This routine destroys the array information created with the vGrid
+
+    ! Dummy arguments
+
+    type (vGrid_T), intent(inout) :: vGrid
+
+    ! Executable code
+
+    vGrid%noSurfs = 0
+    vGrid%verticalCoordinate = 0
+
+    call deallocate_test ( vGrid%surfs, "vGrid%surfs", ModuleName )
+
+  end subroutine DestroyVGridContents
+
+  !----------------------------------------  ConvertVGrid_inout  -----
+  subroutine ConvertVGrid_inout ( vGrid, newVerticalCoordinate )
+
+  ! This routine converts the surfaces of a VGrid between vertical coordinates
+
+    ! Dummy arguments
+
+    type (vGrid_T), intent(inout) :: vGrid
+    integer, intent(in)           :: newVerticalCoordinate
+
+    ! Executable code
+    if ( VGrid%verticalCoordinate == newVerticalCoordinate ) return
+    select case (newVerticalCoordinate)
+    case (l_GeodAltitude)
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Sorry--not able to convert VGrids between vertical coordinates' )
+    case (l_GPH)
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Sorry--not able to convert VGrids between vertical coordinates' )
+    case (l_eta)
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Sorry--not able to convert VGrids between vertical coordinates' )
+    case (l_theta)
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Sorry--not able to convert VGrids between vertical coordinates' )
+    case (l_pressure)
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Sorry--not able to convert VGrids between vertical coordinates' )
+    case default
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Sorry--not able to convert VGrids between vertical coordinates' )
+    end select
+
+  end subroutine ConvertVGrid_inout
+
+  !----------------------------------------  ConvertVGrid_sngl  -----
+  subroutine ConvertVGrid_sngl ( vGrid, newVerticalCoordinate, surfs )
+
+  ! This routine converts the surfaces of a VGrid between vertical coordinates
+
+    ! Dummy arguments
+
+    type (vGrid_T), intent(in) :: vGrid
+    integer, intent(in)        :: newVerticalCoordinate
+    real, dimension(:)         :: surfs
+
+
+    ! Executable code
+    surfs = vGrid%surfs(:,1)
+    if ( VGrid%verticalCoordinate == newVerticalCoordinate ) return
+    select case (newVerticalCoordinate)
+    case (l_GeodAltitude)
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Sorry--not able to convert VGrids between vertical coordinates' )
+    case (l_GPH)
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Sorry--not able to convert VGrids between vertical coordinates' )
+    case (l_eta)
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Sorry--not able to convert VGrids between vertical coordinates' )
+    case (l_theta)
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Sorry--not able to convert VGrids between vertical coordinates' )
+    case (l_pressure)
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Sorry--not able to convert VGrids between vertical coordinates' )
+    case default
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Sorry--not able to convert VGrids between vertical coordinates' )
+    end select
+
+  end subroutine ConvertVGrid_sngl
+
+  !----------------------------------------  ConvertVGrid_dbl  -----
+  subroutine ConvertVGrid_dbl ( vGrid, newVerticalCoordinate, surfs )
+
+  ! This routine converts the surfaces of a VGrid between vertical coordinates
+
+    ! Dummy arguments
+
+    type (vGrid_T), intent(in)     :: vGrid
+    integer, intent(in)            :: newVerticalCoordinate
+    double precision, dimension(:) :: surfs
+
+
+    ! Executable code
+    surfs = vGrid%surfs(:,1)
+    if ( VGrid%verticalCoordinate == newVerticalCoordinate ) return
+    select case (newVerticalCoordinate)
+    case (l_GeodAltitude)
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Sorry--not able to convert VGrids between vertical coordinates' )
+    case (l_GPH)
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Sorry--not able to convert VGrids between vertical coordinates' )
+    case (l_eta)
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Sorry--not able to convert VGrids between vertical coordinates' )
+    case (l_theta)
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Sorry--not able to convert VGrids between vertical coordinates' )
+    case (l_pressure)
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Sorry--not able to convert VGrids between vertical coordinates' )
+    case default
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Sorry--not able to convert VGrids between vertical coordinates' )
+    end select
+
+  end subroutine ConvertVGrid_dbl
+
+  ! ---------------------------------------  DestroyVGridDatabase  -----
+  subroutine DestroyVGridDatabase ( DATABASE )
+
+  ! This subroutine destroys a vGrid database
+
+    use Allocate_Deallocate, only: Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+
+    ! Dummy argument
+    type (VGrid_T), dimension(:), pointer :: DATABASE
+
+    ! Local variables
+    integer(c_intptr_t) :: Addr         ! For tracing
+    integer :: S, Status, vgridIndex
+
+    if ( associated(database) ) then
+      do vgridIndex = 1, SIZE(database)
+        call DestroyVGridContents ( database(vgridIndex) )
+      end do
+      s = size(database) * storage_size(database) / 8
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(database(1)), addr)
+      deallocate ( database, stat=status )
+      call test_deallocate ( status, ModuleName, "database", s, address=addr )
+    end if
+
+  end subroutine DestroyVGridDatabase
+
+  ! -------------------------------------------  DoVGridsMatch_VG  -----
+  logical function DoVGridsMatch_VG ( A, B, RelErr )
+    ! Returns true if A and B are essentially the same VGrid.
+    type (vGrid_T), intent(in) :: A
+    type (vGrid_T), intent(in) :: B
+    real(rs), intent(in), optional :: RelErr ! "essentially equal" means
+      ! "all(abs(a%surfs-b%surfs) <=
+      ! relerr*max(maxval(abs(a%surfs)),maxval(abs(b%surfs))))"
+    real(rs) :: Test
+
+    ! Executable code
+    doVGridsMatch_VG = .false.
+    if ( a%verticalCoordinate /= b%verticalCoordinate ) return
+    if ( a%noSurfs /= b%noSurfs ) return
+    if ( .not. present(relErr) ) then
+      if ( any ( .not. essentiallyEqual ( a%surfs, b%surfs ) ) ) return
+    else
+      test = relerr*max(maxval(abs(a%surfs)),maxval(abs(b%surfs)))
+      if ( any(abs(a%surfs-b%surfs) > test) ) return
+    end if
+    doVGridsMatch_VG = .true.
+
+  end function DoVGridsMatch_VG
+
+  ! -----------------------------------------------  Dump_a_VGrid  -----
+  subroutine Dump_a_VGrid ( VGrid, Details, What )
+    use Dump_0, only: Dump
+    use Intrinsic, only: Lit_Indices
+    use Output_M, only: Newline, Output
+    use String_Table, only: Display_String
+    type(vGrid_T), intent(in) :: VGrid
+    integer, intent(in), optional :: Details ! <= 0 => Don't dump arrays
+    !                                        ! >0   => Do dump arrays
+    !                                        ! Default 1
+    character(len=*), intent(in), optional :: What ! Prints ' '//what//':'
+    integer :: MyDetails
+    myDetails = 1
+    if ( present(details) ) myDetails = details
+    if ( present(what) ) call output ( ' ' // trim(what) // ':' )
+    call output ( ' Name = ' )
+    if ( vGrid%name /= 0 ) then
+      call display_string ( vgrid%name )
+    else
+      call output ( '<none>' )
+    end if
+    call output ( ' noSurfs = ' )
+    call output ( vgrid%noSurfs )
+    call output ( ' Coordinate = ' )
+    call display_string ( lit_indices(vgrid%verticalCoordinate) )
+    call newline
+    if ( myDetails > 0 ) then
+      call dump ( vgrid%surfs(:,1), ' Surfs = ' )
+      call newline
+    end if
+  end subroutine Dump_a_VGrid
+
+
+  ! ------------------------------------------------  Dump_VGrids  -----
+  subroutine Dump_VGrids ( VGrids, Details, Where )
+
+    use MoreTree, only: StartErrorMessage
+    use Output_M, only: Output
+    type(vGrid_T), pointer :: VGrids(:)             ! The database
+    integer, intent(in), optional :: Details ! <= 0 => Don't dump arrays
+    !                                        ! >0   => Do dump arrays
+    !                                        ! Default 1
+    integer, intent(in), optional :: Where   ! Tree node index
+
+    integer :: I
+    if ( associated(vGrids) ) then
+      call output ( 'VGRIDS: SIZE = ' )
+      call output ( size(vgrids), advance='yes' )
+      do i = 1, size(vgrids)
+        call output ( i, 4 )
+        call dump_a_vGrid ( vgrids(i), details )
+      end do
+    else
+      if ( present(where) ) call startErrorMessage ( where )
+      call output ( 'No VGrids to dump.', advance='yes' )
+    end if
+  end subroutine Dump_VGrids
+
+  ! ----------------------------------  GetUnitForVerticalCoordinate  -----
+  integer function GetUnitForVerticalCoordinate ( coordinate )
+    integer, intent(in) :: coordinate
+    ! Excutable code
+    select case ( coordinate )
+    case ( l_angle )
+      GetUnitForVerticalCoordinate = PHYQ_Angle
+    case ( l_geodAltitude, l_gph )
+      GetUnitForVerticalCoordinate = PHYQ_Length
+    case ( l_integer )
+      GetUnitForVerticalCoordinate = PHYQ_Dimensionless
+    case ( l_none )
+      GetUnitForVerticalCoordinate = PHYQ_Invalid
+    case ( l_pressure )
+      GetUnitForVerticalCoordinate = PHYQ_Pressure
+    case ( l_theta )
+      GetUnitForVerticalCoordinate = PHYQ_Temperature
+    case ( l_zeta )
+      GetUnitForVerticalCoordinate = PHYQ_Zeta
+    case default
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Invalid vGrid type' )
+    end select
+  end function GetUnitForVerticalCoordinate
+
+  ! ----------------------------------------NullifyVGrid -----
+  subroutine NullifyVGrid ( IntentionallyNotUsed )
+    ! Given a vGrid, nullify all the pointers associated with it
+    type ( VGrid_T ), intent(out) :: IntentionallyNotUsed
+
+    ! Executable code isn't necessary because IntentionallyNotUsed is
+    ! intent(out) and IntentionallyNotUsed%surfs has default initialization
+    ! to NULL()
+  end subroutine NullifyVGrid
+
+  ! ------------------------------------------------  PVMPackVGrid ----
+  subroutine PVMPackVgrid ( VGRID )
+    use PVMIDL, only: PVMIDLPack
+    use MorePVM, only: PVMPackStringIndex, PVMPackLitIndex
+
+    ! Dummy argument
+    type ( VGrid_T), intent(in) :: VGRID
+
+    ! Local variables
+    integer :: INFO                     ! Flag from PVM
+
+    ! Executable code
+
+    call PVMPackStringIndex ( vGrid%name, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'Packing Vgrid name' )
+    call PVMPackLitIndex ( vGrid%verticalCoordinate, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'Packing Vgrid coordinate' )
+
+    call PVMIDLPack ( vGrid%noSurfs, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'Packing Vgrid size' )
+    if ( associated ( vGrid%surfs ) ) then
+      call PVMIDLPack ( vGrid%surfs, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, 'Packing Vgrid surfaces' )
+    else
+      if ( vGrid%noSurfs > 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Asked to pack a strange vGrid' )
+    end if
+
+  end subroutine PVMPackVgrid
+
+  ! ------------------------------------------------  PVMUnpackVGrid ----
+  subroutine PVMUnpackVgrid ( VGRID )
+    use PVMIDL, only: PVMIDLUnpack
+    use MorePVM, only: PVMUnpackStringIndex, PVMUnpackLitIndex
+    use Allocate_Deallocate, only: Allocate_test
+
+    ! Dummy argument
+    type ( VGrid_T), intent(out) :: VGRID
+
+    ! Local variables
+    integer :: INFO                     ! Flag from PVM
+
+    ! Executable code
+
+    call PVMUnpackStringIndex ( vGrid%name, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'Unpacking Vgrid name' )
+    call PVMUnpackLitIndex ( vGrid%verticalCoordinate, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'Unpacking Vgrid coordinate' )
+
+    call PVMIDLUnpack ( vGrid%noSurfs, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'Unpacking Vgrid size' )
+    call Allocate_test ( vGrid%surfs, vGrid%noSurfs, 1, 'vGrid%surfs', ModuleName )
+    if ( vGrid%noSurfs > 0 ) then
+      call PVMIDLUnpack ( vGrid%surfs, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, 'Unpacking Vgrid surfaces' )
+    end if
+
+  end subroutine PVMUnpackVgrid
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: VGridsDatabase.f90,v 2.29 2017/11/03 20:02:31 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module VGridsDatabase
+
+! $Log: VGridsDatabase.f90,v $
+! Revision 2.29  2017/11/03 20:02:31  pwagner
+! Most array gymnastics moved from MLSFillValues to HyperSlabs module
+!
+! Revision 2.28  2015/03/28 01:43:46  vsnyder
+! Added stuff to trace allocate/deallocate addresses
+!
+! Revision 2.27  2014/09/05 00:19:47  vsnyder
+! More complete and accurate allocate/deallocate size tracking.  Some
+! cannonball polishing.
+!
+! Revision 2.26  2009/06/23 18:25:43  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.25  2008/08/27 19:58:30  vsnyder
+! Add PRINT to not_used_here
+!
+! Revision 2.24  2008/06/06 22:52:21  pwagner
+! EssentiallyEqual moved to MLSFillValues
+!
+! Revision 2.23  2008/06/06 01:54:43  vsnyder
+! Get kinds from MLSKinds, not MLSCommon
+!
+! Revision 2.22  2006/05/02 18:59:50  pwagner
+! Added ConvertVGrid, though mostly non-functional for now
+!
+! Revision 2.21  2006/02/08 21:34:46  vsnyder
+! Add a 'what' argument, that just prints, to Dump_a_VGrid
+!
+! Revision 2.20  2005/06/03 01:54:36  vsnyder
+! Make VGrids a public module variable, some cannonball polishing,
+! new copyright notice, move Id to not_used_here to avoid cascades.
+!
+! Revision 2.19  2005/04/19 20:23:57  livesey
+! Bug fix in AddVGridIfNecessary for case when this is the first vGrid
+!
+! Revision 2.18  2005/03/15 23:48:55  pwagner
+! PVMERRORMESSAGE now part of MLSMessageModule
+!
+! Revision 2.17  2005/01/12 03:06:08  vsnyder
+! Added AddVGridIfNecessary and relative error test option to DoVGridsMatch.
+! Don't try to dump VGrid's name if its string index is zero.
+!
+! Revision 2.16  2005/01/07 00:38:53  vsnyder
+! Call the kind for the Surfs field RS
+!
+! Revision 2.15  2004/12/13 20:29:36  vsnyder
+! Added DoVGridsMatch generic with DoVGridsMatch_VG specific
+!
+! Revision 2.14  2004/06/17 22:35:10  pwagner
+! Added new integer type for vertical coordinate
+!
+! Revision 2.13  2004/06/03 22:57:48  vsnyder
+! Cosmetic changes to account for using VGrid struct for TGrids too
+!
+! Revision 2.12  2004/05/29 02:46:39  vsnyder
+! Fix a bug in Dump_a_VGrid, some cannonball-polishing
+!
+! Revision 2.11  2004/05/22 02:27:07  vsnyder
+! Add Dump_a_VGrid
+!
+! Revision 2.10  2003/09/15 23:19:04  vsnyder
+! Remove unused local variables and USEs
+!
+! Revision 2.9  2003/08/16 00:32:50  vsnyder
+! Get PHYQ_... directly from Intrinsic instead of indirectly via Units
+!
+! Revision 2.8  2003/06/20 19:33:53  pwagner
+! Quanities now share grids stored separately in databses
+!
+! Revision 2.7  2002/11/22 12:55:12  mjf
+! Added nullify routine(s) to get round Sun's WS6 compiler not
+! initialising derived type function results.
+!
+! Revision 2.6  2002/10/08 00:09:15  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.5  2002/10/05 00:41:12  livesey
+! Added pvm pack and unpack stuff
+!
+! Revision 2.4  2002/08/20 19:19:32  livesey
+! Added GetUnitForVerticalCoordinate
+!
+! Revision 2.3  2001/04/26 02:33:03  vsnyder
+! Moved *_indices declarations from init_tables_module to intrinsic
+!
+! Revision 2.2  2001/04/11 00:03:52  vsnyder
+! Improve 'dump'
+!
+! Revision 2.1  2001/04/07 01:54:08  vsnyder
+! Initial Commit
+!
+@
+
+
+2.29
+log
+@Most array gymnastics moved from MLSFillValues to HyperSlabs module
+@
+text
+@a108 1
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+d458 1
+a458 1
+       "$Id: VGridsDatabase.f90,v 2.28 2015/03/28 01:43:46 vsnyder Exp $"
+d468 3
+@
+
+
+2.28
+log
+@Added stuff to trace allocate/deallocate addresses
+@
+text
+@d17 3
+a19 2
+  use intrinsic, only: L_ANGLE, L_ETA, L_GEODALTITUDE, L_GPH, L_INTEGER, &
+    & L_NONE, L_PRESSURE, L_THETA, L_ZETA, &
+d22 2
+a23 2
+  use MLSKinds, only: RS => R8  ! Real kind for Surfs
+  use MLSMessageModule, only: & ! Message logging
+d27 1
+a27 1
+  implicit NONE
+a282 1
+    use MLSFillValues, only: ESSENTIALLYEQUAL
+d306 1
+a306 1
+    use Dump_0, only: DUMP
+d308 2
+a309 2
+    use OUTPUT_M, only: NEWLINE, OUTPUT
+    use STRING_TABLE, only: DISPLAY_STRING
+d341 1
+a341 1
+    use OUTPUT_M, only: OUTPUT
+d459 1
+a459 1
+       "$Id: VGridsDatabase.f90,v 2.27 2014/09/05 00:19:47 vsnyder Exp $"
+d469 3
+@
+
+
+2.27
+log
+@More complete and accurate allocate/deallocate size tracking.  Some
+cannonball polishing.
+@
+text
+@d108 1
+d257 1
+d263 1
+d271 2
+d274 1
+a274 1
+      call test_deallocate ( status, ModuleName, "database", s )
+d459 1
+a459 1
+       "$Id: VGridsDatabase.f90,v 2.26 2009/06/23 18:25:43 pwagner Exp $"
+d469 4
+@
+
+
+2.26
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d23 1
+a23 1
+    & MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, MLSMSG_Error, &
+d30 1
+a30 1
+  ! information. Note that this is only relevant for coherent quantities. 
+d70 1
+a70 1
+  private :: not_used_here 
+d107 2
+d170 1
+a170 1
+    end select      
+d184 1
+a184 1
+    
+d208 1
+a208 1
+    end select      
+d222 1
+a222 1
+    
+d246 1
+a246 1
+    end select      
+d255 2
+d261 1
+a261 1
+    integer :: vgridIndex, Status
+d267 1
+d269 1
+a269 2
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_Deallocate // "database" )
+d271 1
+d328 1
+a328 1
+    endif
+d370 1
+a370 1
+    case ( l_pressure ) 
+d372 1
+a372 1
+    case ( l_theta ) 
+d383 1
+a383 1
+  subroutine NullifyVGrid ( V )
+d385 1
+a385 1
+    type ( VGrid_T ), intent(out) :: V
+d387 3
+a389 2
+    ! Executable code isn't necessary because V is intent(out) and v%surfs
+    ! has default initialization to NULL()
+d419 1
+a419 1
+    
+d448 1
+a448 1
+    
+d454 1
+a454 1
+       "$Id: read_apriori.f90 is it here $"
+d464 3
+@
+
+
+2.25
+log
+@Add PRINT to not_used_here
+@
+text
+@d445 1
+a446 1
+  !---------------------------- RCS Ident Info -------------------------------
+d448 2
+a449 3
+    & "$Id: VGridsDatabase.f90,v 2.24 2008/06/06 22:52:21 pwagner Exp $"
+  character (len=len(idParm)) :: Id = IdParm
+  !---------------------------------------------------------------------------
+d451 1
+a451 1
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
+d453 1
+d458 3
+@
+
+
+2.24
+log
+@EssentiallyEqual moved to MLSFillValues
+@
+text
+@d448 1
+a448 1
+    & "$Id: VGridsDatabase.f90,v 2.23 2008/06/06 01:54:43 vsnyder Exp $"
+d452 1
+d458 3
+@
+
+
+2.23
+log
+@Get kinds from MLSKinds, not MLSCommon
+@
+text
+@d272 1
+a272 1
+    use MLSNumerics, only: EssentiallyEqual
+d448 1
+a448 1
+    & "$Id: VGridsDatabase.f90,v 2.22 2006/05/02 18:59:50 pwagner Exp $"
+d457 3
+@
+
+
+2.22
+log
+@Added ConvertVGrid, though mostly non-functional for now
+@
+text
+@d21 1
+a21 1
+  use MLSCommon, only: RS => R8 ! Real kind for Surfs
+d448 1
+a448 1
+    & "$Id: VGridsDatabase.f90,v 2.21 2006/02/08 21:34:46 vsnyder Exp $"
+d457 3
+@
+
+
+2.21
+log
+@Add a 'what' argument, that just prints, to Dump_a_VGrid
+@
+text
+@d17 4
+d46 4
+d59 1
+d137 111
+a353 4
+    use intrinsic, only: L_ANGLE, L_GEODALTITUDE, L_GPH, L_INTEGER, L_NONE, &
+      & L_PRESSURE, L_THETA, L_ZETA, &
+      & PHYQ_Dimensionless, PHYQ_Pressure, PHYQ_Zeta, PHYQ_Temperature, &
+      & PHYQ_Length, PHYQ_Angle, PHYQ_Invalid
+d448 1
+a448 1
+    & "$Id: VGridsDatabase.f90,v 2.20 2005/06/03 01:54:36 vsnyder Exp $"
+d457 3
+@
+
+
+2.20
+log
+@Make VGrids a public module variable, some cannonball polishing,
+new copyright notice, move Id to not_used_here to avoid cascades.
+@
+text
+@d175 1
+a175 1
+  subroutine Dump_a_VGrid ( VGrid, Details )
+d184 1
+d188 1
+d332 1
+a332 1
+    & "$Id: VGridsDatabase.f90,v 2.19 2005/04/19 20:23:57 livesey Exp $"
+d341 4
+@
+
+
+2.19
+log
+@Bug fix in AddVGridIfNecessary for case when this is the first vGrid
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
+d38 3
+a58 3
+  character (len=*), parameter, private :: IdParm = &
+    & "$Id: VGridsDatabase.f90,v 2.18 2005/03/15 23:48:55 pwagner Exp $"
+  character (len=len(idParm)) :: Id = IdParm
+d68 1
+a68 1
+  integer function AddVgridIfNecessary ( VGrid, VGrids, RelErr )
+a69 1
+    type(vGrid_t), pointer :: VGrids(:)
+d259 9
+a326 9
+  ! ----------------------------------------NullifyVGrid -----
+  subroutine NullifyVGrid ( V )
+    ! Given a vGrid, nullify all the pointers associated with it
+    type ( VGrid_T ), intent(out) :: V
+
+    ! Executable code
+    nullify ( v%surfs )
+  end subroutine NullifyVGrid
+
+d328 5
+d339 3
+@
+
+
+2.18
+log
+@PVMERRORMESSAGE now part of MLSMessageModule
+@
+text
+@d49 1
+a49 1
+    & "$Id: VGridsDatabase.f90,v 2.17 2005/01/12 03:06:08 vsnyder Exp $"
+d71 9
+a79 7
+    do i = 1, size(vGrids)
+      if ( doVGridsMatch(vGrid,vGrids(i),relerr) ) then
+        call destroyVGridContents ( vGrid )
+        addVgridIfNecessary = i
+        return
+      end if
+    end do
+d327 3
+@
+
+
+2.17
+log
+@Added AddVGridIfNecessary and relative error test option to DoVGridsMatch.
+Don't try to dump VGrid's name if its string index is zero.
+@
+text
+@d1 2
+a2 2
+! Copyright (c) 1999, California Institute of Technology. ALL RIGHTS RESERVED.
+! U.S. Government sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d11 2
+a12 1
+    & MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, MLSMSG_Error
+d49 1
+a49 1
+    & "$Id: VGridsDatabase.f90,v 2.16 2005/01/07 00:38:53 vsnyder Exp $"
+a253 1
+    use PVM, only: PVMErrorMessage
+a283 1
+    use PVM, only: PVMErrorMessage
+d325 4
+@
+
+
+2.16
+log
+@Call the kind for the Surfs field RS
+@
+text
+@d38 2
+a39 1
+  public :: AddVGridToDatabase, DestroyVGridContents, DestroyVGridDatabase
+d48 1
+a48 1
+    & "$Id: VGridsDatabase.f90,v 2.15 2004/12/13 20:29:36 vsnyder Exp $"
+d57 25
+d140 1
+a140 1
+  logical function DoVGridsMatch_VG ( A, B )
+d145 4
+d154 6
+a159 1
+    if ( any ( .not. essentiallyEqual ( a%surfs, b%surfs ) ) ) return
+d178 5
+a182 1
+    call display_string ( vgrid%name )
+d326 3
+@
+
+
+2.15
+log
+@Added DoVGridsMatch generic with DoVGridsMatch_VG specific
+@
+text
+@d9 1
+a9 1
+  use MLSCommon, only: R8
+d25 1
+a25 1
+    real(r8), dimension(:,:), pointer :: Surfs => NULL()  ! Array of surfaces
+d43 1
+d47 1
+a47 1
+    & "$Id: VGridsDatabase.f90,v 2.14 2004/06/17 22:35:10 pwagner Exp $"
+d287 3
+@
+
+
+2.14
+log
+@Added new integer type for vertical coordinate
+@
+text
+@d30 4
+d39 1
+d46 1
+a46 1
+    & "$Id: VGridsDatabase.f90,v 2.13 2004/06/03 22:57:48 vsnyder Exp $"
+d112 16
+d286 3
+@
+
+
+2.13
+log
+@Cosmetic changes to account for using VGrid struct for TGrids too
+@
+text
+@d41 1
+a41 1
+    & "$Id: VGridsDatabase.f90,v 2.12 2004/05/29 02:46:39 vsnyder Exp $"
+d111 1
+a111 1
+    use OUTPUT_M, only: OUTPUT
+d126 5
+a130 1
+    if ( myDetails > 0 ) call dump ( vgrid%surfs(:,1), ' Surfs = ' )
+d159 1
+a159 1
+  ! ------------------------------------------------  GetUnitForVGrid  -----
+d161 3
+a163 2
+    use intrinsic, only: L_ANGLE, L_GEODALTITUDE, L_GPH, L_NONE, &
+      & L_PRESSURE, L_THETA, L_ZETA, PHYQ_Pressure, PHYQ_Zeta, PHYQ_Temperature, &
+d172 2
+d265 3
+@
+
+
+2.12
+log
+@Fix a bug in Dump_a_VGrid, some cannonball-polishing
+@
+text
+@d26 1
+a26 1
+                                   ! (actually dimensioned 1:noSurfs)
+d41 1
+a41 1
+    & "$Id: VGridsDatabase.f90,v 2.11 2004/05/22 02:27:07 vsnyder Exp $"
+d124 1
+a124 1
+    call output ( ' verticalCoordinate = ' )
+d258 3
+@
+
+
+2.11
+log
+@Add Dump_a_VGrid
+@
+text
+@d41 1
+a41 1
+    & "$Id: VGridsDatabase.f90,v 2.10 2003/09/15 23:19:04 vsnyder Exp $"
+d126 1
+a126 1
+    if ( details > 0 ) call dump ( vgrid%surfs(:,1), ' Surfs = ' )
+d131 3
+a133 1
+  subroutine Dump_VGrids ( VGrids, Details )
+d135 1
+a135 1
+    type(vGrid_T), intent(in) :: VGrids(:)             ! The database
+d139 2
+d142 11
+a152 6
+    call output ( 'VGRIDS: SIZE = ' )
+    call output ( size(vgrids), advance='yes' )
+    do i = 1, size(vgrids)
+      call output ( i, 4 )
+      call dump_a_vGrid ( vgrids(i), details )
+    end do
+d258 3
+@
+
+
+2.10
+log
+@Remove unused local variables and USEs
+@
+text
+@d31 1
+a31 1
+    module procedure Dump_VGrids
+d35 1
+a35 1
+  public :: Dump, Dump_VGrids, GetUnitForVerticalCoordinate
+d41 1
+a41 1
+    & "$Id: VGridsDatabase.f90,v 2.9 2003/08/16 00:32:50 vsnyder Exp $"
+d107 2
+a108 2
+  ! ------------------------------------------------  Dump_VGrids  -----
+  subroutine Dump_VGrids ( VGrids, Details )
+d113 1
+a113 1
+    type(vGrid_T), intent(in) :: VGrids(:)             ! The database
+d117 1
+a117 1
+    integer :: I, MyDetails
+d120 18
+d142 1
+a142 7
+      call output ( ': Name = ' )
+      call display_string ( vgrids(i)%name )
+      call output ( ' noSurfs = ' )
+      call output ( vgrids(i)%noSurfs )
+      call output ( ' verticalCoordinate = ' )
+      call display_string ( lit_indices(vgrids(i)%verticalCoordinate) )
+      if ( details > 0 ) call dump ( vgrids(i)%surfs(:,1), ' Surfs = ' )
+d249 3
+@
+
+
+2.9
+log
+@Get PHYQ_... directly from Intrinsic instead of indirectly via Units
+@
+text
+@d41 1
+a41 1
+    & "$Id: VGridsDatabase.f90,v 2.8 2003/06/20 19:33:53 pwagner Exp $"
+d138 1
+a138 1
+      & PHYQ_Length, PHYQ_Angle, PHYQ_Dimensionless, PHYQ_Invalid
+a164 2
+    use String_table, only: GET_STRING
+    use Intrinsic, only: LIT_INDICES
+a170 1
+    character ( len=80 ) :: WORD        ! String
+a195 1
+    use MoreTree, only: GetStringIndexFromString, GetLitIndexFromString
+a202 1
+    character ( len=80 ) :: WORD        ! String
+d237 3
+@
+
+
+2.8
+log
+@Quanities now share grids stored separately in databses
+@
+text
+@d41 1
+a41 1
+    & "$Id: VGridsDatabase.f90,v 2.7 2002/11/22 12:55:12 mjf Exp $"
+d136 2
+a137 1
+    use units, only: PHYQ_Pressure, PHYQ_Zeta, PHYQ_Temperature, &
+a138 2
+    use intrinsic, only: L_ANGLE, L_GEODALTITUDE, L_GPH, L_NONE, &
+      & L_PRESSURE, L_THETA, L_ZETA
+d242 3
+@
+
+
+2.7
+log
+@Added nullify routine(s) to get round Sun's WS6 compiler not
+initialising derived type function results.
+@
+text
+@d25 1
+a25 1
+    real(r8), dimension(:), pointer :: Surfs => NULL()  ! Array of surfaces
+d41 1
+a41 1
+    & "$Id: VGridsDatabase.f90,v 2.6 2002/10/08 00:09:15 pwagner Exp $"
+d130 1
+a130 1
+      if ( details > 0 ) call dump ( vgrids(i)%surfs, ' Surfs = ' )
+d219 1
+a219 1
+    call Allocate_test ( vGrid%surfs, vGrid%noSurfs, 'vGrid%surfs', ModuleName )
+d243 4
+@
+
+
+2.6
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d36 1
+d41 1
+a41 1
+    & "$Id: VGridsDatabase.f90,v 2.5 2002/10/05 00:41:12 livesey Exp $"
+d227 9
+d243 3
+@
+
+
+2.5
+log
+@Added pvm pack and unpack stuff
+@
+text
+@d40 1
+a40 1
+    & "$Id: VGridsDatabase.f90,v 2.4 2002/08/20 19:19:32 livesey Exp $"
+d44 1
+d226 4
+d233 3
+@
+
+
+2.4
+log
+@Added GetUnitForVerticalCoordinate
+@
+text
+@d36 1
+d40 1
+a40 1
+    & "$Id: VGridsDatabase.f90,v 2.3 2001/04/26 02:33:03 vsnyder Exp $"
+d159 66
+d228 3
+@
+
+
+2.3
+log
+@Moved *_indices declarations from init_tables_module to intrinsic
+@
+text
+@d35 1
+a35 1
+  public :: Dump, Dump_VGrids
+d39 1
+a39 1
+    & "$Id: VGridsDatabase.f90,v 2.2 2001/04/11 00:03:52 vsnyder Exp $"
+d131 27
+d161 3
+@
+
+
+2.2
+log
+@Improve 'dump'
+@
+text
+@a8 1
+  use Dump_0, only: DUMP
+a11 2
+  use OUTPUT_M, only: OUTPUT
+  use STRING_TABLE, only: DISPLAY_STRING
+d34 2
+a35 2
+  public :: AddVGridToDatabase, DestroyVGridContents, DestroyVGridDatabase, Dump
+  public :: Dump_VGrids
+d39 1
+a39 1
+    & "$Id: VGridsDatabase.f90,v 2.1 2001/04/07 01:54:08 vsnyder Exp $"
+d105 5
+a109 1
+  subroutine Dump_VGrids ( VGrids, Lit_Indices, Details )
+a110 1
+    integer, intent(in), dimension(:) :: Lit_Indices   ! From init_tables
+d134 3
+@
+
+
+2.1
+log
+@Initial Commit
+@
+text
+@d42 1
+a42 1
+    & "$Id: ForwardModelInterface.f90,v 2.66 2001/04/06 21:53:40 vsnyder Exp $"
+d45 1
+a45 1
+    & "$RCSfile: ForwardModelInterface.f90,v $"
+d108 1
+a108 1
+  subroutine Dump_VGrids ( VGrids, Lit_Indices )
+d111 6
+a116 1
+    integer :: I
+d127 1
+a127 1
+      call dump ( vgrids(i)%surfs, ' Surfs = ' )
+d133 4
+a136 1
+! $Log: $
+@
+

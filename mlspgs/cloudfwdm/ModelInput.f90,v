@@ -1,0 +1,885 @@
+head	1.17;
+access;
+symbols
+	v5-02-NRT-19:1.17
+	v6-00:1.17
+	v5-02-NRT-18:1.17
+	v5-02:1.17
+	v5-01-NRT-17:1.17
+	v5-01-NRT-16:1.17
+	v5-01-NRT-15:1.17
+	v5-01-NRT-14:1.17
+	neuralnetworks-1-0:1.17.0.14
+	cfm-single-freq-0-1:1.17.0.12
+	v5-01:1.17
+	v5-00:1.17
+	v4-23-TA133:1.17.0.10
+	mus-emls-1-70:1.17.0.8
+	rel-1-0-englocks-work:1.17.0.6
+	VUMLS1-00:1.17
+	VPL1-00:1.17
+	V4-22-NRT-08:1.17
+	VAM1-00:1.17
+	V4-21:1.17.0.4
+	V4-13:1.17
+	V4-12:1.17
+	V4-11:1.17
+	V4-10:1.17
+	V3-43:1.17
+	M4-00:1.17
+	V3-41:1.17
+	V3-40-PlusGM57:1.17.0.2
+	V2-24-NRT-04:1.16
+	V3-33:1.17
+	V2-24:1.16
+	V3-31:1.17
+	V3-30-NRT-05:1.17
+	cfm-01-00:1.17
+	V3-30:1.17
+	V3-20:1.17
+	V3-10:1.17
+	V2-23-NRT-02:1.16
+	V2-23:1.16
+	V2-22-NRT-01:1.16
+	V2-22:1.16
+	V2-21:1.16
+	V2-20:1.16
+	V2-11:1.16
+	V2-10:1.16
+	V2-00:1.16
+	V1-51:1.15
+	V1-50:1.15
+	V1-45:1.15
+	V1-44:1.15
+	V1-43:1.15
+	V1-32:1.15
+	V1-31:1.15
+	V1-30:1.15
+	V1-13:1.11
+	V1-12:1.11
+	V1-11:1.11
+	V1-10:1.11
+	newfwm-feb03:1.11.0.2
+	V1-04:1.4
+	V1-03:1.4
+	V1-02:1.4
+	JointForwardModel:1.4.0.2
+	V1-00:1.4;
+locks; strict;
+comment	@# @;
+
+
+1.17
+date	2009.06.23.18.26.19;	author pwagner;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2005.06.22.18.27.38;	author pwagner;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2003.05.14.23.29.13;	author dwu;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2003.05.14.23.25.36;	author dwu;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2003.05.07.23.18.40;	author jonathan;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2003.04.09.08.16.53;	author dwu;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2003.01.23.00.19.09;	author pwagner;	state Exp;
+branches
+	1.11.2.1;
+next	1.10;
+
+1.10
+date	2002.12.18.16.10.21;	author jonathan;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2002.12.02.17.44.15;	author dwu;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2002.11.28.01.45.26;	author dwu;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2002.10.08.17.08.07;	author pwagner;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2002.08.22.00.15.31;	author jonathan;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2002.08.19.22.22.04;	author jonathan;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.10.22.15.42.58;	author jonathan;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2001.10.11.22.10.02;	author dwu;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.09.21.15.51.37;	author jonathan;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.09.19.19.23.44;	author jonathan;	state Exp;
+branches;
+next	;
+
+1.11.2.1
+date	2003.05.02.17.32.27;	author jonathan;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.17
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module ModelInput
+
+! -------------------------------------------------------------------------  
+! SET ALL PARAMETERS ONTO INTERNAL MODEL GRIDS
+! -------------------------------------------------------------------------
+
+      use Interpack, only: LOCATE
+      use MLSCommon, only: r8
+
+      IMPLICIT NONE
+      Private
+      Public :: MODEL_ATMOS 
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+      
+contains
+
+      SUBROUTINE MODEL_ATMOS(PRESSURE,HEIGHT,TEMPERATURE,VMR,NZ,NS,  &
+                 &           NcloudType, WCin, IPSDin,               &
+                 &           YP,YZ,YT,YQ,VMR1,WC,NH,CHK_CLD,IPSD )
+
+!========================================================================C
+!     DESCRIPTION                                                        C
+!     -----------                                                        C
+!     1: CHECK THE INPUT L2 ATMOSPHERIC PROFILES.                        C
+!     2: OUTPUT INTERPOLATED ATMOSPHERIC PROFILES IF NEEDED TO INTERNAL  C
+!        MODEL GRIDS                                                     C
+!     3: CONVERT TANGENT PRESSURE TO TANGENT HEIGHT                      C
+!                                                                        C
+!     J. JIANG, MAY 18, 2001                                             C
+!========================================================================C
+
+!----------------------------------------------
+!     INPUT PARAMETERS
+!----------------------------------------------
+
+      INTEGER, intent(in) :: NZ                ! NO. OF L2 ATMOSPHERIC LEVELS
+      INTEGER, intent(in) :: NS                ! NO. OF CHEMICAL SPECIES
+      INTEGER, intent(in) :: NcloudType
+      INTEGER, intent(in) :: NH                ! MODEL ATMOSPHERIC LEVELS
+      REAL(r8), intent(in) :: PRESSURE(NZ)     ! PRESSURE LEVEL
+      REAL(r8), intent(in) :: HEIGHT(NZ)       ! PRESSURE HEIGHT
+      REAL(r8), intent(in) :: TEMPERATURE(NZ)  ! ATMOSPHERIC TEMPERATURE
+      REAL(r8), intent(in) :: VMR(NS,NZ)       ! 1=H2O VOLUME MIXING RATIO
+                                               ! 2=O3
+
+      REAL(r8), intent(in) :: WCin(NcloudType,NZ)             
+      INTEGER, intent(in) :: IPSDin(NZ)
+      
+!----------------------------------------------
+!     OUTPUT PARAMETERS
+!----------------------------------------------
+
+      REAL(r8), intent(out) :: YZ(NH)          ! PRESSURE HEIGHT (m)
+      REAL(r8), intent(out) :: YP(NH)          ! PRESSURE (hPa)
+      REAL(r8), intent(out) :: YT(NH)          ! TEMPERATURE PROFILE
+      REAL(r8), intent(out) :: YQ(NH)          ! RELATIVE HUMIDITY (%)
+      REAL(r8), intent(out) :: VMR1(NS-1,NH)   ! 1=O3 VOLUME MIXING RATIO
+      REAL(r8), intent(out) :: WC(NcloudType,NH)
+      INTEGER, intent(out) :: IPSD(NH)
+      REAL(r8), intent(out) :: CHK_CLD(NH)     ! CLOUD CHECKER
+
+!----------------------------------------------------------
+!     WORK SPACE
+!----------------------------------------------------------
+      REAL(r8) :: HTOP,DH,ZH(NH),ZA(NH), zvmr(nh)
+      REAL(r8) :: eta                          ! Interpolating fraction;
+      INTEGER :: I,JM,J, K                     !  0 < eta < 1
+!--------------------------------------------------------------------------
+
+      HTOP = 80.e3_r8    ! TOP OF THE MODEL
+      DH=HTOP/NH         ! LAYER THICKNESS
+
+      DO I=1,NH
+         ZH(I)=(I-1)*DH
+      END DO
+
+      DO I=1,NZ
+         ZA(I)=-LOG10( PRESSURE(I) )
+      END DO
+
+      DO I=1,NZ
+         ZVMR(I)=LOG10( max(1.e-19_r8, VMR(1,I)) )
+      END DO
+
+
+!==========================================
+!     PRODUCE MODEL ATMOSPHERIC PROFILES
+!==========================================
+
+         DO J=1,NH
+
+            CALL LOCATE (HEIGHT,NZ,NZ,ZH(J),JM)              
+
+            ! Now we will interpolate things to our new heights
+            ! To do this we use the fraction eta : 0 <= eta <= 1
+            ! such that f[j] = eta f[j[m]] + (1-eta) f[j[m+1]]
+            ! This is simple linear interpolation; see also 
+            ! MLSNumerics for InterpolateValues
+            eta = (HEIGHT(JM+1)-ZH(J)) / (HEIGHT(JM+1)-HEIGHT(JM))
+
+            YP(J) = eta*ZA(JM) + (1-eta)*ZA(JM+1)
+
+            YP(J) = 10**(-YP(J))
+
+            YZ=ZH
+
+            YT(J) = eta*TEMPERATURE(JM) + (1-eta)*TEMPERATURE(JM+1)
+
+! ICE QUANTITIES
+            DO K=1,NcloudType
+              WC(K,J) = eta*WCin(K,JM) + (1-eta)*WCin(K,JM+1)
+            ENDDO
+            
+              CHK_CLD(J) = Sum(WC(1:NcloudType,J))
+
+            IPSD(J) = IPSDin(1)     
+
+! VMR QUANTITIES
+            YQ(J) = eta*zvmr(JM) + (1-eta)*zvmr(JM+1)
+            YQ(J) = 10**YQ(J)
+
+            DO K=1,NS-1
+             VMR1(K,J) = eta*VMR(K+1,JM) + (1-eta)*VMR(K+1,JM+1)
+            ENDDO
+       
+         ENDDO
+
+      END SUBROUTINE MODEL_ATMOS
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: read_apriori.f90 is it here $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module ModelInput
+
+! $Log: ModelInput.f90,v $
+! Revision 1.16  2005/06/22 18:27:38  pwagner
+! Cant have access declared outside module scope
+!
+! Revision 1.15  2003/05/14 23:29:13  dwu
+! fix a dimension problem with locate
+!
+! Revision 1.14  2003/05/14 23:25:36  dwu
+! fix a dimension problem with WC
+!
+! Revision 1.13  2003/05/07 23:18:40  jonathan
+! some clean-ups
+!
+! Revision 1.12  2003/04/09 08:16:53  dwu
+! Fix the bug associated with number of cloud types dimension
+!
+! Revision 1.11  2003/01/23 00:19:09  pwagner
+! Some cosmetic only (or so I hope) changes
+!
+! Revision 1.10  2002/12/18 16:10:21  jonathan
+! minor changes
+!
+! Revision 1.9  2002/12/02 17:44:15  dwu
+! remove the bug in interpolating IPSD
+!
+! Revision 1.7  2002/10/08 17:08:07  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 1.6  2002/08/22 00:15:31  jonathan
+! change NS to NS-1 for VMR1
+!
+! Revision 1.5  2002/08/19 22:22:04  jonathan
+! debug stuff
+!
+! Revision 1.4  2001/10/22 15:42:58  jonathan
+! pretect vmr to be non-zero valus
+!
+! Revision 1.3  2001/10/11 22:10:02  dwu
+! remove tangent height calculation
+!
+! Revision 1.2  2001/09/21 15:51:37  jonathan
+! modified F95 version
+!
+@
+
+
+1.16
+log
+@Cant have access declared outside module scope
+@
+text
+@d146 1
+a147 1
+!---------------------------- RCS Ident Info -------------------------------
+d149 2
+a150 3
+       "$Id: $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d152 1
+d154 1
+d159 3
+@
+
+
+1.15
+log
+@fix a dimension problem with locate
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d25 3
+a27 6
+ !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm =                          &
+    "$Id: ModelInput.f90,v 1.14 2003/05/14 23:25:36 dwu Exp $"
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName=                       &
+    "$RCSfile: ModelInput.f90,v $"
+d29 1
+a29 1
+ !---------------------------------------------------------------------------
+d147 5
+d158 3
+@
+
+
+1.14
+log
+@fix a dimension problem with WC
+@
+text
+@d19 1
+a19 1
+    "$Id: ModelInput.f90,v 1.13 2003/05/07 23:18:40 jonathan Exp $"
+d103 1
+a103 1
+            CALL LOCATE (HEIGHT,NZ,NH,ZH(J),JM)              
+d148 3
+@
+
+
+1.13
+log
+@some clean-ups
+@
+text
+@d19 1
+a19 1
+    "$Id: ModelInput.f90,v 1.12 2003/04/09 08:16:53 dwu Exp $"
+d29 1
+a29 1
+                 &           N, WCin, IPSDin,                        &
+d49 1
+a49 1
+      INTEGER, intent(in) :: N
+d57 1
+a57 1
+      REAL(r8), intent(in) :: WCin(N,NZ)             
+d69 1
+a69 1
+      REAL(r8), intent(out) :: WC(N,NH)
+a77 1
+      INTEGER :: NcloudType		! number of cloud types
+a100 1
+      NcloudType = size(WCin(:,1))
+d124 2
+a125 2
+
+            CHK_CLD(J) = WC(1,J) + WC(2,J)
+d148 3
+@
+
+
+1.12
+log
+@Fix the bug associated with number of cloud types dimension
+@
+text
+@d19 1
+a19 1
+    "$Id: ModelInput.f90,v 1.11 2003/01/23 00:19:09 pwagner Exp $"
+a30 1
+!                &           ZT,ZZT,NT)
+a58 2
+!     INTEGER, intent(in) :: NT                ! NO. OF TANGENT PRESSURE LEVELS
+!     REAL(r8), intent(in) :: ZT(NT)           ! TANGENT PRESSURE
+a72 2
+!     REAL(r8), intent(out) :: ZZT(NT)         ! TANGENT HEIGHT
+
+d113 1
+a113 2
+!           YP(J)=((HEIGHT(JM+1)-ZH(J))*ZA(JM)+(ZH(J)-HEIGHT(JM))*  &
+!     &            ZA(JM+1))/(HEIGHT(JM+1)-HEIGHT(JM))             
+a119 2
+!           YT(J)=((HEIGHT(JM+1)-ZH(J))*TEMPERATURE(JM)+(ZH(J)-HEIGHT(JM))*  &
+!     &            TEMPERATURE(JM+1))/(HEIGHT(JM+1)-HEIGHT(JM))             
+a122 1
+
+a123 2
+!           WC(K,J)=((HEIGHT(JM+1)-ZH(J))*WCin(K,JM)+(ZH(J)-HEIGHT(JM))*  &
+!     &            WCin(K,JM+1))/(HEIGHT(JM+1)-HEIGHT(JM))             
+a128 1
+            ! IPSD INDEX CAN NOT BE INTERPOLATED
+a131 2
+!           Yq(J)=((HEIGHT(JM+1)-ZH(J))*zvmr(JM)+(ZH(J)-HEIGHT(JM))*  &
+!     &            zvmr(JM+1))/(HEIGHT(JM+1)-HEIGHT(JM))             
+a132 1
+
+a135 2
+!            VMR1(K,J)=((HEIGHT(JM+1)-ZH(J))*VMR(K+1,JM)+(ZH(J)-HEIGHT(JM))*  &
+!     &            VMR(K+1,JM+1))/(HEIGHT(JM+1)-HEIGHT(JM))             
+d150 3
+@
+
+
+1.11
+log
+@Some cosmetic only (or so I hope) changes
+@
+text
+@d19 1
+a19 1
+    "$Id: ModelInput.f90,v 1.10 2002/12/18 16:10:21 jonathan Exp $"
+d83 1
+d107 1
+d132 1
+a132 1
+            DO K=1,2
+d167 3
+@
+
+
+1.11.2.1
+log
+@update to main franch
+@
+text
+@d19 1
+a19 1
+    "$Id: ModelInput.f90,v 1.12 2003/04/09 08:16:53 dwu Exp $"
+a82 1
+      INTEGER :: NcloudType		! number of cloud types
+a105 1
+      NcloudType = size(WCin(:,1))
+d130 1
+a130 1
+            DO K=1,NcloudType
+a164 6
+! Revision 1.12  2003/04/09 08:16:53  dwu
+! Fix the bug associated with number of cloud types dimension
+!
+! Revision 1.11  2003/01/23 00:19:09  pwagner
+! Some cosmetic only (or so I hope) changes
+!
+@
+
+
+1.10
+log
+@minor changes
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+d19 1
+a19 1
+    "$Id: ModelInput.f90,v 1.9 2002/12/02 17:44:15 dwu Exp $"
+d30 2
+a31 2
+                 &           YP,YZ,YT,YQ,VMR1,WC,NH,CHK_CLD,IPSD,    &
+                 &           ZT,ZZT,NT)
+d48 8
+a55 7
+      INTEGER :: NZ                            ! NO. OF L2 ATMOSPHERIC LEVELS
+      INTEGER :: NS                            ! NO. OF CHEMICAL SPECIES
+      INTEGER :: N
+      REAL(r8) :: PRESSURE(NZ)                 ! PRESSURE LEVEL
+      REAL(r8) :: HEIGHT(NZ)                   ! PRESSURE HEIGHT
+      REAL(r8) :: TEMPERATURE(NZ)              ! ATMOSPHERIC TEMPERATURE
+      REAL(r8) :: VMR(NS,NZ)                   ! 1=H2O VOLUME MIXING RATIO
+d58 4
+a61 4
+      REAL(r8) :: WCin(N,NZ)                         
+      INTEGER :: IPSDin(NZ)
+      INTEGER :: NT                            ! NO. OF TANGENT PRESSURE LEVSLS
+      REAL(r8) :: ZT(NT)                       ! TANGENT PRESSURE
+a65 1
+      INTEGER :: NH                            ! MODEL ATMOSPHERIC LEVELS
+d67 8
+a74 8
+      REAL(r8) :: YZ(NH)                       ! PRESSURE HEIGHT (m)
+      REAL(r8) :: YP(NH)                       ! PRESSURE (hPa)
+      REAL(r8) :: YT(NH)                       ! TEMPERATURE PROFILE
+      REAL(r8) :: YQ(NH)                       ! RELATIVE HUMIDITY (%)
+      REAL(r8) :: VMR1(NS-1,NH)                  ! 1=O3 VOLUME MIXING RATIO
+      REAL(r8) :: WC(N,NH)
+      INTEGER :: IPSD(NH)
+      REAL(r8) :: CHK_CLD(NH)                  ! CLOUD CHECKER      
+d76 1
+a76 1
+      REAL(r8) :: ZZT(NT)                      ! TANGENT HEIGHT
+d81 3
+a83 2
+      REAL(r8) :: HTOP,DH,ZH(NH),ZA(NH),ZZ(NH),WK, zvmr(nh)
+      INTEGER :: I,JM,J, K
+d110 9
+a118 2
+            YP(J)=((HEIGHT(JM+1)-ZH(J))*ZA(JM)+(ZH(J)-HEIGHT(JM))*  &
+     &            ZA(JM+1))/(HEIGHT(JM+1)-HEIGHT(JM))             
+d124 3
+a126 2
+            YT(J)=((HEIGHT(JM+1)-ZH(J))*TEMPERATURE(JM)+(ZH(J)-HEIGHT(JM))*  &
+     &            TEMPERATURE(JM+1))/(HEIGHT(JM+1)-HEIGHT(JM))             
+d131 3
+a133 2
+            WC(K,J)=((HEIGHT(JM+1)-ZH(J))*WCin(K,JM)+(ZH(J)-HEIGHT(JM))*  &
+     &            WCin(K,JM+1))/(HEIGHT(JM+1)-HEIGHT(JM))             
+d142 3
+a144 2
+            Yq(J)=((HEIGHT(JM+1)-ZH(J))*zvmr(JM)+(ZH(J)-HEIGHT(JM))*  &
+     &            zvmr(JM+1))/(HEIGHT(JM+1)-HEIGHT(JM))             
+d149 3
+a151 2
+            VMR1(K,J)=((HEIGHT(JM+1)-ZH(J))*VMR(K+1,JM)+(ZH(J)-HEIGHT(JM))*  &
+     &            VMR(K+1,JM+1))/(HEIGHT(JM+1)-HEIGHT(JM))             
+d165 3
+@
+
+
+1.9
+log
+@remove the bug in interpolating IPSD
+@
+text
+@d19 1
+a19 1
+    "$Id: ModelInput.f90,v 1.7 2002/10/08 17:08:07 pwagner Exp $"
+d97 1
+a97 1
+         ZVMR(I)=LOG10( max(1.e-39_r8, VMR(1,I)) )
+d135 1
+a136 2
+            YQ(J) =10**YQ(J)
+          
+d153 3
+@
+
+
+1.8
+log
+@fix a bug in call locate(..)
+@
+text
+@d107 1
+a107 1
+            CALL LOCATE (HEIGHT,NZ,NZ,ZH(J),JM)              
+d128 2
+a129 2
+            IPSD(J)=((HEIGHT(JM+1)-ZH(J))*IPSDin(JM)+(ZH(J)-HEIGHT(JM))*  &
+     &            IPSDin(JM+1))/(HEIGHT(JM+1)-HEIGHT(JM))             
+@
+
+
+1.7
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d19 1
+a19 1
+    "$Id: ModelInput.f90,v 1.6 2002/08/22 00:15:31 jonathan Exp $"
+d107 1
+a107 1
+            CALL LOCATE (HEIGHT,NZ,NH,ZH(J),JM)              
+d154 3
+@
+
+
+1.6
+log
+@change NS to NS-1 for VMR1
+@
+text
+@d19 1
+a19 1
+    "$Id: ModelInput.f90,v 1.5 2002/08/19 22:22:04 jonathan Exp $"
+d23 1
+d147 4
+d154 3
+@
+
+
+1.5
+log
+@debug stuff
+@
+text
+@d19 1
+a19 1
+    "$Id: ModelInput.f90,v 1.4 2001/10/22 15:42:58 jonathan Exp $"
+d48 1
+a48 1
+      INTEGER :: NS
+d70 1
+a70 1
+      REAL(r8) :: VMR1(NS,NH)                  ! 1=O3 VOLUME MIXING RATIO
+d137 1
+a137 1
+            DO K=1,1
+a143 23
+
+!----------------------------------------------------------------------
+! now we don't need this because tangent heights are given along with tangent pressure
+!==========================================
+!     PRODUCE TANGENT HEIGHTS (KM)
+!==========================================
+
+!      DO I=1,NT
+!        print*, ZT(I)
+!         ZZ(I)=-LOG10( max(1.e-9_r8, ZT(I)) )
+!      END DO
+
+!      stop
+
+!      DO J=1,NT      
+!         CALL LOCATE (ZA,NZ,NH,ZZ(J),JM)
+!         ZZT(J)=((ZA(JM+1)-ZZ(J))*HEIGHT(JM)+(ZZ(J)-ZA(JM))*    &
+!     &                HEIGHT(JM+1))/(ZA(JM+1)-ZA(JM))             
+!      ENDDO
+
+!----------------------------------------------------------------------
+
+!      RETURN
+d149 3
+@
+
+
+1.4
+log
+@pretect vmr to be non-zero valus
+@
+text
+@d19 1
+a19 1
+    "$Id: ModelInput.f90,v 1.3 2001/10/11 22:10:02 dwu Exp $"
+d80 2
+a81 2
+      REAL(r8) :: PTOP,PBOTTOM,DP,ZH(NH),ZA(NH),ZZ(NH),WK, zvmr(nh)
+      INTEGER :: I,JM,J
+d84 2
+a85 3
+      PTOP = (80./16.-3.)*1._r8    ! TOP OF THE MODEL
+      PBOTTOM=-LOG10(PRESSURE(1))  ! BOTTOM OF THE MODEL
+      DP=(PTOP-PBOTTOM)/NH         ! LAYER THICKNESS
+d88 1
+a88 1
+         ZH(I)=PBOTTOM+(I-1)*DP
+a99 2
+      IF (NZ .NE. NH) THEN
+
+d106 1
+a106 7
+            CALL LOCATE (ZA,NZ,NH,ZH(J),JM)              
+
+            if (jm .le. 0) then
+              print*,'wronh JM: ',JM
+              stop
+                jm=1                               ! since there is no pressure(0)
+            endif
+d108 2
+a109 2
+            YP(J)=((ZA(JM+1)-ZH(J))*ZA(JM)+(ZH(J)-ZA(JM))*  &
+     &            ZA(JM+1))/(ZA(JM+1)-ZA(JM))             
+d113 1
+a113 2
+            YZ(J)=((ZA(JM+1)-ZH(J))*HEIGHT(JM)+(ZH(J)-ZA(JM))*    &
+     &            HEIGHT(JM+1))/(ZA(JM+1)-ZA(JM))
+d115 2
+a116 2
+            YT(J)=((ZA(JM+1)-ZH(J))*TEMPERATURE(JM)+(ZH(J)-ZA(JM))* &
+     &            TEMPERATURE(JM+1))/(ZA(JM+1)-ZA(JM))
+d118 1
+a118 2
+            WC(1,J)=((ZA(JM+1)-ZH(J))*WCin(1,JM)+(ZH(J)-ZA(JM))*    &
+     &            WCin(1,JM+1))/(ZA(JM+1)-ZA(JM))
+d120 4
+a123 5
+            WC(2,J)=((ZA(JM+1)-ZH(J))*WCin(2,JM)+(ZH(J)-ZA(JM))*    &
+     &            WCin(2,JM+1))/(ZA(JM+1)-ZA(JM))
+            
+            YQ(J)=((ZA(JM+1)-ZH(J))*ZVMR(JM)+(ZH(J)-ZA(JM))*       &
+     &            ZVMR(JM+1))/(ZA(JM+1)-ZA(JM))
+d125 1
+a125 1
+            YQ(J) =10**YQ(J)
+d127 2
+a128 5
+            VMR1(1,J)=((ZA(JM+1)-ZH(J))*VMR(2,JM)+(ZH(J)-ZA(JM))*   &
+     &                VMR(2,JM+1))/(ZA(JM+1)-ZA(JM))
+         
+            IPSD(J)=((ZA(JM+1)-ZH(J))*IPSDin(JM)+(ZH(J)-ZA(JM))*    &
+     &            IPSDin(JM+1))/(ZA(JM+1)-ZA(JM))
+d130 3
+a132 1
+            CHK_CLD(J) = WC(1,J) + WC(2,J)
+a133 1
+         ENDDO
+d135 7
+a141 12
+      ELSE
+         
+         DO J=1,NZ
+            YP(J)     = PRESSURE(J)    
+            YZ(J)     = HEIGHT(J)      
+            YT(J)     = TEMPERATURE(J)
+            WC(1,J)   = WCin(1,J)
+            WC(2,J)   = WCin(2,J)
+            YQ(J)     = VMR(1,J)     
+            VMR1(1,J) = VMR(2,J)    
+            IPSD(J)   = IPSDin(J)
+            CHK_CLD(J) = WC(1,J) + WC(2,J)
+a143 1
+      ENDIF
+d172 3
+@
+
+
+1.3
+log
+@remove tangent height calculation
+@
+text
+@d19 1
+a19 1
+    "$Id: ModelInput.f90,v 1.2 2001/09/21 15:51:37 jonathan Exp $"
+d97 1
+a97 1
+         ZVMR(I)=LOG10( VMR(1,I) )
+d192 3
+@
+
+
+1.2
+log
+@modified F95 version
+@
+text
+@d19 1
+a19 1
+    "$Id: ModelInput.f90,v 1.1 2001/09/19 19:23:44 jonathan Exp $"
+d166 1
+a166 1
+
+d171 1
+a171 1
+      DO I=1,NT
+d173 2
+a174 2
+         ZZ(I)=-LOG10( max(1.e-9_r8, ZT(I)) )
+      END DO
+d178 5
+a182 5
+      DO J=1,NT      
+         CALL LOCATE (ZA,NZ,NH,ZZ(J),JM)
+         ZZT(J)=((ZA(JM+1)-ZZ(J))*HEIGHT(JM)+(ZZ(J)-ZA(JM))*    &
+     &                HEIGHT(JM+1))/(ZA(JM+1)-ZA(JM))             
+      ENDDO
+d192 3
+@
+
+
+1.1
+log
+@add module
+@
+text
+@d10 1
+d19 1
+a19 1
+    "$Id: ModelInput.f90,v 1.1 2001/09/19 16:46:37 jonathan Exp $"
+d191 1
+a191 7
+! $Log: ModelInput.f90,v      
+
+
+
+
+
+
+@
+

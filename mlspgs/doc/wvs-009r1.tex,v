@@ -1,0 +1,378 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.14
+	cfm-single-freq-0-1:1.1.0.12
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.10
+	mus-emls-1-70:1.1.0.8
+	rel-1-0-englocks-work:1.1.0.6
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2008.06.11.20.14.50;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.25in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9.00in
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+%\settowidth{\hW}{\bf wvs-005}
+\settowidth{\hW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    8 November 2000\hfill Page \thepage\ of \pageref{lastpage}\hfill{\bf
+    wvs-009r1}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Dave, Nathaniel\\
+Subject: \>Changes in mathematical method for EOS MLS retrieval\\
+From: \>Van Snyder, Fred Krogh\\
+\end{tabbing}
+
+\parindent 0pt \parskip 3pt
+\vspace{-20pt}
+
+\section{Introduction}
+
+In wvs-002, the Newtonian iteration for inverting the radiative transfer
+equation described in the \emph{EOS MLS Retrieval Process Algorithm
+Theoretical Basis} document JPL D-16159 is shown in terms of a
+least-squares problem, \emph{viz.}
+
+\begin{equation}
+\left [ \begin{array}{c} \mathbf{W}_1 \mathbf{K}_1 \\
+                         \text{...} \\
+                         \mathbf{W}_n \mathbf{K}_n \\
+                         \mathbf{W_a} \\
+                         \, \\
+                         \lambda \mathbf{I}
+         \end{array} \right ]
+ [ \mathbf{x}^{(r+1)} - \mathbf{x}^{(r)} ] \;\simeq\;
+\left [ \begin{array}{c} \mathbf{W}_1 \: [
+                           \mathbf{y}_1 - \mathbf{f}_1(\mathbf{x}^{(r)}) ] \\
+                         \text{...} \\
+                         \mathbf{W}_n \: [
+                           \mathbf{y}_i - \mathbf{f}_n(\mathbf{x}^{(r)}) ] \\
+                           \mathbf{W_a}
+                           \: [ \mathbf{a} - \mathbf{x}^{(r)} ] \\
+                         \, \\
+                         0
+         \end{array} \right ] \;,
+\end{equation}\label{orig}
+
+or, more briefly, $\mathbf{A \, \delta x} \simeq \mathbf{b}$.  A
+least-squares problem can be converted to a system of equations by
+multiplying by $\mathbf{A^T}$.  The result $\mathbf{A^T A \, \delta x} =
+\mathbf{A^T b}$ is called a \emph{system of normal equations}.
+
+It is easier to reason mathematically about least-squares problems in the
+form of normal equations, but there is some danger in actually forming
+them: the condition number is squared.  The condition number is the ratio
+of the norm of a matrix to the norm of its inverse.  It is a rough
+measure of the loss of precision to be expected in the solution.  There
+are methods to solve least-squares problems directly, that is, without
+forming normal equations, but these methods require roughly twice as much
+computational effort as is required to form normal equations, and then
+solve them.  There is therefore some attraction to solving a
+least-squares problem in normal equations form.  This can safely be done
+if one knows a priori that the condition number is not large.
+
+We have reason to believe that the condition number of the least-squares
+problem in the Newtonian iteration for inverting the radiative transfer
+equation is not large.  Therefore, we propose to solve it by forming
+normal equations, as described in JPL D-16159.
+
+\section{Forming the normal equations}
+
+Observing that the matrices $\mathbf{W}_i$ and $\mathbf{W}_a$
+are Cholesky factors of the inverses of the measurement and a priori
+covariance matrices $\mathbf{S}_i^{-1}$ and $\mathbf{S}_a^{-1}$,
+respectively, and denoting $\mathbf{A^T b}$ by $\mathbf{c}$, the system
+of normal equations of the original least-squares problem (\ref{orig}) is
+
+\begin{equation}
+ \left ( \sum_{i=1}^n \mathbf{K}_i^\mathbf{T} \mathbf{S}_i^{-1} \mathbf{K}_i +
+  \mathbf{S}_a^{-1} + \lambda^2 \mathbf{I} \right )\: \mathbf{\delta x} =
+ \sum_{i=1}^n \mathbf{K}_i^\mathbf{T} \mathbf{S}_i^{-1}
+   \: [ \mathbf{y}_i - \mathbf{f}_i(\mathbf{x}^{(r)}) ]
+   + \mathbf{S}_a^{-1} [ \mathbf{a} - \mathbf{x}^{(r)} ] = \mathbf{c} \: .
+\end{equation}\label{normal}
+
+To reduce the storage requirements, this system of equations can be built
+up a little bit at a time.  The process starts with the set of equations
+$\mathbf{S}_a^{-1} \: \mathbf{\delta x} = \mathbf{S}_a^{-1} [ \mathbf{a}
+- \mathbf{x}^{(r)} ]$ and adds equations $\mathbf{K}_i^\mathbf{T}
+\mathbf{S}_i^{-1} \mathbf{K}_i \: \mathbf{\delta x} =
+\mathbf{K}_i^\mathbf{T} \mathbf{S}_i^{-1} \: [ \mathbf{y}_i -
+\mathbf{f}_i(\mathbf{x}^{(r)}) ]$ as they are formed by the forward
+model.
+
+After having done this, $\mathbf{c}$ is the gradient of the nonlinear
+problem.  The nonlinear solver uses the gradient to compute $\lambda$. 
+After $\lambda$ is computed, the equations $\lambda^2 \mathbf{I} \:
+\mathbf{\delta x} = 0$ are added to the system.
+
+\section{Methods to solve normal equations}
+
+By the nature of their formation, normal equations are symmetric and
+positive definite.  There is an attractive algorithm for solving
+symmetric and positive definite systems of equations, known as Cholesky
+decomposition.  Given a symmetric and positive definite matrix
+$\mathbf{X}$, a Cholesky decomposition constructs an upper-triangular
+matrix $\mathbf{U}$ such that $\mathbf{U^T U} = \mathbf{X}$.  In factored
+form the normal equations are $\mathbf{A^T A \delta x} = \mathbf{U^T U \,
+\delta x} = \mathbf{c}$.  Since $\mathbf{U}$ is triangular, this system
+can easily be solved in two steps, first by solving $\mathbf{U^T y} =
+\mathbf{c}$ for $\mathbf{y}$, and then solving $\mathbf{U \, \delta x} =
+\mathbf{y}$ for $\mathbf{\delta x}$.
+
+\section{Updating the normal equations}
+
+The equations of the form $\lambda \mathbf{I} = 0$ in (\ref{orig}) arise
+from Levenberg-Marquardt stabilization of the Newtonian iteration.  The
+effect of a large $\lambda$ is to decrease the norm of the solution
+$\mathbf{\delta x}$.  The nonlinear solver starts with a small $\lambda$,
+which allows a large $\mathbf{\delta x}$, and increases it if necessary
+so that $\mathbf{\delta x}$ is constrained to remain within a
+predetermined \emph{trust region}. It may seem that in order to
+accomodate changing $\lambda$ one would need to retain the (upper
+triangle of the) normal equations $\mathbf{A^T A} \: \mathbf{\delta x} =
+\mathbf{c}$ so that a revised system $( \mathbf{A^T A} + \delta \lambda^2
+\mathbf{I} ) \: \mathbf{\delta x} = \mathbf{c}$ can be solved.  (It is
+not a good idea to reconstruct the normal equations as $( \mathbf{U^T U}
++ \delta \lambda^2 \mathbf{I} ) \: \mathbf{\delta x} = \mathbf{c}$, as
+this again squares the already-squared condition number.)  It turns out
+not to be necessary.  Start with $\mathbf{U \delta x} = \mathbf{U^{-T} c}
+= \mathbf{y}$ and add new rows $\delta \lambda \mathbf{I} \mathbf{\delta
+x} = 0$ to form the least-squares problem
+
+\begin{equation}
+ \left [
+  \begin{array}{c}\mathbf{U} \\ \delta \lambda \mathbf{I} \end{array}
+ \right ] \mathbf{\delta x} \simeq
+ \left [ \begin{array}{c}\mathbf{y} \\ 0 \end{array} \right ]
+\end{equation}
+
+for which the normal equations $( \mathbf{U^T U} + \delta \lambda^2
+\mathbf{I} ) \: \mathbf{\delta x} = \mathbf{c}$ are the same as would be
+obtained by replacing $\lambda^2$ by $\lambda^2 + \delta \lambda^2$ in
+(\ref{normal}), or adding equations $\delta\lambda\mathbf{I}\delta x = 0$
+to equation (\ref{orig}).  It is not the same as replacing $\lambda$ by
+$\lambda + \delta\lambda$ in equation (\ref{orig}), and this is not what
+is expected by the nonlinear solver.  Do not solve this system by
+constructing normal equations, as this again squares the already-squared
+condition number.  Instead, construct an orthogonal transformation
+$\mathbf{Q}$ so that
+
+\begin{equation}
+ \left [ \begin{array}{c}\mathbf{\hat U} \\ 0 \end{array} \right ]
+  \mathbf{\delta x} =
+ \mathbf{Q}
+ \left [
+  \begin{array}{c}\mathbf{U} \\ \delta \lambda \mathbf{I} \end{array}
+ \right ] \mathbf{\delta x} \simeq
+ \mathbf{Q}
+ \left [ \begin{array}{c}\mathbf{y} \\ 0 \end{array} \right ] =
+ \left [ \begin{array}{c}\mathbf{\hat y} \\ \zeta \end{array} \right ]
+\end{equation}\label{update}
+
+and $\mathbf{\hat U}$ is triangular.  The vector $\zeta$ is not relevant
+and is not computed.  This procedure does not square the condition
+number.  One can compute $\mathbf{\hat y}$ while computing $\mathbf{\hat
+U}$ by applying $\mathbf{Q}$ to $\mathbf{y}$, or notice
+
+\begin{equation}
+\begin{split}
+ \mathbf{\hat U^T \hat U} \mathbf{\delta x} &=
+  \left [ \mathbf{U^T} | \delta \lambda
+   \mathbf{I} \right ] \mathbf{Q^T Q}
+   \left [
+  \begin{array}{c}\mathbf{U} \\ \delta \lambda \mathbf{I} \end{array}
+ \right ] \mathbf{\delta x} =
+ \left ( \mathbf{U^T U} + \delta \lambda^2 \mathbf{I} \right )
+  \mathbf{\delta x} =\\
+  & = \left [ \mathbf{U^T} | \delta \lambda \mathbf{I} \right ] \mathbf{Q^T Q}
+ \left [ \begin{array}{c}\mathbf{y} \\ 0 \end{array} \right ] =
+ \mathbf{U^T U^{-T} c} = \mathbf{c} \: .\\
+\end{split}
+\end{equation}
+
+and solve $\mathbf{\hat U^T \hat y} = \mathbf{c}$ for $\mathbf{\hat y}$.
+In either case, solve $\mathbf{\hat U \delta x} = \mathbf{\hat y}$ for
+$\mathbf{\delta x}$.
+
+The matrix $\mathbf{Q}$ can either be the product of Givens rotations or
+Householder reflections.  The latter requires less computational effort
+if the number of rows to be added is large, as it is in this case.
+
+It requires more storage but less time to retain $\mathbf{A^T A}$,
+replace it by $\mathbf{A^T A + \delta \lambda^2 I}$, and solve the
+revised normal equations by Cholesky decomposition.  It requires less
+storage but more time to update the factored normal equations as
+described by equation (\ref{update}).  There should be no difference in
+stability.
+
+In the case that the factored normal equations are updated as described
+by equation (\ref{update}), it requires more storage but less time, and
+it may be more stable, to retain $\mathbf{c}$ and solve $\mathbf{\hat U^T
+\hat y} = \mathbf{c}$.  It requires less storage but more time, and it
+may be less stable, to compute $\mathbf{\hat y}$ as described by equation
+(\ref{update}).  To see that it may be less stable to compute
+$\mathbf{\hat y}$ as in equation (\ref{update}), suppose the original
+problem were poorly conditioned because of having too small a value for
+$\lambda$.  This may result in $\mathbf{y}$ being too large, i.e. having
+too large a norm.  Since $\mathbf{Q}$ is orthogonal, computing
+$\mathbf{\hat y}$ as in equation (\ref{update}) preserves the norm of
+$\mathbf{y}$.  The equation $\mathbf{\hat U^T \hat U \delta x} =
+\mathbf{c}$ is better conditioned than $\mathbf{U^T U \delta x} =
+\mathbf{c}$ because $\lambda$ is larger.
+
+\section{Column scaling}
+
+Since the solution includes both volume mixing ratios and temperatures,
+it is expected that there will be variation of approximately 14 orders of
+magnitude in the components of the solution.  This will cause some
+numerical problems.  To avoid them, leave aside the Levenberg-Marquardt
+stabilization $\mathbf{\lambda I \delta x = 0}$ and write the remaining
+least-squares problem as $\mathbf{A \Sigma \Sigma^{-1} \delta x} \simeq
+\mathbf{b}$.  Denoting all of the $\mathbf{W_i K_i}$ parts of the matrix
+by $\mathbf{\hat A}$, the $\mathbf{W_i [ y_i - f_i(x^{(r)})]}$ parts of
+the right-hand side by $\mathbf{\hat b}$, the $\mathbf{W_a [ a-x^{(r)}]}$
+part of the right-hand side by $\mathbf{\hat a}$, letting $\mathbf{y =
+\Sigma^{-1} \delta x}$, and leaving aside the Levenberg-Marquardt
+stabilization for the moment, we have, in normal equations form,
+$\mathbf{\Sigma^T ( \hat A^T \hat A + S^{-1} ) \Sigma y = \Sigma^T ( \hat
+A^T \hat b + \hat a)}$.
+
+There are several choices for $\mathbf{\Sigma}$.  Golub and Van Loan
+remark that if $\mathbf{\Sigma}$ is diagonal, with each element being the
+$L_2$ norm of the corresponding column of $\mathbf{A}$ (sans
+$\mathbf{\lambda I}$), the condition number $\kappa_2$ is minimized.  In
+order to save storage space, we are planning to accumulate the normal
+equations little-by-little.  Thus, the column norm is not known until
+after the normal equations are formed.  This may actually be a good
+thing, as one is not thereby tempted to do column scaling on the Jacobian
+matrices or $\mathbf{W_a}$, but must wait and instead do both row and
+column scaling on the normal equations.  Although this scaling choice
+minimizes the condition number of the matrix, it doesn't guarantee that
+the solution will be well scaled.  That it is well scaled rests on the
+assumption that the column norms of the matrix are proportional to the
+corresponding components of the solution.
+
+Another possibility is to use $\mathbf{\Sigma = W_a^{-1}}$.  Working
+through the algebra gives
+\[ \mathbf{[\,W_a^{-T} \hat A^T \hat A W_a^{-1} + I\,]\,
+   y = W_a^{-T} \hat A^T \hat b + W_a \,[\,a - x^{(r)}\,]}\,.\]
+Although this has the attractive $\mathbf{I}$ added to the diagonal, the
+scaling operation is significantly more expensive than scaling by a
+diagonal matrix.  As above, that the solution is well scaled rests on an
+assumption, in this case that the magnitudes of the elements of
+$\mathbf{W_a} \delta x$ are approximately equal.
+
+A third possibility is to assume that $\mathbf{a}$ is a good
+approximation for $\mathbf{x}$, and therefore to scale with a diagonal
+$\mathbf{\Sigma}$ the diagonal elements of which are corresponding
+elements of $\mathbf{a - x^{(r)}}$.  If we have faith in the a priori
+estimate, this one produces the best scaling of the solution, with the
+least work.
+
+In any case, it is important not to scale the Levenberg-Marquardt
+stabilization.  This stabilization is calculated by the nonlinear solver
+using its knowledge of the properties of the scaled matrix $\mathbf{A
+\Sigma}$ (where $\mathbf{A}$ is the matrix of this section, not the
+earlier sections).
+
+\section{Why use Cholesky instead of a conjugate-gradient method?}
+
+The document JPL D-16159 advocates to use a conjugate-gradient method to
+solve either the least-squares problem (\ref{orig}) or the normal
+equations system (\ref{normal}).
+
+When using infinite precision arithmetic, the conjugate-gradient method
+converges to the same solution as a direct method after a number of
+iterations equal to the number of columns in the problem.  With finite
+precision arithmetic, however, the iteration may not converge at all. 
+The rate of convergence can be improved by \emph{preconditioning} the
+system.  The ``better'' the preconditioner, the faster the rate of
+convergence.  The ideal preconditioner for the normal equations of a
+least-squares problem is $\mathbf{\hat U}$.  Thus, reducing the number of
+iterations of the conjugate-gradient method requires, in the limit, as
+much work as solving the system by a direct method.
+
+It is desirable to have the covariance matrix of the solution,
+$(\mathbf{A^T A})^{-1} = ( \mathbf{\hat U^T \hat U} )^{-1}$, as well as
+the solution.  Forming the covariance matrix of the solution by using a
+conjugate-gradient method requires solving as many additional equations
+as there are columns in the problem.
+
+The matrix $\mathbf{A}$ is sparse -- it has a block-banded structure, and
+a block border.  By developing a block-Cholesky solver, it is easy to
+exploit the sparsity to avoid unnecessary computations.
+
+Taken all together, the Cholesky method is preferred to the
+conjugate-gradient method.
+
+\label{lastpage}
+\end{document}
+% $Id: $
+@

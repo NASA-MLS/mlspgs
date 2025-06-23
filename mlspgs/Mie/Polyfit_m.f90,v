@@ -1,0 +1,164 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.14
+	cfm-single-freq-0-1:1.1.0.12
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.10
+	mus-emls-1-70:1.1.0.8
+	rel-1-0-englocks-work:1.1.0.6
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2009.08.05.01.04.13;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@! Copyright 2009, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Polyfit_m
+
+! Least-squares fit a set of data to a polynomial of specified degree.
+
+  use MLSKinds, only: RK => R8
+
+  implicit NONE
+  private
+  public :: Polyfit, RK
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), parameter :: ModuleName= &
+       "$RCSfile: Mie_Tables.f90,v $"
+!---------------------------------------------------------------------------
+
+contains
+
+  subroutine Polyfit ( X, Y, MaxOrd, Order, Stdev, Fit, Diff )
+
+    real(rk), intent(in) :: X(:)       ! Independent variable
+    real(rk), intent(in) :: Y(:)       ! size(y) <= 2 voids warranty
+    integer, intent(in) :: MaxOrd      ! maximum order of the fit
+    integer, intent(out) :: Order      ! actual order of the fit
+    real(rk), intent(out) :: Stdev     ! norm2(residual)/(m-n)
+    real(rk), intent(out) :: Fit(:)    ! The fitted polynomial evaluated at X
+    real(rk), intent(out) :: Diff(:)   ! Y - Fit
+
+    real(rk) :: P(maxOrd+3), SD(1), W((maxOrd+3)*(maxOrd+3))
+
+    integer :: I, M
+
+    interface PFIT
+      subroutine DPFIT ( M, X, Y, SD, NMAX, SEEKN, COMTRN, CHBBAS, P, NDEG, &
+        &                SIGFAC, W )
+        integer, intent(in) :: M
+        double precision, intent(in) :: X(m), Y(m), SD(*)
+        integer, intent(in) :: NMAX
+        logical, intent(in) :: SEEKN, COMTRN, CHBBAS
+        double precision, intent(inout) :: P(nmax+3)
+        integer, intent(out) :: NDEG
+        double precision, intent(out) :: SIGFAC
+        double precision, intent(inout) :: W((nmax+3)*(nmax+3))
+      end subroutine DPFIT
+      subroutine SPFIT ( M, X, Y, SD, NMAX, SEEKN, COMTRN, CHBBAS, P, NDEG, &
+        &                SIGFAC, W )
+        integer, intent(in) :: M
+        real, intent(in) :: X(m), Y(m), SD(*)
+        integer, intent(in) :: NMAX
+        logical, intent(in) :: SEEKN, COMTRN, CHBBAS
+        real, intent(inout) :: P(nmax+3)
+        integer, intent(out) :: NDEG
+        real, intent(out) :: SIGFAC
+        real, intent(inout) :: W((nmax+3)*(nmax+3))
+      end subroutine SPFIT
+    end interface
+
+    interface CPVAL
+      double precision function DCPVAL ( P, NDEG, X )
+        integer, intent(in) :: NDEG
+        double precision, intent(in) :: P(ndeg+3)
+        double precision, intent(in) :: X
+      end function DCPVAL
+      real function SCPVAL ( P, NDEG, X )
+        integer, intent(in) :: NDEG
+        real, intent(in) :: P(ndeg+3)
+        real, intent(in) :: X
+      end function SCPVAL
+    end interface
+
+    m = size(y)
+
+    ! Compute the polynomial fit
+    sd(1) = -1.0
+    call pfit ( m, x, y, sd, maxord, .true., .true., .true., p, order, stdev, w )
+
+    ! Evaluate the fitted polynomial
+    do i = 1, m
+      fit(i) = cpval(p,order,x(i))
+    end do
+
+    diff = y - fit
+
+  end subroutine Polyfit
+
+! ------------------------------------------------  not_used_here  -----
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: FullForwardModel_m.f90,v 2.295 2009/06/23 18:26:10 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+
+end module Polyfit_m
+
+! $Log: $
+@

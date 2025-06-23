@@ -1,0 +1,96 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.12
+	cfm-single-freq-0-1:1.1.0.10
+	TES-MLuo-01:1.1
+	TES-UNKNOWN:1.1
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.8
+	mus-emls-1-70:1.1.0.6
+	rel-1-0-englocks-work:1.1.0.4
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.2
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	M4-00:1.1
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2010.03.16.22.20.53;	author honghanh;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Fixed, and tested for HGrid creation
+@
+text
+@Tue Mar 16 15:16:46 PDT 2010
+Testing HGrid creation
+IFC.Linux.ifc5.2.16/mockup < v3.20-cfm-004.l2cf
+Name = (unknown) noProfs = 1 lowerOverlap = 0 upperOverlap = 0
+ prof       phi       geodLat           lon          time     solarTime   solarZenith      losAngle
+    1  -159.000      -20.7760       22.0674      3.818016E+08   1.47132       139.158       188.803
+~/mlspgs/bin/IFC.Linux.ifc5.2.16/mlsl2 < /testing/workspace/honghanh/l2tests/v3/py-suite/v3.20-cfm-004.l2cf
+2010-03-16   15:19:21   starting mlsl2
+get attributeOrbitNumber
+get attributeOrbitPeriod
+
+                                          F e b r u a r y                                          
+   Sunday        Monday        Tuesday      Wednesday     Thursday       Friday       Saturday   
+-------------------------------------------------------------------------------------------------
+|            |             |           1 |           2 |           3 |           4 |           5 |
+|            |             |             |             |             |             |             |
+|            |             |             |             |             |             |             |
+|            |             |         d32 |         d33 |         d34 |         d35 |         d36 |
+-------------------------------------------------------------------------------------------------
+||         6||           7 |           8 |           9 |          10 |          11 |          12 |
+||          ||             |             |             |             |             |             |
+||          ||             |             |             |             |             |             |
+||       d37||         d38 |         d39 |         d40 |         d41 |         d42 |         d43 |
+-------------------------------------------------------------------------------------------------
+|         13 |          14 |          15 |          16 |          17 |          18 |          19 |
+|            |             |             |             |             |             |             |
+|            |             |             |             |             |             |             |
+|        d44 |         d45 |         d46 |         d47 |         d48 |         d49 |         d50 |
+-------------------------------------------------------------------------------------------------
+|         20 |          21 |          22 |          23 |          24 |          25 |          26 |
+|            |             |             |             |             |             |             |
+|            |             |             |             |             |             |             |
+|        d51 |         d52 |         d53 |         d54 |         d55 |         d56 |         d57 |
+-------------------------------------------------------------------------------------------------
+|         27 |          28 |             |             |             |             |             |
+|            |             |             |             |             |             |             |
+|            |             |             |             |             |             |             |
+|        d58 |         d59 |             |             |             |             |             |
+-------------------------------------------------------------------------------------------------
+ HGrid Name = HGRIDSTANDARD noProfs = 1 lowerOverlap = 0 upperOverlap = 0
+ prof       phi       geodLat           lon          time     solarTime   solarZenith      losAngle
+    1  -159.000      -20.7760       22.0674      3.818016E+08   1.47132       139.158       188.803
+@

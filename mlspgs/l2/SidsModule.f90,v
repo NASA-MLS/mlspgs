@@ -1,0 +1,3229 @@
+head	2.78;
+access;
+symbols
+	v5-02-NRT-19:2.78
+	v6-00:2.78
+	v5-02-NRT-18:2.78
+	v5-02:2.78
+	v5-01-NRT-17:2.78
+	v5-01-NRT-16:2.78
+	v5-01-NRT-15:2.78
+	v5-01-NRT-14:2.78
+	neuralnetworks-1-0:2.78.0.6
+	cfm-single-freq-0-1:2.78.0.4
+	v5-01:2.78
+	v5-00:2.78
+	v4-23-TA133:2.78.0.2
+	mus-emls-1-70:2.77.0.4
+	rel-1-0-englocks-work:2.77.0.2
+	VUMLS1-00:2.75
+	VPL1-00:2.75
+	V4-22-NRT-08:2.75
+	VAM1-00:2.75
+	V4-21:2.74.0.2
+	V4-13:2.74
+	V4-12:2.72
+	V4-11:2.72
+	V4-10:2.72
+	V3-43:2.53
+	M4-00:2.68
+	V3-41:2.53
+	V3-40-PlusGM57:2.53.0.2
+	V2-24-NRT-04:2.51
+	V3-33:2.60
+	V2-24:2.51
+	V3-31:2.60
+	V3-30-NRT-05:2.60
+	cfm-01-00:2.57
+	V3-30:2.53
+	V3-20:2.53
+	V3-10:2.53
+	V2-23-NRT-02:2.51
+	V2-23:2.51
+	V2-22-NRT-01:2.51
+	V2-22:2.51
+	V2-21:2.49
+	V2-20:2.49
+	V2-11:2.49
+	V2-10:2.49
+	V2-00:2.49
+	V1-51:2.48
+	V1-50:2.48
+	V1-45:2.47
+	V1-44:2.47
+	V1-43:2.45
+	V1-32:2.44
+	V1-31:2.44
+	V1-30:2.43
+	V1-13:2.42
+	V1-12:2.42
+	V1-11:2.42
+	V1-10:2.42
+	newfwm-feb03:2.42.0.2
+	V1-04:2.39
+	V1-03:2.39
+	V1-02:2.39
+	JointForwardModel:2.39.0.2
+	V1-00:2.39
+	newfwm-sep01:2.33.0.2
+	V0-7:2.33
+	V0-5-Level2:2.28
+	V0-5-SIPS:2.18;
+locks; strict;
+comment	@# @;
+
+
+2.78
+date	2018.09.13.20.24.50;	author pwagner;	state Exp;
+branches;
+next	2.77;
+
+2.77
+date	2017.12.07.01.01.24;	author vsnyder;	state Exp;
+branches;
+next	2.76;
+
+2.76
+date	2017.07.27.01.41.50;	author vsnyder;	state Exp;
+branches;
+next	2.75;
+
+2.75
+date	2015.03.28.02.51.19;	author vsnyder;	state Exp;
+branches;
+next	2.74;
+
+2.74
+date	2014.09.05.01.20.54;	author vsnyder;	state Exp;
+branches;
+next	2.73;
+
+2.73
+date	2014.09.05.00.49.07;	author vsnyder;	state Exp;
+branches;
+next	2.72;
+
+2.72
+date	2014.03.01.03.10.56;	author vsnyder;	state Exp;
+branches;
+next	2.71;
+
+2.71
+date	2014.01.09.00.30.24;	author pwagner;	state Exp;
+branches;
+next	2.70;
+
+2.70
+date	2013.09.24.23.47.22;	author vsnyder;	state Exp;
+branches;
+next	2.69;
+
+2.69
+date	2013.08.30.02.45.48;	author vsnyder;	state Exp;
+branches;
+next	2.68;
+
+2.68
+date	2013.03.15.20.36.03;	author vsnyder;	state Exp;
+branches;
+next	2.67;
+
+2.67
+date	2013.03.01.01.09.50;	author pwagner;	state Exp;
+branches;
+next	2.66;
+
+2.66
+date	2012.10.11.21.02.16;	author pwagner;	state Exp;
+branches;
+next	2.65;
+
+2.65
+date	2011.05.17.00.44.14;	author vsnyder;	state Exp;
+branches;
+next	2.64;
+
+2.64
+date	2011.05.17.00.26.25;	author vsnyder;	state Exp;
+branches;
+next	2.63;
+
+2.63
+date	2011.04.02.01.23.22;	author vsnyder;	state Exp;
+branches;
+next	2.62;
+
+2.62
+date	2011.03.30.00.41.07;	author vsnyder;	state Exp;
+branches;
+next	2.61;
+
+2.61
+date	2011.03.25.20.44.45;	author vsnyder;	state Exp;
+branches;
+next	2.60;
+
+2.60
+date	2010.09.17.00.08.18;	author pwagner;	state Exp;
+branches;
+next	2.59;
+
+2.59
+date	2010.08.27.06.36.41;	author yanovsky;	state Exp;
+branches;
+next	2.58;
+
+2.58
+date	2010.08.06.23.04.24;	author pwagner;	state Exp;
+branches;
+next	2.57;
+
+2.57
+date	2010.05.13.23.48.19;	author pwagner;	state Exp;
+branches;
+next	2.56;
+
+2.56
+date	2010.03.29.18.40.09;	author pwagner;	state Exp;
+branches;
+next	2.55;
+
+2.55
+date	2010.03.24.20.56.11;	author vsnyder;	state Exp;
+branches;
+next	2.54;
+
+2.54
+date	2010.02.25.18.20.12;	author pwagner;	state Exp;
+branches;
+next	2.53;
+
+2.53
+date	2009.06.23.18.46.18;	author pwagner;	state Exp;
+branches;
+next	2.52;
+
+2.52
+date	2008.06.06.01.59.28;	author vsnyder;	state Exp;
+branches;
+next	2.51;
+
+2.51
+date	2007.06.29.19.32.07;	author vsnyder;	state Exp;
+branches;
+next	2.50;
+
+2.50
+date	2007.04.03.17.39.36;	author vsnyder;	state Exp;
+branches;
+next	2.49;
+
+2.49
+date	2005.06.22.18.57.02;	author pwagner;	state Exp;
+branches;
+next	2.48;
+
+2.48
+date	2004.12.27.23.06.15;	author vsnyder;	state Exp;
+branches;
+next	2.47;
+
+2.47
+date	2004.06.21.22.50.55;	author livesey;	state Exp;
+branches;
+next	2.46;
+
+2.46
+date	2004.05.19.19.16.12;	author vsnyder;	state Exp;
+branches;
+next	2.45;
+
+2.45
+date	2004.03.31.03.59.43;	author livesey;	state Exp;
+branches;
+next	2.44;
+
+2.44
+date	2003.09.11.23.16.36;	author livesey;	state Exp;
+branches;
+next	2.43;
+
+2.43
+date	2003.06.20.19.38.26;	author pwagner;	state Exp;
+branches;
+next	2.42;
+
+2.42
+date	2002.10.08.17.36.23;	author pwagner;	state Exp;
+branches;
+next	2.41;
+
+2.41
+date	2002.09.23.18.04.47;	author livesey;	state Exp;
+branches;
+next	2.40;
+
+2.40
+date	2002.09.18.23.56.01;	author vsnyder;	state Exp;
+branches;
+next	2.39;
+
+2.39
+date	2002.01.09.00.51.05;	author livesey;	state Exp;
+branches;
+next	2.38;
+
+2.38
+date	2002.01.08.18.15.57;	author livesey;	state Exp;
+branches;
+next	2.37;
+
+2.37
+date	2001.11.27.23.34.49;	author pwagner;	state Exp;
+branches;
+next	2.36;
+
+2.36
+date	2001.11.09.23.17.22;	author vsnyder;	state Exp;
+branches;
+next	2.35;
+
+2.35
+date	2001.10.02.16.49.56;	author livesey;	state Exp;
+branches;
+next	2.34;
+
+2.34
+date	2001.10.01.22.54.22;	author pwagner;	state Exp;
+branches;
+next	2.33;
+
+2.33
+date	2001.05.26.00.21.38;	author livesey;	state Exp;
+branches;
+next	2.32;
+
+2.32
+date	2001.05.10.01.08.11;	author livesey;	state Exp;
+branches;
+next	2.31;
+
+2.31
+date	2001.05.09.01.50.31;	author vsnyder;	state Exp;
+branches;
+next	2.30;
+
+2.30
+date	2001.05.08.21.33.56;	author livesey;	state Exp;
+branches;
+next	2.29;
+
+2.29
+date	2001.05.05.00.02.27;	author livesey;	state Exp;
+branches;
+next	2.28;
+
+2.28
+date	2001.05.03.23.09.09;	author livesey;	state Exp;
+branches;
+next	2.27;
+
+2.27
+date	2001.05.03.20.33.51;	author vsnyder;	state Exp;
+branches;
+next	2.26;
+
+2.26
+date	2001.05.01.23.52.54;	author vsnyder;	state Exp;
+branches;
+next	2.25;
+
+2.25
+date	2001.05.01.06.57.30;	author livesey;	state Exp;
+branches;
+next	2.24;
+
+2.24
+date	2001.05.01.00.20.34;	author livesey;	state Exp;
+branches;
+next	2.23;
+
+2.23
+date	2001.04.26.19.48.11;	author livesey;	state Exp;
+branches;
+next	2.22;
+
+2.22
+date	2001.04.26.00.57.20;	author vsnyder;	state Exp;
+branches;
+next	2.21;
+
+2.21
+date	2001.04.24.23.11.40;	author vsnyder;	state Exp;
+branches;
+next	2.20;
+
+2.20
+date	2001.04.19.23.56.01;	author livesey;	state Exp;
+branches;
+next	2.19;
+
+2.19
+date	2001.04.19.20.30.24;	author livesey;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2001.04.12.21.42.24;	author livesey;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2001.04.12.18.13.28;	author vsnyder;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2001.04.12.17.48.11;	author livesey;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2001.04.10.23.28.10;	author livesey;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2001.04.10.02.46.17;	author livesey;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2001.04.10.00.24.30;	author vsnyder;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2001.04.07.01.50.49;	author vsnyder;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2001.03.30.00.07.24;	author livesey;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2001.03.28.23.47.33;	author livesey;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2001.03.25.00.50.31;	author livesey;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2001.03.20.02.30.15;	author livesey;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2001.03.17.00.45.28;	author livesey;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2001.03.09.01.35.18;	author vsnyder;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2001.03.09.01.30.10;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2001.03.08.23.52.24;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2001.03.08.20.11.19;	author zvi;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2001.03.08.03.23.09;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.03.08.00.00.08;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.78
+log
+@Moved changeable options to new L2Options; added DumpOptions
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=============================================================================
+module SidsModule
+  !=============================================================================
+
+  ! This module evaluates the radiative transfer equation, and maybe
+  ! its derivatives.  It is used for SIDS and L2PC runs.
+
+  implicit none
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: SidsModule.f90,v $"
+  private :: not_used_here
+!---------------------------------------------------------------------------
+
+contains
+
+  subroutine SIDS ( Root, VectorDatabase, MatrixDatabase, HessianDatabase, &
+    & configDatabase, chunk)
+
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test, Test_Allocate
+    use Chunks_M, only: MLSChunk_T
+    use Expr_M, only: Expr
+    use Forwardmodelconfig, only: Forwardmodelconfig_T
+    use Forwardmodelwrappers, only: Forwardmodel
+    use Forwardmodelintermediate, only: Forwardmodelstatus_T
+    use Hessianmodule_1, only: Hessian_T, Inserthessianplane
+    use HighOutput, only: OutputnamedValue
+    use Init_Tables_Module, only: F_Destroyjacobian, F_Forwardmodel, &
+      & F_Fwdmodelextra, F_Fwdmodelin, F_Fwdmodelout, &
+      & F_Hessian, F_Jacobian, F_Mirrorhessian, &
+      & F_Perturbation, F_SingleMAF, F_Switches, F_Tscat
+    use, Intrinsic :: Iso_C_Binding, only: C_Intptr_T, C_Loc
+    use Lexer_Core, only: Print_Source
+    use MLSKinds, only: R8
+    use MLSMessagemodule, only: MLSMessage, MLSMSG_Error
+    use Matrixmodule_0, only: M_Absent, M_Full, M_Banded, M_Column_Sparse, &
+      & MatrixElement_T
+    use Matrixmodule_1, only: Addtomatrix, Copymatrix, Createblock, &
+      & Destroyblock, Destroymatrix, Dump, Findblock, &
+      & GetfrommatrixDatabase, Matrix_Database_T, Matrix_T, Scalematrix
+    use MLSL2options, only: L2Options
+    use MLSL2timings, only: Add_To_Retrieval_Timing
+    use MLSStringlists, only: Switchdetail
+    use Moretree, only: Get_Field_Id, Get_Boolean
+    use Output_M, only: Output
+    use Scanmodelmodule, only: Destroyforwardmodelintermediate, &
+      & Dumpinstancewindows
+    use String_Table, only: Get_String
+    use Time_M, only: Time_Now
+    use Toggles, only: Gen, Switches, Toggle
+    use Trace_M, only: Trace_Begin, Trace_End
+    use Tree, only: Decoration, Nsons, Subtree, Sub_Rosa, Where
+    use Vectorsmodule, only: Vector_T, &
+      & CopyVector, DestroyVectorinfo, Dump, Operator(-)
+
+    ! Dummy arguments:
+    integer, intent(in) :: Root         ! Of the relevant subtree of the AST
+    ! Indexes an n_cf vertex
+    type(vector_T), dimension(:), target :: VectorDatabase
+    type(matrix_Database_T), dimension(:), pointer :: MatrixDatabase
+    type(hessian_t), dimension(:), pointer :: HessianDatabase
+    type(forwardModelConfig_T), dimension(:), pointer :: configDatabase
+    type(MLSChunk_T), intent(in) :: chunk
+
+    integer(c_intptr_t) :: Addr         ! For tracing
+    integer :: Error                    ! >= indicates an error occurred
+    integer :: ExprUnits(2)             ! From expr
+    real(r8) :: ExprValue(2)            ! From expr
+    integer :: Field                    ! Of the "sids" specification
+    integer :: config                   ! Index for config loop
+    integer, dimension(:), pointer :: Configs ! Forward model configs
+    type(vector_T), pointer :: FwdModelIn
+    type(vector_T), pointer :: FwdModelExtra
+    type(vector_T), pointer :: FwdModelOut
+    type(vector_T), pointer :: Perturbation
+    type(vector_T) :: SaveState         ! For numerical derivatives
+    type(matrix_T) :: SaveJacobian      ! The Jacobian matrix
+    type(vector_T) :: Deviation         ! Result of perturbation
+    type(vector_T) :: SaveResult        ! Result of forward model out
+    integer :: I                        ! Subscript, loop inductor
+    integer :: IxHessian                ! Index of Hessian in hessian database
+    integer :: IxJacobian               ! Index of Jacobian in matrix database
+    type(hessian_T), pointer :: Hessian ! The Hessian matrix
+    type(matrix_T), pointer :: Jacobian ! The Jacobian matrix
+    integer :: Col                      ! Column in jacobian
+    integer :: Element                  ! Index
+    integer :: Instance                 ! Index
+    integer :: LoopEnd                  ! Loop limit
+    integer :: MAF1                     ! Loop limit
+    integer :: MAF2                     ! Loop limit
+    integer :: MAF                      ! Index
+    integer :: Me = -1                  ! String index for trace
+    integer :: Quantity                 ! Index
+    logical :: GetAnaJac                ! Forward model needs to compute analytical Jacobians
+    integer :: RowInstance              ! From jacobian
+    integer :: RowQuantity              ! From jacobian
+    integer :: Row                      ! Row in jacobian
+    integer :: SingleMAF                ! From l2cf
+    integer :: Son                      ! Of ROOT
+    integer :: Status                   ! Flag
+    integer :: SwitchLen                ! LEN_TRIM(Switches) on entry
+    integer :: SwitchLenCur             ! LEN_TRIM(Switches) after command processing
+    integer, allocatable :: ToKeep(:)   ! Molecule cross derivatives to keep
+                                        ! after computing Hessian by
+                                        ! perturbation. Union of molecule second
+                                        ! derivatives from all configs.  Keep
+                                        ! them all if this ends up empty as a
+                                        ! result of no config specifying
+                                        ! moleculeSecondDerivatives.
+    logical :: DestroyJacobian          ! Flag
+    logical :: DoThisOne                ! Flag
+    logical :: DoTScat                  ! Flag
+    logical :: MirrorHessian            ! Flag
+    logical :: ShowPtb                  ! From -Sptb command-line option
+    integer :: ShowPtbLevel             ! Number from -Sptb#
+    real ::    T1
+    type (MatrixElement_T), pointer :: M0 ! A block from the jacobian
+
+    type (ForwardModelStatus_T) :: fmStat ! Status for forward model
+
+    real (r8) :: THISPTB                ! A scalar perturbation
+
+    ! Error message codes
+    integer, parameter :: HessianNotJacobian = 1 ! Column vectors different
+    integer, parameter :: NeedJacobian = HessianNotJacobian + 1 ! Needed if derivatives requested
+    integer, parameter :: NotPlain = needJacobian + 1  ! Not a "plain" matrix
+    integer, parameter :: PerturbationNotState = NotPlain + 1 ! Ptb. not same as state
+    integer, parameter :: WrongDestroyJacobian = PerturbationNotState + 1 ! destroyJacobian with Hessian
+
+    call trace_begin ( Me, "SIDS", root, cond=toggle(gen) )
+    call time_now ( t1 )
+
+    nullify ( configs, perturbation, Hessian )
+    ! Process the fields of the "sids" specification
+    doTScat = .false.
+    error = 0
+    ixJacobian = 0
+    IxHessian = 0
+    destroyJacobian = .false.
+    mirrorHessian = .false.
+    singleMAF = -1
+    fwdModelExtra => NULL()             ! Can be omitted
+    switchLen = len_trim(switches)
+    switchLenCur = switchLen + 1
+    switches(switchLenCur:switchLenCur) = ','
+
+    do i = 2, nsons(root)
+      son = subtree(i,root)
+      field = get_field_id(son)
+      select case ( field )
+      case ( f_destroyJacobian )
+        destroyJacobian = Get_boolean(son)
+      case ( f_mirrorHessian )
+        mirrorHessian = Get_boolean(son)
+      case ( f_forwardModel )
+        call Allocate_Test ( configs, nsons(son)-1, 'configs', ModuleName )
+        do config = 2, nsons(son)
+          configs(config-1) = decoration(decoration(subtree(config,son)))
+        end do
+      case ( f_fwdModelExtra )
+        fwdModelExtra => vectorDatabase(decoration(decoration(subtree(2,son))))
+      case ( f_fwdModelIn )
+        fwdModelIn => vectorDatabase(decoration(decoration(subtree(2,son))))
+      case ( f_fwdModelOut )
+        fwdModelOut => vectorDatabase(decoration(decoration(subtree(2,son))))
+      case ( f_jacobian )
+        ixJacobian = decoration(subtree(2,son)) ! jacobian: matrix vertex
+      case ( f_hessian )
+        ixHessian =  decoration(subtree(2,son)) ! hessian: hessian vertex
+      case ( f_perturbation )
+        perturbation => vectorDatabase(decoration(decoration(subtree(2,son))))
+      case ( f_singleMAF )
+        call expr ( subtree(2,son), exprUnits, exprValue )
+        singleMAF = exprValue(1)
+      case ( f_switches )
+        call get_string ( sub_rosa(subtree(2,son)), switches(switchLenCur+1:), strip=.true. )
+        switchLenCur = len_trim(switches) + 1
+        switches(switchLenCur:switchLenCur) = ','
+      case ( f_TScat )
+        doTScat = Get_boolean(son)
+      end select
+    end do ! i = 2, nsons(root)
+
+    showPtbLevel = switchDetail( switches, 'ptb' )
+    showptb = showPtbLevel > -1 .and. associated( perturbation )
+
+    ! Now if we weren't given a forward model extra, point it to the forwardModelIn
+    ! This seems rather cheesy.  However, the alternative is changing a lot of
+    ! code from having FwdModelExtra as optional to pointer.
+    if ( .not. associated ( fwdModelExtra ) ) &
+      & fwdModelExtra => fwdModelIn
+
+    ! Check that we have a Jacobian if we need one
+    if ( ixJacobian > 0 ) then
+      i = decoration(ixJacobian)
+      call getFromMatrixDatabase ( matrixDatabase(i), jacobian )
+      if ( .not. associated(jacobian) ) call announceError ( notPlain )
+    else
+      if ( any( (/configDatabase(configs)%atmos_Der, &
+        &         configDatabase(configs)%spect_Der, &
+        &         configDatabase(configs)%temp_der/) ) ) then
+        call announceError ( needJacobian )
+      end if
+    end if
+
+    ! Check we have a Jacobian if we have a Hessian
+    if ( ixHessian > 0 .and. ixJacobian <= 0 ) call announceError( needJacobian )
+    if ( ixHessian > 0 ) then
+      hessian => HessianDatabase ( -decoration ( ixHessian ) )
+      if ( hessian%col%vec%template%name /= jacobian%col%vec%template%name &
+        & .or. hessian%row%vec%template%name /= jacobian%row%vec%template%name &
+        & .or. (hessian%col%instFirst .neqv. jacobian%col%instFirst) &
+        & .or. (hessian%row%instFirst .neqv. jacobian%row%instFirst) )&
+        & call announceError ( HessianNotJacobian )
+    end if
+
+    ! Check that if we set destroyJacobian we're not asking for Hessian information
+    if ( destroyJacobian .and. ( ixHessian > 0 ) ) call announceError ( wrongDestroyJacobian )
+
+    ! Now work out if we're going to be asking the forward model to compute analytical Jacobians
+    ! or if it's up to us to do so
+    getAnaJac = ( ixJacobian > 0 ) .and. ( .not. associated ( perturbation ) .or. &
+      & ( ixHessian > 0 ) )
+
+    ! Setup some stuff for the case where we're doing numerical derivatives.
+    if ( associated ( perturbation ) ) then
+      if ( perturbation%template%name /= fwdModelIn%template%name ) &
+        & call AnnounceError ( perturbationNotState )
+      quantity = 1
+      instance = 1
+      element = 0
+      loopEnd = perturbation%template%totalElements
+      if ( showptb ) then
+        call outputnamedValue( 'loopEnd', loopEnd )
+        call outputnamedValue( 'size(configs)', size(configs) )
+      end if
+    else
+      ! Alternatively do simple one shot run.
+      loopEnd = 1
+      doThisOne = .true.
+    end if
+
+    if ( error > 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Errors prevent SIDS run.' )
+
+    configDatabase(configs)%generateTScat = doTScat
+
+    if ( ixHessian > 0 ) call get_toKeep ! Cross derivatives to keep in Hessian
+
+    ! Now have a possible loop over state vector elements, applying corrections.
+    do i = 1, loopEnd
+
+      ! Deal with the case where this is a perturbation.
+      if ( associated ( perturbation ) ) then
+        if ( element == 0 ) then
+          ! Do a first unperturbed case.  Save the initial state first.
+          call CopyVector ( saveState, fwdModelIn, clone=.true. )
+          doThisOne=.true.
+        else
+          thisPtb =perturbation%quantities(quantity)%values(element,instance)
+          doThisOne = thisPtb /= 0.0
+          if ( doThisOne ) then
+            call CopyVector ( fwdModelIn, saveState ) ! Get saved state
+            ! Perturb it
+            fwdModelIn%quantities(quantity)%values(element,instance) = &
+              & fwdModelIn%quantities(quantity)%values(element,instance) + &
+              & thisPtb
+          end if
+        end if
+      end if
+
+      ! Now loop over the MAFs / forward model configs and run the models
+      if ( doThisOne ) then
+        fmStat%newScanHydros = .true.
+
+        if ( ixJacobian > 0 ) then
+          call allocate_test ( fmStat%rows, jacobian%row%nb, 'fmStat%rows', &
+            & ModuleName )
+        else ! because it's not optional in many places in the forward model
+          call allocate_test ( fmStat%rows, 0, 'fmStat%rows', ModuleName )
+        end if
+
+        if ( showptb .and. instance == 1 ) then
+          call dump( perturbation%quantities(quantity), details=showPtbLevel-1, &
+            & name='Perturbation', vector=perturbation )
+          call dump ( saveState%quantities(quantity), details=showPtbLevel-1, &
+            & name='Save State', vector=saveState )
+        end if
+
+        ! Loop over forward model configs
+        do config = 1, size(configs)
+          ! Work out the loop limits
+          if ( singleMAF == -1 ) then
+            maf1 = 1
+            maf2 = chunk%lastMAFIndex - chunk%firstMAFIndex + 1
+            if (configDatabase(configs(config))%skipOverlaps) then
+              maf1 = maf1 + chunk%noMAFsLowerOverlap
+              maf2 = maf2 - chunk%noMAFsUpperOverlap
+            end if
+          else
+            if ( (singleMAF < 1) .or. &
+              & (singleMAF > chunk%lastMAFIndex - chunk%firstMAFIndex + 1) ) &
+              & call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & 'Illegal value of singleMAF' )
+            maf1 = singleMAF
+            maf2 = singleMAF
+          end if
+          if ( switchDetail( switches, 'fiw' ) > -1 ) &
+            & call DumpInstanceWindows ( &
+            & fwdModelIn, fwdModelExtra, maf1, maf2, &
+            & configDatabase(configs(config)), &
+            & details=switchDetail( switches, 'fiw' ) &
+            & )
+          if ( L2Options%SkipRetrieval ) cycle
+          ! Loop over mafs
+          do maf = maf1, maf2
+            fmStat%maf = maf
+              call add_to_retrieval_timing( 'sids', t1 )
+            if ( getAnaJac ) then
+              if ( associated ( Hessian ) .and. .not. associated(perturbation) ) then
+                call forwardModel ( configDatabase(configs(config)), &
+                  & FwdModelIn, FwdModelExtra, &
+                  & FwdModelOut, fmStat, Jacobian, Hessian, vectorDatabase )
+              else
+                call forwardModel ( configDatabase(configs(config)), &
+                  & FwdModelIn, FwdModelExtra, &
+                  & FwdModelOut, fmStat, Jacobian, vectors=vectorDatabase )
+              end if
+            else
+              call forwardModel ( configDatabase(configs(config)), &
+                & FwdModelIn, FwdModelExtra, &
+                & FwdModelOut, fmStat, vectors=vectorDatabase )
+            end if
+            call time_now ( t1 )
+          end do                        ! MAF loop
+
+          ! Destroy jacobian if asked to
+          if (destroyJacobian .and. ixJacobian > 0 ) then
+            call DestroyBlock ( Jacobian )
+            allocate ( Jacobian%block ( jacobian%row%nb, jacobian%col%nb ), &
+              & STAT=status )
+            addr = 0
+            if ( status == 0 ) then
+              if ( size(Jacobian%block) > 0 ) &
+                & addr = transfer(c_loc(Jacobian%block(1,1)), addr)
+            end if
+            call test_allocate ( status, moduleName, 'jacobian%block', &
+              & uBounds=[jacobian%row%nb,jacobian%col%nb], &
+              & elementSize=storage_size(Jacobian%block)/8, address=addr )
+          end if
+        end do                          ! Forward model config loop
+
+        ! Tidy up the intermediate/status stuff from the model
+        call deallocate_test ( fmStat%rows, 'FmStat%rows', moduleName )
+        call DestroyForwardModelIntermediate ! in case scan model got used
+        fmStat%newScanHydros = .true.
+        if ( L2Options%SkipRetrieval ) cycle
+
+        ! Place the numerical derivative result into Jacobian if needed
+        if ( associated ( perturbation ) ) then
+          ! Where to store deviation in Jacobian or Hessian
+          col = FindBlock ( jacobian%col, quantity, instance )
+          if ( element == 0 ) then
+            call CopyVector (saveResult, fwdModelOut, clone=.true.)
+            if ( ixHessian > 0 ) call CopyMatrix ( saveJacobian, jacobian )
+          else
+            if ( ixHessian <= 0 ) then
+              ! We're doing perturbations to get Jacobians
+              deviation = fwdModelOut - saveResult
+              ! Loop over rows in the jacobian
+              do row = 1, jacobian%row%nb
+                rowQuantity = jacobian%row%quant(row)
+                rowInstance = jacobian%row%inst(row)
+                ! Is there any deviation to store?
+                if ( maxval ( abs ( &
+                   & deviation%quantities(rowQuantity)%values(:,rowInstance))) /= 0.0 ) then
+
+                  ! If so, this column of the block (creating if necessary)
+                  m0 => jacobian%block(row,col)
+                  if ( m0%kind == M_Absent ) then
+                    call CreateBlock ( jacobian, row, col, m_full )
+                    m0%values = 0.0
+                  end if
+                  if ( any (m0%kind == (/ m_banded, m_column_sparse /) ) ) &
+                    & call MLSMessage(MLSMSG_Error, ModuleName, &
+                    & 'Unable to fill banded/column sparse blocks numerically')
+                  m0%values(:,element) = &
+                    & deviation%quantities(rowQuantity)%values(:,rowInstance)/thisPtb
+
+                end if                    ! Anything to place?
+              end do                      ! Loop over rows
+            else
+              ! We're doing perturbations to get Hessians
+              call AddToMatrix ( jacobian, saveJacobian, -1.0_r8 )
+              call ScaleMatrix ( jacobian, 1.0/thisPtb )
+              ! Insert this difference
+              if ( switchDetail( switches, 'hess' ) > 0 ) then
+                call output ( 'Inserting Jacobian numerical deriv. into Hessian', advance='yes' )
+                call dump( jacobian, details=1 )
+              end if
+              call InsertHessianPlane ( hessian, jacobian, col, element, &
+                & toKeep, mirror=mirrorHessian )
+            end if
+          end if                         ! Not very first run
+        end if                           ! Doing perturbation.
+
+      end if                             ! Do this element
+
+      ! Work out which element is next if we're perturbing
+      if ( associated ( perturbation ) ) then
+        element = element + 1
+        if ( element == &
+          & perturbation%quantities(quantity)%template%instanceLen + 1) then
+          element = 1
+          instance = instance + 1
+          if ( instance == &
+            & perturbation%quantities(quantity)%template%noInstances + 1 ) then
+            instance = 1
+            quantity = quantity + 1
+          end if
+        end if
+      end if
+
+    end do                              ! Possible loop over perturbation elements
+
+    if ( associated ( perturbation ) ) then
+      call CopyVector ( fwdModelIn, saveState )
+      call CopyVector ( fwdModelOut, saveResult )
+      call DestroyVectorInfo ( saveState )
+      call DestroyVectorInfo ( saveResult )
+      call DestroyVectorInfo ( deviation )
+      if ( ixHessian > 0 ) then
+        call CopyMatrix ( jacobian, saveJacobian )
+        call DestroyMatrix ( saveJacobian )
+      end if
+    end if
+
+    configDatabase(configs)%generateTScat = .false.
+
+    call deallocate_test ( configs, 'configs', ModuleName )
+    call add_to_retrieval_timing( 'sids', t1 )
+
+    switches(switchLen+1:) = '' ! Clobber switches from SIDS command
+
+    call trace_end ( "SIDS", cond=toggle(gen) )
+
+  contains
+    ! --------------------------------------------  AnnounceError  -----
+    subroutine AnnounceError ( Code )
+      integer, intent(in) :: Code       ! Index of error message
+
+      error = max(error,1)
+      call output ( '***** At ' )
+      call print_source ( where(root) )
+      call output ( ' SidsModule complained: ' )
+      select case ( code )
+      case ( HessianNotJacobian )
+        call output ( 'Hessian and Jacobian are not compatible.', advance='yes' )
+      case ( needJacobian )
+        call output ( 'A Jacobian is required if derivatives are requested.', &
+          & advance='yes' )
+      case ( notPlain )
+        call output ( 'The Jacobian matrix is not a "plain" matrix.', &
+          & advance='yes' )
+      case ( perturbationNotState )
+        call output ( 'The perturbation vector is not the same type as fwdModelIn.', &
+          & advance='yes' )
+      case ( wrongDestroyJacobian )
+        call output ( 'Cannot set destroyJacobian and ask for a Hessian', advance='yes' )
+      end select
+    end subroutine AnnounceError
+
+    ! -----------------------------------------------  Get_ToKeep  -----
+    subroutine Get_ToKeep
+      integer :: Config, I ! Loop index
+      integer :: ToKeepGuess(sum( (/ ( count(configDatabase(configs(config))%moleculeSecondDerivatives), &
+                                     & config = 1, size(configs) ) /) ) )
+      i = 0
+      do config = 1, size(configs)
+        toKeepGuess(i+1:i+count(configDatabase(configs(config))%moleculeSecondDerivatives)) = &
+          & pack(configDatabase(configs(config))%molecules, &
+          &      configDatabase(configs(config))%moleculeSecondDerivatives)
+        i = i + count(configDatabase(configs(config))%moleculeSecondDerivatives)
+      end do
+      ! Delete duplicates
+      do i = 2, size(toKeepGuess)
+        if ( any( toKeepGuess(1:i-1) == toKeepGuess(i) ) ) toKeepGuess(i) = 0
+      end do
+      allocate ( toKeep(count(toKeepGuess>0)), stat=status )
+      call test_allocate ( status, moduleName, 'ToKeep' )
+      toKeep = pack(toKeepGuess,toKeepGuess>0)
+    end subroutine Get_ToKeep
+
+  end subroutine SIDS
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: SidsModule.f90,v 2.77 2017/12/07 01:01:24 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module SidsModule
+
+! $Log: SidsModule.f90,v $
+! Revision 2.77  2017/12/07 01:01:24  vsnyder
+! Don't use host-associated variable as a DO index
+!
+! Revision 2.76  2017/07/27 01:41:50  vsnyder
+! Better debug printing
+!
+! Revision 2.75  2015/03/28 02:51:19  vsnyder
+! Added stuff to trace allocate/deallocate addresses
+!
+! Revision 2.74  2014/09/05 01:20:54  vsnyder
+! Remove USE for unreferenced name
+!
+! Revision 2.73  2014/09/05 00:49:07  vsnyder
+! EmpiricalGeometry.f90 -- Wrong comment
+!
+! Revision 2.72  2014/03/01 03:10:56  vsnyder
+! Move units checking to init_tables_module
+!
+! Revision 2.71  2014/01/09 00:30:24  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
+! Revision 2.70  2013/09/24 23:47:22  vsnyder
+! Use Where instead of Source_Ref for messages
+!
+! Revision 2.69  2013/08/30 02:45:48  vsnyder
+! Revise calls to trace_begin and trace_end
+!
+! Revision 2.68  2013/03/15 20:36:03  vsnyder
+! Add 'switches' field to SIDS
+!
+! Revision 2.67  2013/03/01 01:09:50  pwagner
+! 'fiw' switch dumps instance window
+!
+! Revision 2.66  2012/10/11 21:02:16  pwagner
+! Fix timing error--dont include ForwardModel times
+!
+! Revision 2.65  2011/05/17 00:44:14  vsnyder
+! Remove ill-advised handling of perturbation for logBasis molecules.  The
+! logBasis flag only affects copying to the forward model's grid structures,
+! not how mixing ratios are stored in vector quantities.
+!
+! Revision 2.64  2011/05/17 00:26:25  vsnyder
+! Handle log-basis perturbation correctly
+!
+! Revision 2.63  2011/04/02 01:23:22  vsnyder
+! Make a list of the molecule cross derivatives to keep from the union of
+! all molecules specified in moleculeSecondDerivatives fields of all configs.
+!
+! Revision 2.62  2011/03/30 00:41:07  vsnyder
+! Don't ask for analytic Hessian if using perturbation
+!
+! Revision 2.61  2011/03/25 20:44:45  vsnyder
+! Initially nullify Hessian.  Use Test_Allocate.  Delete cross derivatives
+! that are not requested, when storing a Hessian plane.
+!
+! Revision 2.60  2010/09/17 00:08:18  pwagner
+! Should not crash if 'ptb' switch set but no perturbation asoociated
+!
+! Revision 2.59  2010/08/27 06:36:41  yanovsky
+! Can now call forwardModel with Hessian as argument
+!
+! Revision 2.58  2010/08/06 23:04:24  pwagner
+! Added 'hess' switch
+!
+! Revision 2.57  2010/05/13 23:48:19  pwagner
+! Added -Sptb to show perturbation
+!
+! Revision 2.56  2010/03/29 18:40:09  pwagner
+! Repaired error due to undefined ixHessian
+!
+! Revision 2.55  2010/03/24 20:56:11  vsnyder
+! Minor tweaks in Hessian generation
+!
+! Revision 2.54  2010/02/25 18:20:12  pwagner
+! Adds support for new Hessian data type
+!
+! Revision 2.53  2009/06/23 18:46:18  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.52  2008/06/06 01:59:28  vsnyder
+! Set DoTScat flag in configs, some cannonball polishing
+!
+! Revision 2.51  2007/06/29 19:32:07  vsnyder
+! Make ForwardModelIntermediate_t private to ScanModelModule
+!
+! Revision 2.50  2007/04/03 17:39:36  vsnyder
+! Replace pointer attribute on VectorDatabase with target attribute
+!
+! Revision 2.49  2005/06/22 18:57:02  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.48  2004/12/27 23:06:15  vsnyder
+! Remove unreferenced use names
+!
+! Revision 2.47  2004/06/21 22:50:55  livesey
+! Some trapping of silly values of singleMAF in sids command
+!
+! Revision 2.46  2004/05/19 19:16:12  vsnyder
+! Move MLSChunk_t to Chunks_m
+!
+! Revision 2.45  2004/03/31 03:59:43  livesey
+! Added singleMAF option
+!
+! Revision 2.44  2003/09/11 23:16:36  livesey
+! Now hands the vectors database to the forward model to support the
+! linearized forward model's xStar / yStar capabilities.
+!
+! Revision 2.43  2003/06/20 19:38:26  pwagner
+! Allows direct writing of output products
+!
+! Revision 2.42  2002/10/08 17:36:23  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.41  2002/09/23 18:04:47  livesey
+! Got rid of unnecessary timing
+!
+! Revision 2.40  2002/09/18 23:56:01  vsnyder
+! Call time_now at end of add_to_retrieval_timing
+!
+! Revision 2.39  2002/01/09 00:51:05  livesey
+! Allow fwdModelExtra to be omitted, a different way
+!
+! Revision 2.38  2002/01/08 18:15:57  livesey
+! Made fwdModelExtra optional
+!
+! Revision 2.37  2001/11/27 23:34:49  pwagner
+! Split forward model timings into four types
+!
+! Revision 2.36  2001/11/09 23:17:22  vsnyder
+! Use Time_Now instead of CPU_TIME
+!
+! Revision 2.35  2001/10/02 16:49:56  livesey
+! Removed fmStat%finished and change loop ordering in forward models
+!
+! Revision 2.34  2001/10/01 22:54:22  pwagner
+! Added subsection timings for Retrieval section
+!
+! Revision 2.33  2001/05/26 00:21:38  livesey
+! Added zeroing of jacobian blocks in numerical derivative case.
+!
+! Revision 2.32  2001/05/10 01:08:11  livesey
+! Added destroyJacobian option
+!
+! Revision 2.31  2001/05/09 01:50:31  vsnyder
+! Make sure fmstat%rows is defined (even though it's not used)
+!
+! Revision 2.30  2001/05/08 21:33:56  livesey
+! Removed some print statements
+!
+! Revision 2.29  2001/05/05 00:02:27  livesey
+! Got a numerical derivative code working.
+!
+! Revision 2.28  2001/05/03 23:09:09  livesey
+! Removed temporary code to delete jacobian
+!
+! Revision 2.27  2001/05/03 20:33:51  vsnyder
+! Added a nullify and did some cosmetic changes
+!
+! Revision 2.26  2001/05/01 23:52:54  vsnyder
+! Allocate and deallocate fmStat%rows here
+!
+! Revision 2.25  2001/05/01 06:57:30  livesey
+! *** empty log message ***
+!
+! Revision 2.24  2001/05/01 00:20:34  livesey
+! Sets up fmStat%rows correctly.
+!
+! Revision 2.23  2001/04/26 19:48:11  livesey
+! Now uses ForwardModelWrappers
+!
+! Revision 2.22  2001/04/26 00:57:20  vsnyder
+! Deallocate fmStat%rows, cosmetic changes
+!
+! Revision 2.21  2001/04/24 23:11:40  vsnyder
+! Remove 'Done forward model!' print
+!
+! Revision 2.20  2001/04/19 23:56:01  livesey
+! New fmStat
+!
+! Revision 2.19  2001/04/19 20:30:24  livesey
+! Added call to DestroyForwardModelIntermediate
+!
+! Revision 2.18  2001/04/12 21:42:24  livesey
+! Another interim version, forgot to nullify a pointer.
+!
+! Revision 2.17  2001/04/12 18:13:28  vsnyder
+! OOPS! Hadn't saved it from the editor!
+!
+! Revision 2.16  2001/04/12 17:48:11  livesey
+! Moved maf increment in from ForwardModel to here.
+!
+! Revision 2.15  2001/04/10 23:28:10  livesey
+! Interim working version
+!
+! Revision 2.14  2001/04/10 02:46:17  livesey
+! Working version, no more FMI/TFMI
+!
+! Revision 2.13  2001/04/10 00:24:30  vsnyder
+! Add an error message if Jacobian isn't 'plain'
+!
+! Revision 2.12  2001/04/07 01:50:49  vsnyder
+! Move some of VGrid to lib/VGridsDatabase.  Move ForwardModelConfig_T and
+! some related stuff to fwdmdl/ForwardModelConfig.
+!
+! Revision 2.11  2001/03/30 00:07:24  livesey
+! Removed FMC in call to forwardModel
+!
+! Revision 2.10  2001/03/28 23:47:33  livesey
+! Made it so it can run in a loop
+!
+! Revision 2.9  2001/03/25 00:50:31  livesey
+! Interim version, bug with frequency averaging
+!
+! Revision 2.8  2001/03/20 02:30:15  livesey
+! Interim version, gets same numbers as Zvi
+!
+! Revision 2.7  2001/03/17 00:45:28  livesey
+! Moved to new ForwardModelConfig_T
+!
+! Revision 2.6  2001/03/09 01:35:18  vsnyder
+! Don't run fwd model if derivatives requested but Jacobian not supplied
+!
+! Revision 2.5  2001/03/09 01:30:10  vsnyder
+! Don't ask for Jacobian if convolution is requested
+!
+! Revision 2.4  2001/03/08 23:52:24  vsnyder
+! Process sons correctly
+!
+! Revision 2.3  2001/03/08 20:11:19  zvi
+! *** empty log message ***
+!
+! Revision 2.2  2001/03/08 03:23:09  vsnyder
+! More stuff to work with L2_Load
+!
+! Revision 2.1  2001/03/08 00:00:08  vsnyder
+! Initial commit.
+!
+@
+
+
+2.77
+log
+@Don't use host-associated variable as a DO index
+@
+text
+@d32 35
+a66 35
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST, TEST_ALLOCATE
+    use CHUNKS_M, only: MLSCHUNK_T
+    use EXPR_M, only: EXPR
+    use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T
+    use FORWARDMODELWRAPPERS, only: FORWARDMODEL
+    use FORWARDMODELINTERMEDIATE, only: FORWARDMODELSTATUS_T
+    use HESSIANMODULE_1, only: HESSIAN_T, INSERTHESSIANPLANE
+    use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
+    use INIT_TABLES_MODULE, only: F_DESTROYJACOBIAN, F_FORWARDMODEL, &
+      & F_FWDMODELEXTRA, F_FWDMODELIN, F_FWDMODELOUT, &
+      & F_HESSIAN, F_JACOBIAN, F_MIRRORHESSIAN, &
+      & F_PERTURBATION, F_SINGLEMAF, F_SWITCHES, F_TSCAT
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+    use LEXER_CORE, only: PRINT_SOURCE
+    use MLSKINDS, only: R8
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
+    use MATRIXMODULE_0, only: M_ABSENT, M_FULL, M_BANDED, M_COLUMN_SPARSE, &
+      & MATRIXELEMENT_T
+    use MATRIXMODULE_1, only: ADDTOMATRIX, COPYMATRIX, CREATEBLOCK, &
+      & DESTROYBLOCK, DESTROYMATRIX, DUMP, FINDBLOCK, &
+      & GETFROMMATRIXDATABASE, MATRIX_DATABASE_T, MATRIX_T, SCALEMATRIX
+    use MLSL2OPTIONS, only: SKIPRETRIEVAL
+    use MLSL2TIMINGS, only: ADD_TO_RETRIEVAL_TIMING
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use MORETREE, only: GET_FIELD_ID, GET_BOOLEAN
+    use OUTPUT_M, only: OUTPUT
+    use SCANMODELMODULE, only: DESTROYFORWARDMODELINTERMEDIATE, &
+      & DUMPINSTANCEWINDOWS
+    use STRING_TABLE, only: GET_STRING
+    use TIME_M, only: TIME_NOW
+    use TOGGLES, only: GEN, SWITCHES, TOGGLE
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+    use TREE, only: DECORATION, NSONS, SUBTREE, SUB_ROSA, Where
+    use VECTORSMODULE, only: VECTOR_T, &
+      & COPYVECTOR, DESTROYVECTORINFO, DUMP, OPERATOR(-)
+d326 1
+a326 1
+          if ( skipRetrieval ) cycle
+d369 1
+a369 1
+        if ( skipRetrieval ) cycle
+d511 1
+a511 1
+       "$Id: SidsModule.f90,v 2.76 2017/07/27 01:41:50 vsnyder Exp $"
+d521 3
+@
+
+
+2.76
+log
+@Better debug printing
+@
+text
+@d487 1
+d511 1
+a511 1
+       "$Id: SidsModule.f90,v 2.75 2015/03/28 02:51:19 vsnyder Exp $"
+d521 3
+@
+
+
+2.75
+log
+@Added stuff to trace allocate/deallocate addresses
+@
+text
+@d24 1
+a24 1
+  private :: not_used_here 
+d79 2
+a80 2
+    integer :: EXPRUNITS(2)             ! From expr
+    real(r8) :: EXPRVALUE(2)            ! From expr
+d97 4
+a100 4
+    integer :: COL                      ! Column in jacobian
+    integer :: ELEMENT                  ! Index
+    integer :: INSTANCE                 ! Index
+    integer :: LOOPEND                  ! Loop limit
+d105 6
+a110 6
+    integer :: QUANTITY                 ! Index
+    logical :: GETANAJAC                ! Forward model needs to compute analytical Jacobians
+    integer :: ROWINSTANCE              ! From jacobian
+    integer :: ROWQUANTITY              ! From jacobian
+    integer :: ROW                      ! Row in jacobian
+    integer :: SINGLEMAF                ! From l2cf
+d112 1
+a112 1
+    integer :: STATUS                   ! Flag
+d122 6
+a127 5
+    logical :: DESTROYJACOBIAN          ! Flag
+    logical :: DOTHISONE                ! Flag
+    logical :: DOTSCAT                  ! Flag
+    logical :: MIRRORHESSIAN            ! Flag
+    logical :: SHOWPTB
+d184 1
+a184 1
+      case ( f_singleMAF ) 
+d196 2
+a197 1
+    showptb = switchDetail( switches, 'ptb' ) > -1 .and. associated( perturbation)
+d287 1
+a287 1
+        
+d294 6
+a299 3
+        
+        if ( showptb ) then
+          call dump( perturbation%quantities(quantity), details=-1 )
+d326 1
+a326 1
+          if ( skipretrieval ) cycle
+d370 1
+a370 1
+        
+d388 2
+a389 2
+                  & deviation%quantities(rowQuantity)%values(:,rowInstance))) /= 0.0 ) then
+                  
+d401 1
+a401 1
+                  
+d510 1
+a510 1
+       "$Id: SidsModule.f90,v 2.74 2014/09/05 01:20:54 vsnyder Exp $"
+d520 3
+@
+
+
+2.74
+log
+@Remove USE for unreferenced name
+@
+text
+@d44 1
+d77 1
+d349 8
+a356 1
+            call test_allocate ( status, moduleName, 'jacobian%block' )
+d505 1
+a505 1
+       "$Id: SidsModule.f90,v 2.73 2014/09/05 00:49:07 vsnyder Exp $"
+d515 3
+@
+
+
+2.73
+log
+@EmpiricalGeometry.f90
+@
+text
+@d496 1
+a496 1
+       "$Id: SidsModule.f90,v 2.72 2014/03/01 03:10:56 vsnyder Exp $"
+d506 3
+@
+
+
+2.72
+log
+@Move units checking to init_tables_module
+@
+text
+@a43 1
+    use INTRINSIC, only: PHYQ_DIMENSIONLESS
+d496 1
+a496 1
+       "$Id: SidsModule.f90,v 2.71 2014/01/09 00:30:24 pwagner Exp $"
+d506 3
+@
+
+
+2.71
+log
+@Some procedures formerly in output_m now got from highOutput
+@
+text
+@d134 1
+a134 2
+    integer, parameter :: BadSingleMAF = 1 ! Bad units for singleMAF
+    integer, parameter :: HessianNotJacobian = BadSingleMAF + 1 ! Column vectors different
+a183 1
+        if ( exprUnits(1) /= phyq_dimensionless ) call AnnounceError ( BadSingleMAF )
+a455 2
+      case ( badSingleMAF )
+        call output ( 'The singleMAF argument must be dimensionless', advance='yes' )
+d497 1
+a497 1
+       "$Id: SidsModule.f90,v 2.70 2013/09/24 23:47:22 vsnyder Exp $"
+d507 3
+@
+
+
+2.70
+log
+@Use Where instead of Source_Ref for messages
+@
+text
+@d39 1
+d57 1
+a57 1
+    use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
+d501 1
+a501 1
+       "$Id: SidsModule.f90,v 2.69 2013/08/30 02:45:48 vsnyder Exp $"
+d511 3
+@
+
+
+2.69
+log
+@Revise calls to trace_begin and trace_end
+@
+text
+@d63 1
+a63 1
+    use TREE, only: DECORATION, NSONS, SOURCE_REF, SUBTREE, SUB_ROSA
+d454 1
+a454 1
+      call print_source ( source_ref(root) )
+d500 1
+a500 1
+       "$Id: SidsModule.f90,v 2.68 2013/03/15 20:36:03 vsnyder Exp $"
+d510 3
+@
+
+
+2.68
+log
+@Add 'switches' field to SIDS
+@
+text
+@d102 1
+d140 1
+a140 1
+    if ( toggle(gen) ) call trace_begin ( "SIDS", root )
+d445 1
+a445 1
+    if ( toggle(gen) ) call trace_end ( "SIDS" )
+d500 1
+a500 1
+       "$Id: SidsModule.f90,v 2.67 2013/03/01 01:09:50 pwagner Exp $"
+d510 3
+@
+
+
+2.67
+log
+@'fiw' switch dumps instance window
+@
+text
+@d42 1
+a42 1
+      & F_PERTURBATION, F_SINGLEMAF, F_TSCAT
+d59 1
+d63 1
+a63 1
+    use TREE, only: DECORATION, NSONS, SOURCE_REF, SUBTREE
+d110 2
+d152 3
+d185 4
+d442 2
+d499 1
+a499 1
+       "$Id: SidsModule.f90,v 2.66 2012/10/11 21:02:16 pwagner Exp $"
+d509 3
+@
+
+
+2.66
+log
+@Fix timing error--dont include ForwardModel times
+@
+text
+@d45 1
+a45 1
+    use MLSCOMMON, only: R8
+d52 1
+d57 2
+a58 1
+    use SCANMODELMODULE, only: DESTROYFORWARDMODELINTERMEDIATE
+d304 7
+a310 1
+            
+d346 1
+d487 1
+a487 1
+       "$Id: SidsModule.f90,v 2.65 2011/05/17 00:44:14 vsnyder Exp $"
+d497 3
+@
+
+
+2.65
+log
+@Remove ill-advised handling of perturbation for logBasis molecules.  The
+logBasis flag only affects copying to the forward model's grid structures,
+not how mixing ratios are stored in vector quantities.
+@
+text
+@d32 31
+a62 31
+    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST, TEST_ALLOCATE
+    use Chunks_m, only: MLSChunk_T
+    use Expr_M, only: EXPR
+    use ForwardModelConfig, only: ForwardModelConfig_T
+    use ForwardModelWrappers, only: ForwardModel
+    use ForwardModelIntermediate, only: ForwardModelStatus_T
+    use HessianModule_1, only: Hessian_T, InsertHessianPlane
+    use Init_Tables_Module, only: f_destroyjacobian, f_forwardModel, &
+      & f_fwdModelExtra, f_fwdModelIn, f_fwdModelOut, &
+      & f_hessian, f_jacobian, f_mirrorHessian, &
+      & f_perturbation, f_singleMAF, f_TScat
+    use Intrinsic, only: PHYQ_DIMENSIONLESS
+    use Lexer_Core, only: Print_Source
+    use MLSCommon, only: R8
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use MatrixModule_0, only: M_Absent, M_Full, M_Banded, M_Column_Sparse, &
+      & MatrixElement_T
+    use MatrixModule_1, only: AddToMatrix, CopyMatrix, CreateBlock, &
+      & DestroyBlock, DestroyMatrix, Dump, FindBlock, &
+      & GetFromMatrixDatabase, Matrix_Database_T, Matrix_T, ScaleMatrix
+    use MLSL2Timings, only: add_to_retrieval_timing
+    use MLSStringLists, only: switchDetail
+    use MoreTree, only: Get_Field_Id, Get_Boolean
+    use Output_M, only: Output, outputNamedValue
+    use ScanModelModule, only: DestroyForwardModelIntermediate
+    use Time_M, only: Time_Now
+    use Toggles, only: Gen, Switches, Toggle
+    use Trace_M, only: Trace_begin, Trace_end
+    use Tree, only: Decoration, Nsons, Source_Ref, Subtree
+    use VectorsModule, only: Vector_T, &
+      & CopyVector, DestroyVectorInfo, Dump, operator(-)
+d322 1
+d478 1
+a478 1
+       "$Id: SidsModule.f90,v 2.63 2011/04/02 01:23:22 vsnyder Exp $"
+d488 5
+@
+
+
+2.64
+log
+@Handle log-basis perturbation correctly
+@
+text
+@d257 1
+a257 1
+          thisPtb = perturbation%quantities(quantity)%values(element,instance)
+a258 2
+          if ( perturbation%quantities(quantity)%template%logBasis ) &
+            & thisPtb = exp(thisPtb)
+d262 3
+a264 10
+            if ( perturbation%quantities(quantity)%template%logBasis ) then
+              fwdModelIn%quantities(quantity)%values(element,instance) = &
+                & fwdModelIn%quantities(quantity)%values(element,instance) + &
+                & thisPtb
+            else
+              fwdModelIn%quantities(quantity)%values(element,instance) = &
+                & log(exp( &
+                  & fwdModelIn%quantities(quantity)%values(element,instance) ) + &
+                  & thisPtb)
+            end if
+d487 3
+@
+
+
+2.63
+log
+@Make a list of the molecule cross derivatives to keep from the union of
+all molecules specified in moleculeSecondDerivatives fields of all configs.
+@
+text
+@d257 1
+a257 1
+          thisPtb =perturbation%quantities(quantity)%values(element,instance)
+d259 2
+d264 10
+a273 3
+            fwdModelIn%quantities(quantity)%values(element,instance) = &
+              & fwdModelIn%quantities(quantity)%values(element,instance) + &
+              & thisPtb
+d486 1
+a486 1
+       "$Id: SidsModule.f90,v 2.62 2011/03/30 00:41:07 vsnyder Exp $"
+d496 4
+@
+
+
+2.62
+log
+@Don't ask for analytic Hessian if using perturbation
+@
+text
+@d107 7
+d233 1
+a233 1
+      endif
+d245 2
+d381 1
+a381 4
+                ! List of cross derivatives to save:
+                & pack(configDatabase(configs(config))%molecules, &
+                &      configDatabase(configs(config))%moleculeSecondDerivatives), &
+                & mirror=mirrorHessian )
+d452 20
+d477 1
+a477 1
+       "$Id: SidsModule.f90,v 2.61 2011/03/25 20:44:45 vsnyder Exp $"
+d487 3
+@
+
+
+2.61
+log
+@Initially nullify Hessian.  Use Test_Allocate.  Delete cross derivatives
+that are not requested, when storing a Hessian plane.
+@
+text
+@d299 1
+a299 1
+              if ( associated ( Hessian ) ) then
+d451 1
+a451 1
+       "$Id: SidsModule.f90,v 2.60 2010/09/17 00:08:18 pwagner Exp $"
+d461 4
+@
+
+
+2.60
+log
+@Should not crash if 'ptb' switch set but no perturbation asoociated
+@
+text
+@d32 1
+a32 1
+    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+d46 1
+a46 1
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate
+d130 1
+a130 1
+    nullify ( configs, perturbation )
+d273 1
+a273 1
+        endif
+d320 1
+a320 2
+            if ( status /= 0 ) call MLSMessage (MLSMSG_Error, ModuleName, &
+              & MLSMSG_Allocate//'jacobian%block' )
+d368 1
+a368 1
+                call output ( 'Inserting Jacobian num. deriv.  into hessian', advance='yes' )
+d370 6
+a375 2
+              endif
+              call InsertHessianPlane ( hessian, jacobian, col, element, mirror=mirrorHessian )
+d380 1
+a380 1
+      end if                            ! Do this element
+d451 1
+a451 1
+       "$Id: SidsModule.f90,v 2.59 2010/08/27 06:36:41 yanovsky Exp $"
+d461 3
+@
+
+
+2.59
+log
+@Can now call forwardModel with Hessian as argument
+@
+text
+@a130 2
+    showptb = switchDetail( switches, 'ptb' ) > -1
+
+d175 2
+d448 1
+a448 1
+       "$Id: SidsModule.f90,v 2.57 2010/05/13 23:48:19 pwagner Exp $"
+d458 3
+@
+
+
+2.58
+log
+@Added 'hess' switch
+@
+text
+@d299 9
+a307 3
+              call forwardModel ( configDatabase(configs(config)), &
+                & FwdModelIn, FwdModelExtra, &
+                & FwdModelOut, fmStat, Jacobian, vectorDatabase )
+d458 3
+@
+
+
+2.57
+log
+@Added -Sptb to show perturbation
+@
+text
+@d29 2
+a30 1
+  subroutine SIDS ( Root, VectorDatabase, MatrixDatabase, HessianDatabase, configDatabase, chunk)
+d39 4
+a42 3
+    use Init_Tables_Module, only: f_destroyjacobian, f_forwardModel, f_fwdModelExtra, &
+      f_fwdModelIn, f_fwdModelOut, f_hessian, f_jacobian, f_mirrorHessian, &
+      f_perturbation, f_singleMAF, f_TScat
+d49 3
+a51 2
+    use MatrixModule_1, only: AddToMatrix, CopyMatrix, CreateBlock, DestroyBlock, DestroyMatrix, FindBlock, &
+      GetFromMatrixDatabase, Matrix_Database_T, Matrix_T, ScaleMatrix
+d362 4
+d442 1
+a442 1
+       "$Id: SidsModule.f90,v 2.56 2010/03/29 18:40:09 pwagner Exp $"
+d452 3
+@
+
+
+2.56
+log
+@Repaired error due to undefined ixHessian
+@
+text
+@d50 1
+d52 1
+a52 1
+    use Output_M, only: Output
+d55 1
+a55 1
+    use Toggles, only: Gen, Toggle
+d58 2
+a59 1
+    use VectorsModule, only: CopyVector, DestroyVectorInfo, Vector_T, operator(-)
+d108 1
+d128 1
+d220 4
+d267 4
+d435 1
+a435 1
+       "$Id: SidsModule.f90,v 2.55 2010/03/24 20:56:11 vsnyder Exp $"
+d445 3
+@
+
+
+2.55
+log
+@Minor tweaks in Hessian generation
+@
+text
+@d130 1
+d423 1
+a423 1
+       "$Id: SidsModule.f90,v 2.54 2010/02/25 18:20:12 pwagner Exp $"
+d433 3
+@
+
+
+2.54
+log
+@Adds support for new Hessian data type
+@
+text
+@d85 1
+a85 1
+    type(hessian_T), pointer :: Hessian ! The Jacobian matrix
+d114 3
+a116 1
+    integer, parameter :: NeedJacobian = 1   ! Needed if derivatives requested
+d119 1
+a119 2
+    integer, parameter :: BadSingleMAF = PerturbationNotState + 1 ! Bad units for singleMAF
+    integer, parameter :: WrongDestroyJacobian = BadSingleMAF + 1 ! destroyJacobian with Hessian
+d190 8
+a197 1
+    if ( ixHessian > 0 ) hessian => HessianDatabase ( -decoration ( ixHessian ) )
+d209 2
+a210 4
+      if ( perturbation%template%name /= fwdModelIn%template%name ) then
+        call AnnounceError ( perturbationNotState )
+        stop
+      end if
+d221 3
+d232 1
+a232 1
+          ! Do a first unperturbed case
+d237 4
+a240 2
+          if ( thisPtb /= 0.0 ) then
+            call CopyVector ( fwdModelIn, saveState )
+a243 3
+            doThisOne=.true.
+          else
+            doThisOne=.false.
+d310 2
+a318 2
+              ! Store the deviation in the jacobian
+              col = FindBlock ( jacobian%col, quantity, instance )
+d323 1
+a323 1
+                ! Is there anydeviaiton to store?
+a344 2
+              ! Store the deviation in the hessian
+              col = FindBlock ( hessian%col, quantity, instance )
+d397 1
+a397 1
+      call output ( ' RetrievalModule complained: ' )
+d399 4
+a411 2
+      case ( badSingleMAF )
+        call output ( 'The singleMAF argument must be dimensionless', advance='yes' )
+d422 1
+a422 1
+       "$Id: SidsModule.f90,v 2.53 2009/06/23 18:46:18 pwagner Exp $"
+d432 3
+@
+
+
+2.53
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d23 1
+a23 1
+       "$RCSfile: $"
+d29 1
+a29 1
+  subroutine SIDS ( Root, VectorDatabase, MatrixDatabase, configDatabase, chunk)
+d37 1
+d39 2
+a40 2
+      f_fwdModelIn, f_fwdModelOut, f_jacobian, f_perturbation, f_singleMAF, &
+      f_TScat
+d47 2
+a48 2
+    use MatrixModule_1, only: CreateBlock, DestroyBlock, FindBlock, &
+      GetFromMatrixDatabase, Matrix_Database_T, Matrix_T
+d64 1
+d79 1
+d83 1
+d85 1
+d95 1
+d105 1
+d118 1
+d130 1
+d140 2
+d155 2
+d187 12
+d243 1
+d274 1
+a274 1
+            if ( ixJacobian > 0 .and. .not. associated(perturbation)) then
+d304 1
+d306 36
+a341 25
+            deviation = fwdModelOut - saveResult
+            ! Store the deviation in the jacobian
+            col = FindBlock ( jacobian%col, quantity, instance )
+            ! Loop over rows in the jacobian
+            do row = 1, jacobian%row%nb
+              rowQuantity = jacobian%row%quant(row)
+              rowInstance = jacobian%row%inst(row)
+              ! Is there anydeviaiton to store?
+              if ( maxval ( abs ( &
+                & deviation%quantities(rowQuantity)%values(:,rowInstance))) /= 0.0 ) then
+                
+                ! If so, this column of the block (creating if necessary)
+                m0 => jacobian%block(row,col)
+                if ( m0%kind == M_Absent ) then
+                  call CreateBlock ( jacobian, row, col, m_full )
+                  m0%values = 0.0
+                end if
+                if ( any (m0%kind == (/ m_banded, m_column_sparse /) ) ) &
+                  & call MLSMessage(MLSMSG_Error, ModuleName, &
+                  & 'Unable to fill banded/column sparse blocks numerically')
+                m0%values(:,element) = &
+                  & deviation%quantities(rowQuantity)%values(:,rowInstance)/thisPtb
+
+              end if                    ! Anything to place?
+            end do                      ! Loop over rows
+d370 4
+d404 2
+d414 1
+a414 1
+       "$Id: read_apriori.f90 is it here $"
+d424 3
+@
+
+
+2.52
+log
+@Set DoTScat flag in configs, some cannonball polishing
+@
+text
+@d23 1
+a23 1
+       "$RCSfile: SidsModule.f90,v $"
+d367 1
+a368 1
+!---------------------------- RCS Ident Info -------------------------------
+d370 2
+a371 3
+       "$Id: SidsModule.f90,v 2.51 2007/06/29 19:32:07 vsnyder Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d373 1
+d375 1
+d380 3
+@
+
+
+2.51
+log
+@Make ForwardModelIntermediate_t private to ScanModelModule
+@
+text
+@d37 3
+a39 2
+    use Init_Tables_Module, only: f_destroyjacobian, f_forwardModel, f_fwdModelIn, &
+      f_fwdModelExtra, f_fwdModelOut, f_jacobian, f_perturbation, f_singleMAF
+d82 2
+a83 2
+    integer :: Son                      ! Of ROOT
+    integer :: QUANTITY                 ! Index
+d85 1
+a85 1
+    integer :: MAF                      ! Index
+d88 7
+a94 1
+    integer :: ELEMENT                  ! Index
+d98 1
+a98 6
+    integer :: LOOPEND                  ! Loop limit
+    integer :: COL                      ! Column in jacobian
+    integer :: ROW                      ! Row in jacobian
+    integer :: ROWINSTANCE              ! From jacobian
+    integer :: ROWQUANTITY              ! From jacobian
+    integer :: SINGLEMAF                ! From l2cf
+d112 2
+a113 2
+      if ( toggle(gen) ) call trace_begin ( "SIDS", root )
+      call time_now ( t1 )
+d118 1
+d129 9
+a139 2
+      case ( f_fwdModelExtra )
+        fwdModelExtra => vectorDatabase(decoration(decoration(subtree(2,son))))
+d142 2
+d150 2
+a151 9
+      case ( f_jacobian )
+        ixJacobian = decoration(subtree(2,son)) ! jacobian: matrix vertex
+      case ( f_destroyJacobian )
+        destroyJacobian = Get_boolean(son)
+      case ( f_forwardModel )
+        call Allocate_Test ( configs, nsons(son)-1, 'configs', ModuleName )
+        do config = 2, nsons(son)
+          configs(config-1) = decoration(decoration(subtree(config,son)))
+        end do
+d190 2
+d334 1
+a334 1
+      if ( toggle(gen) ) call trace_end ( "SIDS" )
+d337 3
+a339 1
+      call add_to_retrieval_timing( 'sids', t1 )
+d370 1
+a370 1
+       "$Id: SidsModule.f90,v 2.50 2007/04/03 17:39:36 vsnyder Exp $"
+d379 3
+@
+
+
+2.50
+log
+@Replace pointer attribute on VectorDatabase with target attribute
+@
+text
+@d36 1
+a36 2
+    use ForwardModelIntermediate, only: ForwardModelIntermediate_T,&
+      & ForwardModelStatus_T, DestroyForwardModelIntermediate
+d50 1
+a99 1
+    type (ForwardModelIntermediate_T) :: ifm ! Work space for forward model
+d244 1
+a244 1
+                & FwdModelOut, ifm, fmStat, Jacobian, vectorDatabase )
+d248 1
+a248 1
+                & FwdModelOut, ifm, fmStat, vectors=vectorDatabase )
+d264 2
+a265 1
+        call DestroyForwardModelIntermediate ( ifm )
+d361 1
+a361 1
+       "$Id: SidsModule.f90,v 2.49 2005/06/22 18:57:02 pwagner Exp $"
+d370 3
+@
+
+
+2.49
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d23 1
+a23 1
+       "$RCSfile: $"
+d60 1
+a60 1
+    type(vector_T), dimension(:), pointer :: VectorDatabase
+d361 1
+a361 1
+       "$Id: $"
+d370 3
+@
+
+
+2.48
+log
+@Remove unreferenced use names
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d21 1
+a21 4
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
+       "$Id: SidsModule.f90,v 2.47 2004/06/21 22:50:55 livesey Exp $"
+  character (len=len(idParm)), private :: Id = idParm
+d23 1
+a23 1
+       "$RCSfile: SidsModule.f90,v $"
+d359 5
+d370 3
+@
+
+
+2.47
+log
+@Some trapping of silly values of singleMAF in sids command
+@
+text
+@d15 1
+a15 1
+       "$Id: SidsModule.f90,v 2.46 2004/05/19 19:16:12 vsnyder Exp $"
+a27 1
+    use Dump_0, only: dump
+d41 2
+a42 3
+    use MatrixModule_1, only: AddToMatrixDatabase, CreateEmptyMatrix, &
+      GetFromMatrixDatabase, Matrix_Database_T, Matrix_T, DestroyBlock, CreateBlock, &
+      & FindBlock
+d49 1
+a49 1
+    use Tree, only: Decoration, Node_ID, Nsons, Source_Ref, Sub_Rosa, Subtree
+d360 3
+@
+
+
+2.46
+log
+@Move MLSChunk_t to Chunks_m
+@
+text
+@d15 1
+a15 1
+       "$Id: SidsModule.f90,v 2.45 2004/03/31 03:59:43 livesey Exp $"
+d227 4
+d362 3
+@
+
+
+2.45
+log
+@Added singleMAF option
+@
+text
+@a10 27
+  use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+  use Dump_0, only: dump
+  use Expr_M, only: EXPR
+  use ForwardModelConfig, only: ForwardModelConfig_T
+  use ForwardModelWrappers, only: ForwardModel
+  use ForwardModelIntermediate, only: ForwardModelIntermediate_T,&
+    & ForwardModelStatus_T, DestroyForwardModelIntermediate
+  use Init_Tables_Module, only: f_destroyjacobian, f_forwardModel, f_fwdModelIn, &
+    f_fwdModelExtra, f_fwdModelOut, f_jacobian, f_perturbation, f_singleMAF
+  use Intrinsic, only: PHYQ_DIMENSIONLESS
+  use Lexer_Core, only: Print_Source
+  use MLSCommon, only: R8, MLSCHUNK_T
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate
+  use MatrixModule_0, only: M_Absent, M_Full, M_Banded, M_Column_Sparse, &
+    & MatrixElement_T
+  use MatrixModule_1, only: AddToMatrixDatabase, CreateEmptyMatrix, &
+    GetFromMatrixDatabase, Matrix_Database_T, Matrix_T, DestroyBlock, CreateBlock, &
+    & FindBlock
+  use MLSL2Timings, only: add_to_retrieval_timing
+  use MoreTree, only: Get_Field_Id, Get_Boolean
+  use Output_M, only: Output
+  use Time_M, only: Time_Now
+  use Toggles, only: Gen, Toggle
+  use Trace_M, only: Trace_begin, Trace_end
+  use Tree, only: Decoration, Node_ID, Nsons, Source_Ref, Sub_Rosa, Subtree
+  use VectorsModule, only: CopyVector, DestroyVectorInfo, Vector_T, operator(-)
+
+d15 1
+a15 1
+       "$Id: SidsModule.f90,v 2.44 2003/09/11 23:16:36 livesey Exp $"
+d26 28
+d358 3
+@
+
+
+2.44
+log
+@Now hands the vectors database to the forward model to support the
+linearized forward model's xStar / yStar capabilities.
+@
+text
+@d13 1
+d19 2
+a20 1
+    f_fwdModelExtra, f_fwdModelOut, f_jacobian, f_perturbation
+d42 1
+a42 1
+       "$Id: SidsModule.f90,v 2.43 2003/06/20 19:38:26 pwagner Exp $"
+d62 2
+d92 1
+d105 1
+d116 1
+d131 4
+d218 10
+a227 5
+          maf1 = 1
+          maf2 = chunk%lastMAFIndex - chunk%firstMAFIndex + 1
+          if (configDatabase(configs(config))%skipOverlaps) then
+            maf1 = maf1 + chunk%noMAFsLowerOverlap
+            maf2 = maf2 - chunk%noMAFsUpperOverlap
+d343 2
+d357 4
+@
+
+
+2.43
+log
+@Allows direct writing of output products
+@
+text
+@d40 1
+a40 1
+       "$Id: SidsModule.f90,v 2.42 2002/10/08 17:36:23 pwagner Exp $"
+d54 1
+a54 1
+    type(vector_T), dimension(:), intent(inout), target :: VectorDatabase
+d221 1
+a221 1
+                & FwdModelOut, ifm, fmStat, Jacobian )
+d225 1
+a225 1
+                & FwdModelOut, ifm, fmStat )
+d339 3
+@
+
+
+2.42
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d40 1
+a40 1
+       "$Id: SidsModule.f90,v 2.41 2002/09/23 18:04:47 livesey Exp $"
+d157 1
+a157 1
+      if ( perturbation%template%id /= fwdModelIn%template%id ) then
+d339 3
+@
+
+
+2.41
+log
+@Got rid of unnecessary timing
+@
+text
+@d40 1
+a40 1
+       "$Id: SidsModule.f90,v 2.40 2002/09/18 23:56:01 vsnyder Exp $"
+d44 1
+d332 4
+d339 3
+@
+
+
+2.40
+log
+@Call time_now at end of add_to_retrieval_timing
+@
+text
+@d40 1
+a40 1
+       "$Id: SidsModule.f90,v 2.39 2002/01/09 00:51:05 livesey Exp $"
+a227 2
+            call add_to_retrieval_timing( 'forward_model', t1 )
+
+d334 3
+@
+
+
+2.39
+log
+@Allow fwdModelExtra to be omitted, a different way
+@
+text
+@d40 1
+a40 1
+       "$Id: SidsModule.f90,v 2.38 2002/01/08 18:15:57 livesey Exp $"
+d100 2
+a101 2
+    if ( toggle(gen) ) call trace_begin ( "SIDS", root )
+    call time_now ( t1 )
+d151 1
+a151 1
+      endif
+d159 1
+a159 1
+      endif
+d168 1
+a168 1
+    endif
+d189 1
+a189 1
+          endif
+d211 1
+a211 1
+          endif
+d216 1
+a216 2
+            call add_to_retrieval_timing( 'sids', t1 )
+            call time_now ( t1 )
+d228 1
+a228 3
+!          ForwardModel itself calls add_to_retrieval_timing
+!          call add_to_retrieval_timing( 'forward_model', t1 )
+          call time_now ( t1 )
+d237 1
+a237 1
+          endif
+d274 2
+a275 2
+          endif                         ! Not very first run
+        endif                           ! Doing perturbation.
+d304 1
+a304 1
+    if ( toggle(gen) ) call trace_end ( "SIDS" )
+d307 1
+a307 2
+    call add_to_retrieval_timing( 'sids', t1 )
+    call time_now ( t1 )
+d336 3
+@
+
+
+2.38
+log
+@Made fwdModelExtra optional
+@
+text
+@d40 1
+a40 1
+       "$Id: SidsModule.f90,v 2.37 2001/11/27 23:34:49 pwagner Exp $"
+d135 6
+d340 3
+@
+
+
+2.37
+log
+@Split forward model timings into four types
+@
+text
+@d40 1
+a40 1
+       "$Id: SidsModule.f90,v 2.36 2001/11/09 23:17:22 vsnyder Exp $"
+d109 1
+d334 3
+@
+
+
+2.36
+log
+@Use Time_Now instead of CPU_TIME
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+d40 1
+a40 1
+       "$Id: SidsModule.f90,v 2.35 2001/10/02 16:49:56 livesey Exp $"
+d222 2
+a223 1
+          call add_to_retrieval_timing( 'forward_model', t1 )
+d333 3
+@
+
+
+2.35
+log
+@Removed fmStat%finished and change loop ordering in forward models
+@
+text
+@d30 1
+d40 1
+a40 1
+       "$Id: SidsModule.f90,v 2.34 2001/10/01 22:54:22 pwagner Exp $"
+d101 1
+a101 1
+    call cpu_time ( t1 )
+d210 1
+a210 1
+            call cpu_time ( t1 )
+d223 1
+a223 1
+          call cpu_time ( t1 )
+d303 1
+a303 1
+    call cpu_time ( t1 )
+d332 3
+@
+
+
+2.34
+log
+@Added subsection timings for Retrieval section
+@
+text
+@d20 1
+a20 1
+  use MLSCommon, only: R8
+d39 1
+a39 1
+       "$Id: SidsModule.f90,v 2.33 2001/05/26 00:21:38 livesey Exp $"
+d47 1
+a47 2
+  ! subroutine SIDS ( Root, VectorDatabase, MatrixDatabase, FwdModelInfo )
+  subroutine SIDS ( Root, VectorDatabase, MatrixDatabase, configDatabase)
+d55 1
+d74 3
+a186 1
+        fmStat%newHydros = .true.
+a187 2
+        fmStat%maf = 0
+        fmStat%finished = .false.
+d194 16
+a209 10
+        
+        ! Loop over mafs
+        do while ( .not. fmStat%finished )
+          ! What if one config set finished but others still had more to do?
+          ! Ermmm, think of this next time.
+          fmStat%maf = fmStat%maf + 1
+          fmstat%rows = .false. ! Just so it's not undefined
+          call add_to_retrieval_timing( 'sids', t1 )
+          call cpu_time ( t1 )
+          do config = 1, size(configs)
+d219 1
+a219 1
+          end do
+d232 1
+a232 1
+        end do
+d331 3
+@
+
+
+2.33
+log
+@Added zeroing of jacobian blocks in numerical derivative case.
+@
+text
+@d27 1
+d39 1
+a39 1
+       "$Id: SidsModule.f90,v 2.32 2001/05/10 01:08:11 livesey Exp $"
+d83 1
+d97 1
+d201 2
+d215 3
+d295 2
+d325 3
+@
+
+
+2.32
+log
+@Added destroyJacobian option
+@
+text
+@d38 1
+a38 1
+       "$Id: SidsModule.f90,v 2.31 2001/05/09 01:50:31 vsnyder Exp $"
+d242 4
+a245 2
+                if ( m0%kind == M_Absent ) &
+                  & call CreateBlock ( jacobian, row, col, m_full )
+d315 3
+@
+
+
+2.31
+log
+@Make sure fmstat%rows is defined (even though it's not used)
+@
+text
+@d17 2
+a18 2
+  use Init_Tables_Module, only: f_forwardModel, f_fwdModelIn, f_fwdModelExtra, &
+    f_fwdModelOut, f_jacobian, f_perturbation
+d27 1
+a27 1
+  use MoreTree, only: Get_Field_Id
+d38 1
+a38 1
+       "$Id: SidsModule.f90,v 2.30 2001/05/08 21:33:56 livesey Exp $"
+d75 1
+d101 1
+d117 2
+d209 9
+d313 3
+@
+
+
+2.30
+log
+@Removed some print statements
+@
+text
+@d38 1
+a38 1
+       "$Id: SidsModule.f90,v 2.29 2001/05/05 00:02:27 livesey Exp $"
+d193 1
+d300 3
+@
+
+
+2.29
+log
+@Got a numerical derivative code working.
+@
+text
+@d38 1
+a38 1
+       "$Id: SidsModule.f90,v 2.28 2001/05/03 23:09:09 livesey Exp $"
+a172 1
+        print*,'Doing perturbation:', i, element, instance, quantity
+a221 1
+              print*,'Possibly filling:',row,col
+a224 1
+                print*,'Yes'
+d299 3
+@
+
+
+2.28
+log
+@Removed temporary code to delete jacobian
+@
+text
+@d18 1
+a18 1
+    f_fwdModelOut, f_jacobian
+d20 1
+d22 2
+d25 2
+a26 1
+    GetFromMatrixDatabase, Matrix_Database_T, Matrix_T, DestroyBlock
+d32 1
+a32 1
+  use VectorsModule, only: Vector_T
+d38 1
+a38 1
+       "$Id: SidsModule.f90,v 2.27 2001/05/03 20:33:51 vsnyder Exp $"
+d63 4
+d71 3
+d75 7
+d86 2
+d91 1
+d95 1
+a95 1
+    nullify ( configs )
+d111 2
+d123 1
+d136 39
+a174 9
+    fmStat%newHydros = .true.
+    fmStat%maf = 0
+    fmStat%finished = .false.
+    if ( ixJacobian > 0 ) then
+      call allocate_test ( fmStat%rows, jacobian%row%nb, 'fmStat%rows', &
+        & ModuleName )
+    else ! because it's not optional in many places in the forward model
+      call allocate_test ( fmStat%rows, 0, 'fmStat%rows', ModuleName )
+    end if
+d176 6
+a181 6
+    ! Loop over mafs
+    do while ( .not. fmStat%finished )
+      ! What if one config set finished but others still had more to do?
+      ! Ermmm, think of this next time.
+      fmStat%maf = fmStat%maf + 1
+      do config = 1, size(configs)
+d183 75
+a257 7
+          call forwardModel ( configDatabase(configs(config)), &
+            & FwdModelIn, FwdModelExtra, &
+            & FwdModelOut, ifm, fmStat, Jacobian )
+        else
+          call forwardModel ( configDatabase(configs(config)), &
+            & FwdModelIn, FwdModelExtra, &
+            & FwdModelOut, ifm, fmStat )
+d259 1
+a259 3
+      end do
+    end do
+    call deallocate_test ( fmStat%rows, 'FmStat%rows', moduleName )
+d261 9
+a269 1
+    call DestroyForwardModelIntermediate ( ifm )
+d291 3
+d302 3
+@
+
+
+2.27
+log
+@Added a nullify and did some cosmetic changes
+@
+text
+@d34 1
+a34 1
+       "$Id: SidsModule.f90,v 2.26 2001/05/01 23:52:54 vsnyder Exp $"
+a131 10
+
+          ! For the moment, destroy the jacobian here-----------------------
+          call DestroyBlock ( Jacobian )
+          allocate ( Jacobian%block ( jacobian%row%nb, jacobian%col%nb ), &
+            & STAT=status )
+          if ( status /= 0 ) call MLSMessage (MLSMSG_Error, ModuleName, &
+            & MLSMSG_Allocate//'jacobian%block' )
+          !-----------------------------------------------------------------
+
+          fmStat%rows = .false. 
+d171 3
+@
+
+
+2.26
+log
+@Allocate and deallocate fmStat%rows here
+@
+text
+@d34 1
+a34 1
+       "$Id: SidsModule.f90,v 2.25 2001/05/01 06:57:30 livesey Exp $"
+d55 1
+a55 1
+    integer, pointer, dimension(:) :: configs=>NULL() ! Forward model configs
+d74 2
+d181 3
+@
+
+
+2.25
+log
+@*** empty log message ***
+@
+text
+@d34 1
+a34 1
+       "$Id: SidsModule.f90,v 2.24 2001/05/01 00:20:34 livesey Exp $"
+d113 6
+a118 2
+    if ( ixJacobian > 0 ) &
+      & call allocate_test(fmStat%rows, jacobian%row%nb, 'fmStat%rows', ModuleName)
+d147 1
+a147 2
+    if ( ixJacobian > 0 ) &
+      & call deallocate_test ( fmStat%rows, 'FmStat%rows', moduleName )
+d179 3
+@
+
+
+2.24
+log
+@Sets up fmStat%rows correctly.
+@
+text
+@d20 1
+d22 1
+a22 1
+    GetFromMatrixDatabase, Matrix_Database_T, Matrix_T
+d30 2
+d34 1
+a34 1
+       "$Id: SidsModule.f90,v 2.23 2001/04/26 19:48:11 livesey Exp $"
+d63 1
+d126 10
+d143 2
+a144 1
+    call deallocate_test ( fmStat%rows, 'FmStat%rows', moduleName )
+d176 3
+@
+
+
+2.23
+log
+@Now uses ForwardModelWrappers
+@
+text
+@d31 1
+a31 1
+       "$Id: SidsModule.f90,v 2.22 2001/04/26 00:57:20 vsnyder Exp $"
+d109 2
+a110 1
+    nullify ( fmStat%rows )
+d161 3
+@
+
+
+2.22
+log
+@Deallocate fmStat%rows, cosmetic changes
+@
+text
+@d14 1
+a14 1
+  use ForwardModelInterface, only: ForwardModel
+d31 1
+a31 1
+       "$Id: $"
+d34 1
+a34 1
+       "$RCSfile: $"
+d160 3
+@
+
+
+2.21
+log
+@Remove 'Done forward model!' print
+@
+text
+@d11 2
+d15 2
+a27 4
+  use Dump_0, only: dump
+  use ForwardModelIntermediate, only: ForwardModelIntermediate_T,&
+    & ForwardModelStatus_T, DestroyForwardModelIntermediate
+  use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+d29 7
+a35 6
+  !---------------------------- RCS Ident Info -------------------------------
+  character (len=130), private :: Id = &
+    & "$Id: SidsModule.f90,v 2.20 2001/04/19 23:56:01 livesey Exp $"
+  character (len=*), parameter, private :: ModuleName= &
+    & "$RCSfile: SidsModule.f90,v $"
+  !---------------------------------------------------------------------------
+d112 1
+a112 1
+    do while (.not. fmStat%finished )
+d128 1
+d130 1
+a130 1
+    call DestroyForwardModelIntermediate( ifm )
+d160 3
+@
+
+
+2.20
+log
+@New fmStat
+@
+text
+@d31 1
+a31 1
+    & "$Id: SidsModule.f90,v 2.19 2001/04/19 20:30:24 livesey Exp $"
+a124 1
+        print*,'Done forward model!'
+d158 3
+@
+
+
+2.19
+log
+@Added call to DestroyForwardModelIntermediate
+@
+text
+@d31 1
+a31 1
+    & "$Id: SidsModule.f90,v 2.18 2001/04/12 21:42:24 livesey Exp $"
+d105 4
+a108 2
+    !                             newHydros maf finished
+    fmStat = ForwardModelStatus_T(.true.,   0,  .false. )
+d159 3
+@
+
+
+2.18
+log
+@Another interim version, forgot to nullify a pointer.
+@
+text
+@d26 1
+a26 1
+    & ForwardModelStatus_T
+d31 1
+a31 1
+    & "$Id: SidsModule.f90,v 2.17 2001/04/12 18:13:28 vsnyder Exp $"
+d127 2
+d157 3
+@
+
+
+2.17
+log
+@OOPS! Hadn't saved it from the editor!
+@
+text
+@d31 1
+a31 1
+    & "$Id: SidsModule.f90,v 2.16 2001/04/12 17:48:11 livesey Exp $"
+d51 1
+a51 1
+    integer, pointer, dimension(:) :: configs ! Forward model configs
+d123 1
+d155 3
+@
+
+
+2.16
+log
+@Moved maf increment in from ForwardModel to here.
+@
+text
+@d31 1
+a31 1
+    & "$Id: SidsModule.f90,v 2.15 2001/04/10 23:28:10 livesey Exp $"
+d86 3
+a88 3
+        call Allocate_Test(configs, nsons(son)-1, 'configs', ModuleName)
+        do config = 1, nsons(son)-1
+          configs(config) = decoration(decoration(subtree(config+1,son)))
+d104 3
+a106 3
+    
+    fmStat%newHydros = .true.
+    fmStat%maf = 1
+d109 4
+a112 1
+    do
+d117 1
+a117 1
+            & FwdModelOut, ifm, fmStat, Jacobian)
+d121 1
+a121 1
+            & FwdModelOut, ifm, fmStat)
+a123 4
+      ! What if one config set finished but others still had more to do?
+      ! Ermmm, think of this next time.
+      if (fmStat%finished) exit
+      fmStat%maf = fmStat%maf + 1
+d128 1
+a128 1
+    call deallocate_test( configs, 'configs', ModuleName)
+d154 3
+@
+
+
+2.15
+log
+@Interim working version
+@
+text
+@d25 3
+a27 1
+  use ForwardModelIntermediate, only: ForwardModelIntermediate_T, ForwardModelStatus_T
+d31 1
+a31 1
+    & "$Id: SidsModule.f90,v 2.14 2001/04/10 02:46:17 livesey Exp $"
+a47 1
+    type (ForwardModelConfig_T), pointer :: CONFIG ! Selected configuration
+d50 2
+d86 4
+a89 1
+        config => configDatabase(decoration(decoration(subtree(2,son))))
+d97 23
+a119 6
+      fmStat%newHydros = .true.
+      fmStat%maf = 1
+      do
+        call forwardModel ( config, FwdModelIn, FwdModelExtra, &
+          & FwdModelOut, ifm, fmStat, Jacobian)
+        if (fmStat%finished) exit
+d121 5
+a126 16
+    else if ( config%atmos_Der .or. config%spect_Der .or. config%temp_der ) then
+      call announceError ( needJacobian )
+    else
+      fmStat%newHydros = .true.
+!      fmStat%maf = 2 ! DEBUG
+      fmStat%maf = 1
+!      config%signals(1)%channels=.false.
+!      config%signals(1)%channels(1)=.true.
+      do
+        call forwardModel ( config, FwdModelIn, FwdModelExtra, &
+          & FwdModelOut, ifm, fmStat)
+        if (fmStat%finished) exit
+!        if (fmStat%maf == 4) stop
+      end do
+    end if
+    print*,'Done the forward model!!!'
+d129 2
+d155 3
+@
+
+
+2.14
+log
+@Working version, no more FMI/TFMI
+@
+text
+@d25 1
+d29 1
+a29 1
+    & "$Id: SidsModule.f90,v 2.13 2001/04/10 00:24:30 vsnyder Exp $"
+d57 3
+d91 8
+a98 2
+      call forwardModel ( config, FwdModelExtra, FwdModelIn, &
+        &                   Jacobian, FwdModelOut=FwdModelOut)
+d102 11
+a112 4
+      print*,'Calling forward model without derivatives'
+      call forwardModel ( config, FwdModelExtra, FwdModelIn, &
+        &                   FwdModelOut=FwdModelOut)
+      print*,'Got back from forward model'
+d141 3
+@
+
+
+2.13
+log
+@Add an error message if Jacobian isn't 'plain'
+@
+text
+@a23 1
+  use l2_load_m, only: l2_load
+a25 4
+  !??? The next USE statement is Temporary for l2load:
+  use L2_TEST_STRUCTURES_M, only: FWD_MDL_CONFIG, FWD_MDL_INFO, &
+    & TEMPORARY_FWD_MDL_INFO
+
+d28 1
+a28 1
+    & "$Id: SidsModule.f90,v 2.12 2001/04/07 01:50:49 vsnyder Exp $"
+d36 1
+a36 2
+  subroutine SIDS ( Root, VectorDatabase, MatrixDatabase, configDatabase, &
+    & FMC, FMI, TFMI )
+a44 6
+    !??? Begin temporary stuff to start up the forward model
+    type(fwd_mdl_config) :: FMC
+    type(fwd_mdl_info), dimension(:), pointer :: FMI
+    type(temporary_fwd_mdl_info), dimension(:), pointer :: TFMI
+    !??? End of temporary stuff to start up the forward model
+
+d88 1
+a88 3
+        &                 Jacobian, FwdModelOut=FwdModelOut, &
+        &                 FMI=FMI(1), TFMI=TFMI(1)) !???  temporary
+      !     &                  FMI=FMI,TFMI=TFMI) !??? Last line temporary
+d94 1
+a94 3
+        &                 FwdModelOut=FwdModelOut, &
+        &                 FMI=FMI(1), TFMI=TFMI(1)) !??? temporary
+      !     &             FMI=FMI,TFMI=TFMI) !??? Last line temporary
+d124 3
+@
+
+
+2.12
+log
+@Move some of VGrid to lib/VGridsDatabase.  Move ForwardModelConfig_T and
+some related stuff to fwdmdl/ForwardModelConfig.
+@
+text
+@d33 1
+a33 1
+    & "$Id: SidsModule.f90,v 2.11 2001/03/30 00:07:24 livesey Exp $"
+d70 1
+d98 1
+d100 2
+a101 2
+        &                   Jacobian, FwdModelOut=FwdModelOut, &
+        &                   FMI=FMI(1), TFMI=TFMI(1)) !???  temporary
+d108 3
+a110 3
+        &                   FwdModelOut=FwdModelOut, &
+        &                   FMI=FMI(1), TFMI=TFMI(1)) !??? temporary
+      !     &               FMI=FMI,TFMI=TFMI) !??? Last line temporary
+d129 3
+d140 4
+@
+
+
+2.11
+log
+@Removed FMC in call to forwardModel
+@
+text
+@d11 2
+a12 1
+  use ForwardModelInterface, only: ForwardModel, ForwardModelConfig_T
+d33 1
+a33 1
+    & "$Id: SidsModule.f90,v 2.10 2001/03/28 23:47:33 livesey Exp $"
+d135 3
+@
+
+
+2.10
+log
+@Made it so it can run in a loop
+@
+text
+@d32 1
+a32 1
+    & "$Id: SidsModule.f90,v 2.9 2001/03/25 00:50:31 livesey Exp $"
+d98 2
+a99 2
+        &                   FMC=FMC, FMI=FMI(1), TFMI=TFMI(1)) !???  temporary
+      !     &                   FMC=FMC,FMI=FMI,TFMI=TFMI) !??? Last line temporary
+d106 2
+a107 2
+        &                   FMC=FMC, FMI=FMI(1), TFMI=TFMI(1)) !??? temporary
+      !     &                   FMC=FMC,FMI=FMI,TFMI=TFMI) !??? Last line temporary
+d134 3
+@
+
+
+2.9
+log
+@Interim version, bug with frequency averaging
+@
+text
+@d32 1
+a32 1
+    & "$Id: SidsModule.f90,v 2.8 2001/03/20 02:30:15 livesey Exp $"
+a92 2
+    allocate(tfmi(1),fmi(1))
+    call l2_load(fmc, fmi(1), tfmi(1), i)
+a110 2
+    stop
+    deallocate(fmi,tfmi)
+d134 3
+@
+
+
+2.8
+log
+@Interim version, gets same numbers as Zvi
+@
+text
+@d32 1
+a32 1
+    & "$Id: SidsModule.f90,v 2.7 2001/03/17 00:45:28 livesey Exp $"
+d105 1
+d110 1
+d138 3
+@
+
+
+2.7
+log
+@Moved to new ForwardModelConfig_T
+@
+text
+@d23 2
+d32 1
+a32 1
+    & "$Id: SidsModule.f90,v 2.6 2001/03/09 01:35:18 vsnyder Exp $"
+d93 2
+d102 1
+a102 1
+    else if ( fmc%atmos_Der .or. fmc%spect_Der .or. fmc%temp_der ) then
+d110 3
+a112 1
+
+d136 3
+@
+
+
+2.6
+log
+@Don't run fwd model if derivatives requested but Jacobian not supplied
+@
+text
+@d6 1
+a6 1
+!=============================================================================
+d8 2
+a9 2
+! This module evaluates the radiative transfer equation, and maybe
+! its derivatives.  It is used for SIDS and L2PC runs.
+d11 3
+a13 3
+  use ForwardModelInterface, only: ForwardModel, ForwardModelInfo_T
+  use Init_Tables_Module, only: f_fwdModelIn, f_fwdModelExtra, f_fwdModelOut, &
+    & f_jacobian
+d16 1
+a16 1
+    & GetFromMatrixDatabase, Matrix_Database_T, Matrix_T
+d30 1
+a30 1
+    & "$Id: SidsModule.f90,v 2.5 2001/03/09 01:30:10 vsnyder Exp $"
+d37 2
+a38 2
+! subroutine SIDS ( Root, VectorDatabase, MatrixDatabase, FwdModelInfo )
+  subroutine SIDS ( Root, VectorDatabase, MatrixDatabase, FwdModelInfo, &
+d43 1
+a43 1
+                                        ! Indexes an n_cf vertex
+d46 1
+a46 1
+    type(forwardModelInfo_T), intent(in) :: FwdModelInfo ! From ForwardModelSetup
+d48 5
+a52 5
+!??? Begin temporary stuff to start up the forward model
+  type(fwd_mdl_config) :: FMC
+  type(fwd_mdl_info), dimension(:), pointer :: FMI
+  type(temporary_fwd_mdl_info), dimension(:), pointer :: TFMI
+!??? End of temporary stuff to start up the forward model
+d54 1
+d86 2
+d94 4
+a97 4
+      call forwardModel ( FwdModelInfo, FwdModelExtra, FwdModelIn, &
+      &                   Jacobian, FwdModelOut=FwdModelOut, &
+      &                   FMC=FMC, FMI=FMI(1), TFMI=TFMI(1)) !???  temporary
+!     &                   FMC=FMC,FMI=FMI,TFMI=TFMI) !??? Last line temporary
+d101 4
+a104 4
+      call forwardModel ( FwdModelInfo, FwdModelExtra, FwdModelIn, &
+      &                   FwdModelOut=FwdModelOut, &
+      &                   FMC=FMC, FMI=FMI(1), TFMI=TFMI(1)) !??? temporary
+!     &                   FMC=FMC,FMI=FMI,TFMI=TFMI) !??? Last line temporary
+d130 3
+@
+
+
+2.5
+log
+@Don't ask for Jacobian if convolution is requested
+@
+text
+@d30 1
+a30 1
+    & "$Id: SidsModule.f90,v 2.4 2001/03/08 23:52:24 vsnyder Exp $"
+a90 5
+    else if ( fmc%atmos_Der .or. fmc%spect_Der .or. fmc%temp_der ) then
+      call announceError ( needJacobian )
+    end if
+
+    if ( ixjacobian > 0 ) then
+d95 2
+d103 1
+d127 3
+@
+
+
+2.4
+log
+@Process sons correctly
+@
+text
+@d30 1
+a30 1
+    & "$Id: SidsModule.f90,v 2.3 2001/03/08 20:11:19 zvi Exp $"
+d91 1
+a91 2
+    else if ( fmc%atmos_Der .or. fmc%do_conv .or. fmc%spect_Der .or. &
+      & fmc%temp_der ) then
+d129 3
+@
+
+
+2.3
+log
+@*** empty log message ***
+@
+text
+@d30 1
+a30 1
+    & "$Id: SidsModule.f90,v 2.2 2001/03/08 03:23:09 vsnyder Exp $"
+d62 1
+d74 2
+a75 1
+      field = get_field_id(root)
+d78 1
+a78 1
+        fwdModelIn => vectorDatabase(decoration(decoration(subtree(2,root))))
+d80 1
+a80 1
+        fwdModelExtra => vectorDatabase(decoration(decoration(subtree(2,root))))
+d82 1
+a82 1
+        fwdModelOut => vectorDatabase(decoration(decoration(subtree(2,root))))
+d84 1
+a84 1
+        ixJacobian = decoration(subtree(2,root)) ! jacobian: matrix vertex
+d88 2
+a89 2
+    i = decoration(ixJacobian)
+    if ( i > 0 ) then
+d96 11
+a106 4
+    call forwardModel ( FwdModelInfo, FwdModelExtra, FwdModelIn, &
+    &                   Jacobian, FwdModelOut=FwdModelOut, &
+    &                   FMC=FMC, FMI=FMI(1), TFMI=TFMI(1))
+!   &                   FMC=FMC,FMI=FMI,TFMI=TFMI) !??? Last line temporary
+d130 3
+@
+
+
+2.2
+log
+@More stuff to work with L2_Load
+@
+text
+@d30 1
+a30 1
+    & "$Id: SidsModule.f90,v 2.1 2001/03/08 00:00:08 vsnyder Exp $"
+d39 1
+a39 1
+    & fmc, fmi, tfmi )
+d96 2
+a97 1
+    &                   FMC=FMC, FMI=FMI, TFMI=TFMI ) !??? Last line temporary
+d121 3
+@
+
+
+2.1
+log
+@Initial commit.
+@
+text
+@d10 2
+d30 1
+a30 1
+    & "$Id: RetrievalModule.f90,v 2.6 2001/02/22 18:54:05 vsnyder Exp $"
+d32 1
+a32 1
+    & "$RCSfile: RetrievalModule.f90,v $"
+d37 3
+a39 2
+! subroutine SIDS ( Root, VectorDatabase, MatrixDatabase )
+  subroutine SIDS ( Root, VectorDatabase, MatrixDatabase, fmc, fmi, tfmi )
+d46 1
+d94 3
+d119 4
+a122 1
+! $Log: $
+@
+

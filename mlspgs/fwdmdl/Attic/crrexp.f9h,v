@@ -1,0 +1,121 @@
+head	2.3;
+access;
+symbols
+	V1-13:2.2
+	V1-12:2.2
+	V1-11:2.2
+	V1-10:2.2
+	newfwm-feb03:2.2.0.2;
+locks; strict;
+comment	@# @;
+
+
+2.3
+date	2003.05.05.23.00.25;	author livesey;	state dead;
+branches;
+next	2.2;
+
+2.2
+date	2003.02.04.01.31.24;	author vsnyder;	state Exp;
+branches
+	2.2.2.1;
+next	2.1;
+
+2.1
+date	2003.02.04.01.27.32;	author vsnyder;	state Exp;
+branches;
+next	;
+
+2.2.2.1
+date	2003.04.16.19.59.06;	author vsnyder;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.3
+log
+@Merged in feb03 newfwm branch
+@
+text
+@! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+! $Id: crrexp.f9h,v 2.2 2003/02/04 01:31:24 vsnyder Exp $
+
+    real(rk) :: C, C1, S
+    real(rk) :: X, Y, ZABS ! zabs is really |z|**2
+
+    x = real(z)
+    y = aimag(z)
+    zabs = x**2 + y**2
+    if ( zabs == 0.0_rk ) then ! avoid dividing by zero
+      crrexp = 1.0_rk
+      return
+    end if
+
+    c = cos(y)
+    s = sin(y)
+    if ( c < 0.0_rk ) then
+      c1 = 1.0_rk - c
+    else ! avoid cancellation for small |y|
+      c1 = s**2 / ( 1.0_rk + c )
+    end if
+
+    crrexp = ( conjg(z) * ( cmplx(c,s) * rexp(x) + cmplx(-c1,s) ) ) / zabs
+
+! $Log: crrexp.f9h,v $
+! Revision 2.2  2003/02/04 01:31:24  vsnyder
+! Add copyright notice
+!
+
+@
+
+
+2.2
+log
+@Add copyright notice
+@
+text
+@d4 1
+a4 1
+! $Id: crrexp.f9h,v 2.1 2003/02/04 01:27:32 vsnyder Exp $
+d27 4
+a30 1
+! $Log: $
+@
+
+
+2.2.2.1
+log
+@Moved to ../lib
+@
+text
+@d4 1
+a4 1
+! $Id: crrexp.f9h,v 2.2 2003/02/04 01:31:24 vsnyder Exp $
+d27 1
+a27 4
+! $Log: crrexp.f9h,v $
+! Revision 2.2  2003/02/04 01:31:24  vsnyder
+! Add copyright notice
+!
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d1 4
+a4 1
+! $Id: $
+d27 2
+a28 1
+! $Log:
+@
+

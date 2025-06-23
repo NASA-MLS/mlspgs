@@ -1,0 +1,1729 @@
+head	1.38;
+access;
+symbols
+	newfwm-sep01:1.37.0.2
+	V0-7:1.37
+	V0-5-Level2:1.34
+	V0-5-SIPS:1.25;
+locks; strict;
+comment	@# @;
+
+
+1.38
+date	2001.09.17.20.26.26;	author livesey;	state dead;
+branches;
+next	1.37;
+
+1.37
+date	2001.06.21.13.07.08;	author zvi;	state Exp;
+branches
+	1.37.2.1;
+next	1.36;
+
+1.36
+date	2001.06.07.23.30.33;	author pwagner;	state Exp;
+branches;
+next	1.35;
+
+1.35
+date	2001.05.16.01.25.21;	author livesey;	state Exp;
+branches;
+next	1.34;
+
+1.34
+date	2001.04.26.22.54.41;	author zvi;	state Exp;
+branches;
+next	1.33;
+
+1.33
+date	2001.04.25.00.53.43;	author livesey;	state Exp;
+branches;
+next	1.32;
+
+1.32
+date	2001.04.25.00.40.07;	author livesey;	state Exp;
+branches;
+next	1.31;
+
+1.31
+date	2001.04.25.00.38.48;	author zvi;	state Exp;
+branches;
+next	1.30;
+
+1.30
+date	2001.04.23.22.12.08;	author livesey;	state Exp;
+branches;
+next	1.29;
+
+1.29
+date	2001.04.23.21.56.25;	author livesey;	state Exp;
+branches;
+next	1.28;
+
+1.28
+date	2001.04.23.21.43.28;	author zvi;	state Exp;
+branches;
+next	1.27;
+
+1.27
+date	2001.04.19.22.09.18;	author livesey;	state Exp;
+branches;
+next	1.26;
+
+1.26
+date	2001.04.19.06.48.13;	author zvi;	state Exp;
+branches;
+next	1.25;
+
+1.25
+date	2001.04.13.03.34.45;	author zvi;	state Exp;
+branches;
+next	1.24;
+
+1.24
+date	2001.04.13.02.00.55;	author vsnyder;	state Exp;
+branches;
+next	1.23;
+
+1.23
+date	2001.04.13.02.00.10;	author vsnyder;	state Exp;
+branches;
+next	1.22;
+
+1.22
+date	2001.04.13.01.44.36;	author vsnyder;	state Exp;
+branches;
+next	1.21;
+
+1.21
+date	2001.04.13.00.27.20;	author vsnyder;	state Exp;
+branches;
+next	1.20;
+
+1.20
+date	2001.04.12.21.43.50;	author livesey;	state Exp;
+branches;
+next	1.19;
+
+1.19
+date	2001.04.12.01.02.11;	author zvi;	state Exp;
+branches;
+next	1.18;
+
+1.18
+date	2001.04.07.23.51.17;	author zvi;	state Exp;
+branches;
+next	1.17;
+
+1.17
+date	2001.04.07.01.21.10;	author livesey;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2001.03.31.23.40.55;	author zvi;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2001.03.30.20.28.21;	author zvi;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2001.03.30.01.40.24;	author livesey;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2001.03.30.00.07.57;	author livesey;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2001.03.29.08.51.01;	author zvi;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2001.03.26.21.06.31;	author zvi;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2001.03.26.17.56.14;	author zvi;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2001.03.21.18.40.09;	author livesey;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2001.03.21.18.39.43;	author livesey;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2001.03.21.06.30.10;	author livesey;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2001.03.21.02.12.54;	author livesey;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2001.03.21.01.09.42;	author livesey;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.03.20.11.03.15;	author zvi;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2001.03.05.21.37.20;	author zvi;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.02.03.02.07.01;	author zvi;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.01.31.22.40.12;	author zvi;	state Exp;
+branches;
+next	;
+
+1.37.2.1
+date	2001.09.10.10.02.32;	author zvi;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.38
+log
+@New forward model
+@
+text
+@! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+module Comp_Path_Entities_M
+  use MLSCommon, only: R8
+  use GLNP, only: NG
+  use ELLIPSE_M, only: ELLIPSE
+  use PATH_ENTITIES_M, only: PATH_INDEX, PATH_VECTOR, PATH_VECTOR_2D
+  use VERT_TO_PATH_M, only: VERT_TO_PATH
+  use VectorsModule, only: VectorValue_T
+
+  implicit NONE
+  private
+  public :: Comp_Path_Entities
+
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+    & "$Id: comp_path_entities_m.f90,v 1.37 2001/06/21 13:07:08 zvi Exp $"
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName= &
+    & "$RCSfile: comp_path_entities_m.f90,v $"
+!---------------------------------------------------------------------
+contains
+!---------------------------------------------------------------------
+
+  subroutine Comp_Path_Entities ( temperature, closestInstances, &
+    &        N_lvls, No_t, Gl_count, Ndx_path, Z_glgrid, &
+    &        T_glgrid, H_glgrid, Dhdz_glgrid, Tan_hts, No_tan_hts, Z_path, &
+    &        H_path, T_path, Phi_path, Dhdz_path, Eta_phi, No_phi_t, &
+    &        T_phi_basis, NoMAFs, PhiWindow, Elvar, Ier )
+
+  !  ===============================================================
+  !  Declaration of variables for sub-program: comp_path_entities
+  !  ===============================================================
+
+  !  ---------------------------
+  !  Calling sequence variables:
+  !  ---------------------------
+  type (VectorValue_T), intent(in) :: temperature
+  integer, dimension(:), intent(in) :: closestInstances
+
+  integer, intent(in) :: no_t, no_phi_t, N_lvls, gl_count, PhiWindow, NoMAFs
+  !
+  integer, intent(in out) :: No_tan_hts
+
+  type(ellipse), intent(in out) :: Elvar(:)
+
+  integer, intent(out) :: Ier
+  !
+  real(r8), intent(in) :: Z_glgrid(:), H_glgrid(:,:), T_glgrid(:,:)
+  real(r8), intent(in) :: Dhdz_glgrid(:,:)
+
+  real(r8), intent(in) :: T_phi_basis(:)
+  real(r8), intent(in) :: Tan_hts(:,:)
+
+  type(path_index) , intent(inout) :: Ndx_path(:,:)
+  type(path_vector), intent(inout) :: Z_path(:,:), T_path(:,:), H_path(:,:), &
+                                      Phi_path(:,:), Dhdz_path(:,:)
+
+  type(path_vector_2d), intent(inout) :: Eta_phi(:,:)
+  !
+  !  ----------------------
+  !  Local variables:
+  !  ----------------
+
+  Integer :: i, k, l, jj, kk, lmin, lmax, klo, khi, ngt, maf, &
+             WinSize, MidWin
+
+  Real(r8) :: h, q, r, zeta, phi
+
+  Real(r8), dimension(:)  , allocatable :: zpath, tpath, hpath, ppath, dhdzp
+  Real(r8), dimension(:,:), allocatable :: phi_eta
+
+  ier = 0
+  ngt = 2 * (Ng+1) * (N_lvls+1)
+
+! Compute all the various integration paths according to tangent heights.
+! Get the z, t, h, phi, dhdz & dh_dt arrays on these paths.
+
+  allocate ( zpath(ngt), hpath(ngt), tpath(ngt), ppath(ngt), dhdzp(ngt), &
+             & stat=ier )
+  if(ier /= 0) then
+    print *,'** Allocation Error in comp_path_entities: ?path ...'
+    print *,'** Error: ALLOCATION error in MAIN ..'
+    print *,'   STAT =',ier
+    Return
+  end if
+
+  do maf = 1, NoMAFs
+    l = closestInstances(maf)
+    lmin = max(1,l-phiWindow/2)
+    lmax = min(no_phi_t,l+phiWindow/2)
+    WinSize = lmax-lmin+1
+    MidWin = l - lmin + 1
+    allocate ( phi_eta(ngt,lmin:lmax), stat=ier )
+    if ( ier /= 0 ) then
+      print *,'** Error Allocating phi_eta in routine: comp_path_entities..'
+      print *,'   STAT =',ier
+      return
+    endif
+    do k = 1, no_tan_hts
+      h = tan_hts(k,l)
+      call vert_to_path ( elvar(l), n_lvls, Ng, ngt, gl_count, WinSize, &
+        & MidWin, no_t, h, z_glgrid, t_glgrid(1:,lmin:lmax), &
+        & h_glgrid(1:,lmin:lmax), dhdz_glgrid(1:,lmin:lmax), &
+        & t_phi_basis(lmin:lmax), zpath, hpath, &
+        & tpath, ppath, dhdzp, phi_eta, klo, khi, ier )
+      if(ier /= 0) return
+      allocate ( z_path(k,maf)%values(khi), h_path(k,maf)%values(khi),   &
+        &        t_path(k,maf)%values(khi), phi_path(k,maf)%values(khi), &
+        &        dhdz_path(k,maf)%values(khi), stat=ier )
+      if ( ier == 0 ) allocate ( eta_phi(k,maf)%values(khi,lmin:lmax),&
+                                & stat=ier )
+      if ( ier /= 0 ) then
+        print *,'** Error: ALLOCATION error in routine: comp_path_entities ..'
+        print *,'   STAT =',ier
+        return
+      endif
+      ndx_path(k,maf)%break_point_index = klo
+      ndx_path(k,maf)%total_number_of_elements = khi
+      z_path(k,maf)%values(1:khi) = zpath(1:khi)
+      t_path(k,maf)%values(1:khi) = tpath(1:khi)
+      h_path(k,maf)%values(1:khi) = hpath(1:khi)
+      phi_path(k,maf)%values(1:khi) = ppath(1:khi)
+      dhdz_path(k,maf)%values(1:khi) = dhdzp(1:khi)
+      eta_phi(k,maf)%values(1:khi,lmin:lmax) = phi_eta(1:khi,lmin:lmax)
+    end do ! k = 1, no_tan_hts
+    deallocate ( phi_eta, stat=i )
+  end do ! maf = 1, NoMAFs
+
+ 99  deallocate ( zpath, hpath, tpath, ppath, dhdzp, stat=i )
+
+  return
+
+end subroutine Comp_Path_Entities
+
+end module Comp_Path_Entities_M
+! $Log: comp_path_entities_m.f90,v $
+! Revision 1.37  2001/06/21 13:07:08  zvi
+! Speed enhancement MAJOR update
+!
+! Revision 1.36  2001/06/07 23:30:33  pwagner
+! Added Copyright statement
+!
+! Revision 1.35  2001/05/16 01:25:21  livesey
+! Removed unnecessary radiance parameter.
+!
+! Revision 1.34  2001/04/26 22:54:41  zvi
+! Fixing some phiwindow bug
+!
+! Revision 1.33  2001/04/25 00:53:43  livesey
+! Removed print statement
+!
+! Revision 1.32  2001/04/25 00:40:07  livesey
+! Removed unnecessary deallocate
+!
+! Revision 1.31  2001/04/25 00:38:48  zvi
+! Fix bug in elvar..
+!
+! Revision 1.30  2001/04/23 22:12:08  livesey
+! Whoops, bug fix.
+!
+! Revision 1.29  2001/04/23 21:56:25  livesey
+! Accepts closestInstances as parameter
+!
+! Revision 1.28  2001/04/23 21:43:28  zvi
+! Introducing no_phi_t etc.
+!
+! Revision 1.27  2001/04/19 22:09:18  livesey
+! Modified to deal with no mafs /= T%noInstances
+!
+! Revision 1.26  2001/04/19 06:48:13  zvi
+! Fixing memory leaks..
+!
+! Revision 1.25  2001/04/13 03:34:45  zvi
+! Correcting minor error in allocation, cleaing up comments.
+!
+! Revision 1.24  2001/04/13 02:00:55  vsnyder
+! Finish changing phi_eta back to allocatable
+!
+! Revision 1.23  2001/04/13 02:00:10  vsnyder
+! Change phi_eta back to allocatable
+!
+! Revision 1.22  2001/04/13 01:44:36  vsnyder
+! Work on moving window
+!
+! Revision 1.21  2001/04/13 00:27:20  vsnyder
+! Limit amount of phi_eta assigned
+!
+! Revision 1.20  2001/04/12 21:43:50  livesey
+! Some attempts to fix array bounds in vert_to_path call
+!
+! Revision 1.19  2001/04/12 01:02:11  zvi
+! Adding phiwindow to calling seq.
+!
+! Revision 1.18  2001/04/07 23:51:17  zvi
+! New code - move the spsfunc & refraction along the path to get_path_spsfunc
+!
+! Revision 1.17  2001/04/07 01:21:10  livesey
+! Removed print statement
+!
+! Revision 1.16  2001/03/31 23:40:55  zvi
+! Eliminate l2pcdim (dimension parameters) move to allocatable ..
+!
+! Revision 1.15  2001/03/30 20:28:21  zvi
+! General fix-up to get rid of COMMON BLOCK (ELLIPSE)
+!
+! Revision 1.14  2001/03/30 01:40:24  livesey
+! Removed some arguments
+!
+! Revision 1.13  2001/03/30 00:07:57  livesey
+! Removed more arguments
+!
+! Revision 1.12  2001/03/29 08:51:01  zvi
+! Changing the (*) toi (:) everywhere
+!
+! Revision 1.11  2001/03/26 21:06:31  zvi
+! *** empty log message ***
+!
+! Revision 1.10  2001/03/26 17:56:14  zvi
+! New codes to deal with dh_dt_path issue.. now being computed on the fly
+!
+! Revision 1.9  2001/03/21 18:40:09  livesey
+! Removed dump statements
+!
+! Revision 1.7  2001/03/21 06:30:10  livesey
+! Minor change, still wrong
+!
+! Revision 1.6  2001/03/21 02:12:54  livesey
+! Interim version, got mr_f in but not working yet.
+!
+! Revision 1.5  2001/03/21 01:09:42  livesey
+! Commented out dh_dt_path to save memory
+!
+! Revision 1.4  2001/03/20 11:03:15  zvi
+! Fixing code for "real" data run, increase dim. etc.
+!
+! Revision 1.3  2001/03/05 21:37:20  zvi
+! New filter format
+!
+! Revision 1.1  2000/06/21 21:56:13  zvi
+! First version D.P.
+!
+! Revision 1.1 2000/06/09 00:08:13  Z.Shippony
+! Initial conversion to Fortran 90
+@
+
+
+1.37
+log
+@Speed enhancement MAJOR update
+@
+text
+@d18 1
+a18 1
+    & "$Id: comp_path_entities_m.f90,v 1.36 2001/06/07 23:30:33 pwagner Exp $"
+d139 3
+@
+
+
+1.37.2.1
+log
+@Cleanup..comp_path_entities_m.f90
+@
+text
+@d18 1
+a18 1
+    & "$Id: comp_path_entities_m.f90,v 1.37 2001/06/21 13:07:08 zvi Exp $"
+a138 3
+! Revision 1.37  2001/06/21 13:07:08  zvi
+! Speed enhancement MAJOR update
+!
+@
+
+
+1.36
+log
+@Added Copyright statement
+@
+text
+@d6 1
+a6 1
+  use GL6P, only: NG
+d18 1
+a18 1
+    & "$Id: comp_path_entities_m.f90,v 1.35 2001/05/16 01:25:21 livesey Exp $"
+d139 3
+@
+
+
+1.35
+log
+@Removed unnecessary radiance parameter.
+@
+text
+@d1 3
+d18 1
+a18 1
+    & "$Id: comp_path_entities_m.f90,v 1.34 2001/04/26 22:54:41 zvi Exp $"
+d139 3
+@
+
+
+1.34
+log
+@Fixing some phiwindow bug
+@
+text
+@d15 1
+a15 1
+    & "$Id: comp_path_entities_m.f90,v 1.33 2001/04/25 00:53:43 livesey Exp $"
+d23 1
+a23 1
+  subroutine Comp_Path_Entities ( radiance, temperature, closestInstances, &
+a35 1
+  type (VectorValue_T), intent(in) :: radiance
+d136 3
+@
+
+
+1.33
+log
+@Removed print statement
+@
+text
+@d15 1
+a15 1
+    & "$Id: comp_path_entities_m.f90,v 1.32 2001/04/25 00:40:07 livesey Exp $"
+a86 1
+
+a92 1
+    print*,'Hello there',l,lmin,lmax,winSize,midwin
+d137 3
+@
+
+
+1.32
+log
+@Removed unnecessary deallocate
+@
+text
+@d15 1
+a15 1
+    & "$Id: comp_path_entities_m.f90,v 1.31 2001/04/25 00:38:48 zvi Exp $"
+a100 1
+    print*,'Elvar:',elvar(l)%phi_tan,elvar(maf)%rr
+d139 3
+@
+
+
+1.31
+log
+@Fix bug in elvar..
+@
+text
+@d15 1
+a15 1
+    & "$Id: comp_path_entities_m.f90,v 1.30 2001/04/23 22:12:08 livesey Exp $"
+d87 1
+d94 1
+d101 1
+a109 3
+      deallocate ( z_path(k,maf)%values, h_path(k,maf)%values,   &
+        &          t_path(k,maf)%values, phi_path(k,maf)%values, &
+        &          dhdz_path(k,maf)%values, eta_phi(k,maf)%values, stat=i )
+d130 1
+a130 1
+  end do ! l = 1, NoMAFs
+d140 3
+@
+
+
+1.30
+log
+@Whoops, bug fix.
+@
+text
+@d15 1
+a15 1
+    & "$Id: comp_path_entities_m.f90,v 1.29 2001/04/23 21:56:25 livesey Exp $"
+d101 1
+a101 1
+      call vert_to_path ( elvar(maf), n_lvls, Ng, ngt, gl_count, WinSize, &
+d140 3
+@
+
+
+1.29
+log
+@Accepts closestInstances as parameter
+@
+text
+@d15 1
+a15 1
+    & "$Id: comp_path_entities_m.f90,v 1.28 2001/04/23 21:43:28 zvi Exp $"
+a71 2
+  integer, dimension(NoMAFs) :: closestInstance
+
+d140 3
+@
+
+
+1.28
+log
+@Introducing no_phi_t etc.
+@
+text
+@a6 1
+  use ManipulateVectorQuantities, only: FINDCLOSESTINSTANCES
+d15 1
+a15 1
+    & "$Id: comp_path_entities_m.f90,v 1.27 2001/04/19 22:09:18 livesey Exp $"
+d23 1
+a23 1
+  subroutine Comp_Path_Entities ( radiance, temperature, &
+d38 1
+a88 2
+  call FindClosestInstances( temperature, radiance, closestInstance )
+
+d90 1
+a90 1
+    l = closestInstance(maf)
+d142 3
+@
+
+
+1.27
+log
+@Modified to deal with no mafs /= T%noInstances
+@
+text
+@d16 1
+a16 1
+    & "$Id: comp_path_entities_m.f90,v 1.26 2001/04/19 06:48:13 zvi Exp $"
+d28 1
+a28 1
+    &        T_phi_basis, No_mmaf, PhiWindow, Elvar, Ier )
+d40 1
+a40 1
+  integer, intent(in) :: no_t, no_phi_t, N_lvls, gl_count, PhiWindow, No_mmaf
+d64 2
+a65 1
+  Integer :: i, k, l, jj, kk, lmin, lmax, klo, khi, ngt, maf
+d72 1
+a72 1
+  integer, dimension(no_mmaf) :: closestInstance
+d91 1
+a91 1
+  do maf = 1, no_mmaf
+d95 2
+d104 5
+a108 4
+      h = tan_hts(k,maf)
+      call vert_to_path ( elvar(maf), n_lvls, Ng, ngt, gl_count, lmax-lmin+1, &
+        & no_t, h, z_glgrid, t_glgrid(1:,lmin:lmax), h_glgrid(1:,lmin:lmax), &
+        & dhdz_glgrid(1:,lmin:lmax), t_phi_basis(lmin:lmax), zpath, hpath, &
+d134 1
+a134 1
+  end do ! l = 1, no_mmaf
+d144 3
+@
+
+
+1.26
+log
+@Fixing memory leaks..
+@
+text
+@d7 2
+d16 1
+a16 1
+    & "$Id: comp_path_entities_m.f90,v 1.25 2001/04/13 03:34:45 zvi Exp $"
+d24 2
+a25 1
+  subroutine Comp_Path_Entities ( N_lvls, No_t, Gl_count, Ndx_path, Z_glgrid, &
+d37 3
+d64 1
+a64 1
+  Integer :: i, k, l, jj, kk, lmin, lmax, klo, khi, ngt
+d71 2
+d88 4
+a91 2
+  do l = 1, no_mmaf
+    k = min(no_phi_t,no_mmaf)
+d93 1
+a93 1
+    lmax = min(k,l+phiWindow/2)
+d101 2
+a102 2
+      h = tan_hts(k,l)
+      call vert_to_path ( elvar(l), n_lvls, Ng, ngt, gl_count, lmax-lmin+1, &
+d107 7
+a113 7
+      deallocate ( z_path(k,l)%values, h_path(k,l)%values,   &
+        &          t_path(k,l)%values, phi_path(k,l)%values, &
+        &          dhdz_path(k,l)%values, eta_phi(k,l)%values, stat=i )
+      allocate ( z_path(k,l)%values(khi), h_path(k,l)%values(khi),   &
+        &        t_path(k,l)%values(khi), phi_path(k,l)%values(khi), &
+        &        dhdz_path(k,l)%values(khi), stat=ier )
+      if ( ier == 0 ) allocate ( eta_phi(k,l)%values(khi,lmin:lmax),&
+d120 8
+a127 8
+      ndx_path(k,l)%break_point_index = klo
+      ndx_path(k,l)%total_number_of_elements = khi
+      z_path(k,l)%values(1:khi) = zpath(1:khi)
+      t_path(k,l)%values(1:khi) = tpath(1:khi)
+      h_path(k,l)%values(1:khi) = hpath(1:khi)
+      phi_path(k,l)%values(1:khi) = ppath(1:khi)
+      dhdz_path(k,l)%values(1:khi) = dhdzp(1:khi)
+      eta_phi(k,l)%values(1:khi,lmin:lmax) = phi_eta(1:khi,lmin:lmax)
+d140 3
+@
+
+
+1.25
+log
+@Correcting minor error in allocation, cleaing up comments.
+@
+text
+@d14 1
+a14 1
+    & "$Id: comp_path_entities_m.f90,v 1.24 2001/04/13 02:00:55 vsnyder Exp $"
+d48 3
+a50 3
+  type(path_index) , intent(out) :: Ndx_path(:,:)
+  type(path_vector), intent(out) :: Z_path(:,:), T_path(:,:), H_path(:,:), &
+                                    Phi_path(:,:), Dhdz_path(:,:)
+d52 1
+a52 1
+  type(path_vector_2d), intent(out) :: Eta_phi(:,:)
+d83 1
+a83 1
+    lmax = min(l+phiWindow/2,k)
+d85 5
+a89 1
+    print*,'Window:', lmin, lmax
+d130 3
+@
+
+
+1.24
+log
+@Finish changing phi_eta back to allocatable
+@
+text
+@d14 1
+a14 1
+    & "$Id: comp_path_entities_m.f90,v 1.23 2001/04/13 02:00:10 vsnyder Exp $"
+d34 1
+a34 1
+  integer, intent(in) :: No_t, N_lvls, Gl_count, PhiWindow, No_mmaf, No_phi_t
+d58 1
+a58 1
+  Integer :: i, k, l, jj, kk, lmin, lmax, klo, khi, ngt, stat
+a70 3
+!??? The following isn't needed so long as the entities are allocatable --
+!??? Allocatable entities spring into existence unallocated.
+! deallocate ( zpath, hpath, tpath, ppath, dhdzp, phi_eta, stat=i )
+d72 1
+a72 1
+    & stat=ier )
+d77 1
+a77 1
+    return
+d81 1
+d83 1
+a83 1
+    lmax = min(l+phiWindow/2,no_mmaf)
+a87 6
+! Zvi's original version
+!       call vert_to_path ( elvar(l), n_lvls, Ng, ngt, gl_count, no_phi_t, &
+!         &  no_t, h, z_glgrid, t_glgrid(1:, lmin:lmax), h_glgrid(1:, lmin:lmax), &
+!         &  dhdz_glgrid(1:, lmin:lmax), t_phi_basis, zpath, hpath, &
+!         &  tpath, ppath, dhdzp, phi_eta, klo, khi, ier )
+! Nathaniels attempt to fix...
+a91 4
+! OK, what I'm not sure about Zvi is why phi_eta is dimensioned noTanHts,noMAFs
+! and yet needs the lmin:lmax for the second dimension 
+! (it crashes on line 224 of vert_to_path if it doesn't have the
+! same size as h_a). Is phi_eta really dimensioned no_phi_t?
+d98 4
+a101 4
+        &        dhdz_path(k,l)%values(khi), stat=stat )
+      if ( stat == 0 ) allocate ( eta_phi(k,l)%values(khi,no_phi_t), stat=stat )
+      if ( stat /= 0 ) then
+        ier = stat
+a112 5
+!??? Zvi: At this point, phi_eta(:,lmin:lmax) has been computed by
+!??? vert_to_path.  When lmin>1 or lmax<no_phi_t, the following assignent
+!??? has undefined elements.
+!     eta_phi(k,l)%values(1:khi,1:no_phi_t) = phi_eta(1:khi,1:no_phi_t)
+!??? Van's attempt to repair:
+d115 1
+a115 1
+    deallocate ( phi_eta, stat=stat )
+d126 3
+@
+
+
+1.23
+log
+@Change phi_eta back to allocatable
+@
+text
+@d14 1
+a14 1
+    & "$Id: comp_path_entities_m.f90,v 1.22 2001/04/13 01:44:36 vsnyder Exp $"
+a64 1
+  nullify ( phi_eta )
+d143 3
+@
+
+
+1.22
+log
+@Work on moving window
+@
+text
+@d14 1
+a14 1
+    & "$Id: comp_path_entities_m.f90,v 1.21 2001/04/13 00:27:20 vsnyder Exp $"
+d63 1
+a63 1
+  Real(r8), dimension(:,:), pointer :: phi_eta
+d144 3
+@
+
+
+1.21
+log
+@Limit amount of phi_eta assigned
+@
+text
+@d14 1
+a14 1
+    & "$Id: comp_path_entities_m.f90,v 1.20 2001/04/12 21:43:50 livesey Exp $"
+d58 1
+a58 1
+  Integer :: i, j, k, l, jj, kk, lmin, lmax, klo, khi, ngt
+d63 1
+a63 1
+  Real(r8), dimension(:,:), allocatable :: phi_eta
+d65 1
+d76 1
+a76 1
+ &         phi_eta(ngt,no_phi_t), stat=ier )
+d87 1
+d100 1
+a100 1
+        & tpath, ppath, dhdzp, phi_eta(:,lmin:lmax), klo, khi, ier )
+d111 4
+a114 4
+        &        dhdz_path(k,l)%values(khi), stat=j )
+      if ( j == 0 ) allocate ( eta_phi(k,l)%values(khi,no_phi_t), stat=j )
+      if ( j /= 0 ) then
+        ier = j
+d132 3
+a134 2
+    end do
+  end do
+d136 1
+a136 1
+ 99  deallocate ( zpath, hpath, tpath, ppath, dhdzp, phi_eta, stat=i )
+d144 3
+@
+
+
+1.20
+log
+@Some attempts to fix array bounds in vert_to_path call
+@
+text
+@d1 2
+a2 2
+module COMP_PATH_ENTITIES_M
+  use MLSCommon, only: I4, R8
+d7 1
+d9 2
+d13 5
+a17 4
+  CHARACTER (LEN=256) :: Id = &
+  "$Id: comp_path_entities_m.f90,v 1.19 2001/04/12 01:02:11 zvi Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= &
+  "$RCSfile: comp_path_entities_m.f90,v $"
+d22 35
+a56 29
+SUBROUTINE comp_path_entities(n_lvls,no_t,gl_count,ndx_path,z_glgrid,    &
+           t_glgrid, h_glgrid, dhdz_glgrid, tan_hts, no_tan_hts, z_path, &
+           h_path,t_path,phi_path,dhdz_path,eta_phi,no_phi_t,t_phi_basis,&
+           no_mmaf,phiWindow,elvar,Ier)
+
+!  ===============================================================
+!  Declaration of variables for sub-program: comp_path_entities
+!  ===============================================================
+
+!  ---------------------------
+!  Calling sequence variables:
+!  ---------------------------
+Integer(i4), INTENT(IN) :: no_t,n_lvls,gl_count,phiWindow,no_mmaf,no_phi_t
+!
+Integer(i4), INTENT(IN OUT) :: no_tan_hts
+
+Type(ELLIPSE), INTENT(IN OUT) :: elvar(:)
+
+Integer(i4), INTENT(OUT) :: ier
+!
+Real(r8), INTENT(IN) :: z_glgrid(:), h_glgrid(:,:), t_glgrid(:,:)
+Real(r8), INTENT(IN) :: dhdz_glgrid(:,:)
+
+Real(r8), INTENT(IN) :: t_phi_basis(:)
+Real(r8), INTENT(IN) :: tan_hts(:,:)
+
+Type(path_index) , INTENT(OUT) :: ndx_path(:,:)
+Type(path_vector), INTENT(OUT) :: z_path(:,:),t_path(:,:),h_path(:,:), &
+                                  phi_path(:,:),dhdz_path(:,:)
+d58 1
+a58 5
+Type(path_vector_2d), INTENT(OUT) :: eta_phi(:,:)
+!
+!  ----------------------
+!  Local variables:
+!  ----------------
+d60 1
+a60 1
+Integer(i4) :: i, j, k, l, jj, kk, lmin, lmax, klo, khi, ngt
+d62 2
+a63 4
+Real(r8) :: h, q, r, zeta, phi
+
+Real(r8), DIMENSION(:)  , ALLOCATABLE :: zpath,tpath,hpath,ppath,dhdzp
+Real(r8), DIMENSION(:,:), ALLOCATABLE :: phi_eta
+d68 1
+a68 1
+! Compute all the various integration paths according to tanget heights.
+d71 11
+a81 9
+  DEALLOCATE(zpath,hpath,tpath,ppath,dhdzp,phi_eta,STAT=i)
+  ALLOCATE(zpath(ngt),hpath(ngt),tpath(ngt),ppath(ngt),dhdzp(ngt), &
+ &         phi_eta(ngt,no_phi_t),STAT=ier)
+  IF(ier /= 0) THEN
+    Print *,'** Allocation Error in comp_path_entities: ?path ...'
+    PRINT *,'** Error: ALLOCATION error in MAIN ..'
+    PRINT *,'   STAT =',ier
+    Return
+  ENDIF
+d83 1
+a83 1
+  DO l = 1, no_mmaf
+d86 2
+a87 2
+    print*,'Window:',lmin,lmax
+    DO k = 1, no_tan_hts
+d90 4
+a93 4
+!       CALL vert_to_path(elvar(l),n_lvls,Ng,ngt,gl_count,no_phi_t,no_t,h,&
+!            z_glgrid,t_glgrid(1:,lmin:lmax),h_glgrid(1:,lmin:lmax),  &
+!            dhdz_glgrid(1:,lmin:lmax),t_phi_basis,zpath,hpath,tpath, &
+!            ppath,dhdzp,phi_eta,klo,khi,Ier)
+d95 7
+a101 7
+      CALL vert_to_path(elvar(l),n_lvls,Ng,ngt,gl_count,lmax-lmin+1,no_t,h,&
+           z_glgrid,t_glgrid(1:,lmin:lmax),h_glgrid(1:,lmin:lmax),  &
+           dhdz_glgrid(1:,lmin:lmax),t_phi_basis(lmin:lmax),zpath,hpath,tpath, &
+           ppath,dhdzp,phi_eta(:,lmin:lmax),klo,khi,Ier)
+! OK, what I'm not sure about Zvi is why phi_eta is dimensioned noTanHts,noMAFs and yet
+! needs the lmin:lmax for the second dimension 
+! (it crashes on line 224 of vert to path if it doesn't have the
+d103 9
+a111 10
+      IF(ier /= 0) RETURN
+      DEALLOCATE(z_path(k,l)%values, h_path(k,l)%values,   &
+                 t_path(k,l)%values, phi_path(k,l)%values, &
+                 dhdz_path(k,l)%values, eta_phi(k,l)%values,STAT=i)
+      ALLOCATE(z_path(k,l)%values(khi), h_path(k,l)%values(khi),   &
+               t_path(k,l)%values(khi), phi_path(k,l)%values(khi), &
+               dhdz_path(k,l)%values(khi), STAT=j)
+      IF(j == 0) &
+     &    ALLOCATE(eta_phi(k,l)%values(khi,no_phi_t),STAT=j)
+      IF(j /= 0) THEN
+d113 4
+a116 4
+        PRINT *,'** Error: ALLOCATION error in routine: comp_path_entities ..'
+        PRINT *,'   STAT =',ier
+        RETURN
+      ENDIF
+d124 8
+a131 3
+      eta_phi(k,l)%values(1:khi,1:no_phi_t) = phi_eta(1:khi,1:no_phi_t)
+    END DO
+  END DO
+d133 1
+a133 1
+ 99  DEALLOCATE(zpath,hpath,tpath,ppath,dhdzp,phi_eta,STAT=i)
+d135 1
+a135 1
+  Return
+d137 1
+a137 1
+END SUBROUTINE comp_path_entities
+d139 1
+a139 1
+end module COMP_PATH_ENTITIES_M
+d141 3
+@
+
+
+1.19
+log
+@Adding phiwindow to calling seq.
+@
+text
+@d11 1
+a11 1
+  "$Id: comp_path_entities_m.f90,v 1.18 2001/04/07 23:51:17 zvi Exp $"
+d78 1
+a78 1
+    lmin = max(1,l-phiWindow)
+d80 1
+d83 7
+a89 1
+      CALL vert_to_path(elvar(l),n_lvls,Ng,ngt,gl_count,no_phi_t,no_t,h,&
+d91 6
+a96 2
+           dhdz_glgrid(1:,lmin:lmax),t_phi_basis,zpath,hpath,tpath, &
+           ppath,dhdzp,phi_eta,klo,khi,Ier)
+d131 3
+@
+
+
+1.18
+log
+@New code - move the spsfunc & refraction along the path to get_path_spsfunc
+@
+text
+@d11 1
+a11 1
+  "$Id: comp_path_entities_m.f90,v 1.17 2001/04/07 01:21:10 livesey Exp $"
+d21 1
+a21 1
+           no_mmaf,elvar,Ier)
+d30 1
+a30 1
+Integer(i4), INTENT(IN) :: no_t, n_lvls, gl_count, no_mmaf, no_phi_t
+d54 1
+a54 1
+Integer(i4) :: i, j, k, l, jp, jj, kk, lmin, lmax, klo, khi, ngt
+a76 1
+  jp = no_phi_t/2
+d78 2
+a79 6
+    lmin = max(1,l-jp)
+    lmax = lmin + 2 * jp
+    if(lmax > no_mmaf) then
+      lmax = no_mmaf
+      lmin = max(1,lmax - 2 * jp)
+    endif
+d120 3
+@
+
+
+1.17
+log
+@Removed print statement
+@
+text
+@d2 1
+a2 1
+  use MLSCommon, only: I4, R4, R8
+a3 2
+  use L2PC_PFA_STRUCTURES, only: ATMOS_COMP, GEOM_PARAM
+  use L2PC_FILE_PARAMETERS, only: DEG2RAD
+d5 1
+a5 3
+  use PATH_ENTITIES_M, only: PATH_INDEX, PATH_VECTOR, PATH_DERIVATIVE, &
+                             PATH_VECTOR_2D
+  use REFRACTION_M, only: REFRACTIVE_INDEX
+a6 4
+  use TWO_D_POLATE_M, only: TWO_D_POLATE
+  use Molecules, only: l_h2o
+  use Intrinsic, only: l_vmr
+  use VectorsModule, only: Vector_T, VectorValue_T, GetVectorQuantityByType
+d11 1
+a11 1
+  "$Id: comp_path_entities_m.f90,v 1.16 2001/03/31 23:40:55 zvi Exp $"
+d14 1
+a14 1
+!---------------------------------------------------------------------------
+d18 4
+a21 5
+SUBROUTINE comp_path_entities(fwdModelIn, fwdModelExtra, molecules, &
+           n_lvls,no_t,gl_count,ndx_path,z_glgrid,t_glgrid,h_glgrid,&
+           dhdz_glgrid,tan_hts, no_tan_hts,z_path,h_path,     &
+           t_path,phi_path,n_path,dhdz_path,eta_phi,no_phi_t,       &
+           t_phi_basis,spsfunc_path,no_mmaf,elvar,Ier)
+a26 3
+type (Vector_T), intent(in) :: fwdModelIn, fwdModelExtra
+integer, dimension(:), intent(in) :: molecules
+
+d46 1
+a46 1
+           n_path(:,:),phi_path(:,:),dhdz_path(:,:), spsfunc_path(:,:,:)
+d54 1
+a54 2
+Integer(i4) :: i, j, k, l, jp, sps_i, jj, kk, ih2o, lmin, lmax, &
+               klo, khi, ngt
+a60 4
+type (VectorValue_T), pointer :: f, h2o
+
+!  PFA variables:
+
+d67 1
+a67 1
+  DEALLOCATE(zpath,hpath,tpath,ppath,dhdzp,STAT=i)
+d117 1
+a117 50
+! Create the specie function along the path for all species
+!
+  do j = 1, size(molecules)
+    f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+      & quantityType=l_vmr, molecule=molecules(j))
+    jp = f%template%noInstances
+    kk = f%template%noSurfs
+    DO l = 1, no_mmaf
+      DO k = 1, no_tan_hts
+        jj = ndx_path(k,l)%total_number_of_elements
+        DEALLOCATE(spsfunc_path(j,k,l)%values,STAT=i)
+        ALLOCATE(spsfunc_path(j,k,l)%values(jj),STAT=ier)
+        IF(ier /= 0) THEN
+          PRINT *,'** Error: ALLOCATION error for spsfunc_path ..'
+          PRINT *,'   STAT =',ier
+          goto 99
+        ENDIF
+        do i = 1, jj
+          zeta = z_path(k,l)%values(i)
+          phi = phi_path(k,l)%values(i)
+          if (f%template%logBasis) then
+            Call TWO_D_POLATE(f%template%surfs(:,1), &
+              & log(f%values), &
+           &           kk, Deg2Rad*f%template%phi(1,:), jp, zeta, phi, r)
+            q = exp(r)
+          else
+            Call TWO_D_POLATE(f%template%surfs(:,1), &
+              & f%values, kk, Deg2Rad*f%template%phi(1,:), jp, zeta, phi, q)
+          endif
+          spsfunc_path(j,k,l)%values(i) = q
+        end do
+      end do
+    END DO
+  END DO
+
+  DEALLOCATE(zpath,hpath,tpath,ppath,dhdzp,phi_eta,STAT=i)
+!
+! Compute the relative refractive index minus one.
+! Get the water mixing ratio function
+
+  h2o => GetVectorQuantityByType( fwdModelIn, fwdModelExtra, &
+    & quantityType=l_vmr, molecule=l_h2o, noError=.true.)
+  print*,'Wet would have been:',associated(h2o)
+  if (associated(h2o)) then
+    jp = h2o%template%noInstances
+    kk = h2o%template%noSurfs
+  else
+    jp = 0
+    kk = 0
+  endif
+d119 1
+a119 10
+  DO l = 1, no_mmaf
+    CALL refractive_index(h2o%values,h2o%template%surfs(:,1),&
+      &             h2o%template%phi(1,:), &
+  &                 kk,jp,ndx_path(1:,l),z_path(1:,l),t_path(1:,l),    &
+  &                 phi_path(1:,l),n_path(1:,l),associated(h2o),no_tan_hts)
+  END DO
+
+ 99  DEALLOCATE(zpath,hpath,tpath,ppath,dhdzp,STAT=i)
+
+  RETURN
+d125 3
+a150 3
+!
+! Revision 1.8  2001/03/21 18:39:43  livesey
+! Fixed deg2rad bug
+@
+
+
+1.16
+log
+@Eliminate l2pcdim (dimension parameters) move to allocatable ..
+@
+text
+@d19 1
+a19 1
+  "$Id: comp_path_entities_m.f90,v 1.15 2001/03/30 20:28:21 zvi Exp $"
+a101 1
+    print*,'Hello there:',jp,l,no_mmaf,lmin,lmax,shape(t_glgrid),lbound(t_glgrid,2)
+d200 3
+@
+
+
+1.15
+log
+@General fix-up to get rid of COMMON BLOCK (ELLIPSE)
+@
+text
+@a2 1
+  use L2PCDIM, only: N2lvl, MNP => max_no_phi
+d5 1
+a5 2
+  use L2PC_FILE_PARAMETERS, only: MXCO => max_no_elmnts_per_sv_component, &
+                                  DEG2RAD
+d19 1
+a19 1
+  "$Id: comp_path_entities_m.f90,v 1.14 2001/03/30 01:40:24 livesey Exp $"
+a38 2
+Integer(i4), PARAMETER :: ngt = (Ng+1) * N2lvl
+
+d42 1
+a42 2
+Integer(i4), INTENT(IN) :: no_t, n_lvls, gl_count, &
+             no_mmaf, no_phi_t
+d67 1
+a67 1
+               klo, khi
+d79 1
+d201 3
+@
+
+
+1.14
+log
+@Removed some arguments
+@
+text
+@d8 1
+a8 2
+  use ELLIPSE, only: A2, C2, C2OA2, CPT, SPT, CPS, SPS, CPTS, SPTS, HT, &
+      HT2, RR, NPHI_TAN, PHI_S, NPHI_S, PS, ROC, XOC, YOC, EARTHX
+d21 1
+a21 1
+  "$Id: comp_path_entities_m.f90,v 1.13 2001/03/30 00:07:57 livesey Exp $"
+d30 1
+a30 2
+           dhdz_glgrid,tan_hts,&
+           no_tan_hts,z_path,h_path,     &
+d32 1
+a32 1
+           t_phi_basis,spsfunc_path,no_mmaf,Ier)
+d51 2
+d109 1
+a109 1
+      CALL vert_to_path(n_lvls,Ng,ngt,gl_count,no_phi_t,no_t,h,   &
+d205 3
+@
+
+
+1.13
+log
+@Removed more arguments
+@
+text
+@d22 1
+a22 1
+  "$Id: comp_path_entities_m.f90,v 1.12 2001/03/29 08:51:01 zvi Exp $"
+d32 1
+a32 1
+           no_tan_hts,n_sps,z_path,h_path,     &
+d48 1
+a48 1
+Integer(i4), INTENT(IN) :: no_t, n_sps, n_lvls, gl_count, &
+d205 3
+@
+
+
+1.12
+log
+@Changing the (*) toi (:) everywhere
+@
+text
+@d22 1
+a22 1
+  "$Id: comp_path_entities_m.f90,v 1.11 2001/03/26 21:06:31 zvi Exp $"
+d31 2
+a32 2
+           dhdz_glgrid,atmospheric,f_basis,mr_f,no_coeffs_f,tan_hts,&
+           no_tan_hts,n_sps,no_phi_f,f_phi_basis,z_path,h_path,     &
+d34 1
+a34 1
+           t_phi_basis,spsfunc_path,is_f_log,no_mmaf,Ier)
+d49 1
+a49 1
+             no_mmaf, no_phi_t, no_coeffs_f(:), no_phi_f(:)
+a57 2
+Real(r8), INTENT(IN) :: mr_f(:,:,:), f_basis(:,:)
+
+d59 1
+a59 1
+Real(r8), INTENT(IN) :: f_phi_basis(:,:), tan_hts(:,:)
+a64 2
+Logical, INTENT(IN) :: is_f_log(:)
+
+a82 2
+type (atmos_comp), intent(inout) :: ATMOSPHERIC(:)
+!
+d104 1
+a104 1
+      lmin = lmax - 2 * jp
+d106 1
+d205 3
+@
+
+
+1.11
+log
+@*** empty log message ***
+@
+text
+@d22 1
+a22 1
+  "$Id: comp_path_entities_m.f90,v 1.10 2001/03/26 17:56:14 zvi Exp $"
+d49 1
+a49 1
+             no_mmaf, no_phi_t, no_coeffs_f(*), no_phi_f(:)
+d67 1
+a67 1
+Logical, INTENT(IN) :: is_f_log(*)
+d87 1
+a87 1
+type (atmos_comp), intent(inout) :: ATMOSPHERIC(*)
+d210 3
+@
+
+
+1.10
+log
+@New codes to deal with dh_dt_path issue.. now being computed on the fly
+@
+text
+@d22 1
+a22 1
+  "$Id: comp_path_entities_m.f90,v 1.9 2001/03/21 18:40:09 livesey Exp $"
+d96 1
+a96 1
+ &         STAT=ier)
+d210 3
+@
+
+
+1.9
+log
+@Removed dump statements
+@
+text
+@d6 2
+a7 1
+  use L2PC_FILE_PARAMETERS, only: MXCO => max_no_elmnts_per_sv_component
+d10 2
+a11 1
+  use PATH_ENTITIES_M, only: PATH_INDEX, PATH_VECTOR, PATH_DERIVATIVE
+a19 2
+  real (r8), parameter :: DegToRad=1.74532925e-2
+
+d22 1
+a22 1
+  "$Id: comp_path_entities_m.f90,v 1.8 2001/03/21 18:39:43 livesey Exp $"
+d30 5
+a34 6
+  & n_lvls,no_t,gl_count,ndx_path,z_glgrid,  &
+           t_glgrid,h_glgrid,dhdz_glgrid,dh_dt_glgrid,atmospheric,     &
+           f_basis,mr_f,no_coeffs_f,tan_hts,no_tan_hts,n_sps,no_phi_f, &
+           f_phi_basis,z_path,h_path,t_path,phi_path,n_path,dhdz_path, &
+           dh_dt_path,no_phi_t,t_phi_basis,spsfunc_path,is_f_log,      &
+           no_mmaf,Ier)
+d56 1
+a56 1
+Real(r8), INTENT(IN) :: dh_dt_glgrid(:,:,:), dhdz_glgrid(:,:)
+d67 1
+a67 1
+Type(path_derivative), INTENT(OUT) :: dh_dt_path(:,:)
+d69 1
+a69 1
+Logical, INTENT(IN) :: is_f_log(*)
+a77 2
+Real(r4) :: dhdtp(ngt,mnp,mxco)
+
+d81 1
+d116 2
+a117 2
+           dhdz_glgrid(1:,lmin:lmax),dh_dt_glgrid(1:,lmin:lmax,1:), &
+           t_phi_basis,zpath,hpath,tpath,ppath,dhdzp,dhdtp,klo,khi,Ier)
+d121 1
+a121 1
+                 dhdz_path(k,l)%values, dh_dt_path(k,l)%values,STAT=i)
+d125 2
+a126 2
+!      IF(j == 0) &
+!     &     ALLOCATE(dh_dt_path(k,l)%values(khi,no_phi_t,no_t),STAT=j)
+d140 1
+a140 2
+!      dh_dt_path(k,l)%values(1:khi,1:no_phi_t,1:no_t) = &
+!     &                              dhdtp(1:khi,1:no_phi_t,1:no_t)
+d167 1
+a167 1
+           &           kk, DegToRad*f%template%phi(1,:), jp, zeta, phi, r)
+d171 1
+a171 1
+              & f%values, kk, DegToRad*f%template%phi(1,:), jp, zeta, phi, q)
+d179 1
+a179 1
+  DEALLOCATE(zpath,hpath,tpath,ppath,dhdzp,STAT=i)
+d210 3
+d214 1
+a214 1
+! Fixed degtorad bug
+@
+
+
+1.8
+log
+@Fixed degtorad bug
+@
+text
+@a15 2
+  use output_m, only: output
+  use dump_0, only: dump
+d22 1
+a22 1
+  "$Id: comp_path_entities_m.f90,v 1.7 2001/03/21 06:30:10 livesey Exp $"
+a151 6
+    print*,'For molecule ',j,' logBasis is:',f%template%logBasis
+    call output('mr_f is:')
+    call dump(mr_f)
+    call output('f%values is:')
+    call dump(f%values)
+    call output('difference is:')
+d213 3
+@
+
+
+1.7
+log
+@Minor change, still wrong
+@
+text
+@d19 3
+d24 1
+a24 1
+  "$Id: comp_path_entities_m.f90,v 1.6 2001/03/21 02:12:54 livesey Exp $"
+d159 1
+d178 1
+a178 1
+           &           kk, f%template%phi(1,:), jp, zeta, phi, r)
+d182 1
+a182 1
+              & f%values, kk, f%template%phi(1,:), jp, zeta, phi, q)
+d221 3
+@
+
+
+1.6
+log
+@Interim version, got mr_f in but not working yet.
+@
+text
+@d21 1
+a21 1
+  "$Id: comp_path_entities_m.f90,v 1.5 2001/03/21 01:09:42 livesey Exp $"
+d156 2
+a160 2
+        jp = f%template%noInstances
+        kk = f%template%noSurfs
+d217 3
+@
+
+
+1.5
+log
+@Commented out dh_dt_path to save memory
+@
+text
+@d13 5
+d21 1
+a21 1
+  "$Id: comp_path_entities_m.f90,v 1.4 2001/03/20 11:03:15 zvi Exp $"
+d28 2
+a29 1
+SUBROUTINE comp_path_entities(n_lvls,no_t,gl_count,ndx_path,z_glgrid,  &
+d40 3
+a74 1
+Logical :: wet
+d84 2
+d148 13
+a160 6
+  DO l = 1, no_mmaf
+    DO k = 1, no_tan_hts
+      jj = ndx_path(k,l)%total_number_of_elements
+      do j = 1, n_sps
+        jp = no_phi_f(j)
+        kk = no_coeffs_f(j)
+d171 4
+a174 3
+          if (is_f_log(j)) then
+            Call TWO_D_POLATE(f_basis(1:,j), LOG(mr_f(1:kk,1:jp,j)), &
+           &           kk, f_phi_basis(1:,j), jp, zeta, phi, r)
+d177 2
+a178 2
+            Call TWO_D_POLATE(f_basis(1:,j), mr_f(1:kk,1:jp,j), kk,  &
+           &                  f_phi_basis(1:,j), jp, zeta, phi, q)
+d191 10
+a200 16
+  sps_i = 1
+  DO WHILE (atmospheric(sps_i)%name /= 'H2O' .AND. sps_i <= n_sps)
+    sps_i = sps_i + 1
+  END DO
+
+  IF (atmospheric(sps_i)%name == 'H2O') THEN
+    j = sps_i
+    ih2o = sps_i
+  ELSE             ! Ignore water contribution to refractive index (dry air)
+    j = 1
+    ih2o = 0
+  END IF
+
+  wet = (ih2o > 0)
+  jp = no_phi_f(j)
+  kk = no_coeffs_f(j)
+d203 2
+a204 1
+    CALL refractive_index(mr_f(1:,1:,j),f_basis(1:,j),f_phi_basis(1:,j), &
+d206 1
+a206 1
+  &                 phi_path(1:,l),n_path(1:,l),wet,no_tan_hts)
+d217 3
+@
+
+
+1.4
+log
+@Fixing code for "real" data run, increase dim. etc.
+@
+text
+@d16 1
+a16 1
+  "$Id: comp_path_entities_m.f90,v 1.3 2001/03/05 21:37:20 zvi Exp $"
+d116 2
+a117 2
+      IF(j == 0) &
+     &     ALLOCATE(dh_dt_path(k,l)%values(khi,no_phi_t,no_t),STAT=j)
+d131 2
+a132 2
+      dh_dt_path(k,l)%values(1:khi,1:no_phi_t,1:no_t) = &
+     &                              dhdtp(1:khi,1:no_phi_t,1:no_t)
+d204 3
+@
+
+
+1.3
+log
+@New filter format
+@
+text
+@d8 1
+a8 1
+      HT2, RR, PHI_TAN, NPHI_TAN, PHI_S, NPHI_S, PS, ROC, XOC, YOC, EARTHX
+d16 1
+a16 1
+  "$Id: comp_path_entities_m.f90,v 1.1 2000/06/21 21:56:13 zvi Exp $"
+d28 1
+a28 1
+           no_mmaf,phi_tan_mmaf, Ier)
+a45 2
+Real(r8), INTENT(IN) :: phi_tan_mmaf(*)
+
+a73 1
+Real(r8), DIMENSION(:)  , ALLOCATABLE :: t_phi_tan
+a75 2
+Real(r8), DIMENSION(:,:), ALLOCATABLE :: f_phi_tan
+
+a84 7
+  DEALLOCATE(t_phi_tan,STAT=i)
+  ALLOCATE(t_phi_tan(no_phi_t),STAT=ier)
+  if(ier /= 0) then
+    Print *,'** Allocation Error in comp_path_entities: t_phi_tan..'
+    Return
+  endif
+
+a102 2
+    phi_tan = phi_tan_mmaf(l)
+    t_phi_tan(1:no_phi_t) = t_phi_basis(1:no_phi_t) + phi_tan
+d108 1
+a108 1
+           t_phi_tan,zpath,hpath,tpath,ppath,dhdzp,dhdtp,klo,khi,Ier)
+a135 10
+  DEALLOCATE(t_phi_tan,STAT=i)
+  DEALLOCATE(f_phi_tan,STAT=i)
+!
+  l = MAXVAL(no_phi_f,n_sps)
+  ALLOCATE(f_phi_tan(l,n_sps),STAT=ier)
+  IF(ier /= 0) then
+    Print *,'** ALLOCATE Error, comp_path_entities: f_phi_tan, STAT =',ier
+    goto 99
+  endif
+!
+a138 1
+    phi_tan = phi_tan_mmaf(l)
+a143 1
+        f_phi_tan(1:jp,j) = f_phi_basis(1:jp,j) + phi_tan
+d156 1
+a156 1
+           &           kk, f_phi_tan(1:,j), jp, zeta, phi, r)
+d160 1
+a160 1
+           &                  f_phi_tan(1:,j), jp, zeta, phi, q)
+d191 1
+a191 3
+    phi_tan = phi_tan_mmaf(l)
+    f_phi_tan(1:jp,j) = f_phi_basis(1:jp,j) + phi_tan
+    CALL refractive_index(mr_f(1:,1:,j),f_basis(1:,j),f_phi_tan(1:,j), &
+d196 1
+a196 2
+ 99  DEALLOCATE(f_phi_tan,t_phi_tan,STAT=i)
+     DEALLOCATE(zpath,hpath,tpath,ppath,dhdzp,STAT=i)
+d204 3
+@
+
+
+1.2
+log
+@Changes and additions
+@
+text
+@d25 4
+a28 4
+           no_atmos,f_basis,mr_f,no_coeffs_f,tan_hts,no_tan_hts,n_sps, &
+           no_phi_f,f_phi_basis,z_path,h_path,t_path,phi_path,n_path,  &
+           dhdz_path,dh_dt_path,no_phi_t,t_phi_basis,spsfunc_path,     &
+           is_f_log,no_mmaf,phi_tan_mmaf, Ier)
+d39 1
+a39 1
+Integer(i4), INTENT(IN) :: no_atmos, no_t, n_sps, n_lvls, gl_count, &
+d99 1
+a99 1
+  &         STAT=ier)
+d200 1
+a200 1
+  DO WHILE (atmospheric(sps_i)%name /= 'H2O' .AND. sps_i <= no_atmos)
+@
+
+
+1.1
+log
+@Add new version
+@
+text
+@d5 1
+a5 1
+  use L2PC_PFA_STRUCTURES, only: ATMOS_COMP, GEOM_PARAM, PFA_SLAB
+d9 1
+a9 2
+  use PATH_ENTITIES_M, only: PATH_BETA, PATH_INDEX, PATH_VECTOR, &
+                             PATH_DERIVATIVE
+a10 1
+  use PFA_PREP_M, only: PFA_PREP
+d23 6
+a28 8
+SUBROUTINE comp_path_entities(primag,n_lvls,no_t,gl_count,ndx_path,z_glgrid,&
+           t_glgrid,h_glgrid,dhdz_glgrid,dh_dt_glgrid,atmospheric,no_atmos, &
+           f_basis,mr_f,no_coeffs_f,freq,tan_hts,no_tan_hts,n_sps,no_pfa_ch,&
+           no_filt_pts,pfa_ch,pfa_spectrum,f_grid_fltr,fltr_func,InDir,     &
+           ld,band,no_phi_f,f_phi_basis,z_path,h_path,t_path,phi_path,      &
+           n_path,dhdz_path,dh_dt_path,no_phi_t,t_phi_basis,spsfunc_path,   &
+           no_ptg_frq,ptg_frq_grid,is_f_log,beta_path,no_mmaf,phi_tan_mmaf, &
+           ier)
+d40 1
+a40 2
+             no_mmaf, no_phi_t, no_coeffs_f(*), no_phi_f(:), band, &
+             no_pfa_ch, no_filt_pts, pfa_ch(*)
+d42 1
+a42 1
+Integer(i4), INTENT(IN OUT) :: no_tan_hts, ld
+d44 1
+a44 1
+Integer(i4), INTENT(OUT) :: no_ptg_frq(*),ier
+a55 2
+Type(path_beta), INTENT(OUT) :: beta_path(:,:,:,:)
+
+d58 1
+a58 2
+                   n_path(:,:),phi_path(:,:),dhdz_path(:,:),ptg_frq_grid(:),&
+                   spsfunc_path(:,:,:)
+a61 4
+Real(r8), INTENT(OUT) :: freq(*)
+
+Real(r8), INTENT(OUT) :: fltr_func(:,:),f_grid_fltr(:,:)
+
+a63 2
+Character (LEN=*), INTENT(IN) :: InDir
+Character (LEN=*), INTENT(IN) :: primag
+a83 1
+type (pfa_slab)  , intent(inout) :: PFA_SPECTRUM(6,*)
+a222 10
+
+! Create filter grids & functions for PFA calculations
+
+  IF(no_pfa_ch > 0) THEN
+    CALL pfa_prep(atmospheric,band,no_atmos,no_pfa_ch,no_filt_pts,pfa_ch, &
+         pfa_spectrum,f_grid_fltr,freq,fltr_func,no_tan_hts,ndx_path,     &
+         no_ptg_frq,ptg_frq_grid,z_path,t_path,beta_path,InDir,ld,primag, &
+         no_mmaf,ier)
+    IF(ier /= 0) goto 99
+  ENDIF
+@
+

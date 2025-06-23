@@ -1,0 +1,3459 @@
+head	2.32;
+access;
+symbols
+	v5-02-NRT-19:2.32
+	v6-00:2.32
+	v5-02-NRT-18:2.32
+	v5-02:2.32
+	v5-01-NRT-17:2.32
+	v5-01-NRT-16:2.32
+	v5-01-NRT-15:2.32
+	v5-01-NRT-14:2.32
+	neuralnetworks-1-0:2.32.0.10
+	cfm-single-freq-0-1:2.32.0.8
+	v5-01:2.32
+	v5-00:2.32
+	v4-23-TA133:2.32.0.6
+	mus-emls-1-70:2.32.0.4
+	rel-1-0-englocks-work:2.32.0.2
+	VUMLS1-00:2.31
+	VPL1-00:2.31
+	V4-22-NRT-08:2.30
+	VAM1-00:2.30
+	V4-21:2.29.0.2
+	V4-13:2.29
+	V4-12:2.28
+	V4-11:2.28
+	V4-10:2.28
+	M4-00:2.26
+	V3-33:2.16
+	V3-31:2.16
+	V3-30-NRT-05:2.11
+	cfm-01-00:2.7;
+locks; strict;
+comment	@# @;
+
+
+2.32
+date	2017.11.03.20.00.45;	author pwagner;	state Exp;
+branches;
+next	2.31;
+
+2.31
+date	2016.07.28.01.42.27;	author vsnyder;	state Exp;
+branches;
+next	2.30;
+
+2.30
+date	2015.03.28.01.04.29;	author vsnyder;	state Exp;
+branches;
+next	2.29;
+
+2.29
+date	2014.09.04.23.42.20;	author vsnyder;	state Exp;
+branches;
+next	2.28;
+
+2.28
+date	2014.01.09.00.25.06;	author pwagner;	state Exp;
+branches;
+next	2.27;
+
+2.27
+date	2013.08.31.01.24.53;	author vsnyder;	state Exp;
+branches;
+next	2.26;
+
+2.26
+date	2012.02.02.01.11.04;	author pwagner;	state Exp;
+branches;
+next	2.25;
+
+2.25
+date	2012.01.13.01.08.18;	author pwagner;	state Exp;
+branches;
+next	2.24;
+
+2.24
+date	2011.12.07.01.19.56;	author pwagner;	state Exp;
+branches;
+next	2.23;
+
+2.23
+date	2011.11.10.16.20.00;	author pwagner;	state Exp;
+branches;
+next	2.22;
+
+2.22
+date	2011.10.14.00.35.06;	author pwagner;	state Exp;
+branches;
+next	2.21;
+
+2.21
+date	2011.10.07.00.01.55;	author pwagner;	state Exp;
+branches;
+next	2.20;
+
+2.20
+date	2011.09.20.22.34.06;	author pwagner;	state Exp;
+branches;
+next	2.19;
+
+2.19
+date	2011.04.02.01.20.57;	author vsnyder;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2011.04.01.22.06.34;	author vsnyder;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2011.03.02.02.01.35;	author vsnyder;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2011.02.18.17.52.18;	author pwagner;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2011.02.05.01.37.31;	author pwagner;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2010.11.25.01.16.32;	author pwagner;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2010.11.19.23.54.19;	author pwagner;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2010.11.05.20.25.10;	author vsnyder;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2010.09.16.23.54.43;	author pwagner;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2010.08.24.18.04.22;	author yanovsky;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2010.08.20.23.06.05;	author pwagner;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2010.08.13.22.05.32;	author pwagner;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2010.06.29.19.56.40;	author vsnyder;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2010.06.28.17.01.56;	author pwagner;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2010.06.22.22.45.38;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2010.03.26.23.15.45;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2010.03.24.20.36.24;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2010.02.25.18.34.11;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2010.02.25.18.13.35;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.32
+log
+@Most array gymnastics moved from MLSFillValues to HyperSlabs module
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=============================================================================
+module HessianModule_0          ! Low-level Hessians in the MLS PGS suite
+!=============================================================================
+
+! This module provides the elementary Hessian type.  Blocks of this
+! type are used to compose block Hessians.
+
+  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test, &
+    & Test_Allocate, Test_Deallocate
+  use HyperSlabs, only: Repopulate
+  use, Intrinsic :: Iso_C_Binding, only: C_Intptr_T, C_Loc
+  use Diff_1, only: Diff
+  use Dump_0, only: Dump
+  use HighOutput, only: OutputnamedValue
+  use, Intrinsic :: Iso_C_Binding, only: C_Intptr_T, C_Loc
+  use MLSKinds, only: Rh=>rm ! Renamed Here To Make It Easier To Change Later
+  use Output_M, only: Output
+  use Trace_M, only: Trace_Begin, Trace_End
+
+  implicit none
+  private
+
+  public :: H_Absent, H_Sparse, H_Full, H_Unknown
+  public :: HessianElement_T, Tuple_T
+  public :: ClearBlock, CloneBlock, CopyBlock, CreateBlock
+  public :: Densify, DestroyBlock, Diff, Dump
+  public :: InsertHessianPlane, Multiply, OptimizeBlock, RH
+  public :: Sparsify, StreamlineHessian, Unsparsify
+
+  integer, parameter :: H_Absent = 0    ! An absent block -- assumed zero
+  integer, parameter :: H_Sparse = 1    ! A 3-way indexed sparse representation
+  integer, parameter :: H_Full = 2      ! A regular 3-D array representation
+  integer, parameter :: H_Unknown = 3   ! We don't know yet
+  ! This is used for reading l2pc files where we don't want to load the block
+  ! into memory until we know we need it.  The HessianModule_0 code doesn't
+  ! understand such blocks, so use them with care.
+  ! Why use them at all? Such trickery leads to fragile results.
+
+  type :: Tuple_T
+    real(rh) :: H      ! The value of a Hessian element
+    integer :: I, J, K ! Indices of a nonzero element.  I is the "up" index
+                       ! and J and K are the "down" indices"
+  end type Tuple_T
+
+  type HessianElement_T
+    integer :: nRows = 0   ! Extent of first dimensions of H
+    integer :: nCols1 = 0  ! Extent of second dimension of H
+    integer :: nCols2 = 0  ! Extent of third dimension of H
+    integer :: Kind = H_Absent  ! One of H_Absent, H_Sparse, H_Full, H_Unknown
+    ! If Kind == H_Sparse the Tuples component is associated with an array of
+    ! tuples, each one giving a row index, two column indices, and a value, and
+    ! the Values component is null.  All values other than the ones described
+    ! by tuples are assumed to be zero.
+    ! If Kind == H_Full the Values component is associated with an array of
+    ! shape (nRows,nCols1,nCols2), each element containing a value, and the
+    ! Tuples component is null.
+    ! Otherwise, both Tuples and Values are null, and nRows == nCols1 ==
+    ! nCols2 == 0.
+    type(tuple_t), pointer :: Tuples(:) => NULL() ! Some may not be filled (yet)
+    ! Some explanation of why and when TuplesFilled would differ from
+    ! size(tuples) would not be amiss
+    ! So far the only time the original code expanded TuplesFilled
+    ! beyond zero was during insertHessianPlane operations
+    ! Needless to say, this was exceptionally inconvenient when loading
+    ! the values(1:TuplesFilled) from a saved dataset
+    ! Therefore we also set TuplesFilled when we create a Hessian Block
+    integer :: TuplesFilled = 0 ! Number of tuples filled
+    real(rh), pointer :: Values(:,:,:) => NULL() ! for full explicit representation
+    logical :: optimizedAlready = .false. ! Have we been through OptimizeBlock?
+  end type HessianElement_T
+
+  interface ClearBlock
+    module procedure ClearHessianBlock_0
+  end interface
+
+  interface CreateBlock
+    module procedure CreateHessianBlock_0
+  end interface
+
+  interface Densify
+    module procedure Densify_Hessian
+  end interface
+
+  interface DestroyBlock
+    module procedure ClearHessianBlock_0
+  end interface
+
+  interface Diff
+    module procedure Diff_Hessian_Blocks
+  end interface
+
+  interface Dump
+    module procedure Dump_Hessian_Block
+  end interface
+
+  interface InsertHessianPlane
+    module procedure InsertHessianPlane_Array
+    module procedure InsertHessianPlane_Matrix
+  end interface
+
+  interface Multiply
+    module procedure Hessian_Vec_Vec_Multiply_D
+    module procedure Hessian_Vec_Vec_Multiply_S
+  end interface
+
+  interface Sparsify
+    module procedure Sparsify_Hessian, Sparsify_Hessian_Array_D
+    module procedure Sparsify_Hessian_Array_S
+  end interface
+
+  interface StreamlineHessian
+    module procedure StreamlineHessian_0
+  end interface
+
+  real(rh), parameter:: AUGMENTFACTOR = 1.0
+  logical, parameter :: DEEBUG = .false.
+  logical, parameter :: DONTOPTIMIZE = .false.
+  logical, parameter :: DONTOPTIMIZEFULLS = .false.
+  logical, parameter :: DONTSTREAMLINEFULLS = .false.
+  logical, parameter :: DUMPASUNSPARSIFIED = .true.
+  logical, parameter :: OPTIMIZEMEANSSPARISFY = .true.
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: HessianModule_0.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  ! ---------------------------------------------  AugmentHessian  -----
+  subroutine AugmentHessian ( H, N, factor )
+    ! Make space for N extra elements in the Hessian tuple if it's not
+    ! already there If factor is present then don't merely add 'just
+    ! enough' values, but increase the number by this fraction
+    ! ????????????? Why is that a good idea ?????????????
+    ! Among other consequences, h%tuplesFilled will be smaller
+    ! than h%tuples, and subsequent elemental procedures passed
+    ! h%tuples w/o an array subsection will be operating
+    ! with undefined values (paw)
+    use MLSMessagemodule, only: MLSMessage, MLSMSG_Error
+    
+    type(HessianElement_T), intent(inout) :: H
+    integer, intent(in) :: N
+    real(rh), intent(in), optional :: FACTOR
+
+    ! Local variables
+    real(rh) :: myFactor
+    type(tuple_t), dimension(:), pointer :: oldTuple  ! Used to expand 'in place'
+    integer(c_intptr_t) :: Addr         ! For tracing
+    integer :: extra                    ! How many to add
+    integer :: Me = -1                  ! String index for trace cacheing
+    integer :: S                        ! Size in bytes of an object to deallocate
+    integer :: stat                     ! Status from allocates etc
+    integer :: space                    ! How many tuples are free
+
+    call trace_begin ( me, 'AugmentHessian', cond=.false. )
+    myFactor = 1.0_rh
+    if ( present(factor) ) myFactor = factor
+    if ( h%kind == h_full ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & "Attempt to agument an already densified Hessian block" )
+
+    if ( h%kind == h_absent .or. .not. associated(h%tuples) ) then
+      h%kind = h_sparse
+      allocate ( h%tuples ( 0 ), stat=stat )
+      call test_allocate ( stat, moduleName, "H%Tuples", (/1/), (/0/) )
+      h%tuplesFilled = 0
+    end if
+
+    space = size ( h%tuples ) - h%tuplesFilled
+    if ( n > space ) then
+      ! Save old tuple
+      oldTuple => h%tuples
+
+      ! Work out how much to add
+      if ( myFactor > 1.0_rh ) then
+        extra = max ( N, nint ( size ( h%tuples ) * factor ) )
+      else
+        extra = N
+      end if
+
+      ! Create new tuple
+      s = size ( oldTuple ) + extra
+      allocate ( H%tuples ( s ), stat=stat )
+      addr = 0
+      if ( stat == 0 ) addr = transfer(c_loc(H%tuples(1)), addr)
+      call test_allocate ( stat, moduleName, "H%Tuple", &
+        & (/1/), (/s/), storage_size(oldTuple) / 8, address=addr )
+
+      ! Copy old contents
+      if ( associated ( oldTuple ) ) then
+        H%tuples ( 1:h%tuplesFilled ) = oldTuple ( 1:h%tuplesFilled )
+
+      ! Destroy old contents
+        s = size(oldTuple) * storage_size(oldTuple) / 8
+        addr = 0
+        if ( s > 0 ) addr = transfer(c_loc(oldTuple(1)), addr)
+        deallocate ( oldTuple, stat=stat )
+        call test_deallocate ( stat, moduleName, "oldTuple", s, address=addr )
+      end if
+    end if
+    call trace_end ( 'AugmentHessian', cond=.false. )
+  end subroutine AugmentHessian
+
+  ! -------------------------------------------------  CloneBlock  -----
+  subroutine CloneBlock ( Z, X, ForWhom ) ! Z = X, except the values
+  ! Duplicate a Hessian block, including copying all of its structural
+  ! descriptive information, but not its values.
+    type(HessianElement_T), intent(inout) :: Z ! intent(inout) so that
+      !                            destroyBlock gets a chance to clean up surds
+    type(HessianElement_T), intent(in) :: X
+    character(len=*), intent(in) :: ForWhom
+
+    ! Local variables
+    integer(c_intptr_t) :: Addr         ! For tracing
+    integer :: stat
+
+    ! Executable
+    call destroyBlock ( z )
+    z%nRows  = x%nRows
+    z%nCols1 = x%nCols1
+    z%nCols2 = x%nCols2
+    z%kind   = x%kind
+    z%tuplesFilled = 0
+    select case ( x%kind )
+    case ( h_absent )
+      call CreateEmptyBlock ( z )
+    case ( h_sparse )
+      z%tuplesFilled = x%tuplesFilled
+      allocate ( z%tuples ( x%tuplesFilled ), stat=stat )
+      addr = 0
+      if ( stat==0 .and. x%tuplesFilled>0 ) &
+        & addr = transfer(c_loc(z%tuples(1)), addr)
+      call test_allocate ( stat, moduleName, 'Z%Tuples', ubounds=x%tuplesFilled, &
+        elementSize = storage_size(z%tuples) / 8, address=addr )
+    case ( h_full )
+      call Allocate_test ( z%values, x%nRows, x%nCols1, x%nCols2, &
+        & 'values in loneBlock_0' // ForWhom, &
+        & moduleName )
+    ! case default ! Nothing more to be done
+    end select
+  end subroutine CloneBlock
+
+  ! --------------------------------------------------  CopyBlock  -----
+  subroutine CopyBlock ( Z, X ) ! Destroy Z, deep Z = X, including the values
+    type(HessianElement_T), intent(inout) :: Z ! intent(inout) so that the
+      !                            destroyBlock in cloneBlock gets a chance
+      !                            to clean up surds
+    type(HessianElement_T), intent(in) :: X
+    call CloneBlock ( Z, X, "CopyBlock" )
+    select case ( x%kind )
+    case ( h_absent ) ! Nothing more to be done
+    case ( h_sparse )
+      z%tuples = x%tuples
+    case ( h_full )
+      z%values = x%values
+    ! case default ! Nothing more to be done
+    end select
+  end subroutine CopyBlock
+
+  ! ----------------------------------------  ClearHessianBlock_0  -----
+  subroutine ClearHessianBlock_0 ( H )
+    ! Clear a HessianElement_T structure
+    type(HessianElement_T), intent(inout) :: H
+    integer(c_intptr_t) :: Addr         ! For tracing
+    integer :: S, Stat
+
+    if ( associated(h%tuples) ) then
+      s = size(h%tuples) * storage_size(h%tuples) / 8
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(h%tuples(1)), addr)
+      deallocate ( h%tuples, stat=stat )
+      call test_deallocate ( stat, moduleName, &
+        & "H%Tuples in DestroyHessianBlock", s, address=addr )
+    end if
+
+    call deallocate_test ( h%values, moduleName, "H%H in DestroyHessianBlock" )
+
+    h%tuplesFilled = 0
+    h%kind = h_absent
+
+  end subroutine ClearHessianBlock_0
+
+  ! ---------------------------------------  Create_Empty_Hessian  -----
+  subroutine CreateHessianBlock_0 ( H, nRows, nCols1, nCols2, H_kind, initTuples, &
+                                  & Fill )
+  ! Create an empty HessianElement_T structure
+
+    type(HessianElement_T), intent(inout) :: H ! inout so we can destroy it before
+                                        ! its components are nullified by
+                                        ! default initialization
+    integer, intent(in) :: nRows, nCols1, nCols2
+    integer, intent(in) :: H_kind
+    integer, intent(in), optional :: initTuples
+    real(rh), intent(in), optional :: Fill ! Fill value if H_kind==h_full
+
+    integer(c_intptr_t) :: Addr         ! For tracing
+    integer :: Me = -1                  ! String index for trace cacheing
+    integer :: STAT                     ! Status from allocate
+
+    call trace_begin ( me, 'CreateHessianBlock_0', cond=.false. )
+    call clearBlock ( H )
+
+    h%nRows = nRows
+    h%nCols1 = nCols1
+    h%nCols2 = nCols2
+    h%kind = h_kind
+    h%tuplesFilled = 0
+    if ( DEEBUG ) then
+      call output( 'Creating a Hessian Block', advance='yes' )
+      call outputNamedValue( 'nRows', nRows )
+      call outputNamedValue( 'nCols1', nCols1 )
+      call outputNamedValue( 'nCols2', nCols2 )
+      call outputNamedValue( 'h_kind', h_kind )
+    end if
+
+    if ( h_kind == h_sparse ) then
+      h%tuplesFilled = 0
+      if ( present ( initTuples ) ) then
+        if ( DEEBUG ) then
+          call outputNamedValue( 'initTuples', initTuples )
+        end if
+        allocate ( h%tuples ( initTuples ), stat=stat )
+        addr = 0
+        if ( stat==0 .and. initTuples>0 ) addr = transfer(c_loc(h%tuples(1)), addr)
+        call test_allocate ( stat, moduleName, "H%Tuples", &
+          & (/1/), (/initTuples/), elementSize=storage_size(h%tuples)/8, &
+          & address=addr )
+        h%tuplesFilled = initTuples
+      end if
+    end if
+    if ( h_kind == h_full ) then
+      call Allocate_test ( h%values, nRows, nCols1, nCols2, 'values in CreateHessianBlock_0', &
+        & moduleName, fill=fill )
+    end if
+    if ( DEEBUG ) then
+      call dump( h%values, 'h%values' )
+    end if
+    call trace_end ( 'CreateHessianBlock_0', cond=.false. )
+  end subroutine CreateHessianBlock_0
+
+  ! --------------------------------------------  Densify_Hessian  -----
+  subroutine Densify_Hessian ( H )
+  ! Convert a Hessian represented by tuples to an explicit representation
+
+    type(HessianElement_T), intent(inout) :: H
+
+    integer(c_intptr_t) :: Addr         ! For tracing
+    integer :: n, status
+
+    ! Skip if already done
+    select case ( h%kind )
+    case ( h_absent )
+    case ( h_sparse )
+      call allocate_test ( h%values, h%nRows, h%nCols1, h%nCols2, &
+        & "H%values in Densify_Hessian", moduleName, fill=0.0_rh )
+      
+      if ( associated(h%tuples) ) then
+        do n = 1, size(h%tuples)
+          h%values(h%tuples(n)%i,h%tuples(n)%j,h%tuples(n)%k) = h%tuples(n)%h
+        end do
+
+        n = size(h%tuples) * storage_size(h%tuples) / 8
+        addr = 0
+        if ( n > 0 ) addr = transfer(c_loc(h%tuples(1)), addr)
+        deallocate ( h%tuples, stat=status )
+        call test_deallocate ( status, moduleName, 'H%Tuples', n, address=addr )
+      end if
+      h%kind = h_full
+    case ( h_full )
+    end select
+
+  end subroutine Densify_Hessian
+
+  ! ----------------------------------------  Diff_Hessian_Blocks  -----
+  subroutine Diff_Hessian_Blocks ( H1, H2, Details, Indices, options, Clean )
+    use MLSStringlists, only: Optiondetail, Unquote
+    type(HessianElement_T), intent(inout) :: H1, H2
+    integer, intent(in), optional :: Details ! Print details, 0 => minimal,
+                                             ! 1 => values, default 1
+    integer, intent(in), optional :: Indices(:) ! 3 indices of the block
+    character(len=*), intent(in), optional :: options
+    logical, intent(in), optional :: CLEAN   ! print \size
+    ! Internal variables
+    integer :: h1kind
+    integer :: h2kind
+    logical :: My_Clean
+    integer :: My_Details
+    logical :: myForce
+    ! These are in case we need to diff two blocks stored sparsely
+    real(rh), pointer :: h1array(:,:,:) => NULL()
+    real(rh), pointer :: h2array(:,:,:) => NULL()
+
+    my_Details = 1
+    if ( present(details) ) my_Details = details
+    my_Clean = .false.
+    if ( present(clean) ) my_Clean = clean
+    myForce = .false.
+    if ( present(options) ) then
+      myForce = ( optionDetail( options, 'f' ) == 'yes' )
+    end if
+    if ( present(indices) ) then
+      call output ( indices(1), before = ' (', after=', ' )
+      call output ( indices(2), after=', ' )
+      call output ( indices(3), after=')' )
+    end if
+    if ( h1%nRows /= h2%nRows .or. h1%nCols1 /= h2%nCols1 .or. &
+      & h1%nCols2 /= h2%nCols2 ) then
+      call output ( 'the hessian blocks have different shapes', advance='yes' )
+      return
+    end if
+    call output ( ' has ' )
+    call output ( h1%nRows, after=' Rows, ' )
+    call output ( h1%nCols1, after = ' First Columns, ' )
+    call output ( h1%nCols2, after = ' Second Columns, is ' )
+    h1kind = h1%kind
+    h2kind = h2%kind
+    if ( h1kind /= h2kind ) then
+      if ( .not. myForce .or. my_Details < 1 ) then
+        call output ( 'the hessian blocks are of different kind', advance='yes' )
+        return
+      else
+        ! OK, we will need to make the two arrays alike somehow
+        ! Here's an idea--make both full
+        select case ( h1kind )
+        case ( h_absent )
+          call Unsparsify( h1 )
+        case ( h_sparse )
+          call Unsparsify( h1 )
+        case default
+        end select
+        select case ( h2kind )
+        case ( h_absent )
+          call Unsparsify( h2 )
+        case ( h_sparse )
+          call Unsparsify( h2 )
+        case default
+        end select
+        call output( '(originally unlike)' ) ! return
+      end if
+    end if
+    if ( h1kind /= h2kind ) then
+      call outputNamedValue( 'original kind(h1)', h1kind )
+      call outputNamedValue( 'original kind(h2)', h2kind )
+      call outputNamedValue( 'new kind(h1)', h1%kind )
+      call outputNamedValue( 'new kind(h2)', h2%kind )
+    end if
+    call Diff_like( h1, h2, details, options )
+    ! Now did we have to monkey with h1 and k2 becuase they were unkinds?
+    if ( h1kind == h2kind ) return
+    if ( h1kind /= h_full ) then
+      call deallocate_test ( h1%values, moduleName // 'diff', "h1%values" )
+      h1%kind = h1kind
+    end if
+    if ( h2kind /= h_full ) then
+      call deallocate_test ( h2%values, moduleName // 'diff', "h2%values" )
+      h2%kind = h2kind
+    end if
+  contains
+    subroutine Diff_like( h1, h2, details, options )
+    ! Diff two Hessian blocks, confident that they are alike
+    type(HessianElement_T), intent(in) :: H1, H2
+    integer, intent(in), optional :: Details ! Print details, 0 => minimal,
+                                             ! 1 => values, default 1
+    character(len=*), intent(in), optional :: options
+    ! Internal variables
+    character(len=16) :: myoptions ! Keep only array-diffing ones
+    ! Executable
+    if ( .not. present(options) ) then
+      myOptions = merge('c',' ',my_clean)
+    else
+      myOptions = trim( &
+        & unquote( options, quotes='[', cquotes=']', options='-r' ) &
+        & ) // merge('c',' ',my_clean)
+    end if
+    select case ( h1%kind )
+    case ( h_absent )
+      call output ( 'both absent, therefore identical', advance='yes' )
+    case ( h_sparse )
+      call output ( size(h1%tuples), before='sparse with ', &
+        & after=' nonzero elements', advance='yes' )
+      if ( my_details > 0 ) then
+        ! We know how to diff full arrays, so 
+        ! temporarily convert sparse representation to full
+        call output ( '(Diffing as if full)', advance='yes' )
+        call allocate_test( h1array, h1%nRows, h1%nCols1, h1%nCols2, &
+          & "h1array in Diff_Hessian_Blocks", ModuleName, fill=0.0_rh )
+        call allocate_test( h2array, h2%nRows, h2%nCols2, h2%nCols2, &
+          & "h2array in Diff_Hessian_Blocks", ModuleName, fill=0.0_rh )
+        call Repopulate( h1array, h1%tuples%i, h1%tuples%j, h1%tuples%k, &
+          & h1%tuplesFilled, h1%tuples%h )
+        call Repopulate( h2array, h2%tuples%i, h2%tuples%j, h2%tuples%k, &
+          & h2%tuplesFilled, h2%tuples%h )
+        call Diff ( h1array, 'Hessian 1 values', h2array, 'Hessian 2 values' )
+        call deallocate_test ( h1array, moduleName, "h1array in Diff_Hessian_Blocks" )
+        call deallocate_test ( h2array, moduleName, "h2array in Diff_Hessian_Blocks" )
+      end if
+    case ( h_full )
+      call output ( 'full', advance='yes' )
+      if ( details > 0 ) &
+        & call Diff ( h1%values, 'Hessian 1 values', h2%values, &
+          & 'Hessian 2 values', options=myoptions )
+    case ( h_unknown )
+      call output ( 'of unknown form, no method to Diff', advance='yes' )
+    end select
+
+    end subroutine Diff_like
+  end subroutine Diff_Hessian_Blocks
+
+  ! -----------------------------------------  Dump_Hessian_Block  -----
+  subroutine Dump_Hessian_Block ( H, Name, Details, Indices, Clean, Options )
+    use MLSFillValues, only: Isnan
+    use MLSMessagemodule, only: MLSMessage, MLSMSG_Warning
+    type(HessianElement_T), intent(in) :: H
+    character(len=*), intent(in), optional :: NAME
+    integer, intent(in), optional :: Details ! Print details, 
+                                             !-3, just check for NaNs,
+                                             ! 0 => minimal (shape, bandwidth), 
+                                             ! 1 => values, 
+                                             ! default 1
+    integer, intent(in), optional :: Indices(:) ! 3 indices of the block
+    logical, intent(in), optional :: CLEAN   ! print \size
+    character(len=*), intent(in), optional :: options ! Passed dumping arrays
+
+    integer :: I
+    integer :: My_Details
+    logical :: My_Clean
+    character(len=32) :: myOptions
+    ! In case we need to dump as full blocks stored sparsely
+    real(rh), pointer :: harray(:,:,:) => NULL()
+
+    my_Details = 1
+    if ( present(details) ) my_Details = details
+    my_Clean = .false.
+    if ( present(clean) ) my_Clean = clean
+    myOptions = ''
+    if ( present(options) ) myOptions = options
+
+    if ( present(name) ) call output ( name, advance='yes' )
+    call outputNamedValue( 'myOptions', myOptions )
+    if ( present(indices) ) then
+      call output ( indices(1), before = ' (', after=', ' )
+      call output ( indices(2), after=', ' )
+      call output ( indices(3), after=')' )
+    end if
+    call output ( ' has ' )
+    call output ( h%nRows, after=' Rows, ' )
+    call output ( h%nCols1, after = ' First Columns, ' )
+    call output ( h%nCols2, after = ' Second Columns, is ' )
+    select case ( h%kind )
+    case ( h_absent )
+      call output ( 'absent', advance='yes' )
+    case ( h_sparse )
+      if ( h%TuplesFilled < 1 ) then
+        call output( '(0 tuplesFilled)', advance='yes' )
+        return
+      else if ( .not. associated (h%tuples) ) then
+        call output( '(tuplesFilled > 0 yet h%tuples not associated; how?)', advance='yes' )
+        return
+      end if
+      call output ( size(h%tuples), before='sparse with ', &
+        & after=' nonzero elements', advance='yes' )
+      call outputNamedValue( 'Min, max row numbers', &
+        & (/ minval(h%tuples(1:h%TuplesFilled)%i), maxval(h%tuples(1:h%TuplesFilled)%i) /) )
+      call outputNamedValue( 'Min, max 1st col numbers', &
+        & (/ minval(h%tuples(1:h%TuplesFilled)%j), maxval(h%tuples(1:h%TuplesFilled)%j) /) )
+      call outputNamedValue( 'Min, max 2nd col numbers', &
+        & (/ minval(h%tuples(1:h%TuplesFilled)%k), maxval(h%tuples(1:h%TuplesFilled)%k) /) )
+      if ( my_details < -2 ) then
+        ! Check for NaNs
+        if ( any(isNaN(h%tuples%h)) ) &
+          & call MLSMessage( MLSMSG_Warning, ModuleName, &
+          & 'NaNs found in sparse Hessian block' )
+      else if ( my_details > -1 ) then
+        if ( DUMPASUNSPARSIFIED .or. my_details == 0 ) then
+          ! temporarily convert sparse representation to full
+          call output ( '(Dumping as if full)', advance='yes' )
+          call allocate_test( harray, h%nRows, h%nCols1, h%nCols2, &
+            & "harray in Dump_Hessian_Blocks", ModuleName, fill=0.0_rh )
+          call Repopulate( harray, h%tuples%i, h%tuples%j, h%tuples%k, &
+            & h%tuplesFilled, h%tuples%h )
+          if ( my_details == 0 ) then
+            call Dump ( Reshape(harray, (/h%nCols1, h%nCols2, h%nRows/), &
+              & order=(/3,2,1/) ), &
+              & 'Hessian values', options='-B' ) ! Just bandwidth
+          else
+            call Dump ( harray, 'Hessian values', options=options )
+          endif
+          call deallocate_test ( harray, moduleName, "harray in Dump_Hessian_Blocks" )
+        else
+          do i = 1, size(h%tuples)
+            call output ( h%tuples(i)%i, format='(i5)' )
+            call output ( h%tuples(i)%j, format='(i5)' )
+            call output ( h%tuples(i)%k, format='(i5)' )
+            call output ( '   ' )
+            call output ( h%tuples(i)%h, advance='yes' )
+          end do
+        end if
+      end if
+    case ( h_full )
+      call output ( 'full', advance='yes' )
+      if ( my_details < -2 ) then
+        ! Check for NaNs
+        if ( any(isNaN(h%values)) ) &
+          & call MLSMessage( MLSMSG_Warning, ModuleName, &
+          & 'NaNs found in full Hessian block' )
+      else if ( details > 0 ) then
+        call dump ( h%values, &
+          & options=trim(myOptions) // merge('c',' ',my_clean) )
+      else if ( details == 0 ) then
+        call Dump ( Reshape(h%values, (/h%nCols1, h%nCols2, h%nRows/), &
+          & order=(/3,2,1/) ), &
+          & 'Hessian values', options='-B' ) ! Just bandwidth
+      end if
+    case ( h_unknown )
+      call output ( 'of unknown form, nothing to dump', advance='yes' )
+      call outputNamedValue ( 'h_unknown', h_unknown )
+      call outputNamedValue ( 'h_absent', h_absent )
+      call outputNamedValue ( 'h_sparse', h_sparse )
+      call outputNamedValue ( 'h_full', h_full )
+    end select
+    call outputNamedValue ( 'already optimized?', h%optimizedAlready )
+
+  end subroutine Dump_Hessian_Block
+
+  ! ---------------------------------  Hessian_Vec_Vec_Multiply_D  -----
+  subroutine Hessian_Vec_Vec_Multiply_D ( H, V1, V2, SCALAR, P, Update )
+  !{ Multiply a Hessian {\tt H} by {\tt V1} and {\tt V2}, with a factor of
+  !  {\tt SCALAR}, giving {\tt P}:
+    !  $P^i = \text{\tt SCALAR}\times H^i_{jk} V_1^j V_2^k$ or
+    !  $P^i = P^i + \text{\tt SCALAR}\times H^i_{jk} V_1^j V_2^k$,
+    !  depending upon {\tt Update}.  {\tt P} is initially set to zero
+    !  unless {\tt Update} is present and true.
+
+    use MLSMessagemodule, only: MLSMessage, MLSMSG_Error
+    integer, parameter :: RK = kind(0.0d0)
+    type(HessianElement_T), intent(in) :: H
+    real(rk), intent(in) :: V1(:), V2(:)
+    real(rk), intent(in) :: Scalar
+    real(rk), intent(inout) :: P(:)
+    logical, intent(in), optional :: Update
+
+    ! logical, parameter :: DEEBUG = .true.
+    include 'Hessian_Vector_Vector_Multiply_0.f9h'
+
+  end subroutine Hessian_Vec_Vec_Multiply_D
+
+  ! ---------------------------------  Hessian_Vec_Vec_Multiply_S  -----
+  subroutine Hessian_Vec_Vec_Multiply_S ( H, V1, V2, SCALAR, P, Update )
+    !{ Multiply a Hessian {\tt H} by {\tt V1} and {\tt V2}, with a factor of
+    !  {\tt SCALAR}, giving {\tt P}:
+    !  $P^i = \text{\tt SCALAR}\times H^i_{jk} V_1^j V_2^k$ or
+    !  $P^i = P^i + \text{\tt SCALAR}\times H^i_{jk} V_1^j V_2^k$,
+    !  depending upon {\tt Update}.  {\tt P} is initially set to zero
+    !  unless {\tt Update} is present and true.
+
+    use MLSMessagemodule, only: MLSMessage, MLSMSG_Error
+    integer, parameter :: RK = kind(0.0e0)
+    type(HessianElement_T), intent(in) :: H
+    real(rk), intent(in) :: V1(:), V2(:)
+    real(rk), intent(in) :: Scalar
+    real(rk), intent(inout) :: P(:)
+    logical, intent(in), optional :: Update
+
+    ! logical, parameter :: DEEBUG = .true.
+    include 'Hessian_Vector_Vector_Multiply_0.f9h'
+
+  end subroutine Hessian_Vec_Vec_Multiply_S
+
+  ! -----------------------------------  InsertHessianPlane_Array  -----
+  subroutine InsertHessianPlane_Array ( H, plane, k, mirroring )
+    ! Insert the supplied array in (:,:,k) of the HessianElement_T
+    ! or the (:,k,:) plane if mirroring is present and true
+    use MLSMessagemodule, only: MLSMessage, MLSMSG_Error
+
+    type(HessianElement_T), intent(inout) :: H
+    real(rh), intent(in) :: PLANE(:,:)
+    integer, intent(in) :: K
+    logical, intent(in), optional :: MIRRORING
+
+    integer :: I, J, N
+    logical :: MYMIRRORING
+    type(tuple_t) :: oneTuple
+
+    myMirroring = .false.
+    if ( present ( mirroring ) ) myMirroring = mirroring
+    ! Do some checking
+    if ( size ( plane, 1 ) /= h%nRows ) &
+      call MLSMessage ( MLSMSG_Error, moduleName, &
+      & "Rows dimension of plane does not match Hessian" )
+    if ( myMirroring ) then
+      if ( size ( plane, 2 ) /= h%nCols2 ) &
+        call MLSMessage ( MLSMSG_Error, moduleName, &
+        & "Columns dimension of plane does not match Hessian" )
+    else
+      if ( size ( plane, 2 ) /= h%nCols1 ) &
+        call MLSMessage ( MLSMSG_Error, moduleName, &
+        & "Columns dimension of plane does not match Hessian" )
+    end if
+
+    ! Try the dense approach first
+    if ( h%kind == h_full ) then
+      if ( mirroring ) then
+        h%values(:,k,:) = plane(:,:)
+      else
+        h%values(:,:,k) = plane(:,:)
+      end if
+    else
+      ! Otherwise make space for the new entries
+      call AugmentHessian ( H, count ( plane /= 0 ), factor=AUGMENTFACTOR )
+      
+      n = h%tuplesFilled
+      if ( myMirroring ) then
+        oneTuple%j = k
+      else
+        oneTuple%k = k
+      end if
+      do j = 1, size ( plane, 2 )
+        if ( myMirroring ) then
+          oneTuple%k = j
+        else
+          oneTuple%j = j
+        end if
+        do i = 1, size ( plane, 1 )
+          if ( plane ( i, j ) /= 0 ) then
+            n = n + 1
+            oneTuple%h = plane ( i, j )
+            oneTuple%i = i
+            h%tuples ( n ) = oneTuple
+          end if
+        end do
+      end do
+      h%tuplesFilled = n
+    end if
+
+    call optimizeBlock ( h )
+
+  end subroutine InsertHessianPlane_Array
+
+  ! ----------------------------------  InsertHessianPlane_Matrix  -----
+  subroutine InsertHessianPlane_Matrix ( H, plane, k, mirroring )
+    ! Insert the supplied matrix_0 element in (:,:,k) of the HessianElement_T
+    ! or the (:,k,:) plane if mirroring is present and true
+    use MLSMessagemodule, only: MLSMessage, MLSMSG_Error
+    use Matrixmodule_0, only: MatrixElement_T, M_Full, M_Absent, M_Column_Sparse, M_Banded
+    use MLSStringlists, only: Switchdetail
+    use Toggles, only: Switches
+
+    type(HessianElement_T), intent(inout) :: H
+    type(MatrixElement_T), intent(in) :: PLANE
+    integer, intent(in) :: K
+    logical, intent(in), optional :: MIRRORING
+
+    integer :: I, J, P, R, N
+    integer :: Me = -1                  ! String index for trace cacheing
+    logical :: MYMIRRORING
+    type ( tuple_t ) :: oneTuple
+
+    call trace_begin ( me, 'InsertHessianPlane_Matrix', cond=.false. )
+    myMirroring = .false.
+    if ( present ( mirroring ) ) myMirroring = mirroring
+
+    ! Do some checking
+    if ( plane%nRows /= h%nRows ) &
+      call MLSMessage ( MLSMSG_Error, moduleName, &
+      & "Rows dimension of plane does not match Hessian" )
+    if ( myMirroring ) then
+      if ( plane%nCols /= h%nCols2 ) &
+        call MLSMessage ( MLSMSG_Error, moduleName, &
+        & "Columns dimension of plane does not match Hessian" )
+    else
+      if ( plane%nCols /= h%nCols1 ) &
+        call MLSMessage ( MLSMSG_Error, moduleName, &
+        & "Columns dimension of plane does not match Hessian" )
+    end if
+
+    ! Nothing to do if matrix is empty
+    if ( plane%kind == M_Absent ) then
+      call trace_end ( 'InsertHessianPlane_Matrix', cond=.false. )
+      return
+    endif
+
+    ! If the Hessian is dense and the matrix is full then get the other routine to do this
+    if ( plane%kind == M_Full ) then
+      call InsertHessianPlane ( h, plane%values, k, mirroring )
+      if ( switchDetail( switches, 'hess' ) > 0 ) then
+        call output( 'Full plane of hessian values inserted at ')
+        call output( k, advance='yes' )
+      end if
+    else
+      ! Otherwise make space for the new entries
+      if ( h%kind == H_Sparse .or. h%kind == H_Absent ) &
+        & call AugmentHessian ( H, size ( plane%values, 1 ), factor=AUGMENTFACTOR )
+      
+      n = h%tuplesFilled
+      if ( myMirroring ) then
+        oneTuple%j = k
+      else
+        oneTuple%k = k
+      end if
+
+      select case ( plane%kind ) 
+      case ( M_Banded )
+        do j = 1, plane%nCols
+          if ( myMirroring ) then
+            oneTuple%k = j
+          else
+            oneTuple%j = j
+          end if
+
+          i = plane%r1(j) ! Row number of first nonzero
+          do p = plane%r2(j-1) + 1, plane%r2(j) ! Indices in values of nonzeros
+            oneTuple%i = i
+            oneTuple%h = plane%values ( p, 1 )
+            i = i + 1
+            if ( h%kind == H_Sparse ) then
+              n = n + 1
+              h%tuples(n) = oneTuple
+            else
+!print*,'Stats: ', associated ( h%values ), oneTuple%i, oneTuple%j, oneTuple%k
+              h%values ( oneTuple%i, oneTuple%j, oneTuple%k ) = oneTuple%h
+            end if
+          end do
+        end do
+        if ( switchDetail( switches, 'hess' ) > 0 ) then
+          call output( 'Banded plane of hessian values inserted at ')
+          call output( oneTuple%k, advance='yes' )
+        end if
+      case ( M_Column_Sparse )
+        do j = 1, plane%nCols
+          if ( myMirroring ) then
+            oneTuple%k = j
+          else
+            oneTuple%j = j
+          end if
+          do r = plane%r1(j-1) + 1, plane%r1(j) ! Indices of nonzeros and their row numbers
+            oneTuple%i = plane%r2 ( r ) ! Row number of nonzero
+            oneTuple%h = plane%values ( r, 1 )
+            if ( h%kind == H_Sparse ) then
+              n = n + 1
+              h%tuples(n) = oneTuple
+            else
+              h%values ( oneTuple%i, oneTuple%j, oneTuple%k ) = oneTuple%h
+            end if
+          end do
+        end do
+        if ( switchDetail( switches, 'hess' ) > 0 ) then
+          call output( 'column sparse plane of hessian values inserted at ')
+          call output( oneTuple%k, advance='yes' )
+        end if
+      end select
+      if ( h%kind == H_Sparse ) h%tuplesFilled = n
+    end if
+
+    call optimizeBlock ( h )
+
+    call trace_end ( 'InsertHessianPlane_Matrix', cond=.false. )
+  end subroutine InsertHessianPlane_Matrix
+
+  ! ----------------------------------------------  OptimizeBlock  -----
+  ! Rewrite this from scratch before use
+  subroutine OptimizeBlock ( H )
+    use MLSMessagemodule, only: MLSMessage, MLSMSG_Warning
+    use MLSStringlists, only: Switchdetail
+    use Toggles, only: Switches
+    use Sort_M, only: Sortp
+    ! Delete any 'zero' elements and reorder with i as the slowest changing index
+    ! (While this is unconventional, it optimizes for invocations of the 2nd order
+    ! Taylor series)
+    type (HessianElement_T), intent(inout) :: H
+
+    ! Local variables
+    type (Tuple_T), dimension(:), pointer :: NEWTUPLES ! Workspace
+    integer, dimension(:), pointer :: ORDER ! The new order for the tuples
+    integer, dimension(:), pointer :: RANK ! A 'cost' used to generate rank
+    integer(c_intptr_t) :: Addr         ! For tracing
+    integer :: N        ! Number to end up with
+    integer :: I,J,K    ! Loop counters
+    integer :: MaxRank  ! Used to place a tuple out of the running
+    integer :: Me = -1  ! String index for trace cacheing
+    integer :: S        ! Size in bytes of an object to deallocate
+    integer :: STATUS   ! Flag from allocate
+    logical, parameter :: DEEBUG = .true.
+    logical :: verbose
+
+    verbose = ( switchDetail(switches, 'hess') > -1 )
+    if ( h%optimizedAlready ) return
+    h%optimizedAlready = .true.
+    call trace_begin ( me, 'OptimizeBlock', cond=.false. )
+    if ( DONTOPTIMIZE ) then
+       call MLSMessage ( MLSMSG_Warning, ModuleName, &
+         & "Skipping buggy optimizeBlocks (paw)" )
+       call trace_end ( 'OptimizeBlock', cond=.false. )
+       return
+    else if ( DEEBUG .and. any( h%kind == (/ h_full, h_sparse /) ) .and. &
+      & h%tuplesFilled > 0 ) then
+      call output( 'About to dump h with details=0', advance='yes' )
+      call dump( h, details=0, name='Before optimizing Hessian block' )
+      if ( h%kind == h_full ) then
+        call outputnamedValue( 'count(h%values /= 0.0)', count(h%values /= 0.0) )
+      else
+        call outputnamedValue( 'h%tuplesFilled', h%tuplesFilled )
+        n = count ( h%tuples ( 1:h%tuplesFilled ) % h /= 0._rh )
+        call outputnamedValue( 'count(h%tuplevalues /= 0.0_rh)', n )
+        call outputnamedValue( 'is h sparse?', (h%kind == h_Sparse) )
+      end if
+    end if
+    if ( h%kind == h_Absent .or. h%kind == h_Unknown ) then
+      call trace_end ( 'OptimizeBlock', cond=.false. )
+      return
+    endif
+    if ( h%kind == h_Full ) then
+      n = count(h%values /= 0.0)
+      ! Assuming integers take half the space of real(rh), each tuple takes
+      ! 2.5 times the space of a single value.
+      if ( 2.5 * n > size(h%values) .or. DONTOPTIMIZEFULLS ) then
+        h%optimizedAlready = .true.
+        call trace_end ( 'OptimizeBlock', cond=.false. )
+        return ! sparsifying won't improve things
+      else if ( n < 1 ) then
+        ! all values 0; so make it absent
+        call clearBlock ( h )
+      else
+        if ( verbose ) call outputNamedValue( 'Sparsifying full Hessian;' // &
+          & 'Number of nozero elements', n )
+        call Sparsify_Hessian ( H )
+        if ( verbose ) call output( 'Returned from Sparsifying full Hesssian', advance='yes' )
+      end if
+      if ( h%kind /= h_Sparse ) then
+        call trace_end ( 'OptimizeBlock', cond=.false. )
+        return
+      endif
+    elseif ( h%kind == h_Sparse ) then
+      ! Now we re-sparsify the block
+        if ( verbose ) call outputNamedValue( 'Sparsifying sparse Hessian;' // &
+          & 'Number of nozero elements', n )
+      call Sparsify( H )
+    end if
+    ! h%optimizedAlready = .true.
+    ! OK, so now it must be sparse
+
+    if ( h%tuplesFilled == 0 ) then
+      call clearBlock ( h )
+      if ( verbose ) call output( 'We optimized the block away', advance='yes' )
+      call trace_end ( 'OptimizeBlock', cond=.false. )
+      return
+    end if
+
+    if ( .not. associated(h%tuples) ) then
+      call MLSMessage ( MLSMSG_Warning, moduleName, &
+        & "How do we get h%tuples disassociated but h%tuplesFilled > 0?" )
+      call clearBlock ( h )
+    end if
+
+    ! How many will I end up with at most
+    n = count ( h%tuples ( 1:h%tuplesFilled ) % h /= 0._rh )
+    if ( n == 0 ) then
+      call clearBlock ( h )
+      if ( verbose ) call output( 'We optimized the block away', advance='yes' )
+      call trace_end ( 'OptimizeBlock', cond=.false. )
+      return
+    end if
+
+    if ( DEEBUG .and. any( h%kind == (/ h_full, h_sparse /) ) .and. &
+      & h%tuplesFilled > 0 ) then
+      call dump( h, details=0, name='After optimizing Hessian block' )
+      if ( h%kind == h_full ) &
+        & call outputnamedValue( 'count(h%values /= 0.0)', count(h%values /= 0.0) )
+      call outputnamedValue( 'h%tuplesFilled', h%tuplesFilled )
+      if ( associated(h%tuples) ) then
+        n = count ( h%tuples ( 1:h%tuplesFilled ) % h /= 0 )
+        call outputnamedValue( 'count(h%tuplevalues /= 0.0)', n )
+      else if ( h%tuplesFilled > 0 ) then
+        call MLSMessage ( MLSMSG_Warning, ModuleName // "optimizeBlocks", &
+          & "How is it that h%tuplesFilled > 0 but h%tuples is not associated" )
+      end if
+    end if
+
+    if ( OPTIMIZEMEANSSPARISFY ) then
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & "Skipping remainder of optimizeBlocks after sparsifying(paw)" )
+      call trace_end ( 'OptimizeBlock', cond=.false. )
+      return
+    end if
+    ! -------------------------------------------------------------
+    ! The rest of this is probably useless as well as wrong
+    call allocate_Test ( rank,  h%tuplesFilled, "Rank in OptimizeBlock", ModuleName )
+    call allocate_Test ( order, h%tuplesFilled, "Order in OptimizeBlock", ModuleName )
+    rank = h%tuples(1:h%tuplesFilled)%k + &
+      & h%nCols2 * ( h%tuples(1:h%tuplesFilled)%j + &
+      &   h%nCols1 * h%tuples(1:h%tuplesFilled)%i )
+
+    ! Put the zeros out of the running
+    maxRank = h%nRows * h%nCols1 * h%nCols2 + 1
+    where ( h%tuples ( 1:h%tuplesFilled ) % h == 0 )
+      rank = maxRank
+    end where
+
+    call SortP ( rank, 1, h%tuplesFilled, order )
+
+    ! If the first sorted one has a zero value, they all do, since zeros
+    ! were given maxRank.
+    ! ?????????? Why ???????????
+    ! We did not sort by value, remember, but by "rank"
+    ! This is just one of what are many unjustified assumptions here
+    ! They pretty much doom this subroutine (paw)
+    if ( h%tuples(order(1))%h == 0.0 ) then
+      call clearBlock ( h )
+    else
+
+      allocate ( newTuples ( n ), stat=status )
+      addr = 0
+      if ( status == 0 .and. n > 0 ) addr = transfer(c_loc(newTuples(1)), addr)
+      call test_allocate ( status, moduleName, "newTuples", (/1/), (/n/), &
+        & elementSize=storage_size(newTuples)/8, address=addr )
+
+      ! Store the sorted tuples while eliminating duplicates
+      newTuples(1) = h%tuples(order(1))
+      i = 1 ! The one to test for duplication
+      k = 1 ! How many unique ones so far
+o:    do while ( i < n )
+        do j = i+1, n ! The one to test whether it's a duplicate
+          if ( rank(order(i)) /= rank(order(j)) ) then ! Found next unique one
+            i = j
+            k = k + 1
+            newTuples(k) = h%tuples(order(j)) ! Store the next unique one
+            cycle o
+          end if
+        end do
+        exit ! The ones on the end are duplicates
+      end do o
+
+      s = size(h%tuples) * storage_size(h%tuples) / 8
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(h%tuples(1)), addr)
+      deallocate ( h%tuples, stat=status )
+      call test_deallocate ( status, moduleName, "h%tuples", s, address=addr )
+
+      h%tuples => newTuples
+      h%tuplesFilled = k
+
+      ! Densify if that would take less space
+      if ( 2.5 * n > h%nRows * h%nCols1 * h%nCols2 ) then
+        call densify_Hessian ( h )
+      else if ( n > 1.2 * k ) then
+        ! We have an inordinately greater number of tuples than needed
+        allocate ( newTuples ( k ), stat=status )
+        addr = 0
+        if ( status == 0 .and. k > 0 ) addr = transfer(c_loc(newTuples(1)), addr)
+        call test_allocate ( status, moduleName, "newTuples", (/1/), (/k/), &
+          & elementSize=storage_size(newTuples)/8, address=addr )
+        newTuples(:k) = h%tuples(:k)
+        s = size(h%tuples) * storage_size(h%tuples) / 8
+        addr = 0
+        if ( s > 0 ) addr = transfer(c_loc(h%tuples(1)), addr)
+        deallocate ( h%tuples, stat=status )
+        call test_deallocate ( status, moduleName, "h%tuples", s, address=addr )
+        h%tuples => newTuples
+      end if
+    end if
+
+    call Deallocate_Test ( rank, "Rank in OptimizeBlock", ModuleName )
+    call Deallocate_Test ( order, "Order in OptimizeBlock", ModuleName )
+
+    if ( DEEBUG .and. any( h%kind == (/ h_full, h_sparse /) ) .and. &
+      & h%tuplesFilled > 0 ) then
+      call dump( h, details=0, name='After optimizing Hessian block' )
+      if ( h%kind == h_full ) &
+        & call outputnamedValue( 'count(h%values /= 0.0)', count(h%values /= 0.0) )
+      call outputnamedValue( 'h%tuplesFilled', h%tuplesFilled )
+      if ( associated(h%tuples) ) then
+        n = count ( h%tuples ( 1:h%tuplesFilled ) % h /= 0 )
+        call outputnamedValue( 'count(h%tuplevalues /= 0.0)', n )
+      else if ( h%tuplesFilled > 0 ) then
+        call MLSMessage ( MLSMSG_Warning, ModuleName // "optimizeBlocks", &
+          & "How is it that h%tuplesFilled > 0 but h%tuples is not associated" )
+      end if
+    end if
+    ! -------------------------------------------------------------
+    call trace_end ( 'OptimizeBlock', cond=.false. )
+  end subroutine OptimizeBlock
+
+  ! --------------------------------------  Sparsify_Full_Hessian  -----
+  subroutine Sparsify_Full_Hessian ( H )
+    ! Sparsify the representation of a full H
+
+    use MLSStringlists, only: Switchdetail
+    use Toggles, only: Switches
+
+    type (HessianElement_T), intent(inout) :: H
+    integer(c_intptr_t) :: Addr         ! For tracing
+    integer :: i, j, k, l, n
+    integer :: Me = -1                  ! String index for trace cacheing
+    integer :: S                        ! Size in bytes of an object to deallocate
+    integer :: status
+    logical :: verbose
+    ! Executable
+    if ( h%kind /= h_full .or. .not. associated(h%values) ) return
+    verbose = ( switchDetail(switches, 'hess') > -1 ) .or. .true.
+    call trace_begin ( me, 'SparsifyFullHessian', cond=.false. )
+    n = count(h%values /= 0)
+    if ( verbose ) &
+      & call outputNamedValue ( 'About to Sparsify Hessian with non-zeros', n )
+    h%kind   = H_Sparse
+    h%nRows  = size ( h%values, 1 )
+    h%nCols1 = size ( h%values, 2 )
+    h%nCols2 = size ( h%values, 3 )
+
+    if ( associated(h%tuples) ) then
+      call outputNamedValue ( 'Must deallocate old tuples array', h%tuplesFilled )
+      s = size(h%tuples) * storage_size(h%tuples) / 8
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(h%tuples(1)), addr)
+      deallocate ( h%tuples, stat=status )
+      call test_deallocate ( status, ModuleName // '%SparsifyFullHessian', &
+        & "H%Tuples", s, address=addr )
+    end if
+    call outputNamedValue ( 'About to allocate Hessian tuples', n )
+    allocate ( h%tuples(n), stat=status )
+    addr = 0
+    if ( status == 0 .and. n > 0 ) addr = transfer(c_loc(h%tuples(1)), addr)
+    call test_allocate ( status, ModuleName // '%SparsifyFullHessian', "H%Tuples", &
+      & (/ 1 /), (/ n /), elementSize=storage_size(h%tuples), address=addr )
+
+    l = 0
+    do k = 1, h%nCols2
+      do j = 1, h%nCols1
+        do i = 1, h%nRows
+          if ( h%values(i,j,k) /= 0._rh ) then
+            l = l + 1
+            h%tuples(l) = tuple_t(h%values(i,j,k),i,j,k)
+          end if
+        end do
+      end do
+    end do
+    h%tuplesFilled = l
+    call deallocate_test ( h%values, "H%Values in Sparsify_Hessian", moduleName )
+    call trace_end ( 'SparsifyFullHessian', cond=.false. )
+  end subroutine Sparsify_Full_Hessian
+
+  ! -------------------------------------------  Sparsify_Hessian  -----
+  subroutine Sparsify_Hessian ( H )
+    ! (Re-)Sparsify the representation of H
+    ! depending on whether its representation is currently Full
+    ! or already Sparse
+
+    use MLSStringlists, only: Switchdetail
+    use Toggles, only: Switches
+
+    type (HessianElement_T), intent(inout) :: H
+    integer(c_intptr_t) :: Addr         ! For tracing
+    integer :: i
+    integer :: Me = -1               ! String index for trace cacheing
+    integer :: newSize
+    integer :: S                     ! Size in bytes of an object to deallocate
+    integer :: status
+    type(tuple_t), pointer :: Tuples(:) => NULL()
+    logical :: verbose
+
+    ! Executable
+    ! h%optimizedAlready = .false.
+    call trace_begin ( me, 'Sparsify_Hessian', cond=.false. )
+    nullify( tuples )
+    verbose = ( switchDetail(switches, 'hess') > -1 ) .or. .true.
+    select case (h%kind)
+    case (h_Full)
+      if ( verbose ) call output( 'Sparsifying full hessian', advance='yes' )
+      ! if ( associated(h%values) ) call sparsify ( h%values, h )
+      ! call deallocate_test ( h%values, "H%Values in Sparsify_Hessian", moduleName )
+      if ( associated(h%values) ) call sparsify_full_Hessian( h )
+    case (h_Sparse)
+      if ( h%tuplesFilled < 1 ) then
+        call trace_end ( 'Sparsify_Hessian', cond=.false. )
+        return
+      end if
+      newSize = count ( h%tuples ( 1:h%tuplesFilled ) % h /= 0._rh )
+      if ( verbose ) call outputNamedValue( 'Sparsifying sparse hessian', newsize )
+      if ( newSize ==  h%tuplesFilled ) then
+        call trace_end ( 'Sparsify_Hessian', cond=.false. )
+        return
+      else if ( newSize > 0 ) then
+        allocate ( tuples(newSize), stat=status )
+        addr = 0
+        if ( status==0 ) addr = transfer(c_loc(tuples(1)), addr)
+        call test_allocate ( status, moduleName, 'Tuples(NewSize)', &
+          & uBounds=[newSize], elementSize=storage_size(tuples), address=addr )
+        newSize = 0
+        do i = 1, h%tuplesFilled
+          if ( h%tuples(i)%h == 0.0 ) cycle
+          newSize = newSize + 1
+          tuples(newSize) = h%tuples(i)
+        end do
+      end if
+      s = size(h%tuples) * storage_size(h%tuples) / 8
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(h%tuples(1)), addr)
+      deallocate ( h%tuples, stat=status )
+      call test_deallocate ( status, moduleName, 'h%tuples', s, address=addr )
+      h%tuplesFilled = newSize
+      h%tuples => tuples
+    case default
+      if ( verbose ) call output( 'Sparsifying ??? hessian', advance='yes' )
+      ! We don't need to do anything for these cases, do we?
+    end select
+    call trace_end ( 'Sparsify_Hessian', cond=.false. )
+  end subroutine Sparsify_Hessian
+
+  ! -----------------------------------  Sparsify_Hessian_Array_D  -----
+  subroutine Sparsify_Hessian_Array_D ( H_Array, H )
+  ! Create a sparse representation of H_Array in H.
+
+    integer, parameter :: RK = kind(0.0d0)
+    real(rk), intent(in) :: H_Array(:,:,:) ! H(i,j,k)
+    type(HessianElement_T), intent(inout) :: H    ! inout so we can deallocate tuple
+
+    integer :: I, J, K, L, N, Stat
+
+    include 'Sparsify_Hessian_Array.f9h'
+
+  end subroutine Sparsify_Hessian_Array_D
+
+  ! -----------------------------------  Sparsify_Hessian_Array_S  -----
+  subroutine Sparsify_Hessian_Array_S ( H_Array, H )
+  ! Create a sparse representation of H_Array in H.
+
+    integer, parameter :: RK = kind(0.0e0)
+    real(rk), intent(in) :: H_Array(:,:,:) ! H(i,j,k)
+    type(HessianElement_T), intent(inout) :: H    ! inout so we can deallocate tuple
+
+    integer :: I, J, K, L, N, Stat
+
+    include 'Sparsify_Hessian_Array.f9h'
+
+  end subroutine Sparsify_Hessian_Array_S
+
+  !  ---------------------------------------  StreamlineHessian_0  -----
+  subroutine StreamlineHessian_0 ( H, Q1, Q2, Surface, ScaleHeight, Threshold )
+    ! Remove elements 
+    ! (1) between levels separated vertically by more than ScaleHeight (units); or
+    ! (2) between levels separated vertically by more than Surface (index); or
+    ! (3) are smaller in magnitude than the maximum in the block by a factor
+    ! of threshold
+    ! This will make the Hessians, and the containing L2PC files much smaller
+    ! However, some of the assumptions are dubious
+    ! On balance, StreamlineHessian_0 might not be worth the risk (paw)
+    ! Breaking news: running retrievals with analytical, full hessian blocks
+    ! takes too long; we must try streamlining after all
+    use MLSKinds, only: R8
+    use MLSMessagemodule, only: MLSMessage, MLSMSG_Warning
+    use MLSStringlists, only: Switchdetail
+    use QuantityTemplates, only: QuantityTemplate_T
+    use Toggles, only: Switches
+    ! Args
+    type (HessianElement_T), intent(inout) :: H
+    type (QuantityTemplate_T), intent(in) :: Q1, Q2 ! For 1st, 2nd cols of H
+    integer, intent(in) ::  Surface     ! Diagonal horizon (set to 0 outside)
+    ! Eventually we'll use the surfaces field of the template to
+    ! establish a diagonal horizon if we supply scaleheight
+    ! For now, however, we treat it just like surface
+    real(r8), intent(in) :: ScaleHeight ! Diagonal horizon (set to 0 outside)
+    real(r8), intent(in) :: Threshold
+    ! Internal variables
+    real(r8) :: Cutoff ! Threshold * maxval(abs(...)) if threshold > 0.
+    integer :: I, J, K    ! Subscripts
+    integer :: nt      ! Num of nTuples
+    integer :: nnz     ! Num of non-zero values
+    integer :: S1, S2  ! Surface indices for 1st, 2nd cols of H
+    logical :: verbose
+
+    call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      & "Streamlining Hessians is probably still buggy--use with caution (paw)" )
+
+    call outputNamedValue ( 'switches', trim(switches) )
+    verbose = ( switchDetail(switches, 'hess') > -1 )
+    h%optimizedAlready = .false.
+    if ( verbose ) call outputNamedValue( 'h%kind', h%kind )
+    select case ( h%kind )
+    case ( h_absent )
+      return
+    case ( h_sparse )
+      ! Note that this cutoff won't be right if h%tuples is
+      ! longer than h%tuplesFilled (paw)
+      nt = h%tuplesFilled
+      if ( nt < 1 .or. .not. associated(h%tuples) ) then
+        h%kind = h_absent
+        if ( verbose ) &
+          & call output( 'h_sparse, but number of tuplees 0' // &
+          & 'changing to h_absent', advance='yes' )
+        return
+      endif
+      if ( nt < 2 ) return
+      if ( verbose ) call outputNamedValue( 'Before streamlining sparse Hessian;' // &
+        & 'Number of nozero elements', count(h%tuples%h /= 0.) )
+      cutoff = threshold * maxval(abs(h%tuples(1:nt)%h))
+      if ( surface < 0 .and. scaleHeight < 0._r8 ) then
+        ! where ( abs( h%tuples%h ) < cutoff ) h%tuples%h = 0.0
+        do i=1, nt
+          if ( abs( h%tuples(i)%h ) < cutoff ) h%tuples(i)%h = 0.
+        enddo
+      else if ( surface > 0 ) then
+        ! where ( abs( h%tuples%h ) < cutoff .or. &
+         ! &     abs( (h%tuples%j-1 ) / q1%noChans + 1 -   &
+         ! &          (h%tuples%k-1 ) / q2%noChans + 1 ) > &
+         ! &     surface  ) h%tuples%h = 0.0
+        do i=1, nt
+          s1 = (h%tuples(i)%j-1 ) / q1%noChans + 1
+          s2 = (h%tuples(i)%k-1 ) / q2%noChans + 1
+          if ( abs( h%tuples(i)%h ) < cutoff .or. &
+            &     abs(s1-s2) > surface ) h%tuples(i)%h = 0.
+          ! if ( abs( h%tuples(i)%h ) < cutoff .or. &
+          !   &     abs( (h%tuples(i)%j-1 ) / q1%noChans + 1 -   &
+          !   &          (h%tuples(i)%k-1 ) / q2%noChans + 1 ) > &
+          !   &     surface ) h%tuples(i)%h = 0.
+        enddo
+      else if ( scaleheight > 0._r8 ) then
+        ! where ( abs( h%tuples%h ) < cutoff .or. &
+        ! &     abs( q1%surfs( (h%tuples%j-1 ) / q1%noChans + 1, 1) -   &
+        ! &          q2%surfs( (h%tuples%k-1 ) / q2%noChans + 1, 1) ) > &
+        ! &     scaleHeight  ) h%tuples%h = 0.0
+        do i=1, nt
+          s1 = (h%tuples(i)%j-1 ) / q1%noChans + 1
+          s2 = (h%tuples(i)%k-1 ) / q2%noChans + 1
+          if ( abs( h%tuples(i)%h ) < cutoff .or. &
+            &     abs(s1-s2) > scaleHeight ) h%tuples(i)%h = 0.
+          ! if ( abs( h%tuples(i)%h ) < cutoff .or. &
+          !   &     abs( (h%tuples(i)%j-1 ) / q1%noChans + 1 -   &
+          !   &          (h%tuples(i)%k-1 ) / q2%noChans + 1 ) > &
+          !   &     scaleHeight ) h%tuples(i)%h = 0.
+        enddo
+      end if
+      if ( verbose ) call outputNamedValue( 'After streamlining sparse Hessian;' // &
+        & 'Number of nozero elements', count(h%tuples%h /= 0.) )
+    case ( h_full )
+      if ( DONTSTREAMLINEFULLS ) return
+      if ( .not. associated(h%values) ) then
+        h%kind = h_absent
+        if ( verbose ) &
+          & call output( 'h_full, but values not associated' // &
+          & 'changing to h_absent', advance='yes' )
+        return
+      endif
+      nnz = count(h%values /= 0.)
+      if ( nnz < 1 ) then
+        h%kind = h_absent
+        if ( verbose ) &
+          & call output( 'h_full, but all values 0' // &
+          & 'changing to h_absent', advance='yes' )
+        return
+      endif
+      if ( verbose .and. nnz > 0) &
+        & call outputNamedValue( 'Before streamlining full Hessian;' // &
+        & 'Number of nozero elements', nnz )
+      do k = 1, h%nCols2
+        s2 = ( k-1 ) / q2%noChans + 1
+        do j = 1, h%nCols1
+          s1 = ( j-1 ) / q1%noChans + 1
+          if ( surface < 0 .and. scaleheight < 0._r8 ) then
+            ! no op; some compilers may complain
+            cutoff = 0._r8
+          else if ( surface > 0 .and. abs(s1-s2) > surface ) then
+            h%values ( :, j, k ) = 0
+          else if ( scaleHeight > 0._r8 .and. abs(s1-s2) > scaleHeight ) then
+            h%values ( :, j, k ) = 0
+          ! else if ( scaleHeight > 0._r8 .and. &
+          !   & abs ( q1%surfs(s1,1) - q2%surfs(s2,1) ) > scaleHeight ) then
+          !   h%values ( :, j, k ) = 0
+          end if
+        end do
+      end do
+      if ( threshold > 0._r8 ) then
+        cutoff = threshold * maxval(abs(h%values))
+        ! where ( abs(h%values) < cutoff ) h%values = 0.0
+        do k = 1, h%nCols2
+          do j = 1, h%nCols1
+            do i = 1, h%nRows
+              if ( abs( h%values(i,j,k) ) < cutoff ) h%values(i,j,k) = 0.
+            enddo
+          enddo
+        enddo
+      end if
+      if ( verbose .and. nnz > 0 ) &
+        & call outputNamedValue( 'After streamlining full Hessian;' // &
+        & 'Number of nozero elements', count(h%values /= 0.) )
+    end select
+
+    call optimizeBlock ( h )
+
+  end subroutine StreamlineHessian_0
+
+! =====     Private Procedures     =====================================
+
+  ! -------------------------------------------  CreateEmptyBlock  -----
+  subroutine CreateEmptyBlock ( EmptyBlock )
+    type(HessianElement_T), intent(inout) :: EmptyBlock
+    ! EmptyBlock is intent(inout) so that destroyBlock will have a chance
+    ! to clean up surds.  Default initialization for intent(out) would
+    ! nullify the pointers before destroyBlock had a chance to deallocate
+    ! them.
+    call destroyBlock ( emptyBlock )
+  end subroutine CreateEmptyBlock
+
+  !  ------------------------------------------------  Unsparsify  -----
+  ! Fill out h%values based on its sparse nTuples (or else zeros)
+  ! Should you combine this with Repopulate from MLSFillValues module?
+  subroutine Unsparsify ( H )
+    ! Argument
+    type(HessianElement_T), intent(inout) :: H
+    ! Internal variables
+    integer :: i
+    ! Executable
+    select case (h%kind)
+    case ( h_absent )
+      if ( associated(h%values) ) &
+        & call Deallocate_Test ( h%values, moduleName // 'Unsparsify', &
+        &  'h%values' )
+      call allocate_test( h%values, h%nRows, h%nCols1, h%nCols2, &
+          & "h%values", ModuleName // 'Unsparsify', fill=0.0_rh )
+    case ( h_sparse )
+      if ( associated(h%values) ) &
+        & call Deallocate_Test ( h%values, moduleName // 'Unsparsify', &
+        &  'h%values' )
+      call allocate_test( h%values, h%nRows, h%nCols1, h%nCols2, &
+          & "h%values", ModuleName // 'Unsparsify', fill=0.0_rh )
+      do i=1, h%TuplesFilled
+        h%values(h%tuples(i)%i, h%tuples(i)%j, h%tuples(i)%k) = h%tuples(i)%h
+      end do
+    case default
+    end select
+  end subroutine Unsparsify
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: HessianModule_0.f90,v 2.31 2016/07/28 01:42:27 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module HessianModule_0
+
+! $Log: HessianModule_0.f90,v $
+! Revision 2.31  2016/07/28 01:42:27  vsnyder
+! Refactoring dump and diff
+!
+! Revision 2.30  2015/03/28 01:04:29  vsnyder
+! Added stuff to trace allocate/deallocate addresses
+!
+! Revision 2.29  2014/09/04 23:42:20  vsnyder
+! More complete and accurate allocate/deallocate size tracking
+!
+! Revision 2.28  2014/01/09 00:25:06  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
+! Revision 2.27  2013/08/31 01:24:53  vsnyder
+! Replace MLSMessageCalls with trace_begin and trace_end
+!
+! Revision 2.26  2012/02/02 01:11:04  pwagner
+! Added Procedures to Clone, Copy blocks just like with matrices
+!
+! Revision 2.25  2012/01/13 01:08:18  pwagner
+! Fixed two bugs in StreamlineHessian
+!
+! Revision 2.24  2011/12/07 01:19:56  pwagner
+! Details=0 now dumps Bandwidth, too
+!
+! Revision 2.23  2011/11/10 16:20:00  pwagner
+! Fixed bug in streamline
+!
+! Revision 2.22  2011/10/14 00:35:06  pwagner
+! Further attempts to stop hanging during Streamline
+!
+! Revision 2.21  2011/10/07 00:01:55  pwagner
+! Some improvements to speed; still hangs though in Streamline
+!
+! Revision 2.20  2011/09/20 22:34:06  pwagner
+! Repaired most obvious bugs in Sparsify, Streamline
+!
+! Revision 2.19  2011/04/02 01:20:57  vsnyder
+! Don't look at h%values for sparse Hessians
+!
+! Revision 2.18  2011/04/01 22:06:34  vsnyder
+! Don't look at h%values for sparse Hessians, or h%tuplesFilled for full ones
+!
+! Revision 2.17  2011/03/02 02:01:35  vsnyder
+! Declare local variables of Hessian_Vec_Vec_Multiply_* in the include file
+!
+! Revision 2.16  2011/02/18 17:52:18  pwagner
+! myOptions needed to be longer; long enough?
+!
+! Revision 2.15  2011/02/05 01:37:31  pwagner
+! Passes options to dump routines
+!
+! Revision 2.14  2010/11/25 01:16:32  pwagner
+! Fixed bug in diffing Hessian blocks with options
+!
+! Revision 2.13  2010/11/19 23:54:19  pwagner
+! Turned optimizeBlock back on, hopefully skipping bauggy parts
+!
+! Revision 2.12  2010/11/05 20:25:10  vsnyder
+! Rename RM as RH to make it easier to change later.  Rename KIND argument
+! of CreateHessianBlock_0 as H_Kind so the KIND intrinsic is available.  Add
+! a Fill optional argument.  Set h%kind = h_full in Densify_Hessian.  Delete
+! unused declarations.
+!
+! Revision 2.11  2010/09/16 23:54:43  pwagner
+! dump with details=-3 warns of NaNs
+!
+! Revision 2.10  2010/08/24 18:04:22  yanovsky
+! Add default initialization to the components of HessianElement_T
+!
+! Revision 2.9  2010/08/20 23:06:05  pwagner
+! Sets Augmenting factor to 1.0; skips optimizing blocks
+!
+! Revision 2.8  2010/08/13 22:05:32  pwagner
+! Added diff; dumps sparse as if full
+!
+! Revision 2.7  2010/06/29 19:56:40  vsnyder
+! Add SCALAR argument instead of buried 0.5 factor
+!
+! Revision 2.6  2010/06/28 17:01:56  pwagner
+! Fixed a few bugs; added debugging output
+!
+! Revision 2.5  2010/06/22 22:45:38  vsnyder
+! Correct LaTeX comments for multiply
+!
+! Revision 2.4  2010/03/26 23:15:45  vsnyder
+! Add Threshold to StreamlineHessian
+!
+! Revision 2.3  2010/03/24 20:36:24  vsnyder
+! Add Dump_Hessian_Block.  Replace specific DestroyHessianBlock_0 with
+! ClearHessianBlock_0 but keep generic DestroyBlock.  Add OptimizeBlock
+! at the end of InsertHessianPlane_Array.  Simplify InsertHessianPlane_Matrix.
+! Simplify OptimizeBlock.
+!
+! Revision 2.2  2010/02/25 18:34:11  pwagner
+! Fixed bug in first commit
+!
+! Revision 2.1  2010/02/25 18:13:35  pwagner
+! First commit
+!
+@
+
+
+2.31
+log
+@Refactoring dump and diff
+@
+text
+@d19 4
+a22 3
+  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST, &
+    & TEST_ALLOCATE, TEST_DEALLOCATE
+  use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+d24 6
+a29 6
+  use DUMP_0, only: DUMP
+  use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
+  use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+  use MLSKINDS, only: RH=>RM ! Renamed here to make it easier to change later
+  use OUTPUT_M, only: OUTPUT
+  use TRACE_M, only: TRACE_BEGIN, TRACE_END
+d152 1
+a152 1
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
+d389 1
+a389 2
+    use MLSFILLVALUES, only: REPOPULATE
+    use MLSSTRINGLISTS, only: OPTIONDETAIL, UNQUOTE
+d524 2
+a525 2
+    use MLSFILLVALUES, only: ISNAN, REPOPULATE
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_WARNING
+d647 1
+a647 1
+    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
+d669 1
+a669 1
+    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
+d686 1
+a686 1
+    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
+d756 4
+a759 4
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
+    use MATRIXMODULE_0, only: MATRIXELEMENT_T, M_FULL, M_ABSENT, M_COLUMN_SPARSE, M_BANDED 
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use TOGGLES, only: SWITCHES
+d875 4
+a878 4
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_WARNING
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use TOGGLES, only: SWITCHES
+    use SORT_M, only: SORTP
+d1099 2
+a1100 2
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use TOGGLES, only: SWITCHES
+d1159 2
+a1160 2
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use TOGGLES, only: SWITCHES
+d1261 4
+a1264 4
+    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_WARNING
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use QuantityTemplates, only: QUANTITYTEMPLATE_T
+    use TOGGLES, only: SWITCHES
+d1446 1
+a1446 1
+       "$Id: HessianModule_0.f90,v 2.30 2015/03/28 01:04:29 vsnyder Exp $"
+d1456 3
+@
+
+
+2.30
+log
+@Added stuff to trace allocate/deallocate addresses
+@
+text
+@d22 2
+a23 1
+  use DUMP_0, only: DIFF, DUMP
+d1446 1
+a1446 1
+       "$Id: HessianModule_0.f90,v 2.29 2014/09/04 23:42:20 vsnyder Exp $"
+d1456 3
+@
+
+
+2.29
+log
+@More complete and accurate allocate/deallocate size tracking
+@
+text
+@d21 1
+d24 1
+d159 1
+d176 1
+a176 2
+      call test_allocate ( stat, moduleName, "H%Tuples", &
+        & (/1/), (/0/) )
+d193 4
+a196 1
+      allocate ( H%tuples ( size ( oldTuple ) + extra ), stat=stat )
+d198 1
+a198 1
+        & (/1/), (/ size ( oldTuple ) + extra /), storage_size(oldTuple) / 8 )
+d206 2
+d209 1
+a209 1
+        call test_deallocate ( stat, moduleName, "oldTuple", s )
+d225 1
+d241 3
+d245 1
+a245 1
+        elementSize = storage_size(z%tuples) / 8 )
+d275 1
+d280 2
+d284 1
+a284 1
+        & "H%Tuples in DestroyHessianBlock", s )
+d307 1
+d334 2
+d337 2
+a338 1
+          & (/1/), (/initTuples/) )
+a355 2
+    use Allocate_Deallocate, only: Test_Deallocate
+
+d358 1
+d372 6
+a378 4
+
+      n = size(h%tuples) * storage_size(h%tuples) / 8
+      deallocate ( h%tuples, stat=status )
+      call test_deallocate ( status, moduleName, 'H%Tuples', n )
+d887 1
+d1023 4
+a1026 1
+      call test_allocate ( status, moduleName, "newTuples", (/1/), (/n/) )
+d1045 2
+d1048 1
+a1048 1
+      call test_deallocate ( status, moduleName, "h%tuples", s )
+d1059 4
+a1062 1
+        call test_allocate ( status, moduleName, "newTuples", (/1/), (/k/) )
+d1065 2
+d1068 1
+a1068 1
+        call test_deallocate ( status, moduleName, "h%tuples", s )
+d1102 1
+d1123 2
+d1127 1
+a1127 1
+        & "H%Tuples", s )
+d1131 4
+a1134 1
+    call test_allocate ( status, ModuleName // '%SparsifyFullHessian', "H%Tuple", (/ 1 /), (/ n /), -1 )
+a1157 1
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+d1162 1
+d1193 5
+a1197 2
+        allocate(tuples(newSize), stat=status)
+        call test_allocate ( status, moduleName, 'Tuples(NewSize)' )
+d1206 2
+d1209 1
+a1209 1
+      call test_deallocate ( status, moduleName, 'h%tuples', s )
+d1445 1
+a1445 1
+       "$Id: HessianModule_0.f90,v 2.28 2014/01/09 00:25:06 pwagner Exp $"
+d1455 3
+@
+
+
+2.28
+log
+@Some procedures formerly in output_m now got from highOutput
+@
+text
+@d159 1
+d193 1
+a193 1
+        & (/1/), (/ size ( oldTuple ) + extra /) )
+d196 2
+a197 1
+      if ( associated ( oldTuple ) ) H%tuples ( 1:h%tuplesFilled ) = oldTuple ( 1:h%tuplesFilled )
+d200 4
+a203 2
+      deallocate ( oldTuple, stat=stat )
+      call test_deallocate ( stat, moduleName, "oldTuple" )
+d233 2
+d264 1
+a264 1
+    integer :: Stat
+d267 1
+d269 2
+a270 1
+      call test_deallocate ( stat, moduleName, "H%Tuples in DestroyHessianBlock" )
+a318 1
+        h%tuplesFilled = initTuples
+d321 1
+d338 2
+d342 1
+a342 1
+    integer :: n
+d356 4
+a359 2
+      
+      deallocate ( h%tuples, stat=n )
+d872 1
+d1021 1
+d1023 1
+a1023 1
+      call test_deallocate ( status, moduleName, "h%tuples" )
+d1036 1
+d1038 1
+a1038 1
+        call test_deallocate ( status, moduleName, "h%tuples" )
+d1074 1
+d1091 1
+d1093 2
+a1094 1
+      call test_deallocate ( status, ModuleName // '%SparsifyFullHessian', "H%Tuples" )
+d1128 1
+a1128 1
+    integer :: Me = -1                  ! String index for trace cacheing
+d1130 1
+d1166 1
+d1168 1
+a1168 1
+      call test_deallocate ( status, moduleName, 'h%tuples' )
+d1404 1
+a1404 1
+       "$Id: HessianModule_0.f90,v 2.27 2013/08/31 01:24:53 vsnyder Exp $"
+d1414 3
+@
+
+
+2.27
+log
+@Replace MLSMessageCalls with trace_begin and trace_end
+@
+text
+@d22 3
+a24 2
+  use MLSKinds, only: RH=>RM ! Renamed here to make it easier to change later
+  use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
+d1384 1
+a1384 1
+       "$Id: HessianModule_0.f90,v 2.26 2012/02/02 01:11:04 pwagner Exp $"
+d1394 3
+@
+
+
+2.26
+log
+@Added Procedures to Clone, Copy blocks just like with matrices
+@
+text
+@d24 1
+d137 1
+a137 1
+  ! ----------------------------------------------- AugmentHessian -----
+d147 1
+a147 1
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECALLS, MLSMSG_ERROR
+d156 2
+a159 1
+    integer :: extra                    ! How many to add
+d161 1
+a161 1
+    call MLSMessageCalls( 'push', constantName=ModuleName // '%AugmentHessian' )
+d200 1
+a200 1
+    call MLSMessageCalls( 'pop' )
+d211 1
+d214 1
+d253 1
+a253 1
+  ! ------------------------------------------ ClearHessianBlock_0 -----
+d271 1
+a271 1
+  ! ----------------------------------------- Create_Empty_Hessian -----
+a274 1
+    use MLSMESSAGEMODULE, only: MLSMESSAGECALLS
+d284 1
+d287 1
+a287 1
+    call MLSMessageCalls( 'push', constantName=ModuleName // '%CreateHessianBlock_0' )
+d322 1
+a322 1
+    call MLSMessageCalls( 'pop' )
+d325 1
+a325 1
+  ! ---------------------------------------------- Densify_Hessian -----
+d353 1
+a353 1
+  ! ------------------------------------------- Diff_Hessian_Blocks -----
+d489 1
+a489 1
+  ! ------------------------------------------- Dump_Hessian_Block -----
+d605 1
+a605 1
+  ! ----------------------------------- Hessian_Vec_Vec_Multiply_D -----
+d627 1
+a627 1
+  ! ----------------------------------- Hessian_Vec_Vec_Multiply_S -----
+d649 1
+a649 1
+  ! ------------------------------------- InsertHessianPlane_Array -----
+d719 1
+a719 1
+  ! ------------------------------------ InsertHessianPlane_Matrix -----
+d723 1
+a723 1
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECALLS, MLSMSG_ERROR
+d734 1
+d738 1
+a738 1
+    call MLSMessageCalls( 'push', constantName=ModuleName // '%InsertHessianPlane_Matrix' )
+d758 1
+a758 1
+      call MLSMessageCalls( 'pop' )
+d836 1
+a836 1
+    call MLSMessageCalls( 'pop' )
+d839 1
+a839 1
+  ! ------------------------------------------------ OptimizeBlock -----
+d842 1
+a842 1
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECALLS, MLSMSG_WARNING
+d858 1
+d866 1
+a866 1
+    call MLSMessageCalls( 'push', constantName=ModuleName // '%OptimizeBlock' )
+d870 1
+a870 1
+       call MLSMessageCalls( 'pop' )
+d886 1
+a886 1
+      call MLSMessageCalls( 'pop' )
+d895 1
+a895 1
+        call MLSMessageCalls( 'pop' )
+d907 1
+a907 1
+        call MLSMessageCalls( 'pop' )
+d922 1
+a922 1
+      call MLSMessageCalls( 'pop' )
+d937 1
+a937 1
+      call MLSMessageCalls( 'pop' )
+d959 1
+a959 1
+      call MLSMessageCalls( 'pop' )
+d1045 1
+a1045 1
+    call MLSMessageCalls( 'pop' )
+d1048 1
+a1048 1
+  ! --------------------------------------------- Sparsify_Full_Hessian -----
+a1051 1
+    use MLSMessageModule, only: MLSMESSAGECALLS
+d1057 1
+d1063 1
+a1063 1
+    call MLSMessageCalls( 'push', constantName=ModuleName // '%SparsifyFullHessian' )
+d1094 1
+a1094 1
+    call MLSMessageCalls( 'pop' )
+d1097 1
+a1097 1
+  ! --------------------------------------------- Sparsify_Hessian -----
+d1103 1
+a1103 1
+    use MLSMessageModule, only: MLSMESSAGE, MLSMESSAGECALLS, MLSMSG_ERROR
+d1109 1
+d1114 1
+d1117 1
+a1119 1
+    call MLSMessageCalls( 'push', constantName=ModuleName // '%SparsifyHessian' )
+d1128 1
+a1128 1
+        call MLSMessageCalls( 'pop' )
+d1130 1
+a1130 1
+      endif
+d1134 1
+a1134 1
+        call MLSMessageCalls( 'pop' )
+d1136 1
+a1136 1
+      elseif ( newSize > 0 ) then
+d1138 1
+a1138 2
+        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+           & "Unable to allocate replacement tuples in Sparsify" )
+d1144 4
+a1147 5
+        enddo
+      endif
+      deallocate(h%tuples, stat=status)
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+         & "Unable to deallocate original tuples in Sparsify" )
+d1152 1
+a1152 1
+      ! We don't need to anything for these cases, do we?
+d1154 1
+a1154 1
+    call MLSMessageCalls( 'pop' )
+d1157 1
+a1157 1
+  ! ------------------------------------- Sparsify_Hessian_Array_D -----
+d1171 1
+a1171 1
+  ! ------------------------------------- Sparsify_Hessian_Array_S -----
+d1185 1
+a1185 1
+  !  ----------------------------------------- StreamlineHessian_0 -----
+d1351 1
+a1351 1
+  !  ----------------------------------------- Unsparsify -----
+d1383 1
+a1383 1
+       "$Id: HessianModule_0.f90,v 2.25 2012/01/13 01:08:18 pwagner Exp $"
+d1393 3
+@
+
+
+2.25
+log
+@Fixed two bugs in StreamlineHessian
+@
+text
+@d19 2
+d30 2
+a31 1
+  public :: ClearBlock, CreateBlock, Densify, DestroyBlock, Diff, Dump
+a145 1
+    use ALLOCATE_DEALLOCATE, only: TEST_ALLOCATE, TEST_DEALLOCATE
+d201 48
+a251 1
+    use Allocate_Deallocate, only: DEALLOCATE_TEST, TEST_DEALLOCATE
+a270 1
+    use Allocate_Deallocate, only: ALLOCATE_TEST, TEST_ALLOCATE
+a324 2
+    use Allocate_Deallocate, only: ALLOCATE_TEST
+
+a350 1
+    use ALLOCATE_DEALLOCATE, only: DEALLOCATE_TEST, ALLOCATE_TEST
+a486 1
+    use ALLOCATE_DEALLOCATE, only: DEALLOCATE_TEST, ALLOCATE_TEST
+a836 2
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST, &
+      & TEST_ALLOCATE, TEST_DEALLOCATE
+a1045 2
+    use Allocate_Deallocate, only: DEALLOCATE_TEST, &
+      & TEST_ALLOCATE, TEST_DEALLOCATE
+a1154 2
+    use Allocate_Deallocate, only: DEALLOCATE_TEST, &
+      & TEST_ALLOCATE, TEST_DEALLOCATE
+a1168 2
+    use Allocate_Deallocate, only: DEALLOCATE_TEST, &
+      & TEST_ALLOCATE, TEST_DEALLOCATE
+d1333 12
+a1348 1
+    use Allocate_Deallocate, only: DEALLOCATE_TEST, ALLOCATE_TEST
+d1377 1
+a1377 1
+       "$Id: HessianModule_0.f90,v 2.24 2011/12/07 01:19:56 pwagner Exp $"
+d1387 3
+@
+
+
+2.24
+log
+@Details=0 now dumps Bandwidth, too
+@
+text
+@d1163 5
+a1167 2
+    integer, intent(in) ::  Surface
+    real(r8), intent(in) :: ScaleHeight
+d1213 2
+d1216 5
+a1220 3
+            &     abs( (h%tuples(i)%j-1 ) / q1%noChans + 1 -   &
+            &          (h%tuples(i)%k-1 ) / q2%noChans + 1 ) > &
+            &     surface ) h%tuples(i)%h = 0.
+d1224 3
+a1226 3
+         ! &     abs( q1%surfs( (h%tuples%j-1 ) / q1%noChans + 1, 1) -   &
+         ! &          q2%surfs( (h%tuples%k-1 ) / q2%noChans + 1, 1) ) > &
+         ! &     scaleHeight  ) h%tuples%h = 0.0
+d1228 2
+d1231 5
+a1235 3
+            &     abs( (h%tuples(i)%j-1 ) / q1%noChans + 1 -   &
+            &          (h%tuples(i)%k-1 ) / q2%noChans + 1 ) > &
+            &     scaleHeight ) h%tuples(i)%h = 0.
+d1269 1
+a1269 2
+          else if ( scaleHeight > 0._r8 .and. &
+            & abs ( q1%surfs(s1,1) - q2%surfs(s2,1) ) > scaleHeight ) then
+d1271 3
+d1330 1
+a1330 1
+       "$Id: HessianModule_0.f90,v 2.23 2011/11/10 16:20:00 pwagner Exp $"
+d1340 3
+@
+
+
+2.23
+log
+@Fixed bug in streamline
+@
+text
+@d447 5
+a451 2
+    integer, intent(in), optional :: Details ! Print details, -3, just check for NaNs,
+                                             !  0 => minimal, 1 => values, default 1
+d505 2
+a506 2
+      else if ( my_details > 0 ) then
+        if ( DUMPASUNSPARSIFIED ) then
+d513 7
+a519 1
+          call Dump ( harray, 'Hessian values', options=options )
+d541 4
+d1317 1
+a1317 1
+       "$Id: HessianModule_0.f90,v 2.22 2011/10/14 00:35:06 pwagner Exp $"
+d1327 3
+@
+
+
+2.22
+log
+@Further attempts to stop hanging during Streamline
+@
+text
+@d223 1
+a223 1
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECALLS, MLSMSG_ERROR
+d813 1
+d843 1
+d993 1
+a993 1
+    use MLSMessageModule, only: MLSMESSAGE, MLSMESSAGECALLS, MLSMSG_ERROR
+d1006 2
+d1014 1
+d1018 1
+a1043 1
+    use Allocate_Deallocate, only: DEALLOCATE_TEST
+d1164 1
+d1236 1
+a1236 1
+      do k = 1, h%nCols2 - 1
+d1238 1
+a1238 1
+        do j = k + 1, h%nCols1
+a1244 1
+            h%values ( :, k, j ) = 0
+a1247 1
+            h%values ( :, k, j ) = 0
+d1251 1
+a1251 1
+      if ( threshold > 0 ) then
+d1304 1
+a1304 1
+       "$Id: HessianModule_0.f90,v 2.21 2011/10/07 00:01:55 pwagner Exp $"
+d1314 3
+@
+
+
+2.21
+log
+@Some improvements to speed; still hangs though in Streamline
+@
+text
+@d120 2
+d144 1
+a144 1
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
+d157 1
+d196 1
+d223 1
+d235 1
+d270 1
+d662 1
+a662 1
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
+d676 1
+d695 4
+a698 1
+    if ( plane%kind == M_Absent ) return
+d774 1
+d782 1
+a782 1
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_WARNING
+d805 1
+d809 1
+d823 4
+a826 1
+    if ( h%kind == h_Absent .or. h%kind == h_Unknown ) return
+d831 1
+a831 1
+      if ( 2.5 * n > size(h%values) ) then
+d833 1
+d843 4
+a846 1
+      if ( h%kind /= h_Sparse ) return
+d859 1
+d874 1
+d896 1
+d982 1
+d985 47
+d1039 1
+a1039 1
+    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
+d1053 1
+d1057 3
+a1059 2
+      if ( associated(h%values) ) call sparsify ( h%values, h )
+      call deallocate_test ( h%values, "H%Values in Sparsify_Hessian", moduleName )
+d1061 4
+a1064 1
+      if ( h%tuplesFilled < 1 ) return
+d1068 1
+d1090 1
+d1113 2
+a1114 1
+    use Allocate_Deallocate, only: DEALLOCATE_TEST, TEST_ALLOCATE, TEST_DEALLOCATE
+d1139 1
+d1141 1
+d1152 1
+d1154 1
+d1159 1
+d1161 1
+d1169 7
+d1177 2
+d1208 2
+d1211 19
+d1240 2
+a1241 1
+          else if ( scaleHeight > 0._r8 .and. abs ( q1%surfs(s1,1) - q2%surfs(s2,1) ) > scaleHeight ) then
+d1250 6
+a1255 2
+        do i=1, nt
+          if ( abs( h%tuples(i)%h ) < cutoff ) h%tuples(i)%h = 0.
+d1258 3
+d1300 1
+a1300 1
+       "$Id: HessianModule_0.f90,v 2.20 2011/09/20 22:34:06 pwagner Exp $"
+d1310 3
+@
+
+
+2.20
+log
+@Repaired most obvious bugs in Sparsify, Streamline
+@
+text
+@d23 1
+a23 1
+  implicit NONE
+d71 1
+d533 1
+d771 2
+d788 1
+d790 3
+d804 3
+a806 2
+        n = count ( h%tuples ( 1:h%tuplesFilled ) % h /= 0 )
+        call outputnamedValue( 'count(h%tuplevalues /= 0.0)', n )
+d815 1
+d821 2
+d828 2
+d832 1
+d837 1
+d848 1
+a848 1
+    n = count ( h%tuples ( 1:h%tuplesFilled ) % h /= 0 )
+d851 1
+d855 15
+d872 1
+a872 1
+        & "Skipping remainder of optimizeBlocks after sparisfying(paw)" )
+d875 1
+d957 1
+d968 2
+d976 5
+a980 1
+
+d983 1
+d988 5
+a992 2
+      newSize = count ( h%tuples ( 1:h%tuplesFilled ) % h /= 0 )
+      if ( newSize > 0 ) then
+d1003 3
+a1005 1
+      deallocate(h%tuples)
+d1009 1
+d1068 1
+a1068 1
+    integer :: J, K    ! Subscripts
+d1075 1
+d1086 4
+a1089 1
+        where ( abs( h%tuples%h ) < cutoff ) h%tuples%h = 0.0
+d1091 10
+a1100 4
+        where ( abs( h%tuples%h ) < cutoff .or. &
+          &     abs( (h%tuples%j-1 ) / q1%noChans + 1 -   &
+          &          (h%tuples%k-1 ) / q2%noChans + 1 ) > &
+          &     surface  ) h%tuples%h = 0.0
+d1102 10
+a1111 4
+        where ( abs( h%tuples%h ) < cutoff .or. &
+          &     abs( q1%surfs( (h%tuples%j-1 ) / q1%noChans + 1, 1) -   &
+          &          q2%surfs( (h%tuples%k-1 ) / q2%noChans + 1, 1) ) > &
+          &     scaleHeight  ) h%tuples%h = 0.0
+d1132 4
+a1135 1
+        where ( abs(h%values) < cutoff ) h%values = 0.0
+d1176 1
+a1176 1
+       "$Id: HessianModule_0.f90,v 2.19 2011/04/02 01:20:57 vsnyder Exp $"
+d1186 3
+@
+
+
+2.19
+log
+@Don't look at h%values for sparse Hessians
+@
+text
+@d140 2
+a141 2
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+d197 1
+a197 1
+    use Allocate_Deallocate, only: Deallocate_Test, Test_Deallocate
+d217 1
+a217 1
+    use Allocate_Deallocate, only: Allocate_test, Test_Allocate
+d269 1
+a269 1
+    use Allocate_Deallocate, only: Allocate_Test
+d297 3
+a299 3
+    use Allocate_Deallocate, only: Deallocate_Test, Allocate_Test
+    use MLSFillValues, only: Repopulate
+    use MLSStringLists, only: optionDetail, unquote
+d434 3
+a436 3
+    use Allocate_Deallocate, only: Deallocate_Test, Allocate_Test
+    use MLSFillValues, only: isNaN, Repopulate
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
+d544 1
+a544 1
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+d566 1
+a566 1
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+d583 1
+a583 1
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+d653 4
+a656 4
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use MatrixModule_0, only: MatrixElement_T, M_Full, M_Absent, M_Column_Sparse, M_Banded 
+    use MLSStringLists, only: switchDetail
+    use Toggles, only: Switches
+d766 4
+a769 4
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test, &
+      & Test_Allocate, Test_Deallocate
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
+    use Sort_M, only: SORTP
+d814 3
+d839 3
+a841 3
+       call MLSMessage ( MLSMSG_Warning, ModuleName, &
+         & "Skipping optimizeBlocks after sparisfying(paw)" )
+       return
+d928 3
+a930 1
+    ! Sparsify the representation of H
+d932 2
+a933 1
+    use Allocate_Deallocate, only: Deallocate_Test
+d936 4
+d941 24
+a964 3
+    if ( associated(h%values) ) call sparsify ( h%values, h )
+    call deallocate_test ( h%values, "H%Values in Sparsify_Hessian", moduleName )
+
+d971 2
+a972 1
+    use Allocate_Deallocate, only: Deallocate_Test, Test_Allocate, Test_Deallocate
+d987 1
+a987 1
+    use Allocate_Deallocate, only: Deallocate_Test, Test_Allocate, Test_Deallocate
+d1011 2
+a1012 2
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
+    use QuantityTemplates, only: QuantityTemplate_T
+d1022 1
+d1026 1
+a1026 1
+      & "Streamlining Hessians is probably buggy--use with caution (paw)" )
+d1034 3
+a1036 1
+      cutoff = threshold * maxval(abs(h%tuples%h))
+d1081 1
+a1081 1
+    use Allocate_Deallocate, only: Deallocate_Test, allocate_test
+d1110 1
+a1110 1
+       "$Id: HessianModule_0.f90,v 2.18 2011/04/01 22:06:34 vsnyder Exp $"
+d1120 3
+@
+
+
+2.18
+log
+@Don't look at h%values for sparse Hessians, or h%tuplesFilled for full ones
+@
+text
+@d909 3
+a911 1
+      call output( 'After optimizing Hessian block', advance='yes' )
+a912 1
+      call outputnamedValue( 'count(h%values /= 0.0)', count(h%values /= 0.0) )
+d918 1
+a918 1
+         & "How is it that h%tuplesFilled > 0 but h%tuples is not associated" )
+a919 1
+      call dump( h, details=0 )
+d1067 1
+a1067 1
+      enddo
+d1075 1
+a1075 1
+       "$Id: HessianModule_0.f90,v 2.17 2011/03/02 02:01:35 vsnyder Exp $"
+d1085 3
+@
+
+
+2.17
+log
+@Declare local variables of Hessian_Vec_Vec_Multiply_* in the include file
+@
+text
+@d242 1
+a242 1
+    endif
+d249 1
+a249 1
+        endif
+d262 1
+a262 1
+    endif
+d323 1
+a323 1
+    endif
+d333 1
+a333 1
+    endif
+d362 2
+a363 2
+      endif
+    endif
+d369 1
+a369 1
+    endif
+d376 1
+a376 1
+    endif
+d380 1
+a380 1
+    endif
+d397 1
+a397 1
+    endif
+d477 1
+a477 1
+      elseif ( .not. associated (h%tuples) ) then
+d480 1
+a480 1
+      endif
+d494 1
+a494 1
+      elseif ( my_details > 0 ) then
+d521 1
+a521 1
+      elseif ( details > 0 ) then
+d524 1
+a524 1
+      endif
+d693 1
+a693 1
+      endif
+d732 1
+a732 1
+        endif
+d754 1
+a754 1
+        endif
+d789 1
+a789 1
+    elseif ( DEEBUG .and. any( h%kind == (/ h_full, h_sparse /) ) .and. &
+d791 9
+a799 7
+      call output( 'Before optimizing Hessian block', advance='yes' )
+      call outputnamedValue( 'h%tuplesFilled', h%tuplesFilled )
+      call outputnamedValue( 'count(h%values /= 0.0)', count(h%values /= 0.0) )
+      n = count ( h%tuples ( 1:h%tuplesFilled ) % h /= 0 )
+      call outputnamedValue( 'count(h%tuplevalues /= 0.0)', n )
+      call dump( h, details=0 )
+    endif
+d807 1
+a807 1
+      elseif ( n < 1 ) then
+d812 1
+a812 1
+      endif
+d839 1
+a839 1
+    endif
+d915 1
+a915 1
+      elseif ( h%tuplesFilled > 0 ) then
+d918 1
+a918 1
+      endif
+d920 1
+a920 1
+    endif
+d1004 1
+a1004 1
+      elseif ( surface > 0 ) then
+d1009 1
+a1009 1
+      elseif ( scaleheight > 0._r8 ) then
+d1014 1
+a1014 1
+      endif
+d1023 1
+a1023 1
+          elseif ( surface > 0 .and. abs(s1-s2) > surface ) then
+d1026 1
+a1026 1
+          elseif ( scaleHeight > 0._r8 .and. abs ( q1%surfs(s1,1) - q2%surfs(s2,1) ) > scaleHeight ) then
+d1075 1
+a1075 1
+       "$Id: HessianModule_0.f90,v 2.16 2011/02/18 17:52:18 pwagner Exp $"
+d1085 3
+@
+
+
+2.16
+log
+@myOptions needed to be longer; long enough?
+@
+text
+@d539 4
+a542 4
+  !  $P^i = \text{\tt SCALAR} H^i_{jk} V_1^j V_2^k$ or
+  !  $P^i = P^i + \text{\tt SCALAR} H^i_{jk} V_1^j V_2^k$, depending upon
+  !  {\tt Update}.  {\tt P} is initially set to zero unless {\tt Update}
+  !  is present and true.
+a551 3
+    integer :: I, K, N
+    logical :: MyUpdate
+
+d561 4
+a564 4
+    !  $P^i = \text{\tt SCALAR} H^i_{jk} V_1^j V_2^k$ or
+    !  $P^i = P^i + \text{\tt SCALAR} H^i_{jk} V_1^j V_2^k$, depending upon
+    !  {\tt Update}.  {\tt P} is initially set to zero unless {\tt Update}
+    !  is present and true.
+a573 3
+    integer :: I, K, N
+    logical :: MyUpdate
+
+d1073 1
+a1073 1
+       "$Id: HessianModule_0.f90,v 2.15 2011/02/05 01:37:31 pwagner Exp $"
+d1083 3
+@
+
+
+2.15
+log
+@Passes options to dump routines
+@
+text
+@d448 1
+a448 1
+    character(len=16) :: myOptions
+d460 1
+d1079 1
+a1079 1
+       "$Id: HessianModule_0.f90,v 2.14 2010/11/25 01:16:32 pwagner Exp $"
+d1089 3
+@
+
+
+2.14
+log
+@Fixed bug in diffing Hessian blocks with options
+@
+text
+@d433 1
+a433 1
+  subroutine Dump_Hessian_Block ( H, Name, Details, Indices, Clean )
+d443 1
+d448 1
+d456 2
+d501 1
+a501 1
+          call Dump ( harray, 'Hessian values' )
+d521 2
+a522 1
+        call dump ( h%values, options=merge('c',' ',my_clean) )
+d1078 1
+a1078 1
+       "$Id: HessianModule_0.f90,v 2.13 2010/11/19 23:54:19 pwagner Exp $"
+d1088 3
+@
+
+
+2.13
+log
+@Turned optimizeBlock back on, hopefully skipping bauggy parts
+@
+text
+@d354 1
+a354 1
+        select case ( h1kind )
+d356 1
+a356 1
+          call Unsparsify( h1 )
+d358 1
+a358 1
+          call Unsparsify( h1 )
+d361 1
+a361 1
+        return
+d364 6
+d391 1
+a391 1
+    if ( present(options) ) then
+d1073 1
+a1073 1
+       "$Id: HessianModule_0.f90,v 2.12 2010/11/05 20:25:10 vsnyder Exp $"
+d1083 3
+@
+
+
+2.12
+log
+@Rename RM as RH to make it easier to change later.  Rename KIND argument
+of CreateHessianBlock_0 as H_Kind so the KIND intrinsic is available.  Add
+a Fill optional argument.  Set h%kind = h_full in Densify_Hessian.  Delete
+unused declarations.
+@
+text
+@d29 2
+a30 2
+  public :: InsertHessianPlane, Multiply, OptimizeBlock, Sparsify
+  public :: StreamlineHessian, RH
+d39 1
+a39 1
+
+d118 1
+a118 1
+  logical, parameter :: DONTOPTIMIZE = .true.
+d120 1
+d296 1
+a296 1
+  subroutine Diff_Hessian_Blocks ( H1, H2, Details, Indices, Clean )
+d299 2
+a300 1
+    type(HessianElement_T), intent(in) :: H1, H2
+d304 1
+d306 4
+a309 1
+
+d311 1
+a311 1
+    logical :: My_Clean
+d320 4
+a323 1
+
+d338 53
+a390 3
+    if ( h1%kind /= h2%kind ) then
+      call output ( 'the hessian blocks are of different kind', advance='yes' )
+      return
+d417 2
+a418 1
+        & call Diff ( h1%values, 'Hessian 1 values', h2%values, 'Hessian 2 values', options=merge('c',' ',my_clean) )
+d423 1
+d758 1
+d795 10
+a804 4
+      if ( 2.5 * n > size(h%values) ) return ! sparsifying won't improve things
+        ! Assuming integers take half the space of real(rh), each tuple takes
+        ! 2.5 times the space of a single value.
+      call Sparsify_Hessian ( H )
+d827 6
+d959 5
+a963 3
+  subroutine StreamlineHessian_0 ( H, Q1, Q2, ScaleHeight, Threshold )
+    ! Remove elements that are separated vertically by than ScaleHeight or
+    ! that are smaller in magnitude than the maximum in the block by a factor
+d968 2
+d973 1
+d976 1
+d979 1
+d994 13
+a1006 4
+      where ( abs( h%tuples%h ) < cutoff .or. &
+        &     abs( q1%surfs( (h%tuples%j-1 ) / q1%noChans + 1, 1) -   &
+        &          q2%surfs( (h%tuples%k-1 ) / q2%noChans + 1, 1) ) > &
+        &     scaleHeight  ) h%tuples%h = 0.0
+d1012 7
+a1018 1
+          if ( abs ( q1%surfs(s1,1) - q2%surfs(s2,1) ) > scaleHeight ) then
+d1034 30
+d1067 1
+a1067 1
+       "$Id: HessianModule_0.f90,v 2.11 2010/09/16 23:54:43 pwagner Exp $"
+d1077 6
+@
+
+
+2.11
+log
+@dump with details=-3 warns of NaNs
+@
+text
+@d20 1
+a20 1
+  use MLSKinds, only: RM
+d30 1
+a30 1
+  public :: StreamlineHessian
+d42 1
+a42 1
+    real(rm) :: H      ! The value of a Hessian element
+d70 1
+a70 1
+    real(rm), pointer :: Values(:,:,:) => NULL() ! for full explicit representation
+d116 1
+a116 1
+  real(rm), parameter:: AUGMENTFACTOR = 1.0
+d131 3
+a133 3
+    ! Make space for N extra elements in the Hessian tuple if it's not already there
+    ! If factor is present then don't merely add 'just enough' values, but
+    ! increase the number by this fraction
+d136 1
+a136 1
+    ! than h%tuples, and sibsequent elemental procedures passed
+d144 1
+a144 1
+    real(rm), intent(in), optional :: FACTOR
+d147 1
+a147 1
+    real(rm) :: myFactor
+d153 1
+a153 1
+    myFactor = 1.0_rm
+d173 1
+a173 1
+      if ( myFactor > 1.0_rm ) then
+d213 2
+a214 1
+  subroutine CreateHessianBlock_0 ( H, nRows, nCols1, nCols2, kind, initTuples )
+d222 1
+a222 1
+    integer, intent(in) :: kind
+d224 1
+d233 1
+a233 1
+    h%kind = kind
+d240 1
+a240 1
+      call outputNamedValue( 'kind', kind )
+d243 1
+a243 1
+    if ( kind == h_sparse ) then
+d255 1
+a255 1
+    if ( kind == h_full ) then
+d257 1
+a257 1
+        & moduleName )
+d268 1
+a268 1
+    use Allocate_Deallocate, only: Allocate_Test, Test_Deallocate
+d279 1
+a279 1
+        & "H%values in Densify_Hessian", moduleName, fill=0.0_rm )
+d288 1
+a303 1
+    integer :: I
+d307 2
+a308 2
+    real(rm), pointer :: h1array(:,:,:) => NULL()
+    real(rm), pointer :: h2array(:,:,:) => NULL()
+d344 1
+a344 1
+          & "h1array in Diff_Hessian_Blocks", ModuleName, fill=0.0_rm )
+d346 1
+a346 1
+          & "h2array in Diff_Hessian_Blocks", ModuleName, fill=0.0_rm )
+d381 1
+a381 1
+    real(rm), pointer :: harray(:,:,:) => NULL()
+d427 1
+a427 1
+            & "harray in Dump_Hessian_Blocks", ModuleName, fill=0.0_rm )
+d519 1
+a519 1
+    real(rm), intent(in) :: PLANE(:,:)
+d734 1
+a734 1
+        ! Assuming integers take half the space of real(rm), each tuple takes
+d941 1
+a941 1
+       "$Id: HessianModule_0.f90,v 2.10 2010/08/24 18:04:22 yanovsky Exp $"
+d951 3
+@
+
+
+2.10
+log
+@Add default initialization to the components of HessianElement_T
+@
+text
+@d366 2
+a367 1
+    use MLSFillValues, only: Repopulate
+d370 2
+a371 2
+    integer, intent(in), optional :: Details ! Print details, 0 => minimal,
+                                             ! 1 => values, default 1
+d415 6
+a420 1
+      if ( my_details > 0 ) then
+d442 8
+a449 1
+      if ( details > 0 ) call dump ( h%values, options=merge('c',' ',my_clean) )
+d939 1
+a939 1
+       "$Id: HessianModule_0.f90,v 2.9 2010/08/20 23:06:05 pwagner Exp $"
+d949 3
+@
+
+
+2.9
+log
+@Sets Augmenting factor to 1.0; skips optimizing blocks
+@
+text
+@d48 13
+a60 6
+    integer :: nRows    ! Extent of first dimensions of H
+    integer :: nCols1   ! Extent of second dimension of H
+    integer :: nCols2   ! Extent of third dimension of H
+    ! Some explanation of startegy of storing Hessians according to kind 
+    ! belongs here
+    integer :: kind     ! One of H_Absent, H_Sparse, H_Full, H_Unknown
+d926 1
+a926 1
+       "$Id: HessianModule_0.f90,v 2.8 2010/08/13 22:05:32 pwagner Exp $"
+d936 3
+@
+
+
+2.8
+log
+@Added diff; dumps sparse as if full
+@
+text
+@d109 1
+d111 1
+d125 1
+a125 1
+    ! If Geometric is present then don't merely add 'just enough' values, but
+d127 5
+d140 1
+d146 2
+d166 1
+a166 1
+      if ( present ( factor ) ) then
+d392 7
+d401 6
+d530 1
+a530 1
+      call AugmentHessian ( H, count ( plane /= 0 ), factor=1.2 )
+d566 2
+d601 4
+d608 1
+a608 1
+        & call AugmentHessian ( H, size ( plane%values, 1 ), factor=1.2 )
+d640 4
+d662 4
+d695 6
+a700 1
+    if ( DEEBUG .and. any( h%kind == (/ h_full, h_sparse /) ) ) then
+d702 4
+d753 4
+d803 2
+a804 1
+    if ( DEEBUG ) then
+d806 9
+d867 3
+d871 1
+d881 3
+d888 2
+d919 1
+a919 1
+       "$Id: HessianModule_0.f90,v 2.7 2010/06/29 19:56:40 vsnyder Exp $"
+d929 3
+@
+
+
+2.7
+log
+@Add SCALAR argument instead of buried 0.5 factor
+@
+text
+@d19 1
+a19 1
+  use DUMP_0, only: DUMP
+d28 1
+a28 1
+  public :: ClearBlock, CreateBlock, Densify, DestroyBlock, Dump
+d82 4
+d110 1
+d274 72
+d348 2
+d360 2
+d385 18
+a402 7
+        do i = 1, size(h%tuples)
+          call output ( h%tuples(i)%i, format='(i5)' )
+          call output ( h%tuples(i)%j, format='(i5)' )
+          call output ( h%tuples(i)%k, format='(i5)' )
+          call output ( '   ' )
+          call output ( h%tuples(i)%h, advance='yes' )
+        end do
+d409 4
+d656 1
+d658 4
+d753 4
+d850 1
+a850 1
+       "$Id: HessianModule_0.f90,v 2.6 2010/06/28 17:01:56 pwagner Exp $"
+d860 3
+@
+
+
+2.6
+log
+@Fixed a few bugs; added debugging output
+@
+text
+@d322 1
+a322 1
+  subroutine Hessian_Vec_Vec_Multiply_D ( H, V1, V2, P, Update )
+d324 5
+a328 4
+  !  $\frac12$, giving {\tt P}: $P^i = \frac12 H^i_{jk} V_1^j V_2^k$ or
+  !  $P^i = P^i + \frac12 H^i_{jk} V_1^j V_2^k$, depending upon {\tt
+  !  Update}.  This is the second-order term of a Taylor series.  {\tt P}
+  !  is initially set to zero unless {\tt Update} is present and true.
+d334 1
+d347 1
+a347 1
+  subroutine Hessian_Vec_Vec_Multiply_S ( H, V1, V2, P, Update )
+d349 5
+a353 4
+    !  $\frac12$, giving {\tt P}: $P^i = \frac12 H^i_{jk} V_1^j V_2^k$ or
+    !  $P^i = P^i + \frac12 H^i_{jk} V_1^j V_2^k$, depending upon {\tt
+    !  Update}.  This is the second-order term of a Taylor series.  {\tt P}
+    !  is initially set to zero unless {\tt Update} is present and true.
+d359 1
+d745 1
+a745 1
+       "$Id: HessianModule_0.f90,v 2.4 2010/03/26 23:15:45 vsnyder Exp $"
+d755 3
+@
+
+
+2.5
+log
+@Correct LaTeX comments for multiply
+@
+text
+@d19 1
+d21 1
+d51 2
+d55 7
+a63 1
+                        ! first subscript is "upper", others are "lower".
+d105 2
+d211 7
+d220 1
+d222 3
+d226 1
+d235 3
+a237 1
+
+a270 2
+    use Dump_0, only: Dump
+    use Output_m, only: Output
+d339 1
+d362 1
+d751 3
+@
+
+
+2.4
+log
+@Add Threshold to StreamlineHessian
+@
+text
+@d53 1
+d300 1
+a300 1
+  !  $\frac12$, giving {\tt P}: $P^i = \frac12 H^i_{jk} V_1^i V_2^j$ or
+d322 1
+a322 1
+    !  $\frac12$, giving {\tt P}: $P^i = \frac12 H^i_{jk} V_1^i V_2^j$ or
+d715 1
+a715 1
+       "$Id: HessianModule_0.f90,v 2.3 2010/03/24 20:36:24 vsnyder Exp $"
+d725 3
+@
+
+
+2.3
+log
+@Add Dump_Hessian_Block.  Replace specific DestroyHessianBlock_0 with
+ClearHessianBlock_0 but keep generic DestroyBlock.  Add OptimizeBlock
+at the end of InsertHessianPlane_Array.  Simplify InsertHessianPlane_Matrix.
+Simplify OptimizeBlock.
+@
+text
+@d28 1
+d88 5
+a92 1
+  end interface Sparsify
+d102 1
+a102 1
+  ! ----------------------------------------- AugmentHessian -----------
+d158 1
+a158 1
+  ! ----------------------------------------- ClearHessianBlock_0 -----
+d242 1
+a242 1
+  ! -----------------------------------------  Dump_Hessian_Block  -----
+d340 1
+a340 1
+  ! --------------------------------------------- InsertHessianPlane_Array ---
+d410 1
+a410 1
+  ! -------------------------------------------- InsertHessianPlane_Matrix ---
+d510 1
+a510 1
+  ! ------------------------------------------------- OptimizeBlock ----
+d666 45
+d714 1
+a714 1
+       "$Id: HessianModule_0.f90,v 2.2 2010/02/25 18:34:11 pwagner Exp $"
+d724 6
+@
+
+
+2.2
+log
+@Fixed bug in first commit
+@
+text
+@d26 2
+a27 2
+  public :: ClearBlock, CreateBlock, Densify, DestroyBlock, InsertHessianPlane
+  public :: Multiply, OptimizeBlock, Sparsify
+d49 3
+a51 3
+    type(tuple_t), pointer :: tuples(:) => NULL() ! Some may not be filled (yet)
+    integer :: tuplesFilled ! Number of tuples filled
+    real(rm), pointer :: values(:,:,:) => NULL() ! for full explicit representation
+d67 5
+a71 1
+    module procedure DestroyHessianBlock_0
+d119 1
+a119 1
+    if ( h%kind == h_absent ) then
+d138 1
+a138 1
+      
+d160 1
+a160 1
+    if ( h%kind == h_sparse ) then
+d165 1
+a165 2
+    if ( h%kind == h_full ) &
+      & call deallocate_test ( h%values, moduleName, "H%H in DestroyHessianBlock" )
+d167 1
+d186 1
+a186 1
+    call DestroyBlock ( H )
+d237 51
+a287 5
+  ! ---------------------------------------------- Destroy_Hessian -----
+  subroutine DestroyHessianBlock_0 ( H )
+  ! Destroy a HessianElement_T structure
+
+    use Allocate_Deallocate, only: Deallocate_Test, Test_Deallocate
+d289 1
+a289 13
+    type(HessianElement_T), intent(inout) :: H
+
+    integer :: Stat
+
+    if ( h%kind == h_sparse ) then
+      deallocate ( h%tuples, stat=stat )
+      call test_deallocate ( stat, moduleName, "H%Tuples in DestroyHessianBlock" )
+    end if
+
+    if ( h%kind == h_full ) &
+      & call deallocate_test ( h%values, moduleName, "H%H in DestroyHessianBlock" )
+
+  end subroutine DestroyHessianBlock_0
+d401 2
+d417 1
+a417 1
+    integer :: I, J, P, Q, R, N, B
+a463 7
+          if ( j == 1 ) then
+            p = 1
+            b = plane%r2(j)
+          else
+            p = plane%r2(j-1) + 1
+            b = plane%r2(j) - p + 1
+          end if
+d465 2
+a466 1
+          do i = plane%r1(j), plane%r1(j) + b
+d469 8
+a476 1
+            p = p + 1
+a477 7
+          n = n + 1
+          if ( h%kind == H_Sparse ) then
+            h%tuples(n) = oneTuple
+          else
+            print*,'Stats: ', associated ( h%values ), oneTuple%i, oneTuple%j, oneTuple%k
+            h%values ( oneTuple%i, oneTuple%j, oneTuple%k ) = oneTuple%h
+          end if
+d486 2
+a487 9
+          if ( j == 1 ) then
+            p = 1
+            q = plane%r1(1)
+          else
+            p = plane%r1(j-1)
+            q = plane%r1(j)
+          end if
+          do r = p, q
+            oneTuple%i = plane%r2 ( r )
+a488 1
+            n = n + 1
+d490 1
+d498 1
+a498 1
+      h%tuplesFilled = n
+d501 2
+d506 1
+a506 1
+  recursive subroutine OptimizeBlock ( H )
+d509 1
+a516 1
+    logical :: ANYDUPLICATES            ! Used to keep track of duplicates
+d521 1
+a521 1
+    integer :: I,J      ! Loop counters
+d525 9
+a533 2
+    if ( h%Kind == H_Absent ) return
+    if ( h%kind == H_Sparse ) call Sparsify_Hessian ( H )
+d536 12
+a547 1
+    ! How many will I end up with
+d550 1
+a550 1
+      call ClearBlock ( H )
+d554 2
+a555 2
+    call Allocate_Test ( rank,  h%tuplesFilled, "Rank in OptimizeBlock", ModuleName )
+    call Allocate_Test ( order, h%tuplesFilled, "Order in OptimizeBlock", ModuleName )
+d566 26
+a591 5
+    allocate ( newTuples ( N ), stat=status )
+    call test_allocate ( status, moduleName, "newTuples", (/1/), (/N/) )
+    h%tuplesFilled = N
+    
+    call SortP ( rank, 1, n, order )
+d593 2
+a594 4
+    ! Stor the tuples
+    do i = 1, n
+      newTuples(i) = h%tuples(order(i))
+    end do
+d596 16
+a611 2
+    deallocate ( h%tuples, stat=status )
+    call test_deallocate ( status, moduleName, "h%tuples" )
+a615 19
+    h%tuples => newTuples    
+
+    ! Now, look for duplicates (we only need to worry about pairs, but let's be careful)
+    anyDuplicates = .false.
+    do i = 1, n - 1
+      j = i + 1
+      innerLoop: do
+        if ( &
+          & h%tuples(i)%i /= h%tuples(j)%i .or. &
+          & h%tuples(i)%j /= h%tuples(j)%j .or. &
+          & h%tuples(i)%k /= h%tuples(j)%k ) exit innerLoop
+        h%tuples(j)%h = 0
+        anyDuplicates = .true.
+        j = j + 1
+        if ( j == n+1 ) exit innerLoop
+      end do innerLoop
+    end do
+    if ( anyDuplicates ) call OptimizeBlock ( h )
+
+d627 1
+a627 1
+    call deallocate_test ( h%values, "H%H in Sparsify_Hessian", moduleName )
+d635 1
+a635 1
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+a641 5
+    if ( h%kind == H_Sparse ) then
+      deallocate ( h%tuples, stat=stat )
+      call test_deallocate ( stat, moduleName, "H%Tuple" )
+    end if
+
+d650 1
+a650 1
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+a656 5
+    if ( h%kind == H_Sparse ) then
+      deallocate ( h%tuples, stat=stat )
+      call test_deallocate ( stat, moduleName, "H%Tuple" ) 
+    end if
+
+d664 1
+a664 1
+       "$Id: HessianModule_0.f90,v 2.1 2010/02/25 18:13:35 pwagner Exp $"
+d674 3
+@
+
+
+2.1
+log
+@First commit
+@
+text
+@d87 1
+a87 1
+       "$RCSfile: Hessian_0.f90,v $"
+d613 1
+a613 1
+       "$Id: VectorsModule.f90,v 2.147 2010/02/25 18:07:14 pwagner Exp $"
+a618 2
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+d622 4
+a625 1
+! $Log: Hessian_0.f90,v $
+@
+

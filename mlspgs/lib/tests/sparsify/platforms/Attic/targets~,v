@@ -1,0 +1,73 @@
+head	1.2;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2000.11.10.18.43.18;	author pwagner;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2000.10.24.21.03.52;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@emacs b/u added by mistake
+@
+text
+@include ../Makefile.dep
+
+# "$Id: targets~,v 1.1 2000/10/24 21:03:52 pwagner Exp $"
+
+# ========================================================================
+PROG=test_multiply
+$(PROG): $(OBJS) $(libdir)/libmls.a
+	$(FC) -o $(PROG) $(OBJS) \
+                      -L$(libdir) -lmls \
+	-L$(PGSTK) -lPGSTK  \
+# ========================================================================
+
+clean:
+	rm -f *.o *.mod $(PROG) out.test
+
+tar:
+	rm -f $(PROG).tgz
+	tar hcvzf $(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude $(PROG)
+
+# ========================================================================
+# $Log: targets~,v $
+# Revision 1.1  2000/10/24 21:03:52  pwagner
+# first commit
+#
+# Revision 1.1  2000/10/20 23:38:54  pwagner
+# first commit
+#
+# Revision 1.1  2000/10/18 22:07:30  pwagner
+# First commit
+#
+@
+
+
+1.1
+log
+@first commit
+@
+text
+@d3 1
+a3 1
+# "$Id: targets,v 1.1 2000/10/20 23:38:54 pwagner Exp $"
+d21 4
+a24 1
+# $Log: targets,v $
+@
+

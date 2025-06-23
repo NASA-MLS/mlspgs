@@ -1,0 +1,258 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.4
+	cfm-single-freq-0-1:1.1.0.2;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2019.10.03.00.54.00;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9.1in
+
+\newcommand{\docname}{wvs-156}
+\newcommand{\docdate}{2 October 2019}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+   
+\usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\renewcommand\d{\text{d}}
+\newcommand\T{\mathcal{T}}
+\newcommand{\M}{\mathcal{M}}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill Read, Nathaniel Livesey\\
+Subject: \>Calculating incremental optical depth\\
+From: \>Van Snyder\\
+%Reference: \\
+\end{tabbing}
+
+\parindent 0pt \parskip 4pt
+
+In the solution of the non-scattering radiative transfer equation
+
+\begin{equation}\label{diff eq}
+\frac{\partial I(s)}{\partial s} + \alpha(s) I(s) = \alpha(s) B(s)\,,
+\end{equation}
+
+\emph{viz.}
+
+\begin{equation}\label{first}
+I[\alpha(s),s_\M] = I(s_0) \T(s_0,s_\M) +
+ \int_{s_0}^{s_\M} \T(s,s_\M) \alpha(s) B(s) \,
+  \d s\,,
+\end{equation}
+
+the inner integral
+
+\begin{equation}\label{two}
+\T(s,s_\M) = \exp\left( - \int_s^{s_\M} \alpha(\sigma)
+ \, \d \sigma \right)
+\end{equation}
+
+appears. In the full forward model, the argument of the exponential
+function in Equation (\ref{two}), \emph{viz.}
+
+\begin{equation}\label{three}
+\delta(s,s_\M) = \int_s^{s_\M} \alpha(\sigma) \, \d \sigma
+\end{equation}
+
+is called \emph{optical depth}.  (In section 10.3 of the ATBD, it is
+called the \emph{opacity integral}.)  It is evaluated separately for each
+layer between constant-$\zeta$ surfaces:
+
+\begin{equation}\label{four}
+\Delta
+\delta_{i \rightarrow i-1} = \int_{s_i}^{s_{i-1}} \alpha(\sigma) \,
+ \d \sigma \,.
+\end{equation}
+
+In the full forward model, this is called the \emph{incremental optical
+depth}, with the variable name {\tt incoptdepth}.  The full forward model
+operates with $\zeta$ rather than $s$ as the variable of integration.
+Therefore, Equation (\ref{four}) becomes
+
+\begin{equation}\label{five}
+\Delta
+\delta_{i \rightarrow i-1} = \int_{\zeta_i}^{\zeta_{i-1}} \alpha(\zeta) \,
+ \frac{\d s}{\d h} \frac{\d h}{\d \zeta}\, \d \zeta \,.
+\end{equation}
+
+The integral in Equation (\ref{four}) is first approximated by a
+rectangular quadrature, with $s$ as the independent variable:
+
+\begin{equation}\label{six}
+\Delta
+\delta_{j \rightarrow j-1} \approx \alpha_j\, \Delta s_{j \rightarrow j-1}
+\text{, or }
+\text{\tt incoptdepth(j) = alpha_path_c(j) * del_s(j)}
+\end{equation}
+
+where {\tt del_s(j)} is $\Delta s_{j \rightarrow j-1}$.
+
+An initial approximation of the optical depth is the indefinite sum
+
+\begin{equation*}
+\delta_j = \sum_{i=1}^j \Delta \delta_{i \rightarrow i-1} \,.
+\end{equation*}
+
+An estimate of the error in using this approximation to evaluate Equation
+(\ref{two}) is based upon the derivative
+
+\begin{equation}\label{seven}
+\frac{\d\, (-\exp(\delta_j))}{\d s} =
+ -\exp(-\delta_j)\, \frac{\d\, \delta_j}{\d s} \approx
+ -\exp(-\delta_j)\, ( \delta_{j+1} - \delta{_j-1} )\,.
+\end{equation}
+
+During this calculation, the value of $j$ where $-\delta_j < - \ln
+\Omega$, where $\Omega$ is the largest representable floating-point
+number, is saved, because $\exp(-\delta_j)$ will underflow. Where the
+negative of the derivative in Equation (\ref{seven}) is larger than a
+specified tolerance, a logical variable {\tt do_gl} is set {\tt .true.} to
+indicate that the approximation in Equation (\ref{six}) should be replaced
+by a three-point Gauss-Legendre quadrature.
+
+Where {\tt do_gl} is {\tt .false.}, the approximation in Equation
+(\ref{six}) is replaced by a trapezoidal approximation. This is done
+inconsistently, inefficiently, and inaccurately:
+
+{\tt\small
+\begin{equation}\begin{split}\label{nine}
+\Delta \delta_{i \rightarrow i-1} := \,&
+ \Delta \delta_{i \rightarrow i-1} + \frac12 ( \alpha_{j-1} - \alpha_j )
+ \frac{\d s}{\d h} \frac{\d h}{\d \zeta}\, \d \zeta{\text, or} \\
+\text{incoptdepth(j)} \,& \text{= incoptdepth(j) + \& } \\
+ \,& \text{\& ( alpha_path_c(j-1) - alpha_path_c(j) ) * dsdz_c(j-1) *
+ del_zeta(j) }\\
+\end{split}\end{equation}
+}
+
+where {\tt dsdz\_c} = $\frac12\,\frac{\d s}{\d h} \frac{\d h}{\d \zeta}$
+and {\tt del\_zeta} = $\delta\, \zeta$.
+
+This is inconsistent because Equation (\ref{six}) was evaluated with $s$
+as the independent variable, not with $\zeta$ as the independent variable.
+
+It is inefficient because it is a correction from a rectangular to a
+trapezoidal approximation. It would be more efficient to write it directly
+as a trapezoidal approximation, \emph{viz.}
+
+{\tt\small
+incoptdepth(j) = ( alpha_path_c(j-1) + alpha_path_c(j) ) * dsdz_c(j-1) *
+ del_zeta(j)
+}
+
+It is inaccurate because computing this as a correction is less accurate
+than computing the trapezoidal estimate directly.  More importantly,
+{\tt dsdz_c(j-1) * del_zeta(j)} is a rectangular estimate of
+
+\begin{equation*}
+\Delta\,s_{j \rightarrow j-1} = \int_{\zeta_j}^{\zeta{_j-1}}
+ \frac{\d s}{\d h} \frac{\d h}{\d \zeta} \, \d \zeta \,,
+\end{equation*}
+
+which is very inaccurate near the tangent point because $\frac{\d s}{\d
+h}$ has a square-root singularity at the tangent point. In any case, the
+forward model already has $\Delta\,s_{j \rightarrow j-1}$ as the variable
+{\tt del\_s}, so there is no point to evaluate Equation (\ref{five}) using
+Equation(\ref{nine}), i.e., using $\zeta$ as the independent variable,
+instead of evaluating Equation (\ref{four}), i.e., using $s$ as the
+independent variable.
+
+The reason this has not been changed is that the retrieved results appear
+to be more physically realistic using Equation (\ref{five}). The reason
+for this remains a mystery.
+
+\vspace{-1pt} % Somehow, this makes page numbering more likely correct.
+\label{lastpage}
+\end{document}
+@

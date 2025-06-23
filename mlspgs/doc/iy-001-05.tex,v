@@ -1,0 +1,326 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.12
+	cfm-single-freq-0-1:1.1.0.10
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.8
+	mus-emls-1-70:1.1.0.6
+	rel-1-0-englocks-work:1.1.0.4
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.2
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	M4-00:1.1
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2010.09.21.17.57.48;	author yanovsky;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\section{Antenna Radiance}
+
+
+The channel radiance for each height is
+\begin{eqnarray}
+I^A(\epsilon_t, \alpha_t) = \frac{ \displaystyle \int_{-\pi}^{\pi} \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} I(\epsilon,\alpha) \, G(\epsilon_t - \epsilon, \alpha_t - \alpha) \cos \epsilon \, d\epsilon \, d\alpha }{ \displaystyle \int_{-\pi}^{\pi} \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} G(\epsilon_t - \epsilon, \alpha_t - \alpha) \cos \epsilon \, d\epsilon \, d\alpha}.
+\end{eqnarray}
+We have atmospheric information regarding the azimuth or $\alpha$ dimension. Therefore, we assume $I(\epsilon, \alpha)$ has no $\alpha$ dependence, so we write
+\begin{eqnarray*}
+I^A(\epsilon_t) = \frac{ \displaystyle \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} I(\epsilon) \cos \epsilon \int_{-\pi}^{\pi} G(\epsilon_t - \epsilon, \alpha_t - \alpha) \, d\alpha \, d\epsilon }{ \displaystyle \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} \cos \epsilon \int_{-\pi}^{\pi} G(\epsilon_t - \epsilon, \alpha_t - \alpha) \, d\alpha \, d\epsilon}.
+\end{eqnarray*}
+Define
+\begin{eqnarray*}
+\overline{G}(\epsilon_t - \epsilon) &=& \frac{1}{2\pi} \int_{-\pi}^{\pi} G(\epsilon_t - \epsilon, \alpha_t - \alpha) \, d\alpha.
+\end{eqnarray*}
+Then,
+\begin{eqnarray}
+I^A(\epsilon_t) = \frac{ \displaystyle \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} I(\epsilon) \, \overline{G}(\epsilon_t - \epsilon) \, \cos \epsilon \, d\epsilon }{ \displaystyle \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} \, \overline{G}(\epsilon_t - \epsilon) \, \cos \epsilon \, d\epsilon}.
+\label{eqn:AR_IA}
+\end{eqnarray}
+Note that
+\begin{eqnarray}
+4\pi = \int_{-\pi}^{\pi} \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} G(\epsilon_t - \epsilon, \alpha_t - \alpha) \cos \epsilon \, d\epsilon \, d\alpha.
+\end{eqnarray}
+Then, we have
+\begin{eqnarray*}
+2 &=& \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} \overline{G}(\epsilon_t - \epsilon) \cos \epsilon \, d\epsilon,
+\end{eqnarray*}
+and
+\begin{eqnarray}
+I^A(\epsilon_t) &=& \frac{1}{2} \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} I(\epsilon) \, \overline{G}(\epsilon_t - \epsilon) \cos \epsilon \, d\epsilon.
+\end{eqnarray}
+However, we do not integrate over the entire range:
+\begin{eqnarray}
+I^A(\epsilon_t) &=& \frac{1}{2} \int_{\epsilon_t - \epsilon_0}^{\epsilon_t + \epsilon_0} I(\epsilon) \, \overline{G}(\epsilon_t - \epsilon) \cos (\epsilon_t - \epsilon) \, d(\epsilon_t - \epsilon).
+\end{eqnarray}
+
+
+\clearpage
+
+
+\section{Antenna Radiance Jacobians}
+
+
+Given the expression of antenna radiance $I^A$ in equation (\ref{eqn:AR_IA}), the {\bf antenna radiance Jacobian}, which considers the sensitivity of the antenna radiance to a state vector element at a fixed tangent pressure, is given by
+\begin{eqnarray*}
+\begin{array}[c]{l}
+\displaystyle \frac{\partial I^A}{\partial x_q} \ = \ \frac{\partial}{\partial x_q}  \frac{ \displaystyle \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} I(\epsilon) \, \overline{G}(\epsilon_t - \epsilon) \, \cos \epsilon \, d\epsilon }{ \displaystyle \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} \overline{G}(\epsilon_t - \epsilon) \, \cos \epsilon \, d\epsilon } \\
+\displaystyle \ \ \ \ \ \ \ \ \ = \ \frac{\partial}{\partial x_q}  \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} I(\epsilon) \, \overline{G}(\epsilon_t - \epsilon) \, \cos \epsilon \, d\epsilon  
+\ \cdot  \  \frac{  1  }{ \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} \overline{G}(\epsilon_t - \epsilon) \, \cos \epsilon \, d\epsilon   }  \\
+\displaystyle \ \ \ \ \ \ \ \ \ - \  \frac{\partial}{\partial x_q}  \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} \overline{G}(\epsilon_t - \epsilon) \, \cos \epsilon \, d\epsilon   
+\ \cdot \ \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} I(\epsilon) \, \overline{G}(\epsilon_t - \epsilon) \, \cos \epsilon \, d\epsilon 
+\ \cdot \ \frac{  1  }{  \Big[ \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} \, \overline{G}(\epsilon_t - \epsilon) \, \cos \epsilon \, d\epsilon \Big]^2  } ,
+\end{array}
+\end{eqnarray*}
+\begin{eqnarray}
+\begin{array}[c]{l}
+\displaystyle \frac{\partial I^A}{\partial x_q} \ = \ \Bigg[  \frac{\partial}{\partial x_q}  \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} I(\epsilon) \, \overline{G}(\epsilon_t - \epsilon) \, \cos \epsilon \, d\epsilon \\
+\displaystyle \ \ \ \ \ \ \ \ \ \ \ \ \ \ - \  I^A(\epsilon_t) \ \cdot \ \frac{\partial}{\partial x_q}  \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} \overline{G}(\epsilon_t - \epsilon) \, \cos \epsilon \, d\epsilon  \Bigg] \
+\cdot \ \frac{  1  }{  \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} \, \overline{G}(\epsilon_t - \epsilon) \, \cos \epsilon \, d\epsilon  } \\
+\ \\
+\displaystyle \ \ \ \ \ \ \ \ \ = \ \Bigg[ \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} \frac{\partial I (\epsilon)}{\partial x_q} \, \overline{G}(\epsilon_t - \epsilon) \, \cos \epsilon \, d\epsilon + \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} I(\epsilon) \, \frac{\partial \overline{G}(\epsilon_t - \epsilon)}{\partial x_q} \, \cos \epsilon \, d\epsilon  \\
+\displaystyle \ \ \ \ \ \ \ \ \ \ \ \ \ \ + \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}}  I (\epsilon) \, \overline{G}(\epsilon_t - \epsilon) \, \frac{\partial \cos \epsilon}{\partial x_q} \, d\epsilon  + \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}}  I (\epsilon) \, \overline{G}(\epsilon_t - \epsilon) \, \cos \epsilon \, \frac{\partial}{\partial x_q} \, d\epsilon \\
+\displaystyle \ \ \ \ \ \ \ \ \ \ \ \ \ \ - I^A(\epsilon_t) \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}}  \frac{\partial \overline{G}(\epsilon_t - \epsilon)}{\partial x_q} \, \cos \epsilon \, d\epsilon - I^A(\epsilon_t) \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}}  \overline{G}(\epsilon_t - \epsilon) \, \frac{\partial \cos \epsilon}{\partial x_q} \, d\epsilon \\
+\displaystyle \ \ \ \ \ \ \ \ \ \ \ \ \ \ - I^A(\epsilon_t) \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}}  \overline{G}(\epsilon_t - \epsilon) \, \cos \epsilon \, \frac{\partial}{\partial x_q} \, d\epsilon \Bigg] \cdot \ \frac{  1  }{  \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} \, \overline{G}(\epsilon_t - \epsilon) \, \cos \epsilon \, d\epsilon  }.
+\end{array}
+\label{eqn:AR_Derivative}
+\end{eqnarray}
+
+\begin{eqnarray*}
+\frac{\partial I^A}{\partial x_q} &=& \Bigg[ \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} \Big[ \frac{\partial I}{\partial x_q} + (I(\epsilon) - I^A(\epsilon_t)) \frac{d}{d\epsilon} \Big( \frac{\partial \epsilon}{\partial x_q} \Big) \Big] \, \overline{G}(\epsilon_t - \epsilon) \cos \epsilon \, d\epsilon \\
+&& + \  \frac{\partial \epsilon_t}{\partial x_q}  \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} (I(\epsilon) - I^A(\epsilon_t)) \, \frac{d \overline{G}(\epsilon_t - \epsilon)}{d(\epsilon_t - \epsilon)} \, \cos \epsilon \, d\epsilon -  \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} (I(\epsilon) - I^A(\epsilon_t)) \, \frac{\partial \epsilon}{\partial x_q} \, \frac{d \overline{G}(\epsilon_t - \epsilon)}{d(\epsilon_t - \epsilon)} \, \cos \epsilon \, d\epsilon \\
+&& + \ \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}}  (I(\epsilon) - I^A(\epsilon_t)) \, \overline{G}(\epsilon_t - \epsilon) \, \frac{\partial \cos \epsilon}{\partial x_q} \, d\epsilon \Bigg] \cdot \ \frac{  1  }{  \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} \, \overline{G}(\epsilon_t - \epsilon) \, \cos \epsilon \, d\epsilon  }.
+\end{eqnarray*}
+where $x_q$ is a state vector element and $I \equiv I(\vx(\epsilon_t))$.
+
+
+\subsection*{Geometric Quantities}
+
+
+Notation: $H = h + H^{\oplus}$.
+$H^s$ is the satellite height.
+
+\begin{eqnarray}
+\sin \epsilon \ = \ \bigg( \frac{h+H^{\oplus}}{H^s} \bigg),
+\label{eqn:AR_sinepsilon}
+\end{eqnarray}
+\begin{eqnarray}
+\epsilon &=& \sin^{-1} \bigg( \frac{h+H^{\oplus}}{H^s} \bigg),
+\label{eqn:AR_epsilon}
+\end{eqnarray}
+\begin{eqnarray}
+\frac{d\epsilon}{dh} &=& \frac{1}{\sqrt{1- \big( \frac{h+H^{\oplus}}{H^s} \big)^2}} \cdot \frac{1}{H^s} = \frac{1}{H^s \cos \epsilon}.
+\label{eqn:AR_depsilon_dh}
+\end{eqnarray}
+To convert to pressure integration coordinates:
+\begin{eqnarray*}
+d\epsilon &=& \frac{d\epsilon}{dh} \frac{dh}{d\zeta} d\zeta.
+\end{eqnarray*}
+
+
+
+\subsection{Mixing Ratios Antenna Radiance Jacobian}
+
+
+Since molecular concentrations have no effect on tangent pressure, we have $\partial \epsilon / \partial f_q^k = 0$ and $\partial \cos \epsilon / \partial f_q^k = - \sin \epsilon \, (\partial \epsilon / \partial f_q^k) = 0$, and mixing ratios antenna radiance Jacobian becomes
+\begin{eqnarray*}
+\frac{\partial I^A}{\partial f_q^k} &=& \frac{ \displaystyle \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} \frac{\partial I(\epsilon)}{\partial f_q^k} \, \overline{G}(\epsilon_t - \epsilon) \, \cos \epsilon \, d\epsilon } { \displaystyle \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} \, \overline{G}(\epsilon_t - \epsilon) \, \cos \epsilon \, d\epsilon }.
+\end{eqnarray*}
+However, we do not integrate over the entire range:
+\begin{eqnarray*}
+\frac{\partial I^A}{\partial f_q^k} &=& \frac{ \displaystyle \int_{\epsilon_t - \epsilon_0}^{\epsilon_t + \epsilon_0} \frac{\partial I(\epsilon)}{\partial f_q^k} \, \overline{G}(\epsilon_t - \epsilon) \, \cos (\epsilon_t - \epsilon) \, d(\epsilon_t - \epsilon) }{  \displaystyle \int_{\epsilon_t - \epsilon_0}^{\epsilon_t + \epsilon_0} \, \overline{G}(\epsilon_t - \epsilon) \, \cos (\epsilon_t - \epsilon)  \, d(\epsilon_t - \epsilon)  }.
+\end{eqnarray*}
+
+
+\subsection{Mixing Ratios Antenna Radiance Hessian}
+
+
+Since molecular concentrations have no effect on tangent pressure, we have $\partial \epsilon / \partial f_q^k = 0$ and $\partial \cos \epsilon / \partial f_q^k = - \sin \epsilon \, (\partial \epsilon / \partial f_q^k) = 0$, and mixing ratios antenna radiance Hessian becomes
+\begin{eqnarray*}
+\frac{\partial^2 I^A}{\partial f_q^k \partial f_{\tilde{q}}^k} &=& \frac{ \displaystyle \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} \frac{\partial^2 I(\epsilon)}{\partial f_q^k \partial f_{\tilde{q}}^k} \, \overline{G}(\epsilon_t - \epsilon) \, \cos \epsilon \, d\epsilon }{ \displaystyle \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} \, \overline{G}(\epsilon_t - \epsilon) \, \cos \epsilon \, d\epsilon }.
+\end{eqnarray*}
+However, we do not integrate over the entire range:
+\begin{eqnarray*}
+\frac{\partial^2 I^A}{\partial f_q^k \partial f_{\tilde{q}}^k} &=& \frac { \displaystyle \int_{\epsilon_t - \epsilon_0}^{\epsilon_t + \epsilon_0} \frac{\partial^2 I(\epsilon)}{\partial f_q^k \partial f_{\tilde{q}}^k} \, \overline{G}(\epsilon_t - \epsilon) \, \cos (\epsilon_t - \epsilon) \, d(\epsilon_t - \epsilon) }{ \displaystyle \displaystyle \int_{\epsilon_t - \epsilon_0}^{\epsilon_t + \epsilon_0} \, \overline{G}(\epsilon_t - \epsilon) \, \cos (\epsilon_t - \epsilon)  \, d(\epsilon_t - \epsilon) }.
+\end{eqnarray*}
+
+
+\subsection{Temperature Antenna Radiance Jacobian}
+
+
+Temperature antenna radiance Jacobian:
+\begin{eqnarray*}
+\frac{\partial I^A}{\partial \tq} &=& \frac{\partial}{\partial \tq}  \frac{ \displaystyle \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} I(\epsilon) \, \overline{G}(\epsilon_t - \epsilon) \, \cos \epsilon \, d\epsilon }{ \displaystyle \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} \overline{G}(\epsilon_t - \epsilon) \, \cos \epsilon \, d\epsilon }.
+\end{eqnarray*}
+
+
+\subsubsection*{Derivation}
+
+
+The antenna temperature derivative can be written as
+\begin{eqnarray*}
+\begin{array}[c]{l}
+\displaystyle \frac{\partial I^A}{\partial \tq} \ = \ \frac{\partial}{\partial \tq}  \frac{ \displaystyle \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} I(\epsilon) \, \overline{G}(\epsilon_t - \epsilon) \, \cos \epsilon \, d\epsilon }{ \displaystyle \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} \overline{G}(\epsilon_t - \epsilon) \, \cos \epsilon \, d\epsilon } \\
+\displaystyle \ \ \ \ \ \ \ \ \ = \ \frac{\partial}{\partial \tq}  \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} I(\epsilon) \, \overline{G}(\epsilon_t - \epsilon) \, \cos \epsilon \, d\epsilon  
+\ \cdot  \  \frac{  1  }{ \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} \overline{G}(\epsilon_t - \epsilon) \, \cos \epsilon \, d\epsilon   }  \\
+\displaystyle \ \ \ \ \ \ \ \ \ - \  \frac{\partial}{\partial \tq}  \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} \overline{G}(\epsilon_t - \epsilon) \, \cos \epsilon \, d\epsilon   
+\ \cdot \ \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} I(\epsilon) \, \overline{G}(\epsilon_t - \epsilon) \, \cos \epsilon \, d\epsilon 
+\ \cdot \ \frac{  1  }{  \Big[ \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} \, \overline{G}(\epsilon_t - \epsilon) \, \cos \epsilon \, d\epsilon \Big]^2  } ,
+\end{array}
+\end{eqnarray*}
+or
+\begin{eqnarray}
+\begin{array}[c]{l}
+\displaystyle \frac{\partial I^A}{\partial \tq} \ = \ \Bigg[  \underbrace{ \frac{\partial}{\partial \tq}  \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} I(\epsilon) \, \overline{G}(\epsilon_t - \epsilon) \, \cos \epsilon \, d\epsilon }_{\mbox{\ding{192}}} \\
+\displaystyle \ \ \ \ \ \ \ \ \ \ \ \ \ \ - \  I^A(\epsilon_t) \ \cdot \ \underbrace{ \frac{\partial}{\partial \tq}  \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} \overline{G}(\epsilon_t - \epsilon) \, \cos \epsilon \, d\epsilon }_{\mbox{\ding{193}}}  \Bigg]  
+\ \cdot \ \frac{  1  }{  \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} \, \overline{G}(\epsilon_t - \epsilon) \, \cos \epsilon \, d\epsilon  }.
+\end{array}
+\label{eqn:AR_TemperatureDerivative}
+\end{eqnarray}
+The first term in (\ref{eqn:AR_TemperatureDerivative}) can be written as
+\begin{eqnarray*}
+\mbox{\ding{192}} = \frac{\partial}{\partial \tq}  \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} I(\epsilon) \, \overline{G}(\epsilon_t - \epsilon) \, \cos \epsilon \, d\epsilon \ = \ \underbrace{ \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} \frac{\partial I (\epsilon)}{\partial \tq} \, \overline{G}(\epsilon_t - \epsilon) \, \cos \epsilon \, d\epsilon }_{\mbox{\ding{182}}} + \underbrace{ \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} I(\epsilon) \, \frac{\partial \overline{G}(\epsilon_t - \epsilon)}{\partial \tq} \, \cos \epsilon \, d\epsilon }_{\mbox{\ding{183}}}  \\
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ + \underbrace{ \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}}  I (\epsilon) \, \overline{G}(\epsilon_t - \epsilon) \, \frac{\partial \cos \epsilon}{\partial \tq} \, d\epsilon }_{\mbox{\ding{184}}}  + \underbrace{ \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}}  I (\epsilon) \, \overline{G}(\epsilon_t - \epsilon) \, \cos \epsilon \, \frac{\partial}{\partial \tq} \, d\epsilon }_{\mbox{\ding{185}}}.
+\end{eqnarray*}
+\ \\
+In order to derive an expression for \mbox{\ding{183}}, we use equations (\ref{eqn:AR_sinepsilon}) - (\ref{eqn:AR_depsilon_dh}) to write the following quantities:\footnote{An expression for $\displaystyle \frac{dH}{d\tq}$ is given by equation (\ref{eqn:dh_dtq}).}
+\begin{eqnarray*}
+\frac{d\epsilon}{d \tq} &=& \frac{d\epsilon}{dH} \frac{dH}{d\tq} \ = \ \frac{1}{H^s \cos \epsilon} \frac{dH}{d\tq} \ = \ \frac{\tan \epsilon}{H} \frac{dH}{d\tq}, \\
+\frac{\partial \overline{G}(\epsilon_t - \epsilon)}{\partial \tq} &=& \frac{d \overline{G}(\epsilon_t - \epsilon)}{d(\epsilon_t - \epsilon)} \frac{d(\epsilon_t - \epsilon)}{d \tq} \ = \ \frac{d \overline{G}(\epsilon_t - \epsilon)}{d(\epsilon_t - \epsilon)} \cdot \bigg[ \frac{d\epsilon_t}{dh_t} \frac{dh_t}{d\tq} - \frac{d\epsilon}{dh} \frac{dh}{d\tq}  \bigg] \\
+&=& \frac{d \overline{G}(\epsilon_t - \epsilon)}{d(\epsilon_t - \epsilon)} \cdot \bigg[ \frac{\tan \epsilon_t}{H_t} \frac{dH_t}{d\tq} - \frac{\tan \epsilon}{H} \frac{dH}{d\tq}  \bigg].
+\end{eqnarray*}
+Thus, 
+\begin{eqnarray*}
+\mbox{\ding{183}} \ = \ \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} I(\epsilon) \, \frac{\partial \overline{G}(\epsilon_t - \epsilon)}{\partial \tq} \, \cos \epsilon \, d\epsilon \ = \ \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} I(\epsilon) \,\frac{d \overline{G}(\epsilon_t - \epsilon)}{d(\epsilon_t - \epsilon)} \cdot \bigg[ \frac{\tan \epsilon_t}{H_t} \frac{dH_t}{d\tq} - \frac{\tan \epsilon}{H} \frac{dH}{d\tq}  \bigg] \, \cos \epsilon \, d\epsilon. \ \ \ \checkmark
+\end{eqnarray*}
+\ \\
+In order to derive an expression for \mbox{\ding{184}}, we solve for
+\begin{eqnarray*}
+\frac{d \cos \epsilon}{d \tq} & = & -\sin \epsilon \frac{d \epsilon}{d \tq} = -\sin \epsilon \frac{\tan \epsilon}{H} \frac{dH}{d \tq} \ = \ -\frac{\tan^2 \epsilon}{H} \frac{dH}{d \tq} \cos \epsilon.
+\end{eqnarray*}
+Thus, 
+\begin{eqnarray*}
+\mbox{\ding{184}} \ = \ \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}}  I (\epsilon) \, \overline{G}(\epsilon_t - \epsilon) \, \frac{\partial \cos \epsilon}{\partial \tq} \, d\epsilon \ = \ -\int_{-\frac{\pi}{2}}^{\frac{\pi}{2}}  I (\epsilon) \, \overline{G}(\epsilon_t - \epsilon) \, \frac{\tan^2 \epsilon}{H} \frac{dH}{d \tq} \cos \epsilon \, d\epsilon. \ \ \ \checkmark
+\end{eqnarray*}
+\ \\
+In order to derive an expression for \mbox{\ding{185}}, we solve for
+\begin{eqnarray*}
+\frac{d}{d \tq} d\epsilon & = & \frac{d}{d \tq} \frac{d\epsilon}{dh} \frac{dh}{d\zeta} d\zeta \ = \ \bigg[ \frac{d^2 \epsilon}{d\tq dh} \frac{dh}{d\zeta} + \frac{d \epsilon}{dh} \frac{d^2h}{d\tq d\zeta}  \bigg] d\zeta,
+\end{eqnarray*}
+where
+\begin{eqnarray*}
+\frac{d^2 \epsilon}{d\tq dh} & = & \frac{d}{d\tq} \bigg[ \frac{1}{H^s \cos \epsilon}  \bigg] = \frac{\sin \epsilon}{H^s \cos^2 \epsilon} \frac{d\epsilon}{d\tq} =  \frac{\sin \epsilon}{H^s \cos^2 \epsilon} \frac{d\epsilon}{d\tq} = \frac{\sin \epsilon}{H^s \cos^2 \epsilon} \frac{\tan \epsilon}{H} \frac{dH}{d\tq} \\
+&=& \frac{\tan^2 \epsilon}{H^s H \cos \epsilon} \frac{dH}{d\tq} \ = \ \frac{\tan^2 \epsilon}{H} \frac{dH}{d\tq} \frac{d\epsilon}{dh}.
+\end{eqnarray*}
+From (\ref{eqn:dh_dzeta}), we have
+%\scriptsize 
+\begin{eqnarray*}
+\frac{d^2 h}{d\tq d\zeta} &=& \frac{d}{d\tq}  \bigg[ \frac{ g {H^{\oplus}}^2 k \log 10 \sum \tq \eta_q}{m \big[ g H^{\oplus} - k \log 10 \sum_{q=1}^Q \tq P_q(\zeta) \big]^2 } \bigg] \\
+\ \\
+&=& \frac{ \big[ g H^{\oplus} - k \log 10 \sum_{q=1}^Q \tq P_q(\zeta) \big]^2 g {H^{\oplus}}^2 k \, \eta_q \log 10 }{ } \\
+&& \ \ \ \ \ \ \ \frac{ \ \ \ \ \ \ \ \ \ + \ 2 g {H^{\oplus}}^2 (k \log 10)^2 P_q \sum \tq \eta_q  \big[ g H^{\oplus} - k \log 10 \sum_{q=1}^Q \tq P_q(\zeta) \big] }{m \big[ g H^{\oplus} - k \log 10 \sum_{q=1}^Q \tq P_q(\zeta) \big]^4 } \\
+\ \\
+&=& \frac{ g {H^{\oplus}}^2 k \, \eta_q \log 10 }{m \big[ g H^{\oplus} - k \log 10 \sum_{q=1}^Q \tq P_q(\zeta) \big]^2 } \ + \ \frac{ 2 g {H^{\oplus}}^2 (k \log 10)^2 T P_q  \big[ g H^{\oplus} - k \log 10 \sum_{q=1}^Q \tq P_q(\zeta) \big] }{m \big[ g H^{\oplus} - k \log 10 \sum_{q=1}^Q \tq P_q(\zeta) \big]^4 } \\
+\ \\
+&=& \frac{ g {H^{\oplus}}^2 k \, \eta_q \log 10 }{m \big[ g H^{\oplus} - k \log 10 \sum_{q=1}^Q \tq P_q(\zeta) \big]^2 } \ + \ \frac{ 2 g^2 {H^{\oplus}}^4 (k \log 10)^2 T P_q }{H m \big[ g H^{\oplus} - k \log 10 \sum_{q=1}^Q \tq P_q(\zeta) \big]^4 } \\
+\ \\
+&& \ \ \ \small \Big( \mbox{ hydrostatic balance, $1 = \frac{ g {H^{\oplus}}^2 }{ H \big[ g H^{\oplus} - k \log 10 \sum_{q=1}^Q \tq P_q \big] } $ } \Big) \\
+\ \\
+&=& \frac{ g {H^{\oplus}}^2 k T \log 10 }{m \big[ g H^{\oplus} - k \log 10 \sum_{q=1}^Q \tq P_q(\zeta) \big]^2 } \cdot \frac{\eta_q}{T} \\
+&& + \frac{2}{H}  \frac{ g {H^{\oplus}}^2 k \log 10 \, T}{m \big[ g H^{\oplus} - k \log 10 \sum_{q=1}^Q \tq P_q(\zeta) \big]^2 }  \cdot   \frac{ g {H^{\oplus}}^2 k \log 10 \, P_q }{\big[ g H^{\oplus} - k \log 10 \sum_{q=1}^Q \tq P_q(\zeta) \big]^2} \\
+\ \\
+&=& \frac{dh}{d\zeta} \cdot \frac{\eta_q}{T} + \frac{2}{H} \frac{dh}{d\zeta} \frac{dh}{d\tq}.
+\end{eqnarray*}
+%\normalsize
+Hence,
+\begin{eqnarray*}
+\frac{d}{d \tq} d\epsilon &=& \bigg[ \frac{d^2 \epsilon}{d\tq dh} \frac{dh}{d\zeta} + \frac{d \epsilon}{dh} \frac{d^2h}{d\tq d\zeta}  \bigg] d\zeta \\
+&=& \bigg[ \frac{\tan^2 \epsilon}{H} \frac{dH}{d\tq} \frac{d\epsilon}{dh} \frac{dh}{d\zeta} +  \frac{d \epsilon}{dh} \Big[ \frac{dh}{d\zeta} \cdot \frac{\eta_q}{T} + \frac{2}{H} \frac{dh}{d\zeta} \frac{dh}{d\tq} \Big]  \bigg] \frac{d\zeta}{dh} \frac{dh}{d\epsilon} d\epsilon \\
+&=& \bigg[ \frac{\tan^2 \epsilon}{H} \frac{dH}{d\tq} + \Big[ \frac{\eta_q}{T} + \frac{2}{H} \frac{dh}{d\tq} \Big]  \bigg] d\epsilon \\
+&=& \bigg[ \frac{2 + \tan^2 \epsilon}{H} \frac{dh}{d\tq} + \frac{\eta_q}{T} \bigg] d\epsilon.
+\end{eqnarray*}
+Thus,
+\begin{eqnarray*}
+\mbox{\ding{185}} &=& \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}}  I (\epsilon) \, \overline{G}(\epsilon_t - \epsilon) \, \cos \epsilon \, \frac{\partial}{\partial \tq} \, d\epsilon \ = \ \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}}  I (\epsilon) \, \overline{G}(\epsilon_t - \epsilon) \, \cos \epsilon \, \bigg[ \frac{2 + \tan^2 \epsilon}{H} \frac{dh}{d\tq} + \frac{\eta_q}{T} \bigg] d\epsilon. \ \ \ \checkmark
+\end{eqnarray*}
+Therefore,
+\begin{eqnarray*}
+\mbox{\ding{192}} = \frac{\partial}{\partial \tq}  \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} I(\epsilon) \, \overline{G}(\epsilon_t - \epsilon) \, \cos \epsilon \, d\epsilon &=& \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} \frac{\partial I(\epsilon)}{\partial f_q^T} \, \overline{G}(\epsilon_t - \epsilon) \, \cos \epsilon \, d\epsilon \\
+&&+ \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} I(\epsilon) \frac{d\overline{G}(\epsilon_t - \epsilon)}{d(\epsilon_t - \epsilon)} \bigg[ \frac{\tan \epsilon_t}{H_t} \frac{dH_t}{df_q^T} - \frac{\tan \epsilon}{H}  \frac{dH}{df_q^T} \bigg] \cos \epsilon \, d\epsilon \\
+&&- \ \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} I(\epsilon) \overline{G}(\epsilon_t - \epsilon) \frac{\tan^2 \epsilon}{H} \frac{dH}{df_q^T} \cos \epsilon \, d\epsilon \\
+&&+ \ \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} I(\epsilon) \overline{G}(\epsilon_t - \epsilon) \cos \epsilon \bigg[ \frac{2 + \tan^2 \epsilon}{H} \frac{dh}{df_q^T} + \frac{\eta_q}{T} \bigg] \, d\epsilon \\
+\ \\
+\ \\
+&=& \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} \bigg( \frac{\partial I}{\partial f_q^T} + I(\epsilon) \cdot \Big( \frac{2}{H} \frac{dh}{df_q^T} + \frac{\eta_q}{T} \Big) \bigg) \, \overline{G}(\epsilon_t - \epsilon) \, \cos \epsilon \, d\epsilon \\
+&&+ \ \frac{\tan \epsilon_t}{H_t} \frac{dH_t}{df_q^T} \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} I(\epsilon) \frac{d\overline{G}(\epsilon_t - \epsilon)}{d(\epsilon_t - \epsilon)} \, \cos \epsilon \, d\epsilon \\
+&&- \ \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} I(\epsilon) \frac{d\overline{G}(\epsilon_t - \epsilon)}{d(\epsilon_t - \epsilon)} \frac{\tan \epsilon}{H} \frac{dH}{df_q^T} \cos \epsilon \, d\epsilon.
+\end{eqnarray*}
+
+
+The second term in (\ref{eqn:AR_TemperatureDerivative}) can be written as \footnote{Note that this is equivalent to \ding{192} with $I(\epsilon) = 1$.}
+\begin{eqnarray*}
+\mbox{\ding{193}} \ = \ \frac{\partial}{\partial \tq}  \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} \, \overline{G}(\epsilon_t - \epsilon) \, \cos \epsilon \, d\epsilon  &=& \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}}  \frac{\partial \overline{G}(\epsilon_t - \epsilon)}{\partial \tq} \, \cos \epsilon \, d\epsilon \\
+&& +  \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}}  \overline{G}(\epsilon_t - \epsilon) \, \frac{\partial \cos \epsilon}{\partial \tq} \, d\epsilon + \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}}  \overline{G}(\epsilon_t - \epsilon) \, \cos \epsilon \, \frac{\partial}{\partial \tq} \, d\epsilon \\
+&=& \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} \bigg( \frac{2}{H} \frac{dh}{df_q^T} + \frac{\eta_q}{T} \bigg) \, \overline{G}(\epsilon_t - \epsilon) \, \cos \epsilon \, d\epsilon \\
+&&+ \ \frac{\tan \epsilon_t}{H_t} \frac{dH_t}{df_q^T} \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} \frac{d\overline{G}(\epsilon_t - \epsilon)}{d(\epsilon_t - \epsilon)} \, \cos \epsilon \, d\epsilon \\
+&&- \ \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} \frac{d\overline{G}(\epsilon_t - \epsilon)}{d(\epsilon_t - \epsilon)} \frac{\tan \epsilon}{H} \frac{dH}{df_q^T} \cos \epsilon \, d\epsilon.
+\end{eqnarray*}
+
+
+\pagebreak
+
+
+The antenna radiance temperature Jacobian, defined in equation (\ref{eqn:AR_TemperatureDerivative}), can be written as
+\begin{eqnarray*}
+\frac{\partial I^A (\epsilon_t)}{\partial f_q^T} &=& \Bigg[   \int \bigg( \frac{\partial I}{\partial f_q^T} + \big( I(\epsilon) - I^A(\epsilon_t) \big) \cdot \Big( \frac{2}{H} \frac{dh}{df_q^T} + \frac{\eta_q}{T} \Big) \bigg) \, \overline{G}(\epsilon_t - \epsilon) \, \cos \epsilon \, d\epsilon \\
+&&+ \ \frac{\tan \epsilon_t}{H_t} \frac{dH_t}{df_q^T} \int \big( I(\epsilon) - I^A(\epsilon_t) \big) \frac{d\overline{G}(\epsilon_t - \epsilon)}{d(\epsilon_t - \epsilon)} \, \cos \epsilon \, d\epsilon \\
+&&- \ \int \big( I(\epsilon) - I^A(\epsilon_t) \big) \frac{d\overline{G}(\epsilon_t - \epsilon)}{d(\epsilon_t - \epsilon)} \frac{\tan \epsilon}{H} \frac{dH}{df_q^T} \cos \epsilon \, d\epsilon   \Bigg] \ \cdot \ \frac{  1  }{  \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}} \, \overline{G}(\epsilon_t - \epsilon) \, \cos \epsilon \, d\epsilon  },
+\end{eqnarray*}
+where $I^A(\epsilon_t)$ is antenna radiance defined in (\ref{eqn:AR_IA}).
+
+
+\subsubsection*{Simplified equation}
+
+We assume no $\cos \epsilon$ and no normalization.  Hence, the antenna radiance temperature Jacobian can be written as:
+\begin{eqnarray*}
+\frac{\partial I^A (\epsilon_t)}{\partial f_q^T} &=& \int \bigg( \frac{\partial I}{\partial f_q^T} + (I(\epsilon)-I^A (\epsilon_t)) \cdot \Big( \frac{2 + \tan^2 \epsilon}{H} \frac{dh}{df_q^T} + \frac{\eta_q}{T} \Big) \bigg) \, \overline{G}(\epsilon_t - \epsilon) \, d\epsilon \\
+&&+ \ \frac{\tan \epsilon_t}{H_t} \frac{dH_t}{df_q^T} \int (I(\epsilon)-I^A (\epsilon_t)) \frac{d\overline{G}(\epsilon_t - \epsilon)}{d(\epsilon_t - \epsilon)} \, d\epsilon \\
+&&- \ \int (I(\epsilon)-I^A (\epsilon_t)) \frac{d\overline{G}(\epsilon_t - \epsilon)}{d(\epsilon_t - \epsilon)} \frac{\tan \epsilon}{H} \frac{dH}{df_q^T} \, d\epsilon.
+\end{eqnarray*}
+
+
+\pagebreak
+
+% $Id:  $
+@

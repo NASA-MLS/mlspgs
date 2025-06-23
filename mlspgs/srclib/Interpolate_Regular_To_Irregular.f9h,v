@@ -1,0 +1,189 @@
+head	1.3;
+access;
+symbols
+	v5-02-NRT-19:1.3
+	v6-00:1.3
+	v5-02-NRT-18:1.3
+	v5-02:1.3
+	v5-01-NRT-17:1.3
+	v5-01-NRT-16:1.3
+	v5-01-NRT-15:1.3
+	v5-01-NRT-14:1.3
+	neuralnetworks-1-0:1.3.0.12
+	cfm-single-freq-0-1:1.3.0.10
+	v5-01:1.3
+	v5-00:1.3
+	v4-23-TA133:1.3.0.8
+	mus-emls-1-70:1.3.0.6
+	rel-1-0-englocks-work:1.3.0.4
+	VUMLS1-00:1.3
+	VPL1-00:1.3
+	V4-22-NRT-08:1.3
+	VAM1-00:1.3
+	V4-21:1.3.0.2
+	V4-13:1.3
+	V4-12:1.3
+	V4-11:1.3
+	V4-10:1.3
+	M4-00:1.3;
+locks; strict;
+comment	@# @;
+
+
+1.3
+date	2013.02.14.21.40.16;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2013.02.01.21.25.09;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2012.12.20.01.02.39;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@Fixed another bug causing crashes
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id: Interpolate_Regular_To_Irregular.f9h,v 1.2 2013/02/01 21:25:09 vsnyder Exp $
+
+! subroutine Interpolate_Regular_To_Irregular_r* ( XOld, YOld, ZOld, &
+!   & XNew, YNew, ZNew )
+    ! Given XOld, YOld, ZOld, XNew, YNew, interpolate to ZNew.
+    ! The shape of ZOld must be (size(xOld),size(yOld)).
+    ! The shape of ZNew must be the same as Xnew and Ynew
+    ! The only method supported is linear with constant extrapolation.
+!   real(rk), intent(in) :: XOld(:)
+!   real(rk), intent(in) :: YOld(:)
+!   real(rk), intent(in) :: ZOld(:,:)
+!   real(rk), intent(in) :: XNew(:,:), YNew(:,:)
+!   real(rk), intent(out) :: ZNew(:,:)
+
+  real(rk) :: DX(2), DY(2) ! Interpolation factors.  Xi, Eta in wvs-083.
+  integer, dimension(merge(0,size(zNew,1),size(xOld)==1),size(zNew,2)) :: HX, HY
+  integer :: I, IX, IY, J
+
+  ! Unlike the Interpolate_2d_Composite case, there is no point to
+  ! precompute a coefficients array and use it in each loop because the
+  ! coordinates in xNew are unique.
+
+  if ( size(xOld) == 1 ) then
+    ! Interpolate the only column of zOld onto every column of zNew.
+    ! There's only one X with one column of zOld, so we only interpolate in Y
+    do i = lbound(yNew,1), uBound(yNew,1)
+      call interpolateValues ( yOld, zOld(:,1), yNew(i,:), zNew(i,:), &
+        & Method='Linear', Extrapolate='Constant' )
+    end do
+  else
+    ! Get hunt indices
+    do j = 1, size(xNew,2)
+      call hunt ( xOld, xNew(:,j), hx(:,j), allowTopValue=.true., allowBelowValue=.true. )
+    end do
+    do i = 1, size(yNew,1)
+      call hunt ( yOld, yNew(i,:), hy(i,:), allowTopValue=.true., allowBelowValue=.true. )
+    end do
+    ! Interpolate to zNew.  See wvs-083.  zOld here is z^T in wvs-083.
+    do i = 1, size(xNew,1)
+      do j = 1, size(xNew,2)
+        ix = hx(i,j)
+        iy = hy(i,j)
+        if ( ix < 1 ) then
+          dx(1) = 1 ! Constant extrapolation
+        else if ( ix > size(xOld) ) then
+          dx(1) = 0 ! Constant extrapolation
+        else
+          dx(1) = ( xNew(i,j) - xOld(ix) ) / ( xOld(ix+1) - xOld(ix) )
+        end if
+        if ( iy < 1 ) then
+          dy(1) = 1 ! Constant extrapolation
+        else if ( iy > size(yOld) ) then
+          dy(1) = 0 ! Constant extrapolation
+        else
+          dy(1) = ( yNew(i,j) - yOld(iy) ) / ( yOld(iy+1) - yOld(iy) )
+        end if
+        dx(2) = 1.0 - dx(1)
+        dy(2) = 1.0 - dy(1)
+        ix = max(1, min(ix, size(xOld)-1) ) ! Constant extrapolation
+        iy = max(1, min(iy, size(yOld)-1) ) ! Constant extrapolation
+        zNew(j,i) = &
+          & dy(1) * ( dx(1) * zOld(iy,ix)   + dx(2) * zOld(iy,ix+1)   ) + &
+          & dy(2) * ( dx(1) * zOld(iy+1,ix) + dx(2) * zOld(iy+1,ix+1) )
+      end do
+    end do
+
+  end if
+
+! end subroutine Interpolate_Regular_To_Irregular_r*
+
+! $Log: Interpolate_Regular_To_Irregular.f9h,v $
+! Revision 1.2  2013/02/01 21:25:09  vsnyder
+! Correct incorrect subscript order for zOld, zNew
+!
+! Revision 1.1  2012/12/20 01:02:39  vsnyder
+! Initial commit
+!
+@
+
+
+1.2
+log
+@Correct incorrect subscript order for zOld, zNew
+@
+text
+@d12 1
+a12 1
+! $Id: Interpolate_Regular_To_Irregular.f9h,v 1.1 2012/12/20 01:02:39 vsnyder Exp $
+d37 1
+a37 1
+    do i = 1, size(yNew)
+d83 3
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d12 1
+a12 1
+! $Id: $
+d15 2
+a16 2
+!   & XYNew, ZNew )
+    ! Given XOld, YOld, ZOld, XYNew, interpolate to ZNew.
+d20 5
+d38 1
+a38 1
+      call interpolateValues ( yOld, zOld(1,:), yNew(i,:), zNew(i,:), &
+d72 3
+a74 3
+        zNew(i,j) = &
+          & dy(1) * ( dx(1) * zOld(ix,iy)   + dx(2) * zOld(ix+1,iy)   ) + &
+          & dy(2) * ( dx(1) * zOld(ix,iy+1) + dx(2) * zOld(ix+1,iy+1) )
+d82 4
+a85 1
+! $Log: $
+@
+

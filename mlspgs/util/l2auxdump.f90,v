@@ -1,0 +1,1932 @@
+head	1.25;
+access;
+symbols
+	v5-02-NRT-19:1.25
+	v6-00:1.25
+	v5-02-NRT-18:1.25
+	v5-02:1.25
+	v5-01-NRT-17:1.25
+	v5-01-NRT-16:1.25
+	v5-01-NRT-15:1.25
+	v5-01-NRT-14:1.25
+	neuralnetworks-1-0:1.25.0.6
+	cfm-single-freq-0-1:1.25.0.4
+	v5-01:1.25
+	v5-00:1.25
+	v4-23-TA133:1.25.0.2
+	mus-emls-1-70:1.24.0.4
+	rel-1-0-englocks-work:1.24.0.2
+	VUMLS1-00:1.23
+	VPL1-00:1.23
+	V4-22-NRT-08:1.22
+	VAM1-00:1.19
+	V4-21:1.18.0.2
+	V4-13:1.17
+	V4-12:1.17
+	V4-11:1.17
+	V4-10:1.17
+	V3-43:1.10
+	M4-00:1.14
+	V3-41:1.10
+	V3-40-PlusGM57:1.10.0.2
+	V2-24-NRT-04:1.5
+	V3-33:1.13
+	V2-24:1.5
+	V3-31:1.13
+	V3-30-NRT-05:1.12
+	cfm-01-00:1.11
+	V3-30:1.10
+	V3-20:1.10
+	V3-10:1.8
+	V2-23-NRT-02:1.5
+	V2-23:1.5
+	V2-22-NRT-01:1.5
+	V2-22:1.5
+	V2-21:1.4
+	V2-20:1.3
+	V2-11:1.3
+	V2-10:1.3;
+locks; strict;
+comment	@# @;
+
+
+1.25
+date	2019.02.15.00.08.51;	author pwagner;	state Exp;
+branches;
+next	1.24;
+
+1.24
+date	2017.12.01.00.28.06;	author pwagner;	state Exp;
+branches;
+next	1.23;
+
+1.23
+date	2016.08.09.22.45.26;	author pwagner;	state Exp;
+branches;
+next	1.22;
+
+1.22
+date	2016.04.05.23.57.38;	author pwagner;	state Exp;
+branches;
+next	1.21;
+
+1.21
+date	2016.01.22.00.38.04;	author pwagner;	state Exp;
+branches;
+next	1.20;
+
+1.20
+date	2016.01.12.00.52.12;	author pwagner;	state Exp;
+branches;
+next	1.19;
+
+1.19
+date	2015.04.17.23.03.03;	author pwagner;	state Exp;
+branches;
+next	1.18;
+
+1.18
+date	2015.01.24.00.06.03;	author pwagner;	state Exp;
+branches;
+next	1.17;
+
+1.17
+date	2014.03.07.21.47.21;	author pwagner;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2014.01.09.00.31.26;	author pwagner;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2013.08.23.02.51.47;	author vsnyder;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2012.06.14.00.02.44;	author pwagner;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2011.01.04.00.50.45;	author pwagner;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2010.07.23.17.53.27;	author pwagner;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2010.03.11.23.35.55;	author pwagner;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2009.11.20.23.03.38;	author pwagner;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2009.08.18.20.42.15;	author pwagner;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2009.06.16.22.38.28;	author pwagner;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2009.05.08.17.33.09;	author pwagner;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2008.09.09.16.53.34;	author pwagner;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2007.08.17.00.42.38;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2007.02.06.23.20.19;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2006.07.13.18.11.01;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2006.06.29.20.39.45;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2006.06.28.00.06.54;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.25
+log
+@Added -max commandline option
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=================================
+program l2auxdump ! dumps datasets, attributes from L2AUX files
+!=================================
+
+   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+   use Dates_Module, only: Tai93s2hid
+   use Dump_1, only: Dump
+   use Dump_Options, only: DefaultMaxLon, DefaultWidth, DumpDumpOptions, &
+     & IntPlaces
+   use HDF, only: Dfacc_Read
+   use HDF5, only: H5fis_HDF5_F, H5gclose_F, H5gopen_F
+   use HighOutput, only: Dump
+   use L1BData, only: L1BData_T, NameLen, PrecisionSuffix, &
+     & DeallocateL1BData, ReadL1BData
+   use Machine, only: Hp, Getarg
+   use MLSCommon, only: R8
+   use MLSFiles, only: FileNotFound, &
+     & MLS_Exists, MLS_SFStart, MLS_SFEnd, &
+     & HDFVersion_5, MLS_HDF_Version, WildCardHDFVersion
+   use MLSFillValues, only: IsNaN
+   use MLSHDF5, only: MaxNDSNames, DumpHDF5Attributes, DumpHDF5DS, &
+     & GetAllHDF5AttrNames, GetAllHDF5DSNames, &
+     & MLS_H5Open, MLS_H5Close
+   use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, &
+     & MLSMessage
+   use MLSStats1, only: FillValueRelation, Stat_T, StatsOnOneLine, &
+     & Dump, Statistics
+   use MLSStringLists, only: Catlists, GetStringElement, Intersection, &
+     & NumStringElements, StringElementNum
+   use MLSStrings, only: Indexes, Lowercase, Streq, Trim_Safe
+   use Output_M, only: Output, SwitchOutput
+   use Printit_M, only: Set_Config
+   use Time_M, only: Time_Now, Time_Config
+   
+   implicit none
+
+!---------------------------- RCS Ident Info ------------------------------
+  character (len=*), parameter :: ModuleName= &
+       "$RCSfile: l2auxdump.f90,v $"
+  character (len=*), parameter :: IdParm = &
+       "$Id: l2auxdump.f90,v 1.24 2017/12/01 00:28:06 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+!---------------------------------------------------------------------------
+
+! Brief description of program
+! dumps datasets or attributes from l2aux files
+
+! To use this, copy it into
+! mlspgs/tests/lib
+! then enter "make depends" followed by "make"
+! Then run it
+! LF95.Linux/test [options] [input files]
+
+  type options_T
+    logical             :: verbose            = .false. ! Print (lots) extra
+    logical             :: la                 = .false.
+    logical             :: ls                 = .false.
+    logical             :: anyNaNs            = .false. ! Just say if any NaNs
+    logical             :: printMaxVal        = .false. ! Just print maxval
+    logical             :: timereads          = .false. ! Just time how long to read
+    logical             :: isL1BOA            = .false.
+    logical             :: radiances          = .false.
+    logical             :: TAI                = .false.
+    logical             :: useFillValue       = .false.
+    character(len=16)   :: dumpOptions        = ' '
+    character(len=128)  :: DSName      = '' ! Extra dataset if attributes under one
+    character(len=128)  :: root        = '/'
+    character(len=1024) :: attributes = ''
+    character(len=1024) :: datasets   = '*'
+    character(len=255)  :: skipList= ''  ! what SDs to skip
+    character(len=1)    :: fillValueRelation = '='
+    real                :: fillValue  = 0.e0
+    integer             :: firstMAF = -1
+    integer             :: lastMAF = -1
+    integer             :: width = 10
+  end type options_T
+  
+  type ( options_T ) :: options
+  integer, parameter ::          MAXDS = MAXNDSNAMES
+  integer, parameter ::          MAXSDNAMESBUFSIZE = MAXDS*namelen
+  integer, parameter ::          MAXFILES = 4000
+  integer, parameter ::          hdfVersion = HDFVERSION_5
+  character(len=255) ::          filename          ! input filename
+  character(len=255), dimension(MAXFILES) :: filenames
+  integer     ::                 i, status, error ! Counting indices & Error flags
+  logical     ::                 is_hdf5
+  character (len=MAXSDNAMESBUFSIZE) :: mySdList
+  integer            ::          n_filenames
+  real(r8), dimension(:), pointer :: precisions => null()
+  real(r8), dimension(:), pointer :: radiances => null()
+  integer     ::                 sdfid1
+  real        ::                 t1
+  real        ::                 t2
+  real        ::                 tFile
+  ! 
+  call set_config ( useToolkit = .false., logFileUnit = -1 )
+  call switchOutput( 'stdout' )
+  time_config%use_wall_clock = .true.
+  INTPLACES = '8'
+  DEFAULTMAXLON = 32
+  CALL mls_h5open(error)
+  n_filenames = 0
+  do      ! Loop over filenames
+     call get_filename(filename, n_filenames, options)
+     if ( filename(1:1) == '-' ) cycle
+     if ( filename == ' ' ) exit
+     call h5fis_hdf5_f(trim(filename), is_hdf5, error)
+     if ( .not. is_hdf5 ) then
+       print *, 'Sorry--not recognized as hdf5 file: ', trim(filename)
+       cycle
+     endif
+     n_filenames = n_filenames + 1
+     filenames(n_filenames) = filename
+  enddo
+  if ( n_filenames == 0 ) then
+    if ( options%verbose ) print *, 'Sorry no input files supplied'
+    stop
+  endif
+  if ( options%verbose ) call dumpSettings ( options, n_filenames, filenames ) 
+  if ( options%useFillValue ) then
+    fillValueRelation = options%fillValueRelation
+  endif
+  call time_now ( t1 )
+  do i=1, n_filenames
+    call time_now ( tFile )
+    if ( options%ls ) then
+      print *, 'DS Names in: ', trim(filenames(i)), ' ', trim(options%root)
+      call GetAllHDF5DSNames (trim(filenames(i)), trim(options%root), mysdList)
+      call dump(mysdList, 'DS names')
+    endif 
+    if ( options%la ) then
+      sdfid1 = mls_sfstart(filenames(i), DFACC_READ, hdfVersion=hdfVersion)
+      print *, 'Attribute Names in: ', trim(filenames(i)), ' ', &
+        & trim(options%root) // '/' // trim(options%DSName)
+      if ( options%DSName /= ' ' ) then
+        call GetAllHDF5AttrNames ( sdfid1, mysdList, &
+          & DSName=trim(options%root) // '/' // trim(options%DSName) )
+      else
+        call GetAllHDF5AttrNames ( sdfid1, mysdList, &
+          & groupName=trim(options%root) )
+      endif
+      call dump(mysdList, 'Attribute names')
+      status = mls_sfend(sdfid1, hdfVersion=hdfVersion)
+    endif
+    if ( (options%attributes // options%datasets) == ' ' ) cycle
+    if ( options%verbose .or. n_filenames > 1 ) then
+      print *, 'Reading from: ', trim(filenames(i))
+    endif
+    if ( .not. ( options%radiances .or. options%TAI ) ) then
+      sdfid1 = mls_sfstart( filenames(i), DFACC_READ, hdfVersion=hdfVersion )
+      if ( sdfid1 == -1 ) then
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+        &  'Failed to open l2aux file ' // trim(filenames(i)) )
+      end if
+    end if
+    if ( options%datasets /= ' ' ) then
+      if ( options%radiances .or.  options%TAI .or. options%timereads &
+        & .or. options%anyNaNs .or. options%printMaxVal &
+        & .or. options%firstMAF > 0 ) then
+        call dumpRadiances ( filenames(i), hdfVersion, options )
+        sdfid1 = mls_sfstart( filenames(i), DFACC_READ, hdfVersion=hdfVersion )
+      elseif ( options%useFillValue ) then
+        call DumpHDF5DS ( sdfid1, trim(options%root), trim(options%datasets), &
+          & fillValue=options%fillValue, options=options%dumpOptions )
+      else
+        call DumpHDF5DS ( sdfid1, trim(options%root), trim(options%datasets), &
+          & options=options%dumpOptions )
+      endif
+    endif
+    if ( options%attributes /= ' ' ) then
+      if ( options%DSName /= ' ' ) then
+        call DumpHDF5Attributes ( sdfid1, trim(options%attributes), &
+          & DSName=trim(options%root) // '/' // trim(options%DSName), &
+          & options=options%dumpOptions )
+      else
+        ! print *, 'Trying to dump ', trim(options%attributes), ' from ', trim(options%root)
+        call DumpHDF5Attributes ( sdfid1, trim(options%attributes), &
+          & groupName=trim(options%root), options=options%dumpOptions )
+      endif
+    endif
+    ! print *, 'About to mls_sfend on ', sdfid1
+	 status = mls_sfend(sdfid1, hdfVersion=hdfVersion)
+    if ( options%verbose ) call sayTime('reading this file', tFile)
+  enddo
+  if ( options%verbose .and. .not. ( options%la .or. options%ls ) ) &
+    &  call sayTime('reading all files')
+  call mls_h5close(error)
+contains
+!------------------------- dumpSettings ---------------------
+    subroutine dumpSettings( options, n_filenames, filenames )
+    ! Added for command-line processing
+     integer, intent(in)              :: n_filenames
+     character(len=255), dimension(:) :: filenames
+     type ( options_T ), intent(in)   :: options
+     ! Local variables
+     integer :: i
+     ! print *, 'laconic?            ', options%laconic
+     print *, 'verbose?            ', options%verbose
+     print *, 'list attributes  ?  ', options%la   
+     print *, 'list datasets  ?    ', options%ls
+     print *, 'say if any NaNs?    ', options%anyNaNs
+     print *, 'print max value?    ', options%printMaxVal
+     print *, 'just time reads?    ', options%timereads
+     print *, 'radiances only    ? ', options%radiances
+     print *, 'TAI only          ? ', options%TAI
+     print *, 'useFillValue  ?     ', options%useFillValue
+     print *, 'root                ', trim_safe(options%root)
+     print *, 'fillValue           ', options%fillValue
+     print *, 'fillValueRelation   ', options%fillValueRelation
+     print *, 'first maf           ', options%firstMAF
+     print *, 'last maf            ', options%lastMAF
+     print *, 'width               ', options%width
+     print *, 'DSName              ', trim_safe(options%DSName)
+     print *, 'attributes          ', trim_safe(options%attributes)
+     print *, 'datasets            ', trim_safe(options%datasets)
+     print *, 'num files           ', n_filenames
+     do i=1, n_filenames
+       print *, i, trim(filenames(i))
+     enddo
+    end subroutine dumpSettings
+
+!------------------------- get_filename ---------------------
+    subroutine get_filename(filename, n_filenames, options)
+    ! Added for command-line processing
+     character(LEN=255), intent(out)       :: filename          ! filename
+     integer, intent(in)                   :: n_filenames
+     type ( options_T ), intent(inout) :: options
+     ! Local variables
+     integer ::                         error = 1
+     integer, save ::                   i = 1
+     character(LEN=16)       :: number
+  ! Get inputfile name, process command-line args
+  ! (which always start with -)
+    do
+      call getarg ( i+hp, filename )
+      ! print *, i, ' th Arg: ', trim(filename)
+      error = 0
+      if ( filename(1:1) /= '-' ) exit
+      if ( filename(1:3) == '-h ' ) then
+        call print_help
+      elseif ( filename(1:3) == '-A ' ) then
+        options%attributes = '*'
+        options%datasets = ''
+        exit
+      elseif ( filename(1:3) == '-D ' ) then
+        options%datasets = '*'
+        exit
+      elseif ( filename(1:3) == '-nA ' ) then
+        options%attributes = ''
+        exit
+      elseif ( filename(1:3) == '-nD ' ) then
+        options%datasets = ''
+        exit
+      else if ( filename(1:3) == '-a ' ) then
+        call getarg ( i+1+hp, options%attributes )
+        i = i + 1
+        options%datasets = ''
+        exit
+      else if ( filename(1:3) == '-d ' ) then
+        call getarg ( i+1+hp, options%datasets )
+        i = i + 1
+        exit
+      elseif ( filename(1:3) == '-v ' ) then
+        options%verbose = .true.
+        exit
+      elseif ( filename(1:4) == '-la ' ) then
+        options%la = .true.
+        options%datasets = ''
+        exit
+      elseif ( filename(1:4) == '-ls ' ) then
+        options%ls = .true.
+        options%datasets = ''
+        exit
+      else if ( filename(1:3) == '-r ' ) then
+        call getarg ( i+1+hp, options%root )
+        i = i + 1
+        exit
+      else if ( filename(1:7) == '-first ' ) then
+        call getarg ( i+1+hp, number )
+        read(number, *) options%firstMAF
+        i = i + 1
+        exit
+      else if ( filename(1:6) == '-last ' ) then
+        call getarg ( i+1+hp, number )
+        read(number, *) options%lastMAF
+        i = i + 1
+        exit
+      else if ( filename(1:4) == '-w ' ) then
+        call getarg ( i+1+hp, number )
+        read(number, *) options%width
+        defaultWidth = options%width
+        i = i + 1
+        exit
+      elseif ( filename(1:4) == '-one' ) then
+        statsOnOneLine = .true.
+        options%dumpOptions = trim(options%dumpOptions) // 'v'
+        exit
+      else if ( filename(1:4) == '-fv ' ) then
+        call getarg ( i+1+hp, number )
+        read(number, *) options%fillValue
+        options%useFillValue = .true.
+        i = i + 1
+        exit
+      else if ( filename(1:5) == '-fvr ' ) then
+        call getarg ( i+1+hp, options%fillValueRelation )
+        options%useFillValue = .true.
+        i = i + 1
+        exit
+      else if ( filename(1:3) == '-o ' ) then
+        call getarg ( i+1+hp, options%dumpOptions )
+        if ( index( options%dumpOptions, '?' ) > 0 ) then
+          call DumpDumpOptions( "?" )
+          stop
+        endif
+        i = i + 1
+        exit
+      else if ( filename(1:5) == '-radi' ) then
+        options%radiances = .true.
+        exit
+      else if ( filename(1:4) == '-TAI' ) then
+        options%TAI = .true.
+        exit
+      else if ( filename(1:3) == '-rd ' ) then
+        call getarg ( i+1+hp, options%DSName )
+        i = i + 1
+        exit
+      else if ( filename(1:3) == '-t ' ) then
+        options%timereads = .true.
+        exit
+      else if ( lowercase(filename(1:4)) == '-nan' ) then
+        options%anyNaNs = .true.
+        exit
+      else if ( lowercase(filename(1:4)) == '-max' ) then
+        options%printMaxVal = .true.
+        options%isL1BOA = .true. ! So we don't try to read precisions
+        exit
+      elseif ( filename(1:6) == '-skip ' ) then
+        call getarg ( i+1+hp, options%skipList )
+        i = i + 1
+        exit
+      else if ( filename(1:3) == '-f ' ) then
+        call getarg ( i+1+hp, filename )
+        i = i + 1
+        exit
+      else
+        call print_help
+      end if
+      i = i + 1
+    end do
+    if ( error /= 0 ) then
+      call print_help
+    endif
+    i = i + 1
+    if (trim(filename) == ' ' .and. n_filenames == 0) then
+
+    ! Last chance to enter filename
+      print *,  "Enter the name of the HDF5 l2aux file. "
+      read(*,'(a)') filename
+    endif
+    
+  end subroutine get_filename
+!------------------------- print_help ---------------------
+  subroutine print_help
+  ! Print brief but helpful message
+      write (*,*) &
+      & 'Usage:l2auxdump [options] [filenames]'
+      write (*,*) &
+      & ' If no filenames supplied, you will be prompted to supply one'
+      write (*,*) ' Options:'
+      write (*,*) '  -f filename     => add filename to list of filenames'
+      write (*,*) '                   (can do the same w/o the -f)'
+      write (*,*) '  -v              => switch on verbose mode'
+      write (*,*) '  -w width        => use width when dumping char arrays'
+      write (*,*) '  -la             => just list attribute names in files'
+      write (*,*) '  -ls             => just list sd names in files'
+      write (*,*) '  -skip list      => skip dumping the SDs in list'
+      write (*,*) '  -max            => print just max value'
+      write (*,*) '  -NaN            => just say if there are any NaNs'
+      write (*,*) '  -t              => just time reads'
+      write (*,*) '  -radiances      => show radiances only'
+      write (*,*) '  -TAI            => show TAI times only'
+      write (*,*) '  -o opts         => pass opts to dump routines'
+      write (*,*) '                  e.g., "-rs" to dump only rms, stats'
+      write (*,*) '                  e.g., "?" to list available ones'
+      write (*,*) '  -one            => print statistics on one line (dont)'
+      write (*,*) '  -r root         => limit to group based at root'
+      write (*,*) '                     (default is "/")'
+      write (*,*) '  -rd DSName      => limit attributes to root/DSName'
+      write (*,*) '                     (default is group attributes at root)'
+      write (*,*) '  -first maf1     => read l1b starting with maf1'
+      write (*,*) '  -last maf1      => read l1b ending with maf1'
+      write (*,*) '  -fv value       => filter rms, % around value'
+      write (*,*) '  -fvr relation   => one of {"=","<",">"}'
+      write (*,*) '                      we filter values standing in'
+      write (*,*) '                      this relation with fillValue'
+      write (*,*) '  -A              => dump all attributes'
+      write (*,*) '  -D              => dump all datasets (default)'
+      write (*,*) '  -nA             => do not dump attributes (default)'
+      write (*,*) '  -nD             => do not dump datasets'
+      write (*,*) '  -a a1,a2,..     => dump just attributes named a1,a2,..'
+      write (*,*) '  -d d1,d2,..     => dump just datasets named a1,a2,..'
+      write (*,*) '                 (may use \* as wild card)'
+      write (*,*) '  -h              => print brief help'
+      stop
+  end subroutine print_help
+
+  ! ---------------------- dumpradiances  ---------------------------
+  subroutine dumpradiances( file1, hdfVersion, options )
+  !------------------------------------------------------------------------
+
+    ! Given file names file1,
+    ! This routine prints the radiances based on the pattern
+    ! that if a DS named 'x' is a radiance, then
+    ! the file must also contain 'x precision'
+
+    ! Arguments
+
+    character (len=*), intent(in)     :: file1 ! Name of file
+    integer, intent(in)               :: hdfVersion
+    type ( options_T )                :: options
+
+    ! Local
+    logical, parameter                :: countEmpty = .true.
+    logical                           :: file_exists
+    integer                           :: grpid
+    integer                           :: i
+    integer                           :: iPrec
+    logical                           :: isl1boa
+    type(l1bdata_t)                   :: L1BPrecision  ! Result
+    type(l1bdata_t)                   :: L1BRadiance   ! Result
+    type(Stat_T)                      :: L1BStat
+    character (len=MAXSDNAMESBUFSIZE) :: matches
+    character (len=MAXSDNAMESBUFSIZE) :: mySdList
+    integer                           :: NoMAFs
+    integer                           :: noSds
+    integer                           :: sdfid1
+    character (len=80)                :: sdName
+    integer, dimension(3)             :: shp
+    integer                           :: status
+    integer                           :: the_hdfVersion
+    character (len=80)                :: which
+    
+    ! Executable code
+    if ( .not. any( indexes(options%dumpOptions, (/ 'r', 's' /) ) > 0 ) )  then
+      which = '*'
+    else
+      which = ' '
+      if ( index(options%dumpOptions, 'r') > 0 ) which = 'rms'
+      if ( index(options%dumpOptions, 's') > 0 ) which = catLists( which, 'max,min,mean,stddev' )
+    endif 
+    the_hdfVersion = hdfVersion
+    file_exists = ( mls_exists(trim(File1)) == 0 )
+    if ( .not. file_exists ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'File 1 not found; make sure the name and path are correct' &
+        & // trim(file1) )
+    endif
+    if ( the_hdfVersion == WILDCARDHDFVERSION ) then
+      the_hdfVersion = mls_hdf_version(File1, hdfVersion)
+      if ( the_hdfVersion == FILENOTFOUND ) &
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'File 1 not found; make sure the name and path are correct' &
+          & // trim(file1) )
+    endif
+    call GetAllHDF5DSNames (trim(File1), '/', mysdList)
+    if ( options%verbose ) then
+      call output ( '============ DS names in ', advance='no' )
+      call output ( trim(file1) //' ============', advance='yes' )
+    endif
+    if ( mysdList == ' ' ) then
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & 'No way yet to find sdList in ' // trim(File1) )
+      return
+    else
+      if ( options%verbose ) call dump(mysdList, 'DS names')
+    endif
+
+    options%isl1boa = options%isl1boa .or. (index(trim(mysdList), 'GHz/') > 0)
+    if ( options%isl1boa .and. .not. &
+      & ( &
+      & options%timereads .or. options%anyNaNs .or. options%printMaxVal .or. &
+      & options%TAI .or. options%firstMAF > 0 ) &
+      & ) then
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & 'l1boa file contains no radiances ' // trim(File1) )
+      return
+    endif
+    sdfid1 = mls_sfstart(File1, DFACC_READ, hdfVersion=hdfVersion)
+    if (sdfid1 == -1 ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+      &  'Failed to open l1b file ' // trim(File1) )
+    end if
+	 call h5gOpen_f (sdfid1,'/', grpID, status)
+    if ( status /= 0 ) then
+	   call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          	& 'Unable to open group to read attribute in l2aux file' )
+    endif
+    noSds = NumStringElements(trim(mysdList), countEmpty)
+    if ( noSds < 1 ) then
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & 'No sdNames cp to file--unable to count sdNames in ' // trim(mysdList) )
+    endif
+    ! Loop over sdNames in file 1
+    ! print *, 'Looping over ', noSds
+    do i = 1, noSds
+      call GetStringElement (trim(mysdList), sdName, i, countEmpty )
+      ! print *, trim(sdName)
+      if ( index( lowercase(trim(sdName)), PRECISIONSUFFIX ) > 0 ) cycle
+      if ( options%TAI .and. index( lowercase(trim(sdName)), 'tai' ) < 1 ) cycle
+      iPrec = StringElementNum( mysdList, trim(sdName) // PRECISIONSUFFIX, &
+        & countEmpty )
+      ! print *, iPrec, options%isl1boa
+      if ( iPrec < 1 .and. .not. options%isl1boa ) cycle
+      ! We won't try to dump metadata or obvious non-radiance data
+      if ( any( &
+        & streq( &
+        & (/ 'PCF ', 'meta', 'l2cf', 'utcp', 'leap', 'LCF ' /), &
+        & sdname, options='-Pw' ) ) .or. &
+        &  index(options%skipList, trim(sdName)) > 0 ) cycle
+      ! Did we ask for any datasets by name? With wildcard?
+      if ( len_trim(options%datasets) > 1 .and. &
+        & index( options%datasets, '*' ) > 0 ) then
+        matches = Intersection( trim(sdName), trim(options%datasets), options='-w' )
+        if ( len_trim(matches) < 1 ) cycle
+      elseif ( options%datasets /= '*' ) then
+        status = stringElementNum(options%datasets, trim(sdName), countEmpty)
+        if ( status < 1 ) cycle
+      endif
+      ! Allocate and fill l2aux
+      if ( options%verbose ) print *, 'About to read ', trim(sdName)
+      if ( options%firstMAF > -1 ) then
+        call ReadL1BData ( sdfid1, trim(sdName), L1bRadiance, &
+          & NoMAFs, status, firstMAF=options%firstMAF, lastMAF=options%lastMAF, &
+          & hdfVersion=the_hdfVersion, NEVERFAIL=.true., L2AUX=.true. )
+      else
+        call ReadL1BData ( sdfid1, trim(sdName), L1bRadiance, NoMAFs, status, &
+          & hdfVersion=the_hdfVersion, NEVERFAIL=.true., L2AUX=.true. )
+      endif
+      if ( status /= 0 ) then
+	     call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          & 'Unable to find ' // trim(sdName) // ' in ' // trim(File1) )
+        cycle
+      endif
+      if ( options%isl1boa ) then
+        status = 0 ! No radiance precisions in l1boa
+      else
+        if ( options%verbose ) print *, 'About to read ', trim(sdName) // PRECISIONSUFFIX
+        if ( options%firstMAF > -1 ) then
+          call ReadL1BData ( sdfid1, trim(sdName)  // PRECISIONSUFFIX, L1bPrecision, &
+            & NoMAFs, status, firstMAF=options%firstMAF, lastMAF=options%lastMAF, &
+            & hdfVersion=the_hdfVersion, NEVERFAIL=.true., L2AUX=.true. )
+        else
+          call ReadL1BData ( sdfid1, trim(sdName)  // PRECISIONSUFFIX, L1bPrecision, &
+            & NoMAFs, status, &
+            & hdfVersion=the_hdfVersion, NEVERFAIL=.true., L2AUX=.true. )
+        endif
+      endif
+      if ( status /= 0 ) then
+        call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          & 'Unable to find ' // trim(sdName)  // PRECISIONSUFFIX // &
+          & ' in ' // trim(File1) )
+        cycle
+      elseif ( .not. associated(L1bRadiance%DpField) ) then
+        call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          & 'no f.p. values of ' // trim(sdName)  // &
+          & ' in ' // trim(File1) )
+        cycle
+      endif
+      if ( options%timereads ) cycle
+      if ( options%anyNaNs ) then
+        if ( .not. associated(L1bRadiance%DpField) ) then
+          print *, trim(sdName), ' not d.p. and so not checked'
+        elseif ( any(isNan(L1bRadiance%DpField)) ) then
+          print *, 'NaNs found in ', trim(sdName)
+        elseif ( options%verbose ) then
+          print *, 'no NaNs found in ', trim(sdName)
+        endif
+        cycle
+      elseif ( options%printMaxVal ) then
+        if ( .not. associated(L1bRadiance%DpField) ) then
+          print *, trim(sdName), ' not d.p. and so not checked'
+        elseif ( options%verbose ) then
+          print *, 'max(' // trim(sdName) // ')', &
+            & maxval(L1bRadiance%DpField)
+        else
+          print *, maxval(L1bRadiance%DpField)
+        endif
+        cycle
+      endif
+      ! Convert tai93s to hours-in-day
+      if ( options%TAI ) L1bRadiance%DpField = tai93s2hid( L1bRadiance%DpField )
+      shp = shape(L1bRadiance%DpField)
+      if ( any( indexes(options%dumpOptions, (/ 'r', 's' /) ) > 0 ) )  then
+      elseif ( options%useFillValue ) then
+        call dump( L1bRadiance%DpField, name=trim(sdName), &
+          & options='s', FillValue=real(options%fillValue, r8) )
+      else
+        call dump( L1bRadiance%DpField, name=trim(sdName), &
+          & options=options%dumpOptions )
+        if ( associated(L1bPrecision%DpField) ) &
+          &  call dump( L1bPrecision%DpField, name=trim(sdName) // precisionSuffix, &
+          & options=options%dumpOptions )
+      endif
+      L1BStat%count = 0
+      if ( options%verbose ) print *, 'About to reshape radiances'
+      call allocate_test ( radiances, product(shp), 'radiances', ModuleName )
+      radiances = reshape( L1bRadiance%DpField, (/ product(shp) /) )
+      call DeallocateL1BData ( l1bRadiance )
+      if ( associated(L1bPrecision%DpField) ) then
+        if ( options%verbose ) print *, 'About to reshape precisions'
+        call allocate_test ( precisions, product(shp), 'precisions', ModuleName )
+        precisions = reshape( L1bPrecision%DpField, (/ product(shp) /) )
+        call DeallocateL1BData ( l1bPrecision )
+        if ( options%verbose ) print *, 'About to call statistics'
+        call statistics(&
+          & radiances, &
+          & L1BStat, &
+          & precision=precisions )
+        call dump ( L1BStat, which )
+      endif
+      call deallocate_test ( radiances, 'radiances', ModuleName )
+      call deallocate_test ( precisions, 'precisions', ModuleName )
+    enddo
+	 call h5gClose_f ( grpID, status )
+    if ( status /= 0 ) then
+	   call MLSMessage ( MLSMSG_Warning, ModuleName, &
+       & 'Unable to close group in l2aux file: ' // trim(File1) // ' after diffing' )
+    endif
+	 status = mls_sfend( sdfid1, hdfVersion=the_hdfVersion )
+    if ( status /= 0 ) &
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+       & "Unable to close L2aux file: " // trim(File1) // ' after diffing' )
+  end subroutine dumpradiances
+
+!------------------------- SayTime ---------------------
+  subroutine SayTime ( What, startTime )
+    character(len=*), intent(in) :: What
+    real, intent(in), optional :: startTime
+    real :: myt1
+    if ( present(startTime) ) then
+      myt1 = startTime
+    else
+      myt1 = t1
+    endif
+    call time_now ( t2 )
+    call output ( "Timing for " // what // " = " )
+    call output ( dble(t2 - myt1), advance = 'yes' )
+  end subroutine SayTime
+
+!==================
+end program l2auxdump
+!==================
+
+! $Log: l2auxdump.f90,v $
+! Revision 1.24  2017/12/01 00:28:06  pwagner
+! Now obeys -maf1, -maf2 cmdline options
+!
+! Revision 1.23  2016/08/09 22:45:26  pwagner
+! Consistent with splitting of Dunp_0
+!
+! Revision 1.22  2016/04/05 23:57:38  pwagner
+! -one cmdline option added; prints name on each line
+!
+! Revision 1.21  2016/01/22 00:38:04  pwagner
+! May use wildcard as part of dataset names
+!
+! Revision 1.20  2016/01/12 00:52:12  pwagner
+! May override DEFAULTWIDTH when dumping char array
+!
+! Revision 1.19  2015/04/17 23:03:03  pwagner
+! Added -TAI option to convert tai93s to hours-in-day
+!
+! Revision 1.18  2015/01/24 00:06:03  pwagner
+! Added commandline option to detect NaNs lin l1b files
+!
+! Revision 1.17  2014/03/07 21:47:21  pwagner
+! Name_Len changed to nameLen; got from MLSCommon
+!
+! Revision 1.16  2014/01/09 00:31:26  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
+! Revision 1.15  2013/08/23 02:51:47  vsnyder
+! Move PrintItOut to PrintIt_m
+!
+! Revision 1.14  2012/06/14 00:02:44  pwagner
+! Changed how dump options input; now use -o 'opts'
+!
+! Revision 1.13  2011/01/04 00:50:45  pwagner
+! Shortened field width of MAFStartTimeUTC dumps to 32
+!
+! Revision 1.12  2010/07/23 17:53:27  pwagner
+! Now able to limit dump to a range of mafs
+!
+! Revision 1.11  2010/03/11 23:35:55  pwagner
+! verbose output looks better
+!
+! Revision 1.10  2009/11/20 23:03:38  pwagner
+! -shape option just dumps array rank, shape
+!
+! Revision 1.9  2009/08/18 20:42:15  pwagner
+! Dumping counterMAF array looks better
+!
+! Revision 1.8  2009/06/16 22:38:28  pwagner
+! Changed api for dump, diff routines; now rely on options for most optional behavior
+!
+! Revision 1.7  2009/05/08 17:33:09  pwagner
+! New command line option -lac to prevent printing non-data
+!
+! Revision 1.6  2008/09/09 16:53:34  pwagner
+! Many changes, hoping some are correct
+!
+! Revision 1.5  2007/08/17 00:42:38  pwagner
+! Needed to increase MAXDS
+!
+! Revision 1.4  2007/02/06 23:20:19  pwagner
+! -radiances options dumps only radiances
+!
+! Revision 1.3  2006/07/13 18:11:01  pwagner
+! May set fillValue and -relation for rms, pctage
+!
+! Revision 1.2  2006/06/29 20:39:45  pwagner
+! Repaired a few bugs
+!
+! Revision 1.1  2006/06/28 00:06:54  pwagner
+! First commit
+!
+@
+
+
+1.24
+log
+@Now obeys -maf1, -maf2 cmdline options
+@
+text
+@d52 1
+a52 1
+       "$Id: l2auxdump.f90,v 1.23 2016/08/09 22:45:26 pwagner Exp $"
+d70 1
+d72 1
+d168 3
+a170 2
+      if ( options%radiances .or.  options%TAI .or. &
+        & options%timereads .or. options%anyNaNs .or. options%firstMAF > 0 ) then
+d213 1
+d344 4
+d388 1
+d396 1
+a396 1
+      write (*,*) '  -one        => print statistics on one line (dont)'
+d489 2
+a490 2
+    isl1boa = (index(trim(mysdList), 'GHz/') > 0)
+    if ( isl1boa .and. .not. &
+d492 1
+a492 1
+      & options%timereads .or. options%anyNaNs .or. &
+d515 1
+d518 1
+d523 2
+a524 1
+      if ( iPrec < 1 .and. .not. isL1BOA ) cycle
+d555 1
+a555 2
+      if ( options%verbose ) print *, 'About to read ', trim(sdName) // PRECISIONSUFFIX
+      if ( isL1BOA ) then
+a556 4
+      elseif ( options%firstMAF > -1 ) then
+        call ReadL1BData ( sdfid1, trim(sdName)  // PRECISIONSUFFIX, L1bPrecision, &
+          & NoMAFs, status, firstMAF=options%firstMAF, lastMAF=options%lastMAF, &
+          & hdfVersion=the_hdfVersion, NEVERFAIL=.true., L2AUX=.true. )
+d558 10
+a567 3
+        call ReadL1BData ( sdfid1, trim(sdName)  // PRECISIONSUFFIX, L1bPrecision, &
+          & NoMAFs, status, &
+          & hdfVersion=the_hdfVersion, NEVERFAIL=.true., L2AUX=.true. )
+d590 10
+d666 3
+@
+
+
+1.23
+log
+@Consistent with splitting of Dunp_0
+@
+text
+@d16 4
+a19 4
+   use Allocate_deallocate, only: allocate_test, deallocate_test
+   use Dates_module, only: tai93s2hid
+   use Dump_1, only: dump
+   use Dump_Options, only: defaultMaxLon, defaultWidth, dumpDumpOptions, &
+d21 7
+a27 7
+   use HDF, only: dfacc_read
+   use HDF5, only: h5fis_hdf5_f, h5gclose_f, h5gopen_f
+   use Highoutput, only: dump
+   use L1BData, only: L1BData_t, nameLen, precisionSuffix, &
+     & DeallocateL1Bdata, readL1Bdata
+   use Machine, only: hp, getarg
+   use MLSCommon, only: r8
+d31 3
+a33 3
+   use MLSFillValues, only: isNaN
+   use MLSHDF5, only: maxNDSNames, dumpHDF5Attributes, dumpHDF5DS, &
+     & GetAllHDF5AttrNames, getAllHDF5DSNames, &
+d37 8
+a44 8
+   use MLSStats1, only: fillValueRelation, Stat_t, statsOnOneLine, &
+     & Dump, statistics
+   use MLSStringLists, only: catlists, getStringElement, Intersection, &
+     & NumStringElements, stringElementNum
+   use MLSStrings, only: indexes, lowercase, streq, trim_safe
+   use Output_m, only: output, switchOutput
+   use Printit_m, only: set_config
+   use Time_m, only: time_now, time_config
+d52 1
+a52 1
+       "$Id: l2auxdump.f90,v 1.22 2016/04/05 23:57:38 pwagner Exp $"
+d167 1
+a167 1
+        & options%timereads .or. options%anyNaNs ) then
+d482 3
+a484 1
+      & ( options%timereads .or. options%anyNaNs .or. options%TAI ) &
+d556 1
+a556 1
+	     call MLSMessage ( MLSMSG_Warning, ModuleName, &
+d560 5
+d642 3
+@
+
+
+1.22
+log
+@-one cmdline option added; prints name on each line
+@
+text
+@d16 5
+a20 4
+   use allocate_deallocate, only: allocate_test, deallocate_test
+   use dates_module, only: tai93s2hid
+   use dump_0, only: defaultmaxlon, defaultwidth, dump, dumpdumpoptions, &
+     & intplaces
+d23 1
+a23 1
+   use highoutput, only: dump
+d25 2
+a26 2
+     & deallocatel1bdata, readl1bdata
+   use machine, only: hp, getarg
+d28 4
+a31 4
+   use MLSFiles, only: filenotfound, &
+     & MLS_exists, mls_sfstart, mls_sfend, &
+     & HDFVersion_5, mls_hdf_version, wildcardhdfversion
+   use MLSFillvalues, only: isNaN
+d33 1
+a33 1
+     & getAllHDF5AttrNames, getAllHDF5DSNames, &
+d38 1
+a38 1
+     & dump, statistics
+d40 1
+a40 1
+     & numStringElements, stringElementNum
+d42 3
+a44 3
+   use output_m, only: output, switchOutput
+   use printit_m, only: set_config
+   use time_m, only: time_now, time_config
+d52 1
+a52 1
+       "$Id: l2auxdump.f90,v 1.21 2016/01/22 00:38:04 pwagner Exp $"
+d635 3
+@
+
+
+1.21
+log
+@May use wildcard as part of dataset names
+@
+text
+@d23 1
+a23 1
+   use l1bdata, only: l1bdata_t, namelen, precisionsuffix, &
+d31 3
+a33 3
+   use MLSHdf5, only: maxndsnames, dumphdf5attributes, dumphdf5ds, &
+     & getallhdf5attrnames, getallhdf5dsnames, &
+     & MLS_h5open, mls_h5close
+d36 4
+a39 3
+   use MLSStats1, only: fillvaluerelation, stat_t, dump, statistics
+   use MLSStringLists, only: catlists, getstringelement, Intersection, &
+     & numStringelements, stringelementnum
+d51 1
+a51 1
+       "$Id: l2auxdump.f90,v 1.20 2016/01/12 00:52:12 pwagner Exp $"
+d300 4
+d386 1
+d634 3
+@
+
+
+1.20
+log
+@May override DEFAULTWIDTH when dumping char array
+@
+text
+@d34 1
+a34 1
+   use MLSMessagemodule, only: mlsmsg_error, mlsmsg_warning, &
+d37 1
+a37 1
+   use MLSStringlists, only: catlists, getstringelement, &
+d50 1
+a50 1
+       "$Id: l2auxdump.f90,v 1.19 2015/04/17 23:03:03 pwagner Exp $"
+d166 1
+a166 1
+        call dumpradiances ( filenames(i), hdfVersion, options )
+d366 33
+a398 31
+      write (*,*) ' Options: -f filename     => add filename to list of filenames'
+      write (*,*) '                           (can do the same w/o the -f)'
+      write (*,*) '          -v              => switch on verbose mode'
+      write (*,*) '          -w width        => use width when dumping char arrays'
+      write (*,*) '          -la             => just list attribute names in files'
+      write (*,*) '          -ls             => just list sd names in files'
+      write (*,*) '          -skip list      => skip dumping the SDs in list'
+      write (*,*) '          -NaN            => just say if there are any NaNs'
+      write (*,*) '          -t              => just time reads'
+      write (*,*) '          -radiances      => show radiances only'
+      write (*,*) '          -TAI            => show TAI times only'
+      write (*,*) '          -o opts         => pass opts to dump routines'
+      write (*,*) '                          e.g., "-rs" to dump only rms, stats'
+      write (*,*) '                          e.g., "?" to list available ones'
+      write (*,*) '          -r root         => limit to group based at root'
+      write (*,*) '                             (default is "/")'
+      write (*,*) '          -rd DSName      => limit attributes to root/DSName'
+      write (*,*) '                             (default is group attributes at root)'
+      write (*,*) '          -first maf1     => read l1b starting with maf1'
+      write (*,*) '          -last maf1      => read l1b ending with maf1'
+      write (*,*) '          -fv value       => filter rms, % around value'
+      write (*,*) '          -fvr relation   => one of {"=","<",">"}'
+      write (*,*) '                              we filter values standing in'
+      write (*,*) '                              this relation with fillValue'
+      write (*,*) '          -A              => dump all attributes'
+      write (*,*) '          -D              => dump all datasets (default)'
+      write (*,*) '          -nA             => do not dump attributes (default)'
+      write (*,*) '          -nD             => do not dump datasets'
+      write (*,*) '          -a a1,a2,..     => dump just attributes named a1,a2,..'
+      write (*,*) '          -d d1,d2,..     => dump just datasets named a1,a2,..'
+      write (*,*) '          -h              => print brief help'
+d413 3
+a415 3
+    character (len=*), intent(in) :: file1 ! Name of file
+    integer, intent(in)           :: hdfVersion
+    type ( options_T )            :: options
+d418 10
+a427 9
+    logical, parameter            :: countEmpty = .true.
+    logical :: file_exists
+    integer :: grpid
+    integer :: i
+    integer :: iPrec
+    logical :: isl1boa
+    type(l1bdata_t) :: L1BPrecision  ! Result
+    type(l1bdata_t) :: L1BRadiance   ! Result
+    type(Stat_T) :: L1BStat
+d429 8
+a436 8
+    integer :: NoMAFs
+    integer :: noSds
+    integer :: sdfid1
+    character (len=80) :: sdName
+    integer, dimension(3) :: shp
+    integer :: status
+    integer :: the_hdfVersion
+    character (len=80) :: which
+d504 1
+d510 9
+d628 3
+@
+
+
+1.19
+log
+@Added -TAI option to convert tai93s to hours-in-day
+@
+text
+@d18 2
+a19 1
+   use dump_0, only: defaultmaxlon, dump, dumpdumpoptions, intplaces
+d50 1
+a50 1
+       "$Id: l2auxdump.f90,v 1.18 2015/01/24 00:06:03 pwagner Exp $"
+d82 1
+d217 1
+d293 6
+d369 1
+d615 3
+@
+
+
+1.18
+log
+@Added commandline option to detect NaNs lin l1b files
+@
+text
+@d17 1
+d49 1
+a49 1
+       "$Id: l2auxdump.f90,v 1.17 2014/03/07 21:47:21 pwagner Exp $"
+d69 1
+d154 1
+a154 1
+    if ( .not. options%radiances ) then
+d162 2
+a163 1
+      if ( options%radiances .or. options%timereads .or. options%anyNaNs ) then
+d208 1
+d312 3
+d366 1
+a432 1
+    the_hdfVersion = HDFVERSION_5
+d461 3
+a463 1
+    if ( isl1boa .and. .not. (options%timereads .or. options%anyNaNs) ) then
+d487 1
+d540 2
+d550 2
+a551 1
+        call dump( L1bPrecision%DpField, name=trim(sdName) // precisionSuffix, &
+d555 1
+a555 1
+      print *, 'About to reshape radiances'
+d559 12
+a570 10
+      print *, 'About to reshape precisions'
+      call allocate_test ( precisions, product(shp), 'precisions', ModuleName )
+      precisions = reshape( L1bPrecision%DpField, (/ product(shp) /) )
+      call DeallocateL1BData ( l1bPrecision )
+      print *, 'About to call statistics'
+      call statistics(&
+        & radiances, &
+        & L1BStat, &
+        & precision=precisions )
+      call dump ( L1BStat, which )
+d605 3
+@
+
+
+1.17
+log
+@Name_Len changed to nameLen; got from MLSCommon
+@
+text
+@d16 25
+a40 24
+   use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+   use DUMP_0, only: DEFAULTMAXLON, DUMP, DUMPDUMPOPTIONS, INTPLACES
+   use HDF, only: DFACC_READ
+   use HDF5, only: H5FIS_HDF5_F, H5GCLOSE_F, H5GOPEN_F
+   use HIGHOUTPUT, only: DUMP
+   use L1BDATA, only: L1BDATA_T, namelen, PRECISIONSUFFIX, &
+     & DEALLOCATEL1BDATA, READL1BDATA
+   use MACHINE, only: HP, GETARG
+   use MLSCOMMON, only: R8
+   use MLSFILES, only: FILENOTFOUND, &
+     & MLS_EXISTS, MLS_SFSTART, MLS_SFEND, &
+     & HDFVERSION_5, MLS_HDF_VERSION, WILDCARDHDFVERSION
+   use MLSHDF5, only: MAXNDSNAMES, DUMPHDF5ATTRIBUTES, DUMPHDF5DS, &
+     & GETALLHDF5ATTRNAMES, GETALLHDF5DSNAMES, &
+     & MLS_H5OPEN, MLS_H5CLOSE
+   use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_WARNING, &
+     & MLSMESSAGE
+   use MLSSTATS1, only: FILLVALUERELATION, STAT_T, DUMP, STATISTICS
+   use MLSSTRINGLISTS, only: CATLISTS, GETSTRINGELEMENT, &
+     & NUMSTRINGELEMENTS, STRINGELEMENTNUM
+   use MLSSTRINGS, only: INDEXES, LOWERCASE, TRIM_SAFE
+   use OUTPUT_M, only: OUTPUT
+   use PrintIt_m, only: Set_Config
+   use TIME_M, only: TIME_NOW, TIME_CONFIG
+d48 1
+a48 1
+       "$Id: l2auxdump.f90,v 1.16 2014/01/09 00:31:26 pwagner Exp $"
+d65 1
+d74 1
+d84 1
+a84 1
+  integer, parameter ::          MAXFILES = 100
+d100 1
+d149 1
+a149 1
+    if ( options%verbose ) then
+d160 1
+a160 1
+      if ( options%radiances .or. options%timereads ) then
+d202 1
+d315 7
+d355 2
+d453 2
+a454 2
+    isl1boa = (index(trim(mysdList), '/GHz') > 0)
+    if ( isl1boa ) then
+d480 6
+a485 1
+      if ( iPrec < 1 ) cycle
+d502 3
+a504 1
+      if ( options%firstMAF > -1 ) then
+d520 10
+d590 3
+@
+
+
+1.16
+log
+@Some procedures formerly in output_m now got from highOutput
+@
+text
+@d21 1
+a21 1
+   use L1BDATA, only: L1BDATA_T, NAME_LEN, PRECISIONSUFFIX, &
+d28 1
+a28 1
+   use MLSHDF5, only: DUMPHDF5ATTRIBUTES, DUMPHDF5DS, &
+d32 1
+a32 1
+     & MLSMESSAGECONFIG, MLSMESSAGE
+d47 1
+a47 1
+       "$Id: l2auxdump.f90,v 1.15 2013/08/23 02:51:47 vsnyder Exp $"
+d79 2
+a80 2
+  integer, parameter ::          MAXDS = 1024 ! 500
+  integer, parameter ::          MAXSDNAMESBUFSIZE = MAXDS*NAME_LEN
+a385 1
+    integer :: file_access
+a444 1
+    file_access = DFACC_READ
+d559 3
+@
+
+
+1.15
+log
+@Move PrintItOut to PrintIt_m
+@
+text
+@d20 1
+d37 1
+a37 1
+   use OUTPUT_M, only: DUMP, OUTPUT
+d47 1
+a47 1
+       "$Id: l2auxdump.f90,v 1.14 2012/06/14 00:02:44 pwagner Exp $"
+d561 3
+@
+
+
+1.14
+log
+@Changed how dump options input; now use -o 'opts'
+@
+text
+@d37 1
+d46 1
+a46 1
+       "$Id: l2auxdump.f90,v 1.13 2011/01/04 00:50:45 pwagner Exp $"
+d95 1
+a95 2
+  MLSMessageConfig%useToolkit = .false.
+  MLSMessageConfig%logFileUnit = -1
+d560 3
+@
+
+
+1.13
+log
+@Shortened field width of MAFStartTimeUTC dumps to 32
+@
+text
+@d16 6
+a21 6
+   use Allocate_Deallocate, only: allocate_test, deallocate_test
+   use Dump_0, only: DEFAULTMAXLON, DUMP, INTPLACES
+   use Hdf, only: DFACC_READ
+   use HDF5, only: h5fis_hdf5_f, h5gclose_f, h5gopen_f
+   use L1BData, only: l1bdata_t, NAME_LEN, PRECISIONSUFFIX, &
+     & DeallocateL1BData, ReadL1BData
+d23 15
+a37 15
+   use MLSCommon, only: R8
+   use MLSFiles, only: FILENOTFOUND, &
+     & mls_exists, mls_sfstart, mls_sfend, &
+     & HDFVERSION_5, mls_hdf_version, WILDCARDHDFVERSION
+   use MLSHDF5, only: DumpHDF5Attributes, DumpHDF5DS, &
+     & GetAllHDF5AttrNames, GetAllHDF5DSNames, &
+     & mls_h5open, mls_h5close
+   use MLSMessageModule, only: MLSMessageConfig, MLSMSG_Error, MLSMSG_Warning, &
+     & dumpConfig, MLSMessage
+   use MLSStats1, only: FILLVALUERELATION, Stat_T, dump, STATISTICS
+   use MLSStringLists, only: catLists, GetStringElement, NumStringElements, &
+     & StringElementNum
+   use MLSStrings, only: lowercase, trim_safe
+   use output_m, only: dump, outputOptions, output
+   use Time_M, only: Time_Now, time_config
+d45 1
+a45 1
+       "$Id: l2auxdump.f90,v 1.12 2010/07/23 17:53:27 pwagner Exp $"
+a58 1
+    logical             :: laconic            = .false. ! Print contents only
+a61 1
+    logical             :: stats              = .false.
+a63 3
+    logical             :: rms                = .false.
+    logical             :: shape              = .false.
+    logical             :: unique             = .false.
+d65 1
+a80 1
+  character(len=8)   ::          dumpOptions
+a88 1
+  integer     ::                 recl
+a120 6
+  dumpOptions = '-'
+  if ( options%rms ) dumpOptions = trim(dumpOptions) // 'r'
+  if ( options%shape ) dumpOptions = trim(dumpOptions) // 'H'
+  if ( options%stats ) dumpOptions = trim(dumpOptions) // 's'
+  if ( options%unique ) dumpOptions = trim(dumpOptions) // 'u'
+  if ( options%laconic ) dumpOptions = trim(dumpOptions) // 'l'
+d160 1
+a160 1
+          & fillValue=options%fillValue, options=dumpOptions )
+d163 1
+a163 1
+          & options=dumpOptions )
+d170 1
+a170 1
+          & options=dumpOptions )
+d174 1
+a174 1
+          & groupName=trim(options%root), options=dumpOptions )
+d179 1
+a179 1
+    if ( .not. options%laconic ) call sayTime('reading this file', tFile)
+d181 1
+a181 1
+  if ( .not. ( options%laconic .or. options%la .or. options%ls ) ) &
+d193 1
+a193 1
+     print *, 'laconic?            ', options%laconic
+a196 1
+     print *, 'stats  ?            ', options%stats  
+a198 3
+     print *, 'rms    ?            ', options%rms    
+     print *, 'shape  ?            ', options%shape
+     print *, 'unique    ?         ', options%unique
+a254 3
+      elseif ( filename(1:4) == '-lac' ) then
+        options%laconic = .true.
+        exit
+d291 8
+a305 12
+      else if ( filename(1:5) == '-rms ' ) then
+        options%rms = .true.
+        exit
+      else if ( filename(1:6) == '-shape' ) then
+        options%shape = .true.
+        exit
+      else if ( filename(1:4) == '-uni' ) then
+        options%unique = .true.
+        exit
+      else if ( filename(1:3) == '-s ' ) then
+        options%stats = .true.
+        exit
+a338 1
+      write (*,*) '          -lac            => switch on laconic mode'
+a341 1
+      write (*,*) '          -s              => just show % statistics'
+d344 3
+a346 3
+      write (*,*) '          -rms            => just print mean, rms'
+      write (*,*) '          -shape          => just dump array shapes, not contents'
+      write (*,*) '          -unique         => print only unique values'
+a383 1
+    character(len=8)   ::          dumpOptions
+a395 1
+    integer :: numDiffs
+d404 1
+a404 1
+    if ( .not. ( options%rms .or. options%stats ) ) then
+d408 2
+a409 2
+      if ( options%rms ) which = 'rms'
+      if ( options%stats ) which = catLists( which, 'max,min,mean,stddev' )
+a410 6
+  dumpOptions = '-'
+  if ( options%rms ) dumpOptions = trim(dumpOptions) // 'r'
+  if ( options%shape ) dumpOptions = trim(dumpOptions) // 'H'
+  if ( options%stats ) dumpOptions = trim(dumpOptions) // 's'
+  if ( options%unique ) dumpOptions = trim(dumpOptions) // 'u'
+  if ( options%laconic ) dumpOptions = trim(dumpOptions) // 'l'
+d501 1
+a501 1
+      if ( options%rms .or. options%stats ) then
+d507 1
+a507 1
+          & options=dumpOptions )
+d509 1
+a509 1
+          & options=dumpOptions )
+d560 3
+@
+
+
+1.12
+log
+@Now able to limit dump to a range of mafs
+@
+text
+@d17 1
+a17 1
+   use Dump_0, only: DUMP, INTPLACES
+d45 1
+a45 1
+       "$Id: l2auxdump.f90,v 1.11 2010/03/11 23:35:55 pwagner Exp $"
+d104 1
+d593 3
+@
+
+
+1.11
+log
+@verbose output looks better
+@
+text
+@d45 1
+a45 1
+       "$Id: l2auxdump.f90,v 1.10 2009/11/20 23:03:38 pwagner Exp $"
+d76 2
+d218 2
+d276 1
+a276 1
+      elseif ( filename(1:3) == '-la ' ) then
+d280 1
+a280 1
+      elseif ( filename(1:3) == '-ls ' ) then
+d288 10
+d375 2
+d502 8
+a509 2
+      call ReadL1BData ( sdfid1, trim(sdName), L1bRadiance, NoMAFs, status, &
+        & hdfVersion=the_hdfVersion, NEVERFAIL=.true., L2AUX=.true. )
+d516 9
+a524 3
+      call ReadL1BData ( sdfid1, trim(sdName)  // PRECISIONSUFFIX, L1bPrecision, &
+        & NoMAFs, status, &
+        & hdfVersion=the_hdfVersion, NEVERFAIL=.true., L2AUX=.true. )
+d592 3
+@
+
+
+1.10
+log
+@-shape option just dumps array rank, shape
+@
+text
+@d35 1
+a35 1
+   use MLSStrings, only: lowercase
+d45 1
+a45 1
+       "$Id: l2auxdump.f90,v 1.9 2009/08/18 20:42:15 pwagner Exp $"
+d181 1
+d186 1
+a186 1
+    print *, 'About to mls_sfend on ', sdfid1
+d213 1
+a213 1
+     print *, 'root                ', options%root
+d216 3
+a218 3
+     print *, 'DSName              ', options%DSName
+     print *, 'attributes          ', options%attributes
+     print *, 'datasets            ', options%datasets
+d348 7
+d356 1
+a356 5
+      write (*,*) '          -v              => switch on verbose mode'
+      write (*,*) '          -A              => dump all attributes'
+      write (*,*) '          -D              => dump all datasets (default)'
+      write (*,*) '          -nA             => do not dump attributes (default)'
+      write (*,*) '          -nD             => do not dump datasets'
+a360 2
+      write (*,*) '          -a a1,a2,..     => dump just attributes named a1,a2,..'
+      write (*,*) '          -d d1,d2,..     => dump just datasets named a1,a2,..'
+d365 6
+a370 7
+      write (*,*) '          -la             => just list attribute names in files'
+      write (*,*) '          -ls             => just list sd names in files'
+      write (*,*) '          -radiances      => show radiances only'
+      write (*,*) '          -rms            => just print mean, rms'
+      write (*,*) '          -unique         => print only unique values'
+      write (*,*) '          -s              => just show % statistics'
+      write (*,*) '          -t              => just time reads'
+d564 3
+@
+
+
+1.9
+log
+@Dumping counterMAF array looks better
+@
+text
+@d16 1
+d45 1
+a45 1
+       "$Id: l2auxdump.f90,v 1.8 2009/06/16 22:38:28 pwagner Exp $"
+d67 1
+d90 2
+d126 1
+d185 1
+d209 1
+d304 3
+d347 1
+d391 1
+d420 6
+d509 4
+a512 2
+        call dump( L1bRadiance%DpField, name=trim(sdName) )
+        call dump( L1bPrecision%DpField, name=trim(sdName) // precisionSuffix )
+d515 9
+d525 1
+a525 1
+        & reshape( L1bRadiance%DpField, (/ product(shp) /) ), &
+d527 1
+a527 1
+        & precision=reshape( L1bPrecision%DpField, (/ product(shp) /) ) )
+d529 2
+a530 2
+      call DeallocateL1BData ( l1bRadiance )
+      call DeallocateL1BData ( l1bPrecision )
+d563 3
+@
+
+
+1.8
+log
+@Changed api for dump, diff routines; now rely on options for most optional behavior
+@
+text
+@d16 1
+a16 1
+   use Dump_0, only: DUMP
+d44 1
+a44 1
+       "$Id: l2auxdump.f90,v 1.7 2009/05/08 17:33:09 pwagner Exp $"
+d97 1
+d534 3
+@
+
+
+1.7
+log
+@New command line option -lac to prevent printing non-data
+@
+text
+@d44 1
+a44 1
+       "$Id: l2auxdump.f90,v 1.6 2008/09/09 16:53:34 pwagner Exp $"
+a76 2
+
+
+d81 2
+a82 1
+  character(len=255) :: filename          ! input filename
+d84 2
+a85 3
+  integer            :: n_filenames
+  integer     ::  i, status, error ! Counting indices & Error flags
+  logical     :: is_hdf5
+d87 6
+a92 5
+  integer     :: recl
+  integer     :: sdfid1
+  real        :: t1
+  real        :: t2
+  real        :: tFile
+a96 6
+!   inquire( unit=6, recl=recl, name=filename )
+!   print *, 'record length: ', recl
+!   print *, 'file name: ', filename
+!   call dump(outputOptions)
+!   call dumpConfig(MLSMessageConfig)
+  ! relationforpctages = '<' ! we want to know % chi^2 are < 1 (or whatever)
+d119 5
+d163 1
+a163 6
+          & fillValue=options%fillValue, rms=options%rms, stats=options%stats, &
+          & unique=options%unique )
+      elseif ( options%laconic ) then
+        call DumpHDF5DS ( sdfid1, trim(options%root), trim(options%datasets), &
+          & rms=options%rms, stats=options%stats, unique=options%unique, &
+          & laconic=options%laconic )
+d166 1
+a166 1
+          & rms=options%rms, stats=options%stats, unique=options%unique )
+d173 1
+a173 1
+          & rms=options%rms, stats=options%stats )
+d176 1
+a176 1
+          & groupName=trim(options%root), rms=options%rms, stats=options%stats )
+d194 1
+a194 1
+     print *, 'loaconic?           ', options%laconic
+d488 1
+a488 1
+          & stats=.true., FillValue=real(options%fillValue, r8) )
+d533 3
+@
+
+
+1.6
+log
+@Many changes, hoping some are correct
+@
+text
+@d44 1
+a44 1
+       "$Id: l2auxdump.f90,v 1.5 2007/08/17 00:42:38 pwagner Exp $"
+d58 2
+a59 1
+    logical             :: verbose            = .false.
+d167 4
+d187 1
+a187 1
+    call sayTime('reading this file', tFile)
+d189 2
+a190 1
+  if ( .not. (options%la .or. options%ls) ) call sayTime('reading all files')
+d201 1
+d264 3
+d342 1
+d540 3
+@
+
+
+1.5
+log
+@Needed to increase MAXDS
+@
+text
+@d30 1
+a30 1
+     & MLSMessage
+d35 1
+a35 1
+   use output_m, only: output
+d44 1
+a44 1
+       "$Id: l2auxdump.f90,v 1.4 2007/02/06 23:20:19 pwagner Exp $"
+d62 1
+d65 1
+d88 1
+d97 5
+d159 1
+a159 1
+      if ( options%radiances ) then
+d164 2
+a165 1
+          & fillValue=options%fillValue, rms=options%rms, stats=options%stats )
+d168 1
+a168 1
+          & rms=options%rms, stats=options%stats )
+d199 1
+d202 1
+d293 3
+d299 3
+d351 1
+d353 1
+d479 1
+d529 3
+@
+
+
+1.4
+log
+@-radiances options dumps only radiances
+@
+text
+@d44 1
+a44 1
+       "$Id: l2auxdump.f90,v 1.3 2006/07/13 18:11:01 pwagner Exp $"
+d76 1
+a76 1
+  integer, parameter ::          MAXDS = 500
+d509 3
+@
+
+
+1.3
+log
+@May set fillValue and -relation for rms, pctage
+@
+text
+@d18 3
+a20 2
+   use HDF5, only: h5fis_hdf5_f
+   use L1BData, only: NAME_LEN
+d22 4
+a25 3
+   use MLSFiles, only: &
+     & mls_sfstart, mls_sfend, &
+     & HDFVERSION_5
+d29 1
+a29 1
+   use MLSMessageModule, only: MLSMessageConfig, MLSMSG_Error, &
+d31 4
+a34 1
+   use MLSStats1, only: fillValueRelation
+d44 1
+a44 1
+       "$Id: l2auxdump.f90,v 1.2 2006/06/29 20:39:45 pwagner Exp $"
+d62 1
+d143 6
+a148 4
+    sdfid1 = mls_sfstart(filenames(i), DFACC_READ, hdfVersion=hdfVersion)
+    if (sdfid1 == -1 ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+      &  'Failed to open l2aux file ' // trim(filenames(i)) )
+d151 4
+a154 1
+      if ( options%useFillValue ) then
+d190 1
+d192 1
+a192 1
+     print *, 'useFillValue  ?     ', options%rms    
+d272 3
+d332 1
+d338 151
+d509 3
+@
+
+
+1.2
+log
+@Repaired a few bugs
+@
+text
+@d16 8
+a23 11
+   use Dump_0, only: DUMP, RELATIONFORPCTAGES
+   use Hdf, only: DFACC_CREATE, DFACC_READ
+   use HDF5, only: h5fis_hdf5_f, &
+     & H5GCLOSE_F, H5GOPEN_F, H5DOPEN_F, H5DCLOSE_F, h5gcreate_f
+   use L1BData, only: L1BData_T, NAME_LEN, &
+     & DeallocateL1BData, Diff, ReadL1BData
+   use MACHINE, only: FILSEP, HP, IO_ERROR, GETARG
+   use MLSCommon, only: R8
+   use MLSFiles, only: FILENOTFOUND, WILDCARDHDFVERSION, &
+     & mls_exists, mls_hdf_version, mls_sfstart, mls_sfend, &
+     & HDFVERSION_4, HDFVERSION_5
+d26 2
+a27 2
+     & IsHDF5AttributePresent, mls_h5open, mls_h5close
+   use MLSMessageModule, only: MLSMessageConfig, MLSMSG_Error, MLSMSG_Warning, &
+d29 2
+a30 3
+   use MLSStringLists, only: GetStringElement, NumStringElements
+   use MLSStrings, only: LOWERCASE, WriteIntsToChars
+   use output_m, only: resumeOutput, suspendOutput, output
+d39 1
+a39 1
+       "$Id: l2auxdump.f90,v 1.1 2006/06/28 00:06:54 pwagner Exp $"
+d53 8
+a60 7
+    logical     :: verbose            = .false.
+    logical     :: la                 = .false.
+    logical     :: ls                 = .false.
+    logical     :: stats              = .false.
+    logical     :: rms                = .false.
+    character(len=128) :: DSName      = '' ! Extra dataset if attributes under one
+    character(len=128) :: root        = '/'
+d63 2
+d77 1
+a77 1
+  integer     ::  i, count, status, error ! Counting indices & Error flags
+a80 1
+  character(len=16) :: string
+d88 1
+a88 1
+  relationforpctages = '<' ! we want to know % chi^2 are < 1 (or whatever)
+d108 3
+d142 9
+a150 3
+    if ( options%datasets /= ' ' ) &
+      & call DumpHDF5DS ( sdfid1, trim(options%root), trim(options%datasets), &
+      & rms=options%rms, stats=options%stats )
+d180 1
+d182 2
+d249 11
+d311 4
+d342 3
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d43 1
+a43 1
+       "$Id: l2auxdump.f90,v 1.2 2006/05/24 22:22:05 pwagner Exp $"
+d121 1
+a121 1
+        & trim(options%root)//trim(options%DSName)
+d124 1
+a124 1
+          & DSName=trim(options%root)//trim(options%DSName) )
+d147 1
+a147 1
+          & DSName=trim(options%root)//trim(options%DSName), &
+d174 1
+d204 1
+d218 1
+d239 4
+d286 2
+d317 3
+@
+

@@ -1,0 +1,89 @@
+head	1.3;
+access;
+symbols;
+locks; strict;
+comment	@c @;
+
+
+1.3
+date	2001.07.25.17.58.00;	author jonathan;	state dead;
+branches;
+next	1.2;
+
+1.2
+date	2001.06.04.19.07.15;	author jonathan;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.05.29.21.18.39;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@deleted .f files, jonathan
+@
+text
+@      SUBROUTINE HEADER (H)
+
+C=====================================================================
+C     J.JIANG, MARCH 8, 2000
+C=====================================================================
+
+      INTEGER H
+C---------------------------------------------------------------------
+
+      IF(H .EQ. 1) THEN
+         PRINT*,' '
+         PRINT*,'============================================'
+         PRINT*,'  >>>>>> START CLOUD FORWARD MODEL <<<<<<<  '
+         PRINT*,'============================================'
+         PRINT*,' '
+         PRINT*,'INPUT MODEL ATMOSPHERE'
+      ELSE IF (H .EQ. 2) THEN
+         PRINT*,' '
+         PRINT*,'COMPUTE CLEAR-SKY EMISSIONS'
+      ELSE IF (H .EQ. 3) THEN
+         PRINT*,' '
+         PRINT*,'COMPUTE CLOUD SCATTERING'
+      ELSE IF (H .EQ. 4) THEN
+         PRINT*,' '
+         PRINT*,'START RADIATIVE TRANSFER CALCULATION...'
+      ELSE
+         PRINT*,' '
+         PRINT*,'COMPLETE !'
+      ENDIF
+
+      RETURN
+      END
+
+! $Log: header.f,v      
+@
+
+
+1.2
+log
+@FIRST WORKING VERSION OF FULL_CLOUD_FORWARD_MODEL
+@
+text
+@@
+
+
+1.1
+log
+@First version
+@
+text
+@d3 4
+d13 1
+a13 1
+         PRINT*,'EOS MLS MICROWAVE RADIATIVE TRANSFER PROGRAM'
+d34 1
+@
+

@@ -1,0 +1,183 @@
+head	2.3;
+access;
+symbols
+	v5-02-NRT-19:2.3
+	v6-00:2.3
+	v5-02-NRT-18:2.3
+	v5-02:2.3
+	v5-01-NRT-17:2.3
+	v5-01-NRT-16:2.3
+	v5-01-NRT-15:2.3
+	v5-01-NRT-14:2.3
+	neuralnetworks-1-0:2.3.0.12
+	cfm-single-freq-0-1:2.3.0.10
+	v5-01:2.3
+	v5-00:2.3
+	v4-23-TA133:2.3.0.8
+	mus-emls-1-70:2.3.0.6
+	rel-1-0-englocks-work:2.3.0.4
+	VUMLS1-00:2.3
+	VPL1-00:2.3
+	V4-22-NRT-08:2.3
+	VAM1-00:2.3
+	V4-21:2.3.0.2
+	V4-13:2.3
+	V4-12:2.3
+	V4-11:2.3
+	V4-10:2.3;
+locks; strict;
+comment	@# @;
+
+
+2.3
+date	2013.12.12.01.56.25;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2013.10.10.22.40.31;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2013.10.10.22.39.31;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.3
+log
+@Change 'type' component to 'what' component
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! Implementation of arithmetic and logical operations on the type Value_T
+
+! These are provided as an include file rather than simply providing public
+! identifiers in Declaration_Table, where Value_T is defined and these
+! implementations are also provided, so that an optimizing compiler might
+! inline them, and then perhaps optimize away redundant assignment of type
+! and units components.
+
+! $RCSfile: Value_T_Implementations.f9h,v $
+
+! ----------------------------------------------------  Value_Add  -----
+  elemental type(value_t) function Value_Add ( V1, V2 ) result ( R )
+    type(value_t), intent(in) :: V1, V2
+    r = value_t(v1%what, v1%type, v1%value + v2%value, v1%units)
+  end function Value_Add
+
+! ---------------------------------------------------  Value_Diff  -----
+  elemental type(value_t) function Value_Diff ( V1, V2 ) result ( R )
+    type(value_t), intent(in) :: V1, V2
+    r = value_t(v1%what, v1%type, v1%value - v2%value, v1%units)
+  end function Value_Diff
+
+! ----------------------------------------------------  Value_Div  -----
+  elemental type(value_t) function Value_Div ( V1, V2 ) result ( R )
+    type(value_t), intent(in) :: V1, V2
+    r = value_t(v1%what, v1%type, v1%value / v2%value, v1%units)
+  end function Value_Div
+
+! --------------------------------------------------  Value_Equal  -----
+  elemental logical function Value_Equal ( V1, V2 ) result ( R )
+    type(value_t), intent(in) :: V1, V2
+    r = v1%what == v2%what .and. v1%type == v2%type .and. &
+      & all(v1%value == v2%value) .and. all(v1%units == v2%units)
+  end function Value_Equal
+
+! ----------------------------------------------------  Value_Neg  -----
+  elemental type(value_t) function Value_Neg ( V1 ) result ( R )
+    type(value_t), intent(in) :: V1
+    r = value_t(v1%what, v1%type, -v1%value, v1%units)
+  end function Value_Neg
+
+! ---------------------------------------------------  Value_Prod  -----
+  elemental type(value_t) function Value_Prod ( V1, V2 ) result ( R )
+    type(value_t), intent(in) :: V1, V2
+    r = value_t(v1%what, v1%type, v1%value * v2%value, v1%units)
+  end function Value_Prod
+
+! ---------------------------------------------------  Value_Same  -----
+  elemental type(value_t) function Value_Same ( V1 ) result ( R )
+    type(value_t), intent(in) :: V1
+    r = value_t(v1%what, v1%type, v1%value, v1%units)
+  end function Value_Same
+
+! ------------------------------------------------  Value_Unequal  -----
+  elemental logical function Value_Unequal ( V1, V2 ) result ( R )
+    type(value_t), intent(in) :: V1, V2
+    r = .not. ( v1 == v2 )
+  end function Value_Unequal
+
+! $Log: Value_T_Implementations.f9h,v $
+! Revision 2.2  2013/10/10 22:40:31  vsnyder
+! Spell RCSfile correctly
+!
+! Revision 2.1  2013/10/10 22:39:31  vsnyder
+! Initial commit
+!
+@
+
+
+2.2
+log
+@Spell RCSfile correctly
+@
+text
+@d20 1
+a20 1
+! $RCSfile: $
+d25 1
+a25 1
+    r = value_t(v1%type, v1%value + v2%value, v1%units)
+d31 1
+a31 1
+    r = value_t(v1%type, v1%value - v2%value, v1%units)
+d37 1
+a37 1
+    r = value_t(v1%type, v1%value / v2%value, v1%units)
+d43 2
+a44 2
+    r = v1%type == v2%type .and. all(v1%value == v2%value) .and. &
+      & all(v1%units == v2%units)
+d50 1
+a50 1
+    r = value_t(v1%type, -v1%value, v1%units)
+d56 1
+a56 1
+    r = value_t(v1%type, v1%value * v2%value, v1%units)
+d62 1
+a62 1
+    r = value_t(v1%type, v1%value, v1%units)
+d72 3
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d20 1
+a20 1
+! $RCSFile: $
+d71 4
+a74 1
+! $Log: $
+@
+

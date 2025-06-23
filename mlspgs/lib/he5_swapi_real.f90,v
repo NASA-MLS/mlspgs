@@ -1,0 +1,656 @@
+head	2.10;
+access;
+symbols
+	v5-02-NRT-19:2.10
+	v6-00:2.10
+	v5-02-NRT-18:2.10
+	v5-02:2.10
+	v5-01-NRT-17:2.10
+	v5-01-NRT-16:2.10
+	v5-01-NRT-15:2.10
+	v5-01-NRT-14:2.10
+	neuralnetworks-1-0:2.10.0.14
+	cfm-single-freq-0-1:2.10.0.12
+	v5-01:2.10
+	v5-00:2.10
+	v4-23-TA133:2.10.0.10
+	mus-emls-1-70:2.10.0.8
+	rel-1-0-englocks-work:2.10.0.6
+	VUMLS1-00:2.10
+	VPL1-00:2.10
+	V4-22-NRT-08:2.10
+	VAM1-00:2.10
+	V4-21:2.10.0.4
+	V4-13:2.10
+	V4-12:2.10
+	V4-11:2.10
+	V4-10:2.10
+	V3-43:2.10
+	M4-00:2.10
+	V3-41:2.10
+	V3-40-PlusGM57:2.10.0.2
+	V2-24-NRT-04:2.6
+	V3-33:2.10
+	V2-24:2.6
+	V3-31:2.10
+	V3-30-NRT-05:2.10
+	cfm-01-00:2.10
+	V3-30:2.10
+	V3-20:2.10
+	V3-10:2.7
+	V2-23-NRT-02:2.6
+	V2-23:2.6
+	V2-22-NRT-01:2.6
+	V2-22:2.6
+	V2-21:2.6
+	V2-20:2.6
+	V2-11:2.6
+	V2-10:2.6
+	V2-00:2.6
+	V1-51:2.5
+	V1-50:2.5
+	V1-45:2.5
+	V1-44:2.5
+	V1-43:2.5
+	V1-42:2.4
+	V1-41:2.4
+	V1-32:2.5
+	V1-40:2.4
+	V1-31:2.4
+	V1-30:2.4
+	V1-13:2.3
+	V1-12:2.3
+	V1-11:2.3
+	V1-10:2.2
+	newfwm-feb03:2.3.0.2;
+locks; strict;
+comment	@# @;
+
+
+2.10
+date	2010.02.04.23.08.00;	author vsnyder;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2009.10.05.23.37.05;	author pwagner;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2009.09.29.23.34.38;	author pwagner;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2009.06.23.18.25.43;	author pwagner;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2005.06.22.17.25.49;	author pwagner;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2004.02.13.00.16.02;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2003.04.11.23.32.23;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2003.02.08.00.32.54;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2002.10.08.00.09.10;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2002.07.11.22.19.25;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.10
+log
+@Remove USE or declaration for unused names
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module HE5_SWAPI_REAL
+
+  public :: HE5_SWRDFLD_REAL, HE5_SWRDFLD_REAL_2D, HE5_SWRDFLD_REAL_3D, &
+    & HE5_SWWRFLD_REAL, HE5_SWWRFLD_REAL_2D, HE5_SWWRFLD_REAL_3D, &
+    & HE5_EHWRGLATT_REAL, HE5_EHRDGLATT_REAL, &
+    & HE5_SWWRATTR_REAL, HE5_SWWRLATTR_REAL, &
+    & HE5_SWRDATTR_REAL, HE5_SWRDLATTR_REAL
+  public :: HE5_SWSETFILL_REAL
+  private
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: he5_swapi_real.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  integer function HE5_EHWRGLATT_REAL ( FILEID, &
+    & ATTRNAME, DATATYPE, COUNT, BUFFER )
+    use hdf5, only: size_t
+    integer, intent(in) :: FILEID      ! File ID
+    character(len=*), intent(in) :: ATTRNAME     ! Field name
+    integer, intent(in) :: DATATYPE
+    integer(kind=size_t), intent(in) :: COUNT   ! Stride array
+    real, intent(in) :: BUFFER(:)       ! Buffer for write
+
+    integer, external :: HE5_EHWRGLATT
+
+    he5_ehwrglatt_REAL = he5_ehwrglatt(fileID, &
+         & attrname, datatype, count, buffer )
+  end function HE5_EHWRGLATT_REAL
+
+  integer function HE5_EHRDGLATT_REAL ( FILEID, &
+    & ATTRNAME, BUFFER )
+    integer, intent(in) :: FILEID      ! File ID
+    character(len=*), intent(in) :: ATTRNAME     ! Field name
+    real, intent(out) :: BUFFER(:)   ! Buffer for read
+
+    integer, external :: HE5_EHRDGLATT
+
+    he5_ehrdglatt_REAL = he5_ehrdglatt(fileID, &
+         & attrname, buffer )
+  end function HE5_EHRDGLATT_REAL
+
+  integer function HE5_SWSETFILL_REAL (SWATHID, FIELDNAME, NUMBERTYPE, &
+    & FILLVALUE)
+    integer,intent(in)::SWATHID
+    character(len=*),intent(IN)::FIELDNAME
+    integer, intent(in) :: NUMBERTYPE
+    real, intent(in) :: FILLVALUE
+    integer, external :: HE5_SWSETFILL
+    HE5_SWSETFILL_REAL = &
+      & HE5_SWSETFILL (SWATHID, FIELDNAME, NUMBERTYPE, FILLVALUE)
+  end function HE5_SWSETFILL_REAL
+
+  integer function HE5_SWRDFLD_REAL ( SWATHID, FIELDNAME, &
+    & STARTS, STRIDES, EDGES, BUFFER )
+    use hdf5, only: size_t
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: FIELDNAME     ! Field name
+    integer(kind=size_t), intent(in) :: STARTS(*)    ! Start array
+    integer(kind=size_t), intent(in) :: STRIDES(*)   ! Stride array
+    integer(kind=size_t), intent(in) :: EDGES(*)     ! Edge array
+    real, intent(out) :: BUFFER(:)      ! Buffer for read
+
+    integer, external :: HE5_SWRDFLD
+
+    HE5_SWrdfld_real  = HE5_SWrdfld(swathid, fieldname, starts, strides, &
+      & edges, buffer )
+  end function HE5_SWRDFLD_REAL
+
+  integer function HE5_SWRDFLD_REAL_2D ( SWATHID, FIELDNAME, &
+    & STARTS, STRIDES, EDGES, BUFFER )
+    use hdf5, only: size_t
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: FIELDNAME     ! Field name
+    integer(kind=size_t), intent(in) :: STARTS(*)    ! Start array
+    integer(kind=size_t), intent(in) :: STRIDES(*)   ! Stride array
+    integer(kind=size_t), intent(in) :: EDGES(*)     ! Edge array
+    real, intent(out) :: BUFFER(:,:)    ! Buffer for read
+
+    integer, external :: HE5_SWRDFLD
+    HE5_SWrdfld_real_2d  = HE5_SWrdfld(swathid, fieldname, starts, strides, &
+      & edges, buffer )
+  end function HE5_SWRDFLD_REAL_2D
+
+  integer function HE5_SWRDFLD_REAL_3D ( SWATHID, FIELDNAME, &
+    & STARTS, STRIDES, EDGES, BUFFER )
+    use hdf5, only: size_t
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: FIELDNAME     ! Field name
+    integer(kind=size_t), intent(in) :: STARTS(*)    ! Start array
+    integer(kind=size_t), intent(in) :: STRIDES(*)   ! Stride array
+    integer(kind=size_t), intent(in) :: EDGES(*)     ! Edge array
+    real, intent(out) :: BUFFER(:,:,:)  ! Buffer for read
+
+    integer, external :: HE5_SWRDFLD
+
+    HE5_SWrdfld_real_3d  = HE5_SWrdfld(swathid, fieldname, starts, strides, &
+      & edges, buffer )
+  end function HE5_SWRDFLD_REAL_3D
+
+  integer function HE5_SWWRFLD_REAL ( SWATHID, FIELDNAME, &
+    & STARTS, STRIDES, EDGES, BUFFER )
+    use hdf5, only: size_t
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: FIELDNAME     ! Field name
+    integer(kind=size_t), intent(in) :: STARTS(*)    ! Start array
+    integer(kind=size_t), intent(in) :: STRIDES(*)   ! Stride array
+    integer(kind=size_t), intent(in) :: EDGES(*)     ! Edge array
+    real, intent(in) :: BUFFER(:)       ! Buffer for write
+
+    ! integer(kind=size_t) :: COUNTS(1)
+    integer, external :: HE5_SWWRFLD
+
+    HE5_SWwrfld_real = HE5_SWwrfld(swathid, fieldname, starts, strides, &
+      & edges, buffer )
+  end function HE5_SWWRFLD_REAL
+
+  integer function HE5_SWWRFLD_REAL_2D ( SWATHID, FIELDNAME, &
+    & STARTS, STRIDES, EDGES, BUFFER )
+    use hdf5, only: size_t
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: FIELDNAME     ! Field name
+    integer(kind=size_t), intent(in) :: STARTS(*)    ! Start array
+    integer(kind=size_t), intent(in) :: STRIDES(*)   ! Stride array
+    integer(kind=size_t), intent(in) :: EDGES(*)     ! Edge array
+    real, intent(in) :: BUFFER(:,:)     ! Buffer for write
+
+    integer, external :: HE5_SWWRFLD
+
+    HE5_SWwrfld_real_2d  = HE5_SWwrfld(swathid, fieldname, starts, strides, &
+      & edges, buffer )
+  end function HE5_SWWRFLD_REAL_2D
+
+  integer function HE5_SWWRFLD_REAL_3D ( SWATHID, FIELDNAME, &
+    & STARTS, STRIDES, EDGES, BUFFER )
+    use hdf5, only: size_t
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: FIELDNAME     ! Field name
+    integer(kind=size_t), intent(in) :: STARTS(*)    ! Start array
+    integer(kind=size_t), intent(in) :: STRIDES(*)   ! Stride array
+    integer(kind=size_t), intent(in) :: EDGES(*)     ! Edge array
+    real, intent(in) :: BUFFER(:,:,:)   ! Buffer for write
+
+    integer, external :: HE5_SWWRFLD
+
+    HE5_SWwrfld_real_3d  = HE5_SWwrfld(swathid, fieldname, starts, strides, &
+      & edges, buffer )
+  end function HE5_SWWRFLD_REAL_3D
+
+  integer function HE5_SWWRATTR_REAL ( SWATHID, &
+    & ATTRNAME, DATATYPE, COUNT, BUFFER )
+    use hdf5, only: size_t
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: ATTRNAME     ! Field name
+    integer, intent(in) :: DATATYPE
+    integer(kind=size_t), intent(in) :: COUNT   ! Stride array
+    real, intent(in) :: BUFFER(:)       ! Buffer for write
+
+    integer, external :: HE5_SWWRATTR
+
+    he5_swwrattr_REAL = he5_swwrattr(swathid, &
+         & attrname, datatype, count, buffer )
+  end function HE5_SWWRATTR_REAL
+
+  integer function HE5_SWWRLATTR_REAL ( SWATHID, FIELDNAME, &
+    & ATTRNAME, DATATYPE, COUNT, BUFFER )
+    use hdf5, only: size_t
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: FIELDNAME     ! Field name
+    character(len=*), intent(in) :: ATTRNAME     ! Field name
+    integer, intent(in) :: DATATYPE
+    integer(kind=size_t), intent(in) :: COUNT   ! Stride array
+    real, intent(in) :: BUFFER(:)       ! Buffer for write
+
+    integer, external :: HE5_SWWRLATTR
+
+    he5_swwrlattr_REAL = he5_swwrlattr(swathid, fieldname, &
+         & attrname, datatype, count, buffer )
+  end function HE5_SWWRLATTR_REAL
+
+  integer function HE5_SWRDATTR_REAL ( SWATHID, &
+    & ATTRNAME, BUFFER )
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: ATTRNAME     ! Field name
+    real, intent(out) :: BUFFER(:)       ! Buffer for read
+
+    integer, external :: HE5_SWRDATTR
+
+    HE5_SWRDATTR_REAL = he5_swrdattr(swathid, &
+         & attrname, buffer )
+  end function HE5_SWRDATTR_REAL
+
+  integer function HE5_SWRDLATTR_REAL ( SWATHID, FIELDNAME, &
+    & ATTRNAME, BUFFER )
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: FIELDNAME     ! Field name
+    character(len=*), intent(in) :: ATTRNAME     ! Field name
+    real, intent(out) :: BUFFER(:)       ! Buffer for read
+
+    integer, external :: HE5_SWRDLATTR
+
+    HE5_SWRDLATTR_REAL = he5_swrdlattr(swathid, fieldname, &
+         & attrname, buffer )
+  end function HE5_SWRDLATTR_REAL
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: he5_swapi_real.f90,v 2.9 2009/10/05 23:37:05 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module HE5_SWAPI_REAL
+
+! $Log: he5_swapi_real.f90,v $
+! Revision 2.9  2009/10/05 23:37:05  pwagner
+! Moved use hdf5 statements from module scope to speedup Lahey; this is the last time we do taht
+!
+! Revision 2.8  2009/09/29 23:34:38  pwagner
+! Changes needed by 64-bit build
+!
+! Revision 2.7  2009/06/23 18:25:43  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.6  2005/06/22 17:25:49  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.5  2004/02/13 00:16:02  pwagner
+! New stuff for reading swath attributes
+!
+! Revision 2.4  2003/04/11 23:32:23  pwagner
+! Moved he5_swsetfill he5_ehwrglatt interfaces
+!
+! Revision 2.3  2003/02/08 00:32:54  pwagner
+! New attribute-related interfaces
+!
+@
+
+
+2.9
+log
+@Moved use hdf5 statements from module scope to speedup Lahey; this is the last time we do taht
+@
+text
+@d32 1
+a32 1
+  use hdf5, only: hsize_t, hssize_t, size_t
+d70 1
+a70 1
+  use hdf5, only: hsize_t, hssize_t, size_t
+d86 1
+a86 1
+  use hdf5, only: hsize_t, hssize_t, size_t
+d101 1
+a101 1
+  use hdf5, only: hsize_t, hssize_t, size_t
+d117 1
+a117 1
+  use hdf5, only: hsize_t, hssize_t, size_t
+d134 1
+a134 1
+  use hdf5, only: hsize_t, hssize_t, size_t
+d150 1
+a150 1
+  use hdf5, only: hsize_t, hssize_t, size_t
+d166 1
+a166 1
+  use hdf5, only: hsize_t, hssize_t, size_t
+d181 1
+a181 1
+  use hdf5, only: hsize_t, hssize_t, size_t
+d223 1
+a223 1
+       "$Id: he5_swapi_real.f90,v 2.8 2009/09/29 23:34:38 pwagner Exp $"
+d233 3
+@
+
+
+2.8
+log
+@Changes needed by 64-bit build
+@
+text
+@a13 1
+  use hdf5, only: hsize_t, hssize_t, size_t
+d32 1
+d70 1
+d86 1
+a94 9
+    !integer(kind=size_t), dimension(2) :: hstarts, hstrides, hedges
+    !hstarts(1:2) = starts(1:2)
+    !hstrides(1:2) = strides(1:2)
+    !hedges(1:2) = edges(1:2)
+
+      ! print *, 'In HE5_SWRDFLD_REAL_2D: ', trim(fieldname)
+      ! print *, 'starts:  ', starts(1:2)
+      ! print *, 'strides: ', strides(1:2)
+      ! print *, 'edges: ', edges(1:2)
+d101 1
+d117 1
+a127 10
+    ! print *, 'In HE5_SWRDFLD_REAL: ', trim(fieldname)
+    ! print *, 'starts:  ', starts(1:1)
+    ! print *, 'strides: ', strides(1:1)
+    ! print *, 'edges: ', edges(1:1)
+    ! if ( edges(1) < size(BUFFER) ) then
+    !   print *, 'Warning--edges array too small for values'
+    ! endif
+    ! counts = max(edges(1), size(BUFFER) )
+    ! print *, 'counts: ', counts(1:1)
+    ! print *, 'size(BUFFER): ', size(BUFFER)
+d134 1
+d150 1
+d166 1
+d181 1
+d223 1
+a223 1
+       "$Id: he5_swapi_real.f90,v 2.7 2009/06/23 18:25:43 pwagner Exp $"
+d233 3
+@
+
+
+2.7
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d14 1
+d25 1
+a25 1
+       "$RCSfile: $"
+d36 1
+a36 1
+    integer, intent(in) :: COUNT   ! Stride array
+d72 3
+a74 3
+    integer, intent(in) :: STARTS(*)    ! Start array
+    integer, intent(in) :: STRIDES(*)   ! Stride array
+    integer, intent(in) :: EDGES(*)     ! Edge array
+d87 3
+a89 3
+    integer, intent(in) :: STARTS(*)    ! Start array
+    integer, intent(in) :: STRIDES(*)   ! Stride array
+    integer, intent(in) :: EDGES(*)     ! Edge array
+d93 9
+a101 1
+
+d110 3
+a112 3
+    integer, intent(in) :: STARTS(*)    ! Start array
+    integer, intent(in) :: STRIDES(*)   ! Stride array
+    integer, intent(in) :: EDGES(*)     ! Edge array
+d125 3
+a127 3
+    integer, intent(in) :: STARTS(*)    ! Start array
+    integer, intent(in) :: STRIDES(*)   ! Stride array
+    integer, intent(in) :: EDGES(*)     ! Edge array
+d130 1
+d133 10
+d151 3
+a153 3
+    integer, intent(in) :: STARTS(*)    ! Start array
+    integer, intent(in) :: STRIDES(*)   ! Stride array
+    integer, intent(in) :: EDGES(*)     ! Edge array
+d166 3
+a168 3
+    integer, intent(in) :: STARTS(*)    ! Start array
+    integer, intent(in) :: STRIDES(*)   ! Stride array
+    integer, intent(in) :: EDGES(*)     ! Edge array
+d182 1
+a182 1
+    integer, intent(in) :: COUNT   ! Stride array
+d197 1
+a197 1
+    integer, intent(in) :: COUNT   ! Stride array
+d234 1
+a234 1
+       "$Id: read_apriori.f90 is it here $"
+d244 3
+@
+
+
+2.6
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d211 1
+a212 1
+!---------------------------- RCS Ident Info -------------------------------
+d214 2
+a215 3
+       "$Id: $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d217 1
+d219 1
+d224 3
+@
+
+
+2.5
+log
+@New stuff for reading swath attributes
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d22 3
+a24 5
+  !------------------------------- RCS Ident Info ----------------------------
+  character(len=256), private :: Id = &
+    & "$Id: he5_swapi_real.f90,v 2.4 2003/04/11 23:32:23 pwagner Exp $"
+  character(len=*), private, parameter :: ModuleName = &
+    & "$RCSfile: he5_swapi_real.f90,v $"
+d26 1
+a26 1
+  !---------------------------------------------------------------------------
+d212 5
+d223 3
+@
+
+
+2.4
+log
+@Moved he5_swsetfill he5_ehwrglatt interfaces
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+d8 3
+a10 1
+    & HE5_EHWRGLATT_REAL, HE5_SWWRATTR_REAL, HE5_SWWRLATTR_REAL
+d16 1
+a16 1
+    & "$Id: he5_swapi_real.f90,v 2.3 2003/02/08 00:32:54 pwagner Exp $"
+d38 12
+d180 25
+d212 3
+@
+
+
+2.3
+log
+@New attribute-related interfaces
+@
+text
+@d6 5
+a10 1
+  public
+d14 1
+a14 1
+    & "$Id: he5_swapi_real.f90,v 2.2 2002/10/08 00:09:10 pwagner Exp $"
+d22 25
+a136 14
+  integer function HE5_EHWRGLATT_REAL ( FILEID, &
+    & ATTRNAME, DATATYPE, COUNT, BUFFER )
+    integer, intent(in) :: FILEID      ! File ID
+    character(len=*), intent(in) :: ATTRNAME     ! Field name
+    integer, intent(in) :: DATATYPE    ! Start array
+    integer, intent(in) :: COUNT   ! Stride array
+    real, intent(in) :: BUFFER(:)       ! Buffer for write
+
+    integer, external :: HE5_EHWRGLATT
+
+    he5_ehwrglatt_REAL = he5_ehwrglatt(fileID, &
+         & attrname, datatype, count, buffer )
+  end function HE5_EHWRGLATT_REAL
+
+d141 1
+a141 1
+    integer, intent(in) :: DATATYPE    ! Start array
+d156 1
+a156 1
+    integer, intent(in) :: DATATYPE    ! Start array
+d172 4
+a175 1
+! $Log: HDF-EOS5.f90,v $
+@
+
+
+2.2
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d1 3
+d10 1
+a10 1
+    & "$Id: he5_swapi_real.f90,v 2.1 2002/07/11 22:19:25 pwagner Exp $"
+d108 43
+d157 1
+@
+
+
+2.1
+log
+@First commit in this directory--welcome old friends
+@
+text
+@d7 1
+a7 1
+    & "$Id: he5_swapi_real.f90,v 1.1 2000/12/22 15:55:54 pumphrey Exp $"
+d10 1
+d104 4
+@
+

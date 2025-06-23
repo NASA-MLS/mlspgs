@@ -1,0 +1,2016 @@
+head	2.31;
+access;
+symbols
+	v5-02-NRT-19:2.31
+	v6-00:2.31
+	v5-02-NRT-18:2.31
+	v5-02:2.31
+	v5-01-NRT-17:2.31
+	v5-01-NRT-16:2.31
+	v5-01-NRT-15:2.31
+	v5-01-NRT-14:2.31
+	neuralnetworks-1-0:2.31.0.6
+	cfm-single-freq-0-1:2.31.0.4
+	v5-01:2.31
+	v5-00:2.31
+	v4-23-TA133:2.31.0.2
+	mus-emls-1-70:2.28.0.2
+	rel-1-0-englocks-work:2.27.0.2
+	VUMLS1-00:2.26
+	VPL1-00:2.26
+	V4-22-NRT-08:2.26
+	VAM1-00:2.26
+	V4-21:2.26.0.2
+	V4-13:2.26
+	V4-12:2.26
+	V4-11:2.26
+	V4-10:2.26
+	V3-43:2.24
+	M4-00:2.25
+	V3-41:2.24
+	V3-40-PlusGM57:2.24.0.2
+	V2-24-NRT-04:2.20
+	V3-33:2.24
+	V2-24:2.20
+	V3-31:2.24
+	V3-30-NRT-05:2.24
+	cfm-01-00:2.24
+	V3-30:2.24
+	V3-20:2.24
+	V3-10:2.23
+	V2-23-NRT-02:2.20
+	V2-23:2.20
+	V2-22-NRT-01:2.20
+	V2-22:2.20
+	V2-21:2.19
+	V2-20:2.19
+	V2-11:2.19
+	V2-10:2.19
+	V2-00:2.18
+	V1-51:2.17
+	V1-50:2.17
+	V1-45:2.17
+	V1-44:2.17
+	V1-43:2.17
+	V1-32:2.17
+	V1-31:2.17
+	V1-30:2.13
+	V1-13:2.8
+	V1-12:2.8
+	V1-11:2.8
+	V1-10:2.8
+	newfwm-feb03:2.8.0.2
+	newfwm-sep01:1.1.0.2
+	V0-7:1.1;
+locks; strict;
+comment	@# @;
+
+
+2.31
+date	2018.11.01.00.46.06;	author vsnyder;	state Exp;
+branches
+	2.31.2.1;
+next	2.30;
+
+2.30
+date	2018.10.26.22.04.09;	author vsnyder;	state Exp;
+branches;
+next	2.29;
+
+2.29
+date	2018.08.28.20.25.58;	author vsnyder;	state Exp;
+branches;
+next	2.28;
+
+2.28
+date	2018.05.14.23.31.54;	author vsnyder;	state Exp;
+branches;
+next	2.27;
+
+2.27
+date	2017.08.09.20.37.43;	author vsnyder;	state Exp;
+branches;
+next	2.26;
+
+2.26
+date	2013.05.18.00.34.44;	author vsnyder;	state Exp;
+branches;
+next	2.25;
+
+2.25
+date	2011.07.29.01.58.56;	author vsnyder;	state Exp;
+branches;
+next	2.24;
+
+2.24
+date	2010.02.02.01.29.20;	author vsnyder;	state Exp;
+branches;
+next	2.23;
+
+2.23
+date	2009.06.23.18.26.11;	author pwagner;	state Exp;
+branches;
+next	2.22;
+
+2.22
+date	2009.06.13.01.11.07;	author vsnyder;	state Exp;
+branches;
+next	2.21;
+
+2.21
+date	2007.12.04.01.56.41;	author vsnyder;	state Exp;
+branches;
+next	2.20;
+
+2.20
+date	2006.12.13.02.32.03;	author vsnyder;	state Exp;
+branches;
+next	2.19;
+
+2.19
+date	2006.06.16.20.32.31;	author vsnyder;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2005.06.22.18.08.19;	author pwagner;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2003.11.04.02.49.13;	author vsnyder;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2003.10.30.20.32.28;	author vsnyder;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2003.10.09.19.30.36;	author vsnyder;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2003.09.24.22.19.10;	author vsnyder;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2003.08.13.22.19.11;	author michael;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2003.08.12.23.05.30;	author vsnyder;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2003.08.12.19.34.53;	author michael;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2003.05.19.19.58.07;	author vsnyder;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2003.05.15.23.57.21;	author michael;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2003.02.07.03.26.24;	author vsnyder;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2003.02.06.21.36.18;	author vsnyder;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2003.02.03.22.56.20;	author vsnyder;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2003.01.31.01.53.28;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2003.01.30.19.31.18;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2003.01.18.02.22.58;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2003.01.18.01.42.42;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2003.01.08.00.09.56;	author vsnyder;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.09.17.20.26.27;	author livesey;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2001.06.21.13.07.09;	author zvi;	state Exp;
+branches
+	1.1.2.1;
+next	;
+
+2.31.2.1
+date	2019.04.18.16.28.19;	author pwagner;	state Exp;
+branches;
+next	;
+
+1.1.2.1
+date	2001.09.10.10.00.56;	author zvi;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.31
+log
+@Make GL_Everywhere parameter actually do GL everywhere, not only up to black out
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Path_Contrib_M
+
+  implicit NONE
+  private
+  public :: Get_GL_Inds, Path_Contrib
+
+  interface Get_GL_Inds
+    module procedure Get_GL_Inds_and_Where, Get_GL_Inds_Etc, Get_GL_Inds_Only
+  end interface
+
+  interface Path_Contrib
+    module procedure Path_Contrib_Scalar, Path_Contrib_Polarized
+  end interface
+
+  ! If dTaudn < Black_Out, we haven't been using GL, even if Tol < 0.  To do
+  ! GL everywhere, even where delta < Black_Out (dTaudn is at first used for
+  ! delta), except where dTaudn = exp(delta) is zero, set GL_Everywhere true.
+  ! I tried this on a few cases, and it didn't make a noticeable difference in
+  ! radiances or derivatives.
+  logical, parameter, private :: GL_Everywhere = .false.
+
+  ! The dummy argument I_End could be updated to stop worrying about
+  ! incremental optical depth after black out.  At some time in the distant
+  ! past, a comment was added above the call in the full forward model to
+  ! Tau_m%Get_Tau that calculates Tau from incremental optical depth: "this
+  ! breaks the gold brick."  Tau_m%Get_Tau re-calculates delta, and might black
+  ! out at a different point on the path.  Set this .true. to update I_End
+  ! anyway.
+  logical, parameter, private :: Update_I_End = .false.
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: path_contrib_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+!-------------------------------------------  Path_Contrib_Scalar  -----
+! Estimate the error (along the path) of the integral in each interval
+! of the (coarse) pre-selected integration grid.  Use that estimate to
+! select where to do Gauss-Legendre quadrature.  Then specify where to
+! do the Gauss-Legendre quadratures.
+
+  subroutine Path_Contrib_Scalar ( incoptdepth, tan_pt, i_start, i_end, &
+    &                              e_rflty, tol, do_gl )
+
+    use MLSKinds, only: RK => RP, IP
+    use Tau_m, only: Black_Out
+
+  ! inputs
+
+    real(rk), intent(in) :: IncOptDepth(:) ! layer optical depth
+    integer, intent(in) :: tan_pt          ! Tangent point index in IncOptDepth
+    integer, intent(in) :: i_start         ! Start of path to worry about
+    integer, intent(inout) :: i_end        ! End of path to worry about
+    real(rk), intent(in) :: e_rflty        ! earth reflectivity
+    real(rk), intent(in) :: tol            ! accuracy target in K
+
+  ! outputs
+
+    logical, intent(inout) :: do_gl(:)     ! set true for indices in coarse
+                                           ! path to do gl computation
+
+  ! Internal stuff
+
+    real(rk) :: dtaudn(size(incoptdepth))  ! optical depth (delta) at first,
+                                           ! then path derivative of the
+                                           ! transmission function (tau)
+    integer(ip) :: last
+
+    real(rk) :: MyTol
+    real(rk), parameter :: temp = 250.0_rk
+    real(rk), parameter :: TolScale = 2.0_rk / temp ! 2.0 comes from centered
+                                           ! difference used to compute dtaudn
+
+    real(rk), parameter :: My_Black_Out = &
+      & merge(-log(huge(1.0_rk)),black_out,GL_Everywhere)
+
+  ! start code
+
+    myTol = - tolScale * tol ! Negative because we're summing -incoptdepth
+
+    ! Compute dtaudn = delta = indefinite sum of (-incoptdepth).
+
+o:  block
+      dtaudn(i_start) = 0.0_rk
+      do last = i_start+1, min(tan_pt, i_end)
+        dtaudn(last) = dtaudn(last-1) - incoptdepth(last)
+        if ( dtaudn(last) < my_black_out ) exit o
+      end do
+
+      if ( last == tan_pt+1 ) dtaudn(tan_pt+1) = dtaudn(tan_pt)
+
+      do last = max(i_start+1,tan_pt+2), i_end
+        dtaudn(last) = dtaudn(last-1) - incoptdepth(last-1)
+        if ( dtaudn(last) < my_black_out ) exit o
+      end do
+      last = i_end
+    end block o
+
+    ! compute the tau path derivative dTau/ds ~ exp(delta) d delta/ds.
+    dtaudn(i_start:last) = &
+      & (eoshift(dtaudn(i_start:last),1,dtaudn(last)) -             &
+      &  eoshift(dtaudn(i_start:last),-1,dtaudn(i_start))) * &
+      & exp(dtaudn(i_start:last))
+
+    dtaudn(tan_pt+1:last) = dtaudn(tan_pt+1:last) * e_rflty
+
+    ! find where the tau derivative is large.  Remember, tau is monotone
+    ! decreasing, so "large" means "large and negative."
+
+    do_gl(:i_start) = .false. ! irrelevant
+    do_gl(i_start+1:last) = dtaudn(i_start+1:last) < myTol .or. GL_Everywhere
+    do_gl(last+1:) = GL_Everywhere  ! Tau is blacked out, so no point in doing GL
+    if ( update_i_end ) i_end = last
+
+  end subroutine Path_Contrib_Scalar
+
+!----------------------------------------  Path_Contrib_Polarized  -----
+! Estimate the contributions (along the path) of each interval of the
+! (coarse) pre-selected integration grid.  Use that estimate to select
+! where to do Gauss-Legendre quadrature.  Then allocate and fill
+! arrays that control the Gauss-Legendre quadratures.
+
+  subroutine Path_Contrib_Polarized ( deltau, tan_pt, e_rflty, tol, do_gl )
+
+!   use CS_Expmat_M, only: CS_Expmat
+    use MLSCommon, only: RK => RP, IP
+
+  ! inputs
+
+!    complex(rk), intent(in) :: incoptdepth(:,:,:) ! layer optical depth
+    complex(rk), intent(in) :: deltau(:,:,:)    ! = E == exp(-incoptdepth)
+                                           ! (2,2,:)
+    integer, intent(in) :: tan_pt          ! Tangent point index in deltau
+    real(rk), intent(in) :: e_rflty        ! earth reflectivity
+    real(rk), intent(in) :: tol            ! accuracy target in K
+
+  ! outputs
+
+    logical, intent(inout) :: do_gl(:)     ! set true for indices in coarse
+                                           ! path to do gl computation
+
+  ! Internal stuff
+
+    complex(rk) :: dtaudn(2,2)             ! path derivative of the
+                                           ! transmission function
+    complex(rk), parameter :: Ident(2,2) = reshape( (/ 1.0, 0.0, &
+      &                                                0.0, 1.0 /), (/ 2,2 /) )
+    real(rk) :: MyTol
+    complex(rk) :: P(2,2,size(deltau,3)), Tau(2,2,size(deltau,3))
+
+    integer(ip) :: i, n_path
+
+    real(rk), parameter :: temp = 250.0_rk
+    real(rk), parameter :: TolScale = 2.0_rk / temp ! 2.0 comes from centered
+                                           ! difference used to compute dtaudn
+
+  ! start code
+
+    n_path = size(deltau,3)
+    myTol = tolScale * tol
+
+  ! Compute exp(incoptdepth) for all but the last level
+  ! (now done outside)
+
+  !  do i = 1, n_path - 1
+  !    call cs_expmat ( incoptdepth(:,:,i), deltau(:,:,i) )
+  !  end do
+
+    P(:,:,1) = ident
+    Tau(:,:,1) = ident
+
+  ! Multiply the exp(incoptdepth) matrices together.
+
+  !{ $\mathbf{P}_i = \prod_{j=1}^{i-1} \mathbf{E}_i$;
+  !  $\mathbf{\tau}_i = \mathbf{P}_i \mathbf{P}_i^\dagger$.
+
+    do i = 2, tan_pt
+  !Note: Indexing of deltau changes at the tangent point because it is a "layer quantity"
+  !      while P, Tau are defined at the boundary of a layer closest to the spacecraft  
+!      P(:,:,i) =  matmul ( P(1:2,1:2,i-1),  deltau(1:2,1:2,i-1) )
+      P(:,:,i) =  matmul ( P(1:2,1:2,i-1),  deltau(1:2,1:2,i) )
+      Tau(:,:,i) = matmul ( P(1:2,1:2,i), conjg(transpose(P(1:2,1:2,i))) )
+    end do
+
+    P(:,:,tan_pt+1) = P(:,:,tan_pt) * sqrt(e_rflty)
+    Tau(:,:,tan_pt+1) = Tau(:,:,tan_pt) * e_rflty
+
+    do i = tan_pt+2, n_path
+      P(:,:,i) =  matmul ( P(1:2,1:2,i-1),  deltau(1:2,1:2,i-1) )
+      Tau(:,:,i) = matmul ( P(1:2,1:2,i), conjg(transpose(P(1:2,1:2,i))) )
+    end do
+
+  ! Where is the derivative of that product large?
+
+    do i = 2, n_path-1
+      dtaudn = tau(:,:,i+1) - tau(:,:,i-1)
+      if ( any(abs(real(dtaudn))  >= myTol ) .or. &
+           any(abs(aimag(dtaudn)) >= myTol ) ) do_gl(i) = .true.
+    end do
+
+  end subroutine Path_Contrib_Polarized
+
+  ! --------------------------------------  Get_GL_Inds_and_Where  -----
+  subroutine Get_GL_Inds_and_Where ( Do_GL, Tan_pt, GL_Inds, NGL, CG_Inds, NCG, Where_GL )
+  ! Fill the arrays that control application of GL
+
+    use GLnp, only: NG, NGP1
+    use MLSCommon, only: IP
+
+    logical, intent(in) :: DO_GL(:)         ! Set true for indices in coarse
+                                            ! path to do gl computation. 
+                                            ! First and last are set false
+                                            ! here.
+    integer, intent(in) :: Tan_Pt           ! Index of tangent point in Do_GL
+    integer(ip), intent(out) :: GL_Inds(:)  ! Indices of GL points within
+                                            ! coarse & fine path.
+    integer(ip), intent(out) :: NGL         ! How much of GL_Inds to use
+    integer(ip), intent(out) :: CG_Inds(:)  ! If K=CG_Inds(i) <= Tan_Pt then
+                                            ! panel(k-1:k) on the coarse path
+                                            ! needs GL, else panel(k:k+1) needs
+                                            ! GL.
+    integer(ip), intent(out) :: NCG         ! How much of CG_Inds to use
+    integer(ip), intent(out) :: Where_GL(:) ! K = Where_GL(i) indicates
+                                            ! GL_Inds(k:k+ng-1) are GL_Inds
+                                            ! for panel(i:i+1) in the coarse
+                                            ! path.
+
+    integer :: I, I1, I2, J, N_Path, Offset
+
+    integer, parameter :: GLIX(ng) = (/ (i ,i = 1-ng, 0) /)
+
+    n_path = size(do_gl)
+
+    ngl = 0
+    ncg = 0
+    ! The complication here arises from two sources.  First, we never do
+    ! GL between the two tangent points, so we never insert GL points
+    ! between tan_pt and tan_pt+1.  Second, before the tangent point, Do_GL(k)
+    ! indicates that we need GL on panel(i-1:i), while after the tangent
+    ! point, DO_GL indicates that we need GL on panel(i:i+1).
+    where_gl(tan_pt) = 0 ! panel(tan_pt:tan_pt+1) never needs GL
+    i1 = 2
+    i2 = tan_pt
+    offset = 1
+    do j = 0, ngp1, ngp1
+      do i = i1, i2
+        if ( do_gl(i) ) then
+          where_gl(i - offset) = ngl + 1
+          ngl = ngl + ng
+          gl_inds(ngl-ng+1:ngl) = Ngp1 * (i - 1) + glix + j
+          ncg = ncg + 1
+          cg_inds(ncg) = i
+        else
+          where_gl(i - offset) = 0
+        end if
+      end do
+      i1 = tan_pt+1
+      i2 = n_path - 1
+      offset = 0
+    end do
+
+  end subroutine Get_GL_Inds_and_Where
+
+  ! --------------------------------------------  Get_GL_Inds_Etc  -----
+  subroutine Get_GL_Inds_Etc ( Do_GL, Tan_pt, GL_Inds, NGL, CG_Inds, NCG )
+  ! Fill the arrays that control application of GL
+
+    use GLnp, only: NG, NGP1
+    use MLSCommon, only: IP
+
+    logical, intent(in) :: DO_GL(:)         ! Set true for indices in coarse
+                                            ! path to do gl computation. 
+                                            ! First and last are set false
+                                            ! here.
+    integer, intent(in) :: Tan_Pt           ! Index of tangent point in Do_GL
+    integer(ip), intent(out) :: GL_Inds(:)  ! Indices of GL points within
+                                            ! coarse & fine path.
+    integer(ip), intent(out) :: NGL         ! How much of GL_Inds to use
+    integer(ip), intent(out) :: CG_Inds(:)  ! If K=CG_Inds(i) <= Tan_Pt then
+                                            ! panel(k-1:k) on the coarse path
+                                            ! needs GL, else panel(k:k+1) needs
+                                            ! GL.
+    integer(ip), intent(out) :: NCG         ! How much of CG_Inds to use
+
+    integer :: I, I1, I2, J, N_Path
+
+    integer, parameter :: GLIX(ng) = (/ (i ,i = 1-ng, 0) /)
+
+    n_path = size(do_gl)
+
+    ngl = 0
+    ncg = 0
+    ! The complication here arises from two sources.  First, we never do
+    ! GL between the two tangent points, so we never insert GL points
+    ! between tan_pt and tan_pt+1.  Second, before the tangent point, Do_GL(k)
+    ! indicates that we need GL on panel(i-1:i), while after the tangent
+    ! point, DO_GL indicates that we need GL on panel(i:i+1).
+    i1 = 2
+    i2 = tan_pt
+    do j = 0, ngp1, ngp1
+      do i = i1, i2
+        if ( do_gl(i) ) then
+          ngl = ngl + ng
+          gl_inds(ngl-ng+1:ngl) = Ngp1 * (i - 1) + glix + j
+          ncg = ncg + 1
+          cg_inds(ncg) = i
+        end if
+      end do
+      i1 = tan_pt+1
+      i2 = n_path - 1
+    end do
+
+  end subroutine Get_GL_Inds_Etc
+
+  ! -------------------------------------------  Get_GL_Inds_Only  -----
+  subroutine Get_GL_Inds_Only ( Do_GL, Tan_pt, GL_Inds, NGL )
+  ! Fill the arrays that control application of GL
+
+    use GLnp, only: NG, NGP1
+    use MLSCommon, only: IP
+
+    logical, intent(in) :: DO_GL(:)            ! Set true for indices in coarse
+                                               ! path to do gl computation. 
+                                               ! First and last are set false
+                                               ! here.
+    integer, intent(in) :: Tan_Pt              ! Index of tangent point in Do_GL
+    integer(ip), intent(out) :: GL_Inds(:)     ! Indices of GL points within
+                                               ! coarse & fine path.
+    integer(ip), intent(out) :: NGL            ! How much of GL_INDS to use
+
+    integer :: I, I1, I2, J, N_Path
+
+    integer, parameter :: GLIX(ng) = (/ (i ,i = 1-ng, 0) /)
+
+    n_path = size(do_gl)
+
+    ngl = 0
+    ! The complication here arises from two sources.  First, we never do
+    ! GL between the two tangent points, so we never insert GL points
+    ! between tan_pt and tan_pt+1.  Second, before the tangent point, Do_GL(k)
+    ! indicates that we need GL on panel(i-1:i), while after the tangent
+    ! point, DO_GL indicates that we need GL on panel(i:i+1).
+    i1 = 2
+    i2 = tan_pt
+    do j = 0, ngp1, ngp1
+      do i = i1, i2
+        if ( do_gl(i) ) then
+          ngl = ngl + ng
+          gl_inds(ngl-ng+1:ngl) = Ngp1 * (i - 1) + glix + j
+        end if
+      end do
+      i1 = tan_pt+1
+      i2 = n_path - 1
+    end do
+
+  end subroutine Get_GL_Inds_Only
+
+!-----------------------------------------------------------------------
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: path_contrib_m.f90,v 2.30 2018/10/26 22:04:09 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Path_Contrib_M
+
+! $Log: path_contrib_m.f90,v $
+! Revision 2.30  2018/10/26 22:04:09  vsnyder
+! Make I_End INOUT, add a switch to control whether to update it.  Get
+! kinds from MLSKinds instead of MLSCommon.
+!
+! Revision 2.29  2018/08/28 20:25:58  vsnyder
+! Add a named constant to change black out to -log(huge(1.0_rk))
+!
+! Revision 2.28  2018/05/14 23:31:54  vsnyder
+! Add several more Get_GL_Inds routines, make generic for them
+!
+! Revision 2.27  2017/08/09 20:37:43  vsnyder
+! Use a BLOCK with EXIT to eliminate some GO TO statements and a label.
+! Hoist test for optional argument out of a loop, making two versions of it.
+!
+! Revision 2.26  2013/05/18 00:34:44  vsnyder
+! Insert NG fine-grid (GL) points between tangent points, thereby
+! regularizing coarse-grid spacing, and reducing significantly the need
+! to use c_inds to extract coarse-grid points from the composite grid.
+!
+! Revision 2.25  2011/07/29 01:58:56  vsnyder
+! Make CG_INDS, NCG optional
+!
+! Revision 2.24  2010/02/02 01:29:20  vsnyder
+! Don't reference undefined parts of dtaudn
+!
+! Revision 2.23  2009/06/23 18:26:11  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.22  2009/06/13 01:11:07  vsnyder
+! Specify start and end of path
+!
+! Revision 2.21  2007/12/04 01:56:41  vsnyder
+! Don't bother with earth reflectivity after black out
+!
+! Revision 2.20  2006/12/13 02:32:03  vsnyder
+! Drag the tangent point around instead of assuming it's the middle one
+!
+! Revision 2.19  2006/06/16 20:32:31  vsnyder
+! Define NGP1 in glnp
+!
+! Revision 2.18  2005/06/22 18:08:19  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.17  2003/11/04 02:49:13  vsnyder
+! Calculate coarse-path indices where GL is needed
+!
+! Revision 2.16  2003/10/30 20:32:28  vsnyder
+! Simplify gl_inds computation
+!
+! Revision 2.15  2003/10/09 19:30:36  vsnyder
+! Simplify computation of gl_inds
+!
+! Revision 2.13  2003/08/13 22:19:11  michael
+! Fixed indexing bug at line 150 in path_contrib_polarized
+!
+! Revision 2.12  2003/08/12 23:05:30  vsnyder
+! Fix a bug at line 162
+!
+! Revision 2.11  2003/08/12 19:34:53  michael
+! Some futzing by Van.
+!
+! Revision 2.10  2003/05/19 19:58:07  vsnyder
+! Remove USEs for unreferenced symbols, remove unused local variables
+!
+! Revision 2.9  2003/05/15 23:57:21  michael
+! Fixed Path_Contrib_Polarized to properly calculate Tau
+! and renamed variables to agree with polarized ATBD
+!
+! Revision 2.8  2003/02/07 03:26:24  vsnyder
+! Compute deltau instead of incoptdepth in Path_Contrib_Polarized
+!
+! Revision 2.7  2003/02/06 21:36:18  vsnyder
+! Cosmic -- errr -- cosmetic changes
+!
+! Revision 2.6  2003/02/03 22:56:20  vsnyder
+! Get rid of an array temp
+!
+! Revision 2.5  2003/01/31 01:53:28  vsnyder
+! Calculate where to do GL with one less array temp
+!
+! Revision 2.4  2003/01/30 19:31:18  vsnyder
+! Undo change that didn't work -- tried to compute gl_inds without array temp
+!
+! Revision 2.3  2003/01/18 02:22:58  vsnyder
+! IMAG should have been AIMAG
+!
+! Revision 2.2  2003/01/18 01:42:42  vsnyder
+! Added complex 3-quantity path_contrib subroutine.
+! Separated Get_GL_Inds into a separate subroutine.
+!
+! Revision 2.1  2003/01/08 00:09:56  vsnyder
+! Moved from rad_tran, where it didn't seem to belong
+!
+@
+
+
+2.31.2.1
+log
+@Partially reverted off-by-one change to may 10
+@
+text
+@d110 1
+a111 1
+    last = last - 1 ! either i_end or one before the black out
+d376 1
+a376 1
+       "$Id: path_contrib_m.f90,v 2.31 2018/11/01 00:46:06 vsnyder Exp $"
+a385 3
+! Revision 2.31  2018/11/01 00:46:06  vsnyder
+! Make GL_Everywhere parameter actually do GL everywhere, not only up to black out
+!
+@
+
+
+2.30
+log
+@Make I_End INOUT, add a switch to control whether to update it.  Get
+kinds from MLSKinds instead of MLSCommon.
+@
+text
+@d34 5
+a38 5
+  ! incremental optical depth after black out.  At some time in the
+  ! distant past, a comment was added above the call in the full forward
+  ! model that calculates Tau from incremental optical depth that "this
+  ! breaks the gold brick."  Tau re-calculates delta, and might black out
+  ! at a different point on the path.  Set this parameter to update I_End
+d125 2
+a126 2
+    do_gl(i_start+1:last) = dtaudn(i_start+1:last) < myTol
+    do_gl(last+1:) = .false.  ! Tau is blacked out, so no point in doing GL
+d376 1
+a376 1
+       "$Id: path_contrib_m.f90,v 2.29 2018/08/28 20:25:58 vsnyder Exp $"
+d386 4
+@
+
+
+2.29
+log
+@Add a named constant to change black out to -log(huge(1.0_rk))
+@
+text
+@d33 9
+d59 1
+a59 1
+    use MLSCommon, only: RK => RP, IP
+d66 2
+a67 1
+    integer, intent(in) :: i_start, i_end  ! How much of path to worry about
+a113 1
+
+d127 1
+d376 1
+a376 1
+       "$Id: path_contrib_m.f90,v 2.28 2018/05/14 23:31:54 vsnyder Exp $"
+d386 3
+@
+
+
+2.28
+log
+@Add several more Get_GL_Inds routines, make generic for them
+@
+text
+@d26 7
+d78 3
+d91 1
+a91 1
+        if ( dtaudn(last) < black_out ) exit o
+d98 1
+a98 1
+        if ( dtaudn(last) < black_out ) exit o
+d366 1
+a366 1
+       "$Id: path_contrib_m.f90,v 2.27 2017/08/09 20:37:43 vsnyder Exp $"
+d376 3
+@
+
+
+2.27
+log
+@Use a BLOCK with EXIT to eliminate some GO TO statements and a label.
+Hoist test for optional argument out of a loop, making two versions of it.
+@
+text
+@d16 1
+a16 1
+  public :: Get_GL_Inds, PATH_CONTRIB
+d18 6
+a23 2
+  interface PATH_CONTRIB
+    module procedure PATH_CONTRIB_SCALAR, PATH_CONTRIB_POLARIZED
+d90 1
+a91 1
+    last = last - 1 ! either i_end or one before the black out
+d197 63
+a259 2
+  ! ------------------------------------------------  Get_GL_inds  -----
+  subroutine Get_GL_inds ( Do_GL, Tan_pt, GL_Inds, NGL, CG_Inds, NCG )
+d265 52
+a316 1
+    logical, intent(inout) :: DO_GL(:)         ! Set true for indices in coarse
+d321 2
+a322 1
+    integer(ip), intent(out) :: GL_INDS(:)     ! Indices of where to do GL
+a323 3
+    integer(ip), intent(out), optional :: CG_INDS(:) ! Indices on coarse path of
+                                               ! where to do GL
+    integer(ip), intent(out), optional :: NCG  ! How much of CG_INDS to use
+d325 1
+a325 1
+    integer :: I, I1, I2, J, N_PATH
+a330 4
+  ! The first and last index must be false
+
+    do_gl(1:n_path:n_path-1) = .FALSE.
+
+d334 11
+a344 18
+    ! between tan_pt and tan_pt+1.  Second, before the tangent point, DO_GL
+    ! indicates that we need GL in the previous panel, while after the tangent
+    ! point, DO_GL indicates that we need GL in the next panel.
+    if ( present(ncg) ) then ! Implies present(cg_inds)
+      ncg = 0
+      i1 = 2
+      i2 = tan_pt
+      do j = 0, ngp1, ngp1
+        do i = i1, i2
+          if ( do_gl(i) ) then
+            ngl = ngl + ng
+            gl_inds(ngl-ng+1:ngl) = Ngp1 * (i - 1) + glix + j
+            ncg = ncg + 1
+            cg_inds(ncg) = i
+          end if
+        end do
+        i1 = tan_pt+1
+        i2 = n_path - 1
+d346 3
+a348 14
+    else
+      i1 = 2
+      i2 = tan_pt
+      do j = 0, ngp1, ngp1
+        do i = i1, i2
+          if ( do_gl(i) ) then
+            ngl = ngl + ng
+            gl_inds(ngl-ng+1:ngl) = Ngp1 * (i - 1) + glix + j
+          end if
+        end do
+        i1 = tan_pt+1
+        i2 = n_path - 1
+      end do
+    end if
+d350 1
+a350 1
+  end subroutine Get_GL_inds
+d356 1
+a356 1
+       "$Id: path_contrib_m.f90,v 2.26 2013/05/18 00:34:44 vsnyder Exp $"
+d366 4
+@
+
+
+2.26
+log
+@Insert NG fine-grid (GL) points between tangent points, thereby
+regularizing coarse-grid spacing, and reducing significantly the need
+to use c_inds to extract coarse-grid points from the composite grid.
+@
+text
+@d73 6
+a78 5
+    dtaudn(i_start) = 0.0_rk
+    do last = i_start+1, min(tan_pt, i_end)
+      dtaudn(last) = dtaudn(last-1) - incoptdepth(last)
+      if ( dtaudn(last) < black_out ) go to 19
+    end do
+d80 1
+a80 1
+    if ( last == tan_pt+1 ) dtaudn(tan_pt+1) = dtaudn(tan_pt)
+d82 6
+a87 7
+    do last = max(i_start+1,tan_pt+2), i_end
+      dtaudn(last) = dtaudn(last-1) - incoptdepth(last-1)
+      if ( dtaudn(last) < black_out ) go to 19
+    end do
+    last = i_end
+
+19  continue
+a100 1
+    where ( dtaudn(i_start:last) < myTol ) do_gl(i_start:last) = .true.
+d102 1
+d222 1
+a222 2
+    if ( present(ncg) ) ncg = 0
+    ! The complication here arises from two sources.  First, we never doing
+d227 9
+a235 8
+    i1 = 2
+    i2 = tan_pt
+    do j = 0, ngp1, ngp1
+      do i = i1, i2
+        if ( do_gl(i) ) then
+          ngl = ngl + ng
+          gl_inds(ngl-ng+1:ngl) = Ngp1 * (i - 1) + glix + j
+          if ( present(ncg) ) then
+d239 3
+a241 1
+        end if
+d243 14
+a256 3
+      i1 = tan_pt+1
+      i2 = n_path - 1
+    end do
+d264 1
+a264 1
+       "$Id: path_contrib_m.f90,v 2.25 2011/07/29 01:58:56 vsnyder Exp $"
+d274 5
+@
+
+
+2.25
+log
+@Make CG_INDS, NCG optional
+@
+text
+@d52 2
+a53 2
+    logical, intent(inout) :: do_gl(:)     ! TRUEs added for indicies to do
+  !                                          gl computation
+d129 2
+a130 2
+    logical, intent(inout) :: do_gl(:)     ! set true for indicies to do
+  !                                          gl computation
+d153 1
+a153 1
+  !(now done outside)
+d200 4
+a203 3
+    logical, intent(inout) :: DO_GL(:)         ! Set true for indicies to do
+                                               ! gl computation.  First and
+                                               ! last are set false here.
+d211 1
+a211 1
+    integer :: I, N_PATH
+d213 1
+a213 2
+    integer, parameter :: GLIR(ng) = (/ (i, i = 2-ng, 1) /) ! for > Tan_Pt 
+    integer, parameter :: GLIL(ng) = (/ (i ,i = 1-ng, 0) /) ! for <= Tan_Pt
+d219 1
+a219 1
+    do_gl((/1,n_path/)) = .FALSE.
+d223 16
+a238 7
+    do i = 2, n_path-1 ! first and last elements of do_gl are false
+      if ( do_gl(i) ) then
+        ngl = ngl + ng
+        if ( i > tan_pt ) then
+          gl_inds(ngl-ng+1:ngl) = Ngp1 * (i - 1) + glir
+        else
+          gl_inds(ngl-ng+1:ngl) = Ngp1 * (i - 1) + glil
+d240 3
+a242 5
+        if ( present(ncg) ) then
+          ncg = ncg + 1
+          cg_inds(ncg) = i
+        end if
+      end if
+d251 1
+a251 1
+       "$Id: path_contrib_m.f90,v 2.24 2010/02/02 01:29:20 vsnyder Exp $"
+d261 3
+@
+
+
+2.24
+log
+@Don't reference undefined parts of dtaudn
+@
+text
+@d194 1
+a194 1
+  subroutine Get_GL_inds ( Do_GL, Tan_pt, GL_Inds, CG_Inds, NGL, NCG )
+d205 2
+a206 1
+    integer(ip), intent(out) :: CG_INDS(:)     ! Indices on coarse path of
+d208 1
+a208 2
+    integer(ip), intent(out) :: NGL            ! How much of GL_INDS to use
+    integer(ip), intent(out) :: NCG            ! How much of CG_INDS to use
+d222 1
+a222 1
+    ncg = 0
+d231 4
+a234 2
+        ncg = ncg + 1
+        cg_inds(ncg) = i
+d244 1
+a244 1
+       "$Id: path_contrib_m.f90,v 2.23 2009/06/23 18:26:11 pwagner Exp $"
+d254 3
+@
+
+
+2.23
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d24 1
+a24 1
+       "$RCSfile: $"
+d79 1
+a79 1
+    if ( tan_pt < i_end ) dtaudn(tan_pt+1) = dtaudn(tan_pt)
+d81 1
+a81 1
+    do last = tan_pt+2, i_end
+d242 1
+a242 1
+       "$Id: read_apriori.f90 is it here $"
+d252 3
+@
+
+
+2.22
+log
+@Specify start and end of path
+@
+text
+@d24 1
+a24 1
+       "$RCSfile: path_contrib_m.f90,v $"
+d239 1
+a240 1
+!---------------------------- RCS Ident Info -------------------------------
+d242 2
+a243 3
+       "$Id: path_contrib_m.f90,v 2.21 2007/12/04 01:56:41 vsnyder Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d245 1
+a245 1
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
+d247 1
+d252 3
+@
+
+
+2.21
+log
+@Don't bother with earth reflectivity after black out
+@
+text
+@d31 4
+a34 4
+! Estimate the contributions (along the path) of each interval of the
+! (coarse) pre-selected integration grid.  Use that estimate to select
+! where to do Gauss-Legendre quadrature.  Then allocate and fill
+! arrays that control the Gauss-Legendre quadratures.
+d36 2
+a37 1
+  subroutine Path_Contrib_Scalar ( incoptdepth, tan_pt, e_rflty, tol, do_gl )
+d46 1
+d60 1
+a60 1
+    integer(ip) :: i, n_path, last
+a68 2
+    n_path = size(incoptdepth)
+    last = n_path
+d71 1
+a71 1
+  ! Compute the indefinite sum of (-incoptdepth).
+d73 4
+a76 7
+    dtaudn(1) = 0.0_rk
+    do i = 2 , tan_pt
+      dtaudn(i) = dtaudn(i-1) - incoptdepth(i)
+      if ( dtaudn(i) < black_out ) then
+        last = i
+        go to 9
+      end if
+d79 1
+a79 1
+    dtaudn(tan_pt+1) = dtaudn(tan_pt)
+d81 3
+a83 6
+    do i = tan_pt+2, n_path
+      dtaudn(i) = dtaudn(i-1) - incoptdepth(i-1)
+      if ( dtaudn(i) < black_out ) then
+        last = i
+        go to 9
+      end if
+d85 1
+d87 1
+a87 1
+9   continue
+d89 1
+a89 1
+  ! compute the tau path derivative dTau/ds ~ exp(delta) d delta/ds.
+d91 4
+a94 2
+    dtaudn(:last) = (eoshift(dtaudn(:last),1,dtaudn(last)) -             &
+                     eoshift(dtaudn(:last),-1,dtaudn(1))) * exp(dtaudn(:last))
+d98 2
+a99 2
+  ! find where the tau derivative is large.  Remember, tau is monotone
+  ! decreasing, so "large" means "large and negative."
+d101 3
+a103 2
+    where ( dtaudn(:last) < myTol ) do_gl(:last) = .true.
+    do_gl(last+1:) = .false. ! Tau is blacked out, so no point in doing GL
+d242 1
+a242 1
+       "$Id: path_contrib_m.f90,v 2.20 2006/12/13 02:32:03 vsnyder Exp $"
+d246 1
+d252 3
+@
+
+
+2.20
+log
+@Drag the tangent point around instead of assuming it's the middle one
+@
+text
+@d39 1
+d55 4
+a58 3
+    real(rk) :: dtaudn(size(incoptdepth))  ! path derivative of the
+                                           ! transmission function
+    integer(ip) :: i, n_path
+d68 1
+d76 4
+d86 4
+d92 3
+a94 1
+  ! compute the tau path derivative ~ exp(Tau) dTau/ds.
+d96 2
+a97 2
+    dtaudn = (eoshift(dtaudn,1,dtaudn(n_path)) -             &
+              eoshift(dtaudn,-1,dtaudn(1))) * exp(dtaudn)
+d99 1
+a99 1
+    dtaudn(tan_pt+1:n_path) = dtaudn(tan_pt+1:n_path) * e_rflty
+d101 2
+a102 2
+  ! find where the tau derivative is large.  Remember, we've
+  ! been subtracting, so "large" means "large and negative."
+d104 2
+a105 1
+    where ( dtaudn < myTol ) do_gl = .true.
+d244 1
+a244 1
+       "$Id: path_contrib_m.f90,v 2.19 2006/06/16 20:32:31 vsnyder Exp $"
+d253 3
+@
+
+
+2.19
+log
+@Define NGP1 in glnp
+@
+text
+@d36 1
+a36 1
+  subroutine Path_Contrib_Scalar ( incoptdepth, e_rflty, tol, do_gl )
+d42 2
+a43 1
+    real(rk), intent(in) :: incoptdepth(:) ! layer optical depth
+d56 1
+a56 1
+    integer(ip) :: i, i_tan, n_path
+a65 1
+    i_tan = n_path / 2
+d71 1
+a71 1
+    do i = 2 , i_tan
+d75 1
+a75 1
+    dtaudn(i_tan+1) = dtaudn(i_tan)
+d77 1
+a77 1
+    do i = i_tan+2, n_path
+d86 1
+a86 1
+    dtaudn(i_tan+1:n_path) = dtaudn(i_tan+1:n_path) * e_rflty
+d101 1
+a101 1
+  subroutine Path_Contrib_Polarized ( deltau, e_rflty, tol, do_gl )
+d111 1
+d129 1
+a129 1
+    integer(ip) :: i, i_tan, n_path
+a137 1
+    i_tan = n_path / 2
+d155 1
+a155 1
+    do i = 2, i_tan
+d163 2
+a164 2
+    P(:,:,i_tan+1) = P(:,:,i_tan) * sqrt(e_rflty)
+    Tau(:,:,i_tan+1) = Tau(:,:,i_tan) * e_rflty
+d166 1
+a166 1
+    do i = i_tan+2, n_path
+d182 1
+a182 1
+  subroutine Get_GL_inds ( Do_GL, GL_Inds, CG_Inds, NGL, NCG )
+d191 1
+d200 2
+a201 2
+    integer, parameter :: GLIR(ng) = (/ (i, i = 2-ng, 1) /) ! for > n_path/2
+    integer, parameter :: GLIL(ng) = (/ (i ,i = 1-ng, 0) /) ! for <= n_path/2
+d214 1
+a214 1
+        if ( i > n_path / 2 ) then
+d230 1
+a230 1
+       "$Id: path_contrib_m.f90,v 2.18 2005/06/22 18:08:19 pwagner Exp $"
+d239 3
+@
+
+
+2.18
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d24 1
+a24 1
+       "$RCSfile: $"
+d185 1
+a185 1
+    use GLnp, only: NG
+a198 1
+    integer, parameter :: NGP1 = NG + 1
+d229 1
+a229 1
+       "$Id: $"
+d238 3
+@
+
+
+2.17
+log
+@Calculate coarse-path indices where GL is needed
+@
+text
+@d1 11
+d22 3
+a24 5
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+    & "$Id: path_contrib_m.f90,v 2.16 2003/10/30 20:32:28 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName = "$RCSfile: path_contrib_m.f90,v $"
+d228 5
+d239 3
+@
+
+
+2.16
+log
+@Simplify gl_inds computation
+@
+text
+@d13 1
+a13 1
+    & "$Id: path_contrib_m.f90,v 2.15 2003/10/09 19:30:36 vsnyder Exp $"
+d173 2
+a174 2
+  subroutine Get_GL_inds ( Do_GL, GL_Inds, NGL )
+  ! Fill the array that controls application of GL
+d183 2
+d186 1
+d201 1
+d210 2
+d225 3
+@
+
+
+2.15
+log
+@Simplify computation of gl_inds
+@
+text
+@d13 1
+a13 1
+    & "$Id: path_contrib_m.f90,v 2.13 2003/08/13 22:19:11 michael Exp $"
+d188 2
+a189 2
+    integer, parameter :: GLIR(ng) = (/ (i, i = 1, ng ) /)  ! for > n_path/2
+    integer, parameter :: GLIL(ng) = (/ (i ,i = -ng, -1) /) ! for <= n_path/2
+d202 1
+a202 1
+          gl_inds(ngl-ng+1:ngl) = 1 - Ng + Ngp1 * (i - 1) + glir
+d204 1
+a204 1
+          gl_inds(ngl-ng+1:ngl) = 1 +      Ngp1 * (i - 1) + glil
+d219 3
+@
+
+
+2.14
+log
+@Simplify Get_GL_inds, correct some comments
+@
+text
+@d24 2
+a25 1
+! where to do Gauss-Legendre quadrature.
+d89 2
+a90 1
+! where to do Gauss-Legendre quadrature.
+d174 1
+a174 1
+  ! Fill the array that controls application of GL.
+d188 2
+a189 2
+    integer, parameter :: GLIR(ng) = (/ (i, i = 2-ng, 1) /)  ! for > n_path/2
+    integer, parameter :: GLIL(ng) = (/ (i ,i = 1-ng, 0) /)  ! for <= n_path/2
+d202 1
+a202 1
+          gl_inds(ngl-ng+1:ngl) = Ngp1 * (i - 1) + glir
+d204 1
+a204 1
+          gl_inds(ngl-ng+1:ngl) = Ngp1 * (i - 1) + glil
+@
+
+
+2.13
+log
+@Fixed indexing bug at line 150 in path_contrib_polarized
+@
+text
+@d13 1
+a13 1
+    & "$Id: path_contrib_m.f90,v 2.12 2003/08/12 23:05:30 vsnyder Exp $"
+d24 1
+a24 2
+! where to do Gauss-Legendre quadrature.  Then allocate and fill
+! arrays that control the Gauss-Legendre quadratures.
+d88 1
+a88 2
+! where to do Gauss-Legendre quadrature.  Then allocate and fill
+! arrays that control the Gauss-Legendre quadratures.
+d172 1
+a172 1
+  ! Fill the array that controls application of GL
+d186 2
+a187 2
+    integer, parameter :: GLIR(ng) = (/ (i, i = 1, ng ) /)  ! for > n_path/2
+    integer, parameter :: GLIL(ng) = (/ (i ,i = -ng, -1) /) ! for <= n_path/2
+d200 1
+a200 1
+          gl_inds(ngl-ng+1:ngl) = 1 - Ng + Ngp1 * (i - 1) + glir
+d202 1
+a202 1
+          gl_inds(ngl-ng+1:ngl) = 1 +      Ngp1 * (i - 1) + glil
+d217 3
+@
+
+
+2.12
+log
+@Fix a bug at line 162
+@
+text
+@d13 1
+a13 1
+    & "$Id: path_contrib_m.f90,v 2.11 2003/08/12 19:34:53 michael Exp $"
+d147 4
+a150 1
+      P(:,:,i) =  matmul ( P(1:2,1:2,i-1),  deltau(1:2,1:2,i-1) )
+d219 3
+@
+
+
+2.11
+log
+@Some futzing by Van.
+@
+text
+@d13 1
+a13 1
+    & "$Id: path_contrib_m.f90,v 2.10 2003/05/19 19:58:07 vsnyder Exp $"
+d162 1
+a162 1
+      dtaudn = tau(:,:,n_path+1) - tau(:,:,n_path-1)
+d216 3
+@
+
+
+2.10
+log
+@Remove USEs for unreferenced symbols, remove unused local variables
+@
+text
+@d13 1
+a13 1
+    & "$Id: path_contrib_m.f90,v 2.9 2003/05/15 23:57:21 michael Exp $"
+d48 1
+d57 1
+d82 1
+a82 1
+    where ( dtaudn < -tol * tolscale ) do_gl = .true.
+d112 1
+a112 1
+    complex(rk) :: dtaudn(2,2,size(deltau,3))    ! path derivative of the
+d116 1
+a116 1
+
+d129 1
+d143 3
+a160 3
+    dtaudn = 0.5_rk * ( eoshift(Tau(:,:,1:n_path),+1,dim=3) - &
+                      & eoshift(Tau(:,:,1:n_path),-1,dim=3) )
+
+d162 3
+a164 2
+      if ( any(abs(real(dtaudn(:,:,i)))  >= tolScale*tol ) .or. &
+           any(abs(aimag(dtaudn(:,:,i))) >= tolScale*tol ) ) do_gl(i) = .true.
+d216 3
+@
+
+
+2.9
+log
+@Fixed Path_Contrib_Polarized to properly calculate Tau
+and renamed variables to agree with polarized ATBD
+@
+text
+@d13 1
+a13 1
+    & "$Id: path_contrib_m.f90,v 2.8 2003/02/07 03:26:24 vsnyder Exp $"
+a28 1
+    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+d92 1
+a92 2
+    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use CS_Expmat_M, only: CS_Expmat
+d212 4
+@
+
+
+2.8
+log
+@Compute deltau instead of incoptdepth in Path_Contrib_Polarized
+@
+text
+@d13 1
+a13 1
+    & "$Id: path_contrib_m.f90,v 2.7 2003/02/06 21:36:18 vsnyder Exp $"
+d100 1
+a100 1
+    complex(rk), intent(in) :: deltau(:,:,:)    ! exp(incoptdepth)
+d117 1
+a117 1
+    complex(rk) :: tmp(2,2,size(deltau,3)), tmp1(2,2,size(deltau,3))
+d131 1
+a131 1
+  !(now done ouside)
+d137 2
+a138 2
+    tmp(:,:,1) = ident
+    tmp1(:,:,1) = ident
+d143 2
+a144 2
+      tmp(:,:,i) =  matmul ( tmp(:,:,i-1),  deltau(:,:,i-1) )
+      tmp1(:,:,i) = matmul ( tmp1(:,:,i-1), conjg(tmp(:,:,i)) )
+d147 2
+a148 2
+    tmp(:,:,i_tan+1) = tmp(:,:,i_tan) * sqrt(e_rflty)
+    tmp1(:,:,i_tan+1) = tmp1(:,:,i_tan) * e_rflty
+d151 2
+a152 2
+      tmp(:,:,i) =  matmul ( tmp(:,:,i-1),  deltau(:,:,i-1) )
+      tmp1(:,:,i) = matmul ( tmp1(:,:,i-1), conjg(tmp(:,:,i)) )
+d157 2
+a158 2
+    dtaudn = 0.5_rk * ( eoshift(tmp1(:,:,1:n_path),+1,dim=3) - &
+                      & eoshift(tmp1(:,:,1:n_path),-1,dim=3) )
+d161 2
+a162 2
+      if ( any(abs(real(dtaudn(:,:,i)))  > tolScale*tol ) .or. &
+           any(abs(aimag(dtaudn(:,:,i))) > tolScale*tol ) ) do_gl(i) = .true.
+d214 3
+@
+
+
+2.7
+log
+@Cosmic -- errr -- cosmetic changes
+@
+text
+@d13 1
+a13 1
+    & "$Id: path_contrib_m.f90,v 2.6 2003/02/03 22:56:20 vsnyder Exp $"
+d91 1
+a91 1
+  subroutine Path_Contrib_Polarized ( incoptdepth, e_rflty, tol, do_gl )
+d99 2
+a100 1
+    complex(rk), intent(in) :: incoptdepth(:,:,:) ! layer optical depth
+d112 1
+a112 2
+    complex(rk) :: deltau(2,2,size(incoptdepth,3))    ! exp(incoptdepth)
+    complex(rk) :: dtaudn(2,2,size(incoptdepth,3))    ! path derivative of the
+d117 1
+a117 1
+    complex(rk) :: tmp(2,2,size(incoptdepth,3)), tmp1(2,2,size(incoptdepth,3))
+d127 1
+a127 1
+    n_path = size(incoptdepth,3)
+d130 2
+a131 1
+  ! Compute exp(incoptdepth) for all but the first and last levels
+d133 3
+a135 3
+    do i = 1, n_path - 1
+      call cs_expmat ( incoptdepth(:,:,i), deltau(:,:,i) )
+    end do
+d214 3
+@
+
+
+2.6
+log
+@Get rid of an array temp
+@
+text
+@d13 1
+a13 1
+    & "$Id: path_contrib_m.f90,v 2.5 2003/01/31 01:53:28 vsnyder Exp $"
+d30 1
+a30 1
+    use MLSCommon, only: RP, IP
+d34 3
+a36 3
+    real(rp), intent(in) :: incoptdepth(:) ! layer optical depth
+    real(rp), intent(in) :: e_rflty        ! earth reflectivity
+    real(rp), intent(in) :: tol            ! accuracy target in K
+d40 1
+a40 1
+    logical(ip), intent(inout) :: do_gl(:) ! TRUEs added for indicies to do
+d45 1
+a45 1
+    real(rp) :: dtaudn(size(incoptdepth))  ! path derivative of the
+d49 2
+a50 2
+    real(rp), parameter :: temp = 250.0_rp
+    real(rp), parameter :: TolScale = 2.0_rp / temp ! 2.0 comes from centered
+d60 1
+a60 1
+    dtaudn(1) = 0.0_rp
+d94 2
+a95 1
+    use MLSCommon, only: RP, IP
+d99 4
+a102 4
+    complex(rp), intent(in) :: incoptdepth(:,:) ! layer optical depth
+                                           ! First dimension is 3
+    real(rp), intent(in) :: e_rflty        ! earth reflectivity
+    real(rp), intent(in) :: tol            ! accuracy target in K
+d106 2
+a107 2
+    logical(ip), intent(out) :: do_gl(:)       ! set true for indicies to do
+  !                                              gl computation
+d111 2
+a112 1
+    complex(rp) :: dtaudn(3,size(incoptdepth,2))    ! path derivative of the
+d114 5
+d121 2
+a122 2
+    real(rp), parameter :: temp = 250.0_rp
+    real(rp), parameter :: TolScale = 2.0_rp / temp ! 2.0 comes from centered
+d127 1
+a127 1
+    n_path = size(incoptdepth,2)
+d130 1
+a130 1
+  ! Compute the indefinite sum of (-incoptdepth).
+d132 2
+a133 3
+    dtaudn(:,1) = 0.0_rp
+    do i = 2 , i_tan
+      dtaudn(:,i) = dtaudn(:,i-1) - incoptdepth(:,i)
+d136 2
+a137 1
+    dtaudn(:,i_tan+1) = dtaudn(:,i_tan)
+d139 5
+a143 2
+    do i = i_tan+2, n_path
+      dtaudn(:,i) = dtaudn(:,i-1) - incoptdepth(:,i-1)
+d146 2
+a147 1
+  ! compute the tau path derivative ~ exp(Tau) dTau/ds.
+d149 4
+a152 2
+    dtaudn = (eoshift(dtaudn,+1,dim=2) -             &
+      &       eoshift(dtaudn,-1,dim=2) ) * exp(dtaudn)
+d154 1
+a154 1
+    dtaudn(:,i_tan+1:n_path) = dtaudn(:,i_tan+1:n_path) * e_rflty
+d156 2
+a157 1
+  ! find where the tau derivative is large.
+d159 3
+a161 4
+    do i = 2, n_path - 1
+      if ( max(maxval(abs( real(dtaudn(:,i)))), &
+        &      maxval(abs(aimag(dtaudn(:,i))))) > tol * tolscale ) &
+        & do_gl(i) = .true.
+d173 1
+a173 1
+    logical(ip), intent(inout) :: DO_GL(:)     ! Set true for indicies to do
+d176 2
+a177 2
+    integer, intent(out) :: GL_INDS(:)         ! Indices of where to do GL
+    integer, intent(out) :: NGL                ! How much of GL_INDS to use
+d213 3
+@
+
+
+2.5
+log
+@Calculate where to do GL with one less array temp
+@
+text
+@d13 1
+a13 1
+    & "$Id: path_contrib_m.f90,v 2.4 2003/01/30 19:31:18 vsnyder Exp $"
+d154 2
+a155 2
+  subroutine Get_GL_inds ( Do_GL, GL_Inds, GL_Ndx, NGL )
+  ! Create and fill the arrays that control application of GL
+a156 1
+    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+d163 1
+a163 2
+    integer, dimension(:), pointer :: GL_INDS  ! Index of GL indices
+    integer, dimension(:,:), pointer :: GL_NDX ! Packed Index array of GL intervals
+d166 1
+a166 1
+    integer :: I, NO_GL_NDX, N_PATH
+a171 4
+  ! Allocate the output index arrays (and a temp array)
+
+    nullify ( gl_inds, gl_ndx )
+
+d178 9
+a186 19
+    no_gl_ndx = count(do_gl)
+    ngl = Ng * no_gl_ndx
+
+    call allocate_test ( gl_inds, ngl, 'gl_inds', moduleName )
+    call allocate_test ( gl_ndx, no_gl_ndx, 2, 'gl_ndx', moduleName )
+
+  ! Indices where GL is needed are ones where do_gl is true.
+
+    gl_ndx(:,1) = pack((/(i,i=1,n_path)/),do_gl)
+
+  ! Compute the gl indicies
+
+    do i = 1 , no_gl_ndx
+      if ( gl_ndx(i,1) > n_path/2 ) then
+        gl_ndx(i,2) = 1 - Ng + Ngp1 * (gl_ndx(i,1) - 1)
+        gl_inds(ng*(i-1)+1:ng*i) = gl_ndx(i,2) + glir
+      else
+        gl_ndx(i,2) = 1 +      Ngp1 * (gl_ndx(i,1) - 1)
+        gl_inds(ng*(i-1)+1:ng*i) = gl_ndx(i,2) + glil
+d200 3
+@
+
+
+2.4
+log
+@Undo change that didn't work -- tried to compute gl_inds without array temp
+@
+text
+@d13 1
+a13 1
+    & "$Id: path_contrib_m.f90,v 2.3 2003/01/18 02:22:58 vsnyder Exp $"
+d154 1
+a154 1
+  subroutine Get_GL_inds ( Do_GL, GL_Inds, GL_Ndx )
+d161 1
+a161 1
+    logical(ip), intent(inout) :: do_gl(:)     ! Set true for indicies to do
+d166 1
+a167 1
+    integer(ip), dimension(:,:), pointer :: GL_INDGEN ! Temp. array of indeces
+d185 1
+d187 1
+a187 1
+    call allocate_test ( gl_inds, Ng * no_gl_ndx, 'gl_inds', moduleName )
+a188 1
+    call allocate_test ( gl_indgen, Ng, no_gl_ndx, 'gl_indgen', moduleName )
+d199 1
+a199 1
+        gl_indgen(:,i) = glir
+d202 1
+a202 1
+        gl_indgen(:,i) = glil
+a205 6
+    gl_inds = reshape(spread(gl_ndx(:,2),1,Ng) + gl_indgen, (/Ng*no_gl_ndx/))
+
+  ! Dispose of the temp array
+
+    call deallocate_test ( gl_indgen, 'gl_indgen', moduleName )
+
+d216 3
+@
+
+
+2.3
+log
+@IMAG should have been AIMAG
+@
+text
+@d13 1
+a13 1
+    & "$Id: path_contrib_m.f90,v 2.2 2003/01/18 01:42:42 vsnyder Exp $"
+d167 1
+d188 1
+d199 1
+a199 1
+        gl_inds(ng*(i-1)+1:ng*i) = gl_ndx(i,2) + glir
+d202 1
+a202 1
+        gl_inds(ng*(i-1)+1:ng*i) = gl_ndx(i,2) + glil
+d206 6
+d222 3
+@
+
+
+2.2
+log
+@Added complex 3-quantity path_contrib subroutine.
+Separated Get_GL_Inds into a separate subroutine.
+@
+text
+@d13 1
+a13 1
+    & "$Id: path_contrib_m.f90,v 2.1 2003/01/08 00:09:56 vsnyder Exp $"
+d146 2
+a147 2
+      if ( max(maxval(abs(real(dtaudn(:,i)))), &
+        &      maxval(abs(imag(dtaudn(:,i))))) > tol * tolscale ) &
+d214 4
+@
+
+
+2.1
+log
+@Moved from rad_tran, where it didn't seem to belong
+@
+text
+@d5 5
+a9 1
+  public :: PATH_CONTRIB
+d13 1
+a13 1
+    & "$Id: rad_tran_m.f90,v 2.8 2002/10/08 17:08:06 pwagner Exp $"
+d15 1
+a15 1
+  character (len=*), parameter :: ModuleName = "$RCSfile: rad_tran_m.f90,v $"
+d21 1
+a21 1
+!--------------------------------------------------  Path_Contrib  -----
+d27 1
+a27 2
+  subroutine Path_Contrib ( incoptdepth, e_rflty, tol, &
+    &                       do_gl, gl_inds, gl_ndx )
+a29 1
+    use GLnp, only: NG
+d40 1
+a40 1
+    logical(ip), intent(out) :: do_gl(:)   ! set true for indicies to do
+a41 2
+    integer, dimension(:), pointer :: GL_INDS ! Index of GL indices
+    integer, dimension(:,:), pointer :: GL_NDX ! Packed Index array of GL intervals
+d47 1
+a47 2
+    integer(ip), dimension(:,:), pointer :: GL_INDGEN ! Temp. array of indeces
+    integer(ip) :: i, i_tan, n_path, no_gl_ndx
+a52 4
+    integer, parameter :: NGP1 = NG + 1
+    integer, parameter :: GLIR(ng) = (/ (i, i = 1, ng ) /)  ! for > n_path/2
+    integer, parameter :: GLIL(ng) = (/ (i ,i = -ng, -1) /) ! for <= n_path/2
+
+d81 41
+a121 1
+    do_gl = dtaudn < -tol * tolscale
+d123 45
+a167 1
+  ! The first and last index must be false
+d169 3
+a171 1
+    do_gl((/1,n_path/)) = .FALSE.
+d175 3
+a177 1
+    nullify ( gl_inds, gl_ndx, gl_indgen )
+d179 5
+a183 1
+    no_gl_ndx = count(do_gl(1:n_path))
+a186 1
+    call allocate_test ( gl_indgen, Ng, no_gl_ndx, 'gl_indgen', moduleName )
+d190 1
+a190 1
+    gl_ndx(:,1) = pack((/(i,i=1,n_path)/),do_gl(1:n_path))
+d197 1
+a197 1
+        gl_indgen(:,i) = glir
+d200 1
+a200 1
+        gl_indgen(:,i) = glil
+d204 1
+a204 7
+    gl_inds = reshape(spread(gl_ndx(:,2),1,Ng) + gl_indgen, (/Ng*no_gl_ndx/))
+
+  ! Dispose of the temp array
+
+    call deallocate_test ( gl_indgen, 'gl_indgen', moduleName )
+
+  end subroutine Path_Contrib
+d206 1
+a206 1
+!----------------------------------------------------------------------
+d213 4
+a216 1
+! $Log: $
+@
+
+
+1.2
+log
+@New forward model
+@
+text
+@d1 1
+a1 2
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+a2 3
+module PATH_CONTRIB_M
+  use MLSCommon, only: I4, R8
+  use GLNP, only: NG
+d6 1
+d8 5
+a12 4
+  CHARACTER (LEN=256) :: Id = &
+    "$Id: path_contrib_m.f90,v 1.1 2001/06/21 13:07:09 zvi Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= &
+    "$RCSfile: path_contrib_m.f90,v $"
+d14 1
+a15 3
+!----------------------------------------------------------------------
+! This routine computes the contributions (along the path) of each interval
+! of the (coarse) pre-selected integration grid
+d17 57
+a73 39
+ Subroutine Path_contrib(tau, brkpt, no_ele, tol, mid, midval_ndx, &
+         &  no_midval_ndx, gl_ndx, no_gl_ndx, Ier)
+!
+    Integer(i4), intent(in) :: BRKPT, NO_ELE
+
+    Integer(i4), intent(out) :: Ier
+    Integer(i4), intent(out) :: no_midval_ndx,no_gl_ndx,mid
+    Integer(i4), intent(out) :: midval_ndx(:,:), gl_ndx(:,:)
+
+    Real(r8), intent(in) :: tol
+
+    Real(r8), intent(in) :: tau(:)
+
+    Integer(i4) :: Ngp1, mp, h_i, k
+
+    Real(r8) :: r
+!
+    ier = 0
+    Ngp1 = Ng + 1
+!
+    no_gl_ndx = 0
+    no_midval_ndx = 0
+!
+    h_i = 0
+    mp = 1 - Ngp1
+    do
+      mp = mp + Ngp1
+      if(mp > brkpt) EXIT
+      h_i = h_i + 1
+      r = 250.0*abs(tau(h_i+1)-tau(h_i))
+      if(r > tol .or. brkpt - mp <= 2*Ngp1) then
+        no_gl_ndx = no_gl_ndx + 1
+        gl_ndx(no_gl_ndx,1) = h_i
+        gl_ndx(no_gl_ndx,2) = mp
+      else
+        no_midval_ndx = no_midval_ndx + 1
+        midval_ndx(no_midval_ndx,1) = h_i
+        midval_ndx(no_midval_ndx,2) = mp
+      endif
+d75 37
+a111 13
+!
+    mid = h_i
+    h_i = mid - 1
+    mp = brkpt + 1 - Ngp1
+    do
+      mp = mp + Ngp1
+      if(mp >= no_ele) EXIT
+      h_i = h_i + 1
+      r = 250.0*abs(tau(h_i+1)-tau(h_i))
+      if(r > tol .or. mp - brkpt <= 2*Ngp1) then
+        no_gl_ndx = no_gl_ndx + 1
+        gl_ndx(no_gl_ndx,1) = h_i
+        gl_ndx(no_gl_ndx,2) = mp
+d113 3
+a115 4
+        no_midval_ndx = no_midval_ndx + 1
+        midval_ndx(no_midval_ndx,1) = h_i
+        midval_ndx(no_midval_ndx,2) = mp
+      endif
+d117 17
+a133 22
+!
+    k = no_gl_ndx + 1
+    gl_ndx(k,1) = gl_ndx(k-1,1) + 1
+    gl_ndx(k,2) = gl_ndx(k-1,2) + Ngp1
+
+    if(no_midval_ndx > 0) then
+      k = no_midval_ndx + 1
+      midval_ndx(k,1) = midval_ndx(k-1,1) + 1
+      midval_ndx(k,2) = midval_ndx(k-1,2) + Ngp1
+    endif
+!
+    Return
+!
+ End Subroutine PATH_CONTRIB
+
+End module PATH_CONTRIB_M
+! $Log: path_contrib_m.f90,v $
+! Revision 1.1  2001/06/21 13:07:09  zvi
+! Speed enhancement MAJOR update
+!
+! Revision 1.0  2001/06/07 23:30:34  Z.Shippony
+! Initial release
+@
+
+
+1.1
+log
+@Speed enhancement MAJOR update
+@
+text
+@d12 1
+a12 1
+    "$Id: path_contrib_m.f90,v 1.1 2000/08/30 18:12:05 Z.Shippony Exp $"
+d97 3
+@
+
+
+1.1.2.1
+log
+@*** empty log message ***
+@
+text
+@d12 1
+a12 1
+    "$Id: path_contrib_m.f90,v 1.1 2001/06/21 13:07:09 zvi Exp $"
+a96 3
+! Revision 1.1  2001/06/21 13:07:09  zvi
+! Speed enhancement MAJOR update
+!
+@
+

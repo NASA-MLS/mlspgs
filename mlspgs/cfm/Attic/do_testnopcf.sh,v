@@ -1,0 +1,70 @@
+head	1.1;
+access;
+symbols
+	cfm-single-freq-0-1:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2020.10.29.16.37.27;	author whdaffer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2020.10.29.16.37.27;	author whdaffer;	state Exp;
+branches;
+next	;
+
+
+desc
+@script from Paul to run tests
+@
+
+
+1.1
+log
+@file do_testnopcf.sh was initially added on branch cfm-single-freq-0-1.
+@
+text
+@@
+
+
+1.1.2.1
+log
+@Initial revision
+@
+text
+@a0 29
+#!/bin/sh
+
+#do-testnopcf.sh
+#Run the executable w/o the PCF file but with rest of toolkit panoply
+# usage:
+# do-testnopcf.sh executable cmdline
+
+# Useful to test certain executables which require the toolkit for some reason
+echo "do-testnopcf.sh $@@"
+if [ "$#" -lt 1 ]
+then
+  echo "usage: do-testnopcf.sh executable cmdline"
+  exit 0
+fi
+
+PGSHOME=/software/toolkit/ifc17/toolkit
+. $PGSHOME/bin/linux/pgs-env.ksh
+PGE=$1
+shift
+
+export FLIB_DVT_BUFFER=0
+export PGSMEM_USESHM=NO
+export PGE_BINARY_DIR
+export PGE_SCRIPT_DIR
+export PGE_ROOT
+
+ulimit -s unlimited
+
+$PGE $@@
+@
+

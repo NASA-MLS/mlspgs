@@ -1,0 +1,224 @@
+head	2.6;
+access;
+symbols
+	V3-43:2.5
+	V3-41:2.5
+	V3-40-PlusGM57:2.5.0.2
+	V2-24-NRT-04:2.3
+	V3-33:2.5
+	V2-24:2.3
+	V3-31:2.5
+	V3-30-NRT-05:2.5
+	cfm-01-00:2.5
+	V3-30:2.5
+	V3-20:2.5
+	V3-10:2.5
+	V2-23-NRT-02:2.3
+	V2-23:2.3
+	V2-22-NRT-01:2.3
+	V2-22:2.3
+	V2-21:2.3
+	V2-20:2.3
+	V2-11:2.3
+	V2-10:2.3
+	V2-00:2.3
+	V1-51:2.1
+	V1-50:2.1
+	V1-45:2.1
+	V1-44:2.1
+	V1-43:2.1
+	V1-32:2.1
+	V1-31:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.6
+date	2011.08.26.17.56.25;	author pwagner;	state dead;
+branches;
+next	2.5;
+
+2.5
+date	2009.07.09.23.54.38;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2009.06.23.18.26.11;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2005.06.22.18.08.19;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2005.03.29.01.58.17;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2003.11.08.02.01.01;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.6
+log
+@Moved to MLSNumerics; renamed purehunt
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module S_HUNT_M
+  implicit NONE
+  private
+  public :: S_HUNT, HUNT
+  interface HUNT; module procedure S_HUNT; end interface
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: s_hunt.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+contains
+! A binary search routine with a hunt procedure, to start from last known
+! location (if 0 < JLO < N) or from the begining otherwise.
+  pure subroutine S_HUNT ( ELEMENT, ARRAY, N, JLO, JHI )
+    integer, parameter :: RK = kind(0.0e0)
+    include 'hunt.f9h'
+  end subroutine S_HUNT
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: s_hunt.f90,v 2.5 2009/07/09 23:54:38 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module S_HUNT_M
+
+! $Log: s_hunt.f90,v $
+! Revision 2.5  2009/07/09 23:54:38  vsnyder
+! Remove need for MLSCommon or MLSKinds
+!
+! Revision 2.4  2009/06/23 18:26:11  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.3  2005/06/22 18:08:19  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.2  2005/03/29 01:58:17  vsnyder
+! Make stuff pure
+!
+! Revision 2.1  2003/11/08 02:01:01  vsnyder
+! Initial commit -- created just for symmetry
+!
+@
+
+
+2.5
+log
+@Remove need for MLSCommon or MLSKinds
+@
+text
+@d32 1
+a32 1
+       "$Id: s_hunt.f90,v 2.4 2009/06/23 18:26:11 pwagner Exp $"
+d42 3
+@
+
+
+2.4
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d19 1
+a19 1
+       "$RCSfile: $"
+d26 1
+a26 2
+    use MLSCommon, only: I4, R4
+    integer, parameter :: RK = r4
+d32 1
+a32 1
+       "$Id: read_apriori.f90 is it here $"
+d42 3
+@
+
+
+2.3
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d30 1
+a31 1
+!---------------------------- RCS Ident Info -------------------------------
+d33 2
+a34 3
+       "$Id: $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d36 1
+d38 1
+d43 3
+@
+
+
+2.2
+log
+@Make stuff pure
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d17 3
+a19 5
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+    & "$Id: s_hunt.f90,v 2.1 2003/11/08 02:01:01 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName = "$RCSfile: s_hunt.f90,v $"
+d31 5
+d42 3
+@
+
+
+2.1
+log
+@Initial commit -- created just for symmetry
+@
+text
+@d11 1
+a11 1
+    & "$Id: d_hunt_m.f90,v 2.2 2002/10/08 17:08:02 pwagner Exp $"
+d13 1
+a13 1
+  character (len=*), parameter :: ModuleName = "$RCSfile: d_hunt_m.f90,v $"
+d19 1
+a19 1
+  subroutine S_HUNT ( ELEMENT, ARRAY, N, JLO, JHI )
+d30 4
+a33 1
+! $Log: $
+@
+

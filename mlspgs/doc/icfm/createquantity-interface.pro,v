@@ -1,0 +1,95 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.12
+	cfm-single-freq-0-1:1.1.0.10
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.8
+	mus-emls-1-70:1.1.0.6
+	rel-1-0-englocks-work:1.1.0.4
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.2
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	M4-00:1.1
+	V3-33:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2011.04.18.21.24.01;	author honghanh;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial import for ICFM documentation
+@
+text
+@pro CreateQuantity, quantity, name, type, instanceOffset, value=value, $
+logbasis=logbasis, startValue=startValue, badValue=badValue, $
+molecule=molecule, module=instrumentModule, signal=signal, $
+radiometer=radiometer, frequencies=frequencies, $
+frequencyCoordinate=frequencyCoordinate, noChans=noChans, surfs=surfaces, $
+nosurfs=noSurfs, verticalCoordinate=verticalCoordinate, noprofs=noprofs, $
+phi=phi, geodlat=geodlat, longitude=lon, losAngle=losAngle, $
+solarZenith=solarZenith, solarTime=solarTime, time=time, mask=mask, $
+coherence=coherence
+    ; quantity: output, the quantity to be returned
+    ; name: name of the quantity
+    ; type: a string. Please refer to Appendix for applicable types.
+    ; instanceOffset: index of the first non-overlapped instance
+    ; value (optional): the value for this quantity
+    ; logbasis (optional): whether the value is on a log scale. Default is false.
+    ; startValue (optional): only valid when logbasis is true. 
+    ; badValue (optional): the constant representing an invalid value point 
+    ; in the value array
+    ; molecule (optional): the molecule associated with this quantity if any.
+    ; Please refer to Appendix for a list of applicable molecules.
+    ; module (optional): the instrument module associated to this quantity
+    ; if any. Module is a string, one of "GHz", "THz", "sc".
+    ; signal (optional): the signal associated with this quantity if any.
+    ; Please refer to Appendix for a list of applicable signals.
+    ; radiometer (optional): if signal is not needed, there can still a 
+    ; a radiometer associated with this quantity. Please refer to the 
+    ; signal list in the Appendix for applicable radiometers.
+    ; frequencies (optional): 
+    ; frequencyCoordinate (optional): valid only when frequencies are present
+    ; noChans (optional): needed only when frequencies are not present. When
+    ; frequencies are present, noChans is set to the size of frequencies. 
+    ; Otherwise, this value is 1.
+    ; surfs (optional): associated pressure surfaces
+    ; nosurfs (optional): number of pressure surfaces
+    ; verticalCoordinate (optional): only valid when surfs is present.
+    ; Please refer to Appendix for a list of valid vertical coordinate.
+    ; noProfs (optional): a.k.a. noInstances
+    ; phi (optional)
+    ; geodlat (optional):
+    ; lon (optional):
+    ; losAngle (optional):
+    ; solarZenith (optional):
+    ; solarTime (optional): 
+    ; time (optional):
+    ; coherence (optional): default is true
+end 
+@

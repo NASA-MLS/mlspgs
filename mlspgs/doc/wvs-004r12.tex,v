@@ -1,0 +1,1792 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.14
+	cfm-single-freq-0-1:1.1.0.12
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.10
+	mus-emls-1-70:1.1.0.8
+	rel-1-0-englocks-work:1.1.0.6
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2008.06.11.20.14.50;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@% $Id: wvs-004.tex,v 1.11 2001/11/28 02:03:38 vsnyder Exp $
+%
+\documentclass[twoside,11pt]{report}
+\usepackage{largemls}
+\usepackage[mtbold,mtplusscr,mtpluscal]{mathtime}
+\usepackage{times}
+\usepackage{epsfig}
+\usepackage{setspace,fancyheadings,array}
+%\usepackage{chicago}
+\usepackage{pifont}
+\usepackage{pstricks,pst-node,pst-text,pst-tree}
+\usepackage{amsmath}
+\usepackage{longtable}
+\usepackage{listings}
+\usepackage{xr}
+\usepackage[letterpaper,dvips,breaklinks,bookmarksopen=true,
+     extension=dvi,
+     pdftitle={Configuration File Parser Users' Guide},
+     pdfsubject={EOS MLS software},
+     pdfauthor={Van Snyder},
+     pdfkeywords={MLS EOS CHEM Retrieval Level2 Level3 Geophysics
+       Atmosphere Data Algorithms Software Users Guide}]{hyperref}
+%
+%-------------------------------------------------------------------------------
+%
+% Begin the document and set a few various counters and values etc.
+%
+\begin{document}
+\rcsParseName $Name:  $
+\rcsInfo $Id: wvs-004.tex,v 1.11 2001/11/28 02:03:38 vsnyder Exp $
+%
+% Do the title page etc.
+%
+\pagenumbering{roman}
+\title{Configuration File Parser Users' Guide}
+\author{W. Van Snyder}
+\shorttitle{Configuration file parser users' guide}
+%\coverpicture{\epsfig{file=v0.1firstlayer.eps,height=5in}}
+\jpld{0}
+\maketitle
+%
+% Do the table of contents etc.
+%
+\count0=1 % Reset the page number
+\tableofcontents
+%
+\parindent 0pt \parskip 3pt
+\vspace{-20pt}
+
+\count0=1 % Reset the page number
+\chapter*{Introduction}
+The purpose of this report is to explain the Configuration File parser,
+and how to use it.
+
+The document is organized as follows:
+
+\begin{description}
+
+\item[Crash course in language analysis:] Familiarizes the reader
+superficially with the terminology and concepts of language analysis.
+
+\item[Syntax of configuration files:] Describes the syntax of the
+configuration file, using the formal notation developed earlier.
+
+\item[The parser:] Describes how the parser works.
+
+\item[Output of the parser:] Describes the data structures output by the
+parser.
+
+\item[Type Checking:] Describes how the data structures output by the
+parser are used to verify that the types of entities are correct.
+
+\item[Using the type-checked output:] Describes how to use the data
+structures that result from the type-checking phase to control processing.
+
+\item[Some pictures of trees:] Provides a few pictorial examples that may
+help to clarify the text.
+
+\end{description}
+
+\cleardoublepage
+\chapter{Crash course in language analysis}
+\count0=1 \pagenumbering{arabic}
+
+An \emph{alphabet} is a set of symbols.  We will use upper-case letters
+from the second half of the Latin alphabet, e.g. $T$, to denote these sets.
+
+A \emph{language over an alphabet}, or more simply a \emph{language} is a
+set of sequences of symbols from that alphabet.  A \emph{sentence} is a
+sequence in the language.  A language may or may not contain the sequence
+consisting of zero symbols -- the empty sequence -- which is variously
+denoted by $\lambda$ and $\epsilon$.  We will use $\lambda$.  If a
+language contains $\lambda$, it is said to be \emph{nullable}.
+
+The \emph{concatenation} $xy$ of two sequences $x$ and $y$ is a sequence
+that consists of the first sequence $x$ followed immediately by the
+second sequence $y$.  The empty sequence $\lambda$ is the identity element
+for concatenation, i.e. $x\lambda = x = {\lambda}x$ for all $x$.
+
+We will be using some notations from set theory and symbolic logic.  To
+refresh your memory, a constructor for a set is surrounded by \{ and \}. 
+The constructor may be nothing more than a list, or it may be a recipe of
+the form ``abstract entities $E$ that satisfy propositions $P$'', written
+$\{ E \mid P \}$. Here are some operators from set theory and logic that
+are used below, arranged from strongest to weakest precedence:
+
+\begin{tabular}{clll}
+{\bf Operator} & {\bf Pronunciation} & {\bf Operands} & {\bf Meaning} \\
+\hline
+$\rightarrow$ & produces & Symbol and sequence & Described below\\
+$\Rightarrow$ & derives  & Sequences          & Described below\\
+$\cup$   & union & Sets $A$ and $B$           & Everything that is in either
+                                              $A$ or $B$\\
+         &     &                              & i.e. $A \cup B = \{ x
+                                              \mid x \in A \vee x \in B
+                                              \}$\\
+$\in$    & in  & An element $x$ and a set $S$ & $x$ is in (a member of) $S$\\
+$\wedge$ & and & Propositions $x$ and $y$     & True if $x$ is true and $y$ is
+                                              true\\
+$\vee$   & or  & Propositions $x$ and $y$     & True if $x$ is true or $y$ is
+                                              true\\
+\end{tabular}
+
+Let $P$ and $Q$ be sets of sequences (i.e. languages).  The
+\emph{concatenation} $PQ$ of two sets $P$ and $Q$ is defined to be $\{ \
+xy \mid x \in P \wedge y \in Q\ \}$.
+
+The simplest language, containing all others, is the \emph{closure} of
+the alphabet.  It contains all possible sequences, including $\lambda$. 
+It is denoted by a postfix superscript asterisk, e.g. $T^*$.  $T^*$ is
+the solution of the equation $T^* = \{ \lambda \} \cup T T^*$.  (Don't
+try to solve this by fixed-point iteration -- if T is not empty, the
+solution is infinite.)
+
+A \emph{grammar} is a set of rules for producing a language.  This is a
+deeper concept than the ones above.  It will require several paragraphs
+to bring together all the necessary concepts.  Please be patient. 
+Mathematically, a grammar $G$ is a 4-tuple $G = (T,N,P,S)$, in which $T$
+and $N$ are disjoint alphabets called \emph{terminal} and
+\emph{nonterminal} (to be described below), $P$ is a set of
+\emph{productions} (to be described below) and $S \in N$ is a
+distinguished symbol called the \emph{starting symbol}.
+
+We will use the following notational conventions:
+\begin{itemize}
+\item Upper-case letters from the beginning of the Latin alphabet
+ (and $S$\,) denote symbols from $N$.
+\item Lower-case letters from the beginning of the Latin alphabet denote
+  symbols from $T$.
+\item Lower-case letters from the end of the Latin alphabet denote
+  sequences from $T^*$.
+\item Lower-case letters from the Greek alphabet denote
+  sequences from $(T \cup N)^*$.
+\item Upper-case letters from the end of the Latin alphabet (except
+ $S$\,) denote symbols from $T \cup N$.
+\end{itemize}
+
+A \emph{production} is a statement of the form $A \rightarrow \alpha$. If
+one has a sequence of symbols from $(T \cup N)^*$ in which $A$ appears,
+the production $A \rightarrow \alpha$ indicates that it is permissible to
+replace $A$ by $\alpha$.
+
+A \emph{derivation} consists of this replacement.  It is denoted by the
+$\Rightarrow$ symbol.  Thus the definition of a production is ``If $A
+\rightarrow \alpha \in P$ then $\beta A \gamma \Rightarrow \beta \alpha
+\gamma$ is a derivation permitted by the grammar.''  That is, in this
+derivation step, $A$ produces $\alpha$.
+
+A \emph{derivation sequence} consists of a sequence of zero or more
+derivations.  It is denoted by $\Rightarrow^*$.
+
+A \emph{leftmost} (resp. \emph{rightmost}) \emph{derivation sequence} is
+a derivation sequence in which the leftmost (resp. rightmost) nonterminal
+is chosen for replacement at every step.
+
+A \emph{sentential form} is a sequence $\xi \in (T \cup N)^*$ such that
+$S \Rightarrow^* \xi$.  A sentence is a sentential form consisting only
+of symbols from $T$.  Thus, the definition of the language $L(G)$
+generated by a grammar $G$ is $L(G) = \{ x \mid S \Rightarrow^* x \wedge
+x \in T^* \}$.
+
+If a symbol $A \in N$ appears in a sentential form, and $A \rightarrow
+\alpha \in P$, $A$ can be replaced by $\alpha$.  That is, symbols from
+$N$ do not terminate the replacement process.  Thus, $N$ is called the
+``set of \emph{nonterminal symbols}'' or the ``\emph{nonterminal
+alphabet}'' of the grammar.  If a symbol $a \in T$ appears in a
+sentential form, it cannot be replaced.  Therefore $T$ is called the
+``set of \emph{terminal symbols}'' or the \emph{terminal alphabet}'' of
+the grammar.  Notice that ``terminal'' carries no implication of
+end-of-line, end-of-statement or end-of-file.  It means ``terminate the
+derivation,'' not ``terminate the input.''
+
+Terminal symbols are also called ``tokens.'' The set of tokens is called
+the \emph{lexicon} (defined in section \ref{Lexicon}).  The grouping of
+characters into tokens is deduced by a procedure called the ``Lexer.'' 
+The lexer also skips comments (which begin with a semicolon and continue
+to the end of the line), and produces tokens for things that aren't
+character sequences, e.g. end-of-statement if there is no continuation
+mark (\$), and end-of-file.
+
+A \emph{phrase} is a sequence of terminal symbols that arises from a
+single nonterminal symbol.  Consider the derivation $S \Rightarrow^*
+\alpha A \beta \Rightarrow^* \alpha x \beta$.  Since $x$ can be derived
+from the nonterminal symbol $A$, it is a phrase.
+
+By way of example, consider the grammar (\{`+' `*' `a' `b' `c'\}, \{Expr
+Term Name\}, P, Expr) with P =\\
+\begin{tabular}{lllll}
+\{ & Expr $\rightarrow$ Term & Expr $\rightarrow$ Expr `+' Term &
+     Term $\rightarrow$ Name & Term $\rightarrow$ Term `*' Name\\
+   & Name $\rightarrow$ `a'  & Name $\rightarrow$ `b'  & Name
+     $\rightarrow$ `c'       & \} \\
+\end{tabular}\\
+and derive the sentence `a+b*c' in a leftmost way ($\Rightarrow^k$ means
+``Derive using production $k$''):
+
+Expr $\Rightarrow^2$ Expr `+' Term $\Rightarrow^1$ Term `+' Term 
+$\Rightarrow^3$ Name `+' Term $\Rightarrow^5$ `a' `+' Term
+$\Rightarrow^4$ `a' `+' Term `*' Name $\Rightarrow^3$ `a' `+' Name `*'
+Name $\Rightarrow^6$ `a' `+' `b' `*' Name $\Rightarrow^7$ `a' `+' `b' `*'
+`c'.
+
+At this point, the sentential form consists entirely of terminal symbols. 
+Therefore the derivation must terminate because there are no rules to
+replace terminal symbols.  The last sentential form is a sentence.
+
+This derivation (but not the sequence) can be represented by a
+\emph{derivation tree}, which we represent here with the root at the
+left, and sons of each internal vertex indented by the same amount:\\
+\begin{tabular}{lllllllll}
+Expr & -- & Expr & -- & Term & -- & Name & -- & `{\bf a}' \\
+     & -- & `{\bf +}' \\
+     & -- & Term & -- & Term & -- & Name & -- & `{\bf b}' \\
+     &    &      & -- & `{\bf *}' \\
+     &    &      & -- & Name & -- & `{\bf c}' \\
+\end{tabular}
+
+If one traces out the leaves of the tree (emboldened above) from top to
+bottom, one has the sentence.
+
+\chapter{Syntax of configuration files}
+\section{Lexicon}\label{Lexicon}
+
+\subsection{Notation for the lexicon}
+
+A \emph{regular expression} is a way of defining a language with a
+particularly simple structure.  Let $a$, $p$ and $q$ be regular
+expressions.  Then:
+
+\begin{tabular}{|c|c|l|}
+     \hline
+{\bf Regular expression} & {\bf Set it denotes} & {\bf Description} \\
+     \hline
+     \hline
+$\emptyset$ & $\emptyset$     & The empty set\\
+     \hline
+$\lambda$   & \{ $\lambda$ \} & The set consisting of the empty sequence\\
+     \hline
+$a$         & \{ $a$ \}       & The symbol $a$ from the alphabet\\
+     \hline
+$p \mid q$  & $P \cup Q$      & Any sequence in either $P$ or $Q$\\
+     \hline
+$pq$        & $PQ$            & The concatentation of $P$ and $Q$\\
+     \hline
+$p^*$       & $P^*$           & The reflexive and transitive closure (zero
+                                or more) of $P$\\
+     \hline
+$p^+$       & $P P^*$         & The transitive closure (one or more) of $P$\\
+     \hline
+$p?$        & $P \cup \{ \lambda \}$ & $P$ or the empty sequence\\
+     \hline
+\end{tabular}
+
+Parentheses are used for grouping.  Notice that the $\mid$ symbol has a
+meaning here different from its meaning within a set constructor.
+
+\subsection{Symbols in the lexicon}\label{lexer}
+
+The end-of-line is not to appear within any symbol in the lexicon.
+
+Terminal symbols in the grammar, except those given here, are to appear
+in the input literally as they are written in the grammar (except that
+they are not case sensitive).
+
+Three terminal symbols do not necessarily appear literally as they are
+written here.  They are defined by regular expressions.  Let $L$ be the
+set of letters (upper and lower case), and $D$ be the set of decimal
+digits.
+
+`name' $ = L ( \{ \text{`\_'} \} \cup L \cup D )^*$
+
+`number' $= D^+ ( \text{`.'} D^* ) ? ( \{ \text{`D' `E' `d` `e'} \ \}
+            \{ \ \text{`+' `-'} \ \}? D^+) ?$
+
+Let $\text{not}(b)$ denote the alphabet without the symbol $b$.
+
+`string' $= (\{\ ' \ \} ( (\text{not}(')^*) \mid ({'} {'}) )^* \{\ ' \ \} )
+       \mid (\{\ " \ \} ( (\text{not}(")^*) \mid (" ") )^* \{\ " \ \} ) $
+
+That is, strings are surrounded by apostrophes or quotes.  In the first
+case, an apostrophe within the string is indicated by a double
+apostrophe, while in the second case a quote within the string is
+indicated by a double quote.
+
+These symbols are called \emph{pseudo-terminal} because they have an
+internal structure, but one determined by the lexicon, not the grammar.
+
+\section{The grammar}\label{gram}
+
+\vskip -12pt
+
+This grammar is organized in a form that is nearly suitable to design a
+parser, as described in following sections.  The grammar in section
+\ref{alt} is not suitable for construction of a parser using the methods
+discussed here, but it may be easier to read.
+
+$T$ = \{ `begin' `EOF' `EOS' `end' `name' `number' `string' `unit' `(' `)'
+         '[' ']' `+' `$-$' `*' `/' `.' `:' `=' \}
+
+$N$ = \{ cf one\_cf spec spec\_rest field\_list expr value limit lterm
+         lfactor term factor primary \}
+
+\begin{tabular}{|l|}
+     \hline
+{\bf Productions} $P$ \\
+     \hline
+     \hline
+cf $\rightarrow$ one\_cf + `EOF' \\
+     \hline
+one\_cf $\rightarrow$ ( `begin' `name' `EOS' spec + `end' `name' ) ? `EOS' \\
+     \hline
+spec $\rightarrow$ ( `name' spec\_rest ) ? `EOS' \\
+     \hline
+spec\_rest $\rightarrow \lambda$ \\
+     \phantom{spec\_rest}
+          $\rightarrow$ `=' value \\
+     \phantom{spec\_rest}
+          $\rightarrow$ ( `:' `name' ) ? ( `,' field\_list ) + \\
+     \hline
+field\_list $\rightarrow$ expr ( `=' value ) ? \\
+     \phantom{field\_list}
+          $\rightarrow$ `/' `name' \\
+     \hline
+value $\rightarrow$ expr \\
+     \phantom{value}
+          $\rightarrow$ `[' value ( `,' value ) * `]' \\
+     \hline
+expr $\rightarrow$ limit ( (`:'$\mid$`$<$:'$\mid$`:$<$'$\mid$`$<$:$<$') limit ) ? \\
+     \hline
+limit $\rightarrow$ lterm ( `or' lterm ) * \\
+     \hline
+lterm $\rightarrow$ lfactor ( `and' lfactor ) * \\
+     \hline
+lfactor $\rightarrow$ term ( ( `+' $\mid$ `$-$' ) term ) * \\
+     \hline
+term $\rightarrow$ factor ( ( `*' $\mid$ `/' ) factor ) * \\
+     \hline
+factor $\rightarrow$ ( `+' $\mid$ `$-$' ) ? primary \\
+     \hline
+primary $\rightarrow$ `name' ( `.' `name' ) ? \\
+     \phantom{primary}
+        $\rightarrow$ `number' `unit' ? \\
+     \phantom{primary}
+        $\rightarrow$ `string' \\
+     \phantom{primary}
+        $\rightarrow$ `(' expr `)' \\
+     \hline
+\end{tabular}
+
+\vskip 2pt
+
+$S$ = cf.
+
+It is customary to put the production having the starting symbol on its
+left-hand side as the first production.  We put quotation marks around
+terminal symbols.  Thus, it isn't necessary explicitly to give $T$, $N$
+and $S$, and in following grammars, we will not do so.
+
+By way of example, let us start with ``expr'' instead of the starting
+symbol, and derive the phrase $a + b * c$ in a leftmost fashion:
+
+expr~$\Rightarrow$ limit~$\Rightarrow$ lterm~$\Rightarrow$
+lfactor~$\Rightarrow$ term `+' term~$\Rightarrow$ factor `+'
+term~$\Rightarrow$ primary `+' term~$\Rightarrow$ `name(a)' `+'
+term~$\Rightarrow$ `name(a)' `+' factor `*' factor~$\Rightarrow$
+`name(a)' `+' primary `*' factor~$\Rightarrow$ `name(a)' `+' `name(b)'
+`*' factor~$\Rightarrow$ `name(a)' `+' `name(b)' `*'
+primary~$\Rightarrow$ `name(a)' `+' `name(b)' `*' `name(c)'
+
+At this point, the sequence consists entirely of terminal symbols, and so
+we have a phrase that can be derived from the nonterminal symbol expr,
+i.e. expr $\Rightarrow^* a + b * c$.
+
+The symbol `name' is terminal from the point of view of the grammar, but
+has an internal structure deduced from the lexicon, so it is actually
+pseudo-terminal.  The grammar only cares about the ``parts of speech,''
+e.g.~`name'; it doesn't care what the words are, e.g.~$a$.  But we care,
+so in the above example, we have written the word in parentheses after
+the part of speech, \emph{viz.}~`name(a)'.  There is more about this in
+sections \ref{gramBased} and \ref{tree}.
+
+In abstract terms, parsing consists of running such a process backward,
+i.e.~we start with an input sequence, and deduce whether it is a
+sentence, and if so what is its phrase structure.
+
+\chapter{The Parser}
+\section{Organization of the Parser}
+
+The parser reads a sequence of tokens, deduces that they constitute a
+sentence in the language, and produces a (perhaps preliminary) translation
+of the sequence of tokens into a form more suitable for subsequent
+analysis.
+
+The parser described here consists of a collection of potentially
+recursive procedures.  There are other parsing strategies.  One is
+discussed superficially in section \ref{alt}.
+
+There is one procedure for each nonterminal symbol in the grammar shown
+in section \ref{gram}.
+
+Within each procedure, there is a selection process:  If the next token
+is within the selection set (described below) for a production with a
+left-hand side nonterminal symbol that corresponds to that procedure,
+that production is applied.  If the next token is not within the
+selection set for any production with a left-hand side symbol that
+corresponds to that procedure, an error is announced.
+
+``Applying'' a production consists of executing the procedures that
+correspond to nonterminal symbols encountered in the right-hand side, or
+``consuming'' the next token if the next symbol in the right-hand side is
+a terminal symbol, in the order these entities appear.
+
+``Consuming'' a token consists of testing whether it represents the next
+terminal symbol, fetching a new token if so, and announcing an error
+otherwise.
+
+A grammar that permits a parser to be implemented in this way is called
+$LL(1)$.  The first $L$ means that the input is examined left-to-right. 
+The second $L$ means that a leftmost derivation sequence is traced out. 
+The $(1)$ means that one can decide what to do by looking at one symbol
+from the unconsumed input.
+
+The \emph{selection set} for a production is the set of symbols that
+unambiguously indicates that the production should be applied at a
+certain instant during the analysis.  We need to define two functions in
+order to proceed:
+
+The \emph{first set} of a sequence is the set of terminal symbols that
+can appear as the first symbol of a sequence derivable from that
+sequence.  Mathematically, $\text{First}(\alpha) = \{ a \mid \alpha
+\Rightarrow^* ax \}.$  For a set $P$, $\text{First}(P) = \cup_{x \in P}
+\text{First}(x)$.
+
+The \emph{follow set} of a nonterminal symbol is the set of terminal
+symbols that can appear immediately after that symbol in a sentential
+form.  Mathematically, $\text{Follow}(A) = \{ a \mid S \Rightarrow^* \beta
+A a \gamma \}$.
+
+Taking the liberty of concatenating a set with a sequence to generate a
+set of sequences, we have $\text{Select}( A \rightarrow \alpha) =
+\text{First}( \alpha \text{Follow}( A ) )$.  If the selection sets for
+all the productions with a given left-hand side are disjoint, the grammar
+ls LL(1).  The $\text{Follow}(A)$ part comes from wanting to apply $A
+\rightarrow \alpha$ if $\alpha \Rightarrow^* \lambda$.  The
+$\text{First}(\alpha)$ part comes from wanting to apply $A \rightarrow
+\alpha$ otherwise.
+
+Algorithms for computing First, Follow and Select are given in section
+\ref{computing}.
+
+\section{Extended form of the grammar}\label{extend}
+
+In the abbreviated form of the grammar in section \ref{gram}, the * turns
+into {\tt do while}, the + turns into {\tt do until}, and the ? and
+$\mid$ turn into {\tt if}.
+
+It is necessary to have a selection process for these optional or
+repeated parts within the right-hand side.  These selection sets are
+derived by transforming the grammar so as not to include regular right
+parts.
+
+The selection sets for the transformed grammar are tabulated below.  The
+correspondence between selection sets for productions here and the
+selection sets for optional or repeated parts within the right-hand sides
+of the grammar in section \ref{gram} should be obvious.
+
+\begin{longtable}{|l|l|}
+     \hline
+{\bf Productions} $P$ & {\bf Selection Sets} \\
+     \hline
+\endfirsthead
+     \hline
+{\bf Productions} $P$ (cont.)                   & {\bf Selection Sets} (cont.) \\
+     \hline
+\endhead
+     \hline
+     \multicolumn{2}{|l|}{(cont.)} \\
+     \hline
+\endfoot
+     \hline
+\endlastfoot
+     \hline
+cf $\rightarrow$ one\_cf more\_cfs `EOF'         & `begin' \\
+     \hline
+more\_cfs $\rightarrow \lambda$                  & `EOF' \\
+     \phantom{more\_cfs}
+         $\rightarrow$ one\_cf                   & `begin' \\
+     \hline
+one\_cf $\rightarrow$ `EOS'                      & `EOS' \\
+      \phantom{one\_cf}
+        $\rightarrow$ `begin' `name' `EOS'       & \\
+      \phantom{one\_cf $\rightarrow$ }
+                      spec specs
+                      `end' `name' `EOS'         & `begin' \\
+     \hline
+specs $\rightarrow \lambda$                      & `end' \\
+     \phantom{specs}
+      $\rightarrow$ spec specs                   & `name' \\
+     \hline
+spec $\rightarrow$ 'EOS'                         & `EOS'  \\
+     \phantom{spec}
+     $\rightarrow$ `name' spec\_rest `EOS'       & `name' \\
+     \hline
+spec\_rest $\rightarrow \lambda$                 & `EOS' \\
+     \phantom{spec\_rest}
+          $\rightarrow$ `=' value                & `=' \\
+     \phantom{spec\_rest}
+          $\rightarrow$ `:' `name' `,' field\_list more\_specs     & `:' \\
+     \phantom{spec\_rest}
+          $\rightarrow$ `,' field\_list more\_specs     & `,' \\
+     \hline
+more\_specs $\rightarrow \lambda$                & `EOS' \\
+     \phantom{more\_specs}
+            $\rightarrow$ `,' field\_list more\_specs     & `,' \\
+     \hline
+field\_list $\rightarrow$ `name' more\_field\_list & `name' \\
+     \phantom{field\_list}
+          $\rightarrow$ `/' `name'               & `/' \\
+     \hline
+more\_field\_list $\rightarrow \lambda$          & \{ `,' `EOS' \} \\
+     \phantom{more\_field\_list}
+          $\rightarrow$ `=' value                & `=' \\
+     \hline
+value $\rightarrow$ expr                         & \{ `name' `number' `(' `.'
+                                                      `+' `$-$' `string' \} \\
+     \phantom{value}
+          $\rightarrow$ `[' value values ']'     & `[' \\
+     \hline
+values $\rightarrow \lambda$                     & `]' \\
+     \phantom{value}
+        $\rightarrow$ , value values             & `,' \\
+     \hline
+expr $\rightarrow$ `string'                      & `string' \\
+     \phantom{expr}
+     $\rightarrow$ item                          & \{ `name' `number' `(' `.'
+                                                      `+' `$-$' \} \\
+     \hline
+item $\rightarrow$ limit range                   & \{ `name', `number', `(' `.'
+                                                      `+' `$-$' \}\\
+     \hline
+range $\rightarrow \lambda$                      & \{ `,' `EOS' ')' \} \\
+     \phantom{range}
+      $\rightarrow$ `:' limit                    & \{ `:' \} \\
+     \phantom{range}
+      $\rightarrow$ `$<$:' limit                 & \{ `$<$:' \} \\
+     \phantom{range}
+      $\rightarrow$ `:$<$' limit                 & \{ `:$<$' \} \\
+     \phantom{range}
+      $\rightarrow$ `$<$:$<$' limit              & \{ `$<$:$<$' \} \\
+     \hline
+limit $\rightarrow$ lterm lterm\_list            & \{ `name', `number', `(' `.'
+                                                      `+' `$-$' \} \\
+     \hline
+lterm\_list $\rightarrow \lambda$                & \{ `:' `,' `EOS' ')' \} \\
+     \phantom{lterm\_list}
+           $\rightarrow$ `or' lterm lterm\_list  & `or' \\
+     \hline
+lterm $\rightarrow$ lfactor lfactor\_list        & \{ `name', `number', `('
+                                                     `+' `$-$'  `.'\} \\
+     \hline
+lfactor\_list $\rightarrow \lambda$              & \{ `+' `$-$' `:' `,'
+                                                      `EOS' ')' \}\\
+     \phantom{lfactor\_list}
+              $\rightarrow$ `and' lfactor lfactor\_list & `and' \\
+     \hline
+lfactor $\rightarrow$ term term\_list            & \{ `name', `number', `(' `.'
+                                                      `+' `$-$' \} \\
+     \hline
+term\_list $\rightarrow \lambda$                 & \{ `:' `,' `EOS' ')' \} \\
+     \phantom{term\_list}
+           $\rightarrow$ ( `+' $\mid$ `$-$' ) term term\_list & \{ `+' `$-$' \} \\
+     \hline
+term $\rightarrow$ factor factor\_list           & \{ `name', `number', `('
+                                                     `+' `$-$'  `.'\} \\
+     \hline
+factor\_list $\rightarrow \lambda$               & \{ `+' `$-$' `:' `,'
+                                                      `EOS' ')' \}\\
+     \phantom{factor\_list}
+              $\rightarrow$ ( `*' $\mid$ `/' ) factor & \{ `*' `/' \} \\
+     \hline
+factor $\rightarrow$ ( `+' $\mid$ `$-$' ) ? primary & \{ `name', `number', `('
+                                                     `+' `$-$'  `.'\} \\
+     \hline
+primary $\rightarrow$ `name' field               & `name' \\
+     \phantom{primary}
+        $\rightarrow$ `number' `unit' ?          & `number' \\
+     \phantom{primary}
+        $\rightarrow$ `(' expr `)'               & `(' \\
+     \hline
+field $\rightarrow \lambda$                      & \{  `*' `/' `+' `$-$' `:'
+                                                       `,' `EOS' ')'\} \\
+     \phantom{field}
+      $\rightarrow$ `.' `name'                   & `.' \\
+     \hline
+\end{longtable}
+
+\section{Computing First, Follow and Select}\label{computing}
+
+The casual reader can skip this section without losing anything.  In
+fact, all but the intensely interested reader can skip this section
+without losing anything.
+
+This section describes how to compute the First, Follow and Select
+functions.  The functions are represented by arrays in which the argument
+serves as the subscript.  That is, we show how to calculate the answer in
+advance, and write it down.  In order to calculate First and Follow we
+need an auxiliary function Nullable.  $\text{Nullable}(A)$ means $A
+\Rightarrow^* \lambda$.
+
+\subsection{Algorithm: Compute Nullable}
+
+\begin{enumerate}
+\item Construct an array Nullable indexed by the symbols in $T \cup N$;
+  Initialize its elements to {\tt false}.
+\item Repeat
+    \begin{quote}For each production $A \rightarrow \alpha \in P$, if
+    $\alpha \Rightarrow^* \lambda$, replace Nullable($A$) by {\tt
+    true}.\end{quote}
+  until nothing in Nullable changes.
+\end{enumerate}  
+
+This category of algorithm is called a ``fixed point iteration.'' It is a
+commonly used method to solve equations on sets.
+
+\subsubsection{Subalgorithm: Compute whether a sequence is nullable}
+
+\begin{enumerate}
+\item Suppose $\alpha = Z_1 Z_2, ... Z_n$ and initialize ``$\alpha$ is
+  nullable'' to {\tt true}
+\item Repeat for $i = 1, n$
+  \begin{quote}If not Nullable($Z_i$) then set ``$\alpha$ is nullable''
+  to {\tt false} and exit from the loop.\end{quote}
+\end{enumerate}
+
+Notice that this algorithm returns {\tt true} if $\alpha = \lambda$, or
+equivalently, $n = 0$.
+
+\subsection{Algorithm: Compute First}
+
+\begin{enumerate}
+\item Construct an array of sets First indexed by the symbols in $T \cup N$.
+\item For each $A \in N$ initialize First($A$) to the empty set $\emptyset$;
+  For each $a \in T$ initialize First($a$) to $\{a\}$.
+\item Repeat
+    \begin{quote}For each production $A \rightarrow \alpha \in P$
+    replace First($A$) by First($A$) $\cup$ First($\alpha$).\end{quote}
+  until nothing in First changes.
+\end{enumerate}  
+
+\subsubsection{Subalgorithm: Compute First set of a sequence}
+
+Suppose $\alpha = Z_1 Z_2 ... Z_n$ and if $n > 0$ define $\beta$ by
+$\alpha = Z_1 \beta$.  Then if $n > 0$, First($\alpha$) =
+First($Z_1\beta$) = First($Z_1$) $\cup$ ( If Nullable($Z_1$) then
+First($\beta$) else $\emptyset$ ).  Written in an iterative instead of
+recursive form, and fully taking into account the possibility that $n$
+might be zero, this becomes:
+
+\begin{enumerate}
+\item Set ``First($\alpha$)'' = $\emptyset$
+\item Repeat for $i = 1, n$
+  \begin{enumerate}
+  \item Replace ``First($\alpha$)'' by ``First($\alpha$)'' $\cup$ First($Z_i$).
+  \item If not Nullable($Z_i$) exit from the loop
+  \end{enumerate}
+\end{enumerate}
+
+Notice that this gives First$(\lambda) = \emptyset$
+\subsection{Algorithm: Compute Follow}
+
+\begin{enumerate}
+\item Construct an array of sets Follow indexed by the symbols in $N$;
+initialize its elements to the empty set $\emptyset$.
+\item Repeat
+  \begin{quote}
+    Repeat for each production $A \rightarrow \alpha \in P$
+    \begin{enumerate}
+      \item Suppose $\alpha = Z_1 Z_2 ... Z_n$.
+      \item Repeat for $i = 1, n$
+        \begin{quote}Think of $\alpha$ as $\beta Z_i \gamma$.  If $Z_i$
+        is nonterminal replace Follow($Z_i$) by\\
+          Follow($Z_i$) $\cup$ First($\gamma$) $\cup$ ( If $\gamma
+          \Rightarrow^* \lambda$ then Follow($A$) else $\emptyset$ ). 
+          (To see why Follow($A$) is needed if $\gamma \Rightarrow^*
+          \lambda$, consider $S \Rightarrow^* \xi A \eta \Rightarrow \xi
+          \alpha \eta \Rightarrow \xi \beta Z_i \gamma \eta \Rightarrow^*
+          \xi \beta Z_i \eta$.  Thus First($\eta$) $\in$ Follow($Z_i$),
+          but we might also have $S \Rightarrow^* \hat{\xi} A
+          \hat{\eta}$, so Follow($A$) $\in$ Follow($Z_i$) if $\gamma
+          \Rightarrow^* \lambda$.)\end{quote}
+    \end{enumerate}
+  \end{quote}
+  until nothing in Follow changes.
+\end{enumerate}  
+
+\subsection{Algorithm: Compute Select}
+\begin{enumerate}
+\item Construct an array of sets Select indexed by the productions in $P$.
+\item For each production $A \rightarrow \alpha \in P$ compute
+  \begin{quote}Select($A \rightarrow \alpha$) = First($\alpha$) $\cup$ (
+  If $\alpha \Rightarrow^* \lambda$ then Follow($A$) else $\emptyset$
+  ).\end{quote}
+\end{enumerate}
+
+\chapter{Output of the Parser}
+
+\vskip -30pt
+\section{Grammar-based description}\label{gramBased}
+
+A form of output from the parser that is particularly tractable for
+subsequent analysis is an \emph{abstract syntax tree}.  It represents the
+input and is related to the syntax, but it does not include all the
+details of the spelling of the input (hence the \emph{abstract} part).
+
+The grammar in section \ref{gram} is augmented with \emph{tree generation
+rules} in order to produce the abstract syntax tree. This form of grammar
+is called an \emph{attribute grammar}.  The subscripts of the grammar
+symbols are \emph{attributes}.  Attributes are the results of
+extra-grammatical computations carried out during the parsing process,
+and thence associated with a symbol.  Unless otherwise specified,
+subscripts that have the same name are copied from left-to-right.  Parts
+within \{ and \} are actions that compute attributes.  The $\leftarrow$
+symbol is the assignment operator.  The notation $< \ x \ y \ z $ ... $>$
+means ``make a subtree with $x$ at the root, and sons $y$, $z$, ..., in
+that order.''
+
+This grammar reasonably faithfully represents the actual workings of the
+parser.  The one in section \ref{alt} produces the same translation, and
+may be easier to read.  It is based on a different parser construction
+methodology, so it does not faithfully represent the actual parser
+design.
+
+\begin{longtable}{|l|}
+     \hline
+{\bf Productions} $P$ \\
+     \hline
+\endfirsthead
+     \hline
+{\bf Productions} $P$ (cont.) \\
+     \hline
+\endhead
+     \hline
+     (cont.) \\
+     \hline
+\endfoot
+     \hline
+\endlastfoot
+     \hline
+cf$_x$ $\rightarrow$ one\_cf$_z$ + `EOF'
+       \{ $x \leftarrow < \text{n\_cfs} $ list of $z$'s $>$ \} \\
+     \hline
+one\_cf$_x$ $\rightarrow$ block$_y$ \{ $x \leftarrow y$ \} \\
+     \phantom{one\_cf$_x$} $\rightarrow$ `EOS` \{ $x \leftarrow \lambda$ \} \\
+     \hline
+block$_x$ $\rightarrow$ `begin' `name'$_y$ `EOS' spec$_z$ + `end' `name'$_w$
+     `EOS` \\
+     \phantom{block$_x$} \{ $x \leftarrow < \text{n\_cf} \ y $ list of $z$'s $w \ >$ \} \\
+     \hline
+spec$_x$ $\rightarrow$ one\_spec$_{y}$ `EOS' \{ $x \leftarrow y$ \} \\
+     \phantom{spec$_x$} $\rightarrow$ `EOS' \{ $x \leftarrow \lambda$ \} \\
+     \hline
+one\_spec$_x$ $\rightarrow$ 
+     `name'$_y$ spec\_rest$_{yz}$ \{ $x \leftarrow z$ \} `EOS' \\
+     \hline
+spec\_rest$_{xy}$ $\rightarrow \lambda$ \{ $ y \leftarrow x$ \} \\
+     \phantom{spec\_rest}
+          $\rightarrow$ `=' value$_z$
+            \{ $y \leftarrow < \ \text{n\_asg} \ x \; z$ \}\\
+     \phantom{spec\_rest}
+          $\rightarrow$ `:' `name'$_v$ spec\_list$_{xw}$
+            \{$y \leftarrow < \ \text{n\_named} \ v \ w \ >$ \} \\
+     \phantom{spec\_rest}
+          $\rightarrow$ spec\_list$_{xw}$ \{ $y \leftarrow w $ \} \\
+     \hline
+spec\_list$_{xy}$ $\rightarrow$ ( `,' field\_list$_z$ ) + 
+            \{ $y \leftarrow < \ \text{n\_spec\_args} \ x $ list of $z$'s $>$ \}\\
+     \hline
+field\_list$_x$ $\rightarrow$ expr$_y$ spec\_value$_{yz}$
+      \{ $x \leftarrow z$ \} \\
+     \phantom{field\_list}
+          $\rightarrow$ `/' `name'$_z$
+          \{ $x \leftarrow < \ \text{n\_set\_one} \ z \ >$ \} \\
+     \hline
+spec\_value$_{xy}$ $\rightarrow \lambda$ \{ $y \leftarrow x$ \} \\
+     \phantom{spec\_value$_{xy}$} $\rightarrow$
+       `=' value$_z$ \{ $y \leftarrow < \text{n\_equal} \ x \; z$ \}
+       $>$ \} \\
+     \hline
+value$_x$ $\rightarrow$ expr$_z$ \{ $x \leftarrow z$ \} \\
+     \phantom{value$_x$}
+       $\rightarrow$ `[' expr$_z$ ( `,' expr$_z$ ) * `]'
+         \{ $x \leftarrow$ list of $z$'s \} \\
+     \hline
+expr$_x$ $\rightarrow$ `string'$_z$ \{ $x \leftarrow z$ \} \\
+     \phantom{expr$_x$}
+     $\rightarrow$ item$_z$ \{ $x \leftarrow z$ \} \\
+     \phantom{expr$_x$}
+     $\rightarrow$ `[' expr$_z$ ( `,' expr$_z$ ) * `]'
+         \{ $x \leftarrow$ $< \text{n\_array list of } z's >$ \} \\
+     \hline
+item$_z$ $\rightarrow$ limit$_x$ range$_{xy}$ \{ $ z \leftarrow y$ \} \\
+     \hline
+range$_{xy}$ $\rightarrow \lambda$ \{ $y \leftarrow x$ \} \\
+     \phantom{range$_{xy}$} $\rightarrow$ `:' limit$_z$ ;
+        $ y \leftarrow < \ \text{n\_colon} \ x \ z \ > $ \\
+     \phantom{range$_{xy}$} $\rightarrow$ `$<$:' limit$_z$ ;
+        $ y \leftarrow < \ \text{n\_less\_colon} \ x \ z \ > $ \\
+     \phantom{range$_{xy}$} $\rightarrow$ `:$<$' limit$_z$ ;
+        $ y \leftarrow < \ \text{n\_colon\_less} \ x \ z \ > $ \\
+     \phantom{range$_{xy}$} $\rightarrow$ `$<$:$<$' limit$_z$ ;
+        $ y \leftarrow < \ \text{n\_less\_colon\_less} \ x \ z \ > $ \\
+     \hline
+limit$_z$ $\rightarrow$ lterm$_x$ lterm\_list$_{xy}$ \{
+                        $z \leftarrow y$ \} \\
+     \hline
+cont... \\
+     \hline
+lterm\_list$_{xy}$ $\rightarrow \lambda$ \{ $y \leftarrow x$ \} \\
+     \phantom{lterm\_list$_{xy}$}
+            $\rightarrow$ `or' lterm$_z$
+              \{ $v \leftarrow < \ \text{n\_or} \ x \ z \ >$ \}
+            lterm\_list $_{vw}$ \{ $y \leftarrow w$ \} \\
+     \hline
+lterm$_z$ $\rightarrow$ lfactor$_x$ lfactor\_list$_{xy}$ \{
+                        $z \leftarrow y$ \} \\
+     \hline
+lfactor\_list$_{xy}$ $\rightarrow \lambda$ \{ $y \leftarrow x$ \} \\
+     \phantom{lfactor\_list$_{xy}$}
+            $\rightarrow$ `and' lfactor$_z$
+              \{ $v \leftarrow < \ \text{n\_and} \ x \ z \ >$ \}
+            lfactor\_list $_{vw}$ \{ $y \leftarrow w$ \} \\
+     \hline
+lfactor$_z$ $\rightarrow$ term$_x$ ( pterm\_list$_{xy}$ $\mid$
+                                   mterm\_list$_{xy}$ ) \{
+                        $z \leftarrow y$ \} \\
+     \hline
+pterm\_list$_{xy}$ $\rightarrow$ $\lambda$ \{ $y \leftarrow x$ \} \\
+     \phantom{pterm\_list$_{xy}$}
+            $\rightarrow$ `+' term$_z$
+              \{ $v \leftarrow < \ \text{n\_plus} \ x \ z \ >$ \}
+            ( pterm\_list$_{vw}$ $\mid$ pterm\_list$_{vw}$ ) \\
+     \phantom{pterm\_list$_{xy}$} \{ $y \leftarrow w$ \} \\
+     \hline
+mterm\_list$_{xy}$ $\rightarrow$ $\lambda$ \{ $y \leftarrow x$ \} \\
+     \phantom{mterm\_list$_{xy}$}
+            $\rightarrow$ `$-$' term$_z$
+              \{ $v \leftarrow < \ \text{n\_minus} \ x \ z \ >$ \}
+            ( mterm\_list$_{vw}$ $\mid$ mterm\_list$_{vw}$ ) \\
+     \phantom{mterm\_list$_{xy}$} \{ $y \leftarrow w$ \} \\
+     \hline
+term$_z$ $\rightarrow$ factor$_x$ ( mpri\_list$_{xy}$ $\mid$
+                                     dpri\_list$_{xy}$ ) \{
+                                     $z \leftarrow y$ \} \\
+     \hline
+mpri\_list$_{xy}$  $\rightarrow \lambda$ \{ $y \leftarrow x$ \} \\
+     \phantom{mpri\_list$_{xy}$} $\rightarrow$ `*` factor$_z$
+        \{ $v \leftarrow < \ \text{n\_mult} \ x \ z \ >$ \}
+        ( mpri\_list$_{vw}$ $\mid$ dpri\_list$_{vw}$ ) \\
+      \phantom{mpri\_list$_{xy}$} \{ $y \leftarrow w$ \} \\
+     \hline
+dpri\_list$_{xy}$  $\rightarrow$ $\lambda$ \{ $y \leftarrow x$ \} \\
+     \phantom{dpri\_list$_{xy}$} $\rightarrow$ `/` factor$_z$
+        \{ $v \leftarrow < \ \text{n\_div} \ x \ z \ >$ \}
+        ( dpri\_list$_{vw}$ $\mid$ dpri\_list$_{vw}$ ) \\
+     \phantom{dpri\_list$_{xy}$} \{ $y \leftarrow w$ \} \\
+     \hline
+factor$_z$ $\rightarrow$ `+' primary$_x$
+           \{ $z \leftarrow < \ \text{n\_plus} \ x \ >$ \} \\
+     \phantom{factor$_z$}
+       $\rightarrow$ `$-$' primary$_x$
+           \{ $z \leftarrow < \ \text{n\_minus} \ x \ >$ \} \\
+     \phantom{factor$_z$}
+       $\rightarrow$ primary$_x$ \{ $z \leftarrow x$ \} \\
+     \hline
+primary$_z$ $\rightarrow$ `name'$_x$ stru\_comp$_{xy}$
+            \{ $ z \leftarrow y$ \}\\
+     \phantom{primary$_z$}
+        $\rightarrow$ `number'$_x$ unit$_{xy}$ \{ $ z \leftarrow y$ \} \\
+     \phantom{primary$_z$}
+        $\rightarrow$ `(' item$_x$ `)' \{ $ z \leftarrow x$ \} \\
+     \hline
+stru\_comp$_{xy}$ $\rightarrow \lambda$ \{ $y \leftarrow x$ \} \\
+     \phantom{stru\_comp$_{xy}$} $\rightarrow$ `.' `name'$_z$
+     \{ $y \leftarrow < \ \text{n\_dot} \ x \ z \ > $ \}\\
+     \hline
+unit$_{xy}$ $\rightarrow \lambda$ \{ $y \leftarrow x$ \} \\
+     \phantom{unit$_{xy}$} $\rightarrow$ `unit'$_z$
+     \{ $y \leftarrow < \ \text{n\_unit} \ x \ z \ > $ \} \\
+     \hline
+\end{longtable}
+
+\section{An alternative parsing method}\label{alt}
+
+There is a more powerful class of grammars and their associated parsers,
+known as $LR(1)$.  The $L$ means that the input is examined
+left-to-right.  The $R$ means that the reverse of a rightmost derivation
+is traced out.  The $(1)$ means that at most one symbol of lookahead~--
+beyond the current point of analysis~-- is used.  When parsing using
+$LL(1)$, one must decide which production to apply by looking at the
+first terminal symbol in its selection set.  $LR(1)$ parsers are more
+powerful because one can postpone deciding which production to apply
+until the entire right-hand side, plus one more symbol, have been input.
+
+If the MLS configuration file parser were to be an $LR$ parser, the
+grammar would be organized somewhat differently.  The notation is
+augmented by allowing actions at the end of a production.  An action
+consisting of a \emph{node\_id} means ``build a tree vertex
+\emph{node\_id} subsuming the trees associated with every symbol in the
+right-hand side of the production, and associate the resulting tree with
+the left-hand side of the production.''  If the \emph{node\_id} is
+followed by a question mark it means ``do it only if the tree vertex
+would have more than one son.''  Pseudo-terminal symbols create tree
+vertices consisting of themselves.  Other (non-pseudo) terminal symbols
+do not create tree vertices.  If there is no action, the list of trees
+associated with or implied by symbols in the right-hand side becomes
+associated with the left-hand side.
+
+\begin{longtable}{|l|l|}
+     \hline
+{\bf Productions} $P$                           & {\bf Actions}\\
+     \hline
+\endfirsthead
+     \hline
+{\bf Productions} $P$ (cont.)                   & {\bf Actions} (cont.) \\
+     \hline
+\endhead
+     \hline
+     \multicolumn{2}{|l|}{(cont.)} \\
+     \hline
+\endfoot
+     \hline
+\endlastfoot
+     \hline
+cf $\rightarrow$ one\_cf + `EOF'                & n\_cfs \\
+     \hline
+one\_cf $\rightarrow$ ( `begin' `name' `EOS' spec + `end' `name' ) ? `EOS'
+                                                & n\_cf \\
+     \hline
+spec $\rightarrow$ `name' = value               & n\_equal \\
+     \phantom{spec $\rightarrow$} (`name' `:') ? spec\_rest & n\_named ? \\
+     \hline
+spec\_rest $\rightarrow$ 
+       `name' (`,' field\_list ) +  & n\_spec\_args \\
+     \hline
+field\_list $\rightarrow$ `name' `=' value      & n\_asg \\
+     \phantom{field\_list}
+          $\rightarrow$ `/' `name'              & n\_set\_one \\
+     \hline
+value $\rightarrow$ expr                        & \\
+     \phantom{value}
+       $\rightarrow$ `[' expr ( `,' expr ) * `]' & \\
+     \hline
+expr $\rightarrow$ limit                        & \\
+     \phantom{expr}
+     $\rightarrow$ limit `:' limit              & n\_colon \\
+     \phantom{expr}
+     $\rightarrow$ limit `$<$:' limit           & n\_less\_colon \\
+     \phantom{expr}
+     $\rightarrow$ limit `:$<$' limit           & n\_colon\_less \\
+     \phantom{expr}
+     $\rightarrow$ limit `$<$:$<$' limit        & n\_less\_colon\_less \\
+     \phantom{expr}
+     $\rightarrow$ `[' expr ( `,' expr ) * `]'  & n\_array \\
+     \hline
+limit $\rightarrow$ lterm                       & \\
+     \phantom{limit}
+     $\rightarrow$ limit `or' lterm             & n\_or \\
+     \hline
+lterm $\rightarrow$ lfactor                     & \\
+     \phantom{lterm}
+      $\rightarrow$ lterm `and' lfactor         & n\_and \\
+     \hline
+lfactor $\rightarrow$ term                      & \\
+     \phantom{lfactor}
+     $\rightarrow$ lfactor `+' term             & n\_plus \\
+     \phantom{lfactor}
+     $\rightarrow$ lfactor `$-$' term           & n\_minus \\
+     \hline
+term $\rightarrow$ factor                       & \\
+     \phantom{term}
+     $\rightarrow$ term `*' factor              & n\_mult \\
+     \phantom{term}
+     $\rightarrow$ term `/' factor              & n\_div \\
+     \hline
+factor $\rightarrow$ `+' primary                & n\_plus \\
+     \phantom{factor}
+     $\rightarrow$ `$-$' primary                & n\_minus \\
+     \phantom{factor}
+     $\rightarrow$ primary                      & \\
+     \hline
+primary $\rightarrow$ `name' ( `.' `name' ) ?   & n\_dot? \\
+     \phantom{primary}
+        $\rightarrow$ `number' `unit' ?         & n\_unit?\\
+     \phantom{primary}
+        $\rightarrow$ `string'                  & \\
+     \phantom{primary}
+        $\rightarrow$ `(' expr `)'              & \\
+     \hline
+\end{longtable}
+
+Notice that some nonterminal symbols have sets of productions beginning
+with the same terminal symbol, and some productions are \emph{left
+recursive}~-- meaning that the right-hand side begins with the
+nonterminal symbol that appears on the left-hand side.  This makes the
+grammar easier to read, but a quick calculation shows that the selection
+sets used for decision-making in an $LL$ parser would intersect.
+
+Determining the decisions that an $LR$ parser is to take requires a
+tedious and error-prone calculation.  It is therefore usually carried out
+by a program called a \emph{parser generator}.  If we were to use an $LR$
+parser for MLS, it would be necessary to include the parser generator as
+part of the program set.  The author has an $LR$ parser generator,
+written in Fortran.  It is partly converted to Fortran 90, but the
+project was set aside before completion.  At least two work weeks would
+be required to complete it.
+
+There are several advantages of using an $LR$ grammar and parser.  First,
+the set of languages representable by $LR$ grammars is a strict superset
+of the set of languages representable by $LL$ grammars.  Second, by using
+a parser generator, modifications are somewhat easier~-- one needs only
+to change the grammar and re-run the parser generator, rather than
+changing the grammar, and then changing the parser procedure.  The latter
+is tedious and error-prone.  Third, some of the burden of checking for
+correct structure is put back into the parser, instead of the subsequent
+analysis.  Notice, for example, that the field\_list production in
+section \ref{gram} allows \emph{expr~= expr}.  This is not the
+grammatical generality we want, but allowing it to pass through the
+parser and catching it in subsequent analysis greatly simplifies the
+grammar, and therefore the parser.  When using an automatically generated
+$LR$ parser, the parser procedure is a table interpreter that is
+independent of the grammar.  The structure of the grammar is encoded by
+tables produced by the parser generator.  A more complex grammar results
+in a bigger (but still automatically generated) table, not a more complex
+parser procedure.
+
+The disadvantages are that one needs a parser generator, and that error
+messages and error recovery are generally not as good as one gets with
+$LL$ parsers, unless substantial effort is invested.  (Tom Pennello's
+master's degree thesis at UC Santa Cruz dealt with automatic error
+recovery for $LR$ parsers, so at least the solution to the problem of
+$LR$ error recovery is known.  Even so, the procedure that interprets the
+tables produced by the parser generator becomes quite a bit larger in
+order to carry out the error recovery.)
+
+\vspace{-8pt}
+\section{Access to the parser's output data structure}
+\vspace{-2pt}
+
+A design goal of the parsing subsystem is that there is only one search
+for each input item, carried out during lexical analysis.  As each
+character is read, it is put at the end of the \emph{character table}. 
+When the lexical analyzer determines it has reached the end of a symbol,
+it enters it into the \emph{string table}.  If it is new, the string
+table and character table grow.  Otherwise, the position at which the
+symbol is found in the string table is noted.  The definition of ``new''
+depends on the category of symbol.  If it is a character literal, i.e.
+enclosed in quotes or apostrophes, comparison to previous symbols is case
+sensitive.  Otherwise, it is caseless.  Subject to this definition of
+equality, no duplicates are allowed.  For all subsequent processing,
+each symbol is denoted by its index in the string table.
+
+\vspace{-3pt}
+\subsection{Procedures to access symbols}
+
+Procedures are provided by the {\tt string\_table} module to access the
+string and character tables.
+
+Given a string index, the procedure {\tt string\_length} returns the
+length of the symbol and the procedure {\tt get\_string} returns the text
+of the symbol.  If its {\tt CAP} argument is absent or false, the {\tt
+GET\_STRING} procedure returns the string with letters in the case of the
+first appearance of the symbol.  Otherwise, it capitalizes all letters. 
+The procedure {\tt float\_value} returns the numerical value represented
+by the symbol.  One is urged to ensure that the symbol represents a
+numerical value (probably by looking at a node id as described in the
+next section) before invoking {\tt float\_value}!  The procedure {\tt
+display\_string} displays the symbol on standard output if the variable
+{\tt prunit} in the module {\tt output\_m} is negative (the default), or
+on the unit given by {\tt prunit} otherwise.
+
+The interfaces of these procedures are summarized below, in alphabetical
+order.
+
+\vspace{-8pt}
+{\tt\small\begin{verbatim}
+  subroutine DISPLAY_STRING ( STRING, ADVANCE )
+  ! Write the string indexed by STRING.
+    integer, intent(in) :: STRING
+    character(len=*), intent(in), optional :: ADVANCE ! "yes" or "no"
+    return
+  end subroutine DISPLAY_STRING
+
+  double precision function FLOAT_VALUE ( STRING )
+  ! Return the FLOAT value of a string indexed by STRING
+    integer, intent(in) :: STRING
+  end function FLOAT_VALUE
+
+  subroutine GET_STRING ( STRING, STRING_TEXT, CAP )
+  ! Put as much as will fit of the string indexed by STRING
+  ! into STRING_TEXT.
+  ! If CAP is present and .TRUE., capitalize STRING_TEXT.
+    integer, intent(in) :: STRING
+    character(len=*), intent(out) :: STRING_TEXT
+    logical, intent(in), optional :: CAP
+  end subroutine GET_STRING
+
+  integer function STRING_LENGTH ( STRING )
+  ! Return the length of the string indexed by STRING
+    integer, intent(in) :: STRING
+  end function STRING_LENGTH
+\end{verbatim}}
+
+There are numerous other procedures in the {\tt string\_tab\-le} module,
+in addition to the procedures described above.  The curious reader is
+urged to study that module.
+
+\vspace{-3pt}
+\subsection{Procedures to access the tree}\label{tree}
+
+The tree output by the parser is stored in a private data structure in
+the {\tt tree} module, which provides procedures to access it.  Every
+vertex within the tree is denoted by its position therein.  The parser
+output is -1 if syntax errors occur, or the index of the root of the tree
+otherwise.
+
+Each vertex in the tree has a \emph{kind} property, a \emph{decoration}
+property, a \emph{source reference} property, and a \emph{node id}
+property.  The kind, decoration and source reference are described
+below.  The node id is a number that represents the output described in
+section \ref{gramBased}.  The names of these numbers are given by public
+parameters provided by the {\tt tree\_types} module.
+
+The kind of vertex may be determined by the {\tt node\_kind} function. 
+There are several result values of the {\tt node\_kind} function, given
+by public parameters of the {\tt tree} module.  The only ones used by MLS
+software are {\tt pseudo} and {\tt internal}, as described below.
+
+The decoration consists of a single integer.  When the parser produces
+the tree, the decoration is zero.  It can be used for anything one
+pleases.  The decoration can be set by the subroutine {\tt decorate} and
+examined by the function {\tt decoration}.  The decoration is put to
+extensive use in type checking, and can be useful for subsequent
+analyses.  The use for type checking is explained in chapter
+\ref{typeCheck}.
+
+The source reference property indicates the line number and column in the
+input that caused the tree vertex to be constructed.  These are
+represented using a single integer, encoding {\tt 256*line number +
+column number}.  The {\tt source\_ref} function can be used to access
+this integer.  The procedure {\tt print\_source} in the {\tt lexer\_core}
+module may be of interest to the curious reader (The author uses it to
+produce the beginning of error messages.)
+
+As indicated above in section \ref{lexer}, several of the symbols
+produced by the lexical analyzer are considered to be pseudo-terminal. 
+If a tree vertex represents a pseudo-terminal symbol, the {\tt
+node\_kind} function returns the value {\tt pseudo}.  Pseudo-terminal
+symbols have input text associated with them.  The precise text has no
+grammatical significance, so the parser passes it ``under the table''
+from the lexical analyzer to the output tree.  For this reason, the text
+is called \emph{sub-rosa} information.  Given a tree vertex index, the
+procedure {\tt sub\_rosa} returns the sub-rosa information~-- the string
+index of the text.
+
+If a tree vertex does not represent a pseudo-terminal the {\tt
+node\_kind} function returns the value {\tt internal}.  Each internal
+vertex has a number of \emph{sons}, that may be zero or greater.  Given a
+tree vertex index, the function {\tt nsons} returns the number of sons. 
+The most interesting thing encoded by the tree is the relation between
+its vertices.  The sons of a vertex are indexed by an integer that ranges
+from one to the number of sons.  Given a tree vertex index, say $v$, and
+the index, say $k$, of a son, the {\tt subtree} function returns the
+index in the tree of the $k$'th son of the vertex at $v$.  There is no
+procedure to return the parent of a vertex.  If this is interesting, one
+can use the decoration to record it.
+
+The interfaces of these procedures are summarized below, in alphabetical
+order.
+
+{\tt\small\begin{verbatim}
+  subroutine DECORATE ( WHERE, DECORATION )
+  ! Decorate tree WHERE with DECORATION
+    integer, intent(in) :: WHERE
+    integer, intent(in) :: DECORATION
+  end subroutine DECORATE
+
+  integer function DECORATION ( WHERE )
+  ! Return the decoration of the tree WHERE
+    integer, intent(in) :: WHERE
+  end function DECORATION
+
+  integer function NODE_ID ( WHERE )
+  ! Return the node id of the tree node at WHERE
+    integer, intent(in) :: WHERE
+  end function NODE_ID
+
+  integer function NODE_KIND ( WHERE )
+  ! Return the kind of tree(where).
+    integer, intent(in) :: WHERE
+  end function NODE_KIND
+
+  integer function NSONS ( WHERE )
+  ! Return the node id of the tree node at WHERE
+    integer, intent(in) :: WHERE
+  end function NSONS
+
+  integer function SOURCE_REF ( WHERE )
+  ! Return the SOURCE field of the tree node at WHERE
+    integer, intent(in) :: WHERE
+  end function SOURCE_REF
+
+  integer function SUB_ROSA ( WHERE )
+  ! Return the sub_rosa string pointer from the tree node at WHERE
+    integer, intent(in) :: WHERE
+  end function SUB_ROSA
+
+  integer function SUBTREE ( WHICH, WHERE )
+  ! Return the root of the WHICH'th subtree of the tree node
+  ! at WHERE.  The zero'th subtree of WHERE is WHERE
+    integer, intent(in) :: WHICH
+    integer, intent(in) :: WHERE
+  end function SUBTREE
+\end{verbatim}}
+
+In addition to the procedures described above, there are numerous other
+procedures in the {\tt tree} module.  The curious reader is urged to
+study that module.
+
+\chapter{Type checking}\label{typeCheck}
+
+Type checking is performed by a depth-first left-to-right traversal of
+the abstract syntax tree.  The conditions that are verified, and the
+relations that are recorded, are summarized here.  The reader who craves
+more details is urged to read the {\tt type\_checker} module.
+
+\section{The Declaration table}\label{declTable}
+
+There is a table, indexed by the string index given by the sub-rosa
+information of a pseudo-terminal tree vertex, that contains
+declarations.  It is used to find things in the tree.  It is especially
+useful to find the declaration of an object to which there is a
+reference.  The declaration table has several fields.  The uses of the
+fields other than the {\tt type} field depends on the value of the {\tt
+type} field.  The node index values of the {\tt units} field are defined
+in the {\tt tree\_types} module.  All other values of the {\tt units}
+field are defined in {\tt init\_tables\_module}.
+
+\begin{tabular}{|l|l|l|l|}
+\hline
+Type field   & Units field     & Value field & Tree field \\
+\hline
+\hline
+{\tt enum\_value} & enum index &           & son of {\tt dt\_def}\\
+{\tt exprn}  &                 &           & unevaluated expr \\
+{\tt field}  & field index     &           & {\tt spec\_def} node \\
+{\tt label}  &                 &           & {\tt named node} \\
+{\tt log\_value} &             & 0 = false & \\
+{\tt num\_value} & units index & value     & \\
+{\tt section}    & section index &         & {\tt section node} \\
+{\tt section\_node} & section index &      & {\tt one\_cf node} \\
+{\tt str\_value} &             &           & {\tt string} node \\
+{\tt spec}   & spec index      &           & {\tt spec\_def} node \\
+{\tt tree\_node} & node index  &           & \\
+{\tt undeclared} &             &           & \\
+{\tt units\_name} & units index & scale    & \\
+\hline
+\end{tabular}
+
+Several declarations are allowed for each symbol, so that a name can be a
+literal in several types, the name of a specification, a field in several
+specifications, etc.  A name's declarations can be distinguished by
+\emph{type} or by \emph{type} and \emph{units}.  It is unlikely that the
+user of the type-checked parser output will need to use the declaration
+table.  The curious reader is urged to read the {\tt declaration\_table}
+module.
+
+\section{Expressions}
+
+In expressions, if values are literal numbers, terms that are added are
+required to have the same units, while at least one of factors that are
+multiplied are required to be unitless.  In a quotient, the denominator
+is required to be unitless.  The units of the expression are the units of
+the terms, the units if any of the factor with units, or the units if any
+of the denominator.
+
+\section{Sections, specifications, fields}
+The relation between sections and the specifications they can have in
+them, the relation between specifications and the named fields they can
+have in them, and the types of values in fields are checked.  These
+relations are spelled out in the \emph{EOS MLS Software documentation
+series, Quick reference for the syntax of the L2CF}, document number TBD,
+or other documents relevant to different MLS software subsystems.
+
+These relations are encoded by putting trees that describe them into the
+parser's tree space before the parser is run.  This is done in {\tt
+init\_tables\_module}.  After the parser finishes, they become part of
+the abstract syntax tree, as ``left-hand brothers'' of the tree that
+results from parsing the input.  The type checker processes them in the
+same way that it processes parser output.  Examples of these are shown in
+chapter \ref{trees}.
+
+\section{Symbol name conventions}
+Within the parser and type checker, there is a consistent system of symbol
+name prefixes:
+\begin{longtable}{|l|l|}
+     \hline
+{\bf Prefix}         & {\bf Symbol usage}\\
+     \hline
+\endfirsthead
+     \hline
+{\bf Prefix} (cont.) & {\bf Symbol usage} (cont.) \\
+     \hline
+\endhead
+     \hline
+     \multicolumn{2}{|l|}{(cont.)} \\
+     \hline
+\endfoot
+     \hline
+\endlastfoot
+ f\_ & A field name, i.e. the left-hand side of \emph{name = expr}
+       in a specification\\
+ l\_ & A literal of an enumeration type\\
+ n\_ & The node-id of a tree vertex\\
+ p\_ & A parameter name, i.e. the left-hand side of \emph{name = expr} not
+       in a specification\\
+ phyq\_ & A physical quantity name, i.e. units\\
+ s\_ & A specification name\\
+ t\_ & A terminal symbol in the parser or lexer, or a type name elsewhere \\
+ z\_ & A section name (we couldn't use S twice!)\\
+\end{longtable}
+
+These naming conventions are used here when referring to entities in the
+tree.
+
+\section{Representation of types}
+
+The types known to the type checker are encoded by trees.  Using the
+notation introduced in section \ref{gramBased}, these trees are of the
+form $<$ {\tt n\_dt\_def} \emph{type-name literal-name ...} $>$, where
+``...'' means the preceeding item can be repeated any number of times,
+and {\tt n\_dt\_def} is a node id defined in the {\tt tree\_types}
+module.  When type definitions are created in the {\tt
+init\_tables\_module}, each type name or literal name is decorated with
+its index (see page \pageref{bigtree}).  When the type definition tree is
+processed by the type checker, each type name or literal name is entered
+into the declaration table, with a {\tt tree} field that points to the
+parent {\tt n\_dt\_def} vertex.
+
+\section{Representation of specification field requirements}
+
+The fields a specification may have, and the types of values that can be
+put into them, are encoded by trees of the form $<$ {\tt n\_spec\_def}
+\emph{field-spec} ... $>$.  There are three kinds of field specifications.
+\begin{description}
+\item[Specific type required] The tree of the form $<$ {\tt
+  n\_field\_type} \emph{field-name type-name ...} $>$ lists the types,
+  and therefore indirectly the set of allowed literals.
+\item[Label of specific specification required] The tree of the form
+  $<$~{\tt n\_field\_spec} \emph{field-name spec-name ...} $>$ lists the
+  specifications whose labels are allowed.
+\item[Label of specific specification with indirect field value] In the
+  tree of the form $<$ {\tt n\_dot} \emph{field-name spec-name field-name
+  ...}~$>$, the \emph{spec-name} indicates a specification that must be
+  referenced by the first label in a reference of the form {\tt x.y}, and
+  the \emph{field-names} give a sequence of fields, the first being a
+  field of  \emph{spec-name}, the second being a field referenced by the
+  value in the first field, and so on, with the last \emph{field-name}
+  specifying that that field must have the value {\tt y}.  There is an
+  example on page \pageref{dottree}.
+\end{description}
+
+\section{Representation of section requirements}
+
+The specifications that may appear in a section are encoded by trees of
+the form $<$ {\tt n\_section} \emph{section-name content ...} $>$.  A
+\emph{content} specification either consists of an identifier, in which
+case it must be the name of a specification with previously encoded
+requirements, or a tree of the form $<$ {\tt n\_name\_def}
+\emph{parameter-name type ...} $>$, where \emph{type} is the name of a
+type, as for a specification field requirement.
+
+\section{Type checking, and using the type-checked tree}
+
+The type checking is carried out by a set of recursive procedures that
+examines the tree produced by the parser.  These procedures are in the
+{\tt tree\_checker} module, which the curious reader is urged to study. 
+During the examination, decorations are added to the tree.  A decoration
+is either the value of a parameter from the {\tt init\_tables\_module},
+or the index of another part of the tree. Some of the decorations are
+used to encode information used for type checking, and some are put into
+the tree in the expectation that they will be useful for generating the
+ultimate output. 
+
+\subsection{At the file level}
+
+The ordering of sections is checked.  There is an array {\tt
+section\_ordering} in {\tt init\_tab\-les\_mod\-ule} that specifies the
+ordering.  The only extent of the checking is to verify that a section
+follows one that it is permitted to follow.  There is no check to verify
+that the file doesn't end early.
+
+\subsection{At the section level}
+
+A section is represented by a subtree of the form $<$ {\tt n\_cf
+n\_ident\-i\-fi\-er} \emph{specification ...} {\tt
+n\_ident\-i\-fi\-er}~$>$, wherein the sub-rosa information of the {\tt
+n\_identifier} vertices is the section name.  It is checked that they are
+the same.
+
+The first son of {\tt n\_cf} (an {\tt n\_identifier} vertex) is decorated
+with the section index taken from the decoration of the section
+definition tree's first son.  This is a parameter beginning with {\tt
+z\_}, declared in {\tt init\_tables\_module}.  Thus if one has a
+variable, say {\tt root}, that indexes an {\tt n\_cf} vertex, the section
+index can be gotten by {\tt decoration(subtree(1,root))}.
+
+\subsection{Parameter definition}\label{paramDef}
+
+A parameter definition appears in the input in the form \emph{name =
+expr}.  It is represented by a subtree of the form $<$ {\tt n\_equal
+n\_identifier} \emph{expr}~$>$. The {\tt n\_identifier} vertex is
+decorated with the parameter index taken from the section definition
+tree.  This is a Fortran parameter beginning with {\tt p\_}, declared in
+the {\tt init\_tables\_module}.  Suppose one has a variable, say {\tt
+root}, that indexes an {\tt n\_equal} vertex.  The parameter index  can
+be gotten by {\tt decoration(subtree(1,root))}.  It is checked that the
+parameter is allowed to be defined within the section in which the
+parameter definition appears.
+
+The type of the \emph{expr} that is the second son of the {\tt n\_equal}
+vertex is checked.  There are three categories of expressions:  Strings,
+enumerated literals, and general numerical expressions (including
+ranges).  One usually knows a priori that only one kind of expression is
+allowed.  Suppose one has a variable, say {\tt son}, that indexes the root
+of the expression subtree.  The three categories of expression can be
+processed as follows:
+
+\begin{description}
+\item[Enumerated literal] Get the literal index, a parameter beginning
+  with {\tt l\_} declared in {\tt init\_tab\-les\_mod\-ule}, by using {\tt
+  decoration(subtree(2,son))}.
+\item[String] Get the sub-rosa index of the string by using {\tt
+  sub\_rosa(subtree(2,son))}.
+\item[A general numerical expression] Get the value of the expression by
+  {\tt call expr ( sub\-tree(2, son), values, units, type )} (in which
+  {\tt type} is optional).  The {\tt values} and {\tt units} arguments
+  are arrays of length two, in case the expression is a range.  Whether
+  the expression is a range is a type that can be specified to be
+  checked.  The {\tt value} is scaled by the specified units.  The
+  returned units are the ``units family,'' e.g. {\tt phyq\_length}
+  instead of {\tt l\_km}.  The {\tt type} is one of the values of the
+  {\tt type} field of the declaration table (\ref{declTable}).  The {\tt
+  expr} subroutine is in the {\tt expr\_m} module.
+\end{description}
+
+\subsection{Specifications}
+
+A specification appears in the input in the form \emph{name:
+specification, field, ...}.  The ``name:'' is optional.  It is
+represented by a subtree of the form $<$~{\tt n\_spec\_args} \emph{field
+...}~$>$.  If it has a name, it is represented by a subtree of the form
+$<$ {\tt n\_named n\_identifier} $<$~{\tt n\_spec\_args} \emph{field
+...}~$>$ $>$.  It is verified that a specification is allowed in the
+section in which it appears.  Each field is a list of values, a
+specification of the form \emph{name = val ...}, or a specification of
+the form \emph{/name}.
+
+Suppose one has a variable, say {\tt root}, that indexes the {\tt
+n\_spec\_arg} vertex in the tree.  The identity of the specification is
+the first son.  Its decoration is the root of the specification
+definition tree {having root {\tt n\_spec\_def}).  The first son of that
+tree is the definition of the specification name.  Its decoration is the
+index of the specification that is given by a Fortran parameter beginning
+with {\tt s\_} from {\tt init\_tables\_module}, which can be gotten by
+{\tt
+dec\-or\-a\-tion(sub\-tree(1,dec\-or\-a\-tion(sub\-tree(1,root))))}. 
+[This looks like something the type checker ought to lift to {\tt
+dec\-or\-a\-tion(sub\-tree(1,root))}.]
+
+The fields would usually be processed by a loop of the form {\tt do k =
+2, nsons(root)}.  Then the root of the subtree for each field could be
+gotten (within that loop) by {\tt son = subtree(k,root)}.
+
+In the case of a \emph{field} that is a list of expressions, the
+expressions are individually checked for internal consistency, but there
+are no requirements on the characteristics of the entire expressions.
+
+The form \emph{name = val ...} is represented by a subtree of the form
+$<$~{\tt n\_asg n\_identifier} \emph{val ...}~$>$.  It is checked that
+the identifier is an allowed argument name of the specification.  Suppose
+one has a variable, say {\tt son}, that indexes the argument (the {\tt
+n\_asg} vertex).  The index of the field name, a parameter beginning with
+{\tt f\_} from {\tt init\_tables\_module}, can be gotten by {\tt
+decoration(subtree(1,son))}.
+
+There are three categories for the values of the \emph{vals}:
+
+\begin{description}
+\item[The name of another specification] In this case the category of
+  specification is checked, and the name that constitutes the expression
+  is decorated with the position in the tree of the named specification.
+  The position can be gotten by {\tt decoration(subtree(j,son))}, where
+  {\tt son} is as above, and {\tt j} is two for the first name, three
+  for the second, etc.  If one knows that several may appear, they would
+  probably be processed by a loop of the form {\tt do j = 2, nsons(son)}.
+\item[An expression] In this case, the checking and representation are
+  the same as for parameter definitions (see \ref{paramDef}).  Each
+  expression is rooted at {\tt subtree(j,son)}, where {\tt son} is as
+  above, and {\tt j} is two for the first expression, three for the
+  second, etc.  As above, if one knows that several may appear, they
+  would probably be processed by a loop of the form {\tt do j = 2,
+  nsons(son)}.
+\item[A reference of the form x.y] This is represented by a tree of the
+  form $<$~{\tt n\_dot n\_identifier(x) n\_identifier(y)} $>$.  In this
+  case, it is checked that {\tt x} refers to a specified category of
+  specification.  Then, it is verified that the specification labelled by
+  {\tt x} has a specified field in which the value is the label of
+  another category of specification that has a specified field in which
+  the value is the label of another category of specification that has
+  ... until the final field is verified to contain {\tt y}.  There is an
+  example on page \pageref{dottree}.  It is assumed that each of the
+  intermediate specifications in the chain has only one field having the
+  required name, and only the first value in each of those fields is
+  examined.  The final field may have any number of names, but one of
+  them must be {\tt y}.
+\end{description}
+
+The form \emph{/name} is represented by a subtree of the form $<$~{\tt
+n\_set\_one n\_identifier}~$>$.  It is checked that the identifier is a
+name that is allowed for the \emph{name = expr ...} form, and it is
+checked that the identifier is a literal of the type {\tt t\_boolean}. 
+Suppose one has a variable, say {\tt son}, that indexes the argument.  If
+{\tt node\_id(son)} is {\tt n\_set\_one}, one can get the index of the
+field name by {\tt decoration(subtree(1,son))}.  The usual interpretation
+is the same as if \emph{name~=} {\tt true} had been specified, but one
+can do whatever one wishes with this form.
+
+\section{Short examples}
+
+Here is an example of processing the {\tt construct} section in the MLS
+Level 2 software.  The {\tt construct} section allows {\tt hgrid, vgrid,
+quantity} and {\tt vectortemplate} specifications.  The example
+illustrates how to select the action based on the kind of specification,
+and the use of an after-type-checking decoration of the {\tt
+n\_spec\_args} tree vertex.  In this example, {\tt root} is the index of
+a {\tt cf} vertex -- see page \pageref{toptree}.
+
+{\tt\small\begin{verbatim}
+    do i = 2, nsons(root)-1 ! Skip the section name at begin and end
+      son = subtree(i,root)
+      if ( node_id(son) == n_named ) then ! Is spec labeled?
+        key = subtree(2,son)
+        name = sub_rosa(subtree(1,son))
+      else ! son is n_spec_args
+        key = son
+        name = 0
+      end if
+
+      ! Node_id(key) is now n_spec_args.
+
+      select case( decoration(subtree(1,decoration(subtree(1,key)))) )
+      case( s_hgrid )
+        call decorate ( key, AddHGridToDatabase ( hGrids, &
+          & CreateHGridFromMLSCFInfo ( name, key, l1bInfo, chunk ) ) )
+      case ( s_vgrid )           ! Similar
+      case ( s_quantity )        ! Similar
+      case ( s_vectortemplate )  ! Similar
+      case default ! Can't get here if tree_checker worked correctly
+      end select
+    end do
+\end{verbatim}}
+
+The decoration that is added to {\tt key}, the {\tt n\_spec\_args}
+vertex, is the subscript of an element in the {\tt hGrids} array.  There
+are references from {\tt quantity} specifications to {\tt hgrid}
+specifications.  The type checker resolves these into positions in the
+tree, and decorates the references.  Thus when processing a {\tt
+quantity} specification, one can use {\tt decoration(decoration(gson))}
+if {\tt gson} is the index of an {\tt n\_identifier} vertex that
+references the label of the {\tt hgrid} specification in order to get the
+array index for the result of processing a particular {\tt hgrid}
+specification.  It is important to remember that once the label was
+processed by the lexer, there were no further searches for it.
+
+The next example illustrates processing of the {\tt quantity}
+specification.  One of the fields has the name {\tt hgrid}, for which the
+type checker has decorated the {\tt n\_identifier} vertex that is the
+first son of {\tt n\_asg} with the value of the {\tt f\_hgrid} parameter
+from {\tt init\_tables\_module}.  The type checker has verified that the
+name that is the brother of the {\tt hgrid} identifier (the second son of
+{\tt n\_asg}) is the name of an {\tt hgrid} specification, and decorated
+it with the position in the tree of the {\tt n\_spec\_arg} vertex of the
+named {\tt hgrid} specification (see page \pageref{bigtree}).  That
+vertex was decorated in the previous example with the subscript of the
+result of processing the {\tt hgrid} specification.  Once again, no
+searching is necessary after the symbol is processed by the lexer.  Other
+fields of the specification, e.g. the {\tt molecule} field, were verified
+by the type checker to have values that are literals of the required
+enumerated types.
+
+{\tt\small\begin{verbatim}
+    do i = 2, nsons(root)
+      son = subtree(i,root)
+      key = subtree(1,son)
+      if ( node_id(key) == n_set_one ) then
+        key = subtree(1,key)
+        value = l_true
+      else
+        value = decoration(subtree(2,son))
+      end if
+
+      select case ( decoration(key) )
+      case ( f_hgrid )
+        hGridIndex = decoration(value) ! node_id(value) == n_spec_args
+      case ( f_vgrid )
+        vGridIndex = decoration(value) ! node_id(value) == n_spec_args
+      case ( f_type )
+        quantityType = value
+        type_field = son
+      case ( f_unit );              scaleFactor = value
+      case ( f_molecule );          molecule = value
+      case ( f_radiometer );        radiometer = sub_rosa(subtree(2,son))
+      case ( f_band );              band = sub_rosa(subtree(2,son))
+      case ( f_firstindexchannel ); firstIndexChannel = value == l_true
+      end select
+    end do
+\end{verbatim}}
+
+Sometimes it is useful to know which fields have been specified, and to
+prevent them from being specified twice.  A simple way to do this is to
+create a boolean array, say {\tt got}, with dimensions given by {\tt
+field\_first:field\_last} from {\tt init\_tables\_module}.  Initialize
+the array to {\tt false}, and then set {\tt got(}\emph{field}{\tt) =
+true} to indicate the field was noticed, perhaps after checking that it
+is {\tt false} if duplicates are to be prohibited.  For example,
+immediately before the {\tt select case} statement in the above example,
+insert
+
+{\tt\small\begin{verbatim}
+    if ( got(decoration(key)) ) call announce_error ( key, duplicate )
+    got(decoration(key)) = .true.
+\end{verbatim}}
+
+This may seem wasteful of space.  Space is reserved for numerous
+uninteresting fields~-- indeed fields that are impossible in the {\tt
+quantity} specification~-- but it is less space than would be consumed by
+the instructions to initialize the local variables, say {\tt molecule},
+to impossible values, say zero, and check each one individually with, say
+{\tt if ( mole\-cule /= 0 ) call announce\_error ....}
+
+The last example illustrates processing of a field for which the root
+vertex of the abstract syntax tree is {\tt dot}.  As one can see in the
+figure on page \pageref{dottree}, the decoration of the first son of the
+{\tt dot} vertex is the specification labelled by {\tt label\_1}, and the
+decoration of the second son of the {\tt dot} vertex is the
+right-hand-side of a field having a value given by {\tt value}.  The
+decoration of this value is the specification labelled by {\tt value}. 
+In level 2 processing for MLS, {\tt label\_1} will usually be the label
+of a vector specification, and {\tt value} will be the label of a
+quantity specification.  Suppose the variable {\tt dot} indexes the {\tt
+dot} vertex.  If one wants to get a pointer to the part of the vector
+{\tt label\_1} that is indicated by {\tt value} one might use
+
+{\tt\small\begin{verbatim}
+    vector => vectorDatabase(decoration(decoration(subtree(1,dot))))
+    quantity => vector(getVectorQuantityIndexByName(vector,sub_rosa( &
+      & subtree(2,dot))))
+\end{verbatim}}
+
+On the other hand, if one wants to access the quantity database item
+having the label {\tt value} one might use
+
+{\tt\small\begin{verbatim}
+    quantity => quantityDatabase(decoration(decoration(decoration( &
+      & subtree(2,dot)))))
+\end{verbatim}}
+
+(Of course, the two {\tt quantity} variables in these examples have
+different type declarations.)
+
+\chapter{Some pictures of trees}\label{trees}
+
+\label{toptree}\epsfig{file=cf/tree.2.eps}\newpage
+\label{bigtree}\epsfig{file=cf/tree.1.eps}\newpage
+\label{dottree}\epsfig{file=cf/tree.3.eps}
+
+\rcsInfo $Id: wvs-004.tex,v 1.11 2001/11/28 02:03:38 vsnyder Exp $
+
+\label{lastpage}
+\end{document}
+
+% $Log: wvs-004.tex,v $
+% Revision 1.11  2001/11/28 02:03:38  vsnyder
+% Allow arrays of arrays
+%
+% Revision 1.9  2001/01/18 01:45:50  vsnyder
+% Add an example, correct top-level tree picture
+%
+% Revision 1.8  2001/01/17 23:47:23  vsnyder
+% Improve the picture of "dot" vertices checking and results
+%
+% Revision 1.7  2000/11/29 21:35:20  vsnyder
+% Change syntax for array-valued field to [ expr ( , expr ) * ]
+%
+% Revision 1.6  2000/11/28 19:20:02  vsnyder
+% Clarify definition of "new symbol" and functionality of "get_string"
+%
+% Revision 1.5  2000/10/05 20:02:01  vsnyder
+% Changed wording of final paragraph
+%
+% Revision 1.4  2000/08/31 23:28:01  vsnyder
+% Add "exprs" and delete "strings" in grammar in 3.2, correct n_and in grammar in 4.1
+%
+% $Id: $
+@

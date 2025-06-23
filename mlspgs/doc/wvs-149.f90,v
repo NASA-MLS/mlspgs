@@ -1,0 +1,311 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.8
+	cfm-single-freq-0-1:1.2.0.6
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.4
+	mus-emls-1-70:1.2.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2018.07.10.18.17.48;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2018.07.10.00.15.06;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Add more command-line options, and help output
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+program WVS_149
+
+! Make plots for wvs-149.
+
+  implicit NONE
+
+  integer, parameter :: NV = 51 ! Number of Alpha values
+
+  real :: EL(nv)       ! Expected number of links examined for moves for
+                       ! ordered or unordered chains
+  real :: ES(nv)       ! Expected number of probes for successful search,
+                       ! ordered or unordered chains
+  real :: EU(nv)       ! Expected number of probes for unsuccessful search,
+                       ! unordered chains
+  real :: EUP(nv)      ! Expected number of probes for unsuccessful search,
+                       ! ordered chains
+  real :: EV(nv)       ! Expected number of moves to insert N = alpha M entries,
+                       ! unordered chains
+  real :: EVP(nv)      ! Expected number of moves to insert N = alpha M entries,
+                       ! ordered chains
+  real :: ESV(nv)      ! Expected number of probes for successful search
+                       ! using Vitter's algorithm
+  real :: EUV(nv)      ! Expected number of probes for unsuccessful search
+                       ! using Vitter's algorithm
+
+  integer :: I
+  real, parameter :: Beta = 0.86          ! Vitter's recommendation
+  real, parameter :: Delta = 1.0 / ( nv - 1 ) ! Spacing for Alpha
+  real :: EXPA(nv)     ! Exp(-alpha)
+  real, parameter :: Gamma = 0.5772156649 ! Euler's constant
+  ! Solution of 1/beta = exp(-lambda) + lambda:
+  real, parameter :: Lambda = 0.6304254286
+  real :: Mu                              ! min(alpha,zeta)
+  logical :: PlotIt = .true., PrintIt = .false.
+  real, parameter :: Zeta = Beta * Lambda
+
+  ! Declararations for SPLOT
+  real :: Alpha(nv)
+  real :: Y(nv,2)
+  real, parameter :: XSIZE = 2.75 ! inches
+  real, parameter :: YSIZE = 2.75 ! inches
+  real :: OPT(20) = 0.0
+  character(200) :: COPT
+
+  interface
+    subroutine SPLOT ( Xsize, Ysize, X, NX, Y, Opt, Copt )
+      real, intent(in) :: Xsize        ! Plot size, default inches
+      real, intent(in) :: Ysize        ! Plot size, default inches
+      integer, intent(in) :: NX        ! Number of elements of X
+      real, intent(in) :: X(NX)        ! Abscissae
+      real, intent(in) :: Y(*)         ! Ordinates, >= NX
+      real, intent(inout) :: Opt(*)    ! Options
+      character(*), intent(in) :: Copt ! Characters indexed by Opt
+    end subroutine SPLOT
+  end interface
+
+  real, parameter :: Ncurves = 2.0 ! OPT value to specify number of curves
+                                   ! in Y, followed by NV and second dimension
+                                   ! of Y (as real numbers)
+  real, parameter :: Text = 14.0   ! OPT value to specify text annotation,
+                                   ! followed by X, Y position, and T.  T/10
+                                   ! specifies the position in COPT where the
+                                   ! annotation begins.  Mod(T,10) means
+                                   ! 0 => X and Y are in the current data
+                                   !        coordinate system
+                                   ! 1 => X and Y are in physical coordinates
+                                   ! For other values, see ch16-03 
+  real, parameter :: Ticks = 5.0   ! Specify tick marks, followed by which
+                                   ! axes (see ch16-03), and the lengths of
+                                   ! major and minor ticks in points.  Negative
+                                   ! tick lengths are directed outward.
+
+  ! Declarations for SE1
+  interface
+    real function SE1 ( X )  ! Exponential integral E1
+      real, intent(in) :: X
+    end function SE1
+  end interface
+
+  i = 0
+  do
+    i = i + 1
+    call get_command_argument ( i, copt )
+    if ( copt == '' ) exit
+    if ( copt == '-g' ) then
+      plotIt = .true.
+    else if ( copt == '-n' ) then
+      plotIt = .false.
+    else if ( copt == '-nt' ) then
+      printIt = .false.
+    else if ( copt == '-t' ) then
+      printIt = .true.
+    else
+      call get_command_argument ( 0, copt )
+      print '(a)', 'Usage: ' // trim(copt) // ' [options]'
+      print '(a)', ' Options: -g  => make plots (graphics), default true'
+      print '(a)', '          -n  => do not make plots'
+      print '(a)', '          -nt => do not print results'
+      print '(a)', '          -t  => print results, default false'
+      stop
+    end if
+  end do
+
+  alpha = [ ( (i-1) * delta, i = 1, nv) ]
+
+  expa = exp(-alpha)
+
+  eu(1) = 0
+  eu(2:) = ( 1 - expa(2:) + 0.5 * alpha(2:)**2 ) / alpha(2:)
+
+  eup(1) = 0
+  eup(2:) = 0.5 * ( 1 -expa(2:) + 0.5 * alpha(2:)**2 + alpha(2:) ) /alpha(2:)
+
+  ev(1) = 0.0
+  ev(2:) = ( 1 - expa(2:) - alpha(2:) + 0.5 * alpha(2:)**2 ) / alpha(2:)
+
+  evp(1) = 0
+  do i = 2, nv
+    evp(i) = ( se1(alpha(i)) + log(alpha(i)) + gamma ) / alpha(i) + &
+           & 0.5*alpha(i) - 1
+  end do
+
+  y(:,1) = eu - eup
+  y(:,2) = evp - ev
+
+  if ( printit ) &
+    & print '(7a8/(7f8.4))', 'Alpha', 'EU-EUP', 'EVP_EV', 'EU', 'EUP', 'EVP', 'EV', &
+     & ( alpha(i), y(i,1), y(i,2), eu(i), eup(i), evp(i), ev(i), &
+     & i = 1, nv, 5 )
+
+  copt = 'F{wvs-149-1.txp}' // &
+       & '{$E[U(\alpha)]-E[U^\prime(\alpha)]$}' // &
+       & '{$E[V^\prime(\alpha)]-E[V(\alpha)]$}'
+  opt(2:4) =   [ NCurves, real(nv), 2.0 ]
+  opt(5:8) =   [ -Ticks, 1.0, -4.0, -3.0 ]
+  opt(9:12) =  [ Text, 0.1,  0.12,  10.0*index(copt,'{$E[U') ]
+  opt(13:16) = [ Text, 0.32, 0.045, 10.0*index(copt,'{$E[V') ]
+
+  ! It's OK for the rank-2 variable Y to be associated with the rank-1
+  ! dummy argument Y, because the dummy argument is assumed size.  The
+  ! association is in array-element order.
+
+  if ( plotIt ) call splot ( xsize, ysize, alpha, nv, y, opt, copt )
+
+! Now calculations to compare to Vitter's algorithm
+
+  es = 1 + 0.25 * alpha
+  esv(1) = 1.0
+  euv(1) = 0
+  do i = 2, nv
+    mu = min(zeta,alpha(i))
+    esv(i) = mu/alpha(i) * ( 1 + mu / ( 4 * beta ) ) + &
+           & 1 / ( 8 * alpha(i) ) * ( &
+           &   -( 2 * zeta + 3 * beta - 2 ) * &
+           &   ( se1(-2/beta*alpha(i)) - se1(-2/beta*mu) ) * &
+           &   exp(-2 * lambda) + &
+           &   ( 2 * zeta * lambda + 4 * zeta - 3 * beta - 4 * lambda + 2 ) * &
+           &   log(alpha(i)/mu) + &
+           &   ( mu + 2 * beta + 4 + alpha(i) ) * ( alpha(i) - mu ) / beta )
+    euv(i) = beta/alpha(i) * &
+           &   ( 1 - exp(-mu/beta) ) + mu**2 / ( 2 * alpha(i) * beta ) + &
+           &   1 / (8 * alpha(i) ) * ( &
+           &     ( 2 * zeta + 3 * beta - 2 ) * &
+           &     ( exp(2*alpha(i)/beta) - exp(2*mu/beta) ) * &
+           &     exp(-2*lambda) - &
+           &     2 / beta * ( mu + 3 * beta - 6 + alpha(i) ) * &
+           &                ( alpha(i) - mu ) )
+  end do
+
+  if ( printit ) &
+    & print '(5a8/(5f8.4))', 'Alpha', 'EUV', 'EUV-EU', 'ESV', 'ESV-ES', &
+      & ( alpha(i), euv(i), euv(i)-eu(i), esv(i), esv(i)-es(i), i = 1, nv, 5 )
+
+  y(:,1) = euv - eu
+  y(:,2) = esv - es
+
+  copt = 'F{wvs-149-2.txp}' // &
+       & '{$E[U_V(\alpha)]-E[U(\alpha)]$}' // &
+       & '{$E[S_V(\alpha)]-E[S(\alpha)]$}'
+  opt(2:4) =   [ NCurves, real(nv), 2.0 ]
+  opt(5:8) =   [ -Ticks, 1.0, -4.0, -3.0 ]
+  opt(9:12) =  [ Text, 0.4,  0.06,  10.0*index(copt,'{$E[U_') ]
+  opt(13:16) = [ Text, 0.075, 0.025, 10.0*index(copt,'{$E[S_') ]
+
+  ! It's OK for the rank-2 variable Y to be associated with the rank-1
+  ! dummy argument Y, because the dummy argument is assumed size.  The
+  ! association is in array-element order.
+
+  if ( plotIt ) call splot ( xsize, ysize, alpha, nv, y, opt, copt )
+
+  ! Links and moves for Algorithm S
+
+  el = alpha**2 / 3
+
+  if ( printit ) &
+    & print '(3a8/(3f8.4))', 'Alpha', 'EL', 'EV', &
+      & ( alpha(i), el(i), ev(i), i = 1, nv, 5 )
+
+  y(:,1) = el
+  y(:,2) = ev
+
+  copt = 'F{wvs-149-3.txp}' // &
+       & '{$E[L(\alpha)]$}' // &
+       & '{$E[V(\alpha)]$}'
+  opt(2:4) =   [ NCurves, real(nv), 2.0 ]
+  opt(5:8) =   [ -Ticks, 1.0, -4.0, -3.0 ]
+  opt(9:12) =  [ Text, 0.4,  0.15,  10.0*index(copt,'{$E[L') ]
+  opt(13:16) = [ Text, 0.7, 0.025, 10.0*index(copt,'{$E[V') ]
+
+  ! It's OK for the rank-2 variable Y to be associated with the rank-1
+  ! dummy argument Y, because the dummy argument is assumed size.  The
+  ! association is in array-element order.
+
+  if ( plotIt ) call splot ( xsize, ysize, alpha, nv, y, opt, copt )
+
+contains
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: wvs-149.f90,v 1.1 2018/07/10 00:15:06 vsnyder Exp $"
+    not_used_here = .true.
+    print *, IdParm ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end program WVS_149
+
+! $Log: wvs-149.f90,v $
+! Revision 1.1  2018/07/10 00:15:06  vsnyder
+! Initial commit
+!
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d96 17
+a112 2
+    if ( copt == '-n' ) plotIt = .false.
+    if ( copt == '-p' ) printIt = .true.
+d138 1
+a138 1
+    & print '(7a8/(7f8.4))', 'Alpha', 'Y1', 'Y2', 'EU', 'EUP', 'EVP', 'EV', &
+d182 2
+a183 2
+    & print '(3a8/(3f8.4))', 'Alpha', 'UV-U', 'SV-S', &
+      & ( alpha(i), euv(i)-eu(i), esv(i)-es(i), i = 1, nv, 5 )
+d232 1
+a232 1
+       "$Id: QuantityTemplates.f90,v 2.122 2018/05/24 03:18:54 vsnyder Exp $"
+d240 4
+a243 1
+! $Log: $
+@
+

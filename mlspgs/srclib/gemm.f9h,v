@@ -1,0 +1,294 @@
+head	1.7;
+access;
+symbols
+	v5-02-NRT-19:1.7
+	v6-00:1.7
+	v5-02-NRT-18:1.7
+	v5-02:1.7
+	v5-01-NRT-17:1.7
+	v5-01-NRT-16:1.7
+	v5-01-NRT-15:1.7
+	v5-01-NRT-14:1.7
+	neuralnetworks-1-0:1.7.0.14
+	cfm-single-freq-0-1:1.7.0.12
+	v5-01:1.7
+	v5-00:1.7
+	v4-23-TA133:1.7.0.10
+	mus-emls-1-70:1.7.0.8
+	rel-1-0-englocks-work:1.7.0.6
+	VUMLS1-00:1.7
+	VPL1-00:1.7
+	V4-22-NRT-08:1.7
+	VAM1-00:1.7
+	V4-21:1.7.0.4
+	V4-13:1.7
+	V4-12:1.7
+	V4-11:1.7
+	V4-10:1.7
+	V3-43:1.7
+	M4-00:1.7
+	V3-41:1.7
+	V3-40-PlusGM57:1.7.0.2
+	V2-24-NRT-04:1.7
+	V3-33:1.7
+	V2-24:1.7
+	V3-31:1.7
+	V3-30-NRT-05:1.7
+	cfm-01-00:1.7
+	V3-30:1.7
+	V3-20:1.7
+	V3-10:1.7
+	V2-23-NRT-02:1.7
+	V2-23:1.7
+	V2-22-NRT-01:1.7
+	V2-22:1.7
+	V2-21:1.7
+	V2-20:1.5
+	V2-11:1.5
+	V2-10:1.5
+	V2-00:1.5
+	V1-51:1.4
+	V1-50:1.4
+	V1-45:1.4
+	V1-44:1.4
+	V1-43:1.4
+	V1-42:1.4
+	V1-41:1.4
+	V1-32:1.4
+	V1-40:1.4
+	V1-31:1.4
+	V1-30:1.4
+	V1-13:1.4
+	V1-12:1.4
+	V1-11:1.4
+	V1-10:1.4
+	newfwm-feb03:1.4.0.2
+	V1-04:1.4
+	V1-03:1.4
+	V1-02:1.4
+	V1-00:1.4;
+locks; strict;
+comment	@# @;
+
+
+1.7
+date	2006.11.29.19.57.42;	author vsnyder;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2006.11.29.19.55.43;	author vsnyder;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2005.06.22.20.03.55;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.11.14.00.21.46;	author vsnyder;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2001.11.13.21.16.11;	author vsnyder;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.11.03.01.15.17;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.11.02.07.37.41;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.7
+log
+@Replaced ModuleName by *GEMM in some print statements because ModuleName
+is not defined in the scoping units where this file is included.
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! subroutine *GEMM ( TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, &
+!   &                BETA, C, LDC )
+    character ::  TRANSA, TRANSB
+    integer ::    M, N, K, LDA, LDB, LDC
+    real(rk) ::   ALPHA, BETA
+    real(rk) ::   A( LDA, * ), B( LDB, * ), C( LDC, * )
+
+! $Id: gemm.f9h,v 1.6 2006/11/29 19:55:43 vsnyder Exp $
+
+    if ( transa == 'N' .or. transa == 'n' ) then
+      if ( transb == 'N' .or. transb == 'n' ) then
+        c(1:m,1:n) = alpha * matmul( a(1:m,1:k), b(1:k,1:n) ) + &
+          & beta * c(1:m,1:n)
+      else if ( transb == 'T' .or. transb == 't' ) then
+        c(1:m,1:n) = alpha * matmul( a(1:m,1:k), transpose(b(1:n,1:k)) ) + &
+          & beta * c(1:m,1:n)
+      else
+        print *, 'In *GEMM, TRANSB is neither N nor T'
+        stop
+      end if
+    else if ( transa == 'T' .or. transa == 't' ) then
+      if ( transb == 'N' .or. transb == 'n' ) then
+        c(1:m,1:n) = alpha * matmul( transpose(a(1:k,1:m)), b(1:k,1:n) ) + &
+          & beta * c(1:m,1:n)
+      else if ( transb == 'T' .or. transb == 't' ) then
+        c(1:m,1:n) = alpha * matmul( transpose(a(1:k,1:m)), transpose(b(1:n,1:k)) ) + &
+          & beta * c(1:m,1:n)
+      else
+        print *, 'In *GEMM, TRANSB is neither N nor T'
+        stop
+      end if
+    else
+        print *, 'In *GEMM, TRANSA is neither N nor T'
+        stop
+    end if
+! end subroutine *GEMM
+
+! $Log: gemm.f9h,v $
+! Revision 1.6  2006/11/29 19:55:43  vsnyder
+! gemm.f9h <- bogus comment due to brain cramp
+!
+! Revision 1.5  2005/06/22 20:03:55  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 1.4  2001/11/14 00:21:46  vsnyder
+! Insert copyright
+!
+! Revision 1.3  2001/11/13 21:16:11  vsnyder
+! Get rid of dependence on MLSMessage
+!
+! Revision 1.2  2001/11/03 01:15:17  vsnyder
+! Add 'log' stuff at the end
+!
+@
+
+
+1.6
+log
+@gemm.f9h
+@
+text
+@d19 1
+a19 1
+! $Id: gemm.f9h,v 1.5 2005/06/22 20:03:55 pwagner Exp $
+d50 3
+@
+
+
+1.5
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d19 1
+a19 1
+! $Id: HuntArray.f9h,v 1.6 2005/01/19 01:08:22 pwagner Exp $
+d29 1
+a29 1
+        print *, 'In ', ModuleName, ", TRANSB is neither N nor T"
+d40 1
+a40 1
+        print *, 'In ', ModuleName, ", TRANSB is neither N nor T"
+d44 1
+a44 1
+        print *, 'In ', ModuleName, ", TRANSA is neither N nor T"
+d50 3
+@
+
+
+1.4
+log
+@Insert copyright
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d19 1
+a19 7
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id: gemm.f9h,v 1.3 2001/11/13 21:16:11 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName= &
+       "$RCSfile: gemm.f9h,v $"
+!---------------------------------------------------------------------------
+d50 3
+@
+
+
+1.3
+log
+@Get rid of dependence on MLSMessage
+@
+text
+@d1 3
+d13 1
+a13 1
+       "$Id: gemm.f9h,v 1.2 2001/11/03 01:15:17 vsnyder Exp $"
+d48 3
+@
+
+
+1.2
+log
+@Add 'log' stuff at the end
+@
+text
+@d10 1
+a10 1
+       "$Id: gemm.f9h,v 1.1 2001/11/02 07:37:41 pwagner Exp $"
+d24 2
+a25 2
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & "TRANSB is neither N nor T" )
+d35 2
+a36 2
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & "TRANSB is neither N nor T" )
+d39 2
+a40 2
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & "TRANSA is neither N nor T" )
+d44 4
+a47 1
+! $Log: $
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d10 1
+a10 1
+       "$Id: MatrixModule_0.f90,v 2.55 2001/10/26 18:08:57 livesey Exp $"
+d13 1
+a13 1
+       "$RCSfile: MatrixModule_0.f90,v $"
+d43 2
+@
+

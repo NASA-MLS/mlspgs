@@ -1,0 +1,187 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.14
+	cfm-single-freq-0-1:1.1.0.12
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.10
+	mus-emls-1-70:1.1.0.8
+	rel-1-0-englocks-work:1.1.0.6
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2008.06.11.20.14.53;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9.0in
+
+\newcommand{\docname}{\bf wvs-048r2}
+\newcommand{\docdate}{26 October 2006}
+
+\usepackage{graphicx}
+
+\usepackage{floatflt}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill\\
+Subject: \>Different solution for $\phi$--$H$ calculation in {\tt metrics\_m}\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 10pt
+\vspace{-20pt}
+
+\begin{floatingfigure}{3.75in}
+{\includegraphics[width=3.5in,height=4.5in,clip]{./wvs-048-grid2.eps}}
+\end{floatingfigure}
+
+I drew the picture of the line of sight intersecting the $\zeta$ surfaces
+in cartesian $\phi$--$H$ co\"{o}rdinates instead of polar  $\phi$--$\zeta$
+co\"{o}rdinates.  In this diagram, the con\-stant-$\zeta$ surfaces are the
+green lines, the line of sight is the red line, and the temperature $\phi$
+basis is the vertical black lines.  Therefore the values of $H$ in the
+{\tt H\_ref} array appear at the intersections of the green lines and the
+vertical black lines.
+
+Assuming the constant-$\zeta$ surfaces to be piecewise linear, this
+suggests a simple algorithm to solve for the $\phi$ coordinate of each
+intersection of the red line (the line of sight) with the green lines (the
+constant-$\zeta$ surfaces).
+
+Denote {\tt H\_ref} by $H$.  Between two consecutive columns of a row of
+$H$ there is a line segment of a constant-$\zeta$ surface.  Writing the
+intersection of that line with the line of sight expressed as a function
+of $\phi$, \emph{viz.} $H-H_t = H_t(\sec \phi - 1)$ and assuming $\phi=0$
+at the tangent, we need to solve
+
+\begin{equation*}
+H_{ij} + (H_{i,j+1}-H_{ij})
+                  \frac{\phi-\phi_j}
+                       {\phi_{j+1}-\phi_j} - H_t
+= H_t(\sec \phi - 1)
+\end{equation*}
+
+or, using $\sec\phi \approx 1 + \frac12 \phi^2$ and putting the resulting
+polynomial in standard form,
+
+\begin{equation*}
+\frac12 (\phi_{j+1}-\phi_j) H_t \phi^2 -
+(H_{i,j+1}-H_{ij})\phi -
+H_{ij} \phi_{j+1} + H_{i,j+1} \phi_j +
+(\phi_{j+1}-\phi_j)H_t
+\approx 0
+\end{equation*}
+
+for all $i$ and $j$.  If $1<j<n$, where $n$ is the number of columns in
+{\tt H\_ref}, solutions for which $\phi<\phi_j$ or $\phi>\phi_{j+1}$ are
+discarded.  To the left of the tangent point, choose the minimum of the
+two solutions; otherwise, choose the maximum.
+
+The next term in the expansion of $\sec\phi$ is $\frac5{24}\phi^4$ for
+$\phi$ in radians, or $\frac5{24}\left(\frac{\pi}{180}\right)^4\phi^4
+\approx 9.3\times10^{-8}\phi^4$ for $\phi$ in degrees, so this simple
+quadratic equation is probably accurate enough.
+
+Putting $\phi=\phi_t$ at the tangent and referencing $H$ from
+$R^\oplus_{\text{eq}}$, things are a bit messier
+
+\begin{equation*}
+H_{ij} + (H_{i,j+1}-H_{ij})
+                  \frac{\phi-\phi_t-(\phi_j-\phi_t)}
+                       {\phi_{j+1}-\phi_t-(\phi_j-\phi_t)} - H_t
+= (H_t+R^\oplus_{\text{eq}})(\sec (\phi-\phi_t) - 1)\,.
+\end{equation*}
+
+Notice that $R^\oplus_{\text{eq}}$ cancels everywhere on the left-hand
+side.  Using $\sec\phi \approx 1 + \frac12 \phi^2$, writing
+$\delta\phi=\phi-\phi_t$ and $H_{\text{tan}}=H_t+R^\oplus_{\text{eq}}$,
+and putting the resulting polynomial in standard form, we solve for
+$\delta\phi$ in
+
+\begin{equation*}
+\frac12 (\phi_{j+1}-\phi_j) H_{\text{tan}} \delta\phi^2 -
+(H_{i,j+1}-H_{ij})\delta\phi -
+H_{ij} (\phi_{j+1}-\phi_t) + H_{i,j+1} (\phi_j-\phi_t) +
+(\phi_{j+1}-\phi_j)H_t
+\approx 0
+\end{equation*}
+
+and then we have $\phi = \delta\phi + \phi_t$.  This potentially has two
+solutions at the tangent point unless the tangent point is at one of the
+reference $\zeta$ values.  The existing code forces $\delta\phi$ to be
+zero at the tangent.
+
+\label{lastpage}
+\end{document}
+% $Id: $
+@

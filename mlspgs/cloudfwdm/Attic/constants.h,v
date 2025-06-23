@@ -1,0 +1,45 @@
+head	1.2;
+access;
+symbols
+	newfwm-sep01:1.1.0.2
+	V0-7:1.1;
+locks; strict;
+comment	@ * @;
+
+
+1.2
+date	2001.09.07.21.24.34;	author jonathan;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2001.05.29.21.18.39;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@*** empty log message ***
+@
+text
+@	real pi
+	parameter (pi=3.1415926)
+	real*8 re		! earth radius
+	parameter (re=6370.d3)
+	integer nu0		! max dimension for u
+	parameter (nu0=128)
+@
+
+
+1.1
+log
+@First version
+@
+text
+@@
+

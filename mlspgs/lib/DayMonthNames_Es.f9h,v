@@ -1,0 +1,56 @@
+head	2.1;
+access;
+symbols
+	v5-02-NRT-19:2.1
+	v6-00:2.1
+	v5-02-NRT-18:2.1
+	v5-01-NRT-17:2.1
+	v5-01-NRT-16:2.1
+	v5-01-NRT-15:2.1
+	v5-01-NRT-14:2.1
+	neuralnetworks-1-0:2.1.0.4
+	cfm-single-freq-0-1:2.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+2.1
+date	2019.12.20.21.07.13;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.1
+log
+@First commit
+@
+text
+@! Copyright 2019, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+!     .  NASA contract NAS7-918 is acknowledged.
+
+! $Id: dump2db.f9h,v 2.8 2017/07/31 23:18:55 pwagner Exp $
+
+  character(len=*), dimension(12), parameter :: MonthName = (/ &
+    & 'Enero    ', 'Febrero  ', 'Marzo    ', 'Abril    ', 'Mayo     ', &
+    & 'Junio    ', 'Julio    ', 'Agosto   ', 'Septiembr', 'Octubre  ', &
+    & 'Noviembre', 'Diciembre'/)
+
+  character(len=*), dimension(7), parameter :: DaysOfWeek = (/ &
+    & 'Domingo  ', 'Lunes    ', 'Martes   ', 'Miércoles', 'Jueves   ', &
+    & 'Viernes  ', 'Sabado   '/)
+
+! $Log: sort.f9h,v $
+@

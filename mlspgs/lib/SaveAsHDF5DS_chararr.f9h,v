@@ -1,0 +1,176 @@
+head	2.3;
+access;
+symbols
+	v5-02-NRT-19:2.3
+	v6-00:2.3
+	v5-02-NRT-18:2.3
+	v5-02:2.3
+	v5-01-NRT-17:2.3
+	v5-01-NRT-16:2.3
+	v5-01-NRT-15:2.3
+	v5-01-NRT-14:2.3
+	neuralnetworks-1-0:2.3.0.12
+	cfm-single-freq-0-1:2.3.0.10
+	v5-01:2.3
+	v5-00:2.3
+	v4-23-TA133:2.3.0.8
+	mus-emls-1-70:2.3.0.6
+	rel-1-0-englocks-work:2.3.0.4
+	VUMLS1-00:2.3
+	VPL1-00:2.3
+	V4-22-NRT-08:2.3
+	VAM1-00:2.3
+	V4-21:2.3.0.2
+	V4-13:2.3
+	V4-12:2.3
+	V4-11:2.3
+	V4-10:2.3
+	V3-43:2.2
+	M4-00:2.2
+	V3-41:2.2
+	V3-40-PlusGM57:2.2.0.2
+	V3-33:2.2
+	V3-31:2.2
+	V3-30-NRT-05:2.2
+	cfm-01-00:2.2
+	V3-30:2.2
+	V3-20:2.2
+	V3-10:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.3
+date	2013.08.31.01.24.53;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2009.09.29.23.32.09;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2008.05.09.23.27.18;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.3
+log
+@Replace MLSMessageCalls with trace_begin and trace_end
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!   subroutine SaveAsHDF5DS_chararr* ( locID, name, value, &
+!     & finalShape, fillValue, adding_to )
+!     ! This routine does the initial work of creating a dataset
+!     integer, intent(in) :: LOCID          ! Where to place it (group/file)
+!     character (len=*), intent(in) :: NAME ! Name for this dataset
+!     character (len=*), intent(in) :: VALUE(:,...)     ! The array itself
+!     character (len=*), optional, intent(in) :: FILLVALUE
+!     integer, dimension(size(shape(value))), optional, intent(in) :: FINALSHAPE
+!     logical, optional, intent(in)     :: adding_to
+
+! $Id: SaveAsHDF5DS_chararr.f9h,v 2.2 2009/09/29 23:32:09 pwagner Exp $
+
+    ! Local variables
+    integer :: Rank                     ! Rank of VALUE
+    integer :: Me = -1                  ! String index for trace cacheing
+    integer (HID_T) :: setID            ! ID for dataset
+    integer(kind=hsize_t), dimension(size(shape(value))) :: SHP, MAXDIMS ! Shape
+    integer :: spaceID                  ! ID for dataspace
+    integer :: status                   ! Flag from HDF5
+    integer :: STRINGTYPE               ! Type for string
+
+    ! Executable code
+    rank = size(shp)
+
+    call trace_begin ( me, 'SaveAsHDF5DS_chararr'//digits(rank), cond=.false. )
+    shp = shape(value)
+    maxdims = shp
+    if ( present(finalShape) ) maxdims = finalShape
+    ! Create a data type for this string
+    call h5tcopy_f ( H5T_NATIVE_CHARACTER, stringtype, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to create stringtype for array' // trim(name) )
+    call h5tset_size_f ( stringtype, int(max(len(value), 1), size_t), status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to set size for stringtype ' // trim(name) )
+    ! Create the dataspace
+    call createSpaceSet ( locID, name, maxdims, stringtype, &
+      & spaceID, setID, status, adding_to, cFill=FillValue)
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to create dataset for '//digits(rank)//'D char array ' // trim(name) )
+    ! Write the data
+    call h5dWrite_f ( setID, stringtype, value, &
+      & int ( (/ shp, ones(rank:6) /), hsize_t ), status )
+    call finishSaveDS ( name, status, setID, spaceID, stringType )
+    call trace_end ( cond=.false. )
+!   end subroutine SaveAsHDF5DS_chararr*
+
+! $Log: SaveAsHDF5DS_chararr.f9h,v $
+! Revision 2.2  2009/09/29 23:32:09  pwagner
+! Changes needed by 64-bit build
+!
+! Revision 2.1  2008/05/09 23:27:18  vsnyder
+! Initial commit
+!
+@
+
+
+2.2
+log
+@Changes needed by 64-bit build
+@
+text
+@d22 1
+a22 1
+! $Id: SaveAsHDF5DS_chararr.f9h,v 2.1 2008/05/09 23:27:18 vsnyder Exp $
+d25 4
+a29 1
+    integer (HID_T) :: setID            ! ID for dataset
+a30 1
+    integer(kind=hsize_t), dimension(size(shape(value))) :: SHP, MAXDIMS ! Shape
+a31 1
+    integer :: Rank                     ! Rank of VALUE
+d36 1
+a36 1
+    call MLSMessageCalls( 'push', constantName='SaveAsHDF5DS_chararr'//digits(rank) )
+d56 1
+a56 1
+    call MLSMessageCalls( 'pop' )
+d60 3
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d22 1
+a22 1
+! $Id: $
+d43 1
+a43 1
+    call h5tset_size_f ( stringtype, max(len(value), 1), status )
+d58 4
+a61 1
+! $Log: $
+@
+

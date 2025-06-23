@@ -1,0 +1,232 @@
+head	1.1;
+access;
+symbols
+	cfm-single-freq-0-1:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2021.06.30.14.57.47;	author whdaffer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2021.06.30.14.57.47;	author whdaffer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2021.07.13.15.16.51;	author whdaffer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2021.07.19.20.24.17;	author whdaffer;	state Exp;
+branches;
+next	;
+
+
+desc
+@script to write l2cf and associated .org file
+@
+
+
+1.1
+log
+@file cfm_makel2cf.org was initially added on branch cfm-single-freq-0-1.
+@
+text
+@@
+
+
+1.1.2.1
+log
+@Initial revision
+@
+text
+@a0 143
+
+Notes for the script cfm_makel2cf.py
+* Outstanding issues
+
+  + What does empty=empty mean?
+  + 
+
+* codes used within the code
+
+  + s_ : indicates a 'spec' or 'specification' (.e.g in the l2cf, a
+    line like NAME: fowardModel,... the `fowardModel' is a
+    specification)
+
+  + f_ : indicates a `field'. These are the things that can come after
+    `specifications'
+
+  + 
+  
+* Important routines
+  + lib/init_tables_modeuls.f90
+  + fwdmdl/FowardModelConfig.f90
+  + l2/FowardModelSupport.f90
+  + l2/global_settings.f90
+  + lib/L2PC_m.f90
+
+* Finding bits that go into the FWMDL l2cf declaration.
+
+  The `tree' that can occur when the parser encounters a line like ...
+  
+#+BEGIN_SRC l2cf
+  DECLARATION: forwardmodel, type = ...'
+#+END_SRC
+
+
+  is defined at the code init_tables_module.f90: lines 1494 - 1513
+  [[/users/whdaffer/devel/mlsL1andL2Software/cfmwork/mlspgs/l2/init_tables_module.f90::1494][init_tables_module's definition of forewardModule]]
+  
+
+  
+  #+BEGIN_SRC
+  begin, s+s_forwardModel, & ! Must be AFTER s_vector and s_matrix
+  begin, f+f_allLinesForRadiometer, boolean(), &
+  begin, f+f_allLinesInCatalog, boolean(), &
+  begin, f+f_atmos_der, boolean(), &
+  begin, f+f_atmos_second_der, boolean(), &
+  begin, f+f_binSelectors, field_spec(s_binSelector), &
+  begin, f+f_cloud_der, field_type(t_cloud_der), &
+  begin, f+f_default_spectroscopy, boolean(), &
+  begin, f+f_differentialScan, boolean(), &
+  begin, f+f_do_baseline, boolean(), &
+  begin, f+f_do_conv, boolean(), &
+  begin, f+f_do_freq_avg, boolean(), &
+  begin, f+f_do_1d, boolean(), &
+  begin, f+f_forceSidebandFraction, boolean(), &
+  begin, f+f_frqTol, numeric(phyq_frequency), &
+  begin, f+f_i_saturation, field_type(t_i_saturation),&
+  begin, f+f_ignoreHessian, boolean(), &
+  begin, f+f_incl_cld, boolean(), &
+  begin, f+f_integrationGrid, field_spec(s_vGrid), &
+  begin, f+f_linearSideband, numeric(phyq_dimensionless), &
+  begin, f+f_lineCenter, field_type(t_molecule), &
+  begin, f+f_lineWidth, field_type(t_molecule), &
+  begin, f+f_lineWidth_TDep, field_type(t_molecule), &
+  begin, f+f_lockBins, boolean(), &
+  begin, f+f_lsbLBLMolecules, field_type(t_molecule,empty=empty), &
+  begin, f+f_lsbPFAMolecules, field_type(t_molecule,empty=empty), &
+  begin, f+f_MIFTangent, field_type(t_MIFTangent), &
+  begin, f+f_module, field_spec(s_module), &
+  begin, f+f_moleculeDerivatives, field_type(t_molecule), &
+  begin, f+f_moleculeSecondDerivatives, field_type(t_molecule), &
+  begin, f+f_molecules, field_type(t_molecule,array=.true.), &
+  begin, f+f_nabterms, numeric(phyq_dimensionless), &
+  begin, f+f_nazimuthangles, numeric(phyq_dimensionless), &
+  begin, f+f_ncloudspecies, numeric(phyq_dimensionless), &
+  begin, f+f_nmodelsurfs, numeric(phyq_dimensionless), &
+  begin, f+f_no_dup_mol, boolean(), &
+  begin, f+f_noMagneticField, boolean(), &
+  begin, f+f_nscatteringangles, numeric(phyq_dimensionless), &
+  begin, f+f_ncloudspecies, numeric(phyq_dimensionless), &
+  begin, f+f_nsizebins, numeric(phyq_dimensionless) /) )
+  call make_tree ( (/ &
+  
+  #+ END_SRC
+  
+  Each one of the items start f+f_... is a field that can occur in
+  the forwardModel declaration in the L2CF
+
+    
+  things marked as `boolean' may be given a boolean value (I think
+  they mostly default to FALSE) or switched on with /field
+  (e.g. /do_conv)
+
+  Things with the designation `numeric' take a number, which may have
+  a dimension
+
+  s_binSelector is a user defined type, defined in [[file:///users/whdaffer/devel/mlsL1andL2Software/cfmwork/mlspgs/lib/L2PC_m.f90::121][lib/L2PC_m.f90, around line 121]] It looks like this.
+
+#+BEGIN_SRC fortran90
+  ! This datatype describes a selection rule for l2pc bins.
+  type BinSelector_T
+    integer :: selectorType             ! What quantity type does this apply to
+    integer :: molecule                 ! What molecule does it apply to
+    integer :: nameFragment             ! A possible name fragment
+    logical :: exact                    ! We require an exact numeric match for this selector
+    real(r8), dimension(2) :: heightRange ! The height range for this selector
+    real(r8) :: cost                    ! The cost for that range
+  end type BinSelector_T
+#+END_SRC
+
+  So, when this is encountered the parser, It's expecting to build a
+  tree that looks like this.
+
+#+BEGIN_SRC fortran90
+      begin, s+s_binSelector, &
+             begin, f+f_type, field_type(t_binSelectorType,req=req), &
+             begin, f+f_molecule, field_type(t_molecule), &
+             begin, f+f_nameFragment, string(), &
+             begin, f+f_height, numeric_range(), &
+             begin, f+f_cost, numeric(), &
+             ndp+n_spec_def /) )
+#+END_SRC
+
+  binSelectorType may be any of the following...
+
+#+BEGIN_SRC fortran90
+vmr, temperature, latitude, &
+             fieldStrength, fieldElevation, fieldAzimuth, &
+             nameFragment, sza, TScat
+
+#+END_SRC
+
+
+
+  Things of type 't_molecule' are string which name a molecule and if
+  thye have array=.true. may be an array. Some are marked as
+  empty=empty, which means they can be empty.  Don't know what that
+  means yet.
+
+** `field_type'  
+
+  When something is indicated with `field_type', 
+
+** molecules and molecule like things.
+@
+
+
+1.1.2.2
+log
+@Continuing work
+@
+text
+@a143 14
+* PyQt5 notes
+  [[https://pythonpyqt.com/pyqt-qtextedit/][text edit box with slider]]. Best for molecule= stuff.  
+
+  [[https://www.techwithtim.net/tutorials/pyqt5-tutorial/menubar/][Using QtDesigner]] And continue on for buttons, some events and
+  triggers and containers
+
+  https://www.tutorialspoint.com/pyqt5/pyqt5_major_classes.htm
+
+  For signal name, radiometer, and possibly spectrometer type, use
+  QInputDialog, see
+  https://www.tutorialspoint.com/pyqt5/pyqt5_basic_widgets.htm
+
+
+
+@
+
+
+1.1.2.3
+log
+@continuing work
+@
+text
+@a156 5
+** Converting to python
+
+   see [[file:./ui2py]]
+
+   Basically, it's pyuic5 -x uifile -o pyfile
+@
+
+

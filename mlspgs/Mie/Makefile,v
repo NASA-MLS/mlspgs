@@ -1,0 +1,407 @@
+head	1.6;
+access;
+symbols
+	v5-02-NRT-19:1.6
+	v6-00:1.6
+	v5-02-NRT-18:1.6
+	v5-02:1.6
+	v5-01-NRT-17:1.6
+	v5-01-NRT-16:1.6
+	v5-01-NRT-15:1.6
+	v5-01-NRT-14:1.6
+	neuralnetworks-1-0:1.6.0.12
+	cfm-single-freq-0-1:1.6.0.10
+	v5-01:1.6
+	v5-00:1.6
+	v4-23-TA133:1.6.0.8
+	mus-emls-1-70:1.6.0.6
+	rel-1-0-englocks-work:1.6.0.4
+	VUMLS1-00:1.6
+	VPL1-00:1.6
+	V4-22-NRT-08:1.6
+	VAM1-00:1.6
+	V4-21:1.6.0.2
+	V4-13:1.6
+	V4-12:1.6
+	V4-11:1.6
+	V4-10:1.6
+	V3-43:1.4
+	M4-00:1.6
+	V3-41:1.4
+	V3-40-PlusGM57:1.4.0.2
+	V3-33:1.5
+	V3-31:1.5
+	V3-30-NRT-05:1.5
+	cfm-01-00:1.5
+	V3-30:1.4
+	V3-20:1.4
+	V3-10:1.4;
+locks; strict;
+comment	@# @;
+
+
+1.6
+date	2012.10.11.20.07.51;	author vsnyder;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2010.05.07.00.52.32;	author vsnyder;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2008.05.22.01.56.53;	author vsnyder;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2008.04.19.02.36.40;	author vsnyder;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2008.04.19.01.37.27;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2008.04.19.01.15.26;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.6
+log
+@Make Mie_Tables and Mie_Tables_NoHDF .PHONY targets
+@
+text
+@# commercial use must be negotiated with the Office of Technology Transfer
+# at the California Institute of Technology.
+
+# This software may be subject to U.S. export control laws. By accepting this
+# software, the user agrees to comply with all applicable U.S. export laws and
+# regulations. User has the responsibility to obtain export licenses, or other
+# export authority as may be required before exporting such information to
+# foreign countries or providing access to foreign persons.
+
+# "$Id: Makefile,v 1.5 2010/05/07 00:52:32 vsnyder Exp $"
+
+.PHONY: Mie_Tables Mie_Tables_NoHDF clean tar AllDVI
+
+Mie_Tables:
+	rm -f Write*HDF_m.o writehdf_m.mod
+	make -f Makefile.second $@@
+
+Mie_Tables_NoHDF:
+	rm -f Write*HDF_m.o writehdf_m.mod
+	make -f Makefile.second $@@ NO=No
+
+clean tar AllDVI:
+	make -f Makefile.second $@@
+
+# $Log: Makefile,v $
+# Revision 1.5  2010/05/07 00:52:32  vsnyder
+# New top-level makefile
+#
+@
+
+
+1.5
+log
+@New top-level makefile
+@
+text
+@d10 3
+a12 1
+# "$Id: Makefile,v 1.4 2008/05/22 01:56:53 vsnyder Exp $"
+d25 4
+a28 1
+# $Log: $
+@
+
+
+1.4
+log
+@MLS libraries, for HDF output
+@
+text
+@a0 2
+# Copyright 2005, by the California Institute of Technology. ALL
+# RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+d10 1
+a10 1
+# "$Id: Makefile,v 1.3 2008/04/19 02:36:40 vsnyder Exp $"
+d12 12
+a23 108
+FC=     ifort
+FOPTS=  
+LDOPTS= -Wl,-noinhibit-exec
+MATH77= math77
+PLAT=   IFC.Linux
+
+# Paths
+
+TK=/users/pwagner/apps/test/ifc10
+HDFLIB=  ${TK}/HDF4.2r1a/lib
+HDF5=    ${TK}/hdf5-1.6.5-post5/lib
+HDFEOS=  ${TK}/hdfeos/lib/linux
+HDFEOS5= ${TK}/hdfeos5/lib/linux
+PGSTK=   ${TK}/toolkit5.2.14/lib/linux
+PVM_ROOT=${TK}/pvm3
+
+.SUFFIXES:
+.SUFFIXES: .o .dbg.o .f90 .f .c
+
+vpath %.f $(MATH77)/
+
+%.o: %.f
+	$(FC) -c -o $@@ $(FOPTS) $<
+
+all: Mie_Tables
+
+# amach has a test that is subverted by optimization
+amach.o: $(MATH77)/amach.f
+	$(FC) -c -g $(MATH77)/amach.f
+
+ice_size_distribution.mod Ice_Size_Distribution.o: Ice_Size_Distribution.f90
+	$(FC) -c $(FOPTS) Ice_Size_Distribution.f90 -I $(HOME)/mlspgs/lib/$(PLAT)
+
+mie_efficiencies_m.mod Mie_Efficiencies_m.o: Mie_Efficiencies_m.f90 sphbess.mod
+	$(FC) -c $(FOPTS) Mie_Efficiencies_m.f90 -I $(HOME)/mlspgs/lib/$(PLAT)
+
+Mie_Tables.o: Mie_Tables.f90 ice_size_distribution.mod \
+              mie_efficiencies_m.mod phase_m.mod p1_m.mod
+	$(FC) -c $(FOPTS) Mie_Tables.f90 -I $(HOME)/mlspgs/fwdmdl/$(PLAT) \
+              -I $(HOME)/mlspgs/lib/$(PLAT) -I $(HDF5)
+
+p1_m.mod P1_m.o: P1_m.f90
+	$(FC) -c $(FOPTS) P1_m.f90 -I $(HOME)/mlspgs/lib/$(PLAT)
+
+phase_m.mod Phase_m.o: Phase_m.f90 p1_m.mod
+	$(FC) -c $(FOPTS) Phase_m.f90 -I $(HOME)/mlspgs/lib/$(PLAT)
+
+sphbes.o sphbess.mod: sphbes.f90
+	$(FC) -c $(FOPTS) sphbes.f90 -I $(HOME)/mlspgs/lib/$(PLAT)
+
+Mie_Tables: Mie_Tables.o Mie_Efficiencies_m.o \
+            amach.o dcopy.o \
+            dint1.o dinta.o dintdl.o dintdu.o dintf.o \
+            dintm.o dintma.o  dintns.o dinto.o dintop.o dintsm.o \
+            dmess.o mess.o \
+            Ice_Size_Distribution.o Phase_m.o P1_m.o sphbes.o
+	$(FC) -o Mie_Tables $(LDOPTS) \
+              Mie_Tables.o Mie_Efficiencies_m.o \
+              amach.o dcopy.o \
+              dint1.o dinta.o dintdl.o dintdu.o dintf.o \
+              dintm.o dintma.o  dintns.o dinto.o dintop.o dintsm.o \
+              dmess.o mess.o \
+              $(HOME)/mlspgs/fwdmdl/$(PLAT)/RefractiveIndex.o \
+              Ice_Size_Distribution.o Phase_m.o P1_m.o sphbes.o \
+              -L $(HOME)/mlspgs/lib/$(PLAT) -lmls \
+              -L $(PGSTK) -lPGSTK \
+              -L $(HDFEOS) -lhdfeos \
+              -L $(HDFEOS5) -lhe5_hdfeos \
+              -L $(HDF5) -lhdf5_fortran -lhdf5 \
+              -L $(HDFLIB) -lmfhdf \
+              -ldf -lz -ljpeg -lsz \
+              -lGctp \
+              -L $(PVM_ROOT)/lib/LINUX -lfpvm3 -lgpvm3 -lpvm3
+
+clean:
+	rm -f Mie_Efficiencies_m.o Mie_Tables.o \
+              amach.o dcopy.o \
+              dint1.o dinta.o dintdl.o dintdu.o dintf.o dintm.o \
+              dintma.o dintns.o dinto.o dintop.o dintsm.o dmess.o mess.o \
+              Ice_Size_Distribution.o ice_size_distribution.mod \
+              mie_efficiencies_m.mod Phase_m.o phase_m.mod P1_m.o p1_m.mod \
+              sphbes.o sphbess.mod
+
+dcopy.o: $(MATH77)/dcopy.f
+dint1.o: $(MATH77)/dint1.f
+dinta.o: $(MATH77)/dinta.f
+dintdl.o: $(MATH77)/dintdl.f
+dintdu.o: $(MATH77)/dintdu.f
+dintf.o: $(MATH77)/dintf.f
+dintm.o: $(MATH77)/dintm.f
+dintma.o: $(MATH77)/dintma.f
+dintns.o: $(MATH77)/dintns.f
+dinto.o: $(MATH77)/dinto.f
+dintop.o: $(MATH77)/dintop.f
+dintsm.o: $(MATH77)/dintsm.f
+dmess.o: $(MATH77)/dmess.f
+mess.o: $(MATH77)/mess.f
+
+# $Log: Makefile,v $
+# Revision 1.3  2008/04/19 02:36:40  vsnyder
+# Corrected path for amach
+#
+# Revision 1.2  2008/04/19 01:37:27  vsnyder
+# Removed test harness makes
+#
+# Revision 1.1  2008/04/19 01:15:26  vsnyder
+# Initial commit
+#
+@
+
+
+1.3
+log
+@Corrected path for amach
+@
+text
+@d12 1
+a12 1
+# "$Id: Makefile,v 1.2 2008/04/19 01:37:27 vsnyder Exp $"
+d15 3
+a17 3
+FOPTS= 
+LDOPTS=
+MATH77 = math77
+d20 10
+d53 1
+a53 1
+              -I $(HOME)/mlspgs/lib/$(PLAT)
+d76 1
+d78 9
+a86 4
+              $(HOME)/mlspgs/lib/$(PLAT)/Constants.o \
+              $(HOME)/mlspgs/lib/$(PLAT)/MLSKinds.o \
+              $(HOME)/mlspgs/lib/$(PLAT)/physics.o \
+              $(HOME)/mlspgs/fwdmdl/$(PLAT)/RefractiveIndex.o 
+d113 3
+@
+
+
+1.2
+log
+@Removed test harness makes
+@
+text
+@d12 1
+a12 1
+# "$Id: Makefile,v 1.1 2008/04/19 01:15:26 vsnyder Exp $"
+d23 1
+a23 1
+vpath %.f math77/ $(MATH77)/
+d25 1
+a25 1
+.f.o:
+d31 2
+a32 2
+amach.o: math77/amach.f
+	$(FC) -c -g math77/amach.f
+d73 3
+a75 2
+	rm -f Mie_Efficiencies_m.o Mie_Efficiencies_m.o Mie_Tables.o \
+              amach.o dint1.o dinta.o dintdl.o dintdu.o dintf.o dintm.o \
+d97 3
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d12 1
+a12 1
+# "$Id: $"
+d28 1
+a28 2
+all: Mie_Efficiencies Mie_Least_Squares Mie_Tables \
+     Test_Derivs Test_Ice_Distribution Test_Phase
+a39 7
+Mie_Efficiencies_p.o: Mie_Efficiencies_p.f90 mie_efficiencies_m.mod
+	$(FC) -c $(FOPTS) Mie_Efficiencies_p.f90 -I $(HOME)/mlspgs/fwdmdl/$(PLAT) \
+              -I $(HOME)/mlspgs/lib/$(PLAT)
+
+Mie_Least_Squares.o : Mie_Least_Squares.f90
+	$(FC) -c $(FOPTS) Mie_Least_Squares.f90 -I $(HOME)/mlspgs/lib/$(PLAT)
+
+a53 18
+Mie_Efficiencies: Mie_Efficiencies_p.o Mie_Efficiencies_m.o sphbes.o
+	$(FC) -o Mie_Efficiencies $(LDOPTS) \
+              Mie_Efficiencies_p.o Mie_Efficiencies_m.o \
+              sphbes.o \
+              $(HOME)/mlspgs/lib/$(PLAT)/Constants.o \
+              $(HOME)/mlspgs/lib/$(PLAT)/MLSKinds.o \
+              $(HOME)/mlspgs/lib/$(PLAT)/physics.o \
+              $(HOME)/mlspgs/fwdmdl/$(PLAT)/RefractiveIndex.o 
+
+Mie_Least_Squares: Mie_Least_Squares.o \
+            amach.o daxpy.o dcopy.o dcov2.o ddot.o dhfti.o dhtcc.o dhtgen.o \
+            dnrm2.o dswap.o erfin.o ermor.o ermsg.o ierm1.o ierv1.o
+	$(FC) -o Mie_Least_Squares  Mie_Least_Squares.o \
+              amach.o daxpy.o dcopy.o dcov2.o ddot.o dhfti.o dhtcc.o dhtgen.o \
+              dnrm2.o dswap.o erfin.o ermor.o ermsg.o ierm1.o ierv1.o \
+              $(HOME)/mlspgs/lib/$(PLAT)/Constants.o \
+              $(HOME)/mlspgs/lib/$(PLAT)/MLSKinds.o
+
+a71 38
+Test_Derivs.o: Test_Derivs.f90 ice_size_distribution.mod \
+               mie_efficiencies_m.mod
+	$(FC) -c $(FOPTS) Test_Derivs.f90 -I $(HOME)/mlspgs/lib/$(PLAT)
+
+Test_Derivs: Test_Derivs.o Ice_Size_Distribution.o Mie_Efficiencies_m.o \
+             sphbes.o
+	$(FC) -o Test_Derivs $(LDOPTS) Test_Derivs.o Ice_Size_Distribution.o \
+              Mie_Efficiencies_m.o sphbes.o \
+              $(HOME)/mlspgs/lib/$(PLAT)/Constants.o \
+              $(HOME)/mlspgs/lib/$(PLAT)/MLSKinds.o \
+              $(HOME)/mlspgs/lib/$(PLAT)/physics.o \
+              $(HOME)/mlspgs/fwdmdl/$(PLAT)/RefractiveIndex.o 
+
+Test_Ice_Distribution.o: Test_Ice_Distribution.f90 ice_size_distribution.mod
+	$(FC) -c $(FOPTS) Test_Ice_Distribution.f90 -I $(HOME)/mlspgs/lib/$(PLAT)
+
+Test_Ice_Distribution: Test_Ice_Distribution.o Ice_Size_Distribution.o
+	$(FC) -o Test_Ice_Distribution $(LDOPTS) Test_Ice_Distribution.o \
+              Ice_Size_Distribution.o \
+              $(HOME)/mlspgs/lib/$(PLAT)/Constants.o \
+              $(HOME)/mlspgs/lib/$(PLAT)/MLSKinds.o \
+              $(HOME)/mlspgs/lib/$(PLAT)/physics.o \
+              $(HOME)/mlspgs/fwdmdl/$(PLAT)/RefractiveIndex.o 
+
+Test_Phase.o: Test_Phase.f90 mie_efficiencies_m.mod phase_m.mod p1_m.mod
+	$(FC) -c $(FOPTS) Test_Phase.f90 -I $(HOME)/mlspgs/lib/$(PLAT)
+
+Test_Phase: Test_Phase.o
+	$(FC) -o Test_Phase Test_Phase.o Mie_Efficiencies_m.o Phase_m.o \
+              P1_m.o sphbes.o \
+              amach.o dcopy.o dint1.o dinta.o dintdl.o dintdu.o dintf.o \
+              dintm.o dintma.o dintns.o dinto.o dintop.o dintsm.o \
+              dmess.o mess.o \
+              $(HOME)/mlspgs/lib/$(PLAT)/Constants.o \
+              $(HOME)/mlspgs/lib/$(PLAT)/MLSKinds.o \
+              $(HOME)/mlspgs/lib/$(PLAT)/physics.o \
+              $(HOME)/mlspgs/fwdmdl/$(PLAT)/RefractiveIndex.o 
+
+a73 2
+              Test_Derivs.o Test_Derivs Test_Phase.o Test_Phase \
+              Test_Ice_Distribution.o Test_Ice_Distribution \
+a79 1
+daxpy.o: $(MATH77)/daxpy.f
+a80 5
+dcov2.o: $(MATH77)/dcov2.f
+ddot.o: $(MATH77)/ddot.f
+dhfti.o: $(MATH77)/dhfti.f
+dhtcc.o: $(MATH77)/dhtcc.f
+dhtgen.o: $(MATH77)/dhtgen.f
+a92 7
+dnrm2.o: $(MATH77)/dnrm2.f
+dswap.o: $(MATH77)/dswap.f
+erfin.o: $(MATH77)/erfin.o
+ermor.o: $(MATH77)/ermor.o
+ermsg.o: $(MATH77)/ermsg.o
+ierm1.o: $(MATH77)/ierm1.o
+ierv1.o: $(MATH77)/ierv1.o
+d95 4
+a98 1
+# $Log: $
+@
+

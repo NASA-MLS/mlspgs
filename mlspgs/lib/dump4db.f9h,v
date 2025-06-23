@@ -1,0 +1,339 @@
+head	2.6;
+access;
+symbols
+	v5-02-NRT-19:2.6
+	v6-00:2.6
+	v5-02-NRT-18:2.6
+	v5-02:2.6
+	v5-01-NRT-17:2.6
+	v5-01-NRT-16:2.6
+	v5-01-NRT-15:2.6
+	v5-01-NRT-14:2.6
+	neuralnetworks-1-0:2.6.0.10
+	cfm-single-freq-0-1:2.6.0.8
+	v5-01:2.6
+	v5-00:2.6
+	v4-23-TA133:2.6.0.6
+	mus-emls-1-70:2.6.0.4
+	rel-1-0-englocks-work:2.6.0.2
+	VUMLS1-00:2.6
+	VPL1-00:2.6
+	V4-22-NRT-08:2.5
+	VAM1-00:2.5
+	V4-21:2.5.0.2
+	V4-13:2.5
+	V4-12:2.5
+	V4-11:2.5
+	V4-10:2.5
+	M4-00:2.4
+	V3-33:2.3;
+locks; strict;
+comment	@# @;
+
+
+2.6
+date	2016.07.28.01.42.27;	author vsnyder;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2013.06.19.23.13.44;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2012.06.22.20.25.18;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2011.12.15.01.47.01;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2011.07.26.20.45.21;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2011.07.15.23.16.38;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.6
+log
+@Refactoring dump and diff
+@
+text
+@! Copyright 2011, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id: dump4db.f9h,v 2.5 2013/06/19 23:13:44 pwagner Exp $
+
+! subroutine DUMP_4D_COMPLEX ( ARRAY, NAME, &                 
+!   & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )            
+!   double precision, intent(in) :: ARRAY(:,:,:,:)             
+!   character(len=*), intent(in), optional :: NAME           
+!   double precision, intent(in), optional :: FILLVALUE      
+!   integer, intent(in), optional :: WIDTH                   
+!   character(len=*), intent(in), optional :: FORMAT         
+!   integer, intent(in), optional :: LBOUND                  
+!   character(len=*), intent(in), optional :: options        
+!   integer :: I, J, K, L                                    
+!   integer :: NumZeroRows                                   
+!   double precision :: myFillValue                          
+!   character(len=64) :: myFormat                            
+!   integer :: nUnique                                       
+!   integer, dimension(MAXNUMELEMENTS) :: counts             
+!   double precision, dimension(MAXNUMELEMENTS) :: elements  
+    ! if ( present(options) ) call dumpDumpOptions ( options )
+    if ( any(shape(array) == 0) ) then
+      call empty ( name )
+    else if ( size(array) == 1 ) then
+      call dump ( array(1,:,:,:), name, &
+        & fillValue=fillValue, format=format, options=options )
+    else if ( size(array,1) == 1 ) then
+      if ( dopts(wholeArray)%v ) then
+        call dump ( array(1,:,:,:), name, &
+          & fillValue=fillValue, format=format, options=options, theShape='(1,:,:,:)' )
+      else
+        call dump ( array(1,:,:,:), name, &
+          & fillValue=fillValue, format=format, options=options )
+      endif
+    else if ( size(array,2) == 1 ) then
+      if ( dopts(wholeArray)%v ) then
+        call dump ( array(:,1,:,:), name, &
+          & fillValue=fillValue, format=format, options=options, theShape='(:,1,:,:)' )
+      else
+        call dump ( array(:,1,:,:), name, &
+          & fillValue=fillValue, format=format, options=options )
+      endif
+    else if ( size(array,3) == 1 ) then
+      if ( dopts(wholeArray)%v ) then
+        call dump ( array(:,:,1,:), name, &
+          & fillValue=fillValue, format=format, options=options, theShape='(:,:,1,:)' )
+      else
+        call dump ( array(:,:,1,:), name, &
+          & fillValue=fillValue, format=format, options=options )
+      endif
+    else if ( size(array,4) == 1 ) then
+      if ( dopts(wholeArray)%v ) then
+        call dump ( array(:,:,:,1), name, &
+          & fillValue=fillValue, format=format, options=options, theShape='(:,:,:,1)' )
+      else
+        call dump ( array(:,:,:,1), name, &
+          & fillValue=fillValue, format=format, options=options )
+      endif
+    else
+      myOptions = DEFAULTDUMPOPTIONS
+      if ( present(options) ) myOptions = options
+      if ( index(myoptions, 'W') < 1 ) then
+        call output( '(Sorry--unable to dump whole 4-d arrays yet)', advance='yes' )
+        call output( '(Have you considered slicing with -W option?)', advance='yes' )
+      else
+        indx2BSliced = 4
+        if ( optiondetail( myOptions, 'W' ) /= 'no' ) then
+          call readIntsFromChars( optiondetail( myOptions, 'W' ), indx2BSliced )
+        endif
+        select case ( indx2BSliced )
+        case ( 1 )
+          do iSlice=1, size(array, 1)
+            call output( '(' , advance='no' )
+            call output( iSlice , advance='no' )
+            call output( ',:,:,:)' , advance='no' )
+            call dump ( array(iSlice,:,:,:), name, &
+              & fillValue=fillValue, format=format, options=options )
+          enddo
+        case ( 2 )
+          do iSlice=1, size(array, 2)
+            call output( '(:,' , advance='no' )
+            call output( iSlice , advance='no' )
+            call output( ',:,:)' , advance='no' )
+            call dump ( array(:,iSlice,:,:), name, &
+              & fillValue=fillValue, format=format, options=options )
+          enddo
+        case ( 3 )
+          do iSlice=1, size(array, 3)
+            call output( '(:,:,' , advance='no' )
+            call output( iSlice , advance='no' )
+            call output( ',:)' , advance='no' )
+            call dump ( array(:,:,iSlice,:), name, &
+              & fillValue=fillValue, format=format, options=options )
+          enddo
+        case default ! meaning 4
+          do iSlice=1, size(array, 4)
+            call output( '(:,:,:,' , advance='no' )
+            call output( iSlice , advance='no' )
+            call output( ')' , advance='no' )
+            call dump ( array(:,:,:,iSlice), name, &
+              & fillValue=fillValue, format=format, options=options )
+          enddo
+        end select
+      endif
+   end if
+   call theDumpEnds
+! end subroutine DUMP_4D_DOUBLE
+! $Log: dump4db.f9h,v $
+! Revision 2.5  2013/06/19 23:13:44  pwagner
+! Remove more unused stuff
+!
+! Revision 2.4  2012/06/22 20:25:18  pwagner
+! Specify advance arg because we may now set default to 'yes'
+!
+! Revision 2.3  2011/12/15 01:47:01  pwagner
+! Accepts W[i] option; deletes prolix notice of rank reduction
+!
+! Revision 2.2  2011/07/26 20:45:21  pwagner
+! Clearer, less redundant
+!
+! Revision 2.1  2011/07/15 23:16:38  pwagner
+! First commit
+!
+@
+
+
+2.5
+log
+@Remove more unused stuff
+@
+text
+@d12 1
+a12 1
+! $Id: dump4db.f9h,v 2.4 2012/06/22 20:25:18 pwagner Exp $
+d37 1
+a37 1
+      if ( myWholeArray ) then
+d45 1
+a45 1
+      if ( myWholeArray ) then
+d53 1
+a53 1
+      if ( myWholeArray ) then
+d61 1
+a61 1
+      if ( myWholeArray ) then
+d118 3
+@
+
+
+2.4
+log
+@Specify advance arg because we may now set default to 'yes'
+@
+text
+@d12 1
+a12 1
+! $Id: dump4db.f9h,v 2.3 2011/12/15 01:47:01 pwagner Exp $
+a30 1
+    numZeroRows = 0
+d118 3
+@
+
+
+2.3
+log
+@Accepts W[i] option; deletes prolix notice of rank reduction
+@
+text
+@d12 1
+a12 1
+! $Id: dump4db.f9h,v 2.2 2011/07/26 20:45:21 pwagner Exp $
+d83 3
+a85 3
+            call output( '(' )
+            call output( iSlice )
+            call output( ',:,:,:)' )
+d91 3
+a93 3
+            call output( '(:,' )
+            call output( iSlice )
+            call output( ',:,:)' )
+d99 3
+a101 3
+            call output( '(:,:,' )
+            call output( iSlice )
+            call output( ',:)' )
+d107 3
+a109 3
+            call output( '(:,:,:,' )
+            call output( iSlice )
+            call output( ')' )
+d119 3
+@
+
+
+2.2
+log
+@Clearer, less redundant
+@
+text
+@d12 1
+a12 1
+! $Id: dump4db.f9h,v 2.1 2011/07/15 23:16:38 pwagner Exp $
+d34 1
+a34 2
+    else if ( size(array,1) == 1 ) then
+      if ( myWholeArray ) call output( '1st size is 1: reducing rank to 3', advance='yes' )
+d37 8
+d46 7
+a52 3
+      if ( myWholeArray ) call output( '2nd size is 1: reducing rank to 3', advance='yes' )
+      call dump ( array(:,1,:,:), name, &
+        & fillValue=fillValue, format=format, options=options )
+d54 7
+a60 3
+      if ( myWholeArray ) call output( '3rd size is 1: reducing rank to 3', advance='yes' )
+      call dump ( array(:,:,1,:), name, &
+        & fillValue=fillValue, format=format, options=options )
+d62 7
+a68 3
+      if ( myWholeArray ) call output( '4th size is 1: reducing rank to 3', advance='yes' )
+      call dump ( array(:,:,:,1), name, &
+        & fillValue=fillValue, format=format, options=options )
+d70 45
+a114 1
+      call output( '(Sorry--unable to dump full 4-d arrays yet)', advance='yes' )
+d119 3
+@
+
+
+2.1
+log
+@First commit
+@
+text
+@d12 1
+a12 1
+! $Id: dump4Db.f9h,v 2.1 2011/07/12 00:09:03 pwagner Exp $
+d30 1
+d35 1
+a35 1
+      call output( '1st size is 1: reducing rank to 3', advance='yes' )
+d39 1
+a39 1
+      call output( '2nd size is 1: reducing rank to 3', advance='yes' )
+d43 1
+a43 1
+      call output( '13rd size is 1: reducing rank to 3', advance='yes' )
+d47 1
+a47 1
+      call output( '4th size is 1: reducing rank to 3', advance='yes' )
+d55 4
+a58 1
+! $Log: dump1d.f9h,v $
+@
+

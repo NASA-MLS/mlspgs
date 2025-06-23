@@ -1,0 +1,215 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.14
+	cfm-single-freq-0-1:1.1.0.12
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.10
+	mus-emls-1-70:1.1.0.8
+	rel-1-0-englocks-work:1.1.0.6
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2008.06.11.20.14.49;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\documentclass[11pt]{article}
+\textwidth 6.25in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9.00in
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+%\settowidth{\hW}{\bf wvs-001}
+\settowidth{\hW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    8 March 2000\hfill\parbox[t]{\hW}{{\bf wvs-001}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+%\thispagestyle{empty}
+%{\hfill\bf J3/00-103}
+%\pagenumbering{arabic}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+Subject: \>Observations Concerning Code in the {\tt mlspgs/l2} Directory\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 3pt
+\vspace{-20pt}
+
+\section{General}
+
+I have been looking at codes in the {\tt mlspgs/l2} directory.
+
+I have a few comments concerning them.  Some of the recommendations herein
+may already be in place, and I just haven't learned of them.
+
+The modules generally begin with a {\tt PUBLIC} statement and then a {\tt
+PRIVATE} statement that declares {\tt Id} and {\tt ModuleName} to be
+private (although sometimes {\tt ModuleName} is not present, presumably
+because the MLS error procedure is not referenced).
+
+Several modules contain parameters and variables declared within the
+module specification part, in addition to {\tt Id} and {\tt ModuleName}. 
+Some thought ought to be given to which of these parameters are private.
+
+The MLS standard is that the default accessibility for module entities
+(including procedures) is PRIVATE, and that any PUBLIC entities shall be
+explicitly so declared.
+
+It is difficult to find from where resources are accessed.  It would be
+helpful if {\tt USE} statements were annotated with {\tt ONLY} clauses
+indicating the resources that are accessed from each module.  This change
+could be incorporated gradually.  It would be useful to have {\tt
+EXTERNAL} declarations for external procedures.  These should be within
+the procedures from which they are accessed.  If they are declared in the
+module specification part, they should be private.
+
+The module procedures generally do not begin with a description of their
+functionality.  There ought to be at least a short description, with a
+reference to a document providing a more extensive one if necessary.
+
+The forms {\tt INTEGER*4} and {\tt REAL*4} are used.  These have never
+been part of a Fortran standard.  It would be better to use the parameters
+defined for this purpose in MLSCommon.
+
+Many of the modules are clearly not in a condition to be compiled.  I
+have found it useful during development to keep each module in a
+condition to be compiled, as I add functionality to it.  This helps to
+prevent me from compounding blunders.
+
+\section{The module {\tt write\_meta}}
+
+\subsection{The procedure {\tt julian}}
+
+The module {\tt write\_meta} contains a procedure {\tt julian}.  It would
+seem that such a procedure ought to be in a library somewhere. 
+
+It seems only to return a nonzero value in the case that the
+year is a multiple of 100.  The leap-day calculation appears to be
+incorrect.  It appears to return 29 for centuries not multiples of 400
+years.  This probably doesn't matter, as it is unlikely that this software
+will still be in use 99 years from now.  But that kind of reasoning is
+what brought us the Y2K bug!
+
+The loop that adds up the days in the months preceeding the input month
+could be done by the Fortran 90 {\tt SUM} intrinsic function.  Taken all
+together, {\tt julian} could be simplified, \emph{viz.}
+{\tt\begin{verbatim}
+  INTEGER, SAVE :: monref(11) = (/31,28,31,30,31,30,31,31,30,31,30/)
+  monref(2) = merge( MOD(year,4) /= 0 .or. &
+                     MOD(year,100) == 0 .and. MOD(year,400) /= 0 ), 28, 29 )
+  julian = SUM(monref(:mon-1)) + day
+\end{verbatim}}  
+
+\subsection{The procedure {\tt start\_end}}
+
+The procedure {\tt start\_end} declares {\tt julian} to be external. 
+Therefore, the local module procedure will not be used.  This is probably
+not the desired effect.
+
+The {\tt timee} variable is initialized to {\tt "T23:59:00.000"}. It
+probably ought to be initialized to {\tt "T23:59:59.999"}.  This and the
+{\tt times} variable probably also ought to be parameters, but see an
+alternative suggestion below.
+
+There are several places where characters are involved in arithmetic
+expressions, e.g. {\tt "0"+j1}.  This is not permitted by the standard. 
+What is meant here is probably {\tt char(ichar("0")+j1)}.  It appears
+that the intent is to create a character variable having text that
+represents a number.  Writing to an internal file would be clearer, as
+suggested below.
+
+The procedure will not work for dates later than 1999, because "1" and
+"9" are explicitly put into a character variable later converted to an
+integer.  This appears to be a deficiency in the input -- it appears to
+be of the form {\tt yy/mm/dd} -- but it's difficult to tell because there
+are no comments giving the format of the input.
+
+The functionality of the procedure appears to be to construct, in CCSDS
+format, the earliest and latest times on a specified date, apparently
+given in the form {\tt yy/mm/dd}.  It would be easier and clearer to read
+the date from the {\tt dumpline} argument, and write it to the {\tt
+start\_time} and {\tt end\_time} arguments,
+\emph{viz.}{\tt\begin{verbatim}
+  CHARACTER(LEN=*), PARAMETER :: cTimeFmt = '(i4.4,a,i3.3,a)'
+  READ ( dumpline, '(i2,1x,i2,1x,i2)' ) yeari, moni, dayi ! from "yy/mm/dd"
+  IF ( yeari < 90 ) yeari = yeari + 100                   ! Avoid Y2K bug
+  WRITE ( start_time, cTimeFmt ) & ! in CCSDS format
+    1900+yeari, '-', julian( moni, dayi, 1900+yeari ), "T00:00:00.000"
+  WRITE ( end_time, cTimeFmt ) &   ! in CCSDS format
+    1900+yeari, '-', julian( moni, dayi, 1900+yeari ), "T23:59:59.999"
+\end{verbatim}}
+
+Of course, it is necessary eventually to have the date input with a
+four-digit year, so that the above gets simplified to
+{\tt\begin{verbatim}
+  CHARACTER(LEN=*), PARAMETER :: cTimeFmt = '(i4.4,a,i3.3,a)'
+  READ ( dumpline, '(i4,1x,i2,1x,i2)' ) yeari, moni, dayi ! from "yyyy/mm/dd"
+  WRITE ( start_time, cTimeFmt ) & ! in CCSDS format
+    yeari, '-', julian( moni, dayi, yeari ), "T00:00:00.000"
+  WRITE ( end_time, cTimeFmt ) &   ! in CCSDS format
+    yeari, '-', julian( moni, dayi, yeari ), "T23:59:59.999"
+\end{verbatim}}
+
+\label{lastpage}
+\end{document}
+% $Id: $
+@

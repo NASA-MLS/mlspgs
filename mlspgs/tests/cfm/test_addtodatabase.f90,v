@@ -1,0 +1,276 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.12
+	cfm-single-freq-0-1:1.1.0.10
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.8
+	mus-emls-1-70:1.1.0.6
+	rel-1-0-englocks-work:1.1.0.4
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.2
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	M4-00:1.1
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2010.07.12.20.02.43;	author honghanh;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial import
+@
+text
+@! Copyright 2010, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+program test_addtodatabase
+   use CFM, only: QuantityTemplate_T, MLSFile_T, &
+                  AddQuantityTemplateToDatabase, &
+                  AddFileToDatabase
+
+   implicit none
+
+!---------------------------- RCS Ident Info ------------------------------
+   character (len=*), parameter :: ModuleName= &
+       "$RCSfile: test_addtodatabase.f90,v $"
+   character (len=*), parameter :: IdParm = &
+       "$Id: test_addtodatabase.f90,v 1.0 2010/07/08 21:39:16 honghanh Exp $"
+   character (len=len(idParm)) :: Id = idParm
+!---------------------------------------------------------------------------
+
+   type(QuantityTemplate_T), dimension(:), pointer :: quantities
+   type(MLSFile_T), dimension(:), pointer :: files
+   type(MLSFile_T), target :: f1, f2
+   type(QuantityTemplate_T), target :: q1, q2
+   integer :: i, oldsize, newsize
+   character(len=3) :: answer
+
+   print *, ""
+   print *, "-----------------"
+   print *, "SUCCESS CRITERIA:"
+   print *, "-----------------"
+   print *, "1. Size of database increase by 1 after adding an item."
+   print *, "2. The element at the returned index into the database is the added item."
+   print *, "3. The returned index must be greater than 0 but less than or equal to "
+   print *, "   the size of the database (or the returned index is valid)."
+   print *, "4. Can add to an empty database."
+   print *, "5. Can add to database with existing items."
+   print *, "6. Can add duplicate items."
+
+   print *, ""
+   print *, "*******************************************************************************"
+   print *, ""
+
+   nullify(quantities, files)
+
+   print *, "-----------------------------------"
+   print *, "Test AddQuantityTemplateToDatabase:"
+   print *, "-----------------------------------"
+   q1%name = 1
+   q2%name = 2
+   print *, "1. Add to an empty database:"
+   i = AddQuantityTemplateToDatabase(quantities, q1)
+   if (size(quantities) == 1) then
+      answer="YES"
+   else
+      answer="NO "
+   end if
+   print *, "- Is size of database 1? ", answer
+   if (i == 1) then
+      answer = "YES"
+   else
+      answer = "NO "
+   end if
+   print *, "- Is returned index 1? ", answer
+   if (quantities(1)%name == 1) then
+      answer = "YES"
+   else
+      answer = "NO "
+   end if
+   print *, "- Is element at index 1 the added item? ", answer
+   print *, "2. Add to a database with existing item(s):"
+   oldsize = size(quantities)
+   i = AddQuantityTemplateToDatabase(quantities, q2)
+   newsize = size(quantities)
+   if (newsize == (oldsize + 1)) then
+      answer = "YES"
+   else
+      answer = "NO "
+   end if
+   print *, "- Does size increase by 1? ", answer
+   if (i <= newsize .and. i > 0) then
+      answer = "YES"
+   else
+      answer = "NO "
+   end if
+   print *, "- Is the returned index valid? ", answer
+   if (quantities(i)%name == 2) then
+      answer = "YES"
+   else
+      answer = "NO "
+   end if
+   print *, "- Is element at the returned index the added item? ", answer
+   print *, "3. Add duplicate item:"
+   oldsize = size(quantities)
+   i = AddQuantityTemplateToDatabase(quantities, q2)
+   newsize = size(quantities)
+   if (newsize == (oldsize + 1)) then
+      answer = "YES"
+   else
+      answer = "NO "
+   end if
+   print *, "- Does size increase by 1? ", answer
+   if (i <= newsize .and. i > 0) then
+      answer = "YES"
+   else
+      answer = "NO "
+   end if
+   print *, "- Is the returned index valid? ", answer
+   if (quantities(i)%name == 2) then
+      answer = "YES"
+   else
+      answer = "NO "
+   end if
+   print *, "- Is element at the returned index the added item? ", answer
+   i = 0
+   do newsize = 1, size(quantities)
+      if (quantities(newsize)%name == 2) i = i + 1
+   end do
+   if (i == 2) then
+      answer = "YES"
+   else
+      answer = "NO "
+   end if
+   print *, "- Is the number of duplicated items 2? ", answer
+
+   print *, ""
+   print *, "*******************************************************************************"
+   print *, ""
+
+   print *, "-----------------------"
+   print *, "Test AddFileToDatabase:"
+   print *, "-----------------------"
+   f1%name = "file1"
+   f2%name = "file2"
+   print *, "1. Add to an empty database:"
+   i = AddFileToDatabase(files, f1)
+   if (size(files) == 1) then
+      answer="YES"
+   else
+      answer="NO "
+   end if
+   print *, "- Is size of database 1? ", answer
+   if (i == 1) then
+      answer = "YES"
+   else
+      answer = "NO "
+   end if
+   print *, "- Is returned index 1? ", answer
+   if (files(1)%name == "file1") then
+      answer = "YES"
+   else
+      answer = "NO "
+   end if
+   print *, "- Is element at index 1 the added item? ", answer
+   print *, "2. Add to a database with existing item(s):"
+   oldsize = size(files)
+   i = AddFileToDatabase(files, f2)
+   newsize = size(files)
+   if (newsize == (oldsize + 1)) then
+      answer = "YES"
+   else
+      answer = "NO "
+   end if
+   print *, "- Does size increase by 1? ", answer
+   if (i <= newsize .and. i > 0) then
+      answer = "YES"
+   else
+      answer = "NO "
+   end if
+   print *, "- Is the returned index valid? ", answer
+   if (files(i)%name == "file2") then
+      answer = "YES"
+   else
+      answer = "NO "
+   end if
+   print *, "- Is element at the returned index the added item? ", answer
+   print *, "3. Add duplicate item:"
+   oldsize = size(files)
+   i = AddFileToDatabase(files, f2)
+   newsize = size(files)
+   if (newsize == (oldsize + 1)) then
+      answer = "YES"
+   else
+      answer = "NO "
+   end if
+   print *, "- Does size increase by 1? ", answer
+   if (i <= newsize .and. i > 0) then
+      answer = "YES"
+   else
+      answer = "NO "
+   end if
+   print *, "- Is the returned index valid? ", answer
+   if (files(i)%name == "file2") then
+      answer = "YES"
+   else
+      answer = "NO "
+   end if
+   print *, "- Is element at the returned index the added item? ", answer
+   i = 0
+   do newsize = 1, size(files)
+      if (files(newsize)%name == "file2") i = i + 1
+   end do
+   if (i == 2) then
+      answer = "YES"
+   else
+      answer = "NO "
+   end if
+   print *, "- Is the number of duplicated items 2? ", answer
+
+   print *, ""
+   print *, "*******************************************************************************"
+   print *, ""
+
+   print *, "----------------------------------------------------------------------------"
+   print *, "VERIFICATIONS: The test program ends normally and all the answers are 'YES'."
+   print *, "----------------------------------------------------------------------------"
+   print *, ""
+end program test_addtodatabase
+
+! $Log: test_addtodatabase.f90,v $
+@

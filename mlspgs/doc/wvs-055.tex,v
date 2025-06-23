@@ -1,0 +1,290 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.14
+	cfm-single-freq-0-1:1.1.0.12
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.10
+	mus-emls-1-70:1.1.0.8
+	rel-1-0-englocks-work:1.1.0.6
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2008.06.11.20.14.53;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9in
+
+\newcommand{\docname}{\bf wvs-055}
+\newcommand{\docdate}{21 June 2007}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Nathaniel, Bill, Dave, Paul\\
+Subject: \>Summary of changes made to reduce MLSL2 run time\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-10pt}
+
+Dave asked me to investigate whether using hardware-assist devices based upon
+FPGA or DSP chips might provide a substantial reduction in MLSL2 run time. This
+got me started investigating where MLSL2 spends its time.
+
+Paul gave me an {\tt l2cf} named {\tt nopcf\_v02-21-c01\_2005d028.l2cf}, which
+is representative of our production processing configuration.  Using the
+program as of 3 May 2007, compiled with the Lahey/Fujitsu compiler, execution
+required 42942 seconds on my 3 GHz computer (direct writes were turned off). 
+Compiling with the Intel compiler, version 10.0.023, reduced this to 29178
+seconds, a 32\% reduction in run time.
+
+Even though the program as compiled by the NAG compiler has a substantially
+longer run time, the NAG compiler supports performance profiling using a tool
+called {\tt gprof}; the Lahey/Fujitsu compiler does not support profiling. 
+Using this profiler revealed that the {\tt get\_do\_calc\_indexed} routine in
+the {\tt rad\_tran\_m} module consumed more cycles than any other single
+procedure.  This was completely unexpected; we had expected the Voigt function
+to be the tall pole in the performance tent.  Even after all the improvements
+listed below in other parts of the program, Voigt calculations have risen to
+only 1.6\% of the run time.  This demonstrates that examining the results of
+using a profiler is always a profound surprise.
+
+To calculate performance profiles for the program as compiled by the
+Lahey/Fujitsu or Intel compilers, I began using a performance profiler called
+{\tt oprofile}, which needs no support from the compiler.  Robert Thurstans
+helped me set this up.
+
+As a result of examining results from the profilers, the following changes were
+made to reduce the run time of MLSL2, in the order shown.  In each case, the
+change reduced the run time of what was at that time the most expensive
+component, or one near the most expensive.
+
+\begin{enumerate}
+
+\item The {\tt get\_do\_calc\_indexed} routine in the {\tt rad\_tran\_m} module
+was revised to improve cache locality.  It had been using an array of indices
+to select the values along the instrument's line of sight that are used for GL
+integration.  It now assumes that these values are in consecutive array
+locations, so it uses addition instead of indirection (and therefore fewer
+memory accesses) to get the ones after the first one.  It was also observed
+that having the compiler deal with array sections of a length it ought to know
+is fixed and equal to the degree of the GL formula is slower than writing out
+the unrolled loop explicitly.  Thus there is a source-code dependence on the
+degree of the GL formula, which is not true in any other module.
+
+On some platforms, its dummy arguments were changed from assumed-shape to
+assumed-size arguments.  The reason is that with assumed-size arguments the
+compiler knows the distance between consecutive elements at compile time,
+instead of needing to get this information from the associated actual argument
+at run time.  Unfortunately, the Lahey/Fujitsu compiler notices that the dummy
+argument is expected to be contiguous, but the actual argument might not be
+(because it is itself an assumed-shape dummy argument), so it makes a copy of
+the array (twice if it's an intent(inout) array), thereby increasing the run
+time by substantially more than the performance gains within the procedure. 
+The NAG and Intel compilers check the actual argument at run time, and don't
+make a copy if it's contiguous (which it is).
+
+Since we can't get the best out of the {\tt rad\_tran\_m} module using the same
+source on all platforms, the Fortran preprocessor (similar to the C
+preprocessor) is used to adjust for different compilers.  A similar change was
+made in the Math77 FFT routine {\tt dfft\_m}.
+
+\item After {\tt get\_do\_calc\_indexed}, the most important routines were the
+dot product and the matrix product.  Their contributions were reduced by using
+the Atlas routines.  It was also observed that the Intel compiler implements
+the Fortran intrinsic function {\tt dot\_product} much less efficiently than
+the reference (not even ATLAS) BLAS routine, while the NAG compiler does a much
+better job using the intrinsic function than the BLAS function, so {\tt
+MatrixModule\_0} is also tuned for each processor using the Fortran
+preprocessor.
+
+\item The full forward model computes several quantities related to
+spectroscopy that depend upon temperature but not frequency.  These quantities
+need be computed only once per invocation of the forward model.  They are
+stored as a structure of type {\tt slabs\_struct}.  Previously, each component
+of this structure was an array of the same size as the number of spectral lines
+upon which the forward model is operating.  When the single-line absorption was
+computed, it used one element of each component for each spectral line.  This
+resulted in poor cache locality.  The representation was changed to an array,
+each element of which is a structure of (a revised) type {\tt slabs\_struct}. 
+This results in the several quantities germane to a single spectral line being
+brought together in memory instead of being scattered, resulting in better
+cache locality.
+
+The revised type {\tt slabs\_struct} has components of two new types, {\tt
+slabs\_state} and {\tt slabs\_\-deriv}, each component an array of the same
+extent as the number of spectral lines.  These components were changed from
+pointers to allocatable arrays.  The Fortran semantics of pointers are such
+that the compiler doesn't know the distance between consecutive elements; it
+generates code to get the spacing from the pointer at run time.  On the other
+hand, allocatable arrays are known to the compiler to be contiguous, so
+calculating array element addresses is more efficient.
+
+\item After the above changes, MLSL2 was spending nearly 15\% of its time in
+{\tt drad\_tran\_df} executing a statement {\tt d\_delta\_df = 0.0}, where {\tt
+d\_delta\_df} is a two-dimensional array of modest size.  It goes on to replace
+a very small fraction of the elements of that array by nonzero values.  This
+array is a dummy argument; the associated actual argument is declared in the
+full forward model.  Two additional arrays were added to the full forward
+model, to keep track of the locations of nonzeros in {\tt d\_delta\_df}, which
+is filled with zeros once in the full forward model, and the additional arrays
+are initialized to indicate it has no nonzeros.  Then when {\tt drad\_tran\_df}
+is called, the first thing it does is replace nonzeros in {\tt d\_delta\_df}
+(instead of the entire array) with zeros. Then it adjusts the
+nonzero-indicating arrays to indicate there are no nonzeros.  As it calculates
+nonzero elements of this array, it notes where they are.  Changes up to this
+point, including this change (which amounting to less than ten lines of
+code overall) reduced run time to 24243 seconds, a reduction of 16.9\% from
+29178 seconds, or 43.5\% from the status quo ante.
+
+The {\tt drad\_tran\_dt} procedure has a similarly used variable {\tt
+d\_delta\_dt}, but {\tt drad\_tran\_dt} altogether only consumes 1.9\% of the
+program's run time, so changing the representation of this data structure
+cannot give a large improvement.
+
+\item The Fourier analyses used as part of the field of view convolution in the
+{\tt FOV\_Convolve\_m} module operate on a symmetric array.  The result is
+therefore purely real.  The real part of the result can be computed more
+efficiently by using a cosine transform instead of a full Fourier transform. 
+The Fourier coefficients of the measured antenna properties are not purely
+real, so the synthesis step of the convolution remains a full Fourier
+transform.  The improvement here was not as dramatic, yielding only 1.8\%
+reduction in run time.
+
+\item The profiler now revealed that MLSL2 was spending 9.6\% of its time in a
+routine named {\tt get\_eta\_sparse\_2d\_nz}.  Of the 71 million calls to this
+routine in a run using the above-cited {\tt l2cf}, 70 million occurred at one
+line in a routine named {\tt comp\_eta\_docalc\_no\_frq}, which in turn
+consumed 4.5\% of the run time using the {\tt eta} array calculated by {\tt
+get\_eta\_sparse\_2d\_nz}.  The representation of {\tt eta} was changed
+similarly to the change of representation for {\tt d\_delta\_df} above,
+reducing the run time to 21020 seconds, a further reduction of 13.3\% from
+24243 seconds, or 51\% from the status quo ante.
+
+\item After the above changes, {\tt drad\_tran\_df} is again the most prolific
+cycle consumer (10.1\%), but the profiler reports it using 19\% of its time at
+a {\tt call} statement, and another 12\% evaluating the radiative transfer
+integral.  It's an unresolved mystery what's happening at the {\tt call}
+statement (I've asked Intel to investigate).  There might be an opportunity to
+improve the evaluation of the radiative transfer integral, but it would require
+extensive modifications to the representations of many of the forward model's
+data structures; the payoff of at most 1.2\% of the run time is probably not
+worth the effort.
+
+At this time, the second most prolific consumer (8.7\%) of cycles was one line
+in a routine named {\tt dt\_scr\_dt}, that line consuming 89\% of that
+routine's run time.  This line is again related to computations involving an
+{\tt eta} matrix.  When the representation of the affected {\tt eta} was
+changed as earlier described, the run time was reduced to 19691 seconds, a
+further reduction of 6.3\%.
+
+\end{enumerate}
+
+Overall, switching from the Lahey/Fujitsu compiler to the Intel compiler, and
+subsequent program changes, have reduced run time from 42942 seconds to 19691
+seconds, a reduction of 54\%.
+
+Profiler results suggest we have reached or are near the point of diminishing
+returns.  An additional week of labor is unlikely to produce more than another
+5\% reduction in run time, most of which might (or might not) be realized by
+using FFTW instead of the Math77 FFT, which now consumes 8.1\% of the run time.
+
+After the above software changes, the dot product and the Fourier transform are
+now the second and third most prolific cycle consumers, together consuming
+17.4\% of the run time.  This then brings us back to the question Dave
+originally posed:  Can we reduce run time significantly using FPGA or DSP-based
+hardware assists?  The dot product and Fourier transform are two calculations
+that are particularly well suited to these kinds of accelerators.  Vendors of
+these devices make dramatic claims.  If their claims of 1000-fold acceleration
+of dot product and Fourier transform hold up, we might reduce the run time by
+most of that 17.4\%, to around 16300 seconds, a reduction of roughly 60\% from
+the status quo ante.
+
+It seems unlikely that the dot product can be reduced by much, since its
+operation is dominated by memory access.  Our Cosine transforms operate on 2049
+real values, while our full Fourier transforms operate on 2048 complex values. 
+Since both Cosine and Fourier transforms do O($n \log n$) operations on $n$
+values, a hardware accelerator might reduce their contribution by a factor of
+11, from 8.1\% to 0.74\% (assuming the entire input and output arrays can be
+held in the accelerator's private memory), reducing run time to around 18250
+seconds, a reduction of 57.5\% from the status quo ante.  There is, of course,
+the possibility that a clever compiler, such as IBM XLF for their Cell-BE
+architecture, might find other opportunities to use hardware accelerators. 
+This may be worth investigating, but it would be unwise to jump in with both
+feet.
+
+
+\label{lastpage}
+\end{document}
+% $Id: wvs-055r0.tex,v 1.1 2008/06/11 20:14:53 vsnyder Exp $
+@

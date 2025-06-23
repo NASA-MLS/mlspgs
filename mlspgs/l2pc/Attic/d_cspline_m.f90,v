@@ -1,0 +1,68 @@
+head	1.2;
+access;
+symbols
+	V0_1:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2001.01.31.01.14.50;	author zvi;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2000.06.21.21.56.10;	author zvi;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@No longer needed
+@
+text
+@module D_CSPLINE_M
+  use D_HUNT_M, only: HUNT
+  use D_PCSPL_M, only: PCSPL
+  implicit NONE
+  private
+  public D_CSPLINE, CSPLINE
+  interface CSPLINE; module procedure D_CSPLINE; end interface
+!---------------------------- RCS Ident Info -------------------------------
+  CHARACTER (LEN=256) :: Id = &
+       "$Id: d_cspline_m.f90,v 1.1 2000/06/21 21:56:10 zvi Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile: d_cspline_m.f90,v $"
+!---------------------------------------------------------------------------
+  integer, private, parameter :: RK = kind(0.0d0)
+contains
+!
+  subroutine D_CSPLINE ( XIN, XOUT, YIN, YOUT, NIN, NOUT )
+    include 'cspline.f9h'
+  end subroutine D_CSPLINE
+end module D_CSPLINE_M
+! $Log: d_cspline_m.f90,v $
+! Revision 1.1  2000/06/21 21:56:10  zvi
+! First version D.P.
+!
+! Revision 1.1  2000/05/04 18:12:04  vsnyder
+! Initial conversion to Fortran 90
+!
+@
+
+
+1.1
+log
+@First version D.P.
+@
+text
+@d10 1
+a10 1
+       "$Id: d_cspline_m.f90,v 1.1 2000/05/04 18:12:04 vsnyder Exp $"
+d21 3
+@
+

@@ -1,0 +1,165 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.14
+	cfm-single-freq-0-1:1.2.0.12
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.10
+	mus-emls-1-70:1.2.0.8
+	rel-1-0-englocks-work:1.2.0.6
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.2
+	V4-21:1.2.0.4
+	V4-13:1.2
+	V4-12:1.2
+	V4-11:1.2
+	V4-10:1.2
+	V3-43:1.2
+	M4-00:1.2
+	V3-41:1.2
+	V3-40-PlusGM57:1.2.0.2
+	V2-24-NRT-04:1.2
+	V3-33:1.2
+	V2-24:1.2
+	V3-31:1.2
+	V3-30-NRT-05:1.2
+	cfm-01-00:1.2
+	V3-30:1.2
+	V3-20:1.2
+	V3-10:1.2
+	V2-23-NRT-02:1.2
+	V2-23:1.2
+	V2-22-NRT-01:1.2
+	V2-22:1.2
+	V2-21:1.2
+	V2-20:1.2
+	V2-11:1.2
+	V2-10:1.2
+	V2-00:1.2
+	V1-51:1.2
+	V1-50:1.2
+	V1-45:1.2
+	V1-44:1.2
+	V1-43:1.2
+	V1-42:1.2
+	V1-41:1.2
+	V1-32:1.2
+	V1-40:1.2
+	V1-31:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2003.10.23.22.23.17;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2003.09.06.01.03.20;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Changed fmt to (7x, 1pg8.2)
+@
+text
+@!=================================
+PROGRAM outputtest ! tests subroutine
+!=================================
+
+   USE MLSCommon , ONLY: r4, r8
+   USE output_m , ONLY: blanks, output
+
+   IMPLICIT NONE
+
+!------------------- RCS Ident Info -----------------------
+   CHARACTER(LEN=130) :: Id = &                                                    
+   "$Id: outputTest.f90,v 1.1 2003/09/06 01:03:20 pwagner Exp $"
+   CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile: outputTest.f90,v $"
+!----------------------------------------------------------
+
+! Brief description of program
+! This program tests the output subroutine.
+
+! To use this, copy it into
+! mlspgs/tests/lib
+! then enter "make depends" followed by "make"
+
+
+! Then run it
+
+! Variables
+
+integer :: i
+real(r4) :: t1, t2
+real(r8) :: d1, d2
+character(len=*), parameter :: fmt = '(7x, 1pg8.2)'
+! character(len=*), parameter :: fmt = '(g8.2)'
+! character(len=*), parameter :: fmt = '(1pe9.2)'
+
+do i=1, 99
+  t1 = (i-1)*.01
+  t2 = t1 + 1.
+  call output(i, format='(i3)')
+  call output(t1, format=fmt, advance='no')
+  call output(t2, format=fmt, advance='no')
+  call blanks(2)
+  call output(i+1, format='(i3)', advance='yes')
+enddo
+
+do i=1, 99
+  d1 = (i-1)*.01
+  d2 = d1 + 1.
+  call output(i, format='(i3)')
+  call output(d1, format=fmt, advance='no')
+  call output(d2, format=fmt, advance='no')
+  call blanks(2)
+  call output(i+1, format='(i3)', advance='yes')
+enddo
+
+!==================
+END PROGRAM outputtest
+!==================
+
+! $Log: outputTest.f90,v $
+! Revision 1.1  2003/09/06 01:03:20  pwagner
+! First commit
+!
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d12 2
+a13 2
+   "$Id: hhmmss_value_text.f90,v 1.1 2002/02/19 23:28:19 pwagner Exp $"
+   CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile: hhmmss_value_text.f90,v $"
+d31 2
+a32 1
+character(len=*), parameter :: fmt = '(g8.2)'
+d59 4
+a62 1
+! $Log: hhmmss_value_text.f90,v $
+@
+

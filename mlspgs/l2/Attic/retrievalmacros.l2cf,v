@@ -1,0 +1,98 @@
+head	1.2;
+access;
+symbols
+	V1-04:1.1
+	V1-03:1.1
+	V1-02:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2002.06.06.18.13.42;	author bill;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2002.04.15.11.38.01;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Removed
+@
+text
+@; $Id: retrievalmacros.l2cf,v 1.1 2002/04/15 11:38:01 livesey Exp $
+
+; This l2cf fragment defines macros we're going to use a lot
+; in doing phased retrievals
+
+!define(setupPhase,{!dnl
+begin Fill
+  x$1: Vector, template=x$1Template
+  a$1: Vector, template=x$1Template
+  t$1: Vector, template=x$1Template
+  l$1: Vector, template=x$1Template
+  sdIn$1: Vector, template=x$1Template
+  sdOut$1: Vector, template=x$1Template
+  
+  yClean$1: Vector, template=y$1Template
+  yNoise$1: Vector, template=y$1Template
+  y$1: Vector, template=y$1Template
+  f$1: Vector, template=y$1Template
+
+  Transfer, source=state, destination=x$1
+  Transfer, source=apriori, destination=a$1
+  Transfer, source=aprioriPrecision, destination=sdIn$1
+  Transfer, source=length, destination=l$1
+
+  myCovariance$1: matrix, columns=a$1, type=spd
+  FillCovariance, matrix=myCovariance$1, diagonal=sdIn$1, /invert, lengthScale=l$1
+end Fill})
+
+!define(completePhase,{!dnl
+begin Fill
+   Transfer, source=x$1, destination=state
+   Transfer, source=sdOut$1, destination=outputPrecision
+   Destroy, matrix=myCovariance$1
+end Fill})
+
+!define(readRadiances,{!dnl
+  Fill, quantity=yNoise$1.band$2, method=l1b, /isPrecision
+  Fill, quantity=y$1.band$2, method=l1b, precision=yNoise$1.band$2})
+
+!define(readCleanRadiances,{!dnl
+  Fill, quantity=yNoise$1.band$2, method=l1b, /isPrecision
+  Fill, quantity=yClean$1.band$2, method=l1b, precision=yNoise$1.band$2})
+
+!define(addNoise,{!dnl
+  Fill, quantity=y$1.band$2, method=addNoise, sourceQuantity=yClean$1.band$2, $
+    noise=yNoise$1.band$2, seed=$3})
+
+!define(doNoise,{!dnl
+Fill, quantity=yNoise$1.band$2, radianceQuantity=yClean$1.band$2, $
+  systemTemperature=!systemp$2, integrationTime=0.16 s, $
+  method=estimatedNoise
+!addNoise($1,$2,$3)})
+
+
+ 
+@
+
+
+1.1
+log
+@First version
+@
+text
+@d1 1
+a1 1
+; $Id$
+@
+

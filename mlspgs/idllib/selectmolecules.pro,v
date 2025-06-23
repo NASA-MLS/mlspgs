@@ -1,0 +1,210 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.14
+	cfm-single-freq-0-1:1.2.0.12
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.10
+	mus-emls-1-70:1.2.0.8
+	rel-1-0-englocks-work:1.2.0.6
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.2
+	V4-21:1.2.0.4
+	V4-13:1.2
+	V4-12:1.2
+	V4-11:1.2
+	V4-10:1.2
+	V3-43:1.2
+	M4-00:1.2
+	V3-41:1.2
+	V3-40-PlusGM57:1.2.0.2
+	V2-24-NRT-04:1.1
+	V3-33:1.2
+	V2-24:1.1
+	V3-31:1.2
+	V3-30-NRT-05:1.2
+	cfm-01-00:1.2
+	V3-30:1.2
+	V3-20:1.2
+	V3-10:1.2
+	V2-23-NRT-02:1.1
+	V2-23:1.1
+	V2-22-NRT-01:1.1
+	V2-22:1.1
+	V2-21:1.1
+	V2-20:1.1
+	V2-11:1.1
+	V2-10:1.1
+	V2-00:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2008.10.03.16.25.06;	author livesey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2006.04.27.23.03.20;	author lambert;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Added EXTINCTIONV2
+@
+text
+@; $Id: selectmolecules.pro,v 1.1 2006/04/27 23:03:20 lambert Exp $
+
+FUNCTION selectMolecules, thresh, data = data, molName=molName, lineName=lineName, moleculeFile=moleculeFile, fastRead=fastRead
+
+
+;; for standalone function with default database lists invoke as:
+;; moleculeList=selectmolecules(thresh)
+
+;; if the data structure is already available then invoke as:
+;; moleculeList=selectmolecules(thresh, data=data)
+
+IF N_ELEMENTS(data) EQ 0 THEN $
+  BEGIN
+    if n_elements(molName) eq 0 then $
+      molName = getenv('HOME') + '/mlspgs/tables/mol_data_table.tex'
+    if n_elements(lineName) eq 0 then $
+      lineName = getenv('HOME') + '/mlspgs/tables/line_data_table.tex'
+    
+    if keyword_set ( fastRead ) then begin
+        lineName = getenv('HOME') +  '/mlspgs/tables/line_data_table.sav'
+        restore, lineName
+        data = sps_data
+        lineID = 'Restored from saveset'
+        readID = lineID
+        molID = lineID
+    endif else begin
+        ;; Call Bills code to read the files
+        Read_Spect_Dbase, molName, lineName, '', data,  $
+          molID=molID, lineID=lineID, readID=readID
+    endelse
+ENDIF
+
+if n_elements(moleculeFile) eq 0 then $
+  moleculeFile = getenv('HOME') + '/mlspgs/tables/molecule_data_base.txt'
+
+read_molecule_file,moleculeFile,table_of_molecules,spectags,spectls, $
+  hitran,hitran_iso,hitran_frac,mol_mr,dflt_wc,dflt_nc
+
+  idx2keep = [0]
+  mol2keep = ['']
+  alwaysKeepMatch = ['N$_{2}$', 'O$_{2}$', 'EXTINCTION','EXTINCTIONV2']
+  alwaysKeepPos = ['H$_{2}$O-r', 'O$_{3}$-r', 'CLOUD\_']
+
+  t = 240.0
+  del_s = 500.0
+  w_c = 3.0
+  n_c = 0.7
+  qtp = ALOG10([300.0,225.0,150.0])
+ 
+  FOR i = 0, N_ELEMENTS(data) - 1 DO $
+    BEGIN
+      mol_ind = WHERE(table_of_molecules EQ data(i).name,no)
+
+      IF TOTAL(STRMATCH(alwaysKeepMatch, data(i).name)) NE 0 $
+        OR TOTAL(STRMATCH(alwaysKeepPos, (STRSPLIT(data(i).name,'\_',/REGEX,/EXTRACT))[0]+'\_')) NE 0 $
+                          OR TOTAL(STRMATCH(alwaysKeepPos, (STRSPLIT(data(i).name,'-r',/REGEX,/EXTRACT))[0]+'-r')) NE 0 THEN $
+
+        BEGIN
+          mol2keep = [mol2keep, data(i).name]
+          idx2keep = [idx2keep, i]
+      END ELSE IF (no EQ 1 AND data(i).no_lines GT 0.0) THEN $
+        BEGIN
+          qlg = ALOG10(data(i).q)
+          lt_grid = ALOG10(t)
+          qrat = (qlg(1)-qlg(0)) * (lt_grid-qtp(0)) * (lt_grid GT qtp(1)) $
+            / (qtp(1)-qtp(0)) + (qlg(1)-qlg(0) + (qlg(2)-qlg(1)) $
+                                 * (lt_grid-qtp(1))/(qtp(2)-qtp(1))) * (lt_grid LE qtp(1))
+;; a line center strength
+          inds = INDGEN(data(i).no_lines)
+          
+          zip = WHERE(data(i).wc(inds) EQ 0.0,nozip)
+          IF nozip GT 0 THEN BEGIN
+              data(i).wc(zip) = w_c
+              MESSAGE,/CONTINUE,'Overwriting zero WC data with default for:'+ data(i).name
+          ENDIF
+          
+          zip = WHERE(data(i).nc(inds) EQ 0.0,nozip)
+          IF nozip GT 0 THEN BEGIN
+              data(i).nc(zip) = n_c 
+              MESSAGE,/CONTINUE,'Overwriting zero NC data with default for:'+ data(i).name
+          ENDIF
+          
+          beta = 2.30549e09 * (t/300.0)^data(i).nc(inds) $
+            * 10.0^(data(i).ist(inds) - qrat $
+                    + data(i).gse(inds)*(1.0/300.0-1.0/t)/1.600386) $
+            * (1.0 - EXP(-data(i).frq(inds)/(20836.7*t))) $
+            / ((1.0 - EXP(-data(i).frq(inds)/(20836.7*300.0))) * t $
+               * data(i).wc(inds))
+
+          bt = t * scalarize(mol_mr(mol_ind)) * beta * del_s
+          
+          IF MAX(bt) GE thresh THEN $ 
+            BEGIN
+              mol2keep = [mol2keep, data(i).name]
+              idx2keep = [idx2keep, i]
+              msg =  STRING('Accepted:', i, data(i).name, 'Max.bt =', MAX(bt), FORMAT='(A15,1X,I5,1X,A30,2X,A,1X,G10.4)')
+              MESSAGE,/CONTINUE, msg
+          ENDIF ELSE $
+            BEGIN
+              msg =  STRING('Rejected>>>:', i, data(i).name, 'Max.bt =', MAX(bt), FORMAT='(A15,1X,I5,1X,A30,2X,A,1X,G10.4)')
+              MESSAGE,/CONTINUE, msg
+          ENDELSE
+          
+      ENDIF ELSE $
+        BEGIN
+          msg =  STRING('Skipping>>>>>>:', i, data(i).name, 'No. of lines =', data(i).no_lines , FORMAT='(A15,1X,I5,1X,A30,2X,A,1X,I5)')          
+          MESSAGE,/CONTINUE, msg
+      ENDELSE
+  ENDFOR
+  idx2keep = idx2keep[1:*]
+  mol2keep = mol2keep[1:*]
+;; only return the species above the thresold
+  RETURN, data[idx2keep]
+END
+
+;$Log: selectmolecules.pro,v $
+;Revision 1.1  2006/04/27 23:03:20  lambert
+;called by createspectroscopyl2cf.pro
+;
+@
+
+
+1.1
+log
+@called by createspectroscopyl2cf.pro
+@
+text
+@d1 1
+a1 1
+; $Id$
+d41 1
+a41 1
+  alwaysKeepMatch = ['N$_{2}$', 'O$_{2}$', 'EXTINCTION']
+d116 4
+a119 1
+;$Log$@
+

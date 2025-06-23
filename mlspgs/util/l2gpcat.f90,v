@@ -1,0 +1,2024 @@
+head	1.27;
+access;
+symbols
+	v5-02-NRT-19:1.27
+	v6-00:1.27
+	v5-02-NRT-18:1.27
+	v5-02:1.27
+	v5-01-NRT-17:1.27
+	v5-01-NRT-16:1.27
+	v5-01-NRT-15:1.27
+	v5-01-NRT-14:1.27
+	neuralnetworks-1-0:1.27.0.10
+	cfm-single-freq-0-1:1.27.0.8
+	v5-01:1.27
+	v5-00:1.27
+	v4-23-TA133:1.27.0.6
+	mus-emls-1-70:1.27.0.4
+	rel-1-0-englocks-work:1.27.0.2
+	VUMLS1-00:1.24
+	VPL1-00:1.24
+	V4-22-NRT-08:1.21
+	VAM1-00:1.20
+	V4-21:1.19.0.2
+	V4-13:1.19
+	V4-12:1.17
+	V4-11:1.17
+	V4-10:1.17
+	V3-43:1.14
+	M4-00:1.14
+	V3-41:1.14
+	V3-40-PlusGM57:1.14.0.2
+	V2-24-NRT-04:1.10
+	V3-33:1.14
+	V2-24:1.10
+	V3-31:1.14
+	V3-30-NRT-05:1.14
+	cfm-01-00:1.14
+	V3-30:1.14
+	V3-20:1.14
+	V3-10:1.13
+	V2-23-NRT-02:1.10
+	V2-23:1.10
+	V2-22-NRT-01:1.10
+	V2-22:1.10
+	V2-21:1.10
+	V2-20:1.10
+	V2-11:1.10
+	V2-10:1.10
+	V2-00:1.10
+	V1-51:1.4
+	V1-50:1.4
+	V1-45:1.3
+	V1-44:1.3
+	V1-43:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.27
+date	2017.10.12.20.20.35;	author pwagner;	state Exp;
+branches;
+next	1.26;
+
+1.26
+date	2017.08.25.00.20.21;	author pwagner;	state Exp;
+branches;
+next	1.25;
+
+1.25
+date	2017.05.17.22.21.59;	author pwagner;	state Exp;
+branches;
+next	1.24;
+
+1.24
+date	2016.08.25.22.52.52;	author pwagner;	state Exp;
+branches;
+next	1.23;
+
+1.23
+date	2016.06.13.23.27.46;	author pwagner;	state Exp;
+branches;
+next	1.22;
+
+1.22
+date	2016.06.10.16.13.18;	author pwagner;	state Exp;
+branches;
+next	1.21;
+
+1.21
+date	2016.02.11.19.53.20;	author pwagner;	state Exp;
+branches;
+next	1.20;
+
+1.20
+date	2015.08.05.20.37.03;	author pwagner;	state Exp;
+branches;
+next	1.19;
+
+1.19
+date	2014.09.12.22.22.14;	author pwagner;	state Exp;
+branches;
+next	1.18;
+
+1.18
+date	2014.09.12.00.04.08;	author pwagner;	state Exp;
+branches;
+next	1.17;
+
+1.17
+date	2014.01.09.00.31.26;	author pwagner;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2013.08.23.02.51.47;	author vsnyder;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2013.05.30.20.41.09;	author pwagner;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2009.10.27.21.10.03;	author pwagner;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2008.10.13.23.32.41;	author pwagner;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2008.09.25.23.13.20;	author pwagner;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2008.02.28.01.36.24;	author pwagner;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2006.05.19.22.47.40;	author pwagner;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2006.05.19.20.55.36;	author pwagner;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2006.04.06.23.04.21;	author pwagner;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2005.10.29.00.13.56;	author pwagner;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2005.09.23.21.01.13;	author pwagner;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2005.06.22.19.27.33;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2004.12.06.19.13.12;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2004.08.07.00.15.55;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2004.05.06.21.50.48;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.04.30.18.54.22;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.27
+log
+@Correct help mesg: if no filenames supplied, will quit
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=================================
+program l2gpcat ! catenates split L2GPData files, e.g. dgg
+!=================================
+
+   use Dump_0, only: Dump
+   use HDF, only: DFACC_Create, DFACC_RDonly, DFACC_RdWr
+   use HDF5, only: H5FIs_HDF5_F
+   use HighOutput, only: OutputNamedValue
+   use Intrinsic, only: L_Swath
+   use Io_Stuff, only: Read_TextFile
+   use L2GPData, only: L2GPData_T, L2GPNameLen, MaxSwathNamesBufSize, RGP, &
+     & AppendL2GPData, CpHE5GlobalAttrs, CpL2GPData, DestroyL2GPContents, &
+     & ExtractL2GPRecord, ReadL2GPData, WriteL2GPData
+   use Machine, only: Hp, Getarg
+   use MLSCommon, only: MLSFile_T, L2MetaData_T
+   use MLSFiles, only: MLS_Exists, MLS_CloseFile, MLS_OpenFile, &
+     & HDFVersion_4, HDFVersion_5, MLS_InqSwath, InitializeMLSFile
+   use MLSHDF5, only: MLS_H5Open, MLS_H5Close
+   use MLSFillValues, only: Monotonize
+   use MLSFinds, only: FindFirst, FindLast
+   use MLSStringLists, only: CatLists, GetStringElement, &
+     & Intersection, NumStringElements, RemoveElemFromList, &
+     & StringElement, StringElementNum
+   use MLSStrings, only: Asciify
+   use Output_M, only: Output
+   use PrintIt_M, only: Set_Config
+   use Time_M, only: Time_Now, Time_Config
+   
+   implicit none
+
+!---------------------------- RCS Ident Info ------------------------------
+  character (len=*), parameter :: ModuleName= &
+       "$RCSfile: l2gpcat.f90,v $"
+  character (len=*), parameter :: IdParm = &
+       "$Id: l2gpcat.f90,v 1.26 2017/08/25 00:20:21 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+!---------------------------------------------------------------------------
+
+! Brief description of program
+! Catenate L2GPData from list of input files to a single output file
+! May thus "unsplit" the dgg files
+
+! To use this, copy it into
+! mlspgs/tests/lib
+! then enter "make depends" followed by "make"
+
+
+! Then run it
+! LF95.Linux/test [options] [input files] -o [output file]
+  type options_T
+    logical     ::           timing = .false.           ! Show detailed timings
+    logical     ::           verbose = .false.          ! print extra
+    character(len=255) ::    glAttrFile= ''             ! file with global attrs
+    character(len=255) ::    inputFile= ''              ! file with list of inputs       
+    character(len=255) ::    outputFile= 'default.he5'  ! output filename       
+    logical ::               append   = .false.         ! append swaths with same name
+    logical ::               catenate = .false.         ! catenate swaths with same name
+    logical ::               columnsOnly = .false.
+    logical ::               ignoreFills = .false.      ! catenate swaths with same name
+    logical ::               noDupSwaths = .false.      ! cp 1st, ignore rest   
+    logical ::               monotonize = .true.        ! apply to geod. ang.
+    character(len=3) ::      convert= ' '               ! e.g., '425'
+    character(len=255) ::    swathNames = ' '           ! which swaths to copy
+    character(len=255) ::    rename = ' '               ! how to rename them
+    integer            ::    overlap = 0                ! max profiles in overlap
+    integer, dimension(2) :: freqs = 0                  ! Keep range of freqs   
+    integer, dimension(2) :: levels = 0                 ! Keep range of levels   
+    integer, dimension(2) :: nProfiles = 0              ! Discard if nProfiles outside range
+    integer, dimension(2) :: profiles = 0               ! Keep range of profiles   
+  end type options_T
+  
+  type ( options_T ) :: options
+
+  integer, parameter ::          MAXFILES = 750
+  logical, parameter ::          countEmpty = .true.
+  logical     :: createdYet
+  logical, parameter ::          DEEBUG = .false.
+  integer                                 :: file1Handle
+  integer                                 :: file2Handle
+  character(len=255) :: filename          ! input filename
+  character(len=255), dimension(MAXFILES) :: fileNames
+  type(MLSFile_T)                         :: L2GPFile1
+  type(MLSFile_T)                         :: L2GPFile2
+  type(MLSFile_T), dimension(MAXFILES)    :: L2GPFiles
+  integer            :: n_filenames
+  integer     ::  i, j, status, error ! Counting indices & Error flags
+  integer     :: elem
+  integer     ::  hdfversion1
+  integer     ::  hdfversion2
+  logical     :: is_hdf5
+  integer, parameter :: S2US  = 1000000 ! How many microseconds in a s
+  integer, parameter :: DELAY = 1*S2US  ! How long to sleep in microseconds
+  real        :: t1
+  real        :: t2
+  real        :: tLast
+  real        :: tFile
+  character(len=255) ::    rename = ' '               ! how to rename them
+  character(len=L2GPNameLen)          :: swath
+  character(len=MaxSwathNamesBufSize) :: swathList
+  character(len=MaxSwathNamesBufSize) :: swathList1
+  character(len=MaxSwathNamesBufSize) :: swathListAll
+  character(len=MaxSwathNamesBufSize) :: swathListOut
+  type (L2Metadata_T) :: l2metaData
+  integer :: listSize
+  integer :: NUMSWATHSPERFILE
+  integer :: NUMSWATHSSOFAR
+  ! 
+  call set_config ( useToolkit = .false., logFileUnit = -1 )
+  time_config%use_wall_clock = .true.
+  CALL mls_h5open(error)
+  n_filenames = 0
+  do      ! Loop over filenames
+     call get_filename(filename, n_filenames, options)
+     if ( filename(1:1) == '-' ) cycle
+     if ( filename == ' ' ) exit
+     if ( mls_exists(trim(filename)) /= 0 ) then
+       print *, 'Sorry--file not found: ', trim(filename)
+       cycle
+     endif
+     n_filenames = n_filenames + 1
+     filenames(n_filenames) = filename
+  enddo
+  createdYet = .false.
+  if ( len_trim(options%inputFile) > 0 ) then
+    call read_textfile ( options%inputFile, filenames, nLines=n_filenames )
+    ! Must replace all nulls with spaces
+    do i=1, n_filenames
+      filenames(i) = asciify( filenames(i), how='snip' )
+    enddo
+    if ( options%verbose ) then
+      call dump( filenames(1:n_filenames), width=1, options='-t' )
+    endif
+  endif
+  if ( n_filenames == 0 ) then
+    if ( options%verbose ) print *, 'Sorry no input files to copy'
+    stop
+  endif
+  ! Check that the hdfversions of the input files accord with convert mode
+  status = 0
+  do i=1, n_filenames
+   call h5fis_hdf5_f(filenames(i), is_hdf5, error)
+   select case (options%convert)
+   case ('425')
+     if ( is_hdf5 ) then
+       print *, 'Sorry--not recognized as hdf4 file: ', trim(filenames(i))
+       status = 1
+       cycle
+     else
+       hdfVersion1 = HDFVERSION_4
+       hdfVersion2 = HDFVERSION_5
+     endif
+   case ('524')
+     if ( .not. is_hdf5 ) then
+       print *, 'Sorry--not recognized as hdf5 file: ', trim(filenames(i))
+       status = 1
+       cycle
+     else
+       hdfVersion1 = HDFVERSION_5
+       hdfVersion2 = HDFVERSION_4
+     endif
+   case default
+     if ( .not. is_hdf5 ) then
+       hdfVersion1 = HDFVERSION_4
+     else
+       hdfVersion1 = HDFVERSION_5
+     endif
+     hdfVersion2 = hdfVersion1
+   end select
+  enddo
+  call time_now ( t1 )
+
+  swathListAll = ''
+  numswathssofar = 0
+  if ( options%catenate ) then
+    call catenate_swaths
+  elseif ( options%append ) then
+    call append_swaths
+  else
+    call copy_swaths
+  endif
+  ! Do we copy global attributes from a particular file
+  if ( len_trim(options%glAttrFile) > 0 ) then
+    status = InitializeMLSFile( l2gpFile1, type=l_swath, access=DFACC_RDONLY, &
+      & content='l2gp', name=options%glAttrFile, hdfVersion=HDFVERSION_5 )
+    status = InitializeMLSFile( l2gpFile2, type=l_swath, access=DFACC_RDWR, &
+      & content='l2gp', name=options%outputFile, hdfVersion=HDFVERSION_5 )
+    call MLS_OpenFile( l2gpFile1 )
+    call MLS_OpenFile( l2gpFile2 )
+    File1Handle = l2gpFile1%FileID%f_id
+    File2Handle = l2gpFile2%FileID%f_id
+    call cpHE5GlobalAttrs ( File1Handle, File2Handle, status )
+    if ( status /= 0 ) &
+      & call output ( '(Global Attributes missing) ' // &
+      & trim(options%glAttrFile), advance='yes')
+    call MLS_CloseFile( l2gpFile1 )
+    call MLS_CloseFile( l2gpFile2 )
+  endif
+  call mls_h5close(error)
+contains
+!------------------------- append_swaths ---------------------
+!  Add to or overwrite existing swaths
+  subroutine append_swaths
+    ! Internal variables
+    integer :: jj
+    type( MLSFile_T ) :: l2gpFile
+    type(L2GPData_T) :: ol2gp
+    ! Executable
+    status = InitializeMLSFile( l2gpFile, type=l_swath, access=DFACC_CREATE, &
+      & content='l2gp', name='unknown', hdfVersion=HDFVERSION_5 )
+    l2gpFile%name = options%outputFile
+    l2gpFile%stillOpen = .false.
+    if ( options%verbose ) print *, 'Append l2gp data to: ', &
+      & trim(options%outputFile)
+    numswathssofar = mls_InqSwath ( filenames(1), SwathList, listSize, &
+           & hdfVersion=HDFVERSION_5)
+    if ( len_trim(options%swathNames) > 1 ) swathList = options%swathNames
+    swathListOut = swathList
+    if ( len_trim(options%rename) > 1 ) swathListOut = options%rename
+    if ( DEEBUG ) then
+      print *, 'swaths in file'
+      print *, trim(swathList)
+    endif
+    call GetStringElement( swathList, swath, 1, countEmpty )
+    call GetStringElement( swathListOut, rename, 1, countEmpty )
+    do jj=1, NumStringElements( swathList, countEmpty )
+      call GetStringElement( swathList, swath, jj, countEmpty )
+      call GetStringElement( swathListOut, rename, jj, countEmpty )
+      call time_now ( tFile )
+      if ( options%verbose ) print *, 'Appending swath: ', trim(swath)
+      do i=1, n_filenames
+        if ( options%verbose ) print *, 'Reading from: ', trim(filenames(i))
+        call ReadL2GPData( trim(filenames(i)), swath, ol2gp )
+        ! if ( i == 1 ) then
+        ! What do we call the swath in the output file?
+        call AppendL2GPData ( ol2gp, options%outputFile, rename )
+      enddo
+
+    enddo
+  end subroutine append_swaths
+
+!------------------------- catenate_swaths ---------------------
+  subroutine catenate_swaths
+    if ( options%ignoreFills ) then
+      call catenate_non_Fills
+    else
+      call catenate_trimming_overlaps
+    endif
+  end subroutine catenate_swaths
+
+!------------------------- catenate_non_Fills ---------------------
+! catenate the profiles not containing Fills
+! In terms of the profile numbers, we will 
+! write starting with N+1 and continue up to M
+! So, if a represents values already in the file, and 
+! b represents value we will overwrite, then after overwriting we will have
+
+! a[1]   ..  a[N] b[k] b[k+1] .. b[M] a[M+1] ..
+! <---   N   --->  <---   M-k+1  --->
+
+  subroutine catenate_non_Fills
+    ! Internal variables
+    integer :: i1
+    integer :: i2
+    integer :: iBloc
+    integer :: jj
+    type(L2GPData_T) :: l2gp
+    type( MLSFile_T ) :: l2gpFile
+    integer :: nBlocs
+    integer, parameter :: numFilesPerBloc = 40
+    integer :: numProfs
+    integer :: numTotProfs
+    type(L2GPData_T) :: ol2gp
+    integer :: l2FileHandle
+    integer :: N ! last profile number of a
+    integer :: M ! size of b
+    integer :: status
+    logical :: wroteAlready
+    ! Executable
+    if ( options%verbose ) print *, 'Catenate l2gp data to: ', &
+      & trim(options%outputFile)
+    numswathssofar = mls_InqSwath ( filenames(1), SwathList, listSize, &
+           & hdfVersion=HDFVERSION_5)
+    if ( DEEBUG ) then
+      print *, 'swaths in file'
+      print *, trim(swathList)
+    endif
+    if ( options%swathNames /= ' ' ) then
+      swathList1 = swathList
+      swathList = Intersection( options%swathNames, swathList1 )
+    endif
+    status = InitializeMLSFile( l2gpFile, type=l_swath, access=DFACC_CREATE, &
+      & content='l2gp', name='unknown', hdfVersion=HDFVERSION_5 )
+    l2gpFile%name = options%outputFile
+    l2gpFile%stillOpen = .false.
+    call mls_openFile( L2GPFile, Status )
+    l2FileHandle = l2gpFile%FileID%f_id
+    nBlocs = (n_filenames - 1)/numFilesPerBloc + 1
+
+    call GetStringElement( swathList, swath, 1, countEmpty )
+    do jj=1, NumStringElements( swathList, countEmpty ) ! Loop of swaths
+      call GetStringElement( swathList, swath, jj, countEmpty )
+      call time_now ( tFile )
+      if ( options%verbose ) print *, 'Catenating swath: ', trim(swath)
+      N = 0
+      M = 0
+      wroteAlready = .false.
+      numTotProfs = 0
+      i2 = 0
+      do iBloc = 1, nBlocs ! Loop of blocs
+        i1 = i2 + 1
+        i2 = min( i2 + numFilesPerBloc, n_filenames )
+        ! 1st open the files
+        do i=i1, i2
+          status = InitializeMLSFile( L2GPFiles(i), type=l_swath, access=DFACC_RDONLY, &
+            & content='l2gp', name=filenames(i), hdfVersion=HDFVERSION_5 )
+          L2GPFiles(i)%name = filenames(i)
+          L2GPFiles(i)%stillOpen = .false.
+          call mls_openFile( L2GPFiles(i), Status )
+        enddo
+        ! Read each file, putting its values into ol2gp
+        do i=i1, i2
+          if ( options%verbose ) print *, 'Reading from: ', trim(filenames(i))
+          if ( i == 1 ) then
+            call ReadL2GPData( L2GPFiles(i)%FileID%f_id, swath, ol2gp, numProfs )
+            cycle
+          endif
+          call ReadL2GPData( L2GPFiles(i)%FileID%f_id, swath, l2gp, numProfs )
+          ! We will use ChunkNumbers to determine N and M
+          N = FindFirst( l2gp%chunkNumber > 0 ) - 1
+          M = FindLast( l2gp%chunkNumber > 0 )
+          ol2gp%latitude       (N+1:M)     = l2gp%latitude       (N+1:M)
+          ol2gp%longitude      (N+1:M)     = l2gp%longitude      (N+1:M)
+          ol2gp%solarTime      (N+1:M)     = l2gp%solarTime      (N+1:M)
+          ol2gp%solarZenith    (N+1:M)     = l2gp%solarZenith    (N+1:M)
+          ol2gp%losAngle       (N+1:M)     = l2gp%losAngle       (N+1:M)
+          ol2gp%geodAngle      (N+1:M)     = l2gp%geodAngle      (N+1:M)
+          ol2gp%time           (N+1:M)     = l2gp%time           (N+1:M)
+
+          ol2gp%chunkNumber    (N+1:M)     = l2gp%chunkNumber      (N+1:M)
+          ol2gp%status         (N+1:M)     = l2gp%status           (N+1:M)
+          ol2gp%quality        (N+1:M)     = l2gp%quality          (N+1:M)
+          ol2gp%convergence    (N+1:M)     = l2gp%convergence      (N+1:M)  
+          ol2gp%AscDescMode    (N+1:M)     = l2gp%AscDescMode      (N+1:M)  
+
+          ol2gp%l2gpValue      (:,:,N+1:M) = l2gp%l2gpValue        (:,:,N+1:M)    
+          ol2gp%l2gpPrecision  (:,:,N+1:M) = l2gp%l2gpPrecision    (:,:,N+1:M)    
+
+          call DestroyL2GPContents( l2gp )
+        enddo
+        ! Last, close each file
+        do i=i1, i2
+          call mls_closeFile( L2GPFiles(i), Status )
+        enddo
+      enddo  ! End Loop of blocs
+      if ( options%timing ) call sayTime('Reading this swath', tFile)
+      call WriteL2GPData ( ol2gp, l2FileHandle, swath )
+      if ( options%timing ) call sayTime('Writing this swath', tFile)
+      call DestroyL2GPContents( ol2gp )
+    enddo ! End Loop of swaths
+    call mls_closeFile( L2GPFile, Status )
+    if ( options%timing ) call sayTime('catenating all swaths')
+  end subroutine catenate_non_Fills
+
+!------------------------- catenate_trimming_overlaps ---------------------
+! Identify and trim overlaps as follows:
+! let {a1 a2 .. aN} be an array of geodetic angles in one
+! swath while {b1 b2 .. bM} is an array in the next swath
+! where a and b overlap by a certain number of profiles which we will discover:
+! let k be the 1st b s.t. (b - a[N]) > eps
+! Then keeping the a array values in the overlap region will result in
+!
+! a[1]   ..  a[N] b[k] b[k+1] .. b[M] a[M+1] ..
+! <---   N   --->  <---   M-k+1  --->
+
+! A later wrinkle:
+! We may choose not to keep the full N profiles from the previous
+! swath, instead lopping off a few (kLopOff in number)
+! a[1]   ..  a[N-kL] b[k-kL] b[kL+1] .. b[M]
+! <---   N-kL   --->  <---   M-k+kL+1  --->
+
+  subroutine catenate_trimming_overlaps
+    ! Internal variables
+    integer :: j
+    integer :: jj
+    integer :: k
+    integer :: kLopOff
+    type(L2GPData_T) :: l2gp
+    type( MLSFile_T ) :: l2gpFile
+    integer, parameter :: MAXNUMPROFS = 3500
+    integer :: numProfs
+    integer :: numTotProfs
+    type(L2GPData_T) :: ol2gp
+    real(rgp), dimension(MAXNUMPROFS) :: a
+    real(rgp), dimension(MAXNUMPROFS) :: b
+    integer :: N ! size of a
+    integer :: M ! size of b
+    logical :: wroteAlready
+    real(rgp), parameter :: eps = 0.01_rgp
+    ! Executable
+    a = 0.
+    b = 0.
+    if ( options%verbose ) print *, 'Catenate l2gp data to: ', &
+      & trim(options%outputFile)
+    numswathssofar = mls_InqSwath ( filenames(1), SwathList, listSize, &
+           & hdfVersion=HDFVERSION_5)
+    if ( DEEBUG ) then
+      print *, 'swaths in file'
+      print *, trim(swathList)
+    endif
+    if ( options%swathNames /= ' ' ) then
+      swathList1 = swathList
+      swathList = Intersection( options%swathNames, swathList1 )
+    endif
+    call GetStringElement( swathList, swath, 1, countEmpty )
+    do jj=1, NumStringElements( swathList, countEmpty )
+      ! For an unexplained reason, in our tests, 
+      ! everything slows down after 48 swaths
+      ! Here is something we aree trying
+      if ( mod( jj, 10 ) < -1 ) then
+        call mls_h5close( error )
+        call mls_h5open( error )
+      endif
+      call GetStringElement( swathList, swath, jj, countEmpty )
+      call time_now ( tFile )
+      tLast = tFile
+      if ( options%verbose ) print *, 'Catenating swath: ', trim(swath)
+      N = 0
+      M = 0
+      wroteAlready = .false.
+      numTotProfs = 0
+      do i=1, n_filenames
+        if ( options%verbose ) print *, 'Reading from: ', trim(filenames(i))
+        call ReadL2GPData( trim(filenames(i)), swath, ol2gp, numProfs )
+        if ( options%timing ) call sayTime( 'Reading swath ' // trim(swath), tLast )
+        tlast = t2
+        ! Check if nProfiles is in range
+        if ( any(options%nProfiles /= 0) ) then
+          if ( ol2gp%nTimes < options%nProfiles(1) .or. &
+            & ol2gp%nTimes > options%nProfiles(2) ) then
+            print *, 'Warning--skipping ', ol2gp%nTimes, ' profiles in ', trim(filenames(i))
+            call DestroyL2GPContents( ol2gp )
+            cycle
+          endif
+        endif
+        if ( options%monotonize ) &
+          & call Monotonize( ol2gp%GeodAngle )
+          ! & call Monotonize( ol2gp%GeodAngle, FillValue=-999.99 )
+        ! if ( i == 1 ) then
+        if ( .not. wroteAlready ) then
+          status = InitializeMLSFile( l2gpFile, type=l_swath, access=DFACC_CREATE, &
+            & content='l2gp', name='unknown', hdfVersion=HDFVERSION_5 )
+          l2gpFile%name = options%outputFile
+          l2gpFile%stillOpen = .false.
+          if ( DEEBUG ) then
+            print *, 'About to write ', trim(swath)
+          endif
+          call WriteL2GPData ( ol2gp, l2gpFile, swath )
+          if ( options%timing ) call sayTime( 'Writing swath', tLast )
+          tlast = t2
+          N = ol2gp%nTimes
+          a(1:N) = ol2gp%GeodAngle
+          if ( options%verbose ) call dump( a(1:N), '1st a' )
+          call DestroyL2GPContents( ol2gp )
+          numTotProfs = numTotProfs + N
+          wroteAlready = .true.
+          cycle
+        endif
+        M = ol2gp%nTimes
+        b(1:M) = ol2gp%GeodAngle
+        ! 1st, is there nearly 360 deg offset between a, and b?
+        ! (If so, we'll assume a periodic wrap occurred)
+        if ( abs(b(1)-a(N)) > 300._rgp ) then
+        ! if ( abs(b(1)-maxval(a)) > 300._rgp ) then
+          ! add or subtract the requsite 360 deg from a
+          j = int( sign(1.01_rgp, b(1)-a(N)) )
+          if ( DEEBUG ) call outputNamedvalue ( 'j', j )
+          a(1:N) = a(1:N) + j*360._rgp
+        endif
+        ! Find k
+        k = FindFirst( (b(1:M) - a(N)) > eps )
+        kLopOff = 0
+        ! print *, 'k: ', k
+        if ( options%overlap > 0 ) then
+          kLopOff = k - min( k, options%overlap )
+          k = k - kLopOff
+        endif
+        ! Are our overlaps uniform?
+        if ( k < 2 ) then
+          if ( options%verbose ) print *, 'Warning--overlaps not found', k, N, M
+          if ( options%verbose ) call dump( a(1:N), 'a' )
+          if ( options%verbose ) call dump( b(1:M), 'b' )
+          if ( DEEBUG ) print *, 'About to append ', trim(swath)
+          call AppendL2GPData ( ol2gp, options%outputFile, &
+          & swath, offset=max(0,numTotProfs) )
+          if ( options%timing ) call sayTime( 'Appending swath (k < 2 )', tLast )
+          tlast = t2
+          ! Could this be a bug in the HDFEOS library?
+          !if ( i > 1 .and. ol2gp%nTimes > numTotProfs ) &
+          !  & call AppendL2GPData ( ol2gp, options%outputFile, &
+          !  & swath, offset=max(0,numTotProfs) )
+          numTotProfs = numTotProfs + M
+        else
+          ! print *, 'k (before extraction): ', k
+          call ExtractL2GPRecord ( ol2gp, l2gp, rTimes=(/ k, M /) )
+          if ( options%timing ) &
+            & call sayTime( 'Extracting record (k > 1 )', tLast )
+          tlast = t2
+          ! print *, 'k (after extraction): ', k
+          ! print *, 'should be writing'
+          if ( options%verbose ) &
+            & call dump( l2gp%GeodAngle, 'appended Geod. angle' )
+          if ( DEEBUG ) print *, 'About to append ', trim(swath)
+          ! call usleep ( delay ) ! Should we make this parallel%delay?
+          call AppendL2GPData ( l2gp, options%outputFile, &
+          & swath, offset=max(0,numTotProfs-kLopOff) )
+          if ( options%timing ) call sayTime( 'Appending swath (k > 1 )', tLast )
+          tlast = t2
+          ! Could this be a bug in the HDFEOS library?
+          !if ( i > 1 .and. l2gp%nTimes > numTotProfs .and. .false. ) &
+          !  & call AppendL2GPData ( l2gp, options%outputFile, &
+          !  & swath, offset=max(0,numTotProfs) )
+          call DestroyL2GPContents( l2gp )
+          numTotProfs = numTotProfs + M - k - kLopOff + 1
+          ! print *, 'k,N,M,total', k, N, M, numTotProfs
+        endif
+        call DestroyL2GPContents( ol2gp )
+        ! Next time what was "b" will serve as "a"
+        a = b
+        N = M
+        if ( DEEBUG ) then
+          call ReadL2GPData( options%outputFile, swath, ol2gp )
+          ! print *, 'nTimes(total): ', ol2gp%nTimes
+          if ( options%verbose ) &
+            & call dump( ol2gp%GeodAngle, 'stored Geod. angle' )
+          call DestroyL2GPContents( ol2gp )
+        endif
+      enddo
+      if ( options%timing ) call sayTime('catenating this swath', tFile)
+    enddo
+    if ( options%timing ) call sayTime('catenating all swaths')
+  end subroutine catenate_trimming_overlaps
+
+!------------------------- copy_swaths ---------------------
+  subroutine copy_swaths
+    ! logical, parameter :: DEEBUG = .true.
+    if ( options%verbose ) &
+      & print *, 'Copy l2gp data to: ', trim(options%outputFile)
+    do i=1, n_filenames
+      call time_now ( tFile )
+      if ( options%verbose ) print *, 'Copying from: ', trim(filenames(i))
+      if ( options%verbose .and. len_trim(options%swathNames) > 0 ) &
+        & print *, 'swath names: ', trim(options%swathNames)
+      if ( options%noDupSwaths .or. options%swathNames /= ' ' ) then
+        numswathsperfile = mls_InqSwath ( trim(filenames(i)), &
+          & swathList, listSize, hdfVersion=hdfVersion1)
+        if ( DEEBUG ) then
+          print *, 'swaths in file'
+          print *, trim(swathList)
+        endif
+        if ( DEEBUG ) then
+          print *, 'all swaths'
+          print *, trim(swathListAll)
+        endif
+        if ( options%swathNames /= ' ' ) then
+          swathList1 = swathList
+          swathList = Intersection( options%swathNames, swathList1 )
+          if ( swathList == ' ' ) cycle
+          rename = ' '
+          do j=1, NumStringElements( swathList, countEmpty )
+            call GetStringElement( swathList, swath, j, countEmpty )
+            elem = StringElementNum( options%swathNames, swath, countEmpty )
+            rename = catLists( rename, &
+              & StringElement( options%rename, elem, countempty ) )
+          enddo
+        elseif ( numswathssofar > 0 ) then
+          ! Remove any duplicates
+          do j=1, numswathssofar
+            call GetStringElement(swathListAll, swath, j, countEmpty)
+            swathList1 = swathList
+            if ( DEEBUG ) then
+              print *, 'Removing ', trim(swath)
+              print *, trim(swathListAll)
+            endif
+            call RemoveElemFromList (swathList1, swathList, trim(swath))
+            ! Crude hAck--really should fix removeElem procedure
+            if ( swathList(1:1) == ',' ) then
+              swathList1 = swathList(2:)
+              swathList = swathList1
+            endif
+          enddo
+          if ( DEEBUG ) then
+            print *, 'swaths to cp'
+            print *, trim(swathList)
+          endif
+        endif
+        if (len_trim(swathList) < 1 ) return ! Because there are none to copy
+        if ( any( (/options%freqs(2), options%levels(2), &
+          & options%profiles(2)/) > 0 ) &
+          & ) then
+          call cpL2GPData( l2metaData, trim(filenames(i)), &
+          & trim(options%outputFile), create2=.not. createdYet, &
+          & hdfVersion1=hdfVersion1, hdfVersion2=hdfVersion2, &
+          & swathList=trim(swathList), rename=rename, &
+          & notUnlimited=.true., andGlAttributes=.true., &
+          & rFreqs=options%freqs, rLevels=options%levels, rTimes=options%profiles)
+        else
+          call cpL2GPData( l2metaData, trim(filenames(i)), &
+          & trim(options%outputFile), create2=.not. createdYet, &
+          & hdfVersion1=hdfVersion1, hdfVersion2=hdfVersion2, &
+          & swathList=trim(swathList), rename=rename, &
+          & notUnlimited=.true., andGlAttributes=.true.)
+        endif
+        swathList1 = swathListAll
+        swathListAll = catlists(swathList1, swathList)
+        numswathssofar = NumStringElements(swathListAll, countEmpty)
+      else
+        if ( any( (/options%freqs(2), options%levels(2), options%profiles(2)/) &
+          & > 0 ) ) then
+          call cpL2GPData( l2metaData, trim(filenames(i)), &
+          & trim(options%outputFile), create2=.not. createdYet, &
+          & hdfVersion1=hdfVersion1, hdfVersion2=hdfVersion2, &
+          & notUnlimited=.true., andGlAttributes=.true., &
+          & rFreqs=options%freqs, rLevels=options%levels, rTimes=options%profiles)
+        else
+          call cpL2GPData( l2metaData, trim(filenames(i)), &
+          & trim(options%outputFile), create2=.not. createdYet, &
+          & hdfVersion1=hdfVersion1, hdfVersion2=hdfVersion2, &
+          & notUnlimited=.true., andGlAttributes=.true.)
+        endif
+      endif
+      if ( options%timing ) call sayTime('copying this file', tFile)
+      createdYet = .true.
+    enddo
+    if ( options%timing ) call sayTime('copying all files')
+  end subroutine copy_swaths
+!------------------------- get_filename ---------------------
+    subroutine get_filename( filename, n_filenames, options )
+    ! Added for command-line processing
+     character(LEN=255), intent(out) :: filename          ! filename
+     integer, intent(in)             :: n_filenames
+     type ( options_T ), intent(inout) :: options
+     ! character(LEN=*), intent(inout) :: outputFile        ! output filename
+     ! Local variables
+     integer ::                         error = 1
+     integer, save ::                   i = 1
+  ! Get inputfile name, process command-line args
+  ! (which always start with -)
+    do
+      call getarg ( i+hp, filename )
+      ! print *, i, ' th Arg: ', trim(filename)
+      error = 0
+      if ( filename(1:1) /= '-' ) exit
+      if ( filename(1:3) == '-h ' ) then
+        call print_help
+      elseif ( filename(1:3) == '-o ' ) then
+        call getarg ( i+1+hp, options%outputFile )
+        i = i + 1
+        exit
+      elseif ( filename(1:5) == '-425 ' ) then
+        options%convert = '425'
+        exit
+      elseif ( filename(1:5) == '-524 ' ) then
+        options%convert = '524'
+        exit
+      elseif ( filename(1:3) == '-t ' ) then
+        options%timing = .true.
+        exit
+      elseif ( filename(1:3) == '-v ' ) then
+        options%verbose = .true.
+        exit
+      elseif ( filename(1:4) == '-app' ) then
+        options%append = .true.
+        exit
+      elseif ( filename(1:4) == '-cat' ) then
+        options%catenate = .true.
+        exit
+      elseif ( filename(1:4) == '-ign' ) then
+        options%ignoreFills = .true.
+        exit
+      elseif ( filename(1:3) == '-no' ) then
+        options%noDupSwaths = .true.
+        exit
+      else if ( filename(1:3) == '-F ' ) then
+        call getarg ( i+1+hp, options%inputFile )
+        i = i + 1
+      else if ( filename(1:3) == '-f ' ) then
+        call getarg ( i+1+hp, filename )
+        i = i + 1
+        exit
+      else if ( filename(1:3) == '-g ' ) then
+        call getarg ( i+1+hp, options%glAttrFile )
+        i = i + 1
+      else if ( filename(1:3) == '-s ' ) then
+        call getarg ( i+1+hp, options%swathNames )
+        i = i + 1
+        exit
+      else if ( filename(1:3) == '-r ' ) then
+        call getarg ( i+1+hp, options%rename )
+        i = i + 1
+        exit
+      elseif ( filename(1:5) == '-freq' ) then
+        call igetarg ( i+1+hp, options%freqs(1) )
+        i = i + 1
+        call igetarg ( i+1+hp, options%freqs(2) )
+        i = i + 1
+        exit
+      elseif ( filename(1:6) == '-level' ) then
+        call igetarg ( i+1+hp, options%levels(1) )
+        i = i + 1
+        call igetarg ( i+1+hp, options%levels(2) )
+        i = i + 1
+        exit
+      elseif ( filename(1:6) == '-nprof' ) then
+        call igetarg ( i+1+hp, options%nProfiles(1) )
+        i = i + 1
+        call igetarg ( i+1+hp, options%nProfiles(2) )
+        i = i + 1
+        exit
+      elseif ( filename(1:5) == '-over' ) then
+        call igetarg ( i+1+hp, options%overlap )
+        i = i + 1
+        exit
+      elseif ( filename(1:5) == '-prof' ) then
+        call igetarg ( i+1+hp, options%profiles(1) )
+        i = i + 1
+        call igetarg ( i+1+hp, options%profiles(2) )
+        i = i + 1
+        exit
+      else
+        call print_help
+      end if
+      i = i + 1
+    end do
+    if ( error /= 0 ) then
+      call print_help
+    endif
+    i = i + 1
+    
+  end subroutine get_filename
+!------------------------- print_help ---------------------
+  subroutine print_help
+  ! Print brief but helpful message
+    write (*,*) &
+    & 'Usage:l2gpcat [options] [filenames]'
+    write (*,*) 'Options: '
+    write (*,*) '-f filename   => add filename to list of filenames'
+    write (*,*) '                 (can do the same w/o the -f)'
+    write (*,*) '-F infile     => read list of filenames from infile'
+    write (*,*) '-g glattrfile => read global attrs from glattrfile'
+    write (*,*) '-o ofile      => copy swaths to ofile'
+    write (*,*) '-425          => convert from hdf4 to hdf5'
+    write (*,*) '-524          => convert from hdf5 to hdf4'
+    write (*,*) '-t            => show detailed timings'
+    write (*,*) '-v            => switch on verbose mode'
+    write (*,*) '-append       => append or overwrite swaths with same name'
+    write (*,*) '-cat          => catenate swaths with same name'
+    write (*,*) '-ignoreFills  => ignore profiles with Fill Values'
+    write (*,*) '                 useful for combining independently-run chunks'
+    write (*,*) '-nodup        => if dup swath names, cp 1st only'
+    write (*,*) '-freqs m n    => keep only freqs in range m n'
+    write (*,*) '-levels m n   => keep only levels in range m n'
+    write (*,*) '-profiles m n => keep only profiles in range m n'
+    write (*,*) '-nprofiles m n => keep only if nProfs is in range m n'
+    write (*,*) '-s name1,name2,..'
+    write (*,*) '              => copy only swaths so named; otherwise all'
+    write (*,*) '-r rename1,rename2,..'
+    write (*,*) '              => if and how to rename the copied swaths'
+    write (*,*) '-overlap n    => max num profiles in overlap'
+    write (*,*) '-h            => print brief help'
+    stop
+  end subroutine print_help
+!------------------------- SayTime ---------------------
+  subroutine SayTime ( What, startTime )
+    character(len=*), intent(in) :: What
+    real, intent(in), optional :: startTime
+    real :: myt1
+    if ( present(startTime) ) then
+      myt1 = startTime
+    else
+      myt1 = t1
+    endif
+    call time_now ( t2 )
+    call output ( "Timing for " // what // " = " )
+    call output ( dble(t2 - myt1), advance = 'yes' )
+  end subroutine SayTime
+!------------------------- igetarg ---------------------
+  subroutine igetarg ( pos, iarg )
+   integer, intent(in) :: pos
+   integer, intent(out) :: iarg
+   character(len=16) :: arg
+   call getarg ( pos, arg )
+   read(arg, *) iarg
+  end subroutine igetarg
+
+!==================
+end program L2GPcat
+!==================
+
+! $Log: l2gpcat.f90,v $
+! Revision 1.26  2017/08/25 00:20:21  pwagner
+! Fixed bug when rolling up new dual-phase nrt
+!
+! Revision 1.25  2017/05/17 22:21:59  pwagner
+! Works properly with dual-l2 nrt scripts
+!
+! Revision 1.24  2016/08/25 22:52:52  pwagner
+! Can now successfully cat all 351 chunks of Pleiades-style dgg
+!
+! Revision 1.23  2016/06/13 23:27:46  pwagner
+! Added -g commandline option
+!
+! Revision 1.22  2016/06/10 16:13:18  pwagner
+! Added commandline option -F; upped max num of input files tto 750
+!
+! Revision 1.21  2016/02/11 19:53:20  pwagner
+! options to turn timing, verbose mode on
+!
+! Revision 1.20  2015/08/05 20:37:03  pwagner
+! Option -ign can catenate non-Fills
+!
+! Revision 1.19  2014/09/12 22:22:14  pwagner
+! Fixed sense errors in len_trim tests
+!
+! Revision 1.18  2014/09/12 00:04:08  pwagner
+! Added -append commandline option to overwrite swath values in target file
+!
+! Revision 1.17  2014/01/09 00:31:26  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
+! Revision 1.16  2013/08/23 02:51:47  vsnyder
+! Move PrintItOut to PrintIt_m
+!
+! Revision 1.15  2013/05/30 20:41:09  pwagner
+! Reduce amount of debug printing
+!
+! Revision 1.14  2009/10/27 21:10:03  pwagner
+! Brought into compliance with cpL2GPData api
+!
+! Revision 1.13  2008/10/13 23:32:41  pwagner
+! Changed meaning of -overlap option; useful now in rolling up nrts
+!
+! Revision 1.12  2008/09/25 23:13:20  pwagner
+! May exclude swaths when nProfiles outside range
+!
+! Revision 1.11  2008/02/28 01:36:24  pwagner
+! -cat option catenates different pieces of same swath
+!
+! Revision 1.10  2006/05/19 22:47:40  pwagner
+! Fixed bug stopping us from creating -o file if first input file not copied
+!
+! Revision 1.9  2006/05/19 20:55:36  pwagner
+! May rename copied swaths
+!
+! Revision 1.8  2006/04/06 23:04:21  pwagner
+! Optionally cp only ranges of freq, level, profile
+!
+! Revision 1.7  2005/10/29 00:13:56  pwagner
+! Removed unused procedures from use statements
+!
+! Revision 1.6  2005/09/23 21:01:13  pwagner
+! use_wall_clock now a component of time_config
+!
+! Revision 1.5  2005/06/22 19:27:33  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 1.4  2004/12/06 19:13:12  pwagner
+! With -nodup option ignores dup swath names after 1st
+!
+! Revision 1.3  2004/08/07 00:15:55  pwagner
+! All stringlist stuff was moved from mlsstrings to mlsstringlists
+!
+! Revision 1.2  2004/05/06 21:50:48  pwagner
+! Uses mls_h5open/close
+!
+! Revision 1.1  2004/04/30 18:54:22  pwagner
+! First commit
+!
+@
+
+
+1.26
+log
+@Fixed bug when rolling up new dual-phase nrt
+@
+text
+@d22 1
+a22 1
+   use L2GPData, only: L2GPData_T, L2GPNameLen, MAXSWATHNAMESBUFSIZE, RGP, &
+d46 1
+a46 1
+       "$Id: l2gpcat.f90,v 1.25 2017/05/17 22:21:59 pwagner Exp $"
+d110 4
+a113 4
+  character(len=MAXSWATHNAMESBUFSIZE) :: swathList
+  character(len=MAXSWATHNAMESBUFSIZE) :: swathList1
+  character(len=MAXSWATHNAMESBUFSIZE) :: swathListAll
+  character(len=MAXSWATHNAMESBUFSIZE) :: swathListOut
+d754 28
+a781 29
+      write (*,*) &
+      & 'Usage:l2gpcat [options] [filenames]'
+      write (*,*) &
+      & ' If no filenames supplied, you will be prompted to supply one'
+      write (*,*) ' Options: -f filename   => add filename to list of filenames'
+      write (*,*) '                  (can do the same w/o the -f)'
+      write (*,*) ' -F infile     => read list of filenames from infile'
+      write (*,*) ' -g glattrfile => read global attrs from glattrfile'
+      write (*,*) ' -o ofile      => copy swaths to ofile'
+      write (*,*) ' -425          => convert from hdf4 to hdf5'
+      write (*,*) ' -524          => convert from hdf5 to hdf4'
+      write (*,*) ' -t            => show detailed timings'
+      write (*,*) ' -v            => switch on verbose mode'
+      write (*,*) ' -append       => append or overwrite swaths with same name'
+      write (*,*) ' -cat          => catenate swaths with same name'
+      write (*,*) ' -ignoreFills  => ignore profiles with Fill Values'
+      write (*,*) '                  useful for combining independently-run chunks'
+      write (*,*) ' -nodup        => if dup swath names, cp 1st only'
+      write (*,*) ' -freqs m n    => keep only freqs in range m n'
+      write (*,*) ' -levels m n   => keep only levels in range m n'
+      write (*,*) ' -profiles m n => keep only profiles in range m n'
+      write (*,*) ' -nprofiles m n => keep only if nProfs is in range m n'
+      write (*,*) ' -s name1,name2,..'
+      write (*,*) '    => copy only swaths so named; otherwise all'
+      write (*,*) ' -r rename1,rename2,..'
+      write (*,*) '    => if and how to rename the copied swaths'
+      write (*,*) ' -overlap n    => max num profiles in overlap'
+      write (*,*) ' -h            => print brief help'
+      stop
+d811 3
+@
+
+
+1.25
+log
+@Works properly with dual-l2 nrt scripts
+@
+text
+@d19 1
+d30 1
+d46 1
+a46 1
+       "$Id: l2gpcat.f90,v 1.24 2016/08/25 22:52:52 pwagner Exp $"
+d72 1
+d456 3
+d484 1
+d487 1
+d812 3
+@
+
+
+1.24
+log
+@Can now successfully cat all 351 chunks of Pleiades-style dgg
+@
+text
+@d16 1
+a16 1
+   use dump_0, only: Dump
+d18 3
+a20 3
+   use HDF5, only: H5FIs_HDF5_f   
+   use Intrinsic, only: l_swath
+   use io_stuff, only: read_textfile
+d22 1
+a22 1
+     & AppendL2GPData, cpHE5GlobalAttrs, cpL2GPData, DestroyL2GPContents, &
+d24 2
+a25 2
+   use Machine, only: hp, getarg
+   use MLSCommon, only: MLSFile_t, L2Metadata_T
+d30 1
+a30 1
+   use MLSStringLists, only: catLists, GetStringElement, &
+d33 4
+a36 4
+   use MLSStrings, only: asciify
+   use output_m, only: output
+   use PrintIt_m, only: Set_Config
+   use Time_M, only: Time_Now, time_config
+d44 1
+a44 1
+       "$Id: l2gpcat.f90,v 1.23 2016/06/13 23:27:46 pwagner Exp $"
+d508 2
+a509 1
+          if ( options%timing ) call sayTime( 'Extracting record (k > 1 )', tLast )
+d513 2
+a514 1
+          if ( options%verbose ) call dump( l2gp%GeodAngle, 'appended Geod. angle' )
+d536 2
+a537 1
+          if ( options%verbose ) call dump( ol2gp%GeodAngle, 'stored Geod. angle' )
+d549 2
+a550 1
+    if ( options%verbose ) print *, 'Copy l2gp data to: ', trim(options%outputFile)
+d554 2
+d583 4
+d599 1
+d804 3
+@
+
+
+1.23
+log
+@Added -g commandline option
+@
+text
+@d44 1
+a44 1
+       "$Id: l2gpcat.f90,v 1.22 2016/06/10 16:13:18 pwagner Exp $"
+d270 3
+d276 2
+d305 1
+a305 8
+
+    do i=1, n_filenames
+      status = InitializeMLSFile( L2GPFiles(i), type=l_swath, access=DFACC_RDONLY, &
+        & content='l2gp', name=filenames(i), hdfVersion=HDFVERSION_5 )
+      L2GPFiles(i)%name = filenames(i)
+      L2GPFiles(i)%stillOpen = .false.
+      call mls_openFile( L2GPFiles(i), Status )
+    enddo
+d308 1
+a308 1
+    do jj=1, NumStringElements( swathList, countEmpty )
+d316 36
+a351 23
+      do i=1, n_filenames
+        if ( options%verbose ) print *, 'Reading from: ', trim(filenames(i))
+        if ( i == 1 ) then
+          call ReadL2GPData( L2GPFiles(i)%FileID%f_id, swath, ol2gp, numProfs )
+          cycle
+        endif
+        call ReadL2GPData( L2GPFiles(i)%FileID%f_id, swath, l2gp, numProfs )
+        ! We will use ChunkNumbers to determine N and M
+        N = FindFirst( l2gp%chunkNumber > 0 ) - 1
+        M = FindLast( l2gp%chunkNumber > 0 )
+        ol2gp%latitude       (N+1:M)     = l2gp%latitude       (N+1:M)
+        ol2gp%longitude      (N+1:M)     = l2gp%longitude      (N+1:M)
+        ol2gp%solarTime      (N+1:M)     = l2gp%solarTime      (N+1:M)
+        ol2gp%solarZenith    (N+1:M)     = l2gp%solarZenith    (N+1:M)
+        ol2gp%losAngle       (N+1:M)     = l2gp%losAngle       (N+1:M)
+        ol2gp%geodAngle      (N+1:M)     = l2gp%geodAngle      (N+1:M)
+        ol2gp%time           (N+1:M)     = l2gp%time           (N+1:M)
+
+        ol2gp%chunkNumber    (N+1:M)     = l2gp%chunkNumber      (N+1:M)
+        ol2gp%status         (N+1:M)     = l2gp%status           (N+1:M)
+        ol2gp%quality        (N+1:M)     = l2gp%quality          (N+1:M)
+        ol2gp%convergence    (N+1:M)     = l2gp%convergence      (N+1:M)  
+        ol2gp%AscDescMode    (N+1:M)     = l2gp%AscDescMode      (N+1:M)  
+d353 2
+a354 2
+        ol2gp%l2gpValue      (:,:,N+1:M) = l2gp%l2gpValue        (:,:,N+1:M)    
+        ol2gp%l2gpPrecision  (:,:,N+1:M) = l2gp%l2gpPrecision    (:,:,N+1:M)    
+d356 7
+a362 2
+        call DestroyL2GPContents( l2gp )
+      enddo
+d367 1
+a367 1
+    enddo
+a368 3
+    do i=1, n_filenames
+      call mls_closeFile( L2GPFiles(i), Status )
+    enddo
+d793 3
+@
+
+
+1.22
+log
+@Added commandline option -F; upped max num of input files tto 750
+@
+text
+@d17 2
+a18 2
+   use Hdf, only: DFACC_CREATE, DFACC_RDONLY
+   use HDF5, only: h5fis_hdf5_f   
+d22 2
+a23 2
+     & AppendL2GPData, cpL2GPData, DestroyL2GPContents, ExtractL2GPRecord, &
+     & ReadL2GPData, WriteL2GPData
+d26 1
+a26 1
+   use MLSFiles, only: mls_exists, mls_closeFile, mls_openFile, &
+d28 1
+a28 1
+   use MLSHDF5, only: mls_h5open, mls_h5close
+d44 1
+a44 1
+       "$Id: l2gpcat.f90,v 1.21 2016/02/11 19:53:20 pwagner Exp $"
+d62 1
+d86 2
+d89 3
+a91 1
+  character(len=255), dimension(MAXFILES) :: filenames
+d189 17
+a211 1
+    integer :: j
+a212 1
+    integer :: k
+a213 1
+    integer, parameter :: MAXNUMPROFS = 3500
+a214 1
+    real(rgp), parameter :: eps = 0.01_rgp
+a269 1
+    integer :: j
+a270 2
+    integer :: k
+    integer :: kLopOff
+a272 1
+    integer, parameter :: MAXNUMPROFS = 3500
+a275 2
+    real(rgp), dimension(MAXNUMPROFS) :: a
+    real(rgp), dimension(MAXNUMPROFS) :: b
+a280 1
+    real(rgp), parameter :: eps = 0.01_rgp
+a281 2
+    a = 0.
+    b = 0.
+d616 1
+a616 1
+    subroutine get_filename(filename, n_filenames, options)
+d669 3
+d729 1
+d780 3
+@
+
+
+1.21
+log
+@options to turn timing, verbose mode on
+@
+text
+@d20 1
+d33 1
+d44 1
+a44 1
+       "$Id: l2gpcat.f90,v 1.20 2015/08/05 20:37:03 pwagner Exp $"
+d62 1
+d81 1
+a81 1
+  integer, parameter ::          MAXFILES = 100
+d127 10
+d139 42
+d182 1
+a182 43
+    ! Check that the hdfversions of the input files accord with convert mode
+    status = 0
+    do i=1, n_filenames
+     call h5fis_hdf5_f(filenames(i), is_hdf5, error)
+     select case (options%convert)
+     case ('425')
+       if ( is_hdf5 ) then
+         print *, 'Sorry--not recognized as hdf4 file: ', trim(filenames(i))
+         status = 1
+         cycle
+       else
+         hdfVersion1 = HDFVERSION_4
+         hdfVersion2 = HDFVERSION_5
+       endif
+     case ('524')
+       if ( .not. is_hdf5 ) then
+         print *, 'Sorry--not recognized as hdf5 file: ', trim(filenames(i))
+         status = 1
+         cycle
+       else
+         hdfVersion1 = HDFVERSION_5
+         hdfVersion2 = HDFVERSION_4
+       endif
+     case default
+       if ( .not. is_hdf5 ) then
+         hdfVersion1 = HDFVERSION_4
+       else
+         hdfVersion1 = HDFVERSION_5
+       endif
+       hdfVersion2 = hdfVersion1
+     end select
+    enddo
+    call time_now ( t1 )
+
+    swathListAll = ''
+    numswathssofar = 0
+    if ( options%catenate ) then
+      call catenate_swaths
+    elseif ( options%append ) then
+      call append_swaths
+    else
+      call copy_swaths
+    endif
+d653 3
+a704 7
+    if (trim(filename) == ' ' .and. n_filenames == 0) then
+
+    ! Last chance to enter filename
+      print *,  "Enter the name of the HDFEOS4 or 5 L2GP file. " // &
+       &  "The default output file name will be used."
+      read(*,'(a)') filename
+    endif
+d715 22
+a736 20
+      write (*,*) '                    (can do the same w/o the -f)'
+      write (*,*) '   -o ofile      => copy swaths to ofile'
+      write (*,*) '   -425          => convert from hdf4 to hdf5'
+      write (*,*) '   -524          => convert from hdf5 to hdf4'
+      write (*,*) '   -t            => show detailed timings'
+      write (*,*) '   -v            => switch on verbose mode'
+      write (*,*) '   -append       => append or overwrite swaths with same name'
+      write (*,*) '   -cat          => catenate swaths with same name'
+      write (*,*) '   -ignoreFills  => ignore profiles with Fill Values'
+      write (*,*) '   -nodup        => if dup swath names, cp 1st only'
+      write (*,*) '   -freqs m n    => keep only freqs in range m n'
+      write (*,*) '   -levels m n   => keep only levels in range m n'
+      write (*,*) '   -profiles m n => keep only profiles in range m n'
+      write (*,*) '   -nprofiles m n => keep only if nProfs is in range m n'
+      write (*,*) '   -s name1,name2,..'
+      write (*,*) '      => copy only swaths so named; otherwise all'
+      write (*,*) '   -r rename1,rename2,..'
+      write (*,*) '      => if and how to rename the copied swaths'
+      write (*,*) '   -overlap n    => max num profiles in overlap'
+      write (*,*) '   -h            => print brief help'
+d767 3
+@
+
+
+1.20
+log
+@Option -ign can catenate non-Fills
+@
+text
+@d42 1
+a42 1
+       "$Id: l2gpcat.f90,v 1.19 2014/09/12 22:22:14 pwagner Exp $"
+d58 2
+a59 1
+    logical     :: verbose = .false.
+d95 1
+d325 1
+a325 1
+      call sayTime('Reading this swath', tFile)
+d327 1
+a327 1
+      call sayTime('Writing this swath', tFile)
+d334 1
+a334 1
+    call sayTime('catenating all swaths')
+d389 7
+d398 1
+d407 2
+d428 2
+d463 2
+d473 2
+d482 2
+d503 1
+a503 1
+      call sayTime('catenating this swath', tFile)
+d505 1
+a505 1
+    call sayTime('catenating all swaths')
+d588 1
+a588 1
+      call sayTime('copying this file', tFile)
+d591 1
+a591 1
+    call sayTime('copying all files')
+a599 1
+     ! logical, intent(inout)          :: verbose
+d622 3
+d710 1
+d756 3
+@
+
+
+1.19
+log
+@Fixed sense errors in len_trim tests
+@
+text
+@d16 2
+a17 2
+   use dump_0, only: DUMP
+   use Hdf, only: DFACC_CREATE
+d23 1
+a23 1
+   use MACHINE, only: HP, GETARG
+d25 2
+a26 2
+   use MLSFiles, only: mls_exists, &
+     & HDFVERSION_4, HDFVERSION_5, MLS_INQSWATH, InitializeMLSFile
+d28 1
+a28 1
+   use MLSFinds, only: FindFirst
+d42 1
+a42 1
+       "$Id: l2gpcat.f90,v 1.18 2014/09/12 00:04:08 pwagner Exp $"
+d63 1
+d83 1
+a213 1
+
+d217 119
+d343 1
+a343 1
+! a[1]   ..  a[N] b[k] b[k+1] .. b[M]
+d352 1
+a352 1
+  subroutine catenate_swaths
+d486 1
+a486 1
+  end subroutine catenate_swaths
+d612 3
+d691 1
+d733 3
+@
+
+
+1.18
+log
+@Added -append commandline option to overwrite swath values in target file
+@
+text
+@d42 1
+a42 1
+       "$Id: l2gpcat.f90,v 1.17 2014/01/09 00:31:26 pwagner Exp $"
+d189 1
+a189 1
+    if ( len_trim(options%swathNames) < 1 ) swathList = options%swathNames
+d191 1
+a191 1
+    if ( len_trim(options%rename) < 1 ) swathList = options%rename
+d609 3
+@
+
+
+1.17
+log
+@Some procedures formerly in output_m now got from highOutput
+@
+text
+@d17 2
+a18 3
+   use Hdf, only: DFACC_CREATE, DFACC_RDWR, DFACC_READ
+   use HDF5, only: h5fopen_f, h5fclose_f, h5fis_hdf5_f   
+   use HDFEOS5, only: HE5T_NATIVE_CHAR
+d23 2
+a24 2
+   use MACHINE, only: FILSEP, HP, IO_ERROR, GETARG
+   use MLSCommon, only: MLSFile_t, R8, L2Metadata_T
+a27 1
+   use MLSMessageModule, only: MLSMessageConfig
+d29 1
+a29 1
+   use MLSStringLists, only: catLists, GetStringElement, GetUniqueList, &
+a32 1
+   use PCFHdr, only: GlobalAttributes
+d42 1
+a42 1
+       "$Id: l2gpcat.f90,v 1.16 2013/08/23 02:51:47 vsnyder Exp $"
+d60 1
+d88 2
+d98 1
+d161 2
+d169 46
+a237 1
+    integer :: p
+a239 1
+    real(rgp) :: lastGeodAngle
+d341 1
+d486 3
+d566 1
+d609 3
+@
+
+
+1.16
+log
+@Move PrintItOut to PrintIt_m
+@
+text
+@d30 1
+a30 1
+   use MLSSets, only: FindFirst
+d45 1
+a45 1
+       "$Id: l2gpcat.f90,v 1.15 2013/05/30 20:41:09 pwagner Exp $"
+d557 3
+@
+
+
+1.15
+log
+@Reduce amount of debug printing
+@
+text
+@d36 1
+d45 1
+a45 1
+       "$Id: l2gpcat.f90,v 1.14 2009/10/27 21:10:03 pwagner Exp $"
+d103 1
+a103 2
+  MLSMessageConfig%useToolkit = .false.
+  MLSMessageConfig%logFileUnit = -1
+d557 3
+@
+
+
+1.14
+log
+@Brought into compliance with cpL2GPData api
+@
+text
+@d44 1
+a44 1
+       "$Id: l2gpcat.f90,v 1.13 2008/10/13 23:32:41 pwagner Exp $"
+d322 1
+d557 3
+@
+
+
+1.13
+log
+@Changed meaning of -overlap option; useful now in rolling up nrts
+@
+text
+@d25 1
+a25 1
+   use MLSCommon, only: MLSFile_t, R8
+d44 1
+a44 1
+       "$Id: l2gpcat.f90,v 1.12 2008/09/25 23:13:20 pwagner Exp $"
+d97 1
+d368 1
+a368 1
+          call cpL2GPData(trim(filenames(i)), &
+d375 1
+a375 1
+          call cpL2GPData(trim(filenames(i)), &
+d387 1
+a387 1
+          call cpL2GPData(trim(filenames(i)), &
+d393 1
+a393 1
+          call cpL2GPData(trim(filenames(i)), &
+d556 3
+@
+
+
+1.12
+log
+@May exclude swaths when nProfiles outside range
+@
+text
+@d44 1
+a44 1
+       "$Id: l2gpcat.f90,v 1.11 2008/02/28 01:36:24 pwagner Exp $"
+d68 1
+a68 1
+    integer            ::    overlap = 4                ! how many profiles
+d176 6
+d187 1
+d267 6
+d287 1
+d289 1
+d294 1
+a294 1
+          & swath, offset=max(0,numTotProfs) )
+d300 1
+a300 1
+          numTotProfs = numTotProfs + M - k + 1
+d523 1
+a523 1
+      write (*,*) '   -overlap n    => assume n profile overlaps'
+d555 3
+@
+
+
+1.11
+log
+@-cat option catenates different pieces of same swath
+@
+text
+@d44 1
+a44 1
+       "$Id: l2gpcat.f90,v 1.10 2006/05/19 22:47:40 pwagner Exp $"
+d71 1
+d80 1
+a80 2
+  logical, parameter ::          DEEBUG = .true.
+  ! logical ::          columnsOnly
+a81 1
+  ! character(len=255) :: outputFile= 'default.he5'        ! output filename
+a88 1
+  ! logical     :: verbose = .false.
+a188 1
+    integer :: time1
+d193 1
+d202 4
+a210 1
+    numTotProfs = 0
+d217 2
+a218 1
+      time1 = 1
+d222 11
+a232 1
+        if ( i == 1 ) then
+d237 3
+d246 1
+d265 1
+d277 1
+d451 6
+d493 17
+a509 16
+      write (*,*) '                           (can do the same w/o the -f)'
+      write (*,*) '          -o ofile      => copy swaths to ofile'
+      write (*,*) '          -425          => convert from hdf4 to hdf5'
+      write (*,*) '          -524          => convert from hdf5 to hdf4'
+      write (*,*) '          -v            => switch on verbose mode'
+      write (*,*) '          -cat          => catenate swaths with same name'
+      write (*,*) '          -nodup        => if dup swath names, cp 1st only'
+      write (*,*) '          -freqs m n    => keep only freqs in range m n'
+      write (*,*) '          -levels m n   => keep only levels in range m n'
+      write (*,*) '          -profiles m n => keep only profiles in range m n'
+      write (*,*) '          -s name1,name2,..'
+      write (*,*) '             => copy only swaths so named; otherwise all'
+      write (*,*) '          -r rename1,rename2,..'
+      write (*,*) '             => if and how to rename the copied swaths'
+      write (*,*) '          -overlap n    => assume n profile overlaps'
+      write (*,*) '          -h            => print brief help'
+d540 3
+@
+
+
+1.10
+log
+@Fixed bug stopping us from creating -o file if first input file not copied
+@
+text
+@d16 1
+d20 4
+a23 2
+   use L2GPData, only: cpL2GPData, L2GPData_T, ReadL2GPData, DestroyL2GPContents, &
+     & L2GPNameLen, MAXSWATHNAMESBUFSIZE
+d25 1
+a25 1
+   use MLSCommon, only: R8
+d27 1
+a27 1
+     & HDFVERSION_4, HDFVERSION_5, MLS_INQSWATH
+d30 1
+d44 1
+a44 1
+       "$Id: l2gpcat.f90,v 1.9 2006/05/19 20:55:36 pwagner Exp $"
+d62 1
+d68 1
+d79 1
+a79 1
+  logical, parameter ::          DEEBUG = .false.
+a107 14
+!   do      ! Loop over input
+!     read (*, '(a)') swathList
+!     if ( swathList == 'stop' ) stop
+!     read (*, '(a)') swathList1
+!     swathListAll = catLists(swathList, swathList1)
+!     swathList = swathListAll
+!     call GetUniqueList(swathList, swathListAll, &
+!       & i, countEmpty)
+!     print *, 'no unique: ', i
+!     print *, 'unique: ', trim(swathListAll)
+!     read (*, '(a)') swath
+!     call RemoveElemFromList (swathListAll, swathList, trim(swath))
+!     print *, 'After removing: ', trim(swathList)
+!   enddo
+d156 1
+d159 129
+d369 1
+a369 3
+  endif
+  call mls_h5close(error)
+contains
+d403 3
+d433 4
+d474 1
+d483 1
+d515 3
+@
+
+
+1.9
+log
+@May rename copied swaths
+@
+text
+@d40 1
+a40 1
+       "$Id: l2gpcat.f90,v 1.8 2006/04/06 23:04:21 pwagner Exp $"
+d72 1
+d127 1
+d213 1
+a213 1
+          & trim(options%outputFile), create2=(i==1), &
+d220 1
+a220 1
+          & trim(options%outputFile), create2=(i==1), &
+d232 1
+a232 1
+          & trim(options%outputFile), create2=(i==1), &
+d238 1
+a238 1
+          & trim(options%outputFile), create2=(i==1), &
+d244 1
+d386 3
+@
+
+
+1.8
+log
+@Optionally cp only ranges of freq, level, profile
+@
+text
+@d28 2
+a29 1
+     & NumStringElements, RemoveElemFromList
+d40 1
+a40 1
+       "$Id: l2gpcat.f90,v 1.7 2005/10/29 00:13:56 pwagner Exp $"
+d60 3
+a62 1
+    character(len=3) ::      convert= ' '               ! e.g., '425'           
+d79 1
+d87 1
+d163 1
+a163 1
+    NUMSWATHSSOFAR = 0
+d168 1
+a168 1
+      if ( options%noDupSwaths) then
+d179 12
+a190 1
+        if ( numswathssofar > 0 ) then
+d213 1
+a213 1
+          & swathList=trim(swathList), &
+d220 1
+a220 1
+          & swathList=trim(swathList), &
+d287 8
+d348 4
+d383 3
+@
+
+
+1.7
+log
+@Removed unused procedures from use statements
+@
+text
+@d39 1
+a39 1
+       "$Id: l2gpcat.f90,v 1.6 2005/09/23 21:01:13 pwagner Exp $"
+d56 7
+a62 4
+    character(len=255) :: outputFile= 'default.he5'        ! output filename
+    logical ::          columnsOnly = .false.
+    logical ::          noDupSwaths = .false.              ! cp 1st, ignore rest
+    character(len=3) :: convert= ' '                       ! e.g., '425'
+d191 11
+a201 1
+        call cpL2GPData(trim(filenames(i)), &
+d206 1
+d211 9
+a219 1
+        call cpL2GPData(trim(filenames(i)), &
+d223 1
+d271 18
+d314 11
+a324 8
+      write (*,*) ' Options: -f filename => add filename to list of filenames'
+      write (*,*) '                         (can do the same w/o the -f)'
+      write (*,*) '          -o ofile    => copy swaths to ofile'
+      write (*,*) '          -425        => convert from hdf4 to hdf5'
+      write (*,*) '          -524        => convert from hdf5 to hdf4'
+      write (*,*) '          -v          => switch on verbose mode'
+      write (*,*) '          -nodup      => if dup swath names, cp 1st only'
+      write (*,*) '          -h          => print brief help'
+d341 8
+d355 3
+@
+
+
+1.6
+log
+@use_wall_clock now a component of time_config
+@
+text
+@d23 1
+a23 1
+   use MLSFiles, only: mls_exists, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF, &
+d39 1
+a39 1
+       "$Id: l2gpcat.f90,v 1.5 2005/06/22 19:27:33 pwagner Exp $"
+d303 3
+@
+
+
+1.5
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d31 1
+a31 1
+   use Time_M, only: Time_Now, USE_WALL_CLOCK
+d37 1
+a37 1
+       "$RCSfile: MLSL2.f90,v $"
+d39 1
+a39 1
+       "$Id: MLSL2.f90,v 2.138 2005/06/22 18:57:02 pwagner Exp $"
+d90 1
+a90 1
+  USE_WALL_CLOCK = .true.
+d303 3
+@
+
+
+1.4
+log
+@With -nodup option ignores dup swath names after 1st
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d35 7
+a41 5
+!------------------- RCS Ident Info -----------------------
+   CHARACTER(LEN=130) :: Id = &                                                    
+   "$Id: l2gpcat.f90,v 1.3 2004/08/07 00:15:55 pwagner Exp $"
+   CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile: l2gpcat.f90,v $"
+!----------------------------------------------------------
+d303 3
+@
+
+
+1.3
+log
+@All stringlist stuff was moved from mlsstrings to mlsstringlists
+@
+text
+@d19 2
+a20 1
+   use MLSStringLists, only: GetStringElement, NumStringElements
+d29 1
+a29 1
+   "$Id: l2gpcat.f90,v 1.2 2004/05/06 21:50:48 pwagner Exp $"
+d48 1
+d55 2
+d62 1
+a62 1
+  integer     ::  i, count, status, error ! Counting indices & Error flags
+d70 7
+d83 14
+d144 2
+d150 42
+a191 4
+      call cpL2GPData(trim(filenames(i)), &
+        & trim(options%outputFile), create2=(i==1), &
+        & hdfVersion1=hdfVersion1, hdfVersion2=hdfVersion2, &
+        & notUnlimited=.true., andGlAttributes=.true.)
+d231 3
+d269 1
+d293 3
+@
+
+
+1.2
+log
+@Uses mls_h5open/close
+@
+text
+@d19 1
+a19 1
+   use MLSStrings, only: GetStringElement, NumStringElements
+d28 1
+a28 1
+   "$Id: l2gpcat.f90,v 1.1 2004/04/30 18:54:22 pwagner Exp $"
+d224 3
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d17 1
+d28 2
+a29 2
+   "$Id: L2GPcat.f90,v 1.2 2004/03/03 19:11:17 pwagner Exp $"
+   CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile: L2GPcat.f90,v $"
+d70 1
+a70 1
+  CALL h5open_f(error)
+d131 1
+a131 1
+  call h5close_f(error)
+d223 4
+a226 1
+! $Log: L2GPcat.f90,v $
+@
+

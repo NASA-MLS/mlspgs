@@ -1,0 +1,210 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.18
+	cfm-single-freq-0-1:1.1.0.16
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.14
+	mus-emls-1-70:1.1.0.12
+	rel-1-0-englocks-work:1.1.0.10
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.8
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.6
+	V2-24-NRT-04:1.1
+	V3-33:1.1
+	V2-24:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1
+	V2-23-NRT-02:1.1
+	V2-23:1.1
+	V2-22-NRT-01:1.1
+	V2-22:1.1
+	V2-21:1.1
+	V2-20:1.1
+	V2-11:1.1
+	V2-10:1.1
+	V2-00:1.1
+	V1-51:1.1
+	V1-50:1.1
+	V1-45:1.1
+	V1-44:1.1
+	V1-43:1.1
+	V1-42:1.1
+	V1-41:1.1
+	V1-32:1.1
+	V1-40:1.1
+	V1-31:1.1
+	V1-30:1.1
+	V1-13:1.1
+	V1-12:1.1
+	V1-11:1.1
+	V1-10:1.1
+	newfwm-feb03:1.1.0.4
+	V1-04:1.1
+	V1-03:1.1
+	V1-02:1.1
+	V1-00:1.1
+	newfwm-sep01:1.1.0.2
+	V0-7:1.1
+	V0-5-Level2:1.1
+	V0-5-SIPS:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2000.10.20.23.33.27;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@moved to test directory
+@
+text
+@! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+module TABLE_DUMPER
+  use DECLARATION_TABLE, only: ENUM_VALUE, EXPRN, LABEL, LOG_VALUE, &
+                               NUM_VALUE, RANGE, STR_RANGE, STR_VALUE, &
+                               TYPE_NAMES
+  use INTRINSIC, only: PHYQ_INDICES
+  use MLSCF, only: Mlscf_T, MlscfCell_T
+  use OUTPUT_M, only: OUTPUT
+  use STRING_TABLE, only: DISPLAY_STRING
+  implicit NONE
+
+  private
+  public :: DUMP_TABLE
+
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=256), private :: Id = &
+       "$Id: table_dumper.f90,v 2.1 2000/10/11 18:57:28 vsnyder Exp $"
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: table_dumper.f90,v $"
+!---------------------------------------------------------------------------
+
+contains
+  subroutine DUMP_TABLE ( L2CF_DATA )
+    type(mlscf_t), intent(in) :: L2CF_DATA   ! The L2CF data (duh)
+    integer :: I, J, K                       ! Loop inductors
+    call output ( l2cf_data%NoSections )
+    call output ( ' Sections', advance='yes' )
+    do i = 1, l2cf_data%NoSections
+      call output ( 'Section: ' )
+      call output ( trim(l2cf_data%sections(i)%MlscfSectionName), &
+                    advance='yes' )
+      if ( l2cf_data%sections(i)%NoSectionDefs > 0 ) then
+        call output ( ' Definitions (' )
+        call output (l2cf_data%sections(i)%NoSectionDefs )
+        call output ( '):', advance='yes' )
+      end if
+      do j = 1, l2cf_data%sections(i)%NoSectionDefs
+        call dump_cell ( l2cf_data%sections(i)%Cells(j), '  ' )
+      end do
+      if ( l2cf_data%sections(i)%NoSectionEntries > 0 ) then
+        call output ( ' Specifications (' )
+        call output ( l2cf_data%sections(i)%NoSectionEntries )
+        call output ( '):', advance='yes' )
+      end if
+      do j = 1, l2cf_data%sections(i)%NoSectionEntries
+        call output ( '  Specification: ' )
+        if ( l2cf_data%sections(i)%Entries(j)%MlscfLabelName /= ' ' ) then
+          call output ( trim(l2cf_data%sections(i)%Entries(j)%MlscfLabelName) )
+          call output ( ': ' )
+        end if
+        call output ( trim(l2cf_data%sections(i)%Entries(j)%MlscfEntryName), &
+                      advance = 'yes' )
+        do k = 1, l2cf_data%sections(i)%Entries(j)%MlscfEntryNoKeys
+          call dump_cell ( l2cf_data%sections(i)%Entries(j)%cells(k), '   ' )
+        end do
+      end do
+    end do
+  end subroutine DUMP_TABLE
+
+  subroutine DUMP_CELL ( CELL, PREFIX )
+    type(MlscfCell_T), intent(in) :: CELL
+    character(len=*) :: PREFIX
+    call output ( prefix )
+    call output ( trim(cell%Keyword) )
+    call output ( ' = ' )
+    select case ( cell%type )
+    case ( exprn )     ! unevaluated
+      call output ( 'Unevaluated expression' )
+    case ( label )     ! A label reference
+      call output ( trim(cell%charValue) )
+      if ( cell%charRangeUpperBound /= ' ' ) then
+        call output ( '.' )
+        call output ( trim(cell%charRangeUpperBound) )
+      end if
+    case ( log_value ) ! logical value
+      call output ( cell%realValue )
+    case ( num_value ) ! numerical value
+      call output ( cell%realValue )
+      call output ( ', units = ' )
+      call display_string ( phyq_indices(cell%units) )
+    case ( range )     ! numerical range
+      call output ( cell%realValue )
+      call output ( ' : ' )
+      call output ( cell%RangeUpperBound )
+      call output ( ', units = ' )
+      call display_string ( phyq_indices(cell%units) )
+    case ( str_range ) ! string range -- for dates
+      call output ( trim(cell%charValue) )
+      call output ( ' : ' )
+      call output ( trim(cell%charRangeUpperBound) )
+    case ( str_value, enum_value ) ! string value
+      call output ( trim(cell%charValue) )
+    case default
+    end select
+    call output ( ', TYPE: ' )
+    call output ( trim(type_names(cell%type)) )
+    if ( cell%more /= 0 ) then
+      call output ( '; ' )
+      call output ( cell%more )
+      call output ( ' additional values' )
+    end if
+    call output ( '', advance='yes' )
+  end subroutine DUMP_CELL
+end module TABLE_DUMPER
+
+! $Log: table_dumper.f90,v $
+! Revision 2.1  2000/10/11 18:57:28  vsnyder
+! Move from lib/cf_parser to lib; insert copyright notice
+!
+! Revision 2.0  2000/09/05 17:41:51  dcuddy
+! Change revision to 2.0
+!
+! Revision 1.2  2000/09/01 21:42:15  vsnyder
+! Add "more" field to MLSCF_CELL type
+!
+@

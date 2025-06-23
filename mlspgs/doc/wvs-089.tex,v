@@ -1,0 +1,387 @@
+head	1.6;
+access;
+symbols
+	v5-02-NRT-19:1.6
+	v6-00:1.6
+	v5-02-NRT-18:1.6
+	v5-02:1.6
+	v5-01-NRT-17:1.6
+	v5-01-NRT-16:1.6
+	v5-01-NRT-15:1.6
+	v5-01-NRT-14:1.6
+	neuralnetworks-1-0:1.6.0.10
+	cfm-single-freq-0-1:1.6.0.8
+	v5-01:1.6
+	v5-00:1.6
+	v4-23-TA133:1.6.0.6
+	mus-emls-1-70:1.6.0.4
+	rel-1-0-englocks-work:1.6.0.2
+	VUMLS1-00:1.6
+	VPL1-00:1.6
+	V4-22-NRT-08:1.6
+	VAM1-00:1.6
+	V4-21:1.4.0.2
+	V4-13:1.4
+	V4-12:1.4
+	V4-11:1.4
+	V4-10:1.4
+	V3-43:1.1
+	M4-00:1.4
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.4
+	V3-31:1.4
+	V3-30-NRT-05:1.4
+	cfm-01-00:1.4
+	V3-30:1.1
+	V3-20:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.6
+date	2015.04.28.23.39.36;	author vsnyder;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2015.04.28.23.39.03;	author vsnyder;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2010.05.28.23.09.11;	author vsnyder;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2010.05.25.03.00.29;	author vsnyder;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2010.05.25.02.20.45;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2010.01.26.02.08.29;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.6
+log
+@Correct the date
+@
+text
+@\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9in
+
+\newcommand{\docname}{\bf wvs-089r4}
+\newcommand{\docdate}{28 April 2015}
+
+\usepackage{graphicx}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\newcommand{\TS}{T_\text{scat}}
+\newcommand{\TSs}[1]{T_{\text{scat}_{#1}}}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill, Van\\
+Subject: \>TScat derivatives w.r.t. T and IWC\\
+From: \>Van Snyder\\
+Reference: \>\h{wvs-066}, \h{wvs-076}
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-10pt}
+
+Denote a reference orbit geodetic angle $\phi$ by $\phi_i$.  If the atmosphere
+is not horizontally homogeneous along the orbit path, it might be desirable to
+compute TScat tables for different values of $\phi$, for example, to accomodate
+tables for different latitudes.
+
+The scattering points in the set $\{S_{jk}\}$, in the orbit plane, are on a
+grid specified by $\{\phi_j\} \times \{\zeta_k\}$, where $\{\phi_j\}$ are orbit
+geodetic angles.
+
+The reference horizon is the line in the orbit plane from the scattering point
+$S_{jk}$ and perpendicular to the line in the orbit plane from the center of
+the Earth at $\phi_i$.  The angle $\xi$ is measured anticlockwise in the orbit
+plane from that line.
+
+The points in the set $\{A_{mn}\}$, also in the orbit plane, include points in
+addition to $\{S_{jk}\}$, on a grid specified by $\{\phi_m\} \times
+\{\zeta_n\}$.
+
+{\includegraphics[scale=0.85]{./wvs-089-pic}}
+
+$P_{jk}(\xi)$ is the Mie phase function, evaluated for IWC and T at $S_{jk}$;
+$\xi = 0$ at the reference horizon.
+
+The radiance arriving at $S_{jk}$ from direction $\xi$ in the orbit plane is
+$I_{ijk}(\xi)$.
+
+The radiance arriving at $S_{jk}$ from all directions in the orbit plane,
+convolved with the Mie phase function, is
+
+\begin{equation}
+\TSs{ijk} =
+\overline{I}_{ijk} = \int_{-\pi}^\pi I_{ijk}(\xi) P_{jk}(\xi)\, \text{d} \xi
+\,.
+\end{equation}
+
+The derivative of phase-convolved radiance at $S_{jk}$ with respect to some
+quantity $x_{mn}$ at $A_{mn}$ is
+
+\begin{equation}\label{two}
+\frac{\partial\overline{I}_{ijk}}{\partial x_{mn}} =
+ \int_{-\pi}^\pi
+  \left[ \frac{\partial I_{ijk}(\xi)}{\partial x_{mn}} P_{jk}(\xi) +
+         I_{ijk}(\xi) \frac{\partial P_{jk}(\xi)}{\partial x_{mn}}
+          \right] \, \text{d} \xi \,.
+\end{equation}
+
+$I_{ijk}(\xi)$ depends upon whatever quantities are specified at $A_{mn}$
+when $\TS$ is computed, i.e., throughout the entire atmosphere through
+which rays scattered at $S_{jk}$ propagate; $P_{jk}(\xi)$ depends only
+upon temperature and IWC at $S_{jk}$.
+
+If $S_{jk}$ and $A_{mn}$ are the same point, both terms are necessary.
+Otherwise $\frac{\partial P_{jk}(\xi)}{\partial x_{mn}} = 0$, and Equation
+(\ref{two}) can be simplified to
+
+\begin{equation}
+\frac{\partial\overline{I}_{ijk}}{\partial x_{mn}} =
+ \int_{-\pi}^\pi
+  \frac{\partial I_{ijk}(\xi)}{\partial x_{mn}} P_{jk}(\xi)\, \text{d} \xi \,.
+\end{equation}
+
+In comments within the {\tt TScatSupport} module, terms of the form
+$\frac{\partial}{\partial f^k_i}$ and $\frac{\partial}{\partial f^k_{lm}}$
+appear.  The superscript $k$ refers to a species.  The subscript $i$
+refers to a position on the path (black circles in the figure).  The
+subscripts $lm$ refer to positions in the solution field ($A_{mn}$ in the
+figure).
+
+\label{lastpage}
+\end{document}
+% $Id: wvs-089.tex,v 1.5 2015/04/28 23:39:03 vsnyder Exp $
+
+% $Log: wvs-089.tex,v $
+% Revision 1.5  2015/04/28 23:39:03  vsnyder
+% Explain subscripts in comments in TScatSupport
+%
+% Revision 1.4  2010/05/28 23:09:11  vsnyder
+% Remove graphics extension so latex or pdflatex can select it
+%
+% Revision 1.3  2010/05/25 03:00:29  vsnyder
+% Added description of dependence of derivatives upon atmospheric properties
+%
+% Revision 1.2  2010/05/25 02:20:45  vsnyder
+% Added the picture
+%
+% Revision 1.1  2010/01/26 02:08:29  vsnyder
+% Initial commit
+%
+@
+
+
+1.5
+log
+@Explain subscripts in comments in TScatSupport
+@
+text
+@d9 1
+a9 1
+\newcommand{\docdate}{30 September 2015}
+d153 1
+a153 1
+% $Id: wvs-089.tex,v 1.4 2010/05/28 23:09:11 vsnyder Exp $
+d156 3
+@
+
+
+1.4
+log
+@Remove graphics extension so latex or pdflatex can select it
+@
+text
+@d8 2
+a9 2
+\newcommand{\docname}{\bf wvs-089r2}
+\newcommand{\docdate}{24 May 2010}
+d83 4
+a86 1
+Denote the reference orbit geodetic angle $\phi$ by $\phi_i$.
+d101 1
+a101 1
+{\includegraphics[scale=0.90]{./wvs-089-pic}}
+a120 1
+
+d144 7
+d153 1
+a153 1
+% $Id: wvs-089.tex,v 1.3 2010/05/25 03:00:29 vsnyder Exp $
+d156 3
+@
+
+
+1.3
+log
+@Added description of dependence of derivatives upon atmospheric properties
+@
+text
+@a21 1
+  \newcommand{\GX}{eps} % Graphics eXtension
+a31 1
+  \newcommand{\GX}{pdf} % Graphics eXtension
+a39 1
+  \newcommand{\GX}{eps} % Graphics eXtension
+d98 1
+a98 1
+{\includegraphics[scale=0.90]{./wvs-089-pic.\GX}}
+d144 1
+a144 1
+% $Id: wvs-089.tex,v 1.2 2010/05/25 02:20:45 vsnyder Exp $
+d147 3
+@
+
+
+1.2
+log
+@Added the picture
+@
+text
+@d8 1
+a8 1
+\newcommand{\docname}{\bf wvs-089r1}
+d71 3
+d94 1
+a94 1
+the Earth at $\phi_i$.  The angle $\chi$ is measured anticlockwise in the orbit
+d103 2
+a104 2
+$P_{jk}(\chi)$ is the Mie phase function, evaluated for IWC and T at $S_{jk}$;
+$\chi = 0$ at the reference horizon.
+d106 2
+a107 2
+The radiance arriving at $S_{jk}$ from direction $\chi$ in the orbit plane is
+$I_{ijk}(\chi)$.
+d113 2
+a114 2
+T_{\text{scat}} =
+\overline{I}_{ijk} = \int_{-\pi}^\pi I_{ijk}(\chi) P_{jk}(\chi)\, \text{d} \chi
+d119 1
+a119 1
+quantity $x_{mn}$ at $A_{mn}$, where $x$ is either IWC or $T$, is
+d125 3
+a127 3
+  \left[ \frac{\partial I_{ijk}(\chi)}{\partial x_{mn}} P_{jk}(\chi) +
+         I_{ijk}(\chi) \frac{\partial P_{jk}(\chi)}{\partial x_{mn}}
+          \right] \, \text{d} \chi \,.
+d130 5
+d136 1
+a136 1
+Otherwise $\frac{\partial P_{jk}(\chi)}{\partial x_{mn}} = 0$, and Equation
+d142 1
+a142 1
+  \frac{\partial I_{ijk}(\chi)}{\partial x_{mn}} P_{jk}(\chi)\, \text{d} \chi \,.
+d147 1
+a147 1
+% $Id: wvs-089.tex,v 1.1 2010/01/26 02:08:29 vsnyder Exp $
+d150 3
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d8 41
+a48 2
+\newcommand{\docname}{\bf wvs-089}
+\newcommand{\docdate}{25 January 2010}
+d77 1
+a77 1
+Reference: \>wvs-066, wvs-076
+d98 2
+d110 1
+d127 2
+a128 2
+If $S_{jk}$ is not at $A_{mn}$, then $\frac{\partial P_{jk}(\chi)}{\partial
+x_{mn}} = 0$.  Therefore, when $S_{jk}$ is not at $A_{mn}$, Equation
+d139 1
+a139 1
+% $Id: wvs-066.tex,v 1.2 2009/07/01 20:20:23 vsnyder Exp $
+d141 4
+a144 1
+% $Log: $
+@
+

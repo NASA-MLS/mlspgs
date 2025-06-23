@@ -1,0 +1,103 @@
+head	1.2;
+access;
+symbols
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2017.12.18.18.45.33;	author pwagner;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2009.08.03.16.40.18;	author honghanh;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@No longer with our software
+@
+text
+@#	.configure for mls
+MLSF95=IFC
+MLSPLAT=Linux
+MLSCONFG=IFC.Linux.ifc5.2.16
+PGSINC=/users/honghanh/toolkit5.2.16/IFC.Linux.ifc10.0/toolkit5.2.16/include
+PGSTK=/users/honghanh/toolkit5.2.16/IFC.Linux.ifc10.0/toolkit5.2.16/lib/linux
+HDFEOS=/users/honghanh/toolkit5.2.16/IFC.Linux.ifc10.0/hdfeos/lib/linux
+HDFEOS5=/users/honghanh/toolkit5.2.16/IFC.Linux.ifc10.0/hdfeos5/lib/linux
+HDF=/users/honghanh/toolkit5.2.16/IFC.Linux.ifc10.0/HDF4.2r4/lib
+HDF5=/users/honghanh/toolkit5.2.16/IFC.Linux.ifc10.0/hdf5-1.8.3/lib
+GCTP=/users/honghanh/toolkit5.2.16/IFC.Linux.ifc10.0/hdfeos/lib/linux
+PGSLIB=/users/honghanh/toolkit5.2.16/IFC.Linux.ifc10.0/toolkit5.2.16/lib/linux
+HDFEOS_LIB=/users/honghanh/toolkit5.2.16/IFC.Linux.ifc10.0/hdfeos/lib/linux
+HDFLIB=/users/honghanh/toolkit5.2.16/IFC.Linux.ifc10.0/HDF4.2r4/lib
+BLAS=
+LIB_BLAS=
+LAPACK=
+LIB_LAPACK=f95
+PVM_ROOT=/users/honghanh/toolkit5.2.16/IFC.Linux.ifc10.0/pvm3
+PVM_ARCH=LINUX
+FFTW_ROOT=/users/honghanh/toolkit5.2.16/IFC.Linux.ifc10.0/fftw-2.1.3/lib
+COPTS=-D H5_USE_16_API
+FOPTS=-vec-report0 -traceback
+LDOPTS=-static
+export MLSF95
+export MLSPLAT
+export MLSCONFG
+export PGSINC
+export PGSTK
+export HDFEOS
+export HDFEOS5
+export HDF
+export HDF5
+export GCTP
+export PGSLIB
+export HDFEOS_LIB
+export HDFLIB
+export BLAS
+export LIB_BLAS
+export LAPACK
+export LIB_LAPACK
+export PVM_ROOT
+export PVM_ARCH
+export FFTW_ROOT
+export COPTS
+export FOPTS
+export LDOPTS
+@
+
+
+1.1
+log
+@Adding .configure file use for building mlspgs
+@
+text
+@@
+

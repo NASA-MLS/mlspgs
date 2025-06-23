@@ -1,0 +1,715 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.4
+	cfm-single-freq-0-1:1.1.0.2
+	v5-01:1.1
+	v5-00:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2019.06.18.22.48.13;	author yanovsky;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\documentclass[fleqn,10pt]{article}
+\usepackage[dvips]{graphics,color}
+\usepackage{amscd, amsfonts, amsmath, amssymb}
+\usepackage{amsthm}
+\usepackage{eucal}
+\usepackage{pifont}
+
+\usepackage{epsfig}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{verbatim}
+
+\setlength{\topmargin}{-1.5cm}
+\setlength{\headheight}{0.5cm}
+\setlength{\headsep}{0.7cm}
+\setlength{\topskip}{0.5cm}
+\setlength{\textheight}{23.0cm}
+\setlength{\footskip}{0.5cm}
+\setlength{\oddsidemargin}{0.5cm}
+\setlength{\evensidemargin}{0.5cm}
+\setlength{\textwidth}{14.5cm}
+
+
+% For pasting into PPT presentation: 
+%\setlength{\textwidth}{10.5cm}
+
+
+
+
+\setcounter{tocdepth}{5}
+
+
+
+%\numberwithin{equation}{section}
+
+%\pagestyle{headings}
+%\markboth{Igor}{Yanovsky}
+
+
+
+\def\pdf{p}
+\def\vx{{\bf x}}
+\def\vy{{\bf y}}
+\def\vg{{\bf g}}
+\def\g{g}
+\def\vh{{\bf h}}
+\def\vf{{\bf f}}
+\def\vF{{\bf F}}
+\def\vu{{\bf u}}
+\def\vv{{\bf v}}
+\def\vn{{\bf n}}
+\def\vmu{\boldsymbol \mu}
+\def\vnabla{{\bf \nabla}}
+\def\vid{{\bf id}}
+\def\va{{\bf a}}
+\def\vr{{\bf r}}
+\def\vb{{\bf b}}
+
+\def\ff{\mbox f}
+
+\def\D{\mathcal{D}}
+\def\E{\mathcal{E}}
+
+\def\trace{\mbox{trace}}
+\def\divergence{\mbox{div}}
+
+\def\I{\mathcal{I}}
+\def\R{\mathcal{R}}
+\def\S{\mathcal{S}}
+\def\T{\mathcal{T}}
+
+
+\def\m{\mbox{m}}
+\def\km{\mbox{km}}
+\def\nm{\mbox{nm}}
+\def\cm{\mbox{cm}}
+\def\s{\mbox{s}}
+\def\kg{\mbox{kg}}
+\def\K{\mbox{K}}
+\def\N{\mbox{N}}
+\def\J{\mbox{J}}
+\def\Pa{\mbox{Pa}}
+\def\hPa{\mbox{hPa}}
+\def\Hz{\mbox{Hz}}
+\def\MHz{\mbox{MHz}}
+\def\AMU{\mbox{AMU}}
+
+\def\NH{\mbox{NH}}
+\def\NP{\mbox{NP}}
+
+\def\insta{\mathfrak{M}}
+\def\instb{\mathfrak{T}}
+
+\hyphenation{regularize}
+
+
+\begin{document}
+
+\title{Inverse Problems in Atmospheric Sciences}
+\author{Igor Yanovsky \\
+iy-005}
+
+\date{December 16, 2010}
+
+\maketitle
+
+
+\section{The Forward Model}
+
+The quantities to be retrieved can be represented by a {\it state vector} $\vx \in \mathbb{R}^n$.  The quantities actually measured in order to retrieve $\vx$ can be represented by the {\it measurement vector} $\vy \in \mathbb{R}^m$.  For atmospheric retrieval, $\vx$ usually contains atmospheric quantities and temperature, and $\vy$ is a radiance vector.  {\it Measurement noise} is denoted by the vector $\vn \in \mathbb{R}^m$, and is assumed to be Gaussian noise of zero mean, with error covariance $S_n := E(\vn \vn^T)$, where $E$ is the expectation operator. The spectral error covariance is assumed to be diagonal with elements $S_n$. The {\it forward model} $\vF: \mathbb{R}^n \rightarrow \mathbb{R}^m$, where $m > n$, defines the relationship between the measurement vector and the state vector as
+\begin{equation*}
+\vy = \vF(\vx) + \vn.
+\end{equation*}
+A {\it linear} problem is one for which the forward model is linear:
+\begin{equation}
+\vy = \vF(\vx) + \vn = K\vx + \vn,
+\end{equation}
+where $K$ is the $m \times n$ matrix of partial derivatives of forward model elements with respect to state vector elements.\footnote{Note that definitions of the gradient of a vector field, and even Jacobian, differ in different texts.  Here, both the gradient and the Jacobian matrix take the form of the Jacobian matrix, as defined in \cite{iy004}.}
+The problem is {\it nonlinear} when it is not linear. \\
+\ \\
+The quantities to be retrieved in most inverse problems are continuous functions, while measurements are always of discrete quantities \cite{rod00}. Thus, most inverse problems are ill-posed or {\it underconstrained}. This is simply dealt with by replacing the truly continuous state function, corresponding to an infinite number of variables, with a representation in terms of a finite number of parameters. This can be done to whatever spatial resolution or degree of accuracy is required for scientific use of the retrieval. After discretization, the problem may or may not be underconstrained, depending on the grid spacing required and the information content of the measurement. Discretizing the problem before attempting to solve it allows us to use the algebra of vectors and matrices, rather than the more general algebra of Hilbert space, and in any case numerical solutions must always be represented in some discrete form. \\
+\ \\
+A linearization of the forward model about some reference state $\vx$ is
+\begin{equation*}
+\vF(\vx + \delta \vx) \approx \vF(\vx)  + \vnabla \vF(\vx) \delta \vx,
+\end{equation*}
+where $K(\vx) = \vnabla \vF(\vx)$ is the Jacobian of the Forward Model, with $K_{ij} = \displaystyle \frac{\partial F_i}{\partial x_j}$, $i \leq m$, $j \leq n$.
+
+
+\section{Linear Problems without Measurement Error}
+
+
+Denote $\delta \vF = \vF(\vx + \delta \vx) - \vF(\vx)$ and $K = \vnabla \vF(\vx)$.  Then,
+\begin{equation}
+\delta \vF \approx K \delta \vx.
+\end{equation}
+We solve for an approximation $\delta \vy$ of $\delta \vF$, given by
+\begin{equation}
+\delta \vy = K \delta \vx.
+\end{equation}
+\begin{equation}
+\min_{\delta \vx} ||K \delta \vx - \delta \vy||_{L^2}
+\end{equation}
+\begin{equation}
+K^T K \delta \vx = K^T \delta \vy
+\end{equation}
+
+
+
+Given an $m \times n$ matrix $K$, the generalized matrix inverse $K^{+}$, or matrix pseudoinverse, is a unique $n \times m$ matrix.  If the inverse of $K^{T}K$ exists, then
+\begin{equation}
+K^{+} = (K^{T}K)^{-1} K^{T}
+\end{equation}
+
+Singular value decomposition (SVD).  $U$ is an $m \times m$ and $V$ is an $n \times n$ orthogonal matrices, and $\Sigma$ is an $m \times n$ diagonal matrix with nonnegative real numbers on the diagonal. 
+\begin{equation}
+K = U \Sigma V^T.
+\end{equation}
+Note that 
+\begin{equation}
+K^{+} = V \Sigma^{+} U^T.
+\end{equation}
+Derivation:
+\begin{eqnarray*}
+K^{+} &=& (K^{T}K)^{-1} K^{T} \\
+&=& \big( (U \Sigma V^T)^T U \Sigma V^T \big)^{-1} (U \Sigma V^T)^T \\
+&=& \big( V \Sigma^T U^T U \Sigma V^T)^{-1} V \Sigma^T U^T \\
+&=& \big( V \Sigma^T \Sigma V^T)^{-1} V \Sigma^T U^T \\
+&=& V (\Sigma^T \Sigma)^{-1} V^T V \Sigma^T U^T \\
+&=& V (\Sigma^T \Sigma)^{-1} \Sigma^T U^T \\
+&=& V \Sigma^{+} U^T \\
+\end{eqnarray*}
+
+\begin{equation}
+\delta \vx = (K^T K)^{-1} K^T \delta \vy = K^{+} \delta \vy = V \Sigma^{+} U^T \delta \vy.
+\end{equation}
+
+
+\subsection*{Example}
+
+
+For example, consider a case where $m = 3$ and $n = 2$. We have
+\begin{eqnarray*}
+[\delta \vx]_{2 \times 1} &=& [V]_{2 \times 2} \, [\Sigma^{+}]_{2 \times 3} \, [U^T]_{3 \times 3} \, [\delta \vy]_{3 \times 1} \\
+&=& \ \left[ \begin{array}{cc}
+v_{11} & v_{12} \\
+v_{21} & v_{22} 
+\end{array} \right]
+\left[ \begin{array}{ccc}
+1/\sigma_{1} & 0 & 0 \\
+0 & 1/\sigma_{2} & 0 
+\end{array} \right]
+\left[ \begin{array}{ccc}
+u_{11} & u_{21} & u_{31} \\
+u_{12} & u_{22} & u_{32} \\
+u_{13} & u_{23} & u_{33} 
+\end{array} \right]
+\left[ \begin{array}{c}
+\delta y_1 \\
+\delta y_2 \\
+\delta y_3 
+\end{array} \right] \\
+&=& \ \left[ \begin{array}{cc}
+v_{11} & v_{12} \\
+v_{21} & v_{22} 
+\end{array} \right]
+\left[ \begin{array}{ccc}
+1/\sigma_{1} & 0 & 0 \\
+0 & 1/\sigma_{2} & 0 
+\end{array} \right]
+\left[ \begin{array}{c}
+\left\langle \vu_{:,1},\delta \vy \right\rangle \\
+\left\langle \vu_{:,2},\delta \vy \right\rangle \\
+\left\langle \vu_{:,3},\delta \vy \right\rangle
+\end{array} \right] \\
+&=& \ \left[ \begin{array}{cc}
+v_{11} & v_{12} \\
+v_{21} & v_{22} 
+\end{array} \right]
+\left[ \begin{array}{c}
+\displaystyle \frac{ \left\langle \vu_{:,1},\delta \vy \right\rangle }{\sigma_1} \\
+\displaystyle \frac{ \left\langle \vu_{:,2},\delta \vy \right\rangle }{\sigma_2}
+\end{array} \right] \\ 
+&=& \displaystyle \frac{ \left\langle \vu_{:,1},\delta \vy \right\rangle }{\sigma_1} \vv_{:,1} + \frac{ \left\langle \vu_{:,2},\delta \vy \right\rangle }{\sigma_2} \vv_{:,2},
+\end{eqnarray*}
+where $\vu_{:,i}$ and $\vv_{:,i}$ denote $i$-th columns of $U$ and $V$ matrices, respectively, and $\left\langle {\cdot,\cdot} \right\rangle$ denotes inner product.
+
+In a general case, for arbitrary $m$ and $n$, we have
+\begin{equation}
+\delta \vx \ = \ V \Sigma^{+} U^T \delta \vy \ = \ \sum_{i=1}^{nc} \frac{ \left\langle \vu_{:,i},\delta \vy \right\rangle }{\sigma_i} \vv_{:,i},
+\end{equation}
+where $nc$ is the number of singular values not equal to $0$.  The summation is over the columns of $V$.
+
+
+
+\section*{Gaussian Distribution}
+A univariate Gaussian distribution is given by
+\begin{equation}
+p(x) \ = \ \frac{1}{\sqrt{2\pi} \sigma} \exp \bigg( -\frac{(x-\mu)^2}{2\sigma^2} \bigg). 
+\end{equation}
+
+\section*{Multivariate Gaussian}
+The probability density function of the $n$-dimensional multivariate normal distribution is given by
+\begin{equation}
+p(\vx) \ = \ \frac{1}{(2\pi)^{n/2} |S|^{1/2}} \exp \bigg( -\frac{(\vx-\vmu)^T S^{-1} (\vx - \vmu)}{2} \bigg),
+\end{equation}
+where $|B|$ denotes the determinant of a matrix $B$.
+
+Consider a bivariate Gaussian ($n=2$) with the diagonal covariance matrix $S$:
+\begin{eqnarray*}
+\vx &=& \left[ \begin{array}{c}
+x_{1} \\
+x_{2} 
+\end{array} \right], \ \ \ 
+\vmu = \left[ \begin{array}{c}
+\mu_1 \\
+\mu_2
+\end{array} \right], \ \ \ 
+S = \left[ \begin{array}{cc}
+\sigma_1^2 & 0 \\
+0 & \sigma_2^2 
+\end{array} \right].
+\end{eqnarray*}
+Then
+\begin{eqnarray*}
+p(\vx) &=&  \frac{1}{2\pi |S|^{1/2}} \exp \bigg( -\frac{(\vx-\vmu)^T S^{-1} (\vx - \vmu)}{2} \bigg) \\
+&=& \frac{1}{2\pi 
+\left| \begin{array}{cc}
+\sigma_{1}^2 & 0 \\
+0 & \sigma_{2}^2
+\end{array} \right|^{1/2}} 
+\exp \bigg( -\frac{1}{2} \left[ \begin{array}{c}
+x_{1} - \mu_1 \\
+x_{2} - \mu_2 
+\end{array} \right]^T 
+\left[ \begin{array}{cc}
+\sigma_{1}^2 & 0 \\
+0 & \sigma_{2}^2
+\end{array} \right]^{-1}
+\left[ \begin{array}{c}
+x_{1} - \mu_1 \\
+x_{2} - \mu_2 
+\end{array} \right] \bigg) \\
+&=& \frac{1}{2\pi (\sigma_{1}^2 \sigma_{2}^2)^{1/2}}
+\exp \Bigg( -\frac{1}{2} \left[ \begin{array}{c}
+x_{1} - \mu_1 \\
+x_{2} - \mu_2 
+\end{array} \right]^T 
+\left[ \begin{array}{cc}
+\frac{1}{\sigma_{1}^2} & 0 \\
+0 & \frac{1}{\sigma_{2}^2}
+\end{array} \right]
+\left[ \begin{array}{c}
+x_{1} - \mu_1 \\
+x_{2} - \mu_2 
+\end{array} \right] \Bigg) \\
+&=& \frac{1}{2\pi \sigma_{1}\sigma_{2}}
+\exp \Bigg( -\frac{1}{2} \left[ \begin{array}{c}
+x_{1} - \mu_1 \\
+x_{2} - \mu_2 
+\end{array} \right]^T 
+\left[ \begin{array}{c}
+\frac{1}{\sigma_{1}^2}(x_{1} - \mu_1) \\
+\frac{1}{\sigma_{2}^2}(x_{2} - \mu_2) 
+\end{array} \right] \Bigg) \\
+&=& \frac{1}{2\pi \sigma_{1}\sigma_{2}}
+\exp \bigg( -\frac{(x_{1} - \mu_1)^2}{2\sigma_1^2} - \frac{(x_{2} - \mu_2)^2}{2\sigma_{2}^2} \bigg) \\
+&=& \frac{1}{\sqrt{2\pi} \sigma_{1}} \exp \bigg( -\frac{(x_{1} - \mu_1)^2}{2\sigma_1^2} \bigg)
+\cdot \frac{1}{\sqrt{2\pi} \sigma_{2}} \exp \bigg( - \frac{(x_{2} - \mu_2)^2}{2\sigma_{2}^2} \bigg).
+\end{eqnarray*}
+Thus, the bivariate Gaussian density with the diagonal covariance matrix is the product of two independent Gaussian densities with means $\mu_1$ and $\mu_2$ and variances $\sigma_1^2$ and $\sigma_2^2$. \\
+\ \\
+\ \\
+
+\section*{Atmospheric Retrieval}
+Inverse methods rely on understanding of the functional properties of $\vF$ and invoke {\it a priori} knowledge of $\vn$ and/or $\vx$ to stabilize or {\it regularize} the inverse problem. \\
+\ \\
+The retrieval $\hat{\vx}$ is obtained using {\it inverse} or {\it retrieval method} ${\bf R}$
+\begin{equation*}
+\hat{\vx} = {\bf R} (\vy,\vx_a),
+\end{equation*}
+where $\vx_a$ is an {\it a priori} estimate of $\vx$. \\
+\ \\
+Statistical approach based on Bayes' theorem.
+\begin{equation*}
+\vy = \vF(\vx) + \vn
+\end{equation*}
+SVD can characterize the linearization of $\vF$.  However, we also need information about $\vx$ and $\vn$.
+
+
+\subsection*{Bayes' Theorem}
+
+
+Let's define $p(\vx,\vy)$ to be the joint probability distribution function (pdf) of $\vx$ and $\vy$, and $p(\vx)$ to be the marginal probability distribution of $\vx$:
+\begin{eqnarray*}
+p(\vx) &=& \int p(\vx,\vy) \, d\vy.
+\end{eqnarray*}
+$p(\vx | \vy)$ is the conditional probability distribution function of $\vx$ given $\vy$.
+\begin{eqnarray*}
+p(\vy,\vx) &=& p(\vy | \vx) p(\vx), \\
+p(\vx,\vy) &=& p(\vx | \vy) p(\vy).
+\end{eqnarray*}
+Thus,
+\begin{equation}
+p(\vx|\vy) = \frac{p(\vy | \vx) p(\vx)}{p(\vy)}.
+\label{eqn:Bayes}
+\end{equation}
+
+
+\subsection*{Gaussian case}
+
+
+Consider the multivariate Gaussian case:
+\begin{equation}
+p(\vx) = \frac{1}{(2\pi)^{d/2} |S_a|^{1/2}} \exp \Big( - \frac{1}{2} (\vx-\vx_a)^T S_a^{-1} (\vx - \vx_a) \Big), \\ 
+\label{eqn:Gaussian_apriori}
+\end{equation}
+\begin{equation}
+p(\vy|\vx) = \frac{1}{(2\pi)^{d/2} |S_{\vn}|^{1/2}} \exp \Big( - \frac{1}{2} (\vy-\vF(\vx))^T S_{\vn}^{-1} (\vy-\vF(\vx)) \Big),
+\label{eqn:Gaussian_noise}
+\end{equation}
+where
+\begin{eqnarray*}
+\vx_a &=& E[\vx], \\
+\bar{\vn} &=& E[\vn] = \mathbf{0},
+\end{eqnarray*}
+and {\it a priori} covariance matrix $S_a \in \mathbb{R}^{n \times n}$ and the measurement error covariance matrix $S_{\vn} \in \mathbb{R}^{m \times m}$ are given as
+\begin{eqnarray*}
+S_a &=& E[(\vx - \vx_a)(\vx - \vx_a)^T], \\
+S_{\vn} &=& E[(\vn - \bar{\vn})(\vn - \bar{\vn})^T].
+\end{eqnarray*}
+For numerical illustrations, the measurement error covariance matrix can be taken to be proportional to an identity matrix, of the form $S_{\vn} = \sigma_{\vn}^2 I_m$. \\
+\ \\
+$\vx_a$ is known from previous measurements. \\
+Taking the natural log of both sides in (\ref{eqn:Bayes}), we obtain:
+\begin{equation}
+\log p(\vx|\vy) = \log p(\vy|\vx) + \log p(\vx) + \mbox{const.}
+\label{eqn:Bayes_in_log}
+\end{equation}
+Plugging equations (\ref{eqn:Gaussian_apriori}) and (\ref{eqn:Gaussian_noise}) into (\ref{eqn:Bayes_in_log}), gives
+\begin{equation}
+-2\log p(\vx|\vy) = ||\vy-\vF(\vx)||_{S_{\vn}^{-1}}^2 + ||\vx - \vx_a||_{S_a^{-1}}^2 + \mbox{constant},
+\label{eqn:neg2logP}
+\end{equation}
+where the norm $||\va||_B$ for vector $\va$ and matrix $B$ is defined as:
+\begin{equation*}
+||\va||_B = \big[ \va^T B \va \big]^{\frac{1}{2}}.
+\end{equation*}
+The maximum a posteriori (MAP) solution is found from
+\begin{equation}
+\frac{d}{d\vx} \log p(\vx|\vy) \Big|_{\vx = \hat{\vx}} \ = \ \mathbf{0}.
+\end{equation}
+Since we seek to find the maximum of the conditional probability in (\ref{eqn:Bayes}), we minimize the cost function $E$, which is the negative of log conditional probability in (\ref{eqn:neg2logP}):
+\begin{eqnarray*}
+&& \min_{\vx} E(\vx), \\
+&& E(\vx) \ = \ ||\vy-\vF(\vx)||_{S_{\vn}^{-1}}^2 + ||\vx - \vx_a||_{S_a^{-1}}^2.
+\end{eqnarray*}
+The minimization problem can also be written as
+\begin{equation}
+\min_{\vx} E(\vx) \ = \ \min_{\vx} \Big\{ (\vy-\vF(\vx))^T S_{\vn}^{-1} (\vy-\vF(\vx)) + (\vx-\vx_a)^T S_a^{-1} (\vx - \vx_a) \Big\}.
+\label{eqn:minimization_functional}
+\end{equation}
+
+
+
+
+
+\pagebreak
+
+
+\subsection*{The Structured Least Squares}
+
+Since
+\begin{equation}
+\vF(\vx) \approx \vF(\vx_a) + K\cdot(\vx-\vx_a),
+\end{equation}
+we can write:
+\begin{equation}
+\vy - \vF(\vx) \approx - \big( K\cdot(\vx-\vx_a) - (\vy  - \vF(\vx_a)) \big).
+\end{equation}
+Multiplying through by the matrix $S_{\vn}^{-\frac{1}{2}}$, we obtain
+\begin{equation}
+S_n^{-\frac{1}{2}} (\vy - \vF(\vx)) \approx - \big(S_n^{-\frac{1}{2}} K\cdot(\vx-\vx_a) - S_n^{-\frac{1}{2}} (\vy  - \vF(\vx_a) \big).
+\end{equation}
+Therefore, equation (\ref{eqn:minimization_functional}) can be re-written as
+\begin{eqnarray*}
+&&\min_{\vx} \left\{ (\vy-\vF(\vx))^T S_n^{-1} (\vy-\vF(\vx)) + (\vx-\vx_a)^T S_a^{-1} (\vx - \vx_a) \right\} \\
+&& = \ \min_{\vx} \left\{ (\vy-\vF(\vx))^T S_n^{-\frac{1}{2}} S_n^{-\frac{1}{2}} (\vy-\vF(\vx)) + (\vx-\vx_a)^T S_a^{-\frac{1}{2}} S_a^{-\frac{1}{2}} (\vx - \vx_a) \right\} \\
+&& = \ \min_{\vx} \bigg\{ \big[S_n^{-\frac{1}{2}} K\cdot(\vx-\vx_a) - S_n^{-\frac{1}{2}} (\vy  - \vF(\vx_a)) \big]^T \big[S_n^{-\frac{1}{2}} K\cdot(\vx-\vx_a) - S_n^{-\frac{1}{2}} (\vy  - \vF(\vx_a)) \big] \\
+&& \ \ \ \ \ \ \ \ \ \ \ \ + \big[ S_a^{-\frac{1}{2}}(\vx-\vx_a) \big]^T  \big[ S_a^{-\frac{1}{2}} (\vx - \vx_a) \big]  \bigg\} \\
+&& = \ \min_{\vx} \left\{ \left[ \begin{array}{c}
+S_n^{-\frac{1}{2}} K \cdot(\vx-\vx_a) - S_n^{-\frac{1}{2}} (\vy  - \vF(\vx_a)) \\
+S_a^{-\frac{1}{2}}  (\vx-\vx_a)
+\end{array} \right]^T  \left[ \begin{array}{c}
+S_n^{-\frac{1}{2}} K \cdot(\vx-\vx_a) - S_n^{-\frac{1}{2}} (\vy  - \vF(\vx_a)) \\
+S_a^{-\frac{1}{2}}  (\vx-\vx_a)
+\end{array} \right] \right\} \\
+&& = \ \min_{\vx} \left\{ \left| \left|  \left[ \begin{array}{c}
+S_n^{-\frac{1}{2}} K \\
+S_a^{-\frac{1}{2}}
+\end{array} \right] (\vx-\vx_a) 
+- \left[ \begin{array}{c}
+S_n^{-\frac{1}{2}} (\vy  - \vF(\vx_a)) \\
+\mathbf{0}
+\end{array} \right] \right| \right|^2  \right\}.
+\end{eqnarray*}
+This expression can be written as
+\begin{equation}
+\min_{\delta \vx} ||K' \delta \vx - \delta \vy'||^2,
+\end{equation}
+where
+\begin{equation}
+K' = \left[ \begin{array}{c}
+S_n^{-\frac{1}{2}} K \\
+S_a^{-\frac{1}{2}}
+\end{array} \right], \ \ \
+\delta \vx = \vx - \vx_a, \ \ \
+\mbox{and} \ \ \
+\delta \vy' = \left[ \begin{array}{c}
+S_n^{-\frac{1}{2}} (\vy  - \vF(\vx_a)) \\
+\mathbf{0}
+\end{array} \right],
+\label{eqn:Kprime_and_deltayprime}
+\end{equation}
+and can be thought of as solving
+\begin{equation}
+K' \delta \vx = \delta \vy'.
+\end{equation}
+
+
+\subsection*{Solving Structured Least Squares}
+
+The Gauss-Newton method can be used to minimize nonlinear least-squares problem.  The {\it maximum a posteriori} (MAP) solution is obtained as follows
+\begin{equation}
+K'^T K' \delta \vx = K'^T \delta \vy'.
+\end{equation}
+\begin{equation}
+\hat{\vx} = \vx_a + (K'^T K')^{-1} K'^T \delta \vy'.
+\end{equation}
+Plugging in expressions for $K'$ and $\delta \vy'$ from (\ref{eqn:Kprime_and_deltayprime}), we obtain\footnote{Note that for matrices $A$ and $B$, $\displaystyle  \left[ \begin{array}{c}
+A \\
+B 
+\end{array} \right]^T = [A^T B^T]$.}
+\begin{equation}
+\hat{\vx} = \vx_a + \big( K^T S_n^{-1} K + S_a^{-1} \big)^{-1} K^T S_n^{-1} (\vy  - \vF(\vx_a)).
+\label{eqn:SLS_solution}
+\end{equation}
+The error between the true state $\vx$ and the retrieved state $\hat{\vx}$ is denoted as $\tilde{\vx} = \vx - \hat{\vx}$.
+
+
+\pagebreak
+
+
+\section{Error Characterization}
+
+\subsection{The Forward Model}
+
+For a remote or indirect measurement, the radiance vector $\vy$ is a sum of a vector valued function $\vF$ of the unknown state vector $\vx$ and noise vector $\vn$:
+\begin{equation}
+\vy = \vF(\vx) + \vn.
+\label{eqn:ForwardModel}
+\end{equation}
+
+
+\subsection{The Retrieval Method}
+
+
+The retrieval $\hat{\vx}$ is obtained using {\it inverse} or {\it retrieval method} ${\bf R}$
+\begin{equation}
+\hat{\vx} = {\bf R} (\vy,\vx_a),
+\label{eqn:RetrievalMethod}
+\end{equation}
+where $\vx_a$ is an {\it a priori} estimate of $\vx$.
+
+
+\subsection{The Transfer Function}
+
+
+We can relate the retrieval to the true state by substituting Equation (\ref{eqn:ForwardModel}) into Equation (\ref{eqn:RetrievalMethod}):
+\begin{equation}
+\hat{\vx} = {\bf R} \big(\vF(\vx) + \vn, \, \vx_a\big).
+\label{eqn:TransferFunction}
+\end{equation}
+{\it Characterization} refers to the sensitivity of the retrieval to the true state, expressed by the matrix of derivatives $\partial \hat{\vx} / \partial \vx$. \\
+{\it Error analysis} refers to the sensitivity of the retrieval to all of the sources of error in the transfer function, including noise in the measurement, and the effect of modeling the true physics of the measurement by some forward model.
+
+
+\subsection{Linearization of the Transfer Function}
+
+
+In Equation (\ref{eqn:TransferFunction}), linearize the forward model about $\vx = \vx_a$:
+\begin{equation}
+\hat{\vx} = {\bf R} \Big(\vF(\vx_a) + \frac{\partial \vF}{\partial \vx}(\vx-\vx_a) + \vn, \, \vx_a \Big).
+\label{eqn:Linearized_about_xa}
+\end{equation}
+We now linearize the inverse method with respect to its argument, $\vy$:
+\begin{equation*}
+\hat{\vx} = {\bf R} \big(\vF(\vx_a), \, \vx_a\big) + G \bigg( \frac{\partial \vF}{\partial \vx}(\vx-\vx_a) + \vn \bigg),
+\end{equation*}
+where $G = \partial {\bf R} / \partial \vy$ is the sensitivity of the retrieval to the measurement (or the sensitivity to measurement error).  This can be written as
+\begin{equation}
+\hat{\vx} - \vx_a \ = \ \underbrace{{\bf R} \big(\vF(\vx_a), \, \vx_a\big) - \vx_a}_{bias} + \underbrace{A(\vx-\vx_a)}_{smoothing} + \underbrace{G \vn}_{retrieval \; error},
+\label{eqn:xhat_minus_xa}
+\end{equation}
+where\footnote{To verify, derive $\displaystyle \frac{\partial \hat{\vx}}{\partial \vx}$ from (\ref{eqn:Linearized_about_xa}).}
+\begin{eqnarray*}
+A &=& G \frac{\partial \vF}{\partial \vx} \ = \ \frac{\partial \hat{\vx}}{\partial \vx}
+\end{eqnarray*}
+is the sensitivity of the retrieval to the true state. \\
+The averaging kernel describes the change in the estimate due to the change in the true state. \\
+The {\it bias} term should be zero for all well behaved inverse methods. \\
+The {\it smoothing} term represents the way in which the observing system smoothes the profile.  Assuming the bias term is zero, we have
+\begin{eqnarray}
+\hat{\vx} = \vx_a + A(\vx-\vx_a) + G \vn = (I_n - A) \vx_a + A \vx + G \vn.
+\label{eqn:Linearized_expression_xhat}
+\end{eqnarray}
+The third term on the right hand side of Equation (\ref{eqn:xhat_minus_xa}) is the error in the retrieval due to the total measurement error (the error in the retrieval due to $\vn$), rather than the error of the retrieval process. \\
+\ \\
+From the linearized expression for the retrieved state in Equation (\ref{eqn:Linearized_expression_xhat}), the sensitivity of the retrieved state to the {\it a priori} is given as:
+\begin{eqnarray*}
+\frac{\partial {\bf R}}{\partial \vx_a} = \frac{\partial \hat{\vx}}{\partial \vx_a} = I_n - A.
+\end{eqnarray*}
+The closer $A$ is to $I_n$, the less sensitive the retrieval is to the {\it a priori}.
+
+
+\section{Error Analysis}
+
+From Equation (\ref{eqn:xhat_minus_xa}), given that the bias term is zero, we can find that
+\begin{equation}
+\hat{\vx} - \vx \ = \ \underbrace{(A-I_n)(\vx-\vx_a)}_{smoothing \ error} + \underbrace{G \vn}_{retrieval \; noise}.
+\label{eqn:xhat_minus_x_error}
+\end{equation}
+
+
+\section{Characterization of the Estimate}
+
+Equation (\ref{eqn:SLS_solution}):
+\begin{equation}
+\hat{\vx} = \vx_a + \big( K^T S_{\vn}^{-1} K + S_a^{-1} \big)^{-1} K^T S_{\vn}^{-1} (\vy  - \vF(\vx_a)).
+\end{equation}
+\begin{equation}
+G = \frac{\partial {\bf R}}{\partial \vy} = \frac{\partial \hat{\vx}}{\partial \vy} = \big( K^T S_{\vn}^{-1} K + S_a^{-1} \big)^{-1} K^T S_{\vn}^{-1}.
+\end{equation}
+Since $\vy = \vF(\vx) + \vn$, and thus, $\vy  - \vF(\vx_a) \approx K(\vx-\vx_a) + \vn$, we have
+\begin{equation}
+\hat{\vx} = \vx_a + \big( K^T S_{\vn}^{-1} K + S_a^{-1} \big)^{-1} K^T S_{\vn}^{-1} (K(\vx-\vx_a) + \vn).
+\end{equation}
+\begin{eqnarray}
+A &=& GK \ = \ G \frac{\partial \vF}{\partial \vx} \ = \ \frac{\partial \hat{\vx}}{\partial \vx} \ = \ \big( K^T S_{\vn}^{-1} K + S_a^{-1} \big)^{-1} K^T S_{\vn}^{-1} K.
+\end{eqnarray}
+\begin{equation}
+\hat{\vx} = \vx_a + A(\vx-\vx_a) + G\vn.
+\end{equation}
+\ \\
+{\it Gauss-Newton}:
+\begin{equation*}
+\vx^{(k+1)} = \vx^{(k)} + \Big[ S_a^{-1} + K^T S_{\vn}^{-1} K \Big]^{-1}   \Big( K^T S_{\vn}^{-1} (\vy-\vF(\vx^{(k)})) - S_a^{-1} (\vx^{(k)} - \vx_a) \Big).
+\end{equation*}
+\begin{equation*}
+G = \frac{\partial {\bf R}}{\partial \vy} = \frac{\partial \hat{\vx}}{\partial \vy} = \big( S_a^{-1} + K^T S_{\vn}^{-1} K \big)^{-1} K^T S_{\vn}^{-1}.
+\end{equation*}
+Since $\vy = \vF(\vx) + \vn$, and thus, $\vy  - \vF(\vx^{(k)}) \approx K(\vx-\vx^{(k)}) + \vn$, we have
+\begin{equation*}
+\vx^{(k+1)} = \vx^{(k)} + \Big[ S_a^{-1} + K^T S_{\vn}^{-1} K \Big]^{-1}   \Big( K^T S_{\vn}^{-1} (K(\vx-\vx^{(k)}) + \vn) - S_a^{-1} (\vx^{(k)} - \vx_a) \Big).
+\end{equation*}
+What is $\hat{\vx}$ here?  \ \ \ $\hat{\vx} = \vx^{(k+1)}$?
+\begin{eqnarray*}
+A &=& GK \ = \ G \frac{\partial \vF}{\partial \vx} \ = \ \frac{\partial \hat{\vx}}{\partial \vx} \ = \ \big( K^T S_{\vn}^{-1} K + S_a^{-1} \big)^{-1} K^T S_{\vn}^{-1} K.
+\end{eqnarray*}
+\begin{equation*}
+\vx^{(k+1)} = \vx^{(k)} + A(\vx-\vx^{(k)}) + G\vn - \Big[ S_a^{-1} + K^T S_{\vn}^{-1} K \Big]^{-1}   S_a^{-1} (\vx^{(k)} - \vx_a).
+\end{equation*}
+
+\pagebreak
+
+\begin{eqnarray*}
+A = GK = \frac{\partial \hat{\vx}}{\partial \vx}.
+\end{eqnarray*}
+
+\begin{eqnarray}
+A \ = \ \frac{\partial \hat{\vx}}{\partial \vx} \ = \ \big( K^T S_{\vn}^{-1} K + S_a^{-1} \big)^{-1} K^T S_{\vn}^{-1} K.
+\end{eqnarray}
+
+
+
+\section{Optimal Methods for Nonlinear Inverse Problems}
+
+The Newton iteration can be used for finding the zero of the gradient of the cost function $E$ given by
+\begin{equation}
+E(\vx) \ = \ (\vy-\vF(\vx))^T S_n^{-1} (\vy-\vF(\vx)) + (\vx-\vx_a)^T S_a^{-1} (\vx - \vx_a).
+\label{eqn:cost_function_E}
+\end{equation}
+For the general vector equation $\nabla_{\vx} E(\vx) = {\bf 0}$, the {\it Newton} iteration can be written as:
+\begin{equation*}
+\vx^{(k+1)} = \vx^{(k)} - \big( \nabla_{\vx}^2 E(\vx^{(k)}) \big)^{-1} \nabla_{\vx} E(\vx^{(k)}).
+\label{eqn:Newton_iteration_general}
+\end{equation*}
+The derivative of the cost function (\ref{eqn:cost_function_E}) is
+\begin{equation*}
+\nabla_{\vx} E(\vx) \ = \ -[\nabla_{\vx} \vF(\vx)]^T S_n^{-1} (\vy-\vF(\vx)) + S_a^{-1} (\vx - \vx_a) \ = \ {\bf 0}.
+\end{equation*}
+Denote $K(\vx) = \nabla_{\vx} \vF(\vx)$.  Then,
+\begin{equation*}
+\nabla_{\vx} E(\vx) \ = \ -K^T(\vx) S_n^{-1} (\vy-\vF(\vx)) + S_a^{-1} (\vx - \vx_a) \ = \ {\bf 0}.
+\end{equation*}
+The Hessian of the cost function is
+\begin{equation*}
+\nabla_{\vx}^2 E(\vx) \ = \ S_a^{-1} + K^T(\vx) S_n^{-1} K(\vx) - \nabla_{\vx} K^T(\vx) S_n^{-1} (\vy-\vF(\vx)).
+\end{equation*}
+The Newton iteration is therefore given by
+\begin{equation*}
+\vx^{(k+1)} = \vx^{(k)} + \Big[ S_a^{-1} + K^T S_n^{-1} K - \nabla_{\vx} K^T S_n^{-1} (\vy-\vF(\vx)) \Big]^{-1}   \Big( K^T S_n^{-1} (\vy-\vF(\vx)) - S_a^{-1} (\vx - \vx_a) \Big).
+\label{eqn:Newton_iteration}
+\end{equation*}
+The {\it Gauss-Newton} iteration sets $\nabla_{\vx} K^T S_n^{-1} (\vy-\vF(\vx)) = {\bf 0}$:
+\begin{equation*}
+\vx^{(k+1)} = \vx^{(k)} + \Big[ S_a^{-1} + K^T S_n^{-1} K \Big]^{-1}   \Big( K^T S_n^{-1} (\vy-\vF(\vx^{(k)})) - S_a^{-1} (\vx^{(k)} - \vx_a) \Big),
+\label{eqn:GN_iteration}
+\end{equation*}
+where $K = K(\vx^{(k)})$. \\
+The {\it Levenberg-Marquardt} iteration is
+\begin{equation*}
+\vx^{(k+1)} = \vx^{(k)} + \Big[ (1 + \mu) S_a^{-1} + K^T S_n^{-1} K \Big]^{-1}   \Big( K^T S_n^{-1} (\vy-\vF(\vx^{(k)})) - S_a^{-1} (\vx^{(k)} - \vx_a) \Big),
+\label{eqn:LM_iteration}
+\end{equation*}
+where $K = K(\vx^{(k)})$. \\
+\ \\
+\ \\
+References \cite{bowrodkul07,dashsu07,jan93,bueerikuh05,reashisch06,wikipedia,wolfram,elazyl06}
+
+
+\pagebreak
+
+
+\bibliographystyle{ieeetr}
+\bibliography{iy-005}
+
+\end{document}
+
+
+@

@@ -1,0 +1,119 @@
+head	2.1;
+access;
+symbols
+	v5-02-NRT-19:2.1
+	v6-00:2.1
+	v5-02-NRT-18:2.1
+	v5-02:2.1
+	v5-01-NRT-17:2.1
+	v5-01-NRT-16:2.1
+	v5-01-NRT-15:2.1
+	v5-01-NRT-14:2.1
+	neuralnetworks-1-0:2.1.0.14
+	cfm-single-freq-0-1:2.1.0.12
+	v5-01:2.1
+	v5-00:2.1
+	v4-23-TA133:2.1.0.10
+	mus-emls-1-70:2.1.0.8
+	rel-1-0-englocks-work:2.1.0.6
+	VUMLS1-00:2.1
+	VPL1-00:2.1
+	V4-22-NRT-08:2.1
+	VAM1-00:2.1
+	V4-21:2.1.0.4
+	V4-13:2.1
+	V4-12:2.1
+	V4-11:2.1
+	V4-10:2.1
+	V3-43:2.1
+	M4-00:2.1
+	V3-41:2.1
+	V3-40-PlusGM57:2.1.0.2
+	V3-33:2.1
+	V3-31:2.1
+	V3-30-NRT-05:2.1
+	cfm-01-00:2.1
+	V3-30:2.1
+	V3-20:2.1
+	V3-10:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.1
+date	2008.06.18.20.43.01;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.1
+log
+@First commit
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id: diff.f9h,v 2.15 2008/02/07 18:45:21 pwagner Exp $
+
+!  subroutine FindUniqueInteger ( Set, Unique, nUnique,counts )
+!    ! Find all unique elements in the array Set
+!    integer, dimension(:), intent(in)            :: Set
+!    integer, dimension(:), intent(out)           :: Unique  ! array of unique elements
+!    integer, optional, intent(out)               :: nUnique ! num of unique elements
+!    integer, dimension(:), optional, intent(out) :: counts  ! how often each appears
+! 
+!    ! Local variables
+!    integer :: myUnique(size(Set))
+    integer :: i                        ! Loop counter
+    integer :: myCounts(size(Set))
+    integer :: num
+    integer :: prev
+
+    ! Executable code
+    num = 0
+    myCounts = 0
+    if ( present(nUnique) ) nUnique = 0
+    if ( size(Unique) < 1 ) return
+    if ( size(Set) < 1 ) then
+      return
+    elseif ( size(Set) < 2 ) then
+      Unique = Set(1)
+      if ( present(nUnique) ) nUnique = 1
+      if ( present(counts) ) counts = 1
+      return
+    endif
+    num = 1
+    myUnique(1) = Set(1)
+    myCounts(1) = 1
+    do i=2, size(Set)
+      prev = FindFirst( myUnique(1:num), Set(i) )
+      if ( prev > 0 ) then
+        myCounts(prev) = myCounts(prev) + 1
+      else
+        num = num + 1
+        myUnique(num) = Set(i)
+        myCounts(num) = 1
+      endif
+    enddo
+    if ( present(nUnique) ) nUnique = num
+    num = min( num, size(Unique) )
+!    Unique = 0
+!    Unique(1:num) = myUnique(1:num)
+!    if ( present(counts) ) counts(1:num) = myCounts(1:num)
+!  end subroutine FindUniqueInteger
+
+! $Log: diff.f9h,v $
+@

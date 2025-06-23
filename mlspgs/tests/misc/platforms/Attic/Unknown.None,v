@@ -1,0 +1,300 @@
+head	1.8;
+access;
+symbols
+	V2-21:1.7
+	V2-20:1.7
+	V2-11:1.7
+	V2-10:1.7
+	V2-00:1.7
+	V1-51:1.7
+	V1-50:1.7
+	V1-45:1.7
+	V1-44:1.7
+	V1-43:1.7
+	V1-42:1.7
+	V1-41:1.7
+	V1-32:1.7
+	V1-40:1.7
+	V1-31:1.7
+	V1-30:1.7
+	V1-13:1.7
+	V1-12:1.7
+	V1-11:1.7
+	V1-10:1.7
+	newfwm-feb03:1.7.0.2
+	V1-04:1.7
+	V1-03:1.7
+	V1-02:1.7
+	V1-00:1.6
+	newfwm-sep01:1.4.0.2
+	V0-7:1.4;
+locks; strict;
+comment	@# @;
+
+
+1.8
+date	2007.06.07.20.01.58;	author pwagner;	state dead;
+branches;
+next	1.7;
+
+1.7
+date	2002.04.26.23.37.47;	author pwagner;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2002.02.08.18.34.45;	author pwagner;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2002.02.06.18.48.52;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.08.15.23.12.10;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2001.08.13.23.23.12;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.06.14.23.04.16;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.06.14.22.36.31;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.8
+log
+@compiler-specific pieces removed from platforms directory
+@
+text
+@#a file full of macros to be included by a Makefile
+#to compile a Fortran 9x program or library
+
+# "$Id: Unknown.None,v 1.7 2002/04/26 23:37:47 pwagner Exp $"
+
+SHELL = /bin/sh
+
+# Path to source files:
+S = ..
+
+# Use the libmls.a directory, libdir, for .mod files
+# dir1 is the path prepended to its .o files in dependency lists
+libdir = ../../../lib/$(MLSCONFG)
+
+dir1 = $(libdir)/
+
+# sources shared by l2, l3 are in $(srclib)
+# these USE init_tables_module, which is different for l2 from the l3 version
+# while l2 and l3 use the same sources in srclib they do
+# require different objects--thus a source library instead of an object
+# library (such as libmls.a)
+# therefore we will tell make to add srclib to directories searched for .f90
+# while dir2, the path prepended to its .o files in dependency lists, is empty
+# so that its object files share the current working directory with those of l2
+srclib = ../../../srclib
+
+# This is the directory name from which we will get init_tables_module
+# (either l1, l2, or l3)
+init_m_dir = l1
+
+itmdir=../../../$(init_m_dir)/$(MLSCONFG)
+
+dir2 = $(itmdir)/
+
+# Do the load options include garbage collection?
+# The answer  will determine what we do to the machine.f90 file from
+MACH_DIR=../../../lib/machines/$(MLSCONFG)
+GC_IN_LDOPTS := $(shell echo ${LDOPTS} | grep '\-gc')
+ifeq ($(GC_IN_LDOPTS),)
+BAD_MATCH=-gc
+else
+BAD_MATCH=no -gc
+endif
+
+# Set paths for finding source files (different from .o and .mod)
+
+vpath %.o ./
+vpath %.f90 ../ $(MACH_DIR)
+vpath %.f9h ../ $(srclib)
+vpath %.f ../ $(PGSINC)
+vpath %.c ../
+
+FC = f95
+
+DUSTY = $(FOPTS) -dusty
+
+# All the paths to supply .mod and INCLUDE files used in compiling %.f90
+# Precede each path by "-I "
+INC_PATHS = $(EXTRA_PATHS) -I $S -I $(PGSINC)
+
+# Define some suffix rules
+
+.SUFFIXES:
+.SUFFIXES: .o .dbg.o .f90 .f .c
+.f90.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
+
+.f90.dbg.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< -o $*.dbg.o $(FAFTER)
+
+.f.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
+
+.c.o:
+	$(CC) -c ${INC_PATHS} -DNAGf90Fortran $<
+
+#Special load libraries
+l_specials =
+
+# $Log: Unknown.None,v $
+# Revision 1.7  2002/04/26 23:37:47  pwagner
+# Changes to allow building libs, too
+#
+# Revision 1.6  2002/02/08 18:34:45  pwagner
+# Defines BAD_MATCH for machine.f90 depending on whether collecting garbage
+#
+# Revision 1.5  2002/02/06 18:48:52  pwagner
+# Where to get machine.f90 now depends on whether to collect garbage
+#
+# Revision 1.4  2001/08/15 23:12:10  pwagner
+# Default rules for .f and .c; EXTRA_PATHS added to INC_PATHS
+#
+# Revision 1.3  2001/08/13 23:23:12  pwagner
+# Added rules for compiling .c files, too
+#
+# Revision 1.2  2001/06/14 23:04:16  pwagner
+# Now builds f90tex from util successfully
+#
+# Revision 1.1  2001/06/14 22:36:31  pwagner
+# First commit
+#
+@
+
+
+1.7
+log
+@Changes to allow building libs, too
+@
+text
+@d4 1
+a4 1
+# "$Id: Unknown.None,v 1.6 2002/02/08 18:34:45 pwagner Exp $"
+d81 3
+@
+
+
+1.6
+log
+@Defines BAD_MATCH for machine.f90 depending on whether collecting garbage
+@
+text
+@d4 1
+a4 1
+# "$Id: Unknown.None,v 1.5 2002/02/06 18:48:52 pwagner Exp $"
+d59 1
+a59 1
+INC_PATHS = $(EXTRA_PATHS) -I $(PGSINC) -I $S
+d81 3
+@
+
+
+1.5
+log
+@Where to get machine.f90 now depends on whether to collect garbage
+@
+text
+@d4 1
+a4 1
+# "$Id: Unknown.None,v 1.4 2001/08/15 23:12:10 pwagner Exp $"
+d36 2
+a37 1
+# The answer  will determine where we get out machine.f90 file from
+d40 1
+a40 1
+MACH_DIR=../machines/NAG.nogc
+d42 1
+a42 1
+MACH_DIR=../machines/$(MLSCONFG)
+d81 3
+@
+
+
+1.4
+log
+@Default rules for .f and .c; EXTRA_PATHS added to INC_PATHS
+@
+text
+@d4 1
+a4 1
+# "$Id: Unknown.None,v 1.3 2001/08/13 23:23:12 pwagner Exp $"
+d35 9
+d47 3
+a49 3
+vpath %.f90 ../ ../../../lib/machines/$(MLSCONFG)
+vpath %.f9h ../
+vpath %.f ../
+d80 3
+@
+
+
+1.3
+log
+@Added rules for compiling .c files, too
+@
+text
+@d4 1
+a4 1
+# "$Id: Unknown.None,v 1.2 2001/06/14 23:04:16 pwagner Exp $"
+d49 1
+a49 1
+INC_PATHS = -I $(PGSINC) -I $S
+d71 3
+@
+
+
+1.2
+log
+@Now builds f90tex from util successfully
+@
+text
+@d4 1
+a4 1
+# "$Id: Unknown.None,v 1.1 2001/06/14 22:36:31 pwagner Exp $"
+d40 2
+d54 1
+a54 1
+.SUFFIXES: .o .dbg.o .f90 .f
+d64 3
+d71 3
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d4 1
+a4 1
+# "$Id: Unknown.None,v 1.4 2001/05/18 23:30:22 pwagner Exp $"
+d38 1
+a38 1
+vpath %.f90 ../
+d66 3
+@
+

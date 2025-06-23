@@ -1,0 +1,249 @@
+head	1.4;
+access;
+symbols
+	v5-02-NRT-19:1.4
+	v6-00:1.4
+	v5-02-NRT-18:1.4
+	v5-02:1.4
+	v5-01-NRT-17:1.4
+	v5-01-NRT-16:1.4
+	v5-01-NRT-15:1.4
+	v5-01-NRT-14:1.4
+	neuralnetworks-1-0:1.4.0.14
+	cfm-single-freq-0-1:1.4.0.12
+	v5-01:1.4
+	v5-00:1.4
+	v4-23-TA133:1.4.0.10
+	mus-emls-1-70:1.4.0.8
+	rel-1-0-englocks-work:1.4.0.6
+	VUMLS1-00:1.4
+	VPL1-00:1.4
+	V4-22-NRT-08:1.4
+	VAM1-00:1.4
+	V4-21:1.4.0.4
+	V4-13:1.4
+	V4-12:1.4
+	V4-11:1.4
+	V4-10:1.4
+	V3-43:1.4
+	M4-00:1.4
+	V3-41:1.4
+	V3-40-PlusGM57:1.4.0.2
+	V2-24-NRT-04:1.3
+	V3-33:1.4
+	V2-24:1.3
+	V3-31:1.4
+	V3-30-NRT-05:1.4
+	cfm-01-00:1.4
+	V3-30:1.4
+	V3-20:1.4
+	V3-10:1.4
+	V2-23-NRT-02:1.3
+	V2-23:1.3
+	V2-22-NRT-01:1.3
+	V2-22:1.3
+	V2-21:1.1
+	V2-20:1.1
+	V2-11:1.1
+	V2-10:1.1
+	V2-00:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.4
+date	2008.01.07.21.40.29;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2007.08.20.22.02.52;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2007.08.13.17.29.16;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2006.01.14.00.48.25;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.4
+log
+@Replace DEFAULTUNDEFINEDVALUE with user-settable undefinedValue
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id: HuntRange.f9h,v 1.3 2007/08/20 22:02:52 pwagner Exp $
+
+    ! subroutine HuntRange_r4 ( list, vrange, irange, options )
+    ! Return index range through which
+    ! values of list are within vrange, inclusive
+    ! If none, return (/ 0, 0 /)
+    ! Special interpretation: inclusive means
+    ! if vrange(1) == vrange(2), any values of list also == vrange
+    ! are within that range
+    ! options allow simplifications
+    ! options           meaning
+    !   p               assume list is preordered s.t. list[i] <= list[i+1]
+    !                     (which should allow you to ignore FillVaalues)
+    ! Dummy args
+    ! real(rk), dimension(:)               :: list
+    ! real(rk), dimension(2)               :: vrange
+    character(len=*), optional, intent(in) :: options
+    real(rk) :: s
+    real(rk), dimension(size(list)) :: slist
+    real(rk), dimension(2) :: svrange
+    real(rk) :: smaller
+    integer, dimension(2) :: irange
+    ! Local variables
+    logical :: increasing
+    integer :: N
+    character(len=8) :: myOptions
+    ! Executable
+    myOptions = ' '
+    if ( present(options) ) myOptions = options
+    N = size(list)
+    ! Special cases
+    if ( N == 1 ) then
+      if ( ( list(1)-vrange(1) ) * ( vrange(2)-list(1) ) >= 0._rk ) then
+        irange = 1
+      else
+        irange = 0
+      endif
+      return
+    endif
+    s = 1. ! To be used by nearest intrinsic
+    ! First: is list increasing or decreasing?
+    increasing = ( list(N) >= list(1) ) .or. ( index(myOptions, 'p') > 0 )
+    if ( .not. increasing ) then
+      slist = -list
+      svrange = -vrange
+    elseif ( any(isFillValue(list)) .and. .false. ) then
+      ! I'm not happy with this idea--missing values are exactly that: missing
+      slist = list
+      call ReplaceFillValues( slist, &
+        & real(undefinedValue, kind(slist)), &
+        & options='-i' )
+      svrange = vrange
+    else
+      slist = list
+      svrange = vrange
+    endif
+    
+    ! Next make sure smaller of svrange is 1st, large second
+    if ( svrange(2) < svrange(1) ) then
+      smaller = svrange(2)
+      svrange(2) = svrange(1)
+      svrange(1) = smaller
+    endif
+    
+    ! Now find first slist s.t. slist(first) > svrange(1)
+    irange(1) = FindFirst( slist > nearest(svrange(1), -s) )
+    ! Now find last slist s.t. slist(last) < svrange(2)
+    irange(2) = FindLast( slist < nearest(svrange(2), s) .and. &
+      & slist > nearest(svrange(1), -s) )
+    irange(1) = min( irange(1), irange(2) )
+    if ( all(irange == 0 ) ) then
+      ! This is as it should be when none of list are within range
+    elseif ( any(irange == 0 ) ) then
+      ! This should be impossible, unless we're simply unlucky
+      call dump(list, 'list')
+      call dump(vrange, 'vrange')
+      call dump(irange, 'irange')
+      call MLSMessage ( MLSMSG_Error, &
+        & ModuleName, "illegal case of hunting range" )
+    else
+      ! This is as it should be: some of the list are within range
+    endif
+        
+! $Log: HuntRange.f9h,v $
+! Revision 1.3  2007/08/20 22:02:52  pwagner
+! Fixed another bug in HuntRange
+!
+! Revision 1.2  2007/08/13 17:29:16  pwagner
+! Fixed obvious bugs in HuntRange
+!
+! Revision 1.1  2006/01/14 00:48:25  pwagner
+! First commit
+!
+@
+
+
+1.3
+log
+@Fixed another bug in HuntRange
+@
+text
+@d12 1
+a12 1
+! $Id: HuntRange.f9h,v 1.2 2007/08/13 17:29:16 pwagner Exp $
+d61 1
+a61 1
+        & real(DEFAULTUNDEFINEDVALUE, kind(slist)), &
+d96 3
+@
+
+
+1.2
+log
+@Fixed obvious bugs in HuntRange
+@
+text
+@d12 1
+a12 1
+! $Id: HuntRange.f9h,v 1.1 2006/01/14 00:48:25 pwagner Exp $
+d57 7
+d81 1
+d85 1
+a85 1
+      ! This should be impossible
+d96 3
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d12 1
+a12 1
+! $Id: HuntRange.f9h,v 1.1 2005/12/23 03:09:33 vsnyder Exp $
+d14 1
+a14 1
+    ! subroutine HuntRange_r4 ( list, vrange, irange )
+d21 4
+d26 3
+a28 2
+    ! real(rk), dimension(:) :: list
+    ! real(rk), dimension(2) :: vrange
+d37 1
+d39 2
+d53 1
+a53 1
+    increasing = ( list(N) >= list(1) )
+d72 2
+a73 1
+    irange(2) = FindLast( slist < nearest(svrange(2), s) )
+d88 3
+@
+

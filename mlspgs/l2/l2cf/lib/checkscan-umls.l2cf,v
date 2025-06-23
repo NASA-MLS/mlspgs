@@ -1,0 +1,138 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.10
+	cfm-single-freq-0-1:1.2.0.8
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.6
+	mus-emls-1-70:1.2.0.4
+	rel-1-0-englocks-work:1.2.0.2
+	VUMLS1-00:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2017.03.09.01.50.19;	author mjschwar;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2017.02.24.23.49.19;	author mjschwar;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@*** empty log message ***
+@
+text
+@;must be after retrievalmacros
+begin Construct
+  ScanningUp: Boolean, formula="false"
+  ScanningDown: Boolean, formula="false"
+  ScanningUpXorDown: Boolean, formula="false"
+  GHzScanHeightInvalid: Boolean, formula="false"
+  testout: Boolean, formula="false"
+  MinTooLow: Boolean, formula="false"
+  MinTooHigh: Boolean, formula="false"
+  MaxTooLow: Boolean, formula="false"
+  MaxTooHigh: Boolean, formula="false"
+  MinOutOfRange: Boolean, formula="false"
+  MaxOutOfRange: Boolean, formula="false"
+  GHzScanHeightMif2: quantity, type=geolocation, module= GHz
+  GHzScanHeightMif28: quantity, type=geolocation, module= GHz
+  referenceMIF: quantity, type=geolocation, module= GHz
+  heightsTemplate: VectorTemplate, quantities = [ $
+    GHzScanHeightMif2, GHzScanHeightMif28, referenceMIF ]
+end Construct
+begin Retrieve 
+  Subset, quantity=apriori.tngtGeodAltGHz, mask=fill, surface=[ 2:2 ]
+end Retrieve
+begin Fill
+  GHzHeights: Vector, template=heightsTemplate
+   Fill, quantity=GHzHeights.GHzScanHeightMif2, method=vector, $
+   sourceQuantity=apriori.tngtGeodAltGHz, /ignoreTemplate, /sourceMask
+end Fill
+begin Retrieve 
+    Subset, quantity=apriori.tngtGeodAltGHz, mask=fill, surface=[ 28:28 ]
+end Retrieve
+begin Fill
+   Fill, quantity=GHzHeights.GHzScanHeightMif28, method=vector, $
+   sourceQuantity=apriori.tngtGeodAltGHz, /ignoreTemplate, /sourceMask
+end Fill
+begin Retrieve 
+  Subset, quantity=apriori.tngtGeodAltGHz, mask=fill, /reset
+end Retrieve
+begin Fill
+  Compare, a=GHzHeights.GHzScanHeightMif28, c=70000, formula="any a > c",$
+           Boolean=ScanningUp
+  Dump, Boolean=ScanningUp
+  Compare, a=GHzHeights.GHzScanHeightMif2, c=70000, formula="any a > c",$
+           Boolean=ScanningDown
+  Dump, Boolean=ScanningDown
+end Fill
+begin Fill
+   Skip, formula="ScanningUp and ScanningDown"
+   Skip, formula="(not ScanningUp) and (not ScanningDown)"
+   Reevaluate, Boolean=ScanningUpXorDown, formula="True"        
+end Fill
+begin Fill
+  Dump, Boolean=ScanningUpXorDown
+end Fill
+
+begin Fill 
+  Compare, a=apriori.tngtGeodAltGHz, c= -20000, formula="any a < c", $
+    Boolean=MinTooLow
+  Dump, Boolean=MinTooLow
+  
+  Compare, a=apriori.tngtGeodAltGHz, c= 20000, formula="all a > c", $
+    Boolean=MinTooHigh
+  Dump, Boolean=MinTooHigh
+  
+
+  Compare, a=apriori.tngtGeodAltGHz, c= 70000, formula="all a < c", $
+    Boolean=MaxTooLow
+   Dump, Boolean=MaxTooLow
+  
+  Compare, a=apriori.tngtGeodAltGHz, c= 110000, formula="any a > c", $
+    Boolean=MaxTooHigh
+  Dump, Boolean=MaxTooHigh
+  
+  
+  Reevaluate, Boolean=MinOutOfRange, formula="MinTooLow or MinTooHigh"
+  Reevaluate, Boolean=MaxOutOfRange, formula="MaxTooLow or MaxTooHigh"
+  Reevaluate, Boolean=GHzScanHeightInvalid, formula="MinOutOfRange or MaxOutOfRange"
+  Reevaluate, Boolean=GHzScanHeightInvalid, formula="GHzScanHeightInvalid or (not ScanningUpXorDown)"
+
+  
+  Dump, Boolean=GHzScanHeightInvalid
+end Fill
+@
+
+
+1.1
+log
+@Adding umls specific code to standard parts
+@
+text
+@d16 1
+d18 1
+a18 1
+    GHzScanHeightMif2, GHzScanHeightMif28 ]
+@
+

@@ -1,0 +1,256 @@
+head	2.2;
+access;
+symbols
+	v5-02-NRT-19:2.2
+	v6-00:2.2
+	v5-02-NRT-18:2.2
+	v5-02:2.2
+	v5-01-NRT-17:2.2
+	v5-01-NRT-16:2.2
+	v5-01-NRT-15:2.2
+	v5-01-NRT-14:2.2
+	neuralnetworks-1-0:2.2.0.16
+	cfm-single-freq-0-1:2.2.0.14
+	v5-01:2.2
+	v5-00:2.2
+	v4-23-TA133:2.2.0.12
+	mus-emls-1-70:2.2.0.10
+	rel-1-0-englocks-work:2.2.0.8
+	VUMLS1-00:2.2
+	VPL1-00:2.2
+	V4-22-NRT-08:2.2
+	whdrel10_merged_to_here:2.2
+	merge_whdrel10_from_here:2.2
+	TAG_TRUNK_AFTER_PW_CHANGES:2.2
+	TAG_TRUNK_BEFORE_PW_CHANGES:2.2
+	VAM1-00:2.2
+	whd-rel-1-0:2.2.0.6
+	V4-21:2.2.0.4
+	V4-13:2.2
+	V4-12:2.2
+	V4-11:2.2
+	V4-10:2.2
+	V3-43:2.2
+	M4-00:2.2
+	V3-41:2.2
+	V3-40-PlusGM57:2.2.0.2
+	V2-24-NRT-04:2.2
+	V3-33:2.2
+	V2-24:2.2
+	V3-31:2.2
+	V3-30-NRT-05:2.2
+	cfm-01-00:2.2
+	V3-30:2.2
+	V3-20:2.2
+	V3-10:2.2
+	V2-23-NRT-02:2.2
+	V2-23:2.2
+	V2-22-NRT-01:2.2
+	V2-22:2.2
+	V2-21:2.2
+	V2-20:2.2
+	V2-11:2.2
+	V2-10:2.2
+	V2-00:2.2
+	V1-51:2.2;
+locks; strict;
+comment	@# @;
+
+
+2.2
+date	2005.01.28.17.10.58;	author perun;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2005.01.27.17.40.23;	author perun;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.2
+log
+@Split MoonToLimbAngle into separate GHz and THz entries
+@
+text
+@; Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
+; U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+;
+;------------------- RCS Ident Info -----------------------
+; $Id: l1-v0151.cf,v 2.1 2005/01/27 17:40:23 perun Exp $
+;----------------------------------------------------------
+
+; This is the Configuration file for version 1.51 for the MLSL1 program set
+; of the Level 1 software for the EOS Microwave Limb Sounder (MLS).
+;
+; -----------------------------------------------------------------------------
+;
+; This section of the l1cf gives parameters that are global settings to the
+; software, output file comments, file versions etc.  Note that while this
+; section must occur first in the l1cf, the ordering of the options within the
+; section is not critical.
+;
+BEGIN GlobalSettings
+    ;;
+    ;; Will check this version against the OutputVersion in the PCF
+    ;;
+    OutputVersionString="v01-51"
+    ;;
+    ;;
+    ;; Whether on not to read ephemeris data and produce L1BOA data
+    ;;
+    ProduceL1BOA = true
+    ;;
+    ;; Whether on not to simulate L1BOA data (default = false)
+    ;;
+    SimOA = false
+    ;;
+END GlobalSettings
+;
+; ----------------------------------------------------------------------------
+;
+; This section of the l1cf gives calibration parameters
+;
+;
+BEGIN Calibration
+    ;;
+    ;; Calibration window length in MAFs:
+    ;;
+    CalWindow = 6 MAFs
+    ;;
+    ;; Space temperature in degrees K:
+    ;;
+    GHzSpaceTemp = 2.7 K
+    ;;
+    ;; Target temperature in degrees K:
+    ;;
+    GHzTargetTemp = 0 K
+    ;;
+    ;; Space temperature in degrees K:
+    ;;
+    THzSpaceTemp = 0 K
+    ;;
+    ;; Target temperature in degrees K:
+    ;;
+    ;; THzTargetTemp = 0 K
+    ;;
+    ;; Space encoder angle in degrees:
+    ;;
+    THzSpaceAngle = 356.8 Deg
+    ;;
+    THzMaxBias = 2.5
+    ;;
+    ;; Moon to Space port angle:
+    ;;
+    MoonToSpaceAngle = 5 Deg
+    ;;
+    ;; Moon to GHz Limb port angle:
+    ;;
+    MoonToLimbAngleGHz = 1 Deg
+    ;;
+    ;; Moon to THz Limb port angle:
+    ;;
+    MoonToLimbAngleTHz = 2 Deg
+    ;;
+    ;; MIF duration in seconds:
+    ;;
+    MIF_Duration = 0.1669623 s
+    ;;
+    ;; MIF dead time in seconds:
+    ;;
+    MIF_DeadTime = 5.000e-3 s
+    ;;
+    ;; MIFs per MAF:
+    ;;
+    MIFsPerMAF = 148 MIFs
+    ;;
+    ;; Default gains flag:
+    ;;
+    UseDefaultGains = false
+    ;;
+    ;; Calib DACS flag:
+    ;;
+    CalibDACS = true
+    ;;
+    ;; window to use for DACS DC baseline
+    ;;
+    DACSwindow = 10 MAFs
+    ;;
+    ;; Band switches:
+    ;;
+    switch,S=1,bandno=25
+    switch,S=2,bandno=3
+    switch,S=3,bandno=8
+    switch,S=4,bandno=12
+    switch,S=5,bandno=15
+    ;;
+    ;; Mark bad channels/bands
+    ;;
+    MarkChanBad, chan=22, bandno=3
+    MarkChanBad, chan=22, bandno=4
+    MarkChanBad, chan=22, bandno=5
+    MarkChanBad, chan=21, bandno=15
+    MarkChanBad, chan=21, bandno=18
+    MarkChanBad, chan=9, bandno=27
+    MarkChanBad, chan=10, bandno=27
+    MarkChanBad, chan=2, bandno=32
+    MarkChanBad, chan=4, bandno=32
+    ;;
+    ;; GHz MIF definitions:
+    ;;
+    limbMIFs, MIFs=[2:122], use=override, module=GHz
+    ;;
+    spaceMIFs, MIFs=[125:137], use=override, module=GHz
+    ;;
+    targetMIFs, MIFs=[140:147], use=override, module=GHz
+    ;;
+    discardMIFs, MIFs=[0:1,123:124,138:139,148:149], use=override, module=GHz
+    ;;
+    ;; THz MIF definitions:
+    ;;
+    limbMIFs, MIFs=[0:116], use=override, module=THz
+    ;;
+    spaceMIFs, MIFs=[120:131], use=override, module=THz
+    ;;
+    targetMIFs, MIFs=[133:141], use=override, module=THz
+    ;;
+    discardMIFs, MIFs=[117:119,132:132,142:149], use=override, module=THz
+    ;;
+END Calibration
+BEGIN Output
+    ;;
+    ;; whether or not to remove the GHz Baselines from the Rad output
+    ;;
+    RemoveBaseline = false
+    ;;
+    ;; The next entry determines if the precisions are scaled by the square
+    ;; root of the default values in the chi square table:
+    ;;
+    ; enablechi2err, bandno=1:34
+    ;;
+END Output
+;
+; ----------------------------------------------------------------------------
+@
+
+
+2.1
+log
+@Version 1.51 commit
+@
+text
+@d5 1
+a5 1
+; $Id: l1-v0150.cf,v 2.1 2004/12/01 17:53:07 perun Exp $
+d72 1
+a72 1
+    ;; Moon to Limb port angle:
+d74 5
+a78 1
+    MoonToLimbAngle = 2 Deg
+@
+

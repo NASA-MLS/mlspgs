@@ -1,0 +1,525 @@
+head	1.13;
+access;
+symbols
+	newfwm-sep01:1.12.0.2
+	V0-7:1.12
+	V0-5-Level2:1.9
+	V0-5-SIPS:1.9
+	V0_1:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.13
+date	2001.09.17.20.26.27;	author livesey;	state dead;
+branches;
+next	1.12;
+
+1.12
+date	2001.07.04.00.34.24;	author zvi;	state Exp;
+branches
+	1.12.2.1;
+next	1.11;
+
+1.11
+date	2001.06.21.13.07.09;	author zvi;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2001.06.07.23.39.32;	author pwagner;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2001.04.07.23.51.33;	author zvi;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2001.03.31.23.40.56;	author zvi;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2001.03.30.20.28.21;	author zvi;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2001.03.29.08.51.01;	author zvi;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2001.03.05.21.37.20;	author zvi;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.01.31.01.08.48;	author zvi;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2000.11.22.23.10.04;	author zvi;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2000.11.22.23.07.31;	author zvi;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2000.05.04.18.12.06;	author vsnyder;	state Exp;
+branches;
+next	;
+
+1.12.2.1
+date	2001.09.10.10.01.05;	author zvi;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.13
+log
+@New forward model
+@
+text
+@! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+module SPECTRO_DERIVATIVE_M
+  use ELLIPSE_M, only: ELLIPSE
+  use GET_DRAD_NOTDER_M, only: GET_DRAD_NOTDER
+  use L2PC_PFA_STRUCTURES, only: SPECTRO_PARAM
+  use MLSCommon, only: I4, R8
+  use PATH_ENTITIES_M, only: PATH_VECTOR,PATH_DERIVATIVE
+  use SPECTRO_DELTA_INTEGRAL_M, only: SPECTRO_DELTA_INTEGRAL
+  implicit NONE
+  private
+  public :: SPECTRO_DERIVATIVE
+!---------------------------- RCS Ident Info -------------------------------
+  private ID, ModuleName
+  CHARACTER (LEN=256) :: Id = &
+   "$Id: spectro_derivative_m.f90,v 1.12 2001/07/04 00:34:24 zvi Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= &
+   "$RCSfile: spectro_derivative_m.f90,v $"
+!---------------------------------------------------------------------------
+contains
+  Subroutine SPECTRO_DERIVATIVE(mid,brkpt,no_ele,z_path,h_path,phi_path, &
+ &           DHDZ_PATH,N_lvls,ref_corr,spsfunc_s,pfa_dbeta_s,    &
+ &           tau,t_script,s_np,s_nz,ilo,ihi,spectro,frq_i,elvar, &
+ &           midval_ndx,no_midval_ndx,gl_ndx,no_gl_ndx,midval_delta, &
+ &           k_spect,ier)
+!
+    Integer(i4), intent(in) :: N_LVLS, MID, BRKPT, ILO,   &
+   &                           IHI, S_NP, S_NZ, NO_ELE, frq_i
+
+    Integer(i4), intent(in) :: no_midval_ndx,no_gl_ndx
+    Integer(i4), intent(in) :: midval_ndx(:,:), gl_ndx(:,:)
+!
+    Type(path_vector), intent(in) :: z_path, h_path, phi_path, dhdz_path
+
+    Type(ELLIPSE), INTENT(IN OUT) :: elvar
+
+    Real(r8), intent(in) :: midval_delta(:)    ! (N2lvl)
+
+    Real(r8), intent(in) :: REF_CORR(:), TAU(:)
+    Real(r8), intent(in) :: T_SCRIPT(:), PFA_DBETA_S(:), SPSFUNC_S(:)
+!
+    Type(spectro_param), intent(in) :: SPECTRO
+!
+    Type(path_derivative), intent(in out) :: k_spect
+!
+    Integer(i4), intent(out) :: ier
+!
+    Integer(i4) :: ip, iz
+    Real(r8) :: r, delta_s(2*(N_lvls+1))
+    Real(r8) :: zeta_basis(s_nz), phi_basis(s_np)
+!
+    Real(r8), ALLOCATABLE, DIMENSION(:) :: Integrand
+!
+    phi_basis(1:s_np)  = REAL(spectro%phi_basis(1:s_np),r8)
+    zeta_basis(1:s_nz) = REAL(spectro%zeta_basis(1:s_nz),r8)
+!
+    ALLOCATE(Integrand(no_ele), STAT=ier)
+    IF(ier /= 0) THEN
+      Ier = 1
+      Print *,'** Error: ALLOCATION error in SPECTRO_DERIVATIVE ..'
+      Return
+    endif
+!
+!  Define the integrand array:
+!
+    integrand(1:no_ele) = pfa_dbeta_s(1:no_ele) * spsfunc_s(1:no_ele)
+!
+    do iz = 1, s_nz
+!
+      do ip = 1, s_np
+!
+        Call spectro_delta_integral(mid, brkpt, no_ele, z_path, h_path, &
+          &  phi_path,dhdz_path,N_lvls,ref_corr,zeta_basis,phi_basis,   &
+          &  s_nz,s_np,iz,ip,integrand,elvar,midval_ndx,no_midval_ndx,  &
+          &  gl_ndx,no_gl_ndx,midval_delta,delta_s)
+!
+! Now assemble the spectral derivatives for this frequency:
+!
+        Call get_drad_notder (delta_s, t_script, tau, mid, ilo, ihi, r)
+        k_spect%values(frq_i,iz,ip) = r
+!
+      end do                   ! ip loop
+!
+    end do                     ! iz loop
+
+    DEALLOCATE(Integrand, STAT=iz)
+!
+    Return
+  End Subroutine SPECTRO_DERIVATIVE
+end module SPECTRO_DERIVATIVE_M
+! $Log: spectro_derivative_m.f90,v $
+! Revision 1.12  2001/07/04 00:34:24  zvi
+! Modified & new code(s) for better timing
+!
+! Revision 1.11  2001/06/21 13:07:09  zvi
+! Speed enhancement MAJOR update
+!
+! Revision 1.10  2001/06/07 23:39:32  pwagner
+! Added Copyright statement
+!
+! Revision 1.9  2001/04/07 23:51:33  zvi
+! *** empty log message ***
+!
+! Revision 1.8  2001/03/31 23:40:56  zvi
+! Eliminate l2pcdim (dimension parameters) move to allocatable ..
+!
+! Revision 1.7  2001/03/30 20:28:21  zvi
+! General fix-up to get rid of COMMON BLOCK (ELLIPSE)
+!
+! Revision 1.6  2001/03/29 08:51:01  zvi
+! Changing the (*) toi (:) everywhere
+!
+! Revision 1.5  2001/03/05 21:37:20  zvi
+! New filter format
+!
+! Revision 1.1  2000/06/21 21:56:17  zvi
+! First version D.P.
+!
+! Revision 1.1  2000/05/04 18:12:06  vsnyder
+! Initial conversion to Fortran 90
+@
+
+
+1.12
+log
+@Modified & new code(s) for better timing
+@
+text
+@d17 1
+a17 1
+   "$Id: spectro_derivative_m.f90,v 1.11 2001/06/21 13:07:09 zvi Exp $"
+d93 3
+@
+
+
+1.12.2.1
+log
+@*** empty log message ***
+@
+text
+@d17 1
+a17 1
+   "$Id: spectro_derivative_m.f90,v 1.12 2001/07/04 00:34:24 zvi Exp $"
+a92 3
+! Revision 1.12  2001/07/04 00:34:24  zvi
+! Modified & new code(s) for better timing
+!
+@
+
+
+1.11
+log
+@Speed enhancement MAJOR update
+@
+text
+@d9 2
+a10 2
+  use PATH_ENTITIES_M, only: PATH_VECTOR,PATH_DERIVATIVE,PATH_INT_VECTOR_2D
+  use PFA_DB_DELTA_M, only: PFA_DB_DELTA
+d17 1
+a17 1
+   "$Id: spectro_derivative_m.f90,v 1.10 2001/06/07 23:39:32 pwagner Exp $"
+d26 1
+a26 1
+ &           Sps_zeta_loop, Sps_phi_loop, k_spect,ier)
+a33 1
+    Type(path_int_vector_2d), intent(in) :: Sps_zeta_loop,Sps_phi_loop
+d53 2
+d58 11
+d73 4
+a76 6
+        Call PFA_DB_DELTA (mid, brkpt, no_ele, z_path, h_path, phi_path, &
+ &           dhdz_path, N_lvls, ref_corr, spsfunc_s, pfa_dbeta_s,        &
+ &           zeta_basis, phi_basis, s_nz, s_np, iz, ip, elvar,           &
+ &           midval_delta, midval_ndx, no_midval_ndx, gl_ndx, no_gl_ndx, &
+ &           Sps_zeta_loop, Sps_phi_loop, delta_s, Ier)
+        if (Ier /= 0) Return
+d86 2
+d93 3
+@
+
+
+1.10
+log
+@Added Copyright statement
+@
+text
+@d9 1
+a9 1
+  use PATH_ENTITIES_M, only: PATH_VECTOR, PATH_DERIVATIVE
+d17 1
+a17 1
+       "$Id: spectro_derivative_m.f90,v 1.9 2001/04/07 23:51:33 zvi Exp $"
+d19 1
+a19 1
+       "$RCSfile: spectro_derivative_m.f90,v $"
+d23 4
+a26 3
+ &           DHDZ_PATH,N_lvls,ref_corr,spsfunc_s,pfa_dbeta_s,   &
+ &           tau,t_script,s_np,s_nz,ilo,ihi,spectro,frq_i,elvar,&
+ &           k_spect,ier)
+d30 3
+d34 1
+d39 2
+d61 5
+a65 3
+        Call pfa_db_delta (mid, brkpt, no_ele, z_path, h_path, phi_path, &
+      &      DHDZ_PATH, N_lvls, ref_corr, spsfunc_s, pfa_dbeta_s,        &
+      &      zeta_basis,phi_basis,s_nz,s_np,iz,ip,elvar,delta_s,Ier )
+d81 3
+@
+
+
+1.9
+log
+@*** empty log message ***
+@
+text
+@d1 3
+d17 1
+a17 1
+       "$Id: spectro_derivative_m.f90,v 1.8 2001/03/31 23:40:56 zvi Exp $"
+d72 3
+@
+
+
+1.8
+log
+@Eliminate l2pcdim (dimension parameters) move to allocatable ..
+@
+text
+@d14 1
+a14 1
+       "$Id: spectro_derivative_m.f90,v 1.7 2001/03/30 20:28:21 zvi Exp $"
+d32 1
+a32 2
+    Real(r8), intent(in) :: T_SCRIPT(:), PFA_DBETA_S(:), &
+   &                        SPSFUNC_S(:)
+d69 3
+@
+
+
+1.7
+log
+@General fix-up to get rid of COMMON BLOCK (ELLIPSE)
+@
+text
+@d3 1
+a3 2
+  use GET_DRAD_M, only: GET_DRAD
+  use L2PCdim, only: N2LVL
+d14 1
+a14 1
+       "$Id: spectro_derivative_m.f90,v 1.6 2001/03/29 08:51:01 zvi Exp $"
+d20 2
+a21 2
+ &           DHDZ_PATH,N_lvls,mxco,ref_corr,mnp,spsfunc_s,pfa_dbeta_s,   &
+ &           tau,t_script,Ary_Zero,s_np,s_nz,ilo,ihi,spectro,frq_i,elvar,&
+d24 1
+a24 1
+    Integer(i4), intent(in) :: MNP, N_LVLS, MXCO, MID, BRKPT, ILO,   &
+d32 1
+a32 1
+    Real(r8), intent(in) :: T_SCRIPT(:), ARY_ZERO(:), PFA_DBETA_S(:), &
+d42 2
+a43 1
+    Real(r8)    :: r, delta_s(N2lvl), zeta_basis(mxco), phi_basis(MNP)
+d53 2
+a54 2
+ &           DHDZ_PATH, N_lvls, ref_corr, spsfunc_s, pfa_dbeta_s,        &
+ &           zeta_basis,phi_basis,s_nz,s_np,iz,ip,elvar,delta_s,Ier )
+d59 1
+a59 1
+        Call get_drad (delta_s, t_script, tau, Ary_Zero, mid, ilo, ihi, r)
+d70 3
+@
+
+
+1.6
+log
+@Changing the (*) toi (:) everywhere
+@
+text
+@d2 1
+d15 1
+a15 1
+       "$Id: spectro_derivative_m.f90,v 1.5 2001/03/05 21:37:20 zvi Exp $"
+d22 1
+a22 1
+ &           tau,t_script,Ary_Zero,s_np,s_nz,ilo,ihi,spectro,frq_i,      &
+d30 2
+d54 1
+a54 1
+ &           zeta_basis, phi_basis, s_nz, s_np, iz, ip, delta_s, Ier )
+d70 3
+@
+
+
+1.5
+log
+@New filter format
+@
+text
+@d14 1
+a14 1
+       "$Id: spectro_derivative_m.f90,v 1.1 2000/06/21 21:56:17 zvi Exp $"
+d29 3
+a31 3
+    Real(r8), intent(in) :: REF_CORR(*), TAU(*)
+    Real(r8), intent(in) :: T_SCRIPT(*), ARY_ZERO(*), PFA_DBETA_S(*), &
+   &                        SPSFUNC_S(*)
+d67 3
+@
+
+
+1.4
+log
+@New version of forward model
+@
+text
+@@
+
+
+1.3
+log
+@Re-add basic stuff
+@
+text
+@d5 2
+a6 2
+  use MLSCommon, only: I4, R4, R8
+  use PATH_ENTITIES_M, only: PATH_VECTOR
+d19 4
+a22 4
+  Subroutine SPECTRO_DERIVATIVE(mid, brkpt, no_ele, z_path, h_path, phi_path, &
+ &           DHDZ_PATH, N_lvls, mxco, ref_corr,mnp, spsfunc_s, pfa_dbeta_s,   &
+ &           tau, t_script, Ary_Zero, s_np, s_nz, ilo, ihi, spectro, k_spect, &
+ &           Ier )
+d25 1
+a25 1
+   &                           IHI, S_NP, S_NZ, NO_ELE
+d35 1
+a35 1
+    Real(r4), intent(out) :: k_spect(mxco,*)
+d57 1
+a57 1
+        k_spect(iz, ip) = r
+@
+
+
+1.2
+log
+@New version
+@
+text
+@d4 3
+a6 2
+  use L2PC_PFA_STRUCTURES, only: MAXAITKENPTS, MAXPFACH, SPECTRO_PARAM
+  use MLSCommon, only: I4, R4
+a10 1
+
+d14 1
+a14 1
+       "$Id: spectro_derivative_m.f90,v 1.1 2000/05/04 18:12:06 vsnyder Exp $"
+a17 1
+
+d19 9
+d29 12
+a40 26
+  Subroutine SPECTRO_DERIVATIVE ( z_path, t_path, h_path, phi_path,      &
+ &           dHdz_path, N_lvls, jf, jch, nf, no_coeffs_f, mxco, f_basis, &
+ &           mr_f, ref_corr, mnp, no_phi_f, phi_basis_f, IndxR, IndxL,   &
+ &           path_brkpt, beta_t_power, pfa_dbeta_s, tau, t_script,       &
+ &           Ary_Zero, ilo, ihi, s_nz, s_np, spectro, Rad_s, Ier )
+!
+    real(r4), intent(in) :: Z_PATH(*), T_PATH(*), H_PATH(*), PHI_PATH(*)
+    real(r4), intent(in) :: DHDZ_PATH(*)
+    integer(i4), intent(in) :: N_LVLS, JF, JCH, NF, NO_COEFFS_f(*), MXCO
+    real(r4), intent(in) :: F_BASIS(mxco,*), MR_F(mxco,mnp,*), REF_CORR(*)
+    integer(i4), intent(in) :: MNP, NO_PHI_F(*)
+    real(r4), intent(in) :: PHI_BASIS_F(mnp,*)
+    integer(i4), intent(in) :: INDXR, INDXL, PATH_BRKPT(*)
+    real(r4), intent(in) :: BETA_T_POWER(N2lvl,maxaitkenpts,2,*)
+!   real(r4), intent(in) :: BETA_T_POWER(N2lvl,maxaitkenpts,maxpfach,*)
+    real(r4), intent(in) :: PFA_DBETA_S(N2lvl,maxaitkenpts,2,*)
+!   real(r4), intent(in) :: PFA_DBETA_S(N2lvl,maxaitkenpts,maxpfach,*)
+    real(r4), intent(in) :: TAU(*), T_SCRIPT(*), ARY_ZERO(*)
+    integer(i4), intent(in) :: ILO, IHI
+    integer(i4), intent(in) :: S_NZ, S_NP
+    type(spectro_param), intent(in) :: SPECTRO
+    real(r4), intent(out) :: Rad_s(maxaitkenpts,mxco,*)
+    integer(i4), intent(out) :: ier
+
+    Real(r4) ::  delta_s(N2lvl)
+    Integer(i4) :: ip,iz
+d42 2
+a43 1
+    if(s_nz < 1 .or. s_np < 1) Return
+d49 3
+a51 6
+        Call pfa_db_delta ( z_path, t_path, h_path, phi_path, dHdz_path,    &
+   &         N_lvls, jf, jch, nf, no_coeffs_f, mxco, N2lvl, maxaitkenpts,   &
+   &         maxpfach, f_basis, mr_f, ref_corr, mnp, no_phi_f, phi_basis_f, &
+   &         IndxR, IndxL, path_brkpt, beta_t_power, pfa_dbeta_s,           &
+   &         spectro%zeta_basis, spectro%phi_basis, s_nz, s_np, iz, ip,     &
+   &         delta_s, Ier )
+d56 2
+a57 2
+        Call get_drad ( delta_s, t_script, tau, Ary_Zero, IndxR,            & 
+   &                    IndxL, ilo, ihi, Rad_s(jf, iz, ip))
+a65 1
+
+d67 3
+a71 1
+!
+@
+
+
+1.1
+log
+@Initial conversion to Fortran 90
+@
+text
+@d14 1
+a14 1
+       "$Id: SPECTRO_DERIVATIVE_M,v 1.12 2000/02/08 19:54:57 vsnyder Exp $"
+d75 4
+a78 1
+! $Log: SPECTRO_DERIVATIVE_M,v $
+@
+

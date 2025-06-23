@@ -1,0 +1,443 @@
+head	2.3;
+access;
+symbols
+	v5-02-NRT-19:2.3
+	v6-00:2.3
+	v5-02-NRT-18:2.3
+	v5-02:2.3
+	v5-01-NRT-17:2.3
+	v5-01-NRT-16:2.3
+	v5-01-NRT-15:2.3
+	v5-01-NRT-14:2.3
+	neuralnetworks-1-0:2.3.0.10
+	cfm-single-freq-0-1:2.3.0.8
+	v5-01:2.3
+	v5-00:2.3
+	v4-23-TA133:2.3.0.6
+	mus-emls-1-70:2.3.0.4
+	rel-1-0-englocks-work:2.3.0.2
+	VUMLS1-00:2.3
+	VPL1-00:2.3
+	V4-22-NRT-08:2.3;
+locks; strict;
+comment	@# @;
+
+
+2.3
+date	2016.03.25.01.03.25;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2016.03.24.23.17.58;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2016.03.24.22.46.00;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.3
+log
+@Make Output_v public
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Output_0
+
+  ! Simple low-level output.
+
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  !!!                                                                   !!!
+  !!! PLEASE: Don't put a bunch of fancy stuff here.  This module is    !!!
+  !!! intended to be reusable.                                          !!!
+  !!!                                                                   !!!
+  !!! Instead, extend the type Output_0_t in a different module,        !!!
+  !!! override the bindings, and associate the Output_v pointer with    !!!
+  !!! an object of that type.  If you need to provide more information  !!!
+  !!! via arguments, package it in whatever type object you want to,    !!!
+  !!! and associate it with the "More" dummy argument, which is         !!!
+  !!! unlimited polymorphic and can therefore have an actual argument   !!!
+  !!! of any type associated with it.  Use a SELECT TYPE construct in   !!!
+  !!! the fancy routines to "pop open" the "More" argument.             !!!
+  !!!                                                                   !!!
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+  use, intrinsic :: ISO_Fortran_Env, only: OUTPUT_UNIT
+
+  implicit none
+  private
+
+  interface Output
+    module procedure Output_Char
+    module procedure Output_Double
+    module procedure Output_Integer
+    module procedure Output_Logical
+    module procedure Output_Single
+  end interface
+
+  ! Public procedures
+  public :: Blanks, NewLine, NewPage
+  public :: Output, Output_Char, Output_Double
+  public :: Output_Integer, Output_Logical, Output_Single
+  public :: Parse_Advance
+
+  ! Public type
+  public :: Output_0_t
+
+  ! Public Variables
+  public :: NewPage_char, Output_v, Output_0_v
+
+  type :: Output_0_t
+    integer :: PrUnit = output_unit           ! Unit to use for output
+    character(:), pointer :: Chars => NULL()  ! Characters to output
+  contains
+    ! Override these in an extension type if you need something fancier,
+    ! and associate an object of that type with Output_v
+    procedure :: Output_Char => Output_Char_0
+    procedure, nopass :: Output_Double => Output_Double_0
+    procedure, nopass :: Output_Integer => Output_Integer_0
+    procedure, nopass :: Output_Logical => Output_Logical_0
+    procedure, nopass :: Output_Single => Output_Single_0
+    generic :: Output => Output_Char, Output_Double, Output_Integer, &
+      & Output_Logical, Output_Single
+  end type Output_0_t
+
+  type(Output_0_t), target, save :: Output_0_v
+
+  class(Output_0_t), pointer :: Output_v => null()
+
+  ! Change this from your main program if necessary.
+  character, save :: NewPage_char = achar(12) ! Ctrl-L
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: output_0.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  ! -----------------------------------------------------  Blanks  -----
+  subroutine Blanks ( N_Blanks, Advance, More )
+    integer, intent(in) :: N_Blanks
+    character, intent(in), optional :: Advance
+    class(*), optional :: More
+    integer :: I ! Blanks to write in next output statement
+    integer :: N ! Blanks still to write
+    character(127) :: Buf = ''
+    n = n_blanks
+    do while ( n > 0 )
+      i = min(n, len(buf))
+      call output ( buf(:i), more=more )
+      n = n - i
+    end do
+    call output ( '', advance=advance, more=more )
+  end subroutine Blanks
+
+  ! ----------------------------------------------------  NewLine  -----
+  subroutine NewLine
+    call output ( '', advance='yes' )
+  end subroutine NewLine
+
+  ! ----------------------------------------------------  NewPage  -----
+  subroutine NewPage
+    call output ( NewPage_char )
+  end subroutine NewPage
+
+  ! ----------------------------------------------  Output_Char_0  -----
+
+  subroutine Output_Char_0 ( Chars, Advance, More )
+    class(Output_0_t), intent(in) :: Chars
+    character(len=*), intent(in), optional :: Advance
+    class(*), optional :: More
+    write ( chars%prunit, '(a)', advance=parse_advance ( advance ) ) chars%chars
+  end subroutine Output_Char_0
+
+  ! ------------------------------------------------  Output_Char  -----
+
+  subroutine Output_Char ( Chars, Advance, More )
+    character(len=*), intent(in), target :: Chars
+    character(len=*), intent(in), optional :: Advance
+    class(*), intent(inout), optional :: More
+    if ( .not. associated(output_v) ) output_v => output_0_v
+    output_v%chars => chars
+    call output_v%output ( advance, more )
+  end subroutine Output_Char
+
+  ! ----------------------------------------------  Output_Double  -----
+
+  subroutine Output_Double_0 ( Value, Format, Advance, Before, After, More )
+    double precision, intent(in) :: Value
+    character(*), intent(in), optional :: Format ! Trailing blanks trimmed
+      ! If you want trailing blanks, put them in After; don't ask for them
+      ! in Format.
+    character(*), intent(in), optional :: Advance
+    character(*), intent(in), optional :: Before
+    character(*), intent(in), optional :: After
+    class(*), intent(inout), optional :: More
+    character(30) :: Buf
+    integer :: D, I
+    if ( present(before) ) call output ( before )
+    if ( present(format) ) then
+      write ( buf, format ) value
+    else
+      write ( buf, * ) value
+      buf = adjustl(buf)
+      d = index(buf,'.')
+      if ( d /= 0 ) then
+        ! Trim trailing zeroes
+        i = scan(buf,'Ee')
+        if ( i == 0 ) i = len_trim(buf) + 1
+        do i = i-1, d+1, -1
+          if ( buf(i:i) == '0' ) buf(i:) = buf(i+1:)
+        end do
+      end if
+      if ( buf(i:i) == '.' ) buf(i+1:) = '0' // buf(i+1:)
+    end if
+    if ( present(after) ) then
+      call output ( trim(buf) )
+      call output ( after, advance )
+    else
+      call output ( trim(buf), advance )
+    end if
+  end subroutine Output_Double_0
+
+  subroutine Output_Double ( Value, Format, Advance, Before, After, More )
+    double precision, intent(in) :: Value
+    character(*), intent(in), optional :: Format ! Trailing blanks trimmed
+      ! If you want trailing blanks, put them in After; don't ask for them
+      ! in Format.
+    character(*), intent(in), optional :: Advance
+    character(*), intent(in), optional :: Before
+    character(*), intent(in), optional :: After
+    class(*), intent(inout), optional :: More
+    if ( .not. associated(output_v) ) output_v => output_0_v
+    call output_v%output ( Value, Format, Advance, Before, After, More )
+  end subroutine Output_Double
+
+  ! ---------------------------------------------  Output_Integer  -----
+
+  subroutine Output_Integer_0 ( Value, Places, Format, Advance, Before, After, &
+    & More )
+    integer, intent(in) :: Value
+    integer, intent(in), optional :: Places ! Minimum number of places
+    character(*), intent(in), optional :: Format ! Takes priority over places.
+      ! Trailing blanks trimmed. If you want trailing blanks, put them in
+      ! After; don't ask for them in Format.
+    character(*), intent(in), optional :: Advance
+    character(*), intent(in), optional :: Before
+    character(*), intent(in), optional :: After
+    class(*), intent(inout), optional :: More
+    character(30) :: Buf
+    integer :: I, MyPlaces ! Minimum number of places to occupy
+    if ( present(before) ) call output ( before )
+    myPlaces = 0
+    if ( present(places) ) myPlaces = places
+    if ( present(format) ) then
+      write ( buf, format ) value
+    else
+      write ( buf, '(i12)' ) value
+      i = max( 1, min(13-myPlaces, index(buf,' ',back=.true.)+1) )
+      buf = buf(i:)
+    end if
+    if ( present(after) ) then
+      call output ( trim(buf) )
+      call output ( after, advance )
+    else
+      call output ( trim(buf), advance )
+    end if
+  end subroutine Output_Integer_0
+
+  subroutine Output_Integer ( Value, Places, Format, Advance, Before, After, &
+    & More )
+    integer, intent(in) :: Value
+    integer, intent(in), optional :: Places ! Minimum number of places
+    character(*), intent(in), optional :: Format ! Takes priority over places.
+      ! Trailing blanks trimmed. If you want trailing blanks, put them in
+      ! After; don't ask for them in Format.
+    character(*), intent(in), optional :: Advance
+    character(*), intent(in), optional :: Before
+    character(*), intent(in), optional :: After
+    class(*), intent(inout), optional :: More
+    if ( .not. associated(output_v) ) output_v => output_0_v
+    call output_v%output ( Value, Places, Format, Advance, Before, After, More )
+  end subroutine Output_Integer
+
+  ! ---------------------------------------------  Output_Logical  -----
+
+  subroutine Output_Logical_0 ( Value, Advance, Before, After, More )
+    logical, intent(in) :: Value
+    character(*), intent(in), optional :: Advance
+    character(*), intent(in), optional :: Before
+    character(*), intent(in), optional :: After
+    class(*), intent(inout), optional :: More
+    if ( present(before) ) call output ( before )
+    if ( present(after) ) then
+      call output ( merge('T','F',value) )
+      call output ( after, advance )
+    else
+      call output ( merge('T','F',value), advance )
+    end if
+  end subroutine Output_Logical_0
+
+  subroutine Output_Logical ( Value, Advance, Before, After, More )
+    logical, intent(in) :: Value
+    character(*), intent(in), optional :: Advance
+    character(*), intent(in), optional :: Before
+    character(*), intent(in), optional :: After
+    class(*), intent(inout), optional :: More
+    if ( .not. associated(output_v) ) output_v => output_0_v
+    call output_v%output ( Value, Advance, Before, After, More )
+  end subroutine Output_Logical
+
+  ! ----------------------------------------------  Output_Single  -----
+
+  subroutine Output_Single_0 ( Value, Format, Advance, Before, After, More )
+    real, intent(in) :: Value
+    character(*), intent(in), optional :: Format ! Trailing blanks trimmed
+      ! If you want trailing blanks, put them in After; don't ask for them
+      ! in Format.
+    character(*), intent(in), optional :: Advance
+    character(*), intent(in), optional :: Before
+    character(*), intent(in), optional :: After
+    class(*), intent(inout), optional :: More
+    character(30) :: Buf
+    integer :: D, I
+    if ( present(before) ) call output ( before )
+    if ( present(format) ) then
+      write ( buf, format ) value
+    else
+      write ( buf, * ) value
+      buf = adjustl(buf)
+      d = index(buf,'.')
+      if ( d /= 0 ) then
+        ! Trim trailing zeroes
+        i = scan(buf,'Ee')
+        if ( i == 0 ) i = len_trim(buf) + 1
+        do i = i-1, d+1, -1
+          if ( buf(i:i) == '0' ) buf(i:) = buf(i+1:)
+        end do
+      end if
+      if ( buf(i:i) == '.' ) buf(i+1:) = '0' // buf(i+1:)
+    end if
+    if ( present(after) ) then
+      call output ( trim(buf) )
+      call output ( after, advance )
+    else
+      call output ( trim(buf), advance )
+    end if
+  end subroutine Output_Single_0
+
+  subroutine Output_Single ( Value, Format, Advance, Before, After, More )
+    real, intent(in) :: Value
+    character(*), intent(in), optional :: Format ! Trailing blanks trimmed
+      ! If you want trailing blanks, put them in After; don't ask for them
+      ! in Format.
+    character(*), intent(in), optional :: Advance
+    character(*), intent(in), optional :: Before
+    character(*), intent(in), optional :: After
+    class(*), intent(inout), optional :: More
+    if ( .not. associated(output_v) ) output_v => output_0_v
+    call output_v%output ( Value, Format, Advance, Before, After, More )
+  end subroutine Output_Single
+
+  ! ----------------------------------------------  Parse_Advance  -----
+
+  character(3) function Parse_Advance ( Advance )
+    ! Return "no" if Advance is absent.
+    ! Return "yes" if the first letter of Advance is "Y" or "y".
+    ! Return "no" if the first letter of Advance is anything else.
+    character(len=*), intent(in), optional :: Advance
+    parse_advance = 'no'
+    if ( .not. present(advance) ) return
+    if ( advance(1:1) == 'Y' .or. advance(1:1) == 'y' ) parse_advance = 'yes'
+  end function Parse_Advance
+
+  ! ..............................................  not_used_here  .....
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: output_0.f90,v 2.2 2016/03/24 23:17:58 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Output_0
+
+! $Log: output_0.f90,v $
+! Revision 2.2  2016/03/24 23:17:58  vsnyder
+! Add NewPage and NewPage_char; make Output_0_v public
+!
+! Revision 2.1  2016/03/24 22:46:00  vsnyder
+! Initial commit
+!
+@
+
+
+2.2
+log
+@Add NewPage and NewPage_char; make Output_0_v public
+@
+text
+@d22 1
+a22 1
+  !!! override the bindings, and associate the Output_0_v pointer with  !!!
+d55 1
+a55 1
+  public :: NewPage_char, Output_0_v
+d74 1
+a74 1
+  class(Output_0_t), pointer, public :: Output_v => null()
+d327 1
+a327 1
+       "$Id: output_0.f90,v 2.1 2016/03/24 22:46:00 vsnyder Exp $"
+d337 3
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d45 2
+a46 1
+  public :: Blanks, NewLine
+d51 7
+a57 1
+  type, public :: Output_0_t
+d71 1
+a71 1
+ 
+d76 3
+d81 1
+a81 1
+       "$RCSfile: output_m.f90,v $"
+d109 5
+d327 1
+a327 1
+       "$Id: output_m.f90,v 2.125 2015/09/24 18:52:28 pwagner Exp $"
+d336 4
+a339 1
+! $Log: $
+@
+

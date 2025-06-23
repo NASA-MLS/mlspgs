@@ -1,0 +1,96 @@
+head	2.4;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+2.4
+date	2000.11.16.21.13.05;	author pwagner;	state dead;
+branches;
+next	2.3;
+
+2.3
+date	2000.10.05.17.43.06;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2000.09.15.21.50.18;	author livesey;	state dead;
+branches;
+next	2.1;
+
+2.1
+date	2000.09.11.17.49.53;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.4
+log
+@Moved to srclib
+@
+text
+@! Needs: 
+  ! use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
+  !            & MLSMSG_Error
+! in the including scoping unit or its host.
+
+    integer :: newSize, status
+
+    ! Executable code
+
+    if ( associated(database) ) then ! tree_checker prevents duplicate names
+      newSize=SIZE(database)+1
+    else
+      newSize=1
+    end if
+
+    allocate(tempDatabase(newSize),STAT=status)
+    if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate // "tempDatabase")
+
+    if ( newSize>1 ) tempDatabase(1:newSize-1) = database
+    if ( ASSOCIATED(database) ) deallocate ( database, stat=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_DeAllocate // "database" )
+    database => tempDatabase
+@
+
+
+2.3
+log
+@Re-entry, because CVS somehow decided we don't need it anymore
+@
+text
+@@
+
+
+2.2
+log
+@New version of L2GP data, moved some stuff from l2 to lib
+@
+text
+@a24 5
+
+! $Log: addItemToDatabase.f9h,v $
+! Revision 2.1  2000/09/11 17:49:53  vsnyder
+! Initial code.
+!
+@
+
+
+2.1
+log
+@Initial code.
+@
+text
+@d26 4
+a29 1
+! $Log: $
+@
+

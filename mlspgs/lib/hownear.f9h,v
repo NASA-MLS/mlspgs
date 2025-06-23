@@ -1,0 +1,111 @@
+head	2.1;
+access;
+symbols
+	v5-02-NRT-19:2.1
+	v6-00:2.1
+	v5-02-NRT-18:2.1
+	v5-02:2.1
+	v5-01-NRT-17:2.1
+	v5-01-NRT-16:2.1
+	v5-01-NRT-15:2.1
+	v5-01-NRT-14:2.1
+	neuralnetworks-1-0:2.1.0.14
+	cfm-single-freq-0-1:2.1.0.12
+	v5-01:2.1
+	v5-00:2.1
+	v4-23-TA133:2.1.0.10
+	mus-emls-1-70:2.1.0.8
+	rel-1-0-englocks-work:2.1.0.6
+	VUMLS1-00:2.1
+	VPL1-00:2.1
+	V4-22-NRT-08:2.1
+	VAM1-00:2.1
+	V4-21:2.1.0.4
+	V4-13:2.1
+	V4-12:2.1
+	V4-11:2.1
+	V4-10:2.1
+	V3-43:2.1
+	M4-00:2.1
+	V3-41:2.1
+	V3-40-PlusGM57:2.1.0.2
+	V2-24-NRT-04:2.1
+	V3-33:2.1
+	V2-24:2.1
+	V3-31:2.1
+	V3-30-NRT-05:2.1
+	cfm-01-00:2.1
+	V3-30:2.1
+	V3-20:2.1
+	V3-10:2.1
+	V2-23-NRT-02:2.1
+	V2-23:2.1
+	V2-22-NRT-01:2.1
+	V2-22:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.1
+date	2007.09.13.21.07.14;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.1
+log
+@First commit
+@
+text
+@! Copyright 2007, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id: hownear.f9h,v 2.1 2007/07/16 23:33:59 pwagner Exp $
+      ! ------------------- ratios -----------------------
+      ! subroutine hownear( array1, array2, pct, gaps, gapratios )
+      !  integer, parameter                             :: KINDVALUE = r4
+      !  ! Args
+      real(KINDVALUE), dimension(:), intent(in)           :: array1, array2
+      real(KINDVALUE), dimension(:), intent(out)          :: pct
+      real(KINDVALUE), dimension(:), optional, intent(in) :: gaps
+      real(KINDVALUE), dimension(:), optional, intent(in) :: gapratios
+      ! Internal variables
+      integer                                        :: i, j, n, near
+      ! Executable
+      ! 1st--no matter what, let every returned arg be given some value
+      pct = 0._KINDVALUE
+      ! It is necessary that 
+      ! array1 and array2 have the same size
+      if ( size(array1) /= size(array2) ) return
+      n = size(array1)
+      if ( present(gaps) ) then
+        do i=1, size(gaps)
+          near = count( abs(array1-array2) <= gaps(i) )
+          pct(i) = near * 100._KINDVALUE / n
+        enddo
+      elseif( present(gapratios) ) then
+        do i=1, size(gapratios)
+          near = 0
+          do j=1, size(array1)
+            if ( abs(array1(j)-array2(j)) <= &
+              & gapratios(i)*max( abs(array1(j)), abs(array2(j)) ) ) near = near + 1
+          enddo
+          pct(i) = near * 100._KINDVALUE / n
+        enddo
+      endif
+      ! end subroutine hownear
+!
+! $Log: hownear.f9h,v $
+@

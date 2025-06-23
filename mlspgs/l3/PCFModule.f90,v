@@ -1,0 +1,1309 @@
+head	1.17;
+access;
+symbols
+	v5-02-NRT-19:1.17
+	v6-00:1.17
+	v5-02-NRT-18:1.17
+	v5-02:1.17
+	v5-01-NRT-17:1.17
+	v5-01-NRT-16:1.17
+	v5-01-NRT-15:1.17
+	v5-01-NRT-14:1.17
+	neuralnetworks-1-0:1.17.0.14
+	cfm-single-freq-0-1:1.17.0.12
+	v5-01:1.17
+	v5-00:1.17
+	v4-23-TA133:1.17.0.10
+	mus-emls-1-70:1.17.0.8
+	rel-1-0-englocks-work:1.17.0.6
+	VUMLS1-00:1.17
+	VPL1-00:1.17
+	V4-22-NRT-08:1.17
+	VAM1-00:1.17
+	V4-21:1.17.0.4
+	V4-13:1.17
+	V4-12:1.17
+	V4-11:1.17
+	V4-10:1.17
+	V3-43:1.17
+	M4-00:1.17
+	V3-41:1.17
+	V3-40-PlusGM57:1.17.0.2
+	V2-24-NRT-04:1.17
+	V3-33:1.17
+	V2-24:1.17
+	V3-31:1.17
+	V3-30-NRT-05:1.17
+	cfm-01-00:1.17
+	V3-30:1.17
+	V3-20:1.17
+	V3-10:1.17
+	V2-23-NRT-02:1.17
+	V2-23:1.17
+	V2-22-NRT-01:1.17
+	V2-22:1.17
+	V2-21:1.17
+	V2-20:1.17
+	V2-11:1.17
+	V2-10:1.17
+	V2-00:1.17
+	V1-51:1.15
+	V1-50:1.15
+	V1-45:1.15
+	V1-44:1.15
+	V1-43:1.15
+	V1-42:1.14
+	V1-41:1.14
+	V1-32:1.12
+	V1-40:1.13
+	V1-31:1.12
+	V1-30:1.12
+	V1-13:1.9
+	V1-12:1.9
+	V1-11:1.9
+	V1-10:1.9
+	newfwm-feb03:1.9.0.4
+	V1-04:1.9
+	V1-03:1.9
+	V1-02:1.9
+	V1-00:1.9
+	newfwm-sep01:1.9.0.2
+	V0-7:1.9
+	V0-5-Level2:1.8
+	V0-5-SIPS:1.8;
+locks; strict;
+comment	@# @;
+
+
+1.17
+date	2006.02.28.17.56.56;	author cvuu;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2005.06.23.19.07.39;	author pwagner;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2004.05.04.15.33.15;	author cvuu;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2004.03.19.14.31.10;	author cvuu;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2004.01.07.21.43.18;	author cvuu;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2003.08.11.23.29.09;	author cvuu;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2003.04.30.18.15.48;	author pwagner;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2003.03.22.02.55.53;	author jdone;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2001.07.18.15.59.37;	author nakamura;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2001.03.27.19.42.38;	author nakamura;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2001.02.21.21.17.36;	author nakamura;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2001.01.16.17.52.25;	author nakamura;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2000.12.29.21.45.56;	author nakamura;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2000.12.07.21.23.04;	author nakamura;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2000.12.07.19.43.58;	author nakamura;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2000.10.24.19.45.26;	author nakamura;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2000.10.17.20.31.58;	author nakamura;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.17
+log
+@V2.00 commit
+@
+text
+@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!==============================================================================
+MODULE PCFModule
+!==============================================================================
+
+   USE MLSCommon, ONLY: FileNameLen, r8
+   USE MLSL3Common, ONLY: TAI2A_ERR, CCSDS_LEN
+   USE MLSMessageModule, ONLY: MLSMSG_Error, MLSMessage
+   USE Output_m, ONLY: output
+
+   IMPLICIT NONE
+   private
+   PUBLIC :: ExpandFileTemplate, SearchPCFNames, FindFileType, &
+     & FindFileDay, SearchPCFDates
+
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: PCFModule.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+! Contents:
+
+! Subroutines -- ExpandFileTemplate
+!                SearchPCFNames
+!                FindFileType
+!                FindFileDay
+!                SearchPCFDates
+
+! Remarks:  This module contains subroutines related to getting file names from
+!           the PCF.
+
+CONTAINS
+
+!-----------------------------------------------------------------------------
+   SUBROUTINE ExpandFileTemplate (template, filename, level, version, cycle, &
+        & day)
+!-----------------------------------------------------------------------------
+
+! Brief description of subroutine
+! This subroutine expands the version, cycle, and day fields in a file name
+! template.  Note: CYCLE is a STRING here, which is how it's read from the PCF.
+
+! Arguments
+
+      CHARACTER (LEN=*), INTENT(IN) :: template
+
+      CHARACTER (LEN=*), INTENT(IN), OPTIONAL :: cycle, day, level, version
+
+      CHARACTER (LEN=*), INTENT(OUT) :: fileName
+
+! Parameters
+
+! Functions
+
+! Variables
+
+      CHARACTER (LEN=4) :: field, zCy
+
+      INTEGER :: i, iCy, indx, numFields
+
+! Initializations
+
+      numFields = 4
+
+      fileName = template
+
+! Loop through the expandable fields in the template
+
+      DO i = 1, numFields
+
+! Search for $
+
+         indx = INDEX(fileName,'$')
+
+! Exit, if there are no expandable fields 
+
+         IF (indx == 0) EXIT
+
+! Match the field name to the input argument
+
+         field = fileName(indx:indx+3)
+    
+         IF (field == '$lev') THEN
+
+            IF ( PRESENT(level) ) THEN
+               fileName = fileName(:(indx-1)) // TRIM(level) // &
+                    & fileName((indx+6):)
+            ELSE
+               CALL MLSMessage(MLSMSG_Error, ModuleName, & 
+                    & 'Input level required to expand the template.')
+            ENDIF
+
+         ELSE IF (field == '$ver') THEN
+
+            IF ( PRESENT(version) ) THEN
+               fileName = fileName(:(indx-1)) // TRIM(version) // &
+                    & fileName((indx+8):)
+            ELSE
+               CALL MLSMessage(MLSMSG_Error, ModuleName, & 
+                    & 'Input version required to expand the template.')
+            ENDIF
+
+         ELSE IF (field == '$cyc') THEN
+
+            IF ( PRESENT(cycle) ) THEN
+
+! Convert from CHARACTER to INTEGER
+
+               READ(cycle, '(I2)') iCy
+
+! Add a leading zero, if less than 10
+
+               IF (iCy < 10) THEN
+                  zCy = '0' // TRIM(cycle)
+               ELSE 
+                  zCy = cycle
+               ENDIF
+
+               !fileName = fileName(:(indx-1)) // 'C' // TRIM(zCy) // &
+               !     & fileName((indx+6):)
+               fileName = fileName(:(indx-1)) // 'c' // TRIM(zCy) // &
+                    & fileName((indx+6):)
+
+            ELSE
+
+               CALL MLSMessage(MLSMSG_Error, ModuleName, & 
+                    & 'Input cycle required to expand the template.')
+
+            ENDIF
+
+         ELSE IF (field == '$day') THEN
+
+            IF ( PRESENT(day) ) THEN
+               fileName = fileName(:(indx-1)) // TRIM(day) // &
+                    & fileName((indx+4):)
+            ELSE
+               CALL MLSMessage(MLSMSG_Error, ModuleName, &
+                    & 'Input day required to expand the template.')
+            ENDIF
+
+         ENDIF
+
+      ENDDO
+
+!-----------------------------------
+   END SUBROUTINE ExpandFileTemplate
+!-----------------------------------
+
+!------------------------------------------------------------------------
+   SUBROUTINE SearchPCFNames (inName, mlspcf_start, mlspcf_end, mlspcf, &
+        & outName)
+!------------------------------------------------------------------------
+   USE SDPToolkit, ONLY: PGS_S_SUCCESS, Pgs_pc_getReference
+
+! Brief description of subroutine 
+! This subroutine searches the PCF for an entry matching the input name.  If a
+! match is found, it returns the file's name (including the path) & number from
+! the PCF.  If no entry is found, a PCF number of -1 is returned, along with
+! the original input name, with a path name concatenated to it.
+
+! Arguments
+
+      CHARACTER (LEN=FileNameLen), INTENT(IN) :: inName
+
+      INTEGER, INTENT(IN) :: mlspcf_end, mlspcf_start
+
+      INTEGER, INTENT(OUT) :: mlspcf
+
+      CHARACTER (LEN=FileNameLen), INTENT(OUT) :: outName
+
+! Parameters
+
+! Functions
+
+! Variables
+
+      CHARACTER (LEN=FileNameLen) :: path, pcfName
+
+      INTEGER :: i, indx, returnStatus, version
+
+! Initializations
+
+      mlspcf = -1
+
+! Loop through all the files in this range of PCF numbers
+
+      DO i = mlspcf_start, mlspcf_end
+
+! Retrieve the PCF name
+
+         version = 1
+
+         returnStatus = Pgs_pc_getReference(i, version, pcfName)
+
+         IF (returnStatus == PGS_S_SUCCESS) THEN
+
+! If a file name was successfully retrieved from the PCF, extract its pathname
+
+            indx = INDEX(pcfName, '/', .TRUE.)
+            path = pcfName(:indx)
+
+! Concatenate the path with the input name
+
+            outName = TRIM(path) // inName
+
+! Check the path/input name string against the PCF entry
+
+            IF (outName == pcfName) THEN
+
+! If it matches, save the PCF number
+
+               mlspcf = i
+               EXIT
+
+            ENDIF
+
+         ENDIF
+
+      ENDDO
+
+!-------------------------------
+   END SUBROUTINE SearchPCFNames
+!-------------------------------
+
+!-----------------------------------------------------------------------
+   SUBROUTINE FindFileType (type, mlspcf_start, mlspcf_end, match, name)
+!-----------------------------------------------------------------------
+   USE SDPToolkit, ONLY: PGS_S_SUCCESS, Pgs_pc_getReference
+
+! Brief description of subroutine
+! This subroutine searches the PCF for a file of the proper level/species.  It
+! returns a matching PCF number & name, or a value of match = -1, if no match
+! was found.
+
+! Arguments
+
+      CHARACTER(LEN=*), INTENT(IN) :: type
+
+      INTEGER, INTENT(IN) :: mlspcf_start, mlspcf_end
+
+      CHARACTER(LEN=*), INTENT(OUT) :: name
+
+      INTEGER, INTENT(OUT) :: match
+
+! Parameters
+
+! Functions
+
+! Variables
+
+      CHARACTER (LEN=480) :: msr
+
+      INTEGER :: i, returnStatus, version
+
+! Initialize match to its unfound value
+
+      match = -1
+
+! Loop through all PCF entries in the range corresponding to this file type
+
+      DO i = mlspcf_start, mlspcf_end
+
+! Retrieve the name
+
+         version = 1
+         returnStatus = Pgs_pc_getReference(i, version, name)
+
+! If no name was returned for this number, go on to the next one
+
+         IF (returnStatus /= PGS_S_SUCCESS) CYCLE
+
+! Check whether the returned name contains the desired file substring
+
+         IF (INDEX(name, TRIM(type)) /= 0) THEN
+
+! If so, save the PCF number for the matching entry
+
+            match = i
+            EXIT
+
+         ENDIF
+
+      ENDDO
+
+! If no match was found, this is an error message
+
+      IF (match == -1) THEN
+         msr = 'No PCF entry for a file containing the substring ' // type
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+!-----------------------------
+   END SUBROUTINE FindFileType
+!-----------------------------
+
+!-----------------------------------------------------------------------------
+   SUBROUTINE FindFileDay(type, time, mlspcf_start, mlspcf_end, match, name, &
+        & date)
+!-----------------------------------------------------------------------------
+   USE SDPToolkit, ONLY: PGS_S_SUCCESS, Pgs_pc_getReference
+
+! Brief description of subroutine
+! This subroutine searches the PCF for a file of a desired level/species/day.
+! It returns a PCF number & name, the date, or match = -1 if no entry is found.
+
+! Arguments
+
+      CHARACTER (LEN=*), INTENT(IN) :: type
+
+      INTEGER, INTENT(IN) :: mlspcf_end, mlspcf_start
+
+      REAL(r8), INTENT(IN) :: time
+
+      CHARACTER (LEN=*), INTENT(OUT) :: name
+
+      CHARACTER (LEN=8), INTENT(OUT) :: date
+
+      INTEGER, INTENT(OUT) :: match
+
+! Parameters
+
+
+! Variables
+
+      CHARACTER (LEN=480) :: msr
+      CHARACTER (LEN=CCSDS_LEN) :: timeA
+      CHARACTER (LEN=26) :: timeB
+
+      INTEGER :: i, returnStatus, version
+! Functions
+
+      INTEGER, EXTERNAL :: Pgs_td_asciiTime_aToB, Pgs_td_taiToUTC
+
+! Convert input time to CCSDS A format
+
+      returnStatus = Pgs_td_taiToUTC(time, timeA)
+      IF (returnStatus /= PGS_S_SUCCESS) CALL MLSMessage(MLSMSG_Error, &
+           & ModuleName, TAI2A_ERR)
+
+! Convert from CCSDS A to B
+
+      returnStatus = Pgs_td_asciiTime_aToB(timeA, timeB)
+      IF (returnStatus /= PGS_S_SUCCESS) CALL MLSMessage(MLSMSG_Error, &
+           & ModuleName,'Error converting data time from CCSDS A to B.')
+
+! Save only the date portion, for comparison to file names
+
+!      date = timeB(1:8)
+      date = timeB(1:4)//'d'//timeB(6:8) !to be the same format with RangeDays for compare
+
+! Loop through all the files in this range of PCF numbers
+
+      match = -1
+
+      DO i = mlspcf_start, mlspcf_end
+
+! Retrieve the name
+
+         version = 1
+         returnStatus = Pgs_pc_getReference(i, version, name)
+
+! If no name was returned for this number, go on to the next one
+
+         IF (returnStatus /= PGS_S_SUCCESS) CYCLE
+
+! Check whether the returned name contains the desired level/species/day
+
+         IF ((INDEX(name,TRIM(type)) /= 0) .AND. (INDEX(name,date) /= 0)) THEN
+
+! If so, save the PCF number for the matching entry
+
+            match = i
+            EXIT
+	    
+         ENDIF
+
+      ENDDO
+
+! If match was found, this is an error condition
+
+      IF (match == -1) THEN
+         msr = 'No PCF entry of the form ' // TRIM(type) // ' for day ' // date
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+! Change it back to original format (yyyy-xxx)
+
+      date = timeB(1:4)//'-'//timeB(6:8) !to be the same format with RangeDays
+    
+!----------------------------
+   END SUBROUTINE FindFileDay
+!----------------------------
+
+!------------------------------------------------------------------------------
+   SUBROUTINE SearchPCFDates(type, date, mlspcf_start, mlspcf_end, match, file)
+!------------------------------------------------------------------------------
+   USE SDPToolkit, ONLY: PGS_S_SUCCESS, Pgs_pc_getReference
+
+! Brief description of subroutine
+! This routine searches the PCF for a file for desired type and date.  
+! For input,
+! the date is given as a CHARACTER string in CCSDS B format.  For output, a
+! matching PCF number & name, or a value of match = -1 if no match was found,
+! are returned.
+
+
+! Arguments
+
+      CHARACTER (LEN=8), INTENT(IN) :: date
+
+      CHARACTER (LEN=*), INTENT(IN) :: type
+
+      INTEGER, INTENT(IN) :: mlspcf_end, mlspcf_start
+
+      INTEGER, INTENT(OUT) :: match
+
+      CHARACTER (LEN=FileNameLen) :: file
+
+! Parameters
+
+! Functions
+
+! Variables
+
+      CHARACTER (LEN=480) :: msr
+      CHARACTER (LEN=8) :: pDate
+
+      INTEGER :: i, indx, returnStatus, version
+
+      match = -1
+
+! Loop through all the PCF numbers for the file type
+
+      DO i = mlspcf_start, mlspcf_end
+
+         version = 1
+         returnStatus = Pgs_pc_getReference(i, version, file)
+
+! If no file name was returned, go on to the next PCF number
+
+         IF (returnStatus /= PGS_S_SUCCESS) CYCLE
+
+! Check that the returned file name is for the proper type
+
+         IF ( INDEX(file, TRIM(type)) /= 0 ) THEN
+
+! Extract the date from the file name
+
+            indx = INDEX(file, '.', .TRUE.)
+            pDate = file(indx-8:indx-1)
+	    pDate = file(indx-8:indx-5)//'-'//file(indx-3:indx-1)
+
+! Check that the date matches the desired input
+
+            IF ( date == pDate) THEN
+
+! Save the PCF name and number
+
+               match = i
+               EXIT
+
+            ENDIF
+
+         ENDIF
+
+      ENDDO
+
+! If match was found, this is an error condition
+
+      IF (match == -1) THEN
+         msr = 'SearchPCFDates: No PCF entry of the form ' // TRIM(type) // ' for day ' // date
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+!-------------------------------
+   END SUBROUTINE SearchPCFDates
+!-------------------------------
+
+!===================
+  logical function not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id: PCFModule.f90,v 1.16 2005/06/23 19:07:39 pwagner Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+END MODULE PCFModule
+!===================
+
+! $Log: PCFModule.f90,v $
+! Revision 1.16  2005/06/23 19:07:39  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 1.15  2004/05/04 15:33:15  cvuu
+! v1.4.3: Use int array for Date in Data Field
+!
+! Revision 1.14  2004/03/19 14:31:10  cvuu
+! Correct the date format in the metadata file
+!
+! Revision 1.13  2004/01/07 21:43:18  cvuu
+! version 1.4 commit
+!
+! Revision 1.12  2003/08/11 23:29:09  cvuu
+! brought closer to James Johnson want to
+!
+! Revision 1.11  2003/04/30 18:15:48  pwagner
+! Work-around for LF95 infinite compile-time bug
+!
+! Revision 1.10  2003/03/22 02:55:53  jdone
+! use only and indentation added
+!
+! Revision 1.9  2001/07/18 15:59:37  nakamura
+! Added subroutine SearchPCFDates.
+!
+! Revision 1.8  2001/03/27 19:42:38  nakamura
+! Moved annotation routines to PCFHdr module.
+!
+! Revision 1.7  2001/02/21 21:17:36  nakamura
+! Changed MLSPCF to MLSPCF3.
+!
+! Revision 1.6  2001/01/16 17:52:25  nakamura
+! Updated ExpandFileTemplate for current naming convention; added subroutines CreatePCFAnnotation & WritePCF2Hdr.
+!
+! Revision 1.5  2000/12/29 21:45:56  nakamura
+! Added routines FindFileType & FindFileDay.
+!
+! Revision 1.4  2000/12/07 21:23:04  nakamura
+! Changed SearchPCFNames so that input name is always returned with a path, negative PCF number means no file found.
+!
+! Revision 1.3  2000/12/07 19:43:58  nakamura
+! Added 'level' to expandable fields in file template; extract file path names from PCF, rather than cf.
+!
+! Revision 1.2  2000/10/24 19:45:26  nakamura
+! Corrected subroutine name for SearchPCFNames in module Contents; changed version from a constant to a variable in getRef.
+!
+! Revision 1.1  2000/10/17 20:31:58  nakamura
+! Module for getting file names based on input in the PCF and CF.
+!
+@
+
+
+1.16
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d30 1
+a30 1
+       "$RCSfile: $"
+d484 1
+a484 1
+         msr = 'No PCF entry of the form ' // TRIM(type) // ' for day ' // date
+d496 1
+a496 1
+       "$Id: $"
+d505 3
+@
+
+
+1.15
+log
+@v1.4.3: Use int array for Date in Data Field
+@
+text
+@d2 10
+a11 2
+! Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+a26 1
+   PRIVATE :: ID, ModuleName
+d28 5
+a32 5
+!------------------- RCS Ident Info -----------------------
+   CHARACTER(LEN=130) :: Id = &                                                
+   "$Id: PCFModule.f90,v 1.14 2004/03/19 14:31:10 cvuu Exp $"
+   CHARACTER (LEN=*), PARAMETER :: ModuleName="$RCSfile: PCFModule.f90,v $"
+!----------------------------------------------------------
+d493 8
+d505 3
+@
+
+
+1.14
+log
+@Correct the date format in the metadata file
+@
+text
+@d23 1
+a23 1
+   "$Id: PCFModule.f90,v 1.13 2004/01/07 21:43:18 cvuu Exp $"
+a439 2
+      !call output(' 1 date = ', advance='no')
+      !call output(date, advance='yes')
+d490 3
+@
+
+
+1.13
+log
+@version 1.4 commit
+@
+text
+@d23 1
+a23 1
+   "$Id: PCFModule.f90,v 1.12 2003/08/11 23:29:09 cvuu Exp $"
+d355 1
+a355 1
+      date = timeB(1:4)//'d'//timeB(6:8) !to be the same format with RangeDays
+d392 4
+d492 3
+@
+
+
+1.12
+log
+@brought closer to James Johnson want to
+@
+text
+@d12 2
+d23 1
+a23 1
+   "$Id: PCFModule.f90,v 1.11 2003/04/30 18:15:48 pwagner Exp $"
+d354 2
+a355 1
+      date = timeB(1:8)
+d380 1
+a380 1
+
+d436 2
+d455 1
+d488 3
+@
+
+
+1.11
+log
+@Work-around for LF95 infinite compile-time bug
+@
+text
+@d21 1
+a21 1
+   "$Id: PCFModule.f90,v 1.10 2003/03/22 02:55:53 jdone Exp $"
+d123 3
+a125 1
+               fileName = fileName(:(indx-1)) // 'C' // TRIM(zCy) // &
+d482 3
+@
+
+
+1.10
+log
+@use only and indentation added
+@
+text
+@a11 1
+   USE SDPToolkit, ONLY: PGS_S_SUCCESS, Pgs_pc_getReference, Pgs_td_taiToUTC
+d13 3
+a15 1
+   PUBLIC
+d21 1
+a21 1
+   "$Id: PCFModule.f90,v 1.9 2001/07/18 15:59:37 nakamura Exp $"
+d155 1
+d230 1
+d302 1
+d394 1
+d480 3
+@
+
+
+1.9
+log
+@Added subroutine SearchPCFDates.
+@
+text
+@d5 1
+a5 1
+!===============================================================================
+d7 1
+a7 1
+!===============================================================================
+d9 4
+a12 4
+   USE MLSCommon
+   USE MLSL3Common
+   USE MLSMessageModule
+   USE SDPToolkit
+d19 2
+a20 2
+   CHARACTER(LEN=130) :: Id = &                                                    
+   "$Id: PCFModule.f90,v 1.15 2001/05/01 14:57:46 nakamura Exp nakamura $"
+d39 1
+a39 1
+                                  day)
+d90 1
+a90 1
+                          fileName((indx+6):)
+d92 2
+a93 2
+               CALL MLSMessage(MLSMSG_Error, ModuleName, 'Input level &
+                                            &required to expand the template.')
+d100 1
+a100 1
+                          fileName((indx+8):)
+d102 2
+a103 2
+               CALL MLSMessage(MLSMSG_Error, ModuleName, 'Input version &
+                                            &required to expand the template.')
+d123 1
+a123 1
+                          fileName((indx+6):)
+d127 2
+a128 2
+               CALL MLSMessage(MLSMSG_Error, ModuleName, 'Input cycle &
+                                            &required to expand the template.')
+d136 1
+a136 1
+                          fileName((indx+4):)
+d138 2
+a139 2
+               CALL MLSMessage(MLSMSG_Error, ModuleName, 'Input day required &
+                                                    &to expand the template.')
+d152 1
+a152 1
+                              outName)
+d297 1
+a297 1
+                          date)
+a319 3
+! Functions
+
+      INTEGER, EXTERNAL :: Pgs_td_asciiTime_aToB
+d323 2
+a325 2
+      CHARACTER (LEN=CCSDS_LEN) :: timeA
+      CHARACTER (LEN=480) :: msr
+d328 3
+d336 1
+a336 1
+                                                         ModuleName, TAI2A_ERR)
+d342 1
+a342 1
+                ModuleName,'Error converting data time from CCSDS A to B.')
+d387 3
+a389 3
+!-------------------------------------------------------------------------------
+   SUBROUTINE SearchPCFDates (type, date, mlspcf_start, mlspcf_end, match, file)
+!-------------------------------------------------------------------------------
+d392 2
+a393 1
+! This routine searches the PCF for a file for desired type and date.  For input,
+d395 2
+a396 2
+! matching PCF number & name, or a value of match = -1 if no match was found, are
+! returned.
+d417 1
+a418 1
+      CHARACTER (LEN=480) :: msr
+d475 3
+@
+
+
+1.8
+log
+@Moved annotation routines to PCFHdr module.
+@
+text
+@d20 1
+a20 1
+   "$Id: PCFModule.f90,v 1.7 2001/02/21 21:17:36 nakamura Exp $"
+d30 1
+d387 82
+d474 3
+a497 1
+
+@
+
+
+1.7
+log
+@Changed MLSPCF to MLSPCF3.
+@
+text
+@a8 1
+   USE Hdf
+a11 1
+   USE MLSPCF3
+d20 1
+a20 1
+   "$Id: PCFModule.f90,v 1.6 2001/01/16 17:52:25 nakamura Exp $"
+a29 2
+!                CreatePCFAnnotation 
+!                WritePCF2Hdr
+a385 135
+!-----------------------------------------
+   SUBROUTINE CreatePCFAnnotation (anText)
+!-----------------------------------------
+
+! Brief description of subroutine
+! This subroutine stores the PCF as an annotation for writing to file headers.
+
+! Arguments
+
+      CHARACTER (LEN=1), POINTER :: anText(:)
+
+! Parameters
+
+! Functions
+
+      INTEGER, EXTERNAL :: Pgs_pc_getFileSize
+
+! Variables
+
+      CHARACTER (LEN=10) :: mnemonic
+      CHARACTER (LEN=480) :: msg, msr
+
+      INTEGER :: err, ios, pcfHandle, returnStatus, size, version
+
+! Get the size of the PCF
+
+      version = 1
+      returnStatus = Pgs_pc_getFileSize(mlspcf_pcf_start, version, size)
+
+      ALLOCATE(anText(size), STAT=err)
+      IF ( err /= 0 ) THEN
+         msr = MLSMSG_Allocate // ' anText PCF array.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+! Open the PCF for reading
+
+      version = 1
+      returnStatus = Pgs_io_gen_openF (mlspcf_pcf_start, PGSd_IO_Gen_RDirUnf, &
+                                       size, pcfHandle, version)
+      IF (returnStatus /= PGS_S_SUCCESS) THEN
+         call Pgs_smf_getMsg(returnStatus, mnemonic, msg)
+         msr = mnemonic // ':  ' // msg
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+! Read the PCF text into the CHAR anText variable
+
+      READ(UNIT=pcfHandle, REC=1, IOSTAT=ios) anText
+
+! Close the PCF
+
+      returnStatus = Pgs_io_gen_closeF (pcfHandle)
+      IF (returnStatus /= PGS_S_SUCCESS) THEN
+         call Pgs_smf_getMsg(returnStatus, mnemonic, msg)
+         msr = mnemonic // ':  ' // msg
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+!------------------------------------
+   END SUBROUTINE CreatePCFAnnotation
+!------------------------------------
+
+!----------------------------------------
+   SUBROUTINE WritePCF2Hdr (file, anText)
+!----------------------------------------
+
+! Brief description of subroutine
+! This subroutine writes the PCF into an HDF-EOS file as an annotation.
+
+! Arguments
+
+      CHARACTER (LEN=FileNameLen), INTENT(IN) :: file 
+
+      CHARACTER (LEN=1), POINTER :: anText(:)
+
+! Parameters
+
+! Functions
+
+      INTEGER, EXTERNAL :: afEnd, afEndAccess, afFCreate, afStart, afWriteAnn
+      INTEGER, EXTERNAL :: hClose, hOpen
+
+! Variables
+
+      CHARACTER (LEN=480) :: msr
+
+      INTEGER :: anID, annID, fileID, status
+
+! Open the HDF-EOS file for writing
+
+      fileID = hOpen(file, DFACC_WRITE, 0)
+      IF (fileID == -1) THEN
+         msr = MLSMSG_Fileopen // file
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+! Initialize the AN interface
+
+      anID = afStart(fileID)
+      IF (anID == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
+                                              &initialize the AN interface.')
+
+! Create a file annotation
+
+      annID = afFCreate(anID, AN_FILE_DESC)
+      IF (annID == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
+                                               &create the file annotation.')
+
+! Write the PCF as an annotation to the file
+
+      status = afWriteAnn( annID, anText, SIZE(anText) )
+
+! Terminate access to the annotation
+
+      status = afEndAccess(annID)
+      IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
+                                    &terminate access to the file annotation.')
+
+! Terminate access to the AN interface
+
+      status = afEnd(anID)
+      IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
+                                       &terminate access to the AN interface.')
+
+! Close the HDF file
+
+      status = hClose(fileID)
+      IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
+                                                       &close the HDF file.')
+
+!-----------------------------
+   END SUBROUTINE WritePCF2Hdr
+!-----------------------------
+
+d391 3
+@
+
+
+1.6
+log
+@Updated ExpandFileTemplate for current naming convention; added subroutines CreatePCFAnnotation & WritePCF2Hdr.
+@
+text
+@d13 1
+a13 1
+   USE MLSPCF
+d22 1
+a22 1
+   "$Id: PCFModule.f90,v 1.11 2001/01/11 16:49:12 nakamura Exp nakamura $"
+d530 3
+@
+
+
+1.5
+log
+@Added routines FindFileType & FindFileDay.
+@
+text
+@d9 1
+d13 1
+d22 1
+a22 1
+   "$Id: PCFModule.f90,v 1.9 2000/12/29 19:18:58 nakamura Exp nakamura $"
+d32 2
+d63 1
+a63 1
+      CHARACTER (LEN=4) :: field
+d65 1
+a65 1
+      INTEGER :: i, indx, numFields
+d112 14
+a125 1
+               fileName = fileName(:(indx-1)) // 'c' // TRIM(cycle) // &
+d127 1
+d129 1
+d132 1
+d390 135
+d530 3
+d545 1
+@
+
+
+1.4
+log
+@Changed SearchPCFNames so that input name is always returned with a path, negative PCF number means no file found.
+@
+text
+@d10 1
+d12 1
+a12 1
+   USE MLSPCF
+d20 1
+a20 1
+   "$Id: PCFModule.f90,v 1.3 2000/12/07 19:43:58 nakamura Exp $"
+d28 2
+d87 1
+a87 1
+            IF ( PRESENT(version) ) THEN
+d140 3
+a142 3
+! match is found, it returns the name (including the path) & number of the file
+! file in the PCF.  If no entry is found, outName is the original name
+! concatenated with an output path & a PCF number of -1.
+d164 4
+d180 1
+a180 1
+! Extract the pathname
+d187 5
+a191 1
+            path = TRIM(path) // inName
+d193 1
+a193 1
+! Check it against the given name
+a194 1
+            IF (path == pcfName) THEN
+a195 1
+               outName = pcfName
+d197 1
+a197 3
+            ELSE
+               mlspcf = -1
+               outName = path
+d208 162
+d375 3
+@
+
+
+1.3
+log
+@Added 'level' to expandable fields in file template; extract file path names from PCF, rather than cf.
+@
+text
+@d19 1
+a19 1
+   "$Id: PCFModule.f90,v 1.5 2000/11/30 20:53:07 nakamura Exp nakamura $"
+d138 2
+a139 2
+! file in the PCF.  If no entry is found, outName is returned with the value
+! 'NONE.'
+a160 5
+! Initializations
+
+      mlspcf = -1
+      outName = 'NONE'
+
+d188 3
+d206 3
+@
+
+
+1.2
+log
+@Corrected subroutine name for SearchPCFNames in module Contents; changed version from a constant to a variable in getRef.
+@
+text
+@d19 1
+a19 1
+   "$Id: PCFModule.f90,v 1.1 2000/10/17 20:31:58 nakamura Exp $"
+d33 4
+a36 3
+!-------------------------------------------------------------------------
+   SUBROUTINE ExpandFileTemplate (template, filename, version, cycle, day)
+!-------------------------------------------------------------------------
+d46 1
+a46 1
+      CHARACTER (LEN=*), INTENT(IN), OPTIONAL :: cycle, day, version
+d62 1
+a62 1
+      numFields = 3
+d82 11
+a92 1
+         IF (field == '$ver') THEN
+d130 4
+a133 3
+!-----------------------------------------------------------------------------
+   SUBROUTINE SearchPCFNames (inName, mlspcf_start, mlspcf_end, mlspcf, match)
+!-----------------------------------------------------------------------------
+d136 4
+a139 2
+! This subroutine searches the PCF for an entry matching the input name, which
+! includes the path.
+d149 1
+a149 1
+      INTEGER, INTENT(OUT) :: match
+d157 1
+a157 1
+      CHARACTER (LEN=FileNameLen) :: pcfName
+d159 1
+a159 1
+      INTEGER :: i, returnStatus, version
+d164 1
+a164 1
+      match = 0
+d176 10
+a185 1
+         IF (returnStatus /= PGS_S_SUCCESS) CYCLE
+d189 6
+a194 4
+         IF (inName == pcfName) THEN
+            mlspcf = i
+            match = 1
+            EXIT
+d208 3
+@
+
+
+1.1
+log
+@Module for getting file names based on input in the PCF and CF.
+@
+text
+@d19 1
+a19 1
+   "$Id: PCFModule.f90,v 1.2 2000/10/16 20:09:07 nakamura Exp nakamura $"
+d26 1
+a26 1
+!                GetFileFromPCF
+d145 1
+a145 1
+      INTEGER :: i, returnStatus
+d158 3
+a160 1
+         returnStatus = Pgs_pc_getReference(i, 1, pcfName)
+d182 4
+a185 1
+! $Log: $
+@
+

@@ -1,0 +1,479 @@
+head	2.9;
+access;
+symbols
+	V3-43:2.8
+	V3-41:2.8
+	V3-40-PlusGM57:2.8.0.2
+	cfm-01-00:2.8
+	V3-30:2.8
+	V3-20:2.8
+	V1-04:2.8
+	V1-03:2.8
+	V1-02:2.8
+	V1-00:2.8
+	newfwm-sep01:2.2.0.2
+	V0-7:2.2;
+locks; strict;
+comment	@# @;
+
+
+2.9
+date	2002.05.22.00.50.16;	author livesey;	state dead;
+branches;
+next	2.8;
+
+2.8
+date	2001.10.31.18.35.57;	author livesey;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2001.10.18.00.48.06;	author livesey;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2001.10.15.22.11.19;	author livesey;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2001.10.09.22.41.53;	author livesey;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2001.10.09.01.08.10;	author livesey;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2001.10.02.16.49.56;	author livesey;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2001.07.24.10.45.26;	author livesey;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.06.06.21.47.50;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.9
+log
+@L2CFs no longer belong in l2
+@
+text
+@; This l2cf is an attempt to make a universal l2cf for doing sids runs
+; This is a simple l2cf for testing purposes. Mainly for testing the
+; M4 stuff.  The band number to do is passed in as _band, the date as
+; _day.
+
+; First some m4 directives.
+include(m4defs.l2cf)
+!ifdef(band, ,!define(band,3))
+!define(outpath,{/bigdata/livesey/misc/})
+!define(ver,test4)
+!define(day,1996-051)
+!define(signal,!sigBand$1)
+!define(molecules,!mol$1)
+!define(systemp,{!systemp}$1)
+
+; Now include the valid signals database
+!include(validsignals-emls.l2cf)
+
+; Now define the signals for each band
+!include(signalsforband.l2cf)
+
+; Now the spectroscopy database
+!include(spectroscopy.l2cf)
+
+; Now the list of which lines apply for which bands
+!include(moleculesperband.l2cf)
+
+; Now read the l2gp files for each specie
+!include(readl2gpfiles.l2cf)
+
+; -------------------------------------------- Global settings ----
+BEGIN GlobalSettings
+
+    l1Boa, file='/data/emls/l1boa/truth/!year(!day)/MLS-Aura_L1BOA_Full_s4-t_!day.dat'
+    startTime = "00:00:00"
+    endTime = "02:00:00"
+
+    vGridStandard: vGrid, coordinate=Zeta, type=Logarithmic, $
+                   start=1000mb, formula=[72:12]
+    vGridBaseline: vGrid, coordinate=Zeta, type=Logarithmic, $
+                   start=1000mb, formula=[72:12]
+
+    vGridRefGPH: vGrid, coordinate=Zeta, type=Explicit, values=100mb
+
+    fwmIntegrationGrid: vGrid, coordinate=Zeta, type=Logarithmic, $
+      start = 1000mb, formula=[ 73:12 ]
+    ;; Forward model tangent grid needs points below the surface.
+    fwmTangentGrid: vGrid, coordinate=Zeta, type=Logarithmic, $
+      start = 10.0e9 mb, formula=[ 8:1, 37:12, 12:6 ]
+
+
+    forwardModelGlobal, $
+      antennaPatterns='/user1/livesey/mlspgs/l2/aaap_emls_sids_v03.dat', $
+      filterShapes='/user1/livesey/mlspgs/l2/all_filter_banks.dat', $
+      pointingGrids='/user1/livesey/mlspgs/l2/grid_file_mdb.dat'
+
+    sidsFwm: forwardModel, type=full,  $
+      signals = !signal(!band), $
+      molecules = !molecules(!band), $
+      integrationGrid=fwmIntegrationGrid, $
+      phiWindow=5, $
+      frqGap=2 GHz, $
+      /skipOverlaps, $
+      tangentGrid=fwmTangentGrid, /do_conv, /do_freq_avg
+
+END GlobalSettings
+
+; ------------------------------------------- Chunk divide
+!include(chunkdivide8th.l2cf)
+
+; ------------------------------------------- Construct sections --
+BEGIN Construct
+
+    hGridStandard: hGrid, type=height, height=15km, module=GHz
+
+END Construct
+
+!include(constructstandardspecies.l2cf)
+!include(constructunfoldedradiances.l2cf)
+
+BEGIN Construct
+    stateTemplate: VectorTemplate, quantities=  $
+      [temp, refGPH, ptanGHz, ptanTHz, !AllMolecules ]
+    extraStateTemplate: VectorTemplate, quantities =  $
+      [ !AllElevs, !AllSBRatios, !LesserState, !AllISORatios ]
+
+    measTemplate: VectorTemplate, quantities= $
+      [ {band}!band ]
+END Construct
+
+; ------------------------------------------- Fill -----------------
+
+BEGIN Fill
+
+    ;; Define the vectors
+    x: Vector, template=stateTemplate
+    b: Vector, template=extraStateTemplate
+    y: Vector, template=measTemplate
+    f: Vector, template=measTemplate
+    yNoise: Vector, template=measTemplate
+
+    ;; Define the matrix
+    K: Matrix, rows=y, columns=x
+
+    
+
+END Fill
+
+; Define the names of the standard vectors for the canned fills used below
+
+!define(x,x)
+!define(b,b)
+!include(fillfroml2gp.l2cf)
+!include(filllesserstate.l2cf)
+!include(fillisotopes.l2cf)
+
+BEGIN Fill
+
+    ;; Now the two tangent presssures
+    Fill, quantity=x.ptanGHz, method=hydrostatic, $
+      h2oQuantity=x.h2o, $
+      temperatureQuantity=x.temp, $
+      refGPHQuantity=x.refGPH, $
+      geocAltitudeQuantity=b.tngtGeocAltGHz, $
+      maxIterations=10
+
+    Fill, quantity=x.ptanTHz, method=hydrostatic, $
+      h2oQuantity=x.h2o, $
+      temperatureQuantity=x.temp, $
+      refGPHQuantity=x.refGPH, $
+      geocAltitudeQuantity=b.tngtGeocAltTHz, $
+      maxIterations=10
+    
+END Fill
+
+!include(fillsidebandratios.l2cf)
+
+; ------------------------------------------------------- Retrieve -----
+
+BEGIN Retrieve
+
+  sids, fwdModelIn=x, fwdModelExtra=b, fwdModelOut=y,$
+    forwardModel=[sidsFwm]
+
+END Retrieve
+
+; ------------------------------------------------- Fill, noise -----
+
+!include(definesystemp.l2cf)
+
+BEGIN Fill
+
+    Fill, quantity={yNoise.band}!band, radianceQuantity={y.band}!band,  $
+      systemTemperature= !systemp(!band), integrationTime=0.16 s,  $
+      method = estimatedNoise
+
+END Fill
+
+; ------------------------------------------------------- Join -----
+
+BEGIN Join
+    radL2AUX: l2aux, source=y.band{}!band, /prefixSignal, sdName=''
+    noiseL2AUX: l2aux, source=yNoise.band{}!band, /prefixSignal, sdName=' precision'
+    ptanGHzL2AUX: l2aux, source=x.ptanGHz
+    ptanTHzL2AUX: l2aux, source=x.ptanTHz
+END Join
+
+
+; ---------------------------------------------------------  Output  -----
+BEGIN Output
+
+    output, file='!outpath/MLS-Aura_L1BRAD_!band-clean_!ver_!day.dat', $
+      quantities=  $
+      [ ptanGHzL2AUX, ptanTHzL2AUX, radL2AUX, noiseL2AUX ], type=l2aux
+
+END Output
+
+
+@
+
+
+2.8
+log
+@New l2pc fragments
+@
+text
+@@
+
+
+2.7
+log
+@Minor changes / bug fixes
+@
+text
+@d8 1
+a8 1
+!ifdef(band, ,!define(band,2L))
+d36 1
+a36 1
+    endTime = "23:59:59"
+d172 1
+a172 1
+    output, file='!outpath/rad_band_!band_!ver_!day.dat',  $
+@
+
+
+2.6
+log
+@More changes
+@
+text
+@d34 1
+a34 1
+    l1Boa, file='/data/emls/l1boa/truth/{}!year{}/MLS-Aura_L1BOA_Full_s4-t_{}!day{}.dat'
+d105 1
+a105 15
+    ;; Now fill the main state quantities from the l2gp data
+    Fill, quantity=x.temp,   method=l2gp, sourceL2GP=l2gpTempInput
+    Fill, quantity=x.refgph, method=l2gp, sourceL2GP=l2gpGphInput,/interpolate
+    Fill, quantity=x.BrO,    method=l2gp, sourceL2GP=l2gpBroInput
+    Fill, quantity=x.CO,     method=l2gp, sourceL2GP=l2gpCOInput
+    Fill, quantity=x.ClO,    method=l2gp, sourceL2GP=l2gpClOInput
+    Fill, quantity=x.H2O,    method=l2gp, sourceL2GP=l2gpH2OInput
+    Fill, quantity=x.HCN,    method=l2gp, sourceL2GP=l2gpHCNInput
+    Fill, quantity=x.HCl,    method=l2gp, sourceL2GP=l2gpHClInput
+    Fill, quantity=x.HNO3,   method=l2gp, sourceL2GP=l2gpHNO3Input
+    Fill, quantity=x.HO2,    method=l2gp, sourceL2GP=l2gpHO2Input
+    Fill, quantity=x.HOCl,   method=l2gp, sourceL2GP=l2gpHOClInput
+    Fill, quantity=x.N2O,    method=l2gp, sourceL2GP=l2gpN2OInput
+    Fill, quantity=x.O3,     method=l2gp, sourceL2GP=l2gpO3Input
+    Fill, quantity=x.OH,     method=l2gp, sourceL2GP=l2gpOHInput
+d113 1
+@
+
+
+2.5
+log
+@More changes for new m4 usage
+@
+text
+@a11 1
+!define(year,1996)
+d68 2
+a69 11
+; ------------------------------------------ Chunk divide  ----
+BEGIN ChunkDivide
+    IdealLength =             0.25 orbits
+    overlap =                 3 MAFs
+    HomeGeodAngle =           0 degrees
+    HomeModule =              GHz
+    ScanLowerLimit =          -10 km : 20 km
+    ScanUpperLimit =          40 km : 100 km
+    CriticalScanningModules = Both
+    MaxGap =                  3 minutes
+END ChunkDivide
+a174 5
+    l2gpTemp: l2gp, source=x.temp, swath = 'Temperature'
+    l2gpH2O:  l2gp, source=x.h2o,  swath = 'H2O'
+    l2gpN2O:  l2gp, source=x.n2o,  swath = 'N2O'
+    l2gpHCl:  l2gp, source=x.hcl,  swath = 'HCl'
+
+d185 1
+a185 3
+    output, file='{}_outpath{temp_}!ver{.dat}', type=l2gp,  $
+      quantities=l2gpTemp
+    output, file='{}_outpath{rad_band}!band{_}!ver{_}!day{.dat}',  $
+@
+
+
+2.4
+log
+@Regular commit
+@
+text
+@d8 1
+d15 1
+a15 1
+!define(systemp,!systemp$1)
+d41 2
+d88 2
+a89 2
+l2cfinc(constructstandardspecies.l2cf)
+l2cfinc(constructunfoldedradiances.l2cf)
+d135 4
+a138 4
+define(_x,x)
+define(_b,b)
+l2cfinc(filllesserstate.l2cf)
+l2cfinc(fillisotopes.l2cf)
+d159 1
+a159 1
+l2cfinc(fillsidebandratios.l2cf)
+d172 1
+a172 1
+l2cfinc(definesystemp.l2cf)
+@
+
+
+2.3
+log
+@Removed fmStat%finished and change loop ordering in forward models
+@
+text
+@a5 10
+
+ifdef(_band, ,define(_band,{1L}))
+define(_outpath,/bigdata/livesey/misc/)
+define(_ver,test4)
+define(_day,1996-051)
+define(_year,1996)
+define(_signal,_sigBand$1)
+define(_molecules,_mol$1)
+define(_systemp, _systemp$1)
+
+d8 7
+d17 1
+a17 1
+l2cfinc(validsignals-emls.l2cf)
+d20 1
+a20 1
+l2cfinc(signalsforband.l2cf)
+d23 1
+a23 1
+l2cfinc(spectroscopy.l2cf)
+d26 1
+a26 1
+l2cfinc(moleculesperband.l2cf)
+d29 1
+a29 1
+l2cfinc(readl2gpfiles.l2cf)
+d34 1
+a34 1
+    l1Boa, file='/data/emls/l1boa/truth/{}_year{}/MLS-Aura_L1BOA_Full_s4-t_{}_day{}.dat'
+d56 2
+a57 2
+      signals = _signal(_band), $
+      molecules = _molecules(_band), $
+d90 1
+a90 1
+      [temp, refGPH, ptanGHz, ptanTHz, _AllMolecules ]
+d92 1
+a92 1
+      [ _AllElevs, _AllSBRatios, _LesserState, _AllISORatios ]
+d95 1
+a95 1
+      [ {band}_band ]
+a127 1
+
+d173 2
+a174 2
+    Fill, quantity={yNoise.band}_band, radianceQuantity={y.band}_band,  $
+      systemTemperature= _systemp(_band), integrationTime=0.16 s,  $
+d187 2
+a188 2
+    radL2AUX: l2aux, source=y.band{}_band, /prefixSignal, sdName=''
+    noiseL2AUX: l2aux, source=yNoise.band{}_band, /prefixSignal, sdName=' precision'
+d197 1
+a197 1
+    output, file='{}_outpath{temp_}_ver{.dat}', type=l2gp,  $
+d199 1
+a199 1
+    output, file='{}_outpath{rad_band}_band{_}_ver{_}_day{.dat}',  $
+d204 2
+@
+
+
+2.2
+log
+@Regular commit
+@
+text
+@d7 3
+a9 3
+ifdef(_band, ,define(_band,{12U}))
+define(_outpath,/nas/bigdata/livesey/misc/)
+define(_ver,test3)
+d37 1
+a37 1
+    l1Boa, file='/nas/data/emls/l1boa/truth/{}_year{}/MLS-Aura_L1BOA_Full_s4-t_{}_day{}.dat'
+d71 1
+a71 1
+    IdealLength =             0.05 orbits
+@
+
+
+2.1
+log
+@First version.
+@
+text
+@d7 1
+a7 1
+ifdef(_band, ,define(_band,{1L}))
+d9 1
+a9 1
+define(_ver,test2)
+d71 1
+a71 1
+    IdealLength =             0.0416 orbits
+d166 2
+a167 2
+;   sids, fwdModelIn=x, fwdModelExtra=b, fwdModelOut=y,$
+;     forwardModel=[sidsFwm]
+@
+

@@ -1,0 +1,66 @@
+head	1.2;
+access;
+symbols
+	V0_1:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2001.01.31.01.14.51;	author zvi;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2000.06.21.21.56.16;	author zvi;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@No longer needed
+@
+text
+@module PHYSICS
+! Physical constants
+  use MLSCommon, only: R8
+  implicit NONE
+  public
+  Real(r8), Parameter :: H = 6.62606891e-34_r8 ! Physics News, 1998
+  Real(r8), Parameter :: K = 1.3806503e-23_r8  ! NIST, 1998
+  Real(r8), Parameter :: H_OVER_K = H / K * 1.0e6_r8 ! \nu in MHz
+! Real(r8), Parameter :: H_OVER_K = 4.7992377e-5_r8 ! using H and K above
+! Real(r8), Parameter :: H_OVER_K = 4.7992157e-5_r8 ! Zvi's original
+!---------------------------- RCS Ident Info -------------------------------
+  private :: Id, ModuleName
+  CHARACTER (LEN=256) :: Id = &
+       "$Id: physics.f90,v 1.1 2000/06/21 21:56:16 zvi Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile: physics.f90,v $"
+!---------------------------------------------------------------------------
+end module PHYSICS
+! $Log: physics.f90,v $
+! Revision 1.1  2000/06/21 21:56:16  zvi
+! First version D.P.
+!
+! Revision 1.1  2000/05/04 18:12:06  vsnyder
+! Initial conversion to Fortran 90
+!
+@
+
+
+1.1
+log
+@First version D.P.
+@
+text
+@d14 1
+a14 1
+       "$Id: physics.f90,v 1.1 2000/05/04 18:12:06 vsnyder Exp $"
+d19 3
+@
+

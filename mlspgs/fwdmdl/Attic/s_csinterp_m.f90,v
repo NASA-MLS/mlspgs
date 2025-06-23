@@ -1,0 +1,71 @@
+head	1.2;
+access;
+symbols
+	V0_1:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2000.11.22.23.07.30;	author zvi;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2000.05.04.18.12.06;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@New version
+@
+text
+@module S_CSINTERP_M
+  use MLSCommon, only: I4
+  implicit NONE
+  private
+  public :: S_CSINTERP, CSINTERP
+  interface CSINTERP; module procedure S_CSINTERP; end interface
+
+!---------------------------- RCS Ident Info -------------------------------
+  CHARACTER (LEN=256) :: Id = &
+       "$Id: s_csinterp_m.f90,v 1.1 2000/05/04 18:12:06 vsnyder Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile: s_csinterp_m.f90,v $"
+!---------------------------------------------------------------------------
+
+  integer, private, parameter :: RK = kind(0.0e0)
+contains
+
+  function S_CSINTERP ( x_in, x_out, y_in, y_out,        &
+ &                      len_in, len_out, max_len_in, max_len_out, &
+ &                      a, b, c, d) result (RESULT)
+    include 'csinterp.f9h'
+  end function S_CSINTERP
+end module S_CSINTERP_M
+
+! $Log: s_csinterp_m.f90,v $
+! Revision 1.1  2000/05/04 18:12:06  vsnyder
+! Initial conversion to Fortran 90
+!
+@
+
+
+1.1
+log
+@Initial conversion to Fortran 90
+@
+text
+@d10 1
+a10 1
+       "$Id: S_CSINTERP_M,v 1.12 2000/02/08 19:54:57 vsnyder Exp $"
+d24 4
+a27 1
+! $Log: S_CSINTERP_M,v $
+@
+

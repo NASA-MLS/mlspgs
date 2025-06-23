@@ -1,0 +1,93 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.12
+	cfm-single-freq-0-1:1.1.0.10
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.8
+	mus-emls-1-70:1.1.0.6
+	rel-1-0-englocks-work:1.1.0.4
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2014.11.04.23.36.42;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@First commit
+@
+text
+@; $Id: lblmoleculesforpfafwm.l2cf,v 1.2 2006/06/29 23:05:52 lambert Exp $
+
+;; =======================lblMoleculesforpfafwm================================
+;; removes newline char from the string returned by !esyscmd
+!define(DropLastChar, {!substr({$*},0,!eval(!len({$*})-1))})
+  
+;; replace l2cf line continuation char '$' with shell char '\'
+!define(TransLitContinueLineChar, {!translit({$*}, {$}, {\})})
+  
+;; the macros !ExpandRTVLMandatoryLBLMoleculesForX are contained in
+;; the spectroscopy l2cf defs file
+!define(ExpandRTVLMandatoryLBLMoleculesFor, {!makelist(!RTVLMandatoryLBLMoleculesFor,{},$@@)})
+
+;; system call to python routine
+!define(PyCatLBLMolecules, {!DropLastChar(!esyscmd(!home/mlspgs/scripts/pycatlblmolecules.py {$*}))})
+!define(CatLBL, {!PyCatLBLMolecules(!TransLitContinueLineChar({$*}))})
+
+;; e.g. call as !lblMolecules(2L, 3L) to get the required lbl
+;; molecules for these sidebands
+;;!define(lblMolecules, {!CatLBL(!ExpandRTVLMandatoryLBLMoleculesFor($@@))})
+;;!define(lblMolecules, {!RTVLMandatoryLBLMoleculesFor$@@})
+
+;; system call to python routine 
+!define(PyDiff, {!DropLastChar(!esyscmd(!home/mlspgs/scripts/pydiff.py {$*}))})
+!define(lblMoleculesR3Ext, {!PyDiff('!lblMolecules($*)' 'H2O, H2O_R3, N2, O2')})
+
+;; =======================lblMoleculesforpfafwm================================
+
+!define(lblMolecules,{!dnl
+!ifelse($1,R1,{!RTVLMandatoryLBLMoleculesForR1})!dnl
+!ifelse($1,R2,{!RTVLMandatoryLBLMoleculesForR2})!dnl
+!ifelse($1,R3,{!RTVLMandatoryLBLMoleculesForR3})})
+
+!define(LbandsForRadiometer,{!dnl
+!ifelse($1,R1,{1L})!dnl
+!ifelse($1,R2,{2L,3L,4L})!dnl
+!ifelse($1,R3,{5L,6L})})
+
+!define(UbandsForRadiometer,{!dnl
+!ifelse($1,R1,{1U})!dnl
+!ifelse($1,R2,{2U,3U,4U})!dnl
+!ifelse($1,R3,{5U,6U})})
+
+;$Log: lblmoleculesforpfafwm.l2cf,v $
+;Revision 1.2  2006/06/29 23:05:52  lambert
+;added lblMoleculesR3Ext and PyDiff definitions
+;
+;Revision 1.1  2006/04/27 23:40:01  lambert
+;handles mandatory lbl molecules for PFA forward models
+;
+@

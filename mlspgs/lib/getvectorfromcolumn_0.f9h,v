@@ -1,0 +1,148 @@
+head	2.2;
+access;
+symbols
+	v5-02-NRT-19:2.2
+	v6-00:2.2
+	v5-02-NRT-18:2.2
+	v5-02:2.2
+	v5-01-NRT-17:2.2
+	v5-01-NRT-16:2.2
+	v5-01-NRT-15:2.2
+	v5-01-NRT-14:2.2
+	neuralnetworks-1-0:2.2.0.14
+	cfm-single-freq-0-1:2.2.0.12
+	v5-01:2.2
+	v5-00:2.2
+	v4-23-TA133:2.2.0.10
+	mus-emls-1-70:2.2.0.8
+	rel-1-0-englocks-work:2.2.0.6
+	VUMLS1-00:2.2
+	VPL1-00:2.2
+	V4-22-NRT-08:2.2
+	VAM1-00:2.2
+	V4-21:2.2.0.4
+	V4-13:2.2
+	V4-12:2.2
+	V4-11:2.2
+	V4-10:2.2
+	V3-43:2.2
+	M4-00:2.2
+	V3-41:2.2
+	V3-40-PlusGM57:2.2.0.2
+	V2-24-NRT-04:2.2
+	V3-33:2.2
+	V2-24:2.2
+	V3-31:2.2
+	V3-30-NRT-05:2.2
+	cfm-01-00:2.2
+	V3-30:2.2
+	V3-20:2.2
+	V3-10:2.2
+	V2-23-NRT-02:2.2
+	V2-23:2.2
+	V2-22-NRT-01:2.2
+	V2-22:2.2
+	V2-21:2.2
+	V2-20:2.2
+	V2-11:2.2
+	V2-10:2.2
+	V2-00:2.2
+	V1-51:2.1
+	V1-50:2.1
+	V1-45:2.1
+	V1-44:2.1
+	V1-43:2.1
+	V1-42:2.1
+	V1-41:2.1
+	V1-32:2.1
+	V1-40:2.1
+	V1-31:2.1
+	V1-30:2.1
+	V1-13:2.1
+	V1-12:2.1
+	V1-11:2.1
+	V1-10:2.1
+	newfwm-feb03:2.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+2.2
+date	2005.06.22.17.44.10;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2003.01.08.21.29.27;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.2
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id: getvectorfromcolumn_0.f9h,v 2.1 2003/01/08 21:29:27 livesey Exp $
+
+! ------------------------------------------------------------------------------
+! Part of MatrixModule_0, used for r4 and r8 versions of routine of this name
+
+    if ( column < 1 .or. column > b%nCols ) call MLSMessage ( MLSMSG_Error, &
+      & moduleName, '"Column" is out-of-range in GetVectorFromColumn_0' )
+    if ( size(x) < b%nRows )  call MLSMessage ( MLSMSG_Error, &
+      & moduleName, '"X" is too small in GetVectorFromColumn_0' )
+    select case ( b%kind )
+    case ( M_Absent )
+      x = 0.0_r4
+    case ( M_Banded )
+      x = 0.0_r4
+      x(b%r1(column):b%r1(column)+b%r2(column)-b%r2(column-1)-1) = &
+        b%values(b%r2(column-1)+1:b%r2(column),column)
+    case ( M_Column_Sparse )
+      x = 0.0_r4
+      x(b%r2(b%r1(column-1)+1:b%r1(column))) = &
+        b%values(b%r1(column-1)+1:b%r1(column),column)
+    case ( M_Full )
+      x(1:b%nRows) = b%values(1:b%nRows,column)
+    end select
+
+! $Log: getvectorfromcolumn_0.f9h,v $
+! Revision 2.1  2003/01/08 21:29:27  livesey
+! First version, extracted from MatrixModule_0
+!
+@
+
+
+2.1
+log
+@First version, extracted from MatrixModule_0
+@
+text
+@d1 4
+a4 2
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d6 7
+a12 1
+! $Id$
+d36 4
+a39 1
+! $Log$
+@
+

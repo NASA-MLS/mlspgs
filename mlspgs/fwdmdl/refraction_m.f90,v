@@ -1,0 +1,4751 @@
+head	2.47;
+access;
+symbols
+	v5-02-NRT-19:2.47
+	v6-00:2.47
+	v5-02-NRT-18:2.47
+	v5-02:2.47
+	v5-01-NRT-17:2.47
+	v5-01-NRT-16:2.47
+	v5-01-NRT-15:2.47
+	v5-01-NRT-14:2.47
+	neuralnetworks-1-0:2.47.0.10
+	cfm-single-freq-0-1:2.47.0.8
+	v5-01:2.47
+	v5-00:2.47
+	v4-23-TA133:2.47.0.6
+	mus-emls-1-70:2.47.0.4
+	rel-1-0-englocks-work:2.47.0.2
+	VUMLS1-00:2.47
+	VPL1-00:2.46
+	V4-22-NRT-08:2.46
+	VAM1-00:2.45
+	V4-21:2.45.0.2
+	V4-13:2.45
+	V4-12:2.45
+	V4-11:2.45
+	V4-10:2.45
+	V3-43:2.39
+	M4-00:2.43
+	V3-41:2.39
+	V3-40-PlusGM57:2.39.0.2
+	V2-24-NRT-04:2.34
+	V3-33:2.40
+	V2-24:2.34
+	V3-31:2.40
+	V3-30-NRT-05:2.39
+	cfm-01-00:2.39
+	V3-30:2.39
+	V3-20:2.39
+	V3-10:2.39
+	V2-23-NRT-02:2.34
+	V2-23:2.34
+	V2-22-NRT-01:2.34
+	V2-22:2.34
+	V2-21:2.25
+	V2-20:2.25
+	V2-11:2.25
+	V2-10:2.25
+	V2-00:2.24
+	V1-51:2.21
+	V1-50:2.21
+	V1-45:2.20
+	V1-44:2.20
+	V1-43:2.19
+	V1-32:2.19
+	V1-31:2.19
+	V1-30:2.13
+	V1-13:2.13
+	V1-12:2.13
+	V1-11:2.13
+	V1-10:2.13
+	newfwm-feb03:2.13.0.2
+	V1-04:2.9
+	V1-03:2.9
+	V1-02:2.9
+	JointForwardModel:2.9.0.2
+	V1-00:2.9
+	newfwm-sep01:1.9.0.2
+	V0-7:1.9
+	V0-5-Level2:1.5
+	V0-5-SIPS:1.5;
+locks; strict;
+comment	@# @;
+
+
+2.47
+date	2016.11.11.01.45.05;	author vsnyder;	state Exp;
+branches;
+next	2.46;
+
+2.46
+date	2016.01.23.02.52.55;	author vsnyder;	state Exp;
+branches;
+next	2.45;
+
+2.45
+date	2013.07.26.22.19.05;	author vsnyder;	state Exp;
+branches;
+next	2.44;
+
+2.44
+date	2013.06.12.02.33.19;	author vsnyder;	state Exp;
+branches;
+next	2.43;
+
+2.43
+date	2013.02.28.21.05.48;	author vsnyder;	state Exp;
+branches;
+next	2.42;
+
+2.42
+date	2012.02.16.22.44.36;	author pwagner;	state Exp;
+branches;
+next	2.41;
+
+2.41
+date	2011.05.09.18.03.33;	author pwagner;	state Exp;
+branches;
+next	2.40;
+
+2.40
+date	2011.01.05.00.22.08;	author vsnyder;	state Exp;
+branches;
+next	2.39;
+
+2.39
+date	2009.07.09.23.53.53;	author vsnyder;	state Exp;
+branches;
+next	2.38;
+
+2.38
+date	2009.06.23.18.26.11;	author pwagner;	state Exp;
+branches;
+next	2.37;
+
+2.37
+date	2009.06.13.01.08.51;	author vsnyder;	state Exp;
+branches;
+next	2.36;
+
+2.36
+date	2009.01.16.23.42.04;	author vsnyder;	state Exp;
+branches;
+next	2.35;
+
+2.35
+date	2007.10.30.20.52.26;	author vsnyder;	state Exp;
+branches;
+next	2.34;
+
+2.34
+date	2007.10.02.22.35.17;	author vsnyder;	state Exp;
+branches;
+next	2.33;
+
+2.33
+date	2007.09.07.22.13.00;	author vsnyder;	state Exp;
+branches;
+next	2.32;
+
+2.32
+date	2007.09.07.03.00.32;	author vsnyder;	state Exp;
+branches;
+next	2.31;
+
+2.31
+date	2007.07.31.23.48.10;	author vsnyder;	state Exp;
+branches;
+next	2.30;
+
+2.30
+date	2007.07.27.00.17.41;	author vsnyder;	state Exp;
+branches;
+next	2.29;
+
+2.29
+date	2007.07.11.22.27.39;	author vsnyder;	state Exp;
+branches;
+next	2.28;
+
+2.28
+date	2007.02.02.00.22.44;	author vsnyder;	state Exp;
+branches;
+next	2.27;
+
+2.27
+date	2007.02.01.02.51.07;	author vsnyder;	state Exp;
+branches;
+next	2.26;
+
+2.26
+date	2006.12.13.02.32.03;	author vsnyder;	state Exp;
+branches;
+next	2.25;
+
+2.25
+date	2006.06.29.19.31.59;	author vsnyder;	state Exp;
+branches;
+next	2.24;
+
+2.24
+date	2005.12.22.20.58.22;	author vsnyder;	state Exp;
+branches;
+next	2.23;
+
+2.23
+date	2005.12.07.00.33.48;	author vsnyder;	state Exp;
+branches;
+next	2.22;
+
+2.22
+date	2005.06.22.18.08.19;	author pwagner;	state Exp;
+branches;
+next	2.21;
+
+2.21
+date	2004.09.01.01.47.56;	author vsnyder;	state Exp;
+branches;
+next	2.20;
+
+2.20
+date	2004.06.17.00.08.24;	author vsnyder;	state Exp;
+branches;
+next	2.19;
+
+2.19
+date	2003.11.04.01.55.08;	author vsnyder;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2003.11.03.23.15.15;	author vsnyder;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2003.09.26.18.23.34;	author vsnyder;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2003.09.17.23.33.26;	author vsnyder;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2003.09.17.23.32.56;	author vsnyder;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2003.09.13.02.02.00;	author vsnyder;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2002.10.08.17.08.06;	author pwagner;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2002.09.26.21.03.02;	author vsnyder;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2002.09.26.18.02.36;	author livesey;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2002.09.26.00.27.55;	author vsnyder;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2002.03.15.06.53.02;	author zvi;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2002.03.14.22.33.30;	author zvi;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2002.03.14.20.31.14;	author zvi;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2002.02.18.06.58.04;	author zvi;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2002.02.18.01.01.58;	author zvi;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2002.02.17.03.23.40;	author zvi;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2002.02.16.10.32.18;	author zvi;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2002.02.14.21.36.13;	author zvi;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.12.01.01.35.22;	author zvi;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2001.09.17.20.26.27;	author livesey;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2001.06.21.13.07.09;	author zvi;	state Exp;
+branches
+	1.9.2.1;
+next	1.8;
+
+1.8
+date	2001.06.19.23.19.26;	author pwagner;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2001.06.19.23.15.46;	author zvi;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2001.06.07.23.39.31;	author pwagner;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2001.03.31.23.40.56;	author zvi;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.03.21.22.46.34;	author livesey;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2001.03.20.11.03.16;	author zvi;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.01.31.01.08.48;	author zvi;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2000.11.22.23.07.30;	author zvi;	state Exp;
+branches;
+next	;
+
+1.9.2.1
+date	2001.09.10.10.02.32;	author zvi;	state Exp;
+branches;
+next	1.9.2.2;
+
+1.9.2.2
+date	2001.09.12.21.38.53;	author zvi;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.47
+log
+@Correct kind type parameter for H_Tol value
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module REFRACTION_M
+
+  !{ Compute the refractive index
+  !  $n = A \frac{P}{T} \left( 1 + B
+  !           \frac{\mathbf{f}_{{\text{H}_2\text{O}}}}{T} \right)$
+  !%
+  !  and its derivatives w.r.t.\ temp and H2O.  Don't bother with
+  !  derivatives w.r.t.\ $P$ or $\zeta$, which can be gotten easily without
+  !  needing $A$ or $B$, and would require derivatives of $T$ and
+  !  $\mathbf{f}_{{\text{H}_2\text{O}}}$ with respect to $P$ or $\zeta$.\\
+  !
+  !  $\frac{\text{d} n}{\text{d} T} = 
+  !    \frac1T \left( \frac{A P}T - 2 n \right)$ or
+  !    $- \frac{n}T$ if $\mathbf{f}_{{\text{H}_2\text{O}}}$ is not used.
+  !\\[5pt]
+  !  $\frac{\text{d} n}{\text{d} \mathbf{f}_{{\text{H}_2\text{O}}}} =
+  !    \frac{A B P}{T^2}$
+  !\\[5pt]
+  !  $\frac{\text{d} n}{\text{d} P} = \frac{n}{P} +
+  !    \frac{\text{d} n}{\text{d} T} \frac{\text{d} T}{\text{d} P} +
+  !    \frac{\text{d} n}{\text{d} \mathbf{f}_{{\text{H}_2\text{O}}}}
+  !    \frac{\text{d} \mathbf{f}_{{\text{H}_2\text{O}}}}{\text{d} P}$
+  !\\[5pt]
+  !  $\frac{\text{d} n}{\text{d} \zeta} = -n \ln 10 +
+  !    \frac{\text{d} n}{\text{d} T} \frac{\text{d} T}{\text{d} \zeta} +
+  !    \frac{\text{d} \mathbf{f}_{{\text{H}_2\text{O}}}}{\text{d} \zeta} =
+  !  \frac{\text{d} n}{\text{d} P} \frac{\text{d} P}{\text{d} \zeta}$
+
+  use MLSKINDS, only: RP, R8
+    
+  implicit none
+
+  private
+  public :: Refractive_Index, Refractive_Index_Deriv, Refractive_Index_f, &
+          & Refractive_Index_H2O_Update, Comp_Refcor
+  public :: MaxRefraction
+
+  real(rp), parameter, public :: RefrAterm = 0.0000776_rp
+  real(rp), parameter, public :: RefrBterm = 4810.0_rp
+
+  interface Refractive_Index
+    module procedure Refractive_Index_0,   Refractive_Index_0_h2o
+    module procedure Refractive_Index_1,   Refractive_Index_1_h2o
+    module procedure Refractive_Index_1_2, Refractive_Index_1_2_h2o
+    module procedure Refractive_Index_2,   Refractive_Index_2_h2o
+  end interface
+
+  interface Refractive_Index_f
+    module procedure Refractive_Index_0_f, Refractive_Index_0_h2o_f
+  end interface
+
+  interface Refractive_Index_deriv
+    module procedure Refractive_Index_0_deriv
+    module procedure Refractive_Index_0_h2o_deriv
+    module procedure Refractive_Index_1_deriv
+    module procedure Refractive_Index_1_h2o_deriv
+  end interface
+
+  interface Refractive_Index_H2O_Update
+    module procedure Refractive_Index_H2O_Update_0
+    module procedure Refractive_Index_H2O_Update_1
+    module procedure Refractive_Index_H2O_Update_2
+  end interface
+
+  ! This is the maximum amount of refraction allowed
+  real(r8), parameter :: MaxRefraction = 0.0004 ! Add one to get refractive index
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: refraction_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+!------------------------------------------  Refractive_Index_0_f  -----
+  pure elemental function Refractive_Index_0_f ( p_path, t_path ) result ( n_path )
+
+  ! This routine computes the refractive index as a function of pressure
+  ! and temperature. The returned value has one subtracted from it.
+  ! We could easily make this elemental.
+
+  ! inputs
+    real(rp), intent(in) :: p_path  ! pressure(hPa)
+    real(rp), intent(in) :: t_path  ! temperature(K)
+  ! output
+    real(rp) :: n_path ! refractive indicies - 1
+
+  ! begin code
+    n_path = refrAterm * p_path / t_path
+
+  end function Refractive_Index_0_f
+
+!--------------------------------------------  Refractive_Index_0  -----
+  subroutine Refractive_Index_0 ( p_path, t_path, n_path )
+
+  ! This routine computes the refractive index as a function of pressure
+  ! and temperature. The returned value has one subtracted from it.
+  ! We could easily make this elemental.
+
+  ! inputs
+    real(rp), intent(in) :: p_path  ! pressure(hPa)
+    real(rp), intent(in) :: t_path  ! temperature(K)
+  ! output
+    real(rp), intent(out) :: n_path ! refractive indicies - 1
+
+  ! begin code
+    n_path = refrAterm * p_path / t_path
+
+  end subroutine Refractive_Index_0
+
+!--------------------------------------  Refractive_Index_0_deriv  -----
+  subroutine Refractive_Index_0_deriv ( p_path, t_path, n_path, dNdT )
+
+  ! This routine computes the refractive index as a function of pressure
+  ! and temperature. The returned value has one subtracted from it.
+  ! We could easily make this elemental.
+
+  ! inputs
+    real(rp), intent(in) :: p_path  ! pressure(hPa)
+    real(rp), intent(in) :: t_path  ! temperature(K)
+  ! output
+    real(rp), intent(out) :: n_path ! refractive indicies - 1
+    real(rp), intent(out) :: dNdT   ! d(n_path)/d(t_path)
+
+  ! begin code
+    n_path = refrAterm * p_path / t_path
+
+    dNdT = - n_path / t_path
+
+  end subroutine Refractive_Index_0_deriv
+
+!----------------------------------------  Refractive_Index_0_h2o_f  -----
+  pure elemental function Refractive_Index_0_h2o_f ( p_path, t_path, h2o_path ) &
+                                                   & result ( n_path )
+  ! This routine computes the refractive index as a function of pressure,
+  ! temperature, and H2O. The returned value has one subtracted from it.
+  ! We could easily make this elemental.
+
+  ! inputs
+    real(rp), intent(in) :: p_path   ! pressure(hPa)
+    real(rp), intent(in) :: t_path   ! temperature(K)
+  ! Keywords
+    real(rp), intent(in) :: h2o_path ! H2O vmr(ppv)
+  ! output
+    real(rp) :: n_path ! refractive indicies - 1
+
+  ! begin code
+    n_path = refrAterm * p_path / t_path * ( 1.0_rp + refrBterm*h2o_path/t_path)
+
+  end function Refractive_Index_0_h2o_f
+
+!----------------------------------------  Refractive_Index_0_h2o  -----
+  subroutine Refractive_Index_0_h2o ( p_path, t_path, n_path, h2o_path )
+
+  ! This routine computes the refractive index as a function of pressure,
+  ! temperature, and H2O. The returned value has one subtracted from it.
+  ! We could easily make this elemental.
+
+  ! inputs
+    real(rp), intent(in) :: p_path   ! pressure(hPa)
+    real(rp), intent(in) :: t_path   ! temperature(K)
+  ! output
+    real(rp), intent(out) :: n_path  ! refractive indicies - 1
+  ! Keywords
+    real(rp), intent(in) :: h2o_path ! H2O vmr(ppv)
+
+  ! begin code
+    n_path = refrAterm * p_path / t_path * ( 1.0_rp + refrBterm*h2o_path/t_path)
+
+  end subroutine Refractive_Index_0_h2o
+
+!-----------------------------------  Refractive_Index_0_h2o_deriv  -----
+  subroutine Refractive_Index_0_h2o_deriv ( p_path, t_path, h2o_path, &
+                                          & n_path, dNdT, dNdH )
+
+  ! This routine computes the refractive index as a function of pressure,
+  ! temperature, and H2O. The returned value has one subtracted from it.
+  ! We could easily make this elemental.  Its derivatives w.r.t. Temperature
+  ! and H2O are also computed.
+
+  ! inputs
+    real(rp), intent(in) :: p_path   ! pressure(hPa)
+    real(rp), intent(in) :: t_path   ! temperature(K)
+    real(rp), intent(in) :: h2o_path ! H2O vmr(ppv)
+  ! output
+    real(rp), intent(out) :: n_path  ! refractive indicies - 1
+    real(rp), intent(out) :: dNdT    ! d(n_path)/d(t_path)
+    real(rp), intent(out) :: dNdH    ! d(n_path)/d(h2o_path)
+
+    real(rp) :: APT                  ! A * P / T
+
+  ! begin code
+    apt = refrAterm * p_path / t_path
+    n_path = apt * ( 1.0_rp + refrBterm*h2o_path/t_path)
+
+    dNdT = ( apt - 2.0*n_path ) / t_path
+    dNdH = apt * refrBterm / t_path  ! A B P /T^2
+
+  end subroutine Refractive_Index_0_h2o_deriv
+
+! --------------------------------  Refractive_Index_H2O_Update_0  -----
+  subroutine Refractive_Index_H2O_Update_0 ( t_path, h2o_path, n_path )
+
+  ! Update the refractive index N_Path previously computed using only
+  ! temperature and pressure to account for H2O.
+
+  ! inputs
+    real(rp), intent(in) :: t_path    ! temperature(K)
+    real(rp), intent(in) :: h2o_path  ! H2O vmr(ppv)
+  ! inout
+    real(rp), intent(inout) :: n_path ! refractive indicies - 1
+
+    n_path = n_path * ( 1.0_rp + refrBterm*h2o_path/t_path)
+
+  end subroutine Refractive_Index_H2O_Update_0
+
+! -------------------------------------------  Refractive_Index_1  -----
+  subroutine Refractive_Index_1 ( p_path, t_path, n_path )
+
+  ! This routine computes the refractive index as a function of pressure
+  ! and temperature. The returned value has one subtracted from it.
+
+  ! inputs
+    real(rp), intent(in) :: p_path(:)  ! pressure(hPa)
+    real(rp), intent(in) :: t_path(:)  ! temperature(K)
+  ! output
+    real(rp), intent(out) :: n_path(:) ! refractive indicies - 1
+
+  ! begin code
+    n_path = refrAterm * p_path / t_path
+
+  end subroutine Refractive_Index_1
+
+!--------------------------------------  Refractive_Index_1_deriv  -----
+  subroutine Refractive_Index_1_deriv ( p_path, t_path, n_path, dNdT )
+
+  ! This routine computes the refractive index as a function of pressure
+  ! and temperature. The returned value has one subtracted from it.
+  ! Its derivative w.r.t. Temperature is also computed.
+
+  ! inputs
+    real(rp), intent(in) :: p_path(:)  ! pressure(hPa)
+    real(rp), intent(in) :: t_path(:)  ! temperature(K)
+  ! output
+    real(rp), intent(out) :: n_path(:) ! refractive indicies - 1
+    real(rp), intent(out) :: dNdT(:)   ! d(n_path)/d(t_path)
+  ! optional
+
+  ! begin code
+    n_path = refrAterm * p_path / t_path
+
+    dNdT = - n_path / t_path
+
+  end subroutine Refractive_Index_1_deriv
+
+! ---------------------------------------  Refractive_Index_1_h2o  -----
+  subroutine Refractive_Index_1_h2o ( p_path, t_path, n_path, h2o_path )
+
+  ! This routine computes the refractive index as a function of pressure,
+  ! temperature, and H2O. The returned value has one subtracted from it.
+  ! Its derivatives w.r.t. Temperature and H2O are also computed.
+
+  ! inputs
+    real(rp), intent(in) :: p_path(:)   ! pressure(hPa)
+    real(rp), intent(in) :: t_path(:)   ! temperature(K)
+  ! output
+    real(rp), intent(out) :: n_path(:)  ! refractive indicies - 1
+  ! Keywords
+    real(rp), intent(in) :: h2o_path(:) ! H2O vmr(ppv)
+
+  ! begin code
+    n_path = refrAterm * p_path / t_path * ( 1.0_rp + refrBterm*h2o_path/t_path)
+
+  end subroutine Refractive_Index_1_h2o
+
+!-----------------------------------  Refractive_Index_1_h2o_deriv  -----
+  subroutine Refractive_Index_1_h2o_deriv ( p_path, t_path, h2o_path, &
+                                          & n_path, dNdT, dNdH )
+
+  ! This routine computes the refractive index as a function of altitude
+  ! and phi. The returned value has one subtracted from it.
+  ! We could easily make this elemental.
+
+  ! inputs
+    real(rp), intent(in) :: p_path(:)    ! pressure(hPa)
+    real(rp), intent(in) :: t_path(:)    ! temperature(K)
+    real(rp), intent(in) :: h2o_path(:)  ! H2O vmr(ppv)
+  ! output
+    real(rp), intent(out) :: n_path(:)   ! refractive indicies - 1
+    real(rp), intent(out) :: dNdT(:)     ! d(n_path)/d(t_path)
+    real(rp), intent(out) :: dNdH(:)     ! d(n_path)/d(h2o_path)
+
+    real(rp) :: APT(size(p_path))        ! A * P / T
+
+  ! begin code
+    apt = refrAterm * p_path / t_path
+    n_path = apt * ( 1.0_rp + refrBterm*h2o_path/t_path)
+
+    dNdT = ( apt - 2.0*n_path ) / t_path
+    dNdH = apt * refrBterm / t_path      ! A B P /T^2
+
+  end subroutine Refractive_Index_1_h2o_deriv
+
+! --------------------------------  Refractive_Index_H2O_Update_1  -----
+  subroutine Refractive_Index_H2O_Update_1 ( t_path, h2o_path, n_path )
+
+  ! Update the refractive index N_Path previously computed using only
+  ! temperature and pressure to account for H2O.
+
+  ! inputs
+    real(rp), intent(in) :: t_path(:)    ! temperature(K)
+    real(rp), intent(in) :: h2o_path(:)  ! H2O vmr(ppv)
+  ! inout
+    real(rp), intent(inout) :: n_path(:) ! refractive indicies - 1
+
+    n_path = n_path * ( 1.0_rp + refrBterm*h2o_path/t_path)
+
+  end subroutine Refractive_Index_H2O_Update_1
+
+! -----------------------------------------  Refractive_Index_1_2  -----
+  subroutine Refractive_Index_1_2 ( p_path, t_path, n_path )
+
+  ! This routine computes the refractive index as a function of altitude
+  ! and phi. The returned value has one subtracted from it.
+
+  ! inputs
+    real(rp), intent(in) :: p_path(:)    ! pressure(hPa)
+    real(rp), intent(in) :: t_path(:,:)  ! temperature(K)
+  ! output
+    real(rp), intent(out) :: n_path(:,:) ! refractive indicies - 1
+
+    integer :: I
+
+  ! begin code
+    do i = 1, size(t_path,2)
+      n_path(:,i) = refrAterm * p_path(:) / t_path(:,i)
+    end do
+
+  end subroutine Refractive_Index_1_2
+
+! -------------------------------------  Refractive_Index_1_2_h2o  -----
+  subroutine Refractive_Index_1_2_h2o ( p_path, t_path, n_path, h2o_path )
+
+  ! This routine computes the refractive index as a function of altitude
+  ! and phi. The returned value has one subtracted from it.
+
+  ! inputs
+    real(rp), intent(in) :: p_path(:)     ! pressure(hPa)
+    real(rp), intent(in) :: t_path(:,:)   ! temperature(K)
+  ! output
+    real(rp), intent(out) :: n_path(:,:)  ! refractive indicies - 1
+  ! Keywords
+    real(rp), intent(in) :: h2o_path(:,:) ! H2O vmr(ppv)
+
+    integer :: I
+
+  ! begin code
+    do i = 1, size(t_path,2)
+      n_path(:,i) = refrAterm * p_path(:) / t_path(:,i) * &
+        & ( 1.0_rp + refrBterm*h2o_path(:,i)/t_path(:,i))
+    end do
+
+  end subroutine Refractive_Index_1_2_h2o
+
+! -------------------------------------------  Refractive_Index_2  -----
+  subroutine Refractive_Index_2 ( p_path, t_path, n_path )
+
+  ! This routine computes the refractive index as a function of altitude
+  ! and phi. The returned value has one subtracted from it.
+
+  ! inputs
+    real(rp), intent(in) :: p_path(:,:)  ! pressure(hPa)
+    real(rp), intent(in) :: t_path(:,:)  ! temperature(K)
+  ! output
+    real(rp), intent(out) :: n_path(:,:) ! refractive indicies - 1
+
+  ! begin code
+    n_path = refrAterm * p_path / t_path
+
+  end subroutine Refractive_Index_2
+
+! ---------------------------------------  Refractive_Index_2_h2o  -----
+  subroutine Refractive_Index_2_h2o ( p_path, t_path, n_path, h2o_path )
+
+  ! This routine computes the refractive index as a function of altitude
+  ! and phi. The returned value has one subtracted from it.
+
+  ! inputs
+    real(rp), intent(in) :: p_path(:,:)   ! pressure(hPa)
+    real(rp), intent(in) :: t_path(:,:)   ! temperature(K)
+  ! output
+    real(rp), intent(out) :: n_path(:,:)  ! refractive indicies - 1
+  ! Keywords
+    real(rp), intent(in) :: h2o_path(:,:) ! H2O vmr(ppv)
+
+  ! begin code
+    n_path = refrAterm * p_path / t_path * ( 1.0_rp + refrBterm*h2o_path/t_path)
+
+  end subroutine Refractive_Index_2_h2o
+
+! --------------------------------  Refractive_Index_H2O_Update_2  -----
+  subroutine Refractive_Index_H2O_Update_2 ( t_path, h2o_path, n_path )
+
+  ! Update the refractive index N_Path previously computed using only
+  ! temperature and pressure to account for H2O.
+
+  ! inputs
+    real(rp), intent(in) :: t_path(:,:)    ! temperature(K)
+    real(rp), intent(in) :: h2o_path(:,:)  ! H2O vmr(ppv)
+  ! inout
+    real(rp), intent(inout) :: n_path(:,:) ! refractive indicies - 1
+
+    n_path = n_path * ( 1.0_rp + refrBterm*h2o_path/t_path)
+
+  end subroutine Refractive_Index_H2O_Update_2
+
+! --------------------------------------------------  Comp_Refcor  -----
+
+  subroutine Comp_Refcor ( tan_pt, h_path, n_path, ht, del_s, ref_corr, &
+                         & status )
+
+  !{ This routine computes the integral
+  !
+  ! \begin{equation*}
+  ! I = \Delta s^{\text{refr}}_{i\rightarrow i-1} =
+  ! \int_{H_{i-1}}^{H_i} \frac{\mathcal{N}(H) H}
+  !                           {\sqrt{\mathcal{N}(H)^2 H^2 - \mathcal{N}_t^2 H_t^2}}
+  !                      \,\text{d} H\,,
+  ! \end{equation*}
+  !
+  ! which is described in Eqn. 10.12 of the 19 August 2004 MLS ATBD, pg. 45,
+  ! using the Gauss-Legendre method.
+  !
+  ! Substitute $x = \sqrt{\mathcal{N}(H)^2 H^2 - \mathcal{N}_t^2 H_t^2}$
+  ! to remove the singularity, giving
+  ! $I = \int_{x_{i-1}}^{x_i}
+  !       \frac{\text{d}x}
+  !            {N(h)+h\frac{\text{d}}{\text{d}h}N(h)}
+  !    = \int_{x_{i-1}}^{x_i}
+  !       \frac{\text{d}x}{\frac{\text{d}}{\text{d}h} h N(h)}$,
+  ! where $h$ is the solution of $h N(h) = \sqrt{H_t^2 \mathcal{N}_t^2 + x^2}$.
+  !
+  ! Assume $\mathcal{N}(h) = 1+E$, where $E = n_{i-1} \exp(\epsilon (h-H_{i-1}))$,
+  ! $\epsilon = \frac1{H_i-H_{i-1}} \log \frac{n_i}{n{_i-1}}$, and
+  ! $n_i = \mathcal{N}(H_i)-1$.
+  !
+  ! If $\mathcal{N}(H_{i-1}) = \mathcal{N}(H_i)$ the integral is evaluable as
+  ! $\left.\frac1{\mathcal{N}(H_i)} \sqrt{\mathcal{N}(H_i) H - \mathcal{N}_t H_t}
+  ! \right|_{H=H_{i-1}}^{H_i}$.
+  !
+  ! If the refractive correction is not in the interval [1.0,rmax], or if
+  ! $\frac{\text{d}}{\text{d}h} h N(h)$ changes sign, use the trapezoidal
+  ! rule instead.  On the ends of the interval, $h=H_i$ and $E=n_i$, so
+  ! $\mathcal{N}(H_i) = \mathcal{N}_i$, giving $I=\frac{x_i-x_{i-1}}2
+  ! (f_{i-1}+f_i)$ where the integrand $f_i = \frac1{1+n_i(1+\epsilon H_i)}$.
+
+  ! For derivation of the code below, please see: "FWD Model" paper,
+  ! Page 16, Eqn. 26 & 27
+
+    use DUMP_0, only: DUMP
+    use GLNP, only: NG, GX=>GX_ALL, GW=>GW_ALL
+    use MLSKINDS, only: RP, IP
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use OUTPUT_M, only: OUTPUT
+    use TOGGLES, only: SWITCHES
+
+    integer, intent(in) :: Tan_pt  ! Tangent point index in H_Path etc.
+    real(rp), intent(in) :: H_PATH(:)
+    real(rp), intent(in) :: N_PATH(:)
+
+    real(rp), intent(in) :: ht     ! Geometric tangent height from Earth center, km
+
+    real(rp), intent(out) :: Del_s(:) ! Del_s(j) = path length from j to j+m,
+                                   ! where m is the direction from the tangent
+                                   ! point, except Del_s(0) = Del_s(no_ele) = 0.
+    real(rp), intent(out) :: REF_CORR(:)
+
+    integer, intent(out) :: Status ! 0 = OK, 1 = too many iterations,
+                                   ! 4 = failed to bracket root,
+                                   ! 5 = discontinuity, 6 = improper usage
+
+    logical :: Bad      ! Ref_Corr < 1 somewhere
+    integer(ip) :: HNDP ! "Solve_Hn Detail Printing"
+    integer(ip) :: RCFX ! "Ref_Cor FiXup printing"
+    integer(ip) :: j, j1, j2, k, m, no_ele, panel_stat, stat, My_Tan
+
+    real(rp) :: INTEGRAND_GL(Ng)
+
+    real(rp) :: q, htan2, NH, Nt2Ht2
+    real(rp) :: dndh, eps, H, h1, h2, N, n1, n2, t1, t2, x1, x2, xm, ym
+
+    real(rp), parameter :: Tiny = 1.0e-8_rp
+!   real(rp), parameter :: Rmax = 1.3_rp
+
+    status = 0
+    hndp = switchDetail(switches,'hndp') ! bit 1 => Dump the arrays if trouble
+                                         ! bit 2 => Dump the arrays and stop
+                                         ! bit 4 => Dump the iterates
+    rcfx = switchDetail(switches,'rcfx')
+
+    no_ele = size(n_path)
+    my_tan = min(tan_pt, no_ele)
+
+  !  Initialize the ref_corr array:
+
+    ref_corr(1:no_ele) = 1.0_rp
+
+    htan2 = ht * ht
+    Nt2Ht2 = (n_path(my_tan)*ht)**2
+
+    bad = .false.
+
+    j1 = my_tan
+    j2 = 2
+    del_s(1) = 0.0
+    do m = -1, 1, 2
+      h2 = h_path(j1)
+      n2 = n_path(j1)
+
+      q = (h2 * n2)**2 - nt2ht2
+      if ( abs(q) < tiny ) q = 0.0_rp
+      n2 = n2 - 1.0_rp
+      x2 = sqrt(abs(q))
+
+      do j = j1, j2, m
+
+        x1 = x2
+        n1 = n2
+        h1 = h2
+        n2 = n_path(j+m)
+        h2 = h_path(j+m)
+
+        del_s(j) = abs(sqrt(abs(h1**2-htan2)) - sqrt(abs(h2**2-htan2)))
+
+        q = (h2 * n2)**2 - nt2ht2
+        if ( abs(q) < tiny) q = 0.0_rp
+        n2 = n2 - 1.0_rp
+
+        if ( q < 0.0_rp ) then
+          if ( hndp > 0 ) then
+            write ( *, '("q < 0 for Ref_Corr(",i0,"), q = ",1pg15.7)' ) j, q
+            write ( *, * ) "n2, h2, nt2ht2 = ", n2+1.0, h2, nt2ht2
+          end if
+          ref_corr(j) = 100.0
+          bad = .true.
+          cycle
+        end if
+
+        x2 = sqrt(q)
+
+        if ( abs(n2-n1) <= 1.0e-3*(n2+n1) ) then
+          ! Where N is essentially constant, the integral is easy, and probably
+          ! almost exactly 1.0.
+          if ( hndp > 0 ) write ( *, '("N essentially constant for Ref_Corr(",i0,")")' ) j
+          ref_corr(j) = abs( sqrt((n_path(j+m)*h2)**2-nt2ht2) - &
+            &                sqrt((n_path(j  )*h1)**2-nt2ht2) ) / &
+            &           ( n_path(j) * del_s(j) )
+        else if ( n1 <= 0.0 .or. n2 <= 0.0 ) then
+          ! Force trapezoidal rule on untransformed integral because
+          ! we can't compute eps to do the transformation
+          if ( hndp > 0 ) write ( *, '("Trapezoidal for Ref_Corr(",i0,")")' ) j
+          t1 = (1.0 + n1) * h1
+          t2 = (1.0 + n2) * h2
+          ref_corr(j) = 0.5 * abs( ( h2 - h1 ) * &
+            & (t1/sqrt(t1**2-nt2ht2) + t2/sqrt(t2**2-nt2ht2)) ) / Del_s(j)
+        else
+          if ( hndp > 3 ) write ( *, '("Solving for H for Ref_Corr(",i0,")")' ) j
+          panel_stat = 0
+          eps = log(n2/n1)/(h2-h1)
+          xm = 0.5_rp *(x2 + x1)      ! Midpoint of the interval
+          ym = 0.5_rp *(x2 - x1)      ! Half of the interval length
+          do k = 1, ng
+            q = xm + ym * gx(k)       ! Gauss abscissa
+            NH = sqrt(q*q + nt2ht2)
+            ! Solve h*(1+n1*exp(eps*(h-h1))) = sqrt(q*q + nt2ht2) for h
+            call solve_hn
+            panel_stat = max(panel_stat,stat)
+            if ( stat > 1 ) exit
+            integrand_gl(k) = 1.0_rp/(n+h*dndh) ! = 1 / d(nh)/dh
+          end do ! k
+          status = max(status,panel_stat)
+
+          ! And Finally - define the refraction correction:
+
+          if ( panel_stat < 2 ) then
+            ref_corr(j) = dot_product(integrand_gl,gw) * ym / Del_s(j)
+          else
+            ref_corr(j) = -1.0 ! To be corrected later
+          end if
+        end if
+
+        ! If ref_corr(j) is unphysical, use the trapezoidal rule instead
+
+        bad = bad .or. ref_corr(j) < 1.0
+
+      end do ! j
+
+      if ( my_tan < tan_pt ) exit
+      j1 = tan_pt + 1
+      j2 = no_ele - 1
+      del_s(no_ele) = 0.0
+    end do ! m
+
+    if ( bad ) then
+      ! Things are unphysical somewhere.  Replace ref_corr by 1.0
+      ! wherever it's less than 1.0.  Alternatively, the average
+      ! of neighbors, or a value interpolated from neighbors could be used.
+      if ( rcfx >= 0 ) call output( 'Ref_Corr fixup needed.', advance='yes' )
+      call dumpArrays
+      if ( rcfx >= 0 ) call output ( 'Ref_Corr fixed at' )
+      do j = 2, no_ele-1
+        if ( ref_corr(j) < 1.0 ) then
+          ref_corr(j) = 1.0
+!           ref_corr(j) = 0.5 * ( max(1.0_rp,min(rmax,ref_corr(j-1))) + &
+!                      & max(1.0_rp,min(rmax,ref_corr(j+1))) )
+          if ( rcfx >= 0 ) call output ( j, before=' ' )
+        end if
+      end do
+      if ( rcfx >= 0 ) then
+        call output ( '', advance='yes' )
+        call dump ( ref_corr, name='Ref_Corr after fixup' )
+        if ( rcfx > 0 ) stop
+      end if
+    end if
+
+    if ( status > 0 ) then ! Solve_Hn didn't converge somewhere
+      call dumpArrays
+      if ( iand(hndp,3) /= 0 ) call dumpArrays
+      if ( iand(hndp,2) /= 0 ) stop
+    end if
+
+  contains
+
+  ! .................................................... Solve_Hn  .....
+
+  ! Solve the equation h*(1.0+N(h)) = N*H, where N(h) is an exponential:
+  !    N(h) = n1*Exp(eps*(h-h1)), for h,
+
+    subroutine Solve_Hn
+
+      ! Stat = 0 => all OK, = 1 => too many iterations,
+      !      = 4 => Could not bracket root (no solution),
+      !      = 5 => Discontinuity (no solution),
+      !      = 6 => improper usage (ought to stop).
+      use Zero_m, only: ZERO
+
+      integer :: iter
+      real(rp) :: E ! N1 * exp(eps * (h-h1))
+      real(rp) :: f1, f2, x1, x2
+      logical :: Head ! Need debug stuff heading
+
+      real(rp), parameter :: H_tol = 0.001_rp ! km
+
+      integer,  parameter :: Max_Iter = 20
+      character(LEN=*), parameter :: Msg1 = &
+        & 'From Solve_Hn routine: Did not converge within 20 iterations'
+
+      character(LEN=*), parameter :: Msg2 = &
+        & 'From Solve_Hn routine: Zero finder thinks F has a discontinuity'
+
+      character(LEN=*), parameter :: Msg3 = &
+        & 'From Solve_Hn routine: Could not bracket the root'
+
+      character(LEN=*), parameter :: Msg4 = &
+        & 'From Solve_Hn routine: Improper usage of zero finder'
+
+      character(max(len(msg1),len(msg2),len(msg3))+10) :: Msg
+
+      iter = 1
+
+      x1 = h1
+      x2 = h2
+      e = n1 * exp(eps*(x2-h1))
+      f2 = x2 * (1.0_rp + e ) - NH
+
+      head = .true.
+      stat = 0
+      do while ( iter < max_iter )
+
+        iter = iter + 1
+        e = n1 * exp(eps*(x1-h1))
+        f1 = x1 * (1.0_rp + e ) - NH
+        if ( hndp > 3 ) then
+          if ( head ) then
+            write ( *, '(5(3x,a2,9x)/2g14.7,1p,2g14.6,g20.12)' ) &
+            & 'x1', 'x2', 'f1', 'f2', 'NH', &
+            &  h1,   h2,   f1,   f2,   NH
+          else
+            write ( *, '(g14.7,14x,1pg14.6)') x1, f1
+          end if
+          head = .false.
+        end if
+        call zero ( x1, f1, x2, f2, stat, h_tol )
+        if ( stat /= 1 ) exit
+
+      end do
+
+      select case ( stat )
+      case ( 1 ) ! Too many iterations
+        msg = msg1
+        write ( msg(len(msg1)+1:), '(" at ", i0)' ) j
+        call MLSMessage ( MLSMSG_Warning, ModuleName, trim(msg) )
+        call dumpDiags ( NH, f1, f2 )
+      case ( 2, 3 ) ! Normal termination, tolerance is/is not satisfied
+        stat = 0 ! Worked OK
+        e = n1 * exp(eps*(x1-h1))
+        h = x1
+      case ( 4 ) ! F has a discontinuity -- no solution
+        msg = msg2
+        write ( msg(len(msg2)+1:), '(" at ", i0)' ) j
+        call MLSMessage ( MLSMSG_Warning, ModuleName, trim(msg) )
+        call dumpDiags ( NH, f1, f2 )
+      case ( 5 ) ! Couldn't bracket root -- no solution
+        msg = msg3
+        write ( msg(len(msg3)+1:), '(" at ", i0)' ) j
+        call MLSMessage ( MLSMSG_Warning, ModuleName, trim(msg) )
+        call dumpDiags ( NH, f1, f2 )
+      case ( 6 ) ! Improper usage
+        msg = msg4
+        write ( msg(len(msg4)+1:), '(" at ", i0)' ) j
+        call MLSMessage ( MLSMSG_Error, ModuleName, trim(msg) )
+      end select
+
+      N = 1.0_rp + e
+      dndh = eps * e
+
+    end subroutine Solve_Hn
+
+    subroutine DumpArrays
+
+      if ( rcfx >= 0 ) then
+        call output ( tan_pt, before='Tan_Pt = ' )
+        call output ( ht, before=' Ht = ' )
+        call output ( no_ele, before=' No_Ele = ' )
+        call dump ( h_path, name=' H_Path', format='(f14.4)' )
+        call dump ( n_path-1.0, name='N_Path' )
+        call dump ( ref_corr, name='Ref_Corr' )
+      end if
+
+    end subroutine DumpArrays
+
+    subroutine DumpDiags ( NH, F1, F2 )
+
+      real(rp), intent(in), optional :: NH, F1, F2
+
+      integer :: DFRC
+      dfrc = switchDetail(switches,'drfc')
+      if ( dfrc < 0 ) return
+      call output ( tan_pt, before='Tan_PT = ' )
+      call output ( ht, before=', Ht = ' )
+      call output ( no_ele, before=' No_Ele = ' )
+      if ( present(NH) ) then
+        call output ( stat, before=', stat = ', advance='yes' )
+        call output ( n1, before='n1 = ' )
+        call output ( n2, before=', n2 = ' )
+        call output ( h1, format='(f8.3)', before=', h1 = ' )
+        call output ( h2, format='(f8.3)', before=', h2 = ', advance='yes' )
+        call output ( nh, format='(f8.3)', before='NH = ' )
+        call output ( f1, before=', f1 = ' )
+        call output ( f2, before=', f2 = ', advance='yes' )
+      else
+        call output ( bad, before=', bad = ', advance='yes' )
+        call dump ( h_path, name='H_Path' )
+        call dump ( n_path-1.0, name='N_Path' )
+      end if
+      if ( dfrc > 0 ) stop
+
+    end subroutine DumpDiags
+
+  end subroutine Comp_Refcor
+
+!------------------------------------------------------------------
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: refraction_m.f90,v 2.46 2016/01/23 02:52:55 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module REFRACTION_M
+
+! $Log: refraction_m.f90,v $
+! Revision 2.46  2016/01/23 02:52:55  vsnyder
+! Add LaTeX, procedures to compute derivatives
+!
+! Revision 2.45  2013/07/26 22:19:05  vsnyder
+! Fiddle with dump switches
+!
+! Revision 2.44  2013/06/12 02:33:19  vsnyder
+! Cruft removal
+!
+! Revision 2.43  2013/02/28 21:05:48  vsnyder
+! Try to cope with short paths
+!
+! Revision 2.42  2012/02/16 22:44:36  pwagner
+! Skip printing Ref_Corr msg unless switch rcfx set
+!
+! Revision 2.41  2011/05/09 18:03:33  pwagner
+! Converted to using switchDetail
+!
+! Revision 2.40  2011/01/05 00:22:08  vsnyder
+! TeXnicalities
+!
+! Revision 2.39  2009/07/09 23:53:53  vsnyder
+! Replace MLSCommon with MLSKinds
+!
+! Revision 2.38  2009/06/23 18:26:11  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.37  2009/06/13 01:08:51  vsnyder
+! Improve comments about dummy arguments
+!
+! Revision 2.36  2009/01/16 23:42:04  vsnyder
+! Don't need to set all of Del_s to zero initially because all but 1 and
+! no_ele get set anyway.  Add PRINT statement to not_used_here.
+!
+! Revision 2.35  2007/10/30 20:52:26  vsnyder
+! Change diagnostic output criteria
+!
+! Revision 2.34  2007/10/02 22:35:17  vsnyder
+! Cannonball polishing
+!
+! Revision 2.33  2007/09/07 22:13:00  vsnyder
+! Don't put an upper bound on the refractive correction
+!
+! Revision 2.32  2007/09/07 03:00:32  vsnyder
+! Use Math 77 zero finder
+!
+! Revision 2.31  2007/07/31 23:48:10  vsnyder
+! Integrate away from tangent point to handle singularity correctly
+!
+! Revision 2.30  2007/07/27 00:17:41  vsnyder
+! Print enough to run Comp_refcor off line if "Drastic correction" message
+! is produced, and switch drcx or DRCX is set.  Stop after printing if
+! DRCX is set.
+!
+! Revision 2.29  2007/07/11 22:27:39  vsnyder
+! More robust integration in Comp_refcor
+!
+! Revision 2.28  2007/02/02 00:22:44  vsnyder
+! Don't bracket the Newton move so tightly
+!
+! Revision 2.27  2007/02/01 02:51:07  vsnyder
+! Improve Newton iteration in Solve_HN
+!
+! Revision 2.26  2006/12/13 02:32:03  vsnyder
+! Drag the tangent point around instead of assuming it's the middle one
+!
+! Revision 2.25  2006/06/29 19:31:59  vsnyder
+! Use entire integration formula, not just interior points, in case of Lobatto
+!
+! Revision 2.24  2005/12/22 20:58:22  vsnyder
+! Added more ranks and H2O update
+!
+! Revision 2.23  2005/12/07 00:33:48  vsnyder
+! Update references to ATBD in comments
+!
+! Revision 2.22  2005/06/22 18:08:19  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.21  2004/09/01 01:47:56  vsnyder
+! Add status argument
+!
+! Revision 2.20  2004/06/17 00:08:24  vsnyder
+! Removed two unused variables
+!
+! Revision 2.19  2003/11/04 01:55:08  vsnyder
+! simplify nonconverged case
+!
+! Revision 2.18  2003/11/03 23:15:15  vsnyder
+! Get rid of path_ds_dh procedure -- a one-liner used in one place
+!
+! Revision 2.17  2003/09/26 18:23:34  vsnyder
+! Reinstate a lost CVS comment
+!
+! Revision 2.16  2003/09/17 23:33:26  vsnyder
+! Major revision
+!
+! Revision 2.15  2003/09/17 23:32:56  vsnyder
+! Clean up a few loose ends before major revision
+!
+! Revision 2.14  2003/09/13 02:02:00  vsnyder
+! Converges faster with derivatives instead of differences
+!
+! Revision 2.13  2002/10/08 17:08:06  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.12  2002/09/26 21:03:02  vsnyder
+! Publish two constants, make Refractive_index generic
+!
+! Revision 2.11  2002/09/26 18:02:36  livesey
+! Bug fix (wouldn't compile)
+!
+! Revision 2.10  2002/09/26 00:27:55  vsnyder
+! Insert copyright notice, move USEs from module scope to procedure scope,
+! cosmetic changes.
+!
+! Revision 2.9  2002/03/15 06:53:02  zvi
+! Some cosmetic changes
+!
+! Revision 2.8  2002/03/14 22:33:30  zvi
+! Add protection against Log() blowout
+!
+! Revision 2.7  2002/03/14 20:31:14  zvi
+! Make Comp_refcor more robust
+!
+! Revision 2.6  2002/02/18 06:58:04  zvi
+! Trimming some unused code..
+!
+! Revision 2.5  2002/02/18 01:01:58  zvi
+! Let the program crash & burn for LARGE negative Sqrt Arg.
+!
+! Revision 2.4  2002/02/17 03:23:40  zvi
+! Better code for convergance in Solve_Hn
+!
+! Revision 2.3  2002/02/16 10:32:18  zvi
+! Make sure iteration in Solve_HN do not diverge
+!
+! Revision 2.2  2002/02/14 21:36:13  zvi
+! Fix Sqrt() problem..
+!
+! Revision 2.1  2001/12/01 01:35:22  zvi
+! Clerifying code.. easier to follow..
+!
+! Revision 2.0  2001/09/17 20:26:27  livesey
+! New forward model
+!
+! Revision 1.9.2.2  2001/09/12 21:38:53  zvi
+! Added CVS stuff
+!
+! Revision 1.9.2.1  2001/09/10 10:02:32  zvi
+! Cleanup..comp_path_entities_m.f90
+!
+! Revision 1.1 2000/06/09 00:08:14  Z.Shippony
+! Initial conversion to Fortran 90
+@
+
+
+2.46
+log
+@Add LaTeX, procedures to compute derivatives
+@
+text
+@d665 1
+a665 1
+      real(rp), parameter :: H_tol = 0.001 ! km
+d790 1
+a790 1
+       "$Id: refraction_m.f90,v 2.45 2013/07/26 22:19:05 vsnyder Exp $"
+d800 3
+@
+
+
+2.45
+log
+@Fiddle with dump switches
+@
+text
+@d14 27
+a40 1
+  use MLSKINDS, only: RP
+d45 3
+a47 1
+  public :: Refractive_index, Refractive_Index_H2O_Update, Comp_refcor
+d52 16
+a67 5
+  interface Refractive_index
+    module procedure Refractive_index_0,   Refractive_index_0_h2o
+    module procedure Refractive_index_1,   Refractive_index_1_h2o
+    module procedure Refractive_index_1_2, Refractive_index_1_2_h2o
+    module procedure Refractive_index_2,   Refractive_index_2_h2o
+d76 3
+d84 1
+d87 6
+a92 2
+!--------------------------------------------  Refractive_index_0  -----
+  subroutine Refractive_index_0 ( p_path, t_path, n_path )
+d94 16
+a109 2
+  ! This routine computes the refractive index as a function of altitude
+  ! and phi. The returned value has one subtracted from it.
+d113 2
+a114 2
+    real(rp), intent(in) :: p_path ! pressure(hPa)
+    real(rp), intent(in) :: t_path ! temperature(K)
+d121 1
+a121 3
+  ! dn_path_dT = - n_path / t_path
+
+  end subroutine Refractive_index_0
+d123 2
+a124 2
+!----------------------------------------  Refractive_index_0_h2o  -----
+  subroutine Refractive_index_0_h2o ( p_path, t_path, n_path, h2o_path )
+d126 2
+a127 2
+  !{ This routine computes the refractive index as a function of altitude
+  ! and phi. The returned value has one subtracted from it.
+a128 7
+  !
+  ! Let $n = r_a \frac{P}{T}$ where $r_a =$ {\tt refrAterm} and
+  ! $n_{H_2 O} = n \left( 1 + r_b \frac{f^{H_2 O}}{T} \right)$ where
+  ! $r_b =$ {\tt refrBterm}.  Then
+  ! $\frac{\partial n_{H_2 O}}{\partial T} =
+  !  -\frac{n}{T^2} ( T + 2 r_b f^{H_2 O} ) =
+  !  \frac{n - 2 n_{H_2 O}}{T}$
+d131 2
+a132 2
+    real(rp), intent(in) :: p_path ! pressure(hPa)
+    real(rp), intent(in) :: t_path ! temperature(K)
+d135 19
+d156 7
+d164 14
+a177 1
+  ! real(rp) :: n(size(n_path))
+d182 5
+a186 3
+  ! n = refrAterm * p_path / t_path
+  ! n_path = n * ( 1.0_rp + refrBterm*h2o_path/t_path)
+  ! dn_path_dT = (n - 2.0 * n_path) / t_path
+d188 24
+a211 1
+  end subroutine Refractive_index_0_h2o
+d229 2
+a230 2
+! -------------------------------------------  Refractive_index_1  -----
+  subroutine Refractive_index_1 ( p_path, t_path, n_path )
+d232 2
+a233 2
+  ! This routine computes the refractive index as a function of altitude
+  ! and phi. The returned value has one subtracted from it.
+d236 2
+a237 2
+    real(rp), intent(in) :: p_path(:) ! pressure(hPa)
+    real(rp), intent(in) :: t_path(:) ! temperature(K)
+d244 1
+a244 1
+  end subroutine Refractive_index_1
+d246 2
+a247 2
+! ---------------------------------------  Refractive_index_1_h2o  -----
+  subroutine Refractive_index_1_h2o ( p_path, t_path, n_path, h2o_path )
+d249 3
+a251 2
+  ! This routine computes the refractive index as a function of altitude
+  ! and phi. The returned value has one subtracted from it.
+d254 2
+a255 2
+    real(rp), intent(in) :: p_path(:) ! pressure(hPa)
+    real(rp), intent(in) :: t_path(:) ! temperature(K)
+d258 22
+d286 29
+a314 1
+  end subroutine Refractive_index_1_h2o
+d332 2
+a333 2
+! -----------------------------------------  Refractive_index_1_2  -----
+  subroutine Refractive_index_1_2 ( p_path, t_path, n_path )
+d339 2
+a340 2
+    real(rp), intent(in) :: p_path(:)   ! pressure(hPa)
+    real(rp), intent(in) :: t_path(:,:) ! temperature(K)
+d351 1
+a351 1
+  end subroutine Refractive_index_1_2
+d353 2
+a354 2
+! -------------------------------------  Refractive_index_1_2_h2o  -----
+  subroutine Refractive_index_1_2_h2o ( p_path, t_path, n_path, h2o_path )
+d360 2
+a361 2
+    real(rp), intent(in) :: p_path(:)   ! pressure(hPa)
+    real(rp), intent(in) :: t_path(:,:) ! temperature(K)
+d363 1
+a363 1
+    real(rp), intent(out) :: n_path(:,:) ! refractive indicies - 1
+d375 1
+a375 1
+  end subroutine Refractive_index_1_2_h2o
+d377 2
+a378 2
+! -------------------------------------------  Refractive_index_2  -----
+  subroutine Refractive_index_2 ( p_path, t_path, n_path )
+d384 2
+a385 2
+    real(rp), intent(in) :: p_path(:,:) ! pressure(hPa)
+    real(rp), intent(in) :: t_path(:,:) ! temperature(K)
+d392 1
+a392 1
+  end subroutine Refractive_index_2
+d394 2
+a395 2
+! ---------------------------------------  Refractive_index_2_h2o  -----
+  subroutine Refractive_index_2_h2o ( p_path, t_path, n_path, h2o_path )
+d401 2
+a402 2
+    real(rp), intent(in) :: p_path(:,:) ! pressure(hPa)
+    real(rp), intent(in) :: t_path(:,:) ! temperature(K)
+d404 1
+a404 1
+    real(rp), intent(out) :: n_path(:,:) ! refractive indicies - 1
+d411 1
+a411 1
+  end subroutine Refractive_index_2_h2o
+d429 1
+a429 1
+! --------------------------------------------------  Comp_refcor  -----
+d431 1
+a431 1
+  subroutine Comp_refcor ( tan_pt, h_path, n_path, ht, del_s, ref_corr, &
+d783 1
+a783 1
+  end subroutine Comp_refcor
+d790 1
+a790 1
+       "$Id: refraction_m.f90,v 2.44 2013/06/12 02:33:19 vsnyder Exp $"
+d800 3
+d847 1
+a847 1
+! Print enough to run Comp_Refcor off line if "Drastic correction" message
+d852 1
+a852 1
+! More robust integration in Comp_Refcor
+d903 1
+a903 1
+! Publish two constants, make Refractive_Index generic
+d919 1
+a919 1
+! Make comp_refcor more robust
+@
+
+
+2.44
+log
+@Cruft removal
+@
+text
+@d342 4
+a345 7
+    hndp = 0
+    if ( switchDetail(switches,'hndp') > -1 ) hndp = hndp + 1 ! Dump the arrays if trouble
+    if ( switchDetail(switches,'Hndp') > -1 ) hndp = hndp + 2 ! Dump the arrays and stop
+    if ( switchDetail(switches,'HNDP') > -1 ) hndp = hndp + 4 ! Dump the iterates
+    rcfx = 0
+    if ( switchDetail(switches,'rcfx') > -1 ) rcfx = 1
+    if ( switchDetail(switches,'RCFX') > -1 ) rcfx = 2
+d454 1
+a454 1
+      if ( rcfx /= 0 ) call output( 'Ref_Corr fixup needed.', advance='yes' )
+d456 1
+a456 1
+      if ( rcfx /= 0 ) call output ( 'Ref_Corr fixed at' )
+d462 1
+a462 1
+          if ( rcfx /= 0 ) call output ( j, before=' ' )
+d465 1
+a465 1
+      if ( rcfx /= 0 ) then
+d468 1
+a468 1
+        if ( rcfx > 1 ) stop
+d577 1
+a577 1
+      if ( rcfx /= 0 ) then
+d592 3
+a594 3
+      if ( max( &
+        & switchDetail(switches,'drfc'),switchDetail(switches,'DRFC')&
+        & ) < 0 ) return
+d612 1
+a612 1
+      if ( switchDetail(switches,'DRFC') > -1 ) stop
+d623 1
+a623 1
+       "$Id: refraction_m.f90,v 2.43 2013/02/28 21:05:48 vsnyder Exp $"
+d633 3
+@
+
+
+2.43
+log
+@Try to cope with short paths
+@
+text
+@a337 1
+    real(rp), parameter :: Htol = 1.0e-3_rp
+d339 1
+a339 1
+    real(rp), parameter :: Rmax = 1.3_rp
+d626 1
+a626 1
+       "$Id: refraction_m.f90,v 2.42 2012/02/16 22:44:36 pwagner Exp $"
+d636 3
+@
+
+
+2.42
+log
+@Skip printing Ref_Corr msg unless switch rcfx set
+@
+text
+@d331 1
+a331 1
+    integer(ip) :: j, j1, j2, k, m, no_ele, panel_stat, stat
+d352 1
+d359 1
+a359 1
+    Nt2Ht2 = (n_path(tan_pt)*ht)**2
+d363 1
+a363 1
+    j1 = tan_pt
+d448 1
+d583 3
+a585 2
+        call output ( ht, before=', Ht = ', advance='yes' )
+        call dump ( h_path, name='H_Path', format='(f14.4)' )
+d601 1
+d627 1
+a627 1
+       "$Id: refraction_m.f90,v 2.41 2011/05/09 18:03:33 pwagner Exp $"
+d637 3
+@
+
+
+2.41
+log
+@Converted to using switchDetail
+@
+text
+@d456 1
+a456 2
+      call MLSMessage ( MLSMSG_Warning, moduleName, &
+        & 'Ref_Corr fixup needed.  Re-run with -Srcfx to see details.' )
+d493 1
+a493 1
+      use Zero_m, only: Zero
+d623 1
+a623 1
+       "$Id: refraction_m.f90,v 2.40 2011/01/05 00:22:08 vsnyder Exp $"
+d633 3
+@
+
+
+2.40
+log
+@TeXnicalities
+@
+text
+@d14 1
+a14 1
+  use MLSKinds, only: RP
+d305 7
+a311 6
+    use Dump_0, only: Dump
+    use GLNP, only: NG, GX=>gx_all, GW=>gw_all
+    use MLSKinds, only: RP, IP
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+    use Output_m, only: Output
+    use Toggles, only: Switches
+d344 3
+a346 3
+    if ( index(switches,'hndp') /= 0 ) hndp = hndp + 1 ! Dump the arrays if trouble
+    if ( index(switches,'Hndp') /= 0 ) hndp = hndp + 2 ! Dump the arrays and stop
+    if ( index(switches,'HNDP') /= 0 ) hndp = hndp + 4 ! Dump the iterates
+d348 2
+a349 2
+    if ( index(switches,'rcfx') /= 0 ) rcfx = 1
+    if ( index(switches,'RCFX') /= 0 ) rcfx = 2
+d594 3
+a596 1
+      if ( max(index(switches,'drfc'),index(switches,'DRFC')) == 0 ) return
+d613 1
+a613 1
+      if ( index(switches,'DRFC') > 0 ) stop
+d624 1
+a624 1
+       "$Id: refraction_m.f90,v 2.39 2009/07/09 23:53:53 vsnyder Exp $"
+d634 3
+@
+
+
+2.39
+log
+@Replace MLSCommon with MLSKinds
+@
+text
+@d48 1
+a48 1
+  ! and phi. The returned value has one subtracted from it
+d60 2
+d67 10
+a76 2
+  ! This routine computes the refractive index as a function of altitude
+  ! and phi. The returned value has one subtracted from it
+d86 2
+d91 4
+d621 1
+a621 1
+       "$Id: refraction_m.f90,v 2.38 2009/06/23 18:26:11 pwagner Exp $"
+d631 3
+@
+
+
+2.38
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d14 1
+a14 1
+  use MLSCommon, only: RP
+d39 1
+a39 1
+       "$RCSfile: $"
+d605 1
+a605 1
+       "$Id: read_apriori.f90 is it here $"
+d615 3
+@
+
+
+2.37
+log
+@Improve comments about dummy arguments
+@
+text
+@d39 1
+a39 1
+       "$RCSfile: refraction_m.f90,v $"
+d602 1
+a603 1
+!---------------------------- RCS Ident Info -------------------------------
+d605 2
+a606 3
+       "$Id: refraction_m.f90,v 2.36 2009/01/16 23:42:04 vsnyder Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d608 1
+a608 1
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
+d610 1
+d615 3
+@
+
+
+2.36
+log
+@Don't need to set all of Del_s to zero initially because all but 1 and
+no_ele get set anyway.  Add PRINT statement to not_used_here.
+@
+text
+@d296 1
+a296 1
+    integer, intent(in) :: Tan_pt      ! Tangent point index in H_Path etc.
+d300 1
+a300 1
+    real(rp), intent(in) :: ht
+d302 3
+a304 1
+    real(rp), intent(out) :: Del_s(:)
+d605 1
+a605 1
+       "$Id: refraction_m.f90,v 2.35 2007/10/30 20:52:26 vsnyder Exp $"
+d615 4
+@
+
+
+2.35
+log
+@Change diagnostic output criteria
+@
+text
+@a337 2
+    Del_s = 0.0
+
+d345 1
+d430 1
+d603 1
+a603 1
+       "$Id: refraction_m.f90,v 2.34 2007/10/02 22:35:17 vsnyder Exp $"
+d607 1
+d613 3
+@
+
+
+2.34
+log
+@Cannonball polishing
+@
+text
+@d398 1
+a398 1
+          if ( hndp > 0 ) write ( *, '("Solving for H for Ref_Corr(",i0,")")' ) j
+d513 1
+a513 1
+        if ( hndp > 0 ) then
+d603 1
+a603 1
+       "$Id: refraction_m.f90,v 2.33 2007/09/07 22:13:00 vsnyder Exp $"
+d612 3
+@
+
+
+2.33
+log
+@Don't put an upper bound on the refractive correction
+@
+text
+@d437 2
+a438 1
+      call MLSMessage ( MLSMSG_Warning, moduleName, 'Ref_Corr fixup needed' )
+d440 1
+a440 1
+      call output ( 'Ref_Corr fixed at' )
+d603 1
+a603 1
+       "$Id: refraction_m.f90,v 2.32 2007/09/07 03:00:32 vsnyder Exp $"
+d612 3
+@
+
+
+2.32
+log
+@Use Math 77 zero finder
+@
+text
+@d309 1
+a309 3
+    logical :: Bad  ! Ref_Corr < 1 or Ref_corr > rmax somewhere
+    logical :: Repl ! Replace fancy estimate by trapezoid
+    integer(ip) :: DRCX ! "Drastic Ref_Cor fiXup printing"
+d311 2
+a312 1
+    integer(ip) :: j, j1, j2, k, m, no_ele, stat
+d317 1
+a317 1
+    real(rp) :: dndh, eps, H, h1, h2, N, n1, n2, t1, t2, tv, x1, x2, xm, ym
+d328 3
+a330 3
+    drcx = 0
+    if ( index(switches,'drcx') /= 0 ) drcx = 1
+    if ( index(switches,'DRCX') /= 0 ) drcx = 2
+d356 1
+a356 1
+jl:   do j = j1, j2, m
+d383 2
+a384 1
+          ! Where N is essentially constant, the integral is easy
+d386 2
+a387 2
+          ref_corr(j) = abs( sqrt((n_path(j)*h2)**2-nt2ht2) - &
+            &                sqrt((n_path(j)*h1)**2-nt2ht2) ) / &
+d399 1
+d408 2
+a409 6
+            status = max(status,stat)
+            if ( stat > 1 ) then
+              ! Force a different approximation
+              integrand_gl = 100.0 * Del_s(j) / ym
+              exit
+            end if
+d412 2
+d416 5
+a420 1
+          ref_corr(j) = dot_product(integrand_gl,gw) * ym / Del_s(j)
+d425 1
+a425 32
+        if ( ref_corr(j) < 1.0 .or. ref_corr(j) > rmax ) then
+          t1 = 1.0 / (1.0 + n1*(1.0 + eps*h1))
+          t2 = 1.0 / (1.0 + n2*(1.0 + eps*h2))
+          if ( t1 * t2 > 0.0 ) then
+            ! Use trapezoidal rule on transformed integral
+!print *, 'Trapezoid used on transformed integral, ref_corr(',j,') =', ref_corr(j)
+            tv = ym * ( t1 + t2 ) / Del_s(j)
+          else
+            ! Derivative has a discontinuity in the interval, so
+            ! the transformation doesn't work.  Use the trapezoidal
+            ! rule on the untransformed integral.
+!print *, 'Trapezoid used on untransformed integral, ref_corr(',j,') =', ref_corr(j)
+            t1 = (1.0 + n1) * h1
+            t2 = (1.0 + n2) * h2
+            tv = 0.5 * abs( ( h2 - h1 ) * &
+              & (t1/sqrt(t1**2-nt2ht2) + t2/sqrt(t2**2-nt2ht2)) ) / Del_s(j)
+          end if
+          if ( ref_corr(j) < 1.0 ) then
+            repl = tv >= 1.0
+          else
+            repl = tv <= rmax
+          end if
+          if ( repl ) then
+            if ( drcx /= 0 ) then
+              call output ( j, before='In Comp_Refcor, trapezoidal estimate used at ' )
+              call output ( ref_corr(j), before=' to replace ' )
+              call output ( tv, before=' by ' )
+              call output ( no_ele, before=', path length = ', advance='yes' )
+            end if
+            ref_corr(j) = tv
+          end if
+        end if
+d427 1
+a427 3
+        bad = bad .or. ref_corr(j) < 1.0 .or. ref_corr(j) > rmax
+
+      end do jl ! j
+d434 4
+a437 3
+      ! Things are still haywire.  For unphysical ref_corr replace by the
+      ! average of adjacent panels, bounded by 1.0 ... rmax.
+      call MLSMessage ( MLSMSG_Warning, moduleName, 'Drastic Ref_Corr fixup needed' )
+d441 5
+a445 5
+        if ( ref_corr(j) < 1.0 .or. ref_corr(j) > rmax ) then
+          tv = 0.5 * ( max(1.0_rp,min(rmax,ref_corr(j-1))) + &
+                     & max(1.0_rp,min(rmax,ref_corr(j+1))) )
+          if ( drcx /= 0 ) call output ( j, before=' ' )
+          ref_corr(j) = tv
+d448 1
+a448 1
+      if ( drcx /= 0 ) then
+d451 1
+a451 1
+        if ( drcx > 1 ) stop
+d560 1
+a560 1
+      if ( drcx /= 0 ) then
+d602 1
+a602 1
+       "$Id: refraction_m.f90,v 2.31 2007/07/31 23:48:10 vsnyder Exp $"
+d611 3
+@
+
+
+2.31
+log
+@Integrate away from tangent point to handle singularity correctly
+@
+text
+@d248 2
+a249 1
+  subroutine Comp_refcor ( tan_pt, h_path, n_path, ht, del_s, ref_corr, status )
+d280 1
+a280 1
+  ! If the refractive correction is not in the interval [1.0,1.3], or if
+d292 1
+a292 1
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
+d305 7
+a311 4
+    integer, intent(out) :: Status ! 0 = OK, 1 = failed to bracket root,
+                                   ! 2 = too many iterations
+
+    logical :: Bad ! Ref_Corr < 1 or Ref_corr > 1.3 somewhere
+d318 1
+a318 1
+    real(rp) :: dndh, eps, H, h1, h2, N, n1, n2, t1, t2, x1, x2, xm, ym
+d322 1
+d325 7
+a331 1
+    hndp = index(switches,'hndp')
+d408 1
+a408 4
+            if ( stat == 1 ) then
+!               ref_corr(j) = ref_corr(j-1+2*m) ! Why did I do this?
+!               ref_corr(j) = ref_corr(j-1)
+!               cycle jl
+d422 1
+a422 1
+        if ( ref_corr(j) < 1.0 .or. ref_corr(j) > 1.3 ) then
+d427 2
+a428 1
+            ref_corr(j) = ym * ( t1 + t2 ) / Del_s(j)
+d433 1
+d436 1
+a436 1
+            ref_corr(j) = 0.5 * abs( ( h2 - h1 ) * &
+d439 14
+d455 1
+a455 1
+        bad = bad .or. ref_corr(j) < 1.0 .or. ref_corr(j) > 1.3
+d465 1
+a465 1
+      ! average of adjacent panels, bounded by 1.0 ... 1.3.
+d467 2
+a468 7
+      if ( max(index(switches,'drcx'),index(switches,'DRCX')) /= 0 ) then
+        call output ( tan_pt, before='Tan_Pt = ' )
+        call output ( ht, before=', Ht = ', advance='yes' )
+        call dump ( h_path, name='H_Path', format='(f14.4)' )
+        call dump ( n_path-1.0, name='N_Path' )
+        call dump ( ref_corr, name='Ref_Corr' )
+      end if
+d470 6
+a475 3
+        if ( ref_corr(j) < 1.0 .or. ref_corr(j) > 1.3 ) &
+          & ref_corr(j) = 0.5 * ( max(1.0_rp,min(1.3_rp,ref_corr(j-1))) + &
+                                & max(1.0_rp,min(1.3_rp,ref_corr(j+1))) )
+d477 2
+a478 1
+      if ( max(index(switches,'drcx'),index(switches,'DRCX')) /= 0 ) then
+d480 1
+a480 1
+        if ( index(switches,'DRCX') /= 0 ) stop
+d484 6
+a495 1
+  ! using a Newton iteration
+d499 6
+d507 1
+a507 1
+      real(rp) :: h_old, f1, f2, dh, hpos, hneg
+d512 1
+d514 1
+a514 1
+        & 'From Solve_Hn routine: Could not bracket the root'
+a515 1
+      integer,  parameter :: Max_Iter = 20
+d517 1
+a517 1
+        & 'From Solve_Hn routine: Did not converge within 20 iterations'
+d519 2
+a520 2
+      character(len=*), parameter :: Msg3 = &
+        & 'Solution is within range even though not initially bracketed'
+d522 2
+a523 1
+      character(max(len(msg1),len(msg2))+10) :: Msg
+d525 1
+a525 17
+      stat = 0 ! Assume it will work
+      f1 = h1 * (1.0_rp + n1) - NH ! residual at H = H1
+      f2 = h2 * (1.0_rp + n2) - NH ! residual at H = H2
+
+      if ( f1*f2 > 0.0_rp ) then ! start in the middle
+        stat = 1
+        msg = msg1
+        write ( msg(len(msg1)+1:), '(" at ", i0)' ) j
+        call MLSMessage ( MLSMSG_Warning, ModuleName, trim(msg) )
+        call dumpDiags ( NH, f1, f2 )
+        h = h1 + 0.5*(1.0+gx(k)) * ( h2 - h1 )
+!        h = 0.5 * ( h1 + h2 )
+      else ! start at the mean of the ends weighted by the other's residuals
+        h = (h1 * abs(f2) + h2 * abs(f1)) / (abs(f1) + abs(f2))
+      end if
+      hneg = min(h1,h2)
+      hpos = max(h1,h2)
+d529 8
+a536 26
+      if ( hndp > 0 ) then
+        write ( *, '(7(3x,a2,9x)/3g14.7,1p,3g14.6,g20.12)' ) &
+          & 'h1', 'h2', 'h ', 'f1', 'f2', 'Q ', 'NH', &
+          &  h1,   h2,   h,    f1,   f2,  q,     NH
+        head = .true. ! Need the heading for each iteration
+      end if
+      
+      do
+
+        h_old = h
+
+        e = n1 * exp(eps*(h-h1))
+        f2 = h * (1.0_rp + e ) - NH
+        if ( abs(f2) < tiny ) exit ! Are we near a zero?
+
+!         This is probably a bad idea in that it prevents correcting from
+!         overshooting
+!         if ( f2 < 0.0_rp ) then
+!           hneg = h
+!         else
+!           hpos = h
+!         end if
+
+        dh = f2 / ( 1.0_rp + e * ( 1.0_rp + eps * h ) ) ! f2 / (d f2 / dh)
+
+        h = h_old - dh ! Take the Newton move
+d538 3
+d542 4
+a545 17
+          if ( head ) &
+            & write ( *, '(6(3x,a2,9x))' ) 'H-','H+','H ','dH','e ','f2'
+          head = .false.
+          write ( *, '(3g14.7,1p,3g14.6)' ) hneg, hpos, h, dh, e, f2
+        end if
+
+        if ( abs(dh) < htol ) exit ! Is the Newton move tiny?
+
+        if ( (h-hneg)*(h-hpos) > 0.0 ) then
+!         if ( h < min(hpos,hneg) .OR. h > max(hpos,hneg) ) &
+!           h = 0.5_rp * (hneg + hpos) ! Keep H in bounds
+          if ( h > hpos ) then
+            if ( f2 < 0.0 ) then
+              h = hneg
+            else
+              h = hpos
+            end if
+d547 1
+a547 5
+            if ( f2 > 0.0 ) then
+              h = hpos
+            else
+              h = hneg
+            end if
+d549 1
+a549 3
+!           h = min(hpos,max(hneg,h))
+          if ( hndp > 0 ) write ( *, '(28x,1pg14.7,44x,"H was out of bounds")' ) h
+          if ( abs(hpos-hneg) <= h_tol ) exit
+d551 2
+a552 13
+
+        if ( abs(hpos-hneg) <= h_tol ) exit
+
+        if ( iter >= max_iter ) then
+          stat = 2
+          msg = msg2
+          write ( msg(len(msg2)+1:), '(" at ", i0)' ) j
+          call MLSMessage ( MLSMSG_Warning, ModuleName, trim(msg) )
+          call dumpDiags ( NH, f1, f2 )
+          exit
+        end if
+
+        iter = iter + 1
+d556 25
+a580 8
+      if ( stat == 1 ) then
+        ! Maybe the solution is good even though we couldn't initially
+        ! bracket it
+        if ( (h-h1)*(h-h2) <= 0.0 ) then
+          stat = 0
+          call MLSMessage ( MLSMSG_Warning, ModuleName, msg3 )
+        end if
+      end if
+d587 12
+d621 1
+d631 1
+a631 1
+       "$Id: refraction_m.f90,v 2.30 2007/07/27 00:17:41 vsnyder Exp $"
+d640 3
+@
+
+
+2.30
+log
+@Print enough to run Comp_Refcor off line if "Drastic correction" message
+is produced, and switch drcx or DRCX is set.  Stop after printing if
+DRCX is set.
+@
+text
+@d314 1
+a314 1
+    real(rp) :: dndh, eps, H, h1, h2, N, n1, n2, t1, t2, x1, x2, xm, ym, ys
+d335 5
+a339 6
+    j1 = 1
+    j2 = tan_pt
+    ys = 0.5_rp
+    do m = 0, 1
+      h2 = h_path(j1+m)
+      n2 = n_path(j1+m)
+d346 1
+a346 1
+jl:   do j = j1+1, j2
+d349 1
+d351 1
+a351 1
+        n1 = n2
+a355 2
+        n2 = n_path(j+m)
+
+d361 4
+d374 1
+d381 1
+d389 2
+a390 2
+          xm = 0.5_rp *(x1 + x2)      ! Midpoint of the interval
+          ym = ys *(x1 - x2)          ! Half of the interval length
+d435 1
+a435 1
+      j1 = tan_pt
+a436 1
+      ys = -0.5_rp
+d627 1
+a627 1
+       "$Id: refraction_m.f90,v 2.29 2007/07/11 22:27:39 vsnyder Exp $"
+d636 5
+@
+
+
+2.29
+log
+@More robust integration in Comp_Refcor
+@
+text
+@d439 8
+d452 4
+a455 1
+      call MLSMessage ( MLSMSG_Warning, moduleName, 'Drastic Ref_Corr fixup needed' )
+d612 1
+a612 1
+        call dump ( n_path, name='N_Path' )
+d624 1
+a624 1
+       "$Id: refraction_m.f90,v 2.28 2007/02/02 00:22:44 vsnyder Exp $"
+d633 3
+@
+
+
+2.28
+log
+@Don't bracket the Newton move so tightly
+@
+text
+@d250 34
+a283 2
+  ! This routine computes the integral described in Eqn. 10.12 of the
+  ! 19 August 2004 MLS ATBD, pg. 45, using the Gauss-Legendre method.
+d288 1
+a288 1
+    use MLSCommon, only: RP, IP
+d290 1
+d292 2
+d307 2
+d313 2
+a314 2
+    real(rp) :: q, htan2, Nt2Ht2
+    real(rp) :: dndh, eps, H, h1, h2, N, n1, n2, x1, x2, xm, ym, ys
+d316 1
+d320 1
+d333 1
+d362 3
+a364 2
+        if ( q < 0.0_rp .or. n1*n2 <= 0.0_rp ) then
+          ref_corr(j) = ref_corr(j-1)
+d370 54
+a423 11
+        eps = log(n2/n1)/(h2-h1)
+        xm = 0.5_rp *(x1 + x2)      ! Midpoint of the interval
+        ym = ys *(x1 - x2)          ! Half of the interval length
+        do k = 1, ng
+          q = xm + ym * gx(k)       ! Gauss abscissa
+          ! Solve h*(1+n1*exp(eps*(h-h1))) = sqrt(q*q + nt2ht2) for h
+          call solve_hn ( sqrt(q*q + nt2ht2) )
+          status = max(status,stat)
+          if ( stat == 1 ) then
+            ref_corr(j) = ref_corr(j-1+2*m)
+            cycle jl
+d425 1
+a425 2
+          integrand_gl(k) = 1.0_rp/(n+h*dndh) ! = 1 / d(nh)/dh
+        end do ! k
+d427 1
+a427 3
+    ! And Finally - define the refraction correction:
+
+        ref_corr(j) = dot_product(integrand_gl,gw) * ym / Del_s(j)
+d436 11
+d455 1
+a455 3
+    subroutine Solve_Hn ( NH )
+
+      real(rp), intent(in) :: NH
+d460 3
+d471 5
+a480 1
+        call MLSMessage ( MLSMSG_Warning, ModuleName, Msg1)
+d482 6
+a487 1
+        h = 0.5 * ( h1 + h2 )
+d491 2
+a492 2
+      hneg = h1
+      hpos = h2
+d496 7
+d511 8
+d523 8
+a530 1
+        if ( abs(dh) < tiny ) exit ! Is the Newton move tiny?
+d532 1
+a532 1
+        if ( (h-hneg)*(h-hpos) > 0.01 * (hpos-hneg)**2 ) &
+d534 20
+a553 1
+            &  h = 0.5_rp * (hneg + hpos) ! Keep H in bounds
+a555 1
+          call MLSMessage ( MLSMSG_Warning, ModuleName, Msg2 )
+d557 4
+a563 6
+        if ( f2 < 0.0_rp ) then
+          hneg = h
+        else
+          hpos = h
+        end if
+
+d571 4
+a574 1
+        if ( (h-h1)*(h-h2) <= 0.0 ) stat = 0
+d582 24
+d613 1
+a613 1
+       "$Id: refraction_m.f90,v 2.27 2007/02/01 02:51:07 vsnyder Exp $"
+d622 3
+@
+
+
+2.27
+log
+@Improve Newton iteration in Solve_HN
+@
+text
+@a281 1
+    stat = 0
+d356 3
+a358 1
+  !------------------------------------------------------------------
+d360 1
+a360 1
+  !    N(h) = n1*Exp(eps*(h-h1))
+d378 27
+a404 2
+       f1 = h1 * (1.0_rp + n1) - NH
+       f2 = h2 * (1.0_rp + n2) - NH
+d406 1
+a406 57
+       if ( f1*f2 > 0.0_rp ) then
+         call MLSMessage ( MLSMSG_Warning, ModuleName, Msg1)
+         stat = 1
+         h = 0.5 * ( h1 + h2 )
+         hneg = -huge(hneg)
+         hpos = huge(hpos)
+       else
+         if ( f1 <= 0.0_rp ) then
+           hneg = h1
+           hpos = h2
+         else
+           hpos = h1
+           hneg = h2
+         end if
+         h = (h1 * abs(f2) + h2 * abs(f1)) / (abs(f1) + abs(f2))
+       end if
+
+       iter = 1
+
+       do
+
+         h_old = h
+
+         e = n1 * exp(eps*(h-h1))
+         f2 = h * (1.0_rp + e ) - NH
+         if ( abs(f2) < tiny ) exit ! Are we near a zero?
+
+         dh = f2 / ( 1.0_rp + e * ( 1.0_rp + eps * h ) ) ! f2 / (d f2 / dh)
+
+         h = h_old - dh ! Take the Newton move
+
+         if ( abs(dh) < tiny ) exit ! Is the Newton move tiny?
+
+         if ( h < min(hpos,hneg) .OR. h > max(hpos,hneg) ) &
+             &  h = 0.5_rp * (hneg + hpos) ! Keep H in bounds
+
+         if ( iter >= max_iter ) then
+           call MLSMessage ( MLSMSG_Warning, ModuleName, Msg2 )
+           stat = 2
+           exit
+         end if
+
+         if ( f2 < 0.0_rp ) then
+           hneg = h
+         else
+           hpos = h
+         end if
+
+         iter = iter + 1
+
+       end do
+
+       if ( stat == 1 ) then
+         ! Maybe the solution is good even though we couldn't initially
+         ! bracket it
+         if ( (h-h1)*(h-h2) <= 0.0 ) stat = 0
+       end if
+d408 28
+a435 2
+       N = 1.0_rp + e
+       dndh = eps * e
+d446 1
+a446 1
+       "$Id: refraction_m.f90,v 2.26 2006/12/13 02:32:03 vsnyder Exp $"
+d455 3
+@
+
+
+2.26
+log
+@Drag the tangent point around instead of assuming it's the middle one
+@
+text
+@d272 1
+a272 1
+    integer(ip) :: j, j1, j2, k, m, no_ele
+d282 1
+d337 3
+a339 2
+          if ( h < 0.0 ) then
+            ref_corr(j) = ref_corr(j-1)
+d360 1
+d367 2
+a368 4
+      real(rp) :: E ! exp(eps * (v2-h1))
+      real(rp) :: v1, v2, f1, f2, df, hpos, hneg
+
+      integer,  parameter :: Max_Iter = 20
+d372 2
+a380 1
+         H = -1.0_rp
+d382 4
+a385 7
+         status = 1
+         return 
+       end if
+
+       if ( f1 <= 0.0_rp ) then
+         hneg = h1
+         hpos = h2
+d387 8
+a394 2
+         hpos = h1
+         hneg = h2
+a397 4
+       v2 = (h1 * abs(f2) + h2 * abs(f1)) / (abs(f1) + abs(f2))
+       e = n1 * exp(eps*(v2-h1))
+       f2 = v2 * (1.0_rp + e ) - NH
+       df = 1.0_rp + e * ( 1.0_rp + eps * v2 )
+d401 5
+a405 2
+         v1 = v2
+         f1 = f2
+d407 1
+a407 1
+         v2 = v1 - f1 / df
+d409 1
+a409 2
+         if ( v2 < min(hpos,hneg) .OR. v2 > max(hpos,hneg) ) &
+             &  v2 = 0.5_rp * (hneg + hpos)
+d411 1
+a411 2
+         e = n1 * exp(eps*(v2-h1))
+         f2 = v2 * (1.0_rp + e ) - NH
+d413 2
+a414 1
+         if ( abs(f2) < tiny .or. abs(v2-v1) < tiny ) exit
+d418 1
+a418 1
+           status = 2
+d423 1
+a423 1
+           hneg = v2
+d425 1
+a425 1
+           hpos = v2
+a428 1
+         df = 1.0_rp + e * ( 1.0_rp + eps * v2 )
+d432 6
+a437 1
+       H = v2
+d450 1
+a450 1
+       "$Id: refraction_m.f90,v 2.25 2006/06/29 19:31:59 vsnyder Exp $"
+d456 2
+a457 1
+END module REFRACTION_M
+d459 3
+@
+
+
+2.25
+log
+@Use entire integration formula, not just interior points, in case of Lobatto
+@
+text
+@d248 1
+a248 1
+  subroutine Comp_refcor ( h_path, n_path, ht, del_s, ref_corr, status )
+d260 1
+d272 1
+a272 1
+    integer(ip) :: j, j1, j2, k, m, mid, no_ele
+a283 1
+    mid = (no_ele + 1) / 2
+d292 1
+a292 1
+    Nt2Ht2 = (n_path(mid)*ht)**2
+d296 1
+a296 1
+    j2 = mid
+d349 1
+a349 1
+      j1 = mid
+d443 1
+a443 1
+       "$Id: refraction_m.f90,v 2.24 2005/12/22 20:58:22 vsnyder Exp $"
+d451 3
+@
+
+
+2.24
+log
+@Added more ranks and H2O update
+@
+text
+@d257 1
+a257 1
+    use GLNP, only: NG, GX, GW
+d443 1
+a443 1
+       "$Id: refraction_m.f90,v 2.23 2005/12/07 00:33:48 vsnyder Exp $"
+d451 3
+@
+
+
+2.23
+log
+@Update references to ATBD in comments
+@
+text
+@d19 1
+a19 1
+  public :: Refractive_index, Comp_refcor
+d25 10
+a34 2
+    module procedure Refractive_index_0,     Refractive_index_1
+    module procedure Refractive_index_0_h2o, Refractive_index_1_h2o
+d50 1
+a50 6
+  !  ===============================================================
+  !  Declaration of variables for sub-program: refractive_index
+  !  ===============================================================
+  !  ---------------------------
+  !  Calling sequence variables:
+  !  ---------------------------
+d52 2
+a53 2
+    real(rp), intent(in) :: p_path ! pressure(hPa) vector
+    real(rp), intent(in) :: t_path ! temperature vector(K)
+d67 1
+a67 7
+  ! We could easily make this elemental.
+  !  ===============================================================
+  !  Declaration of variables for sub-program: refractive_index
+  !  ===============================================================
+  !  ---------------------------
+  !  Calling sequence variables:
+  !  ---------------------------
+d69 2
+a70 2
+    real(rp), intent(in) :: p_path ! pressure(hPa) vector
+    real(rp), intent(in) :: t_path ! temperature vector(K)
+d81 17
+a97 1
+!--------------------------------------------  Refractive_index_1  -----
+d104 2
+a105 2
+    real(rp), intent(in) :: p_path(:) ! pressure(hPa) vector
+    real(rp), intent(in) :: t_path(:) ! temperature vector(K)
+d114 1
+a114 1
+!----------------------------------------  Refractive_index_1_h2o  -----
+d121 2
+a122 2
+    real(rp), intent(in) :: p_path(:) ! pressure(hPa) vector
+    real(rp), intent(in) :: t_path(:) ! temperature vector(K)
+d133 113
+d443 1
+a443 1
+       "$Id: refraction_m.f90,v 2.22 2005/06/22 18:08:19 pwagner Exp $"
+d451 3
+@
+
+
+2.22
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d31 1
+a31 1
+       "$RCSfile: $"
+d88 2
+a89 9
+  ! and phi. The returned value has one subtracted from it
+  ! We could easily make this elemental but it might run slower due
+  ! to multiple executions of if ( PRESENT(...))
+  !  ===============================================================
+  !  Declaration of variables for sub-program: refractive_index
+  !  ===============================================================
+  !  ---------------------------
+  !  Calling sequence variables:
+  !  ---------------------------
+d105 2
+a106 9
+  ! and phi. The returned value has one subtracted from it
+  ! We could easily make this elemental but it might run slower due
+  ! to multiple executions of if ( PRESENT(...))
+  !  ===============================================================
+  !  Declaration of variables for sub-program: refractive_index
+  !  ===============================================================
+  !  ---------------------------
+  !  Calling sequence variables:
+  !  ---------------------------
+d124 2
+a125 2
+  ! This routine computes the integral described in Eqn. 8.11 of the
+  ! MLS ATBD, pg. 44,  using the Gauss-Legendre method.
+d317 1
+a317 1
+       "$Id: $"
+d325 3
+@
+
+
+2.21
+log
+@Add status argument
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d29 3
+a31 5
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+    & "$Id: refraction_m.f90,v 2.20 2004/06/17 00:08:24 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName= "$RCSfile: refraction_m.f90,v $"
+d329 5
+d339 3
+@
+
+
+2.20
+log
+@Removed two unused variables
+@
+text
+@d23 1
+a23 1
+    & "$Id: refraction_m.f90,v 2.19 2003/11/04 01:55:08 vsnyder Exp $"
+d130 1
+a130 1
+  subroutine Comp_refcor ( h_path, n_path, ht, del_s, ref_corr )
+d150 3
+d162 2
+d262 1
+d297 1
+d328 3
+@
+
+
+2.19
+log
+@simplify nonconverged case
+@
+text
+@d23 1
+a23 1
+    & "$Id: refraction_m.f90,v 2.18 2003/11/03 23:15:15 vsnyder Exp $"
+d150 1
+a150 1
+    integer(ip) :: i, j, j1, j2, k, m, mid, no_ele
+d155 1
+a155 1
+    real(rp) :: dndh, eps, H, h1, h2, N, NH, n1, n2, x1, x2, xm, ym, ys
+d321 3
+@
+
+
+2.18
+log
+@Get rid of path_ds_dh procedure -- a one-liner used in one place
+@
+text
+@d23 1
+a23 1
+    & "$Id: refraction_m.f90,v 2.17 2003/09/26 18:23:34 vsnyder Exp $"
+a230 2
+    return
+
+d289 4
+a292 1
+         if ( iter >= max_iter ) exit
+a304 3
+       if ( abs(f2) >= tiny .and. abs(v2-v1) >= tiny ) &
+           & call MLSMessage ( MLSMSG_Warning, ModuleName, Msg2 )
+
+d321 3
+@
+
+
+2.17
+log
+@Reinstate a lost CVS comment
+@
+text
+@d11 1
+a11 1
+  public :: Refractive_index, Comp_refcor, Path_ds_dh
+d17 2
+a18 1
+    module procedure Refractive_index_1, Refractive_index_0
+d23 1
+a23 1
+    & "$Id: refraction_m.f90,v 2.16 2003/09/17 23:33:26 vsnyder Exp $"
+d30 48
+d79 1
+a79 1
+  subroutine Refractive_index_1 ( p_path, t_path, n_path, h2o_path )
+a95 2
+  ! Keywords
+    real(rp), optional, intent(in) :: h2o_path(:) ! H2O vmr(ppv)
+a98 3
+    if ( present(h2o_path) ) &
+      & n_path = n_path *( 1.0_rp + refrBterm*h2o_path/t_path)
+    return
+d102 2
+a103 2
+!--------------------------------------------  Refractive_index_0  -----
+  subroutine Refractive_index_0 ( p_path, t_path, n_path, h2o_path )
+d116 2
+a117 2
+    real(rp), intent(in) :: p_path ! pressure(hPa) vector
+    real(rp), intent(in) :: t_path ! temperature vector(K)
+d119 1
+a119 1
+    real(rp), intent(out) :: n_path ! refractive indicies - 1
+d121 1
+a121 1
+    real(rp), optional, intent(in) :: h2o_path ! H2O vmr(ppv)
+d124 1
+a124 4
+    n_path = refrAterm * p_path / t_path
+    if ( present(h2o_path) ) &
+      & n_path = n_path *( 1.0_rp + refrBterm*h2o_path/t_path)
+    return
+d126 1
+a126 1
+  end subroutine Refractive_index_0
+a314 17
+! ---------------------------------------------------  Path_ds_dh  -----
+  elemental real(rp) function Path_ds_dh ( r_path, r_tan )
+
+  ! inputs:
+
+    real(rp), intent(in) :: r_path ! heights + req (km).
+    real(rp), intent(in) :: r_tan ! tangent height + req (km).
+
+  ! output:
+  !  REAL(rp), INTENT(out) :: path_ds_dh ! path length derivative wrt height.
+
+  ! calculation
+
+    path_ds_dh = r_path / sqrt(r_path**2 - r_tan**2)
+
+  end function Path_ds_dh
+
+d323 3
+@
+
+
+2.16
+log
+@Major revision
+@
+text
+@d22 1
+a22 1
+    & "$Id: refraction_m.f90,v 2.14 2003/09/13 02:02:00 vsnyder Exp $"
+d299 6
+@
+
+
+2.15
+log
+@Clean up a few loose ends before major revision
+@
+text
+@d109 1
+a109 1
+    integer(ip) :: i, j, k, no_ele, mid
+d114 1
+a114 1
+    real(rp) :: H, N, dndh, x1, x2, h1, h2, n1, n2, xm, ym, NH, eps
+a129 64
+    i = 2
+    j = mid
+    Del_s(i:j) = &
+       &    abs(sqrt(abs(h_path(i-1:j-1)**2-htan2)) -  &
+       &        sqrt(abs(h_path( i : j )**2-htan2)))
+
+    i = j+1
+    j = no_ele-1
+    Del_s(i:j) = &
+       &    abs(sqrt(abs(h_path(i+1:j+1)**2-htan2)) -  &
+       &        sqrt(abs(h_path( i : j )**2-htan2)))
+
+  ! First, do the right hand side of the ray path:
+
+    h2 = h_path(1)
+    n2 = n_path(1)-1.0_rp
+
+    q = (h_path(1)*n_path(1))**2 - nt2ht2
+    if ( abs(q) < tiny ) q = 0.0_rp
+    x2 = sqrt(abs(q))
+
+o1: do j = 2, mid
+
+      x1 = x2
+      h1 = h2
+      n1 = n2
+      h2 = h_path(j)
+      n2 = n_path(j)-1.0_rp
+
+      q = (h_path(j)*n_path(j))**2 - nt2ht2
+      if ( abs(q) < tiny) q = 0.0_rp
+
+      if ( q < 0.0_rp .or. n1*n2 <= 0.0_rp ) then
+        ref_corr(j) = ref_corr(j-1)
+        cycle
+      end if
+
+      x2 = sqrt(q)
+
+      eps = log(n2/n1)/(h2-h1)
+      xm = 0.5_rp *(x1 + x2)
+      ym = 0.5_rp *(x1 - x2)
+      do k = 1, ng
+        q = xm + ym * gx(k)
+        nh = sqrt(q*q + nt2ht2)
+        call solve_hn ( nh )
+        if ( h < 0.0 ) then
+          ref_corr(j) = ref_corr(j-1)
+          cycle o1
+        end if
+        integrand_gl(k) = 1.0_rp/(n+h*dndh)
+      end do
+
+  ! And Finally - define the refraction correction:
+
+      ref_corr(j) = dot_product(integrand_gl,gw) * ym / Del_s(j)
+
+    end do o1
+
+  ! Now, do the left hand side of the ray path:
+
+    j = mid+1
+    h2 = h_path(j)
+    n2 = n_path(j)-1.0_rp
+d131 26
+a156 3
+    q = (h_path(j)*n_path(j))**2 - nt2ht2
+    if ( abs(q) < tiny) q = 0.0_rp
+    x2 = sqrt(abs(q))
+d158 1
+a158 26
+o2: do j = mid+1, no_ele-1
+
+      x1 = x2
+      h1 = h2
+      n1 = n2
+      h2 = h_path(j+1)
+      n2 = n_path(j+1)-1.0_rp
+
+      q = (h_path(j+1)*n_path(j+1))**2 - nt2ht2
+      if ( abs(q) < tiny) q = 0.0_rp
+
+      if ( q < 0.0_rp .or. n1*n2 <= 0.0_rp ) then
+        ref_corr(j) = ref_corr(j-1)
+        cycle
+      end if
+
+      x2 = sqrt(q)
+
+      eps = log(n2/n1)/(h2-h1)
+      xm = 0.5_rp *(x2 + x1)
+      ym = 0.5_rp *(x2 - x1)
+      do k = 1, ng
+        q = xm + ym * gx(k)
+        nh = sqrt(q*q + nt2ht2)
+        call solve_hn ( nh )
+        if ( h < 0.0 ) then
+d160 1
+a160 1
+          cycle o2
+a161 4
+        integrand_gl(k) = 1.0_rp/(n+h*dndh)
+      end do
+
+  ! And Finally - define the refraction correction:
+d163 1
+a163 1
+      ref_corr(j) = dot_product(integrand_gl,gw) * ym / Del_s(j)
+d165 24
+a188 1
+    end do o2
+@
+
+
+2.14
+log
+@Converges faster with derivatives instead of differences
+@
+text
+@d22 1
+a22 1
+    & "$Id: refraction_m.f90,v 2.13 2002/10/08 17:08:06 pwagner Exp $"
+d314 2
+a315 3
+       df = e
+       dndh = eps * df
+       N = 1.0_rp + df
+d346 3
+@
+
+
+2.13
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d22 1
+a22 1
+    & "$Id: refraction_m.f90,v 2.12 2002/09/26 21:03:02 vsnyder Exp $"
+d249 1
+a260 1
+       df = (f2 - f1) / (h2 - h1)
+d278 3
+a280 1
+       f2 = v2 * (1.0_rp + n1 * exp(eps*(v2-h1)) ) - NH
+d292 2
+a293 1
+         f2 = v2 * (1.0_rp + n1 * exp(eps*(v2-h1)) ) - NH
+d306 1
+a306 1
+         df = (f2 - f1) / (v2 - v1)
+d314 1
+a314 1
+       df = n1 * exp(eps*(H-h1))
+d347 3
+@
+
+
+2.12
+log
+@Publish two constants, make Refractive_Index generic
+@
+text
+@d22 1
+a22 1
+    & "$Id: refraction_m.f90,v 2.11 2002/09/26 18:02:36 livesey Exp $"
+d25 1
+d338 4
+d344 3
+@
+
+
+2.11
+log
+@Bug fix (wouldn't compile)
+@
+text
+@d6 1
+a6 1
+  use MLSCommon, only: RP  ! Need to use it here to define result of later function
+d13 7
+d22 1
+a22 1
+    & "$Id: refraction_m.f90,v 2.10 2002/09/26 00:27:55 vsnyder Exp $"
+a26 1
+!----------------------------------------------  Refractive_index  -----
+d28 2
+a29 1
+  subroutine Refractive_index ( p_path, t_path, n_path, h2o_path )
+d48 30
+a77 5
+  !  ----------------
+  !  Local variables:
+  !  ----------------
+    real(rp), parameter :: const1 = 0.0000776_rp
+    real(rp), parameter :: const2 = 4810.0_rp
+d79 3
+a81 2
+    n_path = const1 * p_path / t_path
+    if ( present(h2o_path) ) n_path = n_path *( 1.0_rp + const2*h2o_path/t_path)
+d84 1
+a84 1
+  end subroutine Refractive_index
+d339 3
+@
+
+
+2.10
+log
+@Insert copyright notice, move USEs from module scope to procedure scope,
+cosmetic changes.
+@
+text
+@d6 2
+d15 1
+a15 1
+    & "$Id: refraction_m.f90,v 2.9 2002/03/15 06:53:02 zvi Exp $"
+a23 2
+    use MLSCommon, only: RP
+
+a287 2
+    use MLSCommon, only: RP
+
+d306 4
+@
+
+
+2.9
+log
+@Some cosmetic changes
+@
+text
+@d1 3
+a4 3
+  use MLSCommon, only: R8, RP, IP
+  use GLNP, only: NG, GX, GW
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
+d6 1
+a6 1
+  Implicit None
+d8 2
+a9 2
+  Private
+  Public :: refractive_index, comp_refcor, path_ds_dh
+d12 4
+a15 4
+  CHARACTER (LEN=256) :: Id = &
+ "$Id: refraction_m.f90,v 2.8 2002/03/14 22:33:30 zvi Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= &
+ "$RCSfile: refraction_m.f90,v $"
+d17 2
+a18 2
+CONTAINS
+!-------------------------------------------------------------------
+d20 1
+a20 1
+SUBROUTINE refractive_index(p_path,t_path,n_path,h2o_path)
+d22 1
+a22 40
+! This routine computes the refractive index as a function of altitude
+! and phi. The returned value has one subtracted from it
+! We could easily make this elemental but it might run slower due
+! to multiple executions of IF(PRESENT(...))
+!  ===============================================================
+!  Declaration of variables for sub-program: refractive_index
+!  ===============================================================
+!  ---------------------------
+!  Calling sequence variables:
+!  ---------------------------
+! inputs
+  REAL(rp), INTENT(IN) :: p_path(:) ! pressure(hPa) vector
+  REAL(rp), INTENT(IN) :: t_path(:) ! temperature vector(K)
+! output
+  REAL(rp), INTENT(OUT) :: n_path(:) ! refractive indicies - 1
+! Keywords
+  REAL(rp), OPTIONAL, INTENT(IN) :: h2o_path(:) ! H2O vmr(ppv)
+!  ----------------
+!  Local variables:
+!  ----------------
+  REAL(rp), PARAMETER :: const1 = 0.0000776_rp
+  REAL(rp), PARAMETER :: const2 = 4810.0_rp
+! begin code
+  n_path = const1 * p_path / t_path
+  IF(PRESENT(h2o_path)) n_path = n_path*(1.0_rp + const2*h2o_path/t_path)
+  RETURN
+
+END SUBROUTINE refractive_index
+
+!---------------------------------------------------------------
+! This routine computes the integral described in Eqn. 8.11 of the
+! MLS ATBD, pg. 46,  using the Gauss-Legendre method.
+!
+! For derivation of the code below, please see: "FWD Model" paper,
+! Page 16, Eqn. 26 & 27
+!
+Subroutine comp_refcor(h_path,n_path,ht,del_s,ref_corr)
+!
+    REAL(rp), intent(in) :: H_PATH(:)
+    REAL(rp), intent(in) :: N_PATH(:)
+d24 52
+a75 4
+    Real(rp), intent(in) :: ht
+!
+    REAL(rp), INTENT(out) :: Del_s(:)
+    Real(rp), intent(out) :: REF_CORR(:)
+d77 1
+a77 1
+    Integer(ip) :: i,j,k,no_ele,mid
+d79 2
+a80 1
+    Real(rp) :: INTEGRAND_GL(Ng)
+d82 1
+a82 2
+    Real(rp) :: q, htan2, Nt2Ht2
+    Real(rp) :: H,N,dndh,x1,x2,h1,h2,n1,n2,xm,ym,NH,eps
+d84 1
+a84 3
+    Real(rp), PARAMETER :: Tiny = 1.0e-8_rp
+!
+    no_ele = Size(n_path)
+d86 3
+a88 3
+!
+!  Initialize the ref_corr array:
+!
+d90 1
+a90 1
+!
+d92 1
+a92 1
+!
+d95 1
+a95 1
+!
+d99 2
+a100 2
+       &    abs(Sqrt(abs(h_path(i-1:j-1)**2-htan2)) -  &
+       &        Sqrt(abs(h_path( i : j )**2-htan2)))
+d105 4
+a108 2
+       &    abs(Sqrt(abs(h_path(i+1:j+1)**2-htan2)) -  &
+       &        Sqrt(abs(h_path( i : j )**2-htan2)))
+a109 2
+! First, do the right hand side of the ray path:
+!
+a111 4
+!
+    q = (h_path(1)*n_path(1))**2-Nt2Ht2
+    if(abs(q) < Tiny) q = 0.0_rp
+    x2 = Sqrt(abs(q))
+d113 6
+a118 2
+    do j = 2, mid
+!
+d125 2
+a126 2
+      q = (h_path(j)*n_path(j))**2 - Nt2Ht2
+      if(abs(q) < Tiny) q = 0.0_rp
+d128 1
+a128 1
+      if(q < 0.0_rp .OR. n1*n2 <= 0.0_rp) then
+d130 2
+a131 2
+        CYCLE
+      endif
+d133 1
+a133 1
+      x2 = Sqrt(q)
+d135 1
+a135 1
+      eps = Log(n2/n1)/(h2-h1)
+d138 5
+a142 5
+      do k = 1, Ng
+        q = xm + ym * Gx(k)
+        NH = Sqrt(q*q + Nt2Ht2)
+        Call Solve_Hn(NH)
+        if( H < 0.0) then
+d144 3
+a146 3
+          goto 10
+        endif
+        Integrand_GL(k) = 1.0_rp/(N+H*dndh)
+d148 9
+a156 13
+!
+      q = SUM(integrand_GL(1:)*Gw(1:))
+!
+! And Finally - define the refraction correction:
+!
+      ref_corr(j) = q * ym / Del_s(j)
+!
+ 10   k = 0
+!
+    end do
+!
+! Now, do the left hand side of the ray path:
+!
+d161 5
+a165 3
+    q = (h_path(j)*n_path(j))**2 - Nt2Ht2
+    if(abs(q) < Tiny) q = 0.0_rp
+    x2 = Sqrt(abs(q))
+a166 2
+    do j = mid+1, no_ele-1
+!
+d173 2
+a174 2
+      q = (h_path(j+1)*n_path(j+1))**2 - Nt2Ht2
+      if(abs(q) < Tiny) q = 0.0_rp
+d176 1
+a176 1
+      if(q < 0.0_rp .OR. n1*n2 <= 0.0_rp) then
+d178 2
+a179 2
+        CYCLE
+      endif
+d181 1
+a181 1
+      x2 = Sqrt(q)
+d183 1
+a183 1
+      eps = Log(n2/n1)/(h2-h1)
+d186 5
+a190 5
+      do k = 1, Ng
+        q = xm + ym * Gx(k)
+        NH = Sqrt(q*q + Nt2Ht2)
+        Call Solve_Hn(NH)
+        if( H < 0.0) then
+d192 3
+a194 3
+          goto 20
+        endif
+        Integrand_GL(k) = 1.0_rp/(N+H*dndh)
+a195 17
+!
+      q = SUM(integrand_GL(1:)*Gw(1:))
+!
+! And Finally - define the refraction correction:
+!
+      ref_corr(j) = q * ym / Del_s(j)
+!
+ 20   k = 0
+!
+    end do
+!
+    Return
+!
+Contains
+!------------------------------------------------------------------
+! Solve the equation h*(1.0+N(h)) = N*H, where N(h) is an exponential:
+!    N(h) = n1*Exp(eps*(h-h1))
+d197 48
+a244 1
+  Subroutine Solve_Hn(NH)
+d246 1
+a246 1
+    Real(rp), intent(in) :: NH
+d248 2
+a249 2
+    Integer :: iter
+    Real(rp) :: v1,v2,f1,f2,df,hpos,hneg
+d251 1
+a251 1
+    Integer,  PARAMETER :: Max_Iter = 20
+d253 2
+a254 4
+    CHARACTER(LEN=49), PARAMETER :: Msg1 = &
+          & 'From Solve_Hn routine: Could not bracket the root'
+    CHARACTER(LEN=61), PARAMETER :: Msg2 = &
+     & 'From Solve_Hn routine: Did not converged within 20 iterations'
+d256 1
+a256 3
+     f1 = h1 * (1.0_rp + n1) - NH
+     f2 = h2 * (1.0_rp + n2) - NH
+     df = (f2 - f1) / (h2 - h1)
+d258 1
+a258 5
+     IF (f1*f2 > 0.0_rp) THEN
+       H = -1.0_rp
+       Call MLSMessage ( MLSMSG_Warning, ModuleName, Msg1)
+       RETURN 
+     ENDIF
+d260 1
+a260 7
+     if(f1 <= 0.0_rp) then
+       hneg = h1
+       hpos = h2
+     else
+       hpos = h1
+       hneg = h2
+     endif
+d262 5
+a266 3
+     iter = 1
+     v2 = (h1 * abs(f2) + h2 * abs(f1)) / (abs(f1) + abs(f2))
+     f2 = v2 * (1.0_rp + n1 * Exp(eps*(v2-h1)) ) - NH
+d268 2
+a269 1
+     DO
+d271 1
+a271 2
+       v1 = v2
+       f1 = f2
+d273 2
+a274 1
+       v2 = v1 - f1 / df
+d276 4
+a279 2
+       if(v2 < min(hpos,hneg) .OR. v2 > max(hpos,hneg)) &
+           &  v2 = 0.5_rp * (hneg + hpos)
+d281 1
+a281 1
+       f2 = v2 * (1.0_rp + n1 * Exp(eps*(v2-h1)) ) - NH
+d283 1
+a283 1
+       if(abs(f2) < Tiny .OR. abs(v2-v1) < Tiny) EXIT
+d285 2
+a286 1
+       if(Iter == Max_Iter) EXIT
+d288 1
+a288 5
+       if(f2 < 0.0_rp) then
+         hneg = v2
+       else
+         hpos = v2
+       endif
+d290 1
+a290 2
+       iter = iter + 1
+       df = (f2 - f1) / (v2 - v1)
+d292 2
+a293 1
+     END DO
+d295 2
+a296 2
+     if(abs(f2) >= Tiny .AND. abs(v2-v1) >= Tiny) &
+         & Call MLSMessage ( MLSMSG_Warning, ModuleName, Msg2)
+d298 1
+a298 4
+     H = v2
+     df = n1 * Exp(eps*(H-h1))
+     dndh = eps * df
+     N = 1.0_rp + df
+d300 1
+a300 1
+  End Subroutine Solve_Hn
+d302 1
+a302 1
+End Subroutine comp_refcor
+a304 17
+  ELEMENTAL REAL(rp) FUNCTION path_ds_dh(r_path,r_tan)
+!
+! inputs:
+!
+  REAL(rp), INTENT(in) :: r_path ! heights + req (km).
+  REAL(rp), INTENT(in) :: r_tan ! tangent height + req (km).
+!
+! output:
+!  REAL(rp), INTENT(out) :: path_ds_dh ! path length derivative wrt height.
+!
+! calculation
+!
+  path_ds_dh = r_path / SQRT(r_path**2 - r_tan**2)
+!
+  END FUNCTION path_ds_dh
+!
+!------------------------------------------------------------------
+d308 3
+@
+
+
+2.8
+log
+@Add protection against Log() blowout
+@
+text
+@d13 1
+a13 1
+ "$Id: refraction_m.f90,v 2.7 2002/03/14 20:31:14 zvi Exp $"
+d220 4
+a223 4
+    CHARACTER(LEN=55), PARAMETER :: Msg1 = &
+          & '** Warning from Solve_Hn: Could not bracket the root ..'
+    CHARACTER(LEN=67), PARAMETER :: Msg2 = &
+     & '** Warning from Solve_Hn: Did not converged within 20 iterations ..'
+d307 3
+@
+
+
+2.7
+log
+@Make comp_refcor more robust
+@
+text
+@d13 1
+a13 1
+ "$Id: refraction_m.f90,v 2.6 2002/02/18 06:58:04 zvi Exp $"
+d121 1
+a121 1
+      if(q < 0.0_rp) then
+d173 1
+a173 1
+      if(q < 0.0_rp) then
+d307 3
+@
+
+
+2.6
+log
+@Trimming some unused code..
+@
+text
+@d4 1
+d13 1
+a13 1
+ "$Id: refraction_m.f90,v 2.5 2002/02/18 01:01:58 zvi Exp $"
+d108 1
+a108 1
+    x2 = Sqrt(q)
+d120 6
+d135 4
+d148 2
+d160 1
+a160 1
+    x2 = Sqrt(q)
+d172 6
+d187 4
+d200 2
+a215 1
+    Logical :: bracketed
+d220 5
+a224 1
+     bracketed = .FALSE.
+d229 9
+a237 9
+     if(f1*f2 < 0.0_rp) then
+       bracketed = .TRUE.
+       if(f1 < 0.0_rp) then
+         hneg = h1
+         hpos = h2
+       else
+         hpos = h1
+         hneg = h2
+       endif
+d239 2
+a240 1
+       Print *,'** Warning from Solve_Hn: Could not bracket the root ..'
+d254 1
+a254 2
+       if(bracketed) then
+         if(v2 < min(hpos,hneg) .OR. v2 > max(hpos,hneg)) &
+a255 1
+       endif
+d263 4
+a266 6
+       if(bracketed) then
+         if(f2 < 0.0_rp) then
+           hneg = v2
+         else
+           hpos = v2
+         endif
+d274 2
+a275 4
+     if(abs(f2) >= Tiny .AND. abs(v2-v1) >= Tiny) then
+       Print *,'** Warning from Solve_Hn: Did not converged within ', &
+            &  Max_Iter,' iterations ..'
+     endif
+d307 3
+@
+
+
+2.5
+log
+@Let the program crash & burn for LARGE negative Sqrt Arg.
+@
+text
+@d12 1
+a12 1
+ "$Id: refraction_m.f90,v 2.4 2002/02/17 03:23:40 zvi Exp $"
+d191 2
+a192 2
+    Logical :: bound
+    Real(rp) :: v1,v2,f1,f2,df,fpos,fneg,hpos,hneg
+d196 3
+a198 3
+     bound = .FALSE.
+     f1 = h1 * (1.0 + n1) - NH
+     f2 = h2 * (1.0 + n2) - NH
+d202 1
+a202 1
+       bound = .TRUE.
+a203 1
+         fneg = f1
+a204 1
+         fpos = f2
+a206 1
+         fpos = f1
+a207 1
+         fneg = f2
+d211 1
+a211 1
+       Print *,'** Warning from Solve_Hn: ROOT is NOT bound ..'
+d215 2
+a216 2
+     v2 = (h1*abs(f2)+h2*abs(f1))/(abs(f1)+abs(f2))
+     f2 = v2*(1.0+n1*Exp(eps*(v2-h1)))-NH
+d225 3
+a227 2
+       if(bound) then
+         if(v2 < min(hpos,hneg) .OR. v2 > max(hpos,hneg)) v2 = 0.5_rp*(hneg + hpos)
+d230 1
+a230 1
+       f2 = v2*(1.0+n1*Exp(eps*(v2-h1)))-NH
+d236 1
+a236 4
+       iter = iter + 1
+       df = (f2 - f1) / (v2 - v1)
+
+       if(bound) then
+a237 1
+           fneg = f2
+a239 1
+           fpos = f2
+a241 1
+         df = (fpos - fneg) / (hpos - hneg)
+d244 3
+d250 2
+a251 2
+       Print *,'** Warning from Solve_Hn: DID NOT converged within ',Max_Iter, &
+             & ' iterations ..'
+d284 3
+@
+
+
+2.4
+log
+@Better code for convergance in Solve_Hn
+@
+text
+@d12 1
+a12 1
+ "$Id: refraction_m.f90,v 2.3 2002/02/16 10:32:18 zvi Exp $"
+d73 2
+d106 1
+a106 1
+    if(q < 1.0e-9_rp) q = 0.0_rp
+d118 1
+a118 1
+      if(q < 1.0e-9_rp) q = 0.0_rp
+d146 1
+a146 1
+    if(q < 1.0e-9_rp) q = 0.0_rp
+d158 1
+a158 1
+      if(q < 1.0e-9_rp) q = 0.0_rp
+a194 1
+    Real(rp), PARAMETER :: Tiny = 1.0e-8_rp
+d290 3
+@
+
+
+2.3
+log
+@Make sure iteration in Solve_HN do not diverge
+@
+text
+@d12 1
+a12 1
+ "$Id: refraction_m.f90,v 2.2 2002/02/14 21:36:13 zvi Exp $"
+d189 2
+a190 1
+    Real(rp) :: v1,v2,f1,f2,df,pdf
+d192 4
+d200 17
+d227 5
+d234 3
+a236 2
+       if(abs(f2) < 1.0e-8_rp) EXIT
+       if(abs(v2-v1) < 1.0e-8_rp) EXIT
+a238 3
+       if(Iter > 10) EXIT
+
+       pdf = df
+d241 10
+a250 3
+! If the derivative became too small relative to previous one, keep 
+! the previous derivative value (Otherwise the next step-size will be 
+! too large ..)
+d252 1
+a252 1
+       if(abs(df/pdf).lt.0.1) df = pdf
+d254 4
+a257 1
+     END DO
+d289 3
+@
+
+
+2.2
+log
+@Fix Sqrt() problem..
+@
+text
+@d12 1
+a12 1
+ "$Id: refraction_m.f90,v 2.1 2001/12/01 01:35:22 zvi Exp $"
+d189 1
+a189 1
+    Real(rp) :: v1,v2,f1,f2,df
+d213 1
+d216 6
+d254 3
+@
+
+
+2.1
+log
+@Clerifying code.. easier to follow..
+@
+text
+@d12 1
+a12 1
+ "$Id: refraction_m.f90,v 2.0 2001/09/17 20:26:27 livesey Exp $"
+d102 4
+a105 1
+    x2 = Sqrt((h_path(1)*n_path(1))**2-Nt2Ht2)
+d114 5
+a118 1
+      x2 = Sqrt(abs((h_path(j)*n_path(j))**2-Nt2Ht2))
+d142 4
+a145 1
+    x2 = Sqrt(abs((h_path(j)*n_path(j))**2-Nt2Ht2))
+d154 5
+a158 1
+      x2 = Sqrt((h_path(j+1)*n_path(j+1))**2-Nt2Ht2)
+d247 3
+@
+
+
+2.0
+log
+@New forward model
+@
+text
+@d12 1
+a12 1
+ "$Id: refraction_m.f90,v 1.9.2.2 2001/09/12 21:38:53 zvi Exp $"
+d64 1
+a64 1
+    REAL(rp), INTENT(out) :: del_s(:)
+d67 1
+a67 1
+    Integer(ip) :: i,j,k,n_c,nch
+d71 2
+a72 2
+    Real(rp) :: q, htan2, ntht2
+    Real(rp) :: hv,nv,dndh,x1,x2,h1,h2,n1,n2,xm,ym,nh,eps
+d74 2
+a75 2
+    n_c = Size(n_path)
+    nch = (n_c + 1) / 2
+d79 1
+a79 1
+    ref_corr(1:n_c) = 1.0_rp
+d84 1
+a84 1
+    ntht2 = (n_path(nch)*ht)**2
+d87 1
+a87 1
+    j = nch
+d93 1
+a93 1
+    j = n_c-1
+d102 1
+a102 1
+    x2 = Sqrt((h_path(1)*n_path(1))**2-ntht2)
+d104 1
+a104 1
+    do j = 2, nch
+d111 1
+a111 1
+      x2 = Sqrt(abs((h_path(j)*n_path(j))**2-ntht2))
+d117 3
+a119 3
+        nh = Sqrt(q*q + ntht2)
+        Call Solve_Hn(nh)
+        Integrand_GL(k) = 1.0_rp/(nv+hv*dndh)
+d132 1
+a132 1
+    j = nch+1
+d135 1
+a135 1
+    x2 = Sqrt(abs((h_path(j)*n_path(j))**2-ntht2))
+d137 1
+a137 1
+    do j = nch+1, n_c-1
+d144 1
+a144 1
+      x2 = Sqrt((h_path(j+1)*n_path(j+1))**2-ntht2)
+d150 3
+a152 3
+        nh = Sqrt(q*q + ntht2)
+        Call Solve_Hn(nh)
+        Integrand_GL(k) = 1.0_rp/(nv+hv*dndh)
+a162 2
+!    DEALLOCATE(Del_s,STAT=i)
+!
+d167 1
+a167 1
+! Solve the equation h*(1.0+N(h)) = NxH, where N(h) is an exponential:
+d170 1
+a170 1
+  Subroutine Solve_Hn(NxH)
+d172 1
+a172 1
+    Real(rp), intent(in) :: NxH
+d177 2
+a178 2
+     f1 = h1 * (1.0 + n1) - NxH
+     f2 = h2 * (1.0 + n2) - NxH
+d183 1
+a183 1
+     f2 = v2*(1.0+n1*Exp(eps*(v2-h1)))-NxH
+d191 1
+a191 1
+       f2 = v2*(1.0+n1*Exp(eps*(v2-h1)))-NxH
+d203 4
+a206 4
+     hv = v2
+     nv = n1 * Exp(eps*(hv-h1))
+     dndh = eps * nv
+     nv = 1.0_rp + nv
+d233 3
+@
+
+
+1.9
+log
+@Speed enhancement MAJOR update
+@
+text
+@a0 3
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+d2 1
+a2 5
+  use MLSCommon, only: I4, R4, R8
+  use D_LINTRP_M, only: LINTRP
+  use D_SOLVE_QUAD_M, only: SOLVE_QUAD
+  use TWO_D_POLATE_M, only: TWO_D_POLATE
+  use PATH_ENTITIES_M, only: PATH_INDEX, PATH_VECTOR
+d4 1
+d6 4
+d12 1
+a12 1
+ "$Id: refraction_m.f90,v 1.7 2001/06/19 23:15:46 zvi Exp $"
+d16 1
+a16 2
+contains
+
+d19 1
+a19 3
+SUBROUTINE refractive_index(h2o_vmr,h2o_press,h2o_phi,no_h2o_press, &
+           no_h2o_phi,ndx_path,z_path,t_path,phi_path,n_path,       &
+           wet,no_tan_hts)
+d23 2
+a24 1
+
+d31 7
+a37 10
+Logical, INTENT(IN) :: wet
+Integer(i4), INTENT(IN) :: no_h2o_press,no_h2o_phi,no_tan_hts
+
+Real(r8), INTENT(IN) :: h2o_vmr(:,:),h2o_press(:),h2o_phi(:)
+
+Type(path_index),  INTENT(IN)  :: ndx_path(:)
+Type(path_vector),  INTENT(IN) :: z_path(:), t_path(:), phi_path(:)
+
+Type(path_vector), INTENT(OUT) :: n_path(:)
+
+d41 6
+a46 2
+Integer(i4) :: ht_i, ptg_i, j, ier
+Real(r8) :: r, p, v, z, ti, phi
+a47 33
+! Derive the water function by linear interpolation of the basis coefficients
+! and compute the relative refractive index function.
+! ***************** Caution ******************************
+! ADD: 1.000 TO GET THE ABSOLUTE REFRACTIVE INDEX !!!!
+
+  ptg_i = no_tan_hts
+  DEALLOCATE(n_path(ptg_i)%values,STAT=j)
+
+  DO ptg_i = 1, no_tan_hts
+    j = ndx_path(ptg_i)%total_number_of_elements
+    ALLOCATE(n_path(ptg_i)%values(j), STAT=ier)
+    if(Ier /= 0) then
+      Print *,'** Allocation error in "refractive_index" routine !'
+      Stop
+    endif
+    n_path(ptg_i)%values(1:j) = 0.0
+    DO ht_i = 1, j
+      z = z_path(ptg_i)%values(ht_i)
+      if(z < -5.0) CYCLE
+      ti = 1.0_r8 / t_path(ptg_i)%values(ht_i)
+      p = 10.0_r8**(-z)
+      r = 7.76D-5 * p * ti
+      if(wet) then
+        phi = phi_path(ptg_i)%values(ht_i)
+        Call TWO_D_POLATE (h2o_press,h2o_vmr,no_h2o_press,h2o_phi, &
+                           no_h2o_phi,z,phi,v)
+        r = r * (1.0_r8 + 4810.0_r8 * v * ti)
+      endif
+      n_path(ptg_i)%values(ht_i) = r
+    END DO
+  END DO
+
+  RETURN
+d51 10
+d62 4
+a65 6
+SUBROUTINE refraction_correction(no_tan_hts, tan_hts, h_path, n_path, &
+                      ndx_path, E_rad, ref_corr)
+
+!  ===============================================================
+!  Declaration of variables for sub-program: refraction_correction
+!  ===============================================================
+d67 1
+a67 4
+!  ---------------------------
+!  Calling sequence variables:
+!  ---------------------------
+Integer(i4), INTENT(IN) :: no_tan_hts
+d69 1
+a69 1
+Real(r8), INTENT(IN)  :: tan_hts(:), E_rad
+d71 20
+a90 2
+Type(path_index),  INTENT(IN) :: ndx_path(:)
+Type(path_vector), INTENT(IN) :: h_path(:), n_path(:)
+d92 5
+a96 1
+Real(r8), INTENT(OUT) :: ref_corr(:,:)       ! (N2lvl,Nptg)
+d98 5
+a102 4
+!  ----------------------
+!  Local variables:
+!  ----------------
+Integer(i4) :: i, j, k, m, ptg_i, no_ele, Ngp1, count, revc, brkpt
+d104 23
+a126 15
+Real(r8) :: ngrid(size(ref_corr,1))
+Real(r8) :: hgrid(size(ref_corr,1))
+Real(r8) :: refcor(size(ref_corr,1))
+
+Real(r8) :: h_tan, ht2, h
+
+  Ngp1 = Ng + 1
+
+  DO ptg_i = 1, no_tan_hts-1
+
+    brkpt = ndx_path(ptg_i)%break_point_index
+    no_ele = ndx_path(ptg_i)%total_number_of_elements
+
+    h_tan = tan_hts(ptg_i) + E_rad
+    ht2 = h_tan * h_tan
+a127 11
+    hgrid(1:) = -1.0
+    ngrid(1:) =  1.0
+    ref_corr(1:,ptg_i) = 1.0
+
+    k = 0
+    j = 1 - Ngp1
+    revc = (brkpt + Ng) / Ngp1
+    do i = 1, revc
+      j = j + Ngp1
+      h = h_path(ptg_i)%values(j) + E_rad
+      if(h >= h_tan) k = k + 1
+d129 32
+a160 17
+
+    count = 0
+    j = 1 - Ngp1
+    do i = 1, revc
+      j = j + Ngp1
+      h = h_path(ptg_i)%values(j) + E_rad
+      if(h >= h_tan) then
+        count = count + 1
+        hgrid(k+1-count) = h
+        ngrid(k+1-count) = n_path(ptg_i)%values(j)
+      endif
+    end do
+
+    m = count
+    CALL create_ref_corr(count, h_tan, ht2, hgrid, ngrid, refcor)
+    do i = 1, count
+      ref_corr(i,ptg_i) = refcor(count+1-i)
+d162 9
+d172 1
+a172 2
+    hgrid(1:) = -1.0
+    ngrid(1:) =  1.0
+d174 1
+a174 12
+    count = 0
+    j = brkpt+1-Ngp1
+    revc = (no_ele-brkpt+Ng) / Ngp1
+    do i = 1, revc
+      j = j + Ngp1
+      h = h_path(ptg_i)%values(j) + E_rad
+      if(h >= h_tan) then
+        count = count + 1
+        hgrid(count) = h
+        ngrid(count) = n_path(ptg_i)%values(j)
+      endif
+    end do
+d176 2
+a177 7
+    CALL create_ref_corr(count, h_tan, ht2, hgrid, ngrid, refcor)
+    do i = 1, count
+      m = m + 1
+      ref_corr(m,ptg_i) = refcor(i)
+    end do
+!
+  END DO
+d179 3
+a181 2
+  k = no_tan_hts
+  ref_corr(1:,k) = ref_corr(1:,k-1)
+d183 3
+a185 2
+  RETURN
+END SUBROUTINE refraction_correction
+d187 1
+a187 11
+!---------------------------------------------------------------
+
+SUBROUTINE create_ref_corr(n_lvls, ht, ht2, hgrid, ngrid, refcor)
+
+!  ===============================================================
+!  Declaration of variables for sub-program: refraction_correction
+!  ===============================================================
+!  ---------------------------
+!  Calling sequence variables:
+!  ---------------------------
+Integer(i4), INTENT(IN) :: n_lvls
+d189 2
+a190 7
+Real(r8), INTENT(IN) :: ht, ht2
+Real(r8), INTENT(INOUT) :: ngrid(:), hgrid(:)
+Real(r8), INTENT(OUT) :: refcor(:)
+!  ----------------------
+!  Local variables:
+!  ----------------
+Integer(i4) :: j, k, l, m
+d192 2
+a193 55
+Real(r8) :: hn, pr, hneg, hpos, q, r, hsk, hsk1, an1, an2, dndh, n1, n2, &
+            ngrd_tan, nt, ntht2, xm, ym, an, dh, h, s1, s2, h1, h2, x1,  &
+            x2, eps, sum
+
+! For first time in, Load the Gauss-Legendre abscissae & weights
+
+  refcor(1:) = 1.0
+
+  if ( n_lvls > 1) then
+    k = n_lvls
+    x1 = ngrid(n_lvls-1)
+    x2 = ngrid(n_lvls)
+    DO WHILE(k < Size(ngrid) .AND. x1 > 1.0d-13)
+      k = k + 1
+      xm = x2 * (x2 / x1)
+      IF(xm >= 1.0D-13) THEN
+        x1 = x2
+        x2 = xm
+      ELSE
+        x1 = x2
+        xm = x2
+      END IF
+      ngrid(k) = xm
+    END DO
+  end if
+
+!  First approximation:
+
+  j = 1
+  DO WHILE(hgrid(j) <= ht .AND. j < n_lvls)
+    j = j + 1
+  END DO
+
+  IF(j == 1) THEN
+    l = 2
+    refcor(1) = 1.0
+    ngrd_tan = ngrid(1) + ngrid(2)
+    hsk1 = hgrid(2) * hgrid(2)
+  ELSE
+    l = j
+    m = MAX(1,j-1)
+    refcor(m) = 1.0
+    hsk1 = hgrid(j) * hgrid(j)
+    CALL exp_lintrp(hgrid(m),hgrid(j),ht,ngrid(m),ngrid(j),an)
+    ngrd_tan = ngrid(j) + an
+  END IF
+  DO k = l, n_lvls-1
+    r = 0.0
+    hsk = hsk1
+    hsk1 = hgrid(k+1) * hgrid(k+1)
+    an = ngrd_tan - ngrid(k+2) - ngrid(k+1)
+    q = 2.0_r8 * SQRT(hsk-ht2) * SQRT(hsk1-ht2)
+    IF(q > 0.0) r = ht2 * an / q
+    refcor(k) = 1.0_r8 + r
+  END DO
+d195 2
+a196 2
+  q = refcor(max(n_lvls-1,1))
+  refcor(n_lvls:) = q
+d198 2
+a199 1
+  if(ht < 0.0) Return
+d201 1
+a201 2
+! For derivation of the code below, please see: "FWD Model" paper,
+! Page 16, Eqn. 26 & 27
+d203 1
+a203 77
+!  Modified approximation: Integral{dx/(1+n+h*dn/dh)},
+!     Where: x = Sqrt((n*h)^2 - (nt*htan)^2)
+!
+  j = 1
+  DO WHILE(hgrid(j) <= ht .AND. j < n_lvls)
+    j = j + 1
+  END DO
+
+  m = MAX(1,j-1)
+  CALL exp_lintrp(hgrid(m),hgrid(j),ht,ngrid(m),ngrid(j),an)
+
+  nt = 1.0_r8 + an
+  ntht2 = nt * nt * ht2
+
+  s2 = 0.0
+  h2 = hgrid(m)
+  r = h2*h2 - ht2
+  IF(r > 1.0D-8) s2 = SQRT(r)
+
+  x2 = 0.0_r8
+  an2 = ngrid(m)
+  n2 = 1.0_r8 + an2
+  q = n2 * h2
+  r = q * q - ntht2
+  IF(r > 1.0D-13) x2 = SQRT(r)
+
+  pr = 100.0
+  DO  k = m, n_lvls - 1
+
+    h1 = h2
+    h2 = hgrid(k+1)
+
+    s1 = s2
+    IF(h2 <= ht) CYCLE
+    s2 = SQRT(h2*h2-ht2)
+    IF(s2 <= s1) CYCLE
+
+    an1 = an2
+    an2 = ngrid(k+1)
+
+    n1 = n2
+    n2 = 1.0_r8 + an2
+
+    x1 = x2
+    q = n2 * h2
+    r = q * q - ntht2
+    IF(r < 0.0) CYCLE
+    x2 = SQRT(r)
+
+    dh = h2 - h1
+    eps = LOG(an2/an1)/dh
+
+    an = n2 * h2 - n1 * h1
+    IF(an >= 0.0) THEN
+      hpos = h2
+    ELSE
+      hpos = h1
+    END IF
+
+    hneg = h1 + h2 - hpos
+
+    an = 2.0
+    sum = 0.0_r8
+    xm = 0.5_r8 * (x2 + x1)
+    ym = 0.5_r8 * (x2 - x1)
+    DO l = 1, ng
+      q = xm + ym * Gx(l)
+      hn = SQRT(q*q + ntht2)
+      CALL solve_hn(hn,h1,an1,eps,hneg,hpos,h,an)
+      dndh = eps * an
+      r = ym / (1.0_r8 + an + h * dndh)
+      sum = sum + r * Gw(l)
+    END DO
+
+    an = sum / (s2 - s1)
+    IF(an >= 1.0_r8 .AND. an <= pr) refcor(k) = an
+    pr = refcor(k)
+d205 4
+a208 1
+  END DO
+d210 1
+a210 2
+  q = refcor(max(n_lvls-1,1))
+  refcor(n_lvls:) = q
+d212 1
+a212 2
+  RETURN
+END SUBROUTINE create_ref_corr
+d214 2
+a215 17
+!---------------------------------------------------------------------
+! Exponential interpolation subroutine
+!
+      Subroutine Exp_Lintrp(h1,h2,h,a1,a2,a)
+!
+      Real(r8) :: h1,h2,h,a1,a2,a,r,q
+!
+      if(abs(h2-h1).lt.1.0e-8) then
+        a = 0.50 * (a1 + a2)
+        return
+      else if(abs(h-h1).lt.5.0e-9) then
+        a = a1
+        return
+      else if(abs(h-h2).lt.5.0e-9) then
+        a = a2
+        return
+      endif
+d217 1
+a217 3
+      r = -1.0
+      q = (h - h1) / (h2 - h1)
+      if(abs(a1).gt.1.0e-11) r = a2 / a1
+d219 2
+a220 1
+      if(r .gt. 0.0d0) then
+d222 2
+a223 1
+        a = a1 * Exp(q*Log(r))
+d225 1
+a225 1
+      else
+d227 1
+a227 1
+! This is a sign change transition revert to linear interpolation
+d229 1
+a229 1
+        a = a1 + (a2 - a1) * q
+d231 1
+a231 9
+      endif
+!
+      Return
+      End Subroutine Exp_Lintrp
+!-------------------------------------------------------------------
+! Solve the equation h*(1+N(h)) = Hn, where N(h) is an exponential:
+!    N(h) = an1*Exp(eps*(h-h1))
+
+SUBROUTINE solve_hn(hn,h1,an1,eps,rneg,rpos,vh,vn)
+d233 1
+a233 67
+REAL(r8), INTENT(IN) :: hn, h1, an1, eps, rneg, rpos
+REAL(r8), INTENT(IN OUT) :: vh, vn
+
+INTEGER(i4) :: i
+REAL(r8) :: hneg, hpos, hmid, a, b, c, r1, r2, vh0, f0, f, af, df, vn0
+
+hneg = rneg
+hpos = rpos
+hmid = 0.5_r8 * (hpos + hneg)
+
+! First guess - Use first two Taylor series terms of:  Exp(eps*(h-h1))
+! Then solve quadratic eqation in h: (1.0+an1*Exp(eps*(h-h1)))*h-Hn = 0
+
+  a = an1 * eps
+  b = 1.0_r8 + an1 * (1.0_r8 - eps * h1)
+  c = -hn
+  CALL solve_quad(a,b,c,r1,r2)     ! r2 <= r1, use the smaller root
+  IF(r2 < MIN(hpos,hneg) .OR. r2 > MAX(hpos,hneg)) THEN
+    IF(vn < 1.0) THEN
+      vh0 = vh
+    ELSE
+      vh0 = hmid
+    END IF
+  ELSE
+    vh0 = r2
+  END IF
+
+  vn0 = an1 * EXP(eps*(vh0-h1))
+  f0 = (1.0_r8 + vn0) * vh0 - hn
+  IF(f0 > 0.0) THEN
+    hpos = vh0
+  ELSE
+    hneg = vh0
+  END IF
+
+  i = 0
+  af = 1.0_r8
+  DO WHILE(i < 10 .AND. af > 1.0D-7)
+    i = i + 1
+    df = 1.0_r8 + vn0 * (1.0_r8 + eps * vh0)
+    vh = vh0 - f0 / df
+    hmid = 0.5_r8 * (hpos + hneg)
+    IF(vh < MIN(hpos,hneg) .OR. vh > MAX(hpos,hneg)) vh = hmid
+    vn = an1 * EXP(eps*(vh-h1))
+    f  = (1.0_r8 + vn) * vh - hn
+    IF(f > 0.0) THEN
+      hpos = vh
+    ELSE
+      hneg = vh
+    END IF
+    f0 = f
+    vh0 = vh
+    vn0 = vn
+    af = ABS(f)
+  END DO
+
+  IF(af > 1.0D-7) THEN
+    PRINT *,'** WARNING: From subroutine: SOLVE_HN **'
+    PRINT *,'   Solving: h*(1+N(h)) - Hn = 0'
+    PRINT *,'   Failed to converge after ',i,' iterations !!'
+    PRINT *,'   Last value: h*(1+N(h))-Hn =',f
+  END IF
+
+  RETURN
+END SUBROUTINE solve_hn
+
+end module REFRACTION_M
+d235 2
+a236 14
+! Revision 1.7  2001/06/19 23:15:46  zvi
+! Correcting intent in: solve_hn   routine
+!
+! Revision 1.6  2001/06/07 23:39:31  pwagner
+! Added Copyright statement
+!
+! Revision 1.5  2001/03/31 23:40:56  zvi
+! Eliminate l2pcdim (dimension parameters) move to allocatable ..
+!
+! Revision 1.4  2001/03/21 22:46:34  livesey
+! Some bug found with range checking fixed
+!
+! Revision 1.3  2001/03/20 11:03:16  zvi
+! Fixing code for "real" data run, increase dim. etc.
+d238 2
+a239 2
+! Revision 1.2  2001/01/31 01:08:48  zvi
+! New version of forward model
+@
+
+
+1.9.2.1
+log
+@Cleanup..comp_path_entities_m.f90
+@
+text
+@d1 3
+d5 5
+a9 1
+  use MLSCommon, only: R8, RP, IP
+d14 1
+a14 1
+ "$Id: refraction_m.f90,v 1 2000/06/09 00:08:14 Z.Shippony Exp $"
+d18 2
+a19 1
+CONTAINS
+d22 3
+a24 1
+SUBROUTINE refractive_index(p_path,t_path,n_path,h2o_path)
+d28 1
+a28 2
+! We could easily make this elemental but it might run slower due
+! to multiple executions of IF(PRESENT(...))
+d35 10
+a44 7
+! inputs
+  REAL(rp), INTENT(IN) :: p_path(:) ! pressure(hPa) vector
+  REAL(rp), INTENT(IN) :: t_path(:) ! temperature vector(K)
+! output
+  REAL(rp), INTENT(OUT) :: n_path(:) ! refractive indicies - 1
+! Keywords
+  REAL(rp), OPTIONAL, INTENT(IN) :: h2o_path(:) ! H2O vmr(ppv)
+d48 35
+a82 5
+  REAL(rp), PARAMETER :: const1 = 0.0000776_rp
+  REAL(rp), PARAMETER :: const2 = 4810.0_rp
+! begin code
+  n_path = const1 * p_path / t_path
+  IF(PRESENT(h2o_path)) n_path = n_path*(1.0_rp + const2*h2o_path/t_path)
+a83 1
+
+a86 10
+! This routine computes the integral described in Eqn. 8.11 of the
+! MLS ATBD, pg. 46,  using the Gauss-Legendre method.
+!
+! For derivation of the code below, please see: "FWD Model" paper,
+! Page 16, Eqn. 26 & 27
+!
+Subroutine comp_refcor(h_path,n_path,ht,del_s,ref_corr)
+!
+    REAL(rp), intent(in) :: H_PATH(:)
+    REAL(rp), intent(in) :: N_PATH(:)
+d88 31
+a118 4
+    Real(rp), intent(in) :: ht
+!
+    REAL(rp), INTENT(out) :: del_s(:)
+    Real(rp), intent(out) :: REF_CORR(:)
+d120 1
+a120 1
+    Integer(ip) :: i,j,k,n_c,nch
+d122 2
+a123 1
+    Real(rp) :: INTEGRAND_GL(Ng)
+d125 2
+a126 2
+    Real(rp) :: q, htan2, ntht2
+    Real(rp) :: hv,nv,dndh,x1,x2,h1,h2,n1,n2,xm,ym,nh,eps
+d128 24
+a151 17
+    n_c = Size(n_path)
+    nch = (n_c + 1) / 2
+!
+!  Initialize the ref_corr array:
+!
+    ref_corr(1:n_c) = 1.0_rp
+!
+    Del_s = 0.0
+!
+    htan2 = ht * ht
+    ntht2 = (n_path(nch)*ht)**2
+!
+    i = 2
+    j = nch
+    Del_s(i:j) = &
+       &    abs(Sqrt(abs(h_path(i-1:j-1)**2-htan2)) -  &
+       &        Sqrt(abs(h_path( i : j )**2-htan2)))
+d153 5
+a157 5
+    i = j+1
+    j = n_c-1
+    Del_s(i:j) = &
+       &    abs(Sqrt(abs(h_path(i+1:j+1)**2-htan2)) -  &
+       &        Sqrt(abs(h_path( i : j )**2-htan2)))
+d159 2
+a160 5
+! First, do the right hand side of the ray path:
+!
+    h2 = h_path(1)
+    n2 = n_path(1)-1.0_rp
+    x2 = Sqrt((h_path(1)*n_path(1))**2-ntht2)
+d162 11
+a172 24
+    do j = 2, nch
+!
+      x1 = x2
+      h1 = h2
+      n1 = n2
+      h2 = h_path(j)
+      n2 = n_path(j)-1.0_rp
+      x2 = Sqrt(abs((h_path(j)*n_path(j))**2-ntht2))
+      eps = Log(n2/n1)/(h2-h1)
+      xm = 0.5_rp *(x1 + x2)
+      ym = 0.5_rp *(x1 - x2)
+      do k = 1, Ng
+        q = xm + ym * Gx(k)
+        nh = Sqrt(q*q + ntht2)
+        Call Solve_Hn(nh)
+        Integrand_GL(k) = 1.0_rp/(nv+hv*dndh)
+      end do
+!
+      q = SUM(integrand_GL(1:)*Gw(1:))
+!
+! And Finally - define the refraction correction:
+!
+      ref_corr(j) = q * ym / Del_s(j)
+!
+d174 5
+a178 32
+!
+! Now, do the left hand side of the ray path:
+!
+    j = nch+1
+    h2 = h_path(j)
+    n2 = n_path(j)-1.0_rp
+    x2 = Sqrt(abs((h_path(j)*n_path(j))**2-ntht2))
+
+    do j = nch+1, n_c-1
+!
+      x1 = x2
+      h1 = h2
+      n1 = n2
+      h2 = h_path(j+1)
+      n2 = n_path(j+1)-1.0_rp
+      x2 = Sqrt((h_path(j+1)*n_path(j+1))**2-ntht2)
+      eps = Log(n2/n1)/(h2-h1)
+      xm = 0.5_rp *(x2 + x1)
+      ym = 0.5_rp *(x2 - x1)
+      do k = 1, Ng
+        q = xm + ym * Gx(k)
+        nh = Sqrt(q*q + ntht2)
+        Call Solve_Hn(nh)
+        Integrand_GL(k) = 1.0_rp/(nv+hv*dndh)
+      end do
+!
+      q = SUM(integrand_GL(1:)*Gw(1:))
+!
+! And Finally - define the refraction correction:
+!
+      ref_corr(j) = q * ym / Del_s(j)
+!
+d181 1
+a181 8
+!    DEALLOCATE(Del_s,STAT=i)
+!
+    Return
+!
+Contains
+!------------------------------------------------------------------
+! Solve the equation h*(1.0+N(h)) = NxH, where N(h) is an exponential:
+!    N(h) = n1*Exp(eps*(h-h1))
+d183 2
+a184 1
+  Subroutine Solve_Hn(NxH)
+d186 2
+a187 1
+    Real(rp), intent(in) :: NxH
+d189 1
+a189 2
+    Integer :: iter
+    Real(rp) :: v1,v2,f1,f2,df
+d191 1
+a191 3
+     f1 = h1 * (1.0 + n1) - NxH
+     f2 = h2 * (1.0 + n2) - NxH
+     df = (f2 - f1) / (h2 - h1)
+d193 7
+a199 3
+     iter = 1
+     v2 = (h1*abs(f2)+h2*abs(f1))/(abs(f1)+abs(f2))
+     f2 = v2*(1.0+n1*Exp(eps*(v2-h1)))-NxH
+d201 7
+a207 1
+     DO
+d209 55
+a263 2
+       v1 = v2
+       f1 = f2
+d265 2
+a266 2
+       v2 = v1 - f1 / df
+       f2 = v2*(1.0+n1*Exp(eps*(v2-h1)))-NxH
+d268 1
+a268 2
+       if(abs(f2) < 1.0e-8_rp) EXIT
+       if(abs(v2-v1) < 1.0e-8_rp) EXIT
+d270 2
+a271 2
+       iter = iter + 1
+       if(Iter > 10) EXIT
+d273 77
+a349 1
+       df = (f2 - f1) / (v2 - v1)
+d351 1
+a351 1
+     END DO
+d353 2
+a354 4
+     hv = v2
+     nv = n1 * Exp(eps*(hv-h1))
+     dndh = eps * nv
+     nv = 1.0_rp + nv
+d356 2
+a357 1
+  End Subroutine Solve_Hn
+d359 21
+a379 4
+End Subroutine comp_refcor
+
+!------------------------------------------------------------------
+  ELEMENTAL REAL(rp) FUNCTION path_ds_dh(r_path,r_tan)
+d381 1
+a381 1
+! inputs:
+d383 1
+a383 2
+  REAL(rp), INTENT(in) :: r_path ! heights + req (km).
+  REAL(rp), INTENT(in) :: r_tan ! tangent height + req (km).
+d385 1
+a385 2
+! output:
+!  REAL(rp), INTENT(out) :: path_ds_dh ! path length derivative wrt height.
+d387 1
+a387 1
+! calculation
+d389 1
+a389 1
+  path_ds_dh = r_path / SQRT(r_path**2 - r_tan**2)
+d391 1
+a391 1
+  END FUNCTION path_ds_dh
+d393 7
+a399 1
+!------------------------------------------------------------------
+d401 67
+a467 1
+END module REFRACTION_M
+d469 18
+@
+
+
+1.9.2.2
+log
+@Added CVS stuff
+@
+text
+@a3 1
+
+a4 4
+
+  Private
+  Public :: refractive_index, comp_refcor, path_ds_dh
+
+d7 1
+a7 1
+ "$Id: refraction_m.f90,v 1.9.2.1 2001/09/10 10:02:32 zvi Exp $"
+a229 3
+! Revision 1.9.2.1  2001/09/10 10:02:32  zvi
+! Cleanup..comp_path_entities_m.f90
+!
+@
+
+
+1.8
+log
+@Changed vn from intent(out) to inout; reversed zvis latest changes (temporarily)
+@
+text
+@d10 1
+a10 1
+  use GL6P, only: NG, GX, GW
+d14 1
+a14 1
+ "$Id: refraction_m.f90,v 1.6 2001/06/07 23:39:31 pwagner Exp $"
+d402 1
+a402 2
+REAL(r8), INTENT(IN OUT)  :: vh
+REAL(r8), INTENT(INOUT)     :: vn
+d469 3
+@
+
+
+1.7
+log
+@Correcting intent in: solve_hn   routine
+@
+text
+@d10 1
+a10 1
+  use GLNP, only: NG, GX, GW
+d402 2
+a403 1
+REAL(r8), INTENT(IN OUT)  :: vh, vn
+@
+
+
+1.6
+log
+@Added Copyright statement
+@
+text
+@d10 1
+a10 1
+  use GL6P, only: NG, GX, GW
+d14 1
+a14 1
+ "$Id: refraction_m.f90,v 1.5 2001/03/31 23:40:56 zvi Exp $"
+d402 1
+a402 2
+REAL(r8), INTENT(IN OUT)  :: vh
+REAL(r8), INTENT(OUT)     :: vn
+d469 3
+@
+
+
+1.5
+log
+@Eliminate l2pcdim (dimension parameters) move to allocatable ..
+@
+text
+@d1 3
+d14 1
+a14 1
+ "$Id: refraction_m.f90,v 1.4 2001/03/21 22:46:34 livesey Exp $"
+d470 3
+@
+
+
+1.4
+log
+@Some bug found with range checking fixed
+@
+text
+@a2 1
+  use L2PCDIM, only: N2lvl, Nptg
+d11 1
+a11 1
+ "$Id: refraction_m.f90,v 1.3 2001/03/20 11:03:16 zvi Exp $"
+d109 5
+a113 1
+Real(r8) :: ngrid(N2lvl), hgrid(N2lvl), refcor(N2lvl), h_tan, ht2, h
+d125 3
+a127 3
+    hgrid(1:N2lvl) = -1.0
+    ngrid(1:N2lvl) =  1.0
+    ref_corr(1:N2lvl,ptg_i) = 1.0
+d156 2
+a157 2
+    hgrid(1:N2lvl) = -1.0
+    ngrid(1:N2lvl) =  1.0
+d212 1
+a212 1
+  refcor(1:N2lvl) = 1.0
+d218 1
+a218 1
+    DO WHILE(k < N2lvl .AND. x1 > 1.0d-13)
+d263 1
+a263 1
+  refcor(n_lvls:N2lvl) = q
+d351 1
+a351 1
+  refcor(n_lvls:N2lvl) = q
+d467 3
+@
+
+
+1.3
+log
+@Fixing code for "real" data run, increase dim. etc.
+@
+text
+@d12 1
+a12 1
+ "$Id: refraction_m.f90,v 1.2 2001/01/31 01:08:48 zvi Exp $"
+d211 17
+a227 15
+  k = n_lvls
+  x1 = ngrid(n_lvls-1)
+  x2 = ngrid(n_lvls)
+  DO WHILE(k < N2lvl .AND. x1 > 1.0d-13)
+    k = k + 1
+    xm = x2 * (x2 / x1)
+    IF(xm >= 1.0D-13) THEN
+      x1 = x2
+      x2 = xm
+    ELSE
+      x1 = x2
+      xm = x2
+    END IF
+    ngrid(k) = xm
+  END DO
+d259 1
+a259 1
+  q = refcor(n_lvls-1)
+d347 1
+a347 1
+  q = refcor(n_lvls-1)
+d464 3
+@
+
+
+1.2
+log
+@New version of forward model
+@
+text
+@d3 1
+a3 1
+  use L2PCDIM, only: NLVL, N2lvl, Nptg
+d12 1
+a12 1
+ "$Id: refraction_m.f90,v 1 2000/06/09 00:08:14 Z.Shippony Exp $"
+d110 1
+a110 1
+Real(r8) :: ngrid(Nlvl), hgrid(Nlvl), refcor(Nlvl), h_tan, ht2, h
+d122 2
+a123 2
+    hgrid(1:Nlvl) = -1.0
+    ngrid(1:Nlvl) =  1.0
+d153 2
+a154 2
+    hgrid(1:Nlvl) = -1.0
+    ngrid(1:Nlvl) =  1.0
+d209 1
+a209 1
+  refcor(1:nlvl) = 1.0
+d214 1
+a214 1
+  DO WHILE(k < nlvl .AND. x1 > 1.0d-13)
+d258 1
+a258 1
+  refcor(n_lvls:nlvl) = q
+d346 1
+a346 1
+  refcor(n_lvls:nlvl) = q
+d462 3
+@
+
+
+1.1
+log
+@New version
+@
+text
+@a0 1
+!
+d20 3
+a22 3
+SUBROUTINE refractive_index(h2o_vmr,h2o_press,h2o_phi,no_h2o_press,    &
+           no_h2o_phi,ndx_path,z_path,t_path,phi_path,n_path,h2o_path, &
+           no_tan_hts,wet)
+d41 1
+a41 2
+! Real(r8), INTENT(OUT) :: n_path(:,:),h2o_path(:,:)
+Type(path_vector), INTENT(OUT) :: n_path(:), h2o_path(:)
+d47 1
+a47 1
+Real(r8) :: q, r, p, v, z, ti, phi
+d54 3
+d59 1
+a59 2
+    ALLOCATE(n_path(ptg_i)%values(j), h2o_path(ptg_i)%values(j), &
+   &         STAT=ier)
+a64 1
+    h2o_path(ptg_i)%values(1:j) = 1.0
+a75 3
+        p = 300.0_r8 * ti
+        q = 31.6_r8 * v * (p**7.5)
+        h2o_path(ptg_i)%values(ht_i) = 1.0_r8 + q
+d204 2
+a205 2
+            n_tan, nt, ntht2, xm, ym, an, dh, h, s1, s2, h1, h2, x1, x2, &
+            eps, sum
+d237 1
+a237 1
+    n_tan = ngrid(1) + ngrid(2)
+d245 1
+a245 1
+    n_tan = ngrid(j) + an
+d251 1
+a251 1
+    an = n_tan - ngrid(k+2) - ngrid(k+1)
+a463 1
+
+@
+

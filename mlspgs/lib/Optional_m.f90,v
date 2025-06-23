@@ -1,0 +1,641 @@
+head	2.7;
+access;
+symbols
+	v5-02-NRT-19:2.7
+	v6-00:2.7
+	v5-02-NRT-18:2.7
+	v5-02:2.4
+	v5-01-NRT-17:2.7
+	v5-01-NRT-16:2.7
+	v5-01-NRT-15:2.7
+	v5-01-NRT-14:2.6
+	neuralnetworks-1-0:2.5.0.4
+	cfm-single-freq-0-1:2.5.0.2
+	v5-01:2.4
+	v5-00:2.4
+	v4-23-TA133:2.4.0.6
+	mus-emls-1-70:2.4.0.4
+	rel-1-0-englocks-work:2.4.0.2
+	VUMLS1-00:2.3;
+locks; strict;
+comment	@# @;
+
+
+2.7
+date	2021.09.10.17.42.52;	author pwagner;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2021.02.05.05.10.33;	author pwagner;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2019.10.31.22.56.51;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2017.10.27.23.13.09;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2017.01.19.23.31.03;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2016.11.03.21.00.16;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2016.09.23.02.55.58;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.7
+log
+@Moved most stuff into new Exception_m
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Optional_m
+! Data types and procedures to 
+! (1) either return a default or override it depending
+!
+! === (start of toc) ===                                                 
+!     c o n t e n t s
+!     - - - - - - - -
+!         Datatypes
+!
+!         Functions, operations, routines
+! Default            Returns either the value of an optional arg
+!                       if it is present, otherwise a default value
+! Print_Default      Print an int array , or a default mesg if not present
+! Raise              Construct an Exception_t datatype
+! === (end of toc) ===
+
+! === (start of api) ===
+! === (end of api) ===
+
+  implicit none
+  private
+
+  public :: Default, Default_Char, Default_Double, Default_Integer
+  public :: Default_Logical, Default_Single
+  public :: Print_Default
+
+  interface Default
+    module procedure Default_Char, Default_Double, Default_Integer
+    module procedure Default_Logical, Default_Single
+  end interface
+
+  interface Print_Default
+    module procedure PrintDefault_Intarr
+  end interface
+
+  integer, public, parameter :: DefaultCharLen = 32
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: Optional_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  function Default_Char ( Opt, Default, additional ) result ( R )
+    ! The optional arg additional (if true) adds on the characters in
+    ! Default even if Opt is present
+    character(len=*), intent(in), optional           :: Opt
+    character(len=*), intent(in)                     :: Default
+    logical, intent(in), optional                    :: Additional
+    character(len=max(DefaultCharLen, len(default))) :: R
+    r = default
+    if ( present(opt) ) r = opt
+    if ( .not. present(additional) .or. .not. present(opt) ) return
+    if ( additional ) r = trim(opt) // trim(Default)
+  end function Default_Char
+
+  double precision function Default_Double ( Opt, Default ) result ( R )
+    double precision, intent(in), optional :: Opt
+    double precision, intent(in) :: Default
+    r = default
+    if ( present(opt) ) r = opt
+  end function Default_Double
+
+  integer function Default_Integer ( Opt, Default ) result ( R )
+    integer, intent(in), optional :: Opt
+    integer, intent(in) :: Default
+    r = default
+    if ( present(opt) ) r = opt
+  end function Default_Integer
+
+  logical function Default_Logical ( Opt, Default ) result ( R )
+    logical, intent(in), optional :: Opt
+    logical, intent(in) :: Default
+    r = default
+    if ( present(opt) ) r = opt
+  end function Default_Logical
+
+  real function Default_Single ( Opt, Default ) result ( R )
+    real, intent(in), optional :: Opt
+    real, intent(in) :: Default
+    r = default
+    if ( present(opt) ) r = opt
+  end function Default_Single
+
+  ! ------------------- PrintDefault_intarr --------------------
+  ! The PrintDefault subroutine prints either the value
+  ! if present, or else a default character string
+  subroutine PrintDefault_intarr ( name, ints, mesg )
+    ! Args
+    character(len=*), intent(in)                     :: name
+    integer, dimension (:), optional, intent(in)     :: ints
+    character(len=*), intent(in)                     :: mesg
+    ! Executable
+    if ( present(ints) ) then
+      print *, trim(name) // ': ', ints
+    else
+      print *, trim(name) // ' ' // trim(mesg)
+    endif
+  end subroutine PrintDefault_intarr
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: Optional_m.f90,v 2.6 2021/02/05 05:10:33 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Optional_m
+
+! $Log: Optional_m.f90,v $
+! Revision 2.6  2021/02/05 05:10:33  pwagner
+! Added a new Print_Default
+!
+! Revision 2.5  2019/10/31 22:56:51  pwagner
+! Moved DumpException here from dump_1
+!
+! Revision 2.4  2017/10/27 23:13:09  pwagner
+! Default_Char can now taked optional arg additional
+!
+! Revision 2.3  2017/01/19 23:31:03  pwagner
+! Add the Exception_t data type and Raise and Pass_or_Catch functions
+!
+! Revision 2.2  2016/11/03 21:00:16  pwagner
+! Added HowWeHandle to determine how to handle an exception
+!
+! Revision 2.1  2016/09/23 02:55:58  vsnyder
+! Initial commit
+!
+@
+
+
+2.6
+log
+@Added a new Print_Default
+@
+text
+@a14 2
+!     on the presence of an optional variable holding the overrding value
+! (2) Handle exceptions in a flexible manner
+a15 3
+! Should we move the Exception-handling stuff to a separate module?
+  use MLSFinds, only: FindFirst
+
+a19 1
+! Exception_t        The container for kind, cause, times, etc.
+a21 2
+! AddExceptionToDatabase       
+!                    Adds an Exception_t to a database
+a23 5
+! Dump               Dump an Exception_t or a database of such types
+! HowWeHandle        Returns one of two values depending on whether an 
+!                       optional arg is present; if present sets it to TRUE
+! Pass_or_catch      Do we Process an Exception_t datatype, or Pass it on up
+!                       the chain of calls?
+a28 1
+! DumpException ( exception_t Exception )
+d36 1
+a36 2
+  public :: HowWeHandle_int, HowWeHandle_log
+  public :: Dump, DumpException, Raise, Pass_or_Catch, Print_Default
+a42 4
+  interface Dump
+    module procedure DumpException, DumpDatabase
+  end interface
+
+a46 48
+  interface Pass_or_Catch
+    module procedure Pass_or_Catch_Int
+    module procedure Pass_or_Catch_char
+  end interface
+
+  ! The compiler can't disambiguate these; ideas?
+  ! interface HowWeHandle
+  !  module procedure HowWeHandle_log, HowWeHandle_int
+  ! end interface
+
+  ! This is the Exception type
+  !   The Raise function creates one
+  !   The Pass_or_Catch function processes one
+  ! Ideally, what should happen is this:
+  ! Say A_1 calls A_2 which calls .. which calls A_n. 
+  ! A certain exception occurs in A_n.
+  ! A_n Raises an exception by Creating that certain Exception datatype 
+  ! and returns it to A_(n-1). If A_(n-1) doesn't handle it itself, it passes
+  ! it back up to A_(n-2) which passes it .. finally landing back on 
+  ! A_1's doorstep.
+  ! So, the operations supplied here are actually Raise and Pass_or_Catch.
+  ! The caller is obliged to respond appropriately when the callee returns
+  ! an Exception.
+  !
+  ! Here's some  sample code
+  ! use Optional_m, only: Exception_t, Pass_or_Catch
+  ! . . .
+  ! type(Exception_t) :: Exception ! Could be a dummy arg
+  ! call fragile ( args, Exception )
+  ! if ( Exception%condition ) then ! You may not need this extra 'if'
+  !    n = Pass_or_catch( Exception, names_we_catch )
+  !    select case ( n )
+  !    case (1)
+  !      call handler_1
+  !    case (2)
+  !      call handler_2
+  !    .   .   .
+  !    case default
+  !      call clean_up
+  !      return ! Pass Exception to Caller if among the dummy args
+  !    end select
+  ! endif
+  ! ! Go on our merry way unless the handler_k cried 'stop'
+  ! 
+  ! While not elegant
+  ! we've made a start at least.
+  ! And, dammit Jim, this is Fortran, not Java.
+  public :: Exception_t
+a47 16
+  type Exception_t
+    logical           :: condition   ! If conditional
+    character(len=DefaultCharLen) :: name        ! So we can match on names
+    character(len=DefaultCharLen) :: where       ! it was Raised originally
+    integer           :: id          ! So we can match on id
+    integer           :: try_number  ! If not the 1st time
+    integer           :: severity    ! E.g., MLSMSG_Error
+    integer           :: verboseness ! 0, 1, 2, .. Do we print; how much
+    integer           :: int_result  ! Immediate cause
+    real              :: sngl_result ! Immediate cause
+    character(len=16) :: char_result ! Immediate cause
+  end type Exception_t
+  
+  ! Pass_or_Catch may return these reserved values
+  integer, public, parameter :: Pass = 0
+  integer, public, parameter :: InternalError = Pass - 1
+a56 22
+  !-------------------------------------------  AddExceptionToDatabase  -----
+!          --- Warning ---  
+!    Uncommenting this function creates a circular depndency
+!   integer function AddExceptionToDatabase( Database, Item )
+! 
+!     ! This function adds an Exception data type to a database of said types,
+!     ! creating a new database if it doesn't exist.  The result value is
+!     ! the size -- where Exception is put.
+! 
+!     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+! 
+!     ! Dummy arguments
+!     type (Exception_t), dimension(:), pointer :: Database
+!     type (Exception_t), intent(in)            :: Item
+! 
+!     ! Local variables
+!     type (Exception_T), dimension(:), pointer :: TempDatabase
+!     include "addItemToDatabase.f9h" 
+! 
+!     AddExceptionToDatabase = newSize
+!   end function AddExceptionToDatabase
+
+a97 135
+  ! -----------------------------------------------  Dump  -----
+  ! This dumps a table of the Exception type's components
+  subroutine DumpDatabase ( Database )
+    use HighOutput, only: StyledOutput
+    ! Args
+    type(Exception_t), dimension(:), intent(in)       :: Database
+    integer                                           :: i
+    call StyledOutput( 'Exceptions Database', options='-B' )
+    if ( size(Database) < 1 ) then
+      call StyledOutput ( '**** Exception Database empty ****' )
+      return
+    endif
+    do i = 1, size(Database)
+      call dump( database(i) )
+    end do
+  end subroutine DumpDatabase
+
+  ! This dumps a table of the Exception type's components
+  subroutine DumpException ( Exception, WhereAmI, Message )
+    use HighOutput, only: AddRow, AddRow_Divider, AddRow_Header, &
+      & OutputTable, StartTable
+    use Output_m, only: Output
+    ! Args
+    type(Exception_t), intent(in)          :: Exception
+    character(len=*), intent(in), optional :: WhereAmI ! Where are we dumping from?
+    character(len=*), intent(in), optional :: Message  ! Anything else to say?
+    ! Internal variables
+    ! Executable
+    call startTable
+    if ( present(WhereAmI) ) then
+      call addRow_header ( '(Exception Info) ' // trim(WhereAmI), 'c' )
+    else
+      call addRow_header ( 'Exception Info', 'c' )
+    endif
+    call addRow_divider ( '-' )
+    call addRow ( 'name        ', trim(Exception%Name)  )
+    call addRow ( 'where       ', trim(Exception%Where) )
+    call addRow ( 'id          ', Exception%id          )
+    call addRow_divider ( '-' )
+    call addRow ( 'condition   ', Exception%condition   )
+    call addRow ( 'try_number  ', Exception%try_number  )
+    call addRow ( 'severity    ', Exception%severity    )
+    call addRow ( 'verboseness ', Exception%verboseness )
+    call addRow ( 'int_result  ', Exception%int_result  )
+    call addRow ( 'sngl_result ', Exception%sngl_result )
+    call addRow ( 'char_result ', trim(Exception%char_result) )
+    call outputTable ( sep='|', border='-' )
+    if ( present(Message) ) call output( trim(Message), advance='yes' )
+  end subroutine DumpException
+
+  ! --------------------------------------------------------------------
+  ! One way to handle exceptions: does not use the Exception_t datatype
+  ! Instead we proceed on a path determined by the presence or absence
+  ! of an optional argument
+  !
+
+  ! --------------------------- HowWeHandle -----------------------------------
+  ! Function used to determine how to handle exceptions (crash or just set flag)
+  ! depending on whether an optional flag named 'opt' is present
+  ! If opt is not present                     => AbsentValue
+  ! If opt is present                         => PresentValue
+  !                                               and set opt => 1 or TRUE or ..
+  ! E.g., whether to quit with just a warning message or with an error
+  ! Assume the optional arg 'fail' is meant to allow for a soft failure:
+  ! if an exception occurs, fail is seet to a non-zero value,
+  ! a message is printed, and the procedure returns
+  ! If instead fail is not present, we quit with a message, as in:
+  !   severity = HowWeHandle( fail, MLSMSG_Error, MLSMSG_Warning )
+  !   call MLSMessage ( severity, ModuleName, &
+  !     & 'Something happened' )
+  integer function HowWeHandle_int ( Opt, AbsentValue, PresentValue, OptValue ) &
+    & result ( R )
+    integer, intent(out), optional :: Opt
+    integer, intent(in)            :: AbsentValue
+    integer, intent(in)            :: PresentValue
+    integer, intent(in), optional  :: OptValue    ! If present, set opt to me
+    if ( present(opt) ) then
+      r = PresentValue
+      opt = 1
+      if ( present(OptValue) ) opt = OptValue
+    else
+      r = AbsentValue
+    endif
+  end function HowWeHandle_int
+
+  integer function HowWeHandle_log ( Opt, AbsentValue, PresentValue ) result ( R )
+    logical, intent(out), optional :: Opt
+    integer, intent(in)            :: AbsentValue
+    integer, intent(in)            :: PresentValue
+    if ( present(opt) )then
+      r = PresentValue
+      opt = .true.
+    else
+      r = AbsentValue
+    endif
+  end function HowWeHandle_log
+  
+  ! --------------------------------------------------------------------
+  ! The other way to handle exceptions uses the Exception_t datatype
+  ! The procedure that detects the exception Raises an instance and
+  ! then either Catches it or else Passes it back up the chain of
+  ! calls
+
+  ! ------------------- Pass_or_Catch --------------------
+  ! The Pass_or_Catch subroutine decides how to process an Exception.
+  ! Pass means send it back up one more step in the calling chain
+  ! Catch means handle it right away, either dying or recovering somehow.
+  ! For now, the decision whether to Catch or Pass is based solely
+  ! on matching names or ids.
+  ! Can't DumpException here because Dump_1 module uses us, which would
+  ! create a circular dependence
+  function Pass_or_Catch_int ( exception, names ) result ( which )
+    ! Args
+    type (Exception_t), intent(in)                            :: Exception
+    integer, dimension(:), intent(in)                         :: names
+    integer                                                   :: which
+    ! Executable
+    which = FindFirst( names, Exception%id )
+    if ( Exception%verboseness > 2 .or. &
+      & ( Exception%verboseness > 0 .and. which > 0 ) ) &
+      & call DumpException( exception )
+  end function Pass_or_Catch_int
+
+  function Pass_or_Catch_char ( exception, names ) result ( which )
+    ! Args
+    type (Exception_t), intent(in)                            :: Exception
+    character(len=*), dimension(:), intent(in)                :: names
+    integer                                                   :: which
+    ! Executable
+    which = FindFirst( names, Exception%name )
+    if ( Exception%verboseness > 2 .or. &
+      & ( Exception%verboseness > 0 .and. which > 0 ) ) &
+      & call DumpException( exception )
+  end function Pass_or_Catch_char
+
+a113 30
+  ! ------------------- Raise --------------------
+  ! The Raise function constructs an Exception
+  ! The caller can Catch it himself, or Pass it back up the Chain
+  function Raise ( name, where, id, condition, try_number, severity, &
+    & verboseness, int_result, sngl_result, char_result ) result ( Exception )
+    ! Args
+    character(len=*)   , optional, intent(in)     :: name
+    character(len=*)   , optional, intent(in)     :: where
+    integer            , optional, intent(in)     :: id 
+    logical            , optional, intent(in)     :: condition  
+    integer            , optional, intent(in)     :: try_number 
+    integer            , optional, intent(in)     :: severity   
+    integer            , optional, intent(in)     :: verboseness   
+    integer            , optional, intent(in)     :: int_result 
+    real               , optional, intent(in)     :: sngl_result
+    character(len=*)   , optional, intent(in)     :: char_result
+    type (Exception_t)                            :: Exception
+    ! Executable
+    Exception%name         = Default( name       , ' '     ) 
+    Exception%where        = Default( where      , ' '     ) 
+    Exception%id           = Default( id         , 0       ) 
+    Exception%condition    = Default( condition  , .false. )
+    Exception%try_number   = Default( try_number , 0       )
+    Exception%severity     = Default( severity   , 5       )
+    Exception%verboseness  = Default( verboseness, 0       )
+    Exception%int_result   = Default( int_result , 0       )
+    Exception%sngl_result  = Default( sngl_result, 0.e0    )
+    Exception%char_result  = Default( char_result, ' '     )
+  end function Raise
+   
+d117 1
+a117 1
+       "$Id: Optional_m.f90,v 2.5 2019/10/31 22:56:51 pwagner Exp $"
+d127 3
+@
+
+
+2.5
+log
+@Moved DumpException here from dump_1
+@
+text
+@d37 1
+d51 1
+a51 1
+  public :: Dump, DumpException, Raise, Pass_or_Catch
+d62 4
+d338 16
+d387 1
+a387 1
+       "$Id: Optional_m.f90,v 2.4 2017/10/27 23:13:09 pwagner Exp $"
+d397 3
+@
+
+
+2.4
+log
+@Default_Char can now taked optional arg additional
+@
+text
+@d28 2
+d32 1
+d40 4
+d50 1
+a50 1
+  public :: Raise, Pass_or_Catch
+d57 4
+d88 1
+a88 1
+  ! type(Exception_t) :: Exception
+d100 1
+a100 1
+  !      return ! Pass Exception to Caller
+d103 1
+a103 1
+  ! ! Go on our merry way unless the handler cried 'stop'
+d105 1
+a105 1
+  ! While the lack of elegance abaove is obvious even to the coarsest observer
+d135 22
+d198 50
+d316 3
+a318 3
+  ! if ( Exception%verboseness > 2 .or. &
+  !   & ( Exception%verboseness > 0 .and. which > 0 ) ) &
+  !   & call DumpException( exception )
+d328 3
+a330 3
+  ! if ( Exception%verboseness > 2 .or. &
+  !   & ( Exception%verboseness > 0 .and. which > 0 ) ) &
+  !   & call DumpException( exception )
+d366 1
+a366 1
+       "$Id: Optional_m.f90,v 2.3 2017/01/19 23:31:03 pwagner Exp $"
+d376 3
+@
+
+
+2.3
+log
+@Add the Exception_t data type and Raise and Pass_or_Catch functions
+@
+text
+@d124 3
+a126 1
+  function Default_Char ( Opt, Default ) result ( R )
+d129 1
+d133 2
+d283 1
+a283 1
+       "$Id: Optional_m.f90,v 2.2 2016/11/03 21:00:16 pwagner Exp $"
+d293 3
+@
+
+
+2.2
+log
+@Added HowWeHandle to determine how to handle an exception
+@
+text
+@d13 7
+d24 3
+d32 3
+d43 1
+d50 6
+d60 56
+d125 3
+a127 3
+    character(len=*), intent(in), optional :: Opt
+    character(len=*), intent(in) :: Default
+    character(len=len(default)) :: R
+d161 6
+d176 1
+a176 1
+  ! If instead fail is not present, we quit with a message
+d178 2
+d206 69
+a274 1
+
+d278 1
+a278 1
+       "$Id: Optional_m.f90,v 2.1 2016/09/23 02:55:58 vsnyder Exp $"
+d288 3
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d14 10
+d29 1
+d36 4
+d42 1
+a42 1
+       "$RCSfile: HGridsDatabase.f90,v $"
+d84 39
+d126 1
+a126 1
+       "$Id: HGridsDatabase.f90,v 2.36 2016/09/23 02:41:47 vsnyder Exp $"
+d135 4
+a138 1
+! $Log: $
+@
+

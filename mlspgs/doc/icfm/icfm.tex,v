@@ -1,0 +1,148 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.12
+	cfm-single-freq-0-1:1.2.0.10
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.8
+	mus-emls-1-70:1.2.0.6
+	rel-1-0-englocks-work:1.2.0.4
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.2
+	V4-21:1.2.0.2
+	V4-13:1.2
+	V4-12:1.2
+	V4-11:1.2
+	V4-10:1.2
+	M4-00:1.2
+	V3-33:1.2;
+locks; strict;
+comment	@% @;
+
+
+1.2
+date	2011.04.20.22.25.39;	author honghanh;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2011.04.18.21.24.01;	author honghanh;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Complete documentation
+@
+text
+@\documentclass[11pt]{article}
+\usepackage{shortmlsdoc}
+\usepackage{times,mathptm}
+\usepackage{geometry}
+\usepackage[svgnames]{xcolor}
+\usepackage{listings}
+\usepackage[square]{natbib}
+\usepackage{amsmath}
+\usepackage{array,booktabs}
+\usepackage{underscore}
+\usepackage{multicol}
+\usepackage{hyperref}
+%
+\newcommand{\mycomment}[1]{{\color{red}\sffamily\slshape #1}}
+\newcommand{\snippet}[1]{\texttt{#1}}
+\newcommand{\cs}[1]{\ensuremath{_\text{#1}}}
+\newcommand{\cp}[1]{\ensuremath{^\text{#1}}}
+\renewcommand{\b}[1]{\ensuremath{\mathbf{#1}}}
+\newcommand{\degsym}{\ensuremath{^\circ}}
+%
+\setlength{\fboxsep}{4mm}
+% \newcommand{\tbd}[2][TBD:]{\par\noindent\colorbox{Linen}{\parbox{\linewidth-2\fboxsep}{%
+%       \sffamily{\large\textbf{#1}\par}\vspace{1.5ex}#2}}\par}
+\newcommand{\tbd}[1]{%
+%  \colorbox{Linen}{%
+    \begin{quote}
+      \colorbox{Linen}{\parbox{\linewidth}{%
+          \sffamily\textbf{TBD:} #1}}
+    \end{quote}}
+%
+%\rcsInfo$Id: icfm.tex,v 1.1 2011/04/18 21:24:01 honghanh Exp $
+\seriestitle{Aura Microwave Limb Sounder (MLS)}
+\title{IDL Callable Forward Model Interface Requirements Document}
+\author{H.~H.~Nguyen}
+\version{v0.0.1, \today}
+%
+\begin{document}
+\maketitle
+%
+\lstset{language=Fortran}
+\lstset{backgroundcolor=\color{WhiteSmoke}}
+\lstset{frame=single,framerule=0pt}
+\lstset{xleftmargin=1ex}
+\lstset{xrightmargin=1ex}
+%
+\lstset{basicstyle=\footnotesize\ttfamily}
+\lstset{commentstyle=\color{red}\itshape}
+\lstset{keywordstyle=\color{Green}\bfseries}
+%\lstset{identifierstyle=\color{MediumBlue}}
+\lstset{stringstyle=\color{Chocolate}}
+%
+% --------------------------------------------- Main document
+%
+\addtocounter{tocdepth}{-1}
+\tableofcontents
+\input{icfm-intro.tex}
+%
+\input{icfm-structure-review.tex}
+%
+\input{icfm-reference.tex}
+%
+\appendix
+%
+\input{icfm-example.tex}
+%
+\input{icfm-lists.tex}
+%
+\bibliographystyle{plainnat}
+\bibliography{icfmbib}
+
+\end{document}
+@
+
+
+1.1
+log
+@Initial import for ICFM documentation
+@
+text
+@d31 1
+a31 1
+%\rcsInfo$Id: cfm.tex,v 1.6 2010/06/29 23:56:57 livesey Exp $
+d62 1
+a62 1
+%\appendix
+d64 1
+a64 1
+%\input{cfm-example.tex}
+d66 1
+a66 3
+%\input{cfm-compilation.tex}
+%
+%\input{cfm-appendix.tex}
+@
+

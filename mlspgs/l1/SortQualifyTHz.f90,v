@@ -1,0 +1,1020 @@
+head	2.18;
+access;
+symbols
+	v5-02-NRT-19:2.18
+	v6-00:2.17
+	v5-02-NRT-18:2.17
+	v5-02:2.17
+	v5-01-NRT-17:2.17
+	v5-01-NRT-16:2.17
+	v5-01-NRT-15:2.17
+	v5-01-NRT-14:2.17
+	neuralnetworks-1-0:2.17.0.10
+	cfm-single-freq-0-1:2.17.0.8
+	v5-01:2.17
+	v5-00:2.17
+	v4-23-TA133:2.17.0.6
+	mus-emls-1-70:2.17.0.4
+	rel-1-0-englocks-work:2.17.0.2
+	VUMLS1-00:2.17
+	VPL1-00:2.17
+	V4-22-NRT-08:2.17
+	whdrel10_merged_to_here:2.17
+	merge_whdrel10_from_here:2.16.4.1
+	TAG_TRUNK_AFTER_PW_CHANGES:2.16
+	TAG_TRUNK_BEFORE_PW_CHANGES:2.16
+	VAM1-00:2.16
+	whd-rel-1-0:2.16.0.4
+	V4-21:2.16.0.2
+	V4-13:2.15
+	V4-12:2.15
+	V4-11:2.15
+	V4-10:2.15
+	V3-43:2.15
+	M4-00:2.15
+	V3-41:2.15
+	V3-40-PlusGM57:2.15.0.2
+	V2-24-NRT-04:2.14
+	V3-33:2.15
+	V2-24:2.14
+	V3-31:2.15
+	V3-30-NRT-05:2.15
+	cfm-01-00:2.15
+	V3-30:2.15
+	V3-20:2.15
+	V3-10:2.15
+	V2-23-NRT-02:2.14
+	V2-23:2.14
+	V2-22-NRT-01:2.14
+	V2-22:2.14
+	V2-21:2.14
+	V2-20:2.14
+	V2-11:2.14
+	V2-10:2.14
+	V2-00:2.13
+	V1-51:2.6
+	V1-50:2.5
+	V1-45:2.4
+	V1-44:2.4
+	V1-43:2.4
+	V1-42:2.4
+	V1-41:2.4
+	V1-32:2.3
+	V1-40:2.4
+	V1-31:2.3
+	V1-30:2.3
+	V1-13:2.2
+	V1-12:2.2
+	V1-11:2.2
+	V1-10:2.2
+	newfwm-feb03:2.2.0.2;
+locks; strict;
+comment	@# @;
+
+
+2.18
+date	2024.10.09.22.37.38;	author pwagner;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2016.03.15.22.17.59;	author whdaffer;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2015.01.13.18.45.19;	author pwagner;	state Exp;
+branches
+	2.16.4.1;
+next	2.15;
+
+2.15
+date	2009.05.13.20.33.05;	author vsnyder;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2006.08.02.18.58.45;	author perun;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2006.06.14.13.49.29;	author perun;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2006.03.24.15.18.51;	author perun;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2005.12.06.19.29.51;	author perun;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2005.10.14.15.55.44;	author perun;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2005.10.12.17.12.27;	author perun;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2005.06.23.18.41.36;	author pwagner;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2005.05.02.16.07.41;	author perun;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2005.01.28.17.07.14;	author perun;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2004.11.10.15.36.11;	author perun;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2004.01.09.17.46.23;	author perun;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2003.08.15.14.25.04;	author perun;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2003.02.10.20.32.45;	author perun;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2003.01.31.18.13.34;	author perun;	state Exp;
+branches;
+next	;
+
+2.16.4.1
+date	2015.10.09.10.21.38;	author whdaffer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.18
+log
+@Stop excess printing on dates THz module is off
+@
+text
+@! Copyright 2006, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=============================================================================
+MODULE SortQualifyTHz ! Sort and qualify the L0 data for the THz module
+!=============================================================================
+
+  USE L0_sci_tbls, ONLY: THzSciMAF
+  USE THzCalibration, ONLY: CalBuf, MAFdata_T
+  USE MLSFillValues, ONLY: isNaN
+
+  IMPLICIT NONE
+
+  PRIVATE
+
+  PUBLIC :: SortAndQualifyTHz
+
+!---------------------------- RCS Module Info ------------------------------
+  CHARACTER (len=*), PRIVATE, PARAMETER :: ModuleName= &
+       "$RCSfile: SortQualifyTHz.f90,v $"
+  PRIVATE :: not_used_here 
+!---------------------------------------------------------------------------
+
+  TYPE (MAFdata_T), POINTER :: CurMAFdata => NULL()
+
+CONTAINS
+
+!=============================================================================
+  SUBROUTINE FillCalData
+!=============================================================================
+
+    USE MLSL1Config, ONLY: L1Config
+    USE MLSL1Common, ONLY: absZero_C, OA_counterMAF
+    USE EngTbls, ONLY: EngMAF, CalTgtIndx 
+    USE EngUtils, ONLY: NextEngMAF
+    USE SciUtils, ONLY: NextSciMAF
+    USE MLSL1Utils, ONLY : GetIndexedAvg
+    USE BrightObjects_m, ONLY: THz_BO_stat
+    USE dates_module, ONLY: tai93s2hid
+
+    LOGICAL :: more_data
+
+    INTEGER :: sci_MAFno, CalMAFs, CalMAFno
+    REAL :: MAF_dur, MIF_dur
+    logical, parameter :: verbose = .false. ! Thz is off more days than on
+
+    MIF_dur = L1Config%Calib%MIF_duration
+    MAF_dur = MIF_dur * L1Config%Calib%MIFsPerMAF   !Nominal duration of MAF
+    calMAFs = NINT ((L1Config%Expanded_TAI%endTime - &
+         L1Config%Expanded_TAI%startTime) / MAF_dur) + 10
+
+    ALLOCATE (CalBuf%MAFdata(calMAFs))
+
+    CalMAFno = 0
+
+    DO
+
+       CALL NextEngMAF (more_data)
+
+       IF (.NOT. more_data) EXIT    !! Nothing more to do
+
+       CALL NextSciMAF (more_data)
+
+       IF (.NOT. more_data) EXIT    !! Nothing more to do
+
+       sci_MAFno = THzSciMAF(0)%MAFno
+
+       DO
+
+          IF (EngMAF%MAFno == sci_MAFno) EXIT   ! Nothing more to read
+
+          IF (EngMAF%secTAI <= THzSciMAF(2)%secTAI) THEN       ! Catch the Sci
+
+             CALL NextEngMAF (more_data)
+             IF (.NOT. more_data) RETURN    !! Nothing more to do
+
+          ELSE IF (EngMAF%secTAI > THzSciMAF(2)%secTAI) THEN   ! Catch the Eng
+
+             CALL NextSciMAF (more_data)
+             IF (.NOT. more_data) RETURN    !! Nothing more to do
+             sci_MAFno = THzSciMAF(0)%MAFno
+
+          ENDIF
+
+       ENDDO
+
+       PRINT *, "THz SCI/ENG MAF, time: ", sci_MAFno, EngMAF%MAFno, &
+            & tai93s2hid( EngMAF%sectai, leapsec=.true. )
+       CalMAFno = CalMAFno + 1
+       CurMAFdata => CalBuf%MAFdata(CalMAFno)
+       CurMAFdata%SciMIF = THzSciMAF
+       CurMAFdata%EMAF = EngMAF
+       CurMAFdata%last_MIF = MAXVAL (THzSciMAF%MIFno)
+       CurMAFdata%BandSwitch(4:5) =  &
+            CurMAFdata%SciMIF(CurMAFdata%last_MIF)%BandSwitch
+       CurMAFdata%CalTgtTemp = &
+            GetIndexedAvg (EngMAF%eng%value, CalTgtIndx%THzAmb) - absZero_C
+       CurMAFdata%LimbCalTgtTemp = &
+            GetIndexedAvg (EngMAF%eng%value, CalTgtIndx%THzLimb) - absZero_C
+       CurMAFdata%BO_stat = THz_BO_stat(:,CalMAFno)
+
+       more_data =  THzSciMAF(0)%secTAI <= L1Config%Input_TAI%endTime .AND. &
+            (CalMAFno < SIZE (OA_counterMAF))
+       if ( isNaN( CurMAFdata%CalTgtTemp) .and. verbose ) then
+         print *, 'CalTgtTemp is a NaN'
+         print *, 'absZero_C ', absZero_C
+         CurMAFdata%CalTgtTemp = &
+            GetIndexedAvg ( EngMAF%eng%value, CalTgtIndx%THzAmb, debug=.true.) - absZero_C
+       endif
+       if ( isNaN( CurMAFdata%LimbCalTgtTemp) .and. verbose ) then
+         print *, 'LimbCalTgtTemp is a NaN'
+         CurMAFdata%LimbCalTgtTemp = &
+            GetIndexedAvg ( EngMAF%eng%value, CalTgtIndx%THzLimb, debug=.true.) - absZero_C
+       endif
+       ! print *, minval(CalTgtIndx%THzAmb), maxval(CalTgtIndx%THzAmb)
+       ! print *, minval(CalTgtIndx%THzAmb), maxval(CalTgtIndx%THzLimb)
+       ! print *, size(EngMAF%eng%value)
+       ! if ( any(isNaN(EngMAF%eng%value)) ) print *, 'At least one value is a NaN'
+       IF (.NOT. more_data) EXIT    !! Nothing more to do
+
+    ENDDO
+
+    IF (SIZE (OA_counterMAF) > 1) &
+         CalMAFno = MIN (SIZE (OA_counterMAF), CalMAFno)
+    CalBuf%MAFs = CalMAFno
+
+  END SUBROUTINE FillCalData
+
+!=============================================================================
+  SUBROUTINE QualifyEachMAF
+!=============================================================================
+
+    USE BrightObjects_m, ONLY:Test_BO_stat, BO_Match
+    USE Constants, ONLY: Rad2Deg
+    USE MLSL1Common, ONLY: L1BFileInfo, SC_YPR, THz_GeodAlt
+    USE MLSL1Config, ONLY: THz_seq, THz_seq_use
+    USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Warning
+    USE SDPToolkit, ONLY: PGS_TD_TAItoUTC
+
+    INTEGER :: MAF, MIF, n, stat
+    CHARACTER(len=80) :: msg
+    CHARACTER(len=27) :: asciiUTC
+    REAL :: encoder(2)
+
+    CHARACTER(len=1) :: SwMirPos
+    CHARACTER(len=1), PARAMETER :: discard = "D"
+    CHARACTER(len=1), PARAMETER :: limb = "L"
+    CHARACTER(len=1), PARAMETER :: match = "M"
+    CHARACTER(len=1), PARAMETER :: override = "O"
+    CHARACTER(len=1), PARAMETER :: undefined = "U"
+    REAL, PARAMETER :: BadLimbRange(2) = (/ 6.0, 354.0 /)
+    REAL, PARAMETER :: SpaceAltRange(2) = (/ 120.0e03, 600.0e03 /)
+    REAL, PARAMETER :: good_yaw = 1.0   ! good YAW value in degrees
+    REAL, PARAMETER :: bad_bias = 9.0   ! special "bad" bias value
+
+    PRINT *, 'qualifying all the MAFs'
+
+    DO MAF = 1, CalBuf%MAFs
+
+       CurMAFdata => CalBuf%MAFdata(MAF)
+
+!! Initialize MIF Rad Precision signs:
+
+       CurMAFdata%MIFprecSign = 1.0
+
+       DO MIF = 0, CurMAFdata%last_MIF
+
+!! Initialize to "U"ndefined:
+
+          CurMAFdata%ChanType(MIF)%FB = undefined
+
+          !! Save current sw pos:
+       
+          SwMirPos = CurMAFdata%SciMIF(MIF)%SwMirPos
+
+!! Rule #1: Data quality information:
+
+          IF (.NOT. CurMAFdata%SciMIF(MIF)%CRC_good) THEN
+
+             !! Discard all
+
+             CurMAFdata%ChanType(MIF)%FB = discard
+
+             CYCLE                              !! All done for this packet
+          ENDIF
+
+!! Rule #2: User Input qualifications:
+
+          !! Set the appropriate user input channels to "D"iscard
+
+!! Rule #3: Disqualify based on engineering ("OFF" state, out-of-lock, etc.)
+
+          !! Set the appropriate channels to "D"iscard
+
+!! Rule #4: Check for "Z"ero data
+
+!! Discard all bands (for now)
+
+          IF (ANY (CurMAFdata%SciMIF(MIF)%MaxAtten)) SwMirPos = discard
+
+!! Rule #5: Set Switching Mirror position
+
+
+          !! Possibly use sequence from configuration:
+
+          IF (THz_seq_use == match) THEN           ! Type Match
+             IF (SwMirPos /= THz_seq(MIF)) THEN  ! "D"iscard if not a match
+                SwMirPos = discard
+             ENDIF
+          ELSE IF (THz_seq_use == override) THEN   ! Type Override
+             !IF (SwMirPos /= discard) THEN       ! Override if not a discard
+                SwMirPos = THz_seq(MIF)
+             !ENDIF
+          ENDIF
+
+
+          WHERE (CurMAFdata%ChanType(MIF)%FB == undefined)
+             CurMAFdata%ChanType(MIF)%FB = SwMirPos
+             !! NOTE: The GHz module could be using FB 12 (FB(:,6)!
+          END WHERE
+
+!! Discard if out of "good" limb angle range:
+
+          IF (SwMirPos == limb) THEN
+             encoder =  CurMAFdata%SciMIF(MIF)%TSSM_pos
+             IF (ANY (encoder > BadLimbRange(1) .AND. &
+                  encoder < BadLimbRange(2))) SwMirPos = discard
+
+
+!! Discard if "S"pace altitude out of "good" alt range (pitch maneuver):
+
+          ELSE IF (SwMirPos == 'S') THEN
+             IF (THz_GeodAlt(MIF, MAF) < SpaceAltRange(1) .OR. &
+                  THz_GeodAlt(MIF, MAF) > SpaceAltRange(2)) SwMirPos = discard
+          ENDIF
+
+!! Mark bias if out of "good" YAW position:
+
+          IF (ABS(SC_YPR(1,MIF,MAF) * Rad2Deg) >= good_yaw) THEN
+             CurMAFdata%SciMIF(MIF)%LLO_Bias = bad_bias
+          ENDIF
+
+! Reset Sw Pos
+
+          CurMAFdata%SciMIF(MIF)%SwMirPos = SwMirPos
+
+       ENDDO
+
+!! Make sure enough calibration data is in MAF:
+
+       IF ((COUNT (CurMAFdata%SciMIF%SwMirPos == 'T') == 0) .OR. &
+            (COUNT (CurMAFdata%SciMIF%SwMirPos == 'S') == 0)) &
+            CurMAFdata%SciMIF%SwMirPos = discard
+
+!! Check for bright objects in Limb FOV and mark "S"pace views as "D"iscards
+
+       CALL Test_BO_stat (CurMAFdata%BO_stat)
+
+       DO n = 1, BO_Match%Num
+          msg = TRIM(BO_Match%Name(n)) // ' in Limb View'
+          stat = PGS_TD_TAItoUTC (CurMAFdata%SciMIF(0)%secTAI, asciiUTC)
+          CALL MLSMessage (MLSMSG_Warning, ModuleName, &
+               TRIM(msg)//' at '//asciiUTC)
+          WRITE (L1BFileInfo%LogId, *) ''
+          WRITE (L1BFileInfo%LogId, *) TRIM(msg)//' at MAF UTC '//asciiUTC
+          WHERE (BO_Match%InFOV(:,n) .AND. CurMAFdata%SciMIF%SwMirPos == 'S')
+             CurMAFdata%SciMIF%SwMirPos = discard
+          ENDWHERE
+          WHERE (BO_Match%InFOV(:,n))
+             CurMAFdata%MIFprecSign = BO_Match%PrecScale(n)  ! sign of precision
+          ENDWHERE
+       ENDDO
+
+    ENDDO
+
+  END SUBROUTINE QualifyEachMAF
+
+!=============================================================================
+  SUBROUTINE SortAndQualifyTHz
+!=============================================================================
+
+    CALL FillCalData
+
+    CALL QualifyEachMAF
+
+  END SUBROUTINE SortAndQualifyTHz
+
+!=============================================================================
+  LOGICAL FUNCTION not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  CHARACTER (len=*), PARAMETER :: IdParm = &
+       "$Id: SortQualifyTHz.f90,v 2.17 2016/03/15 22:17:59 whdaffer Exp $"
+  CHARACTER (len=LEN(idParm)), SAVE :: Id = idParm
+!---------------------------------------------------------------------------
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  END FUNCTION not_used_here
+END MODULE SortQualifyTHz
+!=============================================================================
+
+! $Log: SortQualifyTHz.f90,v $
+! Revision 2.17  2016/03/15 22:17:59  whdaffer
+! Merged whd-rel-1-0 back onto main branch. Most changes
+! are to comments, but there's some modification to Calibration.f90
+! and MLSL1Common to support some new modules: MLSL1Debug and SnoopMLSL1.
+!
+! Revision 2.16.4.1  2015/10/09 10:21:38  whdaffer
+! checkin of continuing work on branch whd-rel-1-0
+!
+! Revision 2.16  2015/01/13 18:45:19  pwagner
+! Prints time with MAF nums; warns if Cal Temps are NaNs
+!
+! Revision 2.15  2009/05/13 20:33:05  vsnyder
+! Get constants from Constants, kinds from MLSKinds
+!
+! Revision 2.14  2006/08/02 18:58:45  perun
+! Change maximum SpaceAltRange value to 600 km from 250 km
+!
+! Revision 2.13  2006/06/14 13:49:29  perun
+! Protect reading beyond OA data size
+!
+! Revision 2.12  2006/03/24 15:18:51  perun
+! Add sorting based on "good" altitude range and YAW positions
+!
+! Revision 2.11  2005/12/06 19:29:51  perun
+! Removed call to Flag_Bright_Objects and added testing BO_stat
+!
+! Revision 2.10  2005/10/14 15:55:44  perun
+! Restrict maximum size of CalBuf to size of OA_counterMAF
+!
+! Revision 2.9  2005/10/12 17:12:27  perun
+! Check for enough cal views in MAF
+!
+! Revision 2.8  2005/06/23 18:41:36  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.7  2005/05/02 16:07:41  perun
+! Read sci data until at or after the requested start time
+!
+! Revision 2.6  2005/01/28 17:07:14  perun
+! Get THz FOV bright object flags
+!
+! Revision 2.5  2004/11/10 15:36:11  perun
+! Check for "Bright Objects" in FOV; check encoder for good range (-/+ 6.0)
+!
+! Revision 2.4  2004/01/09 17:46:23  perun
+! Version 1.4 commit
+!
+! Revision 2.3  2003/08/15 14:25:04  perun
+! Version 1.2 commit
+!
+! Revision 2.2  2003/02/10 20:32:45  perun
+! Increase calbuf size.
+!
+! Revision 2.1  2003/01/31 18:13:34  perun
+! Version 1.1 commit
+!
+!
+@
+
+
+2.17
+log
+@Merged whd-rel-1-0 back onto main branch. Most changes
+are to comments, but there's some modification to Calibration.f90
+and MLSL1Common to support some new modules: MLSL1Debug and SnoopMLSL1.
+@
+text
+@d53 1
+d112 1
+a112 1
+       if ( isNaN( CurMAFdata%CalTgtTemp) ) then
+d118 1
+a118 1
+       if ( isNaN( CurMAFdata%LimbCalTgtTemp) ) then
+d300 1
+a300 1
+       "$Id: SortQualifyTHz.f90,v 2.16.4.1 2015/10/09 10:21:38 whdaffer Exp $"
+d309 5
+@
+
+
+2.16
+log
+@Prints time with MAF nums; warns if Cal Temps are NaNs
+@
+text
+@d94 2
+a95 2
+PRINT *, "SCI/ENG MAF, time: ", sci_MAFno, EngMAF%MAFno, &
+  & tai93s2hid( EngMAF%sectai, leapsec=.true. )
+d210 1
+d223 1
+d299 1
+a299 1
+       "$Id: SortQualifyTHz.f90,v 2.15 2009/05/13 20:33:05 vsnyder Exp $"
+d308 6
+@
+
+
+2.16.4.1
+log
+@checkin of continuing work on branch whd-rel-1-0
+@
+text
+@d94 2
+a95 2
+       PRINT *, "THz SCI/ENG MAF, time: ", sci_MAFno, EngMAF%MAFno, &
+            & tai93s2hid( EngMAF%sectai, leapsec=.true. )
+a209 1
+
+a221 1
+
+d297 1
+a297 1
+       "$Id: SortQualifyTHz.f90,v 2.16 2015/01/13 18:45:19 pwagner Exp $"
+a305 3
+! Revision 2.16  2015/01/13 18:45:19  pwagner
+! Prints time with MAF nums; warns if Cal Temps are NaNs
+!
+@
+
+
+2.15
+log
+@Get constants from Constants, kinds from MLSKinds
+@
+text
+@d18 1
+d47 1
+d94 2
+a95 1
+PRINT *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
+d111 15
+d297 1
+a297 1
+       "$Id: SortQualifyTHz.f90,v 2.14 2006/08/02 18:58:45 perun Exp $"
+d306 3
+@
+
+
+2.14
+log
+@Change maximum SpaceAltRange value to 600 km from 250 km
+@
+text
+@d122 3
+a125 1
+    USE MLSL1Common, ONLY: L1BFileInfo, SC_YPR, THz_GeodAlt
+a127 2
+    USE BrightObjects_m, ONLY:Test_BO_stat, BO_Match
+    USE Units, ONLY: Rad2Deg
+d279 1
+a279 1
+       "$Id: SortQualifyTHz.f90,v 2.13 2006/06/14 13:49:29 perun Exp $"
+d288 3
+@
+
+
+2.13
+log
+@Protect reading beyond OA data size
+@
+text
+@d141 1
+a141 1
+    REAL, PARAMETER :: SpaceAltRange(2) = (/ 120.0e03, 250.0e03 /)
+d216 2
+a217 1
+!! Discard if "S"pace altitude out of "good" alt range:
+d279 1
+a279 1
+       "$Id: SortQualifyTHz.f90,v 2.12 2006/03/24 15:18:51 perun Exp $"
+d288 3
+@
+
+
+2.12
+log
+@Add sorting based on "good" altitude range and YAW positions
+@
+text
+@d106 3
+a108 1
+       more_data =  THzSciMAF(0)%secTAI <= L1Config%Input_TAI%endTime
+d278 1
+a278 1
+       "$Id: SortQualifyTHz.f90,v 2.11 2005/12/06 19:29:51 perun Exp $"
+d287 3
+@
+
+
+2.11
+log
+@Removed call to Flag_Bright_Objects and added testing BO_stat
+@
+text
+@d1 1
+a1 1
+! Copyright 2005, by the California Institute of Technology. ALL
+d49 1
+a49 1
+    INTEGER :: sci_MAFno, MIFsPerMAF, CalMAFs, CalMAFno
+a51 1
+    MIFsPerMAF = L1Config%Calib%MIFsPerMAF
+d53 1
+a53 1
+    MAF_dur = MIF_dur * MIFsPerMAF   !Nominal duration of MAF
+d67 1
+a67 1
+       DO    ! Read sci data until after start time
+a68 7
+          CALL NextSciMAF (more_data)
+
+          IF (.NOT. more_data) EXIT    !! Nothing more to do
+
+          IF (THzSciMAF(2)%secTAI >= L1Config%Expanded_TAI%startTime) EXIT
+
+       ENDDO
+d97 1
+a97 1
+       CurMAFdata%last_MIF = MIFsPerMAF - 1
+d121 1
+a121 1
+    USE MLSL1Common, ONLY: L1BFileInfo
+d125 1
+d139 3
+d149 4
+d197 1
+a197 1
+             IF (SwMirPos /= discard) THEN       ! Override if not a discard
+d199 1
+a199 1
+             ENDIF
+d213 12
+d239 1
+a239 1
+!! Check for bright objects in Limb FOV and mark as "D"iscards
+d250 3
+d254 1
+a254 1
+             CurMAFdata%SciMIF%SwMirPos = discard
+d276 1
+a276 1
+       "$Id: SortQualifyTHz.f90,v 2.10 2005/10/14 15:55:44 perun Exp $"
+d285 3
+@
+
+
+2.10
+log
+@Restrict maximum size of CalBuf to size of OA_counterMAF
+@
+text
+@d45 1
+a45 1
+    USE TkL1B, ONLY: Flag_Bright_Objects, LOG_ARR1_PTR_T
+a50 1
+    TYPE (LOG_ARR1_PTR_T) :: Limb_BO_Flag(2)
+d112 1
+a113 9
+!! Check for Bright Objects in FOVs
+
+       Limb_BO_flag(1)%ptr => CurMAFdata%LimbView%MoonInFOV(:,2)
+       Limb_BO_flag(2)%ptr => CurMAFdata%LimbView%VenusInFOV(:,2)
+
+
+       CALL Flag_Bright_Objects (CurMAFdata%SciMIF%secTAI, &
+            CurMAFdata%SciMIF%scAngle, L1Config%Calib%MoonToLimbAngle_THz, &
+            Limb_BO_flag)
+d132 1
+d134 1
+a134 1
+    INTEGER :: MAF, MIF, n
+a136 1
+    LOGICAL :: MoonInLimbView, VenusInLimbView
+d229 5
+a233 6
+       VenusInLimbView = ANY (CurMAFdata%LimbView%VenusInFOV(:,2))
+       IF (VenusInLimbView) msg = 'Venus in Limb View' 
+       MoonInLimbView = ANY (CurMAFdata%LimbView%MoonInFOV(:,2))
+       IF (MoonInLimbView) msg = 'Moon in Limb View'
+       IF (MoonInLimbView .OR. VenusInLimbView) THEN   ! Discard
+          n = PGS_TD_TAItoUTC (CurMAFdata%SciMIF(0)%secTAI, asciiUTC)
+d238 4
+a241 7
+          DO n = 0, CurMAFdata%last_MIF
+             IF (CurMAFdata%LimbView%MoonInFOV(n,2) .OR. &
+                  CurMAFdata%LimbView%VenusInFOV(n,2)) THEN
+                CurMAFdata%SciMIF(n)%SwMirPos = discard
+             ENDIF
+          ENDDO
+       ENDIF
+d261 1
+a261 1
+       "$Id: SortQualifyTHz.f90,v 2.9 2005/10/12 17:12:27 perun Exp $"
+d270 3
+@
+
+
+2.9
+log
+@Check for enough cal views in MAF
+@
+text
+@d40 1
+a40 1
+    USE MLSL1Common, ONLY: absZero_C
+d127 2
+d274 1
+a274 1
+       "$Id: SortQualifyTHz.f90,v 2.8 2005/06/23 18:41:36 pwagner Exp $"
+d283 3
+@
+
+
+2.8
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d26 3
+a28 3
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: $"
+  private :: not_used_here 
+d101 1
+a101 1
+print *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
+d154 1
+a154 1
+    print *, 'qualifying all the MAFs'
+d191 1
+a191 1
+          !! Discard all bands (for now)
+d228 6
+d269 1
+a269 1
+  logical function not_used_here()
+d271 3
+a273 3
+  character (len=*), parameter :: IdParm = &
+       "$Id: $"
+  character (len=len(idParm)), save :: Id = idParm
+d276 1
+a276 1
+  end function not_used_here
+d281 3
+@
+
+
+2.7
+log
+@Read sci data until at or after the requested start time
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d25 5
+a29 5
+  !------------------------------- RCS Ident Info ------------------------------
+  CHARACTER(LEN=130) :: id = &
+       "$Id: SortQualifyTHz.f90,v 2.6 2005/01/28 17:07:14 perun Exp $"
+  CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile: SortQualifyTHz.f90,v $"
+  !-----------------------------------------------------------------------------
+d263 8
+d275 3
+@
+
+
+2.6
+log
+@Get THz FOV bright object flags
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
+d19 1
+a19 1
+       "$Id: SortQualifyTHz.f90,v 2.5 2004/11/10 15:36:11 perun Exp $"
+d61 1
+a61 1
+       CALL NextSciMAF (more_data)
+d63 7
+d259 3
+@
+
+
+2.5
+log
+@Check for "Bright Objects" in FOV; check encoder for good range (-/+ 6.0)
+@
+text
+@d19 1
+a19 1
+       "$Id: SortQualifyTHz.f90,v 2.4 2004/01/09 17:46:23 perun Exp $"
+d101 3
+a103 2
+       Limb_BO_flag(1)%ptr => CurMAFdata%LimbView%MoonInFOV
+       Limb_BO_flag(2)%ptr => CurMAFdata%LimbView%VenusInFOV
+d106 2
+a107 1
+            CurMAFdata%SciMIF%scAngle, Limb_BO_flag)
+d215 1
+a215 1
+       VenusInLimbView = ANY (CurMAFdata%LimbView%VenusInFOV)
+d217 1
+a217 1
+       MoonInLimbView = ANY (CurMAFdata%LimbView%MoonInFOV)
+d226 2
+a227 2
+             IF (CurMAFdata%LimbView%MoonInFOV(n) .OR. &
+                  CurMAFdata%LimbView%VenusInFOV(n)) THEN
+d252 3
+@
+
+
+2.4
+log
+@Version 1.4 commit
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+d19 1
+a19 1
+       "$Id: SortQualifyTHz.f90,v 2.3 2003/08/15 14:25:04 perun Exp $"
+d37 1
+d43 1
+d99 7
+d119 9
+a127 2
+
+    INTEGER :: MAF, MIF
+d131 1
+d135 1
+d197 8
+d211 20
+d250 3
+@
+
+
+2.3
+log
+@Version 1.2 commit
+@
+text
+@d19 1
+a19 1
+       "$Id: SortQualifyTHz.f90,v 2.2 2003/02/10 20:32:45 perun Exp $"
+d32 1
+a32 1
+    USE MLSL1Common, ONLY: MAFinfo, absZero_C
+d94 2
+d97 1
+a97 1
+       more_data =  MAFinfo%startTAI <= L1Config%Input_TAI%endTime
+d100 1
+d131 4
+d156 3
+a158 1
+          !! Set the appropriate channels to "Z"ero
+a161 4
+          !! Save current sw pos:
+       
+          SwMirPos = CurMAFdata%SciMIF(MIF)%SwMirPos
+
+d204 3
+@
+
+
+2.2
+log
+@Increase calbuf size.
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+a7 1
+  USE MLSCommon, ONLY: r8
+d19 1
+a19 1
+       "$Id: SortQualifyTHz.f90,v 2.1 2003/01/31 18:13:34 perun Exp $"
+d40 1
+a40 3
+    INTEGER :: sci_MAFno, dif_MAFno, MIFsPerMAF, CalMAFs, CalMAFno
+    INTEGER, SAVE :: prev_MAFno
+    REAL(r8), SAVE :: prev_secTAI
+d64 7
+a70 2
+       IF (EngMAF%MAFno < sci_MAFno) THEN   ! Catch up to the Science
+          DO
+d72 4
+a75 5
+             IF (EngMAF%MAFno == sci_MAFno) EXIT
+             IF (.NOT. more_data) EXIT    !! Nothing more to do
+          ENDDO
+       ELSE IF (EngMAF%MAFno > sci_MAFno) THEN   ! Catch up to the Engineering
+          DO
+d77 1
+d79 5
+a83 4
+             IF (EngMAF%MAFno == sci_MAFno) EXIT
+             IF (.NOT. more_data) EXIT    !! Nothing more to do
+          ENDDO
+       ENDIF
+d199 3
+@
+
+
+2.1
+log
+@Version 1.1 commit
+@
+text
+@d20 2
+a21 2
+       "$Id: $"
+  CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile: $"
+d49 2
+a50 2
+    calMAFs = (L1Config%Expanded_TAI%endTime - &
+         L1Config%Expanded_TAI%startTime) / MAF_dur
+d195 4
+a198 1
+! $Log: $
+@
+

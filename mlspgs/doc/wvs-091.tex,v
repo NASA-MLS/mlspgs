@@ -1,0 +1,170 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.12
+	cfm-single-freq-0-1:1.1.0.10
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.8
+	mus-emls-1-70:1.1.0.6
+	rel-1-0-englocks-work:1.1.0.4
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.2
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	M4-00:1.1
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2010.04.09.02.28.55;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.35in
+\textheight 9.35in
+
+\newcommand{\docname}{\bf wvs-091}
+\newcommand{\docdate}{10 February 2010}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Van\\
+Subject: \>Accessing the TScat Jacobian as a {\tt Matrix\_T} object\\
+From: \>Van Snyder\\
+%Reference: \>wvs-063
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-10pt}
+
+Matrices in {\tt mlsl2} are two-level structures.  At the outer level a
+matrix is composed of blocks.  The inner level describes the blocks. 
+Each block is composed of elements, which can be represented as absent,
+column sparse, banded, or full.  The details are in the modules {\tt
+MatrixModule\_1} (for the outer level) and {\tt MatrixModule\_0} (for the
+inner level).  The following table describes symbols used below.
+
+\begin{tabular}{l|l}
+Symbol & Index of\\
+\hline
+{\tt i}$_b$ & a band (signal quantity) \\
+{\tt k}$_c$ & a channel in the band indexed by {\tt i}$_b$ \\
+$\phi_C$    & the orbit geodetic angle of a cloud scattering point \\
+$\zeta_C$   & the pressure ($\zeta$) level of a cloud scattering point \\
+{\tt j}$_q$ & a state-vector quantity (species or temperature) \\
+$\phi_A$    & the orbit geodetic angle of a point in the atmosphere \\
+$\zeta_A$   & the pressure ($\zeta$) level of a point in the atmosphere \\
+\end{tabular}
+
+An element of the TScat Jacobian is the derivative of radiance observed
+in a specific channel of a specific band, scattered from a specific
+point, with respect to a specific quantity (mixing ratio of a specific
+species or the temperature) at a particular point in the atmosphere:
+%
+\begin{equation*}
+\frac{\partial I^{\text{\tt i}_b,\text{\tt k}_c}_{\phi_C,\zeta_C}}
+     {\partial f^{\text{\tt j}_q}_{\phi_A,\zeta_A}}
+\end{equation*}
+%
+where $f^{\text{\tt j}_q}_{\phi_A,\zeta_A}$ is the $\text{\tt
+j}_q^\text{th}$ quantity (either mixing ratio or temperature).
+
+Assuming the blocks are full and the name of the Jacobian is {\tt M}, an
+element of the Jacobian can be referenced using {\tt
+M\%block(i,j)\%values(k,l)} where
+%
+\begin{equation*}\begin{split}
+\text{{\tt i}} =\,&
+ \text{\tt i}_b + (\phi_C-1) \times (\text{number of bands}) \\
+\text{{\tt j}} =\,&
+ \text{\tt j}_q + (\phi_A-1) \times (\text{number of quantities}) \\
+\text{{\tt k}} =\,&
+ \zeta_C + ( \text{\tt k}_c -1 ) \times (\text{number of }\zeta_C) \\
+\text{{\tt l}} =\,& \zeta_A\,.
+\end{split}\end{equation*}
+
+The labels for the rows of {\tt M\%block} are given by a {\tt Vector\_T}
+object in {\tt M\%row\%vec\%template}. The number of bands is the number
+of quantities in that vector.  The labels for the columns of {\tt
+M\%block} are given by a {\tt Vector\_T} object in {\tt
+M\%col\%vec\%template}.  The following table describes how the indices
+access the labels.
+
+\begin{tabular}{l|l}
+Symbol & Indexes \\
+\hline
+{\tt i}$_b$ & {\tt M\%row\%vec\%template\%quantities} \\
+{\tt k}$_c$ & {\tt M\%row\%vec\%template\%quantities(i$_b$)\%channels} \\
+$\phi_C$    & {\tt M\%row\%vec\%template\%quantities(i$_b$)\%phi} \\
+$\zeta_C$   & {\tt M\%row\%vec\%template\%quantities(i$_b$)\%surfs} \\
+{\tt j}$_q$ & {\tt M\%col\%vec\%template\%quantities} \\
+$\phi_A$    & {\tt M\%col\%vec\%template\%quantities(j$_q$)\%phi} \\
+$\zeta_A$   & {\tt M\%col\%vec\%template\%quantities(j$_q$)\%surfs} \\
+\end{tabular}
+
+Assuming the name of the TScat radiance vector is {\tt V}, individual
+radiances can be accessed using {\tt
+V\%quantities(i$_b$)\%values(k,$\phi_C$)}.
+
+\label{lastpage}
+\end{document}
+
+% $Id: wvs-089.tex,v 1.1 2010/01/26 02:08:29 vsnyder Exp $
+
+% $Log: $
+@

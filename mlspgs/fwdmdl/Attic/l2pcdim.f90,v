@@ -1,0 +1,200 @@
+head	1.6;
+access;
+symbols
+	V0-5-SIPS:1.5
+	V0_1:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.6
+date	2001.04.20.02.57.45;	author livesey;	state dead;
+branches;
+next	1.5;
+
+1.5
+date	2001.03.20.11.03.16;	author zvi;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.01.31.01.08.48;	author zvi;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2000.11.22.23.10.04;	author zvi;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2000.11.22.23.07.28;	author zvi;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2000.05.04.18.12.05;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.6
+log
+@Be gone foul piece of code
+@
+text
+@module L2PCDIM
+  use MLSCommon, only: I4
+  implicit NONE
+  public
+!---------------------------- RCS Ident Info -------------------------------
+  private ID, ModuleName
+  CHARACTER (LEN=256) :: Id = &
+       "$Id: l2pcdim.f90,v 1.5 2001/03/20 11:03:16 zvi Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile: l2pcdim.f90,v $"
+!---------------------------------------------------------------------------
+!  This file contains all the parameters defining the dimensions of
+!  various entities in the L2PC program
+!
+!  Updated by Z. Shippony on May/5/97.  (For version 5.1)
+!  (Increasing Ncf from 22 to: 43)
+!  (Increasing Nsps from 13  to: 20)
+!  (Commenting out all magnetic stuff ..)
+!
+!  Updated by Z. Shippony on May/5/98.  (For EOS version)
+!  (Adding maximum number of Phi dimension)
+!
+!  Updated by Z. Shippony on Jan/8/01.  (For EOS version)
+!  (Adding maximum number of MMAF per pass)
+!
+! Integer(i4) :: Maxmagch, Maxmagsps, Maxbfields
+  Integer(i4), parameter :: NBAND=6      ! Max. # of bands
+  Integer(i4), parameter :: NCH=90       ! Max. # of channels
+  Integer(i4), parameter :: NLVL=130     ! Max. # of pre-selected major
+!                                          grid points
+  Integer(i4), parameter :: N2LVL=2*NLVL ! Twice Nlvl
+  Integer(i4), parameter :: NCF=50       ! Max. # of profile coefficients
+  Integer(i4), parameter :: NRAD=32      ! Max. # of radiances per channel
+  Integer(i4), parameter :: MAXFFT=1024  ! Max. # of FFT points
+  Integer(i4), parameter :: MAX_NO_MMAF=10 ! Max. # of MMAF per chunk
+!
+  Integer(i4), parameter :: NSPS=4       ! Max. # of species
+  Integer(i4), parameter :: NPTG=130     ! Max. # of convolution hights
+  Integer(i4), parameter :: MAX_NO_PHI=5
+!
+! Integer(i4), parameter :: MAX_NO_MMAF=70 ! Max. # of MMAF per chunk
+! Integer(i4), parameter :: MAX_NO_PHI=13
+! Integer(i4), parameter :: NSPS=20      ! Max. # of species
+
+end module L2PCDIM
+! $Log: l2pcdim.f90,v $
+! Revision 1.5  2001/03/20 11:03:16  zvi
+! Fixing code for "real" data run, increase dim. etc.
+!
+! Revision 1.4  2001/01/31 01:08:48  zvi
+! New version of forward model
+!
+! Revision 1.1  2000/05/04 18:12:05  vsnyder
+! Initial conversion to Fortran 90
+@
+
+
+1.5
+log
+@Fixing code for "real" data run, increase dim. etc.
+@
+text
+@d8 1
+a8 1
+       "$Id: l2pcdim.f90,v 1.4 2001/01/31 01:08:48 zvi Exp $"
+d46 3
+@
+
+
+1.4
+log
+@New version of forward model
+@
+text
+@d8 1
+a8 1
+       "$Id: l2pcdim.f90,v 1.1 2000/05/04 18:12:05 vsnyder Exp $"
+d28 1
+a28 1
+  Integer(i4), parameter :: NLVL=100     ! Max. # of pre-selected major
+d31 1
+a31 1
+  Integer(i4), parameter :: NCF=43       ! Max. # of profile coefficients
+d36 2
+a37 2
+  Integer(i4), parameter :: NSPS=3       ! Max. # of species
+  Integer(i4), parameter :: NPTG=54      ! Max. # of convolution hights
+a42 2
+! Integer(i4), parameter :: NSPS=14      ! Max. # of species
+! Integer(i4), parameter :: NPTG=67      ! Max. # of convolution hights
+d46 3
+@
+
+
+1.3
+log
+@Re-add basic stuff
+@
+text
+@d22 3
+d28 2
+a29 1
+  Integer(i4), parameter :: NLVL=100     ! Max. # of pre-selected major grid poi
+d34 2
+d37 1
+d39 2
+a40 1
+  Integer(i4), parameter :: NPTG=54      ! Max. # of convolution hights
+d45 1
+a49 1
+!
+@
+
+
+1.2
+log
+@New version
+@
+text
+@a4 1
+
+a10 1
+
+a22 1
+
+d25 1
+a25 1
+  Integer(i4), parameter :: NLVL=100     ! Max. # of pre-selected major grid points
+a32 1
+
+a34 1
+
+a36 1
+
+a37 1
+
+@
+
+
+1.1
+log
+@Initial conversion to Fortran 90
+@
+text
+@d9 1
+a9 1
+       "$Id: L2PCDIM,v 1.12 2000/02/08 19:54:57 vsnyder Exp $"
+d45 4
+a48 1
+! $Log: L2PCDIM,v $
+@
+

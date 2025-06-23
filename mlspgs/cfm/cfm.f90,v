@@ -1,0 +1,790 @@
+head	1.26;
+access;
+symbols
+	v5-02-NRT-19:1.26
+	v6-00:1.26
+	v5-02-NRT-18:1.26
+	v5-02:1.26
+	v5-01-NRT-17:1.26
+	v5-01-NRT-16:1.26
+	v5-01-NRT-15:1.26
+	v5-01-NRT-14:1.26
+	neuralnetworks-1-0:1.26.0.10
+	cfm-single-freq-0-1:1.26.0.8
+	TES-MLuo-01:1.26
+	TES-UNKNOWN:1.26
+	v5-01:1.26
+	v5-00:1.26
+	v4-23-TA133:1.26.0.6
+	mus-emls-1-70:1.26.0.4
+	rel-1-0-englocks-work:1.26.0.2
+	VUMLS1-00:1.26
+	VPL1-00:1.26
+	V4-22-NRT-08:1.26
+	VAM1-00:1.26
+	V4-21:1.25.0.2
+	V4-13:1.25
+	V4-12:1.25
+	V4-11:1.25
+	V4-10:1.25
+	M4-00:1.25
+	V3-33:1.12
+	V3-31:1.12
+	V3-30-NRT-05:1.8
+	cfm-01-00:1.4;
+locks; strict;
+comment	@# @;
+
+
+1.26
+date	2015.08.05.20.19.24;	author pwagner;	state Exp;
+branches;
+next	1.25;
+
+1.25
+date	2011.12.25.03.39.06;	author honghanh;	state Exp;
+branches;
+next	1.24;
+
+1.24
+date	2011.12.15.16.53.24;	author honghanh;	state Exp;
+branches;
+next	1.23;
+
+1.23
+date	2011.12.14.22.54.18;	author honghanh;	state Exp;
+branches;
+next	1.22;
+
+1.22
+date	2011.11.01.22.16.11;	author honghanh;	state Exp;
+branches;
+next	1.21;
+
+1.21
+date	2011.10.31.20.04.59;	author honghanh;	state Exp;
+branches;
+next	1.20;
+
+1.20
+date	2011.10.20.00.23.07;	author honghanh;	state Exp;
+branches;
+next	1.19;
+
+1.19
+date	2011.10.19.19.33.10;	author honghanh;	state Exp;
+branches;
+next	1.18;
+
+1.18
+date	2011.10.19.17.53.42;	author honghanh;	state Exp;
+branches;
+next	1.17;
+
+1.17
+date	2011.10.19.16.05.50;	author honghanh;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2011.08.25.20.10.32;	author honghanh;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2011.06.21.19.04.48;	author honghanh;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2011.03.24.15.16.46;	author honghanh;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2011.03.10.18.18.02;	author pwagner;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2011.01.31.17.45.43;	author honghanh;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2010.12.10.00.48.28;	author pwagner;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2010.11.18.19.04.13;	author honghanh;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2010.09.28.14.42.42;	author honghanh;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2010.09.21.15.06.49;	author honghanh;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2010.09.16.20.54.40;	author honghanh;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2010.08.05.16.23.03;	author honghanh;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2010.07.08.21.39.16;	author honghanh;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2010.06.29.18.49.32;	author honghanh;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2010.06.29.16.40.23;	author honghanh;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2010.06.29.15.29.34;	author honghanh;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2010.06.29.02.34.03;	author honghanh;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.26
+log
+@Copied from /users/akopyan/mlspgs-0403/cfm
+@
+text
+@! Copyright 2010, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module cfm          ! callable forward model
+  ! This module merely unifies all the .mod files that
+  ! will be USEd by any fortran90 program that is compiled
+  ! and with the callable forward model and links against libcfm.a or libcfm_all.a
+   use CFM_MLSSetup_m, only: CFM_MLSCleanup, CFM_MLSSetup, CreateMLSValue_O2, &
+                             CreateMLSValue_EarthReflectivity, &
+                             CreateMLSValue_LSF, CreateMLSValue_FromL1BOA, &
+                             CreateMLSValue_SpaceRadiance, GetConstantQuantities, &
+                             CreateMLSValue_ElevationOffset, &
+                             timeRange2MafRange
+   use Chunks_m, only: MLSChunk_T
+   use CFM_IO_M, only: Read_Spectroscopy, ReadDACSFilterShapes, &
+                     ReadAntennaPatterns, ReadFilterShapes, &
+                     ReadPointingGrids, ReadPFAFile, ReadHDF5L2PC, &
+                     Read_ptan, Write_To_File1, Write_To_File2, & ! Added by Pranjit Saha
+                     read_H5inputdata, & ! Added by Zheng Qu
+                     read_txtinputdata, & ! Added by Zheng Qu
+                     Write_To_HDF5, Write2HDF5, &  ! Added by Zheng Qu
+                     Copy_RadianceJacobian, path_join,  & ! Added by Zheng Qu
+                     Filter_RadianceJacobian, log_inputdata, & ! Added by Zheng Qu
+                     runLogFileUnit, errorLogFileUnit, runlog, & ! Added by Zheng Qu
+                        errlog, openLogFiles  ! Added by Zheng Qu
+   use CFM_Matrix_M, only: CreatePlainMatrix
+   use PFADatabase_m, only: Destroy_PFADataBase
+   use L2PC_m, only: DestroyL2PCDatabase
+   use FilterShapes_m, only: Destroy_DACS_Filter_Database, &
+                             Destroy_Filter_Shapes_Database
+   use AntennaPatterns_m, only: Destroy_Ant_Patterns_Database
+   use SpectroscopyCatalog_m, only: Destroy_SpectCat_Database, &
+                                    Destroy_Line_Database
+   use PointingGrid_m, only: Destroy_Pointing_Grid_Database
+   use CFM_VGrid_m, only: CreateVGrid
+   use VGridsDatabase, only: DestroyVGridContents, VGrid_T, Dump
+   use CFM_HGrid_m, only: CreateRegularHGrid
+   use HGridsDatabase, only: DestroyHGridContents, HGrid_T, Dump
+   use CFM_FGrid_m, only: CreateFGrid
+   use FGrid, only: FGrid_T, DestroyFGridContents, Dump
+   use CFM_QuantityTemplate_m, only: CreateQtyTemplate
+   use QuantityTemplates, only: Dump, AddQuantityTemplateToDatabase, &
+                                DestroyQuantityTemplateDatabase, &
+                                QuantityTemplate_T, DestroyQuantityTemplateContents
+   use CFM_VectorTemplate_m, only: CreateVectorTemplate
+   use VectorsModule, only: Dump, Vector_T, VectorValue_T, &
+                            VectorTemplate_T, DestroyVectorTemplateInfo, &
+                            DestroyVectorInfo, GetVectorQtyByTemplateIndex, &
+                            operator(+), operator(-)
+   use CFM_Vector_m, only: CreateVector, CreateValue4AgileVector, &
+                           CreateAgileVector, AddValue2Vector, &
+                           DestroyAgileVectorContent, DestroyVectorValueContent, &
+                           CloneAgileVector
+   use CFM_Fill_m, only: ExplicitFillVectorQuantity, ApplyBaseline, &
+                         FillVectorQuantityFromL1B, FillPhitanQuantity, &
+                         SpreadFillVectorQuantity, FillPtanQuantity
+   use ForwardModelConfig, only: ForwardModelConfig_T, Dump
+   use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T
+   use CFM_FWDMDL_M, only: ForwardModel, ForwardModel2
+   use MLSCommon, only: MLSFile_T, r8
+   use Init_tables_module ! essentially, all the l_..., and some phyq
+   use MLSFiles, only: GetMLSFileByType, InitializeMLSFile, mls_openFile, &
+                       AddFileToDatabase, mls_closeFile
+   use Intrinsic, only: l_hdf
+   use Hdf, only: DFACC_RDONLY
+   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning, &
+                               MLSMSG_Debug, MLSMSG_Info, MLSMSG_Crash, &
+                               MLSMSG_Success, MLSMessageSetup, & 
+                               MLSMessageClose , MLSMessageExit
+
+   use MatrixModule_1, only: Matrix_T, Dump, DestroyMatrix
+
+   implicit none
+   public
+   private :: not_used_here
+
+contains
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+    character (len=*), parameter :: ModuleName= &
+         "$RCSfile: cfm.f90,v $"
+    character (len=*), parameter :: IdParm = &
+         "$Id: cfm.f90,v 1.25 2011/12/25 03:39:06 honghanh Exp $"
+    character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module cfm
+
+! $Log: cfm.f90,v $
+! Revision 1.25  2011/12/25 03:39:06  honghanh
+! Fix cloning and memory cleanup method
+! in forwardmodel2 subroutines.
+!
+! Revision 1.24  2011/12/15 16:53:24  honghanh
+! Correct the name of CreateMLSValue_EarthReflectivity
+!
+! Revision 1.23  2011/12/14 22:54:18  honghanh
+! Add timeRange2MafRange method in CFM.
+!
+! Revision 1.22  2011/11/01 22:16:11  honghanh
+! Add API to destroy individual QuantityTemplate_T and VectorValue_T
+!
+! Revision 1.21  2011/10/31 20:04:59  honghanh
+! Change CreateMLSValue_FromL1B to CreateMLSValue_FromL1BOA.
+!
+! Revision 1.20  2011/10/20 00:23:07  honghanh
+! Add elevation offset creation subroutine to public API
+!
+! Revision 1.19  2011/10/19 19:33:10  honghanh
+! Adding DestroyAgileVectorContent to CFM_Vector_m
+!
+! Revision 1.16  2011/08/25 20:10:32  honghanh
+! Add other log levels other than Error and Warning from MLSMessageModule
+!
+! Revision 1.15  2011/06/21 19:04:48  honghanh
+! Adding ForwardModel2
+!
+! Revision 1.14  2011/03/24 15:16:46  honghanh
+! Add new interfaces for creating vector and vector values without going through quantity template databases
+!
+! Revision 1.13  2011/03/10 18:18:02  pwagner
+! Everything from init_tables_module back
+!
+! Revision 1.12  2011/01/31 17:45:43  honghanh
+! Make not_used_here a private function
+!
+! Revision 1.11  2010/12/10 00:48:28  pwagner       
+! Everything from init_tables_module now available
+!       
+! Revision 1.10  2010/11/18 19:04:13  honghanh  
+! New example to run forward model with a single maf
+!
+! Revision 1.9  2010/09/28 14:42:42  honghanh
+! Add call to forwardModel with jacobian
+!
+! Revision 1.8  2010/09/21 15:06:49  honghanh
+! Separate the running forward model example and reading observed radiance example
+!
+! Revision 1.3  2010/06/29 16:40:23  honghanh
+! Remove all function/subroutine and user type forwarding from
+! all CFM modules except for from cfm.f90
+!
+! Revision 1.2  2010/06/29 15:29:34  honghanh
+! Develop FillPtanQuantity to compute ptan, instead of using
+! Get2DHydrostaticTangentPressure
+!
+! Revision 1.1  2010/06/29 02:34:03  honghanh
+! Change cfm_m.f90 to cfm.f90 to match the naming scheme of cfm directory
+!
+! Revision 1.4  2010/06/29 02:28:17  honghanh
+! Change mockup to import functions and literals from CFM module
+!
+! Revision 1.2  2010/06/16 20:23:52  honghanh
+! Update cfm_fwdmdl to cfm_fwdmdl_m
+!
+! Revision 1.1  2010/06/03 23:31:57  pwagner
+! First commit
+!
+@
+
+
+1.25
+log
+@Fix cloning and memory cleanup method
+in forwardmodel2 subroutines.
+@
+text
+@d25 9
+a33 1
+                     ReadPointingGrids, ReadPFAFile, ReadHDF5L2PC
+d76 3
+a78 1
+                               MLSMSG_Success
+d91 1
+a91 1
+         "$Id: cfm.f90,v 1.24 2011/12/15 16:53:24 honghanh Exp $"
+d101 4
+@
+
+
+1.24
+log
+@Correct the name of CreateMLSValue_EarthReflectivity
+@
+text
+@d52 2
+a53 1
+                           DestroyAgileVectorContent, DestroyVectorValueContent
+d81 1
+a81 1
+         "$Id: cfm.f90,v 1.23 2011/12/14 22:54:18 honghanh Exp $"
+d91 3
+@
+
+
+1.23
+log
+@Add timeRange2MafRange method in CFM.
+@
+text
+@d17 1
+a17 1
+                             CreateMLSValue_EarthReflectiviy, &
+d80 1
+a80 1
+         "$Id: cfm.f90,v 1.22 2011/11/01 22:16:11 honghanh Exp $"
+d90 3
+@
+
+
+1.22
+log
+@Add API to destroy individual QuantityTemplate_T and VectorValue_T
+@
+text
+@d20 2
+a21 1
+                             CreateMLSValue_ElevationOffset
+d80 1
+a80 1
+         "$Id: cfm.f90,v 1.21 2011/10/31 20:04:59 honghanh Exp $"
+d90 3
+@
+
+
+1.21
+log
+@Change CreateMLSValue_FromL1B to CreateMLSValue_FromL1BOA.
+@
+text
+@d43 1
+a43 1
+                                QuantityTemplate_T
+d51 1
+a51 1
+                           DestroyAgileVectorContent
+d79 1
+a79 1
+         "$Id: cfm.f90,v 1.20 2011/10/20 00:23:07 honghanh Exp $"
+d89 3
+@
+
+
+1.20
+log
+@Add elevation offset creation subroutine to public API
+@
+text
+@d18 1
+a18 1
+                             CreateMLSValue_LSF, CreateMLSValue_FromL1B, &
+d79 1
+a79 1
+         "$Id: cfm.f90,v 1.19 2011/10/19 19:33:10 honghanh Exp $"
+d89 3
+@
+
+
+1.19
+log
+@Adding DestroyAgileVectorContent to CFM_Vector_m
+@
+text
+@d19 2
+a20 1
+                             CreateMLSValue_SpaceRadiance, GetConstantQuantities
+d79 1
+a79 1
+         "$Id: cfm.f90,v 1.16 2011/08/25 20:10:32 honghanh Exp $"
+d89 3
+@
+
+
+1.18
+log
+@Forward new API from CFM_MLSSetup_m
+@
+text
+@d49 2
+a50 1
+                           CreateAgileVector, AddValue2Vector
+@
+
+
+1.17
+log
+@Add mls_closefile to the list of public API.
+@
+text
+@d16 4
+a19 1
+   use CFM_MLSSetup_m, only: CFM_MLSCleanup, CFM_MLSSetup
+@
+
+
+1.16
+log
+@Add other log levels other than Error and Warning from MLSMessageModule
+@
+text
+@d56 1
+a56 1
+                       AddFileToDatabase
+d74 1
+a74 1
+         "$Id: cfm.f90,v 1.15 2011/06/21 19:04:48 honghanh Exp $"
+d84 3
+@
+
+
+1.15
+log
+@Adding ForwardModel2
+@
+text
+@d59 3
+a61 1
+   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+d74 1
+a74 1
+         "$Id: cfm.f90,v 1.14 2011/03/24 15:16:46 honghanh Exp $"
+d84 3
+@
+
+
+1.14
+log
+@Add new interfaces for creating vector and vector values without going through quantity template databases
+@
+text
+@d52 1
+a52 1
+   use CFM_FWDMDL_M, only: ForwardModel
+d72 1
+a72 1
+         "$Id: cfm.f90,v 1.13 2011/03/10 18:18:02 pwagner Exp $"
+d82 3
+@
+
+
+1.13
+log
+@Everything from init_tables_module back
+@
+text
+@d45 2
+a46 1
+   use CFM_Vector_m, only: CreateVector
+d72 1
+a72 1
+         "$Id: cfm.f90,v 1.12 2011/01/31 17:45:43 honghanh Exp $"
+d82 3
+@
+
+
+1.12
+log
+@Make not_used_here a private function
+@
+text
+@d53 1
+a53 8
+   use Init_tables_module, only: l_logarithmic, l_zeta, l_temperature, &
+                                 L_IntermediateFrequency, l_vmr, l_gph, &
+                                 l_ptan, l_radiance, l_orbitInclination, &
+                                 l_tngtgeodalt, l_tngtgeocalt, l_o3, &
+                                 phyq_pressure, phyq_angle, l_h2o, l_refgph, &
+                                 l_phitan, l_explicit, l_l1bMAFBaseline, &
+                                 l_frequency, l_usbFrequency, l_lsbFrequency, &
+                                 l_ghz
+d71 1
+a71 1
+         "$Id: cfm.f90,v 1.9 2010/09/28 14:42:42 honghanh Exp $"
+d81 9
+@
+
+
+1.11
+log
+@Everything from init_tables_module now available
+@
+text
+@d53 8
+a60 1
+   use Init_tables_module ! essentially, all the l_..., and some phyq
+d70 1
+d78 1
+a78 1
+         "$Id: cfm.f90,v 1.10 2010/11/18 19:04:13 honghanh Exp $"
+a87 3
+! Revision 1.10  2010/11/18 19:04:13  honghanh
+! New example to run forward model with a single maf
+!
+@
+
+
+1.10
+log
+@New example to run forward model with a single maf
+@
+text
+@d53 1
+a53 8
+   use Init_tables_module, only: l_logarithmic, l_zeta, l_temperature, &
+                                 L_IntermediateFrequency, l_vmr, l_gph, &
+                                 l_ptan, l_radiance, l_orbitInclination, &
+                                 l_tngtgeodalt, l_tngtgeocalt, l_o3, &
+                                 phyq_pressure, phyq_angle, l_h2o, l_refgph, &
+                                 l_phitan, l_explicit, l_l1bMAFBaseline, &
+                                 l_frequency, l_usbFrequency, l_lsbFrequency, &
+                                 l_ghz
+d70 1
+a70 1
+         "$Id: cfm.f90,v 1.9 2010/09/28 14:42:42 honghanh Exp $"
+d80 3
+@
+
+
+1.9
+log
+@Add call to forwardModel with jacobian
+@
+text
+@d65 2
+a66 2
+   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+   use MatrixModule_1, only: Matrix_T, Dump
+d77 1
+a77 1
+         "$Id: cfm.f90,v 1.8 2010/09/21 15:06:49 honghanh Exp $"
+d87 3
+@
+
+
+1.8
+log
+@Separate the running forward model example and reading observed radiance example
+@
+text
+@d66 1
+a66 1
+   use MatrixModule_1, only: Matrix_T
+d77 1
+a77 1
+         "$Id: cfm.f90,v 1.3 2010/06/29 16:40:23 honghanh Exp $"
+d87 3
+@
+
+
+1.7
+log
+@Deallocate signal and related database
+@
+text
+@a70 7
+!---------------------------- RCS Ident Info ------------------------------
+   character (len=*), parameter :: ModuleName= &
+       "$RCSfile: cfm.f90,v $"
+   character (len=*), parameter :: IdParm = &
+       "$Id: cfm.f90,v 1.3 2010/06/29 16:40:23 honghanh Exp $"
+   character (len=len(idParm)) :: Id = idParm
+!---------------------------------------------------------------------------
+d74 5
+a78 3
+  character (len=*), parameter :: IdParm = &
+       "$Id: cfm.f90,v 1.3 2010/06/29 16:40:23 honghanh Exp $"
+  character (len=len(idParm)) :: Id = idParm
+@
+
+
+1.6
+log
+@Added Jacobian to forwardModel subroutine
+@
+text
+@d49 1
+a49 1
+   use ForwardModelConfig, only: ForwardModelConfig_T
+d59 2
+a60 1
+                                 l_frequency, l_usbFrequency, l_lsbFrequency
+@
+
+
+1.5
+log
+@Add ApplyBaseline to cfm_fill_m
+@
+text
+@d21 1
+d35 1
+a35 1
+   use FGrid, only: FGrid_T, DestroyFGridContents,  Dump
+d58 2
+a59 1
+                                 l_phitan, l_explicit, l_l1bMAFBaseline
+d65 1
+@
+
+
+1.4
+log
+@Add vector subtraction interface to subtract simulated radiance from
+observed radiance
+@
+text
+@d45 1
+a45 1
+   use CFM_Fill_m, only: ExplicitFillVectorQuantity, &
+d57 1
+a57 1
+                                 l_phitan, l_explicit
+@
+
+
+1.3
+log
+@Remove all function/subroutine and user type forwarding from
+all CFM modules except for from cfm.f90
+@
+text
+@d42 2
+a43 1
+                            DestroyVectorInfo, GetVectorQtyByTemplateIndex
+d71 1
+a71 1
+       "$Id: cfm.f90,v 1.2 2010/06/29 15:29:34 honghanh Exp $"
+d78 1
+a78 1
+       "$Id: cfm.f90,v 1.2 2010/06/29 15:29:34 honghanh Exp $"
+d88 4
+@
+
+
+1.2
+log
+@Develop FillPtanQuantity to compute ptan, instead of using
+Get2DHydrostaticTangentPressure
+@
+text
+@d16 2
+a17 1
+   use CFM_MLSSetup_m, only: CFM_MLSCleanup, MLSChunk_T, CFM_MLSSetup
+d20 24
+a43 23
+                     ReadPointingGrids, ReadPFAFile, ReadHDF5L2PC, &
+                     Destroy_DACS_Filter_Database, &
+                     Destroy_Filter_Shapes_Database, &
+                     Destroy_Ant_Patterns_Database, &
+                     Destroy_SpectCat_Database, &
+                     Destroy_Line_Database, &
+                     Destroy_Pointing_Grid_Database, &
+                     DestroyL2PCDatabase, Destroy_PFADataBase
+   use CFM_VGrid_m, only: CreateVGrid, DestroyVGridContents, &
+                        VGrid_T, Dump
+   use CFM_HGrid_m, only: CreateRegularHGrid, HGrid_T, &
+                        DestroyHGridContents, Dump
+   use CFM_FGrid_m, only: CreateFGrid, FGrid_T, DestroyFGridContents, &
+                        Dump
+   use CFM_QuantityTemplate_m, only: CreateQtyTemplate, Dump, &
+                        AddQuantityTemplateToDatabase, &
+                        DestroyQuantityTemplateDatabase, &
+                        QuantityTemplate_T
+   use CFM_VectorTemplate_m, only: CreateVectorTemplate, Dump, &
+                        VectorTemplate_T, DestroyVectorTemplateInfo
+   use CFM_Vector_m, only: CreateVector, Dump, &
+                         Vector_T, VectorValue_T, &
+                         DestroyVectorInfo, GetVectorQtyByTemplateIndex
+d47 3
+a49 2
+   use CFM_FWDMDL_M, only: ForwardModel, FORWARDMODELSTATUS_T, &
+                         ForwardModelConfig_T
+d70 1
+a70 1
+       "$Id: cfm.f90,v 1.1 2010/06/29 02:34:03 honghanh Exp $"
+d77 1
+a77 1
+       "$Id: cfm.f90,v 1.1 2010/06/29 02:34:03 honghanh Exp $"
+d87 4
+@
+
+
+1.1
+log
+@Change cfm_m.f90 to cfm.f90 to match the naming scheme of cfm directory
+@
+text
+@d44 1
+a44 1
+                         SpreadFillVectorQuantity
+a55 1
+   use ScanModelModule, only: Get2DHydrostaticTangentPressure
+d67 1
+a67 1
+       "$Id: cfm.f90,v 1.4 2010/06/29 02:28:17 honghanh Exp $"
+d74 1
+a74 1
+       "$Id: cfm.f90,v 1.4 2010/06/29 02:28:17 honghanh Exp $"
+d84 3
+@
+

@@ -1,0 +1,1903 @@
+head	2.29;
+access;
+symbols
+	v5-02-NRT-19:2.29
+	v6-00:2.29
+	v5-02-NRT-18:2.29
+	v5-02:2.28
+	v5-01-NRT-17:2.29
+	v5-01-NRT-16:2.29
+	v5-01-NRT-15:2.29
+	v5-01-NRT-14:2.29
+	neuralnetworks-1-0:2.29.0.2
+	cfm-single-freq-0-1:2.28.0.2
+	v5-01:2.28
+	v5-00:2.28
+	v4-23-TA133:2.27.0.2
+	mus-emls-1-70:2.25.0.4
+	rel-1-0-englocks-work:2.25.0.2
+	VUMLS1-00:2.25
+	VPL1-00:2.23
+	V4-22-NRT-08:2.23
+	VAM1-00:2.21
+	V4-21:2.21.0.4
+	V4-13:2.21
+	V4-12:2.21
+	V4-11:2.21
+	V4-10:2.21
+	V3-43:2.21
+	M4-00:2.21
+	V3-41:2.21
+	V3-40-PlusGM57:2.21.0.2
+	V2-24-NRT-04:2.19
+	V3-33:2.21
+	V2-24:2.19
+	V3-31:2.21
+	V3-30-NRT-05:2.21
+	cfm-01-00:2.21
+	V3-30:2.21
+	V3-20:2.21
+	V3-10:2.21
+	V2-23-NRT-02:2.19
+	V2-23:2.19
+	V2-22-NRT-01:2.19
+	V2-22:2.19
+	V2-21:2.16
+	V2-20:2.16
+	V2-11:2.16
+	V2-10:2.16
+	V2-00:2.16
+	V1-51:2.14
+	V1-50:2.14
+	V1-45:2.14
+	V1-44:2.14
+	V1-43:2.14
+	V1-32:2.12
+	V1-31:2.12
+	V1-30:2.12
+	V1-13:2.11
+	V1-12:2.11
+	V1-11:2.11
+	V1-10:2.11
+	newfwm-feb03:2.11.0.2
+	JointForwardModel:2.6.0.2;
+locks; strict;
+comment	@# @;
+
+
+2.29
+date	2020.08.28.21.41.58;	author vsnyder;	state Exp;
+branches;
+next	2.28;
+
+2.28
+date	2019.06.24.23.28.17;	author pwagner;	state Exp;
+branches;
+next	2.27;
+
+2.27
+date	2018.09.07.17.15.20;	author pwagner;	state Exp;
+branches;
+next	2.26;
+
+2.26
+date	2018.08.22.01.40.27;	author vsnyder;	state Exp;
+branches;
+next	2.25;
+
+2.25
+date	2016.11.11.01.52.23;	author vsnyder;	state Exp;
+branches;
+next	2.24;
+
+2.24
+date	2016.10.24.22.14.24;	author vsnyder;	state Exp;
+branches;
+next	2.23;
+
+2.23
+date	2016.05.10.00.03.55;	author vsnyder;	state Exp;
+branches;
+next	2.22;
+
+2.22
+date	2016.01.23.02.53.49;	author vsnyder;	state Exp;
+branches;
+next	2.21;
+
+2.21
+date	2009.06.23.18.26.11;	author pwagner;	state Exp;
+branches;
+next	2.20;
+
+2.20
+date	2008.07.31.17.57.54;	author vsnyder;	state Exp;
+branches;
+next	2.19;
+
+2.19
+date	2006.11.30.02.06.49;	author vsnyder;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2006.11.30.01.29.28;	author vsnyder;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2006.11.11.03.44.13;	author vsnyder;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2005.12.22.20.53.29;	author vsnyder;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2005.06.22.18.08.19;	author pwagner;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2004.05.17.23.25.04;	author livesey;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2004.05.17.22.06.07;	author livesey;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2003.05.05.23.00.25;	author livesey;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2002.10.08.17.08.04;	author pwagner;	state Exp;
+branches
+	2.11.2.1;
+next	2.10;
+
+2.10
+date	2002.10.03.22.25.13;	author vsnyder;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2002.07.11.20.51.49;	author bill;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2002.07.05.07.52.48;	author zvi;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2002.06.28.11.06.51;	author zvi;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2002.06.24.21.11.24;	author zvi;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2002.06.24.21.07.13;	author zvi;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2002.06.24.21.01.28;	author zvi;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2002.06.20.14.17.39;	author bill;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2002.06.19.11.00.33;	author zvi;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2002.06.07.04.52.38;	author bill;	state Exp;
+branches;
+next	;
+
+2.11.2.1
+date	2003.03.07.23.17.06;	author vsnyder;	state Exp;
+branches;
+next	2.11.2.2;
+
+2.11.2.2
+date	2003.03.20.01.42.26;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.29
+log
+@Set up to calculate chi angles for QTM
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Get_Chi_Out_m
+
+  use Sparse_m, only: Sparse_t
+  implicit none
+  private
+  public :: Get_Chi_Out
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: get_chi_out_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  subroutine Get_Chi_Out ( ZetaTan, PhiTan, SCgeocAlt, Grids_tmp, Ref_zeta, &
+           & Ref_gph, Elev_offset, Req, Grids_f, H2O_ind, &
+           & Tan_Chi_Out, dhdz_out, dx_dh_out, dxdt_tan, d2xdxdt_tan, &
+           & InstRefr, MAF, ScECR_MIF, ECRtoFOV )
+
+! Compute the output angles to interpolate to
+
+    use Get_Chi_Angles_m, only: Get_Chi_Angles
+    use Get_Chi_Angles_3D_m, only: Get_Chi_Angles
+    use Load_sps_data_m, only: Grids_T
+    use MLSKinds, only: RP
+    use Refraction_m, only: MaxRefraction, Refractive_Index
+    use Sparse_Eta_m, only: Sparse_Eta_t
+    use Two_D_Hydrostatic_m, only: Two_D_Hydrostatic
+    use VectorsModule, only: VectorValue_t
+
+! Inputs
+
+    real(rp), intent(in) :: ZetaTan(:)   ! Tangent zeta profle for input mmaf
+    real(rp), intent(in) :: PhiTan(:)    ! Tangent phi profle for input mmaf
+                                         ! (in radians)
+    real(rp), intent(in) :: SCgeocAlt(:) ! Spacecraft geocentric altitude
+                                         ! profile in METERS
+    type (grids_t), intent(in) :: Grids_tmp  ! All Temperature's coordinates
+
+    real(rp), intent(in) :: Ref_zeta     ! Zeta for input gph's
+    real(rp), intent(in) :: Ref_gph(:)   ! Reference geopotential heights along the
+                           ! temperature horizontal basis in METERS
+    real(rp), intent(in) :: Elev_offset  ! Elevation offset in radians
+    real(rp), intent(in) :: Req(:)       ! Earth radius (M) in equivalent circle
+    type(grids_t), intent(in) :: Grids_f ! Grids other than temperature
+    integer, intent(in) :: H2O_ind       ! Where is H2O in Grids_F?
+
+! Outputs
+
+    real(rp), intent(out) :: Tan_Chi_Out(:) ! Computed tangent pointing angles
+                                ! in radians, corrected for refraction
+    real(rp), intent(out) :: dhdz_out(:)    ! dh/dz on the output grid
+    real(rp), intent(out) :: dx_dh_out(:)   ! d(chi)/dh on the output grid
+
+! Outputs not computed if size(dxdt_tan) is zero
+    real(rp), intent(out), optional :: dxdt_tan(:,:)      ! Computed dchi dt.
+    real(rp), intent(out), optional :: d2xdxdt_tan(:,:)   ! Computed d2chi dxdt.
+                                   ! at each phi value representation (km)
+
+! Optional inputs for QTM
+    real(rp), intent(in), optional :: InstRefr ! Index of refraction -1 at inst.
+    integer, intent(in), optional :: MAF ! Used to index ScECR_MIF and ECRtoFOV
+    type(VectorValue_t), intent(in), optional :: ScECR_MIF
+    type(VectorValue_t), intent(in), optional :: ECRtoFOV
+
+! The matrix hierarchy is n_out,n_t_zeta,n_t_phi
+
+! Internal variables
+
+    integer :: ht_i, n_out, n_t_phi, n_t_zeta
+
+    logical :: Derivs ! Compute dxdt_tan and d2xdxdt_tan
+
+    real(rp) :: d2hdhdt_tan(size(zetatan), grids_tmp%l_z(1), grids_tmp%l_p(1))
+    real(rp) :: dhdt_tan(size(zetatan), grids_tmp%l_z(1), grids_tmp%l_p(1))
+    real(rp) :: dhdz_tan(size(zetatan), grids_tmp%l_p(1))
+! ifort 17 complains about this, but gets different answers if this is deleted
+real(rp) :: h2o_tan_out(merge(size(zetatan),0,h2o_ind>0))
+! or if the declaration is changed to
+! real(rp) :: h2o_tan_out(0)
+    real(rp) :: Height_Tan(size(zetatan), grids_tmp%l_p(1))
+    real(rp) :: H_Tan_Out(size(zetatan))
+    real(rp) :: N_Tan_Out(size(zetatan))
+    real(rp) :: Temp_Tan(size(zetatan), grids_tmp%l_p(1))
+    real(rp) :: T_Tan_Out(size(zetatan))
+
+    type(sparse_eta_t) :: Eta_T ! Interpolation coefficients from temperature
+                                ! phi basis to PhiTan
+
+! Dimensions we use
+
+    n_out = size(zetatan)
+    n_t_phi = grids_tmp%l_p(1)  ! Size of temperature phi basis
+    n_t_zeta = grids_tmp%l_z(1) ! Size of temperature zeta basis
+
+    call two_d_hydrostatic ( grids_tmp, ref_zeta, ref_gph, zetatan, &
+             & temp_tan, height_tan, dhdz_tan, dHidTlm=dhdt_tan, &
+             & ddHdHdTl0=d2hdhdt_tan )
+
+! Tangent heights, temperatures, and dhdz, for tangent pressures along phi
+
+    call eta_t%eta ( grids_tmp%phi_basis, phitan, sorted=.false. )
+
+    do ht_i = 1, n_out
+      h_tan_out(ht_i) = eta_t%row_dot_vec ( ht_i, height_tan(ht_i,:) )
+      t_tan_out(ht_i) = eta_t%row_dot_vec ( ht_i, temp_tan(ht_i,:) )
+      dhdz_out(ht_i) = eta_t%row_dot_vec ( ht_i, dhdz_tan(ht_i,:) )
+    end do
+
+! Compute refractive index
+
+    if ( h2o_ind > 0 ) then
+      block
+        integer :: beg_p, beg_z  ! Begin of h2o info in grids_f
+        integer :: end_p, end_z  ! End of h2o info in grids_f
+        type(sparse_eta_t) :: Eta_P, Eta_Z, Eta_ZP
+        real(rp) :: h2o_tan_out(n_out)
+        ! Compute the tangent water vapor profile along input phi_tan
+        beg_z = grids_f%l_z(h2o_ind-1) + 1
+        end_z = grids_f%l_z(h2o_ind)
+        beg_p = grids_f%l_p(h2o_ind-1) + 1
+        end_p = grids_f%l_p(h2o_ind)
+
+        call eta_p%eta ( grids_f%phi_basis(beg_p:end_p), phitan, sorted=.false. )
+        call eta_z%eta ( grids_f%zet_basis(beg_z:end_z), zetatan, sorted=.false. )
+
+        call eta_zp%eta_nd ( eta_z, eta_p )
+        call eta_zp%sparse_dot_vec ( grids_f%c(h2o_ind)%v1, h2o_tan_out )
+
+        if ( grids_f%lin_log(h2o_ind) ) h2o_tan_out = exp(h2o_tan_out)
+
+! Compute refractive index depending on h2o
+
+        call refractive_index ( 10.0**(-zetatan), t_tan_out, n_tan_out, &
+                              & h2o_path=h2o_tan_out )
+      end block
+
+    else
+
+! Compute refractive index not depending on h2o
+
+      call refractive_index ( 10.0**(-zetatan), t_tan_out, n_tan_out )
+
+    end if
+    n_tan_out = min ( n_tan_out, maxRefraction )
+
+! Compute output angles to interpolate to
+
+    derivs = present(dxdt_tan)
+    if ( derivs ) derivs = size(dxdt_tan) > 0
+    if ( derivs ) then
+
+      block
+        ! Variables for one tangent phi's derivatives w.r.t.
+        ! temperature zeta and phi.  Get_Chi_Angles wants derivatives at the
+        ! tangent as one-D zeta*phi instead of two-D zeta X phi.
+        real(rp), target :: dhdt_1_tan_1(n_t_zeta*n_t_phi)
+        real(rp), pointer :: dhdt_1_tan(:,:)
+        real(rp), target :: d2hdhdt_1_tan_1(n_t_zeta*n_t_phi)
+        real(rp), pointer :: d2hdhdt_1_tan(:,:)
+        integer :: J, K       ! Subscripts
+
+        dhdt_1_tan_1 = 0
+        dhdt_1_tan(1:n_t_zeta,1:n_t_phi) => dhdt_1_tan_1
+        d2hdhdt_1_tan_1 = 0
+        d2hdhdt_1_tan(1:n_t_zeta,1:n_t_phi) => d2hdhdt_1_tan_1
+
+        do ht_i = 1, n_out
+          ! Interpolate derivatives to phi for Ht_i
+          ! An iterator to traverse a row of a Sparse_t would be useful here
+          k = eta_t%rows(ht_i)                  ! Last element in the row
+          if ( k /= 0 ) then                    ! Row isn't empty
+            do
+              j = eta_t%e(k)%c                  ! Element's column subscript
+              dhdt_1_tan(:,j)    = dhdt_tan(ht_i,:,j)    * eta_t%e(k)%v
+              d2hdhdt_1_tan(:,j) = d2hdhdt_tan(ht_i,:,j) * eta_t%e(k)%v
+              k = eta_t%e(k)%nr                 ! Next element in the row
+              if ( k == eta_t%rows(ht_i) ) exit ! Back to the last one?
+            end do
+          end if
+
+          if ( .not. present(instRefr) ) then ! not QTM
+            ! We can't compute the index of refraction at the instrument
+            ! (actually index - 1.0), so use zero.
+            ! SCgeocAlt and RefGPH are in meters, but Get_Chi_Angles wants them
+            ! in km.
+            call get_chi_angles ( 0.001_rp*scgeocalt(ht_i), n_tan_out(ht_i), 0.0_rp, &
+              & h_tan_out(ht_i), phitan(ht_i), req(ht_i), elev_offset, &
+              & tan_chi_out(ht_i), dx_dh_out(ht_i), dhdz_out(ht_i), &
+              & dhdt_1_tan_1, d2hdhdt_1_tan_1, &
+              & dxdt_tan(ht_i,:), d2xdxdt_tan(ht_i,:) )
+            ! Put zeroes back where we put nonzeroes above
+            ! An iterator to traverse a row of a Sparse_t would be useful here
+          else ! QTM
+            call get_chi_angles ( n_tan_out(ht_i), instRefr, &
+              & scECR_MIF%value3(1:3,ht_i,MAF), ECRtoFOV%value3(1:3,ht_i,MAF), &
+              & h_tan_out(ht_i), req(ht_i), elev_offset, &
+              & tan_chi_out(ht_i), &
+              & dx_dh_out(ht_i), dhdz_out(ht_i), dhdt_1_tan_1, &
+              & d2hdhdt_1_tan_1, dxdt_tan(ht_i,:), d2xdxdt_tan(ht_i,:) )
+          end if
+          k = eta_t%rows(ht_i)                  ! Last element in the row
+          if ( k /= 0 ) then                    ! Row isn't empty
+            do
+              j = eta_t%e(k)%c                  ! Element's column subscript
+              dhdt_1_tan(:,j) = 0
+              d2hdhdt_1_tan(:,j) = 0
+              k = eta_t%e(k)%nr                 ! Next element in the row
+              if ( k == eta_t%rows(ht_i) ) exit ! Back to the last one?
+            end do
+          end if
+        end do
+
+      end block
+
+    else
+
+      if ( .not. present(instRefr) ) then ! not QTM
+        do ht_i = 1, n_out
+           ! We can't compute the index of refraction at the instrument, so
+           ! pretend it's 1.0 by setting the instrument index to zero.
+          call get_chi_angles( 0.001_rp*scgeocalt(ht_i), n_tan_out(ht_i), 0.0_rp, &
+            & h_tan_out(ht_i), phitan(ht_i), req(ht_i), elev_offset, &
+            & tan_chi_out(ht_i), dx_dh_out(ht_i), dhdz_out(ht_i) )
+        end do
+      else ! QTM
+        do ht_i = 1, n_out
+          call get_chi_angles ( n_tan_out(ht_i), instRefr, &
+            & scECR_MIF%value3(1:3,ht_i,MAF), ECRtoFOV%value3(1:3,ht_i,MAF), &
+            & h_tan_out(ht_i), req(ht_i), elev_offset, &
+            & tan_chi_out(ht_i) )
+        end do
+      end if
+
+    end if
+
+  end subroutine Get_Chi_Out
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: get_chi_out_m.f90,v 2.28 2019/06/24 23:28:17 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Get_Chi_Out_m
+
+! $Log: get_chi_out_m.f90,v $
+! Revision 2.28  2019/06/24 23:28:17  pwagner
+! Updated to reflect TA-01-143
+!
+! Revision 2.27  2018/09/07 17:15:20  pwagner
+! Code around a NAG-6.1 compiler bug
+!
+! Revision 2.26  2018/08/22 01:40:27  vsnyder
+! Convert to sparse interpolators
+!
+! Revision 2.25  2016/11/11 01:52:23  vsnyder
+! Change units for ScGeocAlt and Ref_GPH from km to m, and do the conversion
+! from m to km here instead of in callers, to avoid the need for an array
+! temp.
+!
+! Revision 2.24  2016/10/24 22:14:24  vsnyder
+! Eliminate orbit inclination because two_d_hydrostatic no longer needs it
+!
+! Revision 2.23  2016/05/10 00:03:55  vsnyder
+! Cannonball polishing
+!
+! Revision 2.22  2016/01/23 02:53:49  vsnyder
+! Get MaxRefraction from refraction_m instead of geometry
+!
+! Revision 2.21  2009/06/23 18:26:11  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.20  2008/07/31 17:57:54  vsnyder
+! Make some arguments optional
+!
+! Revision 2.19  2006/11/30 02:06:49  vsnyder
+! Clean up some surds of ASSOCIATED->SIZE transition
+!
+! Revision 2.18  2006/11/30 01:29:28  vsnyder
+! Clean up some surds of ASSOCIATED->SIZE transition
+!
+! Revision 2.17  2006/11/11 03:44:13  vsnyder
+! Depointerize some variables
+!
+! Revision 2.16  2005/12/22 20:53:29  vsnyder
+! Simplify calcuation of water vapor
+!
+! Revision 2.15  2005/06/22 18:08:19  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.14  2004/05/17 23:25:04  livesey
+! More guards
+!
+! Revision 2.13  2004/05/17 22:06:07  livesey
+! Guard against large refractive indices
+!
+! Revision 2.12  2003/05/05 23:00:25  livesey
+! Merged in feb03 newfwm branch
+!
+! Revision 2.11.2.2  2003/03/20 01:42:26  vsnyder
+! Revise Grids_T structure
+!
+! Revision 2.11.2.1  2003/03/07 23:17:06  vsnyder
+! Use ASSOCIATED instead of PRESENT of GET_CHI_OUT
+!
+! Revision 2.11  2002/10/08 17:08:04  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.10  2002/10/03 22:25:13  vsnyder
+! Move USE statements from module scope to procedure scope.  Convert some
+! allocated arrays to automatic arrays.  Cosmetic changes.
+!
+! Revision 2.9  2002/07/11 20:51:49  bill
+! made req an mmif quantity
+!
+! Revision 2.8  2002/07/05 07:52:48  zvi
+! Coor. switch (phi,z) -> (z,phi)
+!
+! Revision 2.7  2002/06/28 11:06:51  zvi
+! computes dx_dh & dh_dz on output grid as well
+!
+! Revision 2.6  2002/06/24 21:11:24  zvi
+! Adding Grids_tmp structure and modifying calling sequences
+!
+! Revision 1.0  2002/06/24 22:20:45  bill
+! Intitial release ...
+@
+
+
+2.28
+log
+@Updated to reflect TA-01-143
+@
+text
+@d29 2
+a30 1
+           & Tan_Chi_Out, dhdz_out, dx_dh_out, dxdt_tan, d2xdxdt_tan )
+d35 1
+d41 1
+d72 6
+d194 20
+a213 11
+          ! We can't compute the index of refraction at the instrument
+          ! (actually index - 1.0), so use zero.
+          ! SCgeocAlt and RefGPH are in meters, but Get_Chi_Angles wants them
+          ! in km.
+          call get_chi_angles ( 0.001_rp*scgeocalt(ht_i), n_tan_out(ht_i), 0.0_rp, &
+             & h_tan_out(ht_i), phitan(ht_i), req(ht_i), elev_offset, &
+             & tan_chi_out(ht_i), dx_dh_out(ht_i), dhdz_out(ht_i), &
+             & dhdt_1_tan_1, d2hdhdt_1_tan_1, &
+             & dxdt_tan(ht_i,:), d2xdxdt_tan(ht_i,:) )
+          ! Put zeroes back where we put nonzeroes above
+          ! An iterator to traverse a row of a Sparse_t would be useful here
+d230 16
+a245 7
+       do ht_i = 1, n_out
+          ! We can't compute the index of refraction at the instrument, so
+          ! pretend it's 1.0 by setting the instrument index to zero.
+         call get_chi_angles( 0.001_rp*scgeocalt(ht_i), n_tan_out(ht_i), 0.0_rp, &
+           & h_tan_out(ht_i), phitan(ht_i), req(ht_i), elev_offset, &
+           & tan_chi_out(ht_i), dx_dh_out(ht_i), dhdz_out(ht_i) )
+       end do
+d254 1
+a254 1
+       "$Id: get_chi_out_m.f90,v 2.27 2018/09/07 17:15:20 pwagner Exp $"
+d264 3
+@
+
+
+2.27
+log
+@Code around a NAG-6.1 compiler bug
+@
+text
+@d49 1
+a49 1
+    real(rp), intent(in) :: Ref_zeta(:)  ! Zetas for inputted gph's
+d100 2
+a101 1
+             & temp_tan, height_tan, dhdz_tan, dhdt_tan, d2hdhdt_tan )
+d185 5
+a189 1
+          call get_chi_angles ( 0.001_rp*scgeocalt(ht_i), n_tan_out(ht_i), &
+a193 1
+
+d213 3
+a215 1
+         call get_chi_angles( 0.001_rp*scgeocalt(ht_i), n_tan_out(ht_i), &
+d227 1
+a227 1
+       "$Id: get_chi_out_m.f90,v 2.26 2018/08/22 01:40:27 vsnyder Exp $"
+d237 3
+@
+
+
+2.26
+log
+@Convert to sparse interpolators
+@
+text
+@d14 2
+a15 1
+  implicit NONE
+d221 1
+a221 1
+       "$Id: get_chi_out_m.f90,v 2.25 2016/11/11 01:52:23 vsnyder Exp $"
+d231 3
+@
+
+
+2.25
+log
+@Change units for ScGeocAlt and Ref_GPH from km to m, and do the conversion
+from m to km here instead of in callers, to avoid the need for an array
+temp.
+@
+text
+@d26 3
+a28 3
+  subroutine Get_Chi_Out ( zetatan, phitan, scgeocalt, Grids_tmp, ref_zeta, &
+           & ref_gph, elev_offset, req, grids_f, h2o_ind, &
+           & tan_chi_out, dhdz_out, dx_dh_out, dxdt_tan, d2xdxdt_tan )
+d32 1
+a32 2
+    use Get_chi_angles_m, only: Get_chi_angles
+    use Get_eta_matrix_m, only: Get_eta_sparse
+d34 4
+a37 3
+    use MLSCommon, only: RP
+    use Refraction_m, only: MaxRefraction, Refractive_index
+    use Two_d_hydrostatic_m, only: Two_d_hydrostatic
+d41 4
+a44 4
+    real(rp), intent(in) :: zetatan(:)   ! tangent zeta profle for input mmaf
+    real(rp), intent(in) :: phitan(:)    ! tangent phi profle for input mmaf
+!                                          (in radians)
+    real(rp), intent(in) :: scgeocalt(:) ! spacecraft geocentric altitude
+d48 5
+a52 5
+    real(rp), intent(in) :: ref_zeta(:)  ! zetas for inputted gph's
+    real(rp), intent(in) :: ref_gph(:)   ! reference geopotential heights along the
+!                            temperature horizontal basis in METERS
+    real(rp), intent(in) :: elev_offset  ! elevation offset in radians
+    real(rp), intent(in) :: req(:)       ! Earth radius in equivalent circle
+d54 1
+a54 1
+    integer, intent(in) :: H2O_ind       ! Where is h2o_ind in Grids_F?
+d58 2
+a59 2
+    real(rp), intent(out) :: tan_chi_out(:) ! computed tangent pointing angles
+!                                 in radians, corrected for refraction
+d64 3
+a66 3
+    real(rp), intent(out), optional :: dxdt_tan(:,:)      ! computed dchi dt.
+    real(rp), intent(out), optional :: d2xdxdt_tan(:,:)   ! computed d2chi dxdt.
+!                                  ! at each phi value representation (km)
+d68 1
+a68 1
+! the matrix hierarchy is n_out,phi,zeta
+d70 1
+a70 1
+! internal variables
+a71 2
+    integer :: beg_p, beg_v, beg_z  ! One less than begin of h2o info in grids_f
+    integer :: end_p, end_z         ! End of h2o info in grids_f
+a72 1
+    integer :: sv_p, sv_z
+d79 9
+a87 11
+    real(rp) :: eta_p(size(zetatan),merge(grids_f%l_p(max(h2o_ind-1,0)) + 1,1,h2o_ind>0): &
+                                    merge(grids_f%l_p(h2o_ind),0,h2o_ind>0))
+    real(rp) :: eta_t(size(zetatan), grids_tmp%l_p(1))
+    real(rp) :: eta_z(size(zetatan),merge(grids_f%l_z(max(h2o_ind-1,0)) + 1,1,h2o_ind>0): &
+                                    merge(grids_f%l_z(h2o_ind),0,h2o_ind>0))
+    real(rp) :: h2o_tan_out(merge(size(zetatan),0,h2o_ind>0))
+    real(rp) :: height_tan(size(zetatan), grids_tmp%l_p(1))
+    real(rp) :: h_tan_out(size(zetatan))
+    real(rp) :: n_tan_out(size(zetatan))
+    real(rp) :: temp_tan(size(zetatan), grids_tmp%l_p(1))
+    real(rp) :: t_tan_out(size(zetatan))
+d89 4
+a92 1
+! dimensions we use
+d101 1
+a101 1
+! tangent heights for input pressures along phi
+d103 1
+a103 1
+    call get_eta_sparse ( grids_tmp%phi_basis, phitan, eta_t )
+d105 5
+a109 3
+    h_tan_out = sum(height_tan * eta_t, dim=2)
+    t_tan_out = sum(temp_tan * eta_t, dim=2)
+    dhdz_out = sum(dhdz_tan * eta_t, dim=2)
+d111 1
+a111 1
+! compute refractive index
+d114 24
+a137 28
+      ! compute the tangent water vapor profile along input phi_tan
+      end_z = grids_f%l_z(h2o_ind)
+      beg_z = grids_f%l_z(h2o_ind-1) + 1
+      end_p = grids_f%l_p(h2o_ind)
+      beg_p = grids_f%l_p(h2o_ind-1) + 1
+
+      call get_eta_sparse ( grids_f%phi_basis(beg_p:end_p), phitan, eta_p )
+      call get_eta_sparse ( grids_f%zet_basis(beg_z:end_z), zetatan, eta_z )
+
+! beg_v starts at one less than the true start index
+      beg_v = grids_f%l_v(h2o_ind-1)
+
+      h2o_tan_out(:) = 0.0_rp
+      do sv_p = beg_p, end_p
+        do sv_z = beg_z, end_z
+          beg_v = beg_v + 1
+          h2o_tan_out = h2o_tan_out + &
+            & grids_f%values(beg_v) * eta_z(:,sv_z) * eta_p(:,sv_p)
+        end do
+      end do
+
+      if ( grids_f%lin_log(h2o_ind) ) h2o_tan_out = exp(h2o_tan_out)
+
+! compute refractive index depending on h2o
+
+      call refractive_index ( 10.0**(-zetatan), t_tan_out, n_tan_out, &
+                            & h2o_path=h2o_tan_out )
+      n_tan_out = min ( n_tan_out, maxRefraction )
+d141 1
+a141 1
+! compute refractive index not depending on h2o
+a143 1
+      n_tan_out = min ( n_tan_out, maxRefraction )
+d146 1
+d148 1
+a148 1
+! compute output angles to interpolate to
+d154 50
+a203 10
+      dhdt_tan = dhdt_tan * spread(eta_t,2,n_t_zeta)
+      d2hdhdt_tan = d2hdhdt_tan * spread(eta_t,2,n_t_zeta)
+      do ht_i = 1, n_out
+        call get_chi_angles ( 0.001_rp*scgeocalt(ht_i), n_tan_out(ht_i), &
+           & h_tan_out(ht_i), phitan(ht_i), req(ht_i), elev_offset, &
+           & tan_chi_out(ht_i), dx_dh_out(ht_i), dhdz_out(ht_i), &
+           & reshape(dhdt_tan(ht_i,:,:),(/n_t_zeta*n_t_phi/)), &
+           & reshape(d2hdhdt_tan(ht_i,:,:),(/n_t_zeta*n_t_phi/)), &
+           & dxdt_tan(ht_i,:), d2xdxdt_tan(ht_i,:) )
+      end do
+d220 1
+a220 1
+       "$Id: get_chi_out_m.f90,v 2.24 2016/10/24 22:14:24 vsnyder Exp $"
+d230 5
+@
+
+
+2.24
+log
+@Eliminate orbit inclination because two_d_hydrostatic no longer needs it
+@
+text
+@d44 2
+a45 1
+    real(rp), intent(in) :: scgeocalt(:) ! spacecraft geocentric altitude profile in km
+d50 1
+a50 1
+!                            temperature horizontal basis in km
+a67 1
+
+d161 1
+a161 1
+        call get_chi_angles ( scgeocalt(ht_i), n_tan_out(ht_i), &
+d172 1
+a172 1
+         call get_chi_angles(scgeocalt(ht_i), n_tan_out(ht_i), &
+d184 1
+a184 1
+       "$Id: get_chi_out_m.f90,v 2.23 2016/05/10 00:03:55 vsnyder Exp $"
+d194 3
+@
+
+
+2.23
+log
+@Cannonball polishing
+@
+text
+@d27 1
+a27 1
+           & ref_gph, orb_inc, elev_offset, req, grids_f, h2o_ind, &
+a49 1
+    real(rp), intent(in) :: orb_inc      ! orbital incline angle in radians
+d100 1
+a100 1
+    call two_d_hydrostatic ( grids_tmp, ref_zeta, ref_gph, zetatan, orb_inc, &
+d184 1
+a184 1
+       "$Id: get_chi_out_m.f90,v 2.22 2016/01/23 02:53:49 vsnyder Exp $"
+d194 3
+@
+
+
+2.22
+log
+@Get MaxRefraction from refraction_m instead of geometry
+@
+text
+@d59 2
+a60 1
+!                                 corrected for refraction in radians
+a61 1
+    real(rp), intent(out) :: dhdz_out(:)    ! dh/dz on the output grid
+d185 1
+a185 1
+       "$Id: get_chi_out_m.f90,v 2.21 2009/06/23 18:26:11 pwagner Exp $"
+d195 3
+@
+
+
+2.21
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d20 1
+a20 1
+       "$RCSfile: $"
+d36 1
+a36 1
+    use Refraction_m, only: Refractive_index
+a37 1
+    use Geometry, only: MaxRefraction
+d141 1
+a141 1
+                          & h2o_path=h2o_tan_out )
+d185 1
+a185 1
+       "$Id: read_apriori.f90 is it here $"
+d195 3
+@
+
+
+2.20
+log
+@Make some arguments optional
+@
+text
+@d20 1
+a20 1
+       "$RCSfile: get_chi_out_m.f90,v $"
+d183 1
+a184 1
+!---------------------------- RCS Ident Info -------------------------------
+d186 2
+a187 3
+       "$Id: get_chi_out_m.f90,v 2.19 2006/11/30 02:06:49 vsnyder Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d189 1
+d191 1
+d196 3
+@
+
+
+2.19
+log
+@Clean up some surds of ASSOCIATED->SIZE transition
+@
+text
+@d64 3
+a66 3
+! Outputs not computed if size zero
+    real(rp), intent(out) :: dxdt_tan(:,:)      ! computed dchi dt.
+    real(rp), intent(out) :: d2xdxdt_tan(:,:)   ! computed d2chi dxdt.
+d79 2
+d156 3
+a158 1
+    if ( size(dxdt_tan) > 0 ) then
+d160 1
+a160 1
+      dhdt_tan = dhdt_tan  * spread(eta_t,2,n_t_zeta)
+d186 1
+a186 1
+       "$Id: get_chi_out_m.f90,v 2.18 2006/11/30 01:29:28 vsnyder Exp $"
+d195 3
+@
+
+
+2.18
+log
+@Clean up some surds of ASSOCIATED->SIZE transition
+@
+text
+@d82 1
+a82 1
+    real(rp) :: eta_p(size(zetatan),merge(grids_f%l_p(max(h2o_ind-1,1)) + 1,1,h2o_ind>0): &
+d85 1
+a85 1
+    real(rp) :: eta_z(size(zetatan),merge(grids_f%l_z(max(h2o_ind-1,1)) + 1,1,h2o_ind>0): &
+d182 1
+a182 1
+       "$Id: get_chi_out_m.f90,v 2.17 2006/11/11 03:44:13 vsnyder Exp $"
+d191 3
+@
+
+
+2.17
+log
+@Depointerize some variables
+@
+text
+@d82 1
+a82 1
+    real(rp) :: eta_p(size(zetatan),merge(grids_f%l_p(h2o_ind-1) + 1,1,h2o_ind>0): &
+d85 1
+a85 1
+    real(rp) :: eta_z(size(zetatan),merge(grids_f%l_z(h2o_ind-1) + 1,1,h2o_ind>0): &
+d182 1
+a182 1
+       "$Id: get_chi_out_m.f90,v 2.16 2005/12/22 20:53:29 vsnyder Exp $"
+d191 3
+@
+
+
+2.16
+log
+@Simplify calcuation of water vapor
+@
+text
+@a31 1
+    use Allocate_Deallocate, only: Allocate_test, Deallocate_test
+d64 3
+a66 3
+! Outputs not computed if not associated
+    real(rp), pointer :: dxdt_tan(:,:)      ! computed dchi dt.
+    real(rp), pointer :: d2xdxdt_tan(:,:)   ! computed d2chi dxdt.
+d82 2
+a83 1
+    real(rp), pointer :: eta_p(:,:)
+d85 3
+a87 2
+    real(rp), pointer :: eta_z(:,:)
+    real(rp), pointer :: h2o_tan_out(:)
+a99 2
+    nullify ( eta_p, eta_z, h2o_tan_out )
+
+a119 4
+      call allocate_test ( eta_p, n_out, end_p, 'eta_p', modulename, low2=beg_p )
+      call allocate_test ( eta_z, n_out, end_z, 'eta_z', modulename, low2=beg_z )
+      call allocate_test ( h2o_tan_out, n_out, 'h2o_tan_out', modulename )
+
+a142 4
+      call deallocate_test ( h2o_tan_out, 'h2o_tan_out', modulename )
+      call deallocate_test ( eta_z, 'eta_z', modulename )
+      call deallocate_test ( eta_p, 'eta_p', modulename )
+
+d154 1
+a154 1
+    if ( associated(dxdt_tan) ) then
+d182 1
+a182 1
+       "$Id: get_chi_out_m.f90,v 2.15 2005/06/22 18:08:19 pwagner Exp $"
+d191 3
+@
+
+
+2.15
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d20 1
+a20 1
+       "$RCSfile: $"
+d77 1
+a77 1
+    integer :: ht_i, n_h2o_phi, n_h2o_zeta, n_out, n_t_phi, n_t_zeta
+d117 1
+a117 1
+      beg_z = grids_f%l_z(h2o_ind-1)
+d119 1
+a119 5
+      beg_p = grids_f%l_p(h2o_ind-1)
+      beg_v = grids_f%l_v(h2o_ind-1)
+
+      n_h2o_zeta = end_z - beg_z
+      n_h2o_phi  = end_p - beg_p
+d121 2
+a122 2
+      call allocate_test ( eta_p, n_out, n_h2o_phi, 'eta_p', modulename )
+      call allocate_test ( eta_z, n_out, n_h2o_zeta, 'eta_z', modulename )
+d125 2
+a126 2
+      call get_eta_sparse ( grids_f%phi_basis(beg_p+1:end_p), phitan, eta_p )
+      call get_eta_sparse ( grids_f%zet_basis(beg_z+1:end_z), zetatan, eta_z )
+d128 2
+a129 1
+! beg_v is actually one less than the true start index
+d132 3
+a134 2
+      do sv_p = 1, n_h2o_phi
+        do sv_z = 1, n_h2o_zeta
+d136 1
+a136 2
+            & grids_f%values(beg_v + sv_z + n_h2o_zeta * (sv_p - 1)) * &
+            &   eta_z(:,sv_z) * eta_p(:,sv_p)
+d191 1
+a191 1
+       "$Id: $"
+d200 3
+@
+
+
+2.14
+log
+@More guards
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d18 3
+a20 6
+  !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+    & "$Id: get_chi_out_m.f90,v 2.13 2004/05/17 22:06:07 livesey Exp $"
+  character (len=len(idParm)) :: Id = IdParm
+  character (len=*), parameter :: ModuleName = &
+    & "$RCSfile: get_chi_out_m.f90,v $"
+d22 1
+a22 1
+  !---------------------------------------------------------------------------
+d192 5
+d203 3
+@
+
+
+2.13
+log
+@Guard against large refractive indices
+@
+text
+@d12 1
+a12 1
+    & "$Id: get_chi_out_m.f90,v 2.12 2003/05/05 23:00:25 livesey Exp $"
+d155 1
+d193 3
+@
+
+
+2.12
+log
+@Merged in feb03 newfwm branch
+@
+text
+@d12 1
+a12 1
+    & "$Id$"
+d15 1
+a15 1
+    & "$RCSfile$"
+d34 1
+d144 1
+d191 4
+a194 1
+! $Log$
+@
+
+
+2.11
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d1 3
+a3 1
+! This module computes the output angles to interpolate to
+d12 1
+a12 1
+    & "$Id: get_chi_out_m.f90,v 2.10 2002/10/03 22:25:13 vsnyder Exp $"
+d15 1
+a15 1
+    & "$RCSfile: get_chi_out_m.f90,v $"
+d17 2
+a18 1
+!---------------------------------------------------------------------------
+d22 4
+a25 3
+           & ref_gph, orb_inc, elev_offset, req, tan_chi_out, dhdz_out, &
+           & dx_dh_out, h2o_zeta_basis, h2o_phi_basis, h2o_coeffs, lin_log, &
+           & dxdt_tan, d2xdxdt_tan )
+d31 1
+a31 1
+    use MLSCommon, only: I4, RP
+d35 1
+a35 1
+! inputs
+d43 2
+a44 2
+    real(rp), intent(in) :: ref_zeta(:) ! zetas for inputted gph's
+    real(rp), intent(in) :: ref_gph(:) ! reference geopotential heights along the
+d46 5
+a50 10
+    real(rp), intent(in) :: orb_inc    ! orbital incline angle in radians
+    real(rp), intent(in) :: elev_offset ! elevation offset in radians
+    real(rp), intent(in) :: req(:)  ! Earth radius in equivalent circle
+!                                  ! at each phi value representation (km)
+! Keywords
+    real(rp), optional, intent(in) :: h2o_zeta_basis(:) ! h2o zeta basis
+    real(rp), optional, intent(in) :: h2o_phi_basis(:) ! h2o phi basis
+    real(rp), optional, intent(in) :: h2o_coeffs(:) ! h2o coefficients in long
+!                            vector format zetaXphi.
+    logical,  optional, intent(in) :: lin_log ! representation type
+d52 1
+a52 1
+! outputs
+d59 5
+a63 2
+    real(rp), optional, intent(out) :: dxdt_tan(:,:) ! computed dchi dt.
+    real(rp), optional, intent(out) :: d2xdxdt_tan(:,:) ! computed d2chi dxdt.
+d66 1
+d69 8
+a76 6
+    integer(i4) :: n_out, n_t_phi, n_t_zeta, n_h2o_zeta, n_h2o_phi
+    integer(i4) :: sv_p, sv_z, ht_i
+
+    real(rp) :: d2hdhdt_tan(size(zetatan), grids_tmp%no_z(1), grids_tmp%no_p(1))
+    real(rp) :: dhdt_tan(size(zetatan), grids_tmp%no_z(1), grids_tmp%no_p(1))
+    real(rp) :: dhdz_tan(size(zetatan), grids_tmp%no_p(1))
+d78 1
+a78 1
+    real(rp) :: eta_t(size(zetatan), grids_tmp%no_p(1))
+d81 1
+a81 1
+    real(rp) :: height_tan(size(zetatan), grids_tmp%no_p(1))
+d84 1
+a84 1
+    real(rp) :: temp_tan(size(zetatan), grids_tmp%no_p(1))
+d90 2
+a91 2
+    n_t_phi = grids_tmp%no_p(1)
+    n_t_zeta = grids_tmp%no_z(1)
+d106 1
+a106 1
+! compute the tangent water vapor profile along input phi_tan
+d108 7
+a114 1
+    if ( present(h2o_coeffs) ) then
+d116 2
+a117 2
+      n_h2o_zeta = size(h2o_zeta_basis)
+      n_h2o_phi  = size(h2o_phi_basis)
+d123 2
+a124 2
+      call get_eta_sparse ( h2o_phi_basis, phitan, eta_p )
+      call get_eta_sparse ( h2o_zeta_basis, zetatan, eta_z )
+d126 1
+a126 1
+! This is actually one less than the true start index
+d132 1
+a132 1
+            & h2o_coeffs(sv_z + n_h2o_zeta * (sv_p - 1)) * &
+d137 1
+a137 1
+      if ( lin_log ) h2o_tan_out = exp(h2o_tan_out)
+d139 1
+a139 1
+! compute refractive index
+d150 2
+d158 1
+a158 1
+    if ( present(dxdt_tan) ) then
+d171 1
+a171 1
+     else
+d174 3
+a176 3
+         call get_chi_angles(scgeocalt(ht_i),n_tan_out(ht_i), &
+           & h_tan_out(ht_i),phitan(ht_i),req(ht_i),elev_offset, &
+           & tan_chi_out(ht_i),dx_dh_out(ht_i),dhdz_out(ht_i))
+d188 11
+a198 1
+! $Log: get_chi_out_m.f90,v $
+d213 1
+a213 1
+! Adding Grids_tmp stracture and modifying calling sequences
+@
+
+
+2.11.2.1
+log
+@Use ASSOCIATED instead of PRESENT of GET_CHI_OUT
+@
+text
+@d10 1
+a10 1
+    & "$Id: get_chi_out_m.f90,v 2.11 2002/10/08 17:08:04 pwagner Exp $"
+d20 2
+a21 2
+           & dx_dh_out, h2o_zeta_basis, dxdt_tan, d2xdxdt_tan, &
+           & h2o_phi_basis, h2o_coeffs, lin_log )
+d31 1
+a31 1
+! Inputs
+d45 7
+d53 1
+a53 1
+! Outputs
+d60 2
+a61 11
+! Outputs not computed if not associated
+    real(rp), pointer :: dxdt_tan(:,:)      ! computed dchi dt.
+    real(rp), pointer :: d2xdxdt_tan(:,:)   ! computed d2chi dxdt.
+!                                  ! at each phi value representation (km)
+
+! Optional inputs
+    real(rp), optional, intent(in) :: h2o_zeta_basis(:) ! h2o zeta basis
+    real(rp), optional, intent(in) :: h2o_phi_basis(:) ! h2o phi basis
+    real(rp), optional, intent(in) :: h2o_coeffs(:) ! h2o coefficients in long
+!                            vector format zetaXphi.
+    logical,  optional, intent(in) :: lin_log ! representation type
+d145 1
+a145 1
+    if ( associated(dxdt_tan) ) then
+a175 3
+! Revision 2.11  2002/10/08 17:08:04  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+@
+
+
+2.11.2.2
+log
+@Revise Grids_T structure
+@
+text
+@d1 1
+a1 3
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+d10 1
+a10 1
+    & "$Id: get_chi_out_m.f90,v 2.11.2.1 2003/03/07 23:17:06 vsnyder Exp $"
+d15 1
+a15 2
+  !---------------------------------------------------------------------------
+
+d19 3
+a21 4
+           & ref_gph, orb_inc, elev_offset, req, grids_f, h2o_ind, &
+           & tan_chi_out, dhdz_out, dx_dh_out, dxdt_tan, d2xdxdt_tan )
+
+! Compute the output angles to interpolate to
+d27 1
+a27 1
+    use MLSCommon, only: RP
+d39 2
+a40 2
+    real(rp), intent(in) :: ref_zeta(:)  ! zetas for inputted gph's
+    real(rp), intent(in) :: ref_gph(:)   ! reference geopotential heights along the
+d42 3
+a44 5
+    real(rp), intent(in) :: orb_inc      ! orbital incline angle in radians
+    real(rp), intent(in) :: elev_offset  ! elevation offset in radians
+    real(rp), intent(in) :: req(:)       ! Earth radius in equivalent circle
+    type(grids_t), intent(in) :: Grids_f ! Grids other than temperature
+    integer, intent(in) :: H2O_ind       ! Where is h2o_ind in Grids_F?
+d58 6
+d66 1
+d68 2
+a69 1
+! internal variables
+d71 3
+a73 8
+    integer :: beg_p, beg_v, beg_z  ! One less than begin of h2o info in grids_f
+    integer :: end_p, end_z         ! End of h2o info in grids_f
+    integer :: ht_i, n_h2o_phi, n_h2o_zeta, n_out, n_t_phi, n_t_zeta
+    integer :: sv_p, sv_z
+
+    real(rp) :: d2hdhdt_tan(size(zetatan), grids_tmp%l_z(1), grids_tmp%l_p(1))
+    real(rp) :: dhdt_tan(size(zetatan), grids_tmp%l_z(1), grids_tmp%l_p(1))
+    real(rp) :: dhdz_tan(size(zetatan), grids_tmp%l_p(1))
+d75 1
+a75 1
+    real(rp) :: eta_t(size(zetatan), grids_tmp%l_p(1))
+d78 1
+a78 1
+    real(rp) :: height_tan(size(zetatan), grids_tmp%l_p(1))
+d81 1
+a81 1
+    real(rp) :: temp_tan(size(zetatan), grids_tmp%l_p(1))
+d87 2
+a88 2
+    n_t_phi = grids_tmp%l_p(1)  ! Size of temperature phi basis
+    n_t_zeta = grids_tmp%l_z(1) ! Size of temperature zeta basis
+d103 1
+a103 1
+! compute refractive index
+d105 1
+a105 7
+    if ( h2o_ind > 0 ) then
+      ! compute the tangent water vapor profile along input phi_tan
+      end_z = grids_f%l_z(h2o_ind)
+      beg_z = grids_f%l_z(h2o_ind-1)
+      end_p = grids_f%l_p(h2o_ind)
+      beg_p = grids_f%l_p(h2o_ind-1)
+      beg_v = grids_f%l_v(h2o_ind-1)
+d107 2
+a108 2
+      n_h2o_zeta = end_z - beg_z
+      n_h2o_phi  = end_p - beg_p
+d114 2
+a115 2
+      call get_eta_sparse ( grids_f%phi_basis(beg_p+1:end_p), phitan, eta_p )
+      call get_eta_sparse ( grids_f%zet_basis(beg_z+1:end_z), zetatan, eta_z )
+d117 1
+a117 1
+! beg_v is actually one less than the true start index
+d123 1
+a123 1
+            & grids_f%values(beg_v + sv_z + n_h2o_zeta * (sv_p - 1)) * &
+d128 1
+a128 1
+      if ( grids_f%lin_log(h2o_ind) ) h2o_tan_out = exp(h2o_tan_out)
+d130 1
+a130 1
+! compute refractive index depending on h2o
+a140 2
+! compute refractive index not depending on h2o
+
+d160 1
+a160 1
+    else
+d163 3
+a165 3
+         call get_chi_angles(scgeocalt(ht_i), n_tan_out(ht_i), &
+           & h_tan_out(ht_i), phitan(ht_i), req(ht_i), elev_offset, &
+           & tan_chi_out(ht_i), dx_dh_out(ht_i), dhdz_out(ht_i) )
+a176 1
+
+a177 3
+! Revision 2.11.2.1  2003/03/07 23:17:06  vsnyder
+! Use ASSOCIATED instead of PRESENT of GET_CHI_OUT
+!
+d195 1
+a195 1
+! Adding Grids_tmp structure and modifying calling sequences
+@
+
+
+2.10
+log
+@Move USE statements from module scope to procedure scope.  Convert some
+allocated arrays to automatic arrays.  Cosmetic changes.
+@
+text
+@d10 1
+a10 1
+    & "$Id: get_chi_out_m.f90,v 2.9 2002/07/11 20:51:49 bill Exp $"
+d14 1
+d170 4
+d176 4
+@
+
+
+2.9
+log
+@made req an mmif quantity
+@
+text
+@d2 6
+a7 9
+MODULE get_chi_out_m
+  USE MLSCommon, only: I4, RP, IP
+  USE Allocate_Deallocate, only: allocate_test, deallocate_test
+  USE Load_sps_data_m, ONLY: Grids_T
+  USE get_eta_matrix_m, only: get_eta_sparse
+  USE get_chi_angles_m, only: get_chi_angles
+  USE two_d_hydrostatic_m, only: two_d_hydrostatic
+  USE refraction_m, only: refractive_index
+  IMPLICIT none
+d9 2
+a10 2
+  character (len=*), parameter, private :: IdParm = &
+    & "$Id: get_chi_out_m.f90,v 2.8 2002/07/05 07:52:48 zvi Exp $"
+d12 1
+a12 1
+  character (len=*), parameter, private :: ModuleName= &
+d15 15
+a29 7
+ CONTAINS
+!
+  SUBROUTINE get_chi_out(zetatan,phitan,scgeocalt,Grids_tmp,ref_zeta,&
+           & ref_gph,orb_inc,elev_offset,req,tan_chi_out,dhdz_out,dx_dh_out,&
+           & h2o_zeta_basis,h2o_phi_basis,h2o_coeffs,lin_log,dxdt_tan,&
+           & d2xdxdt_tan)
+!
+d31 14
+a44 14
+!
+  REAL(rp), INTENT(in) :: zetatan(:)   ! tangent zeta profle for input mmaf
+  REAL(rp), INTENT(in) :: phitan(:)    ! tangent phi profle for input mmaf
+!                                        (in radians)
+  REAL(rp), INTENT(in) :: scgeocalt(:) ! spacecraft geocentric altitude profile in km
+  type (Grids_T), INTENT(in) :: Grids_tmp  ! All Temperature's coordinates
+
+  REAL(rp), INTENT(in) :: ref_zeta(:) ! zetas for inputted gph's
+  REAL(rp), INTENT(in) :: ref_gph(:) ! reference geopotential heights along the
+!                          temperature horizontal basis in km
+  REAL(rp), INTENT(in) :: orb_inc    ! orbital incline angle in radians
+  REAL(rp), INTENT(in) :: elev_offset ! elevation offset in radians
+  REAL(rp), INTENT(in) :: req(:)  ! Earth radius in equivalent circle
+!                                ! at each phi value representation (km)
+d46 6
+a51 6
+  REAL(rp), OPTIONAL, INTENT(in) :: h2o_zeta_basis(:) ! h2o zeta basis
+  REAL(rp), OPTIONAL, INTENT(in) :: h2o_phi_basis(:) ! h2o phi basis
+  REAL(rp), OPTIONAL, INTENT(in) :: h2o_coeffs(:) ! h2o coefficients in long
+!                          vector format zetaXphi.
+  LOGICAL,  OPTIONAL, INTENT(in) :: lin_log ! representation type
+!
+a52 5
+!
+  REAL(rp), INTENT(out) :: tan_chi_out(:) ! computed tangent pointing angles
+!                               corrected for refraction in radians
+  REAL(rp), INTENT(out) :: dx_dh_out(:)   ! d(chi)/dh on the output grid
+  REAL(rp), INTENT(out) :: dhdz_out(:)    ! dh/dz on the output grid
+d54 8
+a61 3
+  REAL(rp), OPTIONAL, INTENT(out) :: dxdt_tan(:,:) ! computed dchi dt.
+  REAL(rp), OPTIONAL, INTENT(out) :: d2xdxdt_tan(:,:) ! computed d2chi dxdt.
+!
+a63 5
+!
+  INTEGER(i4) :: n_out, n_t_phi, n_t_zeta, n_h2o_zeta, n_h2o_phi
+  INTEGER(i4) :: sv_p, sv_z, ht_i
+!
+  REAL(rp) :: dhdz, q
+d65 16
+a80 13
+  REAL(rp), POINTER :: h_tan_out(:)
+  REAL(rp), POINTER :: t_tan_out(:)
+  REAL(rp), POINTER :: n_tan_out(:)
+  REAL(rp), POINTER :: h2o_tan_out(:)
+  REAL(rp), POINTER :: temp_tan(:,:)
+  REAL(rp), POINTER :: height_tan(:,:)
+  REAL(rp), POINTER :: dhdz_tan(:,:)
+  REAL(rp), POINTER :: dhdt_tan(:,:,:)
+  REAL(rp), POINTER :: d2hdhdt_tan(:,:,:)
+  REAL(rp), POINTER :: eta_t(:,:)
+  REAL(rp), POINTER :: eta_z(:,:)
+  REAL(rp), POINTER :: eta_p(:,:)
+!
+a81 25
+!
+  n_out = SIZE(zetatan)
+  n_t_phi = Grids_tmp%no_p(1)
+  n_t_zeta = Grids_tmp%no_z(1)
+!
+  NULLIFY(temp_tan,height_tan,dhdz_tan,dhdt_tan,d2hdhdt_tan,eta_t,h_tan_out, &
+        & t_tan_out,n_tan_out,eta_p,eta_z,h2o_tan_out)
+!
+  CALL allocate_test(temp_tan,n_out,n_t_phi,'temp_tan',ModuleName)
+  CALL allocate_test(height_tan,n_out,n_t_phi,'height_tan',ModuleName)
+  CALL allocate_test(dhdz_tan,n_out,n_t_phi,'dhdz_tan',ModuleName)
+  CALL allocate_test(dhdt_tan,n_out,n_t_zeta,n_t_phi,'dhdt_tan',ModuleName)
+  CALL allocate_test(d2hdhdt_tan,n_out,n_t_zeta,n_t_phi,'d2hdhdt_tan', &
+                   & ModuleName)
+  CALL allocate_test(eta_t,n_out,n_t_phi,'eta_t',ModuleName)
+  CALL allocate_test(h_tan_out,n_out,'h_tan_out',ModuleName)
+  CALL allocate_test(t_tan_out,n_out,'t_tan_out',ModuleName)
+  CALL allocate_test(n_tan_out,n_out,'n_tan_out',ModuleName)
+!
+  CALL two_d_hydrostatic(Grids_tmp,ref_zeta,ref_gph,zetatan,orb_inc, &
+           & temp_tan, height_tan, dhdz_tan, dhdt_tan,d2hdhdt_tan)
+!
+! tangent heights for inputted pressures along phi
+!
+  CALL get_eta_sparse(Grids_tmp%phi_basis, phitan, eta_t)
+d83 23
+a105 7
+  h_tan_out = SUM(height_tan * eta_t, dim=2)
+  t_tan_out = SUM(temp_tan * eta_t, dim=2)
+  dhdz_out = SUM(dhdz_tan * eta_t, dim=2)
+!
+! compute the tangent water vapor profile along inputted phi_tan
+!
+  IF (PRESENT(h2o_coeffs)) THEN
+d107 3
+a109 2
+    n_h2o_zeta = SIZE(h2o_zeta_basis)
+    n_h2o_phi  = SIZE(h2o_phi_basis)
+d111 2
+a112 3
+    CALL allocate_test(eta_p, n_out, n_h2o_phi, 'eta_p',ModuleName)
+    CALL allocate_test(eta_z, n_out, n_h2o_zeta, 'eta_z',ModuleName)
+    CALL allocate_test(h2o_tan_out, n_out, 'h2o_tan_out',ModuleName)
+a113 3
+    CALL get_eta_sparse(h2o_phi_basis, phitan, eta_p)
+    CALL get_eta_sparse(h2o_zeta_basis, zetatan, eta_z)
+!
+a114 8
+!
+    h2o_tan_out(:) = 0.0_rp
+    DO sv_p = 1, n_h2o_phi
+      DO sv_z = 1, n_h2o_zeta
+        q = h2o_coeffs(sv_z + n_h2o_zeta * (sv_p - 1))
+        h2o_tan_out = h2o_tan_out + q * eta_z(:,sv_z) * eta_p(:,sv_p)
+      ENDDO
+    ENDDO
+d116 11
+a126 2
+    IF (lin_log) h2o_tan_out = EXP(h2o_tan_out)
+!
+a127 3
+!
+    CALL refractive_index(10.0**(-zetatan), t_tan_out, n_tan_out, &
+                        & h2o_path=h2o_tan_out)
+d129 13
+a141 10
+    CALL deallocate_test(eta_p,'eta_p',ModuleName)
+    CALL deallocate_test(eta_z,'eta_z',ModuleName)
+    CALL deallocate_test(h2o_tan_out,'h2o_tan_out',ModuleName)
+!
+  ELSE
+!
+    CALL refractive_index(10.0**(-zetatan), t_tan_out, n_tan_out)
+!
+  ENDIF
+!
+d143 30
+a173 38
+  IF(PRESENT(dxdt_tan)) THEN
+!
+    dhdt_tan = dhdt_tan  * SPREAD(eta_t,2,n_t_zeta)
+    d2hdhdt_tan = d2hdhdt_tan * SPREAD(eta_t,2,n_t_zeta)
+    DO ht_i = 1, n_out
+      dhdz = dhdz_out(ht_i)
+      CALL get_chi_angles(scgeocalt(ht_i),n_tan_out(ht_i), &
+         & h_tan_out(ht_i),phitan(ht_i),Req(ht_i),elev_offset, &
+         & tan_chi_out(ht_i),q,dhdz,RESHAPE(dhdt_tan(ht_i,:,:),&
+         & (/n_t_zeta*n_t_phi/)),RESHAPE(d2hdhdt_tan(ht_i,:,:), &
+         & (/n_t_zeta*n_t_phi/)),dxdt_tan(ht_i,:),d2xdxdt_tan(ht_i,:))
+      dx_dh_out(ht_i) = q
+    ENDDO
+!
+   ELSE
+!
+    DO ht_i = 1, n_out
+      CALL get_chi_angles(scgeocalt(ht_i),n_tan_out(ht_i), &
+         & h_tan_out(ht_i),phitan(ht_i),Req(ht_i),elev_offset, &
+         & tan_chi_out(ht_i),dx_dh_out(ht_i),dhdz_out(ht_i))
+     ENDDO
+!
+  ENDIF
+!
+  CALL deallocate_test (temp_tan,'temp_tan',ModuleName)
+  CALL deallocate_test (height_tan,'height_tan',ModuleName)
+  CALL deallocate_test (dhdz_tan,'dhdz_tan',ModuleName)
+  CALL deallocate_test (dhdt_tan,'dhdt_tan',ModuleName)
+  CALL deallocate_test (d2hdhdt_tan,'dhdt_tan',ModuleName)
+  CALL deallocate_test (eta_t,'eta_t',ModuleName)
+  CALL deallocate_test (h_tan_out,'h_tan_out',ModuleName)
+  CALL deallocate_test (t_tan_out,'t_tan_out',ModuleName)
+  CALL deallocate_test (n_tan_out,'n_tan_out',ModuleName)
+!
+ END SUBROUTINE get_chi_out
+!
+END MODULE get_chi_out_m
+! $Log: get_chi_out_m.f90,v $
+@
+
+
+2.8
+log
+@Coor. switch (phi,z) -> (z,phi)
+@
+text
+@d13 1
+a13 1
+    & "$Id: get_chi_out_m.f90,v 2.7 2002/06/28 11:06:51 zvi Exp $"
+d38 2
+a39 2
+  REAL(rp), INTENT(in) :: req  ! Earth radius in equivalent circle
+!                                representation (km)
+d159 1
+a159 1
+         & h_tan_out(ht_i),phitan(ht_i),Req,elev_offset, &
+d170 1
+a170 1
+         & h_tan_out(ht_i),phitan(ht_i),Req,elev_offset, &
+d190 3
+@
+
+
+2.7
+log
+@computes dx_dh & dh_dz on output grid as well
+@
+text
+@d13 1
+a13 1
+    & "$Id: get_chi_out_m.f90,v 2.6 2002/06/24 21:11:24 zvi Exp $"
+d54 2
+a55 2
+  REAL(rp), OPTIONAL, INTENT(out) :: dxdt_tan(:,:,:) ! computed dchi dt.
+  REAL(rp), OPTIONAL, INTENT(out) :: d2xdxdt_tan(:,:,:) ! computed d2chi dxdt.
+d90 2
+a91 2
+  CALL allocate_test(dhdt_tan,n_out,n_t_phi,n_t_zeta,'dhdt_tan',ModuleName)
+  CALL allocate_test(d2hdhdt_tan,n_out,n_t_phi,n_t_zeta,'d2hdhdt_tan', &
+d154 2
+a155 2
+    dhdt_tan = dhdt_tan  * SPREAD(eta_t,3,n_t_zeta)
+    d2hdhdt_tan = d2hdhdt_tan * SPREAD(eta_t,3,n_t_zeta)
+d161 2
+a162 3
+         & (/n_t_phi,n_t_zeta/)), RESHAPE(d2hdhdt_tan(ht_i,:,:), &
+         & (/n_t_phi,n_t_zeta/)), dxdt_tan(ht_i,:,:), &
+         & d2xdxdt_tan(ht_i,:,:))
+d190 3
+@
+
+
+2.6
+log
+@Adding Grids_tmp stracture and modifying calling sequences
+@
+text
+@d13 1
+a13 1
+    & "$Id: get_chi_out_m.f90,v 2.2 2002/06/19 11:00:33 zvi Exp $"
+d20 4
+a23 3
+  SUBROUTINE get_chi_out(zetatan,phitan,scgeocalt,Grids_tmp,ref_zeta, &
+           & ref_gph,orb_inc,elev_offset,req,tan_chi_out,h2o_zeta_basis,&
+           & h2o_phi_basis,h2o_coeffs,lin_log,dxdt_tan,d2xdxdt_tan)
+d51 3
+d63 2
+d85 1
+a85 1
+  & t_tan_out,n_tan_out,eta_p,eta_z,h2o_tan_out)
+d104 1
+d107 1
+d112 1
+d115 1
+d118 2
+a119 2
+    CALL allocate_test(h2o_tan_out, n_out, 'h2o_tan_out', &
+    & ModuleName)
+d128 2
+a129 2
+        h2o_tan_out = h2o_tan_out + h2o_coeffs(sv_z - n_h2o_zeta &
+        & + n_h2o_zeta * sv_p) * eta_z(:,sv_z) * eta_p(:,sv_p)
+d132 1
+d138 2
+a139 1
+    & h2o_path = h2o_tan_out)
+d157 1
+d159 7
+a165 6
+          &    h_tan_out(ht_i),phitan(ht_i),Req,elev_offset, &
+          &    tan_chi_out(ht_i), RESHAPE(dhdt_tan(ht_i,:,:), &
+          &    (/n_t_phi,n_t_zeta/)), RESHAPE(d2hdhdt_tan(ht_i,:,:), &
+          &    (/n_t_phi,n_t_zeta/)), dxdt_tan(ht_i,:,:), &
+          &    d2xdxdt_tan(ht_i,:,:))
+     ENDDO
+d171 2
+a172 2
+          &    h_tan_out(ht_i),phitan(ht_i),Req,elev_offset, &
+          &    tan_chi_out(ht_i))
+d190 4
+a193 1
+! $Log: get_chi_angles_m.f90,v $
+@
+
+
+2.5
+log
+@Bug fixing and correcting Log entries
+@
+text
+@d13 1
+a13 1
+    & "$Id: get_chi_out_m.f90,v 2.4 2002/06/24 21:01:28 zvi Exp $"
+d176 3
+a178 6
+! $Log: get_chi_out_m.f90,v $
+! Revision 2.4  2002/06/24 21:01:28  zvi
+! Adding Grids_tmp stracture and modify calling sequences
+!
+! Revision 1.0  2002/06/24 14:59:00  bill
+! First release ...
+@
+
+
+2.4
+log
+@*** empty log message ***
+@
+text
+@d13 1
+a13 1
+    & "$Id: get_chi_out_m.f90,v 2.2 2002/06/19 11:00:33 zvi Exp $"
+d177 3
+@
+
+
+2.3
+log
+@resolved merge conflicts--wgr
+@
+text
+@d3 1
+d5 1
+a8 1
+  USE MLSCommon, only: I4, RP, IP
+d20 3
+a22 4
+  SUBROUTINE get_chi_out(zetatan,phitan,scgeocalt,temp_zeta_basis, &
+  & temp_phi_basis,temp_coeffs,ref_zeta,ref_gph,orb_inc,elev_offset, &
+  & req,tan_chi_out,h2o_zeta_basis,h2o_phi_basis,h2o_coeffs,lin_log, &
+  & dxdt_tan,d2xdxdt_tan)
+d30 2
+a31 4
+  REAL(rp), INTENT(in) :: temp_zeta_basis(:) ! temperature zeta basis
+  REAL(rp), INTENT(in) :: temp_phi_basis(:) ! temperature phi basis
+  REAL(rp), INTENT(in) :: temp_coeffs(:) ! temperature coefficients in long
+!                          vector format zetaXphi.
+a61 1
+  REAL(rp), POINTER :: dzdh_tan_out(:)
+d75 2
+a76 2
+  n_t_phi = SIZE(temp_phi_basis)
+  n_t_zeta = SIZE(temp_zeta_basis)
+d79 2
+a80 1
+  & t_tan_out,n_tan_out,eta_p,eta_z,h2o_tan_out,dzdh_tan_out)
+d92 2
+a93 4
+  CALL two_d_hydrostatic(temp_zeta_basis, temp_phi_basis, &
+  & RESHAPE(temp_coeffs, (/n_t_zeta,n_t_phi/)), ref_zeta, ref_gph, &
+  & zetatan, orb_inc, temp_tan, height_tan, dhdz_tan, dhdt_tan, &
+  & d2hdhdt_tan)
+d97 1
+a97 1
+  CALL get_eta_sparse(temp_phi_basis, phitan, eta_t)
+a143 4
+    CALL allocate_test(eta_z, n_out, n_t_zeta, 'eta_z',ModuleName)
+    CALL allocate_test(dzdh_tan_out,n_out,'n_tan_out',ModuleName)
+    dzdh_tan_out = 1.0 / SUM(dhdz_tan * eta_t, dim=2)
+    CALL get_eta_sparse(temp_zeta_basis, zetatan, eta_z)
+d149 5
+a153 9
+          &    (/n_t_phi,n_t_zeta/)), t_tan_out(ht_i), dzdh_tan_out(ht_i), &
+          &    RESHAPE(SPREAD(RESHAPE(eta_t(ht_i,:),(/n_t_phi/)),2,n_t_zeta) &
+          &   *SPREAD(RESHAPE(eta_z(ht_i,:), &
+          &    (/n_t_zeta/)),1,n_t_phi),(/n_t_phi,n_t_zeta/)),  &
+          &    dxdt_tan(ht_i,:,:),d2xdxdt_tan(ht_i,:,:))
+    ENDDO
+    CALL deallocate_test(eta_z,'eta_z',ModuleName)
+    CALL deallocate_test(dzdh_tan_out,'n_tan_out',ModuleName)
+  ELSE
+d176 3
+@
+
+
+2.2
+log
+@Removing debug statements, some cosmetic changes
+@
+text
+@d12 1
+a12 1
+    & "$Id: get_chi_out_m.f90,v 2.1 2002/06/07 04:52:38 bill Exp $"
+d64 1
+d82 1
+a82 2
+  & t_tan_out,n_tan_out,eta_p,eta_z,h2o_tan_out)
+!
+d148 4
+d157 9
+a165 5
+          &    (/n_t_phi,n_t_zeta/)), dxdt_tan(ht_i,:,:), &
+          &    d2xdxdt_tan(ht_i,:,:))
+     ENDDO
+!
+   ELSE
+@
+
+
+2.1
+log
+@new output pointing angle routine--wgr
+@
+text
+@d2 1
+a2 1
+  MODULE get_chi_out_m
+d12 1
+a12 1
+    & "$Id: get_chi_out_m.f90,v 1.00 2002/06/04 23:06:47 read Exp $"
+d16 3
+a18 2
+  !---------------------------------------------------------------------------
+  CONTAINS
+d23 1
+d25 1
+d49 1
+d54 1
+d57 1
+d60 1
+d73 1
+d75 1
+d79 1
+d82 1
+d88 1
+a88 1
+  & ModuleName)
+d93 1
+d98 1
+d100 1
+d104 1
+d106 1
+d116 1
+d118 1
+d127 1
+d129 1
+d135 1
+d137 1
+d139 1
+d141 1
+d143 1
+d145 1
+d156 1
+d158 1
+d164 1
+d166 14
+a179 11
+  CALL deallocate_test(temp_tan,'temp_tan',ModuleName)
+  CALL deallocate_test(height_tan,'height_tan',ModuleName)
+  CALL deallocate_test(dhdz_tan,'dhdz_tan',ModuleName)
+  CALL deallocate_test(dhdt_tan,'dhdt_tan',ModuleName)
+  CALL deallocate_test(d2hdhdt_tan,'dhdt_tan',ModuleName)
+  CALL deallocate_test(eta_t,'eta_t',ModuleName)
+  CALL deallocate_test(h_tan_out,'h_tan_out',ModuleName)
+  CALL deallocate_test(t_tan_out,'t_tan_out',ModuleName)
+  CALL deallocate_test(n_tan_out,'n_tan_out',ModuleName)
+  END SUBROUTINE get_chi_out
+  END MODULE get_chi_out_m
+@
+

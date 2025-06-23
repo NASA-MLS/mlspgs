@@ -1,0 +1,966 @@
+head	2.30;
+access;
+symbols
+	v5-02-NRT-19:2.30
+	v6-00:2.30
+	v5-02-NRT-18:2.30
+	v5-02:2.28
+	v5-01-NRT-17:2.30
+	v5-01-NRT-16:2.30
+	v5-01-NRT-15:2.29
+	v5-01-NRT-14:2.29
+	neuralnetworks-1-0:2.29.0.2
+	cfm-single-freq-0-1:2.28.0.8
+	v5-01:2.28
+	v5-00:2.28
+	v4-23-TA133:2.28.0.6
+	mus-emls-1-70:2.28.0.4
+	rel-1-0-englocks-work:2.28.0.2
+	VUMLS1-00:2.27
+	VPL1-00:2.27
+	V4-22-NRT-08:2.27
+	VAM1-00:2.26
+	V4-21:2.26.0.2
+	V4-13:2.26
+	V4-12:2.26
+	V4-11:2.26
+	V4-10:2.26
+	V3-43:2.24
+	M4-00:2.25
+	V3-41:2.24
+	V3-40-PlusGM57:2.24.0.2
+	V2-24-NRT-04:2.21
+	V3-33:2.24
+	V2-24:2.20
+	V3-31:2.24
+	V3-30-NRT-05:2.24
+	cfm-01-00:2.24
+	V3-30:2.24
+	V3-20:2.24
+	V3-10:2.24
+	V2-23-NRT-02:2.21
+	V2-23:2.20
+	V2-22-NRT-01:2.21
+	V2-22:2.20
+	V2-21:2.19
+	V2-20:2.19
+	V2-11:2.19
+	V2-10:2.19
+	V2-00:2.19
+	V1-51:2.14
+	V1-50:2.14
+	V1-45:2.14
+	V1-44:2.14
+	V1-43:2.14
+	V1-32:2.14
+	V1-31:2.14
+	V1-30:2.14
+	V1-13:2.11
+	V1-12:2.11
+	V1-11:2.11
+	V1-10:2.11
+	newfwm-feb03:2.11.0.2
+	V1-04:2.8
+	V1-03:2.8
+	V1-02:2.8
+	JointForwardModel:2.8.0.2
+	V1-00:2.7
+	newfwm-sep01:2.7.0.2
+	V0-7:2.7
+	V0-5-Level2:2.5
+	V0-5-SIPS:2.5;
+locks; strict;
+comment	@# @;
+
+
+2.30
+date	2022.03.16.22.20.55;	author pwagner;	state Exp;
+branches;
+next	2.29;
+
+2.29
+date	2020.12.22.22.21.01;	author pwagner;	state Exp;
+branches;
+next	2.28;
+
+2.28
+date	2017.07.10.18.53.23;	author pwagner;	state Exp;
+branches;
+next	2.27;
+
+2.27
+date	2016.01.29.00.48.54;	author pwagner;	state Exp;
+branches;
+next	2.26;
+
+2.26
+date	2014.03.26.17.45.49;	author pwagner;	state Exp;
+branches;
+next	2.25;
+
+2.25
+date	2012.04.05.20.13.01;	author pwagner;	state Exp;
+branches;
+next	2.24;
+
+2.24
+date	2009.06.23.18.46.18;	author pwagner;	state Exp;
+branches;
+next	2.23;
+
+2.23
+date	2008.12.18.22.00.01;	author pwagner;	state Exp;
+branches;
+next	2.22;
+
+2.22
+date	2008.05.08.19.18.22;	author pwagner;	state Exp;
+branches;
+next	2.21;
+
+2.21
+date	2008.01.08.00.18.48;	author pwagner;	state Exp;
+branches;
+next	2.20;
+
+2.20
+date	2007.01.10.00.02.54;	author pwagner;	state Exp;
+branches;
+next	2.19;
+
+2.19
+date	2006.06.15.17.35.32;	author pwagner;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2006.06.13.18.19.08;	author pwagner;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2006.01.19.00.31.02;	author pwagner;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2005.08.25.20.30.20;	author pwagner;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2005.06.22.18.57.02;	author pwagner;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2003.08.01.20.05.09;	author pwagner;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2003.07.16.21.50.53;	author pwagner;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2003.05.29.17.54.28;	author pwagner;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2002.10.08.17.36.22;	author pwagner;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2002.10.01.22.25.16;	author pwagner;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2002.10.01.20.19.06;	author bwknosp;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2002.04.06.00.11.18;	author pwagner;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2001.08.09.00.23.05;	author pwagner;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2001.05.30.22.54.59;	author pwagner;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2001.04.16.23.52.26;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2001.04.13.23.49.46;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2001.04.12.00.21.27;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2001.04.10.23.02.56;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.02.13.22.59.36;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.30
+log
+@Remove conflict between mlspcf_l2_param_CrashMsg and mlspcf_l2_param_col_spec_keys
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+! NOTE: This module is automatically created by the makemlspcfmodule
+!       perl script.  Do *NOT* attempt to modify this by hand.
+!
+
+MODULE MLSPCF2
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: MLSPCF2.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+   INTEGER, PARAMETER :: mlspcf_l2_param_InputVersion = 2000
+   INTEGER, PARAMETER :: mlspcf_l2_param_PGEVersion = 2001
+   INTEGER, PARAMETER :: mlspcf_l2_param_Cycle = 2002
+   INTEGER, PARAMETER :: mlspcf_l2_param_CCSDSStartId = 2003
+   INTEGER, PARAMETER :: mlspcf_l2_param_CCSDSEndId = 2004
+   INTEGER, PARAMETER :: mlspcf_l2_param_spec_keys = 2005
+   INTEGER, PARAMETER :: mlspcf_l2_param_spec_mcfnames = 2006
+   INTEGER, PARAMETER :: mlspcf_l2_param_switches = 2007
+   INTEGER, PARAMETER :: mlspcf_l2_param_col_spec_keys = 2008
+   INTEGER, PARAMETER :: mlspcf_l2_param_col_spec_mcfnames = 2009
+   INTEGER, PARAMETER :: mlspcf_l2_param_col_spec_doinames = 2010
+   INTEGER, PARAMETER :: mlspcf_l2_param_CrashMsg = 2011
+   !
+   INTEGER, PARAMETER :: mlspcf_pcf_start = 900
+   INTEGER, PARAMETER :: mlspcf_pcf_end = 900
+   !
+   INTEGER, PARAMETER :: mlspcf_mobile_l2cf_start = 901
+   INTEGER, PARAMETER :: mlspcf_mobile_l2cf_end = 905
+   !
+   INTEGER, PARAMETER :: mlspcf_nomen_start = 20000
+   INTEGER, PARAMETER :: mlspcf_nomen_end = 20000
+   !
+   INTEGER, PARAMETER :: mlspcf_antpats_start = 20001
+   INTEGER, PARAMETER :: mlspcf_antpats_end = 20001
+   !
+   INTEGER, PARAMETER :: mlspcf_filtshps_start = 20002
+   INTEGER, PARAMETER :: mlspcf_filtshps_end = 20002
+   !
+   INTEGER, PARAMETER :: mlspcf_dacsfltsh_start = 20003
+   INTEGER, PARAMETER :: mlspcf_dacsfltsh_end = 20003
+   !
+   INTEGER, PARAMETER :: mlspcf_ptggrids_start = 20004
+   INTEGER, PARAMETER :: mlspcf_ptggrids_end = 20004
+   !
+   INTEGER, PARAMETER :: mlspcf_pfa_start = 20005
+   INTEGER, PARAMETER :: mlspcf_pfa_end = 20024
+   !
+   INTEGER, PARAMETER :: mlspcf_IGRF_start = 20025
+   INTEGER, PARAMETER :: mlspcf_IGRF_end = 20025
+   !
+   INTEGER, PARAMETER :: mlspcf_ElevOffset_start = 20026
+   INTEGER, PARAMETER :: mlspcf_ElevOffset_end = 20026
+   !
+   INTEGER, PARAMETER :: mlspcf_IsoTopeRatio_start = 20027
+   INTEGER, PARAMETER :: mlspcf_IsoTopeRatio_end = 20027
+   !
+   INTEGER, PARAMETER :: mlspcf_SBFraction_start = 20028
+   INTEGER, PARAMETER :: mlspcf_SBFraction_end = 20028
+   !
+   INTEGER, PARAMETER :: mlspcf_SysTemperature_start = 20029
+   INTEGER, PARAMETER :: mlspcf_SysTemperature_end = 20029
+   !
+   INTEGER, PARAMETER :: mlspcf_NoiseBW_start = 20030
+   INTEGER, PARAMETER :: mlspcf_NoiseBW_end = 20030
+   !
+   INTEGER, PARAMETER :: mlspcf_Misc_start = 20031
+   INTEGER, PARAMETER :: mlspcf_Misc_end = 20031
+   !
+   INTEGER, PARAMETER :: mlspcf_MieTables_start = 20032
+   INTEGER, PARAMETER :: mlspcf_MieTables_end = 20032
+   !
+   INTEGER, PARAMETER :: mlspcf_spectroscopy_start = 20033
+   INTEGER, PARAMETER :: mlspcf_spectroscopy_end = 20033
+   !
+   INTEGER, PARAMETER :: mlspcf_surfaceHeight_start = 20034
+   INTEGER, PARAMETER :: mlspcf_surfaceHeight_end = 20034
+   !
+   INTEGER, PARAMETER :: mlspcf_l2pc_start = 20035
+   INTEGER, PARAMETER :: mlspcf_l2pc_end = 20099
+   !
+   INTEGER, PARAMETER :: mlspcf_l2apriori_start = 21000
+   INTEGER, PARAMETER :: mlspcf_l2apriori_end = 21049
+   !
+   INTEGER, PARAMETER :: mlspcf_mobile_l1b_rad_start = 21050
+   INTEGER, PARAMETER :: mlspcf_mobile_l1b_rad_end = 21109
+   !
+   INTEGER, PARAMETER :: mlspcf_mobile_l1b_oa_start = 21110
+   INTEGER, PARAMETER :: mlspcf_mobile_l1b_oa_end = 21139
+   !
+   INTEGER, PARAMETER :: mlspcf_polygon_start = 21150
+   INTEGER, PARAMETER :: mlspcf_polygon_end = 21150
+   !
+   INTEGER, PARAMETER :: mlspcf_l2ncep_start = 21900
+   INTEGER, PARAMETER :: mlspcf_l2ncep_end = 21999
+   !
+   INTEGER, PARAMETER :: mlspcf_l2geos5_start = 22000
+   INTEGER, PARAMETER :: mlspcf_l2geos5_end = 22099
+   !
+   INTEGER, PARAMETER :: mlspcf_l2dao_start = 22100
+   INTEGER, PARAMETER :: mlspcf_l2dao_end = 22199
+   !
+   INTEGER, PARAMETER :: mlspcf_l2clim_start = 22200
+   INTEGER, PARAMETER :: mlspcf_l2clim_end = 22249
+   !
+   INTEGER, PARAMETER :: mlspcf_l2neurnet_start = 22250
+   INTEGER, PARAMETER :: mlspcf_l2neurnet_end = 22299
+   !
+   INTEGER, PARAMETER :: mlspcf_l2ascii_start = 22300
+   INTEGER, PARAMETER :: mlspcf_l2ascii_end = 22399
+   !
+   INTEGER, PARAMETER :: mlspcf_mobile_l2gp_start = 30000
+   INTEGER, PARAMETER :: mlspcf_mobile_l2gp_end = 30569
+   !
+   INTEGER, PARAMETER :: mlspcf_mobile_l2dgg_start = 30570
+   INTEGER, PARAMETER :: mlspcf_mobile_l2dgg_end = 30599
+   !
+   INTEGER, PARAMETER :: mlspcf_mobile_l2dgm_start = 30600
+   INTEGER, PARAMETER :: mlspcf_mobile_l2dgm_end = 30629
+   !
+   INTEGER, PARAMETER :: mlspcf_mobile_l2fwm_full_start = 30630
+   INTEGER, PARAMETER :: mlspcf_mobile_l2fwm_full_end = 30659
+   !
+   INTEGER, PARAMETER :: mlspcf_mobile_mcf_l2log_start = 4000
+   INTEGER, PARAMETER :: mlspcf_mobile_mcf_l2log_end = 4000
+   !
+   INTEGER, PARAMETER :: mlspcf_mobile_mcf_l2gp_start = 4001
+   INTEGER, PARAMETER :: mlspcf_mobile_mcf_l2gp_end = 4021
+   !
+   INTEGER, PARAMETER :: mlspcf_mobile_mcf_l2dgg_start = 4022
+   INTEGER, PARAMETER :: mlspcf_mobile_mcf_l2dgg_end = 4022
+   !
+   INTEGER, PARAMETER :: mlspcf_mobile_mcf_l2dgm_start = 4023
+   INTEGER, PARAMETER :: mlspcf_mobile_mcf_l2dgm_end = 4023
+   !
+   include 'pcf2mob.f9h'
+contains 
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: MLSPCF2.f90,v 2.29 2020/12/22 22:21:01 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+END MODULE MLSPCF2
+
+! $Log: MLSPCF2.f90,v $
+! Revision 2.29  2020/12/22 22:21:01  pwagner
+! Reserved id nums for Neural Net Coefficient Files
+!
+! Revision 2.28  2017/07/10 18:53:23  pwagner
+! Added mlspcf_l2ascii_start, mlspcf_l2ascii_end
+!
+! Revision 2.27  2016/01/29 00:48:54  pwagner
+! Added Polygon file
+!
+! Revision 2.26  2014/03/26 17:45:49  pwagner
+! Added ProductionLocation, identifier_product_DOI to attributes
+!
+! Revision 2.25  2012/04/05 20:13:01  pwagner
+! Added ids for igrf and other parameter files
+!
+! Revision 2.24  2009/06/23 18:46:18  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.23  2008/12/18 22:00:01  pwagner
+! Added print to not_used_here
+!
+! Revision 2.22  2008/05/08 19:18:22  pwagner
+! added Mie Tables entries
+!
+! Revision 2.21  2008/01/08 00:18:48  pwagner
+! Levels 1 and 2 can use same shared PCF now
+!
+! Revision 2.20  2007/01/10 00:02:54  pwagner
+! Made PCF entries for spectroscopy and surfaceHeight files
+!
+! Revision 2.19  2006/06/15 17:35:32  pwagner
+! Increased max num of l2pc from 30 to 65
+!
+! Revision 2.18  2006/06/13 18:19:08  pwagner
+! Added pcfids for geos5; moved ncep pcfids backwards to make room
+!
+! Revision 2.17  2006/01/19 00:31:02  pwagner
+! Set aside range for pfa files, col_spec_keys and _hash
+!
+! Revision 2.16  2005/08/25 20:30:20  pwagner
+! Restored larger mlspcf_l2gp_end--better way to limit warnings found
+!
+! Revision 2.15  2005/06/22 18:57:02  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.14  2003/08/01 20:05:09  pwagner
+! Lowered mlspcf_l2gp_end to limit toolkit warnings
+!
+! Revision 2.13  2003/07/16 21:50:53  pwagner
+! Added mlspcf_dacsfltsh_start, _end
+!
+! Revision 2.12  2003/05/29 17:54:28  pwagner
+! Able to read dao, ncep files w/o knowing name fragment
+!
+! Revision 2.11  2002/10/08 17:36:22  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.10  2002/10/01 22:25:16  pwagner
+! Fixed RCS Ident Block
+!
+! Revision 2.9  2002/10/01 20:19:06  bwknosp
+! Added Id, RCS, and Log info
+!
+@
+
+
+2.29
+log
+@Reserved id nums for Neural Net Coefficient Files
+@
+text
+@d33 1
+d151 1
+a151 1
+       "$Id: MLSPCF2.f90,v 2.28 2017/07/10 18:53:23 pwagner Exp $"
+d161 3
+@
+
+
+2.28
+log
+@Added mlspcf_l2ascii_start, mlspcf_l2ascii_end
+@
+text
+@d113 4
+a116 1
+   INTEGER, PARAMETER :: mlspcf_l2clim_end = 22299
+d150 1
+a150 1
+       "$Id: MLSPCF2.f90,v 2.27 2016/01/29 00:48:54 pwagner Exp $"
+d160 3
+@
+
+
+2.27
+log
+@Added Polygon file
+@
+text
+@d115 3
+d147 1
+a147 1
+       "$Id: MLSPCF2.f90,v 2.26 2014/03/26 17:45:49 pwagner Exp $"
+d157 3
+@
+
+
+2.26
+log
+@Added ProductionLocation, identifier_product_DOI to attributes
+@
+text
+@d100 3
+d144 1
+a144 1
+       "$Id: MLSPCF2.f90,v 2.25 2012/04/05 20:13:01 pwagner Exp $"
+d154 3
+@
+
+
+2.25
+log
+@Added ids for igrf and other parameter files
+@
+text
+@d28 1
+a28 1
+   INTEGER, PARAMETER :: mlspcf_l2_param_spec_hash = 2006
+d31 2
+a32 1
+   INTEGER, PARAMETER :: mlspcf_l2_param_col_spec_hash = 2009
+d141 1
+a141 1
+       "$Id: MLSPCF2.f90,v 2.24 2009/06/23 18:46:18 pwagner Exp $"
+d151 3
+@
+
+
+2.24
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d18 1
+a18 1
+       "$RCSfile: $"
+d55 22
+a76 1
+   INTEGER, PARAMETER :: mlspcf_pfa_end = 20031
+a122 3
+   INTEGER, PARAMETER :: mlspcf_mobile_l2parsf_start = 30660
+   INTEGER, PARAMETER :: mlspcf_mobile_l2parsf_end = 30660
+   !
+d140 1
+a140 1
+       "$Id: read_apriori.f90 is it here $"
+d150 3
+@
+
+
+2.23
+log
+@Added print to not_used_here
+@
+text
+@d18 1
+a18 1
+       "$RCSfile: MLSPCF2.f90,v $"
+d119 1
+a120 1
+!---------------------------- RCS Ident Info -------------------------------
+d122 2
+a123 3
+       "$Id: MLSPCF2.f90,v 2.22 2008/05/08 19:18:22 pwagner Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d125 1
+a125 1
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
+d127 1
+d132 3
+@
+
+
+2.22
+log
+@added Mie Tables entries
+@
+text
+@d122 1
+a122 1
+       "$Id: MLSPCF2.f90,v 2.21 2008/01/08 00:18:48 pwagner Exp $"
+d126 1
+d132 3
+@
+
+
+2.21
+log
+@Levels 1 and 2 can use same shared PCF now
+@
+text
+@d55 4
+a58 1
+   INTEGER, PARAMETER :: mlspcf_pfa_end = 20032
+d122 1
+a122 1
+       "$Id: MLSPCF2.f90,v 2.20 2007/01/10 00:02:54 pwagner Exp $"
+d131 3
+@
+
+
+2.20
+log
+@Made PCF entries for spectroscopy and surfaceHeight files
+@
+text
+@d36 2
+a37 2
+   INTEGER, PARAMETER :: mlspcf_l2cf_start = 901
+   INTEGER, PARAMETER :: mlspcf_l2cf_end = 905
+d69 2
+a70 2
+   INTEGER, PARAMETER :: mlspcf_l1b_rad_start = 21050
+   INTEGER, PARAMETER :: mlspcf_l1b_rad_end = 21109
+d72 2
+a73 2
+   INTEGER, PARAMETER :: mlspcf_l1b_oa_start = 21110
+   INTEGER, PARAMETER :: mlspcf_l1b_oa_end = 21139
+d87 2
+a88 2
+   INTEGER, PARAMETER :: mlspcf_l2gp_start = 30000
+   INTEGER, PARAMETER :: mlspcf_l2gp_end = 30569
+d90 2
+a91 2
+   INTEGER, PARAMETER :: mlspcf_l2dgg_start = 30570
+   INTEGER, PARAMETER :: mlspcf_l2dgg_end = 30599
+d93 2
+a94 2
+   INTEGER, PARAMETER :: mlspcf_l2dgm_start = 30600
+   INTEGER, PARAMETER :: mlspcf_l2dgm_end = 30629
+d96 2
+a97 2
+   INTEGER, PARAMETER :: mlspcf_l2fwm_full_start = 30630
+   INTEGER, PARAMETER :: mlspcf_l2fwm_full_end = 30659
+d99 2
+a100 2
+   INTEGER, PARAMETER :: mlspcf_l2parsf_start = 30660
+   INTEGER, PARAMETER :: mlspcf_l2parsf_end = 30660
+d102 2
+a103 2
+   INTEGER, PARAMETER :: mlspcf_mcf_l2log_start = 4000
+   INTEGER, PARAMETER :: mlspcf_mcf_l2log_end = 4000
+d105 2
+a106 2
+   INTEGER, PARAMETER :: mlspcf_mcf_l2gp_start = 4001
+   INTEGER, PARAMETER :: mlspcf_mcf_l2gp_end = 4021
+d108 2
+a109 2
+   INTEGER, PARAMETER :: mlspcf_mcf_l2dgg_start = 4022
+   INTEGER, PARAMETER :: mlspcf_mcf_l2dgg_end = 4022
+d111 2
+a112 2
+   INTEGER, PARAMETER :: mlspcf_mcf_l2dgm_start = 4023
+   INTEGER, PARAMETER :: mlspcf_mcf_l2dgm_end = 4023
+d114 1
+d119 1
+a119 1
+       "$Id: MLSPCF2.f90,v 2.19 2006/06/15 17:35:32 pwagner Exp $"
+d128 3
+@
+
+
+2.19
+log
+@Increased max num of l2pc from 30 to 65
+@
+text
+@d55 7
+a61 1
+   INTEGER, PARAMETER :: mlspcf_pfa_end = 20034
+d118 1
+a118 1
+       "$Id: MLSPCF2.f90,v 2.18 2006/06/13 18:19:08 pwagner Exp $"
+d127 3
+@
+
+
+2.18
+log
+@Added pcfids for geos5; moved ncep pcfids backwards to make room
+@
+text
+@d58 1
+a58 1
+   INTEGER, PARAMETER :: mlspcf_l2pc_end = 20064
+d112 1
+a112 1
+       "$Id: MLSPCF2.f90,v 2.17 2006/01/19 00:31:02 pwagner Exp $"
+d121 3
+@
+
+
+2.17
+log
+@Set aside range for pfa files, col_spec_keys and _hash
+@
+text
+@d69 5
+a73 2
+   INTEGER, PARAMETER :: mlspcf_l2ncep_start = 22000
+   INTEGER, PARAMETER :: mlspcf_l2ncep_end = 22099
+d112 1
+a112 1
+       "$Id: MLSPCF2.f90,v 2.16 2005/08/25 20:30:20 pwagner Exp $"
+d121 3
+@
+
+
+2.16
+log
+@Restored larger mlspcf_l2gp_end--better way to limit warnings found
+@
+text
+@d30 2
+d54 2
+a55 2
+   INTEGER, PARAMETER :: mlspcf_clouds_start = 20005
+   INTEGER, PARAMETER :: mlspcf_clouds_end = 20034
+d79 1
+a79 2
+   !INTEGER, PARAMETER :: mlspcf_l2gp_end = 30029   ! Otherwise more toolkit msgs
+   INTEGER, PARAMETER :: mlspcf_l2gp_end = 30569 ! warning "id not found"
+d109 1
+a109 1
+       "$Id: MLSPCF2.f90,v 2.15 2005/06/22 18:57:02 pwagner Exp $"
+d118 3
+@
+
+
+2.15
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d18 1
+a18 1
+       "$RCSfile: $"
+d77 2
+a78 2
+   INTEGER, PARAMETER :: mlspcf_l2gp_end = 30029   ! Otherwise more toolkit msgs
+   ! INTEGER, PARAMETER :: mlspcf_l2gp_end = 30569 ! warning "id not found"
+d108 1
+a108 1
+       "$Id: $"
+d117 3
+@
+
+
+2.14
+log
+@Lowered mlspcf_l2gp_end to limit toolkit warnings
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d16 3
+a18 6
+  !---------------------------- RCS Ident Info -------------------------------
+  character(len=*), private, parameter :: IdParm = &
+    & "$Id: MLSPCF2.f90,v 2.13 2003/07/16 21:50:53 pwagner Exp $"
+  character(len=len(idparm)), private :: Id = idParm
+  character(len=*), private, parameter :: ModuleName = &
+       & "$RCSfile: MLSPCF2.f90,v $"
+d20 1
+a20 1
+  !---------------------------------------------------------------------------
+d106 5
+d117 3
+@
+
+
+2.13
+log
+@Added mlspcf_dacsfltsh_start, _end
+@
+text
+@d10 1
+a10 1
+    & "$Id: MLSPCF2.f90,v 2.12 2003/05/29 17:54:28 pwagner Exp $"
+d72 2
+a73 1
+   INTEGER, PARAMETER :: mlspcf_l2gp_end = 30569
+d107 3
+@
+
+
+2.12
+log
+@Able to read dao, ncep files w/o knowing name fragment
+@
+text
+@d10 1
+a10 1
+    & "$Id: MLSPCF2.f90,v 2.11 2002/10/08 17:36:22 pwagner Exp $"
+d41 2
+a42 2
+   INTEGER, PARAMETER :: mlspcf_ptggrids_start = 20003
+   INTEGER, PARAMETER :: mlspcf_ptggrids_end = 20003
+d44 2
+a45 2
+   INTEGER, PARAMETER :: mlspcf_clouds_start = 20004
+   INTEGER, PARAMETER :: mlspcf_clouds_end = 20033
+d47 5
+a51 2
+   INTEGER, PARAMETER :: mlspcf_l2pc_start = 20034
+   INTEGER, PARAMETER :: mlspcf_l2pc_end = 20063
+d106 3
+@
+
+
+2.11
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d10 1
+a10 1
+    & "$Id: MLSPCF2.f90,v 2.10 2002/10/01 22:25:16 pwagner Exp $"
+d59 9
+d80 3
+d103 3
+@
+
+
+2.10
+log
+@Fixed RCS Ident Block
+@
+text
+@d10 1
+a10 1
+    & "$Id: SDPToolkit.f90,v 2.11 2002/10/01 22:03:55 pwagner Exp $"
+d13 2
+a14 1
+       & "$RCSfile: SDPToolkit.f90,v $"
+d83 5
+d91 3
+@
+
+
+2.9
+log
+@Added Id, RCS, and Log info
+@
+text
+@d7 8
+a14 5
+!------------------- RCS Ident Info -----------------------
+   CHARACTER(LEN=130) :: Id = &
+   "$Id: MLSPCF2.f90,v 2.9 2002/10/01 20:08:48 bwknosp Exp $"
+    & "$RCSfile: MLSPCF2.f90,v $"
+!----------------------------------------------------------
+a15 1
+MODULE MLSPCF2
+d84 4
+a87 1
+! $Log: MLSPCF2.f90,v $@
+
+
+2.8
+log
+@Combined pcf numbers for dao, ncep, clim, l2gp into apriori
+@
+text
+@d6 7
+d81 2
+@
+
+
+2.7
+log
+@pcf param for extra switches added; read
+@
+text
+@d37 2
+a38 2
+   INTEGER, PARAMETER :: mlspcf_l2ncep_start = 21000
+   INTEGER, PARAMETER :: mlspcf_l2ncep_end = 21019
+d40 2
+a41 5
+   INTEGER, PARAMETER :: mlspcf_l2dao_start = 21020
+   INTEGER, PARAMETER :: mlspcf_l2dao_end = 21039
+   !
+   INTEGER, PARAMETER :: mlspcf_l2clim_start = 21040
+   INTEGER, PARAMETER :: mlspcf_l2clim_end = 21049
+@
+
+
+2.6
+log
+@Added 3 fwdmdl global input files
+@
+text
+@d14 1
+@
+
+
+2.5
+log
+@Gave up penalty to MLSL2Options
+@
+text
+@d24 12
+@
+
+
+2.4
+log
+@Allows more l2gp mcfs
+@
+text
+@a62 4
+
+   ! Change the following to 1 before delivering to sids;
+   ! when set to 0, it allows program to run w/o creating metadata
+   integer, parameter :: PENALTY_FOR_NO_METADATA = 0
+@
+
+
+2.3
+log
+@Renamed OutputVersion to PGEVersion
+@
+text
+@d55 1
+a55 1
+   INTEGER, PARAMETER :: mlspcf_mcf_l2gp_end = 4017
+d57 2
+a58 2
+   INTEGER, PARAMETER :: mlspcf_mcf_l2dgg_start = 4018
+   INTEGER, PARAMETER :: mlspcf_mcf_l2dgg_end = 4018
+d60 2
+a61 2
+   INTEGER, PARAMETER :: mlspcf_mcf_l2dgm_start = 4019
+   INTEGER, PARAMETER :: mlspcf_mcf_l2dgm_end = 4019
+@
+
+
+2.2
+log
+@Added penalty, more parameters
+@
+text
+@d8 1
+a8 1
+   INTEGER, PARAMETER :: mlspcf_l2_param_OutputVersion = 2001
+@
+
+
+2.1
+log
+@l2 modules can only use MLSPCF2
+@
+text
+@d12 2
+d63 4
+@
+

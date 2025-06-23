@@ -1,0 +1,140 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.12
+	cfm-single-freq-0-1:1.1.0.10
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.8
+	mus-emls-1-70:1.1.0.6
+	rel-1-0-englocks-work:1.1.0.4
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.2
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2014.01.14.00.15.11;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit of new module for new LR
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Trace
+
+  ! Print trace beginnings and ends
+
+  implicit NONE
+  private
+
+  public :: Trace_Begin, Trace_Begin_Array, Trace_End
+
+  integer, private :: Depth = -1
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: analyz.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  subroutine Trace_Begin_Array ( Who, Number, Text, For )
+    use Output_m, only: NewLine, Output
+    character(len=*), intent(in) :: Who
+    integer, intent(in), optional :: Number(:)
+    character(len=*), intent(in), optional :: Text
+    character(len=*), intent(in), optional :: For
+    integer :: I
+    depth = depth + 1
+    call output ( repeat('.',max(depth,0)) )
+    call output ( 'Enter ' )
+    call output ( trim(who) )
+    if ( present(for) ) call output ( for )
+    if ( present(text) ) call output ( text )
+    if ( present(number) ) then
+      do i = 1, size(number)
+        call output ( number(i), before=' ' )
+      end do
+    end if
+    call newLine
+  end subroutine Trace_Begin_Array
+
+  subroutine Trace_Begin ( Who, Number, Text, For )
+    use Output_m, only: NewLine, Output
+    character(len=*), intent(in) :: Who
+    integer, intent(in), optional :: Number
+    character(len=*), intent(in), optional :: Text
+    character(len=*), intent(in), optional :: For
+    depth = depth + 1
+    call output ( repeat('.',max(depth,0)) )
+    call output ( 'Enter ' )
+    call output ( trim(who) )
+    if ( present(for) ) call output ( for )
+    if ( present(text) ) call output ( text )
+    if ( present(number) ) call output ( number )
+    call newLine
+  end subroutine Trace_Begin
+
+  subroutine Trace_End ( Who, Number, Text )
+    use Output_m, only: NewLine, Output
+    character(len=*), intent(in) :: Who
+    integer, intent(in), optional :: Number
+    character(len=*), intent(in), optional :: Text
+    call output ( repeat('.',max(depth,0)) )
+    depth = depth - 1
+    call output ( 'Exit  ' )
+    call output ( trim(who) )
+    if ( present(text) ) call output ( text )
+    if ( present(number) ) call output ( number )
+    call newLine
+  end subroutine Trace_End
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: analyz.f90,v 1.2 2013/12/12 01:53:00 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Trace
+
+! $Log: analyz.f90,v $
+@

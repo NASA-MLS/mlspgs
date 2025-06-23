@@ -1,0 +1,752 @@
+head	2.8;
+access;
+symbols
+	v5-02-NRT-19:2.8
+	v6-00:2.8
+	v5-02-NRT-18:2.8
+	v5-02:2.8
+	v5-01-NRT-17:2.8
+	v5-01-NRT-16:2.8
+	v5-01-NRT-15:2.8
+	v5-01-NRT-14:2.8
+	neuralnetworks-1-0:2.8.0.14
+	cfm-single-freq-0-1:2.8.0.12
+	v5-01:2.8
+	v5-00:2.8
+	v4-23-TA133:2.8.0.10
+	mus-emls-1-70:2.8.0.8
+	rel-1-0-englocks-work:2.8.0.6
+	VUMLS1-00:2.8
+	VPL1-00:2.8
+	V4-22-NRT-08:2.8
+	VAM1-00:2.8
+	V4-21:2.8.0.4
+	V4-13:2.8
+	V4-12:2.8
+	V4-11:2.8
+	V4-10:2.8
+	V3-43:2.8
+	M4-00:2.8
+	V3-41:2.8
+	V3-40-PlusGM57:2.8.0.2
+	V2-24-NRT-04:2.4
+	V3-33:2.8
+	V2-24:2.4
+	V3-31:2.8
+	V3-30-NRT-05:2.8
+	cfm-01-00:2.8
+	V3-30:2.8
+	V3-20:2.8
+	V3-10:2.7
+	V2-23-NRT-02:2.4
+	V2-23:2.4
+	V2-22-NRT-01:2.4
+	V2-22:2.4
+	V2-21:2.2
+	V2-20:2.2
+	V2-11:2.2
+	V2-10:2.2
+	V2-00:2.2
+	V1-51:2.1
+	V1-50:2.1
+	V1-45:2.1
+	V1-44:2.1
+	V1-43:2.1
+	V1-32:2.1
+	V1-31:2.1
+	V1-30:2.1
+	V1-13:2.1
+	V1-12:2.1
+	V1-11:2.1
+	V1-10:2.1
+	newfwm-feb03:2.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+2.8
+date	2010.02.04.23.09.28;	author vsnyder;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2009.06.23.18.26.10;	author pwagner;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2008.04.19.01.07.24;	author vsnyder;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2008.02.29.01.59.11;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2007.10.05.23.59.54;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2007.06.21.00.52.54;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2005.06.22.18.08.19;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2003.01.31.18.35.55;	author jonathan;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.8
+log
+@Use kind= in CMPLX
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module RefractiveIndex
+
+!==================================================================
+! COMPUTE COMPLEX REFRACTIVE INDEX OF WATER DROPS AND ICE PARTICLES
+!
+!* T  ---- TEMPERATURE IN  K                          ++ INPUT    *
+!* F  ---- FREQUENCY  IN  GHZ                         ++ INPUT    *
+!* E  ---- REFRACTIVE INDEX (E=M**2)                  ++ OUTPUT   *
+!==================================================================
+
+  implicit none
+
+  public :: UKSUB     ! For Water
+  public :: UKISUB    ! For Ice
+  public :: UKISUB_dT ! For Ice, with temperature derivative
+
+  interface UKISUB_dT
+    module procedure UKISUB_dT_, UKISUB_dT_2
+  end interface
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: RefractiveIndex.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  pure subroutine UKSUB ( F, T, M )  ! For Water
+    !-----------------------
+    use MLSKinds, only: r8
+    real(r8), intent(in) :: F, T         ! GHz, K
+    complex(r8), intent(out) :: M
+    real(r8) :: th, fp, fs, e0, x, y     ! Liebe
+    real(r8), parameter :: e1=5.48_r8    ! Liebe
+    real(r8), parameter :: e2=3.51_r8    ! Liebe
+!    real(r8) :: A, BV, C, E1_Lu, O0, O1, O2, R, S, Wl, X1, X2, XS, XC ! Lu
+
+    th = 300.0/t - 1.0
+
+!... from Liebe (1989)
+
+    fp = 20.09 - (142.4 - 294*th)*th
+    fs = 590.0 - 1500.0*th
+    e0 = 77.66 + 103.3*th
+    x = (e0-e1)/(1+(f/fp)**2) + (e1-e2)/(1+(f/fs)**2) + e2
+    y = -( (e0-e1)*f/(fp*(1+(f/fp)**2)) + (e1-e2)*f/(fs*(1+(f/fs)**2)) )
+
+!... Lu
+!    wl=30./f
+!    C=max(max(T,233.15)-273.16,-50.0)
+!    E0=5.27137+(0.0216474-0.00131198*C)*C
+!    A=-16.8129/(C+273.)+0.0609265
+!    S=12.5664E+08
+!    R=0.00033836*EXP(2513.98/(C+273.))
+!    e1_Lu=78.54*(1.0-4.579E-3*(C-25.)+1.19E-5*(C-25.)**2-2.8E-8*(C-25.)**3)
+!    X1=(R/WL)**(1.0-A)
+!    XX=X1*X1
+!    X2=A*PAI/2
+!    XS=ASIN(X2)
+!    XC=ACOS(X2)
+!    BV=18.8496E+10
+!    O1=(e1_Lu-E0)*(1.0+X1*XS)
+!    O2=(e1_Lu-E0)*X1*XC
+!    O0=1.0+2.0*X1*XS+XX
+!    X=E0+O1/O0
+!    Y=-( S*WL/BV+O2/O0 )
+    m=sqrt(cmplx(x,y,kind=r8))
+
+  end subroutine UKSUB
+
+  pure subroutine UKISUB ( F, T, M )  ! For Ice
+    ! ----------------------
+    use Constants, only: Pi
+    use MLSKinds, only: r8
+    real(r8), intent(in) :: F, T         ! GHz, K
+    complex(r8), intent(out) :: M
+    real(r8) :: a, b, th, x, y           ! Hufford
+!    real(r8), parameter :: c=1.16e-11_r8 ! Mishima
+!    real(r8), parameter :: c = 6.543036549e-12 ! 1.11e-6/(30.0**3*2*pi) ! Dong Wu
+    real(r8), parameter :: c = 1.11e-6/(30.0**3*2*pi) ! Dong Wu
+
+    th = 300.0/t
+
+    x = 3.15_r8
+
+!{ from George Hufford, \emph{A model for the complex permittivity if
+!  ice at frequencies below 1 THz}, {\bf International Journal of
+!  Infrared and Millimeter Waves 12}, 7 (1991):\\
+!  $\beta(T) = (0.445 \times 10^{-4} + 0.00211 \times 10^{-4} T )
+!            + 0.585 \times 10^{-4} / ( 1 - T / 29.1 )^2$ GHz$^{-1}$
+!  (T in degrees Celsius) =
+!             $0.00211 \times 10^{-4} T - 0.131 \times 10^{-4}
+!            + \frac{0.04947229919}{(302.2061046 - T)^2}$ (T in degrees Kelvin).
+!  In terms of $\theta = 300/T$
+!  (T in degrees Kelvin):
+!  $\beta(T) = \frac{0.633 \times 10^{-4}} \theta - 0.131 \times 10^{-4}
+!            + \left(\frac{7.36 \times 10^{-4} \theta}
+!                         {\theta - 0.9927} \right)^2$.
+
+    a = (50.4e-4 + 62.0e-4*(th-1)) * exp(-22.1*(th-1.))
+!    b = 0.633e-4/th-0.131e-4 + (7.36e-4*th/(th-0.9927))**2
+    b = 0.00211e-4 * t - 0.131e-4 + 0.04947229919/(302.2061046 - t)**2
+!    y = -( a/f+b*f )
+
+!... additional term from Mishima, as derived by Jonathan Jiang
+
+!    y = -( a/f + b*f + c*f**3 )
+
+!... and then modified by Dong Wu (2007-12-05)
+
+    y = -( a/f + f*(b + c*f*f*sqrt(x)) )
+
+    m = sqrt(cmplx(x,y,kind=r8))
+
+  end subroutine UKISUB
+
+  pure subroutine UKISUB_dT_ ( F, T, M, dM_dT )  ! For Ice
+    ! ----------------------
+    use Constants, only: Pi
+    use MLSKinds, only: r8
+    real(r8), intent(in) :: F, T         ! GHz, K
+    complex(r8), intent(out) :: M, dM_dT
+    real(r8) :: a, b, th, x, y           ! Hufford
+!    real(r8), parameter :: c=1.16e-11_r8 ! Mishima
+!    real(r8), parameter :: c = 6.543036549e-12 ! 1.11e-6/(30.0**3*2*pi) ! Dong Wu
+    real(r8), parameter :: c = 1.11e-6/(30.0**3*2*pi) ! Dong Wu
+
+    real(r8) :: da_dT, db_dt, de_dt, eth ! exp(-22.1*(th-1.))
+
+    th = 300.0/t
+
+    x = 3.15_r8
+
+!  from George Hufford, \emph{A model for the complex permittivity if
+!  ice at frequencies below 1 THz}, {\bf International Journal of
+!  Infrared and Millimeter Waves 12}, 7 (1991):\\
+!  $\beta(T) = (0.445 \times 10^{-4} + 0.00211 \times 10^{-4} T )
+!            + 0.585 \times 10^{-4} / ( 1 - T / 29.1 )^2$ GHz$^{-1}$
+!  (T in degrees Celsius) =
+!             $0.00211 \times 10^{-4} T - 0.131 \times 10^{-4}
+!            + \frac{0.04947229919}{(302.2061046 - T)^2}$ (T in degrees Kelvin).
+!  In terms of $\theta = 300/T$
+!  (T in degrees Kelvin):
+!  $\beta(T) = \frac{0.633 \times 10^{-4}} \theta - 0.131 \times 10^{-4}
+!            + \left(\frac{7.36 \times 10^{-4} \theta}
+!                         {\theta - 0.9927} \right)^2$.
+
+!{ From this
+! \begin{equation*}\begin{split}
+! \frac{\partial \epsilon}{\partial T} =\,&
+!  -i \left( \frac1f \frac{\partial a}{\partial T} +
+!   f \frac{\partial b}{\partial T} \right) \text{ where}\\
+! \frac{\partial a}{\partial T} =\,&
+!  \left( 62\times 10^{-4} \exp(-22.1(\theta-1)) -
+!  22.1(50.4 + 62(\theta-1)) 10^{-4} \exp(-22.1(\theta-1)) \right)
+!  \frac{\partial \theta}{\partial T} \\
+!  =\,& (0.031836-0.13702\, \theta)\, \exp(-22.1(\theta-1))
+!    \frac{\partial \theta}{\partial T} \\
+! \frac{\partial b}{\partial T} =\,&
+!  2.11 \times 10^{-7} + 2 \frac{0.04947229919}{(302.2061046 - T)^3} \\
+! \frac{\partial \theta}{\partial T} =\,& -\frac{300}{T^2} = -\frac\theta{T}
+! \end{split}\end{equation*}
+!%
+! Since $m = \sqrt{\epsilon}$ and $\frac{\partial\epsilon}{\partial T}$ is
+! pure imaginary,
+! \begin{equation*}
+!  \frac{\partial m}{\partial T} =
+!   \frac1{2m}\, \frac{\partial \epsilon}{\partial T} =
+!   {m^*}\, \frac1{2|m|^2}\, \frac{\partial \epsilon}{\partial T} =
+!   -\frac1{2|m|^2} \Im \frac{\partial\epsilon}{\partial T}
+!    ( \Im m + i \Re m)
+! \end{equation*}
+
+    eth = exp(-22.1*(th-1.))
+    a = (50.4e-4 + 62.0e-4*(th-1)) * eth
+!    b = 0.633e-4/th-0.131e-4 + (7.36e-4*th/(th-0.9927))**2
+    b = 2.11e-7 * t - 0.131e-4 + 0.04947229919/(302.2061046 - t)**2
+!    y = -( a/f+b*f )
+
+!... additional term from Mishima, as derived by Jonathan Jiang
+
+!    y = -( a/f + b*f + c*f**3 )
+
+!... and then modified by Dong Wu (2007-12-05)
+
+    y = -( a/f + f*(b + c*f*f*sqrt(x)) )
+
+    m = sqrt(cmplx(x,y,kind=r8))
+
+    da_dT = -( 0.031836 - 0.13702 * th ) * th/T * eth
+    db_dT = 2.11e-7 + 0.09894459838 / ( 302.2061046 - t )**3
+    de_dt = -( da_dt / f + f * db_dt ) ! pure imaginary
+    dm_dt = ( 0.5 / m ) * cmplx(0.0_r8,de_dt,kind=r8)
+
+  end subroutine UKISUB_dT_
+
+!  pure &
+  subroutine UKISUB_dT_2 ( F, T, M, dM_dT, Y, dE_dT )  ! For Ice
+    ! ----------------------
+    use Constants, only: Pi
+    use MLSKinds, only: r8
+    real(r8), intent(in) :: F, T         ! GHz, K
+    complex(r8), intent(out) :: M, dM_dT
+    real(r8), intent(out) :: Y, dE_dT
+    real(r8) :: a, b, th, x              ! Hufford
+!    real(r8), parameter :: c=1.16e-11_r8 ! Mishima
+!    real(r8), parameter :: c = 6.543036549e-12 ! 1.11e-6/(30.0**3*2*pi) ! Dong Wu
+    real(r8), parameter :: c = 1.11e-6/(30.0**3*2*pi) ! Dong Wu
+
+    real(r8) :: da_dT, db_dt, eth ! exp(-22.1*(th-1.))
+
+    th = 300.0/t
+
+    x = 3.15_r8
+
+    eth = exp(-22.1*(th-1.))
+    a = (50.4e-4 + 62.0e-4*(th-1)) * eth
+!    b = 0.633e-4/th-0.131e-4 + (7.36e-4*th/(th-0.9927))**2
+    b = 2.11e-7 * t - 0.131e-4 + 0.04947229919/(302.2061046 - t)**2
+!    y = -( a/f+b*f )
+
+!... additional term from Mishima, as derived by Jonathan Jiang
+
+!    y = -( a/f + b*f + c*f**3 )
+
+!... and then modified by Dong Wu (2007-12-05)
+
+    y = -( a/f + f*(b + c*f*f*sqrt(x)) )
+
+    m = sqrt(cmplx(x,y,kind=r8))
+    da_dT = -( 0.031836 - 0.13702 * th ) * th/T * eth
+    db_dT = 2.11e-7 + 0.09894459838 / ( 302.2061046 - t )**3
+    de_dt = -( da_dt / f + f * db_dt ) ! pure imaginary
+    dm_dt = ( 0.5 / m ) * cmplx(0.0_r8,de_dt,kind=r8)
+
+  end subroutine UKISUB_dT_2
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: RefractiveIndex.f90,v 2.7 2009/06/23 18:26:10 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module RefractiveIndex
+
+! $Log: RefractiveIndex.f90,v $
+! Revision 2.7  2009/06/23 18:26:10  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.6  2008/04/19 01:07:24  vsnyder
+! Split UKISUB into state and derivatives, plus other minor revisions
+!
+! Revision 2.5  2008/02/29 01:59:11  vsnyder
+! Added a sqrt(x) term
+!
+! Revision 2.4  2007/10/05 23:59:54  vsnyder
+! Move water part of private COMX into UKSUB, ice part into UKISUB. then
+! delete COMX.  Polish up formatting.
+!
+! Revision 2.3  2007/06/21 00:52:54  vsnyder
+! Remove tabs, which are not part of the Fortran standard
+!
+! Revision 2.2  2005/06/22 18:08:19  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.1  2003/01/31 18:35:55  jonathan
+! moved from cldfwm
+!
+! Revision 1.6  2002/10/08 17:08:08  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 1.5  2002/04/16 03:42:25  jonathan
+! fix a bug
+!
+! Revision 1.4  2002/04/15 22:22:32  jonathan
+! check bug
+!
+! Revision 1.3  2002/04/15 17:13:28  jonathan
+! add mishima term
+!
+! Revision 1.2  2001/09/21 15:51:37  jonathan
+! modified F95 version
+!
+@
+
+
+2.7
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d34 1
+a34 1
+       "$RCSfile: $"
+d79 1
+a79 1
+    m=sqrt(cmplx(x,y))
+d125 1
+a125 1
+    m = sqrt(cmplx(x,y))
+d200 1
+a200 1
+    m = sqrt(cmplx(x,y))
+d205 1
+a205 1
+    dm_dt = ( 0.5 / m ) * cmplx(0.0_r8,de_dt)
+d246 1
+a246 1
+    dm_dt = ( 0.5 / m ) * cmplx(0.0_r8,de_dt)
+d253 1
+a253 1
+       "$Id: read_apriori.f90 is it here $"
+d263 3
+@
+
+
+2.6
+log
+@Split UKISUB into state and derivatives, plus other minor revisions
+@
+text
+@d34 2
+a35 2
+       "$RCSfile: RefractiveIndex.f90,v $"
+  private :: not_used_here
+d250 1
+a251 1
+!---------------------------- RCS Ident Info -------------------------------
+d253 2
+a254 3
+       "$Id: RefractiveIndex.f90,v 2.4 2007/10/05 23:59:54 vsnyder Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d256 1
+d258 1
+d263 3
+@
+
+
+2.5
+log
+@Added a sqrt(x) term
+@
+text
+@d24 7
+a30 2
+  public :: UKSUB  ! For Water
+  public :: UKISUB ! For Ice
+d40 1
+a40 1
+  subroutine UKSUB ( F, T, M )  ! For Water
+d43 1
+a43 1
+    real(r8), intent(in) :: F, T
+d83 1
+a83 1
+  subroutine UKISUB ( F, T, M )  ! For Ice
+d87 1
+a87 1
+    real(r8), intent(in) :: F, T
+d91 1
+d96 1
+a96 1
+    x = 3.15
+d112 1
+a112 1
+    a = (50.4 + 62.*(th-1)) * 1.0e-4*exp(-22.1*(th-1.))
+d119 1
+a119 1
+!    y = -( a/f + f*(b + c*f*f) )
+d123 1
+a123 1
+    y = -( a/f + f*(b + c*sqrt(x)*f*f) )
+d125 1
+a125 1
+    m=sqrt(cmplx(x,y))
+d129 121
+d262 3
+@
+
+
+2.4
+log
+@Move water part of private COMX into UKSUB, ice part into UKISUB. then
+delete COMX.  Polish up formatting.
+@
+text
+@d80 1
+d85 2
+a86 1
+    real(r8), parameter :: c=1.16e-11_r8 ! Mishima
+d90 15
+a104 1
+!... from Hufford (1991) model
+d107 2
+a108 2
+    b = (0.633/th-0.131)*1e-4 + (7.36e-4*th/(th-0.9927))**2
+    x = 3.15
+d111 1
+a111 1
+!... additional term from Mishima
+d113 5
+a117 2
+    y = -( a/f + b*f + c*f**3 )
+!    write(*,*)y,f,t
+d126 1
+a126 1
+       "$Id: RefractiveIndex.f90,v 2.3 2007/06/21 00:52:54 vsnyder Exp $"
+d135 4
+@
+
+
+2.3
+log
+@Remove tabs, which are not part of the Fortran standard
+@
+text
+@d15 1
+a15 1
+! COMPUTE COMPLEX REFRACTIVE INDEX OF WATER DROPS AND ICE-PARTICLES       
+d17 1
+a17 2
+!* WI ---- 'W' OR 'I' ( WATER CASE OR ICE CASE )      ++ INPUT    *  
+!* T  ---- TEMPERATURE IN  K                          ++ INPUT    *  
+d19 1
+a19 1
+!* E  ---- REFRACTIVE INDEX (E=M**2)  ++ OUTPUT                   *  
+d22 1
+a22 2
+         use MLSCommon, only: r8
+         implicit none
+d24 2
+a25 2
+         Private :: COMX
+         Public :: UKSUB, UKISUB
+d30 1
+a30 1
+  private :: not_used_here 
+d32 1
+a32 1
+      
+d35 12
+a46 33
+         SUBROUTINE UKSUB(F,T,M)
+         !-----------------------
+         real(r8) :: F, T
+         COMPLEX(r8) :: E,M
+         CALL COMX('W',T,F,E)
+         M=SQRT(E)
+ 
+         END SUBROUTINE UKSUB
+
+         SUBROUTINE UKISUB(F,T,M)
+         ! ----------------------
+         real(r8) :: F, T
+         COMPLEX(r8) :: E, M
+         CALL COMX('I',T,F,E)
+         M=SQRT(E)
+
+         END SUBROUTINE UKISUB
+
+          subroutine comx(wi,t,f,e) 
+
+          complex(r8) :: e,c
+          character(1) wi
+          real(r8) :: t, f, th, fp, fs, e0, e1, e2, x, y
+          real(r8) :: a, b
+  
+          th=300./t
+!          wl=30./f
+          if ( wi .eq. 'W') then                                          
+            goto 100                                                  
+          else                                        
+            goto 200                                                  
+          end if                                                           
+                                                         
+d49 36
+a84 31
+ 100    if (t .lt. 233.15 ) then
+           t = 233.15
+        endif
+
+        fp=20.09-142.4*(th-1.)+294*(th-1.)**2
+        fs=590.-1500.*(th-1.)
+        e0=77.66+103.3*(th-1.)
+        e1=5.48
+        e2=3.51
+        x=(e0-e1)/(1+(f/fp)**2)+(e1-e2)/(1+(f/fs)**2)+e2
+        y=(e0-e1)*f/fp/(1+(f/fp)**2)+(e1-e2)*f/fs/(1+(f/fs)**2)
+
+!..Lu          C=T-273.16 
+!          IF(C.LT.-50.) C=-50.
+!  100     E0=5.27137+0.0216474*C-0.00131198*C*C                            
+!          A=-16.8129/(C+273.)+0.0609265                                    
+!          S=12.5664E+08                                                   
+!          R=0.00033836*EXP(2513.98/(C+273.))                               
+!          E1=78.54*(1.0-4.579E-3*(C-25.)+
+!     1       1.19E-5*(C-25.)**2-2.8E-8*(C-25.)**3)   
+!          X1=(R/WL)**(1.0-A)                                                 
+!          XX=X1*X1                                                         
+!          X2=A*PAI/2                                                       
+!          XS=ASIN(X2)                                                       
+!          XC=ACOS(X2)                                                       
+!          BV=18.8496E+10                                                   
+!          O1=(E1-E0)*(1.0+X1*XS)                                             
+!          O2=(E1-E0)*X1*XC                                                 
+!          O0=1.0+2.0*X1*XS+XX                                                
+!          X=E0+O1/O0                                                       
+!          Y=S*WL/BV+O2/O0  
+d86 1
+a86 3
+        e=x*(1.0,0.0)+y*(0.0,-1.0)
+
+        return              !jj
+d90 4
+a93 2
+  200   a=(50.4+62.*(th-1))*1.e-4*exp(-22.1*(th-1.))
+        b=(0.633/th-0.131)*1e-4+(7.36e-4*th/(th-0.9927))**2
+a95 1
+        c=1.16e-11_r8
+d97 2
+a98 4
+        x=3.15
+!        y=a/f+b*f
+        y=a/f+b*f+c*f**3
+!        write(*,*)y,f,t
+d100 1
+a100 2
+        e=x*(1.0,0.0)+y*(0.0,-1.0)
+        return
+d102 1
+a102 1
+        END subroutine comx
+d107 1
+a107 1
+       "$Id: RefractiveIndex.f90,v 2.2 2005/06/22 18:08:19 pwagner Exp $"
+d116 3
+@
+
+
+2.2
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d24 1
+a24 1
+ 	 implicit none
+d31 1
+a31 1
+       "$RCSfile: $"
+d43 2
+a44 2
+	 
+	 END SUBROUTINE UKSUB
+d53 1
+a53 1
+	 END SUBROUTINE UKISUB
+d58 1
+a58 1
+          character*1 wi
+d61 1
+a61 1
+		  
+d77 7
+a83 7
+	fs=590.-1500.*(th-1.)
+	e0=77.66+103.3*(th-1.)
+	e1=5.48
+	e2=3.51
+	x=(e0-e1)/(1+(f/fp)**2)+(e1-e2)/(1+(f/fs)**2)+e2
+	y=(e0-e1)*f/fp/(1+(f/fp)**2)+(e1-e2)*f/fs/(1+(f/fs)**2)
+	
+d85 1
+a85 1
+!	  IF(C.LT.-50.) C=-50.
+d110 2
+a111 2
+  200	a=(50.4+62.*(th-1))*1.e-4*exp(-22.1*(th-1.))
+	b=(0.633/th-0.131)*1e-4+(7.36e-4*th/(th-0.9927))**2
+d114 1
+a114 1
+	c=1.16e-11_r8
+d116 1
+a116 1
+	x=3.15
+d118 1
+a118 1
+	y=a/f+b*f+c*f**3
+d129 1
+a129 1
+       "$Id: $"
+d138 3
+@
+
+
+2.1
+log
+@moved from cldfwm
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d29 3
+a31 6
+ !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm =                          &
+    "$Id: RefractiveIndex.f90,v 1.6 2002/10/08 17:08:08 pwagner Exp $"
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName=                       &
+    "$RCSfile: RefractiveIndex.f90,v $"
+d33 1
+a33 1
+ !---------------------------------------------------------------------------
+d127 5
+d138 3
+@
+

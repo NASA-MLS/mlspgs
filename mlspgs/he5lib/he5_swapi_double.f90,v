@@ -1,0 +1,193 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.18
+	cfm-single-freq-0-1:1.1.0.16
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.14
+	mus-emls-1-70:1.1.0.12
+	rel-1-0-englocks-work:1.1.0.10
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.8
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.6
+	V2-24-NRT-04:1.1
+	V3-33:1.1
+	V2-24:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1
+	V2-23-NRT-02:1.1
+	V2-23:1.1
+	V2-22-NRT-01:1.1
+	V2-22:1.1
+	V2-21:1.1
+	V2-20:1.1
+	V2-11:1.1
+	V2-10:1.1
+	V2-00:1.1
+	V1-51:1.1
+	V1-50:1.1
+	V1-45:1.1
+	V1-44:1.1
+	V1-43:1.1
+	V1-32:1.1
+	V1-31:1.1
+	V1-13:1.1
+	V1-12:1.1
+	V1-11:1.1
+	V1-10:1.1
+	newfwm-feb03:1.1.0.4
+	V1-04:1.1
+	V1-03:1.1
+	V1-02:1.1
+	V1-00:1.1
+	newfwm-sep01:1.1.0.2
+	V0-7:1.1
+	V0-5-Level2:1.1
+	V0-5-SIPS:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2000.12.22.15.55.54;	author pumphrey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit of HDF-EOS5 versions of L2GP interface.
+@
+text
+@module HE5_SWAPI_DOUBLE
+
+  public
+
+  !------------------------------- RCS Ident Info ----------------------------
+  character(len=256), private :: Id = &
+    & "$Id$"
+  character(len=*), private, parameter :: ModuleName = &
+    & "$RCSfile$"
+  !---------------------------------------------------------------------------
+
+contains
+
+  integer function HE5_SWRDFLD_DOUBLE ( SWATHID, FIELDNAME, &
+    & STARTS, STRIDES, EDGES, BUFFER )
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: FIELDNAME     ! Field name
+    integer, intent(in) :: STARTS(*)    ! Start array
+    integer, intent(in) :: STRIDES(*)   ! Stride array
+    integer, intent(in) :: EDGES(*)     ! Edge array
+    double precision, intent(out) :: BUFFER(:)  ! Buffer for read
+
+    integer, external :: HE5_SWRDFLD
+
+    HE5_SWrdfld_double  = HE5_SWrdfld(swathid, fieldname, starts, strides, &
+      & edges, buffer )
+  end function HE5_SWRDFLD_DOUBLE
+
+  integer function HE5_SWRDFLD_DOUBLE_2D ( SWATHID, FIELDNAME, &
+    & STARTS, STRIDES, EDGES, BUFFER )
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: FIELDNAME     ! Field name
+    integer, intent(in) :: STARTS(*)    ! Start array
+    integer, intent(in) :: STRIDES(*)   ! Stride array
+    integer, intent(in) :: EDGES(*)     ! Edge array
+    double precision, intent(out) :: BUFFER(:,:)  ! Buffer for read
+
+    integer, external :: HE5_SWRDFLD
+
+    HE5_SWrdfld_double_2d  = HE5_SWrdfld(swathid, fieldname, starts, strides, &
+      & edges, buffer )
+  end function HE5_SWRDFLD_DOUBLE_2D
+
+  integer function HE5_SWRDFLD_DOUBLE_3D ( SWATHID, FIELDNAME, &
+    & STARTS, STRIDES, EDGES, BUFFER )
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: FIELDNAME     ! Field name
+    integer, intent(in) :: STARTS(*)    ! Start array
+    integer, intent(in) :: STRIDES(*)   ! Stride array
+    integer, intent(in) :: EDGES(*)     ! Edge array
+    double precision, intent(out) :: BUFFER(:,:,:)  ! Buffer for read
+
+    integer, external :: HE5_SWRDFLD
+
+    HE5_SWrdfld_double_3d  = HE5_SWrdfld(swathid, fieldname, starts, strides, &
+      & edges, buffer )
+  end function HE5_SWRDFLD_DOUBLE_3D
+
+  integer function HE5_SWWRFLD_DOUBLE ( SWATHID, FIELDNAME, &
+    & STARTS, STRIDES, EDGES, BUFFER )
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: FIELDNAME     ! Field name
+    integer, intent(in) :: STARTS(*)    ! Start array
+    integer, intent(in) :: STRIDES(*)   ! Stride array
+    integer, intent(in) :: EDGES(*)     ! Edge array
+    double precision, intent(in) :: BUFFER(:)   ! Buffer for write
+
+    integer, external :: HE5_SWWRFLD
+
+    HE5_SWwrfld_double = HE5_SWwrfld(swathid, fieldname, starts, strides, &
+      & edges, buffer )
+  end function HE5_SWWRFLD_DOUBLE
+
+  integer function HE5_SWWRFLD_DOUBLE_2D ( SWATHID, FIELDNAME, &
+    & STARTS, STRIDES, EDGES, BUFFER )
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: FIELDNAME     ! Field name
+    integer, intent(in) :: STARTS(*)    ! Start array
+    integer, intent(in) :: STRIDES(*)   ! Stride array
+    integer, intent(in) :: EDGES(*)     ! Edge array
+    double precision, intent(in) :: BUFFER(:,:)  ! Buffer for write
+
+    integer, external :: HE5_SWWRFLD
+
+    HE5_SWwrfld_double_2d  = HE5_SWwrfld(swathid, fieldname, starts, strides, &
+      & edges, buffer )
+  end function HE5_SWWRFLD_DOUBLE_2D
+
+  integer function HE5_SWWRFLD_DOUBLE_3D ( SWATHID, FIELDNAME, &
+    & STARTS, STRIDES, EDGES, BUFFER )
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: FIELDNAME     ! Field name
+    integer, intent(in) :: STARTS(*)    ! Start array
+    integer, intent(in) :: STRIDES(*)   ! Stride array
+    integer, intent(in) :: EDGES(*)     ! Edge array
+    double precision, intent(in) :: BUFFER(:,:,:)  ! Buffer for write
+
+    integer, external :: HE5_SWWRFLD
+
+    HE5_SWwrfld_double_3d  = HE5_SWwrfld(swathid, fieldname, starts, strides, &
+      & edges, buffer )
+  end function HE5_SWWRFLD_DOUBLE_3D
+
+end module HE5_SWAPI_DOUBLE
+@

@@ -1,0 +1,624 @@
+head	1.14;
+access;
+symbols
+	V0_1:1.13;
+locks; strict;
+comment	@# @;
+
+
+1.14
+date	2000.09.05.17.21.16;	author dcuddy;	state dead;
+branches;
+next	1.13;
+
+1.13
+date	2000.06.30.01.09.35;	author lungu;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2000.06.19.23.59.29;	author lungu;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2000.05.18.00.02.10;	author lungu;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2000.04.13.23.48.26;	author vsnyder;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2000.01.11.22.51.35;	author livesey;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2000.01.07.23.53.35;	author livesey;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	99.12.17.21.40.12;	author livesey;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	99.12.17.00.59.32;	author livesey;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	99.12.16.18.04.15;	author livesey;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	99.12.16.00.04.51;	author livesey;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	99.12.15.22.57.45;	author livesey;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	99.12.14.22.56.02;	author livesey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	99.11.24.23.06.19;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.14
+log
+@moved to mlspgs/l2
+@
+text
+@! Copyright (c) 1999, California Institute of Technology. ALL RIGHTS RESERVED.
+! U.S. Government sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+!=============================================================================
+MODULE vGrid                    ! Definitions for vGrids in vector quantities
+!=============================================================================
+
+  USE MLSCommon                 ! General constants etc.
+  USE MLSCF                     ! L2CF info
+  USE VerticalCoordinate        ! The various vertical coorindate systems.
+  USE MLSStrings                ! String handling routines
+  USE MLSMessageModule          ! Message logging
+
+  IMPLICIT NONE
+  PUBLIC
+
+  PRIVATE :: ID, ModuleName
+  !------------------------------- RCS Ident Info ---------------------------
+  CHARACTER (LEN=130) :: Id= "$Id: VGrid.f90,v 1.13 2000/06/30 01:09:35 lungu Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName="$RCSfile: VGrid.f90,v $"
+  !--------------------------------------------------------------------------
+
+  ! Define the vGrid data type.  This is used to store all the vGrid
+  ! information. Note that this is only relevant for coherent quantities. 
+  ! Incoherent ones deal with vGrids seperately.
+
+  INTEGER, PARAMETER :: vGridNameLen=32
+  TYPE vGrid_T
+     CHARACTER (LEN=vGridNameLen) :: name ! Name for vGrid
+     INTEGER :: verticalCoordinate ! Enumerated type e.g. VC_Pressure
+     INTEGER :: noSurfs         ! Number of surfaces
+     REAL(r8), DIMENSION(:), POINTER :: surfs  ! Array of surfaces
+     ! (actually dimensioned noSurfs)
+  END TYPE vGrid_T
+
+CONTAINS
+
+  !--------------------------------------------------------------------------
+
+  ! This routine creates a vGrid according to user supplied information in the
+  ! l2cf.
+
+  SUBROUTINE CreateVGridFromMLSCFInfo(vGrid, cfInfo)
+
+    ! Dummy arguments
+    TYPE(vGrid_T),    INTENT(OUT) :: vGrid ! Returned vGrid
+    TYPE(MLSCfEntry_T), INTENT(IN)  :: cfInfo ! Input info. from l2cf
+
+    ! Local parameters
+    CHARACTER (LEN=*), PARAMETER :: UnitsMessage= &
+         & "Inappropriate units for vertical coordinates"
+
+    ! Local variables
+    INTEGER :: keyNo, i            ! Entry in the l2cf line
+    INTEGER :: family           ! Physical quantity family
+    TYPE (MLSCFCell_T) :: cell  ! Part of the l2cf information
+
+    ! Executable code
+
+    ! We will go through the information given in the l2cf and create an
+    ! appropriate vGrid for it.
+
+    vGrid%name=""
+    vGrid%verticalCoordinate=VC_Invalid
+    vGrid%noSurfs=0
+ !   IF (SIZE(vGrid%surfs)/=0) CALL  MLSMessage(MLSMSG_Error,ModuleName,&
+ !        & "vGrid%surfs already associated")
+
+    DO keyNo=1,cfInfo%mlscfEntryNoKeys
+       cell=cfInfo%cells(keyNo)
+       SELECT CASE(Capitalize(TRIM(cell%keyword)))
+       CASE ("NAME")
+          vGrid%name=cell%charValue
+       CASE ("COORDINATE")
+          vGrid%verticalCoordinate=ParseVerticalCoordinateName(cell%charValue)
+       CASE ("VALUES")
+          CALL ParseVertCoordSpec(cell%charValue,vGrid%surfs,family)
+       CASE DEFAULT
+          CALL MLSMessage(MLSMSG_Error,ModuleName,"Unexpected key "//&
+               & TRIM(cell%keyword))
+       END SELECT
+    END DO
+
+    vGrid%noSurfs = SIZE(vGrid%surfs)
+    ! Now check that this is a sensible vGrid, first the obvious stuff
+
+
+    IF (LEN_TRIM(vGrid%name)==0) CALL MLSMessage(MLSMSG_Error,ModuleName,&
+         & "Invalid or absent vGrid name")
+    IF (vGrid%verticalCoordinate==VC_Invalid) CALL MLSMessage(MLSMSG_Error,&
+         & ModuleName,"Invalid vertical coordinate for vGrid "//&
+         & TRIM(vGrid%name))
+    IF (SIZE(vGrid%surfs) == 0) CALL MLSMessage(MLSMSG_Error,&
+         & ModuleName,"Invalid/absent surfaces in vGrid "//TRIM(vGrid%name))
+
+    ! Check that the given surfaces are in an appropriate unit
+
+    SELECT CASE(vGrid%verticalCoordinate)
+    CASE (VC_None)
+       IF (family/=PHYQ_Dimensionless) &
+            & CALL MLSMessage(MLSMSG_Error,ModuleName,UnitsMessage)
+    CASE (VC_Pressure)
+       IF (family/=PHYQ_Pressure) &
+            & CALL MLSMessage(MLSMSG_Error,ModuleName,UnitsMessage)
+    CASE (VC_Zeta)
+       IF (family/=PHYQ_Dimensionless) &
+            & CALL MLSMessage(MLSMSG_Error,ModuleName,UnitsMessage)
+    CASE (VC_Altitude)
+       IF (family/=PHYQ_Length) &
+            & CALL MLSMessage(MLSMSG_Error,ModuleName,UnitsMessage)
+    CASE (VC_GPH)
+       IF (family/=PHYQ_Length) &
+            & CALL MLSMessage(MLSMSG_Error,ModuleName,UnitsMessage)
+    CASE (VC_Theta)
+       IF (family/=PHYQ_Temperature) &
+            & CALL MLSMessage(MLSMSG_Error,ModuleName,UnitsMessage)
+    CASE (VC_Angle)
+       IF (family/=PHYQ_Angle) &
+            & CALL MLSMessage(MLSMSG_Error,ModuleName,UnitsMessage)
+    END SELECT
+  END SUBROUTINE CreateVGridFromMLSCFInfo
+
+  !--------------------------------------------------------------------------
+
+  ! This routine destroys the array information created with the vGrid
+
+  SUBROUTINE DestroyVGridContents(vGrid)
+
+    ! Dummy arguments
+
+    TYPE (vGrid_T), INTENT(INOUT) :: vGrid
+    ! Local variables
+    INTEGER :: status
+    ! Executable code
+
+    vGrid%name=''
+    vGrid%noSurfs=0
+    vGrid%verticalCoordinate=VC_Invalid
+
+    DEALLOCATE(vGrid%surfs, STAT=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"vGrid%surfs")
+
+  END SUBROUTINE DestroyVGridContents
+
+  !--------------------------------------------------------------------------
+
+  ! This routine adds a vGrid to a database of vGrids, creating the database
+  ! if necessary.
+
+  SUBROUTINE AddVGridToDatabase(database,vgrid)
+
+    ! Dummy arguments
+    TYPE (VGrid_T), DIMENSION(:), POINTER :: database
+    TYPE (VGrid_T), INTENT(IN) :: vgrid
+
+    ! Local variables
+    TYPE (VGrid_T), DIMENSION(:), POINTER :: tempDatabase
+    INTEGER :: newSize,status
+
+    ! Executable code
+
+    IF (ASSOCIATED(database)) THEN
+       ! Check we don't already have one of this name
+       IF (LinearSearchStringArray(database%name,vGrid%name, &
+            & caseInsensitive=.TRUE.)/=0)THEN
+          CALL MLSMessage(MLSMSG_Error,&
+            & ModuleName,MLSMSG_Duplicate//vGrid%name)
+       END IF
+       newSize=SIZE(database)+1
+    ELSE
+       newSize=1
+    ENDIF
+    ALLOCATE(tempDatabase(newSize),STAT=status)
+    IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & "Allocation failed for tempDatabase")
+
+    IF (newSize>1) tempDatabase(1:newSize-1)=database
+    tempDatabase(newSize)=vgrid
+    IF (ASSOCIATED(database))DEALLOCATE(database, STAT=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"database")
+    database=>tempDatabase
+  END SUBROUTINE AddVGridToDatabase
+
+  ! --------------------------------------------------------------------------
+
+  ! This subroutine destroys a vGrid database
+
+  SUBROUTINE DestroyVGridDatabase(database)
+
+    ! Dummy argument
+    TYPE (VGrid_T), DIMENSION(:), POINTER :: database
+
+    ! Local variables
+    INTEGER :: vgridIndex, status
+
+    IF (ASSOCIATED(database)) THEN
+       DO vgridIndex=1,SIZE(database)
+          CALL DestroyVGridContents(database(vgridIndex))
+       ENDDO
+       DEALLOCATE(database, STAT=status)
+       IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"database")
+    ENDIF
+  END SUBROUTINE DestroyVGridDatabase  
+
+END MODULE vGrid
+
+!
+! $Log: VGrid.f90,v $
+! Revision 1.13  2000/06/30 01:09:35  lungu
+! Replaced ASSociated(vGrid%surfs) by SIZE(vGrid%surfs)/=0.
+!
+! Revision 1.12  2000/06/19 23:59:29  lungu
+! Added status check after deallocate.
+!
+! Revision 1.11  2000/05/18 00:02:10  lungu
+! Commented out "IF (ASSOCIATED(vGrid%surfs))" so it works for the2nd, 3rd, etc calls.
+! Capitalized TRIM(cell%keyword).
+! Added check "IF (ASSOCIATED(database))DEALLOCATE(database)".
+!
+! Revision 1.10  2000/04/13 23:48:26  vsnyder
+! Changed "LEN_TRIM()=="" to LEN_TRIM()==0 in CreateVGridFromMLSCFInfo
+!
+! Revision 1.9  2000/01/11 22:51:35  livesey
+! Dealt with ramifications of change from read_parse_l2cf to MLSCF
+!
+! Revision 1.8  2000/01/07 23:53:35  livesey
+! Nearly integrated, just a few tweaks.
+!
+! Revision 1.7  1999/12/17 21:40:12  livesey
+! Added check for duplicate name in database
+!
+! Revision 1.6  1999/12/17 00:59:32  livesey
+! Nightly checkin
+!
+! Revision 1.5  1999/12/16 18:04:15  livesey
+! Whoops, wrong name for END SUBROUTINE!
+!
+! Revision 1.4  1999/12/16 00:04:51  livesey
+! Renamed routine DestroyVGridInformation to DestroyVGridContents
+!
+! Revision 1.3  1999/12/15 22:57:45  livesey
+! First version that seems to compile
+!
+! Revision 1.2  1999/12/14 22:56:02  livesey
+! Regular commit
+!
+! Revision 1.1  1999/11/24 23:06:19  livesey
+! First simple version
+!
+!
+@
+
+
+1.13
+log
+@Replaced ASSociated(vGrid%surfs) by SIZE(vGrid%surfs)/=0.
+@
+text
+@d19 1
+a19 1
+  CHARACTER (LEN=130) :: Id= "$Id: VGrid.f90,v 1.12 2000/06/19 23:59:29 lungu Exp $"
+d212 3
+@
+
+
+1.12
+log
+@Added status check after deallocate.
+@
+text
+@d19 1
+a19 1
+  CHARACTER (LEN=130) :: Id= "$Id: VGrid.f90,v 1.11 2000/05/18 00:02:10 lungu Exp $"
+d66 2
+a67 2
+!    IF (ASSOCIATED(vGrid%surfs)) CALL MLSMessage(MLSMSG_Error,ModuleName,&
+!         & "vGrid%surfs already associated")
+d93 1
+a93 1
+    IF (.NOT.(ASSOCIATED(vGrid%surfs))) CALL MLSMessage(MLSMSG_Error,&
+d166 2
+a167 1
+            & caseInsensitive=.TRUE.)/=0) CALL MLSMessage(MLSMSG_Error,&
+d169 1
+d212 3
+@
+
+
+1.11
+log
+@Commented out "IF (ASSOCIATED(vGrid%surfs))" so it works for the2nd, 3rd, etc calls.
+Capitalized TRIM(cell%keyword).
+Added check "IF (ASSOCIATED(database))DEALLOCATE(database)".
+@
+text
+@d19 1
+a19 1
+  CHARACTER (LEN=130) :: Id= "$Id: VGrid.f90,v 1.10 2000/04/13 23:48:26 vsnyder Exp $"
+d54 1
+a54 1
+    INTEGER :: keyNo            ! Entry in the l2cf line
+d84 1
+d132 2
+a133 1
+
+d140 3
+a142 1
+    DEALLOCATE(vGrid%surfs)
+d178 3
+a180 1
+    IF (ASSOCIATED(database))DEALLOCATE(database)
+d194 1
+a194 1
+    INTEGER :: vgridIndex
+d200 3
+a202 1
+       DEALLOCATE(database)
+d210 5
+@
+
+
+1.10
+log
+@Changed "LEN_TRIM()=="" to LEN_TRIM()==0 in CreateVGridFromMLSCFInfo
+@
+text
+@d19 1
+a19 1
+  CHARACTER (LEN=130) :: Id= "$Id: VGrid.f90,v 1.9 2000/01/11 22:51:35 livesey Exp $"
+d66 2
+a67 2
+    IF (ASSOCIATED(vGrid%surfs)) CALL MLSMessage(MLSMSG_Error,ModuleName,&
+         & "vGrid%surfs already associated")
+d71 1
+a71 1
+       SELECT CASE(TRIM(cell%keyword))
+d86 1
+a119 1
+
+a167 1
+
+d174 1
+a174 1
+    DEALLOCATE(database)
+d202 3
+@
+
+
+1.9
+log
+@Dealt with ramifications of change from read_parse_l2cf to MLSCF
+@
+text
+@d19 1
+a19 1
+  CHARACTER (LEN=130) :: Id= "$Id: VGrid.f90,v 1.8 2000/01/07 23:53:35 livesey Exp $"
+d86 1
+a86 1
+    IF (LEN_TRIM(vGrid%name)=="") CALL MLSMessage(MLSMSG_Error,ModuleName,&
+d203 3
+@
+
+
+1.8
+log
+@Nearly integrated, just a few tweaks.
+@
+text
+@d9 1
+a9 1
+  USE ReadParseL2CF             ! L2CF info etc.
+d19 1
+a19 1
+  CHARACTER (LEN=130) :: Id= "$Id: VGrid.f90,v 1.7 1999/12/17 21:40:12 livesey Exp $"
+d47 1
+a47 1
+    TYPE(L2CfEntry), INTENT(IN)  :: cfInfo ! Input info. from l2cf
+d56 1
+a56 1
+    TYPE (L2CFCell) :: cell     ! Part of the l2cf information
+d69 1
+a69 1
+    DO keyNo=1,cfInfo%l2cfEntryNoKeys
+d203 3
+@
+
+
+1.7
+log
+@Added check for duplicate name in database
+@
+text
+@d9 1
+a9 1
+  USE Temporary_Types           ! L2CF info etc.
+d19 1
+a19 1
+  CHARACTER (LEN=130) :: Id= "$Id: VGrid.f90,v 1.6 1999/12/17 00:59:32 livesey Exp $"
+d203 3
+@
+
+
+1.6
+log
+@Nightly checkin
+@
+text
+@d19 1
+a19 1
+  CHARACTER (LEN=130) :: Id= "$Id: VGrid.f90,v 1.5 1999/12/16 18:04:15 livesey Exp $"
+d160 4
+d203 3
+@
+
+
+1.5
+log
+@Whoops, wrong name for END SUBROUTINE!
+@
+text
+@d19 1
+a19 1
+  CHARACTER (LEN=130) :: Id= "$Id: VGrid.f90,v 1.4 1999/12/16 00:04:51 livesey Exp $"
+d77 1
+a77 1
+          CALL ParseVerticalCoordinateSpec(cell%charValue,vGrid%surfs,family)
+d91 1
+a91 1
+    IF (.NOT.(ASSOCIATED(vGrid%surfs))) CALL MLS_Message(MLSMSG_Error,&
+d199 3
+@
+
+
+1.4
+log
+@Renamed routine DestroyVGridInformation to DestroyVGridContents
+@
+text
+@d12 1
+d19 1
+a19 1
+  CHARACTER (LEN=130) :: Id= "$Id: VGrid.f90,v 1.3 1999/12/15 22:57:45 livesey Exp $"
+d140 1
+a140 1
+  END SUBROUTINE DestroyVGridInformation
+d199 3
+@
+
+
+1.3
+log
+@First version that seems to compile
+@
+text
+@d18 2
+a19 2
+  CHARACTER (LEN=130) :: Id= "$Id: VGrid.f90,v 1.2 1999/12/14 22:56:02 livesey Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName="$RCSfile$"
+d125 1
+a125 1
+  SUBROUTINE DestroyVGridInformation(vGrid)
+d198 3
+@
+
+
+1.2
+log
+@Regular commit
+@
+text
+@d9 2
+a10 2
+  USE L2CF                      ! Information on l2cf data
+  USE VerticalCoordinates       ! The various vertical coorindate systems.
+d18 2
+a19 1
+  CHARACTER (LEN=130) :: Id= "$Id: VGrid.f90,v 1.1 1999/11/24 23:06:19 livesey Exp $"
+d26 1
+d28 1
+a28 1
+     CHARACTER (LEN=NameLen) :: name ! Name for vGrid
+a44 1
+
+d48 4
+a52 1
+
+d54 2
+d62 6
+d69 12
+a80 2
+       SELECT 
+       
+d83 36
+d143 51
+d198 3
+@
+
+
+1.1
+log
+@First simple version
+@
+text
+@d8 1
+a8 1
+  USE Inc                       ! General MLS constants etc.
+d16 1
+a16 1
+  PRIVATE :: ID
+d18 1
+a18 1
+  CHARACTER (LEN=130) :: Id= "$Id$"
+d29 1
+a29 1
+     DOUBLE PRECISION, DIMENSION(:), POINTER :: surfs  ! Array of surfaces
+d40 1
+a40 1
+  SUBROUTINE CreateVGridFromMLSCFInfo(vGrid, mlscfInfo)
+d45 1
+a45 1
+    TYPE(mlsCfEntry), INTENT(IN)  :: mlscfInfo ! Input info. from l2cf
+d49 1
+a49 1
+    INTEGER :: l2cfKeyNo        ! Entry in l2cf line
+d56 3
+a58 2
+    DO l2cfKeyNo=0,mlsCFInfo
+
+d88 4
+a91 1
+! $Log$
+@
+

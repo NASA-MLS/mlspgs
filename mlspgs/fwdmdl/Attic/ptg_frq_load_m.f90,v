@@ -1,0 +1,367 @@
+head	1.7;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.7
+date	2001.04.10.02.38.25;	author livesey;	state dead;
+branches;
+next	1.6;
+
+1.6
+date	2001.03.31.23.40.55;	author zvi;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2001.03.20.11.03.16;	author zvi;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.03.13.01.46.46;	author vsnyder;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2001.03.09.00.51.28;	author zvi;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.03.09.00.40.32;	author zvi;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.03.06.09.28.28;	author zvi;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.7
+log
+@They're gonecvs remove l2_load_m.f90 l2_test_structures_m.f90 ptg_frq_load_m.f90cvs remove l2_load_m.f90 l2_test_structures_m.f90 ptg_frq_load_m.f90
+@
+text
+@module PTG_FRQ_LOAD_M
+  use MLSCommon, only: I4, R8
+  use L2_TEST_STRUCTURES_M
+  use D_HUNT_M, only: HUNT
+  implicit NONE
+!---------------------------- RCS Ident Info -------------------------------
+  CHARACTER (LEN=256) :: Id = &
+    "$Id: ptg_frq_load_m.f90,v 1.6 2001/03/31 23:40:55 zvi Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= &
+    "$RCSfile: ptg_frq_load_m.f90,v $"
+!---------------------------------------------------------------------------
+contains
+!---------------------------------------------------------------------------
+! ===========================================     ptg_frq_load =====
+! This subprogram loads the pointing frequency gridding by band
+!
+  SUBROUTINE ptg_frq_load(FMC, FMI, Ier)
+!---------------------------------------------------------------------------
+
+Type(fwd_mdl_config), INTENT(IN OUT) :: FMC
+Type(fwd_mdl_info), INTENT(IN OUT) :: FMI
+Integer(i4), INTENT(OUT) :: ier
+!
+! ---- Local variables ---------
+!
+Integer(i4) :: i, k, kk, jp, io, l
+
+Real(r8) :: q, r, dummy(200)
+!
+Character (LEN=80) :: Fnd, Line
+!
+! Load the pointing vs. frequencies database for the given band
+! (needed for frequency averaging)
+!
+  Ier = 0
+  Fnd(1:) = ' '
+  Fnd = FMC%B
+!
+  k = size(FMI%tan_press)
+  ALLOCATE(FMI%no_ptg_frq(k),STAT=ier)
+  IF(ier /= 0) ALLOCATE(FMI%ptg_frq_grid(k),STAT=ier)
+  IF(ier /= 0) THEN
+    PRINT *,'** ALLOCATION error for no_ptg_frq or ptg_frq_grid ..'
+    PRINT *,'   Allocation STAT =',ier
+    Return
+  ENDIF
+
+  kk = -1
+  FMI%no_ptg_frq(1:k) = 0
+!
+  CLOSE(32,iostat=i)
+  OPEN(32,file=Fnd,action='READ',status='OLD',iostat=io)
+  if(io /= 0) goto 10
+!
+! First entry in the file is the 'Band' frequency. All the rest are
+! relative to this (center) frequency for this band
+!
+  Read(32,*,iostat=io) q
+  if(io /= 0) goto 10
+!
+  DO
+!
+    Read(32,*,iostat=io) r, jp
+    if(io > 0) goto 10
+    if(io /= 0) EXIT
+
+    k = -1
+    Call Hunt(r,FMI%tan_press,size(FMI%tan_press),k,i)
+    IF(ABS(r-FMI%tan_press(i)) < ABS(r-FMI%tan_press(k))) k = i
+!
+    DEALLOCATE(FMI%ptg_frq_grid(k)%values,STAT=i)
+
+    if(FMC%do_frqavg) then
+      FMI%no_ptg_frq(k) = jp
+      ALLOCATE(FMI%ptg_frq_grid(k)%values(jp),STAT=i)
+    else
+      FMI%no_ptg_frq(k) = 1
+      ALLOCATE(FMI%ptg_frq_grid(k)%values(2),STAT=i)
+    endif
+
+    IF(i /= 0) THEN
+      ier = i
+      PRINT *,'** Error: ALLOCATION error for ptg_frq_grid ..'
+      PRINT *,'   tan_hts index:',k,' STAT =',ier
+      do l = 1, k
+        DEALLOCATE(FMI%ptg_frq_grid(l)%values,STAT=i)
+      end do
+      goto 99
+    ENDIF
+
+    Read(32,*,iostat=io) (dummy(i),i=1,jp)
+    if(io /= 0) goto 10
+    if(kk < 0) kk = k
+
+    if(FMC%Zfrq > 0.0) dummy(1) = FMC%Zfrq - q
+!
+! Add 'band' frequency to ptg_frq_grid to convert to absolute grid
+!
+    jp = FMI%no_ptg_frq(k)
+    FMI%ptg_frq_grid(k)%values(1:jp) = dummy(1:jp) + q
+!
+  END DO
+!
+  if(kk > 1) then
+    jp = FMI%no_ptg_frq(kk)
+    do k = 1, kk-1
+      DEALLOCATE(FMI%ptg_frq_grid(k)%values,STAT=i)
+      ALLOCATE(FMI%ptg_frq_grid(k)%values(jp),STAT=i)
+      IF(i /= 0) THEN
+        ier = i
+        PRINT *,'** Error: ALLOCATION error for ptg_frq_grid ..'
+        PRINT *,'   tan_hts index:',k,' STAT =',ier
+        do l = 1, k
+          DEALLOCATE(FMI%ptg_frq_grid(l)%values,STAT=i)
+        end do
+        goto 99
+      ENDIF
+      FMI%no_ptg_frq(k) = jp
+      FMI%ptg_frq_grid(k)%values(1:jp) = &
+     &           FMI%ptg_frq_grid(kk)%values(1:jp)
+    end do
+  endif
+!
+  do k = 1, size(FMI%tan_press)
+    if(FMI%no_ptg_frq(k) < 1) then
+      i = k
+      do while(i > 1 .and. FMI%no_ptg_frq(i) < 1)
+        i = i - 1
+      end do
+      jp = FMI%no_ptg_frq(i)
+      if(jp < 1) CYCLE
+      FMI%no_ptg_frq(k) = jp
+      DEALLOCATE(FMI%ptg_frq_grid(k)%values,STAT=l)
+      ALLOCATE(FMI%ptg_frq_grid(k)%values(jp),STAT=l)
+      FMI%ptg_frq_grid(k)%values(1:jp) = &
+     &           FMI%ptg_frq_grid(i)%values(1:jp)
+    endif
+  end do
+!
+ 10 CLOSE(32,iostat=i)
+    if(io > 0) then
+      ier = io
+      goto 99
+    else
+      io = 0
+    endif
+!
+ 99  CLOSE(32,iostat=i)
+!
+     if(io /= 0) then
+       Ier = iabs(io)
+       Call ErrMsg(Line,io)
+     endif
+
+     Return
+
+  END SUBROUTINE PTG_FRQ_LOAD
+
+end module PTG_FRQ_LOAD_M
+! $Log: ptg_frq_load_m.f90,v $
+! Revision 1.6  2001/03/31 23:40:55  zvi
+! Eliminate l2pcdim (dimension parameters) move to allocatable ..
+!
+! Revision 1.5  2001/03/20 11:03:16  zvi
+! Fixing code for "real" data run, increase dim. etc.
+!
+! Revision 1.3  2001/03/09 00:51:28  zvi
+! Fixed ier not set in ptg_frq_load
+!
+! Revision 1.2  2001/03/09 00:40:32  zvi
+! Correcting an error in HUNT routine
+!
+! Revision 1.1  2001/03/06 09:28:28  zvi
+! *** empty log message ***
+!
+! Revision 1.1 2000/06/09 00:08:13  Z.Shippony
+! Initial conversion to Fortran 90
+@
+
+
+1.6
+log
+@Eliminate l2pcdim (dimension parameters) move to allocatable ..
+@
+text
+@d8 1
+a8 1
+    "$Id: ptg_frq_load_m.f90,v 1.5 2001/03/20 11:03:16 zvi Exp $"
+d161 3
+@
+
+
+1.5
+log
+@Fixing code for "real" data run, increase dim. etc.
+@
+text
+@a3 1
+  use L2PCdim, only: N2lvl, Nptg
+d8 1
+a8 1
+    "$Id: ptg_frq_load_m.f90,v 1.3 2001/03/09 00:51:28 zvi Exp $"
+d28 1
+a28 3
+Real(r8) :: dummy(N2lvl)
+
+Real(r8) :: q, r
+d39 9
+d49 1
+a49 1
+  FMI%no_ptg_frq(1:Nptg) = 0
+d161 3
+@
+
+
+1.4
+log
+@Allocate and use the correct size for tan_press
+@
+text
+@d65 5
+a69 8
+    if(ABS(r-FMI%tan_press(k)) > 0.001) then
+      Print *,'** Warning **'
+      Print *,'   Zeta:',Sngl(r),' not an entry in tan_press !'
+      Print *,'   ptg_frq_grid for this Zeta is ignored ..'
+      Print *
+      Read(32,*,iostat=io) (dummy(i),i=1,jp)
+      if(io /= 0) goto 10
+!
+d71 3
+d75 9
+a83 1
+      DEALLOCATE(FMI%ptg_frq_grid(k)%values,STAT=i)
+d85 3
+a87 7
+      if(FMC%Zfrq > 0.0) then
+        FMI%no_ptg_frq(k) = 1
+        ALLOCATE(FMI%ptg_frq_grid(k)%values(2),STAT=i)
+      else
+        FMI%no_ptg_frq(k) = jp
+        ALLOCATE(FMI%ptg_frq_grid(k)%values(jp),STAT=i)
+      endif
+d89 1
+a89 15
+      IF(i /= 0) THEN
+        ier = i
+        PRINT *,'** Error: ALLOCATION error for ptg_frq_grid ..'
+        PRINT *,'   tan_hts index:',k,' STAT =',ier
+        do l = 1, k
+          DEALLOCATE(FMI%ptg_frq_grid(l)%values,STAT=i)
+        end do
+        goto 99
+      ENDIF
+
+      Read(32,*,iostat=io) (dummy(i),i=1,jp)
+      if(io /= 0) goto 10
+      if(kk < 0) kk = k
+
+      if(FMC%Zfrq > 0.0) dummy(1) = FMC%Zfrq - q
+d93 2
+a94 4
+      jp = FMI%no_ptg_frq(k)
+      FMI%ptg_frq_grid(k)%values(1:jp) = dummy(1:jp) + q
+!
+    endif
+d117 16
+@
+
+
+1.3
+log
+@Fixed ier not set in ptg_frq_load
+@
+text
+@d9 1
+a9 1
+    "$Id: ptg_frq_load_m.f90,v 1.2 2001/03/09 00:40:32 zvi Exp $"
+d27 1
+a27 1
+Integer(i4) :: i, k, kk, kz, jp, io, l
+a42 1
+  kz = FMI%no_ptg_frq(1)
+d62 1
+a62 1
+    Call Hunt(r,FMI%tan_press,kz,k,i)
+d151 3
+@
+
+
+1.2
+log
+@Correcting an error in HUNT routine
+@
+text
+@d9 1
+a9 1
+    "$Id: ptg_frq_load_m.f90,v 1.1 2001/03/06 09:28:28 zvi Exp $"
+d38 1
+d152 3
+@
+
+
+1.1
+log
+@*** empty log message ***
+@
+text
+@d9 1
+a9 1
+    "$Id: ptg_frq_load_m.f90,v 1.1 2001/02/22 18:12:05 ZShippony Exp $"
+d60 2
+d151 3
+@
+

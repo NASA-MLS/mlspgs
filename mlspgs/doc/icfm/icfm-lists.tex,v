@@ -1,0 +1,367 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.12
+	cfm-single-freq-0-1:1.1.0.10
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.8
+	mus-emls-1-70:1.1.0.6
+	rel-1-0-englocks-work:1.1.0.4
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.2
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	M4-00:1.1
+	V3-33:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2011.04.20.22.25.39;	author honghanh;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Complete documentation
+@
+text
+@\section{Lists and tables}%
+\label{app:Lists}
+\subsection{Types}
+\noindent\begin{minipage}{\linewidth}
+\begin{multicols}{2}
+\noindent\snippet{cloud}\\
+\snippet{cloudExtinction}\\
+\snippet{cloudIce}\\
+\snippet{cloudInducedRadiance}\\
+\snippet{cloudTemperature}\\
+\snippet{cloudWater}\\
+\snippet{cloudy\_110RH\_below\_top}\\
+\snippet{cloudy\_110RH\_in\_cloud}\\
+\snippet{elevOffset}\\
+\snippet{fieldAzimuth}\\
+\snippet{fieldElevation}\\
+\snippet{fieldStrength}\\
+\snippet{geocAltitude}\\
+\snippet{geodAltitude}\\
+\snippet{geodAngle}\\
+\snippet{gph}\\
+\snippet{gph\_precision}\\
+\snippet{H2OFromRHI}\\
+\snippet{H2OPrecisionFromRHI}\\
+\snippet{IceDensity}\\
+\snippet{iwc}\\
+\snippet{IWCfromExtinction}\\
+\snippet{iwc\_high\_height}\\
+\snippet{iwc\_low\_height}\\
+\snippet{iwp}\\
+\snippet{ptan}\\
+\snippet{radiance}\\
+\snippet{refGPH}\\
+\snippet{rhi}\\
+\snippet{RHIFromH2O}\\
+\snippet{RHIPrecisionFromH2O}\\
+\snippet{systemTemperature}\\
+\snippet{temperature}\\
+\snippet{temperature\_precision}\\
+\snippet{tngtgeocalt}\\
+\snippet{tngtgeodalt}\\
+\snippet{vmr}\\
+\end{multicols}
+\end{minipage}
+
+\subsection{Units}
+\begin{tabular}{ll}
+\toprule
+\textbf{Quantity} & \textbf{Units} \\
+\midrule
+\snippet{invalid} & Default value for uninitialized variables\\
+\snippet{dimensionless} & Value for unitless quantities\\
+\snippet{length} & Meters\\
+\snippet{time} & Seconds\\
+\snippet{pressure} & Millibars\\
+\snippet{temperature} & Kelvins\\
+\snippet{vmr} & Number of `parts per one'\\
+\snippet{angle} & Degrees\\
+\snippet{mafs} & Number of mafs\\
+\snippet{mifs} & Number of mifs\\
+\snippet{frequency} & MHz\\
+\snippet{zeta} & $\log_{10}\left(\text{Pressure\,/\,hPa}\right)$ \\
+\snippet{velocity} & meters\,/\,second\\
+\snippet{extinction} & 1\,/\,meters\\
+\snippet{icedensity} & g\,/\,meters$^3$\\
+\snippet{colmabundance} & $\log_{10}\left(\text{g\,/meters}\right)^3$\\
+\snippet{pctrhi} & Relative humidity wrt. ice (\%)\\
+\snippet{gauss} & Gauss \\
+\snippet{profiles} & Number of profiles\\
+\bottomrule
+\end{tabular}
+
+\subsection{Molecules}
+
+\begin{multicols}{3}
+\noindent\snippet{BR\_79\_O}\\
+\snippet{BR\_79\_O\_V1}\\
+\snippet{BR\_81\_O}\\
+\snippet{BR\_81\_O\_V1}\\
+\snippet{BRO}\\
+\snippet{C\_13\_H2CHCN}\\
+\snippet{C\_13\_H3CN}\\
+\snippet{C\_13\_O}\\
+\snippet{CH2C\_13\_HCN}\\
+\snippet{CH2CDCN}\\
+\snippet{CH2CHC\_13\_N}\\
+\snippet{CH2CHCN}\\
+\snippet{CH2OHCOCH2OH}\\
+\snippet{CH3C\_13\_N}\\
+\snippet{CH3CH2CH3}\\
+\snippet{CH3CH2CN}\\
+\snippet{CH3CH2OH}\\
+\snippet{CH3CL}\\
+\snippet{CH3CL\_35}\\
+\snippet{CH3CL\_37}\\
+\snippet{CH3CN}\\
+\snippet{CH3CN\_15}\\
+\snippet{CH3COCH3}\\
+\snippet{CH3D}\\
+\snippet{CH3O}\\
+\snippet{CH3OH}\\
+\snippet{CH3OOH}\\
+\snippet{CH4}\\
+\snippet{CL\_35\_NO2}\\
+\snippet{CL\_35\_O}\\
+\snippet{CL\_35\_ONO2}\\
+\snippet{CL\_35\_OOCL\_35}\\
+\snippet{CL\_35\_OOCL\_37}\\
+\snippet{CL\_35\_O\_V1}\\
+\snippet{CL\_37\_NO2}\\
+\snippet{CL\_37\_O}\\
+\snippet{CL\_37\_ONO2}\\
+\snippet{CL\_37\_O\_V1}\\
+\snippet{CLNO2}\\
+\snippet{CLO}\\
+\snippet{CLONO2}\\
+\snippet{CLOOCL}\\
+\snippet{CLOUD\_A}\\
+\snippet{CLOUD\_S}\\
+\snippet{CO}\\
+\snippet{CO\_17}\\
+\snippet{CO\_18}\\
+\snippet{CO2}\\
+\snippet{COF2}\\
+\snippet{D2O}\\
+\snippet{DCL\_35}\\
+\snippet{DCL\_37}\\
+\snippet{DF}\\
+\snippet{DNO3}\\
+\snippet{EXTINCTION}\\
+\snippet{EXTINCTIONV2}\\
+\snippet{H2C\_13\_O}\\
+\snippet{H2CO}\\
+\snippet{H2CO\_18}\\
+\snippet{H2O}\\
+\snippet{H2O\_17}\\
+\snippet{H2O\_17\_V2}\\
+\snippet{H2O\_18}\\
+\snippet{H2O\_18\_V2}\\
+\snippet{H2O2}\\
+\snippet{H2O\_V2}\\
+\snippet{H2S}\\
+\snippet{H2S\_32}\\
+\snippet{H2S\_32\_O4}\\
+\snippet{H2SO4}\\
+\snippet{HBR}\\
+\snippet{HBR\_79}\\
+\snippet{HBR\_81}\\
+\snippet{HC\_13\_N}\\
+\snippet{HCL}\\
+\snippet{HCL\_35}\\
+\snippet{HCL\_35\_O}\\
+\snippet{HCL\_37}\\
+\snippet{HCL\_37\_O}\\
+\snippet{HCLO}\\
+\snippet{HCN}\\
+\snippet{HCN\_15}\\
+\snippet{HCN\_V2}\\
+\snippet{HCOCH2OH}\\
+\snippet{HCOOH}\\
+\snippet{HDO}\\
+\snippet{HDO\_17}\\
+\snippet{HDO\_18}\\
+\snippet{HDO\_V2}\\
+\snippet{HF}\\
+\snippet{HN\_15\_O3}\\
+\snippet{HNO3}\\
+\snippet{HNO3\_V5}\\
+\snippet{HNO3\_V6}\\
+\snippet{HNO3\_V7}\\
+\snippet{HNO3\_V8}\\
+\snippet{HNO3\_V9}\\
+\snippet{HO\_18\_NO2}\\
+\snippet{HO2}\\
+\snippet{HOBR}\\
+\snippet{HOBR\_79}\\
+\snippet{HOBR\_81}\\
+\snippet{HOCL}\\
+\snippet{HOCL\_35}\\
+\snippet{HOCL\_37}\\
+\snippet{HONO}\\
+\snippet{HONO\_18\_O}\\
+\snippet{HONOO\_18}\\
+\snippet{HOONO}\\
+\snippet{HOONO2}\\
+\snippet{N\_15\_H3}\\
+\snippet{N\_15\_NO}\\
+\snippet{N2}\\
+\snippet{N2O}\\
+\snippet{N2O\_17}\\
+\snippet{N2O\_18}\\
+\snippet{N2O\_2V2}\\
+\snippet{N2O\_V1}\\
+\snippet{N2O\_V2}\\
+\snippet{NF3}\\
+\snippet{NH2CH2CH2OH}\\
+\snippet{NH3}\\
+\snippet{NH3\_V2}\\
+\snippet{NN\_15\_O}\\
+\snippet{NO}\\
+\snippet{NO2}\\
+\snippet{NO\_PLUS}\\
+\snippet{O}\\
+\snippet{O\_17}\\
+\snippet{O\_17\_O}\\
+\snippet{O\_18}\\
+\snippet{O\_18\_H}\\
+\snippet{O\_18\_O}\\
+\snippet{O\_18\_O\_V1}\\
+\snippet{O2}\\
+\snippet{O2\_V1}\\
+\snippet{O3}\\
+\snippet{O3\_2V2}\\
+\snippet{O3\_ASYM\_O\_17}\\
+\snippet{O3\_ASYM\_O\_18}\\
+\snippet{O3\_ASYM\_O\_18\_V2}\\
+\snippet{O3\_R}\\
+\snippet{O3\_SYM\_O\_17}\\
+\snippet{O3\_SYM\_O\_18}\\
+\snippet{O3\_SYM\_O\_18\_V2}\\
+\snippet{O3\_V1\_3}\\
+\snippet{O3\_V1\_3\_V2}\\
+\snippet{O3\_V2}\\
+\snippet{OBR\_79\_O}\\
+\snippet{OBR\_81\_O}\\
+\snippet{OBRO}\\
+\snippet{OC\_13\_S\_32}\\
+\snippet{OCL\_35\_O}\\
+\snippet{OCL\_37\_O}\\
+\snippet{OCLO}\\
+\snippet{OCO\_18}\\
+\snippet{OCS}\\
+\snippet{OCS\_32}\\
+\snippet{OCS\_34}\\
+\snippet{OD}\\
+\snippet{OH}\\
+\snippet{OH\_V1\_2}\\
+\snippet{S\_32\_O\_18\_O}\\
+\snippet{S\_32\_O2}\\
+\snippet{S\_32\_O2\_V2}\\
+\snippet{S\_33\_O2}\\
+\snippet{S\_34\_O2}\\
+\snippet{SNGLT\_DLTA\_O\_18\_O}\\
+\snippet{SNGLT\_DLTA\_O2}\\
+\snippet{SO2}
+\end{multicols}
+
+\subsection{Bands}
+
+\begin{multicols}{3}
+\noindent\snippet{R1A:118.B1LF:PT}\\
+\snippet{R2:190.B2LF:H2O}\\
+\snippet{R2:190.B3LF:N2O}\\
+\snippet{R2:190.B4LF:HNO3}\\
+\snippet{R2:190.B5LF:ClO}\\
+\snippet{R2:190.B6LF:O3}\\
+\snippet{R3:240.B7LF:O3}\\
+\snippet{R3:240.B8LF:PT}\\
+\snippet{R3:240.B9LF:CO}\\
+\snippet{R4:640.B10LF:ClO}\\
+\snippet{R4:640.B11LF:BrO}\\
+\snippet{R4:640.B12LF:N2O}\\
+\snippet{R4:640.B13LF:HCl}\\
+\snippet{R4:640.B14LF:O3}\\
+\snippet{R5H:2T5.B15LF:OH}\\
+\snippet{R5H:2T5.B16LF:OH}\\
+\snippet{R5H:2T5.B17LF:PT}\\
+\snippet{R5V:2T5.B18LF:OH}\\
+\snippet{R5V:2T5.B19LF:OH}\\
+\snippet{R5V:2T5.B20LF:PT}\\
+\snippet{R1B:118.B21LF:PT}\\
+\snippet{R1A:118.B22LD:PT}\\
+\snippet{R2:190.B23LD:H2O}\\
+\snippet{R3:240.B24LD:O3}\\
+\snippet{R3:240.B25LD:CO}\\
+\snippet{R1B:118.B26LD:PT}\\
+\snippet{R2:190.B27LM:HCN}\\
+\snippet{R4:640.B28LM:HO2}\\
+\snippet{R4:640.B29LM:HOCl}\\
+\snippet{R4:640.B30LM:HO2}\\
+\snippet{R4:640.B31LM:BrO}\\
+\snippet{R1A:118.B32LW:PT}\\
+\snippet{R3:240.B33LW:O3}\\
+\snippet{R1B:118.B34LW:PT}\\
+\snippet{R2:190.B2UF:H2O}\\
+\snippet{R2:190.B3UF:N2O}\\
+\snippet{R2:190.B4UF:HNO3}\\
+\snippet{R2:190.B5UF:ClO}\\
+\snippet{R2:190.B6UF:O3}\\
+\snippet{R3:240.B7UF:O3}\\
+\snippet{R3:240.B8UF:PT}\\
+\snippet{R3:240.B9UF:CO}\\
+\snippet{R4:640.B10UF:ClO}\\
+\snippet{R4:640.B11UF:BrO}\\
+\snippet{R4:640.B12UF:N2O}\\
+\snippet{R4:640.B13UF:HCl}\\
+\snippet{R4:640.B14UF:O3}\\
+\snippet{R5H:2T5.B15UF:OH}\\
+\snippet{R5H:2T5.B16UF:OH}\\
+\snippet{R5H:2T5.B17UF:PT}\\
+\snippet{R5V:2T5.B18UF:OH}\\
+\snippet{R5V:2T5.B19UF:OH}\\
+\snippet{R5V:2T5.B20UF:PT}\\
+\snippet{R2:190.B23UD:H2O}\\
+\snippet{R3:240.B24UD:O3}\\
+\snippet{R3:240.B25UD:CO}\\
+\snippet{R2:190.B27UM:HCN}\\
+\snippet{R4:640.B28UM:HO2}\\
+\snippet{R4:640.B29UM:HOCl}\\
+\snippet{R4:640.B30UM:HO2}\\
+\snippet{R4:640.B31UM:BrO}\\
+\snippet{R3:240.B33UW:O3}
+\end{multicols}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "cfm"
+%%% End: 
+@

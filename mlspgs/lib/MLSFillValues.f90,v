@@ -1,0 +1,5545 @@
+head	2.39;
+access;
+symbols
+	v5-02-NRT-19:2.39
+	v6-00:2.39
+	v5-02-NRT-18:2.39
+	v5-02:2.39
+	v5-01-NRT-17:2.39
+	v5-01-NRT-16:2.39
+	v5-01-NRT-15:2.39
+	v5-01-NRT-14:2.39
+	neuralnetworks-1-0:2.39.0.8
+	cfm-single-freq-0-1:2.39.0.6
+	v5-01:2.39
+	v5-00:2.39
+	v4-23-TA133:2.39.0.4
+	mus-emls-1-70:2.39.0.2
+	rel-1-0-englocks-work:2.38.0.2
+	VUMLS1-00:2.35
+	VPL1-00:2.35
+	V4-22-NRT-08:2.35
+	VAM1-00:2.34
+	V4-21:2.33.0.2
+	V4-13:2.33
+	V4-12:2.32
+	V4-11:2.32
+	V4-10:2.32
+	V3-43:2.19
+	M4-00:2.30
+	V3-41:2.19
+	V3-40-PlusGM57:2.19.0.2
+	V2-24-NRT-04:2.9
+	V3-33:2.25
+	V2-24:2.9
+	V3-31:2.25
+	V3-30-NRT-05:2.20
+	cfm-01-00:2.19
+	V3-30:2.19
+	V3-20:2.19
+	V3-10:2.18
+	V2-23-NRT-02:2.9
+	V2-23:2.9
+	V2-22-NRT-01:2.9
+	V2-22:2.9
+	V2-21:2.9
+	V2-20:2.9
+	V2-11:2.9
+	V2-10:2.9
+	V2-00:2.9;
+locks; strict;
+comment	@# @;
+
+
+2.39
+date	2018.04.19.02.00.36;	author vsnyder;	state Exp;
+branches;
+next	2.38;
+
+2.38
+date	2017.11.03.19.56.00;	author pwagner;	state Exp;
+branches;
+next	2.37;
+
+2.37
+date	2017.11.02.00.06.50;	author pwagner;	state Exp;
+branches;
+next	2.36;
+
+2.36
+date	2017.08.25.00.18.10;	author pwagner;	state Exp;
+branches;
+next	2.35;
+
+2.35
+date	2016.01.13.00.45.44;	author pwagner;	state Exp;
+branches;
+next	2.34;
+
+2.34
+date	2015.03.28.01.49.59;	author vsnyder;	state Exp;
+branches;
+next	2.33;
+
+2.33
+date	2014.09.05.00.04.34;	author vsnyder;	state Exp;
+branches;
+next	2.32;
+
+2.32
+date	2013.09.17.22.35.13;	author pwagner;	state Exp;
+branches;
+next	2.31;
+
+2.31
+date	2013.08.12.23.47.25;	author pwagner;	state Exp;
+branches;
+next	2.30;
+
+2.30
+date	2011.12.13.01.07.36;	author pwagner;	state Exp;
+branches;
+next	2.29;
+
+2.29
+date	2011.12.07.01.16.15;	author pwagner;	state Exp;
+branches;
+next	2.28;
+
+2.28
+date	2011.07.26.20.44.21;	author pwagner;	state Exp;
+branches;
+next	2.27;
+
+2.27
+date	2011.07.07.00.28.27;	author pwagner;	state Exp;
+branches;
+next	2.26;
+
+2.26
+date	2011.03.22.23.38.30;	author pwagner;	state Exp;
+branches;
+next	2.25;
+
+2.25
+date	2011.01.20.01.14.31;	author pwagner;	state Exp;
+branches;
+next	2.24;
+
+2.24
+date	2010.11.30.00.33.52;	author pwagner;	state Exp;
+branches;
+next	2.23;
+
+2.23
+date	2010.11.11.19.54.29;	author pwagner;	state Exp;
+branches;
+next	2.22;
+
+2.22
+date	2010.10.13.00.41.23;	author pwagner;	state Exp;
+branches;
+next	2.21;
+
+2.21
+date	2010.09.24.23.44.48;	author pwagner;	state Exp;
+branches;
+next	2.20;
+
+2.20
+date	2010.08.13.22.02.41;	author pwagner;	state Exp;
+branches;
+next	2.19;
+
+2.19
+date	2010.02.17.22.30.53;	author pwagner;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2009.06.23.18.25.42;	author pwagner;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2008.09.03.20.41.17;	author pwagner;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2008.07.10.00.12.43;	author pwagner;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2008.06.06.22.52.21;	author pwagner;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2008.06.04.21.42.56;	author pwagner;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2008.04.10.20.25.50;	author pwagner;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2008.03.07.01.33.47;	author pwagner;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2008.01.09.20.50.47;	author pwagner;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2008.01.07.21.34.41;	author pwagner;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2006.06.15.17.31.30;	author pwagner;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2006.03.15.17.32.35;	author pwagner;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2006.02.28.21.43.31;	author pwagner;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2006.02.02.16.19.57;	author pwagner;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2006.02.01.23.54.20;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2006.02.01.23.42.14;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2006.01.14.00.50.15;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2005.12.23.03.10.31;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2005.12.16.00.00.23;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.39
+log
+@Compute address for allocate/deallocate tracking.  Remove USE statements for
+unused names.
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=============================================================================
+module MLSFillValues              ! Some FillValue-related stuff
+!=============================================================================
+
+  use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+  use Ieee_Arithmetic, only: IsFinite => Ieee_Is_Finite, IsNaN => Ieee_Is_NaN, &
+    & Ieee_Is_Finite, Ieee_Is_NaN
+  use MLSCommon, only: Fill_Signal, Inf_Signal, NaN_Signal, UndefinedValue, &
+    & Is_What_Ieee, MLSFill_T, MLSFills
+  use MLSKinds ! Everything
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+  use MLSFinds, only: FindFirst, FindLast
+  use MLSStrings, only: Lowercase
+  use Output_M, only: Blanks, Output
+
+  implicit none
+
+  private
+
+  public :: AddMLSFillToDatabase, Dump
+  public :: FillFunction, InfFunction, NaNFunction
+  public :: FilterValues
+  public :: IsFillValue
+  public :: IsFinite, IsInfinite, IsNaN
+  public :: Monotonize
+  public :: RemoveFillValues, ReorderFillValues, ReplaceFillValues
+  public :: RoundUpOrDown
+  public :: WhereAreTheFills, WhereAreTheNaNs, WhereAreTheInfs
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: MLSFillValues.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+! This module contains stuff related to:
+! FillValues, NaNs, Infinities
+! Rounding up or dowwn, and 
+! Bridging or Monotonize-ing values that interrupt a monotonic array
+
+! Fill values are values in an array which have been so marked as to be ignored
+! Sometimes they are preassigned values, as with mls hdf[eos] datasets
+! where we use -999.99
+! Sometimes we give them values explicitly to mark where an agorithm failed
+! or where a an excursion outside its region of validity was detected
+! Sometimes we simply want to consider only non-zero values
+
+! Could we generalize this to mark as Fill values any values above or
+! below a threshold, or whose absolute value is above a threshold?
+
+! === (start of toc) ===                                                 
+!     c o n t e n t s
+!     - - - - - - - -
+
+!         Functions, operations, routines
+! addMLSFillToDatabase
+!                   Create or add to a database of MLSFills, to be used in 
+!                   deciding whether an argument is a Fill, broadly defined
+! Dump              Dump the MLSFills database
+! FillFunction      Returns the Fill value
+! InfFunction       Returns the Infinite value
+! NaNFunction       Returns the NaN value
+! FilterValues      Filters entries in two arrays
+! IsFillValue       Returns true if argument is FillValue
+! IsFinite          Returns true if argument is finite
+! IsInfinite        Returns true if argument is infinite
+! IsNaN             Returns true if argument is NaN
+! Monotonize        Replace any non-monotonic elements
+! RemoveFillValues  Removes FillValues from an array
+!                     returning a new array smaller in size
+! ReorderFillValues Reorders FillValue entries at the end of an array
+! ReplaceFillValues Replaces FillValue entries in an array
+!                     either by interpolating or stutter the non-Fill values
+! RoundUpOrDown     Rounds an arg up or down depending on fraction
+! WhereAreTheFills  Find which array elements are Fill values
+! WhereAreTheInfs   Find which array elements are Inf
+! WhereAreTheNaNs   Find which array elements are NaN
+! === (end of toc) ===                                                   
+
+! === (start of api) ===
+! int addMLSFillToDatabase( MLSFill_T arg, [MLSFill_T yourDatabase(:)] )
+! int addMLSFillToDatabase( r8 FillValue, &
+!   [r8 tol], [char* condition], [MLSFill_T yourDatabase(:)] )
+! Dump ( [MLSFill_T Database(:)] )
+! nprec FillFunction( nprec arg )
+! nprec InfFunction( nprec arg )
+! nprec NaNFunction( nprec arg )
+! filterValues ( a, atab, b, btab, log warn, [fillValue], [precision] )
+! log IsFillValue ( a, [fillvalue], [log strict] )
+! log IsFinite ( a )
+! log Isinfinite ( a )
+! log IsNaN ( a )
+! Monotonize( values, [Period], [FillValue], [log strict] )
+! RemoveFillValues ( array, FillValue, newArray, [second], [newSecond] )
+! ReorderFillValues ( values, FillValue )
+! ReplaceFillValues ( values, FillValue, [newValues], [newFill], [char* options] )
+! nprec RoundUpOrDown( nprec value )
+! WhereAreTheFills ( array, [which(:)], [int howMany], [mode], [inds(:,:)] )
+! WhereAreTheInfs ( array, [which(:)], [int howMany], [mode], [inds(:,:)] )
+! WhereAreTheNaNs ( array, [which(:)], [int howMany], [mode], [inds(:,:)] )
+!
+! These last 3 search for the targeted numerical type (Fill, Inf, or NaN)
+! according to mode:
+!     'any'  Finds which column or plane (corresponding to last index) has any
+!     'all'  Finds which column or plane (corresponding to last index) is all
+!     'ind'  Finds index pair (for rank 2) or triple (for rank 3) of each
+! More Notes:
+! (1) for rank r array, inds should be dimensioned (r,n) where n is the max
+! number of Fills or whatever you expect
+! (2) For mode = 'all' or 'any', inds is ignored, howMany is number of columns
+!     or planes
+! (3) For mode = 'ind', which is ignored, howMany is number of individuals
+! Example: we're searching for NaNs; the array looks like the following
+!
+!  0   0   0 NaN
+! NaN  0   0 NaN
+! NaN NaN  0 NaN
+!  0   0   0 NaN
+!
+!      Then
+! mode      howMany     which        inds
+! 'any'       3        1, 2, 4     (ignored)
+! 'all'       1           4        (ignored)
+! 'ind'       7       (ignored)  (1,4),(2,1),(2,4),(3,1),(3,2),(3,4),(4,4)
+! We show the pairs of indices under inds above, but as returned
+! by the routine the 2x7 array of inds will be laid out as follows
+!  1  2  2  3  3  3  4
+!  4  1  4  1  2  4  4
+!
+! === (end of api) ===                                                 
+  interface addMLSFillToDatabase
+    module procedure addFillValueToDatabase, addMLSFillTypeToDatabase
+  end interface
+
+  interface BridgeMissingValues
+    module procedure BridgeMissingValues_1dr4, BridgeMissingValues_1dr8, BridgeMissingValues_1dint
+    module procedure BridgeMissingValues_2dr4, BridgeMissingValues_2dr8, BridgeMissingValues_2dint
+    module procedure BridgeMissingValues_3dr4, BridgeMissingValues_3dr8, BridgeMissingValues_3dint
+  end interface
+
+  interface Dump
+    module procedure DumpMLSFillsDatabase
+  end interface
+
+  interface FillFunction
+    module procedure FillFunction_REAL, FillFunction_DOUBLE
+  end interface
+
+  interface InfFunction
+    module procedure InfFunction_REAL, InfFunction_DOUBLE
+  end interface
+
+  interface NaNFunction
+    module procedure NaNFunction_REAL, NaNFunction_DOUBLE
+  end interface
+
+  interface FilterValues
+    module procedure FilterValues_REAL, FilterValues_DOUBLE
+    module procedure FilterValues_REAL_2d, FilterValues_DOUBLE_2d
+    module procedure FilterValues_REAL_3d, FilterValues_DOUBLE_3d
+  end interface
+  
+  interface IsFillValue
+    module procedure IsFillValue_r4, IsFillValue_r8, IsFillValue_int
+  end interface
+
+  interface IsFinite
+    module procedure IsFinite_INTEGER
+  end interface
+  
+  interface IsInfinite
+    module procedure IsInfinite_REAL, IsInfinite_DOUBLE, IsInfinite_INTEGER
+  end interface
+  
+  interface IsNaN
+    module procedure IsNaN_INTEGER
+    module procedure IsNaN_CHARACTER
+  end interface
+  
+  interface Monotonize
+    module procedure Monotonize_1dr4, Monotonize_1dr8, Monotonize_1dint
+    module procedure Monotonize_2dr4, Monotonize_2dr8, Monotonize_2dint
+    module procedure Monotonize_3dr4, Monotonize_3dr8, Monotonize_3dint
+  end interface
+
+  interface RemoveFillValues
+    module procedure RemoveFill1d_r4, RemoveFill1d_r8, RemoveFill1d_int
+    ! I'm not certain it makes sense to do this except in 1-d
+    module procedure RemoveFill2d_r4, RemoveFill2d_r8, RemoveFill2d_int
+    module procedure RemoveFill3d_r4, RemoveFill3d_r8, RemoveFill3d_int
+  end interface
+
+  interface ReorderFillValues
+    module procedure ReorderFillValues_r4, ReorderFillValues_r8, ReorderFillValues_int
+  end interface
+
+  interface ReplaceFillValues
+    module procedure ReplaceFill1d_r4, ReplaceFill1d_r8, ReplaceFill1d_int
+    module procedure ReplaceFill2d_r4, ReplaceFill2d_r8, ReplaceFill2d_int
+    module procedure ReplaceFill3d_r4, ReplaceFill3d_r8, ReplaceFill3d_int
+  end interface
+
+  interface RoundUpOrDown
+    module procedure roundUpOrDown_r4, roundUpOrDown_r8, roundUpOrDown_int
+  end interface
+
+  interface swap
+    module procedure swap_int, swap_r4, swap_r8
+  end interface
+
+  interface WhereAreTheFills
+    module procedure WhereAreTheFills_REAL, WhereAreTheFills_DOUBLE
+    module procedure WhereAreTheFills_REAL_2d, WhereAreTheFills_DOUBLE_2d
+    module procedure WhereAreTheFills_REAL_3d, WhereAreTheFills_DOUBLE_3d
+    module procedure WhereAreTheFills_INTEGER
+    module procedure WhereAreTheFills_INTEGER_2d, WhereAreTheFills_INTEGER_3d
+  end interface
+  
+  interface WhereAreTheInfs
+    module procedure WhereAreTheInfs_REAL, WhereAreTheInfs_DOUBLE
+    module procedure WhereAreTheInfs_REAL_2d, WhereAreTheInfs_DOUBLE_2d
+    module procedure WhereAreTheInfs_REAL_3d, WhereAreTheInfs_DOUBLE_3d
+    module procedure WhereAreTheInfs_REAL_4d, WhereAreTheInfs_DOUBLE_4d
+    module procedure WhereAreTheInfs_INTEGER
+    module procedure WhereAreTheInfs_INTEGER_2d, WhereAreTheInfs_INTEGER_3d
+  end interface
+  
+  interface WhereAreTheNaNs
+    module procedure WhereAreTheNaNs_REAL, WhereAreTheNaNs_DOUBLE
+    module procedure WhereAreTheNaNs_REAL_2d, WhereAreTheNaNs_DOUBLE_2d
+    module procedure WhereAreTheNaNs_REAL_3d, WhereAreTheNaNs_DOUBLE_3d
+    module procedure WhereAreTheNaNs_REAL_4d, WhereAreTheNaNs_DOUBLE_4d
+    module procedure WhereAreTheNaNs_INTEGER
+    module procedure WhereAreTheNaNs_INTEGER_2d, WhereAreTheNaNs_INTEGER_3d
+  end interface
+  
+  interface WhereAreThey
+    module procedure WhereAreThey_REAL, WhereAreThey_DOUBLE
+    module procedure WhereAreThey_REAL_2d, WhereAreThey_DOUBLE_2d
+    module procedure WhereAreThey_REAL_3d, WhereAreThey_DOUBLE_3d
+    module procedure WhereAreThey_REAL_4d, WhereAreThey_DOUBLE_4d
+    module procedure WhereAreThey_INTEGER
+    module procedure WhereAreThey_INTEGER_2d, WhereAreThey_INTEGER_3d
+  end interface
+  
+  ! This tolerance won't work w/o a little fudging 
+  ! when fill values get really huge; e.g. gmao use 1.e15, gloria 1.e12
+  ! The fudging will take the form of
+  ! max( FILLVALUETOLERANCE, abs(FILLVALUE/100000) )
+  ! where obviously 100000 is an arbitrary number
+  ! Should we study this more carefully?
+  real, parameter, private :: FILLVALUETOLERANCE = 0.2 ! Poss. could make it 1
+  character(len=3), save   :: NaNString          = 'NaN'
+  character(len=3), save   :: InfString          = 'Inf'
+  logical, parameter       :: DEEBUG             = .false.
+  logical, save            :: DONTINTERPOLATE    = .false. ! If true, stutter
+
+contains
+
+  !-------------------------------------------  AddFillValueToDatabase  -----
+  integer function AddFillValueToDatabase( FillValue, &
+    & tol, condition, yourDatabase )
+
+    ! This function adds an FillValue data type to a database of said types,
+    ! creating a new database if it doesn't exist.  The result value is
+    ! the size -- where FillValue is put.
+
+    ! Dummy arguments
+    type (MLSFill_T), dimension(:), optional, pointer :: yourDatabase
+    real(r8), optional, intent(in)                    :: tol
+    real(r8), intent(in)                              :: FillValue
+    character(len=*), optional, intent(in)            :: condition
+
+    ! Local variables
+    type (MLSFill_T)                        :: item
+    ! Executable
+    item%value = FillValue
+    if ( present(condition) ) then
+      item%condition = condition
+    else
+      item%condition = '='
+    endif
+    if ( present(tol) ) then
+      item%tol = tol
+    else
+      item%tol = max( real(FILLVALUETOLERANCE, r8), abs(FillValue*1.d-6) )
+    endif
+    AddFillValueToDatabase = addMLSFillTypeToDatabase( item, yourDatabase )
+  end function AddFillValueToDatabase
+
+  !-------------------------------------------  addMLSFillTypeToDatabase  -----
+  integer function addMLSFillTypeToDatabase( ITEM, yourDatabase )
+
+    ! This function adds an MLSFill data type to a database of said types,
+    ! creating a new database if it doesn't exist.  The result value is
+    ! the size -- where MLSFill is put.
+
+    ! Dummy arguments
+    type (MLSFill_T), dimension(:), optional, pointer :: yourDatabase
+    type (MLSFill_T), intent(in) :: ITEM
+
+    ! Executable
+    if ( present(yourDatabase) ) then
+      addMLSFillTypeToDatabase = AddMLSFillToDefinite( item, yourDatabase )
+      ! call dump( yourDatabase )
+    else
+      addMLSFillTypeToDatabase = AddMLSFillToDefinite( item, MLSFills )
+      ! call dump( MLSFills )
+    endif
+  end function addMLSFillTypeToDatabase
+
+  !-------------------------------------------  AddMLSFillToDefinite  -----
+  integer function AddMLSFillToDefinite( ITEM, DATABASE )
+
+    ! This function adds an MLSFill data type to a database of said types,
+    ! creating a new database if it doesn't exist.  The result value is
+    ! the size -- where MLSFill is put.
+
+    ! Dummy arguments
+    type (MLSFill_T), dimension(:), pointer :: DATABASE
+    type (MLSFill_T), intent(in) :: ITEM
+
+    ! Local variables
+    type (MLSFill_T), dimension(:), pointer :: tempDatabase
+    ! Executable
+    include "addItemToDatabase.f9h" 
+
+    AddMLSFillToDefinite = newSize
+  end function AddMLSFillToDefinite
+
+  ! ---------------------------------------------  Dump  -----
+  ! This family of routines performs any Dumps appropriate
+  ! to the args--in our case the MLSFill types
+  subroutine DumpMLSFillsDatabase ( database )
+    ! Args
+    type(MLSFill_T), dimension(:), pointer, optional :: database
+    ! Internal variables
+    type(MLSFill_T), dimension(:), pointer :: dumpingdatabase
+    integer :: i
+    ! Executable
+    if ( present(database) ) then
+      dumpingdatabase => database
+    else
+      dumpingdatabase => MLSFills
+    endif
+    if ( .not. associated(dumpingdatabase) ) then
+      call output( 'MLSFill database is not associated', advance='yes' )
+      return
+    endif
+    call output( 'MLSFill database', advance='yes' )
+    call output( '         i' )
+    call blanks(12)
+    call output( 'value')
+    call blanks(4)
+    call output( 'tolerance')
+    call blanks(4)
+    call output( '          condition', advance='yes' )
+    do i=1, size(dumpingdatabase)
+      call output( i )
+      call blanks ( 4 )
+      call output( dumpingdatabase(i)%value )
+      call blanks ( 4 )
+      call output( dumpingdatabase(i)%tol )
+      call blanks ( 4 )
+      call output( dumpingdatabase(i)%condition, advance='yes' )
+    enddo
+  end subroutine DumpMLSFillsDatabase
+
+! -------------------------------------------------  FillFunction  -----
+! Returns the fillValue
+  function FillFunction_DOUBLE(arg) result(value)
+    double precision, intent(in) :: arg
+    real                         :: value
+    value = UndefinedValue
+  end function FillFunction_DOUBLE
+
+  function FillFunction_REAL(arg) result(value)
+    real, intent(in)        :: arg
+    real                    :: value
+    value = UndefinedValue
+  end function FillFunction_REAL
+
+! -------------------------------------------------  InfFunction  -----
+! Returns the Inf Value
+  function InfFunction_DOUBLE(arg) result(value)
+    double precision, intent(in) :: arg
+    real                         :: value
+    read ( InfString, * ) value
+  end function InfFunction_DOUBLE
+
+  function InfFunction_REAL(arg) result(value)
+    real, intent(in)        :: arg
+    real                    :: value
+    read ( InfString, * ) value
+  end function InfFunction_REAL
+
+! -------------------------------------------------  NaNFunction  -----
+! Returns the NaN Value
+  function NaNFunction_DOUBLE(arg) result(value)
+    double precision, intent(in) :: arg
+    real                         :: value
+    read ( NaNString, * ) value
+  end function NaNFunction_DOUBLE
+
+  function NaNFunction_REAL(arg) result(value)
+    real, intent(in)        :: arg
+    real                    :: value
+    read ( NaNString, * ) value
+  end function NaNFunction_REAL
+
+! -------------------------------------------------  FilterValues  -----
+  subroutine filterValues_REAL ( a, ATAB, b, BTAB, warn, fillValue, precision )
+    ! Return arrays filtered
+    ! where corresponding precision array < 0
+    ! or whose values are not finite
+    ! "Filter" means offending elements set to 0. or optional fillValue
+    ! Returned arrays are assigned values as appropriate
+    
+    ! An older version was able to reset any fillValues found to 0
+    ! but that functionality has been removed
+    ! It can be accomplished with ease in your code via
+    ! where ( isFillValue(array) )
+    !    array = 0.
+    ! endwhere
+    
+    ! See also ReplaceFillValues
+    integer, parameter :: RK = kind(0.0) ! Kind type parameter for default real
+    character(*), parameter :: P = 'default reals'
+    include 'FilterValues_1d.f9h'
+  end subroutine filterValues_REAL
+
+  subroutine filterValues_DOUBLE ( a, ATAB, b, BTAB, warn, fillValue, precision )
+    ! Return arrays filtered etc.
+    character(*), parameter :: P = 'double precision reals'
+    integer, parameter :: RK = kind(0.0d0) ! Kind type parameter for double precision
+    include 'FilterValues_1d.f9h'
+  end subroutine filterValues_DOUBLE
+
+  subroutine filterValues_REAL_2d(a, ATAB, b, BTAB, warn, fillValue, precision)
+    ! Return arrays filtered etc.
+    integer, parameter :: RK = kind(0.0) ! Kind type parameter for default real
+    ! Args
+    real(rk), dimension(:,:), intent(in)           :: a
+    real(rk), dimension(:,:), intent(in)           :: b
+    real(rk), dimension(:,:), intent(out)          :: atab
+    real(rk), dimension(:,:), intent(out)          :: btab
+    logical, intent(out)                           :: warn
+    real(rk), optional, intent(in)                 :: fillValue
+    real(rk), dimension(:,:), optional, intent(in) :: precision
+    include 'FilterValues_nd.f9h'
+  end subroutine filterValues_REAL_2d
+
+  subroutine filterValues_DOUBLE_2d(a, ATAB, b, BTAB, warn, fillValue, precision)
+    ! Return arrays filtered etc.
+    integer, parameter :: RK = kind(0.0d0) ! Kind type parameter for double precision
+    ! Args
+    real(rk), dimension(:,:), intent(in)           :: a
+    real(rk), dimension(:,:), intent(in)           :: b
+    real(rk), dimension(:,:), intent(out)          :: atab
+    real(rk), dimension(:,:), intent(out)          :: btab
+    logical, intent(out)                           :: warn
+    real(rk), optional, intent(in)                 :: fillValue
+    real(rk), dimension(:,:), optional, intent(in) :: precision
+    include 'FilterValues_nd.f9h'
+  end subroutine filterValues_DOUBLE_2d
+
+  subroutine filterValues_REAL_3d(a, ATAB, b, BTAB, warn, fillValue, precision)
+    ! Return arrays filtered etc.
+    integer, parameter :: RK = kind(0.0) ! Kind type parameter for default real
+    ! Args
+    real(rk), dimension(:,:,:), intent(in)           :: a
+    real(rk), dimension(:,:,:), intent(in)           :: b
+    real(rk), dimension(:,:,:), intent(out)          :: atab
+    real(rk), dimension(:,:,:), intent(out)          :: btab
+    logical, intent(out)                             :: warn
+    real(rk), optional, intent(in)                   :: fillValue
+    real(rk), dimension(:,:,:), optional, intent(in) :: precision
+    include 'FilterValues_nd.f9h'
+  end subroutine filterValues_REAL_3d
+
+  subroutine filterValues_DOUBLE_3d(a, ATAB, b, BTAB, warn, fillValue, precision)
+    ! Return arrays filtered etc.
+    integer, parameter :: RK = kind(0.0d0) ! Kind type parameter for double precision
+    ! Args
+    real(rk), dimension(:,:,:), intent(in)           :: a
+    real(rk), dimension(:,:,:), intent(in)           :: b
+    real(rk), dimension(:,:,:), intent(out)          :: atab
+    real(rk), dimension(:,:,:), intent(out)          :: btab
+    logical, intent(out)                             :: warn
+    real(rk), optional, intent(in)                   :: fillValue
+    real(rk), dimension(:,:,:), optional, intent(in) :: precision
+    include 'FilterValues_nd.f9h'
+  end subroutine filterValues_DOUBLE_3d
+
+! ------------------------------------------------- IsFillValue ---
+
+  ! This family of routines checks to see if an arg is a fillValue
+  elemental logical function IsFillValue_int ( A, FILLVALUE, STRICT )
+    integer, intent(in) :: A
+    integer, intent(in), optional :: FILLVALUE
+    logical, optional, intent(in) :: STRICT ! true-> check FILLVALUE against arg
+    ! Executable
+    ! The following somewhat confusing business short-circuits
+    ! checking the arg if we are strict but FillValue is not present
+    IsFillValue_int = .true.
+    if ( present(strict) ) IsFillValue_int = .not. ( &
+      & strict .and. present(FillValue) &
+      & )
+    if ( .not. IsFillValue_int ) return
+    if ( .not. present(FillValue) ) then
+      IsFillValue_int = is_what_ieee( fill_signal, a )
+    else
+      IsFillValue_int = &
+        & abs(a - FillValue) < 1 ! FILLVALUETOLERANCE
+    endif
+  end function IsFillValue_int
+
+  elemental logical function IsFillValue_r4 ( A, FILLVALUE, STRICT )
+    real(r4), intent(in) :: A
+    real(r4), intent(in), optional :: FILLVALUE
+    logical, optional, intent(in) :: STRICT ! true-> check FILLVALUE against arg
+    ! Executable
+    ! The following somewhat confusing business short-circuits
+    ! checking the arg if we are strict but FillValue is not present
+    IsFillValue_r4 = .true.
+    if ( present(strict) ) IsFillValue_r4 = .not. ( &
+      & strict .and. present(FillValue) &
+      & )
+    if ( .not. IsFillValue_r4 ) return
+    if ( .not. present(FillValue) ) then
+      IsFillValue_r4 = is_what_ieee( fill_signal, a )
+    else
+      IsFillValue_r4 = &
+        & abs(a - FillValue) < max( FILLVALUETOLERANCE, abs(FillValue/100000) )
+    endif
+  end function IsFillValue_r4
+
+  elemental logical function IsFillValue_r8 ( A, FILLVALUE, STRICT )
+    real(r8), intent(in) :: A
+    real(r8), intent(in), optional :: FILLVALUE
+    logical, optional, intent(in) :: STRICT ! true-> check FILLVALUE against arg
+    ! Executable
+    ! The following somewhat confusing business short-circuits
+    ! checking the arg if we are strict but FillValue is not present
+    IsFillValue_r8 = .true.
+    if ( present(strict) ) IsFillValue_r8 = .not. ( &
+      & strict .and. present(FillValue) &
+      & )
+    if ( .not. IsFillValue_r8 ) return
+    if ( .not. present(FillValue) ) then
+      IsFillValue_r8 = is_what_ieee( fill_signal, a )
+    else
+      IsFillValue_r8 = &
+        & abs(a - FillValue) < &
+        & max( Real(FILLVALUETOLERANCE, r8), abs(FillValue/100000) )
+    endif
+  end function IsFillValue_r8
+
+! ------------------------------------------------- IsFinite ---
+
+  ! This family of routines checks to see if an arg is finite
+  elemental logical function IsFinite_INTEGER ( A ) result( finite )
+    integer, intent(in) :: A
+    finite = .true.
+  end function isfinite_INTEGER
+
+! ------------------------------------------------- IsInfinite ---
+
+  ! This family of routines checks to see if an arg is Infinite
+  elemental logical function IsInfinite_REAL ( A ) result( Infinite )
+    real, intent(in) :: A
+    Infinite = .not. ( ieee_is_finite(a) .or. ieee_is_NaN(a) )
+  end function isInfinite_real
+  elemental logical function IsInfinite_DOUBLE ( A ) result( Infinite )
+    double precision, intent(in) :: A
+    Infinite = .not. ( ieee_is_finite(a) .or. ieee_is_NaN(a) )
+  end function isInfinite_DOUBLE
+  elemental logical function IsInfinite_INTEGER ( A ) result( Infinite )
+    integer, intent(in) :: A
+    Infinite = .false.
+  end function isInfinite_INTEGER
+
+! ------------------------------------------------- IsNaN ---
+
+  ! This family of routines checks to see if an arg is NaN
+  elemental logical function IsNaN_INTEGER ( A ) result( NaN )
+    integer, intent(in) :: A
+    NaN = .false.
+  end function isNaN_INTEGER
+
+  elemental logical function IsNaN_CHARACTER ( A ) result( NaN )
+    character(len=8), intent(in) :: A
+    NaN = .false.
+  end function IsNaN_CHARACTER
+
+  ! This family of subroutines makes arrays of values monotonically (increasing)
+  ! May be used instead of BridgeMissing Values
+  ! if Fill Values are -999.99
+  ! Will also handle Periodic arrays, e.g. angles
+  ! optional arg strict will insist that values[i] < values[i+1]
+  subroutine Monotonize_1dint( values, Period, FillValue, strict )
+    ! Args
+    integer, dimension(:), intent(inout) :: values
+    integer, optional, intent(in) :: Period
+    integer, optional, intent(in) :: FillValue
+    logical, optional, intent(in) :: strict
+    ! Internal variables
+    integer :: dx
+    integer :: dxmin
+    integer :: x1
+    integer :: x2
+    include 'Monotonize.f9h'
+  end subroutine Monotonize_1dint
+
+  subroutine Monotonize_1dr4( values, Period, FillValue, strict )
+    ! Args
+    real(r4), dimension(:), intent(inout) :: values
+    real(r4), optional, intent(in) :: Period
+    real(r4), optional, intent(in) :: FillValue
+    logical, optional, intent(in) :: strict
+    ! Internal variables
+    real(r4) :: dx
+    real(r4) :: dxmin
+    real(r4) :: x1
+    real(r4) :: x2
+    include 'Monotonize.f9h'
+  end subroutine Monotonize_1dr4
+
+  subroutine Monotonize_1dr8( values, Period, FillValue, strict )
+    ! Args
+    real(r8), dimension(:), intent(inout) :: values
+    real(r8), optional, intent(in) :: Period
+    real(r8), optional, intent(in) :: FillValue
+    logical, optional, intent(in) :: strict
+    ! Internal variables
+    real(r8) :: dx
+    real(r8) :: dxmin
+    real(r8) :: x1
+    real(r8) :: x2
+    include 'Monotonize.f9h'
+  end subroutine Monotonize_1dr8
+
+  ! (But what about Period and FillValue? Don't you want them, too?)
+
+  ! Actually, what doess it mean to be monotonic in 2d or 3d?
+  ! The gradient is a vector, do you want to constrain it?
+  ! Where will you need this? Will you ever need this?
+  subroutine Monotonize_2dint(values)
+    ! Args
+    integer, dimension(:,:), intent(inout) :: values
+    ! Internal variables
+    integer :: i
+    do i=1, size(values, 1)
+      call Monotonize(values(i,:))
+    enddo
+  end subroutine Monotonize_2dint
+
+  subroutine Monotonize_2dr4(values)
+    ! Args
+    real(r4), dimension(:,:), intent(inout) :: values
+    ! Internal variables
+    integer :: i
+    do i=1, size(values, 1)
+      call Monotonize(values(i,:))
+    enddo
+  end subroutine Monotonize_2dr4
+
+  subroutine Monotonize_2dr8(values)
+    ! Args
+    real(r8), dimension(:,:), intent(inout) :: values
+    ! Internal variables
+    integer :: i
+    do i=1, size(values, 1)
+      call Monotonize(values(i,:))
+    enddo
+  end subroutine Monotonize_2dr8
+
+  subroutine Monotonize_3dint(values)
+    ! Args
+    integer, dimension(:,:,:), intent(inout) :: values
+    ! Internal variables
+    integer :: i, j
+    do j=1, size(values, 2)
+      do i=1, size(values, 1)
+        call Monotonize(values(i,j,:))
+      enddo
+    enddo
+  end subroutine Monotonize_3dint
+
+  subroutine Monotonize_3dr4(values)
+    ! Args
+    real(r4), dimension(:,:,:), intent(inout) :: values
+    ! Internal variables
+    integer :: i, j
+    do j=1, size(values, 2)
+      do i=1, size(values, 1)
+        call Monotonize(values(i,j,:))
+      enddo
+    enddo
+  end subroutine Monotonize_3dr4
+
+  subroutine Monotonize_3dr8(values)
+    ! Args
+    real(r8), dimension(:,:,:), intent(inout) :: values
+    ! Internal variables
+    integer :: i, j
+    do j=1, size(values, 2)
+      do i=1, size(values, 1)
+        call Monotonize(values(i,j,:))
+      enddo
+    enddo
+  end subroutine Monotonize_3dr8
+
+! -------------------------------------  RemoveFillValues  -----
+
+  ! This family of routines removes fill values from an array
+  ! returning a new, possibly smaller array
+  ! If a second array of the same size is supplied
+  ! it is reduced similarly by removing corresponding
+  ! elements
+  ! The new arrays must be large enough to accomodate non-fill elements
+  ! 
+  ! This should be a standard way of dealing with fill values:
+  ! Say we read in a set of GMAO temperatures and their associated heights
+  ! Some of the temperatures are fill values
+  ! Before using the arrays to calculate tropopause pressures, we
+  ! wish to remove all fill values (whose inclusion would sink the calculation)
+  ! So count how many non-fill temperatures we've got, allocate new arrays
+  ! to hold temperatures and heights, then call RemoveFillValues
+
+  ! See also ReplaceFillValues
+
+  subroutine RemoveFill1d_int ( array, FillValue, newArray, second, newSecond )
+    integer, dimension(:), intent(in) :: array
+    integer, intent(in) :: FillValue
+    integer, dimension(:) :: newArray
+    integer, dimension(:), optional, intent(in) :: second
+    integer, dimension(:), optional :: newSecond
+    !
+    ! Local variables
+    ! More local variables and executable
+    include 'RemoveFillValues.f9h'
+  end subroutine RemoveFill1d_int
+
+  subroutine RemoveFill1d_r4 ( array, FillValue, newArray, second, newSecond )
+    real(r4), dimension(:), intent(in) :: array
+    real(r4), intent(in) :: FillValue
+    real(r4), dimension(:) :: newArray
+    real(r4), dimension(:), optional, intent(in) :: second
+    real(r4), dimension(:), optional :: newSecond
+    !
+    ! Local variables
+    ! More local variables and executable
+    include 'RemoveFillValues.f9h'
+  end subroutine RemoveFill1d_r4
+
+  subroutine RemoveFill1d_r8 ( array, FillValue, newArray, second, newSecond )
+    real(r8), dimension(:), intent(in) :: array
+    real(r8), intent(in) :: FillValue
+    real(r8), dimension(:) :: newArray
+    real(r8), dimension(:), optional, intent(in) :: second
+    real(r8), dimension(:), optional :: newSecond
+    !
+    ! Local variables
+    ! More local variables and executable
+    include 'RemoveFillValues.f9h'
+  end subroutine RemoveFill1d_r8
+
+  subroutine RemoveFill2d_int ( array, FillValue, newArray, second, newSecond )
+    integer, dimension(:,:), intent(in) :: array
+    integer, intent(in) :: FillValue
+    integer, dimension(:) :: newArray
+    integer, dimension(:,:), optional, intent(in) :: second
+    integer, dimension(:), optional :: newSecond
+    !
+    ! Local variables
+    integer, parameter       :: rank = 2
+    integer, dimension(rank) :: shp
+    ! More local variables and executable
+    shp = shape(array)
+    if ( .not. present(second) .or. .not. present(newSecond) ) then
+      call RemoveFillValues( reshape(array, (/product(shp)/) ), &
+        & FillValue, newArray )
+    else
+      call RemoveFillValues( reshape(array, (/product(shp)/) ), &
+        & FillValue, newArray, reshape(second, (/product(shp)/) ), newSecond )
+      endif
+  end subroutine RemoveFill2d_int
+
+  subroutine RemoveFill2d_r4 ( array, FillValue, newArray, second, newSecond )
+    real(r4), dimension(:,:), intent(in) :: array
+    real(r4), intent(in) :: FillValue
+    real(r4), dimension(:) :: newArray
+    real(r4), dimension(:,:), optional, intent(in) :: second
+    real(r4), dimension(:), optional :: newSecond
+    !
+    ! Local variables
+    integer, parameter       :: rank = 2
+    integer, dimension(rank) :: shp
+    ! More local variables and executable
+    shp = shape(array)
+    if ( .not. present(second) .or. .not. present(newSecond) ) then
+      call RemoveFillValues( reshape(array, (/product(shp)/) ), &
+        & FillValue, newArray )
+    else
+      call RemoveFillValues( reshape(array, (/product(shp)/) ), &
+        & FillValue, newArray, reshape(second, (/product(shp)/) ), newSecond )
+      endif
+  end subroutine RemoveFill2d_r4
+
+  subroutine RemoveFill2d_r8 ( array, FillValue, newArray, second, newSecond )
+    real(r8), dimension(:,:), intent(in) :: array
+    real(r8), intent(in) :: FillValue
+    real(r8), dimension(:) :: newArray
+    real(r8), dimension(:,:), optional, intent(in) :: second
+    real(r8), dimension(:), optional :: newSecond
+    !
+    ! Local variables
+    integer, parameter       :: rank = 2
+    integer, dimension(rank) :: shp
+    ! More local variables and executable
+    shp = shape(array)
+    if ( .not. present(second) .or. .not. present(newSecond) ) then
+      call RemoveFillValues( reshape(array, (/product(shp)/) ), &
+        & FillValue, newArray )
+    else
+      call RemoveFillValues( reshape(array, (/product(shp)/) ), &
+        & FillValue, newArray, reshape(second, (/product(shp)/) ), newSecond )
+      endif
+  end subroutine RemoveFill2d_r8
+
+  subroutine RemoveFill3d_int ( array, FillValue, newArray, second, newSecond )
+    integer, dimension(:,:,:), intent(in) :: array
+    integer, intent(in) :: FillValue
+    integer, dimension(:) :: newArray
+    integer, dimension(:,:,:), optional, intent(in) :: second
+    integer, dimension(:), optional :: newSecond
+    !
+    ! Local variables
+    integer, parameter       :: rank = 3
+    integer, dimension(rank) :: shp
+    ! More local variables and executable
+    shp = shape(array)
+    if ( .not. present(second) .or. .not. present(newSecond) ) then
+      call RemoveFillValues( reshape(array, (/product(shp)/) ), &
+        & FillValue, newArray )
+    else
+      call RemoveFillValues( reshape(array, (/product(shp)/) ), &
+        & FillValue, newArray, reshape(second, (/product(shp)/) ), newSecond )
+      endif
+  end subroutine RemoveFill3d_int
+
+  subroutine RemoveFill3d_r4 ( array, FillValue, newArray, second, newSecond )
+    real(r4), dimension(:,:,:), intent(in) :: array
+    real(r4), intent(in) :: FillValue
+    real(r4), dimension(:) :: newArray
+    real(r4), dimension(:,:,:), optional, intent(in) :: second
+    real(r4), dimension(:), optional :: newSecond
+    !
+    ! Local variables
+    integer, parameter       :: rank = 3
+    integer, dimension(rank) :: shp
+    ! More local variables and executable
+    shp = shape(array)
+    if ( .not. present(second) .or. .not. present(newSecond) ) then
+      call RemoveFillValues( reshape(array, (/product(shp)/) ), &
+        & FillValue, newArray )
+    else
+      call RemoveFillValues( reshape(array, (/product(shp)/) ), &
+        & FillValue, newArray, reshape(second, (/product(shp)/) ), newSecond )
+      endif
+  end subroutine RemoveFill3d_r4
+
+  subroutine RemoveFill3d_r8 ( array, FillValue, newArray, second, newSecond )
+    real(r8), dimension(:,:,:), intent(in) :: array
+    real(r8), intent(in) :: FillValue
+    real(r8), dimension(:) :: newArray
+    real(r8), dimension(:,:,:), optional, intent(in) :: second
+    real(r8), dimension(:), optional :: newSecond
+    !
+    ! Local variables
+    integer, parameter       :: rank = 3
+    integer, dimension(rank) :: shp
+    ! More local variables and executable
+    shp = shape(array)
+    if ( .not. present(second) .or. .not. present(newSecond) ) then
+      call RemoveFillValues( reshape(array, (/product(shp)/) ), &
+        & FillValue, newArray )
+    else
+      call RemoveFillValues( reshape(array, (/product(shp)/) ), &
+        & FillValue, newArray, reshape(second, (/product(shp)/) ), newSecond )
+      endif
+  end subroutine RemoveFill3d_r8
+
+! -------------------------------------  ReorderFillValues  -----
+
+  ! This family of routines reorders fillvalues in an array so they
+  ! appear at the end
+  ! E.g., given (/ 1, 4, -999, 6, -999, -1 /)
+  ! returns (/ 1, 4, 6, -1, -999, -999 /)
+
+  subroutine ReorderFillValues_r4 ( values, FillValue )
+    real(r4), dimension(:), intent(inout) :: values
+    real(r4), intent(in)                  :: FillValue
+    !
+    ! Local variables
+    ! More local variables and executable
+    include 'ReorderFillValues.f9h'
+  end subroutine ReorderFillValues_r4
+
+  subroutine ReorderFillValues_r8 ( values, FillValue )
+    real(r8), dimension(:), intent(inout) :: values
+    real(r8), intent(in)                  :: FillValue
+    !
+    ! Local variables
+    ! More local variables and executable
+    include 'ReorderFillValues.f9h'
+  end subroutine ReorderFillValues_r8
+
+  subroutine ReorderFillValues_int ( values, FillValue )
+    integer, dimension(:), intent(inout) :: values
+    integer, intent(in)                  :: FillValue
+    !
+    ! Local variables
+    ! More local variables and executable
+    include 'ReorderFillValues.f9h'
+  end subroutine ReorderFillValues_int
+
+! -------------------------------------  ReplaceFillValues  -----
+
+  ! This family of routines replaces entries in an array
+  ! based on whether they
+  ! (1) are equal to FillValue; or
+  ! (2) other criteria set by options
+  ! The replacement values are supplied either by 
+  ! newvalues, newFill, or according to options (e.g., you may interpolate)
+  ! In short, you ensure result is positive-definite, negative definite,
+  ! monotonic, or an analogous condition
+  ! Note:
+  ! When interpolating arrays with rank > 1, the interpolated-against
+  ! index is the last one
+  ! Thus we don't do true multi-dimensional interpolation
+  ! If you wish to interpolate against another index, you must reshape
+  
+  ! This should be a standard way of dealing with fill values:
+  ! Say you have an array of results, some of which are fillValues
+  ! and also some of which are unphysical
+  ! (Perhaps the calculations were invalid for some points)
+  ! Before passing the array on for extra calculations you
+  ! want to ensure all its entries will be valid (to keep next step
+  ! from bombing)
+
+  ! Can also be used to replace one set of fill values (e.g. 10^12)
+  ! with another (e.g., -999.99)
+
+  ! See also RemoveFillValues
+
+  subroutine ReplaceFill1d_int ( values, FillValue, newValues, newFill, options )
+    integer, dimension(:), intent(inout) :: values
+    integer, intent(in) :: FillValue
+    integer, dimension(:), optional, intent(in) :: newvalues
+    integer, optional, intent(in) :: newFill
+    character(len=*), optional, intent(in) :: options
+    !
+    ! Local variables
+    ! More local variables and executable
+    include 'ReplaceFillValues.f9h'
+  end subroutine ReplaceFill1d_int
+
+  subroutine ReplaceFill1d_r4 ( values, FillValue, newValues, newFill, options )
+    real(r4), dimension(:), intent(inout) :: values
+    real(r4), intent(in) :: FillValue
+    real(r4), dimension(:), optional, intent(in) :: newvalues
+    real(r4), optional, intent(in) :: newFill
+    character(len=*), optional, intent(in) :: options
+    !
+    ! Local variables
+    ! More local variables and executable
+    include 'ReplaceFillValues.f9h'
+  end subroutine ReplaceFill1d_r4
+
+  subroutine ReplaceFill1d_r8 ( values, FillValue, newValues, newFill, options )
+    real(r8), dimension(:), intent(inout) :: values
+    real(r8), intent(in) :: FillValue
+    real(r8), dimension(:), optional, intent(in) :: newvalues
+    real(r8), optional, intent(in) :: newFill
+    character(len=*), optional, intent(in) :: options
+    !
+    ! Local variables
+    ! More local variables and executable
+    include 'ReplaceFillValues.f9h'
+  end subroutine ReplaceFill1d_r8
+
+  subroutine ReplaceFill2d_int ( values, FillValue, newValues, newFill, options )
+    integer, dimension(:, :), intent(inout) :: values
+    integer, intent(in) :: FillValue
+    integer, dimension(:, :), optional, intent(in) :: newvalues
+    integer, optional, intent(in) :: newFill
+    character(len=*), optional, intent(in) :: options
+    !
+    ! Local variables
+    ! More local variables and executable
+    include 'ReplaceFillValues.f9h'
+  end subroutine ReplaceFill2d_int
+
+  subroutine ReplaceFill2d_r4 ( values, FillValue, newValues, newFill, options )
+    real(r4), dimension(:, :), intent(inout) :: values
+    real(r4), intent(in) :: FillValue
+    real(r4), dimension(:, :), optional, intent(in) :: newvalues
+    real(r4), optional, intent(in) :: newFill
+    character(len=*), optional, intent(in) :: options
+    !
+    ! Local variables
+    ! More local variables and executable
+    include 'ReplaceFillValues.f9h'
+  end subroutine ReplaceFill2d_r4
+
+  subroutine ReplaceFill2d_r8 ( values, FillValue, newValues, newFill, options )
+    real(r8), dimension(:, :), intent(inout) :: values
+    real(r8), intent(in) :: FillValue
+    real(r8), dimension(:, :), optional, intent(in) :: newvalues
+    real(r8), optional, intent(in) :: newFill
+    character(len=*), optional, intent(in) :: options
+    !
+    ! Local variables
+    ! More local variables and executable
+    include 'ReplaceFillValues.f9h'
+  end subroutine ReplaceFill2d_r8
+
+  subroutine ReplaceFill3d_int ( values, FillValue, newValues, newFill, options )
+    integer, dimension(:, :, :), intent(inout) :: values
+    integer, intent(in) :: FillValue
+    integer, dimension(:, :, :), optional, intent(in) :: newvalues
+    integer, optional, intent(in) :: newFill
+    character(len=*), optional, intent(in) :: options
+    !
+    ! Local variables
+    ! More local variables and executable
+    include 'ReplaceFillValues.f9h'
+  end subroutine ReplaceFill3d_int
+
+  subroutine ReplaceFill3d_r4 ( values, FillValue, newValues, newFill, options )
+    real(r4), dimension(:, :, :), intent(inout) :: values
+    real(r4), intent(in) :: FillValue
+    real(r4), dimension(:, :, :), optional, intent(in) :: newvalues
+    real(r4), optional, intent(in) :: newFill
+    character(len=*), optional, intent(in) :: options
+    !
+    ! Local variables
+    ! More local variables and executable
+    include 'ReplaceFillValues.f9h'
+  end subroutine ReplaceFill3d_r4
+
+  subroutine ReplaceFill3d_r8 ( values, FillValue, newValues, newFill, options )
+    real(r8), dimension(:, :, :), intent(inout) :: values
+    real(r8), intent(in) :: FillValue
+    real(r8), dimension(:, :, :), optional, intent(in) :: newvalues
+    real(r8), optional, intent(in) :: newFill
+    character(len=*), optional, intent(in) :: options
+    !
+    ! Local variables
+    ! More local variables and executable
+    include 'ReplaceFillValues.f9h'
+  end subroutine ReplaceFill3d_r8
+
+! ============================================================================
+  ! This family of subroutines bridges missing values by interpolation
+  subroutine BridgeMissingValues_1dint(values, MissingValue)
+    ! Args
+    integer, dimension(:), intent(inout) :: values
+    integer, intent(in), optional        :: missingValue
+    ! Internal variables
+    integer :: dx
+    integer :: myMissingValue
+    integer :: x1
+    integer :: x2
+    include 'BridgeMissingValues.f9h'
+  end subroutine BridgeMissingValues_1dint
+
+  subroutine BridgeMissingValues_1dr4(values, MissingValue)
+    ! Args
+    real(r4), dimension(:), intent(inout) :: values
+    real(r4), intent(in), optional        :: missingValue
+    ! Internal variables
+    real(r4) :: dx
+    real(r4) :: myMissingValue
+    real(r4) :: x1
+    real(r4) :: x2
+    include 'BridgeMissingValues.f9h'
+  end subroutine BridgeMissingValues_1dr4
+
+  subroutine BridgeMissingValues_1dr8(values, MissingValue)
+    ! Args
+    real(r8), dimension(:), intent(inout) :: values
+    real(r8), intent(in), optional        :: missingValue
+    ! Internal variables
+    real(r8) :: dx
+    real(r8) :: myMissingValue
+    real(r8) :: x1
+    real(r8) :: x2
+    include 'BridgeMissingValues.f9h'
+  end subroutine BridgeMissingValues_1dr8
+
+  subroutine BridgeMissingValues_2dint(values, MissingValue)
+    ! Args
+    integer, dimension(:,:), intent(inout) :: values
+    integer, intent(in), optional          :: missingValue
+    ! Internal variables
+    integer :: i
+    do i=1, size(values, 1)
+      call BridgeMissingValues(values(i,:), MissingValue)
+    enddo
+  end subroutine BridgeMissingValues_2dint
+
+  subroutine BridgeMissingValues_2dr4(values, MissingValue)
+    ! Args
+    real(r4), dimension(:,:), intent(inout) :: values
+    real(r4), intent(in), optional          :: missingValue
+    ! Internal variables
+    integer :: i
+    do i=1, size(values, 1)
+      call BridgeMissingValues(values(i,:), MissingValue)
+    enddo
+  end subroutine BridgeMissingValues_2dr4
+
+  subroutine BridgeMissingValues_2dr8(values, MissingValue)
+    ! Args
+    real(r8), dimension(:,:), intent(inout) :: values
+    real(r8), intent(in), optional          :: missingValue
+    ! Internal variables
+    integer :: i
+    do i=1, size(values, 1)
+      call BridgeMissingValues(values(i,:), MissingValue)
+    enddo
+  end subroutine BridgeMissingValues_2dr8
+
+  subroutine BridgeMissingValues_3dint(values, MissingValue)
+    ! Args
+    integer, dimension(:,:,:), intent(inout) :: values
+    integer, intent(in), optional            :: missingValue
+    ! Internal variables
+    integer :: i, j
+    do j=1, size(values, 2)
+      do i=1, size(values, 1)
+        call BridgeMissingValues(values(i,j,:), MissingValue)
+      enddo
+    enddo
+  end subroutine BridgeMissingValues_3dint
+
+  subroutine BridgeMissingValues_3dr4(values, MissingValue)
+    ! Args
+    real(r4), dimension(:,:,:), intent(inout) :: values
+    real(r4), intent(in), optional            :: missingValue
+    ! Internal variables
+    integer :: i, j
+    do j=1, size(values, 2)
+      do i=1, size(values, 1)
+        call BridgeMissingValues(values(i,j,:), MissingValue)
+      enddo
+    enddo
+  end subroutine BridgeMissingValues_3dr4
+
+  subroutine BridgeMissingValues_3dr8(values, MissingValue)
+    ! Args
+    real(r8), dimension(:,:,:), intent(inout) :: values
+    real(r8), intent(in), optional            :: missingValue
+    ! Internal variables
+    integer :: i, j
+    do j=1, size(values, 2)
+      do i=1, size(values, 1)
+        call BridgeMissingValues(values(i,j,:), MissingValue)
+      enddo
+    enddo
+  end subroutine BridgeMissingValues_3dr8
+
+  ! ----------------------------------  roundUpOrDown  -----
+  ! This family of functions returns a result rounded up if
+  ! the fractional part > .5
+  ! otherwise rounded down
+  elemental function roundUpOrDown_r4( value ) result ( rounded )
+    integer, parameter :: RK = R4
+    ! Args
+    real(rk), intent(in) :: value
+    real(rk) :: rounded
+    ! Internal variables
+    real(rk) :: frac
+    integer :: sgn
+    ! Executable
+    rounded = int( value )
+    sgn = sign(1._rk, value )
+    frac = sgn * ( value - rounded )
+    if ( frac > 0.5_rk ) rounded = rounded + sgn
+  end function roundUpOrDown_r4
+
+  elemental function roundUpOrDown_r8( value ) result ( rounded )
+    integer, parameter :: RK = R8
+    ! Args
+    real(rk), intent(in) :: value
+    real(rk) :: rounded
+    ! Internal variables
+    real(rk) :: frac
+    integer :: sgn
+    ! Executable
+    rounded = int( value )
+    sgn = sign(1._rk, value )
+    frac = sgn * ( value - rounded )
+    if ( frac > 0.5_rk ) rounded = rounded + sgn
+  end function roundUpOrDown_r8
+
+  elemental function roundUpOrDown_int( value ) result ( rounded )
+    ! Trivial; supplied just to satisfy other generic functions
+    ! Args
+    integer, intent(in) :: value
+    integer :: rounded
+    ! Executable
+    rounded = value
+  end function roundUpOrDown_int
+
+  ! ----------------------------------  WhereAreTheFills  -----
+  ! This family of procedures finds which array elements are Fills
+  subroutine WhereAreTheFills_DOUBLE ( array, which, howMany )
+    ! Args
+    double precision, dimension(:), intent(in)   :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    call WhereAreThey( Fill_signal, array, which, howMany )
+  end subroutine WhereAreTheFills_DOUBLE
+
+  subroutine WhereAreTheFills_integer ( array, which, howMany )
+    ! Args
+    integer, dimension(:), intent(in)               :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    call WhereAreThey( Fill_signal, array, which, howMany )
+  end subroutine WhereAreTheFills_integer
+
+  subroutine WhereAreTheFills_REAL ( array, which, howMany )
+    ! Args
+    real, dimension(:), intent(in)               :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    call WhereAreThey( Fill_signal, array, which, howMany )
+  end subroutine WhereAreTheFills_REAL
+
+  subroutine WhereAreTheFills_DOUBLE_2d ( array, which, howMany, mode, inds )
+    ! Args
+    double precision, dimension(:,:), intent(in) :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
+    call WhereAreThey( Fill_signal, array, which, howMany, mode, inds )
+  end subroutine WhereAreTheFills_DOUBLE_2d
+
+  subroutine WhereAreTheFills_integer_2d ( array, which, howMany, mode, inds )
+    ! Args
+    integer, dimension(:,:), intent(in)             :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
+    call WhereAreThey( Fill_signal, array, which, howMany, mode, inds )
+  end subroutine WhereAreTheFills_integer_2d
+
+  subroutine WhereAreTheFills_REAL_2d ( array, which, howMany, mode, inds )
+    ! Args
+    real, dimension(:,:), intent(in)             :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
+    call WhereAreThey( Fill_signal, array, which, howMany, mode, inds )
+  end subroutine WhereAreTheFills_REAL_2d
+
+  subroutine WhereAreTheFills_DOUBLE_3d ( array, which, howMany, mode, inds )
+    ! Args
+    double precision, dimension(:,:,:), intent(in) :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
+    call WhereAreThey( Fill_signal, array, which, howMany, mode, inds )
+  end subroutine WhereAreTheFills_DOUBLE_3d
+
+  subroutine WhereAreTheFills_integer_3d ( array, which, howMany, mode, inds )
+    ! Args
+    integer, dimension(:,:,:), intent(in)           :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
+    call WhereAreThey( Fill_signal, array, which, howMany, mode, inds )
+  end subroutine WhereAreTheFills_integer_3d
+
+  subroutine WhereAreTheFills_REAL_3d ( array, which, howMany, mode, inds )
+    ! Args
+    real, dimension(:,:,:), intent(in)           :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
+    call WhereAreThey( Fill_signal, array, which, howMany, mode, inds )
+  end subroutine WhereAreTheFills_REAL_3d
+
+  ! ----------------------------------  WhereAreTheInfs  -----
+  ! This family of procedures finds which array elements are Infs
+  subroutine WhereAreTheInfs_DOUBLE ( array, which, howMany )
+    ! Args
+    double precision, dimension(:), intent(in)   :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    call WhereAreThey( inf_signal, array, which, howMany )
+  end subroutine WhereAreTheInfs_DOUBLE
+
+  subroutine WhereAreTheInfs_integer ( array, which, howMany )
+    ! Args
+    integer, dimension(:), intent(in)               :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    call WhereAreThey( inf_signal, array, which, howMany )
+  end subroutine WhereAreTheInfs_integer
+
+  subroutine WhereAreTheInfs_REAL ( array, which, howMany )
+    ! Args
+    real, dimension(:), intent(in)               :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    call WhereAreThey( inf_signal, array, which, howMany )
+  end subroutine WhereAreTheInfs_REAL
+
+  subroutine WhereAreTheInfs_DOUBLE_2d ( array, which, howMany, mode, inds )
+    ! Args
+    double precision, dimension(:,:), intent(in) :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
+    call WhereAreThey( inf_signal, array, which, howMany, mode, inds )
+  end subroutine WhereAreTheInfs_DOUBLE_2d
+
+  subroutine WhereAreTheInfs_integer_2d ( array, which, howMany, mode, inds )
+    ! Args
+    integer, dimension(:,:), intent(in)             :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
+    call WhereAreThey( inf_signal, array, which, howMany, mode, inds )
+  end subroutine WhereAreTheInfs_integer_2d
+
+  subroutine WhereAreTheInfs_REAL_2d ( array, which, howMany, mode, inds )
+    ! Args
+    real, dimension(:,:), intent(in)             :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
+    call WhereAreThey( inf_signal, array, which, howMany, mode, inds )
+  end subroutine WhereAreTheInfs_REAL_2d
+
+  subroutine WhereAreTheInfs_DOUBLE_3d ( array, which, howMany, mode, inds )
+    ! Args
+    double precision, dimension(:,:,:), intent(in) :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
+    call WhereAreThey( inf_signal, array, which, howMany, mode, inds )
+  end subroutine WhereAreTheInfs_DOUBLE_3d
+
+  subroutine WhereAreTheInfs_DOUBLE_4d ( array, which, howMany, mode, inds )
+    ! Args
+    double precision, dimension(:,:,:,:), intent(in) :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
+    call WhereAreThey( inf_signal, array, which, howMany, mode, inds )
+  end subroutine WhereAreTheInfs_DOUBLE_4d
+
+  subroutine WhereAreTheInfs_integer_3d ( array, which, howMany, mode, inds )
+    ! Args
+    integer, dimension(:,:,:), intent(in)           :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
+    call WhereAreThey( inf_signal, array, which, howMany, mode, inds )
+  end subroutine WhereAreTheInfs_integer_3d
+
+  subroutine WhereAreTheInfs_REAL_3d ( array, which, howMany, mode, inds )
+    ! Args
+    real, dimension(:,:,:), intent(in)           :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
+    call WhereAreThey( inf_signal, array, which, howMany, mode, inds )
+  end subroutine WhereAreTheInfs_REAL_3d
+
+  subroutine WhereAreTheInfs_REAL_4d ( array, which, howMany, mode, inds )
+    ! Args
+    real, dimension(:,:,:,:), intent(in)           :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
+    call WhereAreThey( inf_signal, array, which, howMany, mode, inds )
+  end subroutine WhereAreTheInfs_REAL_4d
+
+  ! ----------------------------------  WhereAreTheNaNs  -----
+  ! This family of procedures finds which array elements are NaNs
+  subroutine WhereAreTheNaNs_DOUBLE ( array, which, howMany )
+    ! Args
+    double precision, dimension(:), intent(in)   :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    call WhereAreThey( NaN_signal, array, which, howMany )
+  end subroutine WhereAreTheNaNs_DOUBLE
+
+  subroutine WhereAreTheNaNs_integer ( array, which, howMany )
+    ! Args
+    integer, dimension(:), intent(in)               :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    call WhereAreThey( NaN_signal, array, which, howMany )
+  end subroutine WhereAreTheNaNs_integer
+
+  subroutine WhereAreTheNaNs_REAL ( array, which, howMany )
+    ! Args
+    real, dimension(:), intent(in)               :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    call WhereAreThey( NaN_signal, array, which, howMany )
+  end subroutine WhereAreTheNaNs_REAL
+
+  subroutine WhereAreTheNaNs_DOUBLE_2d ( array, which, howMany, mode, inds )
+    ! Args
+    double precision, dimension(:,:), intent(in)   :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
+    call WhereAreThey( NaN_signal, array, which, howMany, mode, inds )
+  end subroutine WhereAreTheNaNs_DOUBLE_2d
+
+  subroutine WhereAreTheNaNs_integer_2d ( array, which, howMany, mode, inds )
+    ! Args
+    integer, dimension(:,:), intent(in)             :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
+    call WhereAreThey( NaN_signal, array, which, howMany, mode, inds )
+  end subroutine WhereAreTheNaNs_integer_2d
+
+  subroutine WhereAreTheNaNs_REAL_2d ( array, which, howMany, mode, inds )
+    ! Args
+    real, dimension(:,:), intent(in)             :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
+    call WhereAreThey( NaN_signal, array, which, howMany, mode, inds )
+  end subroutine WhereAreTheNaNs_REAL_2d
+
+  subroutine WhereAreTheNaNs_DOUBLE_3d ( array, which, howMany, mode, inds )
+    ! Args
+    double precision, dimension(:,:,:), intent(in)   :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
+    call WhereAreThey( NaN_signal, array, which, howMany, mode, inds )
+  end subroutine WhereAreTheNaNs_DOUBLE_3d
+
+  subroutine WhereAreTheNaNs_DOUBLE_4d ( array, which, howMany, mode, inds )
+    ! Args
+    double precision, dimension(:,:,:,:), intent(in)   :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
+    call WhereAreThey( NaN_signal, array, which, howMany, mode, inds )
+  end subroutine WhereAreTheNaNs_DOUBLE_4d
+
+  subroutine WhereAreTheNaNs_integer_3d ( array, which, howMany, mode, inds )
+    ! Args
+    integer, dimension(:,:,:), intent(in)           :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
+    call WhereAreThey( NaN_signal, array, which, howMany, mode, inds )
+  end subroutine WhereAreTheNaNs_integer_3d
+
+  subroutine WhereAreTheNaNs_REAL_3d ( array, which, howMany, mode, inds )
+    ! Args
+    real, dimension(:,:,:), intent(in)           :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
+    call WhereAreThey( NaN_signal, array, which, howMany, mode, inds )
+  end subroutine WhereAreTheNaNs_REAL_3d
+
+  subroutine WhereAreTheNaNs_REAL_4d ( array, which, howMany, mode, inds )
+    ! Args
+    real, dimension(:,:,:,:), intent(in)           :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
+    call WhereAreThey( NaN_signal, array, which, howMany, mode, inds )
+  end subroutine WhereAreTheNaNs_REAL_4d
+
+  ! ----------------------------------  private procedures  -----
+  subroutine announce_error(message, int1, int2, dontstop)
+    character(len=*), intent(in) :: message
+    integer, optional, intent(in) :: int1
+    integer, optional, intent(in) :: int2
+    logical, optional, intent(in) :: dontstop
+    logical :: keepgoing
+    !
+    keepgoing = .false.
+    if ( present(dontstop) ) keepgoing=dontstop
+    if ( .not. keepgoing ) then
+      call output('*** Error in MLSFillValues module ***', advance='yes')
+    endif
+    call output(trim(message), advance='no')
+    call blanks(3)
+    if ( present(int1) ) write(*,'(i4)',advance='no') int1
+    call blanks(3)
+    if ( present(int2) ) write(*,'(i4)', advance='no') int2
+    if ( .not. keepgoing ) stop
+  end subroutine announce_error
+
+  subroutine swap_int( first, second )
+    ! Swap first and second args
+    integer, intent(inout) :: first
+    integer, intent(inout) :: second
+    integer :: temp
+    ! Executable
+    temp = first
+    first = second
+    second = temp
+  end subroutine swap_int
+
+  subroutine swap_r4( first, second )
+    ! Swap first and second args
+    real(r4), intent(inout) :: first
+    real(r4), intent(inout) :: second
+    real(r4) :: temp
+    ! Executable
+    temp = first
+    first = second
+    second = temp
+  end subroutine swap_r4
+
+  subroutine swap_r8( first, second )
+    ! Swap first and second args
+    real(r8), intent(inout) :: first
+    real(r8), intent(inout) :: second
+    real(r8) :: temp
+    ! Executable
+    temp = first
+    first = second
+    second = temp
+  end subroutine swap_r8
+
+  ! ----------------------------------  WhereAreThey  -----
+  ! This family of procedures finds which array elements are whats
+  ! where what is one of our ieee signalling flags
+  subroutine WhereAreThey_DOUBLE ( what, array, which, howMany )
+    ! Args
+    integer, intent(in)                          :: what ! a signal flag
+    double precision, dimension(:), intent(in)   :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    ! Internal variables
+    integer :: i
+    integer :: n
+    integer :: nWhich ! size(which);  > 0 only if which is present
+    ! Executable
+    nWhich = 0
+    if ( present(which) ) nWhich = size(which)
+    if ( nWhich > 0 ) which = 0
+    if ( present(howMany) ) howMany = 0
+    if ( size(array) < 1 ) return
+    n = 0
+    do i=1, size(array)
+      if ( is_what_ieee(what, array(i)) ) then
+        n = n + 1
+        if ( n <= nWhich ) which(n) = i
+      endif
+    enddo
+    if ( present(howMany) ) howMany = n
+  end subroutine WhereAreThey_DOUBLE
+
+  subroutine WhereAreThey_integer ( what, array, which, howMany )
+    ! Args
+    integer, intent(in)                          :: what ! a signal flag
+    integer, dimension(:), intent(in)               :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    ! Internal variables
+    integer :: i
+    integer :: n
+    integer :: nWhich ! size(which);  > 0 only if which is present
+    ! Executable
+    nWhich = 0
+    if ( present(which) ) nWhich = size(which)
+    if ( nWhich > 0 ) which = 0
+    if ( present(howMany) ) howMany = 0
+    if ( size(array) < 1 ) return
+    n = 0
+    do i=1, size(array)
+      if ( is_what_ieee(what, array(i)) ) then
+        n = n + 1
+        if ( n <= nWhich ) which(n) = i
+      endif
+    enddo
+    if ( present(howMany) ) howMany = n
+  end subroutine WhereAreThey_integer
+
+  subroutine WhereAreThey_REAL ( what, array, which, howMany )
+    ! Args
+    integer, intent(in)                          :: what ! a signal flag
+    real, dimension(:), intent(in)               :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    ! Internal variables
+    integer :: i
+    integer :: n
+    integer :: nWhich ! size(which);  > 0 only if which is present
+    ! Executable
+    nWhich = 0
+    if ( present(which) ) nWhich = size(which)
+    if ( nWhich > 0 ) which = 0
+    if ( present(howMany) ) howMany = 0
+    if ( size(array) < 1 ) return
+    n = 0
+    do i=1, size(array)
+      if ( is_what_ieee(what, array(i)) ) then
+        n = n + 1
+        if ( n <= nWhich ) which(n) = i
+      endif
+    enddo
+    if ( present(howMany) ) howMany = n
+  end subroutine WhereAreThey_REAL
+
+  subroutine WhereAreThey_DOUBLE_2d ( what, array, which, howMany, mode, inds )
+    ! Args
+    integer, intent(in)                          :: what ! a signal flag
+    double precision, dimension(:,:), intent(in) :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
+    ! Internal variables
+    integer :: i, j
+    character(len=3) :: myMode
+    integer :: n
+    integer :: nWhich ! size(which);  > 0 only if which is present
+    logical :: yes
+    ! Executable
+    nWhich = 0
+    if ( present(which) ) nWhich = size(which)
+    if ( nWhich > 0 ) which = 0
+    if ( present(howMany) ) howMany = 0
+    if ( size(array,2) < 1 ) return
+    myMode = 'any'
+    if ( present(mode) ) myMode = mode
+    n = 0
+    yes = .false.
+    do i=1, size(array, 2)
+      select case( lowercase(myMode(1:3)) )
+      case ( 'ind' )
+        do j=1, size(array, 1)
+          if ( .not. is_what_ieee(what, array(j,i)) ) cycle
+          n = n + 1
+          if ( present(inds) ) inds( 1:2, min(n,size(inds,2)) ) = (/ j, i /)
+        enddo
+      case ( 'any' )
+        yes = any( is_what_ieee(what, array(:,i)) )
+      case ( 'all' )
+        yes = all( is_what_ieee(what, array(:,i)) )
+      case default ! unrecognized mode; sorry
+        yes = .false.
+      end select
+      if ( yes ) then
+        n = n + 1
+        if ( n <= nWhich ) which(n) = i
+      endif
+    enddo
+    if ( present(howMany) ) howMany = n
+  end subroutine WhereAreThey_DOUBLE_2d
+
+  subroutine WhereAreThey_integer_2d ( what, array, which, howMany, mode, inds )
+    ! Args
+    integer, intent(in)                          :: what ! a signal flag
+    integer, dimension(:,:), intent(in)             :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
+    ! Internal variables
+    integer :: i, j
+    character(len=3) :: myMode
+    integer :: n
+    integer :: nWhich ! size(which);  > 0 only if which is present
+    logical :: yes
+    ! Executable
+    nWhich = 0
+    if ( present(which) ) nWhich = size(which)
+    if ( nWhich > 0 ) which = 0
+    if ( present(howMany) ) howMany = 0
+    if ( size(array,2) < 1 ) return
+    myMode = 'any'
+    if ( present(mode) ) myMode = mode
+    n = 0
+    do i=1, size(array, 2)
+      select case( lowercase(myMode(1:3)) )
+      case ( 'ind' )
+        do j=1, size(array, 1)
+          if ( .not. is_what_ieee(what, array(j,i)) ) cycle
+          n = n + 1
+          if ( present(inds) ) inds( 1:2, min(n,size(inds,2)) ) = (/ j, i /)
+        enddo
+      case ( 'any' )
+        yes = any( is_what_ieee(what, array(:,i)) )
+      case ( 'all' )
+        yes = all( is_what_ieee(what, array(:,i)) )
+      case default ! unrecognized mode; sorry
+        yes = .false.
+      end select
+      if ( yes ) then
+        n = n + 1
+        if ( n <= nWhich ) which(n) = i
+      endif
+    enddo
+    if ( present(howMany) ) howMany = n
+  end subroutine WhereAreThey_integer_2d
+
+  subroutine WhereAreThey_REAL_2d ( what, array, which, howMany, mode, inds )
+    ! Args
+    integer, intent(in)                          :: what ! a signal flag
+    real, dimension(:,:), intent(in)             :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
+    ! Internal variables
+    integer :: i, j
+    character(len=3) :: myMode
+    integer :: n
+    integer :: nWhich ! size(which);  > 0 only if which is present
+    logical :: yes
+    ! Executable
+    nWhich = 0
+    if ( present(which) ) nWhich = size(which)
+    if ( nWhich > 0 ) which = 0
+    if ( present(howMany) ) howMany = 0
+    if ( size(array,2) < 1 ) return
+    myMode = 'any'
+    if ( present(mode) ) myMode = mode
+    n = 0
+    do i=1, size(array, 2)
+      select case( lowercase(myMode(1:3)) )
+      case ( 'ind' )
+        do j=1, size(array, 1)
+          if ( .not. is_what_ieee(what, array(j,i)) ) cycle
+          n = n + 1
+          if ( present(inds) ) inds( 1:2, min(n,size(inds,2)) ) = (/ j, i /)
+        enddo
+      case ( 'any' )
+        yes = any( is_what_ieee(what, array(:,i)) )
+      case ( 'all' )
+        yes = all( is_what_ieee(what, array(:,i)) )
+      case default ! unrecognized mode; sorry
+        yes = .false.
+      end select
+      if ( yes ) then
+        n = n + 1
+        if ( n <= nWhich ) which(n) = i
+      endif
+    enddo
+    if ( present(howMany) ) howMany = n
+  end subroutine WhereAreThey_REAL_2d
+
+  subroutine WhereAreThey_DOUBLE_3d ( what, array, which, howMany, mode, inds )
+    ! Args
+    integer, intent(in)                          :: what ! a signal flag
+    double precision, dimension(:,:,:), intent(in) :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
+    ! Internal variables
+    integer :: i, j, k
+    character(len=3) :: myMode
+    integer :: n
+    integer :: nWhich ! size(which);  > 0 only if which is present
+    logical :: yes
+    ! Executable
+    nWhich = 0
+    if ( present(which) ) nWhich = size(which)
+    if ( nWhich > 0 ) which = 0
+    if ( present(howMany) ) howMany = 0
+    if ( size(array,3) < 1 ) return
+    myMode = 'any'
+    if ( present(mode) ) myMode = mode
+    n = 0
+    do i=1, size(array, 3)
+      select case( lowercase(myMode(1:3)) )
+      case ( 'ind' )
+        do j=1, size(array, 2)
+          do k=1, size(array, 1)
+            if ( .not. is_what_ieee(what, array(k, j,i)) ) cycle
+            n = n + 1
+          if ( present(inds) ) inds( 1:3, min(n,size(inds,2)) ) = (/ k, j, i /)
+          enddo
+        enddo
+      case ( 'any' )
+        yes = any( is_what_ieee(what, array(:,:,i)) )
+      case ( 'all' )
+        yes = all( is_what_ieee(what, array(:,:,i)) )
+      case default ! unrecognized mode; sorry
+        yes = .false.
+      end select
+      if ( yes ) then
+        n = n + 1
+        if ( n <= nWhich ) which(n) = i
+      endif
+    enddo
+    if ( present(howMany) ) howMany = n
+  end subroutine WhereAreThey_DOUBLE_3d
+
+  subroutine WhereAreThey_DOUBLE_4d ( what, array, which, howMany, mode, inds )
+    ! Args
+    integer, intent(in)                          :: what ! a signal flag
+    double precision, dimension(:,:,:,:), intent(in) :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
+    ! Internal variables
+    integer :: i, j, k, l
+    character(len=3) :: myMode
+    integer :: n
+    integer :: nWhich ! size(which);  > 0 only if which is present
+    logical :: yes
+    ! Executable
+    nWhich = 0
+    if ( present(which) ) nWhich = size(which)
+    if ( nWhich > 0 ) which = 0
+    if ( present(howMany) ) howMany = 0
+    if ( size(array,4) < 1 ) return
+    myMode = 'any'
+    if ( present(mode) ) myMode = mode
+    n = 0
+    do i=1, size(array, 4)
+      select case( lowercase(myMode(1:3)) )
+      case ( 'ind' )
+        do j=1, size(array, 3)
+          do k=1, size(array, 2)
+            do l=1, size(array, 1)
+              if ( .not. is_what_ieee(what, array(l, k, j, i)) ) cycle
+              n = n + 1
+            if ( present(inds) ) inds( 1:4, min(n,size(inds,2)) ) = (/ l, k, j, i /)
+            enddo
+          enddo
+        enddo
+      case ( 'any' )
+        yes = any( is_what_ieee(what, array(:,:,:,i)) )
+      case ( 'all' )
+        yes = all( is_what_ieee(what, array(:,:,:,i)) )
+      case default ! unrecognized mode; sorry
+        yes = .false.
+      end select
+      if ( yes ) then
+        n = n + 1
+        if ( n <= nWhich ) which(n) = i
+      endif
+    enddo
+    if ( present(howMany) ) howMany = n
+  end subroutine WhereAreThey_DOUBLE_4d
+
+  subroutine WhereAreThey_integer_3d ( what, array, which, howMany, mode, inds )
+    ! Args
+    integer, intent(in)                          :: what ! a signal flag
+    integer, dimension(:,:,:), intent(in)           :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
+    ! Internal variables
+    integer :: i, j, k
+    character(len=3) :: myMode
+    integer :: n
+    integer :: nWhich ! size(which);  > 0 only if which is present
+    logical :: yes
+    ! Executable
+    nWhich = 0
+    if ( present(which) ) nWhich = size(which)
+    if ( nWhich > 0 ) which = 0
+    if ( present(howMany) ) howMany = 0
+    if ( size(array,3) < 1 ) return
+    myMode = 'any'
+    if ( present(mode) ) myMode = mode
+    n = 0
+    do i=1, size(array, 3)
+      select case( lowercase(myMode(1:3)) )
+      case ( 'ind' )
+        do j=1, size(array, 2)
+          do k=1, size(array, 1)
+            if ( .not. is_what_ieee(what, array(k, j,i)) ) cycle
+            n = n + 1
+          if ( present(inds) ) inds( 1:3, min(n,size(inds,2)) ) = (/ k, j, i /)
+          enddo
+        enddo
+      case ( 'any' )
+        yes = any( is_what_ieee(what, array(:,:,i)) )
+      case ( 'all' )
+        yes = all( is_what_ieee(what, array(:,:,i)) )
+      case default ! unrecognized mode; sorry
+        yes = .false.
+      end select
+      if ( yes ) then
+        n = n + 1
+        if ( n <= nWhich ) which(n) = i
+      endif
+    enddo
+    if ( present(howMany) ) howMany = n
+  end subroutine WhereAreThey_integer_3d
+
+  subroutine WhereAreThey_REAL_3d ( what, array, which, howMany, mode, inds )
+    ! Args
+    integer, intent(in)                          :: what ! a signal flag
+    real, dimension(:,:,:), intent(in)           :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
+    ! Internal variables
+    integer :: i, j, k
+    character(len=3) :: myMode
+    integer :: n
+    integer :: nWhich ! size(which);  > 0 only if which is present
+    logical :: yes
+    ! Executable
+    nWhich = 0
+    if ( present(which) ) nWhich = size(which)
+    if ( nWhich > 0 ) which = 0
+    if ( present(howMany) ) howMany = 0
+    if ( size(array,3) < 1 ) return
+    myMode = 'any'
+    if ( present(mode) ) myMode = mode
+    n = 0
+    do i=1, size(array, 3)
+      select case( lowercase(myMode(1:3)) )
+      case ( 'ind' )
+        do j=1, size(array, 2)
+          do k=1, size(array, 1)
+            if ( .not. is_what_ieee(what, array(k, j,i)) ) cycle
+            n = n + 1
+          if ( present(inds) ) inds( 1:3, min(n,size(inds,2)) ) = (/ k, j, i /)
+          enddo
+        enddo
+      case ( 'any' )
+        yes = any( is_what_ieee(what, array(:,:,i)) )
+      case ( 'all' )
+        yes = all( is_what_ieee(what, array(:,:,i)) )
+      case default ! unrecognized mode; sorry
+        yes = .false.
+      end select
+      if ( yes ) then
+        n = n + 1
+        if ( n <= nWhich ) which(n) = i
+      endif
+    enddo
+    if ( present(howMany) ) howMany = n
+  end subroutine WhereAreThey_REAL_3d
+
+
+  subroutine WhereAreThey_real_4d ( what, array, which, howMany, mode, inds )
+    ! Args
+    integer, intent(in)                          :: what ! a signal flag
+    real, dimension(:,:,:,:), intent(in) :: array
+    integer, dimension(:), optional, intent(out) :: which
+    integer, optional, intent(out)               :: howMany
+    character(len=*), optional, intent(in)       :: mode ! any, ind, or all
+    integer, dimension(:,:), optional, intent(out) :: inds
+    ! Internal variables
+    integer :: i, j, k, l
+    character(len=3) :: myMode
+    integer :: n
+    integer :: nWhich ! size(which);  > 0 only if which is present
+    logical :: yes
+    ! Executable
+    nWhich = 0
+    if ( present(which) ) nWhich = size(which)
+    if ( nWhich > 0 ) which = 0
+    if ( present(howMany) ) howMany = 0
+    if ( size(array,4) < 1 ) return
+    myMode = 'any'
+    if ( present(mode) ) myMode = mode
+    n = 0
+    do i=1, size(array, 4)
+      select case( lowercase(myMode(1:3)) )
+      case ( 'ind' )
+        do j=1, size(array, 3)
+          do k=1, size(array, 2)
+            do l=1, size(array, 1)
+              if ( .not. is_what_ieee(what, array(l, k, j, i)) ) cycle
+              n = n + 1
+            if ( present(inds) ) inds( 1:4, min(n,size(inds,2)) ) = (/ l, k, j, i /)
+            enddo
+          enddo
+        enddo
+      case ( 'any' )
+        yes = any( is_what_ieee(what, array(:,:,:,i)) )
+      case ( 'all' )
+        yes = all( is_what_ieee(what, array(:,:,:,i)) )
+      case default ! unrecognized mode; sorry
+        yes = .false.
+      end select
+      if ( yes ) then
+        n = n + 1
+        if ( n <= nWhich ) which(n) = i
+      endif
+    enddo
+    if ( present(howMany) ) howMany = n
+  end subroutine WhereAreThey_real_4d
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: MLSFillValues.f90,v 2.38 2017/11/03 19:56:00 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module MLSFillValues
+!=============================================================================
+
+!
+! $Log: MLSFillValues.f90,v $
+! Revision 2.38  2017/11/03 19:56:00  pwagner
+! Most array gymnastics moved to HyperSlabs module
+!
+! Revision 2.37  2017/11/02 00:06:50  pwagner
+! rerank uses Subscripts from Array_Stuff now
+!
+! Revision 2.36  2017/08/25 00:18:10  pwagner
+! Dropped all the internal output routines in favor of Output_m
+!
+! Revision 2.35  2016/01/13 00:45:44  pwagner
+! May optionally stutter instead of interpolate
+!
+! Revision 2.34  2015/03/28 01:49:59  vsnyder
+! Moved IsMonotonic to Monotone module
+!
+! Revision 2.33  2014/09/05 00:04:34  vsnyder
+! More complete and accurate allocate/deallocate size tracking.  Remove
+! unnecessary POINTER attribute from some arguments.  Remove declarations
+! of unused variables.
+!
+! Revision 2.32  2013/09/17 22:35:13  pwagner
+! Changed api of Embed, Extract arrays to match hyperslab
+!
+! Revision 2.31  2013/08/12 23:47:25  pwagner
+! FindSomethings moved to MLSFinds module
+!
+! Revision 2.30  2011/12/13 01:07:36  pwagner
+! Now uses MLSFills if allocated; can add to or dump it
+!
+! Revision 2.29  2011/12/07 01:16:15  pwagner
+! Added Bandwidth calculation
+!
+! Revision 2.28  2011/07/26 20:44:21  pwagner
+! Added some 4d interfaces
+!
+! Revision 2.27  2011/07/07 00:28:27  pwagner
+! Made extremum elemental
+!
+! Revision 2.26  2011/03/22 23:38:30  pwagner
+! Rerank now public
+!
+! Revision 2.25  2011/01/20 01:14:31  pwagner
+! Added Collapse: Turns array into lower-rank representation, collapsing last index
+!
+! Revision 2.24  2010/11/30 00:33:52  pwagner
+! Added instance for character arg to isNaN
+!
+! Revision 2.23  2010/11/11 19:54:29  pwagner
+! May select values by relative size
+!
+! Revision 2.22  2010/10/13 00:41:23  pwagner
+! WhereAreThe.. can now take'ind' mode, returning indexes of each
+!
+! Revision 2.21  2010/09/24 23:44:48  pwagner
+! removed all but integervalued isFinite, isNaN in favor of ieee_arithmetic-supplied versions
+!
+! Revision 2.20  2010/08/13 22:02:41  pwagner
+! Renamed Repopulate; renamed decimate to Depopulate
+!
+! Revision 2.19  2010/02/17 22:30:53  pwagner
+! Added Depopulate routines to pick out non-zeros in sparse arrays
+!
+! Revision 2.18  2009/06/23 18:25:42  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.17  2008/09/03 20:41:17  pwagner
+! Added GatherArray
+!
+! Revision 2.16  2008/07/10 00:12:43  pwagner
+! Added extremum, halfWaves
+!
+! Revision 2.15  2008/06/06 22:52:21  pwagner
+! EssentiallyEqual moved to MLSFillValues
+!
+! Revision 2.14  2008/06/04 21:42:56  pwagner
+! Monotonize now takes optional arg strict
+!
+! Revision 2.13  2008/04/10 20:25:50  pwagner
+! Montonize can take optional arg FillValue
+!
+! Revision 2.12  2008/03/07 01:33:47  pwagner
+! Added optional arg Period to Monotonize
+!
+! Revision 2.11  2008/01/09 20:50:47  pwagner
+! WhereAreThe.. support integer arrays
+!
+! Revision 2.10  2008/01/07 21:34:41  pwagner
+! Added new functions to id and return ieee signals; WhereAreThe.. procedures
+!
+! Revision 2.9  2006/06/15 17:31:30  pwagner
+! Added ReorderFillValues
+!
+! Revision 2.8  2006/03/15 17:32:35  pwagner
+! Can removeFillValues from multi-dimensional arrays if results are rank 1
+!
+! Revision 2.7  2006/02/28 21:43:31  pwagner
+! Improve comments regarding FilterValues
+!
+! Revision 2.6  2006/02/02 16:19:57  pwagner
+! Should not use optional arg FillValue unless present
+!
+! Revision 2.5  2006/02/01 23:54:20  pwagner
+! Fixed bug in integer format
+!
+! Revision 2.4  2006/02/01 23:42:14  pwagner
+! Added RemoveFillValues
+!
+! Revision 2.3  2006/01/14 00:50:15  pwagner
+! Added procedures to embed, extract blocs from larger arrays
+!
+! Revision 2.2  2005/12/23 03:10:31  vsnyder
+! Make some routines more generic, using include
+!
+! Revision 2.1  2005/12/16 00:00:23  pwagner
+! Created to hold fillValue-related stuff
+@
+
+
+2.38
+log
+@Most array gymnastics moved to HyperSlabs module
+@
+text
+@a329 2
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+
+d2050 1
+a2050 1
+       "$Id: MLSFillValues.f90,v 2.37 2017/11/02 00:06:50 pwagner Exp $"
+d2062 3
+@
+
+
+2.37
+log
+@rerank uses Subscripts from Array_Stuff now
+@
+text
+@d16 1
+a16 2
+  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test, &
+    & Test_Allocate, Test_Deallocate
+d23 1
+a23 2
+  use MLSFinds, only: FindAll, FindFirst, FindLast
+  use MLSStringLists, only: ExtractSubstring
+a31 3
+  public :: Bandwidth, Collapse, Depopulate, Repopulate
+  public :: EmbedArray, EssentiallyEqual, ExtractArray
+  public :: Extremum
+a33 2
+  public :: GatherArray
+  public :: HalfWaves
+d37 1
+a37 1
+  public :: RemoveFillValues, ReorderFillValues, ReplaceFillValues, ReRank
+d48 3
+a50 5
+! (1) fill values
+! (2) embedding/extracting blocs  or hyperslabs of elements
+! (3) monotonic increasing or decreasing arrays
+! (4) Some miscellaneous procedures identifying Finite, NaN, or Inf, quantities
+! (All but (1) should perhaps be relocated into other modules)
+a69 5
+! Bandwidth         Calculate the Bandwidth of a banded array
+! Collapse          Collapse an array into a lower rank array
+!                    e.g., by summing over elements of dropped index
+! Depopulate        Finds locations of non-zero values in presumably
+!                     sparse array
+a70 8
+! EmbedArray        Replace a hyperslab of elements in the larger array
+!                     with the smaller
+! EssentiallyEqual  Returns true if two real arguments 'close enough'
+!                    (See comments below for interpretation
+!                     of array versions)
+! ExtractArray      Extract a hyperslab of elements from the larger array
+!                     (optionally allocates slab first)
+! Extremum          Returns the value farther from 0
+a71 1
+! GatherArray       Gather a subset of elements from a larger array
+a74 1
+! HalfWaves         Count consecutive values with same sign
+a84 2
+! Repopulate        Restores non-zero values in presumably
+!                     sparse array to their proper locations
+a94 8
+! Bandwidth ( array, int bwidth, [real pctnzero], [int indxColpse] )
+! Collapse ( arrayIn, nums, logs, [testvalue], [char* options] )
+! Depopulate ( array[:], int i[:], int n, &
+!   & [nprec testvalue], [nprec values[:], [char* options] )
+! Depopulate ( array[:,:], int i[:], int j[:], int n, &
+!   & [nprec testvalue], [nprec values[:], [char* options] )
+! Depopulate ( array[:,:,:], int i[:], int j[:],  int k[:], int n, &
+!   & [nprec testvalue], [nprec values[:], [char* options] )
+a95 7
+! EmbedArray ( slab, array, &
+!   int start[2], int count[2], int stride[2], int block[2], [char* options] )
+! log EssentiallyEqual ( nprec A, nprec B, &
+!   [nprec FillValue], [nprec Precision] )
+! ExtractArray ( slab, array, &
+!   int start[2], int count[2], int stride[2], int block[2], [char* options] )
+! nprec Extremum( nprec arg1, nprec arg2 )
+a96 3
+! GatherArray ( bloc, array, int which1[:], &
+!   [int which2(:)], [int which3(:), [char* options] )
+! halfWaves( nprec array[:], int lengths[:], [int nWaves] )
+d104 1
+d108 1
+a108 8
+! Repopulate ( array[:], int i[:], int n, &
+!   & [nprec values[:], [char* options] )
+! Repopulate ( array[:,:], int i[:], int j[:], int n, &
+!   & [nprec values[:], [char* options] )
+! Repopulate ( array[:,:,:], int i[:], int j[:],  int k[:], int n, &
+!   & [nprec values[:], [char* options] )
+! Monotonize( values, [Period], [FillValue], [log strict] )
+! nprec roundUpOrDown( nprec value )
+a145 6
+  interface BandWidth
+    module procedure BandWidth_1dr4, BandWidth_1dr8, BandWidth_1dint
+    module procedure BandWidth_2dr4, BandWidth_2dr8, BandWidth_2dint
+    module procedure BandWidth_3dr4, BandWidth_3dr8, BandWidth_3dint
+  end interface
+
+a151 12
+  interface Collapse
+    module procedure Collapse_2d_r4, Collapse_2d_r8, Collapse_2d_int
+    module procedure Collapse_3d_r4, Collapse_3d_r8, Collapse_3d_int
+  end interface
+
+  interface Depopulate
+    module procedure Depopulate_1d_r4, Depopulate_1d_r8
+    module procedure Depopulate_2d_r4, Depopulate_2d_r8
+    module procedure Depopulate_3d_r4, Depopulate_3d_r8
+    module procedure Depopulate_1d_int
+  end interface
+  
+a155 25
+  interface EmbedArray
+    module procedure EmbedArray_1d_r4, EmbedArray_1d_r8
+    module procedure EmbedArray_2d_r4, EmbedArray_2d_r8
+    module procedure EmbedArray_3d_r4, EmbedArray_3d_r8
+    module procedure EmbedArray_1d_int
+  end interface
+
+  interface EssentiallyEqual
+    module procedure EssentiallyEqual_r4, EssentiallyEqual_r8
+    module procedure EssentiallyEqual_r4_1d, EssentiallyEqual_r8_1d
+    module procedure EssentiallyEqual_r4_2d, EssentiallyEqual_r8_2d
+    module procedure EssentiallyEqual_r4_3d, EssentiallyEqual_r8_3d
+  end interface
+
+  interface ExtractArray
+    module procedure ExtractArray_1d_r4, ExtractArray_1d_r8
+    module procedure ExtractArray_2d_r4, ExtractArray_2d_r8
+    module procedure ExtractArray_3d_r4, ExtractArray_3d_r8
+    module procedure ExtractArray_1d_int
+  end interface
+
+  interface Extremum
+    module procedure Extremum_REAL, Extremum_DOUBLE, Extremum_int
+  end interface
+
+a159 11
+  interface GatherArray
+    module procedure GatherArray_1d_r4, GatherArray_1d_r8
+    module procedure GatherArray_2d_r4, GatherArray_2d_r8
+    module procedure GatherArray_3d_r4, GatherArray_3d_r8
+    module procedure GatherArray_1d_int
+  end interface
+
+  interface halfWaves
+    module procedure halfWaves_REAL, halfWaves_DOUBLE
+  end interface
+
+d191 6
+d214 1
+a214 8
+  interface Repopulate
+    module procedure Repopulate_1d_r4, Repopulate_1d_r8
+    module procedure Repopulate_2d_r4, Repopulate_2d_r8
+    module procedure Repopulate_3d_r4, Repopulate_3d_r8
+    module procedure Repopulate_1d_int
+  end interface
+
+  interface roundUpOrDown
+a217 6
+  interface Monotonize
+    module procedure Monotonize_1dr4, Monotonize_1dr8, Monotonize_1dint
+    module procedure Monotonize_2dr4, Monotonize_2dr8, Monotonize_2dint
+    module procedure Monotonize_3dr4, Monotonize_3dr8, Monotonize_3dint
+  end interface
+
+a263 1
+  integer, parameter       :: MAXDEPOPULATED     = 1000000
+a343 256
+  ! ---------------------------------------------  Bandwidth  -----
+  ! This family of routines calculates the Bandwidth of a presumably
+  ! banded matrix
+  ! Optionally it also returns the %age of elements that are non-zero
+  ! Passed a higher-rank object, that object is first collapsed to a matrix
+  ! Passed a rank-one object, it complains
+  !
+  ! Is there any advantage to be gained from generalizing to the case of
+  ! a "banded" matrix where the elements outside the band are Fill values
+  ! instead of zero?
+  subroutine BandWidth_1dint( iarray, bwidth, pctnzero )
+    ! Args
+    integer, dimension(:), intent(in )    :: iarray
+    integer, intent(out)                  :: bwidth
+    real, optional, intent(out)           :: pctnzero
+    call output( 'Sorry, Bandwidth inappropriate for 1-d array', advance='yes' )
+    bwidth = 0
+    if ( present(pctnzero) ) pctnzero = 0.
+  end subroutine BandWidth_1dint
+
+  subroutine BandWidth_1dr4( array, bwidth, pctnzero )
+    ! Args
+    integer, parameter :: RK = R4
+    real(rk), dimension(:), intent(in )   :: array
+    integer, intent(out)                  :: bwidth
+    real, optional, intent(out)           :: pctnzero
+    ! Internal variables
+    call output( 'Sorry, Bandwidth inappropriate for 1-d array', advance='yes' )
+    bwidth = 0
+    if ( present(pctnzero) ) pctnzero = 0.
+  end subroutine BandWidth_1dr4
+
+  subroutine BandWidth_1dr8( array, bwidth, pctnzero )
+    ! Args
+    integer, parameter :: RK = R8
+    real(rk), dimension(:), intent(in )   :: array
+    integer, intent(out)                  :: bwidth
+    real, optional, intent(out)           :: pctnzero
+    ! Internal variables
+    call output( 'Sorry, Bandwidth inappropriate for 1-d array', advance='yes' )
+    bwidth = 0
+    if ( present(pctnzero) ) pctnzero = 0.
+  end subroutine BandWidth_1dr8
+
+  subroutine BandWidth_2dint( iarray, bwidth, pctnzero )
+    ! Args
+    integer, dimension(:,:), intent(in )  :: iarray
+    integer, intent(out)                  :: bwidth
+    real, optional, intent(out)           :: pctnzero
+    integer, parameter :: RK = R4
+    ! Internal variables
+    real(rk), dimension(size(iarray, 1), size(iarray, 2)) :: array
+    array = iarray
+    call BandWidth( array, bwidth, pctnzero )
+  end subroutine BandWidth_2dint
+
+  subroutine BandWidth_2dr4( array, bwidth, pctnzero )
+    ! Args
+    integer, parameter :: RK = R4
+    real(rk), dimension(:,:), intent(in ) :: array
+    integer, intent(out)                  :: bwidth
+    real, optional, intent(out)           :: pctnzero
+    ! Internal variables
+    include 'BandWidth.f9h'
+  end subroutine BandWidth_2dr4
+
+  subroutine BandWidth_2dr8( array, bwidth, pctnzero )
+    ! Args
+    integer, parameter :: RK = R8
+    real(rk), dimension(:,:), intent(in ) :: array
+    integer, intent(out)                  :: bwidth
+    real, optional, intent(out)           :: pctnzero
+    ! Internal variables
+    include 'BandWidth.f9h'
+  end subroutine BandWidth_2dr8
+
+  subroutine BandWidth_3dint( array, bwidth, pctnzero, indxColpse )
+    ! Args
+    integer, dimension(:,:,:), intent(in)    :: array
+    integer, intent(out)                  :: bwidth
+    real, optional, intent(out)           :: pctnzero
+    integer, optional, intent(in)         :: indxColpse ! which index to collapse
+    integer, dimension(:,:), pointer      :: ColpsedArray => null()
+    include 'BandWidth3d.f9h'
+  end subroutine BandWidth_3dint
+
+  subroutine BandWidth_3dr4( array, bwidth, pctnzero, indxColpse )
+    ! Args
+    integer, parameter :: RK = R4
+    real(rk), dimension(:,:,:), intent(in)   :: array
+    integer, intent(out)                  :: bwidth
+    real, optional, intent(out)           :: pctnzero
+    integer, optional, intent(in)         :: indxColpse ! which index to collapse
+    ! Internal variables
+    real(rk), dimension(:,:), pointer     :: ColpsedArray => null()
+    include 'BandWidth3d.f9h'
+    ! call output( 'Sorry, Bandwidth inappropriate for 3-d array', advance='yes' )
+  end subroutine BandWidth_3dr4
+
+  subroutine BandWidth_3dr8( array, bwidth, pctnzero, indxColpse )
+    ! Args
+    integer, parameter :: RK = R8
+    real(rk), dimension(:,:,:), intent(in)   :: array
+    integer, intent(out)                  :: bwidth
+    real, optional, intent(out)           :: pctnzero
+    integer, optional, intent(in)         :: indxColpse ! which index to collapse
+    real(rk), dimension(:,:), pointer     :: ColpsedArray => null()
+    ! Internal variables
+    include 'BandWidth3d.f9h'
+    ! call output( 'Sorry, Bandwidth inappropriate for 3-d array', advance='yes' )
+  end subroutine BandWidth_3dr8
+
+  ! ---------------------------------------------  Collapse  -----
+  ! This family of routines collapses an array[i1,i2,..in] to lower-rank
+  ! arrays nums or logs[i1,i2,..,i(n-1)] by operating on all the elements of 
+  ! the last index in depending upon options:
+  ! options             nums                      logs
+  ! 'num[op]'         use 'op'
+  ! 'any[op]'                                 use 'any' with 'op'
+  ! 'all[op]'                                 use 'all' with 'op' (default)
+  
+  !   op                          meaning
+  !   '+'               sum                any or all even (default)
+  !   '>'               max                any or all > testvalue
+  !   '<'               min                any or all < testvalue
+  !   '='                                  any or all = testvalue
+  !   '!'                                  reverse sense of test
+  !   ('!' may be added to any of ops above, e.g.: 'all[!+]' would
+  !    return TRUE if all of the elements were odd)
+  ! If testvalue is not supplied, it defaults to 0
+  ! Options may contain separate fields for the nums and logs; e.g.,
+  ! 'num[>]all[!=]' would return 
+  !    nums    max values of elements over last index
+  !    logs    true where all the elements were non-zero over last index
+  ! 
+  subroutine Collapse_2d_r4 ( array, nums, logs, testvalue, options )
+    integer, parameter :: RK = R4
+    include 'Collapse_2d.f9h'
+  end subroutine Collapse_2d_r4
+
+  subroutine Collapse_3d_r4 ( array, nums, logs, testvalue, options )
+    integer, parameter :: RK = R4
+    include 'Collapse_3d.f9h'
+  end subroutine Collapse_3d_r4
+
+  subroutine Collapse_2d_r8 ( array, nums, logs, testvalue, options )
+    integer, parameter :: RK = r8
+    include 'Collapse_2d.f9h'
+  end subroutine Collapse_2d_r8
+
+  subroutine Collapse_3d_r8 ( array, nums, logs, testvalue, options )
+    integer, parameter :: RK = r8
+    include 'Collapse_3d.f9h'
+  end subroutine Collapse_3d_r8
+
+  subroutine Collapse_2d_int ( iarray, inums, logs, itestvalue, options )
+    integer, dimension(:,:), intent(in)           :: iarray ! The larger array
+    integer , dimension(:), optional, intent(out) :: inums
+    logical , dimension(:), optional, intent(out) :: logs
+    integer, intent(in), optional                 :: itestvalue
+    character(len=*), intent(in), optional        :: options
+    ! Local variables
+    real(r4), dimension(size(iarray, 1), size(iarray, 2)) :: array
+    real(r4), dimension(size(iarray, 1))                  :: nums
+    real(r4)                                              :: testvalue
+    ! Executable
+    array = iarray
+    testvalue = 0
+    if ( present(itestvalue) ) testvalue = itestvalue
+    call Collapse( array, nums, logs, testvalue, options )
+    if ( present(inums) ) inums = nums
+  end subroutine Collapse_2d_int
+
+  subroutine Collapse_3d_int ( iarray, inums, logs, itestvalue, options )
+    integer, dimension(:,:,:), intent(in)           :: iarray ! The larger array
+    integer , dimension(:,:), optional, intent(out) :: inums
+    logical , dimension(:,:), optional, intent(out) :: logs
+    integer, intent(in), optional                   :: itestvalue
+    character(len=*), intent(in), optional          :: options
+    ! Local variables
+    real(r4), dimension(size(iarray, 1), size(iarray, 2), size(iarray, 3)) &
+      &                                                   :: array
+    real(r4), dimension(size(iarray, 1), size(iarray, 2)) :: nums
+    real(r4)                                              :: testvalue
+    ! Executable
+    array = iarray
+    testvalue = 0
+    if ( present(itestvalue) ) testvalue = itestvalue
+    call Collapse( array, nums, logs, testvalue, options )
+    if ( present(inums) ) inums = nums
+  end subroutine Collapse_3d_int
+
+  ! ---------------------------------------------  Depopulate  -----
+  ! This family of routines returns only non-zero values of an array[i,j,..]
+  ! or, depending upon options:
+  ! options             which to return
+  !   '+'              values  >  testvalue
+  !   '/'              values  /= testvalue
+  !   '%'              compare values with testvalue*maxval(values)
+  !  '||'              test according to |array[i]|
+  !  'r '              reverse sense; i.e. return just the "zeros"
+  ! If testvalue is not supplied, it defaults to 0
+  ! Optionally we return just the indices i for 1-d arrays, (i,j) for 2-d,
+  ! (i,j,k) for 3-d, etc.
+  ! This is similar in spirit to "sparifying" a full block Hessian
+  ! See also Repopulate
+  subroutine Depopulate_1d_int ( iarray, i, n, itestvalue, ivalues, options )
+    integer, dimension(:), intent(out) :: i
+    integer, dimension(:), intent(in) :: iarray ! The larger array
+    integer, intent(out) :: n
+    integer, parameter :: RK = R4
+    integer, intent(in), optional     :: itestvalue
+    integer, dimension(:), intent(out), optional :: ivalues
+    character(len=*), intent(in), optional :: options
+    ! Local variables
+    real(rk), dimension(size(iarray)) :: array ! The sparse array
+    real(rk) :: testvalue
+    real(rk), dimension(MAXDepopulateD) :: values
+    ! Executable
+    testvalue = 0._rk
+    if ( present(itestvalue) ) testvalue = real( itestvalue, rk )
+    array = iarray
+    call Depopulate ( array, i, n, testvalue, values, options )
+    if ( present(ivalues) ) ivalues = values(1:size(ivalues))
+  end subroutine Depopulate_1d_int
+
+  subroutine Depopulate_1d_r4 ( array, i, n, testvalue, values, options )
+    integer, parameter :: RK = R4
+    include 'Decimate_1d.f9h'
+  end subroutine Depopulate_1d_r4
+
+  subroutine Depopulate_2d_r4 ( array, i, j, n, testvalue, values, options )
+    integer, parameter :: RK = R4
+    include 'Decimate_2d.f9h'
+  end subroutine Depopulate_2d_r4
+
+  subroutine Depopulate_3d_r4 ( array, i, j, k, n, testvalue, values, options )
+    integer, parameter :: RK = R4
+    include 'Decimate_3d.f9h'
+  end subroutine Depopulate_3d_r4
+
+  subroutine Depopulate_1d_r8 ( array, i, n, testvalue, values, options )
+    integer, parameter :: RK = r8
+    include 'Decimate_1d.f9h'
+  end subroutine Depopulate_1d_r8
+
+  subroutine Depopulate_2d_r8 ( array, i, j, n, testvalue, values, options )
+    integer, parameter :: RK = r8
+    include 'Decimate_2d.f9h'
+  end subroutine Depopulate_2d_r8
+
+  subroutine Depopulate_3d_r8 ( array, i, j, k, n, testvalue, values, options )
+    integer, parameter :: RK = r8
+    include 'Decimate_3d.f9h'
+  end subroutine Depopulate_3d_r8
+
+a381 307
+
+  ! ---------------------------------------------  EmbedArray  -----
+  ! This family of routines replace a bloc of elements in a larger
+  ! array with corresponding elements from a smaller
+  subroutine EmbedArray_1d_int ( ibloc, iarray, start, count, stride, block, options )
+    integer, dimension(:), pointer :: ibloc
+    integer, dimension(:), pointer :: iarray ! The larger array
+    integer, parameter :: RK = R4
+    integer, dimension(:), intent(in)     :: start
+    integer, dimension(:), intent(in)     :: count
+    integer, dimension(:), intent(in)     :: stride
+    integer, dimension(:), intent(in)     :: block
+    character(len=*), intent(in), optional :: options
+    ! Local variables
+    real(rk), dimension(:), pointer :: bloc
+    real(rk), dimension(:), pointer :: array ! The larger array
+    ! Executable
+    nullify ( array, bloc )
+    call allocate_test ( bloc, size(ibloc), ModuleName, &
+      & "1-d bloc for int embedding" )
+    call allocate_test ( array, size(iarray), ModuleName, &
+      & "1-d array for int embedding" )
+    array = iarray
+    bloc = ibloc
+    call EmbedArray ( bloc, array, start, count, stride, block, options )
+    iarray = array
+    call deallocate_test ( array, ModuleName, "1-d array for int embedding" )
+    call deallocate_test ( bloc, ModuleName, "1-d bloc for int embedding" )
+  end subroutine EmbedArray_1d_int
+
+  subroutine EmbedArray_1d_r4 ( slab, array, start, count, stride, block, options )
+    integer, parameter :: RK = R4
+    character, parameter :: DIRECTION = 'm'
+    include 'EmbedExtract_1d.f9h'
+  end subroutine EmbedArray_1d_r4
+
+  subroutine EmbedArray_1d_r8 ( slab, array, start, count, stride, block, options )
+    integer, parameter :: RK = R8
+    character, parameter :: DIRECTION = 'm'
+    include 'EmbedExtract_1d.f9h'
+  end subroutine EmbedArray_1d_r8
+
+  subroutine ExtractArray_1d_int ( ibloc, iarray, start, count, stride, block, options )
+    integer, dimension(:), pointer :: ibloc
+    integer, dimension(:) :: iarray ! The larger array
+    integer, parameter :: RK = R4
+    integer, dimension(:), intent(in)     :: start
+    integer, dimension(:), intent(in)     :: count
+    integer, dimension(:), intent(in)     :: stride
+    integer, dimension(:), intent(in)     :: block
+    character(len=*), intent(in), optional :: options
+    ! Local variables
+    real(rk), dimension(:), pointer :: bloc
+    real(rk), dimension(:), pointer :: array ! The larger array
+    ! Executable
+    nullify ( array, bloc )
+    if ( associated(ibloc) ) then
+      call allocate_test ( bloc, size(ibloc), ModuleName, &
+        & "1-d bloc for int extracting" )
+    end if
+    call allocate_test ( array, size(iarray), ModuleName, &
+        & "1-d array for int extracting" )
+    array = iarray
+    call ExtractArray ( bloc, array, start, count, stride, block, options )
+    if ( .not. associated(ibloc) ) then
+      call allocate_test ( ibloc, size(bloc), ModuleName, &
+        & "1-d bloc for int extracting" )
+    end if
+    ibloc = bloc
+    call deallocate_test ( array, ModuleName, "1-d array for int extracting" )
+    call deallocate_test ( bloc, ModuleName, "1-d bloc for int extracting" )
+  end subroutine ExtractArray_1d_int
+
+  subroutine ExtractArray_1d_r4 ( slab, array, start, count, stride, block, options )
+    integer, parameter :: RK = R4
+    character, parameter :: DIRECTION = 'x'
+    include 'EmbedExtract_1d.f9h'
+  end subroutine ExtractArray_1d_r4
+
+  subroutine ExtractArray_1d_r8 ( slab, array, start, count, stride, block, options )
+    integer, parameter :: RK = R8
+    character, parameter :: DIRECTION = 'x'
+    include 'EmbedExtract_1d.f9h'
+  end subroutine ExtractArray_1d_r8
+
+  subroutine EmbedArray_2d_r4 ( slab, array, start, count, stride, block, options )
+    integer, parameter :: RK = R4
+    character, parameter :: DIRECTION = 'm'
+    include 'EmbedExtract_2d.f9h'
+  end subroutine EmbedArray_2d_r4
+
+  subroutine EmbedArray_2d_r8 ( slab, array, start, count, stride, block, options )
+    integer, parameter :: RK = R8
+    character, parameter :: DIRECTION = 'm'
+    include 'EmbedExtract_2d.f9h'
+  end subroutine EmbedArray_2d_r8
+
+  subroutine ExtractArray_2d_r4 ( slab, array, start, count, stride, block, options )
+    integer, parameter :: RK = R4
+    character, parameter :: DIRECTION = 'x'
+    include 'EmbedExtract_2d.f9h'
+  end subroutine ExtractArray_2d_r4
+
+  subroutine ExtractArray_2d_r8 ( slab, array, start, count, stride, block, options )
+    integer, parameter :: RK = R8
+    character, parameter :: DIRECTION = 'x'
+    include 'EmbedExtract_2d.f9h'
+  end subroutine ExtractArray_2d_r8
+
+  subroutine EmbedArray_3d_r4 ( slab, array, start, count, stride, block, options )
+    integer, parameter :: RK = R4
+    character, parameter :: DIRECTION = 'm'
+    include 'EmbedExtract_3d.f9h'
+  end subroutine EmbedArray_3d_r4
+
+  subroutine EmbedArray_3d_r8 ( slab, array, start, count, stride, block, options )
+    integer, parameter :: RK = R8
+    character, parameter :: DIRECTION = 'm'
+    include 'EmbedExtract_3d.f9h'
+  end subroutine EmbedArray_3d_r8
+
+  subroutine ExtractArray_3d_r4 ( slab, array, start, count, stride, block, options )
+    integer, parameter :: RK = R4
+    character, parameter :: DIRECTION = 'x'
+    include 'EmbedExtract_3d.f9h'
+  end subroutine ExtractArray_3d_r4
+
+  subroutine ExtractArray_3d_r8 ( slab, array, start, count, stride, block, options )
+    integer, parameter :: RK = R8
+    character, parameter :: DIRECTION = 'x'
+    include 'EmbedExtract_3d.f9h'
+  end subroutine ExtractArray_3d_r8
+
+! ---------------------------------------------  EssentiallyEqual  -----
+
+  ! This family of routines checks to see if two reals are essentially
+  ! the same.
+  elemental logical function EssentiallyEqual_r4 ( A, B )
+    real(r4), intent(in) :: A
+    real(r4) ,intent(in) :: B
+    EssentiallyEqual_r4 = &
+      & a >= nearest ( b, -1.0_r4 ) .and. a <= nearest ( b, 1.0_r4 )
+  end function EssentiallyEqual_r4
+
+  elemental logical function EssentiallyEqual_r8 ( A, B )
+    real(r8), intent(in) :: A
+    real(r8) ,intent(in) :: B
+    EssentiallyEqual_r8 = &
+      & a >= nearest ( b, -1.0_r8 ) .and. a <= nearest ( b, 1.0_r8 )
+  end function EssentiallyEqual_r8
+
+  ! The following functions are slightly different:
+  ! A scalar logical testing that every element of two arrays are equal
+  ! You may filter out values in either array equal to the FillValue
+  ! or for which the corresponding Precision array is negative
+  ! or where either element is not finite
+  ! Warn if an element of one array is finite while the other is not
+  function EssentiallyEqual_r4_1d ( A, B, FillValue, Precision ) &
+    & result(equal)
+    real(r4), dimension(:), intent(in)             :: A
+    real(r4), dimension(:), intent(in)             :: B
+    real(r4), intent(in)                           :: fillValue
+    real(r4), dimension(:), optional, intent(in)   :: precision
+    logical                                        :: equal
+    real(r4), dimension(size(A))                   :: atab
+    real(r4), dimension(size(B))                   :: btab
+    logical                                        :: warn
+    equal = .false.
+    call filterValues(A, ATAB, B, BTAB, warn, fillValue, precision)
+    if ( .not. warn ) equal = all( &
+      & a >= nearest ( b, -1.0_r4 ) .and. a <= nearest ( b, 1.0_r4 ) &
+      & )
+  end function EssentiallyEqual_r4_1d
+
+  function EssentiallyEqual_r8_1d ( A, B, FillValue, Precision ) &
+    & result(equal)
+    real(r8), dimension(:), intent(in)             :: A
+    real(r8), dimension(:), intent(in)             :: B
+    real(r8), intent(in)                           :: fillValue
+    real(r8), dimension(:), optional, intent(in)   :: precision
+    logical                                        :: equal
+    real(r8), dimension(size(A))                   :: atab
+    real(r8), dimension(size(B))                   :: btab
+    logical                                        :: warn
+    equal = .false.
+    call filterValues(A, ATAB, B, BTAB, warn, fillValue, precision)
+    if ( .not. warn ) equal = all( &
+      & a >= nearest ( b, -1.0_r8 ) .and. a <= nearest ( b, 1.0_r8 ) &
+      & )
+  end function EssentiallyEqual_r8_1d
+
+  function EssentiallyEqual_r4_2d ( A, B, FillValue, Precision ) &
+    & result(equal)
+    real(r4), dimension(:,:), intent(in)             :: A
+    real(r4), dimension(:,:), intent(in)             :: B
+    real(r4), intent(in)                             :: fillValue
+    real(r4), dimension(:,:), optional, intent(in)   :: precision
+    logical                                        :: equal
+    ! Internal variables
+    integer, dimension(2)                          :: shp
+    shp =shape(a)
+    if ( present(Precision) ) then
+      equal = EssentiallyEqual_r4_1d(reshape(a, (/shp(1)*shp(2)/)), &
+        & reshape(b, (/shp(1)*shp(2)/)), &
+        & FillValue, reshape(Precision, (/shp(1)*shp(2)/)) )
+    else
+      equal = EssentiallyEqual_r4_1d(reshape(a, (/shp(1)*shp(2)/)), &
+        & reshape(b, (/shp(1)*shp(2)/)), FillValue )
+    endif
+      
+  end function EssentiallyEqual_r4_2d
+
+  function EssentiallyEqual_r8_2d ( A, B, FillValue, Precision ) &
+    & result(equal)
+    real(r8), dimension(:,:), intent(in)             :: A
+    real(r8), dimension(:,:), intent(in)             :: B
+    real(r8), intent(in)                             :: fillValue
+    real(r8), dimension(:,:), optional, intent(in)   :: precision
+    logical                                        :: equal
+    ! Internal variables
+    integer, dimension(2)                          :: shp
+    shp =shape(a)
+    if ( present(Precision) ) then
+      equal = EssentiallyEqual_r8_1d(reshape(a, (/shp(1)*shp(2)/)), &
+        & reshape(b, (/shp(1)*shp(2)/)), &
+        & FillValue, reshape(Precision, (/shp(1)*shp(2)/)) )
+    else
+      equal = EssentiallyEqual_r8_1d(reshape(a, (/shp(1)*shp(2)/)), &
+        & reshape(b, (/shp(1)*shp(2)/)), FillValue )
+    endif
+      
+  end function EssentiallyEqual_r8_2d
+
+  function EssentiallyEqual_r4_3d ( A, B, FillValue, Precision ) &
+    & result(equal)
+    real(r4), dimension(:,:,:), intent(in)             :: A
+    real(r4), dimension(:,:,:), intent(in)             :: B
+    real(r4), intent(in)                               :: fillValue
+    real(r4), dimension(:,:,:), optional, intent(in)   :: precision
+    logical                                        :: equal
+    ! Internal variables
+    integer, dimension(3)                          :: shp
+    shp =shape(a)
+    if ( present(Precision) ) then
+      equal = EssentiallyEqual_r4_1d(reshape(a, (/shp(1)*shp(2)*shp(3)/)), &
+        & reshape(b, (/shp(1)*shp(2)*shp(3)/)), &
+        & FillValue, reshape(Precision, (/shp(1)*shp(2)*shp(3)/)) )
+    else
+      equal = EssentiallyEqual_r4_1d(reshape(a, (/shp(1)*shp(2)*shp(3)/)), &
+        & reshape(b, (/shp(1)*shp(2)*shp(3)/)), FillValue )
+    endif
+      
+  end function EssentiallyEqual_r4_3d
+
+  function EssentiallyEqual_r8_3d ( A, B, FillValue, Precision ) &
+    & result(equal)
+    real(r8), dimension(:,:,:), intent(in)             :: A
+    real(r8), dimension(:,:,:), intent(in)             :: B
+    real(r8), intent(in)                               :: fillValue
+    real(r8), dimension(:,:,:), optional, intent(in)   :: precision
+    logical                                        :: equal
+    ! Internal variables
+    integer, dimension(3)                          :: shp
+    shp =shape(a)
+    if ( present(Precision) ) then
+      equal = EssentiallyEqual_r8_1d(reshape(a, (/shp(1)*shp(2)*shp(3)/)), &
+        & reshape(b, (/shp(1)*shp(2)*shp(3)/)), &
+        & FillValue, reshape(Precision, (/shp(1)*shp(2)*shp(3)/)) )
+    else
+      equal = EssentiallyEqual_r8_1d(reshape(a, (/shp(1)*shp(2)*shp(3)/)), &
+        & reshape(b, (/shp(1)*shp(2)*shp(3)/)), FillValue )
+    endif
+      
+  end function EssentiallyEqual_r8_3d
+
+! -------------------------------------------------  Extremum  -----
+! Returns the arg with the large absolute value
+  elemental function Extremum_DOUBLE(arg1, arg2) result(value)
+    double precision, intent(in) :: arg1, arg2
+    double precision             :: value
+    if ( abs(arg2) > abs(arg1) ) then
+      value = arg2
+    else
+      value = arg1
+    endif
+  end function Extremum_DOUBLE
+
+  elemental function Extremum_REAL(arg1, arg2) result(value)
+    real, intent(in)        :: arg1, arg2
+    real                    :: value
+    if ( abs(arg2) > abs(arg1) ) then
+      value = arg2
+    else
+      value = arg1
+    endif
+  end function Extremum_REAL
+
+  elemental function Extremum_int(arg1, arg2) result(value)
+    integer, intent(in)        :: arg1, arg2
+    integer                    :: value
+    if ( abs(arg2) > abs(arg1) ) then
+      value = arg2
+    else
+      value = arg1
+    endif
+  end function Extremum_int
+
+a395 91
+! -------------------------------------------------  GatherArray  -----
+! This family of subroutines gathers {array[i], i in which1} into bloc}
+! if 'a' is among options, we allocate bloc
+! We could also code ScatterArray, but choose not to do so
+  subroutine GatherArray_1d_int ( ibloc, iarray, which1, options )
+    integer, dimension(:), pointer :: ibloc
+    integer, dimension(:), pointer :: iarray ! The larger array
+    integer, parameter :: RK = R4
+    integer, dimension(:), intent(in)     :: which1
+    character(len=*), intent(in), optional :: options
+    ! Local variables
+    real(rk), dimension(:), pointer :: bloc => null()
+    real(rk), dimension(:), pointer :: array => null() ! The larger array
+    integer :: status
+    ! Executable
+    if ( associated(ibloc) ) then
+      allocate( bloc(size(ibloc)), stat=status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, &
+      & ModuleName, "unable to allocate 1-d bloc for int gathering" )
+    endif
+    allocate( array(size(iarray)), stat=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, &
+      & ModuleName, "unable to allocate 1-d array for int gathering" )
+    array = iarray
+    call GatherArray ( bloc, array, which1, options )
+    if ( .not. associated(ibloc) ) then
+      allocate( ibloc(size(bloc)), stat=status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, &
+      & ModuleName, "unable to allocate 1-d bloc for int extracting" )
+    endif
+    ibloc = bloc
+    deallocate( bloc, array, stat=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, &
+      & ModuleName, "unable to deallocate 1-d bloc for int extracting" )
+  end subroutine GatherArray_1d_int
+
+  subroutine GatherArray_1d_r4 ( bloc, array, which1, options )
+    integer, parameter :: RK = r4
+    character, parameter :: DIRECTION = 'g'
+    include 'GatherScatter_1d.f9h'
+  end subroutine GatherArray_1d_r4
+
+  subroutine GatherArray_2d_r4 ( bloc, array, which1, which2, options )
+    integer, parameter :: RK = r4
+    character, parameter :: DIRECTION = 'g'
+    include 'GatherScatter_2d.f9h'
+  end subroutine GatherArray_2d_r4
+
+  subroutine GatherArray_3d_r4 ( bloc, array, which1, which2, which3, options )
+    integer, parameter :: RK = r4
+    character, parameter :: DIRECTION = 'g'
+    include 'GatherScatter_3d.f9h'
+  end subroutine GatherArray_3d_r4
+
+  subroutine GatherArray_1d_r8 ( bloc, array, which1, options )
+    integer, parameter :: RK = R8
+    character, parameter :: DIRECTION = 'g'
+    include 'GatherScatter_1d.f9h'
+  end subroutine GatherArray_1d_r8
+
+  subroutine GatherArray_2d_r8 ( bloc, array, which1, which2, options )
+    integer, parameter :: RK = R8
+    character, parameter :: DIRECTION = 'g'
+    include 'GatherScatter_2d.f9h'
+  end subroutine GatherArray_2d_r8
+
+  subroutine GatherArray_3d_r8 ( bloc, array, which1, which2, which3, options )
+    integer, parameter :: RK = R8
+    character, parameter :: DIRECTION = 'g'
+    include 'GatherScatter_3d.f9h'
+  end subroutine GatherArray_3d_r8
+
+! -------------------------------------------------  HalfWaves  -----
+! Calculates the half-wave lengths of an array
+! i.e., the number of consecutive pos. or neg. values
+  subroutine halfWaves_DOUBLE( array, lengths, nWaves )
+    real(r8), dimension(:), intent(in)         :: array
+    integer, dimension(:), intent(out)         :: lengths
+    integer, optional, intent(out)             :: nWaves
+    integer, parameter :: RK = R8
+    include 'halfWaves.f9h'
+  end subroutine halfWaves_DOUBLE
+
+  subroutine halfWaves_REAL( array, lengths, nWaves )
+    real(r4), dimension(:), intent(in)         :: array
+    integer, dimension(:), intent(out)         :: lengths
+    integer, optional, intent(out)             :: nWaves
+    integer, parameter :: RK = R4
+    include 'halfWaves.f9h'
+  end subroutine halfWaves_REAL
+
+d609 118
+a1078 57
+  ! ---------------------------------------------  Repopulate  -----
+  ! This family of routines restores non-zero values of a presumably
+  ! sparse array to their proper locations, depending on options
+  ! options             does which 
+  !   ' '              replaces value at (i, j, ..)
+  !   '+'              added to value at (i, j, ..)
+  !   '-'              subtracted from value at (i, j, ..)
+  !   '>'              replaces value at (i, j, ..) only if bigger
+  !   '<'              replaces value at (i, j, ..) only if smaller
+  ! See Depopulate
+  subroutine Repopulate_1d_int ( iarray, i, n, ivalues, options )
+    integer, dimension(:), intent(in) :: i
+    integer, dimension(:), intent(inout) :: iarray ! The larger array
+    integer, intent(in) :: n
+    integer, parameter :: RK = R4
+    integer, dimension(:), intent(in) :: ivalues
+    character(len=*), intent(in), optional :: options
+    ! Local variables
+    real(rk), dimension(size(iarray)) :: array ! The sparse array
+    real(rk), dimension(size(ivalues)) :: values
+    ! Executable
+    values = ivalues
+    array = iarray
+    call Repopulate ( array, i, n, values, options )
+    iarray = array
+  end subroutine Repopulate_1d_int
+
+  subroutine Repopulate_1d_r4 ( array, i, n, values, options )
+    integer, parameter :: RK = R4
+    include 'Repopulate_1d.f9h'
+  end subroutine Repopulate_1d_r4
+
+  subroutine Repopulate_2d_r4 ( array, i, j, n, values, options )
+    integer, parameter :: RK = R4
+    include 'Repopulate_2d.f9h'
+  end subroutine Repopulate_2d_r4
+
+  subroutine Repopulate_3d_r4 ( array, i, j, k, n, values, options )
+    integer, parameter :: RK = R4
+    include 'Repopulate_3d.f9h'
+  end subroutine Repopulate_3d_r4
+
+  subroutine Repopulate_1d_r8 ( array, i, n, values, options )
+    integer, parameter :: RK = r8
+    include 'Repopulate_1d.f9h'
+  end subroutine Repopulate_1d_r8
+
+  subroutine Repopulate_2d_r8 ( array, i, j, n, values, options )
+    integer, parameter :: RK = r8
+    include 'Repopulate_2d.f9h'
+  end subroutine Repopulate_2d_r8
+
+  subroutine Repopulate_3d_r8 ( array, i, j, k, n, values, options )
+    integer, parameter :: RK = r8
+    include 'Repopulate_3d.f9h'
+  end subroutine Repopulate_3d_r8
+
+a1188 118
+  ! This family of subroutines makes arrays of values monotonically (increasing)
+  ! May be used instead of BridgeMissing Values
+  ! if Fill Values are -999.99
+  ! Will also handle Periodic arrays, e.g. angles
+  ! optional arg strict will insist that values[i] < values[i+1]
+  subroutine Monotonize_1dint( values, Period, FillValue, strict )
+    ! Args
+    integer, dimension(:), intent(inout) :: values
+    integer, optional, intent(in) :: Period
+    integer, optional, intent(in) :: FillValue
+    logical, optional, intent(in) :: strict
+    ! Internal variables
+    integer :: dx
+    integer :: dxmin
+    integer :: x1
+    integer :: x2
+    include 'Monotonize.f9h'
+  end subroutine Monotonize_1dint
+
+  subroutine Monotonize_1dr4( values, Period, FillValue, strict )
+    ! Args
+    real(r4), dimension(:), intent(inout) :: values
+    real(r4), optional, intent(in) :: Period
+    real(r4), optional, intent(in) :: FillValue
+    logical, optional, intent(in) :: strict
+    ! Internal variables
+    real(r4) :: dx
+    real(r4) :: dxmin
+    real(r4) :: x1
+    real(r4) :: x2
+    include 'Monotonize.f9h'
+  end subroutine Monotonize_1dr4
+
+  subroutine Monotonize_1dr8( values, Period, FillValue, strict )
+    ! Args
+    real(r8), dimension(:), intent(inout) :: values
+    real(r8), optional, intent(in) :: Period
+    real(r8), optional, intent(in) :: FillValue
+    logical, optional, intent(in) :: strict
+    ! Internal variables
+    real(r8) :: dx
+    real(r8) :: dxmin
+    real(r8) :: x1
+    real(r8) :: x2
+    include 'Monotonize.f9h'
+  end subroutine Monotonize_1dr8
+
+  ! (But what about Period and FillValue? Don't you want them, too?)
+
+  ! Actually, what doess it mean to be monotonic in 2d or 3d?
+  ! The gradient is a vector, do you want to constrain it?
+  ! Where will you need this? Will you ever need this?
+  subroutine Monotonize_2dint(values)
+    ! Args
+    integer, dimension(:,:), intent(inout) :: values
+    ! Internal variables
+    integer :: i
+    do i=1, size(values, 1)
+      call Monotonize(values(i,:))
+    enddo
+  end subroutine Monotonize_2dint
+
+  subroutine Monotonize_2dr4(values)
+    ! Args
+    real(r4), dimension(:,:), intent(inout) :: values
+    ! Internal variables
+    integer :: i
+    do i=1, size(values, 1)
+      call Monotonize(values(i,:))
+    enddo
+  end subroutine Monotonize_2dr4
+
+  subroutine Monotonize_2dr8(values)
+    ! Args
+    real(r8), dimension(:,:), intent(inout) :: values
+    ! Internal variables
+    integer :: i
+    do i=1, size(values, 1)
+      call Monotonize(values(i,:))
+    enddo
+  end subroutine Monotonize_2dr8
+
+  subroutine Monotonize_3dint(values)
+    ! Args
+    integer, dimension(:,:,:), intent(inout) :: values
+    ! Internal variables
+    integer :: i, j
+    do j=1, size(values, 2)
+      do i=1, size(values, 1)
+        call Monotonize(values(i,j,:))
+      enddo
+    enddo
+  end subroutine Monotonize_3dint
+
+  subroutine Monotonize_3dr4(values)
+    ! Args
+    real(r4), dimension(:,:,:), intent(inout) :: values
+    ! Internal variables
+    integer :: i, j
+    do j=1, size(values, 2)
+      do i=1, size(values, 1)
+        call Monotonize(values(i,j,:))
+      enddo
+    enddo
+  end subroutine Monotonize_3dr4
+
+  subroutine Monotonize_3dr8(values)
+    ! Args
+    real(r8), dimension(:,:,:), intent(inout) :: values
+    ! Internal variables
+    integer :: i, j
+    do j=1, size(values, 2)
+      do i=1, size(values, 1)
+        call Monotonize(values(i,j,:))
+      enddo
+    enddo
+  end subroutine Monotonize_3dr8
+
+a1550 67
+  ! Find multidimensional set of indices in an array
+  ! with shape shp corresponding to 1-d address
+  !
+  ! We shall assume that the first index is the fastest, then the 2nd, ..
+  ! Our method is the following:
+  ! Let the size of the kth index be s[k]
+  ! Then we seek the array i[k] such that
+  ! address = i[1] + s[1] ( i[2] + s[2] ( i[3] + .. + i[N] ) .. )
+  ! (Where we assume 0-based indexing, like c, 
+  !   rather than 1-based, as Fortran uses)
+  ! We can build this by parts as follows
+  ! a[N]   = i[N]
+  ! a[N-1] = i[N-1] + s[N-1] i[N]
+  ! a[N-2] = i[N-2] + s[N-2] ( i[N-1] + s[N-1] i[N] )
+  ! .   .   .
+  ! a[1] = address
+  ! Where N is the rank of the array
+  ! Note then that the recurrences hold
+  ! a[N-1] - a[N] s[N-1]   = i[N-1]
+  ! a[N-2] - a[N-1] s[N-2] = i[N-2]
+  ! .   .   .
+  ! a[1] - a[2] s[1]       = i[1]
+  !
+  ! From this last we realize that
+  ! i[1] = a[1] mod(s[1])
+  ! Solve it for i[1], then a[2] = ( a[1] - i[1] ) / s[1]
+  ! Then for succeeding values of k
+  ! i[k] = a[k] mod(s[k])
+
+  ! Remember to modify each of these if we wish to use
+  ! Fortran-style indexes which start at 1, not 0, as follows
+  !
+  ! i'[k] = i[k] + 1, k > 1
+  ! i'[1] = i[1]
+  ! address = i'[1] + s[1] ( i'[2] - 1 + s[2] ( i[3] - 1 + .. + i[N] ) .. )
+  ! Actually, let's just use Subscripts from Array_Stuff
+  subroutine rerank( address, shp, indices )
+    use Array_Stuff, only: Subscripts
+    integer, intent(in)                :: address
+    integer, dimension(:), intent(in)  :: shp
+    integer, dimension(:), intent(out) :: indices
+    indices = Subscripts( address, shp )
+  end subroutine rerank
+
+  subroutine rerank_old( address, shp, indices )
+    integer, intent(in)                :: address
+    integer, dimension(:), intent(in)  :: shp
+    integer, dimension(:), intent(out) :: indices
+    ! Local variables
+    integer :: aofk
+    integer :: k
+    integer :: N
+    integer, parameter :: OFFSET = 1 ! at what index do arrays start?
+    !
+    N = size(shp)
+    if ( N < 2 ) then
+      indices(1) = address
+      return
+    end if
+    aofk = address - OFFSET
+    do k=1, N
+      indices(k) = MOD(aofk, shp(k))
+      aofk = ( aofk - indices(k) ) / shp(k)
+    enddo
+    indices = indices + OFFSET ! Converting to Fortran-style, beginning with 1
+  end subroutine rerank_old
+  
+d2052 1
+a2052 1
+       "$Id: MLSFillValues.f90,v 2.36 2017/08/25 00:18:10 pwagner Exp $"
+d2064 3
+@
+
+
+2.36
+log
+@Dropped all the internal output routines in favor of Output_m
+@
+text
+@d2374 36
+d2411 8
+a2418 35
+    ! Find multidimensional set of indices in an array
+    ! with shape shp corresponding to 1-d address
+    !
+    ! We shall assume that the first index is the fastest, then the 2nd, ..
+    ! Our method is the following:
+    ! Let the size of the kth index be s[k]
+    ! Then we seek the array i[k] such that
+    ! address = i[1] + s[1] ( i[2] + s[2] ( i[3] + .. + i[N] ) .. )
+    ! (Where we assume 0-based indexing, like c, 
+    !   rather than 1-based, as Fortran uses)
+    ! We can build this by parts as follows
+    ! a[N]   = i[N]
+    ! a[N-1] = i[N-1] + s[N-1] i[N]
+    ! a[N-2] = i[N-2] + s[N-2] ( i[N-1] + s[N-1] i[N] )
+    ! .   .   .
+    ! a[1] = address
+    ! Where N is the rank of the array
+    ! Note then that the recurrences hold
+    ! a[N-1] - a[N] s[N-1]   = i[N-1]
+    ! a[N-2] - a[N-1] s[N-2] = i[N-2]
+    ! .   .   .
+    ! a[1] - a[2] s[1]       = i[1]
+    !
+    ! From this last we realize that
+    ! i[1] = a[1] mod(s[1])
+    ! Solve it for i[1], then a[2] = ( a[1] - i[1] ) / s[1]
+    ! Then for succeeding values of k
+    ! i[k] = a[k] mod(s[k])
+    
+    ! Remember to modify each of these if we wish to use
+    ! Fortran-style indexes which start at 1, not 0, as follows
+    !
+    ! i'[k] = i[k] + 1, k > 1
+    ! i'[1] = i[1]
+    ! address = i'[1] + s[1] ( i'[2] - 1 + s[2] ( i[3] - 1 + .. + i[N] ) .. )
+d2439 1
+a2439 1
+  end subroutine rerank
+d2942 1
+a2942 1
+       "$Id: MLSFillValues.f90,v 2.35 2016/01/13 00:45:44 pwagner Exp $"
+d2954 3
+@
+
+
+2.35
+log
+@May optionally stutter instead of interpolate
+@
+text
+@d16 12
+a27 10
+  use allocate_deallocate, only: allocate_test, deallocate_test
+  use ieee_arithmetic, only: isFinite => ieee_is_finite, isNaN => ieee_is_NaN, &
+    & ieee_is_finite, ieee_is_NaN
+  use MLSCommon, only: fill_signal, inf_signal, NaN_signal, undefinedvalue, &
+    & is_what_ieee, MLSFill_t, MLSFills
+  use MLSKinds ! everything
+  use MLSMessageModule, only: mlsmessage, mlsmsg_error
+  use MLSFinds, only: findAll, findFirst, findLast
+  use MLSStringLists, only: extractSubstring 
+  use MLSStrings, only: lowercase
+d33 1
+a33 1
+  public :: addMLSFillToDatabase, Dump
+d36 1
+a36 1
+  public :: extremum
+d45 1
+a45 1
+  public :: roundUpOrDown
+d56 1
+a56 1
+! (2) embedding/extracting blocs of elements
+d157 1
+a157 1
+! Monotonize_1dint( values, [Period], [FillValue], [log strict] )
+a294 9
+  interface output
+    module procedure output_str, output_int, output_real, output_dble
+  end interface
+  
+  interface outputNamedValue
+    module procedure outputNamedValue_real, outputNamedValue_int, &
+      & outputNamedValue_str
+  end interface
+  
+d383 1
+a383 1
+  !-------------------------------------------  `  -----
+d414 1
+a414 1
+  !-------------------------------------------  `  -----
+a441 1
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+a754 1
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+a780 1
+    use Allocate_Deallocate, only: Allocate_Test
+a786 1
+    use Allocate_Deallocate, only: Allocate_Test
+a792 1
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+a823 1
+    use Allocate_Deallocate, only: Allocate_Test
+a829 1
+    use Allocate_Deallocate, only: Allocate_Test
+a835 1
+    use Allocate_Deallocate, only: Allocate_Test
+a841 1
+    use Allocate_Deallocate, only: Allocate_Test
+a847 1
+    use Allocate_Deallocate, only: Allocate_Test
+a853 1
+    use Allocate_Deallocate, only: Allocate_Test
+a859 1
+    use Allocate_Deallocate, only: Allocate_Test
+a865 1
+    use Allocate_Deallocate, only: Allocate_Test
+a871 1
+    use Allocate_Deallocate, only: Allocate_Test
+a877 1
+    use Allocate_Deallocate, only: Allocate_Test
+d1898 1
+a1898 1
+  ! optional arg strict will insist that values[i] < valies[i+1]
+a2026 7
+    ! The following just gives frac = sgn * ( value - rounded )
+    !select case (sgn)
+    !case (1)
+    !  frac = value - rounded
+    !case (-1)
+    !  frac = -( value - rounded )
+    !end select
+a2041 7
+    ! The following just gives frac = sgn * ( value - rounded )
+    !select case (sgn)
+    !case (1)
+    !  frac = value - rounded
+    !case (-1)
+    !  frac = -( value - rounded )
+    !end select
+d2364 1
+a2364 1
+      call output('*** Error in MLSCommon module ***', advance='yes')
+a2373 118
+  subroutine blanks(num, advance)
+    integer, intent(in) :: num
+    character(len=*), optional, intent(in) :: advance
+    integer :: i
+    character(len=3) :: myAdvance
+    myAdvance = 'no'
+    if ( present(advance) ) myAdvance = advance
+    do i=1, num
+      write(*, '(a1)', advance='no') ' '
+    enddo
+    if ( myAdvance == 'yes' ) write(*, '(a1)', advance='yes') ''
+    
+  end subroutine blanks
+
+  subroutine output_one_char(str)
+    character(len=1), intent(in) :: str
+    write(*, '(a1)', advance='no') str
+    
+  end subroutine output_one_char
+
+  subroutine output_str(str, advance)
+    character(len=*), intent(in) :: str
+    character(len=*), optional, intent(in) :: advance
+    integer :: i
+    do i=1, len(str)
+      call output_one_char(str(i:i))
+    enddo
+    if ( .not. present(advance) ) return
+    if ( advance=='yes' ) call blanks( 0, advance='yes' )
+    
+  end subroutine output_str
+
+  subroutine output_int(int, advance)
+    integer, intent(in) :: int
+    character(len=*), optional, intent(in) :: advance
+    character(len=16) :: str
+    write(str, '(i12)') int
+    ! write(*, '(a1)', advance=advance) trim(str)
+    call output( trim(str), advance )
+    
+  end subroutine output_int
+
+  subroutine output_real(val, advance)
+    real, intent(in) :: val
+    character(len=*), optional, intent(in) :: advance
+    character(len=16) :: str
+    write(str, '(1pg12.2)') val
+    ! write(*, '(a1)', advance=advance) trim(str)
+    call output( trim(str), advance )
+    
+  end subroutine output_real
+
+  subroutine output_dble(val, advance)
+    double precision, intent(in) :: val
+    character(len=*), optional, intent(in) :: advance
+    character(len=16) :: str
+    write(str, '(1pg12.2)') val
+    ! write(*, '(a1)', advance=advance) trim(str)
+    call output( trim(str), advance )
+    
+  end subroutine output_dble
+
+  subroutine outputNamedValue_int(name, int)
+    character(len=*), intent(in) :: name
+    integer, intent(in) :: int
+    character(len=16) :: str
+    write(*, '(a1)', advance='no') trim(name) // ': '
+    write(str, '(i12)') int
+    write(*, '(a1)', advance='yes') trim(str)
+    
+  end subroutine outputNamedValue_int
+
+  subroutine outputNamedValue_real(name, val)
+    character(len=*), intent(in) :: name
+    real, intent(in) :: val
+    character(len=16) :: str
+    write(*, '(a1)', advance='no') trim(name) // ': '
+    write(str, '(f12.2)') val
+    write(*, '(a1)', advance='yes') trim(str)
+    
+  end subroutine outputNamedValue_real
+
+  subroutine outputNamedValue_str(name, str)
+    character(len=*), intent(in) :: name
+    character(len=*), intent(in) :: str
+    write(*, '(a1)', advance='no') trim(name) // ': '
+    write(*, '(a1)', advance='yes') trim(str)
+    
+  end subroutine outputNamedValue_str
+
+  ! ----------------------------------  DUMP_NAME_V_PAIRS  -----
+  subroutine DUMP_NAME_V_PAIRS ( VALUES, WIDTH )
+    integer, intent(in)                         :: values(:)
+    integer, intent(in), optional :: WIDTH ! How many pairs per line (1)?
+    
+    integer :: J, K, L
+    integer :: MyWidth
+    character(len=24) :: myName
+    MyWidth = 1
+    if ( present(width) ) myWidth = max(width, 1)
+    if ( size(values) < 1 ) return
+    l = 0
+    do j=1, size(values), MyWidth
+      do k=1, MyWidth
+        call blanks(3, advance='no')
+        l = l + 1
+        if ( l <= size(values) ) then
+          write(myName, *) 'integer # ', l, ': '
+          call output(myName,  advance='no')
+          call blanks(3, advance='no')
+          write(*,'(i4)', advance='no') values(l)
+        end if
+      end do
+      call output(' ', advance='yes')
+    end do
+
+  end subroutine DUMP_NAME_V_PAIRS
+  
+d2933 1
+a2933 1
+       "$Id: MLSFillValues.f90,v 2.34 2015/03/28 01:49:59 vsnyder Exp $"
+d2945 3
+@
+
+
+2.34
+log
+@Moved IsMonotonic to Monotone module
+@
+text
+@d16 10
+a25 10
+  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+  use IEEE_ARITHMETIC, only: ISFINITE => IEEE_IS_FINITE, ISNAN => IEEE_IS_NAN, &
+    & IEEE_IS_FINITE, IEEE_IS_NAN
+  use MLSCOMMON, only: FILL_SIGNAL, INF_SIGNAL, NAN_SIGNAL, UNDEFINEDVALUE, &
+    & IS_WHAT_IEEE, MLSFill_T, MLSFILLS
+  use MLSKINDS ! EVERYTHING
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
+  use MLSFINDS, only: FINDALL, FINDFIRST, FINDLAST
+  use MLSSTRINGLISTS, only: EXTRACTSUBSTRING 
+  use MLSSTRINGS, only: LOWERCASE
+d56 1
+a56 1
+! (4) Some miscellaneous procedures identifying Finite, Nan, or Inf, quantities
+d59 1
+a59 1
+! Fill values are values in an array which have been marked as to be ignored
+d62 2
+a63 2
+! Sometimes they values given explicitly to mark where an agorithm failed
+! or a an excursion outside its region of validity was detected
+d68 1
+d106 1
+d112 1
+a112 1
+! WhereAreTheNans   Find which array elements are NaN
+d382 5
+a386 4
+  integer, parameter       :: MAXDEPOPULATED = 1000000
+  character(len=3), save :: NaNString = 'NaN'
+  character(len=3), save :: InfString = 'Inf'
+  logical, parameter ::   DEEBUG = .false.
+d392 1
+a392 1
+    & tol, condition, YOURDATABASE )
+d399 1
+a399 1
+    type (MLSFill_T), dimension(:), optional, pointer :: YOURDATABASE
+d422 1
+a422 1
+  integer function addMLSFillTypeToDatabase( ITEM, YOURDATABASE )
+d429 1
+a429 1
+    type (MLSFill_T), dimension(:), optional, pointer :: YOURDATABASE
+d434 2
+a435 2
+      addMLSFillTypeToDatabase = AddMLSFillToDefinite( item, yourdatabase )
+      ! call dump( yourdatabase )
+d1373 1
+a1373 1
+    Infinite = .not. ( ieee_is_finite(a) .or. ieee_is_nan(a) )
+d1377 1
+a1377 1
+    Infinite = .not. ( ieee_is_finite(a) .or. ieee_is_nan(a) )
+d3087 1
+a3087 1
+       "$Id: MLSFillValues.f90,v 2.33 2014/09/05 00:04:34 vsnyder Exp $"
+d3099 3
+@
+
+
+2.33
+log
+@More complete and accurate allocate/deallocate size tracking.  Remove
+unnecessary POINTER attribute from some arguments.  Remove declarations
+of unused variables.
+@
+text
+@d41 1
+a41 1
+  public :: IsMonotonic, Monotonize
+a99 1
+! IsMonotonic       Returns true if array is monotonic
+a152 1
+! log IsMonotonic ( array, [char* direction] )
+a326 4
+  
+  interface IsMonotonic
+    module procedure IsMonotonic_r4, IsMonotonic_r8, IsMonotonic_int
+  end interface
+d447 1
+a1802 107
+! ------------------------------------------------- IsMonotonic ---
+
+  ! This family of routines checks to see if an array monotonically increases
+  ! By default it returns TRUE if either monotonic increasing or decreasing
+  ! If optional DIRECTION is supplied and '+', TRUE means increasing
+  ! if '-', TRUE means drecreasing
+  ! We are strict in the sense that any "stalling" produces FALSE
+  ! Thus {0, 1, 2, 2, 3} is not monotonic
+  !
+  ! If you would like to know instead whether an array is "never falling"
+  ! or "never rising" that's a different though related condition
+  logical function IsMonotonic_int ( ARRAY, DIRECTION ) result(sooDesu)
+    integer, dimension(:), intent(in) :: ARRAY
+    character(len=*), intent(in), optional :: DIRECTION
+    ! Internal variables
+    character(len=1) :: MYDIRECTION
+    integer :: i
+    integer, dimension(size(array)-1) :: increment
+    integer :: incMax
+    integer :: incMin
+    integer, parameter :: ZERO = 0
+    ! Executable
+    myDirection = '0' ! Either direction is OK, as long as monotonic
+    if ( present(direction) ) myDirection = direction
+    if ( size(array) < 2 ) then
+      sooDesu = .true.
+      return
+    endif
+    do i=2, size(array)
+      increment(i-1) = array(i) - array(i-1)
+    enddo
+    incMin = minval(increment)
+    incMax = maxval(increment)
+    select case (myDirection)
+    case ('+') ! Must be increasing monotonic
+      sooDesu = ( incMin > zero )
+    case ('-') ! Must be decreasing monotonic
+      sooDesu = ( incMax < zero )
+    case default ! either will do
+      sooDesu = ( incMin > zero ) .or. ( incMax < zero )
+    end select
+  end function IsMonotonic_int
+
+  logical function IsMonotonic_r4 ( ARRAY, DIRECTION ) result(sooDesu)
+    real(r4), dimension(:), intent(in) :: ARRAY
+    character(len=*), intent(in), optional :: DIRECTION
+    ! Internal variables
+    character(len=1) :: MYDIRECTION
+    integer :: i
+    real(r4), dimension(size(array)-1) :: increment
+    real(r4) :: incMax
+    real(r4) :: incMin
+    real(r4), parameter :: ZERO = 0._r4
+    ! Executable
+    myDirection = '0' ! Either direction is OK, as long as monotonic
+    if ( present(direction) ) myDirection = direction
+    if ( size(array) < 2 ) then
+      sooDesu = .true.
+      return
+    endif
+    do i=2, size(array)
+      increment(i-1) = array(i) - array(i-1)
+    enddo
+    incMin = minval(increment)
+    incMax = maxval(increment)
+    select case (myDirection)
+    case ('+') ! Must be increasing monotonic
+      sooDesu = ( incMin > zero )
+    case ('-') ! Must be decreasing monotonic
+      sooDesu = ( incMax < zero )
+    case default ! either will do
+      sooDesu = ( incMin > zero ) .or. ( incMax < zero )
+    end select
+  end function IsMonotonic_r4
+
+  logical function IsMonotonic_r8 ( ARRAY, DIRECTION ) result(sooDesu)
+    real(r8), dimension(:), intent(in) :: ARRAY
+    character(len=*), intent(in), optional :: DIRECTION
+    ! Internal variables
+    character(len=1) :: MYDIRECTION
+    integer :: i
+    real(r8), dimension(size(array)-1) :: increment
+    real(r8) :: incMax
+    real(r8) :: incMin
+    real(r8), parameter :: ZERO = 0._r8
+    ! Executable
+    myDirection = '0' ! Either direction is OK, as long as monotonic
+    if ( present(direction) ) myDirection = direction
+    if ( size(array) < 2 ) then
+      sooDesu = .true.
+      return
+    endif
+    do i=2, size(array)
+      increment(i-1) = array(i) - array(i-1)
+    enddo
+    incMin = minval(increment)
+    incMax = maxval(increment)
+    select case (myDirection)
+    case ('+') ! Must be increasing monotonic
+      sooDesu = ( incMin > zero )
+    case ('-') ! Must be decreasing monotonic
+      sooDesu = ( incMax < zero )
+    case default ! either will do
+      sooDesu = ( incMin > zero ) .or. ( incMax < zero )
+    end select
+  end function IsMonotonic_r8
+
+d3084 1
+a3084 1
+       "$Id: MLSFillValues.f90,v 2.32 2013/09/17 22:35:13 pwagner Exp $"
+d3096 5
+@
+
+
+2.32
+log
+@Changed api of Embed, Extract arrays to match hyperslab
+@
+text
+@d22 1
+a22 2
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, &
+    & MLSMSG_ERROR, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE
+a434 3
+    ! Local variables
+    type (MLSFill_T), dimension(:), pointer :: database
+    type (MLSFill_T), dimension(:), pointer :: tempDatabase
+a436 1
+      database => yourDatabase
+a439 1
+      database => MLSFills
+a442 1
+!     call dump ( database )
+d452 2
+d765 1
+d775 2
+a776 3
+    real(rk), dimension(:), pointer :: bloc => null()
+    real(rk), dimension(:), pointer :: array => null() ! The larger array
+    integer :: status
+d778 5
+a782 6
+    allocate( bloc(size(ibloc)), stat=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, &
+      & ModuleName, "unable to allocate 1-d bloc for int embedding" )
+    allocate( array(size(iarray)), stat=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, &
+      & ModuleName, "unable to allocate 1-d array for int embedding" )
+d787 2
+a788 3
+    deallocate( bloc, array, stat=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, &
+      & ModuleName, "unable to deallocate 1-d bloc for int embedding" )
+d792 1
+d799 1
+d806 1
+d808 1
+a808 1
+    integer, dimension(:), pointer :: iarray ! The larger array
+d816 2
+a817 3
+    real(rk), dimension(:), pointer :: bloc => null()
+    real(rk), dimension(:), pointer :: array => null() ! The larger array
+    integer :: status
+d819 1
+d821 5
+a825 7
+      allocate( bloc(size(ibloc)), stat=status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, &
+      & ModuleName, "unable to allocate 1-d bloc for int extracting" )
+    endif
+    allocate( array(size(iarray)), stat=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, &
+      & ModuleName, "unable to allocate 1-d array for int extracting" )
+d829 3
+a831 4
+      allocate( ibloc(size(bloc)), stat=status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, &
+      & ModuleName, "unable to allocate 1-d bloc for int extracting" )
+    endif
+d833 2
+a834 3
+    deallocate( bloc, array, stat=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, &
+      & ModuleName, "unable to deallocate 1-d bloc for int extracting" )
+d838 1
+d845 1
+d852 1
+d859 1
+d866 1
+d873 1
+d880 1
+d887 1
+d894 1
+d901 1
+a1769 1
+    real(rk) :: testvalue
+d3196 1
+a3196 1
+       "$Id: MLSFillValues.f90,v 2.31 2013/08/12 23:47:25 pwagner Exp $"
+d3208 3
+@
+
+
+2.31
+log
+@FindSomethings moved to MLSFinds module
+@
+text
+@d67 1
+a67 1
+! Could w generalize this to mark as Fill values any values above or
+d83 2
+a84 2
+! EmbedArray        Replace a bloc of elements in the larger array
+!                   with the smaller
+d88 2
+a89 2
+! ExtractArray      Extract a bloc of elements from the larger array
+!                     (optionally allocates bloc first)
+d128 2
+a129 1
+! EmbedArray ( bloc, array, int range[2], [char* options] )
+d132 2
+a133 1
+! ExtractArray ( bloc, array, int range[2], [char* options] )
+d769 1
+a769 1
+  subroutine EmbedArray_1d_int ( ibloc, iarray, range, options )
+d773 4
+a776 1
+    integer, dimension(2), intent(in)     :: range
+d791 1
+a791 1
+    call EmbedArray ( bloc, array, range, options )
+d798 1
+a798 1
+  subroutine EmbedArray_1d_r4 ( bloc, array, range, options )
+d804 1
+a804 1
+  subroutine EmbedArray_1d_r8 ( bloc, array, range, options )
+d810 1
+a810 1
+  subroutine ExtractArray_1d_int ( ibloc, iarray, range, options )
+d814 4
+a817 1
+    integer, dimension(2), intent(in)     :: range
+d833 1
+a833 1
+    call ExtractArray ( bloc, array, range, options )
+d845 1
+a845 1
+  subroutine ExtractArray_1d_r4 ( bloc, array, range, options )
+d851 1
+a851 1
+  subroutine ExtractArray_1d_r8 ( bloc, array, range, options )
+d857 1
+a857 1
+  subroutine EmbedArray_2d_r4 ( bloc, array, range1, range2, options )
+d863 1
+a863 1
+  subroutine EmbedArray_2d_r8 ( bloc, array, range1, range2, options )
+d869 1
+a869 1
+  subroutine ExtractArray_2d_r4 ( bloc, array, range1, range2, options )
+d875 1
+a875 1
+  subroutine ExtractArray_2d_r8 ( bloc, array, range1, range2, options )
+d881 1
+a881 1
+  subroutine EmbedArray_3d_r4 ( bloc, array, range1, range2, range3, options )
+d887 1
+a887 1
+  subroutine EmbedArray_3d_r8 ( bloc, array, range1, range2, range3, options )
+d893 1
+a893 1
+  subroutine ExtractArray_3d_r4 ( bloc, array, range1, range2, range3, options )
+d899 1
+a899 1
+  subroutine ExtractArray_3d_r8 ( bloc, array, range1, range2, range3, options )
+d3195 1
+a3195 1
+       "$Id: MLSFillValues.f90,v 2.30 2011/12/13 01:07:36 pwagner Exp $"
+d3207 3
+@
+
+
+2.30
+log
+@Now uses MLSFills if allocated; can add to or dump it
+@
+text
+@d24 1
+a24 1
+  use MLSSETS, only: FINDALL, FINDFIRST, FINDLAST
+d3187 1
+a3187 1
+       "$Id: MLSFillValues.f90,v 2.29 2011/12/07 01:16:15 pwagner Exp $"
+d3199 3
+@
+
+
+2.29
+log
+@Added Bandwidth calculation
+@
+text
+@d20 1
+a20 1
+    & IS_WHAT_IEEE
+d22 2
+a23 1
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
+d32 1
+d74 39
+a112 35
+! Bandwidth                    Calculate the Bandwidth of a banded array
+! Collapse                     Collapse an array into a lower rank array
+!                               e.g., by summing over elements of dropped index
+! Depopulate                   Finds locations of non-zero values in presumably
+!                                sparse array
+! EmbedArray                   Replace a bloc of elements in the larger array
+!                              with the smaller
+! EssentiallyEqual             Returns true if two real arguments 'close enough'
+!                               (See comments below for interpretation
+!                                of array versions)
+! ExtractArray                 Extract a bloc of elements from the larger array
+!                                (optionally allocates bloc first)
+! Extremum                     Returns the value farther from 0
+! FillFunction                 Returns the Fill value
+! GatherArray                  Gather a subset of elements from a larger array
+! InfFunction                  Returns the Infinite value
+! NaNFunction                  Returns the NaN value
+! FilterValues                 Filters entries in two arrays
+! HalfWaves                    Count consecutive values with same sign
+! IsFillValue                  Returns true if argument is FillValue
+! IsFinite                     Returns true if argument is finite
+! IsInfinite                   Returns true if argument is infinite
+! IsNaN                        Returns true if argument is NaN
+! IsMonotonic                  Returns true if array is monotonic
+! Monotonize                   Replace any non-monotonic elements
+! RemoveFillValues             Removes FillValues from an array
+!                                returning a new array smaller in size
+! ReorderFillValues            Reorders FillValue entries at the end of an array
+! ReplaceFillValues            Replaces FillValue entries in an array
+! Repopulate                   Restores non-zero values in presumably
+!                                sparse array to their proper locations
+! RoundUpOrDown                Rounds an arg up or down depending on fraction
+! WhereAreTheFills             Find which array elements are Fill values
+! WhereAreTheInfs              Find which array elements are Inf
+! WhereAreTheNans              Find which array elements are NaN
+d116 3
+d127 1
+d189 4
+d216 4
+d293 1
+a293 1
+    module procedure output_str, output_int, output_real
+d392 77
+d725 39
+d1294 1
+a1294 2
+    logical, optional, intent(in) :: STRICT
+    integer  :: MYFILLVALUE
+d1303 6
+a1308 4
+    myFillValue = int(undefinedValue)
+    if ( present(fillValue) ) myFillValue = fillValue
+    IsFillValue_int = &
+      & abs(a - myFillValue) < 1 ! FILLVALUETOLERANCE
+d1314 1
+a1314 2
+    logical, optional, intent(in) :: STRICT
+    real(r4)  :: MYFILLVALUE
+d1323 6
+a1328 4
+    myFillValue = undefinedValue
+    if ( present(fillValue) ) myFillValue = fillValue
+    IsFillValue_r4 = &
+      & abs(a - myFillValue) < max( FILLVALUETOLERANCE, abs(myFillValue/100000) )
+d1334 1
+a1334 2
+    logical, optional, intent(in) :: STRICT
+    real(r8)  :: MYFILLVALUE
+d1343 7
+a1349 5
+    myFillValue = undefinedValue
+    if ( present(fillValue) ) myFillValue = fillValue
+    IsFillValue_r8 = &
+      & abs(a - myFillValue) < &
+      & max( Real(FILLVALUETOLERANCE, r8), abs(myFillValue/100000) )
+d2524 6
+d2533 6
+a2538 1
+    write(*, '(a1)', advance=advance) trim(str)
+d2547 2
+a2548 1
+    write(*, '(a1)', advance=advance) trim(str)
+d2556 3
+a2558 2
+    write(str, '(f12.2)') val
+    write(*, '(a1)', advance=advance) trim(str)
+d2562 10
+d3187 1
+a3187 1
+       "$Id: MLSFillValues.f90,v 2.28 2011/07/26 20:44:21 pwagner Exp $"
+d3199 3
+@
+
+
+2.28
+log
+@Added some 4d interfaces
+@
+text
+@d16 1
+a25 1
+  use OUTPUT_M, only: OUTPUTNAMEDVALUE
+d31 1
+a31 1
+  public :: Collapse, Depopulate, Repopulate
+d57 10
+d72 1
+d110 1
+d179 6
+d275 6
+a280 1
+    module procedure output_str, output_int
+d374 112
+d2403 37
+d3027 1
+a3027 1
+       "$Id: MLSFillValues.f90,v 2.27 2011/07/07 00:28:27 pwagner Exp $"
+d3039 3
+@
+
+
+2.27
+log
+@Made extremum elemental
+@
+text
+@d314 1
+d323 1
+d332 1
+d2071 10
+d2101 10
+d2177 10
+d2207 10
+d2655 50
+d2801 51
+d2855 1
+a2855 1
+       "$Id: MLSFillValues.f90,v 2.26 2011/03/22 23:38:30 pwagner Exp $"
+d2867 3
+@
+
+
+2.26
+log
+@Rerank now public
+@
+text
+@d16 10
+a25 10
+  use ieee_arithmetic, only: isFinite => ieee_is_finite, isNaN => ieee_is_nan, &
+    & ieee_is_finite, ieee_is_nan
+  use MLSCommon, only: fill_signal, inf_signal, nan_signal, undefinedvalue, &
+    & is_what_ieee
+  use MLSKinds ! Everything
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+  use MLSSets, only: FindAll, findFirst, findLast
+  use MLSStringLists, only: extractSubstring 
+  use MLSStrings, only: Lowercase
+  use output_m, only: OUTPUTNAMEDVALUE
+d769 1
+a769 1
+  function Extremum_DOUBLE(arg1, arg2) result(value)
+d779 1
+a779 1
+  function Extremum_REAL(arg1, arg2) result(value)
+d789 1
+a789 1
+  function Extremum_int(arg1, arg2) result(value)
+d2711 1
+a2711 1
+       "$Id: MLSFillValues.f90,v 2.25 2011/01/20 01:14:31 pwagner Exp $"
+d2723 3
+@
+
+
+2.25
+log
+@Added Collapse: Turns array into lower-rank representation, collapsing last index
+@
+text
+@d41 1
+a41 1
+  public :: RemoveFillValues, ReorderFillValues, ReplaceFillValues
+d2711 1
+a2711 1
+       "$Id: MLSFillValues.f90,v 2.24 2010/11/30 00:33:52 pwagner Exp $"
+d2723 3
+@
+
+
+2.24
+log
+@Added instance for character arg to isNaN
+@
+text
+@d23 1
+d25 1
+d31 1
+a31 1
+  public :: Depopulate, Repopulate
+d62 2
+d99 1
+d173 5
+d348 80
+d2711 1
+a2711 1
+       "$Id: MLSFillValues.f90,v 2.23 2010/11/11 19:54:29 pwagner Exp $"
+d2723 3
+@
+
+
+2.23
+log
+@May select values by relative size
+@
+text
+@d243 1
+d1019 5
+d2621 1
+a2621 1
+       "$Id: MLSFillValues.f90,v 2.22 2010/10/13 00:41:23 pwagner Exp $"
+d2633 3
+@
+
+
+2.22
+log
+@WhereAreThe.. can now take'ind' mode, returning indexes of each
+@
+text
+@d338 3
+a340 3
+  ! This family of routines returns just those values of an array[i,j,..]
+  ! depending upon options:
+  ! options             which 
+d343 3
+a345 1
+  ! If '||' is among the options, we test according to |array[i]|
+d349 1
+d2615 1
+a2615 1
+       "$Id: MLSFillValues.f90,v 2.21 2010/09/24 23:44:48 pwagner Exp $"
+d2627 3
+@
+
+
+2.21
+log
+@removed all but integervalued isFinite, isNaN in favor of ieee_arithmetic-supplied versions
+@
+text
+@d129 32
+a160 3
+! WhereAreTheFills ( array, which, [int howMany] )
+! WhereAreTheInfs ( array, which, [int howMany] )
+! WhereAreTheNaNs ( array, which, [int howMany] )
+d1843 1
+a1843 1
+  subroutine WhereAreTheFills_DOUBLE_2d ( array, which, howMany, mode )
+d1848 3
+a1850 2
+    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
+    call WhereAreThey( Fill_signal, array, which, howMany, mode )
+d1853 1
+a1853 1
+  subroutine WhereAreTheFills_integer_2d ( array, which, howMany, mode )
+d1858 3
+a1860 2
+    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
+    call WhereAreThey( Fill_signal, array, which, howMany, mode )
+d1863 1
+a1863 1
+  subroutine WhereAreTheFills_REAL_2d ( array, which, howMany, mode )
+d1868 3
+a1870 2
+    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
+    call WhereAreThey( Fill_signal, array, which, howMany, mode )
+d1873 1
+a1873 1
+  subroutine WhereAreTheFills_DOUBLE_3d ( array, which, howMany, mode )
+d1878 3
+a1880 2
+    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
+    call WhereAreThey( Fill_signal, array, which, howMany, mode )
+d1883 1
+a1883 1
+  subroutine WhereAreTheFills_integer_3d ( array, which, howMany, mode )
+d1888 3
+a1890 2
+    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
+    call WhereAreThey( Fill_signal, array, which, howMany, mode )
+d1893 1
+a1893 1
+  subroutine WhereAreTheFills_REAL_3d ( array, which, howMany, mode )
+d1898 3
+a1900 2
+    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
+    call WhereAreThey( Fill_signal, array, which, howMany, mode )
+d1929 1
+a1929 1
+  subroutine WhereAreTheInfs_DOUBLE_2d ( array, which, howMany, mode )
+d1934 3
+a1936 2
+    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
+    call WhereAreThey( inf_signal, array, which, howMany, mode )
+d1939 1
+a1939 1
+  subroutine WhereAreTheInfs_integer_2d ( array, which, howMany, mode )
+d1944 3
+a1946 2
+    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
+    call WhereAreThey( inf_signal, array, which, howMany, mode )
+d1949 1
+a1949 1
+  subroutine WhereAreTheInfs_REAL_2d ( array, which, howMany, mode )
+d1954 3
+a1956 2
+    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
+    call WhereAreThey( inf_signal, array, which, howMany, mode )
+d1959 1
+a1959 1
+  subroutine WhereAreTheInfs_DOUBLE_3d ( array, which, howMany, mode )
+d1964 3
+a1966 2
+    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
+    call WhereAreThey( inf_signal, array, which, howMany, mode )
+d1969 1
+a1969 1
+  subroutine WhereAreTheInfs_integer_3d ( array, which, howMany, mode )
+d1974 3
+a1976 2
+    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
+    call WhereAreThey( inf_signal, array, which, howMany, mode )
+d1979 1
+a1979 1
+  subroutine WhereAreTheInfs_REAL_3d ( array, which, howMany, mode )
+d1984 3
+a1986 2
+    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
+    call WhereAreThey( inf_signal, array, which, howMany, mode )
+d2015 1
+a2015 1
+  subroutine WhereAreTheNaNs_DOUBLE_2d ( array, which, howMany, mode )
+d2020 3
+a2022 2
+    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
+    call WhereAreThey( NaN_signal, array, which, howMany, mode )
+d2025 1
+a2025 1
+  subroutine WhereAreTheNaNs_integer_2d ( array, which, howMany, mode )
+d2030 3
+a2032 2
+    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
+    call WhereAreThey( NaN_signal, array, which, howMany, mode )
+d2035 1
+a2035 1
+  subroutine WhereAreTheNaNs_REAL_2d ( array, which, howMany, mode )
+d2040 3
+a2042 2
+    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
+    call WhereAreThey( NaN_signal, array, which, howMany, mode )
+d2045 1
+a2045 1
+  subroutine WhereAreTheNaNs_DOUBLE_3d ( array, which, howMany, mode )
+d2050 3
+a2052 2
+    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
+    call WhereAreThey( NaN_signal, array, which, howMany, mode )
+d2055 1
+a2055 1
+  subroutine WhereAreTheNaNs_integer_3d ( array, which, howMany, mode )
+d2060 3
+a2062 2
+    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
+    call WhereAreThey( NaN_signal, array, which, howMany, mode )
+d2065 1
+a2065 1
+  subroutine WhereAreTheNaNs_REAL_3d ( array, which, howMany, mode )
+d2070 3
+a2072 2
+    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
+    call WhereAreThey( NaN_signal, array, which, howMany, mode )
+d2326 1
+a2326 1
+  subroutine WhereAreThey_DOUBLE_2d ( what, array, which, howMany, mode )
+d2332 2
+a2333 1
+    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
+d2335 1
+a2335 1
+    integer :: i
+d2349 1
+d2352 6
+d2373 1
+a2373 1
+  subroutine WhereAreThey_integer_2d ( what, array, which, howMany, mode )
+d2379 2
+a2380 1
+    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
+d2382 1
+a2382 1
+    integer :: i
+d2398 6
+d2419 1
+a2419 1
+  subroutine WhereAreThey_REAL_2d ( what, array, which, howMany, mode )
+d2425 2
+a2426 1
+    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
+d2428 1
+a2428 1
+    integer :: i
+d2444 6
+d2465 1
+a2465 1
+  subroutine WhereAreThey_DOUBLE_3d ( what, array, which, howMany, mode )
+d2471 2
+a2472 1
+    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
+d2474 1
+a2474 1
+    integer :: i
+d2490 8
+d2513 1
+a2513 1
+  subroutine WhereAreThey_integer_3d ( what, array, which, howMany, mode )
+d2519 2
+a2520 1
+    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
+d2522 1
+a2522 1
+    integer :: i
+d2538 8
+d2561 1
+a2561 1
+  subroutine WhereAreThey_REAL_3d ( what, array, which, howMany, mode )
+d2567 2
+a2568 1
+    character(len=*), optional, intent(in)       :: mode ! 'any' or 'all'
+d2570 1
+a2570 1
+    integer :: i
+d2586 8
+d2612 1
+a2612 1
+       "$Id: MLSFillValues.f90,v 2.20 2010/08/13 22:02:41 pwagner Exp $"
+d2624 3
+@
+
+
+2.20
+log
+@Renamed Repopulate; renamed decimate to Depopulate
+@
+text
+@d16 2
+a17 1
+  use ieee_arithmetic, only: ieee_is_finite, ieee_is_nan
+d205 1
+a205 1
+    module procedure IsFinite_REAL, IsFinite_DOUBLE, IsFinite_INTEGER
+d213 1
+a213 1
+    module procedure IsNaN_REAL, IsNaN_DOUBLE, IsNaN_INTEGER
+a956 8
+  elemental logical function IsFinite_REAL ( A ) result( finite )
+    real, intent(in) :: A
+    finite = ieee_is_finite(a)
+  end function isfinite_real
+  elemental logical function IsFinite_DOUBLE ( A ) result( finite )
+    double precision, intent(in) :: A
+    finite = ieee_is_finite(a)
+  end function isfinite_DOUBLE
+a980 8
+  elemental logical function IsNaN_REAL ( A ) result( NaN )
+    real, intent(in) :: A
+    NaN = ieee_is_NaN(a)
+  end function isNaN_real
+  elemental logical function IsNaN_DOUBLE ( A ) result( NaN )
+    double precision, intent(in) :: A
+    NaN = ieee_is_NaN(a)
+  end function isNaN_DOUBLE
+d2516 1
+a2516 1
+       "$Id: MLSFillValues.f90,v 2.19 2010/02/17 22:30:53 pwagner Exp $"
+d2528 3
+@
+
+
+2.19
+log
+@Added Decimate routines to pick out non-zeros in sparse arrays
+@
+text
+@d28 1
+a28 1
+  public :: Decimate
+d59 1
+a59 1
+! Decimate                     Finds locations of non-zero values in presumably
+d63 3
+a65 3
+! EssentiallyEqual         Returns true if two real arguments 'close enough'
+!                            (See comments below for interpretation
+!                             of array versions)
+d67 1
+a67 1
+!                               (optionally allocates bloc first)
+d85 2
+d94 1
+a94 1
+! Decimate ( array[:], int i[:], int n, &
+d96 1
+a96 1
+! Decimate ( array[:,:], int i[:], int j[:], int n, &
+d98 1
+a98 1
+! Decimate ( array[:,:,:], int i[:], int j[:],  int k[:], int n, &
+d119 6
+d138 5
+a142 5
+  interface Decimate
+    module procedure Decimate_1d_r4, Decimate_1d_r8
+    module procedure Decimate_2d_r4, Decimate_2d_r8
+    module procedure Decimate_3d_r4, Decimate_3d_r8
+    module procedure Decimate_1d_int
+d236 7
+d300 1
+a300 1
+  integer, parameter       :: MAXDECIMATED = 10000
+d307 1
+a307 1
+  ! ---------------------------------------------  Decimate  -----
+d317 2
+a318 1
+  subroutine Decimate_1d_int ( iarray, i, n, itestvalue, ivalues, options )
+d329 1
+a329 1
+    real(rk), dimension(MAXDECIMATED) :: values
+d334 1
+a334 1
+    call Decimate ( array, i, n, testvalue, values, options )
+d336 1
+a336 1
+  end subroutine Decimate_1d_int
+d338 1
+a338 1
+  subroutine Decimate_1d_r4 ( array, i, n, testvalue, values, options )
+d341 1
+a341 1
+  end subroutine Decimate_1d_r4
+d343 1
+a343 1
+  subroutine Decimate_2d_r4 ( array, i, j, n, testvalue, values, options )
+d346 1
+a346 1
+  end subroutine Decimate_2d_r4
+d348 1
+a348 1
+  subroutine Decimate_3d_r4 ( array, i, j, k, n, testvalue, values, options )
+d351 1
+a351 1
+  end subroutine Decimate_3d_r4
+d353 1
+a353 1
+  subroutine Decimate_1d_r8 ( array, i, n, testvalue, values, options )
+d356 1
+a356 1
+  end subroutine Decimate_1d_r8
+d358 1
+a358 1
+  subroutine Decimate_2d_r8 ( array, i, j, n, testvalue, values, options )
+d361 1
+a361 1
+  end subroutine Decimate_2d_r8
+d363 1
+a363 1
+  subroutine Decimate_3d_r8 ( array, i, j, k, n, testvalue, values, options )
+d366 1
+a366 1
+  end subroutine Decimate_3d_r8
+d1353 58
+d2531 1
+a2531 1
+       "$Id: MLSFillValues.f90,v 2.18 2009/06/23 18:25:42 pwagner Exp $"
+d2543 3
+@
+
+
+2.18
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d21 1
+a21 1
+  use MLSSets, only: findFirst, findLast
+d28 1
+d44 1
+a44 1
+       "$RCSfile: $"
+d59 2
+d92 6
+d130 7
+d285 1
+a285 1
+
+d292 60
+d503 1
+a503 3
+  function EssentiallyEqual_r4_1d ( A, B, FillValue, Precision ) &
+    & result(equal)
+  ! This function is slightly different:
+d509 2
+a527 5
+  ! This function is slightly different:
+  ! A scalar logical testing that every element of two arrays are equal
+  ! You may filter out values in either array equal to the FillValue
+  ! or for which the corresponding Precision array is negative
+  ! or where either element is not finite
+a544 5
+  ! This function is slightly different:
+  ! A scalar logical testing that every element of two arrays are equal
+  ! You may filter out values in either array equal to the FillValue
+  ! or for which the corresponding Precision array is negative
+  ! or where either element is not finite
+a565 5
+  ! This function is slightly different:
+  ! A scalar logical testing that every element of two arrays are equal
+  ! You may filter out values in either array equal to the FillValue
+  ! or for which the corresponding Precision array is negative
+  ! or where either element is not finite
+a586 5
+  ! This function is slightly different:
+  ! A scalar logical testing that every element of two arrays are equal
+  ! You may filter out values in either array equal to the FillValue
+  ! or for which the corresponding Precision array is negative
+  ! or where either element is not finite
+a607 5
+  ! This function is slightly different:
+  ! A scalar logical testing that every element of two arrays are equal
+  ! You may filter out values in either array equal to the FillValue
+  ! or for which the corresponding Precision array is negative
+  ! or where either element is not finite
+d628 1
+a628 1
+! Returns the fillValue
+d674 3
+a676 2
+! Calculates the half-wave lengths of an array
+! i.e., the number of consecutive pos. or neg. values
+d2048 58
+d2457 1
+a2457 1
+       "$Id: read_apriori.f90 is it here $"
+d2469 3
+@
+
+
+2.17
+log
+@Added GatherArray
+@
+text
+@d43 1
+a43 1
+       "$RCSfile: MLSFillValues.f90,v $"
+d2344 1
+a2345 1
+!---------------------------- RCS Ident Info -------------------------------
+d2347 2
+a2348 3
+       "$Id: MLSFillValues.f90,v 2.16 2008/07/10 00:12:43 pwagner Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d2350 1
+d2352 1
+d2359 3
+@
+
+
+2.16
+log
+@Added extremum, halfWaves
+@
+text
+@d32 1
+d67 1
+d95 2
+d150 7
+d622 71
+d2347 1
+a2347 1
+       "$Id: MLSFillValues.f90,v 2.15 2008/06/06 22:52:21 pwagner Exp $"
+d2358 3
+@
+
+
+2.15
+log
+@EssentiallyEqual moved to MLSFillValues
+@
+text
+@d29 1
+d32 1
+d64 1
+d69 1
+d86 2
+a87 1
+! === (start of api) ===                                                 
+d90 20
+d138 4
+d146 4
+d565 32
+d611 19
+d2265 1
+a2265 1
+       "$Id: MLSFillValues.f90,v 2.14 2008/06/04 21:42:56 pwagner Exp $"
+d2276 3
+@
+
+
+2.14
+log
+@Monotonize now takes optional arg strict
+@
+text
+@d28 1
+a28 1
+  public :: EmbedArray, ExtractArray
+d57 3
+d82 4
+d99 7
+d365 167
+d2181 1
+a2181 1
+       "$Id: MLSFillValues.f90,v 2.13 2008/04/10 20:25:50 pwagner Exp $"
+d2192 3
+@
+
+
+2.13
+log
+@Montonize can take optional arg FillValue
+@
+text
+@d480 1
+a480 1
+  elemental logical function IsFillValue_int ( A, FILLVALUE )
+d483 1
+d485 8
+d499 1
+a499 1
+  elemental logical function IsFillValue_r4 ( A, FILLVALUE )
+d502 1
+d504 8
+d518 1
+a518 1
+  elemental logical function IsFillValue_r8 ( A, FILLVALUE )
+d521 1
+d523 8
+d1156 5
+a1160 1
+  subroutine Monotonize_1dint( values, Period, FillValue )
+d1165 1
+d1168 1
+d1174 1
+a1174 1
+  subroutine Monotonize_1dr4( values, Period, FillValue )
+d1179 1
+d1182 1
+d1188 1
+a1188 1
+  subroutine Monotonize_1dr8( values, Period, FillValue )
+d1193 1
+d1196 1
+d1203 4
+d2000 1
+a2000 1
+       "$Id: MLSFillValues.f90,v 2.12 2008/03/07 01:33:47 pwagner Exp $"
+d2011 3
+@
+
+
+2.12
+log
+@Added optional arg Period to Monotonize
+@
+text
+@d1129 1
+a1129 1
+  subroutine Monotonize_1dint( values, Period )
+d1133 1
+d1141 1
+a1141 1
+  subroutine Monotonize_1dr4( values, Period )
+d1145 1
+d1153 1
+a1153 1
+  subroutine Monotonize_1dr8( values, Period )
+d1157 1
+d1165 1
+d1959 1
+a1959 1
+       "$Id: MLSFillValues.f90,v 2.11 2008/01/09 20:50:47 pwagner Exp $"
+d1970 3
+@
+
+
+2.11
+log
+@WhereAreThe.. support integer arrays
+@
+text
+@d35 1
+d73 1
+d154 4
+d1129 1
+a1129 1
+  subroutine Monotonize_1dint(values)
+d1132 1
+d1140 1
+a1140 1
+  subroutine Monotonize_1dr4(values)
+d1143 1
+d1151 1
+a1151 1
+  subroutine Monotonize_1dr8(values)
+d1154 1
+d1228 57
+d1955 1
+a1955 1
+       "$Id: MLSFillValues.f90,v 2.10 2008/01/07 21:34:41 pwagner Exp $"
+d1966 3
+@
+
+
+2.10
+log
+@Added new functions to id and return ieee signals; WhereAreThe.. procedures
+@
+text
+@d170 2
+d178 2
+d186 2
+d194 2
+d1229 8
+d1254 9
+d1281 9
+d1309 8
+d1334 9
+d1361 9
+d1389 8
+d1414 9
+d1441 9
+d1600 26
+d1691 39
+d1808 39
+d1889 1
+a1889 1
+       "$Id: MLSFillValues.f90,v 2.9 2006/06/15 17:31:30 pwagner Exp $"
+d1900 3
+@
+
+
+2.9
+log
+@Added ReorderFillValues
+@
+text
+@d16 3
+a18 2
+  use ieee_arithmetic, only: ieee_is_finite
+  use MLSCommon, only: r4, r8, DEFAULTUNDEFINEDVALUE
+d29 1
+d32 1
+a32 1
+  public :: IsFinite
+d35 1
+d47 1
+d49 1
+d58 3
+d64 2
+d72 4
+d97 12
+d123 8
+d166 24
+d192 1
+a192 1
+  ! The fidging will take the form of
+d198 2
+d337 42
+d470 1
+a470 1
+    myFillValue = int(DEFAULTUNDEFINEDVALUE)
+d480 1
+a480 1
+    myFillValue = DEFAULTUNDEFINEDVALUE
+d490 1
+a490 1
+    myFillValue = DEFAULTUNDEFINEDVALUE
+d513 32
+d1211 162
+d1485 211
+d1699 1
+a1699 1
+       "$Id: MLSFillValues.f90,v 2.8 2006/03/15 17:32:35 pwagner Exp $"
+d1710 3
+@
+
+
+2.8
+log
+@Can removeFillValues from multi-dimensional arrays if results are rank 1
+@
+text
+@d20 1
+d32 1
+a32 1
+  public :: RemoveFillValues, ReplaceFillValues
+d60 1
+d108 4
+d128 4
+d592 34
+d1155 33
+d1192 1
+a1192 1
+       "$Id: MLSFillValues.f90,v 2.7 2006/02/28 21:43:31 pwagner Exp $"
+d1203 3
+a1225 1
+!
+@
+
+
+2.7
+log
+@Improve comments regarding FilterValues
+@
+text
+@d102 2
+a103 2
+    ! module procedure RemoveFill2d_r4, RemoveFill2d_r8, RemoveFill2d_int
+    ! module procedure RemoveFill3d_r4, RemoveFill3d_r8, RemoveFill3d_int
+d456 126
+d1115 1
+a1115 1
+       "$Id: MLSFillValues.f90,v 2.6 2006/02/02 16:19:57 pwagner Exp $"
+d1126 3
+@
+
+
+2.6
+log
+@Should not use optional arg FillValue unless present
+@
+text
+@d269 2
+a270 2
+    ! Return arrays filtered of any fillValues
+    ! or where corresponding precision array < 0
+d272 1
+a272 1
+    ! "Filter" means offending elements set to 0.
+d274 9
+d989 1
+a989 1
+       "$Id: MLSFillValues.f90,v 2.5 2006/02/01 23:54:20 pwagner Exp $"
+d1000 3
+@
+
+
+2.5
+log
+@Fixed bug in integer format
+@
+text
+@d362 1
+a362 1
+      & abs(a - myFillValue) < max( FILLVALUETOLERANCE, abs(FILLVALUE/100000) )
+d373 1
+a373 1
+      & max( Real(FILLVALUETOLERANCE, r8), abs(FILLVALUE/100000) )
+d980 1
+a980 1
+       "$Id: MLSFillValues.f90,v 2.4 2006/02/01 23:42:14 pwagner Exp $"
+d991 3
+@
+
+
+2.4
+log
+@Added RemoveFillValues
+@
+text
+@d944 1
+a944 1
+    write(str, '(i)') int
+d980 1
+a980 1
+       "$Id: MLSFillValues.f90,v 2.3 2006/01/14 00:50:15 pwagner Exp $"
+d991 3
+@
+
+
+2.3
+log
+@Added procedures to embed, extract blocs from larger arrays
+@
+text
+@d28 1
+a28 1
+  public :: IsFillValue, ReplaceFillValues
+d31 1
+d39 5
+a43 2
+  ! This module contains some low level numerical stuff, hunting, interpolating
+  ! etc.
+d55 4
+d95 11
+d122 6
+d362 1
+a362 1
+      & abs(a - myFillValue) < FILLVALUETOLERANCE
+d372 2
+a373 1
+      & abs(a - myFillValue) < Real(FILLVALUETOLERANCE, r8)
+d392 55
+d455 2
+d462 13
+d933 1
+a933 1
+  subroutine output(str, advance)
+d938 10
+a947 1
+  end subroutine output
+d980 1
+a980 1
+       "$Id: MLSFillValues.f90,v 2.2 2005/12/23 03:10:31 vsnyder Exp $"
+d991 3
+@
+
+
+2.2
+log
+@Make some routines more generic, using include
+@
+text
+@d26 1
+d44 4
+d59 14
+d109 133
+d248 1
+a248 1
+    ! Returned arrays are allocated and assigned values as appropriate
+d875 1
+a875 1
+       "$Id: MLSFillValues.f90,v 2.1 2005/12/16 00:00:23 pwagner Exp $"
+d886 3
+@
+
+
+2.1
+log
+@Created to hold fillValue-related stuff
+@
+text
+@d20 1
+a20 1
+  use MLSStrings, only: Capitalize, lowercase
+d90 10
+a99 60
+! ------------------------------------------------- FilterValues ---
+  subroutine filterValues_REAL(a, ATAB, b, BTAB, warn, fillValue, precision)
+      ! Return arrays filtered of any fillValues
+      ! or where corresponding precision array < 0
+      ! or whose values are not finite
+      ! "Filter" means offending elements set to 0.
+      ! Returned arrays are allocated and assigned values as appropriate
+      ! Args
+      real, dimension(:), intent(in)             :: a
+      real, dimension(:), intent(in)             :: b
+      real, dimension(:), intent(out)            :: atab
+      real, dimension(:), intent(out)            :: btab
+      logical, intent(out)                           :: warn
+      real, optional, intent(in)                 :: fillValue
+      real, dimension(:), optional, intent(in)   :: precision
+      ! Internal variables
+      integer                                        :: i
+      real                                       :: myFillValue
+      integer                                        :: n
+      ! Executable
+      myFillValue = 0.
+      if ( present(FillValue) ) myFillValue = FillValue
+      warn = .false.
+      n=size(a)
+      if ( n /= size(b) ) then
+        call announce_error('a and b different sizes', n, size(b))
+      elseif ( n /= size(atab) ) then
+        call announce_error('a and atab different sizes', n, size(b))
+      elseif ( n /= size(btab) ) then
+        call announce_error('a and btab different sizes', n, size(b))
+      elseif ( DEEBUG ) then
+        call output('Filtering 1-d reals ', advance='yes')
+        !call dump_name_v_pairs( (/n, size(b), size(atab), size(btab) /), &
+        !  & 'size(a), size(b), size(atab), size(btab)', width=4)
+      endif
+      atab = a
+      btab = b
+      do i=1, N
+        if ( .not. ieee_is_finite(a(i)) .or. .not. ieee_is_finite(b(i)) ) then
+          atab(i) = myFillValue
+          btab(i) = myFillValue
+          warn = warn .or. ieee_is_finite(a(i)) .or. ieee_is_finite(b(i))
+        endif
+      enddo
+      if ( present(fillValue) ) then
+        do i=1, N
+          if ( isFillValue(a(i), FillValue) .or. isFillValue(b(i), FillValue) ) then
+            atab(i) = myFillValue
+            btab(i) = myFillValue
+          endif
+        enddo
+      endif
+      if ( present(precision) ) then
+        do i=1, N
+          if ( (precision(i) < 0.) ) then
+            atab(i) = myFillValue
+            btab(i) = myFillValue
+          endif
+        enddo
+      endif
+d102 5
+a106 54
+  subroutine filterValues_DOUBLE(a, ATAB, b, BTAB, warn, fillValue, precision)
+      ! Return arrays filtered etc.
+      ! Args
+      double precision, dimension(:), intent(in)             :: a
+      double precision, dimension(:), intent(in)             :: b
+      double precision, dimension(:), intent(out)            :: atab
+      double precision, dimension(:), intent(out)            :: btab
+      logical, intent(out)                           :: warn
+      double precision, optional, intent(in)                 :: fillValue
+      double precision, dimension(:), optional, intent(in)   :: precision
+      ! Internal variables
+      integer                                        :: i
+      double precision                                       :: myFillValue
+      integer                                        :: n
+      ! Executable
+      myFillValue = 0.d0
+      if ( present(FillValue) ) myFillValue = FillValue
+      n=size(a)
+      if ( n /= size(b) ) then
+        call announce_error('a and b different sizes', n, size(b))
+      elseif ( n /= size(atab) ) then
+        call announce_error('a and atab different sizes', n, size(b))
+      elseif ( n /= size(btab) ) then
+        call announce_error('a and btab different sizes', n, size(b))
+      elseif ( DEEBUG ) then
+        call output('Filtering 1-d double precision ', advance='yes')
+        !call dump_name_v_pairs( (/n, size(b), size(atab), size(btab)/) , &
+        !  & 'size(a), size(b), size(atab), size(btab)', width=4)
+      endif
+      atab = a
+      btab = b
+      do i=1, N
+        if ( .not. ieee_is_finite(a(i)) .or. .not. ieee_is_finite(b(i)) ) then
+          atab(i) = myFillValue
+          btab(i) = myFillValue
+          warn = warn .or. ieee_is_finite(a(i)) .or. ieee_is_finite(b(i))
+        endif
+      enddo
+      if ( present(fillValue) ) then
+        do i=1, N
+          if ( isFillValue(a(i), FillValue) .or. isFillValue(b(i), FillValue) ) then
+            atab(i) = myFillValue
+            btab(i) = myFillValue
+          endif
+        enddo
+      endif
+      if ( present(precision) ) then
+        do i=1, N
+          if ( (precision(i) < 0.d0) ) then
+            atab(i) = myFillValue
+            btab(i) = myFillValue
+          endif
+        enddo
+      endif
+d110 11
+a120 34
+      ! Return arrays filtered etc.
+      ! Args
+      real, dimension(:,:), intent(in)             :: a
+      real, dimension(:,:), intent(in)             :: b
+      real, dimension(:,:), intent(out)            :: atab
+      real, dimension(:,:), intent(out)            :: btab
+      logical, intent(out)                           :: warn
+      real, optional, intent(in)                 :: fillValue
+      real, dimension(:,:), optional, intent(in)   :: precision
+      ! Internal variables
+      integer, dimension(2)                          :: shp
+      real, dimension(size(a,1)*size(a,2))       :: a1
+      real, dimension(size(b,1)*size(b,2))       :: b1
+      ! Executable
+      shp = shape(a)
+      if ( DEEBUG ) then
+        call dump_name_v_pairs(shp, width=4)
+        call dump_name_v_pairs(shape(b), width=4)
+      endif
+      if ( present(precision) ) then
+        call filterValues(reshape(a, (/shp(1)*shp(2)/)), &
+        & a1, &
+        & reshape(b, (/shp(1)*shp(2)/)), &
+        & b1, &
+        & warn, fillValue, reshape(precision, (/shp(1)*shp(2)/)) )
+      else
+        call filterValues(reshape(a, (/shp(1)*shp(2)/)), &
+        & a1, &
+        & reshape(b, (/shp(1)*shp(2)/)), &
+        & b1, &
+        & warn, fillValue)
+      endif
+      atab = reshape(a1, shp)
+      btab = reshape(b1, shp)
+d124 11
+a134 34
+      ! Return arrays filtered etc.
+      ! Args
+      double precision, dimension(:,:), intent(in)             :: a
+      double precision, dimension(:,:), intent(in)             :: b
+      double precision, dimension(:,:), intent(out)            :: atab
+      double precision, dimension(:,:), intent(out)            :: btab
+      logical, intent(out)                           :: warn
+      double precision, optional, intent(in)                 :: fillValue
+      double precision, dimension(:,:), optional, intent(in)   :: precision
+      ! Internal variables
+      integer, dimension(2)                          :: shp
+      double precision, dimension(size(a,1)*size(a,2))       :: a1
+      double precision, dimension(size(b,1)*size(b,2))       :: b1
+      ! Executable
+      shp = shape(a)
+      if ( DEEBUG ) then
+        call dump_name_v_pairs(shp, width=4)
+        call dump_name_v_pairs(shape(b), width=4)
+      endif
+      if ( present(precision) ) then
+        call filterValues(reshape(a, (/shp(1)*shp(2)/)), &
+        & a1, &
+        & reshape(b, (/shp(1)*shp(2)/)), &
+        & b1, &
+        & warn, fillValue, reshape(precision, (/shp(1)*shp(2)/)) )
+      else
+        call filterValues(reshape(a, (/shp(1)*shp(2)/)), &
+        & a1, &
+        & reshape(b, (/shp(1)*shp(2)/)), &
+        & b1, &
+        & warn, fillValue)
+      endif
+      atab = reshape(a1, shp)
+      btab = reshape(b1, shp)
+d138 11
+a148 34
+      ! Return arrays filtered etc.
+      ! Args
+      real, dimension(:,:,:), intent(in)             :: a
+      real, dimension(:,:,:), intent(in)             :: b
+      real, dimension(:,:,:), intent(out)            :: atab
+      real, dimension(:,:,:), intent(out)            :: btab
+      logical, intent(out)                           :: warn
+      real, optional, intent(in)                 :: fillValue
+      real, dimension(:,:,:), optional, intent(in)   :: precision
+      ! Internal variables
+      integer, dimension(3)                          :: shp
+      real, dimension(size(a,1)*size(a,2)*size(a,3))       :: a1
+      real, dimension(size(b,1)*size(b,2)*size(b,3))       :: b1
+      ! Executable
+      shp = shape(a)
+      if ( DEEBUG ) then
+        call dump_name_v_pairs(shp, width=4)
+        call dump_name_v_pairs(shape(b), width=4)
+      endif
+      if ( present(precision) ) then
+        call filterValues(reshape(a, (/shp(1)*shp(2)*shp(3)/)), &
+        & a1, &
+        & reshape(b, (/shp(1)*shp(2)*shp(3)/)), &
+        & b1, &
+        & warn, fillValue, reshape(precision, (/shp(1)*shp(2)*shp(3)/)) )
+      else
+        call filterValues(reshape(a, (/shp(1)*shp(2)*shp(3)/)), &
+        & a1, &
+        & reshape(b, (/shp(1)*shp(2)*shp(3)/)), &
+        & b1, &
+        & warn, fillValue)
+      endif
+      atab = reshape(a1, shp)
+      btab = reshape(b1, shp)
+d152 11
+a162 34
+      ! Return arrays filtered etc.
+      ! Args
+      double precision, dimension(:,:,:), intent(in)             :: a
+      double precision, dimension(:,:,:), intent(in)             :: b
+      double precision, dimension(:,:,:), intent(out)            :: atab
+      double precision, dimension(:,:,:), intent(out)            :: btab
+      logical, intent(out)                           :: warn
+      double precision, optional, intent(in)                 :: fillValue
+      double precision, dimension(:,:,:), optional, intent(in)   :: precision
+      ! Internal variables
+      integer, dimension(3)                          :: shp
+      double precision, dimension(size(a,1)*size(a,2)*size(a,3))       :: a1
+      double precision, dimension(size(b,1)*size(b,2)*size(b,3))       :: b1
+      ! Executable
+      shp = shape(a)
+      if ( DEEBUG ) then
+        call dump_name_v_pairs(shp, width=4)
+        call dump_name_v_pairs(shape(b), width=4)
+      endif
+      if ( present(precision) ) then
+        call filterValues(reshape(a, (/shp(1)*shp(2)*shp(3)/)), &
+        & a1, &
+        & reshape(b, (/shp(1)*shp(2)*shp(3)/)), &
+        & b1, &
+        & warn, fillValue, reshape(precision, (/shp(1)*shp(2)*shp(3)/)) )
+      else
+        call filterValues(reshape(a, (/shp(1)*shp(2)*shp(3)/)), &
+        & a1, &
+        & reshape(b, (/shp(1)*shp(2)*shp(3)/)), &
+        & b1, &
+        & warn, fillValue)
+      endif
+      atab = reshape(a1, shp)
+      btab = reshape(b1, shp)
+d723 1
+a723 1
+       "$Id: MLSFillValues.f90,v 2.39 2005/11/04 18:47:34 pwagner Exp $"
+d734 3
+@
+

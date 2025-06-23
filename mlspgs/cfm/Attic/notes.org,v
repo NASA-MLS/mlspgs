@@ -1,0 +1,1642 @@
+head	1.1;
+access;
+symbols
+	cfm-single-freq-0-1:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2020.10.06.15.31.23;	author whdaffer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2020.10.06.15.31.23;	author whdaffer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2020.10.29.16.32.36;	author whdaffer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2021.02.03.15.54.44;	author whdaffer;	state Exp;
+branches;
+next	;
+
+
+desc
+@ny notes
+@
+
+
+1.1
+log
+@file notes.org was initially added on branch cfm-single-freq-0-1.
+@
+text
+@@
+
+
+1.1.2.1
+log
+@added notes.org
+@
+text
+@a0 1353
+* Building
+
+  CD to <path-to-mlspgs>
+  % make update
+  % make install-cfm
+  % make install-fullcfm
+
+* Discussion with Paul
+
+*
+the things that are changed when the statements 
+
+MLSSignals
+MLSSignalsNomenclature
+
+** Parts modified by the various parts of the signals file.
+  + signals database
+
+  
+
+* Module.
+
+  Hightest level container of something that can be a container. SC/GHz/THz 
+  Beneath those are R1a, R1b, ... 
+
+  You can declare modules other than SC/GHz/THz, say 'adhoc'
+
+  If you have a new module, you need have the geolocation has to appear in the L1B file. Probably not a good choice
+
+  Best to use the GHz, but always need SC module.
+
+  'his' is never expanded....
+
+  
+
+
+* The simplest thing.....
+
+  Change l2cf and then run mockup. This will prove that changing the signals file won't cause a problem. 
+
+  Then we'll have to change config.l2cf and mockup.f90 to handle this
+  new situation.
+
+  'signal,band=B1000C'
+
+  the signal designation would be?  (what is suffix used for?)
+
+  R1000Custom:B1000C:dummy
+
+
+  Does the 'molecules' statement in the l2cf/source that could handle an arbitrary frequency?
+
+  Molecules is tied to Spectroscopy. Frequency you're looking at is controlled the 'signals' statement.
+
+ 
+** Building mockup
+
+   cd <path-to-mlspgs>
+   make update
+   make install-cfm | tee install-cfm.log 2>&1
+   make install-fullcfm | tee install-fullcfm.log 2>&1
+
+   cd cfm
+   make mockup  | tee mockup.log 2>&1
+
+** Running mockup
+
+*** With a signals file and config file (l2cf controlling file)
+
+     get the script `do-testnopcf.sh' from Paul or copy-n-paste this out of this file
+     
+#+BEGIN_SRC bash
+#!/bin/sh
+
+#do-testnopcf.sh
+#Run the executable w/o the PCF file but with rest of toolkit panoply
+# usage:
+# do-testnopcf.sh executable cmdline
+
+# Useful to test certain executables which require the toolkit for some reason
+echo "do-testnopcf.sh $@@"
+if [ "$#" -lt 1 ]
+then
+  echo "usage: do-testnopcf.sh executable cmdline"
+  exit 0
+fi
+
+PGSHOME=/software/toolkit/ifc17/toolkit
+. $PGSHOME/bin/linux/pgs-env.ksh
+PGE=$1
+shift
+
+export FLIB_DVT_BUFFER=0
+export PGSMEM_USESHM=NO
+export PGE_BINARY_DIR
+export PGE_SCRIPT_DIR
+export PGE_ROOT
+
+ulimit -s unlimited
+
+$PGE $@@
+#+END_SRC 
+
+     Here `executable' is the full path to the executable. If you're
+     in the cfm directory containing mockup.f90, that will be
+     something like
+
+     <path-to-mlspgs-dir>/cfm/IFC.Linux.<some-other-verbiage>/mockup
+
+
+     As currently configured, `cmdline' will the signals database
+     followed by the `config' (or run controlling) l2cf. For example,
+     in the current cfm there are the files signals.l2cf and
+     config.l2cf, so we would call it as....
+
+#+BEGIN_SRC bash
+% ./do-testnopcf.sh IFC.Linux.ifc17debug/mockup signals.l2cf config.pcf
+#+END_SRC
+
+* Running mockup with modified files.
+
+  Changed signals.l2cf to include the inputs devised by NJL. Those changes were...
+
+
+#+BEGIN_SRC l2cf
+
+  ;; <whd> custom. Radiometer. Testing if we can add a signal
+  R1000Custom: radiometer, suffix="dummy", module=GHz, lo=239.66 GHz, singleSideband=0
+   ;;<whd> spectrometerType: custom: Test running single frequency with two channels
+  FBCustom: spectrometerType, first=1, channels=[ $
+    -575.0 MHz: 96.0 MHz,  -479.0 MHz: 96.0 MHz, $
+    -383.0 MHz: 96.0 MHz,  -303.0 MHz: 64.0 MHz, $
+    -239.0 MHz: 64.0 MHz,  -175.0 MHz: 64.0 MHz, $
+    -119.0 MHz: 48.0 MHz,   -79.0 MHz: 32.0 MHz, $
+     -51.0 MHz: 24.0 MHz,   -31.0 MHz: 16.0 MHz, $
+     -17.0 MHz: 12.0 MHz,    -7.0 MHz:  8.0 MHz, $
+       0.0 MHz:  6.0 MHz,     7.0 MHz:  8.0 MHz, $
+      17.0 MHz: 12.0 MHz,    31.0 MHz: 16.0 MHz, $
+      51.0 MHz: 24.0 MHz,    79.0 MHz: 32.0 MHz, $
+     119.0 MHz: 48.0 MHz,   175.0 MHz: 64.0 MHz, $
+     239.0 MHz: 64.0 MHz,   303.0 MHz: 64.0 MHz, $
+     383.0 MHz: 96.0 MHz,   479.0 MHz: 96.0 MHz, $
+     575.0 MHz: 96.0 MHz ]
+  ;; <whd> Custom. Band: Test running on 2 channels from a custom frequency
+  B1000C: band, suffix="dummy", radiometer=R1000Custom, spectrometerType=FBcustom, $
+                centerFrequency=0 GHz
+  ;; <whd> Custom signal. Test running a custom single frequency with 2 channels
+  signal, band=B1000C, switch=0, spectrometer=0, direction=1 ;; **** CUSTOM
+#+END_SRC
+
+
+
+Changed  config.l2cf (renamed to config-single-freq.l2cf) to attempt ot call
+  this new 'signal'. 
+
+#+BEGIN_SRC l2cf
+     signals='R1000Custom:dummy.B1000C', $
+#+end_SRC
+
+
+Ran into many errors when it was trying parse the signal and config statements
+
+#+BEGIN_SRC bash
+test2.log:***** At line 272, column 14, In column 18 of R1000Custom:B1000C:, the wrong suffix is specified.  Expected "".
+test2.log:***** At line 272, column 14, In column 19 of R1000Custom:B1000C:, the input was incorrect.  Expected ..
+
+test3.log:***** At line 272, column 14, In column 13 of R1000Custom:.B1000C:, the input was incorrect.  Expected <identifier>.
+
+test4.log:***** At line 272, column 14, In column 13 of R1000Custom:.B1000C, the input was incorrect.  Expected <identifier>.
+
+test5.log:***** At line 272, column 14, In column 18 of R1000Custom:B1000C, the wrong suffix is specified.  Expected "".
+
+test6.log:***** At line 272, column 14, In column 13 of R1000Custom:.B1000C, the input was incorrect.  Expected <identifier>.
+
+test7.log:***** At line 283, column 14, In column 18 of R1000Custom:B1000C:dummy, the wrong suffix is specified.  Expected "".
+test7.log:***** At line 283, column 14, In column 19 of R1000Custom:B1000C:dummy, the input was incorrect.  Expected ..
+test7.log:***** At line 283, column 14, In column 24 of R1000Custom:B1000C:dummy, the token is not the label of a "band", "radiometer", "spectrometerType", "switch" or "channel".
+#+END_SRC
+
+By the way, the line number given above is line in the file created by
+concatenating the two l2cfs (e.g. cat signals.l2cf
+config-single-freq.l2cf > foo.l2cf). The two columns mention are, I
+believe 1) the column of the beginning of the `signals=' statement,
+followed by the column of the offending part of that line
+
+And finally hit it right with the signals= statement above and the
+radiometer and band statments having suffix='dummy
+  
+     signals='R1000Custom:dummy.B1000C', $
+
+Apparently, it *really* needs some sort of suffix for the radiometer! 
+
+so, the signal name is <radiometer>:<suffix>.<band>:suffix?
+
+This run (see test8.log) successfully parsed the two l2cf files, but failed failed  with the following message
+
+#+BEGIN_SRC bash
+do-testnopcf.sh IFC.Linux.ifc17debug/mockup signals.l2cf config-single-freq.l2cf
+Warning (SpectroscopyCatalog_m): Unable to verify that instrument name in HDFSpectroscopy file is emls
+size(state):6
+Name = state
+   1~ Qty_Template_Name = temperature unlabeled
+
+   2~ Qty_Template_Name = <none given> unlabeled
+
+   3~ Qty_Template_Name = SO2 unlabeled
+
+   4~ Qty_Template_Name = HNO3 unlabeled
+
+   5~ Qty_Template_Name = O3 unlabeled
+
+   6~ Qty_Template_Name = <none given> unlabeled
+
+Calling stack (bottom-up)
+.. ForwardModel
+.. ForwardModelConfig
+Error (ForwardModelConfig): No matching channel shape information
+.ForwardModel ANALYTICALL2PCFWM, tree at 0, line 0, column 0 Sys_Memory (kB): 519420.0 Memory: 193.6 MB CPU:   12.1    
+* Interim report on allocates/deallocates *
+Number of calls to _allocate_:376447
+Number of calls to _deallocate_:179406
+Total GB allocated:0.718657073674989
+Total GB deallocated:-0.515623115417182
+Net GB remaining allocated:0.203033958257807
+#+END_SRC
+
+*Error (ForwardModelConfig): No matching channel shape information*. 
+
+Left it at that as [2020-08-27 Thu] 12:10pm for Paul to
+eat some lunch
+
+This message is from fwmdl/ForwardModelConfig.f90, but it turns out
+that it only comes into play if doing frequency averaging (see
+/do_freq_avg in the config-single-freq.l2cf
+
+I removed that directive from the `analyticalL2pcFwm' statement in the
+config file and ran again (test10.log) and got the following.
+
+#+BEGIN_SRC l2cf
+./do_testnopcf.sh IFC.Linux.ifc17debug/mockup signals.l2cf config-single-freq.l2cf  | tee test10.log 2>&1do-testnopcf.sh IFC.Linux.ifc17debug/mockup signals.l2cf config-single-freq.l2cf
+Warning (SpectroscopyCatalog_m): Unable to verify that instrument name in HDFSpectroscopy file is emls
+size(state):6
+Name = state
+   1~ Qty_Template_Name = temperature unlabeled
+
+   2~ Qty_Template_Name = <none given> unlabeled
+
+   3~ Qty_Template_Name = SO2 unlabeled
+
+   4~ Qty_Template_Name = HNO3 unlabeled
+
+   5~ Qty_Template_Name = O3 unlabeled
+
+   6~ Qty_Template_Name = <none given> unlabeled
+
+Calling stack (bottom-up)
+.. ForwardModel
+.. PFADataBase
+Error (PFADataBase): No PFA data for signal R1000CUSTOM:DUMMY.B1000C:DUMMY.S0.FBCUSTOM-0, channel 1, sideband -1 and molecule HNO3.
+.ForwardModel ANALYTICALL2PCFWM, tree at 0, line 0, column 0 Sys_Memory (kB): 519416.0 Memory: 193.6 MB CPU:   12.1    
+* Interim report on allocates/deallocates *
+Number of calls to _allocate_:376449
+Number of calls to _deallocate_:179406
+Total GB allocated:0.718659605674918
+Total GB deallocated:-0.515623115417182
+Net GB remaining allocated:0.203036490257736
+
+#+END_SRC
+
+Now it's 
+
+*No PFA data for signal R1000CUSTOM:DUMMY.B1000C:DUMMY.S0.FBCUSTOM-0, channel 1, sideband -1 and molecule HNO3.*
+
+This may have to do with the molecule statement in the config file.
+
+So, if you don't do frequency averaging, you have to have some
+Pre-Frequency Averaged info for the `molecules' mentioned in the 'molecule'
+statuement. But if you *do* frequency averaging, you need some channel
+shape info for that signal.
+
+Note from PFADataBase.f90, line 90
+
+#+BEGIN_SRC fortran90
+  ! Structures for finding PFA data quickly.  There are four levels of tables,
+  ! indexed respectively by molecule, signal, sideband and channel.  We do this
+  ! instead of having a rank-4 array because some molecules have no PFA data,
+  ! and of those that do, some have no data for some signals, and of those that
+  ! do, some have no data for one sideband, and then the number of channels is
+  ! different for different signals.
+#+END_SRC
+
+*molecule, signal, sideband and channel*
+
+May need to make up some `dummy' molecules, but this will have to be
+dependent on the frequency?
+
+
+
+
+* test11 : commented out {LSB,USB}lblMolecules Got: 'Error
+  (ForwardModelVectorTools): There is no quantity in vector state that
+  has type vmr for molecule EXTINCTIONV2 for radiometer
+  R1000CUSTOM:DUMMY'
+
+  This comes from mockup.f90. QExtinctionv2r3=CreateQtyTemplate(...), ~line222
+
+#+BEGIN_SRC fortran90
+
+    qExtinctionv2r3 = CreateQtyTemplate(l_vmr, avgrid=vGridStandard55, &
+    ahgrid=hGridStandard, afgrid=fgridExtinctionConstant, qRadiometer="R3", &
+    qMolecule=l_extinctionv2)
+#+END_SRC
+
+  the l_extentionv2 references the line in the l2cf 
+
+Paul thinks changing this by commenting out the ahgrid= line
+
+
+* test12 :  Changed `centerfrequency' to match the numbers for R3. No change in error 
+
+  Add a parmaeter radiometer='R1000Custom:Dummy" in mockup.f90 and rebuild and retry.
+
+* test13 : Changed mockup.f90.  Added a parameter `radiometer' ==
+  'R1000Custom:Dummy', and used it in the definition of extinctionv2
+  (~line 222), in call to CreateQtyTemplate
+
+* test14 Added some stuff requested by PWagner that will generate a
+  traceback at a crash, which I did. I kept the R1000Custom:Dummy
+  (unrequested by Paul) and got the following
+
+Got the following.
+
+do-testnopcf.sh IFC.Linux.ifc17debug/mockup signals.l2cf config-single-freq.l2cf
+Warning (SpectroscopyCatalog_m): Unable to verify that instrument name in HDFSpectroscopy file is emls
+size(state):6
+Name = state
+   1~ Qty_Template_Name = temperature unlabeled
+
+   2~ Qty_Template_Name = <none given> unlabeled
+
+   3~ Qty_Template_Name = SO2 unlabeled
+
+   4~ Qty_Template_Name = HNO3 unlabeled
+
+   5~ Qty_Template_Name = O3 unlabeled
+
+   6~ Qty_Template_Name = <none given> unlabeled
+
+Name = simulatedRadiance
+   1~ Qty_Template_Name = band7 unlabeled
+
+    Quantity type: radiance noChans = 25 noSurfs = 125 noInstances = 1
+    noCrossTrack = 1 instanceLen = 3125 signal: (no name in the
+    database for this quantity) instrumentmodule: GHz incoherent
+    nonstacked regular linear-basis minorFrame nonmajorFrame values
+    array size is 25x125x1 = 3125, with values, without mask Calling
+    stack (bottom-up) .. ForwardModel .. FullForwardModel
+    .. FullForwardModel, MAF= .. FullForwardModelAuto, MAF=
+    .. ForwardModel.Both_Sidebands .. VectorsModule Error
+
+    *(VectorsModule): There is no quantity in vector simulatedRadiance*
+    *that has type radiance for signal*
+    *R1000CUSTOM:DUMMY.B1000C:DUMMY.S0.FBCUSTOM-*
+
+    This is with radiometer changes to "R3"
+
+and then a crash with the following traceback
+
+#+BEGIN_SRC sh
+orrtl: severe (32): invalid logical unit number, unit -2147483647, file unknown
+Image              PC                Routine            Line        Source             
+mockup             000000000208F152  Unknown               Unknown  Unknown
+mockup             0000000001A3425D  machine_mp_crash_          98  machine.f90
+mockup             0000000001622682  mlsmessagemodule_         240  MLSMessage.f9h
+mockup             000000000162D7AA  mlsmessagemodule_        1228  MLSMessage.f9h
+mockup             000000000162ADC3  mlsmessagemodule_        1000  MLSMessage.f9h
+mockup             0000000001624B52  mlsmessagemodule_         454  MLSMessage.f9h
+mockup             0000000001A1123D  vectorsmodule_mp_        2716  VectorsModule.f90
+mockup             0000000001A0E7B8  vectorsmodule_mp_        2469  VectorsModule.f90
+mockup             0000000000B45646  fullforwardmodel_        1718  FullForwardModel_m.f90
+mockup             0000000000B324F0  fullforwardmodel_        1270  FullForwardModel_m.f90
+mockup             0000000000B20516  fullforwardmodel_         524  FullForwardModel_m.f90
+mockup             00000000007367EE  forwardmodelwrapp         358  ForwardModelWrappers.f90
+mockup             0000000000735BD9  forwardmodelwrapp         270  ForwardModelWrappers.f90
+mockup             00000000004E4955  cfm_fwdmdl_m_mp_f         255  cfm_fwdmdl.f90
+mockup             0000000000452E1F  MAIN__                    363  mockup.f90
+mockup             000000000040237E  Unknown               Unknown  Unknown
+mockup             000000000217A604  Unknown               Unknown  Unknown
+mockup             000000000217A881  Unknown               Unknown  Unknown
+mockup             0000000000402266  Unknown               Unknown  Unknown
+
+#+END_SRC
+
+* test15
+
+  Added this line to the analyticalL2pcFwm
+  specificQuantities=[EXTINCTIONV2R3]
+
+  Paul says: If you have a quantity of type 'extinction', it must be
+  associated with a radiomter and gets that from the 'signal'
+  statement. Apparently this is done by the forward model itself,
+  instead of getting it from the l2cf.
+
+  This failed with the message.....
+
+  ***** At line 291, column 56: the "specificQuantities" field has the wrong type of associated value, expected quantity
+
+  The failure is that the quantity database is empty. The
+  config-single-freq.l2cf only declares `molecules', not
+  quantities. Hence using the statement 'specificQuantites' is
+  disallowed.
+
+  This is a fundamental issue with the *cfm*, because it only takes
+  `signles.l2cf' and 'config.l2cf'
+
++ 
+
+  
+
+* test 16
+  *Error (VectorsModule): There is no quantity in vector simulatedRadiance that has type radiance for signal R1000CUSTOM:DUMMY.B1000C:DUMMY.S0.FBCUSTOM-*
+
+traceback
+#+BEGIN_SRC SH
+forrtl: severe (32): invalid logical unit number, unit -2147483647, file unknown
+Image              PC                Routine            Line        Source             
+mockup             000000000208F152  Unknown               Unknown  Unknown
+mockup             0000000001A3425D  machine_mp_crash_          98  machine.f90
+mockup             0000000001622682  mlsmessagemodule_         240  MLSMessage.f9h
+mockup             000000000162D7AA  mlsmessagemodule_        1228  MLSMessage.f9h
+mockup             000000000162ADC3  mlsmessagemodule_        1000  MLSMessage.f9h
+mockup             0000000001624B52  mlsmessagemodule_         454  MLSMessage.f9h
+mockup             0000000001A1123D  vectorsmodule_mp_        2716  VectorsModule.f90
+mockup             0000000001A0E7B8  vectorsmodule_mp_        2469  VectorsModule.f90
+mockup             0000000000B45646  fullforwardmodel_        1718  FullForwardModel_m.f90
+mockup             0000000000B324F0  fullforwardmodel_        1270  FullForwardModel_m.f90
+mockup             0000000000B20516  fullforwardmodel_         524  FullForwardModel_m.f90
+mockup             00000000007367EE  forwardmodelwrapp         358  ForwardModelWrappers.f90
+mockup             0000000000735BD9  forwardmodelwrapp         270  ForwardModelWrappers.f90
+mockup             00000000004E4955  cfm_fwdmdl_m_mp_f         255  cfm_fwdmdl.f90
+mockup             0000000000452E1F  MAIN__                    363  mockup.f90
+mockup             000000000040237E  Unknown               Unknown  Unknown
+mockup             000000000217A604  Unknown               Unknown  Unknown
+mockup             000000000217A881  Unknown               Unknown  Unknown
+mockup             0000000000402266  Unknown               Unknown  Unknown
+
+#+END_SRC
+
+
+* test17
+
+Paul, in an email asks to do the following
+
+#+BEGIN_SRC fortran99
+
+Please add these statements among the declarations in mockup.f90.
+
+    type(QuantityTemplate_T) :: qband1000
+    type(VectorValue_T) :: band1000
+
+
+At line 345 of mockup.f90 add
+    qband1000 = CreateQtyTemplate(l_radiance, startL1Maf_new,
+endL1Maf_new, filedatabase, &
+                               qSignal="R1000Custom:dummy.B1000C",
+qName='band1000')
+    band1000 = CreateValue4AgileVector(qband1000)
+    call AddValue2Vector(radiance, band1000)
+
+I decided we don't need radiance precisions for Band1000.
+#+END_SRC
+
+
+Ran it, it failed with error
+
+*Error (VectorsModule): There is no quantity in vector [unnamed] that has type limbSidebandFraction for signal R1000CUSTOM:DUMMY.B1000LC:DUMMY.S0.FBCUS*
+
+btw. what is the side band fraction.
+
+
+* test 18
+
+  *Set signleSideband=-1*
+
+Same error 
+
+*Error (VectorsModule): There is no quantity in vector [unnamed] that has type limbSidebandFraction*
+*for signal R1000CUSTOM:DUMMY.B1000LC:DUMMY.S0.FBCUS*
+
+Same traceback
+
+traceback: 
+forrtl: severe (32): invalid logical unit number, unit -2147483647, file unknown
+Image              PC                Routine            Line        Source             
+mockup             00000000020925E2  Unknown               Unknown  Unknown
+mockup             0000000001A376F5  machine_mp_crash_          98  machine.f90
+mockup             0000000001625B1A  mlsmessagemodule_         240  MLSMessage.f9h
+mockup             0000000001630C42  mlsmessagemodule_        1228  MLSMessage.f9h
+mockup             000000000162E25B  mlsmessagemodule_        1000  MLSMessage.f9h
+mockup             0000000001627FEA  mlsmessagemodule_         454  MLSMessage.f9h
+mockup             0000000001A146D5  vectorsmodule_mp_        2716  VectorsModule.f90
+mockup             0000000001A11D93  vectorsmodule_mp_        2479  VectorsModule.f90
+mockup             0000000000B078C8  forwardmodelvecto         131  ForwardModelVectorTools.f90
+mockup             0000000000DBC22A  convolution_m_mp_         225  Convolution_m.f90
+mockup             0000000000B3D207  fullforwardmodel_        1494  FullForwardModel_m.f90
+mockup             0000000000B239AE  fullforwardmodel_         524  FullForwardModel_m.f90
+mockup             0000000000739C86  forwardmodelwrapp         358  ForwardModelWrappers.f90
+mockup             0000000000739071  forwardmodelwrapp         270  ForwardModelWrappers.f90
+mockup             00000000004E7DED  cfm_fwdmdl_m_mp_f         255  cfm_fwdmdl.f90
+mockup             00000000004562AE  MAIN__                    377  mockup.f90
+mockup             000000000040237E  Unknown               Unknown  Unknown
+mockup             000000000217DAC4  Unknown               Unknown  Unknown
+mockup             000000000217DD41  Unknown               Unknown  Unknown
+mockup             0000000000402266  Unknown               Unknown  Unknown
+
+* test19
+
+  Take singlesidebad statements out of R1000Custom: radiometer
+
+  Same error
+
+  *Error (VectorsModule): There is no quantity in vector [unnamed] that has type limbSidebandFraction for signal R1000CUSTOM:DUMMY.B1000LC:DUMMY.S0.FBCUS*
+
+and traceback
+
+forrtl: severe (32): invalid logical unit number, unit -2147483647, file unknown
+Image              PC                Routine            Line        Source             
+mockup             00000000020925E2  Unknown               Unknown  Unknown
+mockup             0000000001A376F5  machine_mp_crash_          98  machine.f90
+mockup             0000000001625B1A  mlsmessagemodule_         240  MLSMessage.f9h
+mockup             0000000001630C42  mlsmessagemodule_        1228  MLSMessage.f9h
+mockup             000000000162E25B  mlsmessagemodule_        1000  MLSMessage.f9h
+mockup             0000000001627FEA  mlsmessagemodule_         454  MLSMessage.f9h
+mockup             0000000001A146D5  vectorsmodule_mp_        2716  VectorsModule.f90
+mockup             0000000001A11D93  vectorsmodule_mp_        2479  VectorsModule.f90
+mockup             0000000000B078C8  forwardmodelvecto         131  ForwardModelVectorTools.f90
+mockup             0000000000DBC22A  convolution_m_mp_         225  Convolution_m.f90
+mockup             0000000000B3D207  fullforwardmodel_        1494  FullForwardModel_m.f90
+mockup             0000000000B239AE  fullforwardmodel_         524  FullForwardModel_m.f90
+mockup             0000000000739C86  forwardmodelwrapp         358  ForwardModelWrappers.f90
+mockup             0000000000739071  forwardmodelwrapp         270  ForwardModelWrappers.f90
+mockup             00000000004E7DED  cfm_fwdmdl_m_mp_f         255  cfm_fwdmdl.f90
+mockup             00000000004562AE  MAIN__                    377  mockup.f90
+mockup             000000000040237E  Unknown               Unknown  Unknown
+mockup             000000000217DAC4  Unknown               Unknown  Unknown
+mockup             000000000217DD41  Unknown               Unknown  Unknown
+mockup             0000000000402266  Unknown               Unknown  Unknown
+[14:38][{1338}]% 
+
+* test20
+
+  Same error
+
+*Error (VectorsModule): There is no quantity in vector [unnamed] that has type limbSidebandFraction for signal R1000CUSTOM:DUMMY.B1000LC:DUMMY.S0.FBCUS*
+
+* test21
+
+  Add sideband and elevation offsets to mockup.f90. See comments in the code.
+****** At (no lcf tree available), In column 26 of R1000Custom:dummy.B1000CLF, the token is not the label of a "band", "radiometer", "spectrometerType", "switch" or "channel".***
+#+BEGIN_SRC FORTRAN
+
+Error (cfm_qtytemplate): Unable to parse signal string
+forrtl: severe (32): invalid logical unit number, unit -2147483647, file unknown
+Image              PC                Routine            Line        Source             
+mockup             000000000209F8A2  Unknown               Unknown  Unknown
+mockup             0000000001A449A9  machine_mp_crash_          98  machine.f90
+mockup             0000000001632DCE  mlsmessagemodule_         240  MLSMessage.f9h
+mockup             000000000163DEF6  mlsmessagemodule_        1228  MLSMessage.f9h
+mockup             000000000163B50F  mlsmessagemodule_        1000  MLSMessage.f9h
+mockup             000000000163529E  mlsmessagemodule_         454  MLSMessage.f9h
+mockup             00000000005ACFAD  cfm_quantitytempl         315  cfm_qtytemplate.f90
+mockup             00000000004562E3  MAIN__                    388  mockup.f90
+mockup             000000000040237E  Unknown               Unknown  Unknown
+mockup             000000000218AD84  Unknown               Unknown  Unknown
+mockup             000000000218B001  Unknown               Unknown  Unknown
+mockup             0000000000402266  Unknown               Unknown  Unknown
+
+#+END_SRC
+
+* test22 
+
+Remove the 'C' from the 'band' designation in both the
+signals.l2cf and mockup.f90. But Paul wants to have the signal defined
+with an 'F' at the end,
+
+Question why we need 'UF' and 'LF'. Looking intoo cfm_mlssetup.f90 and
+cfm_constants (see lines 69 and 103 for definition of band7l and
+band7u, respectively)
+
+#+BEGIN_SRC FORTRAN
+Net GB remaining allocated:0.210013566060411
+forrtl: severe (32): invalid logical unit number, unit -2147483647, file unknown
+Image              PC                Routine            Line        Source             
+mockup             000000000209F8A2  Unknown               Unknown  Unknown
+mockup             0000000001A449A9  machine_mp_crash_          98  machine.f90
+mockup             0000000001632DCE  mlsmessagemodule_         240  MLSMessage.f9h
+mockup             000000000163DEF6  mlsmessagemodule_        1228  MLSMessage.f9h
+mockup             000000000163B50F  mlsmessagemodule_        1000  MLSMessage.f9h
+mockup             000000000163529E  mlsmessagemodule_         454  MLSMessage.f9h
+mockup             00000000017F9DC2  moremessage_mp_me         154  MoreMessage.f90
+mockup             0000000000DD4192  convolution_mconv         400  Convolution_m.f90
+mockup             0000000000DC9C47  convolution_m_mp_         255  Convolution_m.f90
+mockup             0000000000B4A4BB  fullforwardmodel_        1494  FullForwardModel_m.f90
+mockup             0000000000B30C62  fullforwardmodel_         524  FullForwardModel_m.f90
+mockup             0000000000746FE2  forwardmodelwrapp         358  ForwardModelWrappers.f90
+mockup             00000000007463CD  forwardmodelwrapp         270  ForwardModelWrappers.f90
+mockup             00000000004F5149  cfm_fwdmdl_m_mp_f         255  cfm_fwdmdl.f90
+mockup             0000000000463562  MAIN__                    434  mockup.f90
+mockup             000000000040237E  Unknown               Unknown  Unknown
+mockup             000000000218AD84  Unknown               Unknown  Unknown
+mockup             000000000218B001  Unknown               Unknown  Unknown
+mockup             0000000000402266  Unknown               Unknown  Unknown
+[11:24][{1386}]% 
+
+#+END_SRC
+This got all the way into the convolution. Error was....
+
+*Error (Convolution_m): With config(ANALYTICALL2PCFWM): No matching antenna patterns*
+
+Gets antenna pattern from a file.  
+
+/Solution: Take out /do_conf in config-single-freq.l2cf/
+
+* test23
+
+*Error (VectorsModule): There is no quantity in vector [unnamed] that has type elevOffset for signal R1000CUSTOM:DUMMY.B1000UF:DUMMY.S0.FBCUSTOM-0*
+
+What the heck is *R1000CUSTOM:DUMMY.B1000UF:DUMMY.S0.FBCUSTOM-0*
+
+#+BEGIN_SRC FORTRAN
+Net GB remaining allocated:0.21687449386637
+forrtl: severe (32): invalid logical unit number, unit -2147483647, file unknown
+Image              PC                Routine            Line        Source             
+mockup             000000000209F8A2  Unknown               Unknown  Unknown
+mockup             0000000001A449A9  machine_mp_crash_          98  machine.f90
+mockup             0000000001632DCE  mlsmessagemodule_         240  MLSMessage.f9h
+mockup             000000000163DEF6  mlsmessagemodule_        1228  MLSMessage.f9h
+mockup             000000000163B50F  mlsmessagemodule_        1000  MLSMessage.f9h
+mockup             000000000163529E  mlsmessagemodule_         454  MLSMessage.f9h
+mockup             0000000001A21989  vectorsmodule_mp_        2716  VectorsModule.f90
+mockup             0000000001A1F047  vectorsmodule_mp_        2479  VectorsModule.f90
+mockup             0000000000B14B7C  forwardmodelvecto         131  ForwardModelVectorTools.f90
+mockup             0000000000DC9776  convolution_m_mp_         234  Convolution_m.f90
+mockup             0000000000B4A4BB  fullforwardmodel_        1494  FullForwardModel_m.f90
+mockup             0000000000B30C62  fullforwardmodel_         524  FullForwardModel_m.f90
+mockup             0000000000746FE2  forwardmodelwrapp         358  ForwardModelWrappers.f90
+mockup             00000000007463CD  forwardmodelwrapp         270  ForwardModelWrappers.f90
+mockup             00000000004F5149  cfm_fwdmdl_m_mp_f         255  cfm_fwdmdl.f90
+mockup             0000000000463562  MAIN__                    434  mockup.f90
+mockup             000000000040237E  Unknown               Unknown  Unknown
+mockup             000000000218AD84  Unknown               Unknown  Unknown
+mockup             000000000218B001  Unknown               Unknown  Unknown
+mockup             0000000000402266  Unknown               Unknown  Unknown
+#+END_SRC
+
+* test24
+
+Changes requested by Paul
+
+Apparently the forward model pays more attention to the ':molecule' part
+of the signal field than we thought.
+
+So ..
+
+in config-single-freq.l2cf
+replace
+  signals='R1000Custom:dummy.B1000F'
+with
+  signals='R1000Custom:dummy.B1000F:dummy'
+
+In mockup.l2cf
+
+replace
+   qband1000 = CreateQtyTemplate(l_radiance, &
+        startL1Maf_new, &
+        endL1Maf_new, &
+        filedatabase, &
+        qSignal="R1000Custom:dummy.B1000F", &
+        qName='band1000F')
+
+with
+   qband1000 = CreateQtyTemplate(l_radiance, &
+        startL1Maf_new, &
+        endL1Maf_new, &
+        filedatabase, &
+        qSignal="R1000Custom:dummy.B1000F:dummy", &
+        qName='band1000F')
+
+Then, wherever you see
+             qSignal='R1000Custom:dummy.B1000LF')
+replace it with
+             qSignal='R1000Custom:dummy.B1000LF:dummy')
+
+and similarly where ever you see
+             qSignal='R1000Custom:dummy.B1000UF')
+replace it with
+             qSignal='R1000Custom:dummy.B1000UF:dummy')
+
+
+I hope these changes go some distance to please the forward model.
+
+Thanks.
+
+
+Results ===================================
+
+Same error
+*Error (VectorsModule): There is no quantity in vector [unnamed] that has type elevOffset for signal R1000CUSTOM:DUMMY.B1000UF:DUMMY.S0.FBCUSTOM-0*
+traceback
+#+BEGIN_SRC FORTRAN
+forrtl: severe (32): invalid logical unit number, unit -2147483647, file unknown
+Image              PC                Routine            Line        Source             
+mockup             000000000209F8A2  Unknown               Unknown  Unknown
+mockup             0000000001A449A9  machine_mp_crash_          98  machine.f90
+mockup             0000000001632DCE  mlsmessagemodule_         240  MLSMessage.f9h
+mockup             000000000163DEF6  mlsmessagemodule_        1228  MLSMessage.f9h
+mockup             000000000163B50F  mlsmessagemodule_        1000  MLSMessage.f9h
+mockup             000000000163529E  mlsmessagemodule_         454  MLSMessage.f9h
+mockup             0000000001A21989  vectorsmodule_mp_        2716  VectorsModule.f90
+mockup             0000000001A1F047  vectorsmodule_mp_        2479  VectorsModule.f90
+mockup             0000000000B14B7C  forwardmodelvecto         131  ForwardModelVectorTools.f90
+mockup             0000000000DC9776  convolution_m_mp_         234  Convolution_m.f90
+mockup             0000000000B4A4BB  fullforwardmodel_        1494  FullForwardModel_m.f90
+mockup             0000000000B30C62  fullforwardmodel_         524  FullForwardModel_m.f90
+mockup             0000000000746FE2  forwardmodelwrapp         358  ForwardModelWrappers.f90
+mockup             00000000007463CD  forwardmodelwrapp         270  ForwardModelWrappers.f90
+mockup             00000000004F5149  cfm_fwdmdl_m_mp_f         255  cfm_fwdmdl.f90
+mockup             0000000000463562  MAIN__                    435  mockup.f90
+mockup             000000000040237E  Unknown               Unknown  Unknown
+mockup             000000000218AD84  Unknown               Unknown  Unknown
+mockup             000000000218B001  Unknown               Unknown  Unknown
+mockup             0000000000402266  Unknown               Unknown  Unknown
+#+END_SRC 
+
+* test25
+  Added the following to mockup.f90
+
+#+BEGIN_SRC FORTRAN
+    CALL outputnamedValue( 'size(stateExtra)', &
+         SIZE(stateExtra%quantities) )
+    CALL Dump( stateExtra, details=1 )
+
+#+END_SRC 
+
+
+
+Since nothing substantial was changed, the error remains as in test24
+*Error (VectorsModule): There is no quantity in vector [unnamed] that has type elevOffset for signal R1000CUSTOM:DUMMY.B1000UF:DUMMY.S0.FBCUSTOM-0*
+
+#+BEGIN_SRC FORTRAN
+orrtl: severe (32): invalid logical unit number, unit -2147483647, file unknown
+Image              PC                Routine            Line        Source             
+mockup             000000000209FA52  Unknown               Unknown  Unknown
+mockup             0000000001A44B5D  machine_mp_crash_          98  machine.f90
+mockup             0000000001632F82  mlsmessagemodule_         240  MLSMessage.f9h
+mockup             000000000163E0AA  mlsmessagemodule_        1228  MLSMessage.f9h
+mockup             000000000163B6C3  mlsmessagemodule_        1000  MLSMessage.f9h
+mockup             0000000001635452  mlsmessagemodule_         454  MLSMessage.f9h
+mockup             0000000001A21B3D  vectorsmodule_mp_        2716  VectorsModule.f90
+mockup             0000000001A1F1FB  vectorsmodule_mp_        2479  VectorsModule.f90
+mockup             0000000000B14D30  forwardmodelvecto         131  ForwardModelVectorTools.f90
+mockup             0000000000DC992A  convolution_m_mp_         234  Convolution_m.f90
+mockup             0000000000B4A66F  fullforwardmodel_        1494  FullForwardModel_m.f90
+mockup             0000000000B30E16  fullforwardmodel_         524  FullForwardModel_m.f90
+mockup             0000000000747196  forwardmodelwrapp         358  ForwardModelWrappers.f90
+mockup             0000000000746581  forwardmodelwrapp         270  ForwardModelWrappers.f90
+mockup             00000000004F52FD  cfm_fwdmdl_m_mp_f         255  cfm_fwdmdl.f90
+mockup             0000000000463719  MAIN__                    441  mockup.f90
+mockup             000000000040237E  Unknown               Unknown  Unknown
+mockup             000000000218AF04  Unknown               Unknown  Unknown
+mockup             000000000218B181  Unknown               Unknown  Unknown
+mockup             0000000000402266  Unknown               Unknown  Unknown
+[07:42][{1454}]% 
+
+#+END_SRC 
+
+#+BEGIN_SRC FORTRAN
+#+END_SRC 
+
+
+* test26
+
+Same error
+
+*Error (VectorsModule): There is no quantity in vector [unnamed] that has type elevOffset for signal R1000CUSTOM:DUMMY.B1000UF:DUMMY.S0.FBCUSTOM-0*
+
+#+BEGIN_SRC FORTRAN
+forrtl: severe (32): invalid logical unit number, unit -2147483647, file unknown
+Image              PC                Routine            Line        Source             
+mockup             00000000020A00C2  Unknown               Unknown  Unknown
+mockup             0000000001A451D1  machine_mp_crash_          98  machine.f90
+mockup             00000000016335F6  mlsmessagemodule_         240  MLSMessage.f9h
+mockup             000000000163E71E  mlsmessagemodule_        1228  MLSMessage.f9h
+mockup             000000000163BD37  mlsmessagemodule_        1000  MLSMessage.f9h
+mockup             0000000001635AC6  mlsmessagemodule_         454  MLSMessage.f9h
+mockup             0000000001A221B1  vectorsmodule_mp_        2716  VectorsModule.f90
+mockup             0000000001A1F86F  vectorsmodule_mp_        2479  VectorsModule.f90
+mockup             0000000000B153A4  forwardmodelvecto         131  ForwardModelVectorTools.f90
+mockup             0000000000DC9F9E  convolution_m_mp_         234  Convolution_m.f90
+mockup             0000000000B4ACE3  fullforwardmodel_        1494  FullForwardModel_m.f90
+mockup             0000000000B3148A  fullforwardmodel_         524  FullForwardModel_m.f90
+mockup             000000000074780A  forwardmodelwrapp         358  ForwardModelWrappers.f90
+mockup             0000000000746BF5  forwardmodelwrapp         270  ForwardModelWrappers.f90
+mockup             00000000004F5971  cfm_fwdmdl_m_mp_f         255  cfm_fwdmdl.f90
+mockup             0000000000463D8C  MAIN__                    455  mockup.f90
+mockup             000000000040237E  Unknown               Unknown  Unknown
+mockup             000000000218B584  Unknown               Unknown  Unknown
+mockup             000000000218B801  Unknown               Unknown  Unknown
+mockup             0000000000402266  Unknown               Unknown  Unknown
+[11:05][{1485}]% 
+
+#+END_SRC 
+  
+* test27
+
+Same error
+
+*Error (VectorsModule): There is no quantity in vector [unnamed] that has type elevOffset for signal R1000CUSTOM:DUMMY.B1000UF:DUMMY.S0.FBCUSTOM-0*
+
+#+BEGIN_SRC FORTRAN
+
+remaining allocated:0.21687449386637
+forrtl: severe (32): invalid logical unit number, unit -2147483647, file unknown
+Image              PC                Routine            Line        Source             
+mockup             00000000020A0032  Unknown               Unknown  Unknown
+mockup             0000000001A45139  machine_mp_crash_          98  machine.f90
+mockup             000000000163355E  mlsmessagemodule_         240  MLSMessage.f9h
+mockup             000000000163E686  mlsmessagemodule_        1228  MLSMessage.f9h
+mockup             000000000163BC9F  mlsmessagemodule_        1000  MLSMessage.f9h
+mockup             0000000001635A2E  mlsmessagemodule_         454  MLSMessage.f9h
+mockup             0000000001A22119  vectorsmodule_mp_        2716  VectorsModule.f90
+mockup             0000000001A1F7D7  vectorsmodule_mp_        2479  VectorsModule.f90
+mockup             0000000000B1530C  forwardmodelvecto         131  ForwardModelVectorTools.f90
+mockup             0000000000DC9F06  convolution_m_mp_         234  Convolution_m.f90
+mockup             0000000000B4AC4B  fullforwardmodel_        1494  FullForwardModel_m.f90
+mockup             0000000000B313F2  fullforwardmodel_         524  FullForwardModel_m.f90
+mockup             0000000000747772  forwardmodelwrapp         358  ForwardModelWrappers.f90
+mockup             0000000000746B5D  forwardmodelwrapp         270  ForwardModelWrappers.f90
+mockup             00000000004F58D9  cfm_fwdmdl_m_mp_f         255  cfm_fwdmdl.f90
+mockup             0000000000463CF5  MAIN__                    454  mockup.f90
+mockup             000000000040237E  Unknown               Unknown  Unknown
+mockup             000000000218B504  Unknown               Unknown  Unknown
+mockup             000000000218B781  Unknown               Unknown  Unknown
+mockup             0000000000402266  Unknown               Unknown  Unknown
+
+#+END_SRC 
+
+* test28
+
+New RESULTS!
+
+#+BEGIN_SRC FORTRAN
+forrtl: severe (408): fort: (7): Attempt to use pointer VALUES when it is not associated with a target
+
+Image              PC                Routine            Line        Source             
+mockup             0000000002076876  Unknown               Unknown  Unknown
+mockup             000000000050F8A1  cfm_io_m_mp_write        1108  cfm_io.f90
+mockup             0000000000463D1A  MAIN__                    458  mockup.f90
+mockup             000000000040237E  Unknown               Unknown  Unknown
+mockup             000000000218B504  Unknown               Unknown  Unknown
+mockup             000000000218B781  Unknown               Unknown  Unknown
+mockup             0000000000402266  Unknown               Unknown  Unknown
+[16:17][{1508}]% echo $tn
+28
+[16:20][{1509}]% 
+
+#+END_SRC 
+
+* test29.log
+
+  Paul had me swap out the 'signals' statement in the config-single-freq.l2cf so that we were now using 
+  signals = 'R3:240.B7F:O3', $ 
+
+  and rerun. 
+
+It did crash at the end with the following traceback
+
+It did crash with a traceback. Line 1107 in cfm_io writes the jacobian.
+
+#+BEGIN_SRC Fortran
+Image              PC                Routine            Line        Source             
+mockup             0000000002076876  Unknown               Unknown  Unknown
+mockup             000000000050F8A1  cfm_io_m_mp_write        1108  cfm_io.f90
+mockup             0000000000463D1A  MAIN__                    458  mockup.f90
+mockup             000000000040237E  Unknown               Unknown  Unknown
+mockup             000000000218B504  Unknown               Unknown  Unknown
+mockup             000000000218B781  Unknown               Unknown  Unknown
+mockup             0000000000402266  Unknown               Unknown  Unknown
+#+END_SRC
+
+* test30. 
+
+Paul wanted more printing, so he gave me another mockup.f90
+
+
+* test 31
+
+  See mockup.diff.20200809.1 for the difference in mockup.f90 between test30 and test31
+#+BEGIN_SRC Fortran
+
+Image              PC                Routine            Line        Source             
+mockup             0000000002076F16  Unknown               Unknown  Unknown
+mockup             0000000000510B2A  cfm_io_m_mp_write        1119  cfm_io.f90
+mockup             00000000004643BD  MAIN__                    478  mockup.f90
+mockup             000000000040237E  Unknown               Unknown  Unknown
+mockup             000000000218BB84  Unknown               Unknown  Unknown
+mockup             000000000218BE01  Unknown               Unknown  Unknown
+mockup             0000000000402266  Unknown               Unknown  Unknown
+[09:21][{1032}]% 
+
+#+END_SRC
+
+* test 32
+
+  Paul gave me a new cfm_io.f90. Built it, ran it. No traceback! 
+
+
+
+  
+* test 33
+
+** input.f90  
+
+   If there's a `use input' in mockup and there's a module input.f90,
+   things in input.f90 are available to the calling program
+
+** molecules statement in config*.l2cf
+
+   The labels in that statement have to appear in the spectroscopy
+   files. The molecules field gives the name of each part of the state
+   vector. These are defined in the spectroscopy
+   file. 
+
+   /data/emls/l2cal/MLS-Aura_L2Cal-Spectroscopy-PFA_v4-0-3_0000d000.h5
+
+** noise, baseline, precision
+
+   Not required for an arbitrary freqency, since that info comes from
+   the spectroscopy file.
+
+* test34
+
+#+BEGIN_SRC fortran
+orrtl: severe (408): fort: (7): Attempt to use pointer QUANTITIES when it is not associated with a target
+
+Image              PC                Routine            Line        Source             
+mockup             0000000002076F16  Unknown               Unknown  Unknown
+mockup             00000000019F3700  vectorsmodule_mp_         936  VectorsModule.f90
+mockup             0000000001A30B00  vectorsmodule_mp_        3188  VectorsModule.f90
+mockup             000000000046D1B0  MAIN__                    603  mockup.f90
+mockup             000000000040237E  Unknown               Unknown  Unknown
+mockup             000000000218BB84  Unknown               Unknown  Unknown
+mockup             000000000218BE01  Unknown               Unknown  Unknown
+mockup             0000000000402266  Unknown               Unknown  Unknown
+(whd-default) [16:37][{1850}]% 
+#+END_SRC
+
+  Mockup: Line 604 
+
+diffVector=observed-radiance. `observed' is only defined for band7,
+not band1000. Move and edit the definition of `observed' inside
+original==.False. and try again
+
+
+* test35
+
+  Same error and traceback
+
+* test36
+
+  Moved the definitions of upper/lower sideband, baseline and other
+  things for band1000 inside if (original) then ... else .. endif
+
+This is the same error
+
+
+
+#+BEGIN_SRC FORTRAN
+   1#     1     6
+forrtl: severe (408): fort: (7): Attempt to use pointer QUANTITIES when it is not associated with a target
+
+Image              PC                Routine            Line        Source             
+mockup             0000000002076F36  Unknown               Unknown  Unknown
+mockup             00000000019F3714  vectorsmodule_mp_         936  VectorsModule.f90
+mockup             0000000001A30B14  vectorsmodule_mp_        3188  VectorsModule.f90
+mockup             000000000046D1C5  MAIN__                    609  mockup.f90
+mockup             000000000040237E  Unknown               Unknown  Unknown
+mockup             000000000218BBC4  Unknown               Unknown  Unknown
+mockup             000000000218BE41  Unknown               Unknown  Unknown
+mockup             0000000000402266  Unknown               Unknown  Unknown
+
+#+END_SRC
+* test40
+  Commented out the diffVector=... line. It ran to completion.
+  However, `observed' has a size of 0.
+
+#+BEGIN_SRC LOG
+ printing observed, radiance vectors
+ *** observed ***
+size(observed):0
+Name = observedRadiance
+ *** radiance ***
+size(radiance):1
+Name = simulatedRadiance
+
+#+END_SRC
+
+
+* test41
+  
+  Commented out the line observed=CreateAgileVector. Paul thinks this
+  is what causes observed to be 'stomped on' and that causes the
+  diffVect=observed-simulated to crash.
+
+  however, this run died with the following inscrutable message
+
+./do_testnopcf.sh: line 29: 274146 Aborted                 (core dumped) $PGE $@@
+
+#+BEGIN_SRC LOG
+*** Error in `IFC.Linux.ifc17debug/mockup': free(): invalid pointer: 0x0000000002c6db38 ***
+======= Backtrace: =========
+[0x21c20cc]
+[0x20cb97b]
+[0xe97afb]
+[0x5c1ec3]
+[0x5c1e45]
+[0x46f15c]
+[0x40237e]
+[0x218db04]
+[0x218dd81]
+[0x402266]
+======= Memory map: ========
+00400000-028c5000 r-xp 00000000 00:2c 8765778                            /users/whdaffer/devel/mlsL1andL2Software/cfmwork/mlspgs/cfm/IFC.Linux.ifc17debug/mockup
+02ac4000-02c6f000 rwxp 024c4000 00:2c 8765778                            /users/whdaffer/devel/mlsL1andL2Software/cfmwork/mlspgs/cfm/IFC.Linux.ifc17debug/mockup
+02c6f000-057e1000 rwxp 00000000 00:00 0 
+0596c000-0c7df000 rwxp 00000000 00:00 0                                  [heap]
+2b4c67ab6000-2b4c6b960000 rwxp 00000000 00:00 0 
+2b4c6b960000-2b4c6b969000 r-xp 00000000 00:2b 2317630                    /nas/depot/depot/intel/2017/compilers_and_libraries_2017.0.098/linux/compiler/lib/intel64_lin/locale/en_US/ifcore_msg.cat
+2b4c6b969000-2b4c6b96a000 rwxp 00000000 00:00 0 
+2b4c6c000000-2b4c6c049000 rwxp 00000000 00:00 0 
+2b4c6c049000-2b4c70000000 ---p 00000000 00:00 0 
+7ffd795e0000-7ffd7f829000 rwxp 00000000 00:00 0                          [stack]
+7ffd7f8da000-7ffd7f8dc000 r-xp 00000000 00:00 0                          [vdso]
+ffffffffff600000-ffffffffff601000 r-xp 00000000 00:00 0                  [vsyscall]
+#+END_SRC
+
+* test42
+
+Died with the following error and traceback
+
+*Error (VectorsModule): There is no quantity in vector [unnamed] that has type ptan for instrument module GHz*
+...FullForwardModel, MAF= 1, tree at 0, line 0, column 0 Sys_Memory (kB): 519544.0 Memory: 193.7 MB CPU:   10.3    
+
+
+#+BEGIN_SRC
+Image              PC                Routine            Line        Source             
+mockup-band7       00000000020A2692  Unknown               Unknown  Unknown
+mockup-band7       0000000001A4779D  machine_mp_crash_          98  machine.f90
+mockup-band7       0000000001635BC2  mlsmessagemodule_         240  MLSMessage.f9h
+mockup-band7       0000000001640CEA  mlsmessagemodule_        1228  MLSMessage.f9h
+mockup-band7       000000000163E303  mlsmessagemodule_        1000  MLSMessage.f9h
+mockup-band7       0000000001638092  mlsmessagemodule_         454  MLSMessage.f9h
+mockup-band7       0000000001A2477D  vectorsmodule_mp_        2716  VectorsModule.f90
+mockup-band7       0000000001A21E3B  vectorsmodule_mp_        2479  VectorsModule.f90
+mockup-band7       0000000000B17970  forwardmodelvecto         131  ForwardModelVectorTools.f90
+mockup-band7       0000000000B2DB93  fullforwardmodel_         252  FullForwardModel_m.f90
+mockup-band7       0000000000749DD6  forwardmodelwrapp         358  ForwardModelWrappers.f90
+mockup-band7       00000000007491C1  forwardmodelwrapp         270  ForwardModelWrappers.f90
+mockup-band7       00000000004F7F4D  cfm_fwdmdl_m_mp_f         255  cfm_fwdmdl.f90
+mockup-band7       000000000046DFC7  MAIN__                    533  mockup.f90
+mockup-band7       000000000040237E  Unknown               Unknown  Unknown
+mockup-band7       000000000218DB44  Unknown               Unknown  Unknown
+mockup-band7       000000000218DDC1  Unknown               Unknown  Unknown
+mockup-band7       0000000000402266  Unknown               Unknown  Unknown
+
+#+END_SRC
+
+** 2716  VectorsModule.f90
+2715 is 
+      call dump( vector, details=0 ) ! It's not the values causing us to crash
+   
+** 2479  VectorsModule.f90
+
+        index = GetVectorQuantityIndexByType ( otherVector, &
+          &  quantityType, molecule, instrumentModule, supportedInstrumentModule, & 
+	  & radiometer, reflector, signal, &
+          &  sideband, noError=myNoError )
+
+** 131  ForwardModelVectorTools.f90
+    if ( useGetQuantityByType ) then
+-->      GetQuantityForForwardModel => GetVectorQuantityByType ( vector, & 
+        & otherVector, &
+        & quantityType, molecule, instrumentModule, & 
+        & supportedInstrumentModule, &
+        & radiometer, reflector, signal, sideband, &
+        & foundInFirst, noError )
+      return
+    end if
+
+** 252  FullForwardModel_m.f90
+-->    pTan => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+      & quantityType=l_ptan, foundInFirst=pTan_der, config=fwdModelConf, &
+      & instrumentModule=fwdModelConf%signals(1)%instrumentModule )
+    pTan_der = pTan_der .and. present ( jacobian )
+** 358  ForwardModelWrappers.f90
+        call FullForwardModel ( config, FwdModelIn, FwdModelExtra, &
+          FwdModelOut, fmStat, Jacobian, ExtraJacobian, Hessian) 
+** 270  ForwardModelWrappers.f90
+      call doForwardModels
+** 255  cfm_fwdmdl.f90
+
+        do i=1, size(config)
+-->            call ForwardModelOrig (config(i), fwdmodelIn, &
+            adjustedExtraInput, fwdModelOut, fmStat, Jacobian)
+        end do
+
+** 533  mockup.f90
+-->   CALL ForwardModel2 (0, forwardModelConfigDatabase, state, &
+        stateExtra, radiance, jacobian)
+
+
+*Solution* 
+
+CALL AddValue2Vector(stateExtra, newer_ptanGHz) was in the band1000
+part, not in the band7 part. Moved it to just before the test on
+ORIGINAL
+
+Also, edit config-single-freq.l2cf so that signals = 'R3:240.B7F:O3',
+
+* test43
+
+Failed. with the following traceback. No error in log
+
+#+BEGIN_SRC
+   Quantity type: radiance
+    noChans = 25 noSurfs = 125 noInstances = 1 noCrossTrack = 1 instanceLen = 3125
+    signal:     (no name in the database for this quantity)
+    instrumentmodule: GHz
+    incoherent nonstacked regular linear-basis minorFrame nonmajorFrame
+    values array size is 25x125x1 = 3125, with values, without mask
+forrtl: severe (408): fort: (7): Attempt to use pointer QUANTITIES when it is not associated with a target
+
+Image              PC                Routine            Line        Source             
+mockup-band7       0000000002079136  Unknown               Unknown  Unknown
+mockup-band7       00000000019F5920  vectorsmodule_mp_         936  VectorsModule.f90
+mockup-band7       0000000001A32D20  vectorsmodule_mp_        3188  VectorsModule.f90
+mockup-band7       000000000046F3CF  MAIN__                    658  mockup.f90
+mockup-band7       000000000040237E  Unknown               Unknown  Unknown
+mockup-band7       000000000218DDC4  Unknown               Unknown  Unknown
+mockup-band7       000000000218E041  Unknown               Unknown  Unknown
+mockup-band7       0000000000402266  Unknown               Unknown  Unknown
+
+
+#+END_SRC
+
+** 936  VectorsModule.f90
+
+-->    call test_allocate ( status, moduleName, "z%quantities", &
+      & uBounds=[size(x%quantities)], elementSize=storage_size(z%quantities) / 8, &
+      & address=addr ) <------------------------------------------------------|
+                                                                                                   |
+      Emacs is 0-indexed. I think fortran is 1-indexed. 935 is here ---|
+-->(?)    z%quantities%index = x%quantities%index
+    do i = 1, size(x%quantities)
+      z%quantities(i)%template = x%quantities(i)%template
+    end do
+    call createValues ( z )
+
+   
+** 3188  VectorsModule.f90
+-->    call CloneVector ( z, x, vectorNameText='_z' )
+    do i = 1, size(x%quantities)
+      z%quantities(i)%values = x%quantities(i)%values - y%quantities(i)%values
+    end do   
+** 658  mockup.f90
+diffVector = observed-radiance
+* test44  (band7)
+* test45 (band1000)
+  
+  Changed the signals statement in signals.l2cf following Pauls instructtions.
+
+<quote>
+Hi William,
+
+I may have discovered an internal inconsistency in our signals.l2cf in how we treat Band 7 vs Band 1000.
+
+/users/whdaffer/devel/mlsL1andL2Software/cfmwork/mlspgs/cfm 238: grep 'band=B7F' signals.l2cf
+  signal,  band=B7F,  switch=0, spectrometer=7, direction= -1 ; O3
+  signal, band=B7F,  switch=3, spectrometer=8 , direction= -1 ; O3
+/users/whdaffer/devel/mlsL1andL2Software/cfmwork/mlspgs/cfm 239: grep 'band=B1000F' signals.l2cf
+  signal, band=B1000F, switch=0, spectrometer=0, direction=1 ;; **** CUSTOM
+
+We may not need the extra signal for switch position "3" beacuse hopefully the the signal field of the configuration is using switch=0.
+
+But should we put
+ signal, band=B1000F, switch=0, spectrometer=7, direction=-1 ;; **** CUSTOM
+to bring Band1000's definition closer to Band7?
+
+Let's try that, anyway.
+
+Hopefully we're learning something from this and not simply grinding gears and spinning wheels.
+
+Thanks.
+</quote>
+
+* l2cf tagup
+  [2020-09-23 Wed]
+
+  Suggestions from NJL and BR
+
+  disable pfa,  (done)
+
+  use allLinesInCatalog instead of allLinesForRadiometer.
+
+  run lower sideband for band7 (want single sideband, says
+  Bill). Double sideband calculation won't work? Don't know why.
+  Say BR: when we create arbitrary frequencies, it will need to be a
+  single-side calculation.
+
+  radiometer offsets? Probably need to do this. 
+  
+  turn off convolution (which we have done, it was causing crashes)
+
+* test47 (band1000, with /allLinesInCatalog)
+
+  This does take considerably longer.
+
+  Created aliases (see .myaliases) to run and cp results to
+  directories. During the run the two l2cfs are catted to the
+  logfile. Ran one case with spectrometer=7 and then another with
+  spectrometer=0. No d
+
+
+* tests 48 (band7) and 49 (band1000)
+
+  PW had me set singleSideBand=1 in signals.l2cf for the R3 and
+  R1000Custom statements.
+
+  I've now put all the output in directories
+  band{7,1000}-test{number}-output. I also echo into the logfile the
+  band and the test number
+
+
+
+
+* Plots
+  + b7-reverse-b1000.png : I don't know what the test number was, but
+    it was a case where b7 had direction=-1 and band1000 had
+    direction=1, so I read the band1000 and reverse the first
+    (channel) dimension
+
+  band7-v-band1000-tests-47-48.png : Should be test 47 and 48
+
+* tagup [2020-09-30 Wed]
+
+  forms of sidebandfraction: 
+  + Bill measured in lab by. Cal side band fraction (sdf at cal mirror) (about 1)
+  + Limb SBF, losses which scale with frequency (about .98)
+
+
+  Looking at MLSSignals_m.f90: Line 399 (case (s_radiometer) ! ...... RADIOMETER .....
+
+  parses lines like R3: radiomter from signals file.
+
+  NJL Have the code do this in the main program. 
+
+  radiometer, signal, band, fill in the appropriate bits, then call
+  addSignalToDatabase by hand. It may be that this is so dependent on the decorates 
+
+  Van says that if you don't need to find something in the l2cf, you
+  don't need the decoration.
+
+  So, do the calls for building the radiometer, signal, band and ???. 
+
+  Create new heterodyne radiometer.
+
+** next step. 
+
+   1) Do everything that mockup currently does, but by means of calls
+      to subroutines in mockup that set the radiometer, band and
+      signal. do this with a duplicate of band7.. Call it band1001,
+      Define it based on the template of WF bands (e.g. band32W, so,
+      something like WF1002). Used defered=true, first=1 and then use
+      the subroutines to define the band, signal.
+   2) Now define band1002, but the l0=0 and centerfreq == the old
+      L0. 
+     
+*** contemporaneous (frazzled) notes      
+
+   band1001 spectrometer type (defered=true) like widefilter type
+   (e.g. wf4) and create band as parallel to band32, and a signal like
+   b32W WF5: spectrometerType, deferred=true, first=1 (first channel
+   == 1, not 0) ; <- our new fake spectrometer type
+   
+   The deferred means "we're not going to give you the channel info yet.
+   
+   And, in the signals
+   
+   signal,band=band1001,
+   
+   so, look for s_radiometer, s_band, s_signal
+   
+   Looking at typs Radiometer_T, Band_T, SepctromterType_T and
+   Signal_T, around lines 182 in MLSSignals_m.f90
+   
+**** Van looking at the code
+
+   says for where these databases are referenced in other parts of
+   the code.  addItemToDatabase.f9h. 
+
+   Looking at 
+
+   Looked at FFMDL. Radiometer isn't used in FFMD except to get
+   polarizing info when using a
+   
+   Linear model doesn't use polarized info
+   
+   What is this with pointing grid? 
+
+   
+   Discussion about which databases have what: databases=[module,
+   bands, radiometer, ratdiometertype, signals]
+
+   Polarization is the only thing from the radiometers database, so if
+   you set that up, all you need is the signals database.
+
+   So, add the polarization 
+
+   Look at lib/parse_signals 
+
+
+   Index in radiometers database to the polarization, can copy that to signals database.
+   
+
+   
+   
+** Chat with Paul. 
+
+  1. Need main routine to be named mockup, so we'll have to move the
+     old one aside, or commit it and then create a new branch for new
+     mockup.
+
+  2. Will still use current mockup, so it'll be either be a band7 run,
+     or b1000 run, but add new features that will define a
+     radiometer100{1,2}, band100{1,2}, signal 100{1,2} in subroutines in mockup.
+
+     
+  
+* new branch for mockup.f90
+
+  Switched it to banch cfm-single-freq-0-2 for these next edits. If
+  satisfactory, will merge to cfm-single-freq-0-1 and then to the main
+  branch
+@
+
+
+1.1.2.2
+log
+@snapshot save
+@
+text
+@a1353 70
+
+* [2020-10-07 Wed] tagup (enter_terminal, t_identifier)
+
+  2 ways: ---------------------------------------------------------
+
+  1. add terminal
+  2. add api in CFM that doesn't require parsing l2cf. 
+
+     
+  Look Symbol_Table::enter_terminal in Parse_Signal
+
+  SnoopMLSL2 
+  add with 't_identifier.'
+
+  if you add it and it's already in the string table, it returns its
+  index, otherwise it adds it and returns the new index. 
+
+
+* enter_terminal
+
+  enters something in the character table and returns the index from
+  the string table
+
+
+** notes on spectrometertype
+
+   can't have f_channels *and* f_first,f_last,f_step.
+
+
+* [2020-10-21 Wed] tagup
+
+  + fortran book -- NJL will put his on the step.
+  + Luis : SAGE meeting done (Mon Tue)
+
+  + Neural Net idea. Frank's NN implementation of retreiving
+    Temperature showing promise and NJL et al. are considering
+    including it in the NRT production code. Question: code it up in
+    Fortran? Or just wrap it in fortran. NJL is more interested in the
+    former.
+
+    Question to BR. How many lines of IDL code did he use. LV asks why
+    not O3/CO too? NJL answers: he doesn't want to run before we can
+    walk.
+
+
+  Paul is discussing how we'll compare this NRT implementation to
+  Frank's python code. Paul asks: how did he (either Bill or Frank)
+  associate MAF with Profile number. In CFM Paul says they had some
+  functions for matching these up.
+
+  Lookup `find_nearest_instance' in main forward model.
+
+  the main point here is that Bill's approach depends on the L2 file
+
+  NJL is pointing out that we need to create a new datatype for
+  Frank's coefficients in the L2, some sort of L2CF language additions
+  to specify in the 'retrieve' statemet, how to populate the 'status',
+  marking which profiles are bad because various issues, and what
+  about populating 'precision' Frank says some people are using
+  multiple start-points and weights to get some handle on the
+  precision by looking at the spread of the results.
+
+  LV saks: Can you tune model to predict 'precision'. DoDI
+  (D(output)/D(input)) as a prediction of 'precision'
+
+  When I'm done with CFM, will work with Frank to code this up.
+
+  
+
+  
+@
+
+
+1.1.2.3
+log
+@continuing note taking
+@
+text
+@a7 29
+  There is a shell script in mlspgs/cfm that does a 'pushd ..' and then does
+  everything except the make update
+
+
+* Running
+
+  
+** Vanilla run7/run1000
+*** run7NM
+
+  cd to mlspgs/cfm
+
+  Define command line shell variable `tn' to be the number of the last test.
+
+  source .myaliases
+
+  this will provide the aliases run{7,1000} and run{7,1000}NM and cp7nm
+
+  Look at those for aliases for what they do.
+
+  run one (at this stage ([2021-02-02 Tue]: this almost always be
+  run7NM) and copy the results to its own directory using cp7NM. 
+
+  There was an alias for the vanilla run7 that attempted to combine
+  the two actions (running an copying), but I had some problems with
+  it.
+
+
+
+a1423 119
+
+* Using run7.sh and run1000.sh
+  source .myaliases
+  make sure tn is defined to the latest test number, it will be incremented by the run7 or run7cp alias
+  run7cp
+
+
+
+* test 51
+
+  Added a 'call dump(radiometers) and stop after call CFM_MLSSetup' at Paul's request
+
+
+* test 53
+  Added code to the main to call load_spectrometer
+  test53-NM.log
+  band7-test53-NM-output/*
+
+
+* test 54
+  load_spectrometertype
+  test54-NM.log
+  band7-test54-NM-output/*
+
+* test 55
+  load_band
+  test55-NM.log
+  band7-test55-NM-output/*
+
+* test 56
+  load_signal
+
+  May have to rewrite load_signal, because, at the moment, it does
+  everything and calls load_{radiometer,radiometertype,band}
+  internally 
+
+  test56-NM.log 
+  band7-test56-NM-output/*
+
+
+** Discuss about units
+
+   + init_tables
+   + init_MLSSignals_m.f90 (DU=d*u, PHYQ_Frequencies)
+
+
+** test60-NM
+
+   First run using all the subroutines (orignal=.false.)
+* test62
+
+  direction from paul
+
+  <quote>
+I have a number of suggestions:
+
+Add
+  print *, trim(qSignal)
+just before line 315 of cfm_qtytemplate.f90
+
+Change the arg to CreateQtyTemplate from
+     qSignal="R1000Custom:dummy.B1000F:dummy"
+to
+    qSignal="R1000CustomNM:dummy.B1000F:dummy"
+
+Let's see what it says.
+</quote>
+
+Did that. This changed the name of the radiometer in the lines at the end of the log from 
+'R1000Custom' to 'R1000CustomNM' Otherwise, nothing else changed
+
+#+BEGIN_SRC Fortran
+      Without mask
+ printing radiance (before forward model)
+size(radiance):0
+Name = simulatedRadiance
+ Original =  F
+***** At (no lcf tree available), In column 13 of R1000CustomNM:dummy.B1000F:dummy, the token is not the label of a "band", "radiometer", "spectrometerType", "switch" or "channel".
+***** At (no lcf tree available), In column 19 of R1000CustomNM:dummy.B1000F:dummy, a suffix is not permitted at this point.
+***** At (no lcf tree available), In column 26 of R1000CustomNM:dummy.B1000F:dummy, the token is not the label of a "band", "radiometer", "spectrometerType", "switch" or "channel".
+***** At (no lcf tree available), In column 32 of R1000CustomNM:dummy.B1000F:dummy, a suffix is not permitted at this point.
+***** At (no lcf tree available), In column 33 of R1000CustomNM:dummy.B1000F:dummy, not enough information given.
+ ***** qSignal = R1000CustomNM:dummy.B1000F:dummy
+Calling stack (bottom-up)
+.. cfm_qtytemplate
+Error (cfm_qtytemplate): Unable to parse signal string
+forrtl: severe (32): invalid logical unit number, unit -2147483647, file unknown
+Image              PC                Routine            Line        Source             
+mockup             00000000020A78F2  Unknown               Unknown  Unknown
+mockup             0000000001A4C9F9  machine_mp_crash_          98  machine.f90
+mockup             000000000163AC36  mlsmessagemodule_         240  MLSMessage.f9h
+mockup             0000000001645D5E  mlsmessagemodule_        1228  MLSMessage.f9h
+mockup             0000000001643377  mlsmessagemodule_        1000  MLSMessage.f9h
+mockup             000000000163D106  mlsmessagemodule_         454  MLSMessage.f9h
+mockup             00000000005B4E17  cfm_quantitytempl         316  cfm_qtytemplate.f90
+mockup             00000000005B1AB4  cfm_quantitytempl         150  cfm_qtytemplate.f90
+mockup             000000000045D1A7  MAIN__                    637  mockup.f90
+mockup             000000000040237E  Unknown               Unknown  Unknown
+mockup             0000000002192DC4  Unknown               Unknown  Unknown
+mockup             0000000002193041  Unknown               Unknown  Unknown
+mockup             0000000000402266  Unknown               Unknown  Unknown
+#+END_SRC
+
+* test63
+  <quote>
+Hi William,
+
+We can make Parse_Signal show more of its steps bu turning on the switch ParSig
+
+In mockup..f90 among the other USE statements add
+
+    use Toggles, only: Switches
+Then near the top of the main program add
+switches = 'ParSig'
+</quote>
+
+
+This doesn't seem to have done much. sdiff shows very little
+difference between test 62 and test63
+@
+
+

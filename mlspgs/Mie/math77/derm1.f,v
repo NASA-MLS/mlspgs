@@ -1,0 +1,104 @@
+head	1.3;
+access;
+symbols
+	v5-02-NRT-19:1.3
+	v6-00:1.3
+	v5-02-NRT-18:1.3
+	v5-02:1.3
+	v5-01-NRT-17:1.3
+	v5-01-NRT-16:1.3
+	v5-01-NRT-15:1.3
+	v5-01-NRT-14:1.3
+	neuralnetworks-1-0:1.3.0.14
+	cfm-single-freq-0-1:1.3.0.12
+	v5-01:1.3
+	v5-00:1.3
+	v4-23-TA133:1.3.0.10
+	mus-emls-1-70:1.3.0.8
+	rel-1-0-englocks-work:1.3.0.6
+	VUMLS1-00:1.3
+	VPL1-00:1.3
+	V4-22-NRT-08:1.3
+	VAM1-00:1.3
+	V4-21:1.3.0.4
+	V4-13:1.3
+	V4-12:1.3
+	V4-11:1.3
+	V4-10:1.3
+	V3-43:1.3
+	M4-00:1.3
+	V3-41:1.3
+	V3-40-PlusGM57:1.3.0.2
+	V3-33:1.3
+	V3-31:1.3
+	V3-30-NRT-05:1.3
+	cfm-01-00:1.3
+	V3-30:1.3
+	V3-20:1.3;
+locks; strict;
+comment	@c @;
+
+
+1.3
+date	2009.08.05.01.29.35;	author vsnyder;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2008.04.26.00.03.10;	author vsnyder;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2008.04.19.01.18.58;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@Initial commit
+@
+text
+@      SUBROUTINE DERM1(SUBNAM,INDIC,LEVEL,MSG,LABEL,VALUE,FLAG)
+C     .  Copyright (C) 1989, California Institute of Technology.
+C     .  U. S. Government sponsorship under
+C     .  NASA contract NAS7-918 is acknowledged.
+C>> 1994-10-20 DERM1  Krogh  Changes to use M77CON
+C>> 1994-04-20 DERM1  CLL Edited to make DP & SP files similar.
+C>> 1985-08-02 DERM1  Lawson  Initial code.
+c--D replaces "?": ?ERM1, ?ERV1
+C
+      CHARACTER*(*) SUBNAM,MSG,LABEL
+      CHARACTER*1 FLAG
+      integer INDIC, LEVEL
+      DOUBLE PRECISION VALUE
+C
+      CALL ERMSG(SUBNAM,INDIC,LEVEL,MSG,',')
+      CALL DERV1(LABEL,VALUE,FLAG)
+C
+      RETURN
+      END
+
+@
+
+
+1.2
+log
+@Committed in error
+@
+text
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@@
+

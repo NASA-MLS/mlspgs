@@ -1,0 +1,280 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.4
+	cfm-single-freq-0-1:1.1.0.2;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2020.03.18.23.39.16;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit -- originally written 14 Nov 2014
+@
+text
+@\documentclass[11pt]{article}
+
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9in
+\parindent 0pt
+\parskip 6pt
+
+\newcommand{\docname}{wvs-159}
+\newcommand{\docdate}{18 March 2020}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+\fi
+\ifnum\pdfoutput>0
+
+  \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+  \hypersetup{%
+    hypertexnames=false,%
+    colorlinks=true,%
+    linktocpage=true,%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{pdftex}
+\else
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\renewcommand{\d}{\text{d}}
+\newcommand{\T}{\mathcal{T}}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Nathaniel, Paul, Bill, Alyn, Mike\\
+Subject: \>Converting Geocentric Cartesian (ECR) to Geodetic co\"ordinates\\
+From: \>Van Snyder\\
+References: \>\h{wvs-004} \h{wvs-146} \\
+\end{tabbing}
+
+\section*{Introduction}
+
+There are a very large number of methods to convert geocentric Cartesian
+(ECR) co\"ordinates to geodetic co\"ordinates, assuming an ellipsoid of
+rotation, i.e., only two different axes, not three.
+
+\section*{Converting Geodetic to Geocentric Cartesian co\"ordinates}
+
+The equations to convert geodetic to geocentric Cartesian co\"ordinates are
+
+\begin{equation}\label{one}\begin{split}
+x = \,& ( N(\phi) + H ) \cos \lambda \cos \phi \\
+ \,& \\
+y = \,& ( N(\phi) + H ) \sin \lambda \cos \phi \\
+ \,& \\
+z =  \,& ( ( 1-e^2 ) N(\phi) + H ) \sin \phi =
+  \left( \frac{b^2}{a^2} N(\phi) + H \right) \sin \phi \\
+\end{split}\end{equation}
+
+where $\lambda$ is longitude, $\phi$ is geodetic latitude, $H$ is geodetic
+height above the ellipsoid, $e^2 = 1 - \frac{b^2}{a^2}$ is the
+eccentricity, $a$ is the equatorial (semi-major) axis, $b$ is the polar
+(semi-minor axis), $N(\phi) = \frac{a^2}d$ is the radius of curvature in
+the prime normal section (the curve in the east-west plane that intersects
+the Earth and contains the zenith -- see \h{wvs-146}), and $d^2 = a^2
+\cos^2 \phi + b^2 \sin^2 \phi = a^2(1-e^2\sin^2\phi)$.
+
+Determining the longitude from Cartesian co\"ordinates is easy: $\lambda =
+\tan^{-1} \frac{y}x$.
+
+\section*{Bowring's method}
+
+Start by estimating the geodetic latitude
+%
+\begin{equation*}
+\phi = \tan^{-1} \left(\frac{az}{bs} \right)
+\end{equation*}
+
+where $s = \sqrt{x^2+y^2}$.  Then iterate the following until $\phi$
+converges:
+%
+\begin{equation*}\begin{split}
+t = \,& \frac{b z + ( a^2-b^2 ) \sin^3 \phi}
+             {a s - ( a^2-b^2 ) \cos^3 \phi} \\
+\,& \\
+\phi = \,& \tan^{-1} \left( t \right) \\
+\end{split}\end{equation*}
+
+The geodetic height is then
+
+\begin{equation*}\begin{split}
+H = \,& s \cos \theta + ( z + e^2 N(\theta) \sin \theta )
+    \sin \theta - N(\theta) \\
+  = \,& s \cos \theta + z \sin \theta - N(\theta)
+    ( 1 - e^2 \sin^2 \theta ) \\
+  = \,& s \cos \theta + z \sin \theta - d \\
+\end{split}\end{equation*}
+
+where $\theta = \tan^{-1} \left( \frac{a}b t \right)$.
+
+\section*{Another iterative method}
+
+Estimate $\phi_0 = \tan^{-1} \frac{a^2 z}{b^2 s}$.  Then
+
+\begin{enumerate}
+
+\item Evaluate $N(\phi_n)$
+
+\item Evaluate $\phi_{n+1} =
+      \tan^{-1}\frac{z + e^2 N(\phi_n) \sin \phi}{s}$
+
+\end{enumerate}
+
+until $|\phi_{n+1} - \phi_n|$ is small enough.  Then evaluate
+$H = \frac{s}{\cos\phi_n} - N(\phi_n)$.
+
+\section*{A Newton method}
+
+Let $\phi_n$ and $H_n$ be estimates of $\phi$ and $H$ after $n$
+iterations. Let $\mathbf{C}_n$ be a vector consisting of values of
+$z_n$ and $s_n$, with $z_0$ and $s_0$ the given values, and later values
+taken as functions of $\phi_n$ and $H_n$.  Let $\mathbf{G}_n$ be the
+estimated values of $\phi_n$ and $H_n$.
+
+A Newton method to compute $(H, \phi)$ from $(s, z)$ where $s =
+\sqrt{x^2 + y^2} = ( N(\phi) + H) \cos \phi$ would require the
+Jacobian
+
+\begin{equation*}
+\mathbf{J}(\mathbf{C},\mathbf{G}) =
+ \frac{\partial (s,z)}{\partial ( H, \phi)} =
+  \left( \begin{array}{ccc}
+   \cos\phi & & \cos\phi \, \frac{\partial N(\phi)}
+                                       {\partial \phi} -
+                (N(\phi) + H ) \sin\phi \\
+   & \\
+   \frac{b^2}{a^2} \sin\phi & &
+     \frac{b^2}{a^2} \sin\phi \, \frac{\partial N(\phi)}
+                                    {\partial \phi} +
+        \left( \frac{b^2}{a^2} N(\phi) + H \right) \cos\phi \\
+ \end{array}\right)
+\end{equation*}
+
+at each iteration, where
+
+\begin{equation*}
+\frac{\partial N(\phi)}{\partial \phi} =
+ \frac{a^2 \sin\phi \cos\phi ( a^2-b^2)}{d^3}
+\end{equation*}
+
+First, estimate $\mathbf{G}_0 = ( \phi_0, H_0 ) ^T$:
+
+\begin{equation*}\begin{split}
+\phi_0 = \,& \tan^{-1} \frac{a^2 z}{b^2 s} \\
+\,& \\
+H_0 = \,& \sqrt{z^2+s^2} -
+ \frac{ab}{\sqrt{a^2 \sin^2 \phi + b^2 \cos^2 \phi}} \\
+\end{split}\end{equation*}
+
+then iterate
+
+\begin{equation*}\begin{split}
+\mathbf{G}_{n+1} = \,& \mathbf{G}_n - \mathbf{J}^{-1}
+  ( \mathbf{C}_0 - \mathbf{C}_n ) \text{ or, written as a system to solve}
+  \\
+  \,& \\
+\mathbf{J}\, \delta \mathbf{G} = \,& \mathbf{C}_0 - \mathbf{C}_n \\
+\end{split}\end{equation*}
+
+\section*{Fukushima's method}
+
+In the Journal of Geodesy (2006) 79: 689-693, Toshio Fukushima presented 
+a method based on Halley's third-order iteration for the tangent of the
+reduced latitude.  Rather than iterating on the tangent, which requires
+divisions in each iteration, Fukushima iterates on denormalized quantities
+related to the sine and cosine, thereby not requiring any divisions or
+evaluations of trigonometric functions during the iteration.
+
+\begin{equation*}\begin{split}
+s = \,& \sqrt{x^2 + y^2} \\
+e_c = \,& \frac{b}a \\
+E = \,& e^2 = 1 - \frac{b^2}{a^2} = 1 - e_c^2\\
+P = \,& \frac{s}a \\
+S_0 = \,& z \\
+C_0 = \,& e_c P \\
+A_n = \,& \sqrt{S_n^2+C_n^2} \\
+B_n = \,&  1.5 E S_n C_n^2 [ ( P S_n - z C_n ) A_n - E S_n C_n ] \\
+B_0 = \,& 1.5 E^2 P S_0^2 C_0^2 ( A_0 - e_c ) \\
+D_n = \,& z A_n^3 + E S_n^3 \\
+F_n = \,& P A_n^3 - E C_n^3 \\
+S_{n+1} = \,& D_n F_n - B_n S_n \\
+C_{n+1} = \,& F_n^2 - B_n C_n \\
+C_c = \,& e_c C_{n+1} \\
+\phi = \,& \text{signum}(z) \, \tan^{-1} \frac{S_{n+1}}{C_c} \\
+h = \,& \frac{s C_c + |z| S_{n+1} - b A_{n+1}}
+             {\sqrt{C_c^2 + S_{n+1}^2}} \\
+\end{split}\end{equation*}
+
+Fukushima's tests show that the method is accurate to within a few micro
+arcseconds for heights $<$ 30,000 km, and faster than other methods, with
+only one iteration, i.e., only S_1 and C_1 are computed.
+
+\label{lastpage}
+\end{document}
+
+% $Id: wvs-118.tex,v 1.2 2014/11/24 20:01:01 vsnyder Exp $
+
+% $Log: wvs-118.tex,v $
+@

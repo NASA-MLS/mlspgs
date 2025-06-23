@@ -1,0 +1,1758 @@
+head	1.1;
+access;
+symbols
+	cfm-single-freq-0-1:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2021.03.03.14.24.30;	author whdaffer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2021.03.03.14.24.30;	author whdaffer;	state Exp;
+branches;
+next	;
+
+
+desc
+@NM = 'new method'
+@
+
+
+1.1
+log
+@file mockupNM.f90 was initially added on branch cfm-single-freq-0-1.
+@
+text
+@@
+
+
+1.1.2.1
+log
+@initial revision
+@
+text
+@a0 1717
+! Copyright 2010, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! This program is meant to serve as an example, and proof that the CFM library
+! is working. Consequently, the design of this program does not follow good
+! software design principles. This program should not be used as a part in
+! any programs or software suite meant for long-term use.
+
+program mockup
+
+    use CFM
+    use highOutput, only: outputNamedValue
+    use input
+    USE machine, ONLY: getarg, NEVERCRASH
+    USE MLSMessageModule, ONLY: MLSMessageConfig
+
+    ! To convert MAF to Profile, Pranjit Saha 
+    use global_settings, only: L1MAFToL2Profile, L2ProfileToL1MAF
+    use MLSL2Options, only: Toolkit
+    use MLSHDF5, only: MLS_H5OPEN, MLS_H5CLOSE
+    ! To get some output
+    USE Output_M, ONLY: Output !Blanks, Newline, 
+
+    !! Added singleSideband and Elevation stuff per PW. Starting at test21 2020/08/31
+
+    use CFM_Vector_m, only: CreateValue4AgileVector
+    use CFM_Constants_m
+    use CFM_QuantityTemplate_m, only: CreateQtyTemplate
+    use INIT_TABLES_MODULE, only: l_elevOffset, l_limbsidebandFraction
+    USE MLSSignals_m, ONLY: Dump_Radiometers,Radiometers, &
+         & Dump_Bands,Bands,&
+         & Dump_SpectrometerTypes,SpectrometerTypes, &
+         & Signal_T, & 
+         & Dump_Signals, signals, AddSignalToDatabase, &
+         & Dump
+         
+    USE Allocate_Deallocate, ONLY: Deallocate_Test, Allocate_Test
+
+    ! debugging (from PW)
+    USE Toggles, only: Switches
+    IMPLICIT NONE
+
+
+
+!---------------------------- RCS Ident Info ------------------------------
+    character (len=*), parameter :: ModuleName= &
+        "$RCSfile: mockup.f90,v $"
+    character (len=*), parameter :: IdParm = &
+        "$Id: mockup.f90,v 1.62.2.2 2020/09/30 19:34:13 whdaffer Exp $"
+    character (len=len(idParm)) :: Id = idParm
+!---------------------------------------------------------------------------
+
+    INTEGER :: i
+    integer :: nQtys
+
+    ! =================== New Method (NM) ================
+    ! Call the 'load_(...) subroutines to load quantities,
+    ! eventually defining a signal.
+
+    LOGICAL :: Verbose=.TRUE.
+
+    ! For loadRadiometer -------------------------------------------
+    REAL(r8),parameter :: L0=239.66 ! GHz (how do I communicate that?)
+    character(len=1) :: polarization
+    CHARACTER(len=128) :: prefix, suffix, instrumentModule
+    INTEGER :: singleSideBand, RadiometerIndex
+    ! For loadSpectrometerType ------------------------------------
+    ! REAL(r8),ALLOCATABLE :: frequencies(:),widths(:)
+
+    ! For loadSpectrometerType --------------------------- For the
+    ! moment, we'll leave these as parameters, but change them to a
+    ! variable later.
+    REAL(r8),PARAMETER :: freqs(25)=(/-575.0, -479.0 ,-383.0 , -303.0 ,-239.0 , &
+         & -175.0 ,-119.0 ,  -79.0 , -51.0 ,  -31.0 ,-17.0 ,   -7.0 ,  0.0 ,    7.0 ,  17.0 ,   &
+         & 31.0 , 51.0 ,   79.0 ,119.0 ,  175.0 ,239.0 ,  303.0 ,383.0 ,  479.0 ,575.0/)
+
+    REAL(r8),parameter:: wids(25)=(/96.0 ,96.0 ,64.0 ,48.0 ,24.0 ,12.0 ,&
+         & 6.0,12.0,24.0,48.0 ,64.0 ,96.0 ,96.0 ,96.0 ,  64.0 ,  64.0 ,  32.0 , &
+         16.0 ,8.0 ,8.0 ,16.0 ,32.0 ,64.0 ,64.0 ,96.0/)
+    !REAL(r8), ALLOCATABLE :: frequencies(:), widths(:)
+    LOGICAL :: DEFERRED
+    ! INTEGER :: first, last
+    ! REAL(r8) :: start, step, width
+    character(len=128) :: name
+    integer :: SpectrometerTypeIndex
+
+    ! For LoadBand
+    real(r8) :: CenterFrequency
+    integer :: BandIndex
+
+    ! And, finally, for the actual signal
+    TYPE (Signal_T) :: signal
+    ! ===================== end NM ===================
+
+
+    ! Legacy code
+    ! To write values in file, read MLS L1BOA and L2GP files, Pranjit Saha
+    CHARACTER(LEN=20), PARAMETER :: FMT1 = "(F16.5)"
+    CHARACTER(LEN=20), PARAMETER :: FMT2 = "(E18.8)"
+    integer :: FileIndex2
+    type (MLSFile_T), dimension(:), pointer :: FileDatabase2 => null()
+    type (MLSFile_T) :: L1BFile2, L2GPFile2
+    integer :: startL1Maf_new
+    integer :: endL1Maf_new
+    ! For reading ptan Values from L2AUX-DGM file, Pranjit Saha
+    real(r8), dimension(125) :: ptanValuesRead
+
+    type(ForwardModelConfig_T), dimension(:), pointer :: forwardModelConfigDatabase
+    type(MLSFile_T), dimension(:), pointer :: filedatabase
+    type(MLSFile_T) :: l1bfile
+    type(VGrid_T) :: vGridStandard55, vGridStandard37, vGridTESCO, vGridRefGPH
+    type(VGrid_T) :: vGridExtinction
+    type(HGrid_T) :: hGridStandard
+    type(FGrid_T) :: fGridExtinctionConstant
+    type(QuantityTemplate_T) :: qtemp, qCO, qso2, qhno3, qo3, qextinctionv2r3
+    type(QuantityTemplate_T) :: qphitanGhz, qrefGPH, qgph, qisotoperatioO_18_O
+    type(QuantityTemplate_T) :: qisotoperatioO3_ASYM_O_18, qisotoperatioO3_V2
+    type(QuantityTemplate_T) :: qisotoperatioHNO3, qisotoperatioCO, qband7
+    type(QuantityTemplate_T) :: qisotoperatioO3, qisotoperatioS_32_O2, newer_qptanGHz
+    type(QuantityTemplate_T) :: qisotoperatioO3_SYM_O_18, qbaseline7
+    type(Vector_T) :: state, stateExtra
+    type(Vector_T) :: radiance, diffVector
+    type(Vector_T) :: observed, obsPrecision
+    type(Vector_T) :: corrections, correctionNoise
+    character(len=3) :: GHz = "GHz"
+    character(len=2) :: sc = "sc"
+    type(VectorValue_T) :: temperature, co, o2, so2, hno3, o3, extinctionv2r3, newer_ptanGHz 
+    type(VectorValue_T) :: phitanGhz, refGPH, gph, isotoperatioO_18_O, isotoperatioO3
+    type(VectorValue_T) :: isotoperatioO3_ASYM_O_18, isotoperatioO3_V2, isotoperatioS_32_O2
+    type(VectorValue_T) :: isotoperatioHNO3, isotoperatioCO, limbSidebandFraction7L
+    type(VectorValue_T) :: limbSidebandFraction7U, elev7L, elev7U, earthReflectivity
+    type(VectorValue_T) :: orbitInclination, spaceRadiance, scGeocAlt, tngtGeocAltGHz
+    TYPE(VectorValue_T) :: losVelGHz, band7, isotoperatioO3_SYM_O_18, precision7, precision1000
+    type(VectorValue_T) :: correction7, noise7
+    CHARACTER(len=256) :: signalFileName, configFileName
+    CHARACTER(len=128) :: radiometer
+    type(Matrix_T) :: jacobian
+    integer :: error
+
+    !! test17. Add the following declarations (from Paul)
+    TYPE(QuantityTemplate_T) :: qband1000
+    TYPE(VectorValue_T) :: band1000
+
+    !! starting at test21, added sideband and elevation declarations as per PW: 2020/08/31
+    type(VectorValue_T) :: limbSidebandFraction1000L
+    type(VectorValue_T) :: limbSidebandFraction1000U
+    type(VectorValue_T) :: elev1000L
+    type(VectorValue_T) :: elev1000U
+    TYPE(QuantityTemplate_T) :: TEMPLATE
+
+
+    TYPE (Frequency_Info_T) frequencies_info, widths_info
+    TYPE(DACS_Info_T) dacs_info
+
+
+    INTEGER :: status,k
+     ! Set the following to TRUE if signal is Band7, FALSE otherwise
+     logical, parameter :: Original = .FALSE.
+
+     ! =========== Executable section =================
+
+
+
+     ! Initialize fields in the two user defined types
+     frequencies_info%units='unk'
+     frequencies_info%first=-1
+     
+     dacs_info%first=-1
+     dacs_info%last=-1
+     dacs_info%start=-1.0
+     dacs_info%step=-1.0
+     dacs_info%width=-1.0
+     dacs_info%start_units='unk'
+     dacs_info%step_units='unk'
+     dacs_info%width_units='unk'
+
+     PRINT *,'----------------------------------------------------------------------- '
+     PRINT *,""
+     PRINT *,'In mockup-NM:1 (LoadRadiometers + LoadSpectrometerType + loadband + signal: no stop)'
+     PRINT *,""
+     PRINT *,'----------------------------------------------------------------------- '
+     radiometer="R3"
+
+
+
+    MLSMessageConfig%crashOnAnyError = .true.
+    neverCrash = .false.
+
+    call getarg(1, signalFileName)
+    call getarg(2, configFileName)
+    Toolkit = .false.
+
+    nullify(filedatabase)
+
+    PRINT *,'calling CFM_MLSSetup'
+    call CFM_MLSSetup(signalFileName, configFileName, forwardModelConfigDatabase)
+    ! Debugging
+    switches='ParSig'
+
+    ! Add calls to the new subroutines to configure 
+    !  1) the new radiometer,  (test53)
+    ! 2) the radiometertype (test54)
+    ! 3) the band 
+    ! 4) the signal
+    ! We'll do a run for each one in turn.
+
+    ! --- For NM: LoadRadiometer -----------------------------
+    ! Required: 
+     polarization='a'
+     prefix='R1000CustomNM'
+     suffix='dummy'
+     singleSideBand=1
+     instrumentModule='GHz'
+     ! optional
+     ! 
+
+
+
+     ! --- begin loadRadiometer ------------------
+    PRINT *,' %%%%%%%%%%%%%%% Calling LoadRadiometer'
+    CALL LoadRadiometer(L0,&
+         & trim(instrumentModule), &
+         & polarization, &
+         & trim(prefix), &
+         & trim(suffix), &
+         & singleSideBand, &
+         & RadiometerIndex, &
+         .TRUE.)
+    PRINT *,'After loadRadiometer: RadiometerIndex = ',RadiometerIndex
+    PRINT *,' %%%%%%%%%%%%%%% End LoadRadiometer'
+
+
+    PRINT *,'%%%%%%%%%%%%%%%% calling dump_radiometers(radiometers)'
+    CALL Dump_Radiometers(Radiometers)
+    PRINT *,'%%%%%%%%%%%%%%%% end dump_radiometers(radiometers)'
+
+    DEFERRED=.FALSE.
+    
+    name='FBCustomNM'
+    ! nQtys=size(freqs)
+    ! Don't need this, it's handled in LoadSpectroemterType
+    ! CALL test_allocate(status, moduleName, 'frequencies')
+    ! IF (status /= 1) CALL MLSMessage (MLSMSG_Error, moduleName, &
+    ! & "Error allocating frequencies")
+    ! CALL test_allocate(status, moduleName, 'frequencies')
+    ! IF (status /= 1) CALL MLSMessage (MLSMSG_Error, moduleName, &
+    ! & "Error allocating widths")
+
+    PRINT *,' '
+
+    frequencies_info%first=1
+    widths_info%first=1
+
+    PRINT *,'size(freqs) = ',size(freqs)
+    CALL Allocate_Test(frequencies_info%values, SIZE(freqs), &
+         'frequencies_info%values',moduleName,frequencies_info%first)
+
+    DO k=frequencies_info%first,SIZE(freqs) 
+      frequencies_info%values(k)=freqs(k)
+    ENDDO
+    frequencies_info%units='MHz'
+    
+    PRINT *,'SIZE(wids) = ',size(wids)
+    CALL Allocate_Test(widths_info%values, SIZE(wids), &
+         & 'widths_info%values',moduleName,widths_info%first)
+    DO k=widths_info%first,SIZE(wids) 
+      widths_info%values(k)=wids(k)
+    ENDDO
+    widths_info%units='MHz'
+
+    PRINT *,'%%%%%%%%%%%%%%%%  Calling LoadSpectrometerType'
+    CALL LoadSpectrometerType(frequencies_info,&
+          & widths_info,  & 
+          & DEFERRED, & 
+          & DACS_Info, &
+          & name, &
+          & SpectrometerTypes, &
+          & SpectrometerTypeIndex, .TRUE.)
+    PRINT *,'%%%%%%%%%%%%%%%%  end LoadSpectrometerType'
+    ! --- end  loadSpectrometerType --------------------
+
+    ! --- begin loadBand --------------------
+    ! For LoadBand
+    PRINT *,'%%%%%%%%%%%%%%%%  calling LoadBand'
+    prefix='B1000F'
+    CenterFrequency=3.94500
+    suffix='dummy'
+    CALL LoadBand( CenterFrequency, &
+          & trim(prefix), &  ! Basically, the name of the band.
+          & RadiometerIndex, & 
+          & SpectrometerTypeIndex, &
+          & trim(Suffix), & 
+          & BandIndex, &
+          & verbose)
+
+    PRINT *,'%%%%%%%%%%%%%%%%  end LoadBand'
+    ! --- end loadBand --------------------
+    PRINT *,'%%%%%%%%%%%%%%%%  calling dump_SpectrometerTypes(SpectrometerTypes)'
+    CALL Dump_SpectrometerTypes(SpectrometerTypes)
+    PRINT *,'%%%%%%%%%%%%%%%%  end dump_SpectrometerTypes'
+    PRINT *,'======= calling dump_bands(bands)'
+    CALL Dump_Bands(Bands)
+    PRINT *,'======= done with dump_bands(bands)'
+    PRINT *,"%%%%%%%%%%%%%%%%  defining signal %%%%%%%%%%%%%"
+    ! Now, fill in the signal user defined type
+
+    ! Stuff from the band_t
+    PRINT *,'bandIndex = ',bandIndex
+    PRINT *,'CenterFrequency = ',CenterFrequency
+    PRINT*,'SpectrometerTypeIndex = ',SpectrometerTypeIndex
+
+    signal%band=bandIndex
+    signal%CenterFrequency=bands(bandIndex)%CenterFrequency
+    signal%spectrometerType=SpectrometerTypeIndex
+    
+    ! And the spectrometerType_t
+    signal%DACS=spectrometerTypes(SpectrometerTypeIndex)%DACS
+    signal%DEFERRED=spectrometerTypes(SpectrometerTypeIndex)%DEFERRED
+    IF (ASSOCIATED(spectrometerTypes((SpectrometerTypeIndex))%frequencies)) THEN 
+      signal%frequencies=>spectrometerTypes((SpectrometerTypeIndex))%frequencies
+    ENDIF
+    IF (ASSOCIATED(spectrometerTypes((SpectrometerTypeIndex))%widths)) THEN 
+      signal%widths=>spectrometerTypes((SpectrometerTypeIndex))%widths
+    ENDIF
+
+    ! and radiometer_t ---------------------------------------------------
+
+    signal%radiometer=RadiometerIndex
+    !CALL output("signal%radiometer = ",advance='yes')
+    
+    signal%LO=radiometers(RadiometerIndex)%LO
+    !CALL outputNamedValue("signal%LO",signal%LO,advance='yes')
+
+
+    Signal%instrumentModule=radiometers(RadiometerIndex)%instrumentModule
+    signal%singleSideBand=radiometers(RadiometerIndex)%singleSideBand
+
+    signal%direction=-1
+    signal%switch=0
+
+
+    PRINT *,'%%%%%%%%%% Calling AddSignalToDatabase'
+    signal%index = AddSignalToDatabase(signals,signal)
+    PRINT *,'%%%%%%%%%% end AddSignalToDatabase'
+
+    PRINT*,'+++++++ printing stuff having to do with signal%radiometer (.e.g radiometerIndex)'
+    CALL outputNamedValue('RadiometerIndex',RadiometerIndex)
+    CALL Dump(radiometers(RadiometerIndex))
+    PRINT*,'======================='
+    CALL Dump(radiometers(signals(signal%index)%radiometer))
+    !CALL display_string(signal%radiometer,advance='yes')
+    PRINT*,'+++++++ done printing stuff (radiometerIndex) '
+    
+    PRINT *,' %%%%%%%%%%%%% calling dump_signal %%%%%%%%%%%%%%%%5'
+    CALL Dump_Signals(signals)
+    PRINT *,' %%%%%%%%%%%%% Done dump_signal %%%%%%%%%%%%%%%%5'
+
+    PRINT *,'############## calling my Dump_Band'
+    call Dump_Band(bands(bandIndex))
+    PRINT *,'############## done my Dump_Band'
+
+    PRINT *,' %%%%%%%%%%%%%%%%% Calling CreateQtyTemplate %%%%%%%%%%%%%%%%%'
+    qband1000 = CreateQtyTemplate(l_radiance, &
+         startL1Maf_new, &
+         endL1Maf_new, &
+         filedatabase, &
+         qSignal="R1000CustomNM.B1000F" )!, &
+         ! qName='B1000F') 
+
+    PRINT *,' %%%%%%%%%% Done CreateQtyTemplate '
+
+    PRINT *,'stop!'
+    stop
+
+    ! Convert profile to MAF (Major Frame) number, Pranjit Saha
+    FileIndex2 = InitializeMLSFile( L1BFile2, content = 'l1boa', &
+      & name=trim(l1boa), shortName='L1BOA', type=l_hdf, access=DFACC_RDONLY )
+    FileIndex2 = AddFileToDataBase( FileDatabase2, L1BFile2 ) 
+
+    FileIndex2 = InitializeMLSFile( L2GPFile2, content = 'l2gp', &
+      & name=trim(L2GP), shortName='L2GP', &
+      & type=l_hdfeos, access=DFACC_RDONLY )
+    FileIndex2 = AddFileToDataBase( FileDatabase2, L2GPFile2 )
+
+    startL1Maf_new = L2ProfileToL1MAF( startProfile, FileDatabase2 )
+    endL1Maf_new = L2ProfileToL1MAF( endProfile, FileDatabase2 )
+
+    ! Read ptanGHz values from  MLS *DGM* file, Pranjit Saha
+    call Read_ptan(l2dgm, 'HDF5', startL1Maf_new, ptanValuesRead)    
+
+    !========================= Run the forward model ==========================
+
+    ! Read L1BOA file
+    error = InitializeMLSFile (l1bfile, content='l1boa', name=trim(l1boa), &
+    shortName='L1BOA', type=l_hdf, access=DFACC_RDONLY)
+    if (error /= 0) call MLSMessage (MLSMSG_Error, moduleName, &
+    "Error initializing " // trim(l1boa))
+    call mls_openfile (l1bfile, error)
+    if (error /= 0) call MLSMessage (MLSMSG_Error, moduleName, &
+    "Error opening " // trim(l1boa))
+    ! don't care about return value of the following function
+    i = AddFileToDatabase(filedatabase, l1bfile)
+
+   ! Create necessary template and vector for ptanGHz already read from file, Pranjit Saha
+   newer_qptanGHz = CreateQtyTemplate(l_ptan, startL1Maf_new, endL1Maf_new, &
+     & filedatabase=filedatabase, qInstModule='Ghz')
+   newer_ptanGHz  = CreateValue4AgileVector(newer_qptanGHz, value=ptanValuesRead)
+
+    ! Ming: Haley assumes 0-based indexing for L1Maf
+    startL1Maf_new = startL1Maf_new - 1
+    endL1Maf_new = endL1Maf_new - 1
+
+    ! read MLS input data file
+    call Read_Spectroscopy (spectroscopy, 'HDF5')
+    call ReadAntennaPatterns (antennaPatterns)
+    call ReadFilterShapes(filterShapes)
+    call ReadDACSFilterShapes (DACSFilterShapes)
+    call ReadPointingGrids (pointingGrids)
+
+    do i = 1, size(pfaFiles)
+        call ReadPFAFile (pfaFiles(i))
+
+    end do
+    do i = 1, size(l2pc)
+        call ReadHDF5L2PC (l2pc(i))
+    end do
+
+    vGridStandard37 = CreateVGrid (l_zeta, phyq_pressure, l_logarithmic, &
+                                   start=1000.0d0, formula="37:6")
+
+    vGridRefGPH = CreateVGrid (l_zeta, phyq_pressure, l_explicit, &
+                               values=(/100.0_r8/))
+    vGridStandard55 = CreateVGrid (l_zeta, phyq_pressure, l_explicit, &
+    values=(/1000.00_r8,  825.404_r8,  681.292_r8,  562.341_r8,  464.159_r8,  &
+             383.119_r8,  316.228_r8,  261.016_r8,  215.443_r8,  177.828_r8,  &
+             146.780_r8,  121.153_r8,  100.000_r8,  82.5404_r8,  68.1292_r8,  &
+             56.2341_r8,  46.4159_r8,  38.3119_r8,  31.6228_r8, 26.1016_r8,  &
+             21.5443_r8,  17.7828_r8,  14.6780_r8,  12.1153_r8,  10.0000_r8, &
+             8.25404_r8,  6.81292_r8,  5.62341_r8,  4.64159_r8,  3.83119_r8,  &
+             3.16228_r8,  2.61016_r8,  2.15443_r8,  1.77828_r8,  1.46780_r8,  &
+             1.21153_r8,  1.00000_r8,  0.681292_r8, 0.464159_r8,  0.316228_r8, &
+             0.215443_r8, 0.146780_r8,  0.100000_r8,  0.0464159_r8, 0.0215443_r8, &
+             0.01000_r8,  0.00464159_r8, 0.00215443_r8, 0.00100_r8, 0.000464159_r8,&
+             0.000215443_r8, 0.000100_r8, 4.64159e-05_r8, 2.15443e-05_r8, 1.00000e-05_r8 /))
+
+    vGridTESCO = CreateVGrid (l_zeta, phyq_pressure, l_explicit, &
+   values= (/   1.00829E+03_r8,   1.00000E+03_r8,   9.08514E+02_r8,   8.25402E+02_r8,   7.49893E+02_r8, &
+            6.81291E+02_r8,   6.18966E+02_r8,   5.62342E+02_r8,   5.10898E+02_r8,   4.64160E+02_r8, &
+            4.21698E+02_r8,   3.83117E+02_r8,   3.48069E+02_r8,   3.16227E+02_r8,   2.87298E+02_r8, &
+            2.61016E+02_r8,   2.37137E+02_r8,   2.15444E+02_r8,   1.95735E+02_r8,   1.77829E+02_r8, &
+            1.61561E+02_r8,   1.46779E+02_r8,   1.33352E+02_r8,   1.21152E+02_r8,   1.10069E+02_r8, &
+            1.00000E+02_r8,   9.08518E+01_r8,   8.25406E+01_r8,   7.49896E+01_r8,   6.81295E+01_r8, &
+            6.18963E+01_r8,   5.62339E+01_r8,   5.10896E+01_r8,   4.64158E+01_r8,   4.21696E+01_r8, &
+            3.83119E+01_r8,   3.48071E+01_r8,   3.16229E+01_r8,   2.87299E+01_r8,   2.61017E+01_r8, &
+            2.37136E+01_r8,   2.15443E+01_r8,   1.95734E+01_r8,   1.77828E+01_r8,   1.61560E+01_r8, &
+            1.46780E+01_r8,   1.33352E+01_r8,   1.21153E+01_r8,   1.10070E+01_r8,   1.00000E+01_r8, &
+            9.08514E+00_r8,   8.25402E+00_r8,   6.81291E+00_r8,   5.10898E+00_r8,   4.64160E+00_r8, &
+            3.16227E+00_r8,   2.61016E+00_r8,   2.15443E+00_r8,   1.61560E+00_r8,   1.33352E+00_r8, &
+            1.00000E+00_r8,   6.81292E-01_r8,   3.83118E-01_r8,   2.15443E-01_r8,   1.00000E-01_r8 /))
+
+    vGridExtinction = CreateVGrid (l_zeta, phyq_pressure, l_logarithmic, &
+         start=1000.0d0, formula="21:12,14:6,12:3")
+
+    ! Have insetoverlaps, and not single
+    hGridStandard = CreateRegularHGrid(GHz, 0.0_r8, 1.5_r8, .true., &
+                                       filedatabase, startL1Maf_new, endL1Maf_new)
+
+    fGridExtinctionConstant = CreateFGrid(L_IntermediateFrequency, (/0.0_r8/))
+
+    ! Construct state vector
+    state = CreateAgileVector(name='state')
+
+    qtemp = CreateQtyTemplate(l_temperature, qName='temperature', &
+                              avgrid=vGridStandard55, ahgrid=hGridStandard)
+    temperature = CreateValue4AgileVector(qtemp, value=TemperatureInput)
+    ! call outputNamedValue ( 'is T qtyTemplate%crossAngles associated?', &
+    !   & associated(qtemp%crossAngles) )
+    ! call outputNamedValue ( 'is T%qtyTemplate%crossAngles associated?', &
+    !   & associated(temperature%template%crossAngles) )
+    call AddValue2Vector(state, temperature)
+
+    qCO = CreateQtyTemplate(l_vmr, avgrid=vGridTESCO, ahgrid=hGridStandard, &
+    qMolecule=l_co, qName='CO')
+    !co = CreateValue4AgileVector(qco, value=COInput)
+    !call AddValue2Vector(state, co)
+
+    o2 = CreateMLSValue_O2 (vGridStandard37, hGridStandard)
+    call AddValue2Vector(state, o2)
+
+    qSO2 = CreateQtyTemplate(l_vmr, avgrid=vGridStandard37, ahgrid=hGridStandard, &
+    qMolecule=l_so2, qName='SO2')
+    so2 = CreateValue4AgileVector(qSO2, value=SO2Input)
+    call AddValue2Vector(state, so2)
+
+    qHNO3 = CreateQtyTemplate(l_vmr, avgrid=vGridStandard37, ahgrid=hGridStandard, &
+    qMolecule=l_hno3, qName='HNO3')
+    hno3 = CreateValue4AgileVector(qhno3, value=HNO3Input)
+    call AddValue2Vector(state, hno3)
+
+    qO3 = CreateQtyTemplate(l_vmr, avgrid=vGridTESCO, ahgrid=hGridStandard, &
+    ! qO3 = CreateQtyTemplate(l_vmr, avgrid=vGridStandard55, ahgrid=hGridStandard, &
+    qMolecule=l_o3, qName='O3')
+    o3 = CreateValue4AgileVector(qo3, value=O3Input)
+    call AddValue2Vector(state, o3)
+
+    qExtinctionv2r3 = CreateQtyTemplate(l_vmr, avgrid=vGridStandard55, &
+    ! qExtinctionv2r3 = CreateQtyTemplate(l_vmr, avgrid=vGridExtinction, &
+    ahgrid=hGridStandard, afgrid=fgridExtinctionConstant, qRadiometer=Radiometer, &
+    qMolecule=l_extinctionv2)
+    extinctionv2r3 = CreateValue4AgileVector(qExtinctionv2r3, value=extinctionV2R3Input)
+    call AddValue2Vector(state, extinctionv2r3)
+    PRINT*,'print state'
+    call outputnamedValue( 'size(state)', size(state%quantities) )
+    call Dump( state, details=-1 )
+
+    stateExtra = CreateAgileVector(name='stateExtra')
+
+    qPhitanGHz = CreateQtyTemplate(l_phitan, startL1Maf_new, endL1Maf_new, qInstModule=GHz, &
+    filedatabase=filedatabase, qName='phitanGHz')
+    phitanGhz = CreateValue4AgileVector(qPhitanGhz)
+    call FillPhitanQuantity(phitanGhz)
+    call AddValue2Vector(stateExtra, phitanGhz)
+
+    qRefGPH = CreateQtyTemplate(l_refGPH, avgrid=vGridRefGPH, &
+    ahgrid=hGridStandard, qName='refGPH')
+    refGPH = CreateValue4AgileVector(qRefGPH, spreadvalue=refGPHInput) ! unit is meter
+    call AddValue2Vector(stateExtra, refGPH)
+
+    qGPH = CreateQtyTemplate(l_gph, avgrid=vGridStandard55, ahgrid=hGridStandard, &
+                             qName='GPH')
+    gph = CreateValue4AgileVector(qGPH)
+    call AddValue2Vector(stateExtra, gph)
+
+    qIsotoperatioO_18_O = CreateQtyTemplate(l_isotoperatio, &
+    qName='isotoperatioO_18_O', qmolecule=l_o_18_o)
+    isotoperatioO_18_O = CreateValue4AgileVector(qIsotoperatioO_18_O, &
+    spreadvalue=0.00409000_r8)
+    call AddValue2Vector(stateExtra, isotoperatioO_18_O)
+
+    qIsotoperatioO3 = CreateQtyTemplate(l_isotoperatio, qName='isotoperatioO3', &
+    qmolecule=l_o3)
+    isotoperatioO3 = CreateValue4AgileVector(qIsotoperatioO3, &
+    spreadvalue=0.99290103_r8)
+    call AddValue2Vector(stateExtra, isotoperatioO3)
+
+    qIsotoperatioO3_ASYM_O_18 = CreateQtyTemplate(l_isotoperatio, &
+    qmolecule=l_o3_asym_o_18, qName='isotoperatioO3_ASYM_O_18')
+    isotoperatioO3_ASYM_O_18 = CreateValue4AgileVector(qIsotoperatioO3_ASYM_O_18, &
+    spreadvalue=0.00398194_r8)
+    call AddValue2Vector(stateExtra, isotoperatioO3_ASYM_O_18)
+
+    qIsotoperatioO3_SYM_O_18 = CreateQtyTemplate(l_isotoperatio, &
+    qmolecule=l_o3_sym_o_18, qName='isotoperatioO3_SYM_O_18')
+    isotoperatioO3_SYM_O_18 = CreateValue4AgileVector(qIsotoperatioO3_SYM_O_18, &
+    spreadvalue=0.00199097_r8)
+    call AddValue2Vector(stateExtra, isotoperatioO3_SYM_O_18)
+
+    qIsotoperatioO3_V2 = CreateQtyTemplate(l_isotoperatio, qmolecule=l_o3_v2, &
+    qName='isotoperatioO3_V2')
+    isotoperatioO3_V2 = CreateValue4AgileVector(qIsotoperatioO3_V2, &
+    spreadvalue=0.99290103_r8)
+    call AddValue2Vector(stateExtra, isotoperatioO3_V2)
+
+    qIsotoperatioS_32_O2 = CreateQtyTemplate(l_isotoperatio, qmolecule=l_s_32_o2, &
+    qName='isotoperatioS_32_O2')
+    isotoperatioS_32_O2 = CreateValue4AgileVector(qIsotoperatioS_32_O2, &
+    spreadvalue=0.94568002_r8)
+    call AddValue2Vector(stateExtra, isotoperatioS_32_O2)
+
+    qIsotoperatioHNO3 = CreateQtyTemplate(l_isotoperatio, qmolecule=l_hno3, &
+    qName='isotoperatioHNO3')
+    isotoperatioHNO3 = CreateValue4AgileVector(qIsotoperatioHNO3, &
+    spreadvalue=0.98910999_r8)
+    call AddValue2Vector(stateExtra, isotoperatioHNO3)
+
+    qIsotoperatioCO = CreateQtyTemplate(l_isotoperatio, qmolecule=l_co, &
+    qName='isotoperatioCO')
+    isotoperatioCO = CreateValue4AgileVector(qIsotoperatioCO, &
+    spreadvalue=0.98654002_r8)
+    call AddValue2Vector(stateExtra, isotoperatioCO)
+
+    ! Fill orbit inclination, tangent geocentric altitude with
+    ! data from MLS L1B file, and use them, along with other
+    ! quantities to calculate ptan
+    limbSidebandFraction7L = CreateMLSValue_LSF(7, .false.)
+    call AddValue2Vector(stateExtra, limbSidebandFraction7L)
+
+    limbSidebandFraction7U = CreateMLSValue_LSF(7, .true.)
+    call AddValue2Vector(stateExtra, limbSidebandFraction7U)
+
+    elev7L = CreateMLSValue_ElevationOffset(7, .false.)
+    call AddValue2Vector(stateExtra, elev7L)
+
+    elev7U = CreateMLSValue_ElevationOffset(7, .true.)
+    call AddValue2Vector(stateExtra, elev7U)
+
+    earthReflectivity = CreateMLSValue_EarthReflectivity()
+    call AddValue2Vector(stateExtra, earthReflectivity)
+
+    orbitInclination = CreateMLSValue_FromL1BOA (l_orbitInclination, sc, &
+    filedatabase, startL1Maf_new, endL1Maf_new)
+    call AddValue2Vector(stateExtra, orbitInclination)
+
+    spaceRadiance = CreateMLSValue_SpaceRadiance()
+    call AddValue2Vector(stateExtra, spaceRadiance)
+
+    scGeocAlt = CreateMLSValue_FromL1BOA(l_scgeocalt, sc, filedatabase, &
+    startL1Maf_new, endL1Maf_new)
+    call AddValue2Vector(stateExtra, scGeocAlt)
+
+    tngtGeocAltGHz = CreateMLSValue_FromL1BOA (l_tngtgeocalt, GHz, &
+    filedatabase, startL1Maf_new, endL1Maf_new)
+    call AddValue2Vector(stateExtra, tngtGeocAltGHz)
+
+    losVelGHz = CreateMLSValue_FromL1BOA(l_losVel, GHz, filedatabase, &
+    startL1Maf_new, endL1Maf_new)
+    call AddValue2Vector(stateExtra, losVelGHz)
+
+    radiance = CreateAgileVector(name='simulatedRadiance')
+
+   !! ORIGINAL == TRUE => running band7; original == false => band1000
+
+    ! Add ptan_GHz values read from file in the stateExtra, Pranjit Saha
+    CALL AddValue2Vector(stateExtra, newer_ptanGHz)
+    nQtys = SIZE(stateExtra%quantities)
+    PRINT *, 'After adding ptanGHz, n is ', nQtys
+    CALL Dump( stateextra%Quantities(nQtys), details=1 )
+
+
+    PRINT *,'printing radiance (before forward model)'
+    CALL outputnamedValue( 'size(radiance)', &
+         SIZE(radiance%quantities) )
+    CALL Dump( radiance, details=0 )
+
+    PRINT *,'Original = ',original
+
+    
+    IF ( Original ) THEN
+     qband7 = CreateQtyTemplate(l_radiance, startL1Maf_new, endL1Maf_new, filedatabase, &
+          qSignal="R3:240.B7F:O3", qName='band7')
+     band7 = CreateValue4AgileVector(qband7)
+     ! need to read precision before reading quantity
+     band7 = CreateValue4AgileVector(qband7)
+     precision7 = CreateValue4AgileVector(qband7)
+
+     call AddValue2Vector(radiance, band7)
+     CALL AddValue2Vector(observed, band7)
+     ! precision of a quantity has the same template as the quantity
+     CALL AddValue2Vector(obsPrecision, precision7)
+
+     ! need to fill precision first
+     CALL FillVectorQuantityFromL1B(precision7, startL1Maf_new, endL1Maf_new, &
+          filedatabase, .TRUE.)
+     ! then fill the quantity and setting precision at the same time
+     CALL FillVectorQuantityFromL1B(band7, startL1Maf_new, endL1Maf_new, &
+          filedatabase, .FALSE., precisionQuantity=precision7)
+
+     ! then we need to get the baseline correction and noise
+     qbaseline7 = CreateQtyTemplate(l_l1bmafbaseline, startL1Maf_new, endL1Maf_new, &
+          filedatabase, qSignal="R3:240.B7F:O3", qname='baseline 7')
+
+     correction7 = CreateValue4AgileVector (qbaseline7)
+     ! the space in ' Baseline' is very important
+     CALL FillVectorQuantityFromL1B(correction7, startL1Maf_new, endL1Maf_new, &
+          filedatabase, .FALSE., suffix=' Baseline')
+
+     ! apply correction to the quantity
+     CALL ApplyBaseline (band7, correction7, .FALSE., .FALSE.)
+
+     ! get the noise
+     noise7 = CreateValue4AgileVector(qbaseline7) ! same template as baseline
+     ! again, the string must match exactly
+     CALL FillVectorQuantityFromL1B(noise7, startL1Maf_new, endL1Maf_new, &
+          filedatabase, .FALSE., suffix=' Baseline precision')
+
+     ! apply the noise to the precision
+     CALL ApplyBaseline (precision7, noise7, .TRUE., .FALSE.)
+
+   ELSE
+      !! test17 and up. Add the following declarations (from Paul)
+     qband1000 = CreateQtyTemplate(l_radiance, &
+          startL1Maf_new, &
+          endL1Maf_new, &
+          filedatabase, &
+          qSignal="R1000CustomNM:dummy.B1000F:dummy", &
+          qName='B1000F')
+     band1000 = CreateValue4AgileVector(qband1000)
+     precision1000 = CreateValue4AgileVector(qband1000)
+     CALL AddValue2Vector(radiance, band1000)
+     CALL AddValue2Vector(observed, band1000)
+
+
+     ! <note from Paul>
+     ! Every radiance must be accompanied by corresponding side band
+     ! fractions and elevation offsets
+     !
+     ! in most cases split according to lower 'L' or upper 'U' sidebands
+     ! Note that we might have used the wrong value, 7, instead of 1000.
+     ! However, that wrong signal would have become deeply embedded
+     ! So we'll try doing by hand what CreateMLSValue_ does automatically
+     ! <end note from Paul>
+     
+     ! limbSidebandFraction1000L = CreateMLSValue_LSF(7, .false.)
+     ! <whd> may (probably will) need to change that to `customNM'
+     TEMPLATE = CreateQtyTemplate (l_limbsidebandFraction, &
+          qSignal='R1000Custom:dummy.B1000LF:dummy')
+     limbSidebandFraction1000L = CreateValue4AgileVector(TEMPLATE, &
+          VALUE=vlimbSidebandFraction7L)
+     CALL AddValue2Vector(stateExtra, limbSidebandFraction1000L)
+
+     ! limbSidebandFraction1000U = CreateMLSValue_LSF(7, .true.)
+     TEMPLATE = CreateQtyTemplate (l_limbsidebandFraction, &
+          qSignal='R1000Custom:dummy.B1000UF:dummy')
+     limbSidebandFraction1000U = CreateValue4AgileVector(TEMPLATE, &
+          VALUE=vlimbSidebandFraction7U)
+     CALL AddValue2Vector(stateExtra, limbSidebandFraction1000U)
+
+     ! elev1000L = CreateMLSValue_ElevationOffset(7, .false.)
+     TEMPLATE = CreateQtyTemplate (l_elevOffset, &
+          qSignal='R1000Custom:dummy.B1000LF:dummy')
+     elev1000L  = CreateValue4AgileVector(TEMPLATE, spreadvalue=velev7L)
+     CALL AddValue2Vector(stateExtra, elev1000L)
+     nQtys = SIZE(stateExtra%quantities)
+     PRINT *, 'After adding elev1000L, n is ', nQtys
+     CALL Dump( stateextra%Quantities(nQtys), details=1 )
+
+     ! elev1000U = CreateMLSValue_ElevationOffset(7, .true.)
+     TEMPLATE = CreateQtyTemplate (l_elevOffset, &
+          qSignal='R1000Custom:dummy.B1000UF:dummy')
+     elev1000U  = CreateValue4AgileVector(TEMPLATE, spreadvalue=velev7U)
+     CALL AddValue2Vector(stateExtra, elev1000U)
+     nQtys = SIZE(stateExtra%quantities)
+     PRINT *, 'After adding elev1000U, n is ', nQtys
+     CALL Dump( stateextra%Quantities(nQtys), details=1 )
+
+     ! need to fill precision first
+     CALL FillVectorQuantityFromL1B(precision1000, startL1Maf_new, endL1Maf_new, &
+          filedatabase, .TRUE.)
+     ! then fill the quantity and setting precision at the same time
+     CALL FillVectorQuantityFromL1B(band1000, startL1Maf_new, endL1Maf_new, &
+          filedatabase, .FALSE., precisionQuantity=precision1000)
+
+     ! then we need to get the baseline correction and noise
+     ! (commented out by whd) qbaseline1000 =
+     ! CreateQtyTemplate(l_l1bmafbaseline, startL1Maf_new,
+     ! endL1Maf_new, & filedatabase,
+     ! qSignal='R1000Custom:dummy.B1000F:dummy', qname='baseline
+     ! 1000')
+
+     ! correction1000 = CreateValue4AgileVector (qbaseline1000) ! the
+     ! space in ' Baseline' is very important CALL
+     ! FillVectorQuantityFromL1B(correction1000, startL1Maf_new,
+     ! endL1Maf_new, & filedatabase, .FALSE., suffix=' Baseline')
+
+     ! ! apply correction to the quantity
+     ! CALL ApplyBaseline (band1000, correction1000, .FALSE., .FALSE.)
+
+     ! get the noise (commented out by whd) noise1000 =
+     ! CreateValue4AgileVector(qbaseline1000) ! same template as
+     ! baseline ! again, the string must match exactly CALL
+     ! FillVectorQuantityFromL1B(noise1000, startL1Maf_new,
+     ! endL1Maf_new, & filedatabase, .FALSE., suffix=' Baseline
+     ! precision')
+
+     ! ! apply the noise to the precision
+     ! CALL ApplyBaseline (precision1000, noise1000, .TRUE., .FALSE.)
+
+     !! end add for 2020/08/30 sideband and elevation offset
+
+
+
+     PRINT *,'printing radiance (before forward model)'
+     CALL outputnamedValue( 'size(radiance)', &
+          SIZE(radiance%quantities) )
+     CALL Dump( radiance, details=0 )
+
+   ENDIF !! band1000 block
+
+   ! test 25. Print some stuff
+   PRINT *,'printing stateExtra'
+   CALL outputnamedValue( 'size(stateExtra)', &
+        SIZE(stateExtra%quantities) )
+   CALL Dump( stateExtra, details=1 )
+
+   !! starting at test21, added sideband and elevation stuff as per PW 2020/08/31
+
+
+   
+   ! We no longer need vGrid because the quantity templates have copied it
+   CALL DestroyVGridContents(vGridStandard55)
+   CALL DestroyVGridContents(vGridStandard37)
+   CALL DestroyVGridContents(vGridTESCO)
+   ! No long need hGrid, fGrid either
+   CALL DestroyHGridContents(hGridStandard)
+   CALL DestroyFGridContents(fGridExtinctionConstant)
+   
+   ! GPH is filled by the forward model
+   
+   ! Create jacobian
+   jacobian = CreatePlainMatrix(radiance, state)
+   
+   ! Call the forward model
+   CALL ForwardModel2 (0, forwardModelConfigDatabase, state, &
+        stateExtra, radiance, jacobian)
+   
+   
+   PRINT *,'printing radiance (after forward model)'
+   CALL outputnamedValue( 'size(radiance)', &
+        SIZE(radiance%quantities) )
+   CALL Dump( radiance, details=0 )
+   
+   
+   PRINT *,'shape(Jacobian)'
+   CALL Dump( SHAPE(Jacobian%BLOCK), '2d shape' )
+   
+   ! Write 'state', 'radiance', 'jacobian', 'ptanGHz' in separate files, Pranjit Saha
+   CALL Write_To_File1 (state, radiance, jacobian, newer_ptanGHz)
+   
+   !=================== Finish running the forward model =====================
+   
+   !== Clean up anything that is not related to reading observed radiance ====
+   CALL DestroyMatrix(jacobian)
+   CALL DestroyAgileVectorContent (state)
+   CALL DestroyAgileVectorContent (stateExtra)
+   CALL Destroy_DACS_Filter_Database
+   CALL Destroy_Filter_Shapes_Database
+   CALL Destroy_Ant_Patterns_Database
+   CALL Destroy_SpectCat_Database
+   CALL Destroy_Line_Database
+   CALL Destroy_Pointing_Grid_Database
+   CALL DestroyL2PCDatabase
+   CALL Destroy_PFADataBase
+   
+   ! Destroy all quantity templates that goes in state and stateExtra
+   IF ( .FALSE. ) THEN
+     CALL DestroyQuantityTemplateContents(qtemp)
+     CALL DestroyQuantityTemplateContents(qCO)
+     CALL DestroyQuantityTemplateContents(qSO2)
+     CALL DestroyQuantityTemplateContents(qHNO3)
+     CALL DestroyQuantityTemplateContents(qO3)
+     CALL DestroyQuantityTemplateContents(qExtinctionv2r3)
+     CALL DestroyQuantityTemplateContents(newer_qPtanGHz)
+     CALL DestroyQuantityTemplateContents(qPhitanGHz)
+     CALL DestroyQuantityTemplateContents(qRefGPH)
+     CALL DestroyQuantityTemplateContents(qGPH)
+     CALL DestroyQuantityTemplateContents(qIsotoperatioO_18_O)
+     CALL DestroyQuantityTemplateContents(qIsotoperatioO3)
+     CALL DestroyQuantityTemplateContents(qIsotoperatioO3_ASYM_O_18)
+     CALL DestroyQuantityTemplateContents(qIsotoperatioO3_SYM_O_18)
+     CALL DestroyQuantityTemplateContents(qIsotoperatioO3_V2)
+     CALL DestroyQuantityTemplateContents(qIsotoperatioS_32_O2)
+     CALL DestroyQuantityTemplateContents(qIsotoperatioHNO3)
+     CALL DestroyQuantityTemplateContents(qIsotoperatioCO)
+     ! even quantities created by CFM routines has templates
+     CALL DestroyQuantityTemplateContents(o2%TEMPLATE)
+     CALL DestroyQuantityTemplateContents(limbSidebandFraction7L%TEMPLATE)
+     CALL DestroyQuantityTemplateContents(limbSidebandFraction7U%TEMPLATE)
+     CALL DestroyQuantityTemplateContents(elev7L%TEMPLATE)
+     CALL DestroyQuantityTemplateContents(elev7U%TEMPLATE)
+     CALL DestroyQuantityTemplateContents(earthReflectivity%TEMPLATE)
+     CALL DestroyQuantityTemplateContents(orbitInclination%TEMPLATE)
+     CALL DestroyQuantityTemplateContents(spaceRadiance%TEMPLATE)
+     CALL DestroyQuantityTemplateContents(scGeocAlt%TEMPLATE)
+     CALL DestroyQuantityTemplateContents(tngtGeocAltGHz%TEMPLATE)
+     CALL DestroyQuantityTemplateContents(losVelGHz%TEMPLATE)
+   ENDIF
+   ! stop
+   !========================== finish cleaning ===============================
+   
+   !====================== Read observed radiance ============================
+   ! Open l1brad
+   error = InitializeMLSFile(l1bfile, content='l1brad', &
+        name=TRIM(l1brad), shortName='L1BRAD', TYPE=l_hdf, access=DFACC_RDONLY)
+   IF (error /= 0) CALL MLSMessage (MLSMSG_Error, moduleName, &
+        "Error initializing " // TRIM(l1brad))
+   
+   CALL mls_openFile(l1bfile, error)
+   IF (error /= 0 ) CALL MLSMessage (MLSMSG_Error, moduleName, &
+        "Error opening " // TRIM(l1brad))
+   
+   ! Add it to the filedatabase
+   ! AddFileToDatabase doesn't return an error.
+   ! I don't care about the return value of AddFileToDatabase,
+   ! but Fortran dictate that the return value has to be captured,
+   ! so error is being used as a dummy variable.
+   error = AddFileToDatabase(filedatabase, l1bfile)
+   
+   observed = CreateAgileVector(name='observedRadiance')
+   obsPrecision = CreateAgileVector(name='observedRadiancePrecision')
+   
+   
+   ! Write 'band7' and 'precision7' in separate text files, Pranjit Saha
+   IF (Original) THEN
+     CALL Write_To_File2 (band7, precision7)
+   ELSE 
+     CALL Write_To_File2 (band1000, band1000)
+   ENDIF
+   
+   !==================== Finish reading observed radiance ====================
+   
+   !============= At this point we don't need L1B file anymore ===============
+   DO i = 1, SIZE(filedatabase)
+     CALL mls_closefile(filedatabase(i))
+   END DO
+   
+   DEALLOCATE(filedatabase)
+   NULLIFY(filedatabase)
+   !================== Done closing and clean up file objects ================
+   
+     PRINT *,'printing observed, radiance vectors'
+     PRINT *,'*** observed ***'
+     CALL outputnamedValue( 'size(observed)', &
+          SIZE(observed%quantities) )
+     CALL Dump( observed, details=0 )
+
+     PRINT *,'*** radiance ***'
+     CALL outputnamedValue( 'size(radiance)', &
+          SIZE(radiance%quantities) )
+     CALL Dump( radiance, details=0 )
+
+
+   !diffVector = observed - radiance
+   
+   !===== Clean up calculated and observed radiance and related vectors ======
+   CALL DestroyAgileVectorContent (radiance)
+   CALL DestroyAgileVectorContent (observed)
+   call DestroyAgileVectorContent (diffVector)
+   call DestroyAgileVectorContent (obsPrecision)
+
+   call DestroyVectorValueContent (noise7)
+   call DestroyVectorValueContent (correction7)
+
+   call DestroyQuantityTemplateContents(qband7)
+   call DestroyQuantityTemplateContents(qbaseline7)
+
+   !====== Done cleaning up ==================
+
+   call CFM_MLSCleanup(forwardModelConfigDatabase)
+
+
+
+!=================================
+
+
+ CONTAINS
+ 
+ ! Here follow subroutines that emulate the code of the parser when it
+ ! encounters lines in the l2cf like 
+ 
+ ! FBCustom: spectrometerType, first=1, channels=[ $
+ !   -575.0 MHz: 96.0 MHz,  -479.0 MHz: 96.0 MHz, ... <this continues on>....
+ !
+ ! -- and -- 
+ !
+ ! ;; <whd> Custom. Band: Test running on 2 channels from a custom frequency
+ ! B1000F: band, suffix="dummy", radiometer=R1000Custom, $
+ !     spectrometerType=FBcustom, $
+ !       centerFrequency= 3.94500 GHz
+ ! -- and, finally --
+ !
+ !   signal, band=B1000F, switch=0, $
+ !       spectrometer=0, direction=-1 ;; **** CUSTOM
+ !
+ ! 
+ !=================================
+
+
+
+ ! Emulate the code around lines 511 - 610 MLSSignals_m.f90, -- ( the
+ ! case block starting with case(s_spectrometertype) ) -- so as to provide the
+ ! capability of adding an arbitrary 'signal' to the signals database
+ ! without having to add the appropriate lines to the signals.l2cf
+
+ ! This routine will load a newly constructed SpectrometerType to the
+ ! SpectrometerType Databse (creating it, if need be!)
+ 
+ ! Returns the index of this SpectrometerType in the SpectrometerType
+ ! Database
+
+
+     SUBROUTINE LoadSpectrometerType ( frequencies_info,&
+          & widths_info,  & 
+          & DEFERRED, &
+          & dacs_info, &
+          & name, &
+          & SpectrometerTypeDatabase, &
+          & index, &
+          & verbose)
+
+       USE CFM , ONLY: Frequency_Info_T, DACS_Info_T
+       USE MLSKinds, ONLY: R8
+       USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+
+       USE Symbol_Table, ONLY: Enter_Terminal
+       USE Symbol_Types, ONLY: t_identifier
+       USE MLSSignals_M, ONLY: SpectrometerType_T,&
+            & AddspectrometertypetoDatabase
+
+       USE Allocate_Deallocate, ONLY: Deallocate_Test, Allocate_Test
+       USE DUMP_0,ONLY : Dump
+
+
+
+       IMPLICIT NONE
+
+       ! arguments
+
+       TYPE :: DACS_Multipliers_T
+          REAL(r8) :: start, step, width
+       END TYPE DACS_Multipliers_T
+
+       TYPE (Frequency_Info_T), INTENT(in), OPTIONAL :: frequencies_info,widths_info
+       TYPE (DACS_Info_T), INTENT(in),optional :: dacs_info
+       !REAL(r8), INTENT(in),OPTIONAL :: frequencies(:),widths(:)
+       ! CHARACTER(len=3), INTENT(in):: freqUnits, widthUnits
+       ! INTEGER,INTENT(in),OPTIONAL ::first,last
+       ! REAL(r8),OPTIONAL,INTENT(in):: start,step,width
+       CHARACTER(len=*),OPTIONAL::name
+       LOGICAL, INTENT(in),OPTIONAL:: DEFERRED
+       LOGICAL, optional:: verbose
+       
+       INTEGER,INTENT(out):: index ! Index into SpectrometerTypeDatabase
+       !return variable
+
+       TYPE(SpectrometerType_T), dimension(:), &
+            & POINTER,INTENT(inout) :: SpectrometerTypeDatabase
+
+       ! local variables
+
+       TYPE(SpectrometerType_T) :: SpectrometerType
+       INTEGER :: n1, n2,k
+       CHARACTER(len=128) :: msg, SubroutineName
+
+       ! This variable keeps track of whether [first, step, width,
+       ! last] for DACS is present
+       LOGICAL :: sswl(4)
+       REAL(r8):: multiplier=1.0
+       TYPE (DACS_Multipliers_T) :: dacs_multipliers
+       
+       ! These convert to the indicated units. Everything should be in
+       ! MHz, so, if DACS_Info%{start,step,width}_units='GHz',
+       ! multiplier=1e3. If the units == 'kHz', multiplier=1e-3
+
+       dacs_multipliers%start=1.0
+       dacs_multipliers%step=1.0
+       dacs_multipliers%width=1.0
+
+
+       SubroutineName="LoadSpectrometerType"
+       if (.not.present(verbose)) verbose=.FALSE.
+       IF (verbose)  THEN 
+         PRINT *,'*********************** begin loadSpectrometerType *******************'
+       ENDIF
+       ! In the L2CF one can specify, 
+       !
+       ! 1) first+channels (`channels INCLUDE a freqency and width, which
+       ! the code pulls apart and store in separate fields in the user
+       ! defined type.) This is used for all of the FB and BF spectrometer
+       ! types.
+       !
+       ! 2) start/last/step/width (DACS)
+       !
+       ! 3) A deferred == true. and tell the system what's happening
+       ! later. The WF bands
+       !
+       ! 1) and 2) are incompatible.
+
+       sswl=(/.FALSE.,.FALSE.,.FALSE.,.FALSE./)
+       IF (.NOT.DEFERRED) THEN 
+         IF ( PRESENT(frequencies_info) .AND. (.NOT.PRESENT(widths_info)))THEN 
+           msg="Got FREQUENCIES, but no WIDTHS" 
+           CALL MLSMessage ( MLSMSG_Error, SubroutineName, TRIM(msg))
+         ENDIF
+       ENDIF
+
+
+       ! IF (ALL(sswl) .AND. (.NOT. (DACS))) THEN 
+       !   CALL MLSMessage ( MLSMSG_Error, SubroutineName, &
+       !        'all(START,STEP,WIDTH,LAST but DACS=FALSE')
+       ! ENDIF
+
+       IF ( PRESENT(DACS_Info) .AND. (DACS_Info%DACS))  THEN 
+
+         IF (verbose) PRINT *,'Present(DACS_Info%DACS) =',DACS_Info%DACS
+         ! Here we get the frequecies from the DACS declaration
+
+         SpectrometerType%dacs = DACS_Info%DACS
+
+         sswl(1)=(DACS_info%start /= -1.0)
+         IF (sswl(1)) THEN 
+           IF (verbose) PRINT *,'Got start = ',DACS_Info%start
+         ENDIF
+         sswl(2)=(DACS_info%step /= -1.0)
+         IF (sswl(2)) THEN 
+           IF (verbose) PRINT *,'Got step = ',DACS_Info%step
+         ENDIF
+         sswl(3)=(DACS_info%width /= -1)
+         IF (sswl(3)) THEN 
+           IF (verbose) PRINT *,'Got width = ',DACS_Info%width
+         ENDIF
+         sswl(4)=(DACS_Info%last /= -1)
+         IF (sswl(4)) THEN 
+           IF (verbose) PRINT *,'got last = ',DACS_Info%last
+         ENDIF
+         
+         IF (.NOT.(ALL(sswl))) THEN 
+           CALL MLSMessage ( MLSMSG_Error, SubroutineName, &
+                & 'DACS==True, but not(all(START,STEP,WIDTH,LAST are defined!' )
+         ENDIF
+         
+         !configure the multiplies
+         IF (DACS_Info%start_units == 'kHz') THEN 
+           dacs_multipliers%start=1e-3
+         ELSEIF (DACS_Info%start_units == 'GHz') THEN 
+           dacs_multipliers%start=1e3
+         ENDIF
+         
+         IF (DACS_Info%step_units == 'kHz') THEN 
+           dacs_multipliers%step=1e-3
+         ELSEIF (DACS_Info%step_units == 'GHz') THEN 
+           dacs_multipliers%step=1e3
+         ENDIF
+         
+         IF (DACS_Info%width_units == 'kHz') THEN 
+           dacs_multipliers%width=1e-3
+         ELSEIF (DACS_Info%width_units == 'GHz') THEN 
+           dacs_multipliers%width=1e3
+         ENDIF
+         
+         
+         ! template from ~lines 577 in MLSSignals_m.f90
+         CALL Allocate_Test ( spectrometerType%frequencies, DACS_Info%last, &
+              & 'spectrometerType%frequencies', SubroutineName, &
+              & lowBound = DACS_Info%first )
+         CALL allocate_Test ( spectrometerType%widths, DACS_Info%last, &
+              & 'spectrometerType%widths', SubroutineName, &
+              & lowBound = DACS_Info%first )
+         spectrometerType%frequencies(DACS_Info%first) = &
+              & DACS_Info%start * dacs_multipliers%start
+         spectrometerType%widths(DACS_Info%first) = &
+              & DACS_Info%width*dacs_multipliers%width
+         
+         ! not sure about the limits of this looop here. MLSSignals has
+         ! DO k=2,nsons(channels)...
+         !   call expr ( subtree(k,channels), units, value )
+         !   spectrometerType%frequencies(k-2 +first) = value(1)
+         !   spectrometerType%widths(k-2+first) = value(2)
+         ! END DO 
+         
+         DO k = DACS_Info%first+1, DACS_Info%last
+           spectrometerType%frequencies(k) = &
+                DACS_Info%start * dacs_multipliers%start + &
+                & (k-DACS_Info%first) * DACS_Info%step * dacs_multipliers%step
+
+           spectrometerType%widths(k) = &
+                DACS_Info%width * dacs_multipliers%width + &
+                & (k-DACS_Info%first) * DACS_Info%step * dacs_multipliers%width
+           
+         END DO ! k
+       ELSE ! end if(DACS)
+         
+         PRINT *,'Got Frequences (and widths, presumably)'
+
+
+         ! DACS_Info%DACS == FALSE
+         IF (.NOT. PRESENT(frequencies_Info)) THEN 
+           CALL MLSMessage(MLSMSG_Error,SubroutineName,&
+                "You passed neither DACS_Info nor Frequencies_Info")
+         ENDIF
+         IF (PRESENT(frequencies_info) .AND. (.NOT. PRESENT(widths_info))) THEN 
+           CALL MLSMessage(MLSMSG_Error,SubroutineName,&
+                "You passed Frequencies_Info, but not widths_info!")
+         ENDIF
+         IF (verbose) PRINT *,'Got Frequencies'
+         n1 = SIZE(frequencies_info%values)
+         n2 = SIZE(widths_info%values)
+         IF (n1 .NE. n2) THEN
+           IF (verbose) THEN 
+             PRINT *,'size(frequencies) = ',n1
+             PRINT *,'size(widths) = ',n2
+           ENDIF
+           msg="size(frequencies) .ne. size(widths)" 
+           CALL MLSMessage ( MLSMSG_Error, SubroutineName, TRIM(msg))
+         ENDIF
+         ! Since frequencies/widths values are now allocatable, can I
+         ! point Spectrometertype%frequences to
+         ! frequencies_info%values?
+         
+         ! It is assumed that _nothing_ has been done to the values in
+         ! frequencies_info and widths_info. It's at this point in the
+         ! code that their units will come into play.
+         multiplier=1.0
+         IF (frequencies_info%units == "kHz") THEN 
+           multiplier=1.e-3
+         ELSEIF (frequencies_info%units=='GHz') THEN 
+           multiplier=1.e3
+         ENDIF
+         
+         CALL Allocate_Test(SpectrometerType%Frequencies,n1,&
+              'SpectrometerType%frequencies', SubroutineName, &
+         & lowbound=frequencies_info%first)
+         CALL Allocate_Test(SpectrometerType%widths,n1,&
+              & 'SpectrometerType%widths', subroutineName, & 
+              & lowbound=widths_info%first)
+         DO k = frequencies_info%first,size(frequencies_info%values)
+           spectrometerType%frequencies(k) = frequencies_info%values(k)
+           spectrometerType%widths(k) = widths_info%values(k)
+         END DO
+         
+       ENDIF
+       
+       IF (PRESENT(name)) THEN
+         if (verbose) PRINT *,'name = ',trim(name)
+         SpectrometerType%name = enter_terminal(name,t_identifier)
+       ENDIF
+
+       IF (PRESENT(DEFERRED)) THEN 
+         IF (verbose) PRINT *,'defered = ',DEFERRED
+         SpectrometerType%DEFERRED=DEFERRED
+       ENDIF
+       PRINT *,'Dumping SpectrometerType%frequencies-----------------------'
+       CALL Dump(SpectrometerType%frequencies)
+       PRINT *,'Dumping SpectrometerType%widths-----------------------'
+       CALL Dump(SpectrometerType%widths)
+
+       ! This should return the number of elements in the SpectrometerTypeDatabase
+       index = AddSpectrometerTypeToDatabase(SpectrometerTypeDatabase,& 
+            &                                                              SpectrometerType)
+
+       IF (verbose) THEN 
+         PRINT *,'SpectrometerTypeIndex = ',index
+         PRINT *,'*********************** end loadSpectrometerType *******************'
+       ENDIF
+     END SUBROUTINE LoadSpectrometerType
+
+
+     !! ==================== LoadRadiometer ===============
+     SUBROUTINE LoadRadiometer(LO, &
+          & instrumentModule, &
+          & polarization, &
+          & prefix, &
+          & suffix, &
+          & singleSideband, &
+          & RadiometerIndex, &
+          & verbose)
+
+       ! Emulate the code around line 369 - 402 MLSSignals_m.f90, -- ( the
+       ! case block starting with case(s_radiometer) ) -- so as to provide the
+       ! capability of adding an arbitrary 'signal' to the signals database
+       ! without having to add the appropriate lines to the signals.l2cf
+
+       USE MLSKinds, ONLY: R8
+       USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+       USE Symbol_Table, ONLY: Enter_Terminal
+       USE Symbol_Types, ONLY: t_identifier
+       USE INTRINSIC, ONLY : l_a, l_b
+       USE Allocate_Deallocate, ONLY: Deallocate_Test, Allocate_Test
+       USE MLSSignals_m, ONLY: Radiometer_T, &
+            & Module_T, &
+            & AddModuleToDatabase,&
+            & AddRadiometerToDatabase, &
+            & radiometers, & ! radiometer database from MLSSignals_m
+            & modules
+
+
+       IMPLICIT NONE 
+       REAL(r8),INTENT(in):: LO ! Local oscillator frequency. Assumed to be in GHz!!!!!
+       CHARACTER(len=*),INTENT(in) :: instrumentModule, prefix, suffix
+       INTEGER,INTENT(in):: singleSideband  !+/-1 indicates single sideband, 0=folded
+       CHARACTER(len=1),INTENT(in) :: polarization ! either 'a' or 'b'
+       LOGICAL, OPTIONAL:: verbose
+
+       INTEGER, INTENT(out) :: RadiometerIndex 
+       type (Radiometer_T) :: radiometer
+
+       ! Just to remind me what's in this user-defined type
+       ! type, public :: Radiometer_T
+       !    real(r8) :: LO                      ! Local oscillator in MHz
+       !    integer :: InstrumentModule         ! Index in Modules database
+       !    integer :: Polarization             ! L_A or L_B, default is L_A
+       !    integer :: Prefix                   ! Sub_rosa index of declaration's label
+       !    integer :: Suffix                   ! Sub_rosa index
+       !    integer :: SingleSideband           ! +/-1 indicates indicates single sideband 0 folded
+       !  end type Radiometer_T
+
+       type (Module_T) :: thisModule
+
+
+       ! And what's in the Module type
+       ! type, public :: Module_T
+       !   integer :: Name                     ! Sub_rosa index of declaration's label
+       !   integer :: Node                     ! Node of tree where module declared
+       !   logical :: spaceCraft               ! Set if module is in fact s/c
+       !   integer :: supportedModule          ! See discssion below
+       !   logical :: Aura  = .true.           ! Set if s/c is in fact Aura
+       !   character(len=32) :: NameString = ' '  ! If not get_string (e.g., camelCase)
+       ! end type Module_T
+
+       IF (.not. PRESENT(verbose)) verbose=.FALSE.
+
+       IF (verbose) PRINT *,'*********************** begin loadRadiometer ***********************'
+       radiometer%LO = LO
+       IF (polarization=="a") THEN
+         radiometer%Polarization = l_a
+       ELSE IF (polarization=="b") THEN 
+         radiometer%Polarization = l_b
+         ! else????
+       ENDIF
+       radiometer%singleSideBand = singleSideBand
+       radiometer%prefix = enter_terminal(prefix,t_identifier)  
+       radiometer%suffix = enter_terminal(suffix,t_identifier)  
+
+       ! Define the module. I'm hoping I don't need the node of the tree where the
+       ! module is defined.
+       thisModule%nameString=instrumentModule
+       thisModule%name=enter_terminal(TRIM(instrumentModule),t_identifier)
+       thisModule%spaceCraft=.FALSE.
+       radiometer%InstrumentModule=AddModuleToDatabase(modules,thisModule)
+       RadiometerIndex = AddRadiometerToDatabase(radiometers,radiometer)
+
+       IF (verbose) THEN 
+         PRINT *,'========================================='
+         PRINT *,'In loadRadiometer '
+         PRINT *,'instrumentModule=',TRIM(instrumentModule)
+         PRINT *,'thisModule%nameString=',TRIM(thisModule%nameString)
+         PRINT *,'thisModule%name = ' ,thisModule%name
+         PRINT *,'thisModule%spaceCraft = ' ,thisModule%spaceCraft
+         PRINT *,'RadiometerIndex = ',RadiometerIndex
+         PRINT *,'========================================='
+         PRINT *,'*********************** exiting loadRadiometer ***********************'
+       ENDIF
+     END SUBROUTINE LoadRadiometer
+
+
+     
+     ! Configure and load the Band into the band database
+     ! This is the type definition of band_t
+     ! type, public :: Band_T
+     !   real(r8) :: CenterFrequency         ! Zero if not present (wide filter)
+     !   integer :: Prefix                   ! Sub_rosa index of declaration's label
+     !   integer :: Radiometer               ! Index in Radiometers database, or none if deferred
+     !   integer :: SpectrometerType         ! Index in SpectrometerTypes database
+     !   integer :: Suffix                   ! Sub_rosa index
+     ! end type Band_T
+     
+     ! This parses a line like this....
+     ! B1F:  band, suffix= "PT",   radiometer=R1A, spectrometerType= FB25,  $
+     !          centerfrequency= 8.04667 GHz
+     ! prefix: 'B1F' 
+
+     SUBROUTINE LoadBand(CenterFrequency, &
+          & prefix, &  ! Basically, the name of the band.
+          & radiometer, & 
+          & SpectrometerType, &
+          & Suffix, & 
+          & bandIndex, & 
+          & verbose )
+
+       USE MLSKinds, ONLY: R8
+       USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+       USE Symbol_Table, ONLY: Enter_Terminal
+       USE Symbol_Types, ONLY: t_identifier
+       USE Allocate_Deallocate, ONLY: Deallocate_Test, Allocate_Test
+       USE MLSSignals_m, ONLY: Band_T, AddBandToDatabase, Bands
+       
+
+       IMPLICIT NONE
+
+       REAL(r8),INTENT(in) :: CenterFrequency
+       INTEGER, OPTIONAL,INTENT(in) :: radiometer ! indices into the databases
+       INTEGER,intent(in):: SpectrometerType
+       CHARACTER(len=*), INTENT(in) :: prefix, & ! the band name
+            & suffix ! strings, converted to sub_rosa index using enter_terminal
+
+       
+       LOGICAL,OPTIONAL :: verbose
+       INTEGER,intent(out) :: bandIndex
+
+       ! Local variables
+       TYPE(band_t):: Band
+
+
+       ! Emulate the code around line 377 MLSSignals_m.f90, -- ( the
+       ! case block starting with case(s_band) ) -- so as to provide the
+       ! capability of adding an arbitrary 'signal' to the signals database
+       ! without having to add the appropriate lines to the signals.l2cf
+       IF (.NOT. Present(verbose)) verbose =.FALSE.
+       IF (verbose) THEN 
+         PRINT *,' ======================= in LoadBand =================== '
+         PRINT *,'CenterFrequency=',CenterFrequency
+         PRINT *,'radiometer= ',radiometer
+         PRINT *,'SpectrometerType = ',spectrometerType
+       ENDIF
+       Band%CenterFrequency=CenterFrequency
+       Band%radiometer=radiometer
+       Band%SpectrometerType=SpectrometerType
+       IF (TRIM(prefix) /= "") THEN 
+         Band%prefix = enter_terminal(TRIM(prefix),t_identifier)
+         IF (verbose) THEN 
+           PRINT *,'prefix = ',trim(prefix)
+           PRINT *,'Band%prefix = ',Band%prefix
+         ENDIF
+       ENDIF
+       IF (TRIM(suffix) /= "" ) THEN 
+         Band%suffix = enter_terminal(TRIM(suffix),t_identifier)
+         IF (verbose) THEN
+           PRINT *,'suffix = ',suffix
+           PRINT *,'Band%suffix = ',Band%suffix
+         ENDIF
+       ENDIF
+
+       PRINT *,' ============ Calling addBandToDatabase'
+       bandIndex=AddBandToDatabase(Bands,band)
+       IF (verbose) THEN 
+         PRINT *,'bandIndex = ',bandIndex
+         PRINT *,' ======================= done with AddBandToDatabase '
+       ENDIF
+
+       PRINT *,' ================ exiting LoadBand '
+     END SUBROUTINE LoadBand
+
+     !! ================== LoadSignal =====================
+     ! Take individual definitions of a signal and construct an instance of
+     ! signal_t, then load the signal in the database.
+     !
+     ! Emulate the code around line 411 - 510 in MLSSignals_m.f90, -- ( the
+     ! case block starting with case(s_signal) ) -- so as to provide the
+     ! capability of adding an arbitrary 'signal' to the signals database
+     ! without having to add the appropriate lines to the signals.l2cf
+
+     ! for this, it looks like we need some subset of 
+     ! sideband, radiometer, instrumentModule, band, channels, direction,
+     ! spectrometer and switch (GSN switch?)'
+
+     ! In the l2cf, a 'signal' definition looks like this.
+     !
+     !   signal,  band=B1F,  switch=0, spectrometer=1, direction= -1 ; PT
+     !
+     ! A band statement looks like this.
+     !
+     !   B1F:  band, suffix= "PT",   radiometer=R1A, spectrometerType= FB25,  $
+     !       centerfrequency= 8.04667 GHz
+     ! 
+     ! The radiometer statement looks like this
+     !
+     !   R1A: radiometer, suffix= "118", $
+     !        MODULE= GHz, lo = 126.8 GHz, singleSideband= -1
+     !
+     ! And the spectrometerType looks like this.
+     !
+     !   FB25: spectrometerType, first= 1,  $
+     !   channels= [ $
+     !   -575.0 MHz: 96.0 MHz,  -479.0 MHz: 96.0 MHz, $
+     !   -383.0 MHz: 96.0 MHz,  -303.0 MHz: 64.0 MHz, $
+     !   -239.0 MHz: 64.0 MHz,  -175.0 MHz: 64.0 MHz, $
+     !   -119.0 MHz: 48.0 MHz,   -79.0 MHz: 32.0 MHz, $
+     !    -51.0 MHz: 24.0 MHz,   -31.0 MHz: 16.0 MHz, $
+     !    -17.0 MHz: 12.0 MHz,    -7.0 MHz:  8.0 MHz, $
+     !      0.0 MHz:  6.0 MHz,     7.0 MHz:  8.0 MHz, $
+     !     17.0 MHz: 12.0 MHz,    31.0 MHz: 16.0 MHz, $
+     !     51.0 MHz: 24.0 MHz,    79.0 MHz: 32.0 MHz, $
+     !    119.0 MHz: 48.0 MHz,   175.0 MHz: 64.0 MHz, $
+     !    239.0 MHz: 64.0 MHz,   303.0 MHz: 64.0 MHz, $
+     !    383.0 MHz: 96.0 MHz,   479.0 MHz: 96.0 MHz, $
+     !    575.0 MHz: 96.0 MHz ]
+     !
+     ! Or this...
+     ! 
+     ! DACS: spectrometerType, first= 0, $
+     !   start= -6250.0 kHz, step= 97.65625 kHz, width= 97.65625 kHz, last= 128, /dacs
+     !
+     !
+     ! or this ...
+     !
+     ! WF4: spectrometerType, deferred=true, first=1
+     ! commented out for now.
+     ! SUBROUTINE LoadSignal( frequencies, &
+     !      & widths, &
+     !      & name, & 
+     !      & sideband, &
+     !      & singleSideband, &
+     !      & radiometerName, &
+     !      & prefix, &
+     !      & suffix, &
+     !      & instrumentModuleName, &
+     !      & LO, &
+     !      & bandName, &
+     !                            ! & channels, &
+     !      & direction, &
+     !      & spectrometerName, &
+     !      & switch, &
+     !      & CenterFrequency, &
+     !      & Polarization, &
+     !      & first,  &
+     !      & last , &
+     !      & start, &
+     !      & step, &
+     !      & width ,&
+     !      & DEFERRED, &
+     !      & DACS, &
+     !      & SignalDatabase, &
+     !      & signal, &
+     !      & signalIndex, &
+     !      & verbose)
+
+
+     !   USE MLSKinds, ONLY: R8
+     !   USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+     !   USE Symbol_Table, ONLY: Enter_Terminal
+     !   USE Symbol_Types, ONLY: t_identifier
+     !   USE Allocate_Deallocate, ONLY: Deallocate_Test, Allocate_Test
+     !   USE MLSSignals_m, ONLY: Signal_T, &
+     !        & SpectrometerType_T,&
+     !        & Radiometer_T, &
+     !        & Band_T, &
+     !        & Module_T, &
+     !        & AddSignaltoDatabase
+
+     !   ! Arguments (see MLSSignals_m.f90::signal_T for a disussion of most of these.)
+
+     !   IMPLICIT NONE
+     !   ! these will all be strings here. What's stored in the signal_T user
+     !   ! defined quanty is the index into their respective databases, or
+     !   ! the sub_rosa index
+
+     !   CHARACTER(len=*),INTENT(in):: name, &
+     !        & bandName, &
+     !        & instrumentModuleName, &
+     !        & radiometerName, &
+     !        & spectrometerName
+     !   CHARACTER(len=*),INTENT(in):: prefix, suffix ! Radiometer prefix/suffix
+     !   INTEGER,INTENT(in) :: direction                    !  +1 if channel 1 closest to LO, -1 reverse
+     !   INTEGER,INTENT(in):: sideband                    ! -1=lower, +1=upper, 0=folder
+     !   INTEGER,INTENT(in):: singleSideBand        ! ! +/-1 indicates indicates single sideband 0 folded
+     !   ! Don't quite know the difference between `sideband' and 'singlesideband'
+     !   INTEGER,INTENT(IN):: switch                      ! GSN switch number
+
+     !   REAL(r8),INTENT(in)::CenterFrequency,LO
+     !   REAL(r8), OPTIONAL,DIMENSION(:),INTENT(in):: frequencies(:),widths(:)
+     !   INTEGER,OPTIONAL,INTENT(in) :: first,last
+     !   REAL(r8),OPTIONAL,INTENT(in) :: start,step,width ! These are required if DACS==.TRUE.
+     !   LOGICAL, OPTIONAL,INTENT(in) ::DACS
+
+     !   CHARACTER(len=1),OPTIONAL,INTENT(in) :: Polarization ! either 'a' or 'b'
+     !   LOGICAL,OPTIONAL, INTENT(in) :: DEFERRED
+     !   LOGICAL, OPTIONAL:: verbose
+
+
+     !   TYPE (Signal_T), DIMENSION(:), pointer :: SignalDatabase(:)
+     !   ! if signal is already allocated on input, it's
+     !   ! deallocated, then reallocated
+     !   TYPE (Signal_T), INTENT(out) :: signal 
+     !   INTEGER,intent(out) :: signalIndex
+
+
+
+     !   ! Local variables
+     !   ! Local versions for some arguments that we may need to default
+     !   ! INTEGER :: lfirst,llast, index
+     !   ! real(r8):: lstart,lstep,lwidth
+     !   LOGICAL :: lDACS=.FALSE.
+     !   ! LOGICAL :: sswl(4)= (/.FALSE.,.FALSE.,.FALSE.,.FALSE./)
+     !   TYPE (SpectrometerType_T),POINTER,DIMENSION(:)::SpectrometerTypeDatabase
+     !   TYPE(Radiometer_T),POINTER,Dimension(:) :: RadiometerDatabase
+     !   !TYPE (Band_T)::Band
+     !   TYPE (Band_T),POINTER,DIMENSION(:)::BandDatabase
+
+     !   INTEGER::stat,k,n, index
+     !   CHARACTER(len=128) :: SubroutineName
+
+     !   SubroutineName="LoadSignal"
+     !   if (.not. present(verbose)) verbose=.FALSE.
+     !   IF (verbose) PRINT *,' *************************** begin LoadSignal *****************************'
+     !   CALL LoadSpectrometerType( frequencies,widths,  & 
+     !        & DEFERRED, dacs, &
+     !        & first, last,start, step, width, &  !first can appear with anything, last,step,width appear only for DACS
+     !        & name, &
+     !        & SpectrometerTypeDatabase, index)
+
+     !   signal%SpectrometerType = index
+
+     !   CALL LoadRadiometer(LO,&
+     !        & InstrumentModuleName, & ! A string here, will be turned into sub_rosa index
+     !        & Polarization, & ! 'a' or 'b', will be converted internally to L_A or L_B, default is L_A
+     !        & Prefix, &   ! a string here, will be turned into a sub_rosa index
+     !        & Suffix, & ! a string here, will be turned into a sub_rosa index
+     !        & SingleSideBand, & ! +/-1 indicates indicates single sideband 0 folded
+     !        & index, &
+     !        & verbose) 
+
+     !   signal%Radiometer =index
+
+     !   ! Load the band
+     !   CALL LoadBand(CenterFrequency,&
+     !        & Prefix, & ! passed as string, will be stored as sub_rosa index
+     !        & signal%Radiometer, &
+     !        & signal%SpectrometerType, &
+     !        & suffix,& ! passed as string, will be stored is sub_rosa index
+     !        & index,&
+     !        & verbose)
+
+     !   signal%band = index
+
+     !   signalIndex = addSignalToDatabase(SignalDatabase,signal)
+     !   IF (verbose) THEN 
+     !     PRINT *,'singleSideBand = ',singleSideBand
+     !     PRINT *,'signal%Radiometer= ',signal%Radiometer
+     !     PRINT *,'signal%band = ',signal%band
+     !     PRINT *,'signal index = ',signalIndex
+     !     PRINT *,' *************************** end LoadSignal *****************************'
+     !   ENDIF
+     ! END SUBROUTINE LoadSignal
+
+     SUBROUTINE dump_band(band)
+       USE MLSSignals_m, ONLY: Band_T
+       USE Output_M, ONLY: Output !Blanks, Newline, 
+       USE String_Table, ONLY: Display_String
+
+       TYPE (Band_T), INTENT(in) :: BAND
+
+         ! local
+         CHARACTER(len=1) :: blank=' '
+
+         call output('band%prefix =  ')
+         CALL display_string (band%prefix, advance='yes')
+         !call output ( ':' )
+         call output('band%suffix = ')
+         CALL display_string (band%suffix, strip=.TRUE. ,advance="yes")
+         call output ( '   Radiometer =  ')
+         if ( band%radiometer /= 0 ) then
+           CALL output ( band%radiometer,advance='yes' )
+           call output ( '    radiometers(band%radiometer)%prefix  =  ' )
+           CALL display_string ( radiometers(band%radiometer)%prefix,advance='yes' )
+         else
+           call output ( ' deferred' )
+         end if
+         call output ( '   SpectrometerType =  ' )
+         call output ( band%spectrometerType )
+         call output(blank, advance='yes' )
+         call output ( '    spectrometerTypes(band%spectrometerType)%name = ' )
+         CALL display_string ( spectrometerTypes(band%spectrometerType)%name, &
+              & advance='yes' )
+         call output ( '   Frequency =  ')
+           call output ( band%centerFrequency, advance='yes' )
+
+     END SUBROUTINE dump_band
+
+ END PROGRAM
+
+
+
+
+! SUBROUTINE LoadIntoDatabase()
+! END SUBROUTINE LoadIntoDatabase
+
+
+! SUBROUTINE AnnounceError(errMsg)
+!   CHARACTER(len=256),intent(in)::errMsg
+!   call output(errMsg)
+! END SUBROUTINE AnnounceError
+
+
+
+! $Log: mockup.f90,v $
+! Revision 1.62.2.2  2020/09/30 19:34:13  whdaffer
+! code current up To test test49
+!
+! Revision 1.62.2.1  2020/09/15 23:26:36  whdaffer
+! Intermediate checking, just to capture the state of work. Most of
+! these changes come from Paul Wagner
+!
+! Revision 1.62  2020/07/15 20:46:51  pwagner
+! Copied from MLuo
+!
+! Revision 1.51  2011/11/03 17:44:32  honghanh
+! Bug fix in mockup
+!
+! Revision 1.50  2011/11/02 04:20:16  honghanh
+! Mockup for new CFM API.
+!
+! Revision 1.48  2011/03/24 15:16:46  honghanh
+! Add new interfaces for creating vector and vector values without going through quantity template databases
+!
+! Revision 1.44  2010/11/03 20:17:01  honghanh
+! Add name as an optional argument to CreateVector.
+!
+! Revision 1.42  2010/09/28 14:42:42  honghanh
+! Add call to forwardModel with jacobian
+!
+! Revision 1.39  2010/08/06 14:15:06  honghanh
+! Call dump on diff vector instead of measurement vector.
+!
+! Revision 1.38  2010/08/05 16:23:03  honghanh
+! Added Jacobian to forwardModel subroutine
+!
+! Revision 1.36  2010/07/08 21:39:16  honghanh
+! Add ApplyBaseline to cfm_fill_m
+!
+! Revision 1.34  2010/06/29 17:02:47  honghanh
+! Change the identifier 'fakeChunk' to 'chunk' because
+! since it is created with ChunkDivide, it's as real as a chunk
+! can get.
+!
+! Revision 1.33  2010/06/29 15:29:33  honghanh
+! Develop FillPtanQuantity to compute ptan, instead of using
+! Get2DHydrostaticTangentPressure
+!
+! Revision 1.32  2010/06/29 02:28:17  honghanh
+! Change mockup to import functions and literals from CFM module
+@
+

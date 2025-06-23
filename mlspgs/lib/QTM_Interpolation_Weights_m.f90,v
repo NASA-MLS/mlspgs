@@ -1,0 +1,1395 @@
+head	2.13;
+access;
+symbols
+	v5-02-NRT-19:2.13
+	v6-00:2.13
+	v5-02-NRT-18:2.13
+	v5-02:2.13
+	v5-01-NRT-17:2.13
+	v5-01-NRT-16:2.13
+	v5-01-NRT-15:2.13
+	v5-01-NRT-14:2.13
+	neuralnetworks-1-0:2.13.0.6
+	cfm-single-freq-0-1:2.13.0.4
+	v5-01:2.13
+	v5-00:2.13
+	v4-23-TA133:2.13.0.2
+	mus-emls-1-70:2.11.0.2
+	rel-1-0-englocks-work:2.10.0.2
+	VUMLS1-00:2.9
+	VPL1-00:2.3
+	V4-22-NRT-08:2.2;
+locks; strict;
+comment	@# @;
+
+
+2.13
+date	2018.08.15.17.48.17;	author vsnyder;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2018.08.15.17.45.14;	author vsnyder;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2018.05.14.23.25.29;	author vsnyder;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2017.08.28.20.27.47;	author livesey;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2016.11.23.20.08.45;	author vsnyder;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2016.11.23.00.09.36;	author vsnyder;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2016.11.12.01.34.06;	author vsnyder;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2016.11.02.22.55.15;	author vsnyder;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2016.10.25.18.23.48;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2016.10.05.23.28.22;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2016.08.24.22.56.34;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2015.12.31.00.57.32;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2015.12.31.00.05.02;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.13
+log
+@Repair botched comment from previous check in:
+Remove list interpolators.  Add QTM_Weights_t and Fill_Weights.
+@
+text
+@! Copyright 2015, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=============================================================================
+module QTM_Interpolation_Weights_m
+!=============================================================================
+
+  use MLSKinds, only: RK => RP
+  use Sparse_m, only: Sparse_Element_t
+
+  implicit NONE
+  private
+
+  ! Determine which vertices of QTM to use for interpolation to a specified
+  ! point, and calculate their horizontal interpolation weights.
+
+  public :: Fill_Weights
+  public :: QTM_Interpolation_Weights
+  public :: QTM_Interpolation_Weights_Geo
+  public :: QTM_Interpolation_Weights_ZOT
+  public :: QTM_Weights_t
+
+  interface Fill_Weights
+    module procedure Fill_Weights_List
+    module procedure Fill_Weights_Sparse
+  end interface Fill_Weights
+
+  interface QTM_Interpolation_Weights
+    module procedure QTM_Interpolation_Weights_Geo
+    module procedure QTM_Interpolation_Weights_ZOT
+  end interface QTM_Interpolation_Weights
+
+  public :: Value_QTM_1D_List_t, Value_QTM_2D_List_t, Value_QTM_2D_t
+
+  type :: QTM_Weights_t
+    integer :: N = 3               ! How many weights
+    ! The weights, 3 for 2D, 6 for 3D:
+    type(sparse_element_t) :: W(6) = sparse_element_t(0.0_rk,0,0,0,0)
+  contains
+    procedure :: Fill_Weights_Sparse
+    generic :: Fill_Weights => Fill_Weights_Sparse
+    procedure :: Copy => Copy_Weights_Sparse
+!????? Crashes Intel 17 17.0.0.098 Build 20160721
+!????? where call x%copy ( y ) or x = y appears.
+!     generic :: assignment ( = ) => Copy
+  end type QTM_Weights_t
+
+  type :: Value_List ! ( RK ) ! Base type for Value_*List_t
+!     integer, kind :: RK
+  contains
+    procedure :: Fill_Weights_List
+    generic :: Fill_Weights => Fill_Weights_List
+  end type Value_List
+
+  ! For one interpolation weight from a 1D array
+  type :: Value_1D_t ! ( RK )
+!     integer, kind :: RK
+    real(rk) :: V = 0.0    ! Value to be applied at N
+    integer :: J = 0       ! Subscript at which to apply V
+  end type Value_1D_t
+
+  ! For one interpolation weight from a QTM, or an extract of it onto
+  ! an array of profiles adjacent to an integration path, e.g., in Grids_t.
+  type, extends(value_1D_t) :: Value_QTM_1D_t
+  ! real(rk) :: V = 0.0    ! Value to be applied at N or NP
+  ! integer :: J = 0       ! Index in QTM at which to apply V
+    integer :: JP = 0      ! Index of path-adjacent part of QTM at which to
+                           ! apply V, e.g., in Grids_t.  This is intentionally
+                           ! the same name as the second (probably Phi) subscript
+                           ! in Value_2D_t so that Interpolate_2D_List.f9h can be
+                           ! used for both interpolations.
+  end type Value_QTM_1D_t
+
+  ! For interpolating to a list (probably an integration path) from a QTM,
+  ! or an extract of it onto an array of profiles adjacent to an integration
+  ! path.
+  type, extends(Value_List) :: Value_QTM_1D_List_t ! ( RK )
+!     integer, kind :: RK
+    integer :: N = 3       ! Number of useful elements of V
+!     type(value_QTM_1d_t(rk)) :: V(3) = value_QTM_1d_t(rk)()
+    type(value_QTM_1d_t) :: V(3) = value_QTM_1d_t()
+  end type Value_QTM_1D_List_t
+
+  ! For one interpolation weight from a QTM, or an extract of it onto
+  ! an array of profiles adjacent to an integration path, with a zeta basis
+  ! at each vertex.
+  type, extends(value_QTM_1D_t) :: Value_QTM_2D_t
+  ! real(rk) :: V = 0.0    ! Value to be applied at (NZ, N or NP)
+  ! integer :: J = 0       ! Index in QTM at which to apply V
+  ! integer :: JP = 0      ! Index of path-adjacent part of QTM at which to
+                           ! apply V, e.g., in Grids_t.  This is intentionally
+                           ! the same name as the second (probably Phi) subscript
+                           ! in Value_2D_t so that Interpolate_2D_List.f9h can be
+                           ! used for both interpolations.
+    integer :: JZ = 0      ! Vertical (probably zeta) index
+  end type Value_QTM_2D_t
+
+  ! For interpolating to a list (probably an integration path) from a QTM,
+  ! or an extract of it onto an array of profiles adjacent to an integration
+  ! path, with a zeta basis at each profile.
+  type, extends(Value_List) :: Value_QTM_2D_List_t ! ( RK )
+!     integer, kind :: RK
+    integer :: N = 6       ! Number of useful elements of V
+!     type(value_QTM_2d_t(rk)) :: V(6) = value_QTM_2d_t(rk)()
+    type(value_QTM_2d_t) :: V(6) = value_QTM_2d_t()
+  end type Value_QTM_2D_List_t
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: QTM_Interpolation_Weights_m.f90,v $"
+  private :: not_used_here
+!---------------------------------------------------------------------------
+
+contains
+
+  subroutine Fill_Weights_List ( Weights, Ser, V )
+    ! Fill the Value_QTM_[12]D_List_t structures using given QTM serial numbers
+    ! Ser and weight values V.  This is only a 2D routine, but it allows the
+    ! dynamic type of Weights to be for a 3D interpolation.
+    class(value_list), intent(out) :: Weights
+    integer, intent(in) :: Ser(:)  ! Up to six serial numbers
+    real(rk), intent(in) :: V(:)   ! One weight for each Ser
+    integer :: N
+    n = size(ser)
+    select type ( weights )
+    type is (value_QTM_1D_List_t)
+      weights%n = 3
+      weights%v(:n)%j = ser
+      weights%v(:n)%v = v
+    type is (value_QTM_2D_List_t)
+      weights%n = 3
+      weights%v(:n)%j = ser
+      weights%v(:n)%v = v
+    end select
+  end subroutine Fill_Weights_List
+
+  subroutine Copy_Weights_Sparse ( To_Weights, From_Weights )
+    ! Only copy From_Weights%w(1:From_Weights%n)
+    class( QTM_Weights_t ), intent(inout) :: To_Weights
+    class( QTM_Weights_t ), intent(in) :: From_Weights
+    to_weights%n = from_weights%n
+    to_weights%w(1:to_weights%n) = from_weights%w(1:from_weights%n)
+  end subroutine Copy_Weights_Sparse
+
+  subroutine Fill_Weights_Sparse ( Weights, Ser, V )
+    ! Fill the QTM_Weights_t structure using given QTM serial numbers Ser and
+    ! weight values V.
+    class( QTM_Weights_t ), intent(out) :: Weights
+    integer, intent(in) :: Ser(:)  ! Up to six serial numbers
+    real(rk), intent(in) :: V(:)   ! One weight for each Ser
+    integer :: N
+    n = size(ser)
+    weights%n = n
+    weights%w(:n)%r = 0            ! Row number (path position) not known yet
+    weights%w(:n)%c = ser          ! Column numbers are QTM serial numbers
+    weights%w(:n)%v = v
+  end subroutine Fill_Weights_Sparse
+
+  subroutine QTM_Interpolation_Weights_Geo ( QTM_Tree, Point, Weights, Facet, &
+                                           & Stack, Used )
+
+    ! Get the horizontal interpolation weights for Point in the QTM.  This is
+    ! the routine that actually does the work for Point being in some kind of
+    ! Geo coordinates.  This is a 2D-only routine.
+
+    use Generate_QTM_m, only: QTM_Tree_t
+    use Geolocation_0, only: H_t! , RG
+    use Nearest_Polygon_Point_m, only: Nearest_Polygon_Point
+    use QTM_m, only: Geo_to_ZOT, Stack_t, ZOT_t
+    use Triangle_Interpolate_m, only: Triangle_Interpolate
+
+    type(QTM_tree_t), intent(in) :: QTM_Tree
+    class(h_t), intent(in) :: Point
+!     type(value_QTM_1D_List_t(rg)), intent(out) :: Weights
+    class(value_list), intent(out) :: Weights
+    integer, intent(in), optional :: Facet
+    type(stack_t), intent(inout), optional :: Stack
+    real(rk) :: V(3)
+    class(h_t), intent(out), optional :: Used ! The point used for interpolation
+
+    logical :: Inside ! Point is inside a facet with three serial numbers.
+    integer :: F      ! Index in QTM_Tree of facet containing Point, if any.
+    type(h_t) :: P    ! Coordinates of boundary point nearest to Point.
+    type(ZOT_t) :: Z  ! ZOT coordinates of Point.
+
+    if ( present(facet) ) then
+      f = facet
+    else
+      f = QTM_tree%find_facet ( point, stack )
+    end if
+    inside = f > 0
+    if ( inside ) inside = all(QTM_tree%Q(f)%ser > 0)
+    if ( inside ) then
+      z = geo_to_ZOT ( point )
+    else
+      call nearest_polygon_point ( point, QTM_tree%polygon_geo, p )
+      z = geo_to_ZOT ( p )
+      f = QTM_tree%find_facet ( z, stack )
+      ! P should be inside!
+      inside = f > 0
+      if ( inside ) inside = all(QTM_tree%Q(f)%ser > 0)
+    end if
+    if ( inside ) then
+      call triangle_interpolate ( QTM_tree%Q(f)%z%x, QTM_tree%Q(f)%z%y, &
+                                & z%x, z%y, v )
+      call weights%fill_weights ( QTM_tree%Q(f)%ser, v )
+    else ! Shouldn't get here
+      call weights%fill_weights ( [0], [0.0_rk] )
+    end if
+    if ( present(used) ) then
+      used%lon = p%lon
+      used%lat = p%lat
+    end if
+
+  end subroutine QTM_Interpolation_Weights_Geo
+
+  subroutine QTM_Interpolation_Weights_ZOT ( QTM_Tree, Point, Weights, Facet, &
+                                           & Stack, Used )
+
+    ! Get the horizontal interpolation weights for Point in the QTM.
+    ! This is a 2D-only routine.
+
+    use QTM_m, only: Stack_T, ZOT_t
+    use Generate_QTM_m, only: QTM_Tree_t
+!     use Geolocation_0, only: RG
+    use Nearest_Polygon_Point_m, only: Nearest_Polygon_Point
+    use Triangle_Interpolate_m, only: Triangle_Interpolate
+
+    type(QTM_tree_t), intent(in) :: QTM_Tree
+    type(ZOT_t), intent(in) :: Point
+    class(value_list), intent(out) :: Weights
+    integer, intent(in), optional :: Facet
+    type(stack_t), intent(inout), optional :: Stack
+    type(ZOT_t), intent(out), optional :: Used ! The point used for interpolation
+
+    logical :: Inside ! Point is inside a facet with three serial numbers.
+    integer :: F      ! Index in QTM_Tree of facet containing Point, if any.
+    type(ZOT_t) :: P  ! Coordinates of boundary point nearest to Point.
+    real(rk) :: V(3)
+
+    if ( present(facet) ) then
+      f = facet
+    else
+      f = QTM_tree%find_facet ( point, stack )
+    end if
+    inside = f > 0
+    if ( inside ) inside = all(QTM_tree%Q(f)%ser > 0)
+    if ( .not. inside ) then
+      call nearest_polygon_point ( point, QTM_tree%polygon_zot, p )
+      f = QTM_tree%find_facet ( p, stack )
+      ! It should be inside!
+      inside = f > 0
+      if ( inside ) inside = all(QTM_tree%Q(f)%ser > 0)
+    end if
+    if ( inside ) then
+      call triangle_interpolate ( QTM_tree%Q(f)%z%x, QTM_tree%Q(f)%z%y, &
+                                & point%x, point%y, v )
+      call weights%fill_weights ( QTM_tree%Q(f)%ser, v )
+    else ! Shouldn't get here
+      call weights%fill_weights ( [0], [0.0_rk] )
+    end if
+    if ( present(used) ) used = p
+
+  end subroutine QTM_Interpolation_Weights_ZOT
+
+!=============================================================================
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: QTM_Interpolation_Weights_m.f90,v 2.12 2018/08/15 17:45:14 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module QTM_Interpolation_Weights_m
+
+! $Log: QTM_Interpolation_Weights_m.f90,v $
+! Revision 2.12  2018/08/15 17:45:14  vsnyder
+! Remove list interpolators.  Add QTM_Weights_t and Fill_Weights.
+!
+! Revision 2.11  2018/05/14 23:25:29  vsnyder
+! Change to sparse eta representation
+!
+! Revision 2.10  2017/08/28 20:27:47  livesey
+! Changed the n,nf,np,nz elements to j,jf,...
+!
+! Revision 2.9  2016/11/23 20:08:45  vsnyder
+! Comment out Use...RG until processors support KPDT
+!
+! Revision 2.8  2016/11/23 00:09:36  vsnyder
+! Use types from Indexed_Values_m.  Add _2d routines to do horizontal
+! interpolation for later 3D interpolation.
+!
+! Revision 2.7  2016/11/12 01:34:06  vsnyder
+! Add Facet argument for routines with scalar Point, in case we know it
+!
+! Revision 2.6  2016/11/02 22:55:15  vsnyder
+! Remove Weight_t in favor of Value_t in Path_Representation_m
+!
+! Revision 2.5  2016/10/25 18:23:48  vsnyder
+! Inching toward 3D-QTM forward model support
+!
+! Revision 2.4  2016/10/05 23:28:22  vsnyder
+! Replace ZOT_n component name with Ser because it's a serial number for
+! more than just the ZOT coordinates.
+!
+! Revision 2.3  2016/08/24 22:56:34  vsnyder
+! Make Weights%Which == 1 with Weights%Weight == 0 if a facet is not found,
+! so Weights can still be used without checking whether a facet was found.
+! The result of interpolating with it will be zero.
+!
+! Revision 2.2  2015/12/31 00:57:32  vsnyder
+! Move 3D routines to QTM_Interpolation_Weights_2d_m
+!
+! Revision 2.1  2015/12/31 00:05:02  vsnyder
+! Initial commit
+!
+@
+
+
+2.12
+log
+@Rieve
+@
+text
+@d278 1
+a278 1
+       "$Id: QTM_Interpolation_Weights_m.f90,v 2.11 2018/05/14 23:25:29 vsnyder Exp $"
+d288 3
+@
+
+
+2.11
+log
+@Change to sparse eta representation
+@
+text
+@d17 1
+d25 1
+d27 8
+a34 2
+  public :: QTM_Interpolation_Weights_Geo, QTM_Interpolation_Weights_Geo_list
+  public :: QTM_Interpolation_Weights_ZOT, QTM_Interpolation_Weights_ZOT_list
+d37 2
+a38 9
+    module procedure &
+      & QTM_Interpolation_Weights_Geo, &
+      & QTM_Interpolation_Weights_ZOT, &
+      & QTM_Interpolation_Weights_Geo_list, &
+      & QTM_Interpolation_Weights_ZOT_list, &
+      & QTM_Interpolation_Weights_Geo_2d, &
+      & QTM_Interpolation_Weights_ZOT_2d, &
+      & QTM_Interpolation_Weights_Geo_list_2d, &
+      & QTM_Interpolation_Weights_ZOT_list_2d
+d43 13
+d58 3
+d124 43
+d183 1
+a183 1
+    type(value_QTM_1D_List_t), intent(out) :: Weights
+d186 1
+a202 7
+      weights%v%j = QTM_tree%Q(f)%ser
+      call triangle_interpolate ( QTM_tree%Q(f)%z%x, QTM_tree%Q(f)%z%y, &
+                                & z%x, z%y, weights%v%v )
+      if ( present(used) ) then
+        used%lon = point%lon
+        used%lat = point%lat
+      end if
+d210 11
+a220 12
+      if ( inside ) then
+        weights%v%j = QTM_tree%Q(f)%ser
+        call triangle_interpolate ( QTM_tree%Q(f)%z%x, QTM_tree%Q(f)%z%y, &
+                                  & z%x, z%y, weights%v%v )
+      else ! Shouldn't get here
+!         weights = value_QTM_1D_List_t(rg)(n=1) ! Default weight is zero
+        weights = value_QTM_1D_List_t(n=1) ! Default weight is zero
+      end if
+      if ( present(used) ) then
+        used%lon = p%lon
+        used%lat = p%lat
+      end if
+a224 33
+  subroutine QTM_Interpolation_Weights_Geo_list ( QTM_Tree, Point, Weights, Stack )
+
+    ! Get the horizontal interpolation weights for Point in the QTM.  This is
+    ! the routine that actually does the work for Point being in some kind of
+    ! Geo coordinates.  This is a 2D-only routine.
+
+    use Generate_QTM_m, only: QTM_Tree_t
+    use Geolocation_0, only: H_t! , RG
+    use QTM_m, only: Stack_t
+
+    type(QTM_tree_t), intent(in) :: QTM_Tree
+    class(h_t), intent(in) :: Point(:)             ! Assume size(point) ==
+!     type(value_QTM_1D_list_t(rg)), intent(out) :: Weights(:) ! size(weights), and
+    type(value_QTM_1D_list_t), intent(out) :: Weights(:) ! size(weights), and
+    type(stack_t), intent(inout), optional :: Stack
+
+    integer :: I
+    type(stack_t) :: MyStack
+
+    if ( present(stack) ) then
+      do i = 1, size(point) ! Assume size(point) == size(weights)
+        call QTM_Interpolation_Weights ( QTM_Tree, point(i), weights(i), &
+          & stack=stack )
+      end do
+    else
+      do i = 1, size(point) ! Assume size(point) == size(weights)
+        call QTM_Interpolation_Weights ( QTM_Tree, point(i), weights(i), &
+          & stack=myStack )
+      end do
+    end if
+
+  end subroutine QTM_Interpolation_Weights_Geo_list
+
+d239 1
+a239 2
+!     type(value_QTM_1D_list_t(rg)), intent(out) :: Weights
+    type(value_QTM_1D_list_t), intent(out) :: Weights
+d247 1
+d256 1
+a256 6
+    if ( inside ) then
+      weights%v%j = QTM_tree%Q(f)%ser
+      call triangle_interpolate ( QTM_tree%Q(f)%z%x, QTM_tree%Q(f)%z%y, &
+                                & point%x, point%y, weights%v%v )
+      if ( present(used) ) used = point
+    else
+a261 76
+      if ( inside ) then
+        weights%v%j = QTM_tree%Q(f)%ser
+        call triangle_interpolate ( QTM_tree%Q(f)%z%x, QTM_tree%Q(f)%z%y, &
+                                  & point%x, point%y, weights%v%v )
+      else ! Shouldn't get here
+!         weights = value_QTM_1D_List_t(rg)(n=1) ! Default weight is zero
+        weights = value_QTM_1D_List_t(n=1) ! Default weight is zero
+      end if
+      if ( present(used) ) used = p
+    end if
+
+  end subroutine QTM_Interpolation_Weights_ZOT
+
+  subroutine QTM_Interpolation_Weights_ZOT_list ( QTM_Tree, Point, Weights, Stack  )
+
+    ! Get the horizontal interpolation weights for Point in the QTM.
+    ! This is a 2D-only routine.
+
+    use QTM_m, only: Stack_T, ZOT_t
+    use Generate_QTM_m, only: QTM_Tree_t
+!     use Geolocation_0, only: RG
+
+    type(QTM_tree_t), intent(in) :: QTM_Tree
+    type(ZOT_t), intent(in) :: Point(:)            ! Assume size(point) ==
+!     type(value_QTM_1D_list_t(rg)), intent(out) :: Weights(:) ! size(weights), and
+    type(value_QTM_1D_list_t), intent(out) :: Weights(:) ! size(weights), and
+    type(stack_t), intent(inout), optional :: Stack
+
+    integer :: I
+    type(stack_t) :: MyStack
+
+    if ( present(stack) ) then
+      do i = 1, size(point) ! Assume size(point) == size(weights,2)
+        call QTM_Interpolation_Weights ( QTM_Tree, point(i), weights(i), &
+          & stack=stack )
+      end do
+    else
+      do i = 1, size(point) ! Assume size(point) == size(weights)
+        call QTM_Interpolation_Weights ( QTM_Tree, point(i), weights(i), &
+          & stack=myStack )
+      end do
+    end if
+
+  end subroutine QTM_Interpolation_Weights_ZOT_list
+
+  subroutine QTM_Interpolation_Weights_Geo_2d ( QTM_Tree, Point, Weights, Facet, &
+                                           & Stack, Used )
+
+    ! Get the horizontal interpolation weights for Point in the QTM.  This is
+    ! the routine that actually does the work for Point being in some kind of
+    ! Geo coordinates.  This is a 2D-only routine, but the Weights argument
+    ! is for 3D.
+
+    use Generate_QTM_m, only: QTM_Tree_t
+    use Geolocation_0, only: H_t! , RG
+    use Nearest_Polygon_Point_m, only: Nearest_Polygon_Point
+    use QTM_m, only: Geo_to_ZOT, Stack_t, ZOT_t
+    use Triangle_Interpolate_m, only: Triangle_Interpolate
+
+    type(QTM_tree_t), intent(in) :: QTM_Tree
+    class(h_t), intent(in) :: Point
+!     type(value_QTM_2D_List_t(rg)), intent(out) :: Weights
+    type(value_QTM_2D_List_t), intent(out) :: Weights
+    integer, intent(in), optional :: Facet
+    type(stack_t), intent(inout), optional :: Stack
+    class(h_t), intent(out), optional :: Used ! The point used for interpolation
+
+    logical :: Inside ! Point is inside a facet with three serial numbers.
+    integer :: F      ! Index in QTM_Tree of facet containing Point, if any.
+    type(h_t) :: P    ! Coordinates of boundary point nearest to Point.
+    type(ZOT_t) :: Z  ! ZOT coordinates of Point.
+
+    if ( present(facet) ) then
+      f = facet
+    else
+      f = QTM_tree%find_facet ( point, stack )
+a262 2
+    inside = f > 0
+    if ( inside ) inside = all(QTM_tree%Q(f)%ser > 0)
+a263 2
+      z = geo_to_ZOT ( point )
+      weights%v(1:3)%j = QTM_tree%Q(f)%ser
+d265 4
+a268 24
+                                & z%x, z%y, weights%v(1:3)%v )
+      if ( present(used) ) then
+        used%lon = point%lon
+        used%lat = point%lat
+      end if
+    else
+      call nearest_polygon_point ( point, QTM_tree%polygon_geo, p )
+      z = geo_to_ZOT ( p )
+      f = QTM_tree%find_facet ( z, stack )
+      ! P should be inside!
+      inside = f > 0
+      if ( inside ) inside = all(QTM_tree%Q(f)%ser > 0)
+      if ( inside ) then
+        weights%v(1:3)%j = QTM_tree%Q(f)%ser
+        call triangle_interpolate ( QTM_tree%Q(f)%z%x, QTM_tree%Q(f)%z%y, &
+                                  & z%x, z%y, weights%v(1:3)%v )
+      else ! Shouldn't get here
+!         weights = value_QTM_2D_List_t(rg)(n=1) ! Default weight is zero
+        weights = value_QTM_2D_List_t(n=1) ! Default weight is zero
+      end if
+      if ( present(used) ) then
+        used%lon = p%lon
+        used%lat = p%lat
+      end if
+d270 1
+d272 1
+a272 124
+  end subroutine QTM_Interpolation_Weights_Geo_2d
+
+  subroutine QTM_Interpolation_Weights_Geo_list_2d ( QTM_Tree, Point, Weights, Stack )
+
+    ! Get the horizontal interpolation weights for Point in the QTM.  This is
+    ! the routine that actually does the work for Point being in some kind of
+    ! Geo coordinates.  This is a 2D-only routine, but the Weights argument
+    ! is for 3D.
+
+    use Generate_QTM_m, only: QTM_Tree_t
+    use Geolocation_0, only: H_t! , RG
+    use QTM_m, only: Stack_t
+
+    type(QTM_tree_t), intent(in) :: QTM_Tree
+    class(h_t), intent(in) :: Point(:)             ! Assume size(point) ==
+!     type(value_QTM_2D_List_t(rg)), intent(out) :: Weights(:) ! size(weights), and
+    type(value_QTM_2D_List_t), intent(out) :: Weights(:) ! size(weights), and
+    type(stack_t), intent(inout), optional :: Stack
+
+    integer :: I
+    type(stack_t) :: MyStack
+
+    if ( present(stack) ) then
+      do i = 1, size(point) ! Assume size(point) == size(weights)
+        call QTM_Interpolation_Weights ( QTM_Tree, point(i), weights(i), &
+          & stack=stack )
+      end do
+    else
+      do i = 1, size(point) ! Assume size(point) == size(weights)
+        call QTM_Interpolation_Weights ( QTM_Tree, point(i), weights(i), &
+          & stack=myStack )
+      end do
+    end if
+
+  end subroutine QTM_Interpolation_Weights_Geo_list_2d
+
+  subroutine QTM_Interpolation_Weights_ZOT_2d ( QTM_Tree, Point, Weights, Facet, &
+                                           & Stack, Used )
+
+    ! Get the horizontal interpolation weights for Point in the QTM.
+    ! This is a 2D-only routine, but the Weights argument
+    ! is for 3D.
+
+    use QTM_m, only: Stack_T, ZOT_t
+    use Generate_QTM_m, only: QTM_Tree_t
+!     use Geolocation_0, only: RG
+    use Nearest_Polygon_Point_m, only: Nearest_Polygon_Point
+    use Triangle_Interpolate_m, only: Triangle_Interpolate
+
+    type(QTM_tree_t), intent(in) :: QTM_Tree
+    type(ZOT_t), intent(in) :: Point
+!     type(value_QTM_2D_List_t(rg)), intent(out) :: Weights
+    type(value_QTM_2D_List_t), intent(out) :: Weights
+    integer, intent(in), optional :: Facet
+    type(stack_t), intent(inout), optional :: Stack
+    type(ZOT_t), intent(out), optional :: Used ! The point used for interpolation
+
+    logical :: Inside ! Point is inside a facet with three serial numbers.
+    integer :: F      ! Index in QTM_Tree of facet containing Point, if any.
+    type(ZOT_t) :: P  ! Coordinates of boundary point nearest to Point.
+
+    if ( present(facet) ) then
+      f = facet
+    else
+      f = QTM_tree%find_facet ( point, stack )
+    end if
+    inside = f > 0
+    if ( inside ) inside = all(QTM_tree%Q(f)%ser > 0)
+    if ( inside ) then
+      weights%v(1:3)%j = QTM_tree%Q(f)%ser
+      call triangle_interpolate ( QTM_tree%Q(f)%z%x, QTM_tree%Q(f)%z%y, &
+                                & point%x, point%y, weights%v(1:3)%v )
+      if ( present(used) ) used = point
+    else
+      call nearest_polygon_point ( point, QTM_tree%polygon_zot, p )
+      f = QTM_tree%find_facet ( p, stack )
+      ! It should be inside!
+      inside = f > 0
+      if ( inside ) inside = all(QTM_tree%Q(f)%ser > 0)
+      if ( inside ) then
+        weights%v(1:3)%j = QTM_tree%Q(f)%ser
+        call triangle_interpolate ( QTM_tree%Q(f)%z%x, QTM_tree%Q(f)%z%y, &
+                                  & point%x, point%y, weights%v(1:3)%v )
+      else ! Shouldn't get here
+!         weights = value_QTM_2D_List_t(rg)(n=1) ! Default weight is zero
+        weights = value_QTM_2D_List_t(n=1) ! Default weight is zero
+      end if
+      if ( present(used) ) used = p
+    end if
+
+  end subroutine QTM_Interpolation_Weights_ZOT_2d
+
+  subroutine QTM_Interpolation_Weights_ZOT_list_2d ( QTM_Tree, Point, Weights, Stack  )
+
+    ! Get the horizontal interpolation weights for Point in the QTM.
+    ! This is a 2D-only routine, but the Weights argument
+    ! is for 3D.
+
+    use QTM_m, only: Stack_T, ZOT_t
+    use Generate_QTM_m, only: QTM_Tree_t
+!     use Geolocation_0, only: RG
+
+    type(QTM_tree_t), intent(in) :: QTM_Tree
+    type(ZOT_t), intent(in) :: Point(:)            ! Assume size(point) ==
+!     type(value_QTM_2D_List_t(rg)), intent(out) :: Weights(:) ! size(weights), and
+    type(value_QTM_2D_List_t), intent(out) :: Weights(:) ! size(weights), and
+    type(stack_t), intent(inout), optional :: Stack
+
+    integer :: I
+    type(stack_t) :: MyStack
+
+    if ( present(stack) ) then
+      do i = 1, size(point) ! Assume size(point) == size(weights,2)
+        call QTM_Interpolation_Weights ( QTM_Tree, point(i), weights(i), &
+          & stack=stack )
+      end do
+    else
+      do i = 1, size(point) ! Assume size(point) == size(weights)
+        call QTM_Interpolation_Weights ( QTM_Tree, point(i), weights(i), &
+          & stack=myStack )
+      end do
+    end if
+
+  end subroutine QTM_Interpolation_Weights_ZOT_list_2d
+d278 1
+a278 1
+       "$Id: QTM_Interpolation_Weights_m.f90,v 2.10 2017/08/28 20:27:47 livesey Exp $"
+d288 3
+@
+
+
+2.10
+log
+@Changed the n,nf,np,nz elements to j,jf,...
+@
+text
+@d16 2
+d40 59
+a116 1
+    use Indexed_Values_m, only: Value_QTM_1D_List_t
+a179 1
+    use Indexed_Values_m, only: Value_QTM_1D_list_t
+a214 1
+    use Indexed_Values_m, only: Value_QTM_1D_list_t
+a267 1
+    use Indexed_Values_m, only: Value_QTM_1D_list_t
+a302 1
+    use Indexed_Values_m, only: Value_QTM_2D_List_t
+a366 1
+    use Indexed_Values_m, only: value_QTM_2D_List_t
+a402 1
+    use Indexed_Values_m, only: value_QTM_2D_List_t
+a456 1
+    use Indexed_Values_m, only: value_QTM_2D_List_t
+d485 1
+a485 1
+       "$Id: QTM_Interpolation_Weights_m.f90,v 2.9 2016/11/23 20:08:45 vsnyder Exp $"
+d495 3
+@
+
+
+2.9
+log
+@Comment out Use...RG until processors support KPDT
+@
+text
+@d82 1
+a82 1
+      weights%v%n = QTM_tree%Q(f)%ser
+d97 1
+a97 1
+        weights%v%n = QTM_tree%Q(f)%ser
+d179 1
+a179 1
+      weights%v%n = QTM_tree%Q(f)%ser
+d190 1
+a190 1
+        weights%v%n = QTM_tree%Q(f)%ser
+d272 1
+a272 1
+      weights%v(1:3)%n = QTM_tree%Q(f)%ser
+d287 1
+a287 1
+        weights%v(1:3)%n = QTM_tree%Q(f)%ser
+d371 1
+a371 1
+      weights%v(1:3)%n = QTM_tree%Q(f)%ser
+d382 1
+a382 1
+        weights%v(1:3)%n = QTM_tree%Q(f)%ser
+d432 1
+a432 1
+       "$Id: QTM_Interpolation_Weights_m.f90,v 2.8 2016/11/23 00:09:36 vsnyder Exp $"
+d442 3
+@
+
+
+2.8
+log
+@Use types from Indexed_Values_m.  Add _2d routines to do horizontal
+interpolation for later 3D interpolation.
+@
+text
+@d54 1
+a54 1
+    use Geolocation_0, only: H_t, RG
+d119 1
+a119 1
+    use Geolocation_0, only: H_t, RG
+d154 1
+a154 1
+    use Geolocation_0, only: RG
+d209 1
+a209 1
+    use Geolocation_0, only: RG
+d244 1
+a244 1
+    use Geolocation_0, only: H_t, RG
+d310 1
+a310 1
+    use Geolocation_0, only: H_t, RG
+d346 1
+a346 1
+    use Geolocation_0, only: RG
+d402 1
+a402 1
+    use Geolocation_0, only: RG
+d432 1
+a432 1
+       "$Id: QTM_Interpolation_Weights_m.f90,v 2.7 2016/11/12 01:34:06 vsnyder Exp $"
+d442 4
+@
+
+
+2.7
+log
+@Add Facet argument for routines with scalar Point, in case we know it
+@
+text
+@d31 5
+a35 1
+      & QTM_Interpolation_Weights_ZOT_list
+d54 1
+a54 1
+    use Geolocation_0, only: H_t
+d56 1
+a56 1
+    use Path_Representation_m, only: Value_t
+d62 2
+a63 1
+    type(value_t), intent(out) :: Weights(3)
+d82 1
+a82 1
+      weights%n = QTM_tree%Q(f)%ser
+d84 1
+a84 1
+                                & z%x, z%y, weights%v )
+d97 1
+a97 1
+        weights%n = QTM_tree%Q(f)%ser
+d99 1
+a99 1
+                                  & z%x, z%y, weights%v )
+d101 2
+a102 1
+        weights = value_t(1,1,1,0)
+d119 2
+a120 2
+    use Geolocation_0, only: H_t
+    use Path_Representation_m, only: Value_t
+d124 3
+a126 3
+    class(h_t), intent(in) :: Point(:)          ! Assume size(point) == 
+    type(value_t), intent(out) :: Weights(:,:)  ! size(weights,2) and
+                                                ! size(weights,1) == 3
+d133 2
+a134 2
+      do i = 1, size(point) ! Assume size(point) == size(weights,2)
+        call QTM_Interpolation_Weights ( QTM_Tree, point(i), weights(:,i), &
+d138 2
+a139 2
+      do i = 1, size(point) ! Assume size(point) == size(weights,2)
+        call QTM_Interpolation_Weights ( QTM_Tree, point(i), weights(:,i), &
+d154 1
+d156 1
+a156 1
+    use Path_Representation_m, only: Value_t
+d161 2
+a162 1
+    type(value_t), intent(out) :: Weights(3)
+d179 1
+a179 1
+      weights%n = QTM_tree%Q(f)%ser
+d181 1
+a181 1
+                                & point%x, point%y, weights%v )
+d190 1
+a190 1
+        weights%n = QTM_tree%Q(f)%ser
+d192 1
+a192 1
+                                  & point%x, point%y, weights%v )
+d194 2
+a195 1
+        weights = value_t(1,1,1,0)
+d209 2
+a210 1
+    use Path_Representation_m, only: Value_t
+d213 3
+a215 3
+    type(ZOT_t), intent(in) :: Point(:)         ! Assume size(point) ==
+    type(value_t), intent(out) :: Weights(:,:)  ! size(weights,2) and
+                                                ! size(weights,1) == 3
+d223 1
+a223 1
+        call QTM_Interpolation_Weights ( QTM_Tree, point(i), weights(:,i), &
+d228 1
+a228 1
+        call QTM_Interpolation_Weights ( QTM_Tree, point(i), weights(:,i), &
+d235 193
+d432 1
+a432 1
+       "$Id: QTM_Interpolation_Weights_m.f90,v 2.6 2016/11/02 22:55:15 vsnyder Exp $"
+d442 3
+d461 1
+a461 1
+! Move 3D routines to QTM_Interpolation_Weights_3D_m
+@
+
+
+2.6
+log
+@Remove Weight_t in favor of Value_t in Path_Representation_m
+@
+text
+@d42 2
+a43 2
+  subroutine QTM_Interpolation_Weights_Geo ( QTM_Tree, Point, Weights, Stack, &
+                                           & Used )
+d59 1
+d68 5
+a72 1
+    f = QTM_tree%find_facet ( point, stack )
+d96 1
+a96 1
+        weights = value_t(1,0)
+d128 2
+a129 1
+        call QTM_Interpolation_Weights ( QTM_Tree, point(i), weights(:,i), stack )
+d133 2
+a134 1
+        call QTM_Interpolation_Weights ( QTM_Tree, point(i), weights(:,i), myStack )
+d140 2
+a141 2
+  subroutine QTM_Interpolation_Weights_ZOT ( QTM_Tree, Point, Weights, Stack, &
+                                           & Used )
+d155 1
+d163 5
+a167 1
+    f = QTM_tree%find_facet ( point, stack )
+d186 1
+a186 1
+        weights = value_t(1,0)
+d213 2
+a214 1
+        call QTM_Interpolation_Weights ( QTM_Tree, point(i), weights(:,i), stack )
+d218 2
+a219 1
+        call QTM_Interpolation_Weights ( QTM_Tree, point(i), weights(:,i), myStack )
+d229 1
+a229 1
+       "$Id: QTM_Interpolation_Weights_m.f90,v 2.5 2016/10/25 18:23:48 vsnyder Exp $"
+d239 3
+@
+
+
+2.5
+log
+@Inching toward 3D-QTM forward model support
+@
+text
+@a15 2
+  use Geolocation_0, only: RG
+
+a33 9
+  public :: Weight_t
+
+  type :: Weight_t
+    integer :: Which      ! Position in array element order to which weight is
+                          ! germane; if no facet was found (which shouldn't
+                          ! happen), Which is one and Weight is zero.
+    real(rg) :: Weight    ! Weight -- interpolation coefficient
+  end type Weight_t
+
+d52 1
+d58 1
+a58 1
+    type(weight_t), intent(out) :: Weights(3)
+d72 1
+a72 1
+      weights%which = QTM_tree%Q(f)%ser
+d74 1
+a74 1
+                                & z%x, z%y, weights%weight )
+d87 1
+a87 1
+        weights%which = QTM_tree%Q(f)%ser
+d89 1
+a89 1
+                                  & z%x, z%y, weights%weight )
+d91 1
+a91 1
+        weights = weight_t(1,0)
+d109 1
+d114 1
+a114 1
+    type(weight_t), intent(out) :: Weights(:,:) ! size(weights,2) and
+d142 1
+d147 1
+a147 1
+    type(weight_t), intent(out) :: Weights(3)
+d159 1
+a159 1
+      weights%which = QTM_tree%Q(f)%ser
+d161 1
+a161 1
+                                & point%x, point%y, weights%weight )
+d170 1
+a170 1
+        weights%which = QTM_tree%Q(f)%ser
+d172 1
+a172 1
+                                  & point%x, point%y, weights%weight )
+d174 1
+a174 1
+        weights = weight_t(1,0)
+d188 1
+d192 1
+a192 1
+    type(weight_t), intent(out) :: Weights(:,:) ! size(weights,2) and
+d215 1
+a215 1
+       "$Id: QTM_Interpolation_Weights_m.f90,v 2.4 2016/10/05 23:28:22 vsnyder Exp $"
+d225 3
+@
+
+
+2.4
+log
+@Replace ZOT_n component name with Ser because it's a serial number for
+more than just the ZOT coordinates.
+@
+text
+@d22 1
+a22 1
+  ! point, and calculate their interpolation weights.
+d56 3
+a58 3
+    ! Get the interpolation weights for Point in the QTM.  This is the
+    ! routine that actually does the work for Point being in some kind of Geo
+    ! coordinates.  This is a 2D-only routine.
+d113 3
+a115 3
+    ! Get the interpolation weights for Point in the QTM.  This is the
+    ! routine that actually does the work for Point being in some kind of Geo
+    ! coordinates.  This is a 2D-only routine.
+d145 1
+a145 1
+    ! Get the interpolation weights for Point in the QTM.
+d191 1
+a191 1
+    ! Get the interpolation weights for Point in the QTM.
+d222 1
+a222 1
+       "$Id: QTM_Interpolation_Weights_m.f90,v 2.3 2016/08/24 22:56:34 vsnyder Exp $"
+d232 4
+@
+
+
+2.3
+log
+@Make Weights%Which == 1 with Weights%Weight == 0 if a facet is not found,
+so Weights can still be used without checking whether a facet was found.
+The result of interpolating with it will be zero.
+@
+text
+@d79 1
+a79 1
+    if ( inside ) inside = all(QTM_tree%Q(f)%ZOT_n > 0)
+d82 1
+a82 1
+      weights%which = QTM_tree%Q(f)%ZOT_n
+d95 1
+a95 1
+      if ( inside ) inside = all(QTM_tree%Q(f)%ZOT_n > 0)
+d97 1
+a97 1
+        weights%which = QTM_tree%Q(f)%ZOT_n
+d165 1
+a165 1
+    if ( inside ) inside = all(QTM_tree%Q(f)%ZOT_n > 0)
+d167 1
+a167 1
+      weights%which = QTM_tree%Q(f)%ZOT_n
+d176 1
+a176 1
+      if ( inside ) inside = all(QTM_tree%Q(f)%ZOT_n > 0)
+d178 1
+a178 1
+        weights%which = QTM_tree%Q(f)%ZOT_n
+d222 1
+a222 1
+       "$Id: QTM_Interpolation_Weights_m.f90,v 2.2 2015/12/31 00:57:32 vsnyder Exp $"
+d232 5
+@
+
+
+2.2
+log
+@Move 3D routines to QTM_Interpolation_Weights_3D_m
+@
+text
+@d40 2
+a41 3
+                          ! germane; zero if not to be used because no facet
+                          ! was found (which shouldn't happen) or because the
+                          ! Weight is zero.
+d101 1
+a101 1
+        weights = weight_t(0,0)
+d182 1
+a182 1
+        weights = weight_t(0,0)
+d222 1
+a222 1
+       "$Id: QTM_Interpolation_Weights_m.f90,v 2.1 2015/12/31 00:05:02 vsnyder Exp $"
+d232 3
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@a25 1
+  public :: QTM_Interpolation_Weights_Geo_3D, QTM_Interpolation_Weights_Geo_3D_List
+a32 2
+      & QTM_Interpolation_Weights_Geo_3D, &
+      & QTM_Interpolation_Weights_Geo_3D_List, &
+d48 1
+a48 1
+       "$RCSfile: QTM_m.f90,v $"
+d59 1
+a59 1
+    ! coordinates.  This is a 2D-only routine; it's used by the 3D routines.
+d116 1
+a116 1
+    ! coordinates.  This is a 2D-only routine; it's used by the 3D routines.
+a142 174
+  subroutine QTM_Interpolation_Weights_Geo_3D ( QTM_Tree, Heights, Point, &
+                                              & Weights, N_Weights, Stack, Used )
+
+    ! Construct interpolation weights and positions for a point in a 3D grid
+    ! for which the horizontal grid is QTM.  The 3D grid is assumed to be
+    ! stacked and coherent.  The positions are array element order positions,
+    ! which can be converted to 2D subscripts (QTM serial number, height)
+    ! by the Subscripts function in the Array_Stuff module.
+
+    use Array_Stuff, only: Element_Position
+    use Generate_QTM_m, only: QTM_Tree_t
+    use Geolocation_0, only: H_t, H_V_t, RG
+    use Hunt_m, only: Hunt
+    use QTM_m, only: QK, Stack_t
+
+    type(QTM_tree_t), intent(in) :: QTM_Tree
+    real(rg), intent(in) :: Heights(:)   ! Assume Heights (meters, zeta) are
+    class(h_v_t), intent(in) :: Point    !   the same units as for Point%V
+    type(weight_t), intent(out) :: Weights(6)
+    integer :: N_Weights                 ! Number of nonzero weights
+    type(stack_t), intent(inout), optional :: Stack
+    class(h_t), intent(out), optional :: Used ! Horizontal coordinates of the
+                                         !   point used for interpolation
+
+    real(rg) :: dH       ! Difference in Heights coordinates
+    integer :: Index, J
+    integer(qk) :: N_QTM ! Number of vertices of QTM within or adjacent to
+                         ! the polygon
+    real(rg) :: W        ! Weight in the vertical direction for the lower level
+
+    n_QTM = QTM_Tree%n_in
+
+    ! Get horizontal interpolation coefficients and serial numbers
+    call QTM_Interpolation_Weights ( QTM_Tree, Point, Weights(1:3), Stack, Used )
+
+    ! Get vertical interpolation coefficients
+    call hunt ( heights, point%v, index, &
+              & allowTopValue=.true., allowBelowValue = .true. )
+
+    ! Combine horizontal and vertical interpolation coefficients
+    if ( index == 0 ) then
+      weights(4:6)%which = 0 ! Constant vertical extrapolation outside
+                             !   range of Heights(:)
+    else if ( index >= size(heights) ) then
+      do j = 1, 3
+        weights(j)%which = element_position ( [ weights(j)%which, size(heights) ], &
+          & [ n_QTM, size(heights) ] )
+      end do
+      weights(4:6)%which = 0 ! Constant vertical extrapolation outside
+                             !   range of Heights(:)
+    else
+      dH = heights(index+1) - heights(index)
+      if ( dH == 0 ) then ! shouldn't happen if Heights(:) are distinct
+        weights(4:6)%which = 0 ! Don't use points other than at Height Index
+      else
+        w = ( heights(index+1) - point%v ) / dh
+        if ( w == 1.0_rg ) then
+          do j = 1, 3
+            weights(j)%which = element_position ( [ weights(j)%which, index ], &
+              & [ n_QTM, size(heights) ] )
+          end do
+          weights(4:6)%which = 0 ! Don't use points other than at Height Index
+        else if ( w == 0.0_rg ) then
+          do j = 1, 3
+            weights(j)%which = element_position ( [ weights(j)%which, index+1 ], &
+              & [ n_QTM, size(heights) ] )
+          end do
+          weights(4:6)%which = 0 ! Don't use points other than at Height Index + 1
+        else
+          weights(4:6)%weight = weights(1:3)%weight * ( 1.0_rg - w )
+          weights(1:3)%weight = weights(1:3)%weight * w
+          do j = 1, 3
+            weights(j+3)%which = element_position ( [ weights(j)%which, index+1 ], &
+              & [ n_QTM, size(heights) ] )
+            weights(j)%which = element_position ( [ weights(j)%which, index ], &
+              & [ n_QTM, size(heights) ] )
+          end do
+        end if
+      end if
+    end if
+    n_weights = count ( weights%weight /= 0 ) 
+    where ( weights%weight == 0 ) weights%which = 0
+    weights = pack ( weights,weights%which /= 0 )
+    weights(n_weights+1:6) = weight_t(0,0)
+
+  end subroutine QTM_Interpolation_Weights_Geo_3D
+
+  subroutine QTM_Interpolation_Weights_Geo_3D_List ( QTM_Tree, Heights, Points, &
+                                                   & Weights, N_Weights )
+
+    ! Construct interpolation weights and positions for a point in a 3D grid
+    ! for which the horizontal grid is QTM.  The 3D grid is assumed to be
+    ! stacked and coherent.  The positions are array element order positions,
+    ! which can be converted to 2D subscripts (QTM serial number, height)
+    ! by the Subscripts function in the Array_Stuff module.
+
+    use Array_Stuff, only: Element_Position
+    use Generate_QTM_m, only: QTM_Tree_t
+    use Geolocation_0, only: H_V_t, RG
+    use Hunt_m, only: Hunt
+    use QTM_m, only: QK
+
+    type(QTM_tree_t), intent(in) :: QTM_Tree
+    real(rg), intent(in) :: Heights(:)    ! Assume Heights (meters, zeta) are
+    class(h_v_t), intent(in) :: Points(:) !   the same units as for Point%V
+    type(weight_t), intent(out) :: Weights(6,size(points))
+    integer :: N_Weights                  ! Number of nonzero weights
+
+    real(rg) :: dH       ! Difference in Heights coordinates
+    integer :: I, Index, Indices(size(points)), J
+    integer(qk) :: N_QTM ! Number of vertices of QTM within or adjacent to
+                         ! the polygon
+    real(rg) :: W        ! Weight in the vertical direction for the lower level
+
+    n_QTM = QTM_Tree%n_in
+
+    ! Get horizontal interpolation coefficients and serial numbers
+    call QTM_Interpolation_Weights ( QTM_Tree, Points, Weights(1:3,:) )
+
+    ! Get vertical interpolation coefficients
+    call hunt ( heights, points%v, indices, &
+              & allowTopValue=.true., allowBelowValue = .true. )
+
+    ! Combine horizontal and vertical interpolation coefficients
+    do i = 1, size(points)
+      index = indices(i)
+      if ( index == 0 ) then
+        weights(4:6,i)%which = 0 ! Constant vertical extrapolation outside
+                               !   range of Heights(:)
+      else if ( index >= size(heights) ) then
+        do j = 1, 3
+          weights(j,i)%which = element_position ( [ weights(j,i)%which, size(heights) ], &
+            & [ n_QTM, size(heights) ] )
+        end do
+        weights(4:6,i)%which = 0 ! Constant vertical extrapolation outside
+                               !   range of Heights(:)
+      else
+        dH = heights(index+1) - heights(index)
+        if ( dH == 0 ) then ! shouldn't happen if Heights(:) are distinct
+          weights(4:6,i)%which = 0 ! Don't use points other than at Height Index
+        else
+          w = ( heights(index+1) - points(i)%v ) / dh
+          if ( w == 1.0_rg ) then
+            do j = 1, 3
+              weights(j,i)%which = element_position ( [ weights(j,i)%which, index ], &
+                & [ n_QTM, size(heights) ] )
+            end do
+            weights(4:6,i)%which = 0 ! Don't use points other than at Height Index
+          else if ( w == 0.0_rg ) then
+            do j = 1, 3
+              weights(j,i)%which = element_position ( [ weights(j,i)%which, index+1 ], &
+                & [ n_QTM, size(heights) ] )
+            end do
+            weights(4:6,i)%which = 0 ! Don't use points other than at Height Index + 1
+          else
+            weights(4:6,i)%weight = weights(1:3,i)%weight * ( 1.0_rg - w )
+            weights(1:3,i)%weight = weights(1:3,i)%weight * w
+            do j = 1, 3
+              weights(j,i+3)%which = element_position ( [ weights(j,i)%which, index+1 ], &
+                & [ n_QTM, size(heights) ] )
+              weights(j,i)%which = element_position ( [ weights(j,i)%which, index ], &
+                & [ n_QTM, size(heights) ] )
+            end do
+          end if
+        end if
+      end if
+      n_weights = count ( weights(:,i)%weight /= 0 ) 
+      where ( weights(:,i)%weight == 0 ) weights(:,i)%which = 0
+      weights(:,i) = pack ( weights(:,i),weights(:,i)%which /= 0 )
+      weights(n_weights+1:6,i) = weight_t(0,0)
+    end do
+
+  end subroutine QTM_Interpolation_Weights_Geo_3D_List
+
+d223 1
+a223 1
+       "$Id: QTM_m.f90,v 2.1 2015/11/13 19:45:12 vsnyder Exp $"
+d232 4
+a235 1
+! $Log: $
+@
+

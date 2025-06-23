@@ -1,0 +1,3007 @@
+head	2.26;
+access;
+symbols
+	V1-32:2.24
+	V1-31:2.24
+	V1-30:2.24
+	V1-13:2.20
+	V1-12:2.20
+	V1-11:2.20
+	V1-10:2.19
+	newfwm-feb03:2.20.0.2
+	V1-04:2.10
+	V1-03:2.10
+	V1-02:2.10
+	JointForwardModel:2.10.0.2
+	V1-00:2.10
+	newfwm-sep01:1.14.0.2
+	V0-7:1.14
+	V0-5-Level2:1.8
+	V0-5-SIPS:1.8;
+locks; strict;
+comment	@# @;
+
+
+2.26
+date	2004.03.18.20.43.09;	author vsnyder;	state dead;
+branches;
+next	2.25;
+
+2.25
+date	2004.02.27.22.47.20;	author bill;	state Exp;
+branches;
+next	2.24;
+
+2.24
+date	2003.06.25.02.41.53;	author vsnyder;	state Exp;
+branches;
+next	2.23;
+
+2.23
+date	2003.05.16.23.51.30;	author livesey;	state Exp;
+branches;
+next	2.22;
+
+2.22
+date	2003.05.16.02.46.50;	author vsnyder;	state Exp;
+branches;
+next	2.21;
+
+2.21
+date	2003.05.05.23.00.25;	author livesey;	state Exp;
+branches;
+next	2.20;
+
+2.20
+date	2003.02.11.00.48.18;	author jonathan;	state Exp;
+branches
+	2.20.2.1;
+next	2.19;
+
+2.19
+date	2003.02.06.00.20.22;	author jonathan;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2003.01.31.20.18.40;	author jonathan;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2003.01.31.17.16.28;	author jonathan;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2002.12.13.02.06.50;	author vsnyder;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2002.10.08.17.08.02;	author pwagner;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2002.09.24.23.16.48;	author vsnyder;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2002.09.24.00.49.19;	author vsnyder;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2002.09.12.23.00.04;	author vsnyder;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2002.07.29.21.41.48;	author bill;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2002.03.06.02.29.28;	author zvi;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2002.02.28.07.16.41;	author zvi;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2002.02.27.07.04.10;	author zvi;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2001.11.15.01.22.00;	author zvi;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2001.11.10.00.46.40;	author zvi;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2001.10.18.16.01.37;	author zvi;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2001.10.18.15.59.26;	author zvi;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2001.10.18.07.13.04;	author zvi;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2001.10.17.18.19.10;	author zvi;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.10.16.15.07.08;	author zvi;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2001.09.17.20.26.26;	author livesey;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2001.06.22.20.00.21;	author zvi;	state Exp;
+branches
+	1.14.2.1;
+next	1.13;
+
+1.13
+date	2001.06.21.13.07.08;	author zvi;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2001.06.07.23.30.33;	author pwagner;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2001.05.15.03.47.26;	author zvi;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2001.05.14.23.16.31;	author zvi;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2001.05.14.23.14.54;	author zvi;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2001.04.05.21.58.47;	author zvi;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2001.04.03.07.32.45;	author zvi;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2001.03.29.08.51.01;	author zvi;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2001.02.19.22.20.40;	author zvi;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.02.19.22.14.21;	author zvi;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2001.02.03.02.07.01;	author zvi;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.01.31.01.08.48;	author zvi;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2000.11.22.23.07.24;	author zvi;	state Exp;
+branches;
+next	;
+
+1.14.2.1
+date	2001.09.10.10.02.32;	author zvi;	state Exp;
+branches;
+next	;
+
+2.20.2.1
+date	2003.02.13.17.34.12;	author bill;	state Exp;
+branches;
+next	2.20.2.2;
+
+2.20.2.2
+date	2003.02.27.23.24.34;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.26
+log
+@Functionality moved to get_beta_path_m
+@
+text
+@module CREATE_BETA_M
+
+  implicit NONE
+  private
+  public :: Create_beta
+
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+    & "$id: create_beta_m.f90,v 2.11 2002/07/29 21:41:48 bill Exp $"
+  character ( len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName= &
+    & "$RCSfile: create_beta_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+contains
+! *****     Public Subroutine     **************************************
+! ----------------------------------------------  Create_beta  ---------
+
+  subroutine Create_beta ( molecule, cont, pressure, Temp, Fgr, pfaw, &
+         &   slabs_0, tanh1, beta_value, polarized,                  &
+         &   slabs_p, tanh1_p, slabs_m, tanh1_m,                     &
+         &   t_power, dbeta_dw, dbeta_dn, dbeta_dv  )
+
+!  For a given frequency and height, compute beta_value function.
+!  This routine should be called for primary and image separately.
+
+    use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
+    use MLSCommon, only: RP, IP
+    use Molecules, only: L_N2, L_Extinction, L_O2
+    use SLABS_SW_M, only: DVOIGT_SPECTRAL, VOIGT_LORENTZ, SLABSWINT, SLABS
+
+! Inputs:
+    integer(ip), intent(in) :: molecule ! molecule id
+    real(rp), intent(in) :: cont(:)    ! continuum parameters
+    real(rp), intent(in) :: pressure   ! pressure in hPa
+    real(rp), intent(in) :: temp       ! temperature in K
+    real(rp), intent(in) :: fgr        ! frequency in MHz
+    real(rp), intent(in) :: pfaw(:)    ! line widths
+    real(rp), intent(in) :: tanh1      ! tanh(frq*expa/2)
+    type(slabs_struct), intent(in) :: slabs_0 ! contains, among others:
+
+!    v0s(:)         ! pressure shifted line centers
+!    x1(:)          ! Doppler width
+!    y(:)           ! ratio Pressure to Doppler widths
+!    yi(:)          ! Interference coefficients
+!    expa(:)        ! exponential argument / frequency (not used)
+!    slabs1(:)      ! strengths
+!    dslabs1_dv0(:) ! strength derivative wrt line position
+
+    logical, intent(in), optional :: Polarized(:)! "Don't do this line" -- same size as pfaw
+
+! optional inputs for temperature derivatives
+    type(slabs_struct), intent(in), optional :: slabs_p, slabs_m
+    real(rp), intent(in), optional :: tanh1_p, tanh1_m ! tanh(frq*expa/2)
+! outputs
+    real(rp), intent(out) :: beta_value
+! optional outputs
+    real(rp), optional, intent(out) :: T_POWER ! for temperature derivative
+    real(rp), optional, intent(out) :: DBETA_DW ! line width derivative
+    real(rp), optional, intent(out) :: DBETA_DN ! temperature dependence deriv
+    real(rp), optional, intent(out) :: DBETA_DV ! line position derivative
+
+! -----     Local variables     ----------------------------------------
+
+    integer(ip) :: LN_I
+    integer(ip) :: NL ! no of lines
+
+    real(rp) :: ra, dNu, tp, bp, tm, bm, bv, dw, dn, ds, dbdw, dbdn, dbdv
+
+!----------------------------------------------------------------------------
+
+    nl = size(pfaw)
+
+    tp = Temp + 10.0_rp
+    tm = Temp - 10.0_rp
+
+    if ( present(dbeta_dw) .or. present(dbeta_dn) .or. present(dbeta_dv) ) then
+
+      dbdw = 0.0_rp
+      dbdn = 0.0_rp
+      dbdv = 0.0_rp
+
+    end if
+
+!  Setup absorption coefficients function
+!  Now get the beta_value:
+
+    select case ( molecule )
+    case ( l_n2 ) ! ...........................................  Dry Air
+
+      beta_value = abs_cs_n2_cont(cont,Temp,Pressure,Fgr)
+      if ( present(t_power) ) then
+        bm = abs_cs_n2_cont(cont,tm,Pressure,Fgr)
+        bp = abs_cs_n2_cont(cont,tp,Pressure,Fgr)
+      end if
+
+    case ( l_extinction ) ! ................................  Extinction
+
+      beta_value = 1.0_rp
+      if ( present(t_power)) t_power = 0.0_rp
+      return
+
+    case ( l_o2 ) ! ................................................  O2
+
+      beta_value = abs_cs_o2_cont(cont,Temp,Pressure,Fgr)
+      if ( present(t_power) ) then
+        bm = abs_cs_o2_cont(cont,tm,Pressure,Fgr)
+        bp = abs_cs_o2_cont(cont,tp,Pressure,Fgr)
+      end if
+
+    case default ! ..............................................  Other
+
+      beta_value = abs_cs_cont(cont,Temp,Pressure,Fgr)
+      if ( present(t_power) ) then
+        bm = abs_cs_cont(cont,tm,Pressure,Fgr)
+        bp = abs_cs_cont(cont,tp,Pressure,Fgr)
+      end if
+
+    end select
+
+    if ( nl < 1 ) then
+      if ( present(t_power) ) then
+        ds = log(bp/beta_value)/log(tp/temp)  ! Estimate over [temp+10,temp]
+        ra = log(bp/bm)/        log(tp/tm)    ! Estimate over [temp+10,temp-10]
+        dw = log(beta_value/bm)/log(temp/tm)  ! Estimate over [temp,temp-10]
+        t_power = 0.25 * (ds + 2.0 * ra + dw) ! Weighted Average
+      end if
+      return
+    end if
+
+    if ( present(dbeta_dw) .or. present(dbeta_dn) .or. present(dbeta_dv) ) then
+
+      do ln_i = 1, nl
+
+        if ( present(polarized) ) then
+          if ( polarized(ln_i) ) cycle
+        end if
+
+        dNu = Fgr - slabs_0%v0s(ln_i)
+
+        if ( abs(slabs_0%y(ln_i))+0.666666_rp*abs(slabs_0%x1(ln_i)*dNu) &
+        & > 100.0_rp ) then
+          call Voigt_Lorentz ( dNu, slabs_0%v0s(ln_i), slabs_0%x1(ln_i), &
+            &  slabs_0%yi(ln_i), slabs_0%y(ln_i), pfaw(ln_i), Temp, &
+            &  tanh1, slabs_0%slabs1(ln_i), bv, slabs_0%dslabs1_dv0(ln_i), &
+            &  dw, dn, ds )
+        else
+          call DVoigt_Spectral ( dNu, slabs_0%v0s(ln_i), slabs_0%x1(ln_i), &
+            &  slabs_0%yi(ln_i), slabs_0%y(ln_i), pfaw(ln_i), Temp, &
+            &  tanh1, slabs_0%slabs1(ln_i), bv, slabs_0%dslabs1_dv0(ln_i), &
+            &  dw, dn, ds )
+        end if
+
+        beta_value = beta_value + bv
+        dbdw = dbdw + dw
+        dbdn = dbdn + dn
+        dbdv = dbdv + ds
+
+      end do
+
+      if ( present(dbeta_dw)) dbeta_dw = dbdw
+      if ( present(dbeta_dn)) dbeta_dn = dbdn
+      if ( present(dbeta_dv)) dbeta_dv = dbdv
+
+    else                ! No derivatives required
+
+      if ( maxval(ABS(slabs_0%yi)) < 1.0e-06_rp ) then
+        do ln_i = 1, nl
+          if ( present(polarized) ) then
+            if ( polarized(ln_i) ) cycle
+          end if
+          beta_value = beta_value + &
+            &  Slabs(Fgr - slabs_0%v0s(ln_i), slabs_0%v0s(ln_i), &
+            &        slabs_0%x1(ln_i), tanh1, &
+            &        slabs_0%slabs1(ln_i), slabs_0%y(ln_i))
+        end do
+      else
+        do ln_i = 1, nl
+          if ( present(polarized) ) then
+            if ( polarized(ln_i) ) cycle
+          end if
+          beta_value = beta_value + &
+            &  Slabswint(Fgr - slabs_0%v0s(ln_i), slabs_0%v0s(ln_i), &
+            &            slabs_0%x1(ln_i), tanh1, &
+            &            slabs_0%slabs1(ln_i), &
+            &            slabs_0%y(ln_i), slabs_0%yi(ln_i))
+        end do
+      end if
+
+    end if
+
+    if ( present(t_power) ) then
+
+!  Find the temperature power dependency now:
+
+      if ( maxval(abs(slabs_0%yi)) < 1.0e-6_rp ) then
+        do ln_i = 1, nl
+          if ( present(polarized) ) then
+            if ( polarized(ln_i) ) cycle
+          end if
+          bp = bp + Slabs(Fgr - slabs_p%v0s(ln_i), slabs_p%v0s(ln_i), &
+            &             slabs_p%x1(ln_i), tanh1_p, &
+            &             slabs_p%slabs1(ln_i),slabs_p%y(ln_i))
+          bm = bm + Slabs(Fgr - slabs_m%v0s(ln_i), slabs_m%v0s(ln_i), &
+            &             slabs_m%x1(ln_i), tanh1_m, &
+            &             slabs_m%slabs1(ln_i),slabs_m%y(ln_i))
+        end do
+      else
+        do ln_i = 1, nl
+          if ( present(polarized) ) then
+            if ( polarized(ln_i) ) cycle
+          end if
+          bp = bp + Slabswint(Fgr - slabs_p%v0s(ln_i), slabs_p%v0s(ln_i), &
+            &                 slabs_p%x1(ln_i), tanh1_p, &
+            &                 slabs_p%slabs1(ln_i), slabs_p%y(ln_i), &
+            &                 slabs_p%yi(ln_i))
+          bm = bm + Slabswint(Fgr - slabs_m%v0s(ln_i), slabs_m%v0s(ln_i), &
+            &                 slabs_m%x1(ln_i), tanh1_m, &
+            &                 slabs_m%slabs1(ln_i), slabs_m%y(ln_i), &
+            &                 slabs_m%yi(ln_i))
+        end do
+      end if
+
+      ds = Log(bp/beta_value)/Log(tp/Temp)  ! Estimate over [temp+10,temp]
+      ra = Log(bp/bm)/        Log(tp/tm)    ! Estimate over [temp+10,temp-10]
+      dw = Log(beta_value/bm)/Log(Temp/tm)  ! Estimate over [temp,temp-10]
+      t_power = 0.25 * (ds + 2.0 * ra + dw) ! Weighted Average
+
+    end if
+
+  contains ! ===============================  Internal procedures  =====
+
+    ! ----------------------------------------------  Abs_CS_Cont  -----
+
+    ! Compute the general continuum contribution
+    pure real(rp) function Abs_CS_Cont ( Cont, Temperature, Pressure, Frequency )
+    ! real(rp) function Abs_CS_Cont ( Cont, Temperature, Pressure, Frequency )
+
+      real(rp), intent(in) :: CONT(:)     ! continuum parameters
+      real(rp), intent(in) :: TEMPERATURE ! in Kelvin
+      real(rp), intent(in) :: PRESSURE    ! in mbar
+      real(rp), intent(in) :: FREQUENCY   ! in MegaHertz
+
+      abs_cs_cont = cont(1) * pressure * pressure * frequency * frequency * &
+        & ( (300.0_rp / temperature)**cont(2) )
+
+    end function Abs_CS_Cont
+
+    ! -------------------------------------------  Abs_CS_N2_Cont  -----
+
+    ! Compute the N2 continuum contribution
+    pure real(rp) function Abs_CS_N2_Cont ( Cont, Temperature, Pressure, Frequency )
+    ! real(rp) Function Abs_CS_N2_cont ( Cont, Temperature, Pressure, Frequency )
+
+      real(rp), intent(in) :: CONT(:)     ! continuum parameters
+      real(rp), intent(in) :: TEMPERATURE ! in Kelvin
+      real(rp), intent(in) :: PRESSURE    ! in mbar
+      real(rp), intent(in) :: FREQUENCY   ! in MegaHertz
+
+      real(rp) :: THETA, FSQR, FSXT
+
+      theta = 300.0_rp / temperature
+      fsqr = frequency * frequency
+      fsxt = fsqr * theta
+      abs_cs_n2_cont = pressure * pressure * fsqr * (theta**cont(2)) * &
+                     & ( cont(1) * exp(-cont(3) * fsxt) + &
+                     &   cont(4) * exp(-cont(5) * fsxt) * &
+                     & (cont(6)**2 + fsqr))
+
+    end function Abs_CS_N2_Cont
+
+    ! -------------------------------------------  Abs_CS_O2_Cont  -----
+
+    ! Compute the O2 continuum contribution
+    pure real(rp) function Abs_CS_O2_Cont ( Cont, Temperature, Pressure, Frequency )
+    ! real(rp) Function ABS_CS_O2_CONT ( Cont, Temperature, Pressure, Frequency )
+
+      real(rp), intent(in) :: CONT(:)     ! continuum parameters
+      real(rp), intent(in) :: TEMPERATURE ! in Kelvin
+      real(rp), intent(in) :: PRESSURE    ! in mbar
+      real(rp), intent(in) :: FREQUENCY   ! in MegaHertz
+
+      real(rp) :: THETA, FSQR
+
+      theta = 300.0_rp / temperature
+      fsqr = frequency * frequency
+      abs_cs_o2_cont = cont(1) * pressure * pressure * fsqr * (theta**cont(2)) &
+                     & / (fsqr + (cont(3) * pressure * (theta**cont(4)) )**2 )
+
+    end function Abs_CS_O2_Cont
+
+  end Subroutine Create_beta
+
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
+end module CREATE_BETA_M
+
+! $Log: create_beta_m.f90,v $
+! Revision 2.25  2004/02/27 22:47:20  bill
+! fixed bug in n2 continuum calc
+!
+! Revision 2.24  2003/06/25 02:41:53  vsnyder
+! Cleaning things up, hoping to be faster...
+!
+! Revision 2.23  2003/05/16 23:51:30  livesey
+! Now uses molecule indices rather than spectags
+!
+! Revision 2.22  2003/05/16 02:46:50  vsnyder
+! Removed USE's for unreferenced symbols
+!
+! Revision 2.21  2003/05/05 23:00:25  livesey
+! Merged in feb03 newfwm branch
+!
+! Revision 2.20.2.2  2003/02/27 23:24:34  vsnyder
+! Process only unpolarized lines if 'polarized' argument is present and true
+!
+! Revision 2.20.2.1  2003/02/13 17:34:12  bill
+! uses new slabs_sw
+!
+! Revision 2.20  2003/02/11 00:48:18  jonathan
+! changes made after adding get_beta_path_cloud
+!
+! Revision 2.19  2003/02/06 00:20:22  jonathan
+! Add in many stuff to deal with clouds CloudIce, iwc_path, etc
+!
+! Revision 2.18  2003/01/31 20:18:40  jonathan
+! add get_beta_cloud
+!
+! Revision 2.17  2003/01/31 17:16:28  jonathan
+! add Inc_Cld, and cld_ext
+!
+! Revision 2.16  2002/12/13 02:06:50  vsnyder
+! Use a SLABS structure for the slabs quantities
+!
+! Revision 2.15  2002/10/08 17:08:02  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.14  2002/09/24 23:16:48  vsnyder
+! Fix up some comments
+!
+! Revision 2.13  2002/09/24 00:49:19  vsnyder
+! Move Abs_CS_... to be internal procedures, some cosmetic changes
+!
+! Revision 2.12  2002/09/12 23:00:04  vsnyder
+! Cosmetic changes, move USEs from module scope to procedure scope
+!
+! Revision 2.11  2002/07/29 21:41:48  bill
+! no changes, just debugging
+!
+! Revision 2.10  2002/03/06 02:29:28  zvi
+! Removing more limits on large dNu
+!
+! Revision 2.9  2002/02/28 07:16:41  zvi
+! Removing limit on large dNu
+!
+! Revision 2.8  2002/02/27 07:04:10  zvi
+! Fixing limit on large dNu
+!
+! Revision 2.7  2001/11/15 01:22:00  zvi
+! Remove Extiction debug
+!
+! Revision 2.6  2001/11/10 00:46:40  zvi
+! Adding the EXTINCTION capabilitis
+!
+! Revision 2.5  2001/10/18 16:01:37  zvi
+! Fix a small bug
+!
+! Revision 2.4  2001/10/18 15:59:26  zvi
+! Modification for speed
+!
+! Revision 2.3  2001/10/18 07:13:04  zvi
+! Make routine more efficient for nl=0
+!
+! Revision 2.2  2001/10/17 18:19:10  zvi
+! Fixing bug in computing t_power
+!
+! Revision 2.1  2001/10/16 15:07:08  zvi
+! Continuum parameters are now part of Catalog
+!
+! Revision 2.0  2001/09/17 20:26:26  livesey
+! New forward model
+!
+! Revision 1.14.2.1  2001/09/10 10:02:32  zvi
+! Cleanup..comp_path_entities_m.f90
+!
+! Revision 1.1  2001/02/01 18:12:04  vsnyder
+! Initial conversion to Fortran 90
+@
+
+
+2.25
+log
+@fixed bug in n2 continuum calc
+@
+text
+@d301 3
+@
+
+
+2.24
+log
+@Cleaning things up, hoping to be faster...
+@
+text
+@d266 2
+a267 2
+                     & ( cont(1) * exp(-cont(3) * fsxt * theta) + &
+                     &   cont(4) * exp(-cont(5) * fsxt * theta) * &
+d301 3
+@
+
+
+2.23
+log
+@Now uses molecule indices rather than spectags
+@
+text
+@d12 1
+a12 1
+    & "$RCSfile$"
+a64 1
+    logical :: MyPolarized
+d77 8
+d88 2
+a89 1
+    if ( molecule == l_n2 ) then ! .................  Dry Air
+d97 1
+a97 1
+    else if ( molecule == l_extinction ) then ! ............  Extinction
+d103 1
+a103 1
+    else if ( molecule == l_o2 ) then ! ............................  O2
+d111 1
+a111 1
+    else ! ......................................................  Other
+d119 1
+a119 1
+    end if
+a132 4
+      dbdw = 0.0_rp
+      dbdn = 0.0_rp
+      dbdv = 0.0_rp
+
+d135 3
+a137 3
+        myPolarized = .false.
+        if ( present(polarized) ) myPolarized = polarized(ln_i)
+        if ( myPolarized ) cycle
+d169 3
+a171 3
+          myPolarized = .false.
+          if ( present(polarized) ) myPolarized = polarized(ln_i)
+          if ( myPolarized ) cycle
+d179 3
+a181 3
+          myPolarized = .false.
+          if ( present(polarized) ) myPolarized = polarized(ln_i)
+          if ( myPolarized ) cycle
+d198 3
+a200 3
+          myPolarized = .false.
+          if ( present(polarized) ) myPolarized = polarized(ln_i)
+          if ( myPolarized ) cycle
+d210 3
+a212 3
+          myPolarized = .false.
+          if ( present(polarized) ) myPolarized = polarized(ln_i)
+          if ( myPolarized ) cycle
+d300 4
+a303 1
+! $Log$
+@
+
+
+2.22
+log
+@Removed USE's for unreferenced symbols
+@
+text
+@d12 1
+a12 1
+    & "$RCSfile: create_beta_m.f90,v $"
+d19 1
+a19 1
+  subroutine Create_beta ( Spectag, cont, pressure, Temp, Fgr, pfaw, &
+d29 1
+a29 1
+    use Molecules, only: SP_Air_Cont, SP_Extinction, SP_Liq_H2O, SP_O2
+d33 1
+a33 1
+    integer(ip), intent(in) :: SPECTAG ! molecule id tag
+d81 1
+a81 9
+    if ( spectag == sp_liq_h2o ) then ! ..................  Liquid Water
+
+      beta_value = abs_cs_liq_h2o(Fgr,Temp)
+      if ( present(t_power) ) then
+        bm = abs_cs_liq_h2o(Fgr,tm)
+        bp = abs_cs_liq_h2o(Fgr,tp)
+      end if
+
+    else if ( spectag == sp_air_cont ) then ! .................  Dry Air
+d89 1
+a89 1
+    else if ( spectag == sp_extinction ) then ! ............  Extinction
+d95 1
+a95 1
+    else if ( spectag == sp_o2 ) then ! ............................  O2
+a244 23
+    ! -------------------------------------------  Abs_CS_Liq_H2O  -----
+
+    ! Compute the liquid water correction
+    pure real(rp) function Abs_CS_Liq_H2O ( Frequency, Temperature )
+    ! real(rp) function ABS_CS_LIQ_H2O ( Frequency, Temperature )
+
+      real(rp), intent(in) :: FREQUENCY   ! in MegaHertz
+      real(rp), intent(in) :: TEMPERATURE ! in Kelvin
+
+    ! This function when multiplied by mass density (gm/m^3) of liquid droplet
+    ! water gives absorption in Km^-1. Function comes from Liebe 1985 radio
+    ! science paper and others.
+
+      real(rp) :: TAU, EPSILON, THETA
+
+      theta = 300.0_rp / temperature
+      tau = 4.17e-8_rp * frequency * theta * exp(7.13_rp * theta)
+      epsilon = (185.0_rp - 113.0_rp/theta) / (1.0_rp + tau * tau)
+      abs_cs_liq_h2o = 1.886e-4_rp * frequency * tau * epsilon / &
+                     & ((6.9_rp + epsilon)**2 + (tau*epsilon)**2)
+
+    end function Abs_CS_Liq_H2O
+
+d296 4
+a299 1
+! $Log: create_beta_m.f90,v $
+@
+
+
+2.21
+log
+@Merged in feb03 newfwm branch
+@
+text
+@d12 1
+a12 1
+    & "$RCSfile$"
+d28 1
+a28 1
+    use MLSCommon, only: R8, RP, IP
+a30 1
+    use Cloud_Extinction, only: get_beta_cloud
+d327 4
+a330 1
+! $Log$
+@
+
+
+2.20
+log
+@changes made after adding get_beta_path_cloud
+@
+text
+@d12 1
+a12 1
+    & "$RCSfile: create_beta_m.f90,v $"
+d19 4
+a22 4
+  subroutine Create_beta ( Spectag, cont, pressure, Temp, Fgr, pfaw,         &
+         &   slabs_0, beta_value,                                            &
+         &   slabs_p, slabs_m, t_power,                                      &
+         &   dbeta_dw, dbeta_dn, dbeta_dv  )
+d35 6
+a40 5
+    real(rp), intent(in) :: cont(:) ! continuum parameters
+    real(rp), intent(in) :: pressure ! pressure in hPa
+    real(rp), intent(in) :: temp ! temperature in K
+    real(rp), intent(in) :: fgr ! frequency in MHz
+    real(rp), intent(in) :: pfaw(:) ! line widths
+d47 1
+d50 3
+d55 1
+d66 1
+d140 4
+d146 2
+a147 1
+        if ( abs(slabs_0%y(ln_i))+0.666666_rp*abs(slabs_0%x1(ln_i)*dNu) > 100.0_rp ) then
+d150 2
+a151 1
+            &  slabs_0%slabs1(ln_i), bv, slabs_0%dslabs1_dv0(ln_i), dw, dn, ds )
+d155 2
+a156 1
+            &  slabs_0%slabs1(ln_i), bv, slabs_0%dslabs1_dv0(ln_i), dw, dn, ds )
+d174 3
+d179 2
+a180 1
+            &        slabs_0%x1(ln_i), slabs_0%slabs1(ln_i), slabs_0%y(ln_i))
+d184 3
+d189 2
+a190 1
+            &            slabs_0%x1(ln_i), slabs_0%slabs1(ln_i), &
+d203 3
+d207 2
+a208 1
+            &             slabs_p%x1(ln_i), slabs_p%slabs1(ln_i),slabs_p%y(ln_i))
+d210 2
+a211 1
+            &             slabs_m%x1(ln_i), slabs_m%slabs1(ln_i),slabs_m%y(ln_i))
+d215 3
+d219 3
+a221 2
+            &                 slabs_p%x1(ln_i), slabs_p%slabs1(ln_i), &
+            &                 slabs_p%y(ln_i), slabs_p%yi(ln_i))
+d223 3
+a225 2
+            &                 slabs_m%x1(ln_i), slabs_m%slabs1(ln_i), &
+            &                 slabs_m%y(ln_i), slabs_m%yi(ln_i))
+d328 10
+a337 1
+! $Log: create_beta_m.f90,v $
+@
+
+
+2.20.2.1
+log
+@uses new slabs_sw
+@
+text
+@d19 4
+a22 3
+  subroutine Create_beta ( Spectag, cont, pressure, Temp, Fgr, pfaw, &
+         &   slabs_0, tanh1, beta_value,slabs_p, tanh1_p, slabs_m,   &
+         &   tanh1_m, t_power, dbeta_dw, dbeta_dn, dbeta_dv  )
+a39 1
+    REAL(rp), INTENT(in) :: tanh1 ! tanh(frq*expa/2)
+a45 1
+!    expa(:)        ! exponential argument / frequency (not used)
+a49 1
+    REAL(rp), INTENT(in), OPTIONAL :: tanh1_p, tanh1_m ! tanh(frq*expa/2)
+d135 1
+a135 2
+        if ( abs(slabs_0%y(ln_i))+0.666666_rp*abs(slabs_0%x1(ln_i)*dNu) &
+        & > 100.0_rp ) then
+d138 1
+a138 2
+            &  tanh1, slabs_0%slabs1(ln_i), bv, slabs_0%dslabs1_dv0(ln_i), &
+            &  dw, dn, ds )
+d142 1
+a142 2
+            &  tanh1, slabs_0%slabs1(ln_i), bv, slabs_0%dslabs1_dv0(ln_i), &
+            &  dw, dn, ds )
+d162 1
+a162 2
+            &        slabs_0%x1(ln_i), tanh1, &
+            &        slabs_0%slabs1(ln_i), slabs_0%y(ln_i))
+d168 1
+a168 2
+            &            slabs_0%x1(ln_i), tanh1, &
+            &            slabs_0%slabs1(ln_i), &
+d182 1
+a182 2
+            &             slabs_p%x1(ln_i), tanh1_p, &
+            &             slabs_p%slabs1(ln_i),slabs_p%y(ln_i))
+d184 1
+a184 2
+            &             slabs_m%x1(ln_i), tanh1_m, &
+            &             slabs_m%slabs1(ln_i),slabs_m%y(ln_i))
+d189 2
+a190 3
+            &                 slabs_p%x1(ln_i), tanh1_p, &
+            &                 slabs_p%slabs1(ln_i), slabs_p%y(ln_i), &
+            &                 slabs_p%yi(ln_i))
+d192 2
+a193 3
+            &                 slabs_m%x1(ln_i), tanh1_m, &
+            &                 slabs_m%slabs1(ln_i), slabs_m%y(ln_i), &
+            &                 slabs_m%yi(ln_i))
+a296 3
+! Revision 2.20  2003/02/11 00:48:18  jonathan
+! changes made after adding get_beta_path_cloud
+!
+@
+
+
+2.20.2.2
+log
+@Process only unpolarized lines if 'polarized' argument is present and true
+@
+text
+@d20 2
+a21 3
+         &   slabs_0, tanh1, beta_value, polarized,                  &
+         &   slabs_p, tanh1_p, slabs_m, tanh1_m,                     &
+         &   t_power, dbeta_dw, dbeta_dn, dbeta_dv  )
+d34 6
+a39 6
+    real(rp), intent(in) :: cont(:)    ! continuum parameters
+    real(rp), intent(in) :: pressure   ! pressure in hPa
+    real(rp), intent(in) :: temp       ! temperature in K
+    real(rp), intent(in) :: fgr        ! frequency in MHz
+    real(rp), intent(in) :: pfaw(:)    ! line widths
+    real(rp), intent(in) :: tanh1      ! tanh(frq*expa/2)
+a48 3
+
+    logical, intent(in), optional :: Polarized(:)! "Don't do this line" -- same size as pfaw
+
+d51 1
+a51 1
+    real(rp), intent(in), optional :: tanh1_p, tanh1_m ! tanh(frq*expa/2)
+a61 1
+    logical :: MyPolarized
+a134 4
+        myPolarized = .false.
+        if ( present(polarized) ) myPolarized = polarized(ln_i)
+        if ( myPolarized ) cycle
+
+a164 3
+          myPolarized = .false.
+          if ( present(polarized) ) myPolarized = polarized(ln_i)
+          if ( myPolarized ) cycle
+a171 3
+          myPolarized = .false.
+          if ( present(polarized) ) myPolarized = polarized(ln_i)
+          if ( myPolarized ) cycle
+a187 3
+          myPolarized = .false.
+          if ( present(polarized) ) myPolarized = polarized(ln_i)
+          if ( myPolarized ) cycle
+a196 3
+          myPolarized = .false.
+          if ( present(polarized) ) myPolarized = polarized(ln_i)
+          if ( myPolarized ) cycle
+a307 3
+! Revision 2.20.2.1  2003/02/13 17:34:12  bill
+! uses new slabs_sw
+!
+@
+
+
+2.19
+log
+@Add in many stuff to deal with clouds CloudIce, iwc_path, etc
+@
+text
+@d20 2
+a21 2
+         &   slabs_0, beta_value, Incl_Cld,cld_beta,IPSD,WC,NU,NUA,NAB,NR,N, &
+         &   slabs_p, slabs_m, t_power,                     &
+a40 2
+    Logical :: Incl_Cld
+
+d51 1
+a51 1
+    real(rp), intent(out) :: beta_value, cld_beta
+d64 1
+a64 5
+!    include 'constants.f9h'
+    INTEGER :: N, NU, NUA, NAB, NR, IPSD
+    REAL(rp) :: WC(N)
+    REAL(rp) :: W0(N)       ! SINGLE SCATTERING ALBEDO
+    REAL(rp) :: PHH(N,NU)   ! PHASE FUNCTION
+a74 12
+    IF ( .not. Incl_Cld ) THEN
+
+       cld_beta =0._rp   
+  
+    ELSE
+       !  WC, IPSD, N, NU, NUA, NAB, NR needed to be inputed from l2cf
+       !  will input WC later      
+       call get_beta_cloud (Fgr, Temp, Pressure,               &
+                          &  WC, IPSD, N, NU, NUA, NAB, NR,    &
+                          &  cld_beta, W0, PHH                 )      
+    ENDIF
+
+d297 3
+@
+
+
+2.18
+log
+@add get_beta_cloud
+@
+text
+@d19 4
+a22 3
+  subroutine Create_beta ( Spectag, cont, pressure, Temp, Fgr, pfaw,             &
+         &   slabs_0, beta_value, Incl_Cld, cld_beta, slabs_p, slabs_m, t_power, &
+         &   dbeta_dw, dbeta_dn, dbeta_dv )
+d66 2
+a67 1
+    include 'constants.f9h'
+d315 3
+@
+
+
+2.17
+log
+@add Inc_Cld, and cld_ext
+@
+text
+@d19 2
+a20 2
+  subroutine Create_beta ( Spectag, cont, pressure, Temp, Fgr, pfaw, &
+         &   slabs_0, beta_value, Incl_Cld, cld_beta, slabs_p, slabs_m, t_power,     &
+d30 1
+d65 5
+a69 2
+
+    cld_beta =0._rp   
+d79 12
+d313 3
+@
+
+
+2.16
+log
+@Use a SLABS structure for the slabs quantities
+@
+text
+@d20 1
+a20 1
+         &   slabs_0, beta_value, slabs_p, slabs_m, t_power,     &
+d39 3
+d51 1
+a51 1
+    real(rp), intent(out) :: beta_value
+d65 2
+d297 3
+@
+
+
+2.15
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d19 2
+a20 3
+  subroutine Create_beta ( Spectag, cont, pressure, Temp, Fgr, nl, pfaw, &
+         &   v0s, x1,y, yi, slabs1, beta_value, dslabs1_dv0, v0sp, x1p,  &
+         &   yp, yip, slabs1p, v0sm, x1m, ym, yim, slabs1m, t_power,     &
+d26 1
+d28 1
+a28 1
+    use Molecules, only: L_Air_Cont, L_Extinction, L_Liq_H2O, L_O2, Spec_tags
+a36 1
+    integer(ip), intent(in) :: nl ! no of lines
+d38 7
+a44 8
+    real(r8), intent(in) :: v0s(:) ! pressure shifted line centers
+    real(rp), intent(in) :: x1(:) ! Doppler width
+    real(rp), intent(in) :: y(:) ! ratio Pressure to Doppler widths
+    real(rp), intent(in) :: yi(:) ! Interference coefficients
+    real(rp), intent(in) :: slabs1(:) ! strengths
+! optional inputs for spectral derivatives
+    real(rp), optional, intent(in) :: dslabs1_dv0(:) ! strength derivative
+!                                wrt line position
+d46 1
+a46 10
+    real(r8), optional, intent(in) :: v0sp(:) ! pressure shifted line centers
+    real(rp), optional, intent(in) :: x1p(:)! Doppler width
+    real(rp), optional, intent(in) :: yp(:) ! ratio Pressure to Doppler widths
+    real(rp), optional, intent(in) :: yip(:) ! Interference coefficients
+    real(rp), optional, intent(in) :: slabs1p(:) ! strengths
+    real(r8), optional, intent(in) :: v0sm(:) ! pressure shifted line centers
+    real(rp), optional, intent(in) :: x1m(:)! Doppler width
+    real(rp), optional, intent(in) :: ym(:) ! ratio Pressure to Doppler widths
+    real(rp), optional, intent(in) :: yim(:) ! Interference coefficients
+    real(rp), optional, intent(in) :: slabs1m(:) ! strengths
+d58 1
+d60 3
+a62 1
+    real(rp) :: w, ra, dNu, tp, bp, tm, bm, bv, dw, dn, ds, dbdw, dbdn, dbdv
+a63 4
+    bv = 0.0_rp
+    bp = 0.0_rp
+    bm = 0.0_rp
+    beta_value = 0.0_rp
+d70 1
+a70 1
+    if ( spectag == spec_tags(l_liq_h2o) ) then ! ........  Liquid Water
+d72 1
+a72 1
+      bv = abs_cs_liq_h2o(Fgr,Temp)
+d78 1
+a78 1
+    else if ( spectag == spec_tags(l_air_cont) ) then ! .......  Dry Air
+d80 1
+a80 1
+      bv = abs_cs_n2_cont(cont,Temp,Pressure,Fgr)
+d86 1
+a86 1
+    else if ( spectag == spec_tags(l_extinction) ) then ! ..  Extinction
+d92 1
+a92 1
+    else if ( spectag == spec_tags(l_o2) ) then ! ..................  O2
+d94 1
+a94 1
+      bv = abs_cs_o2_cont(cont,Temp,Pressure,Fgr)
+d102 1
+a102 1
+      bv = abs_cs_cont(cont,Temp,Pressure,Fgr)
+a109 1
+    beta_value = bv
+d112 4
+a115 4
+        ds = log(bp/bv)/log(tp/temp)     ! Estimate over [temp+10,temp]
+        ra = log(bp/bm)/log(tp/tm)       ! Estimate over [temp+10,temp-10]
+        dw = log(bv/bm)/log(temp/tm)     ! Estimate over [temp,temp-10]
+        t_power = (ds + 2.0 * ra + dw) / 4.0  ! Weighted Average
+d128 1
+a128 1
+        dNu = Fgr - v0s(ln_i)
+d130 4
+a133 4
+        w = pfaw(ln_i)
+        if ( abs(y(ln_i))+0.666666_rp*abs(x1(ln_i)*dNu) > 100.0_rp ) then
+          call Voigt_Lorentz ( dNu, v0s(ln_i), x1(ln_i), yi(ln_i), &
+            &  y(ln_i), w, Temp,slabs1(ln_i), bv, dslabs1_dv0(ln_i), dw, dn, ds )
+d135 3
+a137 2
+          call DVoigt_Spectral ( dNu, v0s(ln_i), x1(ln_i), yi(ln_i), y(ln_i), &
+         &     w, Temp, slabs1(ln_i), bv, dslabs1_dv0(ln_i), dw, dn, ds )
+d153 1
+a153 1
+      if ( maxval(ABS(yi)) < 1.0e-06_rp ) then
+d155 3
+a157 3
+          dNu = Fgr - v0s(ln_i)
+          beta_value = beta_value  + &
+            &  Slabs(dNu,v0s(ln_i),x1(ln_i),slabs1(ln_i),y(ln_i))
+a160 1
+          dNu = Fgr - v0s(ln_i)
+d162 3
+a164 1
+            &  Slabswint(dNu,v0s(ln_i),x1(ln_i),slabs1(ln_i),y(ln_i),yi(ln_i))
+d174 1
+a174 1
+      if ( maxval(abs(yi)) < 1.0e-06_rp ) then
+d176 4
+a179 4
+          dNu = Fgr - v0sp(ln_i)
+          bp = bp + Slabs(dNu,v0sp(ln_i),x1p(ln_i),slabs1p(ln_i),yp(ln_i))
+          dNu = Fgr - v0sm(ln_i)
+          bm = bm + Slabs(dNu,v0sm(ln_i),x1m(ln_i),slabs1m(ln_i),ym(ln_i))
+d183 6
+a188 6
+          dNu = Fgr - v0sp(ln_i)
+          bp = bp + Slabswint(dNu,v0sp(ln_i),x1p(ln_i),slabs1p(ln_i), &
+                           &  yp(ln_i),yip(ln_i))
+          dNu = Fgr - v0sm(ln_i)
+          bm = bm + Slabswint(dNu,v0sm(ln_i),x1m(ln_i),slabs1m(ln_i), &
+                           &  ym(ln_i),yim(ln_i))
+d192 4
+a195 5
+      bv = beta_value
+      ds = Log(bp/bv)/Log(tp/Temp)     ! Estimate over [temp+10,temp]
+      ra = Log(bp/bm)/Log(tp/tm)       ! Estimate over [temp+10,temp-10]
+      dw = Log(bv/bm)/Log(Temp/tm)     ! Estimate over [temp,temp-10]
+      t_power = (ds + 2.0 * ra + dw) / 4.0  ! Weighted Average
+d235 2
+a236 2
+      abs_cs_liq_h2o = 1.886e-4_rp * frequency * tau * epsilon &
+                     / ((6.9_rp + epsilon)**2 + (tau*epsilon)**2)
+d284 1
+d292 3
+@
+
+
+2.14
+log
+@Fix up some comments
+@
+text
+@d13 1
+d296 4
+d303 3
+@
+
+
+2.13
+log
+@Move Abs_CS_... to be internal procedures, some cosmetic changes
+@
+text
+@d24 1
+a24 1
+!  This routine should be called for primary and image seperately.
+d81 1
+a81 3
+    if ( spectag == spec_tags(l_liq_h2o) ) then
+
+!  Liquid water
+d89 1
+a89 3
+    else if ( spectag == spec_tags(l_air_cont) ) then
+
+!  Dry air contribution (N2)
+d97 1
+a97 3
+    else if ( spectag == spec_tags(l_extinction) ) then
+
+!  EXTINCTN molecule
+d103 1
+a103 1
+    else if ( spectag == spec_tags(l_o2) ) then ! O2
+d111 1
+a111 1
+    else
+d182 1
+a182 1
+!  Find the temperatue power dependency now:
+d298 3
+@
+
+
+2.12
+log
+@Cosmetic changes, move USEs from module scope to procedure scope
+@
+text
+@a25 4
+    use ABS_CS_CONT_M,    only: ABS_CS_CONT
+    use ABS_CS_LIQ_H2O_M, only: ABS_CS_LIQ_H2O
+    use ABS_CS_N2_CONT_M, only: ABS_CS_N2_CONT
+    use ABS_CS_O2_CONT_M, only: ABS_CS_O2_CONT
+d107 1
+a107 1
+      Return
+d130 3
+a132 3
+        ds = Log(bp/bv)/Log(tp/Temp)     ! Estimate over [temp+10,temp]
+        ra = Log(bp/bm)/Log(tp/tm)       ! Estimate over [temp+10,temp-10]
+        dw = Log(bv/bm)/Log(Temp/tm)     ! Estimate over [temp,temp-10]
+d216 84
+d304 3
+@
+
+
+2.11
+log
+@no changes, just debugging
+@
+text
+@d2 1
+a2 6
+  use MLSCommon, only: R8, RP, IP
+  use ABS_CS_CONT_M,    only: ABS_CS_CONT
+  use ABS_CS_N2_CONT_M, only: ABS_CS_N2_CONT
+  use ABS_CS_O2_CONT_M, only: ABS_CS_O2_CONT
+  use ABS_CS_LIQ_H2O_M, only: ABS_CS_LIQ_H2O
+  use SLABS_SW_M, only: DVOIGT_SPECTRAL, VOIGT_LORENTZ, SLABSWINT, SLABS
+d6 1
+d8 5
+a12 4
+  CHARACTER (LEN=256) :: Id = &
+       "$Id: create_beta_m.f90,v 2.10 2002/03/06 02:29:28 zvi Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= &
+       "$RCSfile: create_beta_m.f90,v $"
+d16 3
+a18 3
+! --------------------------------------     Create_beta     -----
+!
+  Subroutine Create_beta (Spectag, cont, pressure, Temp, Fgr, nl, pfaw,  &
+d21 2
+a22 2
+         &   dbeta_dw, dbeta_dn, dbeta_dv)
+!
+d25 9
+a33 1
+!
+d35 12
+a46 12
+  INTEGER(ip), INTENT(in) :: SPECTAG ! molecule id tag
+  REAL(rp), INTENT(in) :: cont(:) ! continuum parameters
+  REAL(rp), INTENT(in) :: pressure ! pressure in hPa
+  REAL(rp), INTENT(in) :: temp ! temperature in K
+  REAL(rp), INTENT(in) :: fgr ! frequency in MHz
+  INTEGER(ip), INTENT(in) :: nl ! no of lines
+  REAL(rp), INTENT(in) :: pfaw(:) ! line widths
+  REAL(r8), INTENT(in) :: v0s(:) ! pressure shifted line centers
+  REAL(rp), INTENT(in) :: x1(:) ! Doppler width
+  REAL(rp), INTENT(in) :: y(:) ! ratio Pressure to Doppler widths
+  REAL(rp), INTENT(in) :: yi(:) ! Interference coefficients
+  REAL(rp), INTENT(in) :: slabs1(:) ! strengths
+d48 1
+a48 1
+  REAL(rp), OPTIONAL, INTENT(in) :: dslabs1_dv0(:) ! strength derivative
+d51 10
+a60 10
+  REAL(r8), OPTIONAL, INTENT(in) :: v0sp(:) ! pressure shifted line centers
+  REAL(rp), OPTIONAL, INTENT(in) :: x1p(:)! Doppler width
+  REAL(rp), OPTIONAL, INTENT(in) :: yp(:) ! ratio Pressure to Doppler widths
+  REAL(rp), OPTIONAL, INTENT(in) :: yip(:) ! Interference coefficients
+  REAL(rp), OPTIONAL, INTENT(in) :: slabs1p(:) ! strengths
+  REAL(r8), OPTIONAL, INTENT(in) :: v0sm(:) ! pressure shifted line centers
+  REAL(rp), OPTIONAL, INTENT(in) :: x1m(:)! Doppler width
+  REAL(rp), OPTIONAL, INTENT(in) :: ym(:) ! ratio Pressure to Doppler widths
+  REAL(rp), OPTIONAL, INTENT(in) :: yim(:) ! Interference coefficients
+  REAL(rp), OPTIONAL, INTENT(in) :: slabs1m(:) ! strengths
+d62 1
+a62 1
+  REAL(rp), INTENT(out) :: beta_value
+d64 5
+a68 5
+  REAL(rp), OPTIONAL, INTENT(out) :: T_POWER ! for temperature derivative
+  REAL(rp), OPTIONAL, INTENT(OUT) :: DBETA_DW ! line width derivative
+  REAL(rp), OPTIONAL, INTENT(OUT) :: DBETA_DN ! temperature dependence deriv
+  REAL(rp), OPTIONAL, INTENT(OUT) :: DBETA_DV ! line position derivative
+!
+a69 2
+!
+    Integer(ip) :: LN_I
+d71 4
+a74 2
+    Real(rp) :: w,ra,dNu,tp,bp,tm,bm,bv,dw,dn,ds,dbdw,dbdn,dbdv
+!
+d81 1
+a81 1
+!
+d84 3
+a86 3
+!
+    if (spectag == 18999) then
+!
+d88 1
+a88 1
+!
+d90 1
+a90 1
+      IF (PRESENT(t_power)) THEN
+d93 4
+a96 4
+      ENDIF
+!
+    else if (spectag == 28964) then
+!
+d98 1
+a98 1
+!
+d100 1
+a100 1
+      IF (PRESENT(t_power)) THEN
+d103 4
+a106 4
+      ENDIF
+!
+    else if (spectag == 28965) then
+!
+d108 1
+a108 1
+!
+d110 1
+a110 1
+      IF (PRESENT(t_power)) t_power = 0.0_rp
+d112 2
+a113 2
+!
+    else if (spectag == 32001) then
+d116 1
+a116 1
+      IF (PRESENT(t_power)) THEN
+d119 1
+a119 1
+      ENDIF
+d124 1
+a124 1
+      IF (PRESENT(t_power)) THEN
+d127 1
+a127 1
+      ENDIF
+d130 1
+a130 1
+!
+d132 2
+a133 2
+    IF(nl < 1) THEN
+      IF(PRESENT(t_power)) THEN
+d138 6
+a143 6
+      ENDIF
+      Return
+    ENDIF
+!
+    IF(PRESENT(DBETA_DW).OR.PRESENT(DBETA_DN).OR.PRESENT(DBETA_DV)) THEN
+!
+d149 1
+a149 1
+!
+d151 1
+a151 1
+!
+d153 8
+a160 8
+        IF(abs(y(ln_i))+0.666666_rp*abs(x1(ln_i)*dNu) > 100.0_rp) THEN
+          Call Voigt_Lorentz(dNu,v0s(ln_i),x1(ln_i),yi(ln_i), &
+            &  y(ln_i),w,Temp,slabs1(ln_i),bv,dslabs1_dv0(ln_i),dw,dn,ds)
+        ELSE
+          Call dvoigt_spectral(dNu,v0s(ln_i),x1(ln_i),yi(ln_i),y(ln_i), &
+         &     w,Temp,slabs1(ln_i),bv,dslabs1_dv0(ln_i),dw,dn,ds)
+        ENDIF
+!
+d165 1
+a165 1
+!
+d168 7
+a174 7
+      IF(PRESENT(DBETA_DW)) dbeta_dw = dbdw
+      IF(PRESENT(DBETA_DN)) dbeta_dn = dbdn
+      IF(PRESENT(DBETA_DV)) dbeta_dv = dbdv
+!
+    ELSE                ! No derivatives required
+!
+      IF(MAXVAL(ABS(yi)) < 1.0e-06_rp) THEN
+d180 1
+a180 1
+      ELSE
+d186 5
+a190 3
+      ENDIF
+!
+    ENDIF
+a191 2
+    IF(PRESENT(t_power)) THEN
+!
+d193 2
+a194 2
+!
+      IF(MAXVAL(ABS(yi)) < 1.0e-06_rp) THEN
+d201 1
+a201 1
+      ELSE
+d210 1
+a210 1
+      ENDIF
+d217 4
+a220 4
+!
+    ENDIF
+!
+  End Subroutine Create_beta
+d222 1
+d224 3
+@
+
+
+2.10
+log
+@Removing more limits on large dNu
+@
+text
+@d13 1
+a13 1
+       "$Id: create_beta_m.f90,v 2.9 2002/02/28 07:16:41 zvi Exp $"
+a77 1
+! NEED TO ADD THE PARDO WATER VAPOR CONTINUUM FOR 18003
+d218 3
+@
+
+
+2.9
+log
+@Removing limit on large dNu
+@
+text
+@d13 1
+a13 1
+       "$Id: create_beta_m.f90,v 2.8 2002/02/27 07:04:10 zvi Exp $"
+d192 4
+a195 7
+          ds = Fgr - v0s(ln_i)
+          IF(abs(ds) <= 3.0e3) THEN
+            dNu = Fgr - v0sp(ln_i)
+            bp = bp + Slabs(dNu,v0sp(ln_i),x1p(ln_i),slabs1p(ln_i),yp(ln_i))
+            dNu = Fgr - v0sm(ln_i)
+            bm = bm + Slabs(dNu,v0sm(ln_i),x1m(ln_i),slabs1m(ln_i),ym(ln_i))
+          ENDIF
+d199 6
+a204 9
+          ds = Fgr - v0s(ln_i)
+          IF(abs(ds) <= 3.0e3) THEN
+            dNu = Fgr - v0sp(ln_i)
+            bp = bp + Slabswint(dNu,v0sp(ln_i),x1p(ln_i),slabs1p(ln_i), &
+                             &  yp(ln_i),yip(ln_i))
+            dNu = Fgr - v0sm(ln_i)
+            bm = bm + Slabswint(dNu,v0sm(ln_i),x1m(ln_i),slabs1m(ln_i), &
+                             &  ym(ln_i),yim(ln_i))
+          ENDIF
+d219 3
+@
+
+
+2.8
+log
+@Fixing limit on large dNu
+@
+text
+@d13 1
+a13 1
+       "$Id: create_beta_m.f90,v 2.7 2001/11/15 01:22:00 zvi Exp $"
+a147 5
+! If too far from line center, skip it (to fit /mlspgs/ code).
+! Use criterion of 5000.0 so the l2_gridding program works !!
+!
+        if(abs(dNu) > 5000.0_rp) CYCLE             ! To fit /mlspgs/ code
+!
+d173 2
+a174 3
+! To fit /mlspgs/ code
+          if(abs(dNu) <= 5000.0_rp) beta_value = beta_value &
+            + Slabs(dNu,v0s(ln_i),x1(ln_i),slabs1(ln_i),y(ln_i))
+d179 3
+a181 4
+! To fit /mlspgs/ code
+          if(abs(dNu) <= 5000.0_rp) beta_value = beta_value &
+             + Slabswint(dNu,v0s(ln_i),x1(ln_i),slabs1(ln_i),y(ln_i),yi(ln_i))
+        enddo
+d225 3
+@
+
+
+2.7
+log
+@Remove Extiction debug
+@
+text
+@d13 1
+a13 1
+       "$Id: create_beta_m.f90,v 2.6 2001/11/10 00:46:40 zvi Exp $"
+d149 1
+a149 1
+! Use criterion of 3000.0 (NOT 2000.0) so the l2_gridding program works !!
+d151 1
+a151 1
+        if(abs(dNu) > 3000.0_rp) CYCLE             ! To fit /mlspgs/ code
+d179 1
+a179 1
+          if(abs(dNu) <= 3000.0_rp) beta_value = beta_value &
+d186 1
+a186 1
+          if(abs(dNu) <= 3000.0_rp) beta_value = beta_value &
+d232 3
+@
+
+
+2.6
+log
+@Adding the EXTINCTION capabilitis
+@
+text
+@d13 1
+a13 1
+       "$Id: create_beta_m.f90,v 2.5 2001/10/18 16:01:37 zvi Exp $"
+d24 1
+a24 1
+         &   dbeta_dw, dbeta_dn, dbeta_dv, bv_n2)
+a62 1
+  REAL(rp), OPTIONAL, INTENT(OUT) :: BV_N2    ! Beta values for N2 molecule
+d107 1
+a107 2
+      IF (PRESENT(bv_n2)) bv_n2 = abs_cs_n2_cont(cont,Temp,Pressure,Fgr)
+      Return 
+d232 3
+@
+
+
+2.5
+log
+@Fix a small bug
+@
+text
+@d13 1
+a13 1
+       "$Id: create_beta_m.f90,v 2.4 2001/10/18 15:59:26 zvi Exp $"
+d23 2
+a24 2
+         &   yp, yip, slabs1p, v0sm, x1m, ym, yim, slabs1m,              &
+         &   t_power, dbeta_dw, dbeta_dn, dbeta_dv)
+d63 1
+d108 1
+d234 3
+@
+
+
+2.4
+log
+@Modification for speed
+@
+text
+@d13 1
+a13 1
+       "$Id: create_beta_m.f90,v 2.3 2001/10/18 07:13:04 zvi Exp $"
+d105 1
+a105 1
+      bv = 1.0_rp
+d232 3
+@
+
+
+2.3
+log
+@Make routine more efficient for nl=0
+@
+text
+@d13 1
+a13 1
+       "$Id: create_beta_m.f90,v 2.2 2001/10/17 18:19:10 zvi Exp $"
+a88 6
+        if(nl < 1) then
+          ds = Log(bp/bv)/Log(tp/Temp)     ! Estimate over [temp+10,temp]
+          ra = Log(bp/bm)/Log(tp/tm)       ! Estimate over [temp+10,temp-10]
+          dw = Log(bv/bm)/Log(Temp/tm)     ! Estimate over [temp,temp-10]
+          t_power = (ds + 2.0 * ra + dw) / 4.0  ! Weighted Average
+        endif
+a98 6
+        if(nl < 1) then
+          ds = Log(bp/bv)/Log(tp/Temp)     ! Estimate over [temp+10,temp]
+          ra = Log(bp/bm)/Log(tp/tm)       ! Estimate over [temp+10,temp-10]
+          dw = Log(bv/bm)/Log(Temp/tm)     ! Estimate over [temp,temp-10]
+          t_power = (ds + 2.0 * ra + dw) / 4.0  ! Weighted Average
+        endif
+d107 1
+a114 6
+        if(nl < 1) then
+          ds = Log(bp/bv)/Log(tp/Temp)     ! Estimate over [temp+10,temp]
+          ra = Log(bp/bm)/Log(tp/tm)       ! Estimate over [temp+10,temp-10]
+          dw = Log(bv/bm)/Log(Temp/tm)     ! Estimate over [temp,temp-10]
+          t_power = (ds + 2.0 * ra + dw) / 4.0  ! Weighted Average
+        endif
+a122 6
+        if(nl < 1) then
+          ds = Log(bp/bv)/Log(tp/Temp)     ! Estimate over [temp+10,temp]
+          ra = Log(bp/bm)/Log(tp/tm)       ! Estimate over [temp+10,temp-10]
+          dw = Log(bv/bm)/Log(Temp/tm)     ! Estimate over [temp,temp-10]
+          t_power = (ds + 2.0 * ra + dw) / 4.0  ! Weighted Average
+        endif
+d126 1
+a126 1
+
+d128 9
+a136 2
+
+    if(nl < 1) Return
+d232 3
+@
+
+
+2.2
+log
+@Fixing bug in computing t_power
+@
+text
+@d13 1
+a13 1
+       "$Id: create_beta_m.f90,v 2.1 2001/10/16 15:07:08 zvi Exp $"
+d89 6
+a94 4
+        ds = Log(bp/bv)/Log(tp/Temp)     ! Estimate over [temp+10,temp]
+        ra = Log(bp/bm)/Log(tp/tm)       ! Estimate over [temp+10,temp-10]
+        dw = Log(bv/bm)/Log(Temp/tm)     ! Estimate over [temp,temp-10]
+        t_power = (ds + 2.0 * ra + dw) / 4.0  ! Weighted Average
+d105 6
+a110 4
+        ds = Log(bp/bv)/Log(tp/Temp)     ! Estimate over [temp+10,temp]
+        ra = Log(bp/bm)/Log(tp/tm)       ! Estimate over [temp+10,temp-10]
+        dw = Log(bv/bm)/Log(Temp/tm)     ! Estimate over [temp,temp-10]
+        t_power = (ds + 2.0 * ra + dw) / 4.0  ! Weighted Average
+d126 6
+a131 4
+        ds = Log(bp/bv)/Log(tp/Temp)     ! Estimate over [temp+10,temp]
+        ra = Log(bp/bm)/Log(tp/tm)       ! Estimate over [temp+10,temp-10]
+        dw = Log(bv/bm)/Log(Temp/tm)     ! Estimate over [temp,temp-10]
+        t_power = (ds + 2.0 * ra + dw) / 4.0  ! Weighted Average
+d140 6
+a145 4
+        ds = Log(bp/bv)/Log(tp/Temp)     ! Estimate over [temp+10,temp]
+        ra = Log(bp/bm)/Log(tp/tm)       ! Estimate over [temp+10,temp-10]
+        dw = Log(bv/bm)/Log(Temp/tm)     ! Estimate over [temp,temp-10]
+        t_power = (ds + 2.0 * ra + dw) / 4.0  ! Weighted Average
+a240 1
+!
+d248 3
+@
+
+
+2.1
+log
+@Continuum parameters are now part of Catalog
+@
+text
+@d3 1
+d5 1
+d13 1
+a13 1
+       "$Id: create_beta_m.f90,v 2.0 2001/09/17 20:26:26 livesey Exp $"
+d35 1
+a35 1
+  INTEGER(ip), INTENT(in) :: nl ! no of lines (probably not really needed)
+d68 1
+a68 1
+    Real(rp) :: w,ra,dNu,tp,bp,tm,bm,bb,dw,dn,ds,dbdw,dbdn,dbdv
+d70 3
+d74 2
+d85 1
+a85 1
+      beta_value = abs_cs_liq_h2o(Fgr,Temp)
+d87 6
+a92 3
+        dw = Temp + 10.0_rp
+        ra = abs_cs_liq_h2o(Fgr,dw)
+        t_power = Log(ra/beta_value)/Log(dw/Temp)
+a93 1
+      Return
+d99 1
+a99 1
+      beta_value = abs_cs_n2_cont(cont,Temp,Pressure,Fgr)
+d101 6
+a106 3
+        dw = Temp + 10.0_rp
+        ra = abs_cs_n2_cont(cont,dw,Pressure,Fgr)
+        t_power = Log(ra/beta_value)/Log(dw/Temp)
+a107 1
+      Return
+d113 1
+a113 1
+      beta_value = 1.0
+a114 1
+      Return
+d116 24
+d141 4
+a144 2
+!
+!  Check for anything but liquid water and dry air (N2):
+d164 1
+a164 1
+            &  y(ln_i),w,Temp,slabs1(ln_i),bb,dslabs1_dv0(ln_i),dw,dn,ds)
+d167 1
+a167 1
+         &     w,Temp,slabs1(ln_i),bb,dslabs1_dv0(ln_i),dw,dn,ds)
+d170 1
+a170 1
+        beta_value = beta_value + bb
+a204 5
+      bp = 0.0_rp
+      bm = 0.0_rp
+      tp  = Temp + 10.0_rp
+      tm  = Temp - 10.0_rp
+!
+d229 2
+a230 2
+      bb = beta_value
+      ds = Log(bp/bb)/Log(tp/Temp)     ! Estimate over [temp+10,temp]
+d232 1
+a232 1
+      dw = Log(bb/bm)/Log(Temp/tm)     ! Estimate over [temp,temp-10]
+d241 3
+@
+
+
+2.0
+log
+@New forward model
+@
+text
+@d3 1
+a3 1
+  use ABS_CS_AIR_CONT_M, only: ABS_CS_AIR_CONT
+d11 1
+a11 1
+       "$Id: create_beta_m.f90,v 1.14.2.1 2001/09/10 10:02:32 zvi Exp $"
+d19 3
+a21 3
+  Subroutine Create_beta (Spectag, pressure, Temp, Fgr, nl, pfaw, v0s,  &
+         &   x1,y, yi, slabs1, beta_value, dslabs1_dv0, v0sp, x1p,&
+         &   yp, yip, slabs1p, v0sm, x1m, ym, yim, slabs1m,  &
+d29 1
+d88 1
+a88 1
+!  Dry air contribution
+d90 1
+a90 1
+      beta_value = abs_cs_air_cont(Temp,Pressure,Fgr)
+d93 1
+a93 1
+        ra = abs_cs_air_cont(dw,Pressure,Fgr)
+d108 1
+a108 1
+!  Check for anything but liquid water and dry air:
+d210 3
+@
+
+
+1.14
+log
+@Fixing a minor bug
+@
+text
+@a0 3
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+d2 1
+a2 1
+  use MLSCommon, only: I4, R8
+a3 1
+  use ABS_CS_H2O_213G_CONT_M, only: ABS_CS_H2O_213G_CONT
+d5 1
+a5 2
+  use SpectroscopyCatalog_m, only: Catalog_T, Lines
+  use SLABS_SW_M, only: SLABSWINT, DVOIGT_SPECTRAL, LORENTZ_SPECTRAL
+d11 1
+a11 1
+       "$Id: create_beta_m.f90,v 1.13 2001/06/21 13:07:08 zvi Exp $"
+d19 4
+a22 5
+  Subroutine Create_beta (Spectag, pressure, Temp, Fgr, nl, Catalog,     &
+         &   v0s, x1,y, yi, slabs1, dx1_dv0, dy_dv0, dslabs1_dv0, v0sp,  &
+         &   x1p, yp, yip, slabs1p, v0sm, x1m, ym,yim,slabs1m,beta_value,&
+         &   t_power, dbeta_dw, dbeta_dn, dbeta_dnu0, Frq_Gap, temp_der, &
+         &   spect_der,Ier)
+d24 1
+a24 1
+!  For a given channel, frequency and height, compute beta_value function.
+d27 33
+a59 20
+    Integer(i4), intent(in) :: SPECTAG, nl
+    Logical, intent(in) :: temp_der, spect_der
+
+    Real(r8), intent(in) :: Pressure, Temp, Fgr, Frq_Gap
+
+    Real(r8), intent(in) :: x1(:),y(:),yi(:),slabs1(:),slabs1m(:), &
+   &          dx1_dv0(:),dy_dv0(:),dslabs1_dv0(:),v0sp(:),x1p(:),  &
+   &          v0s(:),yp(:),yip(:),slabs1p(:),v0sm(:),x1m(:),ym(:), &
+   &          yim(:)
+!
+    Type(Catalog_T), INTENT(IN) :: Catalog
+
+    Integer(i4), intent(out) :: Ier
+    Real(r8), intent(out) :: BETA_VALUE, T_POWER, DBETA_DW
+    Real(r8), intent(out) :: DBETA_DN, DBETA_DNU0
+!
+! -----  Parameters Declaration ----------------------------------------
+!
+    Real(r8), parameter :: F213 = 2.15e5_r8, DF213 = 1.5e4_r8
+    Real(r8), Parameter :: TINY = epsilon(F213)
+d63 1
+a63 1
+    Integer(i4) :: LN_I, j
+d65 3
+a67 4
+    Logical do_Lorentz
+    Real(r8) :: w,s,wd,ra,dNu,tp,bp,tm,bm,bb,dw,dn,ds
+
+    Real(r8), Parameter :: sqrtln2 = 8.32554611157698e-1_r8
+d70 1
+a70 29
+!
+    Ier = 0
+!
+    t_power = 0.0
+    dbeta_dw = 0.0
+    dbeta_dn = 0.0
+    dbeta_dnu0 = 0.0
+    beta_value = tiny
+!
+! Check for Water with frequency in (2.0d5, 2.3d5) interval
+!
+    if ( spectag == 18003 .and. abs(Fgr-f213) < df213 ) then
+!
+!  Water with frequency in (2.0d5, 2.3d5) interval
+!
+!  NOTE:
+!   This is a problem, we do not have the H2O Mixing Ratio at this point,
+!   Thus we use the value of zero...
+!
+      s = 0.0d0
+      beta_value = abs_cs_h2o_213g_cont(Temp,Pressure,s)
+!     t_power = -3.67           ! See code ...
+      wd = Temp + 10.0d0
+      ra = abs_cs_h2o_213g_cont(wd,Pressure,s)
+      t_power = Log(ra/beta_value)/Log(wd/Temp)
+      Return
+!
+    end if
+!
+d78 5
+a82 3
+      wd = Temp + 10.0d0
+      ra = abs_cs_liq_h2o(Fgr,wd)
+      t_power = Log(ra/beta_value)/Log(wd/Temp)
+d90 5
+a94 4
+!     t_power = -2.79           ! See code ...
+      wd = Temp + 10.0d0
+      ra = abs_cs_air_cont(wd,Pressure,Fgr)
+      t_power = Log(ra/beta_value)/Log(wd/Temp)
+d102 1
+a102 1
+      t_power = 0.0
+d109 1
+a109 45
+    do ln_i = 1, nl
+!
+      j = Catalog%lines(ln_i)
+      w = Lines(j)%W
+!
+! Prepare the temperature weighted coefficients:
+!
+      dNu = Fgr - v0s(ln_i)
+
+      if(Frq_Gap > 0.0  .and. abs(dNu) >= Frq_Gap) CYCLE
+!
+      s = abs(y(ln_i))/SqrtLn2                 ! Wc/Wd
+      ra = abs(x1(ln_i)*dNu)/SqrtLn2           ! abs(dNU)/Wd
+      do_Lorentz = (ra > 15.0 .or. s > 3.0)
+!
+      if(do_Lorentz) then
+        Call Lorentz_spectral(dNu,v0s(ln_i),x1(ln_i),yi(ln_i), &
+       &     y(ln_i),w,Temp,slabs1(ln_i),dslabs1_dv0(ln_i),bb, &
+       &     spect_der,dw,dn,ds)
+      else
+        Call dvoigt_spectral(dNu,v0s(ln_i),x1(ln_i),yi(ln_i),y(ln_i), &
+       &     w,Temp,slabs1(ln_i),dx1_dv0(ln_i),dy_dv0(ln_i),          &
+       &     dslabs1_dv0(ln_i),bb,spect_der,dw,dn,ds)
+      endif
+!
+      beta_value = beta_value + bb
+!
+      if(spect_der) then
+        dbeta_dw = dbeta_dw + dw
+        dbeta_dn = dbeta_dn + dn
+        dbeta_dnu0 = dbeta_dnu0 + ds
+      endif
+
+    end do
+!
+    if(.not. temp_der) Return
+!
+!  Compute the temperature dependency power (n):
+!
+    bp = 0.0
+    bm = 0.0
+    tm = temp - 10.0
+    tp = temp + 10.0
+
+    do ln_i = 1, nl
+d111 90
+a200 40
+      j = Catalog%lines(ln_i)
+      w = Lines(j)%W
+!
+! Prepare the temperature weighted coefficients:
+!
+      ds = Fgr - v0s(ln_i)
+      if(Frq_Gap > 0.0  .and. abs(ds) >= Frq_Gap) CYCLE
+!
+      dNu = Fgr - v0sp(ln_i)
+      s = abs(y(ln_i))/SqrtLn2              ! Wc/Wd
+      ra = abs(x1(ln_i)*dNu)/SqrtLn2        ! abs(dNU)/Wd
+      do_Lorentz = (ra > 15.0 .or. s > 3.0)
+
+      if(do_Lorentz) then
+        Call Lorentz_spectral(dNu,v0sp(ln_i),x1p(ln_i),yip(ln_i), &
+       &     yp(ln_i),w,tp,slabs1p(ln_i),dslabs1_dv0(ln_i),bb,    &
+       &     .false.,dw,dn,ds)
+      else
+        bb = Slabswint(dNu,v0sp(ln_i),x1p(ln_i),slabs1p(ln_i), &
+       &               yp(ln_i),yip(ln_i))
+      endif
+      bp = bp + bb
+!
+      dNu = Fgr - v0sm(ln_i)
+      if(s <= 3.0) then
+        ra = abs(x1(ln_i)*dNu)/SqrtLn2      ! abs(dNU)/Wd
+        do_Lorentz = (ra > 15.0)
+      endif
+
+      if(do_Lorentz) then
+        Call Lorentz_spectral(dNu,v0sm(ln_i),x1m(ln_i),yim(ln_i), &
+       &     ym(ln_i),w,tm,slabs1m(ln_i),dslabs1_dv0(ln_i),bb,    &
+       &     .false.,dw,dn,ds)
+      else
+        bb = Slabswint(dNu,v0sm(ln_i),x1m(ln_i),slabs1m(ln_i), &
+       &               ym(ln_i),yim(ln_i))
+      endif
+      bm = bm + bb
+
+    end do
+d202 1
+a202 4
+    bb = beta_value
+    ds = Log(bp/bb)/Log(tp/temp)     ! Estimate over [temp+10,temp]
+    ra = Log(bp/bm)/Log(tp/tm)       ! Estimate over [temp+10,temp-10]
+    wd = Log(bb/bm)/Log(temp/tm)     ! Estimate over [temp,temp-10]
+d204 1
+a204 1
+    t_power = t_power + (ds + 2.0*ra + wd) / 4.0  ! Weighted Average
+a205 1
+    Return
+d209 2
+a210 28
+! Revision 1.13  2001/06/21 13:07:08  zvi
+! Speed enhancement MAJOR update
+!
+! Revision 1.12  2001/06/07 23:30:33  pwagner
+! Added Copyright statement
+!
+! Revision 1.11  2001/05/15 03:47:26  zvi
+! Adding derivative flag to beta calculations
+!
+! Revision 1.10  2001/05/14 23:16:31  zvi
+! Added Freq. Gap test..
+!
+! Revision 1.9  2001/05/14 23:14:54  zvi
+! Added Freq. Gap test..
+!
+! Revision 1.8  2001/04/05 21:58:47  zvi
+! Implementing l2cf inputs for FilterShape & Spectroscopy instead of FMI
+!
+! Revision 1.7  2001/04/03 07:32:45  zvi
+! Modify the spectral structure - eliminating sps_ from the names
+!
+! Revision 1.6  2001/03/29 08:51:01  zvi
+! Changing the (*) toi (:) everywhere
+!
+! Revision 1.5  2001/02/19 22:20:40  zvi
+! Latest modification: Conv/NoConv
+!
+! Revision 1.4  2001/02/19 22:14:21  zvi
+@
+
+
+1.14.2.1
+log
+@Cleanup..comp_path_entities_m.f90
+@
+text
+@d1 3
+d5 1
+a5 1
+  use MLSCommon, only: R8, RP, IP
+d7 1
+d9 2
+a10 1
+  use SLABS_SW_M, only: DVOIGT_SPECTRAL, VOIGT_LORENTZ, SLABSWINT, SLABS
+d16 1
+a16 1
+       "$Id: create_beta_m.f90,v 1.1 2001/02/01 21:56:10 zvi Exp $"
+d24 5
+a28 4
+  Subroutine Create_beta (Spectag, pressure, Temp, Fgr, nl, pfaw, v0s,  &
+         &   x1,y, yi, slabs1, beta_value, dslabs1_dv0, v0sp, x1p,&
+         &   yp, yip, slabs1p, v0sm, x1m, ym, yim, slabs1m,  &
+         &   t_power, dbeta_dw, dbeta_dn, dbeta_dv)
+d30 1
+a30 1
+!  For a given frequency and height, compute beta_value function.
+d33 20
+a52 33
+! Inputs:
+  INTEGER(ip), INTENT(in) :: SPECTAG ! molecule id tag
+  REAL(rp), INTENT(in) :: pressure ! pressure in hPa
+  REAL(rp), INTENT(in) :: temp ! temperature in K
+  REAL(rp), INTENT(in) :: fgr ! frequency in MHz
+  INTEGER(ip), INTENT(in) :: nl ! no of lines (probably not really needed)
+  REAL(rp), INTENT(in) :: pfaw(:) ! line widths
+  REAL(r8), INTENT(in) :: v0s(:) ! pressure shifted line centers
+  REAL(rp), INTENT(in) :: x1(:) ! Doppler width
+  REAL(rp), INTENT(in) :: y(:) ! ratio Pressure to Doppler widths
+  REAL(rp), INTENT(in) :: yi(:) ! Interference coefficients
+  REAL(rp), INTENT(in) :: slabs1(:) ! strengths
+! optional inputs for spectral derivatives
+  REAL(rp), OPTIONAL, INTENT(in) :: dslabs1_dv0(:) ! strength derivative
+!                                wrt line position
+! optional inputs for temperature derivatives
+  REAL(r8), OPTIONAL, INTENT(in) :: v0sp(:) ! pressure shifted line centers
+  REAL(rp), OPTIONAL, INTENT(in) :: x1p(:)! Doppler width
+  REAL(rp), OPTIONAL, INTENT(in) :: yp(:) ! ratio Pressure to Doppler widths
+  REAL(rp), OPTIONAL, INTENT(in) :: yip(:) ! Interference coefficients
+  REAL(rp), OPTIONAL, INTENT(in) :: slabs1p(:) ! strengths
+  REAL(r8), OPTIONAL, INTENT(in) :: v0sm(:) ! pressure shifted line centers
+  REAL(rp), OPTIONAL, INTENT(in) :: x1m(:)! Doppler width
+  REAL(rp), OPTIONAL, INTENT(in) :: ym(:) ! ratio Pressure to Doppler widths
+  REAL(rp), OPTIONAL, INTENT(in) :: yim(:) ! Interference coefficients
+  REAL(rp), OPTIONAL, INTENT(in) :: slabs1m(:) ! strengths
+! outputs
+  REAL(rp), INTENT(out) :: beta_value
+! optional outputs
+  REAL(rp), OPTIONAL, INTENT(out) :: T_POWER ! for temperature derivative
+  REAL(rp), OPTIONAL, INTENT(OUT) :: DBETA_DW ! line width derivative
+  REAL(rp), OPTIONAL, INTENT(OUT) :: DBETA_DN ! temperature dependence deriv
+  REAL(rp), OPTIONAL, INTENT(OUT) :: DBETA_DV ! line position derivative
+d56 4
+a59 1
+    Integer(ip) :: LN_I
+d61 1
+a61 1
+    Real(rp) :: w,ra,dNu,tp,bp,tm,bm,bb,dw,dn,ds,dbdw,dbdn,dbdv
+d63 29
+a91 1
+    beta_value = 0.0_rp
+a92 2
+!  Setup absorption coefficients function
+! NEED TO ADD THE PARDO WATER VAPOR CONTINUUM FOR 18003
+d100 3
+a102 5
+      IF (PRESENT(t_power)) THEN
+        dw = Temp + 10.0_rp
+        ra = abs_cs_liq_h2o(Fgr,dw)
+        t_power = Log(ra/beta_value)/Log(dw/Temp)
+      ENDIF
+d110 4
+a113 5
+      IF (PRESENT(t_power)) THEN
+        dw = Temp + 10.0_rp
+        ra = abs_cs_air_cont(dw,Pressure,Fgr)
+        t_power = Log(ra/beta_value)/Log(dw/Temp)
+      ENDIF
+d121 1
+a121 1
+      IF (PRESENT(t_power)) t_power = 0.0_rp
+d128 4
+a131 1
+    IF(PRESENT(DBETA_DW).OR.PRESENT(DBETA_DN).OR.PRESENT(DBETA_DV)) THEN
+d133 1
+a133 90
+      dbdw = 0.0_rp
+      dbdn = 0.0_rp
+      dbdv = 0.0_rp
+
+      do ln_i = 1, nl
+!
+        dNu = Fgr - v0s(ln_i)
+!
+! If too far from line center, skip it (to fit /mlspgs/ code).
+! Use criterion of 3000.0 (NOT 2000.0) so the l2_gridding program works !!
+!
+        if(abs(dNu) > 3000.0_rp) CYCLE             ! To fit /mlspgs/ code
+!
+        w = pfaw(ln_i)
+        IF(abs(y(ln_i))+0.666666_rp*abs(x1(ln_i)*dNu) > 100.0_rp) THEN
+          Call Voigt_Lorentz(dNu,v0s(ln_i),x1(ln_i),yi(ln_i), &
+            &  y(ln_i),w,Temp,slabs1(ln_i),bb,dslabs1_dv0(ln_i),dw,dn,ds)
+        ELSE
+          Call dvoigt_spectral(dNu,v0s(ln_i),x1(ln_i),yi(ln_i),y(ln_i), &
+         &     w,Temp,slabs1(ln_i),bb,dslabs1_dv0(ln_i),dw,dn,ds)
+        ENDIF
+!
+        beta_value = beta_value + bb
+        dbdw = dbdw + dw
+        dbdn = dbdn + dn
+        dbdv = dbdv + ds
+!
+      end do
+
+      IF(PRESENT(DBETA_DW)) dbeta_dw = dbdw
+      IF(PRESENT(DBETA_DN)) dbeta_dn = dbdn
+      IF(PRESENT(DBETA_DV)) dbeta_dv = dbdv
+!
+    ELSE                ! No derivatives required
+!
+      IF(MAXVAL(ABS(yi)) < 1.0e-06_rp) THEN
+        do ln_i = 1, nl
+          dNu = Fgr - v0s(ln_i)
+! To fit /mlspgs/ code
+          if(abs(dNu) <= 3000.0_rp) beta_value = beta_value &
+            + Slabs(dNu,v0s(ln_i),x1(ln_i),slabs1(ln_i),y(ln_i))
+        end do
+      ELSE
+        do ln_i = 1, nl
+          dNu = Fgr - v0s(ln_i)
+! To fit /mlspgs/ code
+          if(abs(dNu) <= 3000.0_rp) beta_value = beta_value &
+             + Slabswint(dNu,v0s(ln_i),x1(ln_i),slabs1(ln_i),y(ln_i),yi(ln_i))
+        enddo
+      ENDIF
+!
+    ENDIF
+
+    IF(PRESENT(t_power)) THEN
+!
+!  Find the temperatue power dependency now:
+!
+      bp = 0.0_rp
+      bm = 0.0_rp
+      tp  = Temp + 10.0_rp
+      tm  = Temp - 10.0_rp
+!
+      IF(MAXVAL(ABS(yi)) < 1.0e-06_rp) THEN
+        do ln_i = 1, nl
+          ds = Fgr - v0s(ln_i)
+          IF(abs(ds) <= 3.0e3) THEN
+            dNu = Fgr - v0sp(ln_i)
+            bp = bp + Slabs(dNu,v0sp(ln_i),x1p(ln_i),slabs1p(ln_i),yp(ln_i))
+            dNu = Fgr - v0sm(ln_i)
+            bm = bm + Slabs(dNu,v0sm(ln_i),x1m(ln_i),slabs1m(ln_i),ym(ln_i))
+          ENDIF
+        end do
+      ELSE
+        do ln_i = 1, nl
+          ds = Fgr - v0s(ln_i)
+          IF(abs(ds) <= 3.0e3) THEN
+            dNu = Fgr - v0sp(ln_i)
+            bp = bp + Slabswint(dNu,v0sp(ln_i),x1p(ln_i),slabs1p(ln_i), &
+                             &  yp(ln_i),yip(ln_i))
+            dNu = Fgr - v0sm(ln_i)
+            bm = bm + Slabswint(dNu,v0sm(ln_i),x1m(ln_i),slabs1m(ln_i), &
+                             &  ym(ln_i),yim(ln_i))
+          ENDIF
+        end do
+      ENDIF
+
+      bb = beta_value
+      ds = Log(bp/bb)/Log(tp/Temp)     ! Estimate over [temp+10,temp]
+      ra = Log(bp/bm)/Log(tp/tm)       ! Estimate over [temp+10,temp-10]
+      dw = Log(bb/bm)/Log(Temp/tm)     ! Estimate over [temp,temp-10]
+d135 27
+a161 1
+      t_power = (ds + 2.0 * ra + dw) / 4.0  ! Weighted Average
+d163 1
+a163 1
+    ENDIF
+d165 58
+d226 29
+@
+
+
+1.13
+log
+@Speed enhancement MAJOR update
+@
+text
+@d16 1
+a16 1
+       "$Id: create_beta_m.f90,v 1.12 2001/06/07 23:30:33 pwagner Exp $"
+d139 1
+a139 1
+      tp = abs(y(ln_i))/SqrtLn2                ! Wc/Wd
+d141 1
+a141 1
+      do_Lorentz = (ra > 15.0 .or. tp > 3.0)
+d179 3
+d183 3
+a185 1
+      if(Frq_Gap > 0.0  .and. abs(dNu) >= Frq_Gap) CYCLE
+d198 5
+d226 3
+@
+
+
+1.12
+log
+@Added Copyright statement
+@
+text
+@d10 1
+a10 1
+  use SLABS_SW_M, only: SLABSWINT, DVOIGT_SPECTRAL
+d16 1
+a16 1
+       "$Id: create_beta_m.f90,v 1.11 2001/05/15 03:47:26 zvi Exp $"
+d58 1
+d60 2
+d138 14
+a151 4
+
+      Call dvoigt_spectral(dNu,v0s(ln_i),x1(ln_i),yi(ln_i),y(ln_i), &
+     &       w,temp,slabs1(ln_i),dx1_dv0(ln_i),dy_dv0(ln_i),          &
+     &       dslabs1_dv0(ln_i),bb,spect_der,dw,dn,ds)
+d161 3
+a163 1
+      if(.not. temp_der) CYCLE
+d165 1
+a165 1
+!  Find the temperatue power dependency now:
+d167 6
+a172 4
+      tp = temp + 10.0
+      dNu = Fgr - v0sp(ln_i)
+      bp = Slabswint(dNu,v0sp(ln_i),x1p(ln_i),slabs1p(ln_i),yp(ln_i), &
+     &               yip(ln_i))
+d174 2
+a175 4
+      tm = temp - 10.0
+      dNu = Fgr - v0sm(ln_i)
+      bm = Slabswint(dNu,v0sm(ln_i),x1m(ln_i),slabs1m(ln_i),ym(ln_i), &
+     &               yim(ln_i))
+d177 1
+a177 3
+      ds = Log(bp/bb)/Log(tp/temp)     ! Estimate over [temp+10,temp]
+      ra = Log(bp/bm)/Log(tp/tm)       ! Estimate over [temp+10,temp-10]
+      wd = Log(bb/bm)/Log(temp/tm)     ! Estimate over [temp,temp-10]
+d179 12
+a190 1
+      t_power = t_power + (ds+wd+2.0*ra)/4.0  ! Weighted Average
+d192 11
+d205 6
+a210 1
+    t_power = t_power / nl
+d216 3
+@
+
+
+1.11
+log
+@Adding derivative flag to beta calculations
+@
+text
+@d1 3
+d16 1
+a16 1
+       "$Id: create_beta_m.f90,v 1.10 2001/05/14 23:16:31 zvi Exp $"
+d176 3
+@
+
+
+1.10
+log
+@Added Freq. Gap test..
+@
+text
+@d13 1
+a13 1
+       "$Id: create_beta_m.f90,v 1.9 2001/05/14 23:14:54 zvi Exp $"
+d24 2
+a25 1
+         &   t_power, dbeta_dw, dbeta_dn, dbeta_dnu0, Frq_Gap, Ier)
+d31 1
+d135 1
+a135 1
+     &       dslabs1_dv0(ln_i),bb,dw,dn,ds)
+d138 8
+a145 3
+      dbeta_dw = dbeta_dw + dw
+      dbeta_dn = dbeta_dn + dn
+      dbeta_dnu0 = dbeta_dnu0 + ds
+d173 3
+@
+
+
+1.9
+log
+@Added Freq. Gap test..
+@
+text
+@d13 1
+a13 1
+       "$Id: create_beta_m.f90,v 1.8 2001/04/05 21:58:47 zvi Exp $"
+d31 1
+a31 1
+    Real(r8), intent(in) :: Pressure, Temp, Fgr
+d42 1
+a42 1
+    Real(r8), intent(out) :: DBETA_DN, DBETA_DNU0, Frq_Gap
+d166 3
+@
+
+
+1.8
+log
+@Implementing l2cf inputs for FilterShape & Spectroscopy instead of FMI
+@
+text
+@d13 1
+a13 1
+       "$Id: create_beta_m.f90,v 1.7 2001/04/03 07:32:45 zvi Exp $"
+d24 1
+a24 1
+         &   t_power, dbeta_dw, dbeta_dn, dbeta_dnu0, Ier)
+d42 1
+a42 1
+    Real(r8), intent(out) :: DBETA_DN, DBETA_DNU0
+d128 3
+d132 2
+a133 2
+     &     w,temp,slabs1(ln_i),dx1_dv0(ln_i),dy_dv0(ln_i),          &
+     &     dslabs1_dv0(ln_i),bb,dw,dn,ds)
+d166 3
+@
+
+
+1.7
+log
+@Modify the spectral structure - eliminating sps_ from the names
+@
+text
+@d6 1
+a6 1
+  use L2PC_PFA_STRUCTURES, only: PFA_SLAB
+d13 1
+a13 1
+       "$Id: create_beta_m.f90,v 1.6 2001/03/29 08:51:01 zvi Exp $"
+d21 1
+a21 1
+  Subroutine Create_beta (Spectag, pressure, Temp, Fgr, nl, pfa_spectrum,&
+d38 1
+a38 1
+    Type (pfa_slab), INTENT(IN) :: PFA_SPECTRUM
+d51 1
+a51 1
+    Integer(i4) :: LN_I
+d122 2
+a123 1
+      w = pfa_spectrum%W(ln_i)
+d163 3
+@
+
+
+1.6
+log
+@Changing the (*) toi (:) everywhere
+@
+text
+@d13 1
+a13 1
+       "$Id: create_beta_m.f90,v 1.5 2001/02/19 22:20:40 zvi Exp $"
+d122 1
+a122 1
+      w = pfa_spectrum%SPS_W(ln_i)
+d162 3
+@
+
+
+1.5
+log
+@Latest modification: Conv/NoConv
+@
+text
+@d13 1
+a13 1
+       "$Id: create_beta_m.f90,v 1.4 2001/02/19 22:14:21 zvi Exp $"
+d33 4
+a36 4
+    Real(r8), intent(in) :: x1(*),y(*),yi(*),slabs1(*),slabs1m(*), &
+   &          dx1_dv0(*),dy_dv0(*),dslabs1_dv0(*),v0sp(*),x1p(*),  &
+   &          v0s(*),yp(*),yip(*),slabs1p(*),v0sm(*),x1m(*),ym(*), &
+   &          yim(*)
+d162 3
+@
+
+
+1.4
+log
+@
+Ctest modification Conv/NoConvVS: ----------------------------------------------------------------------
+@
+text
+@d13 1
+a13 1
+       "$Id: create_beta_m.f90,v 1.1 2001/02/01 21:56:10 zvi Exp $"
+d162 2
+@
+
+
+1.3
+log
+@Changes and additions
+@
+text
+@@
+
+
+1.2
+log
+@New version of forward model
+@
+text
+@d2 1
+d6 2
+a7 4
+  use D_HUNT_M, only: HUNT
+  use EOS_MDB, only: EOS_MDB_HDR, EOS_MDB_REC, MAX_TEMP, &
+                     MAX_ZETA, MAX_FREQ
+  use MLSCommon, only: I4, R4, R8
+d13 1
+a13 1
+       "$Id: create_beta_m.f90,v 1.1 2000/06/21 21:56:10 zvi Exp $"
+d21 4
+a24 2
+  Subroutine Create_beta (Spectag, z, t, Fgr, mdb_hdr, mdb_rec, &
+             beta_value, t_power, dbeta_dw, dbeta_dn, dbeta_dnu0, Ier)
+d29 1
+a29 2
+    Integer(i4), intent(in) :: SPECTAG
+    Real(r8), intent(in) :: Z, T, Fgr
+d31 8
+a38 2
+    Type(eos_mdb_hdr), intent(in) :: MDB_HDR
+    Type(eos_mdb_rec), intent(in) :: MDB_REC(*)
+a45 2
+    Integer(i4), parameter :: MZ=44, NZ=max_zeta, NT=max_temp
+!
+d51 1
+a51 3
+    Real(r8) :: DELV, FREQS(MZ)
+    Real(r8) :: B_NTRP, DB_DN_NTRP, DB_DNU0_NTRP, DB_DW_NTRP
+    Real(r8) :: FREQ, PRESSURE, Q, Q_LOG(3), RA, RN, RNU0, RW
+d53 1
+a53 6
+    Integer(i4) :: LN_I, NO_FREQ, NO_PFA_LINES
+!
+    Real(r8), SAVE :: mdb_pres(NZ), mdb_temp(NT), x_grid(MAX_FREQ)
+!
+    Real(r8) :: S, T_P, SPS_MASS, SPS_N, SPS_PS, SPS_V0, SPS_W, WD
+    Real(r8) :: TEMP, V0S, X2NU(MZ), X2NU_P(MZ), X2NU_M(MZ)
+d58 2
+a64 8
+!  Setup frequency independent cross-section data
+!
+    q = -z
+    Temp = t
+    Pressure = 10.0_r8 ** q
+!
+    no_pfa_lines = 0
+!
+a75 1
+!
+d78 1
+a78 1
+      wd = T + 10.0d0
+d80 1
+a80 1
+      t_power = Log(ra/beta_value)/Log(wd/T)
+d120 1
+a120 122
+    if(mdb_hdr%Spectag /= Spectag) then
+      Ier = 1
+      Print 901,Spectag, mdb_hdr%Spectag
+ 901  format('** Error in subroutine: Create_beta ..',/,          &
+     &       '   For some reason mdb_hdr%spectag /= Spectag !',/, &
+     &       '   Spectag:',i6,'  mdb_hdr%spectag:',i6)
+      Return
+    endif
+
+    x_grid(1:max_freq) = 0.0
+    mdb_pres(1:nz) = mdb_hdr%Zeta(1:nz)
+    mdb_temp(1:nt) = mdb_hdr%Log_Temp(1:nt)
+!
+    q_log(1) = mdb_hdr%q_log(1)
+    q_log(2) = mdb_hdr%q_log(2)
+    q_log(3) = mdb_hdr%q_log(3)
+!
+    sps_mass = Real(Spectag / 1000)
+    no_pfa_lines = mdb_hdr%no_lines
+!
+    do ln_i = 1, no_pfa_lines
+!
+      sps_n = mdb_hdr%n(ln_i)
+      sps_w = mdb_hdr%w(ln_i)
+      sps_ps = mdb_hdr%ps(ln_i)
+      sps_v0 = mdb_hdr%v0(ln_i)
+!
+      Call Get_V0s_X2N(Pressure, t, sps_n, sps_ps, sps_w, sps_mass, &
+ &                     sps_v0, v0s, q)
+      freqs(ln_i) = v0s
+      x2nu(ln_i) = q
+!
+      ra = t + 10.0
+      Call Get_V0s_X2N(Pressure, ra, sps_n, sps_ps, sps_w, sps_mass, &
+ &                     sps_v0, v0s, q)
+      x2nu_p(ln_i) = q
+!
+      ra = t - 10.0
+      Call Get_V0s_X2N(Pressure, ra, sps_n, sps_ps, sps_w, sps_mass, &
+ &                     sps_v0, v0s, q)
+      x2nu_m(ln_i) = q
+!
+    end do
+!
+!  Now get the beta_value for anything but Liquid water, water with
+!  frequency in the (2.0d5,2.3d5) region or Dry Air continuum:
+!
+    ra = 0.0d0
+    rw = 0.0d0
+    rn = 0.0d0
+    rNu0 = 0.0d0
+    t_power = 0.0
+!
+    do ln_i = 1, no_pfa_lines
+!
+      Freq = freqs(ln_i)
+      delv = Fgr - Freq
+!
+      no_freq = mdb_hdr%no_f_grid(ln_i)
+      x_grid(1:no_freq) = mdb_hdr%x_grid(1:no_freq,ln_i)
+!
+      Call beta_intrp(z, t, delv, nz, nt, no_freq, mdb_pres, mdb_temp, &
+   &       x_grid, x2nu(ln_i), x2nu_m(ln_i), x2nu_p(ln_i),             &
+   &       mdb_rec(ln_i)%Log_beta, mdb_rec(ln_i)%dLog_beta_dw,         &
+   &       mdb_rec(ln_i)%dLog_beta_dn, mdb_rec(ln_i)%dLog_beta_dNu0,   &
+   &       B_Ntrp, dB_dw_Ntrp, dB_dn_Ntrp, dB_dNu0_Ntrp,t_p)
+!
+      ra = ra + B_Ntrp
+      rw = rw + dB_dw_Ntrp
+      rn = rn + dB_dn_Ntrp
+      rNu0 = rNu0 + dB_dNu0_Ntrp
+      t_power = t_power + t_p
+!
+    end do
+!
+    dbeta_dw = rw
+    dbeta_dn = rn
+    beta_value = ra
+    dbeta_dnu0 = rNu0
+    t_power = t_power / no_pfa_lines
+!
+    Return
+  End Subroutine Create_beta
+! *****     Private Procedures     *************************************
+! ---------------------------------------------     Get_V0S_X2N    -----
+! Compute the shifted Centered frequency & the x-to-Nu factor
+!
+  Subroutine Get_V0s_X2N(p, t, sps_n, sps_ps, sps_w, sps_mass, sps_v0, &
+ &                       v0s, x2nu)
+!
+    Real(r8), intent(in)  :: p, t, sps_n, sps_ps, sps_w, sps_mass, sps_v0
+    Real(r8), intent(out) :: v0s, x2nu
+!
+    Real(r8), parameter :: WF = 3.58117369e-7_r8
+    Real(r8), parameter :: FOUR_LN2 = 2.77258872223978_r8
+    Real(r8), parameter :: SQRTLN2 = 8.32554611157698e-1_r8
+!
+    Real(r8) :: onedt, t3t, ns, wd, x1, y, r
+!
+! Begin code:
+!
+    onedt = 1.0d0 / t
+    t3t = 300.0d0 * onedt
+    ns = 0.25d0 + 1.5d0 * sps_n
+    v0s = sps_v0 + sps_ps * p * (t3t**ns)
+!
+    Wd = v0s * Sqrt(T/sps_mass) * wf
+    x1 = Sqrtln2 / Wd
+    y = x1 * sps_w * p * (t3t**sps_n)
+    r = y + Sqrt(y*y + Four_ln2)
+    x2nu = 0.5d0 * wd * r / Sqrtln2
+!
+    Return
+  End Subroutine Get_V0s_X2N
+! ---------------------------------------------     BETA_INTRP     -----
+! Interpolate the beta using the Power interpolation model
+!
+  Subroutine BETA_INTRP (z, t, dNu, nz, nt, no_freq, mdb_pres, mdb_temp, &
+ &           x_grid, x2nu, x2nu_m, x2nu_p, LogB, dLogB_dw, dLogB_dn,     &
+ &           dLogB_dNu0,B_Ntrp,dB_dw_Ntrp,dB_dn_Ntrp,dB_dNu0_Ntrp,t_power)
+!
+    Real(r8), intent(in) :: Z, T, DNU, X2NU, X2NU_M, X2NU_P
+d122 1
+a122 1
+    Integer(i4), intent(in) :: NZ, NT, NO_FREQ
+d124 1
+a124 1
+    Real(r8), intent(in) :: MDB_PRES(*), MDB_TEMP(*), X_GRID(*)
+d126 4
+a129 2
+!=====================================================================
+! The following are real*4 since they are mdb_rec entities...
+d131 4
+a134 2
+    Real(r4),intent(in) :: LogB(nz,nt,*), dLogB_dw(nz,nt,*)
+    Real(r4),intent(in) :: dLogB_dn(nz,nt,*), dLogB_dNu0(nz,nt,*)
+d136 1
+a136 1
+!=====================================================================
+d138 4
+a141 2
+    Real(r8), intent(out) :: B_Ntrp, dB_dw_Ntrp, dB_dn_Ntrp, dB_dNu0_Ntrp
+    Real(r8), intent(out) :: t_power
+d143 4
+a146 2
+    Integer(i4) :: jz1,jz2,jt1,jt2,jf1,jf2,pjt1
+    Integer(i4) :: i,j,k,m,Ndx(5),ONdx(5)
+d148 3
+a150 8
+    Real(r8) :: LNT, PV, TEMP, X2N
+    Real(r8) :: DELT, DELZ, DZ, DT, Q, R, U, V, Y
+    Real(r8) :: VB(5), VF(5), VN(5), VNU0(5), VW(5), OVF(5)
+
+    Real(r8), parameter :: One = 1.0_r8
+!
+    jz1 = -1
+    Call Hunt(z,mdb_pres,nz,jz1,jz2)
+d152 1
+a152 39
+    delz = z - mdb_pres(jz1)
+    dz = mdb_pres(jz2) - mdb_pres(jz1)
+    u = delz / dz
+    if(u < 0.0) then
+      u = 0.0
+    else if(u > 1.0) then
+      u = 1.0
+    endif
+!
+    Temp = t
+    x2n = x2nu
+!
+    jt1 = -1
+    jf1 = -1
+!
+ 10 lnt = Log(Temp)
+    Call Hunt(lnt,mdb_temp,nt,jt1,jt2)
+!
+    delt = lnt - mdb_temp(jt1)
+    dt = mdb_temp(jt2) - mdb_temp(jt1)
+    v = delt / dt
+    if(v < 0.0) then
+      v = 0.0
+    else if(v > 1.0) then
+      v = 1.0
+    endif
+!
+    q = dNu / x2n
+    Call Hunt(q,x_grid,no_freq,jf1,jf2)
+!
+    m = 5
+    i = m / 2
+    j = max(1,jf1-i)
+    k = min(j,no_freq-m+1)
+    do i = 1, m
+      j = k + i - 1
+      Ndx(i) = j
+      vf(i) = x_grid(j) * x2n
+    end do
+a153 7
+    do i = 1, m
+      j = Ndx(i)
+      y = (One-u) * (One-v) * LogB(jz1,jt1,j) + &
+   &         u    * (One-v) * LogB(jz2,jt1,j) + &
+   &      (One-u) *    v    * LogB(jz1,jt2,j) + &
+   &         u    *    v    * LogB(jz2,jt2,j)
+      vb(i) = y
+d156 1
+a156 52
+    Call Rational_Interp(vf,vb,m,dNu,y)
+!
+    if(Temp == t) then
+      B_Ntrp = Exp(y)               ! Beta(z,t,f)
+      pv = v
+      pjt1 = jt1
+      Ovf(1:m) = vf(1:m)
+      ONdx(1:m) = Ndx(1:m)
+      Temp = t - 10.0
+      x2n = x2nu_m
+      goto 10
+    else if(Temp == t-10.0) then
+      vw(1) = y
+      Temp = t + 10.0
+      x2n = x2nu_p
+      goto 10
+    else if(Temp == t+10.0) then
+      v = Temp / (t - 10.0)
+      t_power = (y - vw(1)) / Log(v)
+    endif
+!
+    v = pv
+    jt1 = pjt1
+    jt2 = jt1 + 1
+!
+    do i = 1, m
+      j = ONdx(i)
+      y = (One-u) * (One-v) * dLogB_dw(jz1,jt1,j) + &
+   &         u    * (One-v) * dLogB_dw(jz2,jt1,j) + &
+   &      (One-u) *    v    * dLogB_dw(jz1,jt2,j) + &
+   &         u    *    v    * dLogB_dw(jz2,jt2,j)
+      vw(i) = y
+      y = (One-u) * (One-v) * dLogB_dn(jz1,jt1,j) + &
+   &         u    * (One-v) * dLogB_dn(jz2,jt1,j) + &
+   &      (One-u) *    v    * dLogB_dn(jz1,jt2,j) + &
+   &         u    *    v    * dLogB_dn(jz2,jt2,j)
+      vn(i) = y
+      y = (One-u) * (One-v) * dLogB_dNu0(jz1,jt1,j) + &
+   &         u    * (One-v) * dLogB_dNu0(jz2,jt1,j) + &
+   &      (One-u) *    v    * dLogB_dNu0(jz1,jt2,j) + &
+   &         u    *    v    * dLogB_dNu0(jz2,jt2,j)
+      vNu0(i) = y
+    end do
+!
+    Call Rational_Interp(Ovf,vw,m,dNu,r)
+    dB_dw_Ntrp = r * B_Ntrp
+!
+    Call Rational_Interp(Ovf,vn,m,dNu,r)
+    dB_dn_Ntrp = r * B_Ntrp
+!
+    Call Rational_Interp(Ovf,vNu0,m,dNu,r)
+    dB_dNu0_Ntrp = r * B_Ntrp
+d159 1
+a159 84
+  End Subroutine BETA_INTRP
+!
+!-----------------------------------------     Rational_Interp     -----
+!
+  Subroutine Rational_Interp ( Xa, Ya, N, x, y)
+!
+    Integer(i4), intent(in) :: N
+!
+    Real(r8), intent(in) :: Xa(*), Ya(*), x
+!
+    Real(r8), intent(out) :: Y
+!
+    Integer, Parameter :: Nmax=7
+    Integer :: I, KHI, KLO, M, NS
+!
+    Real(r8), Parameter :: Tiny=1.0d-14
+!
+    Real(r8) :: C(nmax), D(nmax), DD, DY, DYDX, H, HH, T, W, YLIN
+!
+    y = Ya(1)
+    h = abs(x-Xa(1))
+    if (h <= Tiny) Return
+!
+    klo = -1
+    Call Hunt(X,Xa,N,klo,khi)
+!
+    dydx = (Ya(khi)-Ya(klo))/(Xa(khi)-Xa(klo))
+    ylin = Ya(klo) + dydx * (x - Xa(klo))
+!
+    c(1) = Ya(1)
+    d(1) = Ya(1) + Tiny
+!
+    ns = 1
+    hh = abs(x-Xa(1))
+!
+    do i = 2, n
+      h = abs(x-Xa(i))
+      if (h <= Tiny) then
+        y = Ya(i)
+        Return
+      end if
+      c(i) = Ya(i)
+      d(i) = Ya(i) + Tiny
+      if(h < hh) then
+        ns = i
+        hh = h
+      endif
+    end do
+!
+    y = Ya(ns)
+    ns = ns - 1
+!
+    do m = 1, n - 1
+!
+      do i = 1, n - m
+!
+        w = c(i+1) - d(i)
+        h = Xa(i+m) - x
+        t = (Xa(i) - x) * d(i) / h
+        dd = t - c(i+1)
+        if (dd == 0.0) then
+          y = ylin
+          Return
+        end if
+        dd = w / dd
+        d(i) = c(i+1) * dd
+        c(i) = t * dd
+!
+      end do
+!
+      if (2*ns < n-m) then
+        dy = c(ns+1)
+      else
+        dy = d(ns)
+        ns = ns - 1
+      end if
+!
+      y = y + dy
+!
+    end do
+!
+    Return
+!
+  End Subroutine Rational_Interp
+d162 1
+a162 1
+! Revision 1.1  2000/05/04 18:12:04  vsnyder
+@
+
+
+1.1
+log
+@New version
+@
+text
+@d23 1
+a23 1
+             beta_value, t_power, dbeta_dw, dbeta_dn, dbeta_dnu0)
+d31 1
+a31 1
+    Type(eos_mdb_hdr), intent(in) :: MDB_HDR(*)
+d34 1
+d51 1
+a51 2
+    Integer(i4) :: I, LN_I, NO_FREQ, NO_PFA_LINES
+    Integer(i4), SAVE :: MS = -1, PREV_SPEC = -1
+d60 1
+d130 16
+a145 17
+    if (Spectag /= prev_spec .or. ms < 1) then
+      ms = 0
+      do i = 1, 20
+        if (mdb_hdr(i)%Spectag == Spectag) then
+          ms = i
+          prev_spec = Spectag
+          mdb_pres(1:nz) = mdb_hdr(ms)%Zeta(1:nz)
+          mdb_temp(1:nt) = mdb_hdr(ms)%Log_Temp(1:nt)
+          x_grid(1:max_freq) = 0.0
+          EXIT
+        end if
+      end do
+    end if
+!
+    q_log(1) = mdb_hdr(ms)%q_log(1)
+    q_log(2) = mdb_hdr(ms)%q_log(2)
+    q_log(3) = mdb_hdr(ms)%q_log(3)
+d147 2
+a148 2
+    sps_mass = real(spectag / 1000)
+    no_pfa_lines = mdb_hdr(ms)%no_lines
+d152 4
+a155 4
+      sps_n = mdb_hdr(ms)%n(ln_i)
+      sps_w = mdb_hdr(ms)%w(ln_i)
+      sps_ps = mdb_hdr(ms)%ps(ln_i)
+      sps_v0 = mdb_hdr(ms)%v0(ln_i)
+d188 2
+a189 2
+      no_freq = mdb_hdr(ms)%no_f_grid(ln_i)
+      x_grid(1:no_freq) = mdb_hdr(ms)%x_grid(1:no_freq,ln_i)
+d277 1
+d292 3
+d356 4
+a359 4
+      y = (One-u)*(One-v)*dLogB_dw(jz1,jt1,j) + &
+   &         u   *(One-v)*dLogB_dw(jz2,jt1,j) + &
+   &      (One-u)*   v   *dLogB_dw(jz1,jt2,j) + &
+   &         u   *   v   *dLogB_dw(jz2,jt2,j)
+d361 4
+a364 4
+      y = (One-u)*(One-v)*dLogB_dn(jz1,jt1,j) + &
+   &         u   *(One-v)*dLogB_dn(jz2,jt1,j) + &
+   &      (One-u)*   v   *dLogB_dn(jz1,jt2,j) + &
+   &         u   *   v   *dLogB_dn(jz2,jt2,j)
+d366 4
+a369 4
+      y = (One-u)*(One-v)*dLogB_dNu0(jz1,jt1,j) + &
+   &         u   *(One-v)*dLogB_dNu0(jz2,jt1,j) + &
+   &      (One-u)*   v   *dLogB_dNu0(jz1,jt2,j) + &
+   &         u   *   v   *dLogB_dNu0(jz2,jt2,j)
+d406 1
+@
+

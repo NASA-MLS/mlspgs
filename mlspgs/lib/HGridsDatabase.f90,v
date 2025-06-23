@@ -1,0 +1,2767 @@
+head	2.48;
+access;
+symbols
+	v5-02-NRT-19:2.48
+	v6-00:2.48
+	v5-02-NRT-18:2.48
+	v5-02:2.44
+	v5-01-NRT-17:2.47
+	v5-01-NRT-16:2.46
+	v5-01-NRT-15:2.46
+	v5-01-NRT-14:2.46
+	neuralnetworks-1-0:2.45.0.4
+	cfm-single-freq-0-1:2.45.0.2
+	v5-01:2.44
+	v5-00:2.44
+	v4-23-TA133:2.43.0.2
+	mus-emls-1-70:2.41.0.2
+	rel-1-0-englocks-work:2.40.0.2
+	VUMLS1-00:2.40
+	VPL1-00:2.33
+	V4-22-NRT-08:2.27
+	VAM1-00:2.23
+	V4-21:2.15.0.2
+	V4-13:2.15
+	V4-12:2.13
+	V4-11:2.13
+	V4-10:2.13
+	V3-43:2.9
+	M4-00:2.10
+	V3-41:2.9
+	V3-40-PlusGM57:2.9.0.2
+	V2-24-NRT-04:2.7
+	V3-33:2.9
+	V2-24:2.7
+	V3-31:2.9
+	V3-30-NRT-05:2.9
+	cfm-01-00:2.9
+	V3-30:2.9
+	V3-20:2.9
+	V3-10:2.9
+	V2-23-NRT-02:2.7
+	V2-23:2.7
+	V2-22-NRT-01:2.7
+	V2-22:2.7
+	V2-21:2.7
+	V2-20:2.7
+	V2-11:2.7
+	V2-10:2.7
+	V2-00:2.7
+	V1-51:2.4
+	V1-50:2.4
+	V1-45:2.4
+	V1-44:2.4
+	V1-43:2.2
+	V1-42:2.2
+	V1-41:2.2
+	V1-32:2.2
+	V1-40:2.2
+	V1-31:2.2
+	V1-30:2.2;
+locks; strict;
+comment	@# @;
+
+
+2.48
+date	2022.10.28.21.05.12;	author pwagner;	state Exp;
+branches;
+next	2.47;
+
+2.47
+date	2022.09.15.16.33.58;	author pwagner;	state Exp;
+branches;
+next	2.46;
+
+2.46
+date	2021.07.08.23.30.38;	author pwagner;	state Exp;
+branches;
+next	2.45;
+
+2.45
+date	2020.01.27.18.30.44;	author pwagner;	state Exp;
+branches;
+next	2.44;
+
+2.44
+date	2020.01.09.22.22.08;	author pwagner;	state Exp;
+branches;
+next	2.43;
+
+2.43
+date	2018.08.04.00.44.16;	author vsnyder;	state Exp;
+branches;
+next	2.42;
+
+2.42
+date	2018.08.03.23.26.10;	author vsnyder;	state Exp;
+branches;
+next	2.41;
+
+2.41
+date	2018.04.19.02.00.36;	author vsnyder;	state Exp;
+branches;
+next	2.40;
+
+2.40
+date	2016.10.19.00.11.51;	author pwagner;	state Exp;
+branches;
+next	2.39;
+
+2.39
+date	2016.10.11.23.28.37;	author pwagner;	state Exp;
+branches;
+next	2.38;
+
+2.38
+date	2016.10.01.01.37.28;	author vsnyder;	state Exp;
+branches;
+next	2.37;
+
+2.37
+date	2016.09.23.03.08.37;	author vsnyder;	state Exp;
+branches;
+next	2.36;
+
+2.36
+date	2016.09.23.02.41.47;	author vsnyder;	state Exp;
+branches;
+next	2.35;
+
+2.35
+date	2016.09.23.01.34.56;	author vsnyder;	state Exp;
+branches;
+next	2.34;
+
+2.34
+date	2016.09.13.20.09.13;	author vsnyder;	state Exp;
+branches;
+next	2.33;
+
+2.33
+date	2016.08.23.18.34.44;	author pwagner;	state Exp;
+branches;
+next	2.32;
+
+2.32
+date	2016.08.23.00.41.55;	author vsnyder;	state Exp;
+branches;
+next	2.31;
+
+2.31
+date	2016.08.20.01.11.39;	author vsnyder;	state Exp;
+branches;
+next	2.30;
+
+2.30
+date	2016.08.12.00.35.47;	author pwagner;	state Exp;
+branches;
+next	2.29;
+
+2.29
+date	2016.08.09.18.16.30;	author pwagner;	state Exp;
+branches;
+next	2.28;
+
+2.28
+date	2016.07.28.01.34.55;	author vsnyder;	state Exp;
+branches;
+next	2.27;
+
+2.27
+date	2016.05.18.01.34.37;	author vsnyder;	state Exp;
+branches;
+next	2.26;
+
+2.26
+date	2016.05.17.00.14.40;	author pwagner;	state Exp;
+branches;
+next	2.25;
+
+2.25
+date	2016.04.15.22.24.43;	author pwagner;	state Exp;
+branches;
+next	2.24;
+
+2.24
+date	2016.02.26.02.05.25;	author vsnyder;	state Exp;
+branches;
+next	2.23;
+
+2.23
+date	2016.01.11.23.12.58;	author pwagner;	state Exp;
+branches;
+next	2.22;
+
+2.22
+date	2015.07.14.23.22.27;	author pwagner;	state Exp;
+branches;
+next	2.21;
+
+2.21
+date	2015.06.25.00.37.52;	author pwagner;	state Exp;
+branches;
+next	2.20;
+
+2.20
+date	2015.06.19.20.35.06;	author pwagner;	state Exp;
+branches;
+next	2.19;
+
+2.19
+date	2015.06.19.00.34.19;	author pwagner;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2015.05.27.22.39.39;	author vsnyder;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2015.03.31.21.03.55;	author pwagner;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2015.03.28.01.03.12;	author vsnyder;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2014.09.04.23.40.28;	author vsnyder;	state Exp;
+branches
+	2.15.2.1;
+next	2.14;
+
+2.14
+date	2014.08.07.22.44.28;	author vsnyder;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2014.04.24.23.50.25;	author pwagner;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2013.10.01.22.16.45;	author pwagner;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2013.08.12.23.47.07;	author vsnyder;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2013.03.01.01.04.51;	author pwagner;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2009.06.23.18.25.42;	author pwagner;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2008.05.02.00.38.48;	author vsnyder;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2005.09.21.23.11.54;	author pwagner;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2005.08.25.20.18.05;	author pwagner;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2005.06.22.17.25.49;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2004.05.20.19.48.25;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2004.05.18.01.05.06;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2003.07.07.20.20.28;	author livesey;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2003.06.20.19.34.45;	author pwagner;	state Exp;
+branches;
+next	;
+
+2.15.2.1
+date	2015.04.14.22.41.03;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.48
+log
+@Fixed syntax error in args to StrEq
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module HGridsDatabase                   ! Horizontal grid information
+
+  use Intrinsic, only: L_GeodAngle
+  use MLSKinds, only: R8
+  use Generate_QTM_m, only: QTM_Tree_t
+
+  implicit none
+  private
+
+  public :: HGrid_T, HGrids_T, HGridGeolocations_T, HGridGeolocations
+  public :: AddHGridtodatabase, CopyHGrid, CreateEmptyHGrid, &
+    & DestroyHGridContents, DestroyHGridDatabase, Dump, FindClosestMatch, &
+    & L1BGeoLocation, L1BSubsample, NullifyHGrid, &
+    & TrimHGrid
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: HGridsDatabase.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+  ! This module contains datatypes and routines for handling HGrid information.
+  ! HGrids are the horizontal gridding information that get into vector
+  ! quantities.
+
+  ! This is the main datatype, an HGrid.
+
+  type HGrid_T
+    integer :: Name                 = 0 ! String index of name.            
+    integer :: MasterCoordinate     = l_GeodAngle ! Its lit index;
+    integer :: NoProfs                  ! Number of profiles in this grid  
+    integer :: NoProfsLowerOverlap  = 0 ! Number of profiles in the lower overlap
+    integer :: NoProfsUpperOverlap  = 0 ! Number of profiles in the upper overlap
+    integer :: Type                     ! L_Explicit, L_Fixed ...
+    integer :: Module                   ! index into modules database
+    logical :: ForbidOverspill      = .false.   
+
+    ! This is the maf number passing nearest to the grid point
+    integer, dimension(:), pointer    :: MAF          => NULL()
+    ! Now the various coordinates in the HGrid, all dimensioned (1,noProfs)
+    real(r8), contiguous, pointer :: Phi(:,:)         => NULL()
+    real(r8), contiguous, pointer :: GeodLat(:,:)     => NULL()
+    real(r8), contiguous, pointer :: Lon (:,:)        => NULL()
+    real(r8), contiguous, pointer :: Time(:,:)        => NULL()
+    real(r8), contiguous, pointer :: SolarTime(:,:)   => NULL()
+    real(r8), contiguous, pointer :: SolarZenith(:,:) => NULL()
+    real(r8), contiguous, pointer :: LOSAngle(:,:)    => NULL()
+    ! For QTM
+    type(QTM_tree_t), allocatable :: QTM_Tree ! for finding things and
+                                 ! representing the geolocations of vertices
+                                 ! of a QTM that are within or adjacent to a
+                                 ! specified polygon
+  end type HGrid_T
+
+  ! To construct an array of pointers to HGrid_T.  The reason for this
+  ! is that the quantity template has a pointer to an HGrid_T.  When we
+  ! add an item to the HGrid_T database, using an array of HGrid_T, all
+  ! those pointers become invalid.  So now we allocate each HGrid_T
+  ! individually, and grow an array of HGrids_T.
+  type HGrids_T
+    type(hGrid_t), pointer :: The_HGrid => NULL()
+  end type HGrids_T
+
+  ! Put here all the l1boa quantities that we don't
+  ! wish to read again and again and again ....
+  type HGridGeolocations_T
+    double precision, dimension(:,:), pointer :: MAFStartTimeTAI => null()
+    double precision, dimension(:,:), pointer :: Orbincl         => null()
+    double precision, dimension(:,:), pointer :: GHzGeodAngle    => null()
+    double precision, dimension(:,:), pointer :: GHzGeodAlt      => null()
+    double precision, dimension(:,:), pointer :: GHzGeodLat      => null()
+    double precision, dimension(:,:), pointer :: GHzLosAngle     => null()
+    double precision, dimension(:,:), pointer :: GHzLon          => null()
+    double precision, dimension(:,:), pointer :: GHzSolarTime    => null()
+    double precision, dimension(:,:), pointer :: GHzSolarZenith  => null()
+  end type HGridGeolocations_T
+  
+  type(HGridGeolocations_T), save :: HGridGeolocations
+
+  interface Dump
+    module procedure Dump_a_HGrid
+    module procedure Dump_HGrids
+  end interface
+
+contains ! =========== Public procedures ===================================
+
+ ! -----------------------------------------  AddHGridToDatabase  -----
+  integer function AddHGridToDatabase ( Database, The_HGrid )
+
+    ! This adds an item to the array of pointers to HGrid_T's.  Then it
+    ! allocates an HGrid_T as the last element of the new array.  Then it
+    ! does a shallow copy of the_hGrid to the allocated hGrid -- so DO NOT
+    ! destroy the original one, just nullify all its pointers.
+
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+
+    ! Dummy arguments
+    type (HGrids_T), dimension(:), pointer :: Database
+    type (HGrid_T), intent(in) :: The_HGrid
+
+    ! Local variables
+    type (HGrids_T) :: Item
+    type (HGrids_T), dimension(:), pointer :: TempDatabase
+
+    ! Add another pointer to HGrid_T to the HGrids_T database
+    include "addItemToDatabase.f9h"
+
+    allocate ( database(newSize)%the_hGrid, stat=status )
+    call test_allocate ( status, moduleName, "database(newSize)%the_hGrid" )
+    database(newSize)%the_hGrid = the_hGrid
+
+    AddHGridToDatabase = newSize
+  end function AddHGridToDatabase
+
+  ! -------------------------------------------  copyHGrid  -----
+  ! Deep copy all fields from aGrid to hGrid.
+  ! Allocates all the pointer components, so a full deep copy results
+  ! allowing you to destroy agrid afterwards.
+  subroutine copyHGrid ( aGrid, hGrid )
+    ! Just does allocates etc.
+
+    use Allocate_Deallocate, only: Allocate_Test
+
+    type (HGrid_T), intent(in)  :: AGRID
+    type (HGrid_T), intent(out) :: HGRID
+    integer                     :: stat
+
+    ! Executable code
+    hGrid%Name                 = aGrid%Name               
+    hGrid%masterCoordinate     = aGrid%masterCoordinate   
+    hGrid%noProfs              = aGrid%noProfs            
+    hGrid%noProfsLowerOverlap  = aGrid%noProfsLowerOverlap
+    hGrid%noProfsUpperOverlap  = aGrid%noProfsUpperOverlap
+    hGrid%Type                 = aGrid%Type               
+    hGrid%forbidOverspill      = aGrid%forbidOverspill    
+
+    call Allocate_Test ( hGrid%maf, hGrid%noProfs, &
+      & 'hGrid%maf', ModuleName )
+    call Allocate_Test ( hGrid%phi, 1, hGrid%noProfs, &
+      & 'hGrid%phi', ModuleName )
+    call Allocate_Test ( hGrid%geodLat, 1, hGrid%noProfs, &
+      & 'hGrid%geodLat', ModuleName )
+    call Allocate_Test ( hGrid%lon, 1, hGrid%noProfs, &
+      & 'hGrid%lon', ModuleName )
+    call Allocate_Test ( hGrid%time, 1, hGrid%noProfs, &
+      & 'hGrid%time', ModuleName )
+    call Allocate_Test ( hGrid%solarTime, 1, hGrid%noProfs, &
+      & 'hGrid%solarTime', ModuleName )
+    call Allocate_Test ( hGrid%solarZenith, 1, hGrid%noProfs, &
+      & 'hGrid%solarZenith', ModuleName )
+    call Allocate_Test ( hGrid%losAngle, 1, hGrid%noProfs, &
+      & 'hGrid%losAngle', ModuleName )
+
+    hGrid%maf          = aGrid%maf
+    hGrid%phi          = aGrid%phi        
+    hGrid%geodLat      = aGrid%geodLat    
+    hGrid%lon          = aGrid%lon        
+    hGrid%time         = aGrid%time       
+    hGrid%solarTime    = aGrid%solarTime  
+    hGrid%solarZenith  = aGrid%solarZenith
+    hGrid%losAngle     = aGrid%losAngle   
+    if ( allocated(aGrid%QTM_tree) ) then
+      allocate ( hGrid%QTM_tree, stat=stat )
+      hGrid%losAngle     = aGrid%losAngle   
+    endif
+  end subroutine copyHGrid
+
+  ! -------------------------------------------  CreateEmptyHGrid  -----
+  subroutine CreateEmptyHGrid ( hGrid )
+    ! Just does allocates etc.
+
+    use Allocate_Deallocate, only: Allocate_Test
+
+    type (HGrid_T), intent(inout) :: HGRID
+
+    ! Executable code
+    call Allocate_Test ( hGrid%maf, hGrid%noProfs, &
+      & 'hGrid%maf', ModuleName )
+    call Allocate_Test ( hGrid%phi, 1, hGrid%noProfs, &
+      & 'hGrid%phi', ModuleName )
+    call Allocate_Test ( hGrid%geodLat, 1, hGrid%noProfs, &
+      & 'hGrid%geodLat', ModuleName )
+    call Allocate_Test ( hGrid%lon, 1, hGrid%noProfs, &
+      & 'hGrid%lon', ModuleName )
+    call Allocate_Test ( hGrid%time, 1, hGrid%noProfs, &
+      & 'hGrid%time', ModuleName )
+    call Allocate_Test ( hGrid%solarTime, 1, hGrid%noProfs, &
+      & 'hGrid%solarTime', ModuleName )
+    call Allocate_Test ( hGrid%solarZenith, 1, hGrid%noProfs, &
+      & 'hGrid%solarZenith', ModuleName )
+    call Allocate_Test ( hGrid%losAngle, 1, hGrid%noProfs, &
+      & 'hGrid%losAngle', ModuleName )
+
+  end subroutine CreateEmptyHGrid
+
+  ! ---------------------------------------------  L1BGeoLocation  -----
+  ! Read the appropriate geolocations from the l1boa file.
+  ! The first time through, read from the l1boa, and store in the
+  ! appropriate component of HGridGeolocations.
+  ! In all subsequent times, simply copy the stored values.
+  
+  ! We check for stored values by whether the component is associated
+  subroutine L1BGeoLocation ( filedatabase, name, moduleStr, values, values2d, &
+                            & root, NeverFail )
+
+    use Allocate_Deallocate, only: Allocate_Test
+    use Dump_0, only: Dump
+    use HighOutput, only: OutputNamedValue
+    use L1BData, only: L1BData_T, &
+      & AssembleL1BQtyName, ConvertL1BData, DeallocateL1BData, ReadL1BData
+    use MLSCommon, only: MLSFile_T
+    use MLSFiles, only: GetMLSFileByType
+    use MLSFillValues, only: IsFillValue, Monotonize
+    use MLSKinds, only: Rk => R8
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
+    use MLSStrings, only: Lowercase, StrEq
+    use Output_M, only: Output
+    use Toggles, only: Gen, Levels, Toggle
+    use Trace_M, only: Trace_Begin, Trace_End
+    ! Args
+    type (MLSFile_T), dimension(:), pointer     :: fileDatabase
+    character(len=*), intent(in)                :: name
+    character(len=*), intent(in)                :: moduleStr
+    real(rk), dimension(:), pointer, optional   :: values
+    real(rk), dimension(:,:), pointer, optional :: values2d
+    integer, intent(in), optional :: Root ! For tracing
+    logical, intent(in), optional :: NeverFail ! For ReadL1BData
+    ! Local variables
+    type (L1BData_T) :: l1bField ! L1B data
+    logical, parameter                    :: DeeBug = .false.
+    logical, parameter                    :: Monotonic = .false. ! Must l1b be?
+    integer                               :: HdfVersion
+    type (MLSFile_T), pointer             :: L1BFile
+    character(len=64)                     :: L1bItemName
+    integer                               :: Me = -1 ! String index for tracing
+    logical                               :: MyNeverFail
+    integer                               :: NoFreqs
+    integer                               :: NoMAFs
+    character(len=64)                     :: ReadItemName
+    logical, parameter                    :: ShowName = .false.
+    character(len=64)                     :: SnippedName
+    integer                               :: Status
+    logical                               :: Verbose 
+    ! Executable
+    if ( present(root) ) call trace_begin ( me, "L1BGeoLocation", root, &
+      & cond=toggle(gen) .and. levels(gen) > 2 )
+    myNeverFail = .false.
+    if ( present(neverFail) ) myNeverFail = neverFail
+    l1bItemName = adjustl(lowercase(name))
+    ! Sometimes we're called as GHz/Name; other times as tpName
+    if ( l1bItemName(1:2) == 'tp' ) l1bItemName = trim(moduleStr) // l1bItemName(3:)
+    if ( l1bItemName(1:2) == 'sc' ) l1bItemName = 'sc/' // l1bItemName(3:)
+    ! `1st--check if we have already read this from the l1boa file
+    if ( DeeBug ) call outputnamedValue( 'name', name )
+    if ( DeeBug ) call outputnamedValue( 'module name', moduleStr )
+    if ( DeeBug ) call outputnamedValue( 'l1bItemName (before select case)', l1bItemName )
+    snippedName = snipModuleStr(l1bItemName)
+    if ( showName ) call output ( '############### ' // trim(snippedName), advance='yes' )
+    select case ( snippedName )
+    case ('mafstarttimetai')
+      if ( associated ( HGridGeolocations%MAFStartTimeTAI ) ) then
+        call recallValues( HGridGeolocations%MAFStartTimeTAI, values, values2d )
+        go to 9
+      endif
+    case ('orbincl')
+      if ( associated ( HGridGeolocations%OrbIncl ) ) then
+        call recallValues( HGridGeolocations%OrbIncl, values, values2d )
+        go to 9
+      endif
+    case ('geodangle   ')
+      if ( associated ( HGridGeolocations%GHzGeodAngle ) ) then
+        call recallValues( HGridGeolocations%GHzGeodAngle, values, values2d )
+        go to 9
+      endif
+    case ('geodalt     ')
+      if ( associated ( HGridGeolocations%GHzGeodAlt ) ) then
+        call recallValues( HGridGeolocations%GHzGeodAlt, values, values2d )
+        go to 9
+      endif
+    case ('geodlat     ')
+      if ( associated ( HGridGeolocations%GHzGeodLat ) ) then
+        call recallValues( HGridGeolocations%GHzGeodLat, values, values2d )
+        go to 9
+      endif
+    case ('solartime   ')
+      if ( associated ( HGridGeolocations%GHzSolarTime ) ) then
+        call recallValues( HGridGeolocations%GHzSolarTime, values, values2d )
+        go to 9
+      endif
+    case ('solarzenith   ')
+      if ( associated ( HGridGeolocations%GHzSolarZenith ) ) then
+        call recallValues( HGridGeolocations%GHzSolarZenith, values, values2d )
+        go to 9
+      endif
+    case ('losangle   ')
+      if ( associated ( HGridGeolocations%GHzlosAngle ) ) then
+        call recallValues( HGridGeolocations%GHzlosAngle, values, values2d )
+        go to 9
+      endif
+    case ('lon   ')
+      if ( associated ( HGridGeolocations%GHzlon ) ) then
+        call recallValues( HGridGeolocations%GHzlon, values, values2d )
+        go to 9
+      endif
+    end select
+    ! If we get here, 
+    ! it is because we hadn't read and saved the proper data type
+    L1BFile => GetMLSFileByType( filedatabase, content='l1boa' )
+    hdfversion = L1BFile%HDFVersion
+    if ( DeeBug ) call outputnamedValue( 'name', name )
+    if ( DeeBug ) call outputnamedValue( '1st l1bitemname', l1bitemname )
+    if ( index( lowercase(name), 'ghz') > 0 ) then
+      ! readItemName = "/" // adjustl(Name)
+      call output( 'We should have stopped specifying GHz by now', advance='yes' )
+      call outputNamedValue( 'name', trim(Name) )
+      call outputNamedValue( 'moduleStr', trim(moduleStr) )
+      if ( moduleStr /= 'none' .and. moduleStr /= 'GHz' .and. &
+        & len_trim(moduleStr) > 1 ) then
+        readItemName = trim(moduleStr) // '/' // snipModuleStr(Name, 'GHz')
+      else
+        readItemName = Name
+      endif
+      call outputNamedValue( 'readItemName to read', trim(readItemName) )
+    elseif ( index( name, 'tp') > 0 ) then
+      ! l1bItemName = AssembleL1BQtyName ( 'GHz.' // Name, hdfVersion, .false. )
+      if ( DeeBug ) then
+        call outputNamedValue( 'AssembleL1BQtyName Name:', trim(Name) )
+        call outputNamedValue( 'ModuleStr:', trim(ModuleStr) )
+        call outputNamedValue( 'hdfVersion:', hdfVersion )
+      endif
+      readItemName = AssembleL1BQtyName ( Name(3:), hdfVersion, .true., moduleStr )
+    else
+      readItemName = AssembleL1BQtyName ( Name, hdfVersion, .false. )
+    endif
+    if ( DeeBug ) call outputnamedValue( '2nd readItemName', readItemName )
+    ! We must not pad because that inserts unwanted Fill values 
+    ! into the l1b data fields!
+    ! Before we began using L1BGeoLocation, we used to read each
+    ! chunk's worth of l1b data by setting FirstMAF and lastMAF
+    ! which automatically set dontPad=.true.
+    call ReadL1BData ( L1BFile, readItemName, l1bField, noMAFs, status, &
+      & dontpad=.true., neverFail=neverFail )
+    if ( myNeverFail .and. status /= 0 ) go to 9
+    if ( .not. associated(l1bField%dpField) ) call ConvertL1BData( l1bField )
+
+    ! Do we insist that the l1b data values be monotonic?
+    if ( &
+      & Monotonic &
+      & .and. &
+      & any(isFillValue(l1bField%dpField) ) &
+      & .and. &
+      & .not. & 
+      & any(StrEq( (/ 'GHz/Lon  ', 'scOrbIncl' /), trim(readItemname) ) ) &
+      & ) then 
+      call output( 'Fill values among ' // trim(readItemName), advance='yes' ) 
+      call MLSMessage ( MLSMSG_Warning, trim(ModuleName) // '%L1BGeoLocation', & 
+        & 'Required monotonization' ) 
+      verbose = &
+        & ( any(StrEq( (/ 'GHz/Lon      ', 'GHz/GeodAngle' /) , trim(readItemname) ) ) )
+      if ( verbose ) call dump( l1bField%dpField, 'vals before monotony' ) 
+      call Monotonize( l1bField%dpField ) 
+      if ( verbose ) call dump( l1bField%dpField, 'vals after monotony' ) 
+    endif 
+
+    noFreqs = size(l1bField%dpField,2)
+    if ( present(values) ) then
+      nullify(values)
+      call Allocate_test ( values, noMAFs, 'values of ' // trim(name), ModuleName )
+      values = l1bField%dpField(1,1,:)
+    endif
+    if ( present(values2d) ) then
+      nullify(values2d)
+      call Allocate_test ( values2d, noFreqs, noMAFs, '2d values of ' // trim(name), ModuleName )
+      values2d = l1bField%dpField(1,:,:)
+    endif
+    ! Now before leaving, save these values for the future,
+    ! eliminating the need to read the same dataset each time through
+    select case ( snippedName )
+    case ('mafstarttimetai')
+      call Allocate_test ( HGridGeolocations%MAFStartTimeTAI, noFreqs, noMAFs, &
+        & '2d values of ' // trim(name), ModuleName )
+      HGridGeolocations%MAFStartTimeTAI = l1bField%dpField(1,:,:)
+    case ('geodangle   ')
+      call Allocate_test ( HGridGeolocations%GHzGeodAngle, noFreqs, noMAFs, &
+        & '2d values of ' // trim(name), ModuleName )
+      HGridGeolocations%GHzGeodAngle = l1bField%dpField(1,:,:)
+    case ('geodalt     ')
+      call Allocate_test ( HGridGeolocations%GHzGeodAlt, noFreqs, noMAFs, &
+        & '2d values of ' // trim(name), ModuleName )
+      HGridGeolocations%GHzGeodAlt = l1bField%dpField(1,:,:)
+    case ('geodlat     ')
+      call Allocate_test ( HGridGeolocations%GHzGeodLat, noFreqs, noMAFs, &
+        & '2d values of ' // trim(name), ModuleName )
+      HGridGeolocations%GHzGeodLat = l1bField%dpField(1,:,:)
+    case ('losangle   ')
+      call Allocate_test ( HGridGeolocations%GHzlosangle, noFreqs, noMAFs, &
+        & '2d values of ' // trim(name), ModuleName )
+      HGridGeolocations%GHzlosangle = l1bField%dpField(1,:,:)
+    case ('lon   ')
+      call Allocate_test ( HGridGeolocations%GHzlon, noFreqs, noMAFs, &
+        & '2d values of ' // trim(name), ModuleName )
+      HGridGeolocations%GHzlon = l1bField%dpField(1,:,:)
+    case ('orbincl')
+      call Allocate_test ( HGridGeolocations%orbincl, noFreqs, noMAFs, &
+        & '2d values of ' // trim(name), ModuleName )
+      HGridGeolocations%orbincl = l1bField%dpField(1,:,:)
+    case ('solartime   ')
+      call Allocate_test ( HGridGeolocations%GHzSolarTime, noFreqs, noMAFs, &
+        & '2d values of ' // trim(name), ModuleName )
+      HGridGeolocations%GHzSolarTime = l1bField%dpField(1,:,:)
+    case ('solarzenith   ')
+      call Allocate_test ( HGridGeolocations%GHzsolarzenith, noFreqs, noMAFs, &
+        & '2d values of ' // trim(name), ModuleName )
+      HGridGeolocations%GHzsolarzenith = l1bField%dpField(1,:,:)
+    end select
+    call deallocateL1BData ( l1bField ) ! Avoid memory leaks
+9   if ( present(root) ) call trace_end ( "L1BGeoLocation", &
+      & cond=toggle(gen) .and. levels(gen) > 2 )
+  contains
+    function snipModuleStr ( itemName, moduleGHz ) result ( bareName )
+      character(len=*), intent(in)                    :: itemname
+      character(len=32)                               :: bareName
+      character(len=*), intent(in), optional          :: moduleGHz
+      ! Internal variables
+      character(len=32)                               :: modName
+      integer                                         :: i
+      ! Executable
+      modName = moduleStr
+      if ( present(moduleGHz) ) modName = moduleGHz
+      i = index( itemname, trim(modName) // '/')
+      if ( i < 1 ) then
+        bareName = itemName
+      else
+        bareName = itemName( i+len_trim(modName)+1 : ) ! To account for "/"
+      endif
+      i = index( barename, trim(modName) )
+      if ( i < 1 ) then
+        bareName = bareName
+      else
+        bareName = bareName( i+len_trim(modName) : )
+      endif
+      if ( bareName(1:3) == 'sc/' ) barename = bareName(4:)
+      if ( bareName(1:3) == 'sc' ) barename = bareName(3:)
+    end function snipModuleStr
+    subroutine recallValues( array, values, values2d )
+      ! Args
+      double precision, dimension(:,:)            :: array
+      real(rk), dimension(:), pointer, optional   :: values
+      real(rk), dimension(:,:), pointer, optional :: values2d
+      ! Internal variables
+      integer :: noFreqs
+      integer :: noMAFs
+      ! Executable
+      noFreqs = size( array, 1 )
+      noMAFs = size( array, 2 )
+      if ( present(values) ) then
+        nullify(values)
+        call Allocate_test ( values, noMAFs, 'values of array', ModuleName )
+        values = array(1,:)
+      endif
+      if ( present(values2d) ) then
+        nullify(values2d)
+        call Allocate_test ( values2d, noFreqs, noMAFs, '2d values of array', &
+          & ModuleName )
+        values2d = array(:,:)
+      endif
+    end subroutine recallValues
+  end subroutine L1BGeoLocation
+
+  ! ---------------------------------------------  L1BSubsample  -----
+  ! Pull out just the array elements corresponding to startMAF and LastMAF
+  subroutine L1BSubsample ( chunk, fullArray, fullArray2d, values, values2d )
+    use Allocate_Deallocate, only: Allocate_Test
+    use HighOutput, only: BeVerbose, OutputNamedValue
+    use MLSCommon, only: MLSChunk_t
+    use MLSKinds, only: Rk => R8
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    ! Args
+    type(MLSChunk_t), intent(in)                 :: chunk
+    real(rk), dimension(:), optional             :: fullArray
+    real(rk), dimension(:,:), optional           :: fullArray2d
+    real(rk), dimension(:), pointer, optional    :: values
+    real(rk), dimension(:,:), pointer, optional  :: values2d
+    logical                                      :: verbose
+    ! Local variables
+    integer :: noFreqs
+    integer :: noChunkMAFs
+    ! Executable
+    verbose = BeVerbose( 'hgrid', 1 ) ! .or. .true.
+    noChunkMAFs = chunk%lastMAFIndex - chunk%firstMAFIndex + 1
+    if ( verbose ) then
+      call outputnamedValue( 'noChunkMAFs', noChunkMAFs )
+      call outputnamedValue( '/chunk%firstMAFIndex+1, chunk%lastMAFIndex+1/', &
+        &                    (/chunk%firstMAFIndex+1, chunk%lastMAFIndex+1/) )
+    endif
+    if ( present(values) ) then
+      if ( .not. present(fullArray) )  &
+        & call MLSMessage ( MLSMSG_Error, trim(ModuleName) // '%L1BSubsample', &
+        & 'need FullArray' )
+      nullify(values)
+      call Allocate_test ( values, noChunkMAFs, 'values of array', ModuleName )
+      values = fullArray ( chunk%firstMAFIndex+1:chunk%lastMAFIndex+1 )
+    endif
+    if ( present(values2d) ) then
+      noFreqs = size(fullArray2d, 1)
+      if ( .not. present(fullArray2d) )  &
+        & call MLSMessage ( MLSMSG_Error, trim(ModuleName) // '%L1BSubsample', &
+        & 'need FullArray2d' )
+      nullify(values2d)
+      call Allocate_test ( values2d, noFreqs, noChunkMAFs, '2d values of array', ModuleName )
+      values2d = fullArray2d ( :, chunk%firstMAFIndex+1:chunk%lastMAFIndex+1 )
+    endif
+  end subroutine L1BSubsample
+
+  ! -------------------------------------------------  TrimHGrid  ------
+  subroutine TrimHGrid ( hGrid, side, NOTODELETE )
+
+    use Allocate_Deallocate, only: Allocate_Test
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+
+    type (HGrid_T), intent(inout) :: HGrid
+    integer, intent(in) :: SIDE         ! -1 = lower, 1 = upper
+    integer, intent(in) :: NOTODELETE ! How many to delete, default all
+    ! Local variables
+    integer :: newNoProfs
+    integer, dimension(hGrid%noProfs) :: inttemp
+    real(r8), dimension(hGrid%noProfs) :: temp
+    integer :: first, last
+
+    ! Executable code
+    select case ( side )
+    case ( -1 )
+      newNoProfs = hGrid%noProfs - noToDelete
+      first = noToDelete + 1
+      last = hGrid%noProfs
+      hGrid%noProfsLowerOverlap = max ( hGrid%noProfsLowerOverlap - noToDelete, 0 )
+    case ( 1 )
+      newNoProfs = hGrid%noProfs - noToDelete
+      first = 1
+      last = newNoProfs
+      hGrid%noProfsUpperOverlap = max ( hGrid%noProfsUpperOverlap - noToDelete, 0 )
+    case default
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Invalid side argument to TrimHGrid' )
+    end select
+    if ( newNoProfs < 0 ) call MLSMessage ( &
+        & MLSMSG_Error, ModuleName, 'Too many profiles to delete' )
+
+    hGrid%noProfs = newNoProfs
+
+    ! Now allocate each entry and trim it
+    inttemp = hGrid%maf(:)               ! ------------------------- Maf
+    call Allocate_Test ( hGrid%maf, newNoProfs, 'hGrid%maf', ModuleName)
+    hGrid%maf(:) = inttemp ( first : last )
+    temp = hGrid%phi(1,:)               ! ------------------------- Phi
+    call Allocate_Test ( hGrid%phi, 1, newNoProfs, 'hGrid%phi', ModuleName)
+    hGrid%phi(1,:) = temp ( first : last )
+    temp = hGrid%geodLat(1,:)           ! ------------------------- GeodLat
+    call Allocate_Test ( hGrid%geodLat, 1, newNoProfs, 'hGrid%geodLat', ModuleName)
+    hGrid%geodLat(1,:) = temp ( first : last )
+    temp = hGrid%lon(1,:)               ! ------------------------- Lon
+    call Allocate_Test ( hGrid%lon, 1, newNoProfs, 'hGrid%lon', ModuleName)
+    hGrid%lon(1,:) = temp ( first : last )
+    temp = hGrid%time(1,:)              ! ------------------------- Time
+    call Allocate_Test ( hGrid%time, 1, newNoProfs, 'hGrid%time', ModuleName)
+    hGrid%time(1,:) = temp ( first : last )
+    temp = hGrid%solarTime(1,:)         ! ------------------------- SolarTime
+    call Allocate_Test ( hGrid%solarTime, 1, newNoProfs, 'hGrid%solarTime', ModuleName)
+    hGrid%solarTime(1,:) = temp ( first : last )
+    temp = hGrid%solarZenith(1,:)       ! ------------------------- SolarZenith
+    call Allocate_Test ( hGrid%solarZenith, 1, newNoProfs, 'hGrid%solarZenith', ModuleName)
+    hGrid%solarZenith(1,:) = temp ( first : last )
+    temp = hGrid%losAngle(1,:)          ! ------------------------- LosAngle
+    call Allocate_Test ( hGrid%losAngle, 1, newNoProfs, 'hGrid%losAngle', ModuleName)
+    hGrid%losAngle(1,:) = temp ( first : last )
+
+  end subroutine TrimHGrid
+    
+  ! ---------------------------------------  DestroyHGridContents  -----
+  subroutine DestroyHGridContents ( hGrid )
+
+    use Allocate_Deallocate, only: Deallocate_Test
+
+  ! This routine destroys the information associated with an hGrid
+
+    ! Dummy arguments
+    type (HGrid_T), intent(inout) :: hGrid
+
+    ! Executable code
+    
+    call deallocate_test ( hGrid%maf, 'hGrid%maf', ModuleName )
+    call deallocate_test ( hGrid%phi, 'hGrid%phi', ModuleName )
+    call deallocate_test ( hGrid%geodLat, 'hGrid%geodLat', ModuleName )
+    call deallocate_test ( hGrid%lon, 'hGrid%lon', ModuleName )
+    call deallocate_test ( hGrid%time, 'hGrid%time', ModuleName )
+    call deallocate_test ( hGrid%solarTime, 'hGrid%solarTime', ModuleName )
+    call deallocate_test ( hGrid%solarZenith, 'hGrid%solarZenith', ModuleName )
+    call deallocate_test ( hGrid%losAngle, 'hGrid%losAngle', ModuleName )
+    hGrid%noProfs = 0
+  end subroutine DestroyHGridContents
+
+  ! ---------------------------------------  DestroyHGridDatabase  -----
+  subroutine DestroyHGridDatabase ( database )
+
+    use Allocate_Deallocate, only: Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+
+  ! This subroutine destroys a quantity template database
+
+    ! Dummy argument
+    type (HGrids_T), dimension(:), pointer :: database
+
+    ! Local variables
+    integer(c_intptr_t) :: Addr         ! For tracing
+    integer :: hGridIndex, s, status
+
+    if ( associated(database) ) then
+      do hGridIndex=1,SIZE(database)
+        call DestroyHGridContents ( database(hGridIndex)%the_hGrid )
+        s = storage_size(database(hGridIndex)%the_hGrid) / 8
+        addr = 0
+        if ( s > 0 ) addr = transfer(c_loc(database(1)), addr)
+        deallocate ( database(hGridIndex)%the_hGrid, stat=status )
+        call test_deallocate ( status, ModuleName, &
+          & "database(hGridIndex)%the_hGrid", s, address=addr )
+      end do
+      s = size(database) * storage_size(database) / 8
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(database(1)), addr)
+      deallocate ( database, stat=status )
+      call test_deallocate ( status, ModuleName, "database", s, address=addr )
+    end if
+
+  end subroutine DestroyHGridDatabase
+
+  ! ------------------------------------------------  Dump_a_HGrid  -----
+  subroutine Dump_a_HGrid ( aHGRID, Details, ZOT )
+    use Dates_Module, only: TAI93s2hid
+    use HighOutput, only: OutputNamedValue
+    use Intrinsic, only: Lit_Indices, L_QTM
+    use Optional_m, only: Default
+    use Output_m, only: Blanks, NewLine, Output
+    use QTM_Output, only: Dump_QTM_Tree
+    use String_Table, only: Display_String, IsStringInTable
+
+    type(hGrid_T), intent(in) :: aHGRID
+    logical, intent(in), optional :: ZOT      ! Dump QTM coordinates in ZOT
+                                              ! Default false
+    integer, intent(in), optional :: Details  ! < 1 => Don't dump QTM search tree
+                                              ! > 1 => Dump sons of QTM vertices
+                                              ! Default zero
+
+    integer :: IERR
+    integer :: J
+    ! Executable
+
+    IERR = 0
+    call output ( 'Name = ', advance='no' )
+    if ( isStringInTable(aHgrid%name) ) then
+      call display_string ( aHgrid%name, ierr=ierr )
+      if ( ierr /= 0 ) call output ( ' (not found in string table)' )
+    else
+      call output('(unknown)' )
+    end if
+    call newLine
+    call output ( aHgrid%noProfs, before=' noProfs = ', advance='no' )
+    call output ( aHgrid%noProfsLowerOverlap, before=' lowerOverlap = ', advance='no' )
+    call output ( aHgrid%noProfsUpperOverlap, before=' upperOverlap = ', advance='no' )
+    call output ( ' masterCoordinate = ' )
+    if ( .not. isStringInTable(aHgrid%masterCoordinate, lit_indices) ) then
+      call output ( '0', advance='yes' )
+    else
+      call display_string ( lit_indices(aHgrid%masterCoordinate), advance='yes' )
+    end if
+    if ( .not. isStringInTable( aHgrid%type, lit_indices ) ) then
+      call outputNamedValue ( 'type', 0 )
+    else
+      call display_string ( lit_indices(aHgrid%type), before=' type = ' )
+    end if
+    if ( aHGrid%type == l_QTM ) &
+      & call output ( aHGrid%QTM_tree%level, before=' tree with level = ' )
+    call newLine
+    if ( aHgrid%noProfs > 0 .and. default(details,0) > 0 ) then
+      call output ( ' prof       phi       geodLat           lon', advance='no' )
+      call output ( '      hours in day     solarTime   solarZenith', advance='no' )
+      call output ( '      losAngle  nearest maf', advance='yes' )
+      do j = 1, aHgrid%noProfs
+        if ( &                                                      
+          & ( aHgrid%noProfsLowerOverlap > 0  .and. &               
+          & j == aHgrid%noProfsLowerOverlap + 1 ) &                 
+          & .or. &                                                  
+          & ( aHgrid%noProfsUpperOverlap > 0 .and. &                
+          & aHgrid%noProfs - j == aHgrid%noProfsUpperOverlap - 1 ) &
+          & ) &                                                     
+          & call blanks( 80, fillChar='-', advance='yes' )          
+        call output ( j, places=5 )
+        call output ( aHgrid%phi(1,j), '(1x,1pg13.6)' )
+        call output ( aHgrid%geodLat(1,j), '(1x,1pg13.6)' )
+        call output ( aHgrid%lon(1,j), '(1x,1pg13.6)' )
+        call output ( tai93s2hid( &                                       
+    &         aHgrid%time(1,j), leapsec=.true. ), '(1x,1pg13.6)' )
+        call output ( aHgrid%solarTime(1,j), '(1x,1pg13.6)' )
+        call output ( aHgrid%solarZenith(1,j), '(1x,1pg13.6)' )
+        call output ( aHgrid%losAngle(1,j), '(1x,1pg13.6)', advance='no' )
+        call output ( aHgrid%maf(j), places=6, advance='yes' )
+      end do
+    end if
+    if ( aHGrid%type == l_QTM .and. default(details,0) > 0 ) then
+      call dump_QTM_tree ( aHGrid%QTM_tree, latLon=.not. default(zot,.false.), &
+        & details=details )
+    end if
+  end subroutine Dump_a_HGrid
+
+  ! ------------------------------------------------  Dump_HGrids  -----
+  subroutine Dump_HGrids ( HGrids, Details, ZOT )
+    use Output_M, only: Output
+    type(hGrids_T), intent(in) :: HGrids(:)
+    integer, intent(in), optional :: Details
+    logical, intent(in), optional :: ZOT
+    integer :: I
+    call output ( size(hgrids), before='HGRIDS: SIZE = ', advance='yes' )
+    do i = 1, size(hgrids)
+      call output ( i, 4, after=': ' )
+      call dump ( hGrids(i)%the_hGrid, details, ZOT )
+    end do
+  end subroutine Dump_HGrids
+
+  ! ---------------------------------------- FindClosestMatch ---
+  integer function FindClosestMatch ( reference, sought, instance )
+    use HighOutput, only: OutputNamedValue
+    use Hunt_m, only: Hunt
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    ! Given a sought quantity, 
+    ! the profile in reference is found
+    ! that is closest to profile 'instance' in sought quantity
+    real(r8), dimension(:), intent(in) :: REFERENCE ! e.g. temperature
+    real(r8), dimension(:,:), intent(in) :: SOUGHT ! e.g. ptan, radiance
+    integer, intent(in) :: INSTANCE
+    ! Local variables
+    integer :: BESTGUESS                ! A guessed index
+    integer :: FIRSTGUESS               ! A guessed index
+    integer :: HIGHGUESS                ! A guessed index
+    integer :: LOWGUESS                 ! A guessed index
+    real(r8) :: BESTCOST                ! A cost for a guess
+    real(r8) :: COST                    ! A cost for a guess
+    logical, parameter                    :: DeeBug = .false.
+
+    ! Executable code
+    ! Get starting Guess from Hunt
+    call Hunt ( reference, sought(1,instance), firstGuess, &
+      & start=max(min(instance,size(reference)),1), &
+      & allowTopValue=.true., nearest=.true. )
+
+    ! Now check for better ones either side
+    lowGuess = max ( firstGuess-1, 1 )
+    highGuess = min ( firstGuess+1, size(reference) )
+    bestCost = 0.0
+    if ( DeeBug ) then
+      call outputNamedValue( 'lowGuess', lowGuess )
+      call outputNamedValue( 'highGuess', highGuess )
+      call outputNamedValue( 'instance', instance )
+    endif
+    do firstGuess = lowGuess, highGuess
+      if ( firstGuess < lbound(reference, 1) .or. firstGuess > ubound(reference, 1) ) then
+        call outputNamedValue( 'bound(reference)', (/ lbound(reference), lbound(reference) /) )
+        call outputNamedValue( 'firstGuess', firstGuess )
+        call MLSMessage ( &
+          & MLSMSG_Error, ModuleName, 'firstGuess outside range' )
+      elseif ( instance < lbound(sought, 2 ) .or. instance > ubound(sought, 2 ) ) then
+        call outputNamedValue( 'lbound(sought)', lbound(sought) )
+        call outputNamedValue( 'ubound(sought)', ubound(sought) )
+        call outputNamedValue( 'instance', instance )
+        call MLSMessage ( &
+          & MLSMSG_Error, ModuleName, 'instance outside range' )
+      endif
+      cost = sum ( abs ( reference(firstGuess) - sought(:,instance) ) )
+      if ( ( firstGuess == lowGuess ) .or. ( cost < bestCost ) ) then
+        bestGuess = firstGuess
+        bestCost = cost
+      end if
+    end do
+
+    FindClosestMatch = bestGuess
+  end function FindClosestMatch
+
+  ! ---------------------------------------- NullifyHGrid -----
+  subroutine NullifyHGrid ( IntentionallyNotUsed )
+    ! Given a hGrid, nullify all the pointers associated with it
+    type ( HGrid_T ), intent(out) :: IntentionallyNotUsed
+
+    ! Executable code.  Nothing is needed since intent(out) causes
+    ! default initialization, which nullifies the pointers because
+    ! they all have default initialization => NULL()
+
+  end subroutine NullifyHGrid
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: HGridsDatabase.f90,v 2.47 2022/09/15 16:33:58 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module HGridsDatabase
+
+! $Log: HGridsDatabase.f90,v $
+! Revision 2.47  2022/09/15 16:33:58  pwagner
+! Fixed erroneous code monotonizing l1b data in L1BGeoLocation
+!
+! Revision 2.46  2021/07/08 23:30:38  pwagner
+! Require -SGrid2 for verbose
+!
+! Revision 2.45  2020/01/27 18:30:44  pwagner
+! Works wsith new AssembleL1BQtyName
+!
+! Revision 2.44  2020/01/09 22:22:08  pwagner
+! Now wont try to Monotonize sids l1boa scOrbIncl
+!
+! Revision 2.43  2018/08/04 00:44:16  vsnyder
+! Spiff a warning message
+!
+! Revision 2.42  2018/08/03 23:26:10  vsnyder
+! Add Root (for tracing) and NeverFail (for debug printing) to L1BGeoLocation.
+! Alphabetize local variable declarations.  Pass NeverFail to ReadL1BData.
+! Make sure always to end tracing.
+!
+! Revision 2.41  2018/04/19 02:00:36  vsnyder
+! Compute address for allocate/deallocate tracking.  Remove USE statements for
+! unused names.
+!
+! Revision 2.40  2016/10/19 00:11:51  pwagner
+! Try to avoid certain crashes QTM HGrids and ASMLS data
+!
+! Revision 2.39  2016/10/11 23:28:37  pwagner
+! Removed stop statement; downgraded to just a warning
+!
+! Revision 2.38  2016/10/01 01:37:28  vsnyder
+! Make QTM_Tree component of HGrid_t allocatable
+!
+! Revision 2.37  2016/09/23 03:08:37  vsnyder
+! Get optional argument values using Optional_m
+!
+! Revision 2.36  2016/09/23 02:41:47  vsnyder
+! Remove USE for unused use names
+!
+! Revision 2.35  2016/09/23 01:34:56  vsnyder
+! Remove QTM_Lats; moved to QTM_Tree_t in Generate_QTM_m
+!
+! Revision 2.34  2016/09/13 20:09:13  vsnyder
+! Get Dump_QTM from its new home in QTM_Output
+!
+! Revision 2.33  2016/08/23 18:34:44  pwagner
+! ShowName not needed any longer
+!
+! Revision 2.32  2016/08/23 00:41:55  vsnyder
+! Components within or adjacent to the polygon are now within the QTM_Tree_t
+! structure instead of the HGrid_t structure.
+!
+! Revision 2.31  2016/08/20 01:11:39  vsnyder
+! Cannonball polishing
+!
+! Revision 2.30  2016/08/12 00:35:47  pwagner
+! Seems to restore tthe gold brick
+!
+! Revision 2.29  2016/08/09 18:16:30  pwagner
+! Survives encounter with non-satellite data
+!
+! Revision 2.28  2016/07/28 01:34:55  vsnyder
+! Remove unreferenced USE
+!
+! Revision 2.27  2016/05/18 01:34:37  vsnyder
+! HGridsDatabase.f90
+!
+! Revision 2.26  2016/05/17 00:14:40  pwagner
+! Tries harder not to bomb in display_string
+!
+! Revision 2.25  2016/04/15 22:24:43  pwagner
+! Tried to fix latest cause of Fill Values among l1b fields
+!
+! Revision 2.24  2016/02/26 02:05:25  vsnyder
+! Add QTM support
+!
+! Revision 2.23  2016/01/11 23:12:58  pwagner
+! Skip Attempting to monotonize longitudes containing Fills
+!
+! Revision 2.22  2015/07/14 23:22:27  pwagner
+! Prevent insertion of Fill values in L1BGeolocations when gaps occur in counterMAF
+!
+! Revision 2.21  2015/06/25 00:37:52  pwagner
+! Stop printing low and high Guesses
+!
+! Revision 2.20  2015/06/19 20:35:06  pwagner
+! Fixed mixup in defining noChunkMAFs
+!
+! Revision 2.19  2015/06/19 00:34:19  pwagner
+! Many changes to speed up computing HGrid offsets
+!
+! Revision 2.18  2015/05/27 22:39:39  vsnyder
+! Get Hunt from Hunt_m to avoid circular dependence
+!
+! Revision 2.17  2015/03/31 21:03:55  pwagner
+! ForbidOverspill now a field of HGrid; improved Dump
+!
+! Revision 2.16  2015/03/28 01:03:12  vsnyder
+! Added type component.  Made geolocation components contiguous so they can
+! be rank-remapping pointer targets.
+! Added stuff to trace allocate/deallocate addresses -- mostly commented out
+! because NAG build 1017 doesn't yet allow arrays as arguments to C_LOC.
+!
+! Revision 2.15  2014/09/04 23:40:28  vsnyder
+! More complete and accurate allocate/deallocate size tracking.
+! Convert some local pointer temps to automatic.
+!
+! Revision 2.14  2014/08/07 22:44:28  vsnyder
+! Set default initialization of MasterCoordinate to L_GeodAngle instead
+! of zero.  Spiff up the dump a little bit.
+!
+! Revision 2.13  2014/04/24 23:50:25  pwagner
+! Added masterCoordinate component
+!
+! Revision 2.12  2013/10/01 22:16:45  pwagner
+! Added maf component to HGrid_T
+!
+! Revision 2.11  2013/08/12 23:47:07  vsnyder
+! Default initialize more stuff in HGrid_t
+!
+! Revision 2.10  2013/03/01 01:04:51  pwagner
+! Get R8 from MLSKinds
+!
+! Revision 2.9  2009/06/23 18:25:42  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.8  2008/05/02 00:38:48  vsnyder
+! Simplify NullifyHGrid
+!
+! Revision 2.7  2005/09/21 23:11:54  pwagner
+! Unnecessary changes
+!
+! Revision 2.6  2005/08/25 20:18:05  pwagner
+! Protect against crashing when dumping anonymous HGrids
+!
+! Revision 2.5  2005/06/22 17:25:49  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.4  2004/05/20 19:48:25  vsnyder
+! Move Dump*HGrid here from dumper
+!
+! Revision 2.3  2004/05/18 01:05:06  vsnyder
+! Delete unused MAFIndex and MAFCounter fields from HGrid_T
+!
+! Revision 2.2  2003/07/07 20:20:28  livesey
+! New FindClosestMatch routine
+!
+! Revision 2.1  2003/06/20 19:34:45  pwagner
+! Quanities now share grids stored separately in databses
+!
+@
+
+
+2.47
+log
+@Fixed erroneous code monotonizing l1b data in L1BGeoLocation
+@
+text
+@d364 1
+a364 1
+      & any(StrEq( (/ 'GHz/Lon ', 'scOrbIncl' /), trim(readItemname) ) ) &
+d370 1
+a370 1
+        & ( any(StrEq( (/ 'GHz/Lon', 'GHz/GeodAngle' /) , trim(readItemname) ) ) )
+d811 1
+a811 1
+       "$Id: HGridsDatabase.f90,v 2.46 2021/07/08 23:30:38 pwagner Exp $"
+d821 3
+@
+
+
+2.46
+log
+@Require -SGrid2 for verbose
+@
+text
+@d208 1
+a208 1
+  ! Read the approprriate geolocations from the l1boa file.
+d242 1
+d351 1
+a351 1
+    ! which auttomatically set dontPad=.true.
+d356 10
+a365 2
+    if ( any(isFillValue(l1bField%dpField) ) .and. .not. & 
+      & any(StrEq( (/ '/GHz/Lon ', 'scOrbIncl' /), trim(readItemname) ) ) ) then 
+d369 3
+a371 3
+      verbose = ( trim(readItemname) == '/GHz/Lon' ) & 
+        & .or. ( trim(readItemname) == '/GHz/GeodAngle' ) 
+      if ( verbose ) call dump( l1bField%dpField, 'lons before monotony' ) 
+d373 1
+a373 1
+      if ( verbose ) call dump( l1bField%dpField, 'lons after monotony' ) 
+d811 1
+a811 1
+       "$Id: HGridsDatabase.f90,v 2.45 2020/01/27 18:30:44 pwagner Exp $"
+d821 3
+@
+
+
+2.45
+log
+@Works wsith new AssembleL1BQtyName
+@
+text
+@d491 1
+a491 1
+    verbose = BeVerbose( 'hgrid', -1 ) ! .or. .true.
+d802 1
+a802 1
+       "$Id: HGridsDatabase.f90,v 2.44 2020/01/09 22:22:08 pwagner Exp $"
+d812 3
+@
+
+
+2.44
+log
+@Now wont try to Monotonize sids l1boa scOrbIncl
+@
+text
+@d336 6
+a341 1
+      readItemName = AssembleL1BQtyName ( Name, hdfVersion, .true., moduleStr )
+d802 1
+a802 1
+       "$Id: HGridsDatabase.f90,v 2.43 2018/08/04 00:44:16 vsnyder Exp $"
+d812 3
+@
+
+
+2.43
+log
+@Spiff a warning message
+@
+text
+@d22 2
+a23 2
+  public :: AddHGridtodatabase, CopyHGrid, CreateEmptyHGrid, DestroyHGridContents, &
+    & DestroyHGridDatabase, Dump, FindClosestMatch, &
+d219 10
+a228 10
+    use HighOutput, only: outputNamedValue
+    use L1BData, only: L1BData_t, &
+      & AssembleL1BQtyName, ConvertL1BData, deallocateL1BData, readL1BData
+    use MLSCommon, only: MLSFile_t
+    use MLSFiles, only: getMLSFileByType
+    use MLSFillValues, only: isFillValue, Monotonize
+    use MLSKinds, only: rk => r8
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Warning 
+    use MLSStrings, only: lowercase
+    use Output_m, only: output
+d230 1
+a230 1
+    use Trace_m, only: Trace_Begin, Trace_End
+d350 2
+a351 2
+    if ( any(isFillValue(l1bField%dpField) ) .and. & 
+      & trim(readItemname) /= '/GHz/Lon') then 
+d473 1
+a473 1
+    use MLSKinds, only: rk => r8
+d797 1
+a797 1
+       "$Id: HGridsDatabase.f90,v 2.42 2018/08/03 23:26:10 vsnyder Exp $"
+d807 3
+@
+
+
+2.42
+log
+@Add Root (for tracing) and NeverFail (for debug printing) to L1BGeoLocation.
+Alphabetize local variable declarations.  Pass NeverFail to ReadL1BData.
+Make sure always to end tracing.
+@
+text
+@d316 2
+a317 2
+    ! If we got here, 
+    ! it was because we hadn't read and saved the proper data type
+d353 1
+a353 1
+      call MLSMessage ( MLSMSG_Warning, trim(ModuleName) // 'L1BGeoLocation', & 
+d797 1
+a797 1
+       "$Id: HGridsDatabase.f90,v 2.41 2018/04/19 02:00:36 vsnyder Exp $"
+d807 5
+@
+
+
+2.41
+log
+@Compute address for allocate/deallocate tracking.  Remove USE statements for
+unused names.
+@
+text
+@d214 2
+a215 1
+  subroutine L1BGeoLocation ( filedatabase, name, moduleStr, values, values2d )
+d229 2
+d237 2
+d241 2
+a242 1
+    integer                               :: hdfVersion
+d244 6
+a249 8
+    character(len=64)                     :: l1bItemName
+    integer                               :: noFreqs
+    integer                               :: noMAFs
+    character(len=64)                     :: readItemName
+    character(len=64)                     :: snippedName
+    integer                               :: status
+    logical, parameter                    :: DeeBug = .false.
+    logical                               :: verbose 
+d251 3
+d255 4
+d260 1
+a260 1
+    ! Sometimes we're called as GHz/Name; othertimes as tpName
+d273 1
+a273 1
+        return
+d278 1
+a278 1
+        return
+d283 1
+a283 1
+        return
+d288 1
+a288 1
+        return
+d293 1
+a293 1
+        return
+d298 1
+a298 1
+        return
+d303 1
+a303 1
+        return
+d308 1
+a308 1
+        return
+d313 1
+a313 1
+        return
+d347 2
+a348 1
+      & dontpad=.true. )
+d414 2
+d797 1
+a797 1
+       "$Id: HGridsDatabase.f90,v 2.40 2016/10/19 00:11:51 pwagner Exp $"
+d807 4
+@
+
+
+2.40
+log
+@Try to avoid certain crashes QTM HGrids and ASMLS data
+@
+text
+@a106 1
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+a220 1
+    use machine, only: crash_burn
+a315 1
+      ! call crash_burn
+d783 1
+a783 1
+       "$Id: HGridsDatabase.f90,v 2.39 2016/10/11 23:28:37 pwagner Exp $"
+d793 3
+@
+
+
+2.39
+log
+@Removed stop statement; downgraded to just a warning
+@
+text
+@d138 1
+d174 4
+d220 2
+a221 2
+    use L1BData, only: deallocateL1BData, L1BData_t, readL1BData, &
+      & AssembleL1BQtyName
+d317 1
+d319 7
+a325 1
+      readItemName = Name
+d340 1
+d406 4
+a409 3
+    function snipModuleStr ( itemName ) result ( bareName )
+      character(len=*), intent(in) :: itemname
+      character(len=32)            :: bareName
+d411 2
+a412 1
+      integer                      :: i
+d414 3
+a416 1
+      i = index( itemname, trim(moduleStr) // '/')
+d420 1
+a420 1
+        bareName = itemName( i+len_trim(moduleStr)+1 : ) ! To account for "/"
+d422 1
+a422 1
+      i = index( barename, trim(moduleStr) )
+d426 1
+a426 1
+        bareName = bareName( i+len_trim(moduleStr) : )
+d786 1
+a786 1
+       "$Id: HGridsDatabase.f90,v 2.38 2016/10/01 01:37:28 vsnyder Exp $"
+d796 3
+@
+
+
+2.38
+log
+@Make QTM_Tree component of HGrid_t allocatable
+@
+text
+@d217 1
+d311 3
+a313 1
+      stop
+d769 1
+a769 1
+       "$Id: HGridsDatabase.f90,v 2.37 2016/09/23 03:08:37 vsnyder Exp $"
+d779 3
+@
+
+
+2.37
+log
+@Get optional argument values using Optional_m
+@
+text
+@d22 4
+a25 4
+  public :: addHGridtodatabase, copyHGrid, createEmptyHGrid, destroyHGridContents, &
+    & destroyHGridDatabase, Dump, findClosestMatch, &
+    & L1BGeoLocation, L1BSubsample, nullifyHGrid, &
+    & trimHGrid
+d33 1
+a33 1
+  ! This module contains datatypes and routines for handling HGrid information
+d40 5
+a44 5
+    integer :: Name                 = 0    ! String index of name.            
+    integer :: masterCoordinate     = l_GeodAngle ! Its lit index;
+    integer :: noProfs                  ! Number of profiles in this grid  
+    integer :: noProfsLowerOverlap  = 0 ! Number of profiles in the lower overlap
+    integer :: noProfsUpperOverlap  = 0 ! Number of profiles in the upper overlap
+d46 2
+a47 2
+    integer :: module                   ! index into modules database
+    logical :: forbidOverspill      = .false.   
+d50 1
+a50 1
+    integer, dimension(:), pointer    :: maf         => NULL()
+d52 7
+a58 7
+    real(r8), contiguous, pointer :: phi(:,:)         => NULL()
+    real(r8), contiguous, pointer :: geodLat(:,:)     => NULL()
+    real(r8), contiguous, pointer :: lon (:,:)        => NULL()
+    real(r8), contiguous, pointer :: time(:,:)        => NULL()
+    real(r8), contiguous, pointer :: solarTime(:,:)   => NULL()
+    real(r8), contiguous, pointer :: solarZenith(:,:) => NULL()
+    real(r8), contiguous, pointer :: losAngle(:,:)    => NULL()
+d60 4
+a63 3
+    type(QTM_tree_t) :: QTM_Tree ! for finding things and representing the
+                                 ! geolocations of vertices of a QTM that are
+                                 ! within or adjacent to a specified polygon
+d75 2
+a76 2
+  ! Put here all the  l1boa quantities that we don't
+  ! wish to read again and again and again ..
+d766 1
+a766 1
+       "$Id: HGridsDatabase.f90,v 2.36 2016/09/23 02:41:47 vsnyder Exp $"
+d776 3
+@
+
+
+2.36
+log
+@Remove USE for unused use names
+@
+text
+@d603 1
+a603 2
+    use Dates_Module, only: tai93s2hid
+    use QTM_Output, only: Dump_QTM_Tree
+d605 2
+a606 1
+    use Intrinsic, only: Lit_indices, L_QTM
+d608 1
+d613 1
+a619 2
+    integer :: MyDetails
+    logical :: MyZOT
+a620 2
+    myDetails = 0
+    if ( present(details) ) myDetails = details
+d644 1
+a644 1
+    endif
+d648 1
+a648 1
+    if ( aHgrid%noProfs > 0 .and. myDetails > 0 ) then
+d673 3
+a675 5
+    if ( aHGrid%type == l_QTM ) then
+      myZOT = .false.
+      if ( present(ZOT) ) myZOT = ZOT
+      if ( myDetails > 0 ) call dump_QTM_tree ( aHGrid%QTM_tree, &
+        & latLon=.not. myZOT, details=details )
+d765 1
+a765 1
+       "$Id: HGridsDatabase.f90,v 2.35 2016/09/23 01:34:56 vsnyder Exp $"
+d775 3
+@
+
+
+2.35
+log
+@Remove QTM_Lats; moved to QTM_Tree_t in Generate_QTM_m
+@
+text
+@d603 1
+a603 2
+    use dates_module, only: tai93s2hid
+    use Dump_Geolocation_m, only: Dump_H_t, Dump_ZOT
+d605 4
+a608 4
+    use highOutput, only: outputNamedValue
+    use Intrinsic, only: lit_indices, L_QTM
+    use output_m, only: blanks, newLine, output
+    use string_table, only: display_string, isStringInTable
+d769 1
+a769 1
+       "$Id: HGridsDatabase.f90,v 2.34 2016/09/13 20:09:13 vsnyder Exp $"
+d779 3
+@
+
+
+2.34
+log
+@Get Dump_QTM from its new home in QTM_Output
+@
+text
+@d16 1
+a16 2
+  use Generate_QTM_m, only: QTM_Tree_t, ZOT_t
+  use Geolocation_0, only: GeocLat_t, H_t
+a62 1
+    type(geocLat_t), allocatable :: QTM_Lats(:) ! Unique latitudes in the QTM.
+d74 2
+a75 2
+  ! Put here all the 
+  ! l1boa quantities that we don't wish to read again and again and again ..
+d770 1
+a770 1
+       "$Id: HGridsDatabase.f90,v 2.33 2016/08/23 18:34:44 pwagner Exp $"
+d780 3
+@
+
+
+2.33
+log
+@ShowName not needed any longer
+@
+text
+@d607 1
+a607 1
+    use Generate_QTM_m, only: Dump_QTM_Tree
+d772 1
+a772 1
+       "$Id: HGridsDatabase.f90,v 2.32 2016/08/23 00:41:55 vsnyder Exp $"
+d782 3
+@
+
+
+2.32
+log
+@Components within or adjacent to the polygon are now within the QTM_Tree_t
+structure instead of the HGrid_t structure.
+@
+text
+@d243 1
+a243 1
+    logical, parameter :: ShowName = .true.
+d772 1
+a772 1
+       "$Id: HGridsDatabase.f90,v 2.31 2016/08/20 01:11:39 vsnyder Exp $"
+d782 4
+@
+
+
+2.31
+log
+@Cannonball polishing
+@
+text
+@d61 3
+a63 3
+    type(QTM_tree_t) :: QTM_Tree             ! for finding things
+    type(ZOT_t), allocatable :: QTM_ZOT(:)   ! Vertices of QTM
+    type(h_t), allocatable :: QTM_Geo(:)     ! Vertices of QTM, computed from QTM_ZOT
+d682 1
+a682 6
+        & latLon=.not. myZOT, sons = myDetails > 1 )
+      if ( myZot ) then
+        call dump_ZOT ( aHGrid%QTM_ZOT, ' QTM vertices in ZOT coordinates:' )
+      else
+        call dump_H_t ( aHGrid%QTM_geo, ' QTM vertices in (lon,lat) coordinates:' )
+      end if
+d772 1
+a772 1
+       "$Id: HGridsDatabase.f90,v 2.30 2016/08/12 00:35:47 pwagner Exp $"
+d782 3
+@
+
+
+2.30
+log
+@Seems to restore tthe gold brick
+@
+text
+@d135 1
+a135 1
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST
+d180 1
+a180 1
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST
+d213 2
+a214 2
+    use Allocate_deallocate, only: allocate_test
+    use dump_0, only: dump
+d220 1
+a220 1
+    use MLSFillValues, only: isFillValue, Monotonize	 
+d222 1
+a222 1
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Warning	 
+d242 1
+a242 1
+    logical                               :: verbose	 
+d326 11
+a336 11
+    if ( any(isFillValue(l1bField%dpField) ) .and. &	 
+      & trim(readItemname) /= '/GHz/Lon') then	 
+      call output( 'Fill values among ' // trim(readItemName), advance='yes' )	 
+      call MLSMessage ( MLSMSG_Warning, trim(ModuleName) // 'L1BGeoLocation', &	 
+        & 'Required monotonization' )	 
+      verbose = ( trim(readItemname) == '/GHz/Lon' ) &	 
+        & .or. ( trim(readItemname) == '/GHz/GeodAngle' )	 
+      if ( verbose ) call dump( l1bField%dpField, 'lons before monotony' )	 
+      call Monotonize( l1bField%dpField )	 
+      if ( verbose ) call dump( l1bField%dpField, 'lons after monotony' )	 
+    endif	 
+d485 2
+a486 2
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
+d549 1
+a549 1
+    use ALLOCATE_DEALLOCATE, only: DEALLOCATE_TEST
+d777 1
+a777 1
+       "$Id: HGridsDatabase.f90,v 2.29 2016/08/09 18:16:30 pwagner Exp $"
+d787 3
+@
+
+
+2.29
+log
+@Survives encounter with non-satellite data
+@
+text
+@d214 1
+d220 1
+d222 1
+d239 1
+d242 2
+d251 1
+d253 3
+a255 1
+    select case ( snipModuleStr(l1bItemName) )
+d314 1
+a314 1
+      readItemName = AssembleL1BQtyName ( trim(moduleStr) // Name, hdfVersion, .false. )
+d326 12
+d351 1
+a351 1
+    select case (lowercase(l1bItemName))
+d356 1
+a356 1
+    case ('ghz/geodangle   ')
+d360 1
+a360 1
+    case ('ghz/geodalt     ')
+d364 1
+a364 1
+    case ('ghz/geodlat     ')
+d368 1
+a368 1
+    case ('ghz/losangle   ')
+d372 1
+a372 1
+    case ('ghz/lon   ')
+d376 1
+a376 1
+    case ('sc/orbincl   ')
+d380 1
+a380 1
+    case ('ghz/solartime   ')
+d384 1
+a384 1
+    case ('ghz/solarzenith   ')
+d397 1
+a397 1
+      i = index( itemname, trim(moduleStr) )
+d403 8
+d777 1
+a777 1
+       "$Id: HGridsDatabase.f90,v 2.28 2016/07/28 01:34:55 vsnyder Exp $"
+d787 3
+@
+
+
+2.28
+log
+@Remove unreferenced USE
+@
+text
+@d47 1
+d211 1
+a211 1
+  subroutine L1BGeoLocation ( filedatabase, name, values, values2d )
+d213 2
+a214 3
+    use allocate_deallocate, only: allocate_test
+    use dump_0, only: dump
+    use highOutput, only: outputNamedValue
+d216 3
+a218 4
+      & assembleL1BQtyName
+    use MLSCommon, only: MLSfile_t
+    use MLSFiles, only: getMLSfilebytype
+    use MLSFillValues, only: isFillValue, Monotonize
+a219 1
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
+d221 1
+a221 1
+    use output_m, only: output
+d225 1
+a237 1
+    logical                               :: verbose
+d241 1
+a241 1
+    if ( l1bItemName(1:2) == 'tp' ) l1bItemName = 'ghz/' // l1bItemName(3:)
+d246 1
+a246 1
+    select case (l1bItemName)
+d252 1
+a252 1
+    case ('sc/orbincl')
+d257 1
+a257 1
+    case ('ghz/geodangle   ')
+d262 1
+a262 1
+    case ('ghz/geodalt     ')
+d267 1
+a267 1
+    case ('ghz/geodlat     ')
+d272 1
+a272 1
+    case ('ghz/solartime   ')
+d277 1
+a277 1
+    case ('ghz/solarzenith   ')
+d282 1
+a282 1
+    case ('ghz/losangle   ')
+d287 1
+a287 1
+    case ('ghz/lon   ')
+d300 3
+a302 1
+      readItemName = "/" // adjustl(Name)
+d305 1
+a305 1
+      readItemName = AssembleL1BQtyName ( 'GHz.' // Name, hdfVersion, .false. )
+a316 11
+    if ( any(isFillValue(l1bField%dpField) ) .and. &
+      & trim(readItemname) /= '/GHz/Lon') then
+      call output( 'Fill values among ' // trim(readItemName), advance='yes' )
+      call MLSMessage ( MLSMSG_Warning, trim(ModuleName) // 'L1BGeoLocation', &
+        & 'Required monotonization' )
+      verbose = ( trim(readItemname) == '/GHz/Lon' ) &
+        & .or. ( trim(readItemname) == '/GHz/GeodAngle' )
+      if ( verbose ) call dump( l1bField%dpField, 'lons before monotony' )
+      call Monotonize( l1bField%dpField )
+      if ( verbose ) call dump( l1bField%dpField, 'lons after monotony' )
+    endif
+d370 13
+d748 1
+a748 1
+       "$Id: HGridsDatabase.f90,v 2.27 2016/05/18 01:34:37 vsnyder Exp $"
+d758 3
+@
+
+
+2.27
+log
+@HGridsDatabase.f90
+@
+text
+@d409 2
+a410 2
+    use allocate_deallocate, only: allocate_test
+    use highOutput, only: beVerbose, letsDebug, outputNamedValue
+d746 1
+a746 1
+       "$Id: HGridsDatabase.f90,v 2.26 2016/05/17 00:14:40 pwagner Exp $"
+d756 3
+@
+
+
+2.26
+log
+@Tries harder not to bomb in display_string
+@
+text
+@d22 1
+a22 1
+  public :: HGrid_T, HGridGeolocations_T, HGridGeolocations
+d66 9
+d91 3
+a93 3
+  interface DUMP
+    module procedure DUMP_a_HGRID
+    module procedure DUMP_HGRIDS
+d99 6
+a104 1
+  integer function AddHGridToDatabase ( database, item )
+d110 2
+a111 2
+    type (HGrid_T), dimension(:), pointer :: database
+    type (HGrid_T), intent(in) :: item
+d114 2
+a115 1
+    type (HGrid_T), dimension(:), pointer :: tempDatabase
+d117 1
+d120 4
+d128 3
+a130 3
+  ! Copy all fields from aGrid to hGrid
+  ! Allocates all the pointer components, so a full copy results
+  ! allowing you to destroy agrid afterwards
+d547 1
+a547 1
+    type (HGrid_T), dimension(:), pointer :: database
+d555 7
+a561 1
+        call DestroyHGridContents ( database(hGridIndex) )
+d572 2
+a573 2
+  ! ------------------------------------------------  DUMP_A_HGRID  -----
+  subroutine DUMP_a_HGRID ( aHGRID, Details, ZOT )
+d658 1
+a658 1
+  end subroutine DUMP_a_HGRID
+d660 6
+a665 4
+  ! ------------------------------------------------  DUMP_HGRIDS  -----
+  subroutine DUMP_HGRIDS ( HGRIDS )
+    use OUTPUT_M, only: OUTPUT
+    type(hGrid_T), intent(in) :: HGRIDS(:)
+d670 1
+a670 1
+      call dump ( hgrids(i) )
+d672 1
+a672 1
+  end subroutine DUMP_HGRIDS
+d746 1
+a746 1
+       "$Id: HGridsDatabase.f90,v 2.25 2016/04/15 22:24:43 pwagner Exp $"
+d756 3
+@
+
+
+2.25
+log
+@Tried to fix latest cause of Fill Values among l1b fields
+@
+text
+@d551 1
+d554 1
+a554 1
+    use string_table, only: display_string
+d566 3
+d572 1
+a572 1
+    if ( aHgrid%name > 0 ) then
+d583 1
+a583 1
+    if ( aHgrid%masterCoordinate == 0 ) then
+d588 5
+a592 1
+    call display_string ( lit_indices(aHgrid%type), before=' type = ' )
+d596 1
+a596 1
+    if ( aHgrid%noProfs > 0 ) then
+a623 2
+      myDetails = 0
+      if ( present(details) ) myDetails = details
+d718 1
+a718 1
+       "$Id: HGridsDatabase.f90,v 2.24 2016/02/26 02:05:25 vsnyder Exp $"
+d728 3
+@
+
+
+2.24
+log
+@Add QTM support
+@
+text
+@d194 1
+a194 1
+    use HighOutput, only: outputNamedValue
+d290 7
+a296 1
+    call ReadL1BData ( L1BFile, readItemName, l1bField, noMAFs, status )
+d302 2
+a303 1
+      verbose = ( trim(readItemname) == '/GHz/Lon' ) 
+a306 1
+      ! call dump( l1bField%dpField, 'l1bField%dpField' )
+d390 1
+d400 1
+d405 1
+d407 5
+d712 1
+a712 1
+       "$Id: HGridsDatabase.f90,v 2.23 2016/01/11 23:12:58 pwagner Exp $"
+d722 3
+@
+
+
+2.23
+log
+@Skip Attempting to monotonize longitudes containing Fills
+@
+text
+@d16 2
+d43 1
+a43 1
+    integer :: noProfs                 ! Number of profiles in this grid  
+d46 1
+a46 1
+    integer :: Type                    ! L_Explicit, L_Fixed ...
+d59 5
+d400 1
+a400 1
+        & call MLSMessage ( MLSMSG_Error, trim(ModuleName) // 'L1BSubsample', &
+d409 1
+a409 1
+        & call MLSMessage ( MLSMSG_Error, trim(ModuleName) // 'L1BSubsample', &
+d533 5
+a537 3
+  subroutine DUMP_a_HGRID ( aHGRID )
+    use dates_module, only: tai93s2hid 
+    use Intrinsic, only: lit_indices
+d540 1
+d542 5
+d549 26
+a574 19
+      IERR = 0
+      call output ( 'Name = ', advance='no' )
+      if ( aHgrid%name > 0 ) then
+        call display_string ( aHgrid%name, ierr=ierr )
+        if ( ierr /= 0 ) call output ( ' (not found in string table)' )
+      else
+        call output('(unknown)' )
+      end if
+      call newLine
+      call output ( aHgrid%noProfs, before=' noProfs = ', advance='no' )
+      call output ( aHgrid%noProfsLowerOverlap, before=' lowerOverlap = ', advance='no' )
+      call output ( aHgrid%noProfsUpperOverlap, before=' upperOverlap = ', advance='no' )
+      call output ( ' masterCoordinate = ' )
+      if ( aHgrid%masterCoordinate == 0 ) then
+        call output ( '0', advance='yes' )
+      else
+        call display_string ( lit_indices(aHgrid%masterCoordinate), advance='yes' )
+      end if
+      call display_string ( lit_indices(aHgrid%type), before=' type = ', advance='yes' )
+d592 1
+a592 1
+  &           aHgrid%time(1,j), leapsec=.true. ), '(1x,1pg13.6)' )
+d598 14
+a611 5
+      if ( aHgrid%masterCoordinate > 0 ) then
+        call output( ' Master coordinate: ', advance='no' )
+        call display_string ( lit_indices(aHgrid%masterCoordinate), ierr=ierr )
+        call newLine
+      endif
+d698 1
+a698 1
+       "$Id: HGridsDatabase.f90,v 2.22 2015/07/14 23:22:27 pwagner Exp $"
+d708 3
+@
+
+
+2.22
+log
+@Prevent insertion of Fill values in L1BGeolocations when gaps occur in counterMAF
+@
+text
+@d212 1
+d284 2
+a285 1
+    if ( any(isFillValue(l1bField%dpField) ) ) then
+d289 2
+d292 1
+d667 1
+a667 1
+       "$Id: HGridsDatabase.f90,v 2.21 2015/06/25 00:37:52 pwagner Exp $"
+d677 3
+@
+
+
+2.21
+log
+@Stop printing low and high Guesses
+@
+text
+@d186 1
+d192 1
+d194 3
+a196 1
+    use MLSstrings, only: lowercase
+d283 7
+d662 1
+a662 1
+       "$Id: HGridsDatabase.f90,v 2.20 2015/06/19 20:35:06 pwagner Exp $"
+d672 3
+@
+
+
+2.20
+log
+@Fixed mixup in defining noChunkMAFs
+@
+text
+@d597 1
+d609 5
+a613 3
+    call outputNamedValue( 'lowGuess', lowGuess )
+    call outputNamedValue( 'highGuess', highGuess )
+    call outputNamedValue( 'instance', instance )
+d651 1
+a651 1
+       "$Id: HGridsDatabase.f90,v 2.19 2015/06/19 00:34:19 pwagner Exp $"
+d661 3
+@
+
+
+2.19
+log
+@Many changes to speed up computing HGrid offsets
+@
+text
+@d374 1
+a374 1
+    noChunkMAFs = chunk%firstMAFIndex - chunk%lastMAFIndex + 1
+d648 1
+a648 1
+       "$Id: HGridsDatabase.f90,v 2.17 2015/03/31 21:03:55 pwagner Exp $"
+d658 3
+@
+
+
+2.18
+log
+@Get Hunt from Hunt_m to avoid circular dependence
+@
+text
+@d20 5
+a24 4
+  public :: HGrid_T
+  public :: ADDHGRIDTODATABASE, CREATEEMPTYHGRID, DESTROYHGRIDCONTENTS, &
+    & DESTROYHGRIDDATABASE, DUMP, FINDCLOSESTMATCH, NULLIFYHGRID, &
+    & TRIMHGRID
+d39 2
+a40 2
+    integer :: Name = 0                ! String index of name.            
+    integer :: masterCoordinate = l_GeodAngle ! Its lit index;
+d42 2
+a43 2
+    integer :: noProfsLowerOverlap = 0 ! Number of profiles in the lower overlap
+    integer :: noProfsUpperOverlap = 0 ! Number of profiles in the upper overlap
+d45 1
+a45 1
+    logical :: forbidOverspill     = .false.   
+d59 16
+d100 48
+d176 218
+d581 3
+a583 1
+    use Hunt_m, only: HUNT
+d608 3
+d612 12
+d658 3
+@
+
+
+2.17
+log
+@ForbidOverspill now a field of HGrid; improved Dump
+@
+text
+@d298 1
+a298 1
+    use MLSNUMERICS, only: HUNT
+d348 1
+a348 1
+       "$Id: HGridsDatabase.f90,v 2.16 2015/03/28 01:03:12 vsnyder Exp $"
+d358 3
+@
+
+
+2.16
+log
+@Added type component.  Made geolocation components contiguous so they can
+be rank-remapping pointer targets.
+Added stuff to trace allocate/deallocate addresses -- mostly commented out
+because NAG build 1017 doesn't yet allow arrays as arguments to C_LOC.
+@
+text
+@d44 1
+d228 1
+d230 1
+a230 1
+    use output_m, only: newLine, output
+d249 1
+a249 1
+        call output ( '0' )
+d251 1
+a251 1
+        call display_string ( lit_indices(aHgrid%masterCoordinate) )
+d255 1
+a255 1
+      call output ( '          time     solarTime   solarZenith', advance='no' )
+d258 8
+d270 2
+a271 1
+        call output ( aHgrid%time(1,j), '(1x,1pg13.6)' )
+d348 1
+a348 1
+       "$Id: HGridsDatabase.f90,v 2.15 2014/09/04 23:40:28 vsnyder Exp $"
+d358 6
+@
+
+
+2.15
+log
+@More complete and accurate allocate/deallocate size tracking.
+Convert some local pointer temps to automatic.
+@
+text
+@d43 1
+d48 7
+a54 7
+    real(r8), dimension(:,:), pointer :: phi         => NULL()
+    real(r8), dimension(:,:), pointer :: geodLat     => NULL()
+    real(r8), dimension(:,:), pointer :: lon         => NULL()
+    real(r8), dimension(:,:), pointer :: time        => NULL()
+    real(r8), dimension(:,:), pointer :: solarTime   => NULL()
+    real(r8), dimension(:,:), pointer :: solarZenith => NULL()
+    real(r8), dimension(:,:), pointer :: losAngle    => NULL()
+d68 1
+d201 1
+d209 1
+d211 1
+d217 2
+d220 1
+a220 1
+      call test_deallocate ( status, ModuleName, "database", s )
+d247 1
+a247 1
+        call output ( '0', advance='yes' )
+d249 1
+a249 1
+        call display_string ( lit_indices(aHgrid%masterCoordinate), advance='yes' )
+d251 1
+d337 1
+a337 1
+       "$Id: HGridsDatabase.f90,v 2.14 2014/08/07 22:44:28 vsnyder Exp $"
+d347 4
+@
+
+
+2.15.2.1
+log
+@Make forbidOverspill a component
+@
+text
+@a42 2
+    integer :: Type                    ! L_Explicit, L_Fixed ...
+    logical :: forbidOverspill     = .false.   
+a206 1
+    return
+d240 1
+a240 1
+        call output ( '0' )
+d242 1
+a242 1
+        call display_string ( lit_indices(aHgrid%masterCoordinate) )
+a243 4
+      if ( aHgrid%type > 0 ) then
+        if ( lit_indices(aHgrid%type) > 0 ) &
+          & call display_string ( lit_indices(aHgrid%type), before=' type = ', advance='yes' )
+      endif
+d329 1
+a329 1
+       "$Id: HGridsDatabase.f90,v 2.15 2014/09/04 23:40:28 vsnyder Exp $"
+a338 4
+! Revision 2.15  2014/09/04 23:40:28  vsnyder
+! More complete and accurate allocate/deallocate size tracking.
+! Convert some local pointer temps to automatic.
+!
+@
+
+
+2.14
+log
+@Set default initialization of MasterCoordinate to L_GeodAngle instead
+of zero.  Spiff up the dump a little bit.
+@
+text
+@d65 2
+a66 3
+    
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, &
+      & MLSMSG_DEALLOCATE, MLSMSG_ERROR
+d111 1
+a111 1
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+d119 2
+a120 2
+    integer, dimension(:), pointer  :: inttemp
+    real(r8), dimension(:), pointer :: temp
+a141 3
+    nullify ( inttemp, temp )
+    call allocate_test ( inttemp, hGrid%noProfs, 'inttemp', ModuleName )
+    call allocate_test ( temp, hGrid%noProfs, 'temp', ModuleName )
+a169 1
+    call Deallocate_test ( temp, 'temp', ModuleName )
+d198 1
+a198 1
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_DEALLOCATE, MLSMSG_ERROR
+d206 1
+a206 1
+    integer :: hGridIndex, status
+d211 1
+d213 1
+a213 2
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_DeAllocate // "database" )
+d215 1
+d316 1
+a316 1
+  subroutine NullifyHGrid ( H )
+d318 1
+a318 1
+    type ( HGrid_T ), intent(out) :: H
+d329 1
+a329 1
+       "$Id: HGridsDatabase.f90,v 2.13 2014/04/24 23:50:25 pwagner Exp $"
+d339 4
+@
+
+
+2.13
+log
+@Added masterCoordinate component
+@
+text
+@d13 3
+a15 2
+  
+  use MLSKINDS, only: R8
+d20 1
+a20 1
+  public :: HGRID_T
+d39 1
+a39 1
+    integer :: masterCoordinate = 0    ! Its string index; e.g. l_phiTan
+d234 1
+a234 1
+        if ( ierr /= 0 ) call output ( '(not found in string table)', advance='no' )
+d236 3
+a238 2
+        call output('(unknown)', advance='no' )
+      endif
+d241 7
+a247 1
+      call output ( aHgrid%noProfsUpperOverlap, before=' upperOverlap = ', advance='yes' )
+d333 1
+a333 1
+       "$Id: HGridsDatabase.f90,v 2.12 2013/10/01 22:16:45 pwagner Exp $"
+d343 3
+@
+
+
+2.12
+log
+@Added maf component to HGrid_T
+@
+text
+@d38 1
+d223 3
+a225 2
+    use OUTPUT_M, only: OUTPUT
+    use STRING_TABLE, only: DISPLAY_STRING
+d254 5
+d276 3
+a278 3
+    ! This routine is best explained in context.  Given a 'sought' quantity
+    ! e.g. ptan, radiance, the profile in reference (e.g. temperature) is found
+    ! that is closest to profile 'instance' in reference
+d291 1
+d296 1
+a296 1
+    ! Now check the ones either side
+d325 1
+a325 1
+       "$Id: HGridsDatabase.f90,v 2.11 2013/08/12 23:47:07 vsnyder Exp $"
+d335 3
+@
+
+
+2.11
+log
+@Default initialize more stuff in HGrid_t
+@
+text
+@d42 2
+d88 2
+d118 1
+d141 2
+a142 1
+    nullify ( temp )
+d147 3
+d187 1
+d228 1
+a228 1
+      call output ( 'Name = ' )
+d231 1
+a231 1
+        if ( ierr /= 0 ) call output ( '(not found in string table)')
+d233 1
+a233 1
+        call output('(unknown)')
+d235 2
+a236 2
+      call output ( aHgrid%noProfs, before=' noProfs = ' )
+      call output ( aHgrid%noProfsLowerOverlap, before=' lowerOverlap = ' )
+d238 3
+a240 3
+      call output ( ' prof       phi       geodLat           lon' )
+      call output ( '          time     solarTime   solarZenith' )
+      call output ( '      losAngle', advance='yes' )
+d249 2
+a250 1
+        call output ( aHgrid%losAngle(1,j), '(1x,1pg13.6)', advance='yes' )
+d317 1
+a317 1
+       "$Id: HGridsDatabase.f90,v 2.10 2013/03/01 01:04:51 pwagner Exp $"
+d327 3
+@
+
+
+2.10
+log
+@Get R8 from MLSKinds
+@
+text
+@d37 4
+a40 4
+    integer :: NAME                 ! String index of name.
+    integer :: noProfs              ! Number of profiles in this grid
+    integer :: noProfsLowerOverlap  ! Number of profiles in the lower overlap
+    integer :: noProfsUpperOverlap  ! Number of profiles in the upper overlap
+d42 1
+a42 1
+    ! Now the various coordinates in the HGrid, all dimensioned (noProfs)
+d306 1
+a306 1
+       "$Id: HGridsDatabase.f90,v 2.9 2009/06/23 18:25:42 pwagner Exp $"
+d316 3
+@
+
+
+2.9
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d14 1
+a14 1
+  use MLSCommon, only: r8
+d19 4
+a22 4
+  public :: HGrid_T
+  public :: AddHGridToDatabase, CreateEmptyHGrid, DestroyHGridContents, &
+    & DestroyHGridDatabase, Dump, FindClosestMatch, NullifyHGrid, &
+    & TrimHGrid
+d26 1
+a26 1
+       "$RCSfile: $"
+d62 2
+a63 2
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
+      & MLSMSG_DeAllocate, MLSMSG_Error
+d81 1
+a81 1
+    use Allocate_Deallocate, only: Allocate_Test
+d106 2
+a107 3
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+    use MLSCommon, only: R8
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+d169 1
+a169 1
+    use Allocate_Deallocate, only: Deallocate_Test
+d191 1
+a191 1
+    use MLSMessageModule, only: MLSMessage, MLSMSG_DeAllocate, MLSMSG_Error
+d257 1
+a257 1
+    use MLSNumerics, only: HUNT
+d306 1
+a306 1
+       "$Id: read_apriori.f90 is it here $"
+d316 3
+@
+
+
+2.8
+log
+@Simplify NullifyHGrid
+@
+text
+@d26 1
+a26 1
+       "$RCSfile: HGridsDatabase.f90,v $"
+d304 1
+a305 1
+!---------------------------- RCS Ident Info -------------------------------
+d307 2
+a308 3
+       "$Id: HGridsDatabase.f90,v 2.7 2005/09/21 23:11:54 pwagner Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d310 1
+d312 1
+d317 3
+@
+
+
+2.7
+log
+@Unnecessary changes
+@
+text
+@d298 4
+a301 8
+    ! Executable code
+    nullify ( h%phi )
+    nullify ( h%geodLat )
+    nullify ( h%lon )
+    nullify ( h%time )
+    nullify ( h%solarTime )
+    nullify ( h%solarZenith )
+    nullify ( h%losAngle )
+d307 1
+a307 1
+       "$Id: HGridsDatabase.f90,v 2.6 2005/08/25 20:18:05 pwagner Exp $"
+d316 3
+@
+
+
+2.6
+log
+@Protect against crashing when dumping anonymous HGrids
+@
+text
+@d43 5
+a47 5
+    real(r8), dimension(:,:), pointer :: phi => NULL()
+    real(r8), dimension(:,:), pointer :: geodLat => NULL()
+    real(r8), dimension(:,:), pointer :: lon => NULL()
+    real(r8), dimension(:,:), pointer :: time => NULL()
+    real(r8), dimension(:,:), pointer :: solarTime => NULL()
+d49 1
+a49 1
+    real(r8), dimension(:,:), pointer :: losAngle => NULL()
+d311 1
+a311 1
+       "$Id: HGridsDatabase.f90,v 2.5 2005/06/22 17:25:49 pwagner Exp $"
+d320 3
+@
+
+
+2.5
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d26 1
+a26 1
+       "$RCSfile: $"
+d216 1
+d218 1
+d220 6
+a225 1
+      call display_string ( aHgrid%name )
+d311 1
+a311 1
+       "$Id: $"
+d320 3
+@
+
+
+2.4
+log
+@Move Dump*HGrid here from dumper
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d24 1
+a24 4
+  !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
+    "$Id: HGridsDatabase.f90,v 2.3 2004/05/18 01:05:06 vsnyder Exp $"
+  character (len=len(idParm)), private :: Id = idParm
+d26 1
+a26 1
+    "$RCSfile: HGridsDatabase.f90,v $"
+d28 1
+a28 1
+  !---------------------------------------------------------------------------
+d302 5
+d313 3
+@
+
+
+2.3
+log
+@Delete unused MAFIndex and MAFCounter fields from HGrid_T
+@
+text
+@d11 4
+a14 2
+  public :: HGrid_T, AddHGridToDatabase, CreateEmptyHGrid, TrimHGrid, &
+    & DestroyHGridContents, DestroyHGridDatabase, NullifyHGrid, FindClosestMatch
+d18 1
+a18 1
+    "$Id: HGridsDatabase.f90,v 2.2 2003/07/07 20:20:28 livesey Exp $"
+d47 5
+d206 38
+d303 3
+@
+
+
+2.2
+log
+@New FindClosestMatch routine
+@
+text
+@d16 1
+a16 1
+    "$Id: HGridsDatabase.f90,v 2.1 2003/06/20 19:34:45 pwagner Exp $"
+a42 2
+    integer, dimension(:), pointer :: mafIndex => NULL()
+    integer, dimension(:), pointer :: mafCounter => NULL()
+d258 3
+@
+
+
+2.1
+log
+@Quanities now share grids stored separately in databses
+@
+text
+@d12 1
+a12 1
+    & DestroyHGridContents, DestroyHGridDatabase, NullifyHGrid
+d16 1
+a16 1
+    "$Id: HGrid.f90,v 2.50 2003/05/11 01:43:17 livesey Exp $"
+d19 1
+a19 1
+    "$RCSfile: HGrid.f90,v $"
+d124 1
+a124 1
+    if ( newNoProfs <= 0 ) call MLSMessage ( &
+d201 38
+a238 1
+  ! ----------------------------------------NullifyHGrid -----
+d259 4
+a262 1
+! $Log$
+@
+

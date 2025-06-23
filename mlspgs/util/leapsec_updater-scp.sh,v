@@ -1,0 +1,175 @@
+head	1.3;
+access;
+symbols
+	v5-02-NRT-19:1.3
+	v6-00:1.2
+	v5-02-NRT-18:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.3
+date	2024.07.19.16.37.18;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2024.01.04.22.21.23;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2023.05.25.21.53.24;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@Now scp from jackal
+@
+text
+@#!/bin/sh
+# leapsec_updater-scp.sh
+# simplified: 
+# (1) merely saves leapsec.dat in the current working directory
+#     thereby eliminating all the PGSHOME stuff
+# (2) Since we'll never use ftp again, eliminate that stuff, too
+# (3) However, you must now manually cp the leapsec.dat to whereever it belongs
+ 
+# Copyright 2023, by the California Institute of Technology. ALL
+# RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+# commercial use must be negotiated with the Office of Technology Transfer
+# at the California Institute of Technology.
+
+# This software may be subject to U.S. export control laws. By accepting this
+# software, the user agrees to comply with all applicable U.S. export laws and
+# regulations. User has the responsibility to obtain export licenses, or other
+# export authority as may be required before exporting such information to
+# foreign countries or providing access to foreign persons.
+
+# "$Id: leapsec_updater-scp.sh,v 1.2 2024/01/04 22:21:23 pwagner Exp $"
+
+#scp pwagner@@fox.jpl.nasa.gov:/science/pge/v1300-nrt/toolkit5.2.18/database/common/TD/leapsec.dat ./
+scp pwagner@@jackal.jpl.nasa.gov:/science/pge/v1800-nrt/toolkit5.2.18/database/common/TD/leapsec.dat ./
+
+state=$?
+
+if [ $state != 0 ];  then 
+
+exit $state
+fi
+
+exit 0
+# $Log: leapsec_updater-scp.sh,v $
+# Revision 1.2  2024/01/04 22:21:23  pwagner
+# Simplified--no longer uses PGSHOME
+#
+# Revision 1.1  2023/05/25 21:53:24  pwagner
+# ftp no longer supported; scp from sips machine instead
+#
+@
+
+
+1.2
+log
+@Simplified--no longer uses PGSHOME
+@
+text
+@d20 1
+a20 1
+# "$Id: leapsec_updater-scp.sh,v 1.1 2023/05/25 21:53:24 pwagner Exp $"
+d23 1
+a23 1
+scp pwagner@@kestrel.jpl.nasa.gov:/science/pge/v0502-l2/toolkit5.2.18/database/common/TD/leapsec.dat ./
+d34 3
+@
+
+
+1.1
+log
+@ftp no longer supported; scp from sips machine instead
+@
+text
+@d3 5
+a7 9
+# Plagiarised Raytheon's update_leapsec.sh
+# distributed with the Toolkit
+# but I've removed all the email and user-input stuff
+# Should be useable by a cron job
+# or you can use it directly
+#
+# REQUIRES:
+# PGSHOME must have been defined (by e.g., pgs-env.csh)
+# write access to $PGSHOME/database/common/TD
+d20 1
+a20 23
+# "$Id: leapsec_updater.sh,v 1.2 2005/06/23 22:20:45 pwagner Exp $"
+
+# Check that PGSHOME is defined
+if [ "$PGSHOME" = "" ]
+then
+  echo "PGSHOME is not yet defined"
+  echo "You probably need to run one of the scripts"
+  echo "pgs-env.csh or pgs-env.ksh"
+  exit 1
+fi
+
+# Check that you have write access permission to the file
+if [ ! -w $PGSHOME/database/common/TD/leapsec.dat ]
+then
+  echo "You lack write access permission to the file leapsec.dat"
+  echo "Likely causes are"
+  echo "(1) It is a directory belonging to someone else"
+  echo "(2) The name or location of the directory has been changed"
+  echo "(3) A prior attempt to update the file badly misfired"
+  exit 1
+fi
+
+# change directory to the leapsec.dat directory:
+a21 31
+cd $PGSHOME/database/common/TD
+
+#
+#ftp to USNO  (maia.usno.navy.mil 192.5.41.22 ) and get the current tai-utc.dat in ser7
+
+#echo "Are you a DAAC-location [yes/no]"
+#read user_response
+user_response="No"
+case  "$user_response" in
+    y* | Y* )
+echo "Please enter your DAAC-specific ftp machine"
+read ftp_machine
+
+echo "Please enter your user name"
+read ftp_user
+
+ftp -n <<GG>holder
+#open p0fwi09
+#user cmts2
+open $ftp_machine
+user $ftp_user
+quote site maia.usno.navy.mil
+user anonymous EOSuser
+prompt
+cd ser7
+dir
+get tai-utc.dat
+bye
+GG
+    ;;
+    * )
+a23 4
+    ;;
+    esac
+
+#abort and return status if ftp failed
+d33 4
+a36 1
+# $Log: leapsec_updater.sh,v $
+@
+

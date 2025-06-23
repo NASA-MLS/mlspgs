@@ -1,0 +1,5921 @@
+head	2.31;
+access;
+symbols
+	v5-02-NRT-19:2.31
+	v6-00:2.31
+	v5-02-NRT-18:2.31
+	v5-02:2.31
+	v5-01-NRT-17:2.31
+	v5-01-NRT-16:2.31
+	v5-01-NRT-15:2.31
+	v5-01-NRT-14:2.31
+	neuralnetworks-1-0:2.31.0.10
+	cfm-single-freq-0-1:2.31.0.8
+	v5-01:2.31
+	v5-00:2.31
+	v4-23-TA133:2.31.0.6
+	mus-emls-1-70:2.31.0.4
+	rel-1-0-englocks-work:2.31.0.2
+	VUMLS1-00:2.31
+	VPL1-00:2.30
+	V4-22-NRT-08:2.30
+	whdrel10_merged_to_here:2.30
+	merge_whdrel10_from_here:2.29.6.1
+	TAG_TRUNK_AFTER_PW_CHANGES:2.29
+	TAG_TRUNK_BEFORE_PW_CHANGES:2.29
+	VAM1-00:2.29
+	whd-rel-1-0:2.29.0.6
+	V4-21:2.29.0.4
+	V4-13:2.29
+	V4-12:2.29
+	V4-11:2.29
+	V4-10:2.29
+	V3-43:2.29
+	M4-00:2.29
+	V3-41:2.29
+	V3-40-PlusGM57:2.29.0.2
+	V2-24-NRT-04:2.27
+	V3-33:2.29
+	V2-24:2.27
+	V3-31:2.29
+	V3-30-NRT-05:2.29
+	cfm-01-00:2.29
+	V3-30:2.29
+	V3-20:2.29
+	V3-10:2.29
+	V2-23-NRT-02:2.27
+	V2-23:2.27
+	V2-22-NRT-01:2.27
+	V2-22:2.26
+	V2-21:2.25
+	V2-20:2.25
+	V2-11:2.22
+	V2-10:2.22
+	V2-00:2.21
+	V1-51:2.15
+	V1-50:2.15
+	V1-45:2.13
+	V1-44:2.13
+	V1-43:2.12
+	V1-42:2.11
+	V1-41:2.11
+	V1-32:2.10
+	V1-40:2.11
+	V1-31:2.10
+	V1-30:2.10
+	V1-13:2.9
+	V1-12:2.9
+	V1-11:2.9
+	V1-10:2.9
+	newfwm-feb03:2.9.0.2
+	V1-04:2.6
+	V1-03:2.6
+	V1-02:2.6
+	V1-00:2.6
+	newfwm-sep01:2.1.0.2
+	V0-7:2.1
+	V0-5-Level2:2.1
+	V0-5-SIPS:2.1
+	V0_1:1.4;
+locks; strict;
+comment	@# @;
+
+
+2.31
+date	2016.12.21.18.59.39;	author whdaffer;	state Exp;
+branches;
+next	2.30;
+
+2.30
+date	2016.03.15.22.17.59;	author whdaffer;	state Exp;
+branches;
+next	2.29;
+
+2.29
+date	2009.07.30.20.40.44;	author honghanh;	state Exp;
+branches
+	2.29.6.1;
+next	2.28;
+
+2.28
+date	2009.06.01.14.02.34;	author perun;	state Exp;
+branches;
+next	2.27;
+
+2.27
+date	2008.01.15.19.55.24;	author perun;	state Exp;
+branches;
+next	2.26;
+
+2.26
+date	2007.06.21.21.04.31;	author perun;	state Exp;
+branches;
+next	2.25;
+
+2.25
+date	2006.09.28.16.16.36;	author perun;	state Exp;
+branches;
+next	2.24;
+
+2.24
+date	2006.09.26.17.11.01;	author perun;	state Exp;
+branches;
+next	2.23;
+
+2.23
+date	2006.09.26.16.02.27;	author perun;	state Exp;
+branches;
+next	2.22;
+
+2.22
+date	2006.08.02.18.56.59;	author perun;	state Exp;
+branches;
+next	2.21;
+
+2.21
+date	2006.06.14.13.48.18;	author perun;	state Exp;
+branches;
+next	2.20;
+
+2.20
+date	2006.04.05.18.10.40;	author perun;	state Exp;
+branches;
+next	2.19;
+
+2.19
+date	2006.03.24.15.16.37;	author perun;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2005.12.06.19.28.55;	author perun;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2005.08.24.15.52.26;	author perun;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2005.06.23.18.41.36;	author pwagner;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2004.12.01.17.11.05;	author perun;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2004.11.10.15.34.41;	author perun;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2004.08.12.13.51.50;	author perun;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2004.05.14.15.59.11;	author perun;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2004.01.09.17.46.22;	author perun;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2003.08.15.14.25.04;	author perun;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2003.01.31.18.13.34;	author perun;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2002.11.20.15.44.02;	author perun;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2002.11.07.21.58.30;	author jdone;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2002.03.29.20.18.34;	author perun;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2002.03.12.16.37.06;	author perun;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2001.12.06.01.03.46;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2001.12.04.00.29.16;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2001.10.12.22.11.05;	author livesey;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.02.23.18.26.11;	author perun;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2000.09.05.18.55.14;	author ahanzel;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2000.02.22.15.00.16;	author nakamura;	state Exp;
+branches;
+next	;
+
+2.29.6.1
+date	2015.10.09.10.21.38;	author whdaffer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.31
+log
+@Just some comments to explain what GIRD time is
+@
+text
+@! Copyright 2006, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+!=============================================================================
+MODULE OutputL1B
+!=============================================================================
+
+  USE MLSCommon
+  USE MLSL1Common, ONLY: L1BFileInfo_T
+  USE MLSAuxData, ONLY: Build_MLSAuxData, CreateGroup_MLSAuxData
+  USE MLS_DataProducts, ONLY: DataProducts_T, Deallocate_DataProducts
+  USE OutputL1B_DataTypes
+  USE HDF5, ONLY: HID_T
+
+  IMPLICIT NONE
+
+  PRIVATE
+
+  PUBLIC :: OutputL1BOA_create, OutputL1B_index, OutputL1B_sc, OutputL1B_GHz, &
+       OutputL1B_THz, OutputL1B_rad, OutputL1B_LatBinData, OutputL1B_diags, &
+       OutputL1B_DiagsT, OutputL1B_Chi2
+
+!---------------------------- RCS Module Info ------------------------------
+  CHARACTER (len=*), PRIVATE, PARAMETER :: ModuleName= &
+       "$RCSfile: OutputL1B.f90,v $"
+  PRIVATE :: not_used_here 
+!---------------------------------------------------------------------------
+
+  ! TAItoGIRD is the number of TAI seconds between Jan 1 1993 and Jan
+  ! 1 1958 (both at all-balls UTC). There are 12784 days between those
+  ! 2 dates, so that's 1104537600 *civil* seconds (assuming 86400.0
+  ! seconds/day). There are 27 leap-seconds between Jan 1, 1961 and
+  ! Jan 1, 1993, so GIRD is the number of TAI-seconds, not civil time
+  ! seconds, i.e. it includes leap setons
+  
+  REAL(r8), PARAMETER :: TAItoGIRD = 1104537627.0d00
+
+CONTAINS
+
+  !----------------------------------- OutputL1B_Create ----
+  SUBROUTINE OutputL1BOA_create (sdId, THz)
+    ! This subroutine opens/creates the SD output files, and names the arrays
+    ! and dimensions contained within them.
+
+    ! Arguments
+    TYPE (L1BFileInfo_T), INTENT(IN) :: sdId
+    LOGICAL :: THz
+  
+    IF (THz) RETURN  ! Do not set up L1BOA for THz processing
+
+    CALL CreateGroup_MLSAuxData (sdId%OAId, 'sc')
+    CALL CreateGroup_MLSAuxData (sdId%OAId, 'GHz')
+    CALL CreateGroup_MLSAuxData (sdId%OAId, 'THz')
+
+  END SUBROUTINE OutputL1BOA_create
+
+  !------------------------------------------------- OuptutL1B_index ----
+  SUBROUTINE OutputL1B_index (noMAF, sd_id, index)
+    ! This subroutine writes the time/MIF indexing quantities to the HDF-SD file
+    ! Arguments
+    TYPE (L1BOAindex_T), INTENT(IN) :: index
+    INTEGER, INTENT(IN) :: sd_id, noMAF
+! Variables
+    TYPE( DataProducts_T ) :: dataset
+    INTEGER :: status
+!------------------------------------------------------------------------------
+    CALL Deallocate_DataProducts (dataset)
+
+    ALLOCATE (dataset%Dimensions(1), stat=status)
+
+    dataset%name      = 'MAFStartTimeUTC   '
+    dataset%data_type = 'character         '
+    dataset%Dimensions(1) = 'MAF                 '
+    CALL Build_MLSAuxData (sd_id,dataset, index%MAFStartTimeUTC, & 
+         char_length=lenUTC, lastIndex=noMAF)
+    dataset%name      = 'MAFStartTimeTAI   '
+    dataset%data_type = 'double            '
+    CALL Build_MLSAuxData (sd_id,dataset, index%MAFStartTimeTAI, &
+         lastIndex=noMAF)
+    dataset%name      = 'noMIFs            '
+    dataset%data_type = 'integer           '
+    CALL Build_MLSAuxData (sd_id,dataset, index%noMIFs, lastIndex=noMAF)
+    dataset%name      = 'counterMAF        '
+    CALL Build_MLSAuxData (sd_id,dataset, index%counterMAF, lastIndex=noMAF)
+
+    CALL Deallocate_DataProducts (dataset)
+
+  END SUBROUTINE OutputL1B_index
+
+  !------------------------------------------- OutputL1B_sc ------------
+  SUBROUTINE OutputL1B_sc (noMAF, sd_id, sc)
+    ! This subroutine writes the spacecraft quantities to the HDF-SD file.
+
+    ! Arguments
+    TYPE (L1BOAsc_T), INTENT(IN) :: sc
+    INTEGER, INTENT(IN) :: noMAF, sd_id
+    ! Variables
+    TYPE( DataProducts_T ) :: dataset
+    INTEGER :: status
+!------------------------------------------------------------------------------
+    CALL Deallocate_DataProducts (dataset)
+
+! 2-d first:
+
+    ALLOCATE (dataset%Dimensions(2), stat=status)
+
+    dataset%name      = 'sc/GeocAlt        '
+    dataset%data_type = 'double            '
+    dataset%Dimensions(1) = 'MIF                '
+    dataset%Dimensions(2) = 'MAF                '
+    CALL Build_MLSAuxData (sd_id, dataset, sc%scGeocAlt, lastIndex=noMAF)
+    dataset%name      = 'sc/GeocLat        '
+    dataset%data_type = 'real              '
+    CALL Build_MLSAuxData (sd_id, dataset, sc%scGeocLat, lastIndex=noMAF)
+    dataset%name      = 'sc/GeodAlt        '
+    dataset%data_type = 'double            '
+    CALL Build_MLSAuxData (sd_id, dataset, sc%scGeodAlt, lastIndex=noMAF)
+    dataset%name      = 'sc/GeodLat        '
+    dataset%data_type = 'real              '    
+    CALL Build_MLSAuxData (sd_id, dataset, sc%scGeodLat, lastIndex=noMAF)
+    dataset%name      = 'sc/Lon            '
+    CALL Build_MLSAuxData (sd_id, dataset, sc%scLon, lastIndex=noMAF)
+    dataset%name      = 'sc/GeodAngle      '
+    CALL Build_MLSAuxData (sd_id, dataset, sc%scGeodAngle, lastIndex=noMAF)
+    dataset%name      = 'sc/OrbIncl        '
+    CALL Build_MLSAuxData (sd_id, dataset, sc%scOrbIncl, lastIndex=noMAF)
+    dataset%name      = 'sc/MIF_TAI        '
+    dataset%data_type = 'double            '
+    CALL Build_MLSAuxData (sd_id, dataset, sc%MIF_TAI, lastIndex=noMAF)
+
+! 3-d next:
+
+    DEALLOCATE (dataset%Dimensions, stat=status)
+    ALLOCATE (dataset%Dimensions(3), stat=status)
+    dataset%name      = 'sc/ECI            '
+    dataset%data_type = 'double            '
+    dataset%Dimensions(1) = 'xyz                 '
+    dataset%Dimensions(2) = 'MIF                 '
+    dataset%Dimensions(3) = 'MAF                 '
+    CALL Build_MLSAuxData (sd_id, dataset, sc%scECI, lastIndex=noMAF)
+    dataset%name      = 'sc/ECR            '
+    CALL Build_MLSAuxData (sd_id, dataset, sc%scECR, lastIndex=noMAF)
+    dataset%name      = 'sc/VelECI         '
+    CALL Build_MLSAuxData (sd_id, dataset, sc%scVelECI, lastIndex=noMAF)
+    dataset%name      = 'sc/ypr            '
+    CALL Build_MLSAuxData (sd_id, dataset, sc%ypr, lastIndex=noMAF)
+    dataset%name      = 'sc/yprRate        '
+    CALL Build_MLSAuxData (sd_id, dataset, sc%yprRate, lastIndex=noMAF)
+    dataset%name      = 'sc/VelECR         '
+    CALL Build_MLSAuxData (sd_id, dataset, sc%scVelECR, lastIndex=noMAF)
+    CALL Deallocate_DataProducts (dataset)
+
+  END SUBROUTINE OutputL1B_sc
+
+  !-------------------------------------------- OutputL1B_GHz -------
+  SUBROUTINE OutputL1B_GHz (noMAF, sd_id, tp)
+    ! This subroutine writes the GHz tangent point quantities to the HDF-SD file
+
+    ! Arguments
+    TYPE (L1BOAtp_T), INTENT(IN) :: tp
+    INTEGER, INTENT(IN) :: noMAF, sd_id
+    ! Variables
+    TYPE( DataProducts_T ) :: dataset
+    INTEGER :: status
+!------------------------------------------------------------------------------
+    CALL Deallocate_DataProducts (dataset)
+
+! 2-d first:
+
+    ALLOCATE (dataset%Dimensions(2), stat=status)
+
+    dataset%name      = 'GHz/encoderAngle  '
+    dataset%data_type = 'double            '
+    dataset%Dimensions(1) = 'MIF                 '
+    dataset%Dimensions(2) = 'MAF                 '
+    CALL Build_MLSAuxData (sd_id,dataset, tp%encoderAngle, lastIndex=noMAF)
+    dataset%name      = 'GHz/scAngle       '
+    CALL Build_MLSAuxData (sd_id,dataset, tp%scAngle, lastIndex=noMAF)
+    dataset%name      = 'GHz/scanAngle     '
+    CALL Build_MLSAuxData (sd_id,dataset, tp%scanAngle, lastIndex=noMAF)
+    dataset%name      = 'GHz/azimAngle     '
+    CALL Build_MLSAuxData (sd_id,dataset, tp%azimAngle, lastIndex=noMAF)
+    dataset%name      = 'GHz/scanRate      '
+    dataset%data_type = 'real              '
+    CALL Build_MLSAuxData (sd_id,dataset, tp%scanRate, lastIndex=noMAF)
+    dataset%name      = 'GHz/OrbY          '
+    dataset%data_type = 'real              '
+    dataset%Dimensions(1) = 'GHz.MIF              '
+    CALL Build_MLSAuxData (sd_id,dataset, tp%tpOrbY, lastIndex=noMAF)
+    dataset%name      = 'GHz/GeocAlt       '
+    dataset%data_type = 'double            '
+    CALL Build_MLSAuxData (sd_id,dataset, tp%tpGeocAlt, lastIndex=noMAF)
+    dataset%name      = 'GHz/GeocLat       '
+    dataset%data_type = 'real              '
+    CALL Build_MLSAuxData (sd_id,dataset, tp%tpGeocLat, lastIndex=noMAF)
+    dataset%name      = 'GHz/GeocAltRate   '
+    CALL Build_MLSAuxData (sd_id,dataset, tp%tpGeocAltRate, lastIndex=noMAF)
+    dataset%name      = 'GHz/GeodAlt       '
+    dataset%data_type = 'double            '
+    CALL Build_MLSAuxData (sd_id,dataset, tp%tpGeodAlt, lastIndex=noMAF)
+    dataset%name      = 'GHz/GeodLat       '
+    dataset%data_type = 'real              '
+    CALL Build_MLSAuxData (sd_id,dataset, tp%tpGeodLat, lastIndex=noMAF)
+    dataset%name      = 'GHz/GeodAltRate   '
+    CALL Build_MLSAuxData (sd_id,dataset, tp%tpGeodAltRate, lastIndex=noMAF)
+    dataset%name      = 'GHz/Lon           '
+    CALL Build_MLSAuxData (sd_id,dataset, tp%tpLon, lastIndex=noMAF)
+    dataset%name      = 'GHz/GeodAngle     '
+    CALL Build_MLSAuxData (sd_id,dataset, tp%tpGeodAngle, lastIndex=noMAF)
+    dataset%name      = 'GHz/SolarTime     '
+    CALL Build_MLSAuxData (sd_id,dataset, tp%tpSolarTime, lastIndex=noMAF)
+    dataset%name      = 'GHz/SolarZenith   '
+    CALL Build_MLSAuxData (sd_id,dataset, tp%tpSolarZenith, lastIndex=noMAF)
+    dataset%name      = 'GHz/LosAngle      '
+    CALL Build_MLSAuxData (sd_id,dataset, tp%tpLosAngle, lastIndex=noMAF)
+    dataset%name      = 'GHz/LosVel        '
+    dataset%data_type = 'double            '
+    CALL Build_MLSAuxData (sd_id,dataset, tp%tpLosVel, lastIndex=noMAF)
+    dataset%name      = 'GHz/BO_stat       '
+    dataset%data_type = 'integer           '
+    CALL Build_MLSAuxData (sd_id,dataset, tp%tpBO_stat, lastIndex=noMAF)
+    dataset%name      = 'GHz/GalLat        '
+    dataset%data_type = 'real              '
+    CALL Build_MLSAuxData (sd_id,dataset, tp%tpGalLat, lastIndex=noMAF)
+    dataset%name      = 'GHz/GalLon        '
+    CALL Build_MLSAuxData (sd_id,dataset, tp%tpGalLon, lastIndex=noMAF)
+
+! 3-d next:
+
+    DEALLOCATE (dataset%Dimensions, stat=status)
+    ALLOCATE (dataset%Dimensions(3), stat=status)
+    dataset%name      = 'GHz/ECI           '
+    dataset%data_type = 'double            '
+    dataset%Dimensions(1) = 'xyz                 '
+    dataset%Dimensions(2) = 'GHz.MIF             '
+    dataset%Dimensions(3) = 'MAF                 '
+    CALL Build_MLSAuxData (sd_id, dataset, tp%tpECI, lastIndex=noMAF)
+    dataset%name      = 'GHz/ECR           '
+    CALL Build_MLSAuxData (sd_id, dataset, tp%tpECR, lastIndex=noMAF)
+    dataset%name      = 'GHz/ECRtoFOV      '
+    dataset%Dimensions(1) = '3x3                 '
+    CALL Build_MLSAuxData (sd_id, dataset, tp%tpECRtoFOV, lastIndex=noMAF)
+
+    dataset%name      = 'GHz/Pos_Prime     '
+    dataset%data_type = 'real              '
+    dataset%Dimensions(1) = '2                   '
+    CALL Build_MLSAuxData (sd_id, dataset, tp%tpPos_P, lastIndex=noMAF)
+
+    CALL Deallocate_DataProducts (dataset)
+
+  END SUBROUTINE OutputL1B_GHz
+  !-------------------------------------------- OutputL1B_THz --------------
+  SUBROUTINE OutputL1B_THz (noMAF, sd_id, tp)
+    ! This subroutine writes the THz tangent point quantities to the HDF-SD file
+
+    ! Arguments
+    TYPE (L1BOAtp_T), INTENT(IN) :: tp
+    INTEGER, INTENT(IN) :: noMAF, sd_id
+    ! Variables
+    TYPE( DataProducts_T ) :: dataset
+    INTEGER :: status
+!------------------------------------------------------------------------------
+    CALL Deallocate_DataProducts (dataset)
+
+! 2-d first:
+
+    ALLOCATE (dataset%Dimensions(2), stat=status)
+    dataset%name      = 'THz/encoderAngle  '
+    dataset%data_type = 'double            '
+    dataset%Dimensions(1) = 'MIF'
+    dataset%Dimensions(2) = 'MAF' 
+    CALL Build_MLSAuxData (sd_id, dataset, tp%encoderAngle, lastIndex=noMAF)
+    dataset%name      = 'THz/scAngle       '
+    CALL Build_MLSAuxData (sd_id, dataset, tp%scAngle, lastIndex=noMAF)
+    dataset%name      = 'THz/scanAngle     '
+    CALL Build_MLSAuxData (sd_id, dataset, tp%scanAngle, lastIndex=noMAF)
+    dataset%name      = 'THz/azimAngle     '
+    CALL Build_MLSAuxData (sd_id, dataset, tp%azimAngle, lastIndex=noMAF)
+    dataset%name      = 'THz/scanRate      '
+    dataset%data_type = 'real              '
+    CALL Build_MLSAuxData (sd_id, dataset, tp%scanRate, lastIndex=noMAF)
+    dataset%name      = 'THz/OrbY          '
+    dataset%Dimensions(1) = 'THz.MIF'
+    CALL Build_MLSAuxData (sd_id, dataset, tp%tpOrbY, lastIndex=noMAF)
+    dataset%name      = 'THz/GeocAlt       '
+    dataset%data_type = 'double            '
+    CALL Build_MLSAuxData (sd_id, dataset, tp%tpGeocAlt, lastIndex=noMAF)
+    dataset%name      = 'THz/GeocLat       '
+    dataset%data_type = 'real              '
+    CALL Build_MLSAuxData (sd_id, dataset, tp%tpGeocLat, lastIndex=noMAF)
+    dataset%name      = 'THz/GeocAltRate   '
+    CALL Build_MLSAuxData (sd_id, dataset, tp%tpGeocAltRate, lastIndex=noMAF)
+    dataset%name      = 'THz/GeodAlt       '
+    dataset%data_type = 'double            '
+    CALL Build_MLSAuxData (sd_id, dataset, tp%tpGeodAlt, lastIndex=noMAF)
+    dataset%name      = 'THz/GeodAltX      '
+    dataset%data_type = 'double            '
+    CALL Build_MLSAuxData (sd_id, dataset, tp%tpGeodAltX, lastIndex=noMAF)
+    dataset%name      = 'THz/GeodLat       '
+    dataset%data_type = 'real              '
+    CALL Build_MLSAuxData (sd_id, dataset, tp%tpGeodLat, lastIndex=noMAF)
+    dataset%name      = 'THz/GeodAltRate   '
+    CALL Build_MLSAuxData (sd_id, dataset, tp%tpGeodAltRate, lastIndex=noMAF)
+    dataset%name      = 'THz/Lon           '
+    CALL Build_MLSAuxData (sd_id, dataset, tp%tpLon, lastIndex=noMAF)
+    dataset%name      = 'THz/GeodAngle     '
+    CALL Build_MLSAuxData (sd_id, dataset, tp%tpGeodAngle, lastIndex=noMAF)
+    dataset%name      = 'THz/SolarTime     '
+    CALL Build_MLSAuxData (sd_id, dataset, tp%tpSolarTime, lastIndex=noMAF)
+    dataset%name      = 'THz/SolarZenith   '
+    CALL Build_MLSAuxData (sd_id, dataset, tp%tpSolarZenith, lastIndex=noMAF)
+    dataset%name      = 'THz/LosAngle      '
+    CALL Build_MLSAuxData (sd_id, dataset, tp%tpLosAngle, lastIndex=noMAF)
+    dataset%name      = 'THz/LosVel        '
+    dataset%data_type = 'double            '
+    CALL Build_MLSAuxData (sd_id,dataset, tp%tpLosVel, lastIndex=noMAF)
+    dataset%name      = 'THz/BO_stat       '
+    dataset%data_type = 'integer           '
+    CALL Build_MLSAuxData (sd_id,dataset, tp%tpBO_stat, lastIndex=noMAF)
+    dataset%name      = 'THz/GalLat        '
+    dataset%data_type = 'real              '
+    CALL Build_MLSAuxData (sd_id,dataset, tp%tpGalLat, lastIndex=noMAF)
+    dataset%name      = 'THz/GalLon        '
+    CALL Build_MLSAuxData (sd_id,dataset, tp%tpGalLon, lastIndex=noMAF)
+
+! 3-d next:
+
+    DEALLOCATE (dataset%Dimensions, stat=status)
+    ALLOCATE (dataset%Dimensions(3), stat=status)
+    dataset%name      = 'THz/ECI           '
+    dataset%data_type = 'double            '
+    dataset%Dimensions(1) = 'xyz'
+    dataset%Dimensions(2) = 'THz.MIF'
+    dataset%Dimensions(3) = 'MAF' 
+    CALL Build_MLSAuxData (sd_id, dataset,tp%tpECI, lastIndex=noMAF)
+    dataset%name      = 'THz/ECR           '
+    CALL Build_MLSAuxData (sd_id, dataset,tp%tpECR, lastIndex=noMAF)
+    dataset%name      = 'THz/ECRtoFOV      '
+    dataset%Dimensions(1) = '3x3                 '
+    CALL Build_MLSAuxData (sd_id,dataset, tp%tpECRtoFOV, lastIndex=noMAF)
+    dataset%name      = 'THz/Pos_Prime     '
+    dataset%data_type = 'real              '
+    dataset%Dimensions(1) = '2                   '
+    CALL Build_MLSAuxData (sd_id,dataset, tp%tpPos_P, lastIndex=noMAF)
+
+    CALL Deallocate_DataProducts (dataset)
+
+  END SUBROUTINE OutputL1B_THz
+
+  !-------------------------------------------------------- OutputL1B_rad
+  SUBROUTINE OutputL1B_rad (noMAF, sdId, counterMAF, Reflec, MAFStartTimeTAI, &
+       rad)
+    ! This subroutine writes an MAF's worth of data to the L1BRad D & F files
+
+    USE MLSCommon, ONLY: DEFAULTUNDEFINEDVALUE
+    USE EngTbls, ONLY: Reflec_T
+    USE MLSL1Config, ONLY: MIFsGHz, MIFsTHz, L1Config
+    USE MLSL1Rad, ONLY: Radiance_T, Rad_Name
+    USE MLSSignalNomenclature, ONLY:GetFullMLSSignalName
+    USE SpectralBaseline, ONLY: Baseline, BaselineAC, BaselineDC
+  
+    ! Arguments
+    TYPE (L1BFileInfo_T), INTENT(IN) :: sdId
+    TYPE (Radiance_T), INTENT(IN) :: rad(:)
+    TYPE (Reflec_T), INTENT(IN) :: Reflec
+    INTEGER, INTENT(IN) :: counterMAF, noMAF
+    REAL(r8), INTENT (IN) :: MAFStartTimeTAI
+
+   ! Variables
+    TYPE( DataProducts_T ) :: dataset, baselineDS  
+    CHARACTER (LEN=64) :: dim_chan, dim_mif, name, prec
+    INTEGER :: dims(3)
+    INTEGER(HID_T) :: sd_id
+    INTEGER :: i, status, bandno
+    REAL(r8) :: MAFStartTimeGIRD
+
+! For use in determining filling missing radiance records
+
+    INTEGER, PARAMETER :: max_rad_nos = SIZE (Rad_Name)
+    INTEGER, SAVE :: rad_sdid(max_rad_nos) = -999
+    INTEGER, SAVE :: rad_dim1(max_rad_nos) = 0
+    INTEGER, SAVE :: rad_dim2(max_rad_nos) = 0
+    LOGICAL, SAVE :: rad_out(max_rad_nos) = .FALSE. ! whether rad has output
+    LOGICAL, SAVE :: fill_last(max_rad_nos)   ! whether to fill last record
+    CHARACTER(len=10), SAVE :: rad_chan(max_rad_nos) = " "
+    CHARACTER(len=10), SAVE :: rad_mif(max_rad_nos) = " "
+
+    REAL, PARAMETER :: RAD_FILL = DEFAULTUNDEFINEDVALUE, RAD_ERR_FILL = -1.0
+    REAL, PARAMETER :: RAD_FILL_ARR(129,148) = RAD_FILL
+    REAL, PARAMETER :: RAD_ERR_FILL_ARR(129,148) = RAD_ERR_FILL
+    INTEGER, PARAMETER :: INT_FILL = -1
+
+    ! Convert TAI time to GIRD time
+    ! GIRD time is TAI seconds since Jan 1, 1958 00:00:00 UTC.
+    MAFStartTimeGIRD = MAFStartTimeTAI + TAItoGIRD
+
+! Find the sds_id number for counterMAF in the file RADG, write the data to it,
+! terminate access to the data set
+!------------------------------------------------------------------------------
+    CALL Deallocate_DataProducts (dataset)
+    CALL Deallocate_DataProducts (baselineDS)
+
+    ALLOCATE (dataset%Dimensions(1), stat=status)
+    dataset%name      = 'counterMAF        '
+    dataset%data_type = 'integer           '
+    dataset%Dimensions(1) = 'MAF'
+    IF (sdId%RADGID /= 0) THEN
+
+      !<whd> 
+      ! I assume that RADGID is set ONLY when we're in MLSL1G, so
+      ! this is basically a way of testing on whether the caller is
+      ! MLSL1G 
+      ! </whd>
+
+       IF (sdId%RADDID /= 0) CALL Build_MLSAuxData (sdId%RADDID, dataset, &
+            counterMAF, fill_value=INT_FILL, lastIndex=noMAF) !<whd> doing DACS processing </whd>
+
+       CALL Build_MLSAuxData (sdId%RADGID, dataset, counterMAF, &
+            fill_value=INT_FILL, lastIndex=noMAF)
+    ELSE
+      !<whd> Or here we're coming from  MLSL1T, the Teraherz module </whd>
+       CALL Build_MLSAuxData (sdId%RADTID, dataset, counterMAF, &
+            fill_value=INT_FILL, lastIndex=noMAF)
+    ENDIF
+
+!------------------------------------------------------------------------------
+
+    dataset%name      = 'MAFStartTimeGIRD  '
+    dataset%data_type = 'double            '
+    dataset%Dimensions(1) = 'MAF'
+    IF (sdId%RADGID /= 0) THEN
+       IF (sdId%RADDID /= 0) CALL Build_MLSAuxData (sdId%RADDID, dataset, &
+            MAFStartTimeGIRD, fill_value=-1.0d0, lastIndex=noMAF)
+       CALL Build_MLSAuxData (sdId%RADGID, dataset, MAFStartTimeGIRD, &
+            fill_value=-1.0d0, lastIndex=noMAF)
+    ELSE
+       CALL Build_MLSAuxData (sdId%RADTID, dataset, MAFStartTimeGIRD, &
+            fill_value=-1.0d0, lastIndex=noMAF)
+    ENDIF
+
+! Reflector temperatures:
+
+    dataset%data_type = 'real              '
+    dataset%name      = 'Pri_Reflec        '
+    IF (sdId%RADGID /= 0) THEN
+       IF (sdId%RADDID /= 0) CALL Build_MLSAuxData (sdId%RADDID, dataset, &
+            Reflec%Pri, fill_value=RAD_ERR_FILL, lastIndex=noMAF)
+       CALL Build_MLSAuxData (sdId%RADGID, dataset, Reflec%Pri, &
+            fill_value=RAD_ERR_FILL, lastIndex=noMAF)
+    ENDIF
+    dataset%name      = 'Sec_Reflec        '
+    IF (sdId%RADGID /= 0) THEN
+       IF (sdId%RADDID /= 0) CALL Build_MLSAuxData (sdId%RADDID, dataset, &
+            Reflec%Sec, fill_value=RAD_ERR_FILL, lastIndex=noMAF)
+       CALL Build_MLSAuxData (sdId%RADGID, dataset, Reflec%Sec, &
+            fill_value=RAD_ERR_FILL, lastIndex=noMAF)
+    ENDIF
+    dataset%name      = 'Ter_Reflec        '
+    IF (sdId%RADGID /= 0) THEN
+       IF (sdId%RADDID /= 0) CALL Build_MLSAuxData (sdId%RADDID, dataset, &
+            Reflec%Ter, fill_value=RAD_ERR_FILL, lastIndex=noMAF)
+       CALL Build_MLSAuxData (sdId%RADGID, dataset, Reflec%Ter, &
+            fill_value=RAD_ERR_FILL, lastIndex=noMAF)
+    ENDIF
+
+    DEALLOCATE (dataset%Dimensions, stat=status)
+
+! Prepare for radiance output
+
+    fill_last = .TRUE.   ! will fill last record unless good data
+
+    ALLOCATE (dataset%Dimensions(3), stat=status)
+    dataset%data_type = 'real'
+    dataset%Dimensions(3) = 'MAF                 '
+
+    ALLOCATE (baselineDS%Dimensions(2), stat=status)
+    baselineDS%data_type = 'real'
+    baselineDS%Dimensions(2) = 'MAF                 '
+
+!------------------------------------------------------------------------------
+    DO i = 1, SIZE (rad) ! Loop on number of SDs per MAF
+
+       bandno = rad(i)%bandno
+
+       IF (L1Config%Output%DisableRadOut(bandno)) CYCLE   ! skip to next bandno
+
+       CALL GetFullMLSSignalName(rad(i)%signal, name) ! Concatenate SD names
+       prec = TRIM(name) // ' precision'
+       ! Set parameters based on input data dimensions
+       ! Based on the SD name, set dim name for channel, get Id of output file
+       IF (INDEX(name, 'FB') /= 0 ) THEN
+          dim_chan = 'chanFB              '
+          IF (sdId%RADGID /= 0) THEN
+             IF (INDEX(name,'R5') /= 0 ) THEN  ! Don't allow R5 in GHz file: <whd>R5 is the THz radiometer</whd>
+                dim_chan = ''
+                sd_id = -999
+             ELSE
+                sd_id = sdId%RADGID
+             ENDIF
+          ELSE
+             sd_id = sdId%RADTID
+          ENDIF
+       ELSE IF (INDEX(name, 'MB') /= 0) THEN
+          dim_chan = 'chanMB              '
+          sd_id = sdId%RADGID
+       ELSE IF (INDEX(name, 'WF') /= 0) THEN
+          dim_chan = 'chanWF              '
+          sd_id = sdId%RADGID
+       ELSE IF (INDEX(name, 'DACS') /= 0 .AND. L1Config%Calib%CalibDACS) THEN
+          dim_chan = 'chanDACS            '
+          sd_id = sdId%RADDID
+       ELSE
+          dim_chan = ''
+          sd_id = -999
+       ENDIF
+
+       IF ((ANY(rad(i)%value /= 0.0)) .AND. (sd_id /= -999)) THEN 
+          ! if good radiance data exists 
+          ! Create/Open the value SDs
+          dims(1) = SIZE (rad(i)%value,1)
+          dims(2) = SIZE (rad(i)%value,2)
+          dims(3) = 1
+          IF (INDEX(name,'R5') /= 0 ) THEN
+             dim_mif = 'THz.MIF              '
+             dims(2) = MIFsTHz      !! lenT
+          ELSE
+             dim_mif = 'GHz.MIF              '
+             dims(2) = MIFsGHz      !! lenG
+          ENDIF
+
+!------------------------------------------------Create/Open the value datasets
+          dataset%Dimensions(1) = dim_chan
+          dataset%Dimensions(2) = dim_mif
+          dataset%name = TRIM(name)
+          CALL Build_MLSAuxData (sd_id, dataset, rad(i)%value, &
+               lastIndex=noMAF, dims=dims, fill_value=RAD_FILL)
+
+!------------------------------------------ Create/Open the precision datasets
+
+          dataset%name = TRIM(prec)
+          CALL Build_MLSAuxData (sd_id, dataset, rad(i)%precision, &
+               lastIndex=noMAF, dims=dims, fill_value=RAD_ERR_FILL)
+!-----------------------------------------------------------------------------
+
+! Output diagnostic offsets (GHz only!):
+
+          IF (sd_id /= sdId%RADTID) THEN
+             dataset%name = TRIM(name) // ' Poffset'
+             CALL Build_MLSAuxData (sdId%DiagId, dataset, rad(i)%Poffset(:,1), &
+                  lastIndex=noMAF, fill_value=RAD_FILL)  ! Only 1 per MAF
+             dataset%name = TRIM(name) // ' ModelOffset'
+             CALL Build_MLSAuxData (sdId%DiagId, dataset, rad(i)%ModelOffset, &
+                  lastIndex=noMAF, fill_value=RAD_FILL)
+
+          ENDIF
+
+! Output baselines
+
+          baselineDS%Dimensions(1) = dim_chan
+          baselineDS%name = TRIM(name) // ' Baseline'
+          CALL Build_MLSAuxData (sd_id, baselineDS, Baseline(bandno)%offset, &
+               lastIndex=noMAF, fill_value=RAD_FILL)
+          baselineDS%name = TRIM(name) // ' Baseline precision'
+          CALL Build_MLSAuxData (sd_id, baselineDS, &
+               Baseline(bandno)%precision, lastIndex=noMAF, &
+               fill_value=RAD_ERR_FILL)
+          baselineDS%name = TRIM(name) // ' BaselineAC'
+          CALL Build_MLSAuxData (sd_id, baselineDS, BaselineAC(bandno)%offset, &
+               lastIndex=noMAF, fill_value=RAD_FILL)
+          baselineDS%name = TRIM(name) // ' BaselineAC precision'
+          CALL Build_MLSAuxData (sd_id, baselineDS, &
+               BaselineAC(bandno)%precision, lastIndex=noMAF, &
+               fill_value=RAD_ERR_FILL)
+          baselineDS%name = TRIM(name) // ' BaselineDC'
+          CALL Build_MLSAuxData (sd_id, baselineDS, BaselineDC(bandno)%offset, &
+               lastIndex=noMAF, fill_value=RAD_FILL)
+          baselineDS%name = TRIM(name) // ' BaselineDC precision'
+          CALL Build_MLSAuxData (sd_id, baselineDS, &
+               BaselineDC(bandno)%precision, lastIndex=noMAF, &
+               fill_value=RAD_ERR_FILL)
+
+! Save matching table entries
+
+          WHERE (name == Rad_Name)
+             rad_out = .TRUE.
+             fill_last = .FALSE.
+             rad_dim1 = dims(1)
+             rad_dim2 = dims(2)
+             rad_chan = dim_chan
+             rad_mif = dim_mif
+             rad_sdid = sd_id
+          ENDWHERE
+         
+       ENDIF
+    ENDDO
+
+! Determine filling the radiance file record:
+
+    DO i = 1, max_rad_nos
+       IF (rad_out(i) .AND. fill_last(i)) THEN
+          dataset%Dimensions(1) = rad_chan(i)
+          dataset%Dimensions(2) = rad_mif(i)
+          dataset%name = TRIM(Rad_Name(i))
+          dims(1) = rad_dim1(i)
+          dims(2) = rad_dim2(i)
+          dims(3) = 1
+          CALL Build_MLSAuxData (rad_sdid(i), dataset, RAD_FILL_ARR, &
+               lastIndex=noMAF, dims=dims, fill_value=RAD_FILL)
+          dataset%name = TRIM(Rad_Name(i))// ' precision'
+          CALL Build_MLSAuxData (rad_sdid(i), dataset, RAD_ERR_FILL_ARR, &
+               lastIndex=noMAF, dims=dims, fill_value=RAD_ERR_FILL)
+
+! Fill Baselines:
+
+          baselineDS%Dimensions(1) = rad_chan(i)
+          baselineDS%name = TRIM(Rad_Name(i)) // ' Baseline'
+          CALL Build_MLSAuxData (rad_sdid(i), baselineDS, &
+               RAD_FILL_ARR(1:rad_dim1(i),1), &
+               lastIndex=noMAF, fill_value=RAD_FILL)
+          baselineDS%name = TRIM(Rad_Name(i)) // ' Baseline precision'
+          CALL Build_MLSAuxData (rad_sdid(i), baselineDS, &
+               RAD_ERR_FILL_ARR(1:rad_dim1(i),1), &
+               lastIndex=noMAF, fill_value=RAD_FILL)
+          baselineDS%name = TRIM(Rad_Name(i)) // ' BaselineAC'
+          CALL Build_MLSAuxData (rad_sdid(i), baselineDS, &
+               RAD_FILL_ARR(1:rad_dim1(i),1), &
+               lastIndex=noMAF, fill_value=RAD_FILL)
+          baselineDS%name = TRIM(Rad_Name(i)) // ' BaselineAC precision'
+          CALL Build_MLSAuxData (rad_sdid(i), baselineDS, &
+               RAD_ERR_FILL_ARR(1:rad_dim1(i),1), &
+               lastIndex=noMAF, fill_value=RAD_FILL)
+          baselineDS%name = TRIM(Rad_Name(i)) // ' BaselineDC'
+          CALL Build_MLSAuxData (rad_sdid(i), baselineDS, &
+               RAD_FILL_ARR(1:rad_dim1(i),1), &
+               lastIndex=noMAF, fill_value=RAD_FILL)
+          baselineDS%name = TRIM(Rad_Name(i)) // ' BaselineDC precision'
+          CALL Build_MLSAuxData (rad_sdid(i), baselineDS, &
+               RAD_ERR_FILL_ARR(1:rad_dim1(i),1), &
+               lastIndex=noMAF, fill_value=RAD_FILL)
+       ENDIF
+    ENDDO
+
+    CALL Deallocate_DataProducts (dataset)
+    CALL Deallocate_DataProducts (baselineDS)
+ 
+  END SUBROUTINE OutputL1B_rad
+
+!=============================================================================
+  SUBROUTINE OutputL1B_LatBinData (noMAF, sd_id, AscDescIndx, LatBinIndx, &
+       LatBinChanAvg, BaselineAlt, LatBin, BaselineBandNo, BinnedBaseline, &
+       Name)
+!=============================================================================
+
+    USE MLSHDF5, ONLY: SaveAsHDF5DS, MakeHDF5Attribute
+
+    INTEGER, INTENT(IN) :: noMAF
+    INTEGER(HID_T), INTENT(IN) :: sd_id
+    INTEGER, DIMENSION(:), OPTIONAL :: AscDescIndx, LatBinIndx, BaselineBandNo
+    REAL, DIMENSION(:,:,:), OPTIONAL :: LatBinChanAvg
+    REAL, DIMENSION(:,:), OPTIONAL :: LatBin, BinnedBaseline
+    REAL, DIMENSION(:,:), OPTIONAL :: BaselineAlt
+    CHARACTER(len=*), OPTIONAL :: Name
+
+    TYPE( DataProducts_T ) :: dataset
+    CHARACTER(LEN=16) :: DimName(3)
+    INTEGER :: dims(3), status
+
+    CALL Deallocate_DataProducts (dataset)
+
+    IF (PRESENT (AscDescIndx) .AND. PRESENT (LatBinIndx)) THEN
+
+       ALLOCATE (dataset%Dimensions(2), stat=status)
+       dataset%name = 'AscDescIndx   '
+       dataset%data_type = 'integer           '
+       dataset%Dimensions(1) = 'GHz.MIF             '
+       dataset%Dimensions(2) = 'MAF                 '
+       dims = 1
+       dims(1) = SIZE (AscDescIndx)
+       CALL Build_MLSAuxData (sd_id, dataset, AscDescIndx, lastIndex=noMAF, &
+            dims=dims)
+       dataset%name = 'LatBinIndx    '
+       CALL Build_MLSAuxData (sd_id, dataset, LatBinIndx, lastIndex=noMAF, &
+            dims=dims)
+
+    ENDIF
+
+    IF (PRESENT (BinnedBaseline) .AND. PRESENT (Name)) THEN
+       CALL SaveAsHDF5DS (sd_id, Name, BinnedBaseline)
+       DimName(1) = 'Chan'
+       DimName(2) = 'LatBin'
+       CALL MakeHDF5Attribute (sd_id, Name, 'Dimensions', DimName(1:2))
+    ENDIF
+
+    IF (PRESENT (LatBinChanAvg)) THEN
+       CALL SaveAsHDF5DS (sd_id, 'LatBinChanAvg', LatBinChanAvg)
+       DimName(1) = 'FBChan'
+       DimName(2) = 'BandNo'
+       DimName(3) = 'LatBin'
+       CALL MakeHDF5Attribute (sd_id, 'LatBinChanAvg', 'Dimensions', DimName)
+    ENDIF
+
+    IF (PRESENT (LatBin)) THEN
+       CALL SaveAsHDF5DS (sd_id, 'BaselineLatBin', LatBin)
+       DimName(1) = 'Min/Max lat'
+       DimName(2) = 'LatBin'
+       CALL MakeHDF5Attribute (sd_id, 'BaselineLatBin', 'Dimensions', &
+            DimName(1:2))
+    ENDIF
+
+    IF (PRESENT (BaselineAlt)) THEN
+       CALL SaveAsHDF5DS (sd_id, 'BaselineAlt', BaselineAlt)
+       DimName(1) = 'FBchan'
+       DimName(2) = 'BandNo'
+       CALL MakeHDF5Attribute (sd_id, 'BaselineAlt', 'Dimensions', DimName(1:2))
+    ENDIF
+
+    IF (PRESENT (BaselineBandNo)) THEN
+       CALL SaveAsHDF5DS (sd_id, 'BaselineBandNo', BaselineBandNo)
+       DimName(1) = 'BandNo'
+       CALL MakeHDF5Attribute (sd_id, 'BaselineBandNo', 'Dimensions', &
+            DimName(1:1))
+    ENDIF
+
+    CALL Deallocate_DataProducts (dataset)
+
+  END SUBROUTINE OutputL1B_LatBinData
+
+!=============================================================================
+  SUBROUTINE OutputL1B_diags (sd_id, noMAF, counterMAF, MAFStartTimeTAI, &
+       TP, TPdigP, TPdigN, Zeros)
+!=============================================================================
+
+    ! This subroutine writes an MAF's worth of diagnostic data
+
+    USE MLSL1Common, ONLY: FBchans, GHzNum, MBchans, MBnum, WFchans, WFnum, &
+         deflt_zero, MaxMIFs, DACSnum, DACSchans
+    USE Calibration, ONLY: Chi2, Tsys, Cgain
+    USE MLSHDF5, ONLY: SaveAsHDF5DS, MakeHDF5Attribute
+
+    INTEGER, INTENT(IN) :: sd_id
+    INTEGER, INTENT(IN), OPTIONAL :: counterMAF, noMAF
+    REAL(r8), INTENT(IN), OPTIONAL :: MAFStartTimeTAI
+    REAL, INTENT(IN), OPTIONAL :: TP(:,:), TPdigP(:,:), TPdigN(:,:)
+    LOGICAL, INTENT(IN), OPTIONAL :: Zeros
+
+    CHARACTER(LEN=16) :: DimName(2)
+    INTEGER :: dims(3), status
+    TYPE (DataProducts_T) :: dataset
+    REAL(r8) :: MAFStartTimeGIRD
+
+    IF (PRESENT (Zeros)) THEN
+       CALL SaveAsHDF5DS (sd_id, 'DefltZeros FB', INT(deflt_zero%FB))
+       DimName(1) = 'FBchan'
+       DimName(2) = 'FBbank'
+       CALL MakeHDF5Attribute (sd_id, 'DefltZeros FB', 'Dimensions', DimName)
+       CALL SaveAsHDF5DS (sd_id, 'DefltZeros MB', INT(deflt_zero%MB))
+       DimName(1) = 'MBchan'
+       DimName(2) = 'MBbank'
+       CALL MakeHDF5Attribute (sd_id, 'DefltZeros MB', 'Dimensions', DimName)
+       CALL SaveAsHDF5DS (sd_id, 'DefltZeros WF', INT(deflt_zero%WF))
+       DimName(1) = 'WFchan'
+       DimName(2) = 'WFbank'
+       CALL MakeHDF5Attribute (sd_id, 'DefltZeros WF', 'Dimensions', DimName)
+       RETURN
+    ENDIF
+
+    ! Convert TAI time to GIRD time
+
+    MAFStartTimeGIRD = MAFStartTimeTAI + TAItoGIRD
+
+    ALLOCATE (dataset%Dimensions(1), stat=status)
+    dataset%name      = 'counterMAF        '
+    dataset%data_type = 'integer           '
+    dataset%Dimensions(1) = 'MAF'
+    CALL Build_MLSAuxData (sd_Id, dataset, counterMAF, lastIndex=noMAF)
+
+    dataset%name      = 'MAFStartTimeGIRD  '
+    dataset%data_type = 'double            '
+    CALL Build_MLSAuxData (sd_Id, dataset, MAFStartTimeGIRD, lastIndex=noMAF)
+    CALL Deallocate_DataProducts (dataset)
+
+    ALLOCATE (dataset%Dimensions(3), stat=status)
+    dataset%data_type = 'real'
+    dataset%Dimensions(3) = 'MAF                 '
+
+    dims(1) = FBchans
+    dims(2) = GHzNum
+    dims(3) = 1
+    dataset%Dimensions(1) = 'FBchan              '
+    dataset%Dimensions(2) = 'GHzNum              '
+    dataset%name = 'Tsys FB'
+
+    CALL Build_MLSAuxData (sd_id, dataset, Tsys%FB, lastIndex=noMAF, dims=dims)
+    dataset%name = 'Chi2 FB'
+    CALL Build_MLSAuxData (sd_id, dataset, Chi2%FB, lastIndex=noMAF, dims=dims)
+    dataset%name = 'ChanGain FB'
+    CALL Build_MLSAuxData (sd_id, dataset, Cgain%FB, lastIndex=noMAF, dims=dims)
+
+    dims(1) = MBchans
+    dims(2) = MBnum
+    dataset%Dimensions(1) = 'MBchan              '
+    dataset%Dimensions(2) = 'MBnum               '
+    dataset%name = 'Tsys MB'
+
+    CALL Build_MLSAuxData (sd_id, dataset, Tsys%MB, lastIndex=noMAF, dims=dims)
+    dataset%name = 'Chi2 MB'
+    CALL Build_MLSAuxData (sd_id, dataset, Chi2%MB, lastIndex=noMAF, dims=dims)
+    dataset%name = 'ChanGain MB'
+    CALL Build_MLSAuxData (sd_id, dataset, Cgain%MB, lastIndex=noMAF, dims=dims)
+
+    dims(1) = WFchans
+    dims(2) = WFnum
+    dataset%Dimensions(1) = 'WFchan              '
+    dataset%Dimensions(2) = 'WFnum               '
+    dataset%name = 'Tsys WF'
+
+    CALL Build_MLSAuxData (sd_id, dataset, Tsys%WF, lastIndex=noMAF, dims=dims)
+    dataset%name = 'Chi2 WF'
+    CALL Build_MLSAuxData (sd_id, dataset, Chi2%WF, lastIndex=noMAF, dims=dims)
+    dataset%name = 'ChanGain WF'
+    CALL Build_MLSAuxData (sd_id, dataset, Cgain%WF, lastIndex=noMAF, dims=dims)
+
+!    dims(1) = DACSchans
+    dims(1) = DACSnum
+    dims(2) = 1
+!    dataset%Dimensions(1) = 'DACSchan            '
+    dataset%Dimensions(1) = 'DACSnum             '
+    dataset%name = 'Tsys DACS'
+
+! Use channel 1 since all channels are the same (for now):
+
+    CALL Build_MLSAuxData (sd_id, dataset, Tsys%DACS(1,:), lastIndex=noMAF, &
+         dims=dims(1:2))
+
+    dims(1) = DACSchans
+    dims(2) = DACSnum
+    dataset%Dimensions(1) = 'DACSchan            '
+    dataset%Dimensions(2) = 'DACSnum             '
+    dataset%name = 'Chi2 DACS'
+
+    CALL Build_MLSAuxData (sd_id, dataset, Chi2%DACS, lastIndex=noMAF, &
+         dims=dims)
+
+    dims(1) = MaxMIFs - 2
+    dims(2) = DACSnum
+    dataset%Dimensions(1) = 'MIF                 '
+    dataset%Dimensions(2) = 'DACSnum             '
+
+    dataset%name = 'TP'
+    CALL Build_MLSAuxData (sd_id, dataset, TP, lastIndex=noMAF, dims=dims)
+    dataset%name = 'TPdigP'
+    CALL Build_MLSAuxData (sd_id, dataset, TPdigP, lastIndex=noMAF, dims=dims)
+    dataset%name = 'TPdigN'
+    CALL Build_MLSAuxData (sd_id, dataset, TPdigN, lastIndex=noMAF, dims=dims)
+
+    CALL Deallocate_DataProducts (dataset)
+
+  END SUBROUTINE OutputL1B_diags
+
+!=============================================================================
+  SUBROUTINE OutputL1B_diagsT (sd_Id, MAFno, counterMAF, MAFStartTimeTAI, &
+       nvBounds, OrbNo, Chisq, dLlo, yTsys, ColdCnts, HotCnts, LLO_Bias)
+!=============================================================================
+
+    USE MLSL1Common, ONLY: THzchans, THzNum
+
+    INTEGER, INTENT(IN) :: sd_id
+    INTEGER, INTENT(IN), OPTIONAL :: counterMAF, MAFno, nvBounds, OrbNo
+    REAL(r8), INTENT (IN), OPTIONAL :: MAFStartTimeTAI
+    REAL(r8), DIMENSION(:,:), INTENT (IN), OPTIONAL :: Chisq, dLlo, yTsys
+    REAL, DIMENSION(:,:), INTENT (IN), OPTIONAL :: ColdCnts, HotCnts
+    REAL, DIMENSION(:), INTENT (IN), OPTIONAL :: LLO_Bias
+
+    INTEGER :: dims(3), status
+    TYPE (DataProducts_T) :: dataset
+    REAL(r8) :: MAFStartTimeGIRD
+
+    dims(1) = THzchans
+    dims(2) = THzNum
+    dims(3) = 1
+    IF (PRESENT (counterMAF) .AND. PRESENT (MAFno)) THEN
+
+       DEALLOCATE (dataset%Dimensions, stat=status)
+       ALLOCATE (dataset%Dimensions(1), stat=status)
+       dataset%name      = 'counterMAF        '
+       dataset%data_type = 'integer           '
+       dataset%Dimensions(1) = 'MAF'
+       CALL Build_MLSAuxData (sd_Id, dataset, counterMAF, lastIndex=MAFno)
+
+    ENDIF
+
+    IF (PRESENT (MAFStartTimeTAI) .AND. PRESENT (MAFno)) THEN
+
+       ! Convert TAI time to GIRD time
+
+       MAFStartTimeGIRD = MAFStartTimeTAI + TAItoGIRD
+
+       dataset%name      = 'MAFStartTimeGIRD  '
+       dataset%data_type = 'double            '
+       CALL Build_MLSAuxData (sd_Id, dataset, MAFStartTimeGIRD, lastIndex=MAFno)
+       CALL Deallocate_DataProducts (dataset)
+
+    ENDIF
+
+    IF (PRESENT (nvBounds) .AND. PRESENT (MAFno)) THEN
+
+       DEALLOCATE (dataset%Dimensions, stat=status)
+       ALLOCATE (dataset%Dimensions(1), stat=status)
+       dataset%name      = 'nvBounds          '
+       dataset%data_type = 'integer           '
+       dataset%Dimensions(1) = 'MAF'
+       CALL Build_MLSAuxData (sd_Id, dataset, nvBounds, lastIndex=MAFno)
+
+    ENDIF
+
+    IF (PRESENT (ColdCnts) .AND. PRESENT (MAFno)) THEN
+
+       DEALLOCATE (dataset%Dimensions, stat=status)
+       ALLOCATE (dataset%Dimensions(3), stat=status)
+       dataset%name      = 'ColdCnts          '
+       dataset%data_type = 'real              '
+       dataset%Dimensions(1) = 'THzChan'
+       dataset%Dimensions(2) = 'THzBand'
+       dataset%Dimensions(3) = 'MAF'
+       CALL Build_MLSAuxData (sd_Id, dataset, ColdCnts, lastIndex=MAFno, &
+            dims=dims)
+
+    ENDIF
+
+    IF (PRESENT (HotCnts) .AND. PRESENT (MAFno)) THEN
+
+       DEALLOCATE (dataset%Dimensions, stat=status)
+       ALLOCATE (dataset%Dimensions(3), stat=status)
+       dataset%name      = 'HotCnts           '
+       dataset%data_type = 'real              '
+       dataset%Dimensions(1) = 'THzChan'
+       dataset%Dimensions(2) = 'THzBand'
+       dataset%Dimensions(3) = 'MAF'
+       CALL Build_MLSAuxData (sd_Id, dataset, HotCnts, lastIndex=MAFno, &
+            dims=dims)
+
+    ENDIF
+
+    IF (PRESENT (LLO_Bias) .AND. PRESENT (MAFno)) THEN
+
+       DEALLOCATE (dataset%Dimensions, stat=status)
+       ALLOCATE (dataset%Dimensions(3), stat=status)
+       dataset%name      = 'LLO_Bias          '
+       dataset%data_type = 'real              '
+       dataset%Dimensions(1) = 'MIFno'
+       dataset%Dimensions(2) = 'MAF'
+       CALL Build_MLSAuxData (sd_Id, dataset, LLO_Bias(1:148), &
+            lastIndex=MAFno, dims=(/148, 1/))
+
+    ENDIF
+
+    IF (PRESENT (Chisq) .AND. PRESENT (OrbNo)) THEN
+
+       DEALLOCATE (dataset%Dimensions, stat=status)
+       ALLOCATE (dataset%Dimensions(3), stat=status)
+       dataset%name      = 'Chisq             '
+       dataset%data_type = 'double            '
+       dataset%Dimensions(1) = 'THzChan'
+       dataset%Dimensions(2) = 'THzBand'
+       dataset%Dimensions(3) = 'OrbNo'
+       CALL Build_MLSAuxData (sd_Id, dataset, Chisq, lastIndex=OrbNo, dims=dims)
+
+    ENDIF
+
+    IF (PRESENT (dLlo) .AND. PRESENT (OrbNo)) THEN
+
+       DEALLOCATE (dataset%Dimensions, stat=status)
+       ALLOCATE (dataset%Dimensions(3), stat=status)
+       dataset%name      = 'dLlo              '
+       dataset%data_type = 'double            '
+       dataset%Dimensions(1) = 'THzChan'
+       dataset%Dimensions(2) = 'THzBand'
+       dataset%Dimensions(3) = 'OrbNo'
+       CALL Build_MLSAuxData (sd_Id, dataset, dLlo, lastIndex=OrbNo, dims=dims)
+
+    ENDIF
+ 
+    IF (PRESENT (yTsys) .AND. PRESENT (OrbNo)) THEN
+
+       DEALLOCATE (dataset%Dimensions, stat=status)
+       ALLOCATE (dataset%Dimensions(3), stat=status)
+       dataset%name      = 'yTsys             '
+       dataset%data_type = 'double            '
+       dataset%Dimensions(1) = 'THzChan'
+       dataset%Dimensions(2) = 'THzBand'
+       dataset%Dimensions(3) = 'OrbNo'
+       CALL Build_MLSAuxData (sd_Id, dataset, yTsys, lastIndex=OrbNo, dims=dims)
+
+    ENDIF
+
+  END SUBROUTINE OutputL1B_diagsT
+
+!=============================================================================
+  SUBROUTINE OutputL1B_Chi2 (sd_id)
+!=============================================================================
+
+    ! This subroutine writes the default chi2 data
+
+    USE MLSL1Common, ONLY: BandChi2, BandChans
+    USE MLSHDF5, ONLY: SaveAsHDF5DS, MakeHDF5Attribute
+
+    INTEGER, INTENT(IN) :: sd_id
+
+    CHARACTER(LEN=16) :: DimName(2)
+
+    CALL SaveAsHDF5DS (sd_id, 'BandChans', BandChans)
+    DimName(1) = 'BandNo'
+    CALL MakeHDF5Attribute (sd_id, 'BandChans', 'Dimensions', DimName(1:1))
+
+    CALL SaveAsHDF5DS (sd_id, 'BandChi2', BandChi2)
+    DimName(2) = 'ChanNo'
+    CALL MakeHDF5Attribute (sd_id, 'BandChi2', 'Dimensions', DimName)
+
+ END SUBROUTINE OutputL1B_Chi2
+
+!=============================================================================
+  LOGICAL FUNCTION not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  CHARACTER (len=*), PARAMETER :: IdParm = &
+       "$Id: OutputL1B.f90,v 2.30 2016/03/15 22:17:59 whdaffer Exp $"
+  CHARACTER (len=LEN(idParm)), SAVE :: Id = idParm
+!---------------------------------------------------------------------------
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  END FUNCTION not_used_here
+END MODULE OutputL1B
+!=============================================================================
+
+! $Log: OutputL1B.f90,v $
+! Revision 2.30  2016/03/15 22:17:59  whdaffer
+! Merged whd-rel-1-0 back onto main branch. Most changes
+! are to comments, but there's some modification to Calibration.f90
+! and MLSL1Common to support some new modules: MLSL1Debug and SnoopMLSL1.
+!
+! Revision 2.29.6.1  2015/10/09 10:21:38  whdaffer
+! checkin of continuing work on branch whd-rel-1-0
+!
+! Revision 2.29  2009/07/30 20:40:44  honghanh
+! Remove a deallocate statement so that dataset sc/VelECR has a Dimensions attribute
+!
+! Revision 2.28  2009/06/01 14:02:34  perun
+! Output galactic center latitude and longitudes for GHz and THz
+!
+! Revision 2.27  2008/01/15 19:55:24  perun
+! Add DisableRadOut flag to stop outputting unwanted bands.
+!
+! Revision 2.26  2007/06/21 21:04:31  perun
+! Only output to RADD file if DACS calibration is enabled and output LLO_Bias
+!
+! Revision 2.25  2006/09/28 16:16:36  perun
+! Output ModelOffset and Poffset as just one value per MAF for the MLSL1G program
+!
+! Revision 2.24  2006/09/26 17:11:01  perun
+! Attempt to write diagnostics offsets for GHz only!
+!
+! Revision 2.23  2006/09/26 16:02:27  perun
+! Output DACS Chi2 values to DIAG file
+!
+! Revision 2.22  2006/08/02 18:56:59  perun
+! Removed AscDesc dimension and added Tsys for DACS in DIAG file
+!
+! Revision 2.21  2006/06/14 13:48:18  perun
+! Output TP data in the DIAG file
+!
+! Revision 2.20  2006/04/05 18:10:40  perun
+! Remove unused variables
+!
+! Revision 2.19  2006/03/24 15:16:37  perun
+! Add THz/GeodAltX to L1BOA, Poffset and ModelOffset to DIAG and ColdCnts and HotCnts to DIAGT
+!
+! Revision 2.18  2005/12/06 19:28:55  perun
+! Added outputting BO_stat for both GHz and THz tangent point records
+!
+! Revision 2.17  2005/08/24 15:52:26  perun
+! Output Pos_Prime for both GHz and THz in the L1BOA file
+!
+! Revision 2.16  2005/06/23 18:41:36  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.15  2004/12/01 17:11:05  perun
+! Test calibrated DACS data flag in order to output radiances
+!
+! Revision 2.14  2004/11/10 15:34:41  perun
+! Add azimAngle fields; add baseline fields; add fills when needed
+!
+! Revision 2.13  2004/08/12 13:51:50  perun
+! Version 1.44 commit
+!
+! Revision 2.12  2004/05/14 15:59:11  perun
+! Version 1.43 commit
+!
+! Revision 2.11  2004/01/09 17:46:22  perun
+! Version 1.4 commit
+!
+! Revision 2.10  2003/08/15 14:25:04  perun
+! Version 1.2 commit
+!
+! Revision 2.9  2003/01/31 18:13:34  perun
+! Version 1.1 commit
+!
+! Revision 2.8  2002/11/20 15:44:02  perun
+! Use HDFversion instead of HDFVersionString & remove "default" calls
+!
+! Revision 2.7  2002/11/07 21:58:30  jdone
+! Incorporated HDF4/HDF5 switch; moved HDF4 routines to OutputL1B_HDF4.f90
+!
+! Revision 2.6  2002/03/29 20:18:34  perun
+! Version 1.0 commit
+!
+! Revision 2.4  2001/12/06 01:03:46  pwagner
+! Now writes orbit incline angle in ECR
+!
+! Revision 2.3  2001/12/04 00:29:16  pwagner
+! Made public things needed by sids
+!
+! Revision 2.2  2001/10/12 22:11:05  livesey
+! Tidied things up a bit, added scVelECR, but not filled yet
+!
+! Revision 2.1  2001/02/23 18:26:11  perun
+! Version 0.5 commit
+!
+! Revision 2.0  2000/09/05 18:55:14  ahanzel
+! Changing file revision to 2.0.
+!
+! Revision 1.4  2000/02/22 15:00:16  nakamura
+! Incorporated GetFullMLSSignalName subroutine to concatenate SD names from signal input.
+!
+@
+
+
+2.30
+log
+@Merged whd-rel-1-0 back onto main branch. Most changes
+are to comments, but there's some modification to Calibration.f90
+and MLSL1Common to support some new modules: MLSL1Debug and SnoopMLSL1.
+@
+text
+@d36 7
+d401 1
+a401 1
+
+d1032 1
+a1032 1
+       "$Id: OutputL1B.f90,v 2.29.6.1 2015/10/09 10:21:38 whdaffer Exp $"
+d1041 5
+@
+
+
+2.29
+log
+@Remove a deallocate statement so that dataset sc/VelECR has a Dimensions attribute
+@
+text
+@d408 7
+d416 2
+a417 1
+            counterMAF, fill_value=INT_FILL, lastIndex=noMAF)
+d421 1
+d494 1
+a494 1
+             IF (INDEX(name,'R5') /= 0 ) THEN  ! Don't allow R5 in GHz file
+d1025 1
+a1025 1
+       "$Id: OutputL1B.f90,v 2.28 2009/06/01 14:02:34 perun Exp $"
+d1034 6
+@
+
+
+2.29.6.1
+log
+@checkin of continuing work on branch whd-rel-1-0
+@
+text
+@a407 7
+
+      !<whd> 
+      ! I assume that RADGID is set ONLY when we're in MLSL1G, so
+      ! this is basically a way of testing on whether the caller is
+      ! MLSL1G 
+      ! </whd>
+
+d409 1
+a409 2
+            counterMAF, fill_value=INT_FILL, lastIndex=noMAF) !<whd> doing DACS processing </whd>
+
+a412 1
+      !<whd> Or here we're coming from  MLSL1T, the Teraherz module </whd>
+d485 1
+a485 1
+             IF (INDEX(name,'R5') /= 0 ) THEN  ! Don't allow R5 in GHz file: <whd>R5 is the THz radiometer</whd>
+d1016 1
+a1016 1
+       "$Id: OutputL1B.f90,v 2.29 2009/07/30 20:40:44 honghanh Exp $"
+a1024 3
+! Revision 2.29  2009/07/30 20:40:44  honghanh
+! Remove a deallocate statement so that dataset sc/VelECR has a Dimensions attribute
+!
+@
+
+
+2.28
+log
+@Output galactic center latitude and longitudes for GHz and THz
+@
+text
+@a148 1
+    CALL Deallocate_DataProducts (dataset)
+a150 1
+
+d508 1
+a508 1
+       IF ((ANY(rad(i)%value /= 0.0)) .AND. (sd_id /= -999)) THEN   
+d545 1
+d584 1
+a584 1
+
+d1016 1
+a1016 1
+       "$Id: OutputL1B.f90,v 2.27 2008/01/15 19:55:24 perun Exp $"
+d1025 3
+@
+
+
+2.27
+log
+@Add DisableRadOut flag to stop outputting unwanted bands.
+@
+text
+@d224 5
+d322 5
+d1017 1
+a1017 1
+       "$Id: OutputL1B.f90,v 2.26 2007/06/21 21:04:31 perun Exp $"
+d1026 3
+@
+
+
+2.26
+log
+@Only output to RADD file if DACS calibration is enabled and output LLO_Bias
+@
+text
+@d468 2
+d1007 1
+a1007 1
+       "$Id: OutputL1B.f90,v 2.25 2006/09/28 16:16:36 perun Exp $"
+d1016 3
+@
+
+
+2.25
+log
+@Output ModelOffset and Poffset as just one value per MAF for the MLSL1G program
+@
+text
+@d399 3
+a401 3
+    IF (sdId%RADDID /= 0) THEN
+       CALL Build_MLSAuxData (sdId%RADDID, dataset, counterMAF, &
+            fill_value=INT_FILL, lastIndex=noMAF)
+d414 3
+a416 3
+    IF (sdId%RADDID /= 0) THEN
+       CALL Build_MLSAuxData (sdId%RADDID, dataset, MAFStartTimeGIRD, &
+            fill_value=-1.0d0, lastIndex=noMAF)
+d428 3
+a430 3
+    IF (sdId%RADDID /= 0) THEN
+       CALL Build_MLSAuxData (sdId%RADDID, dataset, Reflec%Pri, &
+            fill_value=RAD_ERR_FILL, lastIndex=noMAF)
+d435 3
+a437 3
+    IF (sdId%RADDID /= 0) THEN
+       CALL Build_MLSAuxData (sdId%RADDID, dataset, Reflec%Sec, &
+            fill_value=RAD_ERR_FILL, lastIndex=noMAF)
+d442 3
+a444 3
+    IF (sdId%RADDID /= 0) THEN
+       CALL Build_MLSAuxData (sdId%RADDID, dataset, Reflec%Ter, &
+            fill_value=RAD_ERR_FILL, lastIndex=noMAF)
+d842 1
+a842 1
+       nvBounds, OrbNo, Chisq, dLlo, yTsys, ColdCnts, HotCnts)
+d852 1
+d924 12
+d1005 1
+a1005 1
+       "$Id: OutputL1B.f90,v 2.24 2006/09/26 17:11:01 perun Exp $"
+d1014 3
+@
+
+
+2.24
+log
+@Attempt to write diagnostics offsets for GHz only!
+@
+text
+@d528 1
+a528 2
+          IF (L1Config%Output%WriteDiagOffsets .AND. &
+               (sd_id /= sdId%RADTID)) THEN
+d530 2
+a531 2
+             CALL Build_MLSAuxData (sdId%DiagId, dataset, rad(i)%Poffset, &
+                  lastIndex=noMAF, dims=dims, fill_value=RAD_FILL)
+d534 1
+a534 1
+                  lastIndex=noMAF, dims=dims, fill_value=RAD_FILL)
+d992 1
+a992 1
+       "$Id: OutputL1B.f90,v 2.23 2006/09/26 16:02:27 perun Exp $"
+d1001 3
+@
+
+
+2.23
+log
+@Output DACS Chi2 values to DIAG file
+@
+text
+@d526 1
+a526 1
+! Output diagnostic offsets:
+d528 2
+a529 1
+          IF (L1Config%Output%WriteDiagOffsets) THEN
+d993 1
+a993 1
+       "$Id: OutputL1B.f90,v 2.22 2006/08/02 18:56:59 perun Exp $"
+d1002 3
+@
+
+
+2.22
+log
+@Removed AscDesc dimension and added Tsys for DACS in DIAG file
+@
+text
+@d815 9
+a859 1
+
+d992 1
+a992 1
+       "$Id: OutputL1B.f90,v 2.21 2006/06/14 13:48:18 perun Exp $"
+d1001 3
+@
+
+
+2.21
+log
+@Output TP data in the DIAG file
+@
+text
+@d630 2
+a631 1
+       LatBinChanAvg, BaselineAlt, LatBin)
+d638 3
+a640 4
+    INTEGER, DIMENSION(:), OPTIONAL :: AscDescIndx
+    INTEGER, DIMENSION(:), OPTIONAL :: LatBinIndx
+    REAL, DIMENSION(:,:,:,:), OPTIONAL :: LatBinChanAvg
+    REAL, DIMENSION(:,:,:), OPTIONAL :: LatBin
+d642 1
+d645 1
+a645 1
+    CHARACTER(LEN=16) :: DimName(4)
+d667 7
+d677 1
+a677 1
+       DimName(2) = 'GHzBand'
+a678 1
+       DimName(4) = 'AscDesc'
+a685 1
+       DimName(3) = 'AscDesc'
+d687 1
+a687 1
+            DimName(1:3))
+d693 1
+a693 1
+       DimName(2) = 'GHzBand'
+d697 7
+d716 1
+a716 1
+         deflt_zero, MaxMIFs, DACSnum
+d803 12
+d984 1
+a984 1
+       "$Id: OutputL1B.f90,v 2.20 2006/04/05 18:10:40 perun Exp $"
+d993 3
+@
+
+
+2.20
+log
+@Remove unused variables
+@
+text
+@d696 2
+a697 1
+  SUBROUTINE OutputL1B_diags (sd_id, noMAF, counterMAF, MAFStartTimeTAI, Zeros)
+d703 1
+a703 1
+         deflt_zero
+d710 1
+d790 12
+d959 1
+a959 1
+       "$Id: OutputL1B.f90,v 2.19 2006/03/24 15:16:37 perun Exp $"
+d968 3
+@
+
+
+2.19
+log
+@Add THz/GeodAltX to L1BOA, Poffset and ModelOffset to DIAG and ColdCnts and HotCnts to DIAGT
+@
+text
+@d924 1
+a924 1
+    USE MLSL1Common, ONLY: NumBands, BandChi2, BandChans
+d945 1
+a945 1
+       "$Id: OutputL1B.f90,v 2.18 2005/12/06 19:28:55 perun Exp $"
+d954 3
+@
+
+
+2.18
+log
+@Added outputting BO_stat for both GHz and THz tangent point records
+@
+text
+@d1 1
+a1 1
+! Copyright 2005, by the California Institute of Technology. ALL
+d31 1
+a31 1
+  character (len=*), private, parameter :: ModuleName= &
+d33 1
+a33 1
+  private :: not_used_here 
+d293 3
+d526 11
+d794 1
+a794 1
+       nvBounds, OrbNo, Chisq, dLlo, yTsys)
+d803 1
+d848 29
+a901 1
+
+d942 1
+a942 1
+  logical function not_used_here()
+d944 3
+a946 3
+  character (len=*), parameter :: IdParm = &
+       "$Id: OutputL1B.f90,v 2.17 2005/08/24 15:52:26 perun Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+d949 1
+a949 1
+  end function not_used_here
+d954 3
+@
+
+
+2.17
+log
+@Output Pos_Prime for both GHz and THz in the L1BOA file
+@
+text
+@d221 3
+d311 3
+d902 1
+a902 1
+       "$Id: OutputL1B.f90,v 2.16 2005/06/23 18:41:36 pwagner Exp $"
+d911 3
+@
+
+
+2.16
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d32 1
+a32 1
+       "$RCSfile: $"
+d231 1
+a231 1
+    CALL Build_MLSAuxData (sd_id,dataset, tp%tpECI, lastIndex=noMAF)
+d233 1
+a233 1
+    CALL Build_MLSAuxData (sd_id,dataset, tp%tpECR, lastIndex=noMAF)
+d236 6
+a241 1
+    CALL Build_MLSAuxData (sd_id,dataset, tp%tpECRtoFOV, lastIndex=noMAF)
+d324 4
+d896 1
+a896 1
+       "$Id: $"
+d905 3
+@
+
+
+2.15
+log
+@Test calibrated DACS data flag in order to output radiances
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d30 5
+a34 5
+  !------------------- RCS Ident Info -----------------------
+  CHARACTER(LEN=130) :: Id = &
+    "$Id: OutputL1B.f90,v 2.14 2004/11/10 15:34:41 perun Exp $"
+  CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile: OutputL1B.f90,v $"
+  !----------------------------------------------------------
+d884 8
+d896 3
+@
+
+
+2.14
+log
+@Add azimAngle fields; add baseline fields; add fills when needed
+@
+text
+@d24 1
+a24 1
+    "$Id: OutputL1B.f90,v 2.13 2004/08/12 13:51:50 perun Exp $"
+d323 1
+a323 1
+    USE MLSL1Config, ONLY: MIFsGHz, MIFsTHz
+d458 1
+a458 1
+       ELSE IF (INDEX(name, 'MB') /= 0 ) THEN
+d461 1
+a461 1
+       ELSE IF (INDEX(name, 'WF') /= 0 ) THEN
+d464 1
+a464 1
+       ELSE IF (INDEX(name, 'DACS') /= 0 ) THEN
+d880 3
+@
+
+
+2.13
+log
+@Version 1.44 commit
+@
+text
+@d20 1
+a20 1
+       OutputL1B_DiagsT
+d24 1
+a24 1
+    "$Id: OutputL1B.f90,v 2.12 2004/05/14 15:59:11 perun Exp $"
+d175 2
+d258 2
+d308 3
+d321 1
+d326 1
+d329 3
+a331 3
+    TYPE (L1BFileInfo_T) :: sdId
+    TYPE (Radiance_T) :: rad(:)
+    TYPE (Reflec_T) :: Reflec
+a333 1
+    REAL(r8) :: MAFStartTimeGIRD
+d336 1
+a336 1
+    TYPE( DataProducts_T ) :: dataset    
+d338 1
+a338 1
+    INTEGER, DIMENSION(3) :: dims
+d340 2
+a341 1
+    INTEGER :: i, status
+d354 1
+a354 1
+    REAL, PARAMETER :: RAD_FILL = -999.9, RAD_ERR_FILL = -1.0
+d357 1
+d367 1
+d374 4
+a377 2
+       CALL Build_MLSAuxData (sdId%RADDID, dataset, counterMAF, lastIndex=noMAF)
+       CALL Build_MLSAuxData (sdId%RADGID, dataset, counterMAF, lastIndex=noMAF)
+d379 2
+a380 1
+       CALL Build_MLSAuxData (sdId%RADTID, dataset, counterMAF, lastIndex=noMAF)
+d390 1
+a390 1
+            lastIndex=noMAF)
+d392 1
+a392 1
+            lastIndex=noMAF)
+d395 1
+a395 1
+            lastIndex=noMAF)
+d403 4
+a406 2
+       CALL Build_MLSAuxData (sdId%RADDID, dataset, Reflec%Pri, lastIndex=noMAF)
+       CALL Build_MLSAuxData (sdId%RADGID, dataset, Reflec%Pri, lastIndex=noMAF)
+d410 4
+a413 2
+       CALL Build_MLSAuxData (sdId%RADDID, dataset, Reflec%Sec, lastIndex=noMAF)
+       CALL Build_MLSAuxData (sdId%RADGID, dataset, Reflec%Sec, lastIndex=noMAF)
+d417 4
+a420 2
+       CALL Build_MLSAuxData (sdId%RADDID, dataset, Reflec%Ter, lastIndex=noMAF)
+       CALL Build_MLSAuxData (sdId%RADGID, dataset, Reflec%Ter, lastIndex=noMAF)
+d433 4
+d440 2
+d485 1
+d500 25
+d555 28
+d587 1
+d853 23
+d880 3
+@
+
+
+2.12
+log
+@Version 1.43 commit
+@
+text
+@d24 1
+a24 1
+    "$Id: OutputL1B.f90,v 2.11 2004/01/09 17:46:22 perun Exp $"
+d423 6
+a428 1
+             sd_id = sdId%RADGID
+d537 1
+d578 1
+a578 1
+  SUBROUTINE OutputL1B_diags (noMAF, sd_Id, counterMAF, MAFStartTimeTAI)
+d583 2
+a584 1
+    USE MLSL1Common, ONLY: FBchans, GHzNum, MBchans, MBnum, WFchans, WFnum
+d586 1
+d588 4
+a591 2
+    INTEGER, INTENT(IN) :: counterMAF, noMAF, sd_id
+    REAL(r8), INTENT (IN) :: MAFStartTimeTAI
+d593 1
+d598 16
+d732 1
+a732 1
+       ALLOCATE (dataset%Dimensions(2), stat=status)
+d737 1
+d745 1
+a745 1
+       ALLOCATE (dataset%Dimensions(2), stat=status)
+d750 1
+d759 1
+a759 1
+       ALLOCATE (dataset%Dimensions(2), stat=status)
+d764 1
+d776 3
+@
+
+
+2.11
+log
+@Version 1.4 commit
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+d19 2
+a20 1
+       OutputL1B_THz, OutputL1B_rad, OutputL1B_LatBinData, OutputL1B_diags
+d24 1
+a24 1
+    "$Id: OutputL1B.f90,v 2.10 2003/08/15 14:25:04 perun Exp $"
+d569 1
+a569 1
+ END SUBROUTINE OutputL1B_LatBinData
+d571 1
+a571 1
+  !-------------------------------------------------------- OutputL1B_rad
+d573 1
+d648 94
+d746 3
+@
+
+
+2.10
+log
+@Version 1.2 commit
+@
+text
+@d9 2
+a10 3
+  USE MLSL1Config, ONLY: L1Config
+  USE MLSFiles, ONLY: HDFVERSION_4
+  USE MLSL1Rad, ONLY: Radiance_T
+d12 1
+a12 6
+  USE OutputL1B_HDF5, ONLY: OUTPUTL1B_CREATE_HDF5, OUTPUTL1B_INDEX_HDF5, &
+       OUTPUTL1B_SC_HDF5, OUTPUTL1B_GHZ_HDF5, OUTPUTL1B_THZ_HDF5, &
+       OUTPUTL1B_RAD_HDF5
+  USE OutputL1B_HDF4, ONLY: OUTPUTL1B_CREATE_HDF4, OUTPUTL1B_INDEX_HDF4, &
+       OUTPUTL1B_SC_HDF4, OUTPUTL1B_GHZ_HDF4, OUTPUTL1B_THZ_HDF4, &
+       OUTPUTL1B_RAD_HDF4
+d18 2
+a19 2
+  PUBLIC :: OUTPUTL1B_CREATE, OUTPUTL1B_INDEX, OUTPUTL1B_SC, OUTPUTL1B_GHZ, &
+       OUTPUTL1B_THZ, OUTPUTL1B_RAD
+d23 1
+a23 1
+    "$Id: OutputL1B.f90,v 2.9 2003/01/31 18:13:34 perun Exp $"
+d26 3
+d30 1
+d32 1
+a32 1
+  SUBROUTINE OutputL1B_create (sdId, THz)
+d40 7
+a46 5
+    IF (L1Config%Output%HDFversion == HDFVERSION_4) THEN
+       CALL OutputL1B_create_HDF4 (sdId, THz)
+    ELSE IF (.NOT. THz) THEN
+       CALL OutputL1B_create_HDF5 (sdId)
+    ENDIF
+a47 1
+  END SUBROUTINE OutputL1B_create
+d54 22
+d77 1
+a77 5
+    IF (L1Config%Output%HDFversion == HDFVERSION_4) THEN
+       CALL OutputL1B_index_HDF4 (noMAF, sd_id, index)
+    ELSE
+       CALL OutputL1B_index_HDF5 (noMAF, sd_id, index)
+    ENDIF
+d80 1
+d88 55
+d144 1
+a144 5
+    IF (L1Config%Output%HDFversion == HDFVERSION_4) THEN
+       CALL OutputL1B_sc_HDF4 (noMAF, sd_id, sc)
+    ELSE
+       CALL OutputL1B_sc_HDF5 (noMAF, sd_id, sc)
+    ENDIF
+d147 1
+d155 71
+d227 1
+a227 5
+    IF (L1Config%Output%HDFversion == HDFVERSION_4) THEN
+       CALL OutputL1B_GHz_HDF4 (noMAF, sd_id, tp)
+    ELSE
+       CALL OutputL1B_GHz_HDF5 (noMAF, sd_id, tp)
+    ENDIF
+d237 66
+d304 1
+a304 5
+    IF (L1Config%Output%HDFversion == HDFVERSION_4) THEN
+       CALL OutputL1B_THz_HDF4 (noMAF, sd_id, tp)
+    ELSE
+       CALL OutputL1B_THz_HDF5 (noMAF, sd_id, tp)
+    ENDIF
+d307 1
+d314 4
+a317 1
+
+d326 22
+d350 17
+a366 1
+    MAFStartTimeGIRD = MAFStartTimeTAI + 1104537627.0d00
+d368 10
+a377 3
+    IF (L1Config%Output%HDFversion == HDFVERSION_4) THEN
+       CALL OutputL1B_rad_HDF4 (noMAF, sdId, counterMAF, Reflec, &
+            MAFStartTimeGIRD, rad)
+d379 21
+a399 2
+       CALL OutputL1B_rad_HDF5 (noMAF, sdId, counterMAF, Reflec, &
+            MAFStartTimeGIRD, rad)
+d402 100
+d503 142
+d650 3
+a682 1
+
+@
+
+
+2.9
+log
+@Version 1.1 commit
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+d9 2
+a10 2
+  USE MLSL1Config, ONLY: MIFsGHz, MIFsTHz, L1Config
+  USE MLSFiles, ONLY: HDFVERSION_4, HDFVERSION_5  
+d29 1
+a29 1
+    "$Id: OutputL1B.f90,v 2.8 2002/11/20 15:44:02 perun Exp $"
+d109 2
+a110 1
+  SUBROUTINE OutputL1B_rad (noMAF, sdId, counterMAF, MAFStartTimeTAI, rad)
+d113 2
+d118 1
+d128 2
+a129 1
+       CALL OutputL1B_rad_HDF4 (noMAF, sdId, counterMAF, MAFStartTimeGIRD, rad)
+d131 2
+a132 1
+       CALL OutputL1B_rad_HDF5 (noMAF, sdId, counterMAF, MAFStartTimeGIRD, rad)
+d141 3
+@
+
+
+2.8
+log
+@Use HDFversion instead of HDFVersionString & remove "default" calls
+@
+text
+@d29 2
+a30 2
+    "$Id: OutputL1B.f90,v 2.7 2002/11/07 21:58:30 jdone Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName="$RCSfile: OutputL1B.f90,v $"
+d34 1
+a34 1
+  SUBROUTINE OutputL1B_create (sdId)
+d37 1
+d39 2
+a40 1
+    TYPE( L1BFileInfo_T ), INTENT(IN) :: sdId
+d43 2
+a44 2
+       CALL OutputL1B_create_HDF4 (sdId)
+    ELSE
+d53 1
+a53 1
+    TYPE( L1BOAindex_T), INTENT(IN) :: index
+d66 1
+d68 1
+a68 1
+    TYPE( L1BOAsc_T ), INTENT(IN) :: sc
+d81 1
+d83 1
+a83 1
+    TYPE( L1BOAtp_T ), INTENT(IN) :: tp
+d96 1
+d98 1
+a98 1
+    TYPE( L1BOAtp_T ), INTENT(IN) :: tp
+d109 1
+a109 1
+  SUBROUTINE OutputL1B_rad (noMAF, sdId, counterMAF, rad)
+d111 1
+d113 2
+a114 2
+    TYPE( L1BFileInfo_T ) :: sdId
+    TYPE( Radiance_T ) :: rad(:)
+d116 6
+d124 1
+a124 1
+       CALL OutputL1B_rad_HDF4 (noMAF, sdId, counterMAF, rad)
+d126 1
+a126 1
+       CALL OutputL1B_rad_HDF5 (noMAF, sdId, counterMAF, rad)
+d135 3
+@
+
+
+2.7
+log
+@Incorporated HDF4/HDF5 switch; moved HDF4 routines to OutputL1B_HDF4.f90
+@
+text
+@d3 1
+d5 2
+d8 4
+a11 4
+  USE MLSL1Common, only: L1BFileInfo_T
+  USE MLSL1Config, only: MIFsGHz, MIFsTHz, L1Config
+  USE MLSStrings, only: lowercase
+  USE MLSL1Rad, only: Radiance_T
+d13 7
+a19 4
+  USE OutputL1B_HDF5, ONLY: OUTPUTL1B_CREATE_HDF5, OUTPUTL1B_INDEX_HDF5, OUTPUTL1B_SC_HDF5, & 
+       OUTPUTL1B_GHZ_HDF5, OUTPUTL1B_THZ_HDF5, OUTPUTL1B_RAD_HDF5
+  USE OutputL1B_HDF4, ONLY: OUTPUTL1B_CREATE_HDF4, OUTPUTL1B_INDEX_HDF4, OUTPUTL1B_SC_HDF4, & 
+       OUTPUTL1B_GHZ_HDF4, OUTPUTL1B_THZ_HDF4, OUTPUTL1B_RAD_HDF4
+d21 1
+d23 4
+a26 2
+  PUBLIC :: OUTPUTL1B_CREATE, OUTPUTL1B_INDEX, OUTPUTL1B_SC, OUTPUTL1B_GHZ, OUTPUTL1B_THZ, & 
+       OUTPUTL1B_RAD
+d28 2
+a29 2
+  CHARACTER(LEN=130) :: Id = &                                                    
+    "$Id: OutputL1B.f90,v 2.6 2002/03/29 20:18:34 perun Exp $"
+d34 3
+a36 3
+  SUBROUTINE OutputL1B_create(sdId)
+    ! This subroutine opens/creates the SD output files, and names the arrays and
+    ! dimensions contained within them.
+d38 1
+a38 1
+    type( L1BFileInfo_T ), intent(IN) :: sdId
+d40 6
+a45 8
+    select case (lowercase(trim(L1Config%Output%HDFVersionString))) 
+       case ('hdf4')
+          call OutputL1B_create_HDF4(sdId)
+       case ('hdf5')
+          call OutputL1B_create_HDF5(sdId)
+       case default
+          call OutputL1B_create_HDF4(sdId)
+    end select 
+d48 2
+a49 2
+  SUBROUTINE OutputL1B_index(noMAF, sd_id, index)
+    ! This subroutine writes the time/MIF indexing quantities to the HDF-SD file. 
+d54 6
+a59 8
+   select case (lowercase(trim(L1Config%Output%HDFVersionString))) 
+       case ('hdf4')
+          call OutputL1B_index_HDF4(noMAF, sd_id, index)
+       case ('hdf5')
+          call OutputL1B_index_HDF5(noMAF, sd_id, index)
+       case default
+          call OutputL1B_index_HDF4(noMAF, sd_id, index)
+    end select 
+d62 1
+a62 1
+  SUBROUTINE OutputL1B_sc(noMAF, sd_id, sc)
+d68 6
+a73 8
+   select case (lowercase(trim(L1Config%Output%HDFVersionString))) 
+       case ('hdf4')
+          call OutputL1B_sc_HDF4(noMAF, sd_id, sc)
+       case ('hdf5')
+          call OutputL1B_sc_HDF5(noMAF, sd_id, sc)
+       case default
+          call OutputL1B_sc_HDF4(noMAF, sd_id, sc)
+    end select 
+d76 2
+a77 2
+  SUBROUTINE OutputL1B_GHz(noMAF, sd_id, tp)
+    ! This subroutine writes the GHz tangent point quantities to the HDF-SD file.
+d82 6
+a87 8
+   select case (lowercase(trim(L1Config%Output%HDFVersionString))) 
+       case ('hdf4')
+          call OutputL1B_GHz_HDF4(noMAF, sd_id, tp)
+       case ('hdf5')
+          call OutputL1B_GHz_HDF5(noMAF, sd_id, tp)
+       case default
+          call OutputL1B_GHz_HDF4(noMAF, sd_id, tp)
+    end select 
+d90 2
+a91 2
+  SUBROUTINE OutputL1B_THz(noMAF, sd_id, tp)
+    ! This subroutine writes the THz tangent point quantities to the HDF-SD file.
+d96 6
+a101 8
+   select case (lowercase(trim(L1Config%Output%HDFVersionString))) 
+       case ('hdf4')
+          call OutputL1B_THz_HDF4(noMAF, sd_id, tp)
+       case ('hdf5')
+          call OutputL1B_THz_HDF5(noMAF, sd_id, tp)
+       case default
+          call OutputL1B_THz_HDF4(noMAF, sd_id, tp)
+    end select 
+d104 1
+a104 1
+  SUBROUTINE OutputL1B_rad(noMAF, sdId, counterMAF, rad)
+d111 6
+a116 8
+   select case (lowercase(trim(L1Config%Output%HDFVersionString))) 
+       case ('hdf4')
+          call OutputL1B_rad_HDF4(noMAF, sdId, counterMAF, rad)
+       case ('hdf5')
+          call OutputL1B_rad_HDF5(noMAF, sdId, counterMAF, rad)
+       case default
+          call OutputL1B_rad_HDF4(noMAF, sdId, counterMAF, rad)
+    end select 
+d118 1
+d120 1
+d123 3
+@
+
+
+2.6
+log
+@Version 1.0 commit
+@
+text
+@a2 2
+
+
+a3 2
+
+  USE Hdf
+d5 9
+a13 5
+  USE MLSL1Common
+  USE MLSL1Config, ONLY: MIFsGHz, MIFsTHz
+  USE MLSL1Rad
+  USE MLSMessageModule, ONLY : MLSMessage, MLSMSG_Error, MLSMSG_Warning
+
+d16 2
+a17 6
+
+  PUBLIC :: L1BOAINDEX_T, L1BOASC_T, L1BOATP_T, &
+    & OUTPUTL1B_CREATE, OUTPUTL1B_INDEX, OUTPUTL1B_SC, &
+    & OUTPUTL1B_GHZ, OUTPUTL1B_THZ, OUTPUTL1B_RAD, &
+    & LENG, LENT, LENCOORD
+
+d20 1
+a20 1
+    "$Id: OutputL1B.f90,v 2.4 2001/12/06 01:03:46 pwagner Exp $"
+a22 143
+
+  ! This module contains the subroutines needed to write L1B data to
+  ! SDS-HDF files.
+
+  ! Parameters
+
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS1_NAME = 'MAFStartTimeUTC'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS2_NAME = 'MAFStartTimeTAI'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS3_NAME = 'noMIFs'
+
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS4_NAME = 'scECI'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS5_NAME = 'scECR'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS6_NAME = 'scGeocAlt'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS7_NAME = 'scGeocLat'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS8_NAME = 'scGeodAlt'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS9_NAME = 'scGeodLat'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS10_NAME = 'scLon'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS11_NAME = 'scGeodAngle'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS12_NAME = 'scVelECI'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS13_NAME = 'ypr'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS14_NAME = 'yprRate'
+
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS15_NAME = 'GHz.encoderAngle'
+
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS16_NAME = 'GHz.scAngle'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS17_NAME = 'GHz.scanAngle'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS18_NAME = 'GHz.scanRate'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS19_NAME = 'GHz.tpECI'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS20_NAME = 'GHz.tpECR'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS21_NAME = 'GHz.tpOrbY'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS22_NAME = 'GHz.tpGeocAlt'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS23_NAME = 'GHz.tpGeocLat'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS24_NAME = 'GHz.tpGeocAltRate'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS25_NAME = 'GHz.tpGeodAlt'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS26_NAME = 'GHz.tpGeodLat'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS27_NAME = 'GHz.tpGeodAltRate'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS28_NAME = 'GHz.tpLon'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS29_NAME = 'GHz.tpGeodAngle'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS30_NAME = 'GHz.tpSolarTime'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS31_NAME = 'GHz.tpSolarZenith'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS32_NAME = 'GHz.tpLosAngle'
+
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS33_NAME = 'THz.encoderAngle'
+
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS34_NAME = 'THz.scAngle'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS35_NAME = 'THz.scanAngle'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS36_NAME = 'THz.scanRate'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS37_NAME = 'THz.tpECI'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS38_NAME = 'THz.tpECR'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS39_NAME = 'THz.tpOrbY'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS40_NAME = 'THz.tpGeocAlt'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS41_NAME = 'THz.tpGeocLat'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS42_NAME = 'THz.tpGeocAltRate'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS43_NAME = 'THz.tpGeodAlt'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS44_NAME = 'THz.tpGeodLat'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS45_NAME = 'THz.tpGeodAltRate'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS46_NAME = 'THz.tpLon'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS47_NAME = 'THz.tpGeodAngle'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS48_NAME = 'THz.tpSolarTime'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS49_NAME = 'THz.tpSolarZenith'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS50_NAME = 'THz.tpLosAngle'
+
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS51_NAME = 'counterMAF'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS62_NAME = 'scVelECR'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS63_NAME = 'scOrbIncl'
+
+  CHARACTER(len=*), PUBLIC, PARAMETER :: DIM1_NAME = 'MAF'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: DIM2_NAME = 'MIF'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: DIM3_NAME = 'GHz.MIF'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: DIM4_NAME = 'THz.MIF'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: DIM5_NAME = 'xyz'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: DIM6_NAME = 'charUTC'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: DIM7_NAME = 'chanFB'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: DIM8_NAME = 'chanMB'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: DIM9_NAME = 'chanWF'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: DIM10_NAME = 'chanDACS'
+
+  INTEGER, PARAMETER :: lenCoord = 3
+  INTEGER, PUBLIC, PARAMETER :: lenUTC = 27
+  INTEGER, PARAMETER :: lenG = 120
+  INTEGER, PARAMETER :: lenT = 120
+
+  REAL, PUBLIC, PARAMETER :: FILL_REAL = -999.9
+  REAL(r8), PUBLIC, PARAMETER :: FILL_DP = -999.9
+
+  ! This data type contains index information for the L1BOA data file.
+  TYPE L1BOAindex_T
+    CHARACTER(LEN=lenUTC) :: MAFStartTimeUTC ! MAF start time in ascii UTC
+    REAL(r8) :: MAFStartTimeTAI		! MAF start time in TAI
+    INTEGER :: noMIFs                   ! total number of MIFs per MAF
+    INTEGER :: counterMAF               ! MAF counter
+  END TYPE L1BOAindex_T
+
+  ! This data type contains spacecraft quantities for the L1BOA data file.
+  TYPE L1BOAsc_T
+    ! dimensioned (xyz,MIF)
+    REAL(r8), DIMENSION(:,:), POINTER :: scECI	! s/c ECI location
+    REAL(r8), DIMENSION(:,:), POINTER :: scECR	! s/c ECR location
+
+    ! dimensioned (MIF)
+    REAL(r8), DIMENSION(:), POINTER :: scGeocAlt	! s/c geoc alt
+    REAL, DIMENSION(:), POINTER :: scGeocLat		! s/c geoc lat
+    REAL(r8), DIMENSION(:), POINTER :: scGeodAlt	! s/c geod alt
+    REAL, DIMENSION(:), POINTER :: scGeodLat		! s/c geod lat
+    REAL, DIMENSION(:), POINTER :: scLon		! s/c longitude
+    REAL, DIMENSION(:), POINTER :: scGeodAngle	! s/c master coordinate
+    REAL, DIMENSION(:), POINTER :: scOrbIncl     ! instant. orb incl ECR (deg)
+
+    ! dimensioned (xyz,MIF)
+    REAL(r8), DIMENSION(:,:), POINTER :: scVelECI	! s/c ECI velocity
+    REAL(r8), DIMENSION(:,:), POINTER :: scVelECR     ! s/c ECR velocity
+    REAL(r8), DIMENSION(:,:), POINTER :: ypr		! s/c yaw, pitch, roll
+    REAL(r8), DIMENSION(:,:), POINTER :: yprRate	! s/c y-p-r rate
+  END TYPE L1BOAsc_T
+
+  ! This data type contains tangent point quantities for the L1BOA data file.
+  TYPE L1BOAtp_T
+
+    ! dimensioned (MIF)
+    REAL(r8), DIMENSION(:), POINTER :: encoderAngle	! boresight wrt instr.
+    REAL(r8), DIMENSION(:), POINTER :: scAngle	! boresight wrt s/c +x
+    REAL(r8), DIMENSION(:), POINTER :: scanAngle	! boresight wrt orbit +x
+    REAL, DIMENSION(:), POINTER :: scanRate		! of change of scanAngle
+
+    ! dimensioned (xyz,mod.MIF)
+    REAL(r8), DIMENSION(:,:), POINTER :: tpECI	! tp location in ECI
+    REAL(r8), DIMENSION(:,:), POINTER :: tpECR	! tp location in ECR
+
+    ! dimensioned (mod.MIF)
+    REAL, DIMENSION(:), POINTER :: tpOrbY		! out-of-plane distance
+    REAL(r8), DIMENSION(:), POINTER :: tpGeocAlt	! geoc alt of tp
+    REAL, DIMENSION(:), POINTER :: tpGeocLat		! geoc lat of tp
+    REAL, DIMENSION(:), POINTER :: tpGeocAltRate	! of change of tpGeocAlt
+    REAL(r8), DIMENSION(:), POINTER :: tpGeodAlt	! geod alt of tp 
+    REAL, DIMENSION(:), POINTER :: tpGeodLat		! geod lat of tp
+    REAL, DIMENSION(:), POINTER :: tpGeodAltRate	! of change of tpGeodAlt
+    REAL, DIMENSION(:), POINTER :: tpLon		! longitude of tp
+    REAL, DIMENSION(:), POINTER :: tpGeodAngle	! tp master coordinate
+    REAL, DIMENSION(:), POINTER :: tpSolarTime	! solar time coordinate
+    REAL, DIMENSION(:), POINTER :: tpSolarZenith	! solar zenith angle
+    REAL, DIMENSION(:), POINTER :: tpLosAngle		! line-of-sight ang to N
+  END TYPE L1BOAtp_T
+
+a23 1
+
+a27 1
+
+d29 10
+a38 561
+    TYPE( L1BFileInfo_T ), INTENT(IN) :: sdId
+
+    ! Functions
+    INTEGER :: sfcreate, sfdimid, sfsdmname, sfendacc, sfsfill
+
+    ! Variables
+    INTEGER :: dim_id, rank, status
+    INTEGER :: sds1_id, sds2_id, sds3_id, sds4_id, sds5_id, sds6_id, sds7_id
+    INTEGER :: sds8_id, sds9_id, sds10_id, sds11_id, sds12_id, sds13_id
+    INTEGER :: sds14_id, sds15_id, sds16_id, sds17_id, sds18_id, sds19_id
+    INTEGER :: sds20_id, sds21_id, sds22_id, sds23_id, sds24_id, sds25_id
+    INTEGER :: sds26_id, sds27_id, sds28_id, sds29_id, sds30_id, sds31_id
+    INTEGER :: sds32_id, sds33_id, sds34_id, sds35_id, sds36_id, sds37_id
+    INTEGER :: sds38_id, sds39_id, sds40_id, sds41_id, sds42_id, sds43_id
+    INTEGER :: sds44_id, sds45_id, sds46_id, sds47_id, sds48_id, sds49_id
+    INTEGER :: sds50_id, sds51_id, sds52_id, sds53_id
+    INTEGER :: sds62_id, sds63_id
+    INTEGER :: dimSize(3)
+
+    ! Create the counterMAF SD in rad file F; name the dimension; terminate access
+    ! to the data set.
+    rank = 1
+    dimSize(2) = SD_UNLIMITED
+
+    sds52_id = sfcreate(sdId%RADFID, SDS51_NAME, DFNT_INT32, rank, &
+      dimSize(2))
+    dim_id = sfdimid(sds52_id, 0)
+    status = sfsdmname(dim_id, DIM1_NAME)
+    status = sfendacc(sds52_id)
+
+    ! Repeat these steps for the Rad D file
+    sds53_id = sfcreate(sdId%RADDID, SDS51_NAME, DFNT_INT32, rank, &
+      dimSize(2))
+    dim_id = sfdimid(sds53_id, 0)
+    status = sfsdmname(dim_id, DIM1_NAME)
+    status = sfendacc(sds53_id)
+
+    ! L1BOA file -- create one-dimensional data sets
+    sds2_id = sfcreate( sdId%OAId, SDS2_NAME, DFNT_FLOAT64, rank, &
+      dimSize(2) )
+    sds3_id = sfcreate( sdId%OAId, SDS3_NAME, DFNT_INT32, rank, &
+      dimSize(2) )
+    sds51_id = sfcreate( sdId%OAId, SDS51_NAME, DFNT_INT32, rank, &
+      dimSize(2) )
+
+    ! Create two-dimensional data sets
+    rank = 2
+
+    ! S/C, GHz & THz non-tp quantities
+    dimSize(1) = lenUTC
+
+    sds1_id = sfcreate( sdId%OAId, SDS1_NAME, DFNT_CHAR8, rank, &
+      dimSize(1:2) )
+
+    dimSize(1) = MaxMIFs
+
+    sds6_id = sfcreate( sdId%OAId, SDS6_NAME, DFNT_FLOAT64, rank, &
+      dimSize(1:2) )
+    status = sfsfill(sds6_id, FILL_DP)
+    sds7_id = sfcreate( sdId%OAId, SDS7_NAME, DFNT_FLOAT32, rank, &
+      dimSize(1:2) )
+    status = sfsfill(sds7_id, FILL_REAL)
+    sds8_id = sfcreate( sdId%OAId, SDS8_NAME, DFNT_FLOAT64, rank, &
+      dimSize(1:2) )
+    status = sfsfill(sds8_id, FILL_DP)
+    sds9_id = sfcreate( sdId%OAId, SDS9_NAME, DFNT_FLOAT32, rank, &
+      dimSize(1:2) )
+    status = sfsfill(sds9_id, FILL_REAL)
+    sds10_id = sfcreate( sdId%OAId, SDS10_NAME, DFNT_FLOAT32, rank, &
+      dimSize(1:2) )
+    status = sfsfill(sds10_id, FILL_REAL)
+    sds11_id = sfcreate( sdId%OAId, SDS11_NAME, DFNT_FLOAT32, rank, &
+      dimSize(1:2) )
+    status = sfsfill(sds11_id, FILL_REAL)
+    sds63_id = sfcreate( sdId%OAId, SDS63_NAME, DFNT_FLOAT32, rank, &
+      dimSize(1:2) )
+    status = sfsfill(sds63_id, FILL_REAL)
+
+    sds15_id = sfcreate( sdId%OAId, SDS15_NAME, DFNT_FLOAT64, rank, &
+      dimSize(1:2) )
+    status = sfsfill(sds15_id, FILL_DP)
+    sds16_id = sfcreate( sdId%OAId, SDS16_NAME, DFNT_FLOAT64, rank, &
+      dimSize(1:2) )
+    status = sfsfill(sds16_id, FILL_DP)
+    sds17_id = sfcreate( sdId%OAId, SDS17_NAME, DFNT_FLOAT64, rank, &
+      dimSize(1:2) )
+    status = sfsfill(sds17_id, FILL_DP)
+    sds18_id = sfcreate( sdId%OAId, SDS18_NAME, DFNT_FLOAT32, rank, &
+      dimSize(1:2) )
+    status = sfsfill(sds18_id, FILL_REAL)
+
+    sds33_id = sfcreate( sdId%OAId, SDS33_NAME, DFNT_FLOAT64, rank, &
+      dimSize(1:2) )
+    status = sfsfill(sds33_id, FILL_DP)
+    sds34_id = sfcreate( sdId%OAId, SDS34_NAME, DFNT_FLOAT64, rank, &
+      dimSize(1:2) )
+    status = sfsfill(sds34_id, FILL_DP)
+    sds35_id = sfcreate( sdId%OAId, SDS35_NAME, DFNT_FLOAT64, rank, &
+      dimSize(1:2) )
+    status = sfsfill(sds35_id, FILL_DP)
+    sds36_id = sfcreate( sdId%OAId, SDS36_NAME, DFNT_FLOAT32, rank, &
+      dimSize(1:2) )
+    status = sfsfill(sds36_id, FILL_REAL)
+
+    ! GHz tangent point quantities
+    dimSize(1) = MIFsGHz
+
+    sds21_id = sfcreate( sdId%OAId, SDS21_NAME, DFNT_FLOAT32, rank, &
+      dimSize(1:2) )
+    status = sfsfill(sds21_id, FILL_REAL)
+    sds22_id = sfcreate( sdId%OAId, SDS22_NAME, DFNT_FLOAT64, rank, &
+      dimSize(1:2) )
+    status = sfsfill(sds22_id, FILL_DP)
+    sds23_id = sfcreate( sdId%OAId, SDS23_NAME, DFNT_FLOAT32, rank, &
+      dimSize(1:2) )
+    status = sfsfill(sds23_id, FILL_REAL)
+    sds24_id = sfcreate( sdId%OAId, SDS24_NAME, DFNT_FLOAT32, rank, &
+      dimSize(1:2) )
+    status = sfsfill(sds24_id, FILL_REAL)
+    sds25_id = sfcreate( sdId%OAId, SDS25_NAME, DFNT_FLOAT64, rank, &
+      dimSize(1:2) )
+    status = sfsfill(sds25_id, FILL_DP)
+    sds26_id = sfcreate( sdId%OAId, SDS26_NAME, DFNT_FLOAT32, rank, &
+      dimSize(1:2) )
+    status = sfsfill(sds26_id, FILL_REAL)
+    sds27_id = sfcreate( sdId%OAId, SDS27_NAME, DFNT_FLOAT32, rank, &
+      dimSize(1:2) )
+    status = sfsfill(sds27_id, FILL_REAL)
+    sds28_id = sfcreate( sdId%OAId, SDS28_NAME, DFNT_FLOAT32, rank, &
+      dimSize(1:2) )
+    status = sfsfill(sds28_id, FILL_REAL)
+    sds29_id = sfcreate( sdId%OAId, SDS29_NAME, DFNT_FLOAT32, rank, &
+      dimSize(1:2) ) 
+    status = sfsfill(sds29_id, FILL_REAL)
+    sds30_id = sfcreate( sdId%OAId, SDS30_NAME, DFNT_FLOAT32, rank, &
+      dimSize(1:2) )
+    status = sfsfill(sds30_id, FILL_REAL)
+    sds31_id = sfcreate( sdId%OAId, SDS31_NAME, DFNT_FLOAT32, rank, &
+      dimSize(1:2) )
+    status = sfsfill(sds31_id, FILL_REAL)
+    sds32_id = sfcreate( sdId%OAId, SDS32_NAME, DFNT_FLOAT32, rank, &
+      dimSize(1:2) )
+    status = sfsfill(sds32_id, FILL_REAL)
+
+    ! THz tangent point quantities
+
+    dimSize(1) = MIFsTHz
+
+    sds39_id = sfcreate( sdId%OAId, SDS39_NAME, DFNT_FLOAT32, rank, &
+      dimSize(1:2) )
+    status = sfsfill(sds39_id, FILL_REAL)
+    sds40_id = sfcreate( sdId%OAId, SDS40_NAME, DFNT_FLOAT64, rank, &
+      dimSize(1:2) )
+    status = sfsfill(sds40_id, FILL_DP)
+    sds41_id = sfcreate( sdId%OAId, SDS41_NAME, DFNT_FLOAT32, rank, &
+      dimSize(1:2) )
+    status = sfsfill(sds41_id, FILL_REAL)
+    sds42_id = sfcreate( sdId%OAId, SDS42_NAME, DFNT_FLOAT32, rank, &
+      dimSize(1:2) )
+    status = sfsfill(sds42_id, FILL_REAL)
+    sds43_id = sfcreate( sdId%OAId, SDS43_NAME, DFNT_FLOAT64, rank, &
+      dimSize(1:2) )
+    status = sfsfill(sds43_id, FILL_DP)
+    sds44_id = sfcreate( sdId%OAId, SDS44_NAME, DFNT_FLOAT32, rank, &
+      dimSize(1:2))
+    status = sfsfill(sds44_id, FILL_REAL)
+    sds45_id = sfcreate( sdId%OAId, SDS45_NAME, DFNT_FLOAT32, rank, &
+      dimSize(1:2) )
+    status = sfsfill(sds45_id, FILL_REAL)
+    sds46_id = sfcreate( sdId%OAId, SDS46_NAME, DFNT_FLOAT32, rank, &
+      dimSize(1:2) )
+    status = sfsfill(sds46_id, FILL_REAL)
+    sds47_id = sfcreate( sdId%OAId, SDS47_NAME, DFNT_FLOAT32, rank, &
+      dimSize(1:2) )
+    status = sfsfill(sds47_id, FILL_REAL)
+    sds48_id = sfcreate( sdId%OAId, SDS48_NAME, DFNT_FLOAT32, rank, &
+      dimSize(1:2) )
+    status = sfsfill(sds48_id, FILL_REAL)
+    sds49_id = sfcreate( sdId%OAId, SDS49_NAME, DFNT_FLOAT32, rank, &
+      dimSize(1:2) )
+    status = sfsfill(sds49_id, FILL_REAL)
+    sds50_id = sfcreate( sdId%OAId, SDS50_NAME, DFNT_FLOAT32, rank, &
+      dimSize(1:2))
+    status = sfsfill(sds50_id, FILL_REAL)
+
+    ! Create three-dimensional data sets
+    rank = 3
+
+    ! S/C quantities
+    dimSize(1) = lenCoord
+    dimSize(2) = MaxMIFs
+    dimSize(3) = SD_UNLIMITED
+
+    sds4_id = sfcreate(sdId%OAId, SDS4_NAME, DFNT_FLOAT64, rank, dimSize)
+    status = sfsfill(sds4_id, FILL_DP)
+    sds5_id = sfcreate(sdId%OAId, SDS5_NAME, DFNT_FLOAT64, rank, dimSize)
+    status = sfsfill(sds5_id, FILL_DP)
+    sds12_id = sfcreate(sdId%OAId, SDS12_NAME, DFNT_FLOAT64, rank, dimSize)
+    status = sfsfill(sds12_id, FILL_DP)
+    sds62_id = sfcreate(sdId%OAId, SDS62_NAME, DFNT_FLOAT64, rank, dimSize)
+    status = sfsfill(sds62_id, FILL_DP)
+    sds13_id = sfcreate(sdId%OAId, SDS13_NAME, DFNT_FLOAT64, rank, dimSize)
+    status = sfsfill(sds13_id, FILL_DP)
+    sds14_id = sfcreate(sdId%OAId, SDS14_NAME, DFNT_FLOAT64, rank, dimSize)
+    status = sfsfill(sds14_id, FILL_DP)
+
+    ! GHz tangent point quantities
+    dimSize(2) = MIFsGHz
+
+    sds19_id = sfcreate(sdId%OAId, SDS19_NAME, DFNT_FLOAT64, rank, dimSize)
+    status = sfsfill(sds19_id, FILL_DP)
+    sds20_id = sfcreate(sdId%OAId, SDS20_NAME, DFNT_FLOAT64, rank, dimSize)
+    status = sfsfill(sds20_id, FILL_DP)
+
+    ! THz tangent point quantities
+    dimSize(2) = MIFsTHz
+
+    sds37_id = sfcreate(sdId%OAId, SDS37_NAME, DFNT_FLOAT64, rank, dimSize) 
+    status = sfsfill(sds37_id, FILL_DP)
+    sds38_id = sfcreate(sdId%OAId, SDS38_NAME, DFNT_FLOAT64, rank, dimSize)
+    status = sfsfill(sds38_id, FILL_DP)
+
+    ! Give names to the dimensions
+    dim_id = sfdimid(sds1_id, 0)
+    status = sfsdmname(dim_id, DIM6_NAME)
+    dim_id = sfdimid(sds1_id, 1)
+    status = sfsdmname(dim_id, DIM1_NAME)
+
+    dim_id = sfdimid(sds2_id, 0)
+    status = sfsdmname(dim_id, DIM1_NAME)
+
+    dim_id = sfdimid(sds3_id, 0)
+    status = sfsdmname(dim_id, DIM1_NAME)
+
+    ! S/C quantities
+    dim_id = sfdimid(sds4_id, 0)
+    status = sfsdmname(dim_id, DIM5_NAME)
+    dim_id = sfdimid(sds4_id, 1)
+    status = sfsdmname(dim_id, DIM2_NAME)
+    dim_id = sfdimid(sds4_id, 2)
+    status = sfsdmname(dim_id, DIM1_NAME)
+
+    dim_id = sfdimid(sds5_id, 0)
+    status = sfsdmname(dim_id, DIM5_NAME)
+    dim_id = sfdimid(sds5_id, 1)
+    status = sfsdmname(dim_id, DIM2_NAME)
+    dim_id = sfdimid(sds5_id, 2)
+    status = sfsdmname(dim_id, DIM1_NAME)
+
+    dim_id = sfdimid(sds6_id, 0)
+    status = sfsdmname(dim_id, DIM2_NAME)
+    dim_id = sfdimid(sds6_id, 1)
+    status = sfsdmname(dim_id, DIM1_NAME)
+
+    dim_id = sfdimid(sds7_id, 0)
+    status = sfsdmname(dim_id, DIM2_NAME)
+    dim_id = sfdimid(sds7_id, 1)
+    status = sfsdmname(dim_id, DIM1_NAME)
+
+    dim_id = sfdimid(sds8_id, 0)
+    status = sfsdmname(dim_id, DIM2_NAME)
+    dim_id = sfdimid(sds8_id, 1)
+    status = sfsdmname(dim_id, DIM1_NAME)
+
+    dim_id = sfdimid(sds9_id, 0)
+    status = sfsdmname(dim_id, DIM2_NAME)
+    dim_id = sfdimid(sds9_id, 1)
+    status = sfsdmname(dim_id, DIM1_NAME)
+
+    dim_id = sfdimid(sds10_id, 0)
+    status = sfsdmname(dim_id, DIM2_NAME)
+    dim_id = sfdimid(sds10_id, 1)
+    status = sfsdmname(dim_id, DIM1_NAME)
+
+    dim_id = sfdimid(sds63_id, 0)
+    status = sfsdmname(dim_id, DIM2_NAME)
+    dim_id = sfdimid(sds63_id, 1)
+    status = sfsdmname(dim_id, DIM1_NAME)
+
+    dim_id = sfdimid(sds11_id, 0)
+    status = sfsdmname(dim_id, DIM2_NAME)
+    dim_id = sfdimid(sds11_id, 1)
+    status = sfsdmname(dim_id, DIM1_NAME)
+
+    dim_id = sfdimid(sds12_id, 0)
+    status = sfsdmname(dim_id, DIM5_NAME)
+    dim_id = sfdimid(sds12_id, 1)
+    status = sfsdmname(dim_id, DIM2_NAME)
+    dim_id = sfdimid(sds12_id, 2)
+    status = sfsdmname(dim_id, DIM1_NAME)
+
+    dim_id = sfdimid(sds62_id, 0)
+    status = sfsdmname(dim_id, DIM5_NAME)
+    dim_id = sfdimid(sds62_id, 1)
+    status = sfsdmname(dim_id, DIM2_NAME)
+    dim_id = sfdimid(sds62_id, 2)
+    status = sfsdmname(dim_id, DIM1_NAME)
+
+    dim_id = sfdimid(sds13_id, 0)
+    status = sfsdmname(dim_id, DIM5_NAME)
+    dim_id = sfdimid(sds13_id, 1)
+    status = sfsdmname(dim_id, DIM2_NAME)
+    dim_id = sfdimid(sds13_id, 2)
+    status = sfsdmname(dim_id, DIM1_NAME)
+
+    dim_id = sfdimid(sds14_id, 0)
+    status = sfsdmname(dim_id, DIM5_NAME)
+    dim_id = sfdimid(sds14_id, 1)
+    status = sfsdmname(dim_id, DIM2_NAME)
+    dim_id = sfdimid(sds14_id, 2)
+    status = sfsdmname(dim_id, DIM1_NAME)
+
+    ! GHz quantities
+    dim_id = sfdimid(sds15_id, 0) 
+    status = sfsdmname(dim_id, DIM2_NAME)
+    dim_id = sfdimid(sds15_id, 1)
+    status = sfsdmname(dim_id, DIM1_NAME)
+
+    dim_id = sfdimid(sds16_id, 0) 
+    status = sfsdmname(dim_id, DIM2_NAME)
+    dim_id = sfdimid(sds16_id, 1)
+    status = sfsdmname(dim_id, DIM1_NAME)
+
+    dim_id = sfdimid(sds17_id, 0) 
+    status = sfsdmname(dim_id, DIM2_NAME)
+    dim_id = sfdimid(sds17_id, 1)
+    status = sfsdmname(dim_id, DIM1_NAME)
+
+    dim_id = sfdimid(sds18_id, 0)
+    status = sfsdmname(dim_id, DIM2_NAME)
+    dim_id = sfdimid(sds18_id, 1)
+    status = sfsdmname(dim_id, DIM1_NAME)
+
+    dim_id = sfdimid(sds19_id, 0)
+    status = sfsdmname(dim_id, DIM5_NAME)
+    dim_id = sfdimid(sds19_id, 1)
+    status = sfsdmname(dim_id, DIM3_NAME)
+    dim_id = sfdimid(sds19_id, 2)
+    status = sfsdmname(dim_id, DIM1_NAME)
+
+    dim_id = sfdimid(sds20_id, 0) 
+    status = sfsdmname(dim_id, DIM5_NAME)
+    dim_id = sfdimid(sds20_id, 1)
+    status = sfsdmname(dim_id, DIM3_NAME)
+    dim_id = sfdimid(sds20_id, 2)
+    status = sfsdmname(dim_id, DIM1_NAME)
+
+    dim_id = sfdimid(sds21_id, 0) 
+    status = sfsdmname(dim_id, DIM3_NAME)
+    dim_id = sfdimid(sds21_id, 1)
+    status = sfsdmname(dim_id, DIM1_NAME)
+
+    dim_id = sfdimid(sds22_id, 0) 
+    status = sfsdmname(dim_id, DIM3_NAME)
+    dim_id = sfdimid(sds22_id, 1)
+    status = sfsdmname(dim_id, DIM1_NAME)
+
+    dim_id = sfdimid(sds23_id, 0) 
+    status = sfsdmname(dim_id, DIM3_NAME)
+    dim_id = sfdimid(sds23_id, 1)
+    status = sfsdmname(dim_id, DIM1_NAME)
+
+    dim_id = sfdimid(sds24_id, 0) 
+    status = sfsdmname(dim_id, DIM3_NAME)
+    dim_id = sfdimid(sds24_id, 1)
+    status = sfsdmname(dim_id, DIM1_NAME)
+
+    dim_id = sfdimid(sds25_id, 0) 
+    status = sfsdmname(dim_id, DIM3_NAME)
+    dim_id = sfdimid(sds25_id, 1)
+    status = sfsdmname(dim_id, DIM1_NAME)
+
+    dim_id = sfdimid(sds26_id, 0) 
+    status = sfsdmname(dim_id, DIM3_NAME)
+    dim_id = sfdimid(sds26_id, 1)
+    status = sfsdmname(dim_id, DIM1_NAME)
+
+    dim_id = sfdimid(sds27_id, 0) 
+    status = sfsdmname(dim_id, DIM3_NAME)
+    dim_id = sfdimid(sds27_id, 1)
+    status = sfsdmname(dim_id, DIM1_NAME)
+
+    dim_id = sfdimid(sds28_id, 0) 
+    status = sfsdmname(dim_id, DIM3_NAME)
+    dim_id = sfdimid(sds28_id, 1)
+    status = sfsdmname(dim_id, DIM1_NAME)
+
+    dim_id = sfdimid(sds29_id, 0)
+    status = sfsdmname(dim_id, DIM3_NAME)
+    dim_id = sfdimid(sds29_id, 1)
+    status = sfsdmname(dim_id, DIM1_NAME)
+
+    dim_id = sfdimid(sds30_id, 0)
+    status = sfsdmname(dim_id, DIM3_NAME)
+    dim_id = sfdimid(sds30_id, 1)
+    status = sfsdmname(dim_id, DIM1_NAME)
+
+    dim_id = sfdimid(sds31_id, 0)
+    status = sfsdmname(dim_id, DIM3_NAME)
+    dim_id = sfdimid(sds31_id, 1)
+    status = sfsdmname(dim_id, DIM1_NAME)
+
+    dim_id = sfdimid(sds32_id, 0)
+    status = sfsdmname(dim_id, DIM3_NAME)
+    dim_id = sfdimid(sds32_id, 1)
+    status = sfsdmname(dim_id, DIM1_NAME)
+
+    ! THz quantities
+    dim_id = sfdimid(sds33_id, 0) 
+    status = sfsdmname(dim_id, DIM2_NAME)
+    dim_id = sfdimid(sds33_id, 1)
+    status = sfsdmname(dim_id, DIM1_NAME)
+
+    dim_id = sfdimid(sds34_id, 0) 
+    status = sfsdmname(dim_id, DIM2_NAME)
+    dim_id = sfdimid(sds34_id, 1)
+    status = sfsdmname(dim_id, DIM1_NAME)
+
+    dim_id = sfdimid(sds35_id, 0) 
+    status = sfsdmname(dim_id, DIM2_NAME)
+    dim_id = sfdimid(sds35_id, 1)
+    status = sfsdmname(dim_id, DIM1_NAME)
+
+    dim_id = sfdimid(sds36_id, 0)
+    status = sfsdmname(dim_id, DIM2_NAME)
+    dim_id = sfdimid(sds36_id, 1) 
+    status = sfsdmname(dim_id, DIM1_NAME)
+
+    dim_id = sfdimid(sds37_id, 0) 
+    status = sfsdmname(dim_id, DIM5_NAME)
+    dim_id = sfdimid(sds37_id, 1)
+    status = sfsdmname(dim_id, DIM4_NAME)
+    dim_id = sfdimid(sds37_id, 2) 
+    status = sfsdmname(dim_id, DIM1_NAME)
+
+    dim_id = sfdimid(sds38_id, 0) 
+    status = sfsdmname(dim_id, DIM5_NAME)
+    dim_id = sfdimid(sds38_id, 1)
+    status = sfsdmname(dim_id, DIM4_NAME)
+    dim_id = sfdimid(sds38_id, 2)
+    status = sfsdmname(dim_id, DIM1_NAME)
+
+    dim_id = sfdimid(sds39_id, 0) 
+    status = sfsdmname(dim_id, DIM4_NAME)
+    dim_id = sfdimid(sds39_id, 1)
+    status = sfsdmname(dim_id, DIM1_NAME)
+
+    dim_id = sfdimid(sds40_id, 0) 
+    status = sfsdmname(dim_id, DIM4_NAME)
+    dim_id = sfdimid(sds40_id, 1)
+    status = sfsdmname(dim_id, DIM1_NAME)
+
+    dim_id = sfdimid(sds41_id, 0) 
+    status = sfsdmname(dim_id, DIM4_NAME)
+    dim_id = sfdimid(sds41_id, 1)
+    status = sfsdmname(dim_id, DIM1_NAME)
+
+    dim_id = sfdimid(sds42_id, 0) 
+    status = sfsdmname(dim_id, DIM4_NAME)
+    dim_id = sfdimid(sds42_id, 1)
+    status = sfsdmname(dim_id, DIM1_NAME)
+
+    dim_id = sfdimid(sds43_id, 0) 
+    status = sfsdmname(dim_id, DIM4_NAME)
+    dim_id = sfdimid(sds43_id, 1)
+    status = sfsdmname(dim_id, DIM1_NAME)
+
+    dim_id = sfdimid(sds44_id, 0) 
+    status = sfsdmname(dim_id, DIM4_NAME)
+    dim_id = sfdimid(sds44_id, 1)
+    status = sfsdmname(dim_id, DIM1_NAME)
+
+    dim_id = sfdimid(sds45_id, 0) 
+    status = sfsdmname(dim_id, DIM4_NAME)
+    dim_id = sfdimid(sds45_id, 1)
+    status = sfsdmname(dim_id, DIM1_NAME)
+
+    dim_id = sfdimid(sds46_id, 0) 
+    status = sfsdmname(dim_id, DIM4_NAME)
+    dim_id = sfdimid(sds46_id, 1)
+    status = sfsdmname(dim_id, DIM1_NAME)
+
+    dim_id = sfdimid(sds47_id, 0)
+    status = sfsdmname(dim_id, DIM4_NAME)
+    dim_id = sfdimid(sds47_id, 1)
+    status = sfsdmname(dim_id, DIM1_NAME)
+
+    dim_id = sfdimid(sds48_id, 0)
+    status = sfsdmname(dim_id, DIM4_NAME)
+    dim_id = sfdimid(sds48_id, 1)
+    status = sfsdmname(dim_id, DIM1_NAME)
+
+    dim_id = sfdimid(sds49_id, 0)
+    status = sfsdmname(dim_id, DIM4_NAME)
+    dim_id = sfdimid(sds49_id, 1)
+    status = sfsdmname(dim_id, DIM1_NAME)
+
+    dim_id = sfdimid(sds50_id, 0)
+    status = sfsdmname(dim_id, DIM4_NAME)
+    dim_id = sfdimid(sds50_id, 1)
+    status = sfsdmname(dim_id, DIM1_NAME)
+
+    ! MAF counter
+    dim_id = sfdimid(sds51_id, 0)
+    status = sfsdmname(dim_id, DIM1_NAME)
+
+    ! Terminate access to the data sets
+    status = sfendacc(sds1_id)
+    status = sfendacc(sds2_id)
+    status = sfendacc(sds3_id)
+    status = sfendacc(sds4_id)
+    status = sfendacc(sds5_id)
+    status = sfendacc(sds6_id)
+    status = sfendacc(sds7_id)
+    status = sfendacc(sds8_id)
+    status = sfendacc(sds9_id)
+    status = sfendacc(sds10_id)
+    status = sfendacc(sds11_id)
+    status = sfendacc(sds63_id)
+    status = sfendacc(sds12_id)
+    status = sfendacc(sds62_id)
+    status = sfendacc(sds13_id)
+    status = sfendacc(sds14_id)
+    status = sfendacc(sds15_id)
+    status = sfendacc(sds16_id)
+    status = sfendacc(sds17_id)
+    status = sfendacc(sds18_id)
+    status = sfendacc(sds19_id)
+    status = sfendacc(sds20_id)
+    status = sfendacc(sds21_id)
+    status = sfendacc(sds22_id)
+    status = sfendacc(sds23_id)
+    status = sfendacc(sds24_id)
+    status = sfendacc(sds25_id)
+    status = sfendacc(sds26_id)
+    status = sfendacc(sds27_id)
+    status = sfendacc(sds28_id)
+    status = sfendacc(sds29_id)
+    status = sfendacc(sds30_id)
+    status = sfendacc(sds31_id)
+    status = sfendacc(sds32_id)
+    status = sfendacc(sds33_id)
+    status = sfendacc(sds34_id)
+    status = sfendacc(sds35_id)
+    status = sfendacc(sds36_id)
+    status = sfendacc(sds37_id)
+    status = sfendacc(sds38_id)
+    status = sfendacc(sds39_id)
+    status = sfendacc(sds40_id)
+    status = sfendacc(sds41_id)
+    status = sfendacc(sds42_id)
+    status = sfendacc(sds43_id)
+    status = sfendacc(sds44_id)
+    status = sfendacc(sds45_id)
+    status = sfendacc(sds46_id)
+    status = sfendacc(sds47_id)
+    status = sfendacc(sds48_id)
+    status = sfendacc(sds49_id)
+    status = sfendacc(sds50_id)
+    status = sfendacc(sds51_id)
+
+a39 1
+
+a42 1
+
+d47 8
+a54 44
+    ! Functions
+    INTEGER :: sfn2index, sfselect, sfwdata, sfwcdata, sfendacc
+
+    ! Variables
+    INTEGER :: sds_index, sds1_id, sds2_id, sds3_id, sds51_id, status
+    INTEGER :: edge(2), start(2), stride(2)
+
+    ! Executable code
+
+    ! Find data sets by name
+    sds_index = sfn2index(sd_id, SDS1_NAME)
+    sds1_id = sfselect(sd_id, sds_index)
+
+    sds_index = sfn2index(sd_id, SDS2_NAME)
+    sds2_id = sfselect(sd_id, sds_index)
+
+    sds_index = sfn2index(sd_id, SDS3_NAME)
+    sds3_id = sfselect(sd_id, sds_index)
+
+    sds_index = sfn2index(sd_id, SDS51_NAME)
+    sds51_id = sfselect(sd_id, sds_index)
+
+    ! Initialize parameters
+    stride = 1
+
+    ! Write time, noMIFs, counterMAF
+    start(1) = 0
+    start(2) = noMAF-1
+    edge(1) = lenUTC
+    edge(2) = 1
+
+    status = sfwcdata(sds1_id, start, stride, edge, index%MAFStartTimeUTC)
+    status = sfwdata(sds2_id, start(2), stride(2), edge(2), &
+      index%MAFStartTimeTAI)
+    status = sfwdata(sds3_id, start(2), stride(2), edge(2), index%noMIFs)
+    status = sfwdata(sds51_id, start(2), stride(2), edge(2), &
+      index%counterMAF)
+
+    ! Terminate access to the data sets
+    status = sfendacc(sds1_id)
+    status = sfendacc(sds2_id)
+    status = sfendacc(sds3_id)
+    status = sfendacc(sds51_id)
+
+a55 1
+
+a58 1
+
+d63 8
+a70 102
+    ! Parameters
+    INTEGER :: sfn2index, sfselect, sfwdata, sfendacc
+
+    ! Variables
+    INTEGER :: sds_index, status
+    INTEGER :: sds4_id, sds5_id, sds6_id, sds7_id, sds8_id, sds9_id
+    INTEGER :: sds10_id, sds11_id, sds12_id, sds13_id, sds14_id
+    INTEGER :: sds62_id, sds63_id
+    INTEGER :: edge(3), start(3), stride(3)
+
+    ! Find data sets by name
+    sds_index = sfn2index(sd_id, SDS4_NAME)
+    sds4_id = sfselect(sd_id, sds_index)
+
+    sds_index = sfn2index(sd_id, SDS5_NAME)
+    sds5_id = sfselect(sd_id, sds_index)
+
+    sds_index = sfn2index(sd_id, SDS6_NAME)
+    sds6_id = sfselect(sd_id, sds_index)
+
+    sds_index = sfn2index(sd_id, SDS7_NAME)
+    sds7_id = sfselect(sd_id, sds_index)
+
+    sds_index = sfn2index(sd_id, SDS8_NAME)
+    sds8_id = sfselect(sd_id, sds_index)
+
+    sds_index = sfn2index(sd_id, SDS9_NAME)
+    sds9_id = sfselect(sd_id, sds_index)
+
+    sds_index = sfn2index(sd_id, SDS10_NAME)
+    sds10_id = sfselect(sd_id, sds_index)
+
+    sds_index = sfn2index(sd_id, SDS11_NAME)
+    sds11_id = sfselect(sd_id, sds_index)
+
+    sds_index = sfn2index(sd_id, SDS63_NAME)
+    sds63_id = sfselect(sd_id, sds_index)
+
+    sds_index = sfn2index(sd_id, SDS12_NAME)
+    sds12_id = sfselect(sd_id, sds_index)
+
+    sds_index = sfn2index(sd_id, SDS62_NAME)
+    sds62_id = sfselect(sd_id, sds_index)
+
+    sds_index = sfn2index(sd_id, SDS13_NAME)
+    sds13_id = sfselect(sd_id, sds_index)
+
+    sds_index = sfn2index(sd_id, SDS14_NAME)
+    sds14_id = sfselect(sd_id, sds_index)
+
+    ! Initialize parameters that aren't reset
+    start(1) = 0
+    stride = 1
+    edge(3) = 1
+
+    ! Write 3-D slabs (xyz x MIF x MAF)
+    start(2) = 0
+    start(3) = noMAF-1
+    edge(1) = lenCoord
+    edge(2) = SIZE(sc%scECI,2)
+
+    status = sfwdata(sds4_id, start, stride, edge, sc%scECI)
+    status = sfwdata(sds5_id, start, stride, edge, sc%scECR)
+    status = sfwdata(sds12_id, start, stride, edge, sc%scVelECI)
+    status = sfwdata(sds62_id, start, stride, edge, sc%scVelECR)
+    status = sfwdata(sds13_id, start, stride, edge, sc%ypr)
+    status = sfwdata(sds14_id, start, stride, edge, sc%yprRate)
+
+    ! Write 2-D slabs (MIF x MAF)
+    start(2) = noMAF-1
+    edge(1) = SIZE(sc%scGeocAlt)
+    edge(2) = 1
+
+    status = sfwdata(sds6_id, start(1:2), stride(1:2), edge(1:2), &
+      sc%scGeocAlt)
+    status = sfwdata(sds7_id, start(1:2), stride(1:2), edge(1:2), &
+      sc%scGeocLat)
+    status = sfwdata(sds8_id, start(1:2), stride(1:2), edge(1:2), &
+      sc%scGeodAlt)
+    status = sfwdata(sds9_id, start(1:2), stride(1:2), edge(1:2), &
+      sc%scGeodLat)
+    status = sfwdata(sds10_id, start(1:2), stride(1:2), edge(1:2), sc%scLon)
+    status = sfwdata(sds11_id, start(1:2), stride(1:2), edge(1:2), &
+      sc%scGeodAngle)
+    status = sfwdata(sds63_id, start(1:2), stride(1:2), edge(1:2), &
+      sc%scOrbIncl)
+
+    ! Terminate access to the data sets
+    status = sfendacc(sds4_id)
+    status = sfendacc(sds5_id)
+    status = sfendacc(sds6_id)
+    status = sfendacc(sds7_id)
+    status = sfendacc(sds8_id)
+    status = sfendacc(sds9_id)
+    status = sfendacc(sds10_id)
+    status = sfendacc(sds11_id)
+    status = sfendacc(sds63_id)
+    status = sfendacc(sds12_id)
+    status = sfendacc(sds62_id)
+    status = sfendacc(sds13_id)
+    status = sfendacc(sds14_id)
+
+a71 1
+
+d79 8
+a86 139
+    ! Functions
+    INTEGER :: sfn2index, sfselect, sfwdata, sfendacc
+
+    ! Variables
+    INTEGER :: sds_index, sds15_id, sds16_id, sds17_id, sds18_id
+    INTEGER :: sds19_id, sds20_id, sds21_id, sds22_id, sds23_id, sds24_id
+    INTEGER :: sds25_id, sds26_id, sds27_id, sds28_id, sds29_id, sds30_id
+    INTEGER :: sds31_id, sds32_id, status
+    INTEGER :: edge(3), start(3), stride(3)
+
+    ! Find data sets by name
+    sds_index = sfn2index(sd_id, SDS15_NAME)
+    sds15_id = sfselect(sd_id, sds_index)
+
+    sds_index = sfn2index(sd_id, SDS16_NAME)
+    sds16_id = sfselect(sd_id, sds_index)
+
+    sds_index = sfn2index(sd_id, SDS17_NAME)
+    sds17_id = sfselect(sd_id, sds_index)
+
+    sds_index = sfn2index(sd_id, SDS18_NAME)
+    sds18_id = sfselect(sd_id, sds_index)
+
+    sds_index = sfn2index(sd_id, SDS19_NAME)
+    sds19_id = sfselect(sd_id, sds_index)
+
+    sds_index = sfn2index(sd_id, SDS20_NAME)
+    sds20_id = sfselect(sd_id, sds_index)
+
+    sds_index = sfn2index(sd_id, SDS21_NAME)
+    sds21_id = sfselect(sd_id, sds_index)
+
+    sds_index = sfn2index(sd_id, SDS22_NAME)
+    sds22_id = sfselect(sd_id, sds_index)
+
+    sds_index = sfn2index(sd_id, SDS23_NAME)
+    sds23_id = sfselect(sd_id, sds_index)
+
+    sds_index = sfn2index(sd_id, SDS24_NAME)
+    sds24_id = sfselect(sd_id, sds_index)
+
+    sds_index = sfn2index(sd_id, SDS25_NAME)
+    sds25_id = sfselect(sd_id, sds_index)
+
+    sds_index = sfn2index(sd_id, SDS26_NAME)
+    sds26_id = sfselect(sd_id, sds_index)
+
+    sds_index = sfn2index(sd_id, SDS27_NAME)
+    sds27_id = sfselect(sd_id, sds_index)
+
+    sds_index = sfn2index(sd_id, SDS28_NAME)
+    sds28_id = sfselect(sd_id, sds_index)
+
+    sds_index = sfn2index(sd_id, SDS29_NAME)
+    sds29_id = sfselect(sd_id, sds_index)
+
+    sds_index = sfn2index(sd_id, SDS30_NAME)
+    sds30_id = sfselect(sd_id, sds_index)
+
+    sds_index = sfn2index(sd_id, SDS31_NAME)
+    sds31_id = sfselect(sd_id, sds_index)
+
+    sds_index = sfn2index(sd_id, SDS32_NAME)
+    sds32_id = sfselect(sd_id, sds_index)
+
+    ! Initialize parameters that aren't reset
+
+    start(1) = 0
+    stride = 1
+    edge(3) = 1
+
+    ! Write GHz data
+
+    start(2) = noMAF-1
+    edge(1) = SIZE(tp%encoderAngle)
+    edge(2) = 1
+
+    status = sfwdata(sds15_id, start(1:2), stride(1:2), edge(1:2), &
+      tp%encoderAngle)
+    status = sfwdata(sds16_id, start(1:2), stride(1:2), edge(1:2), &
+      tp%scAngle)
+    status = sfwdata(sds17_id, start(1:2), stride(1:2), edge(1:2), &
+      tp%scanAngle)
+    status = sfwdata(sds18_id, start(1:2), stride(1:2), edge(1:2), &
+      tp%scanRate)
+
+    edge(1) = SIZE(tp%tpOrbY)
+
+    status = sfwdata(sds21_id, start(1:2), stride(1:2), edge(1:2), tp%tpOrbY)
+    status = sfwdata(sds22_id, start(1:2), stride(1:2), edge(1:2), &
+      tp%tpGeocAlt)
+    status = sfwdata(sds23_id, start(1:2), stride(1:2), edge(1:2), &
+      tp%tpGeocLat)
+    status = sfwdata(sds24_id, start(1:2), stride(1:2), edge(1:2), &
+      tp%tpGeocAltRate)
+    status = sfwdata(sds25_id, start(1:2), stride(1:2), edge(1:2), &
+      tp%tpGeodAlt)
+    status = sfwdata(sds26_id, start(1:2), stride(1:2), edge(1:2), &
+      tp%tpGeodLat)
+    status = sfwdata(sds27_id, start(1:2), stride(1:2), edge(1:2), &
+      tp%tpGeodAltRate)
+    status = sfwdata(sds28_id, start(1:2), stride(1:2), edge(1:2), tp%tpLon)
+    status = sfwdata(sds29_id, start(1:2), stride(1:2), edge(1:2), &
+      tp%tpGeodAngle)
+    status = sfwdata(sds30_id, start(1:2), stride(1:2), edge(1:2), &
+      tp%tpSolarTime)
+    status = sfwdata(sds31_id, start(1:2), stride(1:2), edge(1:2), &
+      tp%tpSolarZenith)
+    status = sfwdata(sds32_id, start(1:2), stride(1:2), edge(1:2), &
+      tp%tpLosAngle)
+
+    start(2) = 0
+    start(3) = noMAF-1
+    edge(1) = lenCoord
+    edge(2) = SIZE(tp%tpECI,2)
+
+    status = sfwdata(sds19_id, start, stride, edge, tp%tpECI)
+    status = sfwdata(sds20_id, start, stride, edge, tp%tpECR)
+
+    ! Terminate access to the data sets
+    status = sfendacc(sds15_id)
+    status = sfendacc(sds16_id)
+    status = sfendacc(sds17_id)
+    status = sfendacc(sds18_id)
+    status = sfendacc(sds19_id)
+    status = sfendacc(sds20_id)
+    status = sfendacc(sds21_id)
+    status = sfendacc(sds22_id)
+    status = sfendacc(sds23_id)
+    status = sfendacc(sds24_id)
+    status = sfendacc(sds25_id)
+    status = sfendacc(sds26_id)
+    status = sfendacc(sds27_id)
+    status = sfendacc(sds28_id)
+    status = sfendacc(sds29_id)
+    status = sfendacc(sds30_id)
+    status = sfendacc(sds31_id)
+    status = sfendacc(sds32_id)
+
+a87 1
+
+a90 1
+
+d95 8
+a102 137
+    ! Functions
+    INTEGER :: sfn2index, sfselect, sfwdata, sfendacc
+
+    ! Variables
+    INTEGER :: sds_index,  sds33_id, sds34_id, sds35_id, sds36_id
+    INTEGER :: sds37_id, sds38_id, sds39_id, sds40_id, sds41_id, sds42_id
+    INTEGER :: sds43_id, sds44_id, sds45_id, sds46_id, sds47_id, sds48_id
+    INTEGER :: sds49_id, sds50_id, status
+    INTEGER :: edge(3), start(3), stride(3)
+
+    ! Find data sets by name
+    sds_index = sfn2index(sd_id, SDS33_NAME)
+    sds33_id = sfselect(sd_id, sds_index)
+
+    sds_index = sfn2index(sd_id, SDS34_NAME)
+    sds34_id = sfselect(sd_id, sds_index)
+
+    sds_index = sfn2index(sd_id, SDS35_NAME)
+    sds35_id = sfselect(sd_id, sds_index)
+
+    sds_index = sfn2index(sd_id, SDS36_NAME)
+    sds36_id = sfselect(sd_id, sds_index)
+
+    sds_index = sfn2index(sd_id, SDS37_NAME)
+    sds37_id = sfselect(sd_id, sds_index)
+
+    sds_index = sfn2index(sd_id, SDS38_NAME)
+    sds38_id = sfselect(sd_id, sds_index)
+
+    sds_index = sfn2index(sd_id, SDS39_NAME)
+    sds39_id = sfselect(sd_id, sds_index)
+
+    sds_index = sfn2index(sd_id, SDS40_NAME)
+    sds40_id = sfselect(sd_id, sds_index)
+
+    sds_index = sfn2index(sd_id, SDS41_NAME)
+    sds41_id = sfselect(sd_id, sds_index)
+
+    sds_index = sfn2index(sd_id, SDS42_NAME)
+    sds42_id = sfselect(sd_id, sds_index)
+
+    sds_index = sfn2index(sd_id, SDS43_NAME)
+    sds43_id = sfselect(sd_id, sds_index)
+
+    sds_index = sfn2index(sd_id, SDS44_NAME)
+    sds44_id = sfselect(sd_id, sds_index)
+
+    sds_index = sfn2index(sd_id, SDS45_NAME)
+    sds45_id = sfselect(sd_id, sds_index)
+
+    sds_index = sfn2index(sd_id, SDS46_NAME)
+    sds46_id = sfselect(sd_id, sds_index)
+
+    sds_index = sfn2index(sd_id, SDS47_NAME)
+    sds47_id = sfselect(sd_id, sds_index)
+
+    sds_index = sfn2index(sd_id, SDS48_NAME)
+    sds48_id = sfselect(sd_id, sds_index)
+
+    sds_index = sfn2index(sd_id, SDS49_NAME)
+    sds49_id = sfselect(sd_id, sds_index)
+
+    sds_index = sfn2index(sd_id, SDS50_NAME)
+    sds50_id = sfselect(sd_id, sds_index)
+
+    ! Initialize parameters that aren't reset during the MAF loop
+    start(1) = 0
+    stride = 1
+    edge(3) = 1
+
+    ! Write THz data
+    start(2) = noMAF-1
+    edge(1) = SIZE(tp%encoderAngle)
+    edge(2) = 1
+
+    status = sfwdata(sds33_id, start(1:2), stride(1:2), edge(1:2), &
+      tp%encoderAngle)
+    status = sfwdata(sds34_id, start(1:2), stride(1:2), edge(1:2), &
+      tp%scAngle)
+    status = sfwdata(sds35_id, start(1:2), stride(1:2), edge(1:2), &
+      tp%scanAngle)
+    status = sfwdata(sds36_id, start(1:2), stride(1:2), edge(1:2), &
+      tp%scanRate)
+
+    edge(1) = SIZE(tp%tpOrbY)
+
+    status = sfwdata(sds39_id, start(1:2), stride(1:2), edge(1:2), tp%tpOrbY)
+    status = sfwdata(sds40_id, start(1:2), stride(1:2), edge(1:2), &
+      tp%tpGeocAlt)
+    status = sfwdata(sds41_id, start(1:2), stride(1:2), edge(1:2), &
+      tp%tpGeocLat)
+    status = sfwdata(sds42_id, start(1:2), stride(1:2), edge(1:2), &
+      tp%tpGeocAltRate)
+    status = sfwdata(sds43_id, start(1:2), stride(1:2), edge(1:2), &
+      tp%tpGeodAlt)
+    status = sfwdata(sds44_id, start(1:2), stride(1:2), edge(1:2), &
+      tp%tpGeodLat)
+    status = sfwdata(sds45_id, start(1:2), stride(1:2), edge(1:2), &
+      tp%tpGeodAltRate)
+    status = sfwdata(sds46_id, start(1:2), stride(1:2), edge(1:2), tp%tpLon)
+    status = sfwdata(sds47_id, start(1:2), stride(1:2), edge(1:2), &
+      tp%tpGeodAngle)
+    status = sfwdata(sds48_id, start(1:2), stride(1:2), edge(1:2), &
+      tp%tpSolarTime)
+    status = sfwdata(sds49_id, start(1:2), stride(1:2), edge(1:2), &
+      tp%tpSolarZenith)
+    status = sfwdata(sds50_id, start(1:2), stride(1:2), edge(1:2), &
+      tp%tpLosAngle)
+
+    start(2) = 0
+    start(3) = noMAF-1
+    edge(1) = lenCoord
+    edge(2) = SIZE(tp%tpECI,2)
+
+    status = sfwdata(sds37_id, start, stride, edge, tp%tpECI)
+    status = sfwdata(sds38_id, start, stride, edge, tp%tpECR)
+
+    ! Terminate access to the data sets
+    status = sfendacc(sds33_id)
+    status = sfendacc(sds34_id)
+    status = sfendacc(sds35_id)
+    status = sfendacc(sds36_id)
+    status = sfendacc(sds37_id)
+    status = sfendacc(sds38_id)
+    status = sfendacc(sds39_id)
+    status = sfendacc(sds40_id)
+    status = sfendacc(sds41_id)
+    status = sfendacc(sds42_id)
+    status = sfendacc(sds43_id)
+    status = sfendacc(sds44_id)
+    status = sfendacc(sds45_id)
+    status = sfendacc(sds46_id)
+    status = sfendacc(sds47_id)
+    status = sfendacc(sds48_id)
+    status = sfendacc(sds49_id)
+    status = sfendacc(sds50_id)
+
+a103 1
+
+a106 1
+
+d112 8
+a119 152
+! Parameters
+
+      REAL, PARAMETER :: FILL_RAD = -999.9  ! 0.0
+      REAL, PARAMETER :: FILL_RAD_ERR = -1.0
+
+    ! Functions
+    INTEGER :: sfcreate, sfdimid, sfendacc, sfn2index, sfsdmname, sfsfill
+    INTEGER :: sfselect, sfwdata
+
+    ! Variables
+    CHARACTER (LEN=64) :: dim_chan, dim_mif, name, prec
+
+    INTEGER :: dim_id, i, noSDs, rank, status, sd_id, sds_index
+    INTEGER :: sds1_id, sds2_id
+    INTEGER :: dimSize(3), start(3), stride(3), edge(3)
+    LOGICAL :: good_rad
+
+    ! Set parameters that won't change in loop through SDs
+    rank = 3
+    dimSize(3) = SD_UNLIMITED
+
+    start(1) = 0
+    start(2) = 0
+    start(3) = noMAF-1
+    stride = 1
+    edge(3) = 1
+
+    ! Find the sds_id number for counterMAF in the file RADF, write the data to it,
+    ! terminate access to the data set
+    name = 'counterMAF'
+    sds_index = sfn2index(sdId%RADFID, name)
+    sds1_id = sfselect(sdId%RADFID, sds_index)
+    status = sfwdata(sds1_id, start(3), stride(3), edge(3), counterMAF)
+    status = sfendacc(sds1_id)
+    IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Error &
+      &writing counterMAF to rad F file')
+
+    ! Do the same for file RADD
+    sds_index = sfn2index(sdId%RADDID, name)
+    sds2_id = sfselect(sdId%RADDID, sds_index)
+    status = sfwdata(sds2_id, start(3), stride(3), edge(3), counterMAF)
+    status = sfendacc(sds2_id)
+    IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Error &
+      &writing counterMAF to rad D file')
+
+    ! Loop on number of SDs per MAF
+    noSDs = SIZE(rad)
+
+    DO i = 1, noSDs
+      ! Concatenate SD names
+      CALL GetFullMLSSignalName(rad(i)%signal, name)
+      prec = TRIM(name) // ' precision'
+
+      ! Set parameters based on input data dimensions
+      dimSize(1) = SIZE(rad(i)%value,1)
+      edge(1) = dimSize(1)
+
+      ! Based on the SD name, set dim name for channel, get Id of output file
+      IF ( INDEX(name,'FB') /= 0 ) THEN
+        dim_chan = DIM7_NAME
+        sd_id = sdId%RADFID
+      ELSE IF ( INDEX(name,'MB') /= 0 ) THEN
+        dim_chan = DIM8_NAME
+        sd_id = sdId%RADFID
+      ELSE IF ( INDEX(name,'WF') /= 0 ) THEN
+        dim_chan = DIM9_NAME
+        sd_id = sdId%RADFID
+      ELSE IF ( INDEX(name,'DACS') /= 0 ) THEN
+        dim_chan = DIM10_NAME
+        sd_id = sdId%RADDID
+      ENDIF
+
+      ! Based on rad module, set dim name & size, edge for # of MIFs
+      IF ( INDEX(name,'R5') /= 0 ) THEN
+        dim_mif = DIM4_NAME
+        dimSize(2) = MIFsTHz  !! lenT
+        edge(2) = MIFsTHz     !! lenT
+      ELSE
+        dim_mif = DIM3_NAME
+        dimSize(2) = MIFsGHz  !! lenG
+        edge(2) = MIFsGHz     !! lenG
+      ENDIF
+
+      ! If # of input MIFs exceeds dim size, re-set & output warning msg
+      IF ( SIZE(rad(i)%value,2) > edge(2) ) CALL MLSMessage(MLSMSG_Warning,&
+        ModuleName, 'Number of MIFs exceeds SD size -- output truncated.')
+
+! Determine if good radiance data exists:
+
+         good_rad = ANY (rad(i)%value /= 0.0)
+
+      ! Check whether the SD already exists
+      sds_index = sfn2index(sd_id, name)
+
+      ! If not, create it, and a corresponding one for precision
+      IF (sds_index == -1 .AND. good_rad) THEN
+
+        sds1_id = sfcreate(sd_id, name, DFNT_FLOAT32, rank, dimSize)
+        IF (sds1_id == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+          'Error creating value SD.')
+        status = sfsfill(sds1_id, FILL_RAD)
+
+        sds2_id = sfcreate(sd_id, prec, DFNT_FLOAT32, rank, dimSize)
+        IF (sds2_id == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+          'Error creating precision SD.')
+        status = sfsfill(sds2_id, FILL_RAD_ERR)
+
+        IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+          'Error setting fill values.')
+
+        ! Give names to the dimensions
+        dim_id = sfdimid(sds1_id, 0)
+        status = sfsdmname(dim_id, dim_chan)
+        dim_id = sfdimid(sds1_id, 1)
+        status = sfsdmname(dim_id, dim_mif)
+        dim_id = sfdimid(sds1_id, 2)
+        status = sfsdmname(dim_id, DIM1_NAME)
+
+        dim_id = sfdimid(sds2_id, 0)
+        status = sfsdmname(dim_id, dim_chan)
+        dim_id = sfdimid(sds2_id, 1)
+        status = sfsdmname(dim_id, dim_mif)
+        dim_id = sfdimid(sds2_id, 2)
+        status = sfsdmname(dim_id, DIM1_NAME)
+
+        IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+          'Error setting dimension names.')
+
+        ! If the SD already exists, find the sds_id numbers for it & its precision
+      ELSE
+        sds1_id = sfselect(sd_id, sds_index)
+        sds_index = sfn2index(sd_id, prec)
+        sds2_id = sfselect(sd_id, sds_index)
+
+      ENDIF
+
+      ! Write data to the value & precision SDs
+      IF (good_rad) THEN
+         status = sfwdata(sds1_id, start, stride, edge, rad(i)%value)
+         status = sfwdata(sds2_id, start, stride, edge, rad(i)%precision)
+         IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+           'Error writing rad data.')
+
+      ! Terminate access to the value & precision data sets
+         status = sfendacc(sds1_id)
+         status = sfendacc(sds2_id)
+         IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Error &
+           &terminating access to the value or precision SD.')
+      ENDIF
+
+    ENDDO
+
+a120 1
+
+d124 3
+@
+
+
+2.5
+log
+@Changed lenG and lenT to 150; added good_rad flag for output control.
+@
+text
+@d106 2
+a107 2
+  INTEGER, PARAMETER :: lenG = 150
+  INTEGER, PARAMETER :: lenT = 150
+d283 1
+a283 1
+    dimSize(1) = lenG
+d324 1
+a324 1
+    dimSize(1) = lenT
+d385 1
+a385 1
+    dimSize(2) = lenG
+d393 1
+a393 1
+    dimSize(2) = lenT
+@
+
+
+2.4
+log
+@Now writes orbit incline angle in ECR
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+d5 1
+a5 1
+module OutputL1B
+d7 6
+a12 6
+  use Hdf
+  use MLSCommon
+  use MLSL1Common
+  use MLSL1Config, only: MIFsGHz, MIFsTHz
+  use MLSL1Rad
+  use MLSMessageModule, only : MLSMessage
+d14 2
+a15 2
+  implicit none
+  private
+d17 1
+a17 1
+  public :: L1BOAINDEX_T, L1BOASC_T, L1BOATP_T, &
+d23 3
+a25 3
+  character(LEN=130) :: Id = &                                                    
+    "$Id: OutputL1B.f90,v 2.3 2001/12/04 00:29:16 pwagner Exp $"
+  character (LEN=*), parameter :: ModuleName="$RCSfile: OutputL1B.f90,v $"
+d33 75
+a107 75
+  character(len=*), public, parameter :: SDS1_NAME = 'MAFStartTimeUTC'
+  character(len=*), public, parameter :: SDS2_NAME = 'MAFStartTimeTAI'
+  character(len=*), public, parameter :: SDS3_NAME = 'noMIFs'
+
+  character(len=*), public, parameter :: SDS4_NAME = 'scECI'
+  character(len=*), public, parameter :: SDS5_NAME = 'scECR'
+  character(len=*), public, parameter :: SDS6_NAME = 'scGeocAlt'
+  character(len=*), public, parameter :: SDS7_NAME = 'scGeocLat'
+  character(len=*), public, parameter :: SDS8_NAME = 'scGeodAlt'
+  character(len=*), public, parameter :: SDS9_NAME = 'scGeodLat'
+  character(len=*), public, parameter :: SDS10_NAME = 'scLon'
+  character(len=*), public, parameter :: SDS11_NAME = 'scGeodAngle'
+  character(len=*), public, parameter :: SDS12_NAME = 'scVelECI'
+  character(len=*), public, parameter :: SDS13_NAME = 'ypr'
+  character(len=*), public, parameter :: SDS14_NAME = 'yprRate'
+
+  character(len=*), public, parameter :: SDS15_NAME = 'GHz.encoderAngle'
+
+  character(len=*), public, parameter :: SDS16_NAME = 'GHz.scAngle'
+  character(len=*), public, parameter :: SDS17_NAME = 'GHz.scanAngle'
+  character(len=*), public, parameter :: SDS18_NAME = 'GHz.scanRate'
+  character(len=*), public, parameter :: SDS19_NAME = 'GHz.tpECI'
+  character(len=*), public, parameter :: SDS20_NAME = 'GHz.tpECR'
+  character(len=*), public, parameter :: SDS21_NAME = 'GHz.tpOrbY'
+  character(len=*), public, parameter :: SDS22_NAME = 'GHz.tpGeocAlt'
+  character(len=*), public, parameter :: SDS23_NAME = 'GHz.tpGeocLat'
+  character(len=*), public, parameter :: SDS24_NAME = 'GHz.tpGeocAltRate'
+  character(len=*), public, parameter :: SDS25_NAME = 'GHz.tpGeodAlt'
+  character(len=*), public, parameter :: SDS26_NAME = 'GHz.tpGeodLat'
+  character(len=*), public, parameter :: SDS27_NAME = 'GHz.tpGeodAltRate'
+  character(len=*), public, parameter :: SDS28_NAME = 'GHz.tpLon'
+  character(len=*), public, parameter :: SDS29_NAME = 'GHz.tpGeodAngle'
+  character(len=*), public, parameter :: SDS30_NAME = 'GHz.tpSolarTime'
+  character(len=*), public, parameter :: SDS31_NAME = 'GHz.tpSolarZenith'
+  character(len=*), public, parameter :: SDS32_NAME = 'GHz.tpLosAngle'
+
+  character(len=*), public, parameter :: SDS33_NAME = 'THz.encoderAngle'
+
+  character(len=*), public, parameter :: SDS34_NAME = 'THz.scAngle'
+  character(len=*), public, parameter :: SDS35_NAME = 'THz.scanAngle'
+  character(len=*), public, parameter :: SDS36_NAME = 'THz.scanRate'
+  character(len=*), public, parameter :: SDS37_NAME = 'THz.tpECI'
+  character(len=*), public, parameter :: SDS38_NAME = 'THz.tpECR'
+  character(len=*), public, parameter :: SDS39_NAME = 'THz.tpOrbY'
+  character(len=*), public, parameter :: SDS40_NAME = 'THz.tpGeocAlt'
+  character(len=*), public, parameter :: SDS41_NAME = 'THz.tpGeocLat'
+  character(len=*), public, parameter :: SDS42_NAME = 'THz.tpGeocAltRate'
+  character(len=*), public, parameter :: SDS43_NAME = 'THz.tpGeodAlt'
+  character(len=*), public, parameter :: SDS44_NAME = 'THz.tpGeodLat'
+  character(len=*), public, parameter :: SDS45_NAME = 'THz.tpGeodAltRate'
+  character(len=*), public, parameter :: SDS46_NAME = 'THz.tpLon'
+  character(len=*), public, parameter :: SDS47_NAME = 'THz.tpGeodAngle'
+  character(len=*), public, parameter :: SDS48_NAME = 'THz.tpSolarTime'
+  character(len=*), public, parameter :: SDS49_NAME = 'THz.tpSolarZenith'
+  character(len=*), public, parameter :: SDS50_NAME = 'THz.tpLosAngle'
+
+  character(len=*), public, parameter :: SDS51_NAME = 'counterMAF'
+  character(len=*), public, parameter :: SDS62_NAME = 'scVelECR'
+  character(len=*), public, parameter :: SDS63_NAME = 'scOrbIncl'
+
+  character(len=*), public, parameter :: DIM1_NAME = 'MAF'
+  character(len=*), public, parameter :: DIM2_NAME = 'MIF'
+  character(len=*), public, parameter :: DIM3_NAME = 'GHz.MIF'
+  character(len=*), public, parameter :: DIM4_NAME = 'THz.MIF'
+  character(len=*), public, parameter :: DIM5_NAME = 'xyz'
+  character(len=*), public, parameter :: DIM6_NAME = 'charUTC'
+  character(len=*), public, parameter :: DIM7_NAME = 'chanFB'
+  character(len=*), public, parameter :: DIM8_NAME = 'chanMB'
+  character(len=*), public, parameter :: DIM9_NAME = 'chanWF'
+  character(len=*), public, parameter :: DIM10_NAME = 'chanDACS'
+
+  integer, parameter :: lenCoord = 3
+  integer, public, parameter :: lenUTC = 27
+  integer, parameter :: lenG = 120
+  integer, parameter :: lenT = 114
+d109 2
+a110 2
+  real, public, parameter :: FILL_REAL = -999.9
+  real(r8), public, parameter :: FILL_DP = -999.9
+d113 6
+a118 6
+  type L1BOAindex_T
+    character(LEN=lenUTC) :: MAFStartTimeUTC ! MAF start time in ascii UTC
+    real(r8) :: MAFStartTimeTAI		! MAF start time in TAI
+    integer :: noMIFs                   ! total number of MIFs per MAF
+    integer :: counterMAF               ! MAF counter
+  end type L1BOAindex_T
+d121 1
+a121 1
+  type L1BOAsc_T
+d123 2
+a124 2
+    real(r8), dimension(:,:), pointer :: scECI	! s/c ECI location
+    real(r8), dimension(:,:), pointer :: scECR	! s/c ECR location
+d127 7
+a133 7
+    real(r8), dimension(:), pointer :: scGeocAlt	! s/c geoc alt
+    real, dimension(:), pointer :: scGeocLat		! s/c geoc lat
+    real(r8), dimension(:), pointer :: scGeodAlt	! s/c geod alt
+    real, dimension(:), pointer :: scGeodLat		! s/c geod lat
+    real, dimension(:), pointer :: scLon		! s/c longitude
+    real, dimension(:), pointer :: scGeodAngle	! s/c master coordinate
+    real, dimension(:), pointer :: scOrbIncl     ! instant. orb incl ECR (deg)
+d136 5
+a140 5
+    real(r8), dimension(:,:), pointer :: scVelECI	! s/c ECI velocity
+    real(r8), dimension(:,:), pointer :: scVelECR     ! s/c ECR velocity
+    real(r8), dimension(:,:), pointer :: ypr		! s/c yaw, pitch, roll
+    real(r8), dimension(:,:), pointer :: yprRate	! s/c y-p-r rate
+  end type L1BOAsc_T
+d143 1
+a143 1
+  type L1BOAtp_T
+d146 4
+a149 4
+    real(r8), dimension(:), pointer :: encoderAngle	! boresight wrt instr.
+    real(r8), dimension(:), pointer :: scAngle	! boresight wrt s/c +x
+    real(r8), dimension(:), pointer :: scanAngle	! boresight wrt orbit +x
+    real, dimension(:), pointer :: scanRate		! of change of scanAngle
+d152 2
+a153 2
+    real(r8), dimension(:,:), pointer :: tpECI	! tp location in ECI
+    real(r8), dimension(:,:), pointer :: tpECR	! tp location in ECR
+d156 13
+a168 13
+    real, dimension(:), pointer :: tpOrbY		! out-of-plane distance
+    real(r8), dimension(:), pointer :: tpGeocAlt	! geoc alt of tp
+    real, dimension(:), pointer :: tpGeocLat		! geoc lat of tp
+    real, dimension(:), pointer :: tpGeocAltRate	! of change of tpGeocAlt
+    real(r8), dimension(:), pointer :: tpGeodAlt	! geod alt of tp 
+    real, dimension(:), pointer :: tpGeodLat		! geod lat of tp
+    real, dimension(:), pointer :: tpGeodAltRate	! of change of tpGeodAlt
+    real, dimension(:), pointer :: tpLon		! longitude of tp
+    real, dimension(:), pointer :: tpGeodAngle	! tp master coordinate
+    real, dimension(:), pointer :: tpSolarTime	! solar time coordinate
+    real, dimension(:), pointer :: tpSolarZenith	! solar zenith angle
+    real, dimension(:), pointer :: tpLosAngle		! line-of-sight ang to N
+  end type L1BOAtp_T
+d170 1
+a170 1
+contains
+d173 1
+a173 1
+  subroutine OutputL1B_create(sdId)
+d178 1
+a178 1
+    type( L1BFileInfo_T ), intent(IN) :: sdId
+d181 1
+a181 1
+    integer :: sfcreate, sfdimid, sfsdmname, sfendacc, sfsfill
+d184 12
+a195 12
+    integer :: dim_id, rank, status
+    integer :: sds1_id, sds2_id, sds3_id, sds4_id, sds5_id, sds6_id, sds7_id
+    integer :: sds8_id, sds9_id, sds10_id, sds11_id, sds12_id, sds13_id
+    integer :: sds14_id, sds15_id, sds16_id, sds17_id, sds18_id, sds19_id
+    integer :: sds20_id, sds21_id, sds22_id, sds23_id, sds24_id, sds25_id
+    integer :: sds26_id, sds27_id, sds28_id, sds29_id, sds30_id, sds31_id
+    integer :: sds32_id, sds33_id, sds34_id, sds35_id, sds36_id, sds37_id
+    integer :: sds38_id, sds39_id, sds40_id, sds41_id, sds42_id, sds43_id
+    integer :: sds44_id, sds45_id, sds46_id, sds47_id, sds48_id, sds49_id
+    integer :: sds50_id, sds51_id, sds52_id, sds53_id
+    integer :: sds62_id, sds63_id
+    integer :: dimSize(3)
+d739 1
+a739 1
+  end subroutine OutputL1B_create
+d742 1
+a742 1
+  subroutine OutputL1B_index(noMAF, sd_id, index)
+d746 2
+a747 2
+    type( L1BOAindex_T), intent(IN) :: index
+    integer, intent(IN) :: sd_id, noMAF
+d750 1
+a750 1
+    integer :: sfn2index, sfselect, sfwdata, sfwcdata, sfendacc
+d753 2
+a754 2
+    integer :: sds_index, sds1_id, sds2_id, sds3_id, sds51_id, status
+    integer :: edge(2), start(2), stride(2)
+d793 1
+a793 1
+  end subroutine OutputL1B_index
+d796 1
+a796 1
+  subroutine OutputL1B_sc(noMAF, sd_id, sc)
+d800 2
+a801 2
+    type( L1BOAsc_T ), intent(IN) :: sc
+    integer, intent(IN) :: noMAF, sd_id
+d804 1
+a804 1
+    integer :: sfn2index, sfselect, sfwdata, sfendacc
+d807 5
+a811 5
+    integer :: sds_index, status
+    integer :: sds4_id, sds5_id, sds6_id, sds7_id, sds8_id, sds9_id
+    integer :: sds10_id, sds11_id, sds12_id, sds13_id, sds14_id
+    integer :: sds62_id, sds63_id
+    integer :: edge(3), start(3), stride(3)
+d862 1
+a862 1
+    edge(2) = size(sc%scECI,2)
+d873 1
+a873 1
+    edge(1) = size(sc%scGeocAlt)
+d905 1
+a905 1
+  end subroutine OutputL1B_sc
+d908 1
+a908 1
+  subroutine OutputL1B_GHz(noMAF, sd_id, tp)
+d911 2
+a912 2
+    type( L1BOAtp_T ), intent(IN) :: tp
+    integer, intent(IN) :: noMAF, sd_id
+d915 1
+a915 1
+    integer :: sfn2index, sfselect, sfwdata, sfendacc
+d918 5
+a922 5
+    integer :: sds_index, sds15_id, sds16_id, sds17_id, sds18_id
+    integer :: sds19_id, sds20_id, sds21_id, sds22_id, sds23_id, sds24_id
+    integer :: sds25_id, sds26_id, sds27_id, sds28_id, sds29_id, sds30_id
+    integer :: sds31_id, sds32_id, status
+    integer :: edge(3), start(3), stride(3)
+d988 1
+a988 1
+    edge(1) = size(tp%encoderAngle)
+d1000 1
+a1000 1
+    edge(1) = size(tp%tpOrbY)
+d1028 1
+a1028 1
+    edge(2) = size(tp%tpECI,2)
+d1053 1
+a1053 1
+  end subroutine OutputL1B_GHz
+d1056 1
+a1056 1
+  subroutine OutputL1B_THz(noMAF, sd_id, tp)
+d1060 2
+a1061 2
+    type( L1BOAtp_T ), intent(IN) :: tp
+    integer, intent(IN) :: noMAF, sd_id
+d1064 1
+a1064 1
+    integer :: sfn2index, sfselect, sfwdata, sfendacc
+d1067 5
+a1071 5
+    integer :: sds_index,  sds33_id, sds34_id, sds35_id, sds36_id
+    integer :: sds37_id, sds38_id, sds39_id, sds40_id, sds41_id, sds42_id
+    integer :: sds43_id, sds44_id, sds45_id, sds46_id, sds47_id, sds48_id
+    integer :: sds49_id, sds50_id, status
+    integer :: edge(3), start(3), stride(3)
+d1135 1
+a1135 1
+    edge(1) = size(tp%encoderAngle)
+d1147 1
+a1147 1
+    edge(1) = size(tp%tpOrbY)
+d1175 1
+a1175 1
+    edge(2) = size(tp%tpECI,2)
+d1200 1
+a1200 1
+  end subroutine OutputL1B_THz
+d1203 1
+a1203 1
+  subroutine OutputL1B_rad(noMAF, sdId, counterMAF, rad)
+d1207 8
+a1214 3
+    type( L1BFileInfo_T ) :: sdId
+    type( Radiance_T ) :: rad(:)
+    integer, intent(IN) :: counterMAF, noMAF
+d1217 2
+a1218 2
+    integer :: sfcreate, sfdimid, sfendacc, sfn2index, sfsdmname, sfsfill
+    integer :: sfselect, sfwdata
+d1221 1
+a1221 1
+    character (LEN=64) :: dim_chan, dim_mif, name, prec
+d1223 4
+a1226 3
+    integer :: dim_id, i, noSDs, rank, status, sd_id, sds_index
+    integer :: sds1_id, sds2_id
+    integer :: dimSize(3), start(3), stride(3), edge(3)
+d1245 1
+a1245 1
+    if (status == -1) call MLSMessage(MLSMSG_Error, ModuleName, 'Error &
+d1253 1
+a1253 1
+    if (status == -1) call MLSMessage(MLSMSG_Error, ModuleName, 'Error &
+d1257 1
+a1257 1
+    noSDs = size(rad)
+d1259 1
+a1259 1
+    do i = 1, noSDs
+d1261 2
+a1262 2
+      call GetFullMLSSignalName(rad(i)%signal, name)
+      prec = trim(name) // ' precision'
+d1265 1
+a1265 1
+      dimSize(1) = size(rad(i)%value,1)
+d1269 1
+a1269 1
+      if ( index(name,'FB') /= 0 ) then
+d1272 1
+a1272 1
+      else if ( index(name,'MB') /= 0 ) then
+d1275 1
+a1275 1
+      else if ( index(name,'WF') /= 0 ) then
+d1278 1
+a1278 1
+      else if ( index(name,'DACS') /= 0 ) then
+d1281 1
+a1281 1
+      endif
+d1284 1
+a1284 1
+      if ( index(name,'R5') /= 0 ) then
+d1288 1
+a1288 1
+      else
+d1292 1
+a1292 1
+      endif
+d1295 1
+a1295 1
+      if ( size(rad(i)%value,2) > edge(2) ) call MLSMessage(MLSMSG_Warning,&
+d1298 4
+d1306 1
+a1306 1
+      if ( sds_index == -1) then
+d1309 1
+a1309 1
+        if (sds1_id == -1) call MLSMessage(MLSMSG_Error, ModuleName, &
+d1311 1
+a1311 1
+        status = sfsfill(sds1_id, FILL_REAL)
+d1314 1
+a1314 1
+        if (sds2_id == -1) call MLSMessage(MLSMSG_Error, ModuleName, &
+d1316 1
+a1316 1
+        status = sfsfill(sds2_id, FILL_REAL)
+d1318 1
+a1318 1
+        if (status == -1) call MLSMessage(MLSMSG_Error, ModuleName, &
+d1336 1
+a1336 1
+        if (status == -1) call MLSMessage(MLSMSG_Error, ModuleName, &
+d1340 1
+a1340 1
+      else
+d1345 2
+a1346 1
+      endif
+d1348 5
+a1352 4
+      status = sfwdata(sds1_id, start, stride, edge, rad(i)%value)
+      status = sfwdata(sds2_id, start, stride, edge, rad(i)%precision)
+      if (status == -1) call MLSMessage(MLSMSG_Error, ModuleName, &
+        'Error writing rad data.')
+d1355 5
+a1359 4
+      status = sfendacc(sds1_id)
+      status = sfendacc(sds2_id)
+      if (status == -1) call MLSMessage(MLSMSG_Error, ModuleName, 'Error &
+        &terminating access to the value or precision SD.')
+d1361 1
+a1361 1
+    enddo
+d1363 1
+a1363 1
+  end subroutine OutputL1B_rad
+d1365 1
+a1365 1
+end module OutputL1B
+d1368 3
+@
+
+
+2.3
+log
+@Made public things needed by sids
+@
+text
+@d24 1
+a24 1
+    "$Id: OutputL1B.f90,v 2.2 2001/10/12 22:11:05 livesey Exp $"
+d45 1
+a45 1
+  character(len=*), public, parameter :: SDS12_NAME = 'scVel'
+d90 2
+d133 1
+d184 1
+a184 2
+    character (LEN=480) :: msr
+    integer :: alloc_err, dim_id, i, rank, returnStatus, status
+d194 1
+d252 3
+d377 2
+d452 5
+d469 7
+d696 1
+d698 1
+d810 1
+d838 3
+d844 3
+d867 1
+d887 2
+d899 1
+d901 1
+d1355 3
+@
+
+
+2.2
+log
+@Tidied things up a bit, added scVelECR, but not filled yet
+@
+text
+@d24 1
+a24 1
+    "$Id: OutputL1B.f90,v 2.1 2001/02/23 18:26:11 perun Exp $"
+d33 68
+a100 68
+  character (len=*), parameter :: SDS1_NAME = 'MAFStartTimeUTC'
+  character (len=*), parameter :: SDS2_NAME = 'MAFStartTimeTAI'
+  character (len=*), parameter :: SDS3_NAME = 'noMIFs'
+
+  character (len=*), parameter :: SDS4_NAME = 'scECI'
+  character (len=*), parameter :: SDS5_NAME = 'scECR'
+  character (len=*), parameter :: SDS6_NAME = 'scGeocAlt'
+  character (len=*), parameter :: SDS7_NAME = 'scGeocLat'
+  character (len=*), parameter :: SDS8_NAME = 'scGeodAlt'
+  character (len=*), parameter :: SDS9_NAME = 'scGeodLat'
+  character (len=*), parameter :: SDS10_NAME = 'scLon'
+  character (len=*), parameter :: SDS11_NAME = 'scGeodAngle'
+  character (len=*), parameter :: SDS12_NAME = 'scVel'
+  character (len=*), parameter :: SDS13_NAME = 'ypr'
+  character (len=*), parameter :: SDS14_NAME = 'yprRate'
+
+  character (len=*), parameter :: SDS15_NAME = 'GHz.encoderAngle'
+
+  character (len=*), parameter :: SDS16_NAME = 'GHz.scAngle'
+  character (len=*), parameter :: SDS17_NAME = 'GHz.scanAngle'
+  character (len=*), parameter :: SDS18_NAME = 'GHz.scanRate'
+  character (len=*), parameter :: SDS19_NAME = 'GHz.tpECI'
+  character (len=*), parameter :: SDS20_NAME = 'GHz.tpECR'
+  character (len=*), parameter :: SDS21_NAME = 'GHz.tpOrbY'
+  character (len=*), parameter :: SDS22_NAME = 'GHz.tpGeocAlt'
+  character (len=*), parameter :: SDS23_NAME = 'GHz.tpGeocLat'
+  character (len=*), parameter :: SDS24_NAME = 'GHz.tpGeocAltRate'
+  character (len=*), parameter :: SDS25_NAME = 'GHz.tpGeodAlt'
+  character (len=*), parameter :: SDS26_NAME = 'GHz.tpGeodLat'
+  character (len=*), parameter :: SDS27_NAME = 'GHz.tpGeodAltRate'
+  character (len=*), parameter :: SDS28_NAME = 'GHz.tpLon'
+  character (len=*), parameter :: SDS29_NAME = 'GHz.tpGeodAngle'
+  character (len=*), parameter :: SDS30_NAME = 'GHz.tpSolarTime'
+  character (len=*), parameter :: SDS31_NAME = 'GHz.tpSolarZenith'
+  character (len=*), parameter :: SDS32_NAME = 'GHz.tpLosAngle'
+
+  character (len=*), parameter :: SDS33_NAME = 'THz.encoderAngle'
+
+  character (len=*), parameter :: SDS34_NAME = 'THz.scAngle'
+  character (len=*), parameter :: SDS35_NAME = 'THz.scanAngle'
+  character (len=*), parameter :: SDS36_NAME = 'THz.scanRate'
+  character (len=*), parameter :: SDS37_NAME = 'THz.tpECI'
+  character (len=*), parameter :: SDS38_NAME = 'THz.tpECR'
+  character (len=*), parameter :: SDS39_NAME = 'THz.tpOrbY'
+  character (len=*), parameter :: SDS40_NAME = 'THz.tpGeocAlt'
+  character (len=*), parameter :: SDS41_NAME = 'THz.tpGeocLat'
+  character (len=*), parameter :: SDS42_NAME = 'THz.tpGeocAltRate'
+  character (len=*), parameter :: SDS43_NAME = 'THz.tpGeodAlt'
+  character (len=*), parameter :: SDS44_NAME = 'THz.tpGeodLat'
+  character (len=*), parameter :: SDS45_NAME = 'THz.tpGeodAltRate'
+  character (len=*), parameter :: SDS46_NAME = 'THz.tpLon'
+  character (len=*), parameter :: SDS47_NAME = 'THz.tpGeodAngle'
+  character (len=*), parameter :: SDS48_NAME = 'THz.tpSolarTime'
+  character (len=*), parameter :: SDS49_NAME = 'THz.tpSolarZenith'
+  character (len=*), parameter :: SDS50_NAME = 'THz.tpLosAngle'
+
+  character (len=*), parameter :: SDS51_NAME = 'counterMAF'
+
+  character (len=*), parameter :: DIM1_NAME = 'MAF'
+  character (len=*), parameter :: DIM2_NAME = 'MIF'
+  character (len=*), parameter :: DIM3_NAME = 'GHz.MIF'
+  character (len=*), parameter :: DIM4_NAME = 'THz.MIF'
+  character (len=*), parameter :: DIM5_NAME = 'xyz'
+  character (len=*), parameter :: DIM6_NAME = 'charUTC'
+  character (len=*), parameter :: DIM7_NAME = 'chanFB'
+  character (len=*), parameter :: DIM8_NAME = 'chanMB'
+  character (len=*), parameter :: DIM9_NAME = 'chanWF'
+  character (len=*), parameter :: DIM10_NAME = 'chanDACS'
+d103 1
+a103 1
+  integer, parameter :: lenUTC = 27
+d107 2
+a108 2
+  real, parameter :: FILL_REAL = -999.9
+  real(r8), parameter :: FILL_DP = -999.9
+d1321 3
+@
+
+
+2.1
+log
+@Version 0.5 commit
+@
+text
+@a0 1
+
+a3 705
+!===============================================================================
+MODULE OutputL1B
+!===============================================================================
+
+   USE Hdf
+   USE MLSCommon
+   USE MLSL1Common
+   USE MLSL1Config, ONLY: MIFsGHz, MIFsTHz
+   USE MLSL1Rad
+   USE MLSMessageModule
+   IMPLICIT NONE
+   PUBLIC
+
+   PRIVATE :: ID, ModuleName
+
+!------------------- RCS Ident Info -----------------------
+   CHARACTER(LEN=130) :: Id = &                                                    
+   "$Id: OutputL1B.f90,v 2.0 2000/09/05 18:55:14 ahanzel Exp $"
+   CHARACTER (LEN=*), PARAMETER :: ModuleName="$RCSfile: OutputL1B.f90,v $"
+!----------------------------------------------------------
+
+! Contents:
+
+! Definitions -- L1BOAindex_T
+!                L1BOAsc_T
+!                L1BOAtp_T
+! Subroutines -- OutputL1B_create
+!                OutputL1B_index
+!                OutputL1B_sc
+!                OutputL1B_GHz
+!                OutputL1B_THz
+!                OutputL1B_rad
+
+! Remarks:  This module contains the subroutines needed to write L1B data to
+!           SDS-HDF files.
+
+! Parameters
+
+   CHARACTER (LEN=*), PARAMETER :: SDS1_NAME = 'MAFStartTimeUTC'
+   CHARACTER (LEN=*), PARAMETER :: SDS2_NAME = 'MAFStartTimeTAI'
+   CHARACTER (LEN=*), PARAMETER :: SDS3_NAME = 'noMIFs'
+
+   CHARACTER (LEN=*), PARAMETER :: SDS4_NAME = 'scECI'
+   CHARACTER (LEN=*), PARAMETER :: SDS5_NAME = 'scECR'
+   CHARACTER (LEN=*), PARAMETER :: SDS6_NAME = 'scGeocAlt'
+   CHARACTER (LEN=*), PARAMETER :: SDS7_NAME = 'scGeocLat'
+   CHARACTER (LEN=*), PARAMETER :: SDS8_NAME = 'scGeodAlt'
+   CHARACTER (LEN=*), PARAMETER :: SDS9_NAME = 'scGeodLat'
+   CHARACTER (LEN=*), PARAMETER :: SDS10_NAME = 'scLon'
+   CHARACTER (LEN=*), PARAMETER :: SDS11_NAME = 'scGeodAngle'
+   CHARACTER (LEN=*), PARAMETER :: SDS12_NAME = 'scVel'
+   CHARACTER (LEN=*), PARAMETER :: SDS13_NAME = 'ypr'
+   CHARACTER (LEN=*), PARAMETER :: SDS14_NAME = 'yprRate'
+
+   CHARACTER (LEN=*), PARAMETER :: SDS15_NAME = 'GHz.encoderAngle'
+
+   CHARACTER (LEN=*), PARAMETER :: SDS16_NAME = 'GHz.scAngle'
+   CHARACTER (LEN=*), PARAMETER :: SDS17_NAME = 'GHz.scanAngle'
+   CHARACTER (LEN=*), PARAMETER :: SDS18_NAME = 'GHz.scanRate'
+   CHARACTER (LEN=*), PARAMETER :: SDS19_NAME = 'GHz.tpECI'
+   CHARACTER (LEN=*), PARAMETER :: SDS20_NAME = 'GHz.tpECR'
+   CHARACTER (LEN=*), PARAMETER :: SDS21_NAME = 'GHz.tpOrbY'
+   CHARACTER (LEN=*), PARAMETER :: SDS22_NAME = 'GHz.tpGeocAlt'
+   CHARACTER (LEN=*), PARAMETER :: SDS23_NAME = 'GHz.tpGeocLat'
+   CHARACTER (LEN=*), PARAMETER :: SDS24_NAME = 'GHz.tpGeocAltRate'
+   CHARACTER (LEN=*), PARAMETER :: SDS25_NAME = 'GHz.tpGeodAlt'
+   CHARACTER (LEN=*), PARAMETER :: SDS26_NAME = 'GHz.tpGeodLat'
+   CHARACTER (LEN=*), PARAMETER :: SDS27_NAME = 'GHz.tpGeodAltRate'
+   CHARACTER (LEN=*), PARAMETER :: SDS28_NAME = 'GHz.tpLon'
+   CHARACTER (LEN=*), PARAMETER :: SDS29_NAME = 'GHz.tpGeodAngle'
+   CHARACTER (LEN=*), PARAMETER :: SDS30_NAME = 'GHz.tpSolarTime'
+   CHARACTER (LEN=*), PARAMETER :: SDS31_NAME = 'GHz.tpSolarZenith'
+   CHARACTER (LEN=*), PARAMETER :: SDS32_NAME = 'GHz.tpLosAngle'
+
+   CHARACTER (LEN=*), PARAMETER :: SDS33_NAME = 'THz.encoderAngle'
+
+   CHARACTER (LEN=*), PARAMETER :: SDS34_NAME = 'THz.scAngle'
+   CHARACTER (LEN=*), PARAMETER :: SDS35_NAME = 'THz.scanAngle'
+   CHARACTER (LEN=*), PARAMETER :: SDS36_NAME = 'THz.scanRate'
+   CHARACTER (LEN=*), PARAMETER :: SDS37_NAME = 'THz.tpECI'
+   CHARACTER (LEN=*), PARAMETER :: SDS38_NAME = 'THz.tpECR'
+   CHARACTER (LEN=*), PARAMETER :: SDS39_NAME = 'THz.tpOrbY'
+   CHARACTER (LEN=*), PARAMETER :: SDS40_NAME = 'THz.tpGeocAlt'
+   CHARACTER (LEN=*), PARAMETER :: SDS41_NAME = 'THz.tpGeocLat'
+   CHARACTER (LEN=*), PARAMETER :: SDS42_NAME = 'THz.tpGeocAltRate'
+   CHARACTER (LEN=*), PARAMETER :: SDS43_NAME = 'THz.tpGeodAlt'
+   CHARACTER (LEN=*), PARAMETER :: SDS44_NAME = 'THz.tpGeodLat'
+   CHARACTER (LEN=*), PARAMETER :: SDS45_NAME = 'THz.tpGeodAltRate'
+   CHARACTER (LEN=*), PARAMETER :: SDS46_NAME = 'THz.tpLon'
+   CHARACTER (LEN=*), PARAMETER :: SDS47_NAME = 'THz.tpGeodAngle'
+   CHARACTER (LEN=*), PARAMETER :: SDS48_NAME = 'THz.tpSolarTime'
+   CHARACTER (LEN=*), PARAMETER :: SDS49_NAME = 'THz.tpSolarZenith'
+   CHARACTER (LEN=*), PARAMETER :: SDS50_NAME = 'THz.tpLosAngle'
+
+   CHARACTER (LEN=*), PARAMETER :: SDS51_NAME = 'counterMAF'
+
+   CHARACTER (LEN=*), PARAMETER :: DIM1_NAME = 'MAF'
+   CHARACTER (LEN=*), PARAMETER :: DIM2_NAME = 'MIF'
+   CHARACTER (LEN=*), PARAMETER :: DIM3_NAME = 'GHz.MIF'
+   CHARACTER (LEN=*), PARAMETER :: DIM4_NAME = 'THz.MIF'
+   CHARACTER (LEN=*), PARAMETER :: DIM5_NAME = 'xyz'
+   CHARACTER (LEN=*), PARAMETER :: DIM6_NAME = 'charUTC'
+   CHARACTER (LEN=*), PARAMETER :: DIM7_NAME = 'chanFB'
+   CHARACTER (LEN=*), PARAMETER :: DIM8_NAME = 'chanMB'
+   CHARACTER (LEN=*), PARAMETER :: DIM9_NAME = 'chanWF'
+   CHARACTER (LEN=*), PARAMETER :: DIM10_NAME = 'chanDACS'
+
+   INTEGER, PARAMETER :: lenCoord = 3
+   INTEGER, PARAMETER :: lenUTC = 27
+   INTEGER, PARAMETER :: lenG = 120
+   INTEGER, PARAMETER :: lenT = 114
+
+   REAL, PARAMETER :: FILL_REAL = -999.9
+   REAL(r8), PARAMETER :: FILL_DP = -999.9
+
+! This data type contains index information for the L1BOA data file.
+
+   TYPE L1BOAindex_T
+
+      CHARACTER(LEN=lenUTC) :: MAFStartTimeUTC	! MAF start time in ascii UTC
+      REAL(r8) :: MAFStartTimeTAI		! MAF start time in TAI
+      INTEGER :: noMIFs				! total number of MIFs per MAF
+      INTEGER :: counterMAF			! MAF counter
+
+   END TYPE L1BOAindex_T
+
+! This data type contains spacecraft quantities for the L1BOA data file.
+
+   TYPE L1BOAsc_T
+
+! dimensioned (xyz,MIF)
+
+      REAL(r8), DIMENSION(:,:), POINTER :: scECI	! s/c ECI location
+      REAL(r8), DIMENSION(:,:), POINTER :: scECR	! s/c ECR location
+
+! dimensioned (MIF)
+
+      REAL(r8), DIMENSION(:), POINTER :: scGeocAlt	! s/c geoc alt
+      REAL, DIMENSION(:), POINTER :: scGeocLat		! s/c geoc lat
+      REAL(r8), DIMENSION(:), POINTER :: scGeodAlt	! s/c geod alt
+      REAL, DIMENSION(:), POINTER :: scGeodLat		! s/c geod lat
+      REAL, DIMENSION(:), POINTER :: scLon		! s/c longitude
+      REAL, DIMENSION(:), POINTER :: scGeodAngle	! s/c master coordinate
+
+! dimensioned (xyz,MIF)
+
+      REAL(r8), DIMENSION(:,:), POINTER :: scVel	! s/c ECI velocity
+      REAL(r8), DIMENSION(:,:), POINTER :: ypr		! s/c yaw, pitch, roll
+      REAL(r8), DIMENSION(:,:), POINTER :: yprRate	! s/c y-p-r rate
+
+   END TYPE L1BOAsc_T
+
+! This data type contains tangent point quantities for the L1BOA data file.
+
+   TYPE L1BOAtp_T
+
+! dimensioned (MIF)
+
+      REAL(r8), DIMENSION(:), POINTER :: encoderAngle	! boresight wrt instr.
+      REAL(r8), DIMENSION(:), POINTER :: scAngle	! boresight wrt s/c +x
+      REAL(r8), DIMENSION(:), POINTER :: scanAngle	! boresight wrt orbit +x
+      REAL, DIMENSION(:), POINTER :: scanRate		! of change of scanAngle
+
+! dimensioned (xyz,mod.MIF)
+
+      REAL(r8), DIMENSION(:,:), POINTER :: tpECI	! tp location in ECI
+      REAL(r8), DIMENSION(:,:), POINTER :: tpECR	! tp location in ECR
+
+! dimensioned (mod.MIF)
+
+      REAL, DIMENSION(:), POINTER :: tpOrbY		! out-of-plane distance
+      REAL(r8), DIMENSION(:), POINTER :: tpGeocAlt	! geoc alt of tp
+      REAL, DIMENSION(:), POINTER :: tpGeocLat		! geoc lat of tp
+      REAL, DIMENSION(:), POINTER :: tpGeocAltRate	! of change of tpGeocAlt
+      REAL(r8), DIMENSION(:), POINTER :: tpGeodAlt	! geod alt of tp 
+      REAL, DIMENSION(:), POINTER :: tpGeodLat		! geod lat of tp
+      REAL, DIMENSION(:), POINTER :: tpGeodAltRate	! of change of tpGeodAlt
+      REAL, DIMENSION(:), POINTER :: tpLon		! longitude of tp
+      REAL, DIMENSION(:), POINTER :: tpGeodAngle	! tp master coordinate
+      REAL, DIMENSION(:), POINTER :: tpSolarTime	! solar time coordinate
+      REAL, DIMENSION(:), POINTER :: tpSolarZenith	! solar zenith angle
+      REAL, DIMENSION(:), POINTER :: tpLosAngle		! line-of-sight ang to N
+
+   END TYPE L1BOAtp_T
+
+CONTAINS
+
+!-----------------------------------
+   SUBROUTINE OutputL1B_create(sdId)
+!-----------------------------------
+
+! Brief description of subroutine
+! This subroutine opens/creates the SD output files, and names the arrays and
+! dimensions contained within them.
+
+! Arguments
+
+      TYPE( L1BFileInfo_T ), INTENT(IN) :: sdId
+
+! Parameters
+
+! Functions
+
+      INTEGER :: sfcreate, sfdimid, sfsdmname, sfendacc, sfsfill
+
+! Variables
+
+      CHARACTER (LEN=480) :: msr
+
+      INTEGER :: alloc_err, dim_id, i, rank, returnStatus, status
+      INTEGER :: sds1_id, sds2_id, sds3_id, sds4_id, sds5_id, sds6_id, sds7_id
+      INTEGER :: sds8_id, sds9_id, sds10_id, sds11_id, sds12_id, sds13_id
+      INTEGER :: sds14_id, sds15_id, sds16_id, sds17_id, sds18_id, sds19_id
+      INTEGER :: sds20_id, sds21_id, sds22_id, sds23_id, sds24_id, sds25_id
+      INTEGER :: sds26_id, sds27_id, sds28_id, sds29_id, sds30_id, sds31_id
+      INTEGER :: sds32_id, sds33_id, sds34_id, sds35_id, sds36_id, sds37_id
+      INTEGER :: sds38_id, sds39_id, sds40_id, sds41_id, sds42_id, sds43_id
+      INTEGER :: sds44_id, sds45_id, sds46_id, sds47_id, sds48_id, sds49_id
+      INTEGER :: sds50_id, sds51_id, sds52_id, sds53_id
+      INTEGER :: dimSize(3)
+
+! Create the counterMAF SD in rad file F; name the dimension; terminate access
+! to the data set.
+
+      rank = 1
+      dimSize(2) = SD_UNLIMITED
+
+      sds52_id = sfcreate(sdId%RADFID, SDS51_NAME, DFNT_INT32, rank, &
+                          dimSize(2))
+      dim_id = sfdimid(sds52_id, 0)
+      status = sfsdmname(dim_id, DIM1_NAME)
+      status = sfendacc(sds52_id)
+
+! Repeat these steps for the Rad D file
+       
+      sds53_id = sfcreate(sdId%RADDID, SDS51_NAME, DFNT_INT32, rank, &
+           dimSize(2))
+      dim_id = sfdimid(sds53_id, 0)
+      status = sfsdmname(dim_id, DIM1_NAME)
+      status = sfendacc(sds53_id)
+
+! L1BOA file -- create one-dimensional data sets
+
+      sds2_id = sfcreate( sdId%OAId, SDS2_NAME, DFNT_FLOAT64, rank, &
+                          dimSize(2) )
+      sds3_id = sfcreate( sdId%OAId, SDS3_NAME, DFNT_INT32, rank, &
+                          dimSize(2) )
+      sds51_id = sfcreate( sdId%OAId, SDS51_NAME, DFNT_INT32, rank, &
+                           dimSize(2) )
+
+! Create two-dimensional data sets
+
+      rank = 2
+
+! S/C, GHz & THz non-tp quantities
+
+      dimSize(1) = lenUTC
+  
+      sds1_id = sfcreate( sdId%OAId, SDS1_NAME, DFNT_CHAR8, rank, &
+                          dimSize(1:2) )
+
+      dimSize(1) = MaxMIFs
+
+      sds6_id = sfcreate( sdId%OAId, SDS6_NAME, DFNT_FLOAT64, rank, &
+                          dimSize(1:2) )
+      status = sfsfill(sds6_id, FILL_DP)
+      sds7_id = sfcreate( sdId%OAId, SDS7_NAME, DFNT_FLOAT32, rank, &
+                          dimSize(1:2) )
+      status = sfsfill(sds7_id, FILL_REAL)
+      sds8_id = sfcreate( sdId%OAId, SDS8_NAME, DFNT_FLOAT64, rank, &
+                          dimSize(1:2) )
+      status = sfsfill(sds8_id, FILL_DP)
+      sds9_id = sfcreate( sdId%OAId, SDS9_NAME, DFNT_FLOAT32, rank, &
+                          dimSize(1:2) )
+      status = sfsfill(sds9_id, FILL_REAL)
+      sds10_id = sfcreate( sdId%OAId, SDS10_NAME, DFNT_FLOAT32, rank, &
+                           dimSize(1:2) )
+      status = sfsfill(sds10_id, FILL_REAL)
+      sds11_id = sfcreate( sdId%OAId, SDS11_NAME, DFNT_FLOAT32, rank, &
+                           dimSize(1:2) )
+      status = sfsfill(sds11_id, FILL_REAL)
+
+      sds15_id = sfcreate( sdId%OAId, SDS15_NAME, DFNT_FLOAT64, rank, &
+                           dimSize(1:2) )
+      status = sfsfill(sds15_id, FILL_DP)
+      sds16_id = sfcreate( sdId%OAId, SDS16_NAME, DFNT_FLOAT64, rank, &
+                           dimSize(1:2) )
+      status = sfsfill(sds16_id, FILL_DP)
+      sds17_id = sfcreate( sdId%OAId, SDS17_NAME, DFNT_FLOAT64, rank, &
+                           dimSize(1:2) )
+      status = sfsfill(sds17_id, FILL_DP)
+      sds18_id = sfcreate( sdId%OAId, SDS18_NAME, DFNT_FLOAT32, rank, &
+                           dimSize(1:2) )
+      status = sfsfill(sds18_id, FILL_REAL)
+
+      sds33_id = sfcreate( sdId%OAId, SDS33_NAME, DFNT_FLOAT64, rank, &
+                           dimSize(1:2) )
+      status = sfsfill(sds33_id, FILL_DP)
+      sds34_id = sfcreate( sdId%OAId, SDS34_NAME, DFNT_FLOAT64, rank, &
+                           dimSize(1:2) )
+      status = sfsfill(sds34_id, FILL_DP)
+      sds35_id = sfcreate( sdId%OAId, SDS35_NAME, DFNT_FLOAT64, rank, &
+                           dimSize(1:2) )
+      status = sfsfill(sds35_id, FILL_DP)
+      sds36_id = sfcreate( sdId%OAId, SDS36_NAME, DFNT_FLOAT32, rank, &
+                           dimSize(1:2) )
+      status = sfsfill(sds36_id, FILL_REAL)
+
+! GHz tangent point quantities
+
+      dimSize(1) = lenG
+
+      sds21_id = sfcreate( sdId%OAId, SDS21_NAME, DFNT_FLOAT32, rank, &
+                           dimSize(1:2) )
+      status = sfsfill(sds21_id, FILL_REAL)
+      sds22_id = sfcreate( sdId%OAId, SDS22_NAME, DFNT_FLOAT64, rank, &
+                           dimSize(1:2) )
+      status = sfsfill(sds22_id, FILL_DP)
+      sds23_id = sfcreate( sdId%OAId, SDS23_NAME, DFNT_FLOAT32, rank, &
+                           dimSize(1:2) )
+      status = sfsfill(sds23_id, FILL_REAL)
+      sds24_id = sfcreate( sdId%OAId, SDS24_NAME, DFNT_FLOAT32, rank, &
+                           dimSize(1:2) )
+      status = sfsfill(sds24_id, FILL_REAL)
+      sds25_id = sfcreate( sdId%OAId, SDS25_NAME, DFNT_FLOAT64, rank, &
+                           dimSize(1:2) )
+      status = sfsfill(sds25_id, FILL_DP)
+      sds26_id = sfcreate( sdId%OAId, SDS26_NAME, DFNT_FLOAT32, rank, &
+                           dimSize(1:2) )
+      status = sfsfill(sds26_id, FILL_REAL)
+      sds27_id = sfcreate( sdId%OAId, SDS27_NAME, DFNT_FLOAT32, rank, &
+                           dimSize(1:2) )
+      status = sfsfill(sds27_id, FILL_REAL)
+      sds28_id = sfcreate( sdId%OAId, SDS28_NAME, DFNT_FLOAT32, rank, &
+                           dimSize(1:2) )
+      status = sfsfill(sds28_id, FILL_REAL)
+      sds29_id = sfcreate( sdId%OAId, SDS29_NAME, DFNT_FLOAT32, rank, &
+                           dimSize(1:2) ) 
+      status = sfsfill(sds29_id, FILL_REAL)
+      sds30_id = sfcreate( sdId%OAId, SDS30_NAME, DFNT_FLOAT32, rank, &
+                           dimSize(1:2) )
+      status = sfsfill(sds30_id, FILL_REAL)
+      sds31_id = sfcreate( sdId%OAId, SDS31_NAME, DFNT_FLOAT32, rank, &
+                           dimSize(1:2) )
+      status = sfsfill(sds31_id, FILL_REAL)
+      sds32_id = sfcreate( sdId%OAId, SDS32_NAME, DFNT_FLOAT32, rank, &
+                           dimSize(1:2) )
+      status = sfsfill(sds32_id, FILL_REAL)
+
+! THz tangent point quantities
+
+      dimSize(1) = lenT
+
+      sds39_id = sfcreate( sdId%OAId, SDS39_NAME, DFNT_FLOAT32, rank, &
+                           dimSize(1:2) )
+      status = sfsfill(sds39_id, FILL_REAL)
+      sds40_id = sfcreate( sdId%OAId, SDS40_NAME, DFNT_FLOAT64, rank, &
+                           dimSize(1:2) )
+      status = sfsfill(sds40_id, FILL_DP)
+      sds41_id = sfcreate( sdId%OAId, SDS41_NAME, DFNT_FLOAT32, rank, &
+                           dimSize(1:2) )
+      status = sfsfill(sds41_id, FILL_REAL)
+      sds42_id = sfcreate( sdId%OAId, SDS42_NAME, DFNT_FLOAT32, rank, &
+                           dimSize(1:2) )
+      status = sfsfill(sds42_id, FILL_REAL)
+      sds43_id = sfcreate( sdId%OAId, SDS43_NAME, DFNT_FLOAT64, rank, &
+                           dimSize(1:2) )
+      status = sfsfill(sds43_id, FILL_DP)
+      sds44_id = sfcreate( sdId%OAId, SDS44_NAME, DFNT_FLOAT32, rank, &
+                           dimSize(1:2))
+      status = sfsfill(sds44_id, FILL_REAL)
+      sds45_id = sfcreate( sdId%OAId, SDS45_NAME, DFNT_FLOAT32, rank, &
+                           dimSize(1:2) )
+      status = sfsfill(sds45_id, FILL_REAL)
+      sds46_id = sfcreate( sdId%OAId, SDS46_NAME, DFNT_FLOAT32, rank, &
+                           dimSize(1:2) )
+      status = sfsfill(sds46_id, FILL_REAL)
+      sds47_id = sfcreate( sdId%OAId, SDS47_NAME, DFNT_FLOAT32, rank, &
+                           dimSize(1:2) )
+      status = sfsfill(sds47_id, FILL_REAL)
+      sds48_id = sfcreate( sdId%OAId, SDS48_NAME, DFNT_FLOAT32, rank, &
+                           dimSize(1:2) )
+      status = sfsfill(sds48_id, FILL_REAL)
+      sds49_id = sfcreate( sdId%OAId, SDS49_NAME, DFNT_FLOAT32, rank, &
+                           dimSize(1:2) )
+      status = sfsfill(sds49_id, FILL_REAL)
+      sds50_id = sfcreate( sdId%OAId, SDS50_NAME, DFNT_FLOAT32, rank, &
+                           dimSize(1:2))
+      status = sfsfill(sds50_id, FILL_REAL)
+
+! Create three-dimensional data sets
+
+      rank = 3
+
+! S/C quantities
+
+      dimSize(1) = lenCoord
+      dimSize(2) = MaxMIFs
+      dimSize(3) = SD_UNLIMITED
+
+      sds4_id = sfcreate(sdId%OAId, SDS4_NAME, DFNT_FLOAT64, rank, dimSize)
+      status = sfsfill(sds4_id, FILL_DP)
+      sds5_id = sfcreate(sdId%OAId, SDS5_NAME, DFNT_FLOAT64, rank, dimSize)
+      status = sfsfill(sds5_id, FILL_DP)
+      sds12_id = sfcreate(sdId%OAId, SDS12_NAME, DFNT_FLOAT64, rank, dimSize)
+      status = sfsfill(sds12_id, FILL_DP)
+      sds13_id = sfcreate(sdId%OAId, SDS13_NAME, DFNT_FLOAT64, rank, dimSize)
+      status = sfsfill(sds13_id, FILL_DP)
+      sds14_id = sfcreate(sdId%OAId, SDS14_NAME, DFNT_FLOAT64, rank, dimSize)
+      status = sfsfill(sds14_id, FILL_DP)
+
+! GHz tangent point quantities
+
+      dimSize(2) = lenG
+
+      sds19_id = sfcreate(sdId%OAId, SDS19_NAME, DFNT_FLOAT64, rank, dimSize)
+      status = sfsfill(sds19_id, FILL_DP)
+      sds20_id = sfcreate(sdId%OAId, SDS20_NAME, DFNT_FLOAT64, rank, dimSize)
+      status = sfsfill(sds20_id, FILL_DP)
+
+! THz tangent point quantities
+
+      dimSize(2) = lenT
+
+      sds37_id = sfcreate(sdId%OAId, SDS37_NAME, DFNT_FLOAT64, rank, dimSize) 
+      status = sfsfill(sds37_id, FILL_DP)
+      sds38_id = sfcreate(sdId%OAId, SDS38_NAME, DFNT_FLOAT64, rank, dimSize)
+      status = sfsfill(sds38_id, FILL_DP)
+   
+! Give names to the dimensions
+
+      dim_id = sfdimid(sds1_id, 0)
+      status = sfsdmname(dim_id, DIM6_NAME)
+      dim_id = sfdimid(sds1_id, 1)
+      status = sfsdmname(dim_id, DIM1_NAME)
+
+      dim_id = sfdimid(sds2_id, 0)
+      status = sfsdmname(dim_id, DIM1_NAME)
+   
+      dim_id = sfdimid(sds3_id, 0)
+      status = sfsdmname(dim_id, DIM1_NAME)
+
+! S/C quantities
+
+      dim_id = sfdimid(sds4_id, 0)
+      status = sfsdmname(dim_id, DIM5_NAME)
+      dim_id = sfdimid(sds4_id, 1)
+      status = sfsdmname(dim_id, DIM2_NAME)
+      dim_id = sfdimid(sds4_id, 2)
+      status = sfsdmname(dim_id, DIM1_NAME)
+
+      dim_id = sfdimid(sds5_id, 0)
+      status = sfsdmname(dim_id, DIM5_NAME)
+      dim_id = sfdimid(sds5_id, 1)
+      status = sfsdmname(dim_id, DIM2_NAME)
+      dim_id = sfdimid(sds5_id, 2)
+      status = sfsdmname(dim_id, DIM1_NAME)
+
+      dim_id = sfdimid(sds6_id, 0)
+      status = sfsdmname(dim_id, DIM2_NAME)
+      dim_id = sfdimid(sds6_id, 1)
+      status = sfsdmname(dim_id, DIM1_NAME)
+
+      dim_id = sfdimid(sds7_id, 0)
+      status = sfsdmname(dim_id, DIM2_NAME)
+      dim_id = sfdimid(sds7_id, 1)
+      status = sfsdmname(dim_id, DIM1_NAME)
+
+      dim_id = sfdimid(sds8_id, 0)
+      status = sfsdmname(dim_id, DIM2_NAME)
+      dim_id = sfdimid(sds8_id, 1)
+      status = sfsdmname(dim_id, DIM1_NAME)
+
+      dim_id = sfdimid(sds9_id, 0)
+      status = sfsdmname(dim_id, DIM2_NAME)
+      dim_id = sfdimid(sds9_id, 1)
+      status = sfsdmname(dim_id, DIM1_NAME)
+
+      dim_id = sfdimid(sds10_id, 0)
+      status = sfsdmname(dim_id, DIM2_NAME)
+      dim_id = sfdimid(sds10_id, 1)
+      status = sfsdmname(dim_id, DIM1_NAME)
+
+      dim_id = sfdimid(sds11_id, 0)
+      status = sfsdmname(dim_id, DIM2_NAME)
+      dim_id = sfdimid(sds11_id, 1)
+      status = sfsdmname(dim_id, DIM1_NAME)
+
+      dim_id = sfdimid(sds12_id, 0)
+      status = sfsdmname(dim_id, DIM5_NAME)
+      dim_id = sfdimid(sds12_id, 1)
+      status = sfsdmname(dim_id, DIM2_NAME)
+      dim_id = sfdimid(sds12_id, 2)
+      status = sfsdmname(dim_id, DIM1_NAME)
+
+      dim_id = sfdimid(sds13_id, 0)
+      status = sfsdmname(dim_id, DIM5_NAME)
+      dim_id = sfdimid(sds13_id, 1)
+      status = sfsdmname(dim_id, DIM2_NAME)
+      dim_id = sfdimid(sds13_id, 2)
+      status = sfsdmname(dim_id, DIM1_NAME)
+
+      dim_id = sfdimid(sds14_id, 0)
+      status = sfsdmname(dim_id, DIM5_NAME)
+      dim_id = sfdimid(sds14_id, 1)
+      status = sfsdmname(dim_id, DIM2_NAME)
+      dim_id = sfdimid(sds14_id, 2)
+      status = sfsdmname(dim_id, DIM1_NAME)
+
+! GHz quantities
+
+      dim_id = sfdimid(sds15_id, 0) 
+      status = sfsdmname(dim_id, DIM2_NAME)
+      dim_id = sfdimid(sds15_id, 1)
+      status = sfsdmname(dim_id, DIM1_NAME)
+
+      dim_id = sfdimid(sds16_id, 0) 
+      status = sfsdmname(dim_id, DIM2_NAME)
+      dim_id = sfdimid(sds16_id, 1)
+      status = sfsdmname(dim_id, DIM1_NAME)
+
+      dim_id = sfdimid(sds17_id, 0) 
+      status = sfsdmname(dim_id, DIM2_NAME)
+      dim_id = sfdimid(sds17_id, 1)
+      status = sfsdmname(dim_id, DIM1_NAME)
+
+      dim_id = sfdimid(sds18_id, 0)
+      status = sfsdmname(dim_id, DIM2_NAME)
+      dim_id = sfdimid(sds18_id, 1)
+      status = sfsdmname(dim_id, DIM1_NAME)
+
+      dim_id = sfdimid(sds19_id, 0)
+      status = sfsdmname(dim_id, DIM5_NAME)
+      dim_id = sfdimid(sds19_id, 1)
+      status = sfsdmname(dim_id, DIM3_NAME)
+      dim_id = sfdimid(sds19_id, 2)
+      status = sfsdmname(dim_id, DIM1_NAME)
+
+      dim_id = sfdimid(sds20_id, 0) 
+      status = sfsdmname(dim_id, DIM5_NAME)
+      dim_id = sfdimid(sds20_id, 1)
+      status = sfsdmname(dim_id, DIM3_NAME)
+      dim_id = sfdimid(sds20_id, 2)
+      status = sfsdmname(dim_id, DIM1_NAME)
+
+      dim_id = sfdimid(sds21_id, 0) 
+      status = sfsdmname(dim_id, DIM3_NAME)
+      dim_id = sfdimid(sds21_id, 1)
+      status = sfsdmname(dim_id, DIM1_NAME)
+
+      dim_id = sfdimid(sds22_id, 0) 
+      status = sfsdmname(dim_id, DIM3_NAME)
+      dim_id = sfdimid(sds22_id, 1)
+      status = sfsdmname(dim_id, DIM1_NAME)
+
+      dim_id = sfdimid(sds23_id, 0) 
+      status = sfsdmname(dim_id, DIM3_NAME)
+      dim_id = sfdimid(sds23_id, 1)
+      status = sfsdmname(dim_id, DIM1_NAME)
+
+      dim_id = sfdimid(sds24_id, 0) 
+      status = sfsdmname(dim_id, DIM3_NAME)
+      dim_id = sfdimid(sds24_id, 1)
+      status = sfsdmname(dim_id, DIM1_NAME)
+
+      dim_id = sfdimid(sds25_id, 0) 
+      status = sfsdmname(dim_id, DIM3_NAME)
+      dim_id = sfdimid(sds25_id, 1)
+      status = sfsdmname(dim_id, DIM1_NAME)
+
+      dim_id = sfdimid(sds26_id, 0) 
+      status = sfsdmname(dim_id, DIM3_NAME)
+      dim_id = sfdimid(sds26_id, 1)
+      status = sfsdmname(dim_id, DIM1_NAME)
+
+      dim_id = sfdimid(sds27_id, 0) 
+      status = sfsdmname(dim_id, DIM3_NAME)
+      dim_id = sfdimid(sds27_id, 1)
+      status = sfsdmname(dim_id, DIM1_NAME)
+
+      dim_id = sfdimid(sds28_id, 0) 
+      status = sfsdmname(dim_id, DIM3_NAME)
+      dim_id = sfdimid(sds28_id, 1)
+      status = sfsdmname(dim_id, DIM1_NAME)
+
+      dim_id = sfdimid(sds29_id, 0)
+      status = sfsdmname(dim_id, DIM3_NAME)
+      dim_id = sfdimid(sds29_id, 1)
+      status = sfsdmname(dim_id, DIM1_NAME)
+
+      dim_id = sfdimid(sds30_id, 0)
+      status = sfsdmname(dim_id, DIM3_NAME)
+      dim_id = sfdimid(sds30_id, 1)
+      status = sfsdmname(dim_id, DIM1_NAME)
+
+      dim_id = sfdimid(sds31_id, 0)
+      status = sfsdmname(dim_id, DIM3_NAME)
+      dim_id = sfdimid(sds31_id, 1)
+      status = sfsdmname(dim_id, DIM1_NAME)
+
+      dim_id = sfdimid(sds32_id, 0)
+      status = sfsdmname(dim_id, DIM3_NAME)
+      dim_id = sfdimid(sds32_id, 1)
+      status = sfsdmname(dim_id, DIM1_NAME)
+
+! THz quantities
+
+      dim_id = sfdimid(sds33_id, 0) 
+      status = sfsdmname(dim_id, DIM2_NAME)
+      dim_id = sfdimid(sds33_id, 1)
+      status = sfsdmname(dim_id, DIM1_NAME)
+
+      dim_id = sfdimid(sds34_id, 0) 
+      status = sfsdmname(dim_id, DIM2_NAME)
+      dim_id = sfdimid(sds34_id, 1)
+      status = sfsdmname(dim_id, DIM1_NAME)
+
+      dim_id = sfdimid(sds35_id, 0) 
+      status = sfsdmname(dim_id, DIM2_NAME)
+      dim_id = sfdimid(sds35_id, 1)
+      status = sfsdmname(dim_id, DIM1_NAME)
+
+      dim_id = sfdimid(sds36_id, 0)
+      status = sfsdmname(dim_id, DIM2_NAME)
+      dim_id = sfdimid(sds36_id, 1) 
+      status = sfsdmname(dim_id, DIM1_NAME)
+
+      dim_id = sfdimid(sds37_id, 0) 
+      status = sfsdmname(dim_id, DIM5_NAME)
+      dim_id = sfdimid(sds37_id, 1)
+      status = sfsdmname(dim_id, DIM4_NAME)
+      dim_id = sfdimid(sds37_id, 2) 
+      status = sfsdmname(dim_id, DIM1_NAME)
+
+      dim_id = sfdimid(sds38_id, 0) 
+      status = sfsdmname(dim_id, DIM5_NAME)
+      dim_id = sfdimid(sds38_id, 1)
+      status = sfsdmname(dim_id, DIM4_NAME)
+      dim_id = sfdimid(sds38_id, 2)
+      status = sfsdmname(dim_id, DIM1_NAME)
+
+      dim_id = sfdimid(sds39_id, 0) 
+      status = sfsdmname(dim_id, DIM4_NAME)
+      dim_id = sfdimid(sds39_id, 1)
+      status = sfsdmname(dim_id, DIM1_NAME)
+
+      dim_id = sfdimid(sds40_id, 0) 
+      status = sfsdmname(dim_id, DIM4_NAME)
+      dim_id = sfdimid(sds40_id, 1)
+      status = sfsdmname(dim_id, DIM1_NAME)
+
+      dim_id = sfdimid(sds41_id, 0) 
+      status = sfsdmname(dim_id, DIM4_NAME)
+      dim_id = sfdimid(sds41_id, 1)
+      status = sfsdmname(dim_id, DIM1_NAME)
+
+      dim_id = sfdimid(sds42_id, 0) 
+      status = sfsdmname(dim_id, DIM4_NAME)
+      dim_id = sfdimid(sds42_id, 1)
+      status = sfsdmname(dim_id, DIM1_NAME)
+
+      dim_id = sfdimid(sds43_id, 0) 
+      status = sfsdmname(dim_id, DIM4_NAME)
+      dim_id = sfdimid(sds43_id, 1)
+      status = sfsdmname(dim_id, DIM1_NAME)
+
+      dim_id = sfdimid(sds44_id, 0) 
+      status = sfsdmname(dim_id, DIM4_NAME)
+      dim_id = sfdimid(sds44_id, 1)
+      status = sfsdmname(dim_id, DIM1_NAME)
+
+      dim_id = sfdimid(sds45_id, 0) 
+      status = sfsdmname(dim_id, DIM4_NAME)
+      dim_id = sfdimid(sds45_id, 1)
+      status = sfsdmname(dim_id, DIM1_NAME)
+
+      dim_id = sfdimid(sds46_id, 0) 
+      status = sfsdmname(dim_id, DIM4_NAME)
+      dim_id = sfdimid(sds46_id, 1)
+      status = sfsdmname(dim_id, DIM1_NAME)
+
+      dim_id = sfdimid(sds47_id, 0)
+      status = sfsdmname(dim_id, DIM4_NAME)
+      dim_id = sfdimid(sds47_id, 1)
+      status = sfsdmname(dim_id, DIM1_NAME)
+
+      dim_id = sfdimid(sds48_id, 0)
+      status = sfsdmname(dim_id, DIM4_NAME)
+      dim_id = sfdimid(sds48_id, 1)
+      status = sfsdmname(dim_id, DIM1_NAME)
+
+      dim_id = sfdimid(sds49_id, 0)
+      status = sfsdmname(dim_id, DIM4_NAME)
+      dim_id = sfdimid(sds49_id, 1)
+      status = sfsdmname(dim_id, DIM1_NAME)
+
+      dim_id = sfdimid(sds50_id, 0)
+      status = sfsdmname(dim_id, DIM4_NAME)
+      dim_id = sfdimid(sds50_id, 1)
+      status = sfsdmname(dim_id, DIM1_NAME)
+
+! MAF counter
+
+      dim_id = sfdimid(sds51_id, 0)
+      status = sfsdmname(dim_id, DIM1_NAME)
+d5 1
+a5 113
+! Terminate access to the data sets
+
+      status = sfendacc(sds1_id)
+      status = sfendacc(sds2_id)
+      status = sfendacc(sds3_id)
+      status = sfendacc(sds4_id)
+      status = sfendacc(sds5_id)
+      status = sfendacc(sds6_id)
+      status = sfendacc(sds7_id)
+      status = sfendacc(sds8_id)
+      status = sfendacc(sds9_id)
+      status = sfendacc(sds10_id)
+      status = sfendacc(sds11_id)
+      status = sfendacc(sds12_id)
+      status = sfendacc(sds13_id)
+      status = sfendacc(sds14_id)
+      status = sfendacc(sds15_id)
+      status = sfendacc(sds16_id)
+      status = sfendacc(sds17_id)
+      status = sfendacc(sds18_id)
+      status = sfendacc(sds19_id)
+      status = sfendacc(sds20_id)
+      status = sfendacc(sds21_id)
+      status = sfendacc(sds22_id)
+      status = sfendacc(sds23_id)
+      status = sfendacc(sds24_id)
+      status = sfendacc(sds25_id)
+      status = sfendacc(sds26_id)
+      status = sfendacc(sds27_id)
+      status = sfendacc(sds28_id)
+      status = sfendacc(sds29_id)
+      status = sfendacc(sds30_id)
+      status = sfendacc(sds31_id)
+      status = sfendacc(sds32_id)
+      status = sfendacc(sds33_id)
+      status = sfendacc(sds34_id)
+      status = sfendacc(sds35_id)
+      status = sfendacc(sds36_id)
+      status = sfendacc(sds37_id)
+      status = sfendacc(sds38_id)
+      status = sfendacc(sds39_id)
+      status = sfendacc(sds40_id)
+      status = sfendacc(sds41_id)
+      status = sfendacc(sds42_id)
+      status = sfendacc(sds43_id)
+      status = sfendacc(sds44_id)
+      status = sfendacc(sds45_id)
+      status = sfendacc(sds46_id)
+      status = sfendacc(sds47_id)
+      status = sfendacc(sds48_id)
+      status = sfendacc(sds49_id)
+      status = sfendacc(sds50_id)
+      status = sfendacc(sds51_id)
+
+!---------------------------------
+   END SUBROUTINE OutputL1B_create
+!---------------------------------
+
+!-------------------------------------------------
+   SUBROUTINE OutputL1B_index(noMAF, sd_id, index)
+!-------------------------------------------------
+
+! Brief description of subroutine
+! This subroutine writes the time/MIF indexing quantities to the HDF-SD file. 
+
+! Arguments
+
+      TYPE( L1BOAindex_T), INTENT(IN) :: index
+
+      INTEGER, INTENT(IN) :: sd_id, noMAF
+
+! Parameters
+
+! Functions
+
+      INTEGER :: sfn2index, sfselect, sfwdata, sfwcdata, sfendacc
+
+! Variables
+
+      INTEGER :: sds_index, sds1_id, sds2_id, sds3_id, sds51_id, status
+      INTEGER :: edge(2), start(2), stride(2)
+
+! Find data sets by name
+
+      sds_index = sfn2index(sd_id, SDS1_NAME)
+      sds1_id = sfselect(sd_id, sds_index)
+
+      sds_index = sfn2index(sd_id, SDS2_NAME)
+      sds2_id = sfselect(sd_id, sds_index)
+
+      sds_index = sfn2index(sd_id, SDS3_NAME)
+      sds3_id = sfselect(sd_id, sds_index)
+
+      sds_index = sfn2index(sd_id, SDS51_NAME)
+      sds51_id = sfselect(sd_id, sds_index)
+
+! Initialize parameters
+
+      stride = 1
+
+! Write time, noMIFs, counterMAF
+
+      start(1) = 0
+      start(2) = noMAF-1
+      edge(1) = lenUTC
+      edge(2) = 1
+
+      status = sfwcdata(sds1_id, start, stride, edge, index%MAFStartTimeUTC)
+      status = sfwdata(sds2_id, start(2), stride(2), edge(2), &
+                       index%MAFStartTimeTAI)
+      status = sfwdata(sds3_id, start(2), stride(2), edge(2), index%noMIFs)
+      status = sfwdata(sds51_id, start(2), stride(2), edge(2), &
+                       index%counterMAF)
+d7 1300
+a1306 1
+! Terminate access to the data sets
+d1308 1
+d1311 2
+a1312 621
+      status = sfendacc(sds3_id)
+      status = sfendacc(sds51_id)
+
+!--------------------------------
+   END SUBROUTINE OutputL1B_index
+!--------------------------------
+
+!-------------------------------------------
+   SUBROUTINE OutputL1B_sc(noMAF, sd_id, sc)
+!-------------------------------------------
+
+! Brief description of subroutine
+! This subroutine writes the spacecraft quantities to the HDF-SD file.
+
+! Arguments
+
+      TYPE( L1BOAsc_T ), INTENT(IN) :: sc
+
+      INTEGER, INTENT(IN) :: noMAF, sd_id
+
+! Parameters
+
+! Functions
+
+      INTEGER :: sfn2index, sfselect, sfwdata, sfendacc
+
+! Variables
+
+      INTEGER :: sds_index, status
+      INTEGER :: sds4_id, sds5_id, sds6_id, sds7_id, sds8_id, sds9_id
+      INTEGER :: sds10_id, sds11_id, sds12_id, sds13_id, sds14_id
+      INTEGER :: edge(3), start(3), stride(3)
+
+! Find data sets by name
+
+      sds_index = sfn2index(sd_id, SDS4_NAME)
+      sds4_id = sfselect(sd_id, sds_index)
+
+      sds_index = sfn2index(sd_id, SDS5_NAME)
+      sds5_id = sfselect(sd_id, sds_index)
+
+      sds_index = sfn2index(sd_id, SDS6_NAME)
+      sds6_id = sfselect(sd_id, sds_index)
+
+      sds_index = sfn2index(sd_id, SDS7_NAME)
+      sds7_id = sfselect(sd_id, sds_index)
+
+      sds_index = sfn2index(sd_id, SDS8_NAME)
+      sds8_id = sfselect(sd_id, sds_index)
+
+      sds_index = sfn2index(sd_id, SDS9_NAME)
+      sds9_id = sfselect(sd_id, sds_index)
+
+      sds_index = sfn2index(sd_id, SDS10_NAME)
+      sds10_id = sfselect(sd_id, sds_index)
+
+      sds_index = sfn2index(sd_id, SDS11_NAME)
+      sds11_id = sfselect(sd_id, sds_index)
+
+      sds_index = sfn2index(sd_id, SDS12_NAME)
+      sds12_id = sfselect(sd_id, sds_index)
+
+      sds_index = sfn2index(sd_id, SDS13_NAME)
+      sds13_id = sfselect(sd_id, sds_index)
+
+      sds_index = sfn2index(sd_id, SDS14_NAME)
+      sds14_id = sfselect(sd_id, sds_index)
+
+! Initialize parameters that aren't reset
+
+      start(1) = 0
+      stride = 1
+      edge(3) = 1
+
+! Write 3-D slabs (xyz x MIF x MAF)
+ 
+      start(2) = 0
+      start(3) = noMAF-1
+      edge(1) = lenCoord
+      edge(2) = SIZE(sc%scECI,2)
+
+      status = sfwdata(sds4_id, start, stride, edge, sc%scECI)
+      status = sfwdata(sds5_id, start, stride, edge, sc%scECR)
+      status = sfwdata(sds12_id, start, stride, edge, sc%scVel)
+      status = sfwdata(sds13_id, start, stride, edge, sc%ypr)
+      status = sfwdata(sds14_id, start, stride, edge, sc%yprRate)
+
+! Write 2-D slabs (MIF x MAF)
+
+      start(2) = noMAF-1
+      edge(1) = SIZE(sc%scGeocAlt)
+      edge(2) = 1
+
+      status = sfwdata(sds6_id, start(1:2), stride(1:2), edge(1:2), &
+                       sc%scGeocAlt)
+      status = sfwdata(sds7_id, start(1:2), stride(1:2), edge(1:2), &
+                       sc%scGeocLat)
+      status = sfwdata(sds8_id, start(1:2), stride(1:2), edge(1:2), &
+                       sc%scGeodAlt)
+      status = sfwdata(sds9_id, start(1:2), stride(1:2), edge(1:2), &
+                       sc%scGeodLat)
+      status = sfwdata(sds10_id, start(1:2), stride(1:2), edge(1:2), sc%scLon)
+      status = sfwdata(sds11_id, start(1:2), stride(1:2), edge(1:2), &
+                       sc%scGeodAngle)
+
+! Terminate access to the data sets
+
+      status = sfendacc(sds4_id)
+      status = sfendacc(sds5_id)
+      status = sfendacc(sds6_id)
+      status = sfendacc(sds7_id)
+      status = sfendacc(sds8_id)
+      status = sfendacc(sds9_id)
+      status = sfendacc(sds10_id)
+      status = sfendacc(sds11_id)
+      status = sfendacc(sds12_id)
+      status = sfendacc(sds13_id)
+      status = sfendacc(sds14_id)
+
+!-----------------------------
+   END SUBROUTINE OutputL1B_sc 
+!-----------------------------
+
+!--------------------------------------------
+   SUBROUTINE OutputL1B_GHz(noMAF, sd_id, tp)
+!--------------------------------------------
+
+! Brief description of subroutine
+! This subroutine writes the GHz tangent point quantities to the HDF-SD file.
+
+! Arguments
+
+      TYPE( L1BOAtp_T ), INTENT(IN) :: tp
+
+      INTEGER, INTENT(IN) :: noMAF, sd_id
+
+! Parameters
+
+! Functions
+
+      INTEGER :: sfn2index, sfselect, sfwdata, sfendacc
+
+! Variables
+
+      INTEGER :: sds_index, sds15_id, sds16_id, sds17_id, sds18_id
+      INTEGER :: sds19_id, sds20_id, sds21_id, sds22_id, sds23_id, sds24_id
+      INTEGER :: sds25_id, sds26_id, sds27_id, sds28_id, sds29_id, sds30_id
+      INTEGER :: sds31_id, sds32_id, status
+      INTEGER :: edge(3), start(3), stride(3)
+
+! Find data sets by name
+
+      sds_index = sfn2index(sd_id, SDS15_NAME)
+      sds15_id = sfselect(sd_id, sds_index)
+
+      sds_index = sfn2index(sd_id, SDS16_NAME)
+      sds16_id = sfselect(sd_id, sds_index)
+
+      sds_index = sfn2index(sd_id, SDS17_NAME)
+      sds17_id = sfselect(sd_id, sds_index)
+
+      sds_index = sfn2index(sd_id, SDS18_NAME)
+      sds18_id = sfselect(sd_id, sds_index)
+
+      sds_index = sfn2index(sd_id, SDS19_NAME)
+      sds19_id = sfselect(sd_id, sds_index)
+
+      sds_index = sfn2index(sd_id, SDS20_NAME)
+      sds20_id = sfselect(sd_id, sds_index)
+
+      sds_index = sfn2index(sd_id, SDS21_NAME)
+      sds21_id = sfselect(sd_id, sds_index)
+
+      sds_index = sfn2index(sd_id, SDS22_NAME)
+      sds22_id = sfselect(sd_id, sds_index)
+
+      sds_index = sfn2index(sd_id, SDS23_NAME)
+      sds23_id = sfselect(sd_id, sds_index)
+
+      sds_index = sfn2index(sd_id, SDS24_NAME)
+      sds24_id = sfselect(sd_id, sds_index)
+
+      sds_index = sfn2index(sd_id, SDS25_NAME)
+      sds25_id = sfselect(sd_id, sds_index)
+
+      sds_index = sfn2index(sd_id, SDS26_NAME)
+      sds26_id = sfselect(sd_id, sds_index)
+
+      sds_index = sfn2index(sd_id, SDS27_NAME)
+      sds27_id = sfselect(sd_id, sds_index)
+
+      sds_index = sfn2index(sd_id, SDS28_NAME)
+      sds28_id = sfselect(sd_id, sds_index)
+
+      sds_index = sfn2index(sd_id, SDS29_NAME)
+      sds29_id = sfselect(sd_id, sds_index)
+
+      sds_index = sfn2index(sd_id, SDS30_NAME)
+      sds30_id = sfselect(sd_id, sds_index)
+
+      sds_index = sfn2index(sd_id, SDS31_NAME)
+      sds31_id = sfselect(sd_id, sds_index)
+
+      sds_index = sfn2index(sd_id, SDS32_NAME)
+      sds32_id = sfselect(sd_id, sds_index)
+
+! Initialize parameters that aren't reset
+
+      start(1) = 0
+      stride = 1
+      edge(3) = 1
+
+! Write GHz data
+
+      start(2) = noMAF-1
+      edge(1) = SIZE(tp%encoderAngle)
+      edge(2) = 1
+
+      status = sfwdata(sds15_id, start(1:2), stride(1:2), edge(1:2), &
+                       tp%encoderAngle)
+      status = sfwdata(sds16_id, start(1:2), stride(1:2), edge(1:2), &
+                       tp%scAngle)
+      status = sfwdata(sds17_id, start(1:2), stride(1:2), edge(1:2), &
+                       tp%scanAngle)
+      status = sfwdata(sds18_id, start(1:2), stride(1:2), edge(1:2), &
+                       tp%scanRate)
+
+      edge(1) = SIZE(tp%tpOrbY)
+
+      status = sfwdata(sds21_id, start(1:2), stride(1:2), edge(1:2), tp%tpOrbY)
+      status = sfwdata(sds22_id, start(1:2), stride(1:2), edge(1:2), &
+                       tp%tpGeocAlt)
+      status = sfwdata(sds23_id, start(1:2), stride(1:2), edge(1:2), &
+                       tp%tpGeocLat)
+      status = sfwdata(sds24_id, start(1:2), stride(1:2), edge(1:2), &
+                       tp%tpGeocAltRate)
+      status = sfwdata(sds25_id, start(1:2), stride(1:2), edge(1:2), &
+                       tp%tpGeodAlt)
+      status = sfwdata(sds26_id, start(1:2), stride(1:2), edge(1:2), &
+                       tp%tpGeodLat)
+      status = sfwdata(sds27_id, start(1:2), stride(1:2), edge(1:2), &
+                       tp%tpGeodAltRate)
+      status = sfwdata(sds28_id, start(1:2), stride(1:2), edge(1:2), tp%tpLon)
+      status = sfwdata(sds29_id, start(1:2), stride(1:2), edge(1:2), &
+                       tp%tpGeodAngle)
+      status = sfwdata(sds30_id, start(1:2), stride(1:2), edge(1:2), &
+                       tp%tpSolarTime)
+      status = sfwdata(sds31_id, start(1:2), stride(1:2), edge(1:2), &
+                       tp%tpSolarZenith)
+      status = sfwdata(sds32_id, start(1:2), stride(1:2), edge(1:2), &
+                       tp%tpLosAngle)
+
+      start(2) = 0
+      start(3) = noMAF-1
+      edge(1) = lenCoord
+      edge(2) = SIZE(tp%tpECI,2)
+
+      status = sfwdata(sds19_id, start, stride, edge, tp%tpECI)
+      status = sfwdata(sds20_id, start, stride, edge, tp%tpECR)
+
+! Terminate access to the data sets
+
+      status = sfendacc(sds15_id)
+      status = sfendacc(sds16_id)
+      status = sfendacc(sds17_id)
+      status = sfendacc(sds18_id)
+      status = sfendacc(sds19_id)
+      status = sfendacc(sds20_id)
+      status = sfendacc(sds21_id)
+      status = sfendacc(sds22_id)
+      status = sfendacc(sds23_id)
+      status = sfendacc(sds24_id)
+      status = sfendacc(sds25_id)
+      status = sfendacc(sds26_id)
+      status = sfendacc(sds27_id)
+      status = sfendacc(sds28_id)
+      status = sfendacc(sds29_id)
+      status = sfendacc(sds30_id)
+      status = sfendacc(sds31_id)
+      status = sfendacc(sds32_id)
+
+!------------------------------
+   END SUBROUTINE OutputL1B_GHz
+!------------------------------
+
+!--------------------------------------------
+   SUBROUTINE OutputL1B_THz(noMAF, sd_id, tp)
+!--------------------------------------------
+
+! Brief description of subroutine
+! This subroutine writes the THz tangent point quantities to the HDF-SD file.
+
+! Arguments
+
+      TYPE( L1BOAtp_T ), INTENT(IN) :: tp
+
+      INTEGER, INTENT(IN) :: noMAF, sd_id
+
+! Parameters
+
+! Functions
+
+      INTEGER :: sfn2index, sfselect, sfwdata, sfendacc
+
+! Variables
+
+      INTEGER :: sds_index,  sds33_id, sds34_id, sds35_id, sds36_id
+      INTEGER :: sds37_id, sds38_id, sds39_id, sds40_id, sds41_id, sds42_id
+      INTEGER :: sds43_id, sds44_id, sds45_id, sds46_id, sds47_id, sds48_id
+      INTEGER :: sds49_id, sds50_id, status
+      INTEGER :: edge(3), start(3), stride(3)
+
+! Find data sets by name
+
+      sds_index = sfn2index(sd_id, SDS33_NAME)
+      sds33_id = sfselect(sd_id, sds_index)
+
+      sds_index = sfn2index(sd_id, SDS34_NAME)
+      sds34_id = sfselect(sd_id, sds_index)
+
+      sds_index = sfn2index(sd_id, SDS35_NAME)
+      sds35_id = sfselect(sd_id, sds_index)
+
+      sds_index = sfn2index(sd_id, SDS36_NAME)
+      sds36_id = sfselect(sd_id, sds_index)
+
+      sds_index = sfn2index(sd_id, SDS37_NAME)
+      sds37_id = sfselect(sd_id, sds_index)
+
+      sds_index = sfn2index(sd_id, SDS38_NAME)
+      sds38_id = sfselect(sd_id, sds_index)
+
+      sds_index = sfn2index(sd_id, SDS39_NAME)
+      sds39_id = sfselect(sd_id, sds_index)
+
+      sds_index = sfn2index(sd_id, SDS40_NAME)
+      sds40_id = sfselect(sd_id, sds_index)
+
+      sds_index = sfn2index(sd_id, SDS41_NAME)
+      sds41_id = sfselect(sd_id, sds_index)
+
+      sds_index = sfn2index(sd_id, SDS42_NAME)
+      sds42_id = sfselect(sd_id, sds_index)
+
+      sds_index = sfn2index(sd_id, SDS43_NAME)
+      sds43_id = sfselect(sd_id, sds_index)
+
+      sds_index = sfn2index(sd_id, SDS44_NAME)
+      sds44_id = sfselect(sd_id, sds_index)
+
+      sds_index = sfn2index(sd_id, SDS45_NAME)
+      sds45_id = sfselect(sd_id, sds_index)
+
+      sds_index = sfn2index(sd_id, SDS46_NAME)
+      sds46_id = sfselect(sd_id, sds_index)
+
+      sds_index = sfn2index(sd_id, SDS47_NAME)
+      sds47_id = sfselect(sd_id, sds_index)
+
+      sds_index = sfn2index(sd_id, SDS48_NAME)
+      sds48_id = sfselect(sd_id, sds_index)
+
+      sds_index = sfn2index(sd_id, SDS49_NAME)
+      sds49_id = sfselect(sd_id, sds_index)
+
+      sds_index = sfn2index(sd_id, SDS50_NAME)
+      sds50_id = sfselect(sd_id, sds_index)
+
+! Initialize parameters that aren't reset during the MAF loop
+
+      start(1) = 0
+      stride = 1
+      edge(3) = 1
+
+! Write THz data
+
+      start(2) = noMAF-1
+      edge(1) = SIZE(tp%encoderAngle)
+      edge(2) = 1
+
+      status = sfwdata(sds33_id, start(1:2), stride(1:2), edge(1:2), &
+                       tp%encoderAngle)
+      status = sfwdata(sds34_id, start(1:2), stride(1:2), edge(1:2), &
+                       tp%scAngle)
+      status = sfwdata(sds35_id, start(1:2), stride(1:2), edge(1:2), &
+                       tp%scanAngle)
+      status = sfwdata(sds36_id, start(1:2), stride(1:2), edge(1:2), &
+                       tp%scanRate)
+
+      edge(1) = SIZE(tp%tpOrbY)
+
+      status = sfwdata(sds39_id, start(1:2), stride(1:2), edge(1:2), tp%tpOrbY)
+      status = sfwdata(sds40_id, start(1:2), stride(1:2), edge(1:2), &
+                       tp%tpGeocAlt)
+      status = sfwdata(sds41_id, start(1:2), stride(1:2), edge(1:2), &
+                       tp%tpGeocLat)
+      status = sfwdata(sds42_id, start(1:2), stride(1:2), edge(1:2), &
+                       tp%tpGeocAltRate)
+      status = sfwdata(sds43_id, start(1:2), stride(1:2), edge(1:2), &
+                       tp%tpGeodAlt)
+      status = sfwdata(sds44_id, start(1:2), stride(1:2), edge(1:2), &
+                       tp%tpGeodLat)
+      status = sfwdata(sds45_id, start(1:2), stride(1:2), edge(1:2), &
+                       tp%tpGeodAltRate)
+      status = sfwdata(sds46_id, start(1:2), stride(1:2), edge(1:2), tp%tpLon)
+      status = sfwdata(sds47_id, start(1:2), stride(1:2), edge(1:2), &
+                       tp%tpGeodAngle)
+      status = sfwdata(sds48_id, start(1:2), stride(1:2), edge(1:2), &
+                       tp%tpSolarTime)
+      status = sfwdata(sds49_id, start(1:2), stride(1:2), edge(1:2), &
+                       tp%tpSolarZenith)
+      status = sfwdata(sds50_id, start(1:2), stride(1:2), edge(1:2), &
+                       tp%tpLosAngle)
+
+      start(2) = 0
+      start(3) = noMAF-1
+      edge(1) = lenCoord
+      edge(2) = SIZE(tp%tpECI,2)
+
+      status = sfwdata(sds37_id, start, stride, edge, tp%tpECI)
+      status = sfwdata(sds38_id, start, stride, edge, tp%tpECR)
+
+! Terminate access to the data sets
+
+      status = sfendacc(sds33_id)
+      status = sfendacc(sds34_id)
+      status = sfendacc(sds35_id)
+      status = sfendacc(sds36_id)
+      status = sfendacc(sds37_id)
+      status = sfendacc(sds38_id)
+      status = sfendacc(sds39_id)
+      status = sfendacc(sds40_id)
+      status = sfendacc(sds41_id)
+      status = sfendacc(sds42_id)
+      status = sfendacc(sds43_id)
+      status = sfendacc(sds44_id)
+      status = sfendacc(sds45_id)
+      status = sfendacc(sds46_id)
+      status = sfendacc(sds47_id)
+      status = sfendacc(sds48_id)
+      status = sfendacc(sds49_id)
+      status = sfendacc(sds50_id)
+
+!------------------------------
+   END SUBROUTINE OutputL1B_THz
+!------------------------------
+
+!--------------------------------------------------------
+   SUBROUTINE OutputL1B_rad(noMAF, sdId, counterMAF, rad)
+!--------------------------------------------------------
+
+! Brief description of subroutine
+! This subroutine writes an MAF's worth of data to the L1BRad D & F files
+
+! Arguments
+
+      TYPE( L1BFileInfo_T ) :: sdId
+      TYPE( Radiance_T ) :: rad(:)
+
+      INTEGER, INTENT(IN) :: counterMAF, noMAF
+
+! Parameters
+
+! Functions
+
+      INTEGER :: sfcreate, sfdimid, sfendacc, sfn2index, sfsdmname, sfsfill
+      INTEGER :: sfselect, sfwdata
+
+! Variables
+
+      CHARACTER (LEN=64) :: dim_chan, dim_mif, name, prec
+
+      INTEGER :: dim_id, i, noSDs, rank, status, sd_id, sds_index
+      INTEGER :: sds1_id, sds2_id
+      INTEGER :: dimSize(3), start(3), stride(3), edge(3)
+
+! Set parameters that won't change in loop through SDs
+
+      rank = 3
+      dimSize(3) = SD_UNLIMITED
+
+      start(1) = 0
+      start(2) = 0
+      start(3) = noMAF-1
+      stride = 1
+      edge(3) = 1
+
+! Find the sds_id number for counterMAF in the file RADF, write the data to it,
+! terminate access to the data set
+
+      name = 'counterMAF'
+      sds_index = sfn2index(sdId%RADFID, name)
+      sds1_id = sfselect(sdId%RADFID, sds_index)
+      status = sfwdata(sds1_id, start(3), stride(3), edge(3), counterMAF)
+      status = sfendacc(sds1_id)
+      IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Error &
+                                       &writing counterMAF to rad F file')
+
+! Do the same for file RADD
+
+      sds_index = sfn2index(sdId%RADDID, name)
+      sds2_id = sfselect(sdId%RADDID, sds_index)
+      status = sfwdata(sds2_id, start(3), stride(3), edge(3), counterMAF)
+      status = sfendacc(sds2_id)
+      IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Error &
+           &writing counterMAF to rad D file')
+
+! Loop on number of SDs per MAF
+
+      noSDs = SIZE(rad)
+
+      DO i = 1, noSDs
+
+! Concatenate SD names
+
+         CALL GetFullMLSSignalName(rad(i)%signal, name)
+
+         prec = TRIM(name) // ' precision'
+
+! Set parameters based on input data dimensions
+
+         dimSize(1) = SIZE(rad(i)%value,1)
+         edge(1) = dimSize(1)
+
+! Based on the SD name, set dim name for channel, get Id of output file
+
+         IF ( INDEX(name,'FB') /= 0 ) THEN
+            dim_chan = DIM7_NAME
+            sd_id = sdId%RADFID
+         ELSE IF ( INDEX(name,'MB') /= 0 ) THEN
+            dim_chan = DIM8_NAME
+            sd_id = sdId%RADFID
+         ELSE IF ( INDEX(name,'WF') /= 0 ) THEN
+            dim_chan = DIM9_NAME
+            sd_id = sdId%RADFID
+         ELSE IF ( INDEX(name,'DACS') /= 0 ) THEN
+            dim_chan = DIM10_NAME
+            sd_id = sdId%RADDID
+         ENDIF
+
+! Based on rad module, set dim name & size, edge for # of MIFs
+
+         IF ( INDEX(name,'R5') /= 0 ) THEN
+            dim_mif = DIM4_NAME
+            dimSize(2) = MIFsTHz  !! lenT
+            edge(2) = MIFsTHz     !! lenT
+         ELSE
+            dim_mif = DIM3_NAME
+            dimSize(2) = MIFsGHz  !! lenG
+            edge(2) = MIFsGHz     !! lenG
+         ENDIF
+
+! If # of input MIFs exceeds dim size, re-set & output warning msg
+
+         IF ( SIZE(rad(i)%value,2) > edge(2) ) CALL MLSMessage(MLSMSG_Warning,&
+            ModuleName, 'Number of MIFs exceeds SD size -- output truncated.')
+
+! Check whether the SD already exists
+
+         sds_index = sfn2index(sd_id, name)
+
+! If not, create it, and a corresponding one for precision
+
+         IF ( sds_index == -1) THEN
+            
+            sds1_id = sfcreate(sd_id, name, DFNT_FLOAT32, rank, dimSize)
+            IF (sds1_id == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+                                              'Error creating value SD.')
+            status = sfsfill(sds1_id, FILL_REAL)
+
+            sds2_id = sfcreate(sd_id, prec, DFNT_FLOAT32, rank, dimSize)
+            IF (sds2_id == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+                                              'Error creating precision SD.')
+            status = sfsfill(sds2_id, FILL_REAL)
+
+            IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+                                             'Error setting fill values.')
+
+! Give names to the dimensions
+
+            dim_id = sfdimid(sds1_id, 0)
+            status = sfsdmname(dim_id, dim_chan)
+            dim_id = sfdimid(sds1_id, 1)
+            status = sfsdmname(dim_id, dim_mif)
+            dim_id = sfdimid(sds1_id, 2)
+            status = sfsdmname(dim_id, DIM1_NAME)
+
+            dim_id = sfdimid(sds2_id, 0)
+            status = sfsdmname(dim_id, dim_chan)
+            dim_id = sfdimid(sds2_id, 1)
+            status = sfsdmname(dim_id, dim_mif)
+            dim_id = sfdimid(sds2_id, 2)
+            status = sfsdmname(dim_id, DIM1_NAME)
+
+            IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+                                             'Error setting dimension names.')
+
+! If the SD already exists, find the sds_id numbers for it & its precision
+
+         ELSE
+
+             sds1_id = sfselect(sd_id, sds_index)
+             
+             sds_index = sfn2index(sd_id, prec)
+             sds2_id = sfselect(sd_id, sds_index)
+
+         ENDIF
+
+! Write data to the value & precision SDs
+
+         status = sfwdata(sds1_id, start, stride, edge, rad(i)%value)
+         status = sfwdata(sds2_id, start, stride, edge, rad(i)%precision)
+         IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+                                          'Error writing rad data.')
+
+! Terminate access to the value & precision data sets
+
+         status = sfendacc(sds1_id)
+         status = sfendacc(sds2_id)
+         IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Error &
+                            &terminating access to the value or precision SD.')
+d1314 1
+a1314 1
+      ENDDO
+d1316 1
+a1316 3
+!------------------------------
+   END SUBROUTINE OutputL1B_rad
+!------------------------------
+d1318 1
+a1318 3
+!===============================================================================
+END MODULE OutputL1B
+!===============================================================================
+d1321 3
+@
+
+
+2.0
+log
+@Changing file revision to 2.0.
+@
+text
+@d2 1
+a2 1
+! Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
+d12 1
+d22 1
+a22 1
+   "$Id: OutputL1B.f90,v 1.4 2000/02/22 15:00:16 nakamura Exp $"
+d202 1
+a202 1
+      TYPE( L1BInfo_T ), INTENT(IN) :: sdId
+d226 1
+a226 1
+! Create the counterMAF SD in rad file A; name the dimension; terminate access
+d232 1
+a232 1
+      sds52_id = sfcreate(sdId%L1BRADIDs(1), SDS51_NAME, DFNT_INT32, rank, &
+d238 1
+a238 1
+! Repeat these steps for the Rad B file, if one was opened
+d240 5
+a244 7
+      IF ( SIZE(sdId%L1BRADIDs) > 1 ) THEN
+         sds53_id = sfcreate(sdId%L1BRADIDs(2), SDS51_NAME, DFNT_INT32, rank, &
+                             dimSize(2))
+         dim_id = sfdimid(sds53_id, 0)
+         status = sfsdmname(dim_id, DIM1_NAME)
+         status = sfendacc(sds53_id)
+      ENDIF
+d248 1
+a248 1
+      sds2_id = sfcreate( sdId%L1BOAId, SDS2_NAME, DFNT_FLOAT64, rank, &
+d250 1
+a250 1
+      sds3_id = sfcreate( sdId%L1BOAId, SDS3_NAME, DFNT_INT32, rank, &
+d252 1
+a252 1
+      sds51_id = sfcreate( sdId%L1BOAId, SDS51_NAME, DFNT_INT32, rank, &
+d263 1
+a263 1
+      sds1_id = sfcreate( sdId%L1BOAId, SDS1_NAME, DFNT_CHAR8, rank, &
+d268 1
+a268 1
+      sds6_id = sfcreate( sdId%L1BOAId, SDS6_NAME, DFNT_FLOAT64, rank, &
+d271 1
+a271 1
+      sds7_id = sfcreate( sdId%L1BOAId, SDS7_NAME, DFNT_FLOAT32, rank, &
+d274 1
+a274 1
+      sds8_id = sfcreate( sdId%L1BOAId, SDS8_NAME, DFNT_FLOAT64, rank, &
+d277 1
+a277 1
+      sds9_id = sfcreate( sdId%L1BOAId, SDS9_NAME, DFNT_FLOAT32, rank, &
+d280 1
+a280 1
+      sds10_id = sfcreate( sdId%L1BOAId, SDS10_NAME, DFNT_FLOAT32, rank, &
+d283 1
+a283 1
+      sds11_id = sfcreate( sdId%L1BOAId, SDS11_NAME, DFNT_FLOAT32, rank, &
+d287 1
+a287 1
+      sds15_id = sfcreate( sdId%L1BOAId, SDS15_NAME, DFNT_FLOAT64, rank, &
+d290 1
+a290 1
+      sds16_id = sfcreate( sdId%L1BOAId, SDS16_NAME, DFNT_FLOAT64, rank, &
+d293 1
+a293 1
+      sds17_id = sfcreate( sdId%L1BOAId, SDS17_NAME, DFNT_FLOAT64, rank, &
+d296 1
+a296 1
+      sds18_id = sfcreate( sdId%L1BOAId, SDS18_NAME, DFNT_FLOAT32, rank, &
+d300 1
+a300 1
+      sds33_id = sfcreate( sdId%L1BOAId, SDS33_NAME, DFNT_FLOAT64, rank, &
+d303 1
+a303 1
+      sds34_id = sfcreate( sdId%L1BOAId, SDS34_NAME, DFNT_FLOAT64, rank, &
+d306 1
+a306 1
+      sds35_id = sfcreate( sdId%L1BOAId, SDS35_NAME, DFNT_FLOAT64, rank, &
+d309 1
+a309 1
+      sds36_id = sfcreate( sdId%L1BOAId, SDS36_NAME, DFNT_FLOAT32, rank, &
+d317 1
+a317 1
+      sds21_id = sfcreate( sdId%L1BOAId, SDS21_NAME, DFNT_FLOAT32, rank, &
+d320 1
+a320 1
+      sds22_id = sfcreate( sdId%L1BOAId, SDS22_NAME, DFNT_FLOAT64, rank, &
+d323 1
+a323 1
+      sds23_id = sfcreate( sdId%L1BOAId, SDS23_NAME, DFNT_FLOAT32, rank, &
+d326 1
+a326 1
+      sds24_id = sfcreate( sdId%L1BOAId, SDS24_NAME, DFNT_FLOAT32, rank, &
+d329 1
+a329 1
+      sds25_id = sfcreate( sdId%L1BOAId, SDS25_NAME, DFNT_FLOAT64, rank, &
+d332 1
+a332 1
+      sds26_id = sfcreate( sdId%L1BOAId, SDS26_NAME, DFNT_FLOAT32, rank, &
+d335 1
+a335 1
+      sds27_id = sfcreate( sdId%L1BOAId, SDS27_NAME, DFNT_FLOAT32, rank, &
+d338 1
+a338 1
+      sds28_id = sfcreate( sdId%L1BOAId, SDS28_NAME, DFNT_FLOAT32, rank, &
+d341 1
+a341 1
+      sds29_id = sfcreate( sdId%L1BOAId, SDS29_NAME, DFNT_FLOAT32, rank, &
+d344 1
+a344 1
+      sds30_id = sfcreate( sdId%L1BOAId, SDS30_NAME, DFNT_FLOAT32, rank, &
+d347 1
+a347 1
+      sds31_id = sfcreate( sdId%L1BOAId, SDS31_NAME, DFNT_FLOAT32, rank, &
+d350 1
+a350 1
+      sds32_id = sfcreate( sdId%L1BOAId, SDS32_NAME, DFNT_FLOAT32, rank, &
+d358 1
+a358 1
+      sds39_id = sfcreate( sdId%L1BOAId, SDS39_NAME, DFNT_FLOAT32, rank, &
+d361 1
+a361 1
+      sds40_id = sfcreate( sdId%L1BOAId, SDS40_NAME, DFNT_FLOAT64, rank, &
+d364 1
+a364 1
+      sds41_id = sfcreate( sdId%L1BOAId, SDS41_NAME, DFNT_FLOAT32, rank, &
+d367 1
+a367 1
+      sds42_id = sfcreate( sdId%L1BOAId, SDS42_NAME, DFNT_FLOAT32, rank, &
+d370 1
+a370 1
+      sds43_id = sfcreate( sdId%L1BOAId, SDS43_NAME, DFNT_FLOAT64, rank, &
+d373 1
+a373 1
+      sds44_id = sfcreate( sdId%L1BOAId, SDS44_NAME, DFNT_FLOAT32, rank, &
+d376 1
+a376 1
+      sds45_id = sfcreate( sdId%L1BOAId, SDS45_NAME, DFNT_FLOAT32, rank, &
+d379 1
+a379 1
+      sds46_id = sfcreate( sdId%L1BOAId, SDS46_NAME, DFNT_FLOAT32, rank, &
+d382 1
+a382 1
+      sds47_id = sfcreate( sdId%L1BOAId, SDS47_NAME, DFNT_FLOAT32, rank, &
+d385 1
+a385 1
+      sds48_id = sfcreate( sdId%L1BOAId, SDS48_NAME, DFNT_FLOAT32, rank, &
+d388 1
+a388 1
+      sds49_id = sfcreate( sdId%L1BOAId, SDS49_NAME, DFNT_FLOAT32, rank, &
+d391 1
+a391 1
+      sds50_id = sfcreate( sdId%L1BOAId, SDS50_NAME, DFNT_FLOAT32, rank, &
+d405 1
+a405 1
+      sds4_id = sfcreate(sdId%L1BOAId, SDS4_NAME, DFNT_FLOAT64, rank, dimSize)
+d407 1
+a407 1
+      sds5_id = sfcreate(sdId%L1BOAId, SDS5_NAME, DFNT_FLOAT64, rank, dimSize)
+d409 1
+a409 1
+      sds12_id = sfcreate(sdId%L1BOAId, SDS12_NAME, DFNT_FLOAT64, rank, dimSize)
+d411 1
+a411 1
+      sds13_id = sfcreate(sdId%L1BOAId, SDS13_NAME, DFNT_FLOAT64, rank, dimSize)
+d413 1
+a413 1
+      sds14_id = sfcreate(sdId%L1BOAId, SDS14_NAME, DFNT_FLOAT64, rank, dimSize)
+d420 1
+a420 1
+      sds19_id = sfcreate(sdId%L1BOAId, SDS19_NAME, DFNT_FLOAT64, rank, dimSize)
+d422 1
+a422 1
+      sds20_id = sfcreate(sdId%L1BOAId, SDS20_NAME, DFNT_FLOAT64, rank, dimSize)
+d429 1
+a429 1
+      sds37_id = sfcreate(sdId%L1BOAId, SDS37_NAME, DFNT_FLOAT64, rank, dimSize) 
+d431 1
+a431 1
+      sds38_id = sfcreate(sdId%L1BOAId, SDS38_NAME, DFNT_FLOAT64, rank, dimSize)
+d1281 1
+a1281 2
+! This subroutine writes an MAF's worth of data to the L1BRad A & B files (if
+! the latter exists).
+d1285 1
+a1285 1
+      TYPE( L1BInfo_T ) :: sdId
+d1316 1
+a1316 1
+! Find the sds_id number for counterMAF in the file A, write the data to it,
+d1320 2
+a1321 3
+
+      sds_index = sfn2index(sdId%L1BRADIDs(1), name)
+      sds1_id = sfselect(sdId%L1BRADIDs(1), sds_index)
+d1325 1
+a1325 1
+                                       &writing counterMAF to rad file A.')
+d1327 1
+a1327 1
+! Do the same for file B, if it exists
+d1329 6
+a1334 8
+      IF ( SIZE(sdId%L1BRADIDs) > 1 ) THEN
+         sds_index = sfn2index(sdId%L1BRADIDs(2), name)
+         sds2_id = sfselect(sdId%L1BRADIDs(2), sds_index)
+         status = sfwdata(sds2_id, start(3), stride(3), edge(3), counterMAF)
+         status = sfendacc(sds2_id)
+         IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Error &
+                                          &writing counterMAF to rad file B.')
+      ENDIF
+d1357 1
+a1357 1
+            sd_id = sdId%L1BRADIDs(1)
+d1360 1
+a1360 1
+            sd_id = sdId%L1BRADIDs(1)
+d1363 1
+a1363 1
+            sd_id = sdId%L1BRADIDs(1)
+d1366 1
+a1366 1
+            sd_id = sdId%L1BRADIDs(2)
+d1373 2
+a1374 2
+            dimSize(2) = lenT
+            edge(2) = lenT
+d1377 2
+a1378 2
+            dimSize(2) = lenG
+            edge(2) = lenG
+d1462 3
+@
+
+
+1.4
+log
+@Incorporated GetFullMLSSignalName subroutine to concatenate SD names from signal input.
+@
+text
+@d21 1
+a21 1
+   "$Id: OutputL1B.f90,v 1.4 2000/02/22 15:00:16 nakamura Exp $"
+d1467 3
+d1473 1
+a1473 9
+! Revision 1.3  2000/02/17 17:27:48  nakamura
+! Changed dim MIF back to mod.MIF for pertinent L1BOA quantities.
+!
+! Revision 1.2  2000/02/15 18:40:08  nakamura
+! Replaced variable 'name' with parameter SDS51_NAME; added parameters lenG & lenT; changed dim MIF to mod.MIF for radiances.
+!
+! Revision 1.1  2000/02/10 16:53:33  nakamura
+! Module for writing L1B data to SDs in HDF output files.
+!
+@
+
+

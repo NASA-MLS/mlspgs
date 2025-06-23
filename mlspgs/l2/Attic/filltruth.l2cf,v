@@ -1,0 +1,118 @@
+head	2.4;
+access;
+symbols
+	V1-04:2.3
+	V1-03:2.3
+	V1-02:2.3
+	V1-00:2.3;
+locks; strict;
+comment	@# @;
+
+
+2.4
+date	2002.05.22.00.50.15;	author livesey;	state dead;
+branches;
+next	2.3;
+
+2.3
+date	2002.01.08.22.47.38;	author livesey;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2001.11.05.23.22.03;	author livesey;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.10.27.00.15.42;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.4
+log
+@L2CFs no longer belong in l2
+@
+text
+@;; $Id: filltruth.l2cf,v 2.3 2002/01/08 22:47:38 livesey Exp $
+
+;; This l2cf fragment sets up and fills the `truth' state vector
+
+begin Fill
+
+  ;; Setup the vector
+  truth: Vector, template=stateTemplate
+
+  ;; Copy the apriori into it
+  Transfer, source=apriori, destination=truth
+
+end fill
+
+;; Now fill it with l2gp information
+!include(fillfroml2gp.l2cf)
+!define(vec,truth)
+!include(fillisotopes.l2cf)
+
+begin Fill
+
+  ;; Now update the ptans for truth
+  Fill, quantity=truth.ptanGHz, method=hydrostatic, $
+    h2oQuantity=truth.h2o, $
+    temperatureQuantity=truth.temp, $
+    refGPHQuantity=truth.refGPH, $
+    geocAltitudeQuantity=truth.tngtGeocAltGHz, $
+    maxIterations=10
+  Fill, quantity=truth.ptanTHz, method=hydrostatic, $
+    h2oQuantity=truth.h2o, $
+    temperatureQuantity=truth.temp, $
+    refGPHQuantity=truth.refGPH, $
+    geocAltitudeQuantity=truth.tngtGeocAltTHz, $
+    maxIterations=10
+
+end Fill
+
+
+@
+
+
+2.3
+log
+@New style
+@
+text
+@d1 1
+a1 1
+;; $Id: filltruth.l2cf,v 2.2 2001/11/05 23:22:03 livesey Exp $
+@
+
+
+2.2
+log
+@Added filling of isotopes
+@
+text
+@d1 1
+a1 1
+;; $Id: filltruth.l2cf,v 2.1 2001/10/27 00:15:42 livesey Exp $
+a15 1
+!define(x, truth)
+d17 1
+@
+
+
+2.1
+log
+@First version
+@
+text
+@d1 1
+a1 1
+;; $Id$
+d18 1
+@
+

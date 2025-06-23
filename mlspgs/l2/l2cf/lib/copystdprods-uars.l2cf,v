@@ -1,0 +1,162 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.10
+	cfm-single-freq-0-1:1.1.0.8
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.6
+	mus-emls-1-70:1.1.0.4
+	rel-1-0-englocks-work:1.1.0.2
+	VUMLS1-00:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2017.02.09.23.34.44;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@First commit
+@
+text
+@!divert(-1)
+; $Id: copystdprods.l2cf,v 1.8 2016/06/15 22:04:29 pwagner Exp $
+;; Copy those quantities that were stored
+;; using DirectWrite commands in Join sections during the loop of chunks
+;; to individual files.
+!divert!dnl
+
+begin Output
+
+;; We might make up a bunch of m4 flags to control the next two things
+Sleep, time=10000us
+Catenate
+
+;; These macros relate to storing standard products
+;; Special cases are handled by lists ending with 'StdProds' mostly
+;; Some are stored at high resolution: HiResStdProds
+;; Some are stored accompanied by a column abundance: ColumnStdProds
+;; Some are stored w/o a column abundance: NonColumnStdProds
+!define(HiResStdProds,{H2O, Temperature, RHI, GPH})!dnl
+;; We're planning on only O3 accompanying its column
+!ifdef(ColumnStdProds,{},{!define(ColumnStdProds,{O3})})!dnl
+;; (OH, IWC and RHI will be treated separately below)
+!ifdef(NonColumnStdProds,{},{!define(NonColumnStdProds,{BrO,CH3CN,CH3Cl,ClO,CO,H2O,HCl,HCN,HNO3,HO2,HOCl,SO2,Temperature,GPH})})!dnl
+
+!ifdef(flagCopyStandardProducts,{
+
+!define(copyStandardProductWithoutColumn, {!dnl
+!define(StdProductPhase,{$1-!phase$1})!dnl
+Copy, $
+!ifdef(flagNRT,
+{  type=l2gp, hdfVersion=5, $
+    inputFile='!DGGFileName', swath='!StdProductPhase', inputtype=l2dgg, $
+    file='!l2gpFileName($1)', rename='$1', $
+    /create
+},
+{  type=l2gp, hdfVersion=5, $
+    inputFile='!DGGFileName', swath='$1-StdProd', inputtype=l2dgg, $
+    file='!l2gpFileName($1)', rename='$1', $
+    /create
+})!dnl
+})
+;; What if we wish to Copy APriori?
+!define(copyApriori, {Copy, $
+  type=l2gp, hdfVersion=5, $
+    inputFile='!DGGFileName', swath='$1-APriori', inputtype=l2dgg, $
+    file='!l2gpFileName($1)'
+})
+
+!forall(copyStandardProductWithoutColumn,!NonColumnStdProds)
+!ifdef(flagCopyAPiori,{
+!forall(copyApriori,!NonColumnStdProds)
+})
+
+!ifdef(flagNRT,{
+;; OK, seem to have flagNRT
+!forall(copyStandardProductWithoutColumn,!ColumnStdProds)
+!forall(copyApriori,!ColumnStdProds)
+},{
+
+!define(copyStandardProductWithColumn, {Copy, $
+  type=l2gp, hdfVersion=5, $
+    inputFile='!DGGFileName', swath='$1-StdProd column,$1-StdProd', inputtype=l2dgg, $
+    file='!l2gpFileName($1)', rename='$1 column,$1', $
+    /create
+})
+;; This is the way we'll do it if we store both column abundances
+;; (one found using mls tropopause, the other using the GMAO tropopause)
+!define(copyStandardProductWith2Columns, {Copy, $
+  type=l2gp, hdfVersion=5, $
+    inputFile='!DGGFileName', swath='$1-StdProd column-MLS,$1-StdProd column-GEOS5,$1-StdProd', inputtype=l2dgg, $
+    file='!l2gpFileName($1)', rename='$1 column-MLS,$1 column-GEOS5,$1', $
+    /create
+})
+
+!ifdef(flagUseGEOS5PTrop,{!dnl
+!forall(copyStandardProductWith2Columns,!ColumnStdProds)
+},{!dnl
+!forall(copyStandardProductWithColumn,!ColumnStdProds)
+})
+!ifdef(flagCopyAPiori,{
+!forall(copyApriori,!ColumnStdProds)
+})
+
+;; --------------------------------- Other files ---
+;; The IWC, RHI files require special treatment
+;; In each case we copy two related swaths into the same l2gp file
+Copy, type=l2gp, hdfVersion=!hdfVersion, $
+    inputFile='!DGGFileName', swath='IWC-StdProd', inputtype=l2dgg, $
+    file='!l2gpFileName(IWC)', rename='IWC', $
+    /create
+
+Copy, type=l2gp, hdfVersion=!hdfVersion, $
+    inputFile='!DGGFileName', swath='IWP-StdProd', inputtype=l2dgg, $
+    file='!l2gpFileName(IWC)', rename='IWP'
+
+Copy, type=l2gp, hdfVersion=!hdfVersion, $
+    inputFile='!DGGFileName', swath='RHI-StdProd', inputtype=l2dgg, $
+    file='!l2gpFileName(RHI)', rename='RHI', $
+    /create
+
+Copy, type=l2gp, hdfVersion=!hdfVersion, $
+    inputFile='!DGGFileName', swath='UTRHI-StdProd', inputtype=l2dgg, $
+    file='!l2gpFileName(RHI)', rename='UTRHI'
+
+!ifdef(flagCopyAPiori,{
+Copy, type=l2gp, hdfVersion=!hdfVersion, $
+    inputFile='!DGGFileName', swath='RHI-APriori', inputtype=l2dgg, $
+    file='!l2gpFileName(RHI)'
+
+Copy, type=l2gp, hdfVersion=!hdfVersion, $
+    inputFile='!DGGFileName', swath='UTRHI-APriori', inputtype=l2dgg, $
+    file='!l2gpFileName(RHI)'
+
+})
+
+})
+
+})
+end Output
+
+!divert(-1)
+; $Log: copystdprods.l2cf,v $
+!divert!dnl
+@

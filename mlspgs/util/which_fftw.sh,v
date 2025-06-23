@@ -1,0 +1,642 @@
+head	1.11;
+access;
+symbols
+	v5-02-NRT-19:1.11
+	v6-00:1.11
+	v5-02-NRT-18:1.11
+	v5-02:1.11
+	v5-01-NRT-17:1.11
+	v5-01-NRT-16:1.11
+	v5-01-NRT-15:1.11
+	v5-01-NRT-14:1.11
+	neuralnetworks-1-0:1.11.0.14
+	cfm-single-freq-0-1:1.11.0.12
+	v5-01:1.11
+	v5-00:1.11
+	v4-23-TA133:1.11.0.10
+	mus-emls-1-70:1.11.0.8
+	rel-1-0-englocks-work:1.11.0.6
+	VUMLS1-00:1.11
+	VPL1-00:1.11
+	V4-22-NRT-08:1.11
+	VAM1-00:1.11
+	V4-21:1.11.0.4
+	V4-13:1.11
+	V4-12:1.11
+	V4-11:1.11
+	V4-10:1.11
+	V3-43:1.11
+	M4-00:1.11
+	V3-41:1.11
+	V3-40-PlusGM57:1.11.0.2
+	V2-24-NRT-04:1.11
+	V3-33:1.11
+	V2-24:1.11
+	V3-31:1.11
+	V3-30-NRT-05:1.11
+	cfm-01-00:1.11
+	V3-30:1.11
+	V3-20:1.11
+	V3-10:1.11
+	V2-23-NRT-02:1.11
+	V2-23:1.11
+	V2-22-NRT-01:1.11
+	V2-22:1.9
+	V2-21:1.8
+	V2-20:1.8
+	V2-11:1.8
+	V2-10:1.8
+	V2-00:1.8
+	V1-51:1.7
+	V1-50:1.7
+	V1-45:1.7
+	V1-44:1.7
+	V1-43:1.7
+	V1-42:1.4
+	V1-41:1.4
+	V1-32:1.5
+	V1-40:1.4
+	V1-31:1.4
+	V1-30:1.4
+	V1-13:1.3
+	V1-12:1.3
+	V1-11:1.3
+	V1-10:1.3
+	newfwm-feb03:1.3.0.2
+	V1-04:1.2
+	V1-03:1.2
+	V1-02:1.2
+	V1-00:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.11
+date	2007.12.14.21.33.27;	author pwagner;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2007.11.28.18.56.23;	author pwagner;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2007.06.27.19.36.05;	author pwagner;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2005.06.23.22.20.46;	author pwagner;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2004.03.19.21.56.03;	author pwagner;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2004.03.17.00.19.35;	author pwagner;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2004.02.06.18.31.34;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2003.05.12.22.08.46;	author jonathan;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2002.10.03.23.06.10;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.10.25.17.53.43;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.10.09.20.51.22;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.11
+log
+@gcc versions from 4.1.0-4.1.9
+@
+text
+@#!/bin/sh
+#which_fftw.sh
+
+# --------------- which_fftw.sh help
+# A "Swiss-Army" shell script
+# Use (1):
+# Creates fftw_link_line to build mlspgs level 3d program (default)
+# Use (2):
+# Echoes version number of gcc compiler; e.g. '2.96' or '3.2' (-gcc option)
+# Use (3):
+# object needed to build static executable; e.g. './temp/ctype-info.o' (-static option)
+# 
+# Usage:
+# which_fftw.sh [options] FFTW_ROOT [FFTW_PREC]
+#
+#    O p t i o n s   a n d   a r g s
+# -h[elp]       print brief help message; exit
+# -gcc          Use (2) above
+# -static       Use (3) above
+# FFTW_ROOT     a directory path where the fftw libraries might be found
+#                These two libraries must have names matching the patterns
+#                1st library: lib[ sd]rfftw.a
+#                2nd library: lib[ sd]fftw.a
+# FFTW_PREC     if present, one of 's' or 'd' specifying which precision
+#                library to choose, or '3' specifying version '3' of fftw
+#                (if absent, the order of preference will be {none, d, s}
+#                in other words if librfftw.a exists, use it
+#                elseif libdrfftw.a exists, use it
+#                elseif libsrfftw.a exists, use it
+#                else return nothing
+
+# Result:
+# Writes fftw_link_line to stdout; similar to the following
+#   -L${FFTW_ROOT} -lrfftw -lfftw
+# Also creates a file containing fftw_link_message in the cwd;
+#  similar to the following
+#    Building mlsl3d with default-precision fftw
+
+# Note:
+# (1) The option(s) marked with "-", if present,
+#     must precede the args on the command line
+# (2) It is assumed that the shell script reecho.sh exists
+#      and is in the same directory as which_fftw.sh
+#
+# --------------- End which_fftw.sh help
+# Copyright 2005, by the California Institute of Technology. ALL
+# RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+# commercial use must be negotiated with the Office of Technology Transfer
+# at the California Institute of Technology.
+
+# This software may be subject to U.S. export control laws. By accepting this
+# software, the user agrees to comply with all applicable U.S. export laws and
+# regulations. User has the responsibility to obtain export licenses, or other
+# export authority as may be required before exporting such information to
+# foreign countries or providing access to foreign persons.
+
+# "$Id: which_fftw.sh,v 1.10 2007/11/28 18:56:23 pwagner Exp $"
+#------------------------------- Main Program ------------
+
+#****************************************************************
+#                                                               *
+#                  * * * Main Program  * * *                    *
+#                                                               *
+#                                                               *
+#	The entry point where control is given to the script         *
+#****************************************************************
+me="$0"
+my_name=which_fftw.sh
+# Where we put the spare pieces Lahey might need to build
+# a static executable
+# (If we don't have these, we can't build statically with Lahey)
+STOB_PATH="/users/pwagner/lib/lf95"
+# What to echo as need object for building static executable
+# (if Lahey compiler < v6.2 and Red Hat > v8 )
+# (even more if CentOS 5)
+my_stobject="$STOB_PATH/ctype-info.o"
+more_stobjects="$STOB_PATH/ctype-info.o $STOB_PATH/unwind-dw2.o \
+ $STOB_PATH/unwind-dw2-fde-glibc.o $STOB_PATH/unwind-c.o"
+DEEBUG=off
+USE="1"
+
+# The following is echoed if we can't any fftw libraries in FFTW_ROOT
+nothing='-L${FFTW_ROOT} -ldrfftw -ldfftw'
+
+if [ $DEEBUG = "on" ]
+then
+   echo "Called me as $0"
+   echo "with args $@@"
+fi
+
+REECHO="`echo $0 | sed 's/which_fftw.sh/reecho.sh/'`"
+more_opts="yes"
+while [ "$more_opts" = "yes" ] ; do
+
+    case "$1" in
+
+    -h | -help )
+       sed -n '/'$my_name' help/,/End '$my_name' help/ p' $me \
+           | sed -n 's/^.//p' | sed '1 d; $ d'
+       exit
+       ;;
+    -gcc )
+       USE="2"
+       shift
+       ;;
+    -static )
+       USE="3"
+       shift
+       ;;
+    * )
+       more_opts="no"
+       ;;
+    esac
+done
+
+if [ $USE != "1" ]
+then
+   stobject=''
+#   - - - U s e  ( 2 ) o r ( 3 ) - - -
+   test_295=`gcc -v 2>&1 | grep -i '2\.95'`
+   test_296=`gcc -v 2>&1 | grep -i '2\.96'`
+   # test_31=`gcc -v 2>&1 | grep -i '3\.1'`
+   # test_32=`gcc -v 2>&1 | grep -i '3\.2'`
+   # test_322=`gcc -v 2>&1 | grep -i '3\.2\.2'`
+   # test_323=`gcc -v 2>&1 | grep -i '3\.2\.3'`
+   gcc_version=
+   if [ "$test_295" != "" ]
+   then
+     gcc_version="2.95"
+   elif [ "$test_296" != "" ]
+   then
+     gcc_version="2.96"
+   else
+     gcc_version=`gcc -dumpversion`
+     #exit 1
+     case "$gcc_version" in
+        3.1)
+        stobject=
+        ;;
+        3.2)
+        stobject=
+        ;;
+        3.2.2)
+        stobject="$my_stobject"
+        ;;
+        3.2.3)
+        stobject="$my_stobject"
+        ;;
+        4.1*)
+        stobject="$more_stobjects"
+        ;;
+        *)
+        stobject="$my_stobject"
+        ;;
+      esac
+   fi
+   if [ "$USE" = "2" ]
+   then
+     echo $gcc_version
+   else
+     echo $stobject
+   fi
+   exit 0
+fi
+
+#   - - - U s e  ( 1 ) - - -
+FFTW_ROOT=$1
+shift
+
+FFTW_PREC=$1
+
+if [ $DEEBUG = "on" ]
+then
+   echo "FFTW_ROOT: $FFTW_ROOT"
+   echo "FFTW_PREC: $FFTW_PREC"
+fi
+
+rm -f fftw_link_message
+# No specified precision
+test=`$REECHO $FFTW_ROOT/librfftw.a $FFTW_ROOT/libfftw.a | wc -w`
+if [ $DEEBUG = "on" ]
+then
+   echo "First test: $test"
+fi
+if [ `expr "$test"` = 2 -a "$FFTW_PREC" = "" ]
+then
+  echo "Building mlsl3[dm] with default-precision fftw" > fftw_link_message
+  echo '-L${FFTW_ROOT} -lrfftw -lfftw'
+  exit
+fi
+
+# double precision
+test=`$REECHO $FFTW_ROOT/libdrfftw.a $FFTW_ROOT/libdfftw.a | wc -w`
+if [ $DEEBUG = "on" ]
+then
+   echo "dp test: $test"
+fi
+if [ `expr "$test"` = 2 -a "$FFTW_PREC" != "s" ]
+then
+  echo "Building mlsl3[dm] with double-precision fftw" > fftw_link_message
+  echo '-L${FFTW_ROOT} -ldrfftw -ldfftw'
+  exit
+fi
+
+# single precision (and last chance for version != 3)
+test=`$REECHO $FFTW_ROOT/libsrfftw.a $FFTW_ROOT/libsfftw.a | wc -w`
+if [ $DEEBUG = "on" ]
+then
+   echo "sp test: $test"
+fi
+if [ `expr "$test"` = 2 -a "$FFTW_PREC" != "d" ]
+then
+  echo "Building mlsl3[dm] with single-precision fftw" > fftw_link_message
+  echo '-L${FFTW_ROOT} -lsrfftw -lsfftw'
+  exit
+fi
+
+# version 3?
+test=`$REECHO $FFTW_ROOT/libfftw3.a | wc -w`
+if [ $DEEBUG = "on" ]
+then
+   echo "sp test: $test"
+fi
+if [ `expr "$test"` = 1 ]
+then
+  echo "Building mlsl3[dm] with version 3 of fftw" > fftw_link_message
+  echo '-L${FFTW_ROOT} -lfftw3'
+  exit
+fi
+
+# uh-oh, no qualified libraries found, so echo $nothing (unless debugging)
+if [ $DEEBUG = "on" ]
+then
+   echo "uh-oh, no qualified libraries found, so echo nothing"
+   echo "No fftw libraries were found in $FFTW_ROOT"         
+   echo "(assuming your precision $FFTW_PREC)"               
+   echo "You probably have to reset FFTW_ROOT in .configure" 
+   echo "Do that by 'make configure_pvm'"                    
+else
+   echo $nothing
+fi
+echo "No fftw libraries were found in $FFTW_ROOT" > fftw_link_message           
+echo "(assuming your precision $FFTW_PREC)" >> fftw_link_message                 
+echo "You probably have to reset FFTW_ROOT in .configure" >> fftw_link_message   
+echo "Do that by 'make configure_pvm'" >> fftw_link_message                      
+exit
+# $Log: which_fftw.sh,v $
+# Revision 1.10  2007/11/28 18:56:23  pwagner
+# CentOS 5 and Lahey6.1 needed more pieces for statoc build
+#
+# Revision 1.9  2007/06/27 19:36:05  pwagner
+# Can handle version 3 of fftw
+#
+# Revision 1.8  2005/06/23 22:20:46  pwagner
+# Reworded Copyright statement
+#
+# Revision 1.7  2004/03/19 21:56:03  pwagner
+# Should adapt better to arbitrary gcc versions after 3.2
+#
+# Revision 1.6  2004/03/17 00:19:35  pwagner
+# Use(3) to fix building static Lahey executables when Red Hat>8
+#
+# Revision 1.5  2004/02/06 18:31:34  pwagner
+# Added gcc version 3.2.3
+#
+# Revision 1.4  2003/05/12 22:08:46  jonathan
+# added v3.2.2
+#
+# Revision 1.3  2002/10/03 23:06:10  pwagner
+# Added Use(2) to return gcc version
+#
+# Revision 1.2  2001/10/25 17:53:43  pwagner
+# Slightly more robust given wrong FFTW_ROOT
+#
+# Revision 1.1  2001/10/09 20:51:22  pwagner
+# First commit
+#
+@
+
+
+1.10
+log
+@CentOS 5 and Lahey6.1 needed more pieces for statoc build
+@
+text
+@d57 1
+a57 1
+# "$Id: which_fftw.sh,v 1.9 2007/06/27 19:36:05 pwagner Exp $"
+d149 1
+a149 1
+        4.1.1)
+d248 3
+@
+
+
+1.9
+log
+@Can handle version 3 of fftw
+@
+text
+@d5 1
+d57 1
+a57 1
+# "$Id: which_fftw.sh,v 1.8 2005/06/23 22:20:46 pwagner Exp $"
+d69 4
+d75 4
+a78 1
+my_stobject="/users/pwagner/lib/lf95/ctype-info.o"
+a132 14
+  #elif [ "$test_31" != "" ]
+  #then
+  #  gcc_version="3.1"
+  #elif [ "$test_322" != "" ]
+  #then
+  #  gcc_version="3.2.2"
+  #  stobject="$my_stobject"
+  #elif [ "$test_323" != "" ]
+  #then
+  #  gcc_version="3.2.3"
+  #  stobject="$my_stobject"
+  #elif [ "$test_32" != "" ]
+  #then
+  #  gcc_version="3.2"
+d149 3
+d248 3
+@
+
+
+1.8
+log
+@Reworded Copyright statement
+@
+text
+@d23 2
+a24 2
+# FFTW_PREC     if present, either 's' or 'd' specifying which precision
+#                library to choose
+d56 1
+a56 1
+# "$Id: which_fftw.sh,v 1.7 2004/03/19 21:56:03 pwagner Exp $"
+d208 1
+a208 1
+# single precision (and last chance)
+d221 13
+d251 3
+@
+
+
+1.7
+log
+@Should adapt better to arbitrary gcc versions after 3.2
+@
+text
+@d45 10
+a54 2
+# Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
+# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d56 1
+a56 1
+# "$Id: which_fftw.sh,v 1.6 2004/03/17 00:19:35 pwagner Exp $"
+d238 3
+@
+
+
+1.6
+log
+@Use(3) to fix building static Lahey executables when Red Hat>8
+@
+text
+@d48 1
+a48 1
+# "$Id: which_fftw.sh,v 1.5 2004/02/06 18:31:34 pwagner Exp $"
+d106 4
+a109 4
+   test_31=`gcc -v 2>&1 | grep -i '3\.1'`
+   test_32=`gcc -v 2>&1 | grep -i '3\.2'`
+   test_322=`gcc -v 2>&1 | grep -i '3\.2\.2'`
+   test_323=`gcc -v 2>&1 | grep -i '3\.2\.3'`
+d117 14
+a130 14
+   elif [ "$test_31" != "" ]
+   then
+     gcc_version="3.1"
+   elif [ "$test_322" != "" ]
+   then
+     gcc_version="3.2.2"
+     stobject="$my_stobject"
+   elif [ "$test_323" != "" ]
+   then
+     gcc_version="3.2.3"
+     stobject="$my_stobject"
+   elif [ "$test_32" != "" ]
+   then
+     gcc_version="3.2"
+d132 19
+a150 1
+     exit 1
+d230 3
+@
+
+
+1.5
+log
+@Added gcc version 3.2.3
+@
+text
+@d9 2
+d18 1
+d45 1
+a45 1
+# Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+d48 1
+a48 1
+# "$Id: which_fftw.sh,v 1.4 2003/05/12 22:08:46 jonathan Exp $"
+d60 3
+d64 1
+a64 1
+USE_2="no"
+d87 5
+a91 1
+       USE_2="yes"
+d100 1
+a100 1
+if [ $USE_2 = "yes" ]
+d102 2
+a103 1
+#   - - - U s e  ( 2 ) - - -
+d123 1
+d127 1
+d134 6
+a139 1
+   echo $gcc_version
+d212 3
+@
+
+
+1.4
+log
+@added v3.2.2
+@
+text
+@d45 1
+a45 1
+# "$Id: which_fftw.sh,v 1.3 2002/10/03 23:06:10 pwagner Exp $"
+d98 1
+d112 3
+d194 3
+@
+
+
+1.3
+log
+@Added Use(2) to return gcc version
+@
+text
+@d45 1
+a45 1
+# "$Id: which_fftw.sh,v 1.2 2001/10/25 17:53:43 pwagner Exp $"
+d97 1
+d108 3
+d190 3
+@
+
+
+1.2
+log
+@Slightly more robust given wrong FFTW_ROOT
+@
+text
+@d5 4
+a8 1
+# Creates fftw_link_line to build mlspgs level 3d program
+d15 1
+d42 1
+a42 1
+# Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+d45 1
+a45 1
+# "$Id: which_fftw.sh,v 1.1 2001/10/09 20:51:22 pwagner Exp $"
+d58 1
+d80 4
+d90 28
+d186 3
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d41 1
+a41 1
+# "$Id: which_fftw.sh,v 1.2 2001/08/16 18:14:35 pwagner Exp $"
+d54 4
+d132 1
+a132 1
+# uh-oh, no qualified libraries found, so echo nothing
+d136 11
+a146 1
+fi
+d149 3
+@
+

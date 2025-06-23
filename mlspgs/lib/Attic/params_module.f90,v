@@ -1,0 +1,42 @@
+head	1.2;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	99.12.16.23.08.51;	author livesey;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	99.12.06.14.16.13;	author pumphrey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Removed as redundant with MLSCommon
+@
+text
+@module params_module
+! Contains various constants used elsewhere in the code
+integer,parameter,public::NameLen=30,LineLen=80
+
+end module params_module
+@
+
+
+1.1
+log
+@Added to CVS tree along with gridded_data_module.f90
+@
+text
+@@
+

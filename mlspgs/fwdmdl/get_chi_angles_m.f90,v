@@ -1,0 +1,2163 @@
+head	2.27;
+access;
+symbols
+	v5-02-NRT-19:2.27
+	v6-00:2.27
+	v5-02-NRT-18:2.27
+	v5-02:2.25
+	v5-01-NRT-17:2.27
+	v5-01-NRT-16:2.27
+	v5-01-NRT-15:2.27
+	v5-01-NRT-14:2.27
+	neuralnetworks-1-0:2.27.0.4
+	cfm-single-freq-0-1:2.27.0.2
+	v5-01:2.25
+	v5-00:2.25
+	v4-23-TA133:2.24.0.2
+	mus-emls-1-70:2.22.0.4
+	rel-1-0-englocks-work:2.22.0.2
+	VUMLS1-00:2.22
+	VPL1-00:2.22
+	V4-22-NRT-08:2.21
+	VAM1-00:2.21
+	V4-21:2.21.0.2
+	V4-13:2.21
+	V4-12:2.21
+	V4-11:2.21
+	V4-10:2.21
+	V3-43:2.20
+	M4-00:2.20
+	V3-41:2.20
+	V3-40-PlusGM57:2.20.0.2
+	V2-24-NRT-04:2.17
+	V3-33:2.20
+	V2-24:2.17
+	V3-31:2.20
+	V3-30-NRT-05:2.20
+	cfm-01-00:2.20
+	V3-30:2.20
+	V3-20:2.20
+	V3-10:2.20
+	V2-23-NRT-02:2.17
+	V2-23:2.17
+	V2-22-NRT-01:2.17
+	V2-22:2.17
+	V2-21:2.17
+	V2-20:2.17
+	V2-11:2.17
+	V2-10:2.17
+	V2-00:2.17
+	V1-51:2.15
+	V1-50:2.15
+	V1-45:2.15
+	V1-44:2.15
+	V1-43:2.15
+	V1-32:2.14
+	V1-31:2.14
+	V1-30:2.14
+	V1-13:2.13
+	V1-12:2.13
+	V1-11:2.13
+	V1-10:2.13
+	newfwm-feb03:2.13.0.2
+	V1-04:2.1
+	V1-03:2.1
+	V1-02:2.1
+	JointForwardModel:2.7.0.2
+	V1-00:2.1
+	newfwm-sep01:1.10.0.2
+	V0-7:1.10
+	V0-5-Level2:1.9
+	V0-5-SIPS:1.9;
+locks; strict;
+comment	@# @;
+
+
+2.27
+date	2020.08.12.00.04.25;	author vsnyder;	state Exp;
+branches;
+next	2.26;
+
+2.26
+date	2020.04.22.01.59.43;	author vsnyder;	state Exp;
+branches;
+next	2.25;
+
+2.25
+date	2019.06.24.23.28.17;	author pwagner;	state Exp;
+branches;
+next	2.24;
+
+2.24
+date	2019.02.28.01.58.18;	author vsnyder;	state Exp;
+branches;
+next	2.23;
+
+2.23
+date	2019.02.28.01.45.14;	author vsnyder;	state Exp;
+branches;
+next	2.22;
+
+2.22
+date	2016.05.27.01.25.28;	author vsnyder;	state Exp;
+branches;
+next	2.21;
+
+2.21
+date	2013.06.12.02.25.43;	author vsnyder;	state Exp;
+branches;
+next	2.20;
+
+2.20
+date	2009.06.23.18.26.11;	author pwagner;	state Exp;
+branches;
+next	2.19;
+
+2.19
+date	2009.05.13.20.03.01;	author vsnyder;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2008.05.20.00.18.46;	author vsnyder;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2005.12.07.00.32.58;	author vsnyder;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2005.06.22.18.08.19;	author pwagner;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2004.05.17.22.05.40;	author livesey;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2003.05.14.22.23.10;	author bill;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2002.10.08.17.08.04;	author pwagner;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2002.10.03.22.23.03;	author vsnyder;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2002.09.26.20.15.26;	author vsnyder;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2002.09.26.00.48.45;	author vsnyder;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2002.07.05.07.52.47;	author zvi;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2002.06.28.11.06.50;	author zvi;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2002.06.24.21.11.24;	author zvi;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2002.06.24.21.07.13;	author zvi;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2002.06.24.21.01.28;	author zvi;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2002.06.20.14.34.30;	author bill;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2002.06.11.22.20.45;	author bill;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2002.06.07.04.50.36;	author bill;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.10.16.22.32.11;	author zvi;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2001.09.17.20.26.27;	author livesey;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2001.06.07.23.30.34;	author pwagner;	state Exp;
+branches
+	1.10.2.1;
+next	1.9;
+
+1.9
+date	2001.04.07.00.23.05;	author vsnyder;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2001.03.31.23.40.55;	author zvi;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2001.03.21.22.47.28;	author livesey;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2001.03.09.03.34.44;	author zvi;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2001.03.09.01.34.07;	author zvi;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.03.09.01.23.52;	author zvi;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2001.02.19.22.20.40;	author zvi;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.02.19.22.14.21;	author zvi;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.01.31.22.40.12;	author zvi;	state Exp;
+branches;
+next	;
+
+1.10.2.1
+date	2001.09.10.10.02.32;	author zvi;	state Exp;
+branches;
+next	1.10.2.2;
+
+1.10.2.2
+date	2001.09.12.21.38.47;	author zvi;	state Exp;
+branches;
+next	1.10.2.3;
+
+1.10.2.3
+date	2001.09.13.11.18.21;	author zvi;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.27
+log
+@Clarified some comments
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Get_Chi_Angles_m
+
+  implicit NONE
+
+  private
+  public :: Get_Chi_Angles
+
+  interface Get_Chi_Angles
+    module procedure Get_Chi_Angles_All, Get_Chi_Angles_Simple
+    module procedure Get_Chi_Angles_Simple_Deriv
+  end interface
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: get_chi_angles_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+contains
+!---------------------------------------------------------------------------
+
+  ! -----------------------------------------  Get_Chi_Angles_All  -----
+  subroutine Get_Chi_Angles_All ( SC_Geoc_Alt, Tan_Refr_Index, Inst_Refr_Index, &
+             & Tan_Ht, Phi_Tan, Req, Elev_Offset, Ptg_Angle, dX_dH, dH_dZ, &
+             & Tan_dH_dT, Tan_d2H_dHdT, dX_dT, d2X_dXdT )
+
+  ! Compute pointing angle and its derivative with respect to tangent
+  ! height. Optionally compute derivatives with respect to temperature.
+
+    use Constants, only: Deg2Rad, Ln10
+    use MLSKinds, only: RP
+
+  ! inputs
+
+    real(rp), intent(in) :: SC_geoc_alt ! geocentric spacecraft(observer)
+                                        ! altitude in km
+    real(rp), intent(in) :: Tan_Refr_Index ! Index of refraction - 1 at tangent
+    real(rp), intent(in) :: Inst_Refr_Index ! Index of refraction - 1 at instrument
+    real(rp), intent(in) :: Tan_ht      ! tangent height relative to Req in km
+    real(rp), intent(in) :: Phi_tan     ! tangent orbit plane projected
+                                        ! geodetic angle in radians
+    real(rp), intent(in) :: Req         ! equivalent earth radius in km at tangent
+    real(rp), intent(in) :: Elev_offset ! radiometer pointing offset in radians
+                                        ! positive is towards the earth,
+                                        ! negative is towards space.
+    real(rp), intent(in) :: dh_dz       ! dh/dz at the tangent point
+
+  ! outputs
+
+    real(rp), intent(out) :: Ptg_angle  ! pointing angle in radians
+    real(rp), intent(out) :: dx_dh      ! derivative of pointing angle
+                                        ! wrt height
+
+  ! keywords
+
+    real(rp), optional, intent(in) :: Tan_dh_dt(:) ! derivative of tangent
+                                                   ! height wrt temperature
+    real(rp), optional, intent(in) :: Tan_d2h_dhdt(:) ! 2nd derivative of
+                                        ! tangent height wrt temperature & height
+    real(rp), optional, intent(out) :: dx_dt(:) ! derivative of pointing angle
+                                                ! wrt temperature
+    real(rp), optional, intent(out) :: d2x_dxdt(:) ! second derivative of
+                                        ! tangent wrt temperature, pointing angle
+  !  ----------------
+  !  Local variables:
+  !  ----------------
+
+    real(rp), parameter :: ampl = 38.9014
+    real(rp), parameter :: phas = 51.6814 * Deg2Rad
+
+    real(rp) :: hs, ht, Np1, q, sinChi, tp, x
+
+  ! Start code:
+
+    ht = Req + tan_ht
+    Np1 = ( 1.0_rp + tan_refr_index )         ! N_t
+
+    !{ Empirical formula (8.5): $H_s = R_s + 38.9014\,
+    !  \sin 2(\phi_t-51^\circ\hspace{-4.2pt}.\hspace{1pt}6814 )$\\
+    !  This only works for EMLS at its current orbit inclination!
+
+    hs = sc_geoc_alt + ampl * sin(2.0*(phi_tan-phas))
+    x = min ( Np1 / ( 1.0_rp + inst_refr_index ) * ht / hs, 1.0_rp )
+
+    !{ $\sin \chi^{\text{refr}}_{\text{eq}} =
+    !    \frac{\mathcal{N}_t}{\mathcal{N}_s} \frac{H_t}{H_s}
+    !    \frac{ \text{min} ( H_t, H^{\oplus}_t ) }{H^{\oplus}_t}$,
+    !  where $\mathcal{N}_s$ is the index of refraction at the spacecraft. 
+    !  This is a bit different from Equation (8.3) in the 19 Aug 2004 ATBD
+    !  because that equation does not consider the case of $H_t <
+    !  H^{\oplus}_t$, and assumes the instrument is in orbit, and therefore
+    !  $N_s = 1.0$.
+
+    ! ptg_angle = asin(x * min(ht,Req)/Req) - elev_offset
+
+    if ( tan_ht >= 0.0_rp ) then      ! min(ht,Req)/Req = 1
+
+      !{ $H_t \geq H^{\oplus}_t: ~
+      !  \sin \chi^{\text{refr}}_{\text{eq}} =
+      !    \frac{N_t}{N_s} \frac{ H_t }{ H_s }; $ \\
+      !  $ \frac{ \text{d} \chi^{\text{refr}}_{\text{eq}} }{ \text{d} H_t}
+      !    \cos \chi^{\text{refr}}_{\text{eq}} =
+      !    \frac{1}{N_s H_s} \left ( N_t +
+      !     \frac{\text{d} N_t}{\text{d} H_t } H_t \right) =
+      !    \frac{1}{N_s H_s} \left ( N_t +
+      !     \frac{ \text{d} N_t }{ \text{d} \zeta_t }
+      !      \frac{ \text{d} \zeta_t }{ \text{d} H_t } H_t \right )$ \\ ~\\
+      !  $N_t = 1 + a\, e^{-\zeta_t \ln 10} ~\Rightarrow~ 
+      !    \frac{ \text{d} N_t }{ \text{d} \zeta_t } = - \ln 10 ( N_t - 1 )
+      !  \Rightarrow $ \\
+      !  $\frac{ \text{d} \chi^{\text{refr}}_{\text{eq}} }
+      !                   { \text{d} H_t}
+      !    \cos \chi^{\text{refr}}_{\text{eq}} =
+      !  \sin \chi^{\text{refr}}_{\text{eq}} 
+      !   \left[ \frac1{H_t} - \frac1{N_t} ( \ln 10 ( N_t-1 ) )
+      !    \frac{ \text{d} \zeta_t }{ \text{d} H_t} \right] $
+
+      sinChi = x
+      q = 1.0_rp / ht - 1.0_rp/np1 * tan_refr_index * Ln10 / dh_dz
+    else                              ! min(ht,Req)/Req = ht/Req
+
+      !{ $H_t < H^{\oplus}_t: ~~
+      !  \sin \chi^{\text{refr}}_{\text{eq}} = 
+      !    \frac{N_t}{N_s} \frac{ H_t^2 }{ H_s H^{\oplus}_t }; ~~
+      !  \frac{ \text{d} N_t }{ \text{d} H_t} = 0 ~~
+      !  \Rightarrow ~~
+      !  \frac{ \text{d} \chi^{\text{refr}}_{\text{eq}} }{ \text{d} H_t}
+      !    \cos \chi^{\text{refr}}_{\text{eq}} =
+      !    2 \frac{N_t}{N_s} \frac{H_t }{H_s H^{\oplus}_t } =
+      !    \frac2{H_t} \sin \chi^{\text{refr}}_{\text{eq}} $
+
+      sinChi = x*ht/Req
+      q = 2.0_rp / ht
+    end if
+
+    ptg_angle = ASIN(sinChi) - elev_offset
+    if ( sinChi < 1.0_rp ) then
+      dx_dh = q * sinChi / sqrt(1.0_rp - sinChi**2)
+    else
+      dx_dh = 0.0_rp
+    end if
+
+  ! Do temperature stuff if user requests it
+  ! Set up: dx_dt, d2x_dxdt arrays for temperature derivative computations
+  ! (NOTE: These entities have NO PHI dimension, so take the center Phi in dh_dt)
+
+    if ( present(tan_dh_dt) ) then
+      tp = tan(ptg_angle)
+      dx_dt = tp * tan_dh_dt / ht
+      d2x_dxdt = tp * dx_dt + tan_d2h_dhdt
+    end if
+
+  end subroutine Get_Chi_Angles_All
+
+  ! --------------------------------------  Get_Chi_Angles_Simple  -----
+  subroutine Get_Chi_Angles_Simple ( SC_Geoc_Alt, Tan_Refr_Index, &
+             & Inst_Refr_Index, Tan_Ht, Phi_Tan, Req, Elev_Offset, Ptg_Angle )
+
+  ! Compute pointing angle.
+
+    use Constants, only: Deg2Rad
+    use MLSKinds, only: RP
+
+  ! inputs
+
+    real(rp), intent(in) :: SC_geoc_alt ! geocentric spacecraft(observer)
+                                        ! altitude in km
+    real(rp), intent(in) :: Tan_Refr_Index ! Index of refraction - 1 at tangent
+    real(rp), intent(in) :: Inst_Refr_Index ! Index of refraction - 1 at instrument
+    real(rp), intent(in) :: Tan_ht      ! tangent height relative to Req
+    real(rp), intent(in) :: Phi_tan     ! tangent orbit plane projected
+                                        ! geodetic angle in radians
+    real(rp), intent(in) :: Req         ! equivalent earth radius in km
+    real(rp), intent(in) :: Elev_offset ! radiometer pointing offset in radians
+                                        ! positive is towards the earth,
+                                        ! negative is towards space.
+
+  ! outputs
+
+    real(rp), intent(out) :: Ptg_angle  ! pointing angle in radians
+
+  !  ----------------
+  !  Local variables:
+  !  ----------------
+
+    real(rp), parameter :: ampl = 38.9014
+    real(rp), parameter :: phas = 51.6814 * Deg2Rad
+
+    real(rp) :: hs, ht, Np1, sinChi, x
+
+  ! Start code:
+
+    ht = Req + tan_ht
+    Np1 = ( 1.0_rp + tan_refr_index ) / ( 1.0_rp + inst_refr_index )
+
+    !{ Empirical formula (8.5): $H_s = R_s + 38.9014\,
+    !  \sin 2(\phi_t-51^\circ\hspace{-4.2pt}.\hspace{1pt}6814 )$\\
+    !  This only works for EMLS at its current orbit inclination!
+
+    hs = sc_geoc_alt + ampl * sin(2.0*(phi_tan-phas))
+    x = min ( Np1 * ht / hs, 1.0_rp )
+
+    !{ $\sin \chi^{\text{refr}}_{\text{eq}} =
+    !    \frac{\mathcal{N}_t}{\mathcal{N}_s} \frac{H_t}{H_s}
+    !    \frac{ \text{min} ( H_t, H^{\oplus}_t ) }{H^{\oplus}_t}$,
+    !  where $\mathcal{N}_s$ is the index of refraction at the spacecraft. 
+    !  This is a bit different from Equation (8.3) in the 19 Aug 2004 ATBD
+    !  because that equation does not consider the case of $H_t <
+    !  H^{\oplus}_t$, and assumes the instrument is orbit, and therefore
+    !  $N_s = 1.0$.
+
+    ! ptg_angle = asin(x * min(ht,Req)/Req) - elev_offset
+
+    if ( tan_ht >= 0.0_rp ) then      ! min(ht,Req)/Req = 1
+
+      !{ $H_t \geq H^{\oplus}_t: ~~
+      !  \sin \chi^{\text{refr}}_{\text{eq}} = 
+      !  \frac{N_t}{N_s} \frac{ H_t }{ H_s }$
+
+      sinChi = x
+    else                              ! min(ht,Req)/Req = ht/Req
+
+      !{ $H_t < H^{\oplus}_t: ~~
+      !  \sin \chi^{\text{refr}}_{\text{eq}} = 
+      !    \frac{N_t}{N_s} \frac{ H_t^2 }{ H_s H^{\oplus}_t }$
+
+      sinChi = x*ht/Req
+    end if
+
+    ptg_angle = ASIN(sinChi) - elev_offset
+
+  end subroutine Get_Chi_Angles_Simple
+
+  ! --------------------------------  Get_Chi_Angles_Simple_Deriv  -----
+  subroutine Get_Chi_Angles_Simple_Deriv ( SC_Geoc_Alt, Tan_Refr_Index, &
+             & Inst_Refr_Index, Tan_Ht, Phi_Tan, Req, Elev_Offset, Ptg_Angle, &
+             & Tan_dH_dT, Tan_d2H_dHdT, dX_dT, d2X_dXdT )
+
+  ! Compute Pointing angle and its derivative with respect to temperature.
+
+    use Constants, only: Deg2Rad
+    use MLSCommon, only: RP
+
+  ! inputs
+
+    real(rp), intent(in) :: SC_geoc_alt ! geocentric spacecraft(observer)
+                                        ! altitude in km
+    real(rp), intent(in) :: Tan_Refr_Index ! Index of refraction - 1 at tangent
+    real(rp), intent(in) :: Inst_Refr_Index ! Index of refraction - 1 at instrument
+    real(rp), intent(in) :: Tan_ht      ! tangent height relative to Req
+    real(rp), intent(in) :: Phi_tan     ! tangent orbit plane projected
+                                        ! geodetic angle in radians
+    real(rp), intent(in) :: Req         ! equivalent earth radius in km
+    real(rp), intent(in) :: Elev_offset ! radiometer pointing offset in radians
+!                                         positive is towards the earth,
+!                                         negative is towards space.
+    real(rp), intent(in) :: Tan_dh_dt(:) ! derivative of tangent
+                                         ! height wrt temperature
+    real(rp), intent(in) :: Tan_d2h_dhdt(:) ! 2nd derivative of
+                                        ! tangent height wrt temperature & height
+  ! outputs
+
+    real(rp), intent(out) :: Ptg_angle  ! pointing angle in radians
+    real(rp), intent(out) :: dx_dt(:)   ! derivative of pointing angle
+                                        ! wrt temperature
+    real(rp), intent(out) :: d2x_dxdt(:) ! second derivative of
+                                        ! tangent wrt temperature, pointing angle
+
+  !  ----------------
+  !  Local variables:
+  !  ----------------
+
+    real(rp) :: tp
+
+  ! Start code:
+
+   call Get_Chi_Angles_Simple ( SC_Geoc_Alt, Tan_Refr_Index, &
+                              & Inst_Refr_Index, Tan_Ht, Phi_Tan, Req, &
+                              & Elev_Offset, Ptg_Angle )
+
+  ! Do temperature stuff
+  ! Set up: dx_dt, d2x_dxdt arrays for temperature derivative computations
+  ! (NOTE: These entities have NO PHI dimension, so take the center Phi in dh_dt)
+
+    tp = tan(ptg_angle)
+    dx_dt = tp * tan_dh_dt /  ( Req + tan_ht )
+    d2x_dxdt = tp * dx_dt + tan_d2h_dhdt
+
+  end subroutine Get_Chi_Angles_Simple_Deriv
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: get_chi_angles_m.f90,v 2.26 2020/04/22 01:59:43 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Get_Chi_Angles_m
+! $Log: get_chi_angles_m.f90,v $
+! Revision 2.26  2020/04/22 01:59:43  vsnyder
+! Some work on QTM chi angles
+!
+! Revision 2.25  2019/06/24 23:28:17  pwagner
+! Updated to reflect TA-01-143
+!
+! Revision 2.24  2019/02/28 01:58:18  vsnyder
+! More TeXnicalities only
+!
+! Revision 2.23  2019/02/28 01:45:14  vsnyder
+! TeXnicalities only
+!
+! Revision 2.22  2016/05/27 01:25:28  vsnyder
+! TeXnicalities
+!
+! Revision 2.21  2013/06/12 02:25:43  vsnyder
+! Cruft removal
+!
+! Revision 2.20  2009/06/23 18:26:11  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.19  2009/05/13 20:03:01  vsnyder
+! Get constants from Constants, kinds from MLSKinds
+!
+! Revision 2.18  2008/05/20 00:18:46  vsnyder
+! Separate angles from angles-and-derivatives
+!
+! Revision 2.17  2005/12/07 00:32:58  vsnyder
+! Add some TeXnicalities
+!
+! Revision 2.16  2005/06/22 18:08:19  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.15  2004/05/17 22:05:40  livesey
+! Minor changes to avoid explosions due to asin(>1)
+!
+! Revision 2.14  2003/05/14 22:23:10  bill
+! corrected sign convention for elev offset angle
+!
+! Revision 2.13  2002/10/08 17:08:04  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.12  2002/10/03 22:23:03  vsnyder
+! Fix a bug in derivative calculation.  Get Deg2Rad from Units.  Cosmetic
+! changes, including LaTeX equations.
+!
+! Revision 2.11  2002/09/26 20:15:26  vsnyder
+! Get Ln10 from Units module
+!
+! Revision 2.10  2002/09/26 00:48:45  vsnyder
+! Insert copyright notice.  Move USEs from module scope to procedure scope.
+! Cosmetic changes.  Get Ln10 from Geometry module.
+!
+! Revision 2.9  2002/07/05 07:52:47  zvi
+! Coor. switch (phi,z) -> (z,phi)
+!
+! Revision 2.8  2002/06/28 11:06:50  zvi
+! computes dx_dh on output grid as well
+!
+! Revision 2.7  2002/06/24 21:11:24  zvi
+! Adding Grids_tmp stracture and modifying calling sequences
+!
+! Revision 2.3  2002/06/11 22:20:45  bill
+! eliminate zero-out feature--wgr
+!
+! Revision 2.2  2002/06/07 04:50:36  bill
+! fixes and improvements--wgr
+!
+! Revision 2.1  2001/10/16 22:32:11  zvi
+! Correcting for Earth intersection case
+!
+! Revision 2.0  2001/09/17 20:26:27  livesey
+! New forward model
+!
+! Revision 1.10.2.3  2001/09/13 11:18:21  zvi
+! use the correct eta
+!
+! Revision 1.10.2.2  2001/09/12 21:38:47  zvi
+! Added CVS stuff
+!
+! Revision 1.10.2.1  2001/09/10 10:02:32  zvi
+! Cleanup..comp_path_entities_m.f90
+!
+! Revision 1.1 2000/06/09 00:08:13  Z.Shippony
+! Initial conversion to Fortran 90
+@
+
+
+2.26
+log
+@Some work on QTM chi angles
+@
+text
+@d37 2
+a38 1
+  ! Set up array of pointing angles
+d49 1
+a49 1
+    real(rp), intent(in) :: Tan_ht      ! tangent height relative to Req
+d52 1
+a52 1
+    real(rp), intent(in) :: Req         ! equivalent earth radius in km
+d56 1
+a56 1
+    real(rp), intent(in) :: dh_dz       ! dh/dz  at the tangent point
+d169 1
+a169 1
+  ! Set up array of pointing angles
+d249 1
+a249 1
+  ! Set up array of pointing angles
+d304 1
+a304 1
+       "$Id: get_chi_angles_m.f90,v 2.25 2019/06/24 23:28:17 pwagner Exp $"
+d313 3
+@
+
+
+2.25
+log
+@Updated to reflect TA-01-143
+@
+text
+@d53 2
+a54 2
+!                                         positive is towards the earth,
+!                                         negative is towards space.
+d85 1
+a85 1
+    Np1 = 1.0_rp + tan_refr_index
+d88 2
+a89 1
+    !  \sin 2(\phi_t-51^\circ\hspace{-4.2pt}.\hspace{1pt}6814 )$
+d92 1
+a92 1
+    x = min ( Np1 * ht / hs, 1.0_rp )
+d97 5
+a101 4
+    !  where $\mathcal{N}_s$ is the index of refraction at the spacecraft,
+    !  which is 1.0, and therefore need not be written explicitly.  This is
+    !  a bit different from Equation (8.3) in the 19 Aug 2004 ATBD because
+    !  that equation does not consider the case of $H_t < H^{\oplus}_t$.
+d108 3
+a110 2
+      !  \sin \chi^{\text{refr}}_{\text{eq}} = N_t \frac{ H_t }{ H_s }; ~
+      !  \frac{ \text{d} \chi^{\text{refr}}_{\text{eq}} }{ \text{d} H_t}
+d112 1
+a112 1
+      !    \frac{1}{H_s} \left ( N_t +
+d114 1
+a114 1
+      !    \frac{1}{H_s} \left ( N_t +
+d118 8
+a125 1
+      !    \frac{ \text{d} N_t }{ \text{d} \zeta_t } = - \ln 10 ( N_t - 1 )$
+d128 1
+a128 1
+      q = Np1 - ht * tan_refr_index * Ln10 / dh_dz
+d133 1
+a133 1
+      !    N_t \frac{ H_t^2 }{ H_s H^{\oplus}_t }; ~~
+d138 2
+a139 1
+      !    2 \frac{ N_t H_t }{ H_s H^{\oplus}_t }$
+d142 1
+a142 1
+      q = 2.0_rp * ht * Np1 / Req
+d147 1
+a147 1
+      dx_dh = q / (hs * sqrt(1.0_rp - sinChi**2))
+d165 2
+a166 2
+  subroutine Get_Chi_Angles_Simple ( SC_Geoc_Alt, Tan_Refr_Index, Inst_Refr_Index, &
+             & Tan_Ht, Phi_Tan, Req, Elev_Offset, Ptg_Angle )
+d184 2
+a185 2
+!                                         positive is towards the earth,
+!                                         negative is towards space.
+d203 1
+a203 1
+    Np1 = 1.0_rp + tan_refr_index
+d205 3
+a207 2
+    !{ Empirical formula: $H_s = R_s + 38.9014\,
+    !  \sin 2(\phi_t-51^\circ\hspace{-4.2pt}.\hspace{1pt}6814 )$
+d215 5
+a219 2
+    !  where $\mathcal{N}_s$ is the index of refraction at the spacecraft,
+    !  which is 1.0, and therefore need not be written explicitly.
+d226 2
+a227 7
+      !  \sin \chi^{\text{refr}}_{\text{eq}} = N_t \frac{ H_t }{ H_s }; ~~
+      !  \frac{ \text{d} \chi^{\text{refr}}_{\text{eq}} }{ \text{d} H_t}
+      !    \cos \chi^{\text{refr}}_{\text{eq}} =\frac{1}{H_s} \left ( N_t +
+      !    \frac{ \text{d} N_t }{ \text{d} \zeta_t }
+      !      \frac{ \text{d} \zeta_t }{ \text{d} H_t } H_t \right )$ \\ ~\\
+      !  $N_t = 1 + a\, e^{-\zeta_t \ln 10} ~\Rightarrow~ 
+      !    \frac{ \text{d} N_t }{ \text{d} \zeta_t } = - \ln 10 ( N_t - 1 )$
+d234 1
+a234 6
+      !    N_t \frac{ H_t^2 }{ H_s H^{\oplus}_t }; ~~
+      !  \frac{ \text{d} N_t }{ \text{d} H_t} = 0 ~~
+      !  \Rightarrow ~~
+      !  \frac{ \text{d} \chi^{\text{refr}}_{\text{eq}} }{ \text{d} H_t}
+      !    \cos \chi^{\text{refr}}_{\text{eq}} =
+      !    2 \frac{ N_t H_t }{ H_s H^{\oplus}_t }$
+d273 3
+a275 3
+    real(rp), optional, intent(out) :: dx_dt(:) ! derivative of pointing angle
+                                                ! wrt temperature
+    real(rp), optional, intent(out) :: d2x_dxdt(:) ! second derivative of
+d282 1
+a282 4
+    real(rp), parameter :: ampl = 38.9014
+    real(rp), parameter :: phas = 51.6814 * Deg2Rad
+
+    real(rp) :: hs, ht, Np1, sinChi, tp, x
+d286 3
+a288 44
+    ht = Req + tan_ht
+    Np1 = 1.0_rp + tan_refr_index
+
+    !{ Empirical formula: $H_s = R_s + 38.9014\,
+    !  \sin 2(\phi_t-51^\circ\hspace{-4.2pt}.\hspace{1pt}6814 )$
+
+    hs = sc_geoc_alt + ampl * sin(2.0*(phi_tan-phas))
+    x = min ( Np1 * ht / hs, 1.0_rp )
+
+    !{ $\sin \chi^{\text{refr}}_{\text{eq}} =
+    !    \frac{\mathcal{N}_t}{\mathcal{N}_s} \frac{H_t}{H_s}
+    !    \frac{ \text{min} ( H_t, H^{\oplus}_t ) }{H^{\oplus}_t}$,
+    !  where $\mathcal{N}_s$ is the index of refraction at the spacecraft,
+    !  which is 1.0, and therefore need not be written explicitly.
+
+    ! ptg_angle = asin(x * min(ht,Req)/Req) - elev_offset
+
+    if ( tan_ht >= 0.0_rp ) then      ! min(ht,Req)/Req = 1
+
+      !{ $H_t \geq H^{\oplus}_t: ~~
+      !  \sin \chi^{\text{refr}}_{\text{eq}} = N_t \frac{ H_t }{ H_s }; ~~
+      !  \frac{ \text{d} \chi^{\text{refr}}_{\text{eq}} }{ \text{d} H_t}
+      !    \cos \chi^{\text{refr}}_{\text{eq}} =\frac{1}{H_s} \left ( N_t +
+      !    \frac{ \text{d} N_t }{ \text{d} \zeta_t }
+      !      \frac{ \text{d} \zeta_t }{ \text{d} H_t } H_t \right )$ \\ ~\\
+      !  $N_t = 1 + a\, e^{-\zeta_t \ln 10} ~\Rightarrow~ 
+      !    \frac{ \text{d} N_t }{ \text{d} \zeta_t } = - \ln 10 ( N_t - 1 )$
+
+      sinChi = x
+    else                              ! min(ht,Req)/Req = ht/Req
+
+      !{ $H_t < H^{\oplus}_t: ~~
+      !  \sin \chi^{\text{refr}}_{\text{eq}} = 
+      !    N_t \frac{ H_t^2 }{ H_s H^{\oplus}_t }; ~~
+      !  \frac{ \text{d} N_t }{ \text{d} H_t} = 0 ~~
+      !  \Rightarrow ~~
+      !  \frac{ \text{d} \chi^{\text{refr}}_{\text{eq}} }{ \text{d} H_t}
+      !    \cos \chi^{\text{refr}}_{\text{eq}} =
+      !    2 \frac{ N_t H_t }{ H_s H^{\oplus}_t }$
+
+      sinChi = x*ht/Req
+    end if
+
+    ptg_angle = ASIN(sinChi) - elev_offset
+d294 3
+a296 5
+    if ( present(dx_dt) .and. present(d2x_dxdt) ) then
+      tp = tan(ptg_angle)
+      dx_dt = tp * tan_dh_dt / ht
+      d2x_dxdt = tp * dx_dt + tan_d2h_dhdt
+    end if
+d303 1
+a303 1
+       "$Id: get_chi_angles_m.f90,v 2.24 2019/02/28 01:58:18 vsnyder Exp $"
+d312 3
+@
+
+
+2.24
+log
+@More TeXnicalities only
+@
+text
+@d33 3
+a35 3
+  subroutine Get_Chi_Angles_All ( sc_geoc_alt, tan_index_refr, tan_ht, &
+             & phi_tan, Req, elev_offset, ptg_angle, dx_dh, dh_dz, tan_dh_dt, &
+             & tan_d2h_dhdt, dx_dt, d2x_dxdt )
+d46 2
+a47 1
+    real(rp), intent(in) :: Tan_index_refr ! tangent index of refraction - 1
+d85 1
+a85 1
+    Np1 = 1.0_rp + tan_index_refr
+d118 1
+a118 1
+      q = Np1 - ht * tan_index_refr * Ln10 / dh_dz
+d154 2
+a155 2
+  subroutine Get_Chi_Angles_Simple ( sc_geoc_alt, tan_index_refr, tan_ht, &
+             & phi_tan, Req, elev_offset, ptg_angle )
+d166 2
+a167 1
+    real(rp), intent(in) :: Tan_index_refr ! tangent index of refraction
+d192 1
+a192 1
+    Np1 = 1.0_rp + tan_index_refr
+d239 3
+a241 3
+  subroutine Get_Chi_Angles_Simple_Deriv ( sc_geoc_alt, tan_index_refr, tan_ht, &
+             & phi_tan, Req, elev_offset, ptg_angle, &
+             & tan_dh_dt, tan_d2h_dhdt, dx_dt, d2x_dxdt )
+d252 2
+a253 1
+    real(rp), intent(in) :: Tan_index_refr ! tangent index of refraction
+d285 1
+a285 1
+    Np1 = 1.0_rp + tan_index_refr
+d333 5
+a337 3
+    tp = tan(ptg_angle)
+    dx_dt = tp * tan_dh_dt / ht
+    d2x_dxdt = tp * dx_dt + tan_d2h_dhdt
+d344 1
+a344 1
+       "$Id: get_chi_angles_m.f90,v 2.23 2019/02/28 01:45:14 vsnyder Exp $"
+d353 3
+@
+
+
+2.23
+log
+@TeXnicalities only
+@
+text
+@d192 2
+a193 1
+    !{ Empirical formula: $H_s = R_s + 38.9014\, \sin 2(\phi_t-51^{\circ}.6814 )$
+d284 2
+a285 1
+    !{ Empirical formula: $H_s = R_s + 38.9014\, \sin 2(\phi_t-51^{\circ}.6814 )$
+d339 1
+a339 1
+       "$Id: get_chi_angles_m.f90,v 2.22 2016/05/27 01:25:28 vsnyder Exp $"
+d348 3
+@
+
+
+2.22
+log
+@TeXnicalities
+@
+text
+@d86 2
+a87 1
+    !{ Empirical formula (8.5): $H_s = R_s + 38.9014\, \sin 2(\phi_t-51^{\circ}.6814 )$
+d94 1
+a94 1
+    !    \frac{ \text{min} ( H_t, H^{\oplus} ) }{H^{\oplus}}$,
+d98 1
+a98 1
+    !  that equation does not consider the case of $H_t < H^{\oplus}$.
+d104 1
+a104 1
+      !{ $H_t \geq H^{\oplus}: ~
+d120 1
+a120 1
+      !{ $H_t < H^{\oplus}: ~~
+d122 1
+a122 1
+      !    N_t \frac{ H_t^2 }{ H_s H^{\oplus} }; ~~
+d127 1
+a127 1
+      !    2 \frac{ N_t H_t }{ H_s H^{\oplus} }$
+d199 1
+a199 1
+    !    \frac{ \text{min} ( H_t, H^{\oplus} ) }{H^{\oplus}}$,
+d207 1
+a207 1
+      !{ $H_t \geq H^{\oplus}: ~~
+d219 1
+a219 1
+      !{ $H_t < H^{\oplus}: ~~
+d221 1
+a221 1
+      !    N_t \frac{ H_t^2 }{ H_s H^{\oplus} }; ~~
+d226 1
+a226 1
+      !    2 \frac{ N_t H_t }{ H_s H^{\oplus} }$
+d290 1
+a290 1
+    !    \frac{ \text{min} ( H_t, H^{\oplus} ) }{H^{\oplus}}$,
+d298 1
+a298 1
+      !{ $H_t \geq H^{\oplus}: ~~
+d310 1
+a310 1
+      !{ $H_t < H^{\oplus}: ~~
+d312 1
+a312 1
+      !    N_t \frac{ H_t^2 }{ H_s H^{\oplus} }; ~~
+d317 1
+a317 1
+      !    2 \frac{ N_t H_t }{ H_s H^{\oplus} }$
+d337 1
+a337 1
+       "$Id: get_chi_angles_m.f90,v 2.21 2013/06/12 02:25:43 vsnyder Exp $"
+d346 3
+@
+
+
+2.21
+log
+@Cruft removal
+@
+text
+@d46 1
+a46 1
+    real(rp), intent(in) :: Tan_index_refr ! tangent index of refraction
+d86 1
+a86 1
+    !{ Empirical formula: $H_s = R_s + 38.9014\, \sin 2(\phi_t-51^{\circ}.6814 )$
+d95 3
+a97 1
+    !  which is 1.0, and therefore need not be written explicitly.
+d103 2
+a104 2
+      !{ $H_t \geq H^{\oplus}: ~~
+      !  \sin \chi^{\text{refr}}_{\text{eq}} = N_t \frac{ H_t }{ H_s }; ~~
+d106 5
+a110 2
+      !    \cos \chi^{\text{refr}}_{\text{eq}} =\frac{1}{H_s} \left ( N_t +
+      !    \frac{ \text{d} N_t }{ \text{d} \zeta_t }
+d336 1
+a336 1
+       "$Id: get_chi_angles_m.f90,v 2.20 2009/06/23 18:26:11 pwagner Exp $"
+d345 3
+@
+
+
+2.20
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d26 1
+a26 1
+       "$RCSfile: $"
+d152 1
+a152 1
+    use Constants, only: Deg2Rad, Ln10
+d179 1
+a179 1
+    real(rp) :: hs, ht, Np1, q, sinChi, x
+a210 1
+      q = Np1 - ht * tan_index_refr * Ln10 ! / dh_dz assumed to be 1.0
+a222 1
+      q = 2.0_rp * ht * Np1 / Req
+d236 1
+a236 1
+    use Constants, only: Deg2Rad, Ln10
+d270 1
+a270 1
+    real(rp) :: hs, ht, Np1, q, sinChi, tp, x
+a301 1
+      q = Np1 - ht * tan_index_refr * Ln10 ! / dh_dz assumed to be 1.0
+a313 1
+      q = 2.0_rp * ht * Np1 / Req
+d331 1
+a331 1
+       "$Id: read_apriori.f90 is it here $"
+d340 3
+@
+
+
+2.19
+log
+@Get constants from Constants, kinds from MLSKinds
+@
+text
+@d26 1
+a26 1
+       "$RCSfile: get_chi_angles_m.f90,v $"
+d332 1
+a333 1
+!---------------------------- RCS Ident Info -------------------------------
+d335 2
+a336 3
+       "$Id: get_chi_angles_m.f90,v 2.18 2008/05/20 00:18:46 vsnyder Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d338 1
+d340 1
+d344 3
+@
+
+
+2.18
+log
+@Separate angles from angles-and-derivatives
+@
+text
+@d39 2
+a40 2
+    use Units, only: Deg2Rad, Ln10
+    use MLSCommon, only: RP
+d152 2
+a153 2
+    use Units, only: Deg2Rad, Ln10
+    use MLSCommon, only: RP
+d238 1
+a238 1
+    use Units, only: Deg2Rad, Ln10
+d335 1
+a335 1
+       "$Id: get_chi_angles_m.f90,v 2.17 2005/12/07 00:32:58 vsnyder Exp $"
+d343 3
+@
+
+
+2.17
+log
+@Add some TeXnicalities
+@
+text
+@d19 5
+d32 2
+a33 2
+  ! ---------------------------------------------  Get_Chi_Angles  -----
+  subroutine Get_Chi_Angles ( sc_geoc_alt, tan_index_refr, tan_ht, &
+d144 181
+a324 1
+    return
+d326 5
+a330 1
+  end subroutine Get_Chi_Angles
+d335 1
+a335 1
+       "$Id: get_chi_angles_m.f90,v 2.16 2005/06/22 18:08:19 pwagner Exp $"
+d343 3
+@
+
+
+2.16
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d21 1
+a21 1
+       "$RCSfile: $"
+d86 5
+a90 2
+    !{ $\sin \chi^{\text{refr}}_{\text{eq}} = N_t \frac{H_t}{H_s}
+    !    \frac{ \text{min} ( H_t, H^{\oplus} ) }{H^{\oplus}}$
+d146 1
+a146 1
+       "$Id: $"
+d154 3
+@
+
+
+2.15
+log
+@Minor changes to avoid explosions due to asin(>1)
+@
+text
+@d1 10
+a10 2
+!{Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d19 3
+a21 6
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+    & "$Id: get_chi_angles_m.f90,v 2.14 2003/05/14 22:23:10 bill Exp $"
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName = &
+    & "$RCSfile: get_chi_angles_m.f90,v $"
+d141 5
+d151 3
+@
+
+
+2.14
+log
+@corrected sign convention for elev offset angle
+@
+text
+@d13 1
+a13 1
+    & "$Id: get_chi_angles_m.f90,v 2.13 2002/10/08 17:08:04 pwagner Exp $"
+d79 1
+a79 1
+    x = Np1 * ht / hs
+d115 5
+a119 1
+    dx_dh = q / (hs * sqrt(1.0_rp - sinChi**2))
+d141 3
+@
+
+
+2.13
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d13 1
+a13 1
+    & "$Id: get_chi_angles_m.f90,v 2.12 2002/10/03 22:23:03 vsnyder Exp $"
+d42 2
+d84 1
+a84 1
+    ! ptg_angle = elev_offset + asin(x * min(ht,Req)/Req)
+d114 1
+a114 1
+    ptg_angle = elev_offset + asin(sinChi)
+d137 3
+@
+
+
+2.12
+log
+@Fix a bug in derivative calculation.  Get Deg2Rad from Units.  Cosmetic
+changes, including LaTeX equations.
+@
+text
+@d13 1
+a13 1
+    & "$Id: get_chi_angles_m.f90,v 2.11 2002/09/26 20:15:26 vsnyder Exp $"
+d17 1
+d129 4
+d135 4
+@
+
+
+2.11
+log
+@Get Ln10 from Units module
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+d4 1
+a4 1
+module GET_CHI_ANGLES_M
+d9 1
+a9 1
+  public :: GET_CHI_ANGLES
+d13 1
+a13 1
+    & "$Id: get_chi_angles_m.f90,v 2.10 2002/09/26 00:48:45 vsnyder Exp $"
+a19 1
+  ! Set up array of pointing angles
+d21 2
+a22 1
+  subroutine GET_CHI_ANGLES ( sc_geoc_alt, tan_index_refr, tan_ht, &
+d26 3
+a28 2
+    use Units, only: Ln10
+    use L2PC_FILE_PARAMETERS, only: DEG2RAD
+a30 6
+  !  ===============================================================
+  !  Declaration of variables for sub-program: get_chi_angles
+  !  ===============================================================
+  !  ---------------------------
+  !  Calling sequence variables:
+  !  ---------------------------
+d33 1
+a33 1
+    real(rp), intent(in) :: sc_geoc_alt ! geocentric spacecraft(observer)
+d35 7
+a41 7
+    real(rp), intent(in) :: tan_index_refr ! tangent index of refraction
+    real(rp), intent(in) :: tan_ht ! tangent height relative to Req
+    real(rp), intent(in) :: phi_tan ! tangent orbit plane projected
+                                    ! geodetic angle in radians
+    real(rp), intent(in) :: Req ! equivalent earth radius in km
+    real(rp), intent(in) :: elev_offset ! radiometer pointing offset in radians
+    real(rp), intent(in) :: dh_dz ! dh/dz  at the tangent point
+d45 3
+a47 3
+    real(rp), intent(out) :: ptg_angle ! pointing angle in radians
+    real(rp), intent(out) :: dx_dh     ! derivative of pointing angle
+                                       ! wrt height
+d51 1
+a51 1
+    real(rp), optional, intent(in) :: tan_dh_dt(:) ! derivative of tangent
+d53 2
+a54 2
+    real(rp), optional, intent(in) :: tan_d2h_dhdt(:) ! 2nd derivative of
+                                      ! tangent height wrt temperature & height
+d58 1
+a58 1
+                                     ! tangent wrt temperature, pointing angle
+d66 1
+a66 1
+    real(rp) :: ht, tp, hs, x, q, Np1
+d72 3
+a76 1
+    ptg_angle = elev_offset + asin(x * min(ht,Req)/Req)
+d78 17
+a94 1
+    if ( tan_ht >= 0.0_rp ) then
+d96 12
+a107 1
+    else
+d110 3
+a112 1
+    dx_dh = q / (hs * Cos(x))
+d116 1
+a116 1
+  ! (NOTE: These entities has NO PHI dimension, so take the center Phi in dh_dt)
+d121 1
+a121 1
+      d2x_dxdt = tp * tp * tan_dh_dt / ht + tan_d2h_dhdt
+d126 1
+a126 1
+  end subroutine GET_CHI_ANGLES
+d128 1
+a128 1
+end module GET_CHI_ANGLES_M
+d130 3
+@
+
+
+2.10
+log
+@Insert copyright notice.  Move USEs from module scope to procedure scope.
+Cosmetic changes.  Get Ln10 from Geometry module.
+@
+text
+@d13 1
+a13 1
+    & "$Id: get_chi_angles_m.f90,v 2.9 2002/07/05 07:52:47 zvi Exp $"
+d26 1
+a26 1
+    use Geometry, only: Ln10
+d104 4
+@
+
+
+2.9
+log
+@Coor. switch (phi,z) -> (z,phi)
+@
+text
+@d1 3
+d5 6
+a10 5
+  use MLSCommon, only: RP, IP
+  use L2PC_FILE_PARAMETERS, only: DEG2RAD
+  Implicit NONE
+  Private
+  Public :: get_chi_angles
+d12 5
+a16 4
+  CHARACTER (LEN=256) :: Id = &
+       "$Id: get_chi_angles_m.f90,v 2.8 2002/06/28 11:06:50 zvi Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= &
+       "$RCSfile: get_chi_angles_m.f90,v $"
+d19 55
+a73 2
+!----------------------------------------------------------------------
+! Set up array of pointing angles
+d75 22
+a96 72
+SUBROUTINE get_chi_angles(sc_geoc_alt,tan_index_refr,tan_ht, &
+           phi_tan,Req,elev_offset,ptg_angle,dx_dh,dh_dz,tan_dh_dt,&
+           tan_d2h_dhdt,dx_dt,d2x_dxdt)
+
+!  ===============================================================
+!  Declaration of variables for sub-program: get_chi_angles
+!  ===============================================================
+!  ---------------------------
+!  Calling sequence variables:
+!  ---------------------------
+! inputs
+!
+  REAL(rp), INTENT(IN) :: sc_geoc_alt ! geocentric spacecraft(observer)
+                                      ! altitude in km
+  REAL(rp), INTENT(IN) :: tan_index_refr ! tangent index of refraction
+  REAL(rp), INTENT(IN) :: tan_ht ! tangent height relative to Req
+  REAL(rp), INTENT(IN) :: phi_tan ! tangent orbit plane projected
+                                  ! geodetic angle in radians
+  REAL(rp), INTENT(IN) :: Req ! equivalent earth radius in km
+  REAL(rp), INTENT(IN) :: elev_offset ! radiometer pointing offset in radians
+  REAL(rp), INTENT(IN) :: dh_dz ! dh/dz  at the tangent point
+!
+! output
+!
+  REAL(rp), INTENT(OUT) :: ptg_angle ! pointing angle in radians
+  REAL(rp), INTENT(OUT) :: dx_dh     ! derivative of pointing angle
+                                     ! wrt height
+!
+! keywords
+!
+  REAL(rp), OPTIONAL, INTENT(IN) :: tan_dh_dt(:) ! derivative of tangent
+                                                 ! height wrt temperature
+  REAL(rp), OPTIONAL, INTENT(IN) :: tan_d2h_dhdt(:) ! 2nd derivative of
+                                    ! tangent height wrt temperature & height
+  REAL(rp), OPTIONAL, INTENT(OUT) :: dx_dt(:) ! derivative of pointing angle
+                                              ! wrt temperature
+  REAL(rp), OPTIONAL, INTENT(OUT) :: d2x_dxdt(:) ! second derivative of
+                                   ! tangent wrt temperature, pointing angle
+!  ----------------
+!  Local variables:
+!  ----------------
+!
+  Real(rp), PARAMETER :: ampl = 38.9014
+  Real(rp), PARAMETER :: phas = 51.6814 * Deg2Rad
+  Real(rp), PARAMETER :: Ln10 = 2.302585092994045684_rp
+!
+  REAL(rp) :: ht, tp, hs, x, q, Np1
+!
+! Start code:
+!
+  ht = Req + tan_ht
+  Np1 = 1.0_rp + tan_index_refr
+  hs = sc_geoc_alt + ampl * SIN(2.0*(phi_tan-phas))
+  x = Np1 * ht / hs
+  ptg_angle = elev_offset + ASIN(x * min(ht,Req)/Req)
+!
+  if(tan_ht >= 0.0_rp) then
+    q = Np1 - ht * tan_index_refr * Ln10 / dh_dz
+  else
+    q = 2.0_rp * ht * Np1 / Req
+  endif
+  dx_dh = q / (hs * Cos(x))
+!
+! Do temperature stuff if user requests it
+! Set up: dx_dt, d2x_dxdt arrays for temperature derivative computations
+! (NOTE: These entities has NO PHI dimension, so take the center Phi in dh_dt)
+!
+  IF(PRESENT(tan_dh_dt)) THEN
+    tp = TAN(ptg_angle)
+    dx_dt = tp * tan_dh_dt / ht
+    d2x_dxdt = tp * tp * tan_dh_dt / ht + tan_d2h_dhdt
+  ENDIF
+d98 1
+a98 1
+  RETURN
+d100 1
+a100 1
+END SUBROUTINE get_chi_angles
+d104 3
+@
+
+
+2.8
+log
+@computes dx_dh on output grid as well
+@
+text
+@d9 1
+a9 1
+       "$Id: get_chi_angles_m.f90,v 2.7 2002/06/24 21:11:24 zvi Exp $"
+d47 8
+a54 8
+  REAL(rp), OPTIONAL, INTENT(IN) :: tan_dh_dt(:,:) ! derivative of tangent
+!                                                  height wrt temperature
+  REAL(rp), OPTIONAL, INTENT(IN) :: tan_d2h_dhdt(:,:) ! 2nd derivative of
+! tangent height wrt temperature & height
+  REAL(rp), OPTIONAL, INTENT(OUT) :: dx_dt(:,:) ! derivative of pointing angle
+!                                       wrt temperature
+  REAL(rp), OPTIONAL, INTENT(OUT) :: d2x_dxdt(:,:) ! second derivative of
+! tangent wrt temperature, pointing angle
+d87 1
+a87 1
+    d2x_dxdt = tp*tp*tan_dh_dt/ht + tan_d2h_dhdt
+d96 3
+@
+
+
+2.7
+log
+@Adding Grids_tmp stracture and modifying calling sequences
+@
+text
+@d9 1
+a9 1
+       "$Id: get_chi_angles_m.f90,v 2.3 2002/06/11 22:20:45 bill Exp $"
+d18 1
+a18 1
+           phi_tan,req,elev_offset,ptg_angle,tan_dh_dt,   &
+d32 1
+a32 1
+  REAL(rp), INTENT(IN) :: tan_ht ! tangent height relative to req
+d35 1
+a35 1
+  REAL(rp), INTENT(IN) :: req ! equivalent earth radius in km
+d37 1
+d42 2
+d60 2
+a61 1
+  Real(rp), PARAMETER :: phas = 51.6814 * deg2rad
+d63 1
+a63 1
+  REAL(rp) :: ht, tp, hs, x
+d67 2
+a68 1
+  ht = req + tan_ht
+d70 2
+a71 2
+  x = (1.0_rp + tan_index_refr) * ht / hs
+  ptg_angle = elev_offset + ASIN(x * min(ht,req)/req)
+d73 6
+a78 1
+! do temperature stuff if user requests it
+d80 1
+a83 2
+!  First: Get table of temperature basis functions
+!
+d85 3
+a87 8
+!    IF(tan_ht > 0.0_rp) THEN
+      tp = TAN(ptg_angle)
+      dx_dt = tp * tan_dh_dt / ht
+      d2x_dxdt = tp*tp*tan_dh_dt/ht + tan_d2h_dhdt
+!    ELSE
+!      dx_dt = 0.0_rp
+!      d2x_dxdt = 0.0_rp
+!    ENDIF
+d89 1
+d91 1
+d93 1
+d96 3
+@
+
+
+2.6
+log
+@Bug fixing and correcting Log entries
+@
+text
+@d9 1
+a9 1
+       "$Id: get_chi_angles_m.f90,v 2.5 2002/06/24 21:01:28 zvi Exp $"
+d73 2
+d76 8
+a83 3
+    tp = TAN(ptg_angle)
+    dx_dt = tp * tan_dh_dt / ht
+    d2x_dxdt = tp*tp*tan_dh_dt/ht + tan_d2h_dhdt
+a84 1
+
+a85 1
+
+a88 3
+! Revision 2.5  2002/06/24 21:01:28  zvi
+! Adding Grids_tmp stracture and modify calling sequences
+!
+@
+
+
+2.5
+log
+@*** empty log message ***
+@
+text
+@d9 1
+a9 1
+       "$Id: get_chi_angles_m.f90,v 2.3 2002/06/11 22:20:45 bill Exp $"
+a72 2
+!  First: Get table of temperature basis functions
+!
+d74 3
+a76 8
+!    IF(tan_ht > 0.0_rp) THEN
+      tp = TAN(ptg_angle)
+      dx_dt = tp * tan_dh_dt / ht
+      d2x_dxdt = tp*tp*tan_dh_dt/ht + tan_d2h_dhdt
+!    ELSE
+!      dx_dt = 0.0_rp
+!      d2x_dxdt = 0.0_rp
+!    ENDIF
+d78 1
+d80 1
+d84 3
+@
+
+
+2.4
+log
+@work in progress--wgr
+@
+text
+@d19 1
+a19 1
+           tan_d2h_dhdt,tan_t,tan_dz_dh,tan_eta_zxp_t,dx_dt,d2x_dxdt)
+a46 5
+  REAL(rp), OPTIONAL, INTENT(IN) :: tan_t ! tangent temperature
+  REAL(rp), OPTIONAL, INTENT(IN) :: tan_dz_dh ! tangent pressure derivative
+!                                           wrt to height.
+  REAL(rp), OPTIONAL, INTENT(IN) :: tan_eta_zxp_t(:,:) ! tangent eta_zxp
+!                                   product for temperature.
+d56 2
+a57 3
+  Real(rp), PARAMETER :: ampl = 38.9014_rp
+  Real(rp), PARAMETER :: phas = 51.6814_rp * deg2rad
+  REAL(rp), PARAMETER :: ln10 = 2.30258509_rp
+a76 1
+!      x = tan_index_refr / (1.0_rp + tan_index_refr)
+d79 1
+a79 5
+      d2x_dxdt = tp*tp*tan_dh_dt/ht + tan_d2h_dhdt 
+!      dx_dt = tp * (tan_dh_dt / ht - x * tan_eta_zxp_t / tan_t)
+!      d2x_dxdt = tp*tp*tan_dh_dt/ht + tan_d2h_dhdt &
+!      & - x * tan_eta_zxp_t * (1.0/COS(ptg_angle)**2 &
+!      & - ht*ln10*tan_dz_dh/(1.0_rp + tan_index_refr)) / tan_t
+@
+
+
+2.3
+log
+@eliminate zero-out feature--wgr
+@
+text
+@d9 1
+a9 1
+       "$Id: get_chi_angles_m.f90,v 2.2 2002/06/07 04:50:36 bill Exp $"
+d19 1
+a19 1
+           tan_d2h_dhdt,dx_dt,d2x_dxdt)
+d47 5
+d61 3
+a63 2
+  Real(rp), PARAMETER :: ampl = 38.9014
+  Real(rp), PARAMETER :: phas = 51.6814 * deg2rad
+d83 1
+d86 5
+a90 1
+      d2x_dxdt = tp*tp*tan_dh_dt/ht + tan_d2h_dhdt
+d100 3
+@
+
+
+2.2
+log
+@fixes and improvements--wgr
+@
+text
+@d9 1
+a9 1
+       "$Id: get_chi_angles_m.f90,v 2.1 2001/10/16 22:32:11 zvi Exp $"
+d76 1
+a76 1
+    IF(tan_ht > 0.0_rp) THEN
+d80 4
+a83 4
+    ELSE
+      dx_dt = 0.0_rp
+      d2x_dxdt = 0.0_rp
+    ENDIF
+d89 3
+@
+
+
+2.1
+log
+@Correcting for Earth intersection case
+@
+text
+@a3 1
+  use GET_ETA_M, only: GET_ETA
+d9 1
+a9 1
+       "$Id: get_chi_angles_m.f90,v 2.0 2001/09/17 20:26:27 livesey Exp $"
+d19 1
+a19 1
+           zeta_basis,phi_basis,tan_temp,tan_press,dx_dt,d2x_dxdt)
+d44 1
+a44 1
+  REAL(rp), OPTIONAL, INTENT(IN) :: tan_dh_dt(:) ! derivative of tangent
+d46 3
+a48 5
+  REAL(rp), OPTIONAL, INTENT(IN) :: zeta_basis(:) ! temperature zeta basis
+  REAL(rp), OPTIONAL, INTENT(IN) :: phi_basis(:) ! temperature phi basis
+  REAL(rp), OPTIONAL, INTENT(IN) :: tan_temp ! tangent temperature
+  REAL(rp), OPTIONAL, INTENT(IN) :: tan_press ! tangent pressure
+  REAL(rp), OPTIONAL, INTENT(OUT) :: dx_dt(:) ! derivative of pointing angle
+d50 2
+a51 2
+  REAL(rp), OPTIONAL, INTENT(OUT) :: d2x_dxdt(:) ! second derivative of tangent
+!                                       wrt temperature, pointing angle
+a58 2
+  INTEGER(ip) :: p_coeffs, z_coeffs
+
+a59 1
+  REAL(rp), ALLOCATABLE :: Eta(:,:)
+a76 4
+      p_coeffs = SIZE(phi_basis)
+      z_coeffs = SIZE(zeta_basis)
+      ALLOCATE(eta(1:1,1:z_coeffs))
+      CALL get_eta((/tan_press/),zeta_basis,1,z_coeffs,Eta)
+d79 1
+a79 3
+      d2x_dxdt = (2.0_rp+tp*tp)*tan_dh_dt/ht +  &
+              &  RESHAPE(eta,(/z_coeffs/)) / tan_temp
+      DEALLOCATE(eta)
+d89 3
+@
+
+
+2.0
+log
+@New forward model
+@
+text
+@d10 1
+a10 1
+       "$Id: get_chi_angles_m.f90,v 1.10.2.3 2001/09/13 11:18:21 zvi Exp $"
+d63 2
+a64 1
+  REAL(rp) :: ht, tp
+d70 3
+a72 2
+  ptg_angle = elev_offset + ASIN((1.0_rp + tan_index_refr)*ht &
+            / (sc_geoc_alt + ampl * SIN(2.0*(phi_tan-phas))))
+d101 3
+@
+
+
+1.10
+log
+@Added Copyright statement
+@
+text
+@a0 3
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+d2 1
+a2 1
+  use MLSCOMMON, only: I4, R8
+a3 1
+  use PATH_ENTITIES_M, only: PATH_INDEX, PATH_VECTOR
+a4 2
+  use D_LINTRP_M, only: LINTRP
+  use Dump_0, only: DUMP !??????
+d6 2
+d10 1
+a10 1
+       "$Id: get_chi_angles_m.f90,v 1.9 2001/04/07 00:23:05 vsnyder Exp $"
+a14 1
+
+d18 3
+a20 3
+SUBROUTINE get_chi_angles(ndx_path,n_path,tan_press,tan_hts,tan_temp, &
+           phi_tan,RoC,h_obs,elev_offset,tan_dh_dt,no_tan_hts,no_t,   &
+           t_z_basis,si,cen_ang,ptg_angle,dx_dt,d2x_dxdt,ier)
+d28 27
+a54 13
+Integer(i4), INTENT(IN) :: no_tan_hts,no_t,si
+
+Real(r8), INTENT(IN) :: t_z_basis(:), tan_dh_dt(:,:)
+Real(r8), INTENT(IN) :: tan_hts(:), tan_temp(:), tan_press(:)
+Real(r8), INTENT(IN) :: RoC, phi_tan, h_obs, elev_offset
+
+Type(path_index), INTENT(IN)  :: ndx_path(:)
+Type(path_vector), INTENT(IN) :: n_path(:)
+
+Integer(i4), INTENT(OUT) :: ier
+Real(r8), INTENT(OUT) :: ptg_angle(:), cen_ang
+Real(r8), INTENT(OUT) :: dx_dt(:,:), d2x_dxdt(:,:)
+
+d58 15
+a72 33
+Integer(i4) :: i, brkpt, sv_i, is, h_i
+
+! Real(r8), PARAMETER :: ampl = 38.91
+! Real(r8), PARAMETER :: phas = 51.6152 * deg2rad
+
+Real(r8), PARAMETER :: ampl = 38.9014
+Real(r8), PARAMETER :: phas = 51.6814 * deg2rad
+
+Real(r8) :: Eta(no_tan_hts,no_t)
+Real(r8) :: r,t,dh,tanx,cse,ht,Rs_eq,ngrid,schi
+
+! Begin code:
+
+  ier = 0
+  Rs_eq = h_obs + ampl * Sin(2.0*(phi_tan-phas))    ! ** Experimental
+
+! Get 'No_tan_hts' convolution angles
+
+  DO i = 1, no_tan_hts
+    ht = tan_hts(i)
+    brkpt = ndx_path(i)%break_point_index
+    ngrid = n_path(i)%values(brkpt) - n_path(i)%values(1)
+    schi = (1.0 + ngrid) * (ht + RoC) / Rs_eq
+    IF(ABS(schi) > 1.0) THEN
+      ier = 1
+      PRINT *,'*** Error in get_chi_angles subroutine !'
+      PRINT *,'    arg > 1.0 in ArcSin(arg) ..'
+      Return
+    END IF
+    ptg_angle(i) = DAsin(schi) + elev_offset
+  END DO
+
+  cen_ang = ptg_angle(si)
+d79 16
+a94 24
+  Call get_eta(tan_press,t_z_basis,no_tan_hts,no_t,Eta)
+!
+  do sv_i = 1, no_t
+!
+    is = 1
+    do while (tan_hts(is)  <  0.0)
+      eta(is,sv_i) = 0.0
+      dx_dt(is,sv_i) = 0.0
+      d2x_dxdt(is,sv_i) = 0.0
+      is = is + 1
+    end do
+!
+    do h_i = is, no_tan_hts
+      t = tan_temp(h_i)
+      dh = tan_hts(h_i) + RoC
+      tanx = tan(ptg_angle(h_i))
+      cse = tanx * tanx
+      r = tan_dh_dt(h_i,sv_i)
+      dx_dt(h_i,sv_i) = r * tanx / dh
+      d2x_dxdt(h_i,sv_i) = (2.0+cse)*r/dh + Eta(h_i,sv_i)/t
+    end do
+!
+  end do
+
+d99 2
+a100 17
+! Revision 1.9  2001/04/07 00:23:05  vsnyder
+! Make sure IER is defined
+!
+! Revision 1.8  2001/03/31 23:40:55  zvi
+! Eliminate l2pcdim (dimension parameters) move to allocatable ..
+!
+! Revision 1.7  2001/03/21 22:47:28  livesey
+! Bugs found with range checking fixed.
+!
+! Revision 1.6  2001/03/09 03:34:44  zvi
+! *** empty log message ***
+!
+! Revision 1.5  2001/03/09 01:34:07  zvi
+! *** empty log message ***
+!
+! Revision 1.4  2001/03/09 01:23:52  zvi
+! *** empty log message ***
+d102 2
+a103 2
+! Revision 1.3  2001/02/19 22:20:40  zvi
+! Latest modification: Conv/NoConv
+d105 2
+a106 1
+! Revision 1.2  2001/02/19 22:14:21  zvi
+@
+
+
+1.10.2.1
+log
+@Cleanup..comp_path_entities_m.f90
+@
+text
+@d1 3
+d5 1
+a5 1
+  use MLSCommon, only: RP, IP
+d7 1
+d9 2
+d14 1
+a14 1
+       "$Id: get_chi_angles_m.f90,v 1.6 2001/03/09 03:34:44 zvi Exp $"
+d23 3
+a25 3
+SUBROUTINE get_chi_angles(sc_geoc_alt,tan_index_refr,tan_ht, &
+           phi_tan,req,elev_offset,ptg_angle,tan_dh_dt,   &
+           zeta_basis,phi_basis,tan_temp,tan_press,dx_dt,d2x_dxdt)
+d33 13
+a45 27
+! inputs
+!
+  REAL(rp), INTENT(IN) :: sc_geoc_alt ! geocentric spacecraft(observer)
+                                      ! altitude in km
+  REAL(rp), INTENT(IN) :: tan_index_refr ! tangent index of refraction
+  REAL(rp), INTENT(IN) :: tan_ht ! tangent height relative to req
+  REAL(rp), INTENT(IN) :: phi_tan ! tangent orbit plane projected
+                                  ! geodetic angle in radians
+  REAL(rp), INTENT(IN) :: req ! equivalent earth radius in km
+  REAL(rp), INTENT(IN) :: elev_offset ! radiometer pointing offset in radians
+!
+! output
+!
+  REAL(rp), INTENT(OUT) :: ptg_angle ! pointing angle in radians
+!
+! keywords
+!
+  REAL(rp), OPTIONAL, INTENT(IN) :: tan_dh_dt(:) ! derivative of tangent
+!                                                  height wrt temperature
+  REAL(rp), OPTIONAL, INTENT(IN) :: zeta_basis(:) ! temperature zeta basis
+  REAL(rp), OPTIONAL, INTENT(IN) :: phi_basis(:) ! temperature phi basis
+  REAL(rp), OPTIONAL, INTENT(IN) :: tan_temp ! tangent temperature
+  REAL(rp), OPTIONAL, INTENT(IN) :: tan_press ! tangent pressure
+  REAL(rp), OPTIONAL, INTENT(OUT) :: dx_dt(:) ! derivative of pointing angle
+!                                       wrt temperature
+  REAL(rp), OPTIONAL, INTENT(OUT) :: d2x_dxdt(:) ! second derivative of tangent
+!                                       wrt temperature, pointing angle
+d49 33
+a81 14
+!
+  Real(rp), PARAMETER :: ampl = 38.9014
+  Real(rp), PARAMETER :: phas = 51.6814 * deg2rad
+!
+  INTEGER(ip) :: p_coeffs, z_coeffs
+  REAL(rp) :: ht, tp
+  REAL(rp), ALLOCATABLE :: Eta(:,:)
+!
+! Start code:
+!
+  ht = req + tan_ht
+  ptg_angle = elev_offset + ASIN((1.0_rp + tan_index_refr)*ht &
+            / (sc_geoc_alt + ampl * SIN(2.0*(phi_tan-phas))))
+! do temperature stuff if user requests it
+d88 24
+a111 16
+  IF(PRESENT(tan_dh_dt)) THEN
+    IF(tan_ht > 0.0_rp) THEN
+      p_coeffs = SIZE(phi_basis)
+      z_coeffs = SIZE(zeta_basis)
+      ALLOCATE(eta(1:1,1:z_coeffs))
+      CALL get_eta((/tan_press/),zeta_basis,1,z_coeffs,Eta)
+      tp = TAN(ptg_angle)
+      dx_dt = tp * tan_dh_dt / ht
+      d2x_dxdt = (2.0_rp+tp*tp)*tan_dh_dt/ht &
+               + RESHAPE(eta,(/z_coeffs/))/tan_temp
+      DEALLOCATE(eta)
+    ELSE
+      dx_dt = 0.0_rp
+      d2x_dxdt = 0.0_rp
+    ENDIF
+  ENDIF
+d116 23
+@
+
+
+1.10.2.2
+log
+@Added CVS stuff
+@
+text
+@a5 2
+  Private
+  Public :: get_chi_angles
+d8 1
+a8 1
+       "$Id: get_chi_angles_m.f90,v 1.10.2.1 2001/09/10 10:02:32 zvi Exp $"
+d13 1
+a96 3
+! Revision 1.10.2.1  2001/09/10 10:02:32  zvi
+! Cleanup..comp_path_entities_m.f90
+!
+@
+
+
+1.10.2.3
+log
+@use the correct eta
+@
+text
+@d10 1
+a10 1
+       "$Id: get_chi_angles_m.f90,v 1.10.2.2 2001/09/12 21:38:47 zvi Exp $"
+a70 1
+!
+d86 2
+a87 2
+      d2x_dxdt = (2.0_rp+tp*tp)*tan_dh_dt/ht +  &
+              &  RESHAPE(eta,(/z_coeffs/)) / tan_temp
+a97 3
+! Revision 1.10.2.2  2001/09/12 21:38:47  zvi
+! Added CVS stuff
+!
+@
+
+
+1.9
+log
+@Make sure IER is defined
+@
+text
+@d1 3
+d14 1
+a14 1
+       "$Id: get_chi_angles_m.f90,v 1.8 2001/03/31 23:40:55 zvi Exp $"
+d116 3
+@
+
+
+1.8
+log
+@Eliminate l2pcdim (dimension parameters) move to allocatable ..
+@
+text
+@d11 1
+a11 1
+       "$Id: get_chi_angles_m.f90,v 1.7 2001/03/21 22:47:28 livesey Exp $"
+d56 1
+a56 1
+!
+d58 2
+a59 1
+!
+d113 3
+@
+
+
+1.7
+log
+@Bugs found with range checking fixed.
+@
+text
+@d3 1
+a3 3
+  use L2PCDIM, only: Nlvl
+  use L2PC_FILE_PARAMETERS, only: mxco => MAX_NO_ELMNTS_PER_SV_COMPONENT, &
+                                  DEG2RAD
+d11 1
+a11 1
+       "$Id: get_chi_angles_m.f90,v 1.6 2001/03/09 03:34:44 zvi Exp $"
+d54 1
+d56 3
+a58 3
+Real(r8) :: Eta(Nlvl,mxco)
+
+  ier = 0
+d72 1
+a72 1
+      RETURN
+d84 1
+a84 1
+  Call get_eta(tan_press,t_z_basis,no_tan_hts,no_t,Nlvl,Eta)
+d112 3
+@
+
+
+1.6
+log
+@*** empty log message ***
+@
+text
+@d9 1
+d13 1
+a13 1
+       "$Id: get_chi_angles_m.f90,v 1.5 2001/03/09 01:34:07 zvi Exp $"
+d113 3
+@
+
+
+1.5
+log
+@*** empty log message ***
+@
+text
+@d12 1
+a12 1
+       "$Id: get_chi_angles_m.f90,v 1.4 2001/03/09 01:23:52 zvi Exp $"
+d59 1
+a59 2
+! Rs_eq = h_obs + ampl * Sin(2.0*(phi_tan-phas))    ! ** Experimental
+  Rs_eq = h_obs
+d112 3
+@
+
+
+1.4
+log
+@*** empty log message ***
+@
+text
+@d12 1
+a12 1
+       "$Id: get_chi_angles_m.f90,v 1.3 2001/02/19 22:20:40 zvi Exp $"
+d59 2
+a60 1
+  Rs_eq = h_obs + ampl * Sin(2.0*(phi_tan-phas))    ! ** Experimental
+d113 3
+@
+
+
+1.3
+log
+@Latest modification: Conv/NoConv
+@
+text
+@d12 1
+a12 1
+       "$Id: get_chi_angles_m.f90,v 1.2 2001/02/19 22:14:21 zvi Exp $"
+d58 1
+d112 3
+@
+
+
+1.2
+log
+@
+Ctest modification Conv/NoConvVS: ----------------------------------------------------------------------
+@
+text
+@d12 1
+a12 1
+       "$Id: get_chi_angles_m.f90,v 1.1 2000/06/09 00:08:13 Z.Shippony Exp $"
+d111 2
+@
+
+
+1.1
+log
+@Add new version
+@
+text
+@d22 2
+a23 2
+           phi_tan,RoC,h_obs,elev_offset,dh_dt_grid,N_lvls,no_tan_hts,&
+           no_t,t_z_basis,z_grid,si,cen_ang,ptg_angle,dx_dt,d2x_dxdt,ier)
+d31 1
+a31 1
+Integer(i4), INTENT(IN) :: no_tan_hts,no_t,N_lvls,si
+d33 1
+a33 1
+Real(r8), INTENT(IN) :: t_z_basis(:), z_grid(:), dh_dt_grid(:,:)
+d47 1
+a47 1
+Integer(i4) :: i, brkpt, ptg_i, sv_i, k, is, h_i
+d56 1
+a56 1
+Real(r8) :: Eta(Nlvl,mxco), temp_dh_dt(Nlvl,mxco)
+a84 9
+  temp_dh_dt(1:si+1,1:no_t) = 0.0
+!
+  ptg_i = no_tan_hts - si + 1
+  do sv_i = 1, no_t
+    Call Lintrp(z_grid,tan_press(si:no_tan_hts),dh_dt_grid(1:,sv_i), &
+   &            temp_dh_dt(si:no_tan_hts,sv_i),N_lvls,ptg_i)
+  end do
+!
+  k = 2 * N_lvls
+a87 2
+    r = dh_dt_grid(1,sv_i)
+!
+a88 2
+      t = tan_temp(is)
+      dh = tan_hts(is) + RoC
+d90 2
+a91 4
+      tanx = Tan(ptg_angle(is))
+      cse = tanx * tanx
+      dx_dt(is,sv_i) = r * tanx / dh
+      d2x_dxdt(is,sv_i) = (2.0+cse)*r/dh + Eta(is,sv_i)/t
+d100 1
+a100 1
+      r = temp_dh_dt(h_i,sv_i)
+@
+

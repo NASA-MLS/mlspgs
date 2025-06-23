@@ -1,0 +1,1106 @@
+head	1.5;
+access;
+symbols
+	v5-02-NRT-19:1.5
+	v6-00:1.5
+	v5-02-NRT-18:1.5
+	v5-02:1.5
+	v5-01-NRT-17:1.5
+	v5-01-NRT-16:1.5
+	v5-01-NRT-15:1.5
+	v5-01-NRT-14:1.5
+	neuralnetworks-1-0:1.5.0.12
+	cfm-single-freq-0-1:1.5.0.10
+	v5-01:1.5
+	v5-00:1.5
+	v4-23-TA133:1.5.0.8
+	mus-emls-1-70:1.5.0.6
+	rel-1-0-englocks-work:1.5.0.4
+	VUMLS1-00:1.5
+	VPL1-00:1.5
+	V4-22-NRT-08:1.5
+	VAM1-00:1.5
+	V4-21:1.5.0.2
+	V4-13:1.5
+	V4-12:1.5
+	V4-11:1.5
+	V4-10:1.4;
+locks; strict;
+comment	@# @;
+
+
+1.5
+date	2014.05.21.00.01.30;	author vsnyder;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2014.01.18.02.44.02;	author vsnyder;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2014.01.14.00.11.42;	author vsnyder;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2013.12.12.01.53.00;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2013.10.24.22.41.14;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.5
+log
+@New parser tables format
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Generate_Table
+
+  implicit NONE
+  private
+  public :: GENTAB
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: gentab.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  subroutine GENTAB ( TBUNIT, Strings )
+
+    use Basis_m, only: BASIS, IFINAL, INDBAS, Items
+    use Chain_Context_Lists, only: LENCSL, LISTCS, LSETS, NCSETS                     
+    use Declare_Vocabulary_m, only: Total
+    use Output_m, only: Blanks, NewLine, Output, OutputOptions
+    use LISTS, only: LIST
+    use String_Table, only: Display_String, Get_String, String_Length
+    use Tables, only: ACTION => Actions, First_Terminal, Last_Nonterminal, &
+      & NTERMS, NUMPRD, PRDIND => Prod_Ind, PRODCN => Productions, VOCAB, &
+      & Vocab_Names
+    use Transitions_And_Reductions, only: NXTRED, NXTTRN, Red, Tran
+
+    implicit NONE
+
+    integer, intent(in) :: TBUNIT
+    integer, intent(in) :: Strings(:) ! String indices of vocabulary names
+
+  ! Generate the tables as Fortran named constants.
+
+  ! IFINAL: The final state
+  ! NUMPRD: The number of productions
+  ! NSTATE: The number of states
+  ! LSETS:  The total number of elements of lookahead sets
+  ! NLOOKS: The number of states needing lookahead sets
+  ! NCSETS: The number of lookahead sets
+  ! NTRANS: The number of transitions
+  ! NTERMS: The number of terminal symbols
+  ! NVOC:   The total number of vocabulary symbols
+  ! TOTAL:  The total number of symbols in all productions
+  ! NBASPROD: Number of productions in all states of the grammar
+
+  ! ENT(1:nstate): Indexed by state number.  Index of vocabulary symbol
+  !    used to enter a state.
+
+  ! FRED(0:nstate): Indexed by state number.  First (actually last)
+  !    reductions.  Lookahead sets for state S are NSET(FRED(S-1)+1:FRED(S)).
+
+  ! FTRN(0:nstate): Indexed by state number.  First (actually last)
+  !    transitions.  Transitions for state S are in TRAN(FTRN(S-1)+1:FTRN(S)).
+
+  ! TRAN(1:ntrans): New state indices, indexed by FTRN, q.v.
+
+  ! NSET(1:nlooks): Lookahead set indices, indexed by FRED, q.v.
+
+  ! PROD(1:nlooks): Production numbers to reduce if lookahead is in the set,
+  !    indexed by FRED, q.v.
+
+  ! LSET(0:ncsets): Last elements of lookahead sets, indexed by NSET, q.v.
+  !    For lookahead set L, elements are LS(LSET(L-1)+1:LSET(L)).
+
+  ! LS(1:lsets): Elements of lookahead sets.
+
+  ! LENS(1:numprd): lengths of productions' right-hand sides, indexed by
+  !    PROD.
+
+  ! LHS(1:numprd): Productions' left-hand sides, indexed by PROD.
+
+  ! ACT(1:numprd): Action to do if production is reduced, indexed by PROD.
+
+  ! VAL(1:nvoc): Vocabulary type indices, from &V specs in the grammar. 
+  !    Negative if no mapping has been provided.
+
+  ! TEXT(1:nvoc): Vocabulary text indices.
+
+  ! The following arrays are not necessary for the parser, but
+  !    may be useful for printing error messages.
+
+  ! PROD_IND(1:numprd+1): Production(i) is represented in
+  !    PRODUCTIONS(prod_ind(i):prod_ind(i+1)-1).
+
+  ! PRODUCTIONS(1:total): The productions, where each element is an index
+  !    in the VAL and TEXT array.
+
+  ! INDBAS(1:nstate+1): Indices of bases for each state.  Each element is
+  !    the starting position in BASPRODS and DOTS of the production number
+  !    and dot position for a basis.
+
+  ! BASPRODS(1:nBaseProd): Production numbers in the bases
+
+  ! DOTS(1:nBaseProd): Item in RHS of production before which a dot appears
+  !    in the basis.
+
+  ! *****     External References     ********************************
+
+  ! OUTPUT  writes a line of text on the output file.
+
+  !     *****     Local Variables     ************************************
+
+  ! I       is a loop induction variable and subscript.
+  ! IPTR    is a list pointer.
+  ! J       is a loop induction variable and subscript.
+  ! K       is a subscript.
+  ! LENPTR  is a pointer to an element of a list of lengths.
+  ! LINE    is used for text assembly.
+  ! LINWID  is the maximum width of lines in Fortran output
+  ! LSTPTR  is a pointer to a list element.
+
+    integer :: I, IPTR, J, K, LENPTR, N, NLOOKS, NSTATE, &
+      & NTRANS, NVOC
+    character(len=120) :: LINE
+    integer, parameter :: Linwid = 73
+    integer :: LSTPTR
+    integer :: LS(lsets), LSET(lsets+1:ncsets+lsets+1)
+    integer :: NBaseProds ! Number of productions in the bases
+    integer :: Old_Unit
+    !                                  nlooks   nstate          ntrans
+    integer :: Work(0:max(lsets,ncsets,nxtred-1,indbas-1,nterms,nxttrn-1, &
+                   &      numprd,last_nonterminal - first_terminal + 1))
+
+  ! *****     Procedures     *****************************************
+
+  ! Route further output to the table unit.
+
+    old_unit = outputOptions%prunit
+    outputOptions%prunit = tbunit
+
+    nBaseProds = basis(indbas)%item - 1
+    call output ( '! This file is generated by the LR parser generator', advance='yes' )
+    call output ( '! DO NOT EDIT THIS FILE MANUALLY', advance='yes' )
+    call newLine
+    call output ( '! Include this file in a module, after', advance='yes' )
+    call output ( '! use Symbol_Types  ! to get token names', advance='yes' )
+    call output ( '! use Tree_Types    ! to get tree node names', advance='yes' )
+    call output ( '! implicit NONE', advance='yes' )
+    call output ( '! public', advance='yes' )
+
+    ! Output Fortran named constant declarations
+    nlooks = nxtred - 1           ! Number of lookahead set references
+    nstate = indbas - 1           ! Number of states
+    ntrans = nxttrn-1
+    nvoc = last_nonterminal - first_terminal + 1
+
+  ! output the first 13 numbers
+
+    write ( line, 1 ) 'IFINAL', ifinal
+  1 format ( 2x,"integer, parameter :: ", a, " = ", i0 )
+    call output ( line, advance='yes' )
+    write ( line, 1 ) 'LSETS', lsets
+    call output ( line, advance='yes' )
+    write ( line, 1 ) 'NCSETS', ncsets
+    call output ( line, advance='yes' )
+    write ( line, 1 ) 'NLOOKS', nlooks
+    call output ( line, advance='yes' )
+    write ( line, 1 ) 'NSTATE', nstate
+    call output ( line, advance='yes' )
+    write ( line, 1 ) 'NTERMS', nterms
+    call output ( line, advance='yes' )
+    write ( line, 1 ) 'NTRANS', ntrans
+    call output ( line, advance='yes' )
+    write ( line, 1 ) 'NUMPRD', numprd
+    call output ( line, advance='yes' )
+    write ( line, 1 ) 'NVOC', nvoc
+    call output ( line, advance='yes' )
+    write ( line, 1 ) 'TOTAL', total
+    call output ( line, advance='yes' )
+    write ( line, 1 ) 'NBASPROD', nBaseProds
+    call output ( line, advance='yes' )
+
+  ! Output the entrance symbol array.  The entrance symbol for state
+  ! 1 is output as 1 but state 1 is never entered so ENT(1) is never
+  ! consulted.  (We use 1 instead of zero because zero is not a valid
+  ! symbol number.  Some other processor may assume so.)
+
+    work(1) = 1
+    do i = 2, indbas-1
+      k = basis(i)%item
+      work(i) = prodcn(prdind(items(k)%prod)+items(k)%dot-1)
+    end do
+    call output_work ( Work(1:indbas-1), 'ENT', '(nstate)', 1, nstate )
+
+  ! Output the first lookahead array (FRED).
+
+    do i = 1, indbas
+      work(i-1) = basis(i)%red - 1
+    end do
+    call output_work ( Work(0:indbas-1), 'FRED', '(0:nstate)', 0, nstate )
+
+  ! Output the first transition array (FTRN)
+
+    do i = 1, indbas
+      work(i-1) = basis(i)%tran - 1
+    end do
+    call output_work ( Work(0:indbas-1), 'FTRN', '(0:nstate)', 0, nstate )
+
+  ! Output the transition vector (TRAN).
+
+    call output_work ( tran(1:ntrans), &
+                     & 'TRAN', '(ntrans)', 1, nxttrn - 1 )
+
+  ! Output the pointers to lookahead vectors (NSET).
+
+    call output_work ( list(red(1:nlooks)%set)%item, &
+                     & 'NSET', '(nlooks)', 1, nlooks )
+
+  ! Output the production index vector (PROD).
+
+    call output_work ( red(1:nlooks)%prod, 'PROD', '(nlooks)', 1, nlooks )
+
+  ! Output the lookahead sets (LS and LSET).
+
+    lenptr = lencsl
+    lstptr = listcs
+    i = lsets
+    j = 0
+    n = 0
+
+    do while (lenptr > 0)
+      iptr = list(list(lstptr)%item)%next
+      i = i + 1
+      lset(i) = n
+      n = n + list(lenptr)%item
+      do while (iptr > 0)
+        j = j + 1
+        ls(j) = list(iptr)%item
+        iptr = list(iptr)%next
+      end do
+      lset(i+1) = n
+      lenptr = list(lenptr)%next
+      lstptr = list(lstptr)%next
+    end do
+
+    call output_work ( lset, 'LSET', '(0:ncsets)', 0, ncsets )
+    call output_work ( ls, 'LS', '(lsets)', 1, lsets )
+
+  ! Output the right hand side length vector (LENS).
+
+    call output_work ( prdind(2:numprd+1) - prdind(1:numprd) - 1, &
+                     & 'LENS', '(numprd)', 1, numprd )
+
+  ! Output the left hand side vector (LHS).
+
+    call output_work ( prodcn(prdind(1:numprd)), 'LHS', '(numprd)', 1, numprd )
+
+  ! Output the action array ACT.
+
+    call output_work ( action(1:numprd), 'ACT', '(numprd)', 1, numprd, which=2 )
+
+  ! Output the token value array (VAL).
+
+    call output_work ( vocab_names(1:nterms), 'VAL', '(nterms)', 1, nterms, &
+      & which=3 )
+
+  ! Output the indices where productions begin (PROD_IND).
+
+    call output_work ( prdind(1:numprd+1), 'PROD_IND', '(numprd+1)', 1, numprd+1 )
+
+  ! Output the productions (PRODUCTIONS).
+
+    call output_work ( prodcn(1:total), 'PRODUCTIONS', '(total)', 1, total )
+
+  ! Output the indices for the bases (INDBAS).
+
+    call output_work ( basis(1:indbas)%item, 'INDBAS', '(nstate+1)', 1, nstate+1 )
+
+  ! Output the production numbers for the bases (BASPRODS).
+
+    call output_work ( items(basis(1)%item:basis(indbas)%item-1)%prod, &
+      & 'BASPRODS', '(nbasprod)', 1, nBaseProds )
+
+  ! Output the dot positions in the bases (DOTS).
+
+    call output_work ( items(basis(1)%item:basis(indbas)%item-1)%dot, &
+      & 'DOTS', '(nbasprod)', 1, nBaseProds )
+
+  ! Generate a subroutine that fills the parser table.
+
+    call output ( 'contains', advance='yes' )
+    call output ( '  subroutine Init_Parser_Table ( T )', advance='yes' )
+    call output ( '  ! Fill the parser table T.', advance='yes' )
+    call output ( '    use Parser_Table_m, only: Parser_Table_t', advance='yes' )
+    call output ( '    use Symbol_Table, only: Enter_Terminal', advance='yes' )
+    call output ( '    type(parser_table_t), intent(out) :: T', advance='yes' )
+    call output ( '    t%ifinal = ifinal', advance='yes' )
+    call output ( '    t%lsets = lsets', advance='yes' )
+    call output ( '    t%ncsets = ncsets', advance='yes' )
+    call output ( '    t%nlooks = nlooks', advance='yes' )
+    call output ( '    t%nstate = nstate', advance='yes' )
+    call output ( '    t%nterms = nterms', advance='yes' )
+    call output ( '    t%ntrans = ntrans', advance='yes' )
+    call output ( '    t%numprd = numprd', advance='yes' )
+    call output ( '    t%nvoc = nvoc', advance='yes' )
+    call output ( '    t%total = total', advance='yes' )
+    call output ( '    t%nBasProd = nBasProd', advance='yes' )
+    call output ( '    allocate ( t%ent(1:nstate), source=ent )', advance='yes' )
+    call output ( '    allocate ( t%fred(0:nstate), source=fred )', advance='yes' )
+    call output ( '    allocate ( t%ftrn(0:nstate), source=ftrn )', advance='yes' )
+    call output ( '    allocate ( t%tran(1:ntrans), source=tran )', advance='yes' )
+    call output ( '    allocate ( t%nset(1:nlooks), source=nset )', advance='yes' )
+    call output ( '    allocate ( t%prod(1:nlooks), source=prod )', advance='yes' )
+    call output ( '    allocate ( t%lset(0:ncsets), source=lset )', advance='yes' )
+    call output ( '    allocate ( t%ls(1:lsets), source=ls )', advance='yes' )
+    call output ( '    allocate ( t%lens(1:numprd), source=lens )', advance='yes' )
+    call output ( '    allocate ( t%lhs(1:numprd), source=lhs )', advance='yes' )
+    call output ( '    allocate ( t%act(1:numprd), source=act )', advance='yes' )
+    call output ( '    allocate ( t%val(1:nterms), source=val )', advance='yes' )
+    call output ( '    allocate ( t%text(1:nvoc) )', advance='yes' )
+    call output ( '    allocate ( t%prod_ind(1:numprd+1), source=prod_ind )', advance='yes' )
+    call output ( '    allocate ( t%productions(1:total), source=productions )', advance='yes' )
+    call output ( '    allocate ( t%indbas(1:nstate+1), source=indbas )', advance='yes' )
+    call output ( '    allocate ( t%basProds(1:nBasProd), source=basProds )', advance='yes' )
+    call output ( '    allocate ( t%dots(1:nbasprod), source=dots )', advance='yes' )
+    do i = 1, nTerms
+      call output ( i, before='    t%text(' )
+      if ( vocab_names(i) < 0 ) then
+        call display_string ( strings(-vocab_names(i)), &
+          & before=') = enter_terminal("_' )
+      else
+        call display_string ( vocab(i), before=') = enter_terminal("' )
+      end if
+      call output ( '",0)', advance='yes' )
+    end do
+    do i = nTerms+1, nvoc
+      call output ( i, before='    t%text(' )
+      call display_string ( vocab(i), before=') = enter_terminal("_' )
+      call output ( '",0)', advance='yes' )
+    end do
+    call output ( '  end subroutine Init_Parser_Table', advance='yes' )
+
+    outputOptions%prunit = old_unit ! Back to whichever unit OUTPUT was using
+
+  contains
+
+    subroutine Gen_Parameter ( Name )
+      character(len=*), intent(in) :: Name
+      write ( line, '("  integer, parameter :: ",a,a)' ) trim(name), ' = [ &'
+      call output ( line )
+    end subroutine Gen_Parameter
+
+    subroutine Output_Numeric_Named_Value ( Work, Name, Dim, First, Last )
+      ! Dump Work(first:last) with Name and Dim, as a named constant
+      integer, intent(in) :: First, Last
+      integer, intent(in) :: Work(First:)
+      character(len=*), intent(in) :: Name, Dim
+      integer :: I, J
+      line = '  integer, parameter :: ' // trim(name) // trim(dim) // ' = [ &'
+      call output ( line, advance='yes' )
+      do i = first, last, 10
+        call blanks ( 4 )
+        do j = i, min(last,i+9)
+          call output ( work(j), 5 )
+          if ( j /= last ) call output ( ', ' )
+        end do
+        if ( j > last ) then
+          call output ( ' ]', advance='yes' )
+        else
+          call output (  ' &', advance='yes' )
+        end if
+      end do
+    end subroutine Output_Numeric_Named_Value
+
+    subroutine Output_String ( Work, Name, Dim, First, Last, Width, Which )
+      integer, intent(in) :: First, Last
+      integer, intent(in) :: Work(First:)
+      character(len=*), intent(in) :: Name, Dim
+      integer, intent(in) :: Width ! of widest field
+      integer, intent(in) :: Which ! 2 = ACT, 3 = VAL
+      integer :: I, J
+      character(10) :: Format
+      logical :: More  ! Outputting ACT and Work(i) is not numeric
+      integer :: NPL   ! Number Per Line
+      character(width+3) :: Temp
+      integer :: W     ! Width of one string
+
+      call output ( &
+        & '  integer, parameter :: ' // trim(name) // trim(dim) // ' = [ &', &
+        & advance='yes' )
+      npl = max(1,linwid/width)
+      write ( format, '("(i",i0,")")' ) width-2 ! in case of numeric output
+      do j = first, last, npl
+        call blanks ( 4 )
+        do i = j, min(j+npl-1,last)
+          if ( work(i) == 0 ) then
+            write ( line, format ) merge(0,-i,which==2)
+            call output ( line(:width-2) )
+          else if ( which == 2 ) then ! ACT
+            w = string_length(abs(work(i)))
+            call get_string ( abs(work(i)), temp )
+            more = verify(temp(:w),'0123456789') /= 0 ! Not numeric
+            if ( more ) then
+              call blanks ( width - w - 7 ) ! -7 because width includes ", "
+                                            ! "10*" before, and "+1" after
+              call output ( '10*' )
+              temp(w+1:w+2) = '+' // merge('1','2',work(i)>0)
+              w = w + 2
+            else
+              call blanks ( width - w - 2 )
+            end if
+            call output ( temp(1:w) )
+          else ! which == 3 => VAL
+            if ( work(i) > 0 ) then
+              w = string_length(work(i))
+              call blanks ( width - w - 2 ) ! -2 because width includes ", "
+              call display_string ( work(i) )
+            else
+              write ( line, format ) work(i)
+              call output ( line(:width-2) )
+            end if
+          end if
+          if ( i /= last ) call output ( ', ' )
+        end do
+        if ( i > last ) then
+          call output ( ' ]', advance='yes' )
+        else
+          call output ( '&', advance='yes' )
+        end if
+      end do
+    end subroutine Output_String
+
+    subroutine Output_Work ( Work, Name, Dim, First, Last, Which )
+      ! Dump Work(first:last) with Name, and Dim if as a named constant
+      integer, intent(in) :: First, Last
+      integer, intent(in) :: Work(First:)
+      character(len=*), intent(in) :: Name, Dim
+      integer, intent(in), optional :: Which
+                                   ! If present and == 2, output symbol from
+                                   ! symbol table, not integer from WORK.
+                                   ! If present and == 3, output symbol from
+                                   ! symbol table, preceded by "10*" and
+                                   ! followed by "+1" if the string index is
+                                   ! positive and "+2" if it's negative.
+      integer, parameter :: MaxLines = 255 ! Fortran 2008 continuation limit
+      integer :: I, J, K, W
+      integer :: Width             ! of longest symbol
+      integer :: My_First, My_Last
+      character(31) :: My_Name, My_Dim
+      w = 1
+      if ( present(which) ) w = which
+      width = 5   ! for numeric values, except for ACT and VAL
+      if ( w /= 1 ) then
+        ! Work out length of longest symbol to determine how many
+        ! to put on each line
+        width = 5
+        do i = first, last
+          if ( w == 2 ) then ! ACTIONS
+            if ( work(i) /= 0 ) width = max(width,string_length(abs(work(i))),2)
+          else ! Vocab_Names
+            if ( work(i) > 0 ) width = max(width,string_length(work(i)),2)
+          end if
+        end do
+        width = width+merge(7,2,which==2) ! Room for 10*name+? if ACT
+      end if
+      k = ( last-first ) / ( linwid/width * maxLines )
+      if ( k == 0 ) then ! Fits within one statement
+        ! Output as one named constant
+        if ( w == 1 ) then
+          call output_numeric_named_value ( work(first:), name, dim, first, &
+            & last )
+        else
+          call output_string ( work(first:), name, dim, first, last, width, w )
+        end if
+      else
+        ! Output as several named constants
+        my_first = first
+        do j = 0, k
+          write ( my_name, '(a,"_",i0)' ) trim(name), j
+          my_last = min(last, my_first + 10*maxLines - 1)
+          write ( my_dim, '("(",i0,":",i0,")")' ) my_first, my_last
+          if ( w == 1 ) then
+            call output_numeric_named_value ( work(my_first:), my_name, &
+              & my_dim, my_first, my_last )
+          else
+            call output_string ( work(my_first:), my_name, my_dim, &
+              & my_first, my_last, width, w )
+          end if
+          my_first = my_last + 1
+        end do
+        line = '  integer, parameter :: ' // trim(name) // trim(dim) // ' = [ &'
+        call output ( line )
+        i = 5
+        do j = 0, k
+          write ( my_name, '(a,"_",i0)' ) trim(name), j
+          if ( i + len_trim(my_name) > 78 ) then
+            line(i:) = ', &'
+            call output ( line )
+            i = 5
+          end if
+          if ( line(i-1:i-1) /= '' ) then
+            line(i:) = ', '
+            i = i + 2
+          end if
+          line(i:) = my_name
+          i = len_trim(line) + 1
+        end do
+        line(i+1:) = ' ]'
+        call output ( line )
+      end if
+    end subroutine Output_Work
+
+  end subroutine GENTAB
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: gentab.f90,v 1.4 2014/01/18 02:44:02 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Generate_Table
+
+! $Log: gentab.f90,v $
+! Revision 1.4  2014/01/18 02:44:02  vsnyder
+! NXTRED should have been NLOOKS in two places
+!
+! Revision 1.3  2014/01/14 00:11:42  vsnyder
+! Revised LR completely
+!
+! Revision 1.2  2013/12/12 01:53:00  vsnyder
+! Remove unused cruft
+!
+! Revision 1.1  2013/10/24 22:41:14  vsnyder
+! Initial commit
+!
+@
+
+
+1.4
+log
+@NXTRED should have been NLOOKS in two places
+@
+text
+@d147 5
+a151 5
+    call output ( 'module Parser_Tables', advance='yes' )
+    call output ( '  use Symbol_Types', advance='yes' )
+    call output ( '  use Tree_Types', advance='yes' )
+    call output ( '  implicit NONE', advance='yes' )
+    call output ( '  public', advance='yes' )
+a268 4
+  ! Create an array for the texts of symbols having negative values in VAL
+
+    call output ( '  integer :: TEXT(1:nvoc) = 0', advance='yes' )
+
+d291 1
+a291 2
+  ! Generate a subroutine that fills values of VAL that are not defined
+  ! as vocabulary symbols inthe grammar.
+d294 3
+a296 3
+    call output ( '  subroutine Init_Vocabulary_Names', advance='yes' )
+    call output ( '  ! Initialize VAL for names that are not defined in', advance='yes' )
+    call output ( '  ! the grammar.  Most of these are nonterminals.', advance='yes' )
+d298 30
+d329 1
+a329 1
+      call output ( i, before='    text(' )
+d339 1
+a339 1
+      call output ( i, before='    text(' )
+d343 1
+a343 2
+    call output ( '  end subroutine Init_Vocabulary_Names', advance='yes' )
+    call output ( 'end module  Parser_Tables', advance='yes' )
+d520 1
+a520 1
+       "$Id: gentab.f90,v 1.3 2014/01/14 00:11:42 vsnyder Exp $"
+d530 3
+@
+
+
+1.3
+log
+@Revised LR completely
+@
+text
+@d218 1
+a218 1
+    call output_work ( list(red(1:nxtred)%set)%item, &
+d223 1
+a223 1
+    call output_work ( red(1:nxtred)%prod, 'PROD', '(nlooks)', 1, nlooks )
+d496 1
+a496 1
+       "$Id: gentab.f90,v 1.2 2013/12/12 01:53:00 vsnyder Exp $"
+d506 3
+@
+
+
+1.2
+log
+@Remove unused cruft
+@
+text
+@d26 1
+a26 1
+  subroutine GENTAB
+d28 10
+a37 9
+    use ANACOM, only: IFINAL, INDBAS, LENCSL, LISTCS, LSETS, NCSETS, &
+                      NXTRED, NXTTRN
+    use IO, only: OUNIT, OUTPUT, TBUNIT
+    use LISTS, only: ITEM, NEXT
+    use S1, only: LENGTH, MOVSTR
+    use S3, only: ACTION, PRDIND, PRODCN, VALUE, VOCAB
+    use S5, only: BASIS, RED, TRAN
+    use TABCOM, only: NTERMS, NUMPRD, NVOC
+    use TOGGLES, only: TOGGLE
+d41 2
+a42 1
+  ! Generate the tables as Fortran named constants, or in unformatted form.
+d44 1
+a44 2
+  ! Named constants or DATA statements if Fortran output is selected
+  ! (toggle "F" is zero -- on) are
+d55 2
+d59 1
+a59 1
+  ! used to enter a state.
+d62 1
+a62 1
+  ! reductions.  Lookahead sets for state S are NSET(FRED(S-1)+1:FRED(S)).
+d65 1
+a65 1
+  ! transitions.  Transitions for state S are in TRAN(FTRN(S-1)+1:FTRN(S)).
+d72 1
+a72 1
+  ! indexed by FRED, q.v.
+d75 1
+a75 1
+  ! For lookahead set L, elements are LS(LSET(L-1)+1:LSET(L)).
+d80 1
+a80 1
+  ! PROD.
+d86 2
+a87 2
+  ! VOC(1:nvoc): Vocabulary symbol indices, from &V specs in the grammar. 
+  ! Negative if no mapping has been provided.
+d89 1
+a89 2
+  ! Numeric data, if Fortran output is not selected (toggle "F" is not zero)
+  ! are output in 10I5 format.
+d91 17
+a107 44
+  ! The first 13 items are:
+  !    The number of states = NSTATE
+  !    The final state = IFINAL
+  !    The initial state = 1 (always)
+  !    The size of the vocabulary = NVOC
+  !    The number of terminal symbols = NTERMS
+  !    The length of the longest symbol (computed here)
+  !    The number of lookahead set choices = (NXTRED-1)/2
+  !    The number of transitions = NXTTRN - 1
+  !    The number of lookahead sets = NCSETS
+  !    The number of productions = NUMPRD
+  !    The length of the longest right hand side (computed here)
+  !    The total number of lookahead sets = LSETS
+  !    The total length of all vocabulary items
+
+  ! Following these 13 items, the vocabulary items are output one per
+  ! line in (I5,A) format.
+
+  ! After the vocabulary items, arrays of numbers are output.  Each
+  ! array starts on a new line:
+  !    The entry symbol array (known as ENT in the parser).
+  !    the first (actually last) lookahead array (known as FRED).
+  !    The first (actually last) transition array (known as FTRN).
+  !    The transition vector (known as TRAN).
+  !    The pointer to lookahead sets array (known as NLOOKS).
+  !    The reduction array (known as PROD).
+  !    The lookahead sets.  Each lookahead set starts a new line.
+  !       The first number is the number of terminals in the lookahead
+  !       set.  The rest are token indices for the members of the set.
+  !    The vector of right hand side lengths (known as LEN).
+  !    The vector of left hand sides (known as LHS).
+  !    The vector of syntax actions (known as ACTION).
+  !    The vector of token values (known as VALUE).
+
+  ! The following two arrays are not necessary for the parser, but
+  ! may be useful for printing error messages.
+
+  !    The right hand sides of the productions.  Each production
+  !       starts on a new line.  The left hand sides and right hand
+  !       side lengths were output previously.
+  !    The configurations, without contexts.  Each state starts on a
+  !       new line.  The first integer is the number of productions.
+  !       Then for each production the production number and dot
+  !       position are output.
+a110 2
+  ! LENGTH  calculates the length of a symbol table item.
+  ! MOVSTR  moves a symbol table item to LINE.
+a114 2
+  ! HLDIDX  is the index in the HOLD array.
+  ! HOLD    is used to collect 10 integers for output.
+a118 1
+  ! L       is a subscript.
+d121 1
+a121 2
+  ! LNGPRD  is the length of the longest right hand side of a production.
+  ! LNGVCB  is the length of the longest vocabulary item.
+a122 1
+  ! TVOC    is the total length of all vocabulary items
+d124 2
+a125 1
+    integer HLDIDX, HOLD(10), I, IPTR, J, K, L, LENPTR, N, NLOOKS, NSTATE
+d127 2
+a128 1
+    integer LNGPRD, LNGVCB, LSTPTR, TVOC
+d130 5
+a134 3
+    !                                  nlooks       nstate          ntrans
+    integer :: Work(0:max(lsets,ncsets,(nxtred-1)/2,indbas/5,nterms,nxttrn-1, &
+                   &      numprd,nvoc))
+d140 18
+a157 1
+    ounit = tbunit
+d161 23
+a183 62
+    nlooks = (nxtred-1)/2         ! Number of lookahead set references
+    nstate = indbas/5             ! Number of states
+    if ( toggle(ichar('F')) /= 0 ) then ! Normally on
+      hold(1) = nstate            ! Number of states
+      hold(2) = ifinal            ! Final state
+      hold(3) = 1                 ! Initial state
+      hold(4) = nvoc              ! Number of vocabulary items
+      hold(5) = nterms            ! Number of terminal symbols
+      lngvcb = 0
+      tvoc = 0
+      do i = 1, nvoc
+         lngvcb = max(lngvcb, length(vocab(i)))
+         tvoc = tvoc + length(vocab(i))
+      end do
+      hold(6) = lngvcb            ! Longest vocabulary item
+      hold(7) = nlooks            ! Number of lookahead set references
+      hold(8) = nxttrn-1          ! Number of transitions
+      hold(9) = ncsets            ! Number of lookahead sets
+      hold(10) = numprd           ! Number of productions
+      hldidx = 10
+      call dump_the_hold_array
+      lngprd = 0
+      do i = 1, numprd
+        lngprd = max(lngprd, prdind(i+1)-prdind(i)-1)
+      end do
+      hold(1) = lngprd            ! Longest right-hand-side
+      hold(2) = lsets             ! Total size of all lookahead sets
+      hold(3) = tvoc              ! Total size of the vocabulary
+      hldidx = 3
+      call dump_the_hold_array
+
+    ! Output the vocabulary items, one per line, with the length in
+    ! columns 1 - 5.
+
+      do i = 1, nvoc
+        l = 6
+        write ( line(1:5), '(i5)' ) length(vocab(i))
+        call movstr ( vocab(i), line, l, 80 )
+        call output ( line(1:l-1) )
+      end do
+    else ! Output Fortran named constant declarations
+      write ( line, 1 ) 'IFINAL', ifinal
+    1 format ( 2x,"integer, parameter :: ", a, " = ", i0 )
+      call output ( line )
+      write ( line, 1 ) 'LSETS', lsets
+      call output ( line )
+      write ( line, 1 ) 'NCSETS', ncsets
+      call output ( line )
+      write ( line, 1 ) 'NLOOKS', nlooks
+      call output ( line )
+      write ( line, 1 ) 'NSTATE', nstate
+      call output ( line )
+      write ( line, 1 ) 'NTERMS', nterms
+      call output ( line )
+      write ( line, 1 ) 'NTRANS', nxttrn-1
+      call output ( line )
+      write ( line, 1 ) 'NUMPRD', numprd
+      call output ( line )
+      write ( line, 1 ) 'NVOC', nvoc
+      call output ( line )
+      hldidx = 0
+    end if
+a189 1
+    n = 1
+d191 3
+a193 4
+    do i = 6, indbas-1, 5
+      n = n + 1
+      k = basis(i)
+      work(n) = prodcn(prdind(basis(k))+basis(k+1)-1)
+d195 1
+a195 1
+    call output_work ( Work(1:n), 'ENT', '(nstate)', 1, nstate )
+d199 2
+a200 4
+    n = 0
+    do i = 1, indbas+4, 5
+      work(n) = (basis(i+4)+2)/2 - 1
+      n = n + 1
+d202 1
+a202 1
+    call output_work ( Work(0:indbas/5), 'FRED', '(0:nstate)', 0, nstate )
+d206 2
+a207 4
+    n = 0
+    do i = 1, indbas+4, 5
+      work(n) = basis(i+3) - 1
+      n = n + 1
+d209 1
+a209 1
+    call output_work ( Work(0:indbas/5), 'FTRN', '(0:nstate)', 0, nstate )
+d213 1
+a213 1
+    call output_work ( (tran(1: nxttrn - 1)+4)/5, &
+d218 2
+a219 2
+    call output_work ( item(red(2:nxtred-1:2)), &
+                     & 'NSET', '(nlooks)', 1, (nxtred-1)/2 )
+d223 1
+a223 1
+    call output_work ( red(1:nxtred-1:2), 'PROD', '(nlooks)', 1, (nxtred-1)/2 )
+d229 3
+a231 5
+    if ( toggle(iachar('F')) == 0 ) then ! normally on
+      i = lsets
+      j = 0
+      n = 0
+    end if
+d234 12
+a245 27
+      iptr = next(item(lstptr))
+      if ( toggle(iachar('F')) == 0 ) then ! normally on
+        i = i + 1
+        lset(i) = n
+        n = n + item(lenptr)
+        do while (iptr > 0)
+          j = j + 1
+          ls(j) = item(iptr)
+          iptr = next(iptr)
+        end do
+        lset(i+1) = n
+      else
+        ! Each set starts a new line.
+        ! The first number is the number of elements of the set.  Remaining
+        ! elements are terminal token indices.
+        hldidx = 1
+        hold(1) = item(lenptr)
+        do while (iptr > 0)
+          if (hldidx >= 10) call dump_the_hold_array
+          hldidx = hldidx + 1
+          hold(hldidx) = item(iptr)
+          iptr = next(iptr)
+        end do
+        call dump_the_hold_array
+      end if
+      lenptr = next(lenptr)
+      lstptr = next(lstptr)
+d248 2
+a249 4
+    if ( toggle(iachar('F')) == 0 ) then ! normally on
+      call output_work ( lset, 'LSET', '(0:ncsets)', 0, ncsets )
+      call output_work ( ls, 'LS', '(lsets)', 1, lsets )
+    end if
+d260 8
+a267 1
+  ! Output the ACTION vector.
+d269 1
+a269 1
+    call output_work ( action(1:numprd), 'ACT', '(numprd)', 1, numprd )
+d271 1
+a271 1
+  ! Output the token value array (VALUE).
+d273 1
+a273 1
+    call output_work ( value(1:nvoc), 'VAL', '(nvoc)', 1, nvoc )
+d275 1
+a275 1
+  ! Output the right hand sides of the productions.
+d277 9
+a285 9
+    do i = 1, numprd
+      do l = prdind(i)+1, prdind(i+1)-1, 10
+        do j = l, min(prdind(i+1)-1, l+9)
+          hldidx = hldidx + 1
+          hold(hldidx) = prodcn(j)
+        end do
+        call dump_the_hold_array
+      end do
+    end do
+d287 2
+a288 1
+  ! Output the bases.
+d290 1
+a290 13
+    do i = 1, indbas-1, 5
+      hold(1) = (basis(i)-basis(i+5))/3
+      hldidx = 1
+      do l = basis(i), basis(i+5)+3, -3
+        if (hldidx .ge. 10) call dump_the_hold_array
+        hldidx = hldidx + 1
+        hold(hldidx) = basis(l)
+        if (hldidx .ge. 10) call dump_the_hold_array
+        hldidx = hldidx + 1
+        hold(hldidx) = basis(l+1)
+      end do
+      call dump_the_hold_array
+    end do
+d292 2
+a293 1
+    return
+d295 2
+a296 1
+  contains
+d298 10
+a307 23
+    subroutine dump_the_hold_array ( N, All )
+      integer, intent(in), optional :: N, All
+      integer :: I, J, K
+      if ( toggle(iachar('F')) == 0 ) then ! normally on
+        if ( present(n) ) then
+          k = 3
+          do i = 1, hldidx, 10
+            do j = 1, min(i+9,hldidx)
+              write ( line(k:k+4), '(i5)' ) hold(j)
+              k = k + 5
+              if ( j < min(i+9,hldidx) ) then
+                line(k:k+1) = ', '
+                k = k + 2
+              end if
+            end do
+            if ( n /= all ) then
+              line(k:k+3) = ', &'
+            else
+              line(k:k+2) = ' ]'
+            end if
+            call output ( line )
+          end do
+        end if
+d309 1
+a309 2
+        write ( line(1:5*hldidx), '(24i5)' ) hold(1:hldidx)
+        call output (line(1:5*hldidx))
+d311 13
+a323 2
+      hldidx = 0
+    end subroutine dump_the_hold_array
+d327 1
+a327 2
+      if ( toggle(iachar('F')) == 0 ) &
+        & write ( line, '("  integer, parameter :: ",a,a)' ) trim(name), ' = [ &'
+d331 81
+a411 1
+    subroutine Output_Work ( Work, Name, Dim, First, Last )
+d416 7
+d424 52
+a475 32
+      integer :: I, J, K
+      if ( toggle(iachar('F')) == 0 ) then ! normally on
+        if ( last-first+1 <= 10*maxLines ) then ! Fits within one statement
+          ! Output as a named constant
+          line = '  integer, parameter :: ' // trim(name) // trim(dim) // ' = [ &'
+          call output ( line )
+          do i = first, last, 10
+            k = 3
+            do j = i, min(last,i+9)
+              write ( line(k:k+4), '(i5)' ) work(j)
+              k = k + 5
+              if ( j < min(last,i+9) ) then
+                line(k:k+1) = ', '
+                k = k + 2
+              end if
+            end do
+            if ( j > last ) then
+              line(k:k+1) = ' ]'
+              k = k + 2
+            else
+              line(k:k+2) = ', &'
+              k = k + 3
+            end if
+            call output ( line(1:k) )
+          end do
+        else ! Too many continuation lines needed
+          ! Output as a DATA statement
+          line = '  integer :: ' // trim(name) // trim(dim)
+          call output ( line )
+          do i = first, last, 3
+            write ( line, 1 ) (trim(name), j, work(j), j = i, min(i+2,last))
+          1 format ( 2x,'data ', 3(a4, '(', i5, ') / ', i5, '/' : ', ') )
+d477 8
+a484 6
+          end do
+        end if
+      else ! Output using (10i5)
+        do i = first, last, 10
+          write ( line(1:50), '(10i5)' ) work(i:min(i+9,last))
+          call output ( line )
+d486 2
+d496 1
+a496 1
+       "$Id: gentab.f90,v 1.1 2013/10/24 22:41:14 vsnyder Exp $"
+d506 3
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d20 1
+a20 1
+       "$RCSfile: parser.f90,v $"
+a144 1
+  ! IEND    is the upper limit for I in some loops.
+d156 1
+a156 1
+    integer HLDIDX, HOLD(10), I, IEND, IPTR, J, K, L, LENPTR, N, NLOOKS, NSTATE
+d466 1
+a466 1
+       "$Id: parser.f90,v 2.29 2013/10/02 01:35:46 vsnyder Exp $"
+d475 4
+a478 1
+! $Log: $
+@
+

@@ -1,0 +1,604 @@
+head	1.4;
+access;
+symbols
+	v5-02-NRT-19:1.4
+	v6-00:1.4
+	v5-02-NRT-18:1.4
+	v5-02:1.4
+	v5-01-NRT-17:1.4
+	v5-01-NRT-16:1.4
+	v5-01-NRT-15:1.4
+	v5-01-NRT-14:1.4
+	neuralnetworks-1-0:1.4.0.10
+	cfm-single-freq-0-1:1.4.0.8
+	v5-01:1.4
+	v5-00:1.4
+	v4-23-TA133:1.4.0.6
+	mus-emls-1-70:1.4.0.4
+	rel-1-0-englocks-work:1.4.0.2
+	VUMLS1-00:1.3
+	VPL1-00:1.3;
+locks; strict;
+comment	@# @;
+
+
+1.4
+date	2017.09.14.17.56.49;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2016.08.23.18.33.47;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2016.07.28.01.46.37;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2016.06.02.22.50.49;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.4
+log
+@Added -both option to create both swaths
+@
+text
+@! Copyright 2016, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=================================
+program extinctionmaker
+!=================================
+! Creates the swath "ExtinctionR3-FinalExt"
+! omitted from the dgg file in v4
+! Needed by joint TES-MLS retrieval
+
+! Optionally, creates "ExtinctionR3-OzoneOnly"
+
+! Or, creates both extra swaths
+   use Dump_0, only: Dump
+   use Diff_1, only: SelfDiff
+   use HDF, only: DFACC_Rdwr, DFACC_RDOnly
+   use HDF5, only: H5fis_HDF5_F
+   use Intrinsic, only: L_HDF, L_Swath
+   use L2AUXData, only: L2AUXData_T, MaxSDNamesBufSize, &
+     & ReadL2AUXData, DestroyL2AUXContents
+   use L2GPData, only: L2GPData_T, Rgp, &
+     & DestroyL2GPContents, ReadL2GPData, WriteL2GPData
+   use Machine, only: Hp, Getarg
+   use MLSCommon, only: MLSFile_T
+   use MLSFiles, only: HDFVERSION_5, Dump, InitializeMLSFile, &
+     & MLS_OpenFile, MLS_CloseFile
+   use MLSFillValues, only: IsFillValue, Monotonize
+   use MLSHDF5, only: GetAllHDF5DSNames, MLS_H5open, MLS_H5close
+   use MLSHDFEOS, only: MLS_Swath_In_File
+   use MLSKinds, only: R8
+   use MLSNumerics, only: InterpolateValues
+   use MLSStats1, only: MLSMin
+   use MLSStrings, only: Lowercase
+   use Monotone, only: IsMonotonic
+   use Output_M, only: Output
+   use PrintIt_M, only: Set_Config
+   use Time_M, only: Time_Now, Time_Config
+
+   implicit none
+
+!---------------------------- RCS Ident Info ------------------------------
+  character (len=*), parameter :: ModuleName= &
+       "$RCSfile: extinctionmaker.f90,v $"
+  character (len=*), parameter :: IdParm = &
+       "$Id: extinctionmaker.f90,v 1.3 2016/08/23 18:33:47 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+!---------------------------------------------------------------------------
+
+! To use this, copy it into
+! mlspgs/tests/l2
+! then enter "make depends" followed by "make"
+
+
+! cp /data/emls/l2[ag]*/v04.20/2005/037/*DG*.h*5 v4
+! cp /data/emls/l2[ag]*/v03.4*/2005/037/*DG*.h*5 v3
+! IFC.Linux/test [options] dgg dgm
+
+  integer, parameter ::          MAXFILES = 100
+  ! The following may one of
+  !    C              for CO (default)
+  !    O              for ozone
+  !    *              for both
+  character(len=*), parameter   :: Ozone = 'O'
+  character(len=*), parameter   :: CO =    'C'
+  character(len=*), parameter   :: Both  = '*'
+  type options_T
+    logical     :: debug   = .false.
+    logical     :: dryrun  = .false.
+    character   :: species = CO     
+    logical     :: verbose = .false.
+    ! In filenames array         element #1 dgg       element #2 dgm
+    character(len=255), dimension(MAXFILES) :: filenames
+  end type options_T
+
+  type ( options_T ) :: options
+
+  character(len=255) :: filename          ! input filename
+  integer            :: n_filenames
+  integer     ::  status, error ! Counting indices & Error flags
+  logical     :: is_hdf5
+  character(len=MAXSDNAMESBUFSIZE) :: sdList
+  real        :: t1
+  real        :: t2
+  !
+  call set_config ( useToolkit = .false., logFileUnit = -1 )
+  time_config%use_wall_clock = .true.
+  call mls_h5open( error )
+  n_filenames = 0
+  do      ! Loop over filenames
+     call get_filename ( filename, n_filenames, options )
+     if ( filename(1:1) == '-' ) cycle
+     if ( filename == ' ' ) exit
+     call h5fis_hdf5_f(trim(filename), is_hdf5, error)
+     if ( .not. is_hdf5 ) then
+       print *, 'Sorry--not recognized as hdf5 file: ', trim(filename)
+       cycle
+     endif
+     n_filenames = n_filenames + 1
+     options%filenames(n_filenames) = filename
+  enddo
+  call time_now ( t1 )
+  if ( options%verbose ) call print_settings
+  if ( n_filenames < 1 ) then
+    if ( options%verbose ) print *, 'Sorry must supply dgg and dgm file names'
+  else
+    select case ( options%species )
+    case ( CO, Ozone )
+      call create_swath ( options%species )
+    case ( Both )
+      call create_swath ( CO )
+      call create_swath ( Ozone )
+    case default
+      print *, 'I expected species to be C, O, or *, not ', options%species
+      stop
+    end select
+  endif
+  call mls_h5close( error )
+  call SayTime( 'Creating swath(s)' )
+contains
+
+  ! Create swath named "ExtinctionR3-FinalExt"
+  ! Or else "ExtinctionR3-OzoneOnly"
+  subroutine create_swath ( species )
+    ! Args:
+    character(len=1), intent(in)      :: species
+    ! Internal variables
+    type(l2auxData_T)                 :: Geodlat
+    type(l2auxData_T)                 :: MIFExrinction
+    type(l2auxData_T)                 :: ptan
+    type(MLSFile_T)                   :: L2AUXFile
+    type(MLSFile_T)                   :: L2GPFile
+    type(L2GPData_T)                  :: l2gp
+    integer                           :: dggAccess
+    integer                           :: instance
+    integer                           :: MAF
+    real(rgp)                         :: maxLatOffset
+    integer, dimension(3)             :: ptanShp
+    character(len=128)                :: PTanDSName
+    character(len=128)                :: MiFXDSName
+    character(len=128)                :: ExtnDSName
+    integer                           :: status
+    logical                           :: v3
+    ! Executable
+    ! Open dgm file
+    print *, 'Entered create_swath for ', species
+    call GetAllHDF5DSNames ( options%filenames(2), '/', sdList )
+    if ( options%debug ) print *, trim(sdList)
+    if ( .not. MLS_swath_in_file ( &
+      & options%filenames(1), 'O3-StdProd', HDFVERSION_5 &
+      & ) ) then
+      if ( options%verbose ) print *, 'The dgg is missing ozone; typo?'
+    endif
+    status = InitializeMLSFile( L2AUXFile, type=l_hdf, access=DFACC_RDONLY, &
+      & content='l2aux', name=options%filenames(2), hdfVersion=HDFVERSION_5 )
+    l2auxFile%name = options%filenames(2)
+    l2auxFile%stillOpen = .false.
+    call mls_openFile( l2auxFile, Status )
+    if ( status /= 0 ) then
+      print *, 'Unable to open trim(options%filenames(2); not the dgm file?'
+      stop
+    endif
+    call Dump( l2auxFile, details=1 )
+    if ( options%verbose ) print *, 'Reading from: ', trim(l2auxFile%name)
+    
+    ! Are we aiming to create the extinction for CO retrieval, or for ozone?
+    PTanDSName = 'GHz.ptan-CorePlusR3'
+    select case ( species )
+    case ( CO )
+      MiFXDSName = 'GHz.MifExtinction-CorePlusR3'
+      ExtnDSName = 'ExtinctionR3-FinalExt'
+    case ( Ozone )
+      ! PTanDSName = 'GHz.ptan-OzoneOnly' ! No--we never wrote this to the dgm file
+      MiFXDSName = 'GHz.MifExtinction-OzoneOnly'
+      ExtnDSName = 'ExtinctionR3-OzoneOnly'
+    case default
+      print *, 'I expected species to be either C or O, not ', species
+      stop
+    end select
+    if ( index( sdList, trim(MiFXDSName) ) < 1 ) then
+      if ( options%verbose ) &
+        & print *, trim(sdList)
+      print *, 'The dgm file is missing its needed extinction ', MiFXDSName
+      return
+    endif
+    v3 = MLS_swath_in_file ( &
+      & options%filenames(1), trim(ExtnDSName), HDFVERSION_5 &
+      & )
+    if ( v3 ) then
+      if ( options%verbose ) &
+        & print *, 'The dgg may be v3, not v4, or else you already processed it'
+      if ( .not. options%debug ) return
+    endif
+    call Readl2auxData( l2auxFile%FileID%f_id, PTanDSName, ptan, &
+      & hdfVersion=HDFVERSION_5 )
+    call Readl2auxData( l2auxFile%FileID%f_id, MiFXDSName, MIFExrinction, &
+      & hdfVersion=HDFVERSION_5 )
+    call Readl2auxData( l2auxFile%FileID%f_id, 'geod lat', Geodlat, &
+      & hdfVersion=HDFVERSION_5 )
+    if ( options%debug ) then
+      print *, 'Min(l2auxptan) ', MLSMin( ptan%values, real( -999.99, r8 ) )
+      print *, 'Max(l2auxptan) ', maxval( ptan%values )
+      print *, 'Max(l2auxextinction) ', maxval( MIFExrinction%values )
+      print *, 'Name(l2auxextinction) ', trim(MiFXDSName)
+    endif
+    ptanShp = shape(ptan%values)
+    ! Convert ptan to hPa
+    where ( ptan%values > -100._r8 )
+      ptan%values = 10.**( -ptan%values )
+    endwhere
+    if ( options%debug ) then
+      print *, 'Min(l2auxptan) in hPa ', MLSMin( ptan%values, real( -999.99, r8 ) )
+      print *, 'Max(l2auxptan) in hPa ', maxval( ptan%values )
+    endif
+    ! Read ozone swath from dgg file
+    if ( options%dryrun ) then
+      dggAccess = DFACC_RDONLY
+    else
+      dggAccess = DFACC_RDWR
+    endif
+    status = InitializeMLSFile( L2GPFile, type=l_swath, access=dggAccess, &
+      & content='l2gp', name=options%filenames(1), hdfVersion=HDFVERSION_5 )
+    L2GPFile%name = options%filenames(1)
+    L2GPFile%stillOpen = .false.
+    call mls_openFile( L2GPFile, Status )
+    call ReadL2GPData( trim(options%filenames(1)), 'O3-StdProd', l2gp )
+    maxLatOffset = 0.
+    if ( options%debug ) then
+      print *, 'shape(ptan): ', ptanShp
+      print *, l2gp%pressures(1), l2gp%pressures(l2gp%nLevels)
+      call dump( ptan%values(1,5:ptanShp(2)-5,8), 'ptan' )
+      call selfdiff( ptan%values(1,5:ptanShp(2)-5,8), 'ptan increments' )
+    endif
+    ! Now modify the ozone swath so its values are extinction
+    do instance=1, L2GP%nTimes
+      MAF = instance+7
+      if ( any( isFillValue(ptan%values(1, 5:ptanShp(2)-5, MAF)) ) ) then
+        if ( options%debug .or. options%verbose ) &
+          & print *, 'Fill values in ptan at instance ', instance
+        if ( options%debug ) &
+          & print *, ptan%values(1,5,MAF), ptan%values(1,ptanShp(2)-5,MAF)
+        cycle
+      endif
+      if ( .not. isMonotonic(ptan%values(1, 5:ptanShp(2)-5, MAF)) ) &
+        & call monotonize( ptan%values(1, 5:ptanShp(2)-5, MAF) )
+      if ( options%debug ) then
+        print *, isMonotonic( ptan%values(1, 5:ptanShp(2)-5, MAF) )
+        print *, ptan%values(1,5,MAF), ptan%values(1,ptanShp(2)-5,MAF)
+      endif
+      call InterpolateValues ( &
+        & real( ptan%values(1, 5:ptanShp(2)-5, MAF), rgp), &
+        & real( MIFExrinction%values(1, 5:ptanShp(2)-5, MAF), rgp), &
+        & l2gp%pressures, l2gp%l2gpvalue(1,:,instance), &
+        & method='Linear', extrapolate='Constant' )
+      if ( options%debug ) &
+        & print *, 'Latitudes: ', l2gp%latitude(instance), &
+        &                         Geodlat%values(1, 1, MAF)
+      maxLatOffset = max( &
+        & maxLatOffset, abs( &
+        & l2gp%latitude(instance) - real(Geodlat%values(1, 1, MAF), rgp) &
+        & ) &
+        & )                  
+    end do
+    if ( options%debug ) then
+      print *, 'Min(l2gp%pressures) ', minval( l2gp%pressures )
+      print *, 'Max(l2gp%pressures) ', maxval( l2gp%pressures )
+      print *, 'Max(l2gp%l2gpvalue) ', maxval( l2gp%l2gpvalue )
+      print *, 'Name(l2gp%l2gpvalue) ', trim(ExtnDSName)
+    endif
+    if ( maxLatOffset > 1.5 ) print *, 'Warning--Latitude offsets > 1.5 deg'
+    if ( options%verbose )  print *, 'Mex latitude offset: ', maxLatOffset
+    ! Now write the new swath
+    if ( .not. v3 .and. .not. options%dryrun) &
+      & call WriteL2GPData ( l2gp, l2gpFile%FileID%f_id, ExtnDSName )
+    ! Housekeeping
+    call DestroyL2AUXContents ( MIFExrinction )
+    call DestroyL2AUXContents ( ptan )
+    call DestroyL2GPContents ( l2gp )
+    call mls_closeFile( l2auxFile, Status )
+    call mls_closeFile( L2GPFile, Status )
+    
+  end subroutine create_swath
+
+!------------------------- get_filename ---------------------
+    subroutine get_filename( filename, n_filenames, options )
+    ! Added for command-line processing
+     character(len=255), intent(out)   :: filename          ! filename
+     integer, intent(in)               :: n_filenames
+     type ( options_T ), intent(inout) :: options
+     ! Local variables
+     integer ::                         error = 1
+     integer, save ::                   i = 1
+  ! Get inputfile name, process command-line args
+  ! (which always start with -)
+    do
+      call getarg ( i+hp, filename )
+      ! print *, i, ' th Arg: ', trim(filename)
+      error = 0
+      if ( filename(1:1) /= '-' ) exit
+      if ( filename(1:3) == '-h ' ) then
+        call print_help
+      elseif ( filename(1:3) == '-d ' ) then
+        options%debug = .true.
+        exit
+      elseif ( filename(1:3) == '-dr' ) then
+        options%dryrun = .true.
+        exit
+      elseif ( lowercase(filename(1:3)) == '-oz' ) then
+        options%species = Ozone
+        exit
+      elseif ( lowercase(filename(1:3)) == '-bo' ) then
+        options%species = Both
+        exit
+      elseif ( filename(1:3) == '-v ' ) then
+        options%verbose = .true.
+        exit
+      else
+        call print_help
+      end if
+      i = i + 1
+    end do
+    if ( error /= 0 ) then
+      call print_help
+    endif
+    i = i + 1
+    if (trim(filename) == ' ' .and. n_filenames == 0) then
+
+    ! Last chance to enter filename
+      print *,  "Enter the name of the HDFEOS5 L2AUX file. " // &
+       &  "The default output file name will be used."
+      read(*,'(a)') filename
+    endif
+
+  end subroutine get_filename
+
+!------------------------- print_settings ---------------------
+  subroutine print_settings
+  ! Print settings
+    print *, 'debug?            ', options%debug
+    print *, 'dryrun?           ', options%dryrun
+    print *, 'verbose?          ', options%verbose
+    print *, 'dgg               ', trim(options%filenames(1))
+    print *, 'dgm               ', trim(options%filenames(2))
+    print *, 'species           ', options%species
+  end subroutine print_settings
+
+!------------------------- print_help ---------------------
+  subroutine print_help
+  ! Print brief but helpful message
+    write (*,*) &
+    & 'Usage:extinctionmaker [options] dgg_file dgm_file'
+    write (*,*) ' Options: '
+    write (*,*) ' -d          => switch on debug mode'
+    write (*,*) ' -dryrun     => switch on dryrun mode'
+    write (*,*) ' -ozone      => create ozone extinction instead of CO'
+    write (*,*) ' -both       => create both extinctions'
+    write (*,*) ' -v          => switch on verbose mode'
+    write (*,*) ' -h          => print brief help'
+    stop
+  end subroutine print_help
+!------------------------- SayTime ---------------------
+  subroutine SayTime ( What, startTime )
+    character(len=*), intent(in) :: What
+    real, intent(in), optional :: startTime
+    real :: myt1
+    if ( present(startTime) ) then
+      myt1 = startTime
+    else
+      myt1 = t1
+    endif
+    call time_now ( t2 )
+    call output ( "Timing for " // what // " = " )
+    call output ( dble(t2 - myt1), advance = 'yes' )
+  end subroutine SayTime
+
+!==================
+end program extinctionmaker
+!==================
+
+! $Log: extinctionmaker.f90,v $
+! Revision 1.3  2016/08/23 18:33:47  pwagner
+! SelfDiff was moved to Diff_1
+!
+! Revision 1.2  2016/07/28 01:46:37  vsnyder
+! Refactor diff and dump
+!
+! Revision 1.1  2016/06/02 22:50:49  pwagner
+! First commit
+!
+@
+
+
+1.3
+log
+@SelfDiff was moved to Diff_1
+@
+text
+@d20 3
+a22 2
+! which would be used by a joint TES-MLS ozone retrieval
+   use Dump_0, only: DUMP
+d24 4
+a27 4
+   use Hdf, only: DFACC_RDWR, DFACC_RDOnly
+   use HDF5, only: h5fis_hdf5_f
+   use Intrinsic, only: l_hdf, l_swath
+   use L2AUXData, only: L2AUXData_t,  maxSDNamesBufSize, &
+d29 3
+a31 3
+   use L2GPData, only: L2GPData_t, rgp, &
+     & DestroyL2GPContents, readL2GPData, writeL2GPData
+   use machine, only: hp, getarg
+d35 4
+a38 4
+   use MLSFillvalues, only: isFillValue, Monotonize
+   use MLSHDF5, only: GetAllHDF5DSNames, mls_h5open, mls_h5close
+   use MLSHDFEOS, only: MLS_swath_in_file
+   use MLSKinds, only: r8
+d41 5
+a45 5
+   use MLSStrings, only: lowercase
+   use Monotone, only: isMonotonic
+   use output_m, only: output
+   use PrintIt_m, only: Set_Config
+   use Time_M, only: Time_Now, time_config
+d53 1
+a53 1
+       "$Id: extinctionmaker.f90,v 1.2 2016/07/28 01:46:37 vsnyder Exp $"
+d67 7
+d77 1
+a77 1
+    character   :: species = 'C'                     ! for CO (default)
+d95 1
+a95 1
+  CALL mls_h5open(error)
+d114 10
+a123 1
+    call create_swath
+d125 2
+a126 2
+  call mls_h5close(error)
+  call SayTime( 'Creating swath' )
+d131 21
+a151 17
+  subroutine create_swath
+    type(l2auxData_T)        :: Geodlat
+    type(l2auxData_T)        :: MIFExrinction
+    type(l2auxData_T)        :: ptan
+    type(MLSFile_T)          :: L2AUXFile
+    type(MLSFile_T)          :: L2GPFile
+    type(L2GPData_T)         :: l2gp
+    integer                  :: dggAccess
+    integer                  :: instance
+    integer                  :: MAF
+    real(rgp)                :: maxLatOffset
+    integer, dimension(3)    :: ptanShp
+    character(len=128)       :: PTanDSName
+    character(len=128)       :: MiFXDSName
+    character(len=128)       :: ExtnDSName
+    integer                  :: status
+    logical                  :: v3
+d153 1
+a153 1
+    print *, 'Entered create_swath'
+d155 1
+a155 5
+    if ( options%verbose ) print *, trim(sdList)
+    if ( index( sdList, 'GHz.MifExtinction-CorePlusR3' ) < 1 ) then
+      if ( options%verbose ) print *, 'The dgg and dgm files seem to be v3, not v4'
+      return
+    endif
+a160 7
+    v3 = MLS_swath_in_file ( &
+      & options%filenames(1), "ExtinctionR3-FinalExt", HDFVERSION_5 &
+      & )
+    if ( v3 ) then
+      if ( options%verbose ) print *, 'The dgg and dgm files seem to be v3, not v4'
+      if ( .not. options%debug ) return
+    endif
+d175 2
+a176 2
+    select case ( options%species )
+    case ( 'C' )
+d179 1
+a179 1
+    case ( 'O' )
+d184 1
+a184 1
+      print *, 'I expected species to be either C or O, not ', options%species
+d187 14
+d292 1
+a292 1
+    subroutine get_filename(filename, n_filenames, options)
+d316 4
+a319 1
+        options%species = 'O'
+d357 10
+a366 9
+      write (*,*) &
+      & 'Usage:extinctionmaker [options] dgg_file dgm_file'
+      write (*,*) ' Options: '
+      write (*,*) ' -d          => switch on debug mode'
+      write (*,*) ' -dryrun     => switch on dryrun mode'
+      write (*,*) ' -ozone      => create ozone extinction instead of CO'
+      write (*,*) ' -v          => switch on verbose mode'
+      write (*,*) ' -h          => print brief help'
+      stop
+d388 3
+@
+
+
+1.2
+log
+@Refactor diff and dump
+@
+text
+@d22 1
+a22 1
+   use Dump_1, only: selfDiff
+d52 1
+a52 1
+       "$Id: extinctionmaker.f90,v 1.1 2016/06/02 22:50:49 pwagner Exp $"
+d243 1
+a243 1
+        & l2gp%latitude(instance) - Geodlat%values(1, 1, MAF) &
+d360 3
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d21 2
+a22 1
+   use Dump_0, only: DUMP, selfDiff
+d52 1
+a52 1
+       "$Id: extinctionmaker.f90,v 1.6 2015/08/05 20:36:28 pwagner Exp $"
+d360 3
+@
+

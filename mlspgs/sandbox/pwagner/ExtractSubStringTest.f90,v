@@ -1,0 +1,182 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.14
+	cfm-single-freq-0-1:1.1.0.12
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.10
+	mus-emls-1-70:1.1.0.8
+	rel-1-0-englocks-work:1.1.0.6
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V2-24-NRT-04:1.1
+	V3-33:1.1
+	V2-24:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1
+	V2-23-NRT-02:1.1
+	V2-23:1.1
+	V2-22-NRT-01:1.1
+	V2-22:1.1
+	V2-21:1.1
+	V2-20:1.1
+	V2-11:1.1
+	V2-10:1.1
+	V2-00:1.1
+	V1-51:1.1
+	V1-50:1.1
+	V1-45:1.1
+	V1-44:1.1
+	V1-43:1.1
+	V1-42:1.1
+	V1-41:1.1
+	V1-32:1.1
+	V1-40:1.1
+	V1-31:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2003.04.11.23.26.53;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@First commit
+@
+text
+@!=================================
+PROGRAM ExtractSubStringTest ! tests MLSStrings module
+!=================================
+
+   USE MLSStrings , ONLY: Capitalize, ExtractSubString, GetStringElement, &
+     & NumStringElements
+
+   IMPLICIT NONE
+
+!------------------- RCS Ident Info -----------------------
+   CHARACTER(LEN=130) :: Id = &                                                    
+   "$Id: ExtractSubStringTest.f90,v 1.1 2003/02/15 00:43:04 pwagner Exp $"
+   CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile: ExtractSubStringTest.f90,v $"
+!----------------------------------------------------------
+
+! Brief description of program
+! This program tests the ExtractSubString subroutine.
+
+! To use this, copy it into
+! mlspgs/tests/lib
+! then enter "make depends" followed by "make"
+
+
+! Then run it, entering comma-separated lists of words; a blank line terminates
+
+! Variables
+
+   INTEGER, PARAMETER                :: MAXLISTLENGTH=80
+   INTEGER, PARAMETER                :: MAXWORDLENGTH=16
+	CHARACTER (LEN=MAXLISTLENGTH)     :: theString
+	CHARACTER (LEN=MAXLISTLENGTH)     :: anotherString
+	CHARACTER (LEN=4)                 :: sub1, sub2
+   INTEGER                           :: listLength, NumWords, wordNum
+	LOGICAL, PARAMETER                :: kountEmpty = .TRUE.
+	LOGICAL, PARAMETER                :: CaseSensitive = .false.
+
+   ! 1st--just a simple test of how option
+   theString = 'abcabc123defdef'
+   sub1 = 'abc'
+   sub2 = 'def'
+   print *, 'theString ', trim(theString)
+   print *, 'sub1 ', trim(sub1)
+   print *, 'sub2 ', trim(sub2)
+   call ExtractSubString(theString, anotherString, sub1, sub2)
+   print *, '(after extracting with default how', trim(anotherString)
+   call ExtractSubString(theString, anotherString, sub1, sub2, how='stingy')
+   print *, '(after extracting with stingy how', trim(anotherString)
+   call ExtractSubString(theString, anotherString, sub1, sub2, how='greedy')
+   print *, '(after extracting with greedy how', trim(anotherString)
+   ! 1st--just a simple test of no_trim option
+   theString = 'abc abc 123def def'
+   sub1 = 'abc '
+   sub2 = 'def '
+   print *, 'theString ', trim(theString)
+   print *, 'sub1 "', sub1, '"'
+   print *, 'sub2 "', sub2, '"'
+   call ExtractSubString(theString, anotherString, sub1, sub2, &
+     & no_trim=.true.)
+   print *, '(after extracting with default how', trim(anotherString)
+   call ExtractSubString(theString, anotherString, sub1, sub2, how='stingy', &
+     & no_trim=.true.)
+   print *, '(after extracting with stingy how', trim(anotherString)
+   call ExtractSubString(theString, anotherString, sub1, sub2, how='greedy', &
+     & no_trim=.true.)
+   print *, '(after extracting with greedy how', trim(anotherString)
+	DO
+
+      ! Prompt for input
+
+ 	   print *, 'Enter sub1'
+		read(*, '(A)') sub1
+      print *, 'You entered ', trim(sub1)
+		IF(sub1 == ' ' .or. Capitalize(sub1) == 'STOP') THEN
+   		print *, 'GAME OVER'
+			STOP
+		ENDIF
+ 	   print *, 'Enter sub2'
+		read(*, '(A)') sub2
+      print *, 'You entered ', trim(sub2)
+	
+      do
+ 	     print *, 'Enter string to be processed'
+		  read(*, '(A)') theString
+        print *, 'You entered ', trim(theString)
+		  IF(theString == ' ') THEN
+   	     CYCLE
+        elseif(Capitalize(theString) == 'STOP') then
+           stop
+		  ENDIF
+
+        call ExtractSubString(theString, anotherString, sub1, sub2)
+		  print *, '(after default extracting) theString = ', anotherString
+        call ExtractSubString(theString, anotherString, sub1, sub2, how='stingy')
+		  print *, '(after stingy extracting) theString = ', anotherString
+        call ExtractSubString(theString, anotherString, sub1, sub2, how='greedy')
+		  print *, '(after greedy extracting) theString = ', anotherString
+		ENDDO
+	ENDDO
+!==================
+END PROGRAM ExtractSubStringTest
+!==================
+
+! $Log: ExtractSubStringTest.f90,v $
+@

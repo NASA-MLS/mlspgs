@@ -1,0 +1,377 @@
+head	2.7;
+access;
+symbols
+	v5-02-NRT-19:2.7
+	v6-00:2.7
+	v5-02-NRT-18:2.7
+	v5-02:2.7
+	v5-01-NRT-17:2.7
+	v5-01-NRT-16:2.7
+	v5-01-NRT-15:2.7
+	v5-01-NRT-14:2.7
+	neuralnetworks-1-0:2.7.0.10
+	cfm-single-freq-0-1:2.7.0.8
+	v5-01:2.7
+	v5-00:2.7
+	v4-23-TA133:2.7.0.6
+	mus-emls-1-70:2.7.0.4
+	rel-1-0-englocks-work:2.7.0.2
+	VUMLS1-00:2.7
+	VPL1-00:2.7
+	V4-22-NRT-08:2.6
+	VAM1-00:2.6
+	V4-21:2.6.0.2
+	V4-13:2.6
+	V4-12:2.6
+	V4-11:2.6
+	V4-10:2.6;
+locks; strict;
+comment	@# @;
+
+
+2.7
+date	2016.05.25.00.19.30;	author vsnyder;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2014.04.09.00.43.43;	author vsnyder;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2014.02.27.02.24.44;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2014.02.21.19.27.16;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2014.01.11.01.41.02;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2014.01.08.21.09.06;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2013.10.09.01.06.36;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.7
+log
+@Decruftication
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Evaluate_Variable_m
+
+  implicit NONE
+  private
+  public :: Define_Variable_As_String, Evaluate_Variable
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: Evaluate_Variable_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains ! ====     Public Procedures     ==============================
+
+  subroutine Define_Variable_As_String ( Variable_Name, String )
+    use Declaration_Table, only: Allocate_Test, Redeclare, Str_Value, Value_t, &
+      & Variable
+    use Symbol_Table, only: Enter_Terminal
+    use Symbol_Types, only: T_Identifier, T_String
+    character(*), intent(in) :: Variable_Name, String
+    integer :: Name, Value
+    type(value_t), allocatable :: The_Value(:)
+
+    name = enter_terminal ( trim(adjustl(variable_name)), t_identifier )
+    value = enter_terminal ( trim(adjustl(string)), t_string )
+    call allocate_test ( the_value, 1, 'The_Value', moduleName )
+    ! Don't use T_String for the type here; it's a token index here.
+    the_value(:) = value_t(str_value,str_value,dble(value))
+    !              string  value       type      units     tree
+    call redeclare ( name, name+0.0d0, variable, str_value, 0, &
+      & values=the_value ) ! Declares it if it's not declared
+  end subroutine Define_Variable_As_String
+
+  subroutine Evaluate_Variable ( Root, Son )
+
+! Evaluate a variable defined by <name> := <expr>.
+! Put its value in the Values component of its declaration.
+
+    use Declaration_Table, only: Allocate_Test, Deallocate_Test, Dump_Values, &
+      & Redeclare, Value_t, Variable
+    use Expr_m, only: Expr
+    use Output_m, only: Output
+    use String_Table, only: Display_String
+    use Toggles, only: Gen, Levels, Toggle
+    use Trace_m, only: Trace_Begin, Trace_End
+    use Tree, only: Nsons, Subtree, Sub_Rosa
+
+    integer, intent(in) :: Root  ! The := tree node of the definition
+    integer, intent(in), optional :: Son  ! Do only this son
+
+    integer :: Details           ! Dump expression values
+    integer :: First             ! First son to do, or only if present(son)
+    integer :: I
+    integer :: Me = -1           ! String index for trace cacheing
+    integer :: Name              ! String index  of name of variable
+    integer :: Type
+    integer :: Units(2), Units2(2) ! From expr
+    double precision :: Value(2) ! From expr
+    type(value_t), allocatable :: Values1(:), Values2(:), Values3(:)
+
+    call trace_begin ( me, 'Evaluate_Variable', root, cond=toggle(gen) )
+    details = merge(levels(gen),0,toggle(gen))
+    name = sub_rosa(subtree(1,root))
+    first = 2
+    if ( present(son) ) first = son
+    call expr ( subtree(first,root), units, value, type, values=values1 )
+    if ( details > 1 ) then
+      call output ( first-1, before='Element ' )
+      call display_string ( name, before=' of value of ', advance='yes' )
+      call dump_values ( values1, details=9 )
+    end if
+    if ( .not. present(son) ) then
+      do i = 3, nsons(root)
+        call expr ( subtree(i,root), units2, value,  type, values=values2 )
+        if ( details > 1 ) then
+          call output ( i-1, before='Element ' )
+          call display_string ( name, before=' of value of ', advance='yes' )
+          call dump_values ( values2, details=9 )
+        end if
+        call allocate_test ( values3, size(values1)+size(values2), &
+          & 'Values3', moduleName )
+        values3 = [ values1, values2 ]
+        call deallocate_test ( values1, 'Values1', moduleName )
+        call deallocate_test ( values2, 'Values2', moduleName )
+        call move_alloc ( values3, values1 )
+      end do
+    end if
+    if ( details > 0 ) then
+      call display_string ( name, before='Final value of ', advance='yes' )
+      call dump_values ( values1, details=details )
+    end if
+    !              string  value       type     units  tree
+    call redeclare ( name, name+0.0d0, variable, type, root, &
+      & values=values1 ) ! Declares it if it wasn't already declared
+    call trace_end ( 'Evaluate_Variable', cond=toggle(gen) )
+
+  end subroutine Evaluate_Variable
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: Evaluate_Variable_m.f90,v 2.6 2014/04/09 00:43:43 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Evaluate_Variable_m
+
+! $Log: Evaluate_Variable_m.f90,v $
+! Revision 2.6  2014/04/09 00:43:43  vsnyder
+! Add Define_Variable_As_String
+!
+! Revision 2.5  2014/02/27 02:24:44  vsnyder
+! Redeclare variable consistently with Declare in tree_checker
+!
+! Revision 2.4  2014/02/21 19:27:16  vsnyder
+! More work on type checking, especially for enumeration-typed variables
+!
+! Revision 2.3  2014/01/11 01:41:02  vsnyder
+! Decruftification
+!
+! Revision 2.2  2014/01/08 21:09:06  vsnyder
+! Add more type checking and tracing
+!
+! Revision 2.1  2013/10/09 01:06:36  vsnyder
+! Initial commit
+!
+@
+
+
+2.6
+log
+@Add Define_Variable_As_String
+@
+text
+@d51 1
+a51 1
+      & Enum_Value, Redeclare, Value_t, Variable
+d113 1
+a113 1
+       "$Id: Evaluate_Variable_m.f90,v 2.5 2014/02/27 02:24:44 vsnyder Exp $"
+d123 3
+@
+
+
+2.5
+log
+@Redeclare variable consistently with Declare in tree_checker
+@
+text
+@d16 1
+a16 1
+  public :: Evaluate_Variable
+d26 19
+d113 1
+a113 1
+       "$Id: Evaluate_Variable_m.f90,v 2.4 2014/02/21 19:27:16 vsnyder Exp $"
+d123 3
+@
+
+
+2.4
+log
+@More work on type checking, especially for enumeration-typed variables
+@
+text
+@d82 1
+a82 1
+      call dump_values ( values1, details=9 )
+d84 2
+a85 2
+    !              string  value     type     units  tree
+    call redeclare ( name, value(1), variable, type, root, &
+d94 1
+a94 1
+       "$Id: Evaluate_Variable_m.f90,v 2.3 2014/01/11 01:41:02 vsnyder Exp $"
+d104 3
+@
+
+
+2.3
+log
+@Decruftification
+@
+text
+@d26 1
+a26 1
+  subroutine Evaluate_Variable ( Root )
+d32 1
+a32 1
+      & Redeclare, Value_t, Variable
+d35 1
+d39 1
+d41 1
+d44 1
+d47 1
+d49 1
+a49 1
+    integer :: Units(2)          ! From expr
+d55 4
+a58 1
+    call expr ( subtree(2,root), units, value, type, values=values1 )
+d60 2
+a61 2
+      call output ( 1, before='Element ' )
+      call output ( ' of value', advance='yes' )
+d64 16
+a79 14
+    do i = 3, nsons(root)
+      call expr ( subtree(i,root), units, value,  type, values=values2 )
+      if ( details > 1 ) then
+        call output ( i-1, before='Element ' )
+        call output ( ' of value', advance='yes' )
+        call dump_values ( values2, details=9 )
+      end if
+      call allocate_test ( values3, size(values1)+size(values2), &
+        & 'Values3', moduleName )
+      values3 = [ values1, values2 ]
+      call deallocate_test ( values1, 'Values1', moduleName )
+      call deallocate_test ( values2, 'Values2', moduleName )
+      call move_alloc ( values3, values1 )
+    end do
+d81 1
+a81 1
+      call output ( 'Final value of variable', advance='yes' )
+d84 2
+a85 1
+    call redeclare ( sub_rosa(subtree(1,root)), value(1), variable, &
+d94 1
+a94 1
+       "$Id: Evaluate_Variable_m.f90,v 2.2 2014/01/08 21:09:06 vsnyder Exp $"
+d104 3
+@
+
+
+2.2
+log
+@Add more type checking and tracing
+@
+text
+@a42 1
+    integer :: N                 ! For allocation
+d83 1
+a83 1
+       "$Id: Evaluate_Variable_m.f90,v 2.1 2013/10/09 01:06:36 vsnyder Exp $"
+d93 3
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d20 1
+a20 1
+       "$RCSfile: expr_m.f90,v $"
+d31 2
+a32 2
+    use Declaration_Table, only: Allocate_Test, Deallocate_Test, Range, &
+      & Redeclare, Str_Range, Value_t, Variable
+d34 2
+a35 1
+    use Toggles, only: Gen, Toggle
+d40 1
+d50 13
+a62 11
+    do i = 2, nsons(root)
+      call expr ( subtree(i,root), units, value, type, values=values2 )
+      if ( allocated(values1) ) then
+        call allocate_test ( values3, size(values1)+size(values2), &
+          & 'Values3', moduleName )
+        values3 = [ values1, values2 ]
+        call deallocate_test ( values1, 'Values1', moduleName )
+        call deallocate_test ( values2, 'Values2', moduleName )
+        call move_alloc ( values3, values1 )
+      else
+        call move_alloc ( values2, values1 )
+d64 6
+d71 4
+d84 1
+a84 1
+       "$Id: tree.f90,v 2.23 2013/10/02 01:31:06 vsnyder Exp $"
+d93 4
+a96 1
+! $Log: $
+@
+

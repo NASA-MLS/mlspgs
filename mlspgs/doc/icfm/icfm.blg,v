@@ -1,0 +1,94 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.12
+	cfm-single-freq-0-1:1.1.0.10
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.8
+	mus-emls-1-70:1.1.0.6
+	rel-1-0-englocks-work:1.1.0.4
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.2
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	M4-00:1.1
+	V3-33:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2011.04.18.21.24.01;	author honghanh;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial import for ICFM documentation
+@
+text
+@This is BibTeX, Version 0.99c (Web2C 7.5.4)
+The top-level auxiliary file: icfm.aux
+The style file: plainnat.bst
+Database file #1: icfmbib.bib
+You've used 5 entries,
+            2774 wiz_defined-function locations,
+            671 strings with 7159 characters,
+and the built_in function-call counts, 4902 in all, are:
+= -- 370
+> -- 582
+< -- 0
++ -- 194
+- -- 189
+* -- 514
+:= -- 825
+add.period$ -- 15
+call.type$ -- 5
+change.case$ -- 73
+chr.to.int$ -- 5
+cite$ -- 10
+duplicate$ -- 99
+empty$ -- 199
+format.name$ -- 194
+if$ -- 944
+int.to.chr$ -- 1
+int.to.str$ -- 1
+missing$ -- 5
+newline$ -- 33
+num.names$ -- 20
+pop$ -- 148
+preamble$ -- 1
+purify$ -- 68
+quote$ -- 0
+skip$ -- 119
+stack$ -- 0
+substring$ -- 134
+swap$ -- 5
+text.length$ -- 0
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 55
+warning$ -- 0
+while$ -- 23
+width$ -- 0
+write$ -- 71
+@

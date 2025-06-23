@@ -1,0 +1,286 @@
+head	2.4;
+access;
+symbols
+	v5-02-NRT-19:2.4
+	v6-00:2.4
+	v5-02-NRT-18:2.4
+	v5-02:2.4
+	v5-01-NRT-17:2.4
+	v5-01-NRT-16:2.4
+	v5-01-NRT-15:2.4
+	v5-01-NRT-14:2.4
+	neuralnetworks-1-0:2.4.0.12
+	cfm-single-freq-0-1:2.4.0.10
+	v5-01:2.4
+	v5-00:2.4
+	v4-23-TA133:2.4.0.8
+	mus-emls-1-70:2.4.0.6
+	rel-1-0-englocks-work:2.4.0.4
+	VUMLS1-00:2.4
+	VPL1-00:2.4
+	V4-22-NRT-08:2.4
+	VAM1-00:2.4
+	V4-21:2.4.0.2
+	V4-13:2.4
+	V4-12:2.4
+	V4-11:2.4
+	V4-10:2.4
+	M4-00:2.4;
+locks; strict;
+comment	@# @;
+
+
+2.4
+date	2012.12.04.03.35.20;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2012.11.30.02.34.40;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2012.11.30.02.16.43;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2012.11.30.02.07.47;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.4
+log
+@Revert to 2.1 due to restrictions on specification expressions
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Lazy
+
+  ! Lazy evaluation functions
+
+  implicit NONE
+
+  private
+
+  public :: AndThen
+
+  ! AndThen ( A, B ) with A optional is false if A is absent,
+  ! or A.and.B otherwise.
+
+! This can't be done, because the AndThen function has optional arguments
+! interface operator ( .ANDTHEN. )
+!   module procedure AndThen
+! end interface
+
+  public :: Lazy_Value
+
+  ! Lazy_Value ( A, B ) with A optional.
+  ! If A is present, the function value is A; otherwise it is B.
+
+  ! All but Lazy_Value_Character are elemental; for them, the ranks of
+  ! A and B must conform.  Lazy_Value_Character is only available for
+  ! scalar arguments.
+
+  interface Lazy_Value
+    module procedure Lazy_Value_Character, Lazy_Value_Double, Lazy_Value_Int
+    module procedure Lazy_Value_Logical, Lazy_Value_Real
+  end interface
+
+  public :: Lazy_Len
+
+  ! Lazy_Len ( A, B ) with A optional.
+  ! If A is present the function value is len(A); otherwise it is len(B).
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: Lazy.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  pure logical function AndThen ( A, B )
+    logical, intent(in), optional :: A
+    logical, intent(in) :: B
+    andThen = present(a)
+    if ( andThen ) andThen = a .and. b
+  end function AndThen
+
+  pure integer function Lazy_Len ( Optional, Absent )
+    character(*), optional, intent(in) :: Optional
+    character(*), intent(in) :: Absent
+    if ( present(optional) ) then
+      lazy_len = len(optional)
+    else
+      lazy_len = len(absent)
+    end if
+  end function Lazy_Len
+
+  function Lazy_Value_Character ( Optional, Absent ) result ( R )
+    character(*), optional, intent(in) :: Optional
+    character(*), intent(in) :: Absent
+    character(:), allocatable :: R
+    ! Intel 12.0 doesn allow this:
+!   allocate ( character(lazy_len(optional,absent)) :: r )
+    if ( present(optional) ) then
+      allocate ( character(len(optional)) :: r )
+      r = optional
+    else
+      allocate ( character(len(absent)) :: r )
+      r = absent
+    end if
+  end function Lazy_Value_Character
+
+  elemental double precision function Lazy_Value_Double ( Optional, Absent ) result ( R )
+    double precision, optional, intent(in) :: Optional
+    double precision, intent(in) :: Absent
+    if ( present(optional) ) then
+      r = optional
+    else
+      r = absent
+    end if
+  end function Lazy_Value_Double
+
+  elemental integer function Lazy_Value_Int ( Optional, Absent ) result ( R )
+    integer, optional, intent(in) :: Optional
+    integer, intent(in) :: Absent
+    if ( present(optional) ) then
+      r = optional
+    else
+      r = absent
+    end if
+  end function Lazy_Value_Int
+
+  elemental logical function Lazy_Value_Logical ( Optional, Absent ) result ( R )
+    logical, optional, intent(in) :: Optional
+    logical, intent(in) :: Absent
+    if ( present(optional) ) then
+      r = optional
+    else
+      r = absent
+    end if
+  end function Lazy_Value_Logical
+
+  elemental real function Lazy_Value_Real ( Optional, Absent ) result ( R )
+    real, optional, intent(in) :: Optional
+    real, intent(in) :: Absent
+    if ( present(optional) ) then
+      r = optional
+    else
+      r = absent
+    end if
+  end function Lazy_Value_Real
+
+! ------------------------------------------------  not_used_here  -----
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: Lazy.f90,v 2.3 2012/11/30 02:34:40 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Lazy
+
+! $Log: Lazy.f90,v $
+! Revision 2.3  2012/11/30 02:34:40  vsnyder
+! Make character function elemental
+!
+! Revision 2.2  2012/11/30 02:16:43  vsnyder
+! Use specification function instead of explicit allocation with a type-spec
+! to compute length of result variable for Lazy_Value_Character.
+!
+! Revision 2.1  2012/11/30 02:07:47  vsnyder
+! Initial commit
+!
+@
+
+
+2.3
+log
+@Make character function elemental
+@
+text
+@d74 1
+a74 1
+  elemental function Lazy_Value_Character ( Optional, Absent ) result ( R )
+d77 3
+a79 1
+    character(lazy_len ( optional, absent )) :: R
+d81 1
+d84 1
+d133 1
+a133 1
+       "$Id: Lazy.f90,v 2.2 2012/11/30 02:16:43 vsnyder Exp $"
+d143 3
+@
+
+
+2.2
+log
+@Use specification function instead of explicit allocation with a type-spec
+to compute length of result variable for Lazy_Value_Character.
+@
+text
+@d74 1
+a74 1
+  pure function Lazy_Value_Character ( Optional, Absent ) result ( R )
+d129 1
+a129 1
+       "$Id: Lazy.f90,v 2.1 2012/11/30 02:07:47 vsnyder Exp $"
+d139 4
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d22 7
+a28 1
+  ! AndThen ( A, B ) is false if A is absent, or A.and.B otherwise.
+d44 4
+a47 4
+! This can't be done, because the AndThen function has optional arguments
+! interface operator ( .ANDTHEN. )
+!   module procedure AndThen
+! end interface
+d51 1
+a51 1
+       "$RCSfile: SpectroscopyCatalog_m.f90,v $"
+d64 10
+d77 1
+a77 1
+    character(:), allocatable :: R
+a78 1
+      allocate ( character(len(optional)) :: r )
+a80 1
+      allocate ( character(len(absent)) :: r )
+d129 1
+a129 1
+       "$Id: SpectroscopyCatalog_m.f90,v 2.54 2012/05/08 01:34:29 vsnyder Exp $"
+d138 4
+a141 1
+! $Log: $
+@
+

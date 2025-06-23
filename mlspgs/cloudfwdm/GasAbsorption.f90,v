@@ -1,0 +1,1416 @@
+head	1.28;
+access;
+symbols
+	v5-02-NRT-19:1.28
+	v6-00:1.28
+	v5-02-NRT-18:1.28
+	v5-02:1.27
+	v5-01-NRT-17:1.28
+	v5-01-NRT-16:1.28
+	v5-01-NRT-15:1.28
+	v5-01-NRT-14:1.28
+	neuralnetworks-1-0:1.28.0.4
+	cfm-single-freq-0-1:1.28.0.2
+	v5-01:1.27
+	v5-00:1.27
+	v4-23-TA133:1.27.0.10
+	mus-emls-1-70:1.27.0.8
+	rel-1-0-englocks-work:1.27.0.6
+	VUMLS1-00:1.27
+	VPL1-00:1.27
+	V4-22-NRT-08:1.27
+	VAM1-00:1.27
+	V4-21:1.27.0.4
+	V4-13:1.27
+	V4-12:1.27
+	V4-11:1.27
+	V4-10:1.27
+	V3-43:1.27
+	M4-00:1.27
+	V3-41:1.27
+	V3-40-PlusGM57:1.27.0.2
+	V2-24-NRT-04:1.26
+	V3-33:1.27
+	V2-24:1.26
+	V3-31:1.27
+	V3-30-NRT-05:1.27
+	cfm-01-00:1.27
+	V3-30:1.27
+	V3-20:1.27
+	V3-10:1.27
+	V2-23-NRT-02:1.26
+	V2-23:1.26
+	V2-22-NRT-01:1.26
+	V2-22:1.26
+	V2-21:1.24
+	V2-20:1.24
+	V2-11:1.24
+	V2-10:1.24
+	V2-00:1.24
+	V1-51:1.23
+	V1-50:1.23
+	V1-45:1.23
+	V1-44:1.23
+	V1-43:1.23
+	V1-32:1.23
+	V1-31:1.23
+	V1-30:1.23
+	V1-13:1.19
+	V1-12:1.19
+	V1-11:1.19
+	V1-10:1.19
+	newfwm-feb03:1.19.0.2
+	V1-04:1.6
+	V1-03:1.6
+	V1-02:1.6
+	JointForwardModel:1.7.0.2
+	V1-00:1.5;
+locks; strict;
+comment	@# @;
+
+
+1.28
+date	2020.01.30.18.07.06;	author pwagner;	state Exp;
+branches;
+next	1.27;
+
+1.27
+date	2009.06.23.18.26.19;	author pwagner;	state Exp;
+branches;
+next	1.26;
+
+1.26
+date	2007.07.25.22.08.04;	author vsnyder;	state Exp;
+branches;
+next	1.25;
+
+1.25
+date	2007.07.25.21.59.39;	author vsnyder;	state Exp;
+branches;
+next	1.24;
+
+1.24
+date	2005.06.22.18.27.38;	author pwagner;	state Exp;
+branches;
+next	1.23;
+
+1.23
+date	2003.05.07.23.25.36;	author jonathan;	state Exp;
+branches;
+next	1.22;
+
+1.22
+date	2003.05.07.23.23.39;	author jonathan;	state Exp;
+branches;
+next	1.21;
+
+1.21
+date	2003.04.03.17.13.40;	author dwu;	state Exp;
+branches;
+next	1.20;
+
+1.20
+date	2003.04.03.16.49.18;	author dwu;	state Exp;
+branches;
+next	1.19;
+
+1.19
+date	2003.02.04.19.25.52;	author jonathan;	state Exp;
+branches;
+next	1.18;
+
+1.18
+date	2003.02.03.20.28.45;	author dwu;	state Exp;
+branches;
+next	1.17;
+
+1.17
+date	2003.02.01.06.43.16;	author dwu;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2003.01.30.18.03.20;	author jonathan;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2003.01.23.00.19.09;	author pwagner;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2002.12.18.16.11.07;	author jonathan;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2002.11.06.19.08.08;	author jonathan;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2002.11.06.18.20.03;	author jonathan;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2002.10.08.17.08.07;	author pwagner;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2002.08.22.00.14.42;	author jonathan;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2002.08.19.22.22.03;	author jonathan;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2002.08.08.22.46.44;	author jonathan;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2002.05.06.22.35.22;	author jonathan;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2002.04.30.18.15.22;	author jonathan;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2001.11.14.00.40.26;	author jonathan;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.09.21.15.51.37;	author jonathan;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2001.09.20.21.49.46;	author jonathan;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.09.20.21.31.25;	author jonathan;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.09.20.19.54.37;	author jonathan;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.28
+log
+@Corrected error which could leave CONT_1 undefined
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module GasAbsorption
+
+! -------------------------------------------------------------------------  
+! COMPUTE ATMOSPHERIC GASES ABSORPTION COEFFICIENTS
+! -------------------------------------------------------------------------
+
+      use MLSCommon, only: R8 
+      implicit none
+      Private
+      Public :: GET_BETA
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: GasAbsorption.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+      
+      real, private, parameter :: pi = 3.1415926
+
+contains
+
+! -------------------------------------------------  GET_BETA  -----
+      SUBROUTINE GET_BETA(QLG,V0,GSE,IST,WTH,NTH,DELTA,N1,GAMMA,N2, &
+                 &        NMOL,NCNT,T,PB,F,RH,VMR,ABSC,NS )
+!                &        MOL,NMOL,NCNT,T,PB,F,RH,VMR,ABSC,NS )
+
+!==============================================================
+!      CALCULATE CLEAR-SKY ABSORPTION COEFFICIENT AT F AND T
+!      LATEST UPDATE: J.JIANG, MAY 18, 2001
+!==============================================================
+
+      use RHIFromH2O, only: RHIFromH2O_Factor
+!      use WaterVapor, only: RHtoEV
+
+      INCLUDE 'spectra.f9h' 
+
+      INTEGER :: NS
+      REAL :: QTP(3)                          ! TEMPERATURE ON WHICH QLG 
+      DATA QTP /300.0,225.0,150.0/            ! ARE GIVEN
+                                              !                 | A GIVEN TEMP
+      REAL(r8) :: QRAT                        ! INTERPOLATED QLG RATIO AT 
+      REAL(r8) :: F                           ! FREQUENCY IN GHz
+      REAL(r8) :: T                           ! TEMPERATURE (K)
+      REAL(r8) :: P                           ! DRY AIR PARTIAL PRESSURE (hPa)
+      REAL(r8) :: PB                          ! TOTAL AIR PRESSURE (hPa)
+      REAL(r8) :: VP                          ! VAPOR PARTIAL PRESSURE (hPa)
+      REAL(r8) :: VMR(NS-1)                   ! MINOR SPECIES 1=O3, 2=N2O, 3=HNO3
+      REAL(r8) :: VMR_H2O                     ! H2O VOLUME MIXING RATIO
+      REAL(r8) :: VMR_O2                      ! O2 VOLUME MIXING RATIO
+      REAL(r8) :: B                           ! BETA (1/m/ppv)
+      REAL(r8) :: RH                          ! Relative Humidity if values > 1
+                                              ! or H2O vmr if values < 1
+      REAL(r8) :: ABSC                        ! ABSORPTION COEFFICIENT (1/m)
+                                              ! 1-O2
+                                              ! 2-H2O
+                                              ! 3-O_18_O
+                                              ! 4-H2O_18
+                                              ! 5-O3
+                                              ! 6-N2O
+                                              ! 7-HNO3
+
+      REAL(r8) :: CONT_1,CONT_2,CONT_3        ! CONTINUUM ABSORPTION COEFFICIENTS
+      REAL(r8) :: SC_CONST
+      REAL(r8) :: SD,G0                       ! DEBY CONTRIBUTION (LIEBE 1989)
+      REAL(r8) :: PS, NPS                     ! PRESSURE SHIFT PARAMETERS
+     
+!      REAL :: PI
+!      PARAMETER (PI=3.1415926)
+
+      REAL(r8) :: ZP,YY,TT,TWTH0,DWTH0        ! WORKING SPACE
+      INTEGER :: I, J, IMOL
+
+!      REAL(r8) :: MYSHAPE, FF, MYRESULT
+!      EXTERNAL MYSHAPE
+
+       REAL(r8) :: FF
+
+!------------------------------------------------------------------------
+      
+      IF(RH .LT. 1._r8) THEN           ! RH IS WATER VAPOR MIXING RATIO
+
+         VMR_H2O = RH                  
+         VP=VMR_H2O*PB                 ! VP IS VAPOR PRESSURE, PB IS TOTAL
+         P=PB-VP                       ! PRESSURE, P IS DRY-AIR PRESSURE
+
+      ELSE IF (RH .GE. 1._r8) THEN     ! RH HERE IS RELATIVE HUMIDITY 
+!         CALL RHtoEV(T,RH,VP)    
+!         P = PB-VP
+!         VMR_H2O = VP/(max(1.e-9_r8, P))
+         VMR_H2O = RHIFromH2O_Factor (T, -log10(PB), 0, .true.)*RH
+         !                                           *
+         ! * optional 0 will return mixing ratio in parts per 1
+         ! * optional 6 will return mixing ratio in units of ppmv
+         VP=PB*VMR_H2O
+         P =PB-VP              !approximate dry air pressure
+      END IF
+
+         VMR_H2O = max(1.e-9_r8, vmr_h2o)
+
+      VMR_O2 = 0.209476_r8
+      FF     = F*1000.                   ! CONVERT F TO MHz
+      ZP     = -LOG10( max(1.e-9_r8,P) ) ! CONVERT P(hPa) TO ZP
+      TT     = 300._r8/T
+
+      ABSC=0._r8
+      I=0
+
+!-------------------------------------
+!     LINE EMISSION
+!-------------------------------------
+      DO IMOL=1,NMOL
+
+         B=0._r8
+         
+         DO J=1,NCNT(IMOL)
+            I=I+1
+
+            IF(IMOL.GE.3.AND.ABS(V0(i)-FF).GT.10000.)  cycle ! GOTO 100 SAVE CPU
+            
+            PS  = 0.00_r8
+            NPS = 0.00_r8
+
+         ! Determine pressure shift parameters
+            select case (IMOL)
+            case (1)                    ! O2
+              IF ( V0(i) .eq. 118750.3410_r8 ) THEN
+                PS   = -0.140_r8
+                NPS  = 1.36_r8
+              END IF
+            case (2)                    ! H2O
+              IF ( V0(i) .eq. 183310.0910_r8) THEN 
+                PS   = -0.160_r8
+                NPS  = 1.375_r8
+              ENDIF
+            case (4)                    ! H2O_18
+              IF ( V0(i) .eq. 203407.5200_r8 ) THEN
+                PS   = -0.160_r8
+                NPS  = 1.375_r8 
+              END IF
+            end select
+            v01(i) = 0.0_r8                     ! Pressure Shift effects
+            V01(i) = V0(i) + PS * P * (TT**NPS) ! Include Hugh Pumphrey's
+
+            IF(T .LE. QTP(2)) THEN
+               QRAT = (QLG(2,I)-QLG(1,I))+&
+                & (QLG(3,I)-QLG(2,I))*(T-QTP(2))/(QTP(3)-QTP(2))
+            ELSE
+               QRAT = (QLG(2,I)-QLG(1,I))*(T-QTP(1))/(QTP(2)-QTP(1))
+            ENDIF
+
+            YY=10.**(-ZP)*(DELTA(I)*TT**N1(I)+GAMMA(I)*TT**N2(I))
+
+!-------------------------------------
+!           PRESSURE WIDTH
+!-------------------------------------
+
+            TWTH0=WTH(I)*10.**(-ZP)*TT**NTH(I)
+
+!-------------------------------------
+!           DOPPLER WIDTH
+!-------------------------------------
+            select case (IMOL)
+            case (1)
+              DWTH0 = 3.58e-7*SQRT(T/32.)*FF         ! O2
+            case (2)
+              DWTH0 = 3.58e-7*SQRT(T/18.)*FF         ! H2O
+            case (3)
+              DWTH0 = 3.58e-7*SQRT(T/34.)*FF         ! O_18_0
+            case (4)
+              DWTH0 = 3.58e-7*SQRT(T/20.)*FF         ! H2O_18
+            case (5)
+              DWTH0 = 3.58e-7*SQRT(T/48.)*FF         ! O3
+            case (6)
+              DWTH0 = 3.58e-7*SQRT(T/44.)*FF         ! N2O
+            case (7)
+              DWTH0 = 3.58e-7*SQRT(T/63.)*FF         ! HNO3
+            end select
+
+!--------------------------------------------------
+!           WHITING'S APPROXIMATION FOR THE VOIGT
+!--------------------------------------------------
+
+            TWTH0 = TWTH0/2+SQRT(TWTH0**2/4+DWTH0**2)
+
+!---------------------------------------------------------------
+!       TO SAVE COMPUTING TIME CHECK IF FREQ IS CLOSE TO O3 LINES
+!----------------------------------------------------------------
+
+            B = B+2.30549e09_r8*10.0**(IST(I)-QRAT+GSE(I)*   &
+     &          (1._r8/300._r8 - 1._r8/T)/1.600386_r8 - ZP) * PI * &
+     &           MYSHAPE(V01(i),FF,YY,TWTH0) * FF/V01(I) *  &
+     &          (1._r8 - EXP(-V01(i)/(20836.7_r8*T)))/           &
+     &          (1._r8 - EXP(-V01(i)/(20836.7_r8*300.0_r8)))/T 
+
+         ENDDO   
+
+         B=MAX(0._r8,B)                 ! AVOID NEGATIVE LINE SHAPE     
+
+            select case (IMOL)
+            case (1)
+              ABSC = ABSC + B*VMR_O2                   ! O2
+            case (2)
+              ABSC = ABSC + B*VMR_H2O                  ! H2O
+            case (3)
+              ABSC = ABSC + B*VMR_O2*0.00409524        ! O_18_O
+            case (4)
+              ABSC = ABSC + B*VMR_H2O*0.00204          ! H2O_18
+            case (5)
+              ABSC = ABSC + B*VMR(1)                   ! O3
+            case (6)
+              ABSC = ABSC + B*VMR(2)                   ! N2O
+            end select
+
+      ENDDO  
+
+!----------------------------------------
+!     DRY CONTINUUM (ATBD APPENDIX F)
+!----------------------------------------
+
+      B=(7.7e-10*EXP(-1.5e-3*(F/30)**2)+1.e-13*(60**2+(F/30)**2)  &
+     &     *EXP(-1.e-4*(F/30)**2))*TT**1.7
+!---------------------------
+! from ATBD N2-N2 continuum                                     
+!--------------------------
+       ABSC = ABSC + B*0.65*(P/1013.)**2*TT**2*(F/30)**2*1.e5/1.8 !best fit to B2 & B6
+!      ABSC = ABSC + B*0.65*(P/1013.)**2*TT**2*(F/30)**2*1.e5
+
+!==============================================================================
+! from ATBD N2-N2 continuum, 0.84 is the best fit to f15 (with N2 O2) sids at
+! 640GHz. The Debye term is coded differently between the two models, which
+! affects R2 and R3 mostly (check it later) 
+!       ABSC = ABSC + 0.84*B*0.65*(P/1013.)**2*TT**2*(F/30)**2*1.e5
+
+! The factor 1.8 is fix to match B2U of Bill's FWM without [o2, o2]
+!      ABSC = ABSC + B*0.65*(P/1013.)**2*TT**2*(F/30)**2*1.e5/1.8  
+!===============================================================================
+!     CONT_1=1.4e-10*(1-1.2e-5*F**1.5)     ! LIEBE 1989
+!     CONT_1 = 1.4e-12/(1+1.93e-5*F**1.5)  ! LIEBE 1993
+!
+!      CONT_1 = 1.4e-12/(1+1.93e-5*F**1.5)*1.28*1.17  ! MATCH THE UARS FIT
+!
+!      B=CONT_1 * F * (P/10.)**2*TT**3.5
+!      ABSC=ABSC + B*.182*F/4.343 
+!------------------------------------------
+!     DEBYE TERM FROM LIEBE
+!------------------------------------------
+      SD = 6.14e-4*P/10.*TT**2
+      G0 = 5.6e-3*(1+1.1*VMR_H2O)*P/10.*TT
+      B = SD*F/(G0 * (1.+ (F/G0)**2))           ! B is Npp in LIEBE
+      ABSC = ABSC + B*.182*F/4.343              ! CONVERTED TO 1/km 
+
+!----------------------------------------
+!     WET CONTINUUM 
+!----------------------------------------
+!      CONT_1 = 1.28e-15         ! BILL'S VALIDATION PAPER
+!      CONT_1 = 1.37e-15         ! UARS 203GHz  v5 
+
+!      the following cont_1 is adjusted based on bill's 
+      ! H2O_R2  continuum=[ 2.52300e-16, 3.62800 ]
+
+! difference with Bill's FWM f15 Band2U~6K, B10L~1K
+
+! ---------------------------------------------------------------------
+! Based on Jonathan Jiang's instructions 2020 Jan 29
+! case R1
+!      if(abs(f-127.) .lt. 14.) CONT_1 = 7.53e-16     ! wu's version
+! case R2
+!      if(abs(f-192.) .lt. 16.) CONT_1 = 7.53e-16/1.3 ! best fit to R2
+! Must define CONT_1 no matter what the frequency or radiometer (paw)
+      CONT_1 = 7.53e-16/1.3 ! best fit to R2
+! ---------------------------------------------------------------------
+      CONT_2 = 4.20
+      CONT_3 = 0.00
+      SC_CONST = CONT_1 * FF**2 * EXP(-CONT_3 * FF**2)
+      B = SC_CONST * 10.**(-2.0*ZP)* TT**CONT_2
+
+!--------------------------------------------------------------
+!     THE SECOND TERM FOR H2O-H2O COLLISION (GODON ET AL 1991)
+!--------------------------------------------------------------
+      B = B+SC_CONST*1.595e-8/8.592e-10*TT**(6.18)*10.**(-2*ZP)*VMR_H2O
+      ABSC = ABSC + B * VMR_H2O
+      ABSC = ABSC * 1.e-3       ! converted from 1/km to 1/m
+
+      END SUBROUTINE GET_BETA
+
+! -------------------------------------------------  myshape  -----
+!--------------------------------------------------------------
+!     DEFINE LINE-SHAPE FUNCTIONS
+!--------------------------------------------------------------
+
+        real(r8) function myshape(v0,ff,yy,twth0) result (myresult)
+
+        real(r8) ::  voffm              ! frequency difference
+        real(r8) ::  voffp              ! frequency difference
+        real(r8) ::  ff                 ! frequency in MHz
+        real(r8) ::  v0                 ! line frequency in MHz
+        real(r8) ::  twth0              ! line width in MHz/mb
+        real(r8) ::  yy                 ! interference coeff.
+        real(r8) ::  twthm, twthp
+
+        voffm = 0.0_r8
+        voffp = 0.0_r8
+        twthm = 0.0_r8
+        twthp = 0.0_r8
+        myresult = 0.0_r8
+
+        voffm = v0 - ff
+        voffp = v0 + ff
+        twthm = twth0 - voffm*yy*1.
+        twthp = twth0 - voffp*yy*1.
+
+!... Gross function
+!       myshape = 4.*ff*v0*twth0/pi/((voffm*voffp)**2+4*(ff*twthm)**2)
+!       return
+!... Van Vleck-Weisskopf
+!J      myshape = twthm/(voffm**2 + twth0**2) + &
+!J     &      twthp/(voffp**2 + twth0**2)
+!J      myshape = myshape * (ff/v0)/pi
+
+        myresult = twthm/(voffm**2 + twth0**2) + &
+       &      twthp/(voffp**2 + twth0**2)
+        myresult = myresult * (ff/v0)/pi
+
+       return
+       end function myshape
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: GasAbsorption.f90,v 1.27 2009/06/23 18:26:19 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module GasAbsorption
+
+! $Log: GasAbsorption.f90,v $
+! Revision 1.27  2009/06/23 18:26:19  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 1.26  2007/07/25 22:08:04  vsnyder
+! Replace tabs by spaces because tabs are not standard
+!
+! Revision 1.25  2007/07/25 21:59:39  vsnyder
+! Move USE from module scope to procedure scope
+!
+! Revision 1.24  2005/06/22 18:27:38  pwagner
+! Cant have access declared outside module scope
+!
+! Revision 1.23  2003/05/07 23:25:36  jonathan
+! fix a bug
+!
+! Revision 1.22  2003/05/07 23:23:39  jonathan
+! some clean-ups
+!
+! Revision 1.21  2003/04/03 17:13:40  dwu
+! changes: N2O mass is 44; HNO3 mass is 63
+!
+! Revision 1.20  2003/04/03 16:49:18  dwu
+! fix a bug: N2O mass should be 30; and add HNO3 in absorption calculation
+!
+! Revision 1.19  2003/02/04 19:25:52  jonathan
+! Fix bug in using RHIFromH2O
+!
+! Revision 1.18  2003/02/03 20:28:45  dwu
+! make wet continuum dependent on radiometer frequency
+!
+! Revision 1.17  2003/02/01 06:43:16  dwu
+! some fixes
+!
+! Revision 1.16  2003/01/30 18:03:20  jonathan
+! switch to use Bill's RHIFromH2O
+!
+! Revision 1.15  2003/01/23 00:19:09  pwagner
+! Some cosmetic only (or so I hope) changes
+!
+! Revision 1.14  2002/12/18 16:11:07  jonathan
+! minor changes
+!
+! Revision 1.13  2002/11/06 19:08:08  jonathan
+! best fit to b2 and b6
+!
+! Revision 1.12  2002/11/06 18:20:03  jonathan
+! add N2O
+!
+! Revision 1.11  2002/10/08 17:08:07  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 1.10  2002/08/22 00:14:42  jonathan
+! upgrade to include more molecules
+!
+! Revision 1.9  2002/08/19 22:22:03  jonathan
+! debug stuff
+!
+! Revision 1.8  2002/08/08 22:46:44  jonathan
+! newly improved version
+!
+! Revision 1.7  2002/05/06 22:35:22  jonathan
+! add Bill's version for H2O
+!
+! Revision 1.6  2002/04/30 18:15:22  jonathan
+! change CONT_1
+!
+! Revision 1.5  2001/11/14 00:40:26  jonathan
+! minor changes
+!
+! Revision 1.4  2001/09/21 15:51:37  jonathan
+! modified F95 version
+!
+@
+
+
+1.27
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d18 2
+a19 2
+      use MLSCommon, only: r8 
+      IMPLICIT NONE
+d25 1
+a25 1
+       "$RCSfile: $"
+d29 1
+a29 1
+      REAL, private, parameter :: PI = 3.1415926
+d90 1
+a90 1
+
+d274 2
+d277 1
+a277 1
+      if(abs(f-127.) .lt. 14.) CONT_1 = 7.53e-16     ! wu's version
+d279 4
+a282 1
+      if(abs(f-192.) .lt. 16.) CONT_1 = 7.53e-16/1.3 ! best fit to R2
+d341 1
+a341 1
+       "$Id: read_apriori.f90 is it here $"
+d351 3
+@
+
+
+1.26
+log
+@Replace tabs by spaces because tabs are not standard
+@
+text
+@d25 1
+a25 1
+       "$RCSfile: GasAbsorption.f90,v $"
+d333 1
+a334 1
+!---------------------------- RCS Ident Info -------------------------------
+d336 2
+a337 3
+       "$Id: GasAbsorption.f90,v 1.25 2007/07/25 21:59:39 vsnyder Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d339 1
+d341 1
+d346 3
+@
+
+
+1.25
+log
+@Move USE from module scope to procedure scope
+@
+text
+@d63 1
+a63 1
+					      ! or H2O vmr if values < 1
+d91 1
+a91 1
+      IF(RH .LT. 1._r8) THEN	       ! RH IS WATER VAPOR MIXING RATIO
+d197 1
+a197 1
+!	TO SAVE COMPUTING TIME CHECK IF FREQ IS CLOSE TO O3 LINES
+d201 4
+a204 4
+     &		(1._r8/300._r8 - 1._r8/T)/1.600386_r8 - ZP) * PI * &
+     &		 MYSHAPE(V01(i),FF,YY,TWTH0) * FF/V01(I) *  &
+     &		(1._r8 - EXP(-V01(i)/(20836.7_r8*T)))/           &
+     &		(1._r8 - EXP(-V01(i)/(20836.7_r8*300.0_r8)))/T 
+d260 1
+a260 1
+      B = SD*F/(G0 * (1.+ (F/G0)**2))		! B is Npp in LIEBE
+d266 1
+a266 1
+!      CONT_1 = 1.28e-15 	! BILL'S VALIDATION PAPER
+d299 18
+a316 18
+	real(r8) ::  voffm		! frequency difference
+	real(r8) ::  voffp		! frequency difference
+	real(r8) ::  ff		        ! frequency in MHz
+	real(r8) ::  v0		        ! line frequency in MHz
+	real(r8) ::  twth0		! line width in MHz/mb
+	real(r8) ::  yy 		! interference coeff.
+	real(r8) ::  twthm, twthp
+
+	  voffm = 0.0_r8
+	  voffp = 0.0_r8
+	  twthm = 0.0_r8
+	  twthp = 0.0_r8
+          myresult = 0.0_r8
+
+	  voffm = v0 - ff
+	  voffp = v0 + ff
+	  twthm = twth0 - voffm*yy*1.
+	  twthp = twth0 - voffp*yy*1.
+d319 2
+a320 2
+!	myshape = 4.*ff*v0*twth0/pi/((voffm*voffp)**2+4*(ff*twthm)**2)
+!	return
+d322 1
+a322 1
+!J 	myshape = twthm/(voffm**2 + twth0**2) + &
+d324 1
+a324 1
+!J 	myshape = myshape * (ff/v0)/pi
+d326 1
+a326 1
+  	myresult = twthm/(voffm**2 + twth0**2) + &
+d328 1
+a328 1
+ 	 myresult = myresult * (ff/v0)/pi
+d336 1
+a336 1
+       "$Id: GasAbsorption.f90,v 1.24 2005/06/22 18:27:38 pwagner Exp $"
+d345 3
+@
+
+
+1.24
+log
+@Cant have access declared outside module scope
+@
+text
+@a18 2
+      use WaterVapor, only: RHtoEV
+      use RHIFromH2O, only: RHIFromH2O_Factor
+d25 1
+a25 1
+       "$RCSfile: $"
+d43 3
+d336 1
+a336 1
+       "$Id: $"
+d345 3
+@
+
+
+1.23
+log
+@fix a bug
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d25 3
+a27 6
+ !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm =                          &
+    "$Id: GasAbsorption.f90,v 1.22 2003/05/07 23:23:39 jonathan Exp $"
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName=                       &
+    "$RCSfile: GasAbsorption.f90,v $"
+d29 1
+a29 1
+ !---------------------------------------------------------------------------
+d333 5
+d344 3
+@
+
+
+1.22
+log
+@some clean-ups
+@
+text
+@d19 1
+a19 1
+    "$Id: GasAbsorption.f90,v 1.21 2003/04/03 17:13:40 dwu Exp $"
+d146 1
+a146 1
+            v01(i) = 0.0_r8                     | Pressure Shift effects
+d334 3
+@
+
+
+1.21
+log
+@changes: N2O mass is 44; HNO3 mass is 63
+@
+text
+@d19 1
+a19 1
+    "$Id: GasAbsorption.f90,v 1.20 2003/04/03 16:49:18 dwu Exp $"
+d27 1
+d91 1
+a91 1
+      ELSE IF (RH .GE. 1._r8) THEN   ! RH HERE IS RELATIVE HUMIDITY 
+d146 1
+a146 1
+            v01(i) = 0.0_r8                     !      | Pressure Shift effects
+a199 2
+! 100     CONTINUE
+
+a203 6
+!          IF(IMOL .EQ. 1) ABSC = ABSC + B*VMR_O2                   ! O2      
+!          IF(IMOL .EQ. 2) ABSC = ABSC + B*VMR_H2O                  ! H2O
+!          IF(IMOL .EQ. 3) ABSC = ABSC + B*VMR_O2*0.00409524        ! O_18_O
+!          IF(IMOL .EQ. 4) ABSC = ABSC + B*VMR_H2O*0.00204          ! H2O_18
+!          IF(IMOL .EQ. 5) ABSC = ABSC + B*VMR(1)                   ! O3
+!          IF(IMOL .EQ. 6) ABSC = ABSC + B*VMR(2)                   ! N2O
+d227 4
+a230 3
+
+! from ATBD N2-N2 continuum                                      band2 and band6
+       ABSC = ABSC + B*0.65*(P/1013.)**2*TT**2*(F/30)**2*1.e5/1.8 !best fit to
+d269 1
+a269 1
+      if(abs(f-127.) .lt. 14.) CONT_1 = 7.53e-16   ! wu's version
+a283 3
+!      print*, absc
+!      stop
+
+a289 1
+!J	real(r8) function myshape(v0,ff,yy,twth0)
+a291 3
+!        use MLSCommon, only: r8        
+!	implicit none
+!        real(r8):: myresult     !J
+a292 2
+!        real :: pi
+!        parameter (pi=3.1415926)
+d300 1
+a300 1
+!
+d334 3
+@
+
+
+1.20
+log
+@fix a bug: N2O mass should be 30; and add HNO3 in absorption calculation
+@
+text
+@d19 1
+a19 1
+    "$Id: GasAbsorption.f90,v 1.19 2003/02/04 19:25:52 jonathan Exp $"
+d178 1
+a178 1
+              DWTH0 = 3.58e-7*SQRT(T/30.)*FF         ! N2O
+d180 1
+a180 1
+              DWTH0 = 3.58e-7*SQRT(T/56.)*FF         ! HNO3
+d349 3
+@
+
+
+1.19
+log
+@Fix bug in using RHIFromH2O
+@
+text
+@d19 1
+a19 1
+    "$Id: GasAbsorption.f90,v 1.18 2003/02/03 20:28:45 dwu Exp $"
+d51 1
+a51 1
+      REAL(r8) :: VMR(NS-1)                   ! MINOR SPECIES 1=O3, 2=N2O
+d62 3
+a127 1
+!            IF(IMOL .EQ. 1) THEN                         ! O2
+d129 1
+a129 1
+            case (1)
+d134 1
+a134 2
+!            ELSE IF(IMOL .EQ. 2) THEN                    ! H2O
+            case (2)
+d139 1
+a139 6
+            case (3)
+!            ELSE IF(IMOL .EQ. 3) THEN                    ! O_18_O
+              PS   = 0.00_r8
+              NPS  = 0.00_r8
+            case (4)
+!            ELSE IF(IMOL .EQ. 4) THEN                    ! H2O_18
+a143 9
+            case (5)
+!            ELSE IF(IMOL .EQ. 5) THEN                    ! O3
+              PS   = 0.00_r8
+              NPS  = 0.00_r8
+            case (6)
+!            ELSE IF(IMOL .EQ. 6) THEN                    ! N2O
+              PS   = 0.00_r8
+              NPS  = 0.00_r8
+!            END IF
+a165 7
+
+! >             IF(IMOL.EQ.1) DWTH0 = 3.58e-7*SQRT(T/32.)*FF         ! O2
+! >             IF(IMOL.EQ.2) DWTH0 = 3.58e-7*SQRT(T/18.)*FF         ! H2O
+! >             IF(IMOL.EQ.3) DWTH0 = 3.58e-7*SQRT(T/34.)*FF         ! O_18_0
+! >             IF(IMOL.EQ.4) DWTH0 = 3.58e-7*SQRT(T/20.)*FF         ! H2O_18
+! >             IF(IMOL.EQ.5) DWTH0 = 3.58e-7*SQRT(T/48.)*FF         ! O3
+! >             IF(IMOL.EQ.6) DWTH0 = 3.58e-7*SQRT(T/44.)*FF         ! N2O
+d178 3
+a180 1
+              DWTH0 = 3.58e-7*SQRT(T/44.)*FF         ! N2O
+d349 3
+@
+
+
+1.18
+log
+@make wet continuum dependent on radiometer frequency
+@
+text
+@d19 1
+a19 1
+    "$Id: GasAbsorption.f90,v 1.17 2003/02/01 06:43:16 dwu Exp $"
+d88 9
+a96 6
+
+         CALL RHtoEV(T,RH,VP)    
+         P = PB-VP
+         VMR_H2O = VP/(max(1.e-9_r8, P))
+!         VMR_H2O = RHIFromH2O_Factor (T, -log(PB), 6, .true.)*100._r8
+         ! optional 6 will return mixing ratio in units of ppmv
+d367 3
+@
+
+
+1.17
+log
+@some fixes
+@
+text
+@d19 1
+a19 1
+    "$Id: GasAbsorption.f90,v 1.16 2003/01/30 18:03:20 jonathan Exp $"
+d89 4
+a92 4
+!         CALL RHtoEV(T,100._r8,VP)    
+!         P = PB-VP
+!         VMR_H2O = VP/(max(1.e-9_r8, P))
+         VMR_H2O = RHIFromH2O_Factor (T, -log(PB), 6, .true.)*100._r8
+d96 2
+d289 4
+a292 2
+!      CONT_1 = 7.53e-16     ! wu's version
+      CONT_1 = 7.53e-16/1.3 ! best fit to band2 and band6
+d364 3
+@
+
+
+1.16
+log
+@switch to use Bill's RHIFromH2O
+@
+text
+@d19 1
+a19 1
+    "$Id: GasAbsorption.f90,v 1.15 2003/01/23 00:19:09 pwagner Exp $"
+d55 2
+a56 1
+      REAL(r8) :: RH                          ! Relative Humidity
+d81 1
+a81 1
+      IF(RH .NE. 100._r8) THEN
+d83 1
+a83 1
+         VMR_H2O = RH                  ! PH IS WATER VAPOR MIXING RATIO
+d87 1
+a87 1
+      ELSE IF (RH .EQ. 100._r8) THEN   ! RH HERE IS 100% RELATIVE HUMIDITY 
+d360 3
+@
+
+
+1.15
+log
+@Some cosmetic only (or so I hope) changes
+@
+text
+@d12 1
+d19 1
+a19 1
+    "$Id: GasAbsorption.f90,v 1.14 2002/12/18 16:11:07 jonathan Exp $"
+d81 1
+d85 8
+a92 4
+      ELSE IF (RH .EQ. 100._r8) THEN
+         CALL RHtoEV(T,100._r8,VP)     ! RH HERE IS 100% RELATIVE HUMIDITY 
+         P = PB-VP
+         VMR_H2O = VP/(max(1.e-9_r8, P))
+d359 3
+@
+
+
+1.14
+log
+@minor changes
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+d18 1
+a18 1
+    "$Id: GasAbsorption.f90,v 1.13 2002/11/06 19:08:08 jonathan Exp $"
+d25 1
+d28 1
+d30 2
+a31 1
+                 &        MOL,NMOL,NCNT,T,PB,F,RH,VMR,ABSC,NS )
+d41 4
+a44 4
+      REAL(r8) :: QTP(3)                      ! TEMPERATURE ON WHICH QLG ARE GIVEN
+      DATA QTP /300.0,225.0,150.0/
+
+      REAL(r8) :: QRAT                        ! INTERPOLATED QLG RATIO AT A GIVEN TEMP
+d66 2
+a67 2
+      REAL :: PI
+      PARAMETER (PI=3.1415926)
+d107 1
+a107 1
+            IF(IMOL.GE.3.AND.ABS(V0(i)-FF).GT.10000.) GOTO 100 ! SAVE CPU
+d113 3
+a115 1
+            IF(IMOL .EQ. 1) THEN                         ! O2
+d120 2
+a121 1
+            ELSE IF(IMOL .EQ. 2) THEN                    ! H2O
+d126 2
+a127 1
+            ELSE IF(IMOL .EQ. 3) THEN                    ! O_18_O
+d130 2
+a131 1
+            ELSE IF(IMOL .EQ. 4) THEN                    ! H2O_18
+d136 2
+a137 1
+            ELSE IF(IMOL .EQ. 5) THEN                    ! O3
+d140 2
+a141 1
+            ELSE IF(IMOL .EQ. 6) THEN                    ! N2O
+d144 4
+a147 4
+            END IF
+
+            v01(i) = 0.0_r8
+            V01(i) = V0(i) + PS * P * (TT**NPS) ! Include Hugh Pumphrey's Pressure Shift effects
+d150 2
+a151 1
+               QRAT = (QLG(2,I)-QLG(1,I))+(QLG(3,I)-QLG(2,I))*(T-QTP(2))/(QTP(3)-QTP(2))
+d168 20
+a187 6
+            IF(IMOL.EQ.1) DWTH0 = 3.58e-7*SQRT(T/32.)*FF         ! O2
+            IF(IMOL.EQ.2) DWTH0 = 3.58e-7*SQRT(T/18.)*FF         ! H2O
+            IF(IMOL.EQ.3) DWTH0 = 3.58e-7*SQRT(T/34.)*FF         ! O_18_0
+            IF(IMOL.EQ.4) DWTH0 = 3.58e-7*SQRT(T/20.)*FF         ! H2O_18
+            IF(IMOL.EQ.5) DWTH0 = 3.58e-7*SQRT(T/48.)*FF         ! O3
+            IF(IMOL.EQ.6) DWTH0 = 3.58e-7*SQRT(T/44.)*FF         ! N2O
+d205 1
+a205 1
+ 100     CONTINUE
+d211 20
+a230 6
+         IF(IMOL .EQ. 1) ABSC = ABSC + B*VMR_O2                   ! O2      
+         IF(IMOL .EQ. 2) ABSC = ABSC + B*VMR_H2O                  ! H2O
+         IF(IMOL .EQ. 3) ABSC = ABSC + B*VMR_O2*0.00409524        ! O_18_O
+         IF(IMOL .EQ. 4) ABSC = ABSC + B*VMR_H2O*0.00204          ! H2O_18
+         IF(IMOL .EQ. 5) ABSC = ABSC + B*VMR(1)                   ! O3
+         IF(IMOL .EQ. 6) ABSC = ABSC + B*VMR(2)                   ! N2O
+d241 2
+a242 2
+! from ATBD N2-N2 continuum
+       ABSC = ABSC + B*0.65*(P/1013.)**2*TT**2*(F/30)**2*1.e5/1.8     !best fit to band2 and band6
+d245 3
+a247 3
+!=====================================================================================
+! from ATBD N2-N2 continuum, 0.84 is the best fit to f15 (with N2 O2) sids at 640GHz
+! The Debye term is coded differently between the two models, which
+d253 1
+a253 1
+!======================================================================================
+d299 1
+d307 1
+a307 1
+	implicit none
+d310 2
+a311 2
+        real :: pi
+        parameter (pi=3.1415926)
+d353 3
+@
+
+
+1.13
+log
+@best fit to b2 and b6
+@
+text
+@d18 1
+a18 1
+    "$Id: GasAbsorption.f90,v 1.12 2002/11/06 18:20:03 jonathan Exp $"
+d87 1
+a87 1
+      FF     = F*1000.                 ! CONVERT F TO MHz
+a214 1
+
+d242 1
+a242 1
+      CONT_1 = 7.53e-16/1.36 ! best fit to band2 and band6
+d313 3
+@
+
+
+1.12
+log
+@add N2O
+@
+text
+@d18 1
+a18 1
+    "$Id: GasAbsorption.f90,v 1.11 2002/10/08 17:08:07 pwagner Exp $"
+d203 1
+a203 1
+       ABSC = ABSC + B*0.65*(P/1013.)**2*TT**2*(F/30)**2*1.e5/1.8
+d243 1
+a243 1
+      CONT_1 = 7.53e-16/1.6
+d314 3
+@
+
+
+1.11
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d18 1
+a18 1
+    "$Id: GasAbsorption.f90,v 1.10 2002/08/22 00:14:42 jonathan Exp $"
+d47 1
+a47 1
+      REAL(r8) :: VMR(NS-1)                      ! MINOR SPECIES 1-O3
+a93 2
+
+
+d131 3
+d157 7
+a163 6
+            IF(IMOL.EQ.1) DWTH0 = 3.58e-7*SQRT(T/32.)*FF
+            IF(IMOL.EQ.2) DWTH0 = 3.58e-7*SQRT(T/18.)*FF
+            IF(IMOL.EQ.3) DWTH0 = 3.58e-7*SQRT(T/34.)*FF
+            IF(IMOL.EQ.4) DWTH0 = 3.58e-7*SQRT(T/20.)*FF
+            IF(IMOL.EQ.5) DWTH0 = 3.58e-7*SQRT(T/48.)*FF
+            
+d191 1
+d203 2
+a204 1
+       ABSC = ABSC + B*0.65*(P/1013.)**2*TT**2*(F/30)**2*1.e5
+d206 1
+d214 1
+d237 3
+d242 2
+a243 1
+      CONT_1 = 7.53e-16   ! wu's version
+a248 1
+
+d314 3
+@
+
+
+1.10
+log
+@upgrade to include more molecules
+@
+text
+@d18 1
+a18 1
+    "$Id: GasAbsorption.f90,v 1.9 2002/08/19 22:22:03 jonathan Exp $"
+d22 1
+d298 4
+d305 3
+@
+
+
+1.9
+log
+@debug stuff
+@
+text
+@d18 1
+a18 1
+    "$Id: GasAbsorption.f90,v 1.8 2002/08/08 22:46:44 jonathan Exp $"
+d46 1
+a46 1
+      REAL(r8) :: VMR(NS)                      ! MINOR SPECIES 1-O3
+d300 3
+@
+
+
+1.8
+log
+@newly improved version
+@
+text
+@d18 1
+a18 1
+    "$Id: GasAbsorption.f90,v 1.7 2002/05/06 22:35:22 jonathan Exp $"
+d90 1
+a90 1
+      ABSC=0.
+d100 1
+a100 1
+         B=0.
+d198 10
+a207 1
+      ABSC = ABSC + B*0.65*(P/1013.)**2*TT**2*(F/30)**2*1.e5
+d229 3
+d237 2
+d271 6
+d281 1
+a284 1
+
+d300 3
+@
+
+
+1.7
+log
+@add Bill's version for H2O
+@
+text
+@d10 1
+a10 1
+      use MLSCommon, only: r8
+d18 1
+a18 1
+    "$Id: GasAbsorption.f90,v 1.6 2002/04/30 18:15:22 jonathan Exp $"
+d27 1
+a27 1
+                 &        MOL,NMOL,NCNT,T,PB,F,RH,VMR,ABSC,NS)
+d60 2
+a61 1
+
+d64 1
+d93 1
+a93 1
+!      print*,'check'
+d99 1
+d101 1
+d106 30
+a169 2
+!            print*,IST(I),GSE(I),V0(I), FF, YY, TWTH0, T
+!            print*,ZP, MYSHAPE(V0(i),FF,YY,TWTH0)   
+d173 3
+a175 3
+     &		 MYSHAPE(V0(i),FF,YY,TWTH0) * FF/V0(I) *  &
+     &		(1._r8 - EXP(-V0(i)/(20836.7_r8*T)))/           &
+     &		(1._r8 - EXP(-V0(i)/(20836.7_r8*300.0_r8)))/T 
+d218 1
+a218 1
+!     CONT_1 = 1.28e-15 	! BILL'S VALIDATION PAPER
+d280 3
+@
+
+
+1.6
+log
+@change CONT_1
+@
+text
+@d18 1
+a18 1
+    "$Id: GasAbsorption.f90,v 1.5 2001/11/14 00:40:26 jonathan Exp $"
+d187 2
+a188 2
+      CONT_1 = 1.37e-15         ! UARS 203GHz  v5 
+!      CONT_1 = 7.53e-16   ! wu's version
+d248 3
+@
+
+
+1.5
+log
+@minor changes
+@
+text
+@d18 1
+a18 1
+    "$Id: GasAbsorption.f90,v 1.4 2001/09/21 15:51:37 jonathan Exp $"
+d187 2
+a188 1
+      CONT_1 = 7.53e-16 
+d248 3
+@
+
+
+1.4
+log
+@modified F95 version
+@
+text
+@d18 1
+a18 1
+    "$Id: GasAbsorption.f90,v 1.3 2001/09/20 21:49:46 jonathan Exp $"
+a77 1
+!         CALL RHtoEV(PB,T,100._r8,VP)     ! RH HERE IS 100% RELATIVE HUMIDITY 
+a103 1
+!               QRAT = (QLG(3,I)-QLG(1,I))*(T-QTP(2))/(QTP(3)-QTP(2))
+d199 3
+d247 3
+@
+
+
+1.3
+log
+@*** empty log message ***
+@
+text
+@d18 1
+a18 1
+    "$Id: GasAbsorption.f90,v 1.2 2001/09/20 21:31:25 jonathan Exp $"
+d245 1
+a245 8
+! $Log: GasAbsorption.f90,v      
+
+
+
+
+
+
+
+@
+
+
+1.2
+log
+@*** empty log message ***
+@
+text
+@d11 1
+d18 1
+a18 1
+    "$Id: GasAbsorption.f90,v 1.1 2001/09/20 19:54:37 jonathan Exp $"
+@
+
+
+1.1
+log
+@*** empty log message ***
+@
+text
+@d17 1
+a17 1
+    "$Id: GasAbsorption.f90,v 1.1 2001/09/20 16:36:09 jonathan Exp $"
+d65 4
+a68 2
+      REAL(r8) :: MYSHAPE, FF, MYRESULT
+      EXTERNAL MYSHAPE
+d206 3
+a208 2
+        function myshape(v0,ff,yy,twth0) result (myresult)
+        use MLSCommon, only: r8        
+d210 1
+a210 1
+        real(r8):: myresult     !J
+d235 1
+a235 1
+ 	myresult = twthm/(voffm**2 + twth0**2) + &
+@
+

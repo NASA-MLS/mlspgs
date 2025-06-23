@@ -1,0 +1,643 @@
+head	1.11;
+access;
+symbols
+	v5-02-NRT-19:1.11
+	v6-00:1.11
+	v5-02-NRT-18:1.11
+	v5-02:1.6
+	v5-01-NRT-17:1.11
+	v5-01-NRT-16:1.11
+	v5-01-NRT-15:1.11
+	v5-01-NRT-14:1.11
+	neuralnetworks-1-0:1.11.0.4
+	cfm-single-freq-0-1:1.11.0.2
+	v5-01:1.6
+	v5-00:1.6
+	v4-23-TA133:1.6.0.6
+	mus-emls-1-70:1.6.0.4
+	rel-1-0-englocks-work:1.6.0.2
+	VUMLS1-00:1.5
+	VPL1-00:1.5
+	V4-22-NRT-08:1.5;
+locks; strict;
+comment	@% @;
+
+
+1.11
+date	2020.04.22.02.57.15;	author vsnyder;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2020.04.21.00.05.49;	author pwagner;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2020.04.14.00.55.33;	author vsnyder;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2020.04.14.00.52.38;	author vsnyder;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2020.03.28.04.09.22;	author vsnyder;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2017.10.13.19.03.39;	author vsnyder;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2016.03.19.01.39.34;	author vsnyder;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2016.03.17.18.58.28;	author vsnyder;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2016.02.24.01.32.10;	author vsnyder;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2016.02.24.01.31.16;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2016.02.18.20.57.06;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.11
+log
+@Add label for equation for the sphere case
+@
+text
+@\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+\usepackage{xr-hyper}
+\externaldocument[146-]{\logdir/wvs-146}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9in
+
+\newcommand{\docname}{wvs-131r6}
+\newcommand{\docdate}{13 April 2020}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\newcommand{\TS}{T_\text{scat}}
+\newcommand{\TSs}[1]{T_{\text{scat}_{#1}}}
+\newcommand{\DB}{\Delta B}
+\newcommand{\oDB}{\overline{\DB}}
+\newcommand{\MT}{\mathcal{T}}
+\newcommand{\hMT}{\MT^s}
+\newcommand{\IF}[1]{\,\mathcal{A}_n\!\left(#1\right)} % Interpolation Function
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Van\\
+Subject: \>Intersection of a line with an ellipsoid\\
+From: \>Van Snyder\\
+Reference: \> wvs-030 \hr{wvs-030} \\
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-20pt}
+
+\section{Ellipsoid}
+
+Using vector notation, an ellipsoid with center at $\mathbf{p}_0$ and axes
+aligned with the co\"ordinate directions can be expressed as the set of points
+$\mathbf{p}$ such that
+%
+\begin{equation}\label{one}
+(\mathbf{M} \, ( \mathbf{p} - \mathbf{p}_0))^T
+(\mathbf{M} \, ( \mathbf{p} - \mathbf{p}_0)) = 1
+\end{equation}
+%
+where $\mathbf{p}$ is a point on the surface of the ellipsoid,
+%
+\begin{equation}\label{M}
+\mathbf{M} = \left[
+ \begin{array}{ccc}
+  \frac1a & 0 & 0 \\
+  0 & \frac1b & 0 \\
+  0 & 0 & \frac1c \\
+ \end{array}
+\right]
+\end{equation}
+%
+and $a$, $b$, and $c$ are the semi-axes.
+
+A line can be expressed as the set of points
+%
+\begin{equation}\label{two}
+\mathbf{p} = \mathbf{C} + s \, \mathbf{U} \,,
+\end{equation}
+%
+where $\mathbf{C}$ is a point on the line and $\mathbf{U}$ is a vector
+along the line.  Substituting Equation (\ref{two}) into Equation
+(\ref{one}) gives
+%
+\begin{equation}\label{four}
+(\mathbf{M}\, \mathbf{U})^T \cdot (\mathbf{M}\, \mathbf{U})\, s^2 +
+2 (\mathbf{M} ( \mathbf{C} - \mathbf{p}_0) )^T \cdot
+(\mathbf{M}\, \mathbf{U})\, s +
+(\mathbf{M} ( \mathbf{C} - \mathbf{p}_0) )^T \cdot
+(\mathbf{M} ( \mathbf{C} - \mathbf{p}_0) ) = 1
+\end{equation}
+
+Let $\mathbf{V} = \mathbf{C} - \mathbf{p}_0$.  Then Equation (\ref{four})
+becomes
+%
+\begin{equation}\label{five}
+(\mathbf{M}\, \mathbf{U})^T \cdot (\mathbf{M}\, \mathbf{U})\, s^2 +
+2 (\mathbf{M} \mathbf{V} )^T \cdot (\mathbf{M}\, \mathbf{U})\, s +
+(\mathbf{M} \mathbf{V} )^T \cdot (\mathbf{M} \mathbf{V} ) = 1
+\end{equation}
+
+which will give zero, one, or two solutions for $s$ depending upon whether
+the line does not intersect the ellipsoid, is tangent to it, or intersects
+it twice.
+
+A method to determine the points on a line and ellipsoid that are nearest
+to each other is described in wvs-030 \hr{wvs-030}.
+
+For the case of a sphere with radius $r$, Equation (\ref{five}) becomes
+%
+\begin{equation}\label{sphere}
+\mathbf{U} \cdot \mathbf{U} \, s^2 +
+2 \mathbf{V} \cdot \mathbf{U} \, s +
+\mathbf{V} \cdot \mathbf{V} = r^2 \,.
+\end{equation}
+
+%=========================================================================
+\section{When the ellipsoid is an oblate spheroid}
+
+Instead of Equation (\ref{M}), write
+
+\begin{equation}
+\mathbf{M} = \left[ \begin{array}{lll}
+ 1 & 0 & 0 \\ 0 & 1 & 0 \\ 0 & 0 & \frac1E \\
+ \end{array} \right]\,,
+\end{equation}
+
+where $E = \sqrt{1-e^2}$ and $e^2 = 1-\frac{c^2}{a^2}$ is the square of
+the eccentricity.  Write the equation of an ellipsoid with its center at
+$\mathbf{p}_0 = (0,0,0)$ as
+
+\begin{equation}
+( \mathbf{M} \mathbf{p} )^T \cdot ( \mathbf{M} \mathbf{p} ) = a^2\,.
+\end{equation}
+
+Equation (\ref{five}) then becomes
+
+\begin{equation}\label{five-a}
+(\mathbf{M}\, \mathbf{U})^T \cdot (\mathbf{M}\, \mathbf{U})\, s^2 +
+2 (\mathbf{M} \mathbf{C} )^T \cdot (\mathbf{M}\, \mathbf{U})\, s +
+(\mathbf{M} \mathbf{C} )^T \cdot (\mathbf{M} \mathbf{C} ) = a^2
+\end{equation}
+
+Equation (\ref{five-a}) has one solution for $s$, i.e., the line is
+tangent to the ellipsoid, if and only if its discriminant is zero, i.e.,
+
+\begin{equation}
+\left( 2 (\mathbf{M} \mathbf{C} )^T \cdot (\mathbf{M}\, \mathbf{U}) \right)^2
+- 4 (\mathbf{M}\, \mathbf{U})^T \cdot (\mathbf{M}\, \mathbf{U})\, 
+\left[ (\mathbf{M} \mathbf{C} )^T \cdot (\mathbf{M} \mathbf{C} ) -a^2 \right]
+ = 0 \,.
+\end{equation}
+
+Let $\mathbf{N} = \mathbf{C} \times \mathbf{U}$.  Then the discriminant is
+zero for
+
+\begin{equation}\label{discriminant-solution}
+a^2 = \frac{ \left( \mathbf{M}^{-1} \mathbf{N} \right)^T \cdot
+             \left( \mathbf{M}^{-1} \mathbf{N} \right) }
+           { E^2 \left( \mathbf{M}\mathbf{U} \right )^T \cdot
+                 \left( \mathbf{M}\mathbf{U} \right ) }\,,
+\end{equation}
+
+but this result is not needed for further discussion.
+
+If $a$ is replaced by $a'$ in Equation (\ref{five-a}), then Equation
+(\ref{five-a}) describes an ellipsoid with the same eccentricity, but with
+semi-major axis $a'$.  If the discriminant is zero with $a'$ substituted
+for $a$ in Equation (\ref{five-a}), then the line in Equation (\ref{two})
+is tangent to the ellipsoid with semi-major axis $a'$ at the single
+solution $s$ of Equation (\ref{five-a}), \emph{viz}.
+
+\begin{equation}\label{s-solution}
+s = - \frac{ (\mathbf{M} \mathbf{C} )^T \cdot (\mathbf{M}\, \mathbf{U}) }
+           { (\mathbf{M}\, \mathbf{U})^T \cdot (\mathbf{M}\, \mathbf{U}) }
+           \,.
+\end{equation}
+
+If $a' < a$, the line intersects the ellipsoid in two places. If $a' = a$,
+the line is tangent to the ellipsoid.  If $a' > a$, the line does not
+intersect the ellipsoid.
+
+To calculate the point, on a line that does not intersect the ellipsoid
+($a' > a$), that is nearest to the ellipsoid, see \h{wvs-030}.
+
+\label{lastpage}
+\vspace*{-0.1in} % Somehow, this causes lastpage to be defined
+\end{document}
+
+% $Id: wvs-131.tex,v 1.10 2020/04/21 00:05:49 pwagner Exp $
+
+% $Log: wvs-131.tex,v $
+% Revision 1.10  2020/04/21 00:05:49  pwagner
+% Should work better with make
+%
+% Revision 1.9  2020/04/14 00:55:33  vsnyder
+% Forgot to update version number and date
+%
+% Revision 1.8  2020/04/14 00:52:38  vsnyder
+% Remove calculation of nearest approach because it was wrong. Refer to wvs-030
+%
+% Revision 1.7  2020/03/28 04:09:22  vsnyder
+% Add calculation of nearest approach
+%
+% Revision 1.6  2017/10/13 19:03:39  vsnyder
+% Explain that the line will intersect 0, 1, or 2 times
+%
+% Revision 1.5  2016/03/19 01:39:34  vsnyder
+% Correct first-order term for s
+%
+% Revision 1.4  2016/03/17 18:58:28  vsnyder
+% Write matrix-vector products correctly, replace t with s
+%
+% Revision 1.3  2016/02/24 01:32:10  vsnyder
+% Forgot to change the date
+%
+% Revision 1.2  2016/02/24 01:31:16  vsnyder
+% Include center of ellipsoid in equations, specify orientation
+%
+% Revision 1.1  2016/02/18 20:57:06  vsnyder
+% Initial commit
+@
+
+
+1.10
+log
+@Should work better with make
+@
+text
+@d156 1
+a156 1
+\begin{equation}
+d235 1
+a235 1
+% $Id: wvs-131.tex,v 1.9 2020/04/14 00:55:33 vsnyder Exp $
+d238 3
+@
+
+
+1.9
+log
+@Forgot to update version number and date
+@
+text
+@d9 1
+a9 1
+\externaldocument[146-]{wvs-146}
+d235 1
+a235 1
+% $Id: wvs-131.tex,v 1.8 2020/04/14 00:52:38 vsnyder Exp $
+d238 3
+@
+
+
+1.8
+log
+@Remove calculation of nearest approach because it was wrong. Refer to wvs-030
+@
+text
+@d17 2
+a18 2
+\newcommand{\docname}{wvs-131r5}
+\newcommand{\docdate}{27 March 2020}
+d235 1
+a235 1
+% $Id: wvs-131.tex,v 1.7 2020/03/28 04:09:22 vsnyder Exp $
+d238 3
+@
+
+
+1.7
+log
+@Add calculation of nearest approach
+@
+text
+@d229 1
+a229 42
+($a' > a$), that is nearest to the ellipsoid, use Equation
+(\ref{146-geodetic}) in \h{wvs-146}, i.e., the equation of an ellipsoid
+using geodetic co\"ordinates, \emph{viz}.
+
+\begin{equation}\label{geodetic}
+\mathbf{r}(\lambda,\phi) =
+\frac{a}{\sqrt{1-e^2\sin^2\phi}}
+\left[ \begin{array}{l}
+\cos\phi \cos\lambda \\ \cos\phi \sin\lambda \\ (1-e^2) \sin\phi \\
+\end{array} \right] \,.
+\end{equation}
+
+Because every ellipsoid described by $\mathbf{M}$ has the same
+eccentricity, for different values of $a$, the position vectors are
+parallel, their (unit) gradients (Equation (\ref{146-unit-gradient}) in
+\h{wvs-146})
+
+\begin{equation}
+\mathbf{g} = \left[ \begin{array}{l}
+ \cos\phi \cos\lambda \\ \cos\phi \sin\lambda \\ \sin\phi \\
+\end{array} \right]
+\end{equation}
+
+are parallel, and the geodetic angular co\"ordinates of the point on the
+ellipsoid with semi-major axis $a$ that is nearest to the line are the
+same as the geodetic angular co\"ordinates of the tangent point to the
+ellipsoid with semi-major axis $a'$.
+
+The position $\mathbf{p}$ on the line that is nearest to the ellipsoid can
+be calculated by substituting $s$ from Equation (\ref{s-solution}) into
+Equation (\ref{two}).  The geodetic angles can be calculated from
+$\mathbf{p} = \mathbf{r}$ using Equation (\ref{geodetic}) (with $a=a'$,
+which isn't necessary), \emph{viz}.
+
+\begin{equation}\begin{split}
+\phi = \,& \tan^{-1} \frac{p_3}{(1-e^2) \sqrt{p_1^2 + p_2^3}} \\[5pt]
+\lambda = \,& \tan^{-1} \frac{p_2}{p_1}\,.
+\end{split}\end{equation}
+
+Substituting these values into Equation (\ref{geodetic}) allows to
+calculate the nearest distance $|\mathbf{p}-\mathbf{r}|$ between the line
+and the ellipsoid.
+d235 1
+a235 1
+% $Id: wvs-131.tex,v 1.6 2017/10/13 19:03:39 vsnyder Exp $
+d238 3
+@
+
+
+1.6
+log
+@Explain that the line will intersect 0, 1, or 2 times
+@
+text
+@d8 2
+d17 2
+a18 2
+\newcommand{\docname}{wvs-131r4}
+\newcommand{\docdate}{12 October 2017}
+d95 2
+d108 1
+a108 1
+\begin{equation}
+d118 1
+a118 1
+and $a$, $b$, and $c$ are the semi-minor axes.
+d131 4
+a134 3
+(\mathbf{M}\, \mathbf{U})^T (\mathbf{M}\, \mathbf{U})\, s^2 +
+2 (\mathbf{M} ( \mathbf{C} - \mathbf{p}_0) )^T (\mathbf{M}\, \mathbf{U})\, s +
+(\mathbf{M} ( \mathbf{C} - \mathbf{p}_0) )^T
+d142 3
+a144 4
+(\mathbf{M}\, \mathbf{U})^T (\mathbf{M}\, \mathbf{U})\, s^2 +
+2 (\mathbf{M} \mathbf{V} )^T (\mathbf{M}\, \mathbf{U})\, s +
+(\mathbf{M} \mathbf{V} )^T
+(\mathbf{M} \mathbf{V} ) = 1
+d147 3
+a149 3
+which will give zero, one, or two solutions for $s$ depending whether the
+line does not intersect the ellipsoid, is tangent to it, or intersects it
+twice.
+d162 110
+d276 1
+a276 1
+% $Id: wvs-131.tex,v 1.5 2016/03/19 01:39:34 vsnyder Exp $
+d279 3
+@
+
+
+1.5
+log
+@Correct first-order term for s
+@
+text
+@d15 2
+a16 2
+\newcommand{\docname}{wvs-131r3}
+\newcommand{\docdate}{18 March 2016}
+d143 4
+d162 1
+a162 1
+% $Id: wvs-131.tex,v 1.4 2016/03/17 18:58:28 vsnyder Exp $
+d165 3
+@
+
+
+1.4
+log
+@Write matrix-vector products correctly, replace t with s
+@
+text
+@d15 2
+a16 2
+\newcommand{\docname}{wvs-131r2}
+\newcommand{\docdate}{15 March 2016}
+d128 1
+a128 1
+(\mathbf{M} ( \mathbf{C} - \mathbf{p}_0) )^T (\mathbf{M}\, \mathbf{U})\, s +
+d138 1
+a138 1
+(\mathbf{M} \mathbf{V} )^T (\mathbf{M}\, \mathbf{U})\, s +
+d150 1
+a150 1
+\mathbf{V} \cdot \mathbf{U} \, s +
+d158 1
+a158 1
+% $Id: wvs-131.tex,v 1.3 2016/02/24 01:32:10 vsnyder Exp $
+d161 3
+@
+
+
+1.3
+log
+@Forgot to change the date
+@
+text
+@d15 2
+a16 2
+\newcommand{\docname}{wvs-131r1}
+\newcommand{\docdate}{23 February 2016}
+d98 2
+a99 2
+(( \mathbf{p} - \mathbf{p}_0) \, \mathbf{M})^T
+(( \mathbf{p} - \mathbf{p}_0) \, \mathbf{M}) = 1
+d119 1
+a119 1
+\mathbf{p} = \mathbf{C} + t \, \mathbf{U} \,,
+d127 4
+a130 4
+(\mathbf{U}\, \mathbf{M})^T (\mathbf{U}\, \mathbf{M})\, t^2 +
+(( \mathbf{C} - \mathbf{p}_0) \mathbf{M} )^T (\mathbf{U}\, \mathbf{M})\, t +
+(( \mathbf{C} - \mathbf{p}_0) \mathbf{M} )^T
+(( \mathbf{C} - \mathbf{p}_0) \mathbf{M} ) = 1
+d137 4
+a140 4
+(\mathbf{U}\, \mathbf{M})^T (\mathbf{U}\, \mathbf{M})\, t^2 +
+(\mathbf{V} \mathbf{M} )^T (\mathbf{U}\, \mathbf{M})\, t +
+(\mathbf{V} \mathbf{M} )^T
+(\mathbf{V} \mathbf{M} ) = 1
+d149 2
+a150 2
+\mathbf{U} \cdot \mathbf{U} \, t^2 +
+\mathbf{V} \cdot \mathbf{U} \, t +
+d158 1
+a158 1
+% $Id: wvs-131.tex,v 1.2 2016/02/24 01:31:16 vsnyder Exp $
+d161 3
+@
+
+
+1.2
+log
+@Include center of ellipsoid in equations, specify orientation
+@
+text
+@d15 2
+a16 2
+\newcommand{\docname}{wvs-131}
+\newcommand{\docdate}{5 February 2016}
+d158 1
+a158 1
+% $Id: wvs-131.tex,v 1.1 2016/02/18 20:57:06 vsnyder Exp $
+d161 3
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d87 1
+a87 1
+Reference: \> wvs-030 \\
+d93 2
+a94 1
+Using vector notation, an ellipsoid can be expressed as the set of points
+d98 2
+a99 2
+(\mathbf{p}\, \mathbf{M})^T (\mathbf{p}\, \mathbf{M}) = 1\,,
+(\mathbf{p} - \mathbf{p}_0) \cdot \mathbf{n} = 0\,,
+d102 1
+a102 1
+where $p$ is a point on the surface of the ellipse,
+d114 2
+d119 1
+a119 1
+\mathbf{p} = d \, \mathbf{U} + \mathbf{U}_0 \,,
+d122 1
+a122 1
+where $\mathbf{U}_0$ is a point on the line and $\mathbf{U}$ is a vector
+d126 11
+a136 1
+\begin{equation}
+d138 3
+a140 2
+(\mathbf{C} \mathbf{M})^T (\mathbf{U}\, \mathbf{M})\, t +
+(\mathbf{C} \mathbf{M})^T (\mathbf{C} \mathbf{M}) = 1
+d144 9
+a152 1
+to each other is described in wvs-030.
+d158 1
+a158 1
+% $Id: wvs-130.tex,v 1.1 2016/02/05 03:36:20 vsnyder Exp $
+d160 2
+a161 2
+% $Log: wvs-130.tex,v $
+% Revision 1.1  2016/02/05 03:36:20  vsnyder
+@
+

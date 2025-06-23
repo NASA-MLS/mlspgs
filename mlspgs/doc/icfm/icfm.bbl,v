@@ -1,0 +1,105 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.12
+	cfm-single-freq-0-1:1.1.0.10
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.8
+	mus-emls-1-70:1.1.0.6
+	rel-1-0-englocks-work:1.1.0.4
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.2
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	M4-00:1.1
+	V3-33:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2011.04.18.21.24.01;	author honghanh;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial import for ICFM documentation
+@
+text
+@\begin{thebibliography}{5}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Livesey et~al.(2006)Livesey, Snyder, Read, and Wagner]{LiveseyEtal06}
+N.~J. Livesey, W.~V. Snyder, W.~G. Read, and P.~A. Wagner.
+\newblock Retrieval algorithms for the eos microwave limb sounder (mls)
+  instrument.
+\newblock \emph{IEEE Trans. Geosci. Remote Sens.}, 44\penalty0 (5):\penalty0
+  1144--1155, 2006.
+
+\bibitem[Nguyen et~al.(2010)Nguyen, Wagner, and Livesey]{NguyenEtal10}
+H.~H. Nguyen, P.~A. Wagner, and N.~J. Livesey.
+\newblock Aura microwave limb sounder (mls) callable forward model interface
+  requirements document.
+\newblock \emph{{Jet Propulsion Laboratory}}, 2010.
+
+\bibitem[Read et~al.(2006)Read, Shippony, Schwartz, Livesey, and
+  Snyder]{ReadEtal06}
+W.~G. Read, Z.~Shippony, M.~J. Schwartz, N.~J. Livesey, and W.~V. Snyder.
+\newblock The clear-sky unpolarized forward model for the {EOS Microwave Limb
+  Sounder (MLS)}.
+\newblock \emph{IEEE Trans. Geosci. Remote Sens.}, 44\penalty0 (5):\penalty0
+  1367--1379, 2006.
+
+\bibitem[Schwartz et~al.(2006)Schwartz, Read, and Snyder]{SchwartzEtal06}
+M.~J. Schwartz, W.~G. Read, and W.~V. Snyder.
+\newblock Polarized radiative transfer for {Zeeman}-split oxygen lines in the
+  {EOS MLS} forward model.
+\newblock \emph{IEEE Trans. Geosci. Remote Sens.}, 44\penalty0 (5):\penalty0
+  1182--1190, 2006.
+
+\bibitem[Waters et~al.(2006)Waters, Froidevaux, Harwood, Jarnot, Pickett, Read,
+  Siegel, Cofield, Filipiak, Flower, Holden, Lau, Livesey, Manney, Pumphrey,
+  Santee, Wu, Cuddy, Lay, Loo, Perun., Schwartz, Stek, Thurstans, Chandra,
+  Chavez, Chen, Boyles, Chudasama, Dodge, Fuller, Girard, Jiang, Jiang, Knosp,
+  LaBelle, Lam, Lee, Miller, Oswald, Patel, Pukala, Quintero, Scaff, Snyder,
+  Tope, Wagner, and Walch]{WatersEtal06}
+J.~W. Waters, L.~Froidevaux, R.~S. Harwood, R.~F. Jarnot, H.~M. Pickett, W.~G.
+  Read, P.~H. Siegel, R.~E. Cofield, M.~J. Filipiak, D.~A. Flower, J.~R.
+  Holden, G.~K. Lau, N.~J. Livesey, G.~L. Manney, H.~C. Pumphrey, M.~L. Santee,
+  D.~L. Wu, D.~T. Cuddy, R.~R. Lay, M.~S. Loo, V.~S. Perun., M.~J. Schwartz,
+  P.~C. Stek, R.~P. Thurstans, K.~M. Chandra, M.~C. Chavez, G.~Chen, M..~A.
+  Boyles, B.~V. Chudasama, R.~Dodge, R.~A. Fuller, M.~A. Girard, J.~H. Jiang,
+  Y.~Jiang, B.~W. Knosp, R.~C. LaBelle, J.~C. Lam, K..~A. Lee, D.~Miller, J.~E.
+  Oswald, N.~C. Patel, D.~M. Pukala, O.~Quintero, D.~M. Scaff, W.~V. Snyder,
+  M.~C. Tope, P.~A. Wagner, and M.~J. Walch.
+\newblock The {Earth Observing System Microwave Limb Sounder (EOS MLS) on the
+  Aura} satellite.
+\newblock \emph{IEEE Trans. Geosci. Remote Sens.}, 44\penalty0 (5):\penalty0
+  1075--1092, 2006.
+
+\end{thebibliography}
+@

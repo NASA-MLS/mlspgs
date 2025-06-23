@@ -1,0 +1,627 @@
+head	1.4;
+access;
+symbols
+	v5-02-NRT-19:1.4
+	v6-00:1.4
+	v5-02-NRT-18:1.4
+	v5-01-NRT-17:1.4
+	v5-01-NRT-16:1.4
+	v5-01-NRT-15:1.3
+	v5-01-NRT-14:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.4
+date	2022.01.20.22.04.18;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2021.09.30.21.54.42;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2021.08.12.20.41.32;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2021.04.15.20.41.27;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.4
+log
+@Added cmdline options to handle non-press levels; fix bug in -vals option
+@
+text
+@! Copyright 2021, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=================================
+program resetL2GPValues ! resets values of L2GPData files, e.g. nrt
+!=================================
+
+   use Dump_0, only: Dump
+   use HDF, only: Dfacc_RdOnly, Dfacc_Rdwr
+   use HighOutput, only: OutputNamedValue
+   use Intrinsic, only: L_HDF, L_Swath
+   use L2GPData, only: L2GPData_T, L2GPnamelen, MaxSwathNamesBufSize, Rgp, &
+     & AppendL2GPData, DestroyL2GPContents, Dump, &
+     & ReadL2GPData
+   use Machine, only: Hp, Getarg
+   use MLSCommon, only: MLSFile_T
+   use MLSFiles, only: HDFVersion_5, Dump, MLS_CloseFile, MLS_Exists, &
+     & MLS_Inqswath, InitializeMLSFile
+   use MLSFinds, only: FindFirst
+   use MLSHDF5, only: GetAllHDF5DSNames, LoadFromHDF5DS, MLS_H5open, MLS_H5close
+   use MLSMessageModule, only: MLSMessageConfig, MLSMessage, MLSMSG_Warning
+   use MLSNumerics, only: InterpolateValues
+   use MLSStringLists, only: GetStringElement, &
+     & Intersection, NumStringElements, StringElementNum
+   use Output_M, only: Blanks, Output
+   use Time_M, only: Time_Now, Time_Config
+   
+   implicit none
+
+!---------------------------- RCS Ident Info ------------------------------
+  character (len=*), parameter :: ModuleName= &
+       "$RCSfile: resetl2gpvalues.f90,v $"
+  character (len=*), parameter :: IdParm = &
+       "$Id: resetl2gpvalues.f90,v 1.3 2021/09/30 21:54:42 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+!---------------------------------------------------------------------------
+
+! Brief description of program
+! Reset values of L2GPData from list of files
+! using values read from a "new values" netCDF file
+! spreading each value over a "spread" of profiles.
+
+! Actually, we'll try to spread each over a chunk of profiles
+
+! To use this, copy it into
+! mlspgs/tests/lib
+! then enter "make depends" followed by "make"
+
+! Then run it something like this
+!    cd /testing/workspace/pwagner/t1--t
+!    /users/pwagner/mlspgs/tests/lib/NAG.Linux-CemtOS7/test \ 
+!       MLS-Aura_L2GP-Temperature_t1--t_1996d051.he5 > $cwd/Temp.out
+
+! We'll use it to create a new set of "truth" files and prepare
+! sids radiances files based on these (hopefully more representative)
+! profiles to use in an alternative approach to systematic errors.
+  type options_T
+    logical               :: debug   = .false.
+    logical               :: verbose = .false.
+    logical               :: dryrun  = .false.
+    logical               :: interp  = .true.        ! interpolate onto pressure surfaces
+    character(len=255)    :: swathNames = ' '        ! which swaths to reset
+    character(len=255)    :: DSNames    = ' '        ! which new DS to use
+    character(len=255)    :: newValues = &           ! where to read new values
+      & '/users/pwagner/joaquim/SET_Profiles_TO3H2O.nc'  
+!      & '/users/pwagner/joaquim/SET_Profile_V1_Clusters.nc'  
+    
+    ! This next option is not currently used
+    ! integer               :: spread = 10              ! Spread of profiles   
+
+    ! This next option lets us use fewer clusters
+    integer               :: NClusters = 0              ! If not all of them  
+  end type options_T
+  
+  type ( options_T ) :: options
+
+  integer, parameter ::          MAXFILES = 100
+  logical, parameter ::          countEmpty = .true.
+  character(len=255) :: filename          ! input filename
+  character(len=255), dimension(MAXFILES) :: filenames
+  integer            :: n_filenames
+  integer     ::  status, error ! Counting indices & Error flags
+  real        :: t1
+  real        :: t2
+  real        :: tFile
+  character(len=L2GPNameLen)          :: DSName
+  character(len=MAXSWATHNAMESBUFSIZE) :: DSList
+  character(len=MAXSWATHNAMESBUFSIZE) :: DSList1
+  character(len=L2GPNameLen)          :: swath
+  character(len=MAXSWATHNAMESBUFSIZE) :: swathList
+  character(len=MAXSWATHNAMESBUFSIZE) :: swathList1
+  integer :: listSize
+  integer :: NUMSWATHSSOFAR
+  ! 
+  MLSMessageConfig%useToolkit = .false.
+  MLSMessageConfig%logFileUnit = -1
+  time_config%use_wall_clock = .true.
+  CALL mls_h5open(error)
+  n_filenames = 0
+  do      ! Loop over filenames
+     call get_filename(filename, n_filenames, options)
+     if ( filename(1:1) == '-' ) cycle
+     if ( filename == ' ' ) exit
+     if ( mls_exists(trim(filename)) /= 0 ) then
+       print *, 'Sorry--file not found: ', trim(filename)
+       cycle
+     endif
+     n_filenames = n_filenames + 1
+     filenames(n_filenames) = filename
+  enddo
+  if ( n_filenames == 0 ) then
+    if ( options%verbose ) print *, 'Sorry no files to reset'
+  else
+    call time_now ( t1 )
+
+    numswathssofar = 0
+    if ( options%verbose ) &
+      & call Dump ( filenames(1:n_filenames), 'l2gp files', width=1 )
+    call reset_swaths
+  endif
+  call mls_h5close(error)
+contains
+!------------------------- reset_swaths ---------------------
+! Identify and reset values
+
+  subroutine reset_swaths
+    ! Internal variables
+    integer :: i
+    integer :: iDS
+    integer :: iSwathNum
+    integer :: jj
+    type(L2GPData_T) :: L2GP
+    type( MLSFile_T ) :: L2GPFile
+    type( MLSFile_T ) :: valuesFile
+    integer :: nPr
+    integer :: numProfs
+    integer :: numTotProfs
+    integer :: N ! size of a
+    real (rgp), dimension(:,:), allocatable :: values
+    real (rgp), dimension(:), allocatable   :: pressures
+    character(len=32)                       :: pressName
+    ! --------------------------------------------------------------------
+    ! This is the number of instances in the new values file
+    integer, parameter :: nvTimes = 350
+    ! This is the current number of datasets we are replacing
+    integer, parameter :: nDS = 6
+
+    ! --------------------------------------------------------------------
+    ! These are the number of pressure levels each has been given
+    ! integer, dimension(nDS), parameter :: NPrs = (/ 41, 14, 12, 13, 37, 41 /)
+    
+    ! Note that in the latest netCDF file, all species are on 37 pressure
+    ! surfaces except for the _HR species. This choice happens to match
+    ! the resolution of our l2gp products. Will future netCDF files from
+    ! Joaquim adhere to this convention, too?
+    integer, dimension(nDS), parameter :: NPrs = (/ 55, 37, 37, 37, 55, 55 /)
+    ! --------------------------------------------------------------------
+
+    ! --------------------------------------------------------------------
+    ! These are their names
+    character(len=*), parameter :: DSMolNames = &
+      & 'H2O,HCl,HNO3,N2O,O3,Temperature'
+!      & 'H2O,HCl,HNO3,N2O,Ozone,Temperature'
+    ! --------------------------------------------------------------------
+    ! Executable
+    status = InitializeMLSFile( valuesFile, type=l_hdf, access=DFACC_RDOnly, &
+      & content='netcdf', name=trim(options%newValues), hdfVersion=HDFVERSION_5 )
+    call GetAllHDF5DSNames ( valuesFile, DSList )
+    if ( options%DSNames /= ' ' ) then
+      DSList1 = DSList
+      DSList = Intersection( options%DSNames, DSList1 )
+    endif
+    if ( options%verbose ) then
+      print *, 'DS names in Texeira file ' // trim(DSList)
+      ! print *, 'Swaths in L2GP file ' // trim(swathList)
+      ! print *, 'Num swaths ', NumStringElements( swathList, countEmpty )
+    endif
+    ! call GetStringElement( swathList, swath, 1, countEmpty )
+    ! call GetStringElement( DSList, DSName, 1, countEmpty )
+    numTotProfs = 0
+!    do jj=1, NumStringElements( swathList, countEmpty )
+    do jj=1, NumStringElements( DSList, countEmpty )
+      call GetStringElement( DSList, DSName, jj, countEmpty )
+      ! call GetStringElement( swathList, swath, jj, countEmpty )
+      call time_now ( tFile )
+      swath = DSName
+      if ( options%verbose ) print *, 'Resetting values of swath: ', trim(swath)
+      if ( options%verbose ) print *, 'using values from DS: ', trim(swath)
+      iDS = StringElementNum( DSMolNames, trim(swath), countEmpty )
+      if ( iDS < 1 ) then
+        if ( options%debug ) then
+          call OutputNamedValue ( 'DSName', swath )
+          call OutputNamedValue ( 'DSMolNames', DSMolNames )
+          call MLSMessage( MLSMSG_Warning, ModuleName, &
+            & "DSName not found in mol list; so not replaced" )
+        endif
+        cycle
+      endif
+      call Blanks( 72, fillChar='-', advance='yes' )
+      if ( options%verbose ) then
+        call OutputNamedValue ( 'DSName', swath )
+        call OutputNamedValue ( 'DSMolNames', DSMolNames )
+        call OutputNamedValue ( 'iDS', iDS )
+      else
+        call OutputNamedValue ( 'Looking to write DSName', swath )
+      endif
+      DSName=swath
+      NPr = nPrs(iDS)
+      allocate(pressures(nPr))
+      allocate(values(nvTimes, nPr))
+      if ( options%verbose ) &
+        & call OutputNamedValue ( 'shp(values)', (/ shape(values) /) )
+      call LoadFromHDF5DS ( valuesFile, DSName, values )
+      if ( options%verbose ) &
+        & call Dump( Values(:,1), 'values used in overwriting', width=5 )
+      pressName = 'Pressure_levels_' // DSName
+      if ( options%verbose ) &
+        & call OutputNamedValue ( 'shp(pressures)', (/ shape(pressures) /) )
+      call LoadFromHDF5DS ( valuesFile, pressName, pressures )
+      N = 0
+      do i=1, n_filenames
+        if ( options%verbose ) &
+          & print *, 'Beginning with L2GP file ' // trim(filenames(i))
+        numswathssofar = mls_InqSwath ( filenames(i), SwathList, listSize, &
+             & hdfVersion=HDFVERSION_5)
+        if ( options%swathNames /= ' ' ) then
+          swathList1 = swathList
+          swathList = Intersection( options%swathNames, swathList1 )
+        endif
+        !
+        ! For some reason lost in the impenetrable mists off the past,
+        ! the swath name in the H2O l2gp file is 
+        !    not H2O
+        ! but instead
+        !    H2O-cld
+        !
+        ! I know, I know that was a poor decision. Putting off when we
+        ! reverse it only accumulates more techincal debt.
+        !
+        ! Nevertheless, we'll put it off a while longer.
+        !
+        if ( DSName == 'H2O' ) swath = 'H2O-cld'
+        !
+        iSwathNum = StringElementNum( swathList, trim(swath), countEmpty )
+        if ( iSwathNum < 1 ) then
+          if ( options%debug ) then
+            call OutputNamedValue ( 'swathName', swath )
+            call OutputNamedValue ( 'swathList', swathList )
+            call MLSMessage( MLSMSG_Warning, ModuleName, &
+              & "swathName not found in list; so not replaced" )
+          endif
+          cycle
+        else
+          call OutputNamedValue ( 'L2GP File', trim(filenames(i)) )
+          call Output( 'Replacing ' // trim(swath) // ' with ' // &
+            & trim(DSName) // ' values', advance='yes' )
+        endif
+        status = InitializeMLSFile( L2GPFile, type=l_swath, access=DFACC_RDWR, &
+            & content='L2GP', name=trim(filenames(i)), hdfVersion=HDFVERSION_5 )
+        if ( options%verbose ) print *, 'Reading from: ', trim(filenames(i))
+        call ReadL2GPData( L2GPFile, swath, L2GP, numProfs )
+        if ( options%debug ) call Dump( L2GP )
+        if ( options%verbose ) &
+          & call Dump( L2GP%L2GPValue(1,1,:), 'L2gp before overwriting', width=5 )
+        call resetL2GPDataByOverwrite ( L2GP, values, pressures )
+        if ( .not. options%dryrun ) &
+          & call AppendL2GPData ( L2GP, L2GPFile, swath )
+        N = L2GP%nTimes
+        ! a(1:N) = L2GP%L2GPValue(1,1,1:N)
+        if ( options%verbose ) &
+          & call dump( L2GP%L2GPValue(1,1,1:N), 'new values', width=5 )
+        if ( options%debug ) call Dump( L2GP )
+        call DestroyL2GPContents( L2GP )
+        if ( options%debug ) then
+          call ReadL2GPData( L2GPFile, swath, L2GP, numProfs )
+          call output ( 'Reset L2GP as reread', advance='yes' )
+          call Dump( L2GP )
+          call DestroyL2GPContents( L2GP )
+        endif
+        numTotProfs = numTotProfs + N
+        call Dump( L2GPFile )
+        call MLS_CloseFile( L2GPFile )
+      enddo
+      deallocate(pressures)
+      deallocate(values)
+      call sayTime('resetting this swath', tFile)
+      call Blanks( 72, advance='yes' )
+    enddo
+    call sayTime('resetting all swaths')
+  end subroutine reset_swaths
+
+  ! (1) overwriting the current l2gpvalue using values
+  ! chunkwise. I.e., each chunk will have the same profile
+  subroutine resetL2GPDataByOverwrite ( L2GP, values, pressures )
+    ! Args
+    type(L2GPData_T)                            :: L2GP
+    real(rgp), dimension(:), intent(in)         :: pressures   
+    real(rgp), dimension(:,:), intent(in)       :: values  
+    ! internal variables
+    integer                                     :: chunk
+    integer                                     :: k
+    integer                                     :: nextprofile
+    integer                                     :: profile
+    integer                                     :: time ! Like chunk number
+    integer                                     :: ntimes ! num of values
+    integer                                     :: ProfsPerChunk
+    ! Executable
+    ntimes = size(values, 1)
+    if ( options%debug ) print *, 'shape values:', shape(values)
+    if ( options%NClusters > 0 ) ntimes = min (ntimes, options%NClusters )
+    ! We added an option to spread constant values across more than one chunk.
+    ! Therefore we'll try to parcel out chunks evenly so they add up
+    !         ProfsPerChunk = L2GP%NTimes/ntimes
+    ! Now that number might truncated, so we'll be careful
+    ProfsPerChunk = (L2GP%NTimes-1)/ntimes + 1
+    if ( options%debug ) &
+      & call OutputNamedValue ( 'ProfsPerChunk ', ProfsPerChunk )
+    chunk = 1
+    nextprofile = 0
+    do time = 1, ntimes
+      profile = nextprofile + 1
+      nextprofile = nextprofile + ProfsPerChunk
+      nextprofile = min( nextprofile, L2GP%NTimes )
+      if ( options%NClusters > 0 ) &
+        & L2GP%ChunkNumber(profile:nextprofile) = time
+    enddo
+    if ( options%debug ) call dump( L2GP%ChunkNumber, 'chunk numbers' )
+    ! stop
+    chunk = 1
+    profile = 1
+    do time = 1, ntimes
+      if ( options%interp ) then
+      ! We must interpolate from the new values pressures onto
+      ! the L2GP's own presure surfaces
+        call InterpolateValues ( pressures, values(time,:), &
+          & L2GP%pressures, L2GP%l2gpValue(1,:,profile), method='L' )
+      elseif ( size(values(time,:)) == size(L2GP%pressures) ) then
+        L2GP%l2gpValue(1,:,profile) = values(time,:)
+      elseif ( time == 1 ) then ! print warning mesg just once
+        print *, 'Mismatched number of pressure surfaces'
+      endif
+      if ( options%debug ) then
+        call Dump ( values(time,:), 'values at this profile', width=5 )
+        call Dump ( L2GP%l2gpValue(1,:,profile), 'l2gp at this profile', width=5 )
+      endif
+      ! Then we spread these values over the next profiles
+      ! When is the next chunk?
+      nextprofile = FindFirst( L2GP%chunkNumber, chunk+1 ) - 1
+      ! What if this is the last chunk?
+      if ( nextprofile < 1 ) nextprofile = L2GP%NTimes
+      if ( options%debug ) &
+        & print *, 'profile, nextprofile: ', profile, nextprofile
+      do k=profile+1, nextprofile ! options%spread
+        L2GP%l2gpValue(1, :, k) = &
+          & L2GP%l2gpValue(1, :, profile)
+      enddo
+      ! And prepare for the next time
+      if ( nextProfile == L2GP%NTimes ) exit
+      profile = nextprofile + 1
+      chunk = chunk + 1
+    enddo
+  end subroutine resetL2GPDataByOverwrite
+
+!------------------------- get_filename ---------------------
+    subroutine get_filename(filename, n_filenames, options)
+    ! Added for command-line processing
+     character(len=255), intent(out) :: filename          ! filename
+     integer, intent(in)             :: n_filenames
+     type ( options_T ), intent(inout) :: options
+     ! Local variables
+     integer ::                         error = 1
+     integer, save ::                   i = 1
+  ! Get inputfile name, process command-line args
+  ! (which always start with -)
+    do
+      call getarg ( i+hp, filename )
+      ! print *, i, ' th Arg: ', trim(filename)
+      error = 0
+      if ( filename(1:1) /= '-' ) exit
+      if ( filename(1:3) == '-h ' ) then
+        call print_help
+      elseif ( filename(1:4) == '-deb' ) then
+        options%debug = .true.
+        exit
+      elseif ( filename(1:4) == '-dry' ) then
+        options%dryrun = .true.
+        exit
+      elseif ( filename(1:5) == '-noin' ) then
+        options%interp = .false. ! Don't interpolate onto pressure surfaces
+        exit
+      elseif ( filename(1:3) == '-v ' ) then
+        options%verbose = .true.
+        exit
+      else if ( filename(1:3) == '-f ' ) then
+        call getarg ( i+1+hp, filename )
+        i = i + 1
+        exit
+      else if ( filename(1:6) == '-vals ' ) then
+        call getarg ( i+1+hp, options%newValues )
+        i = i + 1
+        exit
+      else if ( filename(1:3) == '-s ' ) then
+        call getarg ( i+1+hp, options%swathNames )
+        i = i + 1
+        exit
+      elseif ( filename(1:3) == '-nc' ) then
+        call igetarg ( i+1+hp, options%NClusters )
+        i = i + 1
+        exit
+!       elseif ( filename(1:3) == '-sp' ) then
+!         call igetarg ( i+1+hp, options%spread )
+!         i = i + 1
+!         exit
+      else
+        call print_help
+      end if
+      i = i + 1
+    end do
+    if ( error /= 0 ) then
+      call print_help
+    endif
+    i = i + 1
+    if (trim(filename) == ' ' .and. n_filenames == 0) then
+
+    ! Last chance to enter filename
+      print *,  "Enter the name of the HDFEOS4 or 5 L2GP file. " // &
+       &  "The default output file name will be used."
+      read(*,'(a)') filename
+    endif
+    
+  end subroutine get_filename
+!------------------------- print_help ---------------------
+  subroutine print_help
+  ! Print brief but helpful message
+      write (*,*) &
+      & 'Overwrite the swath values in l2gp files, e.g. sids truth files,'
+      write (*,*) &
+      & 'using values stored in another file (made by Joaquim Texeira)'
+      write (*,*) &
+      & 'Usage: resetL2GPValues [options] [filenames]'
+      write (*,*) &
+      & ' If no filenames supplied, you will be prompted to supply one'
+      write (*,*) &
+      & 'By default we will interpolate onto pressure surfaces'
+      write (*,*) ' Options:'
+      write (*,*) ' -dryrun       => dont execute, just describe'
+      write (*,*) ' -f filename   => add filename to list of l2gp filenames'
+      write (*,*) '                  (can do the same w/o the -f)'
+      write (*,*) ' -s swaths     => reset only swaths'
+      write (*,*) ' -vals vname   => read new values from vname'
+      write (*,*) '                   (default is SET_Profile...nc)'
+      write (*,*) ' -debug        => switch on debug mode'
+      write (*,*) ' -v            => switch on verbose mode'
+      write (*,*) ' -nointerp     => dont interpolate onto pressure surfaces'
+      write (*,*) '                   (we must then assume the surfaces match)'
+      ! write (*,*) ' -spread n     => spread each value over n profiles'
+      write (*,*) ' -nc n         => use only the first n cluster profiles'
+      write (*,*) '                  (otherwise use all in the file)'
+      write (*,*) ' -h            => print brief help'
+      stop
+  end subroutine print_help
+!------------------------- SayTime ---------------------
+  subroutine SayTime ( What, startTime )
+    character(len=*), intent(in) :: What
+    real, intent(in), optional :: startTime
+    real :: myt1
+    if ( present(startTime) ) then
+      myt1 = startTime
+    else
+      myt1 = t1
+    endif
+    call time_now ( t2 )
+    call output ( "Timing for " // what // " = " )
+    call output ( dble(t2 - myt1), advance = 'yes' )
+  end subroutine SayTime
+!------------------------- igetarg ---------------------
+  subroutine igetarg ( pos, iarg )
+   integer, intent(in) :: pos
+   integer, intent(out) :: iarg
+   character(len=16) :: arg
+   call getarg ( pos, arg )
+   read(arg, *) iarg
+  end subroutine igetarg
+
+!==================
+end program resetL2GPValues
+!==================
+
+! $Log: resetl2gpvalues.f90,v $
+! Revision 1.3  2021/09/30 21:54:42  pwagner
+! Fixed bug that always, and usually wongly, overwrites ChunkNumbers
+!
+! Revision 1.2  2021/08/12 20:41:32  pwagner
+! News -nc aloows use of only first n clusters
+!
+! Revision 1.1  2021/04/15 20:41:27  pwagner
+! First commit
+!
+@
+
+
+1.3
+log
+@Fixed bug that always, and usually wongly, overwrites ChunkNumbers
+@
+text
+@d25 1
+a25 1
+   use MLSFiles, only: HDFVersion_5, MLS_Exists, &
+d42 1
+a42 1
+       "$Id: resetl2gpvalues.f90,v 1.2 2021/08/12 20:41:32 pwagner Exp $"
+d69 1
+d282 6
+d289 2
+d340 1
+d343 7
+a349 2
+      call InterpolateValues ( pressures, values(time,:), &
+        & L2GP%pressures, L2GP%l2gpValue(1,:,profile), method='L' )
+d396 3
+d406 1
+a406 1
+      else if ( filename(1:3) == '-vals ' ) then
+d451 2
+d462 2
+d498 3
+@
+
+
+1.2
+log
+@News -nc aloows use of only first n clusters
+@
+text
+@d42 1
+a42 1
+       "$Id: resetl2gpvalues.f90,v 1.1 2021/04/15 20:41:27 pwagner Exp $"
+d310 1
+a310 2
+    ! Unfortunately, the truth files may not have the same number of chunks
+    ! as ntimes.
+d315 2
+a316 1
+    if ( options%debug ) call OutputNamedValue ( 'ProfsPerChunk ', ProfsPerChunk )
+d323 2
+a324 1
+      L2GP%ChunkNumber(profile:nextprofile) = time
+d476 3
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d40 1
+a40 1
+       "$RCSfile: resetL2GPValues.f90,v $"
+d42 1
+a42 1
+       "$Id: resetL2GPValues.f90,v 1.1 2018/02/09 19:02:00 pwagner Exp $"
+d58 1
+a58 1
+!    cd /nas/testing/workspace/pwagner/t1--t
+d77 3
+d309 1
+d395 4
+d442 2
+d474 4
+a477 1
+! $Log: resetL2GPValues.f90,v $
+@
+

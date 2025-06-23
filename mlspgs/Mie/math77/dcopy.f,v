@@ -1,0 +1,180 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.14
+	cfm-single-freq-0-1:1.2.0.12
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.10
+	mus-emls-1-70:1.2.0.8
+	rel-1-0-englocks-work:1.2.0.6
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.2
+	V4-21:1.2.0.4
+	V4-13:1.2
+	V4-12:1.2
+	V4-11:1.2
+	V4-10:1.2
+	V3-43:1.2
+	M4-00:1.2
+	V3-41:1.2
+	V3-40-PlusGM57:1.2.0.2
+	V3-33:1.2
+	V3-31:1.2
+	V3-30-NRT-05:1.2
+	cfm-01-00:1.2
+	V3-30:1.2
+	V3-20:1.2
+	V3-10:1.1;
+locks; strict;
+comment	@c @;
+
+
+1.2
+date	2009.12.15.03.36.14;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2008.04.19.01.18.55;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Update to Math77.6.23
+@
+text
+@      SUBROUTINE DCOPY (N,X,INCX,Y,INCY)
+C Copyright (c) 1996, California Institute of Technology. U.S.
+C Government Sponsorship under NASA Contract NAS7-1260 is acknowledged.
+C>> 2006-06-07 DCOPY  Krogh   Removed arithmetic ifs
+C>> 1994-11-11 DCOPY  Krogh   Declared all vars.
+C>> 1994-10-20 DCOPY  Krogh   Changes to use M77CON
+C>> 1989-05-12 DCOPY  Snyder  Clean up a little for F77
+C>> 1985-08-02 DCOPY  Lawson  Initial code.
+c--D replaces "?": ?COPY
+C
+C     COPY X TO Y.
+C     FOR I = 0 TO N-1, COPY X(LX+I*INCX) TO Y(LY+I*INCY),
+C     WHERE LX = 1 IF INCX .GE. 0, ELSE LX = (-INCX)*N, AND LY IS
+C     DEFINED IN A SIMILAR WAY USING INCY.
+C
+      INTEGER N, INCX, INCY, IX, IY, I, M, NS
+      DOUBLE PRECISION X(*),Y(*)
+C
+      IF(N.LE.0)RETURN
+      IF ((INCX .NE. INCY) .OR. (INCX .LT. 0)) THEN
+C        CODE FOR UNEQUAL OR NONPOSITIVE INCREMENTS.
+        IX = 1
+        IY = 1
+        IF(INCX.LT.0)IX = (-N+1)*INCX + 1
+        IF(INCY.LT.0)IY = (-N+1)*INCY + 1
+        DO 10 I = 1,N
+          Y(IY) = X(IX)
+          IX = IX + INCX
+          IY = IY + INCY
+ 10     CONTINUE
+      ELSE IF (INCX .EQ. 1) THEN
+C        CODE FOR BOTH INCREMENTS EQUAL TO 1
+C        CLEAN-UP LOOP SO REMAINING VECTOR LENGTH IS A MULTIPLE OF 8.
+        M = MOD(N,8)
+        DO 30 I = 1,M
+          Y(I) = X(I)
+ 30     CONTINUE
+        DO 50 I = M+1,N,8
+          Y(I)     = X(I)
+          Y(I + 1) = X(I + 1)
+          Y(I + 2) = X(I + 2)
+          Y(I + 3) = X(I + 3)
+          Y(I + 4) = X(I + 4)
+          Y(I + 5) = X(I + 5)
+          Y(I + 6) = X(I + 6)
+          Y(I + 7) = X(I + 7)
+ 50     CONTINUE
+      ELSE
+C        CODE FOR EQUAL, POSITIVE, NONUNIT INCREMENTS.
+        NS = N*INCX
+        DO 70 I=1,NS,INCX
+          Y(I) = X(I)
+ 70     CONTINUE
+      END IF
+      RETURN
+      END
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d2 3
+d6 1
+a6 1
+C>> 1994-10-20 DCOPY  Krogh  Changes to use M77CON
+d20 1
+a20 3
+      IF(INCX.EQ.INCY) IF(INCX-1) 5,20,60
+    5 CONTINUE
+C
+d22 10
+a31 12
+C
+      IX = 1
+      IY = 1
+      IF(INCX.LT.0)IX = (-N+1)*INCX + 1
+      IF(INCY.LT.0)IY = (-N+1)*INCY + 1
+      DO 10 I = 1,N
+        Y(IY) = X(IX)
+        IX = IX + INCX
+        IY = IY + INCY
+   10 CONTINUE
+      RETURN
+C
+a32 1
+C
+d34 15
+a48 17
+C
+   20 M = MOD(N,8)
+      DO 30 I = 1,M
+        Y(I) = X(I)
+   30 CONTINUE
+      DO 50 I = M+1,N,8
+        Y(I)     = X(I)
+        Y(I + 1) = X(I + 1)
+        Y(I + 2) = X(I + 2)
+        Y(I + 3) = X(I + 3)
+        Y(I + 4) = X(I + 4)
+        Y(I + 5) = X(I + 5)
+        Y(I + 6) = X(I + 6)
+        Y(I + 7) = X(I + 7)
+   50 CONTINUE
+      RETURN
+C
+d50 5
+a54 6
+C
+   60 CONTINUE
+      NS = N*INCX
+      DO 70 I=1,NS,INCX
+        Y(I) = X(I)
+   70   CONTINUE
+@
+

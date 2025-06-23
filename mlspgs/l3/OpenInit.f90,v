@@ -1,0 +1,1946 @@
+head	1.25;
+access;
+symbols
+	v5-02-NRT-19:1.25
+	v6-00:1.25
+	v5-02-NRT-18:1.25
+	v5-02:1.25
+	v5-01-NRT-17:1.25
+	v5-01-NRT-16:1.25
+	v5-01-NRT-15:1.25
+	v5-01-NRT-14:1.25
+	neuralnetworks-1-0:1.25.0.14
+	cfm-single-freq-0-1:1.25.0.12
+	v5-01:1.25
+	v5-00:1.25
+	v4-23-TA133:1.25.0.10
+	mus-emls-1-70:1.25.0.8
+	rel-1-0-englocks-work:1.25.0.6
+	VUMLS1-00:1.25
+	VPL1-00:1.25
+	V4-22-NRT-08:1.25
+	VAM1-00:1.25
+	V4-21:1.25.0.4
+	V4-13:1.25
+	V4-12:1.25
+	V4-11:1.25
+	V4-10:1.25
+	V3-43:1.25
+	M4-00:1.25
+	V3-41:1.25
+	V3-40-PlusGM57:1.25.0.2
+	V2-24-NRT-04:1.24
+	V3-33:1.25
+	V2-24:1.24
+	V3-31:1.25
+	V3-30-NRT-05:1.25
+	cfm-01-00:1.25
+	V3-30:1.25
+	V3-20:1.25
+	V3-10:1.25
+	V2-23-NRT-02:1.24
+	V2-23:1.24
+	V2-22-NRT-01:1.24
+	V2-22:1.24
+	V2-21:1.23
+	V2-20:1.23
+	V2-11:1.22
+	V2-10:1.22
+	V2-00:1.22
+	V1-51:1.16
+	V1-50:1.16
+	V1-45:1.16
+	V1-44:1.16
+	V1-43:1.15
+	V1-42:1.14
+	V1-41:1.14
+	V1-32:1.12
+	V1-40:1.14
+	V1-31:1.12
+	V1-30:1.12
+	V1-13:1.9
+	V1-12:1.9
+	V1-11:1.9
+	V1-10:1.9
+	newfwm-feb03:1.9.0.2
+	V1-04:1.9
+	V1-03:1.9
+	V1-02:1.9
+	V1-00:1.8
+	newfwm-sep01:1.8.0.2
+	V0-7:1.8
+	V0-5-Level2:1.8
+	V0-5-SIPS:1.8;
+locks; strict;
+comment	@# @;
+
+
+1.25
+date	2008.12.02.23.15.18;	author pwagner;	state Exp;
+branches;
+next	1.24;
+
+1.24
+date	2007.05.21.19.55.59;	author cvuu;	state Exp;
+branches;
+next	1.23;
+
+1.23
+date	2006.09.21.16.07.02;	author cvuu;	state Exp;
+branches;
+next	1.22;
+
+1.22
+date	2006.05.04.18.18.30;	author cvuu;	state Exp;
+branches;
+next	1.21;
+
+1.21
+date	2006.04.17.15.40.00;	author cvuu;	state Exp;
+branches;
+next	1.20;
+
+1.20
+date	2006.02.28.17.56.56;	author cvuu;	state Exp;
+branches;
+next	1.19;
+
+1.19
+date	2005.09.22.23.40.49;	author pwagner;	state Exp;
+branches;
+next	1.18;
+
+1.18
+date	2005.07.12.17.18.32;	author pwagner;	state Exp;
+branches;
+next	1.17;
+
+1.17
+date	2005.06.23.19.07.39;	author pwagner;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2004.08.04.23.20.55;	author pwagner;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2004.05.04.15.33.15;	author cvuu;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2004.01.08.21.24.56;	author cvuu;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2004.01.07.21.43.18;	author cvuu;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2003.06.03.20.45.04;	author pwagner;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2003.04.30.18.15.48;	author pwagner;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2003.03.22.02.51.22;	author jdone;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2002.04.10.22.09.02;	author jdone;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2001.03.27.19.35.37;	author nakamura;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2001.02.21.21.11.59;	author nakamura;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2001.01.18.16.52.28;	author nakamura;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2001.01.16.17.48.09;	author nakamura;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2000.12.29.21.42.27;	author nakamura;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2000.11.15.21.28.05;	author nakamura;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2000.10.24.19.31.48;	author nakamura;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2000.10.17.20.26.16;	author nakamura;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.25
+log
+@Warn of compiler-found undefined intent(out) arg
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!==============================================================================
+MODULE OpenInit 
+!==============================================================================
+
+  USE L2INTERFACE, ONLY: ReadL2GPAttribute  
+  USE L3CF, ONLY: L3CFDef_T, L3CFProd_T, FillL3CF
+  USE MLSCF, ONLY: Mlscf_T 
+  USE MLSCommon, ONLY: r8
+  USE MLSL3Common, ONLY: maxWindow, CCSDS_LEN, FILENAMELEN
+  USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Fileopen, &
+       & MLSMSG_ALLOCATE, MLSMSG_Warning
+  USE MLSPCF3, ONLY: mlspcf_l3_param_OutputVersion, mlspcf_l3_param_Cycle, &
+       & mlspcf_l3_param_L2DayRange, mlspcf_l3_param_RangDays, & 
+       & mlspcf_pcf_start,mlspcf_l3cf_start
+  USE dates_module, only: utc_to_yyyymmdd
+  USE Output_m, only: output
+  USE PCFHdr, ONLY: CreatePCFAnnotation, GlobalAttributes, FillTAI93Attribute
+  USE SDPToolkit, ONLY: PGS_S_SUCCESS, pgs_pc_getConfigData, & 
+       & Pgs_td_utcToTAI, max_orbits, spacecraftId, PGS_IO_Gen_CloseF, &
+       & Pgs_io_gen_openF, PGSd_IO_Gen_RSeqFrm, Pgs_pc_getReference, &
+       & max_orbits
+  USE GETCF_M, only: GetCF, InitGetCF
+  IMPLICIT NONE
+  PUBLIC
+
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: OpenInit.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+  
+  ! Contents:
+  
+  ! Definitions -- PCFData_T
+  ! Subroutines -- GetPCFParameters
+  !                SetProcessingWindow
+  !                OpenAndInitialize
+  !                AvgOrbPeriod
+  
+  ! Description:  This module contains the routines needed for the 
+  ! L3 Daily Open/Init task.
+  
+  ! Parameters
+  
+  ! This data type is used to store User-defined Runtime Parameters and other
+  ! information taken from the PCF.
+
+  TYPE PCFData_T
+
+     ! name of the log file (without the path)
+     
+     CHARACTER (LEN=FileNameLen) :: logGranID
+     
+     ! version string in PCF output file names
+     
+     CHARACTER (LEN=15) :: outputVersion	! output files
+     
+     ! first & last days of input & output windows
+     
+     CHARACTER (LEN=8) :: l2EndDay		! last day of l2 to read
+     CHARACTER (LEN=8) :: l2StartDay		! first day of l2 to read
+     CHARACTER (LEN=8) :: l3EndDay		! last day of l3 to write
+     CHARACTER (LEN=8) :: l3StartDay		! first day of l3 to write
+     
+     ! cycle # of processing run
+     
+     CHARACTER (LEN=4) :: cycle
+     
+  END TYPE PCFData_T
+  
+CONTAINS
+
+  !------------------------------------
+  SUBROUTINE GetPCFParameters(l3pcf)
+  !------------------------------------
+
+    ! Brief description of subroutine
+    ! This subroutine retrieves the User-Defined Runtime Parameters from the 
+    ! PCF and stores them in variables used in the MLSL3 code.
+
+    ! Arguments
+
+    TYPE( PCFData_T ), INTENT(OUT) :: l3pcf
+    
+    ! Parameters
+
+    CHARACTER (LEN=*), PARAMETER :: & 
+         UDRP_ERR = 'Failed to get PCF runtime parameter :  '
+    ! Variables
+
+    CHARACTER (LEN=480) :: msr
+    CHARACTER (LEN=FileNameLen) :: name
+    CHARACTER (LEN=17) :: range 
+
+    INTEGER ::  indx, mlspcf_log, returnStatus, version
+    INTEGER ::  l2startInt, l2endInt, diffDays
+
+    ! Functions
+
+    INTEGER, EXTERNAL :: pgs_pc_getConfigData
+
+    ! Retrieve values set in PCF & assign them to variables.
+
+    returnStatus = pgs_pc_getConfigData(mlspcf_l3_param_OutputVersion, &
+         & l3pcf%outputVersion)
+    IF (returnStatus /= PGS_S_SUCCESS) THEN
+       msr = UDRP_ERR // 'OutputVersion'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+    returnStatus = pgs_pc_getConfigData(mlspcf_l3_param_Cycle, l3pcf%cycle)
+    IF (returnStatus /= PGS_S_SUCCESS) THEN
+       msr = UDRP_ERR // 'Cycle'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+    returnStatus = pgs_pc_getConfigData(mlspcf_l3_param_L2DayRange, range)
+    IF (returnStatus /= PGS_S_SUCCESS) THEN
+       msr = UDRP_ERR // 'L2DayRange'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+    l3pcf%l2StartDay = range(1:8)
+    l3pcf%l2EndDay = range(10:17)
+    read(range(6:8),'(i3)')l2startInt
+    read(range(15:17),'(i3)')l2endInt
+    diffDays = l2endInt - l2startInt 
+    
+    returnStatus = pgs_pc_getConfigData(mlspcf_l3_param_RangDays, range)
+    IF (returnStatus /= PGS_S_SUCCESS) THEN
+       msr = UDRP_ERR // 'RangDays'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+    
+    l3pcf%l3StartDay = range(1:8)
+    l3pcf%l3EndDay = range(10:17)
+
+    ! Get the name of the log file from the PCF
+
+    version = 1
+    mlspcf_log = 10101
+
+    returnStatus = Pgs_pc_getReference(mlspcf_log, version, name)
+    IF (returnStatus /= PGS_S_SUCCESS) CALL MLSMessage(MLSMSG_Error, &
+         & ModuleName, 'Error retrieving log file name from PCF.')
+    indx = INDEX(name, '/', .TRUE.)
+    l3pcf%logGranID = name(indx+1:)
+
+    ! Store appropriate user input as global attributes
+    if (diffDays == 6) then
+    	GlobalAttributes%ProcessLevel = '3-weekly'
+    else
+        GlobalAttributes%ProcessLevel = '3-daily'
+    endif
+
+    !GlobalAttributes%InputVersion = l3pcf%outputVersion
+    GlobalAttributes%StartUTC = l3pcf%l3StartDay // &
+      & 'T00:00:00.000000Z'
+    GlobalAttributes%EndUTC = l3pcf%l3EndDay // &
+      & 'T23:59:59.999999Z'
+    GlobalAttributes%PGEVersion = l3pcf%outputVersion   ! l3pcf%PGEVersion
+    call utc_to_yyyymmdd(GlobalAttributes%StartUTC, returnStatus, &
+      & GlobalAttributes%GranuleYear, GlobalAttributes%GranuleMonth, &
+      & GlobalAttributes%GranuleDay) 
+    call FillTAI93Attribute
+    
+  !---------------------------------
+  END SUBROUTINE GetPCFParameters
+  !---------------------------------
+
+  !-------------------------------------------------------------
+  SUBROUTINE SetProcessingWindow (start, end, dates, numDays)
+  !-------------------------------------------------------------
+  USE dates_module, only: days_in_year
+
+    ! Brief description of subroutine
+    ! This subroutine finds each DOY for the L3 processing window 
+    ! and calculates the number of days in the window.
+    
+    ! Arguments
+    
+    CHARACTER (LEN=8), INTENT(IN) :: end, start
+    
+    CHARACTER (LEN=8), INTENT(OUT) :: dates(:)
+
+    INTEGER, INTENT(OUT) :: numDays
+
+    ! Parameters
+
+    ! Functions
+
+    ! Variables
+
+    CHARACTER (LEN=4) :: cYr
+    CHARACTER (LEN=3) :: cDOY
+
+    INTEGER :: i, iDOY, iEnd, iYr, lastDOY
+
+    ! Initializations outside the DO loop
+
+    READ(start(1:4), '(I4)') iYr
+    lastDOY = days_in_year(iYr)
+    READ( start(6:8), '(I3)' ) iDOY
+    READ( end(6:8), '(I3)' ) iEnd
+
+    DO i = 1, maxWindow
+
+       ! Increment DOY
+
+       iDOY = iDOY + 1
+
+       ! Check that the incrementation hasn't crossed a year boundary
+
+       IF (iDOY > lastDOY) THEN
+          iYr = iYr + 1
+          iDOY = 1
+	  IF (i == 10) EXIT
+       ENDIF
+
+       ! Check that the incrementation hasn't crossed the window boundary
+
+       IF (iDOY > iEnd) EXIT
+
+       ! Convert Yr back to CHARACTER
+
+       WRITE( cYr, '(I4)' ) iYr
+
+       ! Convert DOY back to CHARACTER, adding leading zeroes if necessary
+
+       WRITE( cDOY, '(I3)' ) iDOY
+
+       IF (iDOY < 10) THEN
+          cDOY = '00' // cDOY(3:3)
+       ELSE IF (iDOY < 100) THEN
+          cDOY = '0' // cDOY(2:3)
+       ENDIF
+
+       ! Concatenate them into a date
+       
+       if (i < maxWindow) then 
+         dates(i+1) = cYr // '-' // cDOY
+       endif
+
+    ENDDO
+
+    if (i > maxWindow) then
+       numDays = maxWindow
+    else
+       numDays = i
+    endif
+ 
+    dates(1) = start
+    dates(numDays) = end
+
+  !------------------------------------
+  END SUBROUTINE SetProcessingWindow
+  !------------------------------------
+
+  !-----------------------------------------------------------------------
+  SUBROUTINE OpenAndInitialize (l3pcf, cf, l3cf, cfDef, anText, avgPer)
+  !-----------------------------------------------------------------------
+
+    ! Brief description of subroutine
+    ! This subroutine performs the Open/Init task in the MLSL3 program.
+
+    ! Arguments
+
+    TYPE( L3CFDef_T ), INTENT(OUT) :: cfDef
+
+    TYPE( Mlscf_T ), INTENT(OUT) :: cf
+
+    TYPE( PCFData_T ), INTENT(OUT) :: l3pcf
+
+    TYPE( L3CFProd_T ), POINTER :: l3cf(:) 
+
+    CHARACTER (LEN=1), POINTER :: anText(:) 
+
+    REAL(r8), POINTER :: avgPer(:) 
+
+    ! Parameters
+
+    ! Functions
+
+    ! Variables
+
+    CHARACTER (LEN=480) :: msr
+    CHARACTER (LEN=8) :: dates(maxWindow)
+
+    REAL(r8) :: period, sum
+
+    INTEGER :: error, numDays, pcfId, returnStatus, err, i, j, count
+
+         numDays = 0
+             err = 0
+           error = 0
+           pcfId = 0
+    returnStatus = 0
+             sum = 0
+           count = 0
+
+    ! Read the PCF into an annotation for file headers
+
+    CALL CreatePCFAnnotation(mlspcf_pcf_start, anText)
+
+    ! Retrieve values set in PCF & assign them to variables.
+
+    CALL GetPCFParameters(l3pcf)
+
+    ! Calculate the dates, number of days for the processing window
+    
+    CALL SetProcessingWindow(l3pcf%l3StartDay, l3pcf%l3EndDay, dates, &
+         & numDays)
+
+    ! Open the configuration file
+
+    returnStatus = pgs_io_gen_openF (mlspcf_l3cf_start, &
+         & PGSd_IO_Gen_RSeqFrm, 0, pcfId, 1)
+    IF (returnStatus /= PGS_S_SUCCESS) THEN
+       msr = MLSMSG_Fileopen // 'l3cf.'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+    
+    ! Read the configuration file into an MLSCF_T structure
+    
+    CALL InitGetCF
+    
+    CALL getCF(cf, error, inUnit=pcfId)
+    
+    ! Close the configuration file
+    
+    returnStatus = pgs_io_gen_closeF (pcfId)
+    IF (returnStatus /= PGS_S_SUCCESS) & 
+         & CALL MLSMessage(MLSMSG_Error, ModuleName, 'Failed to close l3cf.')
+
+    ! Check the parser output; fill L3CFProd_T
+    
+    CALL FillL3CF(cf, l3pcf%outputVersion, dates, numDays, l3cf, cfDef)
+
+    ! Get L2GP Attributes
+    CALL MLSMessage( MLSMSG_Warning, ModuleName, &
+      & 'ReadL2GPAttribute does not properly set the intent(out) arg numDays' )
+    CALL ReadL2GPAttribute (l3pcf%l3StartDay, l3pcf%l3EndDay, &
+	& l3cf(1)%fileTemplate, numDays)
+
+!    l3cf(1)%nDays = numDays  !override the correct valid days 
+
+! If the average orbit period is either not in the cf file or is a number <=
+!     Then calculate the average orbit period for each day in the input window.
+! If there are orbit period in the l2gp files, use them instead of calculate or ! use from cf file 9/16/03
+
+    IF (numDays .gt. 0) THEN
+       allocate(avgPer(numDays), stat=err)
+       IF ( err /= 0 ) THEN
+          msr = MLSMSG_Allocate // ' array of period averages.'
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+       ENDIF
+
+       DO i = 1, numDays
+          IF (GlobalAttributes%OrbPeriodDays(1,i) /= -1.0) THEN 
+             !call output('first orbitPeriod = ', advance='no')
+             DO j = 1, max_orbits
+               IF (GlobalAttributes%OrbPeriodDays(j,i) /= 0) THEN 
+		   sum = sum + GlobalAttributes%OrbPeriodDays(j,i)
+                   count = count + 1
+               ELSE
+                  print *,'orb period is zero: ',i,j
+	       END IF	 
+             END DO
+             IF (sum /= 0.0) THEN
+                avgPer(i) = sum/count 
+	     ELSE
+                avgPer(i) = cfDef%averageOrbitalPeriod
+	     END IF
+          ELSE  
+             avgPer(i) = cfDef%averageOrbitalPeriod
+	  END IF 
+       END DO
+    ELSE
+       call AvgOrbPeriod(l3pcf%l2StartDay, l3pcf%l2EndDay, avgPer)
+    END IF
+
+  !----------------------------------
+  END SUBROUTINE OpenAndInitialize
+  !----------------------------------
+
+  !----------------------------------------------------
+  SUBROUTINE AvgOrbPeriod (startDay, endDay, avgPer)
+  !----------------------------------------------------
+
+    ! Brief description of subroutine
+    ! This program calculates the average orbital period 
+    ! for each day in the input window.
+            
+    ! Arguments
+
+    CHARACTER (LEN=8), INTENT(IN) :: endDay, startDay
+
+    REAL(r8), POINTER :: avgPer(:)
+
+    ! Parameters
+
+    INTEGER, PARAMETER :: numOffset = 43200
+
+    ! Variables
+
+    CHARACTER (LEN=CCSDS_LEN) :: startA, orbitAscendTime(max_orbits), &
+         & orbitDescendTime(max_orbits)
+    CHARACTER (LEN=480) :: msg, msr
+    CHARACTER (LEN=32) :: mnemonic
+    CHARACTER (LEN=26) :: startB
+    CHARACTER (LEN=8) :: dates(maxWindow)
+
+    REAL(r8) :: sum, offsets(numOffset), ascTAI(max_orbits), & 
+         & int(max_orbits), orbitDownLongitude(max_orbits)
+
+    INTEGER :: err, i, j, numDays, numOrbits, returnStatus, & 
+         & orbitNumber(max_orbits)
+
+    ! Functions
+            
+    INTEGER, EXTERNAL :: Pgs_eph_getEphMet, Pgs_td_asciiTime_bToA, & 
+         & Pgs_td_timeInterval, Pgs_td_utcToTAI
+
+    ! Calculate the offsets
+
+    DO i = 1, numOffset
+       offsets(i) = (i-1) * 2.0
+    ENDDO
+
+    ! Find the number of days in the input window
+    
+    CALL SetProcessingWindow(startDay, endDay, dates, numDays)
+
+    if (numDays .gt. 0) then 
+
+       ALLOCATE(avgPer(numDays), STAT=err)
+       IF ( err /= 0 ) THEN
+          msr = MLSMSG_Allocate // ' array of period averages.'
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+       ENDIF
+       
+    endif
+
+    ! For each day in the input window,
+
+    DO i = 1, numDays
+
+       ! Convert the start time to CCSDS A format
+
+       startB = dates(i) // 'T00:00:00.000000Z'
+
+       returnStatus = Pgs_td_asciiTime_bToA(startB, startA)
+       IF (returnStatus /= PGS_S_SUCCESS) & 
+            & CALL MLSMessage(MLSMSG_Error, &
+            & ModuleName, 'Failed to convert input date to CCSDS A')
+       
+       returnStatus = PGS_EPH_GetEphMet(spacecraftId, &
+            & numOffset, startA, &
+            & offsets, numOrbits,&
+            & orbitNumber, &
+            & orbitAscendTime, &
+            & orbitDescendTime,&
+            & orbitDownLongitude)
+       
+       IF (returnStatus /= PGS_S_SUCCESS) THEN
+          call Pgs_smf_getMsg(returnStatus, mnemonic, msg)
+          msr = mnemonic // ':  ' // msg
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+       ENDIF
+
+       ! Convert orbitAscendTime to TAI93
+       
+       DO j = 1, numOrbits
+          returnStatus = Pgs_td_utcToTAI(orbitAscendTime(j),ascTAI(j))
+          IF (returnStatus /= PGS_S_SUCCESS) & 
+               & CALL MLSMessage(MLSMSG_Error, &
+               & ModuleName, 'Error converting from CCSDSB to TAI.')
+       ENDDO
+
+       ! Get the differences between successive times 
+       ! and add them for the day
+
+       sum = 0.0 
+
+       DO j = 1, numOrbits-1
+          returnStatus = & 
+               & Pgs_td_timeInterval( ascTAI(j), ascTAI(j+1), int(j) )
+          IF (returnStatus /= PGS_S_SUCCESS) & 
+               & CALL MLSMessage(MLSMSG_Error, ModuleName, & 
+               & 'Failed to find interval between orbitsAscendTimes.')
+          sum = sum + int(j)
+       ENDDO
+
+       ! Get the average period for the day
+
+       if (numOrbits .gt. 1) then 
+          avgPer(i) = sum/float(numOrbits-1)
+       else
+          avgPer(i) = 0.0
+       endif
+
+       ! Find Standard Deviation of the period. 
+
+       sum = 0.0 
+
+       DO j = 1, numOrbits-1
+          sum = sum + (int(j) - avgPer(i))*(int(j) - avgPer(i)) 
+       ENDDO
+
+    ENDDO
+
+  !-----------------------------
+  END SUBROUTINE AvgOrbPeriod
+  !-----------------------------
+
+!==================
+  logical function not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id: OpenInit.f90,v 1.24 2007/05/21 19:55:59 cvuu Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+END MODULE OpenInit
+!==================
+
+! $Log: OpenInit.f90,v $
+! Revision 1.24  2007/05/21 19:55:59  cvuu
+! Fix the avgPeriod problem when OrbitPeriod is zero
+!
+! Revision 1.23  2006/09/21 16:07:02  cvuu
+! Fix the problem of crossing a year boundary
+!
+! Revision 1.22  2006/05/04 18:18:30  cvuu
+! Fix bug in the subroutine SetProcessingWindow
+!
+! Revision 1.21  2006/04/17 15:40:00  cvuu
+! Add L3-weekly product for attribute ProcessLevel
+!
+! Revision 1.20  2006/02/28 17:56:56  cvuu
+! V2.00 commit
+!
+! Revision 1.19  2005/09/22 23:40:49  pwagner
+! date conversion procedures and functions all moved into dates module
+!
+! Revision 1.18  2005/07/12 17:18:32  pwagner
+! Dropped global attribute InputVersion
+!
+! Revision 1.17  2005/06/23 19:07:39  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 1.16  2004/08/04 23:20:55  pwagner
+! Much moved from MLSStrings to MLSStringLists
+!
+! Revision 1.15  2004/05/04 15:33:15  cvuu
+! v1.4.3: Use int array for Date in Data Field
+!
+! Revision 1.14  2004/01/08 21:24:56  cvuu
+! correct the PGEVersion in the global attribute
+!
+! Revision 1.13  2004/01/07 21:43:18  cvuu
+! version 1.4 commit
+!
+! Revision 1.12  2003/06/03 20:45:04  pwagner
+! Fills global attributes
+!
+! Revision 1.11  2003/04/30 18:15:48  pwagner
+! Work-around for LF95 infinite compile-time bug
+!
+! Revision 1.10  2003/03/22 02:51:22  jdone
+! average orbit retrieved from cf or calculated
+!
+! Revision 1.9  2002/04/10 22:09:02  jdone
+! Division by zero checked.
+!
+! Revision 1.8  2001/03/27 19:35:37  nakamura
+! Changed from PCFModule to PCFHdr; save logGranID with .dat; allowed for a 1 day output window.
+!
+! Revision 1.7  2001/02/21 21:11:59  nakamura
+! Changed MLSPCF to MLSPCF3; removed inputVersion.
+!
+! Revision 1.6  2001/01/18 16:52:28  nakamura
+! Added type L3CFDef_T; moved minDays from PCF to cf.
+!
+! Revision 1.5  2001/01/16 17:48:09  nakamura
+! Added code for annotating and for retrieving a name template for the log in the cf.
+!
+! Revision 1.4  2000/12/29 21:42:27  nakamura
+! Added subroutine AvgOrbPeriod.
+!
+! Revision 1.3  2000/11/15 21:28:05  nakamura
+! Changed MLSPCF parameter names to mlspcf_l3_param_*.
+!
+! Revision 1.2  2000/10/24 19:31:48  nakamura
+! Added logGranID to PCFData_T; replaced ReadParseMLSCF stub with calls to actual parser.
+!
+! Revision 1.1  2000/10/17 20:26:16  nakamura
+! Module for the Open/Init task.
+!
+@
+
+
+1.24
+log
+@Fix the avgPeriod problem when OrbitPeriod is zero
+@
+text
+@d22 1
+a22 1
+       & MLSMSG_ALLOCATE
+d352 2
+a353 1
+
+d532 1
+a532 1
+       "$Id: OpenInit.f90,v 1.23 2006/09/21 16:07:02 cvuu Exp $"
+d541 3
+@
+
+
+1.23
+log
+@Fix the problem of crossing a year boundary
+@
+text
+@d376 2
+d380 5
+a384 1
+             avgPer(i) = sum/count 
+d387 1
+a387 1
+          END IF
+d531 1
+a531 1
+       "$Id: OpenInit.f90,v 1.22 2006/05/04 18:18:30 cvuu Exp $"
+d540 3
+@
+
+
+1.22
+log
+@Fix bug in the subroutine SetProcessingWindow
+@
+text
+@d229 1
+d525 1
+a525 1
+       "$Id: OpenInit.f90,v 1.21 2006/04/17 15:40:00 cvuu Exp $"
+d534 3
+@
+
+
+1.21
+log
+@Add L3-weekly product for attribute ProcessLevel
+@
+text
+@a138 3
+   
+    print *,'l2StartInt: ',l2startInt 
+    print *,'l2endInt: ',l2endInt 
+a139 1
+    print *,'diffDays: ',diffDays 
+d250 4
+a253 2
+
+       dates(i+1) = cYr // '-' // cDOY
+d257 6
+a262 1
+    numDays = i
+d524 1
+a524 1
+       "$Id: OpenInit.f90,v 1.20 2006/02/28 17:56:56 cvuu Exp $"
+d533 3
+@
+
+
+1.20
+log
+@V2.00 commit
+@
+text
+@d108 1
+d137 7
+d166 6
+a171 1
+    GlobalAttributes%ProcessLevel = '3-daily'
+d521 1
+a521 1
+       "$Id: OpenInit.f90,v 1.19 2005/09/22 23:40:49 pwagner Exp $"
+d530 3
+@
+
+
+1.19
+log
+@date conversion procedures and functions all moved into dates module
+@
+text
+@d52 2
+a53 3
+  ! Remarks:  This is a prototype module for the routines needed for the 
+  ! L3 Daily
+  ! Open/Init task.
+d159 1
+a159 1
+    ! GlobalAttributes%InputVersion = l3pcf%outputVersion
+d337 3
+a339 1
+	& l3cf(1)%fileTemplate)
+a365 1
+
+a366 1
+       print *, 'in else'
+d508 1
+a508 1
+       "$Id: OpenInit.f90,v 1.18 2005/07/12 17:18:32 pwagner Exp $"
+d517 3
+@
+
+
+1.18
+log
+@Dropped global attribute InputVersion
+@
+text
+@d26 1
+a26 1
+  USE MLSStringLists, only: utc_to_yyyymmdd
+d509 1
+a509 1
+       "$Id: OpenInit.f90,v 1.17 2005/06/23 19:07:39 pwagner Exp $"
+d518 3
+@
+
+
+1.17
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d40 1
+a40 1
+       "$RCSfile: $"
+d160 1
+a160 1
+    GlobalAttributes%InputVersion = l3pcf%outputVersion
+d509 1
+a509 1
+       "$Id: $"
+d518 3
+@
+
+
+1.16
+log
+@Much moved from MLSStrings to MLSStringLists
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+a36 1
+  PRIVATE :: ID, ModuleName
+d38 5
+a42 5
+  !------------------- RCS Ident Info -----------------------
+  CHARACTER(LEN=130) :: Id = &                                                
+       "$Id: OpenInit.f90,v 1.15 2004/05/04 15:33:15 cvuu Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName="$RCSfile: OpenInit.f90,v $"
+  !----------------------------------------------------------
+d506 8
+d518 3
+@
+
+
+1.15
+log
+@v1.4.3: Use int array for Date in Data Field
+@
+text
+@d18 1
+a18 1
+  USE MLSStrings, only: utc_to_yyyymmdd
+d33 1
+a33 1
+       "$Id: OpenInit.f90,v 1.14 2004/01/08 21:24:56 cvuu Exp $"
+d503 3
+@
+
+
+1.14
+log
+@correct the PGEVersion in the global attribute
+@
+text
+@d33 1
+a33 1
+       "$Id: OpenInit.f90,v 1.13 2004/01/07 21:43:18 cvuu Exp $"
+d152 1
+d348 1
+a348 1
+               IF (GlobalAttributes%OrbPeriodDays(j,i) /= -1.0) THEN 
+a353 2
+             !call output('avgPer(i) = ', advance='no')
+             !call output(avgPer(i), advance='yes')
+d360 1
+d503 3
+@
+
+
+1.13
+log
+@version 1.4 commit
+@
+text
+@d33 1
+a33 1
+       "$Id: OpenInit.f90,v 1.12 2003/06/03 20:45:04 pwagner Exp $"
+d153 1
+a153 1
+    GlobalAttributes%StartUTC = l3pcf%l2StartDay // &
+d155 1
+a155 1
+    GlobalAttributes%EndUTC = l3pcf%l2EndDay // &
+d157 1
+a157 1
+    GlobalAttributes%PGEVersion = 'v1.2'   ! l3pcf%PGEVersion
+d503 3
+@
+
+
+1.12
+log
+@Fills global attributes
+@
+text
+@d7 2
+a8 1
+  
+d18 2
+a19 1
+  use MLSStrings, only: utc_to_yyyymmdd
+d23 2
+a24 1
+       & Pgs_io_gen_openF, PGSd_IO_Gen_RSeqFrm, Pgs_pc_getReference
+d33 1
+a33 1
+       "$Id: OpenInit.f90,v 1.11 2003/04/30 18:15:48 pwagner Exp $"
+d277 1
+a277 1
+    REAL(r8) :: period
+d279 1
+a279 1
+    INTEGER :: error, numDays, pcfId, returnStatus, err, i
+d286 2
+d327 5
+d334 1
+d336 1
+a336 4
+    period = cfDef%averageOrbitalPeriod
+
+    if (( period .ge. 0.).and.(numDays .gt. 0)) then 
+
+a337 1
+
+d343 16
+a358 3
+       do i = 1, numDays
+
+          avgPer(i) = period
+d360 1
+a360 3
+       enddo
+
+    else
+d362 1
+a362 1
+    endif
+d503 3
+@
+
+
+1.11
+log
+@Work-around for LF95 infinite compile-time bug
+@
+text
+@d1 1
+a1 2
+
+! Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
+d17 2
+a18 1
+  USE PCFHdr, ONLY: CreatePCFAnnotation
+d30 1
+a30 1
+       "$Id: OpenInit.f90,v 1.10 2003/03/22 02:51:22 jdone Exp $"
+d148 12
+d485 3
+@
+
+
+1.10
+log
+@average orbit retrieved from cf or calculated
+@
+text
+@a22 1
+  USE dates_module, only: days_in_year
+d30 1
+a30 1
+       "$Id: OpenInit.f90,v 1.9 2002/04/10 22:09:02 jdone Exp $"
+d155 1
+d473 3
+@
+
+
+1.9
+log
+@Division by zero checked.
+@
+text
+@d5 1
+a5 1
+!===============================================================================
+d7 44
+a50 1
+!===============================================================================
+d52 1
+a52 42
+   USE L3CF
+   USE MLSCF
+   USE MLSCommon
+   USE MLSL3Common
+   USE MLSMessageModule
+   USE MLSPCF3
+   USE PCFHdr
+   USE SDPToolkit
+   USE dates_module
+   use GETCF_M, only: GetCF, InitGetCF
+   IMPLICIT NONE
+   PUBLIC
+
+   PRIVATE :: ID, ModuleName
+
+!------------------- RCS Ident Info -----------------------
+   CHARACTER(LEN=130) :: Id = &                                                    
+   "$Id: OpenInit.f90,v 1.8 2001/03/27 19:35:37 nakamura Exp $"
+   CHARACTER (LEN=*), PARAMETER :: ModuleName="$RCSfile: OpenInit.f90,v $"
+!----------------------------------------------------------
+
+! Contents:
+
+! Definitions -- PCFData_T
+! Subroutines -- GetPCFParameters
+!                SetProcessingWindow
+!                OpenAndInitialize
+!                AvgOrbPeriod
+
+! Remarks:  This is a prototype module for the routines needed for the L3 Daily
+! Open/Init task.
+
+! Parameters
+
+! This data type is used to store User-defined Runtime Parameters and other
+! information taken from the PCF.
+
+   TYPE PCFData_T
+
+     ! cycle # of processing run
+
+     CHARACTER (LEN=4) :: cycle
+d54 4
+d59 1
+a59 1
+
+d61 1
+a61 1
+
+d63 1
+a63 1
+
+d68 7
+a74 7
+
+     ! name of the log file (without the path)
+
+     CHARACTER (LEN=FileNameLen) :: logGranID
+
+   END TYPE PCFData_T
+
+d77 3
+a79 26
+!------------------------------------
+   SUBROUTINE GetPCFParameters(l3pcf)
+!------------------------------------
+
+! Brief description of subroutine
+! This subroutine retrieves the User-Defined Runtime Parameters from the PCF
+! and stores them in variables used in the MLSL3 code.
+
+! Arguments
+
+      TYPE( PCFData_T ), INTENT(OUT) :: l3pcf
+
+! Parameters
+
+      CHARACTER (LEN=*), PARAMETER :: UDRP_ERR = 'Failed to get PCF runtime &
+                                                 &parameter :  '
+
+! Functions
+
+      INTEGER, EXTERNAL :: pgs_pc_getConfigData
+
+! Variables
+
+      CHARACTER (LEN=17) :: range 
+      CHARACTER (LEN=480) :: msr
+      CHARACTER (LEN=FileNameLen) :: name
+d81 3
+a83 1
+      INTEGER ::  indx, mlspcf_log, returnStatus, version
+d85 1
+a85 1
+! Retrieve values set in PCF & assign them to variables.
+d87 3
+a89 6
+      returnStatus = pgs_pc_getConfigData(mlspcf_l3_param_OutputVersion, &
+                                          l3pcf%outputVersion)
+      IF (returnStatus /= PGS_S_SUCCESS) THEN
+         msr = UDRP_ERR // 'OutputVersion'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+d91 3
+a93 5
+      returnStatus = pgs_pc_getConfigData(mlspcf_l3_param_Cycle, l3pcf%cycle)
+      IF (returnStatus /= PGS_S_SUCCESS) THEN
+         msr = UDRP_ERR // 'Cycle'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+d95 3
+a97 5
+      returnStatus = pgs_pc_getConfigData(mlspcf_l3_param_L2DayRange, range)
+      IF (returnStatus /= PGS_S_SUCCESS) THEN
+         msr = UDRP_ERR // 'L2DayRange'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+d99 1
+a99 2
+      l3pcf%l2StartDay = range(1:8)
+      l3pcf%l2EndDay = range(10:17)
+d101 1
+a101 5
+      returnStatus = pgs_pc_getConfigData(mlspcf_l3_param_RangDays, range)
+      IF (returnStatus /= PGS_S_SUCCESS) THEN
+         msr = UDRP_ERR // 'RangDays'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+d103 1
+a103 2
+      l3pcf%l3StartDay = range(1:8)
+      l3pcf%l3EndDay = range(10:17)
+d105 1
+a105 1
+! Get the name of the log file from the PCF
+d107 6
+a112 2
+      version = 1
+      mlspcf_log = 10101
+d114 5
+a118 5
+      returnStatus = Pgs_pc_getReference(mlspcf_log, version, name)
+      IF (returnStatus /= PGS_S_SUCCESS) CALL MLSMessage(MLSMSG_Error, &
+                        ModuleName, 'Error retrieving log file name from PCF.')
+      indx = INDEX(name, '/', .TRUE.)
+      l3pcf%logGranID = name(indx+1:)
+d120 5
+a124 3
+!---------------------------------
+   END SUBROUTINE GetPCFParameters
+!---------------------------------
+d126 11
+a136 3
+!-------------------------------------------------------------
+   SUBROUTINE SetProcessingWindow (start, end, dates, numDays)
+!-------------------------------------------------------------
+d138 1
+a138 3
+! Brief description of subroutine
+! This subroutine finds each DOY for the L3 processing window and calculates
+! the number of days in the window.
+d140 2
+a141 1
+! Arguments
+d143 5
+a147 1
+      CHARACTER (LEN=8), INTENT(IN) :: end, start
+d149 3
+a151 1
+      CHARACTER (LEN=8), INTENT(OUT) :: dates(:)
+d153 3
+a155 1
+      INTEGER, INTENT(OUT) :: numDays
+d157 9
+a165 1
+! Parameters
+d167 1
+a167 1
+! Functions
+d169 1
+a169 1
+! Variables
+d171 1
+a171 2
+      CHARACTER (LEN=3) :: cDOY
+      CHARACTER (LEN=4) :: cYr
+d173 1
+a173 1
+      INTEGER :: i, iDOY, iEnd, iYr, lastDOY
+d175 2
+a176 1
+! Initializations outside the DO loop
+d178 1
+a178 4
+      READ(start(1:4), '(I4)') iYr
+      lastDOY = days_in_year(iYr)
+      READ( start(6:8), '(I3)' ) iDOY
+      READ( end(6:8), '(I3)' ) iEnd
+d180 1
+a180 1
+      DO i = 1, maxWindow
+d182 4
+a185 1
+! Increment DOY
+d187 1
+a187 1
+         iDOY = iDOY + 1
+d189 1
+a189 1
+! Check that the incrementation hasn't crossed a year boundary
+d191 1
+a191 4
+         IF (iDOY > lastDOY) THEN
+            iYr = iYr + 1
+            iDOY = 1
+         ENDIF
+d193 1
+a193 1
+! Check that the incrementation hasn't crossed the window boundary
+d195 4
+a198 1
+         IF (iDOY > iEnd) EXIT
+d200 1
+a200 1
+! Convert Yr back to CHARACTER
+d202 1
+a202 1
+         WRITE( cYr, '(I4)' ) iYr
+d204 1
+a204 1
+! Convert DOY back to CHARACTER, adding leading zeroes if necessary
+d206 1
+a206 1
+         WRITE( cDOY, '(I3)' ) iDOY
+d208 1
+a208 5
+         IF (iDOY < 10) THEN
+            cDOY = '00' // cDOY(3:3)
+         ELSE IF (iDOY < 100) THEN
+            cDOY = '0' // cDOY(2:3)
+         ENDIF
+d210 1
+a210 1
+! Concatenate them into a date
+d212 5
+a216 1
+        dates(i+1) = cYr // '-' // cDOY
+d218 1
+a218 1
+      ENDDO
+d220 1
+a220 3
+      numDays = i
+      dates(1) = start
+      dates(numDays) = end
+d222 1
+a222 3
+!------------------------------------
+   END SUBROUTINE SetProcessingWindow
+!------------------------------------
+d224 3
+a226 3
+!-----------------------------------------------------------------------
+   SUBROUTINE OpenAndInitialize (l3pcf, cf, l3cf, cfDef, anText, avgPer)
+!-----------------------------------------------------------------------
+d228 3
+a230 2
+! Brief description of subroutine
+! This subroutine performs the Open/Init task in the MLSL3 program.
+d232 3
+a234 1
+! Arguments
+d236 2
+a237 1
+      TYPE( L3CFDef_T ), INTENT(OUT) :: cfDef
+d239 1
+a239 1
+      TYPE( Mlscf_T ), INTENT(OUT) :: cf
+d241 1
+a241 1
+      TYPE( PCFData_T ), INTENT(OUT) :: l3pcf
+d243 1
+a243 1
+      TYPE( L3CFProd_T ), POINTER :: l3cf(:)
+d245 1
+a245 1
+      CHARACTER (LEN=1), POINTER :: anText(:)
+d247 1
+a247 1
+      REAL(r8), POINTER :: avgPer(:)
+d249 1
+a249 1
+! Parameters
+d251 1
+a251 1
+! Functions
+d253 1
+a253 1
+! Variables
+d255 1
+a255 2
+      CHARACTER (LEN=480) :: msr
+      CHARACTER (LEN=8) :: dates(maxWindow)
+d257 1
+a257 1
+      INTEGER :: error, numDays, pcfId, returnStatus
+d259 2
+a260 1
+! Read the PCF into an annotation for file headers
+d262 1
+a262 1
+      CALL CreatePCFAnnotation(mlspcf_pcf_start, anText)
+d264 1
+a264 1
+! Retrieve values set in PCF & assign them to variables.
+d266 5
+a270 1
+      CALL GetPCFParameters(l3pcf)
+d272 1
+a272 1
+! Calculate the average orbit period for each day in the input window
+d274 1
+a274 1
+      CALL AvgOrbPeriod(l3pcf%l2StartDay, l3pcf%l2EndDay, avgPer)
+d276 1
+a276 1
+! Calculate the dates, number of days for the processing window
+d278 1
+a278 2
+      CALL SetProcessingWindow(l3pcf%l3StartDay, l3pcf%l3EndDay, dates, &
+                               numDays)
+d280 4
+a283 1
+! Open the configuration file
+d285 1
+a285 6
+      returnStatus = pgs_io_gen_openF (mlspcf_l3cf_start, &
+                                       PGSd_IO_Gen_RSeqFrm, 0, pcfId, 1)
+      IF (returnStatus /= PGS_S_SUCCESS) THEN
+         msr = MLSMSG_Fileopen // 'l3cf.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+d287 18
+a304 1
+! Read the configuration file into an MLSCF_T structure
+d306 3
+a308 1
+      CALL InitGetCF
+d310 2
+a311 1
+      CALL getCF(cf, error, inUnit=pcfId)
+d313 1
+a313 1
+! Close the configuration file
+d315 1
+a315 3
+      returnStatus = pgs_io_gen_closeF (pcfId)
+      IF (returnStatus /= PGS_S_SUCCESS) CALL MLSMessage(MLSMSG_Error, &
+                                          ModuleName, 'Failed to close l3cf.')
+d317 1
+a317 1
+! Check the parser output; fill L3CFProd_T
+d319 4
+a322 1
+      CALL FillL3CF(cf, l3pcf%outputVersion, dates, numDays, l3cf, cfDef)
+d324 1
+a324 3
+!----------------------------------
+   END SUBROUTINE OpenAndInitialize
+!----------------------------------
+d326 1
+a326 3
+!----------------------------------------------------
+   SUBROUTINE AvgOrbPeriod (startDay, endDay, avgPer)
+!----------------------------------------------------
+d328 1
+a328 3
+! Brief description of subroutine
+! This program calculates the average orbital period for each day in the input
+! window.
+d330 3
+a332 1
+! Arguments
+d334 3
+a336 1
+      CHARACTER (LEN=8), INTENT(IN) :: endDay, startDay
+d338 3
+a340 1
+      REAL(r8), POINTER :: avgPer(:)
+d342 5
+a346 1
+! Parameters
+d348 1
+a348 1
+      INTEGER, PARAMETER :: numOffset = 43200
+d350 1
+a350 1
+! Functions
+d352 1
+a352 2
+      INTEGER, EXTERNAL :: Pgs_eph_getEphMet, Pgs_td_asciiTime_bToA
+      INTEGER, EXTERNAL :: Pgs_td_timeInterval, Pgs_td_utcToTAI
+d354 1
+a354 1
+! Variables
+d356 1
+a356 7
+      CHARACTER (LEN=26) :: startB
+      CHARACTER (LEN=CCSDS_LEN) :: startA
+      CHARACTER (LEN=32) :: mnemonic
+      CHARACTER (LEN=480) :: msg, msr
+      CHARACTER (LEN=8) :: dates(maxWindow)
+      CHARACTER (LEN=CCSDS_LEN) :: orbitAscendTime(max_orbits)
+      CHARACTER (LEN=CCSDS_LEN) :: orbitDescendTime(max_orbits)
+d358 6
+a363 2
+      INTEGER :: err, i, j, numDays, numOrbits, returnStatus
+      INTEGER :: orbitNumber(max_orbits)
+d365 2
+a366 4
+      REAL(r8) :: sum
+      REAL(r8) :: offsets(numOffset)
+      REAL(r8) :: ascTAI(max_orbits), int(max_orbits)
+      REAL(r8) :: orbitDownLongitude(max_orbits)
+d368 2
+a369 1
+! Calculate the offsets
+d371 4
+a374 3
+      DO i = 1, numOffset
+         offsets(i) = (i-1) * 2.0
+      ENDDO
+d376 1
+a376 1
+! Find the number of days in the input window
+d378 3
+a380 1
+      CALL SetProcessingWindow(startDay, endDay, dates, numDays)
+d382 3
+a384 1
+      if (numDays .gt. 0) then 
+d386 1
+a386 5
+      ALLOCATE(avgPer(numDays), STAT=err)
+      IF ( err /= 0 ) THEN
+         msr = MLSMSG_Allocate // ' array of period averages.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+d388 7
+a394 1
+      endif
+d396 1
+a396 1
+! For each day in the input window,
+d398 1
+a398 1
+      DO i = 1, numDays
+d400 1
+a400 1
+! Convert the start time to CCSDS A format
+d402 1
+a402 1
+         startB = dates(i) // 'T00:00:00.000000Z'
+d404 18
+a421 3
+         returnStatus = Pgs_td_asciiTime_bToA(startB, startA)
+         IF (returnStatus /= PGS_S_SUCCESS) CALL MLSMessage(MLSMSG_Error, &
+                         ModuleName, 'Failed to convert input date to CCSDS A')
+d423 8
+a430 1
+! Get orbit metadata
+d432 2
+a433 8
+         returnStatus = Pgs_eph_getEphMet(spacecraftId, numOffset, startA, &
+                           offsets,  numOrbits, orbitNumber, orbitAscendTime, &
+                           orbitDescendTime, orbitDownLongitude)
+         IF (returnStatus /= PGS_S_SUCCESS) THEN
+            call Pgs_smf_getMsg(returnStatus, mnemonic, msg)
+            msr = mnemonic // ':  ' // msg
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+d435 1
+a435 1
+! Convert orbitAscendTime to TAI93
+d437 8
+a444 5
+         DO j = 1, numOrbits
+            returnStatus = Pgs_td_utcToTAI( orbitAscendTime(j), ascTAI(j) )
+            IF (returnStatus /= PGS_S_SUCCESS) CALL MLSMessage(MLSMSG_Error, &
+                            ModuleName, 'Error converting from CCSDSB to TAI.')
+         ENDDO
+d446 1
+a446 1
+! Get the differences between successive times and add them for the day
+d448 5
+a452 1
+         sum = 0.0 
+d454 1
+a454 6
+         DO j = 1, numOrbits-1
+            returnStatus = Pgs_td_timeInterval( ascTAI(j), ascTAI(j+1), int(j) )
+            IF (returnStatus /= PGS_S_SUCCESS) CALL MLSMessage(MLSMSG_Error, &
+              ModuleName, 'Failed to find interval between orbitsAscendTimes.')
+            sum = sum + int(j)
+         ENDDO
+d456 1
+a456 1
+! Get the average period for the day
+d458 3
+a460 5
+         if (numOrbits .gt. 1) then 
+           avgPer(i) = sum/float(numOrbits-1)
+         else
+           avgPer(i) = 0.0
+         endif
+d462 1
+a462 1
+      ENDDO
+d464 3
+a466 3
+!-----------------------------
+   END SUBROUTINE AvgOrbPeriod
+!-----------------------------
+d473 3
+@
+
+
+1.8
+log
+@Changed from PCFModule to PCFHdr; save logGranID with .dat; allowed for a 1 day output window.
+@
+text
+@d26 1
+a26 1
+   "$Id: OpenInit.f90,v 1.7 2001/02/21 21:11:59 nakamura Exp $"
+d356 2
+d364 2
+d410 5
+a414 1
+         avgPer(i) = sum/(numOrbits-1)
+d427 3
+@
+
+
+1.7
+log
+@Changed MLSPCF to MLSPCF3; removed inputVersion.
+@
+text
+@d15 1
+a15 1
+   USE PCFModule
+d26 1
+a26 1
+   "$Id: OpenInit.f90,v 1.6 2001/01/18 16:52:28 nakamura Exp $"
+d63 1
+a63 1
+     ! granule ID of the log file (file name, without path or .dat)
+d85 2
+a86 2
+      CHARACTER (LEN=*), PARAMETER :: UDRP_ERR = 'Failed to get runtime &
+                                              &parameter from PCF:  '
+d142 1
+a142 7
+      name = name(indx+1:)
+
+      indx = INDEX(name, '.')
+      IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'No file type &
+                                    &specified in log name.')
+
+      l3pcf%logGranID = name(:indx-1)
+d182 1
+a182 1
+      DO i = 2, maxWindow
+d197 1
+a197 1
+         IF (iDOY >= iEnd) EXIT
+d215 1
+a215 1
+        dates(i) = cYr // '-' // cDOY
+d261 1
+a261 1
+      CALL CreatePCFAnnotation(anText)
+d419 3
+@
+
+
+1.6
+log
+@Added type L3CFDef_T; moved minDays from PCF to cf.
+@
+text
+@d14 1
+a14 1
+   USE MLSPCF
+d26 1
+a26 1
+   "$Id: OpenInit.f90,v 1.5 2001/01/16 17:48:09 nakamura Exp $"
+d52 1
+a52 1
+     ! version string in PCF file names
+a53 1
+     CHARACTER (LEN=15) :: inputVersion		! input files
+a101 7
+      returnStatus = pgs_pc_getConfigData(mlspcf_l3_param_InputVersion, &
+                                          l3pcf%inputVersion)
+      IF (returnStatus /= PGS_S_SUCCESS) THEN
+         msr = UDRP_ERR // 'InputVersion'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+d305 1
+a305 2
+      CALL FillL3CF(cf, l3pcf%inputVersion, l3pcf%outputVersion, dates, &
+                    numDays, l3cf, cfDef)
+d308 1
+a308 1
+   END Subroutine OpenAndInitialize
+d425 3
+@
+
+
+1.5
+log
+@Added code for annotating and for retrieving a name template for the log in the cf.
+@
+text
+@d26 1
+a26 1
+   "$Id: OpenInit.f90,v 1.4 2000/12/29 21:42:27 nakamura Exp $"
+a63 4
+     ! # of days of input data needed to process an l3 product
+
+     INTEGER :: minDays
+
+a94 1
+      CHARACTER (LEN=2) :: aDays
+a131 8
+      returnStatus = pgs_pc_getConfigData(mlspcf_l3_param_MinDays, aDays)
+      IF (returnStatus /= PGS_S_SUCCESS) THEN
+         msr = UDRP_ERR // 'MinDays'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      READ(aDays, '(I2)') l3pcf%minDays
+
+d241 3
+a243 3
+!-------------------------------------------------------------------------
+   SUBROUTINE OpenAndInitialize (l3pcf, cf, l3cf, logType, anText, avgPer)
+!-------------------------------------------------------------------------
+d250 1
+a250 1
+      TYPE( PCFData_T ), INTENT(OUT) :: l3pcf
+d254 2
+a257 2
+      CHARACTER (LEN=*), INTENT(OUT) :: logType
+
+d314 1
+a314 1
+                    numDays, l3cf, logType)
+d434 3
+@
+
+
+1.4
+log
+@Added subroutine AvgOrbPeriod.
+@
+text
+@d15 1
+d26 1
+a26 1
+   "$Id: OpenInit.f90,v 1.11 2000/12/29 19:17:52 nakamura Exp nakamura $"
+d254 3
+a256 3
+!--------------------------------------------------------
+   SUBROUTINE OpenAndInitialize (l3pcf, cf, l3cf, avgPer)
+!--------------------------------------------------------
+d269 4
+d286 4
+d327 1
+a327 1
+                    numDays, l3cf)
+d447 3
+@
+
+
+1.3
+log
+@Changed MLSPCF parameter names to mlspcf_l3_param_*.
+@
+text
+@d9 2
+d12 3
+a15 3
+   USE MLSPCF
+   USE MLSMessageModule
+   USE L3DMData
+a16 2
+   USE MLSCF
+   USE L3CF
+d25 1
+a25 1
+   "$Id: OpenInit.f90,v 1.2 2000/10/24 19:31:48 nakamura Exp $"
+d35 1
+d103 1
+a103 1
+      INTEGER ::  i, indx, mlspcf_log, returnStatus, version
+d161 2
+a162 6
+
+      DO i = 1, 10
+         indx = INDEX(name, '/')
+         IF (indx == 0) EXIT
+         name = name(indx+1:)
+      ENDDO
+d253 3
+a255 3
+!------------------------------------------------
+   SUBROUTINE OpenAndInitialize (l3pcf, cf, l3cf)
+!------------------------------------------------
+d268 2
+d285 4
+d324 109
+d438 3
+@
+
+
+1.2
+log
+@Added logGranID to PCFData_T; replaced ReadParseMLSCF stub with calls to actual parser.
+@
+text
+@d25 1
+a25 1
+   "$Id: OpenInit.f90,v 1.1 2000/10/17 20:26:16 nakamura Exp $"
+d106 1
+a106 1
+      returnStatus = pgs_pc_getConfigData(mlspcf_l3cf_InputVersion, &
+d113 1
+a113 1
+      returnStatus = pgs_pc_getConfigData(mlspcf_l3cf_OutputVersion, &
+d120 1
+a120 1
+      returnStatus = pgs_pc_getConfigData(mlspcf_l3cf_Cycle, l3pcf%cycle)
+d126 1
+a126 1
+      returnStatus = pgs_pc_getConfigData(mlspcf_l3cf_L2DayRange, range)
+d135 1
+a135 1
+      returnStatus = pgs_pc_getConfigData(mlspcf_l3cf_MinDays, aDays)
+d143 1
+a143 1
+      returnStatus = pgs_pc_getConfigData(mlspcf_l3cf_RangDays, range)
+d326 3
+@
+
+
+1.1
+log
+@Module for the Open/Init task.
+@
+text
+@d9 1
+d17 1
+d25 1
+a25 1
+   "$Id: OpenInit.f90,v 1.6 2000/10/17 19:53:24 nakamura Exp nakamura $"
+d41 2
+a42 1
+! This data type is used to store User-defined Runtime Parameters from the PCF.
+d66 4
+d100 1
+d102 1
+a102 1
+      INTEGER ::  returnStatus
+d152 21
+d280 1
+a280 1
+      INTEGER :: numDays, pcfId, returnStatus
+d302 3
+a304 1
+      CALL ReadParseMLSCF(pcfId, cf)
+d325 4
+a328 1
+! $Log: $
+@
+

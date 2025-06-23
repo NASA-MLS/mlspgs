@@ -1,0 +1,76 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2022.03.03.22.26.44;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@First commit
+@
+text
+@! Copyright 2022, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! Adds an item to a database but without tracking data usage
+! so it is most suitable when the item is small and uses little memory
+
+! See also
+! addItemToDatabase.f9h   tracks data usage
+! addItemToDatabase_A.f9h tracks data usage in a different way
+
+! $Id: addItemToDatabase_B.f9h,v 1.11 2018/04/19 00:43:00 vsnyder Exp $
+
+    integer :: NewSize, Status
+    character(127) :: ERMSG
+
+    ! Executable code
+
+    newSize = 1
+    if ( associated(database) )  newSize = newsize + size(database)
+
+    block
+      allocate ( tempDatabase(newSize), STAT=status, ERRMSG=ermsg )
+      if ( status /= 0 ) then
+        print *, trim(ermsg)
+        print *, 'Failed allocating new size for database'
+      endif
+ 
+      if ( newSize>1 ) tempDatabase(1:newSize-1) = database
+      if ( associated(database) ) then
+        deallocate ( database, STAT=status, ERRMSG=ermsg )
+        if ( status /= 0 ) then
+          print *, trim(ermsg)
+          print *, 'Failed deallocating old database'
+        endif
+      end if
+      database => tempDatabase
+      database(newSize) = item
+    end block
+
+! $Log: addItemToDatabase_B.f9h,v $
+@

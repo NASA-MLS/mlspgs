@@ -1,0 +1,378 @@
+head	2.6;
+access;
+symbols
+	v5-02-NRT-19:2.6
+	v6-00:2.6
+	v5-02-NRT-18:2.6
+	v5-02:2.6
+	v5-01-NRT-17:2.6
+	v5-01-NRT-16:2.6
+	v5-01-NRT-15:2.6
+	v5-01-NRT-14:2.6
+	neuralnetworks-1-0:2.6.0.12
+	cfm-single-freq-0-1:2.6.0.10
+	v5-01:2.6
+	v5-00:2.6
+	v4-23-TA133:2.6.0.8
+	mus-emls-1-70:2.6.0.6
+	rel-1-0-englocks-work:2.6.0.4
+	VUMLS1-00:2.6
+	VPL1-00:2.6
+	V4-22-NRT-08:2.6
+	VAM1-00:2.6
+	V4-21:2.6.0.2
+	V4-13:2.6
+	V4-12:2.6
+	V4-11:2.6
+	V4-10:2.6
+	V3-43:2.5
+	M4-00:2.6
+	V3-41:2.5
+	V3-40-PlusGM57:2.5.0.2
+	V2-24-NRT-04:2.5
+	V3-33:2.6
+	V2-24:2.5
+	V3-31:2.6
+	V3-30-NRT-05:2.5
+	cfm-01-00:2.5
+	V3-30:2.5
+	V3-20:2.5
+	V3-10:2.5
+	V2-23-NRT-02:2.5
+	V2-23:2.5
+	V2-22-NRT-01:2.5
+	V2-22:2.5
+	V2-21:2.5
+	V2-20:2.5
+	V2-11:2.5
+	V2-10:2.5
+	V2-00:2.5
+	V1-51:2.4
+	V1-50:2.4
+	V1-45:2.4
+	V1-44:2.4
+	V1-43:2.4
+	V1-42:2.4
+	V1-41:2.4
+	V1-32:2.4
+	V1-40:2.4
+	V1-31:2.4
+	V1-30:2.4
+	V1-13:2.3
+	V1-12:2.3
+	V1-11:2.3
+	V1-10:2.3
+	newfwm-feb03:2.3.0.2
+	V1-04:2.1
+	V1-03:2.1
+	V1-02:2.1
+	V1-00:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.6
+date	2010.11.30.00.34.52;	author pwagner;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2005.06.22.17.44.11;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2003.06.20.00.18.10;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2002.10.02.16.50.21;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2002.10.02.15.36.23;	author bwknosp;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2002.01.30.19.36.34;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.6
+log
+@NaNs now sort to the end
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+!     .  NASA contract NAS7-918 is acknowledged.
+
+      integer, intent(in) :: M, N
+
+!     *****     Local Variables     ************************************
+
+! BL      is the left bound of the sub-array to be sorted at the next
+!         step.
+! BR      is the right bound of the sub array to be sorted at the next
+!         step.
+! CL      is the current left bound of the unsorted sub-array.
+! CR      is the current right bound of the unsorted sub-array.
+! INSERT  the size at which to switch over to insertion sort
+! PARTN   is the partition element.
+! STACKL  keeps track of the left bounds of sub-arrays waiting to be
+!         sorted.
+! STACKR  keeps track of the right bounds of sub-arrays waiting to be
+!         sorted.
+! STKTOP  keeps track of the top of the stacks.
+! TEMP    holds elements of A during exchanges.
+
+      integer :: BL, BR, CL, CR
+      integer, parameter :: INSERT = 10
+      integer :: STACKL(32), STACKR(32), STKTOP
+      integer :: mm, nm
+
+!     *****     Executable Statements     ******************************
+      if ( all(is_what_ieee(nan_signal, A(M:N))) ) then
+        return
+      elseif ( any(is_what_ieee(nan_signal, A(M:N))) ) then
+        if ( DEEBUG ) print *, 'NaNs found in sort'
+        call moveNaNsToEnd ( mm, nm )
+      else
+        mm = M
+        nm = N
+      endif
+
+      if ( nm-mm >= insert ) then
+         stktop = 1
+         stackl(1) = mm
+         stackr(1) = nm
+         do while ( stktop /= 0 )
+            bl = stackl(stktop)
+            br = stackr(stktop)
+            stktop = stktop-1
+!           Choose a partitioning element.  Use the median of the first,
+!           middle and last elements.  Sort them so the extreme elements
+!           serve as sentinels during partitioning.
+            cl = (bl+br)/2
+            partn = a(cl)
+            if ( a(bl) > partn ) then
+               a(cl) = a(bl)
+               a(bl) = partn
+               partn = a(cl)
+            end if
+            if ( a(bl) > a(br) ) then
+               temp = a(br)
+               a(br) = a(bl)
+               a(bl) = temp
+            end if
+            if ( partn > a(br) ) then
+               a(cl) = a(br)
+               a(br) = partn
+               partn = a(cl)
+            end if
+            a(cl) = a(br-1)
+            a(br-1) = partn
+!           Partition the sub-array around PARTN.  Exclude the above
+!           considered elements from partitioning because they're al-
+!           ready in the correct subfiles.  Stop scanning on equality to
+!           prevent files containing equal values from causing a loop.
+            cl = bl
+            cr = br-1
+            do
+   30          cl = cl+1
+                  if ( a(cl) < partn) go to 30
+   40          cr = cr-1
+                  if ( a(cr) > partn) go to 40
+               if ( cl > cr) exit
+               temp = a(cl)
+               a(cl) = a(cr)
+               a(cr) = temp
+            end do
+!           Put sub-arrays on the stack if they're big enough.  Put the
+!           larger under the smaller, so the smaller will be done next.
+!           This makes the upper bound of the stack depth log2 (n-m+1).
+!           (The "Hibbard" modification of quicksort).
+            if ( cl-bl > br-cr ) then
+               if ( cl-bl > insert ) then
+                  stktop = stktop+1
+                  stackl(stktop) = bl
+                  stackr(stktop) = cr
+               end if
+               if ( br-cr > insert ) then
+                  stktop = stktop+1
+                  stackl(stktop) = cl
+                  stackr(stktop) = br
+               end if
+            else
+               if ( br-cr > insert ) then
+                  stktop = stktop+1
+                  stackl(stktop) = cl
+                  stackr(stktop) = br
+               end if
+               if ( cl-bl > insert ) then
+                  stktop = stktop+1
+                  stackl(stktop) = bl
+                  stackr(stktop) = cr
+               end if
+            end if
+         end do
+      end if
+!     Clean up small subfiles using insertion sort on everything.
+      do cr = mm+1, nm
+         partn = a(cr)
+         cl = cr
+   60    if ( a(cl-1) > partn ) then
+            a(cl) = a(cl-1)
+            cl = cl-1
+            if ( cl > mm ) go to 60
+         end if
+         a(cl) = partn
+      end do
+      return
+  contains
+    subroutine moveNaNsToEnd ( mm, nm )
+      ! Move NaNs to end of A
+      ! Args:
+      integer, intent(out) :: mm, nm
+      ! Internal variables
+      integer :: k
+      ! Executable
+      mm = M
+      nm = N
+      k = M - 1
+      do
+        k = k + 1
+        if ( k >= nm ) exit
+        if ( .not. is_what_ieee(nan_signal, A(k)) ) cycle
+        ! swap NaN for current last element
+        if ( DEEBUG ) print *, 'swapping ', k, ' with ', nm
+        partn = A(k)
+        A(k) = A(nm)
+        A(nm) = partn
+        nm = nm - 1
+      enddo
+    end subroutine moveNaNsToEnd
+
+! $Log: sort.f9h,v $
+! Revision 2.5  2005/06/22 17:44:11  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.4  2003/06/20 00:18:10  vsnyder
+! Add intents for M and N, futzing
+!
+! Revision 2.3  2002/10/02 16:50:21  pwagner
+! Removed RCS Ident Block
+!
+! Revision 2.2  2002/10/02 15:36:23  bwknosp
+! Added RCS info
+!
+! Revision 2.1  2002/01/30 19:36:34  vsnyder
+! Initial commit
+!
+@
+
+
+2.5
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d32 1
+a32 1
+      integer BL, BR, CL, CR
+d34 2
+a35 1
+      integer STACKL(32), STACKR(32), STKTOP
+d38 9
+d48 1
+a48 1
+      if ( n-m >= insert ) then
+d50 2
+a51 2
+         stackl(1) = m
+         stackr(1) = n
+d124 1
+a124 1
+      do cr = m+1, n
+d130 1
+a130 1
+            if ( cl > m ) go to 60
+d135 23
+d160 3
+@
+
+
+2.4
+log
+@Add intents for M and N, futzing
+@
+text
+@d1 10
+a10 2
+!     .  Copyright (C) 1989, California Institute of Technology.
+!     .  All rights reserved.  U. S. Government sponsorship under
+d127 3
+@
+
+
+2.3
+log
+@Removed RCS Ident Block
+@
+text
+@d5 1
+a5 1
+      integer M, N
+d112 1
+a112 1
+            if ( cl > m) go to 60
+d119 3
+@
+
+
+2.2
+log
+@Added RCS info
+@
+text
+@a4 7
+!---------------------------- RCS Ident Info -------------------------------
+      character (len=*), parameter :: IdParm = &
+        "$Id: sort.f9h,v 2.1 2002/01/30 19:36:34 vsnyder Exp $"
+      character(len=*), parameter, private :: ModuleName= &
+    & "$RCSfile: sort.f9h,v $"
+!---------------------------------------------------------------------------
+
+d119 3
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d7 3
+a9 1
+        "$Id: RetrievalModule.f90,v 2.128 2002/01/18 00:31:23 livesey Exp $"
+d125 4
+a128 1
+! $Log: $
+@
+

@@ -1,0 +1,214 @@
+head	1.5;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.5
+date	2010.06.29.02.34.03;	author honghanh;	state dead;
+branches;
+next	1.4;
+
+1.4
+date	2010.06.29.02.28.17;	author honghanh;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2010.06.29.00.20.13;	author honghanh;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2010.06.16.20.23.52;	author honghanh;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2010.06.03.23.31.57;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.5
+log
+@Change cfm_m.f90 to cfm.f90 to match the naming scheme of cfm directory
+@
+text
+@! Copyright 2010, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module cfm          ! callable forward model
+  ! This module merely unifies all the .mod files that
+  ! will be USEd by any fortran90 program that is compiled
+  ! and with the callable forward model and links against libcfm.a or libcfm_all.a
+   use CFM_MLSSetup_m, only: CFM_MLSCleanup, MLSChunk_T, CFM_MLSSetup
+   use CFM_IO_M, only: Read_Spectroscopy, ReadDACSFilterShapes, &
+                     ReadAntennaPatterns, ReadFilterShapes, &
+                     ReadPointingGrids, ReadPFAFile, ReadHDF5L2PC, &
+                     Destroy_DACS_Filter_Database, &
+                     Destroy_Filter_Shapes_Database, &
+                     Destroy_Ant_Patterns_Database, &
+                     Destroy_SpectCat_Database, &
+                     Destroy_Line_Database, &
+                     Destroy_Pointing_Grid_Database, &
+                     DestroyL2PCDatabase, Destroy_PFADataBase
+   use CFM_VGrid_m, only: CreateVGrid, DestroyVGridContents, &
+                        VGrid_T, Dump
+   use CFM_HGrid_m, only: CreateRegularHGrid, HGrid_T, &
+                        DestroyHGridContents, Dump
+   use CFM_FGrid_m, only: CreateFGrid, FGrid_T, DestroyFGridContents, &
+                        Dump
+   use CFM_QuantityTemplate_m, only: CreateQtyTemplate, Dump, &
+                        AddQuantityTemplateToDatabase, &
+                        DestroyQuantityTemplateDatabase, &
+                        QuantityTemplate_T
+   use CFM_VectorTemplate_m, only: CreateVectorTemplate, Dump, &
+                        VectorTemplate_T, DestroyVectorTemplateInfo
+   use CFM_Vector_m, only: CreateVector, Dump, &
+                         Vector_T, VectorValue_T, &
+                         DestroyVectorInfo, GetVectorQtyByTemplateIndex
+   use CFM_Fill_m, only: ExplicitFillVectorQuantity, &
+                         FillVectorQuantityFromL1B, FillPhitanQuantity, &
+                         SpreadFillVectorQuantity
+   use CFM_FWDMDL_M, only: ForwardModel, FORWARDMODELSTATUS_T, &
+                         ForwardModelConfig_T
+   use MLSCommon, only: MLSFile_T, r8
+   use Init_tables_module, only: l_logarithmic, l_zeta, l_temperature, &
+                                 L_IntermediateFrequency, l_vmr, l_gph, &
+                                 l_ptan, l_radiance, l_orbitInclination, &
+                                 l_tngtgeodalt, l_tngtgeocalt, l_o3, &
+                                 phyq_pressure, phyq_angle, l_h2o, l_refgph, &
+                                 l_phitan, l_explicit
+   use MLSFiles, only: GetMLSFileByType, InitializeMLSFile, mls_openFile, &
+                       AddFileToDatabase
+   use ScanModelModule, only: Get2DHydrostaticTangentPressure
+   use Intrinsic, only: l_hdf
+   use Hdf, only: DFACC_RDONLY
+   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+
+   implicit none
+   public
+
+!---------------------------- RCS Ident Info ------------------------------
+   character (len=*), parameter :: ModuleName= &
+       "$RCSfile: cfm_m.f90,v $"
+   character (len=*), parameter :: IdParm = &
+       "$Id: cfm_m.f90,v 1.4 2010/06/29 02:28:17 honghanh Exp $"
+   character (len=len(idParm)) :: Id = idParm
+!---------------------------------------------------------------------------
+contains
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: cfm_m.f90,v 1.4 2010/06/29 02:28:17 honghanh Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module cfm
+
+! $Log: cfm_m.f90,v $
+! Revision 1.4  2010/06/29 02:28:17  honghanh
+! Change mockup to import functions and literals from CFM module
+!
+! Revision 1.2  2010/06/16 20:23:52  honghanh
+! Update cfm_fwdmdl to cfm_fwdmdl_m
+!
+! Revision 1.1  2010/06/03 23:31:57  pwagner
+! First commit
+!
+@
+
+
+1.4
+log
+@Change mockup to import functions and literals from CFM module
+@
+text
+@d68 1
+a68 1
+       "$Id: cfm_m.f90,v 1.2 2010/06/16 20:23:52 honghanh Exp $"
+d75 1
+a75 1
+       "$Id: cfm_m.f90,v 1.2 2010/06/16 20:23:52 honghanh Exp $"
+d85 3
+@
+
+
+1.3
+log
+@Move Phitan to state vector instead of stateExtraVector
+@
+text
+@d43 2
+a44 1
+                         FillVectorQuantityFromL1B
+d52 4
+a55 2
+                                 phyq_pressure, phyq_angle, l_h2o
+   use MLSFiles, only: GetMLSFileByType
+d57 3
+a59 1
+   use machine, only: getarg
+@
+
+
+1.2
+log
+@Update cfm_fwdmdl to cfm_fwdmdl_m
+@
+text
+@d1 1
+a1 1
+! Copyright 2005, by the California Institute of Technology. ALL
+d16 1
+a16 3
+   use CFM_MLSSetup_m, only: CFM_MLSCleanup, MLSChunk_T, CFM_MLSSetup, &
+                             GetRefGPHIndexInStateExtra, &
+                             GetPhitanGHzIndexInStateExtra
+d63 1
+a63 1
+       "$Id: cfm_m.f90,v 1.1 2010/06/03 23:31:57 pwagner Exp $"
+d70 1
+a70 1
+       "$Id: cfm_m.f90,v 1.1 2010/06/03 23:31:57 pwagner Exp $"
+d80 3
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d46 1
+a46 1
+   use CFM_FWDMDL, only: ForwardModel, FORWARDMODELSTATUS_T, &
+d63 1
+a63 1
+       "$RCSfile: mockup.f90,v $"
+d65 1
+a65 1
+       "$Id: mockup.f90,v 1.26 2010/06/01 20:41:14 honghanh Exp $"
+d72 1
+a72 1
+       "$Id: ScanModelModule.f90,v 2.72 2009/06/23 18:46:18 pwagner Exp $"
+d82 3
+@
+

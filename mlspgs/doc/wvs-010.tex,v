@@ -1,0 +1,1696 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.12
+	cfm-single-freq-0-1:1.2.0.10
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.8
+	mus-emls-1-70:1.2.0.6
+	rel-1-0-englocks-work:1.2.0.4
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.2
+	V4-21:1.2.0.2
+	V4-13:1.2
+	V4-12:1.2
+	V4-11:1.2
+	V4-10:1.2
+	V3-43:1.1
+	M4-00:1.2
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.2
+date	2012.03.30.20.41.42;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2008.06.11.20.14.50;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Repair graphics stuff
+@
+text
+@\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9in
+
+\newcommand{\docname}{wvs-010r3}
+\newcommand{\docdate}{30 March 2012}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Dave, Nathaniel, Zvi\\
+Subject: \>Interfaces for VectorsModule, MatrixModule\_0 and MatrixModule\_1\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 3pt
+\vspace{-20pt}
+
+\section{Introduction}
+
+\subsection{Creating and filling a vector}
+
+See section \ref{vectorsModule}.
+
+\subsection{Creating and filling a matrix}
+
+Suppose one has a vector of radiances, say {\tt RadianceVector}, and a
+vector of the quantities one wishes to solve for, say {\tt
+SolutionVector}.  One then can create an empty matrix {\tt Z} of type
+{\tt Matrix\_T} (see subsection \ref{matrixT}) in which the rows are
+specified by {\tt RadianceVector} and the columns by {\tt
+SolutionVector}, using
+{\tt\begin{verbatim}
+  call createEmptyMatrix ( Z, Name, RadianceVector, SolutionVector )
+\end{verbatim}}
+where {\tt Name} is the integer index of a name in the parser's symbol
+table, or zero if there is no name. This assumes that the blocks in both
+the rows and columns are in order first by instance, and then by
+quantity.  There are additional options described in subsection
+\ref{createEmpty}.  The {\tt Retrieve} module will probably create most
+matrices.
+
+Having created a matrix, one usually wants to operate on blocks in it by
+specifying the quantity and instance indices in the row and column
+vectors.  This can be done by using the function {\tt FindBlock},
+described in subsection \ref{findBlock}, \emph{viz}.
+{\tt\begin{verbatim}
+  rowBlock = findBlock ( Z%row, rowInstanceNumber, rowQuantityNumber )
+  colBlock = findBlock ( Z%col, colInstanceNumber, colQuantityNumber )
+\end{verbatim}}
+
+Having gotten the row and column numbers of the block, one can create it
+to have some space in it (they spring into existence empty) by using the
+{\tt CreateBlock} procedure described in section \ref{createBlock1}:
+{\tt\begin{verbatim}
+  call createBlock ( Z, rowBlock, colBlock, Kind, numberNonZeros )
+\end{verbatim}}
+wherein {\tt Kind} is one of the four public parameters from {\tt
+MatrixModule\_0} that specify the kinds of matrix blocks (see subsection
+\ref{parms}).  The {\tt numberNonZeros} argument is optional.  It is only
+needed if the {\tt Kind} parameter is {\tt M\_Banded} or {\tt
+M\_Column\_Sparse}.
+
+Once {\tt z\%block(rowBlock,colBlock)} is created, the way one fills it
+depends on its {\tt Kind}. There are pictures in section \ref{matrix0},
+and a description in the interface of {\tt CreateBlock\_0} in subsection
+\ref{createBlock0}. 
+
+Instead of creating a block and filling it, one can create a rank-two
+Fortran array of type {\tt REAL} and kind {\tt R8}, say {\tt Array(
+z\%row\%nelts(rowBlock), z\%col\%nelts(colBlock) )}, fill it, and use
+{\tt\begin{verbatim}
+  call sparsify ( z%block(rowBlock,colBlock), Array )
+\end{verbatim}}
+(see subsection \ref{sparsify}) to convert {\tt Array} to a sparse
+representation, if possible, and in any case to store it into {\tt
+z\%block(rowBlock,colBlock)}.  Unfortunately, the {\tt Sparsify} procedure
+is quite slow.
+
+A database of matrices may be created by declaring a variable of type
+{\tt Matrix\_Database\_T} having rank one and the pointer attribute. 
+Matrices can be added to the database by
+{\tt\begin{verbatim}
+  call addToMatrixDatabase ( database, matrix )
+\end{verbatim}}
+This generic procedure accepts a {\tt matrix} argument of any of the four
+types of matrices provided by {\tt MatrixModule\_1} (see subsection
+\ref{typeMatrix1}).
+
+A pointer to a matrix in a database may be retrieved by
+{\tt\begin{verbatim}
+  call getFromMatrixDatabase ( databaseElement, matrix )
+\end{verbatim}}
+This generic procedure accepts a {\tt matrix} argument of any of the four
+types of matrices provided by {\tt MatrixModule\_1} (see subsection
+\ref{typeMatrix1}).  The {\tt databaseElement} argument is a scalar.  The
+{\tt matrix} argument is required to have the pointer attribute.
+
+A database of matrices may be destroyed by
+{\tt\begin{verbatim}
+  call destroyMatrixDatabase ( database )
+\end{verbatim}}
+which destroys every matrix in the database using the {\tt
+DestroyMatrix} subroutine from {\tt MatrixMod\-ule\_1} (see subsection
+\ref{DestroyMatrix}), and then deallocates the database.
+
+\subsection{Creating and solving the normal equations}
+
+The normal equations have a symmetric positive-definite matrix that is
+formed by multiplying the transpose of the Jacobian matrix times itself. 
+It therefore has the same indices for the rows and columns.  Suppose these
+are to be given by a vector {\tt SolutionVector}.  One can then create
+this matrix, say {\tt Normal} of type {\tt Matrix\_SPD\_T} (see subsection
+\ref{matrixSPD}) by using
+{\tt\begin{verbatim}
+  call createMatrix ( Normal%M, Name, SolutionVector, SolutionVector )
+\end{verbatim}}
+
+The forward model is then used to create a Jacobian matrix, say {\tt
+Jacobian}.  Once one has the Jacobian matrix, and assuming one has
+vectors {\tt RadianceVector} and {\tt RHS}, one can create normal
+equations by using
+{\tt\begin{verbatim}
+  call normalEquations ( Jacobian, Normal, RadianceVector, RHS )
+\end{verbatim}}
+
+This procedure calculates only the upper triangular part of the normal
+equations matrix.
+
+If the entire Jacobian matrix does not fit into main memory, the normal
+equations can be built up a little bit at a time.  One way is to fill only
+part of the Jacobian matrix and radiance vector, say every quantity for a
+particular instance, or vice versa.  After the first call to {\tt
+normalEquations}, use the {\tt DestroyBlock} procedure described in
+subsection \ref{destroyBlock} to destroy the recently created blocks of
+the Jacobian matrix, create others, and call {\tt normalEquations} again,
+but this time with an additional argument {\tt update = .true.}  Continue
+doing this until the entire Jacobian matrix has been processed.
+
+After the normal equations are formed the a priori can be added to them. 
+Suppose the inverse of the covariance matrix is {\tt cov}, of type {\tt
+Matrix\_SPD\_T} (see subsection \ref{matrixSPD}), and the a priori
+estimate of the solution is {\tt apriori}.  One can add the extra rows to
+the right-hand side by accessing the {\tt operator(-)} and {\tt
+assignment(=)} interfaces from {\tt VectorsModule} (see subsection
+\ref{addVectors}), and using
+{\tt\begin{verbatim}
+ diff = solutionVector - apriori   ! Defined operator(-) and assignment(=)
+ call multiplyMatrixVectorSPD ( cov, diff, rhs, update = .true. )
+\end{verbatim}}
+
+The {\tt update = .true.} argument causes the matrix product of {\tt cov}
+and {\tt diff} to be added to {\tt rhs}.
+
+One can then add {\tt cov} to the normal equations matrix by using
+{\tt\begin{verbatim}
+  call addToMatrix ( normal%m, cov ) ! normal%m = normal%m + cov
+\end{verbatim}}
+
+The normal equations should now be column scaled so that the magnitudes
+of the elements of the solution will be approximately equal.  If we
+believe that the a priori solution is reasonably good, and that the next
+solution provided by the nonlinear solver will be near the a priori
+solution, the difference between it and the previous solution estimate,
+i.e. the variable {\tt diff} above, is a reasonable scaling.  The columns
+of the Jacobian matrix should not be scaled as they are formed, as the
+amount of work is proportional to the total size of the Jacobian matrix
+(assuming a diagonal matrix is used for scaling).  By waiting until after
+the normal equations have been formed, the amount of work is about twice
+the size of the normal equations matrix.  In order to scale the
+right-hand side, access the {\tt operator(*)} and {\tt assignment(=)}
+interfaces from {\tt VectorsModule} (see subsection
+\ref{multiplyVectors}) and use
+
+{\tt\begin{verbatim}
+ call rowScale ( diff, normal )
+ call columnScale ( normal, diff )
+ rhs = diff * rhs ! element-by-element product defined by operator(*)
+                  ! defined assignment(=) destroys the old rhs
+ call destroyVectorInfo ( diff ) ! avoids a memory leak
+\end{verbatim}}
+
+After the nonlinear solver chooses a Levenberg-Marquardt stabilization
+parameter {\tt lambda}, it can be incorporated into the normal equations
+by using
+{\tt\begin{verbatim}
+  call updateDiagonal ( normal, lambda )
+\end{verbatim}}
+
+The normal equations can then be factored by using
+{\tt\begin{verbatim}
+  call choleskyFactor ( normal, factor )
+\end{verbatim}}
+
+After the normal equations are factored, one can solve for the nonlinear
+solver's move by using
+{\tt\begin{verbatim}
+  call solveCholesky ( factor, rhs )         ! solution stored into rhs
+  call solveCholesky ( factor, deltaX, rhs, transpose = .true. )
+  call destroyVectorInfo ( rhs )             ! avoids a memory leak
+\end{verbatim}}
+
+Finally, one can update the solution by accessing the {\tt operator(+)}
+and {\tt assignment(=)} interfaces (see subsection \ref{addVectors}) from
+{\tt VectorsModule} and using
+{\tt\begin{verbatim}
+  solutionVector = solutionVector + deltaX   ! Defined operator(+), defined
+                                   ! assignment(=) destroys old
+                                   ! solutionVector
+  call destroyVectorInfo ( deltaX )          ! avoids a memory leak
+\end{verbatim}}
+
+\section{VectorsModule}\label{vectorsModule}
+
+A vector consists of a sequence of \emph{quantities}.  Each vector has a
+template that describes it and others like it (see subsection
+\ref{vectorTypes}).  Each quantity within a vector has a quantity
+template (see {\tt QuantityTemplates.f90}) and a rank-two array of
+values.  The values have dimensions Frequencies (or 1) * Vertical
+Coordinates (or 1) and Horizontal Instances (scan or profile or 1).  The
+order of subscripts for the first dimension is the same as array element
+order for a rank-two object with dimensions Frequencies (or 1) and
+Vertical Coordinates (or 1).
+
+The rows and columns of matrix blocks (see section \ref{matrix0}) are in
+the same order as the elements of the first dimension of a vector quantity
+value.
+
+The rows and columns of high-level matrices (see section \ref{matrix1})
+correspond to quantity and instance indices, but they are not indexed by
+them, because they can be selected to be in either quantity-major or
+instance-major order.  Instead, there is a function {\tt FindBlock} (see
+subsection \ref{findBlock}) that returns the block number (either row or
+column) that corresponds to a (quantity-index, instance-index) pair.
+
+\subsection{Types exported by VectorsModule}\label{vectorTypes}
+
+Three public types are provided by VectorsModule.  The first is the type
+for vector templates:
+{\tt\begin{verbatim}
+  type VectorTemplate_T
+     
+    ! Administrative stuff
+    integer :: Id              ! Id code for vector (for checking purposes)
+    integer :: Name            ! Sub-rosa index of name, if any, else zero
+
+    ! General information about the vector
+
+    integer :: NoQuantities    ! Number of quantities in the vector
+    integer :: TotalInstances  ! Number of horizontal instances in the vector
+    integer :: TotalElements   ! Total of numbers of elements in the vector
+    integer, dimension(:), pointer :: QUANTITIES  ! Indices of the quantity
+    !                            templates in the quantities database
+  end type VectorTemplate_T
+\end{verbatim}}
+
+The second is the type for the information in a vector about a single
+quantity:
+{\tt\begin{verbatim}
+  type VectorValue_T
+    type (QuantityTemplate_T), pointer :: TEMPLATE ! Template for this qty
+    ! The dimensions of VALUES are Frequencies (or 1) * Vertical Coordinates
+    ! (or 1), and Horizontal Instances (scan or profile or 1).  These are
+    ! taken from (template%noChans * template%noSurfs, template%noInstances).
+    real(r8), dimension(:,:), pointer :: VALUES => NULL()
+    ! MASK is used to control whether elements of vectors are of interest.
+    ! If MASK is not associated, every element is of interest.  Otherwise,the
+    ! dimensions of MASK are (size(values,1)+bit_size(mask)-1)/bit_size(mask)
+    ! and size(values,2).  Bits of MASK are used to determine what is not
+    ! interesting.  Zero means the corresponding element of VALUES is
+    ! interesting, and one means it is not.
+    integer, dimension(:,:), pointer :: MASK => NULL()
+  end type VectorValue_T
+\end{verbatim}}
+
+The third describes the vector as a whole:
+{\tt\begin{verbatim}
+  type Vector_T
+    integer :: Name            ! Sub-rosa index of the vector name
+    type (VectorTemplate_T), pointer :: TEMPLATE ! In the template database
+
+    ! The dimension of QUANTITIES is the same as for the QUANTITIES field
+    ! of the vector template.  Each element of QUANTITIES here corresponds
+    ! to the one in the same position in the QUANTITIES field of the
+    ! vector template.
+    type (VectorValue_T), dimension(:), pointer :: QUANTITIES
+  end type Vector_T
+\end{verbatim}}
+
+\subsection{Public procedures provided by VectorsModule}
+\subsubsection{AddToVector}
+{\tt\begin{verbatim}
+  subroutine AddToVector ( X, Y )  ! X = X + Y
+    ! Dummy arguments:
+    type(Vector_T), intent(inout) :: X
+    type(Vector_T), intent(in) :: Y
+  end subroutine AddToVector
+\end{verbatim}}
+
+\subsubsection{AddVectors}\label{addVectors}
+This procedure is also available by using the operator(+) interface.
+{\tt\begin{verbatim}
+  type (Vector_T) function AddVectors ( X, Y ) result (Z)
+  ! Add two vectors, producing one having the same template (but no name,
+  ! of course).
+
+  ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
+  ! It is important to invoke DestroyVectorInfo using the result of this
+  ! function after it is no longer needed. Otherwise, a memory leak will
+  ! result.  Also see AssignVector.
+  ! !!!!! ===== END NOTE ===== !!!!! 
+
+    ! Dummy arguments:
+    type(Vector_T), intent(in) :: X, Y
+  end function AddVectors
+\end{verbatim}}
+
+\subsubsection{AddVectorToDatabase}
+{\tt\begin{verbatim}
+  integer function AddVectorTemplateToDatabase ( DATABASE, ITEM )
+
+  ! This routine adds a vector template to a database of such templates, 
+  ! creating the database if necessary.
+
+    ! Dummy arguments
+    type (VectorTemplate_T), dimension(:), pointer :: DATABASE
+    type (VectorTemplate_T), intent(in) :: ITEM
+  end function AddVectorTemplateToDatabase
+\end{verbatim}}
+
+\subsubsection{AddVectorTemplateToDatabase}
+{\tt\begin{verbatim}
+  integer function AddVectorToDatabase ( DATABASE, ITEM )
+
+  ! This routine adds a vector template to a database of such templates, 
+  ! creating the database if necessary.
+
+    ! Dummy arguments
+    type (Vector_T), dimension(:), pointer :: DATABASE
+    type (Vector_T), intent(in) :: ITEM
+  end function AddVectorToDatabase
+\end{verbatim}}
+
+\subsubsection{AssignVector}
+This procedure is also available by using the Assignment(=) interface.
+{\tt\begin{verbatim}
+  subroutine AssignVector ( Z, X )
+  ! Destroy Z, then assign X to it, by using pointer assignment for the
+  ! components.  DO NOT DO Z = Z!  Notice that CopyVector uses deep
+  ! assignment. Notice that if we have a loop with Z = vector-expr, this
+  ! destroys Z at each iteration, so it is necessary to call DestroyVectorInfo
+  ! only after the loop, if at all.
+    type(Vector_T), intent(inout) :: Z
+    type(Vector_T), intent(in) :: X
+  end subroutine AssignVector
+\end{verbatim}}
+
+\subsubsection{AXPY}
+{\tt\begin{verbatim}
+  type (Vector_T) function AXPY ( A, X, Y ) result (Z)
+  ! Multiply the vector X by A and add Y to it, producing one having the
+  ! same template (but no name, of course).
+
+  ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
+  ! It is important to invoke DestroyVectorInfo using the result of this
+  ! function after it is no longer needed. Otherwise, a memory leak will
+  ! result.  Also see AssignVector.
+  ! !!!!! ===== END NOTE ===== !!!!! 
+
+    ! Dummy arguments:
+    real, intent(in) :: A
+    type(Vector_T), intent(in) :: X, Y
+  end function AXPY
+\end{verbatim}}
+
+\subsubsection{ClearMask}
+{\tt\begin{verbatim}
+  subroutine ClearMask ( MASK, TO_CLEAR )
+  ! Clear bits of MASK indexed by elements of TO_CLEAR.  If TO_CLEAR is
+  ! absent, clear all of the bits of MASK.
+    integer, intent(inout), dimension(:) :: MASK
+    integer, intent(in), dimension(:), optional :: TO_CLEAR
+  end subroutine ClearMask
+\end{verbatim}}
+
+\subsubsection{CloneVector}
+{\tt\begin{verbatim}
+  subroutine CloneVector ( Z, X )
+  ! Destroy Z, except its name.
+  ! Create the characteristics of a vector to be the same template as a
+  ! given one (except it has no name).  Values are allocated, but not
+  ! filled.  Z's mask is allocated if X's is allocated, but it is not filled.
+
+  ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
+  ! It is important to invoke DestroyVectorInfo using the result of this
+  ! function after it is no longer needed. Otherwise, a memory leak will
+  ! result.  Also see AssignVector.
+  ! !!!!! ===== END NOTE ===== !!!!! 
+
+    ! Dummy arguments:
+    type(Vector_T), intent(out) :: Z
+    type(Vector_T), intent(in) :: X
+  end subroutine  CloneVector
+\end{verbatim}}
+
+\subsubsection{CopyVector}
+{\tt\begin{verbatim}
+  subroutine CopyVector ( Z, X, CLONE ) ! If CLONE is present and .true.,
+  ! Destroy Z, deep Z = X, except the name of Z is not changed.  Otherwise,
+  ! copy only the values and mask of X to Z
+
+    type(Vector_T), intent(inout) :: Z
+    type(Vector_T), intent(in) :: X
+    logical, intent(in), optional :: CLONE
+  end subroutine CopyVector
+\end{verbatim}}
+
+\subsubsection{ConstantXVector}
+This procedure is also available by using the operator(*) public interface.
+{\tt\begin{verbatim}
+  type (Vector_T) function ConstantXVector ( A, X ) result (Z)
+  ! Multiply the vector X by A, producing one having the same template
+  ! (but no name, of course).
+
+  ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
+  ! It is important to invoke DestroyVectorInfo using the result of this
+  ! function after it is no longer needed. Otherwise, a memory leak will
+  ! result.  Also see AssignVector.
+  ! !!!!! ===== END NOTE ===== !!!!! 
+
+    ! Dummy arguments:
+    real(r8), intent(in) :: A
+    type(Vector_T), intent(in) :: X
+  end function ConstantXVector
+\end{verbatim}}
+
+\subsubsection{ConstructVectorTemplate}
+{\tt\begin{verbatim}
+  subroutine ConstructVectorTemplate ( name, quantities, selected, &
+    & vectorTemplate )
+
+  ! This subroutine creates a vectorTemplate from a list of quantities.
+  ! The default ordering is currently by quantity.  Later versions may
+  ! have optional parameters to request other orderings.
+
+    ! Dummy arguments
+    integer, intent(in) :: NAME         ! Sub-rosa of vector template name
+    type (QuantityTemplate_T), intent(in) :: quantities(:)
+    integer, intent(in) :: selected(:)  ! Which quantities are selected?
+    type (VectorTemplate_T), intent(out) :: vectorTemplate
+  end subroutine ConstructVectorTemplate
+\end{verbatim}}
+
+\subsubsection{CreateMask}
+{\tt\begin{verbatim}
+  subroutine CreateMask ( VectorValue )
+  ! Allocate the MASK array for a vector quantity.
+    type(VectorValue_T), intent(inout) :: VectorValue
+  end subroutine CreateMask
+\end{verbatim}}
+
+\subsubsection{CreateVector}
+{\tt\begin{verbatim}
+  type(Vector_T) function CreateVector &
+    & ( vectorName, vectorTemplate, quantities ) result (vector )
+
+  ! This routine creates an empty vector according to a given template
+  ! Its mask is not allocated.  Use CreateMask if one is needed.
+
+    ! Dummy arguments
+    integer, intent(in) :: vectorName   ! Sub_rosa index
+    type (VectorTemplate_T), intent(in), target :: VectorTemplate ! For vector
+    type (QuantityTemplate_T), dimension(:), intent(in), target :: Quantities
+  end function CreateVector
+\end{verbatim}}
+
+\subsubsection{DestroyVectorDatabase}
+{\tt\begin{verbatim}
+  subroutine DestroyVectorDatabase ( database )
+
+  ! This subroutine destroys a vector database
+
+    ! Dummy argument
+    type (Vector_T),  dimension(:), pointer :: database
+  end subroutine DestroyVectorDatabase
+\end{verbatim}}
+
+\subsubsection{DestroyVectorInfo}
+{\tt\begin{verbatim}
+  subroutine DestroyVectorInfo ( Vector )
+
+  ! This routine destroys a vector created above
+
+    ! Dummy arguments
+    type (Vector_T), intent(inout) :: VECTOR
+  end subroutine DestroyVectorInfo
+\end{verbatim}}
+
+\subsubsection{DestroyVectorMask}
+{\tt\begin{verbatim}
+  subroutine DestroyVectorInfo ( Vector )
+
+  ! This routine destroys the masks stored in the vector.
+
+    ! Dummy arguments
+    type (Vector_T), intent(inout) :: VECTOR
+  end subroutine DestroyVectorMask
+\end{verbatim}}
+
+\subsubsection{DestroyVectorTemplateDatabase}
+{\tt\begin{verbatim}
+  subroutine DestroyVectorTemplateDatabase ( database )
+
+  ! This subroutine destroys a vector template database
+
+    ! Dummy argument
+    type (VectorTemplate_T), dimension(:), pointer :: database
+  end subroutine DestroyVectorTemplateDatabase
+\end{verbatim}}
+
+\subsubsection{DestroyVectorTemplateInfo}
+{\tt\begin{verbatim}
+  subroutine DestroyVectorTemplateInfo ( vectorTemplate )
+
+  ! This subroutine destroys a vector template created above
+
+    ! Dummy arguments
+    type (VectorTemplate_T), intent(inout) :: vectorTemplate
+  end subroutine DestroyVectorTemplateInfo
+\end{verbatim}}
+
+\subsubsection{DotVectors}
+This procedure is also available by using the operator(.DOT.) public
+interface.
+{\tt\begin{verbatim}
+  real(r8) function DotVectors ( X, Y ) result (Z)
+  ! Compute the inner product of two vectors.
+
+    ! Dummy arguments:
+    type(Vector_T), intent(in) :: X, Y
+  end function DotVectors
+\end{verbatim}}
+
+\subsubsection{Dump\_Vectors}
+This procedure is also available by using the DUMP public interface.  It
+uses the procedure OUTPUT in the module OUTPUT\_M, which by default writes
+to standard output, but can easily be changed to write its output to a
+specified unit.
+{\tt\begin{verbatim}
+  subroutine DUMP_VECTORS ( VECTORS )
+    type(Vector_T), intent(in) :: VECTORS(:)
+  end subroutine DUMP_VECTORS
+\end{verbatim}}
+
+\subsubsection{Dump\_Vector\_Templates}
+This procedure is also available by using the DUMP public interface.  It
+uses the procedure OUTPUT in the module OUTPUT\_M, which by default writes
+to standard output, but can easily be changed to write its output to a
+specified unit.
+{\tt\begin{verbatim}
+  subroutine DUMP_VECTOR_TEMPLATES ( VECTOR_TEMPLATES )
+    type(VectorTemplate_T), intent(in) :: VECTOR_TEMPLATES(:)
+  end subroutine DUMP_VECTOR_TEMPLATES
+\end{verbatim}}
+
+\subsubsection{GetVectorQuantity}
+{\tt\begin{verbatim}
+  function GetVectorQuantity ( vector, quantity )
+
+  ! This function returns a pointer to the information about one quantity
+  ! within a vector.
+
+    ! Dummy arguments
+    type (Vector_T), intent(in) :: Vector
+    integer, intent(in) :: Quantity                 ! Quantity index
+    ! Result
+    type(VectorValue_T), pointer :: GetVectorQuantity
+  end function GetVectorQuantity
+\end{verbatim}}
+
+\subsubsection{GetVectorQuantityByType}
+{\tt\begin{verbatim}
+  function GetVectorQuantityByType ( vector, quantityType, &
+    & molecule, radiometer )
+
+  ! Given a quantity type index (l_...), this function returns the first
+  ! quantity within the vector that has that type.  If molecule and/or
+  ! radiometer are supplied, the quantity that has the specified type, as
+  ! well as the specified molecule and/or radiometer index, is returned.
+
+    ! Dummy arguments
+    type (Vector_T), intent(in) :: Vector
+    integer, intent(in) :: QuantityType ! Quantity type index (l_...)
+    integer, intent(in), optional :: Molecule     ! Molecule index (l_...)
+    integer, intent(in), optional :: Radiometer   ! Radiometer index
+    ! Result
+    type (VectorValue_T) :: GetVectorQuantityByType
+  end function GetVectorQuantityByType
+\end{verbatim}}
+
+\subsubsection{GetVectorQuantityIndexByName}
+{\tt\begin{verbatim}
+  integer function GetVectorQuantityIndexByName ( vector, quantityName )
+
+  ! Given a quantity name's sub-rosa index, this function returns the index
+  ! of the quantity within the vector that has that name.
+
+    ! Dummy arguments
+    type (Vector_T), intent(in) :: Vector
+    integer, intent(in) :: QuantityName ! Quantity name sub-rosa index
+  end function GetVectorQuantityIndexByName
+\end{verbatim}}
+
+\subsubsection{GetVectorQuantityIndexByType}
+{\tt\begin{verbatim}
+  integer function GetVectorQuantityIndexByType ( vector, quantityType, &
+    & molecule, radiometer )
+
+  ! Given a quantity type index (l_...), this function returns the index
+  ! of the first quantity within the vector that has that type.  If
+  ! molecule and/or radiometer are supplied, the quantity that has the
+  ! specified type, as well as the specified molecule and/or radiometer
+  ! index, is returned.
+
+    ! Dummy arguments
+    type (Vector_T), intent(in) :: Vector
+    integer, intent(in) :: QuantityType ! Quantity type index (l_...)
+    integer, intent(in), optional :: Molecule     ! Molecule index (l_...)
+    integer, intent(in), optional :: Radiometer   ! Radiometer index
+  end function GetVectorQuantityIndexByType
+\end{verbatim}}
+
+\subsubsection{MultiplyVectors}\label{multiplyVectors}
+This procedure is also available by using the operator(*) public interface.
+{\tt\begin{verbatim}
+  type (Vector_T) function MultiplyVectors ( X, Y ) result (Z)
+  ! Multiply two vectors element-by-element, producing one having the
+  ! same template (but no name, of course).
+
+  ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
+  ! It is important to invoke DestroyVectorInfo using the result of this
+  ! function after it is no longer needed. Otherwise, a memory leak will
+  ! result.  Also see AssignVector.
+  ! !!!!! ===== END NOTE ===== !!!!! 
+
+    ! Dummy arguments:
+    type(Vector_T), intent(in) :: X, Y
+  end function MultiplyVectors
+\end{verbatim}}
+
+\subsubsection{ScaleVector}
+{\tt\begin{verbatim}
+  subroutine ScaleVector ( X, A, Y )
+  ! Y = A*X if Y is present, else X = A*X.
+
+    ! Dummy arguments:
+    type(Vector_T), intent(inout) :: X
+    real(r8), intent(in) :: A
+    type(Vector_T), intent(out), optional :: Y
+  end function ScaleVector
+\end{verbatim}}
+
+\subsubsection{SetMask}
+{\tt\begin{verbatim}
+  subroutine SetMask ( MASK, TO_SET )
+  ! Set bits of MASK indexed by elements of TO_SET.  If TO_SET is absent,
+  ! set all of the bits of MASK.
+    integer, intent(inout), dimension(:) :: MASK
+    integer, intent(in), dimension(:), optional :: TO_SET
+  end subroutine SetMask
+\end{verbatim}}
+
+\subsubsection{SubtractFromVector}
+{\tt\begin{verbatim}
+  subroutine SubtractFromVector ( X, Y ) ! X = X - Y.
+
+    ! Dummy arguments:
+    type(Vector_T), intent(inout) :: X
+    type(Vector_T), intent(in) :: Y
+  end subroutine SubtractFromVector
+\end{verbatim}}
+
+\subsubsection{SubtractVectors}
+This procedure is also available by using the operator(-) public interface.
+{\tt\begin{verbatim}
+  type (Vector_T) function SubtractVectors ( X, Y ) result (Z)
+  ! Subtract Y from X, producing one having the same template (but no name,
+  ! of course).
+
+  ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
+  ! It is important to invoke DestroyVectorInfo using the result of this
+  ! function after it is no longer needed. Otherwise, a memory leak will
+  ! result.  Also see AssignVector.
+  ! !!!!! ===== END NOTE ===== !!!!! 
+
+    ! Dummy arguments:
+    type(Vector_T), intent(in) :: X, Y
+  end function SubtractVectors
+\end{verbatim}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%\newpage
+
+\section{MatrixModule\_0}\label{matrix0}
+
+MatrixModule\_0 provides a facility for operations on matrices having
+three representations:  Column sparse, Banded, and Full.
+
+Here are pictures that show how the Column sparse and Banded
+representations are implemented:
+
+\includegraphics[width=6in,height=5.9in,keepaspectratio=true,clip=true,
+viewport=34 353 481 757]{sparse}
+
+\subsection{Public type provided by MatrixModule\_0}\label{typeMatrix0}
+The type MatrixElement\_T represents a matrix.  It is called an
+``element'' because objects of this type are used as blocks in
+MatrixModule\_1.
+{\tt\begin{verbatim}
+  type MatrixElement_T
+    integer :: KIND      ! Kind of block -- one of the M_... parameters below
+    integer :: NROWS, NCOLS                  ! Numbers of rows and columns
+    integer, pointer, dimension(:) :: R1 => NULL()     ! Indexed by the column
+      ! number. Used for the first column number if KIND = M_Banded, as
+      ! described above for M_Column_sparse if KIND = M_Column_sparse, and not
+      ! used otherwise.
+    integer, pointer, dimension(:) :: R2 => NULL()     ! Indexed by the
+      ! column number if KIND = M_Banded, by elements of R1 if KIND =
+      ! M_Column_sparse, and not used otherwise.  See M_Banded and
+      ! M_Column_sparse above.
+    real(r8), pointer, dimension(:,:) :: VALUES => NULL()   ! Values of the
+      ! matrix elements.  Indexed by row and column indices if KIND == M_Full,
+      ! by elements in the range of values of R1 if KIND == M_Banded, and by
+      ! elements of R2 if KIND == M_Column_sparse.
+  end type MatrixElement_T
+\end{verbatim}}
+
+\subsection{Public parameters provided by MatrixModule\_0}\label{parms}
+
+There are four parameters exported by MatrixModule\_0.  They are used in
+the {\tt KIND} component of an element of type {\tt MatrixElement\_T} to
+specify the representation of a matrix block.
+\begin{description}
+\item[M\_Absent]Indicates an absent block.  This block is assumed to
+  consist entirely of entries with the value zero.
+\item[M\_Banded]A banded matrix.  The nonzero
+  values in each column are assumed to be in a contiguous sequence.  For
+  column I, R1(I) gives the row of the first nonzero value, and the
+  nonzero elements are VALUES(R2(I-1)+1:R2(I)).
+\item[M\_Column\_sparse]A sparse block in column-sparse
+  representation.  Only the non-zero values are stored.  For column(I),
+  R1(I) gives the index in R2 and VALUES for the last stored value.  The
+  rows of the nonzero values are R2(R1(I-1)+1:R1(I)), and their values are
+  VALUES(R1(I-1)+1:R1(I)).  R1(0) = 0.
+\item[M\_Full]A non-sparse block.
+\end{description}
+
+\subsection{Public procedures provided by MatrixModule\_0}
+
+\subsubsection{Add\_Matrix\_Blocks}
+This procedure is also available by using the operator(+) interface.
+{\tt\begin{verbatim}
+  function Add_Matrix_Blocks ( XB, YB, UPPER ) result ( ZB ) ! ZB = XB + YB
+    type(MatrixElement_T), intent(in), target :: XB, YB
+    logical, intent(in), optional :: UPPER   ! Upper triangle only if true
+    type(MatrixElement_T) :: ZB
+
+  ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
+  ! It is important to invoke DestroyBlock using the result of this
+  ! function after it is no longer needed. Otherwise, a memory leak will
+  ! result.  Also see AssignBlock.
+  ! !!!!! ===== END NOTE ===== !!!!! 
+  end function Add_Matrix_Blocks
+\end{verbatim}}
+
+\subsubsection{AssignBlock}
+This procedure is also available by using the Assignment(=) interface.
+{\tt\begin{verbatim}
+  subroutine AssignVector ( Z, X )
+  ! Destroy Z, then assign X to it, by using pointer assignment for the
+  ! components.  DO NOT DO Z = Z!  Notice that CopyVector uses deep
+  ! assignment. Notice that if we have a loop with Z = vector-expr, this
+  ! destroys Z at each iteration, so it is necessary to call DestroyVectorInfo
+  ! only after the loop, if at all.
+    type(Vector_T), intent(inout) :: Z
+    type(Vector_T), intent(in) :: X
+  end subroutine AssignVector
+\end{verbatim}}
+
+\subsubsection{CholeskyFactor\_0}
+This procedure is also available by using the CholeskyFactor interface.
+{\tt\begin{verbatim}
+  subroutine CholeskyFactor_0 ( Z, XOPT )
+  ! If XOPT is present compute Z such that Z^T Z = XOPT and Z is upper-
+  ! triangular. Otherwise, replace Z such that Z(output) = Z(input)^T
+  ! Z(input) and Z(output) is upper-triangular.
+    type(MatrixElement_T), target, intent(inout) :: Z
+    type(MatrixElement_T), target, intent(in), optional :: XOPT
+  end subroutine CholeskyFactor_0
+\end{verbatim}}
+
+\subsubsection{ClearRows\_0}
+This procedure is also available by using the ClearRows interface.
+{\tt\begin{verbatim}
+  subroutine ClearRows_0 ( X, MASK )
+  ! Clear the rows of X for which MASK has nonzero bits.
+    type(MatrixElement_T), intent(inout) :: X
+    integer, dimension(:), intent(in) :: MASK
+  end subroutine ClearRows_0
+\end{verbatim}}
+
+\subsubsection{CloneBlock}
+{\tt\begin{verbatim}
+  subroutine CloneBlock ( Z, X ) ! Z = X, except the values
+  ! Duplicate a matrix block, including copying all of its structural
+  ! descriptive information, but not its values.
+  end subroutine CloneBlock
+\end{verbatim}}
+
+\subsubsection{ColumnScale\_0}
+This procedure is also available by using the ColumnScale interface.
+{\tt\begin{verbatim}
+  subroutine ColumnScale_0 ( X, V, NEWX ) ! Z = X V where V is a diagonal
+  !                                     matrix represented by a vector and
+  !                                     Z is either X or NEWX.
+    type(MatrixElement_T), intent(inout), target :: X
+    real(r8), intent(in), dimension(:) :: V
+    type(MatrixElement_T), intent(out), target, optional :: NEWX
+  end subroutine ColumnScale_0
+\end{verbatim}}
+
+\subsubsection{CopyBlock}
+{\tt\begin{verbatim}
+  subroutine CopyBlock ( Z, X ) ! Destroy Z, deep Z = X, including the values
+    type(MatrixElement_T), intent(out) :: Z
+    type(MatrixElement_T), intent(in) :: X
+  end subroutine CopyBlock
+\end{verbatim}}
+
+\subsubsection{CreateBlock\_0}\label{createBlock0}
+This procedure is also available by using the CreateBlock interface.
+{\tt\begin{verbatim}
+  subroutine CreateBlock_0 ( Z, nRows, nCols, Kind, NumberNonzero )
+  ! Create a matrix block, but don't fill any elements or structural
+  ! information.  The "NumberNonzero" is required if and only if the
+  ! "Kind" argument has the value M_Banded or M_Column_Sparse.
+  ! The block is first destroyed, so as not to have a memory leak.
+
+  ! Filling the block after it's created depends on the kind.
+  !  M_Absent: Do nothing
+  !  M_Banded: The arrays R1 and R2 are indexed by the column number (c).
+  !   R1(c) gives the index of the first nonzero row.  R2(c) gives the
+  !   subscript in the first dimension of VALUES for the last nonzero element
+  !   in the column.  The second dimension of VALUES has shape (1:1).  The
+  !   subscript for the first nonzero element is R2(c-1)+1 (R2(0)==0 is set
+  !   here).  The number of nonzero elements is R2(c) - R2(c-1).  The index
+  !   of the last nonzero row is R1(c) + R2(c) - R2(c-1) - 1.
+  !  M_Column_Sparse:  The array R1 is indexed by the column number (c). It
+  !   gives the subscripts in R2 and the first dimension of VALUES for
+  !   the last entry in the column.  The first one is in R2(R1(c-1)+1)
+  !   (R1(0)==0). The number of nonzero entries in a column is R1(c) -
+  !   R1(c-1).  The row number of the k'th nonzero in column c is
+  !   R2(R1(c-1)+k), and its value is VALUES(R1(c-1)+k),1).
+  !  M_Full: R1 and R2 are not used (they are allocated with zero extent).
+  !   The value of the (i,j) element of the block is VALUES(i,j).
+
+    type(MatrixElement_T), intent(out) :: Z
+    integer, intent(in) :: nRows, nCols, Kind
+    integer, intent(in), optional :: NumberNonzero ! Only for M_Banded and
+                                                   ! M_Column_Sparse
+  end subroutine CreateBlock_0
+\end{verbatim}}
+
+\subsubsection{Densify}
+{\tt\begin{verbatim}
+  subroutine Densify ( Z, B )
+  ! Given a matrix block B, produce a full matrix Z, even if the matrix
+  ! block had a sparse representation.
+    real(r8), intent(out) :: Z(:,:)          ! Full matrix to produce
+    type(MatrixElement_T), intent(in) :: B   ! Input matrix block
+  end subroutine DENSIFY
+\end{verbatim}}
+
+\subsubsection{DestroyBlock}\label{destroyBlock}
+{\tt\begin{verbatim}
+  subroutine DestroyBlock ( B )
+  ! Deallocate the pointer components of the matrix block B
+    type(MatrixElement_T), intent(inout) :: B
+  end subroutine DestroyBlock
+\end{verbatim}}
+
+\subsubsection{Dump}
+This is a generic interface for the private procedure Dump\_Matrix\_Block. It
+uses the procedure OUTPUT in the module OUTPUT\_M, which by default writes to
+standard output, but can easily be changed to write its output to a specified
+unit.
+{\tt\begin{verbatim}
+  subroutine DUMP_MATRIX_BLOCK ( MATRIX_BLOCK, NAME, DETAILS, BOUNDS )
+    type(MatrixElement_T), intent(in) :: MATRIX_BLOCK
+    character(len=*), intent(in), optional :: NAME
+    logical, intent(in), optional :: DETAILS   ! Print details, default true
+    integer, intent(in), optional :: BOUNDS(4) ! Dump only Bounds(1):Bounds(2)
+                                               !        X  Bounds(3):Bounds(4)
+\end{verbatim}}
+
+\subsubsection{MaxAbsVal\_0}
+This procedure is also available by using the MaxAbsVal interface.
+{\tt\begin{verbatim}
+  real(r8) function MaxAbsVal_0 ( B )
+  ! Return the magnitude of the element in B that has the largest magnitude.
+    type(MatrixElement_T), intent(in) :: B
+  end function MaxAbsVal_0
+\end{verbatim}}
+
+\subsubsection{MinDiag\_0}
+This procedure is also available by using the MinDiag interface.
+{\tt\begin{verbatim}
+  real(r8) function MinDiag_0 ( B )
+  ! Return the magnitude of the element on the diagonal of B that has the
+  ! smallest magnitude.
+    type(MatrixElement_T), intent(in) :: B
+  end function MinDiag_0
+\end{verbatim}}
+
+\subsubsection{MultiplyMatrixBlocks}
+{\tt\begin{verbatim}
+  subroutine MultiplyMatrixBlocks ( XB, YB, ZB, UPDATE, XMASK, YMASK )
+  ! ZB = XB^T YB if UPDATE is absent or false;
+  ! ZB = ZB + XB^T YB if UPDATE is present and true.
+  ! If XMASK (resp. YMASK) is present, ignore columns of XB (resp. YB)
+  ! that correspond to nonzero bits of XMASK (resp. YMASK).
+    type(MatrixElement_T), intent(in) :: XB, YB
+    type(MatrixElement_T), intent(inout) :: ZB
+    logical, intent(in), optional :: UPDATE
+    integer, intent(in), optional, dimension(0:) :: XMASK, YMASK
+
+  ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
+  ! If UPDATE is absent or false, it is important to invoke DestroyBlock
+  ! using the result of this function after it is no longer needed.
+  ! Otherwise, a memory leak will result.  Also see AssignBlock.
+  ! !!!!! ===== END NOTE ===== !!!!! 
+  end subroutine MultiplyMatrixBlocks
+\end{verbatim}}
+
+\subsubsection{MultiplyMatrixVector\_0}
+{\tt\begin{verbatim}
+  subroutine MultiplyMatrixVector_0 ( B, V, P, UPDATE )
+  ! P = B^T V if UPDATE is absent or false.
+  ! P = P + B^T V if UPDATE is present and true.
+  end subroutine MultiplyMatrixVector_0
+\end{verbatim}}
+
+\subsubsection{MultiplyMatrixVectorNoT}
+{\tt\begin{verbatim}
+  subroutine MultiplyMatrixVectorNoT ( B, V, P, UPDATE, DoDiag )
+  ! P = B V if UPDATE is absent or false.
+  ! P = P + B V if UPDATE is present and true.
+  ! Don't multiply by the diagonal element if doDiag (default true) is
+  ! present and false.
+    type(MatrixElement_T), intent(in) :: B
+    real(r8), dimension(:), intent(in) :: V
+    real(r8), dimension(:), intent(inout) :: P
+    logical, optional, intent(in) :: UPDATE, DoDiag
+  end subroutine MultiplyMatrixVectorNoT
+\end{verbatim}}
+
+\subsubsection{NewMultiplyMatrixBlocks}
+This procedure is also available by using the operator(.TX.) interface.
+{\tt\begin{verbatim}
+  function NewMultiplyMatrixBlocks ( X, Y ) result ( Z ) ! Z = X^T Y
+    type(MatrixElement_T), intent(in) :: X, Y
+    type(MatrixElement_T) :: Z
+
+  ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
+  ! It is important to invoke DestroyBlock using the result of this
+  ! function after it is no longer needed. Otherwise, a memory leak will
+  ! result.  Also see AssignBlock.
+  ! !!!!! ===== END NOTE ===== !!!!! 
+  end function NewMultiplyMatrixBlocks
+\end{verbatim}}
+
+\subsubsection{NewMultiplyMatrixVector\_0}
+This procedure is also available by using the operator(.TX.) interface.
+{\tt\begin{verbatim}
+  function NewMultiplyMatrixVector_0 ( B, V ) result ( P ) ! P = B^T V
+    type(MatrixElement_T), intent(in) :: B
+    real(r8), dimension(:), intent(in) :: V
+    real(r8), dimension(size(v)) :: P
+  end function NewMultiplyMatrixVector_0
+\end{verbatim}}
+
+\subsubsection{RowScale\_0}
+This procedure is also available by using the RowScale interface.
+{\tt\begin{verbatim}
+  subroutine RowScale_0 ( V, X, NEWX ) ! Z = V X where V is a diagonal
+  !                                     matrix represented by a vector and
+  !                                     Z is either X or NEWX.
+    real(r8), intent(in), dimension(:) :: V
+    type(MatrixElement_T), intent(inout), target :: X
+    type(MatrixElement_T), intent(out), target, optional :: NEWX
+  end subroutine RowScale_0
+\end{verbatim}}
+
+\subsubsection{SolveCholeskyM\_0}
+This procedure is also available by using the SolveCholesky interface.
+{\tt\begin{verbatim}
+  subroutine SolveCholeskyM_0 ( U, X, B, TRANSPOSE )
+  ! Solve the system U X = B or U^T X = B for X, depending on TRANSPOSE,
+  ! where U is known to be upper-triangular.  X may be the same as B.
+  ! B may be absent, in which case the right-hand side is in X on input,
+  ! and the solution replaces it on output.
+    type(MatrixElement_T), intent(in) :: U        ! Must be square
+    type(MatrixElement_T), intent(inout), target :: X
+    type(MatrixElement_T), intent(in), target, optional :: B
+    logical, intent(in), optional :: TRANSPOSE    ! Solve U^T X = B if
+    !                                               present and true.
+  end subroutine SolveCholeskyM_0
+\end{verbatim}}
+
+\subsubsection{SolveCholeskyV\_0}
+This procedure is also available by using the SolveCholesky interface.
+{\tt\begin{verbatim}
+  subroutine SolveCholeskyV_0 ( U, X, B, TRANSPOSE )
+  ! Solve the system U X = B or U^T X = B for X, depending on TRANSPOSE,
+  ! where U is known to be upper-triangular.  X may be the same as B.
+  ! B may be absent, in which case the right-hand side is in X on input,
+  ! and the solution replaces it on output.  The arrays X and B are
+  ! two-dimensional sections of subvectors of objects of type Vector_T.
+  ! Their elements are taken to correspond to the rows of U in array
+  ! element order.
+    type(MatrixElement_T), intent(in) :: U        ! Must be square
+    real(r8), dimension(:), intent(inout), target :: X
+    real(r8), dimension(:), intent(in), target, optional :: B
+    logical, intent(in), optional :: TRANSPOSE    ! Solve U^T X = B if
+    !                                               present and true.
+  end subroutine SolveCholeskyV_0
+\end{verbatim}}
+
+\subsubsection{Sparsify}\label{sparsify}
+{\tt\begin{verbatim}
+  subroutine Sparsify ( Z, B )
+  ! Given an array Z, compute its sparse representation and store it
+  ! in the matrix block B.
+    real(r8), intent(in) :: Z(:,:)           ! Full array of values
+    type(MatrixElement_T), intent(out) :: B  ! Z as a block, maybe sparse
+
+  ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
+  ! It is important to invoke DestroyBlock using the B argument of this
+  ! function after it is no longer needed. Otherwise, a memory leak will
+  ! result.  Also see AssignBlock.
+  ! !!!!! ===== END NOTE ===== !!!!! 
+  end subroutine Sparsify
+\end{verbatim}}
+
+\subsubsection{UpdateDiagonal\_0}
+This procedure is also available by using the UpdateDiagonal interface.
+{\tt\begin{verbatim}
+  subroutine UpdateDiagonal_0 ( A, LAMBDA )
+  ! Add LAMBDA to the diagonal of A
+    type(MatrixElement_T), intent(inout) :: A
+    real(r8), intent(in) :: LAMBDA
+  end subroutine UpdateDiagonal_0
+\end{verbatim}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%\newpage
+
+\section{MatrixModule\_1}\label{matrix1}
+MatrixModule\_1 provides a high-level form of sparse matrix.  A matrix at
+this level is composed of blocks of type MatrixElement\_T (see subsection
+\ref{typeMatrix0}).  It uses operations from MatrixModule\_0 (see section
+\ref{matrix0}).
+
+\subsection{Public types provided by MatrixModule\_1}\label{typeMatrix1}
+
+There are five types provided by MatrixModule\_1.
+
+\subsubsection{RC\_Info}
+The type RC\_Info provides row and column information about a matrix.
+{\tt\begin{verbatim}
+  type RC_Info
+  ! Information about the row or column of a matrix
+    type(Vector_T), pointer :: Vec ! Vector used to define the row or column
+      ! space of the matrix, if any.
+    integer :: NB                  ! Number of blocks of rows or columns
+    logical :: InstFirst = .true.  ! TRUE means horizontal instance is the
+      ! major order and quantity is the minor order.
+    integer, pointer :: Nelts(:) => NULL()  ! Numbers of rows or columns in
+      ! each row or column of blocks.
+    integer, pointer :: Inst(:) => NULL()   ! The instance indices for the
+      ! rows or columns of blocks.
+    integer, pointer :: Quant(:) => NULL()  ! The quantity indices for the
+      ! rows or columns of blocks.  These are indices within Vec, not the
+      ! quantity template database.
+  end type RC_Info
+\end{verbatim}}
+
+\subsubsection{Matrix\_T}\label{matrixT}
+The type Matrix\_T represents a matrix of unspecified structure.
+{\tt\begin{verbatim}
+  type Matrix_T
+    integer :: Name      ! Sub-rosa index of matrix name, if any, else zero
+    type(RC_Info) :: Col, Row  ! Column and row info
+    type(MatrixElement_T), dimension(:,:), pointer :: BLOCK => NULL()
+  end type Matrix_T
+\end{verbatim}}
+
+\subsubsection{Matrix\_Cholesky\_T}
+The type Matrix\_Cholesky\_T represents a Cholesky-factored matrix.
+{\tt\begin{verbatim}
+  type Matrix_Cholesky_T ! Cholesky factored matrix.  Only the upper triangle
+    type(matrix_T) :: M  ! is stored.
+  end type Matrix_Cholesky_T
+\end{verbatim}}
+
+\subsubsection{Matrix\_Kronecker\_T}
+The type Matrix\_Kronecker\_T represents a Kronecker-product matrix.  There
+are as yet no operations on this type.
+{\tt\begin{verbatim}
+  type Matrix_Kronecker_T  ! Kronecker product matrix.  Not yet implemented.
+    type(matrix_T) :: M
+  end type Matrix_Kronecker_T
+\end{verbatim}}
+
+\subsubsection{Matrix\_SPD\_T}\label{matrixSPD}
+The type Matrix\_SPD\_T represents a Symmetric Positive-Definite matrix.
+{\tt\begin{verbatim}
+  type Matrix_SPD_T      ! Symmetric positive-definite matrix.  Only the
+    type(matrix_T) :: M  ! upper triangle is stored.
+  end type Matrix_SPD_T
+\end{verbatim}}
+
+\subsubsection{Matrix\_Database\_T}
+The type Matrix\_Database\_T may be used to create a database of matrices.
+{\tt\begin{verbatim}
+  type Matrix_Database_T
+    private
+    type(Matrix_T), pointer :: Matrix => NULL()
+    type(Matrix_Cholesky_T), pointer :: Cholesky => NULL()
+    type(Matrix_Kronecker_T), pointer :: Kronecker => NULL()
+    type(Matrix_SPD_T), pointer :: SPD => NULL()
+  end type Matrix_Database_T
+\end{verbatim}}
+
+\subsection{Public procedures provided by MatrixModule\_1}
+
+\subsubsection{AssignMatrix}
+This procedure is also available by using the Assignment (=) interface.
+{\tt\begin{verbatim}
+  subroutine AssignMatrix ( Z, X )
+  ! Destroy Z and then assign X to it, using pointer assignment for pointer
+  ! components.  Notice that CopyMatrix does a deep copy.  If one has Z = X
+  ! inside a loop, it is only necessary to destroy Z after the loop.
+    type(Matrix_T), intent(inout) :: Z
+    type(Matrix_T), intent(in) :: X
+  end subroutine AssignMatrix
+\end{verbatim}}
+
+\subsubsection{AddCholeskyToDatabase}
+This procedure is also available by using the AddToMatrixDatabase
+interface.
+{\tt\begin{verbatim}
+  integer function AddCholeskyToDatabase ( Database, CholeskyItem )
+  ! Add a Cholesky factor matrix to the matrix database.
+    type(matrix_Database_T), dimension(:), pointer :: Database
+    type(matrix_cholesky_T), intent(in) :: CholeskyItem
+  end function AddCholeskyToDatabase
+\end{verbatim}}
+
+\subsubsection{AddKroneckerToDatabase}
+This procedure is also available by using the AddToMatrixDatabase
+interface.
+{\tt\begin{verbatim}
+  integer function AddKroneckerToDatabase ( Database, KroneckerItem )
+  ! Add a Kronecker product matrix to the matrix database.
+    type(matrix_Database_T), dimension(:), pointer :: Database
+    type(matrix_kronecker_T), intent(in) :: KroneckerItem
+  end function AddKroneckerToDatabase
+\end{verbatim}}
+
+\subsubsection{AddMatrices}\label{addMatrices}
+This procedure is also available by using the operator(+) interface.
+{\tt\begin{verbatim}
+  function AddMatrices ( X, Y ) result ( Z ) ! Z = X + Y
+    type(Matrix_T), intent(in) :: X, Y
+    type(Matrix_T) :: Z
+
+  ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
+  ! It is important to invoke DestroyMatrix using the result of this
+  ! function after it is no longer needed. Otherwise, a memory leak will
+  ! result.  Also see AssignMatrix.
+  ! !!!!! ===== END NOTE ===== !!!!! 
+  end function AddMatrices
+\end{verbatim}}
+
+\subsubsection{AddMatrixToDatabase}
+This procedure is also available by using the AddToMatrixDatabase
+interface.
+{\tt\begin{verbatim}
+  integer function AddMatrixToDatabase ( Database, MatrixItem )
+  ! Add a matrix of unspecified structure to the matrix database
+    type(matrix_Database_T), dimension(:), pointer :: Database
+    type(matrix_T), intent(in) :: MatrixItem
+  end function AddMatrixToDatabase
+\end{verbatim}}
+
+\subsubsection{AddSPDToDatabase}
+This procedure is also available by using the AddToMatrixDatabase
+interface.
+{\tt\begin{verbatim}
+  integer function AddSPDToDatabase ( Database, SPDItem )
+  ! Add a symmetric-positive-definite matrix to the matrix database
+    type(matrix_Database_T), dimension(:), pointer :: Database
+    type(matrix_spd_T), intent(in) :: SPDItem
+  end function AddSPDToDatabase
+\end{verbatim}}
+
+\subsubsection{AddToMatrix}
+{\tt\begin{verbatim}
+  subroutine AddToMatrix ( X, Y ) ! X = X + Y
+    type(Matrix_T), intent(inout) :: X
+    type(Matrix_T), intent(in) :: Y
+  end subroutine AddToMatrix
+\end{verbatim}}
+
+\subsubsection{CholeskyFactor\_1}
+This procedure is also available by using the CholeskyFactor interface.
+{\tt\begin{verbatim}
+  subroutine CholeskyFactor_1 ( X, Z )
+  ! Compute the Cholesky factor Z of the matrix X.  Z%M%Block can be
+  ! associated with X%M%Block to save space.
+    type(Matrix_SPD_T), intent(in) :: X ! Matrix to factor.
+    type(Matrix_Cholesky_T), intent(inout) :: Z   ! Factored matrix.
+  end subroutine CholeskyFactor_1
+\end{verbatim}}
+
+\subsubsection{ClearRows\_1}
+This procedure is also available by using the ClearRows interface.
+{\tt\begin{verbatim}
+  subroutine ClearRows_1 ( X )
+  ! Clear the rows of X for which the mask in X's row-defining vector
+  ! has nonzero bits.
+    type(Matrix_T), intent(inout) :: X
+  end subroutine ClearRows_1
+\end{verbatim}}
+
+\subsubsection{ColumnScale\_1}
+This procedure is also available by using the ColumnScale interface.
+{\tt\begin{verbatim}
+  subroutine ColumnScale_1 ( X, V, NEWX ) ! Z = X V where V is a diagonal
+  !                                matrix represented by a vector and Z is X
+  !                                or NEWX.
+    type (Matrix_T), intent(inout), target :: X
+    type (Vector_T), intent(in) :: V
+    type (Matrix_T), intent(out), target, optional :: NEWX 
+  end subroutine ColumnScale_1
+\end{verbatim}}
+
+\subsubsection{CopyMatrix}
+{\tt\begin{verbatim}
+  subroutine CopyMatrix ( Z, X )        ! Destroy Z, then deep Z = X except
+  !                                       the name of Z isn't changed.
+    type(matrix_T), intent(inout) :: Z
+    type(matrix_T), intent(in) :: X
+  end subroutine CopyMatrix
+\end{verbatim}}
+
+\subsubsection{CreateBlock\_1}\label{createBlock1}
+This procedure is also available by using the CreateBlock interface.
+{\tt\begin{verbatim}
+  subroutine CreateBlock_1 ( Z, RowNum, ColNum, Kind, NumNonzeros )
+  ! Create the matrix block Z%Block(RowNum,ColNum), which sprang into
+  ! existence with kind M_Absent.  Create it with the specified Kind.
+  ! See MatrixModule_0 for a list of the kinds.  If the Kind is
+  ! M_Banded or M_ColumnSparse, the number of nonzeroes is needed.
+    type(matrix_T), intent(inout) :: Z       ! The matrix having the block
+    integer, intent(in) :: RowNum, ColNum    ! Row and column of the block
+    integer, intent(in) :: Kind         ! Kind of block, see MatrixModule_0
+    integer, intent(in), optional :: NumNonzeros  ! Number of nonzeros
+  end subroutine CreateBlock_1
+\end{verbatim}}
+
+\subsubsection{CreateEmptyMatrix}\label{createEmpty}
+{\tt\begin{verbatim}
+  subroutine CreateEmptyMatrix ( Z, Name, Row, Col &
+    &,                           Row_Quan_First, Col_Quan_First )
+    type(Matrix_T), intent(out) :: Z    ! The matrix to create
+    integer, intent(in) :: Name         ! Sub-rosa index of its name, or zero
+    type(Vector_T), pointer :: Row      ! Vector used to define the row
+      !                                   space of the matrix.
+    type(Vector_T), pointer :: Col      ! Vector used to define the column
+      !                                   space of the matrix.
+    logical, intent(in), optional :: Row_Quan_First    ! True (default false)
+      ! means the quantity is the major order of the rows of blocks and the
+      ! instance is the minor order.
+    logical, intent(in), optional :: Col_Quan_First    ! True (default false)
+      ! means the quantity is the major order of the columns of blocks and the
+      ! instance is the minor order.
+  end subroutine CreateEmptyMatrix
+\end{verbatim}}
+
+\subsubsection{DestroyMatrix}\label{DestroyMatrix}
+{\tt\begin{verbatim}
+  subroutine DestroyMatrix ( A )
+  ! Destroy a matrix -- deallocate its pointer components, don't change the
+  ! name
+    type(matrix_T), intent(inout) :: A
+  end subroutine DestroyMatrix
+\end{verbatim}}
+
+\subsubsection{DestroyMatrixDatabase}
+{\tt\begin{verbatim}
+  subroutine DestroyMatrixDatabase ( D )
+  ! Destroy every matrix in the database D, then destroy the database.
+    type(matrix_database_T), dimension(:), pointer :: D
+  end subroutine DestroyMatrixDatabase
+\end{verbatim}}
+
+\subsubsection{Dump}
+This is a generic interface for the private procedure Dump\_Matrix.  It uses
+the procedure OUTPUT in the module OUTPUT\_M, which by default writes to
+standard output, but can easily be changed to write its output to a specified
+unit.
+{\tt\begin{verbatim}
+  subroutine Dump_Matrix ( Matrix, Name, Details )
+    type(Matrix_T), intent(in) :: Matrix
+    character(len=*), intent(in), optional :: Name
+    integer, intent(in), optional :: Details   ! Print details, default 1
+    !  <= Zero => no details, == One => Details of matrix but not its blocks,
+    !  > One => Details of the blocks, too.
+  end subroutine Dump_Matrix
+\end{verbatim}}
+
+\subsubsection{FindBlock}\label{findBlock}
+{\tt\begin{verbatim}
+  integer function FindBlock ( RC, Quantity, Instance )
+  ! Given quantity and instance numbers, find a block index.
+  ! This function can be used with either row or column information.
+  ! Zero is returned if there is no block having the desired quantity
+  ! and instance numbers.
+    type(RC_Info), intent(in) :: RC     ! Row or Col component of a Matrix_T
+    integer, intent(in) :: Quantity, Instance
+  end function FindBlock
+\end{verbatim}}
+
+\subsubsection{GetCholeskyFromDatabase}
+This procedure is also available by using the GetFromMatrixDatabase
+interface.
+{\tt\begin{verbatim}
+  subroutine GetCholeskyFromDatabase ( DatabaseElement, Cholesky )
+  ! Get a POINTER to a Cholesky object from DatabaseElement.
+    type(matrix_Database_T), intent(in) :: DatabaseElement
+    type(matrix_cholesky_T), pointer :: Cholesky
+  end subroutine GetCholeskyFromDatabase
+\end{verbatim}}
+
+\subsubsection{GetKroneckerFromDatabase}
+This procedure is also available by using the GetFromMatrixDatabase
+interface.
+{\tt\begin{verbatim}
+  subroutine GetKroneckerFromDatabase ( DatabaseElement, Kronecker )
+  ! Get a POINTER to a Kronecker object from DatabaseElement.
+    type(matrix_Database_T), intent(in) :: DatabaseElement
+    type(matrix_kronecker_T), pointer :: Kronecker
+  end subroutine GetKroneckerFromDatabase
+\end{verbatim}}
+
+\subsubsection{GetMatrixFromDatabase}
+This procedure is also available by using the GetFromMatrixDatabase
+interface.
+{\tt\begin{verbatim}
+  subroutine GetMatrixFromDatabase ( DatabaseElement, Matrix )
+  ! Get a POINTER to a matrix object from DatabaseElement.
+    type(matrix_Database_T), intent(in) :: DatabaseElement
+    type(matrix_T), pointer :: Matrix
+  end subroutine GetMatrixFromDatabase
+\end{verbatim}}
+
+\subsubsection{GetSPDFromDatabase}
+This procedure is also available by using the GetFromMatrixDatabase
+interface.
+{\tt\begin{verbatim}
+  subroutine GetSPDFromDatabase ( DatabaseElement, SPD )
+  ! Get a POINTER to a SPD object from DatabaseElement.
+    type(matrix_Database_T), intent(in) :: DatabaseElement
+    type(matrix_SPD_T), pointer :: SPD
+  end subroutine GetSPDFromDatabase
+\end{verbatim}}
+
+\subsubsection{MaxAbsVal\_1}
+This procedure is also available by using the MaxAbsVal interface.
+{\tt\begin{verbatim}
+  real(r8) function MaxAbsVal_1 ( A )
+  ! Return the magnitude of the element in A that has the largest magnitude.
+    type(Matrix_T), intent(in) :: A
+  end function MaxAbsVal_1
+\end{verbatim}}
+
+\subsubsection{MinDiag\_1}
+This procedure is also available by using the MinDiag interface.
+{\tt\begin{verbatim}
+  real(r8) function MinDiag_1 ( A )
+  ! Return the magnitude of the element on the diagonal of A that has the
+  ! smallest magnitude.
+    type(Matrix_SPD_T), intent(in) :: A
+  end function MinDiag_1
+\end{verbatim}}
+
+\subsubsection{MultiplyMatrices}
+This procedure is also available by using the operator(.TX.) interface.
+{\tt\begin{verbatim}
+  function MultiplyMatrices ( X, Y ) result ( Z ) ! Z = X^T Y
+    type(Matrix_T), intent(in) :: X, Y
+    type(Matrix_T) :: Z
+
+  ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
+  ! It is important to invoke DestroyMatrix using the result of this
+  ! function after it is no longer needed. Otherwise, a memory leak will
+  ! result.  Also see AssignMatrix.
+  ! !!!!! ===== END NOTE ===== !!!!! 
+  end function MultiplyMatrices
+\end{verbatim}}
+
+\subsubsection{MultiplyMatrixVector\_1}
+{\tt\begin{verbatim}
+  subroutine MultiplyMatrixVector_1 ( A, V, Z, UPDATE )
+  ! Z = A^T V if UPDATE is absent or false.
+  ! Z = Z + A^T V is UPDATE is present and true.
+    type(Matrix_T), intent(in) :: A
+    type(Vector_T), intent(in) :: V
+    type(Vector_T), intent(inout) :: Z
+    logical, optional, intent(in) :: UPDATE
+  end subroutine MultiplyMatrixVector_1
+\end{verbatim}}
+
+\subsubsection{MultiplyMatrixVectorSPD\_1}
+{\tt\begin{verbatim}
+  subroutine MultiplyMatrixVectorSPD_1 ( A, V, Z, UPDATE )
+  ! Z = A V if UPDATE is absent or false.
+  ! Z = Z + A V is UPDATE is present and true.
+  ! Remember that for SPD, only the upper triangle is stored, so we need
+  ! Z = A^T V + A V except don't do the diagonal twice.
+    type(Matrix_SPD_T), intent(in) :: A
+    type(Vector_T), intent(in) :: V
+    type(Vector_T), intent(inout) :: Z
+    logical, optional, intent(in) :: UPDATE
+  end subroutine MultiplyMatrixVectorSPD_1
+\end{verbatim}}
+
+\subsubsection{NewMultiplyMatrixVector}
+This procedure is also available by using the operator(.TX.) interface.
+{\tt\begin{verbatim}
+  function NewMultiplyMatrixVector ( A, V ) result ( Z ) ! Z = A^T V
+    type(Matrix_T), intent(in) :: A
+    type(Vector_T), intent(in) :: V
+    type(Vector_T) :: Z
+  end function NewMultiplyMatrixVector
+\end{verbatim}}
+
+\subsubsection{NormalEquations}
+{\tt\begin{verbatim}
+  subroutine NormalEquations ( A, Z, RHS_IN, RHS_OUT, UPDATE )
+  ! If UPDATE is absent, or present but false, form normal equations of the
+  ! least-squares problem A X = RHS_IN. Z = A^T A and RHS_OUT = A^T RHS_IN.
+  ! If UPDATE is present and true, update normal equations of the least-
+  ! squares problem A X = RHS_IN. Z = Z + A^T A and RHS_OUT = RHS_OUT +
+  ! A^T RHS_IN.
+  ! Only the upper triangle of A^T A is formed or updated.
+    type(Matrix_T), intent(in) :: A
+    type(Matrix_SPD_T), intent(inout) :: Z
+    type(Vector_T), intent(in) :: RHS_IN
+    type(Vector_T), intent(inout) :: RHS_OUT
+    logical, intent(in), optional :: UPDATE  ! True (default false) means
+    !                                          to update Z and RHS_OUT
+
+  ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
+  ! If this subroutine is invoked with UPDATE absent, or present and false,
+  ! It is important to invoke DestroyMatrix using the Z argument of this
+  ! subroutine after it is no longer needed. Otherwise, a memory leak will
+  ! result.  Also see AssignMatrix.
+  ! !!!!! ===== END NOTE ===== !!!!! 
+  end subroutine NormalEquations
+\end{verbatim}}
+
+\subsubsection{RowScale\_1}
+This procedure is also available by using the RowScale interface.
+{\tt\begin{verbatim}
+  subroutine RowScale_1 ( V, X, NEWX ) ! Z = V X where V is a diagonal
+  !                                matrix represented by a vector and Z is X
+  !                                or NEWX.
+    type (Vector_T), intent(in) :: V
+    type (Matrix_T), intent(inout), target :: X
+    type (Matrix_T), intent(out), target, optional :: NEWX 
+  end subroutine RowScale_1
+\end{verbatim}}
+
+\subsubsection{SolveCholesky\_1}
+This procedure is also available by using the SolveCholesky interface.
+{\tt\begin{verbatim}
+  subroutine SolveCholesky_1 ( Z, X, RHS, TRANSPOSE )
+  ! Given the Cholesky-factored normal equations Z and the corresponding
+  ! RHS, Solve Z X = RHS for X if TRANSPOSE is absent, or present and
+  ! false.  Solve Z^T X = RHS for X if TRANSPOSE is present and true.
+  ! RHS may be the same as X.  RHS may be absent, in which case X is
+  ! assumed to contain the right-hand side on input, and the solution
+  ! replaces it on output.
+    type(Matrix_Cholesky_T), intent(in) :: Z
+    type(Vector_T), intent(inout), target :: X
+    type(Vector_T), intent(in), target, optional :: RHS
+    logical, optional, intent(in) :: TRANSPOSE
+  end subroutine SolveCholesky_1
+\end{verbatim}}
+
+\subsubsection{UpdateDiagonal\_1}
+This procedure is also available by using the UpdateDiagonal interface.
+{\tt\begin{verbatim}
+  subroutine UpdateDiagonal_1 ( A, LAMBDA )
+  ! Add LAMBDA to the diagonal of A.
+    type(Matrix_SPD_T), intent(inout) :: A
+    real(r8), intent(in) :: LAMBDA
+  end subroutine UpdateDiagonal_1
+\end{verbatim}}
+
+\label{lastpage}
+\end{document}
+
+% $Log: wvs-010.tex,v $
+% Revision 1.1  2008/06/11 20:14:50  vsnyder
+% Initial commit
+%
+% Revision 1.1  2000/12/01 21:36:42  vsnyder
+% Initial entry
+%
+% $Id: wvs-010.tex,v 1.1 2008/06/11 20:14:50 vsnyder Exp $
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d1 9
+a9 3
+\documentclass[11pt,dvips]{article}
+\usepackage{epsfig}
+\textwidth 6.25in
+d13 38
+a50 1
+\textheight 9.00in
+d55 5
+d64 2
+a65 2
+    4 January 2001\hfill Page \thepage\ of \pageref{lastpage}\hfill{\bf
+    wvs-010r2}}%
+d169 1
+a169 1
+DestroyMatrix} subroutine from {\tt MatrixModule\_1} (see subsection
+d778 2
+a779 1
+\epsfig{file=sparse.eps}
+d1595 3
+d1601 1
+a1601 1
+% $Id: $
+@
+

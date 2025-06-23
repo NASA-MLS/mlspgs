@@ -1,0 +1,63 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.4
+	cfm-single-freq-0-1:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2019.10.16.21.00.03;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Needed for new l2cfs with NitrousOxide phase
+@
+text
+@!divert(-1)
+; $Id: gphonlyflags.l2cf,v 1.1 2017/05/31 17:05:38 pwagner Exp $
+
+!define(retrophase,{FinalPtan})
+
+!divert!dnl
+; This l2cf fragment does all the quality flagging for the merra2 phase
+; products of the emls instrument
+
+begin Fill
+  !define(flaggingBands,{1})
+  !define(flaggingRadiometers,{R1A,R1B})!dnl
+
+  Dump, text='In gphonlyflags.l2cf'
+  ;; Copy the flags over from temperature to GPH
+  Fill, quantity=standardDiagnostics.statusGPH_hr, method=vector, $
+    sourceQuantity=standardDiagnostics.statusTemperature_hr, /ignoreTemplate
+  Fill, quantity=standardDiagnostics.qualityGPH_hr, method=vector, $
+    sourceQuantity=standardDiagnostics.qualityTemperature_hr, /ignoreTemplate
+  Fill, quantity=standardDiagnostics.convergenceGPH_hr, method=vector, $
+    sourceQuantity=standardDiagnostics.convergenceTemperature_hr, /ignoreTemplate
+End Fill
+
+Begin Fill
+  Fill, quantity=standardPrecision.GPH_hr, method=gphPrecision, $
+    refGPHPrecisionquantity=standardPrecision.refGPH, $
+    tempPrecisionQuantity=standardPrecision.temperature_hr
+
+end Fill
+
+; $Log: gphonlyflags.l2cf,v $
+@

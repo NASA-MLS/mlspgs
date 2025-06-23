@@ -1,0 +1,537 @@
+head	2.13;
+access;
+symbols
+	v5-02-NRT-19:2.13
+	v6-00:2.13
+	v5-02-NRT-18:2.13
+	v5-02:2.12
+	v5-01-NRT-17:2.12
+	v5-01-NRT-16:2.12
+	v5-01-NRT-15:2.12
+	v5-01-NRT-14:2.12
+	neuralnetworks-1-0:2.12.0.12
+	cfm-single-freq-0-1:2.12.0.10
+	v5-01:2.12
+	v5-00:2.12
+	v4-23-TA133:2.12.0.8
+	mus-emls-1-70:2.12.0.6
+	rel-1-0-englocks-work:2.12.0.4
+	VUMLS1-00:2.12
+	VPL1-00:2.12
+	V4-22-NRT-08:2.12
+	VAM1-00:2.12
+	V4-21:2.12.0.2
+	V4-13:2.12
+	V4-12:2.12
+	V4-11:2.12
+	V4-10:2.12
+	V3-43:2.11
+	M4-00:2.12
+	V3-41:2.11
+	V3-40-PlusGM57:2.11.0.2
+	V2-24-NRT-04:2.8
+	V3-33:2.12
+	V2-24:2.8
+	V3-31:2.12
+	V3-30-NRT-05:2.12
+	cfm-01-00:2.12
+	V3-30:2.11
+	V3-20:2.11
+	V3-10:2.9
+	V2-23-NRT-02:2.8
+	V2-23:2.8
+	V2-22-NRT-01:2.8
+	V2-22:2.8
+	V2-21:2.8
+	V2-20:2.8
+	V2-11:2.8
+	V2-10:2.8
+	V2-00:2.8
+	V1-51:2.7
+	V1-50:2.7
+	V1-45:2.7
+	V1-44:2.7
+	V1-43:2.7
+	V1-42:2.4
+	V1-41:2.4
+	V1-32:2.6
+	V1-40:2.4
+	V1-31:2.4
+	V1-30:2.4
+	V1-13:2.3
+	V1-12:2.3
+	V1-11:2.3
+	V1-10:2.2
+	newfwm-feb03:2.3.0.2;
+locks; strict;
+comment	@# @;
+
+
+2.13
+date	2022.09.30.20.47.45;	author pwagner;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2010.03.25.18.41.26;	author pwagner;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2009.10.05.23.36.52;	author pwagner;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2009.09.29.23.34.38;	author pwagner;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2009.06.23.18.25.43;	author pwagner;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2005.06.22.17.25.49;	author pwagner;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2004.03.24.23.53.02;	author pwagner;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2004.02.26.21.57.25;	author pwagner;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2004.02.13.00.16.02;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2003.04.11.23.32.23;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2003.02.10.22.05.52;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2002.10.08.00.09.09;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2002.07.11.22.19.24;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.13
+log
+@Fixed strange bug in HE5_EHRDGLATT_CHARACTER_ARRAY
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module HE5_SWAPI_CHARACTER_ARRAY
+
+  public :: HE5_EHWRGLATT_CHARACTER_ARRAY, HE5_EHRDGLATT_CHARACTER_ARRAY, &
+    & HE5_SWRDFLD_CHARACTER_ARRAY, HE5_SWWRFLD_CHARACTER_ARRAY, &
+    & HE5_SWWRATTR_CHARACTER_ARRAY, HE5_SWWRLATTR_CHARACTER_ARRAY, &
+    & HE5_SWRDATTR_CHARACTER_ARRAY, HE5_SWRDLATTR_CHARACTER_ARRAY
+  private
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: he5_swapi_character_array.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  integer function HE5_EHWRGLATT_CHARACTER_ARRAY ( FILEID, &
+    & ATTRNAME, DATATYPE, COUNT, BUFFER )
+  use hdf5, only: size_t
+    integer, intent(in) :: FILEID      ! File ID
+    character(len=*), intent(in) :: ATTRNAME     ! Attribute name
+    integer, intent(in) :: DATATYPE    ! E.g., MLS_charType
+    integer(kind=size_t), intent(in) :: COUNT   ! How many to write
+    character(len=*), intent(in) :: BUFFER(:)  ! Buffer for write
+
+    integer, external :: HE5_EHWRGLATT
+
+    he5_ehwrglatt_character_ARRAY = he5_ehwrglatt(fileID, &
+         & attrname, datatype, count, buffer )
+  end function HE5_EHWRGLATT_CHARACTER_ARRAY
+
+  integer function HE5_EHRDGLATT_CHARACTER_ARRAY ( FILEID, &
+    & ATTRNAME, BUFFER )
+    integer, intent(in) :: FILEID      ! File ID
+    character(len=*), intent(in) :: ATTRNAME     ! Field name
+    character(len=*), intent(out) :: BUFFER(:)   ! Buffer for read
+
+    integer, external :: HE5_EHRDGLATT
+    BUFFER = ' ' ! Why is this necessary?
+
+    he5_ehrdglatt_CHARACTER_ARRAY = he5_ehrdglatt(fileID, &
+         & attrname, buffer )
+  end function HE5_EHRDGLATT_CHARACTER_ARRAY
+
+  integer function HE5_SWRDFLD_CHARACTER_ARRAY ( SWATHID, FIELDNAME, &
+    & STARTS, STRIDES, EDGES, BUFFER )
+  use hdf5, only: size_t
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: FIELDNAME     ! Field name
+    integer(kind=size_t), intent(in) :: STARTS(*)    ! Start array
+    integer(kind=size_t), intent(in) :: STRIDES(*)   ! Stride array
+    integer(kind=size_t), intent(in) :: EDGES(*)     ! Edge array
+    character(len=*), intent(out) :: BUFFER(:) ! Buffer for read
+
+    integer, external :: HE5_SWRDFLD
+
+    HE5_SWrdfld_character_array = HE5_SWrdfld(swathid, fieldname, starts, &
+         strides, edges, buffer )
+  end function HE5_SWRDFLD_CHARACTER_ARRAY
+
+  integer function HE5_SWWRFLD_CHARACTER_ARRAY ( SWATHID, FIELDNAME, &
+    & STARTS, STRIDES, EDGES, BUFFER )
+  use hdf5, only: size_t
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: FIELDNAME     ! Field name
+    integer(kind=size_t), intent(in) :: STARTS(*)    ! Start array
+    integer(kind=size_t), intent(in) :: STRIDES(*)   ! Stride array
+    integer(kind=size_t), intent(in) :: EDGES(*)     ! Edge array
+    character(len=*), intent(in) :: BUFFER(:)  ! Buffer for write
+
+    integer(kind=size_t) :: COUNTS(1)
+    integer, external :: HE5_SWWRFLD
+
+    counts = max(edges(1), int(size(buffer), size_t) )
+
+    HE5_SWwrfld_character_array=HE5_SWwrfld(swathid, fieldname, starts, &
+         strides, counts, buffer )
+  end function HE5_SWWRFLD_CHARACTER_ARRAY
+
+  integer function HE5_SWWRATTR_CHARACTER_ARRAY ( SWATHID, &
+    & ATTRNAME, DATATYPE, COUNT, BUFFER )
+  use hdf5, only: size_t
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: ATTRNAME     ! Attribute name
+    integer, intent(in) :: DATATYPE    ! E.g., MLS_charType
+    integer(kind=size_t), intent(in) :: COUNT   ! How many to write
+    character(len=*), intent(in) :: BUFFER(:)  ! Buffer for write
+
+    integer, external :: HE5_SWWRATTR
+
+    he5_swwrattr_character_ARRAY = he5_swwrattr(swathid, &
+         & attrname, datatype, count, buffer )
+  end function HE5_SWWRATTR_CHARACTER_ARRAY
+
+  integer function HE5_SWWRLATTR_CHARACTER_ARRAY ( SWATHID, FIELDNAME, &
+    & ATTRNAME, DATATYPE, COUNT, BUFFER )
+  use hdf5, only: size_t
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: FIELDNAME     ! Field name
+    character(len=*), intent(in) :: ATTRNAME     ! Attribute name
+    integer, intent(in) :: DATATYPE    ! E.g., MLS_charType
+    integer(kind=size_t), intent(in) :: COUNT   ! How many to write
+    character(len=*), intent(in) :: BUFFER(:)  ! Buffer for write
+
+    integer, external :: HE5_SWWRLATTR
+
+    he5_swwrlattr_character_ARRAY = he5_swwrlattr(swathid, fieldname, &
+         & attrname, datatype, count, buffer )
+  end function HE5_SWWRLATTR_CHARACTER_ARRAY
+
+  integer function HE5_SWRDATTR_CHARACTER_ARRAY ( SWATHID, &
+    & ATTRNAME, BUFFER )
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: ATTRNAME     ! Field name
+    character(len=*), intent(out) :: BUFFER(:)       ! Buffer for read
+
+    integer, external :: HE5_SWRDATTR
+    buffer = ''
+    HE5_SWRDATTR_CHARACTER_ARRAY = he5_swrdattr(swathid, &
+         & attrname, buffer )
+  end function HE5_SWRDATTR_CHARACTER_ARRAY
+
+  integer function HE5_SWRDLATTR_CHARACTER_ARRAY ( SWATHID, FIELDNAME, &
+    & ATTRNAME, BUFFER )
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: FIELDNAME     ! Field name
+    character(len=*), intent(in) :: ATTRNAME     ! Field name
+    character(len=*), intent(out) :: BUFFER(:)       ! Buffer for read
+
+    integer, external :: HE5_SWRDLATTR
+    buffer = ''
+    HE5_SWRDLATTR_CHARACTER_ARRAY = he5_swrdlattr(swathid, fieldname, &
+         & attrname, buffer )
+  end function HE5_SWRDLATTR_CHARACTER_ARRAY
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: he5_swapi_character_array.f90,v 2.12 2010/03/25 18:41:26 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module HE5_SWAPI_CHARACTER_ARRAY
+
+@
+
+
+2.12
+log
+@args to max function now the same integer type
+@
+text
+@d50 1
+d150 1
+a150 1
+       "$Id: he5_swapi_character_array.f90,v 2.11 2009/10/05 23:36:52 pwagner Exp $"
+@
+
+
+2.11
+log
+@Moved use hdf5 statements from module scope to speedup Lahey; this is the last time we do taht
+@
+text
+@d84 1
+a84 1
+    counts = max(edges(1), size(buffer) )
+d149 1
+a149 1
+       "$Id: he5_swapi_character_array.f90,v 2.10 2009/09/29 23:34:38 pwagner Exp $"
+@
+
+
+2.10
+log
+@Changes needed by 64-bit build
+@
+text
+@a13 1
+  use hdf5, only: size_t
+d30 1
+d57 1
+d73 1
+d92 1
+d107 1
+d149 1
+a149 1
+       "$Id: he5_swapi_character_array.f90,v 2.9 2009/06/23 18:25:43 pwagner Exp $"
+@
+
+
+2.9
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d14 1
+d23 1
+a23 1
+       "$RCSfile: $"
+d34 1
+a34 1
+    integer, intent(in) :: COUNT   ! How many to write
+d59 3
+a61 3
+    integer, intent(in) :: STARTS(*)    ! Start array
+    integer, intent(in) :: STRIDES(*)   ! Stride array
+    integer, intent(in) :: EDGES(*)     ! Edge array
+d74 3
+a76 3
+    integer, intent(in) :: STARTS(*)    ! Start array
+    integer, intent(in) :: STRIDES(*)   ! Stride array
+    integer, intent(in) :: EDGES(*)     ! Edge array
+d79 1
+d82 2
+d85 1
+a85 1
+         strides, edges, buffer )
+d93 1
+a93 1
+    integer, intent(in) :: COUNT   ! How many to write
+d108 1
+a108 1
+    integer, intent(in) :: COUNT   ! How many to write
+d145 1
+a145 1
+       "$Id: read_apriori.f90 is it here $"
+@
+
+
+2.8
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d138 1
+a139 1
+!---------------------------- RCS Ident Info -------------------------------
+d141 2
+a142 3
+       "$Id: $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d144 1
+d146 1
+@
+
+
+2.7
+log
+@Switched from HE5T_NATIVE_SCHAR to MLS_CHARTYPE
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d20 3
+a22 5
+  !------------------------------- RCS Ident Info ----------------------------
+  character(len=256), private :: Id = &
+    & "$Id: he5_swapi_character_array.f90,v 2.6 2004/02/26 21:57:25 pwagner Exp $"
+  character(len=*), private, parameter :: ModuleName = &
+    & "$RCSfile: he5_swapi_character_array.f90,v $"
+d24 1
+a24 1
+  !---------------------------------------------------------------------------
+d139 5
+@
+
+
+2.6
+log
+@Takes care that attribute return values nulled out before being read
+@
+text
+@d14 1
+a14 1
+    & "$Id: he5_swapi_character_array.f90,v 2.5 2004/02/13 00:16:02 pwagner Exp $"
+d26 1
+a26 1
+    integer, intent(in) :: DATATYPE    ! E.g., HE5T_NATIVE_SCHAR
+d82 1
+a82 1
+    integer, intent(in) :: DATATYPE    ! E.g., HE5T_NATIVE_SCHAR
+d97 1
+a97 1
+    integer, intent(in) :: DATATYPE    ! E.g., HE5T_NATIVE_SCHAR
+@
+
+
+2.5
+log
+@New stuff for reading swath attributes
+@
+text
+@d14 1
+a14 1
+    & "$Id: he5_swapi_character_array.f90,v 2.4 2003/04/11 23:32:23 pwagner Exp $"
+d114 1
+a114 1
+
+d127 1
+a127 1
+
+@
+
+
+2.4
+log
+@Moved he5_swsetfill he5_ehwrglatt interfaces
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+d6 5
+a10 1
+  public
+d14 1
+a14 1
+    & "$Id: he5_swapi_character_array.f90,v 2.3 2003/02/10 22:05:52 pwagner Exp $"
+d36 12
+d106 25
+@
+
+
+2.3
+log
+@New attributes writing for char arrays
+@
+text
+@d1 3
+d10 1
+a10 1
+    & "$Id: he5_swapi_character_array.f90,v 2.2 2002/10/08 00:09:09 pwagner Exp $"
+d18 14
+a60 14
+
+  integer function HE5_EHWRGLATT_CHARACTER_ARRAY ( FILEID, &
+    & ATTRNAME, DATATYPE, COUNT, BUFFER )
+    integer, intent(in) :: FILEID      ! File ID
+    character(len=*), intent(in) :: ATTRNAME     ! Attribute name
+    integer, intent(in) :: DATATYPE    ! E.g., HE5T_NATIVE_SCHAR
+    integer, intent(in) :: COUNT   ! How many to write
+    character(len=*), intent(in) :: BUFFER(:)  ! Buffer for write
+
+    integer, external :: HE5_EHWRGLATT
+
+    he5_ehwrglatt_character_ARRAY = he5_ehwrglatt(fileID, &
+         & attrname, datatype, count, buffer )
+  end function HE5_EHWRGLATT_CHARACTER_ARRAY
+@
+
+
+2.2
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d7 1
+a7 1
+    & "$Id: he5_swapi_character_array.f90,v 2.1 2002/07/11 22:19:24 pwagner Exp $"
+d44 43
+@
+
+
+2.1
+log
+@First commit in this directory--welcome old friends
+@
+text
+@d7 1
+a7 1
+    & "$Id: he5_swapi_character_array.f90,v 1.1 2000/12/22 15:55:53 pumphrey Exp $"
+d10 1
+d44 4
+@
+

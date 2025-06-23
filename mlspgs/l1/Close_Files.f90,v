@@ -1,0 +1,1332 @@
+head	2.24;
+access;
+symbols
+	v5-02-NRT-19:2.24
+	v6-00:2.24
+	v5-02-NRT-18:2.24
+	v5-02:2.24
+	v5-01-NRT-17:2.24
+	v5-01-NRT-16:2.24
+	v5-01-NRT-15:2.24
+	v5-01-NRT-14:2.24
+	neuralnetworks-1-0:2.24.0.10
+	cfm-single-freq-0-1:2.24.0.8
+	v5-01:2.24
+	v5-00:2.24
+	v4-23-TA133:2.24.0.6
+	mus-emls-1-70:2.24.0.4
+	rel-1-0-englocks-work:2.24.0.2
+	VUMLS1-00:2.24
+	VPL1-00:2.23
+	V4-22-NRT-08:2.23
+	whdrel10_merged_to_here:2.23
+	merge_whdrel10_from_here:2.22.6.1
+	TAG_TRUNK_AFTER_PW_CHANGES:2.22
+	TAG_TRUNK_BEFORE_PW_CHANGES:2.22
+	VAM1-00:2.22
+	whd-rel-1-0:2.22.0.6
+	V4-21:2.22.0.4
+	V4-13:2.22
+	V4-12:2.22
+	V4-11:2.22
+	V4-10:2.22
+	V3-43:2.22
+	M4-00:2.22
+	V3-41:2.22
+	V3-40-PlusGM57:2.22.0.2
+	V2-24-NRT-04:2.22
+	V3-33:2.22
+	V2-24:2.22
+	V3-31:2.22
+	V3-30-NRT-05:2.22
+	cfm-01-00:2.22
+	V3-30:2.22
+	V3-20:2.22
+	V3-10:2.22
+	V2-23-NRT-02:2.22
+	V2-23:2.22
+	V2-22-NRT-01:2.21
+	V2-22:2.21
+	V2-21:2.20
+	V2-20:2.20
+	V2-11:2.20
+	V2-10:2.20
+	V2-00:2.19
+	V1-51:2.17
+	V1-50:2.17
+	V1-45:2.16
+	V1-44:2.16
+	V1-43:2.15
+	V1-42:2.13
+	V1-41:2.13
+	V1-32:2.12
+	V1-40:2.13
+	V1-31:2.12
+	V1-30:2.12
+	V1-13:2.10
+	V1-12:2.10
+	V1-11:2.10
+	V1-10:2.9
+	newfwm-feb03:2.9.0.2
+	V1-04:2.5
+	V1-03:2.5
+	V1-02:2.5
+	V1-00:2.5
+	newfwm-sep01:2.4.0.2
+	V0-7:2.4
+	V0-5-Level2:2.4
+	V0-5-SIPS:2.4;
+locks; strict;
+comment	@# @;
+
+
+2.24
+date	2017.01.06.23.42.00;	author pwagner;	state Exp;
+branches;
+next	2.23;
+
+2.23
+date	2016.03.15.22.17.59;	author whdaffer;	state Exp;
+branches;
+next	2.22;
+
+2.22
+date	2008.02.25.20.11.38;	author perun;	state Exp;
+branches
+	2.22.6.1;
+next	2.21;
+
+2.21
+date	2007.06.21.20.58.46;	author perun;	state Exp;
+branches;
+next	2.20;
+
+2.20
+date	2006.08.02.18.52.46;	author perun;	state Exp;
+branches;
+next	2.19;
+
+2.19
+date	2005.12.06.19.22.56;	author perun;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2005.06.23.18.41.35;	author pwagner;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2004.11.10.15.37.51;	author perun;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2004.08.12.13.51.49;	author perun;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2004.05.14.15.59.11;	author perun;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2004.05.06.21.59.23;	author pwagner;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2004.01.09.17.46.22;	author perun;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2003.09.15.17.15.53;	author perun;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2003.08.15.14.25.04;	author perun;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2003.02.28.19.11.35;	author pwagner;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2003.01.31.18.13.34;	author perun;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2002.11.20.17.50.27;	author perun;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2002.11.19.21.33.23;	author perun;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2002.11.07.21.54.54;	author jdone;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2002.03.29.20.18.34;	author perun;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2001.03.12.19.40.11;	author perun;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2001.03.12.16.00.01;	author perun;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2001.03.05.22.35.13;	author perun;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.02.23.18.51.39;	author perun;	state Exp;
+branches;
+next	;
+
+2.22.6.1
+date	2015.10.09.10.21.38;	author whdaffer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.24
+log
+@Workaround for bug in NAG 6.1 regarding L1BFileInfo%engMAF_unit
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=============================================================================
+MODULE Close_files ! Close the production files
+!=============================================================================
+
+  USE MLSL1Common, ONLY: L0FileInfo, L1BFileInfo, L1ProgType, THzType, &
+       LogType, HDFversion
+  USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Info
+  USE WriteMetaL1
+
+  IMPLICIT NONE
+
+  PRIVATE
+
+  PUBLIC :: CloseFiles
+
+!---------------------------- RCS Module Info ------------------------------
+  CHARACTER (len=*), PRIVATE, PARAMETER :: ModuleName= &
+       "$RCSfile: Close_Files.f90,v $"
+  PRIVATE :: not_used_here 
+!---------------------------------------------------------------------------
+
+CONTAINS
+
+!=============================================================================
+  SUBROUTINE CloseFiles   ! Close production Level 1 files
+!=============================================================================
+
+    USE SDPToolkit, ONLY: PGS_IO_Gen_closeF
+    USE MLSFiles, ONLY: MLS_closeFile
+    USE L1BOutUtils, ONLY: WriteHdrAnnots
+    USE OutputL1B, ONLY: OutputL1B_diags, OutputL1B_Chi2
+    USE HDF5, ONLY: H5gClose_f, H5gOpen_f
+    USE MLSHDF5, ONLY: MakeHDF5Attribute, MLS_h5close
+    USE Orbit, ONLY: OrbitNumber, OrbPeriod
+    USE PCFHdr, ONLY: h5_writeglobalattr, CreatePCFAnnotation, WritePCF2Hdr
+    USE BrightObjects_m, ONLY: BO_name, BO_Angle_GHz, BO_Angle_THz
+    USE DACsUtils, ONLY: TPz
+    USE INTRINSIC, ONLY: l_hdf
+    USE MLSL1Common, ONLY: FileNameLen
+
+    CHARACTER (LEN=FileNameLen) :: filename, msg
+
+
+    INTEGER :: i, returnStatus, error, grp_id
+    LOGICAL :: exist
+    LOGICAL :: opened
+
+    CHARACTER (LEN=1), POINTER :: leapsecText(:), utcpoleText(:)
+    INTEGER, PARAMETER :: leapsec_pcf = 10301, utcpole_pcf = 10401
+    logical, parameter :: DeeBug = .false.
+
+    INTEGER, EXTERNAL :: PGS_IO_L0_Close
+
+    ! Close L0 Science Files:
+
+    DO i = 1, 2
+       
+       returnStatus = PGS_IO_L0_Close (L0FileInfo%sci_unit(i))
+
+       CALL MLSMessage (MLSMSG_Info, ModuleName, &
+            & 'Closed L0 Science file: '//L0FileInfo%SciFileName(i))
+
+    ENDDO
+
+    ! Close L0 Engineering Files:
+
+    DO i = 1, 6
+       
+       returnStatus = PGS_IO_L0_Close (L0FileInfo%eng_unit(i))
+
+       CALL MLSMessage (MLSMSG_Info, ModuleName, &
+            & 'Closed L0 Engineering file: '//L0FileInfo%EngFileName(i))
+
+    ENDDO
+
+! Close Eng/Sci MAF data unit:
+
+    INQUIRE (unit=L1BFileInfo%MAF_data_unit, name=filename, opened=opened)
+    IF (opened) THEN
+       CLOSE (L1BFileInfo%MAF_data_unit)
+       CALL MLSMessage (MLSMSG_Info, ModuleName, &
+            & 'Closed MAF_data file: '//filename)
+    ENDIF
+
+    IF (L1ProgType == LogType) THEN
+
+       returnStatus = PGS_IO_Gen_CloseF (l1BFileInfo%LogId)
+
+       CALL MLSMessage (MLSMSG_Info, ModuleName, &
+            & 'Closed L1BLOG file: '//l1BFileInfo%LogFileName)
+       rewind ( L1BFileInfo%engMAF_unit )
+       INQUIRE (unit=L1BFileInfo%engMAF_unit, name=filename, exist=exist, opened=opened)
+       if ( DeeBug ) then
+         print *, 'filename: ', trim(filename)
+         print *, 'exist: ', exist
+         print *, 'opened: ', opened
+         print *, 'engMAF_unit: ', L1BFileInfo%engMAF_unit
+       endif
+       CLOSE (L1BFileInfo%engMAF_unit, status="KEEP", &
+         & iostat=returnStatus, iomsg=msg )
+       if ( DeeBug ) then
+         print *, 'msg: ', trim(msg)
+         print *, 'status: ', returnStatus
+       endif
+       OPEN (unit=L1BFileInfo%EngMAF_unit, file=Filename, &
+         status="REPLACE", FORM="UNFORMATTED", ACCESS="SEQUENTIAL", iostat=returnStatus)
+       INQUIRE (unit=L1BFileInfo%engMAF_unit, name=filename, exist=exist, opened=opened)
+       if ( DeeBug ) then
+         print *, '(after reopening) filename: ', trim(filename)
+         print *, 'status: ', returnStatus		
+         print *, 'exist: ', exist
+         print *, 'opened: ', opened
+         print *, 'engMAF_unit: ', L1BFileInfo%engMAF_unit
+       endif
+       CLOSE (L1BFileInfo%engMAF_unit, status="DELETE", &
+         & iostat=returnStatus, iomsg=msg )
+       if ( DeeBug ) then
+         print *, 'msg: ', trim(msg)
+         print *, 'status: ', returnStatus
+       endif
+       ! stop
+       CALL MLSMessage (MLSMSG_Info, ModuleName, &
+            & 'Closed engMAF file: '//filename)
+
+       INQUIRE (unit=L1BFileInfo%sciMAF_unit, name=filename)
+       CLOSE (L1BFileInfo%sciMAF_unit, status="DELETE")
+       CALL MLSMessage (MLSMSG_Info, ModuleName, &
+            & 'Closed sciMAF file: '//filename)
+
+    ! Write TPz Annotations and Close L1BRADD file.  
+
+       ! <whd> I can't find where the L1BRADD file is opened when running
+       ! MLSL1log, so I think that, for MLSL1log, L1BFileInfo%RADDid will
+       ! *always* == 0, and I can't find TPz in the output in the L1BRADD files
+       ! that I've run.  </whd>
+
+       IF (L1BFileInfo%RADDid /= 0) THEN
+          CALL H5gOpen_f (L1BFileInfo%RADDid, '/', grp_id, returnStatus)
+          CALL MakeHDF5Attribute (grp_id, 'TPz', TPz, .TRUE.)
+          CALL MLS_closeFile (L1BFileInfo%RADDid, HDFversion=HDFversion)
+          CALL MLSMessage (MLSMSG_Info, ModuleName, &
+               & 'Closed L1BRAD D file: '//L1BFileInfo%RADDFileName)
+       ENDIF
+
+       RETURN
+
+    ENDIF
+
+    WRITE (L1BFileInfo%LogId, *) ''
+    IF (L1ProgType == THzType) THEN
+       WRITE (L1BFileInfo%LogId, *) &
+            '##################### End MLSL1T ####################'
+    ELSE
+       WRITE (L1BFileInfo%LogId, *) &
+            '##################### End MLSL1G ####################'
+    ENDIF
+    WRITE (L1BFileInfo%LogId, *) ''
+
+    CLOSE (l1BFileInfo%LogId)
+
+    CALL MLSMessage (MLSMSG_Info, ModuleName, &
+         & 'Closed L1BLOG file: '//l1BFileInfo%LogFileName)
+
+! Close HDF files
+
+    IF (L1ProgType == THzType) THEN
+
+       CALL OutputL1B_Chi2 (L1BFileInfo%RADTid)   ! Write default Chi2
+
+       ! Write Hdr Annotations and Close L1RAD T file
+
+       CALL WriteHdrAnnots (L1BFileInfo%RADTFileName, HDFversion)
+       CALL MLS_closeFile (L1BFileInfo%RADTid, HDFversion=HDFversion)
+       CALL MLSMessage (MLSMSG_Info, ModuleName, &
+            & 'Closed L1BRAD T file: '//L1BFileInfo%RADTFileName)
+
+       ! Write Hdr Annotations and Close L1B THz Diag file
+
+       CALL WriteHdrAnnots (L1BFileInfo%DiagTFileName, HDFversion)
+       CALL h5_writeglobalattr (L1BFileInfo%DiagTid, &
+            skip_if_already_there=.FALSE.)
+       CALL MLS_closeFile (L1BFileInfo%DiagTId, HDFversion=HDFversion)
+       CALL MLSMessage (MLSMSG_Info, ModuleName, &
+            & 'Closed L1B Diag THz file: '//L1BFileInfo%DiagTFileName)
+
+       CALL WriteMetaData (IsTHz=.TRUE.)
+
+       RETURN
+
+    ENDIF
+
+    IF (L1BFileInfo%RADDid /= 0) THEN
+       CALL OutputL1B_Chi2 (L1BFileInfo%RADDid)   ! Write default Chi2
+
+    ! Write Hdr Annotations and Close L1RAD D file
+
+       CALL WriteHdrAnnots (L1BFileInfo%RADDFileName, HDFversion)
+       CALL MLS_closeFile (L1BFileInfo%RADDid, HDFversion=HDFversion)
+       CALL MLSMessage (MLSMSG_Info, ModuleName, &
+            & 'Closed L1BRAD D file: '//L1BFileInfo%RADDFileName)
+    ENDIF
+
+    CALL OutputL1B_Chi2 (L1BFileInfo%RADGid)   ! Write default Chi2
+
+    ! Write Hdr Annotations and Close L1RAD G file
+
+    CALL WriteHdrAnnots (L1BFileInfo%RADGFileName, HDFversion)
+    CALL MLS_closeFile (L1BFileInfo%RADGid, HDFversion=HDFversion)
+    CALL MLSMessage (MLSMSG_Info, ModuleName, &
+         & 'Closed L1BRAD G file: '//L1BFileInfo%RADGFileName)
+
+    ! Write Hdr Annotations and Close L1BOA file
+
+    !! Get annotation from leapsec and utcpole files
+
+    CALL CreatePCFAnnotation (leapsec_pcf, leapsecText)
+
+    CALL CreatePCFAnnotation (utcpole_pcf, utcpoleText)
+
+    CALL H5gOpen_f (L1BFileInfo%OAid, '/', grp_id, returnStatus)
+
+    CALL WritePCF2Hdr (L1BFileInfo%OAFileName, leapsecText, &
+         hdfVersion=HDFversion, fileType=l_hdf, name='/leapsec')
+
+    CALL WritePCF2Hdr (L1BFileInfo%OAFileName, utcpoleText, &
+         hdfVersion=HDFversion, fileType=l_hdf, name='/utcpole')
+ 
+    ! Orbit attributes:
+
+    CALL MakeHDF5Attribute (grp_id, 'OrbitNumber', OrbitNumber, .TRUE.)
+    CALL MakeHDF5Attribute (grp_id, 'OrbitPeriod', OrbPeriod, .TRUE.)
+
+    ! Bright Object attributes:
+
+    CALL MakeHDF5Attribute (grp_id, 'BO_name', BO_name, .TRUE.)
+    CALL MakeHDF5Attribute (grp_id, 'BO_Angle_GHz', BO_Angle_GHz, .TRUE.)
+    CALL MakeHDF5Attribute (grp_id, 'BO_Angle_THz', BO_Angle_THz, .TRUE.)
+    CALL H5gClose_f (grp_id, returnStatus)
+
+    CALL WriteHdrAnnots (L1BFileInfo%OAFileName, HDFversion)
+    CALL MLS_closeFile (L1BFileInfo%OAid, HDFversion=HDFversion)
+    CALL MLSMessage (MLSMSG_Info, ModuleName, &
+         & 'Closed L1BOA file: '//L1BFileInfo%OAFileName)
+
+    ! Write default zeros to L1B Diag file
+
+    CALL OutputL1B_diags (L1BFileInfo%Diagid, Zeros=.TRUE.)
+
+    ! Write Hdr Annotations and Close L1B Diag file
+
+    CALL WriteHdrAnnots (L1BFileInfo%DiagFileName, HDFversion)
+    CALL h5_writeglobalattr (L1BFileInfo%Diagid, &
+         skip_if_already_there=.FALSE.)
+    CALL MLS_closeFile (L1BFileInfo%DiagId, HDFversion=HDFversion)
+    CALL MLSMessage (MLSMSG_Info, ModuleName, &
+         & 'Closed L1B Diag file: '//L1BFileInfo%DiagFileName)
+
+    CALL WriteMetaData
+
+    INQUIRE (unit=L1BFileInfo%EngId, name=filename, opened=opened)
+    IF (opened) THEN
+       CLOSE (L1BFileInfo%EngId)
+       CALL MLSMessage (MLSMSG_Info, ModuleName, &
+            & 'Closed L1BENG file: '//filename)
+    ENDIF
+
+!! Close the HDF 5 Fortran Interface
+
+    CALL MLS_h5close (error)
+    IF (error /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName, &
+         "Fortran HDF 5 API error on closing.")
+    
+  END SUBROUTINE CloseFiles
+
+!=============================================================================
+  LOGICAL FUNCTION not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  CHARACTER (len=*), PARAMETER :: IdParm = &
+       "$Id: Close_Files.f90,v 2.23 2016/03/15 22:17:59 whdaffer Exp $"
+  CHARACTER (len=LEN(idParm)), SAVE :: Id = idParm
+!---------------------------------------------------------------------------
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  END FUNCTION not_used_here
+END MODULE Close_files
+!=============================================================================
+! $Log: Close_Files.f90,v $
+! Revision 2.23  2016/03/15 22:17:59  whdaffer
+! Merged whd-rel-1-0 back onto main branch. Most changes
+! are to comments, but there's some modification to Calibration.f90
+! and MLSL1Common to support some new modules: MLSL1Debug and SnoopMLSL1.
+!
+! Revision 2.22.6.1  2015/10/09 10:21:38  whdaffer
+! checkin of continuing work on branch whd-rel-1-0
+!
+! Revision 2.22  2008/02/25 20:11:38  perun
+! Added leapsec and utcpole file contents to L1BOA output file.
+!
+! Revision 2.21  2007/06/21 20:58:46  perun
+! Only write to RADD file if DACS calibration is enabled
+!
+! Revision 2.20  2006/08/02 18:52:46  perun
+! Write TPz Annotations to RADD file
+!
+! Revision 2.19  2005/12/06 19:22:56  perun
+! Output Bright Object attributes to BOA file
+!
+! Revision 2.18  2005/06/23 18:41:35  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.17  2004/11/10 15:37:51  perun
+! Output and close default Chi2 file
+!
+! Revision 2.16  2004/08/12 13:51:49  perun
+! Version 1.44 commit
+!
+! Revision 2.15  2004/05/14 15:59:11  perun
+! Version 1.43 commit
+!
+! Revision 2.14  2004/05/06 21:59:23  pwagner
+! Uses mls_h5open/close
+!
+! Revision 2.13  2004/01/09 17:46:22  perun
+! Version 1.4 commit
+!
+! Revision 2.12  2003/09/15 17:15:53  perun
+! Version 1.3 commit
+!
+! Revision 2.11  2003/08/15 14:25:04  perun
+! Version 1.2 commit
+!
+! Revision 2.10  2003/02/28 19:11:35  pwagner
+! In accord with new MLS_closeFile interface
+!
+! Revision 2.9  2003/01/31 18:13:34  perun
+! Version 1.1 commit
+!
+! Revision 2.8  2002/11/20 17:50:27  perun
+! Reinstated writing PCF annotations for HDF 4 files
+!
+! Revision 2.7  2002/11/19 21:33:23  perun
+! Use HDFversion instead of HDFVersionString
+!
+! Revision 2.6  2002/11/07 21:54:54  jdone
+! Added HDF4/HDF5 switch.
+!
+! Revision 2.5  2002/03/29 20:18:34  perun
+! Version 1.0 commit
+!
+! Revision 2.4  2001/03/12 19:40:11  perun
+! Write PCF and CF contents as annotations
+!
+! Revision 2.2  2001/03/05 22:35:13  perun
+! Corrected L0_Close call
+!
+! Revision 2.1  2001/02/23 18:51:39  perun
+! Version 0.5 commit
+!
+@
+
+
+2.23
+log
+@Merged whd-rel-1-0 back onto main branch. Most changes
+are to comments, but there's some modification to Calibration.f90
+and MLSL1Common to support some new modules: MLSL1Debug and SnoopMLSL1.
+@
+text
+@d52 1
+a52 1
+    CHARACTER (LEN=FileNameLen) :: filename
+d56 1
+d61 1
+d102 31
+a132 3
+
+       INQUIRE (unit=L1BFileInfo%engMAF_unit, name=filename)
+       CLOSE (L1BFileInfo%engMAF_unit, status="DELETE")
+d290 1
+a290 1
+       "$Id: Close_Files.f90,v 2.22.6.1 2015/10/09 10:21:38 whdaffer Exp $"
+d298 5
+@
+
+
+2.22
+log
+@Added leapsec and utcpole file contents to L1BOA output file.
+@
+text
+@d50 4
+a54 1
+    CHARACTER(LEN=132) :: filename
+d111 6
+a116 1
+    ! Write TPz Annotations and Close L1BRADD file
+d260 1
+a260 1
+       "$Id: Close_Files.f90,v 2.21 2007/06/21 20:58:46 perun Exp $"
+d268 6
+@
+
+
+2.22.6.1
+log
+@checkin of continuing work on branch whd-rel-1-0
+@
+text
+@a49 4
+    USE MLSL1Common, ONLY: FileNameLen
+
+    CHARACTER (LEN=FileNameLen) :: filename
+
+d51 1
+d108 1
+a108 6
+    ! Write TPz Annotations and Close L1BRADD file.  
+
+       ! <whd> I can't find where the L1BRADD file is opened when running
+       ! MLSL1log, so I think that, for MLSL1log, L1BFileInfo%RADDid will
+       ! *always* == 0, and I can't find TPz in the output in the L1BRADD files
+       ! that I've run.  </whd>
+d252 1
+a252 1
+       "$Id: Close_Files.f90,v 2.22 2008/02/25 20:11:38 perun Exp $"
+a259 3
+! Revision 2.22  2008/02/25 20:11:38  perun
+! Added leapsec and utcpole file contents to L1BOA output file.
+!
+@
+
+
+2.21
+log
+@Only write to RADD file if DACS calibration is enabled
+@
+text
+@d46 1
+a46 1
+    USE PCFHdr, ONLY: h5_writeglobalattr
+d49 1
+d55 3
+d187 6
+d195 6
+d252 1
+a252 1
+       "$Id: Close_Files.f90,v 2.20 2006/08/02 18:52:46 perun Exp $"
+d260 3
+@
+
+
+2.20
+log
+@Write TPz Annotations to RADD file
+@
+text
+@d106 7
+a112 5
+       CALL H5gOpen_f (L1BFileInfo%RADDid, '/', grp_id, returnStatus)
+       CALL MakeHDF5Attribute (grp_id, 'TPz', TPz, .TRUE.)
+       CALL MLS_closeFile (L1BFileInfo%RADDid, HDFversion=HDFversion)
+       CALL MLSMessage (MLSMSG_Info, ModuleName, &
+            & 'Closed L1BRAD D file: '//L1BFileInfo%RADDFileName)
+d161 2
+a162 2
+
+    CALL OutputL1B_Chi2 (L1BFileInfo%RADDid)   ! Write default Chi2
+d166 5
+a170 4
+    CALL WriteHdrAnnots (L1BFileInfo%RADDFileName, HDFversion)
+    CALL MLS_closeFile (L1BFileInfo%RADDid, HDFversion=HDFversion)
+    CALL MLSMessage (MLSMSG_Info, ModuleName, &
+         & 'Closed L1BRAD D file: '//L1BFileInfo%RADDFileName)
+d236 1
+a236 1
+       "$Id: Close_Files.f90,v 2.19 2005/12/06 19:22:56 perun Exp $"
+d244 3
+@
+
+
+2.19
+log
+@Output Bright Object attributes to BOA file
+@
+text
+@d28 1
+a28 1
+  character (len=*), private, parameter :: ModuleName= &
+d30 1
+a30 1
+  private :: not_used_here 
+d48 1
+d104 8
+d184 2
+a185 2
+    CALL MakeHDF5Attribute (grp_id, 'OrbitNumber', OrbitNumber, .true.)
+    CALL MakeHDF5Attribute (grp_id, 'OrbitPeriod', OrbPeriod, .true.)
+d189 3
+a191 3
+    CALL MakeHDF5Attribute (grp_id, 'BO_name', BO_name, .true.)
+    CALL MakeHDF5Attribute (grp_id, 'BO_Angle_GHz', BO_Angle_GHz, .true.)
+    CALL MakeHDF5Attribute (grp_id, 'BO_Angle_THz', BO_Angle_THz, .true.)
+d230 1
+a230 1
+  logical function not_used_here()
+d232 3
+a234 3
+  character (len=*), parameter :: IdParm = &
+       "$Id: Close_Files.f90,v 2.18 2005/06/23 18:41:35 pwagner Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+d237 1
+a237 1
+  end function not_used_here
+d241 3
+@
+
+
+2.18
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d29 1
+a29 1
+       "$RCSfile: $"
+d47 1
+d172 3
+d177 6
+d224 1
+a224 1
+       "$Id: $"
+d232 3
+@
+
+
+2.17
+log
+@Output and close default Chi2 file
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d27 5
+a31 5
+  !------------------------------- RCS Ident Info ------------------------------
+  CHARACTER(LEN=130) :: id = &
+       "$Id: Close_Files.f90,v 2.16 2004/08/12 13:51:49 perun Exp $"
+  CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile: Close_Files.f90,v $"
+  !-----------------------------------------------------------------------------
+d211 8
+d222 3
+@
+
+
+2.16
+log
+@Version 1.44 commit
+@
+text
+@d21 1
+a21 1
+       "$Id: Close_Files.f90,v 2.15 2004/05/14 15:59:11 perun Exp $"
+d34 1
+a34 1
+    USE OutputL1B, ONLY: OutputL1B_diags
+d117 2
+d141 3
+d151 3
+a153 1
+    ! Write Hdr Annotations and Close L1RAD F file
+d206 3
+@
+
+
+2.15
+log
+@Version 1.43 commit
+@
+text
+@d21 1
+a21 1
+       "$Id: Close_Files.f90,v 2.14 2004/05/06 21:59:23 pwagner Exp $"
+d34 1
+d165 4
+d199 3
+@
+
+
+2.14
+log
+@Uses mls_h5open/close
+@
+text
+@d21 1
+a21 1
+       "$Id: Close_Files.f90,v 2.13 2004/01/09 17:46:22 perun Exp $"
+d35 1
+a35 1
+    USE MLSHDF5, ONLY: MakeHDF5Attribute, mls_h5close
+d37 1
+a37 1
+!    USE H5LIB
+d97 15
+d123 9
+d167 2
+d184 1
+a184 1
+    CALL mls_h5close (error)
+d194 3
+@
+
+
+2.13
+log
+@Version 1.4 commit
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+d21 1
+a21 1
+       "$Id: Close_Files.f90,v 2.12 2003/09/15 17:15:53 perun Exp $"
+d35 1
+a35 1
+    USE MLSHDF5, ONLY: MakeHDF5Attribute
+d158 1
+a158 1
+    CALL h5close_f (error)
+d168 3
+@
+
+
+2.12
+log
+@Version 1.3 commit
+@
+text
+@d8 2
+a9 1
+  USE MLSL1Common, ONLY: L0FileInfo, L1BFileInfo, L1ProgType, THzType, LogType
+d21 1
+a21 1
+       "$Id: Close_Files.f90,v 2.11 2003/08/15 14:25:04 perun Exp $"
+a30 1
+    USE MLSL1Config, ONLY: L1Config
+d32 1
+a32 1
+    USE MLSFiles, ONLY: MLS_closeFile, HDFVERSION_5
+d37 1
+d40 1
+a40 1
+    INTEGER :: i, returnStatus, error, HDFversion, grp_id
+a98 2
+    HDFversion = L1Config%Output%HDFversion
+
+d130 4
+a133 6
+    IF (HDFversion == HDFVERSION_5) THEN
+       CALL H5gOpen_f (L1BFileInfo%OAid, '/', grp_id, returnStatus)
+       CALL MakeHDF5Attribute (grp_id, 'OrbitNumber', OrbitNumber, .true.)
+       CALL MakeHDF5Attribute (grp_id, 'OrbitPeriod', OrbPeriod, .true.)
+       CALL H5gClose_f (grp_id, returnStatus)
+    ENDIF
+d140 7
+a155 7
+    INQUIRE (unit=L1BFileInfo%DiagId, name=filename, opened=opened)
+    IF (opened) THEN
+       CLOSE (L1BFileInfo%DiagId)
+       CALL MLSMessage (MLSMSG_Info, ModuleName, &
+            & 'Closed L1BDIAG file: '//filename)
+    ENDIF
+
+d158 3
+a160 5
+    IF (HDFversion == HDFVERSION_5) THEN
+       CALL h5close_f (error)
+       IF (error /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            "Fortran HDF 5 API error on closing.")
+    ENDIF
+d168 3
+@
+
+
+2.11
+log
+@Version 1.2 commit
+@
+text
+@d20 1
+a20 1
+       "$Id: Close_Files.f90,v 2.10 2003/02/28 19:11:35 pwagner Exp $"
+d124 2
+a125 2
+    CALL WriteHdrAnnots (L1BFileInfo%RADFFileName, HDFversion)
+    CALL MLS_closeFile (L1BFileInfo%RADFid, HDFversion=HDFversion)
+d127 1
+a127 1
+         & 'Closed L1BRAD F file: '//L1BFileInfo%RADFFileName)
+d173 3
+@
+
+
+2.10
+log
+@In accord with new MLS_closeFile interface
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+d20 1
+a20 1
+       "$Id: Close_Files.f90,v 2.9 2003/01/31 18:13:34 perun Exp $"
+d34 7
+a40 2
+
+    INTEGER :: i, returnStatus, error, HDFversion
+d66 9
+d82 10
+d104 1
+a104 2
+       CALL WriteHdrAnnots (L1BFileInfo%RADTFileName, L1BFileInfo%RADTid, &
+            HDFversion)
+d117 1
+a117 2
+    CALL WriteHdrAnnots (L1BFileInfo%RADDFileName, L1BFileInfo%RADDid, &
+         HDFversion)
+d124 1
+a124 2
+    CALL WriteHdrAnnots (L1BFileInfo%RADFFileName, L1BFileInfo%RADFid, &
+         HDFversion)
+d131 8
+a138 1
+    CALL WriteHdrAnnots (L1BFileInfo%OAFileName, L1BFileInfo%OAid, HDFversion)
+d145 6
+a150 1
+    returnStatus = PGS_IO_Gen_CloseF (l1BFileInfo%EngId)
+d152 6
+a157 7
+    CALL MLSMessage (MLSMSG_Info, ModuleName, &
+         & 'Closed L1BENG file: '//l1BFileInfo%EngFileName)
+
+    returnStatus = PGS_IO_Gen_CloseF (l1BFileInfo%DiagId)
+
+    CALL MLSMessage (MLSMSG_Info, ModuleName, &
+         & 'Closed L1BDIAG file: '//l1BFileInfo%DiagFileName)
+d173 3
+@
+
+
+2.9
+log
+@Version 1.1 commit
+@
+text
+@d20 1
+a20 1
+       "$Id: Close_Files.f90,v 2.5 2002/03/29 20:18:34 perun Exp $"
+d82 1
+a82 1
+       CALL MLS_closeFile (L1BFileInfo%RADTid, HDFversion)
+d96 1
+a96 1
+    CALL MLS_closeFile (L1BFileInfo%RADDid, HDFversion)
+d104 1
+a104 1
+    CALL MLS_closeFile (L1BFileInfo%RADFid, HDFversion)
+d111 1
+a111 1
+    CALL MLS_closeFile (L1BFileInfo%OAid, HDFversion)
+d141 3
+@
+
+
+2.8
+log
+@Reinstated writing PCF annotations for HDF 4 files
+@
+text
+@a0 1
+!
+d3 1
+a3 1
+!
+d8 1
+a8 1
+  USE MLSL1Common, ONLY: L0FileInfo, L1BFileInfo
+d14 4
+a17 1
+  PRIVATE :: Id, ModuleName
+d20 1
+a20 1
+       "$Id: Close_Files.f90,v 2.7 2002/11/19 21:33:23 perun Exp $"
+d27 1
+a27 1
+  SUBROUTINE CloseFiles  ! Close production Level 1 files
+a30 2
+    USE OpenInit, ONLY: antextPCF, antextCF
+    USE PCFHdr, ONLY: WritePCF2Hdr
+d32 2
+a33 1
+    USE MLSFiles, ONLY: mls_closeFile, HDFVERSION_4, HDFVERSION_5  
+d35 1
+a35 1
+    INTEGER :: i, returnStatus, error, hdfVersion
+d61 11
+d74 3
+a76 1
+    hdfVersion = L1Config%Output%HDFversion
+d78 11
+a88 1
+    ! Write Annotations and Close L1RAD D file
+a89 3
+    IF (hdfVersion == HDFVERSION_4) THEN
+       CALL WritePCF2Hdr (l1BFileInfo%RADDFileName, anTextPCF)
+       CALL WritePCF2Hdr (l1BFileInfo%RADDFileName, anTextCF)
+d92 1
+a92 1
+    CALL mls_closeFile (L1BFileInfo%RADDid, hdfVersion)
+d94 3
+d100 1
+a100 1
+    ! Write Annotations and Close L1RAD F file
+d102 3
+a104 7
+    IF (hdfVersion == HDFVERSION_4) THEN
+       CALL WritePCF2Hdr (l1BFileInfo%RADFFileName, anTextPCF)
+       CALL WritePCF2Hdr (l1BFileInfo%RADFFileName, anTextCF)
+    ENDIF
+
+    CALL mls_closeFile (L1BFileInfo%RADFid, hdfVersion)
+    
+d108 1
+a108 8
+    ! Write Annotations and Close L1BOA file
+
+    IF (hdfVersion == HDFVERSION_4) THEN
+       CALL WritePCF2Hdr (l1BFileInfo%OAFileName, anTextPCF)
+       CALL WritePCF2Hdr (l1BFileInfo%OAFileName, anTextCF)
+    ENDIF
+
+    CALL mls_closeFile (L1BFileInfo%OAid, hdfVersion)
+d110 2
+a117 4
+    IF (returnStatus /= PGS_S_SUCCESS) THEN 
+          CALL MLSMessage (MLSMSG_ERROR, ModuleName, &
+               "Calling PGS_IO_Gen_CloseF failed." )
+    ENDIF          
+a122 4
+    IF (returnStatus /= PGS_S_SUCCESS) THEN 
+          CALL MLSMessage (MLSMSG_ERROR, ModuleName, &
+               "Calling PGS_IO_Gen_CloseF failed." )
+    ENDIF          
+d134 1
+a134 1
+       
+d141 3
+@
+
+
+2.7
+log
+@Use HDFversion instead of HDFVersionString
+@
+text
+@d2 1
+a2 1
+! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+d18 1
+a18 1
+       "$Id: Close_Files.f90,v 2.6 2002/11/07 21:54:54 jdone Exp $"
+d65 6
+a70 7
+!
+! Commented for now due to the fact that lib/PCFHdr.f90 is HDF4 only.
+! 
+!     CALL WritePCF2Hdr (l1BFileInfo%RADDFileName, anTextPCF)
+!
+!     CALL WritePCF2Hdr (l1BFileInfo%RADDFileName, anTextCF)
+!
+d77 6
+a82 5
+!
+!    CALL WritePCF2Hdr (l1BFileInfo%RADFFileName, anTextPCF)
+!
+!    CALL WritePCF2Hdr (l1BFileInfo%RADFFileName, anTextCF)
+!
+d89 5
+a93 4
+!
+!    CALL WritePCF2Hdr (l1BFileInfo%OAFileName, anTextPCF)
+!
+!    CALL WritePCF2Hdr (l1BFileInfo%OAFileName, anTextCF)
+d134 3
+@
+
+
+2.6
+log
+@Added HDF4/HDF5 switch.
+@
+text
+@d18 1
+a18 1
+       "$Id: Close_Files.f90,v 2.5 2002/03/29 20:18:34 perun Exp $"
+d32 1
+a32 2
+    USE MLSFiles, only: mls_closeFile, HDFVERSION_4, HDFVERSION_5  
+    USE MLSStrings, ONLY: lowercase
+a39 9
+    select case (lowercase(trim(L1Config%Output%HDFVersionString))) 
+       case ('hdf4')
+          hdfVersion = HDFVERSION_4
+       case ('hdf5')
+          hdfVersion = HDFVERSION_5
+       case default
+          hdfVersion = HDFVERSION_4
+    end select 
+
+d60 4
+d72 1
+a72 1
+    call mls_closeFile(L1BFileInfo%RADDid, hdfVersion)
+d83 1
+a83 1
+    call mls_closeFile(L1BFileInfo%RADFid, hdfVersion)
+d94 1
+a94 1
+    call mls_closeFile(L1BFileInfo%OAid, hdfVersion)
+d119 1
+a119 1
+!! Close the HDF Fortran Interface
+d121 5
+a125 9
+    select case (lowercase(trim(L1Config%Output%HDFVersionString))) 
+       case ('hdf4')
+       case ('hdf5')
+          call h5close_f(error)
+          if (error /= 0) then 
+             call MLSMessage (MLSMSG_Error, ModuleName, "Fortran API error on closing.")
+          endif
+       case default
+    end select 
+d127 1
+a127 1
+  END Subroutine CloseFiles
+d133 3
+@
+
+
+2.5
+log
+@Version 1.0 commit
+@
+text
+@d1 1
+d4 1
+a4 1
+
+a10 1
+  USE Hdf, ONLY: sfend
+d18 1
+a18 1
+       "$Id: Close_Files.f90,v 2.4 2001/03/12 19:40:11 perun Exp $"
+d28 1
+d32 2
+d35 1
+a35 1
+    INTEGER :: i, returnStatus
+d41 9
+d71 8
+a78 10
+
+    CALL WritePCF2Hdr (l1BFileInfo%RADDFileName, anTextPCF)
+
+    CALL WritePCF2Hdr (l1BFileInfo%RADDFileName, anTextCF)
+
+    returnStatus = sfend (L1BFileInfo%RADDid)
+    IF (returnStatus == -1) THEN
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            & 'Failed to close L1BRAD D file: '//l1BFileInfo%RADDFileName)
+    ENDIF
+d84 7
+a90 11
+
+    CALL WritePCF2Hdr (l1BFileInfo%RADFFileName, anTextPCF)
+
+    CALL WritePCF2Hdr (l1BFileInfo%RADFFileName, anTextCF)
+
+    returnStatus = sfend (L1BFileInfo%RADFid)
+    IF (returnStatus == -1) THEN
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            & 'Failed to close L1BRAD F file: '//l1BFileInfo%RADFFileName)
+    ENDIF
+
+d95 4
+d100 1
+a100 9
+    CALL WritePCF2Hdr (l1BFileInfo%OAFileName, anTextPCF)
+
+    CALL WritePCF2Hdr (l1BFileInfo%OAFileName, anTextCF)
+
+    returnStatus = sfend (L1BFileInfo%OAid)
+    IF (returnStatus == -1) THEN
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            & 'Failed to close L1BOA file: '//l1BFileInfo%OAFileName)
+    ENDIF
+d108 4
+d117 4
+d124 13
+a136 1
+    
+d143 3
+@
+
+
+2.4
+log
+@Write PCF and CF contents as annotations
+@
+text
+@d18 1
+a18 1
+       "$Id: Close_Files.f90,v 2.2 2001/03/05 22:35:13 perun Exp $"
+d30 1
+d105 10
+d121 3
+@
+
+
+2.3
+log
+@Write PCF file annotation to output files
+@
+text
+@d28 1
+a28 1
+    USE OpenInit, ONLY: antext
+d57 1
+a57 1
+    ! Write Annotation and Close L1RAD D file
+d59 3
+a61 1
+    CALL WritePCF2Hdr (l1BFileInfo%RADDFileName, anText)
+d72 3
+a74 1
+    ! Write Annotation and Close L1RAD F file
+d76 1
+a76 1
+    CALL WritePCF2Hdr (l1BFileInfo%RADFFileName, anText)
+d87 3
+a89 1
+    ! Write Annotation and Close L1BOA file
+d91 1
+a91 1
+    CALL WritePCF2Hdr (l1BFileInfo%OAFileName, anText)
+@
+
+
+2.2
+log
+@Corrected L0_Close call
+@
+text
+@d18 1
+a18 1
+       "$Id: Close_Files.f90,v 2.1 2001/02/23 18:51:39 perun Exp $"
+d28 3
+d57 3
+a59 1
+    ! Close L1RAD D file
+d70 3
+a72 1
+    ! Close L1RAD F file
+d83 3
+a85 1
+    ! Close L1BOA file
+d104 3
+@
+
+
+2.1
+log
+@Version 0.5 commit
+@
+text
+@d18 2
+a19 2
+       "$Id: $"
+  CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile: $"
+d36 1
+a36 1
+       returnStatus = PGS_IO_L0_Close (L0FileInfo%sci_pcf(i))
+d47 1
+a47 1
+       returnStatus = PGS_IO_L0_Close (L0FileInfo%eng_pcf(i))
+d94 4
+a97 1
+! $Log: $
+@
+

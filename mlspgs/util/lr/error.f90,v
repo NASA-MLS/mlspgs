@@ -1,0 +1,206 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.12
+	cfm-single-freq-0-1:1.2.0.10
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.8
+	mus-emls-1-70:1.2.0.6
+	rel-1-0-englocks-work:1.2.0.4
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.2
+	V4-21:1.2.0.2
+	V4-13:1.2
+	V4-12:1.2
+	V4-11:1.2
+	V4-10:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2014.01.14.00.11.42;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2013.10.24.22.41.14;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Revised LR completely
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Error_m
+
+  implicit NONE
+  private
+  public :: Error
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: error.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  subroutine ERROR ( MSG, IBAD )
+
+    use Output_m, only: OUTPUT
+    implicit NONE
+
+  ! Print an error message, and terminate execution if necessary.
+
+  ! MSG     is the message to be printed, or a part of it.
+  ! IBAD    is a code indicating the severity of the message:
+  !         If the low order digit of IBAD is zero the text in MSG is
+  !         simply printed.  If the low order digit of IBAD is 1 the text
+  !         in MSG is printed with the prefix WARNING.  Otherwise the text
+  !         in MSG is printed with the prefix FATAL, and execution
+  !         is terminated by a STOP statement with stop code of 6.
+
+        character(len=*), intent(in) :: MSG
+        integer, intent(in) :: IBAD
+
+  !     *****     Local Variables     ************************************
+
+  ! JBAD    is the low order digit of IBAD.
+
+    integer  JBAD
+
+  ! *****     Procedures     *****************************************
+
+    call output ( ' *** ' )
+    jbad = mod(ibad, 10)
+    if ( jbad == 1 ) then
+      call output ( 'WARNING' )
+    else if ( jbad >= 1 ) then
+      call output ( 'FATAL' )
+    end if
+    call output ( trim(msg), advance='yes' )
+    if (jbad >= 2) stop 6
+
+  end subroutine ERROR
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: error.f90,v 1.1 2013/10/24 22:41:14 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Error_m
+! $Log: error.f90,v $
+! Revision 1.1  2013/10/24 22:41:14  vsnyder
+! Initial commit
+!
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d12 1
+a12 1
+module Error_Handler
+d20 1
+a20 1
+       "$RCSfile: parser.f90,v $"
+d28 1
+a28 2
+    use IO, only: OUTPUT
+    use READCM, only: LINENO, LINPTR
+d34 1
+a34 2
+  ! IBAD    is a code indicating the severity of the message, and whether
+  !         line and column number of the input is to be printed:
+d39 1
+a39 2
+  !         is terminated by a call to EXIT.  If IBAD is greater than 9,
+  !         the line and column number are printed after the text in MSG.
+a43 4
+  !     *****     External References     ********************************
+
+  ! EXIT    terminates execution.
+
+a45 2
+  ! IBASE   is the current position in LINE at which data are being
+  !         stored.
+a46 1
+  ! LINE    is used to assemble the message.
+d48 1
+a48 2
+    integer IBASE, JBAD
+    character(len=120) :: LINE
+d52 1
+a52 1
+    line = ' ***'
+d54 4
+a57 20
+    if (jbad == 0) then
+      ibase = 5
+    else if (jbad == 1) then
+      line(6:12) = 'WARNING'
+      ibase = 13
+    else
+      line(6:10) = 'FATAL'
+      ibase = 11
+    end if
+    line(ibase+1:ibase+len(msg)) = msg
+    ibase = ibase + len(msg) + 1
+    if (ibad.gt.9) then
+      line(ibase+1:ibase+7) = 'AT LINE'
+      ibase = ibase + 8
+      write ( line(ibase:ibase+3), '(i4)' ) lineno
+      ibase = ibase + 4
+      line(ibase+1:ibase+4) = 'CHAR'
+      ibase = ibase + 5
+      write ( line(ibase:ibase+3), '(i4)' ) linptr
+      ibase = ibase + 3
+d59 1
+a59 1
+    call output (line(1:ibase))
+d67 1
+a67 1
+       "$Id: parser.f90,v 2.29 2013/10/02 01:35:46 vsnyder Exp $"
+d74 5
+a78 2
+end module Error_Handler
+! $Log: $
+@
+

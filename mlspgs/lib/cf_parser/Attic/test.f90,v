@@ -1,0 +1,330 @@
+head	2.5;
+access;
+symbols
+	V0_1:1.1;
+locks; strict;
+comment	@# @;
+
+
+2.5
+date	2000.10.10.23.59.02;	author vsnyder;	state dead;
+branches;
+next	2.4;
+
+2.4
+date	2000.10.03.01.39.10;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2000.10.03.01.09.19;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2000.10.03.00.54.44;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2000.09.29.23.30.09;	author vsnyder;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2000.09.05.17.41.51;	author dcuddy;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2000.07.06.01.43.12;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.5
+log
+@Moved to ../test_cf_parser
+@
+text
+@! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+program TEST
+
+! A test harness for the MLS CF parser.  It also illustrates how to use
+! it, including how to cause the input to come from a Fortran unit instead
+! of standard input.
+
+  use GETCF_M, only: GetCF, InitGetCF
+  use MACHINE ! At least HP, for command lines, IO_ERROR, and maybe GETARG
+  use MLSCF, only: MLSCF_T
+  use OUTPUT_M, only: PRUNIT
+  use TOGGLES, only: CON, GEN, LEX, PAR, SYN, TAB, TOGGLE
+
+  type(mlscf_t) :: CF_DATA
+  logical :: DO_DUMP = .false.     ! Dump declaration table
+  logical :: DO_DUMP_EARLY = .false.    ! Dump declaration table before check
+  logical :: DO_LISTING = .false.  ! List input
+  logical :: DUMP_TREE = .false.   ! Dump tree after parsing
+  integer :: ERROR                 ! Error flag from GetCF
+  integer :: I                     ! counter for command line arguments
+  integer :: INUNIT = -1           ! Fortran unit number for input -1 = stdin
+  integer :: J                     ! index within option
+  character(len=80) :: LINE        ! to read command line arguments
+  integer :: STATUS
+
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=256) :: Id = &
+       "$Id: test.f90,v 2.4 2000/10/03 01:39:10 vsnyder Exp $"
+  character (len=*), parameter :: ModuleName= &
+       "$RCSfile: test.f90,v $"
+!---------------------------------------------------------------------------
+
+  call InitGetCF
+
+  i = 1+hp
+  do ! Process the command line options to set toggles
+    call getarg ( i, line )
+    if ( line(1:1) == '-' ) then
+      do j = 2, len(line)
+        if ( line(j:j) == 'c' ) then
+          toggle(con) = .true.
+        else if ( line(j:j) == 'g' ) then
+          toggle(gen) = .true.
+        else if ( line(j:j) == 'l' ) then
+          toggle(lex) = .true.
+        else if ( line(j:j) == 'p' ) then
+          toggle(par) = .true.
+        else if ( line(j:j) == 'a' ) then
+          toggle(syn) = .true.
+        else if ( line(j:j) == 'A' ) then
+          dump_tree = .true.
+        else if ( line(j:j) == 'd' ) then
+          do_dump = .true.
+        else if ( line(j:j) == 'D' ) then
+          do_dump_early = .true.
+        else if ( line(j:j) == 't' ) then
+          toggle(tab) = .true.
+        else if ( line(j:j) == 'v' ) then
+          do_listing = .true.
+        end if
+      end do
+    else
+  exit
+    end if
+    i = i + 1
+  end do
+
+  if ( line /= ' ' ) then     ! Process input file name
+    open ( 98, file=trim(line), form='formatted', iostat=status )
+    if ( status /= 0 ) then
+      call io_error ( 'While opening input file', status, trim(line) )
+      stop
+    end if
+    inUnit = 98
+    call getarg ( i+1, line )
+    if ( line /= ' ' ) then   ! Process output file name
+      open ( 99, file=trim(line), form='formatted', iostat=status )
+      if ( status /= 0 ) then
+        call io_error ( 'While opening output file', status, trim(line) )
+        stop
+      end if
+      prUnit = 99
+    end if
+  end if
+
+  call getCF ( cf_data, error, inUnit=inUnit, listing=do_listing, &
+    & dump=do_dump, dumpEarly=do_dump_early, dumpTables=.true. )
+
+end program TEST
+
+! $Log: test.f90,v $
+! Revision 2.4  2000/10/03 01:39:10  vsnyder
+! Add the copyright notice.
+!
+! Revision 2.3  2000/10/03 01:09:19  vsnyder
+! Add getting input and output files from command line, and telling the
+! parser to use them.
+!
+! Revision 2.2  2000/10/03 00:54:44  vsnyder
+! Revised to account for changing getL2CF_m.f90 to getCF_m.f90
+!
+! Revision 2.1  2000/09/29 23:30:09  vsnyder
+! Revised to account for getL2CF_m
+!
+! Revision 2.0  2000/09/05 17:41:51  dcuddy
+! Change revision to 2.0
+!
+! Revision 1.1  2000/07/06 01:43:12  vsnyder
+! Initial check-in
+@
+
+
+2.4
+log
+@Add the copyright notice.
+@
+text
+@d30 1
+a30 1
+       "$Id: test.f90,v 2.3 2000/10/03 01:09:19 vsnyder Exp $"
+d94 3
+@
+
+
+2.3
+log
+@Add getting input and output files from command line, and telling the
+parser to use them.
+@
+text
+@d1 3
+d30 1
+a30 1
+       "$Id: test.f90,v 2.2 2000/10/03 00:54:44 vsnyder Exp $"
+d94 4
+a108 1
+!
+@
+
+
+2.2
+log
+@Revised to account for changing getL2CF_m.f90 to getCF_m.f90
+@
+text
+@d3 4
+d8 1
+a8 1
+  use MACHINE ! At least HP, for command lines, and maybe GETARG
+d10 1
+d13 1
+d20 1
+a21 1
+  type(mlscf_t) :: CF_DATA
+d23 1
+d27 1
+a27 1
+       "$Id: test.f90,v 2.1 2000/09/29 23:30:09 vsnyder Exp $"
+d61 1
+a61 1
+    else    
+d67 19
+a85 1
+  call getCF ( cf_data, error, inUnit=-1, listing=do_listing, &
+d91 3
+@
+
+
+2.1
+log
+@Revised to account for getL2CF_m
+@
+text
+@d3 1
+a3 1
+  use GETL2CF_M, only: GetL2CF, InitGetL2CF
+d12 1
+a12 1
+  integer :: ERROR                 ! Error flag from GetL2CF
+d15 1
+a15 1
+  type(mlscf_t) :: L2CF_DATA
+d20 1
+a20 1
+       "$Id: test.f90,v 2.0 2000/09/05 17:41:51 dcuddy Exp $"
+d25 1
+a25 1
+  call InitGetL2CF
+d60 1
+a60 1
+  call getL2CF ( l2cf_data, error, inUnit=-1, listing=do_listing, &
+d66 3
+@
+
+
+2.0
+log
+@Change revision to 2.0
+@
+text
+@d2 2
+a3 3
+  use DECLARATION_TABLE, only: ALLOCATE_DECL, DUMP_DECL
+  use INIT_TABLES_MODULE, only: INIT_TABLES
+  use LEXER_CORE, only: INIT_LEXER
+a5 6
+  use OUTPUT_M, only: OUTPUT
+  use PARSER, only: CONFIGURATION
+  use STRING_TABLE, only: DO_LISTING
+  use TABLE_DUMPER, only: DUMP_TABLE                 ! For debugging
+  use TABLE_GENERATOR, only: GENERATE_TABLE
+  use TREE_CHECKER, only: CHECK_TREE
+a6 2
+  use TREE, only: ALLOCATE_TREE, PRINT_SUBTREE
+  use UNITS, only: INIT_UNITS
+d10 1
+d12 3
+a14 4
+  integer :: ERROR                 ! Error flag from check_tree
+  integer :: HOW_MANY_SECTIONS
+  integer :: I      ! counter for command line arguments
+  integer :: J      ! index within option
+d16 1
+a16 2
+  character(len=80) :: LINE
+  integer :: ROOT   ! of the abstract syntax tree
+d20 1
+a20 1
+       "$Id: test.f90,v 1.1 2000/07/06 01:43:12 vsnyder Exp $"
+d25 1
+a25 5
+  call init_lexer ( n_chars=10000, n_symbols=1000, hash_table_size=1003 )
+  call allocate_decl ( ndecls=1000 )
+  call allocate_tree ( n_tree=10000 )
+  call init_tables
+  call init_units
+d60 3
+a62 21
+  call configuration ( root )
+  if ( root > 0 ) then
+    if ( dump_tree ) call print_subtree ( root, 0 )
+    if ( do_dump_early ) call dump_decl
+    call check_tree ( root, error, how_many_sections=how_many_sections )
+    if ( do_dump ) call dump_decl
+    if ( toggle(syn) ) then
+      call output ( 'Begin abstract syntax tree:', advance='yes' )
+      call print_subtree ( root, 0 )
+      call output ( 'End abstract syntax tree', advance='yes' )
+    end if
+    if ( error == 0 ) then
+      if ( do_dump ) call dump_decl
+      call generate_table ( root, how_many_sections, l2cf_data )
+      call dump_table ( l2cf_data )
+    end if
+  else
+    call output ( &
+      'A syntax error occurred -- there is no abstract syntax tree', &
+      advance='yes' )
+  end if
+d66 3
+@
+
+
+1.1
+log
+@Initial check-in
+@
+text
+@d30 1
+a30 1
+       "$Id: test.f90,v 1.1 2000/07/06 01:43:12 vsnyder Exp $"
+d98 3
+@
+
+

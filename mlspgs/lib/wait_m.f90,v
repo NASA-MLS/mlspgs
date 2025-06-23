@@ -1,0 +1,412 @@
+head	2.2;
+access;
+symbols
+	v5-02-NRT-19:2.2
+	v6-00:2.2
+	v5-02-NRT-18:2.2
+	v5-02:2.2
+	v5-01-NRT-17:2.2
+	v5-01-NRT-16:2.2
+	v5-01-NRT-15:2.2
+	v5-01-NRT-14:2.2
+	neuralnetworks-1-0:2.2.0.6
+	cfm-single-freq-0-1:2.2.0.4
+	v5-01:2.2
+	v5-00:2.2
+	v4-23-TA133:2.2.0.2;
+locks; strict;
+comment	@# @;
+
+
+2.2
+date	2019.01.24.18.38.56;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2018.12.11.01.15.23;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.2
+log
+@Correct misspelling in comment
+@
+text
+@! Copyright 2018, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=============================================================================
+module Wait_M
+!=============================================================================
+
+! Wait or Pause for an event before resuming.
+
+  use IO_Stuff, only: Pause_Stdin => Pause
+  use Machine, only: USleep
+  use Optional_m, only: Default
+  ! use PrintIt_m, only: MLSMSG_Warning, PrintItOut
+  use Time_Config_m, only: SayTime_Config, Time_Config, Time_Now
+  implicit none
+  private
+
+! === (start of toc) ===
+!     c o n t e n t s
+!     - - - - - - - -
+!   datatypes
+! Retry_config_t          retry configuration type
+
+!   subroutines and functions
+! Init_retry              Initialize the retry mechanism
+! Pause                   wait for user input, either via stdin or InputFileName
+! Retry                   Engage retry mechanism that monitors iterations,
+!                         exception handling, or synchronizing events
+!     Example:
+!     Assume you want to keep calling home until you get a successful result "0"
+!     making a call each 2 seconds, and giving up after 100 tries
+!     call init_retry(SUCCESSFUL_RESULT=0)
+!     do
+!        call home(result)
+!        shall_i = retry(result, delay=2.0, max_retries=100)
+!        if ( shall_i /= try_again) exit
+!     enddo
+!     if ( shall_i /= RETRY_SUCCESS ) 
+!        call exception_handler ( shall_i )
+!     endif
+! Wait                     Wait for supplied interval to elapse
+! Wait_for_event           Wait for an event to occur
+! === (end of toc) ===
+
+! === (start of api) ===
+! Init_retry ( [int successful_result], [int failed_result] )
+! Int retry ( int trial_value, [real delay], [int max_retries], &
+!   [real max_retrying_time] )
+! Pause ( char* mesg , [char* InputFileName )] )
+! Wait ( float t, [int err] )
+! Wait_for_event ( integer function event, int id, [int err] )
+! Wait_for_event ( logical function event, int id )
+! Wait_for_event ( logical function event, int id(:), theId )
+!
+! Note:
+! float means either real or double precision types
+! === (end of api) ===
+
+  public :: init_retry, retry, Pause, retry_success, &
+   & too_many_retries, try_again, &
+   & wait, wait_for_event
+
+  interface wait
+    module procedure wait_d
+    module procedure wait_s
+  end interface
+
+  interface wait_for_event
+    module procedure wait_for_event_int
+    module procedure wait_for_event_log
+    module procedure wait_for_events
+  end interface
+
+  ! This is the retry configuration type
+  public :: retry_config_t
+  type retry_config_t
+    integer :: Try_number
+    integer :: Successful_result
+    integer :: Failed_result
+    real    :: Init_t0
+  end type retry_config_t
+
+  integer, parameter :: Microspers         = 1000000 ! How many micros in a s
+  integer, parameter :: Failed_default     = 999
+  integer, parameter :: Try_again          = 1
+  integer, parameter :: Retry_success      = TRY_AGAIN - 1
+  integer, parameter :: Successful_default = 0
+  integer, parameter :: Too_many_retries   = RETRY_SUCCESS - 1
+  !                                              so first value is 0.0
+  type(retry_config_t), public, save :: retry_config
+
+  double precision, private, save :: Start_CPU_time
+  integer         , private, save :: Start_WallClockSeconds = 0
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: wait_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  subroutine Init_retry ( successful_result, failed_result )
+    integer, intent(in), optional :: SUCCESSFUL_RESULT
+    integer, intent(in), optional :: FAILED_RESULT
+    ! As long as retry_config%FAILED_RESULT is default, try for success
+    ! If not default, will try for any value != retry_config%FAILED_RESULT
+    ! Therefore, there's no reason to input both args
+    if ( present(successful_result) .and. present(failed_result) ) then
+      ! call PrintItOut( &
+      print *, &
+        & "both args supplied in call to init_retry--only FAILED_RESULT effective", &
+        ' **'
+        ! & MLSMSG_Warning )
+    endif
+    retry_config%failed_result = FAILED_DEFAULT  
+    retry_config%successful_result = SUCCESSFUL_DEFAULT
+    if ( present(successful_result) ) &
+      & retry_config%successful_result = SUCCESSFUL_RESULT
+    if ( present(failed_result) ) &
+      & retry_config%failed_result = failed_result
+    
+    call time_now (retry_config%init_t0)
+    retry_config%try_number = 0
+  end subroutine Init_retry
+
+  subroutine Pause ( mesg, InputFileName, Prompts )
+    use MLSCommon, only: Filenamelen
+
+    ! Wait to read mesg from InputFileName
+    ! or stdin (if InputFileName not present)
+
+    character(len=8), intent (out)                        :: mesg            
+    character(len=*), intent (in), optional               :: InputFileName   
+    character(len=*), intent (in), dimension(:), optional :: Prompts
+    ! Internal variables
+    character(len=Filenamelen), save                      :: FileName
+    integer                                               :: i
+    character(len=80)                                     :: myMesg
+    integer                                               :: OldWaitTime
+    ! Executable
+    OldWaitTime = Time_Config%wait_time
+    Time_Config%wait_time = 5
+    if ( present(InputFileName) ) then
+      print *, '(P a u s e d .. w a i t i n g   f o r: ', trim(InputFileName)
+      FileName = InputFileName
+      call Wait_then_read_mesg ( myMesg )
+    else
+      call Pause_stdin( mesg, Prompts )
+    endif
+    mesg = myMesg
+    Time_Config%wait_time = OldWaitTime
+  contains
+    subroutine Wait_then_read_mesg ( mesg )
+      character(len=*), intent(out) :: mesg
+      integer                       :: unitnum, status
+      call wait_for_event( File_There_Now, 1 )
+      open ( newunit=unitnum, form='formatted', &
+        & file=trim(FileName), status='old', iostat=status )
+      read ( unitnum, '(a80)' ) MyMesg
+      mesg = MyMesg
+      close ( unitnum )
+    end subroutine Wait_then_read_mesg
+
+    function File_There_Now( id ) result ( now )
+      ! Returns
+      ! 0 if filename exists
+      ! 1 otherwise
+      integer, intent(in)          :: id ! Ignored
+      logical                      :: exist
+      integer                      :: now
+      ! Use-ing MLSFiles might create a circular dependence
+      ! now = mls_exists ( trim(FileName) )
+      if ( len_trim(FileName) < 1 ) then
+        print *, 'Was FileName ever defined?'
+        stop
+      endif
+      inquire( file=trim(FileName), exist=exist )
+      now = merge( 0, 1, exist )
+      ! print *, trim(FileName) // ':', exist
+    end function File_There_Now
+  end subroutine Pause
+
+  function Retry ( Trial_value, delay, max_retries, max_retrying_time )
+    integer, intent(in)           :: Trial_value
+    integer, intent(in), optional :: Max_retries
+    real, intent(in), optional    :: Delay
+    real, intent(in), optional    :: Max_retrying_time
+    integer                       :: Retry
+    real                          :: T1
+    ! Return one of three values
+    ! TRY_AGAIN if TRIAL_VALUE not yet successful (or still failure)
+    ! RETRY_SUCCESS if TRIAL_VALUE successful (or no longer failure)
+    ! TOO_MANY_RETRIES if MAX_RETRIES or MAX_RETRYING_TIME exceeded
+    
+    ! Usage:
+    ! Assume you want to keep calling home until you get a successful result "0"
+    ! making a call each 2 seconds, and giving up after 100 tries
+    ! call init_retry(SUCCESSFUL_RESULT=0)
+    ! do
+    !    call home(result)
+    !    shall_i = retry(result, delay=2.0, max_retries=100)
+    !    if ( shall_i /= try_again) exit
+    ! enddo
+    ! if ( shall_i /= RETRY_SUCCESS ) 
+    !    call exception_handler ( shall_i )
+    ! endif
+    
+    ! This may be useful if you can't trust the file system to cooperate
+    ! well with the hdfeos library: if a gdclose is immediately
+    ! followed by a gdopen, the bare gdopen may fail because the file
+    ! hasn't been fully released
+    
+    ! For other uses, this can hide the grubby details of an event loop
+
+    ! Looking for a successful result?
+    if ( retry_config%failed_result == FAILED_DEFAULT ) then
+    ! Have we succeeded yet?
+      if ( TRIAL_VALUE == retry_config%successful_result ) then
+        retry = RETRY_SUCCESS
+        return
+      endif
+    else
+    ! or looking to avoid failure
+    ! have we avoided it?
+      if ( TRIAL_VALUE /= retry_config%failed_result ) then
+        retry = RETRY_SUCCESS
+        return
+      endif
+    endif
+
+    ! Have we tried too many times?
+    if ( present(MAX_RETRIES) ) then
+      if ( retry_config%try_number > MAX_RETRIES ) then
+          retry = TOO_MANY_RETRIES
+          return
+      endif
+    endif
+    ! For too long?
+    if ( present(MAX_RETRYING_TIME) ) then
+      call time_now (t1)
+      if ( t1 - retry_config%init_t0 > MAX_RETRYING_TIME ) then
+          retry = TOO_MANY_RETRIES
+          return
+      endif
+    endif
+    call wait (delay)
+    retry_config%try_number = retry_config%try_number + 1
+    retry = TRY_AGAIN
+  end function Retry
+
+
+  subroutine WAIT_D ( T, ERR )
+    integer, parameter :: RK = kind(0.0d0)
+    real(rk), intent(in) :: T
+    include "wait.f9h"
+  end subroutine WAIT_D
+
+  subroutine WAIT_S ( T, ERR )
+    integer, parameter :: RK = kind(0.0e0)
+    real(rk), intent(in) :: T
+    include "wait.f9h"
+  end subroutine WAIT_S
+
+  ! ------------ wait_for_event ---------------
+  ! This family waits for an "event" to occur. The occurrence is signaled
+  ! by either
+  ! (a) an integer-valued function returning 0 for sucess; or
+  ! (b) a logical-valued function returning true
+  ! The specific event can be picked out by the argument "id"
+  subroutine wait_for_event_int ( event, id, err )
+    integer, optional, intent(out)     :: err
+    integer, intent(in)                :: id
+    interface
+      integer function event ( id )
+        integer, intent(in) :: id
+      end function event
+    end interface
+    do
+      call Usleep( int(time_config%wait_time*MICROSPERS/time_config%time_divisor) )
+      select case ( event(id) )
+      case ( SUCCESSFUL_DEFAULT )
+        exit
+      case ( FAILED_DEFAULT )
+        if ( present(err) ) err = 1
+        exit
+      ! case default
+        ! nothing--just keep looping
+      end select
+    enddo
+  end subroutine wait_for_event_int
+
+  subroutine wait_for_event_log ( event, id )
+    integer, intent(in)                :: id
+    interface
+      logical function event ( id )
+        integer, intent(in) :: id
+      end function event
+    end interface
+    do
+      call Usleep( int(time_config%wait_time*MICROSPERS/time_config%time_divisor) )
+      if ( event(id) ) exit
+    enddo
+  end subroutine wait_for_event_log
+
+  subroutine wait_for_events ( event, id, theID )
+    ! This lets you wait for any one of a possible number of events
+    integer, dimension(:), intent(in)   :: id
+    integer, intent(out)                :: theID
+    interface
+      logical function event ( id )
+        integer, intent(in) :: id
+      end function event
+    end interface
+    ! Internal variables
+    ! integer                             :: i
+    ! Executable
+    do
+      call Usleep( int(time_config%wait_time*MICROSPERS/time_config%time_divisor) )
+      idLoop: do theID=1, size(id)
+        if ( event(id(theID)) ) exit idLoop
+      enddo idLoop
+      if ( theID <= size(id) ) exit
+    enddo
+  end subroutine wait_for_events
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: wait_m.f90,v 2.1 2018/12/11 01:15:23 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Wait_M
+
+!$Log: wait_m.f90,v $
+!Revision 2.1  2018/12/11 01:15:23  pwagner
+!First commit
+!
+@
+
+
+2.1
+log
+@First commit
+@
+text
+@d16 1
+a16 1
+! Wait or Puase for an event before resuming.
+d105 1
+a105 1
+       "$RCSfile: time_m.f90,v $"
+d338 1
+a338 1
+       "$Id: time_m.f90,v 2.21 2018/10/25 22:43:51 pwagner Exp $"
+d347 4
+a350 1
+!$Log: time_m.f90,v $
+@
+

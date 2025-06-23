@@ -1,0 +1,1092 @@
+head	2.17;
+access;
+symbols
+	v5-02-NRT-19:2.17
+	v6-00:2.17
+	v5-02-NRT-18:2.17
+	v5-02:2.17
+	v5-01-NRT-17:2.17
+	v5-01-NRT-16:2.17
+	v5-01-NRT-15:2.17
+	v5-01-NRT-14:2.17
+	neuralnetworks-1-0:2.17.0.4
+	cfm-single-freq-0-1:2.17.0.2
+	v5-01:2.17
+	v5-00:2.16
+	v4-23-TA133:2.16.0.4
+	mus-emls-1-70:2.16.0.2
+	rel-1-0-englocks-work:2.14.0.2
+	VUMLS1-00:2.13
+	VPL1-00:2.13
+	V4-22-NRT-08:2.13
+	whdrel10_merged_to_here:2.13
+	merge_whdrel10_from_here:2.12.6.1
+	TAG_TRUNK_AFTER_PW_CHANGES:2.12
+	TAG_TRUNK_BEFORE_PW_CHANGES:2.12
+	VAM1-00:2.12
+	whd-rel-1-0:2.12.0.6
+	V4-21:2.12.0.4
+	V4-13:2.12
+	V4-12:2.12
+	V4-11:2.12
+	V4-10:2.12
+	V3-43:2.12
+	M4-00:2.12
+	V3-41:2.12
+	V3-40-PlusGM57:2.12.0.2
+	V2-24-NRT-04:2.11
+	V3-33:2.12
+	V2-24:2.11
+	V3-31:2.12
+	V3-30-NRT-05:2.12
+	cfm-01-00:2.12
+	V3-30:2.12
+	V3-20:2.12
+	V3-10:2.12
+	V2-23-NRT-02:2.11
+	V2-23:2.11
+	V2-22-NRT-01:2.10
+	V2-22:2.10
+	V2-21:2.10
+	V2-20:2.10
+	V2-11:2.10
+	V2-10:2.10
+	V2-00:2.9
+	V1-51:2.6
+	V1-50:2.6
+	V1-45:2.5
+	V1-44:2.5
+	V1-43:2.5
+	V1-42:2.5
+	V1-41:2.5
+	V1-32:2.5
+	V1-40:2.5
+	V1-31:2.5
+	V1-30:2.5
+	V1-13:2.4
+	V1-12:2.4
+	V1-11:2.4
+	V1-10:2.4
+	newfwm-feb03:2.4.0.2
+	V1-04:2.2
+	V1-03:2.2
+	V1-02:2.2
+	V1-00:2.2
+	newfwm-sep01:2.1.0.2
+	V0-7:2.1
+	V0-5-Level2:2.1
+	V0-5-SIPS:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.17
+date	2020.03.31.20.47.23;	author pwagner;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2018.04.17.16.19.26;	author whdaffer;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2018.04.10.18.14.21;	author whdaffer;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2018.04.09.22.13.21;	author whdaffer;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2016.03.15.22.17.59;	author whdaffer;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2008.03.18.17.20.14;	author perun;	state Exp;
+branches
+	2.12.6.1;
+next	2.11;
+
+2.11
+date	2008.02.14.15.00.05;	author perun;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2006.08.02.18.54.58;	author perun;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2005.08.11.19.03.11;	author perun;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2005.06.23.18.41.35;	author pwagner;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2005.02.28.17.15.10;	author perun;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2004.11.10.15.33.11;	author perun;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2003.08.15.14.25.04;	author perun;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2003.01.31.18.13.34;	author perun;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2002.09.12.16.18.39;	author perun;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2002.03.29.20.18.34;	author perun;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.02.23.20.48.47;	author perun;	state Exp;
+branches;
+next	;
+
+2.12.6.1
+date	2015.10.09.10.21.38;	author whdaffer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.17
+log
+@Permit timepackets prior to start time; restores MAFs lost by v5.00
+@
+text
+@! Copyright 2008, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=============================================================================
+MODULE L0Utils ! Utilities to read L0 data
+!=============================================================================
+
+  USE MLSCommon, ONLY: r8
+  USE MLSL1Common, ONLY: L0FileInfo
+  USE SDPToolkit, ONLY: PGS_S_SUCCESS, PGSIO_W_L0_END_OF_VIRTUAL_DS, &
+       PGSIO_M_L0_HEADER_CHANGED, PGS_PC_GetReference,PGSd_PC_FILE_PATH_MAX
+  USE OpenInit, ONLY: OpenL0File
+  USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Info, MLSMSG_Warning
+
+  IMPLICIT NONE
+
+  PRIVATE
+
+  PUBLIC :: ReadL0Sci, ReadL0Eng, CheckSum
+
+!---------------------------- RCS Module Info ------------------------------
+  CHARACTER (len=*), PRIVATE, PARAMETER :: ModuleName= &
+       "$RCSfile: L0Utils.f90,v $"
+  PRIVATE :: not_used_here 
+!---------------------------------------------------------------------------
+
+CONTAINS
+
+!=============================================================================
+  FUNCTION ReadL0Packet (fileHandle, buf_len, pkt_buf, TAI93, EOD) &
+       & RESULT (ret_len)
+!=============================================================================
+
+    INTEGER, INTENT (IN) :: fileHandle
+    INTEGER, INTENT (IN) :: buf_len   ! sized large enough for largest packet!
+    CHARACTER (LEN=*), INTENT (OUT) :: pkt_buf
+    REAL(r8), INTENT (OUT) :: TAI93
+    LOGICAL :: EOD    ! End-Of-Data flag
+
+    INTEGER :: ret_len   ! actual packet length read
+
+    INTEGER :: returnstatus
+
+    INTEGER, EXTERNAL :: PGS_IO_L0_Getpacket
+    INTEGER, EXTERNAL :: PGS_TD_EOSPMGIRDtoTAI
+
+    ret_len = 0     ! Nothing read yet
+    EOD = .FALSE.   ! Not at the end-of-data
+
+    returnstatus = PGS_IO_L0_Getpacket (fileHandle, buf_len, pkt_buf)
+
+    IF (returnstatus /= PGS_S_SUCCESS) THEN
+       IF (returnstatus == PGSIO_W_L0_END_OF_VIRTUAL_DS) THEN
+          EOD = .TRUE.
+       ELSE IF (returnStatus /= PGSIO_M_L0_HEADER_CHANGED) THEN
+          RETURN   ! Nothing more to do
+       ENDIF
+    ENDIF
+
+    ! Get TAI93 time
+
+    returnstatus = PGS_TD_EOSPMGIRDtoTAI (pkt_buf(8:15), TAI93)
+
+    ! return length of CCSDS data length plus header
+
+    ret_len = ICHAR (pkt_buf(5:5)) * 256 + ICHAR (pkt_buf(6:6)) + 7
+
+  END FUNCTION ReadL0Packet
+
+!=============================================================================
+  SUBROUTINE ReadL0Sci (SciPkt, OK)
+!=============================================================================
+
+    USE MLSL1Config, ONLY: L1Config
+
+    CHARACTER(LEN=*), DIMENSION(:) :: SciPkt
+    LOGICAL :: OK
+
+    INTEGER :: returnStatus, version
+    REAL(r8) :: TAI93(2)
+    INTEGER :: ret_len, sindx
+    LOGICAL :: EOD
+    CHARACTER(len=132) :: filename
+
+    INTEGER, PARAMETER :: SciLen = 1024
+    INTEGER, EXTERNAL :: PGS_IO_L0_Close
+
+    TAI93 = 0.0
+    sindx = 1
+    DO
+
+       ret_len = ReadL0Packet (L0FileInfo%sci_unit(sindx), SciLen, &
+            SciPkt(sindx), TAI93(sindx), EOD)
+
+       IF (TAI93(sindx) > L1Config%Expanded_TAI%endTime) THEN
+          OK = .FALSE.
+          CALL MLSMessage (MLSMSG_Info, ModuleName, &
+               & 'After time range: TAI time > L1Config%Expanded_TAI%endTime')
+          ! so it gets sent to STDOUT too, otherwise we have to look in two
+          ! files for the complete story
+          print *,'After time range: TAI time > L1Config%Expanded_TAI%endTime'
+          print *,'returning OK=FALSE'
+          RETURN
+       ENDIF
+
+       IF (TAI93(sindx) < L1Config%Expanded_TAI%startTime) THEN
+          OK = .FALSE.
+          CALL MLSMessage (MLSMSG_Info, ModuleName, &
+               & 'Before time range: TAI time < L1Config%Expanded_TAI%startTime')
+          ! so it gets sent to STDOUT too, otherwise we have to look in two
+          ! files for the complete story
+
+          PRINT *,'Before time range: TAI time < L1Config%Expanded_TAI%startTime'
+          print *,'returning OK=TRUE nevertheless'
+          ! RETURN
+       ENDIF
+
+       IF (EOD) THEN    ! May need to do this elsewhere or pass flag here
+          EOD = .FALSE.       
+          returnStatus = PGS_IO_L0_Close (L0FileInfo%sci_unit(sindx))
+
+          CALL MLSMessage (MLSMSG_Info, ModuleName, &
+               & 'Closed L0 Science file: '//L0FileInfo%SciFileName(sindx))
+
+          L0FileInfo%sci_pcf(sindx) = L0FileInfo%sci_pcf(sindx) + 1 ! Next entry
+          version = 1
+          returnStatus = PGS_PC_getReference (L0FileInfo%sci_pcf(sindx), &
+               version, filename)
+          IF (returnStatus /= PGS_S_SUCCESS) THEN
+             CALL MLSMessage (MLSMSG_Warning, ModuleName, &
+                  & 'No next L0 Sci File')
+             print *,'No next L0 Sci File! returning OK=FALSE'
+             OK = .FALSE.
+             RETURN
+          ENDIF
+
+          CALL OpenL0File (L0FileInfo%sci_pcf(sindx), &
+               L0FileInfo%sci_unit(sindx), L0FileInfo%SciFilename(sindx), &
+               "Science")
+       ENDIF
+
+       IF (ret_len /= SciLen) THEN   ! incorrect length
+          CALL MLSMessage (MLSMSG_Warning, ModuleName, &
+               'Incorrect Sci packet length')
+          CYCLE                      ! try again
+       ENDIF
+
+       IF (TAI93(1) == TAI93(2)) EXIT  ! Same packet time, so done for now
+
+       IF (TAI93(2) < TAI93(1)) THEN
+          sindx = 2
+       ELSE
+          sindx = 1
+       ENDIF
+
+    ENDDO
+
+    OK = .NOT. EOD   ! TEST!!!
+
+  END SUBROUTINE ReadL0Sci
+
+!=============================================================================
+  SUBROUTINE ReadL0Eng (engpkt, MAFno, TotalMAF, MIFsPerMAF, MAFtime, data_Ok, &
+       more_data)
+!=============================================================================
+
+    USE MLSL1Utils, ONLY: BigEndianStr
+    USE MLSL1Common, ONLY: L1BFileInfo,FileNameLen
+    USE SDPToolkit, ONLY: PGS_TD_TAItoUTC
+
+    CHARACTER(LEN=*), DIMENSION(:) :: engpkt
+    INTEGER :: MAFno, TotalMAF, MIFsPerMAF
+    REAL(r8) :: MAFtime
+    LOGICAL :: more_data, data_OK
+
+    INTEGER :: i, n, returnStatus, MAF(6), version
+    REAL(r8) :: TAI93(6), engtime
+    INTEGER :: IDN(128), ret_len
+    LOGICAL :: EOD
+    CHARACTER(len=27) :: asciiUTC
+    CHARACTER(len=FileNameLen) :: filename, msg
+
+
+! For Version 3.0 and above:
+    !offsets into packet giving the MAF number for this packet
+    INTEGER, PARAMETER :: MAF_offset(6) = (/ 61, 253, 253, 17, 19, 17 /)
+
+    INTEGER, EXTERNAL :: PGS_IO_L0_Close
+
+    more_data = .TRUE.
+    data_OK = .TRUE.
+    MAF = -1
+    TAI93 = -1.0     ! Init all times to less than engtime
+    engtime = 0.0    ! No engtime, yet
+    i = 1   ! start with eng packet #1
+    DO
+
+       IF (TAI93(i) < engtime) THEN
+
+          ret_len = ReadL0Packet (L0FileInfo%eng_unit(i), LEN(engpkt(i)), &
+               engpkt(i), TAI93(i), EOD)
+
+          IF (engtime == 0.0) engtime = TAI93(i)
+
+          IF (EOD) THEN    ! May need to do this elsewhere or pass flag here
+
+             returnStatus = PGS_IO_L0_Close (L0FileInfo%eng_unit(i))
+
+             CALL MLSMessage (MLSMSG_Info, ModuleName, &
+                  & 'Closed L0 Engineering file: '//L0FileInfo%EngFileName(i))
+
+             L0FileInfo%eng_pcf(i) = L0FileInfo%eng_pcf(i) + 1  ! Next entry
+             version = 1
+             returnStatus = PGS_PC_getReference (L0FileInfo%eng_pcf(i), &
+                  version, filename)
+             IF (returnStatus /= PGS_S_SUCCESS) THEN
+                CALL MLSMessage (MLSMSG_Warning, ModuleName, &
+                     & 'No next L0 Eng File')
+                more_data = .FALSE.
+                RETURN
+             ENDIF
+
+             CALL OpenL0File (L0FileInfo%eng_pcf(i), L0FileInfo%eng_unit(i), &
+                  L0FileInfo%EngFilename(i), "Engineering")
+          ENDIF
+
+       ENDIF
+
+       MAF(i) = BigEndianStr (EngPkt(i)(MAF_offset(i):MAF_offset(i)+1))
+
+       If (TAI93(i) > engtime) THEN
+          engtime = TAI93(i)              ! consider "new" time to match
+          i = 1                           ! start with packet #1 again
+       ELSEIF (TAI93(i) == engtime) THEN
+          i = i + 1                       ! try next packet
+       ENDIF
+
+       IF (i > 6) EXIT
+
+    ENDDO
+
+    MIFsPerMAF = BigEndianStr (EngPkt(6)(244:245))
+    TotalMAF = BigEndianStr (EngPkt(6)(246:249))
+    MAFno = MAF(1)
+    MAFtime = engtime
+
+! Test checksum value
+
+    DO i = 1, 6
+       DO n = 1, 128
+          IDN(n) = BigEndianStr (engpkt(i)((n*2-1):n*2))
+       ENDDO
+       IF (CheckSum (IDN, 127) /= IDN(128)) THEN
+          data_OK = .FALSE.
+          n = PGS_TD_TAItoUTC (engtime, asciiUTC)
+          WRITE (msg, &
+               '("Bad Checksum: Eng Pkt ", i1, ",MAF: ",i4,' // &
+               '", UTC: ", A27)') i, MAFno, asciiUTC
+
+
+          PRINT *, TRIM(msg)
+          WRITE (L1BFileInfo%LogId, *) ''
+          WRITE (L1BFileInfo%LogId, *) '### Info: '//TRIM(msg)
+          WRITE (L1BFileInfo%LogId, *) ''
+          CALL MLSMessage (MLSMSG_Info, ModuleName, TRIM(msg))
+          RETURN   ! Can't do any more
+       ENDIF
+   ENDDO
+
+  END SUBROUTINE ReadL0Eng
+
+!=============================================================================
+  FUNCTION CheckSum (DN, n) RESULT (csum)
+!=============================================================================
+
+    INTEGER :: n
+    INTEGER :: DN(n)   ! contains 16-bit integer data
+
+    INTEGER :: csum, i, seed
+    DATA seed /z'A300'/
+
+    csum = seed
+    DO i = 1, n
+       csum = IEOR (csum, DN(i))
+    ENDDO
+
+  END FUNCTION CheckSum
+
+!=============================================================================
+  LOGICAL FUNCTION not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  CHARACTER (len=*), PARAMETER :: IdParm = &
+       "$Id: L0Utils.f90,v 2.16 2018/04/17 16:19:26 whdaffer Exp $"
+  CHARACTER (len=LEN(idParm)), SAVE :: Id = idParm
+!---------------------------------------------------------------------------
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  END FUNCTION not_used_here
+END MODULE L0Utils
+!=============================================================================
+
+! $Log: L0Utils.f90,v $
+! Revision 2.16  2018/04/17 16:19:26  whdaffer
+! line 265, syntax error for NAG in write statement
+!
+! Revision 2.15  2018/04/10 18:14:21  whdaffer
+! Gave output field a width, to mollify NAG compiler
+!
+! Revision 2.14  2018/04/09 22:13:21  whdaffer
+! Reportage
+!
+! Revision 2.13  2016/03/15 22:17:59  whdaffer
+! Merged whd-rel-1-0 back onto main branch. Most changes
+! are to comments, but there's some modification to Calibration.f90
+! and MLSL1Common to support some new modules: MLSL1Debug and SnoopMLSL1.
+!
+! Revision 2.12.6.1  2015/10/09 10:21:38  whdaffer
+! checkin of continuing work on branch whd-rel-1-0
+!
+! Revision 2.12  2008/03/18 17:20:14  perun
+! Align Sci packets based on time, not MIF number.
+!
+! Revision 2.11  2008/02/14 15:00:05  perun
+! Changed ReadL0Eng to accommodate missing APID data.
+!
+! Revision 2.10  2006/08/02 18:54:58  perun
+! Warn if science packet of incorrect length is read and continue processing
+!
+! Revision 2.9  2005/08/11 19:03:11  perun
+! Write bad checksum message to log file
+!
+! Revision 2.8  2005/06/23 18:41:35  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.7  2005/02/28 17:15:10  perun
+! Corrected loop for testing checksum
+!
+! Revision 2.6  2004/11/10 15:33:11  perun
+! Test checksum eng value for correctness
+!
+! Revision 2.5  2003/08/15 14:25:04  perun
+! Version 1.2 commit
+!
+! Revision 2.4  2003/01/31 18:13:34  perun
+! Version 1.1 commit
+!
+! Revision 2.3  2002/09/12 16:18:39  perun
+! Align science packets to same MIF and MAF
+!
+! Revision 2.2  2002/03/29 20:18:34  perun
+! Version 1.0 commit
+!
+! Revision 2.1  2001/02/23 20:48:47  perun
+! Version 0.5 commit
+!
+@
+
+
+2.16
+log
+@line 265, syntax error for NAG in write statement
+@
+text
+@d122 2
+a123 2
+          print *,'returning OK=FALSE'
+          RETURN
+d301 1
+a301 1
+       "$Id: L0Utils.f90,v 2.15 2018/04/10 18:14:21 whdaffer Exp $"
+d310 3
+@
+
+
+2.15
+log
+@Gave output field a width, to mollify NAG compiler
+@
+text
+@d265 4
+a268 2
+               '("Bad Checksum: Eng Pkt ", i1, ",MAF: ",i4, &
+               ", UTC: ", A27)') i, MAFno, asciiUTC
+d301 1
+a301 1
+       "$Id: L0Utils.f90,v 2.14 2018/04/09 22:13:21 whdaffer Exp $"
+d310 3
+@
+
+
+2.14
+log
+@Reportage
+@
+text
+@d265 2
+a266 1
+               '("Bad Checksum: Eng Pkt ", i1, ",MAF: ",i, ", UTC: ", A27)') i, MAFno, asciiUTC
+d299 1
+a299 1
+       "$Id: L0Utils.f90,v 2.13 2016/03/15 22:17:59 whdaffer Exp $"
+d308 3
+@
+
+
+2.13
+log
+@Merged whd-rel-1-0 back onto main branch. Most changes
+are to comments, but there's some modification to Calibration.f90
+and MLSL1Common to support some new modules: MLSL1Debug and SnoopMLSL1.
+@
+text
+@d265 1
+a265 1
+               '("Bad Checksum: Eng Pkt ", i1, ", UTC: ", A27)') i, asciiUTC
+d298 1
+a298 1
+       "$Id: L0Utils.f90,v 2.12.6.1 2015/10/09 10:21:38 whdaffer Exp $"
+d307 5
+@
+
+
+2.12
+log
+@Align Sci packets based on time, not MIF number.
+@
+text
+@d19 1
+a19 1
+       PGSIO_M_L0_HEADER_CHANGED, PGS_PC_GetReference
+d105 18
+d140 1
+d176 1
+a176 1
+    USE MLSL1Common, ONLY: L1BFileInfo
+d189 2
+a190 1
+    CHARACTER(len=132) :: filename, msg
+d193 1
+a193 1
+
+d298 1
+a298 1
+       "$Id: L0Utils.f90,v 2.11 2008/02/14 15:00:05 perun Exp $"
+d307 6
+@
+
+
+2.12.6.1
+log
+@checkin of continuing work on branch whd-rel-1-0
+@
+text
+@d19 1
+a19 1
+       PGSIO_M_L0_HEADER_CHANGED, PGS_PC_GetReference,PGSd_PC_FILE_PATH_MAX
+a104 18
+          CALL MLSMessage (MLSMSG_Info, ModuleName, &
+               & 'After time range: TAI time > L1Config%Expanded_TAI%endTime')
+          ! so it gets sent to STDOUT too, otherwise we have to look in two
+          ! files for the complete story
+          print *,'After time range: TAI time > L1Config%Expanded_TAI%endTime'
+          print *,'returning OK=FALSE'
+          RETURN
+       ENDIF
+
+       IF (TAI93(sindx) < L1Config%Expanded_TAI%startTime) THEN
+          OK = .FALSE.
+          CALL MLSMessage (MLSMSG_Info, ModuleName, &
+               & 'Before time range: TAI time < L1Config%Expanded_TAI%startTime')
+          ! so it gets sent to STDOUT too, otherwise we have to look in two
+          ! files for the complete story
+
+          PRINT *,'Before time range: TAI time < L1Config%Expanded_TAI%startTime'
+          print *,'returning OK=FALSE'
+a121 1
+             print *,'No next L0 Sci File! returning OK=FALSE'
+d157 1
+a157 1
+    USE MLSL1Common, ONLY: L1BFileInfo,FileNameLen
+d170 1
+a170 1
+    CHARACTER(len=FileNameLen) :: filename, msg
+d172 1
+a173 2
+! For Version 3.0 and above:
+    !offsets into packet giving the MAF number for this packet
+d278 1
+a278 1
+       "$Id: L0Utils.f90,v 2.12 2008/03/18 17:20:14 perun Exp $"
+a286 3
+! Revision 2.12  2008/03/18 17:20:14  perun
+! Align Sci packets based on time, not MIF number.
+!
+@
+
+
+2.11
+log
+@Changed ReadL0Eng to accommodate missing APID data.
+@
+text
+@d89 1
+a89 1
+    INTEGER :: ret_len, sindx, MIF(2)
+a95 1
+    MIF = -1
+d137 1
+a137 3
+       MIF(sindx) = ICHAR (SciPkt(sindx)(17:17))
+
+       IF (MIF(1) == MIF(2)) EXIT
+d278 1
+a278 1
+       "$Id: L0Utils.f90,v 2.10 2006/08/02 18:54:58 perun Exp $"
+d287 3
+@
+
+
+2.10
+log
+@Warn if science packet of incorrect length is read and continue processing
+@
+text
+@d1 1
+a1 1
+! Copyright 2006, by the California Institute of Technology. ALL
+d169 1
+a169 1
+    REAL(r8) :: TAI93, engtime
+d184 2
+d189 1
+a189 1
+       DO
+d192 1
+a192 1
+               engpkt(i), TAI93, EOD)
+d194 1
+a194 4
+          IF (i == 1) THEN
+             engtime = TAI93 ! Save time from packet #1 for comparisons
+             MAFtime = engtime
+          ENDIF
+d218 1
+a218 3
+         IF (TAI93 >= engtime) EXIT  ! Put in time order for packets 1-6
+
+       ENDDO
+d222 5
+a226 12
+       IF (i == 1) THEN
+          DO n = (i+1), 6
+             IF (MAF(n) /= MAF(n-1)) EXIT
+          ENDDO
+       ELSE
+          IF (MAF(i) == MAF(1)) THEN
+             DO n = (i+1), 6
+                IF (MAF(n) /= MAF(n-1)) EXIT
+             ENDDO
+          ELSE
+             n = 1    ! Start with the next MAF
+          ENDIF
+d228 1
+a228 1
+       i = n
+d236 1
+d281 1
+a281 1
+       "$Id: L0Utils.f90,v 2.9 2005/08/11 19:03:11 perun Exp $"
+d290 3
+@
+
+
+2.9
+log
+@Write bad checksum message to log file
+@
+text
+@d1 1
+a1 1
+! Copyright 2005, by the California Institute of Technology. ALL
+d30 1
+a30 1
+  character (len=*), private, parameter :: ModuleName= &
+d32 1
+a32 1
+  private :: not_used_here 
+d132 6
+d287 1
+a287 1
+  logical function not_used_here()
+d289 3
+a291 3
+  character (len=*), parameter :: IdParm = &
+       "$Id: L0Utils.f90,v 2.8 2005/06/23 18:41:35 pwagner Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+d294 1
+a294 1
+  end function not_used_here
+d299 3
+@
+
+
+2.8
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d31 1
+a31 1
+       "$RCSfile: $"
+d154 1
+d253 3
+d284 1
+a284 1
+       "$Id: $"
+d293 3
+@
+
+
+2.7
+log
+@Corrected loop for testing checksum
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d29 5
+a33 5
+  !------------------------------- RCS Ident Info ------------------------------
+  CHARACTER(LEN=130) :: id = &
+       "$Id: L0Utils.f90,v 2.6 2004/11/10 15:33:11 perun Exp $"
+  CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile: L0Utils.f90,v $"
+  !-----------------------------------------------------------------------------
+d277 8
+d289 3
+@
+
+
+2.6
+log
+@Test checksum eng value for correctness
+@
+text
+@d23 1
+a23 1
+       "$Id: L0Utils.f90,v 2.5 2003/08/15 14:25:04 perun Exp $"
+d235 1
+a235 1
+       DO n = 1, 256
+d273 3
+@
+
+
+2.5
+log
+@Version 1.2 commit
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+d19 1
+a19 1
+  PUBLIC :: ReadL0Sci, ReadL0Eng
+d23 1
+a23 1
+       "$Id: L0Utils.f90,v 2.4 2003/01/31 18:13:34 perun Exp $"
+d141 2
+a142 1
+  SUBROUTINE ReadL0Eng (engpkt, MAFno, TotalMAF, MIFsPerMAF, MAFtime, OK)
+d146 1
+d151 1
+a151 1
+    LOGICAL :: OK
+d155 1
+a155 1
+    INTEGER :: ret_len
+d157 2
+a158 1
+    CHARACTER(len=132) :: filename
+d166 2
+d196 1
+a196 1
+                OK = .FALSE.
+d232 16
+a247 1
+    OK = .TRUE.
+d252 17
+d273 3
+@
+
+
+2.4
+log
+@Version 1.1 commit
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+d13 1
+a13 2
+  USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Info, MLSMSG_Warning, &
+       MLSMSG_Error
+d23 1
+a23 1
+       "$Id: L0Utils.f90,v 2.3 2002/09/12 16:18:39 perun Exp $"
+d70 1
+d72 1
+d79 1
+a79 1
+    INTEGER :: i, returnStatus, version
+d140 1
+d142 1
+d151 1
+a151 1
+    INTEGER :: i, returnStatus, MAF(6), version
+d163 3
+a165 1
+    DO i = 1, 6
+d199 1
+a199 1
+          IF (TAI93 >= engtime) EXIT  ! Put in time order for packets 1-6
+d205 16
+d225 1
+a228 9
+    MAFno = MAF(1)
+
+    DO i = 2, 6
+       IF (MAF(i) /= MAFno) THEN  ! All must be the same MAF number
+          OK = .FALSE.
+          EXIT
+       ENDIF
+    ENDDO
+
+d236 3
+@
+
+
+2.3
+log
+@Align science packets to same MIF and MAF
+@
+text
+@d24 1
+a24 1
+       "$Id: L0Utils.f90,v 2.2 2002/03/29 20:18:34 perun Exp $"
+d107 1
+a107 1
+          L0FileInfo%sci_pcf(sindx) = L0FileInfo%sci_pcf(sindx) + 1  ! Next entry
+d118 3
+a120 2
+          CALL OpenL0File (L0FileInfo%sci_pcf(sindx), L0FileInfo%sci_unit(sindx),&
+               L0FileInfo%SciFilename(sindx), "Science")
+d139 1
+a139 1
+  SUBROUTINE ReadL0Eng (engpkt, MAFno, TotalMAF, MIFsPerMAF, OK)
+d145 1
+d154 1
+a154 1
+! For Version 3.0:
+d167 4
+a170 1
+          IF (i == 1) engtime = TAI93   ! Save time from packet #1 for comparisons
+d181 2
+a182 2
+             returnStatus = PGS_PC_getReference (L0FileInfo%eng_pcf(i), version, &
+                  filename)
+d223 3
+@
+
+
+2.2
+log
+@Version 1.0 commit
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+d13 2
+a14 1
+  USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Info, MLSMSG_Warning, MLSMSG_Error
+d18 4
+a21 1
+  PRIVATE :: Id, ModuleName
+d24 1
+a24 1
+       "$Id: L0Utils.f90,v 2.1 2001/02/23 20:48:47 perun Exp $"
+d71 1
+a71 1
+  SUBROUTINE ReadL0Sci (scipkt, OK)
+d75 1
+a75 1
+    CHARACTER(LEN=*), DIMENSION(:) :: scipkt
+d79 2
+a80 2
+    REAL(r8) :: TAI93
+    INTEGER :: ret_len
+d84 1
+d87 4
+a90 1
+    DO i = 1, 2
+d92 2
+a93 2
+       ret_len = ReadL0Packet (L0FileInfo%sci_unit(i), LEN(scipkt(i)), &
+            scipkt(i), TAI93, EOD)
+d95 1
+a95 1
+       IF (TAI93 > L1Config%Expanded_TAI%endTime) THEN
+d102 1
+a102 1
+          returnStatus = PGS_IO_L0_Close (L0FileInfo%sci_unit(i))
+d105 1
+a105 1
+               & 'Closed L0 Science file: '//L0FileInfo%SciFileName(i))
+d107 1
+a107 1
+          L0FileInfo%sci_pcf(i) = L0FileInfo%sci_pcf(i) + 1  ! Next entry
+d109 2
+a110 2
+          returnStatus = PGS_PC_getReference (L0FileInfo%sci_pcf(i), version, &
+               filename)
+d118 12
+a129 2
+          CALL OpenL0File (L0FileInfo%sci_pcf(i), L0FileInfo%sci_unit(i), &
+               L0FileInfo%SciFilename(i), "Science")
+a155 4
+! For Version 2.4:
+
+    ! INTEGER, PARAMETER :: MAF_offset(6) = (/ 61, 241, 252, 19, 19, 17 /)
+
+d218 3
+@
+
+
+2.1
+log
+@Version 0.5 commit
+@
+text
+@d11 1
+a11 1
+       PGSIO_M_L0_HEADER_CHANGED
+d13 1
+a13 1
+  USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Info
+d20 2
+a21 2
+       "$Id:$"
+  CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile:$"
+d74 1
+a74 1
+    INTEGER :: i, returnStatus
+d78 1
+d93 1
+a93 1
+EOD = .FALSE.       
+d100 10
+d120 1
+a120 1
+  SUBROUTINE ReadL0Eng (engpkt, MAFno, OK)
+d125 1
+a125 1
+    INTEGER :: MAFno
+d128 2
+a129 2
+    INTEGER :: i, returnStatus, MAF(6)
+    REAL(r8) :: TAI93
+d132 5
+d140 1
+a140 1
+    INTEGER, PARAMETER :: MAF_offset(6) = (/ 61, 241, 252, 19, 19, 17 /)
+d146 10
+a155 2
+       ret_len = ReadL0Packet (L0FileInfo%eng_unit(i), LEN(engpkt(i)), &
+            engpkt(i), TAI93, EOD)
+d157 17
+a173 1
+       IF (EOD) THEN    ! May need to do this elsewhere or pass flag here
+d175 1
+a175 1
+          returnStatus = PGS_IO_L0_Close (L0FileInfo%eng_unit(i))
+d177 1
+a177 2
+          CALL MLSMessage (MLSMSG_Info, ModuleName, &
+               & 'Closed L0 Engineering file: '//L0FileInfo%EngFileName(i))
+a178 4
+          L0FileInfo%eng_pcf(i) = L0FileInfo%eng_pcf(i) + 1  ! Next entry
+          CALL OpenL0File (L0FileInfo%eng_pcf(i), L0FileInfo%eng_unit(i), &
+               L0FileInfo%EngFilename(i), "Engineering")
+       ENDIF
+d183 3
+d189 1
+d203 4
+a206 1
+! $Log:$
+@
+

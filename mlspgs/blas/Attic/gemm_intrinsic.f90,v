@@ -1,0 +1,78 @@
+head	1.2;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2001.11.10.00.50.09;	author vsnyder;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2001.11.02.07.36.39;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Made it external instead of a module, split into sgemm_intrinsic and
+dgemm_intrinsic.
+@
+text
+@module Gemm_M
+
+  implicit NONE
+  public
+
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
+       "$Id: gemm_intrinsic.f90,v 1.1 2001/11/02 07:36:39 pwagner Exp $"
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: gemm_intrinsic.f90,v $"
+!---------------------------------------------------------------------------
+
+  interface GEMM
+    module procedure DGEMM, SGEMM
+  end interface
+
+contains
+  subroutine DGEMM ( TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, &
+    &                BETA, C, LDC )
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    integer, parameter :: RK = kind(0.0d0)
+    include "gemm.f9h"
+  end subroutine DGEMM
+
+  subroutine SGEMM ( TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, &
+    &                BETA, C, LDC )
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    integer, parameter :: RK = kind(0.0e0)
+    include "gemm.f9h"
+  end subroutine SGEMM
+end module Gemm_M
+
+!$Log: !
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d8 1
+a8 1
+       "$Id: MatrixModule_0.f90,v 2.55 2001/10/26 18:08:57 livesey Exp $"
+d11 1
+a11 1
+       "$RCSfile: MatrixModule_0.f90,v $"
+@
+

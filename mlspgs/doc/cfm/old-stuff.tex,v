@@ -1,0 +1,138 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.14
+	cfm-single-freq-0-1:1.1.0.12
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.10
+	mus-emls-1-70:1.1.0.8
+	rel-1-0-englocks-work:1.1.0.6
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2009.12.15.01.06.44;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@First version - skeleton
+@
+text
+@
+\section{Reference}
+\subsection{Conventions}
+\begin{description}
+\item[int i] -- i is an integer
+\item[log p] -- p is an logical
+\item[str name] -- name is a character variable
+\item[typ datatype x] -- x is an instance of user-defined data type datatype
+\item[[some\_arg]] -- some\_arg is optional
+\item[*some\_arg] -- some\_arg is a pointer
+\item[array(:)] -- array is an array
+\end{description}
+
+\subsection{Data types}
+Each data type will be introduced, defined, and described by its typical use.
+\begin{description}
+\item[real(r4)] -- real numbers with decimal precision at least 5
+\item[real(r8)] -- real numbers with decimal precision at least 13
+\item[Range\_T] -- pair of ints: ( Bottom, Top )
+\item[ForwardModelConfig\_T] -- forward model configuration
+\item[HGrid\_T] -- horizontal grid
+\item[FGrid\_T] -- frequency grid
+\item[MLSFile\_T] -- file name, location, type, etc.
+\item[VGrid\_T] -- vertical grid
+\item[QuantityTemplate\_T] -- e.g. Temperature: values, locations, etc.
+\item[VectorTemplate\_T] -- container for QuantityTemplate\_Ts
+\item[Vector\_T] -- instance of a VectorTemplate\_T
+\item[ForwardModelStatus\_T] -- state used when modeled as state machine
+\item[Matrix\_T] -- e.g., Jacobian
+\item[GriddedData\_T] -- e.g., meteorology
+\end{description}
+
+
+\subsection{Procedures and functions}
+Each procedure will be introduced and described in a very general way. The
+example near the end of this document should show sufficient detail to make
+how and when to use each perfectly clear.
+
+\noindent In presenting the list of procedures, one ordering we
+might have followed would have gone from first called to last called.
+Another ordering would have been a descending hierarchy. 
+
+\noindent Steering a middle course, we have tried to do both.
+\begin{description}
+\item[CFM\_MLSSetup] ( int retVal, \newline
+  [typ ForwardModelConfig\_T *ForwardModelConfigDatabase(:)] )
+\item[typ HGrid\_T CreateExplicitHGrid] ( r8 time, r8 *phi(:), \newline
+  r8 *solarTime(:), r8 *solarZenith(:), int error )
+\item[CFM\_CreateRegularHGrid] ( typ HGrid\_T hgrid, str hgrid\_name, 
+
+   r8 origin, r8 spacing, int firstMaf, int lastMaf, typ MLSFile\_T L1BFile )
+\item[typ QuantityTemplate\_T cfm\_CreateQtyTemplate] ( \newline
+    typ MLSFile\_T *l1bFile, int firstMAFIndex, int lastMAFIndex, \newline
+    log propertyTable(:,:), int unitstable(:,:), \newline
+    [typ FGrid\_T qFGrid], [typ HGrid\_T HGrid], [typ VGrid\_T VGrid], \newline
+    [typ QuantityTemplate\_T MifGeolocation], \newline
+    [log qLogBasis], [r8 qMinimumV], [str qInstModule], [str qRadiometer], \newline
+    [str qMolecule], \newline
+    [str qSignal], [str qType] )
+\item[ConstructVectorTemplate] ( typ QuantityTemplate\_T quantities(:), \newline
+  int selected(:), typ VectorTemplate\_T vectorTemplate, str forwhom )
+\item[typ VectorTemplate\_T CreateVecTemplate] ( \newline
+  typ QuantityTemplate\_T *quantityTemplates(:) )
+\item[ForwardModel] ( typ ForwardModelConfig\_T Config, \newline
+  typ Vector\_T FwdModelIn, 
+  typ Vector\_T FwdModelExtra, 
+  typ Vector\_T FwdModelOut, typ ForwardModelStatus\_T fmStat, \newline
+  [typ Matrix\_T Jacobian], [ Vector\_T vectors(:)] )
+\item[int InitializeMLSFile] ( typ MLSFile\_T item, [int type], [int access], \newline
+  [str content], [str name], \newline
+  [str shortName], [int HDFVersion], [int recordLength], \newline
+  [typ Range\_T PCFIdRange], [int PCBottom], [int PCTop] )
+\item[mls\_openFile] ( typ MLSFile\_T MLSFile, [int error] )
+\item[mls\_CloseFile] ( typ MLSFile\_T MLSFile, [int error] )
+\item[CFM\_MLSCleanup]
+\end{description}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: t
+%%% End: 
+@

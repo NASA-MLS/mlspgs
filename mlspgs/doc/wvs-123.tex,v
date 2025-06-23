@@ -1,0 +1,313 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.10
+	cfm-single-freq-0-1:1.2.0.8
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.6
+	mus-emls-1-70:1.2.0.4
+	rel-1-0-englocks-work:1.2.0.2
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.2
+date	2015.09.29.02.46.06;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2015.04.30.17.48.12;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Add description of 'regular' and 'ReferenceMIF' fields
+@
+text
+@\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9in
+
+\newcommand{\docname}{wvs-123r1}
+\newcommand{\docdate}{28 September 2015}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\newcommand{\TS}{T_\text{scat}}
+\newcommand{\TSs}[1]{T_{\text{scat}_{#1}}}
+\newcommand{\DB}{\Delta B}
+\newcommand{\oDB}{\overline{\DB}}
+\newcommand{\MT}{\mathcal{T}}
+\newcommand{\hMT}{\MT^s}
+\newcommand{\IF}[1]{\,\mathcal{A}_n\!\left(#1\right)} % Interpolation Function
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill, Nathaniel, Paul, Michael, Van\\
+Subject: \>Magnetic field specification in l2cf\\
+From: \>Van Snyder\\
+Reference: \> \h{wvs-121}, \h{wvs-122}
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-10pt}
+
+There are restrictions and assumptions concerning how the magnetic field
+is specified and filled in the {\tt l2cf}
+
+If the tangent point geocentric altitude quantity and the spacecraft
+velocity quantity are specified, the magnetic field is evaluated at
+specified altitudes on vectors computed from the tangent position by
+rotation in the viewing plane by angles specified in the cross-angles
+field, if the field is specified; otherwise, it is computed at the
+tangent point.  See \h{wvs-122}.  Cross-track viewing is assumed, even
+if the tangent point is in the orbit plane and there are no nonzero
+values for the cross-angles field.  Otherwise, it is calculated at
+positions specified by its {\tt hGrid} and {\tt vGrid} fields.
+
+There was a time when the horizontal grid of the magnetic field quantity
+could not be shared, but this is no longer required.  The latitude,
+longitude, and surfaces fields of quantity templates are now allocatable,
+not pointers.  This  means there is a separate one in each quantity
+template, not just one that is referenced by several pointers.
+
+\begin{itemize}
+
+\item The vertical co\"ordinate of the magnetic field must be {\tt
+  zeta}, geodetic altitude ({\tt geodAltitude}), or geocentric height
+  ({\tt geocAltitude}).
+
+\item If there is any position in the cross-track direction, other than
+  the tangent point, at which the magnetic field is desired, this is
+  specified by the {\tt xGrid} field of the {\tt quantity} statement. 
+  The {\tt xGrid} field must specify an {\tt hGrid} of explicit type. 
+  If cross-track viewing is desired, but the magnetic field is needed
+  only at the tangent point, the {\tt xGrid} field need not be
+  specified.
+
+\item If a spacecraft velocity quantity ({\tt ScVelECR}) and a tangent
+  point geocentric altitude quantity ({\tt geocAltitudeQuantity}) are
+  specified in the {\tt fill} statement, they must be compatible.  If
+  they are specified, cross-track viewing is assumed, even if the
+  tangent point is actually in the orbit plane.  Either both must be
+  provided, or neither can be provided.
+
+  There is a boolean {\tt regular} field in the {\tt fill} statement that
+  only has meaning when filling the magnetic field, and then only if the
+  tangent point geocentric altitude is provided.  If the {\tt regular}
+  field is false, the magnetic field positions are calculated by rotating
+  the MAF according to the {\tt xGrid} angles.  The positions are within
+  the ruled surface defined by the lines connecting the spacecraft
+  position to tangent points.  This magnetic field can be dumped or
+  written using {\tt DirectWrite}, but the forward model cannot use it. 
+
+  If the {\tt regular} field is true (which can be specified using {\tt
+  /regular}), a stacked and coherent quantity is created.  The zero
+  cross-angle position is at some MIF of the MAF nearest to the profile. 
+  This reference MIF can be specified by the {\tt ReferenceMIF} field of
+  the {\tt fill} command, which is only relevent to this case.  If no
+  reference MIF is specified, the middle MIF is used.  If one is specified
+  without units, it is assumed to be a MIF number.  Otherwise, the units
+  must be length (e.g. {\tt km}), and the vertical co\"ordinate for the
+  magnetic field must be geodetic altitude.  The field is then calculated on
+  vertical profiles rotated from the reference position according to the
+  {\tt xGrid}.
+
+  In both these cases, the {\tt ForwardModelGeometry} geometry calculation
+  used by the {\tt fill} statement reallocates the latitude and longitude
+  components of the magnetic field quantity template, and calculates
+  values for them. If the vertical co\"ordinate is geocentric altitude,
+  the computed latitude is geocentric latitude; otherwise it is geodetic
+  latitude.
+
+  If the tangent point geocentric altitude is not provided, the magnetic
+  field is computed using the grid originally specified in the magnetic
+  field quantity.
+
+\item If the vertical co\"ordinate of the magnetic field is {\tt
+  zeta}, a GPH quantity must be provided in the {\tt fill} statement,
+  and a tangent point geocentric altitude quantity ({\tt
+  geocAltitudeQuantity}) cannot be provided in the {\tt fill} statement.
+  That is, a {\tt zeta} vertical co\"ordinate cannot be used with
+  cross-track viewing.
+
+  We cannot calculate the geolocations of the positions in the magnetic
+  field until the relationship between zeta and geocentric height is
+  computed, but we cannot calculate the geolocations at which to compute
+  this relationship until the desired geolocations in the magnetic field
+  have been computed.
+
+\item The numbers of instances of the magnetic field quantity and the
+  tangent point geocentric altitude quantity ({\tt geocAltitudeQuantity})
+  must be equal.  The tangent point geocentric altitude is a minor-frame
+  quantity, and the magnetic field is a profile quantity.  If we ever want
+  to process more than one MAF per chunk, this problem must be addressed.
+
+\item If the magnetic field quantity has a cross-angles grid ({\tt
+  xGrid}) and any of the angles are not zero, then both a tangent point
+  geocentric altitude quantity ({\tt geocAltitudeQuantity}) and a
+  spacecraft velocity quantity ({\tt ScVelECR}) must be specified in the
+  {\tt fill} statement.
+
+\end{itemize}
+
+Here are some examples:
+
+{\tt\begin{verbatim}
+
+  vGridMag: vGrid, type=Linear, coordinate=geodAltitude, $
+    start=-10 km, stop=150 km, number=17
+
+  CrossGrid: hGrid, type=explicit, $
+    geodangle=[-3.0 degrees, -1.5 degrees, 0 degrees, 1.5 degrees, 3.0 degrees]
+
+  magneticField: quantity, type=magneticField, vGrid=vGridMag, $
+    hGrid=hGridStandard, xGrid=crossGrid, stacked=true
+
+  Fill, quantity=apriori.magneticField, method=magneticModel, $
+    scVelECR=apriori.scVelECR, geocAltitudeQuantity=apriori.tngtGeocAltGHz, $
+    /regular, referenceMIF=112km
+\end{verbatim}}
+
+\label{lastpage}
+\vspace*{-0.1in} % Somehow, this causes lastpage to be defined
+\end{document}
+
+% $Id: wvs-123.tex,v 1.1 2015/04/30 17:48:12 vsnyder Exp $
+
+% $Log: wvs-123.tex,v $
+% Revision 1.1  2015/04/30 17:48:12  vsnyder
+% Initial commit
+%
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d15 2
+a16 2
+\newcommand{\docname}{wvs-123}
+\newcommand{\docdate}{28 April 2015}
+d106 6
+d114 1
+a114 1
+\item The vertical co{\"o}rdinate of the magnetic field must be {\tt
+d133 31
+a163 8
+  The horizontal grid of the magnetic field quantity
+  {\large\bfseries\sffamily MUST NOT} be shared!
+
+  The {\tt ForwardModelGeometry} geometry calculation used by the {\tt
+  fill} statement reallocates the latitude and longitude components of
+  the magnetic field quantity template, and calculates values for them! 
+  If the vertical co{\"o}rdinate is geocentric altitude, the computed
+  latitude is geocentric latitude; otherwise it is geodetic latitude.
+d165 1
+a165 1
+\item If the vertical co{\"o}rdinate of the magnetic field is {\tt
+d169 1
+a169 1
+  That is, a {\tt zeta} vertical co{\"o}rdinate cannot be used with
+d179 4
+a182 5
+  tangent point geocentric altitude quantity ({\tt
+  geocAltitudeQuantity}) must be equal.  The tangent point geocentric
+  altitude is a minor-frame quantity, and the magnetic field is a
+  profile quantity.  If we ever want to process more than one MAF per
+  chunk, this problem must be addressed.
+d192 18
+d214 1
+a214 1
+% $Id: wvs-111.tex,v 1.1 2012/08/31 23:37:31 vsnyder Exp $
+d216 4
+a219 1
+% $Log: wvs-111.tex,v $
+@
+

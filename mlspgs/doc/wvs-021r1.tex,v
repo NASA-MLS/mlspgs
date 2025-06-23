@@ -1,0 +1,326 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.14
+	cfm-single-freq-0-1:1.1.0.12
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.10
+	mus-emls-1-70:1.1.0.8
+	rel-1-0-englocks-work:1.1.0.6
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2008.06.11.20.14.51;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.25in
+\usepackage{longtable}
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9.00in
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\settowidth{\hW}{\bf wvs-021r1}
+%\settowidth{\hW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    18 March 2005\hfill\parbox[t]{\hW}{{\bf wvs-021r1}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill, Dong, Michael, Nathaniel\\
+Subject: \>Pre-frequency-averaged radiance calculation\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 3pt
+\vspace{-20pt}
+
+\section{Introduction}
+
+I've implemented Bill's ideas for pre-frequency-averaged (PFA) radiance
+calculation in MLSL2.  This requires to calculate tables of frequency-averaged
+betas for each channel and species, which tables can then be used to calculate
+betas, and thence radiances, in the forward model.  For species that have many
+weak lines or tails within a band, this can result in significant cost
+savings.  For example, for HNO$_3$ in band 6, the run time is reduced by a
+factor of eight.
+
+\section{Calculating PFA tables}
+
+PFA tables can be calculated by MLSL2.  The advantage of this approach is that
+we use the same software as is used to calculate betas in the line-by-line
+(LBL) forward model.
+
+A very simple L2CF is all that is necessary to calculate PFA betas.  The only
+sections required are Signals, Spectroscopy and GlobalSettings.  The Signals
+and Spectroscopy sections are the same as for any other L2 run.  In the
+GlobalSettings section, one needs to read the filter shapes, define pressure
+and temperature grids, and request to calculate the PFA tables.  The filter
+shapes are read by a {\tt ForwardModelGlobal} command.  In an usual L2 run,
+this has {\tt antennaPatterns, filterShapes} and {\tt pointingGrids} fields.
+All that is necessary for PFA calculation is the {\tt filterShapes} field. 
+Here's one I used:
+{\tt\begin{verbatim}
+  ForwardModelGlobal, filterShapes= $
+    "/testing/emls/l2cal/MLS-Aura_L2Cal-Filters_v1-5-0_0000d000.txt"
+\end{verbatim}}
+
+The pressure grid is defined by a {\tt vGrid} command, specifying logarithmic
+type and a {\tt zeta} coordinate.  Here's one I used:
+{\tt\begin{verbatim}
+pfaVgrid: vGrid, type=Logarithmic, coordinate=Zeta, $
+    start=(10 ^ (3+1/6))mb, formula=[87:12]
+\end{verbatim}}
+
+The temperature grid is defined by a {\tt tGrid} command.  This generates a
+logarithmic grid with a {\tt theta} coordinate.  You can't specify that ---
+it's built in.  Here's one I used:
+{\tt\begin{verbatim}
+pfaTgrid: tGrid, number = 7, start = 180 K, step = log(300/180)/6
+\end{verbatim}}
+Notice that the step is in log temperature!
+
+Once the filter shapes and grids are defined, the PFA tables can be calculated
+by using a {\tt makePFA} command.  It has five required fields and two optional
+ones:
+
+\begin{longtable}{lllll}
+Field              & Data type            & Shape  & Optional? & Meaning \\
+\hline
+\endfirsthead
+Field              & Data type            & Shape  & Optional? & Meaning \\
+\hline
+\endhead
+{\tt losvel}       & Numeric              & Scalar & No  & Line-of-sight velocity \\
+{\tt molecules}    & {\tt molecule}       & Array  & No  & List of molecules \\
+{\tt signals}      & Signal string        & Array  & No  & List of signals \\
+{\tt temperatures} & Label of {\tt tGrid} & Scalar & No  & Temperature grid \\
+{\tt vGrid}        & Label of {\tt vGrid} & Scalar & No  & Pressure grid \\
+{\tt allLinesForRadiometer} & Boolean     & Scalar & Yes & Obvious \\
+{\tt allLinesInCatalog}     & Boolean     & Scalar & Yes & Obvious \\
+\end{longtable}
+
+The {\tt makePFA} command makes PFA tables for the Cartesian product of the
+specified signals and molecules.  The signal nomenclature strings are expanded,
+so it isn't necessary to specify every channel separately.  If there are
+several {\tt makePFA} commands, their results are cumulative.
+
+Here's one I used:
+{\tt\begin{verbatim}
+pfagenAll: makePFA, $
+ signals = [ $
+  "B27LM", "B27UM", "B2LF.S0", "B2UF.S0", "B3LF.S2", "B3UF.S2", $
+  "B4LF.S0", "B4UF.S0", "B5LF.S0", "B5UF.S0", "B6LF.S0", "B6UF.S0" ], $
+ molecules = [ $
+  CH3CN, CL_35_O, CL_37_O, CL_37_O_V1, H2O, H2O_17, H2O_17_V2, $
+  H2O_18, H2O_18_V2, H2O_R2, H2O_V2, H2O2, HC_13_N, HCN_15, HCN_V2, HNO3, $
+  HNO3_V5, HNO3_V6, HNO3_V7, HNO3_V8, HNO3_V9, HO2, N2, N_15_NO, N2O, $
+  N2O_17, N2O_18, N2O_2V2, N2O_V1, N2O_V2, NN_15_O, O_17_O, O_18_H, $
+  O_18_O, O_18_O_V1, O2, O2_V1, O3, O3_2V2, O3_ASYM_O_17, O3_ASYM_O_18, $
+  O3_ASYM_O_18_V2, O3_R2, O3_SYM_O_17, O3_SYM_O_18, O3_SYM_O_18_V2, $
+  O3_V1_3, O3_V1_3_V2, O3_V2, OC_13_S_32, OCS_32, OCS_34, S_32_O2, $
+  S_32_O2_V2, S_33_O2, S_34_O2 ], $
+ temperatures=pfaTgrid, vGrid=pfaVgrid, losVel= -6.80kms
+\end{verbatim}}
+
+If the {\tt makePFA} command has a label, it refers to the last table
+generated.  This might be useful if you want to dump a table, using
+the {\tt dump} command, \emph{viz.}
+
+\hspace*{0.25in}{\tt dump, details=2, pfaData=pfagenAll}
+
+This would dump the PFA table for channel 25 of B6UF and S\_34\_O2.
+The {\tt dump} command can also dump all of the generated PFA data, \emph{viz.}
+
+\hspace*{0.25in}{\tt dump, /allPFA}
+
+This only dumps the molecule names, grid names, and signals.  If you want to
+see the tables, increase the details level.
+
+\section{Writing PFA tables to a file}
+
+One can either calculate PFA tables and use them in the same MLSL2 run, or
+calculate them and write them to an HDF5 file for use in future MLSL2 runs (or
+both).  To write PFA tables, use the {\tt writePFA} command in the {\tt
+globalSettings} section.  It has three fields:
+
+\begin{longtable}{lllll}
+Field         & Data type              & Shape  & Optional? & Meaning \\
+\hline
+{\tt file}    & String                 & Scalar & No  & The name of the HDF5 file \\
+{\tt pfaData} & Label of {\tt makePFA} & Array  & Yes & List of PFA data to write \\
+{\tt allPFA}  & Boolean                & Scalar & Yes & If set, means ``Write all PFA data''\\
+\end{longtable}
+
+Either {\tt pfaData} shall be specified, or {\tt allPFA} shall be specified
+with the value {\tt true} (which can alternatively be specified as {\tt
+/allPFA}), but not both.  Here's one I used:
+{\tt\begin{verbatim}
+  writePFA, file="/user5/vsnyder/mlspgs/l2/runs/PFAData.h5", /allpfa
+\end{verbatim}}
+
+Each time the {\tt writePFA} command is executed, it creates a new file; it is
+not possible to write several sets of data to the same file by using several
+{\tt writePFA} commands that refer to the same file.  (Actually, I haven't
+tried that; maybe it works!  But I didn't explicitly plan for it to work that
+way.)
+
+If all you're doing in a MLSL2 run is computing and writing PFA tables, you
+might want to add {\tt dump, /stop} at the end of globalSettings, so MLSL2
+doesn't snivel about not finding L1BOA data --- which isn't needed for PFA table
+calculations.
+
+\section{Reading PFA data from a file}
+
+PFA data written by a {\tt writePFA} command can be read by a {\tt readPFA}
+command.  The {\tt readPFA} command reads PFA tables for the Cartesian product
+of the specified signals and molecules, from the specified file.  The signal
+nomenclature strings are expanded, so it isn't necessary to specify every
+channel separately.  If there are several {\tt readPFA} commands, their results
+are cumulative.  A {\tt readPFA} command has three fields:
+
+\begin{longtable}{lllll}
+Field & Data type & Shape & Optional? & Meaning \\
+\hline
+{\tt file}      & String   & Scalar & No  & The name of the HDF5 file \\
+{\tt molecules} & molecule & Array  & Yes & List of molecules \\
+{\tt signals}   & String   & Array  & Yes & list of signals \\
+\end{longtable}
+
+If the {\tt molecules} field is omitted, it means ``read PFA data for all
+molecules;''  If the {\tt signals} field is omitted, it means ``read PFA data
+for all signals.''  The molecules are \emph{not} automatically grouped; if PFA
+data are needed for various isotopes or rotational or vibrational states, it is
+necessary either to read data for all molecules, or specify every desired
+molecule explicitly.
+
+Here's one I used:
+{\tt\begin{verbatim}
+ readPFA, file="/user5/vsnyder/mlspgs/l2/runs/PFAData.h5", $
+    signals="b6f", $
+    molecules=[hno3,n2,o2,o3]
+\end{verbatim}}
+
+This reads PFA data for all channels in both sidebands of band 6, for HNO$_3$,
+N$_2$, O$_2$ and O$_3$.
+
+\section{Using the PFA method in the full forward model}
+
+The PFA method can be used to reduce computation time in the full forward
+model.  It is not used in other models.  This is done by specifying for which
+molecules radiances are to be calculated using the PFA method instead of the
+LBL method.  Two fields are added to the {\tt forwardModel} command to specify
+PFA calculations:
+
+\pagebreak[4]
+\begin{longtable}{llllp{2.5in}}
+Field                 & Data type & Shape  & Optional? & Meaning \\
+\hline
+{\tt lsbPFAmolecules} & molecule  & Array  & Yes       & List of molecules for
+                                                         which PFA is to be used
+                                                         in the lower sideband\\
+{\tt usbPFAmolecules} & molecule  & Array  & Yes       & List of molecules for
+                                                         which PFA is to be used
+                                                         in the upper sideband \\
+\end{longtable}
+
+The {\tt molecules} field retains the same syntax and type requirements as when
+no PFA calculations are requested, but the meaning is ``list of all molecules,
+both PFA and LBL.''  One then specifies the molecules for which PFA
+calculations are to be performed, and in which sideband of the signals
+specified by the {\tt signals} field.  If molecules are grouped, it is possible
+to specify that radiances for a subset of the group are to be calcualted using
+the PFA method; it is not necessary to calculate radiances for the entire group
+using either PFA or LBL exclusively.
+
+It isn't necessary (or indeed possible) to specify the identities of the PFA
+tables explicitly.  The processor for the forward model configuration finds
+them automatically.  If any necessary ones are not found, an error is announced
+and program execution is terminated.
+
+Here's a {\tt forwardModel} command I used for a SIDS run:
+{\tt\begin{verbatim}
+  sidsFwm: forwardModel, type=full,  $
+    signals = "b6f", $
+    molecules =       [hno3,n2,o2,o3], $
+    LSBpfaMolecules = [hno3,n2      ], $
+    USBpfaMolecules = [        o2,o3], $
+    phiWindow=4.0 degrees, $
+    /skipOverlaps, $
+    integrationGrid=vGridTangentSids, tangentGrid=vGridTangentSids, $
+    /do_conv, $
+    /do_freq_avg
+\end{verbatim}}
+
+This specifies to calculate radiances for HNO$_3$, N$_2$, O$_2$ and O$_3$ in
+band 6.  In the lower sideband, radiances for HNO$_3$ and N$_2$ are calculated
+using the PFA method, and radiances for O$_2$ and O$_3$ are calculated using
+the LBL method.  In the upper sideband, radiances for HNO$_3$ and N$_2$ are
+calculated using the LBL method, and radiances for O$_2$ and O$_3$ are
+calculated using the PFA method.
+
+For this particular configuration, the maximum absolute value of the difference
+in radiance from a full LBL calculation was less than 50 millikelvins.
+
+\label{lastpage}
+\end{document}
+% $Id: $
+@

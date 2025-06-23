@@ -1,0 +1,156 @@
+head	2.4;
+access;
+symbols
+	v5-02-NRT-19:2.4
+	v6-00:2.4
+	v5-02-NRT-18:2.4
+	v5-02:2.4
+	v5-01-NRT-17:2.4
+	v5-01-NRT-16:2.4
+	v5-01-NRT-15:2.4
+	v5-01-NRT-14:2.4
+	neuralnetworks-1-0:2.4.0.10
+	cfm-single-freq-0-1:2.4.0.8
+	v5-01:2.4
+	v5-00:2.4
+	v4-23-TA133:2.4.0.6
+	mus-emls-1-70:2.4.0.4
+	rel-1-0-englocks-work:2.4.0.2
+	VUMLS1-00:2.2;
+locks; strict;
+comment	@# @;
+
+
+2.4
+date	2017.08.28.20.27.47;	author livesey;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2017.07.27.01.38.34;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2016.12.02.02.03.54;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2016.11.23.21.30.30;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.4
+log
+@Changed the n,nf,np,nz elements to j,jf,...
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! subroutine Eta_List_1D_QTM_2D_3D_* ( A, B, C )
+
+    ! Compute the outer product C of interpolation matrices A and B,
+    ! each represented as a sparse list.
+
+!   type(value_1D_list_t(rk)), intent(in) :: A(:)
+!   type(value_qtm_2d_list_t(rk)), intent(in) :: B(:)
+!   type(value_qtm_3d_list_t(rk)), intent(out) :: C(:)
+
+    ! Assume size(A) == size(B) == size(C)
+
+    integer :: I, J, K, L
+
+    do i = 1, size(a)
+      l = 0
+      do j = 1, a(i)%n
+        if ( a(i)%v(j)%j == 0 ) cycle
+        do k = 1, b(i)%n
+          if ( b(i)%v(k)%j == 0 ) cycle
+          l = l + 1
+          c(i)%v(l)%jf = a(i)%v(j)%j
+          c(i)%v(l)%jz = b(i)%v(k)%jz
+          c(i)%v(l)%j = b(i)%v(k)%j
+          c(i)%v(l)%jp = b(i)%v(k)%jp
+          c(i)%v(l)%v = a(i)%v(j)%v * b(i)%v(k)%v
+        end do
+      end do
+      c(i)%n = l
+    end do
+
+! $Log: Eta_List_1D_QTM_2D_3D.f9h,v $
+! Revision 2.3  2017/07/27 01:38:34  vsnyder
+! Don't produce list element with zero subscript
+!
+! Revision 2.2  2016/12/02 02:03:54  vsnyder
+! Move dummy argument declarations from include files to Indexed_Values_m
+!
+! Revision 2.1  2016/11/23 21:30:30  vsnyder
+! Initial commit
+!
+@
+
+
+2.3
+log
+@Don't produce list element with zero subscript
+@
+text
+@d28 1
+a28 1
+        if ( a(i)%v(j)%n == 0 ) cycle
+d30 1
+a30 1
+          if ( b(i)%v(k)%n == 0 ) cycle
+d32 4
+a35 4
+          c(i)%v(l)%nf = a(i)%v(j)%n
+          c(i)%v(l)%nz = b(i)%v(k)%nz
+          c(i)%v(l)%n = b(i)%v(k)%n
+          c(i)%v(l)%np = b(i)%v(k)%np
+d43 3
+@
+
+
+2.2
+log
+@Move dummy argument declarations from include files to Indexed_Values_m
+@
+text
+@a25 1
+      c(i)%n = a(i)%n * b(i)%n
+d28 1
+d30 1
+d39 1
+d43 3
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@a19 3
+    type(value_1D_list_t), intent(in) :: A(:)
+    type(value_qtm_2d_list_t), intent(in) :: B(:)
+    type(value_qtm_3d_list_t), intent(out) :: C(:)
+d40 4
+a43 1
+! $Log: $
+@
+

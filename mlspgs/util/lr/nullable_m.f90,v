@@ -1,0 +1,223 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.12
+	cfm-single-freq-0-1:1.2.0.10
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.8
+	mus-emls-1-70:1.2.0.6
+	rel-1-0-englocks-work:1.2.0.4
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.2
+	V4-21:1.2.0.2
+	V4-13:1.2
+	V4-12:1.2
+	V4-11:1.2
+	V4-10:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2014.01.14.00.11.42;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2013.10.24.22.41.14;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Revised LR completely
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module NULLABLE_M
+
+  implicit NONE
+  private
+
+  logical, public, allocatable, save :: NULLABLE(:)
+  public :: FIND_NULLABLE
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: nullable_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  subroutine FIND_NULLABLE    ! find nullable nonterminals
+
+    use Error_m, only: Error
+    use Tables, only: First_Nonterminal, FRSPRD => First_Production, &
+      & Last_Nonterminal, PRDIND => Prod_Ind, PRODCN => Productions
+    use Toggles, only: GEN, Toggle
+    use Trace, only: Trace_Begin, Trace_End
+
+    logical :: CHANGE         ! "Something changed in NULLABLE"
+    integer :: I, K           ! Subscripts, loop inductors
+
+    if ( toggle(gen) ) call trace_begin ( 'Find_Nullable' )
+    allocate ( nullable(last_nonterminal), stat=i )
+    if ( i /= 0 ) call error &
+      ( 'FIND_NULLABLE-E- Unable to allocate NULLABLE, STAT =', 2 )
+    nullable = .false.        ! nothing nullable yet, esp. terminals
+    do ! until .not. ichange
+      change = .false.
+      do k = First_Nonterminal, Last_Nonterminal   ! all the nonterminals
+        if ( .not. nullable(k) ) then ! k is not yet known to be nullable
+          i = frsprd(k)       ! First production with LHS = k
+          if ( i > 0 ) then   ! Otherwise it an unused symbol defined by &V
+            do while ( prodcn(prdind(i)) == k )  ! While LHS = k
+              nullable(k) = all(nullable(prodcn(prdind(i)+1:prdind(i+1)-1)))
+              if ( nullable(k) ) then
+                change = .true.
+                exit            ! go on to next nonterminal
+              end if
+              i = i + 1         ! go on to next RHS
+            end do              ! While LHS = k
+          end if
+        end if
+      end do                  ! all the nonterminals
+      if ( .not. change ) exit
+    end do
+    call print_nullable
+    if ( toggle(gen) ) call trace_end ( 'Find_Nullable' )
+
+  end subroutine FIND_NULLABLE
+
+  subroutine PRINT_NULLABLE
+    use Output_m, only: Blanks, NewLine, OUTPUT
+    use Processor_Dependent, only: NewPage
+    use String_Table, only: Display_String, String_Length
+    use Tables, only: First_Nonterminal, Last_Nonterminal, VOCAB
+    use TOGGLES_LR
+    integer :: I, K, L           ! Subscripts, loop inductors
+    if (toggle(iachar('2')) /= 0) then
+    ! Print the list of nullable nonterminals.
+      call output ( newPage, dont_asciify=.true. )
+      call output ( 'POTENTIALLY NULL NON-TERMINALS: ', advance='yes' )
+      call blanks ( 4 )
+      i = 4
+      do k = First_Nonterminal, Last_Nonterminal   ! all the nonterminals
+        if ( nullable(k) ) then
+          l = string_length(vocab(k))
+          if ( l+i > 120 ) then
+            call newLine
+            call blanks ( 4 )
+          end if
+          call display_string ( vocab(k), before=' ' )
+          i = i + 1 + l
+        end if
+      end do
+      call newLine
+    end if
+
+  end subroutine PRINT_NULLABLE
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: nullable_m.f90,v 1.1 2013/10/24 22:41:14 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module NULLABLE_M
+
+! $Log: nullable_m.f90,v $
+! Revision 1.1  2013/10/24 22:41:14  vsnyder
+! Initial commit
+!
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d22 1
+a22 1
+       "$RCSfile: parser.f90,v $"
+d30 5
+a34 3
+    use Error_Handler, only: Error
+    use S3, only: FRSPRD, PRDIND, PRODCN
+    use TABCOM, only: NTERMS, NVOC
+d38 3
+a40 1
+    allocate ( nullable(nvoc), stat=i )
+d46 1
+a46 1
+      do k = nterms+1, nvoc   ! all the nonterminals
+d64 1
+d69 7
+a75 8
+    use IO, only: OUTPUT
+    use S1, only: LENGTH, MOVSTR
+    use S3, only: VOCAB
+    use TABCOM, only: NTERMS, NVOC
+    use TOGGLES
+    integer :: I, K           ! Subscripts, loop inductors
+    character(len=120) LINE
+    if (toggle(ichar('2')) /= 0) then
+d77 3
+a79 2
+      line = '1POTENTIALLY NULL NON-TERMINALS:'
+      call output (line(1:33))
+d81 1
+a81 1
+      do k = nterms+1, nvoc   ! all the nonterminals
+d83 4
+a86 3
+          if (length(vocab(k))+i > len(line)) then
+            call output (line(1:i-1))
+            i = 4
+d88 2
+a89 2
+          call movstr (vocab(k), line, i, len(line))
+          i = i + 1
+d92 1
+a92 1
+      call output (line(1:i-1))
+d100 1
+a100 1
+       "$Id: parser.f90,v 2.29 2013/10/02 01:35:46 vsnyder Exp $"
+d109 4
+a112 1
+! $Log: $
+@
+

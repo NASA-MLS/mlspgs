@@ -1,0 +1,114 @@
+head	1.3;
+access;
+symbols
+	v5-02-NRT-19:1.3
+	v6-00:1.3
+	v5-02-NRT-18:1.3
+	v5-02:1.3
+	v5-01-NRT-17:1.3
+	v5-01-NRT-16:1.3
+	v5-01-NRT-15:1.3
+	v5-01-NRT-14:1.3
+	neuralnetworks-1-0:1.3.0.12
+	cfm-single-freq-0-1:1.3.0.10
+	v5-01:1.3
+	v5-00:1.3
+	v4-23-TA133:1.3.0.8
+	mus-emls-1-70:1.3.0.6
+	rel-1-0-englocks-work:1.3.0.4
+	VUMLS1-00:1.3
+	VPL1-00:1.3
+	V4-22-NRT-08:1.3
+	VAM1-00:1.3
+	V4-21:1.3.0.2
+	V4-13:1.3
+	V4-12:1.3
+	V4-11:1.3
+	V4-10:1.3
+	M4-00:1.3
+	V3-33:1.2
+	V3-31:1.2
+	V3-30-NRT-05:1.2
+	cfm-01-00:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.3
+date	2011.12.16.01.19.40;	author honghanh;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2010.06.29.23.56.58;	author livesey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2010.05.24.18.35.58;	author honghanh;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@Updated documentation for newer API centered on the use of agile vectors,
+and removed the concept of vector template and chunk from public API.
+@
+text
+@! Fill the quantity with data from L1B files with maf range
+! specified by firstL1Maf and lastL1Maf
+subroutine FillVectorQuantityFromL1B_maf (quantity, firstL1Maf, lastL1Maf, &
+    filedatabase, isPrecision, suffix, precisionQuantity, BOMask)
+    ! The quantity to be filled
+    type(VectorValue_T), intent(inout) :: quantity
+    ! The maf range of the data to be read from L1B files
+    integer, intent(in) :: firstL1Maf, lastL1Maf
+    ! the filedatabase containing L1B files
+    type(MLSFile_T), dimension(:), pointer :: filedatabase
+    ! is this a precision quantity
+    logical, intent(in) :: isPrecision
+    character(len=*), intent(in), optional :: suffix
+    type(VectorValue_T), intent(in), optional :: precisionQuantity
+    ! If isPrecision is .true. and BOMask is not 0, then
+    ! bright object status is read from L1BOA file
+    integer, intent(in), optional :: BOMask
+end subroutine
+@
+
+
+1.2
+log
+@Getting ready for delivery
+@
+text
+@d1 17
+a17 11
+! Fill the quantity with data from L1B files
+subroutine FillVectorQuantityFromL1B (quantity, chunk, filedatabase, &
+   isPrecision)
+   ! The quantity to be filled
+   type(VectorValue_T), intent(inout) :: quantity
+   ! chunk object carrying needed information
+   type(MLSChunk_T), intent(in) :: chunk
+   ! the filedatabase containing L1B files
+   type(MLSFile_T), dimension(:), pointer :: filedatabase
+   ! is this a precision quantity
+   logical, intent(in) :: isPrecision
+@
+
+
+1.1
+log
+@v0.5 updated document
+@
+text
+@d6 1
+a6 1
+   ! fake chunk object carrying needed information
+@
+

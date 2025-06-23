@@ -1,0 +1,299 @@
+head	1.4;
+access;
+symbols
+	v5-02-NRT-19:1.4
+	v6-00:1.4
+	v5-02-NRT-18:1.4
+	v5-02:1.1
+	v5-01-NRT-17:1.4
+	v5-01-NRT-16:1.4
+	v5-01-NRT-15:1.4
+	v5-01-NRT-14:1.4
+	neuralnetworks-1-0:1.4.0.4
+	cfm-single-freq-0-1:1.4.0.2
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.6
+	mus-emls-1-70:1.1.0.4
+	rel-1-0-englocks-work:1.1.0.2
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.4
+date	2020.04.23.22.55.08;	author vsnyder;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2020.04.23.22.49.13;	author vsnyder;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2020.04.18.01.39.26;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2016.02.05.03.36.20;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.4
+log
+@Checked in before saving from the editor
+@
+text
+@\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9in
+
+\newcommand{\docname}{wvs-130r2}
+\newcommand{\docdate}{23 April 2020}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\newcommand{\TS}{T_\text{scat}}
+\newcommand{\TSs}[1]{T_{\text{scat}_{#1}}}
+\newcommand{\DB}{\Delta B}
+\newcommand{\oDB}{\overline{\DB}}
+\newcommand{\MT}{\mathcal{T}}
+\newcommand{\hMT}{\MT^s}
+\newcommand{\IF}[1]{\,\mathcal{A}_n\!\left(#1\right)} % Interpolation Function
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Van\\
+Subject: \>Intersection of a line with a plane\\
+From: \>Van Snyder\\
+%Reference: \>
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-20pt}
+
+Using vector notation, a plane can be expressed as the set of points
+$\mathbf{p}$ such that
+%
+\begin{equation}\label{one}
+(\mathbf{p} - \mathbf{p}_0) \cdot \mathbf{n} = 0\,,
+\end{equation}
+%
+where $\mathbf{p}_0$ is a point in the plane, and $\mathbf{n}$ is a normal
+vector to it.  A line can be expressed as the set of points
+%
+\begin{equation}\label{two}
+\mathbf{p} = \mathbf{C} + s \, \mathbf{U} \,,
+\end{equation}
+%
+where $\mathbf{C}$ is a point on the line and $\mathbf{U}$ is a vector
+along the line.  Substituting Equation (\ref{two}) into Equation
+(\ref{one}) gives
+%
+\begin{equation}
+(\mathbf{C} + s \, \mathbf{U} - \mathbf{p}_0) \cdot \mathbf{n} = 0 \,.
+\end{equation}
+%
+Expanding gives
+%
+\begin{equation}
+s \, \mathbf{U} \cdot \mathbf{n} + 
+( \mathbf{C} - \mathbf{p}_0) \cdot \mathbf{n} = 0 \,.
+\end{equation}
+%
+Solving for $s$ gives
+%
+\begin{equation}
+s = \frac{( \mathbf{p}_0 - \mathbf{C}) \cdot \mathbf{n}}
+         { \mathbf{U} \cdot \mathbf{n}}
+\end{equation}
+
+If $\mathbf{U} \cdot \mathbf{n} = 0$ the line and plane are parallel.
+Further, if $\mathbf{C} = \mathbf{p}_0$, choose a different $\mathbf{p}_0$;
+then if $(\mathbf{C} - \mathbf{p}_0) \cdot \mathbf{n} = 0$, the line is in
+the plane, and any point will do.
+
+If $\mathbf{U} \cdot \mathbf{n} \neq 0$ the line intersects the plane at
+the point $\mathbf{p} = \mathbf{C} + s \, \mathbf{U}$.
+
+\label{lastpage}
+\vspace*{-0.1in} % Somehow, this causes lastpage to be defined
+\end{document}
+
+% $Id: wvs-130.tex,v 1.3 2020/04/23 22:49:13 vsnyder Exp $
+
+% $Log: wvs-130.tex,v $
+% Revision 1.3  2020/04/23 22:49:13  vsnyder
+% Re-insert and correct material about line in the plane
+%
+% Revision 1.2  2020/04/18 01:39:26  vsnyder
+% Remove a mistake. Make notation similar to other papers.
+%
+% Revision 1.1  2016/02/05 03:36:20  vsnyder
+% Initial commit
+%
+% Revision 1.1  2016/02/05 00:26:55  vsnyder
+% Initial commit
+%
+@
+
+
+1.3
+log
+@Re-insert and correct material about line in the plane
+@
+text
+@d129 4
+a132 3
+If $\mathbf{U} \cdot \mathbf{n} = 0$ the line and plane are parallel. If,
+further, $(\mathbf{C} \neq \mathbf{p}_0)$ and $(\mathbf{C} - \mathbf{p}_0)
+\cdot \mathbf{n} = 0$, the line is in the plane, and any point will do.
+d141 1
+a141 1
+% $Id: wvs-130.tex,v 1.2 2020/04/18 01:39:26 vsnyder Exp $
+d144 3
+@
+
+
+1.2
+log
+@Remove a mistake. Make notation similar to other papers.
+@
+text
+@d15 2
+a16 2
+\newcommand{\docname}{wvs-130r1}
+\newcommand{\docdate}{17 April 2020}
+d129 3
+a131 1
+If $\mathbf{U} \cdot \mathbf{n} = 0$ the line and plane are parallel. 
+d140 1
+a140 1
+% $Id: wvs-130.tex,v 1.1 2016/02/05 03:36:20 vsnyder Exp $
+d143 3
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d15 2
+a16 2
+\newcommand{\docname}{wvs-130}
+\newcommand{\docdate}{4 February 2016}
+d101 1
+a101 2
+vector to it.
+A line can be expressed as the set of points
+d104 1
+a104 1
+\mathbf{p} = d \, \mathbf{l} + \mathbf{l}_0 \,,
+d107 1
+a107 1
+where $\mathbf{l}_0$ is a point on the line and $\mathbf{l}$ is a vector
+d112 1
+a112 1
+(d \, \mathbf{l} + \mathbf{l}_0 - \mathbf{p}_0) \cdot \mathbf{n} = 0 \,.
+d118 2
+a119 2
+d \, \mathbf{l} \cdot \mathbf{n} + 
+( \mathbf{l}_0 - \mathbf{p}_0) \cdot \mathbf{n} = 0 \,.
+d122 1
+a122 1
+Solving for $d$ gives
+d125 2
+a126 2
+d = \frac{( \mathbf{p}_0 - \mathbf{l}_0) \cdot \mathbf{n}}
+         { \mathbf{l} \cdot \mathbf{n}}
+d129 1
+a129 3
+If $\mathbf{l} \cdot \mathbf{n} = 0$ the line and plane are parallel. 
+If $( \mathbf{l}_0 - \mathbf{p}_0) \cdot \mathbf{n} = 0$ the line is
+within the plane.  Otherwise the line and plane do not intersect.
+d131 2
+a132 2
+If $\mathbf{l} \cdot \mathbf{n} \neq 0$ the line intersects the plane at
+the point $d \, \mathbf{l} + \mathbf{l}_0$.
+d138 1
+a138 1
+% $Id: wvs-129.tex,v 1.1 2016/02/05 00:26:55 vsnyder Exp $
+d140 4
+a143 1
+% $Log: wvs-129.tex,v $
+@
+

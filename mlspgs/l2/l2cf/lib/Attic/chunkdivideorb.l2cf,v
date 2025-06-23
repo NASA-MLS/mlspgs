@@ -1,0 +1,45 @@
+head	1.2;
+access;
+symbols
+	V1-04:1.1
+	V1-03:1.1
+	V1-02:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2002.05.13.17.24.25;	author livesey;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2002.04.29.21.54.58;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Getting close to being ready
+@
+text
+@; --------------------------------------------- ChunkDivide ----
+begin ChunkDivide
+  ChunkDivide, method=orbital, maxLength=!MAXLENGTH, overlap=!OVERLAP, $
+    homeGeodAngle=0 degrees, homeModule=GHz, criticalModules=none, maxGap=!MAXGAP
+end ChunkDivide
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@@
+

@@ -1,0 +1,198 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.12
+	cfm-single-freq-0-1:1.2.0.10
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.8
+	mus-emls-1-70:1.2.0.6
+	rel-1-0-englocks-work:1.2.0.4
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.2
+	V4-21:1.2.0.2
+	V4-13:1.2
+	V4-12:1.2
+	V4-11:1.2
+	V4-10:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2014.01.14.00.11.42;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2013.10.24.22.41.14;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Revised LR completely
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Delete
+
+  implicit NONE
+  private
+  public :: DELCS
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: delcs.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  subroutine DELCS (IPTR)
+    use Output_m, only: OUTPUT
+    use LISTS, only: LIST, REL
+    use Tables, only: HEADCS
+    use TOGGLES_LR
+    implicit NONE
+
+  ! Delete the context set pointed to by IPTR.  The first cell of the
+  ! list is a counter.  If the counter is greater than 1, simply
+  ! decrement it.  Otherwise release the list.
+
+    integer IPTR
+
+  ! *****     Local Variables     ************************************
+
+  ! I       Points to the node being examined.
+  ! LAST    Points to the last node examined.
+
+    integer :: I, LAST
+
+  !     *****     Procedures     *****************************************
+
+    if (list(iptr)%item > 1) then
+      list(iptr)%item = list(iptr)%item - 1
+    else
+      if (toggle(iachar('3')) /= 0) then
+        call output ( iptr, before=' Destroy context set at ', advance='yes')
+      end if
+      i = headcs(list(list(iptr)%next)%item)
+      last = 0
+      do while (i /= 0)
+        if (list(i)%item == iptr) then
+          if (last  /=  0) then
+            list(last)%next = list(i)%next
+          else
+            headcs(list(list(iptr)%next)%item) = list(i)%next
+          end if
+          list(i)%next = 0
+          call rel (i)
+          exit
+        end if
+        last = i
+        i = list(i)%next
+      end do
+      call rel (iptr)
+    end if
+
+  end subroutine DELCS
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: delcs.f90,v 1.1 2013/10/24 22:41:14 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Delete
+
+! $Log: delcs.f90,v $
+! Revision 1.1  2013/10/24 22:41:14  vsnyder
+! Initial commit
+!
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d20 1
+a20 1
+       "$RCSfile: parser.f90,v $"
+d27 4
+a30 4
+    use IO, only: OUTPUT
+    use LISTS, only: ITEM, NEXT, REL
+    use S3, only: HEADCS
+    use TOGGLES
+a42 1
+  ! LINE    Is used for message assembly.
+a44 1
+    character(len=120) :: LINE
+d48 2
+a49 2
+    if (item(iptr) > 1) then
+      item(iptr) = item(iptr) - 1
+d51 2
+a52 4
+      if (toggle(ichar('3')) /= 0) then
+        line=' Destroy context set at'
+        write ( line(24:28), '(i5)' ) iptr
+        call output (line(1:28))
+d54 1
+a54 1
+      i = headcs(item(next(iptr)))
+d57 1
+a57 1
+        if (item(i) .eq. iptr) then
+d59 1
+a59 1
+            next(last) = next(i)
+d61 1
+a61 1
+            headcs(item(next(iptr))) = next(i)
+d63 1
+a63 1
+          next(i) = 0
+d68 1
+a68 1
+        i = next(i)
+d78 1
+a78 1
+       "$Id: parser.f90,v 2.29 2013/10/02 01:35:46 vsnyder Exp $"
+d87 4
+a90 1
+! $Log: $
+@
+

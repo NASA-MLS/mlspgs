@@ -1,0 +1,138 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.12
+	cfm-single-freq-0-1:1.1.0.10
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.8
+	mus-emls-1-70:1.1.0.6
+	rel-1-0-englocks-work:1.1.0.4
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.2
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2014.06.13.17.51.38;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@First commit
+@
+text
+@; This l2cf fragment is designed to read radiances for the 'relevant'
+; bands into the measurement vector
+
+begin Fill
+  measurement: Vector, template=measurementTemplate
+  measurementNoise: Vector, template=measurementTemplate
+  cleanMeasurement: Vector, template=measurementTemplate
+  fwm: Vector, template=measurementTemplate
+
+  corrections: Vector, template=correctionsTemplate
+  correctionNoise: Vector, template=correctionsTemplate
+
+  ;; ------------------------------------------ Read radiances -----
+  ;; Define a macro to read one bands worth of radiances
+  !define(readRadiances,{!dnl
+!ifelse($1,{9}, {!dnl
+; Band 9 affected by the Galactic core
+  Fill, quantity=measurementNoise.band$1, avoidBrightObjects="GalacticCenter", $
+    method=l1b, /isPrecision
+  Fill, quantity=measurement.band$1, method=l1b, precision=measurementNoise.band$1
+}, $1,{25}, {!dnl
+; Band 25 affected by the Galactic core, too
+  Fill, quantity=measurementNoise.band$1, avoidBrightObjects="GalacticCenter", $
+    method=l1b, /isPrecision
+  Fill, quantity=measurement.band$1, method=l1b, precision=measurementNoise.band$1
+},{!dnl
+!divert(-1)
+; All the other bands
+!divert!dnl
+  Fill, quantity=measurementNoise.band$1, method=l1b, /isPrecision
+  Fill, quantity=measurement.band$1, method=l1b, precision=measurementNoise.band$1!nl})
+})
+  ;; Read all the relevant bands
+  !nl!forall( {readRadiances}, !relevantBands)
+
+  ;; ------------------------------------------ Read L1B Baselines -----
+  ;; Now do the same for the baseline information in the L1B files.
+  !ifdef(L1BMAFBaselineSource,{},{!define(L1BMAFBaselineSource,{Baseline})})
+
+  ;; ================ Next section can be ommited by defining flagSkipL1BMAFBaseline
+  !ifdef(flagSkipL1BMAFBaseline,{},{
+
+  !define(readL1BMAFBaseline,{!dnl
+  Fill, quantity=corrections.band$1L1BMAFBaseline, method=l1b, $
+    suffix=' !L1BMAFBaselineSource'
+  Fill, quantity=correctionNoise.band$1L1BMAFBaseline, method=l1b, $
+    suffix=' !L1BMAFBaselineSource precision'!nl})
+  ;; Read this for all the relevant bands
+  !nl!forall( {readL1BMAFBaseline}, !relevantBands)
+
+  ;; ------------------------------------------ Apply L1B Baselines -----
+  ;; Now apply the baseline correction to all the radiances
+  !define(applyL1BMAFBaseline,{!dnl
+  Fill, quantity=measurement.band$1, method=applyBaseline, $
+    baselineQuantity=corrections.band$1L1BMAFBaseline
+  Fill, quantity=measurementNoise.band$1, method=applyBaseline, $
+    baselineQuantity=correctionNoise.band$1L1BMAFBaseline, /quadrature!nl})
+  ;; Apply to all relevant bands
+  !nl!forall( {applyL1BMAFBaseline}, !relevantBands)
+
+  })
+  ;; ====================== End of possibly omitted section
+
+  ;; ------------------------------------------ Dump L1B Masks -----
+  ;; Do we want to dump the radiance masks?
+  !ifdef(flagDumpL1BMasks,{!dnl
+    Dump, details=2, mask=measurement.band1
+  !define(DumpL1BMask,{!dnl
+  Dump, details=3, options="-lb[0,5]", mask=measurement.band$1!nl})
+  ;; Do this for all the relevant bands
+  !nl!forall( {DumpL1BMask}, !relevantBands)
+  })
+  ;; ====================== End of possibly omitted section
+
+  ;; ------------------------------------------ Miscellaneous stuff --
+  ;; Setup the radianceDiagnostics vector
+  minorFrameDiagnostics: Vector, template=minorFrameDiagnosticsTemplate
+  mappedChisqMax: Vector, template=mappedChisqTemplate
+  mappedChisqMean: Vector, template=mappedChisqTemplate
+  otherDiagnostics: Vector, template=otherDiagnosticsTemplate
+
+  ;; Now set the scan model precision, and possibly add noise to the values.
+  Fill, quantity=measurementNoise.scanResidualGHz, method=explicit, $
+    explicitValues = !scanModelPrecision, /spread
+  !ifelse(!substr(!cleanNoisy,0,5),noisy,{
+     Fill, quantity=measurement.scanResidualGHz, method=addNoise, $
+       sourceQuantity=cleanMeasurement.scanResidualGHz, $
+       noise=measurementNoise.scanResidualGHz, seed = [ 0, 10000 ]
+})
+end Fill
+
+; $Log: readradiances.l2cf,v $
+@

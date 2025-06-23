@@ -1,0 +1,645 @@
+head	2.11;
+access;
+symbols
+	v5-02-NRT-19:2.11
+	v6-00:2.11
+	v5-02-NRT-18:2.11
+	v5-02:2.11
+	v5-01-NRT-17:2.11
+	v5-01-NRT-16:2.11
+	v5-01-NRT-15:2.11
+	v5-01-NRT-14:2.11
+	neuralnetworks-1-0:2.11.0.4
+	cfm-single-freq-0-1:2.11.0.2
+	v5-01:2.11
+	v5-00:2.11
+	v4-23-TA133:2.10.0.2
+	mus-emls-1-70:2.9.0.8
+	rel-1-0-englocks-work:2.9.0.6
+	VUMLS1-00:2.9
+	VPL1-00:2.9
+	V4-22-NRT-08:2.9
+	VAM1-00:2.9
+	V4-21:2.9.0.4
+	V4-13:2.9
+	V4-12:2.9
+	V4-11:2.9
+	V4-10:2.9
+	V3-43:2.9
+	M4-00:2.9
+	V3-41:2.9
+	V3-40-PlusGM57:2.9.0.2
+	V2-24-NRT-04:2.8
+	V3-33:2.9
+	V2-24:2.8
+	V3-31:2.9
+	V3-30-NRT-05:2.9
+	cfm-01-00:2.9
+	V3-30:2.9
+	V3-20:2.9
+	V3-10:2.9
+	V2-23-NRT-02:2.8
+	V2-23:2.8
+	V2-22-NRT-01:2.8
+	V2-22:2.8
+	V2-21:2.8
+	V2-20:2.8
+	V2-11:2.6
+	V2-10:2.6
+	V2-00:2.6
+	V1-51:2.3
+	V1-50:2.3
+	V1-45:2.3
+	V1-44:2.3
+	V1-43:2.3
+	V1-32:2.3
+	V1-31:2.3
+	V1-30:2.3
+	V1-13:2.3
+	V1-12:2.3
+	V1-11:2.3
+	V1-10:2.3
+	newfwm-feb03:2.3.0.2
+	V1-04:2.2
+	V1-03:2.2
+	V1-02:2.2
+	JointForwardModel:2.2.0.4
+	V1-00:2.2
+	newfwm-sep01:2.2.0.2
+	V0-7:2.2;
+locks; strict;
+comment	@# @;
+
+
+2.11
+date	2019.06.24.23.29.26;	author pwagner;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2018.07.23.22.20.21;	author vsnyder;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2009.06.23.18.46.18;	author pwagner;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2006.09.19.20.33.57;	author vsnyder;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2006.08.11.20.58.38;	author vsnyder;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2006.05.27.02.59.36;	author vsnyder;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2006.05.20.02.17.23;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2005.06.22.18.57.01;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2002.10.07.23.43.11;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2001.06.01.21.28.21;	author livesey;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.06.01.01.34.52;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.11
+log
+@Updated to reflect TA-01-143
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module DNWT_CLONE
+
+! Really simple Newton-method with DNWT's interface.
+
+  use DNWT_TYPE, only: RK
+  use DNWT_MODULE, only: NF_Best, NF_DX, NF_EvalF, NF_EvalJ, NF_NewX, &
+    & NF_Solve, NF_Start, NF_TolX, NF_TolF, NWT_Options, NWT_t
+
+  implicit NONE
+
+  private
+
+  public Alt_NWT, Alt_NWTA, Alt_NWTDB
+
+  interface Alt_NWT; module procedure DNWT; end interface
+  interface Alt_NWTA; module procedure DNWTA; end interface
+  interface Alt_NWTDB; module procedure DNWTDB; end interface
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: dnwt_clone.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+! *****     Private data     *******************************************
+
+  character(len=*), parameter :: ME = 'DNWT'
+
+contains
+
+! ***************************************************     DNWT     *****
+  subroutine DNWT ( NFlag, AJ, Opt )
+
+    integer, intent(out) :: NFlag
+    class(nwt_t), intent(inout) :: AJ
+    type(nwt_options), intent(in), optional :: Opt
+    nflag = nf_start
+    aj%dxnl = huge(aj%dxnl)
+    if ( present(opt) ) aj%o = opt
+    return
+  end subroutine DNWT
+
+! **************************************************     DNWTA     *****
+
+  subroutine DNWTA ( NFlag, AJ )
+
+    integer, intent(inout) :: NFlag
+    class(nwt_t), intent(inout) :: AJ
+
+    select case ( nflag )
+    case ( nf_start )
+      nflag = nf_evalf
+    case ( nf_evalf )
+      if ( aj%fnorm < (1.0 + aj%o%relsf) * aj%fnmin ) then
+        nflag = nf_tolf
+      else
+        nflag = nf_evalj
+      end if
+    case ( nf_evalj )
+      nflag = nf_solve
+    case ( nf_solve )
+      if ( aj%dxn <= aj%o%tolxa .or. aj%dxn <= aj%o%tolxr * aj%axmax ) then
+        nflag = nf_tolx
+      else if ( aj%dxn < aj%dxnl ) then
+        aj%dxnl = aj%dxn
+        nflag = nf_best
+      else
+        nflag = nf_dx
+      end if
+    case ( nf_best )
+      nflag = nf_dx
+    case ( nf_dx )
+      nflag = nf_newx
+    case ( nf_newx )
+      nflag = nf_evalf
+    end select
+  end subroutine DNWTA 
+
+! *************************************************     DNWTDB     *****
+
+  subroutine DNWTDB ( AJ, WIDTH, WHY )
+    type (NWT_T), intent(in), optional :: AJ
+    integer, intent(in), optional :: WIDTH
+    character(len=*), intent(in), optional :: WHY ! printed if present
+  end subroutine DNWTDB
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: dnwt_clone.f90,v 2.10 2018/07/23 22:20:21 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module DNWT_CLONE
+
+! $Log: dnwt_clone.f90,v $
+! Revision 2.10  2018/07/23 22:20:21  vsnyder
+! Add AJ to all argument lists for nwt* so the options can be (eventually)
+! stored there instead of as saved module variables.
+!
+! Revision 2.9  2009/06/23 18:46:18  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.8  2006/09/19 20:33:57  vsnyder
+! Add NF_BEST detector so caller's BEST actions get done
+!
+! Revision 2.7  2006/08/11 20:58:38  vsnyder
+! Add 'simple' method to use alternate Newton solver
+!
+! Revision 2.6  2006/05/27 02:59:36  vsnyder
+! Add convergence test
+!
+! Revision 2.5  2006/05/20 02:17:23  vsnyder
+! Make DNWTDB compatible with dnwt_module
+!
+! Revision 2.4  2005/06/22 18:57:01  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.3  2002/10/07 23:43:11  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.2  2001/06/01 21:28:21  livesey
+! Added some more USE's to make it compile
+!
+! Revision 2.1  2001/06/01 01:34:52  vsnyder
+! Initial commit.  For debugging only
+!
+@
+
+
+2.10
+log
+@Add AJ to all argument lists for nwt* so the options can be (eventually)
+stored there instead of as saved module variables.
+@
+text
+@d17 2
+a18 3
+  use DNWT_MODULE, only: NF_BEST, NF_DX, NF_EVALF, NF_EVALJ, NF_NEWX, &
+    & NF_SOLVE, NF_START, NWT_T, FLAGNAME, NF_GMOVE, NF_BEST, NF_AITKEN,&
+    & NF_DX_AITKEN, NF_TOLX, NF_TOLF, NF_TOLX_BEST, NF_TOO_SMALL, NF_FANDJ
+d24 1
+a24 1
+  public ALT_NWT, ALT_NWTA, ALT_NWTDB, ALT_NWTOP
+d26 3
+a28 4
+  interface ALT_NWT; module procedure DNWT; end interface
+  interface ALT_NWTA; module procedure DNWTA; end interface
+  interface ALT_NWTDB; module procedure DNWTDB; end interface
+  interface ALT_NWTOP; module procedure DNWTOP; end interface
+a36 7
+  save
+
+  ! Some of these aren't used.  They're here so that the DNWTOP from the
+  ! "real" DNWT can be used without modification.
+
+  real(rk) :: AJSCAL, DXMAXI, DXN_PREV, DXNOIS, RELSF, SPMINI, SPSTRT, TOLXA, TOLXR
+  integer :: K1IT
+d41 1
+d43 1
+a43 1
+  subroutine DNWT ( NFLAG, AJ, XOPT, NOPT )
+d45 3
+a47 4
+    integer, intent(out) :: NFLAG
+    type(nwt_t), intent(inout) :: AJ
+    real(rk), intent(in) :: XOPT(*)
+    integer, intent(in), optional :: NOPT(*)
+d49 2
+a50 3
+    dxn_prev = huge(dxn_prev)
+    if ( present(nopt) ) call alt_nwtop ( aj, nopt, xopt )
+    call alt_nwtop ( aj ) ! default initialization
+d56 1
+a56 1
+  subroutine DNWTA ( NFLAG, AJ )
+d58 2
+a59 2
+    integer, intent(inout) :: NFLAG
+    type(nwt_t), intent(inout) :: AJ
+d65 1
+a65 1
+      if ( aj%fnorm < (1.0 + relsf) * aj%fnmin ) then
+d73 1
+a73 1
+      if ( aj%dxn <= tolxa .or. aj%dxn <= tolxr * aj%axmax ) then
+d75 2
+a76 2
+      else if ( aj%dxn < dxn_prev ) then
+        dxn_prev = aj%dxn
+d92 1
+a92 1
+  subroutine DNWTDB ( AJ, WIDTH, LEVEL, WHY )
+a94 3
+    integer, intent(in), optional :: LEVEL ! Absent, do everything
+    ! Present and 1 do everything
+    ! Present and 0 do CDXDXL, CGDX, DXN, FN, FNMIN, INC, SP, SQ, SQRT(FNXE)
+a97 89
+! *************************************************     DNWTOP     *****
+  subroutine DNWTOP ( AJ, NOPT, XOPT )
+    ! Process option vector for DNWT.  With no arguments, does default
+    ! initialization.
+    use ERMSG_M, only: ERMSG, ERVN
+    type (NWT_T), intent(in) :: AJ
+    integer, intent(in), optional :: NOPT(*)
+    real(rk), intent(in), optional :: XOPT(*)
+
+    logical, save :: FIRST = .true.
+    integer I, INDIC, K, KA, NACT
+    integer, save :: IOPTS(8) = (/ 0, 0, 0, 0, 0, 0, 0, 150 /)
+    character(len=4), parameter :: LABL(2) = (/ '(I) ', 'NOPT' /)
+    ! ??? Defaults aren't what comments say
+    real(rk),save :: VALUES(9) = (/ 0.1_rk, epsilon(values), epsilon(values), &
+                                    huge(values), 0.01_rk, 0.0_rk, 0.0_rk, &
+                                    0.0_rk, 0.0_rk /)
+    real(rk),save :: VALNOM(9) = (/ 0.1_rk, epsilon(values), epsilon(values), &
+                                    huge(values), 0.01_rk, 0.0_rk, 0.0_rk, &
+                                    0.0_rk, 0.0_rk /)
+    integer :: IVAL(2) ! for error messages
+
+!*************** Start of executable code ******************
+
+    if ( first ) then
+      valnom(7) = sqrt(sqrt(tiny(values))) ** 3
+      valnom(8) = sqrt(sqrt(epsilon(values))) ** 3
+      values(7:8) = valnom(7:8)
+      first = .false.
+    end if
+    if ( present(nopt) ) then
+      if ( .not. present(xopt) ) then
+        call ermsg ( me, 99, 2, 'NOPT present but XOPT absent', '.' )
+        return
+      end if
+      i = 1
+      do while ( nopt(i) /= 0 )
+        k = nopt(i)
+        ka = abs(k)
+        select case ( ka )
+!****************** Change *DATA* values *******************
+        case ( 1, 2 ) ! Set K1IT
+          if ( k > 0) iopts(ka) = nopt(i+1)
+          k1it = max(iopts(1),iopts(2))
+        case ( 3, 4, 7, 8 ) ! Change XSCAL and FSCAL indexes in data
+                            ! or set up bounds option in data
+          if ( k > 0) iopts(ka) = nopt(i+1)
+        case ( 5, 6 ) ! Set flags in data for reverse communi-
+                      ! cation and special matrix operations
+          if ( k > 0) iopts(ka) = 1
+          i = i - 1
+        case ( 9, 10 ) ! Set to default values
+          iopts = 0
+          iopts(8) = 150
+          values = valnom
+          i = i - 1
+        case ( 11:19 ) ! Set in data SPSTRT, SPMINI, AJSCAL,
+                       ! DXMAXI, RELSF, and DXNOIS
+          values(ka-10) = valnom(ka-10) ! Reset to nominal value
+          if ( k > 0) & ! If indicated, set to user input value
+            values(ka-10) = xopt(nopt(i+1))
+        case default
+          indic = 1
+          nact = 2
+          call ermsg ( me, indic, nact, 'INVALID NOPT', ',' )
+          ival(1) = i
+          ival(2) = nopt(i)
+          call ervn ( labl, ival, '.' )
+          return
+        end select
+        i = i + 2
+      end do
+    else
+      k1it = max(iopts(1),iopts(2))
+    end if
+!                     Reset every time one of them changes
+    spmini = values(2)
+    ajscal = values(3)
+    dxmaxi = values(4)
+    relsf = max(values(5),epsilon(relsf))
+    tolxa = values(7)
+    tolxr = values(8)
+    if ( present(nopt) ) return
+!                     Only set during initialization
+    spstrt = values(1)
+    dxnois = values(6)
+    return
+  end subroutine DNWTOP
+
+d101 1
+a101 1
+       "$Id: dnwt_clone.f90,v 2.9 2009/06/23 18:46:18 pwagner Exp $"
+d111 4
+@
+
+
+2.9
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d34 1
+a34 1
+       "$RCSfile: $"
+d51 1
+a51 1
+  subroutine DNWT ( NFLAG, XOPT, NOPT )
+d54 1
+d59 2
+a60 2
+    if ( present(nopt) ) call alt_nwtop ( nopt, xopt )
+    call alt_nwtop ( ) ! default initialization
+d112 1
+a112 1
+  subroutine DNWTOP ( NOPT, XOPT )
+d116 1
+d203 1
+a203 1
+       "$Id: read_apriori.f90 is it here $"
+d213 3
+@
+
+
+2.8
+log
+@Add NF_BEST detector so caller's BEST actions get done
+@
+text
+@d34 1
+a34 1
+       "$RCSfile: dnwt_clone.f90,v $"
+d198 1
+a199 1
+!---------------------------- RCS Ident Info -------------------------------
+d201 2
+a202 3
+       "$Id: dnwt_clone.f90,v 2.7 2006/08/11 20:58:38 vsnyder Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d204 1
+d206 1
+d211 3
+@
+
+
+2.7
+log
+@Add 'simple' method to use alternate Newton solver
+@
+text
+@d17 1
+a17 1
+  use DNWT_MODULE, only: NF_DX, NF_EVALF, NF_EVALJ, NF_NEWX, &
+d44 1
+a44 1
+  real(rk) :: AJSCAL, DXMAXI, DXNOIS, RELSF, SPMINI, SPSTRT, TOLXA, TOLXR
+d57 1
+d84 3
+d90 2
+d201 1
+a201 1
+       "$Id: dnwt_clone.f90,v 2.6 2006/05/27 02:59:36 vsnyder Exp $"
+d210 3
+@
+
+
+2.6
+log
+@Add convergence test
+@
+text
+@d14 1
+a14 2
+! Really simple Newton-method with DNWT's interface.  It doesn't even
+! have a convergence test, so you need to limit the number of iterations.
+d25 1
+a25 1
+  public NWT, NWTA, NWTDB, NWTOP
+d27 4
+a30 4
+  interface NWT; module procedure DNWT; end interface
+  interface NWTA; module procedure DNWTA; end interface
+  interface NWTDB; module procedure DNWTDB; end interface
+  interface NWTOP; module procedure DNWTOP; end interface
+d57 2
+a58 2
+    if ( present(nopt) ) call nwtop ( nopt, xopt )
+    call nwtop ( ) ! default initialization
+d195 1
+a195 1
+       "$Id: dnwt_clone.f90,v 2.5 2006/05/20 02:17:23 vsnyder Exp $"
+d204 3
+@
+
+
+2.5
+log
+@Make DNWTDB compatible with dnwt_module
+@
+text
+@d22 6
+d31 1
+a32 1
+    
+d39 11
+d58 2
+d74 5
+a78 1
+      nflag = nf_evalj
+d82 5
+a86 1
+      nflag = nf_dx
+d104 89
+d196 1
+a196 1
+       "$Id: dnwt_clone.f90,v 2.4 2005/06/22 18:57:01 pwagner Exp $"
+d205 3
+@
+
+
+2.4
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d29 1
+a29 1
+       "$RCSfile: $"
+d69 7
+a75 1
+  subroutine DNWTDB
+d80 1
+a80 1
+       "$Id: $"
+d89 3
+@
+
+
+2.3
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d27 1
+a27 4
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
+       "$Id: dnwt_clone.f90,v 2.2 2001/06/01 21:28:21 livesey Exp $"
+  character (len=len(idParm)), private :: Id = idParm
+d29 1
+a29 1
+       "$RCSfile: dnwt_clone.f90,v $"
+d72 5
+d83 3
+@
+
+
+2.2
+log
+@Added some more USE's to make it compile
+@
+text
+@d21 1
+a21 1
+       "$Id: dnwt_clone.f90,v 2.1 2001/06/01 01:34:52 vsnyder Exp $"
+d25 1
+d66 4
+d73 3
+@
+
+
+2.1
+log
+@Initial commit.  For debugging only
+@
+text
+@d11 2
+a12 1
+    & NF_SOLVE, NF_START, NWT_T
+d18 1
+d21 1
+a21 1
+       "$Id: dnwt_module.f90,v 2.15 2001/05/25 20:14:01 vsnyder Exp $"
+d24 1
+a24 1
+       "$RCSfile: dnwt_module.f90,v $"
+d67 4
+a70 1
+! $Log: $
+@
+

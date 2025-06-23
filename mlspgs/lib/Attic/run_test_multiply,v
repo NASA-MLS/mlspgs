@@ -1,0 +1,280 @@
+head	2.3;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+2.3
+date	2000.11.15.02.05.37;	author vsnyder;	state dead;
+branches;
+next	2.2;
+
+2.2
+date	2000.10.10.23.13.44;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2000.10.09.22.38.09;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.3
+log
+@Moved to tests/multiply
+@
+text
+@#!/bin/csh
+
+# Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+# $Id: run_test_multiply,v 2.2 2000/10/10 23:13:44 vsnyder Exp $
+
+# Run the "test_multiply" test harness.
+
+if ( .$1 == .--help ) then
+  echo "Options: -s => dump the sparse representation (default false)"
+  echo "         -d => dump the input matrices, and the output ones even if"
+  echo "               there\'s no error (default -d)"
+  echo "         -n => don't dump the matrices (default -d)"
+  echo "         -q => don't ask for the input (just read it)"
+  exit
+endif
+
+./test_multiply $* <<EOF
+10 3 4
+
+0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0
+
+0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0
+EOF
+./test_multiply $* <<EOF
+10 3 4
+
+1 0 0 0 0 0 0 0 0 0
+0 3 4 0 0 0 0 0 0 0
+0 0 0 5 6 7 0 0 0 0
+
+0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0
+EOF
+./test_multiply $* <<EOF
+10 3 4
+
+1 0 0 0 0 0 0 0 0 2  
+0 3 0 0 0 0 0 0 4 0
+0 0 5 6 7 0 0 0 0 0
+
+0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0
+EOF
+./test_multiply $* <<EOF
+10 3 4
+
+1 1 1 1 1 1 1 1 1 1
+2 2 2 2 2 2 2 2 2 2
+3 3 3 3 3 3 3 3 3 3
+
+0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0
+EOF
+./test_multiply $* <<EOF
+10 3 4
+
+0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0
+
+1 0 0 0 0 0 0 0 0 0
+0 3 4 0 0 0 0 0 0 0
+0 0 0 5 6 7 0 0 0 0
+0 0 0 0 0 0 8 9 0 0
+EOF
+./test_multiply $* <<EOF
+10 3 4
+
+1 0 0 0 0 0 0 0 0 0
+0 3 4 0 0 0 0 0 0 0
+0 0 0 5 6 7 0 0 0 0
+
+1 0 0 0 0 0 0 0 0 0
+0 3 4 0 0 0 0 0 0 0
+0 0 0 5 6 7 0 0 0 0
+0 0 0 0 0 0 8 9 0 0
+EOF
+./test_multiply $* <<EOF
+10 3 4
+
+1 0 0 0 0 0 0 0 0 2  
+0 3 0 0 0 0 0 0 4 0
+0 0 5 6 7 0 0 0 0 0
+
+1 0 0 0 0 0 0 0 0 0
+0 3 4 0 0 0 0 0 0 0
+0 0 0 5 6 7 0 0 0 0
+0 0 0 0 0 0 8 9 0 0
+EOF
+./test_multiply $* <<EOF
+10 4 3
+
+4 4 4 4 4 4 4 4 4 4
+5 5 5 5 5 5 5 5 5 5
+6 6 6 6 6 6 6 6 6 6
+7 7 7 7 7 7 7 7 7 7
+
+1 2 0 0 0 0 0 0 0 0
+0 0 3 4 0 0 0 0 0 0
+0 0 0 0 5 6 7 0 0 0
+EOF
+./test_multiply $* <<EOF
+10 3 4    
+
+0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0
+
+1 0 0 0 0 0 0 0 2 0
+0 3 4 0 0 0 0 0 0 0
+0 0 0 5 6 7 0 0 0 0
+0 0 0 0 0 0 8 9 0 0
+EOF
+./test_multiply $* <<EOF
+10 4 3
+
+1 0 0 0 0 0 0 0 0 0
+0 3 4 0 0 0 0 0 0 0
+0 0 0 5 6 7 0 0 0 0
+0 0 0 0 0 0 8 9 0 0
+
+1 0 0 0 0 0 0 0 0 2  
+0 3 0 0 0 0 0 0 4 0
+0 0 5 6 7 0 0 0 0 0
+EOF
+./test_multiply $* <<EOF
+10 3 4
+
+1 0 0 0 0 0 0 0 0 2  
+0 3 0 0 0 0 0 0 4 0
+0 0 5 6 7 0 0 0 0 0
+
+1 0 0 0 0 0 0 0 2 0
+0 3 4 0 0 0 0 0 0 0
+0 0 0 5 6 7 0 0 0 0
+0 0 0 0 0 0 8 9 0 0
+EOF
+./test_multiply $* <<EOF
+10 4 3
+
+4 4 4 4 4 4 4 4 4 4
+5 5 5 5 5 5 5 5 5 5
+6 6 6 6 6 6 6 6 6 6
+7 7 7 7 7 7 7 7 7 7
+
+1 0 0 0 0 0 0 0 0 2  
+0 3 0 0 0 0 0 0 4 0
+0 0 5 6 7 0 0 0 0 0
+EOF
+./test_multiply $* <<EOF
+10 3 4
+
+0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0
+
+4 4 4 4 4 4 4 4 4 4
+5 5 5 5 5 5 5 5 5 5
+6 6 6 6 6 6 6 6 6 6
+7 7 7 7 7 7 7 7 7 7
+EOF
+./test_multiply $* <<EOF
+10 3 4
+
+1 2 0 0 0 0 0 0 0 0
+0 0 3 4 0 0 0 0 0 0
+0 0 0 0 5 6 7 0 0 0
+
+4 4 4 4 4 4 4 4 4 4
+5 5 5 5 5 5 5 5 5 5
+6 6 6 6 6 6 6 6 6 6
+7 7 7 7 7 7 7 7 7 7
+EOF
+./test_multiply $* <<EOF
+10 3 4
+
+1 0 0 0 0 0 0 0 0 2  
+0 3 0 0 0 0 0 0 4 0
+0 0 5 6 7 0 0 0 0 0
+
+4 4 4 4 4 4 4 4 4 4
+5 5 5 5 5 5 5 5 5 5
+6 6 6 6 6 6 6 6 6 6
+7 7 7 7 7 7 7 7 7 7
+EOF
+./test_multiply $* <<EOF
+10 3 4
+
+1 1 1 1 1 1 1 1 1 1
+2 2 2 2 2 2 2 2 2 2
+3 3 3 3 3 3 3 3 3 3
+
+4 4 4 4 4 4 4 4 4 4
+5 5 5 5 5 5 5 5 5 5
+6 6 6 6 6 6 6 6 6 6
+7 7 7 7 7 7 7 7 7 7
+EOF
+
+# $Log: run_test_multiply,v $
+# Revision 2.2  2000/10/10 23:13:44  vsnyder
+# Added copyright, cvs Id and Log, print usage if $1 is "--help"
+#
+# Revision 2.1  2000/10/09 22:38:09  vsnyder
+# Inititial entry.  This is a "test harness" script.
+#
+@
+
+
+2.2
+log
+@Added copyright, cvs Id and Log, print usage if $1 is "--help"
+@
+text
+@d6 1
+a6 1
+# $Id: run_test_multiply,v 2.1 2000/10/09 22:38:09 vsnyder Exp $
+d213 3
+@
+
+
+2.1
+log
+@Inititial entry.  This is a "test harness" script.
+@
+text
+@d1 1
+d3 4
+a6 1
+# $Id: $
+d10 9
+d212 4
+a215 1
+# $Log: $
+@
+

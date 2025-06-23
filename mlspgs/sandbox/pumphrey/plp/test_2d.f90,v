@@ -1,0 +1,186 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.18
+	cfm-single-freq-0-1:1.1.0.16
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.14
+	mus-emls-1-70:1.1.0.12
+	rel-1-0-englocks-work:1.1.0.10
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.8
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.6
+	V2-24-NRT-04:1.1
+	V3-33:1.1
+	V2-24:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1
+	V2-23-NRT-02:1.1
+	V2-23:1.1
+	V2-22-NRT-01:1.1
+	V2-22:1.1
+	V2-21:1.1
+	V2-20:1.1
+	V2-11:1.1
+	V2-10:1.1
+	V2-00:1.1
+	V1-51:1.1
+	V1-50:1.1
+	V1-45:1.1
+	V1-44:1.1
+	V1-43:1.1
+	V1-42:1.1
+	V1-41:1.1
+	V1-32:1.1
+	V1-40:1.1
+	V1-31:1.1
+	V1-13:1.1
+	V1-12:1.1
+	V1-11:1.1
+	V1-10:1.1
+	newfwm-feb03:1.1.0.4
+	V1-04:1.1
+	V1-03:1.1
+	V1-02:1.1
+	V1-00:1.1
+	newfwm-sep01:1.1.0.2
+	V0-7:1.1
+	V0-5-Level2:1.1
+	V0-5-SIPS:1.1
+	V0_1:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	99.12.06.14.27.17;	author pumphrey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Added a bunch of files to the sandbox: mostly files for testing
+the l3ascii stuff.
+@
+text
+@program test_2d
+
+  ! This program is a first attempt to use the plplot library 
+  ! for contour plots
+  use plplot_module
+  !-- Variables--!
+  integer,parameter::nx=101,ny=50,nlevel=21
+  real,parameter::pi=3.1415926536
+  real(kind=PLFLT),dimension(nx)::x
+  real(kind=PLFLT),dimension(ny)::y
+  real(kind=PLFLT),dimension(nx,ny)::z
+  real(kind=PLFLT),dimension(nlevel)::clevel  
+  real(kind=PLFLT)::xmin,xmax,ymin,ymax,shear
+  real(kind=PLFLT)::xmult,ymult,sh_color
+  real(kind=PLFLT),dimension(6)::tr
+  !  character(len=1)::foo
+  integer::ic,i
+  integer(kind=PLINT)::sh_cmap,min_color,min_width,max_color,max_width,sh_width
+
+  ! Nasty. Very nasty !
+  !  common /plplot/ tr
+
+  !------Executable code--------------------!
+  clevel=-1 + (/ (ic*2.0/(nlevel-1),ic=0,nlevel-1) /)
+
+  x=(/ (4*pi*ic/real(nx-1),ic=0,nx-1) /)-2*pi
+  y=(/ (2*pi*ic/real(ny-1),ic=0,ny-1) /)-pi
+
+  ! Hack to make x axis not evenly spaced
+  x=sin(x/4)*2*pi
+  do i=1,nx
+      z(i,:)=sin(y)*cos(x(i))
+  enddo
+  call plscmap0n(5)
+  call plinit()
+
+  xmin=1
+  xmax=nx
+  ymin=1
+  ymax=ny
+
+  call plfcp(z,x,y)
+
+  call plenv(xmin,xmax,ymin,ymax,0,0)
+  call plcol(2)
+  call pllab("X Coord","Y Coord","Boring")
+  call plcol(4)
+  call plcon0(z,nx,ny,1,nx,1,ny,clevel,nlevel)
+
+  xmin=x(1)
+  xmax=x(nx)
+  ymin=y(1)
+  ymax=y(ny)
+  shear=0.0
+  xmult=(x(nx)-x(1))/(nx-1)
+  ymult=(y(ny)-y(1))/(ny-1)
+  tr=(/ xmult,shear,xmin,ymult,shear,ymin /)
+  call pladv(0)
+  call plcol(1)
+  call plenv(xmin,xmax,ymin,ymax,0,0)
+  call plcol(2)
+  call pllab("X Coord","Y Coord","Boring")
+
+  !Do filled contours
+
+  sh_cmap = 1
+  min_color = 1
+  min_width = 0
+  max_color = 0
+  max_width = 0
+  sh_width=1
+  shadeloop:do i=1,nlevel-1
+      sh_color=i
+      sh_color=sh_color/(nlevel-1)
+      ! call plpsty(modulo(i,8)) ! gets different shade patterns 
+
+      !      works if x and y evenly spaced
+      !      call plshade0(z,nx,ny," ", xmin,xmax,ymin,ymax,&
+      !           clevel(i),clevel(i+1),sh_cmap,sh_color,sh_width,&
+      !           min_color,min_width,max_color,max_width)
+
+      call plshade1(z,nx,ny," ", xmin,xmax,ymin,ymax,&
+           clevel(i),clevel(i+1),sh_cmap,sh_color,sh_width,&
+           min_color,min_width,max_color,max_width,x,y)
+
+  enddo shadeloop
+  call plcol(4)
+  print*,tr
+  call plcon1(z,nx,ny,1,nx,1,ny,clevel,nlevel,x,y)
+  call plend()
+
+end program test_2d
+@

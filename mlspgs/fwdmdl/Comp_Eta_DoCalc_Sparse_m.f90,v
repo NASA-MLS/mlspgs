@@ -1,0 +1,1404 @@
+head	2.10;
+access;
+symbols
+	v5-02-NRT-19:2.10
+	v6-00:2.10
+	v5-02-NRT-18:2.10
+	v5-02:2.10
+	v5-01-NRT-17:2.10
+	v5-01-NRT-16:2.10
+	v5-01-NRT-15:2.10
+	v5-01-NRT-14:2.10
+	neuralnetworks-1-0:2.10.0.6
+	cfm-single-freq-0-1:2.10.0.4
+	v5-01:2.10
+	v5-00:2.10
+	v4-23-TA133:2.10.0.2
+	mus-emls-1-70:2.8.0.2
+	rel-1-0-englocks-work:2.6.0.2
+	VUMLS1-00:2.2;
+locks; strict;
+comment	@# @;
+
+
+2.10
+date	2018.09.12.22.01.15;	author vsnyder;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2018.08.28.22.14.02;	author vsnyder;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2018.05.17.01.31.52;	author vsnyder;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2018.05.14.23.40.58;	author vsnyder;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2018.03.07.17.43.57;	author pwagner;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2017.11.29.00.40.39;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2017.11.01.19.00.30;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2017.03.11.00.51.18;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2017.01.14.01.57.09;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2016.12.15.02.44.32;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.10
+log
+@Add Comp_Eta generic, identical to Comp_Eta_DoCalc_Sparse.  Add
+Comp_All_Eta_2D_Local_1D.
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Comp_Eta_DoCalc_Sparse_m
+
+  implicit NONE
+
+  private
+
+  public :: Comp_Eta, Comp_Eta_Docalc_Sparse
+  public :: Comp_All_Eta_2D,  Comp_All_Eta_2D_Local_1D, Comp_One_Eta_2D
+  public :: Comp_All_Eta_QTM, Comp_One_Eta_QTM
+  public :: Comp_One_Eta_Z
+
+  interface Comp_Eta
+    module procedure Comp_All_Eta_2D, Comp_All_Eta_2D_Local_1D, Comp_One_Eta_2D
+    module procedure Comp_One_Eta_2D_Local_1D
+    module procedure Comp_All_Eta_QTM, Comp_One_Eta_QTM
+  end interface
+
+  interface Comp_Eta_Docalc_Sparse
+    module procedure Comp_All_Eta_2D, Comp_All_Eta_2D_Local_1D, Comp_One_Eta_2D
+    module procedure Comp_One_Eta_2D_Local_1D
+    module procedure Comp_All_Eta_QTM, Comp_One_Eta_QTM
+  end interface
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: Comp_Eta_DoCalc_Sparse_m.f90,v $"
+  private :: not_used_here
+!---------------------------------------------------------------------------
+
+contains
+
+  ! --------------------------------------------  Comp_All_Eta_2D  -----
+
+  subroutine Comp_All_Eta_2D ( Grids_f, Tan_Pt, Z_Path, Eta_Z, &
+                             & Phi_Path, Eta_Phi, Eta_zp, Eta_fzp, Skip )
+
+  ! Compute interpolation coefficients for Zeta x Phi for all molecules,
+  ! assuming some will be frequency dependent, and it is necessary to
+  ! keep Eta_Phi and Eta_Z.  If those assumptions are not necessary, use
+  ! Comp_All_Eta_2D_Local_1D.
+
+    use Load_Sps_Data_m, only: Grids_t
+    use MLSKinds, only: RP
+    use Sparse_Eta_m, only: Sparse_Eta_t
+
+    type(grids_t), intent(in) :: Grids_f       ! Quantity values
+    integer, intent(in) :: Tan_Pt              ! To split Z_Path into two
+                                               ! monotone halves
+    real(rp), intent(in) :: Z_Path(:)          ! Zetas on the path
+    class(sparse_eta_t), intent(inout) :: Eta_Z(:) ! from VMR's zeta to path.
+                                               ! InOut so as not to reallocate
+                                               ! Eta_Z%Eta
+    real(rp), intent(in) :: Phi_Path(:)        ! Phis on the path
+    type(sparse_eta_t), intent(inout) :: Eta_Phi(:)  ! Created here
+    class(sparse_eta_t), intent(inout) :: Eta_zp(:)  ! Created here
+    class(sparse_eta_t), intent(inout), optional :: Eta_fzp(:) ! Created here
+    integer, intent(in), optional :: Skip      ! At tangent point, default 1
+
+    integer :: I
+
+    if ( present(eta_fzp) ) then
+      do i = 1, size(grids_f%mol)
+        if ( grids_f%l_f(i-1)+1 == grids_f%l_f(i) ) then ! Not frequency dependent
+          call comp_one_eta_2d ( grids_f, tan_pt, z_path, eta_z(i), &
+                               & phi_path, eta_phi(i), eta_fzp(i), i, skip )
+        else ! Frequency dependent, fill Eta_ZP so we can calculate Eta_FZP
+             ! when we have frequency
+          call comp_one_eta_2d ( grids_f, tan_pt, z_path, eta_z(i), &
+                               & phi_path, eta_phi(i), eta_zp(i), i, skip )
+        end if
+      end do
+    else
+      call comp_one_eta_2d ( grids_f, tan_pt, z_path, eta_z(i), &
+                           & phi_path, eta_phi(i), eta_zp(i), i, skip )
+    end if
+
+  end subroutine Comp_All_Eta_2D
+
+  ! -----------------------------------  Comp_All_Eta_2D_Local_1D  -----
+
+  subroutine Comp_All_Eta_2D_Local_1D ( Grids_f, Tan_Pt, Z_Path, Phi_Path, &
+                                      & Eta_zp, Skip )
+
+  ! Compute interpolation coefficients for Zeta x Phi for all molecules
+  ! without provision for frequency dependence.  Use this one if it isn't
+  ! necessary to keep Eta_Phi and Eta_Z
+
+    use Load_Sps_Data_m, only: Grids_t
+    use MLSKinds, only: RP
+    use Sparse_Eta_m, only: Sparse_Eta_t
+
+    type(grids_t), intent(in) :: Grids_f       ! Quantity values
+    integer, intent(in) :: Tan_Pt              ! To split Z_Path into two
+                                               ! monotone halves
+    real(rp), intent(in) :: Z_Path(:)          ! Zetas on the path
+    real(rp), intent(in) :: Phi_Path(:)        ! Phis on the path
+    class(sparse_eta_t), intent(inout) :: Eta_zp(:)  ! Created here
+    integer, intent(in), optional :: Skip      ! At tangent point, default 1
+
+    integer :: I
+
+    do i = 1, size(grids_f%l_v)
+      call comp_one_eta_2d_local_1D ( grids_f, tan_pt, z_path, phi_path, &
+                                    & eta_zp(i), i, skip )
+    end do
+
+  end subroutine Comp_All_Eta_2D_Local_1D
+
+  ! -------------------------------------------  Comp_All_Eta_QTM  -----
+
+  subroutine Comp_All_Eta_QTM ( Grids_f, Tan_Pt, Z_Path, Eta_Z, Eta_Path, &
+                              & Eta_zQ, Skip )
+
+  ! Compute interpolation coefficients for Zeta x QTM for all molecules
+
+    use Load_Sps_Data_m, only: Grids_t
+    use MLSKinds, only: RP
+    use Sparse_Eta_m, only: Sparse_Eta_t
+
+    type(grids_t), intent(in) :: Grids_f           ! Quantity values
+    integer, intent(in) :: Tan_Pt                  ! To split Z_Path into two
+                                                   ! monotone halves
+    real(rp), intent(in) :: Z_Path(:)              ! Zetas on the path
+    class(sparse_eta_t), intent(out) :: Eta_Z(:)   ! from VMR's zeta to path.
+    class(sparse_eta_t), intent(in) :: Eta_Path(:) ! from QTM to path for
+                                                   ! all species, because
+                                                   ! there's only one QTM.
+    class(sparse_eta_t), intent(out) :: Eta_zQ(:)  ! Created here
+    integer, intent(in), optional :: Skip          ! At tangent point, default 1
+
+    integer :: I
+
+    ! Compute Eta_Path for all molecules because there's only one QTM
+    ! for everything
+
+    do i = 1, size(grids_f%mol)
+      ! Compute Eta_ZQ(i) = Eta_Z(i) * Eta_Path(i)
+      call comp_one_eta_QTM ( grids_f, tan_pt, z_path, eta_z(i), &
+                            & eta_path(i), eta_zQ(i), i, skip )
+    end do
+
+  end subroutine Comp_All_Eta_QTM
+
+  ! --------------------------------------------  Comp_One_Eta_2D  -----
+
+  subroutine Comp_One_Eta_2D ( Grids_f, Tan_Pt, Z_Path, Eta_Z, &
+                             & Phi_Path, Eta_Phi, Eta_zP, N, Skip )
+
+  ! Compute interpolation coefficients for Zeta x Phi for one molecule
+
+    use Load_Sps_Data_m, only: Grids_t
+    use MLSKinds, only: RP
+    use Sparse_Eta_m, only: Sparse_Eta_t
+
+    type(grids_t), intent(in) :: Grids_f         ! Quantity values
+    integer, intent(in) :: Tan_Pt                ! To split Z_Path into two
+                                                 ! monotone halves
+    real(rp), intent(in) :: Z_Path(:)            ! Zetas on the path
+    class(sparse_eta_t), intent(out) :: Eta_Z    ! from VMR's Zeta to path.
+    real(rp), intent(in) :: Phi_Path(:)          ! Phis on the path, Radians
+    class(sparse_eta_t), intent(out) :: Eta_Phi  ! from VMR's Phi to path.
+    class(sparse_eta_t), intent(inout) :: Eta_zP ! Created here
+    integer, intent(in), optional :: N           ! Which quantity, default 1
+    integer, intent(in), optional :: Skip        ! At tangent point, default 1
+
+    integer :: MyN
+    integer :: P1, P2 ! Boundaries from Grids_f%l_p
+    integer :: What
+
+    myN = 1
+    if ( present(n) ) myN = n
+
+    what = grids_f%qtyStuff(myN)%qty%template%name
+
+    p1 = grids_f%l_p(myN-1)+1
+    p2 = grids_f%l_p(myN)
+
+    ! Create and compute Eta_Phi
+    call eta_phi%eta_1d ( grids_f%phi_basis(p1:p2), phi_path, &
+                        & what=what, resize=.true. )
+    eta_phi%lbnd = [ p1 ] ! Column bounds
+    eta_phi%ubnd = [ p2 ] !   in phi_basis
+
+    ! Create Eta_Z
+    call comp_one_eta_z ( grids_f, tan_pt, z_path, eta_z, myN, skip )
+
+    ! Compute Eta_ZP
+    call eta_zp%eta_nd ( eta_z, eta_phi, what=what, resize=.true. )
+
+  end subroutine Comp_One_Eta_2D
+
+  ! -----------------------------------  Comp_One_Eta_2D_Local_1D  -----
+
+  subroutine Comp_One_Eta_2D_Local_1D ( Grids_f, Tan_Pt, Z_Path, &
+                                      & Phi_Path, Eta_zP, N, Skip )
+
+  ! Compute interpolation coefficients for Zeta x Phi for one molecule.
+  ! Use this one if you don't need to keep Eta_Z and Eta_Phi
+
+    use Load_Sps_Data_m, only: Grids_t
+    use MLSKinds, only: RP
+    use Sparse_Eta_m, only: Sparse_Eta_t
+
+    type(grids_t), intent(in) :: Grids_f         ! Quantity values
+    integer, intent(in) :: Tan_Pt                ! To split Z_Path into two
+                                                 ! monotone halves
+    real(rp), intent(in) :: Z_Path(:)            ! Zetas on the path
+    real(rp), intent(in) :: Phi_Path(:)          ! Phis on the path, Radians
+    class(sparse_eta_t), intent(inout) :: Eta_zP ! Created here
+    integer, intent(in), optional :: N           ! Which quantity, default 1
+    integer, intent(in), optional :: Skip        ! At tangent point, default 1
+
+    type(sparse_eta_t) :: Eta_Z    ! from VMR's Zeta to path.
+    type(sparse_eta_t) :: Eta_Phi  ! from VMR's Phi to path.
+    integer :: MyN
+    integer :: P1, P2 ! Boundaries from Grids_f%l_p
+    integer :: What
+
+    myN = 1
+    if ( present(n) ) myN = n
+
+    what = grids_f%qtyStuff(myN)%qty%template%name
+
+    p1 = grids_f%l_p(myN-1)+1
+    p2 = grids_f%l_p(myN)
+
+    ! Create and compute Eta_Phi
+    call eta_phi%eta_1d ( grids_f%phi_basis(p1:p2), phi_path, &
+                        & what=what, resize=.true. )
+    eta_phi%lbnd = [ p1 ] ! Column bounds
+    eta_phi%ubnd = [ p2 ] !   in phi_basis
+
+    ! Create Eta_Z
+    call comp_one_eta_z ( grids_f, tan_pt, z_path, eta_z, myN, skip )
+
+    ! Compute Eta_ZP
+    call eta_zp%eta_nd ( eta_z, eta_phi, what=what, resize=.true. )
+
+  end subroutine Comp_One_Eta_2D_Local_1D
+
+  ! -------------------------------------------  Comp_One_Eta_QTM  -----
+
+  subroutine Comp_One_Eta_QTM ( Grids_f, Tan_Pt, Z_Path, Eta_Z, Eta_Path, &
+                              & Eta_zQ, N, Skip )
+
+  ! Compute interpolation coefficients for Zeta x QTM for one molecule
+
+    use Sparse_Eta_m, only: Sparse_Eta_t
+    use Load_Sps_Data_m, only: Grids_t
+    use MLSKinds, only: RP
+
+    type(grids_t), intent(in) :: Grids_f        ! Quantity values
+    integer, intent(in) :: Tan_Pt               ! To split Z_Path into two
+                                                ! monotone halves
+    real(rp), intent(in) :: Z_Path(:)           ! Zetas on the path
+    class(sparse_eta_t), intent(out) :: Eta_Z   ! from VMR's zeta to path.
+    class(sparse_eta_t), intent(in) :: Eta_Path ! from QTM to path.  Not
+                                                ! computed here because there's
+                                                ! only one QTM for everything
+    class(sparse_eta_t), intent(out) :: Eta_zQ  ! Created here
+    integer, intent(in), optional :: N          ! Which quantity, default 1
+    integer, intent(in), optional :: Skip       ! At tangent point, default 1
+
+    ! Create Eta_Z
+    call comp_one_eta_z ( grids_f, tan_pt, z_path, eta_z, n, skip )
+
+    ! Compute Eta_ZQ
+!     call eta_zp%eta_nd ( eta_z, eta_path, what=what, resize=.true. )
+
+  end subroutine Comp_One_Eta_QTM
+
+  ! ---------------------------------------------  Comp_One_Eta_Z  -----
+
+  subroutine Comp_One_Eta_Z ( Grids_f, Tan_Pt, Z_Path, Eta_Z, &
+                            & N, Skip )
+
+  ! Compute interpolation coefficients for Zeta for one molecule
+
+    use Load_Sps_Data_m, only: Grids_t
+    use MLSKinds, only: RP
+    use Sparse_Eta_m, only: Sparse_Eta_t
+
+    type(grids_t), intent(in) :: Grids_f         ! Quantity values
+    integer, intent(in) :: Tan_Pt                ! To split Z_Path into two
+                                                 ! monotone halves
+    real(rp), intent(in) :: Z_Path(:)            ! Zetas on the path
+    class(sparse_eta_t), intent(out) :: Eta_Z    ! from VMR's Zeta to path.
+    integer, intent(in), optional :: N           ! Which quantity, default 1
+    integer, intent(in), optional :: Skip        ! At tangent point, default 1
+
+    integer :: Z1, Z2 ! Boundaries from Grids_f%l_z
+    integer :: MyN, MySkip
+    integer :: N_Path
+    integer :: What
+
+    myN = 1
+    if ( present(n) ) myN = n
+
+    mySkip = 1
+    if ( present(skip) ) mySkip = skip
+
+    what = grids_f%qtyStuff(myN)%qty%template%name
+
+    n_path = size(z_path) ! Assumed == size(p_path)
+
+    z1 = grids_f%l_z(myN-1)+1
+    z2 = grids_f%l_z(myN)
+
+    ! Create Eta_Z
+    call eta_z%create ( n_path, z2-z1+1, 2*(z2-z1+1), &
+                      & ubnd = [ z2 ], lbnd = [ z1 ], what=what )
+    ! Compute the two halves of Eta_Z on either side of the tangent point
+    ! separately.  These parts are monotone.  This avoids sorting Z_Path.
+    call eta_z%eta_1d ( grids_f%zet_basis(z1:z2), z_path, &
+                      & row1=tan_pt, rowN=1, create=.false. )
+    call eta_z%eta_1d ( grids_f%zet_basis(z1:z2), z_path, &
+                      & row1=tan_pt+mySkip, rowN=n_path, create=.false. )
+
+  end subroutine Comp_One_Eta_Z
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: Comp_Eta_DoCalc_Sparse_m.f90,v 2.9 2018/08/28 22:14:02 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Comp_Eta_DoCalc_Sparse_m
+
+! $Log: Comp_Eta_DoCalc_Sparse_m.f90,v $
+! Revision 2.9  2018/08/28 22:14:02  vsnyder
+! Add Comp_One_Eta_2D_Local_1D, make some arguments optional
+!
+! Revision 2.8  2018/05/17 01:31:52  vsnyder
+! Remove no-longer-used routines
+!
+! Revision 2.7  2018/05/14 23:40:58  vsnyder
+! Change to sparse eta representation
+!
+! Revision 2.6  2018/03/07 17:43:57  pwagner
+! Made consistent with new Sparse_t datatype
+!
+! Revision 2.5  2017/11/29 00:40:39  vsnyder
+! Add Get_Eta_DoCalc_ZP, Get_One_Eta_DoCalc_ZP temporarily to get Eta matrix
+! while full forward model still needs it.  Add "skip # at tangent" argument.
+! Compute column starting position for each species.  Add thumbnails.  Use
+! type-bound forms of Sparse_t procedures.
+!
+! Revision 2.4  2017/11/01 19:00:30  vsnyder
+! Add tangent point
+!
+! Revision 2.3  2017/03/11 00:51:18  vsnyder
+! Use Grids_F instead of Beta_Group
+!
+! Revision 2.2  2017/01/14 01:57:09  vsnyder
+! Eliminate polymorphic interpolators.  Add arguments to return 1D Etas.
+! Assume Z_Path and Phi_Path are not sorted.  Use template%Phi as radians
+! because Phi_Path is radians.
+!
+! Revision 2.1  2016/12/15 02:44:32  vsnyder
+! Initial commit
+!
+@
+
+
+2.9
+log
+@Add Comp_One_Eta_2D_Local_1D, make some arguments optional
+@
+text
+@d18 2
+a19 2
+  public :: Comp_Eta_Docalc_Sparse
+  public :: Comp_All_Eta_2D,  Comp_One_Eta_2D
+d23 6
+d30 1
+a30 1
+    module procedure Comp_All_Eta_2D,  Comp_One_Eta_2D
+d48 4
+a51 1
+  ! Compute interpolation coefficients for Zeta x Phi for all molecules
+d90 30
+d174 1
+a174 1
+    integer, intent(in), optional :: N          ! Which quantity, default 1
+d221 1
+a221 1
+    integer, intent(in), optional :: N          ! Which quantity, default 1
+d335 1
+a335 1
+       "$Id: Comp_Eta_DoCalc_Sparse_m.f90,v 2.8 2018/05/17 01:31:52 vsnyder Exp $"
+d345 3
+@
+
+
+2.8
+log
+@Remove no-longer-used routines
+@
+text
+@d25 1
+d58 1
+a58 1
+    class(sparse_eta_t), intent(inout) :: Eta_fzp(:) ! Created here
+d63 15
+a77 10
+    do i = 1, size(grids_f%mol)
+      if ( grids_f%l_f(i-1)+1 == grids_f%l_f(i) ) then ! Not frequency dependent
+        call comp_one_eta_2d ( grids_f, i, tan_pt, z_path, eta_z(i), &
+                             & phi_path, eta_phi(i), eta_fzp(i), skip )
+      else ! Frequency dependent, fill Eta_ZP so we can calculate Eta_FZP
+           ! when we have frequency
+        call comp_one_eta_2d ( grids_f, i, tan_pt, z_path, eta_z(i), &
+                             & phi_path, eta_phi(i), eta_zp(i), skip )
+      end if
+    end do
+d110 2
+a111 2
+      call comp_one_eta_QTM ( grids_f, i, tan_pt, z_path, eta_z(i), &
+                            & eta_path(i), eta_zQ(i), skip )
+d118 2
+a119 2
+  subroutine Comp_One_Eta_2D ( Grids_f, N, Tan_Pt, Z_Path, Eta_Z, &
+                             & Phi_Path, Eta_Phi, Eta_zP, Skip )
+a127 1
+    integer, intent(in) :: N                     ! Which quantity
+d135 1
+d138 1
+d142 4
+a145 1
+    what = grids_f%qtyStuff(n)%qty%template%name
+d147 2
+a148 2
+    p1 = grids_f%l_p(n-1)+1
+    p2 = grids_f%l_p(n)
+d157 1
+a157 1
+    call comp_one_eta_z ( grids_f, n, tan_pt, z_path, eta_z, skip )
+d164 49
+d215 2
+a216 2
+  subroutine Comp_One_Eta_QTM ( Grids_f, N, Tan_Pt, Z_Path, Eta_Z, Eta_Path, &
+                              & Eta_zQ, Skip )
+a224 1
+    integer, intent(in) :: N                    ! Which quantity
+d233 1
+d237 1
+a237 1
+    call comp_one_eta_z ( grids_f, n, tan_pt, z_path, eta_z, skip )
+d246 2
+a247 2
+  subroutine Comp_One_Eta_Z ( Grids_f, N, Tan_Pt, Z_Path, Eta_Z, &
+                            & Skip )
+a255 1
+    integer, intent(in) :: N                     ! Which quantity
+d260 1
+d264 1
+a264 1
+    integer :: MySkip
+d268 2
+a269 1
+    what = grids_f%qtyStuff(n)%qty%template%name
+d274 2
+d278 2
+a279 2
+    z1 = grids_f%l_z(n-1)+1
+    z2 = grids_f%l_z(n)
+d296 1
+a296 1
+       "$Id: Comp_Eta_DoCalc_Sparse_m.f90,v 2.7 2018/05/14 23:40:58 vsnyder Exp $"
+d306 3
+@
+
+
+2.7
+log
+@Change to sparse eta representation
+@
+text
+@a21 4
+  public :: Get_Eta_DoCalc_FZP
+  ! Be careful with Get_One_Eta_DoCalc_ZP to send only the columns of
+  ! Eta, Do_Calc, NZ and NNZ that are gemane to the species.
+  public :: Get_One_Eta_DoCalc_FZP
+a230 160
+  ! -----------------------------------------  Get_Eta_DoCalc_FZP  -----
+
+  subroutine Get_Eta_DoCalc_FZP ( Eta_FZP_Sparse, Eta_FZP, Grids_f, &
+                                & Do_Calc_FZP, NZ_FZP, NNZ_FZP, One_Sps, &
+                                & Eta_ZP_Sparse, Spread )
+
+  ! Compute Eta_FZP and Do_Calc_FZP from Eta_FZP_Sparse and Eta_ZP_Sparse.
+  ! Where Grids_f%deriv_flags is false, don't set Do_Calc_FZP 
+  ! When the forward model no longer needs these, this subroutine can be
+  ! deleted.
+
+    use Comp_Eta_Docalc_No_Frq_m, only: Spread_Eta_FZP_from_Eta_ZP
+    use Load_Sps_Data_m, only: Grids_t
+    use MLSKinds, only: RP
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use Sparse_Eta_m, only: Sparse_Eta_t
+
+    class(sparse_eta_t), intent(in) :: Eta_FZP_Sparse(:) ! Created by Comp_*_Eta_* above
+    real(rp), intent(inout) :: Eta_FZP(:,:) ! Eta_z * Eta_phi for each state
+                           ! vector element. Marked inout so that we can clear
+                           ! only the nonzeros without making the rest of it
+                           ! undefined.
+    type(grids_t), intent(in) :: Grids_f
+    logical, intent(inout), optional :: Do_Calc_FZP(:,:) ! Do_Calc_FZP(p,v)
+                           ! indicates whether there is a contribution for 
+                           ! state vector element V at point P on the path.
+    integer, intent(inout), optional, target :: NZ_FZP(:,:) ! Nonzeros in eta_FZP
+    integer, intent(inout), optional, target :: NNZ_FZP(:)  ! Number of nonzeros in eta_FZP
+    integer, intent(in), optional :: One_Sps ! Do extraction for only this species
+    class(sparse_eta_t), intent(in), optional :: Eta_ZP_Sparse(:) ! Created by Comp_*_Eta_* above
+    logical, intent(in), optional :: Spread  ! For a frequency-dependent species,
+                                             ! spread the columns from
+                                             ! Eta_ZP_Sparse
+
+    integer :: C, L        ! Column, Last column of Eta_FZP before species S
+    logical :: MySpread
+    integer :: N_Eta_ZP2   ! Second dimension of Eta_ZP
+    integer :: NC          ! Number of columns of Eta_FZP for species S
+    integer :: NP          ! Path length, first dimension of Eta_FZP
+    integer :: S, S1, S2   ! Species index = index in Eta_FZP_Sparse
+    logical :: SpreadIt
+
+    if ( present(one_sps) ) then
+      s1 = one_sps
+      s2 = one_sps
+    else
+      s1 = 1
+      s2 = size(eta_fzp_sparse,1)
+    end if
+
+    mySpread = .false.
+    n_eta_zp2 = 0
+    if ( present(spread) .and. present(eta_zp_sparse) ) then
+      mySpread = spread
+      n_eta_zp2 = merge(grids_f%p_len,0,mySpread)
+    end if
+
+    np = size(eta_fzp,1)
+
+    block
+
+      real(rp) :: Eta_ZP(np,n_eta_zp2)
+      logical :: Do_Calc_ZP(np,n_eta_zp2)
+      integer :: NZ_ZP(np,n_eta_zp2)
+      integer :: NNZ_ZP(n_eta_zp2)
+
+      do_calc_zp = .false.
+      eta_zp = 0
+      nnz_zp = 0
+      nz_zp = 0
+      do s = s1, s2
+        if ( .not. allocated(eta_fzp_sparse(s)%rows) .or. &
+           & .not. allocated(eta_fzp_sparse(s)%cols) ) then
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'Rows or Cols of eta_fzp_sparse(s) not allocated in Get_Eta_DoCalc_fzp' )
+          return
+        end if
+        if ( mySpread ) spreadIt =  grids_f%l_f(s-1)+1 /= grids_f%l_f(s)
+        if ( spreadIt ) then
+          l = grids_f%l_zp(s-1)
+          nc = grids_f%l_zp(s)
+          do_calc_zp(:,l+1:nc) = .false.
+          eta_zp(:,l+1:nc) = 0
+          nnz_zp(l+1:nc) = 0
+          nz_zp(:,l+1:nc) = 0
+
+          call get_one_eta_docalc_fzp ( eta_zp_sparse(s), eta_zp(:,l+1:nc), &
+                                      & do_calc_zp(:,l+1:nc), &
+                                      & nz_zp(:,l+1:nc), nnz_zp(l+1:nc) )
+          call  spread_eta_fzp_from_eta_zp ( grids_f, eta_zp(:np,:), &
+            & do_calc_zp(:np,:), eta_fzp(:np,:), do_calc_fzp(:np,:), &
+            & nz_zp(:np,:), nnz_zp, nz_fzp(:np,:), nnz_fzp, s )
+
+        else
+          l = grids_f%l_v(s-1)
+          nc = grids_f%l_v(s)
+          call get_one_eta_docalc_fzp ( eta_fzp_sparse(s), eta_fzp(:,l+1:nc), &
+                                      & do_calc_fzp(:,l+1:nc), &
+                                      & nz_fzp(:,l+1:nc), nnz_fzp(l+1:nc) )
+          if ( present(do_calc_fzp) ) then
+            do c = l+1, nc
+              do_calc_fzp(:,c) = do_calc_fzp(:,c) .and. &
+                               & grids_f%deriv_flags(c)
+            end do
+          end if
+        end if
+      end do ! s
+ 
+    end block
+
+  end subroutine Get_Eta_DoCalc_FZP
+
+  subroutine Get_One_Eta_DoCalc_FZP ( Eta_FZP_Sparse, Eta_FZP, &
+                                    & Do_Calc_FZP, NZ_FZP, NNZ_FZP )
+
+  ! Compute Eta_FZP and Do_Calc_FZP from Eta_FZP_Sparse for one species.  When the
+  ! forward model no longer needs these, this subroutine can be deleted.
+
+    use Get_Eta_Matrix_m, only: Clean_Out_Nonzeros
+    use MLSKinds, only: RP
+    use Sparse_Eta_m, only: Sparse_Eta_t
+
+    class(sparse_eta_t), intent(in) :: Eta_FZP_Sparse ! Created by Comp_*_Eta_* above
+    real(rp), intent(inout) :: Eta_FZP(:,:) ! The columns of Eta_z * Eta_phi
+                           ! for one species.  Each column is for one state
+                           ! vector element.  Marked inout so that we can clear
+                           ! only the nonzeros without making the rest of it
+                           ! undefined.
+    logical, intent(inout), optional :: Do_Calc_FZP(:,:) ! Do_Calc_FZP(p,v)
+                           ! indicates whether there is a contribution for 
+                           ! state vector element V at point P on the path.
+                           ! Same shape and correspondence for state vector.
+    integer, intent(inout), optional, target :: NZ_FZP(:,:) ! Nonzeros in eta_FZP
+                           ! Same shape and correspondence for state vector.
+    integer, intent(inout), optional, target :: NNZ_FZP(:)  ! Number of nonzeros
+                           ! in eta_FZP.  Same columns as Eta_FZP.
+
+    integer :: I, J, K
+    integer :: NC 
+
+    nc = size(eta_fzp_sparse%cols)
+    call clean_out_nonzeros ( eta_fzp, do_calc_fzp, nz_fzp, nnz_fzp )
+    do j = 1, nc
+      k = eta_fzp_sparse%cols(j)
+      if ( k == 0 ) cycle ! Column is empty
+      i = k
+      do
+        i = eta_fzp_sparse%e(i)%nc ! Next row in this column
+        eta_fzp ( eta_fzp_sparse%e(i)%r,j) = eta_fzp_sparse%e(i)%v
+        if ( present(nz_fzp) ) then
+          nnz_fzp(j) = nnz_fzp(j) + 1
+          nz_fzp(nnz_fzp(j),j) = eta_fzp_sparse%e(i)%r
+        end if
+        if ( present(do_calc_fzp) ) do_calc_fzp ( eta_fzp_sparse%e(i)%r,j ) = .true.
+        if ( i == k ) exit        ! No more rows in this column
+      end do
+    end do
+
+  end subroutine Get_One_Eta_DoCalc_FZP
+
+d234 1
+a234 1
+       "$Id: Comp_Eta_DoCalc_Sparse_m.f90,v 2.6 2018/03/07 17:43:57 pwagner Exp $"
+d244 3
+@
+
+
+2.6
+log
+@Made consistent with new Sparse_t datatype
+@
+text
+@d21 1
+d353 1
+a353 1
+    use Get_Do_Calc_m, only: Clean_Out_Nonzeros
+d398 1
+a398 1
+       "$Id: Comp_Eta_DoCalc_Sparse_m.f90,v 2.5 2017/11/29 00:40:39 vsnyder Exp $"
+d408 3
+@
+
+
+2.5
+log
+@Add Get_Eta_DoCalc_ZP, Get_One_Eta_DoCalc_ZP temporarily to get Eta matrix
+while full forward model still needs it.  Add "skip # at tangent" argument.
+Compute column starting position for each species.  Add thumbnails.  Use
+type-bound forms of Sparse_t procedures.
+@
+text
+@d21 4
+a24 1
+  public :: Get_Eta_DoCalc_ZP, Get_One_Eta_DoCalc_ZP
+d42 3
+a44 1
+                             & Phi_Path, Eta_Phi, Eta_zP, Skip )
+d58 3
+a60 2
+    type(sparse_eta_t), intent(out) :: Eta_Phi(:)  ! Created here
+    class(sparse_eta_t), intent(out) :: Eta_zP(:)  ! Created here
+a62 1
+    integer :: Col1   ! Last column in Eta_ZP before species I
+a64 1
+    col1 = 0
+d66 8
+a73 4
+      call comp_one_eta_2d ( grids_f, i, tan_pt, z_path, eta_z(i), phi_path, &
+                           & eta_phi(i), eta_zP(i), skip, col1 )
+      col1 = col1 + ( grids_f%l_z(i) - grids_f%l_z(i-1) ) * &
+                  & ( grids_f%l_p(i) - grids_f%l_p(i-1) )
+d80 4
+a83 1
+  subroutine Comp_All_Eta_QTM ( Grids_f, Z_Path, Eta_Z,  Eta_Path, Eta_zQ )
+d90 2
+d94 3
+a96 3
+    class(sparse_eta_t), intent(in) :: Eta_Path(:) ! from Phi to path for
+                                                   ! all species, because there's
+                                                   ! only one QTM.
+d98 1
+d102 3
+d106 3
+a108 2
+      call comp_one_eta_QTM ( grids_f, i, z_path, eta_z(i), &
+                            & eta_path(i), eta_zQ(i) )
+d116 3
+a118 1
+                             & Phi_Path, Eta_Phi, Eta_zP, Skip, Col1 )
+a119 1
+    use intrinsic, only: Lit_Indices
+a133 1
+    integer, intent(in), optional :: Col1        ! Value to put in Eta_zp%col1
+d135 2
+a136 3
+    integer :: P1, P2, Z1, Z2 ! Boundaries from Grids_f%l_[pz]
+    integer :: MySkip
+    integer :: N_Path
+d138 1
+a138 4
+    mySkip = 1
+    if ( present(skip) ) mySkip = skip
+
+    n_path = size(z_path) ! Assumed == size(p_path)
+a141 2
+    z1 = grids_f%l_z(n-1)+1
+    z2 = grids_f%l_z(n)
+d145 1
+a145 1
+                         & what=lit_indices(grids_f%mol(n)), resize=.true. )
+d150 1
+a150 9
+    call eta_z%create ( n_path, z2-z1+1, 2*(z2-z1+1), &
+                      & ubnd = [ z2 ], lbnd = [ z1 ], &
+                      & what=lit_indices(grids_f%mol(n)) )
+    ! Compute the two halves of Eta_Z on either side of the tangent point
+    ! separately.  These parts are monotone.  This avoids sorting Z_Path.
+    call eta_z%eta_1d ( grids_f%zet_basis(z1:z2), z_path, &
+                      & row1=tan_pt, rowN=1, create=.false. )
+    call eta_z%eta_1d ( grids_f%zet_basis(z1:z2), z_path, &
+                       & row1=tan_pt+mySkip, rowN=n_path, create=.false. )
+d153 1
+a153 3
+    call eta_zp%eta_nd ( eta_z, eta_phi, &
+                       & what=lit_indices(grids_f%mol(n)), resize=.true. )
+    if ( present(col1) ) eta_zp%col1 = col1
+d159 4
+a162 1
+  subroutine Comp_One_Eta_QTM ( Grids_f, N, Z_Path, Eta_Z, Eta_Path, Eta_zQ )
+d170 2
+d174 3
+a176 1
+    class(sparse_eta_t), intent(in) :: Eta_Path ! from Phi to path.
+d178 4
+d183 2
+a184 9
+!     integer :: I1, I2                         ! Boundaries from Grids_f%l_*
+! 
+!     eta_z%n = size(z_path,1)
+!     i1 = grids_f%l_z(n-1)+1
+!     i2 = grids_f%l_z(n)
+!     ! Get the Zeta interpolator list
+!     call get_eta_list ( grids_f%zet_basis(i1:i2), z_path, eta_z, sorted=.false. )
+!     eta_zQ%n = eta_z%n
+!     call get_eta_list ( eta_z%eta(1:eta_z%n), eta_path, eta_zQ )
+d188 1
+a188 1
+  ! ------------------------------------------  Get_Eta_DoCalc_ZP  -----
+d190 2
+a191 2
+  subroutine Get_Eta_DoCalc_ZP ( Eta_ZP_Sparse, Eta_ZP, Do_Calc_ZP, &
+                               & NZ_ZP, NNZ_ZP, One_Sps )
+d193 1
+a193 2
+  ! Compute Eta_ZP and Do_Calc_ZP from Eta_ZP_Sparse.  When the forward model
+  ! no longer needs these, this subroutine can be deleted.
+d195 52
+d251 2
+a252 2
+    class(sparse_eta_t), intent(in) :: Eta_ZP_Sparse(:) ! Created by Comp_*_Eta_* above
+    real(rp), intent(inout) :: Eta_ZP(:,:) ! Eta_z * Eta_phi for each state
+d256 2
+a257 1
+    logical, intent(inout), optional :: Do_Calc_ZP(:,:) ! Do_Calc_ZP(p,v)
+d260 2
+a261 2
+    integer, intent(inout), optional, target :: NZ_ZP(:,:) ! Nonzeros in eta_ZP
+    integer, intent(inout), optional, target :: NNZ_ZP(:)  ! Number of nonzeros in eta_ZP
+d263 12
+a274 18
+
+    integer :: J
+    integer :: S, S1, S2   ! Species index = index in Eta_ZP_Sparse
+
+    if ( present(nz_zp) .and. present(nnz_zp) ) then
+      if ( present(do_calc_zp) ) then
+        do j = 1, size(nnz_zp)
+          do_calc_zp(nz_zp(1:nnz_zp(j),j),j) = .false.
+        end do
+      end if
+      do j = 1, size(nnz_zp)
+        eta_zp(nz_zp(1:nnz_zp(j),j),j) = 0
+        nnz_zp(j) = 0
+      end do
+    else
+      eta_zp = 0
+      if ( present(do_calc_zp) ) do_calc_zp = .false.
+    end if
+d281 1
+a281 1
+      s2 = size(eta_zp_sparse,1)
+a282 15
+    ! Get one less than the starting column in Eta_zp for species S.
+    ! Columns have zeta-major order.  You might be tempted to put
+    ! Grids_f%l_v(s-1) into Eta_zp_sparse%col1, but that fails for columns
+    ! after species that have frequency dependence if Eta_zp_sparse isn't
+    ! really Eta_fzp_sparse.
+    do s = s1, s2
+      if ( .not. allocated(eta_zp_sparse(s)%rows) .or. &
+         & .not. allocated(eta_zp_sparse(s)%cols) ) then
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Rows or Cols of eta_zp_sparse(s) not allocated in Get_Eta_DoCalc_zp' )
+        return
+      end if
+      call get_one_eta_docalc_zp ( eta_zp_sparse(s), eta_zp, do_calc_zp, &
+                                 & nz_zp, nnz_zp )
+    end do ! s
+d284 61
+a344 1
+  end subroutine Get_Eta_DoCalc_ZP
+d346 2
+a347 2
+  subroutine Get_One_Eta_DoCalc_ZP ( Eta_ZP_Sparse, Eta_ZP, Do_Calc_ZP, &
+                                   & NZ_ZP, NNZ_ZP )
+d349 2
+a350 2
+  ! Compute Eta_ZP and Do_Calc_ZP from Eta_ZP_Sparse.  When the forward model
+  ! no longer needs these, this subroutine can be deleted.
+d356 4
+a359 3
+    class(sparse_eta_t), intent(in) :: Eta_ZP_Sparse ! Created by Comp_*_Eta_* above
+    real(rp), intent(inout) :: Eta_ZP(:,:) ! Eta_z * Eta_phi for each state
+                           ! vector element. Marked inout so that we can clear
+d362 1
+a362 1
+    logical, intent(inout), optional :: Do_Calc_ZP(:,:) ! Do_Calc_ZP(p,v)
+d365 6
+a370 2
+    integer, intent(inout), optional, target :: NZ_ZP(:,:) ! Nonzeros in eta_ZP
+    integer, intent(inout), optional, target :: NNZ_ZP(:)  ! Number of nonzeros in eta_ZP
+d372 1
+a372 1
+    integer :: L           ! Last column in Eta_ZP for species S-1
+d374 4
+a377 4
+    call clean_out_nonzeros ( eta_zp, do_calc_zp, nz_zp, nnz_zp )
+    l = eta_zp_sparse%col1
+    do j = 1, size(eta_zp_sparse%cols)
+      k = eta_zp_sparse%cols(j)
+d381 5
+a385 5
+        i = eta_zp_sparse%e(i)%nc ! Next row in this column
+        eta_zp ( eta_zp_sparse%e(i)%r,j+l ) = eta_zp_sparse%e(i)%v
+        if ( present(nz_zp) ) then
+          nnz_zp(j+l) = nnz_zp(j+l) + 1
+          nz_zp(nnz_zp(j+l),j+l) = eta_zp_sparse%e(i)%r
+d387 1
+a387 1
+        if ( present(do_calc_zp) ) do_calc_zp ( eta_zp_sparse%e(i)%r,j+l ) = .true.
+d392 1
+a392 1
+  end subroutine Get_One_Eta_DoCalc_ZP
+d397 1
+a397 1
+       "$Id: Comp_Eta_DoCalc_Sparse_m.f90,v 2.4 2017/11/01 19:00:30 vsnyder Exp $"
+d407 6
+@
+
+
+2.4
+log
+@Add tangent point
+@
+text
+@d21 1
+d36 2
+d39 1
+a39 1
+                             & Phi_Path, Eta_Phi, Eta_zP )
+d43 1
+a43 1
+    use Sparse_m, only: Sparse_t
+d45 11
+a55 10
+    type(grids_t), intent(in) :: Grids_f      ! Quantity values
+    integer, intent(in) :: Tan_Pt             ! To split Z_Path into two
+                                              ! monotone halves
+    real(rp), intent(in) :: Z_Path(:)         ! Zetas on the path
+    type(sparse_t), intent(inout) :: Eta_Z(:) ! from VMR's zeta to path.
+                                              ! InOut so as not to reallocate
+                                              ! Eta_Z%Eta
+    real(rp), intent(in) :: Phi_Path(:)       ! Phis on the path
+    type(sparse_t), intent(out) :: Eta_Phi(:) ! Created here
+    class(sparse_t), intent(out) :: Eta_zP(:) ! Created here
+d57 1
+d60 1
+d63 3
+a65 1
+                           & eta_phi(i), eta_zP(i) )
+d70 2
+d76 1
+a76 1
+    use Sparse_m, only: Sparse_t
+d78 7
+a84 7
+    type(grids_t), intent(in) :: Grids_f      ! Quantity values
+    real(rp), intent(in) :: Z_Path(:)         ! Zetas on the path
+    type(sparse_t), intent(out) :: Eta_Z(:)   ! from VMR's zeta to path.
+    type(sparse_t), intent(in) :: Eta_Path(:) ! from Phi to path for
+                                              ! all species, because there's
+                                              ! only one QTM.
+    class(sparse_t), intent(out) :: Eta_zQ(:) ! Created here
+d95 2
+d98 1
+a98 1
+                             & Phi_Path, Eta_Phi, Eta_zP )
+d103 1
+a103 2
+    use Sparse_m, only: Create_Sparse, Sparse_t
+    use Sparse_Eta_m, only: Sparse_Eta_1D, Sparse_Eta_nD
+d105 11
+a115 9
+    type(grids_t), intent(in) :: Grids_f      ! Quantity values
+    integer, intent(in) :: N                  ! Which quantity
+    integer, intent(in) :: Tan_Pt             ! To split Z_Path into two
+                                              ! monotone halves
+    real(rp), intent(in) :: Z_Path(:)         ! Zetas on the path
+    type(sparse_t), intent(out) :: Eta_Z      ! from VMR's Zeta to path.
+    real(rp), intent(in) :: Phi_Path(:)       ! Phis on the path, Radians
+    type(sparse_t), intent(out) :: Eta_Phi    ! from VMR's Phi to path.
+    class(sparse_t), intent(inout) :: Eta_zP  ! Created here
+d117 2
+a118 1
+    integer :: P1, P2, Z1, Z2                 ! Boundaries from Grids_f%l_[pz]
+d121 3
+d132 4
+a135 2
+    call sparse_eta_1d ( grids_f%phi_basis(p1:p2), phi_path, eta_phi, &
+                       & what=lit_indices(grids_f%mol(n)), resize=.true. )
+d138 3
+a140 2
+    call create_sparse ( eta_z, n_path, z2-z1+1, 2*(z2-z1+1), &
+                       & what=lit_indices(grids_f%mol(n)) )
+d143 4
+a146 4
+    call sparse_eta_1d ( grids_f%zet_basis(z1:z2), z_path, eta_z, &
+                       & row1=tan_pt, rowN=1, create=.false. )
+    call sparse_eta_1d ( grids_f%zet_basis(z1:z2), z_path, eta_z, &
+                       & row1=tan_pt+1, rowN=n_path, create=.false. )
+d149 1
+a149 1
+    call sparse_eta_nd ( eta_z, eta_phi, eta_zp, &
+d151 1
+d155 2
+d159 1
+a159 2
+    use Sparse_m, only: Sparse_t
+    use Sparse_Eta_m, only: Sparse_Eta_1D, Sparse_Eta_nD
+d163 6
+a168 6
+    type(grids_t), intent(in) :: Grids_f      ! Quantity values
+    integer, intent(in) :: N                  ! Which quantity
+    real(rp), intent(in) :: Z_Path(:)         ! Zetas on the path
+    type(sparse_t), intent(out) :: Eta_Z      ! from VMR's zeta to path.
+    type(sparse_t), intent(in) :: Eta_Path    ! from Phi to path.
+    class(sparse_t), intent(out) :: Eta_zQ    ! Created here
+d182 110
+d295 1
+a295 1
+       "$Id: Comp_Eta_DoCalc_Sparse_m.f90,v 2.3 2017/03/11 00:51:18 vsnyder Exp $"
+d305 3
+@
+
+
+2.3
+log
+@Use Grids_F instead of Beta_Group
+@
+text
+@d35 2
+a36 2
+  subroutine Comp_All_Eta_2D ( Grids_f, Z_Path, Eta_Z, Phi_Path, Eta_Path, &
+    & Eta_zP )
+a37 1
+    use Indexed_Values_m, only: Value_1D_Lists_t, Value_2D_Lists_t
+d40 1
+d43 2
+d46 1
+a46 1
+    type(value_1D_lists_t), intent(inout) :: Eta_Z(:) ! from VMR's zeta to path.
+d50 2
+a51 4
+    type(value_1D_lists_t), intent(inout) :: Eta_Path(:) ! InOut so as not to
+                                              ! reallocate Eta_Path%Eta
+    class(value_2D_lists_t), intent(inout) :: Eta_zP(:) ! InOut so as not to
+                                              ! reallocate Eta_zP%Eta
+d56 2
+a57 2
+      call comp_one_eta_2d ( grids_f, i, z_path, eta_z(i), phi_path, &
+                           & eta_path(i), eta_zP(i) )
+a63 2
+    use Indexed_Values_m, only: Value_1D_Lists_t, Value_QTM_1D_List_t, &
+      & Value_QTM_2D_Lists_t
+d66 1
+d70 2
+a71 4
+    type(value_1D_lists_t), intent(inout) :: Eta_Z(:) ! from VMR's zeta to path.
+                                              ! InOut so as not to reallocate
+                                              ! Eta_Z%Eta
+    type(value_QTM_1D_list_t), intent(in) :: Eta_Path(:) ! from Phi to path for
+d74 1
+a74 2
+    class(value_QTM_2D_lists_t), intent(inout) :: Eta_zQ(:) ! InOut so as not to
+                                              ! reallocate Eta_zQ%Eta
+d80 1
+a80 1
+                            & eta_path, eta_zQ(i)%eta )
+d85 2
+a86 2
+  subroutine Comp_One_Eta_2D ( Grids_f, N, Z_Path, Eta_Z, Phi_Path, Eta_Path, &
+    & Eta_zP )
+d88 1
+a88 2
+    use Get_Eta_List_m, only: Get_Eta_List
+    use Indexed_Values_m, only: Value_1D_Lists_t, Value_2D_lists_t
+d91 2
+d96 2
+d99 1
+a99 3
+    type(value_1D_lists_t), intent(inout) :: Eta_Z ! from VMR's Zeta to path.
+                                              ! InOut so as not to reallocate
+                                              ! Eta_Z%Eta
+d101 7
+a107 5
+    type(value_1D_lists_t), intent(inout) :: Eta_Path ! from VMR's Phi to path.
+                                              ! InOut so as not to reallocate
+                                              ! Eta_Z%Eta
+    class(value_2D_lists_t), intent(inout) :: Eta_zP ! InOut so as not to
+                                              ! reallocate Eta_zP%Eta
+d109 22
+a130 1
+    integer :: I1, I2                         ! Boundaries from Grids_f%l_*
+a131 15
+    eta_z%n = size(z_path,1)
+    i1 = grids_f%l_z(n-1)+1
+    i2 = grids_f%l_z(n)
+    ! Get the Zeta interpolator list
+    call get_eta_list ( grids_f%zet_basis(i1:i2), z_path, eta_z, sorted=.false. )
+    eta_path%n = size(phi_path,1)
+    i1 = grids_f%l_p(n-1)+1
+    i2 = grids_f%l_p(n)
+    ! Get the Phi interpolator list
+    call get_eta_list ( grids_f%phi_basis(i1:i2), phi_path, eta_path, &
+      & sorted=.false. )
+    eta_zP%n = eta_z%n
+    ! Compute the Zeta X Phi interpolator list from the other two
+    call get_eta_list ( eta_z%eta(1:eta_z%n), eta_path%eta(1:eta_path%n), &
+      & eta_zP%eta(1:eta_zP%n) )
+d136 2
+a137 3
+    use Get_Eta_List_m, only: Get_Eta_List
+    use Indexed_Values_m, only: Value_1D_Lists_t, Value_1D_Lists_t, &
+      & Value_QTM_1D_List_t, Value_QTM_2D_list_t
+d144 13
+a156 15
+    type(value_1D_lists_t), intent(inout) :: Eta_Z ! from VMR's zeta to path.
+                                              ! InOut so as not to reallocate
+                                              ! Eta_Z%Eta
+    type(value_QTM_1D_list_t), intent(in) :: Eta_Path(:) ! from Phi to path.
+    class(value_QTM_2D_list_t), intent(inout) :: Eta_zQ(:)
+
+    integer :: I1, I2                         ! Boundaries from Grids_f%l_*
+
+    eta_z%n = size(z_path,1)
+    i1 = grids_f%l_z(n-1)+1
+    i2 = grids_f%l_z(n)
+    ! Get the Zeta interpolator list
+    call get_eta_list ( grids_f%zet_basis(i1:i2), z_path, eta_z, sorted=.false. )
+    eta_zQ%n = eta_z%n
+    call get_eta_list ( eta_z%eta(1:eta_z%n), eta_path, eta_zQ )
+d163 1
+a163 1
+       "$Id: Comp_Eta_DoCalc_Sparse_m.f90,v 2.2 2017/01/14 01:57:09 vsnyder Exp $"
+d173 3
+@
+
+
+2.2
+log
+@Eliminate polymorphic interpolators.  Add arguments to return 1D Etas.
+Assume Z_Path and Phi_Path are not sorted.  Use template%Phi as radians
+because Phi_Path is radians.
+@
+text
+@d35 1
+a35 1
+  subroutine Comp_All_Eta_2D ( Beta_Group, Z_Path, Eta_Z, Phi_Path, Eta_Path, &
+a37 1
+    use ForwardModelConfig, only: Beta_Group_t
+d39 1
+d42 1
+a42 1
+    type(beta_group_t), intent(in) :: Beta_Group(:)
+d50 1
+a50 1
+    type(value_2D_lists_t), intent(inout) :: Eta_zP(:) ! InOut so as not to
+d55 2
+a56 2
+    do i = 1, size(beta_group)
+      call comp_one_eta_2d ( beta_group(i), z_path, eta_z(i), phi_path, &
+d62 1
+a62 1
+  subroutine Comp_All_Eta_QTM ( Beta_Group, Z_Path, Eta_Z,  Eta_Path, Eta_zQ )
+d64 1
+a64 2
+    use ForwardModelConfig, only: Beta_Group_t
+    use Indexed_Values_m, only: Value_1D_Lists_t, Value_QTM_1D_Lists_t, &
+d66 1
+d69 1
+a69 1
+    type(beta_group_t), intent(in) :: Beta_Group(:)
+d74 4
+a77 3
+    type(value_QTM_1D_lists_t), intent(in) :: Eta_Path(:) ! from VMR's Phi to
+                                              ! path.
+    type(value_QTM_2D_lists_t), intent(inout) :: Eta_zQ(:) ! InOut so as not to
+d82 3
+a84 3
+    do i = 1, size(beta_group)
+      call comp_one_eta_QTM ( beta_group(i), z_path, eta_z(i), &
+                            & eta_path(i)%eta, eta_zQ(i)%eta )
+d89 1
+a89 1
+  subroutine Comp_One_Eta_2D ( Beta_Group, Z_Path, Eta_Z, Phi_Path, Eta_Path, &
+a91 2
+    use Constants, only: Deg2Rad
+    use ForwardModelConfig, only: Beta_Group_t
+d94 1
+d97 2
+a98 1
+    type(beta_group_t), intent(in) :: Beta_Group
+d107 1
+a107 1
+    type(value_2D_lists_t), intent(inout) :: Eta_zP ! InOut so as not to
+d110 2
+d113 4
+a116 2
+    call get_eta_list ( beta_group%qty%qty%template%surfs(:,1), z_path, &
+      & eta_z, sorted=.false. )
+d118 5
+a122 2
+    call get_eta_list ( deg2rad*beta_group%qty%qty%template%phi(1,:), phi_path, &
+      & eta_path, sorted=.false. )
+d124 1
+a126 1
+
+d129 1
+a129 2
+  subroutine Comp_One_Eta_QTM ( Beta_Group, Z_Path, Eta_Z, Eta_Path, &
+    & Eta_zQ )
+a130 1
+    use ForwardModelConfig, only: Beta_Group_t
+d134 1
+d137 2
+a138 1
+    type(beta_group_t), intent(in) :: Beta_Group
+d143 4
+a146 2
+    type(value_QTM_1D_list_t), intent(in) :: Eta_Path(:) ! from VMR's Phi to path.
+    type(value_QTM_2D_list_t), intent(inout) :: Eta_zQ(:)
+d149 4
+a152 2
+    call get_eta_list ( beta_group%qty%qty%template%surfs(:,1), z_path, &
+        & eta_z, sorted=.true. )
+d161 1
+a161 1
+       "$Id: Comp_Eta_DoCalc_Sparse_m.f90,v 2.1 2016/12/15 02:44:32 vsnyder Exp $"
+d171 5
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d29 1
+a29 1
+       "$RCSfile: Comp_Sps_Path_Sparse_m.f90,v $"
+d35 2
+a36 1
+  subroutine Comp_All_Eta_2D ( Beta_Group, Z_Path, Eta_Path, Eta_Z, Eta_zP )
+d39 1
+a39 2
+    use Get_Eta_List_m, only: Eta_Lists_t
+    use Indexed_Values_m, only: Value_1D_List_t
+d44 1
+a44 2
+    type(value_1D_list_t), intent(in) :: Eta_Path(:)
+    type(eta_lists_t), intent(inout) :: Eta_Z(:) ! from VMR's zeta to path.
+d47 4
+a50 1
+    type(eta_lists_t), intent(inout) :: Eta_zP(:) ! InOut so as not to
+d56 2
+a57 2
+      call comp_one_eta_2d ( beta_group(i), z_path, eta_path, &
+                           & eta_z(i), eta_zP(i) )
+d62 1
+a62 1
+  subroutine Comp_All_Eta_QTM ( Beta_Group, Z_Path, Eta_Path, Eta_Z, Eta_zQ )
+d65 2
+a66 2
+    use Get_Eta_List_m, only: Eta_Lists_t
+    use Indexed_Values_m, only: Value_QTM_1D_List_t
+d71 1
+a71 2
+    type(value_QTM_1D_list_t), intent(in) :: Eta_Path(:)
+    type(eta_lists_t), intent(inout) :: Eta_Z(:) ! from VMR's zeta to path.
+d74 3
+a76 1
+    type(eta_lists_t), intent(inout) :: Eta_zQ(:) ! InOut so as not to
+d82 2
+a83 2
+      call comp_one_eta_QTM ( beta_group(i), z_path, eta_path, &
+                            & eta_z(i), eta_zQ(i) )
+d88 1
+a88 1
+  subroutine Comp_One_Eta_2D ( Beta_Group, Z_Path, Eta_Path, Eta_Z, &
+d91 1
+d93 2
+a94 2
+    use Get_Eta_List_m, only: Eta_Lists_t, Eta_List_1D
+    use Indexed_Values_m, only: Value_1D_List_t, Value_2D_list_t
+d99 5
+a103 2
+    type(value_1D_list_t), intent(in) :: Eta_Path(:)
+    type(eta_lists_t), intent(inout) :: Eta_Z ! from VMR's zeta to path.
+d106 1
+a106 1
+    type(eta_lists_t), intent(inout) :: Eta_zP ! InOut so as not to
+d109 9
+a117 11
+    call eta_list_1d ( beta_group%qty%qty%template%surfs(:,1), z_path, &
+        & eta_z, sorted=.true. )
+    ! Select Type is needed because eta_z%eta and eta_zP%eta are polymorphic,
+    ! and can't be type bound because they're not scalars.
+    select type ( the_eta_z => eta_z%eta )
+    type is ( value_1D_list_t )
+      select type ( the_eta_zP => eta_zP%eta )
+      type is ( value_2D_list_t )
+        call eta_list_1d ( the_eta_z, eta_path, the_eta_zP )
+      end select
+    end select
+d121 1
+a121 1
+  subroutine Comp_One_Eta_QTM ( Beta_Group, Z_Path, Eta_Path, Eta_Z, &
+d125 3
+a127 3
+    use Get_Eta_List_m, only: Eta_Lists_t, Eta_List_1D
+    use Indexed_Values_m, only: Value_1D_List_t, &
+      & Value_QTM_1D_List_t, value_QTM_2D_list_t
+d132 1
+a132 2
+    type(value_QTM_1D_list_t), intent(in) :: Eta_Path(:)
+    type(eta_lists_t), intent(inout) :: Eta_Z ! from VMR's zeta to path.
+d135 2
+a136 2
+    type(eta_lists_t), intent(inout) :: Eta_zQ ! InOut so as not to
+                                              ! reallocate Eta_zQ%Eta
+d138 2
+a139 1
+    call eta_list_1d ( beta_group%qty%qty%template%surfs(:,1), z_path, &
+d141 2
+a142 9
+    ! Select Type is needed because eta_z%eta and eta_zQ%eta are polymorphic,
+    ! and can't be type bound because they're not scalars.
+    select type ( the_eta_z => eta_z%eta )
+    type is ( value_1D_list_t )
+      select type ( the_eta_zQ => eta_zQ%eta )
+      type is ( value_QTM_2D_list_t )
+        call eta_list_1d ( the_eta_z, eta_path, the_eta_zQ )
+      end select
+    end select
+d149 1
+a149 1
+       "$Id: comp_sps_path_frq_m.f90,v 2.36 2016/11/17 03:13:23 vsnyder Exp $"
+d158 4
+a161 1
+! $Log: $
+@
+

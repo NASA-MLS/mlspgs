@@ -1,0 +1,64 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.4
+	cfm-single-freq-0-1:1.1.0.2
+	v5-01:1.1
+	v5-00:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2019.09.19.18.02.07;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@First commit
+@
+text
+@!divert(-1)
+; $Id: coreplusr2flags.l2cf,v 1.17 2006/10/11 23:04:55 pwagner Exp $
+
+; ----------- Phase name vs. retrieval name
+; Some phase(s) may not have Retrieve sections
+; and so we'll need to know the last one
+!define(retrophase,{!phase})
+
+!divert!dnl
+; This l2cf fragment does all the quality flagging for the N2OOnly phase
+; products.
+
+
+begin Fill
+  ;; ------------------------------------- H2O-N2OOnly
+  !define(flaggingBands,{2,3})
+  !define(flaggingRadiometers,{R2})!dnl
+  !makeQualityForOneProduct(product=H2O,chisqScale=1.0,minRads=8300,cloudMax=15K,cloudMin= -20K)
+  !makeStatusForOneProduct(product=H2O,chisqScale=1.0,minRads=8300,cloudMax=15K,cloudMin= -20K)
+
+  ;; --------------------------------------- N2O-N2OOnly
+  !define(flaggingBands,{3})
+  !define(flaggingRadiometers,{R2})!dnl
+  !makeQualityForOneProduct(product=N2O,chisqScale=1.0,minRads=600,cloudMax=15K,cloudMin= -20K)
+  !makeStatusForOneProduct(product=N2O,chisqScale=1.0,minRads=600,cloudMax=15K,cloudMin= -20K)
+
+end Fill
+
+; $Log: coreplusr2flags.l2cf,v $
+@

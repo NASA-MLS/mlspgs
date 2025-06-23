@@ -1,0 +1,3673 @@
+head	1.45;
+access;
+symbols
+	v5-02-NRT-19:1.45
+	v6-00:1.45
+	v5-02-NRT-18:1.45
+	v5-02:1.44
+	v5-01-NRT-17:1.44
+	v5-01-NRT-16:1.44
+	v5-01-NRT-15:1.44
+	v5-01-NRT-14:1.44
+	neuralnetworks-1-0:1.44.0.10
+	cfm-single-freq-0-1:1.44.0.8
+	v5-01:1.44
+	v5-00:1.44
+	v4-23-TA133:1.44.0.6
+	mus-emls-1-70:1.44.0.4
+	rel-1-0-englocks-work:1.44.0.2
+	VUMLS1-00:1.44
+	VPL1-00:1.44
+	V4-22-NRT-08:1.44
+	VAM1-00:1.44
+	V4-21:1.43.0.2
+	V4-13:1.43
+	V4-12:1.43
+	V4-11:1.43
+	V4-10:1.43
+	V3-43:1.41
+	M4-00:1.43
+	V3-41:1.41
+	V3-40-PlusGM57:1.41.0.2
+	V2-24-NRT-04:1.40
+	V3-33:1.42
+	V2-24:1.40
+	V3-31:1.42
+	V3-30-NRT-05:1.42
+	cfm-01-00:1.41
+	V3-30:1.41
+	V3-20:1.41
+	V3-10:1.40
+	V2-23-NRT-02:1.40
+	V2-23:1.40
+	V2-22-NRT-01:1.40
+	V2-22:1.40
+	V2-21:1.39
+	V2-20:1.39
+	V2-11:1.39
+	V2-10:1.39
+	V2-00:1.39
+	V1-51:1.38
+	V1-50:1.38
+	V1-45:1.37
+	V1-44:1.37
+	V1-43:1.37
+	V1-42:1.36
+	V1-41:1.36
+	V1-32:1.36
+	V1-40:1.36
+	V1-31:1.36
+	V1-30:1.36
+	V1-13:1.35
+	V1-12:1.35
+	V1-11:1.35
+	V1-10:1.34
+	newfwm-feb03:1.34.0.2
+	V1-04:1.32
+	V1-03:1.32
+	V1-02:1.32
+	V1-00:1.29
+	newfwm-sep01:1.21.0.2
+	V0-7:1.21
+	V0-5-Level2:1.16
+	V0-5-SIPS:1.16;
+locks; strict;
+comment	@# @;
+
+
+1.45
+date	2023.09.29.17.35.26;	author pwagner;	state Exp;
+branches;
+next	1.44;
+
+1.44
+date	2015.08.12.18.42.43;	author pwagner;	state Exp;
+branches;
+next	1.43;
+
+1.43
+date	2012.06.19.23.24.55;	author pwagner;	state Exp;
+branches;
+next	1.42;
+
+1.42
+date	2010.08.28.00.48.04;	author pwagner;	state Exp;
+branches;
+next	1.41;
+
+1.41
+date	2009.12.09.01.13.42;	author pwagner;	state Exp;
+branches;
+next	1.40;
+
+1.40
+date	2007.05.29.18.04.14;	author pwagner;	state Exp;
+branches;
+next	1.39;
+
+1.39
+date	2005.06.23.23.00.53;	author pwagner;	state Exp;
+branches;
+next	1.38;
+
+1.38
+date	2004.12.14.21.29.08;	author pwagner;	state Exp;
+branches;
+next	1.37;
+
+1.37
+date	2004.03.31.19.02.32;	author pwagner;	state Exp;
+branches;
+next	1.36;
+
+1.36
+date	2003.05.01.23.34.36;	author pwagner;	state Exp;
+branches;
+next	1.35;
+
+1.35
+date	2003.03.03.18.39.43;	author pwagner;	state Exp;
+branches;
+next	1.34;
+
+1.34
+date	2002.06.25.20.04.11;	author pwagner;	state Exp;
+branches;
+next	1.33;
+
+1.33
+date	2002.05.13.17.59.45;	author pwagner;	state Exp;
+branches;
+next	1.32;
+
+1.32
+date	2002.05.02.00.16.55;	author pwagner;	state Exp;
+branches;
+next	1.31;
+
+1.31
+date	2002.04.29.17.51.00;	author pwagner;	state Exp;
+branches;
+next	1.30;
+
+1.30
+date	2002.04.18.20.18.21;	author pwagner;	state Exp;
+branches;
+next	1.29;
+
+1.29
+date	2002.02.21.21.57.05;	author pwagner;	state Exp;
+branches;
+next	1.28;
+
+1.28
+date	2002.02.12.19.11.48;	author pwagner;	state Exp;
+branches;
+next	1.27;
+
+1.27
+date	2001.11.15.19.44.26;	author pwagner;	state Exp;
+branches;
+next	1.26;
+
+1.26
+date	2001.11.09.21.48.34;	author pwagner;	state Exp;
+branches;
+next	1.25;
+
+1.25
+date	2001.11.08.00.39.14;	author pwagner;	state Exp;
+branches;
+next	1.24;
+
+1.24
+date	2001.11.06.00.22.51;	author pwagner;	state Exp;
+branches;
+next	1.23;
+
+1.23
+date	2001.09.26.17.32.20;	author pwagner;	state Exp;
+branches;
+next	1.22;
+
+1.22
+date	2001.09.25.23.53.22;	author pwagner;	state Exp;
+branches;
+next	1.21;
+
+1.21
+date	2001.08.16.17.16.32;	author pwagner;	state Exp;
+branches;
+next	1.20;
+
+1.20
+date	2001.07.26.23.26.29;	author pwagner;	state Exp;
+branches;
+next	1.19;
+
+1.19
+date	2001.07.24.23.35.26;	author pwagner;	state Exp;
+branches;
+next	1.18;
+
+1.18
+date	2001.07.07.00.27.30;	author pwagner;	state Exp;
+branches;
+next	1.17;
+
+1.17
+date	2001.05.17.23.17.57;	author pwagner;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2001.03.17.00.57.21;	author pwagner;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2001.03.13.19.01.00;	author pwagner;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2001.03.08.23.52.48;	author pwagner;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2001.03.07.14.28.01;	author pumphrey;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2001.02.27.18.41.41;	author pwagner;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2001.02.10.00.14.41;	author pwagner;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2001.02.09.01.02.31;	author pwagner;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2001.01.16.21.31.19;	author pwagner;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2001.01.13.00.42.09;	author pwagner;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2001.01.12.17.59.16;	author pwagner;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2001.01.05.22.56.04;	author pwagner;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2000.11.21.23.54.46;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2000.11.06.18.05.42;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2000.11.03.21.51.10;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2000.10.30.19.35.47;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2000.10.24.21.50.02;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.45
+log
+@Updated to most development; removed mention of 32-bit
+@
+text
+@#!/bin/sh
+#
+#  Lost? Type 'make -f MakeFC help' from the directory where you see this file
+#
+#    README.MakeFC        Instructions about building the mls software
+# Copyright 2005, by the California Institute of Technology. ALL
+# RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+# commercial use must be negotiated with the Office of Technology Transfer
+# at the California Institute of Technology.
+
+# This software may be subject to U.S. export control laws. By accepting this
+# software, the user agrees to comply with all applicable U.S. export laws and
+# regulations. User has the responsibility to obtain export licenses, or other
+# export authority as may be required before exporting such information to
+# foreign countries or providing access to foreign persons.
+
+# "$Id: README.MakeFC,v 1.44 2015/08/12 18:42:43 pwagner Exp $"
+# A self-reading guide to building the mls software;
+# usage: README.MakeFC
+# related documents:
+#  mlspgs.tgz        an archive containing this file and mls software sources
+#  BEFORE.mls        a self-reading guide to prerequisites to the software
+#  build             a script to build all prerequisite libraries and mls 
+#                     software
+
+        more << EOF
+MakeFC--A configurable Makefile in mlspgs
+
+NOTE
+It is possible that you won't need to read this document. If you obtained the
+mls software as part of a shrinkwrap package, look there for the files build,
+env.linux, and f90. After judiciously editing these, just cd to their directory
+and type "build".
+
+SUMMARY
+To build the mls software, on many different combinations of compiler/
+platform/OS, minimizing the changes most users will need to make. Therefore
+it is mostly self-configuring. First, you will need:
+ (1) f95 compiler (Absoft, G95, Intel, NAG, Lahey, or Sun)
+ (2) Installed SDP Toolkit (PGSTK, HDFEOS(5), HDF(5))
+ (3) mls software directory (probably where you're reading this)
+ (4) perl
+ (5) PVM--a library to emulate parallel virtual machines
+ (6) FFTW--a library to accomplish fast Fourier transforms
+and you may want to inquire about the availability of the following two: 
+having them can result in greatly improved performance (as much as an order of
+magnitude in the case of ATLAS)
+ (7) BLAS--a library of basic linear algebra software
+ (8) LAPACK--another linear algebra library
+
+Then, from the "top" level simply type
+  make update
+and you'll be asked to respond to some questions about your compiler, platform,
+and where the various libraries are installed. Then the software will be built.
+You may quit out of this now and try it out, perhaps coming back later if you
+are curious or if something goes wrong. The reasons for the "update" this first
+time are explained below, but the point is that after this first time, you will
+usually be able to make do with just "make".
+
+You might prefer to copy someone else's .configure file before doing this--it
+will save you having to type in the many paths in answer to the questions
+above. An example of a .configure file appears at the end of this document. Or,
+if you build this as part of a shrinkwrap package, creating a correct
+.configure file is automatic.
+
+For more information on obtaining and installing the SDP Toolkit, PVM, and the
+FFTW libraries, see BEFORE.mls which should be in the same directory as this
+file. Or else type 'make firsthelp'.
+
+CONTENTS
+I     SUMMARY
+II    CONTENTS
+III   INTRODUCTION
+IV    WHAT YOU NEED
+V     BUILDING THE SOFTWARE
+VI    BUILDING ONLY PARTS OF THE SOFTWARE
+VII   MULTIPLE PLATFORMS
+VIII  OTHER OPTIONS
+IX    HOW IT WORKS
+X     CALL TO ACTION
+XI    ACTUAL BUGS
+XII   IMPERFECTIONS AND COMPLICATIONS
+XIII  ADVANCED SETTINGS
+XIV   ASSORTED COMMENTS
+XV    EXAMPLE OF A .configure FILE
+
+INTRODUCTION
+An attempt has been made to minimize the amount of editing and configuring each
+user must perform in building the mls software. "User" in this context means
+either someone who will actively modify the software, or someone who wishes
+simply to run it. Specially named Makefiles and a few shell scripts take the
+new user through an initial query driven configuration which creates a file
+named .configure. It contains information about the compiler, platform/OS, and
+paths to relevant libraries. Subsequent uses of make automatically use this
+configuration.
+
+The mls software should be buildable by different users at sites possibly remote
+from each other, and using whatever compiler and platform/OS combination
+they already have. The limitation on the last is that they
+must have installed the SDP Toolkit, HDF and HDFEOS libraries, and have
+an f95 compiler. It is possible to simply supply the source code and
+leave it up to the user to figure out how to put it together, probably
+by reading parts of it, using an automated make utility or a Makefile
+that worked for someone else, plus trial and error. An alternative is to
+create a configurable Makefile or series of such files that will work,
+at least most of the time. This is what has been done with mls software.
+
+The configurable Makefile is found in the mlspgs directory. It will
+automatically build lib and mlsln where n={1,2,3,3m}. To build other parts see
+the section BUILDING ONLY PARTS OF THE SOFTWARE below.
+
+To simplify things the set of directories {blas, l1, l2, l3, l3m, lib, fwdmdl,
+cloudfwdm, cfm, idlcfm} will be henceforth called simply the "mlslevels".
+
+l3 and l3m are being carried along for now, but at some point in the future
+will be removed.
+
+WHAT YOU NEED
+You may begin when you checkout a fresh copy of the mlspgs archive or obtain
+the tar file. If you already have an archive with some changes you wish to
+keep but not share yet, make sure you update the following files and
+directories:
+
+   mlspgs/     mlspgs/util/    mlspgs/mlslevels/   mlspgs/srclib
+   ------      ------------       ----------        -----------
+   Makfile      mlsconfigure         Makfile        (shared
+BEFORE.mls    makemakedep.sh     Makefile.dep       source
+README.MakeFC  f90makedep.pl      platforms/*          files)
+              f90ghostfiles.pl                     Makefile.dep
+              ghostbuster.sh
+                 (etc.)
+
+BUILDING THE SOFTWARE
+Then to make the mls software, including all mlslevels, from the top level of
+the mlspgs directory, enter the command "make update". This should
+launch util/mlsconfigure. It will first query you for your compiler 
+(NAG, Lahey, G95, Intel, Absoft) and for your platform/OS (only three
+choices available: Sun, SGI, or Linux). You'll also be offered the chance to
+give your configuration a name--the default offered to you, based on the
+compiler and platform, should be accepted unless you intend to maintain
+multiple configurations simultaneously with different compiler or linker
+options, linked libraries, and so on.
+
+Next it will prompt you to enter the paths to the SDP Toolkit includes
+directories and to some toolkit-related libraries. These may
+already be known if they were set as environmental variables  when the
+Toolkit was installed. If so, you will see the current non-blank paths
+and be asked to confirm that they are correct. Then you will be done
+with the configuring, and may skip down to the next section. If the
+current paths are blank, incorrect, or you simply wish to try changing
+them, be prepared to enter their full path names. Usually Gctp is
+installed alongside the HDFEOS so after setting the latter, the same
+will be offered as the default path setting for the former.
+
+Note whether you have the latest version of the toolkit (currently 5.2.14.A)
+or an earlier one. The latest version includes version 5 of both the HDF and
+HDFEOS libraries, and so their paths need to be set.
+
+The next set of questions will pertain to four special libraries: BLAS, LAPACK,
+PVM and FFTW. BLAS and LAPACK are completely optional, with the understanding
+that not supplying any paths for them will result in building an executable
+successfully, although perhaps one running a little slower than the fastest
+possible. PVM is required only for level 2. FFTW is required only for levels 1
+and 3.
+
+The final two questions allow you to set your own default compiler and loader
+options. You can instead safely accept the default values.
+
+To set these paths as environment variables, if they are not so set
+already, a first step is to find where your copy of the Toolkit was
+installed. You will find a file there which you may cp to your home
+directory and invoke at login. Or you may do it just before running
+make. For example, the following is from a session in which I hunted
+this file down, sourced it, and echoed the resulting settings.
+
+[pwagner@@riverrun ~]$ ls /software/SRC/TOOLKIT-5.2.6v1.00.NAG/bin/sgi
+INSTALL-AAdata@@           PGS_PC_GetTempReferenceCom*  pgs-dev-env.csh
+INSTALL-HDF@@              PGS_PC_InitCom*              pgs-dev-env.ksh
+INSTALL-HDF4.0r1p1@@       PGS_PC_Shell.sh*             pgs-env.csh
+INSTALL-HDF4.0r2@@         PGS_PC_TempDeleteCom*        pgs-env.ksh
+
+[pwagner@@riverrun ~]$ source /../bin/sgi/pgs-dev-env.csh
+
+#This where the path to the includes file
+[pwagner@@riverrun ~]$ echo $PGSINC
+/software/SRC/TOOLKIT-5.2.6v1.00.NAG/include
+
+#Paths to the following libraries are shown in their respective order
+#HDFEOS
+#HDF
+#PGSTK
+[pwagner@@riverrun ~]$ setenv | grep -i lib
+HDFEOS_LIB=/software/SRC/TOOLKIT-5.2.6v1.00.NAG/hdfeos/lib/sgi
+HDFLIB=/software/SRC/TOOLKIT-5.2.6v1.00.NAG/hdf/sgi/HDF4.1r3/lib
+PGSLIB=/software/SRC/TOOLKIT-5.2.6v1.00.NAG/lib/sgi
+
+This explanation has been given with a great deal of detail (perhaps too much)
+because it is very important. E.g., an empty value for the toolkit path will
+even prevent successfully compiling any of the mls sources. Fortunately, the
+configuration will have to done only this once.
+
+See below for a list and explanation of the Makefile canonical variables.
+
+BUILDING ONLY PARTS OF THE SOFTWARE
+If you wish to build only lib, for example, you may specify that target,
+i.e.
+        make lib
+and similarly for the mlslevels. Alternatively, if you are in lib, perhaps
+changing some of its modules, then while there you may use the simple
+        make
+and only libmls.a will be rebuilt. Again the same is true while in the other
+mlslevels when only the software in that level will be built.
+
+MULTIPLE PLATFORMS/CONFIGURATION NAMES
+Using multiple platforms or simply having multiple named configurations on a
+single platform is easy. You must take precautions to ensure that 
+  (1) each configuration's name is unique and "legal"
+  (2) when you type "make" you know which named configuration is in force
+Because each named configuration "owns" the uniquely-named sub-directory where
+it puts binary objects, named in fact after the configuration, two different
+configurations with the same name would step on each other's binaries.
+
+A legal configuration name is a character string that is a legal name for a
+directory to have on your file system, and one that is not illegal from the
+point of view of mlspgs. That means you should not choose any of the following:
+.configure
+.(anything else)
+CVS
+machines
+(any file name already in lib l1 or ..)
+.
+..
+""
+
+Don't confuse the configuration name with the name of the .configure file. The
+default configuration name when using the NAG compiler on a Linux platform is
+NAG.Linux. The default name for the .configure file is .configure.
+ 
+If you wish to build the software on more than one platform, or use more than
+one combination of compiler/linker/library options, one reliable method is to
+keep multiple copies of the .configure file and alternately rename or hide them
+according to the machine and compiler in use at a particular time.
+
+Alternatively, let us first assume you have more than one .configure file
+already. If you don't, you may create multiple ones either by hand-editing them
+or by renaming the one you use for your current computer, say it is "pencil",
+to .configure-pencil. Then logon to the new platform and type  "make
+configure"  which after you answer all the questions with paths etc.
+appropriate to the new platform will leave you endowed with a new .configure.
+You might now rename it something like .configure-bugbegone, assuming your new
+platform is a machine answering to bugbegone.
+
+To find out your hostname, type
+        me/mlspgs:51%echo $HOST
+        bugbegone
+
+Now to choose this new .configure file to be used when building the software,
+you may invoke make with the following
+        make MLSCFILE=.configure-bugbegone
+or to do the update
+        make MLSCFILE=.configure-bugbegone update
+
+You may either develop the habit of typing this kind of long command every time
+you invoke make, or you may avail yourself of an environment variable to do
+this. That environment variable may even be able to keep track of which platform
+you are currently using and thus automatically direct make to the appropriate
+.configure file.
+
+If you use the c shell, you can set the variable HOSTMLSCFILE with
+        me/mlspgs:58%setenv HOSTMLSCFILE .configure-bugbegone
+        me/mlspgs:59%echo $HOSTMLSCFILE
+        .configure-bugbegone
+To automate this you can instead add the following lines to your .login file
+        if (-e ~/mlspgs/.configure-$HOST) then
+                setenv HOSTMLSCFILE .configure-$HOST
+        endif
+which will set this environment variable automatically.
+
+If you use the Bourne shell, you can set the variable with
+        bash$ HOSTMLSCFILE=.configure-bugbegone
+        bash$ export HOSTMLSCFILE
+        bash$ echo $HOSTMLSCFILE
+        .configure-bugbegone
+To automate this you can instead add the following lines to your .profile file
+        if [ -f ~/mlspgs/.configure-$HOST ]
+        then
+        HOSTMLSCFILE=.configure-bugbegone
+        export HOSTMLSCFILE
+        fi
+
+However you set your environment variable HOSTMLSCFILE, it will now be
+available to lift the burden of assigning which .configure file is used when
+you invoke make, so you can go back to simply typing "make". If you need to
+override the HOSTMLSCFILE, you can be assured that setting MLSCFILE on the line
+invoking make takes precedence for that invocation.
+
+Another setting that may need to vary running on multiple platforms is the
+destination where you wish "make install" to place your executables. By default
+this would be mlspgs/bin/MLSCONFG where MLSCONFG is a variable whose value is
+the configuration name and so automatically tracks different platforms
+correctly. You might choose alternatively, especially if you have root
+privilege, and so may need more flexibility. The counterpart to HOSTMLSCFILE
+is MLSINSTALLDIR. Set it as an environment variable at login, and it will
+dictate where install moves mlsl1, etc. As an alternative, the counterpart to
+the command-line variable MLSCFILE above is INSTALLDIR. Thus you may specify
+the destination via
+           make INSTALLDIR=/usr/local/bin install
+
+It is possible for two different .configure files to name the same
+configuration, i.e. to have the same MLSCONFG setting. As stated above, be
+aware that objects made when either is in force will then be placed in the same
+sub-directory.
+
+OTHER OPTIONS
+These are available either at the "top" level, mlspgs, or in parts at lib or
+the other mlslevels.
+
+make the_target
+(note that all the targets are lower-case)
+
+the_target                 Effect
+
+mostlyclean  removes all binaries created during compilation and linking;
+             then deletes the uniquely-named subdirectory containing them
+clean        removes only the .o and .mod files from the subdirectory;
+             any library or program files remain
+configure    change compiler, (less often) platform/OS, name,
+             paths to Toolkit and other necessary libraries
+mark_all_as_uptodate
+             mark all targets in the current directory as up to date
+install      moves the binary executable(s) to INSTALLDIR
+             also puts shell script versions of each binary executable there
+             with names composed of binary + '.sh'; e.g., mlsl1.sh
+update       replaces Makefiles in subdirectories with latest versions;
+             recalculates dependencies; useful after a cvs update; also deletes
+             orphaned .o and .mod files left behind after sources removed;
+             also useful after minor configuration changes to prevent 
+             unnecessary recompilation
+
+(All the following apply only at the top mlspgs level)
+all          builds all the mlslevels
+configure_pvm    reset paths to PVM_ROOT, FFTW_ROOT, BLAS, LAPACK
+configure_fopts  reset default Fortran95 compiler and linker switches
+configure_full   combines configure, configure_pvm, configure_fopts
+configure_help   prints some details on the mlsconfigure script
+distclean    does a clean; restores archive nearly to initial state
+disthelp     prints this file
+doc          turn the latex files under doc into .dvi and .pdf
+               mostly they document the algorithms and apis of level 2 and cfm
+firsthelp    summarizes prerequisite libraries for building mls
+help         lists topics on which more help is available
+help--brief  brief overview of building mls
+help--convert  
+             how to convert files from hdfeos2 to hdfeos5
+help--depends  
+             some info on the makemakedep.sh script
+help--fopts  how to set compiler and linker options
+help--ghostbuster
+             some info on the ghostbuster.sh script
+help--Makefile
+             summarizes targets, settings, usage of Makefiles
+help--mlsconfigure
+             some info on the mlsconfigure script
+help--platform 
+             how to configure make for your platform
+help--pvm    how to set paths for some optional libraries
+help--reecho 
+             some info on the reecho.sh script
+help--scripts
+             prints some details on the scripts used by the Makefiles
+help--toolkit  
+             how to set paths for the mandatory libraries
+
+  If the target is entered exactly as shown below, the
+  resulting archive will be an uncompressed .tar file; but with:
+  a "z" suffix, e.g. "tarz" -- use gzip to compress -> .tgz
+  a "g" suffix, e.g. "targ" -- assume GNU tar compress -> .tgz
+disttar      tar the whole mlspgs archive for distribution: mlspgs.tar
+substar      tar lib, l1, .. : lib.tar, l1.tar, .., and mlspgs_subs.tar
+tar          tar everything from mlspgs needed by the SIPS: mlspgs_sips.tar
+
+HOW IT WORKS
+Chronology:
+Each time make is called, it finds mlspgs/.configure among the list of
+dependencies. If it doesn't exist yet, as with a fresh copy of the archive, it
+creates one, using mlspgs/util/mlsconfigure. The contents of the resulting file
+will be similar to example shown at the end of this file.
+
+In addition, inside the mlslevels a new directory will be created with a unique
+name given by the value of MLSCONFG. As we stated above, this value is the name
+you gave when you configured make. In this directory mlsconfigure places a
+Makefile which is the catenation of .configure with a file found in the
+directory platforms: e.g., :
+        cat .configure l2/platforms/targets > \
+                l2/NAG.Linux/Makefile
+platforms/targets is a list of makefile-like targets and the commands to build
+them, independent of any particular compiler or platform/OS. Mentioned in an
+include statement is a file of compiler settings specific to the NAG compiler. 
+
+As make proceeds to build the prerequisites of the final program, the
+binaries, .o and .mod files, and end products, e.g. libmls.a or mlsl2, are
+all placed in MLSCONFG.
+
+Also, in subsequent uses, .configure already exists, so make simply executes
+any commands needed to build the end products if any prerequisites are newer.
+
+Hierarchy of make
+The following is a partial org chart showing how make invoked at the top will
+call make in the mlslevels which in turn will call make in subdirectories
+
+         <----------------mlspgs-------------------->
+        /    /      /   /        \     \             \    
+       l1   cfm--->l2---+---------+--->cloudfwdm--->fwdmdl
+       |\    \      \   \        /     /             /       
+       | ------------+---+---->lib<---+-------------/
+       |              \   \    /     /             /
+       |               ---->blas<------------------
+       |                      |
+   MLSCONFG               MLSCONFG
+           
+where the bottom MLSCONFG directories only below blas and l1 have been shown,
+although they exist in the other mlslevels, too. Note also the ability of make
+at the levels of l1, l2, ... to call make in lib. l2 is also able to call make
+in cloudfwdm and fwdmdl. cloudfwdm is also able to call make in fwdmdl. l3m is
+also able to call make in l3. The full path and name of the file shown at
+bottom center is (assuming a typical location for the archive)
+	${HOME}/mlspgs/blas/${MLSCONFG}/Makefile
+
+MLSCONFG/Makefile has the command near its start
+ include 'Makefile.dep'
+that copies in the dependencies stored in the file Makefile.dep. This is how
+make learns which sources to compile to create the binaries, called OBJS. A
+dependency is a line containing a target and a list of prerequisites needed to
+build that target. Makefile has to choose between two locations from which to
+read Makefile.dep. One is stored in each of the mlslevels. This one contains
+dependencies based on object files alone, is foolproof, but can cause excess
+compilation that slows building the mlspgs software. The other is down in the
+MLSCONFG subdirectories. It uses a more advanced but more fragile system
+designed to forestall excessive recompilation.
+
+It would be desirable to make Makefile.dep a target of prerequisites to force
+it to be updated on any change to the source files. Instead, the only way to
+change it is by the explicit command "make update".  Among the drawbacks to
+this are that an outdated Makefile.dep is possibly what cvs finds when checking
+out the archive. See the recommendation concerning the update target below.
+
+Makefile.dep is created by the shell script util/makemakedep.sh and the perl
+script f90makedep.pl. The latter assumes your perl, or a link to it, is in your
+path and that a perl script can be launched via perl script_name [args]. If
+perl is not in your path, or a perl script can't be launched this way on your
+system, you may need to edit the scripts or write your own script named "perl"
+to work around this.
+
+CALL TO ACTION
+This is usable now. Please try it out and inform me of any bugs you
+find. And tell me their solutions if you can, of course. Also of any
+improvements you think of. The configuration step is laborious, especially
+changing the paths, and has become even more so as the system evolved. Since
+it essentially amounts to creating/editing a text file you may prefer to edit
+your own. See the sample at the end of this file.
+
+ACTUAL BUGS
+The older Linux HDFEOS, HDF, PGSTK, etc. libraries as distributed can not be
+made to link properly. Sun and SGI versions seemed correct. The solution is to
+build correct ones. See Hugh Pumphrey's page 
+http://www.met.ed.ac.uk/~hcp/hdfeos_notes.txt for instructions. Thankfully this
+bug disappeared with the next release. However, Sun and SGI installations have
+become problem-plagued with recent releases of hdf4 and hdf5. The toolkit
+people seem poised to drop support for SGI and older Suns.
+
+IMPERFECTIONS AND COMPLICATIONS
+General
+The only combinations of compiler.platform/OS provided for so far are
+  Unknown.None
+  Abs.Linux
+  G95.(pc)Linux
+  IFC.(pc)Linux
+  LF95.(pc)Linux
+  NAG.(pc)Linux
+  NAG.Sun
+  NAG.SGI
+  Sun.Sun
+
+The latest versions of the source code work only with NAG and IFC. The only
+platform we test on is Linux. All the other combinations exist in name only,
+i.e. we haven't forcibly deleted them but caveat emptor. Also, so-called
+32-bit platforms fall under the same rubric.
+
+Now we list some prohibitions to keep in mind:
+(1) Do not use the same .configure file to build with different versions of
+ifort. Treat them as two different compilers.
+(2) Do not use the same .configure to build sometimes on 64-bit
+platforms and other times on 32-bit platforms. Keep the .configure file
+names, and their MLSCONFG=name subdirectories, distinct.
+(3) Do not use the same .configure while switching between internal
+ieee_arithmetic support and that supplied in machines/IFC.Linux.
+
+Do not 'cvs add/commit' your .configure. Instead, if you want to keep a copy of
+your configuration handy, copy it someplace, like ~/mls.configure, then copy it
+back whenever needed. As each MLSCONFG directory is uniquely named after the
+configuration, you may build multiple versions of the mls software. For
+example, I built versions for both Sun and Linux platforms in my home
+directory. I can switch between versions by overwriting the current .configure
+with one saved for the other platform. See above for fuller explanation of how
+to easily handle multiple platforms or named configurations.
+
+When should you "make clean"? Never say "never", but let's say "hardly ever".
+If "make update" has been conscientiously and regularly done, make has never
+been interrupted in the midst of a recompilation, and the os version,  compiler
+version, or compiler options never changed, then you should never have to do a
+"make clean". If any of the conditions above are violated, then the answer
+changes from "never" to "it depends".
+
+Sometimes after doing a cvs update, especially if there has been a lot of active
+coding and cvs committing, the next make will exit complaining about an illegal
+separator.  This is usually the result of cvs "merging" your copy of
+Makefile.dep with one it has archived.  The solution is to do a "make update"
+from the top mlspgs level. Similarly, one of the scripts hidden away in the util
+directory may become corrupted by merge conflicts during a cvs update. In this
+case, too, deleting the scripts and a fresh cvs update may fix the problem.
+
+Another cause of a hotly complaining make is using a make that is not gnu
+compliant. If your gnu make is not the default make on your system, then please
+invoke gnu make by giving its full path.
+
+Compiling one changed module may have the effect of triggering recompilation of
+many other unchanged modules due to dependencies. This is the "cascade effect".
+Sometimes it may be obvious that some or all of the cascade is unnecessary. A
+deeper and more searching scrutiny, checking for the possibility that the new
+.mod file created by a recompile (in the case of a compiler like NAG) is
+actually identical with the existing one, can pare the cascade down, but at the
+cost of requiring a more complex system of Makefiles. This is how our system
+works by default. 
+
+At the end of each make command, if any of the targets was older than its
+prerequisites and therefore rebuilt, the Makefiles attempt to mark all targets
+as up to date. This has some unpleasant consequences, however. If you cd to lib
+and make there, then cd over to l2, suddenly make will notice that all the
+prerequisites in lib are newer than their targets in l2, so this will trigger
+that very cascade that we strove so hard to avoid. So don't do that. If you
+know you want to build mlsl2, cd directly to l2 and build there. In a pinch,
+there is a setting MARK_ALL_AS_UPTODATE available in order to forestall this
+marking. If set to "no", then make shouldn't touch any of the targets it
+doesn't actually rebuild.
+
+PVMWrappers.c in lib is a c source requiring a c compiler. The default value
+for CC is cc. If you get an error along the lines of "cc: Command not found",
+try "make CC=gcc" or another path to a gnu-compatible c compiler. Link errors
+complaining that pvm_ or usleep_ were not found may be traced to a failure to
+compile this or to link it into libmls.a.
+
+If you get link errors you might try adding more libraries to the link
+statement. One way to do this is to use the LDOPTS or LAFTER setting (see under
+Advanced Settings). E.g., Archie MacDonald was able to link only by using "make
+LDOPTS='-lsocket'". Fortunately this is now automatically added for Sun
+platforms.
+
+If you add a new module to one of the levels, make sure that neither the module
+name nor the file name duplicate names of a module already in a lineal
+directory. Two directories are lineal if one is a prerequisite of the other.
+E.g., l1 and srclib are lineal, while l3 and fwdmdl are not.
+
+(Is "lineal" a word most people would recognize?)
+
+Not mentioned above are three extra directories: customblds, srclib, and 
+lib/machines/MLSCONFG. customblds contains custom build instructions for various
+modules, i.e. modules for which the default ".f.o" rules won't work. srclib
+contains some files that are INCLUDEd in the Makefiles. The third contains at
+least one file, machine.f90, with compiler/platform-specific information about
+command-line  arguments and other features. Sometimes other files may accompany
+machine.f90, e.g. to compensate for missing ieee-arithmetic support.
+
+Moreover, we must mention
+* idlcfm:    like cfm but for the idl-callable forward model
+* conv_uars: a separate program to convert uars level 1 products
+* heconvert: a separate program to convert hdfeos4 files to hdfeos5 format
+* netcdf:    several programs programs to convert between hdfeeos and 
+             netcdf formats
+* util/lr:   the parser
+* doc:       tex files for various forms of technical documentation
+
+ADVANCED SETTINGS
+These include features which are otherwise given default values which may prove
+unacceptable for reasons of performance or because debugging flags need to be
+set for the compiler and loader. There may be more than one way to give a value
+to any of these settings. One way is to assign the value on the same line where
+make is invoked; e.g.
+	make target FOPTS="-g90 -gline" LDOPTS="-g90"
+would compile and link for debugging rather than speed-optimized, assuming use
+of NAG f95. Alternatively, some of the following can be set by configure_full.
+
+make the_target SETTING=value
+(note that the left-hand side of the equal sign is UPPER-CASE)
+
+SETTING            Use
+-------            ---
+BLAS               Path to an external blas library; unless LIB_BLAS set the 
+                   library must then be named \$BLAS/libblas.a
+                   You would use this if you already had a precompiled, 
+                   highly-optimized library of the usual blas routines
+BUILDL3            build l3 and l3m, too as part of "make all" or "make install"
+FFTW_ROOT          Path to the FFTW library; required for levels 1 and 3
+FOPTS              Override default compiler option; note that you must
+                   use only legal options
+LAPACK             Path to an external lapack library; unless LIB_LAPACK
+                   set the library must then be named \$LAPACK/liblapack.a
+                   You would use this if you already had a precompiled, 
+                   highly-optimized library; e.g., ATLAS
+LDOPTS             Override default (blank) loader option; note that you must
+                   use only legal options
+LIB_BLAS           Name of the external blas library; if left unset the library
+                   must then be named \$BLAS/libblas.a
+LIB_LAPACK         Name of the external lapack library; if left unset the 
+                   library must then be named \$LAPACK/liblapack.a
+PVM_ROOT           Path to the root of the pvm libraries; note that they
+                   must then be named \$PVM_ROOT/\$PVM_ARCH/lib*.a;
+                   Warning: if PVM_ROOT is set, then so must PVM_ARCH
+PVM_ARCH           (see above)
+
+The following cannot be set by configure_full
+CC                 Overrides the name by which the c compiler is called
+                   e.g., to build on pencil, I used "make CC=gcc"
+EXTRA_PATHS        Extra directories to be searched for .h, .f9h, or .mod
+                   files while compiling
+FAFTER             Appears at the end of each line invoking the compiler
+                   e.g., to highlight warning and error messages issued by LF95
+                   make FAFTER='2>&1 | hl' 
+                   (to build and install this highlighter, type 'make hl')
+FC                 Overrides the name by which the Fortran compiler is called
+                   e.g., Hugh Pumphrey renamed NAG to nagf95 to avoid conflict
+                   with Sun's own f95; then used "make FC=nagf95"
+LAFTER             Appears at the end of the very long link statement
+                   e.g., for additional libraries required to link successfully
+                   or else to highlight errors as in FAFTER
+MARK_ALL_AS_UPTODATE
+                   If yes, forcibly mark all targets as up to date
+                   If no, don't do any extra marking
+NOF2003            If yes, don't compile any modules that use f2003 or later features
+                   (Actually if non-blank)
+PGSTK              Also mentioned below in connection with .configure,
+                   but if set to blank on the line invoking make, it will
+                   cause make to build a toolkit-free version of lib and l2;
+                   E.g., "make PGSTK="
+USEMYFC            Must be set to pick up FC from your .configure
+REECHOMACHOPTS     extra command line options used when reechoing contents of 
+                    lib/machines/MLSCONFG directory; e.g.,
+REECHOMACHOPTS=-excl ieee_arithmetic.f90
+                    says to use internal ieee_arithmetic support
+
+MAKEFILE CANONICAL VARIABLES
+These either are defined explicitly by the .configure file, or assume default
+values. Sometimes the default values work quite well. Other times, e.g. for the 
+case where GMAO assembled all the Baselibs in a single subdirectory, leaving
+all the include files back in the source directories, you must carefully
+define HDF5INC to indicate this separation because the default value
+""$HDF5/../../src $HDF5/../../include" won't work.
+
+All the settings above count as canonical variables. In addition to 
+those are the following
+MLSF95          One of NAG, LF95, IFC, ..
+MLSPLAT         One of Linux, Sun, SGI
+MLSCONFG        Name of subdirectory where compiled objects to be stored
+MLSTKROOT       Top level of toolkit directory
+PGSINC          Location of toolkit include files
+PGSTK           Location of toolkit libraries
+HDFEOS          Location of hdfeos(2) libraries
+HDFEOSINC       Location of hdfeos(2) include files
+HDFEOS5         Location of hdfeos(5) libraries
+HDFEOS5INC      Location of hdfeos(5) include files
+HDF             Location of hdf4 libraries
+HDFINC          Location of hdf4 include files
+HDF5            Location of hdf5 libraries
+HDF5INC         Location of hdf5 include files and .mod files
+GCTP            Location of libGctp.a (usu. same as HDFEOS)
+PGSLIB          Same as PGSTK
+HDFEOS_LIB      Same as HDFEOS
+HDFLIB          Same as HDF
+COPTS           Options to c compiler when compiling .c sources
+FOPTS           Options to Fortran compiler when compiling .f90 sources
+LDOPTS          Options to Fortran compiler when linking
+
+ASSORTED COMMENTS
+The sources currently must reside directly under the mlslevels, and this fact
+is "hard-wired" into the Makefiles.  It may become desirable to segregate them
+into a /src subdirectory parallel to the /MLSCONFG and /platforms
+subdirectories, and thus the Makefiles would need to changed to accomplish
+this.  In general, replacing "hard-wired" directory paths with variable ones,
+set in either .configure or set in a more permanent file, seems like a good
+idea. 
+
+Under the lib directory is a lib/tests subdirectory containing five test
+programs. They were used to test libmls.a during development. It is likely they
+no longer compile nor link properly. In the long run they should be removed.
+Similarly you'll find the directory mlspgs/sids/l1boa which once was used to
+create l1boa files given the output of orbsim. It has fallen into disuse, and
+should be removed.
+
+Another wrinkle in the lib directory is the versions of machine.f90 which lurk
+under machines with names like machines/NAG.Linux/machine.f90 They are intended
+to contain machine/OS/compiler specific information the software can obtain at
+runtime. As a start, I simply copied NAG.Linux into NAG.*, which has worked so
+far. The ones under the NAG rubric are processed by sed into sub-versions
+depending on the presence or absence of the string "-gc" in LDOPTS. You may
+encounter a link error if you set LDOPTS=-gc while configuring, but then build
+with the statement "make LDOPTS=" effectively erasing "-gc" from the link. (So
+say what the solution to this problem is!)
+
+Because of the need of even the toolkit-free version of l2 to convert
+date-and-time info from utc to tai93, bleeding chunks were extracted and hacked
+into an "concealed library" utctotai. It is automatically built behind the
+scenes and then installed in INSTALLDIR.
+
+Four different binary executables are built under l1: mlsl1log, mlsl1boa,
+mlsl1g, and mlsl1t. When you do a "make install", all four are moved to
+INSTALLDIR along with the wrapper script "mlsl1.sh" which runs them in
+sequence.
+
+Any of the variables assigned in the file .configure can be treated as an
+advanced setting. In other words, you may override any of these on the command
+line. E.g., "make PGSTK=/some/other/path MLSCONFG=some.other.name".
+
+There are special variables used by the Makefiles that may not be assigned in
+the .configure file, yet may be overridden on the command line. These should be
+used with care, however.
+
+EVERYTHING         All the directories to be tarred up by "make tar"
+INSTALLDIR         Destination where install moves mlsl1log, etc. 
+                    (see also MLSINSTALLDIR)
+L2PARALLEL         Install l2 parallel executables
+                     if non-blank and target is l2-install
+LEVELS             A subset of l1 l2 l3 l3m; e.g. LEVELS="l1 l2" skips l3 l3m
+MLSCFILE           Overrides the name of the .configure file
+                    (see also HOSTMLSCFILE)
+OMIT               The names of any source files to be excluded; e.g.
+                     make update OMIT="wont_compile.f90 never_would.f90"
+TAR                Overrides name of tar command; e.g. path to GNU tar 
+                   in case your tar won't gzip for targets *targ
+PVM_EP             Where to install parallel executables
+                    if non-blank; default is HOME/pvm3/bin/LINUX
+
+The following are environmental settings
+HOSTMLSCFILE       Get all the mls settings from this file instead of 
+                    .configure (may be overridden by MLSCFILE)
+MLSINSTALLDIR      install puts all the executables here instead of
+                    bin/MLSCONFG (may be overridden by INSTALLDIR)
+
+EXAMPLE OF A .configure FILE
+#	.configure for mls
+USEMYFC=yes
+FC=/users/pwagner/bin/ifort-v19
+MLSF95=IFC
+MLSPLAT=Linux
+MLSCONFG=IFC.Linux.ifc19-OL8
+MLSTKROOT=/users/pwagner/apps/test/ifc19-OL8
+PGSINC=${MLSTKROOT}/toolkit5.2.18/include
+PGSTK=${MLSTKROOT}/toolkit5.2.18/lib/linux
+HDFEOS=${MLSTKROOT}/hdfeos/lib/linux
+HDFEOS5=${MLSTKROOT}/hdfeos5/lib/linux
+HDF=${MLSTKROOT}/hdf-4.2.6/lib
+HDF5=${MLSTKROOT}/hdf5-1.8.18/lib
+GCTP=${MLSTKROOT}/hdfeos/lib/linux
+PGSLIB=${MLSTKROOT}/toolkit5.2.18/lib/linux
+HDFEOS_LIB=${MLSTKROOT}/hdfeos/lib/linux
+HDFLIB=${MLSTKROOT}/hdf-4.2.6/lib
+BLAS=
+LIB_BLAS=
+LAPACK=
+LIB_LAPACK=f95
+PVM_ROOT=${MLSTKROOT}/pvm3
+PVM_ARCH=LINUX
+FFTW_ROOT=${MLSTKROOT}/fftw-2.1.5/lib
+COPTS=-D H5_USE_16_API
+FOPTS=-qopt-report=0 -traceback -xSSSe3
+LDOPTS=-static -xSSSe3
+LAFTER=-ltirpc
+REECHOMACHOPTS=-excl ieee_arithmetic.f90
+PRE=-D${MLSF95}
+LATEXPATH=/usr/local/depot/texlive/2020/bin/x86_64-linux
+TEXINPUTS=/software/toolkit/docs//:
+TEXMFLOCAL=/usr/local/depot/texlive/2020/texmf-dist:/software/toolkit/texmf.local
+BSTINPUTS=/usr/local/depot/texlive/2020/texmf-dist/bibtex/bst//:
+CNETCDF=/users/pwagner/netcdf-c-4.7.1-OL8/lib
+FNETCDF=/users/pwagner/netcdf-fortran-4.5.1-OL8/lib
+export MLSF95    
+export MLSPLAT   
+export MLSCONFG  
+export PGSINC    
+export PGSTK     
+export HDFEOS    
+export HDFEOS5   
+export HDF       
+export HDF5      
+export GCTP      
+export PGSLIB    
+export HDFEOS_LIB
+export HDFLIB    
+export BLAS      
+export LIB_BLAS  
+export LAPACK    
+export LIB_LAPACK
+export PVM_ROOT  
+export PVM_ARCH  
+export FFTW_ROOT 
+export COPTS     
+export FOPTS     
+export LDOPTS    
+export PRE       
+export LAFTER
+export LATEXPATH
+export TEXINPUTS
+export TEXMFLOCAL
+export BSTINPUTS
+export CNETCDF
+export FNETCDF
+
+-pw                           2000-Oct-24 to 2023-Sep-29
+EOF
+exit
+# $Log: README.MakeFC,v $
+# Revision 1.44  2015/08/12 18:42:43  pwagner
+# Removed outdated MakeFC stuff; also dropped most 32-bit vs. 64-bit stuff
+#
+# Revision 1.43  2012/06/19 23:24:55  pwagner
+# Brought up to date; mention idlcfm, NOF2003
+#
+# Revision 1.42  2010/08/28 00:48:04  pwagner
+# Includes latest canonical variables, e.g. HDF5INC
+#
+# Revision 1.41  2009/12/09 01:13:42  pwagner
+# Brought up-to-date with cfm, doc, and 64-bit Intel
+#
+# Revision 1.40  2007/05/29 18:04:14  pwagner
+# compiler-specific settings now in srclib, not platforms
+#
+# Revision 1.39  2005/06/23 23:00:53  pwagner
+# Reworded Copyright statement
+#
+# Revision 1.38  2004/12/14 21:29:08  pwagner
+# Brought up to date with perl scripts in util
+#
+# Revision 1.37  2004/03/31 19:02:32  pwagner
+# Updated to at least mention shrinkwraps
+#
+# Revision 1.36  2003/05/01 23:34:36  pwagner
+# Reflects option allowing update at any level; removed mention of depends; added warning of duplicate names
+#
+# Revision 1.35  2003/03/03 18:39:43  pwagner
+# install now works within each mlslevel, l1 holds 3 executables, blah--hdf4/5 dropped
+#
+# Revision 1.34  2002/06/25 20:04:11  pwagner
+# Some talk about new forestalling of cascades
+#
+# Revision 1.33  2002/05/13 17:59:45  pwagner
+# lib--hdf4 restores to lib stuff lost to l2--hdf5
+#
+# Revision 1.32  2002/05/02 00:16:55  pwagner
+# Mentions NOCASCADE setting
+#
+# Revision 1.31  2002/04/29 17:51:00  pwagner
+# Mentions concealed utctotai library
+#
+# Revision 1.30  2002/04/18 20:18:21  pwagner
+# Level 1 needs fftw; new paths in sample .configure
+#
+# Revision 1.29  2002/02/21 21:57:05  pwagner
+# Separates .configure-able settings from command-line ones
+#
+# Revision 1.28  2002/02/12 19:11:48  pwagner
+# Mention illegal configuration names, HDFVERSIONS, -gc effect on machine.f90
+#
+# Revision 1.27  2001/11/15 19:44:26  pwagner
+# Adds blas to hierarchy of make
+#
+# Revision 1.26  2001/11/09 21:48:34  pwagner
+# Some explanations added for custom-named configurations
+#
+# Revision 1.25  2001/11/08 00:39:14  pwagner
+# New help system; mention of NOCLEANING where appropriate
+#
+# Revision 1.24  2001/11/06 00:22:51  pwagner
+# BLAS, LAPACK usage explained
+#
+# Revision 1.23  2001/09/26 17:32:20  pwagner
+# Renamed SIMPLIFYMAKE to NOHUNTING
+#
+# Revision 1.22  2001/09/25 23:53:22  pwagner
+# Mentions Sun.Sun, SIMPLIFYMAKE
+#
+# Revision 1.21  2001/08/16 17:16:32  pwagner
+# Mentions EXTRA_PATHS, shell script versions of mlsln; snipped less important stuff
+#
+# Revision 1.20  2001/07/26 23:26:29  pwagner
+# Mentions INSTALLDIR, MLSINSTALLDIR
+#
+# Revision 1.19  2001/07/24 23:35:26  pwagner
+# Mentions l3m; no longer recommend -gc
+#
+# Revision 1.18  2001/07/07 00:27:30  pwagner
+# Mentions new version of Toolkit, LIB_BLAS, and cloudfwdm
+#
+# Revision 1.17  2001/05/17 23:17:57  pwagner
+# New section on multiple platforms; mentions toolkit-free version
+#
+# Revision 1.16  2001/03/17 00:57:21  pwagner
+# Reordered sections; mentioned CC setting
+#
+# Revision 1.15  2001/03/13 19:01:00  pwagner
+# In line with new clean, tar; drops -f Makefile after first use
+#
+# Revision 1.14  2001/03/08 23:52:48  pwagner
+# TAR option; complete description of 1st time
+#
+# Revision 1.13  2001/03/07 14:28:01  pumphrey
+# Added note on dealing with corrupted MakeFC
+#
+# Revision 1.12  2001/02/27 18:41:41  pwagner
+# Mentions configure_pvm, configure_fopts
+#
+# Revision 1.11  2001/02/10 00:14:41  pwagner
+# mentions make -f MakeFC update
+#
+# Revision 1.10  2001/02/09 01:02:31  pwagner
+# Mentions advanced settings
+#
+# Revision 1.9  2001/01/16 21:31:19  pwagner
+# clean_all option added
+#
+# Revision 1.8  2001/01/13 00:42:09  pwagner
+# Mentions mlspgs_sips.tgz and mlspgs_subs.tar
+#
+# Revision 1.7  2001/01/12 17:59:16  pwagner
+# Mentions install, tar_sips options
+#
+# Revision 1.6  2001/01/05 22:56:04  pwagner
+# Mentioned Hugh's fix for Toolkit; make all option
+#
+# Revision 1.5  2000/11/21 23:54:46  pwagner
+# Mentions levels 1-3; offer to fix perl path
+#
+# Revision 1.4  2000/11/06 18:05:42  pwagner
+# SHared source library
+#
+# Revision 1.3  2000/11/03 21:51:10  pwagner
+# Cross-directory depends; clean_objs
+#
+# Revision 1.2  2000/10/30 19:35:47  pwagner
+# Reflects change to f90makedep.pl
+#
+# Revision 1.1  2000/10/24 21:50:02  pwagner
+# first commit
+#
+@
+
+
+1.44
+log
+@Removed outdated MakeFC stuff; also dropped most 32-bit vs. 64-bit stuff
+@
+text
+@d17 1
+a17 1
+# "$Id: README.MakeFC,v 1.43 2012/06/19 23:24:55 pwagner Exp $"
+a117 3
+cfm is anticipated to be added to the cvs repository in the near future. Your
+distribution may lack it just yet.
+
+d484 5
+a497 12
+Although I have elsewhere claimed otherwise, you are not able to successfully
+both build and run 32-bit executables on 64-bit platforms.
+
+Can you run 32-bit executables on 64-bit platforms if they were built on
+32-bit platforms? It depends. Definitely not if the executable was
+linked dynamically. 
+
+Can you run 64-bit executables on 32-bit platforms if they were built on
+64-bit platforms? No.
+If you have a different combination, contact me. Even better, if you have a
+different combination and can get it to work, send it to me, or "cvs commit".
+
+d563 2
+d573 9
+d750 1
+a750 1
+FC=/usr/local/bin/ifort-v14
+d753 4
+a756 4
+MLSCONFG=IFC.Linux
+MLSTKROOT=/software/toolkit/ifc14
+PGSINC=${MLSTKROOT}/toolkit/include
+PGSTK=${MLSTKROOT}/toolkit/lib/linux
+d759 2
+a760 2
+HDF=${MLSTKROOT}/hdf/lib
+HDF5=${MLSTKROOT}/hdf5/lib
+d762 1
+a762 1
+PGSLIB=${MLSTKROOT}/toolkit/lib/linux
+d764 1
+a764 1
+HDFLIB=${MLSTKROOT}/hdf/lib
+d771 1
+a771 1
+FFTW_ROOT=${MLSTKROOT}/fftw/lib
+d773 1
+a773 1
+FOPTS=-vec-report0 -traceback -xSSSe3
+d775 1
+d778 6
+d808 7
+d816 1
+a816 1
+-pw                           2000-Oct-24 to 2015-Aug-11
+d820 3
+@
+
+
+1.43
+log
+@Brought up to date; mention idlcfm, NOF2003
+@
+text
+@d17 1
+a17 1
+# "$Id: README.MakeFC,v 1.42 2010/08/28 00:48:04 pwagner Exp $"
+d23 2
+a24 2
+#  build-nag         a script to build all prerequisite libraries and mls 
+#                     software; also build-lahey, build-ifc, etc.
+d31 3
+a33 3
+mls software as part of a shrinkwrap package, look there for the files
+build-xxx (where xxx might be "nag"), env.linux, and f90. After judiciously
+editing these, just cd to their directory and type "build-xxx".
+d52 1
+a52 1
+  make -f MakeFC update
+d56 3
+a58 4
+are curious or if something goes wrong. The reasons for putting each of the
+two parts "-f MakeFC" and "update" this first time are explained below, but the
+point is that after this first time, you will usually be able to make do with
+just "make".
+d68 1
+a68 1
+file. Or else type 'make -f MakeFC firsthelp'.
+d108 3
+a110 9
+The configurable Makefile is MakeFC. It is found in the mlspgs directory. The
+name MakeFC was chosen as unlikely to conflict with other Makefiles. An
+unfortunate consequence of this decision is that to use it to build the
+software, the "make" command must be accompanied by the "-f MakeFC" the first
+time it is used. After that, however, "make" alone suffices. E.g., the usual
+way becomes
+         make
+This will automatically build lib and mlsln where n={1,2,3,3m}. To build other
+parts see the section BUILDING ONLY PARTS OF THE SOFTWARE below.
+d129 1
+a129 1
+   MakeFC      mlsconfigure         MakeFC        (shared
+d138 1
+a138 1
+the mlspgs directory, enter the command "make -f MakeFC update". This should
+d269 1
+a269 1
+you are currently using and thus automatically direct MakeFC to the appropriate
+a375 3
+makefile     makes a new symbolic link from MakeFC to Makefile
+             at the top level as well as each of the subdirectories;
+             useful for older archives before the link became automatic
+a406 5
+Another step make takes at its first invocation is to copy MakeFC to a new file
+named Makefile. If a file named Makefile already exists, it is renamed
+Makefile.old. That is why subsequent uses of make can omit the "-f MakeFC"
+part.
+
+a486 31
+32-bit vs. 64-bit
+Some of our desktops are now running in 64-bit mode. To see whether the
+machine you're currently logged into is 64-bit or not, try typing
+ uname -i
+If it is 64-bit, you will see the line
+ x86_64
+returned. If it is 32-bit, you will see
+ i386
+instead.
+
+The way 32-bit vs. 64-bit impacts building mlspgs will be spelled out in
+detail.
+
+First of all, we built only one 64-bit toolkit, and that is for the
+Intel compiler ifort v11. Users fonder of Lahey, NAG, or earlier
+versions of the Intel compiler must build mlspgs only on 32-bit
+platforms. 
+
+While executables built with v11 produce results close to but different
+from v10, we neglect them and have used v11 in all v3.20 development
+tests except ME-01-003 and -004.
+
+The .configure for the 64-bit toolkit is in 
+/software/toolkit/ifc11-64/.configure
+
+You can copy it to your mlspgs directory, perhaps renaming it to
+something more memorable like .configure-ifc11-64.
+
+Incidentally, it uses the internal ieee_arithmetic support rather than
+the one in machines/IFC.Linux.
+
+d488 2
+a489 3
+(1) Do not use the same .configure file to build somethimes with ifort
+v10 and other times with ifort v11. Treat them as two different
+compilers.
+d496 2
+a497 2
+Although I have claimed otherwise, you are not able to successfully both
+build and run 32-bit executables on 64-bit platforms.
+d524 3
+a526 3
+Sometimes after doing a cvs update, especially if there has been a lot of
+active coding and cvs committing, the next make will exit complaining about an
+illegal separator.  This is usually the result of cvs "merging" your copy of
+d528 3
+a530 6
+from the top mlspgs level.  It is also possible for MakeFC itself to get messed
+up in this way -- the above cures will not work  in this case. You may be able
+to fix the problem by deleting MakeFC and doing a CVS update to fetch a new
+copy. Similarly, one of the scripts hidden away in the util directory
+may become corrupted by merge conflicts during a cvs update. In this case, too,
+deleting the scripts and a fresh cvs update may fix the problem.
+d749 1
+a749 1
+FC=/usr/local/intel/11.1/056/bin/intel64/ifort
+d752 2
+a753 2
+MLSCONFG=IFC.Linux.ifc11-64
+MLSTKROOT=/software/toolkit/ifc11-64
+d775 12
+a786 11
+export MLSF95
+export MLSPLAT
+export MLSCONFG
+export PGSINC
+export PGSTK
+export HDFEOS
+export HDFEOS5
+export HDF
+export HDF5
+export GCTP
+export PGSLIB
+d788 4
+a791 4
+export HDFLIB
+export BLAS
+export LIB_BLAS
+export LAPACK
+d793 7
+a799 6
+export PVM_ROOT
+export PVM_ARCH
+export FFTW_ROOT
+export COPTS
+export FOPTS
+export LDOPTS
+d801 1
+a801 1
+-pw                           2000-Oct-24 to 2010-Aug-27
+d805 3
+@
+
+
+1.42
+log
+@Includes latest canonical variables, e.g. HDF5INC
+@
+text
+@d17 1
+a17 1
+# "$Id: README.MakeFC,v 1.41 2009/12/09 01:13:42 pwagner Exp $"
+d120 1
+a120 1
+cloudfwdm, cfm} will be henceforth called simply the "mlslevels".
+a605 38
+To revert to the simpler, sturdier Makefiles of bygone days put the CASCADE
+setting to "yes", or in fact to anything other than its blank default. This
+throwback applies each time it is used, but is good for that time only; i.e.,
+if the next make is issued without the setting, make will resume checking for
+differences in the .mod files. As this will cause more and more frequent
+compilations, it is recommended only if anomalous behavior has been noted.
+
+Also available but not recommended is a third system that requires more care on
+the user's part. If in addition to the CASCADE setting, you put the NOCASCADE
+setting to "yes", or in fact to anything other than its blank default, only the
+source files that actually changed will be recompiled. This dispensation
+applies each time it is used, but is good for that time only; i.e., if the next
+make is issued without these settings, the recompilations that were forestalled
+on the previous make will likely be triggered. And it should be mentioned that
+changes to the "public" parts of the sources usually require the cascade of
+recompilations to build properly.
+
+Another way to trigger massive recompilation is to modify the .configure file.
+Sometimes this may be appropriate, but not always. If you're certain that it is
+not necessary, for example if you only changed the path to a library, you may
+put the NOCLEANING setting to "yes", or in fact to anything other than its
+blank default. Another way to forestall the massive recompilation in this case
+is to immediately enter "make update" after modifying the .configure file, e.g.
+after "make configure_pvm". Indeed, these two can be conveniently entered on
+the same line as "make configure_pvm update". However, beware of forestalling
+needed recompilations. For example, if you reset FOPTS by "make configure_fopts
+update", you probably want to recompile everything, but the "update" target
+will prevent that.
+
+There may be cases where make can be observed "hunting", where it enters a
+prerequisite-containing directory repeatedly, as if to rebuild the
+prerequisite, but not doing so. This happens because make believes wrongly the
+prerequisite is itself the target of a newer prerequisite. While this hunting
+behavior seems wrong, it will not cause make to fail, and in fact minimizes
+rebuilding the prerequisites. At the cost of some added rebuilding of
+prerequisites, make can be made to give up hunting by putting the NOHUNTING
+setting to "yes", or in fact to anything other than its blank default.
+
+a683 1
+CASCADE            Revert to simpler Makefile dependencies (.o only)
+d687 2
+a688 5
+NOCASCADE          Don't rebuild anything besides changed sources
+                    if non-blank (and CASCADE also set)
+NOCLEANING         Don't rebuild everything on any change to .configure
+                    if non-blank
+NOHUNTING          Stop make from hunting if non-blank
+d853 3
+@
+
+
+1.41
+log
+@Brought up-to-date with cfm, doc, and 64-bit Intel
+@
+text
+@d17 1
+a17 1
+# "$Id: README.MakeFC,v 1.40 2007/05/29 18:04:14 pwagner Exp $"
+d212 2
+d741 32
+d840 3
+a842 2
+TK=/software/toolkit/NAG
+MLSF95=NAG
+d844 12
+a855 11
+MLSCONFG=NAG.Linux
+PGSINC=${TK}/toolkit/include
+PGSTK=${TK}/toolkit/lib/linux
+HDFEOS=${TK}/hdfeos/lib/linux
+HDFEOS5=${TK}/hdfeos5/lib/linux
+HDF=${TK}/hdf/lib
+HDF5=${TK}/hdf5/lib
+GCTP=${TK}/hdfeos/lib/linux
+PGSLIB=${TK}/toolkit/lib/linux
+HDFEOS_LIB=${TK}/hdfeos/lib/linux
+HDFLIB=${TK}/hdf/lib
+d860 1
+a860 1
+PVM_ROOT=${TK}/pvm3
+d862 5
+a866 3
+FFTW_ROOT=${TK}/fftw/lib
+FOPTS=-O2 -C=none
+LDOPTS=-Bstatic
+d887 1
+d891 1
+a891 1
+-pw                           2000-Oct-24 to 2009-Dec-08
+d895 3
+@
+
+
+1.40
+log
+@compiler-specific settings now in srclib, not platforms
+@
+text
+@d17 1
+a17 1
+# "$Id: README.MakeFC,v 1.39 2005/06/23 23:00:53 pwagner Exp $"
+d120 7
+a126 1
+cloudfwdm} will be henceforth called simply the "mlslevels".
+d356 2
+d427 5
+a431 5
+         <----------------mlspgs---------------------------------------->
+        /           /   /        \     \             \        \          \
+       l1         l2---+----------+--->cloudfwdm--->fwdmdl   l3m-------->l3
+       |\           \   \        /     /             /        /          /
+       | ------------+---+---->lib<---+-------------+--------------------
+d488 1
+a498 5
+NAG.SGI assumes abi=32. To compile for a 64 bit kernel, we could
+(1) add platforms/NAG.SGI64 with altered flags
+(2) allow adding extra compiler settings (see below)
+To use these, 64 bit versions of the libraries HDFEOS, etc. would have
+to available, too.
+d500 50
+d686 1
+d733 5
+d852 1
+a852 1
+-pw                           2000-Oct-24 to 2007-May-29
+d856 3
+@
+
+
+1.39
+log
+@Reworded Copyright statement
+@
+text
+@d17 1
+a17 1
+# "$Id: README.MakeFC,v 1.38 2004/12/14 21:29:08 pwagner Exp $"
+d39 1
+a39 1
+ (1) f95 compiler (one of NAG, Lahey, or Sun)
+d140 2
+a141 2
+launch util/mlsconfigure. It will first query you for your compiler (only three
+choices available: NAG, Lahey, or Sun) and for your platform/OS (only three
+d159 1
+a159 1
+Note whether you have the latest version of the toolkit (currently 5.2.12.A)
+d395 3
+a397 3
+Makefile which is the catenation of .configure with two files found in the
+directory platforms: e.g., assuming the default value of MLSCONFG NAG.Linux:
+        cat .configure l2/platforms/NAG.Linux l2/platforms/targets > \
+d399 3
+a401 3
+Here platforms/NAG.Linux is a file of compiler settings specific to the NAG
+compiler. platforms/targets is a list of makefile-like targets and the commands
+to build them, independent of any particular compiler or platform/OS.
+d476 2
+a477 1
+become problem-plagued with recent releases of hdf4 and hdf5.
+d482 1
+d605 7
+a611 7
+Not mentioned above are two extra directories: customblds and 
+lib/machines/MLSCONFG. The first contains custom build instructions for various
+modules, i.e. modules for which the default ".f.o" rules won't work. The second
+contains at least one file, machine.f90, with compiler/platform-specific
+information about command-line  arguments and other features. Sometimes other
+files may accompany machine.f90, e.g. to compensate for missing ieee-arithmetic
+support in the case of Lahey or Sun.
+d792 1
+a792 1
+-pw                           2000-Oct-24 to 2005-Jun-23
+d796 3
+@
+
+
+1.38
+log
+@Brought up to date with perl scripts in util
+@
+text
+@d6 10
+a15 2
+# Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
+# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d17 1
+a17 1
+# "$Id: README.MakeFC,v 1.37 2004/03/31 19:02:32 pwagner Exp $"
+d39 1
+a39 1
+ (1) f95 compiler (either NAG, Lahey, or Sun)
+d41 1
+a41 1
+ (3) mls software (probably where you're reading this)
+d61 6
+d689 3
+d708 4
+a711 3
+Three different binary executables are built under l1: mlsl1log, mlsl1g, and
+mlsl1t. When you do a "make install", all three are moved to INSTALLDIR along
+with the wrapper script "mlsl1.sh" which runs them in sequence.
+d744 1
+d747 11
+a757 11
+MLSCONFG=customized
+PGSINC=/software/SRC/HDF-EOS/TOOLKIT-5.2.7.4mls1.0/include
+PGSTK=/software/SRC/HDF-EOS/TOOLKIT-5.2.7.4mls1.0/lib/linux
+HDFEOS=/software/SRC/TOOLKIT-5.2.7.3v1.00/hdfeos/lib/linux
+HDFEOS5=/software/SRC/HDF-EOS/TOOLKIT-5.2.7.4mls1.0/hdfeos5.0/lib/linux
+HDF=/software/SRC/TOOLKIT-5.2.7.3v1.00/hdf/linux/HDF4.1r3/lib
+HDF5=/software/SRC/HDF-EOS/TOOLKIT-5.2.7.4mls1.0/hdf5/hdf5-1.4.1/lib
+GCTP=/software/SRC/HDF-EOS/TOOLKIT-5.2.7.4mls1.0/hdfeos5.0/lib/linux
+PGSLIB=/software/SRC/HDF-EOS/TOOLKIT-5.2.7.4mls1.0/lib/linux
+HDFEOS_LIB=/software/SRC/TOOLKIT-5.2.7.3v1.00/hdfeos/lib/linux
+HDFLIB=/software/SRC/TOOLKIT-5.2.7.3v1.00/hdf/linux/HDF4.1r3/lib
+d762 1
+a762 1
+PVM_ROOT=/usr/share/pvm3
+d764 3
+a766 3
+FFTW_ROOT=/usr/lib
+FOPTS=-w
+LDOPTS=
+d790 1
+a790 1
+-pw                           2000-Oct-24 to 2004-Dec-06
+d794 3
+@
+
+
+1.37
+log
+@Updated to at least mention shrinkwraps
+@
+text
+@d9 1
+a9 1
+# "$Id: README.MakeFC,v 1.36 2003/05/01 23:34:36 pwagner Exp $"
+d145 1
+a145 1
+Note whether you have the latest version of the toolkit (currently 5.2.9.D)
+d442 5
+a446 6
+script f90makedep.pl. The latter assumes your perl, or a link to it, is
+/usr/bin/perl. This assumption is embodied in line 1 of the script. If your
+perl is elsewhere, edit this line to show the true path. Otherwise, you will be
+asked, when you recalculate dependencies, whether you want to have the makefile
+edit the line for you or else use it as is. Allowing this change will free you
+from being prompted about this again.
+d506 3
+a508 1
+copy.
+d771 1
+a771 1
+-pw                           2000-Oct-24 to 2004-March-31
+d775 3
+@
+
+
+1.36
+log
+@Reflects option allowing update at any level; removed mention of depends; added warning of duplicate names
+@
+text
+@d6 1
+a6 1
+# Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+d9 1
+a9 1
+# "$Id: README.MakeFC,v 1.35 2003/03/03 18:39:43 pwagner Exp $"
+d15 2
+d21 6
+d32 1
+a32 1
+ (2) Installed SDP Toolkit (PGSTK, HDFEOS, HDF)
+d145 1
+a145 1
+Note whether you have the latest version of the toolkit (currently 5.2.8v1.00)
+d147 1
+a147 3
+HDFEOS libraries, and so their paths need to be set. For earlier versions,
+leave their paths blank. Note that a future release of the mlspgs software will
+require 5.2.8 or above and versions 5 of the HDF/HDFEOS libraries.
+d493 7
+d537 2
+a538 1
+differences in the .mod files.
+d588 8
+a702 2
+HDFVERSIONS        Build in support for both hdf4 and hdf5 versions of files
+                    if non-blank (but see l1--hdf5, l2--hdf5, etc.)
+d705 2
+d714 2
+d770 1
+a770 1
+-pw                           2000-Oct-24 to 2003-May-01
+d774 3
+@
+
+
+1.35
+log
+@install now works within each mlslevel, l1 holds 3 executables, blah--hdf4/5 dropped
+@
+text
+@d6 1
+a6 1
+# Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+d9 1
+a9 1
+# "$Id: README.MakeFC,v 1.34 2002/06/25 20:04:11 pwagner Exp $"
+a308 3
+depends      recalculates dependencies;
+             typically done only after adding/removing a module or adding a
+             "USE ..." line to an existing module; but see update below
+d316 5
+a355 5
+update       replaces Makefiles in subdirectories with latest versions;
+             recalculates dependencies; useful after a cvs update; also deletes
+             orphaned .o and .mod files left behind after sources removed;
+             also useful after minor configuration changes to prevent 
+             unnecessary recompilation
+d430 4
+a433 5
+it to be updated on any change to the source files. Instead, the only ways to
+change it are by either of the explicit commands "make depends" or, at the
+mlspgs level, "make update".  Among the drawbacks to this are that an outdated
+Makefile.dep is possibly what cvs finds when checking out the archive. See the
+recommendation concerning the update target below.
+d462 3
+a465 1
+  LF95.(pc)Linux
+d569 5
+d689 1
+a689 1
+                     make depends OMIT="wont_compile.f90 never_would.f90"
+d746 1
+a746 1
+-pw                           2000-Oct-24 to 2003-Mar-03
+d750 3
+@
+
+
+1.34
+log
+@Some talk about new forestalling of cascades
+@
+text
+@d9 1
+a9 1
+# "$Id: README.MakeFC,v 1.33 2002/05/13 17:59:45 pwagner Exp $"
+d316 3
+a350 3
+install      moves the built programs from the mlslevels to INSTALLDIR
+             also puts shell script versions of each binary executable there
+             with names composed of binary + '.sh'; e.g., mlsl1.sh
+a358 4
+l2--hdf5     builds mlsl2 with support for hdf5/hdfeos5 formats;
+             (similarly for l1--hdf5, l3--hdf5, and l3m--hdf5)
+all--hdf5    builds all the levels with support for hdf5/hdfeos5 formats
+lib--hdf4    restores to lib the modules stripped out by xxx--hdf5
+d456 6
+a461 5
+The Linux HDFEOS, HDF, PGSTK, etc. libraries as distributed can not be made to
+link properly. Sun and SGI versions seem correct. The solution is to build
+correct ones. See Hugh Pumphrey's page 
+http://www.met.ed.ac.uk/~hcp/hdfeos_notes.txt for instructions. Hopefully this
+bug will disappear with the next release.
+d663 5
+a667 3
+scenes and then installed in INSTALLDIR. It may in time be moved out from
+behind the scenes into daylight where it may be generally examined and, if
+needed, improved.
+d680 1
+a680 1
+INSTALLDIR         Destination where install moves mlsl1, etc. 
+d743 1
+a743 1
+-pw                           2000-Oct-24 to 2002-Jun-25
+d747 3
+@
+
+
+1.33
+log
+@lib--hdf4 restores to lib stuff lost to l2--hdf5
+@
+text
+@d9 1
+a9 1
+# "$Id: README.MakeFC,v 1.32 2002/05/02 00:16:55 pwagner Exp $"
+d137 5
+a141 4
+Note whether you have the latest version of the toolkit (currently
+5.2.7.4v1.00) or an earlier one. The latest version includes version 5 of both
+the HDF and HDFEOS libraries, and so their paths need to be set. For earlier
+versions, leave their paths blank.
+d314 2
+d426 2
+a427 2
+that copies in the dependencies stored in the file Makefile.dep. This is
+how make learns which sources to compile to create the binaries, called OBJS. A
+d429 6
+a434 2
+build that target. Makefile.dep contains only the dependencies, no explicit
+build commands.
+d502 2
+a503 1
+compliant.
+d508 32
+a539 13
+deeper and more searching scrutiny, perhaps checking that the new .mod file
+created by a recompile (in the case of a compiler like NAG) is actually
+identical with the existing one, could pare the cascade down, but at the cost
+of requiring an even more complex system of Makefiles than this one.
+
+In place of the more complex system is one that requires more care on the
+user's part. If you put the NOCASCADE setting to "yes", or in fact to anything
+other than its blank default, only the source files that actually changed will
+be recompiled. This dispensation applies each time it is used, but is good for
+that time only; i.e., if the next make is issued without the setting, the
+recompilations that were forestalled on the previous make will likely be
+triggered. And it should be mentioned that changes to the "public" parts of the
+sources usually require the cascade of recompilations to build properly.
+d626 4
+d631 1
+a631 1
+                    if non-blank
+d744 1
+a744 1
+-pw                           2000-Oct-24 to 2002-Apr-18
+d748 3
+@
+
+
+1.32
+log
+@Mentions NOCASCADE setting
+@
+text
+@d9 1
+a9 1
+# "$Id: README.MakeFC,v 1.31 2002/04/29 17:51:00 pwagner Exp $"
+d325 7
+d334 7
+d343 2
+d356 4
+d649 1
+a649 1
+                    if non-blank
+d717 3
+@
+
+
+1.31
+log
+@Mentions concealed utctotai library
+@
+text
+@d9 1
+a9 1
+# "$Id: README.MakeFC,v 1.30 2002/04/18 20:18:21 pwagner Exp $"
+d485 9
+d579 2
+d697 3
+@
+
+
+1.30
+log
+@Level 1 needs fftw; new paths in sample .configure
+@
+text
+@d9 1
+a9 1
+# "$Id: README.MakeFC,v 1.29 2002/02/21 21:57:05 pwagner Exp $"
+d290 4
+a293 3
+It is possible for two different .configure files to name the same configuration,
+i.e. to have the same MLSCONFG setting. As stated above, be aware that objects
+made when either is in force will then be placed in the same sub-directory.
+d335 2
+a336 2
+update       replaces Makefiles in subdirectories with latest versions after
+             recalculating dependencies; useful after a cvs update; also deletes
+d601 7
+d630 4
+a633 4
+HOSTMLSCFILE       Get all the mls settings from this file instead of .configure 
+                   (may be overridden by MLSCFILE)
+MLSINSTALLDIR      install puts all the executables here instead of bin/MLSCONFG
+                   (may be overridden by INSTALLDIR)
+d686 3
+@
+
+
+1.29
+log
+@Separates .configure-able settings from command-line ones
+@
+text
+@d9 1
+a9 1
+# "$Id: README.MakeFC,v 1.28 2002/02/12 19:11:48 pwagner Exp $"
+d127 1
+a127 1
+directories and to the PGSTK, HDFEOS, HDF, and Gctp libraries. These may
+d138 1
+a138 1
+5.2.7.3v1.00) or an earlier one. The latest version includes version 5 of both
+d146 2
+a147 1
+possible. PVM is required only for level 2. FFTW is required only for level 3.
+d427 3
+a429 1
+changing the paths, and has become even more so as the system evolved.
+d491 4
+a494 1
+the same line as "make configure_pvm update".
+d536 1
+a536 1
+FFTW_ROOT          Path to the FFTW library; required for mlsl3
+d597 2
+a598 1
+with the statement "make LDOPTS=" effectively erasing "-gc" from the link.
+d632 2
+a633 2
+PGSINC=/software/SRC/TOOLKIT-5.2.7.3v1.00/include
+PGSTK=/software/SRC/TOOLKIT-5.2.7.3v1.00/lib/linux
+d635 1
+a635 1
+HDFEOS5=/software/SRC/TOOLKIT-5.2.7.3v1.00/hdfeos5.0/lib/linux
+d637 3
+a639 3
+HDF5=/software/SRC/TOOLKIT-5.2.7.3v1.00/hdf5/linux/hdf5-1.4.1/lib
+GCTP=/software/SRC/TOOLKIT-5.2.7.3v1.00/hdfeos/lib/linux
+PGSLIB=/software/SRC/TOOLKIT-5.2.7.3v1.00/lib/linux
+d674 1
+a674 1
+-pw                           2000-Oct-24 to 2002-Feb-21
+d678 3
+@
+
+
+1.28
+log
+@Mention illegal configuration names, HDFVERSIONS, -gc effect on machine.f90
+@
+text
+@d9 1
+a9 1
+# "$Id: README.MakeFC,v 1.27 2001/11/15 19:44:26 pwagner Exp $"
+a559 3
+HDFVERSIONS        Build in support for both hdf4 and hdf5 versions of files
+                    if non-blank
+INSTALLDIR         Destination where install moves mlsl1, etc.
+a562 1
+MLSCFILE           Overrides the name of the .configure file
+a569 8
+TAR                Overrides name of tar command; e.g. path to GNU tar 
+                   in case your tar won't gzip for targets *targ
+
+The following are environmental settings
+HOSTMLSCFILE       Get all the mls settings from this file instead of .configure 
+                   (may be overridden by MLSCFILE)
+MLSINSTALLDIR      install puts all the executables here instead of bin/MLSCONFG
+                   (may be overridden by INSTALLDIR)
+d580 3
+a582 3
+Under the lib directory is a lib/tests subdirectory containing five
+test programs. They were used to test libmls.a during development. It
+is likely they no longer compile nor link properly.
+d597 23
+d667 1
+a667 1
+-pw                           2000-Oct-24 to 2002-Feb-12
+d671 3
+@
+
+
+1.27
+log
+@Adds blas to hierarchy of make
+@
+text
+@d6 1
+a6 1
+# Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+d9 1
+a9 1
+# "$Id: README.MakeFC,v 1.26 2001/11/09 21:48:34 pwagner Exp $"
+d197 1
+a197 1
+  (1) each configuration's name is unique
+d203 16
+d470 3
+d560 2
+d600 4
+a603 1
+far.
+d656 1
+a656 1
+-pw                           2000-Oct-24 to 2001-Nov-15
+d660 3
+@
+
+
+1.26
+log
+@Some explanations added for custom-named configurations
+@
+text
+@d9 1
+a9 1
+# "$Id: README.MakeFC,v 1.25 2001/11/08 00:39:14 pwagner Exp $"
+d35 1
+a35 2
+Then, from the "top" level (where you see this file, as well as the l1, l2, l3,
+l3m, lib, fwmdl, cloudfwdm, srclib, and util directories) simply type
+d47 1
+a47 1
+file. Oe else type 'make -f MakeFC firsthelp'.
+d97 1
+a97 1
+To simplify things the set of directories {l1, l2, l3, l3m, lib, fwdmdl,
+d113 1
+a113 1
+                (much else)
+d116 2
+a117 2
+Then to make the mls software, both the lib and all mlslevels, from the top
+level of the mlspgs directory, enter the command "make -f MakeFC". This should
+d139 1
+a139 1
+the HDF and HDFEOS libraries, and so their paths need to be set. Gor earlier
+d143 4
+a146 2
+PVM and FFTW. BLAS is completely optional.  PVM is required only for level 2.
+FFTW is required only for level 3.
+d269 1
+a269 1
+the command-line varaible MLSCFILE above is INSTALLDIR. Thus you may specify
+d309 2
+a310 2
+help--mlsconfigure
+             prints some details on the mlsconfigure script
+d363 1
+a363 2
+call make in the mlslevels which in turn will call make in subdirectories, and
+the names of the Makefile thus summoned.
+d365 7
+a371 5
+            <----------mlspgs/MakeFC-------------------------------------->
+           /              /   |    \             \        \               \
+   l1/MakeFC      l2/MakeFC---+--->cloudfwdm--->fwdmdl  l3m/MakeFC--->l3/MakeFC
+       |   \              \   |    /             /        /               /
+       |    -------------->lib/MakeFC<------------------------------------
+d373 1
+a373 1
+   MLSCONFG/Makefile   MLSCONFG/Makefile
+d375 1
+a375 1
+where the bottom MLSCONFG directories only below lib and l1 have been shown,
+d381 1
+a381 1
+	${HOME}/mlspgs/lib/${MLSCONFG}/Makefile
+d407 1
+a407 1
+This is useable now. Please try it out and inform me of any bugs you
+d409 2
+a410 2
+improvements you think of. The configuration is messy, especially
+changing the paths.
+d443 1
+a443 1
+to easily handle multiple platforms.
+d460 1
+a460 1
+of requiring a more complex system of Makefiles than the this one.
+d500 1
+a500 2
+of NAG f95. Alternatively, the first seven of the following can be set by
+configure_full.
+d573 1
+a573 1
+is possible they may no longer work, nor even compile and link properly.
+d632 1
+a632 1
+-pw                           2000-Oct-24 to 2001-Nov-07
+d636 3
+@
+
+
+1.25
+log
+@New help system; mention of NOCLEANING where appropriate
+@
+text
+@d9 1
+a9 1
+# "$Id: README.MakeFC,v 1.24 2001/11/06 00:22:51 pwagner Exp $"
+d114 1
+d121 5
+a125 1
+choices available: Sun, SGI, or Linux).
+d143 3
+a145 3
+The next set of questions will pertain to three special libraries: BLAS, PVM
+and FFTW. BLAS is completely optional.  PVM is required only for level 2. FFTW
+is required only for level 3.
+d147 1
+a147 1
+The final two questions allow to set your own default compiler and loader
+d193 13
+a205 4
+MULTIPLE PLATFORMS
+If you wish to build the software on more than one platform, one reliable
+method is to keep multiple copies of the .configure file and alternately rename
+or hide them according to the machine and compiler in use at a particular time.
+d262 8
+a269 7
+this would be mlspgs/bin/MLSCONFG and so automatically tracks different
+platforms correctly. You might choose alternatively, especially if you have
+root priviledge, and so may need more flexibility. The counterpart to
+HOSTMLSCFILE is MLSINSTALLDIR. Set it as an environment variable at login, and
+it will dictate where install moves mlsl1, etc. As an alternative, the
+counterpart to the command-line varaible MLSCFILE above is INSTALLDIR. Thus you
+may specify the destination via
+d272 4
+d286 1
+a286 1
+             then deletes the subdirectory containing them
+d291 2
+a292 3
+             "USE ..." line to an existing module;
+             may require editing first line of f90makedep.pl (see below)
+configure    change configuration: compiler, (less often) platform/OS,
+d295 1
+a295 1
+(All the following apply only at the top level)
+d297 4
+d303 7
+a309 1
+help         prints a summary of targets, settings, usage of MakeFC
+d318 3
+a320 8
+             orphaned .o and .mod files left behind after sources removed
+
+(The following are more specialized)
+configure_pvm    reset paths to PVM_ROOT, FFTW_ROOT, BLAS, LAPACK
+                 (see BEFORE.mls)
+configure_fopts  reset default Fortran95 compiler and linker switches
+configure_full   combines configure, configure_pvm, configure_fopts
+configure_help   prints brief help on how to configure the build
+d338 4
+a341 4
+name given by the value of MLSCONFG. In the example above that name would be
+NAG.Linux. In this directory mlsconfigure places a Makefile which is the
+catenation of .configure with two files found in the directory platforms: e.g.,
+assuming the value of MLSCONFG is NAG.Linux:
+d352 4
+a355 4
+Another step make takes at its first invocation is to create a symbolic link
+from MakeFC to a new file named Makefile. If a file named Makefile already
+exists, it is renamed Makefile.old. That is why subsequent uses of make can
+omit the "-f MakeFC" part.
+d436 6
+a441 5
+back whenever needed. As each MLSCONFG directory is uniquely named, you may
+build multiple versions of the mls software. For example, I built versions for
+both Sun and Linux platforms in my home directory. I can switch between versions
+by overwriting the current .configure with one saved for the other platform. See
+above for fuller explanation of how to easily handle multiple platforms.
+d462 6
+a467 2
+not necessary, you may put the NOCLEANING setting to "yes", or in fact to
+anything other than its blank default.
+d582 1
+a582 1
+line. E.g., "make PGSTK=/some/other/path".
+d588 1
+a588 1
+MLSCONFG=NAG.Linux
+d606 1
+a606 1
+FOPTS=-C -O
+d635 3
+@
+
+
+1.24
+log
+@BLAS, LAPACK usage explained
+@
+text
+@d2 3
+d9 1
+a9 1
+# "$Id: README.MakeFC,v 1.23 2001/09/26 17:32:20 pwagner Exp $"
+d30 2
+a31 1
+having them can result in greatly improved performance
+d48 1
+a48 1
+file.
+d436 5
+d448 1
+a448 1
+setting to "yes" or in fact anything other than its blank default.
+d517 3
+a519 1
+NOHUNTING          Stop make from hunting if non-blank (see above)
+d557 1
+a557 1
+#       .configure for mls
+d573 3
+a575 1
+PVM_ROOT=/user2/pwagner/pvm3
+d577 2
+a578 2
+FFTW_ROOT=/usr/local/lib
+FOPTS=-w
+a583 3
+export PGSLIB
+export HDFEOS_LIB
+export HDFLIB
+d590 7
+d603 1
+a603 1
+-pw                           2000-Oct-24 to 2001-Sep-25
+d607 3
+@
+
+
+1.23
+log
+@Renamed SIMPLIFYMAKE to NOHUNTING
+@
+text
+@d6 1
+a6 1
+# "$Id: README.MakeFC,v 1.22 2001/09/25 23:53:22 pwagner Exp $"
+d23 1
+a23 2
+ (4) perl (not needed if you plan only to build and run the software,
+       not change it)
+d26 4
+d289 2
+a290 1
+configure_pvm    reset paths to PVM_ROOT, FFTW_ROOT (see BEFORE.mls)
+d476 4
+d484 2
+d590 3
+@
+
+
+1.22
+log
+@Mentions Sun.Sun, SIMPLIFYMAKE
+@
+text
+@d6 1
+a6 1
+# "$Id: README.MakeFC,v 1.21 2001/08/16 17:16:32 pwagner Exp $"
+d382 3
+a384 2
+correct ones. See Hugh's page  http://www.met.ed.ac.uk/~hcp/hdfeos_notes.txt
+for instructions. Hopefully this bug will disappear with the next release.
+d434 1
+a434 1
+prerequisites, make can be made to give up hunting by putting the SIMPLIFYMAKE
+d498 1
+a502 1
+SIMPLIFYMAKE       Stop make from hunting if non-blank (see above)
+d528 2
+a529 2
+runtime. As a start, I simply copied NAG.Linux into NAG.*, which is probably
+incorrect.
+d580 3
+@
+
+
+1.21
+log
+@Mentions EXTRA_PATHS, shell script versions of mlsln; snipped less important stuff
+@
+text
+@d6 1
+a6 1
+# "$Id: README.MakeFC,v 1.20 2001/07/26 23:26:29 pwagner Exp $"
+d20 1
+a20 1
+ (1) f95 compiler (either NAG or Lahey)
+d111 3
+a113 3
+launch util/mlsconfigure. It will first query you for your compiler (only two
+choices available: NAG or Lahey) and for your platform/OS (only three choices
+available: Sun, SGI, or Linux).
+d392 2
+a393 1
+The last assumes abi=32. To compile for a 64 bit kernel, we could
+d419 17
+d501 1
+d575 1
+a575 1
+-pw                           2000-Oct-24 to 2001-Aug-16
+d579 3
+@
+
+
+1.20
+log
+@Mentions INSTALLDIR, MLSINSTALLDIR
+@
+text
+@d6 1
+a6 1
+# "$Id: README.MakeFC,v 1.19 2001/07/24 23:35:26 pwagner Exp $"
+d254 2
+a255 1
+make the_option
+d257 1
+a257 1
+option                 Effect
+d260 9
+a268 9
+           then deletes the subdirectory containing them
+clean      removes only the .o and .mod files from the subdirectory; 
+           any library or program files remain
+depends    recalculates dependencies;
+           typically done only after adding/removing a module or adding a
+           "USE ..." line to an existing module;
+           may require editing first line of f90makedep.pl (see below)
+configure  change configuration: compiler, (less often) platform/OS,
+           paths to Toolkit and other necessary libraries
+d271 13
+a283 11
+all        builds all the mlslevels
+distclean  does a clean; restores archive nearly to initial state
+help       complete summary of targets, settings, usage of MakeFC
+disthelp   prints this file
+install    moves the built programs from the mlslevels to INSTALLDIR
+makefile   makes a new symbolic link from MakeFC to Makefile
+           at the top level as well as each of the subdirectories;
+           useful for older archives before the link became automatic
+update     replaces Makefiles in subdirectories with latest versions after
+           recalculating dependencies; useful after a cvs update; also deletes
+           orphaned .o and .mod files left behind after sources removed
+d286 1
+a286 1
+configure_pvm  reset paths to PVM_ROOT, FFTW_ROOT (see BEFORE.mls)
+d288 2
+a289 2
+configure_full  combines configure, configure_pvm, configure_fopts
+configure_help  prints brief help on how to configure the build
+d295 3
+a297 3
+disttar    tar the whole mlspgs archive for distribution: mlspgs.tar
+substar    tar lib, l1, .. : lib.tar, l1.tar, .., and mlspgs_subs.tar
+tar        tar everything from mlspgs needed by the SIPS: mlspgs_sips.tar
+a379 3
+Unless either the Lahey compiler or the latest, "beta" copy of the NAG f95 is
+used, Matrix_Module.f90 in lib and l2 has been crudely hacked to compile.
+
+d441 1
+a441 1
+make the_option SETTING=value
+d446 5
+a454 4
+BLAS               Path to an external blas library; unless LIB_BLAS set the 
+                   library must then be named \$BLAS/libblas.a
+                   You would use this if you already had a precompiled, 
+                   highly-optimized library of the usual blas routines
+a460 1
+FFTW_ROOT          Path to the FFTW library; required for mlsl3
+d463 4
+a466 2
+TAR                Overrides name of tar command; e.g. path to GNU tar 
+                   in case your tar won't gzip for targets *targ
+d468 3
+a470 4
+                   e.g., for post-processing to highlight warnings and errors
+                   make FAFTER='2>&1 | hl'  # see util/hl.c for the source    
+LAFTER             Appears at the end of the very long link statement
+                   e.g., for additional libraries required to link successfully
+d474 4
+a477 2
+CC                 Overrides the name by which the c compiler is called
+                   e.g., to build on pencil, I used "make CC=gcc"
+a478 1
+INSTALLDIR         Destination where install moves mlsl1, etc.
+d483 8
+d493 7
+a499 33
+To create Makefile.dep the shell script util/makemakedep.sh is launched,
+and it in turn uses one of the following:
+ f90makedep.pl   the default; found in util; assumes perl or an alias
+                 is at /usr/bin/perl
+ makedepf90      a c++ program; not supplied with mls; not recommended;
+                 may need to be compiled
+
+The latter is available from
+        http://www.helsinki.fi/~eedelman/makedepf90.html
+in binary form for linux, or as c++ sources that need to be compiled.
+
+If for some reason you do not wish to rely on a perl script, or lack perl, the
+shell script makemakedep.sh in util may be edited to switch it to launching
+makedepf90. The line
+        DEP_MAKER=2
+is clearly marked. Change the "2" to a "1". Of course you will need to obtain
+makedepf90, too. A drawback of doing this is that future dependency lists will
+fail to show any dependency on modules in files outside the source directory.
+
+The dependencies calculated by makedepf90 check only among files in the same
+directory as the source files. A consequence of this is that it does not show
+dependencies of files in l2 on prerequisites in lib. A consequence of this is
+that after changes to source files in lib, if the dependencies were recalculated
+by makedepf90, files in l2 may not be recompiled, even when they should be.
+This is a good reason to use f90makedep.pl, the default.
+
+The sources currently must reside directly under lib, srclib, or l[1-3],
+and this fact is "hard-wired" into the Makefiles.  It may become
+desirable to segregate them into a /src subdirectory parallel to the
+/MLSCONFG and /platforms subdirectories, and thus the Makefiles would
+need to changed to accomplish this.  In general, replacing "hard-wired"
+directory paths with variable ones, set in either .configure or set in a
+more permanent file, seems like a good idea. 
+a510 5
+Examining lib/platform/targets reveals yet another wrinkle in lib: two of the
+sources required special compiler flags to compile successfully under NAG. You
+will see them mentioned explicitly at the end with its custom build
+instructions.
+
+d556 1
+a556 1
+-pw                           2000-Oct-24 to 2001-Jul-06
+d560 3
+@
+
+
+1.19
+log
+@Mentions l3m; no longer recommend -gc
+@
+text
+@d6 1
+a6 1
+# "$Id: README.MakeFC,v 1.18 2001/07/07 00:27:30 pwagner Exp $"
+d239 11
+d274 1
+a274 1
+install    moves the built programs from the mlslevels to the mlspgs top level
+d476 1
+d581 3
+@
+
+
+1.18
+log
+@Mentions new version of Toolkit, LIB_BLAS, and cloudfwdm
+@
+text
+@d6 1
+a6 1
+# "$Id: README.MakeFC,v 1.17 2001/05/17 23:17:57 pwagner Exp $"
+d29 1
+a29 1
+lib, srclib, and util directories) simply type
+d88 5
+a92 2
+This will automatically build lib and mls[1-3]. To build other parts see
+the section BUILDING ONLY PARTS OF THE SOFTWARE below.
+d100 6
+a105 6
+   mlspgs/     mlspgs/util/     mlspgs/[c-l]*/   mlspgs/srclib
+   ------      ------------       ----------       -----------
+   MakeFC      mlsconfigure         MakeFC       (shared
+BEFORE.mls    makemakedep.sh     Makefile.dep      source
+README.MakeFC  f90makedep.pl      platforms/*         files)
+              f90ghostfiles.pl                    Makefile.dep
+d109 5
+a113 5
+Then to make the mls software, both the lib and all levels, from the top
+level of the mlspgs directory, enter the command "make -f MakeFC". This
+should launch util/mlsconfigure. It will first query you for your
+compiler (only two choices available: NAG or Lahey) and for your
+platform/OS (only three choices available: Sun, SGI, or Linux).
+d175 2
+a176 3
+and similarly for l1, l2, l3, cloudfwdm, or fwdmdl. Alternatively, if you are
+in lib, perhaps changing some of its modules, then while there you may use the
+simple
+d179 1
+a179 1
+levels when only the software in that level will be built.
+d241 1
+a241 1
+the other levels.
+d259 1
+a259 1
+all        builds lib, l1, l2, l3, and fwdmdl
+d263 1
+a263 1
+install    moves the built programs from l1, l2, l3 to the mlspgs top level
+d292 5
+a296 5
+In addition, inside fwdmdl, lib, l1, l2, and l3 a new directory will be created
+with a unique name given by the value of MLSCONFG. In the example above that
+name would be NAG.Linux. In this directory mlsconfigure places a Makefile which
+is the catenation of .configure with two files found in the directory
+platforms: e.g., assuming the value of MLSCONFG is NAG.Linux:
+d316 11
+a326 10
+The following is a partial org chart showing how make invoked at higher levels
+will call make in lower levels, and the names of the Makefile thus summoned.
+
+                <----------mlspgs/MakeFC-------------------->
+               /              /   |    \             \      \
+       l1/MakeFC      l2/MakeFC---+--->cloudfwdm--->fwdmdl  l3/MakeFC
+           |   \              \   |    /             /      /
+           |    -------------->lib/MakeFC<------------------
+           |                      |
+       MLSCONFG/Makefile   MLSCONFG/Makefile
+d329 5
+a333 5
+although they exist in the other levels, too. Note also the ability of make at
+the levels of l1, l2, ... to call make in lib. l2 is also able to call make in
+cloudfwdm and fwdmdl. cloudfwdm is also able to call make in fwdmdl. The full
+path and name of the file shown at bottom center is (assuming a typical
+location for the archive)
+d425 3
+a427 3
+	make target FOPTS="-gline -gc" LDOPTS="-gc"
+would compile and link for debugging and garbage collection, assuming use of
+NAG f95. Alternatively, the first five of the following can be set by
+d555 1
+d569 3
+@
+
+
+1.17
+log
+@New section on multiple platforms; mentions toolkit-free version
+@
+text
+@d6 1
+a6 1
+# "$Id: README.MakeFC,v 1.16 2001/03/17 00:57:21 pwagner Exp $"
+d97 7
+a103 5
+   mlspgs/     mlspgs/util/     mlspgs/l[1-3]/      mlspgs/lib/    mlspgs/srclib
+   ------      ------------       ----------       -----------      ---------
+   MakeFC      mlsconfigure         MakeFC           MakeFC       (shared
+README.MakeFC  makemakedep.sh     Makefile.dep     Makefile.dep      source
+               f90makedep.pl      platforms/*      platforms/*         files)
+d123 8
+a130 2
+The next set of questions will pertain to two special libraries: PVM and FFTW.
+PVM is required only for level 2. FFTW is required only for level 3.
+d172 3
+a174 2
+and similarly for l1, l2, l3, or fwdmdl. Alternatively, if you are in lib,
+perhaps changing some of its modules, then while there you may use the simple
+d317 7
+a323 7
+                    <----------mlspgs/MakeFC------------>
+                   /              /   |    \            \
+           l1/MakeFC      l2/MakeFC---+--->fwdmdl    l3/MakeFC
+               |   \              \   |    /            /
+               |    -------------->lib/MakeFC<----------
+               |                      |
+           MLSCONFG/Makefile   MLSCONFG/Makefile
+d328 3
+a330 2
+fwdmdl. The full path and name of the file shown at bottom center is (assuming
+a typical location for the archive)
+d436 6
+a448 4
+BLAS               Path to an external blas library; note that the library
+                   must then be named \$BLAS/libblas.a
+                   You would use this if you already had a precompiled, 
+                   highly-optimized library of the usual blas routines
+d517 3
+a519 3
+Although not mentioned above, each of the variables assigned in the file
+.configure can be treated as an advanced setting. In other words, you may
+override any of these on the command line. E.g., "make PGSTK=/some/other/path".
+d526 13
+a538 9
+PGSINC=/nas/user2/pwagner/TOOLKIT/include
+PGSTK=/nas/user2/pwagner/TOOLKIT/lib/linux
+HDFEOS=/nas/user2/pwagner/TOOLKIT/hdfeos/lib/linux
+HDF=/nas/user2/pwagner/TOOLKIT/hdf/linux/HDF4.1r3/lib
+GCTP=/nas/user2/pwagner/TOOLKIT/hdfeos/lib/linux
+PGSLIB=/nas/user2/pwagner/TOOLKIT/lib/linux
+HDFEOS_LIB=/nas/user2/pwagner/TOOLKIT/hdfeos/lib/linux
+HDFLIB=/nas/user2/pwagner/TOOLKIT/hdf/linux/HDF4.1r3/lib
+PVM_ROOT=
+d540 1
+a540 1
+FFTW_ROOT=
+d553 1
+d561 1
+a561 1
+-pw                           2000-Oct-24 to 2001-Mar-16
+d565 3
+@
+
+
+1.16
+log
+@Reordered sections; mentioned CC setting
+@
+text
+@d3 1
+a3 1
+# Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+d6 1
+a6 1
+# "$Id: README.MakeFC,v 1.15 2001/03/13 19:01:00 pwagner Exp $"
+d26 1
+a26 1
+ (6) FFTW--a library to accomplish fast Fourier tranforms
+d50 9
+a58 8
+VII   OTHER OPTIONS
+VIII  HOW IT WORKS
+IX    CALL TO ACTION
+X     ACTUAL BUGS
+XI    IMPERFECTIONS AND COMPLICATIONS
+XII   ADVANCED SETTINGS
+XIII  ASSORTED COMMENTS
+XIV  EXAMPLE OF A .configure FILE
+d121 1
+a121 1
+The next set of questions will pertain to two speciaal libraries: PVM and FFTW.
+d170 58
+d257 2
+a258 1
+           recalculating dependencies; useful after a cvs update
+d382 2
+a383 1
+by overwriting the current .configure with one saved for the other platform.
+d396 3
+a398 1
+try "make CC=gcc" or another path to a gnu-compatible c compiler.
+d403 2
+a404 1
+LDOPTS='-lsocket'".
+d415 4
+a418 1
+configure_full or via enviroment variables.
+d420 2
+a421 1
+Setting            Use
+d449 5
+d548 3
+@
+
+
+1.15
+log
+@In line with new clean, tar; drops -f Makefile after first use
+@
+text
+@d6 1
+a6 1
+# "$Id: README.MakeFC,v 1.14 2001/03/08 23:52:48 pwagner Exp $"
+d56 2
+d121 1
+a121 1
+PVM is currently optional. FFTW is required only for building level 3.
+d191 2
+a192 1
+help       prints this file
+d196 1
+a196 1
+           useful if you have previously configured your archive w/o the link
+a201 1
+               allowing you to turn on or off support for PVM
+d219 1
+a219 34
+will be something like the following:
+#       .configure for mls
+MLSF95=NAG
+MLSPLAT=Linux
+MLSCONFG=NAG.Linux
+PGSINC=/nas/user2/pwagner/TOOLKIT/include
+PGSTK=/nas/user2/pwagner/TOOLKIT/lib/linux
+HDFEOS=/nas/user2/pwagner/TOOLKIT/hdfeos/lib/linux
+HDF=/nas/user2/pwagner/TOOLKIT/hdf/linux/HDF4.1r3/lib
+GCTP=/nas/user2/pwagner/TOOLKIT/hdfeos/lib/linux
+PGSLIB=/nas/user2/pwagner/TOOLKIT/lib/linux
+HDFEOS_LIB=/nas/user2/pwagner/TOOLKIT/hdfeos/lib/linux
+HDFLIB=/nas/user2/pwagner/TOOLKIT/hdf/linux/HDF4.1r3/lib
+PVM_ROOT=
+PVM_ARCH=LINUX
+FFTW_ROOT=
+FOPTS=-w
+LDOPTS=
+export MLSF95
+export MLSPLAT
+export MLSCONFG
+export PGSINC
+export PGSLIB
+export HDFEOS_LIB
+export HDFLIB
+export PGSTK
+export HDFEOS
+export HDF
+export GCTP
+export PVM_ROOT
+export PVM_ARCH
+export FFTW_ROOT
+export FOPTS
+export LDOPTS
+d278 2
+a279 20
+To create Makefile.dep the shell script util/makemakedep.sh is launched,
+and it in turn uses one of the following:
+ f90makedep.pl   the default; found in util; assumes perl or an alias
+                 is at /usr/bin/perl
+ makedepf90      a c++ program; not supplied with mls; not recommended;
+                 may need to be compiled
+
+The latter is available from
+        http://www.helsinki.fi/~eedelman/makedepf90.html
+in binary form for linux, or as c++ sources that need to be compiled.
+
+If for some reason you do not wish to rely on a perl script, or lack perl, the
+shell script makemakedep.sh in util may be edited to switch it to launching
+makedepf90. The line
+        DEP_MAKER=2
+is clearly marked. Change the "2" to a "1". Of course you will need to obtain
+makedepf90, too. A drawback of doing this is that future dependency lists will
+fail to show any dependency on modules in files outside the source directory.
+
+The perl script f90makedep.pl assumes your perl, or a link to it, is
+d282 3
+a284 3
+asked, when you recalculate dependencies, whether you want to have the
+makefile edit the line for you or else use it as is. Allowing this change will
+free you from being prompted about this again.
+d333 4
+a341 30
+The sources currently must reside directly under lib, srclib, or l[1-3],
+and this fact is "hard-wired" into the Makefiles.  It may become
+desirable to segregate them into a /src subdirectory parallel to the
+/MLSCONFG and /platforms subdirectories, and thus the Makefiles would
+need to changed to accomplish this.  In general, replacing "hard-wired"
+directory paths with variable ones, set in either .configure or set in a
+more permanent file, seems like a good idea. 
+
+Under the lib directory is a lib/tests subdirectory containing five
+test programs. They were used to test libmls.a during development. It
+is possible they may no longer work, nor even compile and link properly.
+
+Another wrinkle in the lib directory is the versions of machine.f90 which lurk
+under machines with names like machines/NAG.Linux/machine.f90 They are intended
+to contain machine/OS/compiler specific information the software can obtain at
+runtime. As a start, I simply copied NAG.Linux into NAG.*, which is probably
+incorrect.
+
+Examining lib/platform/targets reveals yet another wrinkle in lib: two of the
+sources required special compiler flags to compile successfully under NAG. You
+will see them mentioned explicitly at the end with its custom build
+instructions.
+
+The dependencies calculated by makedepf90 check only among files in the same
+directory as the source files. A consequence of this is that it does not show
+dependencies of files in l2 on prerequisites in lib. A consequence of this is
+that after changes to source files in lib, if the dependencies were recalculated
+by makedepf90, files in l2 may not be recompiled, even when they should be.
+This is a good reason to use f90makedep.pl, the default.
+
+d376 1
+a376 1
+FC                 Overrides the name by which the compiler is called
+d379 93
+a471 1
+-pw                           2000-Oct-24 to 2001-Mar-8
+d475 3
+@
+
+
+1.14
+log
+@TAR option; complete description of 1st time
+@
+text
+@d6 1
+a6 1
+# "$Id: README.MakeFC,v 1.13 2001/03/07 14:28:01 pumphrey Exp $"
+d30 1
+a30 1
+  make -f MakeFC
+d34 4
+a37 1
+are curious or if something goes wrong.
+d81 4
+a84 3
+software, the "make" command must always be accompanied by the "-f MakeFC"
+arguments. E.g., the usual way to invoke it is
+         "make -f MakeFC".
+d160 4
+a163 5
+        make -f MakeFC lib
+and similarly for l1, l2, l3, l2pc, or fwdmdl. Alternatively, if you are in
+lib, perhaps changing some of its modules, then while there you may use the
+simple
+        make -f MakeFC
+d171 1
+a171 1
+make -f MakeFC the_option
+d175 1
+a175 1
+clean      removes all binaries created during compilation and linking;
+d177 1
+a177 1
+clean_objs removes only the .o and .mod files from the subdirectory; 
+d188 1
+a188 1
+clean_all  does a clean; more thorough in case of multiple configurations
+d191 3
+d204 7
+a210 4
+(The following perform a top-level "clean_all" before archiving)
+tar        tar the whole mlspgs archive for distribution: mlspgs.tgz
+tar_subs   tar lib, l1, .. : lib.tgz, l1,tgz, .., and mlspgs_subs.tar
+tar_sips   tar everything from mlspgs needed by the SIPS: mlspgs_sips.tgz
+d252 5
+a256 5
+In addition, inside lib, l1, l2, and l3 a new directory will be created with a
+unique name given by the value of MLSCONFG. In the example above that name
+would be NAG.Linux. In this directory mlsconfigure places a Makefile which is
+the catenation of .configure with two files found in the directory platforms:
+e.g., assuming the value of MLSCONFG is NAG.Linux:
+d267 7
+a273 3
+In subsequent invocations, .configure already exists, so make simply
+executes any commands needed to build the end products if any
+prerequisites are newer.
+d281 1
+a281 1
+           l1/MakeFC      l2/MakeFC   |    l3/MakeFC    ...  
+d289 3
+a291 2
+the levels of l1, l2, ... to call make in lib. The full path and name of the
+file shown at bottom center is (assuming a typical location for the archive)
+d296 1
+a296 1
+that copies in the dependencies in the form of the file Makefile.dep. This is
+d302 6
+a307 7
+It would be desirable to make Makefile.dep a target of prerequisites to
+force it to be updated on any change to the source files. Instead, the
+only way to change it is by the explicit command 
+	"make -f MakeFC depends". 
+Among the drawbacks to this are that an outdated Makefile.dep is possibly
+what cvs finds when checking out the archive. See the recommendation concerning
+the update target below.
+d373 13
+a385 10
+Sometimes after doing a cvs update, especially if there has been a lot
+of active coding and cvs committing, the next "make -f MakeFC" command
+will cause make to exit complaining about an illegal separator.  This is
+usually the result of cvs "merging" your copy of Makefile.dep with one
+it has archived.  The solution is to do a "make -f MakeFC depends" to
+create a fresh, unmerged copy.  Even better is to do a "make -f MakeFC
+update" from the top mlspgs level.  It is also possible for MakeFC
+itself to get messed up in this way -- the above cures will not work 
+in this case. You may be able to fix the problem by deleting MakeFC and 
+doing a CVS update to fetch a new copy.
+a416 4
+If this ever seems to work well enough, similar MakeFC and platforms
+could be devised for the remaining parts of mls. By design it remains an
+optional way to build, coexisting in parallel with other ways.
+
+d423 1
+a423 1
+	make -f MakeFC target FOPTS="-gline -gc" LDOPTS="-gc"
+d425 2
+a426 2
+NAG f95. Alternatively, all of these settings, with the exception of BLAS and
+TAR, can be set by configure_full or via enviroment variables.
+a432 4
+BLAS               Path to an external blas library; note that the library
+                   must then be named \$BLAS/libblas.a
+                   You would use this if you had a precompiled, highly-optimized
+                   library of the usual blas routines.
+d438 16
+a453 3
+TAR                Path to GNU tar in case your tar won't gzip; only necessary 
+                   for targets tar and tar_sips
+                   
+d458 3
+@
+
+
+1.13
+log
+@Added note on dealing with corrupted MakeFC
+@
+text
+@d6 1
+a6 1
+# "$Id: README.MakeFC,v 1.12 2001/02/27 18:41:41 pwagner Exp $"
+d31 8
+a38 7
+and you'll be asked to respond to some questions about your compiler,
+platform, and where the Toolkit is installed. Then the software will
+be built. You may quit out of this now and try it out, perhaps coming
+back later if you are curious or if something goes wrong.
+
+For more information on obtaining and installing the SDP Toolkit, PVM, and
+the FFTW libraries, enter BEFORE.mls
+d114 6
+d292 4
+d413 2
+a414 2
+NAG f95. Alternatively, these settings can be set by configure_fopts or via
+enviroment variables.
+d430 4
+a433 2
+
+-pw                           2000-Oct-24 to 2001-Jan-12
+d437 3
+@
+
+
+1.12
+log
+@Mentions configure_pvm, configure_fopts
+@
+text
+@d6 1
+a6 1
+# "$Id: README.MakeFC,v 1.11 2001/02/10 00:14:41 pwagner Exp $"
+d349 18
+a366 14
+Sometimes after doing a cvs update, especially if there has been a lot of
+active coding and cvs committing, the next "make -f MakeFC" command will cause
+make to exit complaining about an illegal separator. This is usually the result
+of cvs "merging" your copy of Makefile.dep with one it has archived. The
+solution is to do a "make -f MakeFC depends" to create a fresh, unmerged copy.
+Even better is to do a "make -f MakeFC update" from the top mlspgs level.
+
+The sources currently must reside directly under lib, srclib, or l[1-3], and
+this fact is "hard-wired" into the Makefiles. It may become desirable to
+segregate them into a /src subdirectory parallel to the /MLSCONFG and
+/platforms subdirectories, and thus the Makefiles would need to changed to
+accomplish this. In general, replacing "hard-wired" directory paths with
+variable ones, set in either .configure or set in a more permanent file, seems
+like a good idea.
+d424 3
+@
+
+
+1.11
+log
+@mentions make -f MakeFC update
+@
+text
+@d6 1
+a6 1
+# "$Id: README.MakeFC,v 1.10 2001/02/09 01:02:31 pwagner Exp $"
+d143 2
+a144 3
+even prevent successfully compiling any of the mls sources. It may seem
+overwhelming, and you may exclaim, "Wasn't this supposed to make things
+easier?" Fortunately, the configuration will have to done only this once.
+d174 1
+a174 1
+           paths
+d176 2
+a177 2
+(The following apply only at the top level)
+all        builds lib, l1, l2, l3, l2pc, and fwdmdl
+d179 1
+d184 7
+d207 12
+a218 7
+PGSTK=/nas/user2/pwagner/TOOLKIT/NAG
+HDFEOS=/nas/user2/pwagner/TOOLKIT
+HDF=/software/SRC/TOOLKIT-5.2.6v1.00.NAG/hdf/linux/HDF4.1r3/lib
+GCTP=/nas/user2/pwagner/TOOLKIT
+PGSLIB=/nas/user2/pwagner/TOOLKIT/NAG
+HDFEOS_LIB=/nas/user2/pwagner/TOOLKIT
+HDFLIB=/software/SRC/TOOLKIT-5.2.6v1.00.NAG/hdf/linux/HDF4.1r3/lib
+d226 9
+d315 1
+a315 3
+changing the paths. If everyone could be relied upon to have executed
+pgs-dev-env.csh or pgs-env.csh as part of their login, then this could
+be better hidden.
+d319 1
+a319 2
+used, Matrix_Module.f90 in lib and l2 won't compile. The compiler-dependent
+Makefile created will therefore compile the routine only if you use Lahey.
+d374 1
+a374 1
+Examining lib/platform/targets reveals yet another wrinkle in lib: one of the
+d376 1
+a376 1
+will see it mentioned explicitly at the end with its custom build
+a378 4
+At the cost of making configuration more complex, an option could be
+added that would allow extra settings, e.g. compiler flags could be set
+to suppress warning messages. Until then, see the advanced settings below.
+
+d396 4
+a399 4
+	make -f MakeFC target FOPTS="-g90" LDOPTS="-g90"
+would compile and link for debugging by dbx90, assuming use of NAG f95.
+Alternatively, these settings might be put in .configure or set as enviroment
+variables.
+a411 1
+                   You would use this if you could exploit multiple processors
+d420 3
+@
+
+
+1.10
+log
+@Mentions advanced settings
+@
+text
+@d6 1
+a6 1
+# "$Id: README.MakeFC,v 1.9 2001/01/16 21:31:19 pwagner Exp $"
+d179 1
+d181 2
+a182 1
+clean_all  does a clean; more thorough in case of multiple configurations
+d331 6
+a336 5
+Sometimes after doing a cvs update, the next "make -f MakeFC" command will
+cause make to exit complaining about an illegal separator. This is usually
+the result of cvs "merging" your copy of Makefile.dep with one it has archived.
+The solution is to do a "make -f MakeFC depends" to create a fresh, unmerged
+copy.
+d407 3
+@
+
+
+1.9
+log
+@clean_all option added
+@
+text
+@d6 1
+a6 1
+# "$Id: README.MakeFC,v 1.8 2001/01/13 00:42:09 pwagner Exp $"
+d39 14
+d141 5
+a145 4
+This explanation has been given with a great deal of detail (perhaps too
+much) because it is very important. It may seem overwhelming, and you
+may exclaim, "Wasn't this supposed to make things easier?" Fortunately,
+the configuration will have to done only this once.
+d213 1
+a213 1
+In addition, in lib, l1, l2, and l3 a new directory will be created with a
+d304 1
+a304 1
+for instructions.
+d327 7
+a333 1
+by overwriting the current .configure with one saved for the other version.
+d347 5
+a351 5
+Another wrinkle in the lib directory is the versions of machine.f90
+which lurk under platforms with names like NAG.Linux.machine. They are
+intended to contain machine/OS/compiler specific information the
+software can obtain at runtime. As a start, I simply copied NAG.Linux
+into NAG.*, which is probably incorrect.
+d353 1
+a353 1
+Examining lib/platform/targets reveals yet another wrinkle in lib: two of the
+d355 2
+a356 2
+will see them mentioned explicitly at the end with their custom build
+instructions. The method whereby machine.o is created is also concealed there.
+d360 1
+a360 1
+to suppress warning messages.
+d373 27
+d404 3
+@
+
+
+1.8
+log
+@Mentions mlspgs_sips.tgz and mlspgs_subs.tar
+@
+text
+@d6 1
+a6 1
+# "$Id: README.MakeFC,v 1.7 2001/01/12 17:59:16 pwagner Exp $"
+a160 1
+tar        tar the current directory for distribution as compressed "tgz"
+d165 1
+d167 1
+a167 1
+(The following perform a top-level "clean" before archiving as compressed "tgz")
+d356 3
+@
+
+
+1.7
+log
+@Mentions install, tar_sips options
+@
+text
+@d6 1
+a6 1
+# "$Id: README.MakeFC,v 1.6 2001/01/05 22:56:04 pwagner Exp $"
+d169 1
+a169 1
+tar_subs   tar lib, l1, .. for distribution: mlspgs_subs.tgz
+d356 3
+@
+
+
+1.6
+log
+@Mentioned Hugh's fix for Toolkit; make all option
+@
+text
+@d6 7
+a12 1
+# "$Id: README.MakeFC,v 1.5 2000/11/21 23:54:46 pwagner Exp $"
+d19 9
+a27 6
+it is mostly self-configuring. You will need:
+  f95 compiler (either NAG or Lahey)
+  Installed SDP Toolkit (PGSTK, HDFEOS, HDF)
+  mls software (probably where you're reading this)
+  perl (not needed if you plan only to build and run the software,
+    not change it)
+d36 3
+d118 1
+a118 1
+#Now in order appear paths to the following libraries
+d130 1
+a130 1
+the configuration will have to done only once.
+d146 1
+d149 2
+d161 10
+a170 3
+tar        bind up the current directory (or the whole if at top) for
+           distribution
+all        if entered from the top, builds lib, l1, l2, l3, l2pc, and fwdmdl
+d202 1
+a202 1
+e.g.,
+d230 2
+a231 2
+although they exist in the  other levels, too. Note also the ability of make at
+the levels of l1, l2, ... to call make in lib. The actual path and name of the
+d284 1
+a284 1
+Makefile created will refer to the routine only if you use Lahey.
+d304 2
+a305 3
+If you have a different combination, contact me. Even better, if you
+have a different combination and already get it to work, send it to me,
+or "cvs commit".
+a336 3
+Adding a "make -f MakeFC install" would, like clean_objs, zap the .o and .mod
+files, but also moving the libmls.a and mlsl2, to a permanent, final location.
+
+d352 1
+a352 1
+-pw                           2000-Oct-24 to 2001-Jan-05
+d356 3
+@
+
+
+1.5
+log
+@Mentions levels 1-3; offer to fix perl path
+@
+text
+@d6 1
+a6 1
+# "$Id: README.MakeFC,v 1.4 2000/11/06 18:05:42 pwagner Exp $"
+d54 2
+d124 3
+a126 2
+and similarly for l1, l2, or l3. Alternatively, if you are in lib, perhaps
+changing some of its modules, then while there you may use the simple
+d148 1
+d260 8
+a267 7
+Unless the latest, "beta" copy of the NAG f95 is used, Matrix_Module.f90
+in lib and l2 won't compile. The solution is to upgrade to the latest
+NAG f95. Changing the Makefile alone won't help.
+
+The current NAG Linux HDFEOS, HDF, PGSTK, etc. libraries can not be made to
+link properly. Sun and SGI versions seem correct. The solution is to obtain
+correct ones. This will be moot when newer versions are made available.
+d334 1
+a334 1
+-pw                           2000-Oct-24 to Nov-20
+d338 3
+@
+
+
+1.4
+log
+@SHared source library
+@
+text
+@d6 1
+a6 1
+# "$Id: README.MakeFC,v 1.3 2000/11/03 21:51:10 pwagner Exp $"
+d17 3
+a19 4
+  perl (unless it or an alias is at /usr/bin/perl you may need to edit
+     the first line of f90makedep.pl before recalculating dependencies;
+     do this only if you plan to modify the software)
+Then, from the "top" level (where you see this file, as well as the l2,
+d24 2
+a25 2
+be made. You may quit out of this now and try it out, perhaps coming
+back later if you are curious or if something  goes wrong.
+d31 5
+a35 5
+simply to use it. Specially named Makefiles and a few shell scripts are
+available to guide the new user through an initial query driven configuration
+which creates a file named .configure. It contains information about the
+compiler, platform/OS, and paths to relevant libraries. Subsequent uses of make
+automatically use this configuration.
+d37 1
+a37 1
+The mls software should be buildable by different users at sites remote
+d39 1
+a39 1
+they prefer or already have. The limitation on the last is that they
+d44 1
+a44 1
+that worked for someone else, and trial and error. An alternative is to
+d48 5
+a52 6
+The configurable Makefile for the lib and l2 mls software is MakeFC. It
+is found in the mlspgs directory. The name MakeFC was chosen as unlikely
+to conflict with other Makefiles. An unfortunate consequence of this
+decision is that to use it to build the software, the "make" command
+must always be accompanied by the "-f MakeFC" arguments. E.g., the usual
+way to invoke it is
+d56 4
+a59 3
+You may begin when you checkout a fresh copy of the mlspgs archive. If
+you already have an archive with some changes you wish to keep but not
+share yet, make sure you update the following files and directories:
+d61 1
+a61 1
+   mlspgs/     mlspgs/util/       mlspgs/l2/       mlspgs/lib/    mlspgs/srclib
+d68 1
+a68 1
+Then to make the mls software, both the lib and mlsl2, from the top
+d90 1
+a90 1
+this file down, used it, and echoed the resulting settings.
+d122 2
+a123 2
+and similarly for l2. Alternatively, if you are in lib, perhaps changing
+some of its modules, then while there you may use the simple
+d125 2
+a126 2
+and only libmls.a will be rebuilt. Again the same is true while in l2
+when only mlsl2 will be built.
+d129 2
+a130 2
+These are available either at the "top" level, mlspgs, or in parts at
+the level of lib and l2.
+d143 1
+a143 1
+tar        bind up the current directory (or lib and l2 if at top) for
+d147 1
+d149 3
+a151 4
+dependencies. If it doesn't exist yet, as with a fresh copy of the
+archive, it creates one, using mlspgs/util/mlsconfigure. This will cause
+the file to be created. The contents of the resulting file will be
+something like the following:
+d172 5
+a176 5
+In addition, in lib and l2 a new directory will be created with a unique
+name given by the value of MLSCONFG. In the example above that name
+would be NAG.Linux. In this directory mlsconfigure places a Makefile
+which is the catenation of .configure with two files found in the
+directory platforms: e.g.,
+d179 3
+a181 4
+Here platforms/NAG.Linux is mostly a file of compiler settings specific
+to the NAG compiler. platforms/targets is a list of makefile-like
+targets and the commands to build them, independent of any particular
+compiler or platform/OS.
+d184 1
+a184 1
+binaries, .o and .mod files, and end products, libmls.a and mlsl2, are
+d191 18
+d211 5
+a215 5
+that causes the dependencies to be copied in in the form of the file
+Makefile.dep. This is how make learns which sources to compile to create the
+binaries, called OBJS. A dependency is a line containing a target and a list of
+prerequisites needed to build that target. Makefile.dep contains only the
+dependencies, no explicit build commands.
+d217 1
+a217 1
+It would be desirable to list Makefile.dep among the prerequisites and
+d240 6
+a245 6
+The perl script f90makedep.pl assumes your perl, or an alias to it, is
+/usr/bin/perl. This assumption is embodied in line 1 of the script. If
+your perl is elsewhere, edit this line to show the true path. A possible
+future refinement would be for makemakedep.sh to 
+	"sed 's/path_to_perl/'`which perl`''" 
+the perl script before running it.
+d260 3
+a262 4
+The current NAG Linux HDFEOS, HDF, PGSTK, etc. libraries can not be made
+to link properly. Sun and SGI versions seem correct. The solution is to
+obtain correct ones. This will be moot when newer versions are made
+available.
+d283 4
+a286 1
+back whenever needed.
+d288 2
+a289 2
+The sources currently must reside directly under lib, srclib, or l2, and this
+fact is "hard-wired" into the Makefiles. It may become desirable to
+d291 8
+a298 8
+/platforms subdirectories, and thus the Makefiles would need to changed
+to accomplish this. In general, replacing "hard-wired" directory paths
+with variable ones, set in either .configure or set in a more permanent
+file, seems like a good idea.
+
+Under the lib directory is a lib/tests subdirectory containing three
+test programs. They were used to test progress during development. It
+is possible they may no longer work, or even compile and link properly.
+d307 3
+a309 5
+sources required special compiler flags to compile successfully under
+NAG. You will see them mentioned explicitly at the end with their custom
+build instructions. In the extreme case where every source required a
+different, custom command, the idea of an automatic, self configuring
+Makefile would lose any meaning.
+d315 1
+a315 1
+made that would allow extra settings, e.g. compiler flags could be set
+d321 3
+a323 3
+that after changes to source files in lib, files in l2 may not be recompiled,
+even when they should be. This is a good reason to use f90makedep.pl, the
+default.
+d326 1
+a326 1
+could be devised for the other levels of mls. By design it remains an
+d329 1
+a329 1
+-pw                           2000-Oct-24
+d333 3
+@
+
+
+1.3
+log
+@Cross-directory depends; clean_objs
+@
+text
+@d6 1
+a6 1
+# "$Id: README.MakeFC,v 1.2 2000/10/30 19:35:47 pwagner Exp $"
+d157 3
+a159 3
+PGSINC=/nas/users/pwagner/TOOLKIT/include
+PGSTK=/nas/users/pwagner/TOOLKIT/NAG
+HDFEOS=/nas/users/pwagner/TOOLKIT
+d161 3
+a163 3
+GCTP=/nas/users/pwagner/TOOLKIT
+PGSLIB=/nas/users/pwagner/TOOLKIT/NAG
+HDFEOS_LIB=/nas/users/pwagner/TOOLKIT
+d196 4
+a199 4
+Makefile.dep. This is how make learns which sources to compile to create
+the binaries, called OBJS. Makefile.dep contains only the dependencies,
+no explicit build commands, and lists among the dependent files only
+those it finds in the same directory.
+d304 4
+a307 3
+dependencies of files in l2 on files in lib. A consequence of this is that
+after changes to source files in lib, files in l2 may not be recompiled, even
+when they should be. This is a good reason to use f90makedep.pl, the default.
+d317 3
+@
+
+
+1.2
+log
+@Reflects change to f90makedep.pl
+@
+text
+@d6 1
+a6 1
+# "$Id: README.MakeFC,v 1.1 2000/10/24 21:50:02 pwagner Exp $"
+d21 1
+a21 1
+lib, and util directories) simply type
+d62 5
+a66 5
+   mlspgs/     mlspgs/util/       mlspgs/l2/        mlspgs/lib/
+   ------      ------------       ----------        -----------
+   MakeFC      mlsconfigure         MakeFC            MakeFC
+README.MakeFC  makemakedep.sh     Makefile.dep      Makefile.dep
+               f90makedep.pl      platforms/*       platforms/*
+d134 4
+a137 1
+clean      removes all binaries created during compilation and linking
+d139 1
+a139 1
+           typically done only after adding new module, or adding a
+d141 1
+a141 1
+           may require editing first line of f90makedep.pl
+d206 1
+a206 1
+and it in turn uses  one of the following:
+d209 1
+a209 1
+ makedepf90      a c++ program; not supplied with mls;
+d216 3
+a218 3
+If for some reason you do not wish to rely on a perl script, or lack
+perl, the shell script makemakedep.sh in util may be edited to switch it
+to launching makedepf90. The line
+d220 3
+a222 2
+is clearly marked. Change the "2" to a "1". Of course you will need to
+obtain makedepf90, too.
+d249 1
+a249 25
+IMPERFECTIONS
+The dependencies calculated by f90makedep.pl currently check only among files
+in the same directory as the source files. A consequence of this is that it
+does not show dependencies of files in l2 on files in lib. A consequence of
+this is that after changes to source files in lib, files in l2 may not be
+recompiled, even when they should be. 
+
+Dependencies in l2/Makefile.dep do not include any of the lib sources, even if
+they are mentioned in "USE ..." statements. Therefore, when a source in lib is
+changed and recompiled, the l2 source that USEs it does not automatically get
+recompiled.  This can be  convenient if none of the interface elements were
+changed. But it can be misleading if any of the interface elements were
+changed, and in such a way as to break the l2 source. Forcing the l2 source to
+be recompiled would disclose the broken interface, while in the current
+situation the problem could remain hidden until some other circumstance causes
+it emerge.
+
+One easy fix would be to add a dependency line to each file in l2
+claiming it depends on all the files in lib. This "worst-case" scenario
+will work, but at the cost of frequent, unnecessary recompilations.
+
+The smart fix is to f90makedep.pl, perhaps giving it a list of
+directories as arguments. Then in lib, it could know to check only in
+lib, but in l2 it could check both in lib and l2.
+
+d266 5
+a270 1
+The sources currently must reside directly under lib or l2, and this
+d288 1
+a288 1
+Examining lib/targets reveals yet another wrinkle in lib: two of the
+d295 2
+a296 3
+Adding a "make -f MakeFC clean_objs" would allow more flexibility if it
+zapped only the .o and .mod files, keeping the libmls.a and mlsl2,
+perhaps moving them to a permanent, final location.
+d302 6
+d316 3
+@
+
+
+1.1
+log
+@first commit
+@
+text
+@d6 1
+a6 1
+# "$Id: pwagner Exp $"
+d17 3
+d29 8
+a36 7
+An attempt has been made to minimize the amount of editing and
+configuring each user must perform in building the mls software.
+Specially named Makefiles and two new shell scripts are now available to
+guide the new user through an initial query driven configuration which
+creates a file named .configure. It contains information about the
+compiler, platform/OS, and paths to relevant libraries. Subsequent uses
+of make automatically make use of this configuration.
+d47 1
+a47 1
+at least most of the time.
+d62 5
+a66 5
+mlspgs/     mlspgs/util/       mlspgs/l2/        mlspgs/lib/
+------      ------------       ----------        -----------
+MakeFC      mlsconfigure         MakeFC            MakeFC
+            makemakedep.sh     Makefile.dep      Makefile.dep
+                                platforms/*       platforms/*
+d138 1
+a138 1
+           currently requires makedepf90
+d140 3
+a142 1
+paths
+d200 10
+a209 4
+only way to change it is by the explicit command "make -f MakeFC
+depends". This is because currently the only way to create Makefile.dep
+is by the shell script utility/makemakedep.sh, and it in turn uses
+makedepf90. The latter is available from
+d211 1
+d213 13
+a225 1
+in binary form for linux, or as c++ sources that need to be compiled.
+d246 30
+a275 9
+Among the current shortcomings is the reliance on makedepf90, as noted
+above. Using an alternate perl-based utility looks promising.
+
+The only combinations of compiler.platform/OS I provided for so far are
+Unknown.None
+NAG.(pc)Linux
+LF95.(pc)Linux
+NAG.Sun
+NAG.SGI
+d283 2
+a284 12
+have a different combination and already get it to work, "cvs commit".
+
+A semi-bug results from the split of sources between lib and l2.
+Dependencies in l2/Makefile.dep do not include any of the lib sources,
+even if they are mentioned in "USE ..." statements. Therefore, when a
+source in lib is changed and recompiled, the l2 source that USEs it does
+not automatically get recompiled. This can be convenient if none of the
+interface elements were changed. But it can be misleading if any of the
+interface elements were changed, and in such a way as to break the l2
+source. Forcing the l2 source to be recompiled would disclose the broken
+interface, while in the current situation the problem could remain
+hidden until some other circumstance causes it emerge.
+a293 4
+Adding a "make -f MakeFC tar" option would allow the l2 and lib parts of
+the archive to be conveniently bound up for distribution. A start has
+been made in this direction.
+
+d295 2
+a296 3
+test programs. Only test_cf_parser has been successfully adapted to use
+MakeFC so far. multiply and sparsify still lack MakeFC files and
+platforms directories.
+d321 1
+a321 1
+optional way to build, and coexisting in parallel with other ways.
+d326 4
+a329 1
+# $Log: mlsconfigure,v $
+@
+

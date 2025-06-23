@@ -1,0 +1,153 @@
+head	2.1;
+access;
+symbols
+	v5-02-NRT-19:2.1
+	v6-00:2.1
+	v5-02-NRT-18:2.1
+	v5-02:2.1
+	v5-01-NRT-17:2.1
+	v5-01-NRT-16:2.1
+	v5-01-NRT-15:2.1
+	v5-01-NRT-14:2.1
+	neuralnetworks-1-0:2.1.0.10
+	cfm-single-freq-0-1:2.1.0.8
+	v5-01:2.1
+	v5-00:2.1
+	v4-23-TA133:2.1.0.6
+	mus-emls-1-70:2.1.0.4
+	rel-1-0-englocks-work:2.1.0.2
+	VUMLS1-00:2.1
+	VPL1-00:2.1
+	V4-22-NRT-08:2.1
+	whdrel10_merged_to_here:2.1
+	merge_whdrel10_from_here:1.1.2.1
+	whd-rel-1-0:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+2.1
+date	2016.03.15.22.17.59;	author whdaffer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2016.02.25.19.50.37;	author whdaffer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2016.02.25.19.50.37;	author whdaffer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.1
+log
+@Merged whd-rel-1-0 back onto main branch. Most changes
+are to comments, but there's some modification to Calibration.f90
+and MLSL1Common to support some new modules: MLSL1Debug and SnoopMLSL1.
+@
+text
+@! Copyright 2015, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=============================================================================
+MODULE MLSL1RunConfig! Stores run configuration
+!=============================================================================
+
+  ! This module is meant to store whatever information about the configuration
+  ! of the run might be needed down stream. At the moment (Fri Aug 7 2015) the
+  ! only thing I need is the name of the executable, which must be set in each
+  ! of the `mains' (mlsl0sn, mlsl1log, mlsl1g and mlsl1t), and it primarily for
+  ! use with the MLSL1Debug and SnoopMLSL1 modules.
+  !
+  ! But who knows? Maybe it will become more useful later.
+
+  IMPLICIT NONE
+  PRIVATE
+  
+  
+  CHARACTER (len=256) :: MLSL1Executable
+  PUBLIC MLSL1Executable
+
+END MODULE MLSL1RunConfig
+! $Id: MLSL1RunConfig.f90,v 1.1.2.1 2016/02/25 19:50:37 whdaffer Exp $
+!
+! Modifications
+!
+! $Log: MLSL1RunConfig.f90,v $
+! Revision 1.1.2.1  2016/02/25 19:50:37  whdaffer
+! Initial revision
+!
+!
+@
+
+
+1.1
+log
+@file MLSL1RunConfig.f90 was initially added on branch whd-rel-1-0.
+@
+text
+@d1 40
+@
+
+
+1.1.2.1
+log
+@Initial revision
+@
+text
+@a0 37
+! Copyright 2015, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=============================================================================
+MODULE MLSL1RunConfig! Stores run configuration
+!=============================================================================
+
+  ! This module is meant to store whatever information about the configuration
+  ! of the run might be needed down stream. At the moment (Fri Aug 7 2015) the
+  ! only thing I need is the name of the executable, which must be set in each
+  ! of the `mains' (mlsl0sn, mlsl1log, mlsl1g and mlsl1t), and it primarily for
+  ! use with the MLSL1Debug and SnoopMLSL1 modules.
+  !
+  ! But who knows? Maybe it will become more useful later.
+
+  IMPLICIT NONE
+  PRIVATE
+  
+  
+  CHARACTER (len=256) :: MLSL1Executable
+  PUBLIC MLSL1Executable
+
+END MODULE MLSL1RunConfig
+! $Id$
+!
+! Modifications
+!
+! $Log$
+!
+@
+

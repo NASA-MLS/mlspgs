@@ -1,0 +1,2264 @@
+head	2.19;
+access;
+symbols
+	v5-02-NRT-19:2.19
+	v6-00:2.19
+	v5-02-NRT-18:2.19
+	v5-02:2.19
+	v5-01-NRT-17:2.19
+	v5-01-NRT-16:2.19
+	v5-01-NRT-15:2.19
+	v5-01-NRT-14:2.19
+	neuralnetworks-1-0:2.19.0.14
+	cfm-single-freq-0-1:2.19.0.12
+	v5-01:2.19
+	v5-00:2.19
+	v4-23-TA133:2.19.0.10
+	mus-emls-1-70:2.19.0.8
+	rel-1-0-englocks-work:2.19.0.6
+	VUMLS1-00:2.19
+	VPL1-00:2.19
+	V4-22-NRT-08:2.19
+	whdrel10_merged_to_here:2.19
+	merge_whdrel10_from_here:2.19
+	TAG_TRUNK_AFTER_PW_CHANGES:2.19
+	TAG_TRUNK_BEFORE_PW_CHANGES:2.19
+	VAM1-00:2.19
+	whd-rel-1-0:2.19.0.4
+	V4-21:2.19.0.2
+	V4-13:2.16
+	V4-12:2.16
+	V4-11:2.16
+	V4-10:2.16
+	V3-43:2.15
+	M4-00:2.16
+	V3-41:2.15
+	V3-40-PlusGM57:2.14.0.2
+	V2-24-NRT-04:2.12
+	V3-33:2.14
+	V2-24:2.12
+	V3-31:2.14
+	V3-30-NRT-05:2.14
+	cfm-01-00:2.14
+	V3-30:2.14
+	V3-20:2.14
+	V3-10:2.12
+	V2-23-NRT-02:2.12
+	V2-23:2.12
+	V2-22-NRT-01:2.12
+	V2-22:2.12
+	V2-21:2.12
+	V2-20:2.12
+	V2-11:2.11
+	V2-10:2.11
+	V2-00:2.11
+	V1-51:2.7
+	V1-50:2.7
+	V1-45:2.6
+	V1-44:2.6
+	V1-43:2.5
+	V1-42:2.4
+	V1-41:2.4
+	V1-32:2.2
+	V1-40:2.4
+	V1-31:2.2
+	V1-30:2.2
+	V1-13:2.2
+	V1-12:2.2
+	V1-11:2.2
+	V1-10:2.2
+	newfwm-feb03:2.2.0.2;
+locks; strict;
+comment	@# @;
+
+
+2.19
+date	2015.01.22.23.34.04;	author vsnyder;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2015.01.21.19.32.51;	author pwagner;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2015.01.14.00.29.44;	author pwagner;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2013.02.06.19.05.40;	author quyen;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2012.08.29.17.11.37;	author perun;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2009.09.03.19.07.33;	author perun;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2009.08.21.18.59.13;	author perun;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2006.08.22.18.39.40;	author perun;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2006.04.05.18.08.40;	author perun;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2006.03.24.15.19.57;	author perun;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2005.12.06.19.30.19;	author perun;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2005.06.23.18.41.36;	author pwagner;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2004.11.10.15.38.36;	author perun;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2004.08.12.13.51.51;	author perun;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2004.05.14.15.59.11;	author perun;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2004.01.13.17.15.45;	author perun;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2004.01.09.17.46.23;	author perun;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2003.02.05.21.31.55;	author perun;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2003.01.31.18.13.34;	author perun;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.19
+log
+@Get constants from Constants module instead of SDPToolkit
+@
+text
+@! Copyright 2006, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=============================================================================
+MODULE THzCalibration ! Calibration data and routines for the THz module
+!=============================================================================
+
+  USE MLSCommon, ONLY: r8, rm
+  USE MLSL1Common, ONLY: MaxMIFs, THzChans, THzNum, LO1, L1BFileInfo
+  USE L0_sci_tbls, ONLY: THz_Sci_pkt_T
+  USE EngTbls, ONLY : Eng_MAF_T
+  USE MLSL1Config, ONLY: MIFsTHz
+  USE MLSFillValues, ONLY: isNaN
+  ! USE dump_0, ONLY: dump
+  use output_m, only: switchOutput, revertOutput
+  use PrintIt_m, only: MLSMessageConfig
+ 
+  IMPLICIT NONE
+
+  PRIVATE
+
+  PUBLIC :: CalibrateTHz, Chan_type_T, MAFdata_T, CalBuf_T, CalBuf, Cnts, &
+       VarCnts, SpaceTemp, nvBounds, ColdCnts, HotCnts, GoodCal
+
+!---------------------------- RCS Module Info ------------------------------
+  CHARACTER (len=*), PRIVATE, PARAMETER :: ModuleName= &
+       "$RCSfile: THzCalibration.f90,v $"
+  PRIVATE :: not_used_here 
+!---------------------------------------------------------------------------
+
+  !! Channel type (D, L, S, T, Z):
+
+  TYPE Chan_type_T
+     CHARACTER(len=1) :: FB(THzChans,THzNum)      ! standard THz filter banks
+  END TYPE Chan_type_T
+
+  !! THz Science and Engineering data for 1 MAF:
+
+  TYPE MAFdata_T
+     TYPE (THz_Sci_pkt_T) :: SciMIF(0:(MaxMIFs-1))
+     TYPE (Eng_MAF_T) :: EMAF
+     TYPE (Chan_type_T) :: ChanType(0:(MaxMIFs-1))
+     REAL :: CalTgtTemp       ! Average Calibration Target Temperature (C)
+     REAL :: LimbCalTgtTemp   ! Average Limb Calibration Target Temperature (C)
+     INTEGER :: BO_stat(MIFsTHz) = 0      ! Bright Objects status (THz FOV)
+     REAL :: MIFprecSign(0:(MaxMIFs-1))   ! Radiance precision sign per MIF
+     INTEGER :: last_MIF
+     INTEGER :: BandSwitch(5) ! band switch positions
+  END TYPE MAFdata_T
+
+  TYPE CalBuf_T
+     INTEGER :: MAFs, Cal_start, Cal_end
+     LOGICAL :: BankGood(THzNum)
+     TYPE (MAFdata_T), DIMENSION(:), ALLOCATABLE :: MAFdata
+  END TYPE CalBuf_T
+
+  TYPE (CalBuf_T), TARGET, SAVE :: CalBuf
+
+  INTEGER :: Cal_start = 1
+  INTEGER :: Cal_end, ntot
+  INTEGER, DIMENSION(:), ALLOCATABLE :: CalMIF, MIFx, xMIF0
+  INTEGER, DIMENSION(:), ALLOCATABLE, TARGET :: CalFlag
+  INTEGER, DIMENSION(:), ALLOCATABLE :: CalInfo   ! Similar to Herb's IDL
+  INTEGER, DIMENSION(:), ALLOCATABLE :: BoundsX
+  LOGICAL, DIMENSION(:), ALLOCATABLE :: Bounds
+  INTEGER, DIMENSION(:), ALLOCATABLE :: nvBounds
+  REAL(r8), DIMENSION(:), ALLOCATABLE :: Bias, CalTemp
+  REAL(r8), DIMENSION(:,:,:), ALLOCATABLE :: Cnts, dCnts, VarCnts
+  REAL(r8), DIMENSION(:), ALLOCATABLE :: VarGain
+  REAL, DIMENSION(:,:,:), ALLOCATABLE :: ColdCnts, HotCnts
+  LOGICAL, DIMENSION(:), ALLOCATABLE :: BiasGood
+  REAL :: MaxBias, SpaceTemp
+  REAL(r8) :: aerr(THzChans,THzNum), Chisq(THzChans,THzNum)
+  REAL(r8) :: dLlo(THzChans,THzNum), yTsys(THzChans,THzNum)
+  LOGICAL :: GoodCal = .TRUE.
+  CHARACTER(len=80) :: msg
+
+! Default gains:
+
+  REAL(r8), PARAMETER :: gainZ(THzChans,THzNum) = RESHAPE ( (/ &
+       1.080, 1.407, 1.627, 1.489, 1.214, 1.248, 1.388, 1.353, &
+       1.262, 1.166, 1.128, 1.086, 1.073, 1.051, 1.021, 0.966, &
+       0.938, 0.960, 1.183, 1.350, 1.208, 1.279, 1.510, 1.612, 1.514, &
+       1.122, 1.221, 1.279, 1.227, 1.060, 1.136, 1.167, 1.117, &
+       1.113, 1.195, 1.190, 1.175, 1.159, 1.147, 1.126, 1.179, &
+       1.128, 1.041, 1.087, 1.145, 1.216, 1.351, 1.480, 1.741, 1.805, &
+       0.970, 1.208, 1.274, 1.296, 1.037, 1.091, 0.990, 0.907, &
+       1.070, 1.121, 1.037, 0.921, 0.922, 0.892, 0.838, 0.807, &
+       0.805, 0.889, 1.339, 1.258, 1.307, 1.402, 1.159, 1.097, 1.230, &
+       1.729, 1.842, 1.584, 1.638, 1.590, 1.271, 1.492, 1.569, &
+       1.619, 1.533, 1.513, 1.426, 1.375, 1.380, 1.334, 1.252, &
+       1.334, 1.458, 1.764, 1.709, 1.741, 1.801, 1.652, 1.814, 2.007, &
+       0.977, 1.139, 1.189, 1.535, 1.275, 1.511, 1.547, 1.328, &
+       1.285, 1.286, 1.380, 1.389, 1.505, 1.559, 1.658, 1.776, &
+       1.715, 1.532, 1.769, 1.677, 1.749, 1.834, 1.786, 1.571, 2.206, &
+       2.234, 2.230, 1.873, 1.981, 1.730, 1.448, 1.492, 1.703, &
+       2.007, 1.999, 1.847, 1.658, 1.575, 1.568, 1.500, 1.431, &
+       1.459, 1.586, 2.085, 1.864, 1.888, 1.883, 1.890, 1.879, 2.098 /), &
+       (/ THzChans, THzNum /) )
+
+CONTAINS
+
+!=============================================================================
+  SUBROUTINE BuildCalVectors
+!=============================================================================
+
+!    USE THzUtils, ONLY: Bias_err
+    USE MLSL1Config, ONLY: L1Config
+    USE MLSL1Rad, ONLY: UpdateRadSignals, RadPwr
+
+    INTEGER :: i, last_MIF, mindx, MIF0, MIFno
+    INTEGER :: nBank, numMIFs, nMIFsM1, status, Switch5
+    TYPE (MAFdata_T), POINTER :: CurMAFdata => NULL()
+    INTEGER, PARAMETER :: Cal_size = 240   ! Nominal orbit
+    REAL, PARAMETER :: LO1R5 = LO1(5)  ! Radiometer 5 1st LO frequency
+    logical :: CalTgtTempIsNAN
+    logical :: LimbCalTgtTempIsNAN
+    logical :: FB15NotAllGood
+    logical :: FB20NotAllGood
+
+    SpaceTemp = L1Config%Calib%THzSpaceTemp
+    MaxBias = L1Config%Calib%THzMaxBias
+
+! Figure out how many MIFs needed for calibration:
+
+    Cal_start = 1
+    Cal_end = CalBuf%MAFs
+    numMIFs = 0
+    DO i = Cal_start, Cal_end
+       numMIFs = numMIFs + CalBuf%MAFdata(i)%last_MIF + 1
+    ENDDO
+    nMIFsM1 = numMIFs - 1
+
+! Allocate vectors:
+
+    DEALLOCATE (CalMIF, stat=status)
+    ALLOCATE (CalMIF(0:nMIFsM1))
+
+    DEALLOCATE (MIFx, stat=status)
+    ALLOCATE (MIFx(0:nMIFsM1))
+    DO i = 0, nMIFsM1
+       MIFx(i) = i
+    ENDDO
+    DEALLOCATE (xMIF0, stat=status)
+    ALLOCATE (xMIF0(0:CalBuf%MAFs-1))
+
+    DEALLOCATE (CalFlag, stat=status)  ! calibration = 1, otherwise = 0
+    ALLOCATE (CalFlag(0:nMIFsM1))
+    CalFlag = 0    ! Indicate not a calibration MIF (yet)
+    DEALLOCATE (CalInfo, stat=status)  ! 1 = cold, 2 = hot, otherwise = 0
+    ALLOCATE (CalInfo(0:nMIFsM1))
+    CalInfo = 0
+
+    DEALLOCATE (Bias, stat=status)
+    ALLOCATE (Bias(0:nMIFsM1))
+
+    DEALLOCATE (BiasGood, stat=status)
+    ALLOCATE (BiasGood(0:nMIFsM1))
+
+    DEALLOCATE (CalTemp, stat=status)
+    ALLOCATE (CalTemp(0:nMIFsM1))
+    CalTemp = 0.0
+
+    DEALLOCATE (Cnts, stat=status)
+    ALLOCATE (Cnts(THzChans,THzNum,0:nMIFsM1))
+    DEALLOCATE (dCnts, stat=status)
+    ALLOCATE (dCnts(THzChans,THzNum,0:nMIFsM1))
+    DEALLOCATE (VarCnts, stat=status)
+    ALLOCATE (VarCnts(THzChans,THzNum,0:nMIFsM1))
+    DEALLOCATE (VarGain, stat=status)
+    ALLOCATE (VarGain(0:nMIFsM1))
+    Cnts = 0.0
+    VarCnts = -1.0
+    VarGain = 1.0
+
+    if ( any(isNaN(Cnts)) ) then
+      print *, 'NaNs in Cnts at start of BuildCalVectors'
+      print *, 'SpaceTemp ', SpaceTemp
+      print *, 'Cal_start, Cal_end ', Cal_start, Cal_end
+    endif
+! Fill the vectors:
+
+    CalBuf%BankGood = .TRUE.
+    Switch5 = CalBuf%MAFdata(Cal_start)%SciMIF(0)%BandSwitch(5) ! init compare
+
+    MIF0 = 0   ! index for MIFs
+    CalTgtTempIsNAN = .false.
+    LimbCalTgtTempIsNAN = .false.
+    FB15NotAllGood = .false.
+    FB20NotAllGood = .false.
+    DO i = Cal_start, Cal_end
+
+       xMIF0(i-1) = MIF0                 ! Save MIF0 indexes
+       CurMAFdata => CalBuf%MAFdata(i)
+       last_MIF = CurMAFdata%last_MIF
+       CalMIF(MIF0:MIF0+last_MIF) = CurMAFdata%SciMIF(0:last_MIF)%MIFno
+       Bias(MIF0:MIF0+last_MIF) = &
+            CurMAFdata%SciMIF(0:last_MIF)%LLO_Bias
+
+       DO MIFno = 0, last_MIF
+          mindx = MIF0 + MIFno
+          Cnts(:,:,mindx) = &
+               CurMAFdata%SciMIF(MIFno)%FB(:,:)
+          IF (CurMAFdata%SciMIF(MIFno)%SwMirPos == "S" .AND. &
+               Bias(mindx) < MaxBias) THEN
+             CalTemp(mindx) = 0
+             CalFlag(mindx) = 1
+             CalInfo(mindx) = 1
+          ELSE IF (CurMAFdata%SciMIF(MIFno)%SwMirPos == "T" .AND. &
+               Bias(mindx) < MaxBias) THEN
+             CalTemp(mindx) = CurMAFdata%CalTgtTemp
+             IF (SpaceTemp < 0.0) CalTemp(mindx) = CalTemp(mindx) - &
+                  CurMAFdata%LimbCalTgtTemp
+             IF (CalTemp(mindx) > 200.0) CalTemp(mindx) = &
+                  RadPwr (LO1R5, REAL(CalTemp(mindx))) !for in orbit space = 0
+             CalFlag(mindx) = 1
+             CalInfo(mindx) = 2
+             CalTgtTempIsNAN = CalTgtTempIsNAN .or. isNaN(CurMAFdata%CalTgtTemp)
+             LimbCalTgtTempIsNAN = LimbCalTgtTempIsNAN .or. isNaN(CurMAFdata%LimbCalTgtTemp)
+          ENDIF
+       ENDDO
+
+! Check if Band Switch 5 changes:
+
+       CalBuf%BankGood(1) = .TRUE.
+       IF (ANY (CurMAFdata%SciMIF(0:last_MIF)%BandSwitch(5) /= Switch5)) then
+          CalBuf%BankGood(1) = .FALSE.  ! Filter Bank 15 not all good
+          FB15NotAllGood = .true.
+       endif
+
+! Check if Band 20 is connected:
+
+       CalBuf%BankGood(6) = .TRUE.
+       IF (ANY (CurMAFdata%SciMIF(0:last_MIF)%BandSwitch(4) /= 20)) THEN
+          CalBuf%BankGood(6) = .FALSE. ! Filter Bank 12 (Band 20) not all good
+            FB20NotAllGood = .true.
+          DO MIFno = 0, last_MIF
+             CurMAFdata%SciMIF(MIFno)%FB(:,6) = 0.0   ! Clear counts
+          ENDDO
+       ENDIF
+
+       MIF0 = MIF0 + last_MIF + 1
+
+    ENDDO
+    if ( FB15NotAllGood ) print *, 'Filter Bank 15 not all good'
+    if ( FB20NotAllGood ) print *, 'Filter Bank 20 not all good'
+    if ( CalTgtTempIsNAN ) print *, 'CalTgtTemp Is NaN'
+    if ( LimbCalTgtTempIsNAN ) print *, 'LimbCalTgtTemp Is NaN'
+
+! Adjust LLO Bias V if 2 or more consecutive errs:
+
+!!$    DO i = (numMIFs - 2), 1, -1
+!!$       IF (Bias(i) == Bias_err .AND. Bias(i-1) == Bias_err) THEN
+!!$          Bias(i+1) = Bias_err
+!!$          CalFlag(i+1) = 0
+!!$       ENDIF
+!!$    ENDDO
+
+! Determine which filter bank counts are good to cal:
+
+    DO nBank = 1, THzNum
+       IF (ALL (isNaN(Cnts(:,nBank,:) ))) &
+         & print *, 'Filter Bank ', nBank, ' are all NaN'
+    enddo
+
+    DO nBank = 1, THzNum
+       IF (ALL (Cnts(:,nBank,:) == 0.0)) THEN
+          CalBuf%BankGood(nBank) = .FALSE.
+         print *, 'Filter Bank ', nBank, ' not all good'
+       ELSE IF (.NOT. CalBuf%BankGood(nBank)) THEN
+          Cnts(:,nBank,:) = 0.0  ! clear bad data
+       ENDIF
+    ENDDO
+
+! Set signals based on end cal index
+
+    CALL UpdateRadSignals (CalBuf%MAFdata(Cal_end)%BandSwitch)
+
+! Save current cal start & end:
+
+    CalBuf%Cal_start = Cal_start
+    CalBuf%Cal_end = Cal_end
+
+    if ( any(isNaN(CalTemp)) ) print *, 'NaNs in CalTemp at start of BuildCalVectors'
+    if ( any(isNaN(Cnts)) ) print *, 'NaNs in Cnts at end of BuildCalVectors'
+  END SUBROUTINE BuildCalVectors
+
+!=============================================================================
+  SUBROUTINE RestoreCnts  ! Restore Cnts from CalBuf FB data
+!=============================================================================
+
+    INTEGER :: i, MIF0, MIFno, last_MIF, mindx
+    TYPE (MAFdata_T), POINTER :: CurMAFdata => NULL()
+
+    if ( any(isNaN(Cnts)) ) print *, 'NaNs in Cnts at start of RestoreCnts'
+    MIF0 = 0   ! index for MIFs
+    DO i = 1, CalBuf%MAFs
+       CurMAFdata => CalBuf%MAFdata(i)
+       last_MIF = CurMAFdata%last_MIF
+        DO MIFno = 0, last_MIF
+          mindx = MIF0 + MIFno
+          Cnts(:,:,mindx) = &
+               CurMAFdata%SciMIF(MIFno)%FB(:,:)
+       ENDDO
+       MIF0 = MIF0 + last_MIF + 1
+    ENDDO
+    if ( any(isNaN(Cnts)) ) print *, 'NaNs in Cnts at end of RestoreCnts'
+
+  END SUBROUTINE RestoreCnts
+
+!=============================================================================
+  SUBROUTINE THzBound (ibgn, iend, iorbit, fillnvbounds)
+!=============================================================================
+
+    INTEGER, INTENT (in) :: ibgn, iend, iorbit
+    LOGICAL, INTENT (in), OPTIONAL :: fillnvbounds
+
+    INTEGER :: i, j, nBounds, status
+    INTEGER :: ibound, iMAF, mbgn, mend, nv
+
+    DEALLOCATE (Bounds, stat=status)
+    ALLOCATE (Bounds(ibgn:iend))
+
+! Determine bounds for fitting:
+
+    Bounds = .FALSE.   ! nothing yet
+    WHERE (Bias(ibgn:iend) >= MaxBias)  ! Re-optimizing
+       Bounds = .TRUE.
+    END WHERE
+    WHERE (CalMIF(ibgn:iend) < 0)       ! Missing MIFs
+       Bounds = .TRUE.
+    END WHERE
+    BiasGood(ibgn:iend) = .NOT. Bounds  ! Good Bias values
+    Bounds(iend) = .TRUE.               ! last always a bounds
+    nBounds = COUNT (Bounds)
+    DEALLOCATE (BoundsX, stat=status)
+    ALLOCATE (BoundsX(nBounds))
+    j = 1
+    DO i = ibgn, iend
+       IF (Bounds(i)) THEN
+          BoundsX(j) = i-ibgn
+          j = j + 1
+       ENDIF
+    ENDDO
+
+    IF (.NOT. PRESENT (fillnvbounds)) THEN
+
+! Write to Log file:
+
+       WRITE (L1BFileInfo%LogId, *) ''
+       WRITE (msg, &
+            '("Cal Number: ", i0, ", nBounds: ", i0, ", nBiasGood: ", i0)') &
+            iorbit, nBounds, COUNT (BiasGood(ibgn:iend))
+       WRITE (L1BFileInfo%LogId, *) TRIM (msg)
+
+       RETURN     ! No nvbounds yet...
+
+    ENDIF
+
+! Determine nvBounds:
+
+    DEALLOCATE (nvBounds, stat=status)
+    ALLOCATE (nvBounds(CalBuf%MAFs))
+    nvBounds = 0
+    iMAF = 1
+    mbgn = 0
+    DO iBound = 1, nBounds
+       mend = BoundsX(iBound)
+       nv = mend - mbgn + 1
+       DO i = mbgn, mend
+          IF (CalMIF(i) == 0) THEN
+             nvBounds(iMAF) = nv
+             iMAF = iMAF + 1
+          ENDIF
+       ENDDO
+       mbgn = mend + 1
+    ENDDO
+
+  END SUBROUTINE THzBound
+
+!=============================================================================
+  SUBROUTINE THzDel (Bias, BiasGood, CalFlag, CalTemp, xMIF0, Cnts, VarCnts, &
+       VarGain)
+!=============================================================================
+
+    USE Constants, ONLY: Pi
+    USE MatrixModule_0, ONLY: MatrixInversion
+
+    INTEGER, TARGET :: CalFlag(0:)
+    INTEGER :: xMIF0(0:)
+    REAL(r8) :: Bias(0:), VarGain(0:)
+    REAL(r8) :: CalTemp(0:)
+    REAL(r8) :: Cnts(:,:,0:), VarCnts(:,:,0:)
+    LOGICAL :: BiasGood(0:)
+
+    INTEGER, PARAMETER :: nfit = 4, nfitm1 = nfit - 1
+    INTEGER :: fitno = nfit
+    INTEGER :: i, j, iBound, ibgn, iend, nBounds, ntotx, status
+    INTEGER :: nChan, nBank, nMAFs, nMIFs
+    INTEGER, DIMENSION(:), POINTER :: cFlag
+    REAL, DIMENSION(:), POINTER :: ang, cv, sv
+    REAL(r8) :: trms, xamp
+    REAL(r8), DIMENSION(:), POINTER :: biasx, dbias, tempx, ct, st, val
+    REAL(r8) :: AvgBias, AvgTemp, avgx
+    REAL(r8), DIMENSION(:), TARGET, ALLOCATABLE :: BiasBuf, TempBuf, &
+         cv_buf, sv_buf
+    REAL(r8) :: tt(0:nfitm1,0:nfitm1), tt0(0:nfitm1,0:nfitm1)
+    REAL(rm) :: rtt(nfit,nfit), rtt2(2,2)
+    REAL(r8) :: yv(THzChans,THzNum,0:nfitm1), tv(THzChans,THzNum,0:nfitm1)
+    REAL(r8) :: dCal(THzChans,THzNum), amp(THzChans,THzNum)
+
+    REAL, PARAMETER :: tmin = 10.0
+
+    call switchOutput( 'stdout' )
+    ! MLSMessageConfig%adHocPrintToStdout = .true.
+    if ( any(isNaN(Cnts)) ) print *, 'NaNs in Cnts at start of THzDel'
+    nMAFs = SIZE (xMIF0)
+    nMIFs = SIZE (Bias)
+!    DEALLOCATE (dbias, stat=status)
+    ALLOCATE (dbias(0:nMIFs-1))
+    dbias = bias
+!    DEALLOCATE (val, stat=status)
+    ALLOCATE (val(0:nMIFs-1))
+    tv = 0.0d0
+    yv = 0.0d0
+    amp = 0.d0
+    IF (nfit > 2) THEN
+       nMAFs = nMAFs - 1
+!       DEALLOCATE (ang, stat=status)
+       ALLOCATE (ang(0:nMIFs-1))
+!       DEALLOCATE (cv, stat=status)
+       ALLOCATE (cv(0:nMIFs-1))
+!       DEALLOCATE (sv, stat=status)
+       ALLOCATE (sv(0:nMIFs-1))
+       DO i = 0, (nMIFs - 1)
+          ang(i) = (2.0 * Pi / nMIFs) * i
+          cv(i) = COS (ang(i))
+          sv(i) = SIN (ang(i))
+       ENDDO
+    ENDIF
+
+    ntot = COUNT (CalFlag == 1)
+    IF (ntot <= 1) RETURN
+
+    AvgBias = SUM (Bias * CalFlag) / ntot
+    AvgTemp = SUM (CalTemp * CalFlag) / ntot
+    ! print *, 'AvgBias ', AvgBias
+    ! print *, 'AvgTemp ', AvgTemp
+    ! call dump ( CalTemp, 'CalTemp' )
+!    DEALLOCATE (BiasBuf, stat=status)
+    ALLOCATE (BiasBuf(0:nMIFs-1))
+    BiasBuf = Bias * CalFlag
+!    DEALLOCATE (TempBuf, stat=status)
+    ALLOCATE (TempBuf(0:nMIFs-1))
+    TempBuf = CalTemp * CalFlag
+!    DEALLOCATE (cv_buf, stat=status)
+    ALLOCATE (cv_buf(0:nMIFs-1))
+    cv_buf = cv * CalFlag
+!    DEALLOCATE (sv_buf, stat=status)
+    ALLOCATE (sv_buf(0:nMIFs-1))
+    sv_buf = sv * CalFlag
+
+    nBounds = SIZE (BoundsX)
+    tt = 0.0d0
+    tt(0,0) = ntot / (819.2 * 819.2)
+    DO i = 1, (nfit - 1)
+       tt(i,i) = 0.5
+    ENDDO
+    ibgn = 0
+    DO iBound = 1, nBounds
+       iend = BoundsX(iBound)
+       cFlag => CalFlag(ibgn:iend)
+       ntotx = COUNT (cFlag == 1)
+       IF (ntotx > 1) THEN
+          ! call dump( TempBuf(ibgn:iend), 'TempBuf' )
+          ! call dump( BiasBuf(ibgn:iend), 'BiasBuf' )
+          ! call dump( CalFlag(ibgn:iend), 'CalFlag' )
+          biasx => BiasBuf(ibgn:iend)
+          avgx = SUM (biasx) / ntotx
+          biasx = (biasx - avgx) * cFlag
+          tempx => TempBuf(ibgn:iend)
+          avgx = SUM (tempx) / ntotx
+          tempx = (tempx - avgx) * cFlag
+          tt(0,0) = tt(0,0) + SUM (biasx * biasx)
+          tt(1,1) = tt(1,1) + SUM (tempx * tempx)
+          tt(1,0) = tt(1,0) + SUM (tempx * biasx)
+          DO nBank = 1, THzNum
+             yv(:,nBank,0) = yv(:,nBank,0) + &
+                  MATMUL (Cnts(:,nBank,ibgn:iend), biasx)
+             yv(:,nBank,1) = yv(:,nBank,1) + &
+                  MATMUL (Cnts(:,nBank,ibgn:iend), tempx)
+          ENDDO
+          IF (nfit > 2) THEN
+             ct => cv_buf(ibgn:iend)
+             ct = ct * tempx
+             st => sv_buf(ibgn:iend)
+             st = st * tempx
+             tt(2,2) = tt(2,2) + SUM (ct * ct)
+             tt(2,0) = tt(2,0) + SUM (ct * biasx)
+             tt(2,1) = tt(2,1) + SUM (ct * tempx)
+             tt(3,3) = tt(3,3) + SUM (st * st)
+             tt(3,0) = tt(3,0) + SUM (st * biasx)
+             tt(3,1) = tt(3,1) + SUM (st * tempx)
+             tt(3,2) = tt(3,2) + SUM (st * ct)
+             DO nBank = 1, THzNum
+                yv(:,nBank,2) = yv(:,nBank,2) + &
+                     MATMUL (Cnts(:,nBank,ibgn:iend), ct)
+                yv(:,nBank,3) = yv(:,nBank,3) + &
+                     MATMUL (Cnts(:,nBank,ibgn:iend), st)
+             ENDDO
+          ENDIF
+       ENDIF
+       ibgn = iend + 1
+    ENDDO
+    DO i = 0, (nfit - 2)
+       DO j = i + 1, nfit -1
+          tt(i,j) = tt(j,i)
+       ENDDO
+    ENDDO
+    trms = 2.0 * SQRT(tt(1,1) / ntot)
+
+    tt0 = tt
+    rtt = tt
+    ! call dump( rtt, 'rtt' )
+    CALL MatrixInversion (rtt)
+    tt = rtt
+
+    ! call dump( yv, 'yv' )
+    ! call dump( tt, 'tt' )
+    DO nBank = 1, THzNum
+       tv(:,nBank,:) = MATMUL (yv(:,nBank,:), tt)
+    ENDDO
+    ! call dump( tv, 'tv (1st time)' )
+    DO nBank = 1, THzNum
+       DO nChan = 1, THzChans
+          if ( tv(nChan,nBank,1) /= 0.d0 ) &
+            & amp(nChan,nBank) = SQRT (tv(nChan,nBank,2) * tv(nChan,nBank,2) + &
+              tv(nChan,nBank,3) * tv(nChan,nBank,3)) / ABS (tv(nChan,nBank,1))
+       ENDDO
+    ENDDO
+    xamp = MAXVAL(amp)
+    IF (xamp > 0.2) THEN
+       PRINT *, 'Switch to const gain: ', xamp
+       fitno = 2
+       tt(0,0) = tt0(0,0); tt(1,1) = tt0(1,1)
+       tt(0,1) = tt0(0,1); tt(1,0) = tt0(1,0)
+       rtt2 = tt(0:1,0:1)
+       CALL MatrixInversion (rtt2)
+       tt(0:1,0:1) = rtt2
+       DO nBank = 1, THzNum
+          tv(:,nBank,0:1) = MATMUL (yv(:,nBank,0:1), tt(0:1,0:1))
+       ENDDO
+    ENDIF
+    ! call dump( tv, 'tv (2nd time)' )
+
+    dLlo = tv(:,:,0)
+    dCal = tv(:,:,1)
+    vargain = tt(1,1)
+
+    IF (trms < tmin) THEN
+       vargain = 0.0
+       fitno = 2
+       dCal = gainZ
+    ENDIF
+
+    WHERE (BiasGood)
+       Bias = Bias - AvgBias  ! Adjust bias for remainder of this routine
+    ENDWHERE
+    ! call dump( Bias, 'Bias' )
+    ! call dump( dLlo, 'dLlo' )
+    DO nBank = 1, THzNum
+       DO nChan = 1, THzChans
+          WHERE (BiasGood)
+             Cnts(nChan,nBank,:) = Cnts(nChan,nBank,:) - dLlo(nChan,nBank) * &
+                  Bias
+             VarCnts(nChan,nBank,:) = Bias * Bias * tt(0,0) + 1.0
+          ENDWHERE
+       ENDDO
+    ENDDO
+    if ( any(isNaN(Cnts)) ) print *, 'NaNs in Cnts after 1st bias adjustment'
+
+    IF (fitno == 2) THEN
+       DO nBank = 1, THzNum
+          DO nChan = 1, THzChans
+             Cnts(nChan,nBank,:) = Cnts(nChan,nBank,:) / &
+                  MAX (ABS (dCal(nChan,nBank)), 0.01d0)
+          ENDDO
+       ENDDO
+    ELSE
+       WHERE (BiasGood)
+          vargain = tt(1,1) + 2.0 * tt(1,2) * cv + 2.0 * tt(1,3) * sv + &
+               cv * (tt(2,2) * cv + 2.0 * tt(2,3) * sv) + sv * sv * tt(3,3)
+       ENDWHERE
+
+       DO nBank = 1, THzNum
+          DO nChan = 1, THzChans
+             val = tv(nChan,nBank,1) + tv(nChan,nBank,2) * cv + &
+                  tv(nChan,nBank,3) * sv
+             DO i = 0, (nMIFs - 1)
+                Cnts(nChan,nBank,i) = Cnts(nChan,nBank,i) / &
+                     MAX (ABS (val(i)), 0.01d0)
+             ENDDO
+          ENDDO
+       ENDDO
+    ENDIF
+    if ( any(isNaN(Cnts)) ) print *, 'NaNs in Cnts after 2nd bias adjustment'
+
+    DO nBank = 1, THzNum
+       DO nChan = 1, THzChans
+          yTsys(nChan,nBank) = SUM (Cnts(nChan,nBank,:) * CalFlag) / ntot - &
+               AvgTemp
+       ENDDO
+    ENDDO
+
+! restore bias:
+
+    bias = dbias
+
+! Deallocate the temporary buffers
+!    REAL, DIMENSION(:), POINTER :: ang, cv, sv
+!    REAL(r8), DIMENSION(:), TARGET, ALLOCATABLE :: BiasBuf, TempBuf, &
+!         cv_buf, sv_buf
+
+    DEALLOCATE (ang, stat=status)
+    DEALLOCATE (cv,  stat=status)
+    DEALLOCATE (sv,  stat=status)
+
+    DEALLOCATE (BiasBuf, stat=status)
+    DEALLOCATE (TempBuf, stat=status)
+    DEALLOCATE (cv_buf,  stat=status)
+    DEALLOCATE (sv_buf,  stat=status)
+
+    DEALLOCATE (dbias, stat=status)
+    DEALLOCATE (val, stat=status)
+    if ( any(isNaN(Cnts)) ) print *, 'NaNs in Cnts at end of THzDel'
+    ! MLSMessageConfig%adHocPrintToStdout = .false.
+    call revertOutput
+
+  END SUBROUTINE THzDel
+
+!=============================================================================
+  SUBROUTINE THzCal (ColdCal)
+!=============================================================================
+
+    LOGICAL, INTENT(IN), OPTIONAL :: ColdCal
+
+    INTEGER :: zwin = 2                      ! may pass this in
+
+    INTEGER :: nChan, nBank
+    INTEGER :: i, ibgn, iend, iBound, kbgn, maxPt, mbgn, mend, mif0, status
+    INTEGER :: nordr, ntotx, wbgn, wend, win
+    INTEGER, DIMENSION(:), POINTER :: cFlag
+    REAL(r8) :: t, tmid, val
+    REAL(r8), DIMENSION(:), ALLOCATABLE, SAVE :: tsq, tval
+    REAL(r8), DIMENSION(:,:,:), ALLOCATABLE, SAVE :: yval
+    REAL(r8) :: av(THzChans,THzNum), bv(THzChans,THzNum), cv(THzChans,THzNum)
+    REAL(r8) :: det, mfit0, mfit1, mfit2, mfit3, mfit4, tsqavg
+    REAL(r8) :: yfit1(THzChans,THzNum), yfit2(THzChans,THzNum)
+
+    INTEGER, PARAMETER :: MIFsPerMAF = 148   ! use for now
+    INTEGER, PARAMETER :: mlimb = 122
+    LOGICAL :: first_fit, last_fit, IsColdCal
+
+    PRINT *, 'THzCal'
+
+    IF (PRESENT (ColdCal)) THEN
+       IsColdCal = ColdCal
+    ELSE
+       IsColdCal = .FALSE.
+    ENDIF
+
+    IF (COUNT (CalFlag == 1) == 0) RETURN  ! Nothing to calibrate
+
+    IF (ISColdCal) THEN
+       WHERE (CalTemp /= 0.0 .AND. CalFlag == 1)
+          CalFlag = 0
+       ENDWHERE
+    ENDIF
+    DO nBank = 1, THzNum
+       DO nChan = 1, THzChans
+          dCnts(nChan,nBank,:) = Cnts(nChan,nBank,:) - CalTemp * CalFlag
+       ENDDO
+    ENDDO
+
+    maxPt = SIZE (CalFlag) - 1
+    win = zwin * MIFsPerMAF
+    kbgn = 0
+    iBound = 1
+    wend = -1
+    mif0 = 0
+    first_fit = .TRUE.
+    last_fit = .FALSE.
+    DO
+
+       DO
+          IF (CalMIF(mif0) > mlimb .AND. mif0 < maxPt) THEN
+             mif0 = mif0 + 1
+          ELSE
+             EXIT
+          ENDIF
+       ENDDO
+
+       DO
+          IF (mif0 > wend) THEN
+             wbgn = wend + 1
+             wend = BoundsX(iBound)
+             iBound = iBound + 1
+             DO
+                IF (CalMIF(mif0) <= mlimb .AND. mif0 < wend) THEN
+                   mif0 = mif0 + 1
+                ELSE
+                   EXIT
+                ENDIF
+             ENDDO
+             DO
+                IF (CalMIF(mif0) > mlimb .AND. mif0 < wend) THEN
+                   mif0 = mif0 + 1
+                ELSE
+                   EXIT
+                ENDIF
+             ENDDO
+          ELSE
+             EXIT
+          ENDIF
+       ENDDO
+       ibgn = MAX ((mif0 - win), wbgn)
+       iend = MIN ((mif0 + mlimb + win), wend)
+       cFlag => CalFlag(ibgn:iend)
+       ntotx = COUNT (cFlag == 1)
+
+       ! IF (ntotx > 1 .AND. .NOT. first_fit) THEN
+       IF (ntotx > 1) THEN
+
+!          DEALLOCATE (yval, stat=status)
+          ALLOCATE (yval(THzChans,THzNum,ibgn:iend))
+!          DEALLOCATE (tsq, stat=status)
+          ALLOCATE (tsq(ibgn:iend))
+!          DEALLOCATE (tval, stat=status)
+          ALLOCATE (tval(ibgn:iend))
+
+          DO i = ibgn, iend
+             IF (CalFlag(i) == 1) THEN
+                mbgn = i
+                EXIT
+             ENDIF
+          ENDDO
+          DO i = iend, ibgn, -1
+             IF (CalFlag(i) == 1) THEN
+                mend = i
+                EXIT
+             ENDIF
+          ENDDO
+          nordr = ((mend - mbgn) / REAL(MIFsPerMAF) + 0.2)
+          tmid = SUM (MIFx(ibgn:iend)*cFlag) / REAL(ntotx,r8)
+          tval = (MIFx(ibgn:iend) - tmid) * cFlag
+          tsq = tval * tval
+          mfit0 = 1.0 / ntotx
+          DO nBank = 1, THzNum
+             DO nChan = 1, THzChans
+                yval(nChan,nBank,:) = dCnts(nChan,nBank,ibgn:iend) * cFlag
+                av(nChan,nBank) = SUM (yval(nChan,nBank,:)) * mfit0
+             ENDDO
+          ENDDO
+          bv = 0.0
+          cv = 0.0
+          mfit1 = 0.0; mfit2 = 0.0; mfit3 = 0.0; mfit4 = 0.0
+          IF (nordr > 0) THEN
+             mfit2 = SUM (tsq)
+             IF (nordr == 1) mfit2 = 1.0 / mfit2
+             DO nBank = 1, THzNum
+                DO nChan = 1, THzChans
+                   yfit1(nChan,nBank) = &
+                        DOT_PRODUCT (yval(nChan,nBank,:), tval)
+                   IF (nordr == 1) bv(nChan,nBank) = yfit1(nChan,nBank) * mfit2
+                ENDDO
+             ENDDO
+          ENDIF
+
+          IF (nordr > 1) THEN
+             tsqavg = mfit2 / ntotx
+             tsq = (tsq - tsqavg) * cFlag
+             mfit3 = -SUM (tsq * tval)
+             mfit4 = mfit2
+             mfit2 = SUM (tsq * tsq)
+             det = mfit2 * mfit4 - mfit3 * mfit3
+             DO nBank = 1, THzNum
+                DO nChan = 1, THzChans
+                   yfit2(nChan,nBank) = &
+                        DOT_PRODUCT (yval(nChan,nBank,:), tsq)
+                ENDDO
+             ENDDO
+             IF (ABS (det) > 0.0) THEN
+                mfit2 = mfit2 /det
+                mfit3 = mfit3 /det
+                mfit4 = mfit4 /det
+             ENDIF
+             bv = mfit2 * yfit1 + mfit3 * yfit2
+             cv = mfit3 * yfit1 + mfit4 * yfit2
+             av = av - cv * tsqavg
+             tsqavg = -2.0 * tsqavg
+             mfit1 = tsqavg * mfit3
+             mfit2 = mfit2 + tsqavg * mfit4
+             mfit3 = 2.0 * mfit3
+          ENDIF
+          last_fit = .TRUE.
+!
+          DEALLOCATE (yval,  stat=status)
+          DEALLOCATE (tsq,   stat=status)
+          DEALLOCATE (tval,  stat=status)
+       ENDIF
+       first_fit = .FALSE.
+
+       DO
+          IF (CalMIF(mif0) <= mlimb .AND. mif0 < wend) THEN
+             mif0 = mif0 + 1
+          ELSE
+             EXIT
+          ENDIF
+       ENDDO
+
+       DO
+          IF (CalMIF(mif0) > mlimb .AND. mif0 < wend) THEN
+             mif0 = mif0 + 1
+          ELSE
+             EXIT
+          ENDIF
+       ENDDO
+
+       IF (last_fit) THEN
+          DO i = kbgn, mif0
+             IF (BiasGood(i)) THEN
+                t = i - tmid
+                Cnts(:,:,i) = Cnts(:,:,i) - av - t * (bv + cv * t)
+                val = mfit0 + t * (mfit1 + t * (mfit2 + t * (mfit3 + t * &
+                     mfit4)))
+                VarCnts(:,:,i) = VarCnts(:,:,i) + val + VarGain(i) * &
+                     Cnts(:,:,i) * Cnts(:,:,i)
+             ELSE
+                Cnts(:,:,i) = Cnts(:,:,i) - av
+                VarCnts(:,:,i) = -1.0
+                CalFlag(i) = 0
+                CalInfo(i) = 0
+             ENDIF
+          ENDDO
+          kbgn = mif0 + 1
+       ENDIF
+
+       IF (mif0 == wend) mif0 = mif0 + 1
+       IF (mif0 > maxPt) EXIT
+
+    ENDDO
+
+
+  END SUBROUTINE THzCal
+
+!=============================================================================
+  SUBROUTINE THzReselect (Stype, nbad)
+!=============================================================================
+
+    CHARACTER(LEN=*), INTENT (IN) :: Stype
+    INTEGER, INTENT (OUT) :: nbad
+
+    INTEGER :: mindx, n, ncold, nhot, lbad
+    INTEGER, PARAMETER :: limbMIF = 116
+    REAL :: avg, wt2(THzChans,THzNum), norm
+    LOGICAL :: ChanGood(THzChans,THzNum), cold_type, hot_type, limb_type
+    REAL, PARAMETER :: cmax = 10.0
+    REAL, PARAMETER :: hmax = 0.08
+    REAL, PARAMETER :: limb_range(2) = (/ -10.0, 200.0 /)
+    REAL, PARAMETER :: lavg = 0.5 * (limb_range(1) + limb_range(2))
+    REAL, PARAMETER :: lmax = lavg - limb_range(1)
+
+    PRINT *, 'Reselecting...'
+    if ( any(isNaN(Cnts)) ) print *, 'NaNs in Cnts at start of Reselecting'
+
+    limb_type = (INDEX(Stype, "L") /= 0)
+    cold_type = (INDEX(Stype, "C") /= 0)
+    hot_type = (INDEX(Stype, "H") /= 0)
+
+    norm = 0.0
+    DO n = 1, ThzNum
+       ChanGood(:,n) = CalBuf%BankGood(n)
+       WHERE (aerr(:,n) > 1.0e-30)
+          wt2(:,n) = 1.0 / aerr(:,n)
+       ELSEWHERE
+          wt2(:,n) = 1.0
+       END WHERE
+       WHERE (.NOT. ChanGood(:,n))
+          wt2(:,n) = 0.0
+       END WHERE
+       wt2(:,n) = wt2(:,n) * wt2(:,n)
+       norm = norm + SUM (wt2(:,n) + 1.0e-30)
+    ENDDO
+    wt2 = wt2 / norm
+
+    nbad = 0 ; ncold = 0; nhot = 0 ; lbad = 0
+    DO mindx = 0, (SIZE(CalInfo) - 1)
+       IF (cold_type .AND. CalInfo(mindx) == 1) THEN            ! "cold" cal
+          avg = SUM (wt2 * cnts(:,:,mindx))
+          IF (ChanGood(1,1) .AND. ABS(avg) > cmax .AND. &
+               varcnts(1,1,mindx) > 0.0) THEN
+             nbad = nbad + 1
+             ncold = ncold + 1
+             CalInfo(mindx) = 0
+             CalFlag(mindx) = 0
+          ENDIF
+       ELSE IF (hot_type .AND. CalInfo(mindx) == 2) THEN       ! "hot" cal
+          avg = SUM (wt2 * cnts(:,:,mindx))
+          avg = avg / CalTemp(mindx) - 1.0
+          IF (ChanGood(1,1) .AND. ABS(avg) > hmax .AND. &
+               varcnts(1,1,mindx) > 0.0) THEN
+             nbad = nbad + 1
+             nhot = nhot + 1
+             CalInfo(mindx) = 0
+             CalFlag(mindx) = 0
+          ENDIF
+       ELSE IF (limb_type .AND. CalMIF(mindx) <= limbMIF) THEN  ! limb views
+          avg = SUM (wt2 * cnts(:,:,mindx))
+          IF (ChanGood(1,1) .AND. (ABS(avg - lavg) > lmax) .AND. &
+               varcnts(1,1,mindx) > 0.0) THEN
+             varcnts(:,:,mindx) = -ABS (varcnts(:,:,mindx))
+             lbad = lbad + 1
+          ENDIF
+       ENDIF
+    ENDDO
+
+    IF (limb_type) THEN
+       PRINT *, 'Limb view rejects: ', lbad
+    ELSE
+       PRINT *, 'Cals rejected (cold, hot, total): ', ncold, nhot, nbad
+    ENDIF
+
+    if ( any(isNaN(Cnts)) ) print *, 'NaNs in Cnts at end of Reselecting'
+  END SUBROUTINE THzReselect
+
+!=============================================================================
+  SUBROUTINE THzStat
+!=============================================================================
+
+    INTEGER :: i, nBank, nChan, ntot
+    INTEGER :: mbgn, mend, nCold, nHot, status
+    REAL(r8) :: xavg(THzChans,THzNum), yavg(THzChans,THzNum)
+    REAL(r8) :: xval(THzChans,THzNum), yval(THzChans,THzNum)
+    REAL(r8) :: vnorm
+    REAL :: filter(THzChans)
+    REAL, PARAMETER :: ChanBw(25) = (/ 110.0, 110.0, 110.0, 74.0, 74.0, 74.0, &
+         55.0, 37.0, 28.0, 18.4, 14.0, 9.2, 7.2, 9.2, 14.0, 18.4, 28.0, 37.0, &
+         55.0, 74.0, 74.0, 74.0, 110.0, 110.0, 110.0 /)
+    TYPE (MAFdata_T), POINTER :: CurMAFdata => NULL()
+
+    ntot = COUNT (CalFlag == 1)
+    IF (ntot == 0) THEN
+       goodcal = .FALSE.
+       RETURN
+    ENDIF
+
+    filter = 1000.0 * SQRT (ChanBw / 6.0)
+    vnorm = 1.0d0 / ntot
+    xavg = 0.0
+    yavg = 0.0
+
+    DO i = 0, (SIZE (CalFlag) - 1)
+       IF (CalFlag(i) == 1) THEN
+          xval = vnorm / VarCnts(:,:,i)
+          xavg = xavg + xval
+          yval = Cnts(:,:,i) - CalTemp(i)
+          yavg = yavg + xval * yval * yval
+       ENDIF
+    ENDDO
+
+    DO nBank = 1, THzNum
+       DO nChan = 1, THzChans
+          WHERE (VarCnts(nChan,nBank,:) >= 0.0)
+             VarCnts(nChan,nBank,:) = SQRT (yavg(nChan,nBank) * &
+                  VarCnts(nChan,nBank,:))
+          ENDWHERE
+       ENDDO
+    ENDDO
+
+    WHERE (xavg > 0.0)
+       aerr = SQRT (yavg / xavg)
+    END WHERE
+
+    Chisq = 0.0
+    DO nBank = 1, THzNum
+       WHERE (ytsys(:,nBank) > 0.0)
+          Chisq(:,nBank) = (aerr (:,nBank) * filter) / ytsys(:,nBank)
+       END WHERE
+       Chisq(:,nBank) = Chisq(:,nBank) * Chisq(:,nBank)
+    ENDDO
+
+    DEALLOCATE (ColdCnts, stat=status)
+    ALLOCATE (ColdCnts(THzChans,THzNum,CalBuf%MAFs))
+    ColdCnts = 0.0
+    DEALLOCATE (HotCnts, stat=status)
+    ALLOCATE (HotCnts(THzChans,THzNum,CalBuf%MAFs))
+    HotCnts = 0.0
+
+! Determine average cold and hot counts for each MAF:
+
+    DO i = 1, CalBuf%MAFs
+       CurMAFdata => CalBuf%MAFdata(i)
+       mbgn = xMIF0(i-1)
+       mend = mbgn + CurMAFdata%last_MIF
+       nCold = COUNT (CalInfo(mbgn:mend) == 1)
+       nHot = COUNT (CalInfo(mbgn:mend) == 2)
+
+       DO nBank = 1, THzNum
+          DO nChan = 1, THzChans
+             IF (nCold > 0) THEN
+                ColdCnts(nChan,nBank,i) = SUM (Cnts(nChan,nBank,mbgn:mend), &
+                     (CalInfo(mbgn:mend) == 1)) / nCold
+             ENDIF
+             IF (nHot > 0) THEN
+                HotCnts(nChan,nBank,i) = SUM (Cnts(nChan,nBank,mbgn:mend), &
+                     (CalInfo(mbgn:mend) == 2)) / nHot
+             ENDIF
+          ENDDO
+       ENDDO
+    ENDDO
+
+  END SUBROUTINE THzStat
+
+!=============================================================================
+  SUBROUTINE THzCalDay
+!=============================================================================
+
+    USE MLSL1Common, ONLY: L1BFileInfo
+    USE OutputL1B, ONLY: OutputL1B_DiagsT
+
+    INTEGER :: i, ibgn, iend, iendm, iorbit, iorg, iref, norbits, status
+    INTEGER :: nMAFs, nMIFs, maf1, maf2
+    INTEGER, SAVE :: diagno = 1
+    REAL(r8), DIMENSION(:,:,:), ALLOCATABLE :: tCnts, tVarCnts
+    REAL(r8), DIMENSION(:), ALLOCATABLE :: tVarGain
+    INTEGER, PARAMETER :: nlast = 148 * 11   ! number of MIFs to test at end
+
+! Save Cnts for calibration:
+    if ( any(isNaN(Cnts)) ) print *, 'NaNs in Cnts at start of THzCalDay'
+
+    dCnts = Cnts
+
+! Set CalFlags:
+
+    CalFlag = 0   ! Nothing yet
+    WHERE (CalInfo /= 0)
+       CalFlag = 1       ! Cal MIFs
+    END WHERE
+
+    nMAFs = CalBuf%MAFs
+    nMIFs = SIZE (MIFx)
+    norbits = CEILING (nMAFs / 240.0)
+    iend = -1
+    DO iorbit = 1, norbits
+       ibgn = iend + 1
+       iorg = ibgn
+       iendm = iorbit * 240
+       IF (iendm >= nMAFs) THEN
+          iend = nMIFs - 1
+          ibgn = (nMAFs - 241) * 148
+          IF (ibgn <= 0) THEN
+             ibgn = 0
+          ENDIF
+       ELSE
+          iend = iendm * 148 - 1
+          DO i = 0, nlast
+             IF (bias(iend - i) > maxBias) THEN
+                iend = iend - i
+                EXIT
+             ENDIF
+          ENDDO
+       ENDIF
+       iref = iorg - ibgn
+PRINT *, ibgn, iend, iref, iorg, (iend-ibgn+1)/148
+       maf1 = ibgn / 148
+       maf2 = iend / 148
+       maf2 = MINVAL ((/ maf2, (nMAFs - 1) /))
+       IF (xMIF0(maf2) >= iend) maf2 = maf2 - 1
+       IF (iorbit == norbits .AND. iorbit > 1) maf1 = maf1 - 1
+
+!       DEALLOCATE (tCnts, stat=status)
+       ALLOCATE (tCnts(THzChans,THzNum,0:(iend-ibgn)))
+       tCnts = dCnts(:,:,ibgn:iend)
+!       DEALLOCATE (tVarCnts, stat=status)
+       ALLOCATE (tVarCnts(THzChans,THzNum,0:(iend-ibgn)))
+!       DEALLOCATE (tVargain, stat=status)
+       ALLOCATE (tVargain(0:(iend-ibgn)))
+
+       CALL THzBound (ibgn, iend, iorbit)
+
+       CALL THzDel (Bias(ibgn:iend), BiasGood(ibgn:iend), CalFlag(ibgn:iend), &
+            CalTemp(ibgn:iend), xMIF0(maf1:maf2), tCnts, tVarCnts, tVargain)
+
+       Cnts(:,:,iorg:iend) = tCnts(:,:,iref:)
+       VarCnts(:,:,iorg:iend) = tVarCnts(:,:,iref:)
+       VarGain(iorg:iend) = tVargain(iref:)
+
+       CALL OutputL1B_DiagsT (L1BFileInfo%DiagTid, OrbNo=diagno, &
+            dLlo=dLlo, yTsys=yTsys)
+       diagno = diagno + 1
+
+       DEALLOCATE (tCnts,    stat=status)
+       DEALLOCATE (tVarCnts, stat=status)
+       DEALLOCATE (tVargain, stat=status)
+    ENDDO
+
+    CALL THzBound (0, iend, 0, fillnvbounds=.TRUE.)  ! Bounds for entire dataset
+
+    if ( any(isNaN(Cnts)) ) print *, 'NaNs in Cnts at end of THzCalDay'
+  END SUBROUTINE THzCalDay
+
+!=============================================================================
+  SUBROUTINE CalibrateTHz
+!=============================================================================
+
+    USE MLSL1Common, ONLY: L1BFileInfo
+    USE MLSL1Config, ONLY: L1Config
+    USE OutputL1B, ONLY: OutputL1B_DiagsT
+
+    INTEGER :: nbad
+    LOGICAL :: ColdCal
+
+PRINT *, 'Start calibrating...'
+
+    ColdCal = L1Config%Calib%THzColdCal
+
+    CALL BuildCalVectors
+
+    CALL THzCalDay
+
+    CALL THzCal (ColdCal=ColdCal)
+
+    CALL THzStat
+
+    CALL THzReselect ("C", nbad)        ! Only "C"old cals
+    print *, 'nbad ', nbad
+
+    IF (nbad > 0) THEN
+
+       CALL THzCal (ColdCal=ColdCal)
+
+       CALL THzReselect ("HC", nbad)    ! Both "H"ot and "C"old cals
+
+    ENDIF
+
+    CALL RestoreCnts
+
+    CALL THzCalDay
+
+    CALL THzCal (ColdCal=ColdCal)
+
+    CALL THzStat
+
+    CALL THzReselect ("L", nbad)        ! Only "L"imb views
+
+    CALL OutputL1B_DiagsT (L1BFileInfo%DiagTid, OrbNo=1, Chisq=Chisq)
+
+PRINT *, 'End calibrating...'
+
+  END SUBROUTINE CalibrateTHz
+
+!=============================================================================
+  LOGICAL FUNCTION not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  CHARACTER (len=*), PARAMETER :: IdParm = &
+       "$Id: THzCalibration.f90,v 2.18 2015/01/21 19:32:51 pwagner Exp $"
+  CHARACTER (len=LEN(idParm)), SAVE :: Id = idParm
+!---------------------------------------------------------------------------
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  END FUNCTION not_used_here
+END MODULE THzCalibration
+!=============================================================================
+
+! $Log: THzCalibration.f90,v $
+! Revision 2.18  2015/01/21 19:32:51  pwagner
+! Avoid array bound violations
+!
+! Revision 2.17  2015/01/14 00:29:44  pwagner
+! Warn of NaNs
+!
+! Revision 2.16  2013/02/06 19:05:40  quyen
+! fix hanging problem for misplaced deallocate
+!
+! Revision 2.15  2012/08/29 17:11:37  perun
+! Put in good case tests for Bands 15 and 20.
+!
+! Revision 2.14  2009/09/03 19:07:33  perun
+! Use correct number of MAFs in THzBound routine
+!
+! Revision 2.13  2009/08/21 18:59:13  perun
+! Set calibration flag to false when no cal data is available.
+!
+! Revision 2.12  2006/08/22 18:39:40  perun
+! Initialize tt array to 0.0
+!
+! Revision 2.11  2006/04/05 18:08:40  perun
+! Add SAVE for NAG compiler and remove unused variables
+!
+! Revision 2.10  2006/03/24 15:19:57  perun
+! Rewrote most of this module to do "C"old calibrations for entire day instead of per orbit
+!
+! Revision 2.9  2005/12/06 19:30:19  perun
+! Removed BrightObjest_T and added BO_stat to MAFdata_T
+!
+! Revision 2.8  2005/06/23 18:41:36  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.7  2004/11/10 15:38:36  perun
+! Add first_fit flag per HMP
+!
+! Revision 2.6  2004/08/12 13:51:51  perun
+! Version 1.44 commit
+!
+! Revision 2.5  2004/05/14 15:59:11  perun
+! Version 1.43 commit
+!
+! Revision 2.4  2004/01/13 17:15:45  perun
+! Protect from arithmetic exception.
+!
+! Revision 2.3  2004/01/09 17:46:23  perun
+! Version 1.4 commit
+!
+! Revision 2.2  2003/02/05 21:31:55  perun
+! Calculate variance and chi square
+!
+! Revision 2.1  2003/01/31 18:13:34  perun
+! Version 1.1 commit
+!
+!
+@
+
+
+2.18
+log
+@Avoid array bound violations
+@
+text
+@d394 1
+a394 1
+    USE SDPToolkit, ONLY: Pi
+d1174 1
+a1174 1
+       "$Id: THzCalibration.f90,v 2.17 2015/01/14 00:29:44 pwagner Exp $"
+d1183 3
+@
+
+
+2.17
+log
+@Warn of NaNs
+@
+text
+@d434 1
+d544 2
+a545 1
+          amp(nChan,nBank) = SQRT (tv(nChan,nBank,2) * tv(nChan,nBank,2) + &
+d1174 1
+a1174 1
+       "$Id: THzCalibration.f90,v 2.16 2013/02/06 19:05:40 quyen Exp $"
+d1183 3
+@
+
+
+2.16
+log
+@fix hanging problem for misplaced deallocate
+@
+text
+@d21 4
+d124 4
+d184 5
+d195 4
+d226 2
+d234 4
+a237 2
+       IF (ANY (CurMAFdata%SciMIF(0:last_MIF)%BandSwitch(5) /= Switch5)) &
+            CalBuf%BankGood(1) = .FALSE.  ! Filter Bank 15 not all good
+d244 1
+d253 4
+d270 5
+d277 1
+d292 2
+d303 1
+d315 1
+d422 3
+d454 3
+a456 1
+
+d482 3
+d531 1
+d535 2
+d540 1
+d560 1
+d575 2
+d586 1
+d612 1
+d641 3
+d880 1
+d939 1
+d1045 1
+d1115 1
+d1142 1
+d1172 1
+a1172 1
+       "$Id: THzCalibration.f90,v 2.15 2012/08/29 17:11:37 perun Exp $"
+d1181 3
+@
+
+
+2.15
+log
+@Put in good case tests for Bands 15 and 20.
+@
+text
+@d388 1
+a388 1
+    DEALLOCATE (dbias, stat=status)
+d391 1
+a391 1
+    DEALLOCATE (val, stat=status)
+d397 1
+a397 1
+       DEALLOCATE (ang, stat=status)
+d399 1
+a399 1
+       DEALLOCATE (cv, stat=status)
+d401 1
+a401 1
+       DEALLOCATE (sv, stat=status)
+d416 1
+a416 1
+    DEALLOCATE (BiasBuf, stat=status)
+d419 1
+a419 1
+    DEALLOCATE (TempBuf, stat=status)
+d422 1
+a422 1
+    DEALLOCATE (cv_buf, stat=status)
+d425 1
+a425 1
+    DEALLOCATE (sv_buf, stat=status)
+d572 17
+d684 1
+a684 1
+          DEALLOCATE (yval, stat=status)
+d686 1
+a686 1
+          DEALLOCATE (tsq, stat=status)
+d688 1
+a688 1
+          DEALLOCATE (tval, stat=status)
+d756 4
+d803 1
+d1028 1
+a1028 1
+       DEALLOCATE (tCnts, stat=status)
+d1031 1
+a1031 1
+       DEALLOCATE (tVarCnts, stat=status)
+d1033 1
+a1033 1
+       DEALLOCATE (tVargain, stat=status)
+d1049 3
+d1111 1
+a1111 1
+       "$Id: THzCalibration.f90,v 2.14 2009/09/03 19:07:33 perun Exp $"
+d1120 3
+@
+
+
+2.14
+log
+@Use correct number of MAFs in THzBound routine
+@
+text
+@d214 1
+d220 1
+d1086 1
+a1086 1
+       "$Id: THzCalibration.f90,v 2.13 2009/08/21 18:59:13 perun Exp $"
+d1095 3
+@
+
+
+2.13
+log
+@Set calibration flag to false when no cal data is available.
+@
+text
+@d288 1
+a288 1
+    INTEGER :: i, j, nBounds, nMAFs, status
+a290 2
+    nMAFs = (iend-ibgn+1)/148
+
+d333 1
+a333 1
+    ALLOCATE (nvBounds(nMAFs))
+d1084 1
+a1084 1
+       "$Id: THzCalibration.f90,v 2.12 2006/08/22 18:39:40 perun Exp $"
+d1093 3
+@
+
+
+2.12
+log
+@Initialize tt array to 0.0
+@
+text
+@d27 1
+a27 1
+       VarCnts, SpaceTemp, nvBounds, ColdCnts, HotCnts
+d79 1
+d878 4
+a881 1
+    IF (ntot == 0) RETURN
+d1086 1
+a1086 1
+       "$Id: THzCalibration.f90,v 2.11 2006/04/05 18:08:40 perun Exp $"
+d1095 3
+@
+
+
+2.11
+log
+@Add SAVE for NAG compiler and remove unused variables
+@
+text
+@d429 1
+d1082 1
+a1082 1
+       "$Id: THzCalibration.f90,v 2.10 2006/03/24 15:19:57 perun Exp $"
+d1091 3
+@
+
+
+2.10
+log
+@Rewrote most of this module to do "C"old calibrations for entire day instead of per orbit
+@
+text
+@d61 1
+a61 1
+  TYPE (CalBuf_T), TARGET :: CalBuf
+d110 1
+a110 1
+    USE THzUtils, ONLY: Bias_err
+d114 2
+a115 2
+    INTEGER :: i, j, last_MIF, mindx, MIF0, MIFno, ibgn, iend, iMAF, ibound
+    INTEGER :: nBank, nChan, numMIFs, nMIFsM1, nBounds, status, Switch5
+a283 2
+    USE MLSL1Config, ONLY: L1Config
+
+a790 1
+    REAL :: cmatch(THzChans,THzNum)
+d1081 1
+a1081 1
+       "$Id: THzCalibration.f90,v 2.9 2005/12/06 19:30:19 perun Exp $"
+d1090 3
+@
+
+
+2.9
+log
+@Removed BrightObjest_T and added BO_stat to MAFdata_T
+@
+text
+@d1 1
+a1 1
+! Copyright 2005, by the California Institute of Technology. ALL
+d16 1
+a16 1
+  USE MLSCommon, ONLY: r8
+a23 2
+  SAVE
+
+d27 1
+a27 2
+       VarCnts, SpaceTemp
+  PUBLIC :: Chisq, dLlo, nvBounds, yTsys
+d49 2
+a50 1
+     INTEGER :: BO_stat(MIFsTHz) = 0   ! Bright Objects status (GHz FOV)
+a56 1
+     INTEGER :: CalNo = 0
+d65 1
+a65 2
+  INTEGER, DIMENSION(:), ALLOCATABLE :: CalMIF
+  INTEGER, DIMENSION(:), ALLOCATABLE :: MIFx
+d67 1
+d69 1
+d71 1
+a71 2
+  REAL(r8), DIMENSION(:), ALLOCATABLE :: Bias
+  REAL(r8), DIMENSION(:), ALLOCATABLE :: CalTemp
+d73 2
+d76 3
+a78 5
+  REAL :: SpaceTemp
+  REAL(r8) :: VarGain(THzChans,THzNum)
+  REAL(r8) :: Chisq(THzChans,THzNum)
+  REAL(r8) :: dLlo(THzChans,THzNum)
+  REAL(r8) :: yTsys(THzChans,THzNum)
+d81 23
+d115 1
+a115 2
+    INTEGER :: nBank, numMIFs, nMIFsM1, nBounds, nv, status, Switch5
+    REAL :: MaxBias
+a116 1
+    LOGICAL, DIMENSION(:), ALLOCATABLE, SAVE :: Bounds
+a122 4
+    Cal_end = MIN ((Cal_start+Cal_size-1), CalBuf%MAFs)
+    IF ((CalBuf%MAFs - Cal_end) < Cal_size) Cal_end = CalBuf%MAFs
+    CalBuf%CalNo = CalBuf%CalNo + 1
+
+d125 2
+d136 1
+a136 1
+    ALLOCATE (CalMIF(0:numMIFs-1))
+d143 2
+d149 3
+a162 7
+    DEALLOCATE (Bounds, stat=status)
+    ALLOCATE (Bounds(0:nMIFsM1))
+
+    DEALLOCATE (nvBounds, stat=status)
+    ALLOCATE (nvBounds(Cal_end-Cal_start+1))
+    nvBounds = 0
+
+d169 2
+d173 1
+d183 1
+d189 1
+d198 1
+d207 1
+d218 6
+a223 2
+       IF (ANY (CurMAFdata%SciMIF(0:last_MIF)%BandSwitch(4) /= 20)) &
+            CalBuf%BankGood(6) = .FALSE. ! Filter Bank 12 (Band 20) not all good
+d231 14
+a244 4
+    DO i = (numMIFs - 2), 1, -1
+       IF (Bias(i) == Bias_err .AND. Bias(i-1) == Bias_err) THEN
+          Bias(i+1) = Bias_err
+          CalFlag(i+1) = 0
+d248 49
+d300 1
+a300 1
+    WHERE (Bias >= MaxBias) ! Re-optimizing
+d303 1
+a303 1
+    WHERE (CalMIF < 0)      ! Missing MIFs
+d306 2
+a307 2
+    BiasGood = .NOT. Bounds      ! Good Bias values
+    Bounds(nMIFsM1) = .TRUE.   ! last always a bounds
+d312 1
+a312 1
+    DO i = 0, nMIFsM1
+d314 1
+a314 1
+          BoundsX(j) = i
+d319 14
+d335 3
+d339 1
+a339 1
+    ibgn = 0
+d341 3
+a343 3
+       iend = BoundsX(iBound)
+       nv = iend - ibgn + 1
+       DO i = ibgn, iend
+d349 1
+a349 1
+       ibgn = iend + 1
+d352 1
+a352 28
+! Determine which filter bank counts are good to cal:
+
+    DO nBank = 1, THzNum
+       IF (ALL (Cnts(:,nBank,:) == 0.0)) THEN
+          CalBuf%BankGood(nBank) = .FALSE.
+       ENDIF
+    ENDDO
+
+! Set signals based on end cal index
+
+    CALL UpdateRadSignals (CalBuf%MAFdata(Cal_end)%BandSwitch)
+
+! Write to Log file:
+
+    WRITE (L1BFileInfo%LogId, *) ''
+    WRITE (msg, &
+         '("Cal Number: ", i0, ", nBounds: ", i0, ", nBiasGood: ", i0)') &
+         CalBuf%CalNo, nBounds, COUNT (BiasGood)
+    WRITE (L1BFileInfo%LogId, *) TRIM (msg)
+
+! Save current cal start & end:
+
+    CalBuf%Cal_start = Cal_start
+    CalBuf%Cal_end = Cal_end
+
+    Cal_start = Cal_end + 1
+
+  END SUBROUTINE BuildCalVectors
+d355 2
+a356 1
+  SUBROUTINE THzDel
+d359 14
+a372 2
+    INTEGER :: iBound, ibgn, iend, nBounds, nsize, ntotx, status
+    INTEGER :: nChan, nBank
+d374 3
+a376 1
+    REAL(r8), DIMENSION(:), POINTER :: biasx, tempx
+d378 32
+a409 4
+    REAL(r8), DIMENSION(:), TARGET, ALLOCATABLE, SAVE :: BiasBuf, TempBuf
+    REAL(r8) :: bb, det, tb, tt, yb(THzChans,THzNum), yt(THzChans,THzNum)
+
+    REAL(r8) :: dCal(THzChans,THzNum)
+d412 1
+a412 1
+    IF (ntot == 0) RETURN
+d418 1
+a418 2
+    nsize = SIZE (Bias)
+    ALLOCATE (BiasBuf(0:nsize-1))
+d421 1
+a421 1
+    ALLOCATE (TempBuf(0:nsize-1))
+d423 6
+d431 4
+a434 5
+    bb = ntot / (819.2 * 819.2)
+    tb = 0.0
+    tt = 0.25
+    yb = 0.0
+    yt = 0.0
+d447 3
+a449 3
+          bb = bb + SUM (biasx * biasx)
+          tb = tb + SUM (tempx * biasx)
+          tt = tt + SUM (tempx * tempx)
+d451 22
+a472 5
+             DO nChan = 1, THzChans
+                yb(nChan,nBank) = yb(nChan,nBank) + &
+                     DOT_PRODUCT (Cnts(nChan,nBank,ibgn:iend), biasx)
+                yt(nChan,nBank) = yt(nChan,nBank) + &
+                     DOT_PRODUCT (Cnts(nChan,nBank,ibgn:iend), tempx)
+d474 1
+a474 1
+          ENDDO
+d478 34
+d513 9
+a521 7
+    det = tt * bb - tb * tb
+    tt = tt / det
+    tb = tb / det
+    bb = bb / det
+    VarGain = bb
+    dCal = yt * bb - yb * tb  ! counts per K for T - S
+    dLlo = yb * tt - yt * tb  ! counts per V for LLO bias
+d524 1
+a524 1
+       Bias = Bias - AvgBias  ! Adjust bias (OK since it's not needed later)
+d531 1
+a531 1
+             VarCnts(nChan,nBank,:) = Bias * Bias * tt + 1.0
+d533 31
+a563 3
+          Cnts(nChan,nBank,:) = Cnts(nChan,nBank,:) / &
+               MAX (ABS (dCal(nChan,nBank)), 0.01d0)
+          yTsys(nChan,nBank) = SUM (Cnts(nChan,nBank,:)* CalFlag) / ntot - &
+d568 4
+d575 1
+a575 1
+  SUBROUTINE THzCal
+d578 2
+d595 1
+a595 1
+    LOGICAL :: first_fit, last_fit
+d599 6
+d607 5
+d641 14
+d664 2
+a665 1
+       IF (ntotx > 1 .AND. .NOT. first_fit) THEN
+d718 5
+a722 7
+             IF (ABS (mfit3) > 0.0) THEN
+                det = mfit2 * mfit4 - mfit3 * mfit3
+                DO nBank = 1, THzNum
+                   DO nChan = 1, THzChans
+                      yfit2(nChan,nBank) = &
+                           DOT_PRODUCT (yval(nChan,nBank,:), tsq)
+                   ENDDO
+d724 2
+a728 7
+                bv = mfit2 * yfit1 + mfit3 * yfit2
+                cv = mfit3 * yfit1 + mfit4 * yfit2
+                av = av - cv * tsqavg
+                tsqavg = -2.0 * tsqavg
+                mfit1 = tsqavg * mfit3
+                mfit2 = mfit2 + tsqavg * mfit4
+                mfit3 = 2.0 * mfit3
+d730 7
+a738 1
+
+d765 1
+a765 1
+                VarCnts(:,:,i) = VarCnts(:,:,i) + val + VarGain * &
+d767 5
+d785 79
+d868 1
+a868 1
+    REAL(r8) :: aerr(THzChans,THzNum)
+d876 1
+a909 1
+       aerr(:,nBank) = aerr(:,nBank) * filter
+d911 1
+a911 1
+          Chisq(:,nBank) = aerr (:,nBank) / ytsys(:,nBank)
+d916 30
+d949 84
+a1032 1
+  SUBROUTINE CalibrateTHz (more_data)
+d1035 8
+a1042 1
+    LOGICAL :: more_data
+d1044 1
+a1044 1
+PRINT *, 'start calibrating...'
+d1048 1
+a1048 1
+    CALL THzDel
+d1050 1
+a1050 1
+    CALL THzCal
+d1054 1
+a1054 1
+    more_data = Cal_start <= CalBuf%MAFs
+d1056 21
+a1076 1
+PRINT *, 'end calibrating...'
+d1084 1
+a1084 1
+       "$Id: THzCalibration.f90,v 2.8 2005/06/23 18:41:36 pwagner Exp $"
+d1093 3
+@
+
+
+2.8
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d17 1
+a17 2
+  USE MLSL1Common, ONLY: MaxMIFs, THzChans, THzNum, LO1, L1BFileInfo, &
+       BrightObjects_T
+d20 1
+d33 3
+a35 3
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: $"
+  private :: not_used_here 
+d52 1
+a52 1
+     TYPE (BrightObjects_T) :: LimbView ! Bright Objects in FOV flags
+d389 1
+a389 1
+    print *, 'THzCal'
+d624 1
+a624 1
+  logical function not_used_here()
+d626 3
+a628 3
+  character (len=*), parameter :: IdParm = &
+       "$Id: $"
+  character (len=len(idParm)), save :: Id = idParm
+d631 1
+a631 1
+  end function not_used_here
+d636 3
+@
+
+
+2.7
+log
+@Add first_fit flag per HMP
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d32 5
+a36 5
+  !------------------------------- RCS Ident Info ------------------------------
+  CHARACTER(LEN=130) :: id = &
+       "$Id: THzCalibration.f90,v 2.6 2004/08/12 13:51:51 perun Exp $"
+  CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile: THzCalibration.f90,v $"
+  !-----------------------------------------------------------------------------
+d624 8
+d636 3
+@
+
+
+2.6
+log
+@Version 1.44 commit
+@
+text
+@d9 2
+a10 1
+  USE MLSL1Common, ONLY: MaxMIFs, THzChans, THzNum, LO1, L1BFileInfo
+d26 1
+a26 1
+       "$Id: THzCalibration.f90,v 2.5 2004/05/14 15:59:11 perun Exp $"
+d44 1
+d379 1
+a379 1
+    LOGICAL :: last_fit
+d397 1
+d423 1
+a423 1
+       IF (ntotx > 1) THEN
+d499 1
+d620 3
+@
+
+
+2.5
+log
+@Version 1.43 commit
+@
+text
+@d25 1
+a25 1
+       "$Id: THzCalibration.f90,v 2.4 2004/01/13 17:15:45 perun Exp $"
+d146 1
+a146 1
+    VarCnts = 1.0
+d515 8
+a522 5
+             t = i - tmid
+             Cnts(:,:,i) = Cnts(:,:,i) - av - t * (bv + cv * t)
+             val = mfit0 + t * (mfit1 + t * (mfit2 + t * (mfit3 + t * mfit4)))
+             VarCnts(:,:,i) = VarCnts(:,:,i) + val + VarGain * Cnts(:,:,i) * &
+                  Cnts(:,:,i)
+d567 4
+a570 2
+          VarCnts(nChan,nBank,:) = SQRT (yavg(nChan,nBank) * &
+               VarCnts(nChan,nBank,:))
+d616 3
+@
+
+
+2.4
+log
+@Protect from arithmetic exception.
+@
+text
+@d9 1
+a9 1
+  USE MLSL1Common, ONLY: MaxMIFs, THzChans, THzNum, LO1
+d21 1
+d25 1
+a25 1
+       "$Id: THzCalibration.f90,v 2.3 2004/01/09 17:46:23 perun Exp $"
+d49 1
+d62 1
+a64 1
+  REAL(r8), DIMENSION(:,:), ALLOCATABLE :: VarGain
+d68 3
+d72 1
+d84 2
+a85 2
+    INTEGER :: i, j, last_MIF, mindx, MIF0, MIFno
+    INTEGER :: nBank, numMIFs, nMIFsM1, nBounds, status, Switch5
+d97 1
+d135 4
+a144 2
+    DEALLOCATE (VarGain, stat=status)
+    ALLOCATE (VarGain(THzChans,THzNum))
+d225 16
+d253 8
+d282 1
+a282 1
+    REAL(r8) :: dCal(THzChans,THzNum), dLlo(THzChans,THzNum)
+d536 1
+a536 1
+    REAL(r8) :: aerr(THzChans,THzNum), Chisq(THzChans,THzNum)
+d611 3
+@
+
+
+2.3
+log
+@Version 1.4 commit
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+d24 1
+a24 1
+       "$Id: THzCalibration.f90,v 2.2 2003/02/05 21:31:55 perun Exp $"
+d440 7
+a446 5
+             det = mfit2 * mfit4 - mfit3 * mfit3
+             DO nBank = 1, THzNum
+                DO nChan = 1, THzChans
+                   yfit2(nChan,nBank) = &
+                        DOT_PRODUCT (yval(nChan,nBank,:), tsq)
+d448 11
+a458 11
+             ENDDO
+             mfit2 = mfit2 /det
+             mfit3 = mfit3 /det
+             mfit4 = mfit4 /det
+             bv = mfit2 * yfit1 + mfit3 * yfit2
+             cv = mfit3 * yfit1 + mfit4 * yfit2
+             av = av - cv * tsqavg
+             tsqavg = -2.0 * tsqavg
+             mfit1 = tsqavg * mfit3
+             mfit2 = mfit2 + tsqavg * mfit4
+             mfit3 = 2.0 * mfit3
+d578 3
+@
+
+
+2.2
+log
+@Calculate variance and chi square
+@
+text
+@d9 1
+a9 1
+  USE MLSL1Common, ONLY: MaxMIFs, THzChans, THzNum
+d24 1
+a24 1
+       "$Id: THzCalibration.f90,v 2.1 2003/01/31 18:13:34 perun Exp $"
+d40 2
+a41 1
+     REAL :: CalTgtTemp   ! Average Calibration Target Temperature (C)
+d43 1
+a43 1
+     INTEGER :: BandSwitch(5)   ! band switch positions
+d74 1
+a74 1
+    USE THzUtils, ONLY: Bias_err, MaxBias
+d76 1
+a76 1
+    USE MLSL1Rad, ONLY: UpdateRadSignals
+d79 2
+a80 1
+    INTEGER :: nBank, numMIFs, nBounds, status, Switch5
+d84 1
+d87 1
+d98 1
+d106 2
+a107 2
+    ALLOCATE (MIFx(0:numMIFs-1))
+    DO i = 0, (numMIFs - 1)
+d112 1
+a112 1
+    ALLOCATE (CalFlag(0:numMIFs-1))
+d116 1
+a116 1
+    ALLOCATE (Bias(0:numMIFs-1))
+d119 1
+a119 1
+    ALLOCATE (BiasGood(0:numMIFs-1))
+d122 1
+a122 1
+    ALLOCATE (CalTemp(0:numMIFs-1))
+d126 1
+a126 1
+    ALLOCATE (Bounds(0:numMIFs-1))
+d129 1
+a129 1
+    ALLOCATE (Cnts(THzChans,THzNum,0:numMIFs-1))
+d131 1
+a131 1
+    ALLOCATE (dCnts(THzChans,THzNum,0:numMIFs-1))
+d133 1
+a133 1
+    ALLOCATE (VarCnts(THzChans,THzNum,0:numMIFs-1))
+d146 1
+d162 5
+a166 1
+             CalTemp(mindx) = -25  !CurMAFdata%CalTgtTemp - SpaceTemp
+d169 1
+a169 1
+      ENDDO
+d173 2
+a174 2
+      IF (ANY (CurMAFdata%SciMIF(0:last_MIF)%BandSwitch(5) /= Switch5)) &
+           CalBuf%BankGood(1) = .FALSE.  ! Filter Bank 15 not all good
+d178 4
+a181 2
+      IF (ANY (CurMAFdata%SciMIF(0:last_MIF)%BandSwitch(4) /= 20)) &
+           CalBuf%BankGood(6) = .FALSE.  ! Filter Bank 12 (Band 20) not all good
+a182 1
+      MIF0 = MIF0 + last_MIF + 1
+d204 1
+a204 1
+    Bounds(numMIFs-1) = .TRUE.   ! last always a bounds
+d209 1
+a209 1
+    DO i = 0, (numMIFs - 1)
+d317 1
+a317 1
+               MAX (dCal(nChan,nBank), 0.01d0)
+a456 1
+             last_fit = .TRUE.
+d458 1
+d518 1
+a518 1
+    DO i = 1, SIZE (CalFlag)
+d576 3
+@
+
+
+2.1
+log
+@Version 1.1 commit
+@
+text
+@d20 1
+a20 1
+       SpaceTemp
+d24 2
+a25 2
+       "$Id: $"
+  CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile: $"
+d61 2
+a62 1
+  REAL(r8), DIMENSION(:,:,:), ALLOCATABLE :: Cnts, dCnts
+d65 1
+d127 4
+d132 1
+a238 1
+    REAL(r8) :: yTsys(THzChans,THzNum)
+d291 1
+d303 1
+d324 1
+a324 1
+    REAL(r8) :: t, tmid
+d328 1
+a328 1
+    REAL(r8) :: det, mfit2, mfit3, mfit4, tsqavg
+d401 1
+d405 1
+a405 1
+                av(nChan,nBank) = SUM (yval(nChan,nBank,:)) / ntotx
+d410 1
+a410 1
+
+d413 1
+d418 1
+a418 1
+                   IF (nordr == 1) bv(nChan,nBank) = yfit1(nChan,nBank) / mfit2
+d442 4
+d471 3
+d486 53
+d552 2
+d564 4
+a567 1
+! $Log: $
+@
+

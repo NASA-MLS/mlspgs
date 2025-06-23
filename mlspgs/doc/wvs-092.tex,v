@@ -1,0 +1,164 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.12
+	cfm-single-freq-0-1:1.1.0.10
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.8
+	mus-emls-1-70:1.1.0.6
+	rel-1-0-englocks-work:1.1.0.4
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.2
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	M4-00:1.1
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2010.04.09.02.30.48;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9in
+
+\newcommand{\docname}{\bf wvs-092}
+\newcommand{\docdate}{11 February 2010}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Nathaniel, Paul, Igor\\
+Subject: \>Hessian representation and multiplication\\
+From: \>Van Snyder\\
+%Reference: \>wvs-063
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-10pt}
+
+Let $I^k$ be the radiance in channel $k$ and $\{f\}$ be the set of state
+vector quantities at various positions in the atmosphere.  That is, in
+$f^i$, a value of $i$ distinguishes both a position in the atmosphere and
+a quantity.
+
+The second-order Taylor-series model, in tensor notation and using the
+Einstein summation convention (summation over identical indices of
+different factors in the same term, provided one is ``up'' and the other
+is ``down''), is
+%
+\begin{equation}
+I^k = \hat I^k + J_i^k ( f^i - \hat f^i ) +
+              \frac12 H_{ij}^k  ( f^i - \hat f^i )  ( f^j - \hat f^j )
+\end{equation}
+
+where the Jacobian matrix, in tensor notation, is
+%
+\begin{equation}
+J_i^k = \frac{\partial I^k}{\partial f^i}
+\end{equation}
+
+and the Hessian matrix, in tensor notation, is
+%
+\begin{equation}
+H_{ij}^k = \frac{\partial^2 I^k}{\partial f^i \partial f^j}
+\end{equation}
+
+In the final multiplication
+%
+\begin{equation}\label{four}
+\frac12 H_{ij}^k  ( f^i - \hat f^i )  ( f^j - \hat f^j )
+\end{equation}
+
+we want a result indexed by $k$, and we almost surely have at least one
+nonzero value, somewhere in $H_{ij}^k$, for every value of $k$, even
+though for a given value of $k$ the set of tuples $(i,j)$ for which the
+Hessian is nonzero is very small compared to the set of all tuples
+$(i,j)$.
+
+The representation of $H_{ij}^k$ is an array of tuples
+$(H_{ij}^k,k,i,j)$.  To improve cache locality, which may be irrelevant
+if vectors are sort, the tuples should be sorted with $k$ as the major
+sort key.  To form the product in Equation (\ref{four}) the tuples are
+examined and each $(k,i,j)$ term is added to the $k_\text{th}$ element of
+the product.
+
+Suppose $H$ is represented by a variable {\tt H} of type {\tt
+Hessian\_0}, having at least an array component named {\tt tuple}, which
+is allocated with an extent equal to the number of nonzeroes in $H$.  The
+type of {\tt tuple} has components named {\tt H}, {\tt k}, {\tt i} and
+{\tt j}.  Then to form the product in an array {\tt P}, given a vector
+{\tt F} that represents $f$, the following procedure can be applied:
+
+\begin{alltt}
+  P = 0.0
+  do n = 1, size(H\%tuple)
+    k = H\%tuple(n)\%k
+    P(k) = P(k) + 0.5 * H\%tuple(n)\%H * F(H\%tuple(n)\%i) * F(H\%tuple(n)\%j)
+  end do
+\end{alltt}
+
+\label{lastpage}
+\end{document}
+
+% $Id: wvs-089.tex,v 1.1 2010/01/26 02:08:29 vsnyder Exp $
+
+% $Log: $
+%
+@

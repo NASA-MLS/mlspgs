@@ -1,0 +1,731 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.10
+	cfm-single-freq-0-1:1.2.0.8
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.6
+	mus-emls-1-70:1.2.0.4
+	rel-1-0-englocks-work:1.2.0.2
+	VUMLS1-00:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2017.03.09.01.34.16;	author mjschwar;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2017.02.24.23.49.19;	author mjschwar;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@some uars updates
+@
+text
+@!divert(-1)
+;; $Id: fillapriori-umls.l2cf,v 1.1 2017/02/24 23:49:19 mjschwar Exp $
+
+;; This l2cf fragment is for setting up a priori vectors with
+;; appropriate quantities
+
+!divert!dnl
+;; ----------------------------------------------- Setup vectors
+
+;; First define the vectors in question
+begin Fill
+  apriori: Vector, template=stateTemplate
+  aprioriPrecision: Vector, template=stateTemplate
+  hReg: Vector, template=stateTemplate
+  vReg: Vector, template=stateTemplate
+  ;; The low/high bound options here make sure it defaults to
+  ;; +/- huge, instead of the usual default of zero
+  lowBound: Vector, template=stateTemplate, /lowBound
+  highBound: Vector, template=stateTemplate, /highBound
+
+end Fill
+
+;; ----------------------------------- Fill species with climatology
+
+begin Fill
+  
+  ;; Do this unless we lack climatological data.
+
+  !ifdef(flagIgnoreClimatology,{},{
+  ;; This macro fills one apriori quantity with climatlogical data
+  !define(fillWithClimatology,{Fill, quantity=apriori.$1, method=gridded, $
+    sourceGrid=grid$1!nl})
+
+  ;; Now invoke it for all relevant species
+  !forall(fillWithClimatology,!allClimatologicalSpecies)
+  
+!ifdef(flagOverwriterefGPHWithWACCM,{
+  ;; For the UARS instrument, we require non-zero apriori refGPH
+  ;; which will be used later, incidentally
+  !fillWithClimatology(refGPH)
+  Fill, quantity=apriori.GPH, method=gridded, $
+    sourceGrid=gridGPHWACCM
+  Fill, quantity=apriori.GPH_HR, method=gridded, $
+    sourceGrid=gridGPHWACCM
+})
+  !ifdef(flagSetTopOfHCl,{
+
+  Dump, text='Before setting top of HCl to 3ppbv'
+  Dump, details=2, quantity=apriori.hcl
+  ;; Set the top of HCl to 3ppbv
+  ;; (We will be able to dispense with bookending Subsets soon)
+  Subset, quantity=apriori.hcl, height=[2.4mb:0.00001mb], mask=fill
+  Fill, quantity=apriori.hcl, method=explicit, explicitValues=3ppbv, /spread
+  Subset, quantity=apriori.hcl, mask=fill, /reset
+
+  Dump, text='After setting top of HCl to 3ppbv'
+  Dump, details=2, quantity=apriori.hcl
+})
+  ;; Possibly overwrite temperature with the merged product
+  !ifdef(flagIgnoreMeteorology,{},{Fill, quantity=apriori.temperature, $
+    method=gridded, sourceGrid=mergedTemperature})
+
+  ;; Now for H2O make the bottom value extra large
+  Subset, quantity=apriori.h2o, height=[1000mb:1000mb], mask=fill
+  Fill, quantity=apriori.h2o, method=explicit, explicitValues=4000ppmv, /spread
+  Subset, quantity=apriori.h2o, mask=fill, /reset
+
+  ;; Get RHI from H2O
+  Fill, quantity=apriori.rhi, h2oQuantity=apriori.h2o, $
+    temperatureQuantity=apriori.temperature, method=RHIFromH2O
+
+  Fill, quantity=apriori.rhivmrsngl,method=profile, profileValues = $
+      [ 100mb : 10.0, 68mb:0.0001]
+
+  Fill, quantity=apriori.rhivmr,sourcequantity=apriori.rhi,method = vector, $
+        /interpolate,/ignoreTemplate
+
+; These radiometers use nu^2 extinctions instead of flat extinctions
+!define(v2ExtinctionRadiometers,{R3})!dnl
+; r2 extinction
+   Fill, quantity=apriori.totalextinctionr2,method=profile, profileValues = $
+      [ 1000mb: 0.01, 681mb:0.01, 464mb : 0.007, 316mb : 0.005, $
+      215mb : 0.001, 147mb : 0.0004, 100mb : 0.0002, 68mb:8.8e-5, $
+      46mb: 4.7e-5, 32mb:2.7e-5,22mb:1.2e-5,15mb:5.1e-6, $
+      10mb:5.8e-7,0.00001mb:1.0e-7]
+; r3 extinction
+;   Fill, quantity=apriori.totalextinctionr3,method=profile, profileValues = $
+;      [ 1000mb: 0.01, 681mb:0.01, 464mb : 0.008, 316mb : 0.004, $
+;      215mb : 0.001, 147mb : 0.0005, 100mb : 0.0003, 68mb:0.0002, $
+;      46mb: 0.0001, 32mb:7.0e-5,22mb:4.0e-5,15mb:9.3e-6, $
+;      10mb:2.7e-6,0.00001mb:1.0e-7]
+; these values are better suited for mif extinction
+   Fill, quantity=apriori.totalextinctionr3,method=profile, profileValues = $
+      [ 1000mb: 0.01, 681mb:0.01, 464mb : 0.008, 316mb : 0.004, $
+      215mb : 0.001, 147mb : 0.0005, 100mb : 0.0003, 68mb:0.0002, $
+      46mb: 0.0001, 32mb:7.0e-5,22mb:4.0e-5,15mb:9.3e-6, $
+      10mb:2.7e-6,1mb:1.0e-8,0.1mb:1.5e-10,0.01mb:2.0e-12,0.001mb:3.3e-14, $
+      0.0001mb:3.0e-16,0.00001mb:3.0e-18]
+
+  ;; --------------------------------------------- tpPressure
+  !ifdef(tpPressure,{
+    Fill, quantity=apriori.tpPressure, method=explicit, $
+      explicitValues=!tpPressure, /spread
+  },{
+    Fill, quantity=apriori.tpPressure, method=wmoTropopause, $
+      temperatureQuantity=apriori.temperature, refGPHQuantity=apriori.refGPH, $
+      internalVgrid=vGridWMO
+  })
+  Fill, quantity=apriori.oneHundredHPa, method=explicit, explicitValues=100hPa, /spread
+  }) ;; End if flagGotClimatology
+
+  ;; --------------------------------------------- hiRes Fills
+
+  !ifdef(flagGotClimatology,{
+  !define(fillWithClimatologyHR,{Fill, quantity=apriori.$1_HR, method=gridded, $
+    sourceGrid=grid$1!nl})
+  !define(interpolateToHiRes,{Fill, quantity=$1, sourceQuantity=!TrimLast3($1),!dnl
+     method=vector, /interpolate!nl})
+
+  ;; Could write some fancy macros here to get the list as the
+  ;; intersection of allClimatologicalSpecies and allHiResMolecules,
+  ;; However, life is too short!
+  !fillWithClimatologyHR(Temperature)
+  !fillWithClimatologyHR(H2O)
+  !fillWithClimatologyHR(O3)
+  !fillWithClimatologyHR(CO)
+  ;; Get RHI_HR from RHI.  Not sure if this should really be from
+  ;; H2O_HR and temperature_HR
+  !interpolateToHiRes(apriori.RHI_HR)
+  }) ;; End if flagGotClimatology
+
+  ;; Possibly overwrite temperature with the merged product
+  !ifdef(flagIgnoreMeteorology,{},{Fill, quantity=apriori.temperature_hr,$
+    method=gridded, sourceGrid=mergedTemperature})
+end Fill
+
+;; ----------------------------------- Lesser state
+
+;; Fill the lesser stuff
+!include(filllesserstate-umls.l2cf)
+
+;; ----------------------------------- Tangent pressures
+
+begin Fill
+
+  !ifdef(flagGotClimatology,{
+  ;; Now fill some remaining stuff
+  ;; PEs read in an apriori reference GPH from climatology
+  !ifdef(flagPrecisionEstimates,{
+  ; PEs have read in an apriori reference GPH from climatology
+  },{
+!ifdef(flagUseWACCMrefGPHapriori, {
+Fill, quantity=apriori.refGPH,$
+    method=gridded, sourceGrid=gridGPHWACCM
+},{
+    Fill, quantity=apriori.refGPH, method=explicit, $
+      explicitvalues=16 km,/spread})
+  }) ;; End if precision estimates
+
+  ;; Compute non refracted phitans for apriori
+  Fill, quantity=apriori.phiTanGHz, method=refract, $
+    ptanQuantity=apriori.ptanGHz, $
+    h2oQuantity=apriori.h2o, $
+    temperatureQuantity=apriori.temperature, refract=false
+
+  ;; We'll probably have to skip hydorstatic Fills until
+  ;; they put apriori.tngtGeocAltGHz in the l1boa file
+  ;; or we cook up a different way to Fill it
+  !ifdef(flagSkipHydrostatic,{},{
+  ;; Get full GPH profile
+  Fill, quantity=apriori.gph, method=hydrostatic, $
+    temperatureQuantity=apriori.temperature, $
+    refGPHquantity=apriori.refGPH
+  Fill, quantity=apriori.gph_HR, method=hydrostatic, $
+    temperatureQuantity=apriori.temperature_HR, $
+    refGPHquantity=apriori.refGPH
+
+  ;; Now compute the tangent presssures for apriori
+  Fill, quantity=apriori.ptanGHz, method=hydrostatic, $
+    h2oQuantity=apriori.h2o, $
+    temperatureQuantity=apriori.temperature, $
+    refGPHQuantity=apriori.refGPH, $
+    geocAltitudeQuantity=apriori.tngtGeocAltGHz, $
+    orbitInclination=apriori.orbitInclination, $
+    phiTan=apriori.phiTanGHz, $
+    maxIterations=20, $
+    !ifdef(flagStrict1D,{phiWindow=0 profiles},{phiWindow=4 degrees})
+    })
+  }) ;; End if gotClimatology
+
+  ;; Fill the magnetic field.
+!ifdef(flagAutoReferenceHeight,{},{!dnl
+!ifdef(flagMagneticFieldOnHeightGrid,{!dnl
+  Fill, quantity=apriori.magneticField, method=magneticModel, $
+    scVelECR=apriori.scVelECR, geocAltitudeQuantity=apriori.tngtGeocAltGHz, $
+    /regular, referenceMIF=!referenceHeight },{!dnl
+  Fill, quantity=apriori.magneticField, method=magneticModel, $
+    GPHquantity=apriori.gph
+  Fill, quantity=apriori.fieldAzimuth, method=rotateField, $
+    fieldECR=apriori.magneticField, ecrToFOV=apriori.ecrToFOV
+  Fill, quantity=apriori.fieldElevation, method=rotateField, $
+    fieldECR=apriori.magneticField, ecrToFOV=apriori.ecrToFOV
+  Fill, quantity=apriori.fieldStrength, method=rotateField, $
+    fieldECR=apriori.magneticField, ecrToFOV=apriori.ecrToFOV
+  })})    
+  ;; Adjust tropospheric HCN per HCP message 2013 May 16
+  Fill, quantity=apriori.hcn, method=explicit, explicitValues=0.22 ppbv, $
+    height=[1000 mb : 100 mb], /spread
+  
+  ;; -------------------------------- Apriori precisions for species
+
+  Fill, quantity=aprioriPrecision.bro,  method=explicit, /spread, explicitValues= 1 ppbv
+  Fill, quantity=aprioriPrecision.ch3cn,method=explicit, /spread, explicitValues= 2 ppbv
+  ;; CH3CN was 500 pptv
+  Fill, quantity=aprioriPrecision.clo,  method=explicit, /spread, explicitValues= 3 ppbv
+;; CH3CL
+  Fill, quantity=aprioriPrecision.ch3cl,method=explicit, /spread, explicitValues= 500 pptv
+  Fill, quantity=aprioriPrecision.ch3oh,method=explicit, /spread, explicitValues= 1 ppbv
+  Fill, quantity=aprioriPrecision.ch3ch2oh,method=explicit, /spread, explicitValues= 1 ppbv
+  Fill, quantity=aprioriPrecision.ch3coch3,method=explicit, /spread, explicitValues= 500 pptv
+
+
+  Fill, quantity=aprioriPrecision.co,   method=profile, $
+    profileValues= [ 100mb : 0.5ppmv, 50mb : 0.1ppmv, 31mb : 0.12ppmv, $
+    10mb : 0.2ppmv, 3.1mb : 0.35ppmv, 1mb : 0.7ppmv, 0.31mb : 2ppmv, $
+    0.1mb : 5ppmv, 0.01mb : 10ppmv,  0.001mb : 20ppmv ]
+  Fill, quantity=aprioriPrecision.co_hr,   method=profile, $
+    profileValues= [ 100mb : 0.5ppmv, 50mb : 0.1ppmv, 31mb : 0.12ppmv, $
+    10mb : 0.2ppmv, 3.1mb : 0.35ppmv, 1mb : 0.7ppmv, 0.31mb : 2ppmv, $
+    0.1mb : 5ppmv, 0.01mb : 10ppmv,  0.001mb : 20ppmv ]
+  Fill, quantity=aprioriPrecision.h2o, method=profile, profileValues = $
+    [ 1000mb: 10000ppmv, 464mb : 10000ppmv, 316mb : 1500ppmv, $
+      215mb : 300ppmv, 147mb : 300ppmv, 100mb : 3.0ppmv ]
+  Fill, quantity=aprioriPrecision.hcl,  method=profile, $
+    profileValues= [ 147mb : 2ppbv, 100mb : 4ppbv ]
+  ;; 0.2 ppbv is too small for hcn
+  Fill, quantity=aprioriPrecision.hcn,  method=explicit, /spread, explicitValues= 1 ppbv
+  Fill, quantity=aprioriPrecision.hno3, method=profile, $
+    profileValues= [ 316mb : 4ppbv, 100mb: 8ppbv, 50mb : 10ppbv ]
+  ;; 1 ppbv is too small for ho2
+  Fill, quantity=aprioriPrecision.ho2,  method=explicit, /spread, explicitValues= 10 ppbv
+  Fill, quantity=aprioriPrecision.hocl, method=explicit, /spread, explicitValues= 3 ppbv
+  ;; For N2O, 0.2 ppmv is too small for the troposphere, but we don't
+  ;; have sensitivity there
+  ;Fill, quantity=aprioriPrecision.n2o,  method=explicit, /spread, explicitValues= 0.2 ppmv
+  Fill, quantity=aprioriPrecision.n2o, method=profile, profileValues = $
+    [ 147mb: 50ppbv, 100mb : 200ppbv ]
+  Fill, quantity=aprioriPrecision.o2,  method=explicit, /spread, explicitValues= 20000.0 ppmv
+  Fill, quantity=aprioriPrecision.o3,   method=profile, $
+    profileValues = [ 316mb : 500ppbv, 100mb:2ppmv, 46mb : 4 ppmv ]
+  ;; 1 ppbv is too small for OH.  Better with a profile?
+  Fill, quantity=aprioriPrecision.oh,   method=profile, $
+    profileValues = [ 10mb : 0.1ppbv, 1mb : 1 ppbv, 0.1mb : 5 ppbv, 0.01mb : 10 ppbv ]
+  ;; 100pptv is far too small for so2
+  Fill, quantity=aprioriPrecision.so2,  method=explicit, /spread, explicitValues= 10 ppbv
+
+  Fill, quantity=aprioriPrecision.temperature, method=profile, $
+    profileValues= [ 1000mb:5K, 220mb:10K, 68mb:20K ]
+  Fill, quantity=aprioriPrecision.refGPH, method=explicit, /spread, explicitValues= 5 km
+  Fill, quantity=aprioriPrecision.gph, method=explicit, /spread, explicitValues= 5 km
+
+  ;; Convert H2O precision to RHI precision
+  Fill, quantity=aprioriPrecision.rhi, $
+    h2oPrecisionQuantity=aprioriPrecision.h2o, $
+    tempPrecisionQuantity=aprioriPrecision.temperature, $
+    h2oQuantity=apriori.h2o, temperatureQuantity=apriori.temperature, $
+    method=RHIFromH2O
+
+  Fill, quantity=aprioriPrecision.rhivmrsngl, $
+        sourcequantity=aprioriPrecision.rhi,method = vector,/interpolate, $
+        /ignoreTemplate
+  Fill, quantity=aprioriPrecision.rhivmrsngl, method=profile, $
+        profileValues= [ 100mb:100, 68mb:0.0001 ]
+
+  Fill, quantity=aprioriPrecision.rhivmr, method=explicit,  $
+        explicitValues=100, /spread
+
+  ;; This macro interpolates standard resolution quantities to the
+  ;; hiRes equivalents. 
+  !define(interpolateToHiRes,{Fill, quantity=$1, sourceQuantity=!TrimLast3($1),!dnl
+     method=vector, /interpolate!nl})
+  !interpolateToHiRes(aprioriPrecision.temperature_HR)
+  !interpolateToHiRes(aprioriPrecision.o3_HR)
+  !forall(interpolateToHiRes,!makelist(aprioriPrecision.,{},!allHiResMolecules))
+
+  ;; Get RHI_HR from RHI.  Not sure if this should really be from
+  ;; H2O_HR and temperature_HR
+  !interpolateToHiRes(aprioriPrecision.RHI_HR)
+  ;; Get gph_HR from gph.  Not sure if this should really be from
+  ;; temperature_HR
+  !interpolateToHiRes(aprioriPrecision.gph_HR)
+
+  ;; Actually we'll take a looser precision for H2O
+  Fill, quantity=aprioriPrecision.h2o_hr, method=profile, profileValues = $
+    [ 1000mb: 10000ppmv, 464mb : 10000ppmv, 316mb : 1500ppmv, $
+      215mb : 300ppmv, 147mb : 20ppmv, 100mb : 6.0ppmv ]
+
+  Fill, quantity=vReg.co_hr, method=profile, profileValues= $
+    [ 10mb:15ppbv, 3.1mb:50ppbv,  1mb:150ppbv, 0.31mb: 0.5ppmv, 0.1mb:1.5ppmv, $
+      0.03mb:5ppmv, 0.01mb: 15ppmv, 0.003mb: 50ppmv, 0.001mb:150ppmv ]
+
+  ;; We already filled the hires ozone precision by inerpolating the std res
+  ;   Fill, quantity=aprioriPrecision.o3_hr, method=profile,$
+  ;     profileValues=[ 500hPa:0.05ppmv, 316hPa:0.1ppmv, 215hPa:0.1ppmv, $
+  ; 	147hPa:0.2ppmv, 46hPa:0.5ppmv, 22hPa:1.5ppmv] 
+
+  ;; ------------------------------ A priori extinction precisions
+
+  !define(fillExtinctionApriori,{
+!ifelse(!index(!defn(v2ExtinctionRadiometers),$1),{-1},{
+  Fill, quantity=aprioriPrecision.extinction$1, $
+    method=explicit, /spread, explicitValues=1.0e-6!nl
+},{!dnl
+  Fill, quantity=aprioriPrecision.extinctionv2$1, $
+    method=explicit, /spread, explicitValues=1.0e-6!nl})
+})
+  !forall({fillExtinctionApriori},!allRadiometers)
+
+; r2-4 extinction based on 3-sigma of off-line retrieval
+   Fill, quantity=aprioriPrecision.totalextinctionr2,method=profile, $
+        profileValues = $
+      [ 1000mb: 0.006, 681mb:0.006, 464mb : 0.006, 316mb : 0.006, $
+      215mb : 0.0026, 147mb : 0.0006, 100mb : 0.0003, 68mb:9.0e-5, $
+      46mb: 3.8e-5, 32mb:2.0e-5,22mb:9.2e-6,15mb:1.9e-6,10mb:1.0e-6, $
+      0.00001mb:1.0e-6]
+;      [ 1000mb: 0.0001, 681mb:0.0001, 464mb : 0.0001, 316mb : 0.0001, $
+;      215mb : 0.0001, 147mb : 0.0001, 100mb : 0.0001, 68mb:9.0e-5, $
+;      46mb: 3.8e-5, 32mb:2.0e-5,22mb:9.2e-6,15mb:1.9e-6,10mb:1.0e-6, $
+;      0.00001mb:1.0e-6]
+   Fill, quantity=aprioriPrecision.totalextinctionr3,method=profile, $
+        profileValues = $
+     [ 1000mb: 1.0E-7, 681mb:0.0005, 464mb : 0.001, 316mb : 0.001, $
+      215mb : 0.0006, 147mb : 0.0002, 100mb : 0.0001, 68mb:0.0001, $
+      46mb: 7.0e-5, 32mb:4.0e-5,22mb:2.0e-5,15mb:5.0e-6,10mb:2.0e-6, $
+      0.00001mb:1.0e-6]
+;; WVS
+   Fill, quantity=aprioriPrecision.totalextinctionv2r3,method=explicit, $
+     /spread, explicitValues=1.0e6
+
+; r1a,r1b r5v, r5h need to be updated later
+  Fill, quantity=aprioriPrecision.totalextinctionR1,method=explicit, $
+        /spread, explicitValues=1.0e-6
+
+
+  ;; ------------------------------ Baseline precisions
+
+  !define(fillBaselineApriori,{
+  Fill, quantity=aprioriPrecision.baseline$1, method=profile, profileValues = $
+    [ 1000mb: 80K, 464mb : 50K, 316mb : 30K, $
+      215mb : 20K, 147mb : 10K, 100mb : 5.0K ] !nl})
+  !forall({fillBaselineApriori},!allRadiometers)
+
+  !define(fillBaselineFineApriori,{
+  Fill, quantity=aprioriPrecision.baselineFine$1, method=profile, profileValues = $
+    [ 1000mb: 80K, 464mb : 50K, 316mb : 30K, $
+      215mb : 20K, 147mb : 10K, 100mb : 5.0K ] !nl})
+  !forall({fillBaselineFineApriori},!allRadiometers)
+
+  !define(fillBaselineMAFApriori,{
+  Fill, quantity=aprioriPrecision.baselineMAF$1, method=explicit, $
+        explicitvalues = 5K, /spread !nl})
+  ;;!forall({fillBaselineMAFApriori},!allRadiometers)
+; dacs baseline
+  ;;!forall({fillBaselineMAFApriori},!allDACS)
+; MB baseline
+  ;;!forall({fillBaselineMAFApriori},!allMBs)
+
+; MIF baselines
+;; (We haven't defined them yet)
+
+  !define(fillBaselineMIFApriori,{
+  Fill, quantity=aprioriPrecision.baselineMIF$1, method=explicit, $
+    explicitValues=5K, /spread !nl})
+  ;;!forall({fillBaselineMIFApriori},!allRadiometers)
+; dacs baseline
+  ;;!forall({fillBaselineMIFApriori},!allDACS)
+; MB baseline
+  ;;!forall({fillBaselineMIFApriori},!allMBs)
+
+  !define(fillBaselineGroupApriori,{
+  Fill, quantity=aprioriPrecision.baselineR4Group$1, method=explicit, $
+    explicitValues=5K, /spread !nl})
+  ;;!forall({fillBaselineGroupApriori},1,2,3)
+
+  ;; --------------------------------------- Bounds for species
+
+  Fill, quantity=lowBound.ptanGHz, method=explicit, explicitValues= -20, /spread
+  Fill, quantity=highBound.ptanGHz, method=explicit, explicitValues= 20, /spread
+
+  Fill, quantity=lowBound.temperature, method=explicit, explicitValues=100K, /spread
+  Fill, quantity=highBound.temperature, method=explicit, explicitValues=550K, /spread
+
+  Fill, quantity=lowBound.h2o, method=explicit, explicitValues=0.1ppmv, /spread
+  Fill, quantity=highBound.h2o, method=explicit, explicitValues=0.06, /spread
+
+  ;Fill, quantity=lowBound.oh, method=explicit, explicitValues= -40pptv, /spread
+  Fill, quantity=lowBound.n2o,method=explicit, explicitValues= -40ppbv, /spread
+
+  Fill, quantity=lowBound.RHiVmrsngl, method=profile, profileValues=[100mb:2, 68mb:0.0001]
+  Fill, quantity=highBound.RHiVmrsngl, method=profile, profileValues=[100mb:110, 68mb:0.0001], /spread
+
+;; ensure that apriori between lowbound and highbound
+   Fill, quantity=apriori.RHiVmrsngl, method=manipulate,a=apriori.RHiVmrsngl,b=lowBound.RHiVmrsngl,$
+        manipulation='a>b'
+   Fill, quantity=apriori.RHiVmrsngl, method=manipulate,a=apriori.RHiVmrsngl,b=highBound.RHiVmrsngl,$
+        manipulation='a<b'
+
+   Fill, quantity=lowBound.RHiVmr, method=explicit, explicitValues=0.00001, /spread
+   Fill, quantity=highBound.RHiVmr, method=explicit, explicitValues=2000, /spread
+
+;; ensure that apriori between lowbound and highbound
+   Fill, quantity=apriori.RHiVmr, method=manipulate,a=apriori.RHiVmr,b=lowBound.RHiVmr,$
+        manipulation='a>b'
+   Fill, quantity=apriori.RHiVmr, method=manipulate,a=apriori.RHiVmr,b=highBound.RHiVmr,$
+        manipulation='a<b'
+
+  Fill, quantity=lowBound.extinctionR2, method=explicit, $
+        explicitValues=1.0e-7, /spread
+  Fill, quantity=highBound.extinctionR2, method=explicit, $
+        explicitValues=0.01, /spread
+  Fill, quantity=lowBound.extinctionv2R2, method=explicit, $
+        explicitValues=1.0e-7, /spread
+  Fill, quantity=highBound.extinctionv2R2, method=explicit, $
+        explicitValues=0.01, /spread
+  Fill, quantity=lowBound.extinctionR3, method=explicit, $
+        explicitValues=1.0e-7, /spread
+  Fill, quantity=highBound.extinctionR3, method=explicit, $
+        explicitValues=0.01, /spread
+  Fill, quantity=lowBound.extinctionv2R3, method=explicit, $
+        explicitValues=1.0e-7, /spread
+  Fill, quantity=highBound.extinctionv2R3, method=explicit, $
+        explicitValues=0.01, /spread
+
+  Fill, quantity=lowBound.totalextinctionR2, method=explicit, $
+        explicitValues= -4.0e-4, /spread
+  Fill, quantity=highBound.totalextinctionR2, method=explicit, $
+        explicitValues=0.1, /spread
+  Fill, quantity=lowBound.totalextinctionv2R2, method=explicit, $
+        explicitValues= -4.0e-4, /spread
+  Fill, quantity=highBound.totalextinctionv2R2, method=explicit, $
+        explicitValues=0.1, /spread
+  Fill, quantity=lowBound.totalextinctionR3, method=explicit, $
+        explicitValues= -4.0e-4, /spread
+  Fill, quantity=highBound.totalextinctionR3, method=explicit, $
+        explicitValues=0.1, /spread
+  Fill, quantity=lowBound.totalextinctionv2R3, method=explicit, $
+        explicitValues= -4.0e-4, /spread
+  Fill, quantity=highBound.totalextinctionv2R3, method=explicit, $
+        explicitValues=0.1, /spread
+
+
+  !interpolateToHiRes(lowBound.temperature_HR)
+  !interpolateToHiRes(highBound.temperature_HR)
+  !interpolateToHiRes(lowBound.o3_HR)
+  !interpolateToHiRes(highBound.o3_HR)
+  !forall(interpolateToHiRes,!makelist(lowBound.,{},!allHiResMolecules))
+  !forall(interpolateToHiRes,!makelist(highBound.,{},!allHiResMolecules))
+
+  ;; Now set the smoothing weights - we'll use a profile fill, even if
+  ;; it's only one value.
+  ;; In the cases where there are different smoothings for products in
+  ;; different phases, I'm quoting there the one for the 'standard' product.
+
+  ;; Vertical
+  Fill, quantity=vReg.totalextinctionR2, method=explicit,/spread,explicitValues=5.0e-4
+  Fill, quantity=vReg.totalextinctionR3, method=explicit,/spread,explicitValues=0.5e-3
+;;  WVS
+  Fill, quantity=vReg.totalextinctionv2R3, method=explicit,/spread,explicitValues=0.0
+
+  Fill, quantity=vReg.extinctionR1, method=explicit,/spread,explicitValues=1.0e-3
+  Fill, quantity=vReg.extinctionR2, method=explicit,/spread,explicitValues=1.0e-4
+  Fill, quantity=vReg.extinctionR3, method=explicit,/spread,explicitValues=1.0e-4
+  Fill, quantity=vReg.extinctionv2R3, method=explicit,/spread,explicitValues=1.0e-4
+
+  Fill, quantity=vReg.baselineR1, method=profile, profileValues=[921mb:0K, 100mb:2K ]
+  Fill, quantity=vReg.baselineR2,  method=profile, profileValues=[921mb:0K, 100mb:2K ]
+  Fill, quantity=vReg.baselineR3,  method=profile, profileValues=[921mb:0K, 100mb:2K ]
+
+  Fill, quantity=vReg.baselineFineR1, method=profile, profileValues=[121mb:0K, 100mb:5K ]
+  Fill, quantity=vReg.baselineFineR2,  method=profile, profileValues=[121mb:0K, 100mb:5K ]
+  Fill, quantity=vReg.baselineFineR3,  method=profile, profileValues=[121mb:0K, 100mb:5K ]
+
+  Fill, quantity=vReg.bro, method=profile, $
+    profileValues= [ 1mb:0.1ppbv]
+  Fill, quantity=vReg.ch3cn, method=profile, $
+    profileValues= [ 146mb:500pptv, 100mb:30pptv, 1mb:30pptv, 0.68mb:0pptv ]
+  Fill, quantity=vReg.clo, method=profile, $
+    profileValues= [ 1mb:0.3ppbv, 0.68mb:0ppbv ]
+  Fill, quantity=vReg.ch3cl, method=profile, $
+    profileValues= [ 1mb:0.1ppbv, 0.68mb:0ppbv ]
+  Fill, quantity=vReg.ch3oh, method=profile, $
+    profileValues= [ 1mb:10ppbv, 0.68mb:0ppbv ]
+  Fill, quantity=vReg.ch3ch2oh, method=profile, $
+    profileValues= [ 1mb:10ppbv, 0.68mb:0ppbv ]
+  Fill, quantity=vReg.ch3coch3, method=profile, $
+    profileValues= [ 1mb:0.1ppbv, 0.68mb:0ppbv ]
+  Fill, quantity=vReg.co, method=profile, profileValues= $
+    [ 10mb:15ppbv, 3.1mb:50ppbv,  1mb:150ppbv, 0.31mb: 0.5ppmv, 0.1mb:1.5ppmv, $
+      0.03mb:5ppmv, 0.01mb: 15ppmv, 0.003mb: 50ppmv, 0.001mb:150ppmv ]
+  Fill, quantity=vReg.co_hr, method=profile, profileValues= $
+    [ 10mb:15ppbv, 3.1mb:50ppbv,  1mb:150ppbv, 0.31mb: 0.5ppmv, 0.1mb:1.5ppmv, $
+      0.03mb:5ppmv, 0.01mb: 15ppmv, 0.003mb: 50ppmv, 0.001mb:150ppmv ]
+  Fill, quantity=vReg.h2o, method=profile, profileValues= $
+    [ 1000mb:500ppmv, 300mb:50ppmv, 215mb:20ppmv, 147mb:10ppmv, 100mb:1.0ppmv,$
+    1mb:0.3ppmv,0.1mb:5ppmv, 0.001mb:0ppmv ], logSpace=false
+
+  Fill, quantity=vReg.h2o_hr, method=profile, profileValues= $
+    [ 1000mb:50ppmv, 316mb:100ppmv,215mb:50ppmv, 147mb:5ppmv,121mb: 2ppmv, $
+      100mb:0.5ppmv, 83mb:0.3ppmv, 10mb:0.3ppmv, 1mb:0.4ppmv, 0.1mb:3ppmv, 0.001mb:0ppmv ], $
+      logSpace=false
+  Fill, quantity=vReg.RHiVmr, method=profile, profileValues= [ $
+                    316mb:20.0, 68mb:20.0, 0.147mb:2.0,0.1mb:0.0]
+  Fill, quantity=vReg.hcl, method=profile, $
+    profileValues= [ 0.1mb:1.0ppbv, 0.046mb:0ppbv ]
+  Fill, quantity=vReg.hcn, method=profile, $
+    profileValues= [ 0.1mb:20pptv, 0.001mb:80pptv ]
+  Fill, quantity=vReg.hno3, method=profile, $
+    profileValues= [ 200mb:0.2ppbv, 100mb:1ppbv, 1mb:3ppbv, 0.68mb:0ppbv ]
+  Fill, quantity=vReg.ho2, method=profile, $
+    profileValues=[ 32mb:100pptv, 10mb:200pptv, 3.2mb:500pptv, 1mb:500pptv, 0.32mb:2000pptv, 0.15mb:10000pptv ], /logSpace
+  Fill, quantity=vReg.hocl, method=profile, $
+    profileValues= [ 1mb:0.3ppbv, 0.68mb:0ppbv ]
+  Fill, quantity=vReg.n2o, method=profile, $
+    profileValues= [ 200mb:10ppbv, 100mb:20ppbv, 1mb:20ppbv, 0.1mb:0ppbv ]
+
+  Fill, quantity=vReg.o3, method=profile, $
+    profileValues= [ 200mb:0.2ppmv, 100mb:0.5ppmv, 0.1mb:1ppmv, 0.046mb:0ppmv ]
+  Fill, quantity=vReg.o3_HR, method=profile, $
+    profileValues=[ 383mb:0, 316mb:0.03ppmv, 147mb:0.015ppmv, 100mb:0.10ppmv, $
+    46mb:0.10ppmv, 22mb:0.20ppmv, 10mb:0.30ppmv, 1mb:0.10ppmv, 0.1mb:1.0ppmv, $
+    0.046mb:0ppmv ]
+
+  Fill, quantity=vReg.oh, method=profile, $
+    profileValues=[ 100mb:10pptv, 1mb:10ppbv ], /logSpace
+
+  Fill, quantity=vReg.temperature, method=profile, $
+    profileValues=[ 1mb:1K ]
+  Fill, quantity=vReg.temperature_hr, method=profile, $
+    profileValues=[1.21mb:0.5K, 1mb:0.75K, 0.681mb:1K, 0.147mb:1K, 0.1mb:1.5K, 0.0464mb:8K]
+  ;;Fill, quantity=vReg.temperature_hr, method=profile, $
+  ;;  profileValues=[ 21.6mb:0.5K, 14.7mb:1K, 0.147mb:1K, 0.1mb:2K ]
+  Fill, quantity=vReg.o2, method=profile, $
+    profileValues=[ 1mb:1000ppmv ]
+
+  ;; Horizontal
+  Fill, quantity=hReg.totalextinctionR2, method=explicit,/spread,explicitValues=5.0e-4
+  Fill, quantity=hReg.totalextinctionR3, method=explicit,/spread,explicitValues=0.5e-3
+;; WVS
+  Fill, quantity=hReg.totalextinctionv2R3, method=explicit,/spread,explicitValues=0.0
+
+  Fill, quantity=hReg.extinctionR1, method=explicit,/spread,explicitValues=1.0e-3
+  Fill, quantity=hReg.extinctionR2, method=explicit,/spread,explicitValues=1.0e-4
+  Fill, quantity=hReg.extinctionR3, method=explicit,/spread,explicitValues=1.0e-4
+  Fill, quantity=hReg.extinctionv2R3, method=explicit,/spread,explicitValues=1.0e-4
+
+  Fill, quantity=hReg.baselineR1, method=profile, profileValues=[100mb:0K, 68mb:2K ]
+  Fill, quantity=hReg.baselineR2, method=profile, profileValues=[100mb:0K, 68mb:2K ]
+  Fill, quantity=hReg.baselineR3, method=profile, profileValues=[100mb:0K, 68mb:2K ]
+
+  Fill, quantity=hReg.baselineFineR1, method=profile, profileValues=[121mb:0K, 100mb:5K ]
+  Fill, quantity=hReg.baselineFineR2,  method=profile, profileValues=[121mb:0K, 100mb:5K ]
+  Fill, quantity=hReg.baselineFineR3,  method=profile, profileValues=[121mb:0K, 100mb:5K ]
+
+  Fill, quantity=hReg.bro, method=profile, $
+    profileValues= [ 1mb:0.3ppbv ]
+  Fill, quantity=hReg.ch3cn, method=profile, $
+    profileValues= [ 146mb:500pptv, 100mb:30pptv, 1mb:30pptv, 0.68mb:0pptv ]
+  Fill, quantity=hReg.clo, method=profile, $
+    profileValues= [  1mb:0.1ppbv, 0.68:0pptv ]
+  Fill, quantity=hReg.ch3cl, method=profile, $
+    profileValues= [  1mb:0.1ppbv, 0.68:0pptv ]
+  Fill, quantity=hReg.ch3oh, method=profile, $
+    profileValues= [  1mb:5ppbv, 0.68:0pptv ]
+  Fill, quantity=hReg.ch3ch2oh, method=profile, $
+    profileValues= [  1mb:5ppbv, 0.68:0pptv ]
+  Fill, quantity=hReg.ch3coch3, method=profile, $
+    profileValues= [  1mb:0.05ppbv, 0.68:0pptv ]
+  Fill, quantity=hReg.co, method=profile, profileValues= $
+    [ 100mb:15ppbv,  46mb:5ppbv, 10mb:5ppbv,   3mb: 15ppbv, 1mb:50ppbv, 0.3mb: 150ppbv, 0.1mb:0.5ppmv, $
+      0.03mb: 1.5ppmv, 0.01mb:5ppmv, 0.003mb:15ppmv, 0.001mb: 50ppmv ]
+  Fill, quantity=hReg.co_hr, method=profile, profileValues= $
+    [ 100mb:15ppbv,  46mb:5ppbv, 10mb:5ppbv,  3mb: 15ppbv, 1mb:50ppbv, 0.3mb: 150ppbv, 0.1mb:0.5ppmv, $
+      0.03mb: 1.5ppmv, 0.01mb:5ppmv, 0.003mb:15ppmv, 0.001mb: 50ppmv ]
+
+  Fill, quantity=hReg.h2o, method=profile, $
+     profileValues=[ 147mb:0ppmv, 121mb:2ppmv, 100mb:0.3ppmv, 10mb:0.3ppmv, 1mb:0.4ppmv, 0.1mb:3ppmv, $
+     0.046mb:0ppmv ], logSpace=false
+
+  Fill, quantity=hReg.h2o_HR, method=profile, $
+     profileValues=[ 147mb:0ppmv, 121mb:2ppmv, 100mb:0.3ppmv, 10mb:0.3ppmv, 1mb:0.4ppmv, 0.1mb:3ppmv, $
+     0.046mb:0ppmv ], logSpace=false
+; values used for v3.3
+  Fill, quantity=hReg.RHiVmr, method=profile, profileValues= [ $
+        316mb:2.0, 68mb:2.0, 0.147mb:0.2,0.1mb:0.0]
+; I would like to have this turned off completely
+  Fill, quantity=hReg.RHiVmr, method=profile, profileValues= [ $
+        1000mb:0.0, 0.00001mb:0.0]
+
+  Fill, quantity=hReg.hcl, method=profile, $
+    profileValues= [ 0.1mb:0.3ppbv, 0.046mb:0ppbv ]
+  Fill, quantity=hReg.hcn, method=profile, $
+    profileValues= [ 1mb:20pptv, 0.1mb:0pptv ]
+  Fill, quantity=hReg.hno3, method=profile, $
+    profileValues= [ 1mb:0.3ppbv, 0.68mb:0ppbv ]
+  Fill, quantity=hReg.ho2, method=profile, $
+    profileValues=[ 32mb:50pptv, 10mb:50pptv, 3.2mb:100pptv, 1mb:50pptv, 0.32mb:500pptv, 0.15mb:1000pptv ], /logSpace
+  Fill, quantity=hReg.hocl, method=profile, $
+    profileValues= [ 1mb:0.3ppbv, 0.68mb:0ppbv ]
+  Fill, quantity=hReg.n2o, method=profile, $
+    profileValues= [ 1mb:10ppbv, 0.1mb:0ppbv ]
+
+  Fill, quantity=hReg.o3, method=profile, $
+    profileValues= [ 146mb:30ppbv, 100mb:0.3ppmv, 0.1mb:0.3ppmv, 0.046mb:0ppmv ]
+  Fill, quantity=hReg.o3_HR, method=profile, $
+    profileValues= [ 383mb:0ppmv, 316mb:0.03ppmv, 215mb:0.03ppmv, 147mb:0.01ppmv, $
+    10mb:0.03ppmv, 1mb:0.1ppmv, 0.68mb:0.3ppmv, 0.1mb:0.3ppmv, 0.046mb:0ppmv ]
+
+  Fill, quantity=hReg.oh, method=profile, $
+    profileValues=[ 100mb:10pptv, 1mb:10ppbv ], /logSpace
+  
+  Fill, quantity=hReg.temperature, method=profile, $
+    profileValues=[ 1mb:1K ]
+  Fill, quantity=hReg.temperature_hr, method=profile, $
+    profileValues=[ 1mb:1K ]
+
+  Fill, quantity=hReg.refGPH, method=explicit, explicitValues=10m, /spread
+
+end Fill
+
+; Make certain MIF-based extinctions are defined
+begin Fill
+  Fill, quantity=apriori.TotalExtinctionV2R3, $
+    sourceQuantity=apriori.TotalExtinctionR3, method=vector, $
+    /interpolate, /ignoreTemplate
+end Fill
+!ifdef(flagdelaywriteapriori, {},{!include(writeapriori.l2cf)})
+!divert(-1)
+;$Log: fillapriori-umls.l2cf,v $
+;Revision 1.1  2017/02/24 23:49:19  mjschwar
+;Adding umls specific code to standard parts
+;
+;Revision 1.6  2015/10/06 17:43:07  pwagner
+;Consistent with latest FillMagneticField api
+;
+;Revision 1.5  2015/05/19 20:57:24  pwagner
+;Restored Fill of magneticField
+;
+;Revision 1.4  2015/05/18 17:48:53  pwagner
+;Should not Fill magneticField for MUSTARD
+;
+;Revision 1.3  2014/11/19 21:29:18  pwagner
+;Removed outmoded azimuth quantity type
+;
+;Revision 1.2  2014/09/09 16:52:31  pwagner
+;Prefill azimuth; flagOverwriteWithWACCM controls whether to overwrite gph with WACCM data
+;
+;Revision 1.1  2014/06/13 17:50:36  pwagner
+;First commit
+;
+!divert!dnl
+@
+
+
+1.1
+log
+@Adding umls specific code to standard parts
+@
+text
+@d2 1
+a2 1
+;; $Id: fillapriori-MUSTARD.l2cf,v 1.6 2015/10/06 17:43:07 pwagner Exp $
+d42 1
+a42 1
+    sourceGrid=gridrefGPH
+d44 1
+a44 1
+    sourceGrid=gridrefGPH
+d152 1
+a152 1
+!ifdef(flagUseOperationalGPH, {
+d154 1
+a154 1
+    method=gridded, sourceGrid=mergedGPH
+d638 4
+a641 1
+;$Log: fillapriori-MUSTARD.l2cf,v $
+@
+

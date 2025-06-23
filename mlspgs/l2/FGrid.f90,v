@@ -1,0 +1,762 @@
+head	2.17;
+access;
+symbols
+	v5-02-NRT-19:2.17
+	v6-00:2.17
+	v5-02-NRT-18:2.17
+	v5-02:2.17
+	v5-01-NRT-17:2.17
+	v5-01-NRT-16:2.17
+	v5-01-NRT-15:2.17
+	v5-01-NRT-14:2.17
+	neuralnetworks-1-0:2.17.0.8
+	cfm-single-freq-0-1:2.17.0.6
+	v5-01:2.17
+	v5-00:2.17
+	v4-23-TA133:2.17.0.4
+	mus-emls-1-70:2.17.0.2
+	rel-1-0-englocks-work:2.16.0.2
+	VUMLS1-00:2.16
+	VPL1-00:2.16
+	V4-22-NRT-08:2.16
+	VAM1-00:2.16
+	V4-21:2.15.0.2
+	V4-13:2.15
+	V4-12:2.13
+	V4-11:2.13
+	V4-10:2.13
+	V3-43:2.12
+	M4-00:2.13
+	V3-41:2.12
+	V3-40-PlusGM57:2.12.0.2
+	V2-24-NRT-04:2.9
+	V3-33:2.12
+	V2-24:2.9
+	V3-31:2.12
+	V3-30-NRT-05:2.12
+	cfm-01-00:2.12
+	V3-30:2.12
+	V3-20:2.12
+	V3-10:2.11
+	V2-23-NRT-02:2.9
+	V2-23:2.9
+	V2-22-NRT-01:2.9
+	V2-22:2.9
+	V2-21:2.9
+	V2-20:2.9
+	V2-11:2.9
+	V2-10:2.9
+	V2-00:2.9
+	V1-51:2.8
+	V1-50:2.8
+	V1-45:2.6
+	V1-44:2.6
+	V1-43:2.6
+	V1-32:2.5
+	V1-31:2.5
+	V1-30:2.5
+	V1-13:2.4
+	V1-12:2.4
+	V1-11:2.4
+	V1-10:2.4
+	newfwm-feb03:2.4.0.2
+	V1-04:2.2
+	V1-03:2.2
+	V1-02:2.2
+	JointForwardModel:2.2.0.2
+	V1-00:2.2;
+locks; strict;
+comment	@# @;
+
+
+2.17
+date	2018.04.19.01.14.16;	author vsnyder;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2015.03.28.02.31.30;	author vsnyder;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2014.09.05.00.53.20;	author vsnyder;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2014.09.05.00.49.06;	author vsnyder;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2011.08.20.01.04.33;	author vsnyder;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2010.02.17.20.27.26;	author honghanh;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2009.06.23.18.46.18;	author pwagner;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2009.03.05.16.20.17;	author pwagner;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2005.06.22.18.57.01;	author pwagner;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2004.12.27.23.05.14;	author vsnyder;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2004.08.26.18.51.48;	author pwagner;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2004.01.23.05.38.06;	author livesey;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2003.08.15.23.58.20;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2002.11.22.12.17.48;	author mjf;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2002.10.08.17.36.20;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2001.11.01.00.23.14;	author livesey;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.10.31.18.36.19;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.17
+log
+@Remove USE statements for unused names
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module FGrid                    ! Frequency grid information
+
+  use Allocate_Deallocate, only: Allocate_test, Deallocate_test
+  use dump_0, only: dump
+  use EXPR_M, only: EXPR
+  use Intrinsic, only:  L_None, PHYQ_DIMENSIONLESS, PHYQ_FREQUENCY, &
+    & L_CHANNEL, LIT_INDICES
+  use Init_tables_module, only: F_Coordinate, F_Values
+  use MLSKinds, only: R8
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+  use Output_M, only: Output
+  use STRING_TABLE, only: DISPLAY_STRING
+  use Tree, only: DECORATION, NSONS, SUBTREE
+
+  implicit none
+  private
+
+  public :: FGrid_T, AddFGridToDatabase, CreateFGridFromMLSCFInfo, &
+    & DestroyFGridContents, DestroyFGridDatabase, NullifyFgrid, dump
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: FGrid.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+  ! This module contains code for defining and maintaining 'FGrids'. These
+  ! define frequency coordinates for use in quantity templates and thence
+  ! vector quantities.  Note however that in perhaps the most obvious example
+  ! of a quantity having a frequency coordinate - the radiances - the fGrid
+  ! information is not used, in these cases the information given in the signal
+  ! field describes the frequency.  FGrids are mainly used for quantities such
+  ! as baseline and extinction
+
+  ! This is the main data type
+  type FGrid_T
+    integer :: name                     ! String index of name
+    integer :: noChans                  ! Number of `channels'
+    integer :: frequencyCoordinate      ! Literal, see below
+    real(r8), dimension(:), pointer :: values => NULL() ! The frequencies
+  end type FGrid_T
+  ! Note - frequency coordinate is a literal, examples are:
+  !        l_frequency, l_usbFrequency, l_lsbFrequency, l_intermediateFrequency
+  !      - values *must* remain r8, as we're after kHz precision in THz values.
+  interface DUMP
+    module procedure DUMPFGRID
+    module procedure DUMPFGRIDS
+  end interface
+
+
+contains ! ===================================== Public procedures =====
+
+  ! ----------------------------------------------- AddFGridToDatabase
+  integer function AddFGridToDatabase ( database, item )
+
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+
+    ! Dummy arguments
+    type (FGrid_T), dimension(:), pointer :: database
+    type (FGrid_T), intent(in) :: item
+
+    ! Local variables
+    type (FGrid_T), dimension(:), pointer :: tempDatabase
+
+    include "addItemToDatabase.f9h"
+
+    AddFGridToDatabase = newSize
+  end function AddFGridToDatabase
+
+  ! -------------------------------------------- CreateFGridFromMLSCFInfo
+  type (FGrid_T) function CreateFGridFromMLSCFInfo ( name, root ) &
+    & result ( fGrid )
+    use TOGGLES, only: GEN, LEVELS, TOGGLE
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+    ! Dummy arguments
+    integer, intent(in) :: NAME         ! String index of name
+    integer, intent(in) :: ROOT         ! Tree root
+
+    ! Local variables
+    integer :: I,J                      ! Loop counter
+    integer :: Me = -1                  ! String index for trace
+    integer :: SON                      ! Tree node
+    integer :: UNITS(2)                 ! From expr
+    real(r8) :: VALUES(2)               ! From expr
+
+    ! Executable code
+    call trace_begin ( me, "CreateFGridFromMLSCFInfo", &
+      & cond=toggle(gen) .and. levels(gen) > 0 )
+    call nullifyFGrid ( fGrid ) ! for Sun's still useless compiler
+    fGrid%name = name
+    do i = 2, nsons(root)
+      son = subtree(i,root)
+      select case ( decoration( subtree(1,son) ) )
+      case ( f_coordinate )
+        fGrid%frequencyCoordinate = decoration( subtree(2,son) )
+      case ( f_values )
+        fGrid%noChans = nsons ( son ) - 1
+        call Allocate_test ( fGrid%values, fGrid%noChans, 'fGrid%values', &
+          & ModuleName )
+        do j = 1, fGrid%noChans
+          call expr ( subtree ( j+1, son), units, values )
+          if ( all ( units(1) /= &
+            & (/ phyq_frequency, phyq_dimensionless /) ) ) then
+            call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & 'Bad units for fGrid' )
+          end if
+          fGrid%values(j) = values(1)
+        end do
+      end select
+    end do
+    if ( fGrid%frequencyCoordinate == l_channel ) call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      & 'Did you mean to use channel as fGrid coordinate?' )
+
+    ! Because the parser does such a great job, that's all we need to do here!
+    call trace_end ( "CreateFGridFromMLSCFInfo", &
+      & cond=toggle(gen) .and. levels(gen) > 0 )
+  end function CreateFGridFromMLSCFInfo
+
+  ! -------------------------------------------- DestroyFGridContents
+  subroutine DestroyFGridContents ( fGrid )
+    ! Dummy arguments
+    type (FGrid_T), intent(inout) :: fGrid
+
+    ! Executable code
+    call Deallocate_test ( fGrid%values, 'fGrid%values', ModuleName )
+    fGrid%name = 0
+    fGrid%noChans = 0
+    fGrid%frequencyCoordinate = l_none
+  end subroutine DestroyFGridContents
+
+  ! ----------------------------------------- Destroy FGridDatabase
+  subroutine DestroyFGridDatabase ( database )
+    ! Dummy arguments
+
+    use Allocate_Deallocate, only: Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+    type (FGrid_T), dimension(:), pointer :: database
+
+    ! Local variables
+    integer(c_intptr_t) :: Addr         ! for tracing
+    integer :: I                        ! Loop counter
+    integer :: S                        ! Size in bytes of object to deallocate
+    integer :: STATUS                   ! From deallocate
+
+    ! Executable code
+    if (.not. associated(database) ) return
+    do i = 1, size ( database )
+      call DestroyFGridContents ( database(i) )
+    end do
+
+    s = size(database) * storage_size(database) / 8
+    addr = 0
+    if ( s > 0 ) addr = transfer(c_loc(database(1)), addr)
+    deallocate ( database, STAT=status )
+    call test_deallocate ( status, ModuleName, 'database', s, address=addr )
+
+  end subroutine DestroyFGridDatabase
+
+  ! -------------------------------------------- DumpFGrid
+  subroutine DumpFGrid ( fGrid )
+    ! Dummy arguments
+    type (FGrid_T), intent(in) :: fGrid
+    integer :: ierr
+
+    ! Executable code
+    call output('FGrid name: ', advance='no')
+    if ( fgrid%name > 0 ) then
+        call display_string ( fgrid%name, advance='yes', ierr=ierr )
+        if ( ierr /= 0 ) call output ( '(not found in string table)')
+    else
+        call output('(unknown)', advance='yes')
+    endif
+    call output('Number channels: ', advance='no')
+    call output(fGrid%noChans, advance='yes')
+    call output('Frequency coord: ', advance='no')
+    call display_string ( lit_indices(fGrid%frequencyCoordinate), &
+        &             strip=.true., advance='yes' )
+    if ( associated(fgrid%values) ) then
+      call dump(fgrid%values, 'fgrid values')
+    else
+      call output('(values not associated)', advance='yes')
+    endif
+  end subroutine DumpFGrid
+
+  ! -------------------------------------------- DumpFGrids
+  subroutine DumpFGrids ( fGrids, destroy )
+    ! Dummy arguments
+    type (FGrid_T), dimension(:), intent(inout) :: fGrids
+    logical, optional, intent(in) :: destroy
+    integer :: I
+    logical :: myDestroy
+    myDestroy = .false.
+    if ( present(destroy) ) myDestroy = destroy
+    call output ( size(fgrids), before='FGRIDS: SIZE = ', advance='yes' )
+    do i = 1, size(fgrids)
+      call output ( i, 4, after=': ' )
+      call dump ( fgrids(i) )
+    end do
+    if ( .not. myDestroy ) return
+    do i = 1, size(fgrids)
+      call output ( i, 4, after=': ' )
+      call destroyFGridContents ( fgrids(i) )
+    end do
+  end subroutine DumpFGrids
+
+  ! ----------------------------------------NullifyFGrid -----
+  subroutine NullifyFGrid ( F )
+    ! Given a fGrid, nullify all the pointers associated with it
+    type ( FGrid_T ), intent(out) :: F
+
+    ! Executable code
+    nullify ( f%values )
+  end subroutine NullifyFGrid
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: FGrid.f90,v 2.16 2015/03/28 02:31:30 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module FGrid
+
+! $Log: FGrid.f90,v $
+! Revision 2.16  2015/03/28 02:31:30  vsnyder
+! Added stuff to trace allocate/deallocate addresses
+!
+! Revision 2.15  2014/09/05 00:53:20  vsnyder
+! More complete and accurate allocate/deallocate size tracking.  Add some
+! tracing.
+!
+! Revision 2.14  2014/09/05 00:49:06  vsnyder
+! EmpiricalGeometry.f90 -- Wrong comment
+!
+! Revision 2.13  2011/08/20 01:04:33  vsnyder
+! IERR needs a value before it can be referenced
+!
+! Revision 2.12  2010/02/17 20:27:26  honghanh
+! Fix Dump subroutine to print FGrid when it has no name
+!
+! Revision 2.11  2009/06/23 18:46:18  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.10  2009/03/05 16:20:17  pwagner
+! May now use channel as FGrid coordinate
+!
+! Revision 2.9  2005/06/22 18:57:01  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.8  2004/12/27 23:05:14  vsnyder
+! Remove unreferenced use names
+!
+! Revision 2.7  2004/08/26 18:51:48  pwagner
+! Added dump methods
+!
+! Revision 2.6  2004/01/23 05:38:06  livesey
+! Tidied up handling of l_channel
+!
+! Revision 2.5  2003/08/15 23:58:20  vsnyder
+! Get PHYQ_... directly from Intrinsic instead of indirectly via Units
+!
+! Revision 2.4  2002/11/22 12:17:48  mjf
+! Added nullify routine(s) to get round Sun's WS6 compiler not
+! initialising derived type function results.
+!
+! Revision 2.3  2002/10/08 17:36:20  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.2  2001/11/01 00:23:14  livesey
+! Add check in DestroyFGridDatabase to not do anything if it's empty
+!
+! Revision 2.1  2001/10/31 18:36:19  livesey
+! First version
+!
+@
+
+
+2.16
+log
+@Added stuff to trace allocate/deallocate addresses
+@
+text
+@a67 1
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+d229 1
+a229 1
+       "$Id: FGrid.f90,v 2.15 2014/09/05 00:53:20 vsnyder Exp $"
+d239 3
+@
+
+
+2.15
+log
+@More complete and accurate allocate/deallocate size tracking.  Add some
+tracing.
+@
+text
+@d68 1
+d148 1
+d152 1
+d164 2
+d167 1
+a167 1
+    call test_deallocate ( status, ModuleName, 'database', s )
+d230 1
+a230 1
+       "$Id: FGrid.f90,v 2.14 2014/09/05 00:49:06 vsnyder Exp $"
+d240 4
+@
+
+
+2.14
+log
+@EmpiricalGeometry.f90
+@
+text
+@d225 1
+a225 1
+       "$Id: FGrid.f90,v 2.13 2011/08/20 01:04:33 vsnyder Exp $"
+d235 3
+@
+
+
+2.13
+log
+@IERR needs a value before it can be referenced
+@
+text
+@d20 2
+a21 3
+  use MLSCommon, only: r8
+  use MLSMessageModule, only: MLSMessage, &
+    & MLSMSG_Allocate, MLSMSG_Deallocate, MLSMSG_Error, MLSMSG_Warning
+d66 3
+d84 2
+d89 1
+a89 1
+    
+d92 1
+d98 2
+d126 2
+d145 2
+d151 1
+d160 1
+d162 2
+a163 2
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Deallocate//'database' )
+d225 1
+a225 1
+       "$Id: FGrid.f90,v 2.12 2010/02/17 20:27:26 honghanh Exp $"
+d235 3
+@
+
+
+2.12
+log
+@Fix Dump subroutine to print FGrid when it has no name
+@
+text
+@d162 1
+a162 1
+        call display_string ( fgrid%name, advance='yes' )
+d212 1
+a212 1
+       "$Id: FGrid.f90,v 2.11 2009/06/23 18:46:18 pwagner Exp $"
+d222 3
+@
+
+
+2.11
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d35 1
+a35 1
+       "$RCSfile: $"
+d157 1
+d161 6
+a166 1
+    call display_string ( fgrid%name, advance='yes' )
+d212 1
+a212 1
+       "$Id: read_apriori.f90 is it here $"
+d222 3
+@
+
+
+2.10
+log
+@May now use channel as FGrid coordinate
+@
+text
+@d35 1
+a35 1
+       "$RCSfile: FGrid.f90,v $"
+d203 1
+a204 1
+!---------------------------- RCS Ident Info -------------------------------
+d206 2
+a207 3
+       "$Id: FGrid.f90,v 2.9 2005/06/22 18:57:01 pwagner Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d209 1
+d211 1
+d216 3
+@
+
+
+2.9
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d21 2
+a22 2
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error, &
+    & MLSMSG_Deallocate
+d35 1
+a35 1
+       "$RCSfile: $"
+d115 2
+a116 2
+    if ( fGrid%frequencyCoordinate == l_channel ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Cannot actually use channel as fGrid coordinate' )
+d206 1
+a206 1
+       "$Id: $"
+d215 3
+@
+
+
+2.8
+log
+@Remove unreferenced use names
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d33 1
+a33 4
+  !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
+       "$Id: FGrid.f90,v 2.7 2004/08/26 18:51:48 pwagner Exp $"
+  character (len=len(idParm)), private :: Id = idParm
+d35 1
+a35 1
+       "$RCSfile: FGrid.f90,v $"
+d37 1
+a37 1
+  !---------------------------------------------------------------------------
+d204 5
+d215 3
+@
+
+
+2.7
+log
+@Added dump methods
+@
+text
+@d9 1
+a9 2
+  use Intrinsic, only: L_Frequency, L_IntermediateFrequency, &
+    & L_LSBFrequency, L_None, L_USBFrequency, PHYQ_DIMENSIONLESS, PHYQ_FREQUENCY, &
+d27 1
+a27 1
+       "$Id: FGrid.f90,v 2.6 2004/01/23 05:38:06 livesey Exp $"
+d205 3
+@
+
+
+2.6
+log
+@Tidied up handling of l_channel
+@
+text
+@d7 1
+d11 1
+a11 1
+    & L_CHANNEL
+d16 2
+d24 1
+a24 1
+    & DestroyFGridContents, DestroyFGridDatabase, NullifyFgrid
+d28 1
+a28 1
+       "$Id: FGrid.f90,v 2.5 2003/08/15 23:58:20 vsnyder Exp $"
+d53 4
+d149 41
+d206 3
+@
+
+
+2.5
+log
+@Get PHYQ_... directly from Intrinsic instead of indirectly via Units
+@
+text
+@d9 2
+a10 1
+    & L_LSBFrequency, L_None, L_USBFrequency, PHYQ_DIMENSIONLESS, PHYQ_FREQUENCY
+d25 1
+a25 1
+       "$Id: FGrid.f90,v 2.4 2002/11/22 12:17:48 mjf Exp $"
+d104 3
+d158 3
+@
+
+
+2.4
+log
+@Added nullify routine(s) to get round Sun's WS6 compiler not
+initialising derived type function results.
+@
+text
+@d9 1
+a9 1
+    & L_LSBFrequency, L_None, L_USBFrequency
+a14 1
+  use Units, only: PHYQ_DIMENSIONLESS, PHYQ_FREQUENCY
+d24 1
+a24 1
+       "$Id: FGrid.f90,v 2.3 2002/10/08 17:36:20 pwagner Exp $"
+d154 4
+@
+
+
+2.3
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d21 1
+a21 1
+    & DestroyFGridContents, DestroyFGridDatabase
+d25 1
+a25 1
+       "$Id: FGrid.f90,v 2.2 2001/11/01 00:23:14 livesey Exp $"
+d82 1
+d139 9
+d155 3
+@
+
+
+2.2
+log
+@Add check in DestroyFGridDatabase to not do anything if it's empty
+@
+text
+@d25 1
+a25 1
+       "$Id: FGrid.f90,v 2.1 2001/10/31 18:36:19 livesey Exp $"
+d29 1
+d138 4
+d145 3
+@
+
+
+2.1
+log
+@First version
+@
+text
+@d25 1
+a25 1
+       "$Id: HGrid.f90,v 2.19 2001/07/09 20:15:07 livesey Exp $"
+d28 1
+a28 1
+       "$RCSfile: HGrid.f90,v $"
+d127 1
+a127 1
+
+d139 4
+a142 1
+! $Log$
+@
+

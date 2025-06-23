@@ -1,0 +1,1921 @@
+head	2.28;
+access;
+symbols
+	v5-02-NRT-19:2.28
+	v6-00:2.28
+	v5-02-NRT-18:2.28
+	v5-02:2.28
+	v5-01-NRT-17:2.28
+	v5-01-NRT-16:2.28
+	v5-01-NRT-15:2.28
+	v5-01-NRT-14:2.28
+	neuralnetworks-1-0:2.28.0.4
+	cfm-single-freq-0-1:2.28.0.2
+	v5-01:2.28
+	v5-00:2.28
+	v4-23-TA133:2.27.0.2
+	mus-emls-1-70:2.22.0.4
+	rel-1-0-englocks-work:2.22.0.2
+	VUMLS1-00:2.22
+	VPL1-00:2.22
+	V4-22-NRT-08:2.22
+	VAM1-00:2.22
+	V4-21:2.20.0.2
+	V4-13:2.20
+	V4-12:2.19
+	V4-11:2.18
+	V4-10:2.18
+	V3-43:2.13
+	M4-00:2.14
+	V3-41:2.13
+	V3-40-PlusGM57:2.13.0.2
+	V2-24-NRT-04:2.5
+	V3-33:2.13
+	V2-24:2.5
+	V3-31:2.13
+	V3-30-NRT-05:2.13
+	cfm-01-00:2.13
+	V3-30:2.13
+	V3-20:2.13
+	V3-10:2.11
+	V2-23-NRT-02:2.5
+	V2-23:2.5
+	V2-22-NRT-01:2.5
+	V2-22:2.5
+	V2-21:2.5
+	V2-20:2.5
+	V2-11:2.5
+	V2-10:2.5
+	V2-00:2.5
+	V1-51:2.4
+	V1-50:2.4
+	V1-45:2.4
+	V1-44:2.4
+	V1-43:2.3
+	V1-42:2.3
+	V1-41:2.3
+	V1-32:2.3
+	V1-40:2.3
+	V1-31:2.3
+	V1-30:2.3
+	V1-13:2.3
+	V1-12:2.3
+	V1-11:2.3
+	V1-10:2.3
+	newfwm-feb03:2.3.0.2
+	V1-04:2.2
+	V1-03:2.2
+	V1-02:2.2
+	V1-00:2.2
+	newfwm-sep01:2.2.0.2
+	V0-7:2.2
+	V0-5-Level2:2.2
+	V0-5-SIPS:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.28
+date	2019.06.06.23.47.33;	author pwagner;	state Exp;
+branches;
+next	2.27;
+
+2.27
+date	2019.04.09.20.32.09;	author pwagner;	state Exp;
+branches;
+next	2.26;
+
+2.26
+date	2019.01.24.18.35.49;	author pwagner;	state Exp;
+branches;
+next	2.25;
+
+2.25
+date	2018.12.11.01.19.54;	author pwagner;	state Exp;
+branches;
+next	2.24;
+
+2.24
+date	2018.10.25.23.23.40;	author pwagner;	state Exp;
+branches;
+next	2.23;
+
+2.23
+date	2018.10.17.00.57.58;	author pwagner;	state Exp;
+branches;
+next	2.22;
+
+2.22
+date	2015.08.12.20.20.54;	author pwagner;	state Exp;
+branches;
+next	2.21;
+
+2.21
+date	2015.07.14.23.10.56;	author pwagner;	state Exp;
+branches;
+next	2.20;
+
+2.20
+date	2014.07.31.20.19.08;	author pwagner;	state Exp;
+branches;
+next	2.19;
+
+2.19
+date	2014.06.20.20.25.46;	author pwagner;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2013.08.20.00.29.36;	author pwagner;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2013.08.12.23.47.25;	author pwagner;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2013.04.13.00.17.40;	author pwagner;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2013.04.12.00.01.07;	author pwagner;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2012.08.14.00.22.09;	author pwagner;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2010.02.04.23.08.00;	author vsnyder;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2010.01.25.23.51.11;	author pwagner;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2009.06.30.15.21.21;	author pwagner;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2009.06.23.18.25.43;	author pwagner;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2008.12.02.23.08.28;	author pwagner;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2008.05.02.00.02.47;	author pwagner;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2008.04.18.16.28.26;	author pwagner;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2008.03.11.00.09.11;	author pwagner;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2005.06.22.17.25.49;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2004.05.19.23.00.18;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2002.10.08.00.09.10;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2001.04.26.02.39.11;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2000.10.11.18.33.24;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.28
+log
+@Added more error checking
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module IO_Stuff
+
+! Useful, low-level stuff for mostly formatted I/O
+  use Machine, only: Crash_Burn, Exit_With_Status, NeverCrash
+  use MLSCommon, only: MLSMSG_Crash, MLSMSG_Warning
+  ! use MLSFinds, only: FindFirstCharacter => FindFirst, &
+  !   &                 FindFirstSubstring => FindFirst
+
+  implicit none
+
+  private
+  public :: Get_lun
+  public :: Get_nLines
+  public :: Pause
+  public :: PrintMessage
+  public :: Read_stdin
+  public :: Read_Textfile
+  public :: Truncate_Textfile
+  public :: Write_Textfile
+
+! === (start of toc) ===                                                 
+!     c o n t e n t s                                                    
+!     - - - - - - - -                                                    
+
+!     (subroutines and functions)
+! Get_lun           Find a Fortran logical unit number that's not in use.
+!                     Fortran 2008 allows use of newunit= field in open
+! Get_nLines        Find how many lines are in a text file
+! Pause             Wait for user input via stdin
+! PrintMessage      Print a message and optionally exit with status
+! Read_stdin        Read standard input into characters scalar or array
+! Read_Textfile     Read contents of a textfile into characters scalar or array
+! Truncate_Textfile Delete contents of a text file
+! Write_Textfile    Write characters scalar or array out to a textfile
+! === (end of toc) ===
+
+! === (start of api) ===
+! Get_lun( int lun, [log msg], [int bottom], [int top] )
+! Get_nLines( char* File, int nLines, [int maxLineLen] )
+! Pause ( char* mesg , [char* Prompts(:) )] )
+! PrintMessage ( int severity, char* name, char* line, [char* advance] )
+! Read_stdin( str string, [int maxLineLen], [int nLines] )
+! Read_Textfile( char* File, str string, [int maxLineLen], [int nLines] )
+! Write_Textfile( char* File, str string, [int maxLineLen], [int nLines] )
+! Truncate_Textfile( str string )
+! str can be any of
+! character(len=*)                 a scalar character string of any length
+! character(len=*), dimension(:)   a 1d character array of any length
+! character(len=*), dimension(:,:) a 2d character array of any length
+!
+! Notes:
+! (1) Before reading a textfile into an array, make sure the array is allocated
+! and of sufficient size
+! (2) You could do this by first using get_nLines to discover the size you need, 
+! and then allocating the array
+! (3) By design, reading a textfile into a string will not change any unread
+! elements (so you can prefill with nulls
+! (4) get_nLines returns 0 for an empty file, and -1 if the file doesn't exist
+! or can't be opened
+! === (end of api) ===
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: io_stuff.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+  interface Read_stdin
+    module procedure Read_stdin_arr, Read_stdin_arr2d, Read_stdin_sca
+  end interface
+
+  interface Read_Textfile
+    module procedure Read_Textfile_arr, Read_Textfile_arr2d, Read_Textfile_sca
+  end interface
+
+  interface write_Textfile
+    module procedure write_Textfile_arr, write_Textfile_arr2d, write_Textfile_sca
+  end interface
+
+  ! The only legal unit numbers that files may be assigned
+  ! for use by Fortran opens, closes, reads and writes
+  integer, parameter :: bottom_unit_num = 1
+  integer, parameter :: top_unit_num    = 99
+
+  integer, parameter :: maxStrLen       = 1024
+
+contains
+
+! ================================================     get_lun     =====
+
+  subroutine Get_lun ( lun, msg, bottom, top )
+    ! Find a Fortran logical unit number that's not in use.
+    ! In Fortran 2008, this can be replaced by use of the newunit field in open
+    ! E.g., instead of
+    !    call get_lun ( lun )
+    !    open ( unit=lun, file=.. )
+    ! you can simply
+    !    open ( newunit=lun, file=.. )
+    ! Args
+    integer, intent(out)          :: Lun    ! The logical unit number
+    logical, intent(in), optional :: Msg    ! Print failure message? (default: T)
+    integer, intent(in), optional :: Bottom ! Where to begin
+    integer, intent(in), optional :: Top    ! Where to end
+    ! Internal variables
+    logical :: EXIST, OPENED             ! Used to inquire about the unit
+    integer :: myBottom
+    integer :: myTop
+    ! Executable
+    myBottom = bottom_unit_num
+    myTop    = top_unit_num
+    if ( present(Bottom) ) myBottom = Bottom
+    if ( present(Top) ) myTop = Top
+    do lun = myBottom, myTop
+      inquire ( unit=lun, exist=exist, opened=opened )
+      if ( exist .and. .not. opened ) return
+    end do
+    lun = -1
+    if ( present(msg) ) then
+      if ( .not. msg ) return
+    end if
+    write(*,*) 'IO_STUFF%GET_LUN-E- Unable to get a logical unit number'
+    return
+  end subroutine get_lun
+
+  !------------------ get_nLines
+  ! Notes and limitations:
+  ! formatted io
+  ! No line should be longer than maxStrLen
+  ! Returns 0 if file is of zero length
+  ! Returns -1 if file doesn't exist or can't be opened
+  ! (To get around that limitation supply optional arg maxLineLen)
+  subroutine get_nLines ( File, nLines, maxLineLen )
+  ! read a textfile into string array, one line per element
+    character(len=*), intent(in)  :: File ! its path and name
+    integer, intent(out)          :: nLines ! num lines read
+    integer, optional, intent(in) :: maxLineLen
+    ! Internal variables
+    integer :: lun
+    integer :: status
+    character(len=1), dimension(maxStrLen) :: nullArray
+    character(len=12) :: xfmt
+    character(len=8) :: xlen
+    ! Executable
+    nLines = -1 ! The value returned if the file doesn't exist
+    ! print *, 'Name of textfile: ', trim(File)
+    ! What format do we use for reading each line?
+    xfmt = '(128a1)' ! This is the default; if lines are larger supply maxLineLen
+    if ( present(maxLineLen) ) then
+      write( xlen, '(i8)' ) maxLineLen
+      if ( maxStrLen < maxLineLen ) write( xlen, '(i8)' ) maxStrLen
+      if ( index(xlen, '*') < 1 ) xfmt = '(' // trim(adjustl(xlen)) // 'a1)'
+    else
+      write( xlen, '(i8)' ) maxStrLen
+      if ( index(xlen, '*') < 1 ) xfmt = '(' // trim(adjustl(xlen)) // 'a1)'
+    endif
+    ! Try to read the textfile
+    call GET_LUN ( LUN )
+    open(UNIT=lun, form='formatted', &
+      & file=trim(File), status='old', iostat=status )
+    if ( status /= 0 ) then
+      ! write(*,*) 'IO_STUFF%get_nLines-E- Unable to open textfile ' // &
+      !  & trim(File)
+      return
+    endif
+    ! print *, 'xfmt: ', xfmt
+    nLines = 0
+    do
+      status = 0
+      read( UNIT=lun, fmt=xfmt, eor=50, end=500, err=50, advance='no' ) nullArray
+500   status = -1
+50    if ( status /= 0 ) exit
+      nLines = nLines + 1
+    enddo
+    close( UNIT=lun, iostat=status )
+  end subroutine get_nLines
+
+  subroutine Pause ( mesg, Prompts )
+
+    ! Wait to read mesg from  stdin 
+
+    character(len=*), intent (out)                        :: mesg            
+    character(len=*), intent (in), dimension(:), optional :: Prompts
+    ! Internal variables
+    integer                                               :: i
+    character(len=80)                                     :: myMesg
+    ! Executable
+    if ( present(Prompts) ) then
+      do i=1, size(Prompts)
+        print *, trim(Prompts(i))
+      enddo
+      read (*,'(a80)') myMesg
+    else
+      print *, '(P a u s e d .. e n t e r   m e s s a g e'
+      read (*,'(a80)') myMesg
+    endif
+    mesg = myMesg
+  end subroutine Pause
+
+  ! ------------------------------------  PrintMessage  -----
+  subroutine PrintMessage ( severity, name, line, advance )
+    ! Args
+    integer, intent(in)           :: severity
+    character(len=*), intent(in) :: name
+    character(len=*), intent(in) :: line
+    character (len=*), intent(in), optional :: Advance ! Do not advance
+    !                                 if present and the first character is 'N'
+    !                                 or 'n'
+    ! Local variables
+    integer :: nChars
+    character(len=len(line) + len(name) + 3) :: thus
+    ! Executable
+    nChars = len(line)
+    thus = line
+    if ( len_trim(name) > 0 ) then
+      nChars = len(line) + len(name) + 3
+      thus = '(' // trim(name) // ') ' // line
+    endif
+    print *, 'thus(1:nChars): ' 
+    print *, thus(1:nChars)
+    ! Really, should we allow even PrintMessage to trigger a crash?
+    ! For now, yes, we do.
+    if ( severity == MLSMSG_Crash ) then
+      NeverCrash = .false.
+      call Crash_Burn
+    elseif ( severity > MLSMSG_Warning ) then
+      call exit_with_status ( 1  )
+    endif
+  end subroutine PrintMessage
+
+  !------------------ Read_stdin
+  ! Notes and limitations:
+  ! Won't change unread elements (so you can prefill with nulls)
+  ! formatted io
+  ! No line should be longer than len(string)
+  ! (To get around that limitation supply optional arg maxLineLen)
+  ! Even then certain compilers impose limitations
+  ! E.g., NAG can't read a line longer than 1024 from stdin
+  subroutine Read_stdin_arr ( string, maxLineLen, nLines )
+  ! read stdin into string array, one line per element
+    character(len=*), dimension(:), intent(inout) :: string    ! its contents
+    integer, optional, intent(in) :: maxLineLen
+    integer, optional, intent(out) :: nLines ! num lines read
+    ! Internal variables
+    integer :: lun = 5
+    integer :: pos
+    integer :: recrd
+    integer :: status
+    character(len=1), dimension(len(string)) :: cArray
+    character(len=1), dimension(len(string)) :: nullArray
+    character(len=12) :: xfmt
+    character(len=8) :: xlen
+    ! What format do we use for reading each line?
+    xfmt = '(128a1)' ! This is the default; if lines are larger supply maxLineLen
+    if ( present(maxLineLen) ) then
+     write( xlen, '(i8)' ) maxLineLen
+     if ( len(string) < maxLineLen ) write( xlen, '(i8)' ) len(string)
+     if ( index(xlen, '*') < 1 ) xfmt = '(' // trim(adjustl(xlen)) // 'a1)'
+    else
+     write( xlen, '(i8)' ) len(string)
+     if ( index(xlen, '*') < 1 ) xfmt = '(' // trim(adjustl(xlen)) // 'a1)'
+    endif
+    ! Try to read the stdin
+    if ( present(nLines) ) nLines = 0
+    recrd = 0
+    ! print *, 'xfmt: ', xfmt
+    do
+      status = 0
+      call null_fill_1d( nullArray )
+      cArray = string( min(recrd+1, size(string)) )
+      read( UNIT=lun, fmt=xfmt, eor=50, end=500, err=50, advance='no' ) nullArray
+500   status = -1
+50    if ( status /= 0 ) exit
+      do pos=1, len(string) - 1
+        if ( any(nullArray(pos:pos+1) == achar(0)) ) exit
+      enddo
+      pos = max(pos, 2)
+      cArray(1:pos-1) = nullArray(1:pos-1)
+      ! print *, cArray
+      recrd = min(recrd+1, size(string))
+      string(recrd) = transfer( cArray, string(recrd) )
+    enddo
+    if ( present(nLines) ) nLines = recrd
+  end subroutine Read_stdin_arr
+
+  subroutine Read_stdin_arr2d ( chars, LineLen, nLines )
+  ! read stdin into a 2d char array, one line per row
+  ! leaving unread elements unchanged
+  ! (So you can prefill with nulls)
+    character(len=1), dimension(:,:), intent(inout) :: chars    ! its contents
+    integer, optional, intent(out) :: LineLen ! max line length read
+    integer, optional, intent(out) :: nLines ! num lines read
+    ! Internal variables
+    character(len=1), dimension(size(chars,2)) :: cArray
+    integer :: lun = 5
+    integer :: N ! max line length so far
+    integer :: col
+    integer :: recrd
+    integer :: status
+    character(len=12) :: xfmt
+    character(len=8) :: xlen
+    N = 0
+    ! What format do we use for reading each line?
+    xfmt = '(128a1)' ! This is the default
+    write( xlen, '(i8)' ) size(chars,2)
+    if ( index(xlen, '*') < 1 ) xfmt = '(' // trim(adjustl(xlen)) // 'a1)'
+    ! Try to read stdin
+    if ( present(nLines) ) nLines = 0
+    recrd = 1
+    ! print *, 'xfmt: ', xfmt
+    do
+      status = 0
+      call null_fill_1d( cArray )
+      read( UNIT=lun, fmt=xfmt, eor=50, end=500, err=50, advance='no' ) cArray
+500   status = -1
+50    if ( status /= 0 ) exit
+      do col=1, size(chars, 2)
+        if( cArray(col) == achar(0) ) then
+          N = max(N, col-1)
+          exit
+        else
+          chars(recrd, col) = cArray(col)
+        endif
+      enddo
+      if ( col > size(chars, 2) ) N = size(chars, 2)
+      recrd = min(recrd + 1, size(chars, 1))
+    enddo
+    if ( present(nLines) ) nLines = recrd
+    if ( present(LineLen) ) LineLen = N
+  end subroutine Read_stdin_arr2d
+
+  subroutine Read_stdin_sca ( string, maxLineLen, nLines )
+  ! read stdin into a single string
+    character(len=*), intent(inout) :: string    ! its contents
+    integer, optional, intent(in) :: maxLineLen
+    integer, optional, intent(out) :: nLines ! num lines read
+    ! Internal variables
+    character(len=1), dimension(len(string)) :: cArray
+    integer :: i
+    integer :: lun = 5
+    integer :: pos
+    integer :: recrd
+    integer :: status
+    character(len=12) :: xfmt
+    character(len=8) :: xlen
+    ! Executable
+    ! What format do we use for reading each line?
+    xfmt = '(128a1)' ! This is the default; if lines are larger supply maxLineLen
+    if ( present(maxLineLen) ) then
+     write( xlen, '(i8)' ) maxLineLen
+     if ( len(string) < maxLineLen ) write( xlen, '(i8)' ) len(string)
+     if ( index(xlen, '*') < 1 ) xfmt = '(' // trim(adjustl(xlen)) // 'a1)'
+    else
+     write( xlen, '(i8)' ) len(string)
+     if ( index(xlen, '*') < 1 ) xfmt = '(' // trim(adjustl(xlen)) // 'a1)'
+    endif
+    ! Try to read the stdin
+    if ( present(nLines) ) nLines = 0
+    recrd = 0
+    ! print *, 'xfmt: ', xfmt
+    i = 0
+    do
+      status = 0
+      call null_fill_1d( carray )
+      read( UNIT=lun, fmt=xfmt, eor=50, end=500, err=50, advance='no' ) cArray
+500   status = -1
+50    if ( status /= 0 ) exit
+      ! print *, cArray
+      recrd = recrd + 1
+      oneLine: do pos=1, len(string) - 1
+        if ( any(carray(pos:pos+1) == achar(0)) ) exit oneLine
+        i = min(i + 1, len(string))
+        string(i:i) = carray(pos)
+       enddo oneLine
+      i = min(i + 1, len(string))
+      string(i:i) = achar(13)
+    enddo
+    if ( present(nLines) ) nLines = recrd
+  end subroutine Read_stdin_sca
+
+  !------------------ Read_Textfile
+  ! Notes and limitations:
+  ! Won't change unread elements (so you can prefill with nulls)
+  ! formatted io
+  ! No line should be longer than len(string)
+  ! (To get around that limitation supply optional arg maxLineLen)
+  subroutine Read_Textfile_arr ( File, string, maxLineLen, nLines )
+  ! read a textfile into string array, one line per element
+    character(len=*), intent(in)  :: File ! its path and name
+    character(len=*), dimension(:), intent(inout) :: string    ! its contents
+    integer, optional, intent(in) :: maxLineLen
+    integer, optional, intent(out) :: nLines ! num lines read
+    ! Internal variables
+    logical, parameter :: DEEBug = .false.
+    integer :: lun
+    integer :: pos
+    integer :: recrd
+    integer :: status
+    character(len=1), dimension(len(string)) :: cArray
+    character(len=1), dimension(len(string)) :: nullArray
+    character(len=12) :: xfmt
+    character(len=8) :: xlen
+    ! Executable
+    if ( size(string) < 1 ) then
+      print *, 'Size of string too small in Read_Textfile_arr: ' // trim(file)
+      stop
+    elseif ( len_trim(File) < 1 ) then
+      print *, 'Attempted to read blank filename in Read_Textfile_arr'
+      stop
+    endif
+    if ( DEEBug ) then
+      print *, 'Name of textfile: ', trim(File)
+      print *, 'Size of string: ', size(string)
+    endif
+    ! What format do we use for reading each line?
+    xfmt = '(128a1)' ! This is the default; if lines are larger supply maxLineLen
+    if ( present(maxLineLen) ) then
+      write( xlen, '(i8)' ) maxLineLen
+      if ( len(string) < maxLineLen ) write( xlen, '(i8)' ) len(string)
+      if ( index(xlen, '*') < 1 ) xfmt = '(' // trim(adjustl(xlen)) // 'a1)'
+    else
+      write( xlen, '(i8)' ) len(string)
+      if ( index(xlen, '*') < 1 ) xfmt = '(' // trim(adjustl(xlen)) // 'a1)'
+    endif
+    ! Try to read the textfile
+    if ( present(nLines) ) nLines = 0
+    call GET_LUN ( LUN )
+    open( UNIT=lun, form='formatted', &
+      & file=trim(File), status='old', iostat=status )
+    if ( status /= 0 ) then
+      write(*,*) 'IO_STUFF%Read_Textfile_ARR-E- Unable to open textfile ' // &
+        & trim(File)
+      return
+    endif
+    recrd = 0
+    ! print *, 'xfmt: ', xfmt
+    do
+      status = 0
+      call null_fill_1d( nullArray )
+      cArray = string( min(recrd+1, size(string)) )
+      read( UNIT=lun, fmt=xfmt, eor=50, end=500, err=50, advance='no' ) nullArray
+500   status = -1
+50    if ( status /= 0 ) exit
+      do pos=1, len(string) - 1
+        if ( any(nullArray(pos:pos+1) == achar(0)) ) exit
+      enddo
+      pos = max(pos, 2)
+      cArray(1:pos-1) = nullArray(1:pos-1)
+      ! print *, cArray
+      recrd = min(recrd+1, size(string))
+      string(recrd) = transfer( cArray, string(recrd) )
+    enddo
+    if ( present(nLines) ) nLines = recrd
+    close( UNIT=lun, iostat=status )
+  end subroutine Read_Textfile_arr
+
+  subroutine Read_Textfile_arr2d ( File, chars, LineLen, nLines )
+  ! read a textfile into a 2d char array, one line per row
+  ! leaving unread elements unchanged
+  ! (So you can prefill with nulls)
+    character(len=*), intent(in)  :: File ! its path and name
+    character(len=1), dimension(:,:), intent(inout) :: chars    ! its contents
+    integer, optional, intent(out) :: LineLen ! max line length read
+    integer, optional, intent(out) :: nLines ! num lines read
+    ! Internal variables
+    character(len=1), dimension(size(chars,2)) :: cArray
+    integer :: lun
+    integer :: N ! max line length so far
+    integer :: col
+    integer :: recrd
+    integer :: status
+    character(len=12) :: xfmt
+    character(len=8) :: xlen
+    N = 0
+    ! print *, 'Name of textfile: ', trim(File)
+    ! What format do we use for reading each line?
+    xfmt = '(128a1)' ! This is the default
+    write( xlen, '(i8)' ) size(chars,2)
+    if ( index(xlen, '*') < 1 ) xfmt = '(' // trim(adjustl(xlen)) // 'a1)'
+    ! Try to read the textfile
+    if ( present(nLines) ) nLines = 0
+    call GET_LUN ( LUN )
+    open(UNIT=lun, form='formatted', &
+      & file=trim(File), status='old', iostat=status )
+    if ( status /= 0 ) then
+      write(*,*) 'IO_STUFF%Read_Textfile_ARR2D-E- Unable to open textfile ' // &
+        & trim(File)
+      return
+    endif
+    recrd = 1
+    ! print *, 'xfmt: ', xfmt
+    do
+      status = 0
+      call null_fill_1d( cArray )
+      read( UNIT=lun, fmt=xfmt, eor=50, end=500, err=50, advance='no' ) cArray
+500   status = -1
+50    if ( status /= 0 ) exit
+      do col=1, size(chars, 2)
+        if( cArray(col) == achar(0) ) then
+          N = max(N, col-1)
+          exit
+        else
+          chars(recrd, col) = cArray(col)
+        endif
+      enddo
+      if ( col > size(chars, 2) ) N = size(chars, 2)
+      recrd = min(recrd + 1, size(chars, 1))
+    enddo
+    if ( present(nLines) ) nLines = recrd
+    if ( present(LineLen) ) LineLen = N
+    close( UNIT=lun, iostat=status )
+  end subroutine Read_Textfile_arr2d
+
+  subroutine Read_Textfile_sca ( File, string, maxLineLen, nLines )
+  ! read a textfile into a single string
+    character(len=*), intent(in)  :: File ! its path and name
+    character(len=*), intent(inout) :: string    ! its contents
+    integer, optional, intent(in) :: maxLineLen
+    integer, optional, intent(out) :: nLines ! num lines read
+    ! Internal variables
+    character(len=1), dimension(len(string)) :: cArray
+    integer :: i
+    integer :: lun
+    integer :: pos
+    integer :: recrd
+    integer :: status
+    character(len=12) :: xfmt
+    character(len=8) :: xlen
+    ! Executable
+    ! What format do we use for reading each line?
+    xfmt = '(128a1)' ! This is the default; if lines are larger supply maxLineLen
+    if ( present(maxLineLen) ) then
+     write( xlen, '(i8)' ) maxLineLen
+     if ( len(string) < maxLineLen ) write( xlen, '(i8)' ) len(string)
+     if ( index(xlen, '*') < 1 ) xfmt = '(' // trim(adjustl(xlen)) // 'a1)'
+    else
+     write( xlen, '(i8)' ) len(string)
+     if ( index(xlen, '*') < 1 ) xfmt = '(' // trim(adjustl(xlen)) // 'a1)'
+    endif
+    ! Try to read the textfile
+    if ( present(nLines) ) nLines = 0
+    call GET_LUN ( LUN )
+    open(UNIT=lun, form='formatted', &
+      & file=trim(File), status='old', iostat=status )
+    if ( status /= 0 ) then
+      write(*,*) 'IO_STUFF%Read_Textfile_ARR-E- Unable to open textfile ' // &
+        & trim(File)
+      return
+    endif
+    recrd = 0
+    ! print *, 'xfmt: ', xfmt
+    i = 0
+    do
+      status = 0
+      call null_fill_1d( carray )
+      read( UNIT=lun, fmt=xfmt, eor=50, end=500, err=50, advance='no' ) cArray
+500   status = -1
+50    if ( status /= 0 ) exit
+      ! print *, cArray
+      recrd = recrd + 1
+      oneLine: do pos=1, len(string) - 1
+        if ( any(carray(pos:pos+1) == achar(0)) ) exit oneLine
+        i = min(i + 1, len(string))
+        string(i:i) = carray(pos)
+       enddo oneLine
+      i = min(i + 1, len(string))
+      string(i:i) = achar(13)
+    enddo
+    if ( present(nLines) ) nLines = recrd
+    close( UNIT=lun, iostat=status )
+  end subroutine Read_Textfile_sca
+  
+  !------------------ truncate_Textfile
+  subroutine truncate_Textfile( filename )
+    character(len=*), intent(in) :: filename
+    integer :: unitnum
+    call get_lun( unitnum )
+    open( unit=unitnum, file=filename, form='formatted', status='replace' )
+    close( unitnum )
+  end subroutine truncate_Textfile
+
+  !------------------ write_Textfile
+  ! We assume line feeds are already in string
+  subroutine write_Textfile_arr ( File, string, AsIs )
+  ! write a string array out to a textfile, one line per element
+    character(len=*), intent(in)               :: File ! its path and name
+    character(len=*), dimension(:), intent(in) :: string    ! its contents
+    logical, intent(in), optional              :: AsIs ! Skip Test of nulls
+    ! Internal variables
+    integer :: i, n
+    integer :: lun
+    logical :: myAsIs
+    integer :: status
+    ! print *, 'Name of textfile: ', trim(File)
+    myAsIs = .false.
+    if ( present(AsIs) ) myAsIs = AsIs
+    ! What format do we use for writing each line?
+    ! Try to write the textfile
+    call get_lun ( LUN )
+    open(UNIT=lun, form='formatted', &
+      & file=trim(File), status='unknown', access='sequential', &
+      & recl=size(string)*len(string(1)) + 1, iostat=status )
+    if ( status /= 0 ) then
+      write(*,*) 'IO_STUFF%write_Textfile_ARR-E- Unable to open textfile ' // &
+        & trim(File)
+      return
+    endif
+    do i=1, size(string)
+      ! We'll avoid using the MLSFinds module
+      ! n = FindFirstSubString( string(i), achar(0) )
+      do n=1, len(string(i))
+        if ( string(i)(n:n) == achar(0) ) exit
+      enddo
+      if ( myAsIs ) then
+        write ( lun, '(a)', advance='yes' ) trim(string(i))
+      elseif ( n < 2 ) then
+        write ( lun, '(a)', advance='yes' ) ''
+      else
+        write ( lun, '(a)', advance='yes' ) string(i)(:n-1)
+      endif
+    enddo
+    close( UNIT=lun, iostat=status )
+  end subroutine write_Textfile_arr
+
+  subroutine write_Textfile_arr2d ( File, chars )
+  ! write a 2-d array out to a textfile, one line per row
+    character(len=*), intent(in)  :: File ! its path and name
+    character(len=1), dimension(:,:), intent(in) :: chars    ! its contents
+    ! Internal variables
+    integer :: i, n
+    integer :: lun
+    integer :: status
+    ! print *, 'Name of textfile: ', trim(File)
+    ! What format do we use for writeing each line?
+    ! Try to write the textfile
+    call get_lun ( LUN )
+    open(UNIT=lun, form='formatted', &
+      & file=trim(File), status='unknown', access='sequential', &
+      & recl=size(chars) + 1, iostat=status )
+    if ( status /= 0 ) then
+      write(*,*) 'IO_STUFF%write_Textfile_arr2d-E- Unable to open textfile ' // &
+        & trim(File)
+      return
+    endif
+    do i=1, size(chars,1)
+      ! Avoid USE of the MLSFinds module
+      ! n = FindFirstCharacter( chars(i,:), achar(0) )
+      do n=1, size(chars(i,:))
+        if ( chars(i,n) == achar(0) ) exit
+      enddo
+      if ( n < 2 ) then
+        write ( lun, '(a)', advance='yes' ) ''
+      else
+        write ( lun, '(a)', advance='yes' ) chars(i,:n-1)
+      endif
+    enddo
+    close( UNIT=lun, iostat=status )
+  end subroutine write_Textfile_arr2d
+
+  subroutine write_Textfile_sca ( File, string )
+  ! write a textfile into string array, one line per element
+    character(len=*), intent(in)  :: File ! its path and name
+    character(len=*), intent(in) :: string    ! its contents
+    ! Internal variables
+    integer :: lun
+    integer :: status
+    ! print *, 'Name of textfile: ', trim(File)
+    ! What format do we use for writeing each line?
+    ! Try to write the textfile
+    call get_lun ( LUN )
+    open(UNIT=lun, form='formatted', &
+      & file=trim(File), status='unknown', access='sequential', &
+      & recl=len(string) + 1, iostat=status )
+    if ( status /= 0 ) then
+      write(*,*) 'IO_STUFF%write_Textfile_sca-E- Unable to open textfile ' // &
+        & trim(File)
+      return
+    endif
+    write ( lun, '(a)', advance='no' ) string
+    close( UNIT=lun, iostat=status )
+  end subroutine write_Textfile_sca
+
+!------------ Private procedures
+  subroutine null_fill_1d( array, nullChar )
+    ! Fill array with null chars
+    ! Args
+    character(len=*), dimension(:), intent(out) :: array
+    character(len=1), optional, intent(in)      :: nullChar
+    ! Internal variables
+    character(len=1) :: myNull
+    integer :: col
+    integer :: pos
+    ! Executable
+    myNull = achar(0)
+    if ( present(nullChar) ) myNull = nullChar
+    do col=1, size(array)
+      do pos=1, len(array(1))
+        array(col)(pos:pos) = myNull
+      enddo
+    enddo
+  end subroutine null_fill_1d
+
+  subroutine null_fill_2d( array, nullChar )
+    ! Fill array with null chars
+    ! Args
+    character(len=*), dimension(:,:), intent(out) :: array
+    character(len=1), optional, intent(in)      :: nullChar
+    ! Internal variables
+    integer :: col
+    ! Executable
+    do col=1, size(array,2)
+      call null_fill_1d( array(:, col), nullChar )
+    enddo
+  end subroutine null_fill_2d
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: io_stuff.f90,v 2.27 2019/04/09 20:32:09 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module IO_STUFF
+
+! $Log: io_stuff.f90,v $
+! Revision 2.27  2019/04/09 20:32:09  pwagner
+! Avoid use MLSFinds modul
+!
+! Revision 2.26  2019/01/24 18:35:49  pwagner
+! When asked to PrintMessage actually print message
+!
+! Revision 2.25  2018/12/11 01:19:54  pwagner
+! Moved unconditional stdout PrintMessage here
+!
+! Revision 2.24  2018/10/25 23:23:40  pwagner
+! Added Pause command
+!
+! Revision 2.23  2018/10/17 00:57:58  pwagner
+! New optional arg AsIs to write_Textfile_arr
+!
+! Revision 2.22  2015/08/12 20:20:54  pwagner
+! A needed close staement had been omitted from Read_Textfile_sca; fixed
+!
+! Revision 2.21  2015/07/14 23:10:56  pwagner
+! Added a routine to truncate_Textfile
+!
+! Revision 2.20  2014/07/31 20:19:08  pwagner
+! Improved comments; get_nLines returns 0 for an empty file, and -1 if cant open
+!
+! Revision 2.19  2014/06/20 20:25:46  pwagner
+! Added get_nLines
+!
+! Revision 2.18  2013/08/20 00:29:36  pwagner
+! Print name of text file that we choke on
+!
+! Revision 2.17  2013/08/12 23:47:25  pwagner
+! FindSomethings moved to MLSFinds module
+!
+! Revision 2.16  2013/04/13 00:17:40  pwagner
+! Fixed typos in commets; removed unused variables
+!
+! Revision 2.15  2013/04/12 00:01:07  pwagner
+! Added write_Textfile like existing Read_ routines
+!
+! Revision 2.14  2012/08/14 00:22:09  pwagner
+! get_lun can take optional Bottom, Top args
+!
+! Revision 2.13  2010/02/04 23:08:00  vsnyder
+! Remove USE or declaration for unused names
+!
+! Revision 2.12  2010/01/25 23:51:11  pwagner
+! Added routines to read stdin into string variables
+!
+! Revision 2.11  2009/06/30 15:21:21  pwagner
+! Changed intent to prevent Read_Textfile_sca from leaving undefineds in string
+!
+! Revision 2.10  2009/06/23 18:25:43  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.9  2008/12/02 23:08:28  pwagner
+! Added a print to not_used_here
+!
+! Revision 2.8  2008/05/02 00:02:47  pwagner
+! Less efficient but more failthful
+!
+! Revision 2.7  2008/04/18 16:28:26  pwagner
+! Now works properly with NAG, Lahey, and Intel
+!
+! Revision 2.6  2008/03/11 00:09:11  pwagner
+! Added Read_Textfile; should work for more compilers
+!
+! Revision 2.5  2005/06/22 17:25:49  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.4  2004/05/19 23:00:18  vsnyder
+! Add optional MSG argument
+!
+! Revision 2.3  2002/10/08 00:09:10  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.2  2001/04/26 02:39:11  vsnyder
+! Fix up CVS stuff
+!
+! Revision 2.1  2000/10/11 18:33:24  vsnyder
+! Move from lib/cf_parser to lib; insert copyright notice
+!
+! Revision 2.0  2000/09/05 17:41:50  dcuddy
+! Change revision to 2.0
+!
+! Revision 1.1  2000/07/06 01:43:12  vsnyder
+! Initial check-in
+!
+@
+
+
+2.27
+log
+@Avoid use MLSFinds modul
+@
+text
+@d160 3
+a162 3
+     write( xlen, '(i8)' ) maxLineLen
+     if ( maxStrLen < maxLineLen ) write( xlen, '(i8)' ) maxStrLen
+     if ( index(xlen, '*') < 1 ) xfmt = '(' // trim(adjustl(xlen)) // 'a1)'
+d164 2
+a165 2
+     write( xlen, '(i8)' ) maxStrLen
+     if ( index(xlen, '*') < 1 ) xfmt = '(' // trim(adjustl(xlen)) // 'a1)'
+d404 1
+d413 12
+a424 1
+    ! print *, 'Name of textfile: ', trim(File)
+d428 3
+a430 3
+     write( xlen, '(i8)' ) maxLineLen
+     if ( len(string) < maxLineLen ) write( xlen, '(i8)' ) len(string)
+     if ( index(xlen, '*') < 1 ) xfmt = '(' // trim(adjustl(xlen)) // 'a1)'
+d432 2
+a433 2
+     write( xlen, '(i8)' ) len(string)
+     if ( index(xlen, '*') < 1 ) xfmt = '(' // trim(adjustl(xlen)) // 'a1)'
+d438 1
+a438 1
+    open(UNIT=lun, form='formatted', &
+d729 1
+a729 1
+       "$Id: io_stuff.f90,v 2.26 2019/01/24 18:35:49 pwagner Exp $"
+d739 3
+@
+
+
+2.26
+log
+@When asked to PrintMessage actually print message
+@
+text
+@d17 2
+a18 2
+  use MLSFinds, only: FindFirstCharacter => FindFirst, &
+    &                 FindFirstSubstring => FindFirst
+d49 2
+a50 2
+! get_lun( int lun, [log msg], [int bottom], [int top] )
+! get_nLines( char* File, int nLines, [int maxLineLen] )
+d55 2
+a56 2
+! write_Textfile( char* File, str string, [int maxLineLen], [int nLines] )
+! truncate_Textfile( str string )
+d597 1
+a597 1
+    call GET_LUN ( LUN )
+d607 5
+a611 1
+      n = FindFirstSubString( string(i), achar(0) )
+d634 1
+a634 1
+    call GET_LUN ( LUN )
+d644 5
+a648 1
+      n = FindFirstCharacter( chars(i,:), achar(0) )
+d668 1
+a668 1
+    call GET_LUN ( LUN )
+d717 1
+a717 1
+       "$Id: io_stuff.f90,v 2.25 2018/12/11 01:19:54 pwagner Exp $"
+d727 3
+@
+
+
+2.25
+log
+@Moved unconditional stdout PrintMessage here
+@
+text
+@d229 2
+a230 1
+    print *, 'thus(1:nChars)'
+d709 1
+a709 1
+       "$Id: io_stuff.f90,v 2.24 2018/10/25 23:23:40 pwagner Exp $"
+d719 3
+@
+
+
+2.24
+log
+@Added Pause command
+@
+text
+@d15 2
+d26 1
+d41 1
+d52 1
+d210 30
+d708 1
+a708 1
+       "$Id: io_stuff.f90,v 2.23 2018/10/17 00:57:58 pwagner Exp $"
+d718 3
+@
+
+
+2.23
+log
+@New optional arg AsIs to write_Textfile_arr
+@
+text
+@d23 1
+d37 1
+d47 1
+d183 22
+d673 1
+a673 1
+       "$Id: io_stuff.f90,v 2.22 2015/08/12 20:20:54 pwagner Exp $"
+d683 3
+@
+
+
+2.22
+log
+@A needed close staement had been omitted from READ_TEXTFILE_sca; fixed
+@
+text
+@d12 1
+a12 1
+module IO_STUFF
+d15 2
+a16 2
+  use MLSFinds, only: findFirstCharacter => FindFirst, &
+    &                 findFirstSubstring => FindFirst
+d21 6
+a26 6
+  public :: get_lun
+  public :: get_nLines
+  public :: read_stdin
+  public :: read_textFile
+  public :: truncate_textFile
+  public :: write_textFile
+d33 1
+a33 1
+! get_lun           Find a Fortran logical unit number that's not in use.
+d35 5
+a39 5
+! get_nLines        Find how many lines are in a text file
+! read_stdin        Read standard input into characters scalar or array
+! read_textfile     Read contents of a textfile into characters scalar or array
+! truncate_textFile Delete contents of a text file
+! write_textfile    Write characters scalar or array out to a textfile
+d45 4
+a48 4
+! read_stdin( str string, [int maxLineLen], [int nLines] )
+! read_textfile( char* File, str string, [int maxLineLen], [int nLines] )
+! write_textfile( char* File, str string, [int maxLineLen], [int nLines] )
+! truncate_textFile( str string )
+d71 2
+a72 2
+  interface read_stdin
+    module procedure read_stdin_arr, read_stdin_arr2d, read_stdin_sca
+d75 2
+a76 2
+  interface read_textfile
+    module procedure read_textfile_arr, read_textfile_arr2d, read_textfile_sca
+d79 2
+a80 2
+  interface write_textfile
+    module procedure write_textfile_arr, write_textfile_arr2d, write_textfile_sca
+d92 1
+a92 1
+! ================================================     GET_LUN     =====
+d94 1
+a94 1
+  subroutine GET_LUN ( LUN, MSG, BOTTOM, TOP )
+d103 4
+a106 4
+    integer, intent(out)          :: LUN    ! The logical unit number
+    logical, intent(in), optional :: MSG ! Print failure message? (default: T)
+    integer, intent(in), optional :: BOTTOM ! Where to begin
+    integer, intent(in), optional :: TOP    ! Where to end
+d126 1
+a126 1
+  end subroutine GET_LUN
+d180 1
+a180 1
+  !------------------ read_stdin
+d188 1
+a188 1
+  subroutine READ_stdin_arr ( string, maxLineLen, nLines )
+d233 1
+a233 1
+  end subroutine READ_stdin_arr
+d235 1
+a235 1
+  subroutine READ_stdin_arr2d ( chars, LineLen, nLines )
+d279 1
+a279 1
+  end subroutine READ_stdin_arr2d
+d281 1
+a281 1
+  subroutine READ_stdin_sca ( string, maxLineLen, nLines )
+d328 1
+a328 1
+  end subroutine READ_stdin_sca
+d330 1
+a330 1
+  !------------------ read_textfile
+d336 1
+a336 1
+  subroutine READ_TEXTFILE_arr ( File, string, maxLineLen, nLines )
+d368 1
+a368 1
+      write(*,*) 'IO_STUFF%READ_TEXTFILE_ARR-E- Unable to open textfile ' // &
+d392 1
+a392 1
+  end subroutine READ_TEXTFILE_arr
+d394 1
+a394 1
+  subroutine READ_TEXTFILE_arr2d ( File, chars, LineLen, nLines )
+d423 1
+a423 1
+      write(*,*) 'IO_STUFF%READ_TEXTFILE_ARR2D-E- Unable to open textfile ' // &
+d449 1
+a449 1
+  end subroutine READ_TEXTFILE_arr2d
+d451 1
+a451 1
+  subroutine READ_TEXTFILE_sca ( File, string, maxLineLen, nLines )
+d483 1
+a483 1
+      write(*,*) 'IO_STUFF%READ_TEXTFILE_ARR-E- Unable to open textfile ' // &
+d508 1
+a508 1
+  end subroutine READ_TEXTFILE_sca
+d510 2
+a511 2
+  !------------------ truncate_textFile
+  subroutine truncate_textFile( filename )
+d517 1
+a517 1
+  end subroutine truncate_textFile
+d519 1
+a519 1
+  !------------------ write_textfile
+d521 1
+a521 1
+  subroutine write_TEXTFILE_arr ( File, string )
+d523 1
+a523 1
+    character(len=*), intent(in)  :: File ! its path and name
+d525 1
+d529 1
+d532 2
+d541 1
+a541 1
+      write(*,*) 'IO_STUFF%write_TEXTFILE_ARR-E- Unable to open textfile ' // &
+d547 3
+a549 1
+      if ( n < 2 ) then
+d556 1
+a556 1
+  end subroutine write_TEXTFILE_arr
+d558 1
+a558 1
+  subroutine write_TEXTFILE_arr2d ( File, chars )
+d574 1
+a574 1
+      write(*,*) 'IO_STUFF%write_TEXTFILE_arr2d-E- Unable to open textfile ' // &
+d587 1
+a587 1
+  end subroutine write_TEXTFILE_arr2d
+d589 1
+a589 1
+  subroutine write_TEXTFILE_sca ( File, string )
+d604 1
+a604 1
+      write(*,*) 'IO_STUFF%write_TEXTFILE_sca-E- Unable to open textfile ' // &
+d610 1
+a610 1
+  end subroutine write_TEXTFILE_sca
+d648 1
+a648 1
+       "$Id: io_stuff.f90,v 2.21 2015/07/14 23:10:56 pwagner Exp $"
+d658 3
+d662 1
+a662 1
+! Added a routine to truncate_textFile
+d680 1
+a680 1
+! Added write_textfile like existing read_ routines
+d692 1
+a692 1
+! Changed intent to prevent READ_TEXTFILE_sca from leaving undefineds in string
+d707 1
+a707 1
+! Added read_textfile; should work for more compilers
+@
+
+
+2.21
+log
+@Added a routine to truncate_textFile
+@
+text
+@d34 1
+d38 1
+a38 1
+! truncate_textFile          Delete contents of a text file
+d43 1
+a43 1
+! get_lun( int lun, [log msg] )
+d96 6
+d507 1
+d642 1
+a642 1
+       "$Id: io_stuff.f90,v 2.20 2014/07/31 20:19:08 pwagner Exp $"
+d652 3
+@
+
+
+2.20
+log
+@Improved comments; get_nLines returns 0 for an empty file, and -1 if cant open
+@
+text
+@d25 1
+d33 6
+a38 5
+! get_lun        Find a Fortran logical unit number that's not in use.
+! get_nLines     Find how many lines are in a text file
+! read_stdin     Read standard input into characters scalar or array
+! read_textfile  Read contents of a textfile into characters scalar or array
+! write_textfile Write characters scalar or array out to a textfile
+d47 1
+d502 9
+d634 1
+a634 1
+       "$Id: io_stuff.f90,v 2.19 2014/06/20 20:25:46 pwagner Exp $"
+d644 3
+@
+
+
+2.19
+log
+@Added get_nLines
+@
+text
+@d14 1
+a14 1
+! Useful, low-level stuff for I/O
+d49 10
+d122 2
+d136 2
+a149 1
+    nLines = 0
+d154 2
+a155 2
+      write(*,*) 'IO_STUFF%get_nLines-E- Unable to open textfile ' // &
+        & trim(File)
+d159 1
+d622 1
+a622 1
+       "$Id: io_stuff.f90,v 2.18 2013/08/20 00:29:36 pwagner Exp $"
+d632 3
+@
+
+
+2.18
+log
+@Print name of text file that we choke on
+@
+text
+@d14 3
+a16 3
+! Useful stuff for I/O
+  use MLSFINDS, only: FINDFIRSTCHARACTER => FINDFIRST, &
+    &                 FINDFIRSTSUBSTRING => FINDFIRST
+d21 5
+a25 4
+  public :: GET_LUN
+  public :: READ_STDIN
+  public :: READ_TEXTFILE
+  public :: WRITE_TEXTFILE
+d32 2
+a33 1
+! GET_LUN        Find a Fortran logical unit number that's not in use.
+d40 2
+a41 1
+! GET_LUN( int lun, [log msg] )
+d48 1
+a48 1
+! character(len=*), dimension(:,:) a 1d character array of any length
+d71 2
+a72 2
+  integer, parameter :: bottom_unit_num=1
+  integer, parameter :: top_unit_num=99
+d74 1
+d108 47
+d608 1
+a608 1
+       "$Id: io_stuff.f90,v 2.17 2013/08/12 23:47:25 pwagner Exp $"
+d618 3
+@
+
+
+2.17
+log
+@FindSomethings moved to MLSFinds module
+@
+text
+@d293 2
+a294 1
+      write(*,*) 'IO_STUFF%READ_TEXTFILE_ARR-E- Unable to open textfile'
+d348 2
+a349 1
+      write(*,*) 'IO_STUFF%READ_TEXTFILE_ARR2D-E- Unable to open textfile'
+d408 2
+a409 1
+      write(*,*) 'IO_STUFF%READ_TEXTFILE_ARR-E- Unable to open textfile'
+d452 2
+a453 1
+      write(*,*) 'IO_STUFF%write_TEXTFILE_ARR-E- Unable to open textfile'
+d483 2
+a484 1
+      write(*,*) 'IO_STUFF%write_TEXTFILE_arr2d-E- Unable to open textfile'
+d513 2
+a514 1
+      write(*,*) 'IO_STUFF%write_TEXTFILE_sca-E- Unable to open textfile'
+d557 1
+a557 1
+       "$Id: io_stuff.f90,v 2.16 2013/04/13 00:17:40 pwagner Exp $"
+d567 3
+@
+
+
+2.16
+log
+@Fixed typos in commets; removed unused variables
+@
+text
+@d15 2
+a515 27
+  ! -------------------------------------------  FindFirstCharacter  -----
+  integer function FindFirstCharacter ( Set, Probe )
+    ! Find the first element in the array Set that is equal to Probe
+    ! (case-sensitive, ignores trailing blanks, but alert to leading blanks)
+    character(len=*), dimension(:), intent(in) :: Set
+    character(len=*), intent(in) :: Probe
+
+    ! Executable code
+    do FindFirstCharacter = 1, size(set)
+      if ( trim(set(FindFirstCharacter)) == trim(probe) ) return
+    end do
+    FindFirstCharacter = 0
+  end function FindFirstCharacter
+
+  ! -------------------------------------------  FindFirstSubString  -----
+  integer function FindFirstSubString ( Set, Probe )
+    ! Find the first sub-string in the string Set that is (not) equal to Probe
+    character(len=*), intent(in) :: Set
+    character(len=1), intent(in) :: Probe
+
+    ! Executable code
+    do FindFirstSubString = 1, len(set)
+      if ( set(FindFirstSubString:FindFirstSubString) == probe ) return
+    end do
+    FindFirstSubString = 0
+  end function FindFirstSubString
+
+d551 1
+a551 1
+       "$Id: io_stuff.f90,v 2.15 2013/04/12 00:01:07 pwagner Exp $"
+d561 3
+@
+
+
+2.15
+log
+@Added write_textfile like existing read_ routines
+@
+text
+@d29 4
+a32 4
+! GET_LUN       Find a Fortran logical unit number that's not in use.
+! read_stdin    Read standard input into characters scalar or array
+! read_textfile Read contents of a textfile into characters scalar or array
+! read_textfile Write characters scalar or array into a textfile
+d39 1
+a39 1
+! writed_textfile( char* File, str string, [int maxLineLen], [int nLines] )
+a438 2
+    character(len=12) :: xfmt
+    character(len=8) :: xlen
+a440 1
+    xfmt = '(128a1)' ! This is the default; if lines are larger supply maxLineLen
+d466 1
+a466 1
+    integer :: i, j, n
+a468 2
+    character(len=12) :: xfmt
+    character(len=8) :: xlen
+a470 1
+    xfmt = '(128a1)' ! This is the default; if lines are larger supply maxLineLen
+a497 2
+    character(len=12) :: xfmt
+    character(len=8) :: xlen
+a499 1
+    xfmt = '(128a1)' ! This is the default; if lines are larger supply maxLineLen
+d576 1
+a576 1
+       "$Id: io_stuff.f90,v 2.14 2012/08/14 00:22:09 pwagner Exp $"
+d586 3
+@
+
+
+2.14
+log
+@get_lun can take optional Bottom, Top args
+@
+text
+@d22 1
+d32 1
+d39 1
+d60 4
+d429 93
+d523 27
+d585 1
+a585 1
+       "$Id: io_stuff.f90,v 2.13 2010/02/04 23:08:00 vsnyder Exp $"
+d595 3
+@
+
+
+2.13
+log
+@Remove USE or declaration for unused names
+@
+text
+@d16 1
+a16 1
+  implicit NONE
+d57 6
+d67 8
+a74 4
+  subroutine GET_LUN ( LUN, MSG )
+  ! Find a Fortran logical unit number that's not in use.
+    integer, intent(out) :: LUN          ! The logical unit number
+    logical, intent(in), optional :: MSG ! Print failure message if absent or .true.
+d76 8
+a83 1
+    do lun = 20, 100
+d102 2
+d458 1
+a458 1
+       "$Id: io_stuff.f90,v 2.12 2010/01/25 23:51:11 pwagner Exp $"
+d468 3
+@
+
+
+2.12
+log
+@Added routines to read stdin into string variables
+@
+text
+@a186 1
+    integer :: lines
+a355 1
+    integer :: lines
+d439 1
+a439 1
+       "$Id: io_stuff.f90,v 2.11 2009/06/30 15:21:21 pwagner Exp $"
+d449 3
+@
+
+
+2.11
+log
+@Changed intent to prevent READ_TEXTFILE_sca from leaving undefineds in string
+@
+text
+@d20 1
+d23 20
+d49 4
+d78 150
+d441 1
+a441 1
+       "$Id: io_stuff.f90,v 2.10 2009/06/23 18:25:43 pwagner Exp $"
+d451 3
+@
+
+
+2.10
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d24 1
+a24 1
+       "$RCSfile: $"
+d175 1
+a175 1
+    character(len=*), intent(out) :: string    ! its contents
+d266 1
+a266 1
+       "$Id: read_apriori.f90 is it here $"
+d276 3
+@
+
+
+2.9
+log
+@Added a print to not_used_here
+@
+text
+@d24 1
+a24 1
+       "$RCSfile: io_stuff.f90,v $"
+d263 1
+a264 1
+!---------------------------- RCS Ident Info -------------------------------
+d266 2
+a267 3
+       "$Id: io_stuff.f90,v 2.8 2008/05/02 00:02:47 pwagner Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d269 1
+a269 1
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
+d271 1
+d276 3
+@
+
+
+2.8
+log
+@Less efficient but more failthful
+@
+text
+@d266 1
+a266 1
+       "$Id: io_stuff.f90,v 2.7 2008/04/18 16:28:26 pwagner Exp $"
+d270 1
+d276 3
+@
+
+
+2.7
+log
+@Now works properly with NAG, Lahey, and Intel
+@
+text
+@d29 1
+a29 1
+    module procedure read_textfile_arr, read_textfile_sca
+d55 1
+d57 1
+a57 1
+  ! No line should be longer than 512 characters
+d59 1
+a59 1
+  subroutine READ_TEXTFILE_arr ( File, string, nLines, maxLineLen )
+d63 1
+a64 1
+    integer, optional, intent(in) :: maxLineLen
+d67 1
+d70 5
+a74 3
+    character(len=len(string)) :: tempStr
+    character(len=8) :: xfmt
+    character(len=6) :: xlen
+d76 1
+a76 1
+    xfmt = '(a512)' ! This is the default; if lines are larger supply maxLineLen
+d78 6
+a83 3
+     write( xlen, '(i6)' ) maxLineLen
+     if ( len(string) < maxLineLen ) write( xlen, '(i6)' ) len(string)
+     if ( index(xlen, '*') < 1 ) xfmt = '(a' // trim(adjustl(xlen)) // ')'
+a85 2
+    ! Don't change unread elements
+    ! string = " " 
+d95 1
+d97 14
+a110 4
+      read( UNIT=lun, fmt=xfmt, IOSTAT=status ) tempStr
+      if ( status /= 0 ) exit
+      recrd = recrd + 1
+      string(recrd) = tempStr
+d116 58
+a173 2
+  subroutine READ_TEXTFILE_sca ( File, string, maxLineLen )
+  ! read a textfile into sa single tring
+d177 1
+d179 2
+d182 2
+d186 3
+a188 3
+    character(len=len(string)) :: tempStr
+    character(len=8) :: xfmt
+    character(len=6) :: xlen
+d190 1
+a190 1
+    xfmt = '(a512)' ! This is the default; if lines are larger supply maxLineLen
+d192 6
+a197 2
+     write( xlen, '(i6)' ) maxLineLen
+     if ( index(xlen, '*') < 1 ) xfmt = '(a' // trim(adjustl(xlen)) // ')'
+d200 1
+a200 1
+    string = " "
+d205 1
+a205 1
+      write(*,*) 'IO_STUFF%READ_TEXTFILE_SCA-E- Unable to open textfile'
+d208 3
+a210 1
+    read( UNIT=lun, fmt=xfmt, IOSTAT=status ) string
+d212 14
+a225 3
+      read( UNIT=lun, fmt=xfmt, IOSTAT=status ) tempStr
+      if ( status /= 0 ) exit
+      string = trim(string) // achar(13) // tempStr
+d227 1
+a227 1
+    close( UNIT=lun, iostat=status )
+d229 33
+d266 1
+a266 1
+       "$Id: io_stuff.f90,v 2.6 2008/03/11 00:09:11 pwagner Exp $"
+d275 3
+@
+
+
+2.6
+log
+@Added read_textfile; should work for more compilers
+@
+text
+@d28 4
+d53 49
+a101 2
+  subroutine READ_TEXTFILE ( File, string )
+  ! read a textfile into string
+d104 1
+d110 8
+d124 1
+a124 1
+      write(*,*) 'IO_STUFF%READ_TEXTFILE-E- Unable to open textfile'
+d127 1
+a127 1
+    read( UNIT=lun, IOSTAT=status ) string
+d129 1
+a129 1
+      read( UNIT=lun, IOSTAT=status ) tempStr
+d134 1
+a134 1
+  end subroutine READ_TEXTFILE
+d139 1
+a139 1
+       "$Id: io_stuff.f90,v 2.5 2005/06/22 17:25:49 pwagner Exp $"
+d148 3
+@
+
+
+2.5
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d19 2
+a20 1
+  public GET_LUN
+d24 1
+a24 1
+       "$RCSfile: $"
+d49 27
+d79 1
+a79 1
+       "$Id: $"
+d88 3
+@
+
+
+2.4
+log
+@Add optional MSG argument
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d21 1
+a21 4
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
+       "$Id: io_stuff.f90,v 2.3 2002/10/08 00:09:10 pwagner Exp $"
+  character (len=len(idParm)), private :: Id = idParm
+d23 1
+a23 1
+       "$RCSfile: io_stuff.f90,v $"
+d49 5
+d60 3
+@
+
+
+2.3
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d15 1
+a15 1
+       "$Id: io_stuff.f90,v 2.2 2001/04/26 02:39:11 vsnyder Exp $"
+d26 1
+a26 1
+  subroutine GET_LUN ( LUN )
+d28 6
+a33 5
+    integer, intent(out) :: LUN    ! The logical unit number
+    logical :: OPENED              ! Used to inquire about the unit
+    do lun = 1, 100
+      inquire ( unit=lun, opened=opened )
+      if (.not. opened) return
+d35 4
+a39 1
+    lun = -1
+d42 1
+d50 3
+@
+
+
+2.2
+log
+@Fix up CVS stuff
+@
+text
+@d15 1
+a15 1
+       "$Id: $"
+d18 2
+a19 1
+       "$RCSfile: $"
+d38 4
+d45 3
+@
+
+
+2.1
+log
+@Move from lib/cf_parser to lib; insert copyright notice
+@
+text
+@d14 3
+a16 2
+  character (len=256), private :: Id = &
+       "$Id: io_stuff.f90,v 2.0 2000/09/05 17:41:50 dcuddy Exp $"
+d18 1
+a18 1
+       "$RCSfile: io_stuff.f90,v $"
+d40 3
+@
+

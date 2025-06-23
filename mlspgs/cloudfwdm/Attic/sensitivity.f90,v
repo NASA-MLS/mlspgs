@@ -1,0 +1,495 @@
+head	1.12;
+access;
+symbols
+	newfwm-sep01:1.10.0.2
+	V0-7:1.10;
+locks; strict;
+comment	@# @;
+
+
+1.12
+date	2001.09.20.18.27.56;	author jonathan;	state dead;
+branches;
+next	1.11;
+
+1.11
+date	2001.09.18.20.49.55;	author jonathan;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2001.08.01.20.51.39;	author dwu;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2001.08.01.19.50.03;	author dwu;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2001.08.01.19.42.52;	author dwu;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2001.08.01.17.24.43;	author jonathan;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2001.08.01.00.20.22;	author dwu;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2001.07.31.16.38.45;	author jonathan;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.07.27.19.40.52;	author jonathan;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2001.07.27.15.17.58;	author jonathan;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.07.25.23.44.01;	author jonathan;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.07.25.17.59.34;	author jonathan;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.12
+log
+@*** empty log message ***
+@
+text
+@SUBROUTINE SENSITIVITY(DTcir,ZT,NT,YP,YZ,NH,PRESSURE,NZ,  &
+        &                    delTAU,delTAUc,delTAU100,TAUeff,SS, &
+        &                    Trans_out,BETA,BETAc,DDm,Dm,DDZ,DZ, &
+        &                       N,ISWI,RE)
+!----------------------------------------------------------------
+
+      use MLSCommon, only: r8
+      INTEGER :: NH,NZ
+
+      REAL(r8) :: ZT(NT)                            ! TANGENT HEIGHT
+      REAL(r8) :: YP(NH)                            ! MODEL PRESSURE LEVEL
+      REAL(r8) :: YZ(NH)                            ! MODEL PRESSURE HEIGHT
+      REAL(r8) :: PRESSURE(NZ)                      ! L2 PRESSURE LEVEL
+      REAL(r8) :: DTcir(NT)                      ! CLOUD-INDUCED RADIANCE
+      REAL(r8) :: SS(NT)                         ! CLOUD RADIANCE SENSITIVITY
+      REAL(r8) :: TAUeff(NT)                     ! CLOUD EFFECTIVE OPTICAL DEPTH
+
+      REAL(r8) :: Trans(NH-1)                      ! Clear Transmission Func 
+      REAL(r8) :: delTAU100(NH-1)                   ! 100% AIR EXTINCTION 
+      REAL(r8) :: delTAU(NH-1)                      ! TOTAL EXTINCTION 
+      REAL(r8) :: delTAUc(NH-1)                     ! CLOUDY-SKY EXTINCTION
+
+      REAL(r8) :: Trans_out(NZ-1)            ! TOTAL Clear Trans Func
+      REAL(r8) :: BETA(NZ-1)                     ! TOTAL EXTINCTION
+      REAL(r8) :: BETAc(NZ-1)                    ! CLOUDY-SKY EXTINCTION
+      REAL(r8) :: DDm(N,NH-1)                       ! MASS-MEAN-DIAMETER
+      REAL(r8) :: Dm(N,NZ-1)                        ! MASS-MEAN-DIAMETER
+      REAL(r8) :: DDZ(NH-1)                         ! MODEL LEYER THICKNESS
+      REAL(r8) :: DZ(NZ-1)                          ! L2 LAYER THICKNESS
+
+      REAL(r8) :: RE
+      REAL(r8) :: HT,C_EXT,A_EXT,TGT,DS,DTAU,A_COL
+      REAL(r8) :: ZH(NH-1),ZA(NH-1)
+      INTEGER :: I,K,J,iflag
+!-----------------------------------------------------------------------------
+
+!===============================================================
+!     INTERPOLATE PARAMETERS FROM MODEL LEVEL NH TO L2 LEVEL NZ
+!===============================================================
+! COMPUTE TRANSMISSION FUNCTION
+      DO I=1,NH-1
+        TRANS(I)=0._r8
+      ENDDO
+        TRANS(NH-1) = DELTAU100(NH-1)
+      DO I=NH-2,1,-1
+        TRANS(I)=TRANS(I+1)+DELTAU100(I)   ! only clear sky absorption
+      ENDDO
+
+      Trans = exp(- Trans)
+
+! CONVERT DELTAU TO BETA
+      DO I=1,NH-1
+         ZH(I)=-(LOG10(YP(I+1))+LOG10(YP(I)))/2.
+         delTAU(I) = delTAU(I)/DDZ(I)
+         delTAUc(I) = delTAUc(I)/DDZ(I)
+      END DO
+
+      DO I=1,NZ-1
+         ZA(I)=-(LOG10(PRESSURE(I+1))+LOG10(PRESSURE(I)))/2.
+      END DO
+
+      DO J=1,NZ-1
+      
+         CALL LOCATE (ZH,NH-1, NH-1, ZA(J),JM)
+         
+         Trans_out(J)=((ZH(JM+1)-ZA(J))*TRANS(JM)+(ZA(J)-ZH(JM))*   &
+     &                TRANS(JM+1))/(ZH(JM+1)-ZH(JM))
+     
+         BETA(J)=((ZH(JM+1)-ZA(J))*delTAU(JM)+(ZA(J)-ZH(JM))*   &
+     &                delTAU(JM+1))/(ZH(JM+1)-ZH(JM))
+
+         BETAc(J)=((ZH(JM+1)-ZA(J))*delTAUc(JM)+(ZA(J)-ZH(JM))* &
+     &                delTAUc(JM+1))/(ZH(JM+1)-ZH(JM))             
+
+
+         Dm(1,J)=((ZH(JM+1)-ZA(J))*DDm(1,JM)+(ZA(J)-ZH(JM))*        &
+     &                DDm(1,JM+1))/(ZH(JM+1)-ZH(JM))             
+
+         Dm(2,J)=((ZH(JM+1)-ZA(J))*DDm(2,JM)+(ZA(J)-ZH(JM))*        &
+     &                DDm(2,JM+1))/(ZH(JM+1)-ZH(JM))             
+
+         DZ(J)=((ZH(JM+1)-ZA(J))*DDZ(JM)+(ZA(J)-ZH(JM))*            &
+     &                DDZ(JM+1))/(ZH(JM+1)-ZH(JM))             
+
+      ENDDO
+
+
+!==========================================================================
+!     RADIANCE SENSITIVITY CALCULATIONS
+!==========================================================================
+
+      IF (ISWI .EQ. 0) THEN
+
+         DO I=1,NT
+
+            HT = ZT(I)   
+
+            IF (HT .GE. 0.) THEN
+
+               do j=1,nh
+                  if (yz(j) .ge. ht) then
+                     iflag=j
+                     goto 100
+                  endif
+               enddo
+
+ 100           continue
+
+               C_EXT = 0.
+               A_EXT = 0.
+            
+               DO K=NH-1,iflag+1,-1
+
+                  IF (YZ(K) .GT. HT) THEN
+                     TGT=YZ(K-1) 
+                     IF(YZ(K).EQ.HT)THEN
+                        TGT=HT
+                     ENDIF
+                     DS = SQRT((RE+YZ(K))**2-(RE+HT)**2)-    &
+     &                    SQRT((RE+TGT)**2-(RE+HT)**2)
+                     DTAU = DS * delTAU(K)*DDZ(k)/(YZ(K)-YZ(K-1))
+                     A_COL = A_EXT + DTAU/2.
+                     C_EXT=C_EXT + delTAUc(K)*DDZ(k)*EXP(-A_COL)*   &
+     &                     DS/(YZ(K)-YZ(K-1))
+                     A_EXT = A_EXT + DTAU
+                  ENDIF
+
+               ENDDO
+
+               DO K=iflag+1,NH-1
+
+                  IF (YZ(K) .LT. HT) THEN
+                     TGT=YZ(K-1)
+                     IF(YZ(K).EQ.HT)THEN
+                        TGT=HT
+                     ENDIF 
+                     DS = SQRT((RE+YZ(K))**2-(RE+HT)**2)-    &
+     &                    SQRT((RE+TGT)**2-(RE+HT)**2)
+                     DTAU = DS * delTAU(K)*DDZ(k)/(YZ(K)-YZ(K-1))
+                     A_COL = A_EXT + DTAU/2.
+                     C_EXT=C_EXT + delTAUc(K)*DDZ(k)*EXP(-A_COL)*   &
+     &                     DS/(YZ(K)-YZ(K-1))
+                     A_EXT = A_EXT + DTAU
+                  ENDIF
+
+               ENDDO
+
+               
+               TAUeff(I)=C_EXT
+               if (TAUeff(I) .gt. 0.) then
+                  SS(I)=DTcir(I)/TAUeff(I)
+               else
+                  SS(I)=0.
+               endif
+            ENDIF
+
+         ENDDO
+      
+      ENDIF
+
+!--------------------------------------------------------------------------
+      RETURN
+      END
+
+! $Log: sensitivity.f90,v      
+
+
+
+
+
+
+
+
+
+@
+
+
+1.11
+log
+@*** empty log message ***
+@
+text
+@@
+
+
+1.10
+log
+@add delTau100
+@
+text
+@a87 3
+
+
+
+d121 1
+a121 1
+                     DTAU = DS * delTAU(K)/(YZ(K)-YZ(K-1))
+d123 1
+a123 1
+                     C_EXT=C_EXT + delTAUc(K)*EXP(-A_COL)*   &
+d139 1
+a139 1
+                     DTAU = DS * delTAU(K)/(YZ(K)-YZ(K-1))
+d141 1
+a141 1
+                     C_EXT=C_EXT + delTAUc(K)*EXP(-A_COL)*   &
+@
+
+
+1.9
+log
+@correct trans
+@
+text
+@d1 3
+a3 4
+
+      SUBROUTINE SENSITIVITY(DTcir,ZT,NT,YP,YZ,NH,PRESSURE,NZ,  &
+        &                    delTAU,delTAUc,TAUeff,SS,          &
+        &                    BETA,BETAc,DDm,Dm,DDZ,DZ,          &
+d19 1
+d23 1
+d44 1
+a44 1
+        TRANS(NH-1) = DELTAU(NH-1)-DELTAUc(NH-1)
+d46 1
+a46 1
+        TRANS(I)=TRANS(I+1)+DELTAU(I)-DELTAUc(I)   ! only clear sky absorption
+d66 1
+a66 6
+! If we want to output total beta
+!         BETA(J)=((ZH(JM+1)-ZA(J))*delTAU(JM)+(ZA(J)-ZH(JM))*   &
+!     &                delTAU(JM+1))/(ZH(JM+1)-ZH(JM))
+
+! if we want to output air transmission function             
+         BETA(J)=((ZH(JM+1)-ZA(J))*TRANS(JM)+(ZA(J)-ZH(JM))*   &
+d68 3
+@
+
+
+1.8
+log
+@correct trans
+@
+text
+@d43 1
+a43 1
+        TRANS(NH-1) = DELTAU(NH-1)
+d45 1
+a45 1
+        TRANS(I)=TRANS(I+1)+DELTAU(I)
+@
+
+
+1.7
+log
+@updated version
+@
+text
+@d48 2
+d52 1
+a52 1
+         ZH(I)=-LOG10( (YP(I+1)+YP(I))/2. ) 
+d58 1
+a58 1
+         ZA(I)=-LOG10( (PRESSURE(I+1)+PRESSURE(I))/2. )
+@
+
+
+1.6
+log
+@add Jacobian -Jonathan/Wu
+@
+text
+@d45 1
+a45 1
+        TRANS(I)=TRANS(I-1)+DELTAU(I)
+@
+
+
+1.5
+log
+@improved efficiency, jonathan
+@
+text
+@d19 1
+a21 1
+      REAL(R8) :: TRANS(NH-1)
+@
+
+
+1.4
+log
+@fix bug, jonathan
+@
+text
+@d5 1
+a5 1
+        &                       N,NF,IRF,ISWI,RE)
+d15 3
+a17 3
+      REAL(r8) :: DTcir(NT,NF)                      ! CLOUD-INDUCED RADIANCE
+      REAL(r8) :: SS(NT,NF)                         ! CLOUD RADIANCE SENSITIVITY
+      REAL(r8) :: TAUeff(NT,NF)                     ! CLOUD EFFECTIVE OPTICAL DEPTH
+d21 1
+d23 2
+a24 2
+      REAL(r8) :: BETA(NZ-1,NF)                     ! TOTAL EXTINCTION
+      REAL(r8) :: BETAc(NZ-1,NF)                    ! CLOUDY-SKY EXTINCTION
+d39 8
+d48 1
+d50 3
+a52 1
+         ZH(I)=-LOG10( (YP(I+1)+YP(I))/2. )
+d62 8
+a69 3
+        
+         BETA(J,IRF)=((ZH(JM+1)-ZA(J))*delTAU(JM)+(ZA(J)-ZH(JM))*   &
+     &                delTAU(JM+1))/(ZH(JM+1)-ZH(JM))             
+d71 1
+a71 1
+         BETAc(J,IRF)=((ZH(JM+1)-ZA(J))*delTAUc(JM)+(ZA(J)-ZH(JM))* &
+d74 1
+d86 3
+a88 9
+      DO J=1,NZ-1
+            IF (DZ(J) .GT. 0.) THEN 
+               BETA(J,IRF)=BETA(J,IRF)/DZ(J)
+               BETAc(J,IRF)=BETAc(J,IRF)/DZ(J)
+            ELSE
+               BETA(J,IRF)=0.
+               BETAc(J,IRF)=0.
+            ENDIF
+      ENDDO
+d150 4
+a153 3
+               TAUeff(I,IRF)=C_EXT
+               if (TAUeff(I,IRF) .gt. 0.) then
+                  SS(I,IRF)=DTcir(I,IRF)/TAUeff(I,IRF)
+d155 1
+a155 1
+                  SS(I,IRF)=0.
+d158 1
+@
+
+
+1.3
+log
+@First Successful f90 runs
+@
+text
+@d31 1
+a31 1
+      REAL(r8) :: ZH(NH),ZA(NZ)
+d49 2
+a50 2
+         CALL LOCATE (ZH,NH-1,NZ-1,ZA(J),JM)
+         
+@
+
+
+1.2
+log
+@new f90 version of cloudfwm, jonathan
+@
+text
+@d22 2
+a23 2
+      REAL(r8) :: BETA(NZ,NF)                       ! TOTAL EXTINCTION
+      REAL(r8) :: BETAc(NZ,NF)                      ! CLOUDY-SKY EXTINCTION
+d49 1
+a49 1
+         CALL LOCATE (ZH,NH,NZ,ZA(J),JM)
+@
+
+
+1.1
+log
+@new .f90 version, jonathan
+@
+text
+@d8 2
+a9 1
+      INTEGER NH,NZ
+d11 22
+a32 22
+      REAL ZT(NT)                              ! TANGENT HEIGHT
+      REAL YP(NH)                              ! MODEL PRESSURE LEVEL
+      REAL YZ(NH)                              ! MODEL PRESSURE HEIGHT
+      REAL PRESSURE(NZ)                        ! L2 PRESSURE LEVEL
+      REAL DTcir(NT,NF)                      ! CLOUD-INDUCED RADIANCE
+      REAL SS(NT,NF)                         ! CLOUD RADIANCE SENSITIVITY
+      REAL TAUeff(NT,NF)                     ! CLOUD EFFECTIVE OPTICAL DEPTH
+
+      REAL delTAU(NH-1)                        ! TOTAL EXTINCTION 
+      REAL delTAUc(NH-1)                       ! CLOUDY-SKY EXTINCTION
+
+      REAL BETA(NZ,NF)                         ! TOTAL EXTINCTION
+      REAL BETAc(NZ,NF)                        ! CLOUDY-SKY EXTINCTION
+      REAL DDm(N,NH-1)                         ! MASS-MEAN-DIAMETER
+      REAL Dm(N,NZ-1)                          ! MASS-MEAN-DIAMETER
+      REAL DDZ(NH-1)                           ! MODEL LEYER THICKNESS
+      REAL DZ(NZ-1)                            ! L2 LAYER THICKNESS
+
+      REAL RE
+      REAL HT,C_EXT,A_EXT,TGT,DS,DTAU,A_COL
+      REAL ZH(NH),ZA(NZ)
+      INTEGER I,K,J,iflag
+d40 1
+a40 1
+         ZH(I)=-ALOG10( (YP(I+1)+YP(I))/2. )
+d44 1
+a44 1
+         ZA(I)=-ALOG10( (PRESSURE(I+1)+PRESSURE(I))/2. )
+@
+

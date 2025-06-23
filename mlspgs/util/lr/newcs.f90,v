@@ -1,0 +1,220 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.12
+	cfm-single-freq-0-1:1.2.0.10
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.8
+	mus-emls-1-70:1.2.0.6
+	rel-1-0-englocks-work:1.2.0.4
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.2
+	V4-21:1.2.0.2
+	V4-13:1.2
+	V4-12:1.2
+	V4-11:1.2
+	V4-10:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2014.01.14.00.11.42;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2013.10.24.22.41.14;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Revised LR completely
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module New_Context_Set
+
+  implicit NONE
+  private
+  public :: NEWCS
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: newcs.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  subroutine NEWCS (IS, IPTR)
+
+    use LISTS, only: LCOMPR, LIST, NEW, REL
+    use Output_m, only: OUTPUT
+    use Print_List, only: PNTLST
+    use Tables, only: HEADCS
+    use TOGGLES_LR
+
+    implicit NONE
+
+  ! Create a new context set having elements in the list pointed to
+  ! by IS.  Return the pointer to the context set in IPTR.
+
+    integer, intent(in) :: IS
+    integer, intent(out) :: IPTR
+
+  ! *****     External References     ********************************
+
+  ! LCOMPR  compares two lists.
+  ! PNTLST  Prints a context set.
+
+  ! *****     Local Variables     ************************************
+
+  ! I       is a list pointer subscript.
+  ! IHEAD   is HEADCS(list(IS)%item).
+  ! IIS     is list(IS)%item.
+
+    integer I, IHEAD, IIS
+
+  ! *****     Procedures     *****************************************
+
+    iis = list(is)%item
+    ihead = headcs(iis)
+    i = ihead
+    do while (i /= 0)
+      iptr=list(i)%item
+      if ( lcompr(list(iptr)%next, is) ) then
+        ! Use the list at I, increase its reference count.
+        list(iptr)%item = list(iptr)%item + 1
+        if (toggle(iachar('3')) /= 0) then
+          call output ( list(iptr)%next, before=' Use context set at ' )
+          call output ( is, before=', destroy set at ', advance='yes' )
+        end if
+        call rel (is)
+        return
+      end if
+      i = list(i)%next
+    end do
+    call new (iptr)
+    list(iptr)%item = 1
+    list(iptr)%next = is
+    call new (i)
+    list(i)%item = iptr
+    list(i)%next = ihead
+    headcs(iis) = i
+    if (toggle(iachar('3')) /= 0) then
+      call output ( is, before=' Create a context set at ' )
+      call output ( ' = ' )
+      call pntlst ( is, 33, 3 )
+    end if
+
+  end subroutine NEWCS
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: newcs.f90,v 1.1 2013/10/24 22:41:14 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module New_Context_Set
+
+! $Log: newcs.f90,v $
+! Revision 1.1  2013/10/24 22:41:14  vsnyder
+! Initial commit
+!
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d20 1
+a20 1
+       "$RCSfile: parser.f90,v $"
+d28 2
+a29 2
+    use IO, only: OUTPUT
+    use LISTS, only: ITEM, LCOMPR, NEW, NEXT, REL
+d31 2
+a32 2
+    use S3, only: HEADCS
+    use TOGGLES
+d50 2
+a51 3
+  ! IHEAD   is HEADCS(ITEM(IS)).
+  ! IIS     is ITEM(IS).
+  ! LINE    Is used for message assembly.
+a53 1
+    character(len=120) :: LINE
+d57 1
+a57 1
+    iis = item(is)
+d61 2
+a62 2
+      iptr=item(i)
+      if ( lcompr(next(iptr), is) ) then
+d64 4
+a67 5
+        item(iptr) = item(iptr) + 1
+        if (toggle(ichar('3')) /= 0) then
+          write ( line(1:44), '(a,i5,a,i4)' ) &
+            ' Use context set at', next(iptr), ', destroy set at', is
+          call output (line(1:44))
+d72 1
+a72 1
+      i = next(i)
+d75 2
+a76 2
+    item(iptr) = 1
+    next(iptr) = is
+d78 2
+a79 2
+    item(i) = iptr
+    next(i) = ihead
+d81 4
+a84 4
+    if (toggle(ichar('3')) /= 0) then
+      line=' Create a context set at      ='
+      write ( line(25:29), '(i5)' ) is
+      call pntlst (is,line,33,3)
+d92 1
+a92 1
+       "$Id: parser.f90,v 2.29 2013/10/02 01:35:46 vsnyder Exp $"
+d101 4
+a104 1
+! $Log: $
+@
+

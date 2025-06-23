@@ -1,0 +1,162 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.14
+	cfm-single-freq-0-1:1.1.0.12
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.10
+	mus-emls-1-70:1.1.0.8
+	rel-1-0-englocks-work:1.1.0.6
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2008.06.11.20.14.52;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.2in
+\textheight 9.2in
+
+\newcommand{\docname}{\bf wvs-038}
+\newcommand{\docdate}{28 June 2006}
+
+\usepackage{longtable}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill\\
+Subject: \>Modification to {\tt metrics\_m}\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-20pt}
+
+The objective is to add more values to the $\phi$, $\zeta$ and $H$ grids that
+correspond to the horizontal temperature representation basis $\phi_m$.  The
+existing grids, call them $\phi_l$, $\zeta_l$ and $H_l$, are on both sides of
+the line-of-sight path, correspond to the $\zeta$'s at which heights and
+temperatures are desired.
+
+In {\tt metrics}, $\phi_m$ are given by the variable {\tt p\_basis}, while the
+reference $\zeta$'s are given by the variable {\tt z\_ref}.  Presently, the
+sizes of the resulting $\phi_l$, $\zeta_l$ and $H_l$ grids, produced in
+variables {\tt p\_grid}, {\tt z\_grid} and {\tt h\_grid}, are {\tt
+2*size(z\_ref)}.  In the revision, the size of the resulting $\phi_{l+m}$,
+$\zeta_{l+m}$ and $H_{l+m}$ grids will be {\tt 2*size(z\_ref) + size(p\_basis)}.
+
+Given $\phi_m$, compute $H_m = H_t / \phi_m$.  Then compute $i$ such that
+$\phi_i < \phi_m < \phi_{i+1}$.  Insert $\phi_m$ and $H_m$ into the {\tt
+p\_grid} and {\tt h\_grid} arrays between positions $i$ and $i+1$.  Compute
+$\zeta_m$, starting from
+
+\begin{equation}\begin{split}\label{one}
+\int_{H_i}^{H_m} Z \text{d} H =\,&
+ \int_{\zeta_i}^{\zeta_m} (T_i + \Gamma(\zeta-\zeta_i)) \text{d} \zeta =\\
+Z(H_m-H_i) =\,& T_i(\zeta_m-\zeta_i) + \frac12\Gamma (\zeta_m^2-\zeta_i^2)
+  - \Gamma \zeta_i ( \zeta_m-\zeta_i )
+\end{split}\end{equation}
+
+where
+
+\begin{equation}
+\Gamma = \frac{T_{i+1}-T_i}{\zeta_{i+1}-\zeta_i} \text{ and }
+Z = \frac{(T_i+T_{i+1})(\zeta_{i+1}-\zeta_i)}{2(H_{i+1}-H_i)}\,.
+\end{equation}
+
+Solving Equation (\ref{one}) for $\zeta_m$:
+
+\begin{equation}\label{zeta}
+\zeta_m = \frac{\Gamma\zeta_i - T_i + \sqrt{T_i^2 + 2 \Gamma Z (H_m-H_i)}}\Gamma =
+\frac{\Gamma\zeta_i - T_i + \sqrt{T_i^2 + (T_{i+1}^2-T_i^2)\frac{H_m-H_i}{H_{i+1}-H_i}}}\Gamma
+\,.
+\end{equation}
+
+Written to make the interpolations obvious, we have
+
+\begin{equation}\label{interp}
+(T_{i+1}-T_i) \frac{\zeta_m-\zeta_i}{\zeta_{i+1}-\zeta_i} +T_i =
+\sqrt{T_i^2 + (T_{i+1}^2-T_i^2) \frac{H_m-H_i}{H_{i+1}-H_i}}\,,
+\end{equation}
+
+from which it is clear that $\zeta_m=\zeta_i$ when $H_m=H_i$
+and $\zeta_m=\zeta_{i+1}$ when $H_m=H_{i+1}$.
+
+Insert the computed $\zeta_m$ into the {\tt z\_grid} array between positions
+$i$ and $i+1$.
+
+Do these calculations on the coarse path grid.  Then insert the additional GL
+points to construct the fine grid, and run {\tt metrics} again, instructing it
+not to interpose the additional $\phi_m$ etc. values.
+
+\label{lastpage}
+\end{document}
+% $Id: $
+@

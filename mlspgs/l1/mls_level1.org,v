@@ -1,0 +1,3889 @@
+head	1.5;
+access;
+symbols
+	v5-02-NRT-19:1.5
+	v6-00:1.5
+	v5-02-NRT-18:1.5
+	v5-02:1.5
+	v5-01-NRT-17:1.5
+	v5-01-NRT-16:1.5
+	v5-01-NRT-15:1.5
+	v5-01-NRT-14:1.5
+	neuralnetworks-1-0:1.5.0.8
+	cfm-single-freq-0-1:1.5.0.6
+	v5-01:1.5
+	v5-00:1.5
+	v4-23-TA133:1.5.0.4
+	mus-emls-1-70:1.5.0.2
+	rel-1-0-englocks-work:1.4.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.5
+date	2018.04.17.16.23.23;	author whdaffer;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2018.04.09.22.10.23;	author whdaffer;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2018.03.14.00.55.14;	author whdaffer;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2017.12.08.22.06.44;	author whdaffer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2017.12.05.15.45.48;	author whdaffer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.5
+log
+@Who knows! I think it's in the code walkthrough
+@
+text
+@#   l1 path = /users/whdaffer/devel/mlsL1andL2Software/current/mlspgs/l1
+
+* Documenting the code
+** doxygen
+
+   Free software used for 'self' documenting code. Works on C, C++,
+   Fortran (77 and 9x), Perl and some other things. The documentation
+   is pretty sparse. It seems to work source file directory by source
+   file directory, it's not abundantly clear to me how you document a
+   `project tree' of code.
+
+* F95
+
+** F95 Pointers: 
+
+   Some good stuff here: http://en.wikipedia.org/wiki/Fortran_95_language_features#Pointers
+
+*** Targets
+
+    In order for something to be 'pointed to' by a pointer it must..
+
+    + Be declared a /target/ or ...
+    + Inherit the /target/ attribute in some way. All subcomponents of
+      a derived type which has been declared a target are themselves
+      targets
+
+
+* Getting a copy.
+
+
+  See https://mls.jpl.nasa.gov/team/wiki/index.php/Level_1#Introduction
+
+  Follow the advice for getting the l2scripts module, but change
+  `l1scripts' to `mlspgs'. the mlspgs/l1 is the source directory
+  containing the Level 1 code.
+
+
+* Building
+** A regular (i.e. non-debug) version
+
+
+    From https://mls.jpl.nasa.gov/team/wiki/index.php/Mlspgs#level_1
+
+    *Checkout the software*
+
+#+BEGIN_SCR sh
+   % cd <top-of-your-src-tree>/mlspgs
+   % cvs -d /software/mlsdev/cvsroot checkout mlspgs
+#+END_SCR
+
+
+   Grab a .configure that matches the compiler you want to use. Most
+   people use ifc14. Look in /software/toolkit/<compiler> space,
+   (e.g. /software/toolkit/ifc14/.configure) and put it in the mlspgs
+   directory
+
+
+   *Build the software*
+#<<moonscan>>
+#+BEGIN_SCR sh
+   % cd <top-of-your-src-tree>/mlspgs
+   % export HOSTMLSCFILE=.configure # use .configure-ifc14debug for debug
+   % make update
+   % make install-l1
+   # % make moonscan # if you want the `moon scan' version of L1
+
+   # If you do this, it's a good idea to move 
+   # ./bin/IFC.Linux (or whatever the name of the 
+   # directory where the executables are installed) 
+   # to another name, then rerun 
+   # % make install-l1, to get the 'generic' level 1
+#+END_SCR
+
+   You should define HOSTMLSCFILE just as displayed, the configuration
+   process will complain if you use a fully qualified name for the
+   .configure file. If you see the following message ...
+
+
+
+#+BEGIN_SRC sh
+    If your compiler or platform is not among the options to be presented,
+    you may wish to try one of the options anyway, or else contact:
+
+	    mls software team
+	    jpl
+	    David.T.Cuddy@@jpl.nasa.gov
+	    (818)354-2099
+
+    and give the names of the compiler and platform you use.
+
+    The name you choose for your configuration can reflect the choice
+    of settings embodied in it. The default offered to you, based on
+    the compiler and platform, should be accepted unless you intend to
+    maintain multiple configurations simultaneously with different
+    compiler or linker options, linked libraries, and so on.
+
+
+#+END_SRC 
+
+    and it starts prompting for which compile to use, it hasn't found
+    the .configure file. Again, the configure process wants the file
+    defined in the export HOSTMLSCFILE= line to be a *relative* path
+
+
+
+   The /make install-l1/ puts the executables in mlspgs/bin/IFC.Linux
+
+   You then have to change the environmental file to point to these
+   new executables, specifically, change PGE_BINARY_DIR to point to
+   IFC.Linux.debug instead of IFC.Linux
+
+
+
+** Building a Debug version
+
+   This is the same process, except you use a .configure file that
+   specifies debug options. I used
+   ~pgwagner/mlspgs/.configure-ifc14debug.
+
+   This puts the executables in bin/IFC.Linux.debug
+
+
+*** Debugging Level 1.
+
+    /nas/LINUX/intel/11.0/074/bin/intel64/idb -- windowed debugger
+
+    On iguana, just typing `idb' gets you this
+
+    /nas/LINUX/intel/2013/composer_xe_2013.3.163/bin/intel64/idb
+
+    which seems to work fine.
+
+
+    You can attach to a running process, but I haven't had much luck
+    with that. To start from the beginning you need to define
+    environment variables that are normally defined by the cascade of
+    scripts that configure the run. This starts with T.sh and wends
+    its way through do-timings.sh and thence to 
+
+
+    
+   
+
+** Errors
+
+*** cp: cannot stat `MLSL1G': No such file or directory
+
+  
+* Notes on Level 1 software
+  The scripting runs the following modules in this order. Each is a
+  standalone compiled executable (f90) which is run in the background
+  and each produces output required by the next program in the chain.
+
+  1. MLSL10SN - open input files. checks things
+  2. MLSL1Log - counts the MAFs, determines weights and flags
+  3. MLSL1G - Calculates ephem, does GHz and DACC calibrations
+  4. MLSL1T - Does THz calibration
+
+     
+
+  
+* running Level 1
+#<<RunningL1>>
+** running a non-debug version
+   See https://mls.jpl.nasa.gov/team/wiki/index.php/Level_1 
+
+   To run you must 
+
+  1. Create a directory. It's a good idea to name it so that it tells
+     you something about the run. You should do it in /bigdata,
+     because the files can be big. This will be the root of your
+     output directories. Normally I name it with a string that
+     indicates which version of the toolkit was used in the mlspgs
+     software, e.g. /bigdata/whdaffer/testing/mlspgs/v4/something to
+     indicate this uses some sub-version of the v4 toolkit.
+
+  2. In a directory in another place, also named to give some insight
+     into the purpose of the run. Again, I'll probably include the
+     'v4' in the path. Then, a test number followed by a 'subtest'
+     number. e.g. ~whdaffer/testing/processing/l1tests/.../v4/<test>/<subtest>. This
+     is to allow you to vary some parameters of <test> by specifying a
+     different <subtest> and changing one or a few environmental
+     variables in the ENV and MACRO files. (see next few
+     comments). Into that directory put the following files.
+
+     1. The M4 macros files (e.g. CB-001.macros) - Contains M4 macros
+        which will be expanded as the run begins. See the CVS module
+        mlspgs/l2scripts/l1test for examples.
+     2. A file to define a set of environmental variables need
+        (e.g. SW-001.env, again in the mlspgs/l2scripts/l1test
+        module): Contains definitions for environmental variables
+        needed in the run. You'll need to change /day/, /TEST/,
+        /SUBTEST/ and, possibly PGE_{BINARY,SCRIPT}_DIR to point to
+        your installation of the mlspgs software or to a 'configured'
+        version of the code, depending on what you're doing.  Leave
+        PGE_ROOT and PGSHOME pointing at an existing toolkit until you
+        build you're own toolkit (which you don't want to do unless
+        you have to!)
+     3. An L1CF file (e.g. l1-v410.cf) - file used to create the run
+        PCF file. If one wanted to change the overall Level 1
+        processing, for example, by shutting of some or all the
+        channels in a band, you'd edit this file to accomplish that.
+     4. T.sh - the shell that creates the PCF and starts the run
+     5. PCF.m4 - the template for the run PCF
+     6. do-timings.sh: Edit it point to the tkreset.sh in
+        ${PGE_SCRIPT_DIR}/util, not the one in ${HOME}/mlspgs/util!
+        (maybe by the time you read this, that scripting will have
+        been changed to be more flexible.) This is called by T.sh and,
+        in turn, calls PGS_PC_Shell.sh, which calls the uber-script
+        mlsl1.sh, which controls the processing.
+  3. Execute T.sh 
+
+     
+   T.sh will open and read SW-001.env, CB-001 and l1-v410.cf use those
+   to create the run PCF file and then initiate the calling chain that
+   ultimately results in the call to mlsl1.sh that calls the actual
+   fortran executables.
+
+   This is the call prototype.
+
+   #+BEGIN_SRC sh
+  T.sh -Ef environment_File -Df macros_file
+   #+END_SRC
+
+   which creates the PCF file and starts the run. If there's already a
+   PCF file, this invocation will fail (because T.sh tries to create
+   the PCF. To reuse the PCF file, you can do...
+
+   #+BEGIN_SRC sh
+  T.sh  -resuse -Ef SW-001.env -Df CB-001.macros
+   #+END_SRC
+
+   after they've been suitably modified for your run.
+
+   The first time you call T.sh (without the -resuse switch) it will
+   create the run .PCF file in $WORKPATH, which is defined by various
+   environmental variables in the /environment_file/ and macros in
+   /macro_file/. (Since this depends on what you have in your env and
+   macros file, I can't be more explicit; you'll have to see what's
+   going on in your particular file to determine the value for your
+   particular run. Sorry!). The outputs will go in the
+   $WORKPATH/outputs/
+
+   Thereafter, without creating a new definition for /test/ and/or
+   /subtest/ you must use /-reuse/ or T.sh complains because of the
+   existing PCF file. This is a good thing! You don't want to overwrite
+   the .PCF file unless you really want to redefine things. 
+
+   However, when start you'll probably run into problems and end up
+   with a 0-length PCF file. You'll have to keep deleting it until you
+   get it right.
+
+*** moonscan runs
+
+    Moon Scan runs are the same as regular ones, except that you must
+    build the moonscan executable (See [[moonscan]] in the section
+    discussing building L1) and, rather than using l1-v410.cf for the
+    input .CF file, you use moon0.cf. Aside from that, you use the same
+    methodology as is discuss in [[RunningL1]] above.  files used in
+    running a normal L1 run)
+
+*** T.sh and do-timings.sh
+
+    These two scripts are the 'driver' scripts for the run. T.sh
+    evaluates the .env and .macros files to make their definitions
+    available to do-timings.sh
+
+*** Results
+
+    The T.sh calls do-timings.sh, which, after setting lots of internal
+    variables, calls PGC_PC_Shell.sh, which then calls the the real
+    master of the show: mlsl1.sh. This script runs the following Level
+    1 processors in the following order.
+
+    + mlsl0sn - Checks the input data, makes sure everything is
+      okay. If this fails, the whole run faile.
+    + mlsl1log - Sets up the logging. 
+    + mlsl1g - calculates the GHz radiances
+    + mlsl1t - calculates the THz radiances
+
+    
+    
+
+   
+**** Possible tasks
+***** How to remove band 3
+    MLSL1Config: Handles the run time
+    s_markchanbad
+
+    See lines like 
+
+#+BEGIN_SRC f90
+    MarkChanBad, chan=22, bandno=3
+#+END_SRC
+
+    At the moment, you must specify each channel you want to mark bad,
+    but the software (MLSL1Config.f90:Set_calibration, ~line 707)
+    could allow for the following scenario...
+
+#+BEGIN_SRC f90
+    MarkChanBad, bandno=3
+#+END_SRC
+
+    but don't specify the channel, and MLSL1Config would take that to
+    mean that all channels for band 3 would be marked as bad.
+
+
+***** How to change the altitude marked as 'space' when viewed through antenna
+
+      
+
+
+*** Failures
+
+    T.sh and do-timings.sh are *very* creaky and contankerous. They
+    require *everything* to be *just so* and they don't give very
+    meaningful error messages.
+
+    I've encountered the following error messages.
+
+    + *<LongPathToPCFFile> already exists--rm it or else set -reuse*
+      *option.*  You have an existing PCF file. Either insert -resuse or
+      remove it. (p.s. Don't do --reuse, that produces the extremely
+      useful error message "env file default-env.txt not found")
+    + *Error: PGE file must exist and have size greater than zero!*
+      Something went wrong generating the PCF file. Now you have a
+      0-length PCF file in $WORKDIR (so, you'll have to delete it
+      before you continue).
+    + *PGE file must exist and have size greater than zero*. At the
+      very end of the script calling sequence (T.sh -> do-timings.sh
+      -> PGS_PC_Shell.sh) PGS_PC_Shell.sh calls mlsl1.sh. This is the
+      `PGE file' the message refers too. Generally this means there's a
+      problem with the definition of PGS_BINARY_DIR in your
+      enviromental file.
+    + 
+
+
+      
+
+
+** Running a debug version
+
+   Running a debug version is harder, because you have to set up the
+   environment as it normally would be after running through the
+   scripts (T.sh -> do-timings.sh -> PGC_PC_Shell.sh -> mlsl1.sh) and
+   call the executable. That's quite a bit of work, but here's how
+   I've done it.
+
+#+BEGIN_SRC
+
+  #!/bin/sh
+  IDB=/nas/LINUX/intel/2013/composer_xe_2013.3.163/bin/intel64/idb
+
+
+  export PGSHOME=/users/pwagner/apps/test/shrnkwrp-v4.10/toolkit5.2.18
+
+  . $PGSHOME/bin/linux/pgs-env.ksh
+
+  export PGE_BINARY_DIR=/users/whdaffer/devel/mlsL1andL2Software/mlspgs/bin/IFC.Linux
+  export PGE_SCRIPT_DIR=/users/pwagner/apps/test/shrnkwrp-v4.20/pge/util
+  export PGE_ROOT=/users/pwagner/apps/test/shrnkwrp-v4.10/toolkit/bin/linux
+
+  export PGSTST=/users/pwagner/apps/test/ifc14-5.2.18/toolkit5.2.18/test
+  export PGSOBJ=/users/pwagner/apps/test/ifc14-5.2.18/toolkit5.2.18/obj/linux64
+  export PGSBIN=/users/pwagner/apps/test/ifc14-5.2.18/toolkit5.2.18/bin/linux64
+  export M4PATH=/users/whdaffer/devel/mlsL1andL2Software/mlspgs/l2/l2cf/lib
+  export PGSMSG=/users/pwagner/apps/test/ifc14-5.2.18/toolkit5.2.18/message
+  export PGSRUN=/users/pwagner/apps/test/ifc14-5.2.18/toolkit5.2.18/runtime
+
+  # important, it's the way the executable knows about the PCF file
+  export PGS_PC_INFO_FILE=<fully-qualified-PCF-file>
+
+
+
+  rm -f /users/whdaffer/processing/l1tests/v4/try0d/001/outputs/*.{h5,dat,txt,xml,met}
+
+  for i in /users/whdaffer/processing/l1tests/v4/try0d/001/outputs/Log*; do cp -f /dev/null $i; done
+  touch /users/whdaffer/processing/l1tests/v4/try0d/001/outputs/MLS-Aura_L1BLOG_v04-00-c01_2005d159.txt
+
+  # These I just run, because I'm interested in running mlsl1g in 
+  # debug, and I need their output before mlsl1g, but if you need to 
+  # run one of these, you'd change this script to call either mlsl0sn, 
+  # or mlsl1log in the debugger
+
+  echo Starting mlsl0sn
+  ~/devel/mlsL1andL2Software/mlspgs/bin/IFC.Linux.debug/mlsl0sn
+
+  echo Starting mlsl1log
+  ~/devel/mlsL1andL2Software/mlspgs/bin/IFC.Linux.debug/mlsl1log
+
+  $IDB ~/devel/mlsL1andL2Software/mlspgs/bin/IFC.Linux.debug/mlsl1g 2>&1 | tee idb.log
+
+  unset PGE_BINARY_DIR
+  unset PGE_SCRIPT_DIR
+  unset PGE_ROOT
+  unset PGSHOME
+  unset PGSTST
+  unset PGSOBJ
+  unset PGSBIN
+  unset M4PATH
+  unset PGSMSG
+  unset PGSRUN
+  unset PGS_PC_INFO_FILE
+
+#+END_SRC
+
+   I've developed some scripting 
+* Explanations of failures
+
+
+* SW Notes
+
+** instances of hardcoding
+
+*** SpectralBaseline
+    [[file:/users/whdaffer/devel/mlsL1andL2Software/current/mlspgs/l1/SpectralBaseline.f90:92][SpectralBaseline.f90 around line 92]]. We see the following lines
+
+#+BEGIN_SRC f90   
+
+    ! Mark special band channels bad
+
+	BaselineInclude(13)%chan(25) = .FALSE.      ! Band 13
+	BaselineInclude(14)%chan(24:25) = .FALSE.   ! Band 14
+	DO i = 22, 26                               ! Bands 22-26
+	   BaselineInclude(i)%chan(1) = .FALSE.
+	   BaselineInclude(i)%chan(108:129) = .FALSE.
+	ENDDO
+
+#+END_SRC 
+
+** Notes on the various input tables files
+*** GHzReflSpillEffs.tbl					      :table:
+    Loaded by BandTbls::LoadSpilloverLoss. The Band is the first
+    number. If the channel is different from 1, then that first column
+    will look like xy.y, where 'xy' is the band, and 'z' is the
+    channel. 
+
+    The item under f/GHz is ignored in the fortran code, it's never
+    read.
+
+
+#+BEGIN_SRC f90   
+  Band.ch U/LSB   f/GHz   h1 (PM) h2 (SM) h3 (TM)   hT      hS      hL
+  1       L       118.753 0.9807  0.9930  0.9930  0.99562 0.99574 0.99585
+#+END_SRC 
+
+    There's an fortran IO oddity here. Here's the code.
+
+
+#+BEGIN_SRC f90   
+     DO
+       READ (unit, '(A)', iostat=ios) line
+       IF (ios /= 0) EXIT
+       chan = 1
+       READ (line(1:2), *) bandno
+       READ (line(4:4), *, iostat=ios) chan
+       READ (line(25:), *) h, eta
+       ... more lines, not important here ...
+     ENDDO 
+#+END_SRC 
+
+If column 4 of `line' is a space, then `chan' is not over-written and
+it remains with the value of 1.
+
+
+*** StrayRadCoeffs.tbl						      :table:
+
+    This is loaded by BandTbls::LoadFourierCoeffs. 
+
+    See [[file:/users/whdaffer/devel/mlsL1andL2Software/current/mlspgs/l1/BandTbls.f90:453][BandTbls.f90 around line 453]]
+
+    The table looks like this...
+
+#+BEGIN_SRC f90   
+  {Band.ch m xc yc R k q0} N:\excel\emls\cal\[HighMIFs.xls]trajecmodel 060626.14:24 format 060407
+  1       1       -0.40200  0.08855   24.521 -3.12523  1.04705
+#+END_SRC 
+
+
+    Only columns beyond 9 are used, so the first two columns are
+    ignored. However, it looks like the first column is the band
+    no. as the indices used in loading the arrays match the first
+    column in the file. Apparently each band requires 4 coefficients.
+
+*** deflt-chi2.tbl
+
+    Loaded by BandTbls::loadDefltChi2
+
+    See  [[file:/users/whdaffer/devel/mlsL1andL2Software/current/mlspgs/l1/BandTbls.f90:387][BandTbls around line 387]]
+
+    The first 21 entries (delimited by '# Band xx' signifiers, are the
+    FB bands. 27-31 are the MB bands and the rest are the WF bands.
+
+*** deflt-baselineac.tbl
+
+    See [[file:/users/whdaffer/devel/mlsL1andL2Software/current/mlspgs/l1/SpectralBaseline.f90:707][LoadBaselineAC around line 707]]
+
+    Somewhat the same format as deflt-chi2, bands delimited by '# Band
+    xx' followed by data, except it skips bands 22 through 26 (the
+    DACS bands) The first line is the offset, the second the precision.
+
+*** BandAlts.tbl
+
+    See  [[file:/users/whdaffer/devel/mlsL1andL2Software/current/mlspgs/l1/BandTbls.f90:174][BandTbls around line 174]]
+
+    Gives the altitudes in km per channel for each band for the space
+    views in the limb port. A value <=0 means "don't use that
+    channel"
+
+    Strange that all the DACS channels (Bands 22-26) are marked as
+    "don't use"
+
+    
+
+    
+
+** PCF format
+   Lines are vertical-bar (|) delimited
+*** Input/Output files
+    The first number is defined in MLSPCF1.f90 and falls in a range
+    (there's a _start and _end definition that gives the range) which
+    maps to a parameter giving the name of the APID used in the
+    Toolkit. e.g. the range 21000-21019 maps to APID1732 (the ENG0
+    file). The APID is in the filename too, e.g. for files on 2005/036
+    the filenames begin with 'P2041732', to last four digits before
+    you run into a whole lone line of characters is the APID.
+
+    Mapping 
+    | APID     | file type |
+    |----------+-----------|
+    | APID1732 | ENG1      |
+    | APID1734 | ENG2      |
+    | APID1736 | ENG3      |
+    | APID1738 | ENG4      |
+    | APID1740 | ENG5      |
+    | APID1742 | ENG6      |
+    | APID1744 | SCI1      |
+    | APID1746 | SCI2      |
+    | APID1748 | unknown   | *though a SCI of type  3 is mentioned in the code*
+
+** Packet format
+
+*** Science packets
+
+    Science files have APIDS = 174{4,6}
+    In L0_sci_tbls the following two formats are created. The type of
+    the science packet is determined by the value of character 16 in
+    the 1024-byte packet. 
+
+
+   Following a packet header of 1024 bytes, the remaining packets have
+   the following formats, depending on whether they are type 1 packets
+   (APID=1744) or type 2 packets (APID=1746)
+
+#+BEGIN_SRC f90
+  ! for files with APID 1744
+  CHARACTER (LEN=*), PARAMETER :: Sci1_T1_fmt = &
+       "(3A2,3A1,A4,A2,2A1,2A2,A1,2(25A2),A2,2(25A2),A2,4(25A2),11A2,25A2,A2,&
+       & 2(25A2),2A1,3(2A1),2A13,A1,A13,A1,5A1,320A1,32A1,2A1,A2,2A1,10A1,A2)"
+
+  ! for files with APID 1746
+  CHARACTER (LEN=*), PARAMETER :: Sci2_T1_fmt = &
+       "(3A2,3A1,A4,A2,2A1,2A2,A1,2(11A2,25A2,A2),2(25A2),2(11A2),A2,4(25A2),&
+       & 320A1,A24,A80,2A1,2A24,25A1,5A1,2A1,A2)"
+#+END_SRC
+
+
+#+BEGIN_SRC IDL
+  ;;Using the following structures
+
+  ccsdst={ID:0s, $
+          seq_cntl:0s,$
+	  len:0s,hdr:0b,$
+	  octet_1:0b,$
+	  octet_2:0b,$
+	  coarse_time:0L,$
+	  fine_time:0s}
+
+  sci1Type1Str={ CCDSDS: ccsdst, $
+		type: 0b, $
+		mif: 0b, $
+		maf:0b, $
+		orbit:0s, $
+		spare1:0b, $
+		fb_dat:0s, $ ;; FB_dat(2*25+1+2*25+1+4*25+11+25+1+2*25)
+		gm05_stat: 0b, $
+		GM05_stat : 0b,$
+		GM06_stat : 0b, $
+		GM07_stat(2) : bytarr(2), $
+		GM08_stat(2) : bytarr(2), $
+		GM09_stat(2) : bytarr(2), $
+		GM10_stat : bytarr13), $
+		GM11_stat : bytarr13), $
+		GM12_stat  : 0b, $
+		GM13_stat : bytarr(13), $
+		GM14_stat  : 0b, $
+		GM15_stat(5): bytarr(5), $
+		DACS(320) : bytarr(320), $
+		diag_addr(32): bytarr(32), $
+		read_value : 0b, $
+		status_value : 0b, $
+		status_version : 0s
+		read_riu_id : 0b, $
+		status_riu_id: 0b, $
+		spare2(10) : bytarr(10), $
+		checksum : 0s}
+	
+		
+#+END_SRC
+
+** Shared Memory
+   
+** MLSL0SN
+
+** MLSL1Log
+
+   Calls
+   
+  1. OpenAndInitializeLog
+  2. ExamineData
+     Calls 
+     1. ExamineSciData
+     2. ExamineEngData
+     3. OutputLogSummary
+  3. DetermineWeightsFlags
+  4. CloseFiles
+  5. LogStatus
+  6. MLSMessage
+  7. MLSMessageExit (NORMAL_EXIT_STATUS)
+
+** MLSL1G
+
+   Need to define environmental variable PGS_PC_INFO_FILE = fully
+   qualified PCF file before invoking debugger or you can do it in the debugger with 
+   (idl) set environment PGS_PC_INFO_FILE
+
+   So you can do this
+
+   %
+     PGS_PC_INFO_FILE=~/processing/l1tests/v4/try0d/001/MLS-Aura_L1LOG_t001_2005d159.PCF
+     idb
+
+** PCF file
+   Many lines of the PCF file are vertical bar delimited tables, the
+   first elemement of which is an ID (Paul calls it the 'PCF ID', but
+   I think it's also caled the 'APID'). These APIDs are in several places...
+
+   1. 
+
+
+** The automated creation of the PCF file
+
+   /users/whdaffer/devel/mlsL1andL2Software/mlspgs/util/expandl2cf.sh
+   
+** Errors seen
+
+*** Error:  PCF file must exist and have size greater than zero!
+
+    Caused by not copying PCF.m4 into the directory where you run T.sh
+
+*** About to fail during Get_APE_ASA_pos at MAF
+    See [[file:/users/whdaffer/devel/mlsL1andL2Software/current/mlspgs/l1/SciUtils.f90:197][SciUtils.f90: line 197]]
+
+    Reason for failure:
+
+
+
+    The routine SciUtils::Get_APE_ASA takes a 24 byte vector from the
+    sci2_t1 (defined by Sci2_T1_T type at [[file:/users/whdaffer/devel/mlsL1andL2Software/current/mlspgs/l1/L0_sci_tbls.f90:94][L0_sci_tbls.f90 line 94]]), at
+    the location named `GHz_ant_scan'. (fyi, this variable is a
+    *straight* read of the packet data, see [[file:/users/whdaffer/devel/mlsL1andL2Software/current/mlspgs/l1/SciUtils.f90:104][SciUtils.f90 around line
+    104]] for the actual read statement, so that variable is the *exact
+    format* of the packet, byteswapped, of course). I'm guessing this
+    is the GHz antenna location counts. If the first of these == 0, we
+    see this message before the routine is called.
+
+**** Get_APE_ASA_pos
+
+     This seems to return the position for the GHz antenna, but the
+     code is almost completely uncommented. The method seems to be ...
+
+#+BEGIN_SRC f90
+
+     Input array is named DN
+     If the first byte is 14, 15, 24-27 or 34
+       drop the first 5 bytes (DN=DN(6:))
+     endif
+
+     Now, possibly working with the reduced array (if previous was true)
+     if first byte == 7 or 9 then
+       drop the first three bytes (of possibly already reduced array)
+       i.e. DN=DN(4:)
+     endif 
+     if first byte == 9 then 
+        loc1=3
+     else if byte 10 == 9 then
+        loc1=12
+     endif
+      
+     Here loc1 is the location in the input array (however it's been
+     reduced by the first 2 tests) of the 3 byte (24 bit) value that
+     gives the APE counts
+
+     if loc1 > 0 then 
+       ape_pos(1)=deg24*byte_swap(DN(loc1:loc1+2)
+       ape_pos(2)=deg24*byte_swap(DN(loc1+3:loc1+5)
+     endif 
+
+     where deg24 = 360.0 * 2.0**(-24)
+
+     so 360.0 degrees packed into 24 bits.
+
+     if first byte == 7 then
+       loc2=3
+     elseif byte 10 == 7 then
+       loc2=12
+     endif 
+
+     Hmmm..... Just like APE????
+
+     if loc2 > 0 then 
+       ASA_pos(1)  = BigEndianStr (DN(iasa:iasa+2)) / aaa_frac
+       ASA_pos(2)  = BigEndianStr (DN(iasa+3:iasa+5)) / aaa_frac
+     endif
+
+     where aaa_frac = 3706880.0 ! I have *no* idea where that comes from
+
+#+END_SRC
+
+
+*** x th engineering value is a NaN
+
+    see [[file:/users/whdaffer/devel/mlsL1andL2Software/current/mlspgs/l1/EngUtils.f90:338][EngUtils.f90 around line 338]]
+
+    which is in the _SUBROUTINE ConvertEngCounts_
+
+    Reason for failure: The code tests for the following 
+
+#+BEGIN_SRC
+       if ( isNaN(Eng_tbl(i)%value) .and. &
+         & ( i < 307 .or. i > 321 ) &
+         & ) then
+#+END_SRC
+
+    where 'i' is line number in the file engtlm.tbl (excluding the
+    header and section demarcating lines (those consisting of a line
+    of dashes)). 
+
+    The file engtlm.tbl has information about which TIU channel and
+    scale is appropriate to the mnemonic given in the first
+    column. The line number in that file (excluding the header and
+    lines consisting only of dashes) maps into an array of Riu_Tbl_T
+    (defined at [[file:/users/whdaffer/devel/mlsL1andL2Software/current/mlspgs/l1/EngTbls.f90:194][EngTbls.f90 around line 194]] )that gives the pkt number
+    and start byte of the data for the mnemonic. The processing in
+    ConverEngCounts loops through the data read from engtlm.tbl for
+    each RIU, picks out the appropriate parts in engineering packets
+    on the basis of the data provided by the user type Riu_Tbl_T,
+    storing the byte swapped data in the %value tag and converts the
+    data according to some information contained in mnemonic. For
+    example, if the word 'cal' appears in the mnemonic, it does one
+    thing, if PRT-1 appears, another, ..., and so on.
+
+    So, this line says : if you're not looking at a mnemonic defined
+    between lines 307 and 320 (the GHz switching network, by the way)
+    and the value is a nan, report it, otherwise go to next line. The
+    value is read into the structure (type) Eng_tbl(defined at
+    [[file:/users/whdaffer/devel/mlsL1andL2Software/current/mlspgs/l1/EngTbls.f90:135][EngTbls.f90, around line 135]]) in the subrouting
+    EngUtils::ConvertEngCounts in a big switch statement which
+    portions up the science packet according to the mnemonics defined
+    in engtlm.tbl.
+
+    [[file:/users/whdaffer/devel/mlsL1andL2Software/current/mlspgs/l1/EngTbls.f90:
+
+    
+
+    
+
+*** Subscript #1 of the array USESTDOUT has value -9
+
+    Full message is: forrtl: severe (408): fort: (3): Subscript #1 of
+    the array USESTDOUT has value -9 which is less than the lower
+    bound of -4
+
+    traceback: 557, 476, 430 or lib/output_m.f90.
+
+    Caused by setting outputOptions%prUnit=-9 in
+    MLSL1Config.f90. Changed to outputOptions%prUnit=BOTHPRUNIT after
+    including that parameter in the use output_m statement.
+
+**** Resolution. 
+
+     occurs in THz module because there are no THz values to
+     run. Don't worry about it unless you're working on THz stuff.
+
+
+
+
+    
+
+* Acronyms
+  + L1BOA : L1B Orbit Atitude
+  + GSM : GHz Switching Mirror. Switches between the various views,
+    limb, space and calibration target (L, S and T in the software
+  + TSSM: THz (s) Switching Mirror. Like the GSM, but different. The T
+  + APE:
+  + ASA:
+  + 
+
+
+
+* Investigations
+
+** MJS and the GPH glitches
+
+
+   [2015-03-04 Wed]
+
+   Michael ask me to investigate the cause of glitches in the GPH that
+   arise from bad times in the used to create the L1BOA data. These files
+   have names like
+
+   /data/Aura/attitude/2005/160/AURATTH.C2005160.0000.001.2005160122945.hdf.
+
+   The problem, claims he, is that every so often the time spacing
+   between successive points (which is usually about 1 second) drops
+   to 0.5 secs or less and that the 3rd Euler angle takes on an
+   anomalous value for those anomalous steps. It's Euler angler which
+   causes the problem, I suppose.
+
+   Tracing the execution through the code, I come up with this.
+
+
+   mlspcf_l1b_oa_start = 30002 (MLSPCF.f90) is the code for the lines
+   in the PCF file that give the AURATTH files, whose ident code
+   is 10502. 
+
+   Searching for that in toolkit/include/*.h I find the macro
+   PGSd_SC_ATTHDF_DATA set to that value and searching for that in the
+   src/EPH directory, I find the following routines that make
+   reference to that macro
+
+   ../toolkit/src/EPH/PGS_EPH_EphAtt_unInterpolate.c
+   ../toolkit/src/EPH/PGS_EPH_EphemAttit.c
+
+   So, something in the Level 1 calls these directly, or calls
+   something that calls them.
+
+   And I find it in TkL1B_sc, declared as an integer
+   function. TKL1B_sc is called from L1BOA_MAF, which is called from
+   L1BOutUtiles::OutputL1BOA, which is called from MLSL1G
+
+   MLS1G->L1BOutUtils::OutputL1BOA->L1BOA_MAF->TKL1B_sc->PGS_EPH_EphemAttit.c
+   
+   All that gets passed in is the time of the MAF, it's the toolkit
+   does the interpolation. So L1 can't do anything about bad time
+   deltas.
+
+   *We could* preprocess the offending files, but if we did that we'd
+    have to do it for *all* days (good and bad). That way madness
+    lies!
+
+
+
+
+   
+    [2015-03-04 Wed 14:21]
+
+    I made changes several weeks ago, mostly cosmetic, to make the L1
+    source code presentable to the source-code documention program
+    /Doxygen/. I'm going to check those changes in and do some
+    regression testing.
+
+    
+
+
+* doxygen
+  Doxygen is an autmoated source documentation system, like IDLDoc for
+  IDL, JavaDoc for Java, JSDoc for JavaScript, ..., etc
+
+
+  See http://en.wikipedia.org/wiki/Comparison_of_documentation_generators
+
+  I've found several problems using Doxygen; there are certain code
+  snippets it doesn't like. I've found these problems.
+
+** Comment format for F90
+
+   Start the comment with `!>' or `!<'. Continue such a comment e into
+   multi-line comments by starting each line with `!!'
+
+** Running doxygen
+
+   Controlling doxygen is done entirely by editing a config file; by
+   default named `Doxyfile'. But you can use another file by passing
+   it in as the single parameter on the command line
+
+   We should set /OPTIMIZE_FOR_FORTRAN=YES/ if the project is
+   *entirely* fortran code, but =NO if it's a mixture of Fortran and
+   C. If we run it only over the fortran code, set
+   /OPTIMIZE_FOR_FORTRAN=NO/
+
+#+BEGIN_SRC sh
+  % doxygen [config-file]
+#+END_SRC
+
+** Problems in the L1/L2 code
+
+   First and foremost: a common error is that the parser will loose
+   it's place in the file and think it's inside a block of some sort,
+   so it fails on the last line of the file with a mesage like
+
+   'Error in file /nas/users/whdaffer/devel/mlsL1andL2Software/export/V4-13/mlspgs/l2/dnwt_module.f90 \
+   line: 1547, state: 4'
+
+
+   For example, it may have something that runs off the end of a line
+   and won't see the closing quote, so it thinks it's still in the
+   comment when it hits the end of the file.
+
+   To fix such a problem, you have to find the line that causes the
+   problem. The only way I've found is to remove parts of the file
+   until you remove the part of the file that causes the problem (and,
+   suddenly, doxygen can now process the file). That tells you where
+   the error is. Fix that and you're good to go. 
+
+
+   | File        |   Lines | comment                              |
+   |-------------+---------+--------------------------------------|
+   | MLSL1Common | 246-252 | Definition of BandWidth parameter    |
+   |             |         | The doxygen parser couldn't handle   |
+   |             |         | the multiple reshapes/implied        |
+   |             |         | do-loops. So I broke them out int    |
+   |             |         | individual definitions (see block 1) |
+
+
+#+BEGIN_SRC f90
+  ! block 1
+  TYPE (Chan_R_T), PARAMETER :: BandWidth = Chan_R_T ( &
+       RESHAPE ( (/ (FB_BW, i=1,FBnum) /), (/ FBchans, FBnum /) ), &
+       RESHAPE ( (/ (FB_BW(8:18), i=1,MBnum) /), (/ MBchans, MBnum /) ), & 
+       RESHAPE ( (/ (500.0e06, i=1,WFchans*WFnum) /), (/ WFchans, WFnum /) ), &
+       RESHAPE ( (/ (0.097e06, i=1,DACSchans*DACSnum) /), &
+       (/ DACSchans, DACSnum /) ) )
+#+END_SRC  
+
+   which I rewrote as ...
+
+#+BEGIN_SRC f90
+  REAL, PARAMETER, PRIVATE :: FB_R(FBchans,FBnum)= &
+       RESHAPE ( (/ (FB_BW, i=1,FBnum) /), (/ FBchans, FBnum /) )
+  REAL, PARAMETER, PRIVATE :: MB_R(MBchans,MBnum)= &
+       RESHAPE ( (/ (FB_BW(8:18), i=1,MBnum) /), (/ MBchans, MBnum /) )
+  REAL, PARAMETER, PRIVATE :: WF_R(WFchans,WFnum)= &
+       RESHAPE ( (/ (500.0e06, i=1,WFchans*WFnum) /), (/ WFchans, WFnum /) )
+  REAL, PARAMETER, PRIVATE :: DACCS_R(DACSchans,DACSnum)= &
+       RESHAPE ( (/ (0.097e06, i=1,DACSchans*DACSnum) /), (/ DACSchans, DACSnum /) )
+
+ !! define BandWidth  
+  TYPE (Chan_R_T), PARAMETER :: BandWidth = Chan_R_T ( &
+       FB_R, MB_R, WF_R, DACCS_R)
+ 
+#+END_SRC  
+
+
+  Unfortunately, when I build L1 after having made
+
+** In L2 software 
+
+   In mlspgs/l2 I found multiple problems
+
+   | File            |    Lines | comment                                   |
+   |-----------------+----------+-------------------------------------------|
+   | DumpCommand     | multiple | The routine uses a variable               |
+   |                 |          | named `BLOCK'. Doxygen doesn't like this. |
+   |                 |          | I changed it to `IBLOCK' and doxygen      |
+   |                 |          | stopped complaining.                      |
+   | Fill            |          | Same problem, BLOCK -> iBlock             |
+   | ScanModelModule |          | Block -> iBlock (22 instances)            |
+   | SnoopMLSL2      |          | Block -> iBlock                           |
+   | dnwt_module     |     1235 | Didn't like output_line = '---...'        |
+   |                 |          | The only mod I made was to reduce the     |
+   |                 |          | of '-' characters by one (so the line     |
+   |                 |          | stops at column 78 instead of 79.         |
+   |                 |     1377 | itsName = 'What???' changed to            |
+   |                 |          | itsName = "What???". Apparently it didn't |
+   |                 |          | like the single quotes.                   |
+
+
+** in /lib
+   L2GPData.f90 : the `block' problem
+
+   MLSStrings.f90 : line 2595 has a variable named myEscape =
+   '\'. Doxygen thinks the `\' is escaping the second single quote, so
+   it thinks the string isn't closed propery. I commented out that
+   line and, instead put that data in the definition statement a few lines above, as 
+
+#+BEGIN_SRC f90
+    integer                      :: i, j, k, line
+    character(len=len(outLines)) :: inLine
+    character(len=1)             :: myComment 
+    character(len=1)             :: myEscape /'/'/
+    character(len=len(outLines)) :: outLine
+#+END_SRC
+
+** In mlspgs/util
+
+   end_stmts.f90 : Doxygen doesn't like a variable named `type'
+* understand
+* Scripts reworking
+
+  Notes on rewriting all scripts into one python script and in
+  streamlining the build process, particularly the moonscan processing.
+
+** Moontrack/Moonscan
+
+   everyone calls them 'moonscan' runs, but Rick calls them moontrack
+   runs. In these runs the mirror is stopped from its normal scanning
+   mode, parked in a location near the top of the FOV, then commanded
+   to follow (i.e. track) the moon as it `sets' out the bottom of the
+   FOV.
+
+   To build and run the moonscan processing the following is done by
+   the make moonscan target in mlspgs/Makefile...
+
+   
+   1. Build l1 (make install-l1) as you would normally.
+   2. remove the directories $(INSTALLDIR)-original and
+      $(INSTALLDIR)-moonscan. These are normally something like
+      IFC.Linux-orignal and IFC.Linux-moonscan.
+   3. cd to ./l1
+   4. Do the following 2 things while in the l1 directory
+      1. copy Calibration.f90 to Calibration.f90-original
+      2. Use sed to exit Calibration.f90-original to change "WinMAFs=6"
+	 to "WinMAFs=10"
+   5. make -f MakeFC install-l1 (we're back in mlspgs now!)
+   6. mv $(INSTALLDIR)/mlsl1.sh $(INSTALLDIR)/mlsl1.sh-original
+   7. use sed to append the line "MLSBIN=$$MLSBIN-moonscan" to the
+      line "MLSBIN=" in the mlsl1.sh-original file, send output to
+      $(INSTALLDIR)/mlsl1.sh (i.e. point MLSBIN to the moonscan
+      directory)
+   8. chmod a+x $(INSTALLDIR)/mlsl1.sh
+   9. rename $(INSTALLDIR) to $(INSTALLDIR)-moonscan
+   10. mv $(INSTALLDIR)-original $(INSTALLDIR)
+   11. cd ./l1
+   12. mv Calibration.f90-original Calibration.f90
+
+* Running tests of particular small snippets of code
+
+  Say you want to test some small bit of code, but you don't want to
+  run all of L1 to do it. Say, the modules you're going to use are in mlspgs/lib
+
+  + CD to mlspgs/tests/lib
+  + Move any other .f90 files out of the way. I generally put them in
+    mlspgs/test/lib/old
+  + Code up your main program
+  + In mlspgs/test/lib, do...
+    + make update
+    + make
+  + Your executable will appear in the file `test'
+
+   
+    
+  
+* Questions
+
+  1. What is an RIU? : Ans: _Remote Interface Unit_
+  2. What is the id_word of the riu table? (Ans: it's the identifier for a
+     particular RIU. However, Dominc says (and the C&DH handbook
+     confirms) that this number is *always* equal 77x (119dec). It's
+     only meaning comes when it's equal to 0, which implies the RIU is
+     *off*
+  3. In many runs we see the message "xx th engineering value is a
+     NaN". What does this mean? (Ans: can mean 2 things. 1) the
+     id_word mentioned in #2 equals 0 or 2) the engineering counts is
+     <= 0. Message is emitted at [[file::/users/whdaffer/devel/mlsL1andL2Software/current/mlspgs/l1/EngUtils.f90:384][EngUtils.f90 around line 384]].
+  4. Message 'About to fail during Get_APE_ASA_pos at MAF...'. If the
+     first character in the Antenna position == 0, (The variables is
+     sci_pkt%GHZ_sw), this message is emitted before the call to
+     Get_APE_ASA_pos(). No such complication occurs for THz_sw.
+  5. APE_ASA_pos? These values are pulled out the GHz_ant_pos section
+     of the packet (see [[file::/users/whdaffer/devel/mlsL1andL2Software/current/mlspgs/l1/SciUtils.f90][SciUtils about line 195]] at this line: DN =
+     sci_cptr(tindex)%GHz_ant_scan)
+  6. What is a `BankWall' (see [[file:~/devel/mlsL1andL2Software/current/mlspgs/l1/SortQualify.f90][SortQualify::QualifyWindow]], around line
+     773). Variables,Routines to look at: Variables:
+     CurMAFdata%SciPkt%MaxAtten, SciUtils::DeterminAttens. (ans: A
+     BankWall is a section of 2 or 3 MAFs that are marked as being
+     'bad' because the Attenuation is either maxed out, or it has
+     changed from one MAF to the next. When the attenuation changes,
+     or is maxed, a counter is set to '2'. Each successive MAF after
+     that for which the BankWall was declared, that counter is
+     decremented by 1. When it reaches 0, the BankWall is released. I
+     believe that means that the BankWall lasts for 3 MAFs, although
+     it isn't declared until *after* the MAF in which the attenuation
+     changes or is maxed out.
+  7. Various one letter codes are used as 'band masks' for the various
+     bands in a MIF. They are
+     - T : primary calibration target
+     - D : discard (MIF can't be used for some reason)
+     - M : Match. Used to tell the software how to process a ??
+     - O : override
+     - U : undefined
+  8. How does L1Config%Calib%GHz_seq_use get set in the first place?
+     ([[file:/users/whdaffer/devel/mlsL1andL2Software/current/mlspgs/l1/MLSL1Config.f90][MLSL1Config.f90, about line 667]]) (Ans: )
+  9. In [[file:/users/whdaffer/devel/mlsL1andL2Software/current/mlspgs/l1/SortQualify.f90:444][SortQualify.f90 around line 444]], what does 't' (as opposed to 'T')
+     signify?
+  10. [[file:/users/whdaffer/devel/mlsL1andL2Software/current/mlspgs/l1/SortQualify.f90:540][SortQualify.f90:540]]. If the space/target views counts have a
+      difference < 100 counts, for FB 13, MB 5, WF 2 and DACS 1, the
+      filter banks are off!
+  11. SciUtils::GetSciPkt ([[file:///users/devel/mlsL1andL2Software/current/mlspgs/l1/SciUtils.f90][SciUtils.f90 around line 196]]) subtracts
+      0.25 seconds form the packet TAI93 time. The claim is that this
+      brings it in line the MAF time. Why?
+  12. What is the difference between 'band' and 'bank'
+
+
+
+
+
+
+
+     
+
+
+
+* ToDo
+  - [[file:/users/whdaffer/devel/mlsL1andL2Software/current/mlspgs/l1/SortQualify.f90:482][SortQualify.f90:482]]. Add a Print statement, so that the message
+    goes to the STDOUT log too.
+
+
+* Outputs
+
+  There are 3 primary files that log the run: 
+
+  1. LogReport (in ${JOBDIR}/outputs). This gathers all the messages
+     emitted using the MLSMessage facility.
+  2. MLS-Aura_L1BLOG_<mls-full-ver>_<auraday>.txt (in
+     ${JOBDIR}/outputs, where <mls-full-ver> is the version as it
+     appears in the l1bradversion macro in the .macros file and
+     <auraday> is the date as YYYYdDOY of the run.
+  3. A file named ${TEST}-${SUBTEST} in the CWD where the jobs are
+     run, when run using the paradigm employed by T.sh. In that
+     paradigm, the shell STDOUT is pointed to this file. If you're
+     using a different paradigm that doesn't do this, then these
+     messages will go to STDOUT. These are all the results of the
+     fortran type and/or print messages
+
+  Unless indicated otherwise, these files go ${JOBDIR}/outputs, where
+  JOBDIR is defined in the .env file passed to T.sh via the -Ef switch. 
+
+
+  Some of these files may be used for input or input/output for the
+  next executable in line, so if you want to 'step in' and start the
+  run mid-run, (say you want to skip the first executable and move
+  directly to mlsl1log) you'll have to do the work to generate the
+  required input files. Additionally, .h5 files are 'created', by the
+  applicable executable (e.g. MLS-Aura_L1BRADD_v04-20-c01_2015d066.h5
+  by mlsl1log) so if you want to rerun e.g. mlsl1log, you have to
+  delete that file, because its presence will cause a failure, but if
+  you want to run mlsl1g, you must make sure that file exists in a
+  state that is usable by mlsl1g.
+
+
+  I'll be ignoring files with extensions .met, .xml and files named
+  XMLstylesheet*
+
+** mlsl0sn
+   - LogReport: Gathers together all the statements emitted by the
+     program using the MLSMessage utility.
+   - ShmMem : lists the files used for reporting, i.e. LogReport,
+     LogUser and LogStatus
+
+** mlsl1log
+
+   In addition to adding information to the LogReport file, the
+   following files are created by mlsl1log
+
+   - LogReport : logging
+   - LogUser   : logging (can be ignored)
+   - LogStatus : logging (can be ignored)
+   - engMAF_tmp.dat : concatenated engineering data
+   - sciMAF_tmp.dat : concatenated science data
+   - MAF_data_tmp.dat : ??
+   - MLS-Aura_L1BLOG_<mls-full-ver>_<auraday>.txt : another log
+   - MLS-Aura_L1BENG_<mls-full-ver>_<auraday>.dat : enginerring data
+   - MLS-Aura_L1BRADD_<mls-full-ver>_<auraday>.h5 : Radiances
+
+
+
+
+** mlsl1g
+
+   - LogReport : logging 
+   - LogUser   : logging (can be ignored)
+   - LogStatus : logging (can be ignored)
+   - MLS-Aura_L1BLOG_<mls-full-ver>_<auraday>.txt : another log
+   - MLS-Aura_L1BDIAG_<mls-full-ver>_<auraday>.h5 : diagnostics
+   - MLS-Aura_L1BRADG_<mls-full-ver>_<auraday>.h5 : GHz radiances
+   - MLS-Aura_L1BRADD_<mls-full-ver>_<auraday>.h5 : DACCS radiances
+   - MLS-Aura_L1BOA_<mls-full-ver>_<auraday>.h5   : 
+
+
+** mlsl1t
+
+* Notes on Telemetry
+
+  | Mnemonic      | apid | recid | start byte | startBit |
+  |---------------+------+-------+------------+----------|
+  | MLS_GM02_TEMP | 1732 |   192 |        688 |       87 |
+  | MLS_GM01_TEMP | 1732 |   166 |        720 |       91 |
+  | MLS_TM01_TEMP | 1732 |   206 |       1104 |      139 |
+  | MLS_TM02_TEMP | 1732 |   223 |       1376 |      173 |
+  |---------------+------+-------+------------+----------|
+  | MLS_GM15_TEMP | 1734 |   273 |        208 |       27 |
+  | MLS_GM05_TEMP | 1734 |   290 |        480 |       61 |
+  | MLS_GM07_TEMP | 1734 |   318 |        928 |      117 |
+  | MLS_GM08_TEMP | 1734 |   347 |       1392 |      175 |
+  | MLS_GM09_TEMP | 1734 |   369 |       1744 |      219 |
+  |---------------+------+-------+------------+----------|
+  | MLS_GM04_TEMP | 1736 |   426 |        272 |       35 |
+  | MLS_GM03_TEMP | 1736 |   399 |        304 |       39 |
+  | MLS_GM12_TEMP | 1736 |   443 |        736 |       93 |
+  | MLS_GM13_TEMP | 1736 |   467 |       1120 |      141 |
+  | MLS_GM14_TEMP | 1736 |   491 |       1504 |      189 |
+  |---------------+------+-------+------------+----------|
+  | MLS_SM01_TEMP | 1738 |    11 |        256 |       33 |
+  | MLS_SM05_TEMP | 1738 |    42 |        752 |       95 |
+  | MLS_TM03_TEMP | 1738 |    51 |        896 |      113 |
+  | MLS_GM10_TEMP | 1738 |    67 |       1152 |      145 |
+  | MLS_GM11_TEMP | 1738 |    89 |       1504 |      189 |
+  |---------------+------+-------+------------+----------|
+  | MLS_SM02_TEMP | 1740 |   522 |        272 |       35 |
+  | MLS_SM07_TEMP | 1740 |   548 |        688 |       87 |
+  | MLS_SM08_TEMP | 1740 |   557 |        832 |      105 |
+  | MLS_SM10_TEMP | 1740 |   571 |       1056 |      133 |
+  | MLS_GM06_TEMP | 1740 |   580 |       1200 |      151 |
+  |---------------+------+-------+------------+----------|
+  | MLS_SM11_TEMP | 1742 |   615 |        224 |       29 |
+  | MLS_SM12_TEMP | 1742 |   624 |        368 |       47 |
+
+
+  | Mnemonic          | apid | recid | start byte | startBit |
+  |-------------------+------+-------+------------+----------|
+  | MLS_SM01_VIN_CAL1 | 1738 |     5 |        160 |       21 |
+  | MLS_SM01_VIN_CAL2 | 1738 |     6 |        176 |       23 |
+  | MLS_SM05_VIN_CAL1 | 1738 |    38 |        688 |       87 |
+  | MLS_SM05_VIN_CAL2 | 1738 |    39 |        704 |       89 |
+  | MLS_TM03_VIN_CAL1 | 1738 |    47 |        832 |      105 |
+  | MLS_TM03_VIN_CAL2 | 1738 |    48 |        848 |      107 |
+  | MLS_GM10_VIN_CAL1 | 1738 |    61 |       1056 |      133 |
+  | MLS_GM10_VIN_CAL2 | 1738 |    62 |       1072 |      135 |
+  | MLS_GM11_VIN_CAL1 | 1738 |    85 |       1440 |      181 |
+  | MLS_GM11_VIN_CAL2 | 1738 |    86 |       1456 |      183 |
+  |-------------------+------+-------+------------+----------|
+  | MLS_GM01_VIN_CAL1 | 1732 |   158 |        592 |       75 |
+  | MLS_GM01_VIN_CAL2 | 1732 |   159 |        608 |       77 |
+  | MLS_GM02_VIN_CAL1 | 1732 |   186 |        592 |       75 |
+  | MLS_GM02_VIN_CAL2 | 1732 |   187 |        608 |       77 |
+  | MLS_TM01_VIN_CAL1 | 1732 |   202 |       1040 |      131 |
+  | MLS_TM01_VIN_CAL2 | 1732 |   203 |       1056 |      133 |
+  | MLS_TM02_VIN_CAL1 | 1732 |   217 |       1280 |      161 |
+  | MLS_TM02_VIN_CAL2 | 1732 |   218 |       1296 |      163 |
+  |-------------------+------+-------+------------+----------|
+  | MLS_GM15_VIN_CAL1 | 1734 |   269 |        144 |       19 |
+  | MLS_GM15_VIN_CAL2 | 1734 |   270 |        160 |       21 |
+  | MLS_GM05_VIN_CAL1 | 1734 |   284 |        384 |       49 |
+  | MLS_GM05_VIN_CAL2 | 1734 |   285 |        400 |       51 |
+  | MLS_GM07_VIN_CAL1 | 1734 |   312 |        832 |      105 |
+  | MLS_GM07_VIN_CAL2 | 1734 |   313 |        848 |      107 |
+  | MLS_GM08_VIN_CAL1 | 1734 |   341 |       1296 |      163 |
+  | MLS_GM08_VIN_CAL2 | 1734 |   342 |       1312 |      165 |
+  | MLS_GM09_VIN_CAL1 | 1734 |   363 |       1648 |      207 |
+  | MLS_GM09_VIN_CAL2 | 1734 |   364 |       1664 |      209 |
+  |-------------------+------+-------+------------+----------|
+  | MLS_GM03_VIN_CAL1 | 1736 |   391 |        176 |       23 |
+  | MLS_GM03_VIN_CAL2 | 1736 |   392 |        192 |       25 |
+  | MLS_GM04_VIN_CAL1 | 1736 |   420 |        176 |       23 |
+  | MLS_GM04_VIN_CAL2 | 1736 |   421 |        192 |       25 |
+  | MLS_GM12_VIN_CAL1 | 1736 |   437 |        640 |       81 |
+  | MLS_GM12_VIN_CAL2 | 1736 |   438 |        656 |       83 |
+  | MLS_GM13_VIN_CAL1 | 1736 |   461 |       1024 |      129 |
+  | MLS_GM13_VIN_CAL2 | 1736 |   462 |       1040 |      131 |
+  | MLS_GM14_VIN_CAL1 | 1736 |   485 |       1408 |      177 |
+  | MLS_GM14_VIN_CAL2 | 1736 |   486 |       1424 |      179 |
+  |-------------------+------+-------+------------+----------|
+  | MLS_SM02_VIN_CAL1 | 1740 |   516 |        176 |       23 |
+  | MLS_SM02_VIN_CAL2 | 1740 |   517 |        192 |       25 |
+  | MLS_SM07_VIN_CAL1 | 1740 |   544 |        624 |       79 |
+  | MLS_SM07_VIN_CAL2 | 1740 |   545 |        640 |       81 |
+  | MLS_SM08_VIN_CAL1 | 1740 |   553 |        768 |       97 |
+  | MLS_SM08_VIN_CAL2 | 1740 |   554 |        784 |       99 |
+  | MLS_SM10_VIN_CAL1 | 1740 |   567 |        992 |      125 |
+  | MLS_SM10_VIN_CAL2 | 1740 |   568 |       1008 |      127 |
+  | MLS_GM06_VIN_CAL1 | 1740 |   576 |       1136 |      143 |
+  | MLS_GM06_VIN_CAL2 | 1740 |   577 |       1152 |      145 |
+  |-------------------+------+-------+------------+----------|
+  | MLS_SM11_VIN_CAL1 | 1742 |   611 |        160 |       21 |
+  | MLS_SM11_VIN_CAL2 | 1742 |   612 |        176 |       23 |
+  | MLS_SM12_VIN_CAL1 | 1742 |   620 |        304 |       39 |
+  | MLS_SM12_VIN_CAL2 | 1742 |   621 |        320 |       41 |
+
+* The ITAR protected area
+
+  Need to log in on mls-ist2
+
+  data in /gse/data (/nas/ITAR/gse/data/{sci,eng}_l0
+
+  Look at gse/analysis/generate_date_files.pro. `cat_dat" cats all the
+  non-trivial (those > 400 bytes, which are meta data files) into one file/APID
+
+** GSE software
+
+   Domick uses an idl routine named
+   /gse/analysis/generate_dat_files.pro, which concatenates all the
+   data for each APID into one file. It also converts engineering
+   data. (don't know about science data)
+
+   Thise routine calls two C executables: sci_l0 and eng_l0. See
+   [[file:/users/perun/L0/src/sci_l0.c][sci_l0.c]] and [[file:/users/perun/L0/src/eng_l0.c][eng_l0.c]]
+
+* Files
+  | Name                  | Read(r)/Written(w)?                     | comments               |
+  |-----------------------+-----------------------------------------+------------------------+
+  | MLS-Aura_L1BEng.*.dat | OpenInitLog::OpenAndInitializeLog(w)    |                        |
+  |                       | The following quantities are written    |                        |
+  |                       | in OpenInitLog::OpenAndInitializeLog(w) |                        |
+  |                       | maxtlm (longword)                       |                        |
+  |                       | eng_tbl%mnemonic (516 char*16)          |                        |
+  |                       | LLO_Label (16 char*17)                  |                        |
+  |                       | From here, the writes depend on the     |                        |
+  |                       | relationship of the MIF and MAF time.   |                        |
+  |                       | In CalibWeights::ProcessMAFdata         |                        |
+  |                       | For each MAF in the processing          |                        |
+  |                       | time range...                           |                        |
+  |                       | EngPkt(6*char*256) and                  |                        |
+  |                       | EngMAF%Eng%value(516*float) in 1 write  |                        |
+  |                       | Sci_pos(_dflt)                          | _dflt if MAFs          |
+  |                       | PLL_DN(_dflt)                           | are                    |
+  |                       | LLO_EU(_dflt)                           | mis-aligned            |
+  |                       |                                         |                        |
+  | engMAF.dat            | (PCF id 920)                            | temp file              |
+  |                       | L1LogUtils::ExamineEngData  (w)         |                        |
+  |                       | CalibWeightFlags(r).                    |                        |
+  |                       | Each write                              |                        |
+  |                       | has 1 instance of the user type         |                        |
+  |                       | EngMAF and one instance of EngPkt       |                        |
+  |                       | See EngTbls.f90 for their definition    |                        |
+  |                       |                                         |                        |
+  | sciMAF.dat            | (PCF id 921)                            | temp file              |
+  |                       | L1LogUtils::ExamineSciData  (w)         |                        |
+  |                       | CalibWeightFlags(r).                    |                        |
+  |                       | f77 unformatted.                        |                        |
+  |                       | ~line 288                               |                        |
+  |                       |                                         |                        |
+  | MAF_data_tmp.dat      | (PCF id 922)                            | temp file              |
+  |                       | Each write has one instance of user     | all data for           |
+  |                       | type WeightFlags, one of EngMAF and     | MLSL1{G,T} is read     |
+  |                       | one of SciMAF.                          | from this file.        |
+  |                       | EngMAF and SciMAF are both              | although, not          |
+  |                       | defined in L0_sci_tbls.f90,             | every field defined    |
+  |                       | WeightsFlags is defined in              | in those user types    |
+  |                       | Calibration.f90                         | is filled by the       |
+  |                       |                                         | time they're read!     |
+  |                       |                                         | e.g. altG isn't filled |
+  |                       |                                         | until Calibration      |
+  |                       |                                         | is called.             |
+  | BandAlt.tbl           | Read in...                              |                        |
+  |                       | (PCF id: 912)                           |                        |
+  |-----------------------+-----------------------------------------+------------------------+
+  | L1BDIAGT              | diagnostics for THz and                 |                        |
+  | L1BDIAG               | GHz                                     |                        |
+  | L1BOA                 | Orbital data                            |                        |
+  | L1BRADD               | Radiances for DACS                      |                        |
+  | L1BRADG               | GHz                                     |                        |
+  | L1BRADT               | THz                                     |                        |
+
+
+  | Routine  | Input            | Output              | Comment                    |
+  |----------+------------------+---------------------+----------------------------|
+  | MLSS0N   | L0 files         |                     |                            |
+  |          |                  | BandSwitchesFile(o) | if the GHz switching       |
+  |          |                  |                     | network changes            |
+  |          |                  |                     |                            |
+  | MLSL1log | Eng tables       |                     |                            |
+  |          | zeros file       |                     |                            |
+  |          | dacs contants    |                     |                            |
+  |          | bandSwitchesFile |                     |                            |
+  |          |                  | engMAF_tmp.dat      | engData on a MAF basis     |
+  |          |                  | sciMAF_tmp.dat      | sci data on MAF basis      |
+  |          |                  | MAF_data_tmp.dat    | combination of the         |
+  |          |                  |                     | previous 2 files (which    |
+  |          |                  |                     | are deleted at end         |
+  |          |                  |                     | of run) plus the           |
+  |          |                  |                     | weights flags              |
+  |          |                  |                     |                            |
+  |          |                  | L1BENG file         | A binary dat file          |
+  |          |                  |                     | used by no other           |
+  |          |                  |                     | software. Perhaps          |
+  |          |                  |                     | to diganose problems?      |
+  |          |                  |                     | Opened by OpenInitLog      |
+  |          |                  |                     | PCF id=30003               |
+  |          |                  |                     |                            |
+  |          |                  | L1BRADD (c)         | If doing DACS. Don't       |
+  |          |                  |                     | think anything's writes    |
+  |          |                  |                     | to it  until MLSL1G        |
+  |          |                  |                     |                            |
+  |          |                  |                     | Some information (TPz)     |
+  |          |                  |                     | Is calculated here too     |
+  |          |                  |                     | and written to the RADD    |
+  |          |                  |                     | as an attribute to the '/' |
+  |          |                  |                     |                            |
+  |          |                  |                     |                            |
+  | MLSL1G   | MAF_data_tmp.dat | L1BRAD{T,G}         |                            |
+  |          |                  | L1BDIA{T,G}         |                            |
+  |          |                  | L1BOA               |                            |
+  |          |                  |                     |                            |
+  | MLSL1T   |                  |                     |                            |
+
+
+* Notes on variables
+
+  Abberiaviations
+  - SQ : SortQualify.f90
+  - SU: SciUtils.f90
+  - QCM: SQ:QualifyCurrentMAF
+
+    
+    
+
+  | Name        | where            | comments                             |
+  |-------------+------------------+--------------------------------------|
+  | GHZ_GeodAlt | TkL1B::L1BOA_MAF | Toolkit for L1BOA files?             |
+  | GHZ_sw_pos  | QCM              | Switching mirror (limb,space,target) |
+  |             | CalibWeightFlags | Set by call to SwMirPos for each MIF |
+  |             |                  | There are 2 reports of position      |
+  |             | (SciUtils)       | sci_cptr(t)%                         |
+  |             | GetSciPkt        | GHZ_sw({3:5,6:8})                    |
+  |             |                  | where (t) is the packet `type'       |
+  |             |                  | (always == 1 in mission up to now    |
+  |             |                  | (Mon Jun  1 2015) This usertype is   |
+  |             |                  | is filled in by SU::GetSciPkt        |
+  | AltG        | SU:SciPkt()%altG | Geodetic Altitude. This value field  |
+  |             |                  | in SU::GetSciPkt (in meters).        |
+  |             |                  | variables defining 'S' in 'L' view   |
+  |             |                  | given (in km) in BandAlts.tbl        |
+  |             |                  |                                      |
+  | GHz_seq     |                  |                                      |
+  | GHz_seq_use |                  |                                      |
+  |             |                  |                                      |
+
+  
+** BankWalls
+
+   Used to mark of contiguous ranges of MAFs that can't be used in
+   calibrations because something has changed. You'd think the
+   software would check the gain, but the only thing that's check
+   is 1) if the attenuation is maxed out or 2) if it's changed since
+   the last MAF. If that happens, a 'wall' is declared and a counter
+   is set, which counts from 2 down to 0 and, when it hits 0, the wall
+   is unset.
+
+   Here are the various variables and the routines in which they are
+   used/checked.
+
+   |-------------+---------------+-------------------+---------------------------------------------|
+   | Variable    | type          | subourtine(s)     | comment                                     |
+   |-------------+---------------+-------------------+---------------------------------------------|
+   | BankWall    | BankLogical_T | (Calibration)     |                                             |
+   |             |               | defined           |                                             |
+   |             |               | (SortQualify)     |                                             |
+   |             |               | UpdateCalWindow   |                                             |
+   |             |               | QualifyWindow     |                                             |
+   |             |               | QualifyCurrentMAF |                                             |
+   |             |               |                   |                                             |
+   | BankWallCnt | BankInt_T     | (SortQualify)     | Count (max=2). Used to count when           |
+   |             |               | QualifyCurrentMAF | inside a 'wall'. Set to 2 in                |
+   |             |               | UpdateCalWindow   | QualifyCurrentMAF when MaxAtten%XX          |
+   |             |               |                   | or DeltaAtten%XX of CurMafData%SciPkt       |
+   |             |               |                   | is 'TRUE'. When this counter is != 0,       |
+   |             |               |                   | BankWall for this bank/band is set to       |
+   |             |               |                   | TRUE.                                       |
+   |             |               |                   | For each subsequent MAF this                |
+   |             |               |                   | counter is decremented by 1 until == 0,     |
+   |             |               |                   | and BankWall is set to FALSE for this       |
+   |             |               |                   | band/chan. So this variable and             |
+   |             |               |                   | BankWall mark as *bad* the next 2           |
+   |             |               |                   | MAFs _after_ the one where either           |
+   |             |               |                   | the attenuation changes  or is maxed,       |
+   |             |               |                   | but *not* the MAF where the change is seen! |
+   | SciPkt%     |               |                   |                                             |
+   | MaxAtten    |               |                   | set to 'TRUE' when ??                       |
+   |             |               |                   |                                             |
+   | EngMAF      | Eng_MAF_T     | many places.      | used to read data from the L1B file created |
+   |             |               |                   | by MLSL1Log (In                             |
+   |             |               |                   | CalibWeightsFlags::DetermineWeightsFlags    |
+   |             |               |                   |                                             |
+
+   
+
+** Calibration
+
+   Abbreviations
+   + mci=max_cal_index(=WinMAFs*150-1)
+   + MA=MaxAlts (=10)
+   + GHz Sw : Switching mirror or Switching mirror state.
+     
+   |---------------------+-----------+-------------------------------+-------------------------------------------|
+   | Variable            | type      | subourtine(s)                 | comment                                   |
+   |---------------------+-----------+-------------------------------+-------------------------------------------|
+   | comVec              | r*8       | SetComVecs                    | ???                                       |
+   | (0:MA-1,0:mci-1)    |           | CalComVecs                    |                                           |
+   |                     |           |                               |                                           |
+   | CalSwSeq            | char*1    | SetComVecs                    | default='D'. per MIF Status of GHz sw     |
+   | (0:mci-1)           |           | UpdateCalVectors              | mirror, for every MIF in the WinMAFs of   |
+   |                     |           |                               | MAFs window.                              |
+   |                     |           |                               | D='discard'. Others are 'L'imb,           |
+   |                     |           |                               | 'T'arget and 'S'pace                      |
+   | ComVecSwSeq         | char*1    | SetComVecs                    |                                           |
+   | (0:mci-1)           |           |                               |                                           |
+   |                     |           |                               |                                           |
+   | CalSwSeqLS          | char*1    | D,S,L,T                       | Stores current state of GHz Sw            |
+   | (0:mci-1,MA)        |           |                               | Why dependence on Alt?                    |
+   |                     |           |                               |                                           |
+   | ComVecSwSeqLS       | char*1    | SetComVecs                    |                                           |
+   | (0:mci-1,MA)        |           | UpdateCalVectors              | default='D'. Seems to store the           |
+   |                     |           |                               | value of CalSwSeqLS on previous MAF       |
+   |                     |           |                               |                                           |
+   | CalWin              | Cal_Win_T | Calibration::94               | Stores all the data within WinMAFs.       |
+   |                     |           |                               | Rolls-over as the program steps           |
+   |                     |           |                               | through the MAFs                          |
+   | CalWin%MAFdata      |           | -- same --                    | Stores the data, all sci packets,         |
+   |                     |           |                               | the eng data for a maf, all sorts of      |
+   |                     |           |                               | flags. Basically, the go-to data          |
+   |                     |           |                               | structure                                 |
+   | MAFdata%WeightFlags |           | -- same --                    | logicals. flags for recomp_MAF,           |
+   |                     |           |                               | recomp_s, recomp_t                        |
+   |                     |           |                               | in case some recomputing is required      |
+   |                     |           |                               |                                           |
+   | slimb_weight        | cal_r8_t  | setComVecs                    | stores the weights for slimb obs          |
+   |                     |           |                               | the type has fields for FB, MB, WF        |
+   |                     |           |                               | and DACS for 0:mci and xChans, xNum       |
+   |                     |           |                               | where X=FB,MV,WF and DACS.                |
+   |                     |           |                               |                                           |
+   | space_{c,t,w}       |           |                               | same, but _C_ounts, _T_ime and            |
+   |                     |           |                               | _W_eights for the space view              |
+   |                     |           |                               | MIFs. Counts is whatever is stored        |
+   |                     |           |                               | in scipkt.X (X=FB, MB, WF and DACS)       |
+   |                     |           |                               | for the bank/chan in question.            |
+   |                     |           |                               | Stored in in SU:GSP for FB,MB,WF by       |
+   |                     |           |                               | simply converting from big-endian         |
+   |                     |           |                               | DACS is also in SU:GSP, but requires      |
+   |                     |           |                               | more work. These are the values for       |
+   |                     |           |                               | these when the MIF is marked as a 'S'pace |
+   |                     |           |                               | MIF. WF is a tiny bit more involved       |
+   | target_{c,t,w}      |           |                               | -- same same --, but when marked as a     |
+   |                     |           |                               | 'T'arget MIF                              |
+   | limb_{c,t,w}        |           |                               | -- same same --, but when marked as a     |
+   |                     |           |                               | 'L'imb  MIF                               |
+   |                     |           |                               |                                           |
+   | Ghz_sw_pos          | char*1    | Set in                        | 'D','S','T' or 'L'. See above             |
+   |                     |           | QualifyCurrentMAF             |                                           |
+   |                     |           | From CurMAFdata%SciPkt(MIF)%\ |                                           |
+   |                     |           | GHz_sw_pos. SciPkt(*)=SciMIF  |                                           |
+   |                     |           | Read from temp file written   |                                           |
+   |                     |           | by MLSL1log                   |                                           |
+   |                     |           |                               |                                           |
+
+* Notes on functions/subroutines/modules
+
+** Calibration
+*** Observations
+
+**** Calibration.f90:line 731
+
+     This looks alot like eq. 4.27 in ATB. Code looks like this
+
+#+BEGIN_SRC f90
+    DO j = 1, FBnum
+       DO i = 1, FBchans
+          nvec = 0
+          difspace = 0.0
+          difzero = 0.0
+          WHERE (space_counts%FB(start_index:end_index,i,j) /= 0.0)
+             nvec = 1
+             difspace = space_counts%FB(start_index:end_index,i,j) - &
+                  space_interp%FB(i,j)
+             difzero = space_counts%FB(start_index:end_index,i,j) - &
+                  deflt_zero%FB(i,j)
+          END WHERE
+          nspace = SUM (nvec)
+          IF (nspace >= minmafs) THEN
+             SumDifS2 = SUM(difspace**2)
+             SumDifZ2 = SUM(difzero**2)
+             IF (SumDifS2 > 0.0 .AND. SumDifZ2 > 0.0) THEN
+                chi2%FB(i,j) = &
+                 & (SumDifS2 / nspace - (SUM (difspace) / nspace)**2) /((SumDifZ2 / nspace) &
+                     / (bandwidth%FB(i,j) * tau))
+                chi2%FB(i,j) = chi2%FB(i,j) * nspace / (nspace - 1)
+             ENDIF
+          ENDIF
+       ENDDO
+    ENDDO
+#+END_SRC
+
+     Looking at just one channel/num slot, in IDL this looks like this
+#+BEGIN_SRC IDL
+
+    space=where(space_counts ne 0,nspace)
+    diffspace = space_counts[space]-  intepolate_space_counts[space]
+    diffz=space_counts[space]-  deflt_z[space]
+    if nspace gt minmafs (==6!)  
+      SDS2=total( diffspace^2 ) ;; SumDifS2
+      SDZ2=total( diffz^2 )     ;; SumDifZ2
+      IF SDS2 and SDZ2 > 0 then
+        chi2 = (SDS2/nspace - (Total(diffspace)/nspace)^2) / $
+                       ((SDZ2/nspace)/(bandwidth*tau))
+        chi2 *= nspace/(nspace-1)
+      end
+        
+    
+#+END_SRC
+
+
+*** SetComVecs()
+    Called by Calibration
+    Calls: CalcComVecs
+    Sets some variables, then calls CalcComVecs
+
+*** CalcComVecs
+    args: cal_qual, cal_time, cal_weight, Seq, cal_type, 
+          MaxMIFs, last_cal_index, last_MIF, MIFtime, comVec, errmul)
+
+	  where: cal_{qual,time,weight, type} are the quality, time
+	         (as MIF number), type and weights at MIF # ?,
+
+	         Seq is one char*1 array (probably 'L', 'S', 'T' or
+	         'D' to indicate the status of this MIF
+
+		 MaxMIFs is 150 (set in MLSL1Common)
+		 last_cal_index is index of last MIF
+		 last_MIF ? 
+		 MIFTime : TAI93 time of this mif
+		 comVec is ?
+		 errmul is ?
+
+    Called by CalcComVecs
+    Calls: QuadInterpW(cal_time, cal_weight, cal_qual, MIFno, nVec, comVec(i,:),errmul(i),status)
+
+           Where cal_{time,weight,qual} are the time, weights and
+           quality for MIFno; nVec is the number of MIFs in the
+           calibration window; comVec, errmul are ? and status is the
+           status of the call
+
+*** MLS1Rad::UpdateRadSignals(BandSwitch)
+    MLSL1Common::SwitchBank. `BandSwitch' are the values read from
+    BandSwitches.tbl file, which gives the band j going through switch
+    k. This routine, for i=1,2,...,5, stores into L1Brad(i)% the
+    `signal', which is a string like Bj.FB25-k, for GHz signals
+    (switchs 2-4), Bj.DACS-1 for switch 1 and Bj.FB25-k for the THz
+    bands, where j=band and k=filter-bank. The `signal' (a user type
+    MLSSignal_t, defined in MLSSignalNomenclature.f90) is returned
+    from ParseMLSSignalRequest(request,signal). This is stored into
+    the L1Brad, a module variable
+* work/Processing
+** moonscans/moontracks					 :moonscan:moontrack:
+*** 2015d066 
+
+    Rick is looking at the following Bands
+
+    R1B:118.B34W:PT.S0.WF4-3
+    R1B:640.B11F:BRO.S0.FB25-11
+    R3:240.B8F:PT.S3.FB25-8
+    R2:190.B5F:CLO.S0.FB25-5
+    R1A:118.B1F.PT.S0.FB25-1
+
+    E.g.,
+    start time: 21:36:40 - 6*24 = 2015-066T21:34:10.0000Z
+    End time  : 21:38:20 + 6*24 = 2015-066T21:40:44.0000Z
+
+    with WinMAFs=20 and start/end time = 2015-066T21:32:30.000000Z/2015-066T21:42:31.000000Z
+
+    FB has CalWin%MAFdata.bankwall%FB(13)=TRUE for MAFs 1 - 14 (or 0-13, if you wish)
+
+    When I read
+   ~/processing/l1tests/moontrack/debug/WinMAFs10/workdir/2015d066/001/outputs/MAF_data_tmp.dat
+
+   I get .altG==0 for all MAF/MIFs. Why? (ans: because that part of
+   the structure isn't filled in until Calibration::Calibrate is called in MLSL1{G,T})
+
+   
+**** MAF_data_tmp: Calib Weight Flags
+
+     weight_flags: Calculated in CalibWeightFlags::ProcessMAFdata,
+     which is called from CalibWeightFlags::DetermineWeightFlags, called in MLSL1log
+
+     
+     RECOMP_MAF is FALSE for the entire run. This is only set to TRUE
+     when the number of MIFs in a MAF is not the nominal (147) number
+     of MIFs 
+
+     RECOMP_S is TRUE for MAF 101, MAFNo=166
+
+     RECOMP_T is TRUE for all MAFs *except* MAFs = 167-171 (indices
+     102-106)
+     
+
+*** 2015d117
+#<<Moon-SPV Criterion>>    
+    Moon-SPV criterion reduced to 0 
+    15:00-24:00
+
+    This is a case where the moon is in the field of view during
+    regular operations. Normally the software will reject 'bright'
+    objects when they're within some angular distance of the FOV (Rick
+    thinks that's 5 deg). Reducing the 'Moon-SPV criterion' to 0 means
+    relaxing that restriction so that it no longer rejects the 'bright
+    object' of the moon (until it's looking at it directly?)
+
+*** 2015d118
+    Moon-SPV criterion reduced to 0: See [[Moon-SPV criterion]]
+    00:00-16:00
+
+     
+     
+* f90 notes
+
+* TODOs
+** TODO Fix Bounds error in THzCalibration.f90
+   :LOGBOOK:
+   - State "TODO"       from ""           [2015-05-28 Thu 09:17]
+   :END:
+   See [[BOUNDS error]] above
+
+** DONE Find where nAlts is set and what it does	 :space_in_limb_view:
+   CLOSED: [2015-06-03 Wed 10:13]
+   :LOGBOOK:
+   - State "TODO"       from ""           [2015-06-03 Wed 09:00]
+   :END:
+
+   Answer: in BandTbls::BandAlts
+
+   BandTbls.f90::LoadBandAlts. Loads file
+   /data/emls/l1cal/BandAlts.tbl. nAlts counts the number of *unique*
+   altitudes mentioned in that file. Those *unique* altitudes are
+   stored in the module variable BandTbls::MinAlt and the index of
+   each altitude by band and channel is stored in the module variable
+   *BandTbls::BandAlts*, a rank 1 array having NumBands (==34, defined
+   in MLSCommon.f90) of user type BandAlt_T, which is defined in
+   BandTbls.f90 (about line 60) having the following format
+
+#+BEGIN_SRC f90
+  TYPE BandAlt_T
+     REAL(r4), DIMENSION(:), POINTER :: Meters
+     INTEGER, DIMENSION(:), POINTER :: indx
+  END TYPE BandAlt_T
+#+END_SRC f90
+
+   I don't believe these pointers are ever assigned to anything, they
+   are defined this way because this code was written before the
+   components of user types were allowed to have the ALLOCATABLE
+   property, and this was a way around that restriction. 
+
+   BandAlts is an array of these dimensioned to 34 elements, allocated
+   thusly.
+   
+   BandAlts(1:21) are dimensioned using FBchans (==25);
+   BandAlts(22:26) use DCSchans(129), BandAlts(27:31) use MBchans(11)
+   and BandAlts(32:34) use WFchans(4)
+
+   So BandAlts(i) goes with *band* i.
+
+   So bandAlt(i).indx(j) is the altitude for the j-th channel for the
+   i-th band above which the limb view is looking into space.
+   
+** TODO moontrack: 2015d066: Why does L1BOA file have only 5 MAFs? And they don't cover the processing time range!
+   :LOGBOOK:
+   - State "TODO"       from ""           [2015-06-03 Wed 10:34]
+   :END:
+
+   Ans: Don't quite know why, but I modified the start/stop times and
+   got more MAFs accordingly. See below.
+
+
+*** Investigation
+    All of these have WinMAFs=10 in the Level 1 code.
+
+    start time: 21:36:40 - 6*24 = 2015-066T21:34:10.0000Z
+    End time  : 21:38:20 + 6*24 = 2015-066T21:40:44.0000Z
+
+    The PCF start/end times are 
+
+    1001|Start UTC|2015-066T21:34:10.0000Z
+    1002|End UTC|2015-066T21:40:44.00000Z
+
+    The L1 processing extends that time a bit and reports the extended
+    start/end times.  The report in the log for this run was.
+
+    Input Start/End UTC: 2015-066T21:33:57.640201Z to 2015-066T21:40:56.359799Z
+
+    In the L1BOA file the start times of the 5 MAFs are...
+
+#+BEGIN_SRC idl
+    print,transpose(mafutc)
+
+    2015-03-07T21:34:08.000427Z
+    2015-03-07T21:34:32.720092Z
+    2015-03-07T21:34:57.421905Z
+    2015-03-07T21:35:22.150405Z
+    2015-03-07T21:35:46.876159Z
+
+#+END_SRC idl
+
+    So these times times are missing 10 seconds in the beginning and
+    about 309.5 (about 5 mins!) seconds at the end. Why the large gap?
+
+    I guess I can understand the gap at the beginning. I think I'll do
+    a run using a start date that will capture the preceeding MAF
+
+    Changed start/end times to 
+
+    1001|Start UTC|2015-066T21:33:33.00000Z
+    1002|End UTC|2015-066T21:40:44.00000Z
+
+    And got the following out of the L1BOA file
+
+#+BEGIN_SRC idl
+
+    IDL> print,l1boafile
+    /users/whdaffer/processing/l1tests/moontrack/debug/WinMAFs10/workdir/2015d066/001/outputs/
+   MLS-Aura_L1BOA_v04-20-c01_2015d066.h5
+
+    IDL> fid=h5f_open(l1boafile)
+    IDL> vid=h5d_open(fid,'MAFStartTimeUTC') & mafutc=h5d_read(vid)
+    IDL> print,transpose(mafutc)
+    2015-03-07T21:33:43.263244Z
+    2015-03-07T21:34:08.000427Z
+    2015-03-07T21:34:32.720092Z
+    2015-03-07T21:34:57.421905Z
+    2015-03-07T21:35:22.150405Z
+    2015-03-07T21:35:46.876159Z
+    2015-03-07T21:36:11.580581Z
+    2015-03-07T21:36:36.484756Z
+    2015-03-07T21:37:01.204498Z
+    2015-03-07T21:37:25.906280Z
+    2015-03-07T21:37:50.640853Z
+    2015-03-07T21:38:15.360595Z
+    2015-03-07T21:38:40.249694Z
+    2015-03-07T21:39:04.960494Z
+    2015-03-07T21:39:29.686080Z
+    2015-03-07T21:39:54.405807Z
+    2015-03-07T21:40:19.110168Z
+    2015-03-07T21:40:43.844787Z
+    IDL> 
+
+#+END_SRC idl
+
+    Changing to move back 10 MAFs
+
+    start time: 21:36:40 - 10*24 = 2015d066T21:34:40.0000Z
+    End time  : 21:38:20 + 10*24 = 2015d066T21:42:20.0000Z
+
+    This got something that looks like the commanding of the GHz
+    antenna, but I don't see it returning to normal scan mode.
+
+    Introducing a buffer of 30 MAFs
+
+    start time: 21:36:40 - 30*24 = 2015-066T21:24:40.0000Z
+    End time  : 21:38:20 + 30*24 = 2015-066T21:50:20.0000Z
+
+
+    Still not seeing it return to values of altG around 140 (like at
+    the beginning time). Moving back 100 MAFs
+
+    start time: 21:36:40 - 100*24 = 2015-066T20:56:40.0000Z
+    End time  : 21:38:20 + 100*24 = 2015-066T22:18:20.0000Z
+
+** TODO Find where Eq 4.20 is implemented in L1 code
+   :LOGBOOK:
+   - State "TODO"       from ""           [2015-06-05 Fri 08:46]
+   :END:
+* useful hacks
+** UTC/TAI conversions
+   Add this code in the appropriate places to convert from/to TAI/UTC
+   #+BEGIN_SRC f90
+    USE SDPToolkit, ONLY: PGS_TD_TAItoUTC,PGS_TD_UTCtoTAI
+    CHARACTER(len=27) :: asciiUTC
+    real(8) :: TAI
+    integer :: n
+    INTEGER, EXTERNAL :: PGS_TD_UTCtoTAI
+    n = PGS_TD_UTCtoTAI (asciiUTC, TAI)
+    n = PGS_TD_TAItoUTC (TAI, asciiUTC)
+   #+END_SRC f90
+
+** idb/gdb - debugging.
+
+*** Debugging sessions
+**** [2015-06-05 Fri]: 
+    WinMAFs=10, PCF times =
+    2015-066T20:56:40.0000Z,2015-066T22:18:20.0000Z
+
+    First pass through Calibrate. at times 
+    2015-03-07 20:54:35.0730 (1st MAF)
+    2015-03-07 20:58:32.0000 (last MAF)
+
+    In InterpCals. BankdCalInd%FB = [0,1479] for most channels, which
+    the cal_index = [592,888] (central_window=windex=6). cal_index
+    looks right.
+
+    Around line 574 we see
+
+#+BEGIN_SRC f90
+  cal_interp%FB(i,j) = SUM (comVecPtr(0:calen-1) * &
+      cal_cnts%FB(cal1:cal2,i,j))
+#+END_SRC f90
+
+    In this case, comVecPtr (0:1489, same dimensionality as
+    cal_cnts%Fb) < 0 for all non-zero points. These are points
+
+#+BEGIN_SRC  idl
+   IDL> xx=where(comvec,nxx)
+   IDL> print,nxx
+	   12
+   IDL> print,xx
+	    126         127         128         129         130         131
+	    132         133         134         135         136         137
+#+END_SRC
+
+
+    where comvec was cut-n-pasted out of the debugger.
+
+    BankCalInd%{whatever} is set in SortQualify::QualifyWindow, called
+    from SortQualify::SortAndQualify, called from MLSL1{T,G}
+
+
+*** GDB Tricks (though it doesn't work well on f90)
+   + Getting address of a variable: *p &varname*. Index as you need,
+     i.e. `p &varname(1[,1,1,...])' to get first address and `p
+     &varname(n[,m,p,...])' to get last
+
+   + dump memory range to a file: *dump [format] memory file start
+     end*: where 'format' is `binary',`ihex',`srec' and `tekhex'
+     (always use `binary'). See [[https://sourceware.org/gdb/onlinedocs/gdb/Dump_002fRestore-Files.html][dump memory to file]]
+
+* Disagreements						      :disagreements:
+** Disagreements between ATB and Code
+   1. _ATB, pg 26, 1st para._ Band Zeros. ATB says they're calculated once per orbit by
+      commanding gains to minimum (i.e. attenuation to maximum), and
+      measured, but I don't think that's the case. I think the
+      IF-zeros.tbl file is used throughout. 
+   2. _ATB, p. 29. para after eq 4.26._ Says optimal values of \lambda
+      will be provided as user inputs to L1 code. I haven't seen
+      it. \frac{1}{\lambda} is the time constant for an exponential
+      weighting of the observation as you move away from the central
+      MAF during calibration, but I've seen no evidence of this.
+   3. _ATB, p 29. Last para_. Says points larger than 6\sigma away from
+      preliminary quadratic fit will be rejected. Haven't seen it yet.
+   4. _ATB pg 33, para after eq 4.40._ Says the weights used in
+      calibration will be calculated offline and provided to Level 1 as
+      user inputs. *not done*. The weights are calculated during each run.
+   5. Radiances::CalcRadiance Line ~108. Calculation of
+      rad=((limb_counts-space_counts)...)/eta_TSL(3). This final
+      division isn't in the ATB
+
+
+
+
+** Disagreements within the code
+   1. BandTbls::GetEta_TSL. There's a comment from vince that all bands
+      < 32 hav the same eta_TSL value. The GHzReflSpillEffs.tbl file
+      disagrees. 
+      _Later_: I think he means all banks for a particular band.
+
+
+
+    
+
+* Questions.
+
+  1. Radiances::CalcRadiance. There's a quantity called 'Rho', a
+     function of radiometer. What is it?
+  2. What is P_Offset (Radiances::CalcRadiances::140)
+  3. Why is the equation for calculating radiances when slimb_type ==
+     TRUE different from ATB equation 4.19? (See eqn inside block `if
+     (slimb_type) then rad=...'  at around line 130 in
+     Radiances::CalcRadiance.)
+  4. Radiances::CalLimbRads. In the calls to CalRadiance several of
+     the return values (%value, %Poffset and %precision) use values at
+     location 'Mif_index) to set values at MIF_index+1. Why?
+  5. Radiances::CalcLimbRads. MIF_index runs from the start to the end
+     of the 'middle' MAF in WinMAFs. But 
+     
+
+* Bi-weekly reports
+** [2015-05-22 Fri 15:15]
+*** Accomplished
+
+   1. Continued to find and fix several small bugs that mostly have
+      to do with allocation/deallocation and array overruns that,
+      again, probably don't cause any real problems, but which cause
+      the debuger to crash, because it carse about such things.
+   2. Continue to plow through Level 1 code, both by using the
+      debugger to investigate the code in detail and by brute-force
+      reading the code.
+   3. Decided I needed another way to look at the data, both the
+      input data and the data which MLSL1{G,T} use in their
+      processing, so I wrote 25 files IDL routines to read the
+      temporary files output by Level 1 and to read the input PDS
+      files. Trying to get 'next to the data'. The temporary files
+      output by MLSL1log (which are then used by MLSL1{G,T}) is
+      written as f90 user defined types, and f90 i/o adds padding to
+      various places in the output structure, which caused quite a
+      few problems getting the IDL data structures right. 
+   4. Am now processing 2 'moon in FOV' requests from Rick for days
+      2015d11{7,8}. He made the request this morning (5/22) and I
+      started around 10, after an abortive beginning, go going around
+      noon. Found out there's some difference in the way he wants it
+      processed, but we're going to let this one complete, then
+      reconfigure and run again and compare results.
+
+*** Plan for 5/25 - 6-5
+
+    1. Finish IDL code to read and unpack PDS files
+    2. Try to find place in input data where the 2015d066 moontrack goes awry
+    3. Try to find place in Level 1 code that causes the calibrations to fail
+
+** Weeks of May 25 - Jun 5
+
+   Ran 2 days for Rick: 2015d11{7,8}. This required some
+   reconfiguration of the way I reprocess stuff, so that took about
+   1/2 day to move directories around,rename things and reconfigure
+   some scripting. This is all in hope of making special case L1
+   processing a bit more coherent and predictable.
+
+   
+   Part of this reconfiguration is a nomenclature issue: Rick wants
+   to call what happens when the instrument is commanded to follow
+   the moon -- as in the case of 2015d066 -- a *moon track*, because
+   the mirror is commanded to *track* the moon. Throughout the code
+   and scripting this is called a *moon scan*, but there are other
+   cases when the instrument is actually *commanded* to *scan* the
+   moon, and, while we haven't done any of that for some time, we
+   might still need to go back and do it, so I'm reserving *moon
+   scan* for the cases when we actively scan over the moon and *moon
+   track* for those case (like 2015d066) when we follow the moon down
+   until it sets below the FOV.
+
+   Additinoally, there is the case where the moon is in the space
+   view, now called *moonSPV* or *moon in space view*. This is the
+   case for days 2015d11{7,8}.
+
+   For *moon track* and *moon in space view*, the configuration of
+   the run is identical, which is probably why these two different
+   scenarios were conflated into one term.
+
+   Had a day of trying to get the debugger (either IDB (the Fortran
+   specific debugger) or GDB (the more general, but less
+   fortran-friendly debugger) to what the documentation says it will
+   do, namely do memory dumps of variables. Ultimately abandoned that attempt.
+
+   Investigated using Rick Colfield's IDL code (the code he uses to
+   make his plots). This proved unfruitful because of the method he
+   uses in generating his plots, but it did point me in directions
+   that have aided my general studies of Level 1.
+
+   Continue investigation and commenting of Level 1 software.
+
+   Plan to
+
+   1. Trace the route through the code used in calculating the
+      calibration weights. Rick believes that is where the error is
+      occuring.
+   2. Pick up the PDS unpacking code again. I dropped it because I
+      was hoping I wouldn't have to do this, but it appears I might
+      have to after all.
+
+
+** Weeks of Jun 9 - 19
+*** Calibration Weights and Weight Flags		      :calib:weights:
+[2015-06-08 Mon] - [2015-06-09 Tue]
+
+     MLSL1log: Looking at code for calculating Calibration Weights. Rick
+     thinks this is where the problem occurs.
+
+     Starting in CalibWeightFlags::ProcessMAFdata. 
+
+     Eventually we get into MLSL1Config::set_calibration, which reads
+     input from the .cf file, particularly in the 'Calibration'
+     section of that file. When it sees a line like
+
+     limbMIFs, MIFs=[2:122], use=match, module=GHz
+
+     It sets MIFs 2-122 to be 'L'imb MIFs. The Scan_T user type sets
+     the internal field %USE == 'M'atch for GHz module, the internal
+     field %TYPE to "L" and entries 2 - 122 of internal field "MIF" to
+     1, so a fortran WHERE(%MIF) test will return true for those
+     entries.
+
+     If `use'='M', then what's in the telem and what's in this field
+     must agree, otherwise, if `use'=='O'verride, the software uses
+     what's in the telemetry (I think) and disregards what's in
+     GHz_seq == L1Config%Calib%GHz_seq (what's read from the .cf
+     file.)
+
+     L1Config%Calib%HGz_seq_use = "whatever is after `use=' in the .cf file for the given MIFs"
+
+     L1Config%Calib%GHz_seq = the list of TYPES for each individual
+     MIF. So, the .cf I'm looking at has
+
+#+BEGIN_SRC f90
+    ;; GHz MIF definitions:
+    ;;
+    limbMIFs, MIFs=[2:122], use=match, module=GHz
+    ;;
+    spaceMIFs, MIFs=[126:137], use=match, module=GHz
+    ;;
+    targetMIFs, MIFs=[140:147], use=match, module=GHz
+    ;;
+    discardMIFs, MIFs=[0:1,123:125,138:139,148:149], use=match, module=GHz
+#+END_SRC
+
+     So MIFs 2-122 are 'L'imb MIFs, 126-137 are 'S'pace, 140-147 are
+     'T'arget MIFs and the rest are 'D'iscards
+
+     These are compared against positions calculated by SwMirPos()
+     (which uses SciMAF(n)%GSM_theta, btw) in
+     CalibWeightsFlags::ProcessMAFdata
+
+
+     [2015-06-12 Fri] Yesterday and today I've been investigating the
+     following curiosity. 
+
+     In MLSL1Common the SwMir_Range_T is defined with values for the
+     GHz A, B, B_2 and THz switching mirror. This type has a 1
+     character code that indicates the range that define which sort
+     (`type' in the lingo used in MLSL1Config%Calib) each position
+     is. There are 4 `types', 'L'imb,'S'pace,'T'arget (which, in a
+     comment, is called the 'primary' target) and 't' (which is called
+     the 'secondary' target).
+
+     The variables (GHz_SwMir_Range_{A,B,B_2} and THz_SwMir_Range) are
+     used to set sciMAF%{G,T}Hz_sw_pos to the corresponding 1
+     character code on a MIF by MIF basis, depending on the value of
+     GSM_thet for that MIF. 
+
+     The problem is the value for 't' and 'T'. In my 2015d066
+     moontrack runs, I've found *both* 'T' and 't', even though when I
+     look at GSM_theta, I find no values that fall into the range
+     defined for the 'T'arget value, only 't' values.
+
+     I ran day 2013d1173 and found *no* instances of 'T', only 't's,
+     and looking at the graph of GSM_theta I see no 'T' values for
+     GSM_theta.
+
+     Additionally, there's code in SortQualify::QualifyCurrentMAF
+     (~line 467), which peremptorily sets any place with
+     CurMAFData%ChanType(MIF)%{FB,MB,WF,DACS}() == 't' to 'T'
+
+     So, even though MLSL1Common calls 't' the 'secondary' target, it
+     really seems like it's the primary target. Also, chatting with
+     Dominick, he says that the primary target has a GSM theta value
+     of
+
+
+
+     CurMAFData%ChanType(MIF)%{FB,MB,WF,DACS}() gets set in
+     SortQualify::QualifyCurrentMAF. These are individual
+     channel/numbers (e.g. [25,19] for FB, where `numbers' 1:14 are
+     GHz and 15:19 are for the THz module) for each of the FB, MB, WF
+     and DACS which store the location of the switching mirror. I
+     don't understand why the need to be divided by channel/number (I
+     still haven't figured out which is which, is the first the
+     channel and the second the number or vice versa. For FB, there
+     are 25 Filter banks, and 19 (14(GHz)+5(THz)) channels, but the
+     statements that define these quantities, and they are *all over
+     the place*, call the `25' the FBchan and the `19' the FBnum, and
+     similarly for the other items. The `25' is clearly the number of
+     the filter bank, and the 19 the GHz+THz channel, so I'd call them
+     FBnum=25 and FBchan=19, but that's now what the software has.
+
+     Secondarily, since whether a MIF is 'L', 'S', 'T', 't' or 'D'
+     isn't a function of the filter bank channel/number, I don't see
+     why these are broken out into chan/num and it seems that they're
+     never addressed in any way that doesn't set all of them at one
+     time, but that's the way the software works.
+
+     [2015-06-15 Mon]
+
+     
+     [2015-06-16 Tue]
+     
+
+     
+*** Code surrounding the calculation of attenuations.		:attenuation:
+    
+    Apparently the value reported in the field sci2_type1 packet in
+    the attenuation fields (5 bytes, starting around byte 1016, see
+    mlsl0sci2type1__define.pro). That data only reports the last
+    value set, so you can only capture changes. Also, the array of
+    Atten_T types defined in L0_sci_tbls.f90 has a .Value field, and
+    it is filled in SciUtils::GetSciPkt, but the .Value field doesn't
+    appear to be used anywhere in the code. For 2015d066 I only see
+    RIU 110, addr 49175, value=17
+
+    Dominick tells me that on day 2015d069 it changed to 14 for
+    band 14.  (riu,addr = 110,49174)
+
+   
+
+
+*** Looking at GHz_sw_pos
+    According to MLSL1log, MAFs 167 (22:03:23.4055) through
+    171 (22:05:02.2987) had only 'L' and 'D'.
+
+
+    start time: 21:36:40 
+    End time  : 21:38:20
+
+    Times that the mirror is tracking the moon:
+    2015d066T21:37:09.0547 - 2015d066T21:37:51.6451. 
+
+    This is MAF:MIF  168:48 - 170:5
+
+    The quantity used here -- where the antenna is looking in the limb
+    port -- Rick Cofield calls 'eps' on the plots. It's '/GHz/scangle'
+    in the L1BOA file, and GHZ_scangleg in the L1 software
+
+    Looking at GHz_sw_pos, the per MIF letter code that tells which
+    port the switching mirror is looking at, MAF 101, at time
+    2015d066T21:36:11, is the last MAF with any cal MIFs in it,
+    immediately prior to the MAF where the mirror starts tracking the
+    moon and the first MAF after the moontrack happens at
+    2015d066T21:38:40
+
+    MAFs with Cal MIFs before/after moontrack
+    2015d066T21:36:11 / 2015d066T21:38:40
+
+    MAFs where Walls for FB are declared at every MAF between 21:36 to
+    21:38:40, so for the whole of the moontrack.
+
+    Every MAF from 20:57:28 through to the end fo the run has a Wall
+    for bank 13 which is an HCl band, but I don't think that matters
+    for the Bands being used in Rick's plot.
+
+    
+*** Looking at the L1BLog message about invalid altitudes
+
+    Lots of messages in the L1BLog file that read like this...
+
+    Warning (TkL1B): PGSCSC_W_INVALID_ALTITUDE       :  invalid altitude - probably indicates bad input data
+
+    Message is emitted at Tk1LIB::587 (in subroutine Tp_unit, which
+    "creates unit ECR vector quantities used by TkL1B_tp to !
+    calculate solarZenith and losAngle.")
+
+    Call tree: (for the message I'm looking at right now, there may be others.)
+
+    MLSL1G->
+    SortQualify::SortAndQualify(line 52)->
+    Calibration::UpdateCalWindow(1208)->
+    L1BOutUtils::OutputL1BOA(182)->
+    TkL1B::L1BOA_MAF(68)->
+    TkL1B::TkLIB_tp(1073)->
+    TkL1B::TkLIB_sc(411)->
+    TkL1B::Tp_unit(~586)
+
+    PGS_CSC_GeoToECR (lines 577, 578). Called twise with 2 angles (alt
+    +/- delta/2). It's unlcear which fail, the first or the second
+    call, but one does which triggers the error starting at 583
+
+    
+
+
+*** Report
+
+    Jun 8-Jun19
+
+    Done:
+
+    
+    + Determined that the Intel debugger can not be used to dump the
+      values of variables to a file, even though all the documentation
+      says that it can. 
+
+    + Looking into the calibration of the Calibration weights. Sort
+      out difference between *predicted* and *observed* values . Added
+      many comments in the code explaining this for future
+      maintainers. (Source code perused and
+      commented. CalibWeightsFlags, SortQualify, Calibration)
+
+    + Discovered an oddity regarding which is the primary and
+      secondary calibration target. Things work as they should, but
+      still trying to figure out why it was done this
+      way. (CalibWeightsFlags)
+
+    + Tracked execution of certain segments of code through debugger
+      and verified using data written out to a binary temporary file,
+      as well as reports in the ascii files written by L1.
+
+    + Wrote, successfully built and am now testing a f90 module
+      (MLSL1Debug.f90) to act as 'plug-in' debugging module. This will
+      allow me to plug code into segments of the Level 1 code so that
+      I can write data out to another file for easier inspection. The
+      problem I'm attempting to solve is that the data structures in
+      Level 1 are so large that I can't look at them effectively. This
+      was what I was trying to do in comment 1 regarding the
+      shortcomings of the intel debugger.  except by writing them out
+      and reading them into IDL. At the moment, this module is only
+      being used to track the processing in Calibration.f90 regarding
+      variables with the mysterious name of 'ComVecs', which are
+      processed by 3 subroutines in Calibration named SetComVecs and
+      CalcComVecs and InterpCals; all of which deal with handling the
+      calibrations.
+
+   
+
+    To do:
+
+    + Continue adding functionality to MLSL1Debug.f90 and use it to
+      track executin through the Level 1 code.
+    + Figure out the disagreement between Primary and Secondary
+      targets, are the ranges defined for those two targets in
+      MLSL1Common swapped?
+    + Generate call graphs for MLS L1 code tree, or at least MLSL1G.
+
+      
+
+
+** Weeks of Jun 22 - 
+
+*** [2015-06-22 Mon]: 
+   + Got MLSL1Debug working for writing out comvec info.
+   + Working on calltree.py to generate dot files for call graphs. This
+     has taken all week, and may be a dead-end because the problems of
+     parsing out functions is too had.
+
+*** Report
+
+    _Done_
+
+    1. Continued adding functionality to MLSL1Debug. 
+    2. Used it in figuring out what various variable do, specifically
+       those with `comvec' in their name. I still don't understand
+       _why_ they're named this, but at least now I know what they do.
+    3. Found where equation D.4 is implemented (Interpolation::QuadInterp)
+    4. Continued commenting of code for future maintainers
+    5. Partial implementation of call graphes
+       
+
+
+
+    _To do_
+
+    1. Find where equations 4.20, 4.26, and 4.27 are implemented.
+
+
+
+*** [2015-06-29 Mon]
+    + Looking at output from MLSL1Debug, looking at comvec info.
+** Weeks of Jul 6 - Jul 19
+*** [2015-07-06 Mon] 
+
+**** TODO optimal values \lambda_{r}. c.f. eq 4.26
+     :LOGBOOK:
+     - State "TODO"       from ""           [2015-07-06 Mon 09:10]
+     :END:
+
+     The ATB says they're read in by the L1 Software. Where are they
+     read in and what is the filename?
+
+     Looking at Radiances::CalcRadiance, around like 124. Seeing
+     something that looks very much like eq. 4.20
+
+     MLSL1G->CalcLimbRads->CalcRadiance, after calls to Calibrate
+
+**** TODO ATB: p 26. Discussion of calculating zeros
+     :LOGBOOK:
+     - State "TODO"       from ""           [2015-07-06 Mon 15:12]
+     :END:
+
+     Claims they're measured 'once per orbit ... by commending the IF
+     gains of all radiometers to such a low calue that the
+     spectrometers see essentially no RF signal at their inputs '
+     Commanding gains to zero == commanding max attenuation
+
+     I believe this is _not done_. 
+
+***** TODO How are the gains determined?
+      :LOGBOOK:
+      - State "TODO"       from ""           [2015-07-06 Mon 15:34]
+      :END:
+      Dom says that it's really the attenuator settings: max atten =
+      min gain.
+      
+      In Radiances::CalcRadiance there is a line calculating a
+      quantity named `gain', which implements ATB, eq 4.18 and is then
+      used in calculating radiances. This calculation never makes any
+      reference to the attenuation.
+
+**** TODO ChiSquare: various questions [0/2]
+     :LOGBOOK:
+     - State "TODO"       from ""           [2015-07-06 Mon 09:21]
+     :END:
+***** TODO What does Calibration::ChiSquare do? How is it used?
+      :LOGBOOK:
+      - State "TODO"       from ""           [2015-07-06 Mon 15:02]
+      :END:
+***** TODO How does the 'reference Chi^2' figure in? (ATB: 4.9.2)
+      :LOGBOOK:
+      - State "TODO"       from ""           [2015-07-06 Mon 15:02]
+      :END:
+
+      This is the quantity written to the L1B DIA{G,T} files.
+
+      Says it's 'determined by interpolating the`reference counts'
+      onto the time of each reference measurement' (must mean 'space'
+      reference measurement) 'and computing the mean square difference
+      between the measurement and the interpolants for each
+      channel. The quantity written to the diagnostics file' (meaning
+      the L1B DIAG file?) 'is the ratio of the observed mean square
+      deviation to that predicted simply by the radiometer equation.'
+      (ATB, page 41)
+
+**** TODO Is error weigthing multiplier symetric?
+     :LOGBOOK:
+     - State "TODO"       from ""           [2015-07-06 Mon 14:19]
+     :END:
+
+     See Page 33 of ATB . Last paragraph. Claims the error multiplier
+     is symetric about the middle of the central MAF. Is true?
+
+**** TODO Find what goes into the baseline variables in L1B RAD{G,T} files
+     :LOGBOOK:
+     - State "TODO"       from ""           [2015-07-07 Tue 09:28]
+     :END:
+**** TODO Figure out which data goes into .precision' in L1BRAD{G,T} files
+     :LOGBOOK:
+     - State "TODO"       from ""           [2015-07-07 Tue 13:52]
+     :END:
+
+     Answer: The calculation for `rad_err' in each of the blocks of
+     Radiances::CalcRadiance. See, e.g. ~line 159, the block at 
+
+#+BEGIN_SRC f90     
+
+       IF (slimb_type) THEN
+          rad_err = &
+               (limb_counts-zero_counts)**2 + (slimb_counts-zero_counts)**2 &
+               * sum_w2 + (limb_counts-slimb_counts)**2 * &
+               ((target_counts-zero_counts) / (target_counts-slimb_counts))**2 &
+               * (1.0+sum_w2) * sum_wg2
+       ELSE
+          rad_err = &
+               (limb_counts-zero_counts)**2 + (space_counts-zero_counts)**2 &
+               * sum_w2 + (limb_counts-space_counts)**2 * &
+               ((target_counts-zero_counts) / (target_counts-space_counts))**2 &
+               * (1.0+sum_w2) * sum_wg2
+       ENDIF
+
+   ... followed by ...
+
+       rad_err = SQRT (rad_err / (bandwidth * tau)) / gain
+
+#+END_SRC f90
+**** TODO Why do the arrays in L1BRAD{G,T} have only 125 MIFs?
+     :LOGBOOK:
+     - State "TODO"       from ""           [2015-07-07 Tue 15:58]
+     :END:
+** Weeks of Jul 20 - Jul 31
+*** Mon [2015-07-20 Mon]
+
+    Working on MLSL1Debug: writing out Radiances from Level 1 code
+    
+
+* Algorithms in Level 1
+** Calibration.f90
+
+*** InitCalibWindow
+    Initializes various quantities
+
+    
+*** Calibrate
+
+    Called for each MAF when the WinMAFs window of MAFs is filled.
+    Calls UpdateRadSignals, SetComVecs and InterpCals
+
+***** PseudoCode of Algorithm
+      UpdateRadSignals
+      SetComVecs
+      LOOP : over MIFs in the 'central' MAF
+        Call InterpCals for Space,Target cnts
+        IF doing Limb/Space processing, 
+          LOOP: over Altitudes
+	    Call InterpCals for slimb cnts
+
+	    Load them into the slimb_{interp,err} for the appropriate
+	    type (FB,MB,WF,DACS) bank and Channel.
+	  END Loop
+       ENDIF
+      END LOOP over MIFs in central MAF
+      Call ChiSquare with the interpolated space counts
+
+
+
+*** SetComVecs
+    
+    Calls CalcComVecs
+
+    Checks to see if any of the sequence of MIFs in this MAF have
+    changed since the last one. The expected sequence is stored in the
+    l1cf file for this run (see {limb,space,target,discard}MIFs in the
+    Calibration section. These variable *predict* which MIFs in each
+    MAF will be in which /state/, i.e. those that are expected to be
+    observing the limb will be marked as /limbMIFs/ in the l1cf for
+    the run. 
+    
+    This section from the L1CF also says what's to happen in the
+    telemetry doesn't match with the expectation, specified in the
+    `use' directive. If `use=match' is set any MAF that doesn't match
+    is skipped. You can also set `use=override' in which case it will
+    be used even when it doesn't match.
+
+    If there has been a change, the 'ComVecs' (which, as far as I can
+    tell means 'Common Vectors', since they are common to all
+    bands/channels/banks) are recalculated for the space,target and
+    slimb cases (if this has been requested, see the Do_Slimb=
+    directive in the l1cf file), by calling CalcComVecs
+
+*** SetCalVectors
+
+    Sets the time/cnts/qual fields for FB,MB,WF and DACS to default
+    values that say 'don't use' and processing information for altmask
+    (by default this mask is always 'true' except when running
+    processing of 'space in the limb port' data, and then fills them
+    with data from FB/MB/WF and DACS telemetry if there are cal MIFs
+    in the MAF and it passes tests on whether it's in the right
+    altitude range (again, for 'space in limb port' processing)
+
+*** CalcComVecs
+    Called by: SetComVecs
+
+    Basically this is just a wrapper to Interpolate::QuadInterpW, the
+    routine that implements the quadratic interpolator. Basically all
+    it does is copy over the time and qual variables to 1d vectors
+    with generic names and then calls QuadInterpW for each MIF.
+
+*** UpdateCalVectors
+
+    Called by SortQualify::SortAndQualify and
+    SortQualify::SortAndQualifyTHz for the THz module) which is called
+    from MLSL1{G,T}. SortAndQualify calls SortQualify::UpdateCalWindow
+    which sets the flag CalWinFul. If CalWinFull == .TRUE. Calibrate
+    will be called
+
+*** InterpCals
+
+    Called by Calibration::Calibrate
+
+    
+*** ChiSquare
+
+    Called by Calibration::Calibrate
+
+    
+    
+
+* Snooping							      :snoop:
+
+  Outline of the required steps
+
+  1. Preparation
+  2. Start PVM
+  3. Start IDL
+  4. Do IDL> snoopcatch (this tells PVM that IDL is watching for output)
+  5. Start your routine.
+  6. Snoop the code in IDL
+
+** Preparation
+
+** Start PVM
+   
+
+** Start IDL
+
+** snoopcatch
+
+** Start routine
+
+** Snoop
+
+* Calibration
+
+** SortQualify
+
+   + SortandQualify
+
+     + UpdateCalWindow : Assembles the CalWin%MAFdata structure. Loads
+       SciMAF and EngMAF into that structure as well as other
+       quantities (Geodetic lat/alt), BO_stat, scGeodAngle). Declares
+       CalWinful when there's enough data for a calibration.
+
+     + QualifyCurrentMAF : Looking at the data loaded by 
+       UpdateCalWindow. initializes ChanType (bad name!) MIF based
+       quantity; whether a MIF is an 'L', 'S', 'T' or 'D'. Starts
+       as 'U' = undefined. Declares a Wall if attenuation changes or
+       is maxed, and sets the 2 MAF counter (because it takes that long
+       for the instrument to settle down?). If GHz switching mirror
+       doesn't match predicted values and the program has been told
+       they have to match, set such misbehaving MIFs to "discard." If
+       any survive these tests and are still "undefined", set them to
+       the predicted values. IF there is a 'S' and a 'T' MIF for this
+       MAF, declare the MAF as being calibratable. Check if there are
+       any Walls declared (at this stage, always caused by attenuation
+       changes). If so, set a 2 MAF counter. This will cause the next
+       MAF to be marked as un-calibratable for the affected
+       channels. For any bank where the 'S' and 'T' MIFs counts differ
+       by less than 100 counts in the following channels: FB(13),
+       MB(5), WF(2) and DACS(1), declare a WALL for any such
+       bank. Also declares a Wall for all channels/banks if there's a
+       bright object in the limb view. Looks at the switch network and
+       declares a Wall if there's any change between MAFs or it's
+       different from what's in the BandSwitches file (i.e. what's
+       expected). Finally, it looks at the altitudes to see if they
+       satisfy the 'Space in Limb View' criteria. It counts those and
+       saves that number. These are only used when doing slimb type
+       calibrations.
+
+
+     + QualifyWindow : only called when CalWinFull==.True. This
+       subroutine is mostly taken up with processing instances of
+       BankWalls. for each of FB, MB, WF and DACS... Determines the
+       min/max MAFs in the current calibration window that have Walls
+       and sets every MAF between them as a Wall and every MIF as a
+       'D'. It then sets the extent of the MAFs in the cal window that
+       can be used. If there are 5 or more, set a flag saying this
+       calibration window can be calibrated.
+
+
+
+     + Calibration::UpdateCalVectors : Calls SetCalVectors to assemble
+       the  space, target, slimb counts from the Current MAF
+       science data for each type ('S', 'L', 'SL' or 'T') into the
+       appropriate accumulation arrays. It also updates two vectors,
+       the CalSWSeqLS (the switch sequence to use when doing the
+       'space in limb view' cals (c.f. do_slimb in L1CF file) and
+       CalSwSeq which is the switch sequence for the non-LS
+       calibrations
+
+       
+** Calibrate
+
+   Calibrate is called only when "do_calib", which requires that there
+   are WinMAFs worth of data in the buffer. Doesn't check to see if
+   all of these are good, however.
+
+   Calibrate does the following...
+
+
+   + sets pointers to start/end part of data to process. Start=MAF
+     before central MAF; end=end of central MAF.
+
+   + UpdateRadSignals : in case the GHz switch has changed
+   
+   + Calls SetComVecs : which passes the weights for each cal type
+     (L/S, S,T). SetComVecs checks to see if the sequence of GHz
+     switching mirrors position has changed since the last time and, if
+     it has, calls CalComVecs for the appropriate type of count (LS,S
+     or T)
+
+     - CalcComVecs: This is really where the work happens this is
+       where the quadratic interpolator is called. 
+
+   + Loop over the MIFs in the central MAF. 
+
+     - Call InterpCals for each of the Cal types (S,T,L/S). For the
+       last you also have to loop over the altitudes as well.
+
+       InterpCals contains recursive calls to itself if the total
+       number in the calibration vectors changes, otherwise it uses
+       the last set of ComVecs calculated in CalComVecs
+
+
+
+
+
+** CalcLimbRadiances
+
+* Questions for Presentation
+
+  1. In SortQualify::QualifyCurrentMAF, regarding Bank Walls. There
+     are variables in the code to handle processing of "Bank Walls"
+     for any of the band/channels/filter banks, e.g. FB, MB, WF and
+     DACS. However, I only see code to "declare" a Bank Wall for the
+     25 channel FB case. Why? (ans: Probably because that's
+     sufficient)
+
+     When a "Bank Wall" has been declared because of a change in
+     attenuation, a counter is set to 2 for the FB quantity. In
+     SortQualify::UpdateCalWindow this quantity is decremented until
+     it reaches 0, at which point the 'Bank Wall' is cleared. There is
+     code for MB, WF and DACS to decrement their own counters, but
+     since they never get set in QualifyCurrentMAF, that code never
+     trips.
+
+     Why only FB? (possible ans: again, because FB is sufficient)
+
+  2. Bank Walls can also be declared (in all types) for MOON in space view.
+
+  3. In SortQualify::QualifyWindow, around line 1170.
+     CurMAFdata%WallMIF%{FB,MB,WF,DACS}. When a "Bank Wall" is
+     declared a check is made for MIFs > WallMIF(bank). But at no time
+     can I find cases where WallMIF is ever set to anything other
+     than 0.
+
+  4. CalWin%MAFdata%BankWall%FB is dimensioned to FBnum==19, but in
+     SortQualify (~1073) only 1->GHzNum (1-14) are used. Why?
+
+  5. I see 20 FB 'bands' + R1B P/T = 21 bands, (14 GHz and 6
+     Thz). Then 5 mid-band (MB) spectrometers. then 3 broad filter
+     bands (designated as WF in the software: Bands 32,33 and 34, in
+     12 broad filter channels, according to the ATB) and 5 DACS
+     bands (but it's really only 4 because bands 25 and 26 time share a
+     common DACS unit). 21+5+5+3. The 34 bands as discussed in the
+     ATB?
+
+  6. Code in QualifyCurrentMAF: The code test FB(13,) MB(5,) WF(2,)
+     and DACS(1,) for abs(target-space) < 100 counts. I know FB 13 is
+     off, but why the other bands?
+
+  7. Lines 301-320 of the engtlm.tbl file are skipped in
+     ConvertEngCounts. There is a comment that these are always
+     NaNs. This is a listing of those lines.
+    #+BEGIN_EXAMPLE
+     1    GM15_Vin_Cal1     Cal GM15 -1   4.9982 : RIU GM15 Vin Cal 1           
+     2    GM15_Vin_Cal2     Cal GM15 -1        0 : RIU GM15 Vin Cal 2           
+     3    GM15_YSI_Cal1     Cal GM15 -1     4525 : RIU GM15 YSI Cal 1           
+     4    GM15_YSI_Cal2     Cal GM15 -1      996 : RIU GM15 YSI Cal 2           
+     5        GM15_Temp     Cal GM15 -1        1 : RIU GM15 Temp                
+     6  GSN_SynRF_power     VIN GM15 16        1 : GSN Synthesizer RF power     
+     7       GSN_PCU_5V     VIN GM15  1        1 : GSN PCU +5V                  
+     8      GSN_PCU_12V     VIN GM15  2        3 : GSN PCU +12V                 
+     9         GSN_Temp     YSI GM15 12        1 : GSN Temp                     
+    10   GSN_Synth_Temp     YSI GM15 13        1 : GSN Synthesizer Temp         
+    11 GSN_Synth_VCO1_V     VIN GM15 14        1 : GSN Synthesizer VCO1 voltage 
+    12     GSN_PCU_M12V     VIN GM15  3       -3 : GSN PCU -12V               
+    13      GSN_PCU_M5V     VIN GM15  4       -1 : GSN PCU -5V                
+    14 GSN_Synth_VCO2_V     VIN GM15 15        1 : GSN Synthesizer VCO2 voltage 
+     1    SM01_Vin_Cal1     Cal SM01 -1   4.9988 : RIU SM01 Vin Cal 1          
+     2    SM01_Vin_Cal2     Cal SM01 -1        0 : RIU SM01 Vin Cal 2          
+     3   SM01_PRT2_Cal1     Cal SM01 -1  620.322 : RIU SM01 PRT-2 Cal 1        
+     4   SM01_PRT2_Cal2     Cal SM01 -1  480.331 : RIU SM01 PRT-2 Cal 2        
+     5    SM01_YSI_Cal1     Cal SM01 -1     4525 : RIU SM01 YSI Cal 1          
+     6    SM01_YSI_Cal2     Cal SM01 -1      996 : RIU SM01 YSI Cal 2          
+     7        SM01_Temp     Cal SM01 -1        1 : RIU SM01 Temp               
+
+    #+END_EXAMPLE
+    Why?
+
+  8. ATB Eq 4.26 suggests that the calibration weights are scaled
+     according to their distance from the central calibration window,
+     but I don't see this in the code.
+
+  9. In section 4.4.2, on limitations of the quadratic interpolator,
+     there's a comment after #2. that data points lying 6\sigma away
+     from preliminary fit of remaining data are rejected. I don't see
+     this in the code.
+
+
+     
+
+* Status of CVS Sandboxs
+
+  All my work is happening in this directory, which is currently on a
+  branch named whd-rel-1-0
+
+  /users/whdaffer/devel/mlsL1andL2Software/current/mlspgs/l1
+
+  In addition to the files that came with L1, I've added the following.
+
+  SnoopMLSL1.f9[0h] - Trying to implement Snooping in Level 1
+  MLSL1Debug - Allows limited debugging capabilities.
+
+** Changes I've made.
+
+   
+   + BandSwitches.f90
+
+   + BandSwitchesUpdate.f90
+
+     In ExamineSciData. Added some print stateuemnts, some calls to
+     PGS code to convert to/from TAI93 to record changes in the
+     switch network.
+
+       
+
+   + BandTbls.f90
+
+     Comments
+
+   + BrightObjects_m.f90
+
+   + Calibration.f90
+
+     Most of the changes are to reformatting code to make it more
+     readible, and also adding explanatory comments (set off by <whd>
+     ... </whd> tags to distinguish them from those extant in the code
+     before I got my hand on it.
+
+     Specifics to follow...
+
+     Use MLSL1Debug (my code for debugging stuff). This includes
+     various variables and the subroutines ComVecInfo_init,
+     writeComVecInfo, writeInterpInfo. All MLSL1Debug processing is
+     protected by values in the DebugControl usertype which tells what
+     debugging to do.
+
+     Use MaxAlts and FileNameLen from MLSL1Common.  Use
+     SDPToolkit::PGS_TD_TaitoUTC
+
+     Make max_cal_index public
+
+     *Important* Take out the hardcoding of the WinMAFs value and
+     incorporate it into an include file which is changed depending on
+     whether this is a 'moonscan' (read moon*track*) event (where
+     WinMAFs == 10, which is stored in Calibration-moonscan.f9h) or
+     normal processing (which WinMAFs == 6) which is stored in
+     Calibration-normal.f9h. The change is effected when one does a
+     `make moonscan'.
+
+     Added variable for `errmul'. Split some declarations on multiple
+     lines.
+
+     Added asciiUTC, so I can write messages with the event time in
+     them.
+
+     Added some calls to write/print/MLSMessage to print out more
+     information during the course of processing.
+
+     *Important* Set various variables, all of whose names begin with
+     the characters `db', to be sent to MLSL1Debug::WriteComVecInfo
+
+     Added some arguments to CalcComVecs for use with
+     MLSL1Debug::WriteComVecInfo
+
+   + Calibration.f9h
+
+   + Calibration-moonscan.f9h
+
+   + Calibration-normal.f9h
+
+   + CalibWeightsFlags.f90
+
+     Entirely explanatory comments
+
+   + Close_Files.f90
+
+     Added MLSL1Comment, ONLY, FileNameLen instead of letting the
+     internal variable `filename' be hardcoded to 132 characters.
+
+     Aside from that, comments only, no substantial changes
+
+   + DACsUtils.f90
+
+   + EngTbls.f90
+
+     Comments only, most bracketted by <whd>...</whd>No substantial changes! 
+
+   + EngUtils.f90
+
+     
+
+   + FOV.f90
+
+     Redid the formatting so that the shape of some of the 3x3 arrays
+     is a little clearer. Included some explanatory notes inside of
+     <whd>...</whd> tags (to distinquish them from comments made by
+     other coders.
+
+
+
+   + GHzBaseline.f90
+
+   + InitPCFs.f90
+
+     Again, include MLSL1Common::FileNameLen and dimension
+     PCF_Filename and L1CF_Filename to that value instead of
+     hardcoding their length to 132 characters.
+
+     Modified messaging to be a bit less opaque, in particular, report
+     the start/end UTCs of the run to the PGS log files. 
+
+     Added comments.
+
+     Aside from these, no substantial changes.
+
+   + init_tables_module.f90
+
+   + Interpolation.f90
+
+     Reformated formatting in interface definition to make it easier
+     to figure out which input variable went with which.
+
+     Added variables to the interface to be used by the MLSL1Debug
+     module.
+
+     Reformated some equations to make them more readible.
+
+   + L0_sci_tbls.f90
+
+     Comments only. No substantial changes
+
+   + L0Utils.f90
+
+     Added file length variable from the SDP toolkit, though it doesn't seem to be used. 
+
+     Added MLSL1Common::FileNameLen and changed hardcoding 
+     Added calls to MLSMessage about out of range times so that it
+     gets set to the log file *as well as* the STDOUT `log file'
+
+     Comments 
+
+
+
+   + L1BOutUtils.f90
+
+     Added report to STDOUT about which MAF was being processed.
+
+   + L1LogUtils.f90
+
+     Added reports to the L1BLOG file (PCFid=30006) when MIFno
+     < 0. Added the variables to support thos reports
+     (lastGoodMAF). Added the SDP filelength parameter and changed the
+     hardcoding of string variable lengths to use it.
+
+     Comments.
+
+   
+   + MLSL0SN.f90
+
+     Nothing of substance
+
+
+   + MLSL1Common.f90
+
+     Comments
+
+   + MLSL1Config.f90
+
+     Comments only
+
+   + MLSL1Debug.f90
+
+     This is a completely new file made by me and not part of the
+     standard (until now) MLSPGS/L1 code.
+
+   + MLSL1G.f90
+
+     Added MLSL1Debug::closeMLSL1DebugFiles and call to same.
+
+     Added the 'Start of processing' and 'end of processing' message
+     to the run log maintained by the SDP software.
+
+     Comments. 
+
+   + MLSL1log.f90
+
+     Added MLSL1RunConfig::MLSL1Executable which stores the name of
+     the current executable. Used in MLSL1Debug and MLSL1Snoop
+
+     Comments
+
+   + MLSL1Rad.f90
+
+     Comments
+
+   + MLSL1RunConfig.f90
+     
+     New module to store run configuration info. Used in MLSL1Snoop
+
+   + MLSL1T.f90
+
+     Added MLSL1RunConfig::MLSL1Executable which stores the name of
+     the current executable. Used in MLSL1Debug and MLSL1Snoop
+
+     Comments 
+
+   + MLSL1Utils.f90
+
+   + MLSPCF1.f90
+
+   + OpenInit.f90
+
+     Use MLSL1Common::FileNameLen to set string lengths instead of
+     them being hardcoded.
+
+     Use MLSL1Debug, MLSL1Debug_IOnit and openMLSL1DebugFiles. These
+     are called unconditionally, but they only have an effect if the
+     user has set a environmental flag to a non-null value. If that
+     isn't the case, the routines return without any effect.
+
+     Comments
+
+
+   + OpenInitLog.f90
+
+     Added MLSL1Common::FileNameLen and used it in places the len of
+     string variables (mostly filenames) were hardcoded
+
+     Various comments.
+
+   + Orbit.f90
+
+
+   + OutputL1B_DataTypes.f90
+
+   + OutputL1B.f90
+
+     Comments
+
+   + Radiances.f90
+
+     Comments, particularly those mentioning which equation in the ATB
+     is being implemented at several points.
+
+     Added code to sent output to various output log files (all three
+     of them) to make the logging of the procressing a bit clearer
+
+     In CalcLimbRads...
+       Use MLSL1Debug, DebugControl, writeRadiancesInfo and SnoopRadiances
+       Use SnoopMLS, Snoop and L1SnoopOffering_T
+
+     None of this should change results in any way, as no existing
+     code was changed; only new code was added and it meant only to
+     allow inspection of the data.
+
+     
+     
+
+     Rearranged call interfaces with comments to indicate which are
+     input/output variables.
+
+   + Scan.f90
+
+     Comments
+
+     
+   + SciUtils.f90
+
+     One somewhat substantive change. I wanted to gather more
+     information in case of failures. In GetSciPkt I inherited the
+     call to readL0Sci returns a variable OK, which is immediately
+     checked on return. If OK == false, the routine returns
+     immediately. I postponed the return until other things had been
+     checked and, possibly, messages sent.
+
+     Added messages giving the times of failures, which required
+     adding some calls to routines like PGS_TD_TAItoUTC as well as
+     adding some variables.
+
+     Aside from this, I've added *lots and lots* of comments
+     attempthing to understand `Bank Walls' and such, with some, but
+     not total success
+
+
+
+   + SnoopMLSL1.f90 
+
+     New routine, not used in the legacy code. Should cause no changes
+     because this code is only exercised when MLSL1Debug has the
+     string SnoopMLSL1 in it.
+
+
+   + SnoopMLSL1.f9h
+
+   + SortQualify.f90
+
+   + SortQualifyTHz.f90
+
+     Added a qualification ('THz') to a print statement, so that I
+     could distinguish between messages from this module and
+     SortQualify.f90 (the GHz) module
+
+     Comments
+
+   + SpectralBaseline.f90
+
+     
+   + test_streq.f90
+
+     This is just a little test program I wrote which has no
+     significant effect on the code base
+
+
+
+   + THzCalibration.f90
+
+   + THzRadiances.f90
+
+   + THzUtils.f90
+
+   + TkL1B.f90
+
+     Entirely explanatory comments and additional messaging. Should
+     cause no change
+
+   + WriteMetaL1.f90
+
+     use TRIM in MLSMessage
+
+
+* Running a simple test program using mlspgs code
+
+  1. CD to ...../mlspgs/tests/l1
+  2. create your program file
+  3. run `make update'
+  4. run make. The executable will show up in the directory named by
+     the compiler based on your current HOSTMLSCFILE variable. i.e. my
+     current setting for that is .configure-ifc17debug, so a file
+     `test' will show up in ..../mlspgs/tests/l1/IFC.Linux.debug
+
+  5. run your program
+
+* Notes
+
+  [Fri Mar 11 12:54:52 2016] 
+
+  Having problems running both main trunk and whd-rel-1-0. It's
+  crashing at OpenInitLog::158, a call to PGS_PC_getReference for
+  mlspcg_l1b_end_start. That parameter (30003) is to the line in the
+  PCF that gives the name of the ouptut engineering log file. 
+
+   [13:22][{1025}]% grep 30003 2013d173/001/*.PCF
+   30003|MLS-Aura_L1BENG_v04-00-c01_2013d173.dat|/users/whdaffer/processing\
+     /l1tests/regression-testing/after-merging-PWs-changes/current/2013d173/001/outputs||||1
+
+
+
+  I know it's finding and parsing the PCF correctly, because just
+  before this it opens and reads the engtlm.tbl file.
+
+  The complete message (while running in the debugger) is:
+
+    *** glibc detected *** /users/whdaffer/devel/mlsL1andL2Software/current/mlspgs/\
+                           bin/IFC.Linux.debug//mlsl1log: 
+    munmap_chunk(): invalid pointer: 0x000000000d0a9fe0 ***
+
+    which is occuring way down deep in the PGS sofware.
+
+    When I run it as a script, I get a slightly different message:
+
+    ** glibc detected *** /nas/users/whdaffer/devel/mlsL1andL2Software/current/mlspgs/\
+      ./bin/IFC.Linux.debug/mlsl1log: double free or corruption (!prev): 0x000000000e3f66b0 *** 
+
+* Calibration.f90
+  Most of the work this module does is started inside of
+  SortQualify::SortAndQualify by calling UpdateCalVectors
+
+** Calling tree
+
+   + MLSL1G
+     + SortAndQualify
+
+       + SortQualify::UpdateCalWindow. Does the BankWall
+         countdown. Clears Limb Alts numbers and minimum
+         calflags. Reads the next MAF of data from the file created by
+         MLSL1log , typically called MAF_data_tmp.dat. Makes sure
+         we're inside the processing window and loads MAFdata%SciPkt
+         and MAFData%EMAF and outputs L1BOA data if we are. Loads
+         CalWin data structures and sets a variable that it's time to
+         do a calibration if the window is full. It also sets the
+         pointer CalMAFdata to point to the center of the CalWin
+         structure. If the window is already full, it 'rolls' the data
+         appropriately and moves the current data to the end of the
+         structure.
+
+       + QualifyCurrentMaf: Start by assuming that all MIFs for the
+         current MAF should be 'D'iscarded. Set flags that say whether
+         a MIF is usable or should remain as 'D'iscarded
+         (CurMAFdata%ChanType(MIF)%X, where X=FB,MB,WF and DACS). If
+         there's been a change in attentuation, either because it's
+         changed or because the attenuation has maxed out, set a Wall
+         for all of the channels. This has the effect of skipping the
+         next 2 MAFs (see BankWalCnt%FB). Get the switching mirror
+         position and compare with the predicted locations given in
+         the L1CF config file, store what's read in the telemetry in
+         the variable CurMAFdata%SciPkt(MIF)%GHz_sw_pos and also
+         CurMAFdata%ChanType(MIF)%FB(:,1:14) (slots 15:19 are THz
+         slots) as well as %MB, %WF and %DACS. Whether the MIF is kept
+         or not depends on configuration settings. If
+         GHz_seq_use=='match' and it doesn't match with the values
+         predicted by the quantities {limb,space,target,discard}MIFs
+         (which list the MIFs that should be 'limb','space','target'
+         or 'discard' MIFs) then 'D'iscard that MIF. If
+         GHz_seq_use==override, use whatever's in the telemetry
+         stream. Set a flag saying that there is a least 1 S and 1 T
+         MIF. Does some scaling of DACS data I don't understand. Check
+         to see if a 'bank' is `off', in the sense that the difference
+         between `target' and `space' counts is < 100 counts.  Declare
+         a `Wall' for that bank/channel if true. Check
+         FB(13),MF(5),WF(2) and DACS(1). check for bright objects. For
+         changes in the GHz switch network. If at least 1 of the MIFs
+         is a 'S'pace MIF and 1 is a 'T'arget MIF, set
+         CurMAFdata%CalType = .TRUE., that is, say that this MAF can
+         be used in a calibration. Finally, look at altitudes that
+         have positive precisions and are above the minimum altitude
+         to be considered instances of 'space in the limb view', to be
+         used when the config file requests calibrations using those
+         MIFs (the 'LS' cals) 
+
+       + (if CalWinFul) QualifyWindow. (vp code comment: Qualify the
+         calibration window for spikes, walls, etc.) When
+         CalWin%MAFdata%BankWall%FB(...) == 1 (true), set wallindx (a
+         MAF based quantity) to 1, i.e. setting an index for the MAFs
+         that have been walled off. Then find the beginning/ending
+         MAFs that have walls, and iterate over the MIFs in those
+         MAFs, marking the individual MIFs with a 'D' (discard).
+       + UpdateCalVectors : set a pointer CurMafdata to each MAF in
+         the current calibration window, and record the first and last
+         MIF. Then, for 'S', 'T' and 'L' returning
+         {space,target,limb}_{cnts,qual,time} respectively. For 'LS'
+         type calibrations, do the same except only for the altitudes
+         that are in range call
+	 + SetCalVectors: Set cal_{time,cnts,qual} to (-1,0,0) for %X
+           (X=FB,MB,WF and DACS). Whether or not to do 'LS' type
+           calculations is determined by a `altmask' passed in. Then,
+           For each MIF in this MAF, check to see if it's a cal_type
+           MIF (i.e., for this call, check to see if it's an 'S', 'L',
+           'T' or 'LS' depending on the `cal_type' parameter that was
+           passed, set the appropriate MIFs in the three output
+           quantities (time,cnts,qual): _cnts is just the
+           CurMAFdata%SciPkt(MIF)%X, _qual == 1 and _time =
+           startMIF(MAF) + offset, where startMIF(MAF) is just a
+           counter into the entirety of the calibration window
+
+     + if (do_calib) then 
+       + Calibrate : Taking `windex' to be the index of the central
+         MAF in the current calibration window, start
+         {start,end}_index to the MIFs contained therein and
+         cal_index(1) to be the start of the MAF before the current
+         MAF and cal_index(2) to be the beginning of the MAF after the
+         `central MAF' (NB, cal_index should always be
+         end_index+1!). At this point, call...
+	 + SetComVecs : Return (If CalSwSeq == ComVecSwSeq) because
+           the sequence hasn't changed, otherwise, call...
+	   + CalcComVecs: For each MIF in the central MAF, call...
+
+	     + Interpolate::QuadInterpW with cal_{time,weight,qual),
+               MIF and nvec, return ComVec(MIF,:), error(MIF) and a
+               status. This routine calculate thes time centered in
+               the index of the MIF for which it was called (tvec),
+               the `apoVec' (which is the cal_weight*cal_qual) and
+               then does the following calculations. comVec is a
+               [0:150, 150*WinMAFs] array. Still trying to figure out
+               that dimensionality.
+
+	       + x1=tvec*apoVec
+	       + x2=tvec*x1 ;; tvec*tvec*apoVec = tvec^2*apoVec
+	       + x3=tvec*x2 ;; tvec^3*apoVec
+	       + x4=tvec*x3 ;; tvec^4*apoVec
+	       + sx1=sum(x1) ;  (think IDL's total(x1)
+	       + sx2=sum(x2)
+	       + sx3=sum(x3)
+	       + sx4=sum(x4)
+	       + comVec=apoVec*(sx2*sx4-sx3^2) -
+                 sx1*(sx1*sx4-x2*sx3) + sx2*(x1*sx3-x2*sx2)
+	       + comVec /= Sum(comVec)
+	       + error=sum(comVec^2)
+		 
+	 + For index=start_index,end_index
+	   + InterpCals ; for space counts
+	   + InterpCals ; target counts
+	   + For each altitude ; space in limb port
+	     + InterpCals ; limb/space counts
+	 + ChiSquare
+       + CalcLimbRads
+       + OutputL1Bdata
+       + LatBinRads
+
+   SortQualify::SortAndQualify 
+   UpdateCalVectors
+   SetCalVectors
+
+
+
+   don't know where this came from.
+
+(Sets CalSWSeq and CalSwSeqLS vectors that
+         record where the GHz switching mirror is on a MIF by MIF
+         basis by looking at the position read from telemetry and
+         stored in
+         CalWin%MAFdata(...)%SciPkt(...)%GHz_Sw_pos.). MAFdata(...) is
+         MAF based; SciPkt(...) is MIF based.
+
+
+
+*** Walls
+    Things that can cause Walls.
+
+    1. Bad checksum
+    2. Changes in attenuation
+    3. Bright objects in the FOV
+    4. The GHz switch network changing.
+    5. The band being off (band 13, a notable case of this.) This is
+       determined by the space counts and the target counts being <
+       100 counts different.
+
+** In Calibration:
+
+*** Questions and Answers
+
+    1. Where is the data structure CalWin%MAFData(...). Answer: in
+       UpdateCalWindow the pointer CurMafData is set to
+       CalWin%MAFData(CalWin%current) and then components of that type are
+       set to current data. See 
+
+*** Calling Tree   
+   + Calibrate
+     + SetComVecs. Set MIFno,last_cal_index == beginning/ending of the central MAF. 
+       + CalcComVecs: Pass MIFno,last_cal_index and space_weight for
+         S,T and slimb_wieght for LS type calibrations (for each
+         altitude). Calculates qual, time, comvec and errmul
+	 + For each MIF in central MAF (?), call
+           Interpolate::QuadInterpW, which calculates comVec(MIF,:),
+           errmul(i). The 2nd dimension of comVec is nMAFs*150, the
+           first is 150 and call occurs for each MIF.
+     + Loop over every MIF in central MAF and, in each, do
+       + InterpCals (for space and target cnts and for each Altitude
+         for LS type cals
+
+
+   
+* Engineering scripting/checking
+** L0 sci PDS Alert
+   email sent by test_sci_pdf.sh, which calls test_sci_pds.pro, whose
+   failure causes the message. The routine that writes the message
+   /Changed lock: item from a to b/ is check_eng_locks.pro
+
+* Files opened/written to by L1
+  + MLS-Aura_L1BENG_v04-20-c01_ ... .dat : L1log reads the Packet
+    files, then rewrites the data to this file. It's unclear what this
+    file does. (PCID=30003). In L1BLog code, this is accessed via the
+    field L1BFileInfo%EngId
+  + MAF_data_tmp.dat : (PCFID=922). In L1BLog this is accessed via
+    L1BFileInfo%MAF_data_unit
+
+* Trace through the code
+** MLSL0SN
+   + OpenInitBsw
+   + ExamineSciData: All this routine does is check and/or update the BandSwitches file!
+   + CloseFiles
+** MLSL1log
+
+   + OpenAndInitializeLog In addition to calling the following
+     subroutines, lots of files are being opened in the main body of
+     this subroutine. Some (e.g. the PCF) are read and then closed,
+     while others are opened for the entirety of the run.
+
+     + GetPCFParameters
+     + GetL1Config
+     + Load_Eng_tbls
+     + OpenL0Files
+     + InitSciPointers
+     + GetBandSwitches
+     + LoadChanDefaults
+     + LoadDACSconsts
+     + InitDACS_FFT
+     + MLS_h5open
+     
+   + L1LogUtils::ExamineData: This is where the L0 data is read. 
+     + L1LogUtils::ExamineSciData
+       + SciUtils::NextSciMAF
+
+	 Processes L0 data by calling GetSciPkt(->
+	 ReadL0Sci->ReadL0Packet) until the MAF number changes. Internal
+	 to that routine and the routines called this routine, among
+	 other things, pulls out the positions fo the pointing mirrors,
+	 'process' DACS data, convert the DN for the pointing mirrors to
+	 angles and return.
+
+	 + SciUtils::GetSciPkt : Subroutine is somewhat misnamed. It
+           does much more than merely 'get' the SciPkt! After the
+           calls to ReadL0Sci, the code in this routine, gets the
+           time, converts some quantities
+           (Sci_pkt%{MAFno,MIFno,Orbit}), checks for bad checksums,
+           calculates THz_sw and GHz_sw position as well as the GHz
+           switching mirror position, looks at the GSN for
+           changes. Calls the following (notes on those in their
+           appropriate place, if needed. Most are pretty
+           self-explanatory.)
+
+	   + L0Utils::ReadL0Sci
+	     + L0Utils::ReadL0Packet : Calls the toolkit to read an L0
+               packet (PGS_IO_L0_Getpacket)
+	   + ConvertLLO
+	   + Get_PLL_DN
+	   + DetermineAttens
+	   + UncompressDACSData
+	   + ExtractDACSdata
+	 + ProcessDACSdata
+	   + ProcessDACSdata : DACS data is in some packed, compressed
+	     format. The following undoes all that.
+	     + FixLostCarryBits : have *no* idea
+	     + UnpackDACSdata : unpacks the DACS data, which is some
+	       compressed packed format
+	       + UnpackUncompDACS
+	     + ProcessUnpackedDACS : Crap, I don't know. Coefficients
+	       looks like a combination of a Taylor and a Fourier
+	       series. Then runs them through a fourier transform.
+	 + GetScAngles
+
+     + L1LogUtils::ExamineEngData
+       + EngUtils::NextEngMAF
+	 + ReadL0Eng : For each MAF in turn, assemble the data from
+	   the 6 packets by calling ReadL0Eng. Then, calculate which
+	   side of the electronics and devices are on. Finally, called
+	   ConvertEngCounts, which stores the values of engineering
+	   quantities by mnemonic given in /data/emls/l1cal/engtlm.tbl
+	   file.
+
+	   + L0Utils::ReadL0Eng : This routine loops over the 6
+             engineering packets, calling the following subroutine to
+             get the packet data for this MAF. 
+	     + L0Utils::ReadL0Packet
+	     + PGS_IO_L0_Close : to close the file if we've passed
+               outside the processing window or we've hit the end of
+               file.
+	     + OpenL0File : to open the next packet file in turn.
+	   + ConvertEngCounts : Converts engineering telemetry (.e.g
+	   temps, voltages, etc) and stores them by mnemonic.
+     + OutputLogSummary
+     + DeterminWeightFlags
+     + CloseFiles
+     + LogStatus
+
+** MLSL1G
+   + OpenInitialize : shared by MLSL1G and MLSL1T
+     + MLSL1Debug_Init
+     + openMLSL1DebugFiles
+     + GetPCFParameters
+     + CreatePCFAnnotation
+     + CreatePCFAnnotation
+     + GetL1Config
+     + GetBandSwitches
+     + Load_Eng_tbls
+     + LoadChanDefaults (called twice, once for default gains table
+       and once for the zero's file)
+     + ReadSignalsDatabase
+     + OpenL0Files
+     + OpenL1BFiles
+     + InitSciPoints
+     + InitCalWindow
+     + InitRad
+     + InitFOVConsts (if not in THz mode)
+     + InitBaseLine
+     + OutputL1BOA_create
+     + Load_Band_Tbls
+     + LoadSidebandFracs
+     + LoadSpilloverLoss
+     + LoadFourierCoefs
+     + LoadDefltChi2
+     + LoadBaselineAC
+     + LoadBandAlts
+
+   + LOOP: Do until there's no more good data
+
+     + SortQualify::SortAndQualify(more_data,do_calib)
+
+       The following four routines are only called if SortAndQualify
+       returns a flag (do_calib) that says there's enough good data to
+       do a calibration.
+
+       + UpdateCalWindow : Initializes BankWall, WallCnt, LimAltNo,
+         MinCalFlag variables, Reads WeightFlags,EngMAF and SciMAf
+         from MAF_dat_tmp.dat, which is created by MLSL1log then
+         shifts data around in arrays. If the data is inside the
+         processing interval, call...
+
+	 + OutputL1BOAData for this MAF
+
+       + QualifyCurrentMAF: This is the routine that does most of the
+         work. It initializes various control variabls (MIFprecSign)
+         and the actual data
+         (CurMAFdata%ChanType(MIF)%{FB,MB,WF,DACS}, Declares are
+         BankWall (which only affects 2 MAFs) if the Attenuation is
+         over the maximum or has too much of a change and marks
+         individual MIFs as unuable (D == discard) if their GHz mirror
+         position isn't what's predicted in the L1CF file. Does some
+         quality checking on the space/target counts to see if they
+         make sense. If they're too 'close', suggesting that one or
+         the other of them are mislabeled, declare a WALL. Looks for
+         Bright Objects (e.g. the moon) and declares are WALL if any
+         are found. Looks for changes in the GSN (Ghz Switch network)
+         and declares a wall if there are any. If there haven't been
+         any change, find which channel ('banks' in the L1 code) each
+         switch is going to. (Need to put the Lock state code here,
+         since we need the information about the current GSN
+         configuration)
+
+       + IF (CalWinFull) QualifyWindow
+       + UpdateCalVecctors
+       + do_calib==CalWinFull
+     + IF (only do the following if SortQualify returns `do_calib'==TRUE) THEN 
+       + Calibrate
+       + CalcLimbRads
+       + OutputL1BData
+       + LatBinRads
+     + ENDIF
+     + If more_data==FALSE, exit LOOP
+
+   + ENDLOOP
+
+   + FinaliseDACSData
+   + UpdateBaseLines
+   + UpdateBaseLinesRads
+   + CloseFiles
+   + CloseMLSL1DebugFiles
+
+     
+** MLSL1T
+* Bands/Radiomters/Switch mappings
+** Radiometers
+   + R1A/R1B : Bands 1, 21, 22, 26, 32 and 34
+   + R2 : Bands 2-6, 23 and 27
+   + R3 : Bands 7-9, 25-26 and 33
+   + R4 : Bands 10-14, 28-31
+   + R5 : Bands 15-20 (Thz)
+** Bands
+** GSN Switch
+   1) Band 25 and 26 (DACS). Band 25 is pulled off of Bands 9 (R3),
+      Band 26 comes from Band21 (R1B). Whichever is passed through
+      Switch 1 is to DACS1.
+   2) Bands 2,3,5,6,8 and 9. Sent to FB 3.
+   3) Bands 1,4,7,8,13 and 21. Sent to FB 8.
+   4) Bands 10-12, 14, 20 and 21. Sent to FB 12.
+   5) Bands 15-20, Sent to FB 25 (THz bands!)
+
+* Lock states
+
+  The lock states are stored in the Science5 section of Engineering
+  Packet5 between bits 1520 and 1800, bytes 190-234. There are *three*
+  mnemonics to keep track of! See C&DH handbook, Engineering Packet 5,
+  page 45, Science Packet 5 and Appendix O, page 136.
+  
+  Table showing offsets into packet 5, the RIU ID, the RIU (don't ask
+  me what the difference is between the 'ID" and the name), the value
+  that it should have and what it means if it doesn't have that value.
+
+| Byte | RIU 'ID'  | RIU  |  nominal | bad band(s)/channel(s)   | FB/MB/WF/DACS/(species)         |
+|------+-----------+------+----------+--------------------------+---------------------------------|
+|  190 | SMO5      | FB05 |        1 | MB1 (Band 27)            | (HCN)                           |
+|  191 | SM07      | FB07 |        1 | MB3 (Band 29)            | (HOCl)                          |
+|  192 | SM08      | FB08 |        1 | MB2 (Band 28)            | (HO2)                           |
+|  193 | SM10      | FB10 |        1 | MB4 & MB5 (Bands 30,31)  | (HO2/BrO)                       |
+|  194 | SM11      | DAC1 |       13 | DACS1                    | ??                              |
+|  195 | SM12      | DAC2 |       13 | DACS2                    | ??                              |
+|  196 | SM01      | FB01 |        1 | Side A down converter. A | Only when Side A is on!         |
+|      |           |      |          | analog                   | Q: How do I know this?          |
+|      |           |      |          | data                     |                                 |
+|      |           |      |          | bad!                     |                                 |
+|  197 | SM02      | FB02 |        1 | Side B down-converter B  | Only when Side B is on!         |
+|      |           |      |          | analog                   | Q: How do I know this?          |
+|      |           |      |          | data                     |                                 |
+|      |           |      |          | bad                      |                                 |
+|  210 | GM05      | RCO0 |       14 | Band 1                   | FB1                             |
+|  211 | GM06      | RCO1 |       14 | Band 21                  | Band 21: FB11 (GSN sw4 nominal) |
+|      |           |      |          |                          | FB8 (GSN sw3)                   |
+|      |           |      |          |                          |                                 |
+|  212 | GM07(msb) | RCO2 | [194,12] | Bands 2-6. See [1]       | (All of R2)                     |
+|      |           |      |          |                          |                                 |
+|      |           |      |          |                          | Band 2: FB2                     |
+|      |           |      |          |                          | FB3 (GSN sw 2, non-nominal)     |
+|      |           |      |          |                          | Band 3: FB3 (GSN sw 2, nominal) |
+|      |           |      |          |                          | null, if GSN sw2 doesn't        |
+|      |           |      |          |                          | pass Band 3                     |
+|      |           |      |          |                          |                                 |
+|      |           |      |          |                          | Band 4: FB4                     |
+|      |           |      |          |                          | FB8 (GSN sw3, non-nominal)      |
+|      |           |      |          |                          |                                 |
+|      |           |      |          |                          | Band 5: FB5                     |
+|      |           |      |          |                          | FB3 (GSN sw2, non-noninal)      |
+|      |           |      |          |                          |                                 |
+|      |           |      |          |                          | Band 6: FB6                     |
+|      |           |      |          |                          | FB3 (GSN sw2, non-nominal)      |
+|  213 | GM07(lsb) | RCO2 |          |                          | Same-same                       |
+|      |           |      |          |                          |                                 |
+|      |           |      |          |                          |                                 |
+|      |           |      |          |                          |                                 |
+|      |           |      |          |                          |                                 |
+|      |           |      |          |                          |                                 |
+|      |           |      |          |                          |                                 |
+|      |           |      |          |                          |                                 |
+|  214 | GM08(msb) | RCO3 | [194,12] | Bands 7-9.See [1]        | All of R3                       |
+|      |           |      |          |                          | Band 7: FB7                     |
+|      |           |      |          |                          | FB8 (GSN sw3, non-nominal)      |
+|      |           |      |          |                          |                                 |
+|      |           |      |          |                          | Band 8: FB8                     |
+|      |           |      |          |                          | null (if GSN sw doesn't         |
+|      |           |      |          |                          | pass Band 8)                    |
+|      |           |      |          |                          |                                 |
+|      |           |      |          |                          | Band 9: FB9                     |
+|      |           |      |          |                          | FB3 (GSN sw2, non-nominal)      |
+|  215 | GM08(lsb) | RCO3 |          |                          | same-same                       |
+|      |           |      |          |                          |                                 |
+|  216 | GM09(msb) | RCO4 | [129,12] | Bands 10-14.See [1]      | Band 10: FB10                   |
+|      |           |      |          |                          | FB8 (GSN sw3, non-nominal)      |
+|      |           |      |          |                          |                                 |
+|      |           |      |          |                          | Band 11: FB11                   |
+|      |           |      |          |                          |                                 |
+|      |           |      |          |                          | Band 12: FB12 (GSN sw4,         |
+|      |           |      |          |                          | non-nominal)                    |
+|      |           |      |          |                          | FB12 (GSN sw4, non-nominal)     |
+|      |           |      |          |                          | null (if GSN sw4 doesn't        |
+|      |           |      |          |                          | pass band 12                    |
+|      |           |      |          |                          |                                 |
+|      |           |      |          |                          | Band 13: FB13                   |
+|      |           |      |          |                          | FB8 (GSN sw3, non-nominal)      |
+|      |           |      |          |                          |                                 |
+|      |           |      |          |                          | Band 14: FB14                   |
+|      |           |      |          |                          | FB12 (GSN sw4, non-nominal)     |
+|  217 | GM09(lsb) | RCO4 |          |                          | same-same                       |
+
+
+| Byte | RIU 'ID' | RIU    | nominal | bad band(s)/channel(s)   | FB/MB/WF/DACS/(species)         |
+|------+----------+--------+---------+--------------------------+---------------------------------|
+|  218 | GM10     | SIF1 A |     255 | Band 1 [2]               | FB1                             |
+|  219 | GM11     | SIF1 B |     255 | Band 21                  | Band 21: FB12 (GSN sw4 nominal) |
+|      |          |        |         |                          | FB8 (GSN sw3, non-nominal)      |
+|      |          |        |         |                          |                                 |
+|  220 | GM12     | SIF2   |     255 | Bands 2-6                | See RCO2                        |
+|  221 | GM13     | SIF3   |     255 | Bands 7-9                | See RCO3                        |
+|  222 | GM14     | SIF4   |     243 | Bands 10-14              | See RCO4                        |
+|  224 | GM15     | GSN    |       0 | TBD                      |                                 |
+|  234 | TM03     | SIF5   |       0 | Only meaningful when THz |                                 |
+|      |          |        |         | is on, but still need    |                                 |
+|      |          |        |         | to know in case of       |                                 |
+|      |          |        |         | reprocessing             |                                 |
+
+
+** Questions
+
+   1. When GM05/RCO0 doesnot equal 14 (which affects Band 1): Does the
+      fact that B1F (PT) also gets split off and sent to Band 22
+      (DACS4)require that L1 set DACS4 bad too?
+
+   2. Same question for...
+      + Band 21 (B21F:PT) which also gets sent to FB12 if GSN switch 4
+        is set nominally, or to FB8 if GSN switch 3 is set for that route?
+      + And so on...
+
+
+Footnotes
+
+[1] These are two byte quantities. The first byte in the list is
+the MSB, the seconds the LSB. They both must match their nominal
+values or the corresponding bands are marked bad
+
+[2] See also RCO0
+
+  
+@
+
+
+1.4
+log
+@Continuing note taking
+@
+text
+@d3329 13
+d3345 3
+a3347 4
+*** OpenInitBsw
+*** ExamineSciData
+    All this routine does is check and/or update the BandSwitches file!
+*** CloseFiles
+a3348 6
+   
+   + OpenAndInitializeLog
+   + BandSwitchesUpdate::ExamineData
+     After calling NextSciMAF, check the GSN for changes. That's about
+     it!
+     + SciUtils::NextSciMAF
+d3350 81
+a3430 4
+       By calling GetSciPkt(-> ReadL0Sci->ReadL0Packet) until the MAF
+       number changes, pull out the positions fo the pointing mirrors,
+       'process' DACS data, convert the DN for the pointing mirros to
+       anglesand return.
+d3432 28
+a3459 15
+       + SciUtils::GetSciPkt
+	 Reads the science packets
+	 + SciUtils::ReadL0Packet. Reads a packet (agnostic towards eng/sci?)
+
+       + ProcessDACSdata: DACS data is in some packed, compressed
+         format. The following undoes all that.
+
+	 + UnpackDACSdata : unpacks the DACS data, which is some
+           compressed packed format
+
+	   + UnpackUncompDACS
+
+	 + ProcessUnpackedDACS : Crap, I don't know. Coefficients
+           looks like a combination of a Taylor and a Fourier
+           series. Then runs them through a fourier transform.
+a3460 9
+       + GetScAngles : Converts the DN for the mirrors
+
+   + DetermineWeightsFlags
+
+   + CloseFiles
+
+   + LogStatus
+** MLSL1G
+   + OpenInitialize
+d3470 4
+a3473 4
+     MinCalFlag variables, Reads WeightFlags,EngMAF and SciMAf from
+     MAF_dat_tmp.dat, which is created by MLSL1log then shifts data
+     around in arrays. If the data is inside the processing interval,
+     call...
+d3478 17
+a3494 15
+     work.. It initializes various control variabls (MIFprecSign) and
+     the actual data (CurMAFdata%ChanType(MIF)%{FB,MB,WF,DACS},
+     Declares are BankWall (which only affects 2 MAFs) if the
+     Attenuation is over the maximum or has too much of a change and
+     marks individual MIFs as unuable (D == discard) if their GHz
+     mirror position isn't what's predicted in the L1CF file. Does
+     some quality checking on the space/target counts to see if they
+     make sense. If they're too 'close', suggesting that one or the
+     other of them are mislabeled, declare a WALL. Looks for Bright
+     Objects (e.g. the moon) and declares are WALL if any are
+     found. Looks for changes in the GSN (Ghz Switch network) and
+     declares a wall if there are any. If there haven't been any
+     change, find which channel ('banks' in the L1 code) each switch
+     is going to. (Need to put the Lock state code here, since we need
+     the information about the current GSN configuration)
+d3496 1
+a3496 1
+       + if (CalWinFull) QualifyWindow
+d3499 1
+a3499 1
+     + if (only do the following if SortQualify returns `do_calib'==TRUE)
+d3505 2
+a3506 1
+     + If no more_data==FALSE, exit
+d3508 1
+@
+
+
+1.3
+log
+@Added lock states
+@
+text
+@d3330 113
+d3477 1
+d3481 1
+d3484 1
+d3487 1
+d3501 1
+d3505 1
+d3512 1
+d3514 1
+d3520 1
+d3523 1
+d3557 1
+a3557 1
+* Footnotes
+@
+
+
+1.2
+log
+@Continuing work
+@
+text
+@d3329 114
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d3156 1
+d3173 11
+a3183 10
+       + QualifyCurrentMaf: Set flags that say whether a MIF is usable
+         or should be 'd'iscarded (CurMAFdata%ChanType(MIF)%X, where
+         X=FB,MB,WF and DACS). If there's been a change in
+         attentuation, either because it's changed or because the
+         attenuation has maxed out, set a Wall for all of the
+         channels. This has the effect of skipping the next 2 MAFs
+         (see BankWalCnt%FB. Get the switching mirror position and
+         compare with the predicted locations given in the L1CF config
+         file, store what's read in the telemetry in the variable
+         CurMAFdata%SciPkt(MIF)%GHz_sw_pos and also
+d3185 96
+a3280 8
+         slots) as well as %MB, %WF and %DACS. Set a flag saying that
+         there is a least 1 S and 1 T MIF. Does some scaling of DACS
+         data I don't understand. Check to see if a 'bank' is `off',
+         in the sense that the difference between `target' and `space'
+         counts is < 100 counts.  Declare a `Wall' for that
+         bank/channel if true. Check FB(13),MF(5),WF(2) and
+         DACS(1). check for bright objects. For changes in the GHz
+         switch network.
+d3282 3
+a3284 2
+       + (if CalWinFul) QualifyWindow
+       + UpdateCalVectors (Sets CalSWSeq and CalSwSeqLS vectors that
+d3287 5
+a3291 13
+         stored in CalWin%MAFdata(...)%SciPkt(...)%GHz_Sw_pos.)
+     + Calibrate
+       + SetComVecs
+	 + calcComVecs
+       + For index=start_index,end_index
+	 + InterpCals ; for space counts
+	 + InterpCals ; target counts
+	 + For each altitude ; space in limb port
+	   + InterpCals ; limb/space counts
+       + ChiSquare
+     + CalcLimbRads
+     + OutputL1Bdata
+     + LatBinRads
+d3293 10
+a3302 3
+   SortQualify::SortAndQualify 
+   UpdateCalVectors
+   SetCalVectors
+@
+

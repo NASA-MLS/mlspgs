@@ -1,0 +1,101 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.12
+	cfm-single-freq-0-1:1.1.0.10
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.8
+	mus-emls-1-70:1.1.0.6
+	rel-1-0-englocks-work:1.1.0.4
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.2
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	M4-00:1.1
+	V3-33:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2011.06.08.21.24.36;	author honghanh;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial import of the IDL portion of IDLCFM (a.k.a. ICFM)
+@
+text
+@function ReadL2CFArray, filename, prefix=prefix, suffix=suffix, extraSuffix=extraSuffix
+
+openr, unit, filename, /get_lun
+found = 0
+line = ''
+while not found and not eof ( unit ) do begin
+  readf, unit, line, format='(a)'
+  line = strtrim ( line, 2 )
+  start = strmid ( line, 0, strlen ( prefix ) )
+  if start eq prefix then found = 1
+endwhile
+if not found then return, empty
+
+done = 0
+
+line = strmid ( line, strlen ( prefix ), strlen ( line ) )
+snippet = ''
+
+repeat begin
+  lastChar = strmid ( line, strlen ( line ) - 1, 1 )
+  if lastChar eq '$' then begin
+    snippet = snippet + strmid ( line, 0, strlen ( line ) - 1 )
+    readf, unit, line, format='(a)'
+    line = strtrim ( line, 2 )
+  endif else begin
+    snippet = snippet + line
+    done = 1
+  endelse
+endrep until done or eof ( unit )
+if not done then return, empty
+
+if n_elements ( suffix ) ne 0 then begin
+  trimPos = strpos ( snippet, suffix, /reverse_search )
+  snippet = strmid ( snippet, 0, trimPos )
+endif
+
+;; Strip out any extra suffix stuff
+if n_elements ( extraSuffix ) ne 0 then begin
+  for i = 0, n_elements ( extraSuffix ) - 1 do begin
+    trimPos = strpos ( snippet, extraSuffix[i], /reverse_search )
+    if trimPos ne -1 then snippet = strmid ( snippet, 0, trimPos )
+  endfor
+endif
+
+dummy = execute ( 'result=' + snippet )
+return, result
+
+end
+
+  
+
+  
+@

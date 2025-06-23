@@ -1,0 +1,80 @@
+head	2.1;
+access;
+symbols
+	v5-02-NRT-19:2.1
+	v6-00:2.1
+	v5-02-NRT-18:2.1
+	v5-02:2.1
+	v5-01-NRT-17:2.1
+	v5-01-NRT-16:2.1
+	v5-01-NRT-15:2.1
+	v5-01-NRT-14:2.1
+	neuralnetworks-1-0:2.1.0.10
+	cfm-single-freq-0-1:2.1.0.8
+	v5-01:2.1
+	v5-00:2.1
+	v4-23-TA133:2.1.0.6
+	mus-emls-1-70:2.1.0.4
+	rel-1-0-englocks-work:2.1.0.2
+	VUMLS1-00:2.1
+	VPL1-00:2.1
+	V4-22-NRT-08:2.1
+	VAM1-00:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.1
+date	2015.03.27.01.05.38;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id: $
+
+! logical function IsMonotonic_* ( ARRAY, DIRECTION ) result(sooDesu)
+!   type(?), dimension(:), intent(in) :: ARRAY
+!   character(len=*), intent(in), optional :: DIRECTION
+!   Internal variables....
+    character(len=1) :: MyDirection
+    ! Executable
+    myDirection = '0' ! Either direction is OK, as long as monotonic
+    if ( present(direction) ) myDirection = direction
+    if ( size(array) < 2 ) then
+      sooDesu = .true.
+      return
+    end if
+    increment = array(2:) - array(:size(array)-1)
+    incMin = minval(increment)
+    incMax = maxval(increment)
+    select case (myDirection)
+    case ('+') ! Must be increasing monotonic
+      sooDesu = ( incMin > 0 )
+    case ('-') ! Must be decreasing monotonic
+      sooDesu = ( incMax < 0 )
+    case default ! either will do
+      sooDesu = ( incMin > 0 ) .or. ( incMax < 0 )
+    end select
+
+! $Log: $
+@

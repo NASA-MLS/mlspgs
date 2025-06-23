@@ -1,0 +1,790 @@
+head	1.7;
+access;
+symbols
+	v5-02-NRT-19:1.7
+	v6-00:1.7
+	v5-02-NRT-18:1.7
+	v5-02:1.7
+	v5-01-NRT-17:1.7
+	v5-01-NRT-16:1.7
+	v5-01-NRT-15:1.7
+	v5-01-NRT-14:1.7
+	neuralnetworks-1-0:1.7.0.4
+	cfm-single-freq-0-1:1.7.0.2
+	v5-01:1.7
+	v5-00:1.7
+	v4-23-TA133:1.5.0.4
+	mus-emls-1-70:1.5.0.2
+	rel-1-0-englocks-work:1.3.0.4
+	VUMLS1-00:1.3
+	VPL1-00:1.3
+	V4-22-NRT-08:1.3
+	VAM1-00:1.3
+	V4-21:1.3.0.2
+	V4-13:1.3
+	V4-12:1.3
+	V4-11:1.3
+	V4-10:1.3;
+locks; strict;
+comment	@# @;
+
+
+1.7
+date	2019.07.31.20.09.19;	author vsnyder;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2019.07.09.22.40.52;	author vsnyder;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2018.04.17.23.09.06;	author vsnyder;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2018.04.17.22.40.54;	author vsnyder;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2014.01.14.00.11.42;	author vsnyder;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2013.11.27.01.33.47;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2013.10.24.22.41.14;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.7
+log
+@Add printing for closures
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Print_Set
+
+  implicit NONE
+  private
+  public :: PNTSET
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: pntset.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  subroutine PNTSET ( LNADQT )
+
+    use Basis_m, only: BASIS, IFINAL, INDBAS, Items, Item_t
+    use Complete, only: Closures_Index, Closures
+    use Delete, only: DELCS
+    use Error_m, only: Error
+    use Output_m, only: Blanks, NewLine, OUTPUT
+    use Processor_Dependent, only: NewPage
+    use LISTS, only: LINT, LIST, NEW, REL
+    use Print_List, only: PNTLST
+    use String_Table, only: Display_String, String_Length
+    use Tables, only: Actions, NUMPRD, PRDIND => Prod_Ind, &
+      & PRODCN => Productions, VOCAB
+    use TOGGLES_LR
+    use Transitions_And_Reductions, only: Red, Tran
+
+    integer, intent(out) :: LNADQT     ! The last inadequate state.  Zero if
+                             ! the grammar is adequate, i.e., it is LR(1).
+
+    ! Print the configuration sets.
+
+    ! *****     External References     ************************************
+
+    ! DELCS   deletes a reference to a context set.
+    ! ERROR   prints error messages.
+    ! LINT    detects intersections between pairs of lists.
+    ! PNTLST  prints a list of vocabulary items.
+
+    ! *****     Local Variables     ****************************************
+
+    ! ADEQUT  indicates whether the current state is adequate, that is, free
+    !         of conflicts.
+    ! I       points to the current basis.
+    ! IBASE   is the base of the set of productions being printed.
+    ! IPR     points to the set of productions for a configuration set.
+    ! IPTR    points to a context set list element.
+    ! ITEMP   points to a temporary list node.
+    ! J       is a loop inductor and subscript for RED.
+    ! JDOT    is the position being printed in the production.
+    ! JEND    is the upper limit for J when reductions are being printed, or
+    !         the upper limit for JSTART when transitions are being printed.
+    ! JSTART  is the starting value for J when reductions are being printed,
+    !         or the starting value, loop inductor, and subscript for TRAN
+    !         when transitions are being printed.
+    ! K       is a loop induction variable and subscript.
+    ! L       is a loop inductor, subscript for RED when conflicts are
+    !         being detected, and position in output line.
+    ! LINK    is a pointer to a list node when cross reference lists are
+    !         being constructed or printed.
+    ! LSTHED  is an array of pointers to lists of states in which a
+    !         a production is analyzed.
+    ! REDUCE  is .TRUE. iff the last configuration printed was a reducing
+    !         configuration, in which case the context is not printed (since
+    !         it is the same as the lookahead).
+
+    logical ADEQUT
+    integer I, IBASE, IPR, IPTR, ITEMP, JDOT, JEND, JSTART
+    integer K, L, LINK
+    integer LSTHED(NUMPRD)
+    logical REDUCE
+
+  !     *****     Procedures     *****************************************
+
+    if (toggle(iachar('M')) /= 0) then
+      call clean_up ! redundant context set references
+      return
+    end if
+    lnadqt = 0
+    call new (itemp)
+    call output ( newPage, dont_asciify=.true. )
+    call blanks ( 37 )
+    call output ( 'T H E   P A R S I N G   A U T O M A T O N', advance='yes' )
+    call newLine
+    call output ( ' State number', advance='yes' )
+    call output ( '     .  Production numbers', advance='yes' )
+    call output ( '          .  State Contents', advance='yes' )
+    do i = 1, indbas-1
+      ipr = basis(i)%item        ! first item for the state
+      call print_the_basis       ! for the state
+      if ( toggle(iachar('C')) /= 0 ) call print_the_closure
+      call print_the_transitions ! from the state
+      call print_the_reductions  ! from the state
+    end do
+    call rel (itemp)
+    if (lnadqt /= 0) then
+      call error ( 'This grammar is not LR(1)', 1 )
+      call output ( lnadqt, before=' Last inadequate state:', advance='yes' )
+    end if
+    if (toggle(iachar('X')) == 0) &
+      call print_cross_reference ! of productions and states
+
+  contains
+
+    subroutine clean_up ! redundant context set references
+      integer :: I, J
+      do i = 1, indbas-1
+        ipr = basis(i)%item
+        if ( items(ipr)%prod == 1 .and. items(ipr)%dot > 3 ) ifinal = i
+        do j = ipr, basis(i+1)%item-1
+          call delcs (items(j)%set)
+        end do
+      end do
+    end subroutine clean_up ! redundant context set references
+
+    subroutine print_the_basis ! for the state
+      integer :: J
+      integer :: L ! How many blanks before printing the production.
+      call newLine
+      call output ( i, 6 )
+      if ( items(ipr)%prod == 1 .and. items(ipr)%dot > 3 ) ifinal = i
+      l = 0   ! State number has been printed; don't need initial space
+      do j = ipr, basis(i+1)%item - 1
+        call print_the_production ( items(j), l )! with a dot in the right side
+        l = 6 ! No state number after additional productions; need initial space
+        if (.not.reduce) then
+          iptr = list(items(j)%set)%next
+          if (iptr /= 0 .and. toggle(iachar('2')) /= 0) then
+            call blanks ( 12 )
+            call output ( 'Context:' )
+            call pntlst (iptr, 23, 25)
+          end if
+        end if
+        call delcs ( items(j)%set )
+      end do
+    end subroutine print_the_basis ! for the state
+
+    subroutine print_the_closure ! for the state
+      integer :: J      ! Closure to print
+      integer :: J1, J2 ! Range of Closures to print
+      integer :: NBasis ! Number of items in the basis
+      nBasis = basis(i+1)%item - basis(i)%item
+      j1 = closures_index(i-1) + nBasis + 1
+      j2 = closures_index(i)
+      if ( j1 > j2 ) return
+      call blanks ( 12 )
+      call output ( 'Closure:', advance='yes' )
+      do j = j1, j2
+        call print_the_production ( closures(j), 6 )
+      end do
+    end subroutine print_the_closure
+
+    subroutine print_the_production ( Item, Initial )! with a dot in the right side
+
+      type(item_t), intent(in) :: Item  ! Configuration set item
+      integer, intent(in) :: Initial    ! Space before the production
+
+      integer :: K
+      integer :: Prod_Number
+      integer :: W ! String length of vocab item
+
+      ! Print the left side.
+
+      prod_number = item%prod
+      ibase = prdind(prod_number)
+      call blanks ( initial )
+      call output ( prod_number, 5 )
+      call display_string ( vocab(prodcn(ibase)), before=' ' )
+      call output ( ' ->' )
+      l = string_length(vocab(prodcn(ibase))) + 16
+
+      ! Print the right side of the production with a dot before the
+      ! IDOT'th item.  IDOT is in item%dot.
+
+      jdot = 1
+      do k = ibase+1, prdind(prod_number+1)-1
+        w = string_length(vocab(prodcn(k)))
+        if ( w + l > 120 ) then
+          call newLine
+          call blanks ( 13 )
+          l = 13
+        end if
+        if ( jdot == item%dot ) then
+          call output ( ' .' )
+          l = l + 2
+        end if
+        call display_string ( vocab(prodcn(k)), before=' ' )
+        l = l + w + 1
+        jdot = jdot + 1
+      end do
+      reduce = jdot == item%dot
+      if (reduce) then
+        call output ( ' .' )
+        if ( actions(prod_number) /= 0 ) then
+          call display_string ( abs(actions(prod_number)), before=' => ' )
+          if ( actions(prod_number) < 0 ) call output ( ' ?' )
+        end if
+      end if
+      call newLine
+    end subroutine print_the_production ! with a dot in the right side
+
+    subroutine print_the_transitions ! from the state
+      jstart = basis(i)%tran
+      jend = basis(i+1)%tran - 1
+      if (jstart <= jend) then
+        call blanks ( 12 )
+        call output ( 'Transitions: ' )
+        l = 12 + len('Transitions: ')
+        do while (jstart <= jend)
+          if (l > 115) then
+            call newLine
+            call blanks ( 16 )
+          end if
+          call output ( tran(jstart), 5 )
+          l = l + 5
+          jstart = jstart + 1
+        end do
+        call newLine
+      end if
+    end subroutine print_the_transitions ! from the state
+
+    subroutine print_the_reductions ! from the state
+      integer :: J
+      adequt = .true.
+      jstart = basis(i)%red
+      jend = basis(i+1)%red - 1
+      if (jstart <= jend) then
+        call blanks ( 12 )
+        call output ( 'Reductions:' )
+        do j = jstart, jend
+          if ( j /= jstart ) call blanks ( 12+len('Reductions:'))
+          call output ( red(j)%prod, 7 )
+          iptr = list(red(j)%set)%next
+          call pntlst (iptr, 30, 30)
+          call check_for_conflicts ( j ) ! in state j
+        end do
+        if (.not. adequt) then
+          if (lnadqt /= 0) then
+            call output ( lnadqt, before=' Last inadequate state:', advance='yes' )
+          end if
+          lnadqt = (i+4)/5
+        end if
+      end if
+    end subroutine print_the_reductions ! from the state
+
+    subroutine check_for_conflicts ( j ) ! in state j
+      integer, intent(in) :: J
+      integer :: L
+      do l = basis(i)%tran, basis(i+1)%tran-1
+        k = basis(tran(l))%item
+        list(itemp)%item = prodcn(prdind(items(k)%prod)+items(k)%dot-1)
+        if ( lint(itemp, list(red(j)%set)%next) ) then
+          adequt = .false.
+          call output ( (tran(l)+4)/5, &
+            & before=' *** Intersection with transition to ' )
+          call display_string ( vocab(list(itemp)%item), before=' on ', advance='yes' )
+        end if
+      end do
+      if (j /= jstart) then
+        do l = jstart, j-1
+          if ( lint(list(red(l)%set)%next, list(red(j)%set)%next) ) then
+            adequt = .false.
+            call output ( red(l)%prod, before=' *** Intersection with reduction of ', &
+              & advance='yes' )
+          end if
+        end do
+      end if
+    end subroutine check_for_conflicts ! in this state
+
+    subroutine print_cross_reference ! of productions and states
+      integer :: I, J
+      lsthed(1:numprd) = 0
+      do i = 1, indbas-1
+        do j = basis(i)%item, basis(i+1)%item - 1
+          call new (link)
+          list(link)%item = i
+          list(link)%next = lsthed(items(j)%prod)
+          lsthed(items(j)%prod) = link
+        end do
+      end do
+
+      ! Print the cross reference lists.
+
+      call output ( newPage, dont_asciify=.true. )
+      call blanks ( 34 )
+      call output ( 'A U T O M A T O N   C R O S S   R E F E R E N C E', &
+        & advance='yes' )
+      call newLine
+      call output ( 'Production', advance='yes' )
+      call output ( '    .    Analyzed in states', advance='yes' )
+      do i = 1, numprd
+        link = lsthed(i)
+        if (link /= 0) then
+          call output ( i, 5 )
+          l = 6
+          do while (link /= 0)
+            if (l > 115) call newLine
+            call output ( list(link)%item, 5 )
+            l = l + 5
+            link = list(link)%next
+          end do
+          call newLine
+          call rel (lsthed(i))
+        end if
+      end do
+    end subroutine print_cross_reference ! of productions and states
+
+  end subroutine PNTSET
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: pntset.f90,v 1.6 2019/07/09 22:40:52 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Print_Set
+
+! $Log: pntset.f90,v $
+! Revision 1.6  2019/07/09 22:40:52  vsnyder
+! Spiff some output
+!
+! Revision 1.5  2018/04/17 23:09:06  vsnyder
+! J actually was being used as a global variable, but that's confusing, so
+! pass it around as an argument.
+!
+! Revision 1.4  2018/04/17 22:40:54  vsnyder
+! Declare local DO variables
+!
+! Revision 1.3  2014/01/14 00:11:42  vsnyder
+! Revised LR completely
+!
+! Revision 1.2  2013/11/27 01:33:47  vsnyder
+! Stop with stop-code 1 if not LR
+!
+! Revision 1.1  2013/10/24 22:41:14  vsnyder
+! Initial commit
+!
+@
+
+
+1.6
+log
+@Spiff some output
+@
+text
+@d28 2
+a29 1
+    use Basis_m, only: BASIS, IFINAL, INDBAS, Items
+d105 1
+d124 1
+a124 1
+        do j = ipr, basis(i+1)%item
+d138 1
+a138 1
+        call print_the_production ( j, l )! with a dot in the right side
+d152 14
+a165 1
+    subroutine print_the_production ( s, initial )! with a dot in the right side
+d167 1
+a167 1
+      ! Print the left side.
+d169 2
+a170 2
+      integer, intent(in) :: S       ! Index of configuration set item
+      integer, intent(in) :: Initial ! Space before the production
+d176 3
+a178 1
+      prod_number = items(s)%prod
+d187 1
+a187 1
+      ! IDOT'th item.  IDOT is in items(S)%dot.
+d197 1
+a197 1
+        if ( jdot == items(s)%dot ) then
+d205 1
+a205 1
+      reduce = jdot == items(s)%dot
+d327 1
+a327 1
+       "$Id: pntset.f90,v 1.5 2018/04/17 23:09:06 vsnyder Exp $"
+d337 3
+@
+
+
+1.5
+log
+@J actually was being used as a global variable, but that's confusing, so
+pass it around as an argument.
+@
+text
+@d141 2
+a142 2
+            call blanks ( 13 )
+            call output ( 'Context: ' )
+d310 1
+a310 1
+       "$Id: pntset.f90,v 1.4 2018/04/17 22:40:54 vsnyder Exp $"
+d320 4
+@
+
+
+1.4
+log
+@Declare local DO variables
+@
+text
+@d81 1
+a81 1
+    integer I, IBASE, IPR, IPTR, ITEMP, J, JDOT, JEND, JSTART
+d170 1
+a170 1
+      ! IDOT'th item.  IDOT is in items(J)%dot.
+d180 1
+a180 1
+        if ( jdot == items(j)%dot ) then
+d188 1
+a188 1
+      reduce = jdot == items(j)%dot
+d232 1
+a232 1
+          call check_for_conflicts ! in this state
+d243 2
+a244 1
+    subroutine check_for_conflicts ! in this state
+d310 1
+a310 1
+       "$Id: pntset.f90,v 1.3 2014/01/14 00:11:42 vsnyder Exp $"
+d320 3
+@
+
+
+1.3
+log
+@Revised LR completely
+@
+text
+@d118 1
+d129 1
+d157 1
+d220 1
+d244 1
+d267 1
+d309 1
+a309 1
+       "$Id: pntset.f90,v 1.2 2013/11/27 01:33:47 vsnyder Exp $"
+d319 3
+@
+
+
+1.2
+log
+@Stop with stop-code 1 if not LR
+@
+text
+@d28 1
+a28 1
+    use ANACOM, only: IFINAL, INDBAS
+d30 4
+a33 3
+    use Error_Handler, only: Error
+    use IO, only: OUTPUT
+    use LISTS, only: ITEM, LINT, NEW, NEXT, REL
+d35 8
+a42 10
+    use S1, only: LENGTH, MOVSTR
+    use S3, only: PRDIND, PRODCN, VOCAB
+    use S5, only: BASIS, RED, TRAN
+    use TABCOM, only: NUMPRD
+    use TOGGLES
+    implicit NONE
+
+    integer, intent(out) :: LNADQT
+    ! LNADQT  is the state number of the last inadequate state.  Zero if
+    !         the grammar is adequate, it is LR(1).
+a49 1
+    ! LENGTH  calculates the length of a vocabulary item.
+a50 1
+    ! MOVSTR  moves a vocabulary item from the symbol table.
+d71 1
+a71 1
+    !         being detected, and subscript for LINE.
+a73 1
+    ! LINE    is used for message assembly.
+a82 1
+    character(len=120) :: LINE
+d88 1
+a88 1
+    if (toggle(ichar('M')) /= 0) then
+d94 10
+a103 12
+    line = '1'
+    line(39:81) = 'T H E   P A R S I N G   A U T O M A T O N'
+    call output (line(1:81))
+    line(1:14) = '0 State number'
+    call output (line(1:14))
+    line(1:26) = '     .  Production numbers'
+    call output (line(1:26))
+    line(1:27) = '     .       State Contents'
+    call output (line(1:27))
+    do i = 1, indbas-1, 5
+      ipr = basis(i)
+      call print_the_basis ! for the state
+d105 1
+a105 1
+      call print_the_reductions ! from the state
+d109 2
+a110 4
+      call error ('This grammar is not LR(1)',1)
+      line = ' Last inadequate state:'
+      write ( line(24:29), '(i6)' ) lnadqt
+      call output (line(1:29))
+d112 1
+a112 1
+    if (toggle(ichar('X')) == 0) &
+d118 5
+a122 5
+      do i = 1, indbas-1, 5
+        ipr = basis(i)
+        if (basis(ipr) == 1 .and. basis(ipr+1) > 3) ifinal = (i+4)/5
+        do j = ipr, basis(i+5)+3, -3
+          call delcs (basis(j+2))
+d128 8
+a135 4
+      write ( line(1:6), '("0",i5)' ) (i+4)/5
+      if (basis(ipr) == 1 .and. basis(ipr+1) > 3) ifinal = (i+4)/5
+      do j = ipr, basis(i+5)+3, -3
+        call print_the_production ! with a dot in the right side
+d137 5
+a141 4
+          iptr = next(basis(j+2))
+          if (iptr /= 0 .and. toggle(ichar('2')) /= 0) then
+            line(14:21) = 'Context:'
+            call pntlst (iptr, line, 23, 25)
+d144 1
+a144 1
+        call delcs (basis(j+2))
+d148 1
+a148 1
+    subroutine print_the_production ! with a dot in the right side
+d152 13
+a164 6
+      write ( line(8:12), '(i5)' ) basis(j)
+      l = 14
+      ibase = prdind(basis(j))
+      call movstr (vocab(prodcn(ibase)), line, l, 120)
+      line(l+1:l+2) = '->'
+      l = l + 4
+d167 1
+a167 1
+      ! IDOT'th item.  IDOT is in BASIS(I+1).
+d170 6
+a175 4
+      do k = ibase+1, prdind(basis(j)+1)-1
+        if (length(vocab(prodcn(k)))+l > 120) then
+          call output (line(1:l-1))
+          l = 17
+d177 2
+a178 2
+        if (jdot == basis(j+1)) then
+          line(l:l) = '.'
+d181 2
+a182 2
+        call movstr (vocab(prodcn(k)), line, l, 120)
+        l = l + 1
+d185 1
+a185 1
+      reduce = jdot == basis(j+1)
+d187 5
+a191 2
+        line(l:l) = '.'
+        l = l + 2
+d193 1
+a193 1
+      call output (line(1:l-1))
+d197 2
+a198 2
+      jstart = basis(i+3)
+      jend = basis(i+8) - 1
+d200 3
+a202 2
+        line(14:25) = 'Transitions:'
+        l = 26
+d205 2
+a206 2
+            call output (line(1:l-1))
+            l = 16
+d208 1
+a208 1
+          write ( line(l:l+4), '(i5)' ) (tran(jstart)+4)/5
+d212 1
+a212 1
+        call output (line(1:l-1))
+d218 2
+a219 2
+      jstart = basis(i+4)
+      jend = basis(i+9) - 2
+d221 7
+a227 7
+        line(14:24) = 'Reductions:'
+        do j = jstart, jend, 2
+          l = 26
+          write ( line(l:l+4), '(i5)' ) red(j)
+          l = l + 6
+          iptr = next(red(j+1))
+          call pntlst (iptr, line, l, 32)
+d232 1
+a232 3
+            line = ' Last inadequate state:'
+            write ( line(24:29), '(i6)' ) lnadqt
+            call output (line(1:29))
+d240 4
+a243 5
+      integer :: P ! position in LINE
+      do l = basis(i+3), basis(i+8)-1
+        k = basis(tran(l))
+        item(itemp) = prodcn(prdind(basis(k))+basis(k+1)-1)
+        if ( lint(itemp, next(red(j+1))) ) then
+d245 3
+a247 5
+          line = ' *** Intersection with transition to'
+          write ( line(38:46), '(i0," on ")' ) (tran(l)+4)/5
+          p = len_trim(line)+2
+          call movstr ( vocab(item(itemp)), line, p, 80 )
+          call output (line(1:p))
+d251 2
+a252 2
+        do l = jstart, j-2, 2
+          if ( lint(next(red(l+1)), next(red(j+1))) ) then
+d254 2
+a255 3
+            line = ' *** Intersection with reduction of'
+            write ( line(36:40), '(i5)' ) red(l)
+            call output (line(1:40))
+d263 2
+a264 2
+      do i = 1, indbas-1, 5
+        do j = basis(i), basis(i+5)+3, -3
+d266 3
+a268 3
+          item(link) = (i+4)/5
+          next(link) = lsthed(basis(j))
+          lsthed(basis(j)) = link
+d274 7
+a280 7
+      line(1:1) = '1'
+      line(36:84)='A U T O M A T O N   C R O S S   R E F E R E N C E'
+      call output (line(1:84))
+      line(1:11) = '0Production'
+      call output (line(1:11))
+      line(1:27) = '    .    Analyzed in states'
+      call output (line(1:27))
+d284 1
+a284 1
+          write ( line(1:5), '(i5)' ) i
+d287 2
+a288 3
+            if (l > 115) then
+            end if
+            write ( line(l:l+4), '(i5)' ) item(link)
+d290 1
+a290 1
+            link = next(link)
+d292 1
+a292 1
+          call output (line(1:l-1))
+d303 1
+a303 1
+       "$Id: pntset.f90,v 1.1 2013/10/24 22:41:14 vsnyder Exp $"
+d313 3
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d20 1
+a20 1
+       "$RCSfile: parser.f90,v $"
+d26 1
+a26 1
+  subroutine PNTSET
+d41 4
+a77 1
+    ! LNADQT  is the state number of the last inadequate state.
+a88 1
+    integer LNADQT
+d301 1
+a301 1
+       "$Id: parser.f90,v 2.29 2013/10/02 01:35:46 vsnyder Exp $"
+d310 4
+a313 1
+! $Log: $
+@
+

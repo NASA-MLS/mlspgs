@@ -1,0 +1,95 @@
+head	1.4;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.4
+date	2001.04.11.17.21.23;	author vsnyder;	state dead;
+branches;
+next	1.3;
+
+1.3
+date	2000.11.06.17.24.05;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2000.10.27.23.09.39;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2000.10.20.23.35.50;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.4
+log
+@Should never have been committed
+@
+text
+@#Makefile.dep -- a file to be included by a Makefile
+#to compile a Fortran 9x program or library
+OBJS = \
+table_dumper.o    table_generator.o    test.o  \
+ 
+# using f90makedep.pl to calculate dependencies 
+table_dumper.o: table_dumper.f90 $(dir1)MLSCF.o $(dir1)declaration_table.o \
+	$(dir1)intrinsic.o $(dir1)output_m.o $(dir1)string_table.o
+table_generator.o: table_generator.f90 $(dir1)MLSCF.o \
+	$(dir1)declaration_table.o $(dir1)expr_m.o $(dir1)intrinsic.o \
+	$(dir1)lexer_core.o $(dir1)output_m.o $(dir1)string_table.o \
+	$(dir1)toggles_core.o $(dir1)trace_m.o $(dir1)tree.o \
+	$(dir1)tree_types.o
+test.o: test.f90 $(dir1)MLSCF.o $(dir1)machine.o $(dir1)output_m.o \
+	$(dir1)toggles_core.o $(dir2)getCF_m.o
+ 
+#End of Makefile.dep
+ 
+@
+
+
+1.3
+log
+@Shared source library
+@
+text
+@@
+
+
+1.2
+log
+@getCF_m back to lib
+@
+text
+@d7 9
+a15 3
+table_dumper.o: table_dumper.f90
+table_generator.o: table_generator.f90
+test.o: test.f90
+@
+
+
+1.1
+log
+@first commit
+@
+text
+@d4 1
+a4 1
+getCF_m.o    table_dumper.o    table_generator.o    test.o  \
+d6 4
+a9 4
+getCF_m.o : getCF_m.f90 table_dumper.o table_generator.o 
+table_dumper.o : table_dumper.f90 
+table_generator.o : table_generator.f90 
+test.o : test.f90 getCF_m.o 
+@
+

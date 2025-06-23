@@ -1,0 +1,300 @@
+head	2.7;
+access;
+symbols
+	v5-02-NRT-19:2.7
+	v6-00:2.7
+	v5-02-NRT-18:2.7
+	v5-02:2.7
+	v5-01-NRT-17:2.7
+	v5-01-NRT-16:2.7
+	v5-01-NRT-15:2.7
+	v5-01-NRT-14:2.7
+	neuralnetworks-1-0:2.7.0.12
+	cfm-single-freq-0-1:2.7.0.10
+	v5-01:2.7
+	v5-00:2.7
+	v4-23-TA133:2.7.0.8
+	mus-emls-1-70:2.7.0.6
+	rel-1-0-englocks-work:2.7.0.4
+	VUMLS1-00:2.7
+	VPL1-00:2.7
+	V4-22-NRT-08:2.7
+	VAM1-00:2.7
+	V4-21:2.7.0.2
+	V4-13:2.7
+	V4-12:2.7
+	V4-11:2.7
+	V4-10:2.7
+	V3-43:2.1
+	M4-00:2.7
+	V3-41:2.1
+	V3-40-PlusGM57:2.1.0.2
+	V3-33:2.5
+	V3-31:2.5
+	V3-30-NRT-05:2.5
+	cfm-01-00:2.5
+	V3-30:2.1
+	V3-20:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.7
+date	2011.05.04.19.26.49;	author vsnyder;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2011.03.02.02.01.06;	author vsnyder;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2010.06.29.19.56.40;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2010.06.28.17.02.58;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2010.06.22.22.44.53;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2010.02.25.18.16.46;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2010.02.12.21.08.45;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.7
+log
+@Correct usage if i,j,k fields of sparse representation
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! subroutine Hessian_Vec_Vec_Multiply_D ( H, V1, V2, SCALAR, P, Update )
+!   type(HessianElement_T), intent(in) :: H
+!   real(rk), intent(in) :: V1(:), V2(:)
+!   real(rk), intent(in) :: Scalar
+!   real(rk), intent(inout) :: P(:)
+!   logical, intent(in), optional :: Update
+
+    integer :: K, J, N
+    logical :: MyUpdate
+
+    myUpdate = .false.
+    if ( present(update) ) myUpdate = update
+    if ( .not. myUpdate ) p = 0
+
+    if ( associated(h%tuples) ) then ! First try the sparse representation
+      if ( DEEBUG ) then
+        call outputNamedValue( 'size(p)', size(p) )
+        call outputNamedValue( 'size(v1)', size(v1) )
+        call outputNamedValue( 'size(v2)', size(v2) )
+        call outputNamedValue( 'size(h%tuples)', size(h%tuples) )
+        call outputNamedValue( 'maxval(h%tuples%k)', maxval(h%tuples%k) )
+        call outputNamedValue( 'maxval(h%tuples%i)', maxval(h%tuples%i) )
+        call outputNamedValue( 'maxval(h%tuples%j)', maxval(h%tuples%j) )
+        call outputNamedValue( 'minval(h%tuples%k)', minval(h%tuples%k) )
+        call outputNamedValue( 'minval(h%tuples%i)', minval(h%tuples%i) )
+        call outputNamedValue( 'minval(h%tuples%j)', minval(h%tuples%j) )
+      endif
+      do n = 1, size(h%tuples)
+        k = h%tuples(n)%i
+        p(k) = p(k) + scalar * h%tuples(n)%h * v1(h%tuples(n)%j) * v2(h%tuples(n)%k)
+      end do
+    else if ( associated(h%values) ) then ! Then try the dense represenation
+      if ( size(h%values,1) /= size(p) .or. &
+        &  size(h%values,2) /= size(v1) .or. &
+        &  size(h%values,3) /= size(v2) ) &
+        call MLSMessage ( MLSMSG_Error, moduleName, &
+          & "Dimensions of Hessian and vectors incompatible in multiply" )
+      do k = 1, size(h%values,1)
+        do j = 1, size(h%values,3)
+          ! Summation on i is done by dot_product
+          p(k) = p(k) + scalar * dot_product(h%values(k,:,j), v1(:)) * v2(j)
+        end do
+      end do
+    end if
+
+! $Id: Hessian_Vector_Vector_Multiply_0.f9h,v 2.6 2011/03/02 02:01:06 vsnyder Exp $
+! $Log: Hessian_Vector_Vector_Multiply_0.f9h,v $
+! Revision 2.6  2011/03/02 02:01:06  vsnyder
+! Declare local variables here, make subscript usage consistent with HessianModule_1
+!
+! Revision 2.5  2010/06/29 19:56:40  vsnyder
+! Add SCALAR argument instead of buried 0.5 factor
+!
+! Revision 2.4  2010/06/28 17:02:58  pwagner
+! added debugging output
+!
+! Revision 2.3  2010/06/22 22:44:53  vsnyder
+! Remove extraneous CVS Id line.  Add comments for the subroutine header
+! and for the summation on i.  Correct bugs in the dense case.
+!
+! Revision 2.2  2010/02/25 18:16:46  pwagner
+! Conforms with changed Hessian structure
+!
+! Revision 2.1  2010/02/12 21:08:45  vsnyder
+! Initial commit
+!
+@
+
+
+2.6
+log
+@Declare local variables here, make subscript usage consistent with HessianModule_1
+@
+text
+@d40 2
+a41 2
+        k = h%tuples(n)%k
+        p(k) = p(k) + scalar * h%tuples(n)%h * v1(h%tuples(n)%i) * v2(h%tuples(n)%j)
+d57 1
+a57 1
+! $Id: Hessian_Vector_Vector_Multiply_0.f9h,v 2.5 2010/06/29 19:56:40 vsnyder Exp $
+d59 3
+@
+
+
+2.5
+log
+@Add SCALAR argument instead of buried 0.5 factor
+@
+text
+@d18 4
+d32 1
+d35 1
+a35 1
+        call outputNamedValue( 'maxval(h%tuples%k)', maxval(h%tuples%k) )
+a37 1
+        call outputNamedValue( 'minval(h%tuples%k)', minval(h%tuples%k) )
+d40 2
+a41 2
+        i = h%tuples(n)%i
+        p(i) = p(i) + scalar * h%tuples(n)%h * v1(h%tuples(n)%j) * v2(h%tuples(n)%k)
+d49 4
+a52 4
+      do i = 1, size(h%values,1)
+        do k = 1, size(h%values,3)
+          ! Summation on j is done by dot_product
+          p(i) = p(i) + scalar * dot_product(h%values(i,:,k), v1(:)) * v2(k)
+d57 1
+a57 1
+! $Id: Hessian_Vector_Vector_Multiply_0.f9h,v 2.4 2010/06/28 17:02:58 pwagner Exp $
+d59 3
+d67 1
+a67 1
+! and for the summation on j.  Correct bugs in the dense case.
+@
+
+
+2.4
+log
+@added debugging output
+@
+text
+@d12 1
+a12 1
+! subroutine Hessian_Vec_Vec_Multiply_D ( H, V1, V2, P, Update )
+d15 1
+d37 1
+a37 1
+        p(i) = p(i) + 0.5 * h%tuples(n)%h * v1(h%tuples(n)%j) * v2(h%tuples(n)%k)
+d48 1
+a48 1
+          p(i) = p(i) + 0.5 * dot_product(h%values(i,:,k), v1(:)) * v2(k)
+d53 1
+a53 1
+! $Id: Hessian_Vector_Vector_Multiply_0.f9h,v 2.3 2010/06/22 22:44:53 vsnyder Exp $
+d55 3
+@
+
+
+2.3
+log
+@Remove extraneous CVS Id line.  Add comments for the subroutine header
+and for the summation on j.  Correct bugs in the dense case.
+@
+text
+@d22 12
+d52 1
+a52 1
+! $Id: Hessian_Vector_Vector_Multiply_0.f9h,v 2.2 2010/02/25 18:16:46 pwagner Exp $
+d54 4
+@
+
+
+2.2
+log
+@Conforms with changed Hessian structure
+@
+text
+@d12 5
+a16 1
+! $Id: Hessian_Vector_Vector_Multiply_0.f9h,v 2.2 2009/09/29 23:37:04 pwagner Exp $
+d27 3
+a29 2
+      if ( size(h%values,3) /= size(p) .or. size(h%values,1) /= size(v1) .or. &
+        &  size(h%values,2) /= size(v2) ) &
+d34 2
+a35 1
+          p(i) = p(i) + 0.5 * dot_product(h%values(i,:,k), v1(:)) * v1(k)
+d40 1
+a40 1
+! $Id: Hessian_Vector_Vector_Multiply_0.f9h,v 2.1 2010/02/12 21:08:45 vsnyder Exp $
+d42 3
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d12 1
+d17 4
+a20 4
+    if ( associated(h%tuple) ) then ! First try the sparse representation
+      do n = 1, size(h%tuple)
+        k = h%tuple(n)%k
+        p(k) = p(k) + 0.5 * h%tuple(n)%h * v1(h%tuple(n)%i) * v2(h%tuple(n)%j)
+d22 3
+a24 3
+    else if ( associated(h%h) ) then ! Then try the dense represenation
+      if ( size(h%h,3) /= size(p) .or. size(h%h,1) /= size(v1) .or. &
+        &  size(h%h,2) /= size(v2) ) &
+d27 3
+a29 3
+      do k = 1, size(h%h,3)
+        do j = 1, size(h%h,2)
+          p(k) = p(k) + 0.5 * dot_product(h%h(:,j,k), v1(:)) * v2(j)
+d34 5
+a38 2
+! $Id: $
+! $Log: $
+@
+

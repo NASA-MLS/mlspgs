@@ -1,0 +1,854 @@
+head	2.17;
+access;
+symbols
+	v5-02-NRT-19:2.17
+	v6-00:2.17
+	v5-02-NRT-18:2.17
+	v5-02:2.17
+	v5-01-NRT-17:2.17
+	v5-01-NRT-16:2.17
+	v5-01-NRT-15:2.17
+	v5-01-NRT-14:2.17
+	neuralnetworks-1-0:2.17.0.14
+	cfm-single-freq-0-1:2.17.0.12
+	v5-01:2.17
+	v5-00:2.17
+	v4-23-TA133:2.17.0.10
+	mus-emls-1-70:2.17.0.8
+	rel-1-0-englocks-work:2.17.0.6
+	VUMLS1-00:2.17
+	VPL1-00:2.17
+	V4-22-NRT-08:2.17
+	whdrel10_merged_to_here:2.17
+	merge_whdrel10_from_here:2.17
+	TAG_TRUNK_AFTER_PW_CHANGES:2.17
+	TAG_TRUNK_BEFORE_PW_CHANGES:2.17
+	VAM1-00:2.17
+	whd-rel-1-0:2.17.0.4
+	V4-21:2.17.0.2
+	V4-13:2.16
+	V4-12:2.16
+	V4-11:2.16
+	V4-10:2.16
+	V3-43:2.16
+	M4-00:2.16
+	V3-41:2.16
+	V3-40-PlusGM57:2.16.0.2
+	V2-24-NRT-04:2.15
+	V3-33:2.16
+	V2-24:2.15
+	V3-31:2.16
+	V3-30-NRT-05:2.16
+	cfm-01-00:2.16
+	V3-30:2.16
+	V3-20:2.16
+	V3-10:2.15
+	V2-23-NRT-02:2.15
+	V2-23:2.15
+	V2-22-NRT-01:2.15
+	V2-22:2.15
+	V2-21:2.14
+	V2-20:2.14
+	V2-11:2.13
+	V2-10:2.13
+	V2-00:2.12
+	V1-51:2.8
+	V1-50:2.8
+	V1-45:2.6
+	V1-44:2.6
+	V1-43:2.5
+	V1-42:2.4
+	V1-41:2.4
+	V1-32:2.3
+	V1-40:2.4
+	V1-31:2.3
+	V1-30:2.3
+	V1-13:2.2
+	V1-12:2.2
+	V1-11:2.2
+	V1-10:2.2
+	newfwm-feb03:2.2.0.2;
+locks; strict;
+comment	@# @;
+
+
+2.17
+date	2015.01.14.00.30.57;	author pwagner;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2009.08.21.19.01.09;	author perun;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2007.06.21.21.05.53;	author perun;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2006.09.11.19.41.37;	author perun;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2006.06.16.19.24.46;	author perun;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2006.03.30.15.30.31;	author perun;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2006.03.24.15.20.25;	author perun;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2005.06.23.18.41.36;	author pwagner;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2005.05.02.16.10.04;	author perun;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2004.12.07.21.24.17;	author pwagner;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2004.11.10.15.41.15;	author perun;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2004.08.12.13.51.51;	author perun;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2004.05.14.15.59.11;	author perun;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2004.01.09.17.46.23;	author perun;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2003.08.15.14.25.04;	author perun;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2003.02.05.21.32.41;	author perun;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2003.01.31.18.13.34;	author perun;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.17
+log
+@Able to warn when unable to set precision
+@
+text
+@! Copyright 2006, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=============================================================================
+MODULE THzRadiances ! Determine radiances for the THz module
+!=============================================================================
+
+  USE MLSCommon, ONLY: r8
+  USE MLSL1Common, ONLY: THzNum, THzChans, Deflt_chi2, BandChanBad
+  USE THzCalibration, ONLY : CalBuf, nvBounds, ColdCnts, HotCnts, GoodCal
+  USE MLSL1Rad, ONLY : THzRad
+
+  IMPLICIT NONE
+
+  PRIVATE
+
+  PUBLIC :: ProcessLimbData
+
+!---------------------------- RCS Module Info ------------------------------
+  CHARACTER (len=*), PRIVATE, PARAMETER :: ModuleName= &
+       "$RCSfile: THzRadiances.f90,v $"
+  PRIVATE :: not_used_here 
+!---------------------------------------------------------------------------
+
+CONTAINS
+
+!=============================================================================
+  SUBROUTINE CalcLimbRads ( nMAF, ibgn, debug )
+!=============================================================================
+
+    USE THzCalibration, ONLY : Kelvins => Cnts, VarK => VarCnts !Already Kelvins
+    USE MLSL1Config, ONLY: MIFsTHz, L1Config
+    use dump_0, only: dump
+    use output_m, only: switchOutput, revertOutput
+    use PrintIt_m, only: MLSMessageConfig
+
+    INTEGER, INTENT (IN) :: nMAF
+    INTEGER, INTENT (INOUT) :: ibgn
+    logical, optional, intent(in) :: debug
+
+    INTEGER :: i, iend, calindx, mindx, nBank, nChan, MIF_end, BandNo
+    INTEGER :: limb_sw_err(MIFsTHz)
+    REAL :: MIFprecSign(MIFsTHz)
+    CHARACTER(LEN=1) :: SwMirPos(MIFsTHz)
+    LOGICAL :: do_chi2_err
+    LOGICAL :: cantSetprecision
+    LOGICAL :: myDebug
+
+    calindx = nMAF - CalBuf%Cal_start + 1
+    iend = ibgn + CalBuf%MAFdata(calindx)%last_MIF
+    MIF_end = ibgn + MIFsTHz - 1
+    myDebug = .false.
+    if ( present( debug) ) myDebug = debug
+
+! Mark non-limb data as "bad" with negative precisions
+
+    SwMirPos = CalBuf%MAFdata(calindx)%SciMIF(0:(MIFsTHz-1))%SwMirPos
+    WHERE (SwMirPos == "L")
+       limb_sw_err = 1
+    ELSEWHERE
+       limb_sw_err = -1
+    ENDWHERE
+    MIFprecSign = CalBuf%MAFdata(calindx)%MIFprecSign(0:(MIFsTHz-1))
+    ! print *, 'Num of THz Bands ', THzNum
+    ! print *, 'Shape of VarK ', shape(VarK)
+    ! print *, MIFprecSign
+    ! print *, limb_sw_err
+
+    DO nBank = 1, THzNum
+
+       THzRad(nBank)%value = 0.0
+       THzRad(nBank)%precision  = -1.0
+       BandNo = nBank + 14  ! band no for the bank
+       do_chi2_err = L1Config%Output%EnableChi2Err(BandNo)
+
+       IF (CalBuf%BankGood(nBank)) THEN   ! Have good data
+
+          if ( nBank == 1 ) then
+            if ( myDebug ) print *, ibgn, MIF_end
+            cantSetprecision = .true.
+            do i = ibgn, MIF_end
+               mindx = i-ibgn+1        ! index from 1 to MIFsTHz
+               nChan = 1
+                THzRad(nBank)%value(nChan,mindx) = Kelvins(nChan,nBank,i)
+                IF (THzRad(nBank)%value(nChan,mindx) > -100.0 .AND. &
+                     VarK(nChan,nBank,i) > 0.01) THEN
+                   IF (VarK(nChan,nBank,i) > 0.0) THEN
+                     cantSetprecision = .false.
+                   endif
+                endif
+            enddo
+            if ( cantSetprecision .and. myDebug ) then
+              print *, 'cant set precision for this bank, MAF'
+              call switchOutput( 'stdout' )
+              ! MLSMessageConfig%adHocPrintToStdout = .true.
+              call dump( THzRad(nBank)%value(nChan,1:MIFsTHz), 'value(THzRad))' )
+              call dump( VarK(nChan,nBank,ibgn:MIF_end), 'varK' )
+              ! MLSMessageConfig%adHocPrintToStdout = .false.
+              call revertOutput
+            endif
+          endif
+          DO i = ibgn, MIF_end
+             mindx = i-ibgn+1        ! index from 1 to MIFsTHz
+             DO nChan = 1, THzChans
+                THzRad(nBank)%value(nChan,mindx) = Kelvins(nChan,nBank,i)
+                IF (THzRad(nBank)%value(nChan,mindx) > -100.0 .AND. &
+                     VarK(nChan,nBank,i) > 0.01) THEN
+                   IF (VarK(nChan,nBank,i) > 0.0) THEN
+                      ! All args to intrinsic min must have same
+                      ! type and kind type parameter
+                      THzRad(nBank)%precision(nChan,mindx) = &
+                           VarK(nChan,nBank,i) * MIN ( &
+                           REAL(limb_sw_err(mindx)), MIFprecSign(mindx), &
+                           BandChanBad%Sign(Bandno, nChan))
+                   ELSE
+                      THzRad(nBank)%precision(nChan,mindx) = &
+                           VarK(nChan,nBank,i)
+                   ENDIF
+                   IF (do_chi2_err) THzRad(nbank)%precision(nChan,mindx) = &
+                        SQRT (deflt_chi2%FB(nchan,BandNo)) * &
+                        THzRad(nbank)%precision(nchan,mindx)
+                ENDIF
+             ENDDO
+          ENDDO
+
+       else
+         if ( nBank /= 6 ) print *, 'Did not have good data for this bank ', nBank
+       ENDIF
+    ENDDO
+    ibgn = iend + 1   ! For next call
+
+  END SUBROUTINE CalcLimbRads
+
+!=============================================================================
+  SUBROUTINE ProcessLimbData
+!=============================================================================
+
+    USE MLSL1Common, ONLY: L1BFileInfo, OA_counterMAF, OA_counterIndex
+    USE OutputL1B, ONLY: OutputL1B_rad, OutputL1B_DiagsT
+    USE EngTbls, ONLY: Reflec_T
+    USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Info
+
+    INTEGER :: MAFno, counterMAF, ibgn, nv, last_OA_counterMAF
+    REAL(r8) :: TAI
+    TYPE (Reflec_T) :: Reflec
+    INTEGER, SAVE :: MAFindex = 1
+
+    PRINT *, 'ProcessLimbData'
+
+    IF (.NOT. GoodCal) THEN
+       CALL MLSMessage (MLSMSG_Info, ModuleName, &
+            & "No good THz calibration available!")
+       RETURN
+    ENDIF
+
+    nv = 1
+    ibgn = 0
+
+    last_OA_counterMAF = OA_counterMAF(UBOUND(OA_counterMAF,1))
+
+    outer: DO MAFno = CalBuf%Cal_start, CalBuf%Cal_end
+
+       counterMAF = CalBuf%MAFdata(MAFno)%EMAF%TotalMAF
+       TAI = CalBuf%MAFdata(MAFno)%SciMIF(0)%secTAI
+
+       IF (OA_counterIndex == 0) THEN
+          MAFindex = MAFno
+       ELSE
+          IF (counterMAF < OA_counterMAF(1)) THEN
+             PRINT *, 'counterMAF earlier than OA counterMAF!'
+             CalBuf%Cal_start = CalBuf%Cal_start + 1
+             CYCLE
+          ENDIF
+          DO
+             IF (counterMAF == OA_counterMAF(MAFindex)) THEN
+                EXIT           ! Aligned properly
+             ELSE IF (counterMAF < OA_counterMAF(MAFindex)) THEN
+                CYCLE outer    ! Get next counterMAF
+             ENDIF
+             MAFindex = MAFindex + 1
+          ENDDO
+       ENDIF
+
+       CALL CalcLimbRads (MAFno, ibgn)
+
+PRINT *, "Outputting rad for MAFno: ", MAFindex
+       CALL OutputL1B_rad (MAFindex, L1BFileInfo, counterMAF, Reflec, TAI, &
+            THzrad)
+
+! Write MAF dimensioned Diags
+
+       CALL OutputL1B_DiagsT (L1BFileInfo%DiagTid, MAFno=MAFindex, &
+            counterMAF=counterMAF, MAFStartTimeTAI=TAI, nvBounds=nvBounds(nv), &
+            ColdCnts=ColdCnts(:,:,nv), HotCnts=HotCnts(:,:,nv), &
+            LLO_Bias=CalBuf%MAFdata(mafno)%SciMIF%LLO_Bias)
+       nv = nv + 1
+       IF (counterMAF >= last_OA_counterMAF) EXIT
+
+    ENDDO outer
+
+  END SUBROUTINE ProcessLimbData
+
+!=============================================================================
+  LOGICAL FUNCTION not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  CHARACTER (len=*), PARAMETER :: IdParm = &
+       "$Id: THzRadiances.f90,v 2.16 2009/08/21 19:01:09 perun Exp $"
+  CHARACTER (len=LEN(idParm)), SAVE :: Id = idParm
+!---------------------------------------------------------------------------
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  END FUNCTION not_used_here
+END MODULE THzRadiances
+!=============================================================================
+
+! $Log: THzRadiances.f90,v $
+! Revision 2.16  2009/08/21 19:01:09  perun
+! Process and output radiances only when good calibration is available.
+!
+! Revision 2.15  2007/06/21 21:05:53  perun
+! Save LLO_Bias for outputting as diagnostics
+!
+! Revision 2.14  2006/09/11 19:41:37  perun
+! Check for ENG counterMAF less than OA counterMAF for proper alignment
+!
+! Revision 2.13  2006/06/16 19:24:46  perun
+! Protect THz counterMAF from going beyond OA counterMAF
+!
+! Revision 2.12  2006/03/30 15:30:31  perun
+! Test for minimum VarK to determine good radiances
+!
+! Revision 2.11  2006/03/24 15:20:25  perun
+! Pass "C"old and "H"ot counts to output routine for DIAGT file
+!
+! Revision 2.10  2005/06/23 18:41:36  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.9  2005/05/02 16:10:04  perun
+! Protect counterMAF from running over OA_counterMAF
+!
+! Revision 2.8  2004/12/07 21:24:17  pwagner
+! type converted in min intrinsic to appease NAG
+!
+! Revision 2.7  2004/11/10 15:41:15  perun
+! Adjust precision based on bad chan/switch flags; line output records with L1BOA
+!
+! Revision 2.6  2004/08/12 13:51:51  perun
+! Version 1.44 commit
+!
+! Revision 2.5  2004/05/14 15:59:11  perun
+! Version 1.43 commit
+!
+! Revision 2.4  2004/01/09 17:46:23  perun
+! Version 1.4 commit
+!
+! Revision 2.3  2003/08/15 14:25:04  perun
+! Version 1.2 commit
+!
+! Revision 2.2  2003/02/05 21:32:41  perun
+! Use variances for precisions
+!
+! Revision 2.1  2003/01/31 18:13:34  perun
+! Version 1.1 commit
+!
+!
+@
+
+
+2.16
+log
+@Process and output radiances only when good calibration is available.
+@
+text
+@d36 1
+a36 1
+  SUBROUTINE CalcLimbRads (nMAF, ibgn)
+d41 3
+d47 1
+d54 2
+d60 2
+d72 4
+d86 24
+d134 2
+d215 1
+a215 1
+       "$Id: THzRadiances.f90,v 2.15 2007/06/21 21:05:53 perun Exp $"
+d224 3
+@
+
+
+2.15
+log
+@Save LLO_Bias for outputting as diagnostics
+@
+text
+@d18 1
+a18 1
+  USE THzCalibration, ONLY : CalBuf, nvBounds, ColdCnts, HotCnts
+d111 1
+d120 6
+d177 1
+a177 1
+       "$Id: THzRadiances.f90,v 2.14 2006/09/11 19:41:37 perun Exp $"
+d186 3
+@
+
+
+2.14
+log
+@Check for ENG counterMAF less than OA counterMAF for proper alignment
+@
+text
+@d157 2
+a158 1
+            ColdCnts=ColdCnts(:,:,nv), HotCnts=HotCnts(:,:,nv))
+d170 1
+a170 1
+       "$Id: THzRadiances.f90,v 2.13 2006/06/16 19:24:46 perun Exp $"
+d179 3
+@
+
+
+2.13
+log
+@Protect THz counterMAF from going beyond OA counterMAF
+@
+text
+@d124 1
+a124 1
+    DO MAFno = CalBuf%Cal_start, CalBuf%Cal_end
+d138 5
+a142 1
+             IF (counterMAF == OA_counterMAF(MAFindex)) EXIT
+d161 1
+a161 1
+    ENDDO
+d169 1
+a169 1
+       "$Id: THzRadiances.f90,v 2.12 2006/03/30 15:30:31 perun Exp $"
+d178 3
+@
+
+
+2.12
+log
+@Test for minimum VarK to determine good radiances
+@
+text
+@d112 1
+a112 1
+    INTEGER :: MAFno, counterMAF, ibgn, nv
+d122 2
+d155 1
+d165 1
+a165 1
+       "$Id: THzRadiances.f90,v 2.11 2006/03/24 15:20:25 perun Exp $"
+d174 3
+@
+
+
+2.11
+log
+@Pass "C"old and "H"ot counts to output routine for DIAGT file
+@
+text
+@d78 2
+a79 1
+                IF (THzRad(nBank)%value(nChan,mindx) > -100.0) THEN
+d162 1
+a162 1
+       "$Id: THzRadiances.f90,v 2.10 2005/06/23 18:41:36 pwagner Exp $"
+d171 3
+@
+
+
+2.10
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d1 1
+a1 1
+! Copyright 2005, by the California Institute of Technology. ALL
+d18 1
+a18 1
+  USE THzCalibration, ONLY : CalBuf, Chisq, dLlo, yTsys, nvBounds
+d28 3
+a30 3
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: $"
+  private :: not_used_here 
+d35 1
+d37 1
+d47 1
+d63 1
+d84 1
+a84 1
+                           REAL(limb_sw_err(mindx)), &
+d103 1
+d105 1
+d114 1
+a114 1
+    INTEGER, SAVE :: OrbNo = 1, MAFindex = 1
+d116 1
+a116 1
+    print *, 'ProcessLimbData'
+d120 1
+d130 1
+a130 1
+             print *, 'counterMAF earlier than OA counterMAF!'
+d142 1
+a142 1
+print *, "Outputting rad for MAFno: ", MAFindex
+d149 2
+a150 1
+            counterMAF=counterMAF, MAFStartTimeTAI=TAI, nvBounds=nvBounds(nv))
+a154 6
+! Write orbit no. dimensioned Diags
+
+    CALL OutputL1B_DiagsT (L1BFileInfo%DiagTid, OrbNo=OrbNo, Chisq=Chisq, &
+         dLlo=dLlo, yTsys=yTsys)
+    OrbNo = OrbNo + 1
+
+d158 1
+a158 1
+  logical function not_used_here()
+d160 3
+a162 3
+  character (len=*), parameter :: IdParm = &
+       "$Id: $"
+  character (len=len(idParm)), save :: Id = idParm
+d165 1
+a165 1
+  end function not_used_here
+d170 3
+@
+
+
+2.9
+log
+@Protect counterMAF from running over OA_counterMAF
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d27 5
+a31 5
+  !------------------------------- RCS Ident Info ------------------------------
+  CHARACTER(LEN=130) :: id = &
+       "$Id: THzRadiances.f90,v 2.8 2004/12/07 21:24:17 pwagner Exp $"
+  CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile: THzRadiances.f90,v $"
+  !-----------------------------------------------------------------------------
+d156 8
+d168 3
+@
+
+
+2.8
+log
+@type converted in min intrinsic to appease NAG
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
+d21 1
+a21 1
+       "$Id: THzRadiances.f90,v 2.7 2004/11/10 15:41:15 perun Exp $"
+a107 2
+       CALL CalcLimbRads (MAFno, ibgn)
+
+d114 5
+d125 2
+d152 3
+@
+
+
+2.7
+log
+@Adjust precision based on bad chan/switch flags; line output records with L1BOA
+@
+text
+@d21 1
+a21 1
+       "$Id: THzRadiances.f90,v 2.6 2004/08/12 13:51:51 perun Exp $"
+d68 2
+d71 2
+a72 1
+                           VarK(nChan,nBank,i) * MIN (limb_sw_err(mindx), &
+d147 3
+@
+
+
+2.6
+log
+@Version 1.44 commit
+@
+text
+@d9 1
+a9 1
+  USE MLSL1Common, ONLY: THzNum, THzChans, Deflt_chi2
+d21 1
+a21 1
+       "$Id: THzRadiances.f90,v 2.5 2004/05/14 15:59:11 perun Exp $"
+d35 3
+a37 1
+    INTEGER :: i, iend, mindx, nBank, nChan, MIF_end, BandNo
+d40 2
+a41 1
+    iend = ibgn + CalBuf%MAFdata(nMAF-CalBuf%Cal_start+1)%last_MIF
+d44 9
+d63 1
+a64 1
+                mindx = i-ibgn+1
+d67 8
+a74 2
+                   THzRad(nBank)%precision(nChan,mindx) = &
+                        VarK(nChan,nBank,i)
+d76 1
+a76 1
+                        deflt_chi2%FB(nchan,BandNo) * &
+d90 1
+a90 1
+    USE MLSL1Common, ONLY: L1BFileInfo
+d97 1
+a97 1
+    INTEGER, SAVE :: OrbNo = 1
+d110 12
+a121 2
+print *, "Outputting rad for MAFno: ", MAFno
+       CALL OutputL1B_rad (MAFno, L1BFileInfo, counterMAF, Reflec, TAI, THzrad)
+d125 1
+a125 1
+       CALL OutputL1B_DiagsT (L1BFileInfo%DiagTid, MAFno=MAFno, &
+d144 3
+@
+
+
+2.5
+log
+@Version 1.43 commit
+@
+text
+@d9 1
+a9 1
+  USE MLSL1Common, ONLY: THzNum, THzChans
+d21 1
+a21 1
+       "$Id: THzRadiances.f90,v 2.4 2004/01/09 17:46:23 perun Exp $"
+d30 1
+a30 1
+    USE MLSL1Config, ONLY: MIFsTHz
+d35 2
+a36 1
+    INTEGER :: i, iend, mindx, nBank, nChan, MIF_end
+d45 2
+d54 7
+a60 3
+                IF (THzRad(nBank)%value(nChan,mindx) > -100.0) &
+                     THzRad(nBank)%precision(nChan,mindx) = &
+                     VarK(nChan,nBank,i)
+d116 3
+@
+
+
+2.4
+log
+@Version 1.4 commit
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+d10 1
+a10 1
+  USE THzCalibration, ONLY : CalBuf
+d21 1
+a21 1
+       "$Id: THzRadiances.f90,v 2.3 2003/08/15 14:25:04 perun Exp $"
+d66 1
+a66 1
+    USE OutputL1B, ONLY: OutputL1B_rad
+d69 1
+a69 1
+    INTEGER :: MAFno, counterMAF, ibgn
+d72 2
+a73 1
+ 
+d76 1
+d84 1
+d88 5
+a92 1
+! Write Diags (LATER!)
+d96 6
+d109 3
+@
+
+
+2.3
+log
+@Version 1.2 commit
+@
+text
+@d9 3
+a11 3
+  USE MLSL1Common, ONLY: THzNum, THzChans, LO1
+  USE THzCalibration, ONLY : CalBuf, SpaceTemp
+  USE MLSL1Rad, ONLY : THzRad, RadPwr
+d21 1
+a21 1
+       "$Id: THzRadiances.f90,v 2.2 2003/02/05 21:32:41 perun Exp $"
+a24 2
+  REAL, PARAMETER :: LO1R5 = LO1(5)  ! Radiometer 5 1st LO frequency
+
+d35 1
+a35 3
+    INTEGER :: iend
+    INTEGER :: i, nBank, nChan, MIF_end
+    REAL :: T
+d49 6
+a54 6
+                T = Kelvins(nChan,nBank,i) + SpaceTemp  ! relative to Space
+                IF (ABS(T) > 1.0) THEN
+                   THzRad(nBank)%value(nChan,i-ibgn+1) = RadPwr (LO1R5, T)
+                   THzRad(nBank)%precision(nChan,i-ibgn+1) = VarK(nChan,nBank,i)
+                ENDIF
+            ENDDO
+d65 1
+a65 1
+    USE MLSL1Common, ONLY: L1BFileInfo, MAFinfo
+d96 3
+@
+
+
+2.2
+log
+@Use variances for precisions
+@
+text
+@d21 1
+a21 1
+       "$Id: THzRadiances.f90,v 2.1 2003/01/31 18:13:34 perun Exp $"
+d71 1
+d75 2
+a76 1
+
+d87 1
+a87 1
+       CALL OutputL1B_rad (MAFno, L1BFileInfo, counterMAF, TAI, THzrad)
+d100 3
+@
+
+
+2.1
+log
+@Version 1.1 commit
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+d21 2
+a22 2
+       "$Id: $"
+  CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile: $"
+d31 1
+a31 1
+    USE THzCalibration, ONLY : Kelvins => Cnts  ! Already in Kelvins
+d56 1
+a56 1
+                   THzRad(nBank)%precision(nChan,i-ibgn+1) = 0.0 !???
+d97 4
+a100 1
+! $Log: $
+@
+

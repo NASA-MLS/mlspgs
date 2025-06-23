@@ -1,0 +1,236 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.12
+	cfm-single-freq-0-1:1.1.0.10
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.8
+	mus-emls-1-70:1.1.0.6
+	rel-1-0-englocks-work:1.1.0.4
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.2
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	M4-00:1.1
+	V3-33:1.1
+	V3-31:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2010.12.21.01.25.16;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}
+\usepackage{graphicx}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9.0in
+
+\newcommand{\docname}{\bf wvs-101}
+\newcommand{\docdate}{20 December 2010}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\ifx\dvidir\undefined
+  \newcommand\hr[1]{\href{#1.dvi}{dvi} \href{#1.pdf}{pdf}}
+\else
+  \newcommand\hr[1]{\href{\dvidir/#1.dvi}{dvi} \href{\pdfdir/#1.pdf}{pdf}}
+\fi
+\newcommand\h[1]{#1 \hr{#1}}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[u]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\newcommand{\T}{\mathcal{T}}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Van, Igor\\
+Subject: \>Interpolating derivatives from grid to path\\
+From: \>Van Snyder\\
+%Reference: \>
+\end{tabbing}
+
+\parindent 0pt \parskip 5pt
+\vspace{-20pt}
+
+Consider points, labeled $i$ henceforth, within the
+$(\phi_\ell,\phi_{\ell+1}) \times (\zeta_m,\zeta_{m+1})$ cell of a $\phi
+\times \zeta$ grid.  Assume that function values $f_{lm}$ etc.\ are
+available at the corners of the grid cell, and we wish to compute $f_i$
+using bilinear interpolation.  Then
+
+\begin{equation}\begin{split}
+f_i
+=\,&  \left( f_{\ell,m} \eta_{\phi,i,\ell}
+           + f_{\ell+1,m} (1-\eta_{\phi,i,\ell})
+      \right) \eta_{\zeta,i,m} +
+      \left( f_{\ell,m+1} \eta_{\phi,i,\ell}
+           + f_{\ell+1,m+1} (1-\eta_{\phi,i,\ell})
+      \right) (1-\eta_{\zeta,i,m}) \\
+=\,&
+      \left[ \begin{array}{ll} \eta_{\phi,i,\ell} &
+                               1-\eta_{\phi,i,\ell} \end{array} \right]
+      \left[ \begin{array}{ll} f_{\ell,m}   & f_{\ell,m+1} \\
+                               f_{\ell+1,m} & f_{\ell+1,m+1}
+             \end{array} \right]
+      \left[ \begin{array}{l} \eta_{\zeta,i,m} \\ 1-\eta_{\zeta,i,m}
+      \end{array} \right]
+\end{split}\end{equation}
+
+where
+
+\begin{equation}\begin{split}
+\eta_{\phi,i,l} =\,&
+ \left\{ \begin{array}{ll}
+  \frac{\phi_{\ell+1}-\phi_i}{\phi_{l+1}-\phi_\ell} &
+   \phi_\ell \leq \phi_i \leq \phi_{\ell+1} \\
+  0 & \text{ otherwise} \end{array} \right.
+\text{ and }\,\,
+\eta_{\zeta,i,m} =
+ \left\{ \begin{array}{ll}
+  \frac{\zeta_{m+1}-\zeta_i}{\zeta_{m+1}-\zeta_m} &
+   \zeta_m \leq \zeta_i \leq \zeta_{m+1} \\
+  0 & \text{ otherwise} \end{array} \right. \,.
+\end{split}\end{equation}
+
+Suppose now that we have a function $\alpha(f_i)$ and its derivative with
+respect to $f_i$ available at the corners of the grid cell, and we wish to
+have its derivative at $i$ with respect to $f_{lm}$ etc.
+
+\begin{equation}\begin{split}
+\frac{\partial \alpha_i}{\partial f_{\ell,m}}
+=\,& \frac{\partial f_i}{\partial f_{\ell,m}}
+     \frac{\partial \alpha_i}{\partial f_i}
+   = \eta_{\phi,i,\ell} \eta_{\zeta,i,m}
+     \frac{\partial \alpha_i}{\partial f_i} \\
+\frac{\partial \alpha_i}{\partial f_{\ell+1,m}}
+=\,& \frac{\partial f_i}{\partial f_{\ell+1,m}}
+     \frac{\partial \alpha_i}{\partial f_i}
+   = (1-\eta_{\phi,i,\ell}) \eta_{\zeta,i,m}
+     \frac{\partial \alpha_i}{\partial f_i} \\
+\frac{\partial \alpha_i}{\partial f_{\ell,m+1}}
+=\,& \frac{\partial f_i}{\partial f_{\ell,m+1}}
+     \frac{\partial \alpha_i}{\partial f_i}
+   = \eta_{\phi,i,\ell} (1-\eta_{\zeta,i,m})
+     \frac{\partial \alpha_i}{\partial f_i} \\
+\frac{\partial \alpha_i}{\partial f_{\ell+1,m+1}}
+=\,& \frac{\partial f_i}{\partial f_{\ell+1,m+1}}
+     \frac{\partial \alpha_i}{\partial f_i}
+   = (1-\eta_{\phi,i,\ell}) (1-\eta_{\zeta,i,m})
+     \frac{\partial \alpha_i}{\partial f_i} \,. \\
+\end{split}\end{equation}
+
+If we instead have $\frac{\partial \alpha_i}{\partial f_i}$ and we wish
+to have $\frac{\partial \alpha_i}{\partial f_{lm}}$ we can shift the
+indices and put these together to have
+
+\begin{equation}
+\frac{\partial \alpha_i}{\partial f_{\ell,m}} =
+\frac{\partial \alpha_i}{\partial f_i} \mu_{ilm}
+\text{, where }
+\mu_{ilm} =
+\left\{
+\begin{array}{lll}
+\eta_{\phi,i,\ell} \eta_{\zeta,i,m}
+  & \phi_l \leq \phi_i \leq \phi_{l+1}
+  & \zeta_m \leq \zeta_i \leq \zeta_{m+1} \\
+(1-\eta_{\phi,i,\ell-1}) \eta_{\zeta,i,m}
+  & \phi_{l-1} \leq \phi_i \leq \phi_l
+  & \zeta_m \leq \zeta_i \leq \zeta_{m+1} \\
+\eta_{\phi,i,\ell} (1-\eta_{\zeta,i,m-1})
+  & \phi_l \leq \phi_i \leq \phi_{l+1}
+  & \zeta_{m-1} \leq \zeta_i \leq \zeta_m \\
+(1-\eta_{\phi,i,\ell-1})  (1-\eta_{\zeta,i,m-1})
+  & \phi_{l-1} \leq \phi_i \leq \phi_l
+  & \zeta_{m-1} \leq \zeta_i \leq \zeta_m \\
+\end{array}
+\right.
+\end{equation}
+
+\label{lastpage}
+\end{document}
+
+% $Id: $
+
+% $Log: $
+@

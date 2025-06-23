@@ -1,0 +1,467 @@
+head	1.16;
+access;
+symbols
+	v5-02-NRT-19:1.16
+	v6-00:1.16
+	v5-02-NRT-18:1.16
+	v5-02:1.15
+	v5-01-NRT-17:1.16
+	v5-01-NRT-16:1.16
+	v5-01-NRT-15:1.16
+	v5-01-NRT-14:1.16
+	neuralnetworks-1-0:1.15.0.10
+	cfm-single-freq-0-1:1.15.0.8
+	v5-01:1.15
+	v5-00:1.15
+	v4-23-TA133:1.15.0.6
+	mus-emls-1-70:1.15.0.4
+	rel-1-0-englocks-work:1.15.0.2
+	VUMLS1-00:1.15
+	VPL1-00:1.15
+	V4-22-NRT-08:1.15
+	VAM1-00:1.15
+	V4-21:1.14.0.4
+	V4-13:1.14
+	V4-12:1.14
+	V4-11:1.14
+	V4-10:1.14
+	V3-43:1.14
+	M4-00:1.14
+	V3-41:1.14
+	V3-40-PlusGM57:1.14.0.2
+	V2-24-NRT-04:1.13
+	V3-33:1.14
+	V2-24:1.13
+	V3-31:1.14
+	V3-30-NRT-05:1.14
+	cfm-01-00:1.14
+	V3-30:1.14
+	V3-20:1.14
+	V3-10:1.14
+	V2-23-NRT-02:1.13
+	V2-23:1.13
+	V2-22-NRT-01:1.13
+	V2-22:1.13
+	V2-21:1.13
+	V2-20:1.13
+	V2-11:1.13
+	V2-10:1.13
+	V2-00:1.13
+	V1-51:1.13
+	V1-50:1.13
+	V1-45:1.13
+	V1-44:1.13
+	V1-43:1.13
+	V1-32:1.12
+	V1-31:1.12
+	V1-30:1.11
+	V1-13:1.8
+	V1-12:1.8
+	V1-11:1.8
+	V1-10:1.8
+	newfwm-feb03:1.8.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.16
+date	2021.05.27.23.48.01;	author pwagner;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2015.04.01.00.32.48;	author pwagner;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2008.05.27.16.59.49;	author pwagner;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2004.03.11.23.12.22;	author livesey;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2003.11.07.01.11.22;	author livesey;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2003.05.27.20.23.22;	author livesey;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2003.05.10.00.57.01;	author livesey;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2003.05.07.20.54.13;	author livesey;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2002.11.20.19.56.37;	author mjf;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2002.11.07.23.50.53;	author livesey;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2002.11.06.02.02.42;	author livesey;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2002.10.15.19.26.06;	author livesey;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2002.08.05.23.14.26;	author livesey;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2002.08.04.16.18.09;	author mjf;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2002.05.23.17.45.04;	author livesey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2002.05.17.20.24.09;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.16
+log
+@Removed outdated stuff; new macros should handle future truth sets more easily
+@
+text
+@!divert(-1)
+; $Id: retrievalmacros.l2cf,v 1.162 2019/12/13 00:08:56 pwagner Exp $
+; This section of the l2cf is for reading the 'latest' truth l2gp data
+; and in its current hdfeos format.
+; We snipped all the older cruft--if you want it, check it
+; out from the repository.
+
+  ;; ------------------------------------------------------------------
+  ;; The default values of the following two macros may be overridden 
+  ;; by your .macros file. E.g.,
+  ;;           hdfeosTrVsn=nc
+  ;;           TruthVsn=t4
+  !defunlessdef(hdfeosTrVsn,he5)
+  !defunlessdef(TruthVsn,s8)
+  ;; ------------------------------------------------------------------
+  ;; --------------------- Simulation series s8 and later ---
+  !define(readTruthL2GP,{l2gpTruth$1Input: l2gp, $
+    file='!inpathtruthl2gp/MLS-Aura_L2GP-$1_!TruthVsn{}!simulationVersion--t_!day.!hdfeosTrVsn'!nl})
+
+  !define(mostL2GPSpecies,{BrO,CH3Cl,CH3CN,CH3COCH3,CH3OH,CO,ClO,GPH,HCN,HCl,HNO3,HO2,HOCl,IWC,N2O,O3,OH,PSD,RHI,SO2,Temperature})
+  !define(l2gpInputSpecies,{!mostL2GPSpecies,H2O})
+  ;; ------------------------------------------------------------------
+  
+!divert!dnl
+begin ReadApriori
+  !forall(readTruthL2GP,!mostL2GPSpecies)
+
+  !ifdef(flagUseCloudH2O,{!dnl
+  l2gpTruthH2OInput: l2gp, $
+    file='!inpathtruthl2gp/MLS-Aura_L2GP-H2O-cld_!TruthVsn{}!simulationVersion--t_!day.!hdfeosTrVsn'!nl},{!dnl
+  l2gpTruthH2OInput: l2gp, $
+    file='!inpathtruthl2gp/MLS-Aura_L2GP-H2O_!TruthVsn{}!simulationVersion--t_!day.!hdfeosTrVsn'!nl})
+
+end ReadApriori
+; $Log: retrievalmacros.l2cf,v $
+@
+
+
+1.15
+log
+@Added defs for simulation series s8; should automate this better
+@
+text
+@d1 2
+d4 13
+a16 5
+
+begin ReadApriori
+
+  ;; --------------------------------------- Simulation series s5 ---
+  !ifelse(!simulationSeries,{s5},{
+d18 1
+a18 24
+    file='!inpathtruthl2gp/MLS-Aura_L2GP-$1_s5$2--t_!day.he4'!nl})
+
+  ;; Use forall to do the ones that are just s5--t
+  ;; NOTE, no space before close parentheses
+  !forall(readTruthL2GP, BrO, ClO, GPH)
+  !forall(readTruthL2GP, HCl, HNO3, HO2, HOCl, N2O)
+  !forall(readTruthL2GP, OH, SO2, Temperature)
+
+  ;; Do the others (e.g. s5a--t) explicitly.
+  !readTruthL2GP(CH3CN,a)
+  !readTruthL2GP(HCN,a)
+  !readTruthL2GP(CO,a)
+  !readTruthL2GP(H2O,a)
+  !readTruthL2GP(O3,a)
+  !readTruthL2GP(RHI,a)
+
+  ;; Use this macro for later
+  !define(l2gpInputSpecies,{BrO,CH3CN,CO,ClO,GPH,H2O,HCN,HCl,HNO3,HO2,HOCl,N2O,O3,OH,RHI,SO2,Temperature})
+  })
+
+  ;; --------------------------------------- Simulation series s8 ---
+  !ifelse(!simulationSeries,{s8},{
+  !define(readTruthL2GP,{l2gpTruth$1Input: l2gp, $
+    file='!inpathtruthl2gp/MLS-Aura_L2GP-$1_s8!simulationVersion--t_!day.he4'!nl})
+a20 8
+  !forall(readTruthL2GP,!mostL2GPSpecies)
+
+  !ifdef(flagUseCloudH2O,{!dnl
+  l2gpTruthH2OInput: l2gp, $
+    file='!inpathtruthl2gp/MLS-Aura_L2GP-H2O-cld_s8!simulationVersion--t_!day.he4'!nl},{!dnl
+  l2gpTruthH2OInput: l2gp, $
+    file='!inpathtruthl2gp/MLS-Aura_L2GP-H2O_s8!simulationVersion--t_!day.he4'!nl})
+
+d22 4
+a25 8
+  })
+
+  ;; --------------------------------------- Simulation series s7 ---
+  !ifelse(!simulationSeries,{s7},{
+  !define(readTruthL2GP,{l2gpTruth$1Input: l2gp, $
+    file='!inpathtruthl2gp/MLS-Aura_L2GP-$1_s7!simulationVersion--t_!day.he4'!nl})
+
+  !define(mostL2GPSpecies,{BrO,CH3Cl,CH3CN,CH3COCH3,CH3OH,CO,ClO,GPH,HCN,HCl,HNO3,HO2,HOCl,IWC,N2O,O3,OH,PSD,RHI,SO2,Temperature})
+d30 1
+a30 1
+    file='!inpathtruthl2gp/MLS-Aura_L2GP-H2O-cld_s7!simulationVersion--t_!day.he4'!nl},{!dnl
+d32 1
+a32 1
+    file='!inpathtruthl2gp/MLS-Aura_L2GP-H2O_s7!simulationVersion--t_!day.he4'!nl})
+a33 30
+  !define(l2gpInputSpecies,{!mostL2GPSpecies,H2O})
+  })
+
+  ;; --------------------------------------- Simulation series s6 ---
+  !ifelse(!simulationSeries,{s6},{
+  !define(readTruthL2GP,{l2gpTruth$1Input: l2gp, $
+    file='!inpathtruthl2gp/MLS-Aura_L2GP-$1_s6!simulationVersion--t_!day.he4'!nl})
+
+  !define(mostL2GPSpecies,{BrO,CH3CN,CO,ClO,GPH,HCN,HCl,HNO3,HO2,HOCl,IWC,N2O,O3,OH,PSD,RHI,SO2,Temperature})
+  !forall(readTruthL2GP,!mostL2GPSpecies)
+
+  !ifdef(flagUseCloudH2O,{!dnl
+  l2gpTruthH2OInput: l2gp, $
+    file='!inpathtruthl2gp/MLS-Aura_L2GP-H2O-cld_s6!simulationVersion--t_!day.he4'!nl},{!dnl
+  l2gpTruthH2OInput: l2gp, $
+    file='!inpathtruthl2gp/MLS-Aura_L2GP-H2O_s6!simulationVersion--t_!day.he4'!nl})
+
+  !define(l2gpInputSpecies,{!mostL2GPSpecies,H2O})
+  })
+
+  ;; --------------------------------------- Simulation series sAura2
+  !ifelse(!simulationSeries,{sAura2},{
+  !define(readTruthL2GP,{l2gpTruth$1Input: l2gp, $
+    file='!inpathtruthl2gp/MLS-Aura_L2GP-$1_!simulationSeries!simulationVersion--t_!day.he5', $
+    hdfVersion=5!nl})
+
+  !define(l2gpInputSpecies,{BrO,CO,ClO,GPH,H2O,HCl,HNO3,HO2,HOCl,IWC,N2O,O3,OH,PSD,Temperature})
+  !forall(readTruthL2GP,!l2gpInputSpecies)
+  })
+  
+d35 1
+@
+
+
+1.14
+log
+@Added new methyl molecules
+@
+text
+@d28 17
+@
+
+
+1.13
+log
+@Added IWC etc for sAura2e data.
+@
+text
+@d28 17
+@
+
+
+1.12
+log
+@Stuff to support sAura2(d)
+@
+text
+@d51 1
+a51 1
+  !define(l2gpInputSpecies,{BrO,CO,ClO,GPH,H2O,HCl,HNO3,HO2,HOCl,N2O,O3,OH,Temperature})
+@
+
+
+1.11
+log
+@New simulationVersion stuff
+@
+text
+@d43 11
+a53 1
+})
+@
+
+
+1.10
+log
+@Got rid of the LocateMLSFile stuff
+@
+text
+@d31 1
+a31 1
+    file='!inpathtruthl2gp/MLS-Aura_L2GP-$1_s6--t_!day.he4'!nl})
+d38 1
+a38 1
+    file='!inpathtruthl2gp/MLS-Aura_L2GP-H2O-cld_s6--t_!day.he4'!nl},{!dnl
+d40 1
+a40 1
+    file='!inpathtruthl2gp/MLS-Aura_L2GP-H2O_s6--t_!day.he4'!nl})
+@
+
+
+1.9
+log
+@Various changes, and (hopefully) improvements
+@
+text
+@d31 1
+a31 1
+    file='!LocateMLSFile(MLS-Aura_L2GP-$1_s6--t_!day.he4)'!nl})
+d38 1
+a38 1
+    file='!LocateMLSFile(MLS-Aura_L2GP-H2O-cld_s6--t_!day.he4)'!nl},{!dnl
+d40 1
+a40 1
+    file='!LocateMLSFile(MLS-Aura_L2GP-H2O_s6--t_!day.he4)'!nl})
+@
+
+
+1.8
+log
+@File choosing in clarifypaths.l2cf.  RHi changed to RHI (I hope I've
+haven't got this wrong AGAIN!).
+@
+text
+@d5 2
+d26 18
+@
+
+
+1.7
+log
+@Changed path handling
+@
+text
+@a4 4
+  !ifdef(edinburgh,{
+  !define(readTruthL2GP,{l2gpTruth$1Input: l2gp, $
+    file='!inpath/l2gp/s5--t/!year(!day)/MLS-Aura_L2GP-$1_s5$2--t_!day.he4'!nl})
+  },{
+a6 1
+  })
+d23 1
+a23 1
+  !define(l2gpInputSpecies,{BrO,CH3CN,CO,ClO,GPH,H2O,HCN,HCl,HNO3,HO2,HOCl,N2O,O3,OH,RHi,SO2,Temperature})
+@
+
+
+1.6
+log
+@Renamed internal labels
+@
+text
+@d10 1
+a10 1
+    file='/data/emls/l2gp/s5--t/!year(!day)/MLS-Aura_L2GP-$1_s5$2--t_!day.he4'!nl})
+@
+
+
+1.5
+log
+@Renamed truth for H2O/RHI to s5a (and RHI rather than RHi)
+@
+text
+@d6 1
+a6 1
+  !define(readTruthL2GP,{l2gp$1Input: l2gp, $
+d9 1
+a9 1
+  !define(readTruthL2GP,{l2gp$1Input: l2gp, $
+@
+
+
+1.4
+log
+@Bug fix for the Edinburgh stuff
+@
+text
+@d23 1
+a23 1
+  !readTruthL2GP(H2O,-2)
+d25 1
+a25 1
+  !readTruthL2GP(RHi,-2)
+@
+
+
+1.3
+log
+@Choose path depending on "edinburgh".
+@
+text
+@d5 1
+a5 1
+  !ifdef{edinburgh,{
+@
+
+
+1.2
+log
+@Embarassing bug fix, not reading all the files.
+@
+text
+@d5 4
+d11 1
+@
+
+
+1.1
+log
+@First consolidated version
+@
+text
+@d16 1
+d23 1
+a23 1
+  !define(l2gpInputSpecies,{Temperature,GPH,BrO,ClO,HCl,HNO3,HO2,HOCl,N2O,OH,SO2})
+@
+

@@ -1,0 +1,51 @@
+head	1.2;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2010.05.24.18.35.57;	author honghanh;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2010.03.26.15.33.03;	author honghanh;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@v0.5 updated document
+@
+text
+@! Fill the quantity with given values.
+subroutine ExplicitFillVectorQuantity (quantity, values)
+   ! The quantity to be filled. Only values are filled,
+   ! other fields of VectorValue_T object won't be overwritten.
+   type(VectorValue_T), intent(inout) :: quantity
+   ! the amount of values provided must be equal to
+   ! quantity%template%instanceLen * quantity%template%noInstances
+   real(r8), dimension(:), intent(in) :: values
+end subroutine
+@
+
+
+1.1
+log
+@Update for v0.1 document
+Add subroutines creating grids
+Add ExplicitFillVectorQuantity subroutine
+Add FGrid_T data structure
+Modify mockup.f90
+Removing creating quantity template example because it can be found in the mockup
+@
+text
+@@
+

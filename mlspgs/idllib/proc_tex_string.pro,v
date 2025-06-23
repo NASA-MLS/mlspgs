@@ -1,0 +1,114 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.16
+	cfm-single-freq-0-1:1.1.0.14
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.12
+	mus-emls-1-70:1.1.0.10
+	rel-1-0-englocks-work:1.1.0.8
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.6
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.4
+	V2-24-NRT-04:1.1
+	V3-33:1.1
+	V2-24:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1
+	V2-23-NRT-02:1.1
+	V2-23:1.1
+	V2-22-NRT-01:1.1
+	V2-22:1.1
+	V2-21:1.1
+	V2-20:1.1
+	V2-11:1.1
+	V2-10:1.1
+	V2-00:1.1
+	V1-51:1.1
+	V1-50:1.1
+	V1-45:1.1
+	V1-44:1.1
+	V1-43:1.1
+	V1-42:1.1
+	V1-41:1.1
+	V1-32:1.1
+	V1-40:1.1
+	V1-31:1.1
+	V1-13:1.1
+	V1-12:1.1
+	V1-11:1.1
+	V1-10:1.1
+	newfwm-feb03:1.1.0.2
+	V1-04:1.1
+	V1-03:1.1
+	V1-02:1.1
+	V1-00:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2001.10.05.22.25.45;	author bill;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@New subroutine used by read_spect_dbase--wgr
+@
+text
+@; this processes a tex string
+  PRO proc_tex_string,lu,sps_name,buff
+  buff = ''
+  buff1 = ''
+; disregard comment specifiers
+  READF,lu,buff
+  WHILE STRPOS(buff,'%') GT -1 DO READF,lu,buff
+  WHILE STRPOS(buff,'\\') EQ -1 DO BEGIN
+    READF,lu,buff1
+    buff = buff + buff1
+  ENDWHILE
+; extract molecule name
+  first_amp = STRPOS(buff,'&')
+  sps_name = STRTRIM(STRMID(buff,0,first_amp),2)
+  buff = STRMID(buff,first_amp,STRLEN(buff)-first_amp)
+; now replace every occurance of & with a space
+  buff = STRJOIN(STRSPLIT(buff,'&',/EXTRACT),' ',/SINGLE)
+; now replace every occurance of $\times *10^{ with e
+  buff = STRJOIN(STRSPLIT(buff,'\$\\times 10\^\{',/EXTRACT,/REGEX),'e', $
+         /SINGLE)
+; get rid of trailing }$
+  buff = STRJOIN(STRSPLIT(buff,'\}\$',/EXTRACT,/REGEX),'',/SINGLE)
+; get rid of trailing \\
+  buff = STRJOIN(STRSPLIT(buff,'\\\\',/EXTRACT,/REGEX),'',/SINGLE)
+  RETURN
+  END
+@

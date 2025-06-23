@@ -1,0 +1,459 @@
+head	2.8;
+access;
+symbols
+	v5-02-NRT-19:2.8
+	v6-00:2.8
+	v5-02-NRT-18:2.8
+	v5-02:2.8
+	v5-01-NRT-17:2.8
+	v5-01-NRT-16:2.8
+	v5-01-NRT-15:2.8
+	v5-01-NRT-14:2.8
+	neuralnetworks-1-0:2.8.0.14
+	cfm-single-freq-0-1:2.8.0.12
+	v5-01:2.8
+	v5-00:2.8
+	v4-23-TA133:2.8.0.10
+	mus-emls-1-70:2.8.0.8
+	rel-1-0-englocks-work:2.8.0.6
+	VUMLS1-00:2.8
+	VPL1-00:2.8
+	V4-22-NRT-08:2.8
+	VAM1-00:2.8
+	V4-21:2.8.0.4
+	V4-13:2.8
+	V4-12:2.8
+	V4-11:2.8
+	V4-10:2.8
+	V3-43:2.8
+	M4-00:2.8
+	V3-41:2.8
+	V3-40-PlusGM57:2.8.0.2
+	V2-24-NRT-04:2.7
+	V3-33:2.8
+	V2-24:2.7
+	V3-31:2.8
+	V3-30-NRT-05:2.8
+	cfm-01-00:2.8
+	V3-30:2.8
+	V3-20:2.8
+	V3-10:2.8
+	V2-23-NRT-02:2.7
+	V2-23:2.7
+	V2-22-NRT-01:2.7
+	V2-22:2.7
+	V2-21:2.7
+	V2-20:2.7
+	V2-11:2.7
+	V2-10:2.7
+	V2-00:2.7
+	V1-51:2.6
+	V1-50:2.6
+	V1-45:2.6
+	V1-44:2.6
+	V1-43:2.6
+	V1-32:2.5
+	V1-31:2.5
+	V1-30:2.5
+	V1-13:2.1
+	V1-12:2.1
+	V1-11:2.1
+	V1-10:2.1
+	newfwm-feb03:2.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+2.8
+date	2009.06.23.18.26.10;	author pwagner;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2005.06.22.18.08.18;	author pwagner;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2004.04.21.18.23.56;	author vsnyder;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2003.07.02.17.19.38;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2003.07.02.00.43.16;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2003.06.27.22.05.18;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2003.05.05.23.00.25;	author livesey;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2003.02.04.01.41.33;	author vsnyder;	state Exp;
+branches
+	2.1.2.1;
+next	;
+
+2.1.2.1
+date	2003.03.06.21.53.23;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.8
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module CS_ExpMat_M
+
+  implicit NONE
+  private
+  public :: CS_ExpMat
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+! ----------------------------------------------------  CS_ExpMat  -----
+  subroutine CS_ExpMat ( A, Ex, Status )
+
+!  Compute the exponential function of a complex, 2x2 matrix, A
+
+    use CRREXP_M, only: CRREXP
+    use CS_GetEv_M, only: CS_GetEv
+    use CS_ZeroFix_M, only: CS_ZeroFix
+    use MLSCommon, only: RK => Rp
+
+    complex(rk), intent(in) :: A(2,2)
+    complex(rk), intent(out) :: Ex(2,2)
+    integer, optional, intent(out) :: Status ! zero => OK, else overflow in EXP
+
+    real(rk), save :: Big = -1.0_rk          ! Log(Huge(0.0_rk)), eventually
+    complex(rk) :: EH    ! (exp(h)-1) / h
+    complex(rk) :: Ev(2) ! Eigenvalues of A
+    complex(rk) :: EZ2   ! exp(z2)
+    complex(rk) :: H     ! Ev(1) - Ev(2) = z1 - z2
+    complex(rk) :: W
+
+!{ Use Sylvester's identity for a function of a 2x2 matrix {\bf A}, whose
+!  eigenvalues are: $z_1$ and $z_2$  ({\bf I} is the 2x2 Identity matrix)
+!
+!    $F({\bf A}) = \frac{F(z_1)}
+!                       {z_1-z_2} ({\bf A} - z_2 {\bf I}) +
+!                  \frac{F(z_2)}
+!                       {z_2-z_1} ({\bf A} - z_1 {\bf I})$
+!
+!                              Or:
+!
+!    $F({\bf A}) = \frac{F(z_1) ({\bf A} - z_2 {\bf I}) - 
+!                        F(z_2) ({\bf A} - z_1 {\bf I})}
+!                       {z_1 - z_2}$
+!
+!  For any function $F()$ (in this case: $\exp()$ )
+!
+! Now, rearrange this to get
+!%
+! $e^{z_2} \left [ \frac{e^h-1}h ( {\bf A} - z_2 {\bf I} ) + {\bf I} \right ]$.
+!%
+! where $h = z_1 - z_2$.  This is well behaved as $h \rightarrow 0$, so we
+! don't need to futz with L'H\^opital's rule.  Since
+! $\lim_{h \rightarrow 0}\frac{\text{d}}{\text{d}h} \frac{e^h-1}h = 1$,
+! the relative error in the first term no larger than the relative error
+! in $h$ when $h$ is small.
+
+!{This could also be written as
+! $e^s \left[ \frac{\sinh d}d ( \mathbf{A} - s\, \mathbf{I}) +
+!             \cosh d\, \mathbf{I} \right ]$, where $s = \frac12 (z_1+z_2)$
+! and $d = \frac12 (z_1-z_2)$.  This is useful to compute the derivative
+! without getting into trouble as $d \rightarrow 0$, but the present form
+! is OK here, and more efficient.
+
+    if ( abs(A(1,1)) + abs(A(1,2)) + abs(A(2,1)) + abs(A(2,2)) < &
+      & epsilon(1.0_rk) ) then
+    ! Use the first two terms of Taylor's series for exp(A) = I + A
+      Ex(1,1) = A(1,1) + 1.0_rk
+      Ex(1,2) = A(1,2)
+      Ex(2,1) = A(2,1)
+      Ex(2,2) = A(2,2) + 1.0_rk
+      if ( present(status) ) status = 0
+      return
+    end if
+
+!  First, Get the eigenvalues of the input matrix
+
+    call CS_GetEv ( A, Ev )
+
+!  Now compute Sylvester's identity (as rearranged to avoid trouble
+!  as h -> 0).
+
+    if ( present(status) ) then
+      if ( big < 0.0_rk ) big = log(huge(0.0_rk))
+      if ( real(ev(2)) >= big ) then
+        status = 1
+        return
+      end if
+      status = 0
+    end if
+
+    ez2 = exp(Ev(2))
+    h = ev(1) - ev(2) ! z1 - z2
+
+    if ( present(status) ) then
+      if ( real(h) >= big ) then
+        status = 1
+        return
+      end if
+    end if
+
+    eh = crrexp ( h ) ! (exp(h)-1)/h
+    w = ez2 * eh      ! exp(z2) * (exp(h)-1)/h
+
+    Ex(1,1) = cs_zerofix( w * (A(1,1)-ev(2)) + ez2 )
+
+    Ex(1,2) = cs_zerofix( w * A(1,2) )
+
+    Ex(2,1) = cs_zerofix( w * A(2,1) )
+
+    Ex(2,2) = cs_zerofix( w * (A(2,2)-ev(2)) + ez2 )
+
+  end subroutine CS_ExpMat
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: read_apriori.f90 is it here $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module CS_ExpMat_M
+
+! $Log: cs_expmat_m.f90,v $
+! Revision 2.7  2005/06/22 18:08:18  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.6  2004/04/21 18:23:56  vsnyder
+! Correct a TeXnicality
+!
+! Revision 2.5  2003/07/02 17:19:38  vsnyder
+! Don't set status if it's not present!
+!
+! Revision 2.4  2003/07/02 00:43:16  vsnyder
+! Make sure STATUS gets set
+!
+! Revision 2.3  2003/06/27 22:05:18  vsnyder
+! Add 'status' argument
+!
+! Revision 2.2  2003/05/05 23:00:25  livesey
+! Merged in feb03 newfwm branch
+!
+! Revision 2.1.2.1  2003/03/06 21:53:23  vsnyder
+! Correct a sign error
+!
+! Revision 2.1  2003/02/04 01:41:33  vsnyder
+! Initial commit
+!
+@
+
+
+2.7
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d130 1
+a131 1
+!---------------------------- RCS Ident Info -------------------------------
+d133 2
+a134 3
+       "$Id: $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d136 1
+d138 1
+d143 3
+@
+
+
+2.6
+log
+@Correct a TeXnicality
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d18 3
+a20 6
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+    &  "$Id: cs_expmat_m.f90,v 2.5 2003/07/02 17:19:38 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName= &
+    &  "$RCSfile: cs_expmat_m.f90,v $"
+d131 5
+d142 3
+@
+
+
+2.5
+log
+@Don't set status if it's not present!
+@
+text
+@d12 1
+a12 1
+    &  "$Id: cs_expmat_m.f90,v 2.4 2003/07/02 00:43:16 vsnyder Exp $"
+d64 2
+a65 2
+! $\lim_{h \rightarrow 0}\frac{\text{d}}{\text{d}h} \frac{e^h-1}h = \frac12$,
+! the relative error in the first term is only half of the relative error
+d132 3
+@
+
+
+2.4
+log
+@Make sure STATUS gets set
+@
+text
+@d12 1
+a12 1
+    &  "$Id: cs_expmat_m.f90,v 2.3 2003/06/27 22:05:18 vsnyder Exp $"
+d82 1
+a82 1
+      status = 0
+d132 3
+@
+
+
+2.3
+log
+@Add 'status' argument
+@
+text
+@d12 1
+a12 1
+    &  "$Id: cs_expmat_m.f90,v 2.2 2003/05/05 23:00:25 livesey Exp $"
+d82 1
+d132 3
+@
+
+
+2.2
+log
+@Merged in feb03 newfwm branch
+@
+text
+@d12 1
+a12 1
+    &  "$Id$"
+d15 1
+a15 1
+    &  "$RCSfile$"
+d22 1
+a22 1
+  subroutine CS_ExpMat ( A, Ex )
+d33 3
+d92 9
+d103 8
+d130 4
+a133 1
+! $Log$
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d12 1
+a12 1
+    &  "$Id: freq_avg_m.f90,v 2.5 2002/10/08 17:08:03 pwagner Exp $"
+d15 1
+a15 1
+    &  "$RCSfile: freq_avg_m.f90,v $"
+d90 1
+a90 1
+    h = ev(1) - ev(2)
+d92 1
+a92 1
+    w = ez2 * eh      ! conjg(z) / abs(z)**2 * (exp(h)-1)/h
+d94 1
+a94 1
+    Ex(1,1) = cs_zerofix( ez2 * ( eh * (A(1,1)-ev(2)) - 1.0_rk ) )
+d100 1
+a100 1
+    Ex(2,2) = cs_zerofix( ez2 * ( eh * (A(2,2)-ev(2)) - 1.0_rk ) )
+d110 7
+a116 1
+! $Log: $
+@
+
+
+2.1.2.1
+log
+@Correct a sign error
+@
+text
+@d12 1
+a12 1
+    &  "$Id: cs_expmat_m.f90,v 2.1 2003/02/04 01:41:33 vsnyder Exp $"
+d15 1
+a15 1
+    &  "$RCSfile: cs_expmat_m.f90,v $"
+d90 1
+a90 1
+    h = ev(1) - ev(2) ! z1 - z2
+d92 1
+a92 1
+    w = ez2 * eh      ! exp(z2) * (exp(h)-1)/h
+d94 1
+a94 1
+    Ex(1,1) = cs_zerofix( w * (A(1,1)-ev(2)) + ez2 )
+d100 1
+a100 1
+    Ex(2,2) = cs_zerofix( w * (A(2,2)-ev(2)) + ez2 )
+d110 1
+a110 4
+! $Log: cs_expmat_m.f90,v $
+! Revision 2.1  2003/02/04 01:41:33  vsnyder
+! Initial commit
+!
+@
+

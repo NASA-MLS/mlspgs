@@ -1,0 +1,113 @@
+head	1.3;
+access;
+symbols
+	V1-45:1.2
+	V1-44:1.2
+	V1-43:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.3
+date	2004.09.21.23.02.42;	author livesey;	state dead;
+branches;
+next	1.2;
+
+1.2
+date	2004.04.30.21.40.58;	author livesey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.04.30.21.01.38;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@No longer needed
+@
+text
+@; $Id: coreplusr3flagstight.l2cf,v 1.2 2004/04/30 21:40:58 livesey Exp $
+
+; This l2cf fragment does all the quality flagging for the Core+R3
+; products.
+
+begin Fill
+  ;; ------------------------------------ O3-240
+  !define(flaggingBands,{7,24,33})
+  !makeFlagsForOneProduct(product=O3,radiometer=R3,chisqScale=7.0,minRads=1500,cloudMax=2K,cloudMin= -20K)
+
+  ;; ------------------------------------- CO-240
+  !define(flaggingBands,{9,25,33})
+  !makeFlagsForOneProduct(product=CO,radiometer=R3,chisqScale=7.0,minRads=1500,cloudMax=2K,cloudMin= -20K)
+
+  ;; ------------------------------------- HNO3-240
+  !define(flaggingBands,{7,8,9,33})
+  !makeFlagsForOneProduct(product=HNO3,radiometer=R3,chisqScale=10.0,minRads=2000,cloudMax=2K,cloudMin= -20K)
+
+  ;; ------------------------------------- Temperature-CorePlusR3
+  !define(flaggingBands,{1,8,22,32})
+  !makeFlagsForOneProduct(product=Temperature,radiometer=R3,chisqScale=10.0,minRads=1500,cloudMax=2K,cloudMin= -20K)
+
+  ;; ------------------------------------- GPH-CorePlusR3
+  !define(flaggingBands,{1,8,22,32})
+  !makeFlagsForOneProduct(product=GPH,radiometer=R3,chisqScale=10.0,minRads=1500,cloudMax=2K,cloudMin= -20K)
+
+end Fill
+
+; $Log: coreplusr3flagstight.l2cf,v $
+; Revision 1.2  2004/04/30 21:40:58  livesey
+; Updated for tests
+;
+; Revision 1.7  2004/04/28 23:06:41  livesey
+; Changes to cloud flags.
+;
+; Revision 1.6  2004/04/28 00:32:04  livesey
+; Bug fix
+;
+; Revision 1.5  2004/04/27 23:51:24  livesey
+; Added log information
+;
+@
+
+
+1.2
+log
+@Updated for tests
+@
+text
+@d1 1
+a1 1
+; $Id: coreplusr3flags.l2cf,v 1.7 2004/04/28 23:06:41 livesey Exp $
+d29 4
+a32 1
+; $Log: coreplusr3flags.l2cf,v $
+@
+
+
+1.1
+log
+@Brought over for a while, should go away soon
+@
+text
+@d1 1
+a1 1
+; $Id: coreplusr3flags.l2cf,v 1.6 2004/04/28 00:32:04 livesey Exp $
+d9 1
+a9 1
+  !makeFlagsForOneProduct(product=O3,radiometer=R3,chisqScale=7.0,minRads=1500,cloudMax=8K,cloudMin= -20K)
+d13 1
+a13 1
+  !makeFlagsForOneProduct(product=CO,radiometer=R3,chisqScale=7.0,minRads=1500,cloudMax=8K,cloudMin= -20K)
+d17 1
+a17 1
+  !makeFlagsForOneProduct(product=HNO3,radiometer=R3,chisqScale=10.0,minRads=2000,cloudMax=10K,cloudMin= -20K)
+d30 3
+@
+

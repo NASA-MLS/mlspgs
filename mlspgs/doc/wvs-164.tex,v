@@ -1,0 +1,207 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.2;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2020.09.04.01.16.51;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{color}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9.1in
+
+\newcommand{\docname}{wvs-164}
+\newcommand{\docdate}{3 September 2020}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+\fi
+\ifnum\pdfoutput>0
+  \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+  \hypersetup{%
+    hypertexnames=false,%
+    colorlinks=true,%
+    linktocpage=true,%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{pdftex}
+\else
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+
+\renewcommand{\b}{\mathbf}
+\renewcommand\d{\text{d}}
+\newcommand\T{\mathcal{T}}
+\newcommand{\M}{\mathcal{M}}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill Read, Nathaniel Livesey, Paul Wagner, William Daffer\\
+Subject: \>``Correct'' and ``Wrong'' Trapezoidal Quadrature\\
+From: \>Van Snyder\\
+References: \h{wvs-162}\\
+\end{tabbing}
+
+\parindent 0pt \parskip 4pt
+
+In the big inning, when Zvi Shipponi hit a grand slam home run, the first
+estimate for $\Delta \delta_{s_i \rightarrow s_{i-1}} = \int_{s_i}^{s_{i-1}}
+\alpha(\sigma)\, \d \sigma = \int_{\zeta_i}^{\zeta_{i-1}} \alpha(\zeta) \frac{\d
+s}{\d h} \frac{\d h}{\d \zeta}\, \d \zeta$ was a rectangular quadrature:
+$\alpha(s_i) \times \frac{\d s}{\d h} \frac{\d h}{\d \zeta}\, \Delta \zeta$.
+
+Upon realizing that $\frac{\d s}{\d h} \frac{\d h}{\d \zeta}\, \Delta \zeta$ is
+a rectangular quadrature estimate for $\Delta s$, this was replaced by
+$\alpha(s_i) \times \Delta s$.
+
+An error estimate for this quadrature is formed in {\tt path_contrib}.
+
+Where the error is not sufficiently small, a 3-point Gauss-Legendre quadrature
+is used:
+
+\begin{equation}\label{Gauss}
+\Delta \delta_{s_i \rightarrow s_{i-1}} =
+ \int_{s_i}^{s_{i-1}} \alpha(\sigma)\, \d \sigma =
+ \int_{\zeta_i}^{\zeta_{i-1}} \alpha(\zeta) \,
+  \frac{\d s}{\d h} \frac{\d h}{\d \zeta} \, \d \zeta \approx
+ \left( 
+ \sum_{j=1}^3 \alpha(\zeta_{ij})\, \omega_j
+  \frac{\d s_j}{\d h_j} \frac{\d h_j}{\d \zeta_j}
+  \right) ( \zeta_{i-1} - \zeta_i ) \,,
+\end{equation}
+
+where $\zeta_{ij}$ is the value of $\zeta$ at the $j^\text{th}$ Gauss-Legendre
+abscissa in the interval $\zeta_i \rightarrow \zeta_{i-1}$.
+The derivative $\frac{\d s}{\d h}$ is singular at the tangent point. Equation
+(10.13) in the ATBD is used to remove the singularity:
+
+\begin{equation}
+\int_{\zeta_i}^{\zeta_{i-1}} \alpha(\zeta)
+ \frac{\d s}{\d h} \frac{\d h}{\d \zeta}\, \d \zeta =
+\alpha(\zeta_i) \int_{\zeta_i}^{\zeta_{i-1}}
+ \frac{\d s}{\d h} \frac{\d h}{\d \zeta}\, \d \zeta +
+\int_{\zeta_i}^{\zeta_{i-1}} [ \alpha(\zeta) - \alpha(\zeta_i) ]
+ \frac{\d s}{\d h} \frac{\d h}{\d \zeta}\, \d \zeta \,.
+\end{equation}
+
+This works because $\alpha(\zeta) - \alpha(\zeta_i) \rightarrow 0$ faster than
+$\frac{\d s}{\d h} \rightarrow \infty$. The first integral on the right is
+simply $\alpha(s_i) \times \Delta s$, so the rectangular quadrature estimate is
+retained for this purpose.
+
+A trapezoidal quadrature is more accurate than a rectangular quadrature. Where
+the error estimate formed in {\tt path_contrib} is sufficiently small, i.e.,
+where the 3-point Gauss-Legendre quadrature will not be used, a trapezoidal
+quadrature estimate is formed. There are two ways to do this.
+
+\begin{equation}\begin{split}
+\Delta \delta_{s_i \rightarrow s_{i-1}} \approx \,&
+ \frac12 \, ( \alpha(\zeta_i) + \alpha(\zeta_{i-1}) ) 
+  \frac{\d s_i}{\d h_i} \frac{\d h_i}{\d \zeta_i}
+   ( \zeta_{i-1} - \zeta{i} ) \text{ and}\\
+\Delta \delta_{s_i \rightarrow s_{i-1}} \approx \,&
+ \frac12 \, ( \alpha(s_i) + \alpha(s_{i-1}) ) ( s_{i-1} - s_i ) \,.
+\end{split}\end{equation}
+
+In the first case, $\frac{\d s_i}{\d h_i} \frac{\d h_i}{\d \zeta_i} ( \zeta_{i-1} -
+\zeta{i} )$ is a rectangular quadrature estimate of $s_{i-1} - s_i$.
+
+The first case is considered to be the ``wrong'' trapezoidal quadrature. The
+second case is considered to be the ``correct'' trapezoidal quadrature.
+
+When results using the ``wrong'' and ``correct'' trapezoidal quadratures were
+compared to results using Gauss-Legendre quadrature, i.e., Equation
+(\ref{Gauss}), everywhere, there was a slight preference for the results
+computed using the ``wrong'' trapezoidal quadrature.
+
+One reason that results computed using the ``wrong'' trapezoidal quadrature
+results might appear to be closer to results computed using the Gauss-Quadrature
+is that in Equation (\ref{Gauss}), $\frac{\d s_j}{\d h_j} \frac{\d h_j}{\d
+\zeta_j}$ is multiplied by each of the Gauss weights $\omega_j$, and then
+$\zeta_{i-1} - \zeta_i$ is used for the interval length. This amounts to using a
+3-point Gauss-Legendre quadrature estimate for $s_i - s_{i-1}$ instead of using
+the known value of $\Delta s = s_i - s_{i-1}$. This is necessary because we have
+$\alpha(\zeta_{ij})$, not $\alpha(s_{ij})$.
+
+This arises from a very early decision to use $\zeta$ instead of $s$ as the
+independent variable when integrating the radiative-transfer equation. ``It was
+like that when I got here.''
+
+The {\tt mlsl2} program allows to select the ``wrong'' or ``correct'' quadrature
+method, using the {\tt trapezoid} field of the {\tt forwardModel} statement in
+the {\tt l2cf}. See wvs-162. This specification is respected at lines 2813
+through 2837 in version 2.408 of {\tt FullForwardModel_m.f90}.
+
+\vspace{-1pt} % Somehow, this causes lastpage not to be undefined
+\label{lastpage}
+\end{document}
+
+% $Log: wvs-163.tex,v $
+
+@

@@ -1,0 +1,575 @@
+head	1.8;
+access;
+symbols
+	v5-02-NRT-19:1.8
+	v6-00:1.8
+	v5-02-NRT-18:1.8
+	v5-02:1.8
+	v5-01-NRT-17:1.8
+	v5-01-NRT-16:1.8
+	v5-01-NRT-15:1.8
+	v5-01-NRT-14:1.8
+	neuralnetworks-1-0:1.8.0.12
+	cfm-single-freq-0-1:1.8.0.10
+	v5-01:1.8
+	v5-00:1.8
+	v4-23-TA133:1.8.0.8
+	mus-emls-1-70:1.8.0.6
+	rel-1-0-englocks-work:1.8.0.4
+	VUMLS1-00:1.8
+	VPL1-00:1.8
+	V4-22-NRT-08:1.8
+	VAM1-00:1.8
+	V4-21:1.8.0.2
+	V4-13:1.8
+	V4-12:1.8
+	V4-11:1.8
+	V4-10:1.8
+	M4-00:1.8;
+locks; strict;
+comment	@# @;
+
+
+1.8
+date	2012.03.30.00.07.16;	author vsnyder;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2012.03.29.20.21.24;	author vsnyder;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2012.03.29.00.43.08;	author vsnyder;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2012.03.14.00.58.03;	author vsnyder;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2012.03.14.00.57.08;	author vsnyder;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2012.03.14.00.54.01;	author vsnyder;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2012.03.13.23.46.57;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2012.03.13.23.15.55;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.8
+log
+@Cannonball polishing
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+program REMAKE_GH
+
+! Read spherical harmonic coefficients for Earth's magnetic field models
+! and write a type definition, a variable declaration, and data statements
+! for them, as a Fortran include file.
+
+! Command line arguments:
+!   -p prefix  => a prefix for input file names, default "."
+!   -o output  => output file, default stdout
+!   files...   => up to 20 input file names
+
+  use, intrinsic :: ISO_Fortran_Env, only: Output_Unit
+
+  implicit NONE
+
+  character(127) :: ARG
+  integer :: DT(8)  ! Output from date_and_time intrinsic subroutine
+  real :: DTEMOD(20)
+  real :: ERAD
+  character(13) :: FILMOD(20) = '*************'
+  real :: GH(1023)
+  integer :: I, IER, J, K
+  integer :: NFILE, NGH, NGHMAX = 0, NMAX, NMAXMAX = 0, OU = output_unit
+  character(len=127) :: OFILE = '', PREFIX = ''
+
+  !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: ModuleName= &
+    "$RCSfile: remake_gh.f90,v $"
+  !---------------------------------------------------------------------------
+
+  i = 0
+  do
+    i = i + 1
+    call get_command_argument ( i, arg )
+    select case ( arg(1:3) )
+    case ( '-o ' )
+      i = i + 1
+      call get_command_argument ( i, ofile )
+      ou = 42
+      open ( ou, file=trim(ofile), form='formatted' )
+    case ( '-p ' )
+      i = i + 1
+      call get_command_argument ( i, prefix )
+    case ( '-h ' )
+      call get_command_argument ( 0, arg )
+      print '(3a)', 'Usage: ', trim(arg), ' [options] input-file-names'
+      print '(a)' , ' Options: -o file => output file name, else stdout'
+      print '(a)' , '          -p prefix => prefix for input file names'
+      print '(a)' , '                       / is appended to prefix'
+      stop
+    case default
+      exit
+    end select
+  end do
+
+  nfile = 0
+  do while ( i <= command_argument_count() )
+    nfile = nfile + 1
+    call get_command_argument ( i, filmod(nfile) )
+    i = i + 1
+  end do
+
+  if ( prefix == '' ) prefix = '.'
+
+  call date_and_time ( values=dt )
+  write ( ou, '(a,i4.4,2("-",i2.2),"T",i2.2,2(":",i2.2),".",i0,2a)' ) &
+    & '! Created at ', dt(1:3), dt(5:8), ' from files in ', trim(prefix)
+
+  open ( 99, status='scratch', form='unformatted' )
+
+  ! Read the files
+  do i = 1, nfile
+
+    call getshc ( trim(prefix) // '/' // trim(filmod(i)), nmax, dtemod(i), gh, ier, erad, ngh )
+
+    write ( 99 ) nmax, ngh, erad, gh(:ngh)
+
+    nmaxmax = max(nmaxmax, nmax)
+    nghmax = max(nghmax, ngh)
+  end do
+  rewind ( 99 )
+
+  ! Write a type definition for the data
+  write ( ou, '(a)' ) '  type :: GH_T', &
+    &                 '    real    :: YEAR', &
+    &                 '    character(len=12) :: FILE', &
+    &                 '    integer :: NMAX', &
+    &                 '    integer :: NGH', &
+    &                 '    real ::    ERAD'
+  write ( ou, '(a:,i0,a)' ) &
+    &                 '    real ::    GH(', nghmax, ')', &
+    &                 '  end type GH_T'
+  ! Write a declaration for the variable
+  write ( ou, '(a,i0,a)' ) &
+    &                 '  type(gh_t), save :: GHS(', nfile, ')'
+
+  ! Write the data statements
+  do i = 1, nfile
+    read ( 99 ) nmax, ngh, erad, gh(:ngh)
+    write ( ou, '(a,i0,a)' ) '  data GHS(', i, ') / gh_t ( &'
+    write ( ou, '(a,f7.1,3a,2(i3,a),g14.7,a)' ) &
+      & '    & ', dtemod(i), ', "', filmod(i), '", ', &
+      &           nmax, ', ', ngh, ', ', erad, ', (/ &'
+    gh(ngh+1:) = 0.0
+    do j = 1, nghmax, 5
+      k = min(j+4,nghmax)
+      write ( ou, '("    & ",5(g14.7:,", "))', advance='no' ) gh(j:k)
+      if ( k /= nghmax ) then
+        write ( ou, '(", &")' )
+      else
+        write ( ou, '("/) ) /")' )
+      end if
+    end do
+  end do
+  close ( 99 )
+
+contains
+
+  ! -----------------------------------------------------  GETSHC  -----
+  subroutine GETSHC ( FSPEC, NMAX, YEAR, GH, IER, ERAD, NGH )
+
+! ===============================================================
+!
+!       Version 1.01
+!
+!       Reads spherical harmonic coefficients from the specified
+!       file into an array.
+!
+!       Input:
+!           IU     - Logical unit number
+!           FSPEC  - File specification
+!
+!       Output:
+!           NMAX   - Maximum degree and order of model
+!           GH     - Schmidt quasi-normal internal spherical
+!                    harmonic coefficients
+!           IER    - Error number: =  0, no error
+!                                  = -2, records out of order
+!                                  = FORTRAN run-time error number
+!           ERAD   - Earth's radius associated with the spherical
+!                    harmonic coefficients, in the same units as
+!                    elevation.
+!           NGH    - Number of elements in GH
+!
+!       A. Zunde
+!       USGS, MS 964, Box 25046 Federal Center, Denver, CO  80225
+!
+! ===============================================================
+
+    character(len=*), intent(in) :: FSPEC
+    integer, intent(out) :: NMAX
+    real, intent(out) :: YEAR
+    real, intent(out) :: GH(:)
+    integer, intent(out) :: IER
+    real, intent(out) :: ERAD
+    integer, intent(out), optional :: NGH
+
+    integer, parameter :: IU = 10
+
+    real :: G, H
+    integer :: I, N, NN, M, MM
+
+! ---------------------------------------------------------------
+!       Open coefficient file. Read past first header record.
+!       Read degree and order of model and Earth's radius.
+! ---------------------------------------------------------------
+
+    open ( iu, file=fspec, status='old', iostat=ier, err=666 )
+
+    read ( iu, *, iostat=ier, err=666 ) ! Skip the file name in the file
+    read ( iu, *, iostat=ier, err=666 ) nmax, erad, year
+
+! ---------------------------------------------------------------
+!       Read the coefficient file, arranged as follows:
+!
+!                                       N     M     G     H
+!                                       ----------------------
+!                                   /   1     0    GH(1)  -
+!                                  /    1     1    GH(2) GH(3)
+!                                 /     2     0    GH(4)  -
+!                                /      2     1    GH(5) GH(6)
+!           NMAX*(NMAX+3)/2     /       2     2    GH(7) GH(8)
+!              records          \       3     0    GH(9)  -
+!                                \      .     .     .     .
+!                                 \     .     .     .     .
+!           NMAX*(NMAX+2)          \    .     .     .     .
+!           elements in GH          \  NMAX  NMAX   .     .
+!
+!       N and M are, respectively, the degree and order of the
+!       coefficient.
+! ---------------------------------------------------------------
+
+    i = 0                                                   
+o:  do nn = 1, nmax                                         
+      do mm = 0, nn                                       
+        read (iu, *, iostat=ier, err=666, end=999) n, m, g, h
+        if ( nn /= n .or. mm /= m ) then                
+          ier = -2                                    
+          exit o
+        end if                                          
+        i = i + 1                                       
+        gh(i) = g                                       
+        if ( m /= 0 ) then                              
+          i = i + 1                                   
+          gh(i) = h                                   
+        end if                                          
+      end do                                                 
+    end do o
+
+999 close (iu)
+    if ( present(ngh) ) ngh = i
+
+    return
+
+666 print '(a,i0/2a)', 'I/O Error, iostat = ', ier, 'File = ', trim(fspec)
+  end subroutine GETSHC
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: remake_gh.f90,v 1.7 2012/03/29 20:21:24 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end program REMAKE_GH
+
+! $Log: remake_gh.f90,v $
+! Revision 1.7  2012/03/29 20:21:24  vsnyder
+! Add -h option for usage summary
+!
+! Revision 1.6  2012/03/29 00:43:08  vsnyder
+! Add time stamp, make GH array bigger
+!
+! Revision 1.5  2012/03/14 00:58:03  vsnyder
+! Remove goofy method to determine number of files
+!
+! Revision 1.4  2012/03/14 00:57:08  vsnyder
+! Add copyright statement
+!
+! Revision 1.3  2012/03/14 00:54:01  vsnyder
+! Revised to get file names from command line
+!
+! Revision 1.2  2012/03/13 23:46:57  vsnyder
+! Revise to get file names from input instead of internal data
+!
+! Revision 1.1  2012/03/13 23:15:55  vsnyder
+! Initial commit
+!
+@
+
+
+1.7
+log
+@Add -h option for usage summary
+@
+text
+@d34 1
+a34 1
+  integer :: NFILE, NGH, NGHMAX = 0, NMAX, NMAXMAX = 0, OU = 42
+d50 2
+d58 1
+a58 1
+      print '(a)' , ' Options: -o file => output file name'
+d60 1
+a73 6
+  if ( ofile /= '' ) then
+    open ( ou, file=trim(ofile), form='formatted' )
+  else
+    ou = output_unit
+  end if
+
+d96 5
+a100 5
+    &                '    real    :: YEAR', &
+    &                '    character(len=12) :: FILE', &
+    &                '    integer :: NMAX', &
+    &                '    integer :: NGH', &
+    &                '    real ::    ERAD'
+d102 2
+a103 2
+    &                '    real ::    GH(', nghmax, ')', &
+    &                '  end type GH_T'
+d106 1
+a106 1
+    &                '  type(gh_t), save :: GHS(', nfile, ')'
+d232 1
+a232 1
+       "$Id: remake_gh.f90,v 1.6 2012/03/29 00:43:08 vsnyder Exp $"
+d241 3
+@
+
+
+1.6
+log
+@Add time stamp, make GH array bigger
+@
+text
+@d31 1
+a31 1
+  character(12) :: FILMOD(20) = '************'
+d53 6
+d229 1
+a229 1
+666 print *, 'I/O Error, iostat =', ier
+d235 1
+a235 1
+       "$Id: remake_gh.f90,v 1.5 2012/03/14 00:58:03 vsnyder Exp $"
+d244 3
+@
+
+
+1.5
+log
+@Remove goofy method to determine number of files
+@
+text
+@d32 1
+a32 1
+  real :: GH(144)
+d229 1
+a229 1
+       "$Id: remake_gh.f90,v 1.4 2012/03/14 00:57:08 vsnyder Exp $"
+d238 3
+@
+
+
+1.4
+log
+@Add copyright statement
+@
+text
+@a76 5
+  ! Determine how many files were input
+  do nfile = 0, size(filmod)-1
+    if ( filmod(nfile+1)(1:1) == '*' ) exit
+  end do
+
+d229 1
+a229 1
+       "$Id: remake_gh.f90,v 1.3 2012/03/14 00:54:01 vsnyder Exp $"
+d238 3
+@
+
+
+1.3
+log
+@Revised to get file names from command line
+@
+text
+@d1 11
+d16 1
+a16 1
+! for them in a Fortran include file.
+d234 1
+a234 1
+       "$Id: remake_gh.f90,v 1.2 2012/03/13 23:46:57 vsnyder Exp $"
+d243 3
+@
+
+
+1.2
+log
+@Revise to get file names from input instead of internal data
+@
+text
+@d3 11
+d16 2
+d23 2
+a24 4
+  integer :: NFILE, NGH, NGHMAX = 0, NMAX, NMAXMAX = 0
+  character(len=127) :: PREFIX
+
+  namelist /in/ prefix, filmod
+d28 1
+a28 1
+    "$RCSfile: ForwardModelWrappers.f90,v $"
+d31 34
+a64 1
+  read ( *, in )
+d73 1
+d85 2
+a86 1
+  write ( *, '(a)' ) '  type :: GH_T', &
+d92 1
+a92 1
+  write ( *, '(a:,i3,a)' ) &
+d95 2
+a96 1
+  write ( *, '(a,i2,a)' ) &
+d99 1
+d102 2
+a103 2
+    write ( *, '(a,i3,a)' ) '  data GHS(', i, ') / gh_t ( &'
+    write ( *, '(a,f7.1,3a,2(i3,a),g14.7,a)' ) &
+d109 1
+a109 1
+      write ( *, '("    & ",5(g14.7:,", "))', advance='no' ) gh(j:k)
+d111 1
+a111 1
+        write ( *, '(", &")' )
+d113 1
+a113 1
+        write ( *, '("/) ) /")' )
+d223 1
+a223 1
+       "$Id: ForwardModelWrappers.f90,v 2.39 2012/02/23 00:59:43 vsnyder Exp $"
+a225 1
+    print *, Id ! .mod files sometimes change if PRINT is added
+d231 7
+a237 1
+! $Log: $
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d5 1
+a5 4
+  real, parameter :: DTEMOD(13) = (/ 1945., 1950., 1955., 1960., 1965., &
+    &                                1970., 1975., 1980., 1985., 1990., &
+    &                                1995., 2000., 2005. /)
+
+d7 1
+a7 7
+
+  character*12, parameter :: FILMOD(13) = (/ 'dgrf45.dat  ', 'dgrf50.dat  ', &
+    &                        'dgrf55.dat  ', 'dgrf60.dat  ', 'dgrf65.dat  ', &
+    &                        'dgrf70.dat  ', 'dgrf75.dat  ', 'dgrf80.dat  ', &
+    &                        'dgrf85.dat  ', 'dgrf90.dat  ', 'dgrf95.dat  ', &
+    &                        'igrf00.dat  ', 'igrf00s.dat ' /)
+
+a8 1
+
+d10 1
+a10 2
+  integer, parameter :: IU = 10
+  integer :: NGH, NGHMAX = 0, NMAX, NMAXMAX = 0
+d13 13
+a25 5
+  call getarg ( 1, prefix )
+  if ( prefix == '' ) then
+    print *, 'Enter prefix of file names: '
+    read ( *, '(a)' ) prefix
+  end if
+d29 1
+a29 1
+  do i = 1, size(filmod)
+d31 1
+a31 1
+    call getshc ( iu, trim(prefix) // filmod(i), nmax, gh, ier, erad, ngh )
+d50 1
+a50 1
+    &                '  type(gh_t), save :: GHS(', size(filmod), ')'
+d52 1
+a52 1
+  do i = 1, size(filmod)
+d74 1
+a74 1
+  subroutine GETSHC ( IU, FSPEC, NMAX, GH, IER, ERAD, NGH )
+a103 1
+    integer, intent(in) :: IU
+d106 1
+d112 2
+a120 1
+    open ( iu, file=fspec, status='old', iostat=ier, err=999 )
+d122 5
+a126 2
+    read ( iu, *, iostat=ier, err=999 ) ! Skip the file name in the file
+    read ( iu, *, iostat=ier, err=999 ) nmax, erad
+d150 1
+a150 1
+        read (iu, *, iostat=ier, err=999, end=999) n, m, g, h
+d167 3
+d172 10
+d183 2
+@
+

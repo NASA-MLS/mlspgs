@@ -1,0 +1,92 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.14
+	cfm-single-freq-0-1:1.1.0.12
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.10
+	mus-emls-1-70:1.1.0.8
+	rel-1-0-englocks-work:1.1.0.6
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2010.01.05.00.00.43;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@New additions
+@
+text
+@  ! Parameters for the KIND component of objects of type(MatrixElement_T):
+  integer, parameter :: M_Absent = 0         ! An absent block -- assumed zero
+  integer, parameter :: M_Banded = 1         ! A banded matrix.  The nonzero
+    ! values in each column are assumed to be in a contiguous sequence.  For
+    ! column I, R1(I) gives the row of the first nonzero value, and the
+    ! nonzero elements are VALUES(R2(I-1)+1:R2(I)).
+  integer, parameter :: M_Column_sparse = 2  ! A sparse block in column-sparse
+    ! representation.  Only the non-zero values are stored.  For column(I),
+    ! R1(I) gives the index in R2 and VALUES for the last stored value.  The
+    ! rows of the nonzero values are R2(R1(I-1)+1:R1(I)), and their values are
+    ! VALUES(R1(I-1)+1:R1(I)).  R1(0) = 0.
+  integer, parameter :: M_Full = 3           ! A non-sparse block
+  integer, parameter :: M_Unknown = 4        ! We don't know yet
+    ! This is used for reading l2pc files where we don't want to load the block
+    ! into memory until we know we need it.  The MatrixModule_0 code doesn't
+    ! understand such blocks, so use them with care.
+
+  type MatrixElement_T
+    integer :: KIND = M_Absent               ! Kind of block -- one of the
+      !                                        M_... parameters above
+    integer :: nRows = 0, nCols = 0          ! Numbers of rows and columns
+    integer, pointer, dimension(:) :: R1 => NULL()     ! Indexed by the column
+      ! number. Used for the first column number if KIND = M_Banded, as
+      ! described above for M_Column_sparse if KIND = M_Column_sparse, and not
+      ! used otherwise.
+    integer, pointer, dimension(:) :: R2 => NULL()     ! Indexed by the
+      ! column number if KIND = M_Banded, by elements of R1 if KIND =
+      ! M_Column_sparse, and not used otherwise.  See M_Banded and
+      ! M_Column_sparse above.
+    real(rm), pointer, dimension(:,:) :: VALUES => NULL()   ! Values of the
+      ! matrix elements.  Indexed by row and column indices if KIND == M_Full,
+      ! by elements in the range of values of R1 if KIND == M_Banded, and by
+      ! elements of R2 if KIND == M_Column_sparse.
+  end type MatrixElement_T
+
+@

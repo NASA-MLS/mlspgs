@@ -1,0 +1,68 @@
+head	1.2;
+access;
+symbols
+	V0_1:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2000.11.22.23.07.25;	author zvi;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2000.05.04.18.12.04;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@New version
+@
+text
+@module DAITKEN_MODULE
+!--D replaces "?": ?AITKEN_MODULE ?AITKEN
+  implicit NONE
+  private
+  public :: AITKEN, DAITKEN, RK
+  integer, parameter :: RK=kind(0.0d0)
+
+  interface AITKEN; module procedure DAitken; end interface
+
+  !---------------------------- RCS Ident Info -------------------------------
+  character (len=256) :: Id = &
+       "$Id: daitken_module.f90,v 1.1 2000/05/04 18:12:04 vsnyder Exp $"
+  character (len=*), parameter :: ModuleName= "$RCSfile: daitken_module.f90,v $"
+  !---------------------------------------------------------------------------
+
+contains
+! ================================================     DAitken     =====
+  pure real(rk) Function DAitken ( XN, XNP1, XNP2 ) result (AITKEN)
+    include 'aitken.f9h'
+  End Function DAitken
+end module DAITKEN_MODULE
+
+! $Log: daitken_module.f90,v $
+! Revision 1.1  2000/05/04 18:12:04  vsnyder
+! Initial conversion to Fortran 90
+!
+@
+
+
+1.1
+log
+@Initial conversion to Fortran 90
+@
+text
+@d12 1
+a12 1
+       "$Id: Fill.f90,v 1.1 2000/01/21 21:04:06 livesey Exp $"
+d24 3
+@
+

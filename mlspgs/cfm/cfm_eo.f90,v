@@ -1,0 +1,1511 @@
+head	1.7;
+access;
+symbols
+	v5-02-NRT-19:1.7
+	v6-00:1.7
+	v5-02-NRT-18:1.7
+	v5-02:1.7
+	v5-01-NRT-17:1.7
+	v5-01-NRT-16:1.7
+	v5-01-NRT-15:1.7
+	v5-01-NRT-14:1.7
+	neuralnetworks-1-0:1.7.0.12
+	cfm-single-freq-0-1:1.7.0.10
+	TES-MLuo-01:1.7
+	TES-UNKNOWN:1.7
+	v5-01:1.7
+	v5-00:1.7
+	v4-23-TA133:1.7.0.8
+	mus-emls-1-70:1.7.0.6
+	rel-1-0-englocks-work:1.7.0.4
+	VUMLS1-00:1.7
+	VPL1-00:1.7
+	V4-22-NRT-08:1.7
+	VAM1-00:1.7
+	V4-21:1.7.0.2
+	V4-13:1.7
+	V4-12:1.7
+	V4-11:1.7
+	V4-10:1.7
+	M4-00:1.7
+	V3-33:1.6
+	V3-31:1.6
+	V3-30-NRT-05:1.5
+	cfm-01-00:1.5;
+locks; strict;
+comment	@# @;
+
+
+1.7
+date	2011.10.18.16.37.55;	author honghanh;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2010.11.03.18.34.46;	author honghanh;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2010.06.29.17.02.47;	author honghanh;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2010.06.29.16.40.23;	author honghanh;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2010.06.29.15.53.45;	author honghanh;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2010.06.15.16.14.38;	author honghanh;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2010.05.25.18.02.11;	author honghanh;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.7
+log
+@Refractor elevation offset constants to CFM_Constants_m
+@
+text
+@! Copyright 2010, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+module cfm_eo_m  ! This module is to help cfm_mlssetup subroutine.
+                 ! Quantities allocated in here should be deallocate by cfm_mlssetup_m
+    use MLSCommon, only: r8
+    use CFM_Constants_m
+
+    implicit none
+
+    private
+
+    public :: CreateElevationOffsets, FillElevationOffsets
+
+!---------------------------- RCS Ident Info -------------------------------
+   character(len=*), private, parameter :: ModuleName= &
+       "$RCSfile: cfm_eo.f90,v $"
+   private :: not_used_here
+!---------------------------------------------------------------------------
+
+    integer :: elev1L = 0
+    integer :: elev2L = 0
+    integer :: elev3L = 0
+    integer :: elev4L = 0
+    integer :: elev5L = 0
+    integer :: elev6L = 0
+    integer :: elev7L = 0
+    integer :: elev8L = 0
+    integer :: elev9L = 0
+    integer :: elev10L = 0
+    integer :: elev11L = 0
+    integer :: elev12L = 0
+    integer :: elev13L = 0
+    integer :: elev14L = 0
+    integer :: elev15L = 0
+    integer :: elev16L = 0
+    integer :: elev17L = 0
+    integer :: elev18L = 0
+    integer :: elev19L = 0
+    integer :: elev20L = 0
+    integer :: elev21L = 0
+    integer :: elev22L = 0
+    integer :: elev23L = 0
+    integer :: elev24L = 0
+    integer :: elev25L = 0
+    integer :: elev26L = 0
+    integer :: elev27L = 0
+    integer :: elev28L = 0
+    integer :: elev29L = 0
+    integer :: elev30L = 0
+    integer :: elev31L = 0
+    integer :: elev32L = 0
+    integer :: elev33L = 0
+    integer :: elev34L = 0
+
+    integer :: elev2U = 0
+    integer :: elev3U = 0
+    integer :: elev4U = 0
+    integer :: elev5U = 0
+    integer :: elev6U = 0
+    integer :: elev7U = 0
+    integer :: elev8U = 0
+    integer :: elev9U = 0
+    integer :: elev10U = 0
+    integer :: elev11U = 0
+    integer :: elev12U = 0
+    integer :: elev13U = 0
+    integer :: elev14U = 0
+    integer :: elev15U = 0
+    integer :: elev16U = 0
+    integer :: elev17U = 0
+    integer :: elev18U = 0
+    integer :: elev19U = 0
+    integer :: elev20U = 0
+    integer :: elev23U = 0
+    integer :: elev24U = 0
+    integer :: elev25U = 0
+    integer :: elev27U = 0
+    integer :: elev28U = 0
+    integer :: elev29U = 0
+    integer :: elev30U = 0
+    integer :: elev31U = 0
+    integer :: elev33U = 0
+
+    contains
+
+    subroutine CreateElevationOffsets (chunk, filedatabase, qtyTemplates)
+       use CFM_QuantityTemplate_m, only: CreateQtyTemplate
+       use QuantityTemplates, only: AddQuantityTemplateToDatabase, &
+                                    QuantityTemplate_T
+       use INIT_TABLES_MODULE, only: l_elevOffset
+       use Chunks_m, only: MLSChunk_T
+       use MLSCommon, only: MLSFile_T
+
+       type(MLSChunk_T), intent(in) :: chunk
+       type (MLSFile_T), dimension(:), pointer :: filedatabase
+       type (QuantityTemplate_T), dimension(:), pointer :: qtyTemplates
+
+       type(QuantityTemplate_T) :: elevOffset
+
+       ! Executables
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band1L, &
+          qName='elev1L')
+       elev1L = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band2L, &
+          qName='elev2L')
+       elev2L = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band3L, &
+          qName='elev3L')
+       elev3L = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band4L, &
+          qName='elev4L')
+       elev4L = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band5L, &
+          qName='elev5L')
+       elev5L = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band6L, &
+          qName='elev6L')
+       elev6L = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band7L, &
+          qName='elev7L')
+       elev7L = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band8L, &
+          qName='elev8L')
+       elev8L = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band9L, &
+          qName='elev9L')
+       elev9L = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band10L, &
+          qName='elev10L')
+       elev10L = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band11L, &
+          qName='elev11L')
+       elev11L = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band12L, &
+          qName='elev12L')
+       elev12L = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band13L, &
+          qname='elev13L')
+       elev13L = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band14L, &
+          qName='elev14L')
+       elev14L = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band15L, &
+          qName='elev15L')
+       elev15L = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band16L, &
+          qName='elev16L')
+       elev16L = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band17L, &
+          qName='elev17L')
+       elev17L = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band18L, &
+          qName='elev18L')
+       elev18L = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band19L, &
+          qName='elev19L')
+       elev19L = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band20L, &
+          qName='elev20L')
+       elev20L = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band21L, &
+          qName='elev21L')
+       elev21L = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band22L, &
+          qName='elev22L')
+       elev22L = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band23L, &
+          qName='elev23L')
+       elev23L = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band24L, &
+          qName='elev24L')
+       elev24L = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band25L, &
+          qName='elev25L')
+       elev25L = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band26L, &
+          qName='elev26L')
+       elev26L = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band27L, &
+          qName='elev27L')
+       elev27L = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band28L, &
+          qName='elev28L')
+       elev28L = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band29L, &
+          qName='elev29L')
+       elev29L = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band30L, &
+          qName='elev30L')
+       elev30L = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band31L, &
+          qName='elev31L')
+       elev31L = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band32L, &
+          qName='elev32L')
+       elev32L = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band33L, &
+          qName='elev33L')
+       elev33L = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band34L, &
+          qName='elev34L')
+       elev34L = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       ! Now the the upper band
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band2U, &
+          qName='elev2U')
+       elev2U = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band3U, &
+          qName='elev3U')
+       elev3U = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band4U, &
+          qname='elev4U')
+       elev4U = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band5U, &
+          qName='elev5U')
+       elev5U = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band6U, &
+          qName='elev6U')
+       elev6U = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band7U, &
+          qName='elev7U')
+       elev7U = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band8U, &
+          qName='elev8U')
+       elev8U = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band9U, &
+          qName='elev9U')
+       elev9U = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band10U, &
+          qName='elev10U')
+       elev10U = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band11U, &
+          qName='elev11U')
+       elev11U = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band12U, &
+          qName='elev12U')
+       elev12U = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band13U, &
+          qName='elev13U')
+       elev13U = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band14U, &
+          qname='elev14U')
+       elev14U = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band15U, &
+          qname='elev15U')
+       elev15U = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band16U, &
+          qName='elev16U')
+       elev16U = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band17U, &
+          qName='elev17U')
+       elev17U = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band18U, &
+          qName='elev18U')
+       elev18U = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band19U, &
+          qName='elev19U')
+       elev19U = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band20U, &
+          qName='elev20U')
+       elev20U = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band23U, &
+          qname='elev23U')
+       elev23U = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band24U, &
+          qName='elev24U')
+       elev24U = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band25U, &
+          qName='elev25U')
+       elev25U = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band27U, &
+          qName='elev27U')
+       elev27U = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band28U, &
+          qName='elev28U')
+       elev28U = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band29U, &
+          qName='elev29U')
+       elev29U = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band30U, &
+          qName='elev30U')
+       elev30U = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band31U, &
+          qName='elev31U')
+       elev31U = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+       elevOffset = CreateQtyTemplate(l_elevOffset, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band33U, &
+          qName='elev33U')
+       elev33U = AddQuantityTemplateToDatabase(qtyTemplates, elevOffset)
+
+    end subroutine
+
+    subroutine FillElevationOffsets (stateVectorExtra)
+       use VectorsModule, only: Vector_T, VectorValue_T, &
+                                GetVectorQtyByTemplateIndex
+       use CFM_Fill_M, only: SpreadFillVectorQuantity, ExplicitFillVectorQuantity
+
+       type (Vector_T), intent(in) :: stateVectorExtra
+       type(VectorValue_T) :: quantity
+
+       ! Executables
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev1L)
+       call SpreadFillVectorQuantity (quantity, velev1L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev2L)
+       call SpreadFillVectorQuantity (quantity, velev2L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev3L)
+       call SpreadFillVectorQuantity (quantity, velev3L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev4L)
+       call SpreadFillVectorQuantity (quantity, velev4L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev5L)
+       call SpreadFillVectorQuantity (quantity, velev5L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev6L)
+       call SpreadFillVectorQuantity (quantity, velev6L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev7L)
+       call SpreadFillVectorQuantity (quantity, velev7L)
+       !print *, "Elevation offset 7L"
+       !call dump(quantity, details=3)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev8L)
+       call SpreadFillVectorQuantity (quantity, velev8L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev9L)
+       call SpreadFillVectorQuantity (quantity, velev9L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev10L)
+       call SpreadFillVectorQuantity (quantity, velev10L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev11L)
+       call SpreadFillVectorQuantity (quantity, velev11L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev12L)
+       call SpreadFillVectorQuantity (quantity, velev12L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev13L)
+       call SpreadFillVectorQuantity (quantity, velev13L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev14L)
+       call SpreadFillVectorQuantity (quantity, velev14L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev15L)
+       call SpreadFillVectorQuantity (quantity, velev15L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev16L)
+       call SpreadFillVectorQuantity (quantity, velev16L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev17L)
+       call SpreadFillVectorQuantity (quantity, velev17L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev18L)
+       call SpreadFillVectorQuantity (quantity, velev18L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev19L)
+       call SpreadFillVectorQuantity (quantity, velev19L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev20L)
+       call SpreadFillVectorQuantity (quantity, velev20L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev21L)
+       call SpreadFillVectorQuantity (quantity, velev21L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev22L)
+       call SpreadFillVectorQuantity (quantity, velev22L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev23L)
+       call SpreadFillVectorQuantity (quantity, velev23L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev24L)
+       call SpreadFillVectorQuantity (quantity, velev24L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev25L)
+       call SpreadFillVectorQuantity (quantity, velev25L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev26L)
+       call SpreadFillVectorQuantity (quantity, velev26L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev27L)
+       call SpreadFillVectorQuantity (quantity, velev27L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev28L)
+       call SpreadFillVectorQuantity (quantity, velev28L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev29L)
+       call SpreadFillVectorQuantity (quantity, velev29L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev30L)
+       call SpreadFillVectorQuantity (quantity, velev30L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev31L)
+       call SpreadFillVectorQuantity (quantity, velev31L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev32L)
+       call ExplicitFillVectorQuantity (quantity, velev32L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev33L)
+       call ExplicitFillVectorQuantity (quantity, velev33L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev34L)
+       call ExplicitFillVectorQuantity (quantity, velev34L)
+
+       ! The upper bands
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev2U)
+       call SpreadFillVectorQuantity (quantity, velev2U)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev3U)
+       call SpreadFillVectorQuantity (quantity, velev3U)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev4U)
+       call SpreadFillVectorQuantity (quantity, velev4U)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev5U)
+       call SpreadFillVectorQuantity (quantity, velev5U)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev6U)
+       call SpreadFillVectorQuantity (quantity, velev6U)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev7U)
+       call SpreadFillVectorQuantity (quantity, velev7U)
+       !print *, "Elevation offset 7U"
+       !call dump(quantity, details=3)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev8U)
+       call SpreadFillVectorQuantity (quantity, velev8U)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev9U)
+       call SpreadFillVectorQuantity (quantity, velev9U)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev10U)
+       call SpreadFillVectorQuantity (quantity, velev10U)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev11U)
+       call SpreadFillVectorQuantity (quantity, velev11U)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev12U)
+       call SpreadFillVectorQuantity (quantity, velev12U)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev13U)
+       call SpreadFillVectorQuantity (quantity, velev13U)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev14U)
+       call SpreadFillVectorQuantity (quantity, velev14U)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev15U)
+       call SpreadFillVectorQuantity (quantity, velev15U)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev16U)
+       call SpreadFillVectorQuantity (quantity, velev16U)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev17U)
+       call SpreadFillVectorQuantity (quantity, velev17U)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev18U)
+       call SpreadFillVectorQuantity (quantity, velev18U)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev19U)
+       call SpreadFillVectorQuantity (quantity, velev19U)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev20U)
+       call SpreadFillVectorQuantity (quantity, velev20U)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev23U)
+       call SpreadFillVectorQuantity (quantity, velev23U)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev24U)
+       call SpreadFillVectorQuantity (quantity, velev24U)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev25U)
+       call SpreadFillVectorQuantity (quantity, velev25U)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev27U)
+       call SpreadFillVectorQuantity (quantity, velev27U)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev28U)
+       call SpreadFillVectorQuantity (quantity, velev28U)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev29U)
+       call SpreadFillVectorQuantity (quantity, velev29U)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev30U)
+       call SpreadFillVectorQuantity (quantity, velev30U)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev31U)
+       call SpreadFillVectorQuantity (quantity, velev31U)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, elev33U)
+       call ExplicitFillVectorQuantity (quantity, velev33U)
+    end subroutine
+
+!--------------------------- end bloc --------------------------------------
+   logical function not_used_here()
+   character (len=*), parameter :: IdParm = &
+       "$Id: cfm_eo.f90,v 1.6 2010/11/03 18:34:46 honghanh Exp $"
+   character (len=len(idParm)) :: Id = idParm
+      not_used_here = (id(1:1) == ModuleName(1:1))
+      print *, Id ! .mod files sometimes change if PRINT is added
+   end function not_used_here
+!---------------------------------------------------------------------------
+
+end module
+
+! $Log: cfm_eo.f90,v $
+! Revision 1.6  2010/11/03 18:34:46  honghanh
+! Add qName as an optional argument to CreateQtyTemplate.
+! This is to help debugging process.
+!
+! Revision 1.5  2010/06/29 17:02:47  honghanh
+! Change the identifier 'fakeChunk' to 'chunk' because
+! since it is created with ChunkDivide, it's as real as a chunk
+! can get.
+!
+! Revision 1.4  2010/06/29 16:40:23  honghanh
+! Remove all function/subroutine and user type forwarding from
+! all CFM modules except for from cfm.f90
+!
+! Revision 1.3  2010/06/29 15:53:45  honghanh
+! Add copyright comments and support for CVS log in the file
+!
+@
+
+
+1.6
+log
+@Add qName as an optional argument to CreateQtyTemplate.
+This is to help debugging process.
+@
+text
+@d14 1
+a27 5
+    real(r8), dimension(4), parameter :: velev32L = (/0.0200_r8, 0.0215_r8, 0.0186_r8, 0.0172_r8/)
+    real(r8), dimension(4), parameter :: velev33L = (/-0.0002_r8, 0.0003_r8, 0.0003_r8, 0.0001_r8/)
+    real(r8), dimension(4), parameter :: velev34L = (/0.0057_r8, 0.0057_r8, 0.0060_r8, 0.0063_r8/)
+    real(r8), dimension(4), parameter :: velev33U = (/0.0001_r8, 0.0002_r8, -0.0000_r8, -0.0001_r8/)
+
+d111 1
+a111 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R1A:118.B1LF:PT", &
+d116 1
+a116 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B2LF:H2O", &
+d121 1
+a121 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B3LF:N2O", &
+d126 1
+a126 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B4LF:HNO3", &
+d131 1
+a131 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B5LF:ClO", &
+d136 1
+a136 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B6LF:O3", &
+d141 1
+a141 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B7LF:O3", &
+d146 1
+a146 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B8LF:PT", &
+d151 1
+a151 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B9LF:CO", &
+d156 1
+a156 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B10LF:ClO", &
+d161 1
+a161 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B11LF:BrO", &
+d166 1
+a166 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B12LF:N2O", &
+d171 1
+a171 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B13LF:HCl", &
+d176 1
+a176 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B14LF:O3", &
+d181 1
+a181 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5H:2T5.B15LF:OH", &
+d186 1
+a186 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5H:2T5.B16LF:OH", &
+d191 1
+a191 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5H:2T5.B17LF:PT", &
+d196 1
+a196 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5V:2T5.B18LF:OH", &
+d201 1
+a201 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5V:2T5.B19LF:OH", &
+d206 1
+a206 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5V:2T5.B20LF:PT", &
+d211 1
+a211 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R1B:118.B21LF:PT", &
+d216 1
+a216 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R1A:118.B22LD:PT", &
+d221 1
+a221 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B23LD:H2O", &
+d226 1
+a226 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B24LD:O3", &
+d231 1
+a231 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B25LD:CO", &
+d236 1
+a236 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R1B:118.B26LD:PT", &
+d241 1
+a241 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B27LM:HCN", &
+d246 1
+a246 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B28LM:HO2", &
+d251 1
+a251 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B29LM:HOCl", &
+d256 1
+a256 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B30LM:HO2", &
+d261 1
+a261 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B31LM:BrO", &
+d266 1
+a266 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R1A:118.B32LW:PT", &
+d271 1
+a271 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B33LW:O3", &
+d276 1
+a276 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R1B:118.B34LW:PT", &
+d282 1
+a282 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B2UF:H2O", &
+d287 1
+a287 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B3UF:N2O", &
+d292 1
+a292 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B4UF:HNO3", &
+d297 1
+a297 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B5UF:ClO", &
+d302 1
+a302 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B6UF:O3", &
+d307 1
+a307 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B7UF:O3", &
+d312 1
+a312 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B8UF:PT", &
+d317 1
+a317 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B9UF:CO", &
+d322 1
+a322 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B10UF:ClO", &
+d327 1
+a327 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B11UF:BrO", &
+d332 1
+a332 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B12UF:N2O", &
+d337 1
+a337 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B13UF:HCl", &
+d342 1
+a342 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B14UF:O3", &
+d347 1
+a347 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5H:2T5.B15UF:OH", &
+d352 1
+a352 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5H:2T5.B16UF:OH", &
+d357 1
+a357 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5H:2T5.B17UF:PT", &
+d362 1
+a362 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5V:2T5.B18UF:OH", &
+d367 1
+a367 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5V:2T5.B19UF:OH", &
+d372 1
+a372 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5V:2T5.B20UF:PT", &
+d377 1
+a377 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B23UD:H2O", &
+d382 1
+a382 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B24UD:O3", &
+d387 1
+a387 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B25UD:CO", &
+d392 1
+a392 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B27UM:HCN", &
+d397 1
+a397 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B28UM:HO2", &
+d402 1
+a402 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B29UM:HOCl", &
+d407 1
+a407 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B30UM:HO2", &
+d412 1
+a412 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B31UM:BrO", &
+d417 1
+a417 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B33UW:O3", &
+d433 1
+a433 1
+       call SpreadFillVectorQuantity (quantity, 0.0187_r8)
+d435 1
+a435 1
+       call SpreadFillVectorQuantity (quantity, 0.0151_r8)
+d437 1
+a437 1
+       call SpreadFillVectorQuantity (quantity, 0.0150_r8)
+d439 1
+a439 1
+       call SpreadFillVectorQuantity (quantity, 0.0148_r8)
+d441 1
+a441 1
+       call SpreadFillVectorQuantity (quantity, 0.0146_r8)
+d443 1
+a443 1
+       call SpreadFillVectorQuantity (quantity, 0.0144_r8)
+d445 1
+a445 1
+       call SpreadFillVectorQuantity (quantity, -0.0002_r8)
+d449 1
+a449 1
+       call SpreadFillVectorQuantity (quantity, -0.0000_r8)
+d451 1
+a451 1
+       call SpreadFillVectorQuantity (quantity, -0.0004_r8)
+d453 1
+a453 1
+       call SpreadFillVectorQuantity (quantity, 0.0077_r8)
+d455 1
+a455 1
+       call SpreadFillVectorQuantity (quantity, 0.0077_r8)
+d457 1
+a457 1
+       call SpreadFillVectorQuantity (quantity, 0.0077_r8)
+d459 1
+a459 1
+       call SpreadFillVectorQuantity (quantity, 0.0076_r8)
+d461 1
+a461 1
+       call SpreadFillVectorQuantity (quantity, 0.0076_r8)
+d463 1
+a463 1
+       call SpreadFillVectorQuantity (quantity, -0.0000_r8)
+d465 1
+a465 1
+       call SpreadFillVectorQuantity (quantity, -0.0000_r8)
+d467 1
+a467 1
+       call SpreadFillVectorQuantity (quantity, -0.0000_r8)
+d469 1
+a469 1
+       call SpreadFillVectorQuantity (quantity, -0.0000_r8)
+d471 1
+a471 1
+       call SpreadFillVectorQuantity (quantity, -0.0000_r8)
+d473 1
+a473 1
+       call SpreadFillVectorQuantity (quantity, -0.0000_r8)
+d475 1
+a475 1
+       call SpreadFillVectorQuantity (quantity, 0.0056_r8)
+d477 1
+a477 1
+       call SpreadFillVectorQuantity (quantity, 0.0187_r8)
+d479 1
+a479 1
+       call SpreadFillVectorQuantity (quantity, 0.0151_r8)
+d481 1
+a481 1
+       call SpreadFillVectorQuantity (quantity, -0.0002_r8)
+d483 1
+a483 1
+       call SpreadFillVectorQuantity (quantity, -0.0004_r8)
+d485 1
+a485 1
+       call SpreadFillVectorQuantity (quantity, 0.0056_r8)
+d487 1
+a487 1
+       call SpreadFillVectorQuantity (quantity, 0.0144_r8)
+d489 1
+a489 1
+       call SpreadFillVectorQuantity (quantity, 0.0077_r8)
+d491 1
+a491 1
+       call SpreadFillVectorQuantity (quantity, 0.0077_r8)
+d493 1
+a493 1
+       call SpreadFillVectorQuantity (quantity, 0.0076_r8)
+d495 1
+a495 1
+       call SpreadFillVectorQuantity (quantity, 0.0076_r8)
+d505 1
+a505 1
+       call SpreadFillVectorQuantity (quantity, 0.0141_r8)
+d507 1
+a507 1
+       call SpreadFillVectorQuantity (quantity, 0.0140_r8)
+d509 1
+a509 1
+       call SpreadFillVectorQuantity (quantity, 0.0138_r8)
+d511 1
+a511 1
+       call SpreadFillVectorQuantity (quantity, 0.0133_r8)
+d513 1
+a513 1
+       call SpreadFillVectorQuantity (quantity, 0.0130_r8)
+d515 1
+a515 1
+       call SpreadFillVectorQuantity (quantity, 0.0001_r8)
+d519 1
+a519 1
+       call SpreadFillVectorQuantity (quantity, 0.0003_r8)
+d521 1
+a521 1
+       call SpreadFillVectorQuantity (quantity, -0.0003_r8)
+d523 1
+a523 1
+       call SpreadFillVectorQuantity (quantity, 0.0078_r8)
+d525 1
+a525 1
+       call SpreadFillVectorQuantity (quantity, 0.0081_r8)
+d527 1
+a527 1
+       call SpreadFillVectorQuantity (quantity, 0.0089_r8)
+d529 1
+a529 1
+       call SpreadFillVectorQuantity (quantity, 0.0079_r8)
+d531 1
+a531 1
+       call SpreadFillVectorQuantity (quantity, 0.0078_r8)
+d533 1
+a533 1
+       call SpreadFillVectorQuantity (quantity, -0.0000_r8)
+d535 1
+a535 1
+       call SpreadFillVectorQuantity (quantity, -0.0000_r8)
+d537 1
+a537 1
+       call SpreadFillVectorQuantity (quantity, -0.0000_r8)
+d539 1
+a539 1
+       call SpreadFillVectorQuantity (quantity, -0.0000_r8)
+d541 1
+a541 1
+       call SpreadFillVectorQuantity (quantity, -0.0000_r8)
+d543 1
+a543 1
+       call SpreadFillVectorQuantity (quantity, -0.0000_r8)
+d545 1
+a545 1
+       call SpreadFillVectorQuantity (quantity, 0.0141_r8)
+d547 1
+a547 1
+       call SpreadFillVectorQuantity (quantity, 0.0001_r8)
+d549 1
+a549 1
+       call SpreadFillVectorQuantity (quantity, -0.0003_r8)
+d551 1
+a551 1
+       call SpreadFillVectorQuantity (quantity, 0.0130_r8)
+d553 1
+a553 1
+       call SpreadFillVectorQuantity (quantity, 0.0079_r8)
+d555 1
+a555 1
+       call SpreadFillVectorQuantity (quantity, 0.0080_r8)
+d557 1
+a557 1
+       call SpreadFillVectorQuantity (quantity, 0.0078_r8)
+d559 1
+a559 1
+       call SpreadFillVectorQuantity (quantity, 0.0078_r8)
+d567 1
+a567 1
+       "$Id: cfm_eo.f90,v 1.5 2010/06/29 17:02:47 honghanh Exp $"
+d577 4
+@
+
+
+1.5
+log
+@Change the identifier 'fakeChunk' to 'chunk' because
+since it is created with ChunkDivide, it's as real as a chunk
+can get.
+@
+text
+@d115 2
+a116 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R1A:118.B1LF:PT")
+d120 2
+a121 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B2LF:H2O")
+d125 2
+a126 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B3LF:N2O")
+d130 2
+a131 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B4LF:HNO3")
+d135 2
+a136 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B5LF:ClO")
+d140 2
+a141 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B6LF:O3")
+d145 2
+a146 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B7LF:O3")
+d150 2
+a151 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B8LF:PT")
+d155 2
+a156 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B9LF:CO")
+d160 2
+a161 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B10LF:ClO")
+d165 2
+a166 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B11LF:BrO")
+d170 2
+a171 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B12LF:N2O")
+d175 2
+a176 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B13LF:HCl")
+d180 2
+a181 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B14LF:O3")
+d185 2
+a186 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5H:2T5.B15LF:OH")
+d190 2
+a191 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5H:2T5.B16LF:OH")
+d195 2
+a196 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5H:2T5.B17LF:PT")
+d200 2
+a201 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5V:2T5.B18LF:OH")
+d205 2
+a206 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5V:2T5.B19LF:OH")
+d210 2
+a211 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5V:2T5.B20LF:PT")
+d215 2
+a216 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R1B:118.B21LF:PT")
+d220 2
+a221 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R1A:118.B22LD:PT")
+d225 2
+a226 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B23LD:H2O")
+d230 2
+a231 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B24LD:O3")
+d235 2
+a236 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B25LD:CO")
+d240 2
+a241 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R1B:118.B26LD:PT")
+d245 2
+a246 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B27LM:HCN")
+d250 2
+a251 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B28LM:HO2")
+d255 2
+a256 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B29LM:HOCl")
+d260 2
+a261 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B30LM:HO2")
+d265 2
+a266 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B31LM:BrO")
+d270 2
+a271 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R1A:118.B32LW:PT")
+d275 2
+a276 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B33LW:O3")
+d280 2
+a281 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R1B:118.B34LW:PT")
+d286 2
+a287 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B2UF:H2O")
+d291 2
+a292 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B3UF:N2O")
+d296 2
+a297 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B4UF:HNO3")
+d301 2
+a302 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B5UF:ClO")
+d306 2
+a307 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B6UF:O3")
+d311 2
+a312 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B7UF:O3")
+d316 2
+a317 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B8UF:PT")
+d321 2
+a322 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B9UF:CO")
+d326 2
+a327 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B10UF:ClO")
+d331 2
+a332 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B11UF:BrO")
+d336 2
+a337 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B12UF:N2O")
+d341 2
+a342 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B13UF:HCl")
+d346 2
+a347 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B14UF:O3")
+d351 2
+a352 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5H:2T5.B15UF:OH")
+d356 2
+a357 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5H:2T5.B16UF:OH")
+d361 2
+a362 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5H:2T5.B17UF:PT")
+d366 2
+a367 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5V:2T5.B18UF:OH")
+d371 2
+a372 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5V:2T5.B19UF:OH")
+d376 2
+a377 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5V:2T5.B20UF:PT")
+d381 2
+a382 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B23UD:H2O")
+d386 2
+a387 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B24UD:O3")
+d391 2
+a392 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B25UD:CO")
+d396 2
+a397 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B27UM:HCN")
+d401 2
+a402 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B28UM:HO2")
+d406 2
+a407 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B29UM:HOCl")
+d411 2
+a412 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B30UM:HO2")
+d416 2
+a417 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B31UM:BrO")
+d421 2
+a422 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B33UW:O3")
+d571 1
+a571 1
+       "$Id: cfm_eo.f90,v 1.4 2010/06/29 16:40:23 honghanh Exp $"
+d581 5
+@
+
+
+1.4
+log
+@Remove all function/subroutine and user type forwarding from
+all CFM modules except for from cfm.f90
+@
+text
+@d98 1
+a98 1
+    subroutine CreateElevationOffsets (fakeChunk, filedatabase, qtyTemplates)
+d106 1
+a106 1
+       type(MLSChunk_T), intent(in) :: fakeChunk
+d115 1
+a115 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R1A:118.B1LF:PT")
+d119 1
+a119 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R2:190.B2LF:H2O")
+d123 1
+a123 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R2:190.B3LF:N2O")
+d127 1
+a127 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R2:190.B4LF:HNO3")
+d131 1
+a131 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R2:190.B5LF:ClO")
+d135 1
+a135 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R2:190.B6LF:O3")
+d139 1
+a139 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R3:240.B7LF:O3")
+d143 1
+a143 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R3:240.B8LF:PT")
+d147 1
+a147 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R3:240.B9LF:CO")
+d151 1
+a151 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R4:640.B10LF:ClO")
+d155 1
+a155 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R4:640.B11LF:BrO")
+d159 1
+a159 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R4:640.B12LF:N2O")
+d163 1
+a163 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R4:640.B13LF:HCl")
+d167 1
+a167 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R4:640.B14LF:O3")
+d171 1
+a171 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R5H:2T5.B15LF:OH")
+d175 1
+a175 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R5H:2T5.B16LF:OH")
+d179 1
+a179 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R5H:2T5.B17LF:PT")
+d183 1
+a183 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R5V:2T5.B18LF:OH")
+d187 1
+a187 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R5V:2T5.B19LF:OH")
+d191 1
+a191 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R5V:2T5.B20LF:PT")
+d195 1
+a195 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R1B:118.B21LF:PT")
+d199 1
+a199 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R1A:118.B22LD:PT")
+d203 1
+a203 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R2:190.B23LD:H2O")
+d207 1
+a207 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R3:240.B24LD:O3")
+d211 1
+a211 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R3:240.B25LD:CO")
+d215 1
+a215 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R1B:118.B26LD:PT")
+d219 1
+a219 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R2:190.B27LM:HCN")
+d223 1
+a223 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R4:640.B28LM:HO2")
+d227 1
+a227 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R4:640.B29LM:HOCl")
+d231 1
+a231 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R4:640.B30LM:HO2")
+d235 1
+a235 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R4:640.B31LM:BrO")
+d239 1
+a239 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R1A:118.B32LW:PT")
+d243 1
+a243 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R3:240.B33LW:O3")
+d247 1
+a247 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R1B:118.B34LW:PT")
+d252 1
+a252 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R2:190.B2UF:H2O")
+d256 1
+a256 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R2:190.B3UF:N2O")
+d260 1
+a260 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R2:190.B4UF:HNO3")
+d264 1
+a264 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R2:190.B5UF:ClO")
+d268 1
+a268 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R2:190.B6UF:O3")
+d272 1
+a272 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R3:240.B7UF:O3")
+d276 1
+a276 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R3:240.B8UF:PT")
+d280 1
+a280 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R3:240.B9UF:CO")
+d284 1
+a284 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R4:640.B10UF:ClO")
+d288 1
+a288 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R4:640.B11UF:BrO")
+d292 1
+a292 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R4:640.B12UF:N2O")
+d296 1
+a296 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R4:640.B13UF:HCl")
+d300 1
+a300 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R4:640.B14UF:O3")
+d304 1
+a304 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R5H:2T5.B15UF:OH")
+d308 1
+a308 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R5H:2T5.B16UF:OH")
+d312 1
+a312 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R5H:2T5.B17UF:PT")
+d316 1
+a316 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R5V:2T5.B18UF:OH")
+d320 1
+a320 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R5V:2T5.B19UF:OH")
+d324 1
+a324 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R5V:2T5.B20UF:PT")
+d328 1
+a328 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R2:190.B23UD:H2O")
+d332 1
+a332 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R3:240.B24UD:O3")
+d336 1
+a336 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R3:240.B25UD:CO")
+d340 1
+a340 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R2:190.B27UM:HCN")
+d344 1
+a344 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R4:640.B28UM:HO2")
+d348 1
+a348 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R4:640.B29UM:HOCl")
+d352 1
+a352 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R4:640.B30UM:HO2")
+d356 1
+a356 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R4:640.B31UM:BrO")
+d360 1
+a360 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R3:240.B33UW:O3")
+d509 1
+a509 1
+       "$Id: cfm_eo.f90,v 1.3 2010/06/29 15:53:45 honghanh Exp $"
+d519 4
+@
+
+
+1.3
+log
+@Add copyright comments and support for CVS log in the file
+@
+text
+@d99 3
+a101 2
+       use CFM_QuantityTemplate_m, only: CreateQtyTemplate, AddQuantityTemplateToDatabase, &
+                                         QuantityTemplate_T
+d366 2
+a367 2
+       use CFM_Vector_m, only: Vector_T, VectorValue_T, Dump
+       use CFM_Vector_m, only: GetVectorQtyByTemplateIndex
+d509 1
+a509 1
+       "$Id: cfm_eo.f90,v 1.1 2010/05/25 8:06:33 honghanh Exp $"
+d519 3
+@
+
+
+1.2
+log
+@Fix minor differences in radiances returned by the forward model
+@
+text
+@d1 10
+d516 2
+@
+
+
+1.1
+log
+@Fill elevation offsets and limb sideband fractions
+@
+text
+@d17 4
+a20 4
+    real(r8), dimension(4), parameter :: velev32L = (/0.0200, 0.0215, 0.0186, 0.0172/)
+    real(r8), dimension(4), parameter :: velev33L = (/-0.0002, 0.0003, 0.0003, 0.0001/)
+    real(r8), dimension(4), parameter :: velev34L = (/0.0057, 0.0057, 0.0060, 0.0063/)
+    real(r8), dimension(4), parameter :: velev33U = (/0.0001, 0.0002, -0.0000, -0.0001/)
+d355 1
+a355 1
+       use CFM_Vector_m, only: Vector_T, VectorValue_T
+d377 2
+d447 2
+@
+

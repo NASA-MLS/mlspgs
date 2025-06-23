@@ -1,0 +1,1320 @@
+head	2.19;
+access;
+symbols
+	v5-02-NRT-19:2.19
+	v6-00:2.19
+	v5-02-NRT-18:2.19
+	v5-02:2.19
+	v5-01-NRT-17:2.19
+	v5-01-NRT-16:2.19
+	v5-01-NRT-15:2.19
+	v5-01-NRT-14:2.19
+	neuralnetworks-1-0:2.19.0.6
+	cfm-single-freq-0-1:2.19.0.4
+	v5-01:2.19
+	v5-00:2.19
+	v4-23-TA133:2.19.0.2
+	mus-emls-1-70:2.11.0.4
+	rel-1-0-englocks-work:2.11.0.2
+	VUMLS1-00:2.8
+	VPL1-00:2.8
+	V4-22-NRT-08:2.8
+	VAM1-00:2.8
+	V4-21:2.7.0.2
+	V4-13:2.7
+	V4-12:2.7
+	V4-11:2.7
+	V4-10:2.7;
+locks; strict;
+comment	@# @;
+
+
+2.19
+date	2019.03.18.22.01.36;	author pwagner;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2019.03.08.00.04.40;	author pwagner;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2019.02.21.22.32.26;	author pwagner;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2019.01.24.18.31.47;	author pwagner;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2018.12.11.16.46.47;	author pwagner;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2018.12.11.01.25.02;	author pwagner;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2018.12.07.00.24.05;	author pwagner;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2018.09.13.20.15.40;	author pwagner;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2018.03.22.16.45.35;	author pwagner;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2018.03.14.21.48.19;	author pwagner;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2017.03.23.16.22.03;	author pwagner;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2015.05.06.20.40.49;	author pwagner;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2013.09.09.18.36.58;	author pwagner;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2013.09.06.20.41.38;	author pwagner;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2013.08.30.23.11.27;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2013.08.30.03.56.02;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2013.08.29.19.34.52;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2013.08.28.00.35.19;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2013.08.23.02.48.07;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.19
+log
+@Dont print again if alreadylogged
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module PrintIt_m ! Lowest-level module for printing, logging, etc.
+
+  ! use ISO_FORTRAN_ENV, only: ERROR_UNIT, OUTPUT_UNIT
+  ! use IO_Stuff, only: Pause
+  use Machine, only: Crash_Burn, Exit_With_Status, NeverCrash, USleep
+  use MLSCommon, only: Filenamelen, MLSFile_T, &
+    & MLSMSG_Success, MLSMSG_Pause, MLSMSG_Debug, MLSMSG_Info, &
+    & MLSMSG_TestWarning, MLSMSG_Warning, MLSMSG_Error, MLSMSG_Crash, &
+    & MLS_S_Success
+  use SDPToolkit, only: UseSDPToolkit, Pgs_Smf_GenerateStatusReport
+  use IO_Stuff, only: Pause
+
+  implicit none
+  private
+
+! === (start of toc) ===
+!     c o n t e n t s
+!     - - - - - - - -
+
+!     (data type)
+! MLSMessageConfig         configuration controlling where to print, etc.
+!     (severity levels)
+! MLSMSG_Severity_so_far   worst severity level noted so far in this run
+! MLSMSG_Severity_to_quit  severity level needed to quit
+! MLSMSG_Severity_to_walkback
+!                          severity level needed to print callstack
+!     (message prefixes for errors during ..)
+! MLSMSG_Allocate          allocating an array
+! MLSMSG_Fileopen          opening a file
+! MLSMSG_Keyword           ???
+! MLSMSG_L1BRead           reading an l1b file
+! MLSMSG_Duplicate         ???
+! MLSMSG_DeAllocate        deallocating an array
+! MLSMSG_PVM               using a pvm library procedure
+!    (parameters)
+! MLS_S_Success            if status not this, then something went wrong
+! InvalidLogUnit           Log Unit must not be this
+! StdoutLogUnit            If this, Logging means printing to stdout
+! DefaultLogUnit           If this, Logging means using Toolkit
+
+!     (subroutines and functions)
+! AssembleFullLine         Assemble the full line of output
+! Get_Config               Return any specified configuration setting
+! IgnoreToolkit            Logging and printing both go to stdout
+! LogUnitName              Convert integer LogUnit number to its name string
+! PrintItOut               Print or log inLine; then return or quit
+! SeverityNamesFun         Convert integer severity to its name string
+! Set_Config               Set any specified configuration setting
+! SnipRCSFrom              Trim nonsense involving RCS system from input "with"
+! === (end of toc) ===
+
+! === (start of api) ===
+! AssembleFullLine( int Severity, char* ModuleNameIn, char* Message, &
+!    & char* line, int line_len )
+! Get_Config(  [ log Asciify], [ int LogFileUnit], [char* Prefix], &
+!    & [int Severity_to_Quit], [log UseDefaultFormatStdout], [log UseToolkit] )
+! IgnoreToolkit
+! char(len=12) LogUnitName ( int LogUnit )
+! PrintItOut( char* InLine, int severity, [int line_len], [log noPrefix], &
+!    & [int exitStatus], [log noExit] )
+! char(len=12) SeverityNamesFun ( int Severity )
+! Set_Config(  [ log Asciify], [ int LogFileUnit], [char* Prefix], &
+!    & [int Severity_to_Quit], [log UseDefaultFormatStdout], [log UseToolkit] )
+! char(len=*) SnipRCSFrom ( char* with )
+! === (end of api) ===
+  public :: AssembleFullLine, Get_config, IgnoreToolkit, LogUnitName
+  public :: PrintItOut, Set_config, SnipRCSFrom, SeverityNamesFun
+
+  ! These apply if we don't log messages to a Fortran unit number
+  ! other than Error_Unit or Output_Unit
+  integer, parameter, public :: InvalidLogUnit      = 0 ! max(0,stdoutLogUnit+1)
+  integer, parameter, public :: StdoutLogUnit       = InvalidLogUnit - 1 ! Output_Unit
+  integer, parameter, public :: DefaultLogUnit      = StdoutLogUnit - 1 ! Log_Unit
+  integer, parameter, public :: BothLogUnit         = DefaultLogUnit - 1 ! Error_Unit
+  integer, parameter, public :: BufferedLogUnit     = BothLogUnit - 1 ! Error_Unit
+
+  integer, parameter, public :: PrefixLen = 32
+
+  character (len=*), public, parameter :: MLSMSG_Allocate = &
+     & "Allocation failed: "
+  character (len=*), public, parameter :: MLSMSG_DeAllocate = &
+     & "Deallocation failed: "
+  type, public :: MLSMessageConfig_T
+    ! We log messages by toolkit (if useToolkit and UseSDPToolkit are TRUE )
+    ! --- ------- ------ ------- ------- ------- -------
+    ! In the following, values would have the effect of adding logged messages:
+    ! DEFAULTLOGUNIT: none added
+    ! STDOUTLOGUNIT:  to stdout
+    !  n > 0:         to ftn unit n
+    integer :: logFileUnit             = DEFAULTLOGUNIT ! -2
+    ! --- ------- ------ ------- ------- ------- -------
+
+    ! In the following, values would have the effect on identical warnings of:
+    ! -1: Print every one without suppression
+    !  0: Suppress every one
+    !  1: Print every one only once
+    integer :: limitWarnings           = 1000 ! Max number each warning
+    integer :: masterTID               = -1 ! Where to send error msg
+    character (len=prefixLen) :: CrashIfMsgSays &
+      &                                = ''   ! Crash if any msg has this string
+    character (len=prefixLen) :: prefix &
+      &                                = ''   ! Prefix to every msg
+    ! Instead of showing both module names and severity for every message
+    ! you can control thresholds
+    ! (1) the severity below which to skip showing module names
+    integer :: skipModuleNamesThr      = MLSMSG_Success ! Always show module
+    ! (2) the severity below which to skip showing severity
+    integer :: skipSeverityThr         = MLSMSG_Success ! Always show severity
+    ! (3) the severity below which to skip messages entirely
+    integer :: skipMessageThr          = MLSMSG_Success ! Always show messages
+    ! (4) simply skip every debug
+    logical :: suppressDebugs          = .false.
+
+    ! Instead of simply calling them Info, you could use something more
+    ! informative, like Phase names
+    character (len=prefixLen) :: Info   &
+      &                                = ''      ! What (else) to call Info
+    ! Anything else you would like to prefix Warning or Error messages with,
+    ! like Phase names?
+    character (len=prefixLen) :: Warning   &
+      &                                = ''      ! What (else) to call Info
+    logical :: useToolkit              = .true.
+    integer :: MaxModuleNameLength     = 32      ! Abbreviate longer name
+    integer :: MaxSeverityNameLength   = 8       ! Abbreviate longer severity
+    logical :: CrashOnAnyError         = .false. ! See crash warning
+    logical :: SendErrMsgToMaster      = .false. ! send last gasp to master?
+    logical :: ShowCumulativeSeverity  = .false. ! print severity_so_far?
+    logical :: StackTrace              = .false. ! Trace via MLSMessageCalls?
+    ! Track the last file we were reading/writing if an error occurs and
+    ! that file isn't passed in the call statement
+    type(MLSFile_T) :: MLSFile ! = MLSFile_T() (crashes under intel v12)
+
+    logical :: AsciifyMessages = .true.
+    integer :: Severity_To_Quit = 0
+    logical :: UseDefaultFormatStdout = .false.
+    
+    ! Instead of resuming a Pause by suer input
+    character (len=Filenamelen) :: PausedInputFile &
+      &                                = ''   ! E.g., '/tmp/paused.txt'
+  end type MLSMessageConfig_T
+
+  ! This variable describes the configuration
+  type (MLSMessageConfig_T), public, save :: MLSMessageConfig
+ 
+  ! Other modules expect to find these parameters here, so ..
+  public ::     MLSMSG_Crash, MLSMSG_Debug, MLSMSG_Info, MLSMSG_Error, &
+    & MLSMSG_Success, MLSMSG_Testwarning, MLSMSG_Warning
+  ! MLSMSG_Severity_to_* can be reset in a main program to cause us
+  ! to become more lenient (set it higher) or strict (set it lower )
+  integer, public, save      :: MLSMSG_Severity_to_quit     = MLSMSG_Error
+  integer, public, save      :: MLSMSG_Severity_to_walkback = MLSMSG_Error
+  integer, public, save      :: MLSMSG_Severity_so_far      = MLS_S_Success
+
+  private :: SeverityNames
+  character (len=*), dimension(MLSMSG_Success:MLSMSG_Crash), parameter :: &
+     & SeverityNames = (/&
+     & "Success    ", &
+     & "Pause      ", &
+     & "Debug      ", &
+     & "Info       ", &
+     & "TestWarning", &
+     & "Warning    ", &
+     & "Error      ", &
+     & "Crash      "  &
+     /)
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: PrintIt_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  !--------------------------------------------  AssembleFullLine  -----
+  ! Assemble the full line out of 
+  ! (1) A severity level
+  ! (2) The module name
+  ! (3) Whatever message we're asked to repeat (%Info? %Warning?)
+  subroutine AssembleFullLine( Severity, ModuleNameIn, Message, &
+    & line, line_len )
+    integer, intent(in)           :: Severity ! e.g. MLSMSG_Error
+    character (len=*), intent(in) :: ModuleNameIn ! Name of module (see below)
+    character (len=*), intent(in) :: Message ! Line of text
+    character(len=*)              :: Line
+    integer                       :: line_len
+    ! Assemble a full message line
+
+    if ( severity < MLSMessageConfig%skipMessageThr ) then
+      return
+    elseif ( line_len == 0 ) then
+      if ( severity < MLSMessageConfig%skipSeverityThr ) then
+        line = ' '
+      elseif ( severity > MLSMSG_Success-1 .and. severity < MLSMSG_Crash+1 ) then
+        line = trim(SeverityNamesFun(severity))
+        if ( MLSMessageConfig%ShowCumulativeSeverity .and. len_trim(line) > 0 ) then
+          line = trim(line) // ':' // &
+            & trim(SeverityNamesFun(MLSMSG_Severity_so_far))
+        endif
+        ! Do we prefix with MLSMessageConfig%Info
+        if ( severity == MLSMSG_Info .and. &
+          & len_trim(MLSMessageConfig%Info) > 0 ) &
+          & line = trim(line) // ' ' // MLSMessageConfig%Info
+        ! Do we prefix with MLSMessageConfig%Warning
+        if ( severity > MLSMSG_Info .and. &
+          & len_trim(MLSMessageConfig%Warning) > 0 ) &
+          & line = trim(line) // ' ' // MLSMessageConfig%Warning
+      else
+        line = 'Unknown'
+      end if
+      line_len = len_trim(line)
+      if ( severity >= MLSMessageConfig%skipModuleNamesThr .and. &
+        & len_trim(snipRCSFrom ( moduleNameIn )) > 0 ) then
+        line(line_len+1:line_len+2) = ' ('
+        line(line_len+3:) = snipRCSFrom ( moduleNameIn )
+        line_len = len_trim(line) + 3
+        line(line_len-2:line_len-1) = '):'
+      elseif ( severity >= MLSMessageConfig%skipSeverityThr ) then
+        line_len = len_trim(line) + 1
+        line(line_len:line_len) = ':'
+      end if
+    end if
+    ! Make sure that we don't start prefixing with a blank
+    if ( any( severity >= &
+      & (/MLSMessageConfig%skipModuleNamesThr, MLSMessageConfig%skipSeverityThr/) &
+      & ) .and. line(1:1) == ' ' ) then
+      line_len = line_len - 1
+      line(1:line_len) = line(2:line_len+1)
+    endif
+    line(line_len+1:) = message
+    line_len = line_len + len(message) ! Not len_trim, so we can get
+    ! trailing blanks into a part of a message.  If there are trailing
+    ! blanks remaining when my_adv is true, they'll be trimmed off.
+  end subroutine AssembleFullLine
+
+  ! -------------------------------------------------  Get_Config  -----
+  subroutine Get_Config ( Asciify, LogFileUnit, Prefix, &
+    & Severity_to_Quit, UseDefaultFormatStdout, UseToolkit )
+    logical, intent(out), optional :: Asciify, UseDefaultFormatStdout, UseToolkit
+    integer, intent(out), optional :: LogFileUnit, Severity_to_Quit
+    character(len=*), intent(out), optional :: Prefix
+    if ( present(asciify) ) asciify = MLSMessageConfig%asciifyMessages 
+    if ( present(logFileUnit) ) logFileUnit = MLSMessageConfig%logFileUnit 
+    if ( present(prefix) ) prefix = MLSMessageConfig%prefix
+    if ( present(severity_to_quit) ) severity_to_quit = MLSMessageConfig%severity_to_quit 
+    if ( present(useDefaultFormatStdout) ) useDefaultFormatStdout = MLSMessageConfig%useDefaultFormatStdout
+    if ( present(useToolkit) ) useToolkit = MLSMessageConfig%useToolkit
+  end subroutine Get_Config
+
+  ! -------------------------------------------------  IgnoreToolkit  -----
+  ! Don't use the toolkit for logging, just print to stdout
+  ! Also, if an error occurs, don't silently fail
+  ! Be loud, set off alarms, and print a walkback
+  ! If you build a tool using mlspgs software, you'll want
+  ! to call this right at the start to prevent errors like
+  ! Can not open LogStatus file; there may be problem with PCF file regarding the directory for LogStatus.
+  ! Can not open LogReport file; there may be problem with PCF file regarding the directory for LogReport.
+  ! Can not open LogUser file; there may be problem with PCF file regarding the directory for LogUser.
+  
+  subroutine IgnoreToolkit
+    MLSMessageConfig%logFileUnit       = STDOUTLOGUNIT
+    MLSMessageConfig%useToolkit        = .false.
+    MLSMessageConfig%CrashOnAnyError   = .true.
+    neverCrash                         = .false.
+
+  end subroutine IgnoreToolkit
+
+  ! ------------------------------------------------  LogUnitName_old  -----
+  function LogUnitName_old ( LogUnit ) result( name )
+    ! Return an appropriate name for the LogUnit number
+    ! Args
+    integer, intent(in) :: LogUnit
+    character(len=12) :: name
+    ! Executable
+    select case ( LogUnit )
+    case ( stdoutLogUnit )
+      name = 'stdout'
+    case ( defaultLogUnit )
+      name = 'mls LogUnit'
+    case ( invalidLogUnit )
+      name = 'invalid'
+    case default ! > 0
+      name = 'Fortran unit'
+    end select
+  end function LogUnitName_old
+
+  ! ---------------------------------------------- LogUnitName
+  ! Prints certain normally private data
+  ! revealing what settings and options are in force
+  function LogUnitName ( unit ) result ( name )
+    ! Args
+    integer, intent(in)     :: unit
+    character(len=16)       :: name
+    ! Internal variables
+    ! Executable
+    select case ( unit )
+    case ( BufferedLogUnit )
+      name = 'lines buffer'
+    case ( BothLogUnit )
+      name = 'stdout+log'
+    case ( DefaultLogUnit )
+      name = 'msg log'
+    case ( StdoutLogUnit )
+      name = 'stdout'
+    case ( InvalidLogUnit )
+      name = 'invalid'
+    case default
+      if ( unit > 0 ) then
+        write ( name, '(a8, i8) ' ) 'unit', unit
+      else
+        name = 'illegal unit'
+      endif
+    end select
+  end function LogUnitName
+
+  ! -------------------------------------------------  PrintItOut  -----
+  subroutine PrintItOut ( inLine, severity, &
+    & line_len, noPrefix, exitStatus, noExit, AlreadyLogged  )
+    ! In any way we're asked .. print inLine
+    ! After that, maybe exit with status or worse
+    ! Args
+    character(len=*), intent(in)  :: inLine      ! What to print
+    integer, intent(in)           :: severity    ! Tell me Doc, how bad is it?
+    integer, optional, intent(in) :: line_len    ! If different from (len(inLine)
+    logical, optional, intent(in) :: noPrefix    ! Don't add any prefix
+    integer, intent(in), optional :: exitStatus  ! Exit with this status
+    logical, optional, intent(in) :: noExit      ! No, just return no matter what
+    logical, optional, intent(in) :: AlreadyLogged   ! If true, don't print again
+    ! Local variables
+    logical :: didPrint
+    logical :: exist
+    character(len=len(inline)) :: Line
+    logical :: log_it
+    integer :: loggedLength
+    character(len=len(inline)+len(MLSMessageConfig%prefix)) :: loggedLine
+    integer :: ioerror
+    integer :: maxLineLength
+    character(len=128) :: Mesg
+    logical :: MustPrint
+    logical :: myNoExit
+    logical :: myNoPrefix
+    logical, parameter :: DEEBUG = .false.
+    integer :: unitnum
+    ! Executable
+    if ( MLSMessageConfig%AsciifyMessages ) then
+      line = asciify(inLine)
+    else
+      line = inLine
+    end if
+    loggedLength = len_trim(line)
+    if ( present(line_len) ) loggedLength = max( line_len, loggedLength )
+    myNoExit = .false.
+    if ( present(noExit) ) myNoExit = noExit
+    myNoPrefix = .false.
+    if ( present(noPrefix) ) myNoPrefix = noPrefix
+    loggedLine = line
+    if ( trim(MLSMessageConfig%prefix) /= ' ' .and. .not. myNoPrefix ) then
+      loggedLength = loggedLength + len_trim(MLSMessageConfig%prefix)
+      loggedLine = trim(MLSMessageConfig%prefix) // &
+           & trim(line)
+    end if
+    maxLineLength = min( loggedLength, len(loggedLine) )
+    ! Must log msg if
+    ! (1) toolkit
+    ! (2) severe enough
+    log_it = (MLSMessageConfig%useToolkit .and. UseSDPToolkit) .or. &
+      & severity >= MLSMessageConfig%severity_to_quit
+    ! Must print msg to stdout if
+    ! (1) Not already Logged and
+    ! (2) Using BothLogUnits
+    MustPrint = .true.
+    if ( present( AlreadyLogged ) ) then
+      MustPrint = .not. AlreadyLogged
+      if ( DEEBUG ) print *, 'AlreadyLogged: ', AlreadyLogged
+    endif
+    MustPrint = MustPrint .and. &
+      & any( &
+      &  MLSMessageConfig%logFileUnit == (/ StdoutLogUnit, BothLogUnit /) &
+      & )
+    if ( DEEBUG ) print *, 'log it: ', log_it
+    if ( DEEBUG .and. log_it ) then
+      print *, 'trim(loggedLine) ', trim(loggedLine)
+      print *, 'maxLineLength ', maxLineLength
+      print *, 'logFileUnit ', MLSMessageConfig%logFileUnit
+      print *, 'useToolkit ', MLSMessageConfig%useToolkit
+      print *, 'maxLineLength ', maxLineLength
+    endif
+    if( log_it .and. maxLineLength > 0 .and. MLSMessageConfig%useToolkit ) then
+      ioerror = PGS_SMF_GenerateStatusReport ( loggedLine(1:maxLineLength) )
+    end if
+
+    ! Now, if we're also logging to a file then write to that too.
+    didPrint = .true.
+    select case ( MLSMessageConfig%logFileUnit  )
+    case ( StdoutLogUnit )
+      if ( MLSMessageConfig%useDefaultFormatStdout ) then
+        write ( unit=*, fmt=* ) trim(line)
+      else
+        write ( unit=*, fmt='(a)' ) trim(line)
+      end if
+    case ( defaultLogUnit, BothLogUnit )
+      didPrint = .false.
+    case default
+      write ( UNIT=max(MLSMessageConfig%logFileUnit,1), FMT=* ) trim(line)
+    end select
+    ! Have we neglected to print when we must?
+    if ( DEEBUG ) print *, 'MustPrint', MustPrint
+    if ( DEEBUG ) print *, 'DidPrint', DidPrint
+    if ( MustPrint .and. .not. DidPrint ) &
+      & write ( unit=*, fmt='(a)' ) trim(line)
+    ! Have we been tasked with something more?
+    ! Pause? Exit? Crash?
+    if ( severity == MLSMSG_Pause ) then
+    ! We ignore what the user enters here
+      if ( len_trim(MLSMessageConfig%PausedInputFile) < 1 ) then
+        call Pause ( line )
+      else
+        do
+          call USleep ( 50000 )
+          inquire( file=trim(MLSMessageConfig%PausedInputFile), exist=exist )
+          if ( exist ) exit
+        enddo
+        open ( newunit=unitnum, form='formatted', &
+          & file=trim(MLSMessageConfig%PausedInputFile), status='old', iostat=ioerror )
+        read ( unitnum, '(a80)' ) Mesg
+        close ( unitnum )
+      endif
+      return
+    elseif ( myNoExit ) then
+      return
+    elseif ( severity == MLSMSG_Crash .or. &
+      & (severity > MLSMSG_Warning .and. MLSMessageConfig%CrashOnAnyError) &
+      & ) then
+      NEVERCRASH = .false.
+      call crash_burn
+    endif
+    if ( present( exitStatus ) )  call exit_with_status ( exitStatus  )
+    if ( severity > MLSMSG_Warning ) call exit_with_status ( 1  )
+
+  end subroutine PrintItOut
+
+  ! ----------------------------------------------  ModuleNameFun  -----
+  function ModuleNameFun ( moduleName ) result (name)
+    ! Return name of module unless asked to abbreviate
+    character(len=*), intent(in)    :: moduleName
+    character(len=len(ModuleName))  :: name
+    name = moduleName
+    if ( len_trim(moduleName) < 1 ) name = 'Unknown'
+    if ( MLSMessageConfig%MaxModuleNameLength < 1 ) then
+      name = ' '
+    elseif ( MLSMessageConfig%MaxModuleNameLength < len(ModuleName) ) then
+      name = name(1:MLSMessageConfig%MaxModuleNameLength) // ' '
+    endif
+  end function ModuleNameFun
+
+  ! -------------------------------------------  SeverityNamesFun  -----
+  function SeverityNamesFun ( severity ) result (name)
+    ! Return name of level corresponding to severity, if recognized
+    ! If not recignized, return  'Unknown'
+    ! Full name unless asked to abbreviate
+    integer, intent(in)                   :: severity
+    character(len=len(SeverityNames(1)))  :: name
+    if ( severity < MLSMSG_Success .or. severity > MLSMSG_Crash ) then
+      name = 'Unknown'
+    else
+      name = SeverityNames( severity )
+    endif
+    if ( MLSMessageConfig%MaxSeverityNameLength < 1 ) then
+      name = ' '
+    elseif ( MLSMessageConfig%MaxSeverityNameLength < len(SeverityNames(1)) ) then
+      name = name(1:MLSMessageConfig%MaxSeverityNameLength) // ' '
+    endif
+  end function SeverityNamesFun
+
+  ! ------------------------------------------------  SnipRCSFrom  -----
+  function SnipRCSFrom ( with ) result ( without )
+    ! Trim nonsense involving RCS system from input "with"
+    ! (if present)
+    ! Args
+    character(len=*), intent(in) :: with
+    character(len=len(with))     :: without
+    integer :: secondBuck
+      if ( with(1:1) == '$' ) then
+      ! The with is <dollar>RCSFile: <filename>,v <dollar><otherstuff>
+      ! The without is <filename><otherstuff>
+        secondBuck = 1 + index( with(2:),'$')
+        if ( secondBuck-3 > 11 .and. secondBuck < len_trim(with) ) then
+          ! without = with(11:(LEN_TRIM(with)-8))
+          without = with(11:secondBuck-4) // with(secondBuck+1:)
+        else
+          without = with(11:(LEN_TRIM(with)-8))
+        endif
+      else
+        without = with
+      end if
+      without = ModuleNameFun( without )
+  end function SnipRCSFrom
+  
+  ! -------------------------------------------------  Set_Config  -----
+  subroutine Set_Config ( Asciify, LogFileUnit, Prefix, &
+    & Severity_to_Quit, UseDefaultFormatStdout, UseToolkit )
+    logical, intent(in), optional :: Asciify, UseDefaultFormatStdout, UseToolkit
+    integer, intent(in), optional :: LogFileUnit, Severity_to_Quit
+    character(len=*), intent(in), optional :: Prefix
+    if ( present(asciify) ) MLSMessageConfig%asciifyMessages  = asciify
+    if ( present(logFileUnit) ) MLSMessageConfig%logFileUnit  = logFileUnit
+    if ( present(prefix) ) MLSMessageConfig%prefix = prefix
+    if ( present(severity_to_quit) ) MLSMessageConfig%severity_to_quit  = severity_to_quit
+    if ( present(useToolkit) ) MLSMessageConfig%useToolkit = useToolkit
+    if ( present(useDefaultFormatStdout) ) MLSMessageConfig%useDefaultFormatStdout = useDefaultFormatStdout
+  end subroutine Set_Config
+
+! *****  Private Procedures     ****************************************
+
+  ! -------------------------------------------------  ASCIIFY  -----
+  ! takes input string and replaces any non-printing characters
+  ! with a substitute '@@'
+  function ASCIIFY (STR) result (OUTSTR)
+    !--------Argument--------!
+    character (len=*), intent(in) :: STR
+    character (len=len(str))      :: OUTSTR
+
+    !----------Local vars----------!
+    integer :: I
+    !----------Executable part----------!
+    outstr=str
+    do i=1, len(str)
+      if ( .not. isAscii(str(i:i)) ) outstr(i:i) = '@@'
+    end do
+  end function ASCIIFY
+
+  ! ---------------------------------------------------  isAscii  -----
+  elemental function isAscii(arg) result(itIs)
+    ! Returns TRUE if arg is in range of printing chars [32,126]
+    ! Args
+    character(len=1), intent(in) :: arg
+    logical                      :: itIs
+    ! Internal variables
+    integer, parameter :: pcMin = iachar(' ')
+    integer, parameter :: pcMax = iachar('~')
+    ! Executable
+    itis = iachar(arg) >= pcMin .and. iachar(arg) <= pcMax
+  end function isAscii
+
+!=======================================================================
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: PrintIt_m.f90,v 2.18 2019/03/08 00:04:40 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module PrintIt_m
+
+! $Log: PrintIt_m.f90,v $
+! Revision 2.18  2019/03/08 00:04:40  pwagner
+! Corrected false comment concerning StdoutLogUnit
+!
+! Revision 2.17  2019/02/21 22:32:26  pwagner
+! Prevent strange crashes in PrintItOut; made SeverityNamesFun public
+!
+! Revision 2.16  2019/01/24 18:31:47  pwagner
+! Reorganized modules that print to simplify toolkit-free builds
+!
+! Revision 2.15  2018/12/11 16:46:47  pwagner
+! Changed parameter name to MLS_S_Success to avoid conflict in level 1
+!
+! Revision 2.14  2018/12/11 01:25:02  pwagner
+! Moved MLSMSG_severity parameters to MLSCommon; Pause may await PausedInputFile
+!
+! Revision 2.13  2018/12/07 00:24:05  pwagner
+! Added MLSMSG_Pause; corrected order of other severities
+!
+! Revision 2.12  2018/09/13 20:15:40  pwagner
+! Added new LogUnits to fit in with needs of output_m
+!
+! Revision 2.11  2018/03/22 16:45:35  pwagner
+! Added IgnoreToolkit to ease writing tools that use mlspgs modules
+!
+! Revision 2.10  2018/03/14 21:48:19  pwagner
+! Added toc and api scections to comments
+!
+! Revision 2.9  2017/03/23 16:22:03  pwagner
+! Programs may optionally crash when MLSMessage logs fatal string
+!
+! Revision 2.8  2015/05/06 20:40:49  pwagner
+! May prefix Warnings or worse with, e.g., phase and chunk num
+!
+! Revision 2.7  2013/09/09 18:36:58  pwagner
+! Workaround for ifort v12 internal compiler error
+!
+! Revision 2.6  2013/09/06 20:41:38  pwagner
+! Remove config in favor of using MLSMessageConfig
+!
+! Revision 2.5  2013/08/30 23:11:27  pwagner
+! NoExit option prevents unwanted stop
+!
+! Revision 2.4  2013/08/30 03:56:02  vsnyder
+! Revise use of trace_begin and trace_end
+!
+! Revision 2.3  2013/08/29 19:34:52  pwagner
+! Fixed some bugs affecting logging via toolkit
+!
+! Revision 2.2  2013/08/28 00:35:19  pwagner
+! Moved more stuff from MLSMessage down to PrintIt module
+!
+! Revision 2.1  2013/08/23 02:48:07  vsnyder
+! Initial commit
+!
+@
+
+
+2.18
+log
+@Corrected false comment concerning StdoutLogUnit
+@
+text
+@d329 1
+a329 1
+    & line_len, noPrefix, exitStatus, noExit  )
+d339 1
+d341 1
+d350 1
+d374 3
+d379 12
+d404 1
+d413 1
+d417 5
+d560 1
+a560 1
+       "$Id: PrintIt_m.f90,v 2.17 2019/02/21 22:32:26 pwagner Exp $"
+d570 3
+@
+
+
+2.17
+log
+@Prevent strange crashes in PrintItOut; made SeverityNamesFun public
+@
+text
+@d84 1
+a84 1
+  integer, parameter, public :: DefaultLogUnit      = StdoutLogUnit - 1 ! Error_Unit
+d535 1
+a535 1
+       "$Id: PrintIt_m.f90,v 2.16 2019/01/24 18:31:47 pwagner Exp $"
+d545 3
+@
+
+
+2.16
+log
+@Reorganized modules that print to simplify toolkit-free builds
+@
+text
+@d49 2
+a50 2
+! StdoutLogUnit            If tthis, Logging means printing to stdout
+! DefaultLogUnit           If tthis, Logging means using Toolkit
+d56 1
+a56 1
+! LogUnitName              Return an appropriate name for the LogUnit number
+d58 1
+d72 1
+d77 2
+a78 2
+  public :: assembleFullLine, get_config, IgnoreToolkit, logUnitName, printItOut
+  public :: set_config, snipRCSFrom
+d373 1
+d377 3
+d387 1
+a387 1
+    case ( StdoutLogUnit  )
+d393 1
+a393 1
+    case ( defaultLogUnit )
+d535 1
+a535 1
+       "$Id: PrintIt_m.f90,v 2.15 2018/12/11 16:46:47 pwagner Exp $"
+d545 3
+@
+
+
+2.15
+log
+@Changed parameter name to MLS_S_Success to avoid conflict in level 1
+@
+text
+@d16 1
+a16 1
+  use Machine, only: Crash_Burn, Exit_With_Status, NeverCrash
+d22 1
+a22 1
+  use Wait_M, only: Pause
+d338 1
+d345 1
+d349 1
+d398 9
+a406 1
+        call Pause ( line, trim(MLSMessageConfig%PausedInputFile) )
+d529 1
+a529 1
+       "$Id: PrintIt_m.f90,v 2.14 2018/12/11 01:25:02 pwagner Exp $"
+d539 3
+@
+
+
+2.14
+log
+@Moved MLSMSG_severity parameters to MLSCommon; Pause may await PausedInputFile
+@
+text
+@d20 1
+a20 1
+    & PGS_S_Success
+d47 1
+a47 1
+! PGS_S_Success            if status not this, then something went wrong
+d161 1
+a161 1
+  integer, public, save      :: MLSMSG_Severity_so_far      = PGS_S_SUCCESS
+d518 1
+a518 1
+       "$Id: PrintIt_m.f90,v 2.13 2018/12/07 00:24:05 pwagner Exp $"
+d528 3
+@
+
+
+2.13
+log
+@Added MLSMSG_Pause; corrected order of other severities
+@
+text
+@d15 1
+a15 1
+  use IO_Stuff, only: Pause
+d17 4
+a20 1
+  use MLSCommon, only: MLSFile_T
+d22 1
+a33 8
+! MLSMSG_Success           status returned when all went well
+! MLSMSG_Pause             pause execution waiting for user input
+! MLSMSG_Debug             should print only if debugging turned on
+! MLSMSG_Info              fyi only
+! MLSMSG_Testwarning       test to see if we would print this warning
+! MLSMSG_Warning           not fatal, but deserving of attention
+! MLSMSG_Error             quits after printing
+! MLSMSG_Crash             should give traceback before quitting
+a85 1
+  integer, parameter, public :: PGS_S_SUCCESS = 0
+a87 20
+  ! May get some of these from MLSCommon? 
+  ! Define some low level parameters.  These are used by the calling code to
+  ! indicate the severity or otherwise of the messages.
+  ! Normally, we treat any severity of Error or worse as reason to stop.
+  ! Any Warning is worth recording, and suppressed when too numerous.
+  ! Info may be customized to show, phase name, chunk number, etc.
+  ! Be advised, Crash may not properly close files opened by your run.
+  ! Use it only for specific debugging where you need a walkback.
+  ! See also MLSMessageConfig%crashOnAnyError
+
+  integer, public, parameter :: MLSMSG_Success     = PGS_S_SUCCESS ! == 0
+  integer, public, parameter :: MLSMSG_Pause       = MLSMSG_Success + 1
+  integer, public, parameter :: MLSMSG_Debug       = MLSMSG_Pause + 1
+  integer, public, parameter :: MLSMSG_Info        = MLSMSG_Debug + 1
+  integer, public, parameter :: MLSMSG_TestWarning = MLSMSG_Info + 1
+  ! The next 3 should always be the highest, i.e. most sevre
+  integer, public, parameter :: MLSMSG_Warning     = MLSMSG_TestWarning + 1
+  integer, public, parameter :: MLSMSG_Error       = MLSMSG_Warning + 1
+  integer, public, parameter :: MLSMSG_Crash       = MLSMSG_Error + 1
+
+d146 3
+a148 2
+    ! Temporarily skip using Toolkit (if we ever were)
+    ! logical :: adHocPrintToStdout = .false.
+d154 3
+d392 5
+a396 5
+    ! Even more limiting, we have not yet implemented a way
+    ! for the user input to be done by an external file instead of stdin
+    ! e.g., 
+    !  echo "Continue" > /tmp/Pausedmessage.txt"
+      call Pause ( line )
+d518 1
+a518 1
+       "$Id: PrintIt_m.f90,v 2.12 2018/09/13 20:15:40 pwagner Exp $"
+d528 3
+@
+
+
+2.12
+log
+@Added new LogUnits to fit in with needs of output_m
+@
+text
+@d15 1
+d31 1
+d34 1
+a37 1
+! MLSMSG_Testwarning       test to see if we would print this warning
+d104 2
+a105 1
+  integer, public, parameter :: MLSMSG_Debug       = MLSMSG_Success + 1
+d107 3
+a109 1
+  integer, public, parameter :: MLSMSG_Warning     = MLSMSG_Info + 1
+a111 1
+  integer, public, parameter :: MLSMSG_TestWarning = MLSMSG_Crash + 1
+d187 8
+a194 6
+     & "Success", &
+     & "Debug  ", &
+     & "Info   ", &
+     & "Warning", &
+     & "Error  ", &
+     & "Crash  "  &
+d410 12
+a421 3
+    ! Exit? Crash?
+    if ( myNoExit ) return
+    if ( severity >= MLSMSG_Crash .or. &
+d539 1
+a539 1
+       "$Id: PrintIt_m.f90,v 2.11 2018/03/22 16:45:35 pwagner Exp $"
+d549 3
+@
+
+
+2.11
+log
+@Added IgnoreToolkit to ease writing tools that use mlspgs modules
+@
+text
+@d85 2
+d292 2
+a293 2
+  ! ------------------------------------------------  LogUnitName  -----
+  function LogUnitName ( LogUnit ) result( name )
+d309 29
+d524 1
+a524 1
+       "$Id: PrintIt_m.f90,v 2.10 2018/03/14 21:48:19 pwagner Exp $"
+d534 3
+@
+
+
+2.10
+log
+@Added toc and api scections to comments
+@
+text
+@d55 4
+a58 3
+! assembleFullLine         Assemble the full line of output
+! get_config               Return any specified configuration setting
+! logUnitName              Return an appropriate name for the LogUnit number
+d60 2
+a61 2
+! set_config               Set any specified configuration setting
+! snipRCSFrom              Trim nonsense involving RCS system from input "with"
+d69 1
+d73 2
+d77 1
+a77 1
+  public :: assembleFullLine, get_config, logUnitName, printItOut
+d170 1
+a170 1
+  type (MLSMessageConfig_T), public, save :: MLSMESSAGECONFIG
+d272 18
+d493 1
+a493 1
+       "$Id: PrintIt_m.f90,v 2.9 2017/03/23 16:22:03 pwagner Exp $"
+d503 3
+@
+
+
+2.9
+log
+@Programs may optionally crash when MLSMessage logs fatal string
+@
+text
+@d12 1
+a12 2
+
+module PrintIt_m
+d22 51
+d471 1
+a471 1
+       "$Id: PrintIt_m.f90,v 2.8 2015/05/06 20:40:49 pwagner Exp $"
+d481 3
+@
+
+
+2.8
+log
+@May prefix Warnings or worse with, e.g., phase and chunk num
+@
+text
+@d16 3
+a18 3
+  use Machine, only: crash_burn, exit_with_status, neverCrash
+  use MLSCommon, only: MLSFile_t
+  use SDPToolkit, only: useSDPToolkit, pgs_smf_generateStatusReport
+d73 2
+d421 1
+a421 1
+       "$Id: PrintIt_m.f90,v 2.7 2013/09/09 18:36:58 pwagner Exp $"
+d431 3
+@
+
+
+2.7
+log
+@Workaround for ifort v12 internal compiler error
+@
+text
+@d16 3
+a18 3
+  use MACHINE, only: CRASH_BURN, EXIT_WITH_STATUS, NEVERCRASH
+  use MLSCOMMON, only: MLSFILE_T
+  use SDPToolkit, only: USESDPTOOLKIT, PGS_SMF_GENERATESTATUSREPORT
+d23 2
+a24 2
+  public :: ASSEMBLEFULLLINE, GET_CONFIG, LOGUNITNAME, PRINTITOUT
+  public :: SET_CONFIG, SNIPRCSFROM
+d90 4
+d108 3
+d145 1
+a145 1
+  ! (3) Whatever message we're asked to repeat
+d166 1
+d170 4
+d236 4
+a239 2
+  subroutine PrintItOut ( INLINE, SEVERITY, LINE_LEN, NOPREFIX, EXITSTATUS, NOEXIT  )
+    ! In any way we're asked
+d241 6
+a246 6
+    character(len=*), intent(in) :: INLINE
+    integer, intent(in) :: SEVERITY
+    integer, optional, intent(in) :: LINE_LEN
+    logical, optional, intent(in) :: NOPREFIX
+    integer, intent(in), optional :: EXITSTATUS
+    logical, optional, intent(in) :: NOEXIT
+d419 1
+a419 1
+       "$Id: PrintIt_m.f90,v 2.6 2013/09/06 20:41:38 pwagner Exp $"
+d429 3
+@
+
+
+2.6
+log
+@Remove config in favor of using MLSMessageConfig
+@
+text
+@d15 1
+a15 1
+  use ISO_FORTRAN_ENV, only: ERROR_UNIT, OUTPUT_UNIT
+d18 1
+d99 1
+a99 1
+    type(MLSFile_T) :: MLSFile = MLSFile_T() ! which file were we reading/writing last?
+a225 1
+    use SDPToolkit, only: USESDPTOOLKIT, PGS_SMF_GENERATESTATUSREPORT
+d405 1
+a405 1
+       "$Id: PrintIt_m.f90,v 2.5 2013/08/30 23:11:27 pwagner Exp $"
+d415 3
+@
+
+
+2.5
+log
+@NoExit option prevents unwanted stop
+@
+text
+@a33 11
+  type, private :: Config_t
+    logical :: AsciifyMessages = .true.
+    integer :: LogFileUnit = DefaultLogUnit
+    integer :: Severity_To_Quit = 0
+    logical :: UseDefaultFormatStdout = .false.
+    logical :: UseToolkit = .true.
+    character(len=prefixLen) :: Prefix = ''
+  end type Config_t
+
+  type(config_t), private, save :: Config
+
+d58 1
+d64 2
+d99 4
+d195 6
+a200 6
+    if ( present(asciify) ) asciify = config%asciifyMessages 
+    if ( present(logFileUnit) ) logFileUnit = config%logFileUnit 
+    if ( present(prefix) ) prefix = config%prefix
+    if ( present(severity_to_quit) ) severity_to_quit = config%severity_to_quit 
+    if ( present(useDefaultFormatStdout) ) useDefaultFormatStdout = config%useDefaultFormatStdout
+    if ( present(useToolkit) ) useToolkit = config%useToolkit
+d237 1
+a237 1
+    character(len=len(inline)+len(config%prefix)) :: loggedLine
+d244 1
+a244 1
+    if ( config%AsciifyMessages ) then
+d256 3
+a258 3
+    if ( trim(config%prefix) /= ' ' .and. .not. myNoPrefix ) then
+      loggedLength = loggedLength + len_trim(config%prefix)
+      loggedLine = trim(config%prefix) // &
+d262 2
+a263 2
+    log_it = (config%useToolkit .and. UseSDPToolkit) .or. &
+      & severity >= config%severity_to_quit
+d268 1
+a268 1
+    if( log_it .and. maxLineLength > 0 .and. config%useToolkit ) then
+d273 1
+a273 1
+    select case ( config%logFileUnit  )
+d275 1
+a275 1
+      if ( config%useDefaultFormatStdout ) then
+d282 1
+a282 1
+      write ( UNIT=max(config%logFileUnit,1), FMT=* ) trim(line)
+d361 6
+a366 6
+    if ( present(asciify) ) config%asciifyMessages  = asciify
+    if ( present(logFileUnit) ) config%logFileUnit  = logFileUnit
+    if ( present(prefix) ) config%prefix = prefix
+    if ( present(severity_to_quit) ) config%severity_to_quit  = severity_to_quit
+    if ( present(useToolkit) ) config%useToolkit = useToolkit
+    if ( present(useDefaultFormatStdout) ) config%useDefaultFormatStdout = useDefaultFormatStdout
+d373 1
+a373 1
+  ! with corresponding ones in range [32,126]
+d405 1
+a405 1
+       "$Id: PrintIt_m.f90,v 2.4 2013/08/30 03:56:02 vsnyder Exp $"
+d415 3
+@
+
+
+2.4
+log
+@Revise use of trace_begin and trace_end
+@
+text
+@d15 1
+a15 1
+  use ISO_Fortran_Env, only: ERROR_UNIT, OUTPUT_UNIT
+d106 1
+a106 1
+    type(MLSFile_T) :: MLSFile ! which file were we reading/writing last?
+d227 1
+a227 1
+  subroutine PrintItOut ( INLINE, SEVERITY, LINE_LEN, NOPREFIX, EXITSTATUS  )
+d236 1
+d244 1
+d255 2
+d290 1
+d409 1
+a409 1
+       "$Id: PrintIt_m.f90,v 2.3 2013/08/29 19:34:52 pwagner Exp $"
+d419 3
+@
+
+
+2.3
+log
+@Fixed some bugs affecting logging via toolkit
+@
+text
+@d126 1
+a126 1
+     & "Crash  " &
+d128 2
+a129 1
+ !---------------------------- RCS Module Info ------------------------------
+d137 1
+a137 1
+  !-----------------------------------------  assembleFullLine  -----
+d142 1
+a142 1
+  subroutine assembleFullLine( Severity, ModuleNameIn, Message, &
+d191 1
+a191 1
+  end subroutine assembleFullLine
+d297 1
+d311 1
+d330 2
+a331 1
+  function snipRCSFrom ( with ) result ( without )
+d352 1
+a352 1
+  end function snipRCSFrom
+d404 1
+a404 1
+       "$Id: PrintIt_m.f90,v 2.2 2013/08/28 00:35:19 pwagner Exp $"
+d414 3
+@
+
+
+2.2
+log
+@Moved more stuff from MLSMessage down to PrintIt module
+@
+text
+@d27 3
+a29 3
+  integer, parameter, public :: StdoutLogUnit       = Output_Unit
+  integer, parameter, public :: DefaultLogUnit      = Error_Unit
+  integer, parameter, public :: InvalidLogUnit      = max(0,stdoutLogUnit+1)
+d40 1
+a40 1
+    character(len=prefixLen) :: Prefix
+d243 1
+d251 1
+a251 1
+    if ( present(line_len) ) loggedLength = line_len
+d262 6
+a267 2
+           & severity >= config%severity_to_quit
+    if( log_it .and. loggedLength > 0 .and. config%useToolkit) then
+d400 1
+a400 1
+       "$Id: PrintIt_m.f90,v 2.1 2013/08/23 02:48:07 vsnyder Exp $"
+d410 3
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d15 3
+a17 1
+  use ISO_Fortran_Env, only: Error_Unit, Output_Unit
+d22 2
+a23 1
+  public Get_Config, LogUnitName, PrintItOut, Set_Config
+d31 1
+d45 84
+a128 1
+!---------------------------- RCS Module Info ------------------------------
+d130 1
+a130 1
+       "$RCSfile: MLSMessageModule.f90,v $"
+d136 56
+d226 1
+a226 1
+  subroutine PrintItOut ( INLINE, SEVERITY, LINE_LEN, NOPREFIX  )
+d228 1
+a228 1
+    use SDPToolkit, only: UseSDPToolkit, PGS_SMF_GenerateStatusReport
+d234 1
+d278 10
+d291 54
+d395 1
+a395 1
+       "$Id: MLSMessageModule.f90,v 2.42 2012/08/16 17:38:07 pwagner Exp $"
+d404 4
+a407 1
+! $Log: $
+@
+

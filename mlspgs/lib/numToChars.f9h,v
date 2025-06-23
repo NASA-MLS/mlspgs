@@ -1,0 +1,154 @@
+head	2.2;
+access;
+symbols
+	v5-02-NRT-19:2.2
+	v6-00:2.2
+	v5-02-NRT-18:2.2
+	v5-02:2.1
+	v5-01-NRT-17:2.2
+	v5-01-NRT-16:2.2
+	v5-01-NRT-15:2.2
+	v5-01-NRT-14:2.2
+	neuralnetworks-1-0:2.2.0.4
+	cfm-single-freq-0-1:2.2.0.2
+	v5-01:2.1
+	v5-00:2.1
+	v4-23-TA133:2.1.0.10
+	mus-emls-1-70:2.1.0.8
+	rel-1-0-englocks-work:2.1.0.6
+	VUMLS1-00:2.1
+	VPL1-00:2.1
+	V4-22-NRT-08:2.1
+	VAM1-00:2.1
+	V4-21:2.1.0.4
+	V4-13:2.1
+	V4-12:2.1
+	V4-11:2.1
+	V4-10:2.1
+	V3-43:2.1
+	M4-00:2.1
+	V3-41:2.1
+	V3-40-PlusGM57:2.1.0.2
+	V2-24-NRT-04:2.1
+	V3-33:2.1
+	V2-24:2.1
+	V3-31:2.1
+	V3-30-NRT-05:2.1
+	cfm-01-00:2.1
+	V3-30:2.1
+	V3-20:2.1
+	V3-10:2.1
+	V2-23-NRT-02:2.1
+	V2-23:2.1
+	V2-22-NRT-01:2.1
+	V2-22:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.2
+date	2019.10.01.23.40.52;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2007.10.19.16.23.07;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.2
+log
+@Add Trim optional argument to floating-point output
+@
+text
+@! Copyright 2007, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id: numToChars.f9h,v 2.1 2007/10/19 16:23:07 pwagner Exp $
+! function numToChars_double( value, format ) results ( line )
+!   ! Args
+!   double precision, intent(in) :: VALUE
+!   character(len=*), intent(in), optional :: Format    ! How to print
+!   character(len=30) :: line
+!   ! Internal variables
+!   character(len=30) :: FormatSpec
+!   integer :: I, J, K
+!   ! Executable
+!   FormatSpec = outputOptions%sdFormatDefault
+!   if ( any( value == DPREFERDEFAULTFORMAT ) ) FormatSpec = '*'
+!   if ( present(Format)  ) FormatSpec = Format
+
+    line = ' '
+    if ( FormatSpec == '*' ) then
+      ! No optional formats: use default char-by-char accretion
+      write ( line, * ) value
+    else
+      write ( line, FormatSpec ) value
+    end if
+    do_trim = .false.
+    if ( present(trim) ) do_trim = trim
+    if ( FormatSpec == '*' .or. do_trim ) then
+      if ( scan(line,'123456789') == 0  ) then
+        line = '0'
+      else
+        i = index(line,'.')
+        j = scan(line(i:),'DdEe ') + i - 1
+        if ( i /= 0  ) then
+          if ( j == i ) j = len(line)
+          i = i + 1
+          k = j
+          do while ( j > i )
+            j = j - 1
+            if ( line(j:j) /= '0' .and. line(j:j) /= ' ') exit
+          end do
+          line(j+1:) = line(k:)
+        end if
+        line = adjustl(line)
+      end if
+      k = len_trim(line)
+    ! Use one or both optional formats
+    else
+      k = nCharsinFormat(FormatSpec)
+      if ( k==0 ) k = len_trim(line)
+    end if
+
+! $Log: numToChars.f9h,v $
+! Revision 2.1  2007/10/19 16:23:07  pwagner
+! First commit
+!
+@
+
+
+2.1
+log
+@First commit
+@
+text
+@d12 1
+a12 1
+! $Id: numToChars.f9h.f9h,v 2.1 2007/10/12 23:36:16 pwagner Exp $
+d28 1
+a28 1
+   ! No optional formats: use default char-by-char accretion
+d30 6
+a55 2
+      line = ' '
+      write ( line, FormatSpec ) value
+d60 4
+a63 1
+! $Log: numToChars.f9h.f9h,v $
+@
+

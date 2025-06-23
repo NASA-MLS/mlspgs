@@ -1,0 +1,187 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.14
+	cfm-single-freq-0-1:1.2.0.12
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.10
+	mus-emls-1-70:1.2.0.8
+	rel-1-0-englocks-work:1.2.0.6
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.2
+	V4-21:1.2.0.4
+	V4-13:1.2
+	V4-12:1.2
+	V4-11:1.2
+	V4-10:1.2
+	V3-43:1.2
+	M4-00:1.2
+	V3-41:1.2
+	V3-40-PlusGM57:1.2.0.2
+	V2-24-NRT-04:1.2
+	V3-33:1.2
+	V2-24:1.2
+	V3-31:1.2
+	V3-30-NRT-05:1.2
+	cfm-01-00:1.2
+	V3-30:1.2
+	V3-20:1.2
+	V3-10:1.2
+	V2-23-NRT-02:1.2
+	V2-23:1.2
+	V2-22-NRT-01:1.2
+	V2-22:1.2
+	V2-21:1.2
+	V2-20:1.2
+	V2-11:1.2
+	V2-10:1.2
+	V2-00:1.2
+	V1-51:1.1
+	V1-50:1.1
+	V1-45:1.1
+	V1-44:1.1
+	V1-43:1.1
+	V1-42:1.1
+	V1-41:1.1
+	V1-32:1.1
+	V1-40:1.1
+	V1-31:1.1
+	V1-30:1.1
+	V1-13:1.1
+	V1-12:1.1
+	V1-11:1.1
+	V1-10:1.1
+	newfwm-feb03:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2005.06.23.22.20.46;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2002.09.24.18.10.54;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Reworded Copyright statement
+@
+text
+@#!/bin/sh
+# --------------- unique_name.sh help
+#                 unique_name.sh    Returns a unique name
+#
+# Called by make to prevent multiple makes from attempting to write to same file
+#
+# Returns a unique name based on arg, PID and HOSTNAME
+# e.g.,
+#           temp_file_name=`unique_name.sh foo`
+#           echo $temp_file_name
+# might print foo.colossus.21455
+# if no arg, defaults to "temp" (very original name)
+# if two args present, assumes second is punctuation to
+# use in place of "."
+
+#        O p t i o n s
+#  -h[elp]              (if present) Help
+#
+# --------------- End unique_name.sh help
+#
+# Copyright 2005, by the California Institute of Technology. ALL
+# RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+# commercial use must be negotiated with the Office of Technology Transfer
+# at the California Institute of Technology.
+
+# This software may be subject to U.S. export control laws. By accepting this
+# software, the user agrees to comply with all applicable U.S. export laws and
+# regulations. User has the responsibility to obtain export licenses, or other
+# export authority as may be required before exporting such information to
+# foreign countries or providing access to foreign persons.
+
+# "$Id: unique_name.sh,v 1.1 2002/09/24 18:10:54 pwagner Exp $"
+#---------------------------- unique_name
+#
+#get_unique_name()
+#{
+
+      me="$0"
+      my_name=unique_name.sh
+   # How many args?
+      if [ $# -gt 1 ]
+      then
+        pt="$2"
+        temp="$1"
+      elif [ $# -gt 0 ]
+      then
+        mayday=`echo "$1" | grep '\-h'`
+        if [ "$mayday" != "" ]
+        then
+          sed -n '/'$my_name' help/,/End '$my_name' help/ p' $me \
+              | sed -n 's/^.//p' | sed '1 d; $ d'
+          exit
+        fi
+        pt="."
+        temp="$1"
+      else
+        pt="."
+        temp="temp"
+      fi
+   # Is $HOST defined?
+      if [ "$HOST" != "" ]
+      then
+         our_host_name="$HOST"
+      elif [ "$HOSTNAME" != "" ]
+      then
+         our_host_name="$HOSTNAME"
+      else
+         our_host_name="host"
+      fi
+    #  echo $our_host_name
+   # if in form host.moon.planet.star.. extract host
+      our_host_name=`echo $our_host_name | sed 's/\./,/g'`
+      our_host_name=`perl -e '@@parts=split(",","$ARGV[0]"); print $parts[0]' $our_host_name`
+      echo $temp${pt}$our_host_name${pt}$$
+#}
+
+# $Log: unique_name.sh,v $
+# Revision 1.1  2002/09/24 18:10:54  pwagner
+# First commit
+#
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d21 4
+a24 2
+# Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d26 7
+a32 1
+# "$Id: unique_name.sh,v 1.2 2002/09/04 18:11:36 pwagner Exp $"
+d78 3
+@
+

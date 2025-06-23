@@ -1,0 +1,199 @@
+head	2.3;
+access;
+symbols
+	v5-02-NRT-19:2.3
+	v6-00:2.3
+	v5-02-NRT-18:2.3
+	v5-02:2.3
+	v5-01-NRT-17:2.3
+	v5-01-NRT-16:2.3
+	v5-01-NRT-15:2.3
+	v5-01-NRT-14:2.3
+	neuralnetworks-1-0:2.3.0.12
+	cfm-single-freq-0-1:2.3.0.10
+	v5-01:2.3
+	v5-00:2.3
+	v4-23-TA133:2.3.0.8
+	mus-emls-1-70:2.3.0.6
+	rel-1-0-englocks-work:2.3.0.4
+	VUMLS1-00:2.3
+	VPL1-00:2.3
+	V4-22-NRT-08:2.3
+	VAM1-00:2.3
+	V4-21:2.3.0.2
+	V4-13:2.3
+	V4-12:2.3
+	V4-11:2.3
+	V4-10:2.3
+	M4-00:2.3
+	V3-33:2.3;
+locks; strict;
+comment	@# @;
+
+
+2.3
+date	2011.08.26.17.52.29;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2011.08.26.01.20.31;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2011.08.26.00.22.39;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.3
+log
+@purehunt recovers optimized functionality of fwdmdls own hunt
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! subroutine ?_CSPLINE ( XIN, XOUT, YIN, YOUT, NIN, NOUT, YMIN, YMAX)
+
+! $Id: cspline.f9h,v 2.2 2011/08/26 01:20:31 pwagner Exp $
+! $RCSfile: cspline.f9h,v $
+
+!  Given arrays XIN & YIN of length NIN containing a tabulated function,
+!  with XIN ordered, and given the (ordered) array: XOUT of length: NOUT,
+!  this subroutine Returns the array: YOUT which is the cubic-spline
+!  interpolation of (XIN,YIN) computed for each: XOUT
+
+    integer, intent(in) :: NIN, NOUT
+    real(rk), intent(in) :: XIN(abs(nin)), XOUT(nout), YIN(abs(nin))
+    real(rk), optional, intent(in) :: YMIN, YMAX
+    real(rk), intent(out) :: YOUT(:)
+
+!   logical, intrinsic :: ALL
+    integer :: I, JIN, KHI, KLO, KPL
+    real(rk) :: COEFF(4, abs(nin)), X_IN(abs(nin))
+    real(rk) :: X, Y, XL, XH, YL, YH, YLIN, DYDX, H
+
+    if ( all(yin(2:) == yin(1)) ) then
+      yout = yin(1)
+      return
+    end if
+
+    jin = abs(nin)
+
+    if ( xin(jin) > xin(1) ) then
+      x_in = xin
+      coeff(1,:) = yin
+    else
+      x_in = xin(jin:1:-1)
+      coeff(1,:) = yin(jin:1:-1)
+    end if
+
+    coeff(2,1) = 0.0
+    coeff(2,jin) = 0.0
+
+    call pcspl ( x_in, coeff, jin, 0, 0 )
+
+    klo = -1
+    kpl = -2
+    do i = 1, nout
+
+      x = xout(i)
+      call purehunt ( x, x_in, jin, klo, khi )
+      if ( klo /= kpl ) then
+        kpl = klo
+        xl = x_in(klo)
+        xh = x_in(khi)
+        yl = coeff(1,klo)
+        yh = coeff(1,khi)
+        dydx = (yh-yl)/(xh-xl)
+      end if
+
+      h = x - xl
+      ylin = yl + dydx * h
+      y = yl + h * (coeff(2,klo) + h * (coeff(3,klo) + h * coeff(4,klo) ) )
+
+      if ( abs(y-ylin) > 0.25 * abs(ylin) ) then
+        y = ylin
+      else if ( present(ymin) .and. present(ymax) ) then
+        if ( y < ymin  .or. y > ymax ) y = ylin
+      end if
+
+      yout(i) = y
+
+    end do
+
+! end subroutine ?_CSPLINE
+
+! $Log: cspline.f9h,v $
+! Revision 2.2  2011/08/26 01:20:31  pwagner
+! Fixed obvious bug
+!
+! Revision 2.1  2011/08/26 00:22:39  pwagner
+! Moved here from fwdmdl
+!
+! Revision 2.9  2005/06/22 18:14:01  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.8  2004/03/30 00:55:02  vsnyder
+! Remove declaration for unused variable
+!
+! Revision 2.7  2003/11/08 02:17:30  vsnyder
+! Simplification, polishing
+!
+! Revision 2.6  2002/12/03 01:29:21  vsnyder
+! Typo in a comment
+!
+! Revision 2.5  2002/10/14 20:49:52  vsnyder
+! Add copyright notice, replace ID block with comments, cosmetic changes
+!
+! Revision 2.4  2002/10/02 15:49:38  bwknosp
+! Added Id and RCS info
+!
+@
+
+
+2.2
+log
+@Fixed obvious bug
+@
+text
+@d14 1
+a14 1
+! $Id: cspline.f9h,v 2.1 2011/08/26 00:22:39 pwagner Exp $
+d57 1
+a57 3
+      call hunt ( x_in, x, klo )
+      khi = min( klo+1, jin )
+      ! call hunt ( x, x_in, jin, klo, khi )
+d84 3
+@
+
+
+2.1
+log
+@Moved here from fwdmdl
+@
+text
+@d14 1
+a14 1
+! $Id: cspline.f9h,v 2.9 2005/06/22 18:14:01 pwagner Exp $
+d57 1
+a57 1
+      call hunt ( x_in, x, jin, klo )
+d86 3
+@
+

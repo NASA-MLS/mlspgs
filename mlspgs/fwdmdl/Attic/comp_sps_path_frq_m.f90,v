@@ -1,0 +1,2934 @@
+head	2.38;
+access;
+symbols
+	mus-emls-1-70:2.37.0.2
+	rel-1-0-englocks-work:2.36.0.2
+	VUMLS1-00:2.36
+	VPL1-00:2.34
+	V4-22-NRT-08:2.34
+	VAM1-00:2.34
+	V4-21:2.34.0.2
+	V4-13:2.34
+	V4-12:2.34
+	V4-11:2.34
+	V4-10:2.34
+	V3-43:2.28
+	M4-00:2.32
+	V3-41:2.28
+	V3-40-PlusGM57:2.28.0.2
+	V2-24-NRT-04:2.26
+	V3-33:2.29
+	V2-24:2.26
+	V3-31:2.29
+	V3-30-NRT-05:2.28
+	cfm-01-00:2.28
+	V3-30:2.28
+	V3-20:2.28
+	V3-10:2.28
+	V2-23-NRT-02:2.26
+	V2-23:2.26
+	V2-22-NRT-01:2.26
+	V2-22:2.26
+	V2-21:2.23
+	V2-20:2.23
+	V2-11:2.23
+	V2-10:2.23
+	V2-00:2.23
+	V1-51:2.19
+	V1-50:2.19
+	V1-45:2.18
+	V1-44:2.18
+	V1-43:2.16
+	V1-32:2.16
+	V1-31:2.16
+	V1-30:2.16
+	V1-13:2.13
+	V1-12:2.13
+	V1-11:2.13
+	V1-10:2.13
+	newfwm-feb03:2.13.0.2
+	V1-04:2.6
+	V1-03:2.6
+	V1-02:2.6
+	JointForwardModel:2.8.0.2
+	V1-00:2.6;
+locks; strict;
+comment	@# @;
+
+
+2.38
+date	2018.09.12.23.48.08;	author vsnyder;	state dead;
+branches;
+next	2.37;
+
+2.37
+date	2018.05.14.23.46.45;	author vsnyder;	state Exp;
+branches;
+next	2.36;
+
+2.36
+date	2016.11.17.03.13.23;	author vsnyder;	state Exp;
+branches;
+next	2.35;
+
+2.35
+date	2016.11.17.01.46.45;	author vsnyder;	state Exp;
+branches;
+next	2.34;
+
+2.34
+date	2013.06.12.02.24.35;	author vsnyder;	state Exp;
+branches;
+next	2.33;
+
+2.33
+date	2013.05.18.00.34.44;	author vsnyder;	state Exp;
+branches;
+next	2.32;
+
+2.32
+date	2011.08.20.00.44.58;	author vsnyder;	state Exp;
+branches;
+next	2.31;
+
+2.31
+date	2011.08.12.18.57.06;	author vsnyder;	state Exp;
+branches;
+next	2.30;
+
+2.30
+date	2011.07.29.01.56.15;	author vsnyder;	state Exp;
+branches;
+next	2.29;
+
+2.29
+date	2010.09.25.01.11.20;	author vsnyder;	state Exp;
+branches;
+next	2.28;
+
+2.28
+date	2009.06.23.18.26.10;	author pwagner;	state Exp;
+branches;
+next	2.27;
+
+2.27
+date	2009.01.16.23.47.00;	author vsnyder;	state Exp;
+branches;
+next	2.26;
+
+2.26
+date	2007.06.26.00.38.17;	author vsnyder;	state Exp;
+branches;
+next	2.25;
+
+2.25
+date	2007.06.06.01.13.52;	author vsnyder;	state Exp;
+branches;
+next	2.24;
+
+2.24
+date	2007.01.19.02.37.30;	author vsnyder;	state Exp;
+branches;
+next	2.23;
+
+2.23
+date	2005.12.22.20.51.46;	author vsnyder;	state Exp;
+branches;
+next	2.22;
+
+2.22
+date	2005.09.16.23.41.19;	author vsnyder;	state Exp;
+branches;
+next	2.21;
+
+2.21
+date	2005.08.03.18.04.09;	author vsnyder;	state Exp;
+branches;
+next	2.20;
+
+2.20
+date	2005.06.22.18.08.18;	author pwagner;	state Exp;
+branches;
+next	2.19;
+
+2.19
+date	2004.11.01.20.20.46;	author vsnyder;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2004.08.03.21.59.49;	author vsnyder;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2004.07.08.21.00.23;	author vsnyder;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2003.07.08.02.01.31;	author vsnyder;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2003.05.16.02.46.33;	author vsnyder;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2003.05.05.23.00.25;	author livesey;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2002.11.14.00.52.24;	author livesey;	state Exp;
+branches
+	2.13.2.1;
+next	2.12;
+
+2.12
+date	2002.10.08.17.08.01;	author pwagner;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2002.09.27.20.43.06;	author livesey;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2002.09.06.20.58.26;	author vsnyder;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2002.08.22.23.13.20;	author livesey;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2002.06.13.22.39.42;	author bill;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2002.06.04.10.28.00;	author zvi;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2002.02.16.06.37.34;	author zvi;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2002.01.09.00.30.48;	author zvi;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2001.11.15.01.21.58;	author zvi;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2001.11.10.00.45.08;	author zvi;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2001.11.07.09.59.12;	author zvi;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.11.02.10.47.37;	author zvi;	state Exp;
+branches;
+next	;
+
+2.13.2.1
+date	2003.03.13.02.03.50;	author vsnyder;	state Exp;
+branches;
+next	2.13.2.2;
+
+2.13.2.2
+date	2003.03.20.01.42.26;	author vsnyder;	state Exp;
+branches;
+next	2.13.2.3;
+
+2.13.2.3
+date	2003.03.22.02.32.05;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.38
+log
+@No longer used
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Comp_Sps_Path_Frq_m
+
+  implicit NONE
+
+  private
+  public :: Comp_Sps_Path_Frq, Comp_Sps_Path_Frq_nz, Comp_Sps_Path
+  public :: Comp_Sps_Path_No_Frq, Comp_1_Sps_Path_No_Frq, Comp_One_Path_Frq
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: comp_sps_path_frq_m.f90,v $"
+  private :: not_used_here
+!---------------------------------------------------------------------------
+
+contains
+
+! --------------------------------------------  Comp_Sps_Path_Frq  -----
+  subroutine Comp_Sps_Path_Frq ( Grids_x, Frq, eta_zp, &
+    & do_calc_zp, sps_path, eta_fzp, do_calc_fzp, lo, sideband, &
+    & Already_Spread )
+
+! Compute the SPS path, including for species that are frequency dependent.
+
+    use Comp_Eta_Docalc_No_Frq_m, only: Spread_Eta_FZP_from_Eta_ZP
+    use MLSCommon, only: RP, IP, R8
+    use Get_Eta_Matrix_m, only: Get_Eta_Sparse
+    use Load_sps_data_m, only: Grids_T
+
+! Input:
+
+    type (grids_t), intent(in) :: Grids_x  ! All the needed coordinates
+
+    real(r8), intent(in) :: Frq  ! Frequency at which to compute the values
+    real(rp), intent(in) :: Eta_zp(:,:)    ! Path X (Eta_z x Eta_phi)
+            ! First dimension is same as sps_values.
+    logical, intent(in) :: Do_Calc_Zp(:,:) ! logical indicating whether there
+            ! is a contribution for this state vector element
+
+! Output:
+
+!   These are intent(inout), not intent(out), so they won't be clobbered
+!   in the cases when frq > 1.0 and n_f == 1.  Hopefully, the desired values
+!   will have been filled by a call (outside the frequency loop) with frq <= 1.
+    real(rp), intent(inout) :: Sps_Path(:,:) ! Path X Species.  vmr values
+      !       along the path by species number
+
+    real(rp), intent(inout) :: Eta_Fzp(:,:)  ! Path X (Eta_f x Eta_z x Eta_phi)
+      !       First dimension is same as sps_values.
+    logical, intent(inout) :: Do_Calc_Fzp(:,:) ! indicates whether
+      !       there is a contribution for this state vector element. Same
+      !       shape as Eta_Fzp.
+
+! Optional inputs -- LO and Sideband not needed if Frq < 1.0:
+
+    real(r8), intent(in), optional :: LO       ! Local oscillator freq
+    integer, intent(in), optional :: Sideband  ! -1, 1 or 0.  Zero means
+      !       Grids_x%frq_basis is absolute, not I.F.
+    logical, intent(in), optional :: Already_Spread ! Eta_zp and Do_Calc_zp
+      !       have already been spread out to Eta_fzp and Do_Calc_fzp
+
+! Notes:
+! units of z_basis must be same as zeta_path (usually -log(P)) and units of
+! phi_basis must be the same as phi_path (either radians or degrees).
+! Units of sps_path = sps_values.
+
+! Internal declarations
+
+    integer(ip) :: n_f, no_mol
+    integer(ip) :: sps_i, sv_zp, sv_f
+    integer(ip) :: f_inda, f_indb, v_inda, w_inda, w_indb
+
+    real(rp) :: eta_f(1:maxval(grids_x%l_f(1:)-grids_x%l_f(0:ubound(grids_x%l_f,1)-1)))
+    logical :: not_zero_f(1:maxval(grids_x%l_f(1:)-grids_x%l_f(0:ubound(grids_x%l_f,1)-1)))
+    logical :: Spread
+
+! Begin executable code:
+
+    spread = .false.
+    if ( present(already_spread) ) spread = already_spread
+
+    if ( .not. spread ) &
+      ! Spread out Eta_zp and Do_Calc_zp to Eta_fzp and Do_Calc_fzp,
+      ! copying the same values for all frequencies for frequency-dependent
+      ! species
+      & call Spread_Eta_FZP_from_Eta_ZP ( grids_x, eta_zp, do_calc_zp, &
+                                        &          eta_fzp, do_calc_fzp )
+
+    no_mol = ubound(grids_x%l_z,1)
+
+    if ( frq <= 1.0_r8 ) then
+      do_calc_fzp = .FALSE.
+      eta_fzp = 0.0_rp
+    end if
+
+    f_inda = 0
+    w_inda = 0
+
+    do sps_i = 1, no_mol
+
+      f_indb = grids_x%l_f(sps_i)
+      n_f = f_indb - f_inda
+
+      w_indb = w_inda + (Grids_x%l_z(sps_i) - Grids_x%l_z(sps_i-1)) * &
+                        (Grids_x%l_p(sps_i) - Grids_x%l_p(sps_i-1))
+      if ( n_f /= 1 ) then
+
+! Compute eta_f:
+        if ( sideband == -1 ) then
+          call get_eta_sparse ( lo-Grids_x%frq_basis(f_indb:f_inda+1:-1), &
+            & Frq, eta_f(n_f:1:-1), not_zero_f(n_f:1:-1) )
+        else if ( sideband == +1 ) then
+          call get_eta_sparse ( lo+Grids_x%frq_basis(f_inda+1:f_indb), &
+            & Frq, eta_f(1:n_f), not_zero_f(1:n_f) )
+        else ! sideband == 0 means Grids_x%frq_basis is absolute, not in I.F.
+             ! It doesn't mean folded-sideband calculation.
+          call get_eta_sparse ( Grids_x%frq_basis(f_inda+1:f_indb), &
+            & Frq, eta_f(1:n_f), not_zero_f(1:n_f) )
+        end if
+
+! Compute Sps_Path and fill in the parts of Eta_fzp that depend upon frequency.
+        sps_path(:,sps_i) = 0.0_rp
+        v_inda = grids_x%l_v(sps_i-1)
+        ! Grids_X%Values are really 3-d: Frequencies X Zeta X Phi
+        do sv_zp = w_inda + 1, w_indb
+          do sv_f = 1, n_f
+            v_inda = v_inda + 1
+            if ( not_zero_f(sv_f) ) then
+              ! Calculate eta_fzp from eta_zp with frequency interpolation
+              eta_fzp(:,v_inda) = eta_f(sv_f) * eta_zp(:,sv_zp)
+              sps_path(:,sps_i) = sps_path(:,sps_i) +  &
+                               &  grids_x%values(v_inda) * eta_fzp(:,v_inda)
+              do_calc_fzp(:,v_inda) = do_calc_zp(:,sv_zp) .and. Grids_x%deriv_flags(v_inda)
+            else
+              eta_fzp ( :, v_inda ) = 0.0_r8
+              do_calc_fzp ( :, v_inda ) = .false.
+            end if
+          end do ! sv_f
+        end do ! sv_zp
+
+        if ( grids_x%lin_log(sps_i)) sps_path(:,sps_i) = EXP(sps_path(:,sps_i))
+
+      else ! n_f == 1 here
+        continue
+        ! Hopefully, Comp_Sps_Path_No_Frq has already been called, and
+        ! Sps_Path, Eta_Fzp and Do_Calc_Fzp have not been clobbered since then.
+      end if
+
+      f_inda = f_indb
+      w_inda = w_indb
+
+    end do
+
+  end subroutine Comp_Sps_Path_Frq
+
+! -----------------------------------------  Comp_Sps_Path_Frq_nz  -----
+  subroutine Comp_Sps_Path_Frq_nz ( Grids_x, Frq, eta_zp, nz_zp, nnz_zp, &
+    & do_calc_zp, sps_path, do_calc_fzp, eta_fzp, nz_fzp, nnz_fzp,       &
+    & lo, sideband, Already_Spread )
+
+! Compute the SPS path
+
+    use Comp_Eta_Docalc_No_Frq_m, only: Spread_Eta_FZP_from_Eta_ZP
+    use MLSCommon, only: RP, IP, R8
+    use Get_Eta_Matrix_m, only: Get_Eta_Sparse
+    use Load_sps_data_m, only: Grids_T
+
+! Input:
+
+    type (grids_t), intent(in) :: Grids_x  ! All the needed coordinates
+
+    real(r8), intent(in) :: Frq  ! Frequency at which to compute the values
+    real(rp), intent(in) :: Eta_zp(:,:)    ! Path X (Eta_z x Eta_phi)
+!                         First dimension is same as sps_values.
+    integer, intent(in) :: NZ_ZP(:,:)      ! Nonzeros of Eta_ZP
+    integer, intent(in) :: NNZ_ZP(:)       ! Numbers of rows in NZ_ZP
+    logical, intent(in) :: Do_Calc_Zp(:,:) ! logical indicating whether there
+!                         is a contribution for this state vector element
+
+! Output:
+
+    real(rp), intent(inout) :: Sps_Path(:,:) ! Path X Species.  vmr values
+!                         along the path by species number
+    logical, intent(inout) :: Do_Calc_Fzp(:,:) ! indicates whether there
+!                         is a contribution for this state vector element.
+!                         Same shape as Eta_Fzp.
+    real(rp), intent(inout) :: Eta_Fzp(:,:)  ! Path X (Eta_f x Eta_z x Eta_phi)
+!                         First dimension is same as sps_values.
+    integer, intent(inout) :: NZ_FZP(:,:)    ! Nonzeros of Eta_FZP
+    integer, intent(inout) :: NNZ_FZP(:)     ! Numbers of rows in NZ_FZP
+
+! Optional inputs -- LO and Sideband not needed if Frq < 1.0:
+
+    real(r8), intent(in), optional :: LO       ! Local oscillator freq
+    integer, intent(in), optional :: Sideband  ! -1, 1 or 0.  Zero means
+      !       Grids_x%frq_basis is absolute, not I.F.
+    logical, intent(in), optional :: Already_Spread ! Eta_zp and Do_Calc_zp
+      !       have already been spread out to Eta_fzp and Do_Calc_fzp
+
+! Notes:
+! units of z_basis must be same as zeta_path (usually -log(P)) and units of
+! phi_basis must be the same as phi_path (either radians or degrees).
+! Units of sps_path = sps_values.
+
+! Internal declarations
+
+    integer(ip) :: n_f, no_mol
+    integer(ip) :: sps_i, sv_zp, sv_f
+    integer(ip) :: v_inda, f_inda, f_indb, w_inda, w_indb
+
+    real(rp) :: eta_f(1:maxval(grids_x%l_f(1:)-grids_x%l_f(0:ubound(grids_x%l_f,1)-1)))
+    logical :: not_zero_f(1:maxval(grids_x%l_f(1:)-grids_x%l_f(0:ubound(grids_x%l_f,1)-1)))
+    logical :: Spread
+
+! Begin executable code:
+
+    spread = .false.
+    if ( present(already_spread) ) spread = already_spread
+
+    if ( .not. spread ) &
+      ! Spread out Eta_zp and Do_Calc_zp to Eta_fzp and Do_Calc_fzp,
+      ! copying the same values for all frequencies for frequency-dependent
+      ! species
+      & call Spread_Eta_FZP_from_Eta_ZP ( grids_x, eta_zp, do_calc_zp, &
+                                        &          eta_fzp, do_calc_fzp, &
+                                        &          nz_zp, nnz_zp, &
+                                        &          nz_fzp, nnz_fzp )
+
+    ! Clear nonzero entries of eta_fzp
+    do v_inda = 1, size(nnz_fzp)
+      eta_fzp(nz_fzp(:nnz_fzp(v_inda),v_inda),v_inda) = 0.0
+      do_calc_fzp(nz_fzp(:nnz_fzp(v_inda),v_inda),v_inda) = .false.
+      nnz_fzp(v_inda) = 0
+    end do
+
+    no_mol = ubound(grids_x%l_z,1)
+
+    f_inda = 0
+    w_inda = 0
+
+    do sps_i = 1, no_mol
+
+      f_indb = grids_x%l_f(sps_i)
+      n_f = f_indb - f_inda
+
+      w_indb = w_inda + (Grids_x%l_z(sps_i) - Grids_x%l_z(sps_i-1)) * &
+                        (Grids_x%l_p(sps_i) - Grids_x%l_p(sps_i-1))
+
+      if ( n_f /= 1 ) then
+
+! Compute eta_f:
+        if ( sideband == -1 ) then
+          call get_eta_sparse ( lo-Grids_x%frq_basis(f_indb:f_inda+1:-1), &
+            & Frq, eta_f(n_f:1:-1), not_zero_f(n_f:1:-1) )
+        else
+          call get_eta_sparse ( lo+Grids_x%frq_basis(f_inda+1:f_indb), &
+            & Frq, eta_f(1:n_f), not_zero_f(1:n_f) )
+        end if
+
+! Compute Sps_Path and fill in the parts of Eta_fzp that depend upon frequency.
+
+        sps_path(:,sps_i) = 0.0_rp
+        v_inda = grids_x%l_v(sps_i-1)
+        ! Grids_X%Values are really 3-d: Frequencies X Zeta X Phi
+        do sv_zp = w_inda + 1, w_indb
+          do sv_f = 1, n_f
+            v_inda = v_inda + 1
+            if ( not_zero_f(sv_f) ) then
+              nnz_fzp(v_inda) = nnz_zp(sv_zp)
+              nz_fzp(:nnz_fzp(v_inda),v_inda) = nz_zp(:nnz_zp(sv_zp),sv_zp)
+              eta_fzp(nz_fzp(:nnz_fzp(v_inda),v_inda),v_inda) = &
+                & eta_f(sv_f) * eta_zp(nz_zp(:nnz_zp(sv_zp),sv_zp),sv_zp)
+              sps_path(nz_fzp(:nnz_fzp(v_inda),v_inda),sps_i) = &
+                & sps_path(nz_fzp(:nnz_fzp(v_inda),v_inda),sps_i) + &
+                & grids_x%values(v_inda) * &
+                & eta_fzp(nz_fzp(:nnz_fzp(v_inda),v_inda),v_inda)
+              do_calc_fzp(nz_fzp(:nnz_fzp(v_inda),v_inda),v_inda) = &
+                & do_calc_zp(nz_zp(:nnz_zp(sv_zp),sv_zp),sv_zp) .and. &
+                & Grids_x%deriv_flags(v_inda)
+            end if
+          end do ! sv_f
+        end do ! sv_zp
+
+        if ( grids_x%lin_log(sps_i)) sps_path(:,sps_i) = EXP(sps_path(:,sps_i))
+
+      end if
+
+      f_inda = f_indb
+      w_inda = w_indb
+
+    end do
+
+  end subroutine Comp_Sps_Path_Frq_nz
+
+! --------------------------------------------  Comp_One_Path_Frq  -----
+  subroutine Comp_One_Path_Frq ( Grids_x, Frq, eta_zp, &
+    & do_calc_zp, path_qty, do_calc_fzp, eta_fzp, lo, sideband )
+
+! Compute a one-quantity path value
+
+    use MLSCommon, only: RP, IP, R8
+    use Get_Eta_Matrix_m, only: Get_Eta_Sparse
+    use Load_sps_data_m, only: Grids_T
+
+! Input:
+
+    type (grids_t), intent(in) :: Grids_x  ! All the needed coordinates
+!                         Assume it's a one-quantity grid
+
+    real(r8), intent(in) :: Frq  ! Frequency at which to compute the values
+    real(rp), intent(in) :: Eta_zp(:,:)    ! Path X (Eta_z x Eta_phi)
+!                         First dimension is same as sps_values.
+    logical, intent(in) :: Do_Calc_Zp(:,:) ! logical indicating whether there
+!                         is a contribution for this state vector element
+
+! Output:
+
+    real(rp), intent(inout) :: Path_qty(:) ! Grids_x value interpolated to path.
+    logical, intent(inout) :: Do_Calc_Fzp(:,:) ! indicates whether there
+!                         is a contribution for this state vector element.
+!                         Same shape as Eta_Fzp.
+    real(rp), intent(inout) :: Eta_Fzp(:,:)  ! Path X (Eta_f x Eta_z x Eta_phi)
+!                         First dimension is same as sps_values.
+
+! Optional inputs -- not needed if Frq < 1.0:
+
+    real(r8), intent(in), optional :: LO       ! Local oscillator freq
+    integer, intent(in), optional :: Sideband  ! -1 or 1
+
+! Notes:
+! units of z_basis must be same as zeta_path (usually -log(P)) and units of
+! phi_basis must be the same as phi_path (either radians or degrees).
+! Units of path_qty = sps_values.
+
+! Internal declarations
+
+    integer(ip) :: n_f
+    integer(ip) :: sv_zp, sv_f
+    integer(ip) :: v_inda, w_indb
+
+    real(rp) :: eta_f(1:grids_x%l_f(1))
+    logical :: not_zero_f(1:grids_x%l_f(1))
+
+! Begin executable code:
+
+    if ( frq <= 1.0_r8 ) then
+      do_calc_fzp = .FALSE.
+      eta_fzp = 0.0_rp
+    end if
+
+    n_f = grids_x%l_f(1)
+
+    w_indb = Grids_x%l_z(1) * Grids_x%l_p(1)
+
+! Compute eta_f:
+    if ( sideband == -1 ) then
+      call get_eta_sparse ( lo-Grids_x%frq_basis(n_f:1:-1), &
+        & Frq, eta_f(n_f:1:-1), not_zero_f(n_f:1:-1) )
+    else if ( sideband == +1 ) then
+      call get_eta_sparse ( lo+Grids_x%frq_basis(1:n_f), &
+        & Frq, eta_f(1:n_f), not_zero_f(1:n_f) )
+    else ! sideband == 0 means Grids_x%frq_basis is absolute, not in I.F.
+         ! It doesn't mean folded-sideband calculation.
+      call get_eta_sparse ( Grids_x%frq_basis(1:n_f), &
+        & Frq, eta_f(1:n_f), not_zero_f(1:n_f) )
+    end if
+
+! Compute path_qty
+    path_qty = 0.0_rp
+    v_inda = grids_x%l_v(1-1)
+    ! Grids_X%Values are really 3-d: Frequencies X Zeta X Phi
+    do sv_zp = 1, w_indb
+      do sv_f = 1, n_f
+        v_inda = v_inda + 1
+        if ( not_zero_f(sv_f) ) then
+          eta_fzp(:,v_inda) = eta_f(sv_f) * eta_zp(:,sv_zp)
+          path_qty = path_qty +  &
+                           &  grids_x%values(v_inda) * eta_fzp(:,v_inda)
+          do_calc_fzp(:,v_inda) = do_calc_zp(:,sv_zp) .and. Grids_x%deriv_flags(v_inda)
+        else
+          eta_fzp ( :, v_inda ) = 0.0_r8
+          do_calc_fzp ( :, v_inda ) = .false.
+        end if
+      end do ! sv_f
+    end do ! sv_zp
+
+    if ( grids_x%lin_log(1)) path_qty = EXP(path_qty)
+
+  end subroutine Comp_One_Path_Frq
+
+! ------------------------------------------------  Comp_Sps_Path  -----
+  subroutine Comp_Sps_Path ( Grids_x, SPS_I, Eta_zp, Sps_path )
+
+! Compute the SPS path for grids that use the Frequency dimension for
+! a vector component, e.g. magnetic field.  There's only one multiply-add
+! in the loop (hiding inside of matmul), so there's really no point to
+! sending in do_calc_zp.
+
+! This assumes there is only one species in Grids_x, or that none of the
+! species before Sps_I depend upon frequency.  Otherwise, more care needs
+! to be taken with the relationship between subscripts for Eta_zp and
+! grids_x%values.  Compare to Comp_Sps_Path_No_Frq
+
+    use MLSCommon, only: RP
+    use Load_sps_data_m, only: Grids_T
+
+! Input:
+
+    type (grids_t), intent(in) :: Grids_x  ! All the needed coordinates
+    integer, intent(in) :: SPS_I           ! Which thing-o in Grids_X
+    real(rp), intent(in) :: Eta_zp(:,:)    ! Path X (Eta_z X Eta_phi)
+!                         First dimension is size(Sps_Path,1).
+
+! Output:
+
+    real(rp), intent(out) :: Sps_Path(:,:) ! Values, path X component
+
+! Local variables:
+
+    integer :: N_C, SV_C, V_Inda, V_Indb
+
+    n_c = grids_x%l_f(sps_i) - grids_x%l_f(sps_i-1) ! # Components
+
+    v_inda = grids_x%l_v(sps_i-1)          ! One before first value
+    v_indb = grids_x%l_v(sps_i)            ! Last value
+
+    ! Grids_X%Values are really 3-d: Components X Zeta X Phi.
+    ! For each component, multiply the Zeta X Phi part by Eta (on the left).
+    ! We could do this as
+    !  matmul( eta_zp, &
+    !       &  transpose(reshape(grids_x%values,(/n_c,(v_indb-v_inda)/n_c/) )))
+    ! but this is more efficient, not much more writing, and not that hard
+    ! to grok.
+    do sv_c = 1, n_c
+      sps_path(:,sv_c) = matmul(eta_zp,grids_x%values(v_inda+sv_c:v_indb:n_c))
+    end do
+
+  end subroutine Comp_Sps_Path
+
+! -----------------------------------------  Comp_Sps_Path_No_Frq  -----
+  subroutine Comp_Sps_Path_No_Frq ( Grids_x, Eta_zp, Sps_Path )
+
+! Compute the SPS path for species that don't use frequency.
+! Skip the ones that do.
+
+    use MLSCommon, only: RP
+    use Load_sps_data_m, only: Grids_T
+
+! Input:
+
+    type (grids_t), intent(in) :: Grids_x  ! All the needed coordinates
+    real(rp), intent(in) :: Eta_zp(:,:)    ! Path X (Eta_z X Eta_phi)
+!                         First dimension is size(Sps_Path,1).
+
+! Output:
+
+    real(rp), intent(inout) :: Sps_Path(:,:) ! Path X Species.  vmr values
+!                         along the path by species number
+
+! Notes:
+! units of z_basis must be same as zeta_path (usually -log(P)) and units of
+! phi_basis must be the same as phi_path (either radians or degrees).
+! Units of sps_path = sps_values.
+
+! Internal declarations
+
+    integer :: F_inda, F_indb
+    integer :: No_mol, Nw
+    integer :: Sps_i
+    integer :: V_inda ! , V_indb
+    integer :: W_inda, W_indb
+
+! Begin executable code:
+
+    no_mol = ubound(grids_x%l_z,1)
+
+    f_indb = 0
+    w_indb = 0
+    do sps_i = 1, no_mol
+
+      ! We could use Comp_1_Sps_Path_No_Frq here, at a tiny increase in cost.
+
+      f_inda = f_indb
+      f_indb = grids_x%l_f(sps_i) ! Index of last one for sps_i
+      w_inda = w_indb
+      w_indb = w_inda + (Grids_x%l_z(sps_i) - Grids_x%l_z(sps_i-1)) * &
+                        (Grids_x%l_p(sps_i) - Grids_x%l_p(sps_i-1))
+
+      ! Compute Sps_Path only for sps that don't depend on frequency
+      if ( f_indb-f_inda == 1 ) then
+
+        v_inda = grids_x%l_v(sps_i-1)
+        nw = w_indb - w_inda
+        sps_path(:,sps_i) = &
+          & matmul(eta_zp(:,w_inda+1:w_indb), grids_x%values(v_inda+1:v_inda+nw))
+
+        if ( grids_x%lin_log(sps_i)) sps_path(:,sps_i) = exp(sps_path(:,sps_i))
+
+      end if
+
+    end do
+
+  end subroutine Comp_Sps_Path_No_Frq
+
+! ---------------------------------------  Comp_1_Sps_Path_No_Frq  -----
+  subroutine Comp_1_Sps_Path_No_Frq ( Grids_x, The_Sps, Eta_zp, Sps_Path )
+
+! Compute the SPS path for one species that doesn't use frequency.
+! Actually, if you have an Eta_ZP prepared for an arbitrary grid in its
+! first dimension (not necessary a line-of-sight path), this will put the
+! species on that grid.  It's just a matrix multiply, but it knows how to
+! dig up the species values from the Grids_X structure given The_Sps.
+
+    use MLSCommon, only: RP
+    use Load_sps_data_m, only: Grids_T
+
+! Input:
+
+    type (grids_t), intent(in) :: Grids_x  ! All the needed coordinates
+    integer, intent(in) :: The_Sps ! The molecule for which to compute the
+!                         path value.
+    real(rp), intent(in) :: Eta_zp(:,:)    ! Path X (Eta_z X Eta_phi)
+!                         First dimension is size(Sps_Path).
+
+! Output:
+
+    real(rp), intent(inout) :: Sps_Path(:) ! Path.  vmr values
+!                         along the path for species The_Sps
+
+! Notes:
+! units of z_basis must be same as zeta_path (usually -log(P)) and units of
+! phi_basis must be the same as phi_path (either radians or degrees).
+! Units of sps_path = sps_values.
+
+! Internal declarations
+
+    integer :: Nw
+    integer :: V_inda
+    integer :: W_inda, W_indb
+
+! Begin executable code:
+
+    v_inda = grids_x%l_v(the_sps-1) ! Index of last one for the_sps - 1
+    ! Calculate subscripts for eta_zp
+    w_indb = 0
+    do nw = 1, the_sps
+      w_inda = w_indb
+      w_indb = w_inda + (Grids_x%l_z(nw) - Grids_x%l_z(nw-1)) * &
+                        (Grids_x%l_p(nw) - Grids_x%l_p(nw-1))
+    end do
+
+    nw = w_indb - w_inda
+    sps_path = &
+      & matmul(eta_zp(:,w_inda+1:w_indb), grids_x%values(v_inda+1:v_inda+nw))
+
+    if ( grids_x%lin_log(the_sps)) sps_path = exp(sps_path)
+
+  end subroutine Comp_1_Sps_Path_No_Frq
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: comp_sps_path_frq_m.f90,v 2.37 2018/05/14 23:46:45 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Comp_Sps_Path_Frq_m
+!
+! $Log: comp_sps_path_frq_m.f90,v $
+! Revision 2.37  2018/05/14 23:46:45  vsnyder
+! Add old eta sparsity representation to Spread_Eta_FZP_from_Eta_ZP for debugging
+!
+! Revision 2.36  2016/11/17 03:13:23  vsnyder
+! Repair errors calculating subscripts for Eta_zp in Comp_1_Sps_Path_No_Frq
+!
+! Revision 2.35  2016/11/17 01:46:45  vsnyder
+! Remove feature to calculate without frequency interpolation in the
+! routines designed to do it, if Frq < 1.0.  Use the routines that don't
+! do frequency interpolation instead.
+!
+! Revision 2.34  2013/06/12 02:24:35  vsnyder
+! Cruft removal
+!
+! Revision 2.33  2013/05/18 00:34:44  vsnyder
+! Insert NG fine-grid (GL) points between tangent points, thereby
+! regularizing coarse-grid spacing, and reducing significantly the need
+! to use c_inds to extract coarse-grid points from the composite grid.
+!
+! Revision 2.32  2011/08/20 00:44:58  vsnyder
+! Remove declarations for unused variables
+!
+! Revision 2.31  2011/08/12 18:57:06  vsnyder
+! Change Do_Calc_Fzp back to non-optional.  The only place where it wasn't
+! used, it was actually needed.  Undo ill-advised change to evaluate the
+! outputs when frq>1 and n_f==1.  The outputs were evaluated when frq<=1,
+! when Comp_Sps_Path was called from outside the frequency loop.  Doing it
+! again increases run time substantially, for no benefit.  Comments have
+! been added to this effect.
+!
+! Revision 2.30  2011/07/29 01:56:15  vsnyder
+! Make do_calc_fzp optional
+!
+! Revision 2.29  2010/09/25 01:11:20  vsnyder
+! Interpret sideband==0 in Comp_Sps_Path_Frq, add Comp_One_Path_Frq
+!
+! Revision 2.28  2009/06/23 18:26:10  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.27  2009/01/16 23:47:00  vsnyder
+! Give warning in log-lin case if log(some mixing ratio) is zero
+!
+! Revision 2.26  2007/06/26 00:38:17  vsnyder
+! Separate frq>1 and frq<1 cases
+!
+! Revision 2.25  2007/06/06 01:13:52  vsnyder
+! Use 1-d eta routine
+!
+! Revision 2.24  2007/01/19 02:37:30  vsnyder
+! In Comp_Sps_Path_No_Frq compute only for species that have no freq coordinate
+!
+! Revision 2.23  2005/12/22 20:51:46  vsnyder
+! Added Comp_1_Sps_Path_No_Frq
+!
+! Revision 2.22  2005/09/16 23:41:19  vsnyder
+! Cannonball polishing
+!
+! Revision 2.21  2005/08/03 18:04:09  vsnyder
+! Some spectroscopy derivative stuff
+!
+! Revision 2.20  2005/06/22 18:08:18  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.19  2004/11/01 20:20:46  vsnyder
+! Reorganization of representation for molecules and beta groups; PFA broken for now
+!
+! Revision 2.18  2004/08/03 21:59:49  vsnyder
+! Inching further toward PFA
+!
+! Revision 2.17  2004/07/08 21:00:23  vsnyder
+! Inching toward PFA
+!
+! Revision 2.16  2003/07/08 02:01:31  vsnyder
+! Speed up a tad by storing zero in ELSE instead of everywhere
+!
+! Revision 2.15  2003/05/16 02:46:33  vsnyder
+! Removed USE's for unreferenced symbols
+!
+! Revision 2.14  2003/05/05 23:00:25  livesey
+! Merged in feb03 newfwm branch
+!
+! Revision 2.13.2.3  2003/03/22 02:32:05  vsnyder
+! Polish the basic algorithm, add comp_sps_path
+!
+! Revision 2.13.2.2  2003/03/20 01:42:26  vsnyder
+! Revise Grids_T structure
+!
+! Revision 2.13  2002/11/14 00:52:24  livesey
+! Bug fix, changed arguments to intent(inout) and improved initialization
+! steps. (Nathaniel and Bill worked on this one together).
+!
+! Revision 2.12  2002/10/08 17:08:01  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.11  2002/09/27 20:43:06  livesey
+! Bug fix for 'backwards' bases in get_eta_sparse for eta_f
+!
+! Revision 2.10  2002/09/06 20:58:26  vsnyder
+! Cosmetic changes, copyright notice, move USEs to procedure scope
+!
+! Revision 2.9  2002/08/22 23:13:20  livesey
+! New intermediate frequency based frq_bases
+!
+! Revision 2.8  2002/06/13 22:39:42  bill
+! some variable name changes--wgr
+!
+! Revision 2.7  2002/06/04 10:28:00  zvi
+! rename n_sps to: no_mol, more correctly
+!
+! Revision 2.6  2002/02/16 06:37:34  zvi
+! New code for derivative flags..
+!
+! Revision 2.5  2002/01/09 00:30:48  zvi
+! Fix a bug with skip_eta_frq
+!
+! Revision 2.4  2001/11/15 01:21:58  zvi
+! Extiction debug fix
+!
+! Revision 2.3  2001/11/10 00:45:08  zvi
+! Fixing a bug..
+!
+! Revision 2.2  2001/11/07 09:59:12  zvi
+! More effective code for sps_path calculations
+!
+! Revision 1.0  2001/10/30 14:00:00 zvi Exp $"
+
+@
+
+
+2.37
+log
+@Add old eta sparsity representation to Spread_Eta_FZP_from_Eta_ZP for debugging
+@
+text
+@d573 1
+a573 1
+       "$Id: comp_sps_path_frq_m.f90,v 2.36 2016/11/17 03:13:23 vsnyder Exp $"
+d583 3
+@
+
+
+2.36
+log
+@Repair errors calculating subscripts for Eta_zp in Comp_1_Sps_Path_No_Frq
+@
+text
+@d235 3
+a237 1
+                                        &          eta_fzp, do_calc_fzp )
+d573 1
+a573 1
+       "$Id: comp_sps_path_frq_m.f90,v 2.35 2016/11/17 01:46:45 vsnyder Exp $"
+d583 3
+@
+
+
+2.35
+log
+@Remove feature to calculate without frequency interpolation in the
+routines designed to do it, if Frq < 1.0.  Use the routines that don't
+do frequency interpolation instead.
+@
+text
+@d407 5
+d475 5
+a479 6
+    integer :: f_inda, f_indb
+    integer :: no_mol, n_f
+    integer :: sps_i
+    integer :: v_inda, v_indb
+    integer :: w_inda, w_indb
+    integer :: sv_f, sv_zp
+a485 2
+    f_indb = 0
+    v_indb = 0
+a492 2
+      v_inda = v_indb
+      v_indb = grids_x%l_v(sps_i) ! Index of last one for sps_i
+d499 3
+d503 1
+a503 1
+          & matmul(eta_zp(:,w_inda+1:w_indb), grids_x%values(v_inda+1:v_indb))
+d545 3
+a547 1
+    integer :: v_inda, v_indb, w_inda, w_indb
+d552 7
+a558 5
+    v_indb = grids_x%l_v(the_sps)   ! Index of last one for the_sps
+    w_inda = w_inda + (Grids_x%l_z(the_sps-1) - Grids_x%l_z(the_sps-1-1)) * &
+                      (Grids_x%l_p(the_sps-1) - Grids_x%l_p(the_sps-1-1))
+    w_indb = w_inda + (Grids_x%l_z(the_sps) - Grids_x%l_z(the_sps-1)) * &
+                      (Grids_x%l_p(the_sps) - Grids_x%l_p(the_sps-1))
+d560 1
+d562 1
+a562 1
+      & matmul(eta_zp(:,w_inda+1:w_indb), grids_x%values(v_inda+1:v_indb))
+d571 1
+a571 1
+       "$Id: comp_sps_path_frq_m.f90,v 2.34 2013/06/12 02:24:35 vsnyder Exp $"
+d581 5
+@
+
+
+2.34
+log
+@Cruft removal
+@
+text
+@d23 1
+a23 1
+  private :: not_used_here 
+d30 2
+a31 1
+    & do_calc_zp, sps_path, eta_fzp, do_calc_fzp, lo, sideband )
+d33 1
+a33 1
+! Compute the SPS path
+d35 1
+d46 1
+a46 1
+!             First dimension is same as sps_values.
+d48 1
+a48 1
+!             is a contribution for this state vector element
+d56 1
+a56 1
+!             along the path by species number
+d59 1
+a59 1
+!             First dimension is same as sps_values.
+d61 2
+a62 2
+!             there is a contribution for this state vector element. Same
+!             shape as Eta_Fzp.
+d64 1
+a64 1
+! Optional inputs -- not needed if Frq < 1.0:
+d68 3
+a70 1
+!                         Grids_x%frq_basis is absolute, not I.F.
+d81 1
+a81 1
+    integer(ip) :: v_inda, f_inda, f_indb, w_inda, w_indb
+d85 1
+d89 10
+d116 1
+a116 33
+
+!       if ( frq <= 1.0 .or. n_f == 1 ) then
+      if ( frq <= 1.0 ) then
+        ! frq < 1.0 means we don't want to get interpolation coefficients
+        ! for frequency, i.e., eta_fzp = eta_zp.
+        ! n_f == 1 either means qty%template%frequencyCoordinate == l_none,
+        ! i.e., sps_path is not frequency dependent, or it means there is
+        ! only one frequency for the quantity; in either case, eta_fzp = eta_zp.
+
+! Compute Sps_Path
+        sps_path(:,sps_i) = 0.0_rp
+        v_inda = grids_x%l_v(sps_i-1)
+        ! Grids_X%Values are really 3-d: Frequencies X Zeta X Phi
+        do sv_zp = w_inda + 1, w_indb
+          do sv_f = 1, n_f
+            v_inda = v_inda + 1
+!           where ( do_calc_zp(:,sv_zp) ) ! multiply/add is cheaper than branch
+            eta_fzp(:,v_inda) = eta_zp(:,sv_zp)
+            sps_path(:,sps_i) = sps_path(:,sps_i) +  &
+                             &  grids_x%values(v_inda) * eta_fzp(:,v_inda)
+!             do_calc_fzp(:,v_inda) = Grids_x%deriv_flags(v_inda)
+            do_calc_fzp(:,v_inda) = do_calc_zp(:,sv_zp) .and. Grids_x%deriv_flags(v_inda)
+!           elsewhere
+!             eta_fzp ( :, v_inda ) = 0.0_r8
+!             do_calc_fzp ( :, v_inda ) = .false.
+!           end where
+          end do ! sv_f
+        end do ! sv_zp
+
+        if ( grids_x%lin_log(sps_i)) sps_path(:,sps_i) = EXP(sps_path(:,sps_i))
+
+!       else
+      else if ( n_f /= 1 ) then
+a122 1
+!         else
+d131 1
+a131 1
+! Compute Sps_Path
+d139 1
+a139 1
+!             where ( do_calc_zp(:,sv_zp) )
+a142 1
+!               do_calc_fzp(:,v_inda) = Grids_x%deriv_flags(v_inda)
+a143 4
+!             elsewhere
+!               eta_fzp ( :, v_inda ) = 0.0_r8
+!               do_calc_fzp ( :, v_inda ) = .false.
+!             end where
+d155 2
+a156 3
+        ! Hopefully, Comp_Sps_Path_Frq has already been called with frq
+        ! <= 1.0, and Sps_Path, Eta_Fzp and Do_Calc_Fzp have not been
+        ! clobbered since then.
+d169 1
+a169 1
+    & lo, sideband )
+d173 1
+d202 1
+a202 1
+! Optional inputs -- not needed if Frq < 1.0:
+d205 4
+a208 1
+    integer, intent(in), optional :: Sideband  ! -1 or 1
+d223 1
+d227 10
+d243 1
+a243 1
+    
+d257 1
+a257 28
+      if ( frq <= 1.0 ) then
+
+! Compute Sps_Path
+        sps_path(:,sps_i) = 0.0_rp
+        v_inda = grids_x%l_v(sps_i-1)
+        ! Grids_X%Values are really 3-d: Frequencies X Zeta X Phi
+        do sv_zp = w_inda + 1, w_indb
+          do sv_f = 1, n_f
+            v_inda = v_inda + 1
+            nnz_fzp(v_inda) = nnz_zp(sv_zp)
+            nz_fzp(:nnz_fzp(v_inda),v_inda) = nz_zp(:nnz_zp(sv_zp),sv_zp)
+            eta_fzp(nz_fzp(:nnz_fzp(v_inda),v_inda),v_inda) = &
+              & eta_zp(nz_zp(:nnz_zp(sv_zp),sv_zp),sv_zp)
+            sps_path(nz_fzp(:nnz_fzp(v_inda),v_inda),sps_i) = &
+              & sps_path(nz_fzp(:nnz_fzp(v_inda),v_inda),sps_i) + &
+              & grids_x%values(v_inda) * &
+              & eta_fzp(nz_fzp(:nnz_fzp(v_inda),v_inda),v_inda)
+            do_calc_fzp(nz_fzp(:nnz_fzp(v_inda),v_inda),v_inda) = &
+              & do_calc_zp(nz_zp(:nnz_zp(sv_zp),sv_zp),sv_zp) .and. &
+              & Grids_x%deriv_flags(v_inda)
+          end do ! sv_f
+        end do ! sv_zp
+
+        if ( grids_x%lin_log(sps_i)) sps_path(:,sps_i) = EXP(sps_path(:,sps_i))
+
+      ! n_f == 1 means qty%template%frequencyCoordinate == l_none, i.e.,
+      ! sps_path is not frequency dependent.
+      else if ( n_f /= 1 ) then
+d268 2
+a269 1
+! Compute Sps_Path
+a362 31
+    if ( frq <= 1.0 .or. n_f == 1 ) then
+      ! frq < 1.0 means we don't want to get interpolation coefficients
+      ! for frequency, i.e., eta_fzp = eta_zp.
+      ! n_f == 1 either means qty%template%frequencyCoordinate == l_none,
+      ! i.e., path_qty is not frequency dependent, or it means there is
+      ! only one frequency for the quantity; in either case, eta_fzp = eta_zp.
+
+! Compute path_qty
+      path_qty = 0.0_rp                                                         
+      v_inda = grids_x%l_v(1-1)                                                      
+      ! Grids_X%Values are really 3-d: Frequencies X Zeta X Phi                          
+      do sv_zp = 1, w_indb                                                      
+        do sv_f = 1, n_f                                                                 
+          v_inda = v_inda + 1                                                            
+!         where ( do_calc_zp(:,sv_zp) ) ! multiply/add is cheaper than branch            
+          eta_fzp(:,v_inda) = eta_zp(:,sv_zp)                                            
+          path_qty = path_qty +  &                                     
+                           &  grids_x%values(v_inda) * eta_fzp(:,v_inda)                 
+!           do_calc_fzp(:,v_inda) = Grids_x%deriv_flags(v_inda)                          
+          do_calc_fzp(:,v_inda) = do_calc_zp(:,sv_zp) .and. Grids_x%deriv_flags(v_inda)  
+!         elsewhere                                                                      
+!           eta_fzp ( :, v_inda ) = 0.0_r8                                               
+!           do_calc_fzp ( :, v_inda ) = .false.                                          
+!         end where                                                                      
+        end do ! sv_f                                                                    
+      end do ! sv_zp                                                                     
+
+      if ( grids_x%lin_log(1)) path_qty = EXP(path_qty)                                       
+
+    else
+
+d364 11
+a374 11
+      if ( sideband == -1 ) then
+        call get_eta_sparse ( lo-Grids_x%frq_basis(n_f:1:-1), &
+          & Frq, eta_f(n_f:1:-1), not_zero_f(n_f:1:-1) )
+      else if ( sideband == +1 ) then
+        call get_eta_sparse ( lo+Grids_x%frq_basis(1:n_f), &
+          & Frq, eta_f(1:n_f), not_zero_f(1:n_f) )
+      else ! sideband == 0 means Grids_x%frq_basis is absolute, not in I.F.
+           ! It doesn't mean folded-sideband calculation.
+        call get_eta_sparse ( Grids_x%frq_basis(1:n_f), &
+          & Frq, eta_f(1:n_f), not_zero_f(1:n_f) )
+      end if
+d377 17
+a393 25
+      path_qty = 0.0_rp                                                           
+      v_inda = grids_x%l_v(1-1)                                                        
+      ! Grids_X%Values are really 3-d: Frequencies X Zeta X Phi                            
+      do sv_zp = 1, w_indb                                                        
+        do sv_f = 1, n_f                                                                   
+          v_inda = v_inda + 1                                                              
+          if ( not_zero_f(sv_f) ) then                                                     
+!           where ( do_calc_zp(:,sv_zp) )                                                  
+            eta_fzp(:,v_inda) = eta_f(sv_f) * eta_zp(:,sv_zp)                              
+            path_qty = path_qty +  &                                     
+                             &  grids_x%values(v_inda) * eta_fzp(:,v_inda)                 
+!             do_calc_fzp(:,v_inda) = Grids_x%deriv_flags(v_inda)                          
+            do_calc_fzp(:,v_inda) = do_calc_zp(:,sv_zp) .and. Grids_x%deriv_flags(v_inda)  
+!           elsewhere                                                                      
+!             eta_fzp ( :, v_inda ) = 0.0_r8                                               
+!             do_calc_fzp ( :, v_inda ) = .false.                                          
+!           end where                                                                      
+          else                                                                             
+            eta_fzp ( :, v_inda ) = 0.0_r8                                                 
+            do_calc_fzp ( :, v_inda ) = .false.                                            
+          end if                                                                           
+        end do ! sv_f                                                                      
+      end do ! sv_zp                                                                       
+
+      if ( grids_x%lin_log(1)) path_qty = EXP(path_qty)              
+d395 1
+a395 1
+    end if                                                                                 
+d473 1
+a473 1
+    integer :: v_inda !, v_indb
+d481 4
+a484 3
+    f_inda = 0
+    w_inda = 0
+
+d487 1
+a487 2
+      f_indb = grids_x%l_f(sps_i)
+      n_f = f_indb - f_inda
+d489 5
+d497 4
+a500 11
+        v_inda = grids_x%l_v(sps_i-1)
+        ! Grids_X%Values are really 3-d: Frequencies X Zeta X Phi
+        do sv_zp = w_inda + 1, w_indb
+          do sv_f = 1, n_f
+            v_inda = v_inda + 1
+            sps_path(:,sps_i) = sps_path(:,sps_i) +  &
+                             &  grids_x%values(v_inda) * eta_zp(:,v_inda)
+          end do ! sv_f
+        end do ! sv_zp
+
+        if ( grids_x%lin_log(sps_i)) sps_path(:,sps_i) = EXP(sps_path(:,sps_i))
+d502 1
+d504 1
+a504 18
+!     f_indb = 0
+!     v_indb = 0 ! = grids_x%l_v(0) ! Index of last one for species 0
+!     do sps_i = 1, no_mol
+!
+!       ! Compute Sps_Path only for sps that don't depend on frequency
+!       f_inda = f_indb
+!       f_indb = grids_x%l_f(sps_i) ! Index of last one for sps_i
+!       v_inda = v_indb
+!       v_indb = grids_x%l_v(sps_i) ! Index of last one for sps_i
+!       if ( f_indb-f_inda == 1 ) then
+!         sps_path(:,sps_i) = &
+!           & matmul(eta_zp(:,v_inda+1:v_indb), grids_x%values(v_inda+1:v_indb))
+!
+!         if ( grids_x%lin_log(sps_i)) sps_path(:,sps_i) = exp(sps_path(:,sps_i))
+!       end if
+
+      f_inda = f_indb
+      w_inda = w_indb
+d542 1
+a542 1
+    integer :: v_inda, v_indb
+d548 5
+d554 1
+a554 1
+      & matmul(eta_zp(:,v_inda+1:v_indb), grids_x%values(v_inda+1:v_indb))
+d563 1
+a563 1
+       "$Id: comp_sps_path_frq_m.f90,v 2.33 2013/05/18 00:34:44 vsnyder Exp $"
+d573 3
+@
+
+
+2.33
+log
+@Insert NG fine-grid (GL) points between tangent points, thereby
+regularizing coarse-grid spacing, and reducing significantly the need
+to use c_inds to extract coarse-grid points from the composite grid.
+@
+text
+@a34 1
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
+a344 1
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
+d547 1
+a547 1
+    integer :: v_inda, v_indb
+d650 1
+a650 1
+       "$Id: comp_sps_path_frq_m.f90,v 2.32 2011/08/20 00:44:58 vsnyder Exp $"
+d660 5
+@
+
+
+2.32
+log
+@Remove declarations for unused variables
+@
+text
+@d131 1
+a131 5
+        if ( grids_x%lin_log(sps_i)) then
+          if ( any(sps_path(:,sps_i) == 0.0) ) call MLSMessage ( MLSMSG_Warning, &
+            & moduleName, 'For log-lin species, log(sps_path) = 0.0 somewhere' )
+          sps_path(:,sps_i) = EXP(sps_path(:,sps_i))
+        end if
+d427 1
+a427 5
+      if ( grids_x%lin_log(1)) then                                                  
+        if ( any(path_qty == 0.0) ) call MLSMessage ( MLSMSG_Warning, &         
+          & moduleName, 'For log-lin species, log(path_qty) = 0.0 somewhere' )           
+        path_qty = EXP(path_qty)                                       
+      end if                                                                             
+d652 1
+a652 1
+       "$Id: comp_sps_path_frq_m.f90,v 2.31 2011/08/12 18:57:06 vsnyder Exp $"
+d662 3
+@
+
+
+2.31
+log
+@Change Do_Calc_Fzp back to non-optional.  The only place where it wasn't
+used, it was actually needed.  Undo ill-advised change to evaluate the
+outputs when frq>1 and n_f==1.  The outputs were evaluated when frq<=1,
+when Comp_Sps_Path was called from outside the frequency loop.  Doing it
+again increases run time substantially, for no benefit.  Comments have
+been added to this effect.
+@
+text
+@d386 2
+a387 2
+    integer(ip) :: n_f, no_mol
+    integer(ip) :: sps_i, sv_zp, sv_f
+d660 1
+a660 1
+       "$Id: comp_sps_path_frq_m.f90,v 2.30 2011/07/29 01:56:15 vsnyder Exp $"
+d670 8
+@
+
+
+2.30
+log
+@Make do_calc_fzp optional
+@
+text
+@d51 3
+d59 1
+a59 1
+    logical, intent(inout), optional :: Do_Calc_Fzp(:,:) ! indicates whether
+d88 1
+a88 1
+      if ( present(do_calc_fzp) ) do_calc_fzp = .FALSE.
+d103 2
+a104 1
+      if ( frq <= 1.0 .or. n_f == 1 ) then
+d115 15
+a129 26
+        if ( present(do_calc_fzp) ) then
+          do sv_zp = w_inda + 1, w_indb
+            do sv_f = 1, n_f
+              v_inda = v_inda + 1
+!             where ( do_calc_zp(:,sv_zp) ) ! multiply/add is cheaper than branch
+              eta_fzp(:,v_inda) = eta_zp(:,sv_zp)
+              sps_path(:,sps_i) = sps_path(:,sps_i) +  &
+                               &  grids_x%values(v_inda) * eta_fzp(:,v_inda)
+!               do_calc_fzp(:,v_inda) = Grids_x%deriv_flags(v_inda)
+              do_calc_fzp(:,v_inda) = do_calc_zp(:,sv_zp) .and. Grids_x%deriv_flags(v_inda)
+!             elsewhere
+!               eta_fzp ( :, v_inda ) = 0.0_r8
+!               do_calc_fzp ( :, v_inda ) = .false.
+!             end where
+            end do ! sv_f
+          end do ! sv_zp
+        else
+          do sv_zp = w_inda + 1, w_indb
+            do sv_f = 1, n_f
+              v_inda = v_inda + 1
+              eta_fzp(:,v_inda) = eta_zp(:,sv_zp)
+              sps_path(:,sps_i) = sps_path(:,sps_i) +  &
+                               &  grids_x%values(v_inda) * eta_fzp(:,v_inda)
+            end do ! sv_f
+          end do ! sv_zp
+        end if
+d137 2
+a138 1
+      else
+d145 1
+d158 20
+a177 33
+        if ( present(do_calc_fzp) ) then
+          do sv_zp = w_inda + 1, w_indb
+            do sv_f = 1, n_f
+              v_inda = v_inda + 1
+              if ( not_zero_f(sv_f) ) then
+!               where ( do_calc_zp(:,sv_zp) )
+                eta_fzp(:,v_inda) = eta_f(sv_f) * eta_zp(:,sv_zp)
+                sps_path(:,sps_i) = sps_path(:,sps_i) +  &
+                                 &  grids_x%values(v_inda) * eta_fzp(:,v_inda)
+!                 do_calc_fzp(:,v_inda) = Grids_x%deriv_flags(v_inda)
+                do_calc_fzp(:,v_inda) = do_calc_zp(:,sv_zp) .and. Grids_x%deriv_flags(v_inda)
+!               elsewhere
+!                 eta_fzp ( :, v_inda ) = 0.0_r8
+!                 do_calc_fzp ( :, v_inda ) = .false.
+!               end where
+              else
+                eta_fzp ( :, v_inda ) = 0.0_r8
+                do_calc_fzp ( :, v_inda ) = .false.
+              end if
+            end do ! sv_f
+          end do ! sv_zp
+        else
+          do sv_zp = w_inda + 1, w_indb
+            do sv_f = 1, n_f
+              v_inda = v_inda + 1
+              if ( not_zero_f(sv_f) ) then
+                eta_fzp(:,v_inda) = eta_f(sv_f) * eta_zp(:,sv_zp)
+                sps_path(:,sps_i) = sps_path(:,sps_i) +  &
+                                 &  grids_x%values(v_inda) * eta_fzp(:,v_inda)
+              end if
+            end do ! sv_f
+          end do ! sv_zp
+        end if
+d181 5
+d660 1
+a660 1
+       "$Id: comp_sps_path_frq_m.f90,v 2.29 2010/09/25 01:11:20 vsnyder Exp $"
+d670 3
+@
+
+
+2.29
+log
+@Interpret sideband==0 in Comp_Sps_Path_Frq, add Comp_One_Path_Frq
+@
+text
+@d30 1
+a30 1
+    & do_calc_zp, sps_path, do_calc_fzp, eta_fzp, lo, sideband )
+d45 1
+a45 1
+!                         First dimension is same as sps_values.
+d47 1
+a47 1
+!                         is a contribution for this state vector element
+d52 2
+a53 4
+!                         along the path by species number
+    logical, intent(inout) :: Do_Calc_Fzp(:,:) ! indicates whether there
+!                         is a contribution for this state vector element.
+!                         Same shape as Eta_Fzp.
+d55 4
+a58 1
+!                         First dimension is same as sps_values.
+d85 1
+a85 1
+      do_calc_fzp = .FALSE.
+d111 26
+a136 15
+        do sv_zp = w_inda + 1, w_indb
+          do sv_f = 1, n_f
+            v_inda = v_inda + 1
+!           where ( do_calc_zp(:,sv_zp) ) ! multiply/add is cheaper than branch
+            eta_fzp(:,v_inda) = eta_zp(:,sv_zp)
+            sps_path(:,sps_i) = sps_path(:,sps_i) +  &
+                             &  grids_x%values(v_inda) * eta_fzp(:,v_inda)
+!             do_calc_fzp(:,v_inda) = Grids_x%deriv_flags(v_inda)
+            do_calc_fzp(:,v_inda) = do_calc_zp(:,sv_zp) .and. Grids_x%deriv_flags(v_inda)
+!           elsewhere
+!             eta_fzp ( :, v_inda ) = 0.0_r8
+!             do_calc_fzp ( :, v_inda ) = .false.
+!           end where
+          end do ! sv_f
+        end do ! sv_zp
+d163 33
+a195 20
+        do sv_zp = w_inda + 1, w_indb
+          do sv_f = 1, n_f
+            v_inda = v_inda + 1
+            if ( not_zero_f(sv_f) ) then
+!             where ( do_calc_zp(:,sv_zp) )
+              eta_fzp(:,v_inda) = eta_f(sv_f) * eta_zp(:,sv_zp)
+              sps_path(:,sps_i) = sps_path(:,sps_i) +  &
+                               &  grids_x%values(v_inda) * eta_fzp(:,v_inda)
+!               do_calc_fzp(:,v_inda) = Grids_x%deriv_flags(v_inda)
+              do_calc_fzp(:,v_inda) = do_calc_zp(:,sv_zp) .and. Grids_x%deriv_flags(v_inda)
+!             elsewhere
+!               eta_fzp ( :, v_inda ) = 0.0_r8
+!               do_calc_fzp ( :, v_inda ) = .false.
+!             end where
+            else
+              eta_fzp ( :, v_inda ) = 0.0_r8
+              do_calc_fzp ( :, v_inda ) = .false.
+            end if
+          end do ! sv_f
+        end do ! sv_zp
+d673 1
+a673 1
+       "$Id: comp_sps_path_frq_m.f90,v 2.28 2009/06/23 18:26:10 pwagner Exp $"
+d683 3
+@
+
+
+2.28
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d18 1
+a18 1
+  public :: Comp_Sps_Path_No_Frq, Comp_1_Sps_Path_No_Frq
+d22 1
+a22 1
+       "$RCSfile: $"
+d62 2
+a63 1
+    integer, intent(in), optional :: Sideband  ! -1 or 1
+d99 6
+a104 1
+      if ( frq <= 1.0 ) then
+d132 1
+a132 3
+      ! n_f == 1 means qty%template%frequencyCoordinate == l_none, i.e.,
+      ! sps_path is not frequency dependent.
+      else if ( n_f /= 1 ) then
+d138 1
+a138 1
+        else
+d141 4
+d331 140
+d648 1
+a648 1
+       "$Id: read_apriori.f90 is it here $"
+d658 3
+@
+
+
+2.27
+log
+@Give warning in log-lin case if log(some mixing ratio) is zero
+@
+text
+@d22 2
+a23 2
+       "$RCSfile: comp_sps_path_frq_m.f90,v $"
+  private :: not_used_here
+d497 1
+a498 1
+!---------------------------- RCS Ident Info -------------------------------
+d500 2
+a501 3
+       "$Id: comp_sps_path_frq_m.f90,v 2.26 2007/06/26 00:38:17 vsnyder Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d503 1
+a503 1
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
+d505 1
+d510 3
+@
+
+
+2.26
+log
+@Separate frq>1 and frq<1 cases
+@
+text
+@d25 2
+a26 2
+ contains
+!-----------------------------------------------------------------
+d35 1
+d107 1
+a107 1
+!           where ( do_calc_zp(:,sv_zp) )
+d120 5
+a124 1
+        if ( grids_x%lin_log(sps_i)) sps_path(:,sps_i) = EXP(sps_path(:,sps_i))
+d500 1
+a500 1
+       "$Id: comp_sps_path_frq_m.f90,v 2.25 2007/06/06 01:13:52 vsnyder Exp $"
+d504 1
+d510 3
+@
+
+
+2.25
+log
+@Use 1-d eta routine
+@
+text
+@d17 2
+a18 2
+  public :: Comp_Sps_Path_Frq, Comp_Sps_Path, Comp_Sps_Path_No_Frq
+  public :: Comp_1_Sps_Path_No_Frq
+d23 1
+a23 1
+  private :: not_used_here 
+d29 2
+a30 2
+  subroutine Comp_Sps_Path_Frq ( Grids_x, lo, sideband, Frq, eta_zp, &
+    & do_calc_zp, sps_path, do_calc_fzp, eta_fzp )
+a40 2
+    real(r8), intent(in) :: LO             ! Local oscillator freq
+    integer, intent(in) :: Sideband        ! -1 or 1
+d58 5
+a83 6
+      not_zero_f = .TRUE.
+      sps_path = 0.0_rp
+    else
+      do sps_i = 1, no_mol
+        if ( grids_x%l_f(sps_i) - grids_x%l_f(sps_i-1) > 1 ) sps_path(:,sps_i) = 0.0_rp
+      end do
+d97 24
+d123 1
+a123 4
+      if ( frq <= 1.0 .or. n_f /= 1 ) then
+
+! There are two ways to do this (slow and easy vs quick but difficult)
+! For ease lets do the slow and easy (and certainly more reliable)
+d126 3
+a128 8
+        if ( frq > 1.0_rp ) then
+          if ( sideband == -1 ) then
+            call get_eta_sparse ( lo-Grids_x%frq_basis(f_indb:f_inda+1:-1), &
+              & Frq, eta_f(n_f:1:-1), not_zero_f(n_f:1:-1) )
+          else
+            call get_eta_sparse ( lo+Grids_x%frq_basis(f_inda+1:f_indb), &
+              & Frq, eta_f(1:n_f), not_zero_f(1:n_f) )
+          end if
+d130 2
+a131 1
+          eta_f(1) = 1.0
+d135 1
+d142 10
+a151 10
+!               where ( do_calc_zp(:,sv_zp) )
+                eta_fzp(:,v_inda) = eta_f(sv_f) * eta_zp(:,sv_zp)
+                sps_path(:,sps_i) = sps_path(:,sps_i) +  &
+                                 &  grids_x%values(v_inda) * eta_fzp(:,v_inda)
+!                 do_calc_fzp(:,v_inda) = Grids_x%deriv_flags(v_inda)
+                do_calc_fzp(:,v_inda) = do_calc_zp(:,sv_zp) .and. Grids_x%deriv_flags(v_inda)
+!               elsewhere
+!                 eta_fzp ( :, v_inda ) = 0.0_r8
+!                 do_calc_fzp ( :, v_inda ) = .false.
+!               end where
+d170 148
+d390 1
+a390 1
+    integer :: no_mol
+d393 2
+d400 3
+a402 2
+    f_indb = 0
+    v_indb = 0 ! = grids_x%l_v(0) ! Index of last one for species 0
+d405 35
+a439 1
+      ! Compute Sps_Path only for sps that don't depend on frequency
+d441 1
+a441 10
+      f_indb = grids_x%l_f(sps_i) ! Index of last one for sps_i
+      v_inda = v_indb
+      v_indb = grids_x%l_v(sps_i) ! Index of last one for sps_i
+      if ( f_indb-f_inda == 1 ) then
+        sps_path(:,sps_i) = &
+          & matmul(eta_zp(:,v_inda+1:v_indb), grids_x%values(v_inda+1:v_indb))
+
+        if ( grids_x%lin_log(sps_i)) &
+          & sps_path(:,sps_i) = exp(sps_path(:,sps_i))
+      end if
+d495 1
+a495 1
+       "$Id: comp_sps_path_frq_m.f90,v 2.24 2007/01/19 02:37:30 vsnyder Exp $"
+d504 3
+@
+
+
+2.24
+log
+@In Comp_Sps_Path_No_Frq compute only for species that have no freq coordinate
+@
+text
+@d71 2
+a72 2
+    real(rp) :: eta_f(1:1,1:maxval(grids_x%l_f(1:)-grids_x%l_f(0:ubound(grids_x%l_f,1)-1)))
+    logical :: not_zero_f(1:1,1:maxval(grids_x%l_f(1:)-grids_x%l_f(0:ubound(grids_x%l_f,1)-1)))
+d111 1
+a111 1
+              & (/Frq/), eta_f(1:1,n_f:1:-1), not_zero_f(1:1,n_f:1:-1) )
+d114 1
+a114 1
+              & (/Frq/), eta_f(1:1,1:n_f), not_zero_f(1:1,1:n_f) )
+d117 1
+a117 1
+          eta_f(1,1) = 1.0
+d126 3
+a128 3
+            if ( not_zero_f(1,sv_f) ) then
+              where ( do_calc_zp(:,sv_zp) )
+                eta_fzp(:,v_inda) = eta_f(1,sv_f) * eta_zp(:,sv_zp)
+d131 6
+a136 5
+                do_calc_fzp(:,v_inda) = Grids_x%deriv_flags(v_inda)
+              elsewhere
+                eta_fzp ( :, v_inda ) = 0.0_r8
+                do_calc_fzp ( :, v_inda ) = .false.
+              end where
+d304 1
+a304 1
+       "$Id: comp_sps_path_frq_m.f90,v 2.23 2005/12/22 20:51:46 vsnyder Exp $"
+d313 3
+@
+
+
+2.23
+log
+@Added Comp_1_Sps_Path_No_Frq
+@
+text
+@a79 1
+      eta_f = 1.0_rp
+d116 2
+d201 2
+a202 1
+! Compute the SPS path for species that don't use frequency
+d225 1
+d234 1
+d238 3
+a240 1
+      ! Compute Sps_Path
+d243 3
+a245 2
+      sps_path(:,sps_i) = &
+        & matmul(eta_zp(:,v_inda+1:v_indb), grids_x%values(v_inda+1:v_indb))
+d247 3
+a249 2
+      if ( grids_x%lin_log(sps_i)) &
+        & sps_path(:,sps_i) = exp(sps_path(:,sps_i))
+d303 1
+a303 1
+       "$Id: comp_sps_path_frq_m.f90,v 2.22 2005/09/16 23:41:19 vsnyder Exp $"
+d312 3
+@
+
+
+2.22
+log
+@Cannonball polishing
+@
+text
+@d18 1
+d168 2
+a169 2
+    real(rp), intent(in) :: Eta_zp(:,:)    ! Eta_z x Eta_phi for each path
+!                         element and (ZxP). First dimension is same as sps_path.
+d181 2
+a182 2
+    v_inda = grids_x%l_v(sps_i-1)              ! One before first value
+    v_indb = grids_x%l_v(sps_i)                ! Last value
+d198 1
+a198 1
+  subroutine Comp_Sps_Path_No_Frq ( Grids_x, eta_zp, sps_path )
+d202 1
+a202 1
+    use MLSCommon, only: RP, IP
+d208 2
+a209 2
+    real(rp), intent(in) :: Eta_zp(:,:)    ! Path X (Eta_z x Eta_phi)
+!                         First dimension is same as sps_values.
+d223 3
+a225 3
+    integer(ip) :: no_mol
+    integer(ip) :: sps_i, sv_zp
+    integer(ip) :: v_inda, w_inda, w_indb
+d231 11
+a241 1
+    sps_path = 0.0_rp
+d243 28
+a270 1
+    w_inda = 0
+d272 4
+a275 1
+    do sps_i = 1, no_mol
+d277 1
+a277 2
+      w_indb = w_inda + (Grids_x%l_z(sps_i) - Grids_x%l_z(sps_i-1)) * &
+                        (Grids_x%l_p(sps_i) - Grids_x%l_p(sps_i-1))
+d279 1
+a279 8
+      ! Compute Sps_Path
+      v_inda = grids_x%l_v(sps_i-1)
+      ! Grids_X%Values are really 3-d: Frequencies (1 here) X Zeta X Phi
+      do sv_zp = w_inda + 1, w_indb
+        v_inda = v_inda + 1
+        sps_path(:,sps_i) = sps_path(:,sps_i) +  &
+                         &  grids_x%values(v_inda) * eta_zp(:,v_inda)
+      end do ! sv_zp
+d281 1
+a281 1
+      if ( grids_x%lin_log(sps_i)) sps_path(:,sps_i) = EXP(sps_path(:,sps_i))
+d283 4
+a286 1
+      w_inda = w_indb
+d288 1
+a288 1
+    end do
+d290 1
+a290 1
+  end subroutine Comp_Sps_Path_No_Frq
+d295 1
+a295 1
+       "$Id: comp_sps_path_frq_m.f90,v 2.21 2005/08/03 18:04:09 vsnyder Exp $"
+d304 3
+@
+
+
+2.21
+log
+@Some spectroscopy derivative stuff
+@
+text
+@d201 1
+a201 2
+    use MLSCommon, only: RP, IP, R8
+    use Get_Eta_Matrix_m, only: Get_Eta_Sparse
+d224 1
+a224 1
+    integer(ip) :: v_inda, f_inda, w_inda, w_indb
+d259 1
+a259 1
+       "$Id: comp_sps_path_frq_m.f90,v 2.20 2005/06/22 18:08:18 pwagner Exp $"
+d268 3
+@
+
+
+2.20
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d17 1
+a17 1
+  public :: Comp_Sps_Path_Frq, Comp_Sps_Path
+d21 1
+a21 1
+       "$RCSfile: $"
+d29 1
+a29 1
+    & do_calc_zp, sps_path, do_calc_fzp, eta_fzp, DoPFA )
+a58 4
+! Optional:
+
+    logical, intent(in), optional :: DoPFA ! Doing PFA, default false.
+
+a65 1
+    logical :: MyPFA
+a74 3
+    myPFA = .false.
+    if ( present(doPFA) ) myPFA = doPFA
+
+a75 3
+    if ( myPFA ) then
+    else
+    end if
+d196 61
+d260 1
+a260 1
+       "$Id: $"
+d269 3
+@
+
+
+2.19
+log
+@Reorganization of representation for molecules and beta groups; PFA broken for now
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d19 3
+a21 6
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+    & "$Id: comp_sps_path_frq_m.f90,v 2.18 2004/08/03 21:59:49 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName= &
+    & "$RCSfile: comp_sps_path_frq_m.f90,v $"
+d23 1
+a23 1
+!-----------------------------------------------------------------
+d208 5
+d219 3
+@
+
+
+2.18
+log
+@Inching further toward PFA
+@
+text
+@d13 1
+a13 1
+    & "$Id: comp_sps_path_frq_m.f90,v 2.17 2004/07/08 21:00:23 vsnyder Exp $"
+d66 1
+a66 1
+    integer(ip) :: mol_1, mol_n, n_f, no_mol
+a79 2
+      mol_1 = grids_x%lastNonPFA + 1
+      mol_n = no_mol
+a80 2
+      mol_1 = 1
+      mol_n = grids_x%lastNonPFA 
+d90 1
+a90 1
+      do sps_i = mol_1, mol_n
+d98 1
+a98 1
+    do sps_i = 1, mol_n ! begins at 1 instead of mol_1 to get w_ind[ab] right
+d108 1
+a108 2
+      if ( (frq <= 1.0 .or. n_f /= 1) .and. &
+        &  ( (sps_i > grids_x%lastNonPFA) .eqv. myPFA) ) then
+d209 3
+@
+
+
+2.17
+log
+@Inching toward PFA
+@
+text
+@d13 1
+a13 1
+    & "$Id: comp_sps_path_frq_m.f90,v 2.16 2003/07/08 02:01:31 vsnyder Exp $"
+d66 2
+a67 2
+    integer(ip) :: n_f
+    integer(ip) :: sps_i, no_mol, sv_zp, sv_f
+d78 8
+a85 1
+    no_mol = grids_x%lastNonPFA
+d94 1
+a94 1
+      do sps_i = 1, no_mol
+d102 1
+a102 1
+    do sps_i = 1, no_mol
+d121 1
+a121 1
+            call get_eta_sparse ( lo+sideband*Grids_x%frq_basis(f_indb:f_inda+1:-1), &
+d124 1
+a124 1
+            call get_eta_sparse ( lo+sideband*Grids_x%frq_basis(f_inda+1:f_indb), &
+d214 3
+@
+
+
+2.16
+log
+@Speed up a tad by storing zero in ELSE instead of everywhere
+@
+text
+@d13 1
+a13 1
+    & "$Id: comp_sps_path_frq_m.f90,v 2.15 2003/05/16 02:46:33 vsnyder Exp $"
+d24 1
+a24 1
+    & do_calc_zp, sps_path, do_calc_fzp, eta_fzp )
+a47 2
+    real(rp), intent(inout) :: Eta_Fzp(:,:)  ! Path X (Eta_f x Eta_z x Eta_phi)
+!                         First dimension is same as sps_values.
+d51 7
+d65 2
+a66 1
+    integer(ip) :: n_zp, n_f
+d75 4
+a78 1
+    no_mol = ubound(Grids_x%l_z,1)
+d100 2
+a101 2
+      n_zp = (Grids_x%l_z(sps_i) - Grids_x%l_z(sps_i-1)) * &
+             (Grids_x%l_p(sps_i) - Grids_x%l_p(sps_i-1))
+d103 4
+a106 3
+      w_indb = w_inda + n_zp
+
+      if ( (frq <= 1.0) .or. n_f /= 1 ) then
+d207 3
+@
+
+
+2.15
+log
+@Removed USE's for unreferenced symbols
+@
+text
+@d13 1
+a13 1
+    & "$Id: comp_sps_path_frq_m.f90,v 2.14 2003/05/05 23:00:25 livesey Exp $"
+d29 1
+a29 1
+    use get_eta_matrix_m, only: Get_Eta_Sparse
+d39 3
+a41 3
+    real(rp), intent(in) :: Eta_zp(:,:)    ! Eta_z x Eta_phi for each state
+!                         vector element. First dimension is same as sps_values.
+    logical, intent(in) :: Do_Calc_Zp(:,:) !logical indicating whether there
+d46 4
+a49 5
+    real(rp), intent(inout) :: Sps_Path(:,:) ! vmr values along the path
+!                         by species number
+    real(rp), intent(inout) :: Eta_Fzp(:,:)  ! Eta_f x Eta_z x Eta_phi for each
+!                         state vector element. First dimension is same as
+!                         sps_values.
+a117 2
+            eta_fzp ( :, v_inda ) = 0.0_r8
+            do_calc_fzp ( :, v_inda ) = .false.
+d124 3
+d128 3
+d197 3
+@
+
+
+2.14
+log
+@Merged in feb03 newfwm branch
+@
+text
+@d13 1
+a13 1
+    & "$Id$"
+d16 1
+a16 1
+    & "$RCSfile$"
+d151 1
+a151 1
+    use MLSCommon, only: RP, IP, R8
+d193 4
+a196 1
+! $Log$
+@
+
+
+2.13
+log
+@Bug fix, changed arguments to intent(inout) and improved initialization
+steps. (Nathaniel and Bill worked on this one together).
+@
+text
+@d9 1
+a9 1
+  public :: comp_sps_path_frq
+d13 1
+a13 1
+    & "$Id: comp_sps_path_frq_m.f90,v 2.12 2002/10/08 17:08:01 pwagner Exp $"
+d16 1
+a16 1
+    & "$RCSfile: comp_sps_path_frq_m.f90,v $"
+a30 3
+    use Dump_0, only: Dump
+
+    use output_m, only: Output
+d35 2
+a36 2
+    real(r8), intent(in) :: LO            ! Local oscillator freq
+    integer, intent(in) :: Sideband       ! -1 or 1
+d39 2
+a40 2
+    real(rp), intent(in) :: Eta_zp(:,:) ! Eta_z x Eta_phi for each state
+!                         vector element. This is the same length as sps_values.
+d42 1
+a42 1
+!                        is a contribution for this state vector element
+d47 4
+a50 4
+!                          by species number
+    real(rp), intent(inout) :: Eta_Fzp(:,:) ! Eta_z x Eta_phi x Eta_f for each
+!                          state vector element. This is the same length as
+!                          sps_values.
+d52 2
+a53 2
+!                         is a contribution for this state vector element
+!                         This is the same length as sps_values.
+d61 3
+a63 3
+    integer(ip) :: n_zp, n_f, nfzp, f_len
+    integer(ip) :: sps_i, no_mol, sv_i, sv_zp, sv_f, sv_j
+    integer(ip) :: v_inda, v_indb, f_inda, f_indb, w_inda, w_indb
+d65 2
+a66 2
+    real(rp) :: eta_f(1:1,1:maxval(grids_x%no_f))
+    logical :: not_zero_f(1:1,1:maxval(grids_x%no_f))
+d70 1
+a70 1
+    no_mol = SIZE(Grids_x%no_z)
+d72 3
+a74 1
+    if ( frq < 1.0_r8 ) then
+d76 1
+a77 1
+      do_calc_fzp = .FALSE.
+d80 1
+a80 1
+        if ( grids_x%no_f(sps_i) > 1 ) sps_path(:,sps_i) = 0.0_rp
+d84 2
+a85 4
+    f_len = 0
+    f_inda = 1
+    v_inda = 1
+    w_inda = 1
+d89 5
+a93 3
+      n_f = Grids_x%no_f(sps_i)
+      n_zp = Grids_x%no_z(sps_i) * Grids_x%no_p(sps_i)
+      nfzp = n_f * n_zp
+a94 2
+      f_indb = f_inda + n_f
+      v_indb = v_inda + nfzp
+d97 1
+a97 3
+      if ( (frq > 1.0) .AND. grids_x%no_f(sps_i) == 1 ) then
+        f_len = f_len + nfzp
+      else
+d102 9
+a110 7
+! Compute eta:
+        if ( sideband == -1 ) then
+          call get_eta_sparse ( lo+sideband*Grids_x%frq_basis(f_indb-1:f_inda:-1), &
+            & (/Frq/), eta_f(1:1,n_f:1:-1), not_zero_f(1:1,n_f:1:-1) )
+        else
+          call get_eta_sparse ( lo+sideband*Grids_x%frq_basis(f_inda:f_indb-1), &
+            & (/Frq/), eta_f(1:1,1:n_f), not_zero_f(1:1,1:n_f) )
+d113 15
+a127 15
+        do sv_i = 0 , nfzp - 1
+          f_len = f_len + 1
+          sv_j = v_inda + sv_i
+          sv_f = 1 + MODULO(sv_i,n_f)
+          sv_zp = w_inda + sv_i / n_f
+          eta_fzp ( :, sv_j ) = 0.0_r8
+          do_calc_fzp ( :, sv_j ) = .false.
+          if ( not_zero_f(1,sv_f) ) then
+            where ( do_calc_zp(:,sv_zp) )
+              eta_fzp(:,sv_j) = eta_f(1,sv_f) * eta_zp(:,sv_zp)
+              sps_path(:,sps_i) = sps_path(:,sps_i) +  &
+                               &  grids_x%values(sv_j) * eta_fzp(:,sv_j)
+            end where
+            if ( Grids_x%deriv_flags(f_len) ) then
+              where ( do_calc_zp(:,sv_zp) ) do_calc_fzp(:,sv_j) = .TRUE.
+d129 2
+a130 2
+          end if
+        end do
+a136 1
+      v_inda = v_indb
+d143 44
+d193 11
+a203 1
+! $Log: comp_sps_path_frq_m.f90,v $
+@
+
+
+2.13.2.1
+log
+@Remove unused USE entities
+@
+text
+@d13 1
+a13 1
+    & "$Id: comp_sps_path_frq_m.f90,v 2.13 2002/11/14 00:52:24 livesey Exp $"
+d31 3
+a153 4
+! Revision 2.13  2002/11/14 00:52:24  livesey
+! Bug fix, changed arguments to intent(inout) and improved initialization
+! steps. (Nathaniel and Bill worked on this one together).
+!
+@
+
+
+2.13.2.2
+log
+@Revise Grids_T structure
+@
+text
+@d65 2
+a66 2
+    real(rp) :: eta_f(1:1,1:grids_x%l_f(ubound(grids_x%l_f,1)))
+    logical :: not_zero_f(1:1,1:grids_x%l_f(ubound(grids_x%l_f,1)))
+d70 1
+a70 1
+    no_mol = ubound(Grids_x%l_z,1)
+d78 1
+a78 1
+        if ( grids_x%l_f(sps_i) - grids_x%l_f(sps_i-1) > 1 ) sps_path(:,sps_i) = 0.0_rp
+d83 1
+a83 1
+    f_inda = 0
+d89 2
+a90 5
+      f_indb = grids_x%l_f(sps_i)
+      n_f = f_indb - f_inda
+
+      n_zp = (Grids_x%l_z(sps_i) - Grids_x%l_z(sps_i-1)) * &
+             (Grids_x%l_p(sps_i) - Grids_x%l_p(sps_i-1))
+d93 1
+d97 1
+a97 1
+      if ( (frq > 1.0) .AND. n_f == 1 ) then
+d106 1
+a106 1
+          call get_eta_sparse ( lo+sideband*Grids_x%frq_basis(f_indb:f_inda+1:-1), &
+d109 1
+a109 1
+          call get_eta_sparse ( lo+sideband*Grids_x%frq_basis(f_inda+1:f_indb), &
+@
+
+
+2.13.2.3
+log
+@Polish the basic algorithm, add comp_sps_path
+@
+text
+@d9 1
+a9 1
+  public :: Comp_Sps_Path_Frq, Comp_Sps_Path
+d13 1
+a13 1
+    & "$Id: comp_sps_path_frq_m.f90,v 2.13.2.2 2003/03/20 01:42:26 vsnyder Exp $"
+d35 2
+a36 2
+    real(r8), intent(in) :: LO             ! Local oscillator freq
+    integer, intent(in) :: Sideband        ! -1 or 1
+d39 2
+a40 2
+    real(rp), intent(in) :: Eta_zp(:,:)    ! Eta_z x Eta_phi for each state
+!                         vector element. First dimension is same as sps_values.
+d42 1
+a42 1
+!                         is a contribution for this state vector element
+d47 4
+a50 4
+!                         by species number
+    real(rp), intent(inout) :: Eta_Fzp(:,:)  ! Eta_f x Eta_z x Eta_phi for each
+!                         state vector element. First dimension is same as
+!                         sps_values.
+d52 2
+a53 2
+!                         is a contribution for this state vector element.
+!                         Same shape as Eta_Fzp.
+d61 3
+a63 3
+    integer(ip) :: n_zp, n_f
+    integer(ip) :: sps_i, no_mol, sv_zp, sv_f
+    integer(ip) :: v_inda, f_inda, f_indb, w_inda, w_indb
+d65 2
+a66 2
+    real(rp) :: eta_f(1:1,1:maxval(grids_x%l_f(1:)-grids_x%l_f(0:ubound(grids_x%l_f,1)-1)))
+    logical :: not_zero_f(1:1,1:maxval(grids_x%l_f(1:)-grids_x%l_f(0:ubound(grids_x%l_f,1)-1)))
+d72 1
+a72 3
+    if ( frq <= 1.0_r8 ) then
+      do_calc_fzp = .FALSE.
+      eta_f = 1.0_rp
+a73 1
+      not_zero_f = .TRUE.
+d75 1
+d82 1
+d84 2
+a85 1
+    w_inda = 0
+d94 1
+d96 1
+d99 3
+a101 1
+      if ( (frq <= 1.0) .or. n_f /= 1 ) then
+d106 7
+a112 9
+! Compute eta_f:
+        if ( frq > 1.0_rp ) then
+          if ( sideband == -1 ) then
+            call get_eta_sparse ( lo+sideband*Grids_x%frq_basis(f_indb:f_inda+1:-1), &
+              & (/Frq/), eta_f(1:1,n_f:1:-1), not_zero_f(1:1,n_f:1:-1) )
+          else
+            call get_eta_sparse ( lo+sideband*Grids_x%frq_basis(f_inda+1:f_indb), &
+              & (/Frq/), eta_f(1:1,1:n_f), not_zero_f(1:1,1:n_f) )
+          end if
+d115 15
+a129 15
+! Compute Sps_Path
+        v_inda = grids_x%l_v(sps_i-1)
+        ! Grids_X%Values are really 3-d: Frequencies X Zeta X Phi
+        do sv_zp = w_inda + 1, w_indb
+          do sv_f = 1, n_f
+            v_inda = v_inda + 1
+            eta_fzp ( :, v_inda ) = 0.0_r8
+            do_calc_fzp ( :, v_inda ) = .false.
+            if ( not_zero_f(1,sv_f) ) then
+              where ( do_calc_zp(:,sv_zp) )
+                eta_fzp(:,v_inda) = eta_f(1,sv_f) * eta_zp(:,sv_zp)
+                sps_path(:,sps_i) = sps_path(:,sps_i) +  &
+                                 &  grids_x%values(v_inda) * eta_fzp(:,v_inda)
+                do_calc_fzp(:,v_inda) = Grids_x%deriv_flags(v_inda)
+              end where
+d131 2
+a132 2
+          end do ! sv_f
+        end do ! sv_zp
+d139 1
+a145 44
+! ------------------------------------------------  Comp_Sps_Path  -----
+  subroutine Comp_Sps_Path ( Grids_x, SPS_I, Eta_zp, Sps_path )
+
+! Compute the SPS path for grids that use the Frequency dimension for
+! a vector component, e.g. magnetic field.  There's only one multiply-add
+! in the loop (hiding inside of matmul), so there's really no point to
+! sending in do_calc_zp.
+
+    use MLSCommon, only: RP, IP, R8
+    use Load_sps_data_m, only: Grids_T
+
+! Input:
+
+    type (grids_t), intent(in) :: Grids_x  ! All the needed coordinates
+    integer, intent(in) :: SPS_I           ! Which thing-o in Grids_X
+    real(rp), intent(in) :: Eta_zp(:,:)    ! Eta_z x Eta_phi for each path
+!                         element and (ZxP). First dimension is same as sps_path.
+
+! Output:
+
+    real(rp), intent(out) :: Sps_Path(:,:) ! Values, path X component
+
+! Local variables:
+
+    integer :: N_C, SV_C, V_Inda, V_Indb
+
+    n_c = grids_x%l_f(sps_i) - grids_x%l_f(sps_i-1) ! # Components
+
+    v_inda = grids_x%l_v(sps_i-1)              ! One before first value
+    v_indb = grids_x%l_v(sps_i)                ! Last value
+
+    ! Grids_X%Values are really 3-d: Components X Zeta X Phi.
+    ! For each component, multiply the Zeta X Phi part by Eta (on the left).
+    ! We could do this as
+    !  matmul( eta_zp, &
+    !       &  transpose(reshape(grids_x%values,(/n_c,(v_indb-v_inda)/n_c/) )))
+    ! but this is more efficient, not much more writing, and not that hard
+    ! to grok.
+    do sv_c = 1, n_c
+      sps_path(:,sv_c) = matmul(eta_zp,grids_x%values(v_inda+sv_c:v_indb:n_c))
+    end do
+
+  end subroutine Comp_Sps_Path
+
+a152 3
+! Revision 2.13.2.2  2003/03/20 01:42:26  vsnyder
+! Revise Grids_T structure
+!
+@
+
+
+2.12
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d13 1
+a13 1
+    & "$Id: comp_sps_path_frq_m.f90,v 2.11 2002/09/27 20:43:06 livesey Exp $"
+d33 2
+d49 1
+a49 1
+    real(rp), intent(out) :: Sps_Path(:,:) ! vmr values along the path
+d51 1
+a51 1
+    real(rp), intent(out) :: Eta_Fzp(:,:) ! Eta_z x Eta_phi x Eta_f for each
+d54 1
+a54 1
+    logical, intent(out) :: Do_Calc_Fzp(:,:) ! indicates whether there
+d115 1
+a115 1
+          
+d121 2
+d154 3
+@
+
+
+2.11
+log
+@Bug fix for 'backwards' bases in get_eta_sparse for eta_f
+@
+text
+@d13 1
+a13 1
+    & "$Id: comp_sps_path_frq_m.f90,v 2.10 2002/09/06 20:58:26 vsnyder Exp $"
+d17 1
+d143 4
+d150 3
+@
+
+
+2.10
+log
+@Cosmetic changes, copyright notice, move USEs to procedure scope
+@
+text
+@d13 1
+a13 1
+    & "$Id: comp_sps_path_frq_m.f90,v 2.9 2002/08/22 23:13:20 livesey Exp $"
+d30 1
+d105 8
+a112 4
+
+        call get_eta_sparse ( lo+sideband*Grids_x%frq_basis(f_inda:f_indb-1), &
+                            & (/Frq/), eta_f(1:1,1:n_f), not_zero_f(1:1,1:n_f) )
+
+d145 3
+@
+
+
+2.9
+log
+@New intermediate frequency based frq_bases
+@
+text
+@d1 6
+a6 10
+!
+! This is a new module to compute the sps path
+!
+MODULE comp_sps_path_frq_m
+!
+  USE MLSCommon, ONLY: RP, IP, R8
+  USE get_eta_matrix_m, ONLY: get_eta_sparse
+  use Load_sps_data_m, only: Grids_T
+!
+  IMPLICIT NONE
+d8 2
+a9 2
+  Private
+  Public :: comp_sps_path_frq
+d12 5
+a16 4
+  character (LEN=256) :: Id = &
+ "$Id: comp_sps_path_frq_m.f90,v 2.8 2002/06/13 22:39:42 bill Exp $"
+  character (LEN=*), parameter :: ModuleName= &
+ "$RCSfile: comp_sps_path_frq_m.f90,v $"
+d18 1
+a18 1
+ CONTAINS
+d20 11
+a30 4
+!
+  SUBROUTINE comp_sps_path_frq(Grids_x,lo,sideband,Frq,eta_zp,do_calc_zp,sps_path, &
+  & do_calc_fzp,eta_fzp)
+!
+a31 4
+!
+  type (Grids_T), INTENT(in) :: Grids_x  ! All the needed coordinates
+  real(r8), intent(in) :: lo            ! Local oscillator freq
+  integer, intent(in) :: SIDEBAND       ! -1 or 1
+d33 6
+a38 2
+  REAL(r8), INTENT(in) :: Frq  ! Frequency at which to compute the values
+  REAL(rp), INTENT(in) :: eta_zp(:,:) ! Eta_z x Eta_phi for each state
+d40 1
+a40 1
+  LOGICAL, INTENT(in) :: do_calc_zp(:,:) !logical indicating whether there
+d42 1
+a42 1
+!
+d44 2
+a45 2
+!
+  REAL(rp), INTENT(out) :: sps_path(:,:) ! vmr values along the path
+d47 1
+a47 1
+  REAL(rp), INTENT(out) :: eta_fzp(:,:) ! Eta_z x Eta_phi x Eta_f for each
+d50 1
+a50 1
+  LOGICAL, INTENT(out) :: do_calc_fzp(:,:) !logical indicating whether there
+a56 6
+!
+! Internal declaritions
+!
+  INTEGER(ip) :: n_zp, n_f, nfzp, f_len
+  INTEGER(ip) :: sps_i,no_mol,sv_i,sv_zp,sv_f,sv_j
+  INTEGER(ip) :: v_inda,v_indb,f_inda,f_indb,w_inda,w_indb
+d58 9
+a66 3
+  REAL(rp), ALLOCATABLE :: eta_f(:,:)
+  LOGICAL, ALLOCATABLE :: not_zero_f(:,:)
+!
+a67 27
+!
+  no_mol = SIZE(Grids_x%no_z)
+!
+  IF(frq < 1.0_r8) THEN
+    eta_fzp = 0.0_rp
+    sps_path = 0.0_rp
+    do_calc_fzp = .FALSE.
+  ELSE
+    DO sps_i = 1, no_mol
+      IF(grids_x%no_f(sps_i) > 1) sps_path(:,sps_i) = 0.0_rp
+    ENDDO
+  ENDIF
+!
+  f_len = 0
+  f_inda = 1
+  v_inda = 1
+  w_inda = 1
+!
+  DO sps_i = 1, no_mol
+!
+    n_f = Grids_x%no_f(sps_i)
+    n_zp = Grids_x%no_z(sps_i) * Grids_x%no_p(sps_i)
+    nfzp = n_f * n_zp
+
+    f_indb = f_inda + n_f
+    v_indb = v_inda + nfzp
+    w_indb = w_inda + n_zp
+d69 60
+a128 1
+    IF((Frq > 1.0) .AND. grids_x%no_f(sps_i) == 1) THEN
+a131 39
+      f_len = f_len + nfzp
+      CYCLE
+    ENDIF
+!
+! There are two ways to do this (slow and easy vs quick but difficult)
+! For ease lets do the slow and easy (and certainly more reliable)
+!
+    ALLOCATE(eta_f(1:1,1:n_f))
+    ALLOCATE(not_zero_f(1:1,1:n_f))
+!
+! Compute eta:
+!
+    CALL get_eta_sparse(lo+sideband*Grids_x%frq_basis(f_inda:f_indb-1),(/Frq/), &
+                    &   eta_f,not_zero_f)
+!
+    DO sv_i = 0 , nfzp - 1
+      f_len = f_len + 1
+      sv_j = v_inda + sv_i
+      sv_f = 1 + MODULO(sv_i,n_f)
+      sv_zp = w_inda + sv_i / n_f
+      IF(not_zero_f(1,sv_f)) THEN
+        WHERE(do_calc_zp(:,sv_zp))
+          eta_fzp(:,sv_j) = eta_f(1,sv_f) * eta_zp(:,sv_zp)
+          sps_path(:,sps_i) = sps_path(:,sps_i) +  &
+                           &  grids_x%values(sv_j) * eta_fzp(:,sv_j)
+        ENDWHERE
+        IF(Grids_x%deriv_flags(f_len)) THEN
+          WHERE(do_calc_zp(:,sv_zp))
+            do_calc_fzp(:,sv_j) = .TRUE.
+          ENDWHERE
+        ENDIF
+      ENDIF
+    END DO
+!
+    IF(grids_x%lin_log(sps_i)) sps_path(:,sps_i) = EXP(sps_path(:,sps_i))
+!
+    f_inda = f_indb
+    v_inda = v_indb
+    w_inda = w_indb
+d133 5
+a137 2
+    DEALLOCATE(eta_f)
+    DEALLOCATE(not_zero_f)
+d139 3
+a141 1
+  END DO
+a142 5
+  END SUBROUTINE comp_sps_path_frq
+!
+END MODULE comp_sps_path_frq_m
+!
+! $Log: comp_sps_path_frq_m.f90,v $
+@
+
+
+2.8
+log
+@some variable name changes--wgr
+@
+text
+@d17 1
+a17 1
+ "$Id: comp_sps_path_frq_m.f90,v 2.7 2002/06/04 10:28:00 zvi Exp $"
+d24 1
+a24 1
+  SUBROUTINE comp_sps_path_frq(Grids_x,Frq,eta_zp,do_calc_zp,sps_path, &
+d30 2
+d108 1
+a108 1
+    CALL get_eta_sparse(Grids_x%frq_basis(f_inda:f_indb-1),(/Frq/), &
+d146 3
+@
+
+
+2.7
+log
+@rename n_sps to: no_mol, more correctly
+@
+text
+@d6 1
+a6 1
+  use MLSCommon, only: RP, IP
+d17 1
+a17 1
+ "$Id: comp_sps_path_frq_m.f90,v 2.6 2002/02/16 06:37:34 zvi Exp $"
+d24 2
+a25 2
+  SUBROUTINE comp_sps_path_frq(Grids_x,Frq,sps_values,eta_zp,do_calc_zp, &
+              &   skip_eta_frq,lin_log,sps_path,do_calc_fzp,eta_fzp)
+d31 1
+a31 4
+  REAL(rp), INTENT(in) :: Frq  ! Frequency at which to compute the values
+  REAL(rp), INTENT(in) :: sps_values(:) ! A vector of coefficient break-point
+!                         values entered sequentially according to the
+!                         heirarch, z_basis, phi_basis, sps_number
+a35 2
+  LOGICAL, INTENT(in) :: skip_eta_frq(:) ! Flags for specie with NO Freq. dim.
+  LOGICAL, INTENT(in) :: lin_log(:) ! species representation basis type
+d65 1
+a65 1
+  IF(Frq < 1.0) THEN
+d71 2
+a72 2
+      IF(.NOT. skip_eta_frq(sps_i)) sps_path(:,sps_i) = 0.0_rp
+    END DO
+d90 1
+a90 1
+    IF((Frq > 1.0) .AND. skip_eta_frq(sps_i)) THEN
+d118 1
+a118 1
+                           &  sps_values(sv_j) * eta_fzp(:,sv_j)
+d128 1
+a128 1
+    IF(lin_log(sps_i)) sps_path(:,sps_i) = EXP(sps_path(:,sps_i))
+d144 3
+@
+
+
+2.6
+log
+@New code for derivative flags..
+@
+text
+@d17 1
+a17 1
+ "$Id: comp_sps_path_frq_m.f90,v 2.5 2002/01/09 00:30:48 zvi Exp $"
+d60 1
+a60 1
+  INTEGER(ip) :: sps_i,n_sps,sv_i,sv_zp,sv_f,sv_j
+d68 1
+a68 1
+  n_sps = SIZE(Grids_x%no_z)
+d75 1
+a75 1
+    DO sps_i = 1, n_sps
+d85 1
+a85 1
+  DO sps_i = 1, n_sps
+d149 3
+@
+
+
+2.5
+log
+@Fix a bug with skip_eta_frq
+@
+text
+@d17 1
+a17 1
+ "$Id: comp_sps_path_frq_m.f90,v 2.4 2001/11/15 01:21:58 zvi Exp $"
+d59 1
+a59 1
+  INTEGER(ip) :: n_zp, n_f, nfzp,iw
+d73 1
+a73 1
+    do_calc_fzp = .false.
+d80 1
+d99 1
+d115 1
+a120 1
+          do_calc_fzp(:,sv_j) = .true.
+d125 5
+d132 1
+a132 1
+
+d149 3
+@
+
+
+2.4
+log
+@Extiction debug fix
+@
+text
+@d17 1
+a17 1
+ "$Id: comp_sps_path_frq_m.f90,v 2.3 2001/11/10 00:45:08 zvi Exp $"
+d86 1
+a86 1
+    n_f = max(1,Grids_x%no_f(sps_i))
+d142 3
+@
+
+
+2.3
+log
+@Fixing a bug..
+@
+text
+@d17 1
+a17 1
+ "$Id: comp_sps_path_frq_m.f90,v 2.2 2001/11/07 09:59:12 zvi Exp $"
+d24 2
+a25 2
+  SUBROUTINE comp_sps_path_frq(Grids_x,Frq,values,eta_zp,do_calc_zp, &
+              &   skip_eta_frq,lin_log,sps_values,do_calc_fzp,eta_fzp)
+d32 1
+a32 1
+  REAL(rp), INTENT(in) :: values(:) ! A vector of coefficient break-point
+d36 1
+a36 1
+!                         vector element. This is the same length as values.
+d44 1
+a44 1
+  REAL(rp), INTENT(out) :: sps_values(:,:) ! vmr values along the path
+d48 1
+a48 1
+!                          values.
+d51 1
+a51 1
+!                         This is the same length as values.
+d55 1
+a55 1
+! Units of sps_values = values.
+d72 1
+a72 1
+    sps_values = 0.0_rp
+d76 1
+a76 1
+      IF(.NOT. skip_eta_frq(sps_i)) sps_values(:,sps_i) = 0.0_rp
+a78 1
+
+d86 1
+a86 1
+    n_f = Grids_x%no_f(sps_i)
+d112 13
+a124 31
+    IF(lin_log(sps_i)) THEN
+
+      DO sv_i = 0 , nfzp - 1
+        sv_j = v_inda + sv_i
+        sv_f = 1 + MODULO(sv_i,n_f)
+        sv_zp = w_inda + sv_i / n_f
+        IF(not_zero_f(1,sv_f)) THEN
+          WHERE(do_calc_zp(:,sv_zp))
+            do_calc_fzp(:,sv_j) = .true.
+            eta_fzp(:,sv_j) = eta_f(1,sv_f) * eta_zp(:,sv_zp)
+            sps_values(:,sps_i) = sps_values(:,sps_i) +  &
+                               &  EXP(values(sv_j) * eta_fzp(:,sv_j))
+          ENDWHERE
+        ENDIF
+      END DO
+
+    ELSE
+
+      DO sv_i = 0 , nfzp - 1
+        sv_j = v_inda + sv_i
+        sv_f = 1 + MODULO(sv_i,n_f)
+        sv_zp = w_inda + sv_i / n_f
+        IF(not_zero_f(1,sv_f)) THEN
+          WHERE(do_calc_zp(:,sv_zp))
+            do_calc_fzp(:,sv_j) = .true.
+            eta_fzp(:,sv_j) = eta_f(1,sv_f) * eta_zp(:,sv_zp)
+            sps_values(:,sps_i) = sps_values(:,sps_i) +  &
+                               &  values(sv_j) * eta_fzp(:,sv_j)
+          ENDWHERE
+        ENDIF
+      END DO
+d126 1
+a126 1
+    ENDIF
+d142 3
+@
+
+
+2.2
+log
+@More effective code for sps_path calculations
+@
+text
+@d17 1
+a17 1
+ "$Id: comp_sps_path_frq_m.f90,v 1.0 2001/10/30 14:00:00 zvi Exp $"
+d25 1
+a25 1
+              &   skip_eta_frq,lin_log,path_values,do_calc_fzp,eta_fzp)
+d44 1
+a44 1
+  REAL(rp), INTENT(out) :: path_values(:,:) ! vmr values along the path
+d55 1
+a55 1
+! Units of path_values = values.
+d72 1
+a72 1
+    path_values = 0.0_rp
+d76 1
+a76 1
+      IF(.NOT. skip_eta_frq(sps_i)) path_values(:,sps_i) = 0.0_rp
+d123 2
+a124 2
+            path_values(:,sps_i) = path_values(:,sps_i) +  &
+                               &   EXP(values(sv_j) * eta_fzp(:,sv_j))
+d139 2
+a140 2
+            path_values(:,sps_i) = path_values(:,sps_i) +  &
+                               &   values(sv_j) * eta_fzp(:,sv_j)
+d161 3
+@
+
+
+2.1
+log
+@Implementing frequecy grid
+@
+text
+@d25 2
+a26 1
+                             & lin_log,path_values,do_calc_fzp,eta_fzp)
+d39 1
+d46 2
+a47 2
+  REAL(rp), INTENT(out) :: eta_fzp(:,:) ! Eta_z x Eta_phi x Eta_f for each 
+!                          state vector element. This is the same length as 
+d60 1
+a60 1
+  INTEGER(ip) :: i_sps,n_sps,sv_i,sv_zp,sv_f,sv_j
+d70 10
+a79 3
+  eta_fzp = 0.0
+  path_values = 0.0_rp
+  do_calc_fzp = .false.
+d85 1
+a85 1
+  DO i_sps = 1 , n_sps
+d87 2
+a88 2
+    n_f = Grids_x%no_f(i_sps)
+    n_zp = Grids_x%no_z(i_sps) * Grids_x%no_p(i_sps)
+d94 7
+d113 1
+a113 1
+    IF(lin_log(i_sps)) THEN
+d123 1
+a123 1
+            path_values(:,i_sps) = path_values(:,i_sps) +  &
+d139 1
+a139 1
+            path_values(:,i_sps) = path_values(:,i_sps) +  &
+d162 1
+@
+

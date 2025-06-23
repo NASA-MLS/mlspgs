@@ -1,0 +1,343 @@
+head	2.5;
+access;
+symbols
+	v5-02-NRT-19:2.5
+	v6-00:2.5
+	v5-02-NRT-18:2.5
+	v5-02:2.5
+	v5-01-NRT-17:2.5
+	v5-01-NRT-16:2.5
+	v5-01-NRT-15:2.5
+	v5-01-NRT-14:2.5
+	neuralnetworks-1-0:2.5.0.10
+	cfm-single-freq-0-1:2.5.0.8
+	v5-01:2.5
+	v5-00:2.5
+	v4-23-TA133:2.5.0.6
+	mus-emls-1-70:2.5.0.4
+	rel-1-0-englocks-work:2.5.0.2
+	VUMLS1-00:2.5
+	VPL1-00:2.4
+	V4-22-NRT-08:2.4
+	VAM1-00:2.4
+	V4-21:2.4.0.4
+	V4-13:2.4
+	V4-12:2.4
+	V4-11:2.4
+	V4-10:2.4
+	V3-43:2.4
+	M4-00:2.4
+	V3-41:2.4
+	V3-40-PlusGM57:2.4.0.2
+	V2-24-NRT-04:2.3
+	V3-33:2.4
+	V2-24:2.3
+	V3-31:2.4
+	V3-30-NRT-05:2.4
+	cfm-01-00:2.4
+	V3-30:2.4
+	V3-20:2.4
+	V3-10:2.4
+	V2-23-NRT-02:2.3
+	V2-23:2.3
+	V2-22-NRT-01:2.3
+	V2-22:2.3
+	V2-21:2.3
+	V2-20:2.3
+	V2-11:2.3
+	V2-10:2.3
+	V2-00:2.3
+	V1-51:2.2
+	V1-50:2.2
+	V1-45:2.2
+	V1-44:2.2
+	V1-43:2.2
+	V1-42:2.2
+	V1-41:2.2
+	V1-32:2.2
+	V1-40:2.2
+	V1-31:2.2
+	V1-30:2.2
+	V1-13:2.2
+	V1-12:2.2
+	V1-11:2.2
+	V1-10:2.2
+	newfwm-feb03:2.2.0.2
+	V1-04:2.1
+	V1-03:2.1
+	V1-02:2.1
+	V1-00:2.1
+	newfwm-sep01:2.1.0.2
+	V0-7:2.1
+	V0-5-Level2:2.1
+	V0-5-SIPS:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.5
+date	2016.08.31.01.42.06;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2009.06.23.18.25.43;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2005.06.22.17.25.48;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2002.10.08.00.09.09;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2000.10.11.18.33.24;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.5
+log
+@Don't print Why in Error_intro if it's zero
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module ERROR_HANDLER
+
+  use Machine, only: IO_Error
+  use Output_m, only: Output
+
+  implicit NONE
+  public
+
+  ! Values of the WHY argument of ERROR_INTRO
+  integer, parameter :: Compiler = 1
+  integer, parameter :: Fatal = 2
+  integer, parameter :: Simple = 3
+  integer, parameter :: Warning = 4
+
+  integer, private :: Last_Error = 0
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: error_handler.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  subroutine ALLOCATE_STAT ( DOING_WHAT, STAT )
+  ! Examine the allocation status.  If it failed, print an error message
+  ! and stop
+    character(len=*), intent(in) :: DOING_WHAT    ! What/where doing allocate?
+    integer, intent(in) :: STAT                   ! From ALLOCATE
+    if ( stat == 0 ) return
+    call io_error ( 'ALLOCATE Failed while allocating:', stat, doing_what )
+    stop
+  end subroutine ALLOCATE_STAT
+
+  subroutine ERROR_INTRO ( WHY, WHERE )
+    integer, intent(in) :: WHY
+    integer, intent(in), optional :: WHERE   ! 256*line + column
+    character(len=6) :: LINE
+    call output ('*** ')
+    if ( why > 0 ) then
+      select case ( why )
+      case ( compiler ); call output ( 'Compiler error' )
+      case ( fatal );    call output ( 'Fatal error' )
+      case ( simple );   call output ( 'Error' )
+      case ( warning );  call output ( 'Warning' )
+      end select
+      call output (' *** ')
+    end if
+    if ( present(where) ) then
+      call output ('Near column ')
+      write ( line, '(i6)' ) mod(where,256)
+      call output ( line(index( line, ' ', back=.true. )+1:) )
+      call output ( ' of line ' )
+      write ( line, '(i6)' ) where / 256
+      call output ( line(index( line, ' ', back=.true. )+1:) )
+    end if
+    call output ( ': ' )
+  end subroutine ERROR_INTRO
+
+  subroutine ERROR_WALKBACK ( LINE_NO )
+    integer, intent(in) :: LINE_NO
+    character(len=6) :: LINE
+    if ( last_error /= 0 .and. last_error /= line_no ) then
+      call output ( 'Previous error at line ')
+      write ( line, '(i6)' ) last_error
+      call output ( line(index( line, ' ', back=.true. )+1:), &
+                          advance='yes' )
+    end if
+    last_error = line_no
+  end subroutine ERROR_WALKBACK
+
+  subroutine FINISH_ERROR_WALKBACK
+    character(len=6) :: LINE
+    if ( last_error /= 0 ) then
+      call output ( 'Last error at line ')
+      write ( line, '(i6)' ) last_error
+      call output ( line(index( line, ' ', back=.true. )+1:), &
+                          advance='yes' )
+    end if
+  end subroutine FINISH_ERROR_WALKBACK
+
+  subroutine INIT_ERROR_WALKBACK
+    last_error = 0
+  end subroutine INIT_ERROR_WALKBACK
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: error_handler.f90,v 2.4 2009/06/23 18:25:43 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module ERROR_HANDLER
+
+! $Log: error_handler.f90,v $
+! Revision 2.4  2009/06/23 18:25:43  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.3  2005/06/22 17:25:48  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.2  2002/10/08 00:09:09  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.1  2000/10/11 18:33:24  vsnyder
+! Move from lib/cf_parser to lib; insert copyright notice
+!
+! Revision 2.0  2000/09/05 17:41:49  dcuddy
+! Change revision to 2.0
+!
+! Revision 1.1  2000/07/06 01:43:12  vsnyder
+! Initial check-in
+!
+@
+
+
+2.4
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d14 2
+a15 2
+  use MACHINE, only: IO_ERROR
+  use OUTPUT_M, only: OUTPUT
+d21 4
+a24 4
+  integer, parameter :: COMPILER = 1
+  integer, parameter :: FATAL = 2
+  integer, parameter :: SIMPLE = 3
+  integer, parameter :: WARNING = 4
+d26 1
+a26 1
+  integer, private :: LAST_ERROR = 0
+d30 1
+a30 1
+       "$RCSfile: $"
+d51 9
+a59 7
+    select case ( why )
+    case ( compiler ); call output ( 'Compiler error' )
+    case ( fatal );    call output ( 'Fatal error' )
+    case ( simple );   call output ( 'Error' )
+    case ( warning );  call output ( 'Warning' )
+    end select
+    call output (' *** ')
+d61 1
+a61 1
+      call output ('near column ')
+a68 1
+    return
+a80 1
+    return
+a90 1
+    return
+d96 1
+d100 1
+a100 1
+       "$Id: read_apriori.f90 is it here $"
+d110 3
+@
+
+
+2.3
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d97 1
+a98 1
+!---------------------------- RCS Ident Info -------------------------------
+d100 2
+a101 3
+       "$Id: $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d103 1
+d105 1
+d110 3
+@
+
+
+2.2
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d28 1
+a28 3
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=256), private :: Id = &
+       "$Id: error_handler.f90,v 2.1 2000/10/11 18:33:24 vsnyder Exp $"
+d30 1
+a30 1
+       "$RCSfile: error_handler.f90,v $"
+d98 5
+d109 3
+@
+
+
+2.1
+log
+@Move from lib/cf_parser to lib; insert copyright notice
+@
+text
+@d22 1
+a22 1
+       "$Id: error_handler.f90,v 2.0 2000/09/05 17:41:49 dcuddy Exp $"
+d25 1
+d91 4
+d98 3
+@
+

@@ -1,0 +1,189 @@
+head	2.2;
+access;
+symbols
+	v5-02-NRT-19:2.2
+	v6-00:2.2
+	v5-02-NRT-18:2.2
+	v5-02:2.2
+	v5-01-NRT-17:2.2
+	v5-01-NRT-16:2.2
+	v5-01-NRT-15:2.2
+	v5-01-NRT-14:2.2
+	neuralnetworks-1-0:2.2.0.10
+	cfm-single-freq-0-1:2.2.0.8
+	v5-01:2.2
+	v5-00:2.2
+	v4-23-TA133:2.2.0.6
+	mus-emls-1-70:2.2.0.4
+	rel-1-0-englocks-work:2.2.0.2
+	VUMLS1-00:2.2
+	VPL1-00:2.2
+	V4-22-NRT-08:2.2
+	VAM1-00:2.2
+	V4-21:2.1.0.2
+	V4-13:2.1
+	V4-12:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.2
+date	2015.04.16.19.22.59;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2014.07.04.00.10.08;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.2
+log
+@Correct 'paste and don't modify' error
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!------------------------------- RCS Ident Info ------------------------------
+! $RCSfile: Fill_NaN.f9h,v $
+!-----------------------------------------------------------------------------
+
+    A = merge ( IEEE_Value(A,IEEE_Signaling_NaN), 0.0_rk, &
+              & IEEE_Support_DataType(A) )
+    if ( present(B) ) &
+      & B = merge ( IEEE_Value(B,IEEE_Signaling_NaN), 0.0_rk, &
+                  & IEEE_Support_DataType(B) )
+    if ( present(C) ) &
+      & C = merge ( IEEE_Value(C,IEEE_Signaling_NaN), 0.0_rk, &
+                  & IEEE_Support_DataType(C) )
+    if ( present(D) ) &
+      & D = merge ( IEEE_Value(D,IEEE_Signaling_NaN), 0.0_rk, &
+                  & IEEE_Support_DataType(D) )
+    if ( present(E) ) &
+      & E = merge ( IEEE_Value(E,IEEE_Signaling_NaN), 0.0_rk, &
+                  & IEEE_Support_DataType(E) )
+    if ( present(F) ) &
+      & F = merge ( IEEE_Value(F,IEEE_Signaling_NaN), 0.0_rk, &
+                  & IEEE_Support_DataType(F) )
+    if ( present(G) ) &
+      & G = merge ( IEEE_Value(G,IEEE_Signaling_NaN), 0.0_rk, &
+                  & IEEE_Support_DataType(G) )
+    if ( present(H) ) &
+      & H = merge ( IEEE_Value(H,IEEE_Signaling_NaN), 0.0_rk, &
+                  & IEEE_Support_DataType(H) )
+    if ( present(I) ) &
+      & I = merge ( IEEE_Value(I,IEEE_Signaling_NaN), 0.0_rk, &
+                  & IEEE_Support_DataType(I) )
+    if ( present(J) ) &
+      & J = merge ( IEEE_Value(J,IEEE_Signaling_NaN), 0.0_rk, &
+                  & IEEE_Support_DataType(J) )
+    if ( present(K) ) &
+      & K = merge ( IEEE_Value(K,IEEE_Signaling_NaN), 0.0_rk, &
+                  & IEEE_Support_DataType(K) )
+    if ( present(L) ) &
+      & L = merge ( IEEE_Value(L,IEEE_Signaling_NaN), 0.0_rk, &
+                  & IEEE_Support_DataType(L) )
+    if ( present(M) ) &
+      & M = merge ( IEEE_Value(M,IEEE_Signaling_NaN), 0.0_rk, &
+                  & IEEE_Support_DataType(M) )
+    if ( present(N) ) &
+      & N = merge ( IEEE_Value(N,IEEE_Signaling_NaN), 0.0_rk, &
+                  & IEEE_Support_DataType(N) )
+    if ( present(O) ) &
+      & O = merge ( IEEE_Value(O,IEEE_Signaling_NaN), 0.0_rk, &
+                  & IEEE_Support_DataType(O) )
+    if ( present(P) ) &
+      & P = merge ( IEEE_Value(P,IEEE_Signaling_NaN), 0.0_rk, &
+                  & IEEE_Support_DataType(P) )
+    if ( present(Q) ) &
+      & Q = merge ( IEEE_Value(Q,IEEE_Signaling_NaN), 0.0_rk, &
+                  & IEEE_Support_DataType(Q) )
+    if ( present(R) ) &
+      & R = merge ( IEEE_Value(R,IEEE_Signaling_NaN), 0.0_rk, &
+                  & IEEE_Support_DataType(R) )
+    if ( present(S) ) &
+      & S = merge ( IEEE_Value(S,IEEE_Signaling_NaN), 0.0_rk, &
+                  & IEEE_Support_DataType(S) )
+    if ( present(T) ) &
+      & T = merge ( IEEE_Value(T,IEEE_Signaling_NaN), 0.0_rk, &
+                  & IEEE_Support_DataType(T) )
+    if ( present(U) ) &
+      & U = merge ( IEEE_Value(U,IEEE_Signaling_NaN), 0.0_rk, &
+                  & IEEE_Support_DataType(U) )
+    if ( present(V) ) &
+      & V = merge ( IEEE_Value(V,IEEE_Signaling_NaN), 0.0_rk, &
+                  & IEEE_Support_DataType(V) )
+    if ( present(W) ) &
+      & W = merge ( IEEE_Value(W,IEEE_Signaling_NaN), 0.0_rk, &
+                  & IEEE_Support_DataType(W) )
+    if ( present(X) ) &
+      & X = merge ( IEEE_Value(X,IEEE_Signaling_NaN), 0.0_rk, &
+                  & IEEE_Support_DataType(X) )
+    if ( present(Y) ) &
+      & Y = merge ( IEEE_Value(Y,IEEE_Signaling_NaN), 0.0_rk, &
+                  & IEEE_Support_DataType(Y) )
+    if ( present(Z) ) &
+      & Z = merge ( IEEE_Value(Z,IEEE_Signaling_NaN), 0.0_rk, &
+                  & IEEE_Support_DataType(Z) )
+
+! $Log: Fill_NaN.f9h,v $
+! Revision 2.1  2014/07/04 00:10:08  vsnyder
+! Initial commit
+!
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d13 1
+a13 1
+! $RCSfile: Allocate_Test_1D.f9h,v $
+d67 1
+a67 1
+      & R = merge ( IEEE_Value(G,IEEE_Signaling_NaN), 0.0_rk, &
+d70 1
+a70 1
+      & S = merge ( IEEE_Value(H,IEEE_Signaling_NaN), 0.0_rk, &
+d73 1
+a73 1
+      & T = merge ( IEEE_Value(I,IEEE_Signaling_NaN), 0.0_rk, &
+d76 1
+a76 1
+      & U = merge ( IEEE_Value(J,IEEE_Signaling_NaN), 0.0_rk, &
+d79 1
+a79 1
+      & V = merge ( IEEE_Value(K,IEEE_Signaling_NaN), 0.0_rk, &
+d82 1
+a82 1
+      & W = merge ( IEEE_Value(L,IEEE_Signaling_NaN), 0.0_rk, &
+d85 1
+a85 1
+      & X = merge ( IEEE_Value(M,IEEE_Signaling_NaN), 0.0_rk, &
+d88 1
+a88 1
+      & Y = merge ( IEEE_Value(N,IEEE_Signaling_NaN), 0.0_rk, &
+d91 1
+a91 1
+      & Z = merge ( IEEE_Value(O,IEEE_Signaling_NaN), 0.0_rk, &
+d94 4
+a97 1
+! $Log: Allocate_Deallocate.f90,v $
+@
+

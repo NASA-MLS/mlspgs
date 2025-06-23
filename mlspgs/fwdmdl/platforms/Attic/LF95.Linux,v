@@ -1,0 +1,462 @@
+head	2.6;
+access;
+symbols
+	V2-21:2.5
+	V2-20:2.5
+	V2-11:2.5
+	V2-10:2.5
+	V2-00:2.5
+	V1-51:2.5
+	V1-50:2.5
+	V1-45:2.5
+	V1-44:2.5
+	V1-43:2.5
+	V1-32:2.5
+	V1-31:2.5
+	V1-30:2.5
+	V1-13:2.5
+	V1-12:2.5
+	V1-11:2.5
+	V1-10:2.5
+	newfwm-feb03:2.5.0.2
+	V1-04:2.3
+	V1-03:2.3
+	V1-02:2.3
+	V1-00:2.3
+	newfwm-sep01:1.6.0.2
+	V0-7:1.6
+	V0-5-Level2:1.5
+	V0-5-SIPS:1.5;
+locks; strict;
+comment	@# @;
+
+
+2.6
+date	2007.06.07.19.58.32;	author pwagner;	state dead;
+branches;
+next	2.5;
+
+2.5
+date	2002.07.01.17.32.21;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2002.06.21.00.16.42;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2002.01.19.00.27.39;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2001.11.15.00.07.57;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.10.22.18.30.56;	author pwagner;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2001.09.17.20.26.28;	author livesey;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2001.08.15.21.03.28;	author pwagner;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2001.03.12.23.57.45;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.02.26.21.14.38;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2001.02.01.00.45.55;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.01.13.00.25.41;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2000.11.22.23.35.07;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.6
+log
+@compiler-specific pieces removed from platforms directory
+@
+text
+@#Makefile.mac -- a file full of macros to be included by a Makefile
+#to compile a Fortran 9x program or library
+
+# "$Id: LF95.Linux,v 2.5 2002/07/01 17:32:21 pwagner Exp $"
+
+# Path to source files:
+S = ..
+# Path to root directory of l2, lib, etc.:
+CONFDIR=../..
+
+# Use the libmls.a directory, libdir, for .mod files
+# dir1 is the path prepended to its .o files in dependency lists
+libdir = $(CONFDIR)/lib/$(MLSCONFG)
+
+dir1 = $(libdir)/
+
+# sources shared by l2, l3 are in $(srclib)
+# these USE init_tables_module, which is different for l2 from the l3 version
+# while l2 and l3 use the same sources in srclib they do
+# require different objects--thus a source library instead of an object
+# library (such as libmls.a)
+# therefore we will tell make to add srclib to directories searched for .f90
+# while dir2, the path prepended to its .o files in dependency lists, is empty
+# so that its object files share the current working directory with those of l2
+srclib = $(CONFDIR)/srclib
+
+dir2 =
+
+# Use the libmlspack.a directory, blaslib, for .mod files
+blaslib = $(CONFDIR)/blas/$(MLSCONFG)
+
+UTILDIR=$(CONFDIR)/util
+
+# reecho.sh can filter out globbed file expansions that fail
+# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
+# However we will be using it just to create lapack_linker_line 
+# where LIB_LAPACK may contain multiple libraries
+REECHO=$(UTILDIR)/reecho.sh
+
+# Set paths for finding source files (different from .o and .mod)
+
+vpath %.mod ./
+vpath %.o ./
+vpath %.f90 ../ $(srclib) $(libdir)/../machines/$(MLSCONFG)
+vpath %.f9h ../ $(srclib)
+vpath %.f ../
+vpath %.c ../
+
+FC = lf95
+
+DUSTY = $(FOPTS)
+
+# All the paths to supply .mod and INCLUDE files used in compiling %.f90
+# Precede each path by "-I "
+PATHS_PREFXD := $(shell ${REECHO} -d -prefix=-I $(UNPREFXDPTHS))
+INC_PATHS = $(EXTRA_PATHS) $(PATHS_PREFXD) \
+ -I $(PGSINC) -I $(srclib) -I $S -I $(libdir) -I $(blaslib)
+
+# Define some suffix rules
+
+.SUFFIXES:
+.SUFFIXES: .o .dbg.o .f90 .f .c
+.f90.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
+
+.f90.dbg.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< -o $*.dbg.o $(FAFTER)
+
+.f.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
+
+.c.o:
+	$(CC) -c ${INC_PATHS} -DNAGf90Fortran $<
+
+#Special load libraries
+#l_specials = -lPGSTK.sv3
+l_specials =
+
+# $Log: LF95.Linux,v $
+# Revision 2.5  2002/07/01 17:32:21  pwagner
+# No longer compiles some sources twice
+#
+# Revision 2.4  2002/06/21 00:16:42  pwagner
+# Enroute to ending cascading recompiles
+#
+# Revision 2.3  2002/01/19 00:27:39  pwagner
+# made useful in he5lib by UNPREFXDPTHS
+#
+# Revision 2.2  2001/11/15 00:07:57  pwagner
+# Now works with new libmlspack.a and .mod files in blas
+#
+# Revision 2.1  2001/10/22 18:30:56  pwagner
+# Added l_special like l2
+#
+# Revision 2.0  2001/09/17 20:26:28  livesey
+# New forward model
+#
+# Revision 1.6  2001/08/15 21:03:28  pwagner
+# Default rules for .f and .c; EXTRA_PATHS added to INC_PATHS
+#
+# Revision 1.5  2001/03/12 23:57:45  pwagner
+# New FAFTER, LAFTER flags to postprocess compile & link steps
+#
+# Revision 1.4  2001/02/26 21:14:38  pwagner
+# Commented out FOPTS assignment; now part of .configure setting
+#
+# Revision 1.3  2001/02/01 00:45:55  pwagner
+# Making libfwdmdl.a and l2_test
+#
+# Revision 1.2  2001/01/13 00:25:41  pwagner
+# uses lib/machines/MLSCONFG/machine.f90
+#
+# Revision 1.1  2000/11/22 23:35:07  pwagner
+# First commit
+#
+# Revision 1.1  2000/11/22 22:55:25  pwagner
+# First commit
+#
+#
+@
+
+
+2.5
+log
+@No longer compiles some sources twice
+@
+text
+@d4 1
+a4 1
+# "$Id: LF95.Linux,v 2.4 2002/06/21 00:16:42 pwagner Exp $"
+d80 3
+@
+
+
+2.4
+log
+@Enroute to ending cascading recompiles
+@
+text
+@d4 1
+a4 1
+# "$Id: LF95.Linux,v 2.3 2002/01/19 00:27:39 pwagner Exp $"
+d76 2
+a77 1
+l_specials = -lPGSTK.sv3
+d80 3
+@
+
+
+2.3
+log
+@made useful in he5lib by UNPREFXDPTHS
+@
+text
+@d4 1
+a4 1
+# "$Id: LF95.Linux,v 2.2 2001/11/15 00:07:57 pwagner Exp $"
+d8 2
+d13 1
+a13 1
+libdir = ../../lib/$(MLSCONFG)
+d25 1
+a25 1
+srclib = ../../srclib
+d30 1
+a30 1
+blaslib = ../../blas/$(MLSCONFG)
+d32 1
+a32 1
+UTILDIR=../../util
+d42 1
+d79 3
+@
+
+
+2.2
+log
+@Now works with new libmlspack.a and .mod files in blas
+@
+text
+@d4 1
+a4 1
+# "$Id: LF95.Linux,v 2.1 2001/10/22 18:30:56 pwagner Exp $"
+d30 8
+d52 3
+a54 2
+INC_PATHS = $(EXTRA_PATHS) -I $(PGSINC) -I $(srclib) -I $S -I $(libdir)\
+   -I $(blaslib)
+d76 3
+@
+
+
+2.1
+log
+@Added l_special like l2
+@
+text
+@d4 1
+a4 1
+# "$Id: LF95.Linux,v 2.0 2001/09/17 20:26:28 livesey Exp $"
+d27 3
+d44 2
+a45 1
+INC_PATHS = $(EXTRA_PATHS) -I $(PGSINC) -I $(srclib) -I $S -I $(libdir)
+d67 3
+@
+
+
+2.0
+log
+@New forward model
+@
+text
+@d4 1
+a4 1
+# "$Id: LF95.Linux,v 1.6 2001/08/15 21:03:28 pwagner Exp $"
+d60 1
+a60 1
+l_specials = 
+d63 3
+@
+
+
+1.6
+log
+@Default rules for .f and .c; EXTRA_PATHS added to INC_PATHS
+@
+text
+@d4 1
+a4 1
+# "$Id: LF95.Linux,v 1.5 2001/03/12 23:57:45 pwagner Exp $"
+d63 3
+@
+
+
+1.5
+log
+@New FAFTER, LAFTER flags to postprocess compile & link steps
+@
+text
+@d4 1
+a4 1
+# "$Id: LF95.Linux,v 1.4 2001/02/26 21:14:38 pwagner Exp $"
+d32 2
+a36 3
+# Compiler options:
+# Currently, unknown if DUSTY needs to be different yet
+#FOPTS = -g --chk --info
+a38 9
+# Beginning of path to libraries:
+#L = /nas/software/SRC/TOOLKIT-5.2.6v1.00
+#L = /nas/software/SRC/TOOLKIT-5.2.6v1.00.NAG
+
+#PGSINC = /software/SRC/TOOLKIT-5.2.6v1.00/include
+
+# Beginning of path to HDFEOS  libraries:
+#E = /van1/opt/TOOLKIT
+
+d41 1
+a41 1
+INC_PATHS = -I $(PGSINC) -I $(srclib) -I $S -I $(libdir)
+d46 1
+a46 1
+.SUFFIXES: .o .dbg.o .f90
+d53 2
+a54 2
+#SDP =SDPToolkitSubstitute.o
+#GD=GDapi.o
+d56 2
+a57 18
+#These are the locations of the libraries
+#
+#  Name                 Default value
+#  PGSTK                 $(PGSLIB)
+# HDFEOS                 $(HDFEOS_LIB)
+#   HDF                  $(HDFLIB)
+#  GCTP                  $(HDEOS_LIB)
+#
+#PGSTK =$(PGSLIB)
+#HDFEOS =$(HDFEOS_LIB)
+#HDF =$(HDFLIB)
+#GCTP =$(HDFEOS_LIB)
+#The following can be uncommented to override the defaults
+
+#PGSTK =$(HOME)/TOOLKIT/LF95
+#HDFEOS =$(HOME)/TOOLKIT
+#HDF =/software/SRC/TOOLKIT-5.2.6v1.00/hdf/linux/HDF4.1r3/lib
+#GCTP =/software/SRC/TOOLKIT-5.2.6v1.00/hdfeos/lib/linux
+d63 3
+@
+
+
+1.4
+log
+@Commented out FOPTS assignment; now part of .configure setting
+@
+text
+@d4 1
+a4 1
+# "$Id: LF95.Linux,v 1.3 2001/02/01 00:45:55 pwagner Exp $"
+d58 1
+a58 1
+	$(FC) -c $(FOPTS) $(INC_PATHS) $<
+d61 1
+a61 1
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< -o $*.dbg.o
+d89 3
+@
+
+
+1.3
+log
+@Making libfwdmdl.a and l2_test
+@
+text
+@d4 1
+a4 1
+# "$Id: LF95.Linux,v 1.2 2001/01/13 00:25:41 pwagner Exp $"
+d37 1
+a37 1
+FOPTS = -g --chk --info
+d89 3
+@
+
+
+1.2
+log
+@uses lib/machines/MLSCONFG/machine.f90
+@
+text
+@d4 1
+a4 1
+# "$Id: LF95.Linux,v 1.1 2000/11/22 23:35:07 pwagner Exp $"
+d51 1
+a51 1
+INC_PATHS = -I $(PGSINC) -I $(srclib) -I $S
+d89 3
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d4 1
+a4 1
+# "$Id: LF95.Linux,v 1.1 2000/11/22 22:55:25 pwagner Exp $"
+d30 1
+a30 1
+vpath %.f90 ../ $(srclib)
+d89 3
+@
+

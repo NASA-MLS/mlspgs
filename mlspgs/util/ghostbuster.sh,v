@@ -1,0 +1,969 @@
+head	1.13;
+access;
+symbols
+	v5-02-NRT-19:1.13
+	v6-00:1.13
+	v5-02-NRT-18:1.13
+	v5-02:1.13
+	v5-01-NRT-17:1.13
+	v5-01-NRT-16:1.13
+	v5-01-NRT-15:1.13
+	v5-01-NRT-14:1.13
+	neuralnetworks-1-0:1.13.0.10
+	cfm-single-freq-0-1:1.13.0.8
+	v5-01:1.13
+	v5-00:1.13
+	v4-23-TA133:1.13.0.6
+	mus-emls-1-70:1.13.0.4
+	rel-1-0-englocks-work:1.13.0.2
+	VUMLS1-00:1.13
+	VPL1-00:1.13
+	V4-22-NRT-08:1.13
+	VAM1-00:1.12
+	V4-21:1.12.0.4
+	V4-13:1.12
+	V4-12:1.12
+	V4-11:1.12
+	V4-10:1.12
+	V3-43:1.12
+	M4-00:1.12
+	V3-41:1.12
+	V3-40-PlusGM57:1.12.0.2
+	V2-24-NRT-04:1.12
+	V3-33:1.12
+	V2-24:1.12
+	V3-31:1.12
+	V3-30-NRT-05:1.12
+	cfm-01-00:1.12
+	V3-30:1.12
+	V3-20:1.12
+	V3-10:1.12
+	V2-23-NRT-02:1.12
+	V2-23:1.12
+	V2-22-NRT-01:1.12
+	V2-22:1.12
+	V2-21:1.12
+	V2-20:1.12
+	V2-11:1.12
+	V2-10:1.12
+	V2-00:1.12
+	V1-51:1.11
+	V1-50:1.11
+	V1-45:1.9
+	V1-44:1.9
+	V1-43:1.9
+	V1-42:1.9
+	V1-41:1.9
+	V1-32:1.9
+	V1-40:1.9
+	V1-31:1.9
+	V1-30:1.9
+	V1-13:1.8
+	V1-12:1.8
+	V1-11:1.8
+	V1-10:1.8
+	newfwm-feb03:1.8.0.2
+	V1-04:1.6
+	V1-03:1.6
+	V1-02:1.6
+	V1-00:1.6
+	newfwm-sep01:1.2.0.2
+	V0-7:1.2
+	V0-5-Level2:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.13
+date	2015.11.18.00.23.36;	author pwagner;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2005.06.23.22.20.45;	author pwagner;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2004.11.03.19.09.33;	author pwagner;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2004.10.27.22.34.08;	author pwagner;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2003.06.21.00.34.17;	author pwagner;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2002.07.25.19.54.37;	author pwagner;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2002.07.22.22.08.44;	author pwagner;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2002.01.29.23.43.13;	author pwagner;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2001.11.21.00.26.35;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.11.14.19.42.08;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2001.11.13.23.21.44;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.05.31.20.16.26;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.05.01.17.03.31;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.13
+log
+@Now exits if first arg not a directory; Cosmetic changes
+@
+text
+@#!/bin/sh
+    #ghostbuster.sh
+# --------------- ghostbuster.sh help
+#rm ghosts from the binary directory (the 1st arg)
+#where ghosts are defined as .o and .mod-suffixed
+#files for which no corresponding source file currently
+#exists in any of the source directories (arg# 2 ..)
+#The most likely reason being that the original source file
+#has been moved or deleted, yet the persistent .o or .mod
+#file still "haunts" the binary-directory.
+#
+#Usage:
+#ghostbuster.sh [-lib] arg1 arg2 [arg3 ..]
+#
+#where argn is a path, either absolute or relative to current working directory
+#Result:
+#rm the list of such files, unless it is empty in which case does nothing
+#
+#
+#    O p t i o n s
+# -d file_name  ignore file_name (from current directory)
+#                in effect, acting as though it is already dead
+#                (this would be more useful if we could ignore
+#                 files from each of the source directories)
+# -h[elp]       print brief help message; exit
+# -lib          if this flag is present, 
+#                executes "rm -f *.a" if any ghosts found
+# -perl program  
+#               use program instead of perl to run f90GhostFiles.pl
+#Note:
+#The option(s) marked with "-", if present,
+#must precede the extra search directories on the command line
+# 
+# --------------- End ghostbuster.sh help
+# Copyright 2005, by the California Institute of Technology. ALL
+# RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+# commercial use must be negotiated with the Office of Technology Transfer
+# at the California Institute of Technology.
+
+# This software may be subject to U.S. export control laws. By accepting this
+# software, the user agrees to comply with all applicable U.S. export laws and
+# regulations. User has the responsibility to obtain export licenses, or other
+# export authority as may be required before exporting such information to
+# foreign countries or providing access to foreign persons.
+
+# "$Id: ghostbuster.sh,v 1.12 2005/06/23 22:20:45 pwagner Exp $"
+
+# Function to prompt for user response
+#
+
+UserPrompt()
+{
+    if [ "$AUTO_REPLY" = 1 ] ; then
+      user_response='y'
+    elif [ "$BRAND" = "linux" ] ; then
+      /bin/echo -n "$* " > /dev/tty
+      read user_response
+    else
+      echo "$* \\c" > /dev/tty
+      read user_response
+    fi
+}
+
+#---------------------------- get_unique_name
+#
+# Function returns a unique name based on arg, PID and HOSTNAME
+# e.g.,
+#           temp_file_name=`get_unique_name foo`
+#           echo $temp_file_name
+# might print foo.colossus.21455
+# if no arg, defaults to "temp" (very original name)
+# if two args present, assumes second is punctuation to
+# use in pace of "."
+
+get_unique_name()
+{
+
+   # How many args?
+      if [ $# -gt 1 ]
+      then
+        pt="$2"
+        temp="$1"
+      elif [ $# -gt 0 ]
+      then
+        pt="."
+        temp="$1"
+      else
+        pt="."
+        temp="temp"
+      fi
+   # Is $HOST defined?
+      if [ "$HOST" != "" ]
+      then
+        our_host_name="$HOST"
+      elif [ "$HOSTNAME" != "" ]
+      then
+        our_host_name="$HOSTNAME"
+      else
+        our_host_name="host"
+      fi
+    #  echo $our_host_name
+   # if in form host.moon.planet.star.. extract host
+      our_host_name=`echo $our_host_name | sed 's/\./,/g'`
+      our_host_name=`perl -e '@@parts=split(",","$ARGV[0]"); print $parts[0]' $our_host_name`
+      echo $temp${pt}$our_host_name${pt}$$
+}
+      
+#------------------------------- extant_files ------------
+#
+# Function to return only those files among the args
+# that actually exist
+# Useful when passed something like *.f which may 
+# (1) expand to list of files, returned as extant_files_result, or
+# (2) stay *.f, in which case a blank is returned as extant_files_result 
+#     (unless you have perversely named a file '*.f')
+# usage: extant_files arg1 [arg2] ..
+
+extant_files()
+{
+   extant_files_result=
+   # Trivial case ($# = 0)
+   if [ "$1" != "" ]
+   then
+      for file
+      do
+        if [ -f "$file" ]
+        then
+          extant_files_result="$extant_files_result $file"
+        fi
+      done
+   fi
+}
+
+#------------------------------- Main Program ------------
+
+#****************************************************************
+#                                                               *
+#                  * * * Main Program  * * *                    *
+#                                                               *
+#                                                               *
+#  The entry point where control is given to the script         *
+#****************************************************************
+# Bug: -d file_name only ignores files in current directory
+#         instead of every directory searched for sources
+# Fix: Form list of bad files from reading command-line args
+# then loop over extra search directories, mv-ing files as necessary
+# then bust ghosts
+# then loop again over extra search directories, cleaning up this time
+
+#
+
+DEBUG=0
+#     ^  -- set this to 1 to echo rather than execute rm command
+
+PRINT_TOO_MUCH=0
+#              ^  -- set this to 1 if willing to try patience
+#
+#
+#----------------------- Implementation -----------------------
+
+TRY_CLEANUP=1
+#           ^  -- set this to 1 to try cleaning up from a prior faulty run
+#
+#           How to rename or hide excluded files so they !~= %.f90
+#dsuffix=".xug"
+#          ^^^----- this is the suffix stuck onto any excluded files
+#                   or else the name of a temp directory hiding them
+dsuffix=".`get_unique_name g`"
+if [ $PRINT_TOO_MUCH = "1" ]
+then
+  echo "Hiding excluded files behind temp directory $dsuffix"
+fi
+# Do we have write permission in the current working directory
+if [ -w "`pwd`" ]
+then
+  f90suffix=".f90"
+  if [ -d "$dsuffix" ] ; then
+    if [ $TRY_CLEANUP = "1" ] ; then
+      extant_files "$dsuffix"/*
+      if [ "$extant_files_result" != "" ]
+      then
+      mv "$dsuffix"/* .
+      fi
+      rmdir "$dsuffix"
+    else
+      echo "Sorry--$dsuffix already exists"
+      echo "Aborting new Makefile.dep"
+      exit
+    fi
+  fi
+  mkdir "$dsuffix"
+else
+  f90suffix="$dsuffix"
+fi
+
+me="$0"
+my_name=ghostbuster.sh
+PERL=perl
+
+wrong_list=""
+rm_any_libs="no"
+more_opts="yes"
+while [ "$more_opts" = "yes" ] ; do
+
+    case "$1" in
+
+    -d )
+      if [ -f "$2" ]
+       then
+         if [ "$f90suffix" != "$dsuffix" ]
+         then
+           mv "$2" "$dsuffix"
+         else
+           echo "$2 wrongly added to dependency lists"
+           wrong_list="$wrong_list $2"
+         fi
+       fi
+       shift
+       shift
+       ;;
+    -lib )
+       rm_any_libs="yes"
+       shift
+       ;;
+    -perl )
+       PERL="$2"
+       shift
+       shift
+       ;;
+    -h | -help )
+       sed -n '/'$my_name' help/,/End '$my_name' help/ p' $me \
+           | sed -n 's/^.//p' | sed '1 d; $ d'
+       exit
+       ;;
+
+    * )
+       more_opts="no"
+       ;;
+    esac
+done
+
+if [ $# -lt "2" ]
+then
+  echo " Usage: ghostbuster.sh arg1 arg2 [arg3 ..] "
+  echo " rm ghosts from the binary directory (arg1)"
+  echo " where ghosts are defined as .o and .mod-suffixed"
+  echo " files for which no corresponding source file currently"
+  echo " exists in any of the source directories (arg2 ..)"
+  exit
+elif [ ! -d "$1" ]
+then
+  echo "binary dorectories have yet to be created"
+  exit
+fi
+
+if [ $PRINT_TOO_MUCH = "1" ]
+then
+  echo " using f90GhostFiles.pl to find ghosts "
+fi
+
+#
+# Prefix f90GhostFiles.pl with the path to util
+      # this assumes f90GhostFiles.pl is in same dir as this script
+the_GHOSTFINDER="`echo $0 | sed 's/ghostbuster.sh/f90GhostFiles.pl/'`"
+if [ $PRINT_TOO_MUCH = "1" ]
+then
+  echo " Your perl is $PERL "
+fi
+
+if [ "$DEBUG" = "1" ]
+then
+    echo "About to call $the_GHOSTFINDER $@@"
+    echo "from directory `pwd`"
+ fi
+the_ghosts=`$PERL $the_GHOSTFINDER "$@@"`
+
+from_here=`pwd`
+if [ "$DEBUG" = "1" ]
+then
+  if [ "$the_ghosts" != "" ]
+  then
+    echo cd "$1"
+    echo "rm -f $the_ghosts"
+    if [ "$rm_any_libs" = "yes" ]
+    then
+       echo  "rm -f *.a"
+    fi
+    echo cd "$from_here"
+  else
+    echo "Sorry, the ghosts are away--may I take a message?"
+  fi
+    exit
+fi
+
+if [ "$the_ghosts" != "" ]
+then
+  cd "$1"
+  rm -f $the_ghosts
+  if [ "$rm_any_libs" = "yes" ]
+  then
+    rm -f *.a
+  fi
+  cd "$from_here"
+fi
+#         clean up
+# renamed or hidden files
+if [ -w "$dsuffix" ]
+then
+  extant_files "$dsuffix"/*
+  if [ "$extant_files_result" != "" ]
+  then
+    mv "$dsuffix"/* .
+  fi
+  rmdir "$dsuffix"
+fi
+exit
+# $Log: ghostbuster.sh,v $
+# Revision 1.12  2005/06/23 22:20:45  pwagner
+# Reworded Copyright statement
+#
+# Revision 1.11  2004/11/03 19:09:33  pwagner
+# perl scripts now get launched via perl rather than as stand-alone executables
+#
+# Revision 1.10  2004/10/27 22:34:08  pwagner
+# Set AUTO_REPLY=1 to automate pointing to wherever perl relocates
+#
+# Revision 1.9  2003/06/21 00:34:17  pwagner
+# Added fail-safe measures and MAY_EDIT_PERL flag
+#
+# Revision 1.8  2002/07/25 19:54:37  pwagner
+# Comments on hiding excluded files only if PRINT_TOO_MUCH
+#
+# Revision 1.7  2002/07/22 22:08:44  pwagner
+# Uses get_unique_name for temp file names
+#
+# Revision 1.6  2002/01/29 23:43:13  pwagner
+# Cleans up excluded files from .xug dir before exiting
+#
+# Revision 1.5  2001/11/21 00:26:35  pwagner
+# Fixed bug in ignored files
+#
+# Revision 1.4  2001/11/14 19:42:08  pwagner
+# Added the stuff left out: extant_files code and -lib implementation
+#
+# Revision 1.3  2001/11/13 23:21:44  pwagner
+# option -d bad_file_name added
+#
+# Revision 1.2  2001/05/31 20:16:26  pwagner
+# Added -lib option to rm any haunted libs
+#
+# Revision 1.1  2001/05/01 17:03:31  pwagner
+# First commit
+#
+#
+
+@
+
+
+1.12
+log
+@Reworded Copyright statement
+@
+text
+@d46 1
+a46 1
+# "$Id: ghostbuster.sh,v 1.11 2004/11/03 19:09:33 pwagner Exp $"
+d56 2
+a57 2
+	/bin/echo -n "$* " > /dev/tty
+    read user_response
+d59 2
+a60 2
+	echo "$* \\c" > /dev/tty
+    read user_response
+d94 1
+a94 1
+         our_host_name="$HOST"
+d97 1
+a97 1
+         our_host_name="$HOSTNAME"
+d99 1
+a99 1
+         our_host_name="host"
+d126 4
+a129 4
+         if [ -f "$file" ]
+         then
+               extant_files_result="$extant_files_result $file"
+         fi
+d141 1
+a141 1
+#	The entry point where control is given to the script         *
+d176 7
+a182 13
+	f90suffix=".f90"
+	if [ -d "$dsuffix" ] ; then
+		if [ $TRY_CLEANUP = "1" ] ; then
+         extant_files "$dsuffix"/*
+         if [ "$extant_files_result" != "" ]
+         then
+			   mv "$dsuffix"/* .
+         fi
+			rmdir "$dsuffix"
+		else
+			echo "Sorry--$dsuffix already exists"
+			echo "Aborting new Makefile.dep"
+                exit
+d184 5
+d190 2
+a191 1
+    mkdir "$dsuffix"
+d193 1
+a193 1
+	f90suffix="$dsuffix"
+d208 1
+a208 1
+	    if [ -f "$2" ]
+d210 7
+a216 7
+	       if [ "$f90suffix" != "$dsuffix" ]
+          then
+	          mv "$2" "$dsuffix"
+	       else
+	          echo "$2 wrongly added to dependency lists"
+                            wrong_list="$wrong_list $2"
+	       fi
+d219 1
+a219 1
+	    shift
+d224 1
+a224 1
+	    ;;
+d228 1
+a228 1
+	    shift
+d234 1
+a234 1
+	    ;;
+d242 27
+a268 9
+	if [ $# -lt "2" ]
+	then
+		echo " Usage: ghostbuster.sh arg1 arg2 [arg3 ..] "
+		echo " rm ghosts from the binary directory (arg1)"
+		echo " where ghosts are defined as .o and .mod-suffixed"
+		echo " files for which no corresponding source file currently"
+		echo " exists in any of the source directories (arg2 ..)"
+      exit
+	fi
+d270 6
+a275 20
+	if [ $PRINT_TOO_MUCH = "1" ]
+	then
+		echo " using f90GhostFiles.pl to find ghosts "
+	fi
+
+	#
+	# Prefix f90GhostFiles.pl with the path to util
+        # this assumes f90GhostFiles.pl is in same dir as this script
+	the_GHOSTFINDER="`echo $0 | sed 's/ghostbuster.sh/f90GhostFiles.pl/'`"
+	if [ $PRINT_TOO_MUCH = "1" ]
+	then
+		echo " Your perl is $PERL "
+	fi
+
+	if [ "$DEBUG" = "1" ]
+	then
+      echo "About to call $the_GHOSTFINDER $@@"
+      echo "from directory `pwd`"
+   fi
+	the_ghosts=`$PERL $the_GHOSTFINDER "$@@"`
+d277 17
+a293 17
+   from_here=`pwd`
+	if [ "$DEBUG" = "1" ]
+	then
+   	if [ "$the_ghosts" != "" ]
+	   then
+         	echo cd "$1"
+         	echo "rm -f $the_ghosts"
+	        if [ "$rm_any_libs" = "yes" ]
+	        then
+             echo	"rm -f *.a"
+   	    fi
+          echo cd "$from_here"
+      else
+         	echo "Sorry, the ghosts are away--may I take a message?"
+	   fi
+      exit
+	fi
+d295 10
+a304 10
+	if [ "$the_ghosts" != "" ]
+	then
+        	cd "$1"
+        	rm -f $the_ghosts
+	   if [ "$rm_any_libs" = "yes" ]
+	   then
+        	rm -f *.a
+   	fi
+      cd "$from_here"
+	fi
+d309 6
+a314 6
+         extant_files "$dsuffix"/*
+   if [ "$extant_files_result" != "" ]
+	then
+        	mv "$dsuffix"/* .
+	fi
+   rmdir "$dsuffix"
+d318 3
+@
+
+
+1.11
+log
+@perl scripts now get launched via perl rather than as stand-alone executables
+@
+text
+@d35 10
+a44 2
+# Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
+# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d46 1
+a46 1
+# "$Id: ghostbuster.sh,v 1.10 2004/10/27 22:34:08 pwagner Exp $"
+d314 3
+@
+
+
+1.10
+log
+@Set AUTO_REPLY=1 to automate pointing to wherever perl relocates
+@
+text
+@d28 2
+d38 1
+a38 1
+# "$Id: ghostbuster.sh,v 1.9 2003/06/21 00:34:17 pwagner Exp $"
+a154 5
+MAY_EDIT_PERL=1
+#             ^  -- set this to 1 to permit correcting perl path
+AUTO_REPLY=1
+#          ^  -- set this to 1 to automate user responses to 'y'
+#                (in this case automate correcting perl path)
+d190 1
+d216 6
+a221 1
+	;;
+d226 1
+a226 1
+	;;
+d255 1
+a255 2
+		echo " Your perl is `which perl` "
+		echo " f90GhostFiles.pl is looking for it at `sed -n '1 p' $the_GHOSTFINDER`"
+a257 47
+# Check whether script is looking for perl in right place
+# && give user a chance to redirect it if it is not
+	script_perl=`sed -n '1 p' $the_GHOSTFINDER`
+	your_perl='#!'`which perl` 
+   if [ "$script_perl" != "$your_perl" -a "$MAY_EDIT_PERL" = 1 ]
+        then
+		#Warn user that perl script may need to be changed
+
+		echo " *** Warning: f90GhostFiles.pl may need to be changed"
+		echo " ***          to point to where your perl actually is"
+		echo " ***          "
+		echo " ***  (unless you know of a compelling reason to do otherwise"
+		echo " ***  you probably want to answer 'yes' to the following)"
+		echo " ***          "
+ 		UserPrompt "Change f90GhostFiles.pl to look in [$your_perl](yes) or no?"
+   		if [ "$user_response" != "" ] ; then
+			case  "$user_response" in
+	    		n* | N* )
+				echo "Continuing to use $script_perl"
+              		  	change_perl=
+	   		 ;;
+	    		y* | Y* )
+				echo "Changing to use $your_perl"
+                		change_perl="$your_perl"
+	    		;;
+	   		 * )
+				echo "Changing to use $user_response"
+                		change_perl="$user_response"
+	    		;;
+			esac
+			else
+				echo "Changing to use $your_perl"
+                		change_perl="$your_perl"
+			fi
+   		if [ "$change_perl" != "" ] ; then
+            temp_name=`get_unique_name pl`
+            sed -n "1 s%$script_perl%$change_perl%p;2,$ p" $the_GHOSTFINDER > $temp_name
+            return_status=`expr $?`
+            if [ $return_status = 0 ]
+            then
+				  chmod u+w "$the_GHOSTFINDER"
+         	  mv $temp_name "$the_GHOSTFINDER"
+				  chmod a+x "$the_GHOSTFINDER"
+				  echo "*** You have fixed f90GhostFiles.pl to look for $your_perl"
+            fi
+         fi
+       fi
+d263 1
+a263 1
+	the_ghosts=`$the_GHOSTFINDER "$@@"`
+d306 3
+@
+
+
+1.9
+log
+@Added fail-safe measures and MAY_EDIT_PERL flag
+@
+text
+@d33 1
+a33 1
+# Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+d36 1
+a36 1
+# "$Id: ghostbuster.sh,v 1.8 2002/07/25 19:54:37 pwagner Exp $"
+d43 3
+a45 1
+    if [ "$BRAND" = "linux" ] ; then
+d47 1
+d50 1
+a51 1
+    read user_response
+d154 4
+d351 3
+@
+
+
+1.8
+log
+@Comments on hiding excluded files only if PRINT_TOO_MUCH
+@
+text
+@d36 1
+a36 1
+# "$Id: ghostbuster.sh,v 1.7 2002/07/22 22:08:44 pwagner Exp $"
+d150 1
+d253 1
+a253 1
+   if [ "$script_perl" != "$your_perl" ]
+d286 8
+a293 4
+				chmod u+w "$the_GHOSTFINDER"
+         	mv $temp_name "$the_GHOSTFINDER"
+				chmod a+x "$the_GHOSTFINDER"
+				echo "*** You have fixed f90GhostFiles.pl to look for $your_perl"
+d344 3
+@
+
+
+1.7
+log
+@Uses get_unique_name for temp file names
+@
+text
+@d36 1
+a36 1
+# "$Id: ghostbuster.sh,v 1.6 2002/01/29 23:43:13 pwagner Exp $"
+d156 4
+a159 1
+echo "Hiding excluded files behind temp directory $dsuffix"
+d339 3
+@
+
+
+1.6
+log
+@Cleans up excluded files from .xug dir before exiting
+@
+text
+@d36 1
+a36 1
+# "$Id: ghostbuster.sh,v 1.5 2001/11/21 00:26:35 pwagner Exp $"
+d51 44
+d152 2
+a153 2
+dsuffix=".xug"
+#         ^^^----- this is the suffix stuck onto any excluded files
+d155 2
+d280 2
+a281 1
+            sed -n "1 s%$script_perl%$change_perl%p;2,$ p" $the_GHOSTFINDER > temp.pl
+d283 1
+a283 1
+         	mv temp.pl "$the_GHOSTFINDER"
+d336 3
+@
+
+
+1.5
+log
+@Fixed bug in ignored files
+@
+text
+@d33 5
+a100 5
+# Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+# "$Id: ghostbuster.sh,v 1.4 2001/11/14 19:42:08 pwagner Exp $"
+
+d248 1
+d259 1
+d274 1
+d289 3
+@
+
+
+1.4
+log
+@Added the stuff left out: extant_files code and -lib implementation
+@
+text
+@d21 4
+a24 1
+# -d file_name  exclude file_name
+d26 2
+a27 1
+# -lib   if this flag is present, executes "rm -f *.a" if any ghosts found
+d81 7
+d99 1
+a99 1
+# "$Id: ghostbuster.sh,v 1.3 2001/11/13 23:21:44 pwagner Exp $"
+a102 7
+#
+#if [ "$1" = "-lib" ] ; then
+#   rm_any_libs="yes"
+#   shift
+#else
+#   rm_any_libs="no"
+#fi
+d277 2
+a278 4
+	moved_files_list="$dsuffix"/*
+	moved_files=`echo $moved_files_list`
+#	the above will expand the wild card * if dsuffix is non-empty
+	if [ "$moved_files" != "$dsuffix/*" ]
+a284 1
+exit
+d286 3
+@
+
+
+1.3
+log
+@option -d bad_file_name added
+@
+text
+@d42 35
+d88 1
+a88 1
+# "$Id: ghostbuster.sh,v 1.2 2001/05/31 20:16:26 pwagner Exp $"
+d134 1
+d154 4
+d237 5
+d285 3
+@
+
+
+1.2
+log
+@Added -lib option to rm any haunted libs
+@
+text
+@d3 1
+d14 1
+d20 3
+a22 1
+#Options:
+d24 5
+a28 1
+#
+d50 1
+a50 1
+# Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+d53 1
+a53 1
+# "$Id: ghostbuster.sh,v 1.1 2001/05/01 17:03:31 pwagner Exp $"
+d58 33
+a90 3
+if [ "$1" = "-lib" ] ; then
+   rm_any_libs="yes"
+   shift
+d92 1
+a92 1
+   rm_any_libs="no"
+d95 35
+d224 14
+d240 3
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d12 1
+a12 1
+#ghostbuster.sh arg1 arg2 [arg3 ..]
+d16 4
+a19 1
+# 
+d45 1
+a45 1
+# "$Id: ghostbuster.sh,v 1.8 2001/03/23 00:41:23 pwagner Exp $"
+d50 7
+d132 4
+d146 4
+d153 3
+@
+

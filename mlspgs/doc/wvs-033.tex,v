@@ -1,0 +1,165 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.14
+	cfm-single-freq-0-1:1.1.0.12
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.10
+	mus-emls-1-70:1.1.0.8
+	rel-1-0-englocks-work:1.1.0.6
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2008.06.11.20.14.52;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.6in
+\textheight 9.20in
+
+\newcommand{\docname}{\bf wvs-033}
+\newcommand{\docdate}{2 May 2006}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill\\
+Subject: \>Path integrations\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-20pt}
+
+\section{The problem}
+
+The full forward model currently uses either a trapezoid rule or a
+three-point Gauss-Legendre rule to integrate $\beta$ over one layer of
+the line-of-sight path, depending upon the relationship between a
+specified tolerance and a first-order estimate of the error in the
+trapezoid rule. When the Gauss-Legendre rule is used, the function values
+at the end points, which determined the value of the trapezoidal rule,
+are not used.
+
+\section{Proposed solution}
+
+We could get almost the same result with less computational effort by
+using either a trapezoid rule or a four-point Lobatto rule, or get a far
+better result with the same computational effort by using a five-point
+Lobatto rule.  An $n$ point Lobatto rule uses the function values at the
+end points of the interval, that is, the values used to evaluate the
+trapezondal rule, plus $n-2$ additional values at  points optimally
+selected within the interval.
+
+The algebraic order (the order of polynomial integrated exactly) is $2n$
+for an $n$ point Gauss-Legendre rule, or $2n-2$ for an $n$-point Lobatto
+rule.  Thus, an $n+1$ point Lobatto rule has the same algebraic order as
+an $n$ point Gauss-Legendre rule.
+
+The coefficient of the remainder for an $n$-point Lobatto rule is
+
+\begin{equation}
+R_L(n) =
+\frac{-n (n-1)^3 2^{2 n - 1} [ ( n-2 )! ]^4}
+     {(2 n - 1 ) [ ( 2 n - 2 ) ! ]^3}
+\end{equation}
+
+The coefficient of the remainder for an $n$-point Gauss-Legendre rule is
+
+\begin{equation}
+R_G(n) =
+\frac{2^{2 n + 1} (n!)^4}
+     {( 2 n + 1 ) ( [ ( 2 n ) ! ]^3}
+\end{equation}
+
+Thus $R_L(4)/R_G(3)$ is $-4/3$, that is, the Lobatto rule has the same
+algebraic order (6) and almost the same error coefficient, with less work
+(four function evaluations instead of five), and $R_L(5)/R_G(3)$ is
+$-5/882$, that is, the Lobatto rule has a higher algebraic order (8
+instead of 6) and a far smaller error coefficient, with the same amount
+of work (five function evaluations in both cases).
+
+The singularity-correction scheme
+
+\begin{equation}
+\int_{\zeta_i}^{\zeta_{i+1}} G(\zeta) \frac{\text{d}s}{\text{d}h}
+  \frac{\text{d}h}{\text{d}\zeta}\, \text{d} \zeta =
+G(\zeta_i) \int_{\zeta_i}^{\zeta_{i+1}} \frac{\text{d}s}{\text{d}h}
+  \frac{\text{d}h}{\text{d}\zeta}\, \text{d} \zeta +
+\int_{\zeta_i}^{\zeta_{i+1}} (G(\zeta)-G(\zeta_i)) \frac{\text{d}s}{\text{d}h}
+  \frac{\text{d}h}{\text{d}\zeta}\, \text{d} \zeta
+\end{equation}
+
+continues to work, because it is based
+upon a rectangle-rule estimate.
+
+\label{lastpage}
+\end{document}
+% $Id: wvs-033r0.tex,v 1.1 2008/06/11 20:14:52 vsnyder Exp $
+@

@@ -1,0 +1,376 @@
+head	2.6;
+access;
+symbols
+	v5-02-NRT-19:2.6
+	v6-00:2.6
+	v5-02-NRT-18:2.6
+	v5-02:2.6
+	v5-01-NRT-17:2.6
+	v5-01-NRT-16:2.6
+	v5-01-NRT-15:2.6
+	v5-01-NRT-14:2.6
+	neuralnetworks-1-0:2.6.0.6
+	cfm-single-freq-0-1:2.6.0.4
+	v5-01:2.6
+	v5-00:2.6
+	v4-23-TA133:2.6.0.2
+	mus-emls-1-70:2.5.0.2
+	rel-1-0-englocks-work:2.4.0.4
+	VUMLS1-00:2.4
+	VPL1-00:2.4
+	V4-22-NRT-08:2.4
+	VAM1-00:2.4
+	V4-21:2.4.0.2
+	V4-13:2.4
+	V4-12:2.4
+	V4-11:2.4
+	V4-10:2.4
+	M4-00:2.4
+	V3-33:2.3
+	V3-31:2.3
+	V3-30-NRT-05:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.6
+date	2018.09.07.17.15.00;	author pwagner;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2018.05.17.02.15.45;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2011.07.29.01.57.04;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2011.01.26.03.04.13;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2010.11.05.20.28.34;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2010.08.19.19.17.27;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.6
+log
+@Code around a NAG-6.1 compiler bug
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Interpolate_Mie_m
+
+  use Sparse_m, only: Sparse_t
+  implicit none
+  private
+  public :: Interpolate_Mie
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: Interpolate_Mie_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+contains
+!-----------------------------------------------  Interpolate_Mie  -----
+
+  subroutine Interpolate_Mie ( Frq_Ind, Eta_T_IWC_Path, Atmos_Der, Temp_Der, &
+                             & Beta_c_e_path, Beta_c_s_path,                 &
+                             & dBeta_c_e_dIWC_path, dBeta_c_s_dIWC_path,     &
+                             & dBeta_c_e_dT_path, dBeta_c_s_dT_path )
+
+    ! Interpolate the Mie tables for Frq_Ind to path Temperature and IWC
+    use MLSKinds, only: RP
+    use Read_Mie_m, only: dBeta_dIWC_c_a, dBeta_dIWC_c_s, &
+      & dBeta_dT_c_a, dBeta_dT_c_s, Log_Beta_c_a, Log_Beta_c_s, Log_Mie
+    use Sparse_Eta_m, only: Sparse_Eta_t
+
+    integer, intent(in) :: Frq_Ind       ! Frequency index for Mie tables
+    type(sparse_eta_t) :: Eta_T_IWC_Path ! T x IWC interpolating coeffs
+    logical, intent(in) :: Atmos_Der, Temp_Der ! Compute derivatives?
+    real(rp), intent(out) :: Beta_c_s_path(:), Beta_c_e_path(:)
+    real(rp), intent(out) :: dBeta_c_s_dIWC_path(:), dBeta_c_e_dIWC_path(:)
+    real(rp), intent(out) :: dBeta_c_s_dT_path(:), dBeta_c_e_dT_path(:)
+
+    real(rp) :: Beta_c_a_path(size(Beta_c_s_path))
+    real(rp) :: dBeta_c_a_dIWC_path(size(Beta_c_s_path))
+    real(rp) :: dBeta_c_a_dT_path(size(Beta_c_s_path))
+    integer :: NT ! Mie table T x IWC sizes (they're all the same size)
+    real(rp), pointer :: Temp_1D(:)
+
+    call log_mie ! Get log_beta_c_a and log_beta_c_s if not done yet
+
+    nt = size(log_beta_c_a(:,:,frq_ind))
+    ! Interpolate Mie log_beta_c_a and log_beta_c_s to T and IWC on path
+    ! using interpolating coefficients from Mie tables to T and IWC, then
+    ! exponentiate to get beta_c_a_path and beta_c_s_path.
+    temp_1d(1:nt) => log_beta_c_a(:,:,frq_ind)
+    call eta_T_IWC_path%sparse_dot_vec ( temp_1d, beta_c_a_path )
+    beta_c_a_path = exp(beta_c_a_path)
+    temp_1d(1:nt) => log_beta_c_s(:,:,frq_ind)
+    call eta_T_IWC_path%sparse_dot_vec ( temp_1d, beta_c_s_path )
+    beta_c_s_path = exp(beta_c_s_path)
+
+    beta_c_e_path = beta_c_a_path + beta_c_s_path
+
+    if ( atmos_der ) then
+      temp_1d(1:nt) => dBeta_dIWC_c_a(:,:,frq_ind)
+      call eta_T_IWC_path%sparse_dot_vec ( temp_1d, dBeta_c_a_dIWC_path )
+      temp_1d(1:nt) => dBeta_dIWC_c_s(:,:,frq_ind)
+      call eta_T_IWC_path%sparse_dot_vec ( temp_1d, dBeta_c_s_dIWC_path )
+      dBeta_c_e_dIWC_path = dBeta_c_a_dIWC_path + dBeta_c_s_dIWC_path
+    end if
+
+    if ( temp_der ) then
+      temp_1d(1:nt) => dBeta_dT_c_a(:,:,frq_ind)
+      call eta_T_IWC_path%sparse_dot_vec ( temp_1d, dBeta_c_a_dT_path )
+      temp_1d(1:nt) => dBeta_dT_c_s(:,:,frq_ind)
+      call eta_T_IWC_path%sparse_dot_vec ( temp_1d, dBeta_c_s_dT_path )
+      dBeta_c_e_dT_path = dBeta_c_a_dT_path + dBeta_c_s_dT_path
+    end if
+
+  end subroutine Interpolate_Mie
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: Interpolate_Mie_m.f90,v 2.5 2018/05/17 02:15:45 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Interpolate_Mie_m
+
+! $Log: Interpolate_Mie_m.f90,v $
+! Revision 2.5  2018/05/17 02:15:45  vsnyder
+! Use sparse instead of dense interpolation
+!
+! Revision 2.4  2011/07/29 01:57:04  vsnyder
+! Only IWC instead of IWC_A and IWC_S
+!
+! Revision 2.3  2011/01/26 03:04:13  vsnyder
+! Different etas for IWC_a and IWC_s, get beta_c_e stuff from beta_c_a+beta_c_s
+!
+! Revision 2.2  2010/11/05 20:28:34  vsnyder
+! Delete unused declarations
+!
+! Revision 2.1  2010/08/19 19:17:27  vsnyder
+! Initial commit
+!
+@
+
+
+2.5
+log
+@Use sparse instead of dense interpolation
+@
+text
+@d14 2
+a15 1
+  implicit NONE
+d87 1
+a87 1
+       "$Id: Interpolate_Mie_m.f90,v 2.4 2011/07/29 01:57:04 vsnyder Exp $"
+d97 3
+@
+
+
+2.4
+log
+@Only IWC instead of IWC_A and IWC_S
+@
+text
+@d26 2
+a27 2
+  subroutine Interpolate_Mie ( Frq_Ind, Eta_T_Path, Eta_IWC_Path, Atmos_Der, &
+                             & Temp_Der, Beta_c_e_path, Beta_c_s_path,       &
+d31 1
+a31 2
+    ! Interpolate the Mie tables for Frq_Ind to path IWC and Temperature
+    use Get_Eta_Matrix_m, only: Eta_D_T, Interpolate_Stru
+d35 1
+d37 2
+a38 3
+    integer, intent(in) :: Frq_Ind     ! Frequency index for Mie tables
+    type(eta_d_t), intent(in) :: Eta_IWC_Path(:), & ! IWC Coeffs
+      & Eta_T_Path(:) ! T coeffs
+d47 2
+d52 6
+a57 5
+    ! Interpolate Mie beta_c_a and beta_c_s to T and IWC on path
+    ! using interpolating coefficients from Mie tables to T and IWC.
+    call interpolate_stru ( log_beta_c_a(:,:,frq_ind), &
+      & eta_t_path, eta_iwc_path, &
+      & beta_c_a_path ) ! Actually getting log(beta_c_a_path)
+d59 2
+a60 3
+    call interpolate_stru ( log_beta_c_s(:,:,frq_ind), &
+      & eta_t_path, eta_iwc_path, &
+      & beta_c_s_path ) ! Actually getting log(beta_c_s_path)
+d66 4
+a69 6
+      call interpolate_stru ( dBeta_dIWC_c_a(:,:,frq_ind), &
+        & eta_t_path, eta_iwc_path, &
+        & dBeta_c_a_dIWC_path )
+      call interpolate_stru ( dBeta_dIWC_c_s(:,:,frq_ind), &
+        & eta_t_path, eta_iwc_path, &
+        & dBeta_c_s_dIWC_path )
+d74 4
+a77 6
+      call interpolate_stru ( dBeta_dT_c_a(:,:,frq_ind), &
+        & eta_t_path, eta_iwc_path, &
+        & dBeta_c_a_dT_path )
+      call interpolate_stru ( dBeta_dT_c_s(:,:,frq_ind), &
+        & eta_t_path, eta_iwc_path, &
+        & dBeta_c_s_dT_path )
+d86 1
+a86 1
+       "$Id: Interpolate_Mie_m.f90,v 2.3 2011/01/26 03:04:13 vsnyder Exp $"
+d96 3
+@
+
+
+2.3
+log
+@Different etas for IWC_a and IWC_s, get beta_c_e stuff from beta_c_a+beta_c_s
+@
+text
+@d26 3
+a28 4
+  subroutine Interpolate_Mie ( Frq_Ind, Eta_T_Path, Eta_IWC_a_Path,      &
+                             & Eta_IWC_s_Path, Atmos_Der, Temp_Der,      &
+                             & Beta_c_e_path, Beta_c_s_path,             &
+                             & dBeta_c_e_dIWC_path, dBeta_c_s_dIWC_path, &
+d38 2
+a39 2
+    type(eta_d_t), intent(in) :: Eta_T_Path(:), & ! T coeffs
+      & Eta_IWC_a_Path(:), Eta_IWC_s_Path(:) ! Absorption, scattering Coeffs
+d54 1
+a54 1
+      & eta_t_path, eta_iwc_a_path, &
+d58 1
+a58 1
+      & eta_t_path, eta_iwc_s_path, &
+d66 1
+a66 1
+        & eta_t_path, eta_iwc_a_path, &
+d69 1
+a69 1
+        & eta_t_path, eta_iwc_s_path, &
+d76 1
+a76 1
+        & eta_t_path, eta_iwc_a_path, &
+d79 1
+a79 1
+        & eta_t_path, eta_iwc_s_path, &
+d89 1
+a89 1
+       "$Id: Interpolate_Mie_m.f90,v 2.2 2010/11/05 20:28:34 vsnyder Exp $"
+d99 3
+@
+
+
+2.2
+log
+@Delete unused declarations
+@
+text
+@d26 2
+a27 2
+  subroutine Interpolate_Mie ( Frq_Ind, Eta_T_Path, Eta_IWC_Path,        &
+                             & Atmos_Der, Temp_Der,                      &
+d35 2
+a36 2
+    use Read_Mie_m, only: dBeta_dIWC_c_e, dBeta_dIWC_c_s, &
+      & dBeta_dT_c_e, dBeta_dT_c_s, Log_Beta_c_e, Log_Beta_c_s, Log_Mie
+d39 2
+a40 1
+    type(eta_d_t), intent(in) :: Eta_T_Path(:), Eta_IWC_Path(:) ! Coeffs
+d46 3
+a48 1
+    call log_mie ! Get log_beta_c_e and log_beta_c_s if not done yet
+d50 3
+a52 1
+    ! Interpolate Mie beta_c_e and beta_c_s to T and IWC on path
+d54 4
+a57 4
+    call interpolate_stru ( log_beta_c_e(:,:,frq_ind), &
+      & eta_t_path, eta_iwc_path, &
+      & beta_c_e_path ) ! Actually getting log(beta_c_e_path)
+    beta_c_e_path = exp(beta_c_e_path)
+d59 1
+a59 1
+      & eta_t_path, eta_iwc_path, &
+d63 2
+d66 3
+a68 3
+      call interpolate_stru ( dBeta_dIWC_c_e(:,:,frq_ind), &
+        & eta_t_path, eta_iwc_path, &
+        & dBeta_c_e_dIWC_path )
+d70 1
+a70 1
+        & eta_t_path, eta_iwc_path, &
+d72 1
+d76 3
+a78 3
+      call interpolate_stru ( dBeta_dT_c_e(:,:,frq_ind), &
+        & eta_t_path, eta_iwc_path, &
+        & dBeta_c_e_dT_path )
+d80 1
+a80 1
+        & eta_t_path, eta_iwc_path, &
+d82 1
+d90 1
+a90 1
+       "$Id: Interpolate_Mie_m.f90,v 2.1 2010/08/19 19:17:27 vsnyder Exp $"
+d100 3
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d20 1
+a20 1
+       "$RCSfile: do_t_script_m.f90,v $"
+d36 1
+a36 2
+      & dBeta_dT_c_e, dBeta_dT_c_s, F_s, IWC_s, Log_Beta_c_e, Log_Beta_c_s, &
+      & Log_Mie, T_s
+d81 1
+a81 1
+       "$Id: do_t_script_m.f90,v 2.12 2009/06/23 18:26:11 pwagner Exp $"
+d90 4
+a93 1
+! $Log: $
+@
+

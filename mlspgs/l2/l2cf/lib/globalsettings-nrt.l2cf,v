@@ -1,0 +1,116 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2022.10.27.19.48.34;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@To be used by nrt versions after nrt-17
+@
+text
+@!divert(-1)
+; $Id: globalsettings.l2cf,v 1.8 2020/03/05 23:56:11 pwagner Exp $
+
+; This l2cf fragment 
+; (1) defines macros we're going to need below; then
+; (2) supplies the global settings section
+; For special runs, you may wish to predefine *Bands before entering this section
+; Its contents will also be affected by the flagUsingPCF, because
+; the PCF will supply l1b files, starting and end times, leap seconds file
+    ;; This is the list of bands that the readradiances macro is to read
+    ;; from the level 1 data.
+    ;; (Its definition should be moved out of this section imho)
+    !defunlessdef(relevantBands,{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,22,23,24,25,27,28,29,30,31,32,33,34})
+
+    ;; Define the precision for the scan model.  We should really think
+    ;; about a better place to put this!
+    !defunlessdef(scanModelPrecision,{30 m})
+
+    !define(flagAutoSplitSources,1)
+    ;; This macro creates the list of DirectWriteFiles that sources are to be
+    ;; distributed among automatically
+    !define(oneToNineteen,{!forloop({i},1,18,{!i, })19})
+    !ifdef(flagUsingPCF,{!dnl
+    !define(makeOneDWFPair,{!dnl
+    DirectWriteFile, file='DGG$1', type=l2dgg
+    DirectWriteFile, file='DGM$1', type=l2aux!nl})
+    },{!dnl
+    !define(makeOneDWFPair,{!dnl
+    DirectWriteFile, file='!l2gpFileName(DGG$1)', type=l2dgg
+    DirectWriteFile, file='!l2auxFileName(DGM$1)', type=l2aux!nl})
+    })
+
+!divert!dnl
+    !ifdef(flagWriteL2CFNameToStdErr, {}, {
+; Write the name of the l2cf file to stderr
+; where it can be intercepted by wrapper script if needed
+begin readAPriori
+    l2cf: Boolean, formula="l2cf", /evaluate, /literal
+    Dump, options='--Err', Boolean=l2cf
+end readAPriori
+})
+; -------------------------------------------- Global settings ------
+begin GlobalSettings
+
+    !ifdef(flagUsingPCF, {},
+    {
+    ;; Setup the stuff for reading and dealing with l1b files
+
+    !ifdef(SIDSRTVL,
+    {
+    l1boa, file='!inpathl1boa/MLS-Aura_L1BOA-Full_!l1boaVersion--t_!day.!l1boaHDFVersion'
+    l1brad, file='!inpathl1brad/MLS-Aura_L1BRAD-GHz_!l1bradVersion-!cleanNoisy--t_!day.h5'
+    l1brad, file='!inpathl1brad/MLS-Aura_L1BRAD-DACS_!l1bradVersion-!cleanNoisy--t_!day.h5'
+    l1brad, file='!inpathl1brad/MLS-Aura_L1BRAD-THz_!l1bradVersion-!cleanNoisy--t_!day.h5'
+    },{
+    l1boa, file='!inpathl1boa/MLS-Aura_L1BOA_!l1bradVersion_!day.h5'
+    l1brad, file='!inpathl1brad/MLS-Aura_L1BRADG_!l1bradVersion_!day.h5'
+    l1brad, file='!inpathl1brad/MLS-Aura_L1BRADD_!l1bradVersion_!day.h5'
+    l1brad, file='!inpathl1brad/MLS-Aura_L1BRADT_!l1bradVersion_!day.h5'
+    })
+
+    startTime = '!year(!day)-!doy(!day)T00:00:00.0000'
+    !ifdef(flagDoingSnoop, {endTime = '!year(!day)-!doy(!day)T23:59:59.9999'},
+    {endTime = '!year(!day)-!doy(!day)T23:59:59.4999'})
+    !ifdef(flagUseLeapSecFile, {leapsecfile = '!inpathleapsec/leapsec.dat'})
+    })
+
+    ;; This is the list of DirectWriteFiles that sources are to be
+    ;; distributed among automatically
+!forall(makeOneDWFPair,!oneToNineteen)
+
+    ;; Setup our vertical grids
+    !include(constructstandardgrids.l2cf)
+
+    ;; Setup our emiprical geometry.  This is for getting an empirical
+    ;; value for longitude as a function of geodetic cangle
+    empiricalGeometry, terms=[ $
+                               -1.06863, 43.0943, -16.2062, 8.12730, -4.58416, 2.75786, -1.72880, $
+                               1.11523, -0.733464, 0.489792, -0.331852, 0.227522, -0.156428, $
+                               0.108031, -0.0757825, 0.0536980, -0.0375161, 0.0260555, $
+                               -0.0188811, 0.0138453, -0.00959350]
+
+    ;; Define the frequency grids for the extinciton quantities
+    !include(extinctionfgrids.l2cf)
+    !include(baselinefgrids.l2cf)
+
+end GlobalSettings
+!divert(-1)
+; $Log: globalsettings.l2cf,v $
+!divert!dnl
+@

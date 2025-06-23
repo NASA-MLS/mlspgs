@@ -1,0 +1,91 @@
+head	1.2;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2001.03.02.02.55.30;	author vsnyder;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2000.10.12.22.23.26;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Remove obsolete directory
+@
+text
+@# $Id: Makefile,v 1.1 2000/10/12 22:23:26 vsnyder Exp $
+
+# End of the path to this Makefile:
+ME = pclinuxNAG
+
+# Fortran compiler:
+F90 = f95
+
+# Compiler options:
+FOPTS = -g -C=all
+#FOPTS = -O
+
+# Path to source files:
+S = ..
+
+# Path to MLS library source files:
+MLS = $S/../lib
+
+# Path to .mod files:
+M = $(MLS)/$(ME)
+
+# Option to specify path to .mod files:
+I = -I
+
+# Beginning of path to libraries:
+TOOLKIT = /software/SRC/TOOLKIT-5.2.6v1.00.NAG
+
+# Beginning of path to HDFEOS libraries:
+HDFEOS = /van1/opt/TOOLKIT
+#HDFEOS = $(TOOLKIT)
+
+# Platform (used in a directory path in ../Makefile.inc):
+PLATFORM = linux
+
+# Path to libPGSTK
+PGSTK = $(HOME)/mlspgs/SDPToolkit/$(ME)
+#PGSTK = $(TOOLKIT)/lib/$(PLATFORM)
+
+include $S/Makefile.inc
+
+# $Log: Makefile,v $
+# Revision 1.1  2000/10/12 22:23:26  vsnyder
+# Change directory name from NAG to pclinuxNAG
+#
+# Revision 2.2  2000/10/12 00:38:10  vsnyder
+# Account for lib/cf_parser moving to lib
+#
+# Revision 2.1  2000/10/10 20:33:48  vsnyder
+# Repairs to get rid of WVS pathnames
+#
+@
+
+
+1.1
+log
+@Change directory name from NAG to pclinuxNAG
+@
+text
+@d1 1
+a1 1
+# $Id: Makefile,v 2.2 2000/10/12 00:38:10 vsnyder Exp $
+d42 3
+@
+

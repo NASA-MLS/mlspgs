@@ -1,0 +1,137 @@
+head	2.4;
+access;
+symbols
+	M4-00:2.2;
+locks; strict;
+comment	@# @;
+
+
+2.4
+date	2013.09.30.23.57.51;	author vsnyder;	state dead;
+branches;
+next	2.3;
+
+2.3
+date	2013.09.24.23.27.14;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2012.06.22.20.24.11;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2012.05.07.22.59.59;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.4
+log
+@StartErrorMessage moved from include to module
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! This is an include file to avoid a circular dependence between
+! expr_m and MoreTree.
+
+! $Id: StartErrorMessage.f9h,v 2.3 2013/09/24 23:27:14 vsnyder Exp $
+
+  subroutine StartErrorMessage ( where )
+    use LEXER_CORE, only: PRINT_SOURCE
+    use OUTPUT_M, only: OUTPUT
+    use TREE, only: WHERE_AT => WHERE
+    integer, intent(in) :: Where             ! Tree node index
+    call output ( '***** At ' , advance='no' )
+    if ( where > 0 ) then
+      call print_source ( where_at(where), advance='no', after=': ' )
+    else
+      call output ( '(no tree available): ', advance='no' )
+    end if
+  end subroutine StartErrorMessage
+
+! $Log: StartErrorMessage.f9h,v $
+! Revision 2.3  2013/09/24 23:27:14  vsnyder
+! Use Get_Where or Print_Source to start error messages
+!
+! Revision 2.2  2012/06/22 20:24:11  pwagner
+! Specify advance arg because we may now set default to 'yes'
+!
+! Revision 2.1  2012/05/07 22:59:59  vsnyder
+! Moved to include to avoid circular dependence between expr_m and MoreTree
+!
+@
+
+
+2.3
+log
+@Use Get_Where or Print_Source to start error messages
+@
+text
+@d15 1
+a15 1
+! $Id: StartErrorMessage.f9h,v 2.2 2012/06/22 20:24:11 pwagner Exp $
+d31 3
+@
+
+
+2.2
+log
+@Specify advance arg because we may now set default to 'yes'
+@
+text
+@d15 1
+a15 1
+! $Id: StartErrorMessage.f9h,v 2.1 2012/05/07 22:59:59 vsnyder Exp $
+d20 1
+a20 1
+    use TREE, only: SOURCE_REF
+d24 1
+a24 1
+      call print_source ( source_ref(where) )
+d26 1
+a26 1
+      call output ( '(no tree available)' , advance='no' )
+a27 1
+    call output ( ': ' , advance='no' )
+d31 3
+@
+
+
+2.1
+log
+@Moved to include to avoid circular dependence between expr_m and MoreTree
+@
+text
+@d15 1
+a15 1
+! $Id: $
+d22 1
+a22 1
+    call output ( '***** At ' )
+d26 1
+a26 1
+      call output ( '(no tree available)' )
+d28 1
+a28 1
+    call output ( ': ' )
+d31 4
+a34 1
+! $Log: $
+@
+

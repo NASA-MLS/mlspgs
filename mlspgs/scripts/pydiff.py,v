@@ -1,0 +1,236 @@
+head	1.4;
+access;
+symbols
+	v5-02-NRT-19:1.4
+	v6-00:1.4
+	v5-02-NRT-18:1.4
+	v5-02:1.3
+	v5-01-NRT-17:1.4
+	v5-01-NRT-16:1.4
+	v5-01-NRT-15:1.3
+	v5-01-NRT-14:1.3
+	neuralnetworks-1-0:1.3.0.12
+	cfm-single-freq-0-1:1.3.0.10
+	v5-01:1.3
+	v5-00:1.3
+	v4-23-TA133:1.3.0.8
+	mus-emls-1-70:1.3.0.6
+	rel-1-0-englocks-work:1.3.0.4
+	VUMLS1-00:1.3
+	VPL1-00:1.3
+	V4-22-NRT-08:1.3
+	VAM1-00:1.3
+	V4-21:1.3.0.2
+	V4-13:1.3
+	V4-12:1.3
+	V4-11:1.3
+	V4-10:1.3
+	V3-43:1.1
+	M4-00:1.3
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V2-24-NRT-04:1.1
+	V3-33:1.3
+	V2-24:1.1
+	V3-31:1.3
+	V3-30-NRT-05:1.3
+	cfm-01-00:1.3
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1
+	V2-23-NRT-02:1.1
+	V2-23:1.1
+	V2-22-NRT-01:1.1
+	V2-22:1.1
+	V2-21:1.1
+	V2-20:1.1
+	V2-11:1.1
+	V2-10:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.4
+date	2021.12.22.16.42.04;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2010.05.21.23.54.31;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2010.05.15.00.30.45;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2006.06.29.23.13.01;	author lambert;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.4
+log
+@Converted to python3
+@
+text
+@#! /usr/bin/python3
+# Copyright 2010, by the California Institute of Technology. ALL
+# RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+# commercial use must be negotiated with the Office of Technology Transfer
+# at the California Institute of Technology.
+
+# This software may be subject to U.S. export control laws. By accepting this
+# software, the user agrees to comply with all applicable U.S. export laws and
+# regulations. User has the responsibility to obtain export licenses, or other
+# export authority as may be required before exporting such information to
+# foreign countries or providing access to foreign persons.
+
+# "$Id: pydiff.py,v 1.3 2010/05/21 23:54:31 pwagner Exp $"
+# Usage
+# (1) pydiff.py a b
+#     remove string b from string a
+#     e.g., if a is "p,q,r"
+#              b is "q"
+#     return        "p,r"
+# (2) pydiff.py a b s
+#     treat s as the separator in (1) instead of ","
+# (3) pydiff.py -s b a
+#     treat s as the separator in (1) instead of ","
+#     (Note the "-" in front of s and reversal of a and b)
+#from __future__ import print_function
+import sys
+from pyutils import diff, mrClean
+
+# Find which usage (1) - (3)
+if len(sys.argv) > 3:
+  if sys.argv[1][0] == "-":
+# usage (3)
+    s = sys.argv[1][1]
+    l = mrClean(sys.argv[3],s)
+    u = mrClean(sys.argv[2],s)
+  else:
+# usage (2)
+    s = sys.argv[3][0]
+    l = mrClean(sys.argv[1],s)
+    u = mrClean(sys.argv[2],s)
+else:
+# usage (1)
+  s = ","
+  # read the args
+  l = mrClean(sys.argv[1],s)
+  u = mrClean(sys.argv[2],s)
+
+# convert to lists
+# (instead of converting s to ' ' above, why not just split on s?)
+l = l.split(' ')
+u = u.split(' ')
+
+# print string for m4 to grab
+# print("l", file=sys.stderr, end="=")
+# print(l, file=sys.stderr)
+# print("u", file=sys.stderr, end="=")
+# print(u, file=sys.stderr)
+print(diff(l,u), end=" ")
+
+# $Log: pydiff.py,v $
+# Revision 1.3  2010/05/21 23:54:31  pwagner
+# Use mrClean
+#
+# Revision 1.2  2010/05/15 00:30:45  pwagner
+# Added usages (2) and (3)
+#
+@
+
+
+1.3
+log
+@Use mrClean
+@
+text
+@d1 1
+a1 1
+#! /usr/bin/python
+d13 1
+a13 1
+# "$Id: pydiff.py,v 1.2 2010/05/15 00:30:45 pwagner Exp $"
+d25 1
+d54 5
+a58 1
+print diff(l,u),
+d61 3
+@
+
+
+1.2
+log
+@Added usages (2) and (3)
+@
+text
+@d13 1
+a13 1
+# "$Id: reecho.sh,v 1.9 2009/09/22 17:44:15 pwagner Exp $"
+d26 1
+a26 1
+from pyutils import diff
+d33 2
+a34 2
+    l = sys.argv[3]
+    u = sys.argv[2]
+d38 2
+a39 2
+    l = sys.argv[1]
+    u = sys.argv[2]
+d44 2
+a45 15
+  l = sys.argv[1]
+  u = sys.argv[2]
+
+# remove unwanted chars
+l = l.replace("'",'')
+l = l.replace(' ','')
+l = l.replace(s,' ')  
+l = l.replace('[','')  
+l = l.replace(']','')
+
+u = u.replace("'",'')
+u = u.replace(' ','')
+u = u.replace(s,' ')  
+u = u.replace('[','')  
+u = u.replace(']','')
+d55 4
+a58 1
+# $Log: reecho.sh,v $
+@
+
+
+1.1
+log
+@interface to m4
+@
+text
+@d2 23
+a24 2
+# $Id$
+
+d28 18
+a45 3
+# read the args
+l = sys.argv[1]
+u = sys.argv[2]
+d50 1
+a50 1
+l = l.replace(',',' ')  
+d56 1
+a56 1
+u = u.replace(',',' ')  
+d61 1
+d68 1
+@
+

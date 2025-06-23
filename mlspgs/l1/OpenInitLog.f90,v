@@ -1,0 +1,984 @@
+head	2.11;
+access;
+symbols
+	v5-02-NRT-19:2.11
+	v6-00:2.11
+	v5-02-NRT-18:2.11
+	v5-02:2.11
+	v5-01-NRT-17:2.11
+	v5-01-NRT-16:2.11
+	v5-01-NRT-15:2.11
+	v5-01-NRT-14:2.11
+	neuralnetworks-1-0:2.11.0.8
+	cfm-single-freq-0-1:2.11.0.6
+	v5-01:2.11
+	v5-00:2.11
+	v4-23-TA133:2.11.0.4
+	mus-emls-1-70:2.11.0.2
+	rel-1-0-englocks-work:2.10.0.2
+	VUMLS1-00:2.9
+	VPL1-00:2.9
+	V4-22-NRT-08:2.9
+	whdrel10_merged_to_here:2.9
+	merge_whdrel10_from_here:2.8.6.1
+	TAG_TRUNK_AFTER_PW_CHANGES:2.8
+	TAG_TRUNK_BEFORE_PW_CHANGES:2.8
+	VAM1-00:2.8
+	whd-rel-1-0:2.8.0.6
+	V4-21:2.8.0.4
+	V4-13:2.8
+	V4-12:2.8
+	V4-11:2.8
+	V4-10:2.8
+	V3-43:2.8
+	M4-00:2.8
+	V3-41:2.8
+	V3-40-PlusGM57:2.8.0.2
+	V2-24-NRT-04:2.8
+	V3-33:2.8
+	V2-24:2.8
+	V3-31:2.8
+	V3-30-NRT-05:2.8
+	cfm-01-00:2.8
+	V3-30:2.8
+	V3-20:2.8
+	V3-10:2.8
+	V2-23-NRT-02:2.8
+	V2-23:2.8
+	V2-22-NRT-01:2.8
+	V2-22:2.8
+	V2-21:2.7
+	V2-20:2.7
+	V2-11:2.7
+	V2-10:2.7
+	V2-00:2.6
+	V1-51:2.4
+	V1-50:2.4
+	V1-45:2.4
+	V1-44:2.4
+	V1-43:2.4
+	V1-42:2.4
+	V1-41:2.4
+	V1-32:2.3
+	V1-40:2.4
+	V1-31:2.3
+	V1-30:2.3
+	V1-13:2.1
+	V1-12:2.1
+	V1-11:2.1
+	V1-10:2.1
+	newfwm-feb03:2.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+2.11
+date	2018.04.10.16.39.59;	author whdaffer;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2018.04.09.22.18.34;	author whdaffer;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2016.03.15.22.17.59;	author whdaffer;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2007.06.21.21.04.05;	author perun;	state Exp;
+branches
+	2.8.6.1;
+next	2.7;
+
+2.7
+date	2006.08.02.18.56.35;	author perun;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2006.03.24.15.15.22;	author perun;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2005.06.23.18.41.36;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2004.01.09.17.46.22;	author perun;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2003.09.15.17.15.53;	author perun;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2003.08.15.14.25.04;	author perun;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2003.01.31.18.13.34;	author perun;	state Exp;
+branches;
+next	;
+
+2.8.6.1
+date	2015.10.09.10.21.38;	author whdaffer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.11
+log
+@Too many parens!
+@
+text
+@! Copyright 2006, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=============================================================================
+MODULE OpenInitLog ! Opens input L0 files and output log file
+!=============================================================================
+
+  USE SDPToolkit, ONLY: PGS_PC_GetReference, PGS_S_SUCCESS, &
+       PGSd_IO_Gen_RSeqFrm, PGS_IO_Gen_openF, PGS_IO_Gen_closeF, &
+       PGSd_IO_Gen_WSeqFrm, PGSd_IO_Gen_USeqFrm
+  USE MLSCommon, ONLY: TAI93_Range_T
+  USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Info
+
+  IMPLICIT NONE
+
+  PRIVATE
+
+  PUBLIC :: OpenAndInitializeLog
+
+!---------------------------- RCS Module Info ------------------------------
+  CHARACTER (len=*), PRIVATE, PARAMETER :: ModuleName= &
+       "$RCSfile: OpenInitLog.f90,v $"
+  PRIVATE :: not_used_here 
+!---------------------------------------------------------------------------
+
+CONTAINS
+
+!=============================================================================
+  SUBROUTINE OpenAndInitializeLog
+!=============================================================================
+
+    USE OpenInit, ONLY: OpenL0Files, LoadChanDefaults
+    USE MLSL1Config, ONLY: L1Config, GetL1Config
+    USE InitPCFs, ONLY: L1PCF, GetPCFParameters
+    USE MLSPCF1, ONLY: mlspcf_engtbl_start, mlspcf_l1b_log_start, &
+         mlspcf_pcf_start, mlspcf_l1cf_start, mlspcf_sciMAF_start, &
+         mlspcf_engMAF_start, mlspcf_MAF_data_start, mlspcf_l1b_eng_start, &
+         mlspcf_dacsconst_start, mlspcf_defltzeros_start, mlspcf_l1b_radd_start
+    USE L0_sci_tbls, ONLY: InitSciPointers
+    USE EngTbls, ONLY: Load_Eng_tbls, Eng_tbl, maxtlm
+    USE MLSL1Common, ONLY: L1BFileInfo, deflt_zero, BandSwitch, HDFversion,FileNameLen
+    USE MLSFiles, ONLY: MLS_openFile, MLS_closeFile
+    USE MLSHDF5, ONLY: MLS_h5open
+    USE THzUtils, ONLY: LLO_Label
+    USE DACSUtils, ONLY: InitDACS_FFT
+    USE BandSwitches, ONLY: GetBandSwitches
+    USE SDPTOOLKIT, ONLY : PGSd_PC_FILE_PATH_MAX
+
+
+    CHARACTER (LEN=FileNameLen) :: PhysicalFilename
+    CHARACTER (LEN=28) :: asciiUTC_A
+
+    INTEGER :: eng_tbl_unit, error, ios, log_unit, tbl_unit, sd_id
+    INTEGER :: returnStatus, version
+
+    REAL :: MAF_dur
+
+    INTEGER, EXTERNAL :: PGS_TD_UTCtoTAI,  PGS_TD_TAItoUTC, &
+         PGS_TD_ASCIItime_AtoB, PGS_IO_Gen_Track_LUN
+
+    TYPE (TAI93_Range_T) :: procRange
+
+!! Get PCF and CF filenames:
+
+    version = 1
+    returnStatus = PGS_PC_getReference (mlspcf_pcf_start, version, &
+          & PhysicalFilename)
+    L1PCF%PCF_filename = physicalfilename
+
+    version = 1
+    returnStatus = PGS_PC_getReference (mlspcf_l1cf_start, version, &
+          & PhysicalFilename)
+    L1PCF%L1CF_filename = physicalfilename
+
+!! Get user parameters from the PCF file
+
+    CALL GetPCFParameters
+
+!! Get the Level 1 configuration from the L1CF file
+
+    CALL GetL1Config
+
+!! Check output versions from CF and PCF
+    PRINT *,"About to check CF/L1PCF versions!"
+    IF (L1Config%Globals%OutputVersionString /= L1PCF%OutputVersion) THEN
+      PRINT *,"CF and PCF OutputVersions do not match!"
+      PRINT *,"CF version: "//TRIM(L1Config%Globals%OutputVersionString)
+      PRINT *,"PCF version: "//TRIM(L1PCF%OutputVersion)
+      CALL MLSMessage (MLSMSG_Info, ModuleName, &
+           & "CF and PCF OutputVersions do not match!")
+      CALL MLSMessage (MLSMSG_Info, ModuleName, &
+           & "CF version: "//TRIM(L1Config%Globals%OutputVersionString))
+      CALL MLSMessage (MLSMSG_Error, ModuleName, &
+           & "PCF version: "//TRIM(L1PCF%OutputVersion))
+
+    ENDIF
+
+!! TAI Processing range
+
+    MAF_dur = L1Config%Calib%MIF_duration * L1Config%Calib%MIFsPerMAF
+
+    returnStatus = PGS_TD_UTCtoTAI (L1PCF%startUTC, procRange%startTime)
+    returnStatus = PGS_TD_UTCtoTAI (L1PCF%endUTC, procRange%endTime)
+
+    procRange%startTime = procRange%startTime - MAF_dur * (0.5 + &
+         L1Config%Calib%MAFexpandNum)
+    procRange%endTime = procRange%endTime +  MAF_dur * (0.5 + &
+         L1Config%Calib%MAFexpandNum)
+
+    returnStatus = PGS_TD_TAItoUTC (procRange%startTime, asciiUTC_A)
+    returnStatus = PGS_TD_ASCIItime_AtoB (asciiUTC_A, L1PCF%startUTC)
+    returnStatus = PGS_TD_TAItoUTC (procRange%endTime, asciiUTC_A)
+    returnStatus = PGS_TD_ASCIItime_AtoB (asciiUTC_A, L1PCF%endUTC)
+
+    L1Config%Input_TAI = procRange
+
+    L1Config%Expanded_TAI = procRange
+
+!! Expand time range!!!
+
+    L1Config%Expanded_TAI%startTime = L1Config%Expanded_TAI%startTime - 120.0
+    L1Config%Expanded_TAI%endTime = L1Config%Expanded_TAI%endTime + 120.0
+
+!! Open and initialize eng table: (<whd>engtlm.tbl, PCF ID: 903.</whd>)
+
+    version = 1
+    returnStatus = PGS_PC_getReference (mlspcf_engtbl_start, version, &
+          & PhysicalFilename)
+
+    version = 1
+    returnStatus = PGS_IO_Gen_openF (mlspcf_engtbl_start, PGSd_IO_Gen_RSeqFrm, &
+         0, eng_tbl_unit, version)
+    IF (returnstatus /= PGS_S_SUCCESS) THEN
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            & "Could not open engineering table file: " // PhysicalFilename)
+    ENDIF
+
+    CALL MLSMessage (MLSMSG_Info, ModuleName, &
+         & "Opened engineering table file: " // PhysicalFilename)
+
+    CALL Load_Eng_tbls (eng_tbl_unit, ios)
+
+    returnStatus = PGS_IO_Gen_CloseF (eng_tbl_unit)
+
+    IF (ios /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName, &
+         & "Error reading engineering table file")
+
+    IF (returnstatus /= PGS_S_SUCCESS) THEN
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            & "Could not close engineering table file")
+    ENDIF
+
+    CALL MLSMessage (MLSMSG_Info, ModuleName, &
+         & "Closed engineering table file")
+
+!! Open L1BENG File <whd> As far as I can tell, no other software uses this
+!! file.</whd>
+
+    WRITE (PhysicalFilename, "(I5.5)") mlspcf_l1b_eng_start
+    version = 1
+    returnStatus = PGS_PC_getReference (mlspcf_l1b_eng_start, version, &
+     PhysicalFilename)
+
+    IF (returnStatus /= PGS_S_SUCCESS) THEN
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            & "Could not find L1BENG file entry")
+    ENDIF
+
+    returnStatus = PGS_IO_Gen_Track_LUN (L1BFileInfo%EngId, 0)
+
+    OPEN (unit=L1BFileInfo%EngId, file=PhysicalFilename, &
+         status="REPLACE", FORM="UNFORMATTED", ACCESS="SEQUENTIAL", iostat=ios)
+
+    IF (ios /= 0) THEN
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            & "Could not open L1B engineering file: " // PhysicalFilename)
+    ENDIF
+    
+    CALL MLSMessage (MLSMSG_Info, ModuleName, &
+         & "Opened L1B engineering file: " // PhysicalFilename)
+
+    L1BFileInfo%EngFileName = PhysicalFilename
+
+! write header info
+
+    WRITE (L1BFileInfo%EngId) maxtlm
+    WRITE (L1BFileInfo%EngId) eng_tbl%mnemonic
+
+    WRITE (L1BFileInfo%EngId) LLO_Label   ! Laser LO Labels
+
+!! Open L0 files:
+
+    CALL OpenL0Files
+
+!! Initialize the science data pointers:
+
+    CALL InitSciPointers
+
+!! Open log file:
+
+    WRITE (PhysicalFilename, "(I5.5)") mlspcf_l1b_log_start
+    version = 1
+    returnStatus = PGS_PC_getReference (mlspcf_l1b_log_start, version, &
+          & PhysicalFilename)
+    IF (returnstatus /= PGS_S_SUCCESS) THEN
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            & "Could not find file entry for pcf_log_start: " // &
+            PhysicalFilename)
+    ENDIF
+
+    version = 1
+    returnStatus = PGS_IO_Gen_openF (mlspcf_l1b_log_start,&
+         PGSd_IO_Gen_WSeqFrm, 0, log_unit, version)
+    IF (returnstatus /= PGS_S_SUCCESS) THEN
+       returnStatus = PGS_IO_Gen_openF (mlspcf_l1b_log_start, &
+            PGSd_IO_Gen_USeqFrm, 0, log_unit, version)
+       IF (returnstatus /= PGS_S_SUCCESS) THEN
+          CALL MLSMessage (MLSMSG_Error, ModuleName, &
+               & "Could not open log file: " // PhysicalFilename)
+       ENDIF
+    ENDIF
+
+    CALL MLSMessage (MLSMSG_Info, ModuleName, &
+         & "Opened L1B log file: " // PhysicalFilename)
+
+    L1BFileInfo%LogId = log_unit
+    L1BFileInfo%LogFilename = PhysicalFilename
+
+    WRITE (log_unit, *) ''
+    WRITE (log_unit, *) '################## Begin MLSL1log ####################'
+    WRITE (log_unit, *) ''
+    WRITE (log_unit, *) 'PCF filename: '//TRIM (L1PCF%PCF_filename)
+    WRITE (log_unit, *) 'L1CF filename: '//TRIM (L1PCF%L1CF_filename)
+    WRITE (log_unit, *) 'Input Start/End UTC: '// &
+         TRIM (L1PCF%StartUTC)//' to '//TRIM (L1PCF%EndUTC)
+
+!! Init BandSwitches:
+
+    CALL GetBandSwitches (L1Config%Expanded_TAI%startTime, BandSwitch)
+    WRITE (log_unit, *) 'Initial BandSwitches: ', BandSwitch
+
+!! Open and initialize default zeros table:
+
+    version = 1
+    returnStatus = PGS_PC_getReference (mlspcf_defltzeros_start, version, &
+          & PhysicalFilename)
+
+    version = 1
+    returnStatus = PGS_IO_Gen_openF (mlspcf_defltzeros_start, &
+         PGSd_IO_Gen_RSeqFrm, 0, tbl_unit, version)
+    IF (returnstatus /= PGS_S_SUCCESS) THEN
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            & "Could not open default zeros table file: " // PhysicalFilename)
+    ENDIF
+
+    CALL MLSMessage (MLSMSG_Info, ModuleName, &
+         & "Opened default zeros table file: " // PhysicalFilename)
+
+    CALL LoadChanDefaults (tbl_unit, deflt_zero, ios)
+
+    returnStatus = PGS_IO_Gen_CloseF (tbl_unit)
+
+    IF (ios /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName, &
+         & "Error reading default zeros table file")
+
+    IF (returnstatus /= PGS_S_SUCCESS) THEN
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            & "Could not close default zeros table file")
+    ENDIF
+
+    CALL MLSMessage (MLSMSG_Info, ModuleName, &
+         & "Closed default zeros table file")
+
+!! Open and initialize DACS constants table:
+
+    version = 1
+    returnStatus = PGS_PC_getReference (mlspcf_dacsconst_start, version, &
+          & PhysicalFilename)
+
+    version = 1
+    returnStatus = PGS_IO_Gen_openF (mlspcf_dacsconst_start, &
+         PGSd_IO_Gen_RSeqFrm, 0, tbl_unit, version)
+    IF (returnstatus /= PGS_S_SUCCESS) THEN
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            & "Could not open DACS constants table file: " // PhysicalFilename)
+    ENDIF
+
+    CALL MLSMessage (MLSMSG_Info, ModuleName, &
+         & "Opened DACS constants table file: " // PhysicalFilename)
+
+    CALL LoadDACSconsts (tbl_unit, ios)
+
+    returnStatus = PGS_IO_Gen_CloseF (tbl_unit)
+
+    IF (ios /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName, &
+         & "Error reading DACS constants table file")
+
+    IF (returnstatus /= PGS_S_SUCCESS) THEN
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            & "Could not close DACS constants table file")
+    ENDIF
+
+    CALL MLSMessage (MLSMSG_Info, ModuleName, &
+         & "Closed DACS constants table file")
+
+!! Initialize DACS FFT
+
+    CALL InitDACS_FFT
+
+!! Open Eng/Sci MAF files:
+
+    ! <whd> Temporary file nominally named engMAF_tmp.dat, PCF ID: 921. Eng !
+    ! data will be written here, then cobbled together with the matching sci
+    ! data later.</whd>
+    WRITE (PhysicalFilename, "(I3.3)") mlspcf_engMAF_start
+    version = 1
+    returnStatus = PGS_PC_getReference (mlspcf_engMAF_start, version, &
+          & PhysicalFilename)
+    IF (returnstatus /= PGS_S_SUCCESS) THEN
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            & "Could not find file entry for pcf_engMAF_start: " // &
+            PhysicalFilename)
+    ENDIF
+
+    ! the file read by EngMAF_unit is a temporary file created by
+    ! MLSL1log, typically named engMAF_tmp.dat (PCF ID 921). There's
+    ! also one for the science data named sciMAF_tmp.dat (PCF ID 920)
+    returnStatus = PGS_IO_Gen_Track_LUN (L1BFileInfo%EngMAF_unit, 0)
+
+    OPEN (unit=L1BFileInfo%EngMAF_unit, file=PhysicalFilename, &
+         status="REPLACE", FORM="UNFORMATTED", ACCESS="SEQUENTIAL", iostat=ios)
+
+    IF (ios /= 0) THEN
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            & "Could not open engMAF file: " // PhysicalFilename)
+    ENDIF
+
+    CALL MLSMessage (MLSMSG_Info, ModuleName, &
+         & "Opened engMAF file: " // PhysicalFilename)
+
+    ! <whd> Temporary file nominally named sciMAF_tmp.dat, PCF ID: 920. Science
+    ! data will be written here, then cobbled together with the matching eng
+    ! data later.</whd>
+    WRITE (PhysicalFilename, "(I3.3)") mlspcf_sciMAF_start
+    version = 1
+    returnStatus = PGS_PC_getReference (mlspcf_sciMAF_start, version, &
+          & PhysicalFilename)
+    IF (returnstatus /= PGS_S_SUCCESS) THEN
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            & "Could not find file entry for pcf_sciMAF_start: " // &
+            PhysicalFilename)
+    ENDIF
+
+    returnStatus = PGS_IO_Gen_Track_LUN (L1BFileInfo%SciMAF_unit, 0)
+
+    OPEN (unit=L1BFileInfo%sciMAF_unit, file=PhysicalFilename, &
+         status="REPLACE", FORM="UNFORMATTED", ACCESS="SEQUENTIAL", iostat=ios)
+
+    IF (ios /= 0) THEN
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            & "Could not open sciMAF file: " // PhysicalFilename)
+    ENDIF
+
+    CALL MLSMessage (MLSMSG_Info, ModuleName, &
+         & "Opened sciMAF file: " // PhysicalFilename)
+
+    ! 
+    WRITE (PhysicalFilename, "(I3.3)") mlspcf_MAF_data_start
+    version = 1
+    returnStatus = PGS_PC_getReference (mlspcf_MAF_data_start, version, &
+          & PhysicalFilename)
+    IF (returnstatus /= PGS_S_SUCCESS) THEN
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            & "Could not find file entry for pcf_MAF_data_start: " // &
+            PhysicalFilename)
+    ENDIF
+
+    !<whd> quasi-Temporary file nominally named MAF_data_tmp.dat which will
+    !contain the colocated eng/sci data as well as the calibration weights
+    !flags. PCF ID: 922 </whd>
+    returnStatus = PGS_IO_Gen_Track_LUN (L1BFileInfo%MAF_data_unit, 0)
+
+    OPEN (unit=L1BFileInfo%MAF_data_unit, file=PhysicalFilename, &
+         status="REPLACE", FORM="UNFORMATTED", ACCESS="SEQUENTIAL", &
+         ACTION="READWRITE", iostat=ios)
+
+    IF (ios /= 0) THEN
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            & "Could not open MAF_data file: " // PhysicalFilename)
+    ENDIF
+
+    CALL MLSMessage (MLSMSG_Info, ModuleName, &
+         & "Opened MAF_data file: " // PhysicalFilename)
+
+!! Write some header info for comparisons:
+
+    WRITE (L1BFileInfo%MAF_data_unit) L1PCF%PCF_filename
+    WRITE (L1BFileInfo%MAF_data_unit) L1PCF%L1CF_filename
+
+!! Open the HDF 5 Fortran Interface based on CF file
+
+    error = 0
+    CALL MLS_h5open (error)
+    IF (error /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName, &
+         "Fortran HDF 5 API error on opening.")
+
+    ! Open L1BRADD File
+
+    IF (L1Config%Calib%CalibDACS) THEN
+
+       version = 1
+       returnStatus = PGS_PC_getReference (mlspcf_l1b_radd_start, version, &
+            PhysicalFilename)
+
+       IF (returnStatus == PGS_S_SUCCESS) THEN
+
+          ! Open the HDF file and initialize the SD interface
+
+          CALL MLS_openFile (PhysicalFilename, 'create', sd_id, hdfVersion)
+          CALL MLSMessage (MLSMSG_Info, &
+               & ModuleName, "Opened L1BRADD file: "//PhysicalFilename)
+          L1BFileInfo%RADDID = sd_id
+          L1BFileInfo%RADDFileName = PhysicalFilename
+
+       ELSE
+          
+          CALL MLSMessage (MLSMSG_Error, ModuleName, &
+               & "Could not find L1BRADD file entry")
+
+       ENDIF
+    ENDIF
+
+  END SUBROUTINE OpenAndInitializeLog
+
+!=============================================================================
+  SUBROUTINE LoadDACSconsts (unit, ios)
+!=============================================================================
+
+    USE MLSL1Common, ONLY: DACS_const
+
+    INTEGER :: unit, ios
+    CHARACTER (len=80) :: line
+
+! Read comments until start of data
+
+    DO
+       READ (unit, '(A)') line
+       IF (line(1:6) == "#DATA") EXIT
+    ENDDO
+
+! Read data constants
+
+    DO
+       READ (unit, '(A)', IOSTAT=ios, ERR=999) line
+       IF (line(1:1) == "#" .OR. ios /= 0) EXIT
+    ENDDO
+
+    READ (unit, *, IOSTAT=ios, ERR=999) DACS_const%L
+
+    DO
+       READ (unit, '(A)', IOSTAT=ios, ERR=999) line
+       IF (line(1:1) == "#" .OR. ios /= 0) EXIT
+    ENDDO
+
+    READ (unit, *, IOSTAT=ios, ERR=999) DACS_const%A
+
+999 CONTINUE
+
+    IF (ios /= 0) THEN
+       CALL MLSMessage (MLSMSG_Error, &
+            & ModuleName, "Error reading DACS constants file!")
+    ENDIF
+
+   END SUBROUTINE LoadDACSconsts
+
+!=============================================================================
+  LOGICAL FUNCTION not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  CHARACTER (len=*), PARAMETER :: IdParm = &
+       "$Id: OpenInitLog.f90,v 2.10 2018/04/09 22:18:34 whdaffer Exp $"
+  CHARACTER (len=LEN(idParm)), SAVE :: Id = idParm
+!---------------------------------------------------------------------------
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  END FUNCTION not_used_here
+END MODULE OpenInitLog
+!=============================================================================
+
+! $Log: OpenInitLog.f90,v $
+! Revision 2.10  2018/04/09 22:18:34  whdaffer
+! Print out disagreement between l1cf versions, as that failure has
+! bitten me several times and I've had to spend *way* to much time
+! re-figuring it out.
+!
+! Revision 2.9  2016/03/15 22:17:59  whdaffer
+! Merged whd-rel-1-0 back onto main branch. Most changes
+! are to comments, but there's some modification to Calibration.f90
+! and MLSL1Common to support some new modules: MLSL1Debug and SnoopMLSL1.
+!
+! Revision 2.8.6.1  2015/10/09 10:21:38  whdaffer
+! checkin of continuing work on branch whd-rel-1-0
+!
+! Revision 2.8  2007/06/21 21:04:05  perun
+! Only create RADD file if DACS calibration is enabled
+!
+! Revision 2.7  2006/08/02 18:56:35  perun
+! Added creation of RADD file in anticipation of writing TPz attribute
+!
+! Revision 2.6  2006/03/24 15:15:22  perun
+! Expand processing times, iniut Band Switches and write startup message to log file
+!
+! Revision 2.5  2005/06/23 18:41:36  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.4  2004/01/09 17:46:22  perun
+! Version 1.4 commit
+!
+! Revision 2.3  2003/09/15 17:15:53  perun
+! Version 1.3 commit
+!
+! Revision 2.2  2003/08/15 14:25:04  perun
+! Version 1.2 commit
+!
+! Revision 2.1  2003/01/31 18:13:34  perun
+! Version 1.1 commit
+!
+@
+
+
+2.10
+log
+@Print out disagreement between l1cf versions, as that failure has
+bitten me several times and I've had to spend *way* to much time
+re-figuring it out.
+@
+text
+@d96 1
+a96 1
+      PRINT *,"PCF version: "//TRIM(L1PCF%OutputVersion))
+d488 1
+a488 1
+       "$Id: OpenInitLog.f90,v 2.9 2016/03/15 22:17:59 whdaffer Exp $"
+d497 5
+@
+
+
+2.9
+log
+@Merged whd-rel-1-0 back onto main branch. Most changes
+are to comments, but there's some modification to Calibration.f90
+and MLSL1Common to support some new modules: MLSL1Debug and SnoopMLSL1.
+@
+text
+@d92 11
+a103 3
+    IF (L1Config%Globals%OutputVersionString /= L1PCF%OutputVersion) THEN
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            & "CF and PCF OutputVersions do not match!")
+d333 3
+d488 1
+a488 1
+       "$Id: OpenInitLog.f90,v 2.8.6.1 2015/10/09 10:21:38 whdaffer Exp $"
+d497 5
+@
+
+
+2.8
+log
+@Only create RADD file if DACS calibration is enabled
+@
+text
+@d49 1
+a49 1
+    USE MLSL1Common, ONLY: L1BFileInfo, deflt_zero, BandSwitch, HDFversion
+d55 1
+d57 2
+a58 1
+    CHARACTER (LEN=132) :: PhysicalFilename
+d124 1
+a124 1
+!! Open and initialize eng table:
+d156 2
+a157 1
+!! Open L1BENG File
+d312 3
+d338 3
+d364 1
+d375 3
+d477 1
+a477 1
+       "$Id: OpenInitLog.f90,v 2.7 2006/08/02 18:56:35 perun Exp $"
+d486 6
+@
+
+
+2.8.6.1
+log
+@checkin of continuing work on branch whd-rel-1-0
+@
+text
+@d49 1
+a49 1
+    USE MLSL1Common, ONLY: L1BFileInfo, deflt_zero, BandSwitch, HDFversion,FileNameLen
+a54 1
+    USE SDPTOOLKIT, ONLY : PGSd_PC_FILE_PATH_MAX
+d56 1
+a56 2
+
+    CHARACTER (LEN=FileNameLen) :: PhysicalFilename
+d122 1
+a122 1
+!! Open and initialize eng table: (<whd>engtlm.tbl, PCF ID: 903.</whd>)
+d154 1
+a154 2
+!! Open L1BENG File <whd> As far as I can tell, no other software uses this
+!! file.</whd>
+a308 3
+    ! <whd> Temporary file nominally named engMAF_tmp.dat, PCF ID: 921. Eng !
+    ! data will be written here, then cobbled together with the matching sci
+    ! data later.</whd>
+a331 3
+    ! <whd> Temporary file nominally named sciMAF_tmp.dat, PCF ID: 920. Science
+    ! data will be written here, then cobbled together with the matching eng
+    ! data later.</whd>
+a354 1
+    ! 
+a364 3
+    !<whd> quasi-Temporary file nominally named MAF_data_tmp.dat which will
+    !contain the colocated eng/sci data as well as the calibration weights
+    !flags. PCF ID: 922 </whd>
+d464 1
+a464 1
+       "$Id: OpenInitLog.f90,v 2.8 2007/06/21 21:04:05 perun Exp $"
+a472 3
+! Revision 2.8  2007/06/21 21:04:05  perun
+! Only create RADD file if DACS calibration is enabled
+!
+@
+
+
+2.7
+log
+@Added creation of RADD file in anticipation of writing TPz attribute
+@
+text
+@d393 1
+a393 3
+    version = 1
+    returnStatus = PGS_PC_getReference (mlspcf_l1b_radd_start, version, &
+     PhysicalFilename)
+d395 3
+a397 1
+    IF (returnStatus == PGS_S_SUCCESS) THEN
+d399 1
+a399 1
+       ! Open the HDF file and initialize the SD interface
+d401 1
+a401 5
+       CALL MLS_openFile (PhysicalFilename, 'create', sd_id, hdfVersion)
+       CALL MLSMessage (MLSMSG_Info, &
+            & ModuleName, "Opened L1BRADD file: "//PhysicalFilename)
+       L1BFileInfo%RADDID = sd_id
+       L1BFileInfo%RADDFileName = PhysicalFilename
+d403 5
+a407 1
+    ELSE
+d409 4
+a412 2
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            & "Could not find L1BRADD file entry")
+d414 1
+d464 1
+a464 1
+       "$Id: OpenInitLog.f90,v 2.6 2006/03/24 15:15:22 perun Exp $"
+d473 3
+@
+
+
+2.6
+log
+@Expand processing times, iniut Band Switches and write startup message to log file
+@
+text
+@d46 1
+a46 1
+         mlspcf_dacsconst_start, mlspcf_defltzeros_start
+d49 3
+a51 1
+    USE MLSL1Common, ONLY: L1BFileInfo, deflt_zero, BandSwitch
+d59 1
+a59 1
+    INTEGER :: eng_tbl_unit, ios, log_unit, tbl_unit
+d384 30
+d461 1
+a461 1
+       "$Id: OpenInitLog.f90,v 2.5 2005/06/23 18:41:36 pwagner Exp $"
+d470 3
+@
+
+
+2.5
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d1 1
+a1 1
+! Copyright 2005, by the California Institute of Technology. ALL
+d29 3
+a31 3
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: $"
+  private :: not_used_here 
+d49 1
+a49 1
+    USE MLSL1Common, ONLY: L1BFileInfo, deflt_zero
+d52 1
+d55 1
+d60 4
+a63 1
+    INTEGER, EXTERNAL :: PGS_TD_UTCtoTAI, PGS_IO_Gen_Track_LUN
+d96 2
+d101 10
+d113 1
+a113 1
+    L1Config%Expanded_TAI = L1Config%Input_TAI
+d224 13
+d426 1
+a426 1
+  logical function not_used_here()
+d428 3
+a430 3
+  character (len=*), parameter :: IdParm = &
+       "$Id: $"
+  character (len=len(idParm)), save :: Id = idParm
+d433 1
+a433 1
+  end function not_used_here
+d438 3
+@
+
+
+2.4
+log
+@Version 1.4 commit
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d28 5
+a32 5
+  !------------------------------- RCS Ident Info ------------------------------
+  CHARACTER(LEN=130) :: id = &
+       "$Id: OpenInitLog.f90,v 2.3 2003/09/15 17:15:53 perun Exp $"
+  CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile: OpenInitLog.f90,v $"
+  !-----------------------------------------------------------------------------
+d396 8
+d408 3
+@
+
+
+2.3
+log
+@Version 1.3 commit
+@
+text
+@d22 1
+a22 1
+       "$Id: OpenInitLog.f90,v 2.2 2003/08/15 14:25:04 perun Exp $"
+d32 1
+a32 1
+    USE OpenInit, ONLY: OpenL0Files
+d37 2
+a38 1
+         mlspcf_engMAF_start, mlspcf_MAF_data_start, mlspcf_l1b_eng_start
+d41 1
+a41 1
+    USE MLSL1Common, ONLY: L1BFileInfo
+d43 1
+d47 1
+a47 1
+    INTEGER :: eng_tbl_unit, ios, log_unit
+d199 68
+d347 41
+d392 3
+@
+
+
+2.2
+log
+@Version 1.2 commit
+@
+text
+@d22 1
+a22 1
+       "$Id: OpenInitLog.f90,v 2.1 2003/01/31 18:13:34 perun Exp $"
+d41 1
+d157 2
+d281 3
+@
+
+
+2.1
+log
+@Version 1.1 commit
+@
+text
+@d22 2
+a23 2
+       "$Id: $"
+  CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile: $"
+d36 2
+a37 1
+         mlspcf_pcf_start, mlspcf_l1cf_start
+d39 1
+a39 1
+    USE EngTbls, ONLY: Load_Eng_tbls
+d47 1
+a47 1
+    INTEGER, EXTERNAL :: PGS_TD_UTCtoTAI
+d124 32
+d172 1
+a172 1
+            & "Could not find file entry for pcf_log_start " // &
+d194 77
+d277 4
+a280 1
+! $Log: $
+@
+

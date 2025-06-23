@@ -1,0 +1,90 @@
+head	2.3;
+access;
+symbols
+	V1-04:2.2
+	V1-03:2.2
+	V1-02:2.2
+	V1-00:2.2;
+locks; strict;
+comment	@# @;
+
+
+2.3
+date	2002.05.22.00.50.15;	author livesey;	state dead;
+branches;
+next	2.2;
+
+2.2
+date	2002.01.08.22.46.48;	author livesey;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.10.20.17.28.10;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.3
+log
+@L2CFs no longer belong in l2
+@
+text
+@; This is a fragment of l2cf that fills stuff from l2gp files
+
+begin Fill
+  ;; Now fill the main state quantities from the l2gp data
+  Fill, quantity=truth.temp,   method=l2gp, sourceL2GP=l2gpTempInput, /interpolate
+  Fill, quantity=truth.refgph, method=l2gp, sourceL2GP=l2gpGphInput, /interpolate
+  Fill, quantity=truth.BrO,    method=l2gp, sourceL2GP=l2gpBroInput, /interpolate
+  Fill, quantity=truth.CO,     method=l2gp, sourceL2GP=l2gpCOInput, /interpolate
+  Fill, quantity=truth.ClO,    method=l2gp, sourceL2GP=l2gpClOInput, /interpolate
+  Fill, quantity=truth.H2O,    method=l2gp, sourceL2GP=l2gpH2OInput, /interpolate
+  Fill, quantity=truth.HCN,    method=l2gp, sourceL2GP=l2gpHCNInput, /interpolate
+  Fill, quantity=truth.HCl,    method=l2gp, sourceL2GP=l2gpHClInput, /interpolate
+  Fill, quantity=truth.HNO3,   method=l2gp, sourceL2GP=l2gpHNO3Input, /interpolate
+  Fill, quantity=truth.HO2,    method=l2gp, sourceL2GP=l2gpHO2Input, /interpolate
+  Fill, quantity=truth.HOCl,   method=l2gp, sourceL2GP=l2gpHOClInput, /interpolate
+  Fill, quantity=truth.N2O,    method=l2gp, sourceL2GP=l2gpN2OInput, /interpolate
+  Fill, quantity=truth.O3,     method=l2gp, sourceL2GP=l2gpO3Input, /interpolate
+  Fill, quantity=truth.OH,     method=l2gp, sourceL2GP=l2gpOHInput, /interpolate
+
+end Fill
+@
+
+
+2.2
+log
+@New style
+@
+text
+@@
+
+
+2.1
+log
+@First version
+@
+text
+@d5 14
+a18 14
+  Fill, quantity=!x.temp,   method=l2gp, sourceL2GP=l2gpTempInput, /interpolate
+  Fill, quantity=!x.refgph, method=l2gp, sourceL2GP=l2gpGphInput, /interpolate
+  Fill, quantity=!x.BrO,    method=l2gp, sourceL2GP=l2gpBroInput, /interpolate
+  Fill, quantity=!x.CO,     method=l2gp, sourceL2GP=l2gpCOInput, /interpolate
+  Fill, quantity=!x.ClO,    method=l2gp, sourceL2GP=l2gpClOInput, /interpolate
+  Fill, quantity=!x.H2O,    method=l2gp, sourceL2GP=l2gpH2OInput, /interpolate
+  Fill, quantity=!x.HCN,    method=l2gp, sourceL2GP=l2gpHCNInput, /interpolate
+  Fill, quantity=!x.HCl,    method=l2gp, sourceL2GP=l2gpHClInput, /interpolate
+  Fill, quantity=!x.HNO3,   method=l2gp, sourceL2GP=l2gpHNO3Input, /interpolate
+  Fill, quantity=!x.HO2,    method=l2gp, sourceL2GP=l2gpHO2Input, /interpolate
+  Fill, quantity=!x.HOCl,   method=l2gp, sourceL2GP=l2gpHOClInput, /interpolate
+  Fill, quantity=!x.N2O,    method=l2gp, sourceL2GP=l2gpN2OInput, /interpolate
+  Fill, quantity=!x.O3,     method=l2gp, sourceL2GP=l2gpO3Input, /interpolate
+  Fill, quantity=!x.OH,     method=l2gp, sourceL2GP=l2gpOHInput, /interpolate
+@
+

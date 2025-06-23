@@ -1,0 +1,113 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.14
+	cfm-single-freq-0-1:1.2.0.12
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.10
+	mus-emls-1-70:1.2.0.8
+	rel-1-0-englocks-work:1.2.0.6
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.2
+	V4-21:1.2.0.4
+	V4-13:1.2
+	V4-12:1.2
+	V4-11:1.2
+	V4-10:1.2
+	V3-43:1.2
+	M4-00:1.2
+	V3-41:1.2
+	V3-40-PlusGM57:1.2.0.2
+	V3-33:1.2
+	V3-31:1.2
+	V3-30-NRT-05:1.2
+	cfm-01-00:1.2
+	V3-30:1.2
+	V3-20:1.2
+	V3-10:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2010.04.12.17.44.49;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2008.03.22.00.12.35;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Retrieves hi-res ozone; calculates status properly
+@
+text
+@!divert(-1)
+; $Id: QuickB7B33flags.l2cf,v 1.1 2008/03/22 00:12:35 pwagner Exp $
+
+; ----------- Phase name vs. retrieval name
+; Some phase(s) may not have Retrieve sections
+; and so we'll need to know the last one
+!define(retrophase,{!phase})
+
+!ifdef(flagHiResO3,{!define(O3StdProd,O3_HR)},{!define(O3StdProd,O3)})
+
+!divert!dnl
+; This l2cf fragment does all the quality flagging for the Core+R3
+; products.
+
+begin Fill
+  ;; ------------------------------------ O3-QuickB7B33
+  !define(flaggingBands,{7,33})
+  !define(flaggingRadiometers,{R3})!dnl
+  !makeQualityForOneProduct(product=!O3StdProd,chisqScale=1.0,minRads=500,cloudMax=30K,cloudMin= -999K)
+  !makeStatusForOneProduct(product=!O3StdProd,chisqScale=1.0,minRads=500,cloudMax=30K,cloudMin= -999K)
+  !define(phaseO3,{QuickB7B33})
+
+end Fill
+
+; $Log: QuickB7B33flags.l2cf,v $
+; Revision 1.1  2008/03/22 00:12:35  pwagner
+; First commit
+;
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d2 1
+a2 1
+; $Id: coreplusr3flags.l2cf,v 1.14 2006/10/13 22:13:27 dwu Exp $
+d9 2
+d17 1
+a17 1
+  !define(flaggingBands,{7,24,33})
+d19 2
+a20 1
+  !makeQualityForOneProduct(product=O3,chisqScale=1.0,minRads=500,cloudMax=30K,cloudMin= -999K)
+d25 4
+a28 1
+; $Log: coreplusr3flags.l2cf,v $
+@
+

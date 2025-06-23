@@ -1,0 +1,120 @@
+head	2.2;
+access;
+symbols
+	v5-02-NRT-19:2.2
+	v6-00:2.2
+	v5-02-NRT-18:2.2
+	v5-02:2.2
+	v5-01-NRT-17:2.2
+	v5-01-NRT-16:2.2
+	v5-01-NRT-15:2.2
+	v5-01-NRT-14:2.2
+	neuralnetworks-1-0:2.2.0.16
+	cfm-single-freq-0-1:2.2.0.14
+	v5-01:2.2
+	v5-00:2.2
+	v4-23-TA133:2.2.0.12
+	mus-emls-1-70:2.2.0.10
+	rel-1-0-englocks-work:2.2.0.8
+	VUMLS1-00:2.2
+	VPL1-00:2.2
+	V4-22-NRT-08:2.2
+	whdrel10_merged_to_here:2.2
+	merge_whdrel10_from_here:2.2
+	TAG_TRUNK_AFTER_PW_CHANGES:2.2
+	TAG_TRUNK_BEFORE_PW_CHANGES:2.2
+	VAM1-00:2.2
+	whd-rel-1-0:2.2.0.6
+	V4-21:2.2.0.4
+	V4-13:2.2
+	V4-12:2.2
+	V4-11:2.2
+	V4-10:2.2
+	V3-43:2.2
+	M4-00:2.2
+	V3-41:2.2
+	V3-40-PlusGM57:2.2.0.2
+	V2-24-NRT-04:2.2
+	V3-33:2.2
+	V2-24:2.2
+	V3-31:2.2
+	V3-30-NRT-05:2.2
+	cfm-01-00:2.2
+	V3-30:2.2
+	V3-20:2.2
+	V3-10:2.2
+	V2-23-NRT-02:2.2
+	V2-23:2.2
+	V2-22-NRT-01:2.2
+	V2-22:2.2
+	V2-21:2.2
+	V2-20:2.2
+	V2-11:2.1
+	V2-10:2.1
+	V2-00:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.2
+date	2006.11.03.18.39.48;	author perun;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2006.03.24.19.26.45;	author perun;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.2
+log
+@Version 2.2 commit
+@
+text
+@
+This section contains the header comments for the Band Switches log file.
+
+Each data entry consists of the UTC time of the five switch positions and the
+associated band numbers for each switch.
+
+The last line is replaced by the state of the last MAF of the day plus any
+new switch positions that are detected.
+
+--------------------------------------------------------------------------------
+
+2004-01-01T00:00:00.000000Z      25  3  8 12 15      ! Pre-launch values
+2004-09-01T01:04:58.683120Z      26  3  8 12 15
+2004-09-01T01:07:18.458694Z      26  3  8 21 15
+2004-09-01T22:02:57.601074Z      26  3  8 12 15
+2004-09-07T20:38:39.234268Z      25  3  8 12 15
+2005-04-05T00:37:48.910049Z      25  3  8 10 15
+2005-04-05T00:39:18.074645Z      26  3  8 10 15
+2005-04-05T13:42:37.935897Z      26  3  8 12 15
+2005-04-05T13:44:28.674041Z      25  3  8 12 15
+2005-10-19T21:48:15.670379Z      25  3  8 21 15
+2005-10-20T16:20:15.760543Z      25  3  8 12 15
+2005-12-17T17:49:27.331817Z      25  3  8 21 15
+2005-12-18T15:24:44.163848Z      25  3  8 12 15
+2006-02-15T01:45:11.169555Z      25  3 13 12 15
+2006-02-15T21:57:00.202377Z      25  3  8 12 15
+2006-03-16T21:59:47.596313Z      25  3  8 21 15
+2006-03-17T03:42:01.076873Z      25  3  8 12 15
+2006-11-01T23:59:15.540985Z      25  3  8 12 15
+@
+
+
+2.1
+log
+@Initial V 2.00 commit
+@
+text
+@d29 1
+a29 1
+2006-03-17T23:59:21.638992Z      25  3  8 12 15
+@
+

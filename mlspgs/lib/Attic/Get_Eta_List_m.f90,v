@@ -1,0 +1,777 @@
+head	2.11;
+access;
+symbols
+	rel-1-0-englocks-work:2.10.0.2
+	VUMLS1-00:2.8;
+locks; strict;
+comment	@# @;
+
+
+2.11
+date	2018.05.14.23.26.39;	author vsnyder;	state dead;
+branches;
+next	2.10;
+
+2.10
+date	2018.01.05.19.33.29;	author vsnyder;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2017.09.20.00.07.05;	author vsnyder;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2017.02.07.03.49.00;	author vsnyder;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2017.02.04.02.04.19;	author vsnyder;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2017.01.14.01.50.46;	author vsnyder;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2016.12.15.18.45.50;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2016.12.03.02.46.11;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2016.12.02.02.02.01;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2016.11.23.21.32.25;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2016.11.23.00.05.47;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.11
+log
+@Change to sparse eta representation
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Get_Eta_List_m
+
+  use Indexed_Values_m, only: Invert_List_Index, Value_1D_List_t, &
+    & Value_1D_p_t, Value_1D_t, Value_2D_List_t, Value_3D_List_t, &
+    & Value_QTM_1D_List_t, Value_QTM_2D_List_t, Value_QTM_3D_List_t, &
+    & Value_1D_Lists_t, Value_1D_Lists_t, Value_1D_Lists_t
+
+
+  implicit NONE
+
+  private
+
+  ! Procedures
+  public :: Eta_1D_p_QTM_1D_2D!_d, Eta_1D_p_QTM_1D_2D_s
+  public :: Eta_List_1D_1D_2D!_d, Eta_List_1D_1D_2D_s
+  public :: Eta_List_1D_1D_p_2D
+  public :: Eta_List_0D_2D_3D!_d, Eta_List_0D_2D_3D_s
+  public :: Eta_List_1D_2D_3D!_d, Eta_List_1D_2D_3D_s
+  public :: Eta_List_1D_D, Eta_Lists_1D_D, Eta_List_1D_S, Eta_Lists_1D_S
+  public :: Eta_List_1D_p_D
+  public :: Eta_List_1D_p_S
+  public :: Eta_List_1D_QTM_1D_2D!_d, Eta_List_1D_QTM_1D_2D_s
+  public :: Eta_List_1D_QTM_2D_3D!_d, Eta_List_1D_QTM_2D_3D_s
+  public :: Get_Eta_List
+
+  ! Compute Eta to interpolate from Basis to Grid
+  interface Get_Eta_List
+    module procedure Eta_List_1D_D, Eta_Lists_1D_D
+    module procedure Eta_List_1D_S, Eta_Lists_1D_S
+    module procedure Eta_List_1D_p_D, Eta_List_1D_p_S
+    module procedure Eta_List_1D_1D_2D!_d, Eta_List_1D_1D_2D_s
+    module procedure Eta_List_0D_2D_3D!_d, Eta_List_0D_2D_3D_s
+    module procedure Eta_List_1D_2D_3D!_d, Eta_List_1D_2D_3D_s
+    module procedure Eta_List_1D_QTM_1D_2D!_d, Eta_List_1D_QTM_1D_2D_s
+    module procedure Eta_List_1D_QTM_2D_3D!_d, Eta_List_1D_QTM_2D_3D_s
+    module procedure Eta_List_1D_1D_p_2D
+    module procedure Eta_1D_p_QTM_1D_2D!_d, Eta_1D_p_QTM_1D_2D_s
+  end interface
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: Get_Eta_List_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  ! Compute Eta to interpolate from 1-D Basis to 1-D Grid.
+  subroutine Eta_List_1D_D ( Basis, Grid, Eta, Row1, RowN, Sorted, Rev, Tan_Pt, Skip )
+    integer, parameter :: RK = kind(0.0d0)
+    real(rk), intent(in) :: Basis(:)
+    real(rk), intent(in) :: Grid(:)
+  !   type(value_1D_list_t(rk)), intent(out) :: Eta(:) ! size(grid)
+    type(value_1D_list_t), intent(out) :: Eta(:) ! size(grid)
+    integer, intent(in), optional :: Row1, RowN
+    logical, intent(in), optional :: Sorted ! "Grid is sorted" -- default true
+    logical, intent(in), optional :: Rev    ! Basis list is reversed
+    integer, intent(in), optional :: Tan_Pt ! Tangent point in Grid
+    integer, intent(in), optional :: Skip   ! How many points to skip at Tan_Pt
+    include "Eta_List_1D.f9h"
+  end subroutine Eta_List_1D_D
+
+  ! Compute Eta to interpolate from 1-D Basis to 1-D Grid.
+  subroutine Eta_List_1D_S ( Basis, Grid, Eta, Row1, RowN, Sorted, Rev, Tan_Pt, Skip )
+    integer, parameter :: RK = kind(0.0e0)
+    real(rk), intent(in) :: Basis(:)
+    real(rk), intent(in) :: Grid(:)
+  !   type(value_1D_list_t(rk)), intent(out) :: Eta(:) ! size(grid)
+    type(value_1D_list_t), intent(out) :: Eta(:) ! size(grid)
+    integer, intent(in), optional :: Row1, RowN
+    logical, intent(in), optional :: Sorted ! "Grid is sorted" -- default true
+    logical, intent(in), optional :: Rev    ! Basis list is reversed
+    integer, intent(in), optional :: Tan_Pt ! Tangent point in Grid
+    integer, intent(in), optional :: Skip   ! How many points to skip at Tan_Pt
+    include "Eta_List_1D.f9h"
+  end subroutine Eta_List_1D_S
+
+  ! Compute Eta to interpolate from 1-D Basis to 1-D Grid.
+  subroutine Eta_Lists_1D_D ( Basis, Grid, Eta, Row1, RowN, Sorted, Tan_Pt, Skip )
+    integer, parameter :: RK = kind(0.0d0)
+    real(rk), intent(in) :: Basis(:)
+    real(rk), intent(in) :: Grid(:)
+  !   type(value_1D_list_t(rk)), intent(inout) :: Eta
+    type(value_1D_lists_t), intent(inout) :: Eta
+    integer, intent(in), optional :: Row1, RowN
+    logical, intent(in), optional :: Sorted ! "Basis is sorted" -- default true
+    integer, intent(in), optional :: Tan_Pt ! Tangent point in Grid
+    integer, intent(in), optional :: Skip   ! How many points to skip at Tan_Pt
+    call get_eta_list ( basis, grid, eta%eta, Row1, RowN, sorted, Tan_Pt=tan_pt, &
+                      & Skip=skip )
+    eta%n = size(grid)
+  end subroutine Eta_Lists_1D_D
+
+  ! Compute Eta to interpolate from 1-D Basis to 1-D Grid.
+  subroutine Eta_Lists_1D_S ( Basis, Grid, Eta, Row1, RowN, Sorted, Tan_Pt, Skip )
+    integer, parameter :: RK = kind(0.0e0)
+    real(rk), intent(in) :: Basis(:)
+    real(rk), intent(in) :: Grid(:)
+  !   type(value_1D_list_t(rk)), intent(inout) :: Eta
+    type(value_1D_lists_t), intent(inout) :: Eta
+    integer, intent(in), optional :: Row1, RowN
+    logical, intent(in), optional :: Sorted ! "Basis is sorted" -- default true
+    integer, intent(in), optional :: Tan_Pt ! Tangent point in Grid
+    integer, intent(in), optional :: Skip   ! How many points to skip at Tan_Pt
+    call get_eta_list ( basis, grid, eta%eta, Row1, RowN, sorted, Tan_Pt=tan_pt, &
+                      & Skip=skip )
+    eta%n = size(grid)
+  end subroutine Eta_Lists_1D_S
+
+  ! Compute Eta to interpolate from 1-D Basis to 1-D Grid, returning also
+  ! the amount of Eta actually used.
+  subroutine Eta_List_1D_p_D ( Basis, Grid, Eta, N, Row1, RowN, Sorted )
+    integer, parameter :: RK = kind(0.0d0)
+    real(rk), intent(in) :: Basis(:)
+    real(rk), intent(in) :: Grid(:)
+  !   type(value_1D_p_t(rk)), intent(out) :: Eta(:) ! 2*size(grid)
+    type(value_1D_p_t), intent(out) :: Eta(:) ! 2*size(grid)
+    integer, intent(out) :: N
+    integer, intent(in), optional :: Row1, RowN
+    logical, intent(in), optional :: Sorted ! "Grid is sorted" -- default true
+    include "Eta_List_1D_p.f9h"
+  end subroutine Eta_List_1D_p_D
+
+  ! Compute Eta to interpolate from 1-D Basis to 1-D Grid, returning also
+  ! the amount of Eta actually used.
+  subroutine Eta_List_1D_p_S ( Basis, Grid, Eta, N, Row1, RowN, Sorted )
+    integer, parameter :: RK = kind(0.0e0)
+    real(rk), intent(in) :: Basis(:)
+    real(rk), intent(in) :: Grid(:)
+  !   type(value_1D_p_t(rk)), intent(out) :: Eta(:) ! 2*size(grid)
+    type(value_1D_p_t), intent(out) :: Eta(:) ! 2*size(grid)
+    integer, intent(out) :: N
+    integer, intent(in), optional :: Row1, RowN
+    logical, intent(in), optional :: Sorted ! "Grid is sorted" -- default true
+    include "Eta_List_1D_p.f9h"
+  end subroutine Eta_List_1D_p_S
+
+  ! Compute Eta to interpolate from 2-D basis to 1-D grid.  The matrix C is
+  ! the outer product of interpolation matrices A and B, all represented as
+  ! sparse lists.  The field for which A X B is the basis is assumed to be
+  ! represented by a rank-one array with elements of the "real" rank-two field
+  ! F(NA,*) taken in array-element order.  A%N are first subscripts of F. B%N
+  ! are second subscripts of F.  "Sorted" (optional, default true) indicates
+  ! whether both A and B are sorted on their P component.  NC is the number of
+  ! elements put into C, which might be less than size(A) * size(B) if any
+  ! elements of A%V or B%V are zero.
+  subroutine Eta_List_1D_1D_p_2D ( A, NA, B, C, NC, Sorted )
+!   type(value_1D_p_t(rk)), intent(in) :: A(:)
+!   type(value_1D_p_t(rk)), intent(in) :: B(:)
+!   type(value_1D_p_t(rk)), intent(out) :: C(:)
+    type(value_1D_p_t), intent(in) :: A(:)
+    type(value_1D_p_t), intent(in) :: B(:)
+    type(value_1D_p_t), intent(out) :: C(:) ! at least size(A) * size(B)
+    integer, intent(in) :: NA
+    integer, intent(out) :: NC ! Number of used elements of C
+    logical, intent(in), optional :: Sorted
+    include "Eta_List_1D_1D_p_2D.f9h"
+  end subroutine Eta_List_1D_1D_p_2D
+
+  ! Compute Eta to interpolate from 2-D basis to 1-D grid.  The matrix C
+  ! is the outer product of interpolation matrices A and B, all represented
+  ! as sparse lists.  This assumes size(A) == size(B) == size(C).
+  subroutine Eta_List_1D_1D_2D ( A, B, C )
+!   type(value_1D_list_t(rk)), intent(in) :: A(:)
+!   type(value_1D_list_t(rk)), intent(in) :: B(:)
+!   type(value_2D_list_t(rk)), intent(out) :: C(:)
+    type(value_1D_list_t), intent(in) :: A(:)
+    type(value_1D_list_t), intent(in) :: B(:)
+    type(value_2D_list_t), intent(out) :: C(:)
+    include "Eta_List_1D_1D_2D.f9h"
+  end subroutine Eta_List_1D_1D_2D
+
+  ! Compute Eta to interpolate from 3-D basis to 1-D grid.  The matrix C
+  ! is the outer product of interpolation matrices A and B, all represented
+  ! as sparse lists.  This assumes size(B) == size(C).  B and C are both
+  ! coefficient lists to interpolate onto the same path.  A is a single
+  ! interpolator set, e.g., for frequency, that applies everywhere on the path.
+  subroutine Eta_List_0D_2D_3D ( A, B, C )
+!   type(value_1D_list_t(rk)), intent(in) :: A(:)
+!   type(value_2D_list_t(rk)), intent(in) :: B(:)
+!   type(value_3D_list_t(rk)), intent(out) :: C(:)
+    type(value_1D_list_t), intent(in) :: A
+    type(value_2D_list_t), intent(in) :: B(:)
+    type(value_3D_list_t), intent(out) :: C(:)
+    include "Eta_List_0D_2D_3D.f9h"
+  end subroutine Eta_List_0D_2D_3D
+
+  ! Compute Eta to interpolate from 3-D basis to 1-D grid.  The matrix C
+  ! is the outer product of interpolation matrices A and B, all represented
+  ! as sparse lists.  This assumes size(A) == size(B) == size(C).
+  subroutine Eta_List_1D_2D_3D ( A, B, C )
+!   type(value_1D_list_t(rk)), intent(in) :: A(:)
+!   type(value_2D_list_t(rk)), intent(in) :: B(:)
+!   type(value_3D_list_t(rk)), intent(out) :: C(:)
+    type(value_1D_list_t), intent(in) :: A(:)
+    type(value_2D_list_t), intent(in) :: B(:)
+    type(value_3D_list_t), intent(out) :: C(:)
+    include "Eta_List_1D_2D_3D.f9h"
+  end subroutine Eta_List_1D_2D_3D
+
+  ! Compute Eta to interpolate from a 1-D vertical basis and a 1-D QTM
+  ! basis to a 2-D QTM grid.  The matrix C is the outer product of
+  ! interpolation matrices A and B, all represented as sparse lists.
+  !   This assumes size(A) == size(B) == size(C).
+  subroutine Eta_List_1D_QTM_1D_2D ( A, B, C )
+!   type(value_1D_list_t(rk)), intent(in) :: A(:)
+!   type(value_qtm_1d_list_t(rk)), intent(in) :: B(:)
+!   type(value_qtm_2d_list_t(rk)), intent(out) :: C(:)
+    type(value_1D_list_t), intent(in) :: A(:)
+    type(value_qtm_1d_list_t), intent(in) :: B(:)
+    type(value_qtm_2d_list_t), intent(out) :: C(:)
+    include "Eta_List_1D_QTM_1D_2D.f9h"
+  end subroutine Eta_List_1D_QTM_1D_2D
+
+  ! Compute Eta to interpolate from a 1-D vertical basis and a 1-D QTM
+  ! basis to a 2-D QTM grid.  The matrix C is the outer product of
+  ! interpolation matrices A and B, all represented as sparse lists.
+  ! This assumes size(A) == size(B) == size(C).
+  subroutine Eta_1D_p_QTM_1D_2D ( A, B, C )
+!   type(value_1D_p_t(rk)), intent(in) :: A(:)
+!   type(value_qtm_1d_list_t(rk)), intent(in) :: B(:)
+!   type(value_qtm_2d_list_t(rk)), intent(out) :: C(:)
+    type(value_1D_p_t), intent(in) :: A(:)
+    type(value_qtm_1d_list_t), intent(in) :: B(:)
+    type(value_qtm_2d_list_t), intent(out) :: C(:)
+    include "Eta_1D_p_QTM_1D_2D.f9h"
+  end subroutine Eta_1D_p_QTM_1D_2D
+
+  ! Compute Eta to interpolate from a 1-D frequency  basis and a 2-D QTM basis
+  ! to a 3-D QTM grid.  The matrix C is the outer product of interpolation
+  ! matrices A and B, all represented as sparse lists.
+  ! This assumes size(A) == size(B) == size(C).
+  subroutine Eta_List_1D_QTM_2D_3D ( A, B, C )
+!   type(value_1D_list_t(rk)), intent(in) :: A(:)
+!   type(value_qtm_2d_list_t(rk)), intent(in) :: B(:)
+!   type(value_qtm_3d_list_t(rk)), intent(out) :: C(:)
+    type(value_1D_list_t), intent(in) :: A(:)
+    type(value_qtm_2d_list_t), intent(in) :: B(:)
+    type(value_qtm_3d_list_t), intent(out) :: C(:)
+    include "Eta_List_1D_QTM_2D_3D.f9h"
+  end subroutine Eta_List_1D_QTM_2D_3D
+
+!=========================================================================
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: Get_Eta_List_m.f90,v 2.10 2018/01/05 19:33:29 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Get_Eta_List_m
+!---------------------------------------------------
+! $Log: Get_Eta_List_m.f90,v $
+! Revision 2.10  2018/01/05 19:33:29  vsnyder
+! Add Tan_Pt and Skip optional arguments
+!
+! Revision 2.9  2017/09/20 00:07:05  vsnyder
+! Correct comments for 'sorted' argument to say 'grid is sorted'
+!
+! Revision 2.8  2017/02/07 03:49:00  vsnyder
+! Add support for inverted basis
+!
+! Revision 2.7  2017/02/04 02:04:19  vsnyder
+! Add Eta_List_0D_2D_3D
+!
+! Revision 2.6  2017/01/14 01:50:46  vsnyder
+! Eliminate polymorphic interpolators.  Add Row1 and RowN arguments to some
+! of the interpolators.  Move dump routine to Indexed_Values_m.f90
+!
+! Revision 2.5  2016/12/15 18:45:50  vsnyder
+! Add more dumps
+!
+! Revision 2.4  2016/12/03 02:46:11  vsnyder
+! Add N component to Eta_Lists_t.  Add Eta_List_1D_1D_p_2D and
+! Eta_1D_p_QTM_1D_2D to Eta_List_1D generic.  Add Eta_1D_p_QTM_1D_2D.
+! Correct some comments.
+!
+! Revision 2.3  2016/12/02 02:02:01  vsnyder
+! Move dummy argument declarations here from include files.  Add Eta_Lists_t.
+! Add 1D Eta P generators.  Add outer product of 1D P Etas.
+!
+! Revision 2.2  2016/11/23 21:32:25  vsnyder
+! Add Eta_List_1D_... routines to compute outer products of lower-
+! dimensionality lists.
+!
+! Revision 2.1  2016/11/23 00:05:47  vsnyder
+! Initial commit
+!
+@
+
+
+2.10
+log
+@Add Tan_Pt and Skip optional arguments
+@
+text
+@d259 1
+a259 1
+       "$Id: Get_Eta_List_m.f90,v 2.9 2017/09/20 00:07:05 vsnyder Exp $"
+d269 3
+@
+
+
+2.9
+log
+@Correct comments for 'sorted' argument to say 'grid is sorted'
+@
+text
+@d60 1
+a60 1
+  subroutine Eta_List_1D_D ( Basis, Grid, Eta, Row1, RowN, Sorted, Rev )
+d69 2
+d75 1
+a75 1
+  subroutine Eta_List_1D_S ( Basis, Grid, Eta, Row1, RowN, Sorted, Rev )
+d84 2
+d90 1
+a90 1
+  subroutine Eta_Lists_1D_D ( Basis, Grid, Eta, Row1, RowN, Sorted )
+d98 4
+a101 1
+    call get_eta_list ( basis, grid, eta%eta, Row1, RowN, sorted )
+d106 1
+a106 1
+  subroutine Eta_Lists_1D_S ( Basis, Grid, Eta, Row1, RowN, Sorted )
+d114 4
+a117 1
+    call get_eta_list ( basis, grid, eta%eta, Row1, RowN, sorted )
+d259 1
+a259 1
+       "$Id: Get_Eta_List_m.f90,v 2.8 2017/02/07 03:49:00 vsnyder Exp $"
+d269 3
+@
+
+
+2.8
+log
+@Add support for inverted basis
+@
+text
+@d67 1
+a67 1
+    logical, intent(in), optional :: Sorted ! "Basis is sorted" -- default true
+d80 1
+a80 1
+    logical, intent(in), optional :: Sorted ! "Basis is sorted" -- default true
+d121 1
+a121 1
+    logical, intent(in), optional :: Sorted ! "Basis is sorted" -- default true
+d135 1
+a135 1
+    logical, intent(in), optional :: Sorted ! "Basis is sorted" -- default true
+d249 1
+a249 1
+       "$Id: Get_Eta_List_m.f90,v 2.7 2017/02/04 02:04:19 vsnyder Exp $"
+d259 3
+@
+
+
+2.7
+log
+@Add Eta_List_0D_2D_3D
+@
+text
+@d14 2
+a15 2
+  use Indexed_Values_m, only: Value_1D_List_t, Value_1D_p_t, &
+    & Value_1D_t, Value_2D_List_t, Value_3D_List_t, &
+d60 1
+a60 1
+  subroutine Eta_List_1D_D ( Basis, Grid, Eta, Row1, RowN, Sorted )
+d68 1
+d73 1
+a73 1
+  subroutine Eta_List_1D_S ( Basis, Grid, Eta, Row1, RowN, Sorted )
+d81 1
+d249 1
+a249 1
+       "$Id: Get_Eta_List_m.f90,v 2.6 2017/01/14 01:50:46 vsnyder Exp $"
+d259 3
+@
+
+
+2.6
+log
+@Eliminate polymorphic interpolators.  Add Row1 and RowN arguments to some
+of the interpolators.  Move dump routine to Indexed_Values_m.f90
+@
+text
+@d28 1
+d43 1
+d161 1
+a161 1
+  ! as sparse lists.
+d174 16
+a189 1
+  ! as sparse lists.
+d203 1
+d217 1
+d231 1
+d247 1
+a247 1
+       "$Id: Get_Eta_List_m.f90,v 2.5 2016/12/15 18:45:50 vsnyder Exp $"
+d257 4
+@
+
+
+2.5
+log
+@Add more dumps
+@
+text
+@d14 1
+a14 1
+  use Indexed_Values_m, only: Value_List, Value_1D_List_t, Value_1D_p_t, &
+d16 3
+a18 1
+    & Value_QTM_1D_List_t, Value_QTM_2D_List_t, Value_QTM_3D_List_t
+a23 3
+  ! Type
+  public :: Eta_Lists_t
+
+a24 6
+  public :: Dump, Dump_Eta_Lists
+  public :: Eta_List_1D
+  public :: Eta_List_1D_Polymorphic_D
+  public :: Eta_List_1D_Polymorphic_S
+  public :: Eta_List_1D_Polymorphic_Scalar_D
+  public :: Eta_List_1D_Polymorphic_Scalar_S
+d29 1
+a29 1
+  public :: Eta_List_1D_D, Eta_List_1D_S
+d34 1
+d37 3
+a39 6
+  interface Eta_List_1D
+    module procedure Eta_List_1D_Polymorphic_D
+    module procedure Eta_List_1D_Polymorphic_S
+    module procedure Eta_List_1D_Polymorphic_Scalar_D
+    module procedure Eta_List_1D_Polymorphic_Scalar_S
+    module procedure Eta_List_1D_D, Eta_List_1D_S
+a48 11
+  interface Dump
+    module procedure Dump_Eta_Lists
+  end interface
+
+  ! Use this type to create an array of Eta lists, potentially of different
+  ! types and sizes.
+  type :: Eta_Lists_t
+    integer :: N ! Number of elements of Eta currently in use.
+    class(value_list), allocatable :: Eta(:)
+  end type Eta_Lists_t
+
+d57 2
+a58 3
+  ! Select an Eta-list generator depending upon the dynamic type of the
+  ! Eta component of the argument.
+  subroutine Eta_List_1D_Polymorphic_D ( Basis, Grid, Eta, N, Sorted )
+d62 6
+a67 6
+    class(eta_lists_t), intent(inout) :: Eta(:) ! InOut so as not to reallocate
+                                             ! the Eta component
+    integer, intent(in) :: N                 ! Which Eta%Eta to compute
+    logical, intent(in), optional :: Sorted  ! "Basis is sorted" -- default true
+    call eta_list_1d ( basis, grid, eta(n), sorted )
+  end subroutine Eta_List_1D_Polymorphic_D
+d69 2
+a70 1
+  subroutine Eta_List_1D_Polymorphic_S ( Basis, Grid, Eta, N, Sorted )
+d74 6
+a79 50
+    class(eta_lists_t), intent(inout) :: Eta(:) ! InOut so as not to reallocate
+                                             ! the Eta component
+    integer, intent(in) :: N                 ! Which Eta%Eta to compute
+    logical, intent(in), optional :: Sorted  ! "Basis is sorted" -- default true
+    call eta_list_1d ( basis, grid, eta(n), sorted )
+  end subroutine Eta_List_1D_Polymorphic_S
+
+  subroutine Eta_List_1D_Polymorphic_Scalar_D ( Basis, Grid, Eta, Sorted )
+    integer, parameter :: RK = kind(0.0d0)
+    real(rk), intent(in) :: Basis(:)
+    real(rk), intent(in) :: Grid(:)
+    class(eta_lists_t), intent(inout) :: Eta ! InOut so as not to reallocate
+                                             ! the Eta component
+    logical, intent(in), optional :: Sorted  ! "Basis is sorted" -- default true
+    ! Select Type is needed because eta_list_1d isn't type bound (can't be
+    ! because Eta_z(i)%eta is not a scalar), and the Eta_z(i)%eta component
+    ! is polymorphic.  Maybe they should be type-bound to the types in
+    ! Indexed_Values_m, which would reverse the dependence between
+    ! Indexed_Values_m and Get_Eta_List_m, or requiring to incorporate
+    ! Get_Eta_List_m. into Indexed_Values_m.
+    select type ( this_eta => eta%eta )
+    type is ( value_1D_list_t )
+      call eta_list_1d ( basis, grid, this_eta, sorted )
+      eta%n = size(grid)
+    type is ( value_1D_p_t )
+      call eta_list_1d ( basis, grid, this_eta, eta%n, sorted )
+    end select
+  end subroutine Eta_List_1D_Polymorphic_Scalar_D
+
+  subroutine Eta_List_1D_Polymorphic_Scalar_S ( Basis, Grid, Eta, Sorted )
+    integer, parameter :: RK = kind(0.0e0)
+    real(rk), intent(in) :: Basis(:)
+    real(rk), intent(in) :: Grid(:)
+    class(eta_lists_t), intent(inout) :: Eta ! InOut so as not to reallocate
+                                             ! the Eta component
+    logical, intent(in), optional :: Sorted  ! "Basis is sorted" -- default true
+    ! Select Type is needed because eta_list_1d isn't type bound (can't be
+    ! because Eta_z(i)%eta is not a scalar), and the Eta_z(i)%eta component
+    ! is polymorphic.  Maybe they should be type-bound to the types in
+    ! Indexed_Values_m, which would reverse the dependence between
+    ! Indexed_Values_m and Get_Eta_List_m, or requiring to incorporate
+    ! Get_Eta_List_m. into Indexed_Values_m.
+    select type ( this_eta => eta%eta )
+    type is ( value_1D_list_t )
+      call eta_list_1d ( basis, grid, this_eta, sorted )
+      eta%n = size(grid)
+    type is ( value_1D_p_t )
+      call eta_list_1d ( basis, grid, this_eta, eta%n, sorted )
+    end select
+  end subroutine Eta_List_1D_Polymorphic_Scalar_S
+d82 1
+a82 1
+  subroutine Eta_List_1D_D ( Basis, Grid, Eta, Sorted )
+d86 3
+a88 2
+  !   type(value_1D_list_t(rk)), intent(out) :: Eta(:) ! size(grid)
+    type(value_1D_list_t), intent(out) :: Eta(:) ! size(grid)
+d90 3
+a92 2
+    include "Eta_List_1D.f9h"
+  end subroutine Eta_List_1D_D
+d95 1
+a95 1
+  subroutine Eta_List_1D_S ( Basis, Grid, Eta, Sorted )
+d99 3
+a101 2
+  !   type(value_1D_list_t(rk)), intent(out) :: Eta(:) ! size(grid)
+    type(value_1D_list_t), intent(out) :: Eta(:) ! size(grid)
+d103 3
+a105 2
+    include "Eta_List_1D.f9h"
+  end subroutine Eta_List_1D_S
+d109 1
+a109 1
+  subroutine Eta_List_1D_p_D ( Basis, Grid, Eta, N, Sorted )
+d116 1
+d123 1
+a123 1
+  subroutine Eta_List_1D_p_S ( Basis, Grid, Eta, N, Sorted )
+d130 1
+a221 14
+  subroutine Dump_Eta_Lists ( Eta, Name )
+    use Indexed_Values_m, only: Dump
+    type(eta_lists_t), intent(in) :: Eta
+    character(*), intent(in), optional :: Name
+    select type ( this_eta => eta%eta )
+    type is ( value_1d_list_t )
+      call dump ( this_eta(:eta%n), name )
+    type is ( value_1D_p_t )
+      call dump ( this_eta(:eta%n), name )
+!   type is ( value_QTM_2D_list_t )
+!     call dump ( this_eta, name )
+    end select
+  end subroutine Dump_Eta_Lists
+
+d227 1
+a227 1
+       "$Id: Get_Eta_List_m.f90,v 2.4 2016/12/03 02:46:11 vsnyder Exp $"
+d237 3
+@
+
+
+2.4
+log
+@Add N component to Eta_Lists_t.  Add Eta_List_1D_1D_p_2D and
+Eta_1D_p_QTM_1D_2D to Eta_List_1D generic.  Add Eta_1D_p_QTM_1D_2D.
+Correct some comments.
+@
+text
+@d26 15
+a40 2
+  public :: Eta_List_1D, Eta_List_1D_1D_2D, Eta_List_1D_2D_3D
+  public :: Eta_List_1D_QTM_1D_2D, Eta_List_1D_QTM_2D_3D
+d44 4
+d58 4
+d77 68
+d280 14
+d299 1
+a299 1
+       "$Id: Get_Eta_List_m.f90,v 2.3 2016/12/02 02:02:01 vsnyder Exp $"
+d309 5
+@
+
+
+2.3
+log
+@Move dummy argument declarations here from include files.  Add Eta_Lists_t.
+Add 1D Eta P generators.  Add outer product of 1D P Etas.
+@
+text
+@d37 2
+d44 1
+d152 2
+a153 2
+  ! Compute Eta to interpolate from a 2-D QTM basis and a 1-D vertical
+  ! basis to a 1-D grid.  The matrix C is the outer product of
+d165 16
+a180 3
+  ! Compute Eta to interpolate from a 2-D QTM basis, a 1-D vertical, and a
+  ! 1-D frequency  basis to a 1-D grid.  The matrix C is the outer product
+  ! of interpolation matrices A and B, all represented as sparse lists.
+d196 1
+a196 1
+       "$Id: Get_Eta_List_m.f90,v 2.2 2016/11/23 21:32:25 vsnyder Exp $"
+d206 4
+@
+
+
+2.2
+log
+@Add Eta_List_1D_... routines to compute outer products of lower-
+dimensionality lists.
+@
+text
+@d14 2
+a15 2
+  use Indexed_Values_m, only: Value_1D_List_t, Value_1D_t, &
+    & Value_2D_List_t, Value_3D_List_t, &
+d22 4
+d32 1
+d39 6
+d53 1
+a53 1
+  ! Compute Eta to interpolate from 1-D Basis to 1-D Grid
+d56 5
+d64 1
+a64 1
+  ! Compute Eta to interpolate from 1-D Basis to 1-D Grid
+d67 5
+d75 48
+d124 1
+a124 1
+  ! is the outer product of interpoation matrices A and B, all represented
+d127 6
+d137 1
+a137 1
+  ! is the outer product of interpoation matrices A and B, all represented
+d140 6
+d151 1
+a151 1
+  ! interpoation matrices A and B, all represented as sparse lists.
+d153 6
+d164 1
+a164 1
+  ! of interpoation matrices A and B, all represented as sparse lists.
+d166 6
+d180 1
+a180 1
+       "$Id: Get_Eta_List_m.f90,v 2.1 2016/11/23 00:05:47 vsnyder Exp $"
+d190 4
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d14 3
+a16 1
+  use Indexed_Values_m, only: Value_1D_List_t, Value_1D_t
+d22 2
+a23 1
+  public :: Eta_List_1D
+d28 4
+d36 1
+a36 1
+       "$RCSfile: get_eta_matrix_m.f90,v $"
+d54 28
+d87 1
+a87 1
+       "$Id: get_eta_matrix_m.f90,v 2.27 2016/10/18 00:29:13 vsnyder Exp $"
+d96 4
+a99 1
+! $Log: get_eta_matrix_m.f90,v $
+@
+

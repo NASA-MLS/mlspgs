@@ -1,0 +1,3155 @@
+head	2.37;
+access;
+symbols
+	v5-02-NRT-19:2.37
+	v6-00:2.37
+	v5-02-NRT-18:2.37
+	v5-02:2.37
+	v5-01-NRT-17:2.37
+	v5-01-NRT-16:2.37
+	v5-01-NRT-15:2.37
+	v5-01-NRT-14:2.37
+	neuralnetworks-1-0:2.37.0.4
+	cfm-single-freq-0-1:2.37.0.2
+	v5-01:2.37
+	v5-00:2.37
+	v4-23-TA133:2.36.0.6
+	mus-emls-1-70:2.36.0.4
+	rel-1-0-englocks-work:2.36.0.2
+	VUMLS1-00:2.36
+	VPL1-00:2.36
+	V4-22-NRT-08:2.36
+	VAM1-00:2.34
+	V4-21:2.34.0.2
+	V4-13:2.34
+	V4-12:2.33
+	V4-11:2.33
+	V4-10:2.32
+	V3-43:2.19
+	M4-00:2.25
+	V3-41:2.19
+	V3-40-PlusGM57:2.19.0.2
+	V2-24-NRT-04:2.16
+	V3-33:2.19
+	V2-24:2.16
+	V3-31:2.19
+	V3-30-NRT-05:2.19
+	cfm-01-00:2.19
+	V3-30:2.19
+	V3-20:2.19
+	V3-10:2.19
+	V2-23-NRT-02:2.16
+	V2-23:2.16
+	V2-22-NRT-01:2.16
+	V2-22:2.16
+	V2-21:2.16
+	V2-20:2.16
+	V2-11:2.16
+	V2-10:2.16
+	V2-00:2.16
+	V1-51:2.14
+	V1-50:2.14
+	V1-45:2.14
+	V1-44:2.14
+	V1-43:2.13
+	V1-42:2.10
+	V1-41:2.10
+	V1-32:2.10
+	V1-40:2.10
+	V1-31:2.10
+	V1-30:2.10
+	V1-13:2.10
+	V1-12:2.10
+	V1-11:2.10
+	V1-10:2.10
+	newfwm-feb03:2.10.0.2
+	V1-04:2.8
+	V1-03:2.8
+	V1-02:2.8
+	V1-00:2.8
+	newfwm-sep01:2.6.0.2
+	V0-7:2.6
+	V0-5-Level2:2.5
+	V0-5-SIPS:2.5;
+locks; strict;
+comment	@# @;
+
+
+2.37
+date	2019.07.09.20.20.58;	author pwagner;	state Exp;
+branches;
+next	2.36;
+
+2.36
+date	2015.10.27.21.58.53;	author vsnyder;	state Exp;
+branches;
+next	2.35;
+
+2.35
+date	2015.10.22.23.50.49;	author vsnyder;	state Exp;
+branches;
+next	2.34;
+
+2.34
+date	2014.09.05.00.28.52;	author vsnyder;	state Exp;
+branches;
+next	2.33;
+
+2.33
+date	2014.05.20.23.54.38;	author vsnyder;	state Exp;
+branches;
+next	2.32;
+
+2.32
+date	2014.01.14.00.59.40;	author vsnyder;	state Exp;
+branches;
+next	2.31;
+
+2.31
+date	2014.01.14.00.48.59;	author vsnyder;	state Exp;
+branches;
+next	2.30;
+
+2.30
+date	2013.12.12.02.01.54;	author vsnyder;	state Exp;
+branches;
+next	2.29;
+
+2.29
+date	2013.10.02.01.35.46;	author vsnyder;	state Exp;
+branches;
+next	2.28;
+
+2.28
+date	2013.09.30.23.03.04;	author vsnyder;	state Exp;
+branches;
+next	2.27;
+
+2.27
+date	2013.09.25.01.02.41;	author vsnyder;	state Exp;
+branches;
+next	2.26;
+
+2.26
+date	2013.09.24.23.27.14;	author vsnyder;	state Exp;
+branches;
+next	2.25;
+
+2.25
+date	2012.05.05.00.11.51;	author vsnyder;	state Exp;
+branches;
+next	2.24;
+
+2.24
+date	2012.05.01.22.11.27;	author vsnyder;	state Exp;
+branches;
+next	2.23;
+
+2.23
+date	2012.05.01.22.10.26;	author vsnyder;	state Exp;
+branches;
+next	2.22;
+
+2.22
+date	2012.04.24.20.37.24;	author vsnyder;	state Exp;
+branches;
+next	2.21;
+
+2.21
+date	2011.04.19.01.59.43;	author vsnyder;	state Exp;
+branches;
+next	2.20;
+
+2.20
+date	2011.04.18.19.33.26;	author vsnyder;	state Exp;
+branches;
+next	2.19;
+
+2.19
+date	2009.06.23.18.25.43;	author pwagner;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2008.09.04.20.02.20;	author vsnyder;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2008.09.04.00.46.17;	author vsnyder;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2006.03.22.03.04.00;	author vsnyder;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2005.06.22.17.25.50;	author pwagner;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2004.05.28.23.13.12;	author vsnyder;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2004.01.20.19.43.33;	author vsnyder;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2004.01.17.03.04.48;	author vsnyder;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2004.01.16.23.49.32;	author vsnyder;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2003.01.29.03.14.14;	author vsnyder;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2002.10.08.00.09.13;	author pwagner;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2001.11.28.03.05.54;	author vsnyder;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2001.11.27.00.54.37;	author vsnyder;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2001.07.20.20.18.05;	author vsnyder;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2001.02.28.02.37.11;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2000.11.30.00.23.10;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2000.11.15.22.01.18;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2000.11.15.21.15.27;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2000.10.11.18.02.50;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.37
+log
+@NAG complained if this was used to build lr before; happy now
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module PARSER
+
+! Parser for MLS CF.  The grammar is processed by the LR processor.
+
+  implicit NONE
+  private
+
+  public :: Clean_Up_Parser, Configuration, LR_Parser, LR_Parser_TX
+
+  interface Configuration
+    module procedure LR_Parser, LR_Parser_TX
+  end interface
+
+  ! Derived from lists in parser tables, to make the parser run faster:
+
+  integer, save, allocatable :: LR_0(:) ! If LR_0(I) /= 0, state I is an LR(0)
+                             ! state, i.e., one reduction and no productions.
+                             ! LR_0(I) is the production number to reduce.
+  integer, save, allocatable :: Work(:,:)
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: parser.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains ! ====     Procedures     =====================================
+
+  subroutine LR_Parser_TX ( Root, T )
+    use Parser_Table_m, only: Parser_Table_t
+    use Tree, only: TX
+    type(tx), intent(out) :: ROOT   ! Root of the abstract syntax tree
+    type(parser_table_t), intent(in) :: T
+    call lr_parser ( root%i, T )
+  end subroutine LR_Parser_TX
+
+  subroutine LR_Parser ( Root, T )
+
+    use LEXER_CORE, only: PRINT_SOURCE, TOKEN
+    use LEXER_M, only: LEXER
+    use OUTPUT_M, only: Blanks, NEWLINE, OUTPUT
+    use Parser_Table_m, only: Parser_Table_t
+    use SYMBOL_TABLE, only: DUMP_1_SYMBOL, DUMP_SYMBOL_CLASS
+    use SYMBOL_TYPES, only: T_End_Of_Input, T_Last_Terminal, T_Null
+    use TOGGLES, only: LEVELS, PAR, TOGGLE
+    use TREE, only: BUILD_TREE, Dump_Top_Stack, N_TREE_STACK,&
+                    PUSH_PSEUDO_TERMINAL,  STACK_SUBTREE
+    use TREE_TYPES, only: N_CFS, N_Null
+
+    integer, intent(out) :: Root   ! Index in tree of root of the parsed tree
+    type(parser_table_t), intent(in) :: T
+
+    type :: Stack_Frame
+      integer :: State         ! The parser state
+      integer :: Tree_Index    ! Tree stack pointer of state's t%lhs
+    end type Stack_Frame
+
+    logical :: Need            ! Need to get a token from the lexer
+    integer :: Prev_Error
+
+    logical, save :: Machine = .false. ! Dump the grammar and parsing machine
+    integer :: Map(t_null:t_last_terminal) ! Map token classes to parser
+                               ! vocabulary indices
+    integer :: Newsta, Nowsta  ! Next state, Current state
+    logical, save :: Show_stack = .false. ! stack too
+    logical, save :: Show_state = .false. ! automaton state too
+    logical, save :: Show_work = .false. ! dump work table
+    integer :: SP              ! stack pointer
+    type(stack_frame), allocatable :: Stack(:)
+    type(token) :: The_Token   ! from the lexer
+    integer :: Voc             ! vocabulary index of token or t%lhs
+
+    ! Put names of symbols not defined by the grammar into the string
+    ! table
+    if ( .not. allocated(work) ) then
+
+      ! Compute debug flags
+      show_stack = mod(levels(par),2) /= 0
+      show_state = mod(levels(par)/2,2) /= 0
+      machine = mod(levels(par)/4,2) /= 0
+      show_work = mod(levels(par)/8,2) /= 0
+
+      ! Convert the lists to search for transitions and reductions to the
+      ! array WORK(t%nstate:t%nvoc).
+      ! If Work(i,j) > 0 the next state is Work(i,j)
+      ! If Work(i,j) < 0 reduce production -Work(i,j)
+      ! If Work(i,j) == 0 a syntax error has occurred
+      allocate ( work(t%nstate,t%nvoc), LR_0(t%nstate) )
+      call make_work ( t%ftrn, t%tran, t%ent, t%fred, t%nset, t%lset, t%ls, &
+                     & t%prod, t%val, Work, LR_0, map )
+    end if
+
+    prev_error = 0              ! Line number of previous error
+    sp = 0
+    newsta = abs(t%tran(1))     ! The LR generator likes to put the <SOG>
+                                ! symbol before the goal symbol.  The lexer
+                                ! doesn't produce this symbol before the first
+                                ! input.  Putting the parser in the state
+                                ! adjacent to state 1 skips that symbol.
+    voc = 0                     ! Don't display symbol in Transition routine
+
+    call transition ( .false. ) ! push Newsta onto the parser stack and
+                                ! make it Nowsta.
+
+    need = .true.               ! Indicate a token is necessary
+
+    do while ( nowsta /= t%ifinal )
+      if ( lr_0(nowsta) > 0 ) then
+        ! The current state is an LR(0) state, meaning it does one reduction
+        ! and no transitions.  The production in lr_0(nowsta) can be
+        ! reduced without needing to go to the lexer to get a token.
+        call reduce_production ( lr_0(nowsta) )
+      else
+        if ( need ) then
+          call lexer ( the_token )
+          need = .false.
+        end if
+        ! Decide what to do
+        if ( map(the_token%class) <= 0 .or. map(the_token%class) > t%nterms ) then
+          voc = 0 ! Syntax error, token isn't even in terminal alphabet
+        else
+          voc = work(nowsta,map(the_token%class))
+        end if
+        if ( voc > 0 ) then ! a transition to state voc.
+          newsta = voc
+          if ( the_token%pseudo ) then
+            call push_pseudo_terminal ( the_token%string_index, &
+                                      & the_token%where, class=the_token%class )
+            if ( show_stack ) then
+              call output ( 'Push pseudo terminal ' )
+              call dump_1_symbol ( the_token%string_index )
+              call print_source ( the_token%where, before=' at ' )
+              call output ( n_tree_stack, before=' leaving n_tree_stack = ', &
+                & advance='yes' )
+            end if
+          end if
+          call transition ( .false. )
+          need = .true.        ! Consume the token
+        else if ( voc < 0 ) then ! a reduction by production -voc
+          call reduce_production ( -voc )
+        else ! Syntax error
+         call no_transition
+        end if
+      end if
+    end do
+
+    call build_tree ( n_cfs, n_tree_stack )  ! glue together everything on the
+
+    if ( prev_error > 0 ) then
+      call output ( prev_error, before='Last error at line ', advance='yes' )
+      root = -1
+    else
+      if ( toggle(par) ) then
+      call output ( 'Finished parsing and built ' )
+      call dump_top_stack ( 0, advance='yes' )
+      end if
+      call build_tree ( n_null, 1 )          ! pop the n_cfs, leave the n_null
+      root = stack_subtree(1)
+    end if
+
+  contains
+
+! -------------------------------------------  Catastrophic_Error  -----
+    subroutine Catastrophic_Error ( text, The_Token, State, Nonterminal )
+      use Machine, only: Crash_Burn, Nevercrash
+      use String_Table, only: Display_String
+      character(len=*), intent(in):: text
+      type(token), intent(in), optional  :: The_Token
+      integer, intent(in), optional :: State, Nonterminal
+      if ( present(the_token) ) then
+        call print_source ( the_token%where, &
+          & before='***** Catastrophic Error ***** ', advance='yes' )
+      else
+        call output ( '***** Catastrophic Error *****', advance='yes' )
+      end if
+      if ( present(state) ) &
+        & call output ( state, before='The current state is ', advance='yes' )
+      if ( present(nonterminal) ) &
+        & call output ( nonterminal, before='The nonterminal symbol is ', &
+          & advance='yes' )
+      if ( present(the_token) ) then
+        call output ( 'Next token is ' )
+        call dump_symbol_class ( the_token%class )
+        if ( the_token%pseudo .and. the_token%string_index > 0 ) &
+          & call display_string ( the_token%string_index, before=' ' )
+        call newLine
+      end if
+      call output( 'About to crash and burn in parser', advance='yes' )
+      Nevercrash = .false.
+      call Crash_Burn
+      ! call MLSMessage ( MLSMSG_Crash, moduleName, trim(text) )
+      stop 666
+    end subroutine Catastrophic_Error
+
+! ---------------------------------------------------  Do_Include  -----
+    subroutine Do_Include
+      ! We don't want "string" in the tree, so pop it off the stack.
+      use String_Table, only: Display_String, Open_Include
+      use Tree, only: Pop, Stack_File, Stack_Source_Ref, Stack_Sub_Rosa
+      call open_include ( Stack_Sub_Rosa(), Stack_Source_Ref(), &
+                        & Stack_File() )
+      if ( toggle(par) ) &
+        & call display_string ( Stack_Sub_Rosa(), &
+          & before='Opened include file ', advance='yes' )
+      call pop ( 1 )
+   end subroutine Do_Include
+
+! -----------------------------------------------  Error_Walkback  -----
+    subroutine Error_Walkback ( Line )
+      integer, intent(in) :: Line      ! Line number of error
+      if ( prev_error > 0 ) call output ( prev_error, &
+        & before='Previous error at line ', advance='yes' )
+      prev_error = line
+    end subroutine Error_Walkback
+
+! ----------------------------------------------------  Make_Work  -----
+    subroutine Make_Work ( ftrn, tran, ent, fred, nset, lset, ls, prod, val, &
+                         & Work, LR_0, Map )
+
+    ! Make the Work, LR_0 and Map arrays, to avoid searching ftrn, tran,
+    ! fred, nset, lset, and ls to determine whether to reduce a production
+    ! or make a transition.
+
+    ! Positive elements of WORK are new state numbers and indicate transitions.
+    ! Negative elements of WORK are indices of productions to reduce.
+    ! Zero elements of WORK indicate syntax errors.
+
+    ! Columns 1:nterms are indexed by terminal symbol vocabulary indices. 
+    ! Columns nterms+1:nvoc are indexed by nonterminal symbol vocabulary
+    ! indices, never indicate reductions, and errors are not possible.
+
+      integer, intent(in) :: ftrn(0:), tran(:), ent(:)
+      integer, intent(in) :: fred(0:), nset(:), lset(0:), ls(:)
+      integer, intent(in) :: prod(:), val(:)
+      integer, intent(out) :: WORK(:,:) ! ( nstate : nvoc )
+      integer, intent(out) :: LR_0(:)   ! ( nstate ), "state is an LR(0) state"
+      integer, intent(out) :: Map(t_null:) ! Inverse of val
+
+      ! ftrn(0:nstate): Indexed by state number.  First (actually last)
+      ! transitions.  Transitions for state S are in tran(ftrn(S-1)+1:ftrn(S)).
+
+      ! tran(1:ntrans): New state indices, indexed by ftrn, q.v.
+
+      ! ent(1:nstate): Indexed by state number.  Index of vocabulary symbol
+      ! used to enter a state.
+
+      ! fred(0:nstate): Indexed by state number.  First (actually last)
+      ! reductions.  Lookahead sets for state S are nset(fred(S-1)+1:fred(S)).
+
+      ! nset(1:nlooks): Lookahead set indices, indexed by fred, q.v.
+
+      ! lset(0:ncsets): Last elements of lookahead sets, indexed by nset, q.v.
+      ! For lookahead set L, elements are ls(lset(L-1)+1:lset(L)).
+
+      ! ls(1:lsets): Elements of lookahead sets.
+
+      ! prod(1:nlooks): Production numbers to reduce if lookahead is in the
+      ! set, indexed by fred, q.v.
+
+      logical :: Error
+      integer :: I, J, L
+
+      error = .false. ! Assume OK
+      work = 0
+
+      ! Fill in the transitions
+      do i = 1, ubound(ftrn,1)
+        work(i,ent(tran(ftrn(i-1)+1:ftrn(i)))) = tran(ftrn(i-1)+1:ftrn(i))
+      end do
+
+      ! Fill in the reductions
+      do i = 1, ubound(fred,1)
+        do j = fred(i-1)+1, fred(i)
+          do l = lset(nset(j)-1)+1, lset(nset(j))
+            if ( work(i,ls(l)) > 0 ) then
+              write ( *, '(3(a,i0))' ) &
+                & 'Grammar is not LR.  Intersection in state ', i, &
+                & ' with transition to state ', work(i,ls(l)), &
+                & ' on vocabulary symbol with internal index ', ls(l)
+                error = .true.
+            else if ( work(i,ls(l)) < 0 ) then
+              write ( *, '(3(a,i0))' ) &
+                & 'Grammar is not LR.  Intersection in state ', i, &
+                & ' with reduction of production ', -work(i,ls(l)), &
+                & ' on vocabulary symbol with internal index ', ls(l)
+                error = .true.
+            else
+              work(i,ls(l)) = -prod(j)
+            end if
+          end do
+        end do
+      end do
+
+      do i = 1, ubound(work,1)
+        if ( ftrn(i) == ftrn(i-1) .and. &    ! No transitions
+           & fred(i) == fred(i-1)+1 ) then   ! One reduction
+          lr_0(i) = prod(fred(i))
+        else
+          lr_0(i) = 0
+        end if
+      end do
+
+      do i = 1, ubound(val,1)
+        if ( val(i) > 0 .and. val(i) < ubound(map,1) ) map(val(i)) = i
+      end do
+
+      if ( show_work ) then
+        call output ( "Parser's WORK array:", advance='yes' )
+        do i = 1, size(work,2), 20
+          call output ( '      ' )
+          do l = i, min(i+19,size(work,2))
+            call output ( l, format='(i6)' )
+          end do
+          call newline
+          do j = 1, size(work,1)
+            call output ( j, format='(i5,":")' )
+            do l = i, min(i+19,size(work,2))
+              call output ( work(j,l), format='(i6)' )
+            end do
+            call newline
+          end do
+        end do
+      end if
+
+      if ( error ) then
+        write ( *, '(a)' ) 'Error: Make_Work_m.Make_Work%E%- Grammar is not LR(1)'
+        stop 1
+      end if
+
+      if ( machine ) then
+        call print_grammar
+        call output ( 'The parsing automaton (sans context sets for reductions):', &
+          & advance='yes' )
+        do i = 1, t%nstate
+          call newLine
+          call print_state ( i, number=.true. )
+        end do
+        call output ( 'End of the parsing automaton', advance='yes' )
+      end if
+
+    end subroutine Make_Work
+
+! ------------------------------------------------  No_Transition  -----
+    subroutine No_Transition ( Expected )
+      ! This is a REALLY CRUDE error recovery routine.
+      integer, intent(in), optional :: Expected
+      integer :: I
+      call output ( the_token%where%source / 256,5 )
+      call output ( ': *** Error ***  Unexpected Input ')
+      call dump_1_symbol ( the_token%string_index )
+      if ( the_token%class /= t_end_of_input ) then
+        call print_source ( the_token%where, before=' at ' )
+        call output (' in parser state ' )
+        call output ( nowsta, advance='yes' )
+        call print_state ( nowsta )
+        if ( present(expected) ) then
+          call output ( 'Expected ', advance='no' )
+          call dump_symbol_class ( expected, advance='yes' )
+        else
+          call output ( 'Expected one of: ', advance='yes' )
+          do i = 1, t%nterms
+            if ( work(nowsta,i) > 0 ) &
+              & call dump_symbol_class ( map(i), advance='yes' )
+          end do
+        end if
+        call lexer( the_token )
+        call error_walkback ( the_token%where%source / 256 )
+      else
+        call output (' in parser state ' )
+        call output ( nowsta, advance='yes' )
+        call print_state ( nowsta )
+        if ( present(expected) ) then
+          call output ( 'Expected ', advance='no' )
+          call dump_symbol_class ( expected, advance='yes' )
+        else
+          call output ( 'Expected one of: ', advance='yes' )
+          do i = 1, t%nterms
+            if ( work(nowsta,i) > 0 ) &
+              & call dump_symbol_class ( map(i), advance='yes' )
+          end do
+        end if
+        call error_walkback ( the_token%where%source / 256 )
+        sp = sp - 1
+        if ( sp <= 0 ) call catastrophic_error ( 'Parser stack underflow' )
+        nowsta = stack(sp)%state
+      end if
+    end subroutine No_Transition
+
+! -------------------------------------------------  Print_Action  -----
+    subroutine Print_Action ( P )
+    ! Print the action for production P
+      use String_Table, only: Display_String
+      use Tree, only: Tree_Text
+      integer, intent(in) :: P ! The production number
+      integer :: A
+      a = t%act(p)
+      if ( a /= 0 ) then
+        select case ( mod(a,10) )
+        case ( 1 )
+          call display_string ( tree_text(a / 10), before=' => ' )
+        case ( 2 )
+          call display_string ( tree_text(a / 10), before=' => ' )
+          call output ( ' ?' )
+        case default
+          call output ( a, before=' => ' )
+        end select
+      end if
+    end subroutine Print_Action
+
+! ------------------------------------------------  Print_Grammar  -----
+    subroutine Print_Grammar
+    ! Print the entire grammar, with actions.
+      use String_Table, only: Get_String, String_Length
+      integer :: J, K, LHS, P, PrevLHS
+      character(120) :: Work ! To strip underscore off nonterminal names
+      call output ( 'The grammar:', advance='yes' )
+      prevLHS = -1
+      do p = 1, t%numprd
+        j = t%prod_ind(p)
+        lhs = t%productions(j)
+        if ( lhs /= prevLHS .and. p /= 1 ) call newLine
+        call output ( p, 3 )
+        call get_string ( t%text(lhs), work )
+        k = merge(2,1,work(1:1)=='_')
+        if ( lhs /= prevLHS ) then
+          call output ( ' ' // trim(work(k:)) )
+        else
+          call blanks ( string_length(t%text(lhs)) + 2 - k )
+        end if
+        prevLHS = lhs
+        call output ( ' ->' )
+        do j = t%prod_ind(p)+1, t%prod_ind(p+1)-1
+          call get_string ( t%text(t%productions(j)), work )
+          k = merge(2,1,work(1:1)=='_')
+          call output ( ' ' // trim(work(k:)) )
+        end do
+        call print_action ( p )
+        call newLine
+      end do
+      call output ( 'End of the grammar', advance='yes' )
+    end subroutine Print_Grammar
+
+! --------------------------------------------------  Print_State  -----
+    subroutine Print_State ( State, Number )
+    ! Print the parser configuration in state STATE, i.e., the list of
+    ! t%productions, with t%dots in them.
+      use String_Table, only: Get_String
+      integer, intent(in) :: State
+      logical, intent(in), optional :: Number ! Print state number
+      integer :: I, J, K, JDOT, P
+      logical :: Num
+      character(120) :: Work ! To strip underscore off nonterminal names
+      num = .false.
+      if ( present(number) ) num = number
+      do i = t%indbas(state), t%indbas(state+1)-1
+        p = t%basProds(i)
+        if ( num ) then
+          if ( i == t%indbas(state) ) then
+            call output ( state, 5 )
+          else
+            call blanks ( 5 )
+          end if
+        end if
+        call output ( p, 5 )
+        j = t%prod_ind(p) ! p = production number
+        call get_string ( t%text(t%productions(j)), work )
+        k = merge(2,1,work(1:1)=='_')
+        call output ( ' ' // trim(work(k:)) )
+        call output ( ' ->' )
+        jdot = 1
+        do j = t%prod_ind(p)+1, t%prod_ind(p+1)-1
+          if ( t%dots(i) == jdot ) call output ( ' .' )
+          jdot = jdot + 1
+          call get_string ( t%text(t%productions(j)), work )
+          k = merge(2,1,work(1:1)=='_')
+          call output ( ' ' // trim(work(k:)) )
+        end do
+        if ( t%dots(i) == jdot ) call output ( ' .' )
+        call print_action ( p )
+        call newLine
+      end do
+      if ( num ) then ! Print transitions if any
+        if ( t%ftrn(state) > t%ftrn(state-1) ) then
+          call blanks ( 11 )
+          call output ( 'Transitions: ' )
+          do i = t%ftrn(state-1)+1, t%ftrn(state)
+            call output ( t%tran(i), 5 )
+          end do
+          call newLine
+        end if
+      end if
+    end subroutine Print_State
+
+! --------------------------------------------  Reduce_Production  -----
+    subroutine Reduce_Production ( Prod )
+      integer, intent(in) :: Prod ! Index of production to reduce
+      integer :: Action       ! action when reducing a production:
+                              !      1 = produce a node
+                              !      2 = produce a node iff > 1 sons
+      integer :: I            ! temporary variable
+      integer :: LHS_TREE     ! tree stack index for t%lhs
+      integer :: NEW_NODE     ! tree node to make
+      integer :: NSONS        ! number of tree parts associated with rhs
+
+      sp = sp - t%lens(prod)    ! Pop RHS-length frames from the stack
+      nowsta = stack(sp)%state
+      lhs_tree = stack(sp)%tree_index
+      nsons = n_tree_stack - lhs_tree
+      i = t%act(prod)           ! use i for temp while getting action
+      new_node = i / 10
+      action = mod(i, 10)
+
+      if ( toggle(par) ) then
+        call output ( prod, before='Reduce production ' )
+        call output ( t%lens(prod), before=' consuming ' )
+        call output ( trim(merge(' symbol ', ' symbols', t%lens(prod)==1)) )
+      end if
+      if ( i /= 0 ) then
+        if ( action==1 .or. action==2 .and. nsons>1 ) then
+          call build_tree ( new_node, nsons )
+          if ( toggle(par) ) then
+            call output ( ', building ' )
+            call dump_top_stack ( 0 )
+          end if
+        else if ( action == 9 ) then
+          call do_include
+        end if
+      else if ( toggle(par) .and. nsons>0 ) then
+        call output ( nsons, before=', subsuming ' )
+        call output ( trim(merge(' tree node ', ' tree nodes', nsons==1)) )
+      end if
+      if ( toggle(par) ) then
+        call output ( nowsta, before=', returning to state ' )
+        if ( show_stack ) then
+          call output ( sp, before=', stack(' )
+          call output ( stack(sp)%state, before=') = (' )
+          call output ( stack(sp)%tree_index, before=',' )
+          call output ( ')' )
+        end if
+        call output ( '.', advance='yes' )
+      end if
+
+      newsta = work(nowsta,t%lhs(prod))
+      if ( newsta == 0 ) &
+        & call catastrophic_error ( 'There is no state transition', &
+          & state=nowsta, nonterminal=t%lhs(prod) )
+      voc = t%text(t%lhs(prod))
+      call transition ( .true. )
+
+    end subroutine Reduce_Production
+
+! ---------------------------------------------------  Transition  -----
+    subroutine Transition ( LHS )
+      ! Set the current state (Nowsta) to the new state (Newsta)
+      ! and push it on the stack with N_Tree_Stack.
+      use Allocate_Deallocate, only: Test_Allocate
+      use String_Table, only: Display_String
+      logical, intent(in) :: LHS ! VOC is index of LHS symbol of production
+      integer :: N, S
+      integer :: Stat
+      type(stack_frame), allocatable :: TempStack(:)
+
+      ! Make sure we have a stack, and it's big enough to push the new state
+      n = 0
+      if ( allocated(stack) ) n = ubound(stack,1)
+      if ( sp >= n ) then
+        s = max(100,2*n)
+        allocate ( tempStack(s), stat=stat )
+        call test_allocate ( stat, moduleName, 'Stack', [1], [s], &
+                           & storage_size(stack) / 8 )
+        if ( allocated(stack) ) tempStack(1:sp) = stack(1:sp)
+        call move_alloc ( tempStack, stack )
+      end if
+
+      nowsta = newsta
+      sp = sp + 1
+      stack(sp) = stack_frame(nowsta,n_tree_stack)
+
+      if ( toggle(par) ) then
+        call output ( newsta, before='Enter state ' )
+        if ( voc /= 0 ) then
+          call output ( ' with ' )
+          if ( voc < 0 ) then
+            call output ( t%ent(nowsta), before='symbol number ' )
+          else if ( lhs ) then
+            call display_string ( voc, before='nonterminal symbol ' )
+          else
+            call dump_1_symbol ( the_token%string_index )
+            call print_source ( the_token%where, before=' at ' )
+          end if
+        end if
+        call output ( n_tree_stack, before=', n_tree_stack = ' )
+        if ( show_stack ) then
+          call output ( sp, before=', stack(' )
+          call output ( stack(sp)%state, before=') = (' )
+          call output ( stack(sp)%tree_index, before=',' )
+          call output ( ')' )
+        end if
+        call newLine
+        if ( show_state ) call print_state ( nowsta )
+      end if
+
+    end subroutine Transition
+
+  end subroutine LR_Parser
+
+! ----------------------------------------------  Clean_Up_Parser  -----
+  subroutine Clean_Up_Parser
+    deallocate ( work, LR_0 )
+  end subroutine Clean_Up_Parser
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: parser.f90,v 2.36 2015/10/27 21:58:53 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module PARSER
+
+! $Log: parser.f90,v $
+! Revision 2.36  2015/10/27 21:58:53  vsnyder
+! Handle a symbol that is not in the terminal alphabet as a syntax error, and
+! try to recover, rather than as a crash-burn catastrophic error.
+!
+! Revision 2.35  2015/10/22 23:50:49  vsnyder
+! Announce where bad token has confused the parser
+!
+! Revision 2.34  2014/09/05 00:28:52  vsnyder
+! Correct wrong units for allocation size tracking
+!
+! Revision 2.33  2014/05/20 23:54:38  vsnyder
+! New parser gets its tables from an argument instead of an include
+!
+! Revision 2.32  2014/01/14 00:59:40  vsnyder
+! Remove dependence of Processor_Dependent, which was only for debugging
+!
+! Revision 2.31  2014/01/14 00:48:59  vsnyder
+! Revised LR needs revised parser
+!
+! Revision 1.1  2014/01/14 00:15:02  vsnyder
+! Initial commit of new module for new LR
+!
+! Revision 2.30  2013/12/12 02:01:54  vsnyder
+! Entirely replaced with LR parser
+!
+! Revision 2.29  2013/10/02 01:35:46  vsnyder
+! Add conditional expressions ?...! and variable assignment :=
+!
+! Revision 2.28  2013/09/30 23:03:04  vsnyder
+! Add TX type for tree index and generics to use it
+!
+! Revision 2.27  2013/09/25 01:02:41  vsnyder
+! Add include files
+!
+! Revision 2.26  2013/09/24 23:27:14  vsnyder
+! Use Get_Where or Print_Source to start error messages
+!
+! Revision 2.25  2012/05/05 00:11:51  vsnyder
+! Add support for 'not' operator
+!
+! Revision 2.24  2012/05/01 22:11:27  vsnyder
+! Simplify node generation
+!
+! Revision 2.23  2012/05/01 22:10:26  vsnyder
+! Add TrueList subroutine
+!
+! Revision 2.22  2012/04/24 20:37:24  vsnyder
+! Include the complete grammar at the top
+!
+! Revision 2.21  2011/04/19 01:59:43  vsnyder
+! Support == and /= relational operators too
+!
+! Revision 2.20  2011/04/18 19:33:26  vsnyder
+! Add support for relational operators and boolean-valued expressions
+!
+! Revision 2.19  2009/06/23 18:25:43  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.18  2008/09/04 20:02:20  vsnyder
+! Add PRINT statement in not_used_here + Cannonball polishing
+!
+! Revision 2.17  2008/09/04 00:46:17  vsnyder
+! Reverse precedence of unary +/- and units
+!
+! Revision 2.16  2006/03/22 03:04:00  vsnyder
+! Allow empty spec field values
+!
+! Revision 2.15  2005/06/22 17:25:50  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.14  2004/05/28 23:13:12  vsnyder
+! Add power (^) operator, units coercion for (expr) and function result
+!
+! Revision 2.13  2004/01/20 19:43:33  vsnyder
+! Cosmetic changes
+!
+! Revision 2.12  2004/01/17 03:04:48  vsnyder
+! Provide for functions in expressions
+!
+! Revision 2.11  2004/01/16 23:49:32  vsnyder
+! Add backslash for 'into' operator
+!
+! Revision 2.10  2003/01/29 03:14:14  vsnyder
+! Print the line and column in ENTER debugging output
+!
+! Revision 2.9  2002/10/08 00:09:13  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.8  2001/11/28 03:05:54  vsnyder
+! Implement arrays of arrays
+!
+! Revision 2.7  2001/11/27 00:54:37  vsnyder
+! Implement (partially) open ranges
+!
+! Revision 2.6  2001/07/20 20:18:05  vsnyder
+! Improve error recovery in a few cases -- more work probably needed
+!
+! Revision 2.5  2001/02/28 02:37:11  vsnyder
+! Allow specification with no arguments to have a label
+!
+! Revision 2.4  2000/11/30 00:23:10  vsnyder
+! Implement [] syntax for arrays
+!
+! Revision 2.3  2000/11/15 22:01:18  vsnyder
+! Allow specification with no arguments.
+!
+! Revision 2.2  2000/11/15 21:15:27  vsnyder
+! Corrected a loop on a bad primary; correct processing of spec with no fields
+!
+! Revision 2.1  2000/10/11 18:02:50  vsnyder
+! Move from lib/cf_parser to lib; remove unused variables; add copyright
+!
+! Revision 2.0  2000/09/05 17:41:51  dcuddy
+! Change revision to 2.0
+!
+! Revision 1.1  2000/07/06 01:43:12  vsnyder
+! Initial check-in
+!
+@
+
+
+2.36
+log
+@Handle a symbol that is not in the terminal alphabet as a syntax error, and
+try to recover, rather than as a crash-burn catastrophic error.
+@
+text
+@d176 1
+a176 1
+      use MLSMessageModule, only: MLSMessage, MLSMSG_Crash
+d199 4
+a202 1
+      call MLSMessage ( MLSMSG_Crash, moduleName, trim(text) )
+d626 1
+a626 1
+       "$Id: parser.f90,v 2.35 2015/10/22 23:50:49 vsnyder Exp $"
+d636 4
+@
+
+
+2.35
+log
+@Announce where bad token has confused the parser
+@
+text
+@d88 1
+d106 1
+a106 1
+    newsta = abs(t%tran(1))       ! The LR generator likes to put the <SOG>
+d130 6
+a135 4
+        if ( map(the_token%class) <= 0 .or. map(the_token%class) > t%nterms ) &
+          & call catastrophic_error ( 'No vocabulary index mapping for', the_token )
+        voc = work(nowsta,map(the_token%class))
+        if ( voc > 0 ) then
+d150 1
+a150 1
+        else if ( voc < 0 ) then
+d623 1
+a623 1
+       "$Id: parser.f90,v 2.34 2014/09/05 00:28:52 vsnyder Exp $"
+d633 3
+@
+
+
+2.34
+log
+@Correct wrong units for allocation size tracking
+@
+text
+@d174 1
+d178 6
+a183 1
+      call output ( '***** Catastrophic Error *****', advance='yes' )
+d191 4
+a194 1
+        call dump_symbol_class ( the_token%class, advance='yes' )
+d620 1
+a620 1
+       "$Id: parser.f90,v 2.33 2014/05/20 23:54:38 vsnyder Exp $"
+d630 3
+@
+
+
+2.33
+log
+@New parser gets its tables from an argument instead of an include
+@
+text
+@d566 1
+a566 1
+                           & storage_size(stack) )
+d611 1
+a611 1
+       "$Id: parser.f90,v 2.32 2014/01/14 00:59:40 vsnyder Exp $"
+d621 3
+@
+
+
+2.32
+log
+@Remove dependence of Processor_Dependent, which was only for debugging
+@
+text
+@d19 1
+a19 1
+  public :: CONFIGURATION, LR_Parser, LR_Parser_TX
+d25 7
+d40 2
+a41 1
+  subroutine LR_Parser_TX ( Root )
+d44 2
+a45 1
+    call lr_parser ( root%i )
+d48 1
+a48 1
+  subroutine LR_Parser ( Root )
+d53 1
+a53 4
+    use Parser_Tables, only: IFinal, NState, NTerms, NumPrd, NVoc, &
+      & ENT, FRED, FTRN, TRAN, NSET, PROD, LSET, LS, LENS, LHS, &
+      & ACT, VAL, Text, Prod_Ind, Productions, Indbas, BasProds, Dots, &
+      & Init_Vocabulary_Names
+d62 1
+d66 1
+a66 1
+      integer :: Tree_Index    ! Tree stack pointer of state's LHS
+a68 1
+    logical, save :: First = .true.
+a71 3
+    integer :: LR_0(nstate)    ! If LR_0(I) /= 0, state I is an LR(0) state,
+                               ! i.e., one reduction and no productions.
+                               ! LR_0(I) is the production number to reduce.
+d82 1
+a82 2
+    integer :: Voc             ! vocabulary index of token or LHS
+    integer, save :: Work(nstate,nvoc)
+d86 1
+a86 4
+    if ( first ) then
+      first = .false.
+      call init_vocabulary_names ! put them in the string table so they can
+                                 ! be output in messages
+d94 1
+a94 1
+      ! array WORK(nstate:nvoc).
+d98 3
+a100 2
+      call make_work ( FTRN, TRAN, ENT, FRED, NSET, LSET, LS, PROD, VAL, &
+                     & Work, LR_0, map )
+d105 1
+a105 1
+    newsta = abs(tran(1))       ! The LR generator likes to put the <SOG>
+d117 1
+a117 1
+    do while ( nowsta /= ifinal )
+d129 1
+a129 1
+        if ( map(the_token%class) <= 0 .or. map(the_token%class) > nterms ) &
+d172 1
+a172 1
+    subroutine Catastrophic_Error ( Text, The_Token, State, Nonterminal )
+d174 1
+a174 1
+      character(len=*), intent(in):: Text
+a192 2
+      ! Assuming "#include string" is reduced as an LR(0) production,
+      ! both the top stack frame and the current token are "string".
+d195 3
+a197 4
+      use Tree, only: Pop
+      call open_include ( the_token%string_index, the_token%where%source, &
+                        & the_token%where%file )
+      call pop ( 1 )
+d199 1
+a199 1
+        & call display_string ( the_token%string_index, &
+d201 2
+a202 1
+    end subroutine Do_Include
+d213 1
+a213 1
+    subroutine Make_Work ( FTRN, TRAN, ENT, FRED, NSET, LSET, LS, PROD, VAL, &
+d216 2
+a217 2
+    ! Make the Work, LR_0 and Map arrays, to avoid searching FTRN, TRAN,
+    ! FRED, NSET, LSET, and LS to determine whether to reduce a production
+d224 2
+a225 2
+    ! Columns 1:NTERMS are indexed by terminal symbol vocabulary indices. 
+    ! Columns NTERMS+1:NVOC are indexed by nonterminal symbol vocabulary
+d228 6
+a233 6
+      integer, intent(in) :: FTRN(0:), TRAN(:), ENT(:)
+      integer, intent(in) :: FRED(0:), NSET(:), LSET(0:), LS(:)
+      integer, intent(in) :: PROD(:), VAL(:)
+      integer, intent(out) :: WORK(:,:) ! ( NSTATE : NVOC )
+      integer, intent(out) :: LR_0(:)   ! ( NSTATE ), "state is an LR(0) state"
+      integer, intent(out) :: Map(t_null:) ! Inverse of VAL
+d235 2
+a236 2
+      ! FTRN(0:nstate): Indexed by state number.  First (actually last)
+      ! transitions.  Transitions for state S are in TRAN(FTRN(S-1)+1:FTRN(S)).
+d238 1
+a238 1
+      ! TRAN(1:ntrans): New state indices, indexed by FTRN, q.v.
+d240 1
+a240 1
+      ! ENT(1:nstate): Indexed by state number.  Index of vocabulary symbol
+d243 2
+a244 2
+      ! FRED(0:nstate): Indexed by state number.  First (actually last)
+      ! reductions.  Lookahead sets for state S are NSET(FRED(S-1)+1:FRED(S)).
+d246 1
+a246 1
+      ! NSET(1:nlooks): Lookahead set indices, indexed by FRED, q.v.
+d248 2
+a249 2
+      ! LSET(0:ncsets): Last elements of lookahead sets, indexed by NSET, q.v.
+      ! For lookahead set L, elements are LS(LSET(L-1)+1:LSET(L)).
+d251 1
+a251 1
+      ! LS(1:lsets): Elements of lookahead sets.
+d253 2
+a254 2
+      ! PROD(1:nlooks): Production numbers to reduce if lookahead is in the
+      ! set, indexed by FRED, q.v.
+d330 1
+a330 1
+        do i = 1, nstate
+d357 1
+a357 1
+          do i = 1, nterms
+d373 1
+a373 1
+          do i = 1, nterms
+d392 1
+a392 1
+      a = act(p)
+d414 3
+a416 3
+      do p = 1, numprd
+        j = prod_ind(p)
+        lhs = productions(j)
+d419 1
+a419 1
+        call get_string ( text(lhs), work )
+d424 1
+a424 1
+          call blanks ( string_length(text(lhs)) + 2 - k )
+d428 2
+a429 2
+        do j = prod_ind(p)+1, prod_ind(p+1)-1
+          call get_string ( text(productions(j)), work )
+d442 1
+a442 1
+    ! productions, with dots in them.
+d451 2
+a452 2
+      do i = indbas(state), indbas(state+1)-1
+        p = basprods(i)
+d454 1
+a454 1
+          if ( i == indbas(state) ) then
+d461 2
+a462 2
+        j = prod_ind(p) ! p = production number
+        call get_string ( text(productions(j)), work )
+d467 2
+a468 2
+        do j = prod_ind(p)+1, prod_ind(p+1)-1
+          if ( dots(i) == jdot ) call output ( ' .' )
+d470 1
+a470 1
+          call get_string ( text(productions(j)), work )
+d474 1
+a474 1
+        if ( dots(i) == jdot ) call output ( ' .' )
+d479 1
+a479 1
+        if ( ftrn(state) > ftrn(state-1) ) then
+d482 2
+a483 2
+          do i = ftrn(state-1)+1, ftrn(state)
+            call output ( tran(i), 5 )
+d497 1
+a497 1
+      integer :: LHS_TREE     ! tree stack index for lhs
+d501 1
+a501 1
+      sp = sp - lens(prod)    ! Pop RHS-length frames from the stack
+d505 1
+a505 1
+      i = act(prod)           ! use i for temp while getting action
+d511 2
+a512 2
+        call output ( lens(prod), before=' consuming ' )
+        call output ( trim(merge(' symbol ', ' symbols', lens(prod)==1)) )
+d539 1
+a539 1
+      newsta = work(nowsta,lhs(prod))
+d542 2
+a543 2
+          & state=nowsta, nonterminal=lhs(prod) )
+      voc = text(lhs(prod))
+d580 1
+a580 1
+            call output ( ent(nowsta), before='symbol number ' )
+d603 5
+d611 1
+a611 1
+       "$Id: parser.f90,v 2.31 2014/01/14 00:48:59 vsnyder Exp $"
+d621 3
+@
+
+
+2.31
+log
+@Revised LR needs revised parser
+@
+text
+@a47 1
+    use Processor_Dependent, only: NewPage
+a163 1
+        call output ( newPage, dont_asciify=.true. )
+d608 1
+a608 1
+       "$Id: parser.f90,v 1.1 2014/01/14 00:15:02 vsnyder Exp $"
+d618 3
+@
+
+
+2.30
+log
+@Entirely replaced with LR parser
+@
+text
+@d19 1
+a19 1
+  public :: CONFIGURATION
+d43 6
+a48 1
+    use OUTPUT_M, only: NEWLINE, OUTPUT
+d50 1
+a50 1
+    use SYMBOL_TYPES, only: T_End_Of_Input, T_Include, T_Last_Terminal, T_Null
+d63 1
+a63 3
+    type(stack_frame), allocatable :: Stack(:)
+    integer :: SP              ! Stack pointer
+
+a66 2
+    include "parser.f9h"
+
+d70 1
+a72 2
+    integer :: Work(nstate,nvoc)
+
+d74 29
+a102 10
+    integer :: Voc             ! Vocabulary index of token or LHS
+    type(token) :: The_Token   ! From the lexer
+
+    ! Convert the lists to search for transitions and reductions to the
+    ! array WORK(nstate:nvoc).
+    ! If Work(i,j) > 0 the next state is Work(i,j)
+    ! If Work(i,j) < 0 reduce production -Work(i,j)
+    ! If Work(i,j) == 0 a syntax error has occurred
+    call make_work ( FTRN, TRAN, ENT, FRED, NSET, LSET, LS, PROD, VAL, &
+                   & Work, LR_0, map )
+d104 1
+a104 1
+    prev_error = 0             ! Line number of previous error
+d106 6
+a111 6
+    newsta = abs(tran(1))      ! The LR generator likes to put the <SOG>
+                               ! symbol before the goal symbol.  The lexer
+                               ! doesn't produce this symbol before the first
+                               ! input.  Putting the parser in the state
+                               ! adjacent to state 1 skips that symbol.
+    voc = 0                    ! Don't display symbol in Transition routine
+d113 2
+a114 2
+    call transition            ! push Newsta onto the parser stack and
+                               ! make it Nowsta.
+d116 1
+a116 1
+    need = .true.              ! Indicate a token is necessary
+d138 1
+a138 1
+            if ( toggle(par) .and. levels(par) > 1 ) then
+d146 1
+a146 1
+          call transition
+a156 7
+                                             ! stack
+    if ( toggle(par) ) then
+      call output ( 'Finished parsing and built ' )
+      call dump_top_stack ( 0, advance='yes' )
+    end if
+
+    call build_tree ( n_null, 1 )            ! pop the n_cfs, leave the n_null
+d162 6
+d307 1
+a307 1
+      if ( levels(par) > 1 ) then
+d326 13
+a338 2
+        write ( *, '(a)' ) 'Make_Work_m.Make_Work%E%- Grammar is not LR'
+        stop
+d355 1
+d371 1
+d387 106
+a492 1
+    end subroutine
+a516 3
+        if ( action /= 0 ) call output ( new_node, before=' building ' )
+        if ( levels(par) > 0 ) &
+          & call output ( nowsta, before=', returning to state ' )
+d522 1
+a522 1
+            call output ( ' and build ' )
+d529 2
+a530 2
+          call output ( nsons, before=' subsuming ' )
+          call output ( trim(merge(' tree node ', ' tree nodes', nsons==1)) )
+d533 2
+a534 1
+        if ( levels(par) > 2 ) then
+d547 2
+a548 2
+      voc = val(lhs(prod))
+      call transition
+d553 1
+a553 1
+    subroutine Transition
+d556 3
+a558 1
+      use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+d584 3
+a586 1
+            call output ( ent(nowsta), before='nonterminal symbol number ' )
+d593 1
+a593 1
+        if ( levels(par) > 2 ) then
+d600 1
+d610 1
+a610 1
+       "$Id: parser.f90,v 2.29 2013/10/02 01:35:46 vsnyder Exp $"
+d620 6
+@
+
+
+2.29
+log
+@Add conditional expressions ?...! and variable assignment :=
+@
+text
+@d14 1
+a14 48
+! Parser for L2CF.
+
+! cf -> one_cf+ 'EOF'
+! one_cf -> ('begin' 'name' 'EOS' spec+ 'end' 'name' )? 'EOS'
+! one_cf -> #include "file" 'EOS'
+! spec -> 'name' spec_rest 'EOS'
+! spec -> #include "file" 'EOS'
+! spec -> 'EOS'
+! spec_rest -> \lambda
+! spec_rest -> '=' expr +
+! spec_rest -> ':=' expr +
+! spec_rest -> ( ',' spec_list )
+! spec_rest -> : name ( ',' spec_list )
+! spec_list -> ( ',', field_list ) *
+! field_list -> expr ( '=' expr + )?
+! field_list -> '/' 'name'
+! expr -> array
+! expr -> cond ( '?' cond ':' cond ) ?
+! cond -> limit ( ( ':' | ':<' | '<:' | '<:<' ) limit )?
+! array -> '[' ( , expr )* ']'
+! limit -> lterm ( 'or' lterm ) *
+! lterm -> lneg ( 'and' lneg ) *
+! lneg -> 'not'? lfactor
+! lfactor -> bterm ( '<' | '<=' | '>' | '>=' | '==' | '/=' bterm ) *
+! bterm -> term ( '+' | '-' term ) *
+! term -> factor ( '*' | '/' factor )*
+! factor -> expon ( '^' expon )*
+! expon -> unitless 'unit' ? => n_unit
+! expon -> string
+! unitless -> primary
+! unitless -> '+' primary => n_plus
+! unitless -> '-' primary => n_minus
+! primary -> 'name' ( '.' 'name' ) ?
+! primary -> 'name' '(' expr list ',' ')'
+! primary -> 'number'
+! primary -> '(' expr ')'
+
+! The notation and method are described in wvs-004.
+
+  use LEXER_CORE, only: PRINT_SOURCE, TOKEN
+  use LEXER_M, only: LEXER
+  use OUTPUT_M, only: NEWLINE, OUTPUT
+  use SYMBOL_TABLE, only: DUMP_1_SYMBOL, DUMP_SYMBOL_CLASS
+  use SYMBOL_TYPES ! Everything, especially everything beginning with T_
+  use TOGGLES, only: PAR, TOGGLE
+  use TREE, only: TREE_BUILDER => BUILD_TREE, DUMP_TOP_STACK_NAME, N_TREE_STACK, &
+                  POP, PUSH_PSEUDO_TERMINAL, STACK_SUBTREE, TX
+  use TREE_TYPES   ! Everything, especially everything beginning with N_
+d22 1
+a22 1
+    module procedure Configuration_I, Configuration_TX
+a24 37
+  integer, private :: Depth             ! of calls, for tracing
+
+  integer, private :: ERROR             ! 0 => no errors yet
+                                        ! 1 => errors but not yet EOF
+                                        ! 2 => errors and EOF seen
+  type(token), private, save :: NEXT    ! The next token, SAVE only because
+                                        ! a component of TOKEN has default
+                                        ! initialization, and the standard
+                                        ! thereby requires SAVE (go figure)
+
+  ! Tree node to generate depending upon which operator token appears.
+  ! We only need values for the ones that generate tree nodes.
+  integer, private :: GEN(t_null: t_last_terminal)
+  data gen(t_plus)            / n_plus            / ! +
+  data gen(t_minus)           / n_minus           / ! -
+  data gen(t_star)            / n_mult            / ! *
+  data gen(t_slash)           / n_div             / ! /
+  data gen(t_assign)          / n_variable        / ! :=
+  data gen(t_backslash)       / n_into            / ! \
+  data gen(t_cond)            / n_cond            / ! ? ... :
+  data gen(t_dot)             / n_dot             / ! .
+  data gen(t_colon)           / n_colon           / ! :
+  data gen(t_colon_less)      / n_colon_less      / ! :<
+  data gen(t_less_colon)      / n_less_colon      / ! <:
+  data gen(t_less_colon_less) / n_less_colon_less / ! <:<
+  data gen(t_equal)           / n_equal           / ! =
+  data gen(t_equal_equal)     / n_equal_equal     / ! ==
+  data gen(t_not)             / n_not             / ! not
+  data gen(t_not_equal)       / n_not_equal       / ! /=
+  data gen(t_less)            / n_less            / ! <
+  data gen(t_less_eq)         / n_less_eq         / ! <=
+  data gen(t_greater)         / n_greater         / ! >
+  data gen(t_greater_eq)      / n_greater_eq      / ! >=
+  data gen(t_hat)             / n_pow             / ! >
+  data gen(t_and)             / n_and             / ! and
+  data gen(t_or)              / n_or              / ! or
+
+d31 4
+a34 17
+contains ! ====     Public Procedures     ==============================
+! ----------------------------------------------  CONFIGURATION_I  -----
+  subroutine CONFIGURATION_I ( ROOT ) ! cf -> one_cf+ 'EOF'
+    integer, intent(out) :: ROOT   ! Root of the abstract syntax tree
+    depth = 0 ! in case toggle(par) is set
+    error = 0
+    call get_token
+    do while ( next%class /= t_end_of_input )
+      call one_cf
+    end do
+    call build_tree ( n_cfs, n_tree_stack ) ! collect everything
+    call build_tree ( n_eof, 1 )   ! Force n_cfs off the stack
+    root = stack_subtree ( 1 )
+    if ( error > 0 ) root = -1
+  end subroutine CONFIGURATION_I
+! ---------------------------------------------  CONFIGURATION_TX  -----
+  subroutine CONFIGURATION_TX ( ROOT ) ! cf -> one_cf+ 'EOF'
+d36 98
+a133 35
+    depth = 0 ! in case toggle(par) is set
+    error = 0
+    call get_token
+    do while ( next%class /= t_end_of_input )
+      call one_cf
+    end do
+    call build_tree ( n_cfs, n_tree_stack ) ! collect everything
+    call build_tree ( n_eof, 1 )   ! Force n_cfs off the stack
+    root%i = stack_subtree ( 1 )
+    if ( error > 0 ) root%i = -1
+  end subroutine CONFIGURATION_TX
+! =====     Private Procedures     =====================================
+! -----------------------------------------------  ANNOUNCE_ERROR  -----
+  subroutine ANNOUNCE_ERROR ( THE_TERMINALS, AFTER )
+    integer, intent(in) :: THE_TERMINALS(:)
+    integer, intent(in), optional :: AFTER(:)
+    integer :: I
+    error = max(error,1)
+    call output ( '***** Expected ', advance='no' )
+    if ( size(the_terminals) > 1 ) then
+      call output ( 'one of ', advance='yes' )
+      do i = 1, size(the_terminals)
+        call dump_symbol_class ( the_terminals(i), advance='yes' )
+      end do
+      call output ( '*****' )
+    else
+      call dump_symbol_class ( the_terminals(1), advance='no' )
+    end if
+    call output ( ' but got ' )
+    call dump_1_symbol ( next%string_index, advance='no' )
+    call output ( ' at ' )
+    call print_source ( next%where, advance='yes' )
+    if ( present(after) ) then
+      if ( any(next%class == after) ) then
+        return ! needs more work -- trying to insert missing symbol
+a134 10
+    end if
+    call output ( 'Skipping until expected symbol or end of input.', &
+      advance='yes' )
+    call output ( 'Processing suppressed.', advance='yes' )
+    do while ( all(next%class /= the_terminals) )
+      if ( next%class == t_end_of_input ) then
+        error = 2
+        return
+      end if
+      call lexer ( next )
+a135 2
+    return
+  end subroutine ANNOUNCE_ERROR
+d137 5
+a141 23
+! --------------------------------------------------------  ARRAY  -----
+  recursive subroutine ARRAY ( HOW_MANY ) ! [ <expr> ( , <expr> )* ]
+    integer, intent(inout) :: HOW_MANY  ! Incremented once for each expr
+    if ( toggle(par) ) call where ( 'ARRAY' )
+    call get_token     ! Consume the left bracket
+    if ( next%class == t_right_bracket ) then
+      call get_token ! Consume the right bracket
+    else
+      do
+        call expr
+        how_many = how_many + 1
+        if ( next%class == t_right_bracket ) then
+          call get_token ! Consume the right bracket
+      exit
+        end if
+        if ( next%class /= t_comma ) then
+          call announce_error ( (/ t_right_bracket, t_comma /) )
+          if ( next%class == t_end_of_input .or. &
+               next%class == t_end_of_stmt ) &
+      exit
+        end if
+        call get_token   ! Consume the comma
+      end do
+a142 2
+    if ( toggle(par) ) call finish ( 'ARRAY' )
+  end subroutine ARRAY
+d144 1
+a144 17
+! --------------------------------------------------------  BTERM  -----
+  recursive subroutine BTERM ! BTERM -> term ( +|- term ) *
+    integer :: N
+    if ( toggle(par) ) call where ( 'BTERM' )
+    call term
+    do
+      n = next%class
+      if ( n == t_plus .or. n == t_minus ) then
+        call get_token
+        call term
+        call build_tree ( gen(n), 2 )
+      else
+    exit
+      end if
+    end do
+    if ( toggle(par) ) call finish ( 'BTERM' )
+  end subroutine BTERM
+d146 3
+a148 38
+! ---------------------------------------------------  BUILD_TREE  -----
+  subroutine BUILD_TREE ( NEW_NODE, NSONS, DECORATION )
+    integer, intent(in) :: NEW_NODE
+    integer, intent(in) :: NSONS
+    integer, intent(in), optional :: DECORATION
+
+    if ( toggle(par) ) call where ( 'BUILD_TREE' )
+    call tree_builder ( new_node, nsons, decoration )
+    if ( toggle(par) ) call finish ( 'BUILD_TREE', nsons )
+  end subroutine BUILD_TREE
+
+! ---------------------------------------------------------  COND  -----
+  recursive subroutine COND
+  ! cond -> limit ( ( ':' | ':<' | '<:' | '<:<' ) limit )?
+    integer :: N
+    if ( toggle(par) ) call where ( 'COND' )
+    call limit
+    n = next%class
+    select case ( n )
+    case ( t_colon, t_colon_less, t_less_colon, t_less_colon_less )
+      call get_token
+      call limit
+      call build_tree ( gen(n), 2 )
+    end select
+    if ( toggle(par) ) call finish ( 'COND' )
+  end subroutine COND
+
+! --------------------------------------------------------  EXPON  -----
+  recursive subroutine EXPON  ! expon -> unitless 'unit' ? => n_unit
+                              !       -> string
+                              ! unitless -> primary
+                              !          -> '+' primary => n_plus
+                              !          -> '-' primary => n_minus
+    integer :: N
+    if ( toggle(par) ) call where ( 'EXPON' )
+    n = next%class
+    if ( n == t_string ) then
+      call get_token
+d150 1
+a150 13
+      if ( n == t_plus .or. n == t_minus ) then
+        call get_token
+        call primary
+        call build_tree ( gen(n), 1 )
+      else
+        call primary
+      end if
+      if ( next%class == t_identifier ) then
+        ! First, put unit back on stack (it was popped at end of PRIMARY)
+        call push_pseudo_terminal ( next%string_index, next%where )
+        call build_tree ( n_unit, 2 )
+        call get_token  ! the identifier is used up
+      end if
+a151 2
+    if ( toggle(par) ) call finish ( 'EXPON' )
+  end subroutine EXPON 
+d153 17
+a169 19
+! ---------------------------------------------------------  EXPR  -----
+  recursive subroutine EXPR
+    ! expr -> array
+    ! expr -> cond ( '?' cond '!' cond ) ?
+    integer :: N, NSONS
+    if ( toggle(par) ) call where ( 'EXPR' )
+    if ( next%class == t_left_bracket ) then
+      nsons = 0
+      call array ( nsons )
+      call build_tree ( n_array, nsons )
+    else
+      call cond
+      n = next%class
+      if ( n == t_cond ) then
+        call get_token
+        call cond
+        call test_token ( t_bang )
+        call cond
+        call build_tree ( n_cond, 3 )
+d171 81
+a251 3
+    end if
+    if ( toggle(par) ) call finish ( 'EXPR' )
+  end subroutine EXPR
+d253 21
+a273 11
+! -------------------------------------------------------  FACTOR  -----
+  recursive subroutine FACTOR  ! factor -> expon ( ^ expon )*
+    integer :: HOW_MANY       ! sons of the n_pow node
+    if ( toggle(par) ) call where ( 'FACTOR' )
+    call expon
+    if ( next%class == t_hat ) then
+      how_many = 1
+      do while ( next%class == t_hat )
+        call get_token
+        call expon
+        how_many = how_many + 1
+a274 4
+      call build_tree ( n_pow, how_many )
+    end if
+    if ( toggle(par) ) call finish ( 'FACTOR' )
+  end subroutine FACTOR 
+d276 6
+a281 14
+! ---------------------------------------------------  FIELD_LIST  -----
+  subroutine FIELD_LIST
+    integer :: HOW_MANY       ! sons of the n_asg node
+    if ( toggle(par) ) call where ( 'FIELD_LIST' )
+    do
+      select case ( next%class )
+      case ( t_identifier, t_string, & ! field_list -> expr ( '=' expr + )?
+             t_number )
+        call expr
+        if ( next%class == t_equal ) then
+          call get_token
+          how_many = 1
+          call value ( how_many )
+          call build_tree ( n_asg, how_many )
+d283 1
+a283 13
+    exit
+      case ( t_slash )       ! field_list -> '/' 'name'
+        call get_token
+        call test_token ( t_identifier )
+        call build_tree ( n_set_one, 1 )
+    exit
+      case default
+        if ( error > 1 ) exit
+        call announce_error ( (/ t_identifier, t_string, t_slash /) )
+      end select
+    end do
+    if ( toggle(par) ) call finish ( 'FIELD_LIST' )
+  end subroutine FIELD_LIST
+d285 3
+a287 13
+! -------------------------------------------------------  FINISH  -----
+  subroutine FINISH ( WHAT, NSONS )
+  ! for tracing
+    character(len=*), intent(in) :: WHAT
+    integer, intent(in), optional :: NSONS
+    depth = depth - 1
+    call output ( repeat('.',depth) // 'Exit  ' // trim(what) )
+    if ( present(nsons) ) then
+      call output ( nsons, before=' ' )
+      call dump_top_stack_name ( before=' ' )
+    end if
+    call newLine
+  end subroutine FINISH
+d289 17
+a305 28
+! ----------------------------------------------------  GET_TOKEN  -----
+  subroutine GET_TOKEN
+  ! Call the lexer to get a token.
+  ! If it's a pseudo-terminal token, push it on the tree stack.
+    call lexer ( next )
+    if ( next%pseudo ) call &
+      push_pseudo_terminal ( next%string_index, next%where )
+  end subroutine GET_TOKEN
+
+! ------------------------------------------------------  LFACTOR  -----
+  recursive subroutine LFACTOR ! lfactor -> bterm ( <|<=|>|>=|==|/= bterm ) *
+    integer :: N
+    if ( toggle(par) ) call where ( 'LFACTOR' )
+    call bterm
+    do
+      n = next%class
+      select case ( n )
+      case ( t_less, t_less_eq, t_greater, t_greater_eq, t_equal_equal, &
+           & t_not_equal )
+        call get_token
+        call bterm
+        call build_tree ( gen(n), 2 )
+      case default
+    exit
+      end select
+    end do
+    if ( toggle(par) ) call finish ( 'LFACTOR' )
+  end subroutine LFACTOR
+d307 4
+a310 24
+! --------------------------------------------------------  LIMIT  -----
+  recursive subroutine LIMIT  ! limit -> lterm ( or lterm ) *
+    if ( toggle(par) ) call where ( 'LIMIT' )
+    call lterm
+    do while ( next%class == t_or )
+      call get_token
+      call lterm
+      call build_tree ( n_or, 2 )
+    end do
+    if ( toggle(par) ) call finish ( 'LIMIT' )
+  end subroutine LIMIT
+
+! ---------------------------------------------------------  LNEG  -----
+  recursive subroutine LNEG  ! lneg -> not? lfactor
+    if ( toggle(par) ) call where ( 'LNEG' )
+    if ( next%class == t_not ) then
+      call get_token
+      call lfactor
+      call build_tree ( n_not, 1 )
+    else
+      call lfactor
+    end if
+    if ( toggle(par) ) call finish ( 'LNEG' )
+  end subroutine LNEG
+d312 1
+a312 11
+! --------------------------------------------------------  LTERM  -----
+  recursive subroutine LTERM  ! lterm -> lneg ( and lneg ) *
+    if ( toggle(par) ) call where ( 'LTERM' )
+    call lneg
+    do while ( next%class == t_and )
+      call get_token
+      call lneg
+      call build_tree ( n_and, 2 )
+    end do
+    if ( toggle(par) ) call finish ( 'LTERM' )
+  end subroutine LTERM
+d314 35
+a348 60
+! -------------------------------------------------------  ONE_CF  -----
+  subroutine ONE_CF
+    ! one_cf -> ('begin' 'name' 'EOS' spec+ 'end' 'name' )? 'EOS'
+    ! one_cf -> #include "file" 'EOS'
+    integer :: HOW_MANY       ! How many sons of the generated tree node
+    if ( toggle(par) ) call where ( 'ONE_CF' )
+o:  do
+      select case ( next%class )
+      case ( t_end_of_stmt )  ! one_cf -> 'eos'
+        call get_token
+    exit
+      case ( t_begin )        ! one_cf -> 'begin' 'name' 'eos'
+                              !           spec+ 'end' 'name' 'eos'
+        how_many = 2          ! one for begin, one for end, one for each spec
+        call get_token
+        call test_token ( t_identifier )
+        call test_token ( t_end_of_stmt )
+        do while ( next%class /= t_end )
+          if ( error > 1 ) exit o
+          how_many = how_many + spec()
+          if ( next%class == t_end_of_input ) exit ! must have gotten an error
+        end do
+        call get_token        ! consume the t_end
+        call test_token ( t_identifier )
+        call test_token ( t_end_of_stmt )
+        call build_tree ( n_cf, how_many )
+    exit
+      case ( t_include )
+        call Do_Include
+      case default
+        if ( error > 1 ) exit
+        call announce_error ( (/ t_begin, t_end_of_stmt /) )
+        if ( next%class == t_end_of_input ) exit
+      end select
+    end do o
+    if ( toggle(par) ) call finish ( 'ONE_CF' )
+  end subroutine ONE_CF
+
+! ------------------------------------------------------  PRIMARY  -----
+  recursive subroutine PRIMARY
+    integer :: N
+    if ( toggle(par) ) call where ( 'PRIMARY' )
+    do
+      select case ( next%class )
+      case ( t_identifier )   ! primary -> 'name' ( '.' 'name' ) ?
+        call get_token
+        if ( next%class == t_dot ) then
+          call get_token
+          call test_token ( t_identifier )
+          call build_tree ( n_dot, 2 )
+        else if ( next%class == t_left_parenthesis ) then
+          ! primary -> 'name' '(' expr list ',' ')'
+          n = 1
+          call get_token
+          do while ( next%class /= t_right_parenthesis )
+            call expr
+            n = n + 1
+            if ( next%class /= t_comma ) &
+          exit
+            call get_token
+a349 4
+          call build_tree ( n_func_ref, n ) ! Do this BEFORE test_token because
+                                            ! test_token will push the unit
+                                            ! name if it's there
+          call test_token ( t_right_parenthesis )
+d351 6
+a356 58
+    exit
+      case ( t_number )       ! primary -> 'number'
+        call get_token
+    exit
+      case ( t_left_parenthesis ) ! primary -> '(' expr ')'
+        call get_token
+        call expr
+        call test_token ( t_right_parenthesis )
+    exit
+      case default
+        if ( error > 1 ) exit
+        call announce_error ( (/ t_identifier, t_number, &
+                                 t_string, t_left_parenthesis /), &
+                      after = (/ t_end_of_input, t_end_of_stmt,  &
+                                 t_right_bracket,  t_comma /) )
+        if ( next%class == t_end_of_input .or. &
+             next%class == t_end_of_stmt .or. &
+             next%class == t_right_bracket .or. &
+             next%class == t_comma ) &
+    exit
+      end select
+    end do
+    if ( next%class == t_identifier ) call pop ( 1 ) ! delete unit name
+    if ( toggle(par) ) call finish ( 'PRIMARY' )
+  end subroutine PRIMARY
+
+! ---------------------------------------------------------  SPEC  -----
+  integer function SPEC ()
+  ! Analyze specifications in a section.
+  ! Return how many specifications got generated -- 0 or 1
+  ! spec -> 'name' spec_rest 'EOS'
+  ! spec -> #include "file" 'EOS'
+  ! spec -> 'EOS'
+    if ( toggle(par) ) call where ( 'SPEC' )
+    do
+      select case ( next%class )
+      case ( t_end_of_stmt )  ! spec -> 'EOS'
+        call get_token
+        spec = 0
+    exit
+      case ( t_identifier )   ! spec -> 'name' spec_rest 'EOS'
+        call get_token
+        call spec_rest
+        call test_token ( t_end_of_stmt )
+        spec = 1
+    exit
+      case ( t_include )
+        call do_include
+        spec = 0
+    exit
+      case default
+        if ( error > 1 ) exit
+        call announce_error ( (/ t_identifier, t_end_of_stmt /) )
+        if ( next%class == t_end_of_input ) exit
+      end select
+    end do
+    if ( toggle(par) ) call finish ( 'SPEC' )
+  end function SPEC
+d358 50
+a407 57
+! ----------------------------------------------------  SPEC_LIST  -----
+  subroutine SPEC_LIST
+    integer :: HOW_MANY       ! sons of the n_asg node
+    if ( toggle(par) ) call where ( 'SPEC_LIST' )
+    how_many = 1
+    do while ( next%class == t_comma )  ! spec_list -> ( ',', field_list ) *
+      call get_token
+      call field_list
+      how_many = how_many + 1
+    end do
+    call build_tree ( n_spec_args, how_many )
+    if ( toggle(par) ) call finish ( 'SPEC_LIST' )
+  end subroutine SPEC_LIST
+
+! ----------------------------------------------------  SPEC_REST  -----
+  subroutine SPEC_REST
+    integer :: HOW_MANY       ! sons of the n_equal node
+    if ( toggle(par) ) call where ( 'SPEC_REST' )
+    do
+      select case ( next%class )
+      case ( t_end_of_stmt )  ! spec_rest -> \lambda
+        call build_tree ( n_spec_args, 1 )
+!       call get_token
+    exit
+      case ( t_assign )       ! spec_rest -> ':=' expr +
+        call get_token
+        how_many = 1
+        call value ( how_many )
+        call build_tree ( n_variable, how_many )
+    exit
+      case ( t_equal )        ! spec_rest -> '=' expr +
+        call get_token
+        how_many = 1
+        call value ( how_many )
+        call build_tree ( n_equal, how_many )
+    exit
+      case ( t_comma )        ! spec_rest -> ( ',' spec_list )
+        call spec_list
+    exit
+      case ( t_colon )        ! spec_rest -> : name ( ',' spec_list )
+        call get_token
+        call test_token ( t_identifier )
+        call spec_list
+        call build_tree ( n_named, 2 )
+    exit
+      case default
+        if ( error > 1 ) &
+    exit
+        call announce_error ( (/ t_end_of_stmt, t_equal, t_comma /) )
+        if ( next%class == t_end_of_input .or. &
+             next%class == t_right_bracket.or. &
+             next%class == t_comma ) &
+    exit
+      end select
+    end do
+    if ( toggle(par) ) call finish ( 'SPEC_REST' )
+  end subroutine SPEC_REST
+d409 29
+a437 18
+! ---------------------------------------------------------  TERM  -----
+  recursive subroutine TERM   ! term -> factor ( *|/ factor )*
+    integer :: N
+    if ( toggle(par) ) call where ( 'TERM' )
+    call factor
+    do
+      n = next%class
+      select case ( n )
+      case ( t_star, t_slash, t_backslash )
+        call get_token
+        call factor
+        call build_tree ( gen(n), 2 )
+      case default
+    exit
+      end select
+    end do
+    if ( toggle(par) ) call finish ( 'TERM' )
+  end subroutine TERM
+d439 23
+a461 17
+! ---------------------------------------------------  DO_INCLUDE  -----
+  subroutine Do_Include
+    use Lexer_Core, only: Where_t
+    use String_Table, only: Open_Include
+    integer :: File
+    type(where_t) :: Where_at ! In case Open_Include needs to print a message
+    if ( toggle(par) ) call where ( 'Do_Include' )
+    call lexer ( next )
+    if ( next%class == t_string ) then
+      where_at = next%where
+      file = next%string_index
+      call lexer ( next )
+      if ( next%class /= t_end_of_stmt ) then
+        error = max(error,1)
+        call announce_error ( (/ t_end_of_stmt /) )
+      else
+        call open_include ( file, where_at%source, where_at%file )
+a462 5
+    else
+      call announce_error ( (/ t_string /) )
+    end if
+    if ( toggle(par) ) call finish ( 'Do_Include' )
+  end subroutine Do_Include
+d464 3
+a466 33
+! ---------------------------------------------------  TEST_TOKEN  -----
+  subroutine TEST_TOKEN ( THE_TERMINAL )
+    integer, intent(in) :: THE_TERMINAL
+    if ( next%class == the_terminal ) then
+      call get_token
+      return
+    end if
+    if ( error > 1 ) return
+    error = max(error,1)
+    call announce_error ( (/ the_terminal /) )
+  end subroutine TEST_TOKEN
+
+! --------------------------------------------------------  VALUE  -----
+  subroutine VALUE ( HOW_MANY )
+    integer, intent(inout) :: HOW_MANY  ! Incremented once for each expr
+    select case ( next%class )
+    case ( t_left_bracket )
+      call array ( how_many )
+    case ( t_comma, t_end_of_stmt )
+    case default
+      call expr
+      how_many = how_many + 1
+    end select
+  end subroutine VALUE
+
+! --------------------------------------------------------  WHERE  -----
+  subroutine WHERE ( WHAT )
+    character(len=*), intent(in) :: WHAT
+    call output ( repeat('.',depth) // 'Enter ' // trim(what) )
+    call output ( ' at ' )
+    call print_source ( next%where, advance='yes' )
+    depth = depth + 1
+  end subroutine WHERE
+d471 1
+a471 1
+       "$Id: parser.f90,v 2.28 2013/09/30 23:03:04 vsnyder Exp $"
+d481 3
+@
+
+
+2.28
+log
+@Add TX type for tree index and generics to use it
+@
+text
+@d24 1
+d31 2
+a32 1
+! expr -> limit ( ( ':' | ':<' | '<:' | '<:<' ) limit )?
+d59 2
+a60 2
+  use TREE, only: TREE_BUILDER => BUILD_TREE, N_TREE_STACK, POP, &
+                  PUSH_PSEUDO_TERMINAL, STACK_SUBTREE, TX
+d89 1
+d91 1
+d239 16
+d287 1
+a287 1
+    ! expr -> limit ( ( ':' | ':<' | '<:' | '<:<' ) limit )?
+d295 1
+a295 1
+      call limit
+d297 1
+a297 2
+      select case ( n )
+      case ( t_colon, t_colon_less, t_less_colon, t_less_colon_less )
+d299 5
+a303 3
+        call limit
+        call build_tree ( gen(n), 2 )
+      end select
+d361 4
+a364 1
+    if ( present(nsons) ) call output ( nsons, before=' ' )
+d583 6
+d697 1
+a697 1
+       "$Id: parser.f90,v 2.27 2013/09/25 01:02:41 vsnyder Exp $"
+d707 3
+@
+
+
+2.27
+log
+@Add include files
+@
+text
+@d58 1
+a58 1
+                  PUSH_PSEUDO_TERMINAL, STACK_SUBTREE
+d66 4
+d112 2
+a113 2
+! ------------------------------------------------  CONFIGURATION  -----
+  subroutine CONFIGURATION ( ROOT ) ! cf -> one_cf+ 'EOF'
+d125 15
+a139 1
+  end subroutine CONFIGURATION
+d667 1
+a667 1
+       "$Id: parser.f90,v 2.26 2013/09/24 23:27:14 vsnyder Exp $"
+d677 3
+@
+
+
+2.26
+log
+@Use Get_Where or Print_Source to start error messages
+@
+text
+@d590 1
+d593 1
+d597 1
+d604 1
+a604 1
+        call open_include ( file )
+d649 1
+a649 1
+       "$Id: parser.f90,v 2.25 2012/05/05 00:11:51 vsnyder Exp $"
+d659 3
+@
+
+
+2.25
+log
+@Add support for 'not' operator
+@
+text
+@d18 1
+d20 1
+d71 4
+a74 1
+  type(token), private :: NEXT          ! The next token
+d142 1
+a142 1
+    call print_source ( next%source, advance='yes' )
+d238 1
+a238 1
+        call push_pseudo_terminal ( next%string_index, next%source )
+d332 1
+a332 1
+      push_pseudo_terminal ( next%string_index, next%source )
+d395 1
+d419 2
+d488 3
+d504 4
+d588 21
+d639 1
+a639 1
+    call print_source ( next%source, advance='yes' )
+d646 1
+a646 1
+       "$Id: parser.f90,v 2.24 2012/05/01 22:11:27 vsnyder Exp $"
+d656 3
+@
+
+
+2.24
+log
+@Simplify node generation
+@
+text
+@d31 2
+a32 1
+! lterm -> lfactor ( 'and' lfactor ) *
+d86 1
+d362 13
+d376 1
+a376 1
+  recursive subroutine LTERM  ! lterm -> lfactor ( and lfactor ) *
+d378 1
+a378 1
+    call lfactor
+d381 1
+a381 1
+      call lfactor
+d610 1
+a610 1
+       "$Id: parser.f90,v 2.23 2012/05/01 22:10:26 vsnyder Exp $"
+d620 3
+@
+
+
+2.23
+log
+@Add TrueList subroutine
+@
+text
+@a70 1
+  ! If terminal token indices change, change this table.
+d595 1
+a595 1
+       "$Id: parser.f90,v 2.22 2012/04/24 20:37:24 vsnyder Exp $"
+d605 3
+@
+
+
+2.22
+log
+@Include the complete grammar at the top
+@
+text
+@d50 1
+a50 1
+  use OUTPUT_M, only: OUTPUT
+d52 1
+a52 1
+  use SYMBOL_TYPES ! Everything, except tree_init; remainder begin with T_
+d57 1
+d60 1
+d63 2
+d70 25
+d105 1
+d158 1
+d162 16
+a177 1
+  return
+d179 1
+a179 14
+    do
+      call expr
+      how_many = how_many + 1
+      if ( next%class == t_right_bracket ) then
+        call get_token ! Consume the right bracket
+  return
+      end if
+      if ( next%class /= t_comma ) then
+        call announce_error ( (/ t_right_bracket, t_comma /) )
+        if ( next%class == t_end_of_input .or. &
+             next%class == t_end_of_stmt ) exit
+      end if
+      call get_token   ! Consume the comma
+    end do
+d184 2
+a185 1
+    if ( toggle(par) ) call where ( 'Enter BTERM', advance='yes' )
+d188 2
+a189 1
+      if ( next%class == t_plus ) then
+d192 1
+a192 5
+        call build_tree ( n_plus, 2 )
+      else if ( next%class == t_minus ) then
+        call get_token
+        call term
+        call build_tree ( n_minus, 2 )
+d197 1
+a197 1
+    if ( toggle(par) ) call output ( 'Exit  BTERM', advance='yes' )
+d206 1
+a206 1
+    if ( toggle(par) ) call where ( 'Enter BUILD_TREE', advance='yes' )
+d208 1
+a208 1
+    if ( toggle(par) ) call output ( nsons, before='Exit  BUILD_TREE ', advance='yes' )
+d217 4
+a220 2
+    if ( toggle(par) ) call where ( 'Enter EXPON', advance='yes' )
+    if ( next%class == t_string ) then
+d223 1
+a223 5
+      if ( next%class == t_plus ) then
+        call get_token
+        call primary
+        call build_tree ( n_plus, 1 )
+      else if ( next%class == t_minus ) then
+d226 1
+a226 1
+        call build_tree ( n_minus, 1 )
+d237 1
+a237 1
+    if ( toggle(par) ) call output ( 'Exit  EXPON', advance='yes' )
+d244 2
+a245 2
+    integer :: NSONS
+    if ( toggle(par) ) call where ( 'Enter EXPR', advance='yes' )
+d252 3
+a254 14
+      select case ( next%class )
+      case ( t_colon )
+        call get_token
+        call limit
+        call build_tree ( n_colon, 2 )
+      case ( t_colon_less )
+        call get_token
+        call limit
+        call build_tree ( n_colon_less, 2 )
+      case ( t_less_colon )
+        call get_token
+        call limit
+        call build_tree ( n_less_colon, 2 )
+      case ( t_less_colon_less )
+d257 1
+a257 1
+        call build_tree ( n_less_colon_less, 2 )
+d260 1
+a260 1
+    if ( toggle(par) ) call output ( 'Exit  EXPR', advance='yes' )
+d262 1
+d266 1
+a266 1
+    if ( toggle(par) ) call where ( 'Enter FACTOR', advance='yes' )
+d277 1
+a277 1
+    if ( toggle(par) ) call output ( 'Exit  FACTOR', advance='yes' )
+d279 1
+d283 1
+a283 1
+    if ( toggle(par) ) call where ( 'Enter FIELD_LIST', advance='yes' )
+d306 1
+a306 1
+    if ( toggle(par) ) call output ( 'Exit  FIELD_LIST', advance='yes' )
+d308 12
+d328 1
+d331 2
+a332 1
+    if ( toggle(par) ) call where ( 'Enter LFACTOR', advance='yes' )
+d335 4
+a338 18
+      select case ( next%class )
+      case ( t_less )
+        call get_token
+        call bterm
+        call build_tree ( n_less, 2 )
+      case ( t_less_eq )
+        call get_token
+        call bterm
+        call build_tree ( n_less_eq, 2 )
+      case ( t_greater )
+        call get_token
+        call bterm
+        call build_tree ( n_greater, 2 )
+      case ( t_greater_eq )
+        call get_token
+        call bterm
+        call build_tree ( n_greater_eq, 2 )
+      case ( t_equal_equal )
+d341 1
+a341 5
+        call build_tree ( n_equal_equal, 2 )
+      case ( t_not_equal )
+        call get_token
+        call bterm
+        call build_tree ( n_not_equal, 2 )
+d346 1
+a346 1
+    if ( toggle(par) ) call output ( 'Exit  LFACTOR', advance='yes' )
+d348 1
+d351 1
+a351 1
+    if ( toggle(par) ) call where ( 'Enter LIMIT', advance='yes' )
+d358 1
+a358 1
+    if ( toggle(par) ) call output ( 'Exit  LIMIT', advance='yes' )
+d360 1
+d363 1
+a363 1
+    if ( toggle(par) ) call where ( 'Enter LTERM', advance='yes' )
+d370 1
+a370 1
+    if ( toggle(par) ) call output ( 'Exit  LTERM', advance='yes' )
+d372 1
+d377 1
+a377 1
+    if ( toggle(par) ) call where ( 'Enter ONE_CF', advance='yes' )
+d405 1
+a405 1
+    if ( toggle(par) ) call output ( 'Exit  ONE_CF', advance='yes' )
+d407 1
+d411 1
+a411 1
+    if ( toggle(par) ) call where ( 'Enter PRIMARY', advance='yes' )
+d459 1
+a459 1
+    if ( toggle(par) ) call output ( 'Exit  PRIMARY', advance='yes' )
+d461 1
+d466 1
+a466 1
+    if ( toggle(par) ) call where ( 'Enter SPEC', advance='yes' )
+d485 1
+a485 1
+    if ( toggle(par) ) call output ( 'Exit  SPEC', advance='yes' )
+d487 1
+d491 1
+a491 1
+    if ( toggle(par) ) call where ( 'Enter SPEC_LIST', advance='yes' )
+d499 1
+a499 1
+    if ( toggle(par) ) call output ( 'Exit  SPEC_LIST', advance='yes' )
+d501 1
+d505 1
+a505 1
+    if ( toggle(par) ) call where ( 'Enter SPEC_REST', advance='yes' )
+d528 2
+a529 1
+        if ( error > 1 ) exit
+d534 1
+a534 1
+          & exit
+d537 1
+a537 1
+    if ( toggle(par) ) call output ( 'Exit  SPEC_REST', advance='yes' )
+d539 1
+d542 2
+a543 1
+    if ( toggle(par) ) call where ( 'Enter TERM', advance='yes' )
+d546 3
+a548 1
+      if ( next%class == t_star ) then
+d551 2
+a552 10
+        call build_tree ( n_mult, 2 )
+      else if ( next%class == t_slash ) then
+        call get_token
+        call factor
+        call build_tree ( n_div, 2 )
+      else if ( next%class == t_backslash ) then
+        call get_token
+        call factor
+        call build_tree ( n_into, 2 )
+      else
+d554 1
+a554 1
+      end if
+d556 1
+a556 1
+    if ( toggle(par) ) call output ( 'Exit  TERM', advance='yes' )
+d558 1
+d570 1
+d583 1
+d585 3
+a587 3
+  subroutine WHERE ( WHAT, ADVANCE )
+    character(len=*), intent(in) :: WHAT, ADVANCE
+    call output ( what )
+d589 2
+a590 1
+    call print_source ( next%source, advance=advance )
+d596 1
+a596 1
+       "$Id: parser.f90,v 2.21 2011/04/19 01:59:43 vsnyder Exp $"
+d606 3
+@
+
+
+2.21
+log
+@Support == and /= relational operators too
+@
+text
+@d14 33
+a46 1
+! Parser for L2CF.  The grammar is described in wvs-004.
+d74 1
+a74 1
+  subroutine CONFIGURATION ( ROOT )
+d213 2
+d356 1
+d572 1
+a572 1
+       "$Id: parser.f90,v 2.20 2011/04/18 19:33:26 vsnyder Exp $"
+d582 3
+@
+
+
+2.20
+log
+@Add support for relational operators and boolean-valued expressions
+@
+text
+@d263 1
+a263 1
+  recursive subroutine LFACTOR ! lfactor -> bterm ( <|<=|>|>= bterm ) *
+d284 8
+d537 1
+a537 1
+       "$Id: parser.f90,v 2.19 2009/06/23 18:25:43 pwagner Exp $"
+d547 3
+@
+
+
+2.19
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d36 1
+a36 1
+       "$RCSfile: $"
+d117 20
+d263 1
+a263 1
+  recursive subroutine LFACTOR ! lfactor -> term ( +|- term ) *
+d265 1
+a265 1
+    call term
+d267 2
+a268 1
+      if ( next%class == t_plus ) then
+d270 11
+a280 3
+        call term
+        call build_tree ( n_plus, 2 )
+      else if ( next%class == t_minus ) then
+d282 3
+a284 3
+        call term
+        call build_tree ( n_minus, 2 )
+      else
+d286 1
+a286 1
+      end if
+d529 1
+a529 1
+       "$Id: read_apriori.f90 is it here $"
+d539 3
+@
+
+
+2.18
+log
+@Add PRINT statement in not_used_here + Cannonball polishing
+@
+text
+@d36 1
+a36 1
+       "$RCSfile: parser.f90,v $"
+d497 1
+a498 1
+!---------------------------- RCS Ident Info -------------------------------
+d500 2
+a501 3
+       "$Id: parser.f90,v 2.17 2008/09/04 00:46:17 vsnyder Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d503 1
+a503 1
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
+d505 1
+d510 3
+@
+
+
+2.17
+log
+@Reverse precedence of unary +/- and units
+@
+text
+@d129 1
+a129 1
+  recursive subroutine EXPON  ! expon -> unitless unit? => n_unit
+d132 2
+a133 2
+                              !          -> + primary => n_plus
+                              !          -> - primary => n_minus
+d345 1
+a345 1
+      case ( t_number )       ! primary -> 'number' 'unit' ?
+d500 1
+a500 1
+       "$Id: parser.f90,v 2.16 2006/03/22 03:04:00 vsnyder Exp $"
+d510 3
+@
+
+
+2.16
+log
+@Allow empty spec field values
+@
+text
+@d22 1
+a22 1
+  use TREE, only: BUILD_TREE, N_TREE_STACK, &
+d117 11
+d129 5
+a133 1
+  recursive subroutine EXPON  ! expon -> ( +|- )? primary
+d135 1
+a135 1
+    if ( next%class == t_plus ) then
+a136 6
+      call primary
+      call build_tree ( n_plus, 1 )
+    else if ( next%class == t_minus ) then
+      call get_token
+      call primary
+      call build_tree ( n_minus, 1 )
+d138 17
+a154 1
+      call primary
+d329 1
+a329 1
+          ! primary -> 'name' '(' expr list ',' ')' 'unit'?
+a342 4
+          if ( next%class == t_identifier ) then
+            call build_tree ( n_unit, 2 )
+            call get_token    ! the identifier is used up
+          end if
+a346 4
+        if ( next%class == t_identifier ) then
+          call build_tree ( n_unit, 2 )
+          call get_token      ! the identifier is used up
+        end if
+d348 1
+a348 4
+      case ( t_string )       ! primary -> 'string'
+        call get_token
+    exit
+      case ( t_left_parenthesis ) ! primary -> '(' expr ')' 'unit' ?
+a351 4
+        if ( next%class == t_identifier ) then
+          call build_tree ( n_unit, 2 )
+          call get_token      ! the identifier is used up
+        end if
+d366 1
+d500 1
+a500 1
+       "$Id: parser.f90,v 2.15 2005/06/22 17:25:50 pwagner Exp $"
+d504 1
+d510 3
+@
+
+
+2.15
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d36 1
+a36 1
+       "$RCSfile: $"
+d97 4
+d469 2
+a470 1
+    if ( next%class == t_left_bracket ) then
+d472 2
+a473 1
+    else
+d476 1
+a476 1
+    end if
+d478 8
+d489 1
+a489 1
+       "$Id: $"
+a493 7
+! --------------------------------------------------------  WHERE  -----
+  subroutine WHERE ( WHAT, ADVANCE )
+    character(len=*), intent(in) :: WHAT, ADVANCE
+    call output ( what )
+    call output ( ' at ' )
+    call print_source ( next%source, advance=advance )
+  end subroutine WHERE
+d498 3
+@
+
+
+2.14
+log
+@Add power (^) operator, units coercion for (expr) and function result
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d34 1
+a34 3
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=256), private :: Id = &
+       "$Id: parser.f90,v 2.13 2004/01/20 19:43:33 vsnyder Exp $"
+d36 1
+a36 1
+       "$RCSfile: parser.f90,v $"
+d473 5
+d491 3
+@
+
+
+2.13
+log
+@Cosmetic changes
+@
+text
+@d28 1
+a28 1
+       "$Id: parser.f90,v 2.12 2004/01/17 03:04:48 vsnyder Exp $"
+d107 17
+d156 2
+a157 1
+  recursive subroutine FACTOR  ! factor -> ( +|- )? primary
+d159 9
+a167 10
+    if ( next%class == t_plus ) then
+      call get_token
+      call primary
+      call build_tree ( n_plus, 1 )
+    else if ( next%class == t_minus ) then
+      call get_token
+      call primary
+      call build_tree ( n_minus, 1 )
+    else
+      call primary
+d294 1
+d304 3
+d308 4
+a311 1
+          call build_tree ( n_func_ref, n )
+d324 1
+a324 1
+      case ( t_left_parenthesis ) ! primary -> '(' expr ')'
+d328 4
+d423 1
+a423 1
+  recursive subroutine TERM   ! term -> primary ( *|/ primary )*
+d480 3
+@
+
+
+2.12
+log
+@Provide for functions in expressions
+@
+text
+@d28 1
+a28 1
+       "$Id: parser.f90,v 2.11 2004/01/16 23:49:32 vsnyder Exp $"
+d88 1
+a88 1
+  recursive subroutine ARRAY ( HOW_MANY )
+d154 1
+a154 1
+! ----------------------------------------------------  FIELD_LIST  -----
+d190 1
+a190 1
+! --------------------------------------------------------  LFACTOR  -----
+d452 3
+@
+
+
+2.11
+log
+@Add backslash for 'into' operator
+@
+text
+@d12 1
+a12 1
+  use SYMBOL_TYPES ! Everything, especially everything beginning with T_
+d28 1
+a28 1
+       "$Id: parser.f90,v 2.10 2003/01/29 03:14:14 vsnyder Exp $"
+d266 1
+d276 12
+d452 3
+@
+
+
+2.10
+log
+@Print the line and column in ENTER debugging output
+@
+text
+@d28 1
+a28 1
+       "$Id: parser.f90,v 2.9 2002/10/08 00:09:13 pwagner Exp $"
+d394 4
+d439 3
+@
+
+
+2.9
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d28 1
+a28 1
+       "$Id: parser.f90,v 2.8 2001/11/28 03:05:54 vsnyder Exp $"
+d110 1
+a110 1
+    if ( toggle(par) ) call output ( 'Enter EXPR', advance='yes' )
+d140 1
+a140 1
+    if ( toggle(par) ) call output ( 'Enter FACTOR', advance='yes' )
+d157 1
+a157 1
+    if ( toggle(par) ) call output ( 'Enter FIELD_LIST', advance='yes' )
+d192 1
+a192 1
+    if ( toggle(par) ) call output ( 'Enter LFACTOR', advance='yes' )
+d211 1
+a211 1
+    if ( toggle(par) ) call output ( 'Enter LIMIT', advance='yes' )
+d222 1
+a222 1
+    if ( toggle(par) ) call output ( 'Enter LTERM', advance='yes' )
+d234 1
+a234 1
+    if ( toggle(par) ) call output ( 'Enter ONE_CF', advance='yes' )
+d266 1
+a266 1
+    if ( toggle(par) ) call output ( 'Enter PRIMARY', advance='yes' )
+d311 1
+a311 1
+    if ( toggle(par) ) call output ( 'Enter SPEC', advance='yes' )
+d335 1
+a335 1
+    if ( toggle(par) ) call output ( 'Enter SPEC_LIST', advance='yes' )
+d348 1
+a348 1
+    if ( toggle(par) ) call output ( 'Enter SPEC_REST', advance='yes' )
+d383 1
+a383 1
+    if ( toggle(par) ) call output ( 'Enter TERM', advance='yes' )
+d424 7
+d435 3
+@
+
+
+2.8
+log
+@Implement arrays of arrays
+@
+text
+@d28 1
+a28 1
+       "$Id: parser.f90,v 2.7 2001/11/27 00:54:37 vsnyder Exp $"
+d31 1
+d421 4
+d428 3
+@
+
+
+2.7
+log
+@Implement (partially) open ranges
+@
+text
+@d28 1
+a28 1
+       "$Id: parser.f90,v 2.6 2001/07/20 20:18:05 vsnyder Exp $"
+d85 24
+a108 2
+! -------------------------------------------------------    EXPR  -----
+  subroutine EXPR
+d110 5
+a114 4
+    call limit
+    select case ( next%class )
+    case ( t_colon )
+      call get_token
+d116 19
+a134 14
+      call build_tree ( n_colon, 2 )
+    case ( t_colon_less )
+      call get_token
+      call limit
+      call build_tree ( n_colon_less, 2 )
+    case ( t_less_colon )
+      call get_token
+      call limit
+      call build_tree ( n_less_colon, 2 )
+    case ( t_less_colon_less )
+      call get_token
+      call limit
+      call build_tree ( n_less_colon_less, 2 )
+    end select
+d414 1
+a414 15
+      call get_token     ! Consume the left bracket
+      do
+        call expr
+        how_many = how_many + 1
+        if ( next%class == t_right_bracket ) then
+          call get_token ! Consume the right bracket
+          exit
+        end if
+        if ( next%class /= t_comma ) then
+          call announce_error ( (/ t_right_bracket, t_comma /) )
+          if ( next%class == t_end_of_input .or. &
+               next%class == t_end_of_stmt ) exit
+        end if
+        call get_token   ! Consume the comma
+      end do
+d423 3
+@
+
+
+2.6
+log
+@Improve error recovery in a few cases -- more work probably needed
+@
+text
+@d28 1
+a28 1
+       "$Id: parser.f90,v 2.5 2001/02/28 02:37:11 vsnyder Exp $"
+d89 2
+a90 1
+    if ( next%class == t_colon ) then
+d94 13
+a106 1
+    end if
+d409 3
+@
+
+
+2.5
+log
+@Allow specification with no arguments to have a label
+@
+text
+@d28 1
+a28 1
+       "$Id: parser.f90,v 2.4 2000/11/30 00:23:10 vsnyder Exp $"
+d253 8
+a260 1
+                                 t_string, t_left_parenthesis /) )
+d331 4
+a334 1
+        if ( next%class == t_end_of_input ) exit
+d381 1
+a381 1
+        if ( next%class /= t_comma ) &
+d383 3
+d396 3
+@
+
+
+2.4
+log
+@Implement [] syntax for arrays
+@
+text
+@d28 1
+a28 1
+       "$Id: parser.f90,v 2.3 2000/11/15 22:01:18 vsnyder Exp $"
+d39 1
+a39 2
+      do
+      if ( next%class == t_end_of_input ) exit
+d206 1
+a206 1
+          how_many = how_many +  spec()
+d287 2
+a288 4
+    how_many = 2
+    call get_token
+    call field_list
+    do while ( next%class == t_comma )
+d312 1
+a312 1
+      case ( t_comma )        ! spec_rest -> ( ',' spec_list ) +
+d315 1
+a315 1
+      case ( t_colon )        ! spec_rest -> : name ( ',' spec_list ) +
+d318 2
+a319 3
+        if ( next%class == t_comma ) then
+          call spec_list
+          call build_tree ( n_named, 2 )
+a320 2
+        end if
+        call announce_error ( (/ t_comma /) )
+d383 3
+@
+
+
+2.3
+log
+@Allow specification with no arguments.
+@
+text
+@d28 1
+a28 1
+       "$Id: parser.f90,v 2.2 2000/11/15 21:15:27 vsnyder Exp $"
+d124 2
+a125 8
+          how_many = 2
+          call expr
+          do while ( any(next%class == &
+              (/ t_identifier, t_number, t_string, &
+                 t_left_parenthesis, t_dot /) ) )
+            call expr
+            how_many = how_many + 1
+          end do
+d311 2
+a312 8
+        call expr
+        how_many = 2
+        do while ( any(next%class == &
+            (/ t_identifier, t_number, t_string, &
+               t_left_parenthesis, t_dot, t_plus, t_minus /) ) )
+          call expr
+          how_many = how_many + 1
+        end do
+d365 21
+a385 1
+
+d389 3
+@
+
+
+2.2
+log
+@Corrected a loop on a bad primary; correct processing of spec with no fields
+@
+text
+@d28 1
+a28 1
+       "$Id: parser.f90,v 2.1 2000/10/11 18:02:50 vsnyder Exp $"
+d312 1
+d381 3
+@
+
+
+2.1
+log
+@Move from lib/cf_parser to lib; remove unused variables; add copyright
+@
+text
+@d28 1
+a28 1
+       "$Id: parser.f90,v 2.0 2000/09/05 17:41:51 dcuddy Exp $"
+d260 1
+a260 1
+                                 t_left_parenthesis, t_dot /) )
+d312 2
+a313 1
+        call get_token
+d380 3
+@
+

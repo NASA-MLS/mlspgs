@@ -1,0 +1,1029 @@
+head	2.16;
+access;
+symbols
+	rel-1-0-englocks-work:2.15.0.2
+	VUMLS1-00:2.11;
+locks; strict;
+comment	@# @;
+
+
+2.16
+date	2018.05.14.23.26.39;	author vsnyder;	state dead;
+branches;
+next	2.15;
+
+2.15
+date	2017.11.28.23.12.16;	author vsnyder;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2017.08.28.20.27.47;	author livesey;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2017.08.09.20.32.48;	author vsnyder;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2017.03.11.00.47.23;	author vsnyder;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2017.02.07.03.48.40;	author vsnyder;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2017.02.04.02.06.41;	author vsnyder;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2017.01.21.01.59.53;	author vsnyder;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2017.01.14.01.46.12;	author vsnyder;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2016.12.15.18.45.09;	author vsnyder;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2016.12.03.02.43.46;	author vsnyder;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2016.12.02.01.58.44;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2016.11.29.00.28.54;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2016.11.23.21.32.59;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2016.11.23.20.07.43;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2016.11.23.00.05.48;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.16
+log
+@Change to sparse eta representation
+@
+text
+@! Copyright 2015, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=============================================================================
+module Indexed_Values_m
+!=============================================================================
+
+  ! Types to represent indexed values.  These provide a subscript or
+  ! subscripts, and a value that applies at a position in an array
+  ! indexed by that (those) subscript(s).
+
+  ! These are usually used for interpolation coefficients.
+
+  ! Using RP for RK is temporary until all processors support parameterized
+  ! derived types.  There is an implicit assumption that RP == RG (from
+  ! Geolocation_0).
+
+  use MLSKinds, only: RK => RP
+
+  implicit NONE
+  public
+
+  ! Inheritance heirarchy:
+
+  ! Value_1D_t -> Value_QTM_1D_t -> Value_QTM_2D_t -> Value_QTM_3D_t
+  !            -> Value_2D_t -> Value_3D_t
+  ! Value_List (abstract) ->
+  !            -> Value_1D_List_t
+  !            -> Value_1D_p_t
+  !            -> Value_QTM_1D_List_t
+  !            -> Value_2D_List_t
+  !            -> Value_3D_List_t
+  !            -> Value_QTM_2D_List_t
+  !            -> Value_QTM_3D_List_t
+  ! Value_Lists (abstract) ->
+  !            -> Value_1D_Lists_t
+  !            -> Value_1D_Lists_t
+  !            -> Value_1D_Lists_t
+  !            -> Value_2D_Lists_t
+  !            -> Value_3D_Lists_t
+  !            -> Value_QTM_1D_Lists_t
+  !            -> Value_QTM_2D_Lists_t
+  !            -> Value_QTM_3D_Lists_t
+
+  type :: Value_List ! ( RK ) ! Base type for Value_*List_t
+!     integer, kind :: RK
+  end type Value_List
+
+  ! For one interpolation weight from a 1D array
+  type :: Value_1D_t ! ( RK )
+!     integer, kind :: RK
+    real(rk) :: V = 0.0    ! Value to be applied at N
+    integer :: J = 0       ! Subscript at which to apply V
+  end type Value_1D_t
+
+  ! For one interpolation weight from a 1D array to a 1D array
+  type, extends(Value_List) :: Value_1D_p_t ! ( RK )
+!     integer, kind :: RK
+    real(rk) :: V = 0.0    ! Value to be applied at N
+    integer :: J = 0       ! Subscript at which to apply V
+    integer :: P = 0       ! Subscript at which interpolated value accumulates
+  end type Value_1D_p_t
+
+  ! For interpolating to a list from a 1D array, assuming linear interolation
+  type, extends(Value_List) :: Value_1D_List_t ! ( RK )
+!     integer, kind :: RK
+    integer :: N = 2       ! Number of useful elements of V
+!     type(value_1d_t(rk)) :: V(2) = value_1d_t(rk)()
+    type(value_1d_t) :: V(2) = value_1d_t()
+  end type Value_1D_List_t
+
+  ! For one interpolation weight from a QTM, or an extract of it onto
+  ! an array of profiles adjacent to an integration path, e.g., in Grids_t.
+  type, extends(value_1D_t) :: Value_QTM_1D_t
+  ! real(rk) :: V = 0.0    ! Value to be applied at N or NP
+  ! integer :: J = 0       ! Index in QTM at which to apply V
+    integer :: JP = 0      ! Index of path-adjacent part of QTM at which to
+                           ! apply V, e.g., in Grids_t.  This is intentionally
+                           ! the same name as the second (probably Phi) subscript
+                           ! in Value_2D_t so that Interpolate_2D_List.f9h can be
+                           ! used for both interpolations.
+  end type Value_QTM_1D_t
+
+  ! For interpolating to a list (probably an integration path) from a QTM,
+  ! or an extract of it onto an array of profiles adjacent to an integration
+  ! path.
+  type, extends(Value_List) :: Value_QTM_1D_List_t ! ( RK )
+!     integer, kind :: RK
+    integer :: N = 3       ! Number of useful elements of V
+!     type(value_QTM_1d_t(rk)) :: V(3) = value_QTM_1d_t(rk)()
+    type(value_QTM_1d_t) :: V(3) = value_QTM_1d_t()
+  end type Value_QTM_1D_List_t
+
+  ! For one interpolation weight from a two-dimensional rectangular array, such
+  ! as a state vector.
+  type, extends(value_1D_t) :: Value_2D_t
+  ! real(rk) :: V = 0.0    ! Value to be applied at N or NP
+  ! integer :: J = 0       ! First (probably zeta) subscript at which to apply V
+    integer :: JP = 0      ! Second (probably phi) subscript at which to apply V
+  end type Value_2D_t
+
+  ! For interpolating to a list (probably an integration path) from a two-
+  ! dimensional rectangular array, such as a state vector, assuming bilinear
+  ! interpolation.
+  type, extends(Value_List) :: Value_2D_List_t ! ( RK )
+!     integer, kind :: RK
+    integer :: N = 4       ! Number of useful elements of V
+!     type(value_2d_t(rk)) :: V(4) = value_2d_t(rk)()
+    type(value_2d_t) :: V(4) = value_2d_t()
+  end type Value_2D_List_t
+
+  ! For one interpolation weight from a three-dimensional rectangular array,
+  ! such as a state vector.
+  type, extends(value_2D_t) :: Value_3D_t
+  ! real(rk) :: V = 0.0    ! Value to be applied at N or NP
+  ! integer :: J = 0       ! Second (probably zeta) subscript at which to apply V
+  ! integer :: JP = 0      ! Third (probably phi) subscript at which to apply V
+    integer :: JF = 0      ! First (probaly frequency) subscript at which to apply V
+  end type Value_3D_t
+
+  ! For interpolating to a list (probably an integration path) from a three-
+  ! dimensional rectangular array, such as a state vector, assuming trilinear
+  ! interpolation.
+  type, extends(Value_List) :: Value_3D_List_t ! ( RK )
+!     integer, kind :: RK
+    integer :: N = 8       ! Number of useful elements of V
+!     type(value_3d_t(rk)) :: V(8) = value_3d_t(rk)()
+    type(value_3d_t) :: V(8) = value_3d_t()
+  end type Value_3D_List_t
+
+  ! For one interpolation weight from a QTM, or an extract of it onto
+  ! an array of profiles adjacent to an integration path, with a zeta basis
+  ! at each vertex.
+  type, extends(value_QTM_1D_t) :: Value_QTM_2D_t
+  ! real(rk) :: V = 0.0    ! Value to be applied at (NZ, N or NP)
+  ! integer :: J = 0       ! Index in QTM at which to apply V
+  ! integer :: JP = 0      ! Index of path-adjacent part of QTM at which to
+                           ! apply V, e.g., in Grids_t.  This is intentionally
+                           ! the same name as the second (probably Phi) subscript
+                           ! in Value_2D_t so that Interpolate_2D_List.f9h can be
+                           ! used for both interpolations.
+    integer :: JZ = 0      ! Vertical (probably zeta) index
+  end type Value_QTM_2D_t
+
+  ! For interpolating to a list (probably an integration path) from a QTM,
+  ! or an extract of it onto an array of profiles adjacent to an integration
+  ! path, with a zeta basis at each profile.
+  type, extends(Value_List) :: Value_QTM_2D_List_t ! ( RK )
+!     integer, kind :: RK
+    integer :: N = 6       ! Number of useful elements of V
+!     type(value_QTM_2d_t(rk)) :: V(6) = value_QTM_2d_t(rk)()
+    type(value_QTM_2d_t) :: V(6) = value_QTM_2d_t()
+  end type Value_QTM_2D_List_t
+
+  ! For one interpolation weight from a QTM, or an extract of it onto
+  ! an array of profiles adjacent to an integration path, with a zeta basis
+  ! and a frequency basis at each vertex.
+  type, extends(value_QTM_2D_t) :: Value_QTM_3D_t
+  ! real(rk) :: V = 0.0    ! Value to be applied at (JF, JZ, J or JP)
+  ! integer :: J = 0       ! Index in QTM at which to apply V
+  ! integer :: JP = 0      ! Index of path-adjacent part of QTM at which to
+                           ! apply V, e.g., in Grids_t.  This is intentionally
+                           ! the same name as the second (probably Phi) subscript
+                           ! in Value_2D_t so that Interpolate_2D_List.f9h can be
+                           ! used for both interpolations.
+  ! integer :: JZ = 0      ! Vertical (probably zeta) index
+    integer :: JF = 0      ! Frequency subscript
+  end type Value_QTM_3D_t
+
+  ! For interpolating to a list (probably an integration path) from a QTM,
+  ! or an extract of it onto an array of profiles adjacent to an integration
+  ! path, with a zeta basis and frequency basis at each profile.
+  type, extends(Value_List) :: Value_QTM_3D_List_t ! ( RK )
+!     integer, kind :: RK
+    integer :: N = 12      ! Number of useful elements of V
+!     type(value_QTM_3d_t(rk)) :: V(12) = value_QTM_3d_t(rk)()
+    type(value_QTM_3d_t) :: V(12) = value_QTM_3d_t()
+  end type Value_QTM_3D_List_t
+
+  ! Use this type to create an array of lists, potentially of different sizes.
+  type, abstract :: Value_Lists
+    integer :: N ! Number of elements of Eta currently in use.
+  end type Value_Lists
+
+  type, extends(value_Lists) :: Value_1D_Lists_t
+!   integer :: N ! Number of elements of Eta currently in use.
+    type(value_1D_list_t), allocatable :: Eta(:)
+  end type Value_1D_Lists_t
+
+  type, extends(value_Lists) :: Value_2D_Lists_t
+!   integer :: N ! Number of elements of Eta currently in use.
+    type(value_2D_list_t), allocatable :: Eta(:)
+  end type Value_2D_Lists_t
+
+  type, extends(value_Lists) :: Value_3D_Lists_t
+!   integer :: N ! Number of elements of Eta currently in use.
+    type(value_3D_list_t), allocatable :: Eta(:)
+  end type Value_3D_Lists_t
+
+  type, extends(value_Lists) :: Value_QTM_1D_Lists_t
+!   integer :: N ! Number of elements of Eta currently in use.
+    type(value_QTM_1D_list_t), allocatable :: Eta(:)
+  end type Value_QTM_1D_Lists_t
+
+  type, extends(value_Lists) :: Value_QTM_2D_Lists_t
+!   integer :: N ! Number of elements of Eta currently in use.
+    type(value_QTM_2D_list_t), allocatable :: Eta(:)
+  end type Value_QTM_2D_Lists_t
+
+  type, extends(value_Lists) :: Value_QTM_3D_Lists_t
+!   integer :: N ! Number of elements of Eta currently in use.
+    type(value_QTM_3D_list_t), allocatable :: Eta(:)
+  end type Value_QTM_3D_Lists_t
+
+  interface Convert
+    module procedure Convert_QTM_1D_to_P
+  end interface
+
+  interface Dot_Product
+    module procedure Dot_Product_1D!_d, Dot_Product_1D_s
+  end interface
+
+  interface Dump
+    module procedure Dump_Value_1D_List, Dump_Value_1D_p_List
+!     module procedure Dump_Value_1D_List_d, Dump_Value_1D_List_s
+!     module procedure Dump_Value_1D_p_List_d, Dump_Value_1D_p_List_s
+    module procedure Dump_Value_2D_List
+!     module procedure Dump_Value_2D_List_d, Dump_Value_2D_List_s
+    module procedure Dump_Value_3D_List
+!     module procedure Dump_Value_3D_List_d, Dump_Value_3D_List_s
+  end interface
+
+  interface Interpolate
+    module procedure Interpolate_1D_List!_d, Interpolate_1D_List_s
+    module procedure Interpolate_1D_Lists!_d, Interpolate_1D_Lists_s
+    module procedure Interpolate_1D_P!_d, Interpolate_1D_P_s
+    module procedure Interpolate_QTM_1D_List!_d, Interpolate_QTM_1D_List_s
+    module procedure Interpolate_2D_List!_d, Interpolate_2D_List_s
+    module procedure Interpolate_2D_Lists!_d, Interpolate_2D_Lists_s
+    module procedure Interpolate_2D_P!_d, Interpolate_2D_P_s
+    module procedure Interpolate_QTM_2D_List!_d, Interpolate_QTM_2D_List_s
+    module procedure Interpolate_3D_List!_d, Interpolate_3D_List_s
+    module procedure Interpolate_3D_Lists!_d, Interpolate_3D_Lists_s
+    module procedure Interpolate_QTM_3D_List!_d, Interpolate_QTM_3D_List_s
+  end interface
+
+  interface Interpolate_Polymorphic
+    module procedure Interpolate_Polymorphic_1D
+!     module procedure Interpolate_Polymorphic_1D_d, Interpolate_Polymorphic_1D_s
+    module procedure Interpolate_Polymorphic_2D
+!     module procedure Interpolate_Polymorphic_2D_d, Interpolate_Polymorphic_2D_s
+    module procedure Interpolate_Polymorphic_3D
+!     module procedure Interpolate_Polymorphic_3D_d, Interpolate_Polymorphic_3D_s
+  end interface
+
+  interface Invert_List_Index
+    module procedure Invert_1D_List_Index!_d, Invert_1D_List_Index_s
+  end interface
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: Indexed_Values_m.f90,v $"
+  private :: not_used_here
+!---------------------------------------------------------------------------
+
+contains
+
+  subroutine Convert_QTM_1D_to_P ( From, To, N, Path )
+    type(value_QTM_1D_List_t), intent(in) :: From(:)
+    type(value_1D_p_t), intent(out) :: To(:)
+    integer, intent(out) :: N             ! Number of elements put into To
+    logical, intent(in), optional :: Path ! Use NP component of From
+    integer :: I, J
+    logical :: MyPath
+
+    myPath = .false.
+    if ( present(path) ) myPath = path
+    n = 0
+    do i = 1, size(from)
+      do j = 1, from(i)%n
+        n = n + 1
+        if ( myPath ) then
+          to(n) = value_1D_p_t(v=from(i)%v(j)%v, j=from(i)%v(j)%jp, p=i )
+        else
+          to(n) = value_1D_p_t(v=from(i)%v(j)%v, j=from(i)%v(j)%j, p=i )
+        end if
+      end do
+    end do
+  end subroutine Convert_QTM_1D_to_P
+
+  pure function Dot_Product_1D ( Vector, List ) result ( Dot )
+    real(rk), intent(in) :: Vector(:)
+    type(value_1d_list_t), intent(in) :: List
+    real(rk) :: Dot
+!     integer :: I
+!     dot = sum ( vector(list%v(:list%n)%n) * list%v(:list%n)%v )
+    dot = dot_product ( vector(list%v(:list%n)%j), list%v(:list%n)%v )
+!     dot = 0.0
+!     do i = 1, list%n
+!       if ( list%v(i)%n /= 0 ) dot = dot + vector(list%v(i)%n) * list%v(i)%v
+!     end do
+  end function Dot_Product_1D!_d
+
+  subroutine Dump_Value_1D_List ( Value, Name, Format, Offset )
+    use Dump_Options, only: SDFormatDefault
+    use Output_m, only: NewLine, Output
+!     type(value_1D_list_t(rk)), intent(in) :: Value(:)
+    class(value_1D_list_t), intent(in) :: Value(:)
+    character(len=*), intent(in), optional :: Name
+    character(len=*), intent(in), optional :: Format
+    integer, intent(in), optional :: Offset ! One before starting column in grids_t
+    include "Dump_Value_1D_List.f9h"
+  end subroutine Dump_Value_1D_List
+
+  subroutine Dump_Value_1D_p_List ( Value, Name, Format )
+    use Dump_Options, only: SDFormatDefault
+    use Output_m, only: Output
+!     type(value_1D_list_t(rk)), intent(in) :: Value(:)
+    class(value_1D_p_t), intent(in) :: Value(:)
+    character(len=*), intent(in), optional :: Name
+    character(len=*), intent(in), optional :: Format
+    include "Dump_Value_1D_p_List.f9h"
+  end subroutine Dump_Value_1D_p_List
+
+  subroutine Dump_Value_2D_List ( Value, Name, Format )
+    use Dump_Options, only: SDFormatDefault
+    use Output_m, only: NewLine, Output
+!     type(value_2D_list_t(rk)), intent(in) :: Value(:)
+    class(value_2D_list_t), intent(in) :: Value(:)
+    character(len=*), intent(in), optional :: Name
+    character(len=*), intent(in), optional :: Format
+    include "Dump_Value_2D_List.f9h"
+  end subroutine Dump_Value_2D_List
+
+  subroutine Dump_Value_3D_List ( Value, Name, Format )
+    use Dump_Options, only: SDFormatDefault
+    use Output_m, only: NewLine, Output
+!     type(value_2D_list_t(rk)), intent(in) :: Value(:)
+    class(value_3D_list_t), intent(in) :: Value(:)
+    character(len=*), intent(in), optional :: Name
+    character(len=*), intent(in), optional :: Format
+    include "Dump_Value_3D_List.f9h"
+  end subroutine Dump_Value_3D_List
+
+  subroutine Interpolate_Polymorphic_1D ( Field, Eta, Path )
+    ! Select one interpolator, depending upon the type of Eta
+    real(rk), intent(in) :: Field(:)
+    class(value_list), intent(in) :: Eta(:)     ! Size(Eta) assumed to be
+    real(rk), intent(out) :: Path(:)            ! the same as Size(Path)
+    select type ( Eta )
+    type is ( value_1D_list_t )
+      call interpolate ( field, eta, path )
+    type is ( value_1D_p_t )
+      call interpolate ( field, eta, path )
+    type is ( value_QTM_1D_list_t )
+      call interpolate ( field, eta, path )
+    end select
+  end subroutine Interpolate_Polymorphic_1D
+
+  subroutine Interpolate_Polymorphic_2D ( Field, Eta, Path )
+    ! Select one of the interpolators, depending upon the type of Eta
+    real(rk), intent(in) :: Field(:,:)
+    class(value_list), intent(in) :: Eta(:)     ! Size(Eta) assumed to be
+    real(rk), intent(out) :: Path(:)            ! the same as Size(Path)
+    select type ( Eta )
+    type is ( value_2D_list_t )
+      call interpolate ( field, eta, path )
+    type is ( value_QTM_2D_list_t )
+      call interpolate ( field, eta, path )
+    end select
+  end subroutine Interpolate_Polymorphic_2D
+
+  subroutine Interpolate_Polymorphic_3D ( Field, Eta, Path )
+    ! Select one interpolator, depending upon the type of Eta
+    real(rk), intent(in) :: Field(:,:,:)
+    class(value_list), intent(in) :: Eta(:)     ! Size(Eta) assumed to be
+    real(rk), intent(out) :: Path(:)            ! the same as Size(Path)
+    select type ( Eta )
+    type is ( value_3D_list_t )
+      call interpolate ( field, eta, path )
+    type is ( value_QTM_3D_list_t )
+      call interpolate ( field, eta, path )
+    end select
+  end subroutine Interpolate_Polymorphic_3D
+
+  subroutine Interpolate_1D_List ( Field, Eta, Path )
+    ! Interpolate Field * Eta to Path, where the subscript for Path is
+    ! the same as the subscript for Eta.
+    real(rk), intent(in) :: Field(:)
+    type(value_1D_list_t), intent(in) :: Eta(:) ! Size(Eta) assumed to be
+    real(rk), intent(out) :: Path(:)            ! the same as Size(Path)
+    include "Interpolate_1D_List.f9h"
+  end subroutine Interpolate_1D_List
+
+  subroutine Interpolate_1D_Lists ( Field, Eta, Path )
+    ! Interpolate Field * Eta to Path, where the subscript for Path is
+    ! the same as the subscript for Eta.
+    real(rk), intent(in) :: Field(:)
+    type(value_1D_lists_t), intent(in) :: Eta   ! Eta%n assumed to be
+    real(rk), intent(out) :: Path(:)            ! the same as Size(Path)
+    call interpolate_1d_list ( field, eta%eta(:eta%n), path )
+  end subroutine Interpolate_1D_Lists
+
+  subroutine Interpolate_1D_P ( Field, Eta, Path )
+    ! Interpolate Field * Eta to Path, where the subscript for Path is
+    ! in Eta.
+    real(rk), intent(in) :: Field(:)
+    type(value_1D_p_t), intent(in) :: Eta(:)    ! Size(Eta) assumed to be
+    real(rk), intent(out) :: Path(:)            ! the same as Size(Path)
+    include "Interpolate_1D_P.f9h"
+  end subroutine Interpolate_1D_P
+
+  subroutine Interpolate_QTM_1D_List ( Field, Eta, Path )
+    ! Interpolate Field * Eta to Path, where the subscript for Path is
+    ! the same as the subscript for Eta.
+    real(rk), intent(in) :: Field(:)
+    type(value_QTM_1D_list_t), intent(in) :: Eta(:) ! Size(Eta) assumed to be
+    real(rk), intent(out) :: Path(:)                ! the same as Size(Path)
+    include "Interpolate_1D_List.f9h"
+  end subroutine Interpolate_QTM_1D_List
+
+  subroutine Interpolate_2D_List ( Field, Eta, Path )
+    ! Interpolate Field * Eta to Path, where the subscript for Path is
+    ! the same as the subscript for Eta.
+    real(rk), intent(in) :: Field(:,:)
+    type(value_2D_list_t), intent(in) :: Eta(:) ! Size(Eta) assumed to be
+    real(rk), intent(out) :: Path(:)            ! the same as Size(Path)
+    include "Interpolate_2D_List.f9h"
+  end subroutine Interpolate_2D_List
+
+  subroutine Interpolate_2D_Lists ( Field, Eta, Path )
+    ! Interpolate Field * Eta to Path, where the subscript for Path is
+    ! the same as the subscript for Eta.
+    real(rk), intent(in) :: Field(:,:)
+    type(value_2D_lists_t), intent(in) :: Eta   ! Eta%n assumed to be
+    real(rk), intent(out) :: Path(:)            ! the same as Size(Path)
+    call interpolate_2d_list ( field, eta%eta(:eta%n), path )
+  end subroutine Interpolate_2D_Lists
+
+  subroutine Interpolate_2D_P ( Field, Eta, Path )
+    ! Interpolate Field * Eta to Path, where the second subscript for Field
+    ! and Path is in Eta.  The same interpolation is applied to all of the
+    ! first subscripts for Field and Path, which are assumed to have the
+    ! same extents.  This is for quantities that have several components that
+    ! don't depend upon a basis grid, such as magnetic fields.
+    real(rk), intent(in) :: Field(:,:)          ! Size(Field,1) assumed to be
+    type(value_1D_p_t), intent(in) :: Eta(:)
+    real(rk), intent(out) :: Path(:,:)          ! the same as Size(Path,1)
+    include "Interpolate_2D_P.f9h"
+  end subroutine Interpolate_2D_P
+
+  subroutine Interpolate_QTM_2D_List ( Field, Eta, Path )
+    ! Interpolate Field * Eta to Path, where the subscript for Path is
+    ! the same as the subscript for Eta.
+    real(rk), intent(in) :: Field(:,:)
+    type(value_QTM_2D_list_t), intent(in) :: Eta(:) ! Size(Eta) assumed to be
+    real(rk), intent(out) :: Path(:)                ! the same as Size(Path)
+    include "Interpolate_2D_List.f9h"
+  end subroutine Interpolate_QTM_2D_List
+
+  subroutine Interpolate_3D_List ( Field, Eta, Path )
+    ! Interpolate Field * Eta to Path, where the subscript for Path is
+    ! the same as the subscript for Eta.
+    real(rk), intent(in) :: Field(:,:,:)
+    type(value_3D_list_t), intent(in) :: Eta(:) ! Size(Eta) assumed to be
+    real(rk), intent(out) :: Path(:)            ! the same as Size(Path)
+    include "Interpolate_3D_List.f9h"
+  end subroutine Interpolate_3D_List
+
+  subroutine Interpolate_3D_Lists ( Field, Eta, Path )
+    ! Interpolate Field * Eta to Path, where the subscript for Path is
+    ! the same as the subscript for Eta.
+    real(rk), intent(in) :: Field(:,:,:)
+    type(value_3D_lists_t), intent(in) :: Eta   ! Size(Eta) assumed to be
+    real(rk), intent(out) :: Path(:)            ! the same as Size(Path)
+    call interpolate_3d_list ( field, eta%eta(:eta%n), path )
+  end subroutine Interpolate_3D_Lists
+
+  subroutine Interpolate_QTM_3D_List ( Field, Eta, Path )
+    ! Interpolate Field * Eta to Path, where the subscript for Path is
+    ! the same as the subscript for Eta.
+    real(rk), intent(in) :: Field(:,:,:)
+    type(value_QTM_3D_list_t), intent(in) :: Eta(:) ! Size(Eta) assumed to be
+    real(rk), intent(out) :: Path(:)                ! the same as Size(Path)
+    include "Interpolate_3D_List.f9h"
+  end subroutine Interpolate_QTM_3D_List
+
+  ! Useful in case the order of the basis was reversed
+  subroutine Invert_1D_List_Index ( Eta, N_Basis )
+    ! Replace Eta(:)%v(:)%n with n_basis + 1 - Eta(:)%v(:)%n
+    type(value_1d_list_t), intent(inout) :: Eta(:)
+    integer, intent(in) :: N_Basis
+    integer :: I
+    do i = 1, size(eta)
+      eta(i)%v%j = n_basis + 1 - eta(i)%v%j
+    end do
+  end subroutine Invert_1D_List_Index
+
+!=============================================================================
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: Indexed_Values_m.f90,v 2.15 2017/11/28 23:12:16 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Indexed_Values_m
+
+! $Log: Indexed_Values_m.f90,v $
+! Revision 2.15  2017/11/28 23:12:16  vsnyder
+! Add Offset argument in Dump_Value_1D_List
+!
+! Revision 2.14  2017/08/28 20:27:47  livesey
+! Changed the n,nf,np,nz elements to j,jf,...
+!
+! Revision 2.13  2017/08/09 20:32:48  vsnyder
+! Add commented-out version of Dot_Product_1D that checks for zero
+! subscripts, in case we can't find where the zeros come from.
+!
+! Revision 2.12  2017/03/11 00:47:23  vsnyder
+! Add more comments about NP component
+!
+! Revision 2.11  2017/02/07 03:48:40  vsnyder
+! Add Invert_1D_List_Index
+!
+! Revision 2.10  2017/02/04 02:06:41  vsnyder
+! Add Dot_Product.  Make the list argument of some dumps polymorphic so
+! it will work with extensions (but it only dumps the parent part).
+!
+! Revision 2.9  2017/01/21 01:59:53  vsnyder
+! Add Dump_Value_3D_List
+!
+! Revision 2.8  2017/01/14 01:46:12  vsnyder
+! Add List of Lists, add Format argument to dumps
+!
+! Revision 2.7  2016/12/15 18:45:09  vsnyder
+! Move argument declarations from includes to Indexed_Values
+!
+! Revision 2.6  2016/12/03 02:43:46  vsnyder
+! Add Convert_QTM_1D_to_P
+!
+! Revision 2.5  2016/12/02 01:58:44  vsnyder
+! Move argument declarations here from include files.  Add 2D P interpolator.
+! Add Dump_Value_1D_p_List.
+!
+! Revision 2.4  2016/11/29 00:28:54  vsnyder
+! Add interpolators
+!
+! Revision 2.3  2016/11/23 21:32:59  vsnyder
+! Add Value_3D_*, Dump
+!
+! Revision 2.2  2016/11/23 20:07:43  vsnyder
+! Add Dump_Value_1D_List
+!
+! Revision 2.1  2016/11/23 00:05:48  vsnyder
+! Initial commit
+!
+@
+
+
+2.15
+log
+@Add Offset argument in Dump_Value_1D_List
+@
+text
+@d511 1
+a511 1
+       "$Id: Indexed_Values_m.f90,v 2.14 2017/08/28 20:27:47 livesey Exp $"
+d521 3
+@
+
+
+2.14
+log
+@Changed the n,nf,np,nz elements to j,jf,...
+@
+text
+@d312 1
+a312 1
+  subroutine Dump_Value_1D_List ( Value, Name, Format )
+d319 1
+d511 1
+a511 1
+       "$Id: Indexed_Values_m.f90,v 2.13 2017/08/09 20:32:48 vsnyder Exp $"
+d521 3
+@
+
+
+2.13
+log
+@Add commented-out version of Dot_Product_1D that checks for zero
+subscripts, in case we can't find where the zeros come from.
+@
+text
+@d61 1
+a61 1
+    integer :: N = 0       ! Subscript at which to apply V
+d68 1
+a68 1
+    integer :: N = 0       ! Subscript at which to apply V
+d84 2
+a85 2
+  ! integer :: N = 0       ! Index in QTM at which to apply V
+    integer :: NP = 0      ! Index of path-adjacent part of QTM at which to
+d106 2
+a107 2
+  ! integer :: N = 0       ! First (probably zeta) subscript at which to apply V
+    integer :: NP = 0      ! Second (probably phi) subscript at which to apply V
+d124 3
+a126 3
+  ! integer :: N = 0       ! Second (probably zeta) subscript at which to apply V
+  ! integer :: NP = 0      ! Third (probably phi) subscript at which to apply V
+    integer :: NF = 0      ! First (probaly frequency) subscript at which to apply V
+d144 2
+a145 2
+  ! integer :: N = 0       ! Index in QTM at which to apply V
+  ! integer :: NP = 0      ! Index of path-adjacent part of QTM at which to
+d150 1
+a150 1
+    integer :: NZ = 0      ! Vertical (probably zeta) index
+d167 3
+a169 3
+  ! real(rk) :: V = 0.0    ! Value to be applied at (NF, NZ, N or NP)
+  ! integer :: N = 0       ! Index in QTM at which to apply V
+  ! integer :: NP = 0      ! Index of path-adjacent part of QTM at which to
+d174 2
+a175 2
+  ! integer :: NZ = 0      ! Vertical (probably zeta) index
+    integer :: NF = 0      ! Frequency subscript
+d291 1
+a291 1
+          to(n) = value_1D_p_t(v=from(i)%v(j)%v, n=from(i)%v(j)%np, p=i )
+d293 1
+a293 1
+          to(n) = value_1D_p_t(v=from(i)%v(j)%v, n=from(i)%v(j)%n, p=i )
+d305 1
+a305 1
+    dot = dot_product ( vector(list%v(:list%n)%n), list%v(:list%n)%v )
+d502 1
+a502 1
+      eta(i)%v%n = n_basis + 1 - eta(i)%v%n
+d510 1
+a510 1
+       "$Id: Indexed_Values_m.f90,v 2.12 2017/03/11 00:47:23 vsnyder Exp $"
+d520 4
+@
+
+
+2.12
+log
+@Add more comments about NP component
+@
+text
+@d303 7
+a309 1
+    dot = sum ( vector(list%v(:list%n)%n) * list%v(:list%n)%v )
+d510 1
+a510 1
+       "$Id: Indexed_Values_m.f90,v 2.11 2017/02/07 03:48:40 vsnyder Exp $"
+d520 3
+@
+
+
+2.11
+log
+@Add Invert_1D_List_Index
+@
+text
+@d81 1
+a81 1
+  ! an array of profiles adjacent to an integration path.
+d86 4
+a89 1
+                           ! apply V
+d146 4
+a149 1
+                           ! apply V
+d170 4
+a173 1
+                           ! apply V
+d504 1
+a504 1
+       "$Id: Indexed_Values_m.f90,v 2.10 2017/02/04 02:06:41 vsnyder Exp $"
+d514 3
+@
+
+
+2.10
+log
+@Add Dot_Product.  Make the list argument of some dumps polymorphic so
+it will work with extensions (but it only dumps the parent part).
+@
+text
+@d255 4
+d480 11
+d495 1
+a495 1
+       "$Id: Indexed_Values_m.f90,v 2.9 2017/01/21 01:59:53 vsnyder Exp $"
+d505 4
+@
+
+
+2.9
+log
+@Add Dump_Value_3D_List
+@
+text
+@d218 4
+d286 7
+d297 1
+a297 1
+    type(value_1D_list_t), intent(in) :: Value(:)
+d307 1
+a307 1
+    type(value_1D_p_t), intent(in) :: Value(:)
+d317 1
+a317 1
+    type(value_2D_list_t), intent(in) :: Value(:)
+d327 1
+a327 1
+    type(value_3D_list_t), intent(in) :: Value(:)
+d330 1
+a330 1
+    include "Dump_Value_2D_List.f9h" ! Yeah, it works here too
+d480 1
+a480 1
+       "$Id: Indexed_Values_m.f90,v 2.8 2017/01/14 01:46:12 vsnyder Exp $"
+d490 3
+@
+
+
+2.8
+log
+@Add List of Lists, add Format argument to dumps
+@
+text
+@d224 2
+d312 10
+d469 1
+a469 1
+       "$Id: Indexed_Values_m.f90,v 2.7 2016/12/15 18:45:09 vsnyder Exp $"
+d479 3
+@
+
+
+2.7
+log
+@Move argument declarations from includes to Indexed_Values
+@
+text
+@d43 9
+d112 1
+a112 1
+    integer :: N = 4       ! Number of useful elements of V Value_QTM_2D_t
+d179 35
+d227 11
+a237 16
+    module procedure Interpolate_1D_List
+!     module procedure Interpolate_1D_List_d, Interpolate_1D_List_s
+    module procedure Interpolate_1D_P
+!     module procedure Interpolate_1D_P_d, Interpolate_1D_P_s
+    module procedure Interpolate_QTM_1D_List
+!     module procedure Interpolate_QTM_1D_List_d, Interpolate_QTM_1D_List_s
+    module procedure Interpolate_2D_List
+!     module procedure Interpolate_2D_List_d, Interpolate_2D_List_s
+    module procedure Interpolate_2D_P
+!     module procedure Interpolate_2D_P_d, Interpolate_2D_P_s
+    module procedure Interpolate_QTM_2D_List
+!     module procedure Interpolate_QTM_2D_List_d, Interpolate_QTM_2D_List_s
+    module procedure Interpolate_3D_List
+!     module procedure Interpolate_3D_List_d, Interpolate_3D_List_s
+    module procedure Interpolate_QTM_3D_List
+!     module procedure Interpolate_QTM_3D_List_d, Interpolate_QTM_3D_List_s
+d280 2
+a281 1
+  subroutine Dump_Value_1D_List ( Value, Name )
+d286 1
+d290 2
+a291 1
+  subroutine Dump_Value_1D_p_List ( Value, Name )
+d296 1
+d300 2
+a301 1
+  subroutine Dump_Value_2D_List ( Value, Name )
+d306 1
+d360 9
+d396 9
+d435 9
+d457 1
+a457 1
+       "$Id: Indexed_Values_m.f90,v 2.6 2016/12/03 02:43:46 vsnyder Exp $"
+d467 3
+@
+
+
+2.6
+log
+@Add Convert_QTM_1D_to_P
+@
+text
+@d178 2
+d243 3
+d251 3
+d257 8
+d385 1
+a385 1
+       "$Id: Indexed_Values_m.f90,v 2.5 2016/12/02 01:58:44 vsnyder Exp $"
+d395 3
+@
+
+
+2.5
+log
+@Move argument declarations here from include files.  Add 2D P interpolator.
+Add Dump_Value_1D_p_List.
+@
+text
+@d170 4
+d216 23
+d369 1
+a369 1
+       "$Id: Indexed_Values_m.f90,v 2.4 2016/11/29 00:28:54 vsnyder Exp $"
+d379 4
+@
+
+
+2.4
+log
+@Add interpolators
+@
+text
+@d35 12
+d56 1
+a56 1
+  type :: Value_1D_p_t ! ( RK )
+d64 1
+a64 1
+  type :: Value_1D_List_t ! ( RK )
+d83 1
+a83 1
+  type :: Value_QTM_1D_List_t ! ( RK )
+d101 1
+a101 1
+  type :: Value_2D_List_t ! ( RK )
+d120 1
+a120 1
+  type :: Value_3D_List_t ! ( RK )
+d141 1
+a141 1
+  type :: Value_QTM_2D_List_t ! ( RK )
+d163 1
+a163 1
+  type :: Value_QTM_3D_List_t ! ( RK )
+d171 1
+a171 1
+    module procedure Dump_Value_1D_List
+d173 1
+d181 2
+d187 15
+d217 46
+d281 9
+d311 27
+d342 1
+a342 1
+       "$Id: Indexed_Values_m.f90,v 2.3 2016/11/23 21:32:59 vsnyder Exp $"
+d352 3
+@
+
+
+2.3
+log
+@Add Value_3D_*, Dump
+@
+text
+@d31 5
+d43 8
+d91 1
+a91 1
+    integer :: N = 4       ! Number of useful elements of V
+d163 11
+d187 39
+d230 1
+a230 1
+       "$Id: Indexed_Values_m.f90,v 2.2 2016/11/23 20:07:43 vsnyder Exp $"
+d240 3
+@
+
+
+2.2
+log
+@Add Dump_Value_1D_List
+@
+text
+@d83 19
+d167 1
+a167 1
+       "$Id: Indexed_Values_m.f90,v 2.1 2016/11/23 00:05:48 vsnyder Exp $"
+d177 3
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d126 5
+d133 1
+a133 1
+       "$RCSfile: Path_Representation_m.f90,v $"
+d139 5
+d148 1
+a148 1
+       "$Id: Path_Representation_m.f90,v 2.7 2016/11/12 01:32:23 vsnyder Exp $"
+d157 4
+a160 1
+! $Log: $
+@
+

@@ -1,0 +1,106 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.14
+	cfm-single-freq-0-1:1.1.0.12
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.10
+	mus-emls-1-70:1.1.0.8
+	rel-1-0-englocks-work:1.1.0.6
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2009.11.18.00.07.11;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Bodies for Symm_Tri
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! subroutine Solve_Factored_Symm_Tri_a ( H, D, U, Z, B )
+
+    ! Solve the system A b = L U b = z, where A has been factored as L U,
+    ! and its factors are represented by H, D, and U.  Solve with
+    ! multiple RHS vectors.
+
+    real(rk), intent(in) :: H(:)  ! (1:n-1) Subdiagonal of L
+    real(rk), intent(in) :: D(:)  ! (1:n) Inverse of diagonal of L
+    real(rk), intent(in) :: U(:)  ! (1:n-2) Superdiagonal of U
+                                  ! Diagonal of U is 1
+    real(rk), intent(in) :: Z(:,:)  ! (1:n) RHS
+    real(rk), intent(out) :: B(:,:) ! (1:n) Solution
+
+    real(rk) :: Y(size(d)-1)
+
+    integer :: K, L, N
+
+    n = size(d)
+
+    do l = 1, size(b,2)
+      ! Solve L y = z
+      y(1) = z(1,l) * d(1)
+      do k = 2, n-1
+        y(k) = ( z(k,l) - h(k-1) * y(k-1) ) * d(k)
+      end do
+
+      ! Solve U b = y
+      b(n,l) = ( z(n,l) - h(n-1) * y(n-1) ) * d(n) ! y(n), if we had computed it
+      do k = n-1, 1, -1
+        b(k,l) = y(k) - u(k) * b(k+1,l)
+      end do
+    end do
+
+! end subroutine Solve_Factored_Symm_Tri_a
+
+! $Id: $
+
+! $Log: $
+@

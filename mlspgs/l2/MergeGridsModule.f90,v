@@ -1,0 +1,4626 @@
+head	2.71;
+access;
+symbols
+	v5-02-NRT-19:2.71
+	v6-00:2.71
+	v5-02-NRT-18:2.71
+	v5-02:2.67
+	v5-01-NRT-17:2.71
+	v5-01-NRT-16:2.71
+	v5-01-NRT-15:2.71
+	v5-01-NRT-14:2.71
+	neuralnetworks-1-0:2.71.0.4
+	cfm-single-freq-0-1:2.71.0.2
+	v5-01:2.67
+	v5-00:2.67
+	v4-23-TA133:2.66.0.2
+	mus-emls-1-70:2.65.0.4
+	rel-1-0-englocks-work:2.65.0.2
+	VUMLS1-00:2.61
+	VPL1-00:2.61
+	V4-22-NRT-08:2.61
+	VAM1-00:2.60
+	V4-21:2.59.0.2
+	V4-13:2.59
+	V4-12:2.57
+	V4-11:2.56
+	V4-10:2.54
+	V3-43:2.44
+	M4-00:2.47
+	V3-41:2.44
+	V3-40-PlusGM57:2.44.0.2
+	V2-24-NRT-04:2.34
+	V3-33:2.41
+	V2-24:2.34
+	V3-31:2.41
+	V3-30-NRT-05:2.41
+	cfm-01-00:2.41
+	V3-30:2.41
+	V3-20:2.41
+	V3-10:2.38
+	V2-23-NRT-02:2.34
+	V2-23:2.34
+	V2-22-NRT-01:2.34
+	V2-22:2.34
+	V2-21:2.28
+	V2-20:2.27
+	V2-11:2.24
+	V2-10:2.24
+	V2-00:2.22
+	V1-51:2.14
+	V1-50:2.14
+	V1-45:2.14
+	V1-44:2.14
+	V1-43:2.14
+	V1-32:2.14
+	V1-31:2.14
+	V1-30:2.14
+	V1-13:2.9
+	V1-12:2.9
+	V1-11:2.9
+	V1-10:2.6
+	newfwm-feb03:2.6.0.2
+	V1-04:2.2
+	V1-03:2.2
+	V1-02:2.2
+	JointForwardModel:2.2.0.2
+	V1-00:2.2;
+locks; strict;
+comment	@# @;
+
+
+2.71
+date	2020.07.23.22.18.40;	author pwagner;	state Exp;
+branches;
+next	2.70;
+
+2.70
+date	2020.07.22.22.56.16;	author pwagner;	state Exp;
+branches;
+next	2.69;
+
+2.69
+date	2020.07.09.23.54.30;	author pwagner;	state Exp;
+branches;
+next	2.68;
+
+2.68
+date	2019.10.03.17.30.17;	author pwagner;	state Exp;
+branches;
+next	2.67;
+
+2.67
+date	2019.09.23.20.39.04;	author pwagner;	state Exp;
+branches;
+next	2.66;
+
+2.66
+date	2018.07.27.23.19.53;	author pwagner;	state Exp;
+branches;
+next	2.65;
+
+2.65
+date	2018.03.22.18.15.34;	author pwagner;	state Exp;
+branches;
+next	2.64;
+
+2.64
+date	2018.03.14.22.45.51;	author pwagner;	state Exp;
+branches;
+next	2.63;
+
+2.63
+date	2017.11.03.20.59.27;	author pwagner;	state Exp;
+branches;
+next	2.62;
+
+2.62
+date	2017.03.17.00.38.10;	author pwagner;	state Exp;
+branches;
+next	2.61;
+
+2.61
+date	2016.04.01.00.27.15;	author pwagner;	state Exp;
+branches;
+next	2.60;
+
+2.60
+date	2015.03.28.02.49.58;	author vsnyder;	state Exp;
+branches;
+next	2.59;
+
+2.59
+date	2014.09.05.01.15.02;	author vsnyder;	state Exp;
+branches;
+next	2.58;
+
+2.58
+date	2014.09.05.00.49.07;	author vsnyder;	state Exp;
+branches;
+next	2.57;
+
+2.57
+date	2014.06.20.20.30.24;	author pwagner;	state Exp;
+branches;
+next	2.56;
+
+2.56
+date	2014.06.11.20.03.28;	author pwagner;	state Exp;
+branches;
+next	2.55;
+
+2.55
+date	2014.06.04.18.38.07;	author pwagner;	state Exp;
+branches;
+next	2.54;
+
+2.54
+date	2014.03.01.03.10.56;	author vsnyder;	state Exp;
+branches;
+next	2.53;
+
+2.53
+date	2014.01.11.01.44.18;	author vsnyder;	state Exp;
+branches;
+next	2.52;
+
+2.52
+date	2014.01.09.00.30.24;	author pwagner;	state Exp;
+branches;
+next	2.51;
+
+2.51
+date	2013.12.12.02.11.26;	author vsnyder;	state Exp;
+branches;
+next	2.50;
+
+2.50
+date	2013.10.09.23.41.55;	author vsnyder;	state Exp;
+branches;
+next	2.49;
+
+2.49
+date	2013.08.31.02.29.12;	author vsnyder;	state Exp;
+branches;
+next	2.48;
+
+2.48
+date	2013.08.30.02.45.44;	author vsnyder;	state Exp;
+branches;
+next	2.47;
+
+2.47
+date	2012.08.16.18.01.04;	author pwagner;	state Exp;
+branches;
+next	2.46;
+
+2.46
+date	2012.06.07.22.48.43;	author pwagner;	state Exp;
+branches;
+next	2.45;
+
+2.45
+date	2012.05.08.17.49.54;	author pwagner;	state Exp;
+branches;
+next	2.44;
+
+2.44
+date	2011.05.09.18.23.23;	author pwagner;	state Exp;
+branches;
+next	2.43;
+
+2.43
+date	2011.04.27.17.40.22;	author pwagner;	state Exp;
+branches;
+next	2.42;
+
+2.42
+date	2011.04.20.16.51.55;	author pwagner;	state Exp;
+branches;
+next	2.41;
+
+2.41
+date	2009.12.14.18.37.50;	author pwagner;	state Exp;
+branches;
+next	2.40;
+
+2.40
+date	2009.11.05.00.29.06;	author pwagner;	state Exp;
+branches;
+next	2.39;
+
+2.39
+date	2009.10.26.17.12.09;	author pwagner;	state Exp;
+branches;
+next	2.38;
+
+2.38
+date	2009.06.23.18.46.18;	author pwagner;	state Exp;
+branches;
+next	2.37;
+
+2.37
+date	2008.06.06.22.52.53;	author pwagner;	state Exp;
+branches;
+next	2.36;
+
+2.36
+date	2007.12.07.01.15.01;	author pwagner;	state Exp;
+branches;
+next	2.35;
+
+2.35
+date	2007.10.24.00.17.22;	author pwagner;	state Exp;
+branches;
+next	2.34;
+
+2.34
+date	2007.08.17.00.33.59;	author pwagner;	state Exp;
+branches;
+next	2.33;
+
+2.33
+date	2007.07.04.01.44.15;	author vsnyder;	state Exp;
+branches;
+next	2.32;
+
+2.32
+date	2007.07.04.01.08.43;	author pwagner;	state Exp;
+branches;
+next	2.31;
+
+2.31
+date	2007.06.29.21.01.14;	author pwagner;	state Exp;
+branches;
+next	2.30;
+
+2.30
+date	2007.06.07.21.56.00;	author pwagner;	state Exp;
+branches;
+next	2.29;
+
+2.29
+date	2007.03.23.00.27.17;	author pwagner;	state Exp;
+branches;
+next	2.28;
+
+2.28
+date	2007.01.12.00.34.04;	author pwagner;	state Exp;
+branches;
+next	2.27;
+
+2.27
+date	2006.11.03.19.40.30;	author pwagner;	state Exp;
+branches;
+next	2.26;
+
+2.26
+date	2006.11.03.00.25.47;	author pwagner;	state Exp;
+branches;
+next	2.25;
+
+2.25
+date	2006.11.01.20.34.12;	author pwagner;	state Exp;
+branches;
+next	2.24;
+
+2.24
+date	2006.07.07.23.10.03;	author pwagner;	state Exp;
+branches;
+next	2.23;
+
+2.23
+date	2006.06.22.00.20.46;	author pwagner;	state Exp;
+branches;
+next	2.22;
+
+2.22
+date	2006.06.15.17.36.30;	author pwagner;	state Exp;
+branches;
+next	2.21;
+
+2.21
+date	2006.06.15.00.02.33;	author pwagner;	state Exp;
+branches;
+next	2.20;
+
+2.20
+date	2006.06.13.22.13.12;	author pwagner;	state Exp;
+branches;
+next	2.19;
+
+2.19
+date	2006.05.12.21.26.37;	author pwagner;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2006.05.09.16.42.02;	author pwagner;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2006.05.04.23.04.59;	author pwagner;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2006.02.11.00.14.08;	author pwagner;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2005.06.22.18.57.02;	author pwagner;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2003.08.15.23.58.20;	author vsnyder;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2003.06.06.01.06.59;	author livesey;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2003.05.09.02.13.05;	author livesey;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2003.05.09.01.55.14;	author livesey;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2003.04.04.00.08.26;	author livesey;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2003.02.28.02.33.28;	author livesey;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2003.02.28.02.25.50;	author livesey;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2003.02.19.19.15.13;	author pwagner;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2002.11.22.12.21.14;	author mjf;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2002.10.08.17.36.21;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2002.08.22.20.26.09;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2002.08.21.02.23.39;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2002.01.26.00.10.54;	author livesey;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2002.01.24.00.58.03;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.71
+log
+@AllowEmptyGrids is a new field in Concatenate; defaults to pre-v5.1 behavior
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module MergeGridsModule
+
+  ! This module contains code for merging operational gridded data with apriori
+  ! information.
+  ! Secondary operations may be performed directly on the gridded data--
+  ! e.g., calculating wmo tropopause pressures from eta-level temperatures
+  use Allocate_Deallocate, only: Allocate_Test, Byte_Size, Bytes, &
+    & Deallocate_Test, Test_Allocate, Test_Deallocate
+  use HighOutput, only: Dump, OutputNamedValue
+  use, Intrinsic :: ISO_C_Binding, only: C_Intptr_T, C_Loc
+  use MLSL2Options, only: MLSL2Message, L2cfNode
+  use MLSL2Timings, only: AddPhaseToPhaseNames
+  use MLSMessageModule, only: MLSMsg_Error, MLSMsg_Warning, DumpConfig
+  use Ncep_Dao, only: ReadGriddedData
+  use Output_M, only: Blanks, Output, OutputOptions, StampOptions
+  implicit none
+  private
+
+  public :: Concatenate, ConvertEtaToP, DeleteGriddedData, &
+    & MergeGrids, MergeOneGrid, WMOTropFromGrid
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: MergeGridsModule.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains ! ===================================  Public procedures  =====
+
+  ! -------------------------------------------------  MergeGrids  -----
+
+  subroutine MergeGrids ( root, L2GPDatabase, L2AUXDatabase, &
+    & GriddedDatabase, FileDatabase )
+
+    use DumpCommand_M, only: BooleanFromEmptyGrid, BooleanFromEmptySwath, &
+      & BooleanFromFormula, DumpCommand, ExecuteCommand, &
+      & MLSCase, MLSEndSelect, MLSSelect, MLSSelecting, Skip
+    use GriddedData, only: GriddedData_T, &
+      & AddGriddedDataToDatabase, DestroyGriddedData, Dump, DumpDBFootPrint
+    use Init_Tables_Module, only: F_Grid, S_Boolean, &
+      & S_Case, S_ChangeSettings, S_Concatenate, S_ConcatenateGrids, &
+      & S_ConvertEtaToP, S_Delete, S_Diff, S_Dump, &
+      & S_EndSelect, S_Execute, S_Gridded, S_IsFileAbsent,  &
+      & S_IsGridEmpty, S_Merge, S_MergeGrids, S_Reevaluate, S_Select, S_Skip, &
+      & S_Wmotrop, S_Wmotropfromgrids
+    use L2AUXData, only: L2auxData_T
+    use L2GPData, only: L2gpData_T
+    use MLSCommon, only: MLSFile_T
+    use MLSStringlists, only: SwitchDetail
+    use MoreTree, only: Get_Label_And_Spec, Get_Spec_Id
+    use Next_Tree_Node_M, only: Next_Tree_Node, Next_Tree_Node_State
+    use ReadAPriori, only: ProcessOneAprioriFile
+    use Trace_M, only: Trace_Begin, Trace_End
+    use Tree, only: Nsons, Subtree, Decorate, Decoration
+    use Toggles, only: Gen, Switches, Toggle
+
+    integer, intent(in) :: ROOT         ! Tree root
+    type (l2gpdata_t), dimension(:), pointer :: L2GPDatabase
+    type (L2AUXData_T), dimension(:), pointer :: L2auxDatabase
+    type (GriddedData_T), dimension(:), pointer :: GriddedDatabase 
+    type (MLSFile_T), dimension(:), pointer ::     FileDatabase
+
+    ! Local variables
+    type (GriddedData_T), pointer :: Grid
+    integer :: GSON
+    integer :: J                        ! Loop counter
+    integer :: KEY                      ! Another node
+    integer :: LastAprioriPCF = 1
+    integer :: LastClimPCF    = 1
+    integer :: LastDAOPCF     = 1
+    integer :: LastGEOS5PCF   = 1
+    integer :: LastHeightPCF  = 1
+    integer :: LastNCEPPCF    = 1
+    integer :: Me = -1                  ! String index for trace
+    integer :: NAME                     ! Index into string table
+    integer :: SON                      ! Tree node
+    type(next_tree_node_state) :: State ! of tree traverser
+    integer :: Value
+    logical :: verbose
+    logical :: verboser
+
+    ! excutable code
+    call trace_begin ( me, "MergeGrids", root, cond=toggle(gen) )
+
+    verbose = ( switchDetail(switches, 'grid' ) > -1 )
+    verboser = ( switchDetail(switches, 'grid' ) > 0 )
+    
+    do 
+      son = next_tree_node ( root, state )
+      if ( son == 0 ) exit
+      call get_label_and_spec ( son, name, key )
+      L2CFNODE = key
+      if ( MLSSelecting .and. &
+        & .not. any( get_spec_id(key) == (/ s_endselect, s_select, s_case /) ) ) cycle
+
+      select case ( get_spec_id(key) )
+      case ( s_Boolean )
+        call decorate ( key,  BooleanFromFormula ( name, key ) )
+      case ( s_select ) ! ============ Start of select .. case =========
+        ! We'll start seeking a matching case
+        call MLSSelect (key)
+      case ( s_case ) ! ================ seeking matching case =========
+        ! We'll continue seeking a match unless the case is TRUE
+        call MLSCase (key)
+      case ( s_endSelect ) ! =========== End of select .. case =========
+        ! We'done with seeking a match
+        call MLSEndSelect (key)
+      case ( s_changeSettings ) ! ===============================  changeSettings ==
+        ! Change settings for this phase
+        call addPhaseToPhaseNames ( 0, key )
+        ! How verbose must we be to Dump the new settings?
+        if ( .not. verboser ) cycle
+        call Dump( OutputOptions )
+        call Dump( StampOptions )
+        call DumpConfig
+      case ( s_concatenate )
+        call decorate ( key, AddgriddedDataToDatabase ( griddedDataBase, &
+          & Concatenate ( key, griddedDataBase ) ) )
+        if ( DumpDBFootPrint ) call Dump ( griddedDataBase, Details=-4 )
+      case ( s_ConvertEtaToP )
+        call decorate ( key, AddgriddedDataToDatabase ( griddedDataBase, &
+          & ConvertEtaToP ( key, griddedDataBase ) ) )
+        if ( DumpDBFootPrint ) call Dump ( griddedDataBase, Details=-4 )
+      case ( s_delete )
+        call DeleteGriddedData ( key, griddedDatabase )
+        if ( DumpDBFootPrint ) call Dump ( griddedDataBase, Details=-4 )
+      case ( s_diff, s_dump )
+        call dumpCommand ( key, griddedDataBase=griddedDataBase )
+      case ( s_execute ) ! ======================== ExecuteCommand ==========
+        call ExecuteCommand ( key )
+      case ( s_Gridded )
+        call processOneAprioriFile ( key, L2GPDatabase, L2auxDatabase, &
+          & GriddedDatabase, fileDataBase, &
+          & LastAprioriPCF , &
+          & LastClimPCF    , &
+          & LastDAOPCF     , &
+          & LastGEOS5PCF   , &
+          & LastHeightPCF  , &
+          & LastNCEPPCF     &
+            )
+        if ( DumpDBFootPrint ) call Dump ( griddedDataBase, Details=-4 )
+      case ( s_isFileAbsent )
+        call decorate ( key, BooleanFromEmptySwath ( key ) )
+      case ( s_isGridEmpty )
+        call decorate ( key, &
+          & BooleanFromEmptyGrid ( key, griddedDataBase ) )
+      case ( s_merge )
+        call decorate ( key, AddgriddedDataToDatabase ( griddedDataBase, &
+          & MergeOneGrid ( key, griddedDataBase ) ) )
+        if ( DumpDBFootPrint ) call Dump ( griddedDataBase, Details=-4 )
+      case ( s_concatenateGrids, s_mergeGrids )
+        ! We must get "grid" field from command
+        do j = 2, nsons(key)
+          gson = subtree(j, key)
+          select case ( decoration(subtree(1, gson) ) )
+          case ( f_grid )
+            value = decoration ( decoration ( subtree(2, gson) ) )
+          case default
+          end select
+        enddo
+        grid => griddedDataBase(value)
+        call DestroyGriddedData( grid )
+        if ( get_spec_id(key) == s_mergeGrids ) then
+          grid = MergeOneGrid ( key, griddedDataBase )
+        else
+          grid = Concatenate ( key, griddedDataBase )
+        endif
+        if ( verbose ) then
+          call output( 'The GriddedDatabase, ' )
+          call outputNamedValue( 'size(db)', size(griddedDataBase) )
+          call outputNamedValue( 'our index', value )
+          call outputNamedValue( 'is it empty?', grid%empty )
+        endif
+        if ( DumpDBFootPrint ) call Dump ( griddedDataBase, Details=-4 )
+      case ( s_reevaluate )
+        call decorate ( key,  BooleanFromFormula ( 0, key ) )
+      case ( s_skip ) ! ================================ Skip ==========
+        ! We'll skip the rest of the section if the Boolean cond'n is TRUE
+        if ( Skip(key) ) exit
+      case ( s_wmoTrop )
+        call decorate ( key, AddgriddedDataToDatabase ( griddedDataBase, &
+          & wmoTropFromGrid ( key, griddedDataBase ) ) )
+        if ( DumpDBFootPrint ) call Dump ( griddedDataBase, Details=-4 )
+      case ( s_wmoTropFromGrids )
+        ! We must get "grid" field from command
+        do j = 2, nsons(key)
+          gson = subtree(j, key)
+          select case ( decoration(subtree(1, gson) ) )
+          case ( f_grid )
+            value = decoration ( decoration ( subtree(2, gson) ) )
+          case default
+          end select
+        enddo
+        grid => griddedDataBase(value)
+        call DestroyGriddedData( grid )
+        grid = wmoTropFromGrid ( key, griddedDataBase )
+        if ( DumpDBFootPrint ) call Dump ( griddedDataBase, Details=-4 )
+      case default
+        ! Shouldn't get here if parser worked?
+        call MLSL2Message ( MLSMSG_Error, ModuleName, &
+          & 'Unrecognized command in MergeGrids section' )
+      end select
+    end do
+    call trace_end ( "MergeGrids", cond=toggle(gen) )    
+
+  end subroutine MergeGrids
+
+  ! ----------------------------------------------  ConvertEtaToP  -----
+  type (griddedData_T) function ConvertEtaToP ( root, griddedDataBase ) &
+    & result ( newGrid )
+    use GriddedData, only: GriddedData_T, Dump, NullifyGriddedData, &
+      & ConvertFromEtaLevelGrids
+    use Init_Tables_Module, only: F_A, F_B, F_Grid, F_VGrid, F_LogBasis
+    use MoreTree, only: Get_Boolean
+    use Toggles, only: Gen, Toggle
+    use Trace_M, only: Trace_Begin, Trace_End
+    use Tree, only: Nsons, Subtree, Decoration
+    use VGridsDatabase, only: VGrid_T, VGrids
+    ! use VGridsDatabase, only: VGrid_T, VGrids, ConvertVGrid
+    
+    integer, intent(in) :: ROOT         ! Tree node
+    type (griddedData_T), dimension(:), pointer :: griddedDataBase ! Database
+    ! This routine parses the l2cf instructions that
+    ! convert two gridded data on eta surfaces, one of them pressures,
+    ! to pressure surfaces
+
+    ! Local variables
+    logical :: ByLog                  ! Do logarithmic interpolation?
+    integer :: FIELD                  ! Another tree node
+    integer :: FIELD_INDEX            ! Type of tree node
+    integer :: I                      ! Loop counter
+    integer :: Me = -1                ! String index for trace
+    integer :: returnStatus
+    integer :: SON                    ! Tree node
+    integer :: VALUE                  ! Tree node
+
+    type (griddedData_T), pointer :: A ! Temperatures on eta surfaces
+    type (griddedData_T), pointer :: B ! Pressures on eta surfaces
+    type (griddedData_T), pointer :: V ! Grid with proper pressure surfaces
+    type (VGrid_T), pointer       :: VGrid ! Desired pressure surfaces
+
+    logical, parameter :: DEEBUG = .false.
+
+    ! Executable code
+    call trace_begin ( me, "ConvertEtaToP", root, cond=toggle(gen) )
+    nullify( a, b, v, vGrid )
+    call nullifyGriddedData ( newGrid ) ! for Sun's still useless compiler
+    ByLog = .false.
+
+    if ( DEEBUG ) then
+      call dump(griddedDataBase)
+    end if
+    ! Get the information from the l2cf    
+    ! Note that init_tables_module has insisted that we have all
+    ! arguments so we don't need a 'got' type arrangement
+    do i = 2, nsons(root)
+      son = subtree(i,root)
+      L2CFNODE = son
+      field = subtree(1,son)
+      if ( nsons(son) > 1 ) value = subtree(2,son)
+      field_index = decoration(field)
+      select case ( field_index )
+      case ( f_logBasis ) 
+        ByLog = get_boolean(son)
+      case ( f_a ) 
+        a => griddedDataBase ( decoration ( decoration ( value ) ) )
+        ! Did we defer reading a?
+        if ( a%empty .and. a%deferReading ) then
+          call readGriddedData ( a%sourceFileName, son, a%description, &
+            & a%verticalCoordinate, a, returnStatus, &
+            & a%dimList, TRIM(a%fieldNames), a%missingValue )
+        endif
+      case ( f_b )
+        b => griddedDataBase ( decoration ( decoration ( value ) ) )
+        ! Did we defer reading b?
+        if ( b%empty .and. b%deferReading ) then
+          call readGriddedData ( b%sourceFileName, son, b%description, &
+            & b%verticalCoordinate, b, returnStatus, &
+            & b%dimList, TRIM(b%fieldNames), b%missingValue )
+        endif
+      case ( f_grid )
+        v => griddedDataBase ( decoration ( decoration ( value ) ) )
+        ! Did we fail reading v?
+        if ( .not. associated(v) ) &
+          & call MLSL2Message ( MLSMSG_Error, ModuleName, &
+          & 'The v (climatology?) grid for the conversion is not associated' )
+        ! Did we defer reading v?
+        if ( v%empty .and. v%deferReading ) then
+          call readGriddedData ( v%sourceFileName, son, v%description, &
+            & v%verticalCoordinate, v, returnStatus, &
+            & v%dimList, TRIM(v%fieldNames), v%missingValue )
+        endif
+        ! Did we succeed in reading v (at last?)
+        if ( v%empty )  call MLSL2Message ( MLSMSG_Error, ModuleName, &
+          & 'The v (climatology?) grid for the conversion is empty' )
+      case ( f_vgrid )
+        vGrid => VGrids ( decoration ( decoration ( value ) ) )
+        ! Did we fail reading v?
+        if ( .not. associated(vGrid) ) &
+          & call MLSL2Message ( MLSMSG_Error, ModuleName, &
+          & 'The vgrid for the conversion is not associated' )
+      end select
+    end do
+    if (  .not. associated(vGrid) .and.  .not. associated(v) ) then
+      call MLSL2Message ( MLSMSG_Error, ModuleName, &
+          & 'Either v or vgrid for the conversion must be specified' )
+    elseif ( DEEBUG ) then
+      call output( 'Have either v or vgrid', advance='yes' )
+    endif
+    if ( DEEBUG ) call output( 'Have T, P grids', advance='yes' )
+    newGrid%empty = .true.
+    if ( DEEBUG ) &
+      & call outputNamedValue( 'size(griddedDataBase)', size(griddedDataBase) )
+    if ( size(griddedDataBase) < 2 ) go to 9
+    if ( DEEBUG ) then
+      call output( 'About to check on a, b', advance='yes' )
+      call outputNamedValue( 'associated(a)', associated(a) )
+      call outputNamedValue( 'associated(b)', associated(b) )
+      call outputNamedValue( 'a%empty', a%empty )
+      call outputNamedValue( 'b%empty', b%empty )
+    endif
+    if ( a%empty .or. b%empty ) go to 9
+    newGrid%empty = .false.
+    if ( DEEBUG ) then
+      call output( 'a grid', advance='yes' )
+      call dump( a, details=0 )
+      call output( 'b grid', advance='yes' )
+      call dump( b, details=0 )
+      call output( 'v grid', advance='yes' )
+      call dump( v, details=0 )
+      call output( 'about to convert from eta level grids', advance='yes' )
+    endif
+    call ConvertFromEtaLevelGrids ( a, b, V, newGrid, VGrid, ByLog )
+    if ( DEEBUG ) call output( 'done converting from eta level grids', advance='yes' )
+    newGrid%sourceFileName      = a%sourceFileName
+    newGrid%quantityName        = a%quantityName
+    newGrid%description         = 'Converted Grids'
+    newGrid%units               = a%units
+    newGrid%verticalCoordinate  = v%verticalCoordinate
+    newGrid%missingValue        = a%missingValue
+9   call trace_end ( "ConvertEtaToP", cond=toggle(gen) )
+
+  end function ConvertEtaToP
+
+  ! ------------------------------------------------  Concatenate  -----
+  function Concatenate ( root, griddedDataBase ) result ( newGrid )
+    use GriddedData, only: GriddedData_T, Dump, &
+      & ConcatenateGriddedData, CopyGrid, DestroyGriddedData, NullifyGriddedData
+    use Init_Tables_Module, only: F_A, F_B, F_AllowEmptyGrids, F_DeleteGrids, &
+      & F_SourceGrid
+    use MLSStringlists, only: SwitchDetail
+    use MoreTree, only: Get_Boolean, Get_Field_Id
+    use Toggles, only: Gen, Switches, Toggle
+    use Trace_M, only: Trace_Begin, Trace_End
+    use Tree, only: Nsons, Subtree, Decoration
+    
+    integer, intent(in) :: ROOT         ! Tree node
+    type (griddedData_T), dimension(:), pointer :: griddedDataBase ! Database
+    type (griddedData_T), target :: newGrid
+    ! This routine parses the l2cf instructions that request
+    ! a grid concatenation, and then performs the concatenation
+
+    ! Local variables
+    type (griddedData_T), pointer :: A
+    logical :: ATLEASTONEGRID
+    type (griddedData_T), pointer :: B
+    integer :: db_index
+    logical, parameter            :: DEEBUG = .false.
+    logical :: deleteGrids
+    integer :: FIELD                  ! Another tree node
+    integer :: FIELD_INDEX            ! Type of tree node
+    integer :: GRIDS_NODE
+    integer :: I                      ! Loop counter
+    logical :: AllowEmptyGrids !  = .true. ! .false.
+    type (griddedData_T), target :: Intermediate
+    integer :: Me = -1                ! String index for trace
+    integer :: returnStatus
+    integer :: SON                    ! Tree node
+    integer :: VALUE                  ! Tree node
+    logical :: verbose
+    logical :: WEARETHEFIRST
+
+    ! Executable code
+    call trace_begin ( me, "Concatenate", root, cond=toggle(gen) )
+    call nullifyGriddedData ( newGrid ) ! for Sun's still useless compiler
+    call nullifyGriddedData ( Intermediate ) ! for Sun's still useless compiler
+    deleteGrids = .false.
+    verbose = ( switchDetail(switches, 'grid' ) > -1 )
+    AllowEmptyGrids = .false. ! Defaults to pre-v5.1 behavior
+
+    ! Get the information from the l2cf
+    grids_node = 0
+    do i = 2, nsons(root)
+      son = subtree(i,root)
+      L2CFNODE = son
+      field_Index = get_field_id(son)
+      if ( nsons(son) > 1 ) then
+        field = subtree(1,son)
+        value = subtree(2,son)
+      else
+        field = son ! Won't actually be used
+        ! fieldValue = son
+      end if
+      select case ( field_index )
+      case ( f_a ) 
+        a => griddedDataBase ( decoration ( decoration ( value ) ) )
+        ! Did we defer reading a?
+        if ( a%empty .and. a%deferReading ) then
+          call readGriddedData ( a%sourceFileName, son, a%description, &
+            & a%verticalCoordinate, a, returnStatus, &
+            & a%dimList, TRIM(a%fieldNames), a%missingValue )
+        endif
+      case ( f_b )
+        b => griddedDataBase ( decoration ( decoration ( value ) ) )
+        ! Did we defer reading b?
+        if ( b%empty .and. b%deferReading ) then
+          call readGriddedData ( b%sourceFileName, son, b%description, &
+            & b%verticalCoordinate, b, returnStatus, &
+            & b%dimList, TRIM(b%fieldNames), b%missingValue )
+        endif
+      case ( f_deleteGrids )
+        deleteGrids = get_boolean(son)
+      case ( f_sourceGrid )
+        grids_node = son
+      case ( F_AllowEmptyGrids )
+        AllowEmptyGrids = get_boolean(son)
+      end select
+    end do
+
+    ! Do the concatenation unless:
+    ! AllowEmptyGrids is FALSE
+    !    one or other is empty
+    ! AllowEmptyGrids is TRUE
+    !    all are empty
+    if ( grids_node > 0 ) then
+      ! Method:
+      ! At any step let the result of all prior steps be held in "Intermediate"
+      ! Then at each step concatenate the next gridded data with Intermediate
+      ! When done, copy Intermediate into result
+      ! 1st--check if any are empty; bail out if any or all are
+      newGrid%empty = .true.
+      atleastonegrid = .false.
+      do i=2, nsons(grids_node)
+        db_index = decoration(decoration(subtree(i, grids_node )))
+        b => griddedDataBase ( db_index )
+        ! Did we defer reading b?
+        if ( b%empty .and. b%deferReading ) then
+          call readGriddedData ( b%sourceFileName, grids_node, b%description, &
+            & b%verticalCoordinate, b, returnStatus, &
+            & b%dimList, TRIM(b%fieldNames), b%missingValue )
+        endif
+        if ( b%empty .and. .not. AllowEmptyGrids ) then
+          call trace_end ( "Concatenate", cond=toggle(gen) )
+          return
+        endif
+        atleastonegrid = .true.
+      enddo
+      if ( .not. atleastonegrid ) return
+      newGrid%empty = .false.
+      wearethefirst = .true.
+      do i=2, nsons(grids_node)
+        db_index = decoration(decoration(subtree(i, grids_node )))
+        b => griddedDataBase ( db_index )
+        if ( b%empty ) then
+          if ( verbose ) print *, 'empty grid at i ', i, ' db_index: ', db_index
+          cycle
+        endif
+        if ( DEEBUG ) then
+          print *, ' '
+          print *, 'db_index: ', db_index
+          call dump( b, details=-1 )
+          call outputnamedValue( 'b%equivalentLatitude', b%equivalentLatitude )
+        endif
+        if ( wearethefirst ) then
+          call CopyGrid ( Intermediate, b )
+          wearethefirst = .false.
+        else
+          call ConcatenateGriddedData ( A, B, Intermediate )
+          if ( DEEBUG ) then
+            print *, ' '
+            print *, 'Result of intermediate concatenate'
+            call dump( Intermediate, details=-1 )
+          endif
+        endif
+        if ( deleteGrids ) call DestroyGriddedData ( B )
+        call CopyGrid ( newGrid, Intermediate )
+        a => newGrid
+      enddo
+      ! call CopyGrid ( newGrid, Intermediate )
+      call DestroyGriddedData ( Intermediate )
+      if ( DEEBUG ) call dump( newGrid, details=-1 )
+    elseif ( .not. a%empty .and. .not. b%empty ) then
+      call ConcatenateGriddedData ( A, B, newGrid )
+    else if ( a%empty ) then
+      ! Copy B into the result, of course, that may be empty too
+      ! in which case the result is empty, no problem!
+      call CopyGrid ( newGrid, b )
+    else
+      ! Otherwise a must be full, b empty
+      call CopyGrid ( newGrid, a )
+    end if
+    newGrid%sourceFileName      = a%sourceFileName
+    newGrid%quantityName        = a%quantityName
+    newGrid%description         = 'Concatenated grids'
+    newGrid%heightsUnits        = a%heightsUnits
+    newGrid%units               = a%units
+    newGrid%verticalCoordinate  = a%verticalCoordinate
+    newGrid%equivalentLatitude  = a%equivalentLatitude
+    newGrid%missingValue        = a%missingValue
+    call outputnamedValue( 'a%equivalentLatitude', a%equivalentLatitude )
+    call outputnamedValue( 'newGrid%equivalentLatitude', newGrid%equivalentLatitude )
+
+    call trace_end ( "Concatenate", cond=toggle(gen) )
+
+  end function Concatenate
+
+  ! ------------------------------------------  DeleteGriddedData  -----
+  subroutine DeleteGriddedData ( root, griddedDataBase )
+    use Tree, only: Nsons, Subtree, Decoration
+    use GriddedData, only: DestroygriddedData, GriddedData_T
+    use Init_Tables_Module, only: F_Grid
+    ! This routine deletes the grid indicated by the l2cf
+    integer, intent(in) :: ROOT         ! Tree node
+    type (griddedData_T), dimension(:), pointer :: GRIDDEDDATABASE ! Database
+    ! Local variables
+    type (griddedData_T), pointer :: GRID
+    integer :: FIELD                    ! Tree node
+    integer :: FIELD_INDEX              ! Tree node type
+    integer :: I                        ! Counter
+    integer :: SON                      ! Tree node
+    integer :: VALUE                    ! Tree node
+
+    ! Get the information from the l2cf    
+    ! Note that init_tables_module has insisted that we have all
+    ! arguments so we don't need a 'got' type arrangement
+    ! In this case there is only one argument anyway
+    do i = 2, nsons(root)
+      son = subtree(i,root)
+      L2CFNODE = son
+      field = subtree(1,son)
+      value = subtree(2,son)
+      field_index = decoration(field)
+      select case ( field_index )
+      case ( f_grid ) 
+        grid => griddedDataBase ( decoration ( decoration ( value ) ) )
+      end select
+    end do
+    call DestroyGriddedData ( grid )
+  end subroutine DeleteGriddedData
+
+  ! ----------------------------------------- MergeOneGrid
+  type (griddedData_T) function MergeOneGrid ( root, griddedDataBase ) &
+    & result ( newGrid )
+    use Dump_0, only: Dump
+    use Expr_M, only: Expr
+    use GriddedData, only: GriddedData_T, Rgr, V_Is_Pressure, &
+      & CopyGrid, Dump, NullifyGriddedData, &
+      & SetupNewGriddedData, SliceGriddedData, WrapGriddedData
+    use Init_Tables_Module, only: F_Climatology, F_Height, &
+      & F_Operational, F_Scale
+    use MLSKinds, only: R8
+    use HyperSlabs, only: EssentiallyEqual
+    use Toggles, only: Gen, Toggle
+    use Trace_M, only: Trace_Begin, Trace_End
+    use Tree, only: Nsons, Subtree, Decoration
+
+    integer, intent(in) :: ROOT         ! Tree node
+    type (griddedData_T), dimension(:), pointer :: griddedDataBase ! Database
+
+    ! This routine creates a new grid being a merge of two others.
+    ! The operational grid forms the bottom of the dataset
+    ! The climatology grid the top.  The result has the horizontal
+    ! coordinates to operational and the vertical coordiantes of climatology
+
+    ! Note! This routine is far from efficient. Not least because it
+    ! uses l3atascii_interp_field which isn't terribly efficient either.
+    ! But hey, this isn't a key part of the software when it comes
+    ! to a desire for speed (or at least it shouldn't be)
+
+    ! I'll need to think about missing data at some point.
+
+    ! Local parameters
+    real (r8), parameter :: SCALEHEIGHT = 16.0e3_r8 ! Approximate scale height / m
+
+    ! Local variables
+    integer(c_intptr_t) :: Addr         ! For tracing
+    integer :: DAY                      ! Loop counter
+    logical, parameter :: DEEBUG = .false.
+    integer :: FIELD                    ! Another tree node
+    integer :: FIELD_INDEX              ! Type of tree node
+    integer :: I                        ! Loop inductor
+    integer :: LAT                      ! Loop counter
+    integer :: LON                      ! Loop counter
+    integer :: LST                      ! Loop counter
+    integer :: Me = -1                  ! String index for trace
+    integer :: S                        ! Size in bytes of a deallocated field
+    integer :: SON                      ! Tree node
+    integer :: STATUS                   ! Flag from allocate
+    integer :: SURF                     ! Loop counter
+    integer :: SZA                      ! Loop counter
+    integer :: EXPRUNITS(2)             ! Units for expr
+    integer :: VALUE                    ! Value of tree node
+
+    real (r8) :: CLIWEIGHT              ! Climatological 'weight'
+    real (r8) :: HEIGHT                 ! Transition height
+    real (r8) :: OPWEIGHT               ! Operational 'weight'
+    real (r8) :: SCALE                  ! Transition scale
+    real (r8) :: TOTALWEIGHT            ! Total weight
+    real (r8) :: EXPRVALUES(2)          ! Value of expr
+    real (r8) :: ZTRANS                 ! Transition 'height'
+    real (r8) :: Z                      ! One 'height'
+    real (r8) :: Z1, Z2                 ! Range of transition region
+
+    real (r8) :: CLIVAL                ! One interpolated value
+    real (r8) :: OPVAL                 ! One interpolated value
+    real (rgr), pointer, dimension(:,:,:,:,:,:) :: CLIMAPPED
+    real (rgr), pointer, dimension(:,:,:,:,:,:) :: OPERMAPPED
+    real (r8), dimension(:), pointer :: MEANDATES ! Mean dates for new grid
+
+    type (griddedData_T), pointer :: CLIMATOLOGY => null()
+    type (griddedData_T), pointer :: OPERATIONAL => null()
+    integer :: numMissingClimatology
+    integer :: numMissingOperational
+
+    ! Executable code
+
+    call trace_begin ( me, "MergeOneGrid", root, cond=toggle(gen) )
+    call nullifyGriddedData ( newGrid ) ! for Sun's still useless compiler
+
+    ! Get the information from the l2cf    
+    ! Note that init_tables_module has insisted that we have all
+    ! arguments so we don't need a 'got' type arrangement
+    do i = 2, nsons(root)
+      son = subtree(i,root)
+      L2CFNODE = son
+      field = subtree(1,son)
+      value = subtree(2,son)
+      field_index = decoration(field)
+      select case ( field_index )
+      case ( f_operational ) 
+        operational => griddedDataBase ( decoration ( decoration ( value ) ) )
+      case ( f_climatology )
+        climatology => griddedDataBase ( decoration ( decoration ( value ) ) )
+      case ( f_height )
+        call expr ( value, exprUnits, exprValues )
+        height = exprValues(1)
+      case ( f_scale )
+        call expr ( value, exprUnits, exprValues )
+        scale = exprValues(1)
+      end select
+    end do
+
+    ! Think about cases where one or other grid is empty
+    if ( climatology%empty ) call MLSL2Message ( MLSMSG_Error, ModuleName, &
+      & 'The climatology grid for the merge is empty' )
+
+    if ( operational%empty ) then
+      call MLSL2Message ( MLSMSG_Warning, ModuleName, &
+      & 'The meteorology grid for the merge is empty' )
+      ! If no operational data, then just use climatology
+      call CopyGrid ( newGrid, climatology )
+      call finishUp ( done = .true. )
+      return
+    end if
+    call finishUp ( done = .false. )
+    ! Do some final sanity checks
+    if ( operational%verticalCoordinate /= v_is_pressure ) &
+      & call MLSL2Message ( MLSMSG_Error, ModuleName, &
+      & 'Operational grid not on pressure surfaces' )
+    if ( climatology%verticalCoordinate /= v_is_pressure ) &
+      & call MLSL2Message ( MLSMSG_Error, ModuleName, &
+      & 'Climatology grid not on pressure surfaces' )
+    !  if ( climatology%units /= operational%units ) &
+    !    & call MLSL2Message ( MLSMSG_Error, ModuleName, &
+    !    & 'The climatology and operational data describe different physical quantities' )
+    if ( climatology%equivalentLatitude .neqv. &
+      & operational%equivalentLatitude ) then
+      call output( 'Climatology', advance='yes' )
+      call dump( climatology )
+      call output( 'Meteorology', advance='yes' )
+      call dump( operational )
+      call outputNamedValue( 'Climatology%equivalentLatitude', Climatology%equivalentLatitude )
+      call outputNamedValue( 'operational%equivalentLatitude', operational%equivalentLatitude )
+      call outputNamedValue( '=?', &
+        & Climatology%equivalentLatitude .eqv. operational%equivalentLatitude )
+      call MLSL2Message ( MLSMSG_Error, ModuleName, &
+      & 'Climatology, operational data are mixed latitude/equivalent latitude.' )
+    endif
+    ! OK, now we're ready to go.
+    ! First we're going to 'wrap' the climatology to be sure that we can
+    ! interpolate it in longitude.  The chances are that it has no longitudinal
+    ! variation anyway, so this won't actually do anything
+    call WrapGriddedData ( climatology )
+    ! Create the result.  It has the same vertical coordinates as climatology
+    ! But the same horizontal coordinates as operational.
+    call SetupNewGriddedData ( newGrid, source=operational, &
+      & noHeights=climatology%noHeights )
+    ! Setup the rest of the quantity
+    newGrid%sourceFileName = 'Result of merge'
+    newGrid%quantityName   = 'Result of merge'
+    newGrid%description    = 'Result of merge'
+    newGrid%units          = climatology%units
+    newGrid%verticalCoordinate = v_is_pressure
+    newGrid%equivalentLatitude = climatology%equivalentLatitude
+    newGrid%heights = climatology%heights
+    newGrid%lats = operational%lats
+    newGrid%lons = operational%lons
+    newGrid%lsts = operational%lsts
+    newGrid%szas = operational%szas
+    newGrid%dateStarts = operational%dateStarts
+    newGrid%dateEnds = operational%dateEnds
+
+    ! Get the 'mean' dates for the result
+    nullify ( meanDates )
+    call Allocate_test ( meanDates, newGrid%noDates, 'meanDates', ModuleName )
+    meanDates = ( newGrid%dateStarts + newGrid%dateEnds ) / 2.0
+
+    ! call outputNamedValue( 'Bytes before allocating 2 temp arrays', NoBytesAllocated )
+    ! Now create two fields the same shape as the new field that contain
+    ! the operational and climatological data interpolated to our new locations.
+    ! Whoa! Now you need a total of 3x the size of the merged data set!
+    ! No wonder we are running low on memory!
+    allocate ( operMapped ( &
+      & newGrid%noHeights, newGrid%noLats, newGrid%noLons, &
+      & newGrid%noLsts, newGrid%noSzas, 1 ), stat=status )
+      !& newGrid%noLsts, newGrid%noSzas, newGrid%noDates ), stat=status )
+    ! if ( status /= 0 ) call MLSL2Message ( MLSMSG_Error, ModuleName, &
+    !  & MLSMSG_Allocate//'operMapped' )
+    addr = 0
+    if ( status == 0 ) then
+      if ( size(operMapped) > 0 ) addr = transfer(c_loc(operMapped(1,1,1,1,1,1)), addr)
+    end if
+    call test_allocate ( status, moduleName, 'operMapped', (/1,1,1,1,1,1/), &
+      & (/ newGrid%noHeights, newGrid%noLats, newGrid%noLons, &
+      & newGrid%noLsts, newGrid%noSzas, 1 /), bytes(operMapped), address=addr )
+    allocate ( cliMapped ( &
+      & newGrid%noHeights, newGrid%noLats, newGrid%noLons, &
+      & newGrid%noLsts, newGrid%noSzas, 1 ), stat=status )
+      !& newGrid%noLsts, newGrid%noSzas, newGrid%noDates ), stat=status )
+    ! if ( status /= 0 ) call MLSL2Message ( MLSMSG_Error, ModuleName, &
+    !   & MLSMSG_Allocate//'operMapped' )
+    if ( status == 0 ) then
+      if ( size(cliMapped) > 0 ) addr = transfer(c_loc(cliMapped(1,1,1,1,1,1)), addr)
+    end if
+    call test_allocate ( status, moduleName, 'cliMapped', (/1,1,1,1,1,1/), &
+      & (/ newGrid%noHeights, newGrid%noLats, newGrid%noLons, &
+      & newGrid%noLsts, newGrid%noSzas, 1 /), bytes(cliMapped), address=addr )
+    ! call outputNamedValue( 'Bytes after allocating 2 temp arrays', NoBytesAllocated )
+
+    if ( DEEBUG ) then
+      call dump ( operMapped(:,1:10,1,:,1,1), &
+          & '    operational field values (1st longitude) =' , &
+          & FillValue=newGrid%MissingValue )
+      call dump ( cliMapped(:,1:10,1,:,1,1), &
+          & '    climatology field values (1st longitude) =' , &
+          & FillValue=newGrid%MissingValue )
+    endif
+    zTrans = scaleHeight * ( 3.0 - log10 ( height ) )
+    z1 = zTrans - scale/2.0
+    z2 = zTrans + scale/2.0
+
+    ! Now we're going to fill in the rest of the field
+    do day = 1, newGrid%noDates
+      numMissingClimatology = 0
+      numMissingOperational = 0
+      call SliceGriddedData ( operational, operMapped, &
+        & newGrid%heights, newGrid%lats, newGrid%lons, newGrid%lsts, &
+        & newGrid%szas, meanDates(day:day), missingValue=newGrid%missingValue )
+      call SliceGriddedData ( climatology, cliMapped, &
+        & newGrid%heights, newGrid%lats, newGrid%lons, newGrid%lsts, &
+        & newGrid%szas, meanDates(day:day), missingValue=newGrid%missingValue )
+      do sza = 1, newGrid%noSzas
+        do lst = 1, newGrid%noLsts
+          do lon = 1, newGrid%noLons
+            do lat = 1, newGrid%noLats
+              do surf = 1, newGrid%noHeights
+                ! Get the values
+                ! cliVal = cliMapped ( surf, lat, lon, lst, sza, day )
+                ! opVal = operMapped ( surf, lat, lon, lst, sza, day )
+                cliVal = cliMapped ( surf, lat, lon, lst, sza, 1 )
+                opVal = operMapped ( surf, lat, lon, lst, sza, 1 )
+                ! Weight them by height
+                z = scaleHeight * ( 3.0 - log10 ( newGrid%heights(surf) ) )
+                if ( scale /= 0.0 ) then
+                  cliWeight = ( z - z1 ) / ( z2-z1 )
+                  opWeight = 1.0 - cliWeight
+                end if
+
+                cliWeight = min ( max ( cliWeight, 0.0_r8 ), 1.0_r8 )
+                opWeight = min ( max ( opWeight, 0.0_r8 ), 1.0_r8 )
+
+                ! Check for bad data in operational dataset
+                if ( EssentiallyEqual ( opVal, real(newGrid%missingValue, r8) ) ) then
+                  opWeight = 0.0
+                  numMissingOperational = numMissingOperational + 1
+                endif
+
+                ! Check for bad data in the climatology
+                if ( EssentiallyEqual ( cliVal, real(newGrid%missingValue, r8) ) ) then
+                  call MLSL2Message ( MLSMSG_Error, ModuleName, &
+                  & 'There is a bad data point in the climatology field' )
+                  numMissingClimatology = numMissingClimatology + 1
+                endif
+
+                totalWeight = cliWeight + opWeight
+                if ( totalWeight == 0.0 ) then
+                  ! Presumably was in the region where operational was supposed
+                  ! to dominate, but it's bad, so switch to a priori
+                  cliWeight = 1.0
+                  totalWeight = 1.0
+                end if
+
+                ! OK, store this value
+                newGrid%field ( surf, lat, lon, lst, sza, day ) = &
+                  & ( cliWeight*cliVal + opWeight*opVal ) / totalWeight
+              end do
+            end do
+          end do
+        end do
+      end do
+      if ( DEEBUG ) then
+        call outputNamedValue( 'day ', day )
+        call outputNamedValue( 'numMissingClimatology ', numMissingClimatology )
+        call outputNamedValue( 'numMissingOperational ', numMissingOperational )
+        if ( day > 1 ) cycle
+        call dump ( newGrid%field(:,1:10,1:10,1,1,day), &
+          & '    gridded field values (1st solar time) =' , &
+          & FillValue=newGrid%MissingValue )
+        call dump ( newGrid%field(:,1:10,1,:,1,day), &
+          & '    gridded field values (1st longitude) =' , &
+          & FillValue=newGrid%MissingValue )
+        call dump ( newGrid%field(:,1,1:10,:,1,day), &
+          & '    gridded field values (1st latitude) =' )
+        call dump ( newGrid%field(1,1:10,1:10,:,1,day), &
+          & '    gridded field values (1st height) =' , &
+          & FillValue=newGrid%MissingValue )
+      endif
+    end do
+
+    ! Tidy up
+    ! Oh, sure, you're careful to account for the memory eaten up by meanDates,
+    ! but what about the two biggies???
+    call Deallocate_test ( meanDates, 'meanDates', ModuleName )
+    s = byte_size(cliMapped)
+    addr = 0
+    if ( s > 0 ) addr = transfer(c_loc(cliMapped(1,1,1,1,1,1)), addr)
+    deallocate ( cliMapped, stat=status )
+    call test_deallocate ( status, moduleName, 'climapped', s, address=addr )
+    s = byte_size(operMapped)
+    if ( s > 0 ) addr = transfer(c_loc(operMapped(1,1,1,1,1,1)), addr)
+    deallocate ( operMapped, stat=status )
+    call test_deallocate ( status, moduleName, 'opermapped', s, address=addr )
+    call finishUp ( done = .true. )
+
+  contains
+
+    subroutine FinishUp ( done )
+      logical, optional, intent(in) :: done
+      logical :: myDone
+      myDone = .false.
+      if ( present(done) ) myDone = done
+      if ( DEEBUG ) then
+        call output( 'height: ', advance='no' )
+        call output( height, advance='yes' )
+        call output( 'scale: ', advance='no' )
+        call output( scale, advance='yes' )
+        call output( 'operational%verticalCoordinate: ', advance='no' )
+        call output( operational%verticalCoordinate, advance='yes' )
+        call dump( operational%field( :, 1, 1, 1, 1, 1 ), 'op T' )
+        call dump( operational%heights, 'op h' )
+        call blanks(3)
+        call output( v_is_pressure, advance='yes' )
+        call output( 'climatology%verticalCoordinate: ', advance='no' )
+        call output( climatology%verticalCoordinate, advance='yes' )
+        call dump( climatology%field( :, 1, 1, 1, 1, 1 ), 'cl T' )
+        call dump( climatology%heights, 'cl h' )
+        call blanks(3)
+        call output( v_is_pressure, advance='yes' )
+      end if
+      if ( myDone ) call trace_end ( "MergeOneGrid", cond=toggle(gen) )
+    end subroutine FinishUp
+
+  end function MergeOneGrid
+
+  ! --------------------------------------------  wmoTropFromGrid  -----
+  type (griddedData_T) function wmoTropFromGrid ( root, griddedDataBase ) &
+    & result ( newGrid )
+    use Dump_0, only: Dump
+    use GriddedData, only: GriddedData_T, Dump, V_Is_Pressure, V_Is_Eta, &
+      & NullifyGriddedData, &
+      & DoGriddedDataMatch, &
+      & SetupnewGriddedData
+    use Init_Tables_Module, only: F_A, F_B, F_Grid
+    use MLSCommon, only: DefaultundefinedValue
+    use MLSFillValues, only: IsfillValue, RemovefillValues
+    use MLSStats1, only: MLSMin, MLSMax, MLSMean
+    use MLSStrings, only: Lowercase
+    use Toggles, only: Gen, Toggle
+    use Trace_M, only: Trace_Begin, Trace_End
+    use Tree, only: Nsons, Subtree, Decoration
+    use WMOTropopause, only: ExtraTropics, Twmo
+    ! Implements the algorithm published in GRL
+
+    integer, intent(in) :: ROOT         ! Tree node
+    type (griddedData_T), dimension(:), pointer :: griddedDataBase ! Database
+
+    ! This routine creates a new gridded data by finding wmo Tropopause
+    ! pressure levels among the temperatures of another gridded data,
+    ! possibly using the vertical coords of that gridded data
+    ! (if entered via the "grid=" field) 
+    ! or else using the corresponding pressures stored
+    ! as the field values of a second gridded data
+    ! (if entered via "a=first_gridded, b=second_gridded")
+    ! The new gridded has only one "level" per horizontal grid point
+    ! with tropopause pressures stored in the values field
+    
+    ! We'll assume some things:
+    ! (1) verticalCoordinate is either pressure or eta
+    ! (2) If Pressures grid supplied, grids match
+    !     and Pressures units either Pa or hPa
+    
+    ! Local variables
+    integer :: field
+    integer :: field_index
+    real, dimension(:), pointer :: h ! hPa
+    integer :: i
+    integer :: iDate
+    integer :: iLst
+    integer :: invert
+    integer :: iSza
+    integer :: lat
+    integer :: lon
+    integer :: Me = -1               ! String index for trace
+    real :: missingValue
+    integer :: nLev
+    integer :: nValid
+    real, dimension(:), pointer :: p ! Pa
+    real, parameter :: pliml = 65.*100 ! in Pa
+    real, parameter :: plimlex = 65.*100 ! in Pa
+    real, parameter :: plimu = 550.*100 ! in Pa
+    type (griddedData_T), pointer :: Placeholder    => null()
+    type (griddedData_T), pointer :: Pressures    => null()
+    integer :: returnStatus
+    real :: scale
+    integer :: son
+    real, dimension(:), pointer :: t
+    type (griddedData_T), pointer :: Temperatures => null()
+    real :: trp
+    integer :: value
+    real, dimension(:), pointer :: xyTemp, xyPress
+    logical, parameter :: DEEBUG = .false.
+    integer, parameter :: hPa2Pa  = 100 ! Factor convert hPa to Pa
+
+    ! Executable code
+    call trace_begin ( me, "wmoTropFromGrid", root, cond=toggle(gen) )
+    nullify( xyTemp, xyPress, h, p, t )
+    call nullifyGriddedData ( newGrid ) ! for Sun's still useless compiler
+    MISSINGVALUE = REAL( DEFAULTUNDEFINEDVALUE )
+
+    ! Get the information from the l2cf    
+    ! Note that init_tables_module has insisted that we have all
+    ! arguments so we don't need a 'got' type arrangement
+    do i = 2, nsons(root)
+      son = subtree(i,root)
+      L2CFNODE = son
+      field = subtree(1,son)
+      value = subtree(2,son)
+      field_index = decoration(field)
+      select case ( field_index )
+      case ( f_a ) 
+        Temperatures => griddedDataBase ( decoration ( decoration ( value ) ) )
+        ! Did we defer reading b?
+        if ( Temperatures%empty .and. Temperatures%deferReading ) then
+          call readGriddedData ( Temperatures%sourceFileName, son, Temperatures%description, &
+            & Temperatures%verticalCoordinate, Temperatures, returnStatus, &
+            & Temperatures%dimList, TRIM(Temperatures%fieldNames), Temperatures%missingValue )
+        endif
+      case ( f_b ) 
+        Pressures    => griddedDataBase ( decoration ( decoration ( value ) ) )
+        if ( Pressures%empty .and. Pressures%deferReading ) then
+          call readGriddedData ( Pressures%sourceFileName, son, Pressures%description, &
+            & Pressures%verticalCoordinate, Pressures, returnStatus, &
+            & Pressures%dimList, TRIM(Pressures%fieldNames), Pressures%missingValue )
+        endif
+      case ( f_grid ) 
+        Temperatures => griddedDataBase ( decoration ( decoration ( value ) ) )
+      end select
+    end do
+
+    if ( associated(Temperatures) .and. associated(Pressures) ) then
+    ! What if you reversed the sense of a (Temperatures) and b (Pressures)?
+    ! We must switch them
+      if ( index( 'hpa,mb', lowercase(trim(Temperatures%units)) ) > 0 .and. &
+        &  index( 'hpa,mb', lowercase(trim(Pressures%units)) ) < 1 ) then
+        Placeholder  => Pressures
+        Pressures    => Temperatures
+        Temperatures => Placeholder
+      endif
+      if ( Temperatures%empty ) then
+        call MLSL2Message ( MLSMSG_Warning, moduleName, &
+          & 'Empty Temperatures grid for calculating wmo tropopause' )
+        call trace_end ( "wmoTropFromGrid", cond=toggle(gen) )
+        return
+      elseif ( Pressures%empty ) then
+        call MLSL2Message ( MLSMSG_Warning, moduleName, &
+          & 'Empty Pressures grid for calculating wmo tropopause' )
+        call trace_end ( "wmoTropFromGrid", cond=toggle(gen) )
+        return
+      endif
+    ! What if Temperatures and Pressures don't match
+      if ( .not. doGriddeddataMatch( Temperatures, Pressures ) ) then
+        call output( 'Vert. coords match? ', advance='no' )
+        call output( Temperatures%verticalCoordinate==Pressures%verticalcoordinate, &
+          & advance='yes' )
+        call output( 'starting dates match? ', advance='no' )
+        call output( all( Temperatures%DateStarts==Pressures%DateStarts ), &
+          & advance='yes' )
+        call output( 'ending dates match? ', advance='no' )
+        call output( all( Temperatures%DateEnds==Pressures%DateEnds ), &
+          & advance='yes' )
+        call output( 'Lsts match? ', advance='no' )
+        call output( all( Temperatures%Lsts==Pressures%Lsts ), &
+          & advance='yes' )
+        call output( 'Szas match? ', advance='no' )
+        call output( all( Temperatures%Szas==Pressures%Szas ), &
+          & advance='yes' )
+        call output( 'Num Heights match? ', advance='no' )
+        call output( Temperatures%noHeights==Pressures%noHeights, &
+          & advance='yes' )
+        call output( 'Heights match? ', advance='no' )
+        call output( all( Temperatures%Heights==Pressures%Heights ), &
+          & advance='yes' )
+        call output( 'Missing value match? ', advance='no' )
+        call output( Temperatures%missingValue==Pressures%missingValue, &
+          & advance='yes' )
+        call output( 'Heights units? ', advance='no' )
+        call output( Temperatures%heightsUnits==Pressures%heightsUnits, &
+          & advance='yes' )
+        call output( 'shapes match? ', advance='no' )
+        call output( all( shape(Temperatures%field)==shape(Pressures%field) ), &
+          & advance='yes' )
+        call output( 'Dumping Temperatures grid', advance='yes' )
+        call dump( Temperatures, details=0 )
+        call output( 'Dumping Pressures grid', advance='yes' )
+        call dump( Pressures, details=0 )
+        call MLSL2Message ( MLSMSG_Error, ModuleName, &
+        & 'Gridded T,P data must match to calculate wmo Tropopause' )
+      endif
+    endif
+    if ( DEEBUG ) then
+    call output( 'Temperatures grid', advance='yes' )
+    call dump( Temperatures, details=0 )
+    call output( 'Pressures grid', advance='yes' )
+    call dump( Pressures, details=0 )
+    call output('Max val', advance='no')
+    call output(mlsmax( Pressures%field(:,:,:,1,1,1), Pressures%missingValue ), advance='yes')
+    call output('Min val', advance='no')
+    call output(mlsmin( Pressures%field(:,:,:,1,1,1), Pressures%missingValue ), advance='yes')
+    call output('Mean val', advance='no')
+    call output(mlsmean( Pressures%field(:,:,:,1,1,1), Pressures%missingValue ), advance='yes')
+    endif
+    ! call outputNamedValue( 'Temperatures grid empty?', Temperatures%empty )
+    ! call outputNamedValue( 'Pressures grid empty?   ', Pressures%empty )
+    if ( .not. associated(Temperatures) ) then
+      call MLSL2Message ( MLSMSG_Warning, moduleName, &
+        & 'No associated Temperatures grid for calculating wmo tropopause' )
+      call trace_end ( "wmoTropFromGrid", cond=toggle(gen) )
+      return
+    endif
+    call SetupNewGriddedData ( newGrid, source=Temperatures, &
+      & noHeights=1, noDates=1 )
+    ! Setup the rest of the quantity
+    newGrid%sourceFileName     = 'Gridded Temperatures'
+    newGrid%quantityName       = 'wmo Tropopause'
+    newGrid%description        = 'wmo Tropopause'
+    newGrid%units              = 'hPa' ! If we want 'Pa', restore /100 below
+    newGrid%verticalCoordinate = v_is_pressure
+    newGrid%equivalentLatitude = Temperatures%equivalentLatitude
+    newGrid%heights            = missingValue ! Temperatures%missingValue
+    nlev = Temperatures%noHeights
+    if ( Temperatures%empty ) then
+      newGrid%empty = .true.
+      call MLSL2Message ( MLSMSG_Warning, moduleName, &
+        & 'Temperatures grid was empty' )
+      call trace_end ( "wmoTropFromGrid", cond=toggle(gen) )
+      return
+    elseif ( Pressures%empty ) then
+      newGrid%empty = .true.
+      call MLSL2Message ( MLSMSG_Warning, moduleName, &
+        & 'Pressures grid was empty' )
+      call trace_end ( "wmoTropFromGrid", cond=toggle(gen) )
+      return
+    endif
+    newGrid%lats               = Temperatures%lats
+    newGrid%lons               = Temperatures%lons
+    newGrid%lsts               = Temperatures%lsts
+    newGrid%szas               = Temperatures%szas
+    newGrid%dateEnds           = Temperatures%dateEnds(1)
+    newGrid%dateStarts         = Temperatures%dateStarts(1)
+    newGrid%missingValue       = MISSINGVALUE / hPa2Pa
+    newGrid%field              = MISSINGVALUE
+    ! call outputNamedValue( 'Temperatures grid empty?', Temperatures%empty )
+    ! call outputNamedValue( 'Pressures grid empty?   ', Pressures%empty )
+    if ( nlev < 2 ) then
+      call MLSL2Message ( MLSMSG_Warning, moduleName, &
+        & 'Too few levels on Temperatures grid for calculating wmo tropopause' )
+      call trace_end ( "wmoTropFromGrid", cond=toggle(gen) )
+      return
+    endif
+    ! Right now we can't read eta levels, only pressures
+    ! but when we move to GEOS5 GMAO we'll have no choice:
+    ! Must read eta-level files
+    if ( .not. any( &
+      & Temperatures%verticalCoordinate == (/ v_is_pressure, v_is_eta /) ) ) &
+      & call MLSL2Message ( MLSMSG_Error, moduleName, &
+        & 'Temperatures must be on eta or pressure calculating wmo tropopause' )
+    if (  Temperatures%verticalCoordinate /= v_is_pressure  .and. &
+      & .not. associated(Pressures) ) &
+      & call MLSL2Message ( MLSMSG_Error, moduleName, &
+        & 'Temperatures illegal verticalcoordinate calculating wmo tropopause' )
+    ! For now, just crudely assume the heights is in units of Pa
+    ! If not, we'll need to check heightsUnits
+    if ( lowercase(Temperatures%heightsUnits) /= 'pa' .and. &
+      & .not. associated(Pressures) ) &
+      & call MLSL2Message ( MLSMSG_Error, moduleName, &
+        & 'Temperatures illegal heightsUnits calculating wmo tropopause' )
+
+    call Allocate_test (h, nlev, 'h', ModuleName )
+    call Allocate_test (p, nlev, 'p', ModuleName )
+    call Allocate_test (t, nlev, 't', ModuleName )
+    ! check vertical orientation of data
+    ! (twmo expects ordered from top downward)
+
+    h = Temperatures%heights
+    if (h(1) .gt. h(2)) then
+      invert=1
+      p = h(nlev:1:-1)*100.  ! hPa > Pa
+    else
+      invert=0
+      p = h(:)*100.         ! hPa > Pa
+    endif
+    
+    ! Now actually calculate the tropopause
+    ! for every "horizontal" point
+    do idate=1, 1 ! size( Temperatures%field, 6 )
+      do iSza=1, size( Temperatures%field, 5 )
+        do iLst=1, size( Temperatures%field, 4 )
+          do lon=1, size( Temperatures%field, 3 )
+            do lat=1, size( Temperatures%field, 2 )
+              ! Do we have a second, pressure, gridded data?
+              if ( associated(Pressures) ) then
+                select case (lowercase(Pressures%units))
+                case ('pa', 'b')
+                  scale = 1. 
+                case ('hpa', 'mb')
+                  scale = 100. ! To convert hPa to Pa
+                case default
+                  call output( 'Pressures%units: ', advance='no' )
+                  call output( trim(Pressures%units), advance='yes' )
+                  call MLSL2Message ( MLSMSG_Error, moduleName, &
+                    & 'Pressures units must be Pa, hPa, or mb calculating wmo tropopause' )
+                end select
+                h = Pressures%field(1:nlev,lat,lon,iLst,iSza,idate)
+                if (h(1) .gt. h(2)) then
+                  invert=1
+                  p = Pressures%field(nlev:1:-1,lat,lon,iLst,iSza,idate) * scale
+                else
+                  invert=0
+                  p = Pressures%field(1:nlev,lat,lon,iLst,iSza,idate) * scale
+                endif
+              endif
+              if ( invert == 1 ) then
+                t = temperatures%field(nlev:1:-1,lat,lon,iLst,iSza,idate)
+              else
+                t = temperatures%field(:,lat,lon,iLst,iSza,idate)
+              endif
+              where ( t < 0. .or. t > 100000. )
+                t = MissingValue
+              end where
+              nvalid = count( .not. isFillValue(t) )
+              if ( nvalid < 2 ) cycle
+              call Allocate_test (xyTemp, nvalid, 'xyTemp', ModuleName )
+              call Allocate_test (xyPress, nvalid, 'xyPress', ModuleName )
+              call RemoveFillValues( t, MISSINGVALUE, xyTemp, &
+                & p, xyPress )
+              call twmo(nvalid, xyTemp, xyPress, plimu, pliml, trp)
+              if ( lon == 1 .and. lat == 1 .and. DEEBUG ) then
+                   call dump(xyTemp, 'xyTemp')
+                   call dump(xyPress, 'xyPress')
+                   call output( 'plimu, pliml, trp', advance='no' )
+                   call output( (/ plimu, pliml, trp /), advance='yes' )
+              endif
+              ! Don't let tropopause sink too low in "extra tropics"
+              if ( trp < plimlex .and. &
+                & extraTropics(temperatures%lats(lat)) )  &
+                & trp = MISSINGVALUE
+              if ( trp > 0. .and. trp < 100000000. ) &
+                & newGrid%field(1, lat,lon,iLst,iSza,idate) = trp/hPa2Pa !  for 'Pa'
+              call Deallocate_test ( xyTemp, 'xyTemp', ModuleName )
+              call Deallocate_test ( xyPress, 'xyPress', ModuleName )
+            enddo ! Lats
+          enddo ! Lons
+        enddo ! Lsts
+      enddo ! Szas
+    enddo ! dates
+    call Deallocate_test ( h, 'h', ModuleName )
+    call Deallocate_test ( p, 'p', ModuleName )
+    call Deallocate_test ( t, 't', ModuleName )
+    if ( DeeBug ) then
+      call output('scale: ', advance='no')
+      call output(scale, advance='no')
+    call output('Max val', advance='no')
+    call output(mlsmax( newGrid%field(:,:,:,1,1,1), newGrid%missingValue ), advance='yes')
+    call output('Min val', advance='no')
+    call output(mlsmin( newGrid%field(:,:,:,1,1,1), newGrid%missingValue ), advance='yes')
+    call output('Mean val', advance='no')
+    call output(mlsmean( newGrid%field(:,:,:,1,1,1), newGrid%missingValue ), advance='yes')
+      stop
+    endif
+    if ( DEEBUG ) call dump( newGrid )
+    call trace_end ( "wmoTropFromGrid", cond=toggle(gen) )
+  end function wmoTropFromGrid
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: MergeGridsModule.f90,v 2.70 2020/07/22 22:56:16 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module MergeGridsModule
+
+! $Log: MergeGridsModule.f90,v $
+! Revision 2.70  2020/07/22 22:56:16  pwagner
+! Made more cmds public; AllowEmptyGrids now TRUE when Concatenating grids
+!
+! Revision 2.69  2020/07/09 23:54:30  pwagner
+! Many cmds from readApriori and MergeGrids phase now available to Fill phase
+!
+! Revision 2.68  2019/10/03 17:30:17  pwagner
+! Convert from eta levels may now take a vGrid field
+!
+! Revision 2.67  2019/09/23 20:39:04  pwagner
+! Conversion from Eta surfaces may optionally be logarithmic
+!
+! Revision 2.66  2018/07/27 23:19:53  pwagner
+! Renamed level 2-savvy MLSMessage MLSL2Message
+!
+! Revision 2.65  2018/03/22 18:15:34  pwagner
+! Added command IsFileAbsent; may occur in ReadApriori, MergeGrids, and Output sections
+!
+! Revision 2.64  2018/03/14 22:45:51  pwagner
+! May changeSettings in readApriori and MergeGrids sections
+!
+! Revision 2.63  2017/11/03 20:59:27  pwagner
+! Most array gymnastics moved from MLSFillValues to HyperSlabs module
+!
+! Revision 2.62  2017/03/17 00:38:10  pwagner
+! Quit with apt message if ConvertEtaToP has no climatology file to use
+!
+! Revision 2.61  2016/04/01 00:27:15  pwagner
+! May now Execute a single command or a script of lines from l2cf
+!
+! Revision 2.60  2015/03/28 02:49:58  vsnyder
+! Added stuff to trace allocate/deallocate addresses
+!
+! Revision 2.59  2014/09/05 01:15:02  vsnyder
+! More complete and accurate allocate/deallocate size tracking.  Track
+! allocate/deallocate size in bytes instead of Memory_Units.
+!
+! Revision 2.58  2014/09/05 00:49:07  vsnyder
+! EmpiricalGeometry.f90 -- Wrong comment
+!
+! Revision 2.57  2014/06/20 20:30:24  pwagner
+! Less bebug-type printing
+!
+! Revision 2.56  2014/06/11 20:03:28  pwagner
+! New concatenateGrids command; grid field in Concatenated renamed sourceGrid
+!
+! Revision 2.55  2014/06/04 18:38:07  pwagner
+! Many steps to conserve memory; accurately account for its usage
+!
+! Revision 2.54  2014/03/01 03:10:56  vsnyder
+! Move units checking to init_tables_module
+!
+! Revision 2.53  2014/01/11 01:44:18  vsnyder
+! Decruftification
+!
+! Revision 2.52  2014/01/09 00:30:24  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
+! Revision 2.51  2013/12/12 02:11:26  vsnyder
+! Use iterator to handle variables, and IF and SELECT constructs
+!
+! Revision 2.50  2013/10/09 23:41:55  vsnyder
+! Add Evaluate_Variable
+!
+! Revision 2.49  2013/08/31 02:29:12  vsnyder
+! Replace MLSMessageCalls with trace_begin and trace_end
+!
+! Revision 2.48  2013/08/30 02:45:44  vsnyder
+! Revise calls to trace_begin and trace_end
+!
+! Revision 2.47  2012/08/16 18:01:04  pwagner
+! Exploit level 2-savvy MLSMessage
+!
+! Revision 2.46  2012/06/07 22:48:43  pwagner
+! Printing during mergeGrids now requires 'grid' switch
+!
+! Revision 2.45  2012/05/08 17:49:54  pwagner
+! Added Select .. Case .. EndSelect control structure
+!
+! Revision 2.44  2011/05/09 18:23:23  pwagner
+! description field now marks result of convert, concatenate
+!
+! Revision 2.43  2011/04/27 17:40:22  pwagner
+! Added new command (not a named spec) wmoTropFromGrids
+!
+! Revision 2.42  2011/04/20 16:51:55  pwagner
+! Added new flexibility to l2cf control flow by run-time booleans
+!
+! Revision 2.41  2009/12/14 18:37:50  pwagner
+! Dont crash in wmoTropFromGrid if one of the grids is empty
+!
+! Revision 2.40  2009/11/05 00:29:06  pwagner
+! Better diagnostics output if something goes wrong
+!
+! Revision 2.39  2009/10/26 17:12:09  pwagner
+! Added Diff command to be used like Dump in l2cf
+!
+! Revision 2.38  2009/06/23 18:46:18  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.37  2008/06/06 22:52:53  pwagner
+! EssentiallyEqual moved to MLSFillValues
+!
+! Revision 2.36  2007/12/07 01:15:01  pwagner
+! Removed unused dummp varaibles, etc.
+!
+! Revision 2.35  2007/10/24 00:17:22  pwagner
+! Removed unused declarations
+!
+! Revision 2.34  2007/08/17 00:33:59  pwagner
+! May now dump, stop, under control of l2cf
+!
+! Revision 2.33  2007/07/04 01:44:15  vsnyder
+! Actually leave early from ConvertEtaToP
+!
+! Revision 2.32  2007/07/04 01:08:43  pwagner
+! trace_begin and _end rebalanced in ConvertEtaToP
+!
+! Revision 2.31  2007/06/29 21:01:14  pwagner
+! Should print less unless debugging
+!
+! Revision 2.30  2007/06/07 21:56:00  pwagner
+! Prevents another cause of crashing; extra debugging
+!
+! Revision 2.29  2007/03/23 00:27:17  pwagner
+! Valiant attempts to bring two Lahey versions results closer
+!
+! Revision 2.28  2007/01/12 00:34:04  pwagner
+! Renamed routine outputNamedValue
+!
+! Revision 2.27  2006/11/03 19:40:30  pwagner
+! Fixed unassociated pointers NAG caught
+!
+! Revision 2.26  2006/11/03 00:25:47  pwagner
+! Fixed bug in tropopause calculation
+!
+! Revision 2.25  2006/11/01 20:34:12  pwagner
+! hasty fix to wmo tropopause
+!
+! Revision 2.24  2006/07/07 23:10:03  pwagner
+! Should handle missing GEOS5 files with greater grace
+!
+! Revision 2.23  2006/06/22 00:20:46  pwagner
+! Repair cosmetic blemishes when tracing
+!
+! Revision 2.22  2006/06/15 17:36:30  pwagner
+! Bail out of Concatenating if geos5 files missing
+!
+! Revision 2.21  2006/06/15 00:02:33  pwagner
+! Should work with geos5: convert then concatenate
+!
+! Revision 2.20  2006/06/13 22:13:12  pwagner
+! changed interface to ConvertFromEtaLevelGrids
+!
+! Revision 2.19  2006/05/12 21:26:37  pwagner
+! Added extra debugging statements
+!
+! Revision 2.18  2006/05/09 16:42:02  pwagner
+! May find wmo p trop with two eta-level grids
+!
+! Revision 2.17  2006/05/04 23:04:59  pwagner
+! May convertEtaToP and create a VGrid in MergeGrids section
+!
+! Revision 2.16  2006/02/11 00:14:08  pwagner
+! May calculate wmoTropopause in this section directly
+!
+! Revision 2.15  2005/06/22 18:57:02  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.14  2003/08/15 23:58:20  vsnyder
+! Get PHYQ_... directly from Intrinsic instead of indirectly via Units
+!
+! Revision 2.13  2003/06/06 01:06:59  livesey
+! Added DeleteGrids stuff
+!
+! Revision 2.12  2003/05/09 02:13:05  livesey
+! Removed a dump
+!
+! Revision 2.11  2003/05/09 01:55:14  livesey
+! Sped up Merge by using new SliceGriddedData routine.
+!
+! Revision 2.10  2003/04/04 00:08:26  livesey
+! Added Concatenate capability, various reorganizations.
+!
+! Revision 2.9  2003/02/28 02:33:28  livesey
+! Bug fix, careless with the old emacs.
+!
+! Revision 2.8  2003/02/28 02:25:50  livesey
+! First working version.
+!
+! Revision 2.7  2003/02/19 19:15:13  pwagner
+! Consistent with new GriddedData_T and rgr
+!
+! Revision 2.6  2002/11/22 12:21:14  mjf
+! Added nullify routine(s) to get round Sun's WS6 compiler not
+! initialising derived type function results.
+!
+! Revision 2.5  2002/10/08 17:36:21  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.4  2002/08/22 20:26:09  vsnyder
+! Move another USE from module scope to procedure scope
+!
+! Revision 2.3  2002/08/21 02:23:39  vsnyder
+! Move USE statements from module scope to procedure scope
+!
+! Revision 2.2  2002/01/26 00:10:54  livesey
+! It compiles at least
+!
+! Revision 2.1  2002/01/24 00:58:03  livesey
+! First version, not much more than a stub
+!
+@
+
+
+2.70
+log
+@Made more cmds public; IgnoreEmptyGrids now TRUE when Concatenating grids
+@
+text
+@d360 2
+a361 1
+    use Init_Tables_Module, only: F_A, F_B, F_DeleteGrids, F_SourceGrid
+d385 1
+a385 1
+    logical, parameter :: IgnoreEmptyGrids = .true. ! .false.
+d400 1
+d436 2
+d442 1
+a442 1
+    ! ignoreEmptyGrids is FALSE
+d444 1
+a444 1
+    ! ignoreEmptyGrids is TRUE
+d463 1
+a463 1
+        if ( b%empty .and. .not. IgnoreEmptyGrids ) then
+d1238 1
+a1238 1
+       "$Id: MergeGridsModule.f90,v 2.69 2020/07/09 23:54:30 pwagner Exp $"
+d1248 3
+@
+
+
+2.69
+log
+@Many cmds from readApriori and MergeGrids phase now available to Fill phase
+@
+text
+@d30 2
+a31 1
+  public :: Concatenate, ConvertEtaToP, MergeGrids, MergeOneGrid
+d361 1
+d363 1
+a363 1
+    use Toggles, only: Gen, Toggle
+d384 1
+a384 1
+    logical, parameter :: IgnoreEmptyGrids = .false.
+d390 1
+d398 1
+d471 4
+a474 1
+        if ( b%empty ) cycle
+d1234 1
+a1234 1
+       "$Id: MergeGridsModule.f90,v 2.68 2019/10/03 17:30:17 pwagner Exp $"
+d1244 3
+@
+
+
+2.68
+log
+@Convert from eta levels may now take a vGrid field
+@
+text
+@d30 1
+a30 1
+  public :: MergeGrids
+d49 1
+a49 1
+      & AddGriddedDataToDatabase, DestroyGriddedData
+d129 1
+d133 1
+d136 1
+d151 1
+d160 1
+d184 1
+d193 1
+d207 1
+d1227 1
+a1227 1
+       "$Id: MergeGridsModule.f90,v 2.67 2019/09/23 20:39:04 pwagner Exp $"
+d1237 3
+@
+
+
+2.67
+log
+@Conversion from Eta surfaces may optionally be logarithmic
+@
+text
+@d90 1
+d96 1
+d121 5
+a125 3
+        ! call Dump( OutputOptions )
+        ! call Dump( StampOptions )
+        ! call DumpConfig
+d215 1
+a215 1
+    use Init_Tables_Module, only: F_A, F_B, F_GRID, F_LogBasis
+d220 1
+d242 1
+a242 1
+!    type (VGrid_T), pointer       :: V ! Desired pressure surfaces
+d248 1
+a248 1
+    nullify( a, b, v )
+d286 2
+a287 1
+        if ( .not. associated(v) ) call MLSL2Message ( MLSMSG_Error, ModuleName, &
+d298 6
+a303 2
+!       case ( f_VGrid )
+!         v => VGrids ( decoration ( decoration ( value ) ) )
+d306 6
+d314 2
+a315 1
+    if ( DEEBUG ) call outputNamedValue( 'size(griddedDataBase)', size(griddedDataBase) )
+d335 1
+a335 1
+    call ConvertFromEtaLevelGrids ( a, b, V, newGrid, ByLog )
+d1219 1
+a1219 1
+       "$Id: MergeGridsModule.f90,v 2.66 2018/07/27 23:19:53 pwagner Exp $"
+d1229 3
+@
+
+
+2.66
+log
+@Renamed level 2-savvy MLSMessage MLSL2Message
+@
+text
+@d211 2
+a212 1
+    use Init_Tables_Module, only: F_A, F_B, F_GRID
+d225 1
+d245 1
+d257 1
+a257 1
+      value = subtree(2,son)
+d260 2
+d318 1
+a318 1
+    call ConvertFromEtaLevelGrids ( a, b, V, newGrid )
+d1202 1
+a1202 1
+       "$Id: MergeGridsModule.f90,v 2.65 2018/03/22 18:15:34 pwagner Exp $"
+d1212 3
+@
+
+
+2.65
+log
+@Added command IsFileAbsent; may occur in ReadApriori, MergeGrids, and Output sections
+@
+text
+@d22 1
+a22 1
+  use MLSL2Options, only: MLSMessage, L2cfNode
+d198 1
+a198 1
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+d276 1
+a276 1
+        if ( .not. associated(v) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+d285 1
+a285 1
+        if ( v%empty )  call MLSMessage ( MLSMSG_Error, ModuleName, &
+d624 1
+a624 1
+    if ( climatology%empty ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+d628 1
+a628 1
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+d638 1
+a638 1
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+d641 1
+a641 1
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+d644 1
+a644 1
+    !    & call MLSMessage ( MLSMSG_Error, ModuleName, &
+d656 1
+a656 1
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+d697 1
+a697 1
+    ! if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+d710 1
+a710 1
+    ! if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+d770 1
+a770 1
+                  call MLSMessage ( MLSMSG_Error, ModuleName, &
+d970 1
+a970 1
+        call MLSMessage ( MLSMSG_Warning, moduleName, &
+d975 1
+a975 1
+        call MLSMessage ( MLSMSG_Warning, moduleName, &
+d1016 1
+a1016 1
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+d1035 1
+a1035 1
+      call MLSMessage ( MLSMSG_Warning, moduleName, &
+d1053 1
+a1053 1
+      call MLSMessage ( MLSMSG_Warning, moduleName, &
+d1059 1
+a1059 1
+      call MLSMessage ( MLSMSG_Warning, moduleName, &
+d1075 1
+a1075 1
+      call MLSMessage ( MLSMSG_Warning, moduleName, &
+d1085 1
+a1085 1
+      & call MLSMessage ( MLSMSG_Error, moduleName, &
+d1089 1
+a1089 1
+      & call MLSMessage ( MLSMSG_Error, moduleName, &
+d1095 1
+a1095 1
+      & call MLSMessage ( MLSMSG_Error, moduleName, &
+d1130 1
+a1130 1
+                  call MLSMessage ( MLSMSG_Error, moduleName, &
+d1197 1
+a1197 1
+       "$Id: MergeGridsModule.f90,v 2.64 2018/03/14 22:45:51 pwagner Exp $"
+d1207 3
+@
+
+
+2.64
+log
+@May changeSettings in readApriori and MergeGrids sections
+@
+text
+@d42 2
+a43 2
+  subroutine MergeGrids ( ROOT, L2GPDATABASE, L2AUXDATABASE, &
+    & GRIDDEDDATABASE, FILEDATABASE )
+d45 2
+a46 2
+    use DumpCommand_M, only: BooleanFromEmptyGrid, BooleanFromFormula, &
+      & DumpCommand, ExecuteCommand, &
+d53 1
+a53 1
+      & S_EndSelect, S_Execute, S_Gridded, &
+d71 1
+a71 1
+    type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
+d144 2
+d1197 1
+a1197 1
+       "$Id: MergeGridsModule.f90,v 2.63 2017/11/03 20:59:27 pwagner Exp $"
+d1207 3
+@
+
+
+2.63
+log
+@Most array gymnastics moved from MLSFillValues to HyperSlabs module
+@
+text
+@d20 1
+a20 1
+  use HighOutput, only: OutputNamedValue
+d23 2
+a24 1
+  use MLSMessagemodule, only: MLSMsg_Error, MLSMsg_Warning
+d26 1
+a26 1
+  use Output_M, only: Blanks, Output
+d50 4
+a53 3
+    use Init_Tables_Module, only: F_Grid, &
+      & S_Boolean, S_Case, S_Concatenate, S_ConcatenateGrids, S_ConvertEtaToP, &
+      & S_Delete, S_Diff, S_Dump, S_EndSelect, S_Execute, S_Gridded, &
+d116 6
+d1195 1
+a1195 1
+       "$Id: MergeGridsModule.f90,v 2.62 2017/03/17 00:38:10 pwagner Exp $"
+d1205 3
+@
+
+
+2.62
+log
+@Quit with apt message if ConvertEtaToP has no climatology file to use
+@
+text
+@d522 1
+a522 1
+    use MLSFillValues, only: EssentiallyEqual
+d1187 1
+a1187 1
+       "$Id: MergeGridsModule.f90,v 2.61 2016/04/01 00:27:15 pwagner Exp $"
+d1197 3
+@
+
+
+2.61
+log
+@May now Execute a single command or a script of lines from l2cf
+@
+text
+@d21 2
+a22 2
+  use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+  use MLSL2Options, only: MLSMessage, l2cfNode
+d24 2
+a25 2
+  use ncep_dao, only: readGriddedData
+  use output_m, only: blanks, output
+d44 20
+a63 20
+    use DumpCommand_m, only: booleanFromEmptyGrid, booleanFromFormula, &
+      & dumpCommand, ExecuteCommand, &
+      & MLSCase, MLSEndSelect, MLSSelect, MLSSelecting, skip
+    use GriddedData, only: griddedData_T, &
+      & addGriddedDataToDatabase, destroyGriddedData
+    use Init_tables_module, only: f_grid, &
+      & s_boolean, s_case, s_concatenate, s_concatenateGrids, s_convertEtaToP, &
+      & s_delete, s_diff, s_dump, s_endSelect, s_execute, s_gridded, &
+      & s_isGridEmpty, s_merge, s_mergeGrids, s_reevaluate, s_select, s_skip, &
+      & s_wmotrop, s_wmotropfromgrids
+    use L2AUXData, only: l2auxdata_t
+    use L2GPData, only: l2gpdata_t
+    use MLSCommon, only: mlsfile_t
+    use MLSStringlists, only: switchDetail
+    use MoreTree, only: get_label_and_spec, get_spec_id
+    use Next_Tree_Node_m, only: next_tree_node, next_tree_node_state
+    use ReadAPriori, only: processOneAprioriFile
+    use Trace_M, only: trace_begin, trace_end
+    use Tree, only: nsons, subtree, decorate, decoration
+    use Toggles, only: gen, switches, toggle
+d199 6
+a204 6
+    use GriddedData, only: griddedData_t, dump, nullifyGriddedData, &
+      & convertFromEtaLevelGrids
+    use Init_tables_module, only: F_A, F_B, F_GRID
+    use Toggles, only: gen, toggle
+    use Trace_M, only: trace_begin, trace_end
+    use Tree, only: nsons, subtree, decoration
+d265 3
+d274 3
+d317 7
+a323 7
+    use griddedData, only: griddedData_T, dump, &
+      & concatenateGriddedData, copyGrid, destroyGriddedData, nullifyGriddedData
+    use init_tables_module, only: f_a, f_b, f_deleteGrids, f_sourceGrid
+    use moreTree, only: get_boolean, get_field_id
+    use toggles, only: gen, toggle
+    use trace_m, only: trace_begin, trace_end
+    use tree, only: nsons, subtree, decoration
+d479 2
+a480 2
+    use Tree, only: nsons, subtree, decoration
+    use GriddedData, only: destroygriddeddata, griddedData_t
+d514 12
+a525 12
+    use Dump_0, only: dump
+    use Expr_m, only: expr
+    use GriddedData, only: griddedData_t, rgr, v_is_pressure, &
+      & copyGrid, dump, nullifyGriddedData, &
+      & setupNewGriddedData, sliceGriddedData, wrapGriddedData
+    use Init_tables_module, only: f_climatology, f_height, &
+      & f_operational, f_scale
+    use MLSKinds, only: r8
+    use MLSFillValues, only: essentiallyEqual
+    use Toggles, only: gen, toggle
+    use Trace_M, only: trace_begin, trace_end
+    use Tree, only: nsons, subtree, decoration
+d848 8
+a855 8
+    use dump_0, only: dump
+    use griddeddata, only: griddedData_t, dump, v_is_pressure, v_is_eta, &
+      & nullifyGriddedData, &
+      & doGriddedDataMatch, &
+      & setupnewGriddedData
+    use init_tables_module, only: f_a, f_b, f_grid
+    use MLSCommon, only: defaultundefinedvalue
+    use MLSFillvalues, only: isfillvalue, removefillvalues
+d857 5
+a861 5
+    use MLSStrings, only: lowercase
+    use toggles, only: gen, toggle
+    use trace_m, only: trace_begin, trace_end
+    use tree, only: nsons, subtree, decoration
+    use WMOTropopause, only: extraTropics, twmo
+d1187 1
+a1187 1
+       "$Id: MergeGridsModule.f90,v 2.60 2015/03/28 02:49:58 vsnyder Exp $"
+d1197 3
+@
+
+
+2.60
+log
+@Added stuff to trace allocate/deallocate addresses
+@
+text
+@d45 2
+a46 1
+      & dumpcommand, MLSCase, MLSEndSelect, MLSSelect, MLSSelecting, skip
+d51 2
+a52 2
+      & s_delete, s_diff, s_dump, s_endSelect, s_gridded, s_isGridEmpty, &
+      & s_merge, s_mergeGrids, s_reevaluate, s_select, s_skip, &
+d57 1
+a57 1
+    use MLSStringlists, only: switchdetail
+d124 2
+d199 2
+a200 2
+    use GriddedData, only: GRIDDEDDATA_T, DUMP, NULLIFYGRIDDEDDATA, &
+      & CONVERTFROMETALEVELGRIDS
+d202 3
+a204 3
+    use Toggles, only: GEN, TOGGLE
+    use Trace_M, only: TRACE_BEGIN, TRACE_END
+    use Tree, only: NSONS, SUBTREE, DECORATION
+d473 3
+a475 3
+    use Tree, only: NSONS, SUBTREE, DECORATION
+    use GriddedData, only: DESTROYGRIDDEDDATA, GRIDDEDDATA_T
+    use Init_Tables_Module, only: F_GRID
+d510 3
+a512 3
+    use GriddedData, only: griddeddata_t, rgr, v_is_pressure, &
+      & copygrid, dump, nullifygriddeddata, &
+      & setupnewgriddeddata, slicegriddeddata, wrapgriddeddata
+d516 1
+a516 1
+    use MLSFillValues, only: essentiallyequal
+d842 14
+a855 14
+    use DUMP_0, only: DUMP
+    use GRIDDEDDATA, only: GRIDDEDDATA_T, DUMP, V_IS_PRESSURE, V_IS_ETA, &
+      & NULLIFYGRIDDEDDATA, &
+      & DOGRIDDEDDATAMATCH, &
+      & SETUPNEWGRIDDEDDATA
+    use INIT_TABLES_MODULE, only: F_A, F_B, F_GRID
+    use MLSCOMMON, only: DEFAULTUNDEFINEDVALUE
+    use MLSFILLVALUES, only: ISFILLVALUE, REMOVEFILLVALUES
+    use MLSSTATS1, only: MLSMIN, MLSMAX, MLSMEAN
+    use MLSSTRINGS, only: LOWERCASE
+    use TOGGLES, only: GEN, TOGGLE
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+    use TREE, only: NSONS, SUBTREE, DECORATION
+    use WMOTROPOPAuse, only: EXTRATROPICS, TWMO
+d1181 1
+a1181 1
+       "$Id: MergeGridsModule.f90,v 2.59 2014/09/05 01:15:02 vsnyder Exp $"
+d1191 3
+@
+
+
+2.59
+log
+@More complete and accurate allocate/deallocate size tracking.  Track
+allocate/deallocate size in bytes instead of Memory_Units.
+@
+text
+@d18 4
+a21 3
+  use allocate_deallocate, only: allocate_test, byte_size, bytes, &
+    & deallocate_test, test_allocate, test_deallocate
+  use highOutput, only: outputNamedValue
+d537 1
+d680 4
+d686 1
+a686 1
+      & newGrid%noLsts, newGrid%noSzas, 1 /), bytes(operMapped) )
+d693 3
+d698 1
+a698 1
+      & newGrid%noLsts, newGrid%noSzas, 1 /), bytes(cliMapped) )
+d796 2
+d799 1
+a799 1
+    call test_deallocate ( status, moduleName, 'climapped', s )
+d801 1
+d803 1
+a803 1
+    call test_deallocate ( status, moduleName, 'opermapped', s )
+d1178 1
+a1178 1
+       "$Id: MergeGridsModule.f90,v 2.58 2014/09/05 00:49:07 vsnyder Exp $"
+d1188 4
+@
+
+
+2.58
+log
+@EmpiricalGeometry.f90
+@
+text
+@d1166 1
+a1166 1
+       "$Id: MergeGridsModule.f90,v 2.57 2014/06/20 20:30:24 pwagner Exp $"
+d1176 3
+@
+
+
+2.57
+log
+@Less bebug-type printing
+@
+text
+@d19 1
+a19 2
+    & deallocate_test, memory_units, NoBytesAllocated, &
+    & test_allocate, test_deallocate
+d22 1
+a22 1
+  use MLSMessagemodule, only: MLSMsg_Allocate, MLSMsg_Error, MLSMsg_Warning
+d545 1
+a545 1
+    real    :: S                        ! Size in bytes of a deallocated field
+d786 1
+a786 1
+    s = byte_size(cliMapped) / MEMORY_UNITS
+d789 1
+a789 1
+    s = byte_size(operMapped) / MEMORY_UNITS
+d1166 1
+a1166 1
+       "$Id: MergeGridsModule.f90,v 2.56 2014/06/11 20:03:28 pwagner Exp $"
+d1176 3
+@
+
+
+2.56
+log
+@New concatenateGrids command; grid field in Concatenated renamed sourceGrid
+@
+text
+@a377 3
+        call output( 'Now have deleteGrids field', advance='yes' )
+        call outputnamedValue( 'son', son )
+        call outputnamedValue( 'field', field )
+d423 1
+a424 1
+        call outputnamedValue( 'b%equivalentLatitude', b%equivalentLatitude )
+d668 1
+a668 1
+    call outputNamedValue( 'Bytes before allocating 2 temp arrays', NoBytesAllocated )
+d691 1
+a691 1
+    call outputNamedValue( 'Bytes after allocating 2 temp arrays', NoBytesAllocated )
+d1167 1
+a1167 1
+       "$Id: MergeGridsModule.f90,v 2.55 2014/06/04 18:38:07 pwagner Exp $"
+d1177 3
+@
+
+
+2.55
+log
+@Many steps to conserve memory; accurately account for its usage
+@
+text
+@d49 1
+a49 1
+      & s_boolean, s_case, s_concatenate, s_convertEtaToP, &
+d139 1
+a139 1
+      case ( s_mergeGrids )
+d151 5
+a155 1
+        grid = MergeOneGrid ( key, griddedDataBase )
+d310 1
+a310 1
+    use init_tables_module, only: f_a, f_b, f_deleteGrids, f_grid
+d382 1
+a382 1
+      case ( f_Grid )
+d1170 1
+a1170 1
+       "$Id: MergeGridsModule.f90,v 2.54 2014/03/01 03:10:56 vsnyder Exp $"
+d1180 3
+@
+
+
+2.54
+log
+@Move units checking to init_tables_module
+@
+text
+@d18 8
+a25 4
+  use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
+  use MLSL2OPTIONS, only: MLSMESSAGE, L2CFNODE
+  use MLSMESSAGEMODULE, only: MLSMSG_ALLOCATE, MLSMSG_ERROR, MLSMSG_WARNING
+  use OUTPUT_M, only: BLANKS, OUTPUT
+d44 19
+a62 19
+    use DumpCommand_m, only: BOOLEANFROMEMPTYGRID, BOOLEANFROMFORMULA, &
+      & DUMPCOMMAND, MLSCASE, MLSENDSELECT, MLSSELECT, MLSSELECTING, SKIP
+    use GriddedData, only: GRIDDEDDATA_T, &
+      & ADDGRIDDEDDATATODATABASE, DESTROYGRIDDEDDATA
+    use Init_tables_module, only: F_GRID, &
+      & S_BOOLEAN, S_CASE, S_CONCATENATE, S_CONVERTETATOP, &
+      & S_DELETE, S_DIFF, S_DUMP, S_ENDSELECT, S_GRIDDED, S_ISGRIDEMPTY, &
+      & S_MERGE, S_MERGEGRIDS, S_REEVALUATE, S_SELECT, S_SKIP, &
+      & S_WMOTROP, S_WMOTROPFROMGRIDS
+    use L2AUXData, only: L2AUXDATA_T
+    use L2GPData, only: L2GPDATA_T
+    use MLSCommon, only: MLSFILE_T
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use MoreTree, only: Get_Label_And_Spec, GET_SPEC_ID
+    use Next_Tree_Node_m, only: Next_Tree_Node, Next_Tree_Node_State
+    use ReadAPriori, only: PROCESSONEAPRIORIFILE
+    use Trace_M, only: TRACE_BEGIN, TRACE_END
+    use Tree, only: NSONS, SUBTREE, DECORATE, DECORATION
+    use Toggles, only: GEN, SWITCHES, TOGGLE
+d211 1
+d242 6
+d250 6
+d258 6
+d304 7
+a310 6
+    use GriddedData, only: GRIDDEDDATA_T, DUMP, &
+      & CONCATENATEGRIDDEDDATA, COPYGRID, DESTROYGRIDDEDDATA, NULLIFYGRIDDEDDATA
+    use Init_tables_module, only: F_A, F_B, F_GRID
+    use Toggles, only: GEN, TOGGLE
+    use Trace_M, only: TRACE_BEGIN, TRACE_END
+    use Tree, only: NSONS, SUBTREE, DECORATION
+d324 1
+d332 1
+d341 1
+d348 8
+a355 3
+      field = subtree(1,son)
+      value = subtree(2,son)
+      field_index = decoration(field)
+d359 6
+d367 11
+d399 6
+d423 1
+d435 1
+d455 1
+d458 1
+d460 2
+d504 12
+a515 13
+    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use Dump_0, only: DUMP
+    use Expr_m, only: EXPR
+    use GriddedData, only: GRIDDEDDATA_T, RGR, V_IS_PRESSURE, &
+      & COPYGRID, NULLIFYGRIDDEDDATA, &
+      & SETUPNEWGRIDDEDDATA, SLICEGRIDDEDDATA, WRAPGRIDDEDDATA
+    use Init_tables_module, only: F_CLIMATOLOGY, F_HEIGHT, &
+      & F_OPERATIONAL, F_SCALE
+    use MLSKINDS, only: R8
+    use MLSFillValues, only: ESSENTIALLYEQUAL
+    use Toggles, only: GEN, TOGGLE
+    use Trace_M, only: TRACE_BEGIN, TRACE_END
+    use Tree, only: NSONS, SUBTREE, DECORATION
+d545 1
+d622 16
+a637 7
+    !     if ( climatology%units /= operational%units ) &
+    !       & call MLSMessage ( MLSMSG_Error, ModuleName, &
+    !       & 'The climatology and operational data describe different physical quantities' )
+    if ( climatology%equivalentLatitude .neqv. operational%equivalentLatitude ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'The climatology and operational data are mixed latitude/equivalent latitude.' )
+
+d667 1
+d670 2
+d674 7
+a680 3
+      & newGrid%noLsts, newGrid%noSzas, newGrid%noDates ), stat=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate//'operMapped' )
+d683 9
+a691 10
+      & newGrid%noLsts, newGrid%noSzas, newGrid%noDates ), stat=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate//'operMapped' )
+
+    call SliceGriddedData ( operational, operMapped, &
+      & newGrid%heights, newGrid%lats, newGrid%lons, newGrid%lsts, &
+      & newGrid%szas, meanDates, missingValue=newGrid%missingValue )
+    call SliceGriddedData ( climatology, cliMapped, &
+      & newGrid%heights, newGrid%lats, newGrid%lons, newGrid%lsts, &
+      & newGrid%szas, meanDates, missingValue=newGrid%missingValue )
+d708 6
+d720 4
+a723 2
+                cliVal = cliMapped ( surf, lat, lon, lst, sza, day )
+                opVal = operMapped ( surf, lat, lon, lst, sza, day )
+d783 2
+d786 6
+a791 3
+    deallocate ( cliMapped, operMapped, stat=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate//'operMapped or cliMapped' )
+a826 1
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+d882 2
+a886 1
+    real :: scale
+d911 6
+d919 5
+d1166 1
+a1166 1
+       "$Id: MergeGridsModule.f90,v 2.53 2014/01/11 01:44:18 vsnyder Exp $"
+d1176 3
+@
+
+
+2.53
+log
+@Decruftification
+@
+text
+@a450 1
+    use Intrinsic, only: PHYQ_LENGTH, PHYQ_PRESSURE
+a533 3
+        if ( exprUnits(1) /= phyq_pressure ) call MLSMessage ( &
+          & MLSMSG_Error, ModuleName, &
+          & 'Only pressure is allowed for the height field' )
+a536 3
+        if ( exprUnits(1) /= phyq_length ) call MLSMessage ( &
+          & MLSMSG_Error, ModuleName, &
+          & 'Only altitude is allowed for the scale field' )
+d1066 1
+a1066 1
+       "$Id: MergeGridsModule.f90,v 2.52 2014/01/09 00:30:24 pwagner Exp $"
+d1076 3
+@
+
+
+2.52
+log
+@Some procedures formerly in output_m now got from highOutput
+@
+text
+@d57 1
+a57 2
+    use Tree, only: NSONS, SUBTREE, DECORATE, DECORATION, NODE_ID, SUB_ROSA
+    use Tree_Types, only: N_NAMED
+a68 1
+    integer :: I                        ! Loop counter
+d1073 1
+a1073 1
+       "$Id: MergeGridsModule.f90,v 2.51 2013/12/12 02:11:26 vsnyder Exp $"
+d1083 3
+@
+
+
+2.51
+log
+@Use iterator to handle variables, and IF and SELECT constructs
+@
+text
+@d18 1
+d21 1
+a21 1
+
+a54 1
+    use Output_m, only: OUTPUT, OUTPUTNAMEDVALUE
+a192 1
+    use output_m, only: OUTPUT, OUTPUTNAMEDVALUE
+a455 1
+    use output_m, only: BLANKS, OUTPUT, OUTPUTNAMEDVALUE
+a757 1
+    use OUTPUT_M, only: OUTPUT
+d1075 1
+a1075 1
+       "$Id: MergeGridsModule.f90,v 2.50 2013/10/09 23:41:55 vsnyder Exp $"
+d1085 3
+@
+
+
+2.50
+log
+@Add Evaluate_Variable
+@
+text
+@a40 1
+    use Evaluate_Variable_m, only: Evaluate_Variable
+d52 3
+a54 2
+    use MoreTree, only: GET_SPEC_ID
+    use output_m, only: OUTPUT, OUTPUTNAMEDVALUE
+d58 1
+a58 1
+    use Tree_Types, only: N_NAMED, N_Variable
+d82 2
+a83 1
+    integer :: VALUE
+d91 4
+a94 12
+    do i = 2, nsons(root) - 1           ! Skip the begin and end stuff
+      son = subtree ( i, root )
+      if ( node_id(son) == n_variable ) then
+        call evaluate_variable ( son )
+    cycle
+      end if
+      if ( node_id(son) == n_named ) then ! Is spec labed?
+        key = subtree ( 2, son )
+        name = sub_rosa ( subtree(1,son) )
+      else
+        key = son
+      end if
+d1078 1
+a1078 1
+       "$Id: MergeGridsModule.f90,v 2.49 2013/08/31 02:29:12 vsnyder Exp $"
+d1088 3
+@
+
+
+2.49
+log
+@Replace MLSMessageCalls with trace_begin and trace_end
+@
+text
+@d41 1
+d58 1
+a58 1
+    use Tree_Types, only: N_NAMED
+d92 4
+d1085 1
+a1085 1
+       "$Id: MergeGridsModule.f90,v 2.48 2013/08/30 02:45:44 vsnyder Exp $"
+d1095 3
+@
+
+
+2.48
+log
+@Revise calls to trace_begin and trace_end
+@
+text
+@d19 1
+a19 2
+  use MLSMESSAGEMODULE, only: MLSMSG_ALLOCATE, MLSMSG_ERROR, MLSMSG_WARNING, &
+    & MLSMESSAGECALLS
+d104 1
+a104 1
+      case ( s_select ) ! ============ Start of select .. case ==========
+d107 1
+a107 1
+      case ( s_case ) ! ============ seeking matching case ==========
+d110 1
+a110 1
+      case ( s_endSelect ) ! ============ End of select .. case ==========
+d160 1
+a160 1
+      case ( s_skip ) ! ============================== Skip ==========
+d1080 1
+a1080 1
+       "$Id: MergeGridsModule.f90,v 2.47 2012/08/16 18:01:04 pwagner Exp $"
+d1090 3
+@
+
+
+2.47
+log
+@Exploit level 2-savvy MLSMessage
+@
+text
+@d33 1
+a33 1
+contains ! =================================== Public procedures
+d35 1
+a35 1
+  ! ----------------------------------------- MergeGrid
+d79 1
+d86 2
+a87 6
+    if ( toggle(gen) ) then
+      call trace_begin ( "MergeGrids", root )
+    else
+      call MLSMessageCalls( 'push', constantName=ModuleName )
+    endif
+    ! Executable code
+d186 1
+a186 6
+    if ( toggle(gen) ) then
+      call trace_end ( "MergeGrids" )
+    else
+      call MLSMessageCalls( 'pop' )
+    endif
+    
+d190 1
+a190 1
+  ! ---------------------------------------- ConvertEtaToP --
+a208 2
+    ! Local variables
+    integer :: SON                    ! Tree node
+d211 3
+a214 1
+    integer :: I                      ! Loop counter
+d222 1
+d224 1
+a226 1
+    if ( toggle(gen) ) call trace_begin ( "ConvertEtaToP", root )
+d230 1
+a230 1
+    endif
+d281 1
+a281 1
+9   if ( toggle(gen) ) call trace_end ( "ConvertEtaToP" )
+d285 2
+a286 3
+  ! ---------------------------------------- Concatenate --
+  function Concatenate ( root, griddedDataBase ) &
+    & result ( newGrid )
+d312 1
+d316 1
+d318 1
+a320 1
+    if ( toggle(gen) ) call trace_begin ( "Concatenate", root )
+d357 1
+a357 1
+          if ( toggle(gen) ) call trace_end ( "Concatenate" )
+d408 2
+a409 1
+    if ( toggle(gen) ) call trace_end ( "Concatenate" )
+d412 1
+a412 1
+  ! ------------------------------------ DeleteGriddedData ---
+d492 1
+d523 1
+a524 1
+    if ( toggle(gen) ) call trace_begin ( "MergeOneGrid", root )
+d718 1
+d720 1
+d743 2
+a744 2
+      endif
+      if ( myDone .and. toggle(gen) ) call trace_end ( "MergeOneGrid" )
+d746 1
+d749 1
+a749 1
+  ! ----------------------------------------- wmoTropFromGrid
+d799 1
+d820 1
+a822 1
+    if ( toggle(gen) ) call trace_begin ( "wmoTropFromGrid", root )
+d856 1
+a856 1
+        if ( toggle(gen) ) call trace_end ( "wmoTropFromGrid" )
+d861 1
+a861 1
+        if ( toggle(gen) ) call trace_end ( "wmoTropFromGrid" )
+d921 1
+a921 1
+      if ( toggle(gen) ) call trace_end ( "wmoTropFromGrid" )
+d939 1
+a939 1
+      if ( toggle(gen) ) call trace_end ( "wmoTropFromGrid" )
+d945 1
+a945 1
+      if ( toggle(gen) ) call trace_end ( "wmoTropFromGrid" )
+d961 1
+a961 1
+      if ( toggle(gen) ) call trace_end ( "wmoTropFromGrid" )
+d1075 1
+a1075 1
+    if ( toggle(gen) ) call trace_end ( "wmoTropFromGrid" )
+d1081 1
+a1081 1
+       "$Id: MergeGridsModule.f90,v 2.46 2012/06/07 22:48:43 pwagner Exp $"
+d1091 3
+@
+
+
+2.46
+log
+@Printing during mergeGrids now requires 'grid' switch
+@
+text
+@d18 3
+a51 1
+    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMESSAGECALLS
+d101 1
+d243 1
+d296 1
+a296 1
+      & CONCATENATEGRIDDEDDATA, COPYGRID, DestroyGriddedData, NULLIFYGRIDDEDDATA
+d332 1
+d439 1
+d455 1
+a455 1
+    use Dump_0, only: dump
+d462 2
+a463 4
+    use Intrinsic, only: PHYQ_Length, PHYQ_Pressure
+    use MLSCommon, only: R8
+    use MLSMessageModule, only: MLSMSG_ALLOCATE, MLSMSG_ERROR, MLSMSG_WARNING, &
+      & MLSMESSAGE
+d535 1
+d753 3
+a755 3
+    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use dump_0, only: dump
+    use GriddedData, only: GRIDDEDDATA_T, DUMP, V_IS_PRESSURE, V_IS_ETA, &
+d759 10
+a768 11
+    use Init_tables_module, only: F_A, F_B, F_GRID
+    use MLSCommon, only: DEFAULTUNDEFINEDVALUE
+    use MLSFillValues, only: IsFillValue, RemoveFillValues
+    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
+    use MLSStats1, only: MLSMIN, MLSMAX, MLSMEAN
+    use MLSStrings, only: LOWERCASE
+    use output_m, only: output
+    use Toggles, only: GEN, TOGGLE
+    use Trace_M, only: TRACE_BEGIN, TRACE_END
+    use Tree, only: NSONS, SUBTREE, DECORATION
+    use wmoTropopause, only: ExtraTropics, twmo
+d830 1
+d1081 1
+a1081 1
+       "$Id: MergeGridsModule.f90,v 2.45 2012/05/08 17:49:54 pwagner Exp $"
+d1091 3
+@
+
+
+2.45
+log
+@Added Select .. Case .. EndSelect control structure
+@
+text
+@d50 1
+d57 1
+a57 1
+    use Toggles, only: GEN, TOGGLE
+d80 1
+d88 2
+d153 6
+a158 4
+        call output( 'The GriddedDatabase, ' )
+        call outputNamedValue( 'size(db)', size(griddedDataBase) )
+        call outputNamedValue( 'our index', value )
+        call outputNamedValue( 'is it empty?', grid%empty )
+d1076 1
+a1076 1
+       "$Id: MergeGridsModule.f90,v 2.44 2011/05/09 18:23:23 pwagner Exp $"
+d1086 3
+@
+
+
+2.44
+log
+@description field now marks result of convert, concatenate
+@
+text
+@d38 1
+a38 1
+      & DUMPCOMMAND, SKIP
+d42 3
+a44 3
+      & S_BOOLEAN, S_CONCATENATE, S_CONVERTETATOP, &
+      & S_DELETE, S_DIFF, S_DUMP, S_GRIDDED, S_ISGRIDEMPTY, &
+      & S_MERGE, S_MERGEGRIDS, S_REEVALUATE, S_SKIP, &
+d46 3
+a48 3
+    use L2AUXData, only: L2AUXData_T
+    use L2GPData, only: L2GPData_T
+    use MLSCommon, only: MLSFile_T
+d95 2
+d101 9
+d1070 1
+a1070 1
+       "$Id: MergeGridsModule.f90,v 2.43 2011/04/27 17:40:22 pwagner Exp $"
+d1080 3
+@
+
+
+2.43
+log
+@Added new command (not a named spec) wmoTropFromGrids
+@
+text
+@d263 1
+a263 1
+    newGrid%description         = a%description
+a276 1
+    use MoreTree, only: GET_BOOLEAN
+d387 1
+a387 1
+    newGrid%description         = a%description
+d1059 1
+a1059 1
+       "$Id: MergeGridsModule.f90,v 2.42 2011/04/20 16:51:55 pwagner Exp $"
+d1069 3
+@
+
+
+2.42
+log
+@Added new flexibility to l2cf control flow by run-time booleans
+@
+text
+@d44 2
+a45 1
+      & S_MERGE, S_MERGEGRIDS, S_REEVALUATE, S_SKIP, S_WMOTROP
+d150 13
+d470 1
+a470 1
+    logical, parameter :: DEEBUG = .true.
+d1060 1
+a1060 1
+       "$Id: MergeGridsModule.f90,v 2.41 2009/12/14 18:37:50 pwagner Exp $"
+d1070 3
+@
+
+
+2.41
+log
+@Dont crash in wmoTropFromGrid if one of the grids is empty
+@
+text
+@d34 2
+a35 1
+  subroutine MergeGrids ( root, griddedDataBase )
+d37 2
+a38 1
+    use DumpCommand_m, only: DumpCommand
+d40 8
+a47 3
+      & ADDGRIDDEDDATATODATABASE
+    use Init_tables_module, only: S_CONCATENATE, S_CONVERTETATOP, &
+      & S_DELETE, S_DIFF, S_DUMP, S_MERGE, S_WMOTROP
+d50 2
+d53 1
+a53 1
+    use Tree, only: NSONS, SUBTREE, DECORATE, NODE_ID, SUB_ROSA
+d58 4
+a61 1
+    type (griddedData_T), dimension(:), pointer :: griddedDataBase ! Database
+d64 2
+d67 1
+a67 1
+    integer :: SON                      ! Tree node
+d69 6
+d76 2
+d96 2
+a97 3
+      case ( s_merge )
+        call decorate ( key, AddgriddedDataToDatabase ( griddedDataBase, &
+          & MergeOneGrid ( key, griddedDataBase ) ) )
+d106 40
+a148 2
+      case ( s_diff, s_dump )
+        call dumpCommand ( key, griddedDataBase=griddedDataBase )
+d150 1
+a150 1
+        ! Shouldn't get here is parser worked?
+d170 1
+a170 1
+    use output_m, only: output, outputNamedValue
+d263 1
+d276 1
+d284 2
+a286 1
+    type (griddedData_T), target :: Intermediate
+d288 1
+d294 1
+a294 1
+    ! Get the information from the l2cf    
+d311 5
+a315 1
+    ! Do the concatenation unless one or other is empty
+d321 1
+a321 1
+      ! 1st--check if any are empty; bail out if they are
+d323 1
+d327 1
+a327 1
+        if ( b%empty ) then
+d331 1
+d333 1
+d335 1
+d339 1
+d345 1
+a345 1
+        if ( i == 2 ) then
+d347 1
+d424 2
+a425 2
+    use Init_tables_module, only: F_CLIMATOLOGY, F_HEIGHT, F_OPERATIONAL, &
+      & F_SCALE
+d428 2
+a429 1
+    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_ALLOCATE
+d456 1
+a456 1
+    logical, parameter :: DEEBUG = .false.
+d486 2
+a487 2
+    type (griddedData_T), pointer :: OPERATIONAL
+    type (griddedData_T), pointer :: CLIMATOLOGY
+d527 1
+d529 2
+d533 1
+a533 1
+      if ( toggle(gen) ) call trace_end ( "MergeOneGrid" )
+d536 1
+a536 18
+    if ( DEEBUG ) then
+    call output( 'height: ', advance='no' )
+    call output( height, advance='yes' )
+    call output( 'scale: ', advance='no' )
+    call output( scale, advance='yes' )
+    call output( 'operational%verticalCoordinate: ', advance='no' )
+    call output( operational%verticalCoordinate, advance='yes' )
+    call dump( operational%field( :, 1, 1, 1, 1, 1 ), 'op T' )
+    call dump( operational%heights, 'op h' )
+    call blanks(3)
+    call output( v_is_pressure, advance='yes' )
+    call output( 'climatology%verticalCoordinate: ', advance='no' )
+    call output( climatology%verticalCoordinate, advance='yes' )
+    call dump( climatology%field( :, 1, 1, 1, 1, 1 ), 'cl T' )
+    call dump( climatology%heights, 'cl h' )
+    call blanks(3)
+    call output( v_is_pressure, advance='yes' )
+    endif
+d686 27
+a712 2
+
+    if ( toggle(gen) ) call trace_end ( "MergeOneGrid" )
+d1046 1
+a1046 1
+       "$Id: MergeGridsModule.f90,v 2.40 2009/11/05 00:29:06 pwagner Exp $"
+d1056 3
+@
+
+
+2.40
+log
+@Better diagnostics output if something goes wrong
+@
+text
+@d733 11
+d961 1
+a961 1
+       "$Id: MergeGridsModule.f90,v 2.39 2009/10/26 17:12:09 pwagner Exp $"
+d971 3
+@
+
+
+2.39
+log
+@Added Diff command to be used like Dump in l2cf
+@
+text
+@d739 1
+a739 1
+        call output( any( Temperatures%DateStarts==Pressures%DateStarts ), &
+d742 1
+a742 1
+        call output( any( Temperatures%DateEnds==Pressures%DateEnds ), &
+d745 1
+a745 1
+        call output( any( Temperatures%Lsts==Pressures%Lsts ), &
+d748 1
+a748 1
+        call output( any( Temperatures%Szas==Pressures%Szas ), &
+d750 19
+d804 1
+a804 1
+    if ( Temperatures%empty .or. Pressures%empty ) then
+d807 7
+a813 1
+        & 'Temperatures or Pressures grid was empty' )
+d950 1
+a950 1
+       "$Id: MergeGridsModule.f90,v 2.38 2009/06/23 18:46:18 pwagner Exp $"
+d960 3
+@
+
+
+2.38
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d26 1
+a26 1
+       "$RCSfile: $"
+d40 1
+a40 1
+      & S_DELETE, S_DUMP, S_MERGE, S_WMOTROP
+d88 1
+a88 1
+      case ( s_dump )
+d925 1
+a925 1
+       "$Id: read_apriori.f90 is it here $"
+d935 3
+@
+
+
+2.37
+log
+@EssentiallyEqual moved to MLSFillValues
+@
+text
+@d26 1
+a26 1
+       "$RCSfile: MergeGridsModule.f90,v $"
+d922 1
+a923 1
+!---------------------------- RCS Ident Info -------------------------------
+d925 2
+a926 3
+       "$Id: MergeGridsModule.f90,v 2.36 2007/12/07 01:15:01 pwagner Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d928 1
+d930 1
+d935 3
+@
+
+
+2.36
+log
+@Removed unused dummp varaibles, etc.
+@
+text
+@d356 1
+a356 1
+    use MLSNumerics, only: ESSENTIALLYEQUAL
+d925 1
+a925 1
+       "$Id: MergeGridsModule.f90,v 2.35 2007/10/24 00:17:22 pwagner Exp $"
+d934 3
+@
+
+
+2.35
+log
+@Removed unused declarations
+@
+text
+@d34 1
+a34 1
+  subroutine MergeGrids ( root, griddedDataBase, l2gpDatabase )
+a40 1
+    use L2GPData, only: L2GPDATA_T
+a49 1
+    type ( l2gpData_T), dimension(:), pointer :: L2GPDATABASE
+d925 1
+a925 1
+       "$Id: MergeGridsModule.f90,v 2.34 2007/08/17 00:33:59 pwagner Exp $"
+d934 3
+@
+
+
+2.34
+log
+@May now dump, stop, under control of l2cf
+@
+text
+@d37 2
+a38 4
+    use GriddedData, only: GRIDDEDDATA_T, RGR, &
+      & ADDGRIDDEDDATATODATABASE, &
+      & CONCATENATEGRIDDEDDATA, CONVERTFROMETALEVELGRIDS, COPYGRID, &
+      & NULLIFYGRIDDEDDATA, SETUPNEWGRIDDEDDATA, WRAPGRIDDEDDATA
+a41 1
+    use MLSCommon, only: R8
+d45 1
+a45 1
+    use Tree, only: NSONS, SUBTREE, DECORATE, DECORATION, NODE_ID, SUB_ROSA
+a47 2
+    use VGridsDatabase, only: AddVGridToDatabase, VGrid_T, VGrids
+    use VGrid, only: CREATEVGRIDFROMMLSCFINFO
+a54 1
+    integer :: returnStatus
+a355 1
+    use L3ASCII, only: L3ASCII_INTERP_FIELD
+d637 2
+a638 2
+    use GriddedData, only: GRIDDEDDATA_T, DUMP, RGR, V_IS_PRESSURE, V_IS_ETA, &
+      & COPYGRID, NULLIFYGRIDDEDDATA, &
+d640 1
+a640 1
+      & SETUPNEWGRIDDEDDATA, SLICEGRIDDEDDATA, WRAPGRIDDEDDATA
+d647 1
+a647 1
+    use output_m, only: output, outputNamedValue
+d927 1
+a927 1
+       "$Id: MergeGridsModule.f90,v 2.33 2007/07/04 01:44:15 vsnyder Exp $"
+d936 3
+@
+
+
+2.33
+log
+@Actually leave early from ConvertEtaToP
+@
+text
+@d36 1
+d42 1
+a42 1
+      & S_DELETE, S_MERGE, S_WMOTROP
+d45 1
+a45 1
+    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
+d66 6
+a71 1
+    if ( toggle(gen) ) call trace_begin ( "MergeGrids", root )
+d96 2
+d104 6
+a109 1
+    if ( toggle(gen) ) call trace_end ( "MergeGrids" )
+d934 1
+a934 1
+       "$Id: MergeGridsModule.f90,v 2.32 2007/07/04 01:08:43 pwagner Exp $"
+d943 3
+@
+
+
+2.32
+log
+@trace_begin and _end rebalanced in ConvertEtaToP
+@
+text
+@d162 1
+a162 1
+    if ( size(griddedDataBase) < 2 ) call leaveUs
+d170 1
+a170 1
+    if ( a%empty .or. b%empty ) call leaveUs
+d189 1
+a189 5
+    call leaveUs
+    contains
+    subroutine LeaveUs
+      if ( toggle(gen) ) call trace_end ( "ConvertEtaToP" )
+    end subroutine LeaveUs
+d921 1
+a921 1
+       "$Id: MergeGridsModule.f90,v 2.31 2007/06/29 21:01:14 pwagner Exp $"
+d930 3
+@
+
+
+2.31
+log
+@Should print less unless debugging
+@
+text
+@d189 1
+d925 1
+a925 1
+       "$Id: MergeGridsModule.f90,v 2.30 2007/06/07 21:56:00 pwagner Exp $"
+d934 3
+@
+
+
+2.30
+log
+@Prevents another cause of crashing; extra debugging
+@
+text
+@d159 1
+a159 1
+    call output( 'Have T, P grids', advance='yes' )
+d161 1
+a161 1
+    call outputNamedValue( 'size(griddedDataBase)', size(griddedDataBase) )
+d163 7
+a169 5
+    call output( 'About to check on a, b', advance='yes' )
+    call outputNamedValue( 'associated(a)', associated(a) )
+    call outputNamedValue( 'associated(b)', associated(b) )
+    call outputNamedValue( 'a%empty', a%empty )
+    call outputNamedValue( 'b%empty', b%empty )
+d173 7
+a179 6
+    call output( 'a grid', advance='yes' )
+    call dump( a, details=0 )
+    call output( 'b grid', advance='yes' )
+    call dump( b, details=0 )
+    call output( 'v grid', advance='yes' )
+    call dump( v, details=0 )
+a180 1
+    call output( 'about to convert from eta level grids', advance='yes' )
+d182 1
+a182 1
+    call output( 'done converting from eta level grids', advance='yes' )
+d924 1
+a924 1
+       "$Id: MergeGridsModule.f90,v 2.29 2007/03/23 00:27:17 pwagner Exp $"
+d933 3
+@
+
+
+2.29
+log
+@Valiant attempts to bring two Lahey versions results closer
+@
+text
+@d106 1
+a106 1
+    use output_m, only: output
+d133 1
+d137 3
+d159 11
+d178 1
+d180 1
+d187 4
+a190 1
+    if ( toggle(gen) ) call trace_end ( "ConvertEtaToP" )
+a221 1
+
+d922 1
+a922 1
+       "$Id: MergeGridsModule.f90,v 2.28 2007/01/12 00:34:04 pwagner Exp $"
+d931 3
+@
+
+
+2.28
+log
+@Renamed routine outputNamedValue
+@
+text
+@d335 1
+a335 1
+    use output_m, only: BLANKS, OUTPUT
+d384 2
+a385 2
+    real (rgr) :: CLIVAL                ! One interpolated value
+    real (rgr) :: OPVAL                 ! One interpolated value
+d392 2
+d438 4
+d517 8
+a524 1
+
+d531 2
+d552 4
+a555 1
+                if ( EssentiallyEqual ( opVal, newGrid%missingValue ) ) opWeight = 0.0
+d558 2
+a559 2
+                if ( EssentiallyEqual ( cliVal, newGrid%missingValue ) ) &
+                  & call MLSMessage ( MLSMSG_Error, ModuleName, &
+d561 2
+d580 17
+d762 8
+a777 8
+    nlev = Temperatures%noHeights
+    if ( Temperatures%empty .or. Pressures%empty ) then
+      newGrid%empty = .true.
+      call MLSMessage ( MLSMSG_Warning, moduleName, &
+        & 'Temperatures or Pressures grid was empty' )
+      if ( toggle(gen) ) call trace_end ( "wmoTropFromGrid" )
+      return
+    endif
+d896 1
+d903 1
+a903 1
+       "$Id: MergeGridsModule.f90,v 2.27 2006/11/03 19:40:30 pwagner Exp $"
+d912 3
+@
+
+
+2.27
+log
+@Fixed unassociated pointers NAG caught
+@
+text
+@d586 1
+a586 1
+    use output_m, only: output, output_name_v_pair
+d707 2
+a708 2
+    ! call output_name_v_pair( 'Temperatures grid empty?', Temperatures%empty )
+    ! call output_name_v_pair( 'Pressures grid empty?   ', Pressures%empty )
+d741 2
+a742 2
+    ! call output_name_v_pair( 'Temperatures grid empty?', Temperatures%empty )
+    ! call output_name_v_pair( 'Pressures grid empty?   ', Pressures%empty )
+d865 1
+a865 1
+       "$Id: MergeGridsModule.f90,v 2.26 2006/11/03 00:25:47 pwagner Exp $"
+d874 3
+@
+
+
+2.26
+log
+@Fixed bug in tropopause calculation
+@
+text
+@d642 1
+d865 1
+a865 1
+       "$Id: MergeGridsModule.f90,v 2.25 2006/11/01 20:34:12 pwagner Exp $"
+d874 3
+@
+
+
+2.25
+log
+@hasty fix to wmo tropopause
+@
+text
+@d575 1
+d801 1
+a801 1
+                h = Pressures%field(nlev:1:-1,lat,lon,iLst,iSza,idate)
+d807 1
+a807 1
+                  p = Pressures%field(nlev:1:-1,lat,lon,iLst,iSza,idate) * scale
+d825 6
+d864 1
+a864 1
+       "$Id: MergeGridsModule.f90,v 2.24 2006/07/07 23:10:03 pwagner Exp $"
+d873 3
+@
+
+
+2.24
+log
+@Should handle missing GEOS5 files with greater grace
+@
+text
+@d323 1
+d437 3
+a439 1
+    call output( operational%verticalCoordinate, advance='no' )
+d443 3
+a445 1
+    call output( climatology%verticalCoordinate, advance='no' )
+d583 1
+d637 2
+d693 1
+d698 7
+d729 1
+a729 1
+    newGrid%missingValue              = MISSINGVALUE
+d791 1
+a791 1
+                  scale = 100. ! To convert Pa to hPa
+d793 1
+a793 1
+                  scale = 1.
+d829 1
+a829 1
+                & newGrid%field(1, lat,lon,iLst,iSza,idate) = trp ! /100 for 'Pa'
+d840 11
+d857 1
+a857 1
+       "$Id: MergeGridsModule.f90,v 2.23 2006/06/22 00:20:46 pwagner Exp $"
+d866 3
+@
+
+
+2.23
+log
+@Repair cosmetic blemishes when tracing
+@
+text
+@a86 3
+!       case ( s_vGrid )
+!         call decorate ( son, AddVGridToDatabase ( vGrids, &
+!           & CreateVGridFromMLSCFInfo ( name, son, l2gpDatabase, returnStatus ) ) )
+d579 1
+a579 1
+    use output_m, only: output
+d689 2
+d697 18
+d716 9
+a763 17
+    call SetupNewGriddedData ( newGrid, source=Temperatures, &
+      & noHeights=1, noDates=1 )
+    ! Setup the rest of the quantity
+    newGrid%sourceFileName     = 'Gridded Temperatures'
+    newGrid%quantityName       = 'wmo Tropopause'
+    newGrid%description        = 'wmo Tropopause'
+    newGrid%units              = 'hPa' ! If we want 'Pa', restore /100 below
+    newGrid%verticalCoordinate = v_is_pressure
+    newGrid%equivalentLatitude = Temperatures%equivalentLatitude
+    newGrid%heights            = Temperatures%missingValue
+    newGrid%lats               = Temperatures%lats
+    newGrid%lons               = Temperatures%lons
+    newGrid%lsts               = Temperatures%lsts
+    newGrid%szas               = Temperatures%szas
+    newGrid%dateEnds           = Temperatures%dateEnds(1)
+    newGrid%dateStarts         = Temperatures%dateStarts(1)
+    newGrid%field              = MISSINGVALUE
+d830 1
+a830 1
+       "$Id: MergeGridsModule.f90,v 2.22 2006/06/15 17:36:30 pwagner Exp $"
+d839 3
+@
+
+
+2.22
+log
+@Bail out of Concatenating if geos5 files missing
+@
+text
+@d173 1
+d239 4
+a242 1
+        if ( b%empty ) return
+d434 1
+d637 1
+a637 1
+    if ( toggle(gen) ) call trace_begin ( "MergeOneGrid", root )
+d695 1
+d702 1
+d815 1
+d821 1
+a821 1
+       "$Id: MergeGridsModule.f90,v 2.21 2006/06/15 00:02:33 pwagner Exp $"
+d830 3
+@
+
+
+2.21
+log
+@Should work with geos5: convert then concatenate
+@
+text
+@d233 8
+d813 1
+a813 1
+       "$Id: MergeGridsModule.f90,v 2.20 2006/06/13 22:13:12 pwagner Exp $"
+d822 3
+@
+
+
+2.20
+log
+@changed interface to ConvertFromEtaLevelGrids
+@
+text
+@d134 1
+d158 1
+d165 1
+d177 1
+a177 1
+  type (griddedData_T) function Concatenate ( root, griddedDataBase ) &
+d179 5
+a184 5
+    use GriddedData, only: GRIDDEDDATA_T, NULLIFYGRIDDEDDATA, &
+      & CONCATENATEGRIDDEDDATA, COPYGRID
+    use Trace_M, only: TRACE_BEGIN, TRACE_END
+    use Init_tables_module, only: F_A, F_B
+    use Toggles, only: GEN, TOGGLE
+d188 1
+d193 4
+a196 1
+    integer :: SON                    ! Tree node
+d199 4
+a203 4
+    integer :: I                      ! Loop counter
+
+    type (griddedData_T), pointer :: A
+    type (griddedData_T), pointer :: B
+d207 1
+d211 1
+a211 2
+    ! Note that init_tables_module has insisted that we have all
+    ! arguments so we don't need a 'got' type arrangement
+d222 2
+d228 30
+a257 1
+    if ( .not. a%empty .and. .not. b%empty ) then
+d655 17
+a671 2
+      if ( .not. doGriddeddataMatch( Temperatures, Pressures ) ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+d673 1
+d724 1
+a724 1
+      & noHeights=1 )
+d737 2
+a738 2
+    newGrid%dateEnds           = Temperatures%dateEnds
+    newGrid%dateStarts         = Temperatures%dateStarts
+d742 1
+a742 1
+    do idate=1, size( Temperatures%field, 6 )
+d805 1
+a805 1
+       "$Id: MergeGridsModule.f90,v 2.19 2006/05/12 21:26:37 pwagner Exp $"
+d814 3
+@
+
+
+2.19
+log
+@Added extra debugging statements
+@
+text
+@d41 1
+a41 1
+      & S_DELETE, S_MERGE, S_VGRID, S_WMOTROP
+d87 3
+a89 3
+      case ( s_vGrid )
+        call decorate ( son, AddVGridToDatabase ( vGrids, &
+          & CreateVGridFromMLSCFInfo ( name, son, l2gpDatabase, returnStatus ) ) )
+d106 1
+a106 1
+    use GriddedData, only: GRIDDEDDATA_T, NULLIFYGRIDDEDDATA, &
+d108 2
+a109 1
+    use Init_tables_module, only: F_A, F_B, F_VGRID
+d113 1
+a113 1
+    use VGridsDatabase, only: VGrid_T, VGrids, ConvertVGrid
+d131 2
+a132 1
+    type (VGrid_T), pointer       :: V ! Desired pressure surfaces
+d136 1
+a136 1
+    if ( toggle(gen) ) call trace_begin ( "Concatenate", root )
+d151 4
+a154 2
+      case ( f_VGrid )
+        v => VGrids ( decoration ( decoration ( value ) ) )
+d157 6
+d164 6
+d229 6
+d522 1
+a522 1
+    use GriddedData, only: GRIDDEDDATA_T, RGR, V_IS_PRESSURE, V_IS_ETA, &
+d531 1
+d621 4
+d637 1
+a637 1
+    ! but when we move to GOES5 GMAO we'll have no choice:
+d701 2
+d751 1
+a751 1
+       "$Id: MergeGridsModule.f90,v 2.18 2006/05/09 16:42:02 pwagner Exp $"
+d760 3
+@
+
+
+2.18
+log
+@May find wmo p trop with two eta-level grids
+@
+text
+@d265 1
+d290 1
+d364 10
+a373 1
+
+d722 1
+a722 1
+       "$Id: MergeGridsModule.f90,v 2.17 2006/05/04 23:04:59 pwagner Exp $"
+d731 3
+@
+
+
+2.17
+log
+@May convertEtaToP and create a VGrid in MergeGrids section
+@
+text
+@d255 3
+a257 2
+    use GriddedData, only: GRIDDEDDATA_T, NULLIFYGRIDDEDDATA, COPYGRID, &
+      & WRAPGRIDDEDDATA, SETUPNEWGRIDDEDDATA, RGR, V_IS_PRESSURE, SLICEGRIDDEDDATA
+d489 5
+a493 3
+    use GriddedData, only: GRIDDEDDATA_T, NULLIFYGRIDDEDDATA, COPYGRID, &
+      & WRAPGRIDDEDDATA, SETUPNEWGRIDDEDDATA, RGR, V_IS_PRESSURE, SLICEGRIDDEDDATA
+    use Init_tables_module, only: F_GRID
+d497 1
+d507 8
+a514 3
+    ! This routine creates a new grid by finding wmo Tropopause
+    ! pressure levels among the temperatures of another grid.
+    ! The new "grid" has only one "level" per horizontal grid point
+d517 5
+d540 2
+d545 1
+d564 4
+d573 14
+d598 18
+a621 10
+    ! Right now we can't read eta levels, only pressures
+    ! but when we move to GOES5 GMAO we'll have no choice:
+    ! Must read eta-level files
+    ! if ( .not. any( &
+    !   & Temperatures%verticalCoordinate == (/ v_is_pressure, v_is_eta /) &
+    !   & ) ) then
+    if (  Temperatures%verticalCoordinate /= v_is_pressure ) then
+      call MLSMessage ( MLSMSG_Error, moduleName, &
+        & 'Temperatures illegal verticalcoordinate calculating wmo tropopause' )
+    endif
+d625 1
+a625 1
+      p=h(nlev:1:-1)*100.  ! hPa > Pa
+d628 1
+a628 1
+      p=h(:)*100.         ! hPa > Pa
+d637 1
+a637 1
+    newGrid%units              = 'hPa'
+d655 20
+d695 1
+a695 1
+                & newGrid%field(1, lat,lon,iLst,iSza,idate) = trp/100
+d711 1
+a711 1
+       "$Id: MergeGridsModule.f90,v 2.16 2006/02/11 00:14:08 pwagner Exp $"
+d720 3
+@
+
+
+2.16
+log
+@May calculate wmoTropopause in this section directly
+@
+text
+@d34 1
+a34 1
+  subroutine MergeGrids ( root, griddedDataBase )
+d36 7
+a42 5
+    use GriddedData, only: GRIDDEDDATA_T, RGR, SETUPNEWGRIDDEDDATA, &
+      & ADDGRIDDEDDATATODATABASE, NULLIFYGRIDDEDDATA, &
+      & WRAPGRIDDEDDATA, CONCATENATEGRIDDEDDATA, COPYGRID
+    use Init_tables_module, only: S_MERGE, S_CONCATENATE, S_DELETE, &
+      & S_WMOTROP
+d50 2
+d55 1
+d59 1
+d82 3
+d87 3
+d103 54
+d648 1
+a648 1
+       "$Id: MergeGridsModule.f90,v 2.15 2005/06/22 18:57:02 pwagner Exp $"
+d657 3
+@
+
+
+2.15
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d16 2
+d26 1
+a26 1
+       "$RCSfile: $"
+d39 2
+a40 1
+    use Init_tables_module, only: S_MERGE, S_CONCATENATE, S_DELETE
+d78 3
+d84 1
+a84 1
+          & 'Only merge and concatenate commands allowed in MergeGrids section' )
+d418 161
+d582 1
+a582 1
+       "$Id: $"
+d591 3
+@
+
+
+2.14
+log
+@Get PHYQ_... directly from Intrinsic instead of indirectly via Units
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d22 1
+a22 4
+  !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
+    "$Id: MergeGridsModule.f90,v 2.13 2003/06/06 01:06:59 livesey Exp $"
+  character (len=len(idParm)), private :: Id = idParm
+d24 1
+a24 1
+    "$RCSfile: MergeGridsModule.f90,v $"
+d26 1
+a26 1
+  !---------------------------------------------------------------------------
+d413 5
+d424 3
+@
+
+
+2.13
+log
+@Added DeleteGrids stuff
+@
+text
+@d16 1
+a16 1
+    "$Id: MergeGridsModule.f90,v 2.12 2003/05/09 02:13:05 livesey Exp $"
+d177 1
+a177 2
+    use Tree, only: NSONS, SUBTREE, DECORATION
+    use Units, only: PHYQ_Length, PHYQ_Pressure
+a179 4
+    use MLSNumerics, only: ESSENTIALLYEQUAL
+    use L3ASCII, only: L3ASCII_INTERP_FIELD
+    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_ALLOCATE
+    use Trace_M, only: TRACE_BEGIN, TRACE_END
+d182 2
+d185 2
+d188 2
+a189 1
+    use Expr_m, only: EXPR
+d414 3
+@
+
+
+2.12
+log
+@Removed a dump
+@
+text
+@d16 1
+a16 1
+    "$Id: MergeGridsModule.f90,v 2.11 2003/05/09 01:55:14 livesey Exp $"
+d32 1
+a32 1
+    use Init_tables_module, only: S_MERGE, S_CONCATENATE
+d58 1
+a58 3
+        ! Shouldn't get here if parser worked?
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Expecting only named specifiers in MergeGrids section' )
+d68 2
+d140 33
+d414 3
+@
+
+
+2.11
+log
+@Sped up Merge by using new SliceGriddedData routine.
+@
+text
+@d16 1
+a16 1
+    "$Id: MergeGridsModule.f90,v 2.10 2003/04/04 00:08:26 livesey Exp $"
+a156 1
+    use Dump_0, only: DUMP
+a318 3
+    call dump ( operMapped ( :,:,1,1,1,1 ), 'Operational slice' )
+    call dump ( cliMapped ( :,:,1,1,1,1 ), 'Cli slice' )
+
+d381 3
+@
+
+
+2.10
+log
+@Added Concatenate capability, various reorganizations.
+@
+text
+@d16 1
+a16 1
+    "$Id: MergeGridsModule.f90,v 2.9 2003/02/28 02:33:28 livesey Exp $"
+d143 1
+d147 2
+a148 1
+      & WRAPGRIDDEDDATA, SETUPNEWGRIDDEDDATA, RGR, V_IS_PRESSURE
+d150 1
+a150 1
+    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
+d157 1
+d186 1
+a191 1
+    real (rgr) :: CLIVAL                 ! Value from climatological grid
+a193 1
+    real (rgr) :: OPVAL                  ! Value from operational grid
+d202 6
+d291 25
+d320 3
+d330 3
+a332 19
+                call l3ascii_interp_field ( &
+                  & climatology, &
+                  & cliVal, &
+                  & newGrid%heights(surf), &
+                  & newGrid%lats(lat), &
+                  & newGrid%lons(lon), &
+                  & newGrid%lsts(lst), &
+                  & newGrid%szas(sza), &
+                  & 0.5 * ( newGrid%dateStarts(day)+newGrid%dateEnds(day) ) )
+                call l3ascii_interp_field ( &
+                  & operational, &
+                  & opVal, &
+                  & newGrid%heights(surf), &
+                  & newGrid%lats(lat), &
+                  & newGrid%lons(lon), &
+                  & newGrid%lsts(lst), &
+                  & newGrid%szas(sza), &
+                  & 0.5 * ( newGrid%dateStarts(day)+newGrid%dateEnds(day) ) )
+
+d344 1
+a344 4
+                if ( opVal >= nearest ( operational%missingValue, -1.0 ) .and. &
+                  &  opVal <= nearest ( operational%missingValue,  1.0 ) ) then
+                  opWeight = 0.0
+                endif
+d347 3
+a349 5
+                if ( cliVal >= nearest ( climatology%missingValue, -1.0 ) .and. &
+                  &  cliVal <= nearest ( climatology%missingValue,  1.0 ) ) then
+                  call MLSMessage ( MLSMSG_Error, ModuleName, &
+                    & 'There is a bad data point in the climatology field' )
+                end if
+d368 7
+d385 3
+@
+
+
+2.9
+log
+@Bug fix, careless with the old emacs.
+@
+text
+@d16 1
+a16 1
+       "$Id: MergeGridsModule.f90,v 2.8 2003/02/28 02:25:50 livesey Exp $"
+d19 1
+a19 1
+       "$RCSfile: MergeGridsModule.f90,v $"
+d29 4
+a32 6
+    use Expr_m, only: EXPR
+    use GriddedData, only: GRIDDEDDATA_T, rgr, SETUPNEWGRIDDEDDATA, &
+      & ADDGRIDDEDDATATODATABASE, V_IS_PRESSURE, NullifyGriddedData
+    use Init_tables_module, only: F_CLIMATOLOGY, F_HEIGHT, F_OPERATIONAL, &
+      & F_SCALE, S_MERGE
+    use L3ASCII, only: L3ASCII_INTERP_FIELD
+a39 1
+    use Units, only: PHYQ_Length, PHYQ_Pressure
+d43 1
+a43 1
+    
+d63 2
+a64 1
+      if ( get_spec_id(key) == s_merge ) then
+d67 4
+a70 1
+      else
+d73 161
+a233 2
+          & 'Only merge commands allowed in MergeGrids section' )
+      end if
+a234 2
+    if ( toggle(gen) ) call trace_end ( "MergeGrids", root )
+  contains
+d236 111
+a346 179
+    ! ----------------------------------------- MergeOneGrid
+    type (griddedData_T) function MergeOneGrid ( root, griddedDataBase ) &
+      & result ( newGrid )
+      integer, intent(in) :: ROOT         ! Tree node
+      type (griddedData_T), dimension(:), pointer :: griddedDataBase ! Database
+
+      ! This routine creates a new grid being a merge of two others.
+      ! The operational grid forms the bottom of the dataset
+      ! The climatology grid the top.  The result has the horizontal
+      ! coordinates to operational and the vertical coordiantes of climatology
+
+      ! Note! This routine is far from efficient. Not least because it
+      ! uses l3atascii_interp_field which isn't terribly efficient either.
+      ! But hey, this isn't a key part of the software when it comes
+      ! to a desire for speed (or at least it shouldn't be)
+
+      ! I'll need to think about missing data at some point.
+
+      ! Local parameters
+      real (r8), parameter :: SCALEHEIGHT = 16.0e3_r8 ! Approximate scale height / m
+
+      ! Local variables
+      integer :: DAY                      ! Loop counter
+      integer :: FIELD                    ! Another tree node
+      integer :: FIELD_INDEX              ! Type of tree node
+      integer :: I                        ! Loop inductor
+      integer :: LAT                      ! Loop counter
+      integer :: LON                      ! Loop counter
+      integer :: LST                      ! Loop counter
+      integer :: SON                      ! Tree node
+      integer :: SURF                     ! Loop counter
+      integer :: SZA                      ! Loop counter
+      integer :: UNITS(2)                 ! Units for expr
+      integer :: VALUE                    ! Value of tree node
+
+      real (rgr) :: CLIVAL                 ! Value from climatological grid
+      real (r8) :: CLIWEIGHT              ! Climatological 'weight'
+      real (r8) :: HEIGHT                 ! Transition height
+      real (rgr) :: OPVAL                  ! Value from operational grid
+      real (r8) :: OPWEIGHT               ! Operational 'weight'
+      real (r8) :: SCALE                  ! Transition scale
+      real (r8) :: TOTALWEIGHT            ! Total weight
+      real (r8) :: VALUES(2)              ! Value of expr
+      real (r8) :: ZTRANS                 ! Transition 'height'
+      real (r8) :: Z                      ! One 'height'
+      real (r8) :: Z1, Z2                 ! Range of transition region
+      
+      type (griddedData_T), pointer :: OPERATIONAL
+      type (griddedData_T), pointer :: CLIMATOLOGY
+
+      ! Executable code
+
+      call nullifyGriddedData ( newGrid ) ! for Sun's still useless compiler
+      if ( toggle(gen) ) call trace_begin ( "MergeOneGrid", root )
+
+      ! Get the information from the l2cf    
+      ! Note that init_tables_module has insisted that we have all
+      ! arguments so we don't need a 'got' type arrangement
+      do i = 2, nsons(root)
+        son = subtree(i,root)
+        field = subtree(1,son)
+        value = subtree(2,son)
+        field_index = decoration(field)
+        select case ( field_index )
+        case ( f_operational ) 
+          operational => griddedDataBase ( decoration ( decoration ( value ) ) )
+        case ( f_climatology )
+          climatology => griddedDataBase ( decoration ( decoration ( value ) ) )
+        case ( f_height )
+          call expr ( value, units, values )
+          if ( units(1) /= phyq_pressure ) call MLSMessage ( &
+            & MLSMSG_Error, ModuleName, &
+            & 'Only pressure is allowed for the height field' )
+          height = values(1)
+        case ( f_scale )
+          call expr ( value, units, values )
+          if ( units(1) /= phyq_length ) call MLSMessage ( &
+            & MLSMSG_Error, ModuleName, &
+            & 'Only altitude is allowed for the scale field' )
+          scale = values(1)
+        end select
+      end do
+      ! Do some final sanity checks
+      if ( operational%verticalCoordinate /= v_is_pressure ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Operational grid not on pressure surfaces' )
+      if ( climatology%verticalCoordinate /= v_is_pressure ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Climatology grid not on pressure surfaces' )
+  !     if ( climatology%units /= operational%units ) &
+  !       & call MLSMessage ( MLSMSG_Error, ModuleName, &
+  !       & 'The climatology and operational data describe different physical quantities' )
+      if ( climatology%equivalentLatitude .neqv. operational%equivalentLatitude ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'The climatology and operational data are mixed latitude/equivalent latitude.' )
+
+      ! OK, now we're ready to go.
+      ! Create the result.  It has the same vertical coordinates as climatology
+      ! But the same horizontal coordinates as operational.
+      call SetupNewGriddedData ( newGrid, source=operational, &
+        & noHeights=climatology%noHeights )
+      ! Setup the rest of the quantity
+      newGrid%sourceFileName = 'Result of merge'
+      newGrid%quantityName   = 'Result of merge'
+      newGrid%description    = 'Result of merge'
+      newGrid%units          = climatology%units
+      newGrid%verticalCoordinate = v_is_pressure
+      newGrid%equivalentLatitude = climatology%equivalentLatitude
+      newGrid%heights = climatology%heights
+      newGrid%lats = operational%lats
+      newGrid%lons = operational%lons
+      newGrid%lsts = operational%lsts
+      newGrid%szas = operational%szas
+      newGrid%dateStarts = operational%dateStarts
+      newGrid%dateEnds = operational%dateEnds
+
+      zTrans = scaleHeight * ( 3.0 - log10 ( height ) )
+      z1 = zTrans - scale/2.0
+      z2 = zTrans + scale/2.0
+
+      
+
+      ! Now we're going to fill in the rest of the field
+      do day = 1, newGrid%noDates
+        do sza = 1, newGrid%noSzas
+          do lst = 1, newGrid%noLsts
+            do lon = 1, newGrid%noLons
+              do lat = 1, newGrid%noLats
+                do surf = 1, newGrid%noHeights
+                  call l3ascii_interp_field ( &
+                    & climatology, &
+                    & cliVal, &
+                    & newGrid%heights(surf), &
+                    & newGrid%lats(lat), &
+                    & newGrid%lons(lon), &
+                    & newGrid%lsts(lst), &
+                    & newGrid%szas(sza), &
+                    & 0.5 * ( newGrid%dateStarts(day)+newGrid%dateEnds(day) ) )
+                  call l3ascii_interp_field ( &
+                    & operational, &
+                    & opVal, &
+                    & newGrid%heights(surf), &
+                    & newGrid%lats(lat), &
+                    & newGrid%lons(lon), &
+                    & newGrid%lsts(lst), &
+                    & newGrid%szas(sza), &
+                    & 0.5 * ( newGrid%dateStarts(day)+newGrid%dateEnds(day) ) )
+
+                  ! Weight them by height
+                  z = scaleHeight * ( 3.0 - log10 ( newGrid%heights(surf) ) )
+                  if ( scale /= 0.0 ) then
+                    cliWeight = ( z - z1 ) / ( z2-z1 )
+                    opWeight = 1.0 - cliWeight
+                  end if
+
+                  ! Check for bad data in operational dataset
+                  if ( opVal >= nearest ( operational%missingValue, -1.0 ) .and. &
+                    &  opVal <= nearest ( operational%missingValue,  1.0 ) ) then
+                    opWeight = 0.0
+                  endif
+                  ! Check for bad data in the climatology
+                  if ( cliVal >= nearest ( climatology%missingValue, -1.0 ) .and. &
+                    &  cliVal <= nearest ( climatology%missingValue,  1.0 ) ) then
+                    cliWeight = 0.0
+                  end if
+
+                  cliWeight = min ( max ( cliWeight, 0.0_r8 ), 1.0_r8 )
+                  opWeight = min ( max ( opWeight, 0.0_r8 ), 1.0_r8 )
+                  totalWeight = cliWeight + opWeight
+
+                  ! OK, store this value
+                  if ( totalWeight > 0.0_r8 ) then
+                    newGrid%field ( surf, lat, lon, lst, sza, day ) = &
+                      & ( cliWeight*cliVal + opWeight*opVal ) / totalWeight
+                  else
+                    newGrid%field ( surf, lat, lon, lst, sza, day ) = &
+                      & newGrid%missingValue
+                  end if
+                end do
+d352 3
+a354 3
+      if ( toggle(gen) ) call trace_end ( "MergeOneGrid", root )
+    end function MergeOneGrid
+  end subroutine MergeGrids
+d363 3
+@
+
+
+2.8
+log
+@First working version.
+@
+text
+@d16 1
+a16 1
+       "$Id: MergeGridsModule.f90,v 2.7 2003/02/19 19:15:13 pwagner Exp $"
+d124 3
+d273 3
+@
+
+
+2.7
+log
+@Consistent with new GriddedData_T and rgr
+@
+text
+@d16 1
+a16 1
+       "$Id: MergeGridsModule.f90,v 2.6 2002/11/22 12:21:14 mjf Exp $"
+a124 3
+      type (griddedData_T), pointer :: OPERATIONAL
+      type (griddedData_T), pointer :: CLIMATOLOGY
+
+d195 2
+d222 2
+a223 1
+                  ! Now work out the weighting of the two
+d230 11
+a240 1
+                  ! Would probably think about missing data here
+d242 1
+a242 1
+                  opWeight = min ( max ( cliWeight, 0.0_r8 ), 1.0_r8 )
+d250 2
+a251 2
+  !                   newGrid%field ( surf, lat, lon, lst, sza, day ) = &
+  !                     & newGrid%missing
+d270 3
+@
+
+
+2.6
+log
+@Added nullify routine(s) to get round Sun's WS6 compiler not
+initialising derived type function results.
+@
+text
+@d16 1
+a16 1
+       "$Id: MergeGridsModule.f90,v 2.5 2002/10/08 17:36:21 pwagner Exp $"
+d30 1
+a30 1
+    use GriddedData, only: GRIDDEDDATA_T, SETUPNEWGRIDDEDDATA, &
+d113 2
+a114 2
+      real (r8) :: CLIVAL                 ! Value from climatological grid
+      real (r8) :: CLIWEIGHT              ! Climtaological 'weight'
+d116 1
+a116 1
+      real (r8) :: OPVAL                  ! Value from operational grid
+d260 4
+@
+
+
+2.5
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d16 1
+a16 1
+       "$Id: MergeGridsModule.f90,v 2.4 2002/08/22 20:26:09 vsnyder Exp $"
+d31 1
+a31 1
+      & ADDGRIDDEDDATATODATABASE, V_IS_PRESSURE
+d130 1
+d260 3
+@
+
+
+2.4
+log
+@Move another USE from module scope to procedure scope
+@
+text
+@d16 1
+a16 1
+       "$Id: MergeGridsModule.f90,v 2.3 2002/08/21 02:23:39 vsnyder Exp $"
+d20 1
+d252 4
+d259 3
+@
+
+
+2.3
+log
+@Move USE statements from module scope to procedure scope
+@
+text
+@a8 5
+  ! Moving this into MergeGrids causes lf95 v6.10c to have a SIGSEGV,
+  ! as of 20 Aug 02.  Move it when the compiler is repaired.
+  use GriddedData, only: GRIDDEDDATA_T, SETUPNEWGRIDDEDDATA, &
+    & ADDGRIDDEDDATATODATABASE, V_IS_PRESSURE
+
+d16 1
+a16 1
+       "$Id: MergeGridsModule.f90,v 2.2 2002/01/26 00:10:54 livesey Exp $"
+d26 1
+a26 1
+  subroutine MergeGrids ( root, griddedData )
+d29 2
+d44 1
+a44 1
+    type (GriddedData_T), dimension(:), pointer :: griddedData ! Database
+d66 2
+a67 2
+        call decorate ( key, AddGriddedDataToDatabase ( griddedData, &
+          & MergeOneGrid ( key, griddedData ) ) )
+d78 1
+a78 1
+    type (GriddedData_T) function MergeOneGrid ( root, griddedData ) &
+d81 1
+a81 1
+      type (GriddedData_T), dimension(:), pointer :: GRIDDEDDATA ! Database
+d124 2
+a125 2
+      type (GriddedData_T), pointer :: OPERATIONAL
+      type (GriddedData_T), pointer :: CLIMATOLOGY
+d141 1
+a141 1
+          operational => griddedData ( decoration ( decoration ( value ) ) )
+d143 1
+a143 1
+          climatology => griddedData ( decoration ( decoration ( value ) ) )
+d254 3
+@
+
+
+2.2
+log
+@It compiles at least
+@
+text
+@d9 2
+a10 3
+  use Expr_m, only: EXPR
+  use Init_tables_module, only: F_CLIMATOLOGY, F_HEIGHT, F_OPERATIONAL, &
+    & F_SCALE, S_MERGE
+a12 9
+  use L3ASCII, only: L3ASCII_INTERP_FIELD
+  use MLSCommon, only: R8
+  use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
+  use MoreTree, only: GET_SPEC_ID
+  use Trace_M, only: TRACE_BEGIN, TRACE_END
+  use Tree, only: NSONS, SUBTREE, DECORATE, DECORATION, NODE_ID, SUB_ROSA
+  use Tree_Types, only: N_NAMED
+  use Toggles, only: GEN, TOGGLE
+  use Units, only: PHYQ_Pressure, PHYQ_Length
+d21 1
+a21 1
+       "$Id: MergeGridsModule.f90,v 2.1 2002/01/24 00:58:03 livesey Exp $"
+d32 14
+d78 1
+a78 1
+  end subroutine MergeGrids
+d80 165
+a244 164
+  ! ----------------------------------------- MergeOneGrid
+  type (GriddedData_T) function MergeOneGrid ( root, griddedData ) &
+    & result ( newGrid )
+    integer, intent(in) :: ROOT         ! Tree node
+    type (GriddedData_T), dimension(:), pointer :: GRIDDEDDATA ! Database
+
+    ! This routine creates a new grid being a merge of two others.
+    ! The operational grid forms the bottom of the dataset
+    ! The climatology grid the top.  The result has the horizontal
+    ! coordinates to operational and the vertical coordiantes of climatology
+
+    ! Note! This routine is far from efficient. Not least because it
+    ! uses l3atascii_interp_field which isn't terribly efficient either.
+    ! But hey, this isn't a key part of the software when it comes
+    ! to a desire for speed (or at least it shouldn't be)
+
+    ! I'll need to think about missing data at some point.
+
+    ! Local parameters
+    real (r8), parameter :: SCALEHEIGHT = 16.0e3_r8 ! Approximate scale height / m
+
+    ! Local variables
+    integer :: DAY                      ! Loop counter
+    integer :: FIELD                    ! Another tree node
+    integer :: FIELD_INDEX              ! Type of tree node
+    integer :: I                        ! Loop inductor
+    integer :: LAT                      ! Loop counter
+    integer :: LON                      ! Loop counter
+    integer :: LST                      ! Loop counter
+    integer :: SON                      ! Tree node
+    integer :: SURF                     ! Loop counter
+    integer :: SZA                      ! Loop counter
+    integer :: UNITS(2)                 ! Units for expr
+    integer :: VALUE                    ! Value of tree node
+
+    real (r8) :: CLIVAL                 ! Value from climatological grid
+    real (r8) :: CLIWEIGHT              ! Climtaological 'weight'
+    real (r8) :: HEIGHT                 ! Transition height
+    real (r8) :: OPVAL                  ! Value from operational grid
+    real (r8) :: OPWEIGHT               ! Operational 'weight'
+    real (r8) :: SCALE                  ! Transition scale
+    real (r8) :: TOTALWEIGHT            ! Total weight
+    real (r8) :: VALUES(2)              ! Value of expr
+    real (r8) :: ZTRANS                 ! Transition 'height'
+    real (r8) :: Z                      ! One 'height'
+    real (r8) :: Z1, Z2                 ! Range of transition region
+
+    type (GriddedData_T), pointer :: OPERATIONAL
+    type (GriddedData_T), pointer :: CLIMATOLOGY
+
+    ! Executable code
+
+    if ( toggle(gen) ) call trace_begin ( "MergeOneGrid", root )
+
+    ! Get the information from the l2cf    
+    ! Note that init_tables_module has insisted that we have all
+    ! arguments so we don't need a 'got' type arrangement
+    do i = 2, nsons(root)
+      son = subtree(i,root)
+      field = subtree(1,son)
+      value = subtree(2,son)
+      field_index = decoration(field)
+      select case ( field_index )
+      case ( f_operational ) 
+        operational => griddedData ( decoration ( decoration ( value ) ) )
+      case ( f_climatology )
+        climatology => griddedData ( decoration ( decoration ( value ) ) )
+      case ( f_height )
+        call expr ( value, units, values )
+        if ( units(1) /= phyq_pressure ) call MLSMessage ( &
+          & MLSMSG_Error, ModuleName, &
+          & 'Only pressure is allowed for the height field' )
+        height = values(1)
+      case ( f_scale )
+        call expr ( value, units, values )
+        if ( units(1) /= phyq_length ) call MLSMessage ( &
+          & MLSMSG_Error, ModuleName, &
+          & 'Only altitude is allowed for the scale field' )
+        scale = values(1)
+      end select
+    end do
+    ! Do some final sanity checks
+    if ( operational%verticalCoordinate /= v_is_pressure ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Operational grid not on pressure surfaces' )
+    if ( climatology%verticalCoordinate /= v_is_pressure ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Climatology grid not on pressure surfaces' )
+!     if ( climatology%units /= operational%units ) &
+!       & call MLSMessage ( MLSMSG_Error, ModuleName, &
+!       & 'The climatology and operational data describe different physical quantities' )
+    if ( climatology%equivalentLatitude .neqv. operational%equivalentLatitude ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'The climatology and operational data are mixed latitude/equivalent latitude.' )
+
+    ! OK, now we're ready to go.
+    ! Create the result.  It has the same vertical coordinates as climatology
+    ! But the same horizontal coordinates as operational.
+    call SetupNewGriddedData ( newGrid, source=operational, &
+      & noHeights=climatology%noHeights )
+    ! Setup the rest of the quantity
+    newGrid%sourceFileName = 'Result of merge'
+    newGrid%quantityName   = 'Result of merge'
+    newGrid%description    = 'Result of merge'
+    newGrid%units          = climatology%units
+    newGrid%verticalCoordinate = v_is_pressure
+    newGrid%equivalentLatitude = climatology%equivalentLatitude
+    newGrid%heights = climatology%heights
+    newGrid%lats = operational%lats
+    newGrid%lons = operational%lons
+    newGrid%lsts = operational%lsts
+    newGrid%szas = operational%szas
+    newGrid%dateStarts = operational%dateStarts
+    newGrid%dateEnds = operational%dateEnds
+
+    zTrans = scaleHeight * ( 3.0 - log10 ( height ) )
+    z1 = zTrans - scale/2.0
+    z2 = zTrans + scale/2.0
+
+    ! Now we're going to fill in the rest of the field
+    do day = 1, newGrid%noDates
+      do sza = 1, newGrid%noSzas
+        do lst = 1, newGrid%noLsts
+          do lon = 1, newGrid%noLons
+            do lat = 1, newGrid%noLats
+              do surf = 1, newGrid%noHeights
+                call l3ascii_interp_field ( &
+                  & climatology, &
+                  & cliVal, &
+                  & newGrid%heights(surf), &
+                  & newGrid%lats(lat), &
+                  & newGrid%lons(lon), &
+                  & newGrid%lsts(lst), &
+                  & newGrid%szas(sza), &
+                  & 0.5 * ( newGrid%dateStarts(day)+newGrid%dateEnds(day) ) )
+                call l3ascii_interp_field ( &
+                  & operational, &
+                  & opVal, &
+                  & newGrid%heights(surf), &
+                  & newGrid%lats(lat), &
+                  & newGrid%lons(lon), &
+                  & newGrid%lsts(lst), &
+                  & newGrid%szas(sza), &
+                  & 0.5 * ( newGrid%dateStarts(day)+newGrid%dateEnds(day) ) )
+                ! Now work out the weighting of the two
+                z = scaleHeight * ( 3.0 - log10 ( newGrid%heights(surf) ) )
+                if ( scale /= 0.0 ) then
+                  cliWeight = ( z - z1 ) / ( z2-z1 )
+                  opWeight = 1.0 - cliWeight
+                end if
+
+                ! Would probably think about missing data here
+                cliWeight = min ( max ( cliWeight, 0.0_r8 ), 1.0_r8 )
+                opWeight = min ( max ( cliWeight, 0.0_r8 ), 1.0_r8 )
+                totalWeight = cliWeight + opWeight
+
+                ! OK, store this value
+                if ( totalWeight > 0.0_r8 ) then
+                  newGrid%field ( surf, lat, lon, lst, sza, day ) = &
+                    & ( cliWeight*cliVal + opWeight*opVal ) / totalWeight
+                else
+!                   newGrid%field ( surf, lat, lon, lst, sza, day ) = &
+!                     & newGrid%missing
+                end if
+d250 3
+a252 3
+    end do
+    if ( toggle(gen) ) call trace_end ( "MergeOneGrid", root )
+  end function MergeOneGrid
+d257 3
+@
+
+
+2.1
+log
+@First version, not much more than a stub
+@
+text
+@d9 3
+a11 1
+  use Init_tables_module, only: S_MERGE
+d13 3
+a15 1
+    & ADDGRIDDEDDATATODATABASE
+d18 1
+d21 2
+d31 1
+a31 1
+       "$Id: L2PC_m.f90,v 2.26 2002/01/23 00:50:50 pwagner Exp $"
+d34 1
+a34 1
+       "$RCSfile: L2PC_m.f90,v $"
+d52 1
+d73 1
+d80 45
+a124 1
+    type (GriddedData_T), dimension(:), intent(in) :: GRIDDEDDATA ! Database
+d127 120
+d251 4
+a254 1
+! $Log$
+@
+

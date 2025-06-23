@@ -1,0 +1,3527 @@
+head	2.24;
+access;
+symbols
+	v5-02-NRT-19:2.24
+	v6-00:2.23
+	v5-02-NRT-18:2.23
+	v5-02:2.23
+	v5-01-NRT-17:2.23
+	v5-01-NRT-16:2.23
+	v5-01-NRT-15:2.23
+	v5-01-NRT-14:2.23
+	neuralnetworks-1-0:2.23.0.10
+	cfm-single-freq-0-1:2.23.0.8
+	v5-01:2.23
+	v5-00:2.23
+	v4-23-TA133:2.23.0.6
+	mus-emls-1-70:2.23.0.4
+	rel-1-0-englocks-work:2.23.0.2
+	VUMLS1-00:2.23
+	VPL1-00:2.23
+	V4-22-NRT-08:2.23
+	whdrel10_merged_to_here:2.23
+	merge_whdrel10_from_here:2.22.4.2
+	TAG_TRUNK_AFTER_PW_CHANGES:2.22
+	TAG_TRUNK_BEFORE_PW_CHANGES:2.22
+	VAM1-00:2.22
+	whd-rel-1-0:2.22.0.4
+	V4-21:2.22.0.2
+	V4-13:2.21
+	V4-12:2.21
+	V4-11:2.21
+	V4-10:2.21
+	V3-43:2.21
+	M4-00:2.21
+	V3-41:2.21
+	V3-40-PlusGM57:2.21.0.2
+	V2-24-NRT-04:2.21
+	V3-33:2.21
+	V2-24:2.21
+	V3-31:2.21
+	V3-30-NRT-05:2.21
+	cfm-01-00:2.21
+	V3-30:2.21
+	V3-20:2.21
+	V3-10:2.21
+	V2-23-NRT-02:2.21
+	V2-23:2.21
+	V2-22-NRT-01:2.21
+	V2-22:2.21
+	V2-21:2.21
+	V2-20:2.20
+	V2-11:2.19
+	V2-10:2.18
+	V2-00:2.18
+	V1-51:2.11
+	V1-50:2.11
+	V1-45:2.9
+	V1-44:2.9
+	V1-43:2.8
+	V1-42:2.7
+	V1-41:2.7
+	V1-32:2.6
+	V1-40:2.7
+	V1-31:2.6
+	V1-30:2.6
+	V1-13:2.5
+	V1-12:2.5
+	V1-11:2.5
+	V1-10:2.5
+	newfwm-feb03:2.5.0.2
+	V1-04:2.3
+	V1-03:2.3
+	V1-02:2.3
+	V1-00:2.3
+	newfwm-sep01:2.1.0.2
+	V0-7:2.1
+	V0-5-Level2:2.1
+	V0-5-SIPS:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.24
+date	2024.10.10.20.19.35;	author pwagner;	state Exp;
+branches;
+next	2.23;
+
+2.23
+date	2016.03.15.22.17.59;	author whdaffer;	state Exp;
+branches;
+next	2.22;
+
+2.22
+date	2015.01.13.18.42.17;	author pwagner;	state Exp;
+branches
+	2.22.4.1;
+next	2.21;
+
+2.21
+date	2007.02.09.15.05.59;	author perun;	state Exp;
+branches;
+next	2.20;
+
+2.20
+date	2006.09.28.16.17.06;	author perun;	state Exp;
+branches;
+next	2.19;
+
+2.19
+date	2006.08.18.15.53.19;	author perun;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2006.06.14.13.48.44;	author perun;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2006.04.05.18.09.32;	author perun;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2006.03.24.15.17.06;	author perun;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2005.12.09.16.39.58;	author perun;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2005.08.24.15.52.54;	author perun;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2005.06.23.18.41.36;	author pwagner;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2005.05.02.16.06.38;	author perun;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2004.11.15.16.50.06;	author perun;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2004.11.10.15.40.40;	author perun;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2004.08.12.13.51.51;	author perun;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2004.05.14.15.59.11;	author perun;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2004.01.09.17.46.23;	author perun;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2003.08.15.14.25.04;	author perun;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2003.01.31.18.13.34;	author perun;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2002.11.15.15.12.45;	author perun;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2002.03.29.20.18.34;	author perun;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2001.09.10.16.17.56;	author perun;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.02.23.20.55.04;	author perun;	state Exp;
+branches;
+next	;
+
+2.22.4.1
+date	2015.10.09.10.21.38;	author whdaffer;	state Exp;
+branches;
+next	2.22.4.2;
+
+2.22.4.2
+date	2016.03.14.19.51.24;	author whdaffer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.24
+log
+@Set R2 precisions negative when out-of-lock
+@
+text
+@! Copyright 2006, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=============================================================================
+MODULE Radiances ! Determine radiances for the GHz module
+!=============================================================================
+
+  USE MLSCommon, ONLY: r4, r8
+  USE MLSL1Common, ONLY: GHzNum, FBchans, MBnum, MBchans, WFnum, WFchans, tau, &
+       DACSnum, DACSchans, deflt_gain, deflt_zero, absZero_C, BandWidth, LO1, &
+       MaxMIFs, BandChanBad, limb_cnts, space_interp, target_interp, &
+       target_err, slimb_interp, slimb_err, slimb_type, space_err
+  USE MLSL1Utils, ONLY : GetIndexedAvg
+  USE EngTbls, ONLY : Eng_MAF_T, CalTgtIndx, ReflecIndx, Reflec
+  USE Calibration, ONLY : CalWin, Tsys, Cgain
+  USE MLSL1Rad, ONLY : FBrad, MBrad, WFrad, DACSrad, RadPwr
+
+  USE ALLOCATE_DEALLOCATE, ONLY : test_allocate, test_deallocate
+  USE MLSSignalNomenclature, ONLY:GetFullMLSSignalName
+
+  ! <whd> 
+  !
+  ! On the naming convention here. {FB,MB,WF,DACS}rad are pointers into an array
+  ! named L1Brad of instances of the user-type MLSL1Rad::Radiance_T. You'll
+  ! struggle in vain to find many references to this enclosing type. in
+  ! particular, if you're looking for where the sub-field 'value' and
+  ! 'precision' are set using the name 'L1Brad', you'll end up beating your head
+  ! agains the wall. You won't find it. Instead, the individual portions are
+  ! used in this routine, so you should look for FBrad(xx)%value, ..., etc.
+  !
+  ! Such practices makes maintenance harder, but there you have it. 
+  ! Useful REs to find such things.
+  !
+  ! % grep -inH -P -e '\b(FB|MB|WF|DACS)Rad\(.*\)%value' *.f90
+  !
+  !</whd>
+
+  IMPLICIT NONE
+
+  PRIVATE
+
+  PUBLIC :: CalcLimbRads
+
+!---------------------------- RCS Module Info ------------------------------
+  CHARACTER (len=*), PRIVATE, PARAMETER :: ModuleName= &
+       "$RCSfile: Radiances.f90,v $"
+  PRIVATE :: not_used_here 
+!---------------------------------------------------------------------------
+
+CONTAINS
+
+!=============================================================================
+  SUBROUTINE CalcRadiance (limb_counts, space_counts, target_counts, &           ! in
+       & zero_counts, sum_w2, sum_wg2, space_P, target_P, baffle_P, bandwidth, & ! in
+       & radNum, bandNo, chanNo, &                                               ! in
+       & rad, rad_err, &                                                         ! out
+       & deflt_gain, use_deflt_gain, &                                           ! in
+       & Tsys, gain, &                                                           ! out
+       & slimb_type, slimb_counts, &                                             ! in
+       & P_offset, &                                                             ! out
+       & dacs)                                                                   ! in
+!=============================================================================
+
+    USE BandTbls, ONLY: GetEta_TSL
+
+    INTEGER, INTENT (IN) :: bandNo, chanNo, radNum
+    REAL(r8), INTENT(IN) :: limb_counts, space_counts, target_counts, zero_counts, &
+         slimb_counts
+    REAL(r8), INTENT(IN) :: sum_w2, sum_wg2
+    REAL,INTENT(IN) :: space_P, target_P, baffle_P, bandwidth, deflt_gain
+    REAL, INTENT(OUT) :: P_offset
+    REAL,INTENT(OUT) :: rad, rad_err, gain, Tsys
+    LOGICAL,INTENT(IN) :: use_deflt_gain, slimb_type
+    INTEGER, INTENT(IN),OPTIONAL :: dacs
+
+    ! Local variables
+
+    REAL :: TsysD,baffle_L, baffle_S, baffle_T   ! Baffle radiances
+    REAL :: eta_TSL(3)                     ! Target, Space and Limb eta values
+
+    TYPE Rho_T
+       CHARACTER(len=3) :: Name
+       REAL(r4) :: Limb
+    END TYPE Rho_T
+
+    TYPE (Rho_T), PARAMETER :: Rho(0:4) = (/ &
+         Rho_T ("R1A", 0.9938 * 0.9800), &  ! Index '0'
+         Rho_T ("R1B", 0.9795 * 0.9753), &
+         Rho_T ("R2 ", 0.9914 * 0.9945), &
+         Rho_T ("R3 ", 0.9746 * 0.9953), &
+         Rho_T ("R4 ", 0.9802 * 0.9888)  /)
+
+    rad = 0.0        ! nothing yet
+    rad_err = -1.0   ! nothing yet
+
+!! All baffle radiances same for now
+
+    baffle_L = baffle_P
+    baffle_S = baffle_P
+    baffle_T = baffle_P
+
+    CALL GetEta_TSL (bandNo, chanNO, eta_TSL)
+
+    IF (limb_counts == 0.0d0 .OR. space_counts == target_counts) RETURN
+
+    IF (use_deflt_gain) THEN
+       gain = deflt_gain
+    ELSE
+       ! Eq. 4.18 in ATB, p26
+       gain =  (target_counts - space_counts) / &
+            (eta_TSL(1) * target_P - eta_TSL(2) * space_P &
+            - (1.0 - eta_TSL(1)) * baffle_T &
+            + (1.0 - eta_TSL(2)) * baffle_S)
+     ENDIF
+
+    IF (gain == 0.0) RETURN  ! GAINS can be NEGATIVE!!!
+
+! Calculate Tsys if it hasn't been done:
+
+    ! See eq. 4.47 in the ATB, p 40.
+    IF (Tsys == 0.0) Tsys = (space_counts - zero_counts) / gain - space_P
+
+    IF (slimb_type) THEN
+       rad = ((limb_counts - slimb_counts) / gain) / eta_TSL(3) + &
+            Rho(radNum)%Limb * space_P
+    ELSE
+       !<whd> equation ATB 4.19, p 27</whd>
+       rad = ((limb_counts - space_counts) / gain + eta_TSL(2)*space_P &
+            - (1.0 - eta_TSL(3))*baffle_L + (1.0 - eta_TSL(2)) * &
+            baffle_S) / eta_TSL(3)
+    ENDIF
+
+    !<whd> What is P_offset? Can't find any mention in the ATB </whd>
+    P_offset = ((limb_counts - space_counts) / gain - space_P * &
+         (eta_TSL(3) * Rho(radNum)%Limb - eta_TSL(2)) - &
+         (1.0 - eta_TSL(3)) * baffle_L + (1.0 - eta_TSL(2)) * &
+         baffle_S) / eta_TSL(2)
+
+    IF (PRESENT (dacs)) THEN
+       TsysD = Tsys / 0.87
+       rad_err = (TsysD + rad)**2 + TsysD**2 * sum_w2 + rad**2 * &
+            ((target_P + TsysD) / target_P)**2 + (1.0 + sum_w2) * sum_wg2
+       rad_err = SQRT (rad_err / (bandwidth * tau))
+    ELSE
+       IF (slimb_type) THEN
+          rad_err = &
+               (limb_counts-zero_counts)**2 + (slimb_counts-zero_counts)**2 &
+               * sum_w2 + (limb_counts-slimb_counts)**2 * &
+               ((target_counts-zero_counts) / (target_counts-slimb_counts))**2 &
+               * (1.0+sum_w2) * sum_wg2
+       ELSE
+          ! ATB, eq D.12. sum_w2,sum_wg2 is the sum-of-squares of the space and
+          ! target interpolation weights, respectively
+          rad_err = &
+               (limb_counts-zero_counts)**2 + (space_counts-zero_counts)**2 &
+               * sum_w2 + (limb_counts-space_counts)**2 * &
+               ((target_counts-zero_counts) / (target_counts-space_counts))**2 &
+               * (1.0+sum_w2) * sum_wg2
+       ENDIF
+       IF (rad_err < 0.0) THEN
+          rad_err = -1.0
+          RETURN
+       ENDIF
+       rad_err = SQRT (rad_err / (bandwidth * tau)) / gain
+    ENDIF
+
+  END SUBROUTINE CalcRadiance
+
+!=============================================================================
+  SUBROUTINE CalcNonLimbRad (Band, chan, RadNum, ReflecK, delrad, NonLimbRad)
+!=============================================================================
+
+    USE MLSL1Config, ONLY: L1Config
+    USE BandTbls, ONLY: SideBandFrac, SpilloverLoss, RadiometerLoss, BandFreq
+
+    INTEGER, INTENT (IN) :: Band, chan, RadNum
+    REAL, INTENT (IN) :: ReflecK, delrad
+    REAL, INTENT (OUT) :: NonLimbRad
+
+
+    ! Local Variables
+
+    REAL :: POA_L, POA_U, Spillover_L, Spillover_U
+    REAL, PARAMETER :: GHzToHz = 1.0E09
+
+    POA_L = RadPwr (BandFreq(Band)%Lower(chan)*GHzToHz, ReflecK)
+    POA_U = RadPwr (BandFreq(Band)%Upper(chan)*GHzToHz, ReflecK)
+
+    NonLimbRad = SideBandFrac(Band)%Lower(chan) * (1.0 - &
+         RadiometerLoss(RadNum)%Ohmic) * POA_L
+    NonLimbRad = NonLimbRad + SideBandFrac(Band)%Upper(chan) * (1.0 - &
+         RadiometerLoss(RadNum)%Ohmic) * POA_U
+    IF (Band < 32) THEN
+       Spillover_L = SpilloverLoss(Band)%Lower(1,1)     ! Use only first value
+       Spillover_U = SpilloverLoss(Band)%Upper(1,1)
+    ELSE
+       Spillover_L = SpilloverLoss(Band)%Lower(1,chan)  ! Use only first value
+       Spillover_U = SpilloverLoss(Band)%Upper(1,chan)
+    ENDIF
+    Spillover_L = Spillover_L * RadiometerLoss(RadNum)%Spillover
+    Spillover_U = Spillover_U * RadiometerLoss(RadNum)%Spillover
+
+    NonLimbRad = NonLimbRad + SideBandFrac(Band)%Lower(chan) * &
+         (1.0 - Spillover_L) * &
+         RadiometerLoss(RadNum)%Ohmic * (RadiometerLoss(RadNum)%Radiance + &
+         delrad)
+    NonLimbRad = NonLimbRad + SideBandFrac(Band)%Upper(chan) * &
+         (1.0 - Spillover_U) * &
+         RadiometerLoss(RadNum)%Ohmic * (RadiometerLoss(RadNum)%Radiance + &
+         delrad)
+
+    ! Scale based in user input in the cf file:
+
+    NonLimbRad = NonLimbRad * L1Config%Calib%AntOffsetsScale
+
+  END SUBROUTINE CalcNonLimbRad
+
+!=============================================================================
+  SUBROUTINE CalcLimbRads
+!=============================================================================
+
+    USE MLSL1Debug, ONLY: DebugControl, writeRadiancesInfo,SnoopRadiances
+    USE SnoopMLSL1, ONLY: Snoop, L1SnoopOffering_T
+    USE STRING_TABLE, ONLY: Create_String
+
+    USE MLSL1Config, ONLY: MIFsGHz, L1Config
+    USE MLSL1Common, ONLY: Deflt_chi2
+    USE MLSL1Utils, ONLY: Finite
+    USE SpectralBaseline, ONLY: CalcBaseline
+    USE BandTbls, ONLY: GetDeltaRads, delrad_1_31, delrad_32_34
+
+    USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Info
+
+    ! MLSL1Debug and Snoop variables
+
+    CHARACTER(len=256) SignalName
+    CHARACTER(len=256) :: Location, Comment, msg
+    REAL(r8),ALLOCATABLE :: TAI93(:) ! Time passed to snooper
+    INTEGER status
+    TYPE (L1SnoopOffering_T), Allocatable :: Offerings1(:),Offerings2(:)
+    ! end MLSL1Debug
+
+
+    TYPE (Eng_MAF_T) :: EMAF
+
+    CHARACTER(LEN=1) :: GHz_Cal_Type
+
+    INTEGER :: bank, chan, MIF_index, MIF_index_MAX, radNum, bandNo, Pnum
+    INTEGER :: time_index, start_index, end_index, windex, CalWin_end
+    REAL :: GHz_T1, GHz_T2, space_T, target_T, GHz_target_T, gain, rad_prec
+    REAL :: ReflecAvg, NonLimbRad, Scf, Tcf, MIFprecSign(0:(MaxMIFs-1)), Pavg
+    REAL :: space_P, target_P, baffle_P ! Power per unit bandwidth
+    REAL(r8) :: C_zero
+    LOGICAL :: use_deflt_gains, do_chi2_err, cntl_T
+    INTEGER, PARAMETER :: DACS_FB(4) = (/ 9, 2, 7, 1 /)
+    logical :: DeeBug
+
+
+
+    print *,'In CalcLimbRads =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*'
+
+    use_deflt_gains = L1Config%Calib%UseDefaultGains
+
+    windex = CalWin%central
+    start_index = CalWin%MAFdata(windex)%start_index  ! MIF 0
+    end_index = CalWin%MAFdata(windex)%end_index      ! MIF max
+    CalWin_end = CalWin%MAFdata(CalWin%size)%end_index
+    EMAF = CalWin%MAFdata(windex)%EMAF
+    MIFprecSign = CalWin%MAFdata(windex)%MIFprecSign
+
+
+    WRITE ( msg,'("Central MAF no: ",i3)') EMAF%MAFno
+    PRINT *,TRIM(msg)
+    CALL MLSMessage(MLSMSG_Info,ModuleName,TRIM(msg))
+
+
+    CALL GetDeltaRads (CalWin%MAFdata(windex)%scGeodAngle)
+
+    IF (ANY (INDEX (CalWin%MAFdata(windex)%scipkt(0:147)%GHz_sw_pos, "T") == &
+         1)) THEN
+      GHz_Cal_Type = "Primary"
+    ELSE IF (ANY (INDEX (CalWin%MAFdata(windex)%scipkt(0:147)%GHz_sw_pos, "t") &
+         == 1)) THEN
+      GHz_Cal_Type = "Secondary"
+    ELSE
+      GHz_Cal_Type = "Unknown"
+    ENDIF
+
+    WRITE(msg,*) "GHz_Cal_Type = "//TRIM(GHz_Cal_Type)
+    PRINT *,TRIM(msg)
+    CALL MLSMessage(MLSMSG_Info,ModuleName,TRIM(msg))
+
+    GHz_T1 = GetIndexedAvg (EMAF%eng%value, CalTgtIndx%GHzAmb) - absZero_C
+
+    !    if (finite (GHz_T1)) print *, "GHzAmb avg: ", GHz_T1
+    GHz_T2 = GetIndexedAvg (EMAF%eng%value, CalTgtIndx%GHzCntl) - absZero_C &
+         + 0.5   ! offset for R1(A/B), R2 and R3
+    !    if (finite (GHZ_T2)) print *, "GHzCntl avg: ", GHz_T2
+    !
+    ! <whd> I have *no* idea what this table is about! </whd>
+    !
+    !  Temperature combinations for S and T from cf file:
+    !
+    !    Note: no input T is same as "-"  and all final temps will be absolutes.
+    !
+    !   Scf   Tcf   S   T
+    !--------------------
+    !    +     -    S   A
+    !    +     0    S   C
+    !    +     +    S   T
+    !    -     -    A   S
+    !    -     0    C   S
+    !    0     0    A   C
+    !    0     -    C   A
+    !
+    !<whd> S=space, A=ambient?, C=control? And what does '0', '+' and '-' signify? </whd>
+
+    Scf = L1Config%Calib%GHzSpaceTemp
+    Tcf = L1Config%Calib%GHzTargetTemp
+    cntl_T = .FALSE.
+
+    ! <whd> Scf and Tcf are taken from the L1CF file and are used to select
+    ! which temperatures to use in the following code. If Scf >0, use the value
+    ! given by keyword `GHzSpaceTemp' from the CF file for the 'space'
+    ! temperature, otherwise use the average of the GHz Ambient target that
+    ! appears in the various field labeled 'GHzAmb...' in the engineering data
+    ! stream. (that's what the calls to GetIndexedAverage above produce)
+    ! </whd>
+
+    IF (Scf > 0.0 .AND. Tcf < 0.0) THEN
+      space_T = Scf
+      GHz_target_T = GHz_T1
+    ELSE IF (Scf > 0.0 .AND. NINT (Tcf) == 0) THEN
+      space_T = Scf
+      GHz_target_T = GHz_T2
+      cntl_T = .TRUE.
+    ELSE IF (Scf > 0.0 .AND. Tcf > 0.0) THEN
+      space_T = Scf
+      GHz_target_T = Tcf
+    ELSE IF (Scf < 0.0 .AND. Tcf < 0.0) THEN
+      space_T = GHz_T1
+      GHz_target_T = ABS (Scf)
+    ELSE IF (Scf < 0.0 .AND. NINT (Tcf) == 0) THEN
+      space_T = GHz_T2
+      GHz_target_T = ABS (Scf)
+    ELSE IF (NINT (Scf) == 0 .AND. NINT (Tcf) == 0) THEN
+      space_T = GHz_T1
+      GHz_target_T = GHz_T2
+      cntl_T = .TRUE.
+    ELSE IF (NINT (Scf) == 0 .AND. Tcf < 0.0) THEN
+      space_T = GHz_T2
+      GHz_target_T = GHz_T1
+    ENDIF
+
+    ! Check if Temperatures are good. If either are non-finite, make them as bad
+    ! (i.e. precision==-1)
+
+    IF (.NOT. Finite (space_T) .OR. .NOT. Finite (GHz_target_T) ) THEN
+      DO bank = 1, GHzNum
+        FBrad(bank)%value = 0.0
+        FBrad(bank)%precision = -1.0
+      ENDDO
+      DO bank = 1, MBnum
+        MBrad(bank)%value = 0.0
+        MBrad(bank)%precision = -1.0
+      ENDDO
+      DO bank = 1, WFnum
+        WFrad(bank)%value = 0.0
+        WFrad(bank)%precision = -1.0
+      ENDDO
+      DO bank = 1, DACSnum
+        DACSrad(bank)%value = 0.0
+        DACSrad(bank)%precision = -1.0
+      ENDDO
+      WRITE(msg,*) 'S/T temps are infinite! Nothing to do'
+      PRINT *,TRIM(msg)
+      Call MLSMessage(MLSMSG_Info,ModuleName,TRIM(msg))
+      RETURN
+    ENDIF
+
+    WRITE(msg,'("S/T temp: ", f5.2,"/",f7.3)') space_T, GHz_target_T
+    PRINT *, trim(msg)
+    CALL MLSMessage(MLSMSG_Info,ModuleName,TRIM(msg))
+
+    Tsys%FB = 0.0
+    Tsys%MB = 0.0
+    Tsys%WF = 0.0
+    Cgain%FB = 0.0
+    Cgain%MB = 0.0
+    Cgain%WF = 0.0
+    MIF_index_MAX = MIFsGHz - 1
+
+    ! Reflector temperatures:
+
+    Reflec%Pri = GetIndexedAvg (EMAF%eng%value, ReflecIndx%Pri,DebugControl%Radiances) - absZero_C
+    Reflec%Sec = GetIndexedAvg (EMAF%eng%value, ReflecIndx%Sec,DebugControl%Radiances) - absZero_C
+    Reflec%Ter = GetIndexedAvg (EMAF%eng%value, ReflecIndx%Ter,DebugControl%Radiances) - absZero_C
+
+    ! Page 24 of ATB discusses taking this average
+    ReflecAvg = SUM((/ Reflec%Pri, Reflec%Sec, Reflec%Ter /)) / 3
+
+    ! Target temp with offset added
+
+    target_T =  GHz_target_T
+
+    CALL writeRadiancesInfo(GHzNum,      &
+         &      FBchans,     &
+         &      EMAF%MAFno,  &
+         &      EMAF%TotalMAF, &
+         &      start_index, &
+         &      end_index,   &
+         &      CalWin%central, &
+         &      target_T,    &
+         &      space_T,     &
+         &      GHz_T1,      &
+         &      GHz_T2)
+
+    DO time_index = start_index, end_index   ! for every MIF in the MAF
+      DeeBug = ( time_index == start_index )
+      MIF_index = time_index - start_index  ! MIF # within the central MAF
+
+      DO bank = 1, GHzNum
+        ! CalWin%MAFdata(windex)%LimbAltFlag(MIF_index)%FB(1,bank)
+        BandNo = FBrad(bank)%bandno
+        radNum = FBrad(bank)%signal%radiometerNumber
+        IF (FBrad(bank)%signal%radiometerModifier == "A" .AND. &
+             radNum == 1) radNum = 0   ! R1A
+        
+        if ( DeeBug ) then
+          CALL GetFullMLSSignalName(FBrad(bank)%signal, SignalName) ! Concatenate SD names
+          print *, trim(SignalName)
+          print *, 'Band ', BandNo
+          print *, 'Radiometer ', RadNum
+        endif
+        ! IF (MIF_Index==0) THEN 
+        !   CALL GetFullMLSSignalName(FBrad(bank)%signal, R2AName)
+        !   PRINT *,"CalcLimbRads: FB: working on "//TRIM(R2AName)
+        ! ENDIF
+        space_P = radPwr (LO1(radNum), space_T)
+        IF (cntl_T .AND. radNum == 4) THEN  ! Controlled Target
+          target_P = radPwr (LO1(radNum), (target_T+0.1))  ! additional 0.1 K
+        ELSE
+          target_P = radPwr (LO1(radNum), target_T)
+        ENDIF
+        baffle_P = radPwr (LO1(radNum), GHz_T1)
+        do_chi2_err = L1Config%Output%EnableChi2Err(BandNo)
+
+        ! <whd> MIF_index_MAX = MIFsGHz-1 = 124 (data is 0 indexed, so there
+        ! are 125 total). This is the number of MIFs in the output L1B
+        ! data. As explained by Rick Cofield, this is the number of actual
+        ! data (147-number of cal and otherwise unusable MIFs) There are 9 cal
+        ! MIFs (4 space, 3 target) plus 1 MIF between and on either side =
+        ! 10. Plus the .cf file specifies about 10 MIFs as 'discard'.
+        !!
+        ! Also, radNum==5 is the THz module and this code is for the GHz
+        ! module radiances (I think) 
+        !!
+        !!
+        ! </whd>
+
+
+        ! <whd> I have to admit, though, this seems strange. There may be only
+        ! 125 useful slots, but I don't see that they have to be the first
+        ! 125! </whd>
+
+        IF (MIF_index <= MIF_index_MAX .AND. radNum < 5) THEN
+          if ( DEEBUG ) print*, 'Doing ', FBchans, ' FBchans'
+          DO chan = 1, FBchans
+            C_zero = deflt_zero%FB(chan,bank)
+            ! <whd:question> 
+            ! Why, in the following bit, is there code setting
+            ! %value at MIF_index+1?
+            ! </whd:question>
+            CALL CalcRadiance (limb_cnts%FB(time_index,chan,bank), &   ! in
+                 & space_interp(MIF_index)%FB(chan,bank), &            ! in
+                 & target_interp(MIF_index)%FB(chan,bank), &           ! in
+                 &  C_zero, &                                          ! in
+                 & space_err(MIF_index)%FB(chan,bank), &               ! in
+                 & target_err(MIF_index)%FB(chan,bank), &              ! in
+                 & space_P, target_P, baffle_P, BandWidth%FB(chan,bank), & ! in
+                 & radNum, BandNo, chan, &                                 ! in
+                 & FBrad(bank)%value(chan,MIF_index+1), &                  ! out(why MIF_index+1?)
+                 & rad_prec, &                                             ! out
+                 & deflt_gain%FB(chan,bank), &                             ! in
+                 & use_deflt_gains, &                                      ! in
+                 & Tsys%FB(chan,bank), &                                   ! in/out (if == 0, 
+                                        ! value is calculated)
+                 & gain, &                                                 ! out (==deflt_gain 
+                                        ! if use_deflt_gain)
+                 & slimb_type%FB(chan,bank), &                             ! in
+                 & slimb_interp(MIF_index)%FB(chan,bank), &                ! in
+                 & FBrad(bank)%Poffset(chan,MIF_index+1))                  ! out
+
+
+            ! <whd> If the band/channel is marked as `bad' in the
+            ! L1CF,BandChanBad%Sign(Bandno, chan) will be < 0, so rad_prec
+            ! will be < 0 and thus it will be marked as unusable.</whd>
+            IF (rad_prec > 0.0) rad_prec = rad_prec * MIN ( &
+                 MIFprecSign(MIF_index), BandChanBad%Sign(Bandno, chan))
+            ! Set precisions < 0 when out-of-lock
+            IF (rad_prec > 0.0 .and. RadNum == 2 .and. &
+              & CalWin%MAFdata(windex)%RnPrecSign(MIF_index, 2) < 0. ) then
+              rad_prec = rad_prec * CalWin%MAFdata(windex)%RnPrecSign(MIF_index, 2)
+              if ( DEEBUG .and. chan == 1 ) print *, 'FBrad_prec ', rad_prec
+            endif
+            FBrad(bank)%precision(chan,MIF_index+1) = rad_prec
+
+            CALL CalcNonLimbRad (BandNo, chan, radNum, ReflecAvg, &
+                 delrad_1_31(BandNo), NonLimbRad)
+            IF (MIF_index == 0) FBrad(bank)%ModelOffset(chan) = NonLimbRad
+
+            IF (.NOT. slimb_type%FB(chan,bank)) THEN
+              IF (Finite (NonLimbRad)) THEN
+                FBrad(bank)%value(chan,MIF_index+1) = &
+                     FBrad(bank)%value(chan,MIF_index+1) - NonLimbRad
+              ELSE
+                FBrad(bank)%value(chan,MIF_index+1) = 0.0
+                FBrad(bank)%precision(chan,MIF_index+1) = -1.0
+              ENDIF
+            ENDIF
+
+            IF (do_chi2_err) FBrad(bank)%precision(chan,MIF_index+1) = &
+                 SQRT (deflt_chi2%FB(chan,BandNo)) * &
+                 FBrad(bank)%precision(chan,MIF_index+1)
+
+            IF (Cgain%FB(chan,bank) == 0.0 .AND. Tsys%FB(chan,bank) > 0.0) &
+                 Cgain%FB(chan,bank) = gain
+
+          ENDDO ! Loop over GHz banks
+        ENDIF ! MIF is between 0 and MaxMIFs and not radiometer 5
+      ENDDO ! loop over GHz channels
+
+      IF (MIF_index <= MIF_index_MAX) THEN
+          if ( DEEBUG ) print*, 'Doing ', MBNum, ' MBNum'
+        DO bank = 1, MBnum
+          ! IF (MIF_index == 0) THEN 
+          !   CALL GetFullMLSSignalName(MBrad(bank)%signal, R2AName)
+          !   PRINT *,"CalcLimbRads: MB: working on "//TRIM(R2AName)
+          ! ENDIF
+          bandNo = MBrad(bank)%bandno
+          radNum = MBrad(bank)%signal%radiometerNumber
+          space_P = radPwr (LO1(radNum), space_T)
+          IF (cntl_T .AND. radNum == 4) THEN  ! Controlled Target
+            target_P = radPwr (LO1(radNum), (target_T+0.1)) ! additional 0.1
+          ELSE
+            target_P = radPwr (LO1(radNum), target_T)
+          ENDIF
+          baffle_P = radPwr (LO1(radNum), GHz_T1)
+          do_chi2_err = L1Config%Output%EnableChi2Err(BandNo)
+
+        if ( DeeBug ) then
+          CALL GetFullMLSSignalName(MBrad(bank)%signal, SignalName) ! Concatenate SD names
+          print *, trim(SignalName)
+          print *, 'Band ', BandNo
+          print *, 'Radiometer ', RadNum
+        endif
+          DO chan = 1, MBchans
+            C_zero = deflt_zero%MB(chan,bank)
+            CALL CalcRadiance (limb_cnts%MB(time_index,chan,bank), &
+                 space_interp(MIF_index)%MB(chan,bank), &
+                 target_interp(MIF_index)%MB(chan,bank), C_zero, &
+                 space_err(MIF_index)%MB(chan,bank), &
+                 target_err(MIF_index)%MB(chan,bank), &
+                 space_P, target_P, baffle_P, BandWidth%MB(chan,bank), &
+                 radNum, BandNo, chan,MBrad(bank)%value(chan,MIF_index+1), &
+                 rad_prec, deflt_gain%MB(chan,bank), use_deflt_gains, &
+                 Tsys%MB(chan,bank), gain, slimb_type%MB(chan,bank), &
+                 slimb_interp(MIF_index)%MB(chan,bank), &
+                 MBrad(bank)%Poffset(chan,MIF_index+1))
+
+            IF (rad_prec > 0.0) rad_prec = rad_prec * MIN ( &
+                 MIFprecSign(MIF_index),  BandChanBad%Sign(Bandno, chan))
+            ! Set precisions < 0 when out-of-lock
+            IF (rad_prec > 0.0 .and. RadNum == 2 .and. &
+              & CalWin%MAFdata(windex)%RnPrecSign(MIF_index, 2) < 0. ) then
+              rad_prec = rad_prec * CalWin%MAFdata(windex)%RnPrecSign(MIF_index, 2)
+              if ( DEEBUG .and. chan == 1 ) print *, 'MBrad_prec ', rad_prec
+            endif
+            MBrad(bank)%precision(chan,MIF_index+1) = rad_prec
+
+            CALL CalcNonLimbRad (BandNo, chan, radNum, ReflecAvg, &
+                 delrad_1_31(BandNo), NonLimbRad)
+            IF (MIF_index == 0) MBrad(bank)%ModelOffset(chan) = NonLimbRad
+
+            IF (.NOT. slimb_type%MB(chan,bank)) THEN
+              IF (Finite (NonLimbRad)) THEN
+                MBrad(bank)%value(chan,MIF_index+1) = &
+                     MBrad(bank)%value(chan,MIF_index+1) - NonLimbRad
+              ELSE
+                MBrad(bank)%value(chan,MIF_index+1) = 0.0
+                MBrad(bank)%precision(chan,MIF_index+1) = -1.0
+              ENDIF
+            ENDIF
+
+            IF (do_chi2_err) MBrad(bank)%precision(chan,MIF_index+1) = &
+                 SQRT (deflt_chi2%MB(chan,bank)) * &
+                 MBrad(bank)%precision(chan,MIF_index+1)
+
+            IF (Cgain%MB(chan,bank) == 0.0 .AND. Tsys%MB(chan,bank) > 0.0) &
+                 Cgain%MB(chan,bank) = gain
+
+          ENDDO
+        ENDDO
+
+        if ( DEEBUG ) print*, 'Doing ', WFNum, ' WFNum'
+        DO bank = 1, WFnum
+          bandNo = WFrad(bank)%bandno
+          ! IF (MIF_index == 0 ) THEN 
+          !   CALL GetFullMLSSignalName(WFrad(bank)%signal, R2AName)
+          !   PRINT *,"CalcLimbRads: WF: working on "//TRIM(R2AName)
+          ! ENDIF
+          radNum = WFrad(bank)%signal%radiometerNumber
+          IF (WFrad(bank)%signal%radiometerModifier == "A" .AND. &
+               radNum == 1) radNum = 0   ! R1A
+          space_P = radPwr (LO1(radNum), space_T)
+          target_P = radPwr (LO1(radNum), target_T)
+          baffle_P = radPwr (LO1(radNum), GHz_T1)
+          do_chi2_err = L1Config%Output%EnableChi2Err(BandNo)
+        
+        if ( DeeBug ) then
+          CALL GetFullMLSSignalName(WFrad(bank)%signal, SignalName) ! Concatenate SD names
+          print *, trim(SignalName)
+          print *, 'Band ', BandNo
+          print *, 'Radiometer ', RadNum
+        endif
+
+          DO chan = 1, WFchans
+            C_zero = deflt_zero%WF(chan,bank)
+            CALL CalcRadiance (limb_cnts%WF(time_index,chan,bank), &
+                 space_interp(MIF_index)%WF(chan,bank), &
+                 target_interp(MIF_index)%WF(chan,bank), C_zero, &
+                 space_err(MIF_index)%WF(chan,bank), &
+                 target_err(MIF_index)%WF(chan,bank), &
+                 space_P, target_P, baffle_P, BandWidth%WF(chan,bank), &
+                 radNum, BandNo, chan,WFrad(bank)%value(chan,MIF_index+1), &
+                 rad_prec, deflt_gain%WF(chan,bank), use_deflt_gains, &
+                 Tsys%WF(chan,bank), gain, slimb_type%WF(chan,bank), &
+                 slimb_interp(MIF_index)%WF(chan,bank), &
+                 WFrad(bank)%Poffset(chan,MIF_index+1))
+
+            IF (rad_prec > 0.0) rad_prec = rad_prec * MIN ( &
+                 MIFprecSign(MIF_index), BandChanBad%Sign(Bandno, chan))
+            ! Set precisions < 0 when out-of-lock
+            IF (rad_prec > 0.0 .and. RadNum == 2 .and. &
+              & CalWin%MAFdata(windex)%RnPrecSign(MIF_index, 2) < 0. ) then
+              rad_prec = rad_prec * CalWin%MAFdata(windex)%RnPrecSign(MIF_index, 2)
+              if ( DEEBUG .and. chan == 1 ) print *, 'WFrad_prec ', rad_prec
+            endif
+            WFrad(bank)%precision(chan,MIF_index+1) = rad_prec
+
+            CALL CalcNonLimbRad (BandNo, chan, radNum, ReflecAvg, &
+                 delrad_32_34(BandNo,chan), NonLimbRad)
+            IF (MIF_index == 0) WFrad(bank)%ModelOffset(chan) = NonLimbRad
+
+            IF (.NOT. slimb_type%WF(chan,bank)) THEN
+              IF (Finite (NonLimbRad)) THEN
+                WFrad(bank)%value(chan,MIF_index+1) = &
+                     WFrad(bank)%value(chan,MIF_index+1) - NonLimbRad
+              ELSE
+                WFrad(bank)%value(chan,MIF_index+1) = 0.0
+                WFrad(bank)%precision(chan,MIF_index+1) = -1.0
+              ENDIF
+            ENDIF
+
+            IF (do_chi2_err) WFrad(bank)%precision(chan,MIF_index+1) = &
+                 SQRT (deflt_chi2%WF(chan,bank)) * &
+                 WFrad(bank)%precision(chan,MIF_index+1)
+
+            IF (Cgain%WF(chan,bank) == 0.0 .AND. Tsys%WF(chan,bank) > 0.0) &
+                 Cgain%WF(chan,bank) = gain
+
+          ENDDO
+        ENDDO
+
+        IF (L1Config%Calib%CalibDACS) THEN
+
+          DO bank = 1, DACSnum
+            ! IF (MIF_index == 0) THEN 
+            !   CALL GetFullMLSSignalName(DACSrad(bank)%signal, R2AName)
+            !   PRINT *,"CalcLimbRads: DACS: working on "//TRIM(R2AName)
+            ! ENDIF
+            bandNo = DACSrad(bank)%bandno
+            radNum = DACSrad(bank)%signal%radiometerNumber
+            IF (DACSrad(bank)%signal%radiometerModifier == "A" .AND. &
+                 radNum == 1) radNum = 0   ! R1A
+            space_P = radPwr (LO1(radNum), space_T)
+            target_P = radPwr (LO1(radNum), target_T)
+            baffle_P = radPwr (LO1(radNum), GHz_T1)
+
+        if ( DeeBug ) then
+          CALL GetFullMLSSignalName(DACSrad(bank)%signal, SignalName) ! Concatenate SD names
+          print *, trim(SignalName)
+          print *, 'Band ', BandNo
+          print *, 'Radiometer ', RadNum
+        endif
+            ! Tsys from the appropiate FB:
+
+            IF (bank == 1 .AND. radNum == 1) THEN ! DACS 1 has been switched
+              Tsys%DACS(:,bank) = Tsys%FB(13,1)  ! Use FB 1's Tsys
+            ELSE
+              Tsys%DACS(:,bank) = Tsys%FB(13,DACS_FB(bank))
+            ENDIF
+
+            DO chan = 1, DACSchans
+              C_zero = 0
+              CALL CalcRadiance (limb_cnts%DACS(time_index,chan,bank), &
+                   space_interp(MIF_index)%DACS(chan,bank), &
+                   target_interp(MIF_index)%DACS(chan,bank), C_zero, &
+                   space_err(MIF_index)%DACS(chan,bank), &
+                   target_err(MIF_index)%DACS(chan,bank), &
+                   space_P, target_P, baffle_P, &
+                   BandWidth%DACS(chan,bank), radNum, BandNo, chan, &
+                   DACSrad(bank)%value(chan,MIF_index+1), &
+                   rad_prec, deflt_gain%DACS(chan,bank), use_deflt_gains, &
+                   Tsys%DACS(chan,bank), gain, slimb_type%DACS(chan,bank),&
+                   slimb_interp(MIF_index)%DACS(chan,bank), &
+                   DACSrad(bank)%Poffset(chan,MIF_index+1), dacs=1)
+
+              IF (rad_prec > 0.0) rad_prec = rad_prec * MIN ( &
+                   MIFprecSign(MIF_index), BandChanBad%Sign(Bandno, chan))
+              ! Set precisions < 0 when out-of-lock
+              IF (rad_prec > 0.0 .and. RadNum == 2 .and. &
+                & CalWin%MAFdata(windex)%RnPrecSign(MIF_index, 2) < 0. ) then
+                rad_prec = rad_prec * CalWin%MAFdata(windex)%RnPrecSign(MIF_index, 2)
+                if ( DEEBUG .and. chan == 1 ) print *, 'DACSrad_prec ', rad_prec
+              endif
+                DACSrad(bank)%precision(chan,MIF_index+1) = rad_prec
+
+              CALL CalcNonLimbRad (BandNo, chan, radNum, ReflecAvg, &
+                   delrad_1_31(BandNo), NonLimbRad)
+              IF (MIF_index == 0) DACSrad(bank)%ModelOffset(chan) = &
+                   NonLimbRad
+
+              IF (.NOT. slimb_type%DACS(chan,bank)) THEN
+                IF (Finite (NonLimbRad)) THEN
+                  DACSrad(bank)%value(chan,MIF_index+1) = &
+                       DACSrad(bank)%value(chan,MIF_index+1) - NonLimbRad
+                ELSE
+                  DACSrad(bank)%value(chan,MIF_index+1) = 0.0
+                  DACSrad(bank)%precision(chan,MIF_index+1) = -1.0
+                ENDIF
+              ENDIF
+
+            ENDDO
+          ENDDO
+        ENDIF ! if doing DACS
+      ENDIF ! is MIF < MIF_Max
+    ENDDO ! loop over MIFs
+
+    IF (SnoopRadiances) THEN
+      ! <<<start here >>>
+      Location="Radiances::CalcLimRads"
+      Comment="Just after FB radiances calculation"
+      PRINT *,TRIM(Location)//' : '//TRIM(Comment)
+
+      ALLOCATE(Offerings1(GHzNum), stat=status)
+
+      DO bank=1,GHzNum
+        CALL GetFullMLSSignalName(FBrad(bank)%signal, SignalName)
+        Offerings1(bank)%name=SignalName
+        Offerings1(bank)%rank=2
+        Offerings1(bank)%dimensions=(/FBChans,MIFsGHz,0/)
+        Offerings1(bank)%R2Value => FBrad(bank)%value
+      END DO
+
+      CALL Snoop( TRIM(location), Offerings1, Offerings2, TRIM(comment))
+    ENDIF
+    ! Avg Poffsets:
+
+    DO bank = 1, GHzNum
+      DO chan = 1, FBchans
+        Pavg = 0.0
+        Pnum = 0
+        DO MIF_index = 0, min( (MaxMIFs-1), MIFsGHz-1 )
+          IF (CalWin%MAFdata(windex)%LimbAltFlag(MIF_index)%FB(chan,bank) &
+               .AND. FBrad(bank)%precision(chan,MIF_index+1) > 0.0) THEN
+            Pnum = Pnum + 1
+            Pavg = Pavg + FBrad(bank)%Poffset(chan,MIF_index+1)
+          ENDIF
+        ENDDO
+        IF (Pnum > 0) Pavg = Pavg / Pnum
+
+        ! Save avg in first MIF to output in DIAG file:
+
+        FBrad(bank)%Poffset(chan,1) = Pavg
+
+      ENDDO
+    ENDDO
+
+    DO bank = 1, MBnum
+      DO chan = 1, MBchans
+        Pavg = 0.0
+        Pnum = 0
+        DO MIF_index = 0, min( (MaxMIFs-1), MIFsGHz-1 )
+          IF (CalWin%MAFdata(windex)%LimbAltFlag(MIF_index)%MB(chan,bank) &
+               .AND. MBrad(bank)%precision(chan,MIF_index+1) > 0.0) THEN
+            Pnum = Pnum + 1
+            Pavg = Pavg + MBrad(bank)%Poffset(chan,MIF_index+1)
+          ENDIF
+        ENDDO
+        IF (Pnum > 0) Pavg = Pavg / Pnum
+
+        ! Save avg in first MIF to output in DIAG file:
+
+        MBrad(bank)%Poffset(chan,1) = Pavg
+
+      ENDDO
+    ENDDO
+
+    DO bank = 1, WFnum
+      DO chan = 1, WFchans
+        Pavg = 0.0
+        Pnum = 0
+        DO MIF_index = 0, min( (MaxMIFs-1), MIFsGHz-1 )
+          IF (CalWin%MAFdata(windex)%LimbAltFlag(MIF_index)%WF(chan,bank) &
+               .AND. WFrad(bank)%precision(chan,MIF_index+1) > 0.0) THEN
+            Pnum = Pnum + 1
+            Pavg = Pavg + WFrad(bank)%Poffset(chan,MIF_index+1)
+          ENDIF
+        ENDDO
+        IF (Pnum > 0) Pavg = Pavg / Pnum
+
+        ! Save avg in first MIF to output in DIAG file:
+
+        WFrad(bank)%Poffset(chan,1) = Pavg
+
+      ENDDO
+    ENDDO
+
+    DO bank = 1, DACSnum
+      DO chan = 1, DACSchans
+        Pavg = 0.0
+        Pnum = 0
+        DO MIF_index = 0, min( (MaxMIFs-1), MIFsGHz-1 )
+          IF (CalWin%MAFdata(windex)%LimbAltFlag(MIF_index)%DACS(chan,bank) &
+               .AND. DACSrad(bank)%precision(chan,MIF_index+1) > 0.0) THEN
+            Pnum = Pnum + 1
+            Pavg = Pavg + DACSrad(bank)%Poffset(chan,MIF_index+1)
+          ENDIF
+        ENDDO
+        IF (Pnum > 0) Pavg = Pavg / Pnum
+
+        ! Save avg in first MIF to output in DIAG file:
+
+        DACSrad(bank)%Poffset(chan,1) = Pavg
+
+      ENDDO
+    ENDDO
+
+    ! Spectral Baseline:
+
+    CALL CalcBaseline
+
+  END SUBROUTINE CalcLimbRads
+
+
+!=============================================================================
+  LOGICAL FUNCTION not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  CHARACTER (len=*), PARAMETER :: IdParm = &
+       "$Id: Radiances.f90,v 2.23 2016/03/15 22:17:59 whdaffer Exp $"
+  CHARACTER (len=LEN(idParm)), SAVE :: Id = idParm
+!---------------------------------------------------------------------------
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  END FUNCTION not_used_here
+
+END MODULE Radiances
+!=============================================================================
+
+! $Log: Radiances.f90,v $
+! Revision 2.23  2016/03/15 22:17:59  whdaffer
+! Merged whd-rel-1-0 back onto main branch. Most changes
+! are to comments, but there's some modification to Calibration.f90
+! and MLSL1Common to support some new modules: MLSL1Debug and SnoopMLSL1.
+!
+! Revision 2.22.4.2  2016/03/14 19:51:24  whdaffer
+! Most of the work is to eliminate cicular references between MLSL1Debug
+! and Calibration. To resolve this, I've moved the inclusion of
+! Calibration.f9h and the definition of some 10 variables from
+! Calibration.f90 to MLSL1Common.f90. Radiances, MLSL1Debug and
+! Calibration will get those types, variable from MLSL1Common. Also, use
+! machines.f90 to get the definition of usleep used in SnoopMLSL1
+!
+! Revision 2.22.4.1  2015/10/09 10:21:38  whdaffer
+! checkin of continuing work on branch whd-rel-1-0
+!
+! Revision 2.22  2015/01/13 18:42:17  pwagner
+! Avoid blowing past upper bounds on precision arrays
+!
+! Revision 2.21  2007/02/09 15:05:59  perun
+! Always calculate P_offset
+!
+! Revision 2.20  2006/09/28 16:17:06  perun
+! Save only one ModelOffset per MAF and calculate average slimb view Poffsets
+!
+! Revision 2.19  2006/08/18 15:53:19  perun
+! Replace slimb_err with space_err to correct rad_err calculation
+!
+! Revision 2.18  2006/06/14 13:48:44  perun
+!  Adjust radiances using the delrad values from the BandTbls
+!
+! Revision 2.17  2006/04/05 18:09:32  perun
+! Remove unused variables
+!
+! Revision 2.16  2006/03/24 15:17:06  perun
+! Add calculation of radiances using the Space/Limb view interpolations
+!
+! Revision 2.15  2005/12/09 16:39:58  perun
+! Update port baffle transmission values
+!
+! Revision 2.14  2005/08/24 15:52:54  perun
+! Set rads and precs to fill values when nonlimb radiances are unavailable
+!
+! Revision 2.13  2005/06/23 18:41:36  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.12  2005/05/02 16:06:38  perun
+! Use AntOffsetsScale for scaling NonLimbRad
+!
+! Revision 2.11  2004/11/15 16:50:06  perun
+! Adjust controlled target temperature per RFJ
+!
+! Revision 2.10  2004/11/10 15:40:40  perun
+! Adjust precision based on flag; change DACS precision method; call baseline
+! calculation
+!
+! Revision 2.9  2004/08/12 13:51:51  perun
+! Version 1.44 commit
+!
+! Revision 2.8  2004/05/14 15:59:11  perun
+! Version 1.43 commit
+!
+! Revision 2.7  2004/01/09 17:46:23  perun
+! Version 1.4 commit
+!
+! Revision 2.6  2003/08/15 14:25:04  perun
+! Version 1.2 commit
+!
+! Revision 2.5  2003/01/31 18:13:34  perun
+! Version 1.1 commit
+!
+! Revision 2.3  2002/03/29 20:18:34  perun
+! Version 1.0 commit
+!
+! Revision 2.2  2001/09/10 16:17:56  perun
+! Added CalMAFdata from Calibration module
+!
+! Revision 2.1  2001/02/23 20:55:04  perun
+! Version 0.5 commit
+!
+@
+
+
+2.23
+log
+@Merged whd-rel-1-0 back onto main branch. Most changes
+are to comments, but there's some modification to Calibration.f90
+and MLSL1Common to support some new modules: MLSL1Debug and SnoopMLSL1.
+@
+text
+@d264 1
+d427 1
+a427 1
+
+d436 7
+d475 1
+d508 6
+d542 1
+d559 6
+d581 6
+d613 1
+d627 7
+d651 6
+d698 6
+d729 7
+a735 1
+              DACSrad(bank)%precision(chan,MIF_index+1) = rad_prec
+d869 1
+a869 1
+       "$Id: Radiances.f90,v 2.22.4.2 2016/03/14 19:51:24 whdaffer Exp $"
+d879 5
+@
+
+
+2.22
+log
+@Avoid blowing past upper bounds on precision arrays
+@
+text
+@d19 2
+a20 1
+       MaxMIFs, BandChanBad
+d23 1
+a23 2
+  USE Calibration, ONLY : CalWin, limb_cnts, space_interp, target_interp, &
+       target_err, Tsys, Cgain, slimb_interp, slimb_err, slimb_type, space_err
+d26 20
+d61 9
+a69 4
+  SUBROUTINE CalcRadiance (limb_counts, space_counts, target_counts, &
+       zero_counts, sum_w2, sum_wg2, space_P, target_P, baffle_P, bandwidth, &
+       radNum, bandNo, chanNo, rad, rad_err, deflt_gain, use_deflt_gain, Tsys, &
+       gain, slimb_type, slimb_counts, P_offset, dacs)
+d75 1
+a75 1
+    REAL(r8) :: limb_counts, space_counts, target_counts, zero_counts, &
+d77 8
+a84 5
+    REAL(r8) :: sum_w2, sum_wg2
+    REAL :: space_P, target_P, baffle_P, bandwidth, deflt_gain, P_offset
+    REAL :: rad, rad_err, gain, Tsys, TsysD
+    LOGICAL :: use_deflt_gain, slimb_type
+    INTEGER, OPTIONAL :: dacs
+d86 1
+a86 1
+    REAL :: baffle_L, baffle_S, baffle_T   ! Baffle radiances
+d117 1
+d128 1
+d135 1
+d141 1
+d160 2
+d188 3
+d220 1
+a220 1
+! Scale based in user input in the cf file:
+d230 4
+d240 12
+d255 1
+d265 4
+d278 6
+d288 1
+a288 1
+       GHz_Cal_Type = "Primary"
+d291 1
+a291 1
+       GHz_Cal_Type = "Secondary"
+d293 1
+a293 1
+       GHz_Cal_Type = "Unknown"
+d296 4
+d306 3
+a308 1
+
+d322 2
+d328 9
+a336 1
+    
+d338 2
+a339 2
+       space_T = Scf
+       GHz_target_T = GHz_T1
+d341 3
+a343 3
+       space_T = Scf
+       GHz_target_T = GHz_T2
+       cntl_T = .TRUE.
+d345 2
+a346 2
+       space_T = Scf
+       GHz_target_T = Tcf
+d348 2
+a349 2
+       space_T = GHz_T1
+       GHz_target_T = ABS (Scf)
+d351 2
+a352 2
+       space_T = GHz_T2
+       GHz_target_T = ABS (Scf)
+d354 3
+a356 3
+       space_T = GHz_T1
+       GHz_target_T = GHz_T2
+       cntl_T = .TRUE.
+d358 2
+a359 2
+       space_T = GHz_T2
+       GHz_target_T = GHz_T1
+d362 2
+a363 1
+    ! Check if Temperatures are good
+d366 20
+a385 17
+       DO bank = 1, GHzNum
+          FBrad(bank)%value = 0.0
+          FBrad(bank)%precision = -1.0
+       ENDDO
+       DO bank = 1, MBnum
+          MBrad(bank)%value = 0.0
+          MBrad(bank)%precision = -1.0
+       ENDDO
+       DO bank = 1, WFnum
+          WFrad(bank)%value = 0.0
+          WFrad(bank)%precision = -1.0
+       ENDDO
+       DO bank = 1, DACSnum
+          DACSrad(bank)%value = 0.0
+          DACSrad(bank)%precision = -1.0
+       ENDDO
+       RETURN
+d387 5
+a391 1
+    PRINT *, 'S/T temp: ', space_T, GHz_target_T
+d402 5
+a406 3
+    Reflec%Pri = GetIndexedAvg (EMAF%eng%value, ReflecIndx%Pri) - absZero_C
+    Reflec%Sec = GetIndexedAvg (EMAF%eng%value, ReflecIndx%Sec) - absZero_C
+    Reflec%Ter = GetIndexedAvg (EMAF%eng%value, ReflecIndx%Ter) - absZero_C
+d413 12
+d427 1
+a427 1
+       MIF_index = time_index - start_index  ! MIF # within the central MAF
+d429 105
+a533 6
+       DO bank = 1, GHzNum
+! CalWin%MAFdata(windex)%LimbAltFlag(MIF_index)%FB(1,bank)
+          BandNo = FBrad(bank)%bandno
+          radNum = FBrad(bank)%signal%radiometerNumber
+          IF (FBrad(bank)%signal%radiometerModifier == "A" .AND. &
+               radNum == 1) radNum = 0   ! R1A
+d536 1
+a536 1
+             target_P = radPwr (LO1(radNum), (target_T+0.1))  ! additional 0.1 K
+d538 1
+a538 1
+             target_P = radPwr (LO1(radNum), target_T)
+d543 35
+a577 94
+          IF (MIF_index <= MIF_index_MAX .AND. radNum < 5) THEN
+             DO chan = 1, FBchans
+                C_zero = deflt_zero%FB(chan,bank)
+                CALL CalcRadiance (limb_cnts%FB(time_index,chan,bank), &
+                     space_interp(MIF_index)%FB(chan,bank), &
+                     target_interp(MIF_index)%FB(chan,bank), C_zero, &
+                     space_err(MIF_index)%FB(chan,bank), &
+                     target_err(MIF_index)%FB(chan,bank), &
+                     space_P, target_P, baffle_P, BandWidth%FB(chan,bank), &
+                     radNum, BandNo, chan,FBrad(bank)%value(chan,MIF_index+1), &
+                     rad_prec, deflt_gain%FB(chan,bank), use_deflt_gains, &
+                     Tsys%FB(chan,bank), gain, slimb_type%FB(chan,bank), &
+                     slimb_interp(MIF_index)%FB(chan,bank), &
+                     FBrad(bank)%Poffset(chan,MIF_index+1))
+
+                IF (rad_prec > 0.0) rad_prec = rad_prec * MIN ( &
+                     MIFprecSign(MIF_index), BandChanBad%Sign(Bandno, chan))
+                FBrad(bank)%precision(chan,MIF_index+1) = rad_prec
+
+                CALL CalcNonLimbRad (BandNo, chan, radNum, ReflecAvg, &
+                     delrad_1_31(BandNo), NonLimbRad)
+                IF (MIF_index == 0) FBrad(bank)%ModelOffset(chan) = NonLimbRad
+
+                IF (.NOT. slimb_type%FB(chan,bank)) THEN
+                   IF (Finite (NonLimbRad)) THEN
+                      FBrad(bank)%value(chan,MIF_index+1) = &
+                           FBrad(bank)%value(chan,MIF_index+1) - NonLimbRad
+                   ELSE
+                      FBrad(bank)%value(chan,MIF_index+1) = 0.0
+                      FBrad(bank)%precision(chan,MIF_index+1) = -1.0
+                   ENDIF
+                ENDIF
+
+                IF (do_chi2_err) FBrad(bank)%precision(chan,MIF_index+1) = &
+                     SQRT (deflt_chi2%FB(chan,BandNo)) * &
+                     FBrad(bank)%precision(chan,MIF_index+1)
+
+                IF (Cgain%FB(chan,bank) == 0.0 .AND. Tsys%FB(chan,bank) > 0.0) &
+                     Cgain%FB(chan,bank) = gain
+
+             ENDDO
+          ENDIF
+
+       ENDDO
+
+       IF (MIF_index <= MIF_index_MAX) THEN
+          DO bank = 1, MBnum
+
+             bandNo = MBrad(bank)%bandno
+             radNum = MBrad(bank)%signal%radiometerNumber
+             space_P = radPwr (LO1(radNum), space_T)
+             IF (cntl_T .AND. radNum == 4) THEN  ! Controlled Target
+                target_P = radPwr (LO1(radNum), (target_T+0.1)) ! additional 0.1
+             ELSE
+                target_P = radPwr (LO1(radNum), target_T)
+             ENDIF
+             baffle_P = radPwr (LO1(radNum), GHz_T1)
+             do_chi2_err = L1Config%Output%EnableChi2Err(BandNo)
+
+             DO chan = 1, MBchans
+                C_zero = deflt_zero%MB(chan,bank)
+                CALL CalcRadiance (limb_cnts%MB(time_index,chan,bank), &
+                     space_interp(MIF_index)%MB(chan,bank), &
+                     target_interp(MIF_index)%MB(chan,bank), C_zero, &
+                     space_err(MIF_index)%MB(chan,bank), &
+                     target_err(MIF_index)%MB(chan,bank), &
+                     space_P, target_P, baffle_P, BandWidth%MB(chan,bank), &
+                     radNum, BandNo, chan,MBrad(bank)%value(chan,MIF_index+1), &
+                     rad_prec, deflt_gain%MB(chan,bank), use_deflt_gains, &
+                     Tsys%MB(chan,bank), gain, slimb_type%MB(chan,bank), &
+                     slimb_interp(MIF_index)%MB(chan,bank), &
+                     MBrad(bank)%Poffset(chan,MIF_index+1))
+
+                IF (rad_prec > 0.0) rad_prec = rad_prec * MIN ( &
+                     MIFprecSign(MIF_index),  BandChanBad%Sign(Bandno, chan))
+                MBrad(bank)%precision(chan,MIF_index+1) = rad_prec
+
+                CALL CalcNonLimbRad (BandNo, chan, radNum, ReflecAvg, &
+                     delrad_1_31(BandNo), NonLimbRad)
+                IF (MIF_index == 0) MBrad(bank)%ModelOffset(chan) = NonLimbRad
+
+                IF (.NOT. slimb_type%MB(chan,bank)) THEN
+                   IF (Finite (NonLimbRad)) THEN
+                      MBrad(bank)%value(chan,MIF_index+1) = &
+                           MBrad(bank)%value(chan,MIF_index+1) - NonLimbRad
+                   ELSE
+                      MBrad(bank)%value(chan,MIF_index+1) = 0.0
+                      MBrad(bank)%precision(chan,MIF_index+1) = -1.0
+                   ENDIF
+                ENDIF
+
+                IF (do_chi2_err) MBrad(bank)%precision(chan,MIF_index+1) = &
+                     SQRT (deflt_chi2%MB(chan,bank)) * &
+                     MBrad(bank)%precision(chan,MIF_index+1)
+d579 2
+a580 2
+                IF (Cgain%MB(chan,bank) == 0.0 .AND. Tsys%MB(chan,bank) > 0.0) &
+                     Cgain%MB(chan,bank) = gain
+a581 1
+             ENDDO
+d583 1
+d585 13
+a597 1
+          DO bank = 1, WFnum
+d599 35
+a633 44
+             bandNo = WFrad(bank)%bandno
+             radNum = WFrad(bank)%signal%radiometerNumber
+             IF (WFrad(bank)%signal%radiometerModifier == "A" .AND. &
+                  radNum == 1) radNum = 0   ! R1A
+             space_P = radPwr (LO1(radNum), space_T)
+             target_P = radPwr (LO1(radNum), target_T)
+             baffle_P = radPwr (LO1(radNum), GHz_T1)
+             do_chi2_err = L1Config%Output%EnableChi2Err(BandNo)
+
+             DO chan = 1, WFchans
+                C_zero = deflt_zero%WF(chan,bank)
+                CALL CalcRadiance (limb_cnts%WF(time_index,chan,bank), &
+                     space_interp(MIF_index)%WF(chan,bank), &
+                     target_interp(MIF_index)%WF(chan,bank), C_zero, &
+                     space_err(MIF_index)%WF(chan,bank), &
+                     target_err(MIF_index)%WF(chan,bank), &
+                     space_P, target_P, baffle_P, BandWidth%WF(chan,bank), &
+                     radNum, BandNo, chan,WFrad(bank)%value(chan,MIF_index+1), &
+                     rad_prec, deflt_gain%WF(chan,bank), use_deflt_gains, &
+                     Tsys%WF(chan,bank), gain, slimb_type%WF(chan,bank), &
+                     slimb_interp(MIF_index)%WF(chan,bank), &
+                     WFrad(bank)%Poffset(chan,MIF_index+1))
+
+                IF (rad_prec > 0.0) rad_prec = rad_prec * MIN ( &
+                     MIFprecSign(MIF_index), BandChanBad%Sign(Bandno, chan))
+                WFrad(bank)%precision(chan,MIF_index+1) = rad_prec
+
+                CALL CalcNonLimbRad (BandNo, chan, radNum, ReflecAvg, &
+                     delrad_32_34(BandNo,chan), NonLimbRad)
+                IF (MIF_index == 0) WFrad(bank)%ModelOffset(chan) = NonLimbRad
+
+                IF (.NOT. slimb_type%WF(chan,bank)) THEN
+                   IF (Finite (NonLimbRad)) THEN
+                      WFrad(bank)%value(chan,MIF_index+1) = &
+                           WFrad(bank)%value(chan,MIF_index+1) - NonLimbRad
+                   ELSE
+                      WFrad(bank)%value(chan,MIF_index+1) = 0.0
+                      WFrad(bank)%precision(chan,MIF_index+1) = -1.0
+                   ENDIF
+                ENDIF
+
+                IF (do_chi2_err) WFrad(bank)%precision(chan,MIF_index+1) = &
+                     SQRT (deflt_chi2%WF(chan,bank)) * &
+                     WFrad(bank)%precision(chan,MIF_index+1)
+d635 2
+a636 2
+                IF (Cgain%WF(chan,bank) == 0.0 .AND. Tsys%WF(chan,bank) > 0.0) &
+                     Cgain%WF(chan,bank) = gain
+a637 1
+             ENDDO
+d639 1
+d641 1
+a641 11
+          IF (L1Config%Calib%CalibDACS) THEN
+
+             DO bank = 1, DACSnum
+
+                bandNo = DACSrad(bank)%bandno
+                radNum = DACSrad(bank)%signal%radiometerNumber
+                IF (DACSrad(bank)%signal%radiometerModifier == "A" .AND. &
+                     radNum == 1) radNum = 0   ! R1A
+                space_P = radPwr (LO1(radNum), space_T)
+                target_P = radPwr (LO1(radNum), target_T)
+                baffle_P = radPwr (LO1(radNum), GHz_T1)
+d643 49
+a691 4
+                ! Tsys from the appropiate FB:
+
+                IF (bank == 1 .AND. radNum == 1) THEN ! DACS 1 has been switched
+                   Tsys%DACS(:,bank) = Tsys%FB(13,1)  ! Use FB 1's Tsys
+d693 2
+a694 1
+                   Tsys%DACS(:,bank) = Tsys%FB(13,DACS_FB(bank))
+d696 1
+d698 21
+a718 33
+                DO chan = 1, DACSchans
+                   C_zero = 0
+                   CALL CalcRadiance (limb_cnts%DACS(time_index,chan,bank), &
+                        space_interp(MIF_index)%DACS(chan,bank), &
+                        target_interp(MIF_index)%DACS(chan,bank), C_zero, &
+                        space_err(MIF_index)%DACS(chan,bank), &
+                        target_err(MIF_index)%DACS(chan,bank), &
+                        space_P, target_P, baffle_P, &
+                        BandWidth%DACS(chan,bank), radNum, BandNo, chan, &
+                        DACSrad(bank)%value(chan,MIF_index+1), &
+                        rad_prec, deflt_gain%DACS(chan,bank), use_deflt_gains, &
+                        Tsys%DACS(chan,bank), gain, slimb_type%DACS(chan,bank),&
+                        slimb_interp(MIF_index)%DACS(chan,bank), &
+                        DACSrad(bank)%Poffset(chan,MIF_index+1), dacs=1)
+
+                   IF (rad_prec > 0.0) rad_prec = rad_prec * MIN ( &
+                      MIFprecSign(MIF_index), BandChanBad%Sign(Bandno, chan))
+                   DACSrad(bank)%precision(chan,MIF_index+1) = rad_prec
+
+                   CALL CalcNonLimbRad (BandNo, chan, radNum, ReflecAvg, &
+                        delrad_1_31(BandNo), NonLimbRad)
+                   IF (MIF_index == 0) DACSrad(bank)%ModelOffset(chan) = &
+                        NonLimbRad
+
+                   IF (.NOT. slimb_type%DACS(chan,bank)) THEN
+                      IF (Finite (NonLimbRad)) THEN
+                         DACSrad(bank)%value(chan,MIF_index+1) = &
+                              DACSrad(bank)%value(chan,MIF_index+1) - NonLimbRad
+                      ELSE
+                         DACSrad(bank)%value(chan,MIF_index+1) = 0.0
+                         DACSrad(bank)%precision(chan,MIF_index+1) = -1.0
+                      ENDIF
+                   ENDIF
+d720 3
+a722 2
+                ENDDO
+             ENDDO
+d724 9
+d734 2
+d737 1
+a737 4
+       ENDIF
+    ENDDO
+
+! Avg Poffsets:
+d739 1
+a739 12
+    DO bank = 1, GHzNum
+       DO chan = 1, FBchans
+          Pavg = 0.0
+          Pnum = 0
+          DO MIF_index = 0, min( (MaxMIFs-1), MIFsGHz-1 )
+             IF (CalWin%MAFdata(windex)%LimbAltFlag(MIF_index)%FB(chan,bank) &
+                  .AND. FBrad(bank)%precision(chan,MIF_index+1) > 0.0) THEN
+                Pnum = Pnum + 1
+                Pavg = Pavg + FBrad(bank)%Poffset(chan,MIF_index+1)
+             ENDIF
+          ENDDO
+          IF (Pnum > 0) Pavg = Pavg / Pnum
+d741 1
+a741 5
+! Save avg in first MIF to output in DIAG file:
+
+          FBrad(bank)%Poffset(chan,1) = Pavg
+
+       ENDDO
+d745 11
+a755 11
+       DO chan = 1, MBchans
+          Pavg = 0.0
+          Pnum = 0
+          DO MIF_index = 0, min( (MaxMIFs-1), MIFsGHz-1 )
+             IF (CalWin%MAFdata(windex)%LimbAltFlag(MIF_index)%MB(chan,bank) &
+                  .AND. MBrad(bank)%precision(chan,MIF_index+1) > 0.0) THEN
+                Pnum = Pnum + 1
+                Pavg = Pavg + MBrad(bank)%Poffset(chan,MIF_index+1)
+             ENDIF
+          ENDDO
+          IF (Pnum > 0) Pavg = Pavg / Pnum
+d757 1
+a757 1
+! Save avg in first MIF to output in DIAG file:
+d759 1
+a759 1
+          MBrad(bank)%Poffset(chan,1) = Pavg
+d761 1
+a761 1
+       ENDDO
+d765 11
+a775 11
+       DO chan = 1, WFchans
+          Pavg = 0.0
+          Pnum = 0
+          DO MIF_index = 0, min( (MaxMIFs-1), MIFsGHz-1 )
+             IF (CalWin%MAFdata(windex)%LimbAltFlag(MIF_index)%WF(chan,bank) &
+                  .AND. WFrad(bank)%precision(chan,MIF_index+1) > 0.0) THEN
+                Pnum = Pnum + 1
+                Pavg = Pavg + WFrad(bank)%Poffset(chan,MIF_index+1)
+             ENDIF
+          ENDDO
+          IF (Pnum > 0) Pavg = Pavg / Pnum
+d777 1
+a777 1
+! Save avg in first MIF to output in DIAG file:
+d779 1
+a779 1
+          WFrad(bank)%Poffset(chan,1) = Pavg
+d781 1
+a781 1
+       ENDDO
+d785 11
+a795 11
+       DO chan = 1, DACSchans
+          Pavg = 0.0
+          Pnum = 0
+          DO MIF_index = 0, min( (MaxMIFs-1), MIFsGHz-1 )
+             IF (CalWin%MAFdata(windex)%LimbAltFlag(MIF_index)%DACS(chan,bank) &
+                  .AND. DACSrad(bank)%precision(chan,MIF_index+1) > 0.0) THEN
+                Pnum = Pnum + 1
+                Pavg = Pavg + DACSrad(bank)%Poffset(chan,MIF_index+1)
+             ENDIF
+          ENDDO
+          IF (Pnum > 0) Pavg = Pavg / Pnum
+d797 1
+a797 1
+! Save avg in first MIF to output in DIAG file:
+d799 1
+a799 1
+          DACSrad(bank)%Poffset(chan,1) = Pavg
+d801 1
+a801 1
+       ENDDO
+d804 1
+a804 1
+! Spectral Baseline:
+d810 1
+d815 1
+a815 1
+       "$Id: Radiances.f90,v 2.21 2007/02/09 15:05:59 perun Exp $"
+d825 14
+@
+
+
+2.22.4.1
+log
+@checkin of continuing work on branch whd-rel-1-0
+@
+text
+@a25 20
+  USE ALLOCATE_DEALLOCATE, ONLY : test_allocate, test_deallocate
+  USE MLSSignalNomenclature, ONLY:GetFullMLSSignalName
+
+  ! <whd> 
+  !
+  ! On the naming convention here. {FB,MB,WF,DACS}rad are pointers into an array
+  ! named L1Brad of instances of the user-type MLSL1Rad::Radiance_T. You'll
+  ! struggle in vain to find many references to this enclosing type. in
+  ! particular, if you're looking for where the sub-field 'value' and
+  ! 'precision' are set using the name 'L1Brad', you'll end up beating your head
+  ! agains the wall. You won't find it. Instead, the individual portions are
+  ! used in this routine, so you should look for FBrad(xx)%value, ..., etc.
+  !
+  ! Such practices makes maintenance harder, but there you have it. 
+  ! Useful REs to find such things.
+  !
+  ! % grep -inH -P -e '\b(FB|MB|WF|DACS)Rad\(.*\)%value' *.f90
+  !
+  !</whd>
+
+d41 4
+a44 9
+  SUBROUTINE CalcRadiance (limb_counts, space_counts, target_counts, &           ! in
+       & zero_counts, sum_w2, sum_wg2, space_P, target_P, baffle_P, bandwidth, & ! in
+       & radNum, bandNo, chanNo, &                                               ! in
+       & rad, rad_err, &                                                         ! out
+       & deflt_gain, use_deflt_gain, &                                           ! in
+       & Tsys, gain, &                                                           ! out
+       & slimb_type, slimb_counts, &                                             ! in
+       & P_offset, &                                                             ! out
+       & dacs)                                                                   ! in
+d50 1
+a50 1
+    REAL(r8), INTENT(IN) :: limb_counts, space_counts, target_counts, zero_counts, &
+d52 5
+a56 8
+    REAL(r8), INTENT(IN) :: sum_w2, sum_wg2
+    REAL,INTENT(IN) :: space_P, target_P, baffle_P, bandwidth, deflt_gain
+    REAL, INTENT(OUT) :: P_offset
+    REAL,INTENT(OUT) :: rad, rad_err, gain, Tsys
+    LOGICAL,INTENT(IN) :: use_deflt_gain, slimb_type
+    INTEGER, INTENT(IN),OPTIONAL :: dacs
+
+    ! Local variables
+d58 1
+a58 1
+    REAL :: TsysD,baffle_L, baffle_S, baffle_T   ! Baffle radiances
+a88 1
+       ! Eq. 4.18 in ATB, p26
+a98 1
+    ! See eq. 4.47 in the ATB, p 40.
+a104 1
+       !<whd> equation ATB 4.19, p 27</whd>
+a109 1
+    !<whd> What is P_offset? Can't find any mention in the ATB </whd>
+a127 2
+          ! ATB, eq D.12. sum_w2,sum_wg2 is the sum-of-squares of the space and
+          ! target interpolation weights, respectively
+a153 3
+
+    ! Local Variables
+
+d183 1
+a183 1
+    ! Scale based in user input in the cf file:
+a192 4
+    USE MLSL1Debug, ONLY: DebugControl, writeRadiancesInfo,SnoopRadiances
+    USE SnoopMLSL1, ONLY: Snoop, L1SnoopOffering_T
+    USE STRING_TABLE, ONLY: Create_String
+
+a198 12
+    USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Info
+
+    ! MLSL1Debug and Snoop variables
+
+    CHARACTER(len=256) SignalName
+    CHARACTER(len=256) :: Location, Comment, msg
+    REAL(r8),ALLOCATABLE :: TAI93(:) ! Time passed to snooper
+    INTEGER status
+    TYPE (L1SnoopOffering_T), Allocatable :: Offerings1(:),Offerings2(:)
+    ! end MLSL1Debug
+
+
+a201 1
+
+a210 4
+
+
+    print *,'In CalcLimbRads =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*'
+
+a219 6
+
+    WRITE ( msg,'("Central MAF no: ",i3)') EMAF%MAFno
+    PRINT *,TRIM(msg)
+    CALL MLSMessage(MLSMSG_Info,ModuleName,TRIM(msg))
+
+
+d224 1
+a224 1
+      GHz_Cal_Type = "Primary"
+d227 1
+a227 1
+      GHz_Cal_Type = "Secondary"
+d229 1
+a229 1
+      GHz_Cal_Type = "Unknown"
+a231 4
+    WRITE(msg,*) "GHz_Cal_Type = "//TRIM(GHz_Cal_Type)
+    PRINT *,TRIM(msg)
+    CALL MLSMessage(MLSMSG_Info,ModuleName,TRIM(msg))
+
+d238 1
+a238 3
+    !
+    ! <whd> I have *no* idea what this table is about! </whd>
+    !
+a251 2
+    !
+    !<whd> S=space, A=ambient?, C=control? And what does '0', '+' and '-' signify? </whd>
+d256 1
+a256 9
+
+    ! <whd> Scf and Tcf are taken from the L1CF file and are used to select
+    ! which temperatures to use in the following code. If Scf >0, use the value
+    ! given by keyword `GHzSpaceTemp' from the CF file for the 'space'
+    ! temperature, otherwise use the average of the GHz Ambient target that
+    ! appears in the various field labeled 'GHzAmb...' in the engineering data
+    ! stream. (that's what the calls to GetIndexedAverage above produce)
+    ! </whd>
+
+d258 2
+a259 2
+      space_T = Scf
+      GHz_target_T = GHz_T1
+d261 3
+a263 3
+      space_T = Scf
+      GHz_target_T = GHz_T2
+      cntl_T = .TRUE.
+d265 2
+a266 2
+      space_T = Scf
+      GHz_target_T = Tcf
+d268 2
+a269 2
+      space_T = GHz_T1
+      GHz_target_T = ABS (Scf)
+d271 2
+a272 2
+      space_T = GHz_T2
+      GHz_target_T = ABS (Scf)
+d274 3
+a276 3
+      space_T = GHz_T1
+      GHz_target_T = GHz_T2
+      cntl_T = .TRUE.
+d278 2
+a279 2
+      space_T = GHz_T2
+      GHz_target_T = GHz_T1
+d282 1
+a282 2
+    ! Check if Temperatures are good. If either are non-finite, make them as bad
+    ! (i.e. precision==-1)
+d285 17
+a301 20
+      DO bank = 1, GHzNum
+        FBrad(bank)%value = 0.0
+        FBrad(bank)%precision = -1.0
+      ENDDO
+      DO bank = 1, MBnum
+        MBrad(bank)%value = 0.0
+        MBrad(bank)%precision = -1.0
+      ENDDO
+      DO bank = 1, WFnum
+        WFrad(bank)%value = 0.0
+        WFrad(bank)%precision = -1.0
+      ENDDO
+      DO bank = 1, DACSnum
+        DACSrad(bank)%value = 0.0
+        DACSrad(bank)%precision = -1.0
+      ENDDO
+      WRITE(msg,*) 'S/T temps are infinite! Nothing to do'
+      PRINT *,TRIM(msg)
+      Call MLSMessage(MLSMSG_Info,ModuleName,TRIM(msg))
+      RETURN
+d303 1
+a303 5
+
+    WRITE(msg,'("S/T temp: ", f5.2,"/",f7.3)') space_T, GHz_target_T
+    PRINT *, trim(msg)
+    CALL MLSMessage(MLSMSG_Info,ModuleName,TRIM(msg))
+
+d314 3
+a316 5
+    Reflec%Pri = GetIndexedAvg (EMAF%eng%value, ReflecIndx%Pri,DebugControl%Radiances) - absZero_C
+    Reflec%Sec = GetIndexedAvg (EMAF%eng%value, ReflecIndx%Sec,DebugControl%Radiances) - absZero_C
+    Reflec%Ter = GetIndexedAvg (EMAF%eng%value, ReflecIndx%Ter,DebugControl%Radiances) - absZero_C
+
+    ! Page 24 of ATB discusses taking this average
+a322 12
+    CALL writeRadiancesInfo(GHzNum,      &
+         &      FBchans,     &
+         &      EMAF%MAFno,  &
+         &      EMAF%TotalMAF, &
+         &      start_index, &
+         &      end_index,   &
+         &      target_T,    &
+         &      space_T,     &
+         &      GHz_T1,      &
+         &      GHz_T2       )
+
+
+d325 1
+a325 1
+      MIF_index = time_index - start_index  ! MIF # within the central MAF
+d327 6
+a332 105
+      DO bank = 1, GHzNum
+        ! CalWin%MAFdata(windex)%LimbAltFlag(MIF_index)%FB(1,bank)
+        BandNo = FBrad(bank)%bandno
+        radNum = FBrad(bank)%signal%radiometerNumber
+        IF (FBrad(bank)%signal%radiometerModifier == "A" .AND. &
+             radNum == 1) radNum = 0   ! R1A
+        ! IF (MIF_Index==0) THEN 
+        !   CALL GetFullMLSSignalName(FBrad(bank)%signal, R2AName)
+        !   PRINT *,"CalcLimbRads: FB: working on "//TRIM(R2AName)
+        ! ENDIF
+        space_P = radPwr (LO1(radNum), space_T)
+        IF (cntl_T .AND. radNum == 4) THEN  ! Controlled Target
+          target_P = radPwr (LO1(radNum), (target_T+0.1))  ! additional 0.1 K
+        ELSE
+          target_P = radPwr (LO1(radNum), target_T)
+        ENDIF
+        baffle_P = radPwr (LO1(radNum), GHz_T1)
+        do_chi2_err = L1Config%Output%EnableChi2Err(BandNo)
+
+        ! <whd> MIF_index_MAX = MIFsGHz-1 = 124 (data is 0 indexed, so there
+        ! are 125 total). This is the number of MIFs in the output L1B
+        ! data. As explained by Rick Cofield, this is the number of actual
+        ! data (147-number of cal and otherwise unusable MIFs) There are 9 cal
+        ! MIFs (4 space, 3 target) plus 1 MIF between and on either side =
+        ! 10. Plus the .cf file specifies about 10 MIFs as 'discard'.
+        !!
+        ! Also, radNum==5 is the THz module and this code is for the GHz
+        ! module radiances (I think) 
+        !!
+        !!
+        ! </whd>
+
+
+        ! <whd> I have to admit, though, this seems strange. There may be only
+        ! 125 useful slots, but I don't see that they have to be the first
+        ! 125! </whd>
+
+        IF (MIF_index <= MIF_index_MAX .AND. radNum < 5) THEN
+          DO chan = 1, FBchans
+            C_zero = deflt_zero%FB(chan,bank)
+            ! <whd:question> 
+            ! Why, in the following bit, is there code setting
+            ! %value at MIF_index+1?
+            ! </whd:question>
+            CALL CalcRadiance (limb_cnts%FB(time_index,chan,bank), &   ! in
+                 & space_interp(MIF_index)%FB(chan,bank), &            ! in
+                 & target_interp(MIF_index)%FB(chan,bank), &           ! in
+                 &  C_zero, &                                          ! in
+                 & space_err(MIF_index)%FB(chan,bank), &               ! in
+                 & target_err(MIF_index)%FB(chan,bank), &              ! in
+                 & space_P, target_P, baffle_P, BandWidth%FB(chan,bank), & ! in
+                 & radNum, BandNo, chan, &                                 ! in
+                 & FBrad(bank)%value(chan,MIF_index+1), &                  ! out(why MIF_index+1?)
+                 & rad_prec, &                                             ! out
+                 & deflt_gain%FB(chan,bank), &                             ! in
+                 & use_deflt_gains, &                                      ! in
+                 & Tsys%FB(chan,bank), &                                   ! in/out (if == 0, 
+                                        ! value is calculated)
+                 & gain, &                                                 ! out (==deflt_gain 
+                                        ! if use_deflt_gain)
+                 & slimb_type%FB(chan,bank), &                             ! in
+                 & slimb_interp(MIF_index)%FB(chan,bank), &                ! in
+                 & FBrad(bank)%Poffset(chan,MIF_index+1))                  ! out
+
+
+            ! <whd> If the band/channel is marked as `bad' in the
+            ! L1CF,BandChanBad%Sign(Bandno, chan) will be < 0, so rad_prec
+            ! will be < 0 and thus it will be marked as unusable.</whd>
+            IF (rad_prec > 0.0) rad_prec = rad_prec * MIN ( &
+                 MIFprecSign(MIF_index), BandChanBad%Sign(Bandno, chan))
+            FBrad(bank)%precision(chan,MIF_index+1) = rad_prec
+
+            CALL CalcNonLimbRad (BandNo, chan, radNum, ReflecAvg, &
+                 delrad_1_31(BandNo), NonLimbRad)
+            IF (MIF_index == 0) FBrad(bank)%ModelOffset(chan) = NonLimbRad
+
+            IF (.NOT. slimb_type%FB(chan,bank)) THEN
+              IF (Finite (NonLimbRad)) THEN
+                FBrad(bank)%value(chan,MIF_index+1) = &
+                     FBrad(bank)%value(chan,MIF_index+1) - NonLimbRad
+              ELSE
+                FBrad(bank)%value(chan,MIF_index+1) = 0.0
+                FBrad(bank)%precision(chan,MIF_index+1) = -1.0
+              ENDIF
+            ENDIF
+
+            IF (do_chi2_err) FBrad(bank)%precision(chan,MIF_index+1) = &
+                 SQRT (deflt_chi2%FB(chan,BandNo)) * &
+                 FBrad(bank)%precision(chan,MIF_index+1)
+
+            IF (Cgain%FB(chan,bank) == 0.0 .AND. Tsys%FB(chan,bank) > 0.0) &
+                 Cgain%FB(chan,bank) = gain
+
+          ENDDO ! Loop over GHz banks
+        ENDIF ! MIF is between 0 and MaxMIFs and not radiometer 5
+      ENDDO ! loop over GHz channels
+
+      IF (MIF_index <= MIF_index_MAX) THEN
+        DO bank = 1, MBnum
+          ! IF (MIF_index == 0) THEN 
+          !   CALL GetFullMLSSignalName(MBrad(bank)%signal, R2AName)
+          !   PRINT *,"CalcLimbRads: MB: working on "//TRIM(R2AName)
+          ! ENDIF
+          bandNo = MBrad(bank)%bandno
+          radNum = MBrad(bank)%signal%radiometerNumber
+d335 1
+a335 1
+            target_P = radPwr (LO1(radNum), (target_T+0.1)) ! additional 0.1
+d337 1
+a337 1
+            target_P = radPwr (LO1(radNum), target_T)
+d342 36
+a377 35
+          DO chan = 1, MBchans
+            C_zero = deflt_zero%MB(chan,bank)
+            CALL CalcRadiance (limb_cnts%MB(time_index,chan,bank), &
+                 space_interp(MIF_index)%MB(chan,bank), &
+                 target_interp(MIF_index)%MB(chan,bank), C_zero, &
+                 space_err(MIF_index)%MB(chan,bank), &
+                 target_err(MIF_index)%MB(chan,bank), &
+                 space_P, target_P, baffle_P, BandWidth%MB(chan,bank), &
+                 radNum, BandNo, chan,MBrad(bank)%value(chan,MIF_index+1), &
+                 rad_prec, deflt_gain%MB(chan,bank), use_deflt_gains, &
+                 Tsys%MB(chan,bank), gain, slimb_type%MB(chan,bank), &
+                 slimb_interp(MIF_index)%MB(chan,bank), &
+                 MBrad(bank)%Poffset(chan,MIF_index+1))
+
+            IF (rad_prec > 0.0) rad_prec = rad_prec * MIN ( &
+                 MIFprecSign(MIF_index),  BandChanBad%Sign(Bandno, chan))
+            MBrad(bank)%precision(chan,MIF_index+1) = rad_prec
+
+            CALL CalcNonLimbRad (BandNo, chan, radNum, ReflecAvg, &
+                 delrad_1_31(BandNo), NonLimbRad)
+            IF (MIF_index == 0) MBrad(bank)%ModelOffset(chan) = NonLimbRad
+
+            IF (.NOT. slimb_type%MB(chan,bank)) THEN
+              IF (Finite (NonLimbRad)) THEN
+                MBrad(bank)%value(chan,MIF_index+1) = &
+                     MBrad(bank)%value(chan,MIF_index+1) - NonLimbRad
+              ELSE
+                MBrad(bank)%value(chan,MIF_index+1) = 0.0
+                MBrad(bank)%precision(chan,MIF_index+1) = -1.0
+              ENDIF
+            ENDIF
+
+            IF (do_chi2_err) MBrad(bank)%precision(chan,MIF_index+1) = &
+                 SQRT (deflt_chi2%MB(chan,bank)) * &
+                 MBrad(bank)%precision(chan,MIF_index+1)
+d379 5
+a383 2
+            IF (Cgain%MB(chan,bank) == 0.0 .AND. Tsys%MB(chan,bank) > 0.0) &
+                 Cgain%MB(chan,bank) = gain
+d385 56
+a441 1
+        ENDDO
+d443 42
+a484 13
+        DO bank = 1, WFnum
+          bandNo = WFrad(bank)%bandno
+          ! IF (MIF_index == 0 ) THEN 
+          !   CALL GetFullMLSSignalName(WFrad(bank)%signal, R2AName)
+          !   PRINT *,"CalcLimbRads: WF: working on "//TRIM(R2AName)
+          ! ENDIF
+          radNum = WFrad(bank)%signal%radiometerNumber
+          IF (WFrad(bank)%signal%radiometerModifier == "A" .AND. &
+               radNum == 1) radNum = 0   ! R1A
+          space_P = radPwr (LO1(radNum), space_T)
+          target_P = radPwr (LO1(radNum), target_T)
+          baffle_P = radPwr (LO1(radNum), GHz_T1)
+          do_chi2_err = L1Config%Output%EnableChi2Err(BandNo)
+d486 3
+a488 35
+          DO chan = 1, WFchans
+            C_zero = deflt_zero%WF(chan,bank)
+            CALL CalcRadiance (limb_cnts%WF(time_index,chan,bank), &
+                 space_interp(MIF_index)%WF(chan,bank), &
+                 target_interp(MIF_index)%WF(chan,bank), C_zero, &
+                 space_err(MIF_index)%WF(chan,bank), &
+                 target_err(MIF_index)%WF(chan,bank), &
+                 space_P, target_P, baffle_P, BandWidth%WF(chan,bank), &
+                 radNum, BandNo, chan,WFrad(bank)%value(chan,MIF_index+1), &
+                 rad_prec, deflt_gain%WF(chan,bank), use_deflt_gains, &
+                 Tsys%WF(chan,bank), gain, slimb_type%WF(chan,bank), &
+                 slimb_interp(MIF_index)%WF(chan,bank), &
+                 WFrad(bank)%Poffset(chan,MIF_index+1))
+
+            IF (rad_prec > 0.0) rad_prec = rad_prec * MIN ( &
+                 MIFprecSign(MIF_index), BandChanBad%Sign(Bandno, chan))
+            WFrad(bank)%precision(chan,MIF_index+1) = rad_prec
+
+            CALL CalcNonLimbRad (BandNo, chan, radNum, ReflecAvg, &
+                 delrad_32_34(BandNo,chan), NonLimbRad)
+            IF (MIF_index == 0) WFrad(bank)%ModelOffset(chan) = NonLimbRad
+
+            IF (.NOT. slimb_type%WF(chan,bank)) THEN
+              IF (Finite (NonLimbRad)) THEN
+                WFrad(bank)%value(chan,MIF_index+1) = &
+                     WFrad(bank)%value(chan,MIF_index+1) - NonLimbRad
+              ELSE
+                WFrad(bank)%value(chan,MIF_index+1) = 0.0
+                WFrad(bank)%precision(chan,MIF_index+1) = -1.0
+              ENDIF
+            ENDIF
+
+            IF (do_chi2_err) WFrad(bank)%precision(chan,MIF_index+1) = &
+                 SQRT (deflt_chi2%WF(chan,bank)) * &
+                 WFrad(bank)%precision(chan,MIF_index+1)
+d490 2
+a491 2
+            IF (Cgain%WF(chan,bank) == 0.0 .AND. Tsys%WF(chan,bank) > 0.0) &
+                 Cgain%WF(chan,bank) = gain
+d493 1
+a494 1
+        ENDDO
+d496 3
+a498 1
+        IF (L1Config%Calib%CalibDACS) THEN
+d500 12
+a511 49
+          DO bank = 1, DACSnum
+            ! IF (MIF_index == 0) THEN 
+            !   CALL GetFullMLSSignalName(DACSrad(bank)%signal, R2AName)
+            !   PRINT *,"CalcLimbRads: DACS: working on "//TRIM(R2AName)
+            ! ENDIF
+            bandNo = DACSrad(bank)%bandno
+            radNum = DACSrad(bank)%signal%radiometerNumber
+            IF (DACSrad(bank)%signal%radiometerModifier == "A" .AND. &
+                 radNum == 1) radNum = 0   ! R1A
+            space_P = radPwr (LO1(radNum), space_T)
+            target_P = radPwr (LO1(radNum), target_T)
+            baffle_P = radPwr (LO1(radNum), GHz_T1)
+
+            ! Tsys from the appropiate FB:
+
+            IF (bank == 1 .AND. radNum == 1) THEN ! DACS 1 has been switched
+              Tsys%DACS(:,bank) = Tsys%FB(13,1)  ! Use FB 1's Tsys
+            ELSE
+              Tsys%DACS(:,bank) = Tsys%FB(13,DACS_FB(bank))
+            ENDIF
+
+            DO chan = 1, DACSchans
+              C_zero = 0
+              CALL CalcRadiance (limb_cnts%DACS(time_index,chan,bank), &
+                   space_interp(MIF_index)%DACS(chan,bank), &
+                   target_interp(MIF_index)%DACS(chan,bank), C_zero, &
+                   space_err(MIF_index)%DACS(chan,bank), &
+                   target_err(MIF_index)%DACS(chan,bank), &
+                   space_P, target_P, baffle_P, &
+                   BandWidth%DACS(chan,bank), radNum, BandNo, chan, &
+                   DACSrad(bank)%value(chan,MIF_index+1), &
+                   rad_prec, deflt_gain%DACS(chan,bank), use_deflt_gains, &
+                   Tsys%DACS(chan,bank), gain, slimb_type%DACS(chan,bank),&
+                   slimb_interp(MIF_index)%DACS(chan,bank), &
+                   DACSrad(bank)%Poffset(chan,MIF_index+1), dacs=1)
+
+              IF (rad_prec > 0.0) rad_prec = rad_prec * MIN ( &
+                   MIFprecSign(MIF_index), BandChanBad%Sign(Bandno, chan))
+              DACSrad(bank)%precision(chan,MIF_index+1) = rad_prec
+
+              CALL CalcNonLimbRad (BandNo, chan, radNum, ReflecAvg, &
+                   delrad_1_31(BandNo), NonLimbRad)
+              IF (MIF_index == 0) DACSrad(bank)%ModelOffset(chan) = &
+                   NonLimbRad
+
+              IF (.NOT. slimb_type%DACS(chan,bank)) THEN
+                IF (Finite (NonLimbRad)) THEN
+                  DACSrad(bank)%value(chan,MIF_index+1) = &
+                       DACSrad(bank)%value(chan,MIF_index+1) - NonLimbRad
+d513 1
+a513 2
+                  DACSrad(bank)%value(chan,MIF_index+1) = 0.0
+                  DACSrad(bank)%precision(chan,MIF_index+1) = -1.0
+a514 1
+              ENDIF
+d516 41
+a556 21
+            ENDDO
+          ENDDO
+        ENDIF ! if doing DACS
+      ENDIF ! is MIF < MIF_Max
+    ENDDO ! loop over MIFs
+
+    IF (SnoopRadiances) THEN
+      ! <<<start here >>>
+      Location="Radiances::CalcLimRads"
+      Comment="Just after FB radiances calculation"
+      PRINT *,TRIM(Location)//' : '//TRIM(Comment)
+
+      ALLOCATE(Offerings1(GHzNum), stat=status)
+
+      DO bank=1,GHzNum
+        CALL GetFullMLSSignalName(FBrad(bank)%signal, SignalName)
+        Offerings1(bank)%name=SignalName
+        Offerings1(bank)%rank=2
+        Offerings1(bank)%dimensions=(/FBChans,MIFsGHz,0/)
+        Offerings1(bank)%R2Value => FBrad(bank)%value
+      END DO
+d558 1
+a558 3
+      CALL Snoop( TRIM(location), Offerings1, Offerings2, TRIM(comment))
+    ENDIF
+    ! Avg Poffsets:
+d561 11
+a571 11
+      DO chan = 1, FBchans
+        Pavg = 0.0
+        Pnum = 0
+        DO MIF_index = 0, min( (MaxMIFs-1), MIFsGHz-1 )
+          IF (CalWin%MAFdata(windex)%LimbAltFlag(MIF_index)%FB(chan,bank) &
+               .AND. FBrad(bank)%precision(chan,MIF_index+1) > 0.0) THEN
+            Pnum = Pnum + 1
+            Pavg = Pavg + FBrad(bank)%Poffset(chan,MIF_index+1)
+          ENDIF
+        ENDDO
+        IF (Pnum > 0) Pavg = Pavg / Pnum
+d573 1
+a573 1
+        ! Save avg in first MIF to output in DIAG file:
+d575 1
+a575 1
+        FBrad(bank)%Poffset(chan,1) = Pavg
+d577 1
+a577 1
+      ENDDO
+d581 11
+a591 11
+      DO chan = 1, MBchans
+        Pavg = 0.0
+        Pnum = 0
+        DO MIF_index = 0, min( (MaxMIFs-1), MIFsGHz-1 )
+          IF (CalWin%MAFdata(windex)%LimbAltFlag(MIF_index)%MB(chan,bank) &
+               .AND. MBrad(bank)%precision(chan,MIF_index+1) > 0.0) THEN
+            Pnum = Pnum + 1
+            Pavg = Pavg + MBrad(bank)%Poffset(chan,MIF_index+1)
+          ENDIF
+        ENDDO
+        IF (Pnum > 0) Pavg = Pavg / Pnum
+d593 1
+a593 1
+        ! Save avg in first MIF to output in DIAG file:
+d595 1
+a595 1
+        MBrad(bank)%Poffset(chan,1) = Pavg
+d597 1
+a597 1
+      ENDDO
+d601 11
+a611 11
+      DO chan = 1, WFchans
+        Pavg = 0.0
+        Pnum = 0
+        DO MIF_index = 0, min( (MaxMIFs-1), MIFsGHz-1 )
+          IF (CalWin%MAFdata(windex)%LimbAltFlag(MIF_index)%WF(chan,bank) &
+               .AND. WFrad(bank)%precision(chan,MIF_index+1) > 0.0) THEN
+            Pnum = Pnum + 1
+            Pavg = Pavg + WFrad(bank)%Poffset(chan,MIF_index+1)
+          ENDIF
+        ENDDO
+        IF (Pnum > 0) Pavg = Pavg / Pnum
+d613 1
+a613 1
+        ! Save avg in first MIF to output in DIAG file:
+d615 1
+a615 1
+        WFrad(bank)%Poffset(chan,1) = Pavg
+d617 1
+a617 1
+      ENDDO
+d621 11
+a631 11
+      DO chan = 1, DACSchans
+        Pavg = 0.0
+        Pnum = 0
+        DO MIF_index = 0, min( (MaxMIFs-1), MIFsGHz-1 )
+          IF (CalWin%MAFdata(windex)%LimbAltFlag(MIF_index)%DACS(chan,bank) &
+               .AND. DACSrad(bank)%precision(chan,MIF_index+1) > 0.0) THEN
+            Pnum = Pnum + 1
+            Pavg = Pavg + DACSrad(bank)%Poffset(chan,MIF_index+1)
+          ENDIF
+        ENDDO
+        IF (Pnum > 0) Pavg = Pavg / Pnum
+d633 1
+a633 1
+        ! Save avg in first MIF to output in DIAG file:
+d635 1
+a635 1
+        DACSrad(bank)%Poffset(chan,1) = Pavg
+d637 1
+a637 1
+      ENDDO
+d640 1
+a640 1
+    ! Spectral Baseline:
+a645 1
+
+d650 1
+a650 1
+       "$Id: Radiances.f90,v 2.22 2015/01/13 18:42:17 pwagner Exp $"
+a659 3
+! Revision 2.22  2015/01/13 18:42:17  pwagner
+! Avoid blowing past upper bounds on precision arrays
+!
+@
+
+
+2.22.4.2
+log
+@Most of the work is to eliminate cicular references between MLSL1Debug
+and Calibration. To resolve this, I've moved the inclusion of
+Calibration.f9h and the definition of some 10 variables from
+Calibration.f90 to MLSL1Common.f90. Radiances, MLSL1Debug and
+Calibration will get those types, variable from MLSL1Common. Also, use
+machines.f90 to get the definition of usleep used in SnoopMLSL1
+@
+text
+@d19 1
+a19 2
+       MaxMIFs, BandChanBad, limb_cnts, space_interp, target_interp, &
+       target_err, slimb_interp, slimb_err, slimb_type, space_err
+d22 2
+a23 1
+  USE Calibration, ONLY : CalWin, Tsys, Cgain
+a418 1
+         &      CalWin%central, &
+d422 2
+a423 1
+         &      GHz_T2)
+d815 1
+a815 1
+       "$Id: Radiances.f90,v 2.22.4.1 2015/10/09 10:21:38 whdaffer Exp $"
+a824 3
+! Revision 2.22.4.1  2015/10/09 10:21:38  whdaffer
+! checkin of continuing work on branch whd-rel-1-0
+!
+@
+
+
+2.21
+log
+@Always calculate P_offset
+@
+text
+@d564 1
+a564 1
+          DO MIF_index = 0, (MaxMIFs-1)
+d584 1
+a584 1
+          DO MIF_index = 0, (MaxMIFs-1)
+d604 1
+a604 1
+          DO MIF_index = 0, (MaxMIFs-1)
+d624 1
+a624 1
+          DO MIF_index = 0, (MaxMIFs-1)
+d650 1
+a650 1
+       "$Id: Radiances.f90,v 2.20 2006/09/28 16:17:06 perun Exp $"
+d660 3
+@
+
+
+2.20
+log
+@Save only one ModelOffset per MAF and calculate average slimb view Poffsets
+@
+text
+@a103 4
+       P_offset = ((limb_counts - space_counts) / gain - space_P * &
+            (eta_TSL(3) * Rho(radNum)%Limb - eta_TSL(2)) - &
+            (1.0 - eta_TSL(3)) * baffle_L + (1.0 - eta_TSL(2)) * &
+            baffle_S) / eta_TSL(2)
+a107 1
+       P_offset = 0.0    ! Not available in this method
+d110 5
+d650 1
+a650 1
+       "$Id: Radiances.f90,v 2.19 2006/08/18 15:53:19 perun Exp $"
+d660 3
+@
+
+
+2.19
+log
+@Replace slimb_err with space_err to correct rad_err calculation
+@
+text
+@d112 1
+d202 1
+a202 1
+    INTEGER :: bank, chan, MIF_index, MIF_index_MAX, radNum, bandNo
+d205 1
+a205 1
+    REAL :: ReflecAvg, NonLimbRad, Scf, Tcf, MIFprecSign(0:(MaxMIFs-1))
+d328 1
+a328 1
+
+d363 1
+a363 1
+                FBrad(bank)%ModelOffset(chan,MIF_index+1) = NonLimbRad
+d421 1
+a421 1
+                MBrad(bank)%ModelOffset(chan,MIF_index+1) = NonLimbRad
+d474 1
+a474 1
+                WFrad(bank)%ModelOffset(chan,MIF_index+1) = NonLimbRad
+d537 2
+a538 1
+                   DACSrad(bank)%ModelOffset(chan,MIF_index+1) = NonLimbRad
+d558 82
+d650 1
+a650 1
+       "$Id: Radiances.f90,v 2.18 2006/06/14 13:48:44 perun Exp $"
+d660 3
+@
+
+
+2.18
+log
+@ Adjust radiances using the delrad values from the BandTbls
+@
+text
+@d23 1
+a23 1
+       target_err, Tsys, Cgain, slimb_interp, slimb_err, slimb_type
+d347 1
+a347 1
+                     slimb_err(MIF_index)%FB(chan,bank), &
+d405 1
+a405 1
+                     slimb_err(MIF_index)%MB(chan,bank), &
+d458 1
+a458 1
+                     slimb_err(MIF_index)%WF(chan,bank), &
+d520 1
+a520 1
+                        slimb_err(MIF_index)%DACS(chan,bank), &
+d566 1
+a566 1
+       "$Id: Radiances.f90,v 2.17 2006/04/05 18:09:32 perun Exp $"
+d576 3
+@
+
+
+2.17
+log
+@Remove unused variables
+@
+text
+@d143 1
+a143 1
+  SUBROUTINE CalcNonLimbRad (Band, chan, RadNum, ReflecK, NonLimbRad)
+d150 1
+a150 1
+    REAL, INTENT (IN) :: ReflecK
+d175 2
+a176 1
+         RadiometerLoss(RadNum)%Ohmic * RadiometerLoss(RadNum)%Radiance
+d179 2
+a180 1
+         RadiometerLoss(RadNum)%Ohmic * RadiometerLoss(RadNum)%Radiance
+d196 1
+d219 2
+d239 1
+a239 1
+!
+d241 1
+a241 1
+!
+d361 1
+a361 1
+                     NonLimbRad)
+d419 1
+a419 1
+                     NonLimbRad)
+d472 1
+a472 1
+                     NonLimbRad)
+d535 1
+a535 1
+                        NonLimbRad)
+d566 1
+a566 1
+       "$Id: Radiances.f90,v 2.16 2006/03/24 15:17:06 perun Exp $"
+d576 3
+@
+
+
+2.16
+log
+@Add calculation of radiances using the Space/Limb view interpolations
+@
+text
+@d20 1
+a20 1
+  USE MLSL1Utils, ONLY : GetIndexedAvg, Finite
+d23 1
+a23 1
+       space_err, target_err, Tsys, Cgain, slimb_interp, slimb_err, slimb_type
+d191 1
+a191 1
+    USE MLSL1Common, ONLY: L1BFileInfo, Deflt_chi2
+d198 1
+a198 1
+    INTEGER :: bank, chan, MIF_index, MIF_index_MAX, radNum, bandNo, i
+d561 1
+a561 1
+       "$Id: Radiances.f90,v 2.15 2005/12/09 16:39:58 perun Exp $"
+d571 3
+@
+
+
+2.15
+log
+@Update port baffle transmission values
+@
+text
+@d1 1
+a1 1
+! Copyright 2005, by the California Institute of Technology. ALL
+d23 1
+a23 1
+       space_err, target_err, Tsys, Cgain
+d33 1
+a33 1
+  character (len=*), private, parameter :: ModuleName= &
+d35 1
+a35 1
+  private :: not_used_here 
+d43 2
+a44 1
+       radNum, rad, rad_err, deflt_gain, use_deflt_gain, Tsys, gain, dacs)
+d47 5
+a51 2
+    INTEGER :: radNum
+    REAL(r8) :: limb_counts, space_counts, target_counts, zero_counts
+d53 1
+a53 1
+    REAL :: space_P, target_P, baffle_P, bandwidth, deflt_gain
+d55 1
+a55 1
+    LOGICAL :: use_deflt_gain
+d59 1
+d61 1
+a61 1
+    TYPE Eta_T
+d63 2
+a64 2
+       REAL(r4) :: Limb, Space, Target
+    END TYPE Eta_T
+d66 6
+a71 6
+    TYPE (Eta_T), PARAMETER :: Eta(0:4) = (/ &
+         Eta_T ("R1A", 0.99598, 0.99587, 0.99575), &  ! Index '0'
+         Eta_T ("R1B", 0.99344, 0.99317, 0.99274), &
+         Eta_T ("R2 ", 0.99878, 0.99874, 0.99868), &
+         Eta_T ("R3 ", 0.99915, 0.99912, 0.99910), &
+         Eta_T ("R4 ", 0.99894, 0.99892, 0.99890)  /)
+d82 2
+d90 4
+a93 4
+            (Eta(radNum)%Target * target_P - Eta(radNum)%Space * space_P &
+            - (1.0 - Eta(radNum)%Target) * baffle_T &
+            + (1.0 - Eta(radNum)%Space) * baffle_S)
+    ENDIF
+d101 12
+a112 3
+    rad =  ((limb_counts - space_counts) / gain + Eta(radNum)%Space * space_P &
+         - (1.0 - Eta(radNum)%Limb) * baffle_L + (1.0 - Eta(radNum)%Space) * &
+         baffle_S) / Eta(radNum)%Limb
+d120 13
+a132 5
+       rad_err = &
+            (limb_counts - zero_counts)**2 + (space_counts - zero_counts)**2 &
+            * sum_w2 + (limb_counts - space_counts)**2 * &
+            ((target_counts - zero_counts) / (target_counts-space_counts))**2 &
+            * (1.0 + sum_w2) * sum_wg2
+d342 1
+a342 1
+                     space_err(MIF_index)%FB(chan,bank), &
+d345 1
+a345 1
+                     radNum, FBrad(bank)%value(chan,MIF_index+1), &
+d347 3
+a349 1
+                     Tsys%FB(chan,bank), gain)
+d353 1
+d357 1
+d359 8
+a366 7
+                IF (Finite (NonLimbRad)) THEN
+                   FBrad(bank)%value(chan,MIF_index+1) = &
+                        FBrad(bank)%value(chan,MIF_index+1) - NonLimbRad
+                   FBrad(bank)%precision(chan,MIF_index+1) = rad_prec
+                ELSE
+                   FBrad(bank)%value(chan,MIF_index+1) = 0.0
+                   FBrad(bank)%precision(chan,MIF_index+1) = -1.0
+d400 1
+a400 1
+                     space_err(MIF_index)%MB(chan,bank), &
+d403 1
+a403 1
+                     radNum, MBrad(bank)%value(chan,MIF_index+1), &
+d405 3
+a407 1
+                     Tsys%MB(chan,bank), gain)
+d411 1
+d415 1
+d417 8
+a424 7
+                IF (Finite (NonLimbRad)) THEN
+                   MBrad(bank)%value(chan,MIF_index+1) = &
+                        MBrad(bank)%value(chan,MIF_index+1) - NonLimbRad
+                   MBrad(bank)%precision(chan,MIF_index+1) = rad_prec
+                ELSE
+                   MBrad(bank)%value(chan,MIF_index+1) = 0.0
+                   MBrad(bank)%precision(chan,MIF_index+1) = -1.0
+d453 1
+a453 1
+                     space_err(MIF_index)%WF(chan,bank), &
+d456 1
+a456 1
+                     radNum, WFrad(bank)%value(chan,MIF_index+1), &
+d458 3
+a460 1
+                     Tsys%WF(chan,bank), gain)
+d464 1
+d468 1
+d470 8
+a477 7
+                IF (Finite (NonLimbRad)) THEN
+                   WFrad(bank)%value(chan,MIF_index+1) = &
+                        WFrad(bank)%value(chan,MIF_index+1) - NonLimbRad
+                   WFrad(bank)%precision(chan,MIF_index+1) = rad_prec
+                ELSE
+                   WFrad(bank)%value(chan,MIF_index+1) = 0.0
+                   WFrad(bank)%precision(chan,MIF_index+1) = -1.0
+d515 1
+a515 1
+                        space_err(MIF_index)%DACS(chan,bank), &
+d518 1
+a518 1
+                        BandWidth%DACS(chan,bank), radNum, &
+d521 3
+a523 1
+                        Tsys%DACS(chan,bank), gain, dacs=1)
+d527 1
+d531 1
+d533 9
+a541 8
+                   IF (Finite (NonLimbRad)) THEN
+                      DACSrad(bank)%value(chan,MIF_index+1) = &
+                           DACSrad(bank)%value(chan,MIF_index+1) - NonLimbRad
+                      DACSrad(bank)%precision(chan,MIF_index+1) = rad_prec
+                   ELSE
+                      DACSrad(bank)%value(chan,MIF_index+1) = 0.0
+                      DACSrad(bank)%precision(chan,MIF_index+1) = -1.0
+                  ENDIF
+d558 1
+a558 1
+  logical function not_used_here()
+d560 3
+a562 3
+  character (len=*), parameter :: IdParm = &
+       "$Id: Radiances.f90,v 2.14 2005/08/24 15:52:54 perun Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+d565 2
+a566 1
+  end function not_used_here
+d571 3
+@
+
+
+2.14
+log
+@Set rads and precs to fill values when nonlimb radiances are unavailable
+@
+text
+@d64 3
+a66 3
+         Eta_T ("R2 ", 0.99889, 0.99890, 0.99889), &
+         Eta_T ("R3 ", 0.99929, 0.99928, 0.99929), &
+         Eta_T ("R4 ", 0.99907, 0.99907, 0.99907)  /)
+d517 1
+a517 1
+       "$Id: Radiances.f90,v 2.13 2005/06/23 18:41:36 pwagner Exp $"
+d526 3
+@
+
+
+2.13
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d34 1
+a34 1
+       "$RCSfile: $"
+a326 1
+                FBrad(bank)%precision(chan,MIF_index+1) = rad_prec
+d330 9
+a338 2
+                FBrad(bank)%value(chan,MIF_index+1) = &
+                     FBrad(bank)%value(chan,MIF_index+1) - NonLimbRad
+a379 1
+                MBrad(bank)%precision(chan,MIF_index+1) = rad_prec
+d383 9
+a391 2
+                MBrad(bank)%value(chan,MIF_index+1) = &
+                     MBrad(bank)%value(chan,MIF_index+1) - NonLimbRad
+a427 1
+                WFrad(bank)%precision(chan,MIF_index+1) = rad_prec
+d431 9
+a439 2
+                WFrad(bank)%value(chan,MIF_index+1) = &
+                     WFrad(bank)%value(chan,MIF_index+1) - NonLimbRad
+a485 1
+                   DACSrad(bank)%precision(chan,MIF_index+1) = rad_prec
+d489 9
+a497 2
+                   DACSrad(bank)%value(chan,MIF_index+1) = &
+                        DACSrad(bank)%value(chan,MIF_index+1) - NonLimbRad
+d517 1
+a517 1
+       "$Id: $"
+d526 3
+@
+
+
+2.12
+log
+@Use AntOffsetsScale for scaling NonLimbRad
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d32 5
+a36 5
+  !------------------------------- RCS Ident Info ------------------------------
+  CHARACTER(LEN=130) :: id = &
+       "$Id: Radiances.f90,v 2.11 2004/11/15 16:50:06 perun Exp $"
+  CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile: Radiances.f90,v $"
+  !-----------------------------------------------------------------------------
+d490 8
+d502 3
+@
+
+
+2.11
+log
+@Adjust controlled target temperature per RFJ
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
+d26 1
+a26 1
+       "$Id: Radiances.f90,v 2.10 2004/11/10 15:40:40 perun Exp $"
+d114 1
+d148 4
+d486 3
+@
+
+
+2.10
+log
+@Adjust precision based on flag; change DACS precision method; call baseline
+calculation
+@
+text
+@d26 1
+a26 1
+       "$Id: Radiances.f90,v 2.9 2004/08/12 13:51:51 perun Exp $"
+d167 1
+a167 1
+    LOGICAL :: use_deflt_gains, do_chi2_err
+d192 2
+a193 1
+    GHz_T2 = GetIndexedAvg (EMAF%eng%value, CalTgtIndx%GHzCntl) - absZero_C
+d212 2
+a213 1
+
+d220 1
+d233 1
+d276 4
+a285 3
+          ! Determine which Target temp to use!!
+
+          target_T =  GHz_target_T
+d291 5
+a295 1
+          target_P = radPwr (LO1(radNum), target_T)
+d339 5
+a343 1
+             target_P = radPwr (LO1(radNum), target_T)
+d481 4
+@
+
+
+2.9
+log
+@Version 1.44 commit
+@
+text
+@d10 2
+a11 1
+       DACSnum, DACSchans, deflt_gain, deflt_zero, absZero_C, BandWidth, LO1
+d26 1
+a26 1
+       "$Id: Radiances.f90,v 2.8 2004/05/14 15:59:11 perun Exp $"
+d42 1
+a42 1
+    REAL :: rad, rad_err, gain, Tsys
+d91 3
+a93 2
+       rad_err = (Tsys + rad)**2 + Tsys**2 * sum_w2 + rad**2 * &
+            ((target_P + Tsys) / target_P)**2 + (1.0 + sum_w2) * sum_wg2
+d156 1
+d163 2
+a164 2
+    REAL :: GHz_T1, GHz_T2, space_T, target_T, GHz_target_T, gain
+    REAL :: ReflecAvg, NonLimbRad, Scf, Tcf
+d177 1
+d300 1
+a300 2
+                     FBrad(bank)%precision(chan,MIF_index+1), &
+                     deflt_gain%FB(chan,bank), use_deflt_gains, &
+d303 4
+d313 1
+a313 1
+                     deflt_chi2%FB(chan,BandNo) * &
+d343 1
+a343 2
+                     MBrad(bank)%precision(chan,MIF_index+1), &
+                     deflt_gain%MB(chan,bank), use_deflt_gains, &
+d346 4
+d356 1
+a356 1
+                     deflt_chi2%MB(chan,bank) * &
+d385 1
+a385 2
+                     WFrad(bank)%precision(chan,MIF_index+1), &
+                     deflt_gain%WF(chan,bank), use_deflt_gains, &
+d388 4
+d398 1
+a398 1
+                     deflt_chi2%WF(chan,bank) * &
+d437 1
+a437 2
+                        DACSrad(bank)%precision(chan,MIF_index+1), &
+                        deflt_gain%DACS(chan,bank), use_deflt_gains, &
+d440 4
+d457 4
+d468 3
+@
+
+
+2.8
+log
+@Version 1.43 commit
+@
+text
+@d25 1
+a25 1
+       "$Id: Radiances.f90,v 2.7 2004/01/09 17:46:23 perun Exp $"
+d148 1
+a148 1
+ SUBROUTINE CalcLimbRads
+d152 3
+a154 2
+    USE MLSL1Common, ONLY: L1BFileInfo
+use MLSL1Utils, ONLY: Finite
+d158 1
+a158 1
+    INTEGER :: bank, chan, MIF_index, MIF_index_MAX, radNum, i
+d164 1
+a164 1
+    LOGICAL :: use_deflt_gains
+d187 1
+a187 1
+!    if (finite (GHz_T1)) print *, "GHzAmb avg: ", GHz_T1
+d189 1
+a189 1
+!    if (finite (GHZ_T2)) print *, "GHzCntl avg: ", GHz_T2
+d191 1
+a191 1
+!  Temperature combinations for S and T from cf file:
+d193 1
+a193 1
+!    Note: no input T is same as "-"  and all final temps will be absolutes.
+d195 9
+a203 9
+!   Scf   Tcf   S   T
+!--------------------
+!    +     -    S   A
+!    +     0    S   C
+!    +     +    S   T
+!    -     -    A   S
+!    -     0    C   S
+!    0     0    A   C
+!    0     -    C   A
+d231 1
+a231 1
+! Check if Temperatures are good
+d252 1
+a252 1
+PRINT *, 'S/T temp: ', space_T, GHz_target_T
+d261 1
+a261 1
+! Reflector temperatures:
+d274 1
+a274 1
+! Determine which Target temp to use!!
+d277 1
+a277 1
+
+d284 1
+d300 2
+a301 2
+                CALL CalcNonLimbRad (FBrad(bank)%BandNo, chan, radNum, &
+                     ReflecAvg, NonLimbRad)
+d305 4
+d320 1
+d325 1
+d340 2
+a341 2
+                CALL CalcNonLimbRad (MBrad(bank)%BandNo, chan, radNum, &
+                     ReflecAvg, NonLimbRad)
+d345 4
+d351 1
+a351 1
+                
+d357 1
+d364 1
+d379 2
+a380 2
+                CALL CalcNonLimbRad (WFrad(bank)%BandNo, chan, radNum, &
+                     ReflecAvg, NonLimbRad)
+d384 4
+d390 1
+a390 1
+                
+d398 1
+d406 1
+a406 1
+! Tsys from the appropiate FB:
+d428 2
+a429 2
+                   CALL CalcNonLimbRad (DACSrad(bank)%BandNo, chan, radNum, &
+                        ReflecAvg, NonLimbRad)
+d448 3
+@
+
+
+2.7
+log
+@Version 1.4 commit
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+d8 1
+a8 1
+  USE MLSCommon, ONLY: r8
+d25 1
+a25 1
+       "$Id: Radiances.f90,v 2.6 2003/08/15 14:25:04 perun Exp $"
+d33 2
+a34 2
+       zero_counts, sum_w2, sum_wg2, space_P, target_P, bandwidth, &
+       rad, rad_err, deflt_gain, use_deflt_gain, Tsys, gain, dacs)
+d37 1
+d40 2
+a41 1
+    REAL :: space_P, target_P, bandwidth, rad, rad_err, deflt_gain, Tsys
+d45 13
+a57 1
+    REAL :: gain
+d62 6
+d73 4
+a76 1
+       gain =  (target_counts - space_counts) / (target_P - space_P)
+d85 3
+a87 1
+    rad =  (limb_counts - space_counts) / gain + space_P
+d92 1
+a92 2
+       rad_err = sqrt (rad_err / (bandwidth * tau))
+
+d103 1
+a103 1
+       rad_err = sqrt (rad_err / (bandwidth * tau)) / gain
+d112 1
+a112 1
+    USE BandTbls, ONLY: SideBandFrac, SpilloverLoss, RadiometerLoss
+d118 26
+d153 1
+a153 1
+
+d157 1
+a157 1
+    INTEGER :: bank, chan, MIF_index, MIF_index_MAX, radNum
+d161 1
+a161 1
+    REAL :: space_P, target_P ! Power per unit bandwidth
+d164 1
+a164 1
+    INTEGER, PARAMETER :: DACS_FB(4) = (/ 9, 2, 7, 1 /) ! TEMP!!!
+d185 1
+a189 2
+    ! CALL BlueSkyGains (GHz_T1, GHz_T2, start_index)
+
+d251 1
+a251 1
+print *, 'S/T temp: ', space_T, GHz_target_T
+d278 2
+a279 1
+
+d282 1
+d292 2
+a293 2
+                     space_P, target_P, BandWidth%FB(chan,bank), &
+                     FBrad(bank)%value(chan,MIF_index+1), &
+d300 2
+d317 1
+d326 2
+a327 2
+                     space_P, target_P, BandWidth%MB(chan,bank), &
+                     MBrad(bank)%value(chan,MIF_index+1), &
+d331 6
+d346 2
+d350 1
+d359 2
+a360 2
+                     space_P, target_P, BandWidth%WF(chan,bank), &
+                     WFrad(bank)%value(chan,MIF_index+1), &
+d364 6
+d381 2
+d385 9
+a393 1
+                Tsys%DACS(:,bank) = Tsys%FB(13,DACS_FB(bank))   !TEMP !!!
+d402 2
+a403 1
+                        space_P, target_P, BandWidth%DACS(chan,bank), &
+d409 5
+d429 3
+@
+
+
+2.6
+log
+@Version 1.2 commit
+@
+text
+@d9 2
+a10 3
+  USE MLSL1Common, ONLY: GHzNum, FBchans, MBnum, MBchans, WFnum, WFchans, &
+       DACSnum, DACSchans, Chan_R_T, deflt_gain, deflt_zero, &
+       absZero_C, BandWidth, tau, LO1
+d14 1
+a14 1
+       space_err, target_err, Chi2
+d25 1
+a25 1
+       "$Id: Radiances.f90,v 2.5 2003/01/31 18:13:34 perun Exp $"
+a28 2
+  TYPE (Chan_R_T) :: Tsys, Cgain
+
+d85 13
+d110 1
+a110 1
+    REAL :: Scf, Tcf
+d211 7
+d246 4
+a308 1
+             BandWidth%DACS = 0.15 * 1.0e06    ! Bandwidths for all DACS
+a336 11
+    Reflec%Pri = GetIndexedAvg (EMAF%eng%value, ReflecIndx%Pri) - absZero_C
+    Reflec%Sec = GetIndexedAvg (EMAF%eng%value, ReflecIndx%Sec) - absZero_C
+    Reflec%Ter = GetIndexedAvg (EMAF%eng%value, ReflecIndx%Ter) - absZero_C
+
+! Write Diags
+
+    WRITE (L1BFileInfo%DiagId) CalWin%MAFdata(windex)%SciPkt(0)%MAFno
+    WRITE (L1BFileInfo%DiagId) Tsys%FB, Tsys%MB, Tsys%WF
+    WRITE (L1BFileInfo%DiagId) Cgain%FB, Cgain%MB, Cgain%WF
+    WRITE (L1BFileInfo%DiagId) Chi2%FB, Chi2%MB, Chi2%WF
+
+d344 3
+@
+
+
+2.5
+log
+@Version 1.1 commit
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+d10 1
+a10 1
+       DACSnum, DACSchans, Chan_R_T, deflt_gain, deflt_zero, MaxMIFs, &
+d13 3
+a15 3
+  USE EngTbls, ONLY : Eng_MAF_T, CalTgtIndx
+  USE Calibration, ONLY : CalWin, limb_time, limb_counts, space_interp, &
+       target_interp, space_err, target_err, space_weight, target_weight
+d26 1
+a26 1
+       "$Id: Radiances.f90,v 2.3 2002/03/29 20:18:34 perun Exp $"
+d34 1
+a34 73
+  SUBROUTINE BlueSkyGains (T1, T2, MIF0_offset)
+
+    USE Calibration, ONLY : target_counts
+
+!! Overwrite default gains for Blue Sky test
+
+    INTEGER :: MIF0_offset
+    REAL :: T1, T2
+
+    INTEGER :: bank, chan, radNum
+    REAL :: space_P, target_P
+
+! MIFs for doing gains (edit for blue sky test!!!)
+
+    INTEGER, PARAMETER :: T1_MIF(2) = (/ 136, 147 /), T2_MIF(2) = (/ 122, 133 /)
+    INTEGER :: n_target, n_space
+    INTEGER :: target_MIF(2), space_MIF(2)
+
+    n_space = T1_MIF(2) - T1_MIF(1) + 1
+    n_target = T2_MIF(2) - T2_MIF(1) + 1
+    space_MIF = T1_MIF + MIF0_offset
+    target_MIF = T2_MIF + MIF0_offset
+
+    DO bank = 1, GHzNum
+
+       radNum = FBrad(bank)%signal%radiometerNumber
+       space_P = radPwr (LO1(radNum), T1)
+       target_P = radPwr (LO1(radNum), T2)
+
+       DO chan = 1, FBchans
+          deflt_gain%FB(chan,bank) = &
+           (SUM(target_counts(target_MIF(1):target_MIF(2))%FB(chan,bank)) / &
+           n_target  - &
+           SUM(target_counts(space_MIF(1):space_MIF(2))%FB(chan,bank)) / &
+           n_space) / (target_P - space_P)
+       ENDDO
+
+    ENDDO
+
+    DO bank = 1, MBnum
+
+       radNum = MBrad(bank)%signal%radiometerNumber
+       space_P = radPwr (LO1(radNum), T1)
+       target_P = radPwr (LO1(radNum), T2)
+
+       DO chan = 1, MBchans
+          deflt_gain%MB(chan,bank) = &
+           (SUM(target_counts(target_MIF(1):target_MIF(2))%MB(chan,bank)) / &
+           n_target  - &
+           SUM(target_counts(space_MIF(1):space_MIF(2))%MB(chan,bank)) / &
+           n_space) / (target_P - space_P)
+       ENDDO
+
+    ENDDO
+
+    DO bank = 1, WFnum
+
+       radNum = WFrad(bank)%signal%radiometerNumber
+       space_P = radPwr (LO1(radNum), T1)
+       target_P = radPwr (LO1(radNum), T2)
+
+       DO chan = 1, WFchans
+          deflt_gain%WF(chan,bank) = &
+           (SUM(target_counts(target_MIF(1):target_MIF(2))%WF(chan,bank)) / &
+           n_target  - &
+           SUM(target_counts(space_MIF(1):space_MIF(2))%WF(chan,bank)) / &
+           n_space) / (target_P - space_P)
+       ENDDO
+
+    ENDDO
+
+  END SUBROUTINE BlueSkyGains
+
+d38 1
+d87 3
+a89 1
+  SUBROUTINE CalcLimbRads
+a94 11
+    TYPE ValPrec_T
+       REAL :: value
+       REAL :: precision
+    END TYPE ValPrec_T
+    TYPE Rad_T
+       TYPE (ValPrec_T) :: FB(FBchans,GHzNum)          ! standard filter banks
+       TYPE (ValPrec_T) :: MB(MBchans,MBnum)          ! mid-band filter banks
+       TYPE (ValPrec_T) :: WF(WFchans,WFnum)          ! wide filters
+       TYPE (ValPrec_T) :: DACS(DACSchans,DACSnum)    ! DACS filters
+    END TYPE Rad_T
+    TYPE (Rad_T) :: Rad(0:MaxMIFs-1)
+d97 1
+a97 1
+    INTEGER :: i, j, bank, chan, MIF_index, MIF_index_MAX, radNum
+d99 1
+a99 1
+    REAL :: GHz_T1, GHz_T2, space_T, target_T, GHz_target_T, gain, temp
+d219 1
+a219 1
+                CALL CalcRadiance (limb_counts(time_index)%FB(chan,bank), &
+d246 1
+a246 1
+                CALL CalcRadiance (limb_counts(time_index)%MB(chan,bank), &
+d270 1
+a270 1
+                CALL CalcRadiance (limb_counts(time_index)%WF(chan,bank), &
+d298 1
+a298 1
+                   CALL CalcRadiance (limb_counts(time_index)%DACS(chan,bank), &
+d317 4
+d326 1
+d335 3
+@
+
+
+2.4
+log
+@Change space & target temps to GHz space & target temps
+@
+text
+@d5 1
+a5 1
+MODULE Radiances ! Determine radiances
+d9 1
+a9 1
+  USE MLSL1Common, ONLY: FBnum, FBchans, MBnum, MBchans, WFnum, WFchans, &
+d16 1
+a16 1
+  USE MLSL1Rad, ONLY : FBrad, MBrad, WFrad, DACSrad
+d20 4
+d34 22
+a55 1
+  FUNCTION RadPwr (Hz, T) RESULT (P)
+d57 1
+a57 1
+    USE MLSL1Common, ONLY: boltz, planck
+d59 3
+a61 1
+!! Calculate radiant power per unit bandwidth
+d63 39
+a101 3
+    REAL :: Hz    !! frequency in Hz
+    REAL :: T     !! temperature in Kelvin
+    REAL :: P     !! radiant power
+d103 1
+a103 1
+    P = (planck * Hz) / (boltz * (exp ((planck * Hz) / (boltz * T)) - 1.0))
+d105 1
+a105 1
+  END FUNCTION RadPwr
+d160 1
+a160 1
+    USE MLSL1Config, ONLY: MIFsGHz, MIFsTHz, L1Config
+d169 1
+a169 1
+       TYPE (ValPrec_T) :: FB(FBchans,FBnum)          ! standard filter banks
+d179 2
+a180 1
+    REAL :: GHz_T1, GHz_T2, THz_T1, space_T, target_T, GHz_target_T, gain, temp
+d189 3
+d205 1
+a205 1
+!    print *, "GHzAmb avg: ", GHz_T1
+d207 1
+a207 19
+!    print *, "GHzCntl avg: ", GHz_T2
+    THz_T1 = GetIndexedAvg (EMAF%eng%value, CalTgtIndx%THzAmb) - absZero_C
+
+    IF (L1Config%Calib%GHzTargetTemp > 0.0) THEN  ! Use the config input
+       GHz_target_T = L1Config%Calib%GHzTargetTemp
+    ELSE
+       IF (GHz_Cal_Type == "P") THEN
+          GHz_target_T = GHz_T1
+       ELSE IF (GHz_Cal_Type == "S") THEN
+          GHz_target_T = GHz_T2
+       ELSE
+          print *, "NO CAL TARGET TEMP!"
+          stop   !what else can I do?
+       ENDIF
+    ENDIF
+
+    space_T = L1Config%Calib%GHzSpaceTemp
+
+!! Special test config
+d209 1
+a209 7
+    IF (space_T < 0.0 .AND. L1Config%Calib%GHzTargetTemp <= 0.0) THEN
+       GHz_target_T = GetIndexedAvg (EMAF%eng%value, CalTgtIndx%GHzCntl) - &
+            absZero_C
+       space_T = GetIndexedAvg (EMAF%eng%value, CalTgtIndx%GHzAmb) - absZero_C
+    ENDIF
+
+!! Case for linearity (switch T and S):
+d211 38
+a248 4
+    IF (space_T < 0.0) THEN
+       temp = GHz_target_T
+       GHz_target_T = -space_T
+       space_T = temp
+d254 1
+a254 1
+       DO bank = 1, FBnum
+d272 1
+a272 4
+!print *, 'S/T temp: ', space_T, GHz_target_T
+    start_index = CalWin%MAFdata(windex)%start_index  ! MIF 0
+    end_index = CalWin%MAFdata(windex)%end_index      ! MIF max
+    CalWin_end = CalWin%MAFdata(CalWin%size)%end_index
+d279 1
+d285 1
+a285 1
+       DO bank = 1, FBnum
+d296 1
+a296 9
+! Determine MAX allowable MIF index
+
+          IF (bank < 15) THEN
+             MIF_index_MAX = MIFsGHz - 1
+          ELSE
+             MIF_index_MAX = MIFsTHz - 1
+          ENDIF
+
+          IF (MIF_index <= MIF_index_MAX) THEN
+a315 2
+
+       MIF_index_MAX = MIFsGHz - 1
+@
+
+
+2.3
+log
+@Version 1.0 commit
+@
+text
+@d22 1
+a22 1
+       "$Id: Radiances.f90,v 2.2 2001/09/10 16:17:56 perun Exp $"
+a141 1
+    if (finite(thz_t1)) print *, "THzAmb avg: ", THz_T1
+d143 2
+a144 2
+    IF (L1Config%Calib%TargetTemp > 0.0) THEN  ! Use the config input
+       GHz_target_T = L1Config%Calib%TargetTemp
+d156 1
+a156 1
+    space_T = L1Config%Calib%SpaceTemp
+d160 1
+a160 1
+    IF (space_T < 0.0 .AND. L1Config%Calib%TargetTemp <= 0.0) THEN
+d345 3
+@
+
+
+2.2
+log
+@Added CalMAFdata from Calibration module
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+d10 3
+a12 2
+       MaxMIFs, absZero_C, BandWidth, tau
+  USE MLSL1Utils, ONLY : GetIndexedAvg
+d14 3
+a16 4
+  USE Calibration, ONLY : CalWin, CalMAFdata, limb_time, limb_counts, &
+       space_interp, target_interp, space_err, target_err, space_weight, &
+       target_weight, zero_counts
+  USE MLSL1Rad, ONLY : FBrad, MBrad, WFrad
+d22 1
+a22 1
+       "$Id: Radiances.f90,v 2.1 2001/02/23 20:55:04 perun Exp $"
+d26 2
+d30 14
+d45 2
+a46 2
+       zero_counts, sum_w2, sum_wg2, space_temp, target_temp, bandwidth, &
+       rad, rad_err)
+d50 3
+a52 1
+    REAL :: space_temp, target_temp, bandwidth, rad, rad_err
+d61 31
+a91 8
+    gain =  (target_counts - space_counts) / (target_temp - space_temp)
+    rad =  (limb_counts - space_counts) / gain + space_temp
+
+    rad_err = (limb_counts - zero_counts)**2 + (space_counts - zero_counts)**2 &
+         * sum_w2 + (limb_counts - space_counts)**2 * &
+         ((target_counts - zero_counts) / (target_counts - space_counts))**2 &
+         * (1.0 + sum_w2) * sum_wg2
+    rad_err = sqrt (rad_err / (bandwidth * tau)) / gain
+d97 2
+a98 1
+    USE MLSL1Config, ONLY: MIFsGHz, MIFsTHz
+d106 4
+a109 3
+       TYPE (ValPrec_T) :: FB(FBchans,FBnum)    ! standard filter banks
+       TYPE (ValPrec_T) :: MB(MBchans,MBnum)    ! mid-band filter banks
+       TYPE (ValPrec_T) :: WF(WFchans,WFnum)    ! wide filters
+d113 2
+a114 1
+    INTEGER :: i, j, bank, chan, MIF_index, MIF_index_MAX
+d116 2
+a117 2
+    REAL :: GHz_T1, GHz_T2, THz_T1, target_T
+    REAL :: space_T
+d119 2
+d122 1
+a122 1
+    EMAF = CalWin%MAFdata(CalWin%central)%EMAF
+d124 2
+a125 6
+    GHz_T1 = GetIndexedAvg (EMAF%eng%value, CalTgtIndx%GHzAmb) + absZero_C
+!!$    print *, "GHzAmb avg: ", GHz_T1
+    GHz_T2 = GetIndexedAvg (EMAF%eng%value, CalTgtIndx%GHzCntl) + absZero_C
+!!$    print *, "GHzCntl avg: ", GHz_T2
+    THz_T1 = GetIndexedAvg (EMAF%eng%value, CalTgtIndx%THzAmb) + absZero_C
+!!$    print *, "THzAmb avg: ", THz_T1
+d127 29
+a155 2
+    GHz_T1 = 300.0    !!! For simulation TEST
+    space_T = 0.0     !!! TEST FOR NOW!!!
+d157 40
+a196 1
+    windex = CalWin%central
+d200 6
+d211 3
+a213 1
+! Interpolate limb values
+d215 1
+a215 1
+       DO bank = 1, FBnum
+d217 1
+a217 1
+! Determine which Target temp to use
+d219 2
+a220 1
+          target_T = GHz_T1
+d232 1
+a232 2
+          !C_zero = MAXVAL (zero_counts(start_index:end_index)%FB(chan,bank))
+                C_zero = 1500
+d238 1
+a238 1
+                     space_T, target_T, BandWidth%FB(chan,bank), &
+d240 6
+a245 1
+                     FBrad(bank)%precision(chan,MIF_index+1))
+d248 1
+d255 5
+d261 2
+a262 3
+             !C_zero = MAXVAL (zero_counts(start_index:end_index)%MB(chan,bank))
+                C_zero = 1500
+                CALL CalcRadiance (limb_counts(time_index)%FB(chan,bank), &
+d267 1
+a267 1
+                     space_T, target_T, BandWidth%MB(chan,bank), &
+d269 6
+a274 1
+                     MBrad(bank)%precision(chan,MIF_index+1))
+d279 5
+d285 1
+a285 2
+             !C_zero = MAXVAL (zero_counts(start_index:end_index)%WF(chan,bank))
+                C_zero = 1500
+d291 1
+a291 1
+                     space_T, target_T, BandWidth%WF(chan,bank), &
+d293 6
+a298 1
+                     WFrad(bank)%precision(chan,MIF_index+1))
+d301 29
+d333 5
+a337 6
+!!$DO i = 0, MIF_index_MAX
+!!$  print *, INT(limb_counts(start_index+i)%FB(1,1)), &
+!!$       INT(space_interp(i)%FB(1,1)),&
+!!$       INT(target_interp(i)%FB(1,1)), FBrad(1)%value(1,i+1), &
+!!$       FBrad(1)%precision(1,i+1)
+!!$ENDDO
+d346 3
+@
+
+
+2.1
+log
+@Version 0.5 commit
+@
+text
+@d13 3
+a15 3
+  USE Calibration, ONLY : CalWin, limb_time, limb_counts, space_interp, &
+       & target_interp, space_err, target_err, space_weight, target_weight, &
+       zero_counts
+d22 2
+a23 2
+       "$Id:$"
+  CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile:$"
+d177 4
+a180 1
+! $Log:$
+@
+

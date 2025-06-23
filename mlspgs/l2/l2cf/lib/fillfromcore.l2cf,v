@@ -1,0 +1,173 @@
+head	1.4;
+access;
+symbols
+	v5-02-NRT-19:1.4
+	v6-00:1.4
+	v5-02-NRT-18:1.4
+	v5-02:1.4
+	v5-01-NRT-17:1.4
+	v5-01-NRT-16:1.4
+	v5-01-NRT-15:1.4
+	v5-01-NRT-14:1.4
+	neuralnetworks-1-0:1.4.0.14
+	cfm-single-freq-0-1:1.4.0.12
+	v5-01:1.4
+	v5-00:1.4
+	v4-23-TA133:1.4.0.10
+	mus-emls-1-70:1.4.0.8
+	rel-1-0-englocks-work:1.4.0.6
+	VUMLS1-00:1.4
+	VPL1-00:1.4
+	V4-22-NRT-08:1.4
+	VAM1-00:1.4
+	V4-21:1.4.0.4
+	V4-13:1.4
+	V4-12:1.4
+	V4-11:1.4
+	V4-10:1.4
+	V3-43:1.4
+	M4-00:1.4
+	V3-41:1.4
+	V3-40-PlusGM57:1.4.0.2
+	V2-24-NRT-04:1.4
+	V3-33:1.4
+	V2-24:1.4
+	V3-31:1.4
+	V3-30-NRT-05:1.4
+	cfm-01-00:1.4
+	V3-30:1.4
+	V3-20:1.4
+	V3-10:1.4
+	V2-23-NRT-02:1.4
+	V2-23:1.4
+	V2-22-NRT-01:1.4
+	V2-22:1.4
+	V2-21:1.4
+	V2-20:1.4
+	V2-11:1.4
+	V2-10:1.4
+	V2-00:1.4
+	V1-51:1.4
+	V1-50:1.4
+	V1-45:1.4
+	V1-44:1.4
+	V1-43:1.4
+	V1-32:1.4
+	V1-31:1.4
+	V1-30:1.4
+	V1-13:1.3
+	V1-12:1.3
+	V1-11:1.3
+	V1-10:1.3
+	newfwm-feb03:1.3.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.4
+date	2003.08.15.05.49.58;	author livesey;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2003.01.20.04.57.47;	author livesey;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2003.01.13.23.24.08;	author livesey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2002.11.06.02.02.13;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.4
+log
+@A few minor changes
+@
+text
+@; $Id: fillfromcore.l2cf,v 1.3 2003/01/20 04:57:47 livesey Exp $
+
+;; This L2CF fragment sets the contents of parts of state to the results
+;; of the `core' retrievals.
+
+begin Fill
+  !define(fillFromOneCoreL2GP,{Fill, quantity=state.$1, method=l2gp, $
+    sourceL2GP=l2gpCore$1Input!nl})
+  !forall(fillFromOneCoreL2GP,!coreL2GPSpecies)
+  ;; Also do GPH
+  Fill, quantity=state.GPH, method=hydrostatic, refGPHQuantity=state.refGPH, $
+    temperatureQuantity=state.temperature
+  ;; Also do ptan
+  Fill, quantity=state.ptanGHz, method=l2aux, sourceL2AUX=l2auxCorePtanInput
+  ;; Put the apriori back in the stratospheric h2o
+  Subset, quantity=state.h2o, height=[1000mb:680mb, 68.0mb:0.00001mb], mask=fill
+  Fill, quantity=state.h2o, method=vector, sourceQuantity=apriori.h2o
+  Subset, quantity=state.h2o, mask=fill, /reset
+
+  ;; Make sure this all ends up in stateCore too
+  stateCore: Vector, template=stateTemplate
+  outputPrecisionCore: Vector, template=stateTemplate
+
+  Transfer, source=state, destination=stateCore
+  Transfer, source=outputPrecision, destination=outputPrecisionCore
+end Fill
+@
+
+
+1.3
+log
+@Leave 680/1000mb H2O alone
+@
+text
+@d1 1
+a1 1
+; $Id: fillfromcore.l2cf,v 1.2 2003/01/13 23:24:08 livesey Exp $
+a15 2
+end Fill
+begin Retrieve
+a16 2
+end Retrieve
+begin Fill
+d18 8
+a26 3
+begin Retrieve
+  Subset, quantity=state.h2o, mask=fill, /reset
+end Retrieve
+@
+
+
+1.2
+log
+@Modified so stratospheric H2O remains at a priori.
+@
+text
+@d1 1
+a1 1
+; $Id: fillfromcore.l2cf,v 1.1 2002/11/06 02:02:13 livesey Exp $
+d18 1
+a18 1
+  Subset, quantity=state.h2o, height=[68.0mb:0.00001mb], mask=fill
+@
+
+
+1.1
+log
+@First version
+@
+text
+@d1 1
+a1 1
+; $Id$
+d15 1
+d17 9
+@
+

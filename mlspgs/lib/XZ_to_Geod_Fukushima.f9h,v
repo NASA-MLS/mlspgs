@@ -1,0 +1,130 @@
+head	2.1;
+access;
+symbols
+	v5-02-NRT-19:2.1
+	v6-00:2.1
+	v5-02-NRT-18:2.1
+	v5-02:2.1
+	v5-01-NRT-17:2.1
+	v5-01-NRT-16:2.1
+	v5-01-NRT-15:2.1
+	v5-01-NRT-14:2.1
+	neuralnetworks-1-0:2.1.0.10
+	cfm-single-freq-0-1:2.1.0.8
+	v5-01:2.1
+	v5-00:2.1
+	v4-23-TA133:2.1.0.6
+	mus-emls-1-70:2.1.0.4
+	rel-1-0-englocks-work:2.1.0.2
+	VUMLS1-00:2.1
+	VPL1-00:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.1
+date	2016.05.25.01.51.32;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! elemental subroutine XZ_to_Geod_Fukushima ( X_in, Z_in, A, B, GeodLat, GeodHt )
+
+! Compute geodetic latitude and geodetic height of a point with Cartesian
+! coordinates (X_in, Z_in) with respect to an ellipse having semi-major axis A
+! and semi-minor axis B.
+
+! This can be used to convert ECR to geodetic latitude and geodetic height
+! with respect to the orbit-plane projected ellipse by using that ellipse's
+! minor axis for B and sqrt(ECR%xyz(1)**2 + ECR%xyz(2)**2) for Z_in.
+
+! real(rk), intent(in) :: X_in ! X-coordinate
+! real(rk), intent(in) :: Z_in ! Z-coordinate
+! real(rk), intent(in) :: A    ! Ellipse semi-major axis
+! real(rk), intent(in) :: B    ! Ellipse semi-minor axis
+! real(rk), intent(out) :: GeodLat ! Geodetic latitude of (X_in, Z_in), radians
+! real(rk), intent(out) :: GeodHt  ! Geodetic height of (X_in, Z_in), in same
+                                   ! units as X_in, Z_in, A, B
+
+  integer, parameter :: MaxIt = 1  ! Maximum number of iterations.  In Journal
+                                   ! of Geodesy (2006) 79: 689-693, Fukushima
+                                   ! says one iteration gets within a few micro
+                                   ! arcseconds for heights below 30,000 km.
+
+  real(rk) :: An, An3, Ap, Bn, Dn, Fn  ! Terms in the iteration
+  real(rk) :: Cc                       ! Ec * Cn
+  real(rk) :: Cn, Cp                   ! Cosine-like iterate, previous value
+  real(rk) :: Ec                       ! b / a
+  real(rk) :: E2                       ! Eccentricity**2 = 1 - b^2/a^2
+  integer :: I
+  real(rk) :: P                        ! S / a
+  real(rk) :: S                        ! sqrt ( x**2 + y**2 )
+  real(rk) :: Sn, Sp                   ! Sine-like iterate, previous value
+  real(rk) :: Tol                      ! Finish the iteration
+  real(rk) :: Z                        ! Ec * |z| / a
+
+  Ec = b/a
+  E2 = 1 - Ec**2
+  if ( maxIt > 1 ) Tol = tiny(1.0_rk)**(1.0/3.0) / A
+  s = abs(x_in)
+
+  if ( s < sqrt(tiny(1.0_rk)) ) then ! Too near the pole
+    geodLat = sign(real(0.5_rk*pi,rk)-s,z_in)
+    geodHt = abs(z_in) - b
+    return
+  end if
+
+  ! Now the Fukushima iteration for latitude
+  P = s / a
+  Z = abs(z_in) * Ec / a
+  Sp = Z
+  Cp = Ec * P
+  Ap = sqrt ( Sp**2 + Cp**2 )
+  Bn = 1.5_rk * E2**2 * P * Sp**2 * Cp**2 * ( Ap - Ec )
+  i = 1
+  do
+    An3 = Ap ** 3
+    Dn = Z * An3 + E2 * Sp**3
+    Fn = P * An3 - E2 * Cp**3
+    Sn = Dn * Fn - Bn * Sp
+    Cn = Fn**2 - Bn * Cp
+    An = sqrt ( Sn**2 + Cn**2 )
+    if ( i >= maxIt ) exit
+    i = i + 1
+    if ( abs(Cn-Cp) < tol * abs(p) .or. abs(Sn-Sp) < tol * Z ) exit
+    Ap = An
+    Bn = 1.5_rk * E2 * Sn * Cn**2 * ( ( P * Sn - Z * Cn ) * Ap - &
+       & E2 * Sn * Cn )
+    Cp = Cn
+    Sp = Sn
+  end do
+  Cc = Ec * Cn
+  ! Compute geodetic latitude
+  geodLat = sign ( atan2(Sn,Cc), z_in )
+  ! Compute geodetic height
+  geodHt = ( s * Cc + abs(z_in) * Sn - b * An ) / sqrt ( Cc**2 + Sn**2 )
+
+! $Id: XYZ_to_Geod_Fukushima.f9h,v 2.4 2016/03/19 00:41:14 vsnyder Exp $
+
+! $Log: XYZ_to_Geod_Fukushima.f9h,v $
+@

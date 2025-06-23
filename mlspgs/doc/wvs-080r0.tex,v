@@ -1,0 +1,141 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.14
+	cfm-single-freq-0-1:1.1.0.12
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.10
+	mus-emls-1-70:1.1.0.8
+	rel-1-0-englocks-work:1.1.0.6
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2008.06.11.20.14.55;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9.0in
+
+\newcommand{\docname}{\bf wvs-080}
+\newcommand{\docdate}{3 June 2008}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[u]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Van\\
+Subject: \>TScat and derivatives\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 10pt
+\vspace{-20pt}
+
+We calculate $T_\text{scat}$ by propagating a ray from space through a sample
+atmosphere to a specified point $s$.  The points on that ray are called $r$ in
+the sequel.
+
+At $s$ we have the phase function $P(\theta)$, $\frac{\partial
+P(\theta)}{\partial x_s}$, radiance $I$ resulting from radiative transfer along
+the ray to $s$, $\frac{\partial I}{\partial x_s}$,
+and $\frac{\partial I}{\partial x_r}$, where $x$ is temperature, IWC, or a
+mixing ratio. $T_\text{scat}$ is defined as
+
+\begin{equation*}
+T_\text{scat} = \int_{-\pi}^\pi P(\theta) I(\theta) \, \text{d}\theta
+\end{equation*}
+
+where $\theta$ is the angle between the incident ray and the scattered ray that
+originates at $s$.
+
+From this
+
+\begin{equation*}
+\frac{\partial T_\text{scat}}{\partial x_s} =
+ \int_{-\pi}^\pi
+  \left[ \frac{\partial P(\theta)}{\partial x_s} I +
+         P(\theta) \frac{\partial I}{\partial x_s} \right]
+  \, \text{d} \theta
+\end{equation*}
+
+and
+
+\begin{equation*}
+\frac{\partial T_\text{scat}}{\partial x_r} =
+ \int_{-\pi}^\pi 
+  \left [ \frac{\partial P(\theta)}{\partial x_r} I +
+          P(\theta) \frac{\partial I}{\partial x_r} \right]
+  \, \text{d} \theta =
+ \int_{-\pi}^\pi P(\theta) \frac{\partial I}{\partial x_r} \, \text{d} \theta\,.
+\end{equation*}
+
+\label{lastpage}
+\end{document}
+% $Id: $
+@

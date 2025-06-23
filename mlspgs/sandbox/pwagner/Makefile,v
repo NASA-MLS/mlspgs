@@ -1,0 +1,346 @@
+head	1.3;
+access;
+symbols
+	v5-02-NRT-19:1.3
+	v6-00:1.3
+	v5-02-NRT-18:1.3
+	v5-02:1.3
+	v5-01-NRT-17:1.3
+	v5-01-NRT-16:1.3
+	v5-01-NRT-15:1.3
+	v5-01-NRT-14:1.3
+	neuralnetworks-1-0:1.3.0.6
+	cfm-single-freq-0-1:1.3.0.4
+	v5-01:1.3
+	v5-00:1.3
+	v4-23-TA133:1.3.0.2
+	mus-emls-1-70:1.2.0.12
+	rel-1-0-englocks-work:1.2.0.10
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.2
+	V4-21:1.2.0.8
+	V4-13:1.2
+	V4-12:1.2
+	V4-11:1.2
+	V4-10:1.2
+	V3-43:1.2
+	M4-00:1.2
+	V3-41:1.2
+	V3-40-PlusGM57:1.2.0.6
+	V2-24-NRT-04:1.2
+	V3-33:1.2
+	V2-24:1.2
+	V3-31:1.2
+	V3-30-NRT-05:1.2
+	cfm-01-00:1.2
+	V3-30:1.2
+	V3-20:1.2
+	V3-10:1.2
+	V2-23-NRT-02:1.2
+	V2-23:1.2
+	V2-22-NRT-01:1.2
+	V2-22:1.2
+	V2-21:1.2
+	V2-20:1.2
+	V2-11:1.2
+	V2-10:1.2
+	V2-00:1.2
+	V1-51:1.2
+	V1-50:1.2
+	V1-45:1.2
+	V1-44:1.2
+	V1-43:1.2
+	V1-42:1.2
+	V1-41:1.2
+	V1-32:1.2
+	V1-40:1.2
+	V1-31:1.2
+	V1-13:1.2
+	V1-12:1.2
+	V1-11:1.2
+	V1-10:1.2
+	newfwm-feb03:1.2.0.4
+	V1-04:1.2
+	V1-03:1.2
+	V1-02:1.2
+	V1-00:1.2
+	newfwm-sep01:1.2.0.2
+	V0-7:1.2
+	V0-5-Level2:1.2
+	V0-5-SIPS:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.3
+date	2018.09.20.23.02.04;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.03.01.22.40.52;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.01.26.00.17.40;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@Brought up-to-date with my own copy; not sure if it still works, though
+@
+text
+@# Makefile
+# testing a few ideas before incorporating them into mlspgs
+
+# where to store .configure
+CONFDIR=.
+
+# This will set our MLS platform, compiler. etc.
+# w/o complaining if it does nor exist yet
+-include $(CONFDIR)/.configure
+
+SHELL = /bin/sh
+
+# where a.sh is stored
+MLSBIN=.
+
+# ---------------------- The name of this file (is the right-hand-side below)
+MakeFName = MakeFC
+# If the right-hand-side is not Makefile
+# then to make mls with this file you must instead  of bare "make" use
+#     make -f $(MakeFName)
+
+# This is how big COPY_NUMBER may grow before being reset; it was 10
+MAX_COPIES = 1
+ONE = 1
+
+.SUFFIXES:
+
+%:: %,v
+#  commands to execute (built-in):
+#	$(CHECKOUT,v)
+
+%:: RCS/%,v
+#  commands to execute (built-in):
+#	$(CHECKOUT,v)
+
+%:: RCS/%
+#  commands to execute (built-in):
+#	$(CHECKOUT,v)
+
+%:: s.%
+#  commands to execute (built-in):
+#	$(GET) $(GFLAGS) $(SCCS_OUTPUT_OPTION) $<
+
+%:: SCCS/s.%
+#  commands to execute (built-in):
+#	$(GET) $(GFLAGS) $(SCCS_OUTPUT_OPTION) $<
+
+# This keeps track of the number of times MakeFC -> Makefile
+USE_internal_copynum = no
+
+ifeq ($(USE_internal_copynum),yes)
+	COPY_NUMBER = 16
+else
+	COPY_NUMBER := $(shell echo Make.old* | wc -w)
+#	COPY_NUMBER := $(shell expr $(COPY_NUMBER) + 1)
+endif
+
+ifeq ($(COPY_NUMBER),"")
+	COPY_NUMBER := 0
+endif
+
+NEXT_COPY := $(shell expr $(COPY_NUMBER) + 1)
+LAST_COPY := $(shell expr $(COPY_NUMBER) - 1)
+
+# This determines the command by which MakeFC looks like Makefile
+# Choose either "link" or "copy"; warning--link once caused cvs probs
+LOOKS_LIKE_MakeFC = copy
+
+ifeq ($(LOOKS_LIKE_MakeFC),copy)
+	LOOKS_LIKE_line = cp MakeFC Makefile
+else
+	LOOKS_LIKE_line = ln -s MakeFC Makefile
+endif
+
+REECHO=../../util/reecho.sh
+REWHAT=$(shell ${REECHO} `cat what.reecho`)
+WHAT=$(shell echo `cat what.reecho`)
+
+EVERY_MLSCONFG = $(shell ${REECHO} -d -dirn ../../lib/machines -excl CVS)
+#EVERY_MLSCONFG = LF95.Linux  NAG.Linux  NAG.SGI  NAG.Sun  Unknown.None  Sun.Sun
+
+#
+FOPTS=-gline -gc
+
+INC_PATHS := $(INC_PATHS) $(EXTRA_PATHS) ./
+
+# The program will be simply a file containing the value of a
+PROG=value
+
+.PHONY: configure depends clean tar clean_objs makefile \
+  show_copy add_copy reset_copy internalmakefile internalreset_copy\
+  internaladd_copy
+
+ifdef a
+   a_is_defined = true
+else
+   a_is_defined = false
+endif
+
+$(PROG): $(CONFDIR)/.configure
+	rm -f $(PROG)
+	echo "$(a)" > $(PROG)
+	@@case "$(a)" in \
+		"") \
+		echo "a is blank" ; \
+		;; \
+		*) \
+		echo "a is non-blank" ; \
+		;; \
+	esac 
+	@@case "$(a_is_defined)" in \
+		"true") \
+		echo "a is defined" ; \
+		;; \
+		"false") \
+		echo "a is undefined" ; \
+		;; \
+		*) \
+		echo "a is neither" ; \
+		;; \
+	esac
+	@@echo "FOPTS is ${FOPTS}"
+	@@echo "Filtered becomes `echo ${FOPTS} | sed 's/-O[0-9]*//'`"
+
+configure:
+	echo "Currently, a is $$a"
+	$(MLSBIN)/a.sh
+	echo "However, a is still $(a)"
+	echo "and, buck-a is still $$a"
+
+$(CONFDIR)/.configure:
+	echo "Currently, a is $$a"
+	$(MLSBIN)/a.sh
+	echo "However, a is still $(a)"
+	echo "and, buck-a is still $$a"
+	if [ -f Makefile ] ; then \
+		mv Makefile Makefile.old ;\
+	fi ; \
+	$(LOOKS_LIKE_line)
+
+makefile:
+	@@if [ $(COPY_NUMBER) -lt $(MAX_COPIES) ] ; then \
+		$(MAKE) -f $(MakeFName) internaladd_copy ; \
+	else  \
+		echo "Resetting copy number from  $(COPY_NUMBER) to 1"; \
+		$(MAKE) -f $(MakeFName) internalreset_copy ; \
+	fi
+	@@$(MAKE) -f $(MakeFName) internalmakefile
+
+show_copy:
+	@@echo "copy number $(COPY_NUMBER)"
+	@@echo "next copy number will be $(NEXT_COPY)"
+
+add_copy:
+	@@$(MAKE) -f $(MakeFName) internaladd_copy
+	$@@(MAKE) -f $(MakeFName) internalmakefile
+
+reset_copy:
+	@@$(MAKE) -f $(MakeFName) internalreset_copy
+	@@$(MAKE) -f $(MakeFName) internalmakefile
+
+# For internal use
+internalmakefile:
+	@@if [ -f Makefile ] ; then \
+		if [ $(USE_internal_copynum) = "yes" ] ; then \
+			mv Makefile Make.old.$(LAST_COPY) ;\
+		elif [ -f Make.old.1 ] ; then \
+			mv Makefile Make.old.$(NEXT_COPY) ;\
+		else  \
+			mv Makefile Make.old.1 ;\
+		fi ; \
+	fi ; \
+	$(LOOKS_LIKE_line)
+
+internalreset_copy:
+	@@rm -f temp.Makefile Make.old.*
+	@@echo sed 's/COPY_NUMBER = '$(COPY_NUMBER)'/COPY_NUMBER = '$(NEXT_COPY)'/'
+	if [ $(USE_internal_copynum) = "yes" ] ; then \
+		sed 's/COPY_NUMBER = '$(COPY_NUMBER)'/COPY_NUMBER = '$(ONE)'/' \
+	 $(MakeFName) > temp.Makefile ; \
+		mv temp.Makefile $(MakeFName) ; \
+	fi
+
+internaladd_copy:
+	@@rm -f temp.Makefile
+	@@echo sed 's/COPY_NUMBER = '$(COPY_NUMBER)'/COPY_NUMBER = '$(NEXT_COPY)'/'
+	if [ $(USE_internal_copynum) = "yes" ] ; then \
+		sed 's/COPY_NUMBER = '$(COPY_NUMBER)'/COPY_NUMBER = '$(NEXT_COPY)'/' \
+	 $(MakeFName) > temp.Makefile ; \
+		mv temp.Makefile $(MakeFName) ; \
+	fi
+
+testreecho:
+	@@echo "unfiltered: ${WHAT}"
+	@@echo "filtered: ${REWHAT}"
+	@@echo "INC_PATHS: $(INC_PATHS)"
+
+testeverything:
+	@@echo "unfiltered: ${EVERY_MLSCONFG}"
+
+#---------------------------------------------------------------
+# $Log: MakeFC,v $
+# Revision 1.5  2001/09/26 21:11:41  pwagner
+# Testing suffix and implicit rule-free ops
+#
+# Revision 1.4  2001/09/07 23:08:22  pwagner
+# Whatever change I made, this is the latest
+#
+# Revision 1.3  2001/03/23 21:39:32  pwagner
+# Stopped using internal_copy_number
+#
+#
+@
+
+
+1.2
+log
+@Tests of shielding -O option
+@
+text
+@d16 66
+d85 2
+d90 3
+a92 1
+.PHONY: configure depends clean tar clean_objs
+d136 76
+a211 1
+
+a212 3
+	
+ 
+
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d16 3
+d24 6
+d41 13
+@
+

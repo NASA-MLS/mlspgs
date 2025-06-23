@@ -1,0 +1,390 @@
+head	1.7;
+access;
+symbols
+	v5-02-NRT-19:1.7
+	v6-00:1.7
+	v5-02-NRT-18:1.7
+	v5-02:1.7
+	v5-01-NRT-17:1.7
+	v5-01-NRT-16:1.7
+	v5-01-NRT-15:1.7
+	v5-01-NRT-14:1.7
+	neuralnetworks-1-0:1.7.0.14
+	cfm-single-freq-0-1:1.7.0.12
+	v5-01:1.7
+	v5-00:1.7
+	v4-23-TA133:1.7.0.10
+	mus-emls-1-70:1.7.0.8
+	rel-1-0-englocks-work:1.7.0.6
+	VUMLS1-00:1.7
+	VPL1-00:1.7
+	V4-22-NRT-08:1.7
+	VAM1-00:1.7
+	V4-21:1.7.0.4
+	V4-13:1.7
+	V4-12:1.7
+	V4-11:1.7
+	V4-10:1.7
+	V3-43:1.7
+	M4-00:1.7
+	V3-41:1.7
+	V3-40-PlusGM57:1.7.0.2
+	V2-24-NRT-04:1.6
+	V3-33:1.7
+	V2-24:1.6
+	V3-31:1.7
+	V3-30-NRT-05:1.7
+	cfm-01-00:1.7
+	V3-30:1.7
+	V3-20:1.7
+	V3-10:1.7
+	V2-23-NRT-02:1.6
+	V2-23:1.6
+	V2-22-NRT-01:1.6
+	V2-22:1.6
+	V2-21:1.6
+	V2-20:1.6
+	V2-11:1.6
+	V2-10:1.6
+	V2-00:1.6
+	V1-51:1.5
+	V1-50:1.5
+	V1-45:1.5
+	V1-44:1.5
+	V1-43:1.5
+	V1-42:1.5
+	V1-41:1.5
+	V1-32:1.5
+	V1-40:1.5
+	V1-31:1.5
+	V1-30:1.5
+	V1-13:1.5
+	V1-12:1.5
+	V1-11:1.5
+	V1-10:1.5
+	newfwm-feb03:1.5.0.2
+	V1-04:1.1
+	V1-03:1.1
+	V1-02:1.1
+	V1-00:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.7
+date	2009.06.23.18.21.13;	author pwagner;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2005.06.22.19.45.19;	author pwagner;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2002.10.10.23.48.57;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2002.09.18.22.45.34;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2002.09.13.22.52.13;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2002.09.13.18.06.10;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.11.14.00.23.28;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.7
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Gemv_M
+
+  implicit NONE
+  public
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+! === (start of toc) ===
+! gemv        product of a matrix and a vector
+! === (end of toc) ===
+
+! === (start of api) ===
+! gemv ( char TRANS, int M, int N, 
+!                  val1 ALPHA, val1 A(LDA,*), int LDA, 
+!                  val2 X(*), int incx, val2 BETA, val Y(*), int incy )
+!      where val1, val2 can be any of the types:
+!      { real, double precision }
+! === (end of api) ===
+  interface GEMV
+    subroutine DGEMV ( TRANS, M, N, ALPHA, A, LDA, X, INCX, &
+        &                BETA, Y, INCY )
+      double precision   ALPHA, BETA
+      integer            INCX, INCY, LDA, M, N
+      character          TRANS
+      double precision   A( LDA, * ), X( * ), Y( * )
+    end subroutine DGEMV
+    subroutine SGEMV ( TRANS, M, N, ALPHA, A, LDA, X, INCX, &
+        &                BETA, Y, INCY )
+      real               ALPHA, BETA
+      integer            INCX, INCY, LDA, M, N
+      character          TRANS
+      real               A( LDA, * ), X( * ), Y( * )
+    end subroutine SGEMV
+    module procedure  SDGEMV, DSGEMV
+  end interface
+
+  contains
+    subroutine SDGEMV ( TRANS, M, N, ALPHA, A, LDA, X, INCX, &
+        &                BETA, Y, INCY )
+    ! Matrix-vector product of mixed type
+      real               ALPHA, BETA
+      integer            INCX, INCY, LDA, M, N
+      character          TRANS
+      real               A( LDA, * )
+      double precision   X( * ), Y( * )
+      ! double precision, dimension(M, N) :: a_double
+      
+      if ( m <= 0 .or. n <= 0 ) return
+      ! allocate(a_double(m,n))
+      ! a_double = a(1:m, 1:n)
+      call dgemv(TRANS, m, n, alpha*1.d0, dble(a(1:m,1:n)), m, x, incx, &
+        & beta*1.d0, y, incy)
+      ! call dgemv(TRANS, m, n, alpha*1.d0, a_double, m, x, incx, &
+      ! deallocate(a_double)
+    end subroutine SDGEMV
+  
+    subroutine DSGEMV ( TRANS, M, N, ALPHA, A, LDA, X, INCX, &
+        &                BETA, Y, INCY )
+    ! Matrix-vector product of mixed type
+      double precision               ALPHA, BETA
+      integer            INCX, INCY, LDA, M, N
+      character          TRANS
+      double precision               A( LDA, * )
+      real   X( * ), Y( * )
+      double precision, dimension(M) :: Y_DOUBLE
+      ! double precision, dimension(N) :: X_DOUBLE
+      
+      if ( m <= 0 .or. n <= 0 ) return
+      ! allocate(y_double(m), x_double(n))
+      ! x_double = x(1:(n-1)*abs(incx)+1:incx)
+      y_double = y(1:(m-1)*abs(incy)+1:incy)
+      call dgemv(TRANS, m, n, alpha, a, m, dble(x(1:(n-1)*abs(incx)+1:incx)), incx, &
+        & beta, y_double, 1)
+      ! call dgemv(TRANS, m, n, alpha, a, m, x_double, 1, &
+      y(1:(m-1)*abs(incy)+1:incy) = y_double
+      ! deallocate(y_double, x_double)
+    end subroutine DSGEMV
+  
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: read_apriori.f90 is it here $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Gemv_M
+
+!$Log: gemv_external_m.f90,v $
+!Revision 1.6  2005/06/22 19:45:19  pwagner
+!Reworded Copyright statement, moved rcs id
+!
+!Revision 1.5  2002/10/10 23:48:57  pwagner
+!Added idents to survive zealous Lahey optimizer
+!
+!Revision 1.4  2002/09/18 22:45:34  pwagner
+!Replaced internal arrays a-double, x_double with intrinsic dble function
+!
+!Revision 1.3  2002/09/13 22:52:13  pwagner
+!Replaced pointers with automatic arrays
+!
+!Revision 1.2  2002/09/13 18:06:10  pwagner
+!Added mixed type gemv: sdgemv and dsgemv when matrix and vector precisions differ
+!
+!Revision 1.1  2001/11/14 00:23:28  vsnyder
+!Initial commit
+!
+@
+
+
+1.6
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d94 1
+a95 1
+!---------------------------- RCS Ident Info -------------------------------
+d97 2
+a98 3
+       "$Id: $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d100 1
+d102 1
+d107 3
+@
+
+
+1.5
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d17 1
+a17 4
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
+       "$Id: gemv_external_m.f90,v 1.4 2002/09/18 22:45:34 pwagner Exp $"
+  character (len=len(idParm)), private :: Id = idParm
+d19 1
+a19 1
+       "$RCSfile: gemv_external_m.f90,v $"
+d95 5
+d106 3
+@
+
+
+1.4
+log
+@Replaced internal arrays a-double, x_double with intrinsic dble function
+@
+text
+@d11 1
+a11 1
+       "$Id: gemv_external_m.f90,v 1.3 2002/09/13 22:52:13 pwagner Exp $"
+d15 1
+d18 11
+d89 4
+d96 3
+@
+
+
+1.3
+log
+@Replaced pointers with automatic arrays
+@
+text
+@d11 1
+a11 1
+       "$Id: gemv_external_m.f90,v 1.2 2002/09/13 18:06:10 pwagner Exp $"
+d44 1
+a44 1
+      double precision, dimension(M, N) :: a_double
+d48 2
+a49 3
+      a_double = a(1:m, 1:n)
+      ! call dgemv(TRANS, m, n, alpha*1.d0, dble(a), m, x, incx, &
+      call dgemv(TRANS, m, n, alpha*1.d0, a_double, m, x, incx, &
+d51 1
+d64 1
+a64 1
+      double precision, dimension(N) :: X_DOUBLE
+d68 1
+a68 1
+      x_double = x(1:(n-1)*abs(incx)+1:incx)
+d70 1
+a70 2
+      ! call dgemv(TRANS, m, n, alpha, a, m, dble(x), incx, &
+      call dgemv(TRANS, m, n, alpha, a, m, x_double, 1, &
+d72 1
+d80 3
+@
+
+
+1.2
+log
+@Added mixed type gemv: sdgemv and dsgemv when matrix and vector precisions differ
+@
+text
+@d11 1
+a11 1
+       "$Id: gemv_external_m.f90,v 1.1 2001/11/14 00:23:28 vsnyder Exp $"
+d44 1
+a44 1
+      double precision, dimension(:,:), pointer :: A_DOUBLE
+d47 1
+a47 1
+      allocate(a_double(m,n))
+d49 1
+d52 1
+a52 1
+      deallocate(a_double)
+d63 2
+a64 1
+      double precision, dimension(:), pointer :: X_DOUBLE, Y_DOUBLE
+d67 1
+a67 1
+      allocate(y_double(m), x_double(n))
+d70 3
+a72 2
+      call dgemv(TRANS, m, n, alpha, a, m, x_double, incx, &
+        & beta, y_double, incy)
+d74 1
+a74 1
+      deallocate(y_double, x_double)
+d80 3
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+d11 1
+a11 1
+       "$Id: gemm_external_m.f90,v 1.1 2001/11/02 07:36:39 pwagner Exp $"
+d14 1
+a14 1
+       "$RCSfile: gemm_external_m.f90,v $"
+d32 1
+d35 39
+d76 4
+a79 1
+!$Log: $
+@
+

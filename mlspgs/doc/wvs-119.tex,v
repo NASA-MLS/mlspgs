@@ -1,0 +1,224 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.12
+	cfm-single-freq-0-1:1.1.0.10
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.8
+	mus-emls-1-70:1.1.0.6
+	rel-1-0-englocks-work:1.1.0.4
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.2
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2014.05.08.00.03.28;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\documentclass[11pt]{article}
+
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9in
+
+\newcommand{\docname}{wvs-119}
+\newcommand{\docdate}{7 May 2014}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\renewcommand{\d}{\text{d}}
+\newcommand{\T}{\mathcal{T}}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Nathaniel, Paul, Bill\\
+Subject: \>Exploiting sparsity in Cholesky factorization\\
+From: \>Van Snyder\\
+Reference: \>\h{wvs-050} \\
+\end{tabbing}
+
+\vspace*{-15pt}
+
+In \emph{A column approximate minimum degree ordering algorithm}, which
+appeared in September 2004 {\bf ACM Transactions on Mathematical
+Software}, the authors observe that permutation of the rows and columns of
+a sparse symmetric matrix can have a profound impact on the number of
+nonzeros in the Cholesky factors.
+
+\parindent 0pt
+\parskip 6pt
+
+A companion of that paper, entitled \emph{Algorithm 836: COLAMD, A column
+approximate minimum degree ordering algorithm}, describes C functions to
+compute a ``good'' permutation.
+
+In MLS Level 2, we solve the sparse least-squares problem
+%
+\begin{equation}
+\mathbf{\tilde K \, \delta \tilde x} \simeq - \mathcal{F}
+\end{equation}
+%
+for the Newton move $\mathbf{\delta \tilde x}$ by forming normal equations
+%
+\begin{equation}\label{two}
+\mathbf{\tilde K ^T \tilde K \, \delta \tilde x} =
+ - \mathbf{\tilde K ^T} \mathcal{F}
+\end{equation}
+%
+followed by Cholesky factorization
+%
+\begin{equation}
+\mathbf{\tilde K ^T \tilde K \, \delta \tilde x} =
+\mathbf{U ^T U \, \delta \tilde x} =
+ - \mathbf{\tilde K ^T} \mathcal{F}
+\end{equation}
+%
+wherein $\mathbf{U}$ is upper triangular, and then solve for
+$\mathbf{\delta \tilde x}$ using two back solves.  We take no care to
+permute the rows and columns of $\mathbf{\tilde K ^T \tilde K}$.  The
+factor $\mathbf{U}$ might therefore have more nonzeros than necessary to
+compute the solution, and therefore might have required more time to
+compute.
+
+Abbreviate Equation (\ref{two}) to
+%
+\begin{equation}
+\mathbf{A \, x} = \mathbf{b}
+\end{equation}
+%
+where $\mathbf{A} = \mathbf{\tilde K ^T \tilde K}$, $\mathbf{x} = \mathbf{
+\delta \tilde x}$, and $\mathbf{b} = - \mathbf{\tilde K ^T} \mathcal{F}$. 
+Permute the rows and columns giving
+%
+\begin{equation}
+\mathbf{P A P  \left(P^{-1}\, x \right)} = \mathbf{P b}
+\phantom{space} \text{ or } \phantom{space}
+\mathbf{P A P \, \hat x} = \mathbf{\hat b}
+\end{equation}
+%
+where $\mathbf{P}$ is a permutation matrix, $\mathbf{\hat x} =
+\mathbf{P^{-1} x}$ and $\mathbf{\hat b} = \mathbf{P b}$.  Cholesky factor
+$\mathbf{P A P}$ giving
+%
+\begin{equation}
+\mathbf{P A P \, \hat x} = \mathbf{\hat U ^T \hat U \, \hat x}
+ = \mathbf{\hat b} \,.
+\end{equation}
+%
+Solve for $\mathbf{\hat x}$ using two back solves, and then compute
+$\mathbf{x} = \mathbf{ \delta \tilde x} = \mathbf{P \hat x}$.
+
+The software that embodies Algorithm 836, as it applies to symmetric
+matrices, is a C function entitled {\tt symamd}.  It does not examine or
+manipulate the values of the matrix, or factor it.  Rather, it is given
+the pattern of nonzeros, and returns a permutation.  In the case of MLS
+Level 2, the pattern of nonzeros would be the pattern of non-absent matrix
+blocks.  The Cholesky factoring and back solving procedures in {\tt
+MatrixModule_1} could use the permutation to compute $\mathbf{\delta
+\tilde x}$.
+
+{\tt MatrixModule_0} provides a sparse representation of matrix blocks,
+but the forward model does not exploit it.  Permuting rows and columns of
+the diagonal blocks of $\mathbf{\tilde K ^T \tilde K}$ before Cholesky
+factoring them could reduce computing time, but would require detecting
+the sparsity pattern.  There is at present, however, no sparse Cholesky
+factorization procedure in {\tt MatrixModule_0}.
+
+\label{lastpage}
+\end{document}
+
+% $Id: wvs-118.tex,v 1.1 2014/02/28 22:00:18 vsnyder Exp $
+
+% $Log: wvs-118.tex,v $
+@

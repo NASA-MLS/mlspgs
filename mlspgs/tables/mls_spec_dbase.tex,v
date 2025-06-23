@@ -1,0 +1,248 @@
+head	1.3;
+access;
+symbols
+	v5-02-NRT-19:1.3
+	v6-00:1.3
+	v5-02-NRT-18:1.3
+	v5-02:1.3
+	v5-01-NRT-17:1.3
+	v5-01-NRT-16:1.3
+	v5-01-NRT-15:1.3
+	v5-01-NRT-14:1.3
+	neuralnetworks-1-0:1.3.0.14
+	cfm-single-freq-0-1:1.3.0.12
+	v5-01:1.3
+	v5-00:1.3
+	v4-23-TA133:1.3.0.10
+	mus-emls-1-70:1.3.0.8
+	rel-1-0-englocks-work:1.3.0.6
+	VUMLS1-00:1.3
+	VPL1-00:1.3
+	V4-22-NRT-08:1.3
+	VAM1-00:1.3
+	V4-21:1.3.0.4
+	V4-13:1.3
+	V4-12:1.3
+	V4-11:1.3
+	V4-10:1.3
+	V3-43:1.3
+	M4-00:1.3
+	V3-41:1.3
+	V3-40-PlusGM57:1.3.0.2
+	V2-24-NRT-04:1.3
+	V3-33:1.3
+	V2-24:1.3
+	V3-31:1.3
+	V3-30-NRT-05:1.3
+	cfm-01-00:1.3
+	V3-30:1.3
+	V3-20:1.3
+	V3-10:1.3
+	V2-23-NRT-02:1.3
+	V2-23:1.3
+	V2-22-NRT-01:1.3
+	V2-22:1.3
+	V2-21:1.3
+	V2-20:1.3
+	V2-11:1.3
+	V2-10:1.3
+	V2-00:1.3
+	V1-51:1.3
+	V1-50:1.3
+	V1-45:1.3
+	V1-44:1.3
+	V1-43:1.3
+	V1-42:1.3
+	V1-41:1.3
+	V1-32:1.3
+	V1-40:1.3
+	V1-31:1.3
+	V1-30:1.3
+	V1-13:1.2
+	V1-12:1.2
+	V1-11:1.2
+	V1-10:1.2
+	newfwm-feb03:1.2.0.2
+	V1-04:1.1
+	V1-03:1.1
+	V1-02:1.1
+	V1-00:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.3
+date	2003.05.14.15.24.20;	author bill;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2002.06.07.04.54.15;	author bill;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.10.15.22.00.07;	author bill;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@new line catalogue
+@
+text
+@\documentclass{article}
+\usepackage{longtable}
+\usepackage{dcolumn}
+%Landscape format
+\setlength{\headsep}{0pt}
+\setlength{\headheight}{30pt}
+\setlength{\evensidemargin}{-50pt}
+\setlength{\oddsidemargin}{-50pt}
+\setlength{\topmargin}{-36pt}
+\setlength{\textwidth}{774pt}
+\setlength{\textheight}{500pt}
+\setlength{\parindent}{22pt}
+\setlength{\parskip}{0.5ex}
+\setlength{\footskip}{0pt}
+\setlength{\marginparsep}{10pt}
+\setlength{\marginparwidth}{60pt}
+\newcolumntype{d}[1]{D{.}{.}{#1}}
+\begin{document}
+{\footnotesize
+%\setlongtables
+\begin{longtable}[c]{cd{6}d{4}*{3}{d{5}}cd{2}*{4}{c}}
+\caption{Spectroscopy data base for MLS signals.} \\
+\hline
+species & \multicolumn{1}{c}{isotopic} &
+\multicolumn{1}{c}{mass} & \multicolumn{1}{c}{Q at 300K} &
+\multicolumn{1}{c}{Q at 225K} & \multicolumn{1}{c}{Q at 150K} &
+cont 1 & \multicolumn{1}{c}{cont 2} & cont 3 & cont 4 & cont 5 & cont 6 \\
+ &\multicolumn{1}{c}{abundance} & \multicolumn{1}{c}{AMU} & & & &
+km$^{-1}$hPa$^{-1}$MHz$^{-2}$ & & MHz$^{-2}$ &
+km$^{-1}$hPa$^{-1}$MHz$^{-4}$ & MHz$^{-2}$ & MHz \\
+\endfirsthead
+\hline
+species & \multicolumn{1}{c}{abundance} &
+\multicolumn{1}{c}{mass} & \multicolumn{1}{c}{Q at 300K} &
+\multicolumn{1}{c}{Q at 225K} & \multicolumn{1}{c}{Q at 150K} &
+cont 1 & \multicolumn{1}{c}{cont 2} & cont 3 & cont 4 & cont 5 & cont 6 \\
+ & & \multicolumn{1}{c}{AMU} & & & &
+km$^{-1}$hPa$^{-1}$MHz$^{-2}$ & & MHz$^{-2}$ &
+km$^{-1}$hPa$^{-1}$MHz$^{-4}$ & MHz$^{-2}$ & MHz \\
+\endhead
+\hline
+\multicolumn{12}{r}{\textit{Continued on next page}} \\
+\hline
+\endfoot
+\hline
+\endlastfoot
+\hline
+\input{/user1/bill/mlspgs/tables/mol_data_table}
+\end{longtable}}
+\clearpage
+{\tiny
+%\setlongtables
+\begin{longtable}[c]{d{4}d{4}d{5}*{2}{d{6}d{3}}*{2}{cd{2}}cccp{50pt}p{80pt}c}
+%\caption{Species line data for MLS signals\footnotemark{a}.} \\
+\caption{Species line data for MLS signals.} \\
+\hline
+\multicolumn{1}{c}{$\nu_{a\rightarrow b}$} & \multicolumn{1}{c}{$\nu_{a}$} &
+\multicolumn{1}{c}{$\log I_{a\rightarrow b}$} & \multicolumn{1}{c}{w$_{c}$} &
+\multicolumn{1}{c}{n$_{w}$} & \multicolumn{1}{c}{ps} &
+\multicolumn{1}{c}{n$_{ps}$} & \multicolumn{1}{c}{$\delta$} &
+\multicolumn{1}{c}{n$_{\delta}$} & \multicolumn{1}{c}{$\gamma$} &
+\multicolumn{1}{c}{n$_{\gamma}$} &
+\multicolumn{1}{c}{QN fmt} &
+\multicolumn{1}{c}{QNu} &
+\multicolumn{1}{c}{QNl} &
+\multicolumn{1}{c}{UARS Bands} &
+\multicolumn{1}{c}{EOS Bands} &
+\multicolumn{1}{c}{LS ref} \\
+\multicolumn{1}{c}{MHz} & \multicolumn{1}{c}{cm$^{-1}$} &
+\multicolumn{1}{c}{nm$^{2}$MHz} & \multicolumn{1}{c}{MHz hPa$^{-1}$} & &
+\multicolumn{1}{c}{MHz hPa$^{-1}$} & & \multicolumn{1}{c}{hPa$^{-1}$} & &
+\multicolumn{1}{c}{hPa$^{-1}$} & & & & & & & \\
+\hline
+\endfirsthead
+\hline
+\multicolumn{1}{c}{$\nu_{a\rightarrow b}$} & \multicolumn{1}{c}{$\nu_{a}$} &
+\multicolumn{1}{c}{$\log I_{a\rightarrow b}$} & \multicolumn{1}{c}{w$_{c}$} &
+\multicolumn{1}{c}{n$_{w}$} & \multicolumn{1}{c}{ps} &
+\multicolumn{1}{c}{n$_{ps}$} & \multicolumn{1}{c}{$\delta$} &
+\multicolumn{1}{c}{n$_{\delta}$} & \multicolumn{1}{c}{$\gamma$} &
+\multicolumn{1}{c}{n$_{\gamma}$} &
+\multicolumn{1}{c}{QN fmt} &
+\multicolumn{1}{c}{QNu} &
+\multicolumn{1}{c}{QNl} &
+\multicolumn{1}{c}{UARS Bands} &
+\multicolumn{1}{c}{EOS Bands} &
+\multicolumn{1}{c}{LS ref} \\
+\multicolumn{1}{c}{MHz} & \multicolumn{1}{c}{cm$^{-1}$} &
+\multicolumn{1}{c}{nm$^{2}$MHz} & \multicolumn{1}{c}{MHz hPa$^{-1}$} & &
+\multicolumn{1}{c}{MHz hPa$^{-1}$} & & \multicolumn{1}{c}{hPa$^{-1}$} & &
+\multicolumn{1}{c}{hPa$^{-1}$} & & & & & & & \\
+\hline
+\endhead
+\hline
+\multicolumn{13}{r}{\textit{Continued on next page}} \\
+\endfoot
+\hline
+\endlastfoot
+\hline
+\input{/user1/bill/mlspgs/tables/line_data_table}
+\end{longtable}}
+%\footnotetext[a]{All spectroscopic parameters are values at 300~K.}
+\end{document}
+
+
+@
+
+
+1.2
+log
+@forgot to commit a while back--wgr
+@
+text
+@d51 1
+a51 1
+{\footnotesize
+d53 1
+a53 1
+\begin{longtable}[c]{d{4}d{4}d{5}*{2}{d{6}d{3}}*{2}{cd{2}}p{140pt}p{50pt}}
+d62 7
+a68 2
+\multicolumn{1}{c}{n$_{\gamma}$} & \multicolumn{1}{c}{EOS Bands} &
+\multicolumn{1}{c}{UARS Bands} \\
+d72 1
+a72 1
+\multicolumn{1}{c}{hPa$^{-1}$} & & & \\
+d81 7
+a87 2
+\multicolumn{1}{c}{n$_{\gamma}$} & \multicolumn{1}{c}{EOS Bands} &
+\multicolumn{1}{c}{UARS Bands} \\
+d91 1
+a91 1
+\multicolumn{1}{c}{hPa$^{-1}$} & & & \\
+@
+
+
+1.1
+log
+@tex file to make spectroscopy tables--wgr
+@
+text
+@d7 2
+a8 2
+\setlength{\evensidemargin}{-36pt}
+\setlength{\oddsidemargin}{-36pt}
+d10 1
+a10 1
+\setlength{\textwidth}{760pt}
+@
+

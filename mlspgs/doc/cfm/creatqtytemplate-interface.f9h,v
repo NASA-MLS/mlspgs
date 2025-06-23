@@ -1,0 +1,294 @@
+head	1.7;
+access;
+symbols
+	v5-02-NRT-19:1.7
+	v6-00:1.7
+	v5-02-NRT-18:1.7
+	v5-02:1.7
+	v5-01-NRT-17:1.7
+	v5-01-NRT-16:1.7
+	v5-01-NRT-15:1.7
+	v5-01-NRT-14:1.7
+	neuralnetworks-1-0:1.7.0.12
+	cfm-single-freq-0-1:1.7.0.10
+	v5-01:1.7
+	v5-00:1.7
+	v4-23-TA133:1.7.0.8
+	mus-emls-1-70:1.7.0.6
+	rel-1-0-englocks-work:1.7.0.4
+	VUMLS1-00:1.7
+	VPL1-00:1.7
+	V4-22-NRT-08:1.7
+	VAM1-00:1.7
+	V4-21:1.7.0.2
+	V4-13:1.7
+	V4-12:1.7
+	V4-11:1.7
+	V4-10:1.7
+	V3-43:1.1
+	M4-00:1.7
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.6
+	V3-31:1.6
+	V3-30-NRT-05:1.4
+	cfm-01-00:1.4
+	V3-30:1.1
+	V3-20:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.7
+date	2011.12.16.01.19.40;	author honghanh;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2010.11.03.20.18.58;	author honghanh;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2010.11.03.18.48.12;	author honghanh;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2010.05.24.19.55.57;	author honghanh;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2010.05.24.18.35.57;	author honghanh;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2010.03.26.15.33.03;	author honghanh;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2009.12.21.23.28.26;	author honghanh;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.7
+log
+@Updated documentation for newer API centered on the use of agile vectors,
+and removed the concept of vector template and chunk from public API.
+@
+text
+@type(QuantityTemplate_T) function CreateQtyTemplate_maf (quantityType, firstL1Maf, lastL1Maf, &
+    filedatabase, avgrid, ahgrid, afgrid, qInstModule, qMolecule, qLogBasis, &
+    qMinValue, qSignal, qRadiometer, qBadValue, qName) result(qty)
+
+    ! an integer representing a quantity type, see CFM documentation appendix
+    integer, intent(in) :: quantityType
+    ! firstL1Maf and last1Maf describe the maf range in
+    ! L1BOA file for major frame quantities and minor frame
+    ! quantities that need information from L1BOA file.
+    ! If this quantity is neither a major frame quantity
+    ! nor a minor frame quantity, then firstL1Maf
+    ! and lastL1Maf can be any number as long as its 
+    ! difference is equal to the number of instances
+    ! of this quantity (the VectorValue_T object that
+    ! owns this QuantityTemplate_T).
+    integer, intent(in) :: firstL1Maf
+    integer, intent(in) :: lastL1Maf
+    ! is an array of open files (see CFM_MLSSetup)
+    type (MLSFile_T), dimension(:), pointer, optional ::     FILEDATABASE
+    ! The z-coordinate samples of the spacecraft's path.
+    ! Information in this grid will be copied over.
+    type(VGrid_T), intent(in), optional :: avgrid
+    ! the (x,y) coordinate samples of the spacecraft's path
+    ! Information in this grid will be copied over.
+    type(HGrid_T), intent(in), optional :: ahgrid
+    ! the frequency in which the data is gathered
+    ! Information in this grid will be copied over.
+    type(FGrid_T), intent(in), optional :: afgrid
+    ! instrument module, a case-insensitive string, either "THz" or "GHz"
+    character(len=*), optional :: qInstModule
+    ! an integer representing one of the molecules listed in the CFM document.
+    integer, optional :: qMolecule
+    ! if type is "radiance", then a qSignal must be provided
+    character(len=*), optional :: qSignal
+    ! tells whether the value of avgrid and ahgrid
+    ! is on logarithmic scale. The default value is .false..
+    logical, optional :: qLogBasis
+    ! is used only qLogBasis is .true., in which case
+    ! it is the threshold to which greater or equal coordinate values are recorded
+    ! as their logarithmic equivalent. The default value is 1.0.
+    real(r8), optional :: qMinValue
+    ! If the quantity only associates with a radiometer
+    ! and not a signal, then use qRadiometer instead of 
+    ! qSignal.
+    character(len=*), optional :: qRadiometer
+    ! a number to indicate that a data point shouldn't be used. Default
+    ! is -huge(0.0_r8)
+    real(r8), optional :: qBadValue
+    ! name of the quantity as string
+    character(len=*), optional :: qName
+end function
+@
+
+
+1.6
+log
+@Update interface of CreateVector and CreateQtyTemplate
+@
+text
+@d1 50
+a50 39
+! Creating a quantity based on the optional inputs this subroutine is provided with.
+type(QuantityTemplate_T) function CreateQtyTemplate (quantityType, filedatabase, &
+   chunk, avgrid, ahgrid, afgrid, qInstModule, qMolecule, qLogBasis, qMinValue, &
+   qSignal, qRadiometer, qBadValue, qName) result(qty)
+   ! an integer representing a quantity type, see CFM documentation appendix
+   integer, intent(in) :: quantityType
+   ! is an array of open files (see CFM_MLSSetup)
+   type (MLSFile_T), dimension(:), pointer, optional ::     FILEDATABASE
+   ! an input holder, storing the time range of the data to be read
+   ! (see CFM_MLSSetup)
+   type (MLSChunk_T), intent(in), optional :: Chunk
+   ! the z-coordinate samples of the spacecraft's path
+   ! Information in this grid will be copied over.
+   type(VGrid_T), intent(in), optional :: avgrid
+   ! the (x,y) coordinate samples of the spacecraft's path
+   ! Information in this grid will be copied over.
+   type(HGrid_T), intent(in), optional :: ahgrid
+   ! the frequency in which the data is gathered
+   ! Information in this grid will be copied over.
+   type(FGrid_T), intent(in), optional :: afgrid
+   ! instrument module, a case-insensitive string, either "THz" or "GHz"
+   character(len=*), optional :: qInstModule
+   ! an integer representing one of the molecules listed in the CFM document.
+   integer, optional :: qMolecule
+   ! if type is "radiance", then a qSignal must be provided
+   character(len=*), optional :: qSignal
+   ! tells whether the value of avgrid and ahgrid
+   ! is on logarithmic scale. The default value is .false..
+   logical, optional :: qLogBasis
+   ! is used only qLogBasis is .true., in which case
+   ! it is the threshold to which greater or equal coordinate values are recorded
+   ! as their logarithmic equivalent. The default value is 1.0.
+   real(r8), optional :: qMinValue
+   character(len=*), optional :: qRadiometer
+   ! a number to indicate that a data point shouldn't be used. Default
+   ! is -huge(0.0_r8)
+   real(r8), optional :: qBadValue
+   ! name of the quantity as string
+   character(len=*), optional :: qName
+@
+
+
+1.5
+log
+@Update the interface for CreateQtyTemplate
+@
+text
+@d4 1
+a4 1
+   qSignal, qRadiometer, qBadValue) result(qty)
+@
+
+
+1.4
+log
+@More modifications
+@
+text
+@d38 2
+@
+
+
+1.3
+log
+@v0.5 updated document
+@
+text
+@d2 3
+a4 3
+type(QuantityTemplate_T) function CreateQtyTemplate (quantityType, filedatabase, chunk, &
+     avgrid, ahgrid, afgrid, qInstModule, qMolecule, qLogBasis, qMinValue, qSignal, &
+     qRadiometer, qBadValue) result(qty)
+@
+
+
+1.2
+log
+@Update for v0.1 document
+Add subroutines creating grids
+Add ExplicitFillVectorQuantity subroutine
+Add FGrid_T data structure
+Modify mockup.f90
+Removing creating quantity template example because it can be found in the mockup
+@
+text
+@d2 5
+a6 7
+type(QuantityTemplate_T) function CreateQtyTemplate (type, filedatabase, chunk, &
+   avgrid, ahgrid, afgrid, qInstModule, qMolecule, qLogBasis, qMinValue, qSignal, &
+   qRadiometer, qBadValue, mifGeolocation) result(qty)
+   ! a case-insensitive string, one of the allowable strings for type
+   ! listed in the "Callable Forward Model Interface Requirements Document" (from
+   ! now on will be called CFM document).
+   character(len=*), intent(in) :: type
+d13 1
+d16 1
+d19 1
+d23 2
+a24 2
+   ! a case-insensitive string, one of the molecules listed in the CFM document.
+   character(len=*), optional :: qMolecule
+a37 4
+   type (QuantityTemplate_T), dimension(:), intent(in), optional, target :: &
+      & MifGeolocation ! TARGET attribute needed so pointers to MifGeolocation
+                       ! created at lower levels in the call tree don't become
+                       ! undefined when those procedures return.
+@
+
+
+1.1
+log
+@Replace description with code snippet in the procedure reference portion
+@
+text
+@d1 40
+a40 28
+!Creates a QuantityTemplate\_T object.
+type(QuantityTemplate_T) function CreateQuantityTemplate (filedatabase, &
+        chunk, qHGrid, qVGrid, qLogBasis, qMininumV, qInstrumentModule,
+        qMolecule, qType)
+   !An array of already-opened MLSFile_T objects.
+   type(MLSFile_T), dimension(:), pointer :: filedatabase
+
+   !A MLSChunk_T object returned by CFM_MLSSetup for internal used.
+   type(MLSChunk_T) :: chunk
+
+   !The (x,y) coordinates of samples of the spacecraft's path.
+   type(HGrid_T) :: qHGrid
+
+   !The z coordinates of samples the spacecraft's path.
+   type(VGrid_T) :: qVGrid
+
+   !.true. if points in qHGrid and qVGrid are calculated on a log scale.
+   logical, intent(in) :: qLogBasis
+
+   !If qLogBasis is .true., then this is the threshold to which greater
+   !or equal coordinate values are recorded as their logarithmic equivalent.
+   !The default value is 1.0.
+   real(r8), optional :: qMinimumV
+
+   character(len=*), pointer :: qInstrumentModule !either "GHz" or "THz."
+
+   !A string naming the type of the quantity.
+   character(len=*), pointer :: qType
+@
+

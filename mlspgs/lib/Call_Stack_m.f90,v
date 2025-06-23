@@ -1,0 +1,2182 @@
+head	2.40;
+access;
+symbols
+	v5-02-NRT-19:2.40
+	v6-00:2.40
+	v5-02-NRT-18:2.40
+	v5-02:2.36
+	v5-01-NRT-17:2.40
+	v5-01-NRT-16:2.40
+	v5-01-NRT-15:2.40
+	v5-01-NRT-14:2.38
+	neuralnetworks-1-0:2.37.0.4
+	cfm-single-freq-0-1:2.37.0.2
+	v5-01:2.36
+	v5-00:2.36
+	v4-23-TA133:2.35.0.2
+	mus-emls-1-70:2.33.0.4
+	rel-1-0-englocks-work:2.33.0.2
+	VUMLS1-00:2.33
+	VPL1-00:2.32
+	V4-22-NRT-08:2.32
+	VAM1-00:2.30
+	V4-21:2.28.0.2
+	V4-13:2.27
+	V4-12:2.22
+	V4-11:2.22
+	V4-10:2.22;
+locks; strict;
+comment	@# @;
+
+
+2.40
+date	2021.09.02.22.45.44;	author pwagner;	state Exp;
+branches;
+next	2.39;
+
+2.39
+date	2021.08.20.15.55.27;	author pwagner;	state Exp;
+branches;
+next	2.38;
+
+2.38
+date	2021.02.05.05.09.40;	author pwagner;	state Exp;
+branches;
+next	2.37;
+
+2.37
+date	2020.04.30.23.15.46;	author pwagner;	state Exp;
+branches;
+next	2.36;
+
+2.36
+date	2019.08.19.22.00.48;	author pwagner;	state Exp;
+branches;
+next	2.35;
+
+2.35
+date	2018.08.06.20.00.59;	author vsnyder;	state Exp;
+branches;
+next	2.34;
+
+2.34
+date	2018.08.04.00.29.16;	author vsnyder;	state Exp;
+branches;
+next	2.33;
+
+2.33
+date	2017.01.04.19.16.53;	author pwagner;	state Exp;
+branches;
+next	2.32;
+
+2.32
+date	2016.03.25.00.36.34;	author pwagner;	state Exp;
+branches;
+next	2.31;
+
+2.31
+date	2016.02.11.21.16.07;	author pwagner;	state Exp;
+branches;
+next	2.30;
+
+2.30
+date	2015.09.17.22.48.50;	author pwagner;	state Exp;
+branches;
+next	2.29;
+
+2.29
+date	2015.08.25.18.37.38;	author vsnyder;	state Exp;
+branches;
+next	2.28;
+
+2.28
+date	2014.10.06.23.06.49;	author vsnyder;	state Exp;
+branches;
+next	2.27;
+
+2.27
+date	2014.09.29.20.48.57;	author pwagner;	state Exp;
+branches;
+next	2.26;
+
+2.26
+date	2014.09.29.20.23.35;	author vsnyder;	state Exp;
+branches;
+next	2.25;
+
+2.25
+date	2014.09.11.18.25.13;	author pwagner;	state Exp;
+branches;
+next	2.24;
+
+2.24
+date	2014.09.04.23.32.54;	author vsnyder;	state Exp;
+branches;
+next	2.23;
+
+2.23
+date	2014.08.05.00.18.30;	author pwagner;	state Exp;
+branches;
+next	2.22;
+
+2.22
+date	2014.04.21.16.57.26;	author pwagner;	state Exp;
+branches;
+next	2.21;
+
+2.21
+date	2014.03.15.00.04.40;	author vsnyder;	state Exp;
+branches;
+next	2.20;
+
+2.20
+date	2014.02.13.00.04.01;	author pwagner;	state Exp;
+branches;
+next	2.19;
+
+2.19
+date	2014.01.28.02.59.18;	author vsnyder;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2014.01.11.01.41.02;	author vsnyder;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2014.01.09.00.25.06;	author pwagner;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2013.11.01.00.03.29;	author pwagner;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2013.10.26.00.41.30;	author vsnyder;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2013.10.02.01.28.21;	author vsnyder;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2013.09.24.23.27.14;	author vsnyder;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2013.09.19.23.33.10;	author vsnyder;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2013.09.12.03.11.18;	author vsnyder;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2013.09.04.02.49.00;	author vsnyder;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2013.08.31.02.25.57;	author vsnyder;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2013.08.31.01.23.13;	author vsnyder;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2013.08.30.23.14.26;	author pwagner;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2013.08.30.03.55.00;	author vsnyder;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2013.08.29.19.47.52;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2013.08.23.03.16.52;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2013.08.23.02.49.19;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2013.08.17.03.08.12;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2013.08.17.02.57.41;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.40
+log
+@Improve memory reporting
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Call_Stack_m
+  use MLSCommon, only: NoBytesAllocated
+  ! Datatype and related procedures for a Stack capable of tracing execution
+  ! may dump a walkback of callers, memory usage, timings, etc.
+  
+  ! See also MLSMessage
+! === (start of toc) ===
+!     c o n t e n t s
+!     - - - - - - - -
+
+!     (parameters)
+! Say_Date                Display date at each push, pop
+! Say_When                Display time at each push, pop
+! Show_Final_Summary      Display summary of allocates, deallocates, etc.
+! Show_Sys_Memory         Display memory usage at each push, pop
+! Sys_memory_ch           Memory usage units (e.g., 'kb')
+! Sys_memory_convert      Memory usage units converted to kb
+!
+!     (data type)
+! Stack_t                 The stack type
+
+!     (subroutines and functions)
+! Deallocate_Stack        Recover storage from stack array
+! Dump_Stack              Print walkback
+! Get_Frame               Get an item from within the stack without altering it
+! Pop_Stack               Pop top frame off stack
+! Invert_Stack            Invert the order of frames in the stack stack
+! Push_Stack              Push new frame onto stack
+! Stack_Depth             Get stack depth
+! Top_Stack               Get the top frame from the stack without altering it
+
+! === (end of toc) ===
+  implicit none
+  private
+
+  public :: Stack_T
+  public :: Deallocate_Stack, Dump_Stack, Get_Frame
+  public :: Invert_Stack, Pop_Stack, Push_Stack, Stack_Depth, Top_Stack
+  public :: Show_Sys_Memory, sys_memory_ch, sys_memory_convert, sys_memory_max
+  public :: Show_Final_Summary
+
+  type :: Stack_t
+    real :: Clock = 0.0                ! Whatever Time_Now returns (CPU or ?)
+    integer :: Index = -1              ! Extra info, e.g. MAF number
+    double precision :: Memory = 0.0d0 ! As accounted in Allocate_Deallocate
+    integer :: Sys_Memory = 0          ! In use, in kB (1024), as accounted by
+                                       ! the system and accessed by Memory_Used
+    integer :: String = 0              ! Index in string table
+    integer :: Text = 0                ! Index in string table
+    integer :: Tree = 0                ! Where in l2cf, -1 if stack not allocated,
+                                       ! -2 if stack index < 1, -3 if stack index
+                                       ! > stack_ptr.
+  end type
+
+  interface Push_Stack
+    module procedure Push_Stack_b, Push_Stack_c, Push_Stack_i
+  end interface
+
+  ! Display date and time during push and pop displays
+  logical, parameter :: Say_Date         = .false.
+  logical, save      :: Say_When         = .false.
+
+  ! Display system memory changes during push and pop displays
+  logical, save ::    Show_Final_Summary = .false. ! Should be .false.
+  logical, save ::    Show_Sys_Memory    = .true.
+  character(len=2) :: sys_memory_ch      = 'kB'
+  real             :: sys_memory_convert = 1.0
+  real, save       :: sys_memory_max     = 0.0  ! max so far
+  
+  logical, save, private :: StaySilent = .false. ! E.g., in case it becomes corrupted
+  logical, save, private :: Verbose    = .false. ! Print each push, pop
+
+  ! NoBytesAllocated at previous stack operation, so we can report memory
+  ! size changes that occurred during untraced procedure exits.
+  double precision, save, public, protected :: PrevBytes = 0.0d0
+
+  integer, parameter, private :: MaxDoublings = 10 ! To limit max stack size
+  integer, parameter, private :: StartingStackSize = 100
+  type(stack_t), allocatable, save, private :: Stack(:)
+  integer, save, private :: Stack_Ptr = 0
+  integer, save, private :: Stack_Doublings = 0
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: Call_Stack_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains ! ====     Public Procedures     ==============================
+
+! ---------------------------------------------------  Dump_Stack  -----
+  subroutine Dump_Stack ( Top, Before, Where, Size, SysSize, CPU, DoDepth, &
+    & Rev, Index, String, StringIndex, ShowTime, Used, Advance, &
+    & PrintMemoryReport, StackIsEmpty )
+    ! Dump the call stack.  If Top is present and true, dump only the top
+    ! frame.  If Before is present, print it after "depth" dots and before
+    ! anything else.  If Where is present and true, and the Tree component
+    ! is not zero, print the line and column number from the configuration
+    ! file.
+
+    use Lexer_Core, only: Print_Source
+    use Output_m, only: NewLine, Output
+    use HighOutput, only: DumpSize, FinalMemoryReport
+    use String_Table, only: Display_String
+    use Tree, only: Node_in_tree, Where_At=>Where
+
+    logical, intent(in), optional :: Top   ! Dump only the top frame
+    character(len=*), intent(in), optional :: Before ! first thing output
+    logical, intent(in), optional :: Where ! Dump tree location
+    logical, intent(in), optional :: Size  ! Dump memory size (default true)
+    logical, intent(in), optional :: SysSize ! Dump memory size, as the system
+                                           ! accounts for it, in kB (default
+                                           ! Show_Sys_Memory)
+    logical, intent(in), optional :: CPU   ! Print CPU (default false)
+    logical, intent(in), optional :: DoDepth ! Print "depth" dots (default true)
+    logical, intent(in), optional :: Rev   ! Print in reverse order (default false)
+    integer, intent(in), optional :: Index ! Print this instead of from stack
+    character(len=*), optional, intent(in) :: String
+    integer, optional, intent(in) :: StringIndex
+    logical, intent(in), optional :: ShowTime   ! Show time when we dumped
+    character(len=*), optional :: Used
+    character(len=*), intent(in), optional :: Advance ! Default 'yes'
+    logical, intent(in), optional :: PrintMemoryReport! Report on mem usage so far
+    logical, intent(out), optional :: StackIsEmpty ! Return true if stack is empty
+
+    character(len=3) :: DoAdvance, MyAdvance
+    integer :: Depth, First, I, Inc, Last
+    logical :: Error
+    logical :: MyCPU, MyDoDepth, MyReport, MyRev, MySize, MySysSize, MyTop, MyWhere
+    logical :: MyShowTime
+
+    ! Executable
+
+    if ( StaySilent ) return
+    error = .not. allocated(stack)
+    if ( .not. error ) error = stack_ptr < lbound(stack,1)
+    if ( error ) then
+      if ( present( StackIsEmpty ) ) then
+        StackIsEmpty = .true.
+      else
+        call output ( "*****" )
+        if ( present(before) ) call output ( " " // before )
+        call output ( " There is no stack to dump *****", advance='yes' )
+      endif
+      return
+    end if
+    if ( present( StackIsEmpty ) ) StackIsEmpty = .false.
+
+    myAdvance = 'yes'
+    myCPU = .false.; myDoDepth = .true.; myRev = .false.
+    myShowTime = .false.; mySize = .true.; MySysSize = show_sys_memory
+    myTop = .false.; myWhere = .false.
+
+    if ( present(advance) ) myAdvance = advance
+    if ( present(cpu) ) myCPU = cpu
+    if ( present(doDepth) ) myDoDepth = doDepth
+    if ( present(rev) ) myRev = rev
+    if ( present(showTime) ) myShowTime = showTime
+    if ( present(size) ) mySize = size
+    if ( present(sysSize) ) mySysSize = sysSize
+    if ( present(top) ) myTop = top
+    if ( present(where) ) myWhere = Where
+
+    if ( myRev ) then ! Dump stack bottop-up
+      first = merge(stack_ptr,lbound(stack,1),myTop)
+      last = stack_ptr
+      inc = 1
+    else              ! Dump stack top-down
+      first = stack_ptr
+      last = merge(stack_ptr,lbound(stack,1),myTop)
+      inc = -1
+    end if
+    
+    myReport = Show_Final_Summary
+    if ( present( PrintMemoryReport ) ) myReport = myReport .or. PrintMemoryReport
+
+    doAdvance = 'yes'
+    do depth = first, last, inc
+      if ( depth == last ) doAdvance = myAdvance
+      do i = lbound(stack,1), merge(depth,-1,myDoDepth)
+        call output ( '.' )
+      end do
+      if ( present(before) ) call output ( before )
+      if ( stack(depth)%text > 0 ) call display_string ( stack(depth)%text )
+      if ( present(index) ) then
+        call output ( index, before=' ' )
+      else if ( stack(depth)%index >= 0 ) then
+        call output ( stack(depth)%index, before=' ' )
+      end if
+      if ( stack(depth)%string > 0 ) &
+        & call display_string ( stack(depth)%string, before=' ' )
+      if ( say_when .or. myShowTime ) then
+        call show_when
+        if ( present(used) ) call output ( ' used ' // trim(adjustl(used)) //  ' cpu' )
+      end if
+      if ( present(string) ) call output ( ' ' // string )
+      if ( present(stringIndex) ) then
+        if ( stringIndex > 0 ) call display_string ( stringIndex, before=' ' )
+      end if
+      if ( myWhere .and. node_in_tree(stack(depth)%tree) ) then
+        call output ( stack(depth)%tree, before=', tree at ' )
+        call print_source ( where_at(stack(depth)%tree), before=', ' )
+      elseif ( myWhere ) then
+        call output (' (tree reference outside range) ' )
+      end if
+      if ( mySysSize ) call output ( sys_memory_convert*stack(depth)%sys_memory, &
+        & before = ' Sys_Memory (' // sys_memory_ch // '): ' )
+      if ( mySize ) call dumpSize ( stack(depth)%memory, &
+        & before = ' Memory: ' )
+      if ( myCPU ) call output ( stack(depth)%clock, format='(g10.3)', &
+        & before=' CPU: ' )
+      call output ( '', advance=doAdvance )
+      sys_memory_max = max( sys_memory_max, stack(depth)%sys_memory*1.0 )
+      if ( myReport ) then
+        call NewLine ( dont_make_blank_line=.true. )
+        call FinalMemoryReport ( Show_Final_Summary )
+      endif
+    end do
+
+  end subroutine Dump_Stack
+
+! ----------------------------------------------------  Get_Frame  -----
+  type(stack_t) function Get_Frame ( Depth )
+    ! Get stack(depth) if 1 <= Depth <= Stack_Ptr, otherwise result is
+    ! default initialized except if Stack is not allocated, %tree= -1, if
+    ! Depth < lbound(stack,1), %tree= -2, and if Depth > Stack_Ptr, %tree= -3.
+    integer, intent(in) :: Depth
+
+    if ( .not. allocated(stack) ) then
+      get_frame%tree = -1
+    else if ( depth < lbound(stack,1) ) then
+      get_frame%tree = -2
+    else if ( depth > stack_ptr ) then
+      get_frame%tree = -3
+    else
+      get_frame = stack(depth)
+    end if
+
+  end function Get_Frame
+
+! ----------------------------------------------------  Invert_Stack  -----
+  subroutine Invert_Stack
+    ! Invert the stack; i.e. topmost now bottommost
+    ! 2nd from top now 2nd from bottom, etc.
+    ! Method: 
+    ! One-by-one pop items from input Stack, each time pushing them onto
+    ! inverted stack
+    ! Internal variables
+    integer                               :: i, n, status
+    type(stack_t)                         :: Frame
+    type(stack_t), allocatable            :: InvertStack(:)
+    ! Executable
+    if ( .not. allocated(Stack) ) return
+    n = size(Stack)
+    if ( n < 2 ) return
+    allocate( InvertStack(n), stat = status )
+    if ( status /= 0 ) then
+      print *, 'Unable to allocate InvertStack'
+      return
+    endif
+    do i=1, n
+      call Pop_Stack( Frame=Frame, silent=.true. )
+      InvertStack(i) = Frame
+    enddo
+    call Deallocate_Stack
+    allocate( Stack(n), stat = status )
+    if ( status /= 0 ) then
+      print *, 'Unable to re-allocate Stack in Invert_Stack'
+      return
+    endif
+    Stack = InvertStack
+    deallocate( InvertStack, stat = status )
+  end subroutine Invert_Stack
+
+! ----------------------------------------------------  Pop_Stack  -----
+  subroutine Pop_Stack ( Before, Where, Frame, Index, String, StringIndex, &
+    & Silent, ShowTime, SysSize, PrintMemoryReport )
+    ! Pop the stack.  If Before or Where are present, dump the top frame first.
+
+    ! use Allocate_Deallocate, only: NoBytesAllocated
+    use Output_m, only: FlushOutputLines, Newline, Output
+    use HighOutput, only: DumpSize
+    use Memory_m, only: Memory_Used
+    use String_Table, only: Display_String
+    use Time_m, only: Time_Now
+
+    character(len=*), intent(in), optional :: Before
+    logical, intent(in), optional :: Where
+    type(stack_t), intent(out), optional :: Frame
+    integer, intent(in), optional :: Index
+    character(len=*), optional, intent(in) :: String
+    integer, optional, intent(in) :: StringIndex
+    logical, intent(in), optional :: Silent
+    logical, intent(in), optional :: ShowTime ! Show time when we dumped
+    logical, intent(in), optional :: SysSize  ! Dump memory size, as the system
+                                              ! accounts for it, in kB (default
+                                              ! Show_Sys_Memory)
+    logical, intent(in), optional :: PrintMemoryReport! Report on mem usage so far
+
+    double precision :: Delta ! Memory change, as accounted by Allocate_Deallocate
+    logical :: HaveStack
+    integer :: IDelta         ! Memory change, as accounted by system in kB
+    logical :: MySilent
+    logical :: MySysSize
+    real :: T
+    integer :: Total_used     ! Memory used in kilobytes (1024)
+    character(len=10) :: Used
+
+    ! Executable
+    if ( stack_ptr < 1 ) then
+      print *, 'Attempt to pop an already empty stack failed'
+      return
+    endif
+    if ( Verbose ) then
+      call output( 'Popping' )
+      if ( stack(stack_ptr)%string > 0 ) &
+        & call display_string ( stack(stack_ptr)%string, before=' ' )
+      if ( stack(stack_ptr)%text > 0 ) &
+        & call display_string ( stack(stack_ptr)%text, before=' ' )
+      call output ( stack(stack_ptr)%memory, before=' Memory = ' )
+      call output ( noBytesAllocated, before=' NoBytesAllocated = ', &
+        & advance='yes' )
+    end if
+    if ( StaySilent ) return
+    mySilent = .false.
+    if ( present(silent) ) mySilent = silent
+    mySysSize = Show_Sys_Memory
+    if ( present(sysSize) ) mySysSize = sysSize
+    haveStack = allocated(stack)
+    if ( haveStack ) haveStack = stack_ptr >= lbound(stack,1)
+
+    if ( .not. mySilent .and. (present(before) .or. present(where)) ) then
+      call time_now ( t )
+      t = t - stack(stack_ptr)%clock
+      write ( used, '(g10.3)' ) t
+      ! We call dump_stack even without haveStack because it prints
+      ! an error message if we don't have a stack.
+      call dump_stack ( .true., before, where, size=.false., sysSize=.false., &
+        & index=index, string=string, stringIndex=stringIndex, &
+        & showTime=showTime, used=used, PrintMemoryReport=PrintMemoryReport, &
+        & advance='no' )
+      if ( haveStack ) then
+        if ( mySysSize ) then
+          call memory_used ( total=total_used )
+          sys_memory_max = max( sys_memory_max, total_used*1.0 )
+          iDelta = total_used - stack(stack_ptr)%sys_memory
+          if ( iDelta /= 0 ) then
+            call output ( sys_memory_convert*iDelta, &
+              & before=', Sys_Memory (' // sys_memory_ch // ') ' // &
+                & trim(merge('+', ' ', iDelta > 0 )) )
+            call output ( sys_memory_convert*total_used, before =' to ' )
+          end if
+        end if
+        delta = noBytesAllocated - stack(stack_ptr)%memory
+        idelta = noBytesAllocated - prevBytes
+        if ( abs(delta) + abs(idelta) > 0 ) &
+          & call output ( ', Memory ' )
+        if ( delta /= 0 ) then
+          call dumpSize ( abs(delta), signed=.true. )
+          if ( abs(idelta) > abs(delta) ) call output ( ' (traced) ' )
+        end if
+        if ( abs(idelta) > abs(delta) ) &
+          & call dumpSize ( idelta, after= ' (untraced)' )
+        if ( abs(delta) + abs(idelta) > 0 ) then
+          call dumpSize ( noBytesAllocated, before = ' to ' )
+        else
+          call output ( '(Memory unchanged)', advance='no' )
+        end if
+      end if
+      call newLine
+      call flushOutputLines ! unbuffer even if unbuffered not requested
+    end if
+
+    if ( haveStack ) then
+      if ( present(frame) ) frame = stack(stack_ptr)
+      stack_ptr = stack_ptr - 1
+    end if
+
+    prevBytes = noBytesAllocated
+
+  end subroutine Pop_Stack
+
+! -------------------------------------------------  Push_Stack_B  -----
+  subroutine Push_Stack_B ( Name_I, Name_C, Root, Index, String, Before, Where, &
+    & Advance )
+    ! If Name_I <= 0, use Create_String ( Name_C ) to give it a value.
+    ! We assume the actual argument is a SAVE variable.
+    ! Push the stack.  If Before or Where are present, dump the new top frame.
+    use String_table, only: Create_String
+
+    integer, intent(inout) :: Name_I
+    character(len=*), intent(in) :: Name_C
+    integer, optional, intent(in) :: Root   ! Where in configuration tree
+    integer, optional, intent(in) :: Index  ! Whatever caller wants to send
+    integer, optional, intent(in) :: String ! To print after Name_C
+    character(len=*), optional, intent(in) :: Before  ! Dump top stack frame after push
+    logical, intent(in), optional :: Where
+    character(len=*), intent(in), optional :: Advance
+
+    if ( name_i <= 0 ) name_i = create_string ( trim(name_c) )
+    call push_stack ( name_i, Root, Index, String, Before, Where, Advance )
+
+  end subroutine Push_Stack_B
+
+! -------------------------------------------------  Push_Stack_C  -----
+  subroutine Push_Stack_C ( Name, Root, Index, String, Before, Where, Advance )
+    ! Push the stack.  If Before or Where are present, dump the new top frame.
+    use String_Table, only: Create_String
+
+    character(len=*), intent(in) :: Name
+    integer, optional, intent(in) :: Root   ! Where in configuration tree
+    integer, optional, intent(in) :: Index  ! Whatever caller wants to send
+    integer, optional, intent(in) :: String ! To print after Name
+    character(len=*), optional, intent(in) :: Before  ! Dump top stack frame after push
+    logical, intent(in), optional :: Where
+    character(len=*), intent(in), optional :: Advance
+
+    call push_stack ( create_string ( trim(name) ), Root, Index, String, &
+      & Before, Where, Advance )
+
+  end subroutine Push_Stack_C
+
+! -------------------------------------------------  Push_Stack_I  -----
+  subroutine Push_Stack_I ( Name, Root, Index, String, Before, Where, Advance )
+    ! Push the stack.  If Before or Where are present, dump the new top frame.
+    ! use Allocate_Deallocate, only: Test_Allocate, NoBytesAllocated
+    use HighOutput, only: OutputNamedValue
+    use Memory_m, only: Memory_Used
+    use Output_m, only: Output
+    use String_Table, only: Display_String
+    use Time_m, only: Time_Now
+
+    integer, intent(in) :: Name
+    integer, optional, intent(in) :: Root  ! Where in configuration tree
+    integer, optional, intent(in) :: Index ! Whatever caller wants to send
+    integer, optional, intent(in) :: String ! To print after Name
+    character(len=*), optional, intent(in) :: Before  ! Dump top stack frame after push
+    logical, intent(in), optional :: Where
+    character(len=*), intent(in), optional :: Advance ! Default yes in Dump_Stack
+
+    integer :: Stat
+    type(stack_t), allocatable :: Temp_Stack(:)
+    integer :: Total_Used ! memory, in kB (1024), as accounted by the system
+    intrinsic :: Storage_Size
+    ! Executable
+    if ( StaySilent ) return
+
+    if ( .not. allocated(stack) ) then
+      ! If you allocate with lbound < 0, other stuff won't work.
+      allocate ( stack(startingStackSize), stat=stat )
+      if ( stat /= 0 ) then
+        call output ( 'Unable to allocate temp_stack', advance='yes' )
+        StaySilent = .true.
+        return
+      elseif ( verbose ) then
+        call outputnamedValue ( 'allocated stack with size', startingStackSize )
+      end if
+      ! call test_allocate ( stat, moduleName, 'Stack', &
+      !   & ubounds=(/startingStackSize/), elementSize=storage_size(stack) / 8 )
+      stack_ptr = lbound(stack,1) - 1
+    end if
+    if ( stack_ptr >= ubound(stack,1) ) then
+      ! Must increase stack size
+      ! so we double it
+      ! But limit number doublings to MAXDOUBLINGS
+      Stack_Doublings = Stack_Doublings + 1
+      if ( Stack_Doublings > MAXDOUBLINGS ) then
+        call output( 'Maximum number of stack size doublings exceeded', advance='yes' )
+        StaySilent = .true.
+        return
+      end if
+      allocate ( temp_stack(2*stack_ptr), stat=stat )
+      if ( stat /= 0 ) then
+        call output ( 'Unable to allocate temp_stack', advance='yes' )
+        StaySilent = .true.
+        return
+      end if
+      ! The increase in size will be 2*stack_ptr - size(stack) because
+      ! temp_stack's allocation will be moved to stack, which will deallocate
+      ! stack (without accounting for its size).
+      ! call test_allocate ( stat, moduleName, 'Temp_Stack', &
+      !   & ubounds= 2*stack_ptr - size(stack), elementSize=storage_size(stack) / 8 )
+      temp_stack(:min(stack_ptr,ubound(stack,1))) = stack
+      call move_alloc ( temp_stack, stack )
+    end if
+    stack_ptr = stack_ptr + 1
+    call memory_used ( total=total_used )
+    sys_memory_max = max( sys_memory_max, total_used*1.0 )
+    stack(stack_ptr) = stack_t ( memory=noBytesAllocated, sys_memory=total_used, &
+                               & text=name )
+    if ( present(root) ) stack(stack_ptr)%tree = root
+    if ( present(index) ) stack(stack_ptr)%index = index
+    if ( present(string) ) stack(stack_ptr)%string = string
+    call time_now ( stack(stack_ptr)%clock )
+    if ( present(before) .or. present(where) ) &
+      & call dump_stack ( .true., before, where, advance=advance )
+    if ( Verbose ) then
+      call output( 'Pushing', advance='no' )
+      if ( stack(stack_ptr)%string > 0 ) &
+        & call display_string ( stack(stack_ptr)%string, before=' ' )
+      if ( stack(stack_ptr)%text > 0 ) &
+        & call display_string ( stack(stack_ptr)%text, before=' ' )
+      call output ( stack(stack_ptr)%memory, before=' Memory = ' )
+      call output ( noBytesAllocated, before=' NoBytesAllocated = ', &
+        & advance='yes' )
+    end if
+
+    prevBytes = noBytesAllocated
+
+  end subroutine Push_Stack_I
+
+! --------------------------------------------------  Stack_Depth  -----
+  integer function Stack_Depth ()
+    ! Return -1 if the stack is not allocated, else Stack_Ptr
+    stack_depth = merge(stack_ptr, -1, allocated(stack) )
+  end function Stack_Depth
+
+! ----------------------------------------------------  Top_Stack  -----
+  subroutine Top_Stack ( Top )
+    type(stack_t), intent(out) :: Top
+    if ( .not. allocated(stack) ) then
+      top%tree = -1
+    else if ( stack_ptr < lbound(stack,1) ) then
+      top%tree = -2
+    else
+      top = stack(stack_ptr)
+    end if
+  end subroutine Top_Stack
+
+! ----------------------------------------------------  Deallocate_Stack  -----
+  subroutine Deallocate_Stack
+    ! use Allocate_Deallocate, only: Test_Deallocate
+    ! internal variables
+    integer :: stat
+    ! Executable
+    if ( .not. allocated(stack) ) return
+    deallocate ( stack, stat=stat )
+    ! call test_deallocate ( stat, ModuleName, 'Stack' )
+    stack_ptr = 0
+    Stack_Doublings = 0
+  end subroutine Deallocate_Stack
+
+! =====     Private Procedures     =====================================
+
+  subroutine Show_When
+    use Output_m, only: Output
+    character(8) :: Date
+    character(10) :: Time
+    call date_and_time ( date=date, time=time )
+    call output ( ' at ' // time(1:2) // ':' // time(3:4) // ':' // &
+      & time(5:) )
+    if ( say_date ) call output( ' on ' // date(1:4) // '/' // date(5:6) &
+      & // '/' // date(7:8) )
+  end subroutine Show_When
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: Call_Stack_m.f90,v 2.39 2021/08/20 15:55:27 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Call_Stack_m
+
+! $Log: Call_Stack_m.f90,v $
+! Revision 2.39  2021/08/20 15:55:27  pwagner
+! Made Show_Final_Summary public
+!
+! Revision 2.38  2021/02/05 05:09:40  pwagner
+! Prevents index error if popping an empty stack
+!
+! Revision 2.37  2020/04/30 23:15:46  pwagner
+! Added optional arg PrintMemoryReport to Dump_Stack and Pop_Stack
+!
+! Revision 2.36  2019/08/19 22:00:48  pwagner
+! Avoid USE-ing Allocate_Deallocate due to circular dependency
+!
+! Revision 2.35  2018/08/06 20:00:59  vsnyder
+! Test the status Deallocate_Stack
+!
+! Revision 2.34  2018/08/04 00:29:16  vsnyder
+! Output Index after Name or Text instead of after When
+!
+! Revision 2.33  2017/01/04 19:16:53  pwagner
+! Optional arg StackIsEmpty to Dump_Stack prevents printing if stackIsEmpty
+!
+! Revision 2.32  2016/03/25 00:36:34  pwagner
+! More diagnostics if verbose
+!
+! Revision 2.31  2016/02/11 21:16:07  pwagner
+! Added Deallocate_Stack
+!
+! Revision 2.30  2015/09/17 22:48:50  pwagner
+! Will now catch error where tree ref outside bounds
+!
+! Revision 2.29  2015/08/25 18:37:38  vsnyder
+! Call FlushOutputLines at the end of PopStack
+!
+! Revision 2.28  2014/10/06 23:06:49  vsnyder
+! Shorten memory change trace line
+!
+! Revision 2.27  2014/09/29 20:48:57  pwagner
+! sys_memory_max tracks max sys memory usage
+!
+! Revision 2.26  2014/09/29 20:23:35  vsnyder
+! Cannonball polishing, change memory usage printing
+!
+! Revision 2.25  2014/09/11 18:25:13  pwagner
+! May show sys memory in units other than kB
+!
+! Revision 2.24  2014/09/04 23:32:54  vsnyder
+! Add system memory tracking (default off).  Add untraced memory size changes.
+! Some cannonball polishing.
+!
+! Revision 2.23  2014/08/05 00:18:30  pwagner
+! May print memory_used instead of noBytesAllocated
+!
+! Revision 2.22  2014/04/21 16:57:26  pwagner
+! Tries harder not reference stack if not allocated
+!
+! Revision 2.21  2014/03/15 00:04:40  vsnyder
+! Correct misspallig in two ertor masseges
+!
+! Revision 2.20  2014/02/13 00:04:01  pwagner
+! Revert to older appearance on Exit WALK_TREE..
+!
+! Revision 2.19  2014/01/28 02:59:18  vsnyder
+! Add StringIndex argument to PopStack and DumpStack
+!
+! Revision 2.18  2014/01/11 01:41:02  vsnyder
+! Decruftification
+!
+! Revision 2.17  2014/01/09 00:25:06  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
+! Revision 2.16  2013/11/01 00:03:29  pwagner
+! Added safeguards limiting stacksize, dumping corrupted stacks, etc.
+!
+! Revision 2.15  2013/10/26 00:41:30  vsnyder
+! Cannonball polishing
+!
+! Revision 2.14  2013/10/02 01:28:21  vsnyder
+! Add 'string' argument to pop_stack, dump_stack
+!
+! Revision 2.13  2013/09/24 23:27:14  vsnyder
+! Use Get_Where or Print_Source to start error messages
+!
+! Revision 2.12  2013/09/19 23:33:10  vsnyder
+! More graceful handling of zero source ref
+!
+! Revision 2.11  2013/09/12 03:11:18  vsnyder
+! Add Index argument to Pop_Stack and Dump_Stack
+!
+! Revision 2.10  2013/09/04 02:49:00  vsnyder
+! Add 'Frame' argument to Pop_Stack to return top frame before popping
+!
+! Revision 2.9  2013/08/31 02:25:57  vsnyder
+! Output a blank before Index component in Dump_Stack
+!
+! Revision 2.8  2013/08/31 01:23:13  vsnyder
+! Don't try to display strings or trees with negative indices
+!
+! Revision 2.7  2013/08/30 23:14:26  pwagner
+! pop_stack may pop silently
+!
+! Revision 2.6  2013/08/30 03:55:00  vsnyder
+! Add "string" to stack.  Delete "now" from stack.  Add switch to control
+! printing current date and time in Dump_Stack.  More repairs in Pop_Stack.
+!
+! Revision 2.5  2013/08/29 19:47:52  vsnyder
+! Don't output anything in Pop_Stack if Before and Where absent
+!
+! Revision 2.4  2013/08/23 03:16:52  vsnyder
+! Simplify Push_Stack, some cannonball polishing (I couldn't resist)
+!
+! Revision 2.3  2013/08/23 02:49:19  vsnyder
+! Add Get_Frame, Rev, and Stack_Depth
+!
+! Revision 2.2  2013/08/17 03:08:12  vsnyder
+! Some cannonball polishing (already!)
+!
+! Revision 2.1  2013/08/17 02:57:41  vsnyder
+! Initial commit
+!
+@
+
+
+2.39
+log
+@Made Show_Final_Summary public
+@
+text
+@d186 1
+a186 1
+    if ( present( PrintMemoryReport ) ) myReport = PrintMemoryReport
+d227 1
+a227 1
+        call FinalMemoryReport
+d375 5
+a379 2
+        if ( abs(delta) + abs(idelta) > 0 ) &
+          & call dumpSize ( noBytesAllocated, before = ' to ' )
+d570 1
+a570 1
+       "$Id: Call_Stack_m.f90,v 2.38 2021/02/05 05:09:40 pwagner Exp $"
+d580 3
+@
+
+
+2.38
+log
+@Prevents index error if popping an empty stack
+@
+text
+@d25 1
+d51 1
+d567 1
+a567 1
+       "$Id: Call_Stack_m.f90,v 2.37 2020/04/30 23:15:46 pwagner Exp $"
+d577 3
+@
+
+
+2.37
+log
+@Added optional arg PrintMemoryReport to Dump_Stack and Pop_Stack
+@
+text
+@d319 4
+d565 1
+a565 1
+       "$Id: Call_Stack_m.f90,v 2.36 2019/08/19 22:00:48 pwagner Exp $"
+d575 3
+@
+
+
+2.36
+log
+@Avoid USE-ing Allocate_Deallocate due to circular dependency
+@
+text
+@d73 1
+d101 3
+a103 3
+  subroutine Dump_Stack ( Top, Before, Where, Size, SysSize, CPU, DoDepth, Rev, &
+                        & Index, String, StringIndex, ShowTime, Used, Advance, &
+                        StackIsEmpty )
+d111 2
+a112 2
+    use Output_m, only: Output
+    use HighOutput, only: DumpSize
+a129 1
+    logical, intent(out), optional :: StackIsEmpty ! Return true if stack is empty
+d132 2
+d138 1
+a138 1
+    logical :: MyCPU, MyDoDepth, MyRev, MySize, MySysSize, MyTop, MyWhere
+d182 3
+d223 4
+d286 1
+a286 1
+    & Silent, ShowTime, SysSize )
+d307 1
+d345 2
+a346 1
+        & showTime=showTime, used=used, advance='no' )
+d561 1
+a561 1
+       "$Id: Call_Stack_m.f90,v 2.35 2018/08/06 20:00:59 vsnyder Exp $"
+d571 3
+@
+
+
+2.35
+log
+@Test the status Deallocate_Stack
+@
+text
+@d13 1
+d23 5
+a27 5
+! Say_Date                display date at each push, pop
+! Say_When                display time at each push, pop
+! Show_Sys_Memory         display memory usage at each push, pop
+! sys_memory_ch           memory usage units (e.g., 'kb')
+! sys_memory_convert      memory usage units converted to kb
+d30 1
+a30 1
+! Stack_t                 the stack type
+d34 7
+a40 6
+! Dump_Stack              print walkback
+! Get_Frame               get an item from within the stack without altering it
+! Pop_Stack               pop top frame off stack
+! Push_Stack              push new frame onto stack
+! Stack_Depth             get stack depth
+! Top_Stack               get the top frame from the stack without altering it
+d48 1
+a48 1
+  public :: Pop_Stack, Push_Stack, Stack_Depth, Top_Stack
+d241 34
+d280 1
+a280 1
+    use Allocate_Deallocate, only: NoBytesAllocated
+d417 1
+a417 1
+    use Allocate_Deallocate, only: Test_Allocate, NoBytesAllocated
+d449 2
+a450 2
+      call test_allocate ( stat, moduleName, 'Stack', &
+        & ubounds=(/startingStackSize/), elementSize=storage_size(stack) / 8 )
+d472 2
+a473 2
+      call test_allocate ( stat, moduleName, 'Temp_Stack', &
+        & ubounds= 2*stack_ptr - size(stack), elementSize=storage_size(stack) / 8 )
+d523 1
+a523 1
+    use Allocate_Deallocate, only: Test_Deallocate
+d529 1
+a529 1
+    call test_deallocate ( stat, ModuleName, 'Stack' )
+d550 1
+a550 1
+       "$Id: Call_Stack_m.f90,v 2.34 2018/08/04 00:29:16 vsnyder Exp $"
+d560 3
+@
+
+
+2.34
+log
+@Output Index after Name or Text instead of after When
+@
+text
+@d487 1
+d493 1
+d514 1
+a514 1
+       "$Id: Call_Stack_m.f90,v 2.33 2017/01/04 19:16:53 pwagner Exp $"
+d524 3
+@
+
+
+2.33
+log
+@Optional arg StackIsEmpty to Dump_Stack prevents printing if stackIsEmpty
+@
+text
+@d187 5
+a197 5
+      if ( present(index) ) then
+        call output ( index, before=' ' )
+      else if ( stack(depth)%index >= 0 ) then
+        call output ( stack(depth)%index, before=' ' )
+      end if
+d512 1
+a512 1
+       "$Id: Call_Stack_m.f90,v 2.32 2016/03/25 00:36:34 pwagner Exp $"
+d522 3
+@
+
+
+2.32
+log
+@More diagnostics if verbose
+@
+text
+@d13 26
+d40 1
+d99 2
+a100 1
+                        & Index, String, StringIndex, ShowTime, Used, Advance )
+d127 1
+d143 7
+a149 3
+      call output ( "*****" )
+      if ( present(before) ) call output ( " " // before )
+      call output ( " There is no stack to dump *****", advance='yes' )
+d152 1
+d382 1
+a382 1
+    use highoutput, only: outputnamedvalue
+d512 1
+a512 1
+       "$Id: Call_Stack_m.f90,v 2.31 2016/02/11 21:16:07 pwagner Exp $"
+d522 3
+@
+
+
+2.31
+log
+@Added Deallocate_Stack
+@
+text
+@d348 1
+d376 2
+d478 1
+a478 1
+       "$Id: Call_Stack_m.f90,v 2.30 2015/09/17 22:48:50 pwagner Exp $"
+d488 3
+@
+
+
+2.30
+log
+@Will now catch error where tree ref outside bounds
+@
+text
+@d18 2
+a19 1
+  public :: Dump_Stack, Get_Frame, Pop_Stack, Push_Stack, Stack_Depth, Top_Stack
+d448 11
+d475 1
+a475 1
+       "$Id: Call_Stack_m.f90,v 2.29 2015/08/25 18:37:38 vsnyder Exp $"
+d485 3
+@
+
+
+2.29
+log
+@Call FlushOutputLines at the end of PopStack
+@
+text
+@d82 1
+a82 1
+    use Tree, only: Where_At=>Where
+d167 1
+a167 1
+      if ( myWhere .and. stack(depth)%tree > 0 ) then
+d170 2
+d463 1
+a463 1
+       "$Id: Call_Stack_m.f90,v 2.28 2014/10/06 23:06:49 vsnyder Exp $"
+d473 3
+@
+
+
+2.28
+log
+@Shorten memory change trace line
+@
+text
+@d208 1
+a208 1
+    use Output_m, only: Newline, Output
+d289 1
+d461 1
+a461 1
+       "$Id: Call_Stack_m.f90,v 2.27 2014/09/29 20:48:57 pwagner Exp $"
+d471 3
+@
+
+
+2.27
+log
+@sys_memory_max tracks max sys memory usage
+@
+text
+@d269 4
+a272 4
+            call output ( sys_memory_convert*iDelta, before=', System memory changed by ' )
+            call output ( sys_memory_convert*total_used, &
+              & before = ' ' // sys_memory_ch // ' to ' )
+            call output ( ' ' // sys_memory_ch )
+d277 2
+a278 1
+        if ( abs(delta) + abs(idelta) > 0 ) call output ( ', Memory changed by ' )
+d280 1
+a280 1
+          call dumpSize ( delta )
+d460 1
+a460 1
+       "$Id: Call_Stack_m.f90,v 2.26 2014/09/29 20:23:35 vsnyder Exp $"
+d470 3
+@
+
+
+2.26
+log
+@Cannonball polishing, change memory usage printing
+@
+text
+@d19 1
+a19 1
+  public :: Say_When, Show_Sys_Memory
+d46 1
+d178 1
+d266 1
+d401 1
+d459 1
+a459 1
+       "$Id: Call_Stack_m.f90,v 2.25 2014/09/11 18:25:13 pwagner Exp $"
+d469 3
+@
+
+
+2.25
+log
+@May show sys memory in units other than kB
+@
+text
+@d17 3
+a19 3
+  public :: stack_t
+  public :: dump_stack, get_frame, pop_stack, push_stack, stack_depth, top_stack
+  public :: say_when, Show_Sys_Memory, sys_memory_ch, sys_memory_convert
+d77 5
+a81 5
+    use LEXER_CORE, only: PRINT_SOURCE
+    use OUTPUT_M, only: OUTPUT
+    use HIGHOUTPUT, only: DUMPSIZE
+    use STRING_TABLE, only: DISPLAY_STRING
+    use TREE, only: WHERE_AT=>Where
+d120 1
+a120 1
+    mySize = .true.; MySysSize = show_sys_memory
+a121 2
+    myShowTime = .false.
+    if ( present(showTime) ) myShowTime = showTime
+a122 1
+    if ( present(top) ) myTop = top
+d127 1
+d130 1
+d205 3
+a207 3
+    use ALLOCATE_DEALLOCATE, only: NOBYTESALLOCATED
+    use OUTPUT_M, only: NEWLINE, OUTPUT
+    use HIGHOUTPUT, only: DUMPSIZE
+d209 2
+a210 2
+    use STRING_TABLE, only: DISPLAY_STRING
+    use TIME_M, only: TIME_NOW
+d219 4
+a222 4
+    logical, intent(in), optional :: ShowTime   ! Show time when we dumped
+    logical, intent(in), optional :: SysSize ! Dump memory size, as the system
+                                           ! accounts for it, in kB (default
+                                           ! Show_Sys_Memory)
+a272 1
+        if ( delta /= 0 ) call dumpSize ( delta, before=', Memory changed by ' )
+d274 8
+a281 4
+        if ( abs(idelta) > abs(delta) .and. idelta*delta > 0 ) &
+          & call dumpSize ( idelta, before=' (traced) ', &
+            & after= ' (untraced)' )
+        if ( delta /= 0 .or. idelta /= 0 ) &
+d302 1
+a302 1
+    use STRING_TABLE, only: CREATE_STRING
+d321 1
+a321 1
+    use STRING_TABLE, only: CREATE_STRING
+d337 1
+a337 2
+  subroutine Push_Stack_I ( Name, Root, Index, String, Before, Where, Advance, &
+    & SysSize  )
+d339 1
+a339 1
+    use ALLOCATE_DEALLOCATE, only: TEST_ALLOCATE, NOBYTESALLOCATED
+d341 3
+a343 3
+    use OUTPUT_M, only: OUTPUT
+    use STRING_TABLE, only: DISPLAY_STRING
+    use TIME_M, only: TIME_NOW
+a351 3
+    logical, intent(in), optional :: SysSize ! Dump memory size, as the system
+                                           ! accounts for it, in kB (default
+                                           ! Show_Sys_Memory)
+a352 1
+    logical :: MySysSize
+a359 2
+    mySysSize = Show_Sys_Memory
+    if ( present(sysSize) ) mySysSize = sysSize
+d397 3
+a399 8
+    if ( mySysSize ) then
+      call memory_used ( total=total_used )
+      stack(stack_ptr) = stack_t ( memory=noBytesAllocated, sys_memory=total_used, &
+                                 & text=name )
+    else
+      stack(stack_ptr) = stack_t ( memory=noBytesAllocated, sys_memory=0, &
+                                 & text=name )
+    end if
+d442 1
+a442 1
+    use OUTPUT_M, only: OUTPUT
+d455 1
+a455 1
+       "$Id: Call_Stack_m.f90,v 2.24 2014/09/04 23:32:54 vsnyder Exp $"
+d465 3
+@
+
+
+2.24
+log
+@Add system memory tracking (default off).  Add untraced memory size changes.
+Some cannonball polishing.
+@
+text
+@d17 3
+a19 3
+  public :: STACK_T
+  public :: DUMP_STACK, GET_FRAME, POP_STACK, PUSH_STACK, STACK_DEPTH, TOP_STACK
+  public :: SAY_WHEN, Show_Sys_Memory
+d39 2
+a40 2
+  logical, parameter :: Say_Date = .false.
+  logical, save      :: Say_When = .false.
+d43 3
+a45 1
+  logical, save :: Show_Sys_Memory = .false.
+d48 1
+a48 1
+  logical, save, private :: Verbose = .false. ! Print each push, pop
+d171 2
+a172 2
+      if ( mySysSize ) call output ( stack(depth)%sys_memory, &
+        & before = ' Sys_Memory (kB): ' )
+d267 4
+a270 3
+            call output ( iDelta, before=', System memory changed by ' )
+            call output ( total_used, before = ' kB to ' )
+            call output ( ' kB' )
+d465 1
+a465 1
+       "$Id: Call_Stack_m.f90,v 2.23 2014/08/05 00:18:30 pwagner Exp $"
+d475 4
+@
+
+
+2.23
+log
+@May print memory_used instead of noBytesAllocated
+@
+text
+@a13 2
+  use Memory_m, only: memory_used
+  use MLSCommon, only: processID
+d19 1
+a19 1
+  public :: SAY_WHEN
+d24 3
+a26 1
+    double precision :: Memory = 0.0d0 ! In use, in Memory_Units
+d39 2
+a40 4
+  logical, save :: Say_Date         = .false.
+  logical, save :: Say_When         = .false.
+  logical, save :: Say_memory_used  = .false.
+  real, save    :: last_memory_used = 0.
+d42 3
+d47 6
+a53 1
+  integer, parameter, private :: MAXDOUBLINGS = 10 ! To limit max stack size
+d67 2
+a68 2
+  subroutine Dump_Stack ( Top, Before, Where, Size, CPU, DoDepth, Rev, Index, &
+                        & String, StringIndex, ShowTime, Used, Advance )
+a74 1
+    use ALLOCATE_DEALLOCATE, only: MEMORY_UNITS
+d85 3
+d98 1
+a98 1
+    character(len=3) :: MyAdvance
+d101 3
+a103 1
+    logical :: MyCPU, MyDoDepth, MyRev, MySize, MyTop, MyWhere, myShowTime
+d105 1
+d117 2
+a118 1
+    myCPU = .false.; myDoDepth = .true.; myRev = .false.; mySize = .true.
+a124 1
+    if ( stack_ptr /= merge(stack_ptr,lbound(stack,1),myTop) ) myAdvance = 'yes'
+d129 1
+d142 1
+d144 1
+d155 1
+a155 1
+      endif
+d169 3
+a171 1
+      if ( mySize ) call dumpSize ( memory_units * stack(depth)%memory, &
+d175 1
+a175 1
+      call output ( '', advance=myAdvance )
+d201 1
+a201 1
+    & Silent, ShowTime )
+d204 1
+a204 1
+    use ALLOCATE_DEALLOCATE, only: MEMORY_UNITS, NOBYTESALLOCATED
+d207 1
+d219 3
+d223 1
+a223 1
+    double precision :: Delta
+d225 1
+d227 1
+d229 1
+a229 1
+    real :: Total_used            ! Memory used in bytes
+d234 1
+a234 1
+      call output( 'Popping ', advance='no' )
+d239 4
+a242 2
+      call newLine
+    endif
+d246 2
+d257 12
+a268 16
+      call dump_stack ( .true., before, where, size=.false., index=index, &
+        & string=string, stringIndex=stringIndex, showTime=showTime, &
+        & used=used, advance='no' )
+      if ( .not. haveStack ) return
+      if ( Say_memory_used .and. len_trim(processID) > 0 ) then
+        call memory_used ( processID, total=total_used )
+        delta = total_used - last_memory_used
+        call dumpSize ( delta, before=', Memory changed by ' )
+        call dumpSize ( total_used, before = ' to ' )
+        last_memory_used = total_used
+      elseif ( stack(stack_ptr)%memory /= noBytesAllocated ) then
+        delta = memory_units * (noBytesAllocated - stack(stack_ptr)%memory)
+        if ( abs(delta) < huge(1) ) then
+          call dumpSize ( int(delta), before=', Memory changed by ' )
+        else
+          call dumpSize ( delta, before=', Memory changed by ' )
+d270 8
+a277 1
+        call dumpSize ( memory_units * noBytesAllocated, before = ' to ' )
+d287 2
+d332 2
+a333 1
+  subroutine Push_Stack_I ( Name, Root, Index, String, Before, Where, Advance )
+d336 2
+a337 1
+    use OUTPUT_M, only: NEWLINE, OUTPUT
+d348 3
+d352 1
+d355 1
+d360 2
+d369 1
+a369 1
+      endif
+d371 1
+a371 1
+        & ubounds=(/startingStackSize/), elementSize=storage_size(stack) )
+d383 1
+a383 1
+      endif
+d389 4
+a392 1
+      endif
+d394 1
+a394 1
+        & ubounds=(/2*stack_ptr/), elementSize=storage_size(stack) )
+d399 8
+a406 1
+    stack(stack_ptr) = stack_t ( memory=noBytesAllocated, text=name )
+d414 1
+a414 1
+      call output( 'Pushing ', advance='no' )
+d419 6
+a424 2
+      call newLine
+    endif
+d462 1
+a462 1
+       "$Id: Call_Stack_m.f90,v 2.22 2014/04/21 16:57:26 pwagner Exp $"
+d472 3
+@
+
+
+2.22
+log
+@Tries harder not reference stack if not allocated
+@
+text
+@d14 3
+a16 1
+  implicit NONE
+d39 4
+a42 2
+  logical, save :: Say_Date = .false.
+  logical, save :: Say_When = .false.
+d207 1
+d235 7
+a241 1
+      if ( stack(stack_ptr)%memory /= noBytesAllocated ) then
+d408 1
+a408 1
+       "$Id: Call_Stack_m.f90,v 2.21 2014/03/15 00:04:40 vsnyder Exp $"
+d418 3
+@
+
+
+2.21
+log
+@Correct misspallig in two ertor masseges
+@
+text
+@a89 2
+    character(len=10) :: Now  ! For Date_and_time
+    integer :: Values(8)      ! For Date_and_time
+d92 9
+a115 9
+    error = .not. allocated(stack)
+    if ( .not. error ) error = stack_ptr < lbound(stack,1)
+    if ( error ) then
+      call output ( "*****" )
+      if ( present(before) ) call output ( " " // before )
+      call output ( " There is no stack to dump *****", advance='yes' )
+      return
+    end if
+
+d397 1
+a397 1
+       "$Id: Call_Stack_m.f90,v 2.20 2014/02/13 00:04:01 pwagner Exp $"
+d407 3
+@
+
+
+2.20
+log
+@Revert to older appearance on Exit WALK_TREE..
+@
+text
+@d317 1
+a317 1
+        call output ( 'Unable to alloxate temp_stack', advance='yes' )
+d337 1
+a337 1
+        call output ( 'Unable to alloxate temp_stack', advance='yes' )
+d399 1
+a399 1
+       "$Id: Call_Stack_m.f90,v 2.19 2014/01/28 02:59:18 vsnyder Exp $"
+d409 3
+@
+
+
+2.19
+log
+@Add StringIndex argument to PopStack and DumpStack
+@
+text
+@d37 1
+d58 1
+a58 1
+                        & String, StringIndex, Advance )
+d82 2
+d89 3
+a91 1
+    logical :: MyCPU, MyDoDepth, MyRev, MySize, MyTop, MyWhere
+d97 2
+d136 4
+a152 1
+      if ( say_when ) call show_when
+d183 1
+a183 1
+    & Silent )
+d199 1
+d223 3
+d229 2
+a230 1
+        & string=string, stringIndex=stringIndex, advance='no' )
+a231 4
+      call time_now ( t )
+      t = t - stack(stack_ptr)%clock
+      write ( used, '(g10.3)' ) t
+      call output ( ' used ' // trim(adjustl(used)) //  ' cpu' )
+d391 3
+a393 1
+      & time(5:) // ' on ' // date(1:4) // '/' // date(5:6) // '/' // date(7:8) )
+d399 1
+a399 1
+       "$Id: Call_Stack_m.f90,v 2.18 2014/01/11 01:41:02 vsnyder Exp $"
+d409 3
+@
+
+
+2.18
+log
+@Decruftification
+@
+text
+@d57 1
+a57 1
+                        & String, Advance )
+d80 1
+d135 3
+d172 2
+a173 1
+  subroutine Pop_Stack ( Before, Where, Frame, Index, String, Silent )
+d187 1
+d215 1
+a215 1
+        & string=string, advance='no' )
+d386 1
+a386 1
+       "$Id: Call_Stack_m.f90,v 2.17 2014/01/09 00:25:06 pwagner Exp $"
+d396 3
+@
+
+
+2.17
+log
+@Some procedures formerly in output_m now got from highOutput
+@
+text
+@d252 1
+a252 1
+    call push_stack ( name_i, Root, Index, String, Before, Where )
+d270 1
+a270 1
+      & Before, Where )
+d380 1
+a380 1
+       "$Id: Call_Stack_m.f90,v 2.16 2013/11/01 00:03:29 pwagner Exp $"
+d390 3
+@
+
+
+2.16
+log
+@Added safeguards limiting stacksize, dumping corrupted stacks, etc.
+@
+text
+@d66 2
+a67 1
+    use OUTPUT_M, only: DUMPSIZE, OUTPUT
+d172 2
+a173 1
+    use OUTPUT_M, only: DUMPSIZE, NEWLINE, OUTPUT
+d380 1
+a380 1
+       "$Id: Call_Stack_m.f90,v 2.15 2013/10/26 00:41:30 vsnyder Exp $"
+d390 3
+@
+
+
+2.15
+log
+@Cannonball polishing
+@
+text
+@d17 3
+a19 3
+  public :: Stack_t
+  public :: Dump_Stack, Get_Frame, Pop_Stack, Push_Stack, Stack_Depth, Top_Stack
+  public :: Say_When
+d39 2
+d42 1
+d45 1
+d68 1
+a68 1
+    use TREE, only: DUMP_TREE_NODE, SOURCE_REF, WHERE_AT=>Where
+d85 2
+a86 1
+
+d172 1
+d189 9
+d276 2
+d290 3
+a292 1
+    intrinsic :: Date_And_Time, Storage_Size
+d297 5
+d307 9
+d317 5
+d335 8
+d378 1
+a378 1
+       "$Id: Call_Stack_m.f90,v 2.14 2013/10/02 01:28:21 vsnyder Exp $"
+d388 3
+@
+
+
+2.14
+log
+@Add 'string' argument to pop_stack, dump_stack
+@
+text
+@d129 2
+a130 5
+        if ( source_ref(stack(depth)%tree) == 0 ) then
+          call output ( stack(depth)%tree, before=', tree at ' )
+        else
+          call print_source ( where_at(stack(depth)%tree), before=', ' )
+        end if
+d332 1
+a332 1
+       "$Id: Call_Stack_m.f90,v 2.13 2013/09/24 23:27:14 vsnyder Exp $"
+d342 3
+@
+
+
+2.13
+log
+@Use Get_Where or Print_Source to start error messages
+@
+text
+@d53 1
+a53 1
+                        & Advance )
+d74 1
+d127 1
+d165 1
+a165 1
+  subroutine Pop_Stack ( Before, Where, Frame, Index, Silent )
+d176 1
+d195 1
+a195 1
+        & advance='no' )
+d335 1
+a335 1
+       "$Id: Call_Stack_m.f90,v 2.12 2013/09/19 23:33:10 vsnyder Exp $"
+d345 3
+@
+
+
+2.12
+log
+@More graceful handling of zero source ref
+@
+text
+@d64 1
+a64 1
+    use TREE, only: DUMP_TREE_NODE, SOURCE_REF
+d130 1
+a130 1
+          call print_source ( source_ref(stack(depth)%tree), before=', ' )
+d332 1
+a332 1
+       "$Id: Call_Stack_m.f90,v 2.11 2013/09/12 03:11:18 vsnyder Exp $"
+d342 3
+@
+
+
+2.11
+log
+@Add Index argument to Pop_Stack and Dump_Stack
+@
+text
+@d126 7
+a132 2
+      if ( myWhere .and. stack(depth)%tree > 0 ) &
+        & call print_source ( source_ref(stack(depth)%tree), before=', ' )
+d332 1
+a332 1
+       "$Id: Call_Stack_m.f90,v 2.10 2013/09/04 02:49:00 vsnyder Exp $"
+d342 3
+@
+
+
+2.10
+log
+@Add 'Frame' argument to Pop_Stack to return top frame before popping
+@
+text
+@d52 2
+a53 1
+  subroutine Dump_Stack ( Top, Before, Where, Size, CPU, DoDepth, Rev, Advance )
+d73 1
+d121 5
+a125 1
+      if ( stack(depth)%index >= 0 ) call output ( stack(depth)%index, before=' ' )
+d158 1
+a158 1
+  subroutine Pop_Stack ( Before, Where, Frame, Silent )
+d168 1
+d186 2
+a187 1
+      call dump_stack ( .true., before, where, size=.false., advance='no' )
+d213 2
+a214 1
+  subroutine Push_Stack_B ( Name_I, Name_C, Root, Index, String, Before, Where )
+d227 1
+d235 1
+a235 1
+  subroutine Push_Stack_C ( Name, Root, Index, String, Before, Where )
+d245 1
+d253 1
+a253 1
+  subroutine Push_Stack_I ( Name, Root, Index, String, Before, Where )
+d264 1
+d291 1
+a291 1
+      & call dump_stack ( .true., before, where, advance='yes' )
+d327 1
+a327 1
+       "$Id: Call_Stack_m.f90,v 2.9 2013/08/31 02:25:57 vsnyder Exp $"
+d337 3
+@
+
+
+2.9
+log
+@Output a blank before Index component in Dump_Stack
+@
+text
+@d152 1
+a152 1
+  subroutine Pop_Stack ( Before, Where, Silent )
+d161 1
+d197 4
+a200 1
+    if ( haveStack ) stack_ptr = stack_ptr - 1
+d315 1
+a315 1
+       "$Id: Call_Stack_m.f90,v 2.8 2013/08/31 01:23:13 vsnyder Exp $"
+d325 3
+@
+
+
+2.8
+log
+@Don't try to display strings or trees with negative indices
+@
+text
+@d119 1
+a119 1
+      if ( stack(depth)%index >= 0 ) call output ( stack(depth)%index )
+d311 1
+a311 1
+       "$Id: Call_Stack_m.f90,v 2.7 2013/08/30 23:14:26 pwagner Exp $"
+d321 3
+@
+
+
+2.7
+log
+@pop_stack may pop silently
+@
+text
+@d116 2
+a117 2
+      if ( stack(depth)%text /= 0 ) call display_string ( stack(depth)%text )
+      if ( stack(depth)%string /= 0 ) &
+d120 1
+a120 1
+      if ( myWhere .and. stack(depth)%tree /= 0 ) &
+d161 1
+a161 1
+    logical, intent(in), optional :: silent
+d165 1
+d168 1
+a168 1
+    logical :: mySilent
+d171 1
+a171 1
+    if ( present(silent) ) mySilent=.true.
+d311 1
+a311 1
+       "$Id: Call_Stack_m.f90,v 2.6 2013/08/30 03:55:00 vsnyder Exp $"
+d321 3
+@
+
+
+2.6
+log
+@Add "string" to stack.  Delete "now" from stack.  Add switch to control
+printing current date and time in Dump_Stack.  More repairs in Pop_Stack.
+@
+text
+@d59 5
+a63 5
+    use Allocate_Deallocate, only: Memory_Units
+    use Lexer_Core, only: Print_Source
+    use Output_m, only: DumpSize, Output
+    use String_Table, only: Display_String
+    use Tree, only: Dump_Tree_Node, Source_Ref
+d152 1
+a152 1
+  subroutine Pop_Stack ( Before, Where )
+d155 3
+a157 3
+    use Allocate_Deallocate, only: Memory_Units, NoBytesAllocated
+    use Output_m, only: DumpSize, NewLine, Output
+    use Time_m, only: Time_Now
+d161 1
+d167 4
+a170 1
+
+d174 1
+a174 1
+    if ( present(before) .or. present(where) ) then
+d204 1
+a204 1
+    use String_Table, only: Create_String
+d222 1
+a222 1
+    use String_Table, only: Create_String
+d239 2
+a240 2
+    use Allocate_Deallocate, only: Test_Allocate, NoBytesAllocated
+    use Time_m, only: Time_Now
+d299 1
+a299 1
+    use Output_m, only: Output
+d310 1
+a310 1
+       "$Id: Call_Stack_m.f90,v 2.5 2013/08/29 19:47:52 vsnyder Exp $"
+d320 4
+@
+
+
+2.5
+log
+@Don't output anything in Pop_Stack if Before and Where absent
+@
+text
+@d19 1
+d25 1
+a25 1
+    character(len=10) :: Now = ''      ! Date and time
+d36 3
+d117 2
+d122 1
+a122 2
+      call output ( ' at ' // stack(depth)%now(1:2) // ':' // &
+        & stack(depth)%now(3:4) // ':' // trim(stack(depth)%now(5:)) )
+d163 1
+d167 3
+d171 2
+d174 1
+a174 2
+      if ( .not. allocated(stack) ) return
+      if ( stack_ptr < lbound(stack,1) ) return
+d191 1
+a191 1
+    stack_ptr = stack_ptr - 1
+d196 1
+a196 1
+  subroutine Push_Stack_B ( Name_I, Name_C, Root, Index, Before, Where )
+d204 3
+a206 2
+    integer, optional, intent(in) :: Root  ! Where in configuration tree
+    integer, optional, intent(in) :: Index ! Whatever caller wants to send
+d210 2
+a211 2
+    if ( name_i <= 0 ) name_i = create_string ( name_c )
+    call push_stack ( name_i, Root, Index, Before, Where )
+d216 1
+a216 1
+  subroutine Push_Stack_C ( Name, Root, Index, Before, Where )
+d221 3
+a223 2
+    integer, optional, intent(in) :: Root  ! Where in configuration tree
+    integer, optional, intent(in) :: Index ! Whatever caller wants to send
+d227 2
+a228 1
+    call push_stack ( create_string ( name ), Root, Index, Before, Where )
+d233 1
+a233 1
+  subroutine Push_Stack_I ( Name, Root, Index, Before, Where )
+d241 1
+d267 1
+a268 1
+    call date_and_time ( stack(stack_ptr)%now )
+d271 1
+d292 11
+d306 1
+a306 1
+       "$Id: Call_Stack_m.f90,v 2.4 2013/08/23 03:16:52 vsnyder Exp $"
+d316 3
+@
+
+
+2.4
+log
+@Simplify Push_Stack, some cannonball polishing (I couldn't resist)
+@
+text
+@a154 1
+    character(len=10) :: Used
+d159 1
+d161 16
+a176 14
+    if ( present(before) .or. present(where) ) &
+      & call dump_stack ( .true., before, where, size=.false., advance='no' )
+    if ( .not. allocated(stack) ) return
+    if ( stack_ptr < lbound(stack,1) ) return
+    call time_now ( t )
+    t = t - stack(stack_ptr)%clock
+    write ( used, '(g10.3)' ) t
+    call output ( ' used ' // trim(adjustl(used)) //  ' cpu' )
+    if ( stack(stack_ptr)%memory /= noBytesAllocated ) then
+      delta = memory_units * (noBytesAllocated - stack(stack_ptr)%memory)
+      if ( abs(delta) < huge(1) ) then
+        call dumpSize ( int(delta), before=', Memory changed by ' )
+      else
+        call dumpSize ( delta, before=', Memory changed by ' )
+d178 1
+a178 1
+      call dumpSize ( memory_units * noBytesAllocated, before = ' to ' )
+a179 1
+    call newLine
+d236 1
+a236 1
+      ! Don't allocate with lbound < 0
+d280 1
+a280 1
+       "$Id: Call_Stack_m.f90,v 2.3 2013/08/23 02:49:19 vsnyder Exp $"
+d290 3
+@
+
+
+2.3
+log
+@Add Get_Frame, Rev, and Stack_Depth
+@
+text
+@d67 1
+a67 1
+    logical, intent(in), optional :: Rev  ! Print in reverse order (default false)
+d108 1
+a108 1
+      do i = 1, merge(depth,0,myDoDepth)
+d180 1
+a180 1
+    stack_ptr = max(0,stack_ptr-1)
+d235 1
+d239 1
+d249 1
+a249 1
+    stack(stack_ptr) = stack_t ( text=name )
+a252 1
+    stack(stack_ptr)%memory = noBytesAllocated
+d279 1
+a279 1
+       "$Id: Call_Stack_m.f90,v 2.2 2013/08/17 03:08:12 vsnyder Exp $"
+d289 3
+@
+
+
+2.2
+log
+@Some cannonball polishing (already!)
+@
+text
+@d17 2
+a18 1
+  public :: Dump_Stack, Stack_t, Pop_Stack, Push_Stack, Top_Stack
+d23 1
+a23 1
+    double precision :: Memory = 0.0d0 ! in use, in Memory_Units
+d25 4
+a28 2
+    integer :: Text = 0                ! index in string table
+    integer :: Tree = 0                ! where in l2cf
+d31 7
+a37 5
+  integer, parameter :: StartingStackSize = 100
+  type(stack_t), allocatable, save :: Stack(:)
+  integer, save :: Stack_Ptr = 0
+
+  logical, private :: DEEBUG = .true.  ! Complain about memory inconsistency
+d48 1
+a48 1
+  subroutine Dump_Stack ( Top, Before, Where, Size, CPU, Advance )
+d66 2
+d71 1
+a71 1
+    integer :: Depth, I
+d73 1
+a73 1
+    logical :: MyCPU, MySize, MyTop, MyWhere
+d76 2
+a77 1
+    myCPU = .false.; mySize = .true.; myTop = .false.; myWhere = .false.
+d79 1
+d81 1
+d83 2
+a85 1
+    if ( present(top) ) myTop = top
+d97 12
+a108 2
+    do depth = stack_ptr, merge(stack_ptr,lbound(stack,1),myTop), -1
+      do i = 1, depth
+d127 19
+d184 36
+a219 2
+! ---------------------------------------------------  Push_Stack  -----
+  subroutine Push_Stack ( Name, Root, Index, Before, Where )
+a221 1
+    use String_Table, only: Create_String
+d224 1
+a224 1
+    character(len=*), intent(in) :: Name
+d247 1
+a247 1
+    stack(stack_ptr) = stack_t ( text=create_string ( name ) )
+d255 7
+a261 1
+  end subroutine Push_Stack
+d266 7
+a272 3
+    if ( .not. allocated(stack) ) return
+    if ( stack_ptr < lbound(stack,1) ) return
+    top = stack(stack_ptr)
+d278 1
+a278 1
+       "$Id: Call_Stack_m.f90,v 2.1 2013/08/17 02:57:41 vsnyder Exp $"
+d288 3
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d36 1
+a36 1
+       "$RCSfile: trace_m.f90,v $"
+d115 1
+d127 2
+a128 2
+    call output ( t, format='(g10.3)', before=' used ' )
+    call output ( ' cpu' )
+d195 1
+a195 1
+       "$Id: trace_m.f90,v 2.22 2013/06/28 18:06:14 pwagner Exp $"
+d204 4
+a207 1
+! $Log: $
+@
+

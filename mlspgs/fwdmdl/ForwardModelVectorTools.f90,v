@@ -1,0 +1,1468 @@
+head	2.29;
+access;
+symbols
+	v5-02-NRT-19:2.29
+	v6-00:2.29
+	v5-02-NRT-18:2.29
+	v5-02:2.29
+	v5-01-NRT-17:2.29
+	v5-01-NRT-16:2.29
+	v5-01-NRT-15:2.29
+	v5-01-NRT-14:2.29
+	neuralnetworks-1-0:2.29.0.10
+	cfm-single-freq-0-1:2.29.0.8
+	v5-01:2.29
+	v5-00:2.29
+	v4-23-TA133:2.29.0.6
+	mus-emls-1-70:2.29.0.4
+	rel-1-0-englocks-work:2.29.0.2
+	VUMLS1-00:2.27
+	VPL1-00:2.27
+	V4-22-NRT-08:2.27
+	VAM1-00:2.27
+	V4-21:2.27.0.2
+	V4-13:2.27
+	V4-12:2.27
+	V4-11:2.26
+	V4-10:2.26
+	V3-43:2.20
+	M4-00:2.24
+	V3-41:2.20
+	V3-40-PlusGM57:2.20.0.2
+	V2-24-NRT-04:2.15
+	V3-33:2.20
+	V2-24:2.15
+	V3-31:2.20
+	V3-30-NRT-05:2.20
+	cfm-01-00:2.20
+	V3-30:2.20
+	V3-20:2.20
+	V3-10:2.20
+	V2-23-NRT-02:2.15
+	V2-23:2.15
+	V2-22-NRT-01:2.15
+	V2-22:2.15
+	V2-21:2.15
+	V2-20:2.15
+	V2-11:2.15
+	V2-10:2.15
+	V2-00:2.14
+	V1-51:2.13
+	V1-50:2.13
+	V1-45:2.10
+	V1-44:2.10
+	V1-43:2.9
+	V1-32:2.9
+	V1-31:2.9
+	V1-30:2.9
+	V1-13:2.7
+	V1-12:2.7
+	V1-11:2.7
+	V1-10:2.7
+	newfwm-feb03:2.7.0.2;
+locks; strict;
+comment	@# @;
+
+
+2.29
+date	2018.02.27.01.33.46;	author livesey;	state Exp;
+branches;
+next	2.28;
+
+2.28
+date	2018.02.27.00.51.01;	author livesey;	state Exp;
+branches;
+next	2.27;
+
+2.27
+date	2014.07.18.23.14.29;	author pwagner;	state Exp;
+branches;
+next	2.26;
+
+2.26
+date	2013.08.12.23.48.09;	author pwagner;	state Exp;
+branches;
+next	2.25;
+
+2.25
+date	2013.06.12.02.20.02;	author vsnyder;	state Exp;
+branches;
+next	2.24;
+
+2.24
+date	2013.04.03.23.23.33;	author vsnyder;	state Exp;
+branches;
+next	2.23;
+
+2.23
+date	2013.03.30.00.12.01;	author vsnyder;	state Exp;
+branches;
+next	2.22;
+
+2.22
+date	2011.11.11.00.42.06;	author vsnyder;	state Exp;
+branches;
+next	2.21;
+
+2.21
+date	2011.06.16.20.19.47;	author vsnyder;	state Exp;
+branches;
+next	2.20;
+
+2.20
+date	2009.06.23.18.26.10;	author pwagner;	state Exp;
+branches;
+next	2.19;
+
+2.19
+date	2009.04.20.16.36.26;	author pwagner;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2008.10.03.16.26.47;	author livesey;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2008.09.29.22.56.54;	author vsnyder;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2008.09.29.22.54.13;	author vsnyder;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2006.07.17.20.06.37;	author livesey;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2005.06.22.18.08.18;	author pwagner;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2004.11.01.20.19.35;	author vsnyder;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2004.10.16.17.28.28;	author livesey;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2004.10.07.23.25.50;	author vsnyder;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2004.06.10.00.59.56;	author vsnyder;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2003.05.29.16.37.21;	author livesey;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2003.05.05.23.00.24;	author livesey;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2002.10.08.17.08.03;	author pwagner;	state Exp;
+branches
+	2.7.2.1;
+next	2.6;
+
+2.6
+date	2002.10.02.22.52.19;	author vsnyder;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2002.10.02.22.51.07;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2002.10.02.22.49.13;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2002.09.26.21.41.23;	author livesey;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2002.09.26.18.01.34;	author livesey;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2002.09.25.22.36.49;	author livesey;	state Exp;
+branches;
+next	;
+
+2.7.2.1
+date	2003.03.21.02.47.38;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.29
+log
+@Fixed klutzy typo
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module ForwardModelVectorTools          ! Tools for vectors in forward models
+
+  ! This module contains routines needed to help a forward model get
+  ! hold of the quantities it needs.
+
+  implicit NONE
+
+  private
+
+  public :: GetQuantityForForwardModel, GetQtyStuffForForwardModel
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: ForwardModelVectorTools.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  ! ---------------------------------  GetQuantityForForwardModel  -----
+  function GetQuantityForForwardModel ( vector, otherVector, quantityType, &
+    & molecule, instrumentModule, supportedInstrumentModule, radiometer, &
+    & reflector, signal, sideband, &
+    & molIndex, config, foundInFirst, wasSpecific, noError, matchQty, Frq )
+
+    ! This function is in many senses like GetVectorQuantityByType, (to
+    ! which it can revert), except that given a forwardModelConfig_T in
+    ! config, and possibly an index into the molecules array, it can
+    ! use the specificQuantities stuff in config to identify exactly
+    ! the right quantity.
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T
+    use INTRINSIC, only: LIT_INDICES
+    use INTRINSIC, only: L_VMR
+    use MANIPULATEVECTORQUANTITIES, only: DOHGRIDSMATCH, DOVGRIDSMATCH
+    use MLSKINDS, only: R8
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
+    use MLSFINDS, only: FINDFIRST
+    use MLSSIGNALS_M, only: GETRADIOMETERNAME, GETSIGNALNAME, SIGNALS
+    use MOLECULES, only: ISEXTINCTION
+    use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T
+    use STRING_TABLE, only: GET_STRING
+    use VECTORSMODULE, only: GETVECTORQUANTITYBYTYPE, VECTOR_T, VECTORVALUE_T
+
+    ! Dummy arguments
+    type (Vector_T), target :: VECTOR ! First vector to look in
+    type (Vector_T), target, optional :: OTHERVECTOR ! Second vector to look in
+    integer, intent(in) :: QUANTITYTYPE ! Quantity type index (l_...)
+    integer, intent(in),  optional :: MOLECULE     ! Molecule index (l_...)
+    integer, intent(in),  optional :: INSTRUMENTMODULE ! Instrument module index
+    integer, intent(in),  optional :: SUPPORTEDINSTRUMENTMODULE ! Another instrument module index
+    integer, intent(in),  optional :: RADIOMETER   ! Radiometer index
+    integer, intent(in),  optional :: REFLECTOR    ! Reflector literal
+    integer, intent(in),  optional :: SIGNAL       ! Signal index
+    integer, intent(in),  optional :: SIDEBAND     ! -1, 0, +1
+    type (ForwardModelConfig_T), intent(in), optional :: CONFIG ! fwmConfig
+    integer, intent(in),  optional :: MOLINDEX     ! Index into the molecules array
+    logical, intent(out), optional :: FOUNDINFIRST ! Set if found in first vector
+    logical, intent(out), optional :: WASSPECIFIC  ! Set if listed as specific quantity
+    logical, intent(in),  optional :: NOERROR      ! Don't give error if not found
+    type (VectorValue_T), intent(in), optional :: MATCHQTY ! Result must match this
+    real(r8), intent(in), optional :: Frq          ! Frequency
+    ! Result
+    type (VectorValue_T), pointer :: GetQuantityForForwardModel
+
+    ! Local type
+    type Stuff_t ! a vector_t pointer and a real(r8) pointer
+      type(vector_t), pointer :: V => null() ! Vector(1) or OtherVector(2)
+      integer, pointer :: Match(:) => null() ! Flags for V
+    end type
+
+    ! Local variables
+    logical :: MyNoError                ! Copy of no error
+    real(r8) :: FrqDiff
+
+    ! -1 for no match.  Channel number of best match if Frq is present, else zero.
+    integer, dimension(:), pointer :: MATCH   ! One of stuff(:)%match
+
+    real(r8) :: MyFrq                   ! Copy of Frq, or a fiction if not present
+
+    integer :: BestMatch                ! Channel index of best match
+    integer :: MolEntry                 ! How many similar molecules in list?
+    integer :: NoFound                  ! Number of matches found so far.
+    integer :: NoVectors                ! Number of vectors we've been given
+    integer :: Quantity                 ! Loop counter
+    integer :: ThisMolecule             ! A molecule
+    integer :: VectorIndex              ! Loop counter
+    type (Vector_T), pointer :: V       ! A vector
+    type (QuantityTemplate_T), pointer :: QT ! A quantity template
+    character(len=127) :: MSG
+    logical :: UseGetQuantityByType
+
+    ! pointers to vectors and Match arrays
+    type(stuff_t) :: stuff(2)
+
+    ! Executable code
+
+    ! Do a sanity check, get default values
+    if ( present ( molIndex ) .and. .not. present ( config ) ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & "Cannot have molIndex in GetQuantityForForwardModel without config" )
+    myNoError = .false.
+    if ( present ( noError ) ) myNoError = noError
+    if ( present ( wasSpecific ) ) wasSpecific = .false.
+    if ( present ( foundInFirst ) ) foundInFirst = .false.
+
+    myFrq = huge(0.0_r8)
+    if ( present(frq) ) myFrq = frq
+    nullify ( GetQuantityForForwardModel )
+
+    ! First see if we can simply revert to the simpler GetVectorQuantityByType
+    useGetQuantityByType = .true.
+    if ( present ( config ) ) then
+      if ( associated ( config%specificQuantities ) .or. present(molIndex) ) &
+        & useGetQuantityByType = .false.
+    end if
+
+    ! If we can revert to the simpler GetVectorQuantityByType then do so.
+    if ( useGetQuantityByType ) then
+      GetQuantityForForwardModel => GetVectorQuantityByType ( vector, otherVector, &
+        & quantityType, molecule, instrumentModule, supportedInstrumentModule, &
+        & radiometer, reflector, signal, sideband, &
+        & foundInFirst, noError )
+      return
+    end if
+
+    ! OK, looks like we have to do it the more complicated way.
+    stuff(1)%v => vector
+    if ( present(otherVector) ) stuff(2)%v => otherVector
+    noVectors = merge(2,1,present(otherVector))
+
+    do vectorIndex = 1, noVectors
+      call allocate_test ( stuff(vectorIndex)%match, &
+        & stuff(vectorIndex)%v%template%noQuantities, &
+        & 'stuff%match(vectorIndex)', ModuleName, fill=-1 )
+    end do
+
+    ! Now loop over the one or two vectors and work out which quantities might match.
+    do vectorIndex = 1, noVectors
+      v => stuff(vectorIndex)%v
+      match => stuff(vectorIndex)%match
+      do quantity = 1, v%template%noQuantities
+        thisMolecule = 0
+        qt => v%quantities(quantity)%template
+        ! Now go through the quantities and see if they match
+        if ( quantityType /= qt%quantityType ) cycle
+        if ( present(molecule) ) then
+          if ( molecule /= qt%molecule ) cycle
+          thisMolecule = molecule
+        end if
+        if ( present(molIndex) ) then
+          if ( config%molecules ( molIndex ) /= qt%molecule ) cycle
+          thisMolecule = config%molecules ( molIndex )
+        end if
+        if ( present(instrumentModule ) ) then
+          if ( instrumentModule /= qt%instrumentModule ) cycle
+        end if
+        if ( present(radiometer) ) then
+          ! We can be a little lenient here in the case of vmrs
+          if ( quantityType == l_vmr ) then
+            if ( radiometer /= qt%radiometer .and. &
+               & isExtinction(thisMolecule) ) cycle
+          else
+            if ( radiometer /= qt%radiometer ) cycle
+          end if
+        end if
+        if ( present(reflector) ) then
+          if ( reflector /= qt%reflector ) cycle
+        end if
+        if ( present(sideband) ) then
+          if ( sideband /= qt%sideband ) cycle
+        end if
+        if ( present(signal) ) then
+          if ( signal /= qt%signal ) cycle
+        end if
+        if ( present(matchQty) ) then
+          if ( .not. DoVGridsMatch ( v%quantities(quantity), matchQty ) ) cycle
+          if ( .not. DoHGridsMatch ( v%quantities(quantity), matchQty, &
+            & spacingOnly=.true. ) ) cycle
+        end if
+        if ( qt%signal <= 0 .or. .not. present(frq) ) then
+          match ( quantity ) = 0
+        else
+          frqDiff = huge(0.0_r8)
+          do bestMatch = 1, size(signals(qt%signal)%frequencies)
+            if ( signals(qt%signal)%channels(bestMatch) ) then
+              if ( abs(signals(qt%signal)%frequencies(bestMatch)-myFrq) < frqDiff ) then
+                frqDiff = abs(signals(qt%signal)%frequencies(bestMatch)-myFrq)
+                if ( frqDiff <= signals(qt%signal)%widths(match(quantity)) ) &
+                  & match ( quantity ) = bestMatch
+              end if
+            end if
+          end do
+        end if
+      end do ! Quantity                 ! End loop over the quantities
+    end do   ! VectorIndex              ! End loop over the one or two vectors
+
+    ! Now decide exactly which ones we want
+    if ( present ( molIndex ) ) then
+      ! Some special thought for this case.
+      ! Work out how many of the same molecules preceed or include this one.
+      molEntry = count ( config%molecules ( 1:molIndex ) == &
+        & config%molecules ( molIndex ) )
+    else
+      molEntry = 0
+    end if
+
+    noFound = 0
+
+    ! If Frq is present, find the quantity for a signal whose center frequency
+    ! is nearest to the desired one, and verify that the desired frequency is
+    ! within the same channel.
+    if ( present(frq) ) then
+
+    ! First to see if any of the matches are on our 'specificQuantity'
+    ! list, if so match them.  Though pay special attention in the molIndex case.
+    else if ( present(config) ) then
+      if ( associated ( config%specificQuantities ) ) then
+        specificVectorLoop: do vectorIndex = 1, noVectors
+          v => stuff(vectorIndex)%v
+          match => stuff(vectorIndex)%match
+          do quantity = 1, v%template%noQuantities
+            if ( match ( quantity ) >= 0 .and. &
+              & any ( v%template%quantities(quantity) == config%specificQuantities ) ) then
+              noFound = noFound + 1
+              if ( molEntry == 0 .or. molEntry == noFound ) then
+                GetQuantityForForwardModel => v%quantities(quantity)
+                if ( present ( foundInFirst ) ) foundInFirst = ( vectorIndex == 1 )
+                if ( present ( wasSpecific ) ) wasSpecific = .true.
+                exit specificVectorLoop
+              end if
+            end if
+          end do
+        end do specificVectorLoop
+      end if
+    end if
+
+    if ( molEntry > 1 .and. noFound < molEntry ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unresolved ambiguity in molecule list' )
+
+    ! Otherwise just get it from one or other vector
+    if ( noFound == 0 ) then
+      nonSpecificVectorLoop: do vectorIndex = 1, noVectors
+        v => stuff(vectorIndex)%v
+        match => stuff(vectorIndex)%match
+        quantity = FindFirst ( match >= 0 )
+        if ( quantity /= 0 ) then
+          GetQuantityForForwardModel => v%quantities(quantity)
+          noFound = 1
+          if ( present ( foundInFirst ) ) foundInFirst = ( vectorIndex == 1 )
+          exit nonSpecificVectorLoop
+        end if
+      end do nonSpecificVectorLoop
+    end if
+
+    ! Now, if appropriate, print out an explanatory error message.
+    if ( noFound == 0 .and. .not. myNoError ) then
+      msg = 'There is no quantity in vector '
+      if ( vector%name /= 0 ) then
+        call get_string ( vector%name, msg(len_trim(msg)+2:) )
+      else
+        msg(len_trim(msg)+2:) = '[unnamed]'
+      end if
+      msg = trim(msg) // ' that has type'
+      call get_string ( lit_indices(quantityType), msg(len_trim(msg)+2:) )
+
+      if ( present ( molecule ) ) then
+        msg = trim(msg) // ' for molecule'
+        call get_string ( lit_indices(molecule), msg(len_trim(msg)+2:))
+      end if
+      if ( present ( molIndex ) ) then
+        msg = trim(msg) // ' for molecule'
+        call get_string ( lit_indices(config%molecules(molIndex)), msg(len_trim(msg)+2:))
+      end if
+
+      if ( present ( radiometer ) ) then
+        msg = trim(msg) // ' for radiometer'
+        call getRadiometerName ( radiometer, msg(len_trim(msg)+2:))
+      end if
+
+      if ( present ( reflector ) ) then
+        msg = trim(msg) // ' for reflector'
+        call get_string ( lit_indices(reflector), msg(len_trim(msg)+2:))
+      end if
+
+      if ( present ( instrumentModule ) ) then
+        msg = trim(msg) // ' for instrument module'
+        call get_string ( lit_indices(instrumentModule), msg(len_trim(msg)+2:))
+      end if
+
+      if ( present ( signal ) ) then
+        msg = trim(msg) // ' for signal'
+        call GetSignalName ( signal, msg(len_trim(msg)+2:), sideband=sideband )
+      end if
+
+      call MLSMessage ( MLSMSG_Error, ModuleName, msg(:len_trim(msg)) )
+    end if
+
+    call Deallocate_test ( stuff(1)%match, 'stuff%match(vectorIndex)', ModuleName )
+    call Deallocate_test ( stuff(2)%match, 'stuff%match(vectorIndex)', ModuleName )
+
+  end function GetQuantityForForwardModel
+
+
+  ! ---------------------------------  GetQtyStuffForForwardModel  -----
+  function GetQtyStuffForForwardModel ( vector, otherVector, quantityType, &
+    & molecule, instrumentModule, supportedInstrumentModule, radiometer, reflector, signal, sideband, &
+    & molIndex, config, noError, matchQty, Frq )
+
+    ! This function is in many senses like GetVectorQuantityByType, (to
+    ! which it can revert), except that given a forwardModelConfig_T in
+    ! config, and possibly an index into the molecules array, it can
+    ! use the specificQuantities stuff in config to identify exactly
+    ! the right quantity.
+    use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T, QTYSTUFF_T
+    use MLSKINDS, only: R8
+    use VECTORSMODULE, only: VECTOR_T, VECTORVALUE_T
+
+    ! Dummy arguments
+    type (Vector_T), target :: VECTOR ! First vector to look in
+    type (Vector_T), target, optional :: OTHERVECTOR ! Second vector to look in
+    integer, intent(in) :: QUANTITYTYPE ! Quantity type index (l_...)
+    integer, intent(in),  optional :: MOLECULE     ! Molecule index (l_...)
+    integer, intent(in),  optional :: INSTRUMENTMODULE ! Instrument module index
+    integer, intent(in),  optional :: SUPPORTEDINSTRUMENTMODULE ! Another instrument module index
+    integer, intent(in),  optional :: RADIOMETER   ! Radiometer index
+    integer, intent(in),  optional :: REFLECTOR    ! Reflector literal
+    integer, intent(in),  optional :: SIGNAL       ! Signal index
+    integer, intent(in),  optional :: SIDEBAND     ! -1, 0, +1
+    type (ForwardModelConfig_T), intent(in), optional :: CONFIG ! fwmConfig
+    integer, intent(in),  optional :: MOLINDEX     ! Index into the molecules array
+    logical, intent(in),  optional :: NOERROR      ! Don't give error if not found
+    type (VectorValue_T), intent(in), optional :: MATCHQTY ! Result must match this
+    real(r8), intent(in), optional :: Frq          ! Frequency
+    ! Result
+    type (QtyStuff_t) :: GetQtyStuffForForwardModel
+
+    GetQtyStuffForForwardModel%qty => GetQuantityForForwardModel ( vector, &
+      & otherVector, quantityType, molecule, instrumentModule, supportedInstrumentModule, &
+      & radiometer, reflector, signal, sideband, molIndex, config, &
+      & getQtyStuffForForwardModel%foundInFirst, &
+      & getQtyStuffForForwardModel%wasSpecific, noError, matchQty, Frq )
+
+  end function GetQtyStuffForForwardModel
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: ForwardModelVectorTools.f90,v 2.28 2018/02/27 00:51:01 livesey Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module ForwardModelVectorTools
+
+! $Log: ForwardModelVectorTools.f90,v $
+! Revision 2.28  2018/02/27 00:51:01  livesey
+! Added the supportedInstrumentModule functionality to the various search routines to support A-SMLS
+!
+! Revision 2.27  2014/07/18 23:14:29  pwagner
+! Aimed for consistency in names passed to allocate_test
+!
+! Revision 2.26  2013/08/12 23:48:09  pwagner
+! FindSomethings moved to MLSFinds module
+!
+! Revision 2.25  2013/06/12 02:20:02  vsnyder
+! Cruft removal
+!
+! Revision 2.24  2013/04/03 23:23:33  vsnyder
+! Don't look in config if it's not present
+!
+! Revision 2.23  2013/03/30 00:12:01  vsnyder
+! Add GetQtyStuffForForwardModel
+!
+! Revision 2.22  2011/11/11 00:42:06  vsnyder
+! Use IsExtinction array from Molecules module
+!
+! Revision 2.21  2011/06/16 20:19:47  vsnyder
+! Add Frq argument to GetQuantityForForwardModel
+!
+! Revision 2.20  2009/06/23 18:26:10  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.19  2009/04/20 16:36:26  pwagner
+! Needed changes when identical types with different names allowed in L2PC files
+!
+! Revision 2.18  2008/10/03 16:26:47  livesey
+! Added EXTINCTIONV2
+!
+! Revision 2.17  2008/09/29 22:56:54  vsnyder
+! Add PRINT statement in Not_Used_Here to reduce compilation cascades
+!
+! Revision 2.16  2008/09/29 22:54:13  vsnyder
+! Print radiometer name correctly in error message
+!
+! Revision 2.15  2006/07/17 20:06:37  livesey
+! Added initialization of foundInFirst
+!
+! Revision 2.14  2005/06/22 18:08:18  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.13  2004/11/01 20:19:35  vsnyder
+! Moved QtyStuff_t and associated dump routine to ForwardModelConfig
+!
+! Revision 2.12  2004/10/16 17:28:28  livesey
+! Added wasSpecific argument
+!
+! Revision 2.11  2004/10/07 23:25:50  vsnyder
+! Move Dump_Qty_Stuff here from Get_Species_Data
+!
+! Revision 2.10  2004/06/10 00:59:56  vsnyder
+! Move FindFirst, FindNext from MLSCommon to MLSSets
+!
+! Revision 2.9  2003/05/29 16:37:21  livesey
+! New reflector argument to GetQuantityForForwardModel
+!
+! Revision 2.8  2003/05/05 23:00:24  livesey
+! Merged in feb03 newfwm branch
+!
+! Revision 2.7.2.1  2003/03/21 02:47:38  vsnyder
+! Add a type with a pointer to a quantity, to make arrays of pointers
+!
+! Revision 2.7  2002/10/08 17:08:03  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.6  2002/10/02 22:52:19  vsnyder
+! Remove declaration for unused variable MATCHSC
+!
+! Revision 2.5  2002/10/02 22:51:07  vsnyder
+! OOPS, mispelled 'parameter' as 'private'
+!
+! Revision 2.4  2002/10/02 22:49:13  vsnyder
+! Cosmetic change to RCS stuff
+!
+! Revision 2.3  2002/09/26 21:41:23  livesey
+! Moved error checking
+!
+! Revision 2.2  2002/09/26 18:01:34  livesey
+! Bug fixes.
+!
+! Revision 2.1  2002/09/25 22:36:49  livesey
+! First version
+!
+@
+
+
+2.28
+log
+@Added the supportedInstrumentModule functionality to the various search routines to support A-SMLS
+@
+text
+@d351 1
+a351 1
+      & otherVector, quantityType, molecule, instrumentModule, supportedInstrumentModule, &xo
+d360 1
+a360 1
+       "$Id: ForwardModelVectorTools.f90,v 2.27 2014/07/18 23:14:29 pwagner Exp $"
+d370 3
+@
+
+
+2.27
+log
+@Aimed for consistency in names passed to allocate_test
+@
+text
+@d33 2
+a34 1
+    & molecule, instrumentModule, radiometer, reflector, signal, sideband, &
+d62 1
+d132 2
+a133 1
+        & quantityType, molecule, instrumentModule, radiometer, reflector, signal, sideband, &
+d319 1
+a319 1
+    & molecule, instrumentModule, radiometer, reflector, signal, sideband, &
+d337 1
+d351 3
+a353 3
+      & otherVector, quantityType, molecule, instrumentModule, radiometer, &
+      & reflector, signal, sideband, molIndex, config,                     &
+      & getQtyStuffForForwardModel%foundInFirst,                           &
+d360 1
+a360 1
+       "$Id: ForwardModelVectorTools.f90,v 2.26 2013/08/12 23:48:09 pwagner Exp $"
+d370 3
+@
+
+
+2.26
+log
+@FindSomethings moved to MLSFinds module
+@
+text
+@d308 2
+a309 2
+    call Deallocate_test ( stuff(1)%match, 'matchV', ModuleName )
+    call Deallocate_test ( stuff(2)%match, 'matchOV', ModuleName )
+d356 1
+a356 1
+       "$Id: ForwardModelVectorTools.f90,v 2.25 2013/06/12 02:20:02 vsnyder Exp $"
+d366 3
+@
+
+
+2.25
+log
+@Cruft removal
+@
+text
+@d41 13
+a53 13
+    use Allocate_Deallocate, only: Allocate_test, Deallocate_test
+    use ForwardModelConfig, only: ForwardModelConfig_T
+    use Intrinsic, only: Lit_Indices
+    use Intrinsic, only: L_VMR
+    use ManipulateVectorQuantities, only: DOHGRIDSMATCH, DOVGRIDSMATCH
+    use MLSKinds, only: R8
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use MLSSets, only: FindFirst
+    use MLSSignals_m, only: GetRadiometerName, GetSignalName, Signals
+    use Molecules, only: IsExtinction
+    use QuantityTemplates, only: QuantityTemplate_T
+    use String_table, only: Get_String
+    use VectorsModule, only: GetVectorQuantityByType, Vector_T, VectorValue_T
+d324 3
+a326 3
+    use ForwardModelConfig, only: ForwardModelConfig_T, QtyStuff_t
+    use MLSKinds, only: R8
+    use VectorsModule, only: Vector_T, VectorValue_T
+d356 1
+a356 1
+       "$Id: ForwardModelVectorTools.f90,v 2.24 2013/04/03 23:23:33 vsnyder Exp $"
+d366 3
+@
+
+
+2.24
+log
+@Don't look in config if it's not present
+@
+text
+@a90 2
+    integer :: ClosestFrq               ! Qty index of closest frequency match
+                                        ! >0 for vector 1, < 0 for vector 2
+a118 1
+    closestFrq = 0
+d356 1
+a356 1
+       "$Id: ForwardModelVectorTools.f90,v 2.23 2013/03/30 00:12:01 vsnyder Exp $"
+d366 3
+@
+
+
+2.23
+log
+@Add GetQtyStuffForForwardModel
+@
+text
+@d117 1
+a118 1
+
+d228 15
+a242 13
+    else if ( associated ( config%specificQuantities ) ) then
+      specificVectorLoop: do vectorIndex = 1, noVectors
+        v => stuff(vectorIndex)%v
+        match => stuff(vectorIndex)%match
+        do quantity = 1, v%template%noQuantities
+          if ( match ( quantity ) >= 0 .and. &
+            & any ( v%template%quantities(quantity) == config%specificQuantities ) ) then
+            noFound = noFound + 1
+            if ( molEntry == 0 .or. molEntry == noFound ) then
+              GetQuantityForForwardModel => v%quantities(quantity)
+              if ( present ( foundInFirst ) ) foundInFirst = ( vectorIndex == 1 )
+              if ( present ( wasSpecific ) ) wasSpecific = .true.
+              exit specificVectorLoop
+d244 3
+a246 3
+          end if
+        end do
+      end do specificVectorLoop
+d359 1
+a359 1
+       "$Id: ForwardModelVectorTools.f90,v 2.22 2011/11/11 00:42:06 vsnyder Exp $"
+d369 3
+@
+
+
+2.22
+log
+@Use IsExtinction array from Molecules module
+@
+text
+@d21 1
+a21 1
+  public :: GetQuantityForForwardModel
+d314 40
+d357 1
+a357 1
+       "$Id: ForwardModelVectorTools.f90,v 2.21 2011/06/16 20:19:47 vsnyder Exp $"
+d367 3
+@
+
+
+2.21
+log
+@Add Frq argument to GetQuantityForForwardModel
+@
+text
+@d50 1
+a50 1
+    use Molecules, only: L_EXTINCTION, L_EXTINCTIONV2
+d173 1
+a173 1
+              & ( thisMolecule == l_extinction .or. thisMolecule == l_extinctionv2 ) ) cycle
+d317 1
+a317 1
+       "$Id: ForwardModelVectorTools.f90,v 2.20 2009/06/23 18:26:10 pwagner Exp $"
+d327 3
+@
+
+
+2.20
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d25 1
+a25 1
+       "$RCSfile: $"
+d34 1
+a34 1
+    & molIndex, config, foundInFirst, wasSpecific, noError, matchQty )
+d46 1
+d49 1
+a49 1
+    use MLSSignals_m, only: GetRadiometerName, GetSignalName
+d62 1
+a62 1
+    integer, intent(in),  optional :: REFLECTOR   ! Reflector literal
+d64 1
+a64 1
+    integer, intent(in),  optional :: SIDEBAND ! -1, 0, +1
+d68 2
+a69 2
+    logical, intent(out), optional :: WASSPECIFIC ! Set if listed as specific quantity
+    logical, intent(in),  optional :: NOERROR ! Don't give error if not found
+d71 1
+d75 6
+a81 1
+    logical :: UseGetQuantityByType
+d83 10
+a92 3
+    logical, dimension(:), pointer :: MATCHV ! Flags for vector 
+    logical, dimension(:), pointer :: MATCHOV ! Flags for otherVector
+    logical, dimension(:), pointer :: MATCH ! One of the match...s
+a94 1
+    integer :: VectorIndex              ! Loop counter
+d96 1
+d98 1
+a98 1
+    integer :: Quantity                 ! Loop counter
+d102 4
+d117 3
+d121 1
+d139 3
+d143 5
+a147 7
+    ! Setup a set of logicals to identify the matching quantities
+    nullify ( matchV, matchOV )
+    call Allocate_test ( matchV, size ( vector%quantities ), &
+      & 'matchV', ModuleName )
+    if ( present ( otherVector ) ) &
+      & call Allocate_test ( matchOV, size ( otherVector%quantities ), &
+      &   'matchOV', ModuleName )
+a149 5
+    if ( present ( otherVector ) ) then
+      noVectors = 2
+    else
+      noVectors = 1
+    end if
+d151 3
+a153 8
+      if ( vectorIndex == 1 ) then
+        v => vector
+        match => matchV
+      else
+        v => otherVector
+        match => matchOV
+      end if
+      do quantity = 1, size ( v%quantities )
+a156 1
+        match ( quantity ) = .false.
+d191 17
+a207 4
+        endif
+        match ( quantity ) = .true.
+      end do                            ! End loop over the quantities
+    end do                              ! End loop over the one or two vectors
+d219 7
+d228 1
+a228 2
+    noFound = 0
+    if ( associated ( config%specificQuantities ) ) then
+d230 4
+a233 9
+        if ( vectorIndex == 1 ) then
+          v => vector
+          match => matchV
+        else
+          v => otherVector
+          match => matchOV
+        end if
+        do quantity = 1, size ( v%quantities )
+          if ( match ( quantity ) .and. &
+d254 3
+a256 8
+        if ( vectorIndex == 1 ) then
+          v => vector
+          match => matchV
+        else
+          v => otherVector
+          match => matchOV
+        end if
+        quantity = FindFirst ( match )
+d309 2
+a310 2
+    call Deallocate_test ( matchV, 'matchV', ModuleName )
+    call Deallocate_test ( matchOV, 'matchOV', ModuleName )
+d317 1
+a317 1
+       "$Id: read_apriori.f90 is it here $"
+d327 3
+@
+
+
+2.19
+log
+@Needed changes when identical types with different names allowed in L2PC files
+@
+text
+@d25 1
+a25 1
+       "$RCSfile: ForwardModelVectorTools.f90,v $"
+d293 1
+a294 1
+!---------------------------- RCS Ident Info -------------------------------
+d296 2
+a297 3
+       "$Id: ForwardModelVectorTools.f90,v 2.18 2008/10/03 16:26:47 livesey Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d299 1
+a299 1
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
+d301 1
+d306 3
+@
+
+
+2.18
+log
+@Added EXTINCTIONV2
+@
+text
+@d34 1
+a34 1
+    & molIndex, config, foundInFirst, wasSpecific, noError )
+d45 1
+d69 1
+d175 5
+d296 1
+a296 1
+       "$Id: ForwardModelVectorTools.f90,v 2.17 2008/09/29 22:56:54 vsnyder Exp $"
+d306 3
+@
+
+
+2.17
+log
+@Add PRINT statement in Not_Used_Here to reduce compilation cascades
+@
+text
+@d48 1
+a48 1
+    use Molecules, only: L_EXTINCTION
+d158 2
+a159 1
+            if ( radiometer /= qt%radiometer .and. thisMolecule == l_extinction ) cycle
+d289 1
+a289 1
+       "$Id: ForwardModelVectorTools.f90,v 2.16 2008/09/29 22:54:13 vsnyder Exp $"
+d299 3
+@
+
+
+2.16
+log
+@Print radiometer name correctly in error message
+@
+text
+@d288 1
+a288 1
+       "$Id: ForwardModelVectorTools.f90,v 2.15 2006/07/17 20:06:37 livesey Exp $"
+d292 1
+d298 3
+@
+
+
+2.15
+log
+@Added initialization of foundInFirst
+@
+text
+@d47 1
+a47 1
+    use MLSSignals_m, only: GetSignalName
+d259 1
+a259 1
+        call get_string ( lit_indices(radiometer), msg(len_trim(msg)+2:))
+d288 1
+a288 1
+       "$Id: ForwardModelVectorTools.f90,v 2.14 2005/06/22 18:08:18 pwagner Exp $"
+d297 3
+@
+
+
+2.14
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d25 1
+a25 1
+       "$RCSfile: $"
+d96 1
+d288 1
+a288 1
+       "$Id: $"
+d297 3
+@
+
+
+2.13
+log
+@Moved QtyStuff_t and associated dump routine to ForwardModelConfig
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d23 3
+a25 6
+  !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+    & "$Id: ForwardModelVectorTools.f90,v 2.12 2004/10/16 17:28:28 livesey Exp $"
+  character (len=len(idParm)) :: Id = idParm
+  character (LEN=*), parameter :: ModuleName= &
+    & "$RCSfile: ForwardModelVectorTools.f90,v $"
+d27 1
+a27 1
+  !---------------------------------------------------------------------------
+d285 5
+d296 3
+@
+
+
+2.12
+log
+@Added wasSpecific argument
+@
+text
+@a8 2
+  use VectorsModule, only: VectorValue_T
+
+d13 1
+a13 10
+  public :: Dump, Dump_Qty_Stuff, GetQuantityForForwardModel
+
+  interface Dump
+    module procedure Dump_Qty_Stuff
+  end interface
+
+  type, public :: QtyStuff_T ! So we can have an array of pointers to QTY's
+    type (VectorValue_T), pointer :: QTY
+    logical :: FoundInFirst
+  end type QtyStuff_T
+d17 1
+a17 1
+    & "$Id: ForwardModelVectorTools.f90,v 2.11 2004/10/07 23:25:50 vsnyder Exp $"
+a278 11
+  ! ---------------------------------------------  Dump_Qty_Stuff  -----
+  subroutine Dump_Qty_Stuff ( Qty )
+    use Output_m, only: NewLine, Output
+    use String_Table, only: Display_String
+    use VectorsModule, only: Dump
+    type(qtyStuff_t), intent(in) :: Qty
+    call dump ( qty%qty, details=-2 )
+    if ( qty%foundInFirst ) call output ( ', Found in first' )
+    call newLine
+  end subroutine Dump_Qty_Stuff
+
+d286 3
+@
+
+
+2.11
+log
+@Move Dump_Qty_Stuff here from Get_Species_Data
+@
+text
+@d28 1
+a28 1
+    & "$Id: ForwardModelVectorTools.f90,v 2.10 2004/06/10 00:59:56 vsnyder Exp $"
+d40 1
+a40 1
+    & molIndex, config, foundInFirst, noError )
+d72 1
+d101 1
+d210 1
+d308 3
+@
+
+
+2.10
+log
+@Move FindFirst, FindNext from MLSCommon to MLSSets
+@
+text
+@d15 5
+a19 1
+  public :: GetQuantityForForwardModel
+d28 1
+a28 1
+    & "$Id: ForwardModelVectorTools.f90,v 2.9 2003/05/29 16:37:21 livesey Exp $"
+d37 1
+a37 1
+  ! ------------------------------ GetQuantityForForwardModel ----------------
+d287 11
+d305 3
+@
+
+
+2.9
+log
+@New reflector argument to GetQuantityForForwardModel
+@
+text
+@d24 1
+a24 1
+    & "$Id: ForwardModelVectorTools.f90,v 2.8 2003/05/05 23:00:24 livesey Exp $"
+a46 1
+    use MLSCommon, only: FindFirst
+d48 1
+d290 3
+@
+
+
+2.8
+log
+@Merged in feb03 newfwm branch
+@
+text
+@d24 1
+a24 1
+    & "$Id$"
+d27 1
+a27 1
+    & "$RCSfile$"
+d35 1
+a35 1
+    & molecule, instrumentModule, radiometer, signal, sideband, &
+d62 1
+d108 1
+a108 1
+        & quantityType, molecule, instrumentModule, radiometer, signal, sideband, &
+d162 3
+d260 5
+d289 4
+a292 1
+! $Log$
+@
+
+
+2.7
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d9 2
+d17 5
+d24 1
+a24 1
+    & "$Id: ForwardModelVectorTools.f90,v 2.6 2002/10/02 22:52:19 vsnyder Exp $"
+d27 1
+a27 1
+    & "$RCSfile: ForwardModelVectorTools.f90,v $"
+d43 3
+d47 3
+a50 3
+    use ForwardModelConfig, only: ForwardModelConfig_T
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use VectorsModule, only: GetVectorQuantityByType, Vector_T, VectorValue_T
+d53 1
+a53 4
+    use MLSSignals_m, only: GetSignalName
+    use MLSCommon, only: FindFirst
+    use Intrinsic, only: Lit_Indices
+    use Allocate_Deallocate, only: Allocate_test, Deallocate_test
+d280 7
+a286 1
+! $Log: ForwardModelVectorTools.f90,v $
+@
+
+
+2.7.2.1
+log
+@Add a type with a pointer to a quantity, to make arrays of pointers
+@
+text
+@a8 2
+  use VectorsModule, only: VectorValue_T
+
+a14 5
+  type, public :: QtyStuff_T ! So we can have an array of pointers to QTY's
+    type (VectorValue_T), pointer :: QTY
+    logical :: FoundInFirst
+  end type QtyStuff_T
+
+d17 1
+a17 1
+    & "$Id: ForwardModelVectorTools.f90,v 2.7 2002/10/08 17:08:03 pwagner Exp $"
+d36 2
+a37 1
+    use Allocate_Deallocate, only: Allocate_test, Deallocate_test
+a38 3
+    use Intrinsic, only: Lit_Indices
+    use Intrinsic, only: L_VMR
+    use MLSCommon, only: FindFirst
+d40 1
+a40 2
+    use MLSSignals_m, only: GetSignalName
+    use Molecules, only: L_EXTINCTION
+d43 4
+a46 1
+    use VectorsModule, only: GetVectorQuantityByType, Vector_T, VectorValue_T
+a273 3
+! Revision 2.7  2002/10/08 17:08:03  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+@
+
+
+2.6
+log
+@Remove declaration for unused variable MATCHSC
+@
+text
+@d17 1
+a17 1
+    & "$Id: ForwardModelVectorTools.f90,v 2.5 2002/10/02 22:51:07 vsnyder Exp $"
+d21 1
+d267 4
+d274 3
+@
+
+
+2.5
+log
+@OOPS, mispelled 'parameter' as 'private'
+@
+text
+@d17 1
+a17 1
+    & "$Id: ForwardModelVectorTools.f90,v 2.4 2002/10/02 22:49:13 vsnyder Exp $"
+a67 1
+    logical, dimension(:), pointer :: MATCHSC ! Flags for specificQuantities
+d269 3
+@
+
+
+2.4
+log
+@Cosmetic change to RCS stuff
+@
+text
+@d11 4
+d16 2
+a17 2
+  character (len=*), private :: IdParm = &
+    & "$Id: ForwardModelVectorTools.f90,v 2.3 2002/09/26 21:41:23 livesey Exp $"
+d19 1
+a19 1
+  character (LEN=*), parameter, private :: ModuleName= &
+a22 4
+  private
+
+  public :: GetQuantityForForwardModel
+
+d270 3
+@
+
+
+2.3
+log
+@Moved error checking
+@
+text
+@d9 1
+a9 1
+  implicit none
+d12 3
+a14 2
+  character (LEN=256), private :: Id = &
+    & "$Id: ForwardModelVectorTools.f90,v 2.2 2002/09/26 18:01:34 livesey Exp $"
+d270 3
+@
+
+
+2.2
+log
+@Bug fixes.
+@
+text
+@d13 1
+a13 1
+    & "$Id: ForwardModelVectorTools.f90,v 2.1 2002/09/25 22:36:49 livesey Exp $"
+d197 1
+d199 3
+a201 4
+      if ( molEntry > 1 .and. noFound < molEntry ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unresolved ambiguity in molecule list' )
+    end if
+d269 3
+@
+
+
+2.1
+log
+@First version
+@
+text
+@d9 2
+d13 1
+a13 1
+    & "$Id: ManipulateVectorQuantities.f90,v 2.19 2002/09/19 00:30:36 pwagner Exp $"
+d15 1
+a15 1
+    & "$RCSfile: ManipulateVectorQuantities.f90,v $"
+d34 2
+d42 3
+d73 1
+d87 1
+d92 2
+a93 1
+      if ( associated ( config%specificQuantities ) ) useGetQuantityByType = .false.
+d107 1
+d111 1
+a111 1
+      & call Allocate_test ( matchV, size ( otherVector%quantities ), &
+d121 1
+a121 2
+      select case ( vectorIndex )
+      case ( 1 )
+d124 1
+a124 1
+      case ( 2 )
+d127 1
+a127 1
+      end select
+d129 1
+d136 5
+d146 6
+a151 1
+          if ( radiometer /= qt%radiometer ) cycle
+a158 3
+        if ( present(molIndex) ) then
+          if ( config%molecules ( molIndex ) /= qt%molecule ) cycle
+        end if
+d176 18
+a193 17
+    specificVectorLoop: do vectorIndex = 1, noVectors
+      select case ( vectorIndex )
+      case ( 1 )
+        v => otherVector
+        match => matchV
+      case ( 2 )
+        v => otherVector
+        match => matchOV
+      end select
+      do quantity = 1, size ( v%quantities )
+        if ( match ( quantity ) .and. &
+          & any ( v%template%quantities(quantity) == config%specificQuantities ) ) then
+          noFound = noFound + 1
+          if ( molEntry == 0 .or. molEntry == noFound ) then
+            GetQuantityForForwardModel => v%quantities(quantity)
+            if ( present ( foundInFirst ) ) foundInFirst = ( vectorIndex == 1 )
+            exit specificVectorLoop
+d195 2
+a196 3
+        end if
+      end do
+    end do specificVectorLoop
+d198 4
+a201 3
+    if ( molEntry > 1 .and. noFound < molEntry ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unresolved ambiguity in molecule list' )
+d206 2
+a207 3
+        select case ( vectorIndex )
+        case ( 1 )
+          v => otherVector
+d209 1
+a209 1
+        case ( 2 )
+d212 2
+a213 2
+        end select
+        quantity = FindFirst ( v )
+d268 4
+a271 1
+! $Log$
+@
+

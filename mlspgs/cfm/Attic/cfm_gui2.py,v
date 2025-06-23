@@ -1,0 +1,104 @@
+head	1.1;
+access;
+symbols
+	cfm-single-freq-0-1:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2021.07.13.15.16.48;	author whdaffer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2021.07.13.15.16.48;	author whdaffer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@file cfm_gui2.py was initially added on branch cfm-single-freq-0-1.
+@
+text
+@@
+
+
+1.1.2.1
+log
+@Continuing work
+@
+text
+@a0 64
+#!/usr/bin/env python
+# https://www.techwithtim.net5X5b
+# Working from https://www.youtube.com/watch?v=-2uyzAqefyE -- buttons
+#QTDesigner : https://www.youtube.com/watch?v=FVpho_UiDAY
+# Menubars (menu bars, .triggered, status bar)
+from PyQt5 import QtWidgets
+from PyQt5.QtWidgets import QApplication, QMainWindow
+import sys
+
+
+class cfm_gui(QMainWindow):
+  def __init__(self):
+    super(cfm_gui,self).__init__()
+    #  x,y,width,height
+    #  0,0, is upper left of screen, y points downward
+
+    self.setGeometry(200,200,300,300)
+    self.setWindowTitle("CFM_MakeL2CF_GUI")
+    self.initUI()
+
+  def initUI(self):
+    self.label=QtWidgets.QLabel(self)
+    self.label.setText("foo bar")
+    self.label.move(50,50)
+
+    self.b1=QtWidgets.QPushButton(self)
+    self.b1.setText("click me")
+    self.b1.clicked.connect(self.clicked)
+
+  def clicked(self):
+    self.label.setText("You changed the label")
+    self.update()
+
+  def update(self):
+    self.label.adjustSize()
+    
+#def clicked():
+#  print("It was clicked")
+  
+
+def window():
+  app=QApplication(sys.argv)
+  
+  win=cfm_gui()
+  
+
+  # Moved to object
+  # win.setGeometry(200,200,300,300)
+  # win.setWindowTitle("CFM_MakeL2CF_GUI")
+
+  # label=QtWidgets.QLabel(win)
+  # label.setText("foo bar")
+  # label.move(50,50)
+
+  # b1=QtWidgets.QPushButton(win)
+  # b1.setText("click me")
+  # b1.clicked.connect(clicked)
+
+  win.show()
+  sys.exit(app.exec_())
+  print("done")
+
+window()
+
+@
+

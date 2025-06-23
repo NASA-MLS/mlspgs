@@ -1,0 +1,5650 @@
+head	2.48;
+access;
+symbols
+	v5-02-NRT-19:2.48
+	v6-00:2.48
+	v5-02-NRT-18:2.48
+	v5-02:2.48
+	v5-01-NRT-17:2.48
+	v5-01-NRT-16:2.48
+	v5-01-NRT-15:2.48
+	v5-01-NRT-14:2.48
+	neuralnetworks-1-0:2.48.0.6
+	cfm-single-freq-0-1:2.48.0.4
+	v5-01:2.48
+	v5-00:2.48
+	v4-23-TA133:2.48.0.2
+	mus-emls-1-70:2.47.0.4
+	rel-1-0-englocks-work:2.47.0.2
+	VUMLS1-00:2.46
+	VPL1-00:2.46
+	V4-22-NRT-08:2.46
+	VAM1-00:2.46
+	V4-21:2.46.0.2
+	V4-13:2.46
+	V4-12:2.46
+	V4-11:2.46
+	V4-10:2.46
+	V3-43:2.44
+	M4-00:2.44
+	V3-41:2.44
+	V3-40-PlusGM57:2.44.0.2
+	V2-24-NRT-04:2.31
+	V3-33:2.44
+	V2-24:2.31
+	V3-31:2.44
+	V3-30-NRT-05:2.44
+	cfm-01-00:2.44
+	V3-30:2.44
+	V3-20:2.44
+	V3-10:2.38
+	V2-23-NRT-02:2.31
+	V2-23:2.31
+	V2-22-NRT-01:2.31
+	V2-22:2.31
+	V2-21:2.29
+	V2-20:2.29
+	V2-11:2.29
+	V2-10:2.29
+	V2-00:2.29
+	V1-51:2.23
+	V1-50:2.23
+	V1-45:2.22
+	V1-44:2.22
+	V1-43:2.20
+	V1-42:2.15
+	V1-41:2.15
+	V1-32:2.18
+	V1-40:2.15
+	V1-31:2.15
+	V1-30:2.13;
+locks; strict;
+comment	@# @;
+
+
+2.48
+date	2019.01.29.21.44.15;	author pwagner;	state Exp;
+branches;
+next	2.47;
+
+2.47
+date	2018.03.22.16.56.35;	author pwagner;	state Exp;
+branches;
+next	2.46;
+
+2.46
+date	2013.08.31.01.24.53;	author vsnyder;	state Exp;
+branches;
+next	2.45;
+
+2.45
+date	2013.06.12.02.11.27;	author vsnyder;	state Exp;
+branches;
+next	2.44;
+
+2.44
+date	2010.02.04.23.08.00;	author vsnyder;	state Exp;
+branches;
+next	2.43;
+
+2.43
+date	2010.01.29.01.16.06;	author pwagner;	state Exp;
+branches;
+next	2.42;
+
+2.42
+date	2010.01.14.23.29.35;	author pwagner;	state Exp;
+branches;
+next	2.41;
+
+2.41
+date	2010.01.11.18.34.50;	author pwagner;	state Exp;
+branches;
+next	2.40;
+
+2.40
+date	2009.10.05.23.38.21;	author pwagner;	state Exp;
+branches;
+next	2.39;
+
+2.39
+date	2009.09.29.23.33.49;	author pwagner;	state Exp;
+branches;
+next	2.38;
+
+2.38
+date	2009.06.23.18.25.42;	author pwagner;	state Exp;
+branches;
+next	2.37;
+
+2.37
+date	2008.05.24.00.54.46;	author vsnyder;	state Exp;
+branches;
+next	2.36;
+
+2.36
+date	2008.05.02.00.05.36;	author pwagner;	state Exp;
+branches;
+next	2.35;
+
+2.35
+date	2008.04.25.22.51.44;	author pwagner;	state Exp;
+branches;
+next	2.34;
+
+2.34
+date	2008.04.18.16.29.30;	author pwagner;	state Exp;
+branches;
+next	2.33;
+
+2.33
+date	2008.03.07.01.36.08;	author pwagner;	state Exp;
+branches;
+next	2.32;
+
+2.32
+date	2008.02.22.21.30.18;	author pwagner;	state Exp;
+branches;
+next	2.31;
+
+2.31
+date	2007.08.20.22.00.47;	author pwagner;	state Exp;
+branches;
+next	2.30;
+
+2.30
+date	2007.08.17.00.27.48;	author pwagner;	state Exp;
+branches;
+next	2.29;
+
+2.29
+date	2005.11.15.00.18.20;	author pwagner;	state Exp;
+branches;
+next	2.28;
+
+2.28
+date	2005.11.11.21.41.03;	author pwagner;	state Exp;
+branches;
+next	2.27;
+
+2.27
+date	2005.10.11.17.29.15;	author pwagner;	state Exp;
+branches;
+next	2.26;
+
+2.26
+date	2005.06.29.00.39.30;	author pwagner;	state Exp;
+branches;
+next	2.25;
+
+2.25
+date	2005.06.22.17.25.50;	author pwagner;	state Exp;
+branches;
+next	2.24;
+
+2.24
+date	2005.06.14.20.34.20;	author pwagner;	state Exp;
+branches;
+next	2.23;
+
+2.23
+date	2004.09.23.22.58.59;	author pwagner;	state Exp;
+branches;
+next	2.22;
+
+2.22
+date	2004.08.04.23.19.01;	author pwagner;	state Exp;
+branches;
+next	2.21;
+
+2.21
+date	2004.07.22.17.07.15;	author pwagner;	state Exp;
+branches;
+next	2.20;
+
+2.20
+date	2004.05.05.21.28.42;	author pwagner;	state Exp;
+branches;
+next	2.19;
+
+2.19
+date	2004.03.24.23.53.02;	author pwagner;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2004.02.13.00.16.39;	author pwagner;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2004.02.05.23.31.05;	author pwagner;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2004.01.23.01.12.28;	author pwagner;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2003.10.30.00.01.57;	author pwagner;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2003.10.28.00.28.53;	author pwagner;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2003.07.15.23.36.28;	author pwagner;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2003.07.11.21.50.31;	author livesey;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2003.07.11.01.22.55;	author livesey;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2003.07.09.21.49.07;	author pwagner;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2003.07.02.00.54.25;	author pwagner;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2003.06.26.00.05.40;	author pwagner;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2003.06.20.19.31.39;	author pwagner;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2003.06.06.22.49.12;	author pwagner;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2003.04.21.19.32.27;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2003.04.17.23.04.51;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2003.04.15.23.16.46;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2003.04.15.21.58.54;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2003.04.11.23.28.44;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.48
+log
+@Initialized attrList in MLS_IsGlatt_fid to prevent bleed-thru from last call
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module MLSHDFEOS
+
+  ! This module contains MLS specific routines to do common HDFEOS
+  ! tasks not specifically found in he5_swapi or he5_gdapi.
+  
+  ! We are in mid-transition between the older FileID/FileName interfaces
+  ! and the newer MLSFile defined-type interfaces
+
+  use HDF, only: Dfnt_Char8, Dfnt_Float32, Dfnt_Float64, &
+    & Dfnt_Int8, Dfnt_Int16, Dfnt_Int32, Dfnt_Int64
+  use HDFEOS, only: Gdattach, Gdcreate, &
+    & Swattach, Swcreate, Swdefdfld, Swdefgfld, Swdefdim, Swdetach, &
+    & Swdiminfo, Swinqdflds, Swinqswath
+  use HDFEOS5, only: HE5t_Native_Float, HE5t_Native_Double, &
+    & HE5t_Native_Int, HE5t_Native_Int8, HE5t_Native_Int16, HE5t_Native_Int64
+  use HDFEOS5, only: HE5_Gdattach, HE5_Gdcreate, &
+    & HE5_Swattach, HE5_Swcreate, HE5_Swdefchunk, HE5_Swdetach, HE5_Swdefdfld, &
+    & HE5_Swdefgfld, HE5_Swdefdim, HE5_Swdiminfo, HE5_Swinqdflds, &
+    & HE5_Swinqswath, MLS_Chartype
+  use HE5_Swapi, only: HE5_Swsetfill, HE5_Swwrattr, HE5_Swwrlattr
+  use HE5_Swapi_Character_Array, only: HE5_Ehwrglatt_Character_Array, &
+    & HE5_Ehrdglatt_Character_Array
+  use HE5_Swapi_Character_Scalar, only: HE5_Ehwrglatt_Character_Scalar, &
+    & HE5_Ehrdglatt_Character_Scalar
+  use HE5_Swapi_Double, only: HE5_Ehwrglatt_Double, HE5_Ehrdglatt_Double, &
+    & HE5_Swrdfld_Double, HE5_Swrdfld_Double_2d, HE5_Swrdfld_Double_3d, &
+    & HE5_Swwrfld_Double, HE5_Swwrfld_Double_2d, HE5_Swwrfld_Double_3d
+  use HE5_Swapi_Integer, only: HE5_Ehwrglatt_Integer, &
+    & HE5_Swrdfld_Integer, HE5_Swwrfld_Integer, HE5_Ehrdglatt
+  use HE5_Swapi_Real, only: HE5_Ehwrglatt_Real, HE5_Ehrdglatt_Real, &
+    & HE5_Swrdfld_Real, HE5_Swrdfld_Real_2d, HE5_Swrdfld_Real_3d, &
+    & HE5_Swwrfld_Real, HE5_Swwrfld_Real_2d, HE5_Swwrfld_Real_3d
+  use HighOutput, only: OutputnamedValue
+  use MLSCommon, only: MLSFile_T
+  use MLSFiles, only: HDFversion_4, HDFversion_5, WildcardHDFversion, &
+    & MLS_HDF_Version
+  use MLSMessagemodule, only: MLSMSG_Error, MLSMSG_Warning, MLSMessage
+  use MLSStringlists, only: StringElementnum
+  use MLSStrings, only: Replace
+  use Swapi_Double, only: Swrdfld_Double, Swrdfld_Double_2d, Swrdfld_Double_3d, &
+    & Swwrfld_Double, Swwrfld_Double_2d, Swwrfld_Double_3d
+  use Swapi_Integer, only: Swrdfld_Integer, &
+    & Swwrfld_Integer
+  use Swapi_Real, only: Swrdfld_Real, Swrdfld_Real_2d, Swrdfld_Real_3d, &
+    & Swwrfld_Real, Swwrfld_Real_2d, Swwrfld_Real_3d
+  use Trace_M, only: Trace_Begin, Trace_End
+
+  implicit none
+  private
+
+  public :: He5_Ehwrglatt, He5_Ehrdglatt, Hsize, Hsizes, &
+    & MLS_Ehwrglatt, MLS_Isglatt, &
+    & MLS_Dfldsetup, MLS_Gfldsetup, &
+    & MLS_Swdefdim, MLS_Swdiminfo, MLS_Swrdfld, MLS_Swwrfld, &
+    & MLS_Swattach, MLS_Swcreate, MLS_Swdetach, MLS_Gdcreate, MLS_Gdwrattr, &
+    & MLS_Swwrattr, MLS_Swwrlattr, &
+    & MLS_Swath_In_File
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: MLSHDFEOS.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+! === (start of toc) ===
+!     c o n t e n t s
+!     - - - - - - - -
+
+! HE5_EHRDGLATT     Reads the global attributes at file level
+! HE5_EHWRGLATT     Writes the global attributes at file level
+! HSIZE             Return arg with same integer value
+!                     but with kind value size_t
+! HSIZES            Return array as HSIZE
+! MLS_DFLDSETUP     Sets up a data field in a swath
+! MLS_GDCREATE      Creates a grid (perhaps prior to writing)
+! MLS_GDWRATTR      Writes a grid-level attribute (e.g., pressures)
+! MLS_GFLDSETUP     Sets up a geolocation field in a swath
+! MLS_ISGLATT       Is the named global attribute present in the file?
+! MLS_SWATH_IN_FILE Is named swath in file?
+! MLS_SWATTACH      Attaches a swath (perhaps prior to reading)
+! MLS_SWCREATE      Creates a swath (perhaps prior to writing)
+! MLS_SWDEFDIM      Sets up a dimension for a swath
+! MLS_SWDETACH      Detaches from a swath (perhaps prior to closing the file)
+! MLS_SWDIMINFO     Gets info on a dimension for a swath
+! MLS_SWRDFLD       Reads a field from a swath, data or geolocation
+! MLS_SWWRFLD       Writes a field to a swath, data or geolocation
+! MLS_SWWRATTR      Writes a swath-level attribute (e.g., pressures)
+! MLS_SWWRLATTR     Writes a datafield-level attribute (e.g., units)
+! === (end of toc) ===
+
+! === (start of api) ===
+! int HE5_EHRDGLATT (int fileID, char* attrName, value)
+!     value can be one of:
+!    {char* value, char* value(:), int value(:), r4 value(:), r8 value(:)}
+! int HE5_EHWRGLATT (int fileID, char* attrName, int datatype, int count, value)
+!     value can be one of:
+!    {char* value, char* value(:), int value(:), r4 value(:), r8 value(:)}
+! size_t HSIZE (int arg)
+! size_t(:) HSIZES (int ints(:))
+! int MLS_SWSETFILL (int swathID, char* names, int datatype, value) 
+!     value can be one of:
+!    {char* value, int value, r4 value, r8 value}
+! int MLS_DFLDSETUP (int swathID, char* fieldname, char* dimname, 
+!     char* MAXDIMList, int datatype, int merge, int chunk_rank, 
+!     int chunk_dims(:), [char* filename], [int hdfVersion], [log dontFail],
+!     [int iFill], [r4 rFill], [r8 dFill]) 
+! int MLS_GDCREATE (int fileID, char* gridname, 
+!     int xdimsize, int ydimsize, r8 upleft(2), r8 lowright(2), 
+!     [char* filename], [int hdfVersion]) 
+! int MLS_GDWRATTR (int gridID, char* attrName, int datatype, int count, 
+!     char* buffer)
+! int MLS_GFLDSETUP (int swathID, char* fieldname, char* dimname, 
+!     char* MAXDIMList, int datatype, int merge, int chunk_rank, 
+!     int chunk_dims(:), [char* filename], [int hdfVersion], [log dontFail],
+!     [int iFill], [r4 rFill], [r8 dFill]) 
+! log MLS_ISGLATT (file, char* attrname)
+!     file can be one of: int fileID, or char* filename
+! log MLS_SWATH_IN_FILE (file, char* attrname)
+! int MLS_SWATTACH (file, char* swathname, [char* filename], [int hdfVersion], 
+!     [log dontFail]) 
+!     file can be one of: int fileID, or type(MLSFile_T) MLSFile
+! int MLS_SWCREATE (file, char* swathname, [char* filename], [int hdfVersion]) 
+!     file can be one of: int fileID, or type(MLSFile_T) MLSFile
+! int MLS_SWdefdim (int swathID, char* dimname, 
+!     int dimsize, [char* filename], [int hdfVersion], [log dontFail]) 
+! int MLS_SWDETACH (int swathID, [char* filename], [int hdfVersion])
+! int MLS_SWdiminfo (int swathID, char* dimname, 
+!     [char* filename], [int hdfVersion], [log dontFail]) 
+! int MLS_SWRDFLD (int swathID, char* fieldname, 
+!     int start(rank), int stride(rank), int edge(rank), values,
+!     [char* filename], [int hdfVersion], [log dontFail]) 
+!     values can be one of:
+!    {char* value, char* value(:), int value(:), r4 value(shp), r8 value(shp)}
+!     and shp is an array of ints of size rank
+! int MLS_SWWRFLD (int swathID, char* fieldname, 
+!     int start(rank), int stride(rank), int edge(rank), values,
+!     [char* filename], [int hdfVersion], [log dontFail]) 
+!     values can be one of types in MLS_SWRDFLD
+! int MLS_SWWRATTR (int swathID, char* attrName, int datatype, int count, 
+!     char* buffer)
+! int MLS_SWWRLATTR (int swathID, char* fieldName, char* attrName, 
+!     int datatype, int count, char* buffer)
+! === (end of api) ===
+  interface HE5_EHWRGLATT   ! From its name, might better be in he5_ehapi.f90
+    module procedure HE5_EHWRGLATT_CHARACTER_SCALAR, HE5_EHWRGLATT_DOUBLE, &
+    HE5_EHWRGLATT_INTEGER, HE5_EHWRGLATT_REAL, HE5_EHWRGLATT_CHARACTER_ARRAY
+  end interface
+
+  interface HE5_EHRDGLATT   ! From its name, might better be in he5_ehapi.f90
+    module procedure HE5_EHRDGLATT_CHARACTER_SCALAR, &
+      & HE5_EHRDGLATT_DOUBLE, &
+      & HE5_EHRDGLATT_REAL, HE5_EHRDGLATT_CHARACTER_ARRAY
+  end interface
+
+  interface MLS_EHWRGLATT
+    module procedure MLS_EHWRGLATT_char, MLS_EHWRGLATT_textfile
+  end interface
+
+  interface MLS_ISGLATT
+    module procedure MLS_ISGLATT_FID, &
+      & MLS_ISGLATT_FN
+  end interface
+
+  interface MLS_SWATH_IN_FILE
+    module procedure MLS_SWATH_IN_FILE_ARR, &
+      & MLS_SWATH_IN_FILE_SCA
+  end interface
+
+  interface MLS_SWATTACH
+    module procedure MLS_SWATTACH_ID, &
+      & MLS_SWATTACH_MF
+  end interface
+
+  interface MLS_SWCREATE
+    module procedure MLS_SWCREATE_ID, &
+      & MLS_SWCREATE_MF
+  end interface
+
+  interface MLS_SWRDFLD
+    module procedure &
+      & MLS_SWRDFLD_CHAR_1D, &
+      & MLS_SWRDFLD_DOUBLE_1D, MLS_SWRDFLD_DOUBLE_2D, MLS_SWRDFLD_DOUBLE_3D, &
+      & MLS_SWRDFLD_INTEGER, &
+      & MLS_SWRDFLD_REAL_1D, MLS_SWRDFLD_REAL_2D, MLS_SWRDFLD_REAL_3D
+  end interface
+
+  interface MLS_SWWRFLD
+    module procedure &
+      & MLS_SWWRFLD_CHAR_1D, &
+      & MLS_SWWRFLD_DOUBLE_1D, MLS_SWWRFLD_DOUBLE_2D, MLS_SWWRFLD_DOUBLE_3D, &
+      & MLS_SWWRFLD_INTEGER, &
+      & MLS_SWWRFLD_REAL_1D, MLS_SWWRFLD_REAL_2D, MLS_SWWRFLD_REAL_3D
+  end interface
+
+  integer, public, parameter :: MAXNODFIELDS = 1000
+  integer, public, parameter :: MAXDLISTLENGTH = 400000
+  integer, parameter         :: DFLTMAXLINELENGTH = 1024
+
+  ! Print debugging stuff?
+  logical, parameter :: DEEBUG = .false.  
+  character(len=1), parameter :: BLANK = ' '
+
+contains ! ======================= Public Procedures =========================
+
+  ! ----------------------------------------------  MLS_EHWRGLATT  -----
+  integer function MLS_EHWRGLATT_char ( FILEID, &
+    & ATTRNAME, DATATYPE, COUNT, BUFFER )
+    integer, intent(in) :: FILEID      ! File ID
+    character(len=*), intent(in) :: ATTRNAME     ! Attribute name
+    integer, intent(in) :: DATATYPE    ! E.g., MLS_CHARTYPE
+    integer, intent(in) :: COUNT   ! How many
+    character(len=*), intent(in) :: BUFFER  ! Buffer for write
+
+    ! Local variables
+    integer :: Me = -1                  ! String index for trace cacheing
+
+    ! Executable code
+    call trace_begin ( me, 'MLS_EHWRGLATT_char' , cond=.false. )
+    if ( len_trim(buffer) > 0 ) then
+      MLS_EHWRGLATT_char = he5_ehwrglatt_character_scalar( FILEID, &
+      & ATTRNAME, DATATYPE, hsize(max(COUNT, len_trim(BUFFER))), BUFFER )
+    else
+      MLS_EHWRGLATT_char = he5_ehwrglatt_character_scalar( FILEID, &
+      & ATTRNAME, DATATYPE, hsize(1), BLANK )
+    endif
+    call trace_end ( cond=.false. )
+
+  end function MLS_EHWRGLATT_char
+
+  integer function MLS_EHWRGLATT_textfile ( textFile, FILEID, &
+    & ATTRNAME, maxLineLen )
+    ! Write contents of text file as global attribute
+    ! E.g., may wish to include leap sec file or utc pole
+    use IO_STUFF, only: read_textFile
+    use MLSHDF5, only: MAXCHATTRLENGTH, MAXCHFIELDLENGTH
+
+    character (len=*), intent(in) :: TEXTFILE ! name of textfile
+    integer, intent(in) :: FILEID      ! File ID
+    character(len=*), intent(in) :: ATTRNAME     ! Attribute name
+    integer, optional, intent(in) :: maxLineLen
+
+    ! Internal variables
+    integer, parameter :: DATATYPE = MLS_CHARTYPE
+    character(len=3) :: blockChar
+    character(len=MAXCHFIELDLENGTH) :: BUFFER  ! Buffer to hold contents
+    integer :: firstChar, lastChar
+    integer :: iblock, nblocks
+    integer :: Me = -1                  ! String index for trace cacheing
+    integer :: myMaxLineLen
+    character(len=len(attrname)+3) :: newname
+    integer :: status
+
+    ! Executable code
+    call trace_begin ( me, 'MLS_EHWRGLATT_textfile' , cond=.false. )
+    myMaxLineLen = DFLTMAXLINELENGTH
+    if ( present(maxLineLen) ) myMaxLineLen = maxLineLen
+    ! Try to read the textfile
+    BUFFER = ' '
+    call read_textFile( trim(textFile), BUFFER, myMaxLineLen )
+    status = 0
+    if ( status /= 0 ) then
+      call MLSMessage(MLSMSG_Warning, ModuleName, &
+        & 'Unable to write attribute--failed to read textfile' )
+      call trace_end ( cond=.false. )
+      return
+    endif
+    ! Unfortunately, a lot of null characters sneak into this
+    BUFFER = Replace( BUFFER, char(0), char(32) ) ! Replace null with space
+    ! Be careful lest the attribute is too large
+    if ( len_trim(buffer) > MAXCHATTRLENGTH ) then
+      nblocks = 1 + ( len_trim(buffer) - 1 ) / MAXCHATTRLENGTH
+      lastChar = 0
+      do iblock=1, nblocks
+        firstChar = lastChar + 1
+        lastChar  = min( lastChar + MAXCHATTRLENGTH, len_trim(buffer) )
+        write(blockChar, '(i1)' ) iblock
+        if ( iblock > 9 ) write(blockChar, '(i2)' ) iblock
+        newName = trim(attrname) // adjustl(blockChar)
+        MLS_EHWRGLATT_textfile = &
+          & MLS_EHWRGLATT_char( fileID, newName, &
+          & MLS_CHARTYPE, lastChar-firstChar+1, buffer(firstChar:lastChar) )
+      enddo
+      call trace_end ( cond=.false. )
+      return
+    elseif ( len_trim(buffer) > 0 ) then
+      MLS_EHWRGLATT_textfile = he5_ehwrglatt_character_scalar( FILEID, &
+      & ATTRNAME, DATATYPE, hsize(max(1, len_trim(BUFFER))), BUFFER )
+    else
+      MLS_EHWRGLATT_textfile = he5_ehwrglatt_character_scalar( FILEID, &
+      & ATTRNAME, DATATYPE, hsize(1), BLANK )
+    endif
+    call trace_end ( cond=.false. )
+
+  end function MLS_EHWRGLATT_textfile
+
+  ! ---------------------------------------------  MLS_ISGLATT_FN  -----
+  function MLS_ISGLATT_FN ( FILENAME, ATTRNAME ) result(isThere)
+    ! Is the named attribute a global attribute of the named file?
+    use HDFEOS5, only: he5_swclose, he5_swopen, HE5F_ACC_RDONLY
+    ! Args
+    character(len=*), intent(in) :: filename
+    character(len=*), intent(in) :: ATTRNAME     ! Attribute name
+    logical                      :: isThere
+
+    ! Local variables
+    integer :: fileID
+    integer :: Me = -1                  ! String index for trace cacheing
+    integer :: status
+
+    ! Executable code
+    call trace_begin ( me, 'MLS_ISGLATT_FN' , cond=.false. )
+    isThere = .false.
+    fileID = he5_swopen(trim(fileName), HE5F_ACC_RDONLY)
+    if ( fileID > 0 ) then
+      isThere = MLS_ISGLATT ( fileID, ATTRNAME )
+      status = he5_swclose( fileID )
+    endif
+    call trace_end ( cond=.false. )
+  end function MLS_ISGLATT_FN
+
+  ! --------------------------------------------  MLS_ISGLATT_FID  -----
+  function MLS_IsGlatt_fid ( Fileid, Attrname ) result(isThere)
+    ! Is the named attribute a global attribute of the file?
+    use HDFEOS5, only: HE5_EHinqglatts
+    use MLSStringLists, only: StringElementNum
+    ! Args
+    integer, intent(in)           :: FileID
+    character(len=*), intent(in)  :: Attrname     ! Attribute name
+    logical                       :: IsThere
+    ! Local variables
+    character(len=MAXDLISTLENGTH) :: AttrList
+    logical, parameter            :: Countempty = .true.
+    integer                       :: ListSize
+    integer                       :: Status
+    logical, parameter            :: DEEBUG = .false.
+    ! Executable code
+    isThere = .false.
+    attrList = ' ' ! Why is this necssary?
+    listSize = 0
+    status = he5_EHinqglatts(fileID, attrList, listSize)
+    ! if ( status /= 0 ) return
+    if ( len_trim(attrList) > 0 ) then
+      if ( DEEBUG ) print *, 'glattr list: ', trim(attrList)
+      status = StringElementNum( trim(attrList), trim(attrName), countempty)
+      isThere = ( status > 0 )
+    endif
+  end function MLS_ISGLATT_FID
+
+  ! -----------------------------------------------  MLS_GDCREATE  -----
+  integer function MLS_GDCREATE ( FILEID, GRIDNAME, &
+   &  xdimsize, ydimsize, upleft, lowright, FileName, hdfVersion )
+    integer, intent(in) :: FILEID      ! ID returned by MLS_swopen
+    character(len=*), intent(in) :: GRIDNAME       ! Swath name
+    integer, intent(in) :: xdimsize
+    integer, intent(in) :: ydimsize
+    double precision, dimension(2), intent(in) :: upleft
+    double precision, dimension(2), intent(in) :: lowright
+    character(len=*), optional, intent(in) :: FILENAME  ! File name
+    integer, optional, intent(in) :: hdfVersion
+
+    ! Internal variables
+    logical :: alreadyThere
+    integer :: Me = -1                  ! String index for trace cacheing
+    integer :: myHdfVersion
+    logical :: needsFileName
+    logical, parameter :: MUSTCREATE = .true.
+
+    ! Executable code
+    call trace_begin ( me, 'MLS_GDCREATE' , cond=.false. )
+    MLS_GDCREATE = 0
+    ! All necessary input supplied?
+    needsFileName = (.not. present(hdfVersion))
+    if ( present(hdfVersion) ) &
+      & needsFileName = (hdfVersion == WILDCARDHDFVERSION)
+    if ( needsFileName .and. .not. present(FIleName)) then
+        CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Missing needed arg FILENAME from call to MLS_GDCREATE' )
+      call trace_end ( cond=.false. )
+      return
+    endif
+    if ( needsFileName ) then
+      myHdfVersion = MLS_hdf_version ( trim(FileName) )
+    else
+      myHdfVersion = hdfVersion
+    endif
+    select case (myHdfVersion)
+    case (HDFVERSION_4)
+      if ( MUSTCREATE ) then
+        alreadyThere = .false.
+      else
+        alreadyThere = (gdattach(FileID, trim(GRIDNAME)) >= 0)
+      endif
+      if ( alreadyThere ) then
+        CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'GRIDNAME call to MLS_GDCREATE already there: ' // trim(GRIDNAME))
+      endif
+      MLS_GDCREATE = gdcreate(Fileid, trim(GRIDNAME), &
+        & xdimsize, ydimsize, upleft, lowright)
+    case (HDFVERSION_5)
+      if ( MUSTCREATE ) then
+        alreadyThere = .false.
+      else
+        alreadyThere = (he5_gdattach(FileID, trim(GRIDNAME)) >= 0)
+      endif
+      if ( alreadyThere ) then
+        CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'GRIDNAME call to MLS_GDCREATE already there: ' // trim(GRIDNAME))
+      endif
+      MLS_GDCREATE = he5_gdcreate(Fileid, trim(GRIDNAME), &
+        & hsize(xdimsize), hsize(ydimsize), upleft, lowright)
+    case default
+      MLS_GDCREATE = -1
+    end select
+    if ( MLS_GDCREATE == -1 ) &
+      & CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Failed to create grid name ' // trim(GRIDNAME) )
+
+    call trace_end ( cond=.false. )
+  end function MLS_GDCREATE
+
+  ! -----------------------------------------------  MLS_gdwrattr  -----
+  integer function MLS_gdwrattr ( GRIDID, &
+    & ATTRNAME, DATATYPE, COUNT, BUFFER )
+    integer, intent(in) :: GRIDID      ! Grid ID
+    character(len=*), intent(in) :: ATTRNAME     ! Attribute name
+    integer, intent(in) :: DATATYPE    ! E.g., MLS_CHARTYPE
+    integer, intent(in) :: COUNT   ! How many
+    character(len=*), intent(in) :: BUFFER  ! Buffer for write
+
+    ! Local variables
+    integer :: Me = -1                  ! String index for trace cacheing
+
+    ! Executable code
+    integer, external ::   he5_GDwrattr
+    call trace_begin ( me, 'MLS_gdwrattr' , cond=.false. )
+    if ( len_trim(buffer) > 0 ) then
+      MLS_gdwrattr = HE5_GDWRATTR( GRIDID, &
+      & ATTRNAME, DATATYPE, hsize(max(COUNT, len_trim(BUFFER))), BUFFER )
+    else
+      MLS_gdwrattr = HE5_GDWRATTR( GRIDID, &
+      & ATTRNAME, DATATYPE, hsize(1), BLANK )
+    endif
+
+    call trace_end ( cond=.false. )
+  end function MLS_gdwrattr
+
+  ! --------------------------------------------  MLS_SWATTACH_ID  -----
+  function MLS_SWATTACH_ID ( FILEID, SWATHNAME, FileName, &
+    &  hdfVersion, DONTFAIL ) result(MLS_SWATTACH)
+    integer, intent(in) :: FILEID      ! ID returned by MLS_swopen
+    character(len=*), intent(in) :: SWATHNAME       ! Swath name
+    character(len=*), optional, intent(in) :: FILENAME  ! File name
+    integer, optional, intent(in) :: hdfVersion
+    logical, optional, intent(in) :: DONTFAIL
+    integer :: MLS_SWATTACH
+
+    ! Internal variables
+    integer :: Me = -1                  ! String index for trace cacheing
+    logical :: myDontFail
+    integer :: myHdfVersion
+    logical :: needsFileName
+
+    ! Executable code
+    call trace_begin ( me, 'MLS_swattach_id' , cond=.false. )
+    MLS_SWATTACH = 0
+    myDontFail = .false.
+    if ( present(DontFail) ) myDontFail = DontFail
+    ! All necessary input supplied?
+    needsFileName = (.not. present(hdfVersion))
+    if ( present(hdfVersion) ) &
+      & needsFileName = (hdfVersion == WILDCARDHDFVERSION)
+    if ( needsFileName .and. .not. present(FIleName)) then
+      if ( myDontFail ) then
+        MLS_SWATTACH = -1
+      else
+        CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Missing needed arg FILENAME from call to MLS_SWATTACH' )
+      endif
+      call trace_end ( cond=.false. )
+      return
+    endif
+    if ( needsFileName ) then
+      myHdfVersion = MLS_hdf_version ( trim(FileName) )
+      if ( myHdfVersion < 0 ) print *, 'uh-oh, MLS_hdf_version: ', myhdfVersion
+    else
+      myHdfVersion = hdfVersion
+    endif
+    select case (myHdfVersion)
+    case (HDFVERSION_4)
+      MLS_SWATTACH = swattach(Fileid, trim(swathName))
+    case (HDFVERSION_5)
+      MLS_SWATTACH = he5_swattach(Fileid, trim(swathName))
+    case default
+      MLS_SWATTACH = -1
+    end select
+    if (Deebug) print *, ' (swath id is ', MLS_SWATTACH, ')'
+    if ( MLS_SWATTACH /= -1 ) then
+      call trace_end ( cond=.false. )
+      return
+    elseif ( myDontFail ) then
+      CALL MLSMessage ( MLSMSG_Warning, moduleName,  &
+          & 'Failed to attach swath name ' // trim(swathname) )
+    else
+      CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Failed to attach swath name ' // trim(swathname) )
+    endif
+    call trace_end ( cond=.false. )
+  end function MLS_SWATTACH_ID
+
+  ! --------------------------------------------  MLS_SWATTACH_MF  -----
+  function MLS_SWATTACH_MF ( MLSFile, SWATHNAME, DONTFAIL ) &
+    & result(MLS_SWATTACH)
+    type (MLSFile_T)   :: MLSFile
+    character(len=*), intent(in) :: SWATHNAME       ! Swath name
+    logical, optional, intent(in) :: DONTFAIL
+
+    ! Internal variables
+    integer :: Me = -1                  ! String index for trace cacheing
+    integer :: MLS_SWATTACH
+    logical :: myDontFail
+
+    ! Executable code
+    call trace_begin ( me, 'MLS_swattach_mf' , cond=.false. )
+    MLS_SWATTACH = 0
+    myDontFail = .false.
+    if ( present(DontFail) ) myDontFail = DontFail
+    ! All necessary input supplied?
+    select case (MLSFile%HdfVersion)
+    case (HDFVERSION_4)
+      MLS_SWATTACH = swattach(MLSFile%FileID%f_id, trim(swathName))
+    case (HDFVERSION_5)
+      MLS_SWATTACH = he5_swattach(MLSFile%FileID%f_id, trim(swathName))
+    case default
+      MLS_SWATTACH = -1
+    end select
+    if ( MLS_SWATTACH /= -1 ) then
+      call trace_end ( cond=.false. )
+      return
+    elseif ( myDontFail ) then
+      CALL MLSMessage ( MLSMSG_Warning, moduleName,  &
+          & 'Failed to attach swath name ' // trim(swathname), &
+          & MLSFile=MLSFile )
+    else
+      CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Failed to attach swath name ' // trim(swathname), &
+          & MLSFile=MLSFile )
+    endif
+    call trace_end ( cond=.false. )
+  end function MLS_SWATTACH_MF
+
+  ! --------------------------------------------  MLS_SWCREATE_MF  -----
+  function MLS_SWCREATE_MF ( MLSFile, SWATHNAME ) &
+    & result(MLS_SWCREATE)
+    use hdf5, only: h5eSet_auto_f
+    type (MLSFile_T)   :: MLSFile
+    character(len=*), intent(in) :: SWATHNAME       ! Swath name
+    integer :: MLS_SWCREATE
+
+    ! Internal variables
+    logical :: alreadyThere
+    integer :: Me = -1                  ! String index for trace cacheing
+    integer :: status
+
+    logical, parameter :: ALWAYSTRYSWATTACH = .true.
+    logical, parameter :: MUSTCREATE = .true.
+
+    ! Executable code
+    call trace_begin ( me, 'MLS_swcreate_mf' , cond=.false. )
+    MLS_SWCREATE = 0
+    ! All necessary input supplied?
+    select case (MLSFile%HdfVersion)
+    case (HDFVERSION_4)
+      if ( MUSTCREATE ) then
+        alreadyThere = .false.
+      elseif ( ALWAYSTRYSWATTACH ) then
+        if(DEEBUG) print *, 'About to call swattach with FileID: ', &
+          & MLSFile%FileID%f_id, ' swathname ', &
+          & trim(swathName)
+        alreadyThere = (swattach(MLSFile%FileId%f_id, trim(swathName)) >= 0)
+      else
+        if(DEEBUG) print *, 'About to call MLS_swath_in_file'
+        alreadyThere = MLS_swath_in_file(MLSFile%Name, swathName, HDFVERSION_4)
+      endif
+      if ( alreadyThere ) then
+        CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Swathname call to MLS_SWCREATE already there: ' // trim(swathName), &
+          & MLSFile=MLSFile )
+      endif
+      if(DEEBUG) print *, 'About to call swcreate with FileID: ', &
+        &  MLSFile%Fileid%f_id, ' swathname ', &
+        & trim(swathName)
+      MLS_SWCREATE = swcreate(MLSFile%FileID%f_id, trim(swathName))
+    case (HDFVERSION_5)
+      call h5eSet_auto_f ( 0, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to turn error messages off in MLS_SWCREATE', MLSFile=MLSFile )
+      if ( MUSTCREATE ) then
+        alreadyThere = .false.
+      elseif ( ALWAYSTRYSWATTACH  ) then
+        if(DEEBUG) print *, 'About to call he5_swattach with FileID: ', &
+          & MLSFile%FileID%f_id, ' swathname ', &
+          & trim(swathName)
+        alreadyThere = (he5_swattach(MLSFile%FileID%f_id, trim(swathName)) >= 0)
+      else
+        if(DEEBUG) print *, 'About to call MLS_swath_in_file'
+        alreadyThere = MLS_swath_in_file(MLSFile%Name, swathName, HDFVERSION_5)
+      endif
+      call h5eSet_auto_f ( 1, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to turn error messages back on in MLS_SWCREATE')
+      if ( alreadyThere ) then
+        CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Swathname call to MLS_SWCREATE already there: ' // trim(swathName))
+      endif
+      MLS_SWCREATE = he5_swcreate(MLSFile%FileID%f_id, trim(swathName))
+    case default
+      MLS_SWCREATE = -1
+    end select
+    if ( MLS_SWCREATE == -1 ) &
+      & CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Failed to create swath name ' // trim(swathname), &
+          & MLSFile=MLSFile )
+    call trace_end ( cond=.false. )
+
+  end function MLS_SWCREATE_MF
+
+  ! --------------------------------------------  MLS_SWCREATE_ID  -----
+  function MLS_SWCREATE_ID ( FILEID, SWATHNAME, FileName, hdfVersion ) &
+    & result(MLS_SWCREATE)
+    use hdf5, only: h5eSet_auto_f
+    integer, intent(in) :: FILEID      ! ID returned by MLS_swopen
+    character(len=*), intent(in) :: SWATHNAME       ! Swath name
+    character(len=*), optional, intent(in) :: FILENAME  ! File name
+    integer, optional, intent(in) :: hdfVersion
+    integer  :: MLS_SWCREATE
+
+    ! Internal variables
+    logical :: alreadyThere
+    integer :: Me = -1                  ! String index for trace cacheing
+    integer :: myHdfVersion
+    logical :: needsFileName
+    integer :: status
+    logical, parameter :: ALWAYSTRYSWATTACH = .true.
+    logical, parameter :: MUSTCREATE = .true.
+
+    ! Executable code
+    call trace_begin ( me, 'MLS_swcreate_id' , cond=.false. )
+    MLS_SWCREATE = 0
+    ! All necessary input supplied?
+    needsFileName = (.not. present(hdfVersion))
+    if ( present(hdfVersion) ) &
+      & needsFileName = (hdfVersion == WILDCARDHDFVERSION)
+    if ( needsFileName .and. .not. present(FileName)) then
+        CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Missing needed arg FILENAME from call to MLS_SWCREATE' )
+      call trace_end ( cond=.false. )
+      return
+    endif
+    if ( needsFileName ) then
+      myHdfVersion = MLS_hdf_version ( trim(FileName) )
+    else
+      myHdfVersion = hdfVersion
+    endif
+    select case (myHdfVersion)
+    case (HDFVERSION_4)
+      if ( MUSTCREATE ) then
+        alreadyThere = .false.
+      elseif ( .not. present(filename) .or. ALWAYSTRYSWATTACH ) then
+        if(DEEBUG) print *, 'About to call swattach with FileID: ', Fileid, ' swathname ', &
+          & trim(swathName)
+        alreadyThere = (swattach(FileID, trim(swathName)) >= 0)
+      else
+        if(DEEBUG) print *, 'About to call MLS_swath_in_file'
+        alreadyThere = MLS_swath_in_file(FileName, swathName, HDFVERSION_4)
+      endif
+      if ( alreadyThere ) then
+        CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Swathname call to MLS_SWCREATE already there: ' // trim(swathName))
+      endif
+      if(DEEBUG) print *, 'About to call swcreate with FileID: ', Fileid, ' swathname ', &
+        & trim(swathName)
+      MLS_SWCREATE = swcreate(Fileid, trim(swathName))
+    case (HDFVERSION_5)
+      call h5eSet_auto_f ( 0, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to turn error messages off in MLS_SWCREATE')
+      if ( MUSTCREATE ) then
+        alreadyThere = .false.
+      elseif ( .not. present(filename) .or. ALWAYSTRYSWATTACH  ) then
+        if(DEEBUG) print *, 'About to call he5_swattach with FileID: ', Fileid, ' swathname ', &
+          & trim(swathName)
+        alreadyThere = (he5_swattach(FileID, trim(swathName)) >= 0)
+      else
+        if(DEEBUG) print *, 'About to call MLS_swath_in_file'
+        alreadyThere = MLS_swath_in_file(FileName, swathName, HDFVERSION_5)
+      endif
+      call h5eSet_auto_f ( 1, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to turn error messages back on in MLS_SWCREATE')
+      if ( alreadyThere ) then
+        CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Swathname call to MLS_SWCREATE already there: ' // trim(swathName))
+      endif
+      MLS_SWCREATE = he5_swcreate(Fileid, trim(swathName))
+    case default
+      MLS_SWCREATE = -1
+    end select
+    if ( MLS_SWCREATE == -1 ) &
+      & CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Failed to create swath name ' // trim(swathname) )
+    call trace_end ( cond=.false. )
+
+  end function MLS_SWCREATE_ID
+
+  ! -----------------------------------------------  MLS_SWdefdim  -----
+  integer function MLS_SWdefdim ( SWATHID, DIMNAME, DIMSIZE, FILENAME, &
+    & hdfVersion, DONTFAIL )
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: DIMNAME       ! Dimension name
+    integer, intent(in)          :: DIMSIZE
+    character(len=*), optional :: FileName
+    integer, optional, intent(in) :: hdfVersion
+    logical, optional, intent(in) :: DONTFAIL
+
+    ! Internal variables
+    integer :: Me = -1                  ! String index for trace cacheing
+    logical :: myDontFail
+    integer :: myHdfVersion
+    logical :: needsFileName
+
+    ! Executable code
+    call trace_begin ( me, 'MLS_swdefdim' , cond=.false. )
+    MLS_SWdefdim = 0
+    myDontFail = .false.
+    if ( present(DontFail) ) myDontFail = DontFail
+    ! All necessary input supplied?
+    needsFileName = (.not. present(hdfVersion))
+    if ( present(hdfVersion) ) &
+      & needsFileName = (hdfVersion == WILDCARDHDFVERSION)
+    if ( needsFileName .and. .not. present(FIleName)) then
+      if ( myDontFail ) then
+        MLS_SWdefdim = -1
+      else
+        CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Missing needed arg FILENAME from call to MLS_SWdefdim' )
+      endif
+      call trace_end ( cond=.false. )
+      return
+    endif
+    if ( needsFileName ) then
+      myHdfVersion = MLS_hdf_version ( trim(FileName) )
+    else
+      myHdfVersion = hdfVersion
+    endif
+    select case (myHdfVersion)
+    case (HDFVERSION_4)
+      MLS_SWdefdim = swdefdim(swathid, DIMNAME, DIMSIZE)
+    case (HDFVERSION_5)
+        MLS_SWdefdim = HE5_SWdefdim(swathid, DIMNAME, hsize(DIMSIZE))
+    case default
+      MLS_SWdefdim = -1
+    end select
+    if ( .not. myDontFail .and. MLS_SWdefdim == -1 ) &
+      & CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Failed to define dimension ' // trim(dimname) )
+    call trace_end ( cond=.false. )
+
+  end function MLS_SWdefdim
+
+  ! -----------------------------------------------  MLS_SWDETACH  -----
+  integer function MLS_SWDETACH ( SWATHID, FileName, hdfVersion )
+    integer, intent(in) :: SWATHID      ! ID returned by MLS_swattach
+    character(len=*), optional, intent(in) :: FILENAME  ! File name
+    integer, optional, intent(in) :: hdfVersion
+
+    ! Internal variables
+    integer :: Me = -1                  ! String index for trace cacheing
+    integer :: myHdfVersion
+    logical :: needsFileName
+
+    ! Executable code
+    call trace_begin ( me, 'MLS_swdetach' , cond=.false. )
+    if (Deebug) print *, 'swdetaching ', swathid
+    MLS_SWDETACH = 0
+    ! All necessary input supplied?
+    needsFileName = (.not. present(hdfVersion))
+    if ( present(hdfVersion) ) &
+      & needsFileName = (hdfVersion == WILDCARDHDFVERSION)
+    if ( needsFileName .and. .not. present(FIleName)) then
+        CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Missing needed arg FILENAME from call to MLS_SWDETACH' )
+      call trace_end ( cond=.false. )
+      return
+    endif
+    if ( needsFileName ) then
+      myHdfVersion = MLS_hdf_version ( trim(FileName) )
+    else
+      myHdfVersion = hdfVersion
+    endif
+    select case (myHdfVersion)
+    case (HDFVERSION_4)
+      MLS_SWDETACH = swdetach(swathid)
+    case (HDFVERSION_5)
+      MLS_SWDETACH = he5_swdetach(swathid)
+    case default
+      MLS_SWDETACH = -1
+    end select
+    if ( MLS_SWDETACH == -1 ) &
+      & CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Failed to detach swath id ' )
+    call trace_end ( cond=.false. )
+
+  end function MLS_SWDETACH
+
+  ! ----------------------------------------------  MLS_SWdiminfo  -----
+  integer function MLS_SWdiminfo ( SWATHID, DIMNAME, FILENAME, &
+    & hdfVersion, DONTFAIL )
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: DIMNAME       ! Dimension name
+    character(len=*), optional :: FileName
+    integer, optional, intent(in) :: hdfVersion
+    logical, optional, intent(in) :: DONTFAIL
+
+    ! Internal variables
+    integer :: Me = -1                  ! String index for trace cacheing
+    logical :: myDontFail
+    integer :: myHdfVersion
+    logical :: needsFileName
+
+    ! Executable code
+    call trace_begin ( me, 'MLS_swdiminfo' , cond=.false. )
+    MLS_SWdiminfo = 0
+    myDontFail = .false.
+    if ( present(DontFail) ) myDontFail = DontFail
+    ! All necessary input supplied?
+    needsFileName = (.not. present(hdfVersion))
+    if ( present(hdfVersion) ) &
+      & needsFileName = (hdfVersion == WILDCARDHDFVERSION)
+    if ( needsFileName .and. .not. present(FIleName)) then
+      if ( myDontFail ) then
+        MLS_SWdiminfo = -1
+      else
+        CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Missing needed arg FILENAME from call to MLS_SWdiminfo' )
+      endif
+      call trace_end ( cond=.false. )
+      return
+    endif
+    if ( needsFileName ) then
+      myHdfVersion = MLS_hdf_version ( trim(FileName) )
+    else
+      myHdfVersion = hdfVersion
+    endif
+    select case (myHdfVersion)
+    case (HDFVERSION_4)
+      MLS_SWdiminfo = SWdiminfo(swathid, DIMNAME)
+    case (HDFVERSION_5)
+        MLS_SWdiminfo = HE5_SWdiminfo(swathid, DIMNAME)
+    case default
+      MLS_SWdiminfo = -1
+    end select
+    if ( .not. myDontFail .and. MLS_SWdiminfo == -1 ) &
+      & CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Failed to get info on dimension ' // trim(dimname) )
+    call trace_end ( cond=.false. )
+
+  end function MLS_SWdiminfo
+
+  ! ----------------------------------------------  MLS_DFLDSETUP  -----
+  integer function MLS_DFLDSETUP ( SWATHID, FIELDNAME, DIMNAME, MAXDIMList, &
+    & DATATYPE, MERGE, CHUNK_RANK, CHUNK_DIMS, &
+    & FILENAME, hdfVersion, DONTFAIL, iFill, rFill, dFill )
+    integer, parameter :: RANK = 7
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: FIELDNAME     ! Field name
+    character(len=*), intent(in) :: DIMNAME       ! Dimension name
+    character(len=*), intent(in) :: MAXDIMLIST
+    integer, intent(in)          :: DATATYPE
+    integer, intent(in)          :: MERGE
+    integer, intent(in)          :: CHUNK_RANK
+    integer, dimension(RANK), intent(in) :: CHUNK_DIMS
+    character(len=*), optional :: FileName
+    integer, optional, intent(in) :: hdfVersion
+    logical, optional, intent(in) :: DONTFAIL
+    integer, optional, intent(in) :: iFill
+    real, optional, intent(in) :: rFill
+    double precision, optional, intent(in) :: dFill
+
+    ! Internal variables
+    integer :: Me = -1                  ! String index for trace cacheing
+    logical :: myDontFail
+    integer :: myHdfVersion
+    logical :: needsFileName
+
+    ! Executable code
+    call trace_begin ( me, 'MLS_dfldsetup' , cond=.false. )
+    MLS_dfldsetup = 0
+    myDontFail = .false.
+    if ( present(DontFail) ) myDontFail = DontFail
+    ! All necessary input supplied?
+    needsFileName = (.not. present(hdfVersion))
+    if ( present(hdfVersion) ) &
+      & needsFileName = (hdfVersion == WILDCARDHDFVERSION)
+    if ( needsFileName .and. .not. present(FIleName)) then
+      if ( myDontFail ) then
+        MLS_dfldsetup = -1
+      else
+        CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Missing needed arg FILENAME from call to MLS_dfldsetup' )
+      endif
+      call trace_end ( cond=.false. )
+      return
+    endif
+    if ( needsFileName ) then
+      myHdfVersion = MLS_hdf_version ( trim(FileName) )
+    else
+      myHdfVersion = hdfVersion
+    endif
+    select case (myHdfVersion)
+    case (HDFVERSION_4)
+      MLS_dfldsetup = swdefdfld(swathid, FIELDName, DIMNAME, Datatype, &
+         & MERGE)
+    case (HDFVERSION_5)
+      if ( chunk_rank /= 0 ) &
+        & MLS_dfldsetup = HE5_SWdefchunk( swathid, chunk_rank, hsizes(chunk_dims) )
+      if ( MLS_dfldsetup == 0 ) then
+        if ( present(iFill) ) then
+          MLS_dfldsetup = HE5_SWsetfill(swathid, trim(fieldname), &
+            & he2he5_DataType(Datatype), iFill)
+        elseif ( present(rFill) ) then
+          MLS_dfldsetup = HE5_SWsetfill(swathid, trim(fieldname), &
+            & he2he5_DataType(Datatype), rFill)
+        elseif ( present(dFill) ) then
+          MLS_dfldsetup = HE5_SWsetfill(swathid, trim(fieldname), &
+            & he2he5_DataType(Datatype), dFill)
+        endif
+      endif
+      if ( MLS_dfldsetup == 0 ) &
+        & MLS_dfldsetup = HE5_SWdefdfld(swathid, FIELDName, DIMNAME, MAXDIMLIST, &
+        & he2he5_DataType(Datatype), MERGE)
+    case default
+      MLS_dfldsetup = -1
+    end select
+    if ( DEEBUG ) then
+      print *, 'MLS_dfldsetup: FIELDName, DIMNAME, MAXDIMLIST, TYPE, MERGE'
+      print *, FIELDName, DIMNAME, trim(MAXDIMLIST), DATATYPE, MERGE
+      print *, chunk_rank, chunk_dims
+    endif
+    if ( .not. myDontFail .and. MLS_dfldsetup == -1 ) &
+      & CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Failed to set up data field ' // trim(fieldname) )
+    call trace_end ( cond=.false. )
+
+  end function MLS_DFLDSETUP
+
+  ! ----------------------------------------------  MLS_GFLDSETUP  -----
+  integer function MLS_GFLDSETUP ( SWATHID, FIELDNAME, DIMNAME, MAXDIMList, &
+    & DATATYPE, MERGE, CHUNK_RANK, CHUNK_DIMS, &
+    & FILENAME, hdfVersion, DONTFAIL, iFill, rFill, dFill )
+    integer, parameter :: RANK = 7
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: FIELDNAME     ! Field name
+    character(len=*), intent(in) :: DIMNAME       ! Dimension name
+    character(len=*), intent(in) :: MAXDIMLIST
+    integer, intent(in)          :: DATATYPE
+    integer, intent(in)          :: MERGE
+    integer, intent(in)          :: CHUNK_RANK
+    integer, dimension(RANK), intent(in) :: CHUNK_DIMS
+    character(len=*), optional :: FileName
+    integer, optional, intent(in) :: hdfVersion
+    logical, optional, intent(in) :: DONTFAIL
+    integer, optional, intent(in) :: iFill
+    real, optional, intent(in) :: rFill
+    double precision, optional, intent(in) :: dFill
+
+    ! Internal variables
+    integer :: Me = -1                  ! String index for trace cacheing
+    logical :: myDontFail
+    integer :: myHdfVersion
+    logical :: needsFileName
+
+    ! Executable code
+    call trace_begin ( me, 'MLS_gfldsetup' , cond=.false. )
+    MLS_gfldsetup = 0
+    myDontFail = .false.
+    if ( present(DontFail) ) myDontFail = DontFail
+    ! All necessary input supplied?
+    needsFileName = (.not. present(hdfVersion))
+    if ( present(hdfVersion) ) &
+      & needsFileName = (hdfVersion == WILDCARDHDFVERSION)
+    if ( needsFileName .and. .not. present(FIleName)) then
+      if ( myDontFail ) then
+        MLS_gfldsetup = -1
+      else
+        CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Missing needed arg FILENAME from call to MLS_gfldsetup' )
+      endif
+      call trace_end ( cond=.false. )
+      return
+    endif
+    if ( needsFileName ) then
+      myHdfVersion = MLS_hdf_version ( trim(FileName) )
+    else
+      myHdfVersion = hdfVersion
+    endif
+    select case (myHdfVersion)
+    case (HDFVERSION_4)
+      MLS_gfldsetup = swdefgfld(swathid, trim(FIELDName), trim(DIMNAME), &
+        & Datatype, MERGE)
+    case (HDFVERSION_5)
+      if ( chunk_rank /= 0 ) &
+        & MLS_gfldsetup = HE5_SWdefchunk( swathid, chunk_rank, hsizes(chunk_dims) )
+      if ( MLS_gfldsetup == 0 ) then
+        if ( present(iFill) ) then
+          MLS_gfldsetup = HE5_SWsetfill(swathid, trim(fieldname), &
+            & he2he5_DataType(Datatype), iFill)
+        elseif ( present(rFill) ) then
+          MLS_gfldsetup = HE5_SWsetfill(swathid, trim(fieldname), &
+            & he2he5_DataType(Datatype), rFill)
+        elseif ( present(dFill) ) then
+          MLS_gfldsetup = HE5_SWsetfill(swathid, trim(fieldname), &
+            & he2he5_DataType(Datatype), dFill)
+        endif
+      endif
+      if ( MLS_gfldsetup == 0 ) &
+        & MLS_gfldsetup = HE5_SWdefgfld(swathid, trim(FIELDName), &
+        & trim(DIMNAME), trim(MAXDIMLIST), &
+        & he2he5_DataType(Datatype), MERGE)
+    case default
+      MLS_gfldsetup = -1
+    end select
+    if ( DEEBUG ) then
+      print *, 'MLS_gfldsetup: FIELDName, DIMNAME, MAXDIMLIST, TYPE, MERGE'
+      print *, FIELDName, DIMNAME, trim(MAXDIMLIST), DATATYPE, MERGE
+      print *, chunk_rank, chunk_dims
+    endif
+    if ( .not. myDontFail .and. MLS_gfldsetup == -1 ) &
+      & CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Failed to set up geoloc field ' // trim(fieldname) )
+    call trace_end ( cond=.false. )
+
+  end function MLS_GFLDSETUP
+
+  ! ----------------------------------------  MLS_SWRDFLD_CHAR_1D  -----
+  integer function MLS_SWRDFLD_CHAR_1D ( SWATHID, FIELDNAME, &
+    & START, STRIDE, EDGE, VALUES, FILENAME, hdfVersion, DONTFAIL )
+    integer, parameter :: RANK = 1
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: FIELDNAME     ! Field name
+    integer, dimension(RANK), intent(in) :: START
+    integer, dimension(RANK), intent(in) :: STRIDE
+    integer, dimension(RANK), intent(in) :: EDGE
+    character(len=*), dimension(:), intent(out) :: VALUES
+    character(len=*), optional :: FIleName
+    integer, optional, intent(in) :: hdfVersion
+    logical, optional, intent(in) :: DONTFAIL
+
+    ! Internal variables
+    integer :: Me = -1                  ! String index for trace cacheing
+    logical :: myDontFail
+    integer :: myHdfVersion
+    logical :: needsFileName
+    ! Declare these as externals to try to fool hdfeos(5)
+    integer, external :: swrdfld
+    integer, external :: he5_swrdfld
+
+    ! Executable code
+    call trace_begin ( me, 'MLS_SWRDFLD_CHAR_1D' , cond=.false. )
+    MLS_swrdfld_CHAR_1D = 0
+    myDontFail = .false.
+    if ( present(DontFail) ) myDontFail = DontFail
+    ! All necessary input supplied?
+    needsFileName = (.not. present(hdfVersion))
+    if ( present(hdfVersion) ) &
+      & needsFileName = (hdfVersion == WILDCARDHDFVERSION)
+    if ( needsFileName .and. .not. present(FIleName)) then
+      if ( myDontFail ) then
+        MLS_swrdfld_CHAR_1D = -1
+      else
+        CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Missing needed arg FILENAME from call to MLS_SWRDFLD_CHAR_1D' )
+      endif
+      call trace_end ( cond=.false. )
+      return
+    endif
+    if ( needsFileName ) then
+      myHdfVersion = MLS_hdf_version ( trim(FileName) )
+    else
+      myHdfVersion = hdfVersion
+    endif
+    if (myDontFail) then
+      if (.not. is_datafield_in_swath(swathid, trim(fieldname), myHdfVersion) ) then
+        call trace_end ( cond=.false. )
+        return
+      end if
+    endif
+    select case (myHdfVersion)
+    case (HDFVERSION_4)
+      if (myDontFail) then
+        if (.not. is_swath_datatype_right(swathid, trim(fieldname), &
+          & DFNT_CHAR8, myHdfVersion) ) then
+          call trace_end ( cond=.false. )
+          return
+        end if
+      endif
+      MLS_swrdfld_CHAR_1D = SWRDFLD(swathid, trim(fieldname), &
+        & start, stride, edge, values)
+    case (HDFVERSION_5)
+      MLS_swrdfld_CHAR_1D = HE5_SWRDFLD(swathid, trim(fieldname), &
+        & start, stride, edge, values)
+      if (myDontFail) then
+        if (.not. is_swath_datatype_right(swathid, trim(fieldname), &
+          & MLS_CHARTYPE, myHdfVersion) ) then
+          call trace_end ( cond=.false. )
+          return
+        end if
+      endif
+    case default
+      MLS_swrdfld_CHAR_1D = -1
+    end select
+    if ( .not. myDontFail .and. MLS_swrdfld_CHAR_1D == -1 ) &
+      & CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Failed to read 1-d char field ' // trim(fieldname) )
+    call trace_end ( cond=.false. )
+
+  end function MLS_SWRDFLD_CHAR_1D
+
+  ! --------------------------------------  MLS_SWRDFLD_DOUBLE_1D  -----
+  integer function MLS_SWRDFLD_DOUBLE_1D ( SWATHID, FIELDNAME, &
+    & START, STRIDE, EDGE, VALUES, FILENAME, hdfVersion, DONTFAIL )
+    integer, parameter :: RANK = 1
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: FIELDNAME     ! Field name
+    integer, dimension(RANK), intent(in) :: START
+    integer, dimension(RANK), intent(in) :: STRIDE
+    integer, dimension(RANK), intent(in) :: EDGE
+    double precision, dimension(:), intent(out) :: VALUES
+    character(len=*), optional :: FIleName
+    integer, optional, intent(in) :: hdfVersion
+    logical, optional, intent(in) :: DONTFAIL
+
+    ! Internal variables
+    integer :: Me = -1                  ! String index for trace cacheing
+    logical :: myDontFail
+    integer :: myHdfVersion
+    logical :: needsFileName
+
+    ! Executable code
+    call trace_begin ( me, 'MLS_SWRDFLD_DOUBLE_1D' , cond=.false. )
+    MLS_swrdfld_double_1d = 0
+    myDontFail = .false.
+    if ( present(DontFail) ) myDontFail = DontFail
+    ! All necessary input supplied?
+    needsFileName = (.not. present(hdfVersion))
+    if ( present(hdfVersion) ) &
+      & needsFileName = (hdfVersion == WILDCARDHDFVERSION)
+    if ( needsFileName .and. .not. present(FIleName)) then
+      if ( myDontFail ) then
+        MLS_swrdfld_double_1d = -1
+      else
+        CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Missing needed arg FILENAME from call to MLS_SWRDFLD_DOUBLE_1D' )
+      endif
+      call trace_end ( cond=.false. )
+      return
+    endif
+    if ( needsFileName ) then
+      myHdfVersion = MLS_hdf_version ( trim(FileName) )
+    else
+      myHdfVersion = hdfVersion
+    endif
+    select case (myHdfVersion)
+    case (HDFVERSION_4)
+      MLS_swrdfld_double_1d = SWRDFLD_DOUBLE(swathid, trim(fieldname), &
+        & start, stride, edge, values)
+    case (HDFVERSION_5)
+      MLS_swrdfld_double_1d = HE5_SWRDFLD_DOUBLE(swathid, trim(fieldname), &
+        & hsizes(start), hsizes(stride), hsizes(edge), values)
+    case default
+      MLS_swrdfld_double_1d = -1
+    end select
+    if ( .not. myDontFail .and. MLS_swrdfld_double_1d == -1 ) &
+      & CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Failed to read 1d double field ' // trim(fieldname) )
+    call trace_end ( cond=.false. )
+
+  end function MLS_SWRDFLD_DOUBLE_1D
+
+  ! --------------------------------------  MLS_SWRDFLD_DOUBLE_2d  -----
+  integer function MLS_SWRDFLD_DOUBLE_2d ( SWATHID, FIELDNAME, &
+    & START, STRIDE, EDGE, VALUES, FILENAME, hdfVersion, DONTFAIL )
+    integer, parameter :: RANK = 2
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: FIELDNAME     ! Field name
+    integer, dimension(RANK), intent(in) :: START
+    integer, dimension(RANK), intent(in) :: STRIDE
+    integer, dimension(RANK), intent(in) :: EDGE
+    double precision, dimension(:,:), intent(out) :: VALUES
+    character(len=*), optional :: FIleName
+    integer, optional, intent(in) :: hdfVersion
+    logical, optional, intent(in) :: DONTFAIL
+
+    ! Internal variables
+    integer :: Me = -1                  ! String index for trace cacheing
+    logical :: myDontFail
+    integer :: myHdfVersion
+    logical :: needsFileName
+
+    ! Executable code
+    call trace_begin ( me, 'MLS_SWRDFLD_DOUBLE_2D' , cond=.false. )
+    MLS_swrdfld_double_2d = 0
+    myDontFail = .false.
+    if ( present(DontFail) ) myDontFail = DontFail
+    ! All necessary input supplied?
+    needsFileName = (.not. present(hdfVersion))
+    if ( present(hdfVersion) ) &
+      & needsFileName = (hdfVersion == WILDCARDHDFVERSION)
+    if ( needsFileName .and. .not. present(FIleName)) then
+      if ( myDontFail ) then
+        MLS_swrdfld_double_2d = -1
+      else
+        CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Missing needed arg FILENAME from call to MLS_SWRDFLD_DOUBLE_2d' )
+      endif
+      call trace_end ( cond=.false. )
+      return
+    endif
+    if ( needsFileName ) then
+      myHdfVersion = MLS_hdf_version ( trim(FileName) )
+    else
+      myHdfVersion = hdfVersion
+    endif
+    select case (myHdfVersion)
+    case (HDFVERSION_4)
+      MLS_swrdfld_double_2d = SWRDFLD_DOUBLE_2D(swathid, trim(fieldname), &
+        & start, stride, edge, values)
+    case (HDFVERSION_5)
+      MLS_swrdfld_double_2d = HE5_SWRDFLD_DOUBLE_2D(swathid, trim(fieldname), &
+        & hsizes(start), hsizes(stride), hsizes(edge), values)
+    case default
+      MLS_swrdfld_double_2d = -1
+    end select
+    if ( .not. myDontFail .and. MLS_swrdfld_double_2d == -1 ) &
+      & CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Failed to read 2-d double field ' // trim(fieldname) )
+    call trace_end ( cond=.false. )
+
+  end function MLS_SWRDFLD_DOUBLE_2d
+
+  ! --------------------------------------  MLS_SWRDFLD_DOUBLE_3d  -----
+  integer function MLS_SWRDFLD_DOUBLE_3d ( SWATHID, FIELDNAME, &
+    & START, STRIDE, EDGE, VALUES, FILENAME, hdfVersion, DONTFAIL )
+    integer, parameter :: RANK = 3
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: FIELDNAME     ! Field name
+    integer, dimension(RANK), intent(in) :: START
+    integer, dimension(RANK), intent(in) :: STRIDE
+    integer, dimension(RANK), intent(in) :: EDGE
+    double precision, dimension(:,:,:), intent(out) :: VALUES
+    character(len=*), optional :: FIleName
+    integer, optional, intent(in) :: hdfVersion
+    logical, optional, intent(in) :: DONTFAIL
+
+    ! Internal variables
+    integer :: Me = -1                  ! String index for trace cacheing
+    logical :: myDontFail
+    integer :: myHdfVersion
+    logical :: needsFileName
+
+    ! Executable code
+    call trace_begin ( me, 'MLS_SWRDFLD_DOUBLE_3D' , cond=.false. )
+    MLS_swrdfld_double_3d = 0
+    myDontFail = .false.
+    if ( present(DontFail) ) myDontFail = DontFail
+    ! All necessary input supplied?
+    needsFileName = (.not. present(hdfVersion))
+    if ( present(hdfVersion) ) &
+      & needsFileName = (hdfVersion == WILDCARDHDFVERSION)
+    if ( needsFileName .and. .not. present(FIleName)) then
+      if ( myDontFail ) then
+        MLS_swrdfld_double_3d = -1
+      else
+        CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Missing needed arg FILENAME from call to MLS_SWRDFLD_DOUBLE_3d' )
+      endif
+      call trace_end ( cond=.false. )
+      return
+    endif
+    if ( needsFileName ) then
+      myHdfVersion = MLS_hdf_version ( trim(FileName) )
+    else
+      myHdfVersion = hdfVersion
+    endif
+    select case (myHdfVersion)
+    case (HDFVERSION_4)
+      MLS_swrdfld_double_3d = SWRDFLD_DOUBLE_3D(swathid, trim(fieldname), &
+        & start, stride, edge, values)
+    case (HDFVERSION_5)
+      MLS_swrdfld_double_3d = HE5_SWRDFLD_DOUBLE_3D(swathid, trim(fieldname), &
+        & hsizes(start), hsizes(stride), hsizes(edge), values)
+    case default
+      MLS_swrdfld_double_3d = -1
+    end select
+    if ( .not. myDontFail .and. MLS_swrdfld_double_3d == -1 ) &
+      & CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Failed to read 3d double field ' // trim(fieldname) )
+    call trace_end ( cond=.false. )
+
+  end function MLS_SWRDFLD_DOUBLE_3d
+
+  ! ----------------------------------------  MLS_SWRDFLD_INTEGER  -----
+  integer function MLS_SWRDFLD_INTEGER ( SWATHID, FIELDNAME, &
+    & START, STRIDE, EDGE, VALUES, FILENAME, hdfVersion, DONTFAIL )
+    integer, parameter :: RANK = 1
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: FIELDNAME     ! Field name
+    integer, dimension(RANK), intent(in) :: START
+    integer, dimension(RANK), intent(in) :: STRIDE
+    integer, dimension(RANK), intent(in) :: EDGE
+    integer, dimension(:), intent(out) :: VALUES
+    character(len=*), optional :: FIleName
+    integer, optional, intent(in) :: hdfVersion
+    logical, optional, intent(in) :: DONTFAIL
+
+    ! Internal variables
+    integer :: Me = -1                  ! String index for trace cacheing
+    logical :: myDontFail
+    integer :: myHdfVersion
+    logical :: needsFileName
+
+    ! Executable code
+    call trace_begin ( me, 'MLS_SWRDFLD_INTEGER' , cond=.false. )
+    MLS_swrdfld_integer = 0
+    myDontFail = .false.
+    if ( present(DontFail) ) myDontFail = DontFail
+    ! All necessary input supplied?
+    needsFileName = (.not. present(hdfVersion))
+    if ( present(hdfVersion) ) &
+      & needsFileName = (hdfVersion == WILDCARDHDFVERSION)
+    if ( needsFileName .and. .not. present(FIleName)) then
+      if ( myDontFail ) then
+        MLS_swrdfld_integer = -1
+      else
+        CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Missing needed arg FILENAME from call to MLS_SWRDFLD_integer' )
+      endif
+      call trace_end ( cond=.false. )
+      return
+    endif
+    if ( needsFileName ) then
+      myHdfVersion = MLS_hdf_version ( trim(FileName) )
+    else
+      myHdfVersion = hdfVersion
+    endif
+    select case (myHdfVersion)
+    case (HDFVERSION_4)
+      MLS_swrdfld_integer = SWRDFLD_INTEGER(swathid, trim(fieldname), &
+        & start, stride, edge, values)
+    case (HDFVERSION_5)
+      MLS_swrdfld_integer = HE5_SWRDFLD_INTEGER(swathid, trim(fieldname), &
+        & hsizes(start), hsizes(stride), hsizes(edge), values)
+    case default
+      MLS_swrdfld_integer = -1
+    end select
+    if ( .not. myDontFail .and. MLS_swrdfld_integer == -1 ) &
+      & CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Failed to read integer field ' // trim(fieldname) )
+    call trace_end ( cond=.false. )
+
+  end function MLS_SWRDFLD_INTEGER
+
+  ! ----------------------------------------  MLS_SWRDFLD_REAL_1D  -----
+  integer function MLS_SWRDFLD_REAL_1D ( SWATHID, FIELDNAME, &
+    & START, STRIDE, EDGE, VALUES, FILENAME, hdfVersion, DONTFAIL )
+    integer, parameter :: RANK = 1
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: FIELDNAME     ! Field name
+    integer, dimension(RANK), intent(in) :: START
+    integer, dimension(RANK), intent(in) :: STRIDE
+    integer, dimension(RANK), intent(in) :: EDGE
+    real, dimension(:), intent(out) :: VALUES
+    character(len=*), optional :: FIleName
+    integer, optional, intent(in) :: hdfVersion
+    logical, optional, intent(in) :: DONTFAIL
+
+    ! Internal variables
+    integer :: Me = -1                  ! String index for trace cacheing
+    logical :: myDontFail
+    integer :: myHdfVersion
+    logical :: needsFileName
+
+    ! Executable code
+    call trace_begin ( me, 'MLS_SWRDFLD_REAL_1D' , cond=.false. )
+    MLS_swrdfld_REAL_1d = 0
+    myDontFail = .false.
+    if ( present(DontFail) ) myDontFail = DontFail
+    ! All necessary input supplied?
+    needsFileName = (.not. present(hdfVersion))
+    if ( present(hdfVersion) ) &
+      & needsFileName = (hdfVersion == WILDCARDHDFVERSION)
+    if ( needsFileName .and. .not. present(FIleName)) then
+      if ( myDontFail ) then
+        MLS_swrdfld_REAL_1d = -1
+      else
+        CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Missing needed arg FILENAME from call to MLS_SWRDFLD_REAL_1D' )
+      endif
+      call trace_end ( cond=.false. )
+      return
+    endif
+    if ( needsFileName ) then
+      myHdfVersion = MLS_hdf_version ( trim(FileName) )
+    else
+      myHdfVersion = hdfVersion
+    endif
+    select case (myHdfVersion)
+    case (HDFVERSION_4)
+      MLS_swrdfld_REAL_1d = SWRDFLD_REAL(swathid, trim(fieldname), &
+        & start, stride, edge, values)
+    case (HDFVERSION_5)
+      MLS_swrdfld_REAL_1d = HE5_SWRDFLD_REAL(swathid, trim(fieldname), &
+        & hsizes(start), hsizes(stride), hsizes(edge), values)
+    case default
+      MLS_swrdfld_REAL_1d = -1
+    end select
+    if ( .not. myDontFail .and. MLS_swrdfld_REAL_1d == -1 ) &
+      & CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Failed to read 1d real field ' // trim(fieldname) )
+    call trace_end ( cond=.false. )
+
+  end function MLS_SWRDFLD_REAL_1D
+
+  ! ----------------------------------------  MLS_SWRDFLD_REAL_2d  -----
+  integer function MLS_SWRDFLD_REAL_2d ( SWATHID, FIELDNAME, &
+    & START, STRIDE, EDGE, VALUES, FILENAME, hdfVersion, DONTFAIL )
+  ! use hdf5, only: hsize_t
+    integer, parameter :: RANK = 2
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: FIELDNAME     ! Field name
+    integer, dimension(RANK), intent(in) :: START
+    integer, dimension(RANK), intent(in) :: STRIDE
+    integer, dimension(RANK), intent(in) :: EDGE
+    real, dimension(:,:), intent(out) :: VALUES
+    character(len=*), optional :: FIleName
+    integer, optional, intent(in) :: hdfVersion
+    logical, optional, intent(in) :: DONTFAIL
+
+    ! Internal variables
+    integer :: Me = -1                  ! String index for trace cacheing
+    logical :: myDontFail
+    integer :: myHdfVersion
+    logical :: needsFileName
+
+    ! Executable code
+    call trace_begin ( me, 'MLS_SWRDFLD_REAL_2D' , cond=.false. )
+    MLS_swrdfld_REAL_2d = 0
+    myDontFail = .false.
+    if ( present(DontFail) ) myDontFail = DontFail
+    ! All necessary input supplied?
+    needsFileName = (.not. present(hdfVersion))
+    if ( present(hdfVersion) ) &
+      & needsFileName = (hdfVersion == WILDCARDHDFVERSION)
+    if ( needsFileName .and. .not. present(FIleName)) then
+      if ( myDontFail ) then
+        MLS_swrdfld_REAL_2d = -1
+      else
+        CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Missing needed arg FILENAME from call to MLS_SWRDFLD_REAL_2d' )
+      endif
+      call trace_end ( cond=.false. )
+      return
+    endif
+    if ( needsFileName ) then
+      myHdfVersion = MLS_hdf_version ( trim(FileName) )
+    else
+      myHdfVersion = hdfVersion
+    endif
+    select case (myHdfVersion)
+    case (HDFVERSION_4)
+      MLS_swrdfld_REAL_2d = SWRDFLD_REAL_2D(swathid, trim(fieldname), &
+        & start, stride, edge, values)
+    case (HDFVERSION_5)
+      if ( DEEBUG ) then
+        print *, 'About to read 2-d field: ', trim(fieldname)
+        print *, 'start:  ', start
+        print *, 'stride: ', stride
+        print *, 'edge: ', edge
+        print *, 'hsize_t(start):  ', hsizes(start)
+        print *, 'hsize_t(stride): ', hsizes(stride)
+        print *, 'hsize_t(edge): ', hsizes(edge)
+      endif
+      MLS_swrdfld_REAL_2d = HE5_SWRDFLD_REAL_2D(swathid, trim(fieldname), &
+        & hsizes(start), hsizes(stride), hsizes(edge), values)
+    case default
+      MLS_swrdfld_REAL_2d = -1
+    end select
+    if ( .not. myDontFail .and. MLS_swrdfld_REAL_2d == -1 ) &
+      & CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Failed to read 2-d REAL field ' // trim(fieldname) )
+    call trace_end ( cond=.false. )
+
+  end function MLS_SWRDFLD_REAL_2d
+
+  ! ----------------------------------------  MLS_SWRDFLD_REAL_3d  -----
+  integer function MLS_SWRDFLD_REAL_3d ( SWATHID, FIELDNAME, &
+    & START, STRIDE, EDGE, VALUES, FILENAME, hdfVersion, DONTFAIL )
+    integer, parameter :: RANK = 3
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: FIELDNAME     ! Field name
+    integer, dimension(RANK), intent(in) :: START
+    integer, dimension(RANK), intent(in) :: STRIDE
+    integer, dimension(RANK), intent(in) :: EDGE
+    real, dimension(:,:,:), intent(out) :: VALUES
+    character(len=*), optional :: FIleName
+    integer, optional, intent(in) :: hdfVersion
+    logical, optional, intent(in) :: DONTFAIL
+
+    ! Internal variables
+    integer :: Me = -1                  ! String index for trace cacheing
+    logical :: myDontFail
+    integer :: myHdfVersion
+    logical :: needsFileName
+
+    ! Executable code
+    call trace_begin ( me, 'MLS_SWRDFLD_REAL_3D' , cond=.false. )
+    MLS_swrdfld_REAL_3d = 0
+    myDontFail = .false.
+    if ( present(DontFail) ) myDontFail = DontFail
+    ! All necessary input supplied?
+    needsFileName = (.not. present(hdfVersion))
+    if ( present(hdfVersion) ) &
+      & needsFileName = (hdfVersion == WILDCARDHDFVERSION)
+    if ( needsFileName .and. .not. present(FIleName)) then
+      if ( myDontFail ) then
+        MLS_swrdfld_REAL_3d = -1
+      else
+        CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Missing needed arg FILENAME from call to MLS_SWRDFLD_REAL_3d' )
+      endif
+      call trace_end ( cond=.false. )
+      return
+    endif
+    if ( needsFileName ) then
+      myHdfVersion = MLS_hdf_version ( trim(FileName) )
+    else
+      myHdfVersion = hdfVersion
+    endif
+    select case (myHdfVersion)
+    case (HDFVERSION_4)
+      MLS_swrdfld_REAL_3d = SWRDFLD_REAL_3D(swathid, trim(fieldname), &
+        & start, stride, edge, values)
+    case (HDFVERSION_5)
+      MLS_swrdfld_REAL_3d = HE5_SWRDFLD_REAL_3D(swathid, trim(fieldname), &
+        & hsizes(start), hsizes(stride), hsizes(edge), values)
+    case default
+      MLS_swrdfld_REAL_3d = -1
+    end select
+    if ( .not. myDontFail .and. MLS_swrdfld_REAL_3d == -1 ) &
+      & CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Failed to read 3d real field ' // trim(fieldname) )
+    call trace_end ( cond=.false. )
+
+  end function MLS_SWRDFLD_REAL_3d
+
+  ! -----------------------------------------------  MLS_swwrattr  -----
+  integer function MLS_swwrattr ( SWATHID, &
+    & ATTRNAME, DATATYPE, COUNT, BUFFER )
+    integer, intent(in) :: SWATHID      ! Swath ID
+    character(len=*), intent(in) :: ATTRNAME     ! Attribute name
+    integer, intent(in) :: DATATYPE    ! E.g., MLS_CHARTYPE
+    integer, intent(in) :: COUNT   ! How many
+    character(len=*), intent(in) :: BUFFER  ! Buffer for write
+
+    ! Local variables
+    integer :: Me = -1                  ! String index for trace cacheing
+
+    ! Executable code
+    call trace_begin ( me, 'MLS_swwrattr' , cond=.false. )
+    if ( len_trim(buffer) > 0 ) then
+      MLS_swwrattr = HE5_SWWRATTR( SWATHID, &
+      & ATTRNAME, DATATYPE, hsize(max(COUNT, len_trim(BUFFER))), BUFFER )
+    else
+      MLS_swwrattr = HE5_SWWRATTR( SWATHID, &
+      & ATTRNAME, DATATYPE, hsize(1), BLANK )
+    endif
+    call trace_end ( cond=.false. )
+
+  end function MLS_swwrattr
+
+  ! ----------------------------------------------  MLS_swwrlattr  -----
+  integer function MLS_swwrlattr ( SWATHID, &
+    & FIELDNAME, ATTRNAME, DATATYPE, COUNT, BUFFER )
+    integer, intent(in) :: SWATHID      ! Swath ID
+    character(len=*), intent(in) :: FIELDNAME     ! Field name
+    character(len=*), intent(in) :: ATTRNAME     ! Attribute name
+    integer, intent(in) :: DATATYPE    ! E.g., MLS_CHARTYPE
+    integer, intent(in) :: COUNT   ! How many
+    character(len=*), intent(in) :: BUFFER  ! Buffer for write
+
+    ! Local variables
+    integer :: Me = -1                  ! String index for trace cacheing
+
+    ! Executable code
+    call trace_begin ( me, 'MLS_swwrlattr' , cond=.false. )
+    if ( len_trim(buffer) > 0 ) then
+      MLS_swwrlattr = HE5_SWWRLATTR( SWATHID, FIELDNAME, &
+      & ATTRNAME, DATATYPE, hsize(max(COUNT, len_trim(BUFFER))), BUFFER )
+    else
+      MLS_swwrlattr = HE5_SWWRLATTR( SWATHID, FIELDNAME, &
+      & ATTRNAME, DATATYPE, hsize(1), BLANK )
+    endif
+    call trace_end ( cond=.false. )
+
+  end function MLS_swwrlattr
+
+  ! ----------------------------------------  MLS_SWWRFLD_CHAR_1D  -----
+  integer function MLS_SWWRFLD_CHAR_1D ( SWATHID, FIELDNAME, &
+    & START, STRIDE, EDGE, VALUES, FILENAME, hdfVersion, DONTFAIL )
+    integer, parameter :: RANK = 1
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: FIELDNAME     ! Field name
+    integer, dimension(RANK), intent(in) :: START
+    integer, dimension(RANK), intent(in) :: STRIDE
+    integer, dimension(RANK), intent(in) :: EDGE
+    character(len=*), dimension(:), intent(in) :: VALUES
+    character(len=*), optional :: FIleName
+    integer, optional, intent(in) :: hdfVersion
+    logical, optional, intent(in) :: DONTFAIL
+
+    ! Internal variables
+    integer :: Me = -1                  ! String index for trace cacheing
+    logical :: myDontFail
+    integer :: myHdfVersion
+    logical :: needsFileName
+    ! Declare these as externals to try to fool hdfeos(5)
+    integer, external :: swwrfld
+    integer, external :: he5_swwrfld
+    integer, dimension(12) :: dfrank
+    integer, dimension(12) :: numbertype
+    character(len=80)      :: fieldlist
+    integer                :: nflds
+
+    ! Executable code
+    call trace_begin ( me, 'MLS_SWWRFLD_CHAR_1D' , cond=.false. )
+    MLS_SWWRFLD_CHAR_1D = 0
+    myDontFail = .false.
+    if ( present(DontFail) ) myDontFail = DontFail
+    ! All necessary input supplied?
+    needsFileName = (.not. present(hdfVersion))
+    if ( present(hdfVersion) ) &
+      & needsFileName = (hdfVersion == WILDCARDHDFVERSION)
+    if ( needsFileName .and. .not. present(FIleName)) then
+      if ( myDontFail ) then
+        MLS_SWWRFLD_CHAR_1D = -1
+      else
+        CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Missing needed arg FILENAME from call to MLS_SWWRFLD_CHAR_1D' )
+      endif
+      call trace_end ( cond=.false. )
+      return
+    endif
+    if ( needsFileName ) then
+      myHdfVersion = MLS_hdf_version ( trim(FileName) )
+    else
+      myHdfVersion = hdfVersion
+    endif
+    select case (myHdfVersion)
+    case (HDFVERSION_4)
+      MLS_SWWRFLD_CHAR_1D = SWWRFLD(swathid, trim(fieldname), &
+        & start, stride, edge, values)
+    case (HDFVERSION_5)
+      MLS_SWWRFLD_CHAR_1D = HE5_SWWRFLD(swathid, trim(fieldname), &
+        & hsizes(start), hsizes(stride), hsizes(edge), values)
+    case default
+      MLS_SWWRFLD_CHAR_1D = -1
+    end select
+    needsFileName = is_swath_datatype_right(swathid, fieldname, DFNT_CHAR8, &
+      & myHdfVersion, rank_out=dfrank, numbertype_out=numbertype, &
+      & fieldlist_out=fieldlist, nflds_out=nflds)
+    if ( .not. myDontFail .and. MLS_SWWRFLD_CHAR_1D == -1 ) &
+      & CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Failed to write 1d char field ' // trim(fieldname) )
+    call trace_end ( cond=.false. )
+
+  end function MLS_SWWRFLD_CHAR_1D
+
+  ! --------------------------------------  MLS_SWWRFLD_DOUBLE_1D  -----
+  integer function MLS_SWWRFLD_DOUBLE_1D ( SWATHID, FIELDNAME, &
+    & START, STRIDE, EDGE, VALUES, FILENAME, hdfVersion, DONTFAIL )
+    integer, parameter :: RANK = 1
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: FIELDNAME     ! Field name
+    integer, dimension(RANK), intent(in) :: START
+    integer, dimension(RANK), intent(in) :: STRIDE
+    integer, dimension(RANK), intent(in) :: EDGE
+    double precision, dimension(:), intent(in) :: VALUES
+    character(len=*), optional :: FIleName
+    integer, optional, intent(in) :: hdfVersion
+    logical, optional, intent(in) :: DONTFAIL
+
+    ! Internal variables
+    integer :: Me = -1                  ! String index for trace cacheing
+    logical :: myDontFail
+    integer :: myHdfVersion
+    logical :: needsFileName
+
+    ! Executable code
+    call trace_begin ( me, 'MLS_SWWRFLD_DOUBLE_1D' , cond=.false. )
+    MLS_SWWRFLD_double_1d = 0
+    myDontFail = .false.
+    if ( present(DontFail) ) myDontFail = DontFail
+    ! All necessary input supplied?
+    needsFileName = (.not. present(hdfVersion))
+    if ( present(hdfVersion) ) &
+      & needsFileName = (hdfVersion == WILDCARDHDFVERSION)
+    if ( needsFileName .and. .not. present(FIleName)) then
+      if ( myDontFail ) then
+        MLS_SWWRFLD_double_1d = -1
+      else
+        CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Missing needed arg FILENAME from call to MLS_SWWRFLD_DOUBLE_1D' )
+      endif
+      call trace_end ( cond=.false. )
+      return
+    endif
+    if ( needsFileName ) then
+      myHdfVersion = MLS_hdf_version ( trim(FileName) )
+    else
+      myHdfVersion = hdfVersion
+    endif
+    select case (myHdfVersion)
+    case (HDFVERSION_4)
+      MLS_SWWRFLD_double_1d = SWWRFLD_DOUBLE(swathid, trim(fieldname), &
+        & start, stride, edge, values)
+    case (HDFVERSION_5)
+      MLS_SWWRFLD_double_1d = HE5_SWWRFLD_DOUBLE(swathid, trim(fieldname), &
+        & hsizes(start), hsizes(stride), hsizes(edge), values)
+    case default
+      MLS_SWWRFLD_double_1d = -1
+    end select
+    if ( .not. myDontFail .and. MLS_SWWRFLD_double_1d == -1 ) &
+      & CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Failed to write 1d double field ' // trim(fieldname) )
+    call trace_end ( cond=.false. )
+
+  end function MLS_SWWRFLD_DOUBLE_1D
+
+  ! --------------------------------------  MLS_SWWRFLD_DOUBLE_2d  -----
+  integer function MLS_SWWRFLD_DOUBLE_2d ( SWATHID, FIELDNAME, &
+    & START, STRIDE, EDGE, VALUES, FILENAME, hdfVersion, DONTFAIL )
+    integer, parameter :: RANK = 2
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: FIELDNAME     ! Field name
+    integer, dimension(RANK), intent(in) :: START
+    integer, dimension(RANK), intent(in) :: STRIDE
+    integer, dimension(RANK), intent(in) :: EDGE
+    double precision, dimension(:,:), intent(in) :: VALUES
+    character(len=*), optional :: FIleName
+    integer, optional, intent(in) :: hdfVersion
+    logical, optional, intent(in) :: DONTFAIL
+
+    ! Internal variables
+    integer :: Me = -1                  ! String index for trace cacheing
+    logical :: myDontFail
+    integer :: myHdfVersion
+    logical :: needsFileName
+
+    ! Executable code
+    call trace_begin ( me, 'MLS_SWWRFLD_DOUBLE_2D' , cond=.false. )
+    MLS_SWWRFLD_double_2d = 0
+    myDontFail = .false.
+    if ( present(DontFail) ) myDontFail = DontFail
+    ! All necessary input supplied?
+    needsFileName = (.not. present(hdfVersion))
+    if ( present(hdfVersion) ) &
+      & needsFileName = (hdfVersion == WILDCARDHDFVERSION)
+    if ( needsFileName .and. .not. present(FIleName)) then
+      if ( myDontFail ) then
+        MLS_SWWRFLD_double_2d = -1
+      else
+        CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Missing needed arg FILENAME from call to MLS_SWWRFLD_DOUBLE_2d' )
+      endif
+      call trace_end ( cond=.false. )
+      return
+    endif
+    if ( needsFileName ) then
+      myHdfVersion = MLS_hdf_version ( trim(FileName) )
+    else
+      myHdfVersion = hdfVersion
+    endif
+    select case (myHdfVersion)
+    case (HDFVERSION_4)
+      MLS_SWWRFLD_double_2d = SWWRFLD_DOUBLE_2D(swathid, trim(fieldname), &
+        & start, stride, edge, values)
+    case (HDFVERSION_5)
+      MLS_SWWRFLD_double_2d = HE5_SWWRFLD_DOUBLE_2D(swathid, trim(fieldname), &
+        & hsizes(start), hsizes(stride), hsizes(edge), values)
+    case default
+      MLS_SWWRFLD_double_2d = -1
+    end select
+    if ( .not. myDontFail .and. MLS_SWWRFLD_double_2d == -1 ) &
+      & CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Failed to write 2-d double field ' // trim(fieldname) )
+    call trace_end ( cond=.false. )
+
+  end function MLS_SWWRFLD_DOUBLE_2d
+
+  ! --------------------------------------  MLS_SWWRFLD_DOUBLE_3d  -----
+  integer function MLS_SWWRFLD_DOUBLE_3d ( SWATHID, FIELDNAME, &
+    & START, STRIDE, EDGE, VALUES, FILENAME, hdfVersion, DONTFAIL )
+    integer, parameter :: RANK = 3
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: FIELDNAME     ! Field name
+    integer, dimension(RANK), intent(in) :: START
+    integer, dimension(RANK), intent(in) :: STRIDE
+    integer, dimension(RANK), intent(in) :: EDGE
+    double precision, dimension(:,:,:), intent(in) :: VALUES
+    character(len=*), optional :: FIleName
+    integer, optional, intent(in) :: hdfVersion
+    logical, optional, intent(in) :: DONTFAIL
+
+    ! Internal variables
+    integer :: Me = -1                  ! String index for trace cacheing
+    logical :: myDontFail
+    integer :: myHdfVersion
+    logical :: needsFileName
+
+    ! Executable code
+    call trace_begin ( me, 'MLS_SWWRFLD_DOUBLE_3D' , cond=.false. )
+    MLS_SWWRFLD_double_3d = 0
+    myDontFail = .false.
+    if ( present(DontFail) ) myDontFail = DontFail
+    ! All necessary input supplied?
+    needsFileName = (.not. present(hdfVersion))
+    if ( present(hdfVersion) ) &
+      & needsFileName = (hdfVersion == WILDCARDHDFVERSION)
+    if ( needsFileName .and. .not. present(FIleName)) then
+      if ( myDontFail ) then
+        MLS_SWWRFLD_double_3d = -1
+      else
+        CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Missing needed arg FILENAME from call to MLS_SWWRFLD_DOUBLE_3d' )
+      endif
+      call trace_end ( cond=.false. )
+      return
+    endif
+    if ( needsFileName ) then
+      myHdfVersion = MLS_hdf_version ( trim(FileName) )
+    else
+      myHdfVersion = hdfVersion
+    endif
+    select case (myHdfVersion)
+    case (HDFVERSION_4)
+      MLS_SWWRFLD_double_3d = SWWRFLD_DOUBLE_3D(swathid, trim(fieldname), &
+        & start, stride, edge, values)
+    case (HDFVERSION_5)
+      MLS_SWWRFLD_double_3d = HE5_SWWRFLD_DOUBLE_3D(swathid, trim(fieldname), &
+        & hsizes(start), hsizes(stride), hsizes(edge), values)
+    case default
+      MLS_SWWRFLD_double_3d = -1
+    end select
+    if ( .not. myDontFail .and. MLS_SWWRFLD_double_3d == -1 ) &
+      & CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Failed to write 3d double field ' // trim(fieldname) )
+    call trace_end ( cond=.false. )
+
+  end function MLS_SWWRFLD_DOUBLE_3d
+
+  ! ----------------------------------------  MLS_SWWRFLD_INTEGER  -----
+  integer function MLS_SWWRFLD_INTEGER ( SWATHID, FIELDNAME, &
+    & START, STRIDE, EDGE, VALUES, FILENAME, hdfVersion, DONTFAIL )
+    integer, parameter :: RANK = 1
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: FIELDNAME     ! Field name
+    integer, dimension(RANK), intent(in) :: START
+    integer, dimension(RANK), intent(in) :: STRIDE
+    integer, dimension(RANK), intent(in) :: EDGE
+    integer, dimension(:), intent(in) :: VALUES
+    character(len=*), optional :: FIleName
+    integer, optional, intent(in) :: hdfVersion
+    logical, optional, intent(in) :: DONTFAIL
+
+    ! Internal variables
+    integer :: Me = -1                  ! String index for trace cacheing
+    logical :: myDontFail
+    integer :: myHdfVersion
+    logical :: needsFileName
+
+    ! Executable code
+    call trace_begin ( me, 'MLS_SWWRFLD_INTEGER' , cond=.false. )
+    MLS_SWWRFLD_integer = 0
+    myDontFail = .false.
+    if ( present(DontFail) ) myDontFail = DontFail
+    ! All necessary input supplied?
+    needsFileName = (.not. present(hdfVersion))
+    if ( present(hdfVersion) ) &
+      & needsFileName = (hdfVersion == WILDCARDHDFVERSION)
+    if ( needsFileName .and. .not. present(FIleName)) then
+      if ( myDontFail ) then
+        MLS_SWWRFLD_integer = -1
+      else
+        CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Missing needed arg FILENAME from call to MLS_SWWRFLD_integer' )
+      endif
+      call trace_end ( cond=.false. )
+      return
+    endif
+    if ( needsFileName ) then
+      myHdfVersion = MLS_hdf_version ( trim(FileName) )
+    else
+      myHdfVersion = hdfVersion
+    endif
+    select case (myHdfVersion)
+    case (HDFVERSION_4)
+      MLS_SWWRFLD_integer = SWWRFLD_INTEGER(swathid, trim(fieldname), &
+        & start, stride, edge, values)
+    case (HDFVERSION_5)
+      MLS_SWWRFLD_integer = HE5_SWWRFLD_INTEGER(swathid, trim(fieldname), &
+        & hsizes(start), hsizes(stride), hsizes(edge), values)
+    case default
+      MLS_SWWRFLD_integer = -1
+    end select
+    if ( .not. myDontFail .and. MLS_SWWRFLD_integer == -1 ) &
+      & CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Failed to write integer field ' // trim(fieldname) )
+    call trace_end ( cond=.false. )
+
+  end function MLS_SWWRFLD_INTEGER
+
+  ! ----------------------------------------  MLS_SWWRFLD_REAL_1D  -----
+  integer function MLS_SWWRFLD_REAL_1D ( SWATHID, FIELDNAME, &
+    & START, STRIDE, EDGE, VALUES, FILENAME, hdfVersion, DONTFAIL )
+    integer, parameter :: RANK = 1
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: FIELDNAME     ! Field name
+    integer, dimension(RANK), intent(in) :: START
+    integer, dimension(RANK), intent(in) :: STRIDE
+    integer, dimension(RANK), intent(in) :: EDGE
+    real, dimension(:), intent(in) :: VALUES
+    character(len=*), optional :: FIleName
+    integer, optional, intent(in) :: hdfVersion
+    logical, optional, intent(in) :: DONTFAIL
+
+    ! Internal variables
+    logical, parameter :: DEEBUG = .false.
+    integer :: Me = -1                  ! String index for trace cacheing
+    logical :: myDontFail
+    integer :: myHdfVersion
+    logical :: needsFileName
+
+    ! Executable code
+    call trace_begin ( me, 'MLS_SWWRFLD_REAL_1D' , cond=.false. )
+    MLS_SWWRFLD_REAL_1d = 0
+    myDontFail = .false.
+    if ( present(DontFail) ) myDontFail = DontFail
+    ! All necessary input supplied?
+    needsFileName = (.not. present(hdfVersion))
+    if ( present(hdfVersion) ) &
+      & needsFileName = (hdfVersion == WILDCARDHDFVERSION)
+    if ( needsFileName .and. .not. present(FIleName)) then
+      if ( myDontFail ) then
+        MLS_SWWRFLD_REAL_1d = -1
+      else
+        CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Missing needed arg FILENAME from call to MLS_SWWRFLD_REAL_1D' )
+      endif
+      call trace_end ( cond=.false. )
+      return
+    endif
+    if ( needsFileName ) then
+      myHdfVersion = MLS_hdf_version ( trim(FileName) )
+    else
+      myHdfVersion = hdfVersion
+    endif
+    if(DEEBUG) print *, 'swathid: ', swathid
+    if(DEEBUG) print *, 'myHdfVersion: ', myHdfVersion
+    if(DEEBUG) print *, 'fieldname: ', trim(fieldname)
+    if(DEEBUG) print *, 'start: ', hsizes(start)
+    if(DEEBUG) print *, 'stride: ', hsizes(stride)
+    if(DEEBUG) print *, 'edge: ', hsizes(edge)
+    if(DEEBUG) print *, 'shape(values): ', shape(values)
+    select case (myHdfVersion)
+    case (HDFVERSION_4)
+      MLS_SWWRFLD_REAL_1d = SWWRFLD_REAL(swathid, trim(fieldname), &
+        & start, stride, edge, values)
+    case (HDFVERSION_5)
+      MLS_SWWRFLD_REAL_1d = HE5_SWWRFLD_REAL(swathid, trim(fieldname), &
+        & hsizes(start), hsizes(stride), hsizes(edge), values)
+    case default
+      MLS_SWWRFLD_REAL_1d = -1
+    end select
+    if ( .not. myDontFail .and. MLS_SWWRFLD_REAL_1d == -1 ) &
+      & CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Failed to write 1d real field ' // trim(fieldname) )
+    call trace_end ( cond=.false. )
+
+  end function MLS_SWWRFLD_REAL_1D
+
+  ! ----------------------------------------  MLS_SWWRFLD_REAL_2d  -----
+  integer function MLS_SWWRFLD_REAL_2d ( SWATHID, FIELDNAME, &
+    & START, STRIDE, EDGE, VALUES, FILENAME, hdfVersion, DONTFAIL )
+    integer, parameter :: RANK = 2
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: FIELDNAME     ! Field name
+    integer, dimension(RANK), intent(in) :: START
+    integer, dimension(RANK), intent(in) :: STRIDE
+    integer, dimension(RANK), intent(in) :: EDGE
+    real, dimension(:,:), intent(in) :: VALUES
+    character(len=*), optional :: FIleName
+    integer, optional, intent(in) :: hdfVersion
+    logical, optional, intent(in) :: DONTFAIL
+
+    ! Internal variables
+    logical, parameter :: DEEBUG = .false.
+    integer :: Me = -1                  ! String index for trace cacheing
+    logical :: myDontFail
+    integer :: myHdfVersion
+    logical :: needsFileName
+
+    ! Executable
+    call trace_begin ( me, 'MLS_SWWRFLD_REAL_2D' , cond=.false. )
+    MLS_SWWRFLD_REAL_2d = 0
+    myDontFail = .false.
+    if ( present(DontFail) ) myDontFail = DontFail
+    ! All necessary input supplied?
+    needsFileName = (.not. present(hdfVersion))
+    if ( present(hdfVersion) ) &
+      & needsFileName = (hdfVersion == WILDCARDHDFVERSION)
+    if ( needsFileName .and. .not. present(FIleName)) then
+      if ( myDontFail ) then
+        MLS_SWWRFLD_REAL_2d = -1
+      else
+        CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Missing needed arg FILENAME from call to MLS_SWWRFLD_REAL_2d' )
+      endif
+      call trace_end ( cond=.false. )
+      return
+    endif
+    if ( needsFileName ) then
+      myHdfVersion = MLS_hdf_version ( trim(FileName) )
+    else
+      myHdfVersion = hdfVersion
+    endif
+    if(DEEBUG) print *, 'swathid: ', swathid
+    if(DEEBUG) print *, 'myHdfVersion: ', myHdfVersion
+    if(DEEBUG) print *, 'fieldname: ', trim(fieldname)
+    if(DEEBUG) print *, 'start: ', hsizes(start)
+    if(DEEBUG) print *, 'stride: ', hsizes(stride)
+    if(DEEBUG) print *, 'edge: ', hsizes(edge)
+    if(DEEBUG) print *, 'shape(values): ', shape(values)
+    select case (myHdfVersion)
+    case (HDFVERSION_4)
+      MLS_SWWRFLD_REAL_2d = SWWRFLD_REAL_2D(swathid, trim(fieldname), &
+        & start, stride, edge, values)
+    case (HDFVERSION_5)
+      MLS_SWWRFLD_REAL_2d = HE5_SWWRFLD_REAL_2D(swathid, trim(fieldname), &
+        & hsizes(start), hsizes(stride), hsizes(edge), values)
+    case default
+      MLS_SWWRFLD_REAL_2d = -1
+    end select
+    if ( .not. myDontFail .and. MLS_SWWRFLD_REAL_2d == -1 ) &
+      & CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Failed to write 2-d REAL field ' // trim(fieldname) )
+    call trace_end ( cond=.false. )
+
+  end function MLS_SWWRFLD_REAL_2d
+
+  ! ----------------------------------------  MLS_SWWRFLD_REAL_3d  -----
+  integer function MLS_SWWRFLD_REAL_3d ( SWATHID, FIELDNAME, &
+    & START, STRIDE, EDGE, VALUES, FILENAME, hdfVersion, DONTFAIL )
+    integer, parameter :: RANK = 3
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: FIELDNAME     ! Field name
+    integer, dimension(RANK), intent(in) :: START
+    integer, dimension(RANK), intent(in) :: STRIDE
+    integer, dimension(RANK), intent(in) :: EDGE
+    real, dimension(:,:,:), intent(in) :: VALUES
+    character(len=*), optional :: FIleName
+    integer, optional, intent(in) :: hdfVersion
+    logical, optional, intent(in) :: DONTFAIL
+
+    ! Internal variables
+    integer :: Me = -1                  ! String index for trace cacheing
+    logical :: myDontFail
+    integer :: myHdfVersion
+    logical :: needsFileName
+    call trace_begin ( me, 'MLS_SWWRFLD_REAL_3D' , cond=.false. )
+    MLS_SWWRFLD_REAL_3d = 0
+    myDontFail = .false.
+    if ( present(DontFail) ) myDontFail = DontFail
+    ! All necessary input supplied?
+    needsFileName = (.not. present(hdfVersion))
+    if ( present(hdfVersion) ) &
+      & needsFileName = (hdfVersion == WILDCARDHDFVERSION)
+    if ( needsFileName .and. .not. present(FIleName)) then
+      if ( myDontFail ) then
+        MLS_SWWRFLD_REAL_3d = -1
+      else
+        CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Missing needed arg FILENAME from call to MLS_SWWRFLD_REAL_3d' )
+      endif
+      call trace_end ( cond=.false. )
+      return
+    endif
+    if ( needsFileName ) then
+      myHdfVersion = MLS_hdf_version ( trim(FileName) )
+    else
+      myHdfVersion = hdfVersion
+    endif
+    select case (myHdfVersion)
+    case (HDFVERSION_4)
+      MLS_SWWRFLD_REAL_3d = SWWRFLD_REAL_3D(swathid, trim(fieldname), &
+        & start, stride, edge, values)
+    case (HDFVERSION_5)
+      MLS_SWWRFLD_REAL_3d = HE5_SWWRFLD_REAL_3D(swathid, trim(fieldname), &
+        & hsizes(start), hsizes(stride), hsizes(edge), values)
+    case default
+      MLS_SWWRFLD_REAL_3d = -1
+    end select
+    if ( .not. myDontFail .and. MLS_SWWRFLD_REAL_3d == -1 ) &
+      & CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Failed to write 3d real field ' // trim(fieldname) )
+    call trace_end ( cond=.false. )
+
+  end function MLS_SWWRFLD_REAL_3d
+
+  ! --------------------------------------  MLS_swath_in_file_sca  -----
+  logical function MLS_swath_in_file_sca( filename, swath, HdfVersion, error )
+    ! Returns .true. if swath found in file, .false. otherwise
+    use HDF5, only: Size_t
+    character(len=*), intent(in) :: filename
+    character(len=*), intent(in) :: swath
+    integer, intent(in) :: HdfVersion
+    integer, optional, intent(out) :: error
+
+    ! Internal variables
+    logical, parameter               :: Deebug = .false.
+    character(len=MAXDLISTLENGTH)    :: Fieldlist
+    integer(kind=size_t)             :: Hlistsize
+    integer :: Me = -1               !   String index for trace cacheing
+    integer                          :: Listsize
+    integer                          :: Nswaths
+
+    ! Begin execution
+    ! print*,'Scalar version'
+    call trace_begin ( me, 'MLS_swath_in_file_sca' , cond=.false. )
+    nswaths = 0
+    MLS_swath_in_file_sca = .false.
+    fieldlist = ''
+    listsize = -1 ! So we can check later whether it has been set
+    hlistsize = -1
+    select case (HdfVersion)
+    case (HDFVERSION_4)
+      nswaths = swinqswath(trim(filename), fieldlist, listsize)
+    case (HDFVERSION_5)
+      nswaths = HE5_swinqswath(trim(filename), fieldlist, hlistsize)
+    end select
+    if ( deebug ) then
+      call outputnamedValue ( 'nswaths', nswaths )
+      call outputnamedValue ( 'fieldlist', trim(fieldlist) )
+    endif
+    if ( present(error) ) error = min(0, nswaths)
+    if ( nswaths < 1 ) then
+      call trace_end ( cond=.false. )
+      return
+    endif
+    if ( listsize < 0 ) listsize = hlistsize
+    if ( listsize > MAXDLISTLENGTH ) then
+       CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'list size too big in MLS_swath_in_file_sca ' // trim(filename) )
+    elseif ( listsize < MAXDLISTLENGTH .and. listsize > 0 ) then
+      fieldlist = fieldlist(1:listsize) // ' '
+    endif
+    MLS_swath_in_file_sca = &
+      & ( StringElementNum(fieldlist, trim(swath), .true.) > 0 )
+    call trace_end ( cond=.false. )
+  end function MLS_swath_in_file_sca
+
+  ! --------------------------------------  MLS_swath_in_file_arr  -----
+  logical function MLS_swath_in_file_arr(filename, swaths, HdfVersion, &
+    & which, error )
+    use HDF5, only: Size_t
+    ! Array version of the above
+    character(len=*), intent(in) :: filename
+    character(len=*), dimension(:), intent(in) :: swaths
+    integer, intent(in) :: HdfVersion
+    logical, dimension(:), intent(out) :: which
+    integer, optional, intent(out) :: error
+
+    ! Internal variables
+    character(len=MAXDLISTLENGTH)    :: Fieldlist
+    integer(kind=size_t)             :: Hlistsize
+    integer                          :: I
+    integer                          :: Listsize
+    integer :: Me = -1               !   String index for trace cacheing
+    integer                          :: Nswaths
+
+    ! Begin execution
+    call trace_begin ( me, 'MLS_swath_in_file_arr' , cond=.false. )
+    nswaths = 0
+    MLS_swath_in_file_arr = .false.
+    which = .false.
+    fieldlist = ' '
+    if ( size(swaths) > size(which) ) &
+        CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'array to small to hold values in MLS_swath_in_file_arr' )
+    select case (HdfVersion)
+    case (HDFVERSION_4)
+      nswaths = swinqswath(trim(filename), fieldlist, listsize)
+    case (HDFVERSION_5)
+      nswaths = HE5_swinqswath(trim(filename), fieldlist, hlistsize)
+      listsize = hlistsize
+    end select
+    if ( present(error) ) error = min(0, nswaths)
+    if ( nswaths < 1 ) then
+      call trace_end ( cond=.false. )
+      return
+    endif
+    if (Deebug) print *, ' nswaths is ', nswaths
+    if (Deebug) print *, ' listsize is ', listsize
+    if (Deebug) print *, ' fieldlist is ', trim(fieldlist)
+    if ( listsize > MAXDLISTLENGTH ) then
+       CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'list size too big in MLS_swath_in_file_arr ' // trim(filename) )
+    elseif ( listsize < MAXDLISTLENGTH .and. listsize > 0 ) then
+      fieldlist = fieldlist(1:listsize) // ' '
+    endif
+    do i=1, size(swaths)
+      which(i) = &
+      & ( StringElementNum(fieldlist, trim(swaths(i)), .true.) > 0 )
+    enddo
+    MLS_swath_in_file_arr = any( which )
+    call trace_end ( cond=.false. )
+  end function MLS_swath_in_file_arr
+
+  ! ---------------- hsize ------------
+  function hsize ( arg ) result ( h )
+    use hdf5, only: size_t
+    ! Return arg with same integer value
+    ! but with kind value size_t or, someday, hdfeos5size_t
+    integer,  intent(in)               :: arg
+    integer(kind=size_t)               :: h
+    h = int(arg, size_t)
+  end function hsize
+
+  ! ---------------- hsizes ------------
+  function hsizes ( ints ) result ( h )
+    use hdf5, only: size_t
+    ! Return array with same integer values as ints
+    ! but with kind value size_t or, someday, hdfeos5size_t
+    integer, dimension(:), intent(in)               :: ints
+    integer(kind=size_t), dimension(size(ints))     :: h
+    integer :: i
+    h = 0
+    do i=1, size(ints)
+      h(i) = int(ints(i), size_t)
+    enddo
+  end function hsizes
+
+! ======================= Private Procedures ===========================
+
+  ! --------------------------------------  is_datafield_in_swath  -----
+  logical function is_datafield_in_swath(swathid, field, HdfVersion)
+    ! Returns .true. if datafield found in swath, .false. otherwise
+    integer, intent(in) :: swathid
+    character(len=*), intent(in) :: field
+    integer, intent(in) :: HdfVersion
+    ! Internal variables
+    integer, dimension(MAXNODFIELDS) :: Rank
+    integer, dimension(MAXNODFIELDS) :: Numbertype
+    character(len=MAXDLISTLENGTH)    :: Fieldlist
+    integer                          :: Nflds
+    ! Begin execution
+    nflds = 0
+    is_datafield_in_swath = .false.
+    fieldlist = ''
+    select case (HdfVersion)
+    case (HDFVERSION_4)
+      nflds = swinqdflds(swathid, fieldlist, rank, numbertype)
+    case (HDFVERSION_5)
+      nflds = HE5_swinqdflds(swathid, fieldlist, rank, numbertype)
+    end select
+    if ( nflds == 0 ) return
+    is_datafield_in_swath = &
+      & ( StringElementNum(fieldlist, trim(field), .true.) > 0 )
+  end function is_datafield_in_swath
+
+  ! ------------------------------------  is_swath_datatype_right  -----
+  logical function is_swath_datatype_right(swathid, field, datatype, &
+    & HdfVersion, rank_out, numbertype_out, fieldlist_out, nflds_out)
+    integer, intent(in)                          :: Swathid
+    character(len=*), intent(in)                 :: Field
+    integer, intent(in)                          :: Datatype
+    integer, intent(in)                          :: HdfVersion
+    integer, dimension(:), intent(out), optional :: Rank_out
+    integer, dimension(:), intent(out), optional :: Numbertype_out
+    character(len=*), intent(out), optional      :: Fieldlist_out
+    integer, intent(out), optional               :: Nflds_out
+    ! Internal variables
+    integer, dimension(MAXNODFIELDS) :: rank
+    integer, dimension(MAXNODFIELDS) :: numbertype
+    character(len=MAXDLISTLENGTH)    :: fieldlist
+    integer                         :: nflds
+    ! Begin execution
+    nflds = 0
+    is_swath_datatype_right = .false.
+    ! Set defaults for inputs to HDF routines so that
+    ! we get appropriate answers at all times.
+    rank = 0
+    fieldlist = ''
+    numbertype = 0
+    select case (HdfVersion)
+    case (HDFVERSION_4)
+      nflds = swinqdflds(swathid, fieldlist, rank, numbertype)
+    case (HDFVERSION_5)
+      nflds = HE5_swinqdflds(swathid, fieldlist, rank, numbertype)
+    end select
+    ! Set defaults for ouptuts
+    if ( present(nflds_out) ) nflds_out = nflds
+    if ( present(rank_out) ) rank_out = 0
+    if ( present(numbertype_out) ) numbertype_out = 0
+    if ( present(fieldlist_out) ) fieldlist_out = ' '
+    if ( nflds == 0 ) return
+    ! Now update our outputs
+    if ( present(rank_out) ) rank_out = rank(1:size(rank_out))
+    if ( present(numbertype_out) ) &
+      & numbertype_out = numbertype(1:size(numbertype_out))
+    if ( present(fieldlist_out) ) fieldlist_out = fieldlist
+    nflds = StringElementNum(fieldlist, trim(field), .true.)
+    is_swath_datatype_right = ( nflds > 0 .and. nflds <= MAXNODFIELDS )
+    if ( .not. is_swath_datatype_right ) return
+    is_swath_datatype_right = &
+      & ( numbertype(nflds) == datatype )
+  end function is_swath_datatype_right
+
+  ! --------------------------------------------  he2he5_DataType  -----
+
+  ! This function converts hdfeos2 datatypes to
+  ! corresponding hdfeos5 numbers
+  ! (unless they are already HE5 types in which it returns them unchanged)
+
+  function he2he5_DataType(dataType) result (HE5_dataType)
+
+    ! Arguments
+    integer, intent(IN)       :: dataType
+    integer                   :: HE5_dataType
+    ! begin
+    HE5_dataType = dataType
+    select case (dataType)
+    case(DFNT_FLOAT32)
+      HE5_dataType = HE5T_NATIVE_FLOAT
+    case(DFNT_FLOAT64)
+      HE5_dataType = HE5T_NATIVE_DOUBLE
+    case(DFNT_CHAR8)
+      HE5_dataType = MLS_CHARTYPE
+    case(DFNT_INT8)
+      HE5_dataType = HE5T_NATIVE_INT8
+    case(DFNT_INT16)
+      HE5_dataType = HE5T_NATIVE_INT16
+    case(DFNT_INT32)
+      HE5_dataType = HE5T_NATIVE_INT
+    case(DFNT_INT64)
+      HE5_dataType = HE5T_NATIVE_INT64
+    !case default
+      !HE5_dataType = HE5T_NATIVE_INT
+    end select
+  end function he2he5_DataType
+
+  ! ----------------------------------------------  not_used_here  -----
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: MLSHDFEOS.f90,v 2.47 2018/03/22 16:56:35 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module MLSHDFEOS
+
+! $Log: MLSHDFEOS.f90,v $
+! Revision 2.47  2018/03/22 16:56:35  pwagner
+! Debug printing in MLS_swath_in_file_sca; CamelCase use statements
+!
+! Revision 2.46  2013/08/31 01:24:53  vsnyder
+! Replace MLSMessageCalls with trace_begin and trace_end
+!
+! Revision 2.45  2013/06/12 02:11:27  vsnyder
+! Cruft removal
+!
+! Revision 2.44  2010/02/04 23:08:00  vsnyder
+! Remove USE or declaration for unused names
+!
+! Revision 2.43  2010/01/29 01:16:06  pwagner
+! Fixed undefined hlistsize bug Lahey complained about
+!
+! Revision 2.42  2010/01/14 23:29:35  pwagner
+! Uses separate scalar and array generic forms for HE5_EHRDGLATT_INTEGER
+!
+! Revision 2.41  2010/01/11 18:34:50  pwagner
+! Added more debug printing
+!
+! Revision 2.40  2009/10/05 23:38:21  pwagner
+! Moved use hdf5 statements from module scope to speedup Lahey; this is the last time we do that
+!
+! Revision 2.39  2009/09/29 23:33:49  pwagner
+! Changes needed by 64-bit build
+!
+! Revision 2.38  2009/06/23 18:25:42  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.37  2008/05/24 00:54:46  vsnyder
+! Remove unused declarations
+!
+! Revision 2.36  2008/05/02 00:05:36  pwagner
+! Reads textFile using io stuff
+!
+! Revision 2.35  2008/04/25 22:51:44  pwagner
+! Passes optional arg maxLineLen through to textFile_to_Chars
+!
+! Revision 2.34  2008/04/18 16:29:30  pwagner
+! Now works properly with NAG, Lahey, and Intel
+!
+! Revision 2.33  2008/03/07 01:36:08  pwagner
+! Will subdivide attributes into blocks if too large
+!
+! Revision 2.32  2008/02/22 21:30:18  pwagner
+! Can now save entire textfile as global attribute
+!
+! Revision 2.31  2007/08/20 22:00:47  pwagner
+! More procedures push their names onto MLSCallStack
+!
+! Revision 2.30  2007/08/17 00:27:48  pwagner
+! push more procedures onto MLSCallStack
+!
+! Revision 2.29  2005/11/15 00:18:20  pwagner
+! present a poor choice for argument name; esp when optional args exist
+!
+! Revision 2.28  2005/11/11 21:41:03  pwagner
+! MLS_swath_in_file_sca optionally returns an error flag, too
+!
+! Revision 2.27  2005/10/11 17:29:15  pwagner
+! Added MLS_ISGLATT function
+!
+! Revision 2.26  2005/06/29 00:39:30  pwagner
+! New interfaces for MLS_SWCREATE MLS_SWATTACH accept MLSFiles
+!
+! Revision 2.25  2005/06/22 17:25:50  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.24  2005/06/14 20:34:20  pwagner
+! Small changes to guard against zero-length characters
+!
+! Revision 2.23  2004/09/23 22:58:59  pwagner
+! Fix for when passed blank BUFFER (do we need to fix this elsewhere\?)
+!
+! Revision 2.22  2004/08/04 23:19:01  pwagner
+! Much moved from MLSStrings to MLSStringLists
+!
+! Revision 2.21  2004/07/22 17:07:15  pwagner
+! Fixed set fill values
+!
+! Revision 2.20  2004/05/05 21:28:42  pwagner
+! More debug printing
+!
+! Revision 2.19  2004/03/24 23:53:02  pwagner
+! Switched from HE5T_NATIVE_SCHAR to MLS_CHARTYPE
+!
+! Revision 2.18  2004/02/13 00:16:39  pwagner
+! New stuff for reading swath attributes
+!
+! Revision 2.17  2004/02/05 23:31:05  pwagner
+! Extra debugging when appropriate
+!
+! Revision 2.16  2004/01/23 01:12:28  pwagner
+! Some care taken in handling ...inq.. functions
+!
+! Revision 2.15  2003/10/30 00:01:57  pwagner
+! Added MLS_GDWRATTR
+!
+! Revision 2.14  2003/10/28 00:28:53  pwagner
+! Added MLS_EHWRGLATT,MLS_SWWRATTR,MLS_SWWRLATTR
+!
+! Revision 2.13  2003/07/15 23:36:28  pwagner
+! Disabled most printing; trims args to (HE5_)SWdefgfld
+!
+! Revision 2.12  2003/07/11 21:50:31  livesey
+! Minor bug fix, probably of little consquence
+!
+! Revision 2.11  2003/07/11 01:22:55  livesey
+! Bug fixes and tidyups
+!
+! Revision 2.10  2003/07/09 21:49:07  pwagner
+! Wont try swattaching just to see if swath already there
+!
+! Revision 2.9  2003/07/02 00:54:25  pwagner
+! Failed attempt to turn off hdfeos5 warnings by turning off hdf5 ones
+!
+! Revision 2.8  2003/06/26 00:05:40  pwagner
+! Added optional DONTFAIL arg to MLS_SWATTACH
+!
+! Revision 2.7  2003/06/20 19:31:39  pwagner
+! Changes to allow direct writing of products
+!
+! Revision 2.6  2003/06/06 22:49:12  pwagner
+! Added MLS_sw(gd)create
+!
+! Revision 2.5  2003/04/21 19:32:27  pwagner
+! Can read/write 1-d char fields
+!
+! Revision 2.4  2003/04/17 23:04:51  pwagner
+! Now sits between L2GPData and HDFEOS(5)
+!
+! Revision 2.3  2003/04/15 23:16:46  pwagner
+! Removed prints; begun MLS_SWRDFLD stuff
+!
+! Revision 2.2  2003/04/15 21:58:54  pwagner
+! Now sets _FillValue attribute because swsetfill seems broken
+!
+! Revision 2.1  2003/04/11 23:28:44  pwagner
+! FIrst commit
+!
+@
+
+
+2.47
+log
+@Debug printing in MLS_swath_in_file_sca; CamelCase use statements
+@
+text
+@d333 1
+a333 1
+  function MLS_ISGLATT_FID ( FILEID, ATTRNAME ) result(isThere)
+d335 1
+a335 1
+    use HDFEOS5, only: he5_EHinqglatts
+d338 3
+a340 4
+    integer, intent(in)          :: fileID
+    character(len=*), intent(in) :: ATTRNAME     ! Attribute name
+    logical                      :: isThere
+
+d342 5
+a346 5
+    character(len=MAXDLISTLENGTH) :: attrList
+    logical, parameter :: countempty = .true.
+    integer :: listSize
+    integer :: status
+
+d349 2
+d354 1
+d2140 1
+a2140 1
+  logical function MLS_swath_in_file_sca(filename, swath, HdfVersion, error)
+d2142 1
+a2142 1
+    use hdf5, only: size_t
+d2149 6
+a2154 6
+    logical, parameter               :: deebug = .false.
+    character(len=MAXDLISTLENGTH)    :: fieldlist
+    integer(kind=size_t)             :: hlistsize
+    integer :: Me = -1               ! String index for trace cacheing
+    integer                          :: listsize
+    integer                          :: nswaths
+d2194 1
+a2194 1
+    use hdf5, only: size_t
+d2203 6
+a2208 6
+    character(len=MAXDLISTLENGTH)    :: fieldlist
+    integer(kind=size_t)             :: hlistsize
+    integer                          :: i
+    integer                          :: listsize
+    integer :: Me = -1               ! String index for trace cacheing
+    integer                          :: nswaths
+d2281 4
+a2284 4
+    integer, dimension(MAXNODFIELDS) :: rank
+    integer, dimension(MAXNODFIELDS) :: numbertype
+    character(len=MAXDLISTLENGTH)    :: fieldlist
+    integer                         :: nflds
+d2303 3
+a2305 3
+    integer, intent(in)                          :: swathid
+    character(len=*), intent(in)                 :: field
+    integer, intent(in)                          :: datatype
+d2307 4
+a2310 4
+    integer, dimension(:), intent(out), optional :: rank_out
+    integer, dimension(:), intent(out), optional :: numbertype_out
+    character(len=*), intent(out), optional      :: fieldlist_out
+    integer, intent(out), optional               :: nflds_out
+d2385 1
+a2385 1
+       "$Id: MLSHDFEOS.f90,v 2.46 2013/08/31 01:24:53 vsnyder Exp $"
+d2395 3
+@
+
+
+2.46
+log
+@Replace MLSMessageCalls with trace_begin and trace_end
+@
+text
+@d20 25
+a44 24
+  use Hdf, only: DFNT_CHAR8, DFNT_FLOAT32, DFNT_FLOAT64, &
+    & DFNT_INT8, DFNT_INT16, DFNT_INT32, DFNT_INT64
+  use HDFEOS, only: gdattach, gdcreate, &
+    & swattach, swcreate, swdefdfld, swdefgfld, swdefdim, swdetach, &
+    & swdiminfo, swinqdflds, swinqswath
+  use HDFEOS5, only: HE5T_NATIVE_FLOAT, HE5T_NATIVE_DOUBLE, &
+    & HE5T_NATIVE_INT, HE5T_NATIVE_INT8, HE5T_NATIVE_INT16, HE5T_NATIVE_INT64
+  use HDFEOS5, only: HE5_GDattach, HE5_GDcreate, &
+    & HE5_SWattach, HE5_SWcreate, HE5_SWdefchunk, HE5_SWdetach, HE5_swdefdfld, &
+    & HE5_SWdefgfld, HE5_swdefdim, HE5_swdiminfo, HE5_swinqdflds, &
+    & HE5_swinqswath, MLS_charType
+  use HE5_SWAPI, only: HE5_SWSETFILL, HE5_SWWRATTR, HE5_SWWRLATTR
+  use HE5_SWAPI_CHARACTER_ARRAY, only: HE5_EHWRGLATT_CHARACTER_ARRAY, &
+    & HE5_EHRDGLATT_CHARACTER_ARRAY
+  use HE5_SWAPI_CHARACTER_SCALAR, only: HE5_EHWRGLATT_CHARACTER_SCALAR, &
+    & HE5_EHRDGLATT_CHARACTER_SCALAR
+  use HE5_SWAPI_DOUBLE, only: HE5_EHWRGLATT_DOUBLE, HE5_EHRDGLATT_DOUBLE, &
+    & HE5_SWRDFLD_DOUBLE, HE5_SWRDFLD_DOUBLE_2D, HE5_SWRDFLD_DOUBLE_3D, &
+    & HE5_SWWRFLD_DOUBLE, HE5_SWWRFLD_DOUBLE_2D, HE5_SWWRFLD_DOUBLE_3D
+  use HE5_SWAPI_INTEGER, only: HE5_EHWRGLATT_INTEGER, &
+    & HE5_SWRDFLD_INTEGER, HE5_SWWRFLD_INTEGER, HE5_EHRDGLATT
+  use HE5_SWAPI_REAL, only: HE5_EHWRGLATT_REAL, HE5_EHRDGLATT_REAL, &
+    & HE5_SWRDFLD_REAL, HE5_SWRDFLD_REAL_2D, HE5_SWRDFLD_REAL_3D, &
+    & HE5_SWWRFLD_REAL, HE5_SWWRFLD_REAL_2D, HE5_SWWRFLD_REAL_3D
+d46 4
+a49 4
+  use MLSFiles, only: HDFVERSION_4, HDFVERSION_5, WILDCARDHDFVERSION, &
+    & MLS_hdf_version
+  use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, MLSMessage
+  use MLSStringLists, only: StringElementNum
+d51 7
+a57 7
+  use SWAPI_DOUBLE, only: SWRDFLD_DOUBLE, SWRDFLD_DOUBLE_2D, SWRDFLD_DOUBLE_3D, &
+    &                     SWWRFLD_DOUBLE, SWWRFLD_DOUBLE_2D, SWWRFLD_DOUBLE_3D
+  use SWAPI_INTEGER, only: SWRDFLD_INTEGER, &
+    &                      SWWRFLD_INTEGER
+  use SWAPI_REAL, only: SWRDFLD_REAL, SWRDFLD_REAL_2D, SWRDFLD_REAL_3D, &
+    &                   SWWRFLD_REAL, SWWRFLD_REAL_2D, SWWRFLD_REAL_3D
+  use TRACE_M, only: TRACE_BEGIN, TRACE_END
+d59 1
+a59 1
+  implicit NONE
+d62 7
+a68 7
+  public :: HE5_EHWRGLATT, HE5_EHRDGLATT, HSIZE, HSIZES, &
+    & MLS_EHWRGLATT, MLS_ISGLATT, &
+    & MLS_DFLDSETUP, MLS_GFLDSETUP, &
+    & MLS_SWDEFDIM, MLS_SWDIMINFO, MLS_SWRDFLD, MLS_SWWRFLD, &
+    & MLS_SWATTACH, MLS_SWCREATE, MLS_SWDETACH, MLS_GDCREATE, MLS_GDWRATTR, &
+    & MLS_SWWRATTR, MLS_SWWRLATTR, &
+    & MLS_SWATH_IN_FILE
+a208 1
+  ! integer, parameter         :: DFLTMAXLINES = 200000
+d2147 1
+d2168 4
+d2383 1
+a2383 1
+       "$Id: MLSHDFEOS.f90,v 2.45 2013/06/12 02:11:27 vsnyder Exp $"
+d2393 3
+@
+
+
+2.45
+log
+@Cruft removal
+@
+text
+@d46 2
+a47 3
+    & mls_hdf_version
+  use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, &
+    & MLSMessage, MLSMessageCalls
+d56 1
+d216 1
+a216 1
+  ! ---------------------------------------------  MLS_EHWRGLATT  -----
+d224 6
+a229 2
+    !
+    call MLSMessageCalls( 'push', constantName='MLS_EHWRGLATT_char' )
+d237 1
+a237 1
+    call MLSMessageCalls( 'pop' )
+d252 1
+d259 1
+d263 3
+a265 2
+    !
+    call MLSMessageCalls( 'push', constantName='MLS_EHWRGLATT_textfile' )
+d275 1
+d294 1
+d303 1
+a303 1
+    call MLSMessageCalls( 'pop' )
+d315 1
+d318 1
+d320 3
+a322 2
+    !
+    call MLSMessageCalls( 'push', constantName='MLS_ISGLATT_FN' )
+d329 1
+a329 1
+    call MLSMessageCalls( 'pop' )
+d332 1
+a332 1
+  ! ---------------------------------------------  MLS_ISGLATT_FID  -----
+d341 1
+d347 2
+a348 1
+    !
+d358 1
+a358 1
+  ! ---------------------------------------------  MLS_GDCREATE  -----
+d361 1
+a361 1
+    integer, intent(in) :: FILEID      ! ID returned by mls_swopen
+d369 1
+d372 1
+d376 3
+a378 1
+    call MLSMessageCalls( 'push', constantName='MLS_GDCREATE' )
+d387 1
+d391 1
+a391 1
+      myHdfVersion = mls_hdf_version ( trim(FileName) )
+d427 1
+a427 1
+    call MLSMessageCalls( 'pop' )
+d430 2
+a431 2
+  ! ---------------------------------------------  mls_gdwrattr  -----
+  integer function mls_gdwrattr ( GRIDID, &
+d438 5
+d444 1
+a444 1
+    call MLSMessageCalls( 'push', constantName='mls_gdwrattr' )
+d446 1
+a446 1
+      mls_gdwrattr = HE5_GDWRATTR( GRIDID, &
+d449 1
+a449 1
+      mls_gdwrattr = HE5_GDWRATTR( GRIDID, &
+d453 2
+a454 2
+    call MLSMessageCalls( 'pop' )
+  end function mls_gdwrattr
+d456 1
+a456 1
+  ! ---------------------------------------------  MLS_SWATTACH_ID  -----
+d459 1
+a459 1
+    integer, intent(in) :: FILEID      ! ID returned by mls_swopen
+d465 1
+d467 1
+d471 3
+a473 1
+    call MLSMessageCalls( 'push', constantName='mls_swattach_id' )
+d488 1
+d492 2
+a493 2
+      myHdfVersion = mls_hdf_version ( trim(FileName) )
+      if ( myHdfVersion < 0 ) print *, 'uh-oh, mls_hdf_version: ', myhdfVersion
+d507 1
+a507 1
+      call MLSMessageCalls( 'pop' )
+d516 1
+a516 1
+    call MLSMessageCalls( 'pop' )
+d519 1
+a519 1
+  ! ---------------------------------------------  MLS_SWATTACH_MF  -----
+d525 1
+d527 1
+d530 3
+a532 1
+    call MLSMessageCalls( 'push', constantName='mls_swattach_mf' )
+d546 1
+a546 1
+      call MLSMessageCalls( 'pop' )
+d557 1
+a557 1
+    call MLSMessageCalls( 'pop' )
+d560 1
+a560 1
+  ! ---------------------------------------------  MLS_SWCREATE_MF  -----
+d567 1
+d570 1
+d572 1
+d575 3
+a577 1
+    call MLSMessageCalls( 'push', constantName='mls_swcreate_mf' )
+d590 2
+a591 2
+        if(DEEBUG) print *, 'About to call mls_swath_in_file'
+        alreadyThere = mls_swath_in_file(MLSFile%Name, swathName, HDFVERSION_4)
+d614 2
+a615 2
+        if(DEEBUG) print *, 'About to call mls_swath_in_file'
+        alreadyThere = mls_swath_in_file(MLSFile%Name, swathName, HDFVERSION_5)
+d632 1
+a632 1
+    call MLSMessageCalls( 'pop' )
+d636 1
+a636 1
+  ! ---------------------------------------------  MLS_SWCREATE_ID  -----
+d640 1
+a640 1
+    integer, intent(in) :: FILEID      ! ID returned by mls_swopen
+d645 1
+d648 1
+d654 3
+a656 1
+    call MLSMessageCalls( 'push', constantName='mls_swcreate_id' )
+d665 1
+d669 1
+a669 1
+      myHdfVersion = mls_hdf_version ( trim(FileName) )
+d682 2
+a683 2
+        if(DEEBUG) print *, 'About to call mls_swath_in_file'
+        alreadyThere = mls_swath_in_file(FileName, swathName, HDFVERSION_4)
+d703 2
+a704 2
+        if(DEEBUG) print *, 'About to call mls_swath_in_file'
+        alreadyThere = mls_swath_in_file(FileName, swathName, HDFVERSION_5)
+d720 1
+a720 1
+    call MLSMessageCalls( 'pop' )
+d724 1
+a724 1
+  ! ---------------------------------------------  MLS_SWdefdim  -----
+d733 1
+d735 1
+d739 3
+a741 1
+    call MLSMessageCalls( 'push', constantName='mls_swdefdim' )
+d756 1
+d760 1
+a760 1
+      myHdfVersion = mls_hdf_version ( trim(FileName) )
+d775 1
+a775 1
+    call MLSMessageCalls( 'pop' )
+d779 1
+a779 1
+  ! ---------------------------------------------  MLS_SWDETACH  -----
+d781 1
+a781 1
+    integer, intent(in) :: SWATHID      ! ID returned by mls_swattach
+d784 1
+d786 1
+d789 3
+a791 1
+    call MLSMessageCalls( 'push', constantName='mls_swdetach' )
+d801 1
+d805 1
+a805 1
+      myHdfVersion = mls_hdf_version ( trim(FileName) )
+d820 1
+a820 1
+    call MLSMessageCalls( 'pop' )
+d824 1
+a824 1
+  ! ---------------------------------------------  MLS_SWdiminfo  -----
+d832 1
+d834 1
+d838 3
+a840 1
+    call MLSMessageCalls( 'push', constantName='mls_swdiminfo' )
+d855 1
+a855 1
+      call MLSMessageCalls( 'pop' )
+d859 1
+a859 1
+      myHdfVersion = mls_hdf_version ( trim(FileName) )
+d874 1
+a874 1
+    call MLSMessageCalls( 'pop' )
+d878 1
+a878 1
+  ! ---------------------------------------------  MLS_DFLDSETUP  -----
+d897 1
+d899 1
+d903 4
+a906 2
+    call MLSMessageCalls( 'push', constantName='mls_dfldsetup' )
+    mls_dfldsetup = 0
+d915 1
+a915 1
+        mls_dfldsetup = -1
+d918 1
+a918 1
+          & 'Missing needed arg FILENAME from call to mls_dfldsetup' )
+d920 1
+a920 1
+      call MLSMessageCalls( 'pop' )
+d924 1
+a924 1
+      myHdfVersion = mls_hdf_version ( trim(FileName) )
+d930 1
+a930 1
+      mls_dfldsetup = swdefdfld(swathid, FIELDName, DIMNAME, Datatype, &
+d934 2
+a935 2
+        & mls_dfldsetup = HE5_SWdefchunk( swathid, chunk_rank, hsizes(chunk_dims) )
+      if ( mls_dfldsetup == 0 ) then
+d937 1
+a937 1
+          mls_dfldsetup = HE5_SWsetfill(swathid, trim(fieldname), &
+d940 1
+a940 1
+          mls_dfldsetup = HE5_SWsetfill(swathid, trim(fieldname), &
+d943 1
+a943 1
+          mls_dfldsetup = HE5_SWsetfill(swathid, trim(fieldname), &
+d947 2
+a948 2
+      if ( mls_dfldsetup == 0 ) &
+        & mls_dfldsetup = HE5_SWdefdfld(swathid, FIELDName, DIMNAME, MAXDIMLIST, &
+d951 1
+a951 1
+      mls_dfldsetup = -1
+d954 1
+a954 1
+      print *, 'mls_dfldsetup: FIELDName, DIMNAME, MAXDIMLIST, TYPE, MERGE'
+d958 1
+a958 1
+    if ( .not. myDontFail .and. mls_dfldsetup == -1 ) &
+d961 1
+a961 1
+    call MLSMessageCalls( 'pop' )
+d965 1
+a965 1
+  ! ---------------------------------------------  MLS_GFLDSETUP  -----
+d984 1
+d986 1
+d990 4
+a993 2
+    call MLSMessageCalls( 'push', constantName='mls_gfldsetup' )
+    mls_gfldsetup = 0
+d1002 1
+a1002 1
+        mls_gfldsetup = -1
+d1005 1
+a1005 1
+          & 'Missing needed arg FILENAME from call to mls_gfldsetup' )
+d1007 1
+a1007 1
+      call MLSMessageCalls( 'pop' )
+d1011 1
+a1011 1
+      myHdfVersion = mls_hdf_version ( trim(FileName) )
+d1017 1
+a1017 1
+      mls_gfldsetup = swdefgfld(swathid, trim(FIELDName), trim(DIMNAME), &
+d1021 2
+a1022 2
+        & mls_gfldsetup = HE5_SWdefchunk( swathid, chunk_rank, hsizes(chunk_dims) )
+      if ( mls_gfldsetup == 0 ) then
+d1024 1
+a1024 1
+          mls_gfldsetup = HE5_SWsetfill(swathid, trim(fieldname), &
+d1027 1
+a1027 1
+          mls_gfldsetup = HE5_SWsetfill(swathid, trim(fieldname), &
+d1030 1
+a1030 1
+          mls_gfldsetup = HE5_SWsetfill(swathid, trim(fieldname), &
+d1034 2
+a1035 2
+      if ( mls_gfldsetup == 0 ) &
+        & mls_gfldsetup = HE5_SWdefgfld(swathid, trim(FIELDName), &
+d1039 1
+a1039 1
+      mls_gfldsetup = -1
+d1042 1
+a1042 1
+      print *, 'mls_gfldsetup: FIELDName, DIMNAME, MAXDIMLIST, TYPE, MERGE'
+d1046 1
+a1046 1
+    if ( .not. myDontFail .and. mls_gfldsetup == -1 ) &
+d1049 1
+a1049 1
+    call MLSMessageCalls( 'pop' )
+d1053 1
+a1053 1
+  ! ---------------------------------------------  MLS_SWRDFLD_CHAR_1D  -----
+d1066 1
+d1068 1
+d1075 4
+a1078 2
+    call MLSMessageCalls( 'push', constantName='MLS_SWRDFLD_CHAR_1D' )
+    mls_swrdfld_CHAR_1D = 0
+d1087 1
+a1087 1
+        mls_swrdfld_CHAR_1D = -1
+d1092 1
+d1096 1
+a1096 1
+      myHdfVersion = mls_hdf_version ( trim(FileName) )
+d1101 4
+a1104 2
+      if (.not. is_datafield_in_swath(swathid, trim(fieldname), myHdfVersion) )&
+        & return
+d1110 4
+a1113 1
+          & DFNT_CHAR8, myHdfVersion) ) return
+d1115 1
+a1115 1
+      mls_swrdfld_CHAR_1D = SWRDFLD(swathid, trim(fieldname), &
+d1118 1
+a1118 1
+      mls_swrdfld_CHAR_1D = HE5_SWRDFLD(swathid, trim(fieldname), &
+d1122 4
+a1125 1
+          & MLS_CHARTYPE, myHdfVersion) ) return
+d1128 1
+a1128 1
+      mls_swrdfld_CHAR_1D = -1
+d1130 1
+a1130 1
+    if ( .not. myDontFail .and. mls_swrdfld_CHAR_1D == -1 ) &
+d1133 1
+a1133 1
+    call MLSMessageCalls( 'pop' )
+d1137 1
+a1137 1
+  ! ---------------------------------------------  MLS_SWRDFLD_DOUBLE_1D  -----
+d1150 1
+d1152 1
+d1156 4
+a1159 2
+    call MLSMessageCalls( 'push', constantName='MLS_SWRDFLD_DOUBLE_1D' )
+    mls_swrdfld_double_1d = 0
+d1168 1
+a1168 1
+        mls_swrdfld_double_1d = -1
+d1173 1
+d1177 1
+a1177 1
+      myHdfVersion = mls_hdf_version ( trim(FileName) )
+d1183 1
+a1183 1
+      mls_swrdfld_double_1d = SWRDFLD_DOUBLE(swathid, trim(fieldname), &
+d1186 1
+a1186 1
+      mls_swrdfld_double_1d = HE5_SWRDFLD_DOUBLE(swathid, trim(fieldname), &
+d1189 1
+a1189 1
+      mls_swrdfld_double_1d = -1
+d1191 1
+a1191 1
+    if ( .not. myDontFail .and. mls_swrdfld_double_1d == -1 ) &
+d1194 1
+a1194 1
+    call MLSMessageCalls( 'pop' )
+d1198 1
+a1198 1
+  ! ---------------------------------------------  MLS_SWRDFLD_DOUBLE_2d  -----
+d1211 1
+d1213 1
+d1217 4
+a1220 2
+    call MLSMessageCalls( 'push', constantName='MLS_SWRDFLD_DOUBLE_2D' )
+    mls_swrdfld_double_2d = 0
+d1229 1
+a1229 1
+        mls_swrdfld_double_2d = -1
+d1234 1
+d1238 1
+a1238 1
+      myHdfVersion = mls_hdf_version ( trim(FileName) )
+d1244 1
+a1244 1
+      mls_swrdfld_double_2d = SWRDFLD_DOUBLE_2D(swathid, trim(fieldname), &
+d1247 1
+a1247 1
+      mls_swrdfld_double_2d = HE5_SWRDFLD_DOUBLE_2D(swathid, trim(fieldname), &
+d1250 1
+a1250 1
+      mls_swrdfld_double_2d = -1
+d1252 1
+a1252 1
+    if ( .not. myDontFail .and. mls_swrdfld_double_2d == -1 ) &
+d1255 1
+a1255 1
+    call MLSMessageCalls( 'pop' )
+d1259 1
+a1259 1
+  ! ---------------------------------------------  MLS_SWRDFLD_DOUBLE_3d  -----
+d1272 1
+d1274 1
+d1278 4
+a1281 2
+    call MLSMessageCalls( 'push', constantName='MLS_SWRDFLD_DOUBLE_3D' )
+    mls_swrdfld_double_3d = 0
+d1290 1
+a1290 1
+        mls_swrdfld_double_3d = -1
+d1295 1
+d1299 1
+a1299 1
+      myHdfVersion = mls_hdf_version ( trim(FileName) )
+d1305 1
+a1305 1
+      mls_swrdfld_double_3d = SWRDFLD_DOUBLE_3D(swathid, trim(fieldname), &
+d1308 1
+a1308 1
+      mls_swrdfld_double_3d = HE5_SWRDFLD_DOUBLE_3D(swathid, trim(fieldname), &
+d1311 1
+a1311 1
+      mls_swrdfld_double_3d = -1
+d1313 1
+a1313 1
+    if ( .not. myDontFail .and. mls_swrdfld_double_3d == -1 ) &
+d1316 1
+a1316 1
+    call MLSMessageCalls( 'pop' )
+d1320 1
+a1320 1
+  ! ---------------------------------------------  MLS_SWRDFLD_INTEGER  -----
+d1333 1
+d1335 1
+d1339 4
+a1342 2
+    call MLSMessageCalls( 'push', constantName='MLS_SWRDFLD_INTEGER' )
+    mls_swrdfld_integer = 0
+d1351 1
+a1351 1
+        mls_swrdfld_integer = -1
+d1356 1
+d1360 1
+a1360 1
+      myHdfVersion = mls_hdf_version ( trim(FileName) )
+d1366 1
+a1366 1
+      mls_swrdfld_integer = SWRDFLD_INTEGER(swathid, trim(fieldname), &
+d1369 1
+a1369 1
+      mls_swrdfld_integer = HE5_SWRDFLD_INTEGER(swathid, trim(fieldname), &
+d1372 1
+a1372 1
+      mls_swrdfld_integer = -1
+d1374 1
+a1374 1
+    if ( .not. myDontFail .and. mls_swrdfld_integer == -1 ) &
+d1377 1
+a1377 1
+    call MLSMessageCalls( 'pop' )
+d1381 1
+a1381 1
+  ! ---------------------------------------------  MLS_SWRDFLD_REAL_1D  -----
+d1394 1
+d1396 1
+d1400 4
+a1403 2
+    call MLSMessageCalls( 'push', constantName='MLS_SWRDFLD_REAL_1D' )
+    mls_swrdfld_REAL_1d = 0
+d1412 1
+a1412 1
+        mls_swrdfld_REAL_1d = -1
+d1417 1
+d1421 1
+a1421 1
+      myHdfVersion = mls_hdf_version ( trim(FileName) )
+d1427 1
+a1427 1
+      mls_swrdfld_REAL_1d = SWRDFLD_REAL(swathid, trim(fieldname), &
+d1430 1
+a1430 1
+      mls_swrdfld_REAL_1d = HE5_SWRDFLD_REAL(swathid, trim(fieldname), &
+d1433 1
+a1433 1
+      mls_swrdfld_REAL_1d = -1
+d1435 1
+a1435 1
+    if ( .not. myDontFail .and. mls_swrdfld_REAL_1d == -1 ) &
+d1438 1
+a1438 1
+    call MLSMessageCalls( 'pop' )
+d1442 1
+a1442 1
+  ! ---------------------------------------------  MLS_SWRDFLD_REAL_2d  -----
+d1456 1
+d1458 1
+d1462 4
+a1465 2
+    call MLSMessageCalls( 'push', constantName='MLS_SWRDFLD_REAL_2D' )
+    mls_swrdfld_REAL_2d = 0
+d1474 1
+a1474 1
+        mls_swrdfld_REAL_2d = -1
+d1479 1
+d1483 1
+a1483 1
+      myHdfVersion = mls_hdf_version ( trim(FileName) )
+d1489 1
+a1489 1
+      mls_swrdfld_REAL_2d = SWRDFLD_REAL_2D(swathid, trim(fieldname), &
+d1501 1
+a1501 1
+      mls_swrdfld_REAL_2d = HE5_SWRDFLD_REAL_2D(swathid, trim(fieldname), &
+d1504 1
+a1504 1
+      mls_swrdfld_REAL_2d = -1
+d1506 1
+a1506 1
+    if ( .not. myDontFail .and. mls_swrdfld_REAL_2d == -1 ) &
+d1509 1
+a1509 1
+    call MLSMessageCalls( 'pop' )
+d1513 1
+a1513 1
+  ! ---------------------------------------------  MLS_SWRDFLD_REAL_3d  -----
+d1526 1
+d1528 1
+d1532 4
+a1535 2
+    call MLSMessageCalls( 'push', constantName='MLS_SWRDFLD_REAL_3D' )
+    mls_swrdfld_REAL_3d = 0
+d1544 1
+a1544 1
+        mls_swrdfld_REAL_3d = -1
+d1549 1
+d1553 1
+a1553 1
+      myHdfVersion = mls_hdf_version ( trim(FileName) )
+d1559 1
+a1559 1
+      mls_swrdfld_REAL_3d = SWRDFLD_REAL_3D(swathid, trim(fieldname), &
+d1562 1
+a1562 1
+      mls_swrdfld_REAL_3d = HE5_SWRDFLD_REAL_3D(swathid, trim(fieldname), &
+d1565 1
+a1565 1
+      mls_swrdfld_REAL_3d = -1
+d1567 1
+a1567 1
+    if ( .not. myDontFail .and. mls_swrdfld_REAL_3d == -1 ) &
+d1570 1
+a1570 1
+    call MLSMessageCalls( 'pop' )
+d1574 2
+a1575 2
+  ! ---------------------------------------------  mls_swwrattr  -----
+  integer function mls_swwrattr ( SWATHID, &
+d1582 6
+a1587 1
+    call MLSMessageCalls( 'push', constantName='mls_swwrattr' )
+d1589 1
+a1589 1
+      mls_swwrattr = HE5_SWWRATTR( SWATHID, &
+d1592 1
+a1592 1
+      mls_swwrattr = HE5_SWWRATTR( SWATHID, &
+d1595 1
+a1595 1
+    call MLSMessageCalls( 'pop' )
+d1597 1
+a1597 1
+  end function mls_swwrattr
+d1599 2
+a1600 2
+  ! ---------------------------------------------  mls_swwrlattr  -----
+  integer function mls_swwrlattr ( SWATHID, &
+d1608 6
+a1613 2
+    !
+    call MLSMessageCalls( 'push', constantName='mls_swwrlattr' )
+d1615 1
+a1615 1
+      mls_swwrlattr = HE5_SWWRLATTR( SWATHID, FIELDNAME, &
+d1618 1
+a1618 1
+      mls_swwrlattr = HE5_SWWRLATTR( SWATHID, FIELDNAME, &
+d1621 1
+a1621 1
+    call MLSMessageCalls( 'pop' )
+d1623 1
+a1623 1
+  end function mls_swwrlattr
+d1625 1
+a1625 1
+  ! ---------------------------------------------  MLS_SWWRFLD_CHAR_1D  -----
+d1638 1
+d1640 1
+d1651 4
+a1654 3
+    ! begin execution
+    call MLSMessageCalls( 'push', constantName='mls_SWWRFLD_CHAR_1D' )
+    mls_SWWRFLD_CHAR_1D = 0
+d1663 1
+a1663 1
+        mls_SWWRFLD_CHAR_1D = -1
+d1668 1
+d1672 1
+a1672 1
+      myHdfVersion = mls_hdf_version ( trim(FileName) )
+d1678 1
+a1678 1
+      mls_SWWRFLD_CHAR_1D = SWWRFLD(swathid, trim(fieldname), &
+d1681 1
+a1681 1
+      mls_SWWRFLD_CHAR_1D = HE5_SWWRFLD(swathid, trim(fieldname), &
+d1684 1
+a1684 1
+      mls_SWWRFLD_CHAR_1D = -1
+d1689 1
+a1689 1
+    if ( .not. myDontFail .and. mls_SWWRFLD_CHAR_1D == -1 ) &
+d1692 1
+a1692 1
+    call MLSMessageCalls( 'pop' )
+d1696 1
+a1696 1
+  ! ---------------------------------------------  MLS_SWWRFLD_DOUBLE_1D  -----
+d1709 1
+d1711 1
+d1715 4
+a1718 2
+    call MLSMessageCalls( 'push', constantName='mls_SWWRFLD_DOUBLE_1D' )
+    mls_SWWRFLD_double_1d = 0
+d1727 1
+a1727 1
+        mls_SWWRFLD_double_1d = -1
+d1732 1
+d1736 1
+a1736 1
+      myHdfVersion = mls_hdf_version ( trim(FileName) )
+d1742 1
+a1742 1
+      mls_SWWRFLD_double_1d = SWWRFLD_DOUBLE(swathid, trim(fieldname), &
+d1745 1
+a1745 1
+      mls_SWWRFLD_double_1d = HE5_SWWRFLD_DOUBLE(swathid, trim(fieldname), &
+d1748 1
+a1748 1
+      mls_SWWRFLD_double_1d = -1
+d1750 1
+a1750 1
+    if ( .not. myDontFail .and. mls_SWWRFLD_double_1d == -1 ) &
+d1753 1
+a1753 1
+    call MLSMessageCalls( 'pop' )
+d1757 1
+a1757 1
+  ! ---------------------------------------------  MLS_SWWRFLD_DOUBLE_2d  -----
+d1770 1
+d1772 1
+d1776 4
+a1779 2
+    call MLSMessageCalls( 'push', constantName='mls_SWWRFLD_DOUBLE_2D' )
+    mls_SWWRFLD_double_2d = 0
+d1788 1
+a1788 1
+        mls_SWWRFLD_double_2d = -1
+d1793 1
+d1797 1
+a1797 1
+      myHdfVersion = mls_hdf_version ( trim(FileName) )
+d1803 1
+a1803 1
+      mls_SWWRFLD_double_2d = SWWRFLD_DOUBLE_2D(swathid, trim(fieldname), &
+d1806 1
+a1806 1
+      mls_SWWRFLD_double_2d = HE5_SWWRFLD_DOUBLE_2D(swathid, trim(fieldname), &
+d1809 1
+a1809 1
+      mls_SWWRFLD_double_2d = -1
+d1811 1
+a1811 1
+    if ( .not. myDontFail .and. mls_SWWRFLD_double_2d == -1 ) &
+d1814 1
+a1814 1
+    call MLSMessageCalls( 'pop' )
+d1818 1
+a1818 1
+  ! ---------------------------------------------  MLS_SWWRFLD_DOUBLE_3d  -----
+d1831 1
+d1833 1
+d1837 4
+a1840 2
+    call MLSMessageCalls( 'push', constantName='mls_SWWRFLD_DOUBLE_3D' )
+    mls_SWWRFLD_double_3d = 0
+d1849 1
+a1849 1
+        mls_SWWRFLD_double_3d = -1
+d1854 1
+d1858 1
+a1858 1
+      myHdfVersion = mls_hdf_version ( trim(FileName) )
+d1864 1
+a1864 1
+      mls_SWWRFLD_double_3d = SWWRFLD_DOUBLE_3D(swathid, trim(fieldname), &
+d1867 1
+a1867 1
+      mls_SWWRFLD_double_3d = HE5_SWWRFLD_DOUBLE_3D(swathid, trim(fieldname), &
+d1870 1
+a1870 1
+      mls_SWWRFLD_double_3d = -1
+d1872 1
+a1872 1
+    if ( .not. myDontFail .and. mls_SWWRFLD_double_3d == -1 ) &
+d1875 1
+a1875 1
+    call MLSMessageCalls( 'pop' )
+d1879 1
+a1879 1
+  ! ---------------------------------------------  MLS_SWWRFLD_INTEGER  -----
+d1892 1
+d1894 1
+d1898 4
+a1901 2
+    call MLSMessageCalls( 'push', constantName='mls_SWWRFLD_INTEGER' )
+    mls_SWWRFLD_integer = 0
+d1910 1
+a1910 1
+        mls_SWWRFLD_integer = -1
+d1915 1
+d1919 1
+a1919 1
+      myHdfVersion = mls_hdf_version ( trim(FileName) )
+d1925 1
+a1925 1
+      mls_SWWRFLD_integer = SWWRFLD_INTEGER(swathid, trim(fieldname), &
+d1928 1
+a1928 1
+      mls_SWWRFLD_integer = HE5_SWWRFLD_INTEGER(swathid, trim(fieldname), &
+d1931 1
+a1931 1
+      mls_SWWRFLD_integer = -1
+d1933 1
+a1933 1
+    if ( .not. myDontFail .and. mls_SWWRFLD_integer == -1 ) &
+d1936 1
+a1936 1
+    call MLSMessageCalls( 'pop' )
+d1940 1
+a1940 1
+  ! ---------------------------------------------  MLS_SWWRFLD_REAL_1D  -----
+d1953 1
+d1956 1
+d1960 4
+a1963 2
+    call MLSMessageCalls( 'push', constantName='mls_SWWRFLD_REAL_1D' )
+    mls_SWWRFLD_REAL_1d = 0
+d1972 1
+a1972 1
+        mls_SWWRFLD_REAL_1d = -1
+d1977 1
+d1981 1
+a1981 1
+      myHdfVersion = mls_hdf_version ( trim(FileName) )
+d1994 1
+a1994 1
+      mls_SWWRFLD_REAL_1d = SWWRFLD_REAL(swathid, trim(fieldname), &
+d1997 1
+a1997 1
+      mls_SWWRFLD_REAL_1d = HE5_SWWRFLD_REAL(swathid, trim(fieldname), &
+d2000 1
+a2000 1
+      mls_SWWRFLD_REAL_1d = -1
+d2002 1
+a2002 1
+    if ( .not. myDontFail .and. mls_SWWRFLD_REAL_1d == -1 ) &
+d2005 1
+a2005 1
+    call MLSMessageCalls( 'pop' )
+d2009 1
+a2009 1
+  ! ---------------------------------------------  MLS_SWWRFLD_REAL_2d  -----
+d2022 1
+d2025 1
+d2029 1
+d2031 2
+a2032 2
+    call MLSMessageCalls( 'push', constantName='mls_SWWRFLD_REAL_2D' )
+    mls_SWWRFLD_REAL_2d = 0
+d2041 1
+a2041 1
+        mls_SWWRFLD_REAL_2d = -1
+d2046 1
+d2050 1
+a2050 1
+      myHdfVersion = mls_hdf_version ( trim(FileName) )
+d2063 1
+a2063 1
+      mls_SWWRFLD_REAL_2d = SWWRFLD_REAL_2D(swathid, trim(fieldname), &
+d2066 1
+a2066 1
+      mls_SWWRFLD_REAL_2d = HE5_SWWRFLD_REAL_2D(swathid, trim(fieldname), &
+d2069 1
+a2069 1
+      mls_SWWRFLD_REAL_2d = -1
+d2071 1
+a2071 1
+    if ( .not. myDontFail .and. mls_SWWRFLD_REAL_2d == -1 ) &
+d2074 1
+a2074 1
+    call MLSMessageCalls( 'pop' )
+d2078 1
+a2078 1
+  ! ---------------------------------------------  MLS_SWWRFLD_REAL_3d  -----
+d2091 1
+d2093 1
+d2097 2
+a2098 2
+    call MLSMessageCalls( 'push', constantName='mls_SWWRFLD_REAL_3D' )
+    mls_SWWRFLD_REAL_3d = 0
+d2107 1
+a2107 1
+        mls_SWWRFLD_REAL_3d = -1
+d2112 1
+d2116 1
+a2116 1
+      myHdfVersion = mls_hdf_version ( trim(FileName) )
+d2122 1
+a2122 1
+      mls_SWWRFLD_REAL_3d = SWWRFLD_REAL_3D(swathid, trim(fieldname), &
+d2125 1
+a2125 1
+      mls_SWWRFLD_REAL_3d = HE5_SWWRFLD_REAL_3D(swathid, trim(fieldname), &
+d2128 1
+a2128 1
+      mls_SWWRFLD_REAL_3d = -1
+d2130 1
+a2130 1
+    if ( .not. myDontFail .and. mls_SWWRFLD_REAL_3d == -1 ) &
+d2133 1
+a2133 1
+    call MLSMessageCalls( 'pop' )
+d2137 2
+a2138 2
+  ! ---------------------------------------------  mls_swath_in_file_sca  -----
+  logical function mls_swath_in_file_sca(filename, swath, HdfVersion, error)
+d2145 1
+d2147 1
+d2149 1
+a2150 1
+    character(len=MAXDLISTLENGTH)    :: fieldlist
+d2152 1
+d2155 1
+a2155 1
+    call MLSMessageCalls( 'push', constantName='mls_swath_in_file_sca' )
+d2157 1
+a2157 1
+    mls_swath_in_file_sca = .false.
+d2169 1
+a2169 1
+      call MLSMessageCalls( 'pop' )
+d2175 1
+a2175 1
+          & 'list size too big in mls_swath_in_file_sca ' // trim(filename) )
+d2179 1
+a2179 1
+    mls_swath_in_file_sca = &
+d2181 2
+a2182 2
+    call MLSMessageCalls( 'pop' )
+  end function mls_swath_in_file_sca
+d2184 2
+a2185 2
+  ! ---------------------------------------------  mls_swath_in_file_arr  -----
+  logical function mls_swath_in_file_arr(filename, swaths, HdfVersion, &
+d2194 1
+d2196 1
+d2198 1
+d2200 1
+a2200 1
+    character(len=MAXDLISTLENGTH)    :: fieldlist
+d2202 1
+a2202 1
+    integer                          :: i
+d2204 1
+a2204 1
+    call MLSMessageCalls( 'push', constantName='mls_swath_in_file_arr' )
+d2206 1
+a2206 1
+    mls_swath_in_file_arr = .false.
+d2211 1
+a2211 1
+          & 'array to small to hold values in mls_swath_in_file_arr' )
+d2221 1
+a2221 1
+      call MLSMessageCalls( 'pop' )
+d2229 1
+a2229 1
+          & 'list size too big in mls_swath_in_file_arr ' // trim(filename) )
+d2237 3
+a2239 3
+    mls_swath_in_file_arr = any( which )
+    call MLSMessageCalls( 'pop' )
+  end function mls_swath_in_file_arr
+d2265 1
+a2265 1
+! ======================= Private Procedures =========================  
+d2267 1
+a2267 1
+  ! ---------------------------------------------  is_datafield_in_swath  -----
+d2293 1
+a2293 1
+  ! ---------------------------------------------  is_swath_datatype_right  -----
+d2341 1
+a2341 1
+  ! ---------------------------------------------  he2he5_DataType  -----
+d2374 1
+a2374 1
+  ! ---------------------------------------------  not_used_here  -----
+d2378 1
+a2378 1
+       "$Id: MLSHDFEOS.f90,v 2.44 2010/02/04 23:08:00 vsnyder Exp $"
+d2388 3
+d2440 1
+a2440 1
+! mls_swath_in_file_sca optionally returns an error flag, too
+d2506 1
+a2506 1
+! Added mls_sw(gd)create
+@
+
+
+2.44
+log
+@Remove USE or declaration for unused names
+@
+text
+@a683 1
+    integer, parameter :: RANK = 7
+a773 1
+    integer, parameter :: RANK = 7
+d2214 1
+a2214 1
+       "$Id: MLSHDFEOS.f90,v 2.43 2010/01/29 01:16:06 pwagner Exp $"
+d2224 3
+@
+
+
+2.43
+log
+@Fixed undefined hlistsize bug Lahey complained about
+@
+text
+@d1344 1
+a1344 1
+    use hdf5, only: hsize_t, hssize_t, size_t
+d1984 1
+a1984 1
+    use hdf5, only: hsize_t, hssize_t, size_t
+d2028 1
+a2028 1
+    use hdf5, only: hsize_t, hssize_t, size_t
+d2081 1
+a2081 1
+    use hdf5, only: hsize_t, hssize_t, size_t
+a2085 1
+    integer :: i
+d2091 1
+a2091 1
+    use hdf5, only: hsize_t, hssize_t, size_t
+d2216 1
+a2216 1
+       "$Id: MLSHDFEOS.f90,v 2.42 2010/01/14 23:29:35 pwagner Exp $"
+d2226 3
+@
+
+
+2.42
+log
+@Uses separate scalar and array generic forms for HE5_EHRDGLATT_INTEGER
+@
+text
+@d2000 2
+a2006 1
+      listsize = hlistsize
+d2013 1
+d2217 1
+a2217 1
+       "$Id: MLSHDFEOS.f90,v 2.41 2010/01/11 18:34:50 pwagner Exp $"
+d2227 3
+@
+
+
+2.41
+log
+@Added more debug printing
+@
+text
+@d39 2
+a40 2
+  use HE5_SWAPI_INTEGER, only: HE5_EHWRGLATT_INTEGER, HE5_EHRDGLATT_INTEGER, &
+    & HE5_SWRDFLD_INTEGER, HE5_SWWRFLD_INTEGER
+d67 1
+a67 1
+    & mls_swath_in_file
+d81 3
+d89 1
+d108 2
+d128 1
+d160 3
+a162 2
+    module procedure HE5_EHRDGLATT_CHARACTER_SCALAR, HE5_EHRDGLATT_DOUBLE, &
+    HE5_EHRDGLATT_INTEGER, HE5_EHRDGLATT_REAL, HE5_EHRDGLATT_CHARACTER_ARRAY
+a2076 2
+! ======================= Private Procedures =========================  
+
+d2102 2
+d2215 1
+a2215 1
+       "$Id: MLSHDFEOS.f90,v 2.40 2009/10/05 23:38:21 pwagner Exp $"
+d2225 3
+@
+
+
+2.40
+log
+@Moved use hdf5 statements from module scope to speedup Lahey; this is the last time we do that
+@
+text
+@d815 2
+a816 2
+  ! ---------------------------------------------  MLS_dfldsetUP  -----
+  integer function MLS_dfldsetUP ( SWATHID, FIELDNAME, DIMNAME, MAXDIMList, &
+d886 5
+d896 1
+a896 1
+  end function MLS_dfldsetUP
+d970 5
+a974 1
+   ! print *, 'mls_gfldsetup returns: ', mls_gfldsetup
+d2207 1
+a2207 1
+       "$Id: MLSHDFEOS.f90,v 2.39 2009/09/29 23:33:49 pwagner Exp $"
+d2217 3
+@
+
+
+2.39
+log
+@Changes needed by 64-bit build
+@
+text
+@a56 1
+  use hdf5, only: hsize_t, hssize_t, size_t
+a205 6
+  ! Convenient to put stuff here
+  ! integer, parameter :: MAXRANK = 7
+  ! integer(kind=hsize_t), dimension(MAXRANK) :: hstart
+  ! integer(kind=hsize_t), dimension(MAXRANK) :: hstride
+  ! integer(kind=hsize_t), dimension(MAXRANK) :: hedge
+
+d1327 1
+d1967 1
+d2009 1
+d2064 1
+d2075 1
+d2198 1
+a2198 1
+       "$Id: MLSHDFEOS.f90,v 2.38 2009/06/23 18:25:42 pwagner Exp $"
+d2208 3
+@
+
+
+2.38
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d57 1
+d62 2
+a63 1
+  public :: HE5_EHWRGLATT, HE5_EHRDGLATT, MLS_EHWRGLATT, MLS_ISGLATT, &
+d72 1
+a72 1
+       "$RCSfile: $"
+d207 6
+d227 1
+a227 1
+      & ATTRNAME, DATATYPE, max(COUNT, len_trim(BUFFER)), BUFFER )
+d230 1
+a230 1
+      & ATTRNAME, DATATYPE, 1, BLANK )
+d288 1
+a288 1
+      & ATTRNAME, DATATYPE, max(1, len_trim(BUFFER)), BUFFER )
+d291 1
+a291 1
+      & ATTRNAME, DATATYPE, 1, BLANK )
+d399 1
+a399 1
+        & xdimsize, ydimsize, upleft, lowright)
+d422 1
+a422 1
+      & ATTRNAME, DATATYPE, max(COUNT, len_trim(BUFFER)), BUFFER )
+d425 1
+a425 1
+      & ATTRNAME, DATATYPE, 1, BLANK )
+d720 1
+a720 1
+        MLS_SWdefdim = HE5_SWdefdim(swathid, DIMNAME, DIMSIZE)
+d874 1
+a874 1
+        & mls_dfldsetup = HE5_SWdefchunk(swathid, chunk_rank, chunk_dims)
+d913 1
+a913 1
+    character(len=*), optional :: FIleName
+d952 1
+a952 1
+        & mls_gfldsetup = HE5_SWdefchunk(swathid, chunk_rank, chunk_dims)
+d1096 1
+a1096 1
+        & start, stride, edge, values)
+d1152 1
+a1152 1
+        & start, stride, edge, values)
+d1208 1
+a1208 1
+        & start, stride, edge, values)
+d1264 1
+a1264 1
+        & start, stride, edge, values)
+d1320 1
+a1320 1
+        & start, stride, edge, values)
+d1375 9
+d1385 1
+a1385 1
+        & start, stride, edge, values)
+d1441 1
+a1441 1
+        & start, stride, edge, values)
+d1463 1
+a1463 1
+      & ATTRNAME, DATATYPE, max(COUNT, len_trim(BUFFER)), BUFFER )
+d1466 1
+a1466 1
+      & ATTRNAME, DATATYPE, 1, BLANK )
+d1485 1
+a1485 1
+      & ATTRNAME, DATATYPE, max(COUNT, len_trim(BUFFER)), BUFFER )
+d1488 1
+a1488 1
+      & ATTRNAME, DATATYPE, 1, BLANK )
+d1547 1
+a1547 1
+        & start, stride, edge, values)
+d1606 1
+a1606 1
+        & start, stride, edge, values)
+d1662 1
+a1662 1
+        & start, stride, edge, values)
+d1718 1
+a1718 1
+        & start, stride, edge, values)
+d1774 1
+a1774 1
+        & start, stride, edge, values)
+d1799 1
+d1825 7
+d1838 1
+a1838 1
+        & start, stride, edge, values)
+d1863 1
+d1867 1
+d1893 3
+a1895 3
+    if(DEEBUG) print *, 'start: ', start
+    if(DEEBUG) print *, 'stride: ', stride
+    if(DEEBUG) print *, 'edge: ', edge
+d1903 1
+a1903 1
+        & start, stride, edge, values)
+d1959 1
+a1959 1
+        & start, stride, edge, values)
+d1978 1
+d1992 2
+a1993 1
+      nswaths = HE5_swinqswath(trim(filename), fieldlist, listsize)
+d1996 4
+a1999 1
+    if ( nswaths < 1 ) return
+d2021 1
+d2039 2
+a2040 1
+      nswaths = HE5_swinqswath(trim(filename), fieldlist, listsize)
+d2043 4
+a2046 1
+    if ( nswaths < 1 ) return
+d2066 23
+d2200 1
+a2200 1
+       "$Id: read_apriori.f90 is it here $"
+d2210 3
+@
+
+
+2.37
+log
+@Remove unused declarations
+@
+text
+@d70 1
+a70 1
+       "$RCSfile: MLSHDFEOS.f90,v $"
+d2137 1
+a2138 1
+!---------------------------- RCS Ident Info -------------------------------
+d2140 2
+a2141 3
+       "$Id: MLSHDFEOS.f90,v 2.36 2008/05/02 00:05:36 pwagner Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d2143 1
+d2145 1
+d2150 3
+@
+
+
+2.36
+log
+@Reads textFile using io stuff
+@
+text
+@d232 1
+a232 1
+    use IO_STUFF, only: get_lun, read_textFile
+a244 1
+    integer :: lun
+a262 1
+    close( UNIT=lun, iostat=status )
+d2140 1
+a2140 1
+       "$Id: MLSHDFEOS.f90,v 2.35 2008/04/25 22:51:44 pwagner Exp $"
+d2149 3
+@
+
+
+2.35
+log
+@Passes optional arg maxLineLen through to textFile_to_Chars
+@
+text
+@d198 2
+d232 1
+a232 1
+    use MLSFiles, only: textFile_to_Chars
+d240 2
+d245 2
+a246 1
+    character(len=3) :: blockChar
+a247 2
+    integer, parameter :: DATATYPE = MLS_CHARTYPE
+    integer :: lun
+d251 2
+d254 2
+a255 1
+    call textFile_to_Chars( trim(textFile), BUFFER, maxLineLen )
+d2142 1
+a2142 1
+       "$Id: MLSHDFEOS.f90,v 2.34 2008/04/18 16:29:30 pwagner Exp $"
+d2151 3
+@
+
+
+2.34
+log
+@Now works properly with NAG, Lahey, and Intel
+@
+text
+@a43 1
+  use IO_STUFF, only: get_lun
+d49 1
+a49 1
+  use MLSStringLists, only: GetStringElement, NumStringElements, StringElementNum
+d53 2
+a54 2
+  use SWAPI_INTEGER, only: SWRDFLD_INTEGER, SWRDFLD_INTEGER_2D, SWRDFLD_INTEGER_3D, &
+    &                      SWWRFLD_INTEGER, SWWRFLD_INTEGER_2D, SWWRFLD_INTEGER_3D
+d227 1
+a227 1
+    & ATTRNAME )
+d236 1
+a237 1
+    logical, parameter :: USINGDIRECTACCESS = .false.
+d249 2
+a250 14
+    if ( USINGDIRECTACCESS ) then
+      call GET_LUN ( LUN )
+      open(UNIT=lun, access='direct', recl=MAXCHFIELDLENGTH, &
+        & file=trim(textFile), status='old', iostat=status )
+      if ( status /= 0 ) then
+        call MLSMessage(MLSMSG_Warning, ModuleName, &
+          & 'Unable to write attribute--failed to open textfile' )
+        return
+      endif
+      read(UNIT=lun, REC=1, IOSTAT=status) BUFFER
+    else
+      call textFile_to_Chars( trim(textFile), BUFFER )
+      status = 0
+    endif
+d2136 1
+a2136 1
+       "$Id: MLSHDFEOS.f90,v 2.33 2008/03/07 01:36:08 pwagner Exp $"
+d2145 3
+@
+
+
+2.33
+log
+@Will subdivide attributes into blocks if too large
+@
+text
+@d231 1
+d238 1
+d250 13
+a262 7
+    call GET_LUN ( LUN )
+    open(UNIT=lun, access='direct', recl=MAXCHFIELDLENGTH, &
+      & file=trim(textFile), status='old', iostat=status )
+    if ( status /= 0 ) then
+      call MLSMessage(MLSMSG_Warning, ModuleName, &
+        & 'Unable to write attribute--failed to open textfile' )
+      return
+a263 1
+    read(UNIT=lun, REC=1, IOSTAT=status) BUFFER
+d2149 1
+a2149 1
+       "$Id: MLSHDFEOS.f90,v 2.32 2008/02/22 21:30:18 pwagner Exp $"
+d2158 3
+@
+
+
+2.32
+log
+@Can now save entire textfile as global attribute
+@
+text
+@d231 1
+a231 1
+    use MLSHDF5, only: MAXCHFIELDLENGTH
+d238 4
+d265 16
+a280 1
+    if ( len_trim(buffer) > 0 ) then
+d2142 1
+a2142 1
+       "$Id: MLSHDFEOS.f90,v 2.31 2007/08/20 22:00:47 pwagner Exp $"
+d2151 3
+@
+
+
+2.31
+log
+@More procedures push their names onto MLSCallStack
+@
+text
+@d44 1
+d51 1
+d157 4
+d207 1
+a207 1
+  integer function MLS_EHWRGLATT ( FILEID, &
+d215 1
+a215 1
+    call MLSMessageCalls( 'push', constantName='MLS_EHWRGLATT' )
+d217 1
+a217 1
+      MLS_EHWRGLATT = he5_ehwrglatt_character_scalar( FILEID, &
+d220 46
+a265 1
+      MLS_EHWRGLATT = he5_ehwrglatt_character_scalar( FILEID, &
+d270 1
+a270 1
+  end function MLS_EHWRGLATT
+d2123 1
+a2123 1
+       "$Id: MLSHDFEOS.f90,v 2.30 2007/08/17 00:27:48 pwagner Exp $"
+d2132 3
+@
+
+
+2.30
+log
+@push more procedures onto MLSCallStack
+@
+text
+@d924 1
+d968 2
+a969 2
+    if ( myDontFail .or. mls_swrdfld_CHAR_1D /= -1 ) return
+    CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+d971 1
+d992 1
+d1024 2
+a1025 2
+    if ( myDontFail .or. mls_swrdfld_double_1d /= -1 ) return
+    CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+d1027 1
+d1048 1
+d1080 2
+a1081 2
+    if ( myDontFail .or. mls_swrdfld_double_2d /= -1 ) return
+    CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+d1083 1
+d1104 1
+d1136 2
+a1137 2
+    if ( myDontFail .or. mls_swrdfld_double_3d /= -1 ) return
+    CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+d1139 1
+d1160 1
+d1192 2
+a1193 2
+    if ( myDontFail .or. mls_swrdfld_integer /= -1 ) return
+    CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+d1195 1
+d1216 1
+d1248 2
+a1249 2
+    if ( myDontFail .or. mls_swrdfld_REAL_1d /= -1 ) return
+    CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+d1251 1
+d1272 1
+d1304 2
+a1305 2
+    if ( myDontFail .or. mls_swrdfld_REAL_2d /= -1 ) return
+    CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+d1307 1
+d1328 1
+d1360 2
+a1361 2
+    if ( myDontFail .or. mls_swrdfld_REAL_3d /= -1 ) return
+    CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+d1363 1
+d1375 1
+d1383 1
+d1397 1
+d1405 1
+d1434 1
+d1469 2
+a1470 2
+    if ( myDontFail .or. mls_SWWRFLD_CHAR_1D /= -1 ) return
+    CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+d1472 1
+d1493 1
+d1525 2
+a1526 2
+    if ( myDontFail .or. mls_SWWRFLD_double_1d /= -1 ) return
+    CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+d1528 1
+d1549 1
+d1581 2
+a1582 2
+    if ( myDontFail .or. mls_SWWRFLD_double_2d /= -1 ) return
+    CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+d1584 1
+d1605 1
+d1637 2
+a1638 2
+    if ( myDontFail .or. mls_SWWRFLD_double_3d /= -1 ) return
+    CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+d1640 1
+d1661 1
+d1693 2
+a1694 2
+    if ( myDontFail .or. mls_SWWRFLD_integer /= -1 ) return
+    CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+d1696 1
+d1717 1
+d1749 2
+a1750 2
+    if ( myDontFail .or. mls_SWWRFLD_REAL_1d /= -1 ) return
+    CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+d1752 1
+d1773 1
+d1812 2
+a1813 2
+    if ( myDontFail .or. mls_SWWRFLD_REAL_2d /= -1 ) return
+    CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+d1815 1
+d1836 1
+d1868 2
+a1869 2
+    if ( myDontFail .or. mls_SWWRFLD_REAL_3d /= -1 ) return
+    CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+d1871 1
+d1888 1
+d1908 1
+d1926 1
+d1956 1
+d2072 1
+a2072 1
+       "$Id: MLSHDFEOS.f90,v 2.29 2005/11/15 00:18:20 pwagner Exp $"
+d2081 3
+@
+
+
+2.29
+log
+@present a poor choice for argument name; esp when optional args exist
+@
+text
+@d47 2
+a48 1
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+d209 1
+d217 1
+d233 1
+d240 1
+d283 1
+d327 2
+a328 2
+    if ( MLS_GDCREATE /= -1 ) return
+    CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+d331 1
+d343 1
+d352 1
+d368 1
+a368 1
+    if (Deebug) print *, 'swattaching ', trim(SWATHNAME)
+d401 1
+a403 3
+      if ( present(hdfVersion) ) print *, 'hdfVersion: ', hdfVersion
+      print *, 'myhdfVersion: ', myhdfVersion
+      if ( present(FileName) ) print *, 'FileName: ', trim(FileName)
+a406 3
+      if ( present(hdfVersion) ) print *, 'hdfVersion: ', hdfVersion
+      print *, 'myhdfVersion: ', myhdfVersion
+      if ( present(FileName) ) print *, 'FileName: ', trim(FileName)
+d410 1
+d422 1
+a422 1
+    if (Deebug) print *, 'swattaching ', trim(SWATHNAME)
+a434 1
+    if (Deebug) print *, ' (swath id is ', MLS_SWATTACH, ')'
+d436 1
+d447 1
+d462 1
+d513 2
+a514 2
+    if ( MLS_SWCREATE /= -1 ) return
+    CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+d517 1
+d537 1
+d597 2
+a598 2
+    if ( MLS_SWCREATE /= -1 ) return
+    CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+d600 1
+d618 1
+d648 2
+a649 2
+    if ( myDontFail .or. MLS_SWdefdim /= -1 ) return
+    CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+d651 1
+d663 2
+a664 1
+    if (Deebug) print *, 'swattaching ', swathid
+d688 2
+a689 2
+    if ( MLS_SWDETACH /= -1 ) return
+    CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+d691 1
+d708 1
+d723 1
+d739 2
+a740 2
+    if ( myDontFail .or. MLS_SWdiminfo /= -1 ) return
+    CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+d742 1
+d769 1
+d784 1
+d817 2
+a818 2
+    if ( myDontFail .or. mls_dfldsetup /= -1 ) return
+    CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+d820 1
+d847 1
+d862 1
+d897 2
+a898 2
+    if ( myDontFail .or. mls_gfldsetup /= -1 ) return
+    CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+d900 1
+d2032 1
+a2032 1
+       "$Id: MLSHDFEOS.f90,v 2.28 2005/11/11 21:41:03 pwagner Exp $"
+d2041 3
+@
+
+
+2.28
+log
+@mls_swath_in_file_sca optionally returns an error flag, too
+@
+text
+@d1852 1
+a1852 1
+    & present, error )
+d1857 1
+a1857 1
+    logical, dimension(:), intent(out) :: present
+d1867 1
+a1867 1
+    present = .false.
+d1869 1
+a1869 1
+    if ( size(swaths) > size(present) ) &
+d1890 1
+a1890 1
+      present(i) = &
+d1893 1
+a1893 1
+    mls_swath_in_file_arr = any( present )
+d2009 1
+a2009 1
+       "$Id: MLSHDFEOS.f90,v 2.27 2005/10/11 17:29:15 pwagner Exp $"
+d2018 3
+@
+
+
+2.27
+log
+@Added MLS_ISGLATT function
+@
+text
+@d1817 1
+a1817 1
+  logical function mls_swath_in_file_sca(filename, swath, HdfVersion)
+d1822 1
+d1838 2
+a1839 1
+    if ( nswaths == 0 ) return
+d1852 1
+a1852 1
+    & present )
+d1858 1
+d1878 2
+a1879 1
+    if ( nswaths == 0 ) return
+d2009 1
+a2009 1
+       "$Id: MLSHDFEOS.f90,v 2.26 2005/06/29 00:39:30 pwagner Exp $"
+d2018 3
+@
+
+
+2.26
+log
+@New interfaces for MLS_SWCREATE MLS_SWATTACH accept MLSFiles
+@
+text
+@d16 3
+d59 2
+a60 2
+  public :: HE5_EHWRGLATT, HE5_EHRDGLATT, &
+    & MLS_EHWRGLATT, MLS_DFLDSETUP, MLS_GFLDSETUP, &
+d76 2
+d79 2
+a80 1
+! HE5_EHWRGLATT     Sets the global attributes at file level
+d82 6
+d90 2
+d95 3
+d104 39
+d154 5
+d199 1
+d218 45
+d327 1
+d346 1
+d408 1
+d444 1
+d513 1
+d594 1
+d601 1
+a601 1
+    character(len=*), optional :: FIleName
+d643 1
+d681 1
+d687 1
+a687 1
+    character(len=*), optional :: FIleName
+d729 1
+a794 6
+!>       if ( Datatype == DFNT_CHAR8 ) then
+!>         if(DEEBUG) print *,' Hey, we just tried to set up a char-valued hdfeos5 field'
+!>         if(DEEBUG) print *,' Data type: ', Datatype
+!>         if(DEEBUG) print *,' he2he5_DataType(Datatype): ', he2he5_DataType(Datatype)
+!>         if(DEEBUG) print *,' MLS_CHARTYPE: ', MLS_CHARTYPE
+!>       endif
+d804 1
+a847 11
+   ! print *, 'mls_gfldsetup'
+   ! print *, 'FIELDName: ', trim(FIELDName)
+   ! print *, 'myHdfVersion: ', myHdfVersion
+   ! print *, 'swathid: ', swathid
+   ! print *, 'Datatype: ', Datatype
+   ! print *, 'he5_Datatype: ', he2he5_DataType(Datatype)
+   ! print *, 'chunk_rank: ', chunk_rank
+   ! print *, 'chunk_dims: ', chunk_dims
+   ! print *, 'DIMNAME: ', trim(DIMNAME)
+   ! print *, 'MAXDIMLIST: ', trim(MAXDIMLIST)
+   ! print *, 'MERGE: ', MERGE
+d881 1
+d950 1
+d1004 1
+d1058 1
+d1112 1
+d1166 1
+d1220 1
+d1274 1
+d1328 1
+d1346 1
+a1355 5
+    ! character(len=len(BUFFER)+1) :: TMPBUFFER  ! Buffer for write
+    !
+    ! TMPBUFFER = BUFFER ! Why is this necessary? NAG sometimes dumps core
+    ! print *, SWATHID, &
+    ! & FIELDNAME, ATTRNAME, DATATYPE, COUNT, BUFFER
+d1366 1
+a1424 4
+!>     if(DEEBUG) print *, 'num data fields  ', nflds
+!>     if(DEEBUG) print *, 'data field ranks ', dfrank
+!>     if(DEEBUG) print *, 'data field types ', numbertype
+!>     if(DEEBUG) print *, 'data field list  ', trim(fieldlist)
+d1431 1
+d1485 1
+d1539 1
+d1593 1
+d1647 1
+d1701 1
+d1762 1
+d1816 1
+d1827 1
+a1827 1
+    print*,'Scalar version'
+d1848 1
+d1894 1
+d1920 1
+d2001 1
+d2005 1
+a2005 1
+       "$Id: MLSHDFEOS.f90,v 2.25 2005/06/22 17:25:50 pwagner Exp $"
+d2014 3
+@
+
+
+2.25
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d41 1
+d65 1
+a65 1
+       "$RCSfile: $"
+d103 9
+a111 4
+!   interface MLS_SWSETFILL
+!     module procedure MLS_SWSETFILL_DOUBLE, &
+!       & MLS_SWSETFILL_INTEGER, MLS_SWSETFILL_REAL
+!   end interface
+d238 2
+a239 2
+  integer function MLS_SWATTACH ( FILEID, SWATHNAME, FileName, &
+    &  hdfVersion, DONTFAIL )
+d245 1
+d297 102
+a398 1
+  end function MLS_SWATTACH
+d400 4
+a403 1
+  integer function MLS_SWCREATE ( FILEID, SWATHNAME, FileName, hdfVersion )
+d409 1
+d480 1
+a480 1
+  end function MLS_SWCREATE
+d1891 1
+a1891 1
+       "$Id: $"
+d1900 3
+@
+
+
+2.24
+log
+@Small changes to guard against zero-length characters
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d62 1
+a62 4
+  !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
+       "$Id: MLSHDFEOS.f90,v 2.23 2004/09/23 22:58:59 pwagner Exp $"
+  character (len=len(idParm)), private :: Id = idParm
+d64 1
+a64 1
+       "$RCSfile: MLSHDFEOS.f90,v $"
+d66 1
+a66 1
+  !---------------------------------------------------------------------------
+d1777 5
+d1788 3
+@
+
+
+2.23
+log
+@Fix for when passed blank BUFFER (do we need to fix this elsewhere\?)
+@
+text
+@d56 1
+a56 1
+       "$Id: MLSHDFEOS.f90,v 2.22 2004/08/04 23:19:01 pwagner Exp $"
+d123 1
+a134 2
+    character(len=1), parameter :: BLANK = ' '
+    !
+d217 7
+a223 2
+    mls_gdwrattr = HE5_GDWRATTR( GRIDID, &
+    & ATTRNAME, DATATYPE, max(COUNT, len_trim(BUFFER)), BUFFER )
+a301 3
+   ! print *, 'Now in mls_swcreate'
+   ! print *, 'SWATHNAME: ', trim(SWATHNAME)
+    ! if ( present(filename) ) print *, 'filename: ', trim(filename)
+d1110 7
+a1116 2
+    mls_swwrattr = HE5_SWWRATTR( SWATHID, &
+    & ATTRNAME, DATATYPE, max(COUNT, len_trim(BUFFER)), BUFFER )
+d1128 13
+a1140 2
+    mls_swwrlattr = HE5_SWWRLATTR( SWATHID, FIELDNAME, &
+    & ATTRNAME, DATATYPE, max(COUNT, len_trim(BUFFER)), BUFFER )
+d1778 3
+@
+
+
+2.22
+log
+@Much moved from MLSStrings to MLSStringLists
+@
+text
+@d56 1
+a56 1
+       "$Id: MLSHDFEOS.f90,v 2.21 2004/07/22 17:07:15 pwagner Exp $"
+d133 10
+a142 2
+    MLS_EHWRGLATT = he5_ehwrglatt_character_scalar( FILEID, &
+    & ATTRNAME, DATATYPE, max(COUNT, len_trim(BUFFER)), BUFFER )
+d1761 3
+@
+
+
+2.21
+log
+@Fixed set fill values
+@
+text
+@d36 1
+a36 1
+  use MLSStrings, only: GetStringElement, NumStringElements, StringElementNum
+d56 1
+a56 1
+       "$Id: MLSHDFEOS.f90,v 2.20 2004/05/05 21:28:42 pwagner Exp $"
+d1753 3
+@
+
+
+2.20
+log
+@More debug printing
+@
+text
+@d49 1
+a49 1
+    & MLS_SWDEFDIM, MLS_SWDIMINFO, MLS_SWRDFLD, MLS_SWSETFILL, MLS_SWWRFLD, &
+a52 2
+  logical, parameter :: HE5_SWSETFILL_BROKEN = .true.
+  character(len=*), parameter :: SETFILLTITLE = '_FillValue'
+d56 1
+a56 1
+       "$Id: MLSHDFEOS.f90,v 2.19 2004/03/24 23:53:02 pwagner Exp $"
+d67 1
+a70 1
+! MLS_SWSETFILL     Sets the fill value for one or more fields
+d97 4
+a100 4
+  interface MLS_SWSETFILL
+    module procedure MLS_SWSETFILL_DOUBLE, &
+      & MLS_SWSETFILL_INTEGER, MLS_SWSETFILL_REAL
+  end interface
+d489 2
+a490 1
+    & DATATYPE, MERGE, CHUNK_RANK, CHUNK_DIMS, FILENAME, hdfVersion, DONTFAIL )
+d500 1
+a500 1
+    character(len=*), optional :: FIleName
+d503 3
+d538 12
+d569 2
+a570 1
+    & DATATYPE, MERGE, CHUNK_RANK, CHUNK_DIMS, FILENAME, hdfVersion, DONTFAIL )
+d583 3
+d629 12
+a654 96
+  integer function MLS_SWSETFILL_DOUBLE ( SWATHID, FIELDNAMES, DATATYPE, &
+    & FILLVALUE )
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: FIELDNAMES     ! Field names
+    integer, intent(in) :: DATATYPE
+    double precision, intent(in) :: FILLVALUE
+
+    integer :: Field
+    integer :: numFields
+    character(len=len(FIELDNAMES)) :: FIELDNAME
+    mls_swsetfill_double = 0
+    numFields = NumStringElements(fieldnames, .false.)
+    if ( numFields < 1 ) return
+    do Field=1, numFields
+      call GetStringElement(fieldnames, fieldname, Field, .true.)
+      if ( HE5_SWSETFILL_BROKEN ) then
+        mls_swsetfill_double = he5_swwrlattr(swathid, trim(fieldname), &
+          & trim(SETFILLTITLE), &
+          & DATATYPE, 1, (/ FILLVALUE /) )
+      else
+        mls_swsetfill_double = HE5_SWsetfill(swathid, trim(fieldname), &
+        & datatype, fillvalue)
+      endif
+      if ( DEEBUG ) print *, 'Set fill to field ', trim(fieldname), fillvalue
+      if ( mls_swsetfill_double /= 0 ) then
+        mls_swsetfill_double = -1
+        return
+      endif
+    enddo
+
+  end function MLS_SWSETFILL_DOUBLE
+
+  integer function MLS_SWSETFILL_INTEGER ( SWATHID, FIELDNAMES, DATATYPE, &
+    & FILLVALUE )
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: FIELDNAMES     ! Field names
+    integer, intent(in) :: DATATYPE
+    integer, intent(in) :: FILLVALUE
+
+    integer :: Field
+    integer :: numFields
+    character(len=len(FIELDNAMES)) :: FIELDNAME
+    mls_swsetfill_integer = 0
+    numFields = NumStringElements(fieldnames, .false.)
+    if ( numFields < 1 ) return
+    do Field=1, numFields
+      call GetStringElement(fieldnames, fieldname, Field, .true.)
+      if ( HE5_SWSETFILL_BROKEN ) then
+        mls_swsetfill_integer = he5_swwrlattr(swathid, trim(fieldname), &
+          & trim(SETFILLTITLE), &
+          & DATATYPE, 1, (/ FILLVALUE /) )
+      else
+        mls_swsetfill_integer = HE5_SWsetfill(swathid, trim(fieldname), &
+        & datatype, fillvalue)
+      endif
+      if ( DEEBUG ) print *, 'Set fill to field ', trim(fieldname), fillvalue
+      if ( mls_swsetfill_integer /= 0 ) then
+        mls_swsetfill_integer = -1
+        return
+      endif
+    enddo
+
+  end function MLS_SWSETFILL_INTEGER
+
+  integer function MLS_SWSETFILL_REAL ( SWATHID, FIELDNAMES, DATATYPE, &
+    & FILLVALUE )
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: FIELDNAMES     ! Field names
+    integer, intent(in) :: DATATYPE
+    real, intent(in) :: FILLVALUE
+    integer, external :: HE5_SWsetfill
+    integer :: Field
+    integer :: numFields
+    character(len=len(FIELDNAMES)) :: FIELDNAME
+    mls_swsetfill_real = 0
+    numFields = NumStringElements(fieldnames, .false.)
+    if ( numFields == -1 ) return
+    do Field=1, numFields
+      call GetStringElement(fieldnames, fieldname, Field, .true.)
+      if ( HE5_SWSETFILL_BROKEN ) then
+        mls_swsetfill_real = he5_swwrlattr(swathid, trim(fieldname), &
+          & trim(SETFILLTITLE), &
+          & DATATYPE, 1, (/ FILLVALUE /) )
+      else
+        mls_swsetfill_real = HE5_SWsetfill(swathid, trim(fieldname), &
+        & datatype, fillvalue)
+      endif
+      if ( DEEBUG ) print *, 'Set fill to field ', trim(fieldname), fillvalue
+      if ( mls_swsetfill_real /= 0 ) then
+        mls_swsetfill_real = -1
+        return
+      endif
+    enddo
+
+  end function MLS_SWSETFILL_REAL
+
+d1753 3
+@
+
+
+2.19
+log
+@Switched from HE5T_NATIVE_SCHAR to MLS_CHARTYPE
+@
+text
+@d58 1
+a58 1
+       "$Id: MLSHDFEOS.f90,v 2.18 2004/02/13 00:16:39 pwagner Exp $"
+d648 5
+a652 1
+      if ( mls_swsetfill_double == -1 ) return
+d680 5
+a684 1
+      if ( mls_swsetfill_integer == -1 ) return
+d712 5
+a716 1
+      if ( mls_swsetfill_real == -1 ) return
+d1819 3
+@
+
+
+2.18
+log
+@New stuff for reading swath attributes
+@
+text
+@d14 1
+a14 1
+  use HDFEOS5, only: HE5T_NATIVE_FLOAT, HE5T_NATIVE_DOUBLE, HE5T_NATIVE_SCHAR, &
+d19 1
+a19 1
+    & HE5_swinqswath
+d58 1
+a58 1
+       "$Id: MLSHDFEOS.f90,v 2.17 2004/02/05 23:31:05 pwagner Exp $"
+d132 1
+a132 1
+    integer, intent(in) :: DATATYPE    ! E.g., HE5T_NATIVE_SCHAR
+d208 1
+a208 1
+    integer, intent(in) :: DATATYPE    ! E.g., HE5T_NATIVE_SCHAR
+d543 1
+a543 1
+!>         if(DEEBUG) print *,' HE5T_NATIVE_SCHAR: ', HE5T_NATIVE_SCHAR
+d766 1
+a766 1
+          & HE5T_NATIVE_SCHAR, myHdfVersion) ) return
+d1152 1
+a1152 1
+    integer, intent(in) :: DATATYPE    ! E.g., HE5T_NATIVE_SCHAR
+d1165 1
+a1165 1
+    integer, intent(in) :: DATATYPE    ! E.g., HE5T_NATIVE_SCHAR
+d1786 1
+a1786 1
+      HE5_dataType = HE5T_NATIVE_SCHAR
+d1807 3
+@
+
+
+2.17
+log
+@Extra debugging when appropriate
+@
+text
+@d21 5
+a25 3
+  use HE5_SWAPI_CHARACTER_ARRAY, only: HE5_EHWRGLATT_CHARACTER_ARRAY
+  use HE5_SWAPI_CHARACTER_SCALAR, only: HE5_EHWRGLATT_CHARACTER_SCALAR
+  use HE5_SWAPI_DOUBLE, only: HE5_EHWRGLATT_DOUBLE, &
+d28 1
+a28 1
+  use HE5_SWAPI_INTEGER, only: HE5_EHWRGLATT_INTEGER, &
+d30 1
+a30 1
+  use HE5_SWAPI_REAL, only: HE5_EHWRGLATT_REAL, &
+d47 2
+a48 1
+  public :: HE5_EHWRGLATT, MLS_EHWRGLATT, MLS_DFLDSETUP, MLS_GFLDSETUP, &
+d58 1
+a58 1
+       "$Id: MLSHDFEOS.f90,v 2.16 2004/01/23 01:12:28 pwagner Exp $"
+d89 5
+d1807 3
+@
+
+
+2.16
+log
+@Some care taken in handling ...inq.. functions
+@
+text
+@d55 1
+a55 1
+       "$Id: MLSHDFEOS.f90,v 2.15 2003/10/30 00:01:57 pwagner Exp $"
+d239 1
+d255 3
+d261 3
+d1799 3
+@
+
+
+2.15
+log
+@Added MLS_GDWRATTR
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+d55 1
+a55 1
+       "$Id: MLSHDFEOS.f90,v 2.14 2003/10/28 00:28:53 pwagner Exp $"
+d1617 1
+d1625 6
+d1665 6
+d1693 1
+d1792 3
+@
+
+
+2.14
+log
+@Added MLS_EHWRGLATT,MLS_SWWRATTR,MLS_SWWRLATTR
+@
+text
+@d47 1
+a47 1
+    & MLS_SWATTACH, MLS_SWCREATE, MLS_SWDETACH, MLS_GDCREATE, &
+d55 1
+a55 1
+       "$Id: MLSHDFEOS.f90,v 2.13 2003/07/15 23:36:28 pwagner Exp $"
+d196 13
+d1778 3
+@
+
+
+2.13
+log
+@Disabled most printing; trims args to (HE5_)SWdefgfld
+@
+text
+@d45 1
+a45 1
+  public :: HE5_EHWRGLATT, MLS_DFLDSETUP, MLS_GFLDSETUP, &
+d48 1
+d55 1
+a55 1
+       "$Id: MLSHDFEOS.f90,v 2.12 2003/07/11 21:50:31 livesey Exp $"
+d120 12
+d1120 25
+d1765 3
+@
+
+
+2.12
+log
+@Minor bug fix, probably of little consquence
+@
+text
+@d54 1
+a54 1
+       "$Id: MLSHDFEOS.f90,v 2.11 2003/07/11 01:22:55 livesey Exp $"
+d115 1
+a115 1
+  logical, parameter :: DEEBUG = .true.  
+d251 3
+a253 3
+    print *, 'Now in mls_swcreate'
+    print *, 'SWATHNAME: ', trim(SWATHNAME)
+    if ( present(filename) ) print *, 'filename: ', trim(filename)
+d552 11
+a562 11
+    print *, 'mls_gfldsetup'
+    print *, 'FIELDName: ', trim(FIELDName)
+    print *, 'myHdfVersion: ', myHdfVersion
+    print *, 'swathid: ', swathid
+    print *, 'Datatype: ', Datatype
+    print *, 'he5_Datatype: ', he2he5_DataType(Datatype)
+    print *, 'chunk_rank: ', chunk_rank
+    print *, 'chunk_dims: ', chunk_dims
+    print *, 'DIMNAME: ', trim(DIMNAME)
+    print *, 'MAXDIMLIST: ', trim(MAXDIMLIST)
+    print *, 'MERGE: ', MERGE
+d565 2
+a566 2
+      mls_gfldsetup = swdefgfld(swathid, FIELDName, DIMNAME, Datatype, &
+         & MERGE)
+d571 2
+a572 1
+        & mls_gfldsetup = HE5_SWdefgfld(swathid, FIELDName, DIMNAME, MAXDIMLIST, &
+d577 1
+a577 1
+    print *, 'mls_gfldsetup returns: ', mls_gfldsetup
+d1593 1
+d1604 3
+d1727 3
+@
+
+
+2.11
+log
+@Bug fixes and tidyups
+@
+text
+@d54 1
+a54 1
+       "$Id: MLSHDFEOS.f90,v 2.10 2003/07/09 21:49:07 pwagner Exp $"
+d1653 5
+d1664 1
+d1670 1
+d1722 3
+@
+
+
+2.10
+log
+@Wont try swattaching just to see if swath already there
+@
+text
+@d54 1
+a54 1
+       "$Id: MLSHDFEOS.f90,v 2.9 2003/07/02 00:54:25 pwagner Exp $"
+d112 1
+a112 1
+  integer, public, parameter :: MAXDLISTLENGTH = 4096
+d784 1
+a784 1
+          & 'Failed to read 1-d double field ' // trim(fieldname) )
+d890 1
+a890 1
+          & 'Failed to read 1-d double field ' // trim(fieldname) )
+d943 1
+a943 1
+          & 'Failed to read 1-d double field ' // trim(fieldname) )
+d996 1
+a996 1
+          & 'Failed to read 1-d REAL field ' // trim(fieldname) )
+d1102 1
+a1102 1
+          & 'Failed to read 1-d REAL field ' // trim(fieldname) )
+d1170 1
+a1170 1
+          & 'Failed to write 1-d char field ' // trim(fieldname) )
+d1223 1
+a1223 1
+          & 'Failed to write 1-d double field ' // trim(fieldname) )
+d1329 1
+a1329 1
+          & 'Failed to write 1-d double field ' // trim(fieldname) )
+d1382 1
+a1382 1
+          & 'Failed to write 1-d integer field ' // trim(fieldname) )
+d1435 1
+a1435 1
+          & 'Failed to write 1-d REAL field ' // trim(fieldname) )
+d1548 1
+a1548 1
+          & 'Failed to write 1-d REAL field ' // trim(fieldname) )
+d1562 1
+d1715 3
+@
+
+
+2.9
+log
+@Failed attempt to turn off hdfeos5 warnings by turning off hdf5 ones
+@
+text
+@d13 1
+a13 1
+    & swdiminfo, swinqdflds
+d18 2
+a19 1
+    & HE5_SWdefgfld, HE5_swdefdim, HE5_swdiminfo, HE5_swinqdflds
+d47 2
+a48 1
+    & MLS_SWATTACH, MLS_SWCREATE, MLS_SWDETACH, MLS_GDCREATE
+d54 1
+a54 1
+       "$Id: MLSHDFEOS.f90,v 2.8 2003/06/26 00:05:40 pwagner Exp $"
+d85 5
+d111 2
+a112 2
+  integer, public, parameter :: MAXNODFIELDS = 80
+  integer, public, parameter :: MAXDLISTLENGTH = 1024
+d133 1
+d151 5
+a155 1
+      alreadyThere = (gdattach(FileID, trim(GRIDNAME)) >= 0)
+d163 5
+a167 1
+      alreadyThere = (he5_gdattach(FileID, trim(GRIDNAME)) >= 0)
+d194 1
+d224 8
+a231 2
+    if ( myDontFail .or. MLS_SWATTACH /= -1 ) return
+    CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+d233 1
+a233 1
+
+d247 2
+d251 3
+d257 1
+a257 1
+    if ( needsFileName .and. .not. present(FIleName)) then
+d269 10
+a278 3
+      if(DEEBUG) print *, 'About to call swattach with FileID: ', Fileid, ' swathname ', &
+        & trim(swathName)
+      alreadyThere = (swattach(FileID, trim(swathName)) >= 0)
+d290 10
+a299 1
+      alreadyThere = (he5_swattach(FileID, trim(swathName)) >= 0)
+d372 1
+d552 11
+d576 1
+d1552 56
+d1611 1
+d1714 3
+@
+
+
+2.8
+log
+@Added optional DONTFAIL arg to MLS_SWATTACH
+@
+text
+@d52 1
+a52 1
+       "$Id: MLSHDFEOS.f90,v 2.7 2003/06/20 19:31:39 pwagner Exp $"
+d107 3
+d148 1
+a148 1
+      MLS_GDCREATE = gdcreate(Fileid, GRIDNAME, &
+d156 1
+a156 1
+      MLS_GDCREATE = he5_gdcreate(Fileid, GRIDNAME, &
+d201 1
+a201 1
+      MLS_SWATTACH = swattach(Fileid, SwathNAME)
+d203 1
+a203 1
+      MLS_SWATTACH = he5_swattach(Fileid, SwathNAME)
+d214 1
+d223 1
+d241 2
+d248 7
+a254 2
+      MLS_SWCREATE = swcreate(Fileid, SwathNAME)
+    case (HDFVERSION_5)
+d256 3
+d263 1
+a263 1
+      MLS_SWCREATE = he5_swcreate(Fileid, SwathNAME)
+d454 4
+a457 4
+!>         print *,' Hey, we just tried to set up a char-valued hdfeos5 field'
+!>         print *,' Data type: ', Datatype
+!>         print *,' he2he5_DataType(Datatype): ', he2he5_DataType(Datatype)
+!>         print *,' HE5T_NATIVE_SCHAR: ', HE5T_NATIVE_SCHAR
+d1107 4
+a1110 4
+!>     print *, 'num data fields  ', nflds
+!>     print *, 'data field ranks ', dfrank
+!>     print *, 'data field types ', numbertype
+!>     print *, 'data field list  ', trim(fieldlist)
+d1419 7
+d1600 3
+@
+
+
+2.7
+log
+@Changes to allow direct writing of products
+@
+text
+@d52 1
+a52 1
+       "$Id: MLSHDFEOS.f90,v 2.6 2003/06/06 22:49:12 pwagner Exp $"
+d164 2
+a165 1
+  integer function MLS_SWATTACH ( FILEID, SWATHNAME, FileName, hdfVersion )
+d170 1
+d172 1
+d176 2
+d183 3
+d188 1
+d204 1
+a204 1
+    if ( MLS_SWATTACH /= -1 ) return
+d1578 3
+@
+
+
+2.6
+log
+@Added mls_sw(gd)create
+@
+text
+@d12 2
+a13 1
+    & swattach, swcreate, swdefdfld, swdefgfld, swdefdim, swdiminfo, swinqdflds
+d17 1
+a17 1
+    & HE5_SWattach, HE5_SWcreate, HE5_SWdefchunk, HE5_swdefdfld, &
+d46 1
+a46 1
+    & MLS_SWCREATE, MLS_GDCREATE
+d52 1
+a52 1
+       "$Id: MLSHDFEOS.f90,v 2.5 2003/04/21 19:32:27 pwagner Exp $"
+d164 37
+d297 36
+d1569 3
+@
+
+
+2.5
+log
+@Can read/write 1-d char fields
+@
+text
+@d11 2
+a12 1
+  use HDFEOS, only: swdefdfld, swdefgfld, swdefdim, swdiminfo, swinqdflds
+d15 3
+a17 2
+  use HDFEOS5, only: HE5_SWdefchunk, HE5_swdefdfld, HE5_SWdefgfld, &
+    & HE5_swdefdim, HE5_swdiminfo, HE5_swinqdflds
+d44 2
+a45 1
+    & MLS_SWDEFDIM, MLS_SWDIMINFO, MLS_SWRDFLD, MLS_SWSETFILL, MLS_SWWRFLD
+d51 1
+a51 1
+       "$Id: MLSHDFEOS.f90,v 2.4 2003/04/17 23:04:51 pwagner Exp $"
+d108 103
+d1495 3
+@
+
+
+2.4
+log
+@Now sits between L2GPData and HDFEOS(5)
+@
+text
+@d9 5
+a13 1
+  use HDFEOS, only: swdefdfld, swdefgfld, swdefdim, swdiminfo
+d15 1
+a15 1
+    & HE5_swdefdim, HE5_swdiminfo
+d30 1
+a30 1
+  use MLSStrings, only: GetStringElement, NumStringElements
+d48 1
+a48 1
+       "$Id: MLSHDFEOS.f90,v 2.3 2003/04/15 23:16:46 pwagner Exp $"
+d86 1
+d94 1
+d100 3
+d248 7
+a254 1
+        & Datatype, MERGE)
+d312 1
+a312 1
+        & Datatype, MERGE)
+d406 68
+d845 68
+d962 1
+a962 1
+          & 'Failed to read 1-d double field ' // trim(fieldname) )
+d1015 1
+a1015 1
+          & 'Failed to read 2-d double field ' // trim(fieldname) )
+d1068 1
+a1068 1
+          & 'Failed to read 1-d double field ' // trim(fieldname) )
+d1121 1
+a1121 1
+          & 'Failed to read 1-d double field ' // trim(fieldname) )
+d1174 1
+a1174 1
+          & 'Failed to read 1-d REAL field ' // trim(fieldname) )
+d1227 1
+a1227 1
+          & 'Failed to read 2-d REAL field ' // trim(fieldname) )
+d1280 1
+a1280 1
+          & 'Failed to read 1-d REAL field ' // trim(fieldname) )
+d1286 96
+d1389 3
+@
+
+
+2.3
+log
+@Removed prints; begun MLS_SWRDFLD stuff
+@
+text
+@d9 3
+d15 8
+a22 3
+  use HE5_SWAPI_DOUBLE, only: HE5_EHWRGLATT_DOUBLE
+  use HE5_SWAPI_INTEGER, only: HE5_EHWRGLATT_INTEGER
+  use HE5_SWAPI_REAL, only: HE5_EHWRGLATT_REAL
+d27 6
+d37 2
+a38 1
+  public :: HE5_EHWRGLATT, MLS_SWSETFILL, MLS_SWRDFLD
+d44 1
+a44 1
+       "$Id: MLSHDFEOS.f90,v 2.2 2003/04/15 21:58:54 pwagner Exp $"
+d56 2
+d59 1
+d82 10
+a91 4
+      & MLS_SWRDFLD_DOUBLE_1D
+!      & MLS_SWRDFLD_DOUBLE_1D, MLS_SWRDFLD_DOUBLE_2D, MLS_SWRDFLD_DOUBLE_3D, &
+!      & MLS_SWRDFLD_INTEGER, &
+!      & MLS_SWRDFLD_REAL_1D, MLS_SWRDFLD_REAL_2D, MLS_SWRDFLD_REAL_3D
+d96 211
+d399 1
+a399 1
+    double precision, dimension(:), intent(in) :: VALUES
+a402 1
+    integer, external :: HE5_SWrdfld, SWrdfld
+d421 1
+d430 1
+a430 1
+      mls_swrdfld_double_1d = swrdfld(swathid, trim(fieldname), &
+d433 1
+a433 1
+      mls_swrdfld_double_1d = HE5_swrdfld(swathid, trim(fieldname), &
+d444 688
+d1142 3
+@
+
+
+2.2
+log
+@Now sets _FillValue attribute because swsetfill seems broken
+@
+text
+@a8 1
+  use MLSStrings, only: GetStringElement, NumStringElements
+d15 4
+d23 1
+a23 1
+  public :: HE5_EHWRGLATT, MLS_SWSETFILL
+d29 1
+a29 1
+       "$Id: MLSHDFEOS.f90,v 2.1 2003/04/11 23:28:44 pwagner Exp $"
+d62 8
+a137 2
+    print *, 'SWATHID: ', SWATHID
+    print *, 'FIELDNAMES: ', FIELDNAMES
+a140 1
+    print *, 'numFields: ', numFields
+a142 1
+      print *, 'trim(fieldname): ', trim(fieldname)
+d156 53
+d219 3
+@
+
+
+2.1
+log
+@FIrst commit
+@
+text
+@d10 1
+a10 1
+  use HE5_SWAPI, only: HE5_SWSETFILL
+d21 2
+d26 1
+a26 1
+       "$Id: MLSHDF5.f90,v 2.21 2003/03/20 19:21:11 pwagner Exp $"
+d29 1
+a29 1
+       "$RCSfile: MLSHDF5.f90,v $"
+d42 1
+a42 1
+! int HE5_EHWRGLATT (int fileID, char* attrName, int datatype, int count, value) 
+d76 8
+a83 2
+      mls_swsetfill_double = HE5_SWsetfill(swathid, trim(fieldname), datatype, &
+        & fillvalue)
+d104 8
+a111 2
+      mls_swsetfill_integer = HE5_SWsetfill(swathid, trim(fieldname), datatype, &
+        & fillvalue)
+a122 1
+
+d127 2
+d132 1
+d135 9
+a143 2
+      mls_swsetfill_real = HE5_SWsetfill(swathid, trim(fieldname), datatype, &
+        & fillvalue)
+d158 4
+a161 1
+! $Log: MLS_HDFEOS5.f90,v $
+@
+

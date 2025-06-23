@@ -1,0 +1,312 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.1
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.4
+	cfm-single-freq-0-1:1.2.0.2
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.8
+	mus-emls-1-70:1.1.0.6
+	rel-1-0-englocks-work:1.1.0.4
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.2
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	M4-00:1.1
+	V3-33:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.2
+date	2020.04.21.00.05.49;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2011.03.11.03.38.16;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Should work better with make
+@
+text
+@\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{longtable}
+\usepackage{xr}
+\externaldocument[100-]{\logdir/wvs-100}
+\externaldocument[095-]{\logdir/wvs-095}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9in
+
+\newcommand{\docname}{\bf wvs-104}
+\newcommand{\docdate}{6 March 2011}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\ifx\dvidir\undefined
+  \newcommand\hr[1]{\href{#1.dvi}{dvi} \href{#1.pdf}{pdf}}
+\else
+  \newcommand\hr[1]{\href{\dvidir/#1.dvi}{dvi} \href{\pdfdir/#1.pdf}{pdf}}
+\fi
+\newcommand\h[1]{#1 (\hr{#1})}
+\newcommand\hh[2]{#1 \hr{#2}}
+\newcommand\hrpdf[1]{\href{#1.pdf}{pdf}}
+\newcommand\hpdf[1]{#1 \hrpdf{#1}}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Van, Bill, Mike\\
+Subject: \>Revisiting $2\times2$ matrix exponential and derivatives, for polarized model\\
+From: \>Van Snyder\\
+Reference: \>\h{wvs-015}
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-10pt}
+
+The exponential of a $2\times2$ matrix, and its derivative, are needed in
+the polarized forward model.  The method currently used is described in
+wvs-015.  This memo describes a simpler method.  It would be useful if it
+were correct.  Unfortunately, Equation (\ref{one}) doesn't hold because
+the matrices in Equation (\ref{rho}) do not commute.
+
+In calculating polarized radiative transfer, we evaluate
+$\alpha_{\sigma_-}$, $\alpha_\pi$, and $\alpha_{\sigma_+}$.  We then form
+$\delta = \alpha_{\sigma_-} \rho_{-1} + \alpha_\pi \rho_0 +
+\alpha_{\sigma_+} \rho_{+1}$, where
+
+\begin{equation}\begin{split}\label{rho}
+{\bf\rho}_{-1} =& \left [ \begin{array}{cc}
+                    \cos^2 \phi + \sin^2 \phi \cos^2 \theta &
+                     -\sin\phi \cos\phi \sin^2 \theta - i \cos \theta \\
+                     -\sin\phi \cos\phi \sin^2 \theta + i \cos \theta &
+                     \sin^2 \phi + \cos^2 \phi \cos^2 \theta
+                   \end{array} \right ] \\
+{\bf\rho}_0 =& \sin^2 \theta \left [ \begin{array}{cc}
+                    \sin^2 \phi & \sin\phi \cos\phi \\
+                    \sin\phi \cos\phi & \cos^2 \phi
+               \end{array} \right ] \\
+{\bf\rho}_{+1} =& \left [ \begin{array}{cc}
+                    \cos^2 \phi + \sin^2 \phi \cos^2 \theta &
+                     -\sin\phi \cos\phi \sin^2 \theta + i \cos \theta \\
+                     -\sin\phi \cos\phi \sin^2 \theta - i \cos \theta &
+                     \sin^2 \phi + \cos^2 \phi \cos^2 \theta
+                   \end{array} \right ] = {\bf\rho}^T_{-1} \,.
+\end{split}\end{equation}
+
+Then we exponentiate $\delta \Delta s$.
+
+If we could write $\exp(\delta \Delta s)$ in three parts, viz.
+
+\begin{equation}\label{one}
+\exp(\delta \Delta s) =
+\exp(\alpha_{\sigma_-} \rho_{-1} \Delta s)
+\exp(\alpha_\pi \rho_0 \Delta s)
+\exp(\alpha_{\sigma_+} \rho_{+1} \Delta s)
+\end{equation}
+
+we would have three separate matrix exponentiation problems.  This
+appears to be a more difficult problem, but it's actually simpler.  If we
+look at Sylvester's formula for the exponential of a $2\times2$ matrix
+
+\begin{equation}
+\exp(\mathbf{A}) =
+ \frac{\exp(\lambda_1)(\mathbf{A} - \lambda_2 \mathbf{I})}
+      {\lambda_1-\lambda_2} +
+ \frac{\exp(\lambda_2)(\mathbf{A} - \lambda_1 \mathbf{I})}
+      {\lambda_2-\lambda_1}
+\end{equation}
+
+we are led to inquire the eigenvalues $\lambda_1$ and $\lambda_2$ of
+$\mathbf{A}$.  The eigenvalues of $h \mathbf{A}$ for some scalar $h$ are
+$h \lambda_1$ and $h \lambda_2$.  Therefore, in the factors of Equation
+(\ref{one}) we are led to consider the eigenvalues of $\rho_{-1}$,
+$\rho_0$, and $\rho_{+1}$.  Since $\rho_{+1} = \rho_{-1}^T$, their
+eigenvalues are the same.  Those eigenvalues can be calculated explicitly:
+
+\begin{equation}
+\begin{array}{ll}
+\text{Eigenvalues}(\rho_{-1}) =
+ \left[ \begin{array}{c} 1+\cos^2\theta \\ 0 \end{array} \right]
+&
+\text{, and Eigenvalues}(\rho_{0}) =
+ \left[ \begin{array}{c} \sin^2\theta \\ 0 \end{array} \right]
+\end{array} \,.
+\end{equation}
+
+Since $\lambda_2 = 0$ in both cases, Sylvester's formula simplifies to
+
+\begin{equation}\label{four}
+\exp(\mathbf{A}) =
+ \frac{\exp(\lambda_1)-1}{\lambda_1} \mathbf{A} - \mathbf{I} \,.
+\end{equation}
+
+Equation (\ref{one}) can therefore be evaluated
+
+\begin{equation}\begin{split}\label{six}
+\exp(\delta \Delta s) =\,& (F_{\sigma_-}\rho_{-1} - \mathbf{I})
+                           (F_\pi\rho_0 - \mathbf{I})
+                           (F_{\sigma_+}\rho_{+1} - \mathbf{I})
+\text{ where}\\
+F_p =\,& \frac{\exp(\lambda_p)-1}{\lambda_p}\text{ for }
+p \in \{ \sigma_-, \pi, \sigma_+ \}\,, \\
+\lambda_{\sigma_-} =\,& \alpha_{\sigma_-} \Delta s ( 1 + \cos^2\theta )\,, \\
+\lambda_\pi = \,& \alpha_\pi \Delta s \sin^2\theta \text{, and} \\
+\lambda_{\sigma_+} =\,& \alpha_{\sigma_+} \Delta s ( 1 + \cos^2\theta )
+\,. \\
+\end{split}\end{equation}
+
+$F_p$ is well-behaved as $\lambda_p \rightarrow 0$: $\lim_{\lambda_p
+\rightarrow 0} F_p = 1$.  One needs to take care for small $\lambda_p$,
+but that is not difficult (use Taylor's series).
+
+Computing the factors as in Equation (\ref{six}) might be useful if we
+apply Trotter's multiplication formula
+
+\begin{equation}\label{Trotter}
+\exp(\mathbf{A}+\mathbf{B}+\mathbf{C}) = \lim_{n\rightarrow\infty}
+\left( \exp(\mathbf{A}/n)\exp(\mathbf{B}/n)\exp(\mathbf{C}/n)\right)^n\,,
+\end{equation}
+%
+but this depends upon how large $n$ must be for sufficient accurary, and
+how much cancellation occurs while computing the right-hand side. 
+Evaluation is expensive if $n \neq 2^j$.
+
+Since the matrices in Equation (\ref{rho}) do not depend upon mixing
+ratios or temperature, the derivatives of each factor of $\exp(\delta
+\Delta s)$ with respect to mixing ratios or temperature are also easy to
+compute using
+
+\begin{equation}
+\frac{\partial F_p}{\partial x} =
+ \frac{(\lambda_p-1)F_p + 1}{\alpha_p} \,
+ \frac{\partial \alpha_p}{\partial x}\,.
+\end{equation}
+
+These are well-behaved as $\alpha_p \rightarrow 0$: $\lim_{\alpha_p
+\rightarrow 0} \frac{\partial F_p}{\partial x} = \frac{\lambda_p}{2
+\alpha_p} \frac{\partial \alpha_p}{\partial x}$.
+
+This would simplify the magnetic model, and reduce its run time (if it
+were correct).
+
+The second derivatives are also simple to compute from
+
+\begin{equation}
+\frac{\partial^2 F_p}{\partial x \partial y} =
+ \frac{((\lambda_p-1)^2+1) F_p - 2 + \lambda_p}{\alpha_p^2} \,
+ \frac{\partial \alpha_p}{\partial x}
+ \frac{\partial \alpha_p}{\partial y} +
+\frac{(\lambda_p-1) F_p + 1}{\alpha_p}
+ \frac{\partial^2 \alpha_p}{\partial x \partial y} \,.
+\end{equation}
+
+Indeed, these are far simpler than computing the second derivative of
+$\exp(\delta \Delta s)$ starting from the expression for the first
+derivative in wvs-015.
+
+These are well-behaved as $\alpha_p \rightarrow 0$: $\lim_{\alpha_p
+\rightarrow 0} \frac{\partial^2 F_p}{\partial x \partial y} =
+\frac{\lambda_p^2}{3 \alpha_p^2} \frac{\partial \alpha_p}{\partial x}
+\frac{\partial \alpha_p}{\partial y} + \frac{\lambda_p}{2 \alpha_p}
+\frac{\partial^2 \alpha_p}{\partial x \partial y}$.
+
+\label{lastpage}
+\end{document}
+
+% $Id: wvs-104.tex,v 1.1 2011/03/11 03:38:16 vsnyder Exp $
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d6 2
+a7 2
+\externaldocument[100-]{wvs-100}
+\externaldocument[095-]{wvs-095}
+d242 1
+a242 1
+% $Id: $
+@
+

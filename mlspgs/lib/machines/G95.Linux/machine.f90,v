@@ -1,0 +1,410 @@
+head	1.6;
+access;
+symbols
+	v5-02-NRT-19:1.6
+	v6-00:1.6
+	v5-02-NRT-18:1.6
+	v5-02:1.6
+	v5-01-NRT-17:1.6
+	v5-01-NRT-16:1.6
+	v5-01-NRT-15:1.6
+	v5-01-NRT-14:1.6
+	neuralnetworks-1-0:1.6.0.14
+	cfm-single-freq-0-1:1.6.0.12
+	v5-01:1.6
+	v5-00:1.6
+	v4-23-TA133:1.6.0.10
+	mus-emls-1-70:1.6.0.8
+	rel-1-0-englocks-work:1.6.0.6
+	VUMLS1-00:1.6
+	VPL1-00:1.6
+	V4-22-NRT-08:1.6
+	VAM1-00:1.6
+	V4-21:1.6.0.4
+	V4-13:1.6
+	V4-12:1.6
+	V4-11:1.6
+	V4-10:1.6
+	V3-43:1.6
+	M4-00:1.6
+	V3-41:1.6
+	V3-40-PlusGM57:1.6.0.2
+	V2-24-NRT-04:1.4
+	V3-33:1.6
+	V2-24:1.4
+	V3-31:1.6
+	V3-30-NRT-05:1.6
+	cfm-01-00:1.6
+	V3-30:1.6
+	V3-20:1.6
+	V3-10:1.6
+	V2-23-NRT-02:1.4
+	V2-23:1.4
+	V2-22-NRT-01:1.4
+	V2-22:1.4
+	V2-21:1.4
+	V2-20:1.4
+	V2-11:1.4
+	V2-10:1.4
+	V2-00:1.4
+	V1-51:1.2
+	V1-50:1.2
+	V1-45:1.2
+	V1-44:1.1
+	V1-43:1.1
+	V1-42:1.1
+	V1-41:1.1
+	V1-32:1.1
+	V1-40:1.1
+	V1-31:1.1
+	V1-30:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.6
+date	2009.06.23.19.58.52;	author pwagner;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2009.06.23.18.25.44;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2005.06.22.20.26.22;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2005.03.04.21.41.16;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2004.08.19.00.13.12;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2003.04.25.23.00.49;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.6
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module MACHINE
+  implicit none
+
+  character(LEN=2) :: END_LINE = ' ' // char(10)
+  character(LEN=1) :: FILSEP = '/'      ! '/' for Unix, '\' for DOS or NT
+  integer, parameter :: HP = 0          ! Offset for first argument for GETARG
+
+   ! According to Sun's own docs, e.g. 806-7987.pdf, Sun supplies
+   ! getarg as an intrinsic library routine
+  public :: GETARG
+  interface
+    subroutine GETARG ( ARGNUM, ARGVAL )
+      integer, intent(in) :: ARGNUM  ! 0 = command name, 1 = first arg, etc.
+      character(len=*), intent(out) :: ARGVAL   ! Blank if argnum out-of-range
+    end subroutine GETARG
+  end interface
+
+  interface IO_ERROR; module procedure IO_ERROR_; end interface
+  private IO_ERROR_
+  public :: SHELL_COMMAND
+  public :: MLS_DISABLE_AUTOGC, MLS_GC_NOW, MLS_HOWMANY_GC, MLS_CONFIG_GC
+
+  logical, public, save :: NEVERCRASH = .true. ! Change to false for testing
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  ! -------------------------------------------------  CRASH_BURN  -----
+  subroutine CRASH_BURN ( CODE, MSG, OPT )
+  ! Print CODE and MSG if they're present.
+  ! Try to make the processor crash, so it produces a walkback if it
+  ! supports such a thing.
+  ! DON'T put an optional argument corresponding to OPT.  It may be
+  ! referenced on some systems in an attempt to make the processor crash.
+  ! STOP as a last resort.
+  ! Compile everything with -gline to get a walkback -- even with -O.
+  
+  ! Crash is provoked by one of available methods:
+  ! (a) rewind illegal unit number (default)
+  ! (b) acos(2.)
+  ! You may select which method to use by setting msg = '!x (rest of message)'
+  ! where x is the method
+    integer, intent(in), optional :: CODE
+    character(len=*), intent(in), optional :: MSG
+    integer, intent(in), optional :: OPT(:)
+    integer :: I = -huge(0)
+    real :: arg
+    character(len=*), parameter :: DEFAULTMETHOD = 'b' ! 'a' or 'b'
+    character(len=1) :: method
+    if ( present(code) ) print *, 'In g95 MACHINE%CRASH_BURN, CODE =', code
+    if ( present(msg) ) print *, 'In g95 MACHINE%CRASH_BURN, MSG = ', trim(msg)
+    method = DEFAULTMETHOD
+    if ( NEVERCRASH ) then
+      method = 's' ! Just stop, don't crash nor burn
+    elseif ( present(msg) ) then
+      if ( msg(1:1) == '!' ) method = adjustl(msg(2:))
+    endif
+    select case (method)
+    case (' ', 'a', 'A')
+      rewind i
+    case ('b', 'B')
+      arg = 1.
+      if ( .not. present(opt) ) arg = arg + 1.
+      arg = acos(arg)
+      if ( arg > 0. ) print *, 'arg ', arg
+    case default
+      ! When you just want to land safely; e.g., a sips production run
+    end select
+    stop
+  end subroutine CRASH_BURN
+
+  subroutine IO_ERROR_ ( MESSAGE, IOSTAT, FILE )
+  ! Print MESSAGE and FILE, and then do something reasonable with IOSTAT.
+
+    character(len=*), intent(in) :: MESSAGE
+    integer, intent(in) :: IOSTAT
+    character(len=*), intent(in), optional :: FILE
+
+    integer :: L
+
+    write (*,*) message(:len_trim(message))
+    if ( present(file) ) then
+      l = len_trim(file)
+      write (*,*) file(:l)
+    end if
+    write (*,*) 'Error status code =', iostat
+    return
+  end subroutine IO_ERROR_
+
+  subroutine exit_with_status (istatus)
+    integer,intent(in)::istatus
+
+    call exit(istatus)
+  end subroutine exit_with_status
+
+  subroutine SHELL_COMMAND ( Command, Status, Error )
+  ! Submit a character variable to the system as a shell command.
+  ! Based on Absoft's own documentation :: SupportLibrary.pdf
+  ! Absoft Support Libraries (1991-1998)
+  ! (Based on past adversities, that's no guarantee)
+
+    character(len=*), intent(in) :: Command  ! The command
+    integer, intent(out), optional :: Status ! Its status, if the system
+                                        !  has such a concept, else zero
+    integer, intent(out), optional :: Error  ! Status of the routine to submit
+                                        ! the command, if the system has
+                                        ! such a concept, else zero
+
+    integer :: MyStatus
+
+    interface
+      integer function system ( CH )
+        character(len=*), intent(in) :: CH
+      end function system
+    end interface
+
+    print*,"system not done yet for IFC"
+    myStatus = 0
+    !myStatus = system(command)
+    if ( present(error) ) error = 0
+    if ( present(status) ) status = myStatus
+  end subroutine SHELL_COMMAND
+
+  ! ----------------------------------------------
+  ! The following are merely introduced to satisfy 
+  ! NAG call interfaces to f90_gc
+  ! Not yet functional
+  subroutine MLS_CONFIG_GC ( EXPAND, FREQUENCY, RETRIES, SILENT )
+  ! Configures various parameters affecting garbage collection
+   logical dont_EXPAND, SILENT_GC
+   integer full_frequency, max_retries
+    logical, optional, intent(in) :: expand    ! Autoexpand heap?
+    integer, optional, intent(in) :: frequency ! How many incremental colls. betw. fulls
+    integer, optional, intent(in) :: retries   ! How many attempts before giving up
+    logical, optional, intent(in) :: silent    ! Quash report on each collection?
+    if ( present(expand) ) dont_expand = .not. expand
+    if ( present(frequency) ) full_frequency = frequency
+    if ( present(retries) ) max_retries = retries
+    if ( present(silent) ) silent_gc = silent
+  end subroutine MLS_CONFIG_GC
+
+  subroutine MLS_DISABLE_AUTOGC ( Which )
+  ! Turns automatic garbage collection on/off
+    character(len=*), intent(in) :: Which  ! 'On' or 'Off'
+    logical dont_gc
+    if ( Which == 'On' .or. Which == 'ON' &
+      & .or. Which == 'on' ) then
+      DONT_GC = .false.
+    else
+      DONT_GC = .true.
+    endif
+  end subroutine MLS_DISABLE_AUTOGC
+
+  subroutine MLS_GC_NOW
+  ! Manually collects garbage when called
+  !    CALL GCOLLECT
+  end subroutine MLS_GC_NOW
+
+  integer function MLS_HOWMANY_GC()
+  ! Returns how many garbage collections have been performed
+    MLS_HOWMANY_GC = 0 ! NCOLLECTIONS()
+  end function MLS_HOWMANY_GC
+
+  ! ----------------------------------------------  not_used_here  -----
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: read_apriori.f90 is it here $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module MACHINE
+
+! $Log: machine.f90,v $
+! Revision 1.5  2009/06/23 18:25:44  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 1.4  2005/06/22 20:26:22  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 1.3  2005/03/04 21:41:16  pwagner
+! Expedient until system command available
+!
+! Revision 1.2  2004/08/19 00:13:12  pwagner
+! Added crash_burn to provoke crash with walkback
+!
+! Revision 1.1  2003/04/25 23:00:49  pwagner
+! FIest commit
+!
+@
+
+
+1.5
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d38 1
+a38 1
+       "$RCSfile: machine.f90,v $"
+d181 1
+a182 1
+!---------------------------- RCS Ident Info -------------------------------
+d184 2
+a185 3
+       "$Id: machine.f90,v 1.4 2005/06/22 20:26:22 pwagner Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d187 1
+d189 1
+d194 3
+@
+
+
+1.4
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d38 1
+a38 1
+       "$RCSfile: $"
+a95 1
+!    character(len=127) :: MSG           ! From the Lahey IOSTAT_MSG intrinsic
+a101 2
+!    call iostat_msg (iostat, msg)       ! Lahey intrinsic
+!    write (*,*) msg(:len_trim(msg))     ! Print the error message
+d184 1
+a184 1
+       "$Id: $"
+d193 3
+@
+
+
+1.3
+log
+@Expedient until system command available
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d36 1
+a36 5
+  private :: NOT_USED_HERE
+
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=256), private :: Id = &
+       "$Id: machine.f90,v 1.2 2004/08/19 00:13:12 pwagner Exp $"
+d38 2
+a39 1
+       "$RCSfile: machine.f90,v $"
+d185 5
+d196 3
+@
+
+
+1.2
+log
+@Added crash_burn to provoke crash with walkback
+@
+text
+@d32 1
+a32 1
+       "$Id: machine.f90,v 1.1 2003/04/25 23:00:49 pwagner Exp $"
+d131 3
+a133 1
+    myStatus = system(command)
+d186 3
+@
+
+
+1.1
+log
+@FIest commit
+@
+text
+@d26 4
+d32 1
+a32 1
+       "$Id: machine.f90,v 1.4 2002/02/05 00:38:39 pwagner Exp $"
+d39 44
+d176 5
+d184 3
+@
+

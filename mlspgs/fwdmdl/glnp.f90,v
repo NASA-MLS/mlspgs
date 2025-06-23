@@ -1,0 +1,415 @@
+head	2.8;
+access;
+symbols
+	v5-02-NRT-19:2.8
+	v6-00:2.8
+	v5-02-NRT-18:2.8
+	v5-02:2.8
+	v5-01-NRT-17:2.8
+	v5-01-NRT-16:2.8
+	v5-01-NRT-15:2.8
+	v5-01-NRT-14:2.8
+	neuralnetworks-1-0:2.8.0.14
+	cfm-single-freq-0-1:2.8.0.12
+	v5-01:2.8
+	v5-00:2.8
+	v4-23-TA133:2.8.0.10
+	mus-emls-1-70:2.8.0.8
+	rel-1-0-englocks-work:2.8.0.6
+	VUMLS1-00:2.8
+	VPL1-00:2.8
+	V4-22-NRT-08:2.8
+	VAM1-00:2.8
+	V4-21:2.8.0.4
+	V4-13:2.8
+	V4-12:2.8
+	V4-11:2.8
+	V4-10:2.8
+	V3-43:2.8
+	M4-00:2.8
+	V3-41:2.8
+	V3-40-PlusGM57:2.8.0.2
+	V2-24-NRT-04:2.6
+	V3-33:2.8
+	V2-24:2.6
+	V3-31:2.8
+	V3-30-NRT-05:2.8
+	cfm-01-00:2.8
+	V3-30:2.8
+	V3-20:2.8
+	V3-10:2.8
+	V2-23-NRT-02:2.6
+	V2-23:2.6
+	V2-22-NRT-01:2.6
+	V2-22:2.6
+	V2-21:2.6
+	V2-20:2.6
+	V2-11:2.6
+	V2-10:2.6
+	V2-00:2.4
+	V1-51:2.3
+	V1-50:2.3
+	V1-45:2.3
+	V1-44:2.3
+	V1-43:2.3
+	V1-32:2.3
+	V1-31:2.3
+	V1-30:2.2
+	V1-13:2.2
+	V1-12:2.2
+	V1-11:2.2
+	V1-10:2.2
+	newfwm-feb03:2.2.0.2
+	V1-04:2.0
+	V1-03:2.0
+	V1-02:2.0
+	JointForwardModel:2.0.0.2
+	V1-00:2.0
+	newfwm-sep01:1.1.0.2
+	V0-7:1.1;
+locks; strict;
+comment	@# @;
+
+
+2.8
+date	2009.07.09.23.53.40;	author vsnyder;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2009.06.23.18.26.11;	author pwagner;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2006.06.29.19.31.21;	author vsnyder;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2006.06.16.20.32.31;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2005.06.22.18.08.19;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2003.09.17.19.59.56;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2002.10.08.17.08.04;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2002.09.06.18.18.43;	author vsnyder;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2001.09.17.20.26.27;	author livesey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.06.21.13.07.09;	author zvi;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.8
+log
+@Replace MLSCommon with MLSKinds
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module GLNP
+
+! **************  Gauss-Legendre 3 point formula ***************
+  use MLSKinds, only: R8
+  implicit NONE
+  private
+  public :: GW, GW_All, GX, GX_All, Legendre, Lobatto, NG, NGNEW, NGP1
+  integer, parameter :: Ng = 3
+  integer, parameter :: Legendre = 0           ! 0 for Legendre, -2 for Lobatto
+  logical, parameter :: Lobatto = legendre < 0 ! Lobatto or Legendre?
+  integer, parameter :: NGNEW = ng + legendre  ! Number of new points
+  integer, parameter :: NGP1 = ngnew + 1       ! Used to allocate grids
+
+! These are the 3-point-Gauss-Legendre abscissae (X-axis) values in (-1,1):
+
+  real(r8), parameter :: Gx_all(Ng) = (/ & ! -sqrt(3.0/5.0), 0.0, sqrt(3.0/5.0)
+     & -7.74596669241483377036e-1_r8,  0.00000000000000000000e+0_r8, &
+     &  7.74596669241483377036e-1_r8 /)
+
+! These are the corresponding 3-point-Gauss-Legendre Weights values:
+
+  real(r8), parameter :: Gw_all(Ng) = (/ & ! 5.0/9.0, 8.0/9.0, 5.0/9.0
+     &  5.55555555555555555556e-1_r8,  8.88888888888888888889e-1_r8, &
+     &  5.55555555555555555556e-1_r8 /)
+
+! Just the abscissae and weights needed for updating the path integral:
+  real(r8), parameter :: Gx(ngnew) = gx_all(1-legendre/2:ng+legendre/2)
+  real(r8), parameter :: Gw(ngnew) = gw_all(1-legendre/2:ng+legendre/2)
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: glnp.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains 
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: glnp.f90,v 2.7 2009/06/23 18:26:11 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module GLNP
+
+! $Log: glnp.f90,v $
+! Revision 2.7  2009/06/23 18:26:11  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.6  2006/06/29 19:31:21  vsnyder
+! Inching toward Lobatto
+!
+! Revision 2.5  2006/06/16 20:32:31  vsnyder
+! Define NGP1 in glnp
+!
+! Revision 2.4  2005/06/22 18:08:19  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.3  2003/09/17 19:59:56  vsnyder
+! Correct a comment
+!
+! Revision 2.2  2002/10/08 17:08:04  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.1  2002/09/06 18:18:43  vsnyder
+! Cosmetic changes
+!
+! Revision 2.0  2001/09/17 20:26:27  livesey
+! New forward model
+!
+! Revision 1.1  2001/06/21 13:07:09  zvi
+! Speed enhancement MAJOR update
+!
+! Revision 1.1  2001/06/06 00:00:00  Z.Shippony
+! Initial conversion to Fortran 90
+@
+
+
+2.7
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d15 1
+a15 1
+  use MLSCommon, only: R8
+d43 1
+a43 1
+       "$RCSfile: $"
+d51 1
+a51 1
+       "$Id: read_apriori.f90 is it here $"
+d61 3
+@
+
+
+2.6
+log
+@Inching toward Lobatto
+@
+text
+@d43 1
+a43 1
+       "$RCSfile: glnp.f90,v $"
+d48 1
+a49 1
+!---------------------------- RCS Ident Info -------------------------------
+d51 2
+a52 3
+       "$Id: glnp.f90,v 2.5 2006/06/16 20:32:31 vsnyder Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d54 1
+d56 1
+d61 3
+@
+
+
+2.5
+log
+@Define NGP1 in glnp
+@
+text
+@d18 1
+a18 1
+  public :: GW, GX, Legendre, Lobatto, NG, NGP1
+d20 1
+a20 1
+  integer, parameter :: Legendre = +1     ! +1 for Legendre, -1 for Lobatto
+d22 6
+a27 5
+  integer, parameter :: NGP1 = ng + legendre
+!
+! These are the 3-point-Gauss-Legendre abscissae (X-axis) values in [-1,1]:
+!
+  real(r8), parameter :: Gx(Ng) = (/ & ! -sqrt(3.0/5.0), 0.0, sqrt(3.0/5.0)
+d30 1
+a30 1
+!
+d32 2
+a33 2
+!
+  real(r8), parameter :: Gw(Ng) = (/ & ! 5.0/9.0, 8.0/9.0, 5.0/9.0
+d36 5
+a40 1
+!
+d51 1
+a51 1
+       "$Id: glnp.f90,v 2.4 2005/06/22 18:08:19 pwagner Exp $"
+d60 3
+@
+
+
+2.4
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d18 1
+a18 1
+  public :: NG, GX, GW
+d20 3
+d38 1
+a38 1
+       "$RCSfile: $"
+d46 1
+a46 1
+       "$Id: $"
+d55 3
+@
+
+
+2.3
+log
+@Correct a comment
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d33 3
+a35 6
+!---------------------------- RCS Ident Info -------------------------------
+!
+  character (len=*), parameter :: IdParm = &
+    & "$id: glnp.f90,v 2.0 2001/09/17 20:26:27 livesey Exp $"
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName= "$RCSfile: glnp.f90,v $"
+d41 5
+d52 3
+@
+
+
+2.2
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d15 1
+a15 1
+  real(r8), parameter :: Gx(Ng) = (/ & ! sqrt(3.0/5.0), 0.0, sqrt(3.0/5.0)
+d42 3
+@
+
+
+2.1
+log
+@Cosmetic changes
+@
+text
+@d31 1
+d34 5
+d42 3
+@
+
+
+2.0
+log
+@New forward model
+@
+text
+@d5 1
+a5 1
+! module GL3P
+d7 1
+a7 1
+  use MLSCommon, only: I4, R8
+d11 1
+a11 1
+  Integer(i4), parameter :: Ng = 3
+d13 1
+a13 1
+! These are the 3-point-Gauss-Legendre abscissa (X-axis) values in [-1,1]:
+d15 3
+a17 3
+  Real(r8), parameter :: Gx(Ng) = (/ &
+     & -7.74596669241483377036d-1,  0.00000000000000000000d+0, &
+     &  7.74596669241483377036d-1 /)
+d21 3
+a23 3
+  Real(r8), parameter :: Gw(Ng) = (/ &
+     &  5.55555555555555555556d-1,  8.88888888888888888889d-1, &
+     &  5.55555555555555555556d-1 /)
+d27 4
+a30 3
+  CHARACTER (LEN=256) :: Id = &
+       "$Id: glnp.f90,v 1.1 2001/06/21 13:07:09 zvi Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile: glnp.f90,v $"
+d32 1
+a32 1
+! end module GL3P
+d34 1
+d36 3
+@
+
+
+1.1
+log
+@Speed enhancement MAJOR update
+@
+text
+@d28 1
+a28 1
+       "$Id: glnp.f90,v 1.1 2000/05/04 18:12:05 vsnyder Exp $"
+d34 3
+@
+

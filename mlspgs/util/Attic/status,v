@@ -1,0 +1,42 @@
+head	1.2;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2005.04.01.00.47.53;	author pwagner;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2005.04.01.00.07.40;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Committed in error
+@
+text
+@#!/bin/csh
+# status
+alias status 'cvs status \!* |& grep File: | grep -v Up-to'
+status $*
+exit 0
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@@
+

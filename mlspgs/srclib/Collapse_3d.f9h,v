@@ -1,0 +1,188 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.12
+	cfm-single-freq-0-1:1.1.0.10
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.8
+	mus-emls-1-70:1.1.0.6
+	rel-1-0-englocks-work:1.1.0.4
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.2
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	M4-00:1.1
+	V3-33:1.1
+	V3-31:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2011.01.20.01.12.12;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@First commit
+@
+text
+@! Copyright 2008, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id: collapse_3d.f9h,v 1.2 2010/08/13 21:58:48 pwagner Exp $
+
+    ! Dummy args
+    real(rk), dimension(:,:,:), intent(in)          :: array ! The larger array
+    real(rk), dimension(:,:), optional, intent(out) :: nums
+    logical , dimension(:,:), optional, intent(out) :: logs
+    real(rk), intent(in), optional     :: testvalue
+    character(len=*), intent(in), optional :: options
+    ! Local variables
+    integer :: i1, i2
+    character(len=16) :: myOptions
+    real(rk) :: myTestvalue
+    character(len=3) :: op
+    character(len=3) :: quantifier
+    logical :: sense              ! Sense of the innermost logical test
+    ! Executable
+    myOptions = 'num[+]all{+]' ! Defaults to summing, all even
+    if ( present(options) ) myOptions = lowercase(options)
+    myTestvalue = 0._rk
+    if ( present(testvalue) ) myTestValue = testvalue
+    ! 1st: collapse last index
+    if ( present(nums) ) then
+      op = '+'
+      if ( index( myOptions, 'num[') > 0 ) &
+        & call ExtractSubString( myOptions, op, 'num[', ']' )
+      select case (op)
+      case ('+')
+        do i2=1, size(array, 2)
+          do i1=1, size(array, 1)
+            nums(i1, i2) = sum(array(i1,i2, :))
+          enddo
+        enddo
+      case ('>')
+        do i2=1, size(array, 2)
+          do i1=1, size(array, 1)
+            nums(i1, i2) = maxval(array(i1,i2, :))
+          enddo
+        enddo
+      case ('<')
+        do i2=1, size(array, 2)
+          do i1=1, size(array, 1)
+            nums(i1, i2) = minval(array(i1,i2, :))
+          enddo
+        enddo
+      case default
+        do i2=1, size(array, 2)
+          do i1=1, size(array, 1)
+            nums(i1, i2) = 0.
+          enddo
+        enddo
+      end select
+    endif
+    ! 2nd: create logs
+    if ( present(logs) ) then
+      quantifier = 'all'
+      op = '+'
+      if ( index( myOptions, 'all[') > 0 ) then
+        quantifier = 'all'
+        call ExtractSubString( myOptions, op, 'all[', ']' )
+      elseif ( index( myOptions, 'any[') > 0 ) then
+        quantifier = 'any'
+        call ExtractSubString( myOptions, op, 'any[', ']' )
+      endif
+      sense = .true.
+      if ( op(1:1) == '!' ) then
+        sense = .false.
+        op = op(2:)
+      endif
+      select case (quantifier // op)
+      case ('all' // '+')
+        do i2=1, size(array, 2)
+          do i1=1, size(array, 1)
+            logs(i1, i2) = all( mod(array(i1, i2, :), 2._rk) == 0 )
+          enddo
+        enddo
+      case ('all' // '>')
+        do i2=1, size(array, 2)
+          do i1=1, size(array, 1)
+            logs(i1, i2) = all( array(i1, i2, :) > myTestValue )
+          enddo
+        enddo
+      case ('all' // '<')
+        do i2=1, size(array, 2)
+          do i1=1, size(array, 1)
+            logs(i1, i2) = all( array(i1, i2, :) < myTestValue )
+          enddo
+        enddo
+      case ('all' // '=')
+        do i2=1, size(array, 2)
+          do i1=1, size(array, 1)
+            logs(i1, i2) = all( array(i1, i2, :) == myTestValue )
+          enddo
+        enddo
+      case ('any' // '+')
+        do i2=1, size(array, 2)
+          do i1=1, size(array, 1)
+            logs(i1, i2) = any( mod(array(i1, i2, :), 2._rk) == 0 )
+          enddo
+        enddo
+      case ('any' // '>')
+        do i2=1, size(array, 2)
+          do i1=1, size(array, 1)
+            logs(i1, i2) = any( array(i1, i2, :) > myTestValue )
+          enddo
+        enddo
+      case ('any' // '<')
+        do i2=1, size(array, 2)
+          do i1=1, size(array, 1)
+            logs(i1, i2) = any( array(i1, i2, :) < myTestValue )
+          enddo
+        enddo
+      case ('any' // '=')
+        do i2=1, size(array, 2)
+          do i1=1, size(array, 1)
+            logs(i1, i2) = any( array(i1, i2, :) == myTestValue )
+          enddo
+        enddo
+      case default
+        do i2=1, size(array, 2)
+          do i1=1, size(array, 1)
+            logs(i1, i2) = .false.
+          enddo
+        enddo
+      end select
+      if ( .not. sense ) logs = .not. logs
+    endif
+! $Log: collapse_3d.f9h,v $
+@

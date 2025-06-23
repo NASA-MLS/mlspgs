@@ -1,0 +1,421 @@
+head	1.3;
+access;
+symbols
+	v5-02-NRT-19:1.3
+	v6-00:1.3
+	v5-02-NRT-18:1.3
+	v5-02:1.3
+	v5-01-NRT-17:1.3
+	v5-01-NRT-16:1.3
+	v5-01-NRT-15:1.3
+	v5-01-NRT-14:1.3
+	neuralnetworks-1-0:1.3.0.18
+	cfm-single-freq-0-1:1.3.0.16
+	v5-01:1.3
+	v5-00:1.3
+	v4-23-TA133:1.3.0.14
+	mus-emls-1-70:1.3.0.12
+	rel-1-0-englocks-work:1.3.0.10
+	VUMLS1-00:1.3
+	VPL1-00:1.3
+	V4-22-NRT-08:1.3
+	VAM1-00:1.3
+	V4-21:1.3.0.8
+	V4-13:1.3
+	V4-12:1.3
+	V4-11:1.3
+	V4-10:1.3
+	V3-43:1.3
+	M4-00:1.3
+	V3-41:1.3
+	V3-40-PlusGM57:1.3.0.6
+	V2-24-NRT-04:1.3
+	V3-33:1.3
+	V2-24:1.3
+	V3-31:1.3
+	V3-30-NRT-05:1.3
+	cfm-01-00:1.3
+	V3-30:1.3
+	V3-20:1.3
+	V3-10:1.3
+	V2-23-NRT-02:1.3
+	V2-23:1.3
+	V2-22-NRT-01:1.3
+	V2-22:1.3
+	V2-21:1.3
+	V2-20:1.3
+	V2-11:1.3
+	V2-10:1.3
+	V2-00:1.3
+	V1-51:1.3
+	V1-50:1.3
+	V1-45:1.3
+	V1-44:1.3
+	V1-43:1.3
+	V1-42:1.3
+	V1-41:1.3
+	V1-32:1.3
+	V1-40:1.3
+	V1-31:1.3
+	V1-30:1.3
+	V1-13:1.3
+	V1-12:1.3
+	V1-11:1.3
+	V1-10:1.3
+	newfwm-feb03:1.3.0.4
+	V1-04:1.3
+	V1-03:1.3
+	V1-02:1.3
+	V1-00:1.3
+	newfwm-sep01:1.3.0.2
+	V0-7:1.3
+	V0-5-Level2:1.3
+	V0-5-SIPS:1.3
+	V0_1:1.3;
+locks; strict;
+comment	@# @;
+
+
+1.3
+date	99.12.22.12.40.47;	author pumphrey;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	99.12.06.16.20.41;	author pumphrey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	99.12.06.14.33.39;	author pumphrey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@Tidied up a few bugs
+@
+text
+@#!/bin/sh
+#!/usr/local/GNU/bin/bash 
+
+
+# swap above two lines if bash is in /usr/local/GNU/bin/bash 
+# Copyright (c) The University of Edinburgh
+# This is a utility to generate make files 
+# for Fortran 90. A basic makefile entry for bork.f90 would be
+# bork.o:bork.f90
+# <-tab->$(F90) -c bork.f90
+#
+# however if bork.f90 contains the line "use gunge" then 
+# (A)
+# the entry has to be 
+# bork.o:bork.f90 garple.o <-- Forces bork to be recompiled if a module it 
+# <-tab->$(F90) -c bork.f90                               uses is changed
+# where garple.f90 is the program containing the line "module gunge
+# (B)  
+# The same type of entry has to be done for garple.f90
+#
+# We also need to generate an entry for the link step. If the main program
+# was in baz.f90 then this should be 
+# baz:baz.o bork.o.........
+# <-tab->$(F90) -o baz baz.o bork.o .....
+# The list of object files to be linked should have foo.o in it once 
+# and only once for each foo.f90 that was compiled 
+
+# Test whether some environment variables are set. If so, use them as the 
+# compile command and source file tag
+if [ "${FMKMF_F90}" ] 
+then
+#    echo \# FMKMF_F90 set to ${FMKMF_F90}
+    F90COMMAND=${FMKMF_F90}
+else
+#    echo \# FMKMF_F90 not set, using f90
+    F90COMMAND=f90
+fi
+
+# Probs with different grep versions. We need a grep that recognises 
+# the -q flag 
+# set FMKMF_GREP=/usr/xpg4/bin/grep # Suns
+# on Linux, the ordinary grep works, so this doesn't matter.
+
+if [ "${FMKMF_GREP}" ] 
+then
+#    echo \# FMKMF_GREP set to ${FMKMF_GREP}
+    GREP=${FMKMF_GREP}
+else
+#    echo \# FMKMF_GREP not set, using f90
+    GREP=grep
+fi
+
+if [ ${FMKMF_SFTAG} ] 
+then
+#    echo \# FMKMF_SFTAG set to ${FMKMF_SFTAG}
+    SFTAG=${FMKMF_SFTAG}
+else
+#    echo \# FMKMF_SFTAG not set, using .f90
+    SFTAG=f90
+fi
+
+if [ ${FMKMF_SPATH} ] 
+then
+#    echo \# FMKMF_SPATH set to ${FMKMF_SPATH}
+    SPATH=${FMKMF_SPATH}
+else
+#    echo \# FMKMF_SPATH not set, using .
+    SPATH=.
+fi
+
+# We don't need to test if FMKMF_LINKOPTS is set as fmkmf works if this is 
+# blank
+LINKOPTS=${FMKMF_LINKOPTS}
+
+# initially assume we are the instance started by the user. Change
+# this if the -sub flag is used
+
+issub=xx
+
+# assume forward ls. 
+revlist=
+
+while [ $# -gt 1 ]
+do
+#echo \# Processing arg $1 with Dolhash $#
+    if [ $1 = -p ]
+    then
+	shift
+	SPATH=$1
+    elif [ $1 = -f90 ]
+    then
+	shift
+	F90COMMAND=$1
+    elif [ $1 = -l ]
+    then
+	shift
+	LINKOPTS=$1
+    elif [ $1 = -tag ]
+    then
+	shift
+	SFTAG=$1
+    elif [ $1 = -sub ]
+    then
+	issub=sub
+    elif [ $1 = -r ]
+    then
+	revlist=-r # used in ls commands.
+	echo \# Reversing lists.
+    else
+	echo Don\'t Understand arg $1
+    fi
+    shift
+    
+done
+
+echo \# revlist is ${revlist}
+
+sourcefile=$1
+
+# Remove colons from search path
+SPATHLIST=`echo ${SPATH} | sed "s/:/ /g" `
+echo \# search path $SPATHLIST
+
+# echo \# issub is ${issub}
+
+# get all lines with use as the first word. Make a list of the 
+# second word on those lines
+modulelist=`${GREP} -i  "^ *use " $1 | awk '{printf(" %s ",$2) }'  `
+
+echo \# file ${sourcefile} uses these modules: ${modulelist} 
+
+# Now we need to find the source file that each of those modules is in
+
+modfilelist=
+objfilelist=
+for module in ${modulelist} 
+do
+  #echo \# searching for module ${module}
+  found=false
+  for directory in ${SPATHLIST}
+  do
+    for modfile in `ls ${revlist} ${directory}/*.${SFTAG}` 
+    do
+      #echo \# checking modfile ${modfile}
+      if ${GREP} -i -q -w "^ *module *${module}" ${modfile} 
+      then
+         echo \# module ${module} is in file ${modfile}
+         if echo $modfilelist | ${GREP}  -q $modfile
+         then
+          echo \# ${modfile} Already in list
+         else
+            echo \# Adding ${modfile} to list
+ 	    modfilelist="${modfilelist} ${modfile}"
+#	    echo \# modfile list is now ${modfilelist}
+         fi
+	 found=true
+	 break 2 
+      fi
+    done
+  done
+  if [ ${found} = false ] 
+  then
+    echo \# WARNING: source file containing module ${module} not found
+  fi
+done
+if [ ${issub} != sub ] 
+then
+   rm -f fmkmf_tmp_makefile
+   echo \# Here are the compile steps > fmkmf_tmp_makefile
+fi
+# Now we can make a makefile entry for the program on the command line
+objfile=`echo ${sourcefile} | sed -e"s/\.${SFTAG}/\.o/" -e "s|.*/||" ` 
+#echo \# objfile is $objfile
+objlist=
+#echo \# modfilelist is ${modfilelist}
+for i in ${modfilelist}
+do
+  foo=`echo ${i} | sed -e"s/\.${SFTAG}/.o/g" -e"s|.*/||" `
+#  echo \# foo is ${foo}
+  objlist="${objlist} ${foo}"
+done
+#echo \# objlist is ${objlist}
+echo >> fmkmf_tmp_makefile
+echo ${objfile}:${sourcefile} ${objlist} >> fmkmf_tmp_makefile
+echo -e "\t \$(F90) -c  ${sourcefile}" | sed s"/-e //" >> fmkmf_tmp_makefile
+
+# Now we see if any of the dependent modules are not present on the 
+# global list. If they are not, we add them, then we call this script
+# recursively to build them a makefile entry
+
+# Here is the global list
+if [ ${issub} = sub ]  
+then
+    globalmodfilelist=`cat fmkmf_tmp_list`
+#    echo \# non-root node got ${globalmodfilelist} from file
+else
+#    echo \# root node blanking global list
+    globalmodfilelist=${sourcefile}
+    echo globalmodfilelist  > fmkmf_tmp_list
+fi
+#echo \# Global list is now ${globalmodfilelist}
+
+for modfile in ${modfilelist}
+do
+    if echo ${globalmodfilelist} | ${GREP} -q $modfile
+    then
+        echo \# ${modfile} Already in global list
+        
+    else
+#        echo \# Adding ${modfile} to globallist
+ 	globalmodfilelist="${globalmodfilelist} ${modfile}"
+#	echo \# Sending ${globalmodfilelist} to file
+	echo ${globalmodfilelist} > fmkmf_tmp_list
+	fmkmf -sub -p ${SPATH} ${modfile}
+	globalmodfilelist=`cat fmkmf_tmp_list`
+#	echo \# Got ${globalmodfilelist} from file
+    fi
+done
+
+# Now make makefile entry for Link step if we are not instance of this 
+# script called by itself
+
+if  [ ${issub} != sub ]
+then
+    # link step and definition of F90 must go at top of makefile
+    echo F90=${F90COMMAND}
+    execname=`echo ${sourcefile} | sed s/\.${SFTAG}// `
+    linklist=
+    for i in ${globalmodfilelist}
+    do
+	foo=`echo ${i} | sed -e"s/\.${SFTAG}/.o/g" -e"s|.*/||" `
+	linklist="${linklist} ${foo}"
+    done
+    echo
+    echo ${execname}:${linklist}
+    echo -e "\t \$(F90) -o ${execname} ${linklist} ${LINKOPTS}" | sed s"/-e //"
+    # Next come the compile steps we put in a temporary file
+    cat fmkmf_tmp_makefile
+    rm -f fmkmf_tmp_makefile
+    
+#   Add entry for make clean
+    echo
+    echo \# This entry allows you to type \" make clean \" to get rid of
+    echo \# all object and module files 
+    echo clean:
+    echo -e \
+	    "\t rm -f -r f_{files,modd}* *.o *.mod *.M *.d V*.inc *.vo " \
+	"V*.f *.dbg album F.err" |   sed s"/-e //" 
+
+    rm fmkmf_tmp_list
+#else
+#    echo \# Returning from non-root node of tree
+fi
+@
+
+
+1.2
+log
+@fixed a silly bug connected with the GREP command
+@
+text
+@a0 1
+#!/usr/local/GNU/bin/bash
+d2 4
+d138 1
+a138 1
+  echo \# searching for module ${module}
+d144 1
+a144 1
+      echo \# checking modfile ${modfile}
+a180 1
+  objlist="${objlist} `echo ${i} | sed -e"s/\.${SFTAG}/.o/g" -e"s|.*/||" ` "
+@
+
+
+1.1
+log
+@The FMKMF shell script added to the CVS tree.
+@
+text
+@d1 1
+a2 1
+#!/usr/local/GNU/bin/bash
+d43 2
+a44 2
+#    echo \# FMKMF_F90 set to ${FMKMF_F90}
+    GREP=${FMKMF_F90}
+d46 1
+a46 1
+#    echo \# FMKMF_F90 not set, using f90
+d77 3
+d102 4
+d113 1
+d135 1
+d139 1
+a139 1
+    for modfile in `ls ${directory}/*.${SFTAG}` 
+d141 1
+d151 1
+a151 1
+	    #echo \# modfile list is now ${modfilelist}
+d178 1
+a178 1
+#  objlist="${objlist} `echo ${i} | sed -e"s/\.${SFTAG}/.o/g" -e"s|.*/||" ` "
+d197 1
+a197 1
+#    echo globalmodfilelist  > fmkmf_tmp_list
+d208 1
+a208 1
+        #echo \# Adding ${modfile} to globallist
+d210 1
+a210 1
+	#echo \# Sending ${globalmodfilelist} to file
+d214 1
+a214 1
+	#echo \# Got ${globalmodfilelist} from file
+@
+

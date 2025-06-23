@@ -1,0 +1,1482 @@
+head	1.11;
+access;
+symbols
+	v5-02-NRT-19:1.11
+	v6-00:1.11
+	v5-02-NRT-18:1.11
+	v5-02:1.11
+	v5-01-NRT-17:1.11
+	v5-01-NRT-16:1.11
+	v5-01-NRT-15:1.11
+	v5-01-NRT-14:1.11
+	neuralnetworks-1-0:1.11.0.12
+	cfm-single-freq-0-1:1.11.0.10
+	v5-01:1.11
+	v5-00:1.11
+	v4-23-TA133:1.11.0.8
+	mus-emls-1-70:1.11.0.6
+	rel-1-0-englocks-work:1.11.0.4
+	VUMLS1-00:1.11
+	VPL1-00:1.11
+	V4-22-NRT-08:1.11
+	VAM1-00:1.11
+	V4-21:1.11.0.2
+	V4-13:1.11
+	V4-12:1.11
+	V4-11:1.11
+	V4-10:1.11
+	V3-43:1.9
+	M4-00:1.10
+	V3-41:1.9
+	V3-40-PlusGM57:1.9.0.2
+	V2-24-NRT-04:1.8
+	V3-33:1.10
+	V2-24:1.8
+	V3-31:1.10
+	V3-30-NRT-05:1.10
+	cfm-01-00:1.10
+	V3-30:1.9
+	V3-20:1.9
+	V3-10:1.8
+	V2-23-NRT-02:1.8
+	V2-23:1.8
+	V2-22-NRT-01:1.8
+	V2-22:1.8
+	V2-21:1.7
+	V2-20:1.7
+	V2-11:1.7
+	V2-10:1.7
+	V2-00:1.7
+	V1-51:1.4
+	V1-50:1.4
+	V1-45:1.4
+	V1-44:1.4
+	V1-43:1.4
+	V1-42:1.4
+	V1-41:1.4
+	V1-32:1.4
+	V1-40:1.4
+	V1-31:1.4
+	V1-30:1.4
+	V1-13:1.4
+	V1-12:1.4
+	V1-11:1.4
+	V1-10:1.4
+	newfwm-feb03:1.4.0.2
+	V1-04:1.4
+	V1-03:1.4
+	V1-02:1.4
+	V1-00:1.4
+	newfwm-sep01:1.2.0.2
+	V0-7:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.11
+date	2013.07.02.20.19.46;	author pwagner;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2010.06.08.23.25.40;	author pwagner;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2009.09.22.17.44.15;	author pwagner;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2007.05.29.17.41.20;	author pwagner;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2005.06.23.22.20.46;	author pwagner;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2005.04.27.23.31.04;	author pwagner;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2005.04.21.20.42.33;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.11.09.21.50.34;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2001.11.07.00.20.40;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.08.16.18.14.35;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.08.13.16.42.10;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.11
+log
+@Added warnings about tricky -wxcl option to help page
+@
+text
+@#!/bin/sh
+#reecho.sh
+
+# --------------- reecho.sh help
+# (Re)echoes the command line arguments, minus any that
+# (depending on option(s) selected)
+# are not actual files (with special properties); or
+# are not directories; or
+# contain the glob character '*'
+# Useful 
+# (1) to weed out formulas like *.c that
+# have no matching files and so stay just '*.c'
+# rather than expanding into a list of matching files
+# (2) to construct link or include lines inside Makefiles
+#
+# Optionally pre- or suffixes each with a specified pre- or suffix; e.g.
+# Given 'reecho -prefix=-I *-dir'
+# might echo '-I a-dir -I b-dir -I c-dir ..'
+#
+# Usage (1):
+# reecho.sh [opt] ..  [arg1 arg2 ..]
+#
+#    O p t i o n s
+# -[n]f         [don't] reecho args that are ordinary files and exist
+#                (default is -f)
+# -[n]d         [don't] reecho args that are directories and exist
+# -[n]r         [don't] reecho args that exist and you have read permission
+# -[n]w         [don't] reecho args that exist and you have write permission
+# -[n]x         [don't] reecho args that exist and you have execute permission
+# -[n]glob      [don't] reecho any arg containing the glob character '*'
+# -[n]grep text reecho any arg that is a file [not] containing text
+# -dir "dir"    cd to "dir" before reechoing
+#               may be repeated; e.g. -dir dir1 -dir dir2 searches both
+# -dirn "dir"   cd to "dir" then just reecho all files/directories there
+#               same as (cd dir; ls; back)
+# -escape       remove back slashes '\' before echoing
+#                (which may be there to escape glob character '*' )
+# -[n]first     discard/retain only the first of globbed matches 
+#                (used with -escape option)
+# -[n]last      discard/retain only the last of globbed matches 
+#                (used with -escape option)
+# -reverse      reverse the order of globbed matches (used with -escape option)
+# -lib          reecho each arg "x" if the file "libx.a" exists or ...
+# -libart       reecho objects "ar -t" returns for
+#               each arg "x" if the file "libx.a" exists or ...
+# -unique       remove duplicate matches before output
+# -h[elp]       print brief help message; exit
+# -path "path"  print "path" in front of each arg; e.g. "path/arg1 path/arg2 .."
+# -prefix=xxx   reecho xxx in front of each arg (separated by a space)
+#               e.g. '-I a-dir -I b-dir -I c-dir ..'
+# -prefixn=xxx  reecho xxx in front of each arg (without a separating space)
+#               e.g. '-Ia-dir -Ib-dir -Ic-dir ..'
+# -suffix=xxx   reecho xxx after each arg (separated by a space)
+#               e.g. 'a plop b plop c plop ...'
+# -suffixn=xxx  reecho xxx after each arg (without a separating space)
+#               e.g. 'Xshabam Yshabam Zshabam ..'
+# -excl "bad"   exclude any arg named "bad" (before any pre- or suffixes)
+#               may be repeated; e.g. -excl bad1 -excl bad2 excludes both
+#               (Warning--this option features a trick; see below)
+# arg1          an arg to be reechoed
+#
+# Note:
+# (1) The option(s) marked with "-", if present,
+#     must precede the args on the command line
+# (2) The options [n](f d r w x glob) are mutually exclusive (for the present)
+#      i.e. don't try 'reecho.sh -d -w *' to get all directories you have 
+#      write permission to (though that is a logical improvement to make)
+# (3) -dirn must stand alone--it cannot be used with any other options
+# (4) A surprising "feature" of the -excl option: if arg1 can't be found
+#     reecho.sh returns any "bad" files that can be found
+#     Our Makefiles actually rely on this trick
+# 
+# Usage (2):
+# reecho.sh --set [opts] [--set [opts] ..] - arg1 [arg2 ..]
+# --set         separartor between sets of opts
+# opts          whatever options are to be passed to reecho
+# arg1          an arg to be reechoed for each set of opts
+# Note:
+# (1) The --set
+#     must precede each option set
+# (2) The bare "-" must precede the args
+#      (to indicate the option list has ended)
+
+# Result:
+# A filtered list of args, e.g. arg3 arg6 .. , that satisfy
+# the conditions set up by the options
+# Example:
+# Say you have a directory containing the following files
+#    a.b c.d/ e.d/ f.7*   
+# (where /~a directory, *~ an executable; none of which are parts of the names)
+# then
+#    `reecho *.b *.c`       returns "a.b"
+#    `reecho *.d`           returns ""
+#    `reecho -nf *.d`       returns "c.d e.d"
+#    `reecho -x *`          returns "f.7"
+#    `reecho -glob *.7`     returns "" 
+#    `reecho -glob *.8`     returns "*.8" 
+# 
+# More practical examples:
+#  67%reecho.sh -lib -dir /usr/lib -prefixn=-l dfftw drfftw
+#     -ldfftw -ldrfftw
+#  69%util/reecho.sh -lib -dir /usr/lib -prefixn=lib -suffixn=.a dfftw drfftw
+#     libdfftw.a libdrfftw.a
+#
+#   Example of Usage (2)
+# Given 'reecho --set -d -prefixn=-I --set -d prefix=-p - *-dir'
+# might echo '-Ia-dir -Ib-dir -Ic-dir -p a-dir -p b-dir -p c-dir'
+
+# --------------- End reecho.sh help
+# Copyright 2005, by the California Institute of Technology. ALL
+# RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+# commercial use must be negotiated with the Office of Technology Transfer
+# at the California Institute of Technology.
+
+# This software may be subject to U.S. export control laws. By accepting this
+# software, the user agrees to comply with all applicable U.S. export laws and
+# regulations. User has the responsibility to obtain export licenses, or other
+# export authority as may be required before exporting such information to
+# foreign countries or providing access to foreign persons.
+
+# "$Id: reecho.sh,v 1.10 2010/06/08 23:25:40 pwagner Exp $"
+
+#
+
+#------------------------------- skip_firstarg ------------
+#
+# Function to skip first arg
+# usage: skip_firstarg arg1 [arg2] ..
+
+skip_firstarg()
+{
+   if [ "$#" -gt 1 ]
+   then
+     shift
+     echo $@@
+   fi
+}
+
+#------------------------------- skip_lastarg ------------
+#
+# Function to skip last arg
+# usage: skip_lastarg arg1 [arg2] ..
+
+skip_lastarg()
+{
+   if [ "$#" -gt 1 ]
+   then
+     revargs=`reverse_array $@@`
+     revargs=`skip_firstarg $revargs`
+     revargs=`reverse_array $revargs`
+     echo $revargs
+   fi
+}
+
+#------------------------------- snip_backslash ------------
+#
+# Function to snip "\" char from arg
+# usage: snip_backslash arg1 [arg2] ..
+
+snip_backslash()
+{
+   echo $1 | sed 's/\\//g'
+}
+
+#------------------------------- extant_files ------------
+#
+# Function to return only those files among the args
+# that satisfy the_opt
+# Useful when passed something like *.f which may 
+# (1) expand to list of files, returned as extant_files_result, or
+# (2) stay *.f, in which case a blank is returned as extant_files_result 
+#     (unless you have perversely named a file '*.f')
+# usage: extant_files arg1 [arg2] ..
+
+extant_files()
+{
+   extant_files_result=
+   # Trivial case ($# = 0)
+   if [ "$1" != "" ]
+   then
+      for arg
+      do
+
+         if [ "$as_lib" = "yes" ]
+         then
+            files="lib${arg}.a"
+         else
+            files=$arg
+         fi
+         # Do we have an escaped "*" to glob? If so, snip the "\"
+         if [ "$escape" = "yes" ]
+         then
+           # eval snip_backslash $files
+           files=`eval snip_backslash $files`
+           if [ "$reverse" = "yes" ]
+           then
+             files=`reverse_array $files`
+           fi
+           if [ "$first" = "yes" ]
+           then
+             files=`echo $files | awk '{print $1}'`
+           elif [ "$first" = "no" ]
+           then
+             files=`skip_firstarg $files`
+           elif [ "$last" = "yes" ]
+           then
+             for file in $files
+             do
+               # bash wants something to be done whether we need it or not
+               arg_not_bad="yes"
+             done
+             files=$file
+           elif [ "$last" = "no" ]
+           then
+             files=`skip_lastarg $files`
+           fi
+         fi
+
+         for file in $files
+         do
+
+           arg_not_bad="yes"
+           for badfile in $bad_args
+           do
+              if [ "$file" = "$badfile" ]
+              then
+                 arg_not_bad="no"
+              fi
+           done
+
+           if [ "$arg_not_bad" != "yes" ]
+           then
+  #           arg a bad one--automatically excluded--no operation needed
+              file=$file
+           elif [ $the_opt = "-glob" ]
+           then
+              check=`echo $file | grep -i '\*'`
+              if [ $the_sense = "yes" -a "$check" != "" ]
+              then
+                    extant_files_result="$extant_files_result $file"
+              elif [ $the_sense = "no" -a "$check" = "" ]
+              then
+                    extant_files_result="$extant_files_result $file"
+              fi
+           elif [ $the_opt = "-grep" ]
+           then
+              # This should return non-blank if the_text is in the file
+              # (but only if the file exists and we have read permission)
+              if [ ! -r "$file" ]
+              then
+                check=""
+              else
+                check=`grep -l "$the_text" "$file"`
+                if [ $the_sense = "yes" -a "$check" != "" ]
+                then
+                    extant_files_result="$extant_files_result $file"
+                elif [ $the_sense = "no" -a "$check" = "" ]
+                then
+                    extant_files_result="$extant_files_result $file"
+                fi
+              fi
+           elif [ "$ar_list" = "yes" ]
+           then
+              if [ $the_opt "$file" ]
+              then
+                    extant_files_result="$extant_files_result `ar t $file`"
+              fi
+           elif [ $the_sense = "yes" ]
+           then
+              if [ $the_opt "$file" ]
+              then
+                    extant_files_result="$extant_files_result $file"
+              fi
+           else
+              if [ ! $the_opt "$file" ]
+              then
+                    extant_files_result="$extant_files_result $file"
+              fi
+           fi
+        done
+      done
+   fi
+   # echo $extant_files_result
+}
+
+#---------------------------- reverse_array
+#
+# Function to reverse the elements of a space-separated array
+# eg given
+# reverse_array 'e a b c d'
+# writes 'd c b a e' to standard output
+
+reverse_array()
+{
+
+   # Do we have enough args?
+      if [ $# -lt 1 ]
+      then
+         echo "Usage: reverse_array 'a b c ..'"
+         exit 1
+      fi
+      
+      perl -e 'print join(" ", reverse(@@ARGV))' $@@
+}
+      
+#---------------------------- sort_array
+#
+# Function to sort the elements of a space-separated array
+# eg given
+# sort_array 'e a b c d'
+# writes 'a b c d e' to standard output
+# as a side-effect, it also removes duplicate elements
+# so 'e e f a b a' becomes 'a b e f'
+
+sort_array()
+{
+
+   # Do we have enough args?
+      if [ $# -lt 1 ]
+      then
+         echo "Usage: sort_array 'a b c ..'"
+         exit 1
+      fi
+      
+      sorting=`echo "$1" | sed 's/ /\n/g' | sort | uniq`
+      echo $sorting
+}
+      
+reecho_args()
+{
+  #------------------------------- reecho_args ------------
+  me="$0"
+  my_name=reecho.sh
+  DEEBUG=off
+  if [ $DEEBUG = "on" ]
+  then
+     echo "Called me as $0"
+     echo "with args $@@"
+  fi
+
+  new_dir=""
+  new_list="no"
+  ar_list="no"
+  as_lib="no"
+  the_opt="-f"
+  the_sense="yes"
+  the_text=""
+  more_opts="yes"
+  the_prefix=""
+  the_suffix=""
+  separate_prefix="yes"
+  separate_suffix="yes"
+  bad_args=""
+  dirs=""
+  first=""
+  last=""
+  reverse="no"
+  escape="no"
+  unique="no"
+  while [ "$more_opts" = "yes" ] ; do
+
+      case "$1" in
+
+      -f )
+         the_opt="-f"
+         the_sense="yes"
+         shift
+         ;;
+      -nf )
+         the_opt="-f"
+         the_sense="no"
+         shift
+         ;;
+      -d )
+         the_opt="-d"
+         the_sense="yes"
+         shift
+         ;;
+      -nd )
+         the_opt="-d"
+         the_sense="no"
+         shift
+         ;;
+      -r )
+         the_opt="-r"
+         the_sense="yes"
+         shift
+         ;;
+      -nr )
+         the_opt="-r"
+         the_sense="no"
+         shift
+         ;;
+      -w )
+         the_opt="-w"
+         the_sense="yes"
+         shift
+         ;;
+      -nw )
+         the_opt="-w"
+         the_sense="no"
+         shift
+         ;;
+      -x )
+         the_opt="-x"
+         the_sense="yes"
+         shift
+         ;;
+      -nx )
+         the_opt="-x"
+         the_sense="no"
+         shift
+         ;;
+      -glob )
+         the_opt="-glob"
+         the_sense="yes"
+         shift
+         ;;
+      -nglob )
+         the_opt="-glob"
+         the_sense="no"
+         shift
+         ;;
+      -grep )
+         shift
+         the_text="$1"
+         the_opt="-grep"
+         the_sense="yes"
+         shift
+         ;;
+      -ngrep )
+         shift
+         the_text="$1"
+         the_opt="-grep"
+         the_sense="no"
+         shift
+         ;;
+      -path )
+         shift
+         the_prefix="$1/"
+         separate_prefix="no"
+         shift
+         ;;
+      -prefix=* )
+         the_prefix=`echo $1 | sed 's/-prefix=//'`
+         shift
+         ;;
+      -prefixn=* )
+         the_prefix=`echo $1 | sed 's/-prefixn=//'`
+         separate_prefix="no"
+         shift
+         ;;
+      -suffix=* )
+         the_suffix=`echo $1 | sed 's/-suffix=//'`
+         shift
+         ;;
+      -suffixn=* )
+         the_suffix=`echo $1 | sed 's/-suffixn=//'`
+         separate_suffix="no"
+         shift
+         ;;
+      -h | -help )
+         sed -n '/'$my_name' help/,/End '$my_name' help/ p' $me \
+             | sed -n 's/^.//p' | sed '1 d; $ d'
+         exit
+         ;;
+      -dir )
+         shift
+         new_dir="$1"
+         dirs="$1 $dirs"
+         shift
+         ;;
+      -dirn )
+         shift
+         new_dir="$1"
+         new_list="yes"
+         shift
+         ;;
+      -lib )
+         as_lib="yes"
+         shift
+         ;;
+      -libart )
+         as_lib="yes"
+         ar_list="yes"
+         shift
+         ;;
+      -excl )
+         shift
+         bad_args="$1 $bad_args"
+         shift
+         ;;
+      -first )
+         first="yes"
+         shift
+         ;;
+      -nfirst )
+         first="no"
+         shift
+         ;;
+      -last )
+         last="yes"
+         shift
+         ;;
+      -nlast )
+         last="no"
+         shift
+         ;;
+      -reverse )
+         reverse="yes"
+         shift
+         ;;
+      -escape )
+         escape="yes"
+         shift
+         ;;
+      -uniq* )
+         unique="yes"
+         shift
+         ;;
+      * )
+         more_opts="no"
+         ;;
+      esac
+  done
+
+  if [ $DEEBUG = "on" ]
+  then
+     echo "the_opt $the_opt"
+     echo "the_sense $the_sense"
+     echo "the_prefix $the_prefix"
+     echo "separate_prefix? $separate_prefix"
+     echo "the_suffix $the_suffix"
+     echo "separate_suffix? $separate_suffix"
+     echo "as lib? $as_lib"
+     echo "ar -t lib? $ar_list"
+     echo "new_dir $new_dir"
+     echo "remaining args $@@"
+  fi
+
+  if [ "$new_dir" = "" ]
+  then
+     extant_files "$@@"
+  elif [ "$new_list" = "yes" ]
+  then
+     # This is that simple -dirn option
+     old_dir=`pwd`
+     cd "$new_dir"
+     my_files=`echo *`
+     set `echo $my_files`
+     extant_files "$@@"
+     cd "$old_dir"
+  else
+     if [ $DEEBUG = "on" ]
+     then
+       echo "remaining args $@@:" $@@
+     fi
+     # Now dirs may contain more than one directory to search
+     results=""
+     old_dir=`pwd`
+     for new_dir in $dirs
+     do
+       cd "$new_dir"
+       #  Since we changed directories, args which failed to glob
+       #  in old_dir may glob successfully in new_dir
+       #   extant_files "$@@"
+       extant_files $@@
+       results="$extant_files_result $results"
+       cd "$old_dir"
+     done
+     extant_files_result="$results"
+  fi
+
+  if [ "$separate_suffix" = "yes" ]   
+  then                                
+     the_suffix=" $the_suffix"        
+  fi                                  
+  if [ "$separate_prefix" = "yes" ]   
+  then                                
+     the_prefix="$the_prefix "        
+  fi                                  
+
+  if [ $DEEBUG = "on" -a "$unique" = "yes" ]          
+  then                           
+     echo "Before sorting and removing duplicates: $extant_files_result"   
+  fi                             
+
+  if [ "$unique" = "yes" ]          
+  then                           
+     extant_files_result=`sort_array "$extant_files_result"   `
+  fi                             
+
+  if [ $DEEBUG = "on" ]          
+  then                           
+     echo "Before pre-suffixing: $extant_files_result"   
+  fi                             
+
+  if [ "$the_prefix" = "" -a "$the_suffix" = "" ]
+  then
+     # No prefix--just echo filtered args
+     echo $extant_files_result
+  elif [ "$the_suffix" = "" ]
+  then
+     # prefix each filtered arg
+     prefixed_result=
+     for file in $extant_files_result
+     do
+        prefixed_result="$prefixed_result ${the_prefix}$file"
+     done
+     echo $prefixed_result
+  elif [ "$the_prefix" = "" ]
+  then
+     # suffix each filtered arg
+     prefixed_result=
+     for file in $extant_files_result
+     do
+        prefixed_result="$prefixed_result $file${the_suffix}"
+     done
+     echo $prefixed_result
+  else
+     # prefix and suffix each filtered arg
+     prefixed_result=
+     for file in $extant_files_result
+     do
+        prefixed_result="$prefixed_result ${the_prefix}$file${the_suffix}"
+     done
+     echo $prefixed_result
+fi
+}
+#------------------------------- Main Program ------------
+
+#****************************************************************
+#                                                               *
+#                  * * * Main Program  * * *                    *
+#                                                               *
+#                                                               *
+#	The entry point where control is given to the script         *
+#****************************************************************
+#
+DEEBUG="off"
+me="$0"
+I=reecho
+my_name=reecho.sh
+REECHO=reecho_args
+args=`echo $@@ | sed 's/^.* - //'`
+if [ $DEEBUG = "on" ]
+then
+   echo "Called me as $0"
+   echo "with full options plus args $@@"
+   echo "REECHO is $REECHO"
+   echo "args is $args"
+fi
+
+# Usage (1) or (2)?
+usage_test=`echo $@@ | grep -e --set`
+if [ "$usage_test" = "" ]
+then
+  $REECHO $@@
+  exit
+fi
+
+if [ "$args" = "" ]
+then
+  echo "Usage: there were no args"
+  exit 1
+fi
+
+more_opts="yes"
+first_set="yes"
+result=""
+while [ "$more_opts" = "yes" ] ; do
+    # echo "arg: $1"
+    case "$1" in
+
+    -h | -help )
+       sed -n '/'$my_name' help/,/End '$my_name' help/ p' $me \
+           | sed -n 's/^.//p' | sed '1 d; $ d'
+       exit
+       ;;
+    --set )
+       if [ "$first_set" != "yes" ]
+       then
+         result=`$REECHO $the_opts $args`
+       fi
+       first_set="no"
+       #echo "Beginning option set"
+       the_opts=""
+       shift
+       ;;
+    - )
+       # echo $REECHO $the_opts $args
+       # $REECHO $the_opts $args
+       more_opts="no"
+       result="$result `$REECHO $the_opts $args`"
+       shift
+       ;;
+    -* )
+       the_opts="$the_opts $1"
+       shift
+       ;;
+    * )
+       more_opts="no"
+       ;;
+    esac
+done
+#echo "Remaining args $@@"
+echo $result
+exit
+# $Log: reecho.sh,v $
+# Revision 1.10  2010/06/08 23:25:40  pwagner
+# Added -libart and -path options
+#
+# Revision 1.9  2009/09/22 17:44:15  pwagner
+# Added -escape, -[n]first, -[n]last, and -reverse options
+#
+# Revision 1.8  2007/05/29 17:41:20  pwagner
+# New --set opts for multiple option sets
+#
+# Revision 1.7  2005/06/23 22:20:46  pwagner
+# Reworded Copyright statement
+#
+# Revision 1.6  2005/04/27 23:31:04  pwagner
+# Added -[n]grep options
+#
+# Revision 1.5  2005/04/21 20:42:33  pwagner
+# Removed bug (or so we hope);added new options
+#
+# Revision 1.4  2001/11/09 21:50:34  pwagner
+# -dirn and -excl options added
+#
+# Revision 1.3  2001/11/07 00:20:40  pwagner
+# New -lib -dir and -suffix options
+#
+# Revision 1.2  2001/08/16 18:14:35  pwagner
+# Added -prefix=xxx stuff
+#
+# Revision 1.1  2001/08/13 16:42:10  pwagner
+# First commit under this name; previous name was foolish
+#
+@
+
+
+1.10
+log
+@Added -libart and -path options
+@
+text
+@d59 1
+d69 3
+d121 1
+a121 1
+# "$Id: reecho.sh,v 1.9 2009/09/22 17:44:15 pwagner Exp $"
+d710 3
+@
+
+
+1.9
+log
+@Added -escape, -[n]first, -[n]last, and -reverse options
+@
+text
+@d44 2
+d48 1
+d117 1
+a117 1
+# "$Id: reecho.sh,v 1.8 2007/05/29 17:41:20 pwagner Exp $"
+d258 6
+d339 1
+d434 6
+d479 5
+d532 1
+d706 3
+@
+
+
+1.8
+log
+@New --set opts for multiple option sets
+@
+text
+@d36 7
+d44 1
+a44 1
+# -unique       remove duplicates matches before output
+d114 1
+a114 1
+# "$Id: reecho.sh,v 1.7 2005/06/23 22:20:46 pwagner Exp $"
+d118 40
+a175 8
+         arg_not_bad="yes"
+         for file in $bad_args
+         do
+            if [ "$arg" = "$file" ]
+            then
+               arg_not_bad="no"
+            fi
+         done
+d179 1
+a179 1
+            file="lib${arg}.a"
+d181 1
+a181 1
+            file=$arg
+d183 2
+a184 2
+         
+         if [ "$arg_not_bad" != "yes" ]
+d186 45
+a230 21
+#           arg a bad one--automatically excluded--no operation needed
+            file=$file
+         elif [ $the_opt = "-glob" ]
+         then
+            check=`echo $file | grep -i '\*'`
+            if [ $the_sense = "yes" -a "$check" != "" ]
+            then
+                  extant_files_result="$extant_files_result $arg"
+            elif [ $the_sense = "no" -a "$check" = "" ]
+            then
+                  extant_files_result="$extant_files_result $arg"
+            fi
+         elif [ $the_opt = "-grep" ]
+         then
+            # This should return non-blank if the_text is in the file
+            # (but only if the file exists and we have read permission)
+            if [ ! -r "$file" ]
+            then
+              check=""
+            else
+              check=`grep -l "$the_text" "$file"`
+d233 1
+a233 1
+                  extant_files_result="$extant_files_result $arg"
+d236 29
+a264 1
+                  extant_files_result="$extant_files_result $arg"
+d266 2
+a267 13
+            fi
+         elif [ $the_sense = "yes" ]
+         then
+            if [ $the_opt "$file" ]
+            then
+                  extant_files_result="$extant_files_result $arg"
+            fi
+         else
+            if [ ! $the_opt "$file" ]
+            then
+                  extant_files_result="$extant_files_result $arg"
+            fi
+         fi
+d270 1
+d273 20
+d341 4
+d468 24
+d684 3
+@
+
+
+1.7
+log
+@Reworded Copyright statement
+@
+text
+@d20 1
+a20 1
+# Usage:
+d59 11
+d90 5
+d107 1
+a107 1
+# "$Id: reecho.sh,v 1.6 2005/04/27 23:31:04 pwagner Exp $"
+d215 260
+d485 1
+a485 6
+#   Notes
+#  A logical improvement would be to allow multiple options
+# among the set {[n]f [n]d [n]w [n]r [n]x}
+# which should be doable by forming a list of the_opts and
+# looping over them with calls to extant_files
+# steadily narrowing down the files that survive being refiltered
+d487 1
+d489 2
+a490 1
+DEEBUG=off
+d494 17
+a510 1
+   echo "with args $@@"
+a512 6
+new_dir=""
+new_list="no"
+as_lib="no"
+the_opt="-f"
+the_sense="yes"
+the_text=""
+d514 2
+a515 7
+the_prefix=""
+the_suffix=""
+separate_prefix="yes"
+separate_suffix="yes"
+bad_args=""
+dirs=""
+unique="no"
+d517 1
+a517 1
+
+a519 92
+    -f )
+       the_opt="-f"
+       the_sense="yes"
+       shift
+       ;;
+    -nf )
+       the_opt="-f"
+       the_sense="no"
+       shift
+       ;;
+    -d )
+       the_opt="-d"
+       the_sense="yes"
+       shift
+       ;;
+    -nd )
+       the_opt="-d"
+       the_sense="no"
+       shift
+       ;;
+    -r )
+       the_opt="-r"
+       the_sense="yes"
+       shift
+       ;;
+    -nr )
+       the_opt="-r"
+       the_sense="no"
+       shift
+       ;;
+    -w )
+       the_opt="-w"
+       the_sense="yes"
+       shift
+       ;;
+    -nw )
+       the_opt="-w"
+       the_sense="no"
+       shift
+       ;;
+    -x )
+       the_opt="-x"
+       the_sense="yes"
+       shift
+       ;;
+    -nx )
+       the_opt="-x"
+       the_sense="no"
+       shift
+       ;;
+    -glob )
+       the_opt="-glob"
+       the_sense="yes"
+       shift
+       ;;
+    -nglob )
+       the_opt="-glob"
+       the_sense="no"
+       shift
+       ;;
+    -grep )
+       shift
+       the_text="$1"
+       the_opt="-grep"
+       the_sense="yes"
+       shift
+       ;;
+    -ngrep )
+       shift
+       the_text="$1"
+       the_opt="-grep"
+       the_sense="no"
+       shift
+       ;;
+    -prefix=* )
+       the_prefix=`echo $1 | sed 's/-prefix=//'`
+       shift
+       ;;
+    -prefixn=* )
+       the_prefix=`echo $1 | sed 's/-prefixn=//'`
+       separate_prefix="no"
+       shift
+       ;;
+    -suffix=* )
+       the_suffix=`echo $1 | sed 's/-suffix=//'`
+       shift
+       ;;
+    -suffixn=* )
+       the_suffix=`echo $1 | sed 's/-suffixn=//'`
+       separate_suffix="no"
+       shift
+       ;;
+d525 8
+a532 4
+    -dir )
+       shift
+       new_dir="$1"
+       dirs="$1 $dirs"
+d535 5
+a539 13
+    -dirn )
+       shift
+       new_dir="$1"
+       new_list="yes"
+       shift
+       ;;
+    -lib )
+       as_lib="yes"
+       shift
+       ;;
+    -excl )
+       shift
+       bad_args="$1 $bad_args"
+d542 2
+a543 2
+    -uniq* )
+       unique="yes"
+d551 2
+a552 102
+
+if [ $DEEBUG = "on" ]
+then
+   echo "the_opt $the_opt"
+   echo "the_sense $the_sense"
+   echo "the_prefix $the_prefix"
+   echo "separate_prefix? $separate_prefix"
+   echo "the_suffix $the_suffix"
+   echo "separate_suffix? $separate_suffix"
+   echo "as lib? $as_lib"
+   echo "new_dir $new_dir"
+   echo "remaining args $@@"
+fi
+
+if [ "$new_dir" = "" ]
+then
+   extant_files "$@@"
+elif [ "$new_list" = "yes" ]
+then
+   # This is that simple -dirn option
+   old_dir=`pwd`
+   cd "$new_dir"
+   my_files=`echo *`
+   set `echo $my_files`
+   extant_files "$@@"
+   cd "$old_dir"
+else
+   if [ $DEEBUG = "on" ]
+   then
+     echo "remaining args $@@:" $@@
+   fi
+   # Now dirs may contain more than one directory to search
+   results=""
+   old_dir=`pwd`
+   for new_dir in $dirs
+   do
+     cd "$new_dir"
+     #  Since we changed directories, args which failed to glob
+     #  in old_dir may glob successfully in new_dir
+     #   extant_files "$@@"
+     extant_files $@@
+     results="$extant_files_result $results"
+     cd "$old_dir"
+   done
+   extant_files_result="$results"
+fi
+
+if [ "$separate_suffix" = "yes" ]   
+then                                
+   the_suffix=" $the_suffix"        
+fi                                  
+if [ "$separate_prefix" = "yes" ]   
+then                                
+   the_prefix="$the_prefix "        
+fi                                  
+
+if [ $DEEBUG = "on" -a "$unique" = "yes" ]          
+then                           
+   echo "Before sorting and removing duplicates: $extant_files_result"   
+fi                             
+
+if [ "$unique" = "yes" ]          
+then                           
+   extant_files_result=`sort_array "$extant_files_result"   `
+fi                             
+
+if [ $DEEBUG = "on" ]          
+then                           
+   echo "Before pre-suffixing: $extant_files_result"   
+fi                             
+
+if [ "$the_prefix" = "" -a "$the_suffix" = "" ]
+then
+   # No prefix--just echo filtered args
+   echo $extant_files_result
+elif [ "$the_suffix" = "" ]
+then
+   # prefix each filtered arg
+   prefixed_result=
+   for file in $extant_files_result
+   do
+      prefixed_result="$prefixed_result ${the_prefix}$file"
+   done
+   echo $prefixed_result
+elif [ "$the_prefix" = "" ]
+then
+   # suffix each filtered arg
+   prefixed_result=
+   for file in $extant_files_result
+   do
+      prefixed_result="$prefixed_result $file${the_suffix}"
+   done
+   echo $prefixed_result
+else
+   # prefix and suffix each filtered arg
+   prefixed_result=
+   for file in $extant_files_result
+   do
+      prefixed_result="$prefixed_result ${the_prefix}$file${the_suffix}"
+   done
+   echo $prefixed_result
+fi
+d555 3
+@
+
+
+1.6
+log
+@Added -[n]grep options
+@
+text
+@d80 10
+a89 2
+# Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+# U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
+d91 1
+a91 1
+# "$Id: reecho.sh,v 1.5 2005/04/21 20:42:33 pwagner Exp $"
+d473 3
+@
+
+
+1.5
+log
+@Removed bug (or so we hope);added new options
+@
+text
+@d31 1
+d83 1
+a83 1
+# "$Id: reecho.sh,v 1.4 2001/11/09 21:50:34 pwagner Exp $"
+d135 17
+d221 1
+d294 14
+d465 3
+@
+
+
+1.4
+log
+@-dirn and -excl options added
+@
+text
+@d31 6
+a36 3
+# -dir "dir"    cd to "dir" before filtering
+# -dirn "dir"   ignore args; cd to "dir" then filter all files/directories there
+# -lib          filter each arg "x" based on the file "libx.a" exists or ...
+d48 1
+a48 1
+# arg1          an arg that may or may not be reechoed
+d56 1
+d79 2
+a80 2
+# Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d82 1
+a82 1
+# "$Id: reecho.sh,v 1.3 2001/11/07 00:20:40 pwagner Exp $"
+d149 24
+d209 2
+d301 1
+d319 4
+d347 1
+d355 6
+d362 11
+a372 13
+   cd "$new_dir"
+#  Since we changed directories, args which failed to glob
+#  in old_dir may glob successfully in new_dir
+   extant_files "$@@"
+#   Ahh, but this didn't work; not sure why. Worry about it later
+#   new_args=`echo $@@`
+#   if [ $DEEBUG = "on" ]
+#   then
+#      pwd
+#      echo "new_args $new_args"
+#   fi
+#   extant_files "$new_args"
+   cd "$old_dir"
+d384 10
+d432 3
+@
+
+
+1.3
+log
+@New -lib -dir and -suffix options
+@
+text
+@d32 1
+d43 2
+d78 1
+a78 1
+# "$Id: reecho.sh,v 1.2 2001/08/16 18:14:35 pwagner Exp $"
+d100 9
+d116 5
+a120 1
+         if [ $the_opt = "-glob" ]
+d154 7
+d171 1
+d180 1
+d273 6
+d283 5
+d310 8
+d382 3
+@
+
+
+1.2
+log
+@Added -prefix=xxx stuff
+@
+text
+@d10 2
+a11 1
+# Useful to weed out formulas like *.c that
+d14 1
+d16 1
+a16 1
+# Optionally prefixes each with a specified prefix; e.g.
+d31 2
+d38 4
+a43 1
+#
+d66 5
+d72 1
+a72 1
+# Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+d75 1
+a75 1
+# "$Id: reecho.sh,v 1.1 2001/08/13 16:42:10 pwagner Exp $"
+d95 1
+a95 1
+      for file
+d97 7
+d107 1
+a107 1
+            if [ $the_sense = "yes" -a $check != "" ]
+d109 2
+a110 2
+                  extant_files_result="$extant_files_result $file"
+            elif [ $the_sense = "no" -a $check = "" ]
+d112 1
+a112 1
+                  extant_files_result="$extant_files_result $file"
+d118 1
+a118 1
+                  extant_files_result="$extant_files_result $file"
+d123 1
+a123 1
+                  extant_files_result="$extant_files_result $file"
+d147 2
+d153 3
+a155 1
+separate="yes"
+d226 10
+a235 1
+       separate="no"
+d243 9
+d263 5
+a267 1
+   echo "separate? $separate"
+d271 35
+a305 2
+extant_files "$@@"
+if [ "$the_prefix" = "" ]
+d309 2
+a310 1
+else
+a312 4
+   if [ "$separate" = "yes" ]
+   then
+      the_prefix="$the_prefix "
+   fi
+d318 17
+d338 3
+@
+
+
+1.1
+log
+@First commit under this name; previous name was foolish
+@
+text
+@d6 1
+a6 1
+# (depending on option(s) selected
+d11 6
+a16 2
+# have no matching files and so stay just '*.f'
+# 'no stars => reecho (night)' is the mnemonic
+d30 4
+d40 3
+a42 1
+# (2) The options are mutually exclusive (for the present)
+d48 1
+a48 1
+# Say you have a directory containingg the following files
+d63 1
+a63 1
+# "$Id: reecho.sh,v 1.1 2001/08/10 23:52:37 pwagner Exp $"
+d131 2
+d197 9
+d210 1
+a210 2
+	;;
+
+d221 2
+d227 17
+a243 1
+echo $extant_files_result
+d246 3
+@
+

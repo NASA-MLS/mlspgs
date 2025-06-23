@@ -1,0 +1,192 @@
+head	2.4;
+access;
+symbols
+	v5-02-NRT-19:2.4
+	v6-00:2.4
+	v5-02-NRT-18:2.4
+	v5-02:2.3
+	v5-01-NRT-17:2.4
+	v5-01-NRT-16:2.4
+	v5-01-NRT-15:2.4
+	v5-01-NRT-14:2.4
+	neuralnetworks-1-0:2.4.0.4
+	cfm-single-freq-0-1:2.4.0.2
+	v5-01:2.3
+	v5-00:2.3
+	v4-23-TA133:2.3.0.6
+	mus-emls-1-70:2.3.0.4
+	rel-1-0-englocks-work:2.3.0.2
+	VUMLS1-00:2.3;
+locks; strict;
+comment	@# @;
+
+
+2.4
+date	2020.05.07.21.25.09;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2017.01.28.03.06.41;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2017.01.14.01.30.44;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2017.01.13.21.01.40;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.4
+log
+@Add dimensions to name
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! subroutine Dump_Row_Sparse_* ( Array, Name, Width, Format, Bounds2 )
+!   real(rk), intent(in) :: Array(:,:)
+!   character(*), intent(in), optional :: Name
+!   integer, intent(in), optional :: Width      ! Array elements per line
+!   character(*), intent(in), optional :: Format
+!   integer, intent(in), optional :: Bounds2(:) ! Bounds of 2nd dim array
+
+  integer :: I, Row, Col, Pos
+  character(len=64) :: MyFormat
+  integer :: MyWidth, NS
+  integer, allocatable :: Subs(:)
+
+  myFormat = sdFormatDefault
+  if ( present(format) ) myFormat = format
+
+  ! If it's allocated, Subs gets deleted automatically at the end.
+  if ( present(bounds2) ) then
+    ns = size(bounds2,1)
+    allocate ( subs(ns) )
+  end if
+
+  ! Number of nonzero elements per line.
+  myWidth = 5
+  if ( present(width) ) myWidth = width
+
+  if ( present(name) ) then
+    call output ( name )
+    call output ( size(array,1), before='(' )
+    call output ( size(array,2), before=',', after=')', advance='yes' )
+  end if
+
+  do row = 1, size(array,1)
+    if ( .not. any(array(row,:) /= 0) ) cycle
+    pos = 0
+    call output ( row, places=4, after='#' )
+    do col = 1, size(array,2)
+      if ( array(row,col) /= 0 ) then
+        if ( pos >= myWidth ) then
+          call newLine
+          call blanks ( 6 )
+          pos = 0
+        end if
+        pos = pos + 1
+        if ( present(bounds2) ) then
+          subs(1:ns) = subscripts ( col, bounds2 )
+          call output ( subs(1), before=' (' )
+          do i = 2, ns
+            call output ( subs(i), before=',' )
+          end do
+          call output ( '): ' )
+        else
+          call output ( col, places=4, after=': ' )
+        end if
+        call output ( array(row,col), format=myFormat )
+      end if
+    end do
+    call newLine
+  end do
+
+! $Log: Dump_Row_Sparse.f9h,v $
+! Revision 2.3  2017/01/28 03:06:41  vsnyder
+! Don't reallocate subs for every row if bounds2 is present
+!
+! Revision 2.2  2017/01/14 01:30:44  vsnyder
+! Make list dump and 2D sparse array dump look alike
+!
+! Revision 2.1  2017/01/13 21:01:40  vsnyder
+! Initial commit
+!
+@
+
+
+2.3
+log
+@Don't reallocate subs for every row if bounds2 is present
+@
+text
+@d37 5
+a41 1
+  if ( present(name) ) call output ( name, advance='yes' )
+d72 3
+@
+
+
+2.2
+log
+@Make list dump and 2D sparse array dump look alike
+@
+text
+@d12 1
+a12 1
+! subroutine Dump_Row_Sparse_* ( Array, Name, Width, Format )
+d15 1
+a15 1
+!   integer, intent(in), optional :: Width     ! Array elements per line
+d17 1
+d21 1
+a21 1
+  integer :: MyWidth
+d28 4
+a31 1
+  if ( present(bounds2) ) allocate ( subs(size(bounds2,1)) )
+d52 1
+a52 1
+          subs = subscripts ( col, bounds2 )
+d54 1
+a54 1
+          do i = 2, size(subs)
+d68 3
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d38 1
+a38 1
+    call output ( row, places=4, after='# ' )
+d49 1
+a49 1
+          call output ( subs(1), before='(' )
+d63 4
+a66 1
+! $Log: $
+@
+

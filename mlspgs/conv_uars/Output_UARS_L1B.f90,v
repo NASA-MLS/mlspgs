@@ -1,0 +1,620 @@
+head	1.3;
+access;
+symbols
+	v5-02-NRT-19:1.3
+	v6-00:1.3
+	v5-02-NRT-18:1.3
+	v5-02:1.3
+	v5-01-NRT-17:1.3
+	v5-01-NRT-16:1.3
+	v5-01-NRT-15:1.3
+	v5-01-NRT-14:1.3
+	neuralnetworks-1-0:1.3.0.10
+	cfm-single-freq-0-1:1.3.0.8
+	v5-01:1.3
+	v5-00:1.3
+	v4-23-TA133:1.3.0.6
+	mus-emls-1-70:1.3.0.4
+	rel-1-0-englocks-work:1.3.0.2
+	VUMLS1-00:1.3
+	VPL1-00:1.3
+	V4-22-NRT-08:1.3
+	VAM1-00:1.3
+	V4-21:1.2.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.3
+date	2015.04.21.02.27.08;	author vsnyder;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2014.12.11.00.48.51;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2014.06.17.17.40.27;	author perun;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@Create attributes for some components' units
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=============================================================================
+module Output_UARS_L1B
+!=============================================================================
+
+  use MLS_DataProducts, only: DataProducts_T, Deallocate_DataProducts
+  use MLSAuxData, only: Build_MLSAuxData, CreateGroup_MLSAuxData
+  use MLSSTRINGS, only: CompressString
+
+  implicit NONE
+
+  private
+
+  integer, parameter :: Int_Fill = -1
+
+  public :: OutputL1B_OA, OutputL1B_Rad
+
+  logical, parameter, private :: Deebug = .false.
+
+  !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: Output_UARS_L1B.f90,v $"
+  private :: not_used_here 
+  !---------------------------------------------------------------------------
+
+contains
+
+  subroutine OutputL1B_rad ( sdId, noMAF, counterMAF, rad, prec, gird_time, &
+                           & Limb_Hdr )
+
+    use MLSKinds, only: R8
+    use Rad_File_Contents, only: Limb_Hdr_t
+
+   ! This subroutine writes a MAF's worth of data to the L1BRad File
+
+    integer, intent(in) :: sdId, noMAF, counterMAF
+    real, intent(in) :: rad(15,6,32), prec(15,6,32)
+    real(r8), intent(in) :: gird_time
+    type(limb_hdr_t), intent(in) :: Limb_Hdr
+
+    TYPE (DataProducts_T) :: dataset
+    integer, dimension(3) :: dims = (/15, 32, 1/)
+    integer :: bank, status, bits, spindx
+
+    real, parameter :: Rad_Fill = -999.99, Rad_Err_Fill = -1.0
+
+    character(len=40) :: name
+    character(len=4), parameter :: species(6) = (/ &
+         "PT  ", "ClO " , "H2O2", "O3  ", "H2O ", "O3  " /)
+    character(len=3), parameter :: band(6) = (/ &
+         'B1F', 'B2F', 'B3F', 'B4F', 'B5F', 'B6F' /)
+    character(len=2), parameter :: radiometer(3) = (/ 'R1', 'R2', 'R3' /)
+    character(len=3), parameter :: freq(6) = (/ &
+         '63 ', '205', '205', '205', '183', '183' /)
+    character(len=2), parameter :: switch(0:2) = (/ 'S0', 'S1', 'S2' /)
+    integer :: mask07, bank3, bank6, swpos
+    data mask07 / z'07'/  ! lower 3 bits for Filter Bank 3
+
+    call Deallocate_DataProducts (dataset)
+
+    allocate (dataset%Dimensions(1), stat=status)
+
+    dataset%name      = 'counterMAF'
+    dataset%data_type = 'integer'
+    dataset%Dimensions(1) = 'MAF'
+    call Build_MLSAuxData (sdId, dataset, counterMAF, fill_value=INT_FILL, &
+         lastIndex=noMAF)
+
+    dataset%name      = 'MAFStartTimeGIRD'
+    dataset%data_type = 'double'
+    call Build_MLSAuxData (sdId, dataset, gird_time, fill_value=-1.0d0, &
+         lastIndex=noMAF)
+
+    deallocate (dataset%Dimensions, stat=status)
+
+    allocate (dataset%Dimensions(3), stat=status)
+    dataset%data_type = 'real'
+    dataset%Dimensions(1) = 'chanFB'
+    dataset%Dimensions(2) = 'MIF'
+    dataset%Dimensions(3) = 'MAF'
+
+    bits = ichar(limb_hdr%band_bank)
+
+    bank3 = iand (bits, mask07)  ! what's hooked up to filter bank 3
+    if (btest (bits, 3)) then    ! what's hooked up to filter bank 6
+       bank6 = 3
+    else
+       bank6 = 6
+    end if
+
+    do bank = 1, 6
+       swpos = 0
+       if (bank == 3) then
+          spindx = bank3
+          if (bank3 /= 3) swpos = 1
+       else if (bank == 6) then
+          spindx = bank6
+          if (bank6 /= 3) swpos = 2
+       else
+          spindx = bank
+       end if
+       if (bank == 1) then
+          name = radiometer(1)
+       else if (bank >= 2 .and. bank <= 4) then
+          name = radiometer(2)
+       else
+          name = radiometer(3)
+       end if
+
+       name = name(1:len_trim(name)) // ':' // freq(bank) // '.' // &
+            band(bank) // ':' // species(spindx) // '.' // switch(swpos)
+       name = name(1:len_trim(name)) // '.FB15-' // char(bank+48)
+       name = CompressString (name) 
+
+       dataset%name = TRIM(name)
+       call Build_MLSAuxData (sdId, dataset, rad(:,bank,:), &
+            lastIndex=noMAF, dims=dims, fill_value=RAD_FILL)
+       dataset%name = TRIM(name)//' precision'
+       call Build_MLSAuxData (sdId, dataset, prec(:,bank,:), &
+            lastIndex=noMAF, dims=dims, fill_value=RAD_ERR_FILL)
+    end do
+
+  end subroutine OutputL1B_rad
+
+  subroutine OutputL1B_OA (sdId, noMAF, counterMAF, Limb_OA, EMLS_OA )
+
+    ! This subroutine writes a MAF's worth of data to the L1B OA file
+
+    use HDF5, only:  H5GClose_f, H5GOpen_f
+    use MLSHDF5, only: MakeHDF5Attribute
+    use MLSKinds, only: R8
+    use oa_file_contents, only: emls_oa_t
+    use rad_file_contents, only: limb_oa_t
+ 
+    ! Arguments:
+    integer, intent(in) :: sdId, noMAF, counterMAF
+    type(limb_oa_t), intent(in) :: Limb_OA
+    type(emls_oa_t), intent(in) :: EMLS_OA
+
+    integer :: Grp_Id
+    integer :: status
+
+    type (DataProducts_T) :: dataset
+
+!------------------------------------------------------------------------------
+    call Deallocate_DataProducts (dataset)
+
+    if ( deebug ) print *, 'MAF: ', noMAF, limb_oa%ref_lat, limb_oa%ref_time
+
+! 2-d first:
+
+    allocate (dataset%Dimensions(2), stat=status)
+
+    dataset%data_type = 'real'
+    dataset%Dimensions(1) = 'MIF'
+    dataset%Dimensions(2) = 'MAF'
+
+    dataset%name = 'sc/OrbIncl'
+    call Build_MLSAuxData (sdId, dataset, emls_oa%sc_orbincl, lastIndex=noMAF)
+    dataset%name = 'sc/Lon'
+    call Build_MLSAuxData (sdId, dataset, emls_oa%sc_lon, lastIndex=noMAF)
+    dataset%name = 'sc/GeocLat'
+    call Build_MLSAuxData (sdId, dataset, emls_oa%sc_geoclat, lastIndex=noMAF)
+    dataset%name = 'sc/GeodLat'
+    call Build_MLSAuxData (sdId, dataset, emls_oa%sc_geodlat, lastIndex=noMAF)
+    dataset%name = 'GHz/GeocLat'
+    call Build_MLSAuxData (sdId, dataset, emls_oa%geoc_lat, lastIndex=noMAF)
+    dataset%name = 'GHz/GeodLat'
+    call Build_MLSAuxData (sdId, dataset, emls_oa%geod_lat, lastIndex=noMAF)
+    dataset%name = 'GHz/GeodAngle'
+    call Build_MLSAuxData (sdId, dataset, emls_oa%geod_ang, lastIndex=noMAF)
+    dataset%name = 'GHz/Lon'
+    call Build_MLSAuxData (sdId, dataset, emls_oa%lon, lastIndex=noMAF)
+    dataset%name = 'GHz/SolarTime'
+    call Build_MLSAuxData (sdId, dataset, emls_oa%solartime, lastIndex=noMAF)
+    dataset%name = 'GHz/SolarZenith'
+    call Build_MLSAuxData (sdId, dataset, emls_oa%solarzenith, lastIndex=noMAF)
+    dataset%name = 'GHz/azimAngle'
+    call Build_MLSAuxData (sdId, dataset, emls_oa%azimAngle, lastIndex=noMAF)
+    dataset%name = 'GHz/scanAngle'
+    call Build_MLSAuxData (sdId, dataset, emls_oa%scanAngle, lastIndex=noMAF)
+
+    dataset%data_type = 'double'
+    dataset%name = 'GHz/GeodAlt'
+    call Build_MLSAuxData (sdId, dataset, emls_oa%geod_alt, lastIndex=noMAF)
+    dataset%name = 'GHz/GeocAlt'
+    call Build_MLSAuxData (sdId, dataset, emls_oa%geoc_alt, lastIndex=noMAF)
+    dataset%name = 'GHz/LosAngle'
+    call Build_MLSAuxData (sdId, dataset, emls_oa%LosAngle, lastIndex=noMAF)
+    dataset%name = 'GHz/LosVel'
+    call Build_MLSAuxData (sdId, dataset, emls_oa%LosVel, lastIndex=noMAF)
+    dataset%name = 'GHz/OrbY'
+    call Build_MLSAuxData (sdId, dataset, emls_oa%OrbY, lastIndex=noMAF)
+    dataset%name = 'GHz/ECRtoFOV'
+    call Build_MLSAuxData (sdId, dataset, emls_oa%ECRtoFOV, lastIndex=noMAF)
+    dataset%name = 'sc/GeocAlt'
+    call Build_MLSAuxData (sdId, dataset, emls_oa%sc_geocalt, lastIndex=noMAF)
+    dataset%name = 'sc/GeodAlt'
+    call Build_MLSAuxData (sdId, dataset, emls_oa%sc_geodalt, lastIndex=noMAF)
+
+    dataset%data_type = 'integer'
+    dataset%name = 'GHz/BO_stat'
+    call Build_MLSAuxData (sdId, dataset, emls_oa%bo_stat, lastIndex=noMAF)
+
+    allocate (dataset%Dimensions(1), stat=status)
+    dataset%data_type = 'double'
+    dataset%Dimensions(1) = 'MAF'
+    dataset%name = 'MAFStartTimeTAI'
+    call Build_MLSAuxData (sdId, dataset, emls_oa%MAFStartTimeTAI, &
+         lastIndex=noMAF)
+    dataset%name = 'sc/MIF_TAI'
+    call Build_MLSAuxData (sdId, dataset, emls_oa%sc_MIF_TAI, lastIndex=noMAF)
+
+    dataset%data_type = 'integer'
+    dataset%name      = 'counterMAF'
+    call Build_MLSAuxData (sdId, dataset, counterMAF, fill_value=INT_FILL, &
+         lastIndex=noMAF)
+
+    call Deallocate_DataProducts (dataset)
+
+! 3-d next:
+
+    deallocate (dataset%Dimensions, stat=status)
+    allocate (dataset%Dimensions(3), stat=status)
+
+    dataset%data_type = 'double'
+    dataset%Dimensions(1) = 'xyz'
+    dataset%Dimensions(2) = 'MIF'
+    dataset%Dimensions(3) = 'MAF'
+    dataset%name      = 'GHz/ECI'
+    call Build_MLSAuxData (sdId, dataset, emls_oa%ECI, lastIndex=noMAF)
+    dataset%name      = 'GHz/ECR'
+    call Build_MLSAuxData (sdId, dataset, emls_oa%ECR, lastIndex=noMAF)
+    dataset%name      = 'sc/ECI'
+    call Build_MLSAuxData (sdId, dataset, emls_oa%sc_ECI, lastIndex=noMAF)
+    dataset%name      = 'sc/ECR'
+    call Build_MLSAuxData (sdId, dataset, emls_oa%sc_ECR, lastIndex=noMAF)
+    dataset%name      = 'sc/VelECI'
+    call Build_MLSAuxData (sdId, dataset, emls_oa%sc_VelECI, lastIndex=noMAF)
+    dataset%name      = 'sc/VelECR'
+    call Build_MLSAuxData (sdId, dataset, emls_oa%sc_VelECR, lastIndex=noMAF)
+    dataset%name      = 'sc/ypr'
+    call Build_MLSAuxData (sdId, dataset, emls_oa%sc_ypr, lastIndex=noMAF)
+    dataset%name      = 'sc/yprRate'
+    call Build_MLSAuxData (sdId, dataset, emls_oa%sc_ypr_rate, lastIndex=noMAF)
+
+    call Deallocate_DataProducts (dataset)
+
+    ! Now attributes for some component units
+    call h5gopen_f ( sdId, '/GHz', grp_id, status )
+    call MakeHDF5Attribute ( grp_id, 'GeocLat_units',       'deg'  )
+    call MakeHDF5Attribute ( grp_id, 'GeodLat_units',       'deg'  )
+    call MakeHDF5Attribute ( grp_id, 'GeodAng_units',       'deg'  )
+    call MakeHDF5Attribute ( grp_id, 'Lon_units',           'deg'  )
+    call MakeHDF5Attribute ( grp_id, 'GeocAlt_units',       'm'    )
+    call MakeHDF5Attribute ( grp_id, 'GeodAlt_units',       'm'    )
+    call MakeHDF5Attribute ( grp_id, 'LosAngle_units',      'deg'  )
+    call MakeHDF5Attribute ( grp_id, 'LosVel_units',        'm/s'  )
+    call MakeHDF5Attribute ( grp_id, 'OrbY_units',          'm'    )
+    call MakeHDF5Attribute ( grp_id, 'ECI_units',           'm'    )
+    call MakeHDF5Attribute ( grp_id, 'ECR_units',           'm'    )
+    call h5gclose_f ( grp_id, status )
+    call h5gopen_f ( sdId, '/sc', grp_id, status )
+    call MakeHDF5Attribute ( grp_id, 'OrbIncl_units',       'deg'  )
+    call MakeHDF5Attribute ( grp_id, 'Sc_Lon_units',        'deg'  )
+    call MakeHDF5Attribute ( grp_id, 'Sc_GeocLat_units',    'deg'  )
+    call MakeHDF5Attribute ( grp_id, 'Sc_GeodLat_units',    'deg'  )
+    call MakeHDF5Attribute ( grp_id, 'Sc_GeocAlt_units',    'm'    )
+    call MakeHDF5Attribute ( grp_id, 'Sc_GeodAlt_units',    'm'    )
+    call MakeHDF5Attribute ( grp_id, 'ECI_units',           'm'    )
+    call MakeHDF5Attribute ( grp_id, 'ECR_units',           'm'    )
+    call MakeHDF5Attribute ( grp_id, 'VelECI_units',        'm/s'  )
+    call MakeHDF5Attribute ( grp_id, 'VelECR_units',        'm/s'  )
+    call h5gclose_f ( grp_id, status )
+
+  end subroutine OutputL1B_OA
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: Output_UARS_L1B.f90,v 1.2 2014/12/11 00:48:51 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Output_UARS_L1B
+
+! $Log: Output_UARS_L1B.f90,v $
+! Revision 1.2  2014/12/11 00:48:51  vsnyder
+! Move external procedures into modules.  Add copyright and CVS lines.
+! Compute MIF geolocation (except height) for SC.  Compute MIF-resolved
+! SC velocity.  Some cannonball polishing.
+!
+@
+
+
+1.2
+log
+@Move external procedures into modules.  Add copyright and CVS lines.
+Compute MIF geolocation (except height) for SC.  Compute MIF-resolved
+SC velocity.  Some cannonball polishing.
+@
+text
+@d32 1
+a32 1
+       "$RCSfile: ConstructQuantityTemplates.f90,v $"
+d44 1
+a44 1
+   ! This subroutine writes an MAF's worth of data to the L1BRad F file
+d137 1
+a137 1
+    ! This subroutine writes an MAF's worth of data to the L1B OA file
+d139 2
+d150 1
+d259 27
+d291 1
+a291 1
+       "$Id: ConstructQuantityTemplates.f90,v 2.177 2014/09/05 00:39:49 vsnyder Exp $"
+d300 6
+a305 1
+! $Log: $
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d1 11
+d13 1
+a13 1
+MODULE Output_UARS_L1B
+d16 7
+a22 3
+  USE MLS_DataProducts, ONLY: DataProducts_T, Deallocate_DataProducts
+  USE MLSAuxData, ONLY: Build_MLSAuxData, CreateGroup_MLSAuxData
+  USE MLSSTRINGS, only: COMPRESSSTRING
+d24 1
+a24 1
+  IMPLICIT NONE
+d26 1
+a26 1
+  PRIVATE
+d28 1
+a28 1
+  INTEGER, PARAMETER :: INT_FILL = -1
+d30 5
+a34 1
+  PUBLIC :: OutputL1B_rad, OutputL1B_OA
+d36 1
+a36 1
+CONTAINS
+d38 2
+a39 1
+  SUBROUTINE OutputL1B_rad (sdId, noMAF, counterMAF, rad, prec, gird_time)
+d41 2
+a42 1
+    USE rad_file_contents, ONLY: limb_hdr
+d46 4
+a49 3
+    INTEGER, INTENT(IN) :: sdId, noMAF, counterMAF
+    REAL, INTENT(IN) :: rad(15,6,32), prec(15,6,32)
+    REAL*8, INTENT(IN) :: gird_time
+d55 1
+a55 1
+    REAL, PARAMETER :: RAD_FILL = -999.99, RAD_ERR_FILL = -1.0
+d58 3
+a60 3
+    CHARACTER(len=4), PARAMETER :: species(6) = (/ &
+         "PT", "ClO" , "H2O2", "O3", "H2O", "O3" /)
+    CHARACTER(len=3), PARAMETER :: band(6) = (/ &
+d62 4
+a65 4
+    CHARACTER(len=2), PARAMETER :: radiometer(3) = (/ 'R1', 'R2', 'R3' /)
+    CHARACTER(len=3), PARAMETER :: freq(6) = (/ &
+         '63', '205', '205', '205', '183', '183' /)
+    CHARACTER(len=2), PARAMETER :: switch(0:2) = (/ 'S0', 'S1', 'S2' /)
+d69 1
+a69 1
+    CALL Deallocate_DataProducts (dataset)
+d71 1
+a71 1
+    ALLOCATE (dataset%Dimensions(1), stat=status)
+d76 1
+a76 1
+    CALL Build_MLSAuxData (sdId, dataset, counterMAF, fill_value=INT_FILL, &
+d81 1
+a81 1
+    CALL Build_MLSAuxData (sdId, dataset, gird_time, fill_value=-1.0d0, &
+d84 1
+a84 1
+    DEALLOCATE (dataset%Dimensions, stat=status)
+d86 1
+a86 1
+    ALLOCATE (dataset%Dimensions(3), stat=status)
+d99 1
+a99 1
+    endif
+d111 1
+a111 1
+       endif
+d118 1
+a118 1
+       endif
+d126 1
+a126 1
+       CALL Build_MLSAuxData (sdId, dataset, rad(:,bank,:), &
+d129 1
+a129 1
+       CALL Build_MLSAuxData (sdId, dataset, prec(:,bank,:), &
+d131 1
+a131 1
+    enddo
+d133 1
+a133 1
+  END SUBROUTINE OutputL1B_rad
+d135 1
+a135 1
+  SUBROUTINE OutputL1B_OA (sdId, noMAF, counterMAF)
+d139 3
+a141 2
+    USE rad_file_contents, ONLY: limb_oa
+    USE oa_file_contents, ONLY: emls_oa
+d144 3
+a146 1
+    INTEGER, INTENT(IN) :: sdId, noMAF, counterMAF
+d150 1
+a150 1
+    TYPE (DataProducts_T) :: dataset
+d153 1
+a153 1
+    CALL Deallocate_DataProducts (dataset)
+d155 1
+a155 1
+    print *, 'MAF: ', noMAF, limb_oa%ref_lat, limb_oa%ref_time
+d159 1
+a159 1
+    ALLOCATE (dataset%Dimensions(2), stat=status)
+d166 1
+a166 1
+    CALL Build_MLSAuxData (sdId, dataset, emls_oa%sc_orbincl, lastIndex=noMAF)
+d168 1
+a168 1
+    CALL Build_MLSAuxData (sdId, dataset, emls_oa%sc_lon, lastIndex=noMAF)
+d170 1
+a170 1
+    CALL Build_MLSAuxData (sdId, dataset, emls_oa%sc_geoclat, lastIndex=noMAF)
+d172 1
+a172 1
+    CALL Build_MLSAuxData (sdId, dataset, emls_oa%sc_geodlat, lastIndex=noMAF)
+d174 1
+a174 1
+    CALL Build_MLSAuxData (sdId, dataset, emls_oa%geoc_lat, lastIndex=noMAF)
+d176 1
+a176 1
+    CALL Build_MLSAuxData (sdId, dataset, emls_oa%geod_lat, lastIndex=noMAF)
+d178 1
+a178 1
+    CALL Build_MLSAuxData (sdId, dataset, emls_oa%geod_ang, lastIndex=noMAF)
+d180 1
+a180 1
+    CALL Build_MLSAuxData (sdId, dataset, emls_oa%lon, lastIndex=noMAF)
+d182 1
+a182 1
+    CALL Build_MLSAuxData (sdId, dataset, emls_oa%solartime, lastIndex=noMAF)
+d184 1
+a184 1
+    CALL Build_MLSAuxData (sdId, dataset, emls_oa%solarzenith, lastIndex=noMAF)
+d186 1
+a186 1
+    CALL Build_MLSAuxData (sdId, dataset, emls_oa%azimAngle, lastIndex=noMAF)
+d188 1
+a188 1
+    CALL Build_MLSAuxData (sdId, dataset, emls_oa%scanAngle, lastIndex=noMAF)
+d192 1
+a192 1
+    CALL Build_MLSAuxData (sdId, dataset, emls_oa%geod_alt, lastIndex=noMAF)
+d194 1
+a194 1
+    CALL Build_MLSAuxData (sdId, dataset, emls_oa%geoc_alt, lastIndex=noMAF)
+d196 1
+a196 1
+    CALL Build_MLSAuxData (sdId, dataset, emls_oa%LosAngle, lastIndex=noMAF)
+d198 1
+a198 1
+    CALL Build_MLSAuxData (sdId, dataset, emls_oa%LosVel, lastIndex=noMAF)
+d200 1
+a200 1
+    CALL Build_MLSAuxData (sdId, dataset, emls_oa%OrbY, lastIndex=noMAF)
+d202 1
+a202 1
+    CALL Build_MLSAuxData (sdId, dataset, emls_oa%ECRtoFOV, lastIndex=noMAF)
+d204 1
+a204 1
+    CALL Build_MLSAuxData (sdId, dataset, emls_oa%sc_geocalt, lastIndex=noMAF)
+d206 1
+a206 1
+    CALL Build_MLSAuxData (sdId, dataset, emls_oa%sc_geodalt, lastIndex=noMAF)
+d210 1
+a210 1
+    CALL Build_MLSAuxData (sdId, dataset, emls_oa%bo_stat, lastIndex=noMAF)
+d212 1
+a212 1
+    ALLOCATE (dataset%Dimensions(1), stat=status)
+d216 1
+a216 1
+    CALL Build_MLSAuxData (sdId, dataset, emls_oa%MAFStartTimeTAI, &
+d219 1
+a219 1
+    CALL Build_MLSAuxData (sdId, dataset, emls_oa%sc_MIF_TAI, lastIndex=noMAF)
+d223 1
+a223 1
+    CALL Build_MLSAuxData (sdId, dataset, counterMAF, fill_value=INT_FILL, &
+d226 1
+a226 1
+    CALL Deallocate_DataProducts (dataset)
+d230 2
+a231 2
+    DEALLOCATE (dataset%Dimensions, stat=status)
+    ALLOCATE (dataset%Dimensions(3), stat=status)
+d238 1
+a238 1
+    CALL Build_MLSAuxData (sdId, dataset, emls_oa%ECI, lastIndex=noMAF)
+d240 1
+a240 1
+    CALL Build_MLSAuxData (sdId, dataset, emls_oa%ECR, lastIndex=noMAF)
+d242 1
+a242 1
+    CALL Build_MLSAuxData (sdId, dataset, emls_oa%sc_ECI, lastIndex=noMAF)
+d244 1
+a244 1
+    CALL Build_MLSAuxData (sdId, dataset, emls_oa%sc_ECR, lastIndex=noMAF)
+d246 1
+a246 1
+    CALL Build_MLSAuxData (sdId, dataset, emls_oa%sc_VelECI, lastIndex=noMAF)
+d248 1
+a248 1
+    CALL Build_MLSAuxData (sdId, dataset, emls_oa%sc_VelECR, lastIndex=noMAF)
+d250 1
+a250 1
+    CALL Build_MLSAuxData (sdId, dataset, emls_oa%sc_ypr, lastIndex=noMAF)
+d252 5
+a256 1
+    CALL Build_MLSAuxData (sdId, dataset, emls_oa%sc_ypr_rate, lastIndex=noMAF)
+d258 9
+a266 1
+    CALL Deallocate_DataProducts (dataset)
+d268 1
+a268 1
+  END SUBROUTINE OutputL1B_OA
+d270 1
+a270 1
+END MODULE Output_UARS_L1B
+@
+

@@ -1,0 +1,55 @@
+head	1.2;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2012.03.14.00.49.30;	author vsnyder;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2012.03.13.23.46.12;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Getting input from command line now
+@
+text
+@&in 
+! $RCSFile: $
+! $Log: remake_gh.in,v $
+! Revision 1.1  2012/03/13 23:46:12  vsnyder
+! Initial commit
+!
+prefix = '../fwdmdl/mag'
+filmod(:15) =
+'dgrf45.dat  ', 'dgrf50.dat  ',
+'dgrf55.dat  ', 'dgrf60.dat  ', 'dgrf65.dat  ',
+'dgrf70.dat  ', 'dgrf75.dat  ', 'dgrf80.dat  ',
+'dgrf85.dat  ', 'dgrf90.dat  ', 'dgrf95.dat  ',
+'igrf00.dat  ', 'igrf00s.dat ',
+'igrf10.dat  ', 'igrf10s.dat '
+/
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d3 4
+a6 1
+! $Log: $
+@
+

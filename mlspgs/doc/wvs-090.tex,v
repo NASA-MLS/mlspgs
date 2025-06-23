@@ -1,0 +1,369 @@
+head	1.5;
+access;
+symbols
+	v5-02-NRT-19:1.5
+	v6-00:1.5
+	v5-02-NRT-18:1.5
+	v5-02:1.5
+	v5-01-NRT-17:1.5
+	v5-01-NRT-16:1.5
+	v5-01-NRT-15:1.5
+	v5-01-NRT-14:1.5
+	neuralnetworks-1-0:1.5.0.4
+	cfm-single-freq-0-1:1.5.0.2
+	v5-01:1.5
+	v5-00:1.5
+	v4-23-TA133:1.4.0.6
+	mus-emls-1-70:1.4.0.4
+	rel-1-0-englocks-work:1.4.0.2
+	VUMLS1-00:1.3
+	VPL1-00:1.3
+	V4-22-NRT-08:1.3
+	VAM1-00:1.3
+	V4-21:1.3.0.2
+	V4-13:1.3
+	V4-12:1.3
+	V4-11:1.3
+	V4-10:1.3
+	M4-00:1.3
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.5
+date	2019.05.23.01.43.10;	author vsnyder;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2017.05.11.02.25.28;	author vsnyder;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2012.09.19.02.11.27;	author vsnyder;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2012.03.30.20.41.42;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2010.04.09.02.27.01;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.5
+log
+@Clarifications
+@
+text
+@\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9in
+
+\newcommand{\docname}{\bf wvs-090r4}
+\newcommand{\docdate}{17 April 2019}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Van\\
+Subject: \>Derivation of radiative transfer equation used in Forward Model\\
+From: \>Van Snyder\\
+Reference: \>wvs-063
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-10pt}
+
+\newcommand{\MT}{\mathcal{T}}
+
+The radiative transfer equation for the special case of local thermodynamic
+equilibrium without scattering for isotropic radiation is given by
+
+\begin{equation}\label{one}
+\frac{\text{d} I(s)}{\text{d} s} + \beta(s) I(s) = \beta(s) B(s)
+\end{equation}
+
+where $\beta(s)$ is the absorption coefficient for one chemical species at one
+frequency, and $B(s)$ is the Planck radiation function given by
+
+\begin{equation}
+B(s) = \frac{h \nu}
+            {k \left( \exp \left[ \frac{h \nu}{k T(s)} \right] -1 \right)}\,.
+\end{equation}
+
+The solution of Equation (\ref{one}) is usually written
+
+\begin{equation}\label{three}
+I(s) = I(s_0)\, \MT(s) + \int_{s_0}^s B(\sigma)\, \beta(\sigma)
+        \,\MT(\sigma)\, \text{d}\sigma\,.
+\end{equation}
+
+where
+
+\begin{equation}
+\MT(s) = \exp\left(-\int_{s_0}^s \beta(s^\prime) \,\text{d}s^\prime \right)
+\end{equation}
+
+When several chemical species are involved, $\beta(s)$ is replaced by
+$\alpha(s) = \sum_k f_k(s) \,\beta_k(s)$, where $f_k(s)$ is the volume
+mixing ratio of the $k^\text{th}$ chemical species.  Observing that
+$\frac{\text{d}\MT(s)}{\text{d}s} = -\beta(s) \MT(s)$, Equation
+(\ref{three}) can be written
+
+\begin{equation}
+I(s) = I(s_0) \MT(s_0) + \int_{s_0}^s B(\sigma)\, \beta(\sigma)\,
+ \MT(\sigma) \,\text{d}\sigma =
+I(s_0) \MT(s_0) - \int_{s_0}^s B(\sigma)\,
+ \frac{\text{d}\MT(\sigma)}{\text{d}\sigma} \text{d}\sigma\,.
+\end{equation}
+
+This is further transformed by integrating by parts, making $B(s)$ the variable
+of integration, giving
+
+\begin{equation}\begin{split}
+I(s) = \,& I(s_0) \MT(s_0) -B(\sigma) \MT(s) + B(s_0) \MT(s_0) +
+\int_{s_0}^{s} \MT(B) \, \frac{\text{d} B(\sigma)}{\text{d} \sigma}\,
+ \text{d} \sigma \\
+     = \,& I(s_0) \MT(s_0) -B(s) \MT(s) + B(s_0) \MT(s_0) +
+\int_{B(s_0)}^{B(\sigma)} \MT(B) \,\text{d} B \,.
+\end{split}\end{equation}
+
+This is evaluated as a quadrature in the form
+
+\begin{equation}
+I(s) = \sum_{i=1}^{2N} \Delta B_i \MT_i
+\end{equation}
+
+where $2N$ is the path length and the constant of integration is absorbed into
+the scheme by writing
+
+\begin{equation}
+\begin{array}{ll}
+\Delta B_1 = \frac{B_1+B_2}2 & \Delta B_i = \frac{B_{i+1}-B_{i-1}}2\,.
+\end{array}
+\end{equation}
+
+In order to account for the possibility that the path might be reflected from
+the surface of the Earth, the midpoint of the path at $t=N$ is handled as a
+zero-thickness layer, giving
+
+\begin{equation}
+\begin{array}{ll}
+\Delta B_t = \frac{B_{t+1}-B_{t-1}}2 &
+\Delta B_{2N - t + 1} = \frac{B_{2N-t+2}-B_{2N-t}}2 \\
+& \\
+\Delta B_{2N - i + 1} = \frac{B_{2N-i+2}-B_{2N-i}}2 &
+\Delta B_{2N} = I_0 - \frac{B_{2N-1} + B_{2N}}2
+\end{array}
+\end{equation}
+
+where $I_0$ is space radiance.
+
+$\MT$ is computed using
+
+\begin{equation}
+\begin{split}
+\text{for } i \leq \,& t, \\
+\MT_1 = \,& 1, \\
+\MT_i = \,& \exp \left( - \sum_{j=2}^i \Delta\delta_{j \rightarrow j-1} \right), \\
+\text{for } t < \,& i < 2N - t + 1, \\
+\MT_i = \,& 0, \\
+\text{for } i = \,& 2N - t + 1, \\
+\MT_{2N-t+1} = \,& \Upsilon \MT_t, \\
+\text{for } i > \,& 2N - t + 1, \\
+\MT_i = \,& \MT_{2N-t+1} \exp \left( - \sum_{j=2N-t+2}^i
+ \Delta\delta_{j \rightarrow j-1} \right), \\
+\end{split}
+\end{equation}
+
+where $\Upsilon$ is Earth reflectivity if the ray intersects the Earth surface
+and 1 otherwise,
+
+\begin{equation}
+ \Delta\delta_{j \rightarrow j-1} = \sum_k \Delta\delta_{j \rightarrow j-1}^k
+\end{equation}
+
+and
+
+\begin{equation}
+ \Delta\delta_{j \rightarrow j-1}^k =
+  \frac{\Delta s_{j \rightarrow j-1}^\text{refr}}
+       {\Delta s_{j \rightarrow j-1}}
+  \int_{s_i}^{s_{i-1}} f^k(s) \beta^k(s)\, \text{d} s\,'\,.
+\end{equation}
+
+\label{lastpage}
+\end{document}
+
+% $Id: wvs-090.tex,v 1.4 2017/05/11 02:25:28 vsnyder Exp $
+
+% $Log: wvs-090.tex,v $
+% Revision 1.4  2017/05/11 02:25:28  vsnyder
+% Explain Equation (4) better, expand Equation (5), repair a typo
+%
+% Revision 1.3  2012/09/19 02:11:27  vsnyder
+% Correct a typo
+%
+% Revision 1.2  2012/03/30 20:41:42  vsnyder
+% Repair graphics stuff
+%
+% Revision 1.1  2010/04/09 02:27:01  vsnyder
+% Initial commit
+@
+
+
+1.4
+log
+@Explain Equation (4) better, expand Equation (5), repair a typo
+@
+text
+@d8 2
+a9 2
+\newcommand{\docname}{\bf wvs-090r3}
+\newcommand{\docdate}{10 May 2017}
+d64 8
+a71 4
+I(s) = I(s_0) \exp\left(-\int_{s_0}^s \beta(s^\prime) \,\text{d}s^\prime \right) +
+       \int_{s_0}^s B(s) \beta(s)
+        \,\exp\left(- \int_{s_0}^s \beta(s^\prime) \,\text{d}s^\prime \right)
+       \text{d}s\,.
+d75 4
+a78 4
+$\alpha(s) = \sum_k f_k(s) \,\beta_k(s)$, where $f_k(s)$ is the volume mixing
+ratio of the $k^\text{th}$ chemical species.  The exponential factor is denoted
+by $\MT(s)$.  Observing that $\frac{\text{d}\MT(s)}{\text{d}s} = -\beta(s)
+\MT(s)$, Equation (\ref{three}) can be written
+d81 4
+a84 3
+I(s) = I(s_0) \MT(s_0) + \int_{s_0}^s B(s)\, \beta(s)\, \MT(s) \,\text{d}s =
+I(s_0) \MT(s_0) - \int_{s_0}^s B(s)\, \frac{\text{d}\MT(s)}{\text{d}s}
+ \text{d}s\,.
+d91 3
+a93 2
+I(s) = \,& I(s_0) \MT(s_0) -B(s) \MT(s) + B(s_0) \MT(s_0) +
+\int_{s_0}^{s} \MT(B) \, \frac{\text{d} B(s)}{\text{d} s}\, \text{d} s \\
+d95 1
+a95 1
+\int_{B(s_0)}^{B(s)} \MT(B) \,\text{d} B \,.
+d165 1
+a165 1
+% $Id: wvs-090.tex,v 1.3 2012/09/19 02:11:27 vsnyder Exp $
+d168 3
+@
+
+
+1.3
+log
+@Correct a typo
+@
+text
+@d8 2
+a9 2
+\newcommand{\docname}{\bf wvs-090}
+\newcommand{\docdate}{10 February 2010}
+d53 1
+a53 1
+where $\beta(s)$ is the absorption coefficient for one chemical specie at one
+d63 1
+a63 1
+\begin{equation}
+d72 3
+a74 2
+ratio of the $k^\text{th}$ chemical specie.  The exponential factor is denoted
+by $\MT(s)$, giving
+d77 3
+a79 1
+I(s) = I(s_0) \MT(s_0) + \int_{s_0}^s B(s)\, \beta(s)\, \MT(s) \,\text{d}s\,.
+d85 6
+a90 3
+\begin{equation}
+I(s) = I(s_0) \MT(s_0) + \int_{B(s_0)}^{B(s)} \MT(B) \,\text{d} B\,.
+\end{equation}
+d144 1
+a144 1
+ \Delta\delta_{j \rightarrow j-1} = \sum_i \Delta\delta_{j \rightarrow j-1}^k
+d153 1
+a153 1
+  \int_{s_i}^{s_{i-1}} f^k(s) \beta^k(s) \text{d} s\,'
+d159 1
+a159 1
+% $Id: wvs-090.tex,v 1.2 2012/03/30 20:41:42 vsnyder Exp $
+d162 3
+@
+
+
+1.2
+log
+@Repair graphics stuff
+@
+text
+@d65 1
+a65 1
+       \int_{s_0}^s B(s)
+d76 1
+a76 1
+I(s) = I(s_0) \MT(s_0) + \int_{s_0}^s B(s)\, \MT(s) \,\text{d}s\,.
+d79 2
+a80 1
+This is further transformed by making $B(s)$ the variable of integration, giving
+d153 1
+a153 1
+% $Id: wvs-090.tex,v 1.1 2010/04/09 02:27:01 vsnyder Exp $
+d156 3
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d152 1
+a152 1
+% $Id: wvs-089.tex,v 1.1 2010/01/26 02:08:29 vsnyder Exp $
+d154 2
+a155 2
+% $Log: wvs-089.tex,v $
+% Revision 1.1  2010/01/26 02:08:29  vsnyder
+a156 1
+%
+@
+

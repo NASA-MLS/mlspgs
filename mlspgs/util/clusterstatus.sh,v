@@ -1,0 +1,839 @@
+head	1.12;
+access;
+symbols
+	v5-02-NRT-19:1.12
+	v6-00:1.12
+	v5-02-NRT-18:1.12
+	v5-02:1.12
+	v5-01-NRT-17:1.12
+	v5-01-NRT-16:1.12
+	v5-01-NRT-15:1.12
+	v5-01-NRT-14:1.12
+	neuralnetworks-1-0:1.12.0.14
+	cfm-single-freq-0-1:1.12.0.12
+	v5-01:1.12
+	v5-00:1.12
+	v4-23-TA133:1.12.0.10
+	mus-emls-1-70:1.12.0.8
+	rel-1-0-englocks-work:1.12.0.6
+	VUMLS1-00:1.12
+	VPL1-00:1.12
+	V4-22-NRT-08:1.12
+	VAM1-00:1.12
+	V4-21:1.12.0.4
+	V4-13:1.12
+	V4-12:1.12
+	V4-11:1.12
+	V4-10:1.12
+	V3-43:1.12
+	M4-00:1.12
+	V3-41:1.12
+	V3-40-PlusGM57:1.12.0.2
+	V2-24-NRT-04:1.12
+	V3-33:1.12
+	V2-24:1.12
+	V3-31:1.12
+	V3-30-NRT-05:1.12
+	cfm-01-00:1.12
+	V3-30:1.12
+	V3-20:1.12
+	V3-10:1.12
+	V2-23-NRT-02:1.12
+	V2-23:1.12
+	V2-22-NRT-01:1.12
+	V2-22:1.12
+	V2-21:1.11
+	V2-20:1.10
+	V2-11:1.10
+	V2-10:1.10
+	V2-00:1.8;
+locks; strict;
+comment	@# @;
+
+
+1.12
+date	2007.06.18.20.24.57;	author pwagner;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2007.01.18.23.30.54;	author pwagner;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2006.07.29.00.18.06;	author pwagner;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2006.07.13.18.12.41;	author pwagner;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2006.03.31.18.40.10;	author pwagner;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2006.03.23.19.17.26;	author pwagner;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2005.10.29.00.19.48;	author pwagner;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2005.09.09.16.43.20;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2005.06.23.22.20.45;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2005.05.20.23.10.49;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2005.04.21.20.39.48;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.04.06.22.16.22;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.12
+log
+@Gets expected computetimes from a file
+@
+text
+@#!/bin/bash
+# --------------- clusterstatus help
+# Create status files for level 2 jobs running on mls clusters at the sips
+# Optionally, mail it to me
+# Usage:
+# clusterstatus.sh [options]
+#    O p t i o n s
+# -C names      create status for clusters in names
+#                (e.g., "lightspeed speedracer")
+# -Cf file      choose clusters named in file
+# -cf file      get expected compute times from file
+# -D d1,d2,     ignore jobs in directories d1, d2 (declared "legally dead")
+# -Df file,     jobs in directories named in file are declared "legally dead"
+# -debug        print lots of extra stuff
+# -dryrun       don't run the sipsl2.sh script
+# -vn versions  show separate listings for versions
+#                (e.g., "V01-51,V01-52")
+# -vf file      choose versions named in file
+#                (if file empty, don't show separate listings)
+# -R list       change RECIPIENTS to list
+# -Rf file      change RECIPIENTS to list of addresses found in file
+# -mail         mail the file to RECIPIENTS
+# -scp          scp the file to me
+# -[n]sort      [don't] sort the initial table according to machine
+#                (sort by default)
+# -temp         don't save the resulting clusterstatus file
+# -h[elp]       print brief help message; exit
+#
+# Note:
+# (1) see notes for /home/pwagner/bin/sipsl2.sh
+# (2) scp option does not seem to work
+# (3) so use mail instead
+# 
+# Result:
+# a file showing jobs, machine, date, status, etc.
+# --------------- End clusterstatus help
+# Copyright 2005, by the California Institute of Technology. ALL
+# RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+# commercial use must be negotiated with the Office of Technology Transfer
+# at the California Institute of Technology.
+
+# This software may be subject to U.S. export control laws. By accepting this
+# software, the user agrees to comply with all applicable U.S. export laws and
+# regulations. User has the responsibility to obtain export licenses, or other
+# export authority as may be required before exporting such information to
+# foreign countries or providing access to foreign persons.
+
+# "$Id: clusterstatus.sh,v 1.11 2007/01/18 23:30:54 pwagner Exp $"
+
+#---------------------------- read_file_into_array
+#
+# read each line of stdin
+# catenating them into an array which we will return
+# Ignore any entries beginning with '#' character
+# In fact, only first entry in each line is kept
+# Possible improvements:
+#   Other comment signifiers
+#   Choose field number other than 1
+
+read_file_into_array()
+{
+  array_result=''
+  while read line; do
+    element=`echo $line | awk '$1 !~ /^#/ {print $1}'`
+    if [ "$element" != "" ]
+    then
+      array_result="$array_result $element"
+    fi
+  done
+  echo $array_result
+}
+      
+# ************
+# Main Program
+# ************
+# 
+MAILER="/home/pwagner/bin/mailtome.sh"
+# These next will be routinely overriden by command-line options
+RECIPIENTS="pwagner David.T.Cuddy@@jpl.nasa.gov sysadmin@@sdsio.jpl.nasa.gov bsaha@@sdsio-mail.jpl.nasa.gov rbarrios@@sdsio-mail.jpl.nasa.gov cvuu@@mls.jpl.nasa.gov Brian.W.Knosp@@jpl.nasa.gov"
+clusternames="lightspeed scramjet speedracer"
+computetimes=""
+corpses=""
+corpsefile=""
+debug="no"
+I=clusterstatus
+dryrun=""
+mail="no"
+me="$0"
+my_name=clusterstatus
+scp="no"
+sort="yes"
+temp="no"
+versions="(none)"
+
+options="-c -bug -x"
+pvmfailedoptions="-fail"
+#runningoptions="-c -full -t"
+runningoptions="-c -full -finish -d"
+
+more_opts="yes"
+while [ "$more_opts" = "yes" ] ; do
+
+    case "$1" in
+
+    -C )
+	    shift
+       clusternames="$1"
+       shift
+       ;;
+    -Cf )
+	    shift
+       clusternames=`cat $1 | uniq | read_file_into_array`
+       runningoptions="$runningoptions -Cf $1"
+       shift
+       ;;
+    -cf )
+	    shift
+       computetimes=`cat $1 | uniq | read_file_into_array`
+       runningoptions="$runningoptions -cf $1"
+       shift
+       ;;
+    -D )
+	    shift
+       corpses="$1"
+       options="$options -D $1"
+       runningoptions="$runningoptions -D $1"
+       pvmfailedoptions="$pvmfailedoptions -D $1"
+       shift
+       ;;
+    -Df )
+	    shift
+       corpsefile="$1"
+       options="$options -Df $1"
+       runningoptions="$runningoptions -Df $1"
+       pvmfailedoptions="$pvmfailedoptions -Df $1"
+       shift
+       ;;
+    -dryrun )
+	    shift
+       dryrun="yes$dryrun"
+       ;;
+    -debug )
+	    shift
+       debug="yes"
+       ;;
+    -R )
+	    shift
+       RECIPIENTS="$1"
+       shift
+       ;;
+    -Rf )
+	    shift
+       # RECIPIENTS=`cat $1`
+       RECIPIENTS=`cat $1 | uniq | read_file_into_array`
+       shift
+       ;;
+    -vn )
+	    shift
+       versions="$1"
+       shift
+       ;;
+    -vf )
+	    shift
+       versions=`cat $1 | uniq | read_file_into_array`
+       shift
+       ;;
+    -mail )
+	    shift
+       mail="yes"
+       ;;
+    -scp )
+	    shift
+       scp="yes"
+       ;;
+    -nsort )
+	    shift
+       sort="no"
+       ;;
+    -sort )
+	    shift
+       sort="yes"
+       ;;
+    -temp )
+	    shift
+       temp="yes"
+       ;;
+    -h | -help )
+       sed -n '/'$my_name' help/,/End '$my_name' help/ p' $me \
+           | sed -n 's/^.//p' | sed '1 d; $ d'
+       exit
+	     ;;
+    * )
+       more_opts="no"
+       ;;
+    esac
+done
+
+TODAY=`date +"%Y-%m-%d"`
+if [ "$temp" = "yes" ]
+then
+  OUTPUT=/home/pwagner/clusterstatus/"$TODAY".tmp
+else
+  OUTPUT=/home/pwagner/clusterstatus/"$TODAY".txt
+fi
+
+if [ "$versions" = "" ]
+then
+  versions="(none)"
+else
+  versions=`echo $versions | sed 's/,/ /g'`
+fi
+
+if [ "$dryrun" != "" ]
+then
+  mustrun="no"
+else
+  mustrun="yes"
+fi
+if [ -f "$OUTPUT" ]
+then
+  if [ "$dryrun" != "" ]
+  then
+    mustrun="no"
+  else
+    mv "$OUTPUT" "$OUTPUT.1"
+  fi
+fi
+
+if [ "$debug" = "yes" ]
+then
+  echo "dryrun $dryrun"
+  echo "mail $mail"
+  echo "sort $sort"
+  echo "TODAY $TODAY"
+  echo "OUTPUT $OUTPUT"
+  echo "mustrun $mustrun"
+  echo "options $options"
+  echo "runningoptions $runningoptions"
+  echo "pvmfailedoptions $pvmfailedoptions"
+  echo "versions $versions"
+  echo "clusternames $clusternames"
+  echo "computetimes $computetimes"
+  echo "corpses $corpses"
+  echo "corpsefile $corpsefile"
+  echo "MAILER $MAILER"
+  echo "RECIPIENTS $RECIPIENTS"
+fi
+
+if [ "$mustrun" = "yes" ]
+then
+  echo "Cluster status for $TODAY" > "$OUTPUT"
+fi
+
+for version in $versions
+do
+  sipsoptions="$options"
+
+  if [ "$mustrun" = "yes" ]
+  then
+    if [ "$version" != "(none)" ]
+    then
+      echo "(version $version)" >> "$OUTPUT"
+      sipsoptions="-vn $version $options"
+    fi
+    if [ "$sort" = "yes" ]
+    then
+      for name in $clusternames
+      do
+        machoptions="-m $name $sipsoptions"
+        # echo "/home/pwagner/bin/sipsl2.sh $machoptions"
+        /home/pwagner/bin/sipsl2.sh $machoptions >> "$OUTPUT"
+        # /home/pwagner/bin/sipsl2.sh -c -bug -x -m $name >> "$OUTPUT"
+        echo "" >> "$OUTPUT"
+      done
+    else
+      # echo "/home/pwagner/bin/sipsl2.sh $sipsoptions"
+      /home/pwagner/bin/sipsl2.sh $sipsoptions >> "$OUTPUT"
+      # /home/pwagner/bin/sipsl2.sh -c -bug -x >> "$OUTPUT"
+      echo "" >> "$OUTPUT"
+    fi
+  else
+    echo "Cluster status for $TODAY $OUTPUT"
+    if [ "$version" != "(none)" ]
+    then
+      echo "(version $version)"
+      sipsoptions="-vn $version $sipsoptions"
+    fi
+    if [ "$sort" = "yes" ]
+    then
+      for name in $clusternames
+      do
+        machoptions="-m $name $sipsoptions"
+        echo "/home/pwagner/bin/sipsl2.sh $machoptions"
+        # echo "/home/pwagner/bin/sipsl2.sh -c -bug -x $name"
+        echo ""
+      done
+    else
+      echo "/home/pwagner/bin/sipsl2.sh $sipsoptions"
+      # echo "/home/pwagner/bin/sipsl2.sh -c -bug -x"
+      echo ""
+    fi
+  fi
+
+done
+
+if [ "$mustrun" = "yes" ]
+then
+  echo "Status of running jobs:" >> "$OUTPUT"
+  # echo "/home/pwagner/bin/sipsl2.sh -c -full -t >> $OUTPUT"
+  /home/pwagner/bin/sipsl2.sh $runningoptions >> "$OUTPUT"
+  echo "" >> "$OUTPUT"
+  echo "Nodes showing pvm failures:" >> "$OUTPUT"
+  # echo "/home/pwagner/bin/sipsl2.sh -fail >> $OUTPUT"
+  /home/pwagner/bin/sipsl2.sh $pvmfailedoptions >> "$OUTPUT"
+else
+  echo "Status of running jobs: >> $OUTPUT"
+  echo "/home/pwagner/bin/sipsl2.sh $runningoptions"
+  echo ""
+  echo "Nodes showing pvm failures: >> $OUTPUT"
+  echo "/home/pwagner/bin/sipsl2.sh $pvmfailedoptions"
+fi
+
+if [ "$mail" = "yes" -a "$dryrun" != "yesyes" ]
+then
+  $MAILER -r /home/pwagner/maillogs -s "clusterstatus $TODAY" \
+   -F -R "$RECIPIENTS" "$OUTPUT"
+   # -f "Paul Wagner <paul.a.wagner@@jpl.nasa.gov>" -F -R "$RECIPIENTS" "$OUTPUT"
+elif [ "$mail" = "yes" ]
+then
+  $MAILER -r /home/pwagner/maillogs -s "clusterstatus $TODAY" \
+   -F -R "$RECIPIENTS" -dryrun "$OUTPUT"
+   # -f "Paul Wagner <paul.a.wagner@@jpl.nasa.gov>" -F -R "$RECIPIENTS" -dryrun "$OUTPUT"
+elif [ "$scp" = "no" ]
+then
+  exit 0
+elif [ "$dryrun" = "no" ]
+then
+  echo 'Warning: scp not yet properly tested'
+else
+  /home/pwagner/private/scptome.sh -dryrun "$OUTPUT" 
+fi
+exit 0
+# $Log: clusterstatus.sh,v $
+# Revision 1.11  2007/01/18 23:30:54  pwagner
+# Displays finish time instead of start time for running jobs
+#
+# Revision 1.10  2006/07/29 00:18:06  pwagner
+# Fixed bug preventing running jobs showing start time
+#
+# Revision 1.9  2006/07/13 18:12:41  pwagner
+# Accepts that certain jobs (corpses) may be legally declared dead
+#
+# Revision 1.8  2006/03/31 18:40:10  pwagner
+# Now able to read clusternames, RECIPIENTS, and versions from files
+#
+# Revision 1.7  2006/03/23 19:17:26  pwagner
+# Handles multiple pge versions explicitly
+#
+# Revision 1.6  2005/10/29 00:19:48  pwagner
+# Changes to have mesgs show Return-path we want
+#
+# Revision 1.5  2005/09/09 16:43:20  pwagner
+# Changed args to MAILER to forge return address to jpl address
+#
+# Revision 1.4  2005/06/23 22:20:45  pwagner
+# Reworded Copyright statement
+#
+# Revision 1.3  2005/05/20 23:10:49  pwagner
+# Show how many chunks succumbed to 'list out of order' bug
+#
+# Revision 1.2  2005/04/21 20:39:48  pwagner
+# Improved readability, added speedracer name
+#
+# Revision 1.1  2005/04/06 22:16:22  pwagner
+# First commit
+#
+@
+
+
+1.11
+log
+@Displays finish time instead of start time for running jobs
+@
+text
+@d11 1
+d48 1
+a48 1
+# "$Id: clusterstatus.sh,v 1.10 2006/07/29 00:18:06 pwagner Exp $"
+d81 1
+a84 2
+me="$0"
+my_name=clusterstatus
+d88 2
+d94 6
+d113 7
+d125 3
+d133 3
+a227 4
+options="-c -bug -x"
+#runningoptions="-c -full -t"
+runningoptions="-c -full -finish -d"
+pvmfailedoptions="-fail"
+d242 1
+a248 12
+if [ "$corpses" != "" ]
+then
+  options="$options -D $corpses"
+  runningoptions="$runningoptions -D $corpses"
+  pvmfailedoptions="$pvmfailedoptions -D $corpses"
+elif [ "$corpsefile" != "" ]
+then
+  options="$options -Df $corpsefile"
+  runningoptions="$runningoptions -Df $corpsefile"
+  pvmfailedoptions="$pvmfailedoptions -Df $corpsefile"
+fi
+
+d344 3
+@
+
+
+1.10
+log
+@Fixed bug preventing running jobs showing start time
+@
+text
+@d4 1
+a4 1
+# Optionally, mail or scp it to me
+d47 1
+a47 1
+# "$Id: clusterstatus.sh,v 1.9 2006/07/13 18:12:41 pwagner Exp $"
+a75 3
+#RECIPIENTS="pwagner David.T.Cuddy@@jpl.nasa.gov ahanzel@@mls.jpl.nasa.gov sysadmin@@sdsio.jpl.nasa.gov eparaiso@@sdsio-mail.jpl.nasa.gov bsaha@@sdsio-mail.jpl.nasa.gov dromo@@sdsio.jpl.nasa.gov cvuu@@mls.jpl.nasa.gov Brian.W.Knosp@@jpl.nasa.gov"
+#RECIPIENTS="pwagner David.T.Cuddy@@jpl.nasa.gov ahanzel@@mls.jpl.nasa.gov sysadmin@@sdsio.jpl.nasa.gov mliukis@@sdsio-mail.jpl.nasa.gov bsaha@@sdsio-mail.jpl.nasa.gov dromo@@sdsio.jpl.nasa.gov cvuu@@mls.jpl.nasa.gov Brian.W.Knosp@@jpl.nasa.gov"
+RECIPIENTS="pwagner David.T.Cuddy@@jpl.nasa.gov ahanzel@@mls.jpl.nasa.gov sysadmin@@sdsio.jpl.nasa.gov mliukis@@sdsio-mail.jpl.nasa.gov bsaha@@sdsio-mail.jpl.nasa.gov rbarrios@@sdsio-mail.jpl.nasa.gov cvuu@@mls.jpl.nasa.gov Brian.W.Knosp@@jpl.nasa.gov"
+d77 3
+a79 2
+# clusternames="lightspeed scramjet speedracer"
+clusternames="lightspeed speedracer"
+d208 2
+a209 1
+runningoptions="-c -full -t"
+d338 3
+@
+
+
+1.9
+log
+@Accepts that certain jobs (corpses) may be legally declared dead
+@
+text
+@d47 1
+a47 1
+# "$Id: clusterstatus.sh,v 1.8 2006/03/31 18:40:10 pwagner Exp $"
+d210 1
+a210 1
+runningoptions="-c -full"
+d339 3
+@
+
+
+1.8
+log
+@Now able to read clusternames, RECIPIENTS, and versions from files
+@
+text
+@d11 2
+d47 1
+a47 1
+# "$Id: clusterstatus.sh,v 1.7 2006/03/23 19:17:26 pwagner Exp $"
+d82 2
+d109 10
+d210 2
+d222 2
+d226 2
+d232 12
+d305 1
+a305 1
+  /home/pwagner/bin/sipsl2.sh -c -full -t >> "$OUTPUT"
+d309 1
+a309 1
+  /home/pwagner/bin/sipsl2.sh -fail >> "$OUTPUT"
+d312 1
+a312 1
+  echo "/home/pwagner/bin/sipsl2.sh -c -full -t"
+d315 1
+a315 1
+  echo "/home/pwagner/bin/sipsl2.sh -fail"
+d321 2
+a322 1
+   -f "Paul Wagner <paul.a.wagner@@jpl.nasa.gov>" -F -R "$RECIPIENTS" "$OUTPUT"
+d326 2
+a327 1
+   -f "Paul Wagner <paul.a.wagner@@jpl.nasa.gov>" -F -R "$RECIPIENTS" -dryrun "$OUTPUT"
+d339 3
+@
+
+
+1.7
+log
+@Handles multiple pge versions explicitly
+@
+text
+@d8 3
+d15 2
+d18 1
+d45 1
+a45 1
+# "$Id: clusterstatus.sh,v 1.6 2005/10/29 00:19:48 pwagner Exp $"
+d47 23
+d75 2
+a76 1
+RECIPIENTS="pwagner David.T.Cuddy@@jpl.nasa.gov ahanzel@@mls.jpl.nasa.gov sysadmin@@sdsio.jpl.nasa.gov mliukis@@sdsio-mail.jpl.nasa.gov bsaha@@sdsio-mail.jpl.nasa.gov dromo@@sdsio.jpl.nasa.gov cvuu@@mls.jpl.nasa.gov Brian.W.Knosp@@jpl.nasa.gov"
+d95 10
+d118 6
+d129 5
+d173 7
+a179 1
+versions=`echo $versions | sed 's/,/ /g'`
+d305 3
+@
+
+
+1.6
+log
+@Changes to have mesgs show Return-path we want
+@
+text
+@d8 11
+a18 7
+# -dryrun     don't run the sipsl2.sh script
+# -R list     change RECIPIENTS to list
+# -mail       mail the file to RECIPIENTS
+# -scp        scp the file to me
+# -[n]sort    [don't] sort the initial table according to machine (sort by default)
+# -temp       don't save the resulting clusterstatus file
+# -h[elp]     print brief help message; exit
+d39 1
+a39 1
+# "$Id: clusterstatus.sh,v 1.5 2005/09/09 16:43:20 pwagner Exp $"
+d59 1
+d69 4
+d78 5
+d121 8
+a128 1
+mustrun="yes"
+d138 17
+d158 7
+a164 1
+  if [ "$sort" = "yes" ]
+d166 19
+a184 3
+    for name in $clusternames
+    do
+      /home/pwagner/bin/sipsl2.sh -c -bug -x -m $name >> "$OUTPUT"
+d186 1
+a186 1
+    done
+d188 20
+a207 2
+    /home/pwagner/bin/sipsl2.sh -c -bug -x >> "$OUTPUT"
+    echo "" >> "$OUTPUT"
+d209 5
+d215 1
+d219 1
+a221 12
+  echo "Cluster status for $TODAY $OUTPUT"
+  if [ "$sort" = "yes" ]
+  then
+    for name in $clusternames
+    do
+      echo "/home/pwagner/bin/sipsl2.sh -c -bug -x $name"
+      echo ""
+    done
+  else
+    echo "/home/pwagner/bin/sipsl2.sh -c -bug -x"
+    echo ""
+  fi
+d228 1
+d248 3
+@
+
+
+1.5
+log
+@Changed args to MAILER to forge return address to jpl address
+@
+text
+@d9 1
+d35 1
+a35 1
+# "$Id: clusterstatus.sh,v 1.4 2005/06/23 22:20:45 pwagner Exp $"
+d41 2
+a42 1
+RECIPIENTS="pwagner David.T.Cuddy@@jpl.nasa.gov ahanzel@@mls.jpl.nasa.gov sysadmin@@sdsio.jpl.nasa.gov eparaiso@@sdsio-mail.jpl.nasa.gov bsaha@@sdsio-mail.jpl.nasa.gov dromo@@sdsio.jpl.nasa.gov cvuu@@mls.jpl.nasa.gov Brian.W.Knosp@@jpl.nasa.gov"
+d64 5
+a156 2
+  #$MAILER -r /home/pwagner/maillogs -s "clusterstatus $TODAY" \
+  # -R "$RECIPIENTS" "$OUTPUT"
+d158 1
+a158 1
+   -f "Paul Wagner <paul.a.wagner@@jpl.nasa.gov>" -R "$RECIPIENTS" "$OUTPUT"
+a160 2
+  # $MAILER -r /home/pwagner/maillogs -s "clusterstatus $TODAY" \
+  # -R "$RECIPIENTS" -dryrun "$OUTPUT"
+d162 1
+a162 1
+   -f "Paul Wagner <paul.a.wagner@@jpl.nasa.gov>" -R "$RECIPIENTS" -dryrun "$OUTPUT"
+a168 1
+  # /home/pwagner/private/scptome.sh -r /home/pwagner/scplogs "$OUTPUT" 
+d174 3
+@
+
+
+1.4
+log
+@Reworded Copyright statement
+@
+text
+@d34 1
+a34 1
+# "$Id: clusterstatus.sh,v 1.3 2005/05/20 23:10:49 pwagner Exp $"
+d40 1
+a40 3
+RECIPIENTS="pwagner David.T.Cuddy@@jpl.nasa.gov ahanzel@@mls.jpl.nasa.gov pzimdars@@sdsio-mail.jpl.nasa.gov sneely@@sdsio.jpl.nasa.gov eparaiso@@sdsio-mail.jpl.nasa.gov bsaha@@sdsio-mail.jpl.nasa.gov dromo@@sdsio.jpl.nasa.gov cvuu@@mls.jpl.nasa.gov Brian.W.Knosp@@jpl.nasa.gov"
+#RECIPIENTS="cvuu@@mls.jpl.nasa.gov paul.a.wagner@@jpl.nasa.gov"
+#RECIPIENTS="pwagner"
+d42 2
+a43 1
+clusternames="lightspeed scramjet speedracer"
+d150 2
+d153 1
+a153 1
+   -R "$RECIPIENTS" "$OUTPUT"
+d156 2
+d159 1
+a159 1
+   -R "$RECIPIENTS" -dryrun "$OUTPUT"
+d172 3
+@
+
+
+1.3
+log
+@Show how many chunks succumbed to 'list out of order' bug
+@
+text
+@d23 4
+a26 2
+# Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+# U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
+d28 7
+a34 1
+# "$Id: clusterstatus.sh,v 1.2 2005/04/21 20:39:48 pwagner Exp $"
+d169 3
+@
+
+
+1.2
+log
+@Improved readability, added speedracer name
+@
+text
+@d26 1
+a26 1
+# "$Id: clusterstatus.sh,v 1.1 2005/04/06 22:16:22 pwagner Exp $"
+d32 1
+a32 1
+RECIPIENTS="pwagner David.T.Cuddy@@jpl.nasa.gov ahanzel@@mls.jpl.nasa.gov pzimdars@@sdsio-mail.jpl.nasa.gov sneely@@sdsio.jpl.nasa.gov eparaiso@@sdsio-mail.jpl.nasa.gov bsaha@@sdsio-mail.jpl.nasa.gov dromo@@sdsio.jpl.nasa.gov cvuu@@mls.jpl.nasa.gov"
+d110 1
+a110 1
+      /home/pwagner/bin/sipsl2.sh -c -x -m $name >> "$OUTPUT"
+d114 1
+a114 1
+    /home/pwagner/bin/sipsl2.sh -c -x >> "$OUTPUT"
+d128 1
+a128 1
+      echo "/home/pwagner/bin/sipsl2.sh -c -x $name"
+d132 1
+a132 1
+    echo "/home/pwagner/bin/sipsl2.sh -c -x"
+d161 3
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d3 1
+a3 1
+# Create status files for level 2 jobs running on lightspeed, scramjet
+d11 2
+d26 1
+a26 1
+# "$Id: clusterstatus.sh,v 1.1 2005/04/01 00:13:15 pwagner Exp $"
+d36 1
+d44 2
+d63 12
+a79 1
+
+d87 6
+a92 1
+OUTPUT=/home/pwagner/clusterstatus/"$TODAY".txt
+d106 11
+a116 2
+  /home/pwagner/bin/sipsl2.sh -c -x >> "$OUTPUT"
+  echo "" >> "$OUTPUT"
+d124 11
+a134 2
+  echo "/home/pwagner/bin/sipsl2.sh -c -x"
+  echo ""
+d161 3
+@
+

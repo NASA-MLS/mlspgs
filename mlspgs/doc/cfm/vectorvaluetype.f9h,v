@@ -1,0 +1,78 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.14
+	cfm-single-freq-0-1:1.1.0.12
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.10
+	mus-emls-1-70:1.1.0.8
+	rel-1-0-englocks-work:1.1.0.6
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2009.12.18.23.42.07;	author honghanh;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Code snippets used in the document
+@
+text
+@type VectorValue_T
+    type (QuantityTemplate_T) :: TEMPLATE ! Template for this quantity.
+    integer :: index            ! Index of this quantity into vector database
+    real(r8), dimension(:,:), pointer :: VALUES => NULL() ! The dimensions of
+    ! VALUES are Auxiliary coordinates (or 1) * Frequencies (or 1) * Vertical
+    ! Coordinates (or 1), and Horizontal Instances (scan or profile or 1). 
+    ! These are taken from (template%noAux * template%noChans *
+    ! template%noSurfs, template%noInstances).
+    character, dimension(:,:), pointer :: MASK => NULL() ! MASK is used to
+    ! control whether elements of vectors are of interest. If MASK is not
+    ! associated, every element is of interest.  Otherwise,the dimensions of
+    ! MASK are the same as VALUES.  Bits of MASK(i,j) are used to determine
+    ! what is not interesting.  Zero means something about VALUES(i,j) is
+    ! interesting, and one means it is not.  The low-order bit is used for
+    ! linear algebra.  Other bits can be used for other purposes.
+    ! Actually the mask bits are got at from the ichar(mask)
+    ! Inversely, given the integer representation of the bits, we get the mask
+    ! by mask = char(int)
+    integer :: label = 0        ! Not used
+end type VectorValue_T
+
+@

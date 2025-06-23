@@ -1,0 +1,166 @@
+head	2.3;
+access;
+symbols
+	V0_1:1.2;
+locks; strict;
+comment	@# @;
+
+
+2.3
+date	2000.11.15.01.54.20;	author vsnyder;	state dead;
+branches;
+next	2.2;
+
+2.2
+date	2000.10.09.23.26.45;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2000.10.09.23.25.35;	author vsnyder;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2000.09.05.17.42.01;	author dcuddy;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2000.07.06.18.04.05;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2000.07.06.01.43.16;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.3
+log
+@Moved to mlspgs/lib/LF95
+@
+text
+@# $Id: Makefile,v 2.2 2000/10/09 23:26:45 vsnyder Exp $
+
+# Fortran compiler:
+FC = lf95
+
+# Compiler options:
+FOPTS = -g --chk
+
+# Loader options:
+LDOPTS = -g --chk
+
+# Path to source files:
+S = ..
+
+# Option to specify path to .mod files:
+I = -I
+
+# Path to .mod files for MLS library:
+M = $(HOME)/mlspgs/lib/LF95
+
+# SDPToolkit or SDPToolkitSubstitute?
+#SDP = 
+SDP = Substitute
+
+include ../Makefile.inc
+
+# $Log: Makefile,v $
+# Revision 2.2  2000/10/09 23:26:45  vsnyder
+# Move machine.f90 to lib
+#
+# Revision 2.1  2000/10/09 23:25:35  vsnyder
+# Introduce SDP variable
+#
+# Revision 2.0  2000/09/05 17:42:01  dcuddy
+# Change revision to 2.0
+#
+# Revision 1.2  2000/07/06 18:04:05  vsnyder
+# Insert CVS "variables"
+#
+@
+
+
+2.2
+log
+@Move machine.f90 to lib
+@
+text
+@d1 1
+a1 1
+# $Id: Makefile,v 2.1 2000/10/09 23:25:35 vsnyder Exp $
+d28 3
+@
+
+
+2.1
+log
+@Introduce SDP variable
+@
+text
+@d1 1
+a1 1
+# $Id: Makefile,v 2.0 2000/09/05 17:42:01 dcuddy Exp $
+a24 3
+machine.o: machine.f90
+	$(FC) -c $(FOPTS) machine.f90
+
+d28 3
+@
+
+
+2.0
+log
+@Change revision to 2.0
+@
+text
+@d1 1
+a1 1
+# $Id: Makefile,v 1.2 2000/07/06 18:04:05 vsnyder Exp $
+d18 7
+d31 3
+@
+
+
+1.2
+log
+@Insert CVS "variables"
+@
+text
+@d1 1
+a1 1
+# $Id: $
+d23 4
+a26 1
+# $Log: $
+@
+
+
+1.1
+log
+@Initial check-in
+@
+text
+@d1 2
+a14 3
+# Path to .mod files:
+M = $(HOME)/mlspgs/lib/LF95
+
+a17 7
+# Beginning of path to libraries:
+L = /nas/software/SRC/TOOLKIT-5.2.6v1.00
+#L = /nas/software/SRC/TOOLKIT-5.2.6v1.00.NAG
+
+# Platform (used in a directory path in ../Makefile.inc):
+P = linux
+
+d22 2
+@
+

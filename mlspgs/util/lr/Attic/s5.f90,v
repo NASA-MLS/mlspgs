@@ -1,0 +1,244 @@
+head	1.2;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2014.01.14.00.09.33;	author vsnyder;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2013.10.24.22.41.14;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Revised LR doesn't need it
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module S5
+
+  implicit NONE
+
+  private
+
+  integer, public,  parameter :: MAXBAS = 12000
+  integer, public,  parameter :: MAXRED = 4000
+  integer, public,  parameter :: MAXTRN = 4000
+  integer, public, save :: BASIS(MAXBAS)
+  integer, public, save :: RED(MAXRED)
+  integer, public, save :: TRAN(MAXTRN)
+  public :: ADDBAS, DEQUE, ENQUE, NEWBAS
+
+  ! QHEAD   points to the head of the queue.
+  ! QTAIL   points to the tail of the queue.
+  !         QHEAD AND QTAIL ARE SAVE VARIABLES.
+
+  integer, private, save :: QHEAD = 0, QTAIL = 0
+  integer, private, parameter :: MAXB2 = MAXBAS - 2
+  data BASIS(1) / MAXB2 /, BASIS(4) / 1 /, BASIS(5) / 1 /
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: s5.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+! ===================================================     ADDBAS     =====
+  subroutine ADDBAS (IPTR, NPR, NDOT, NSET)
+
+    use ANACOM, only: INDBAS
+    use Error_Handler, only: Error
+
+    ! Add the item consisting of production NPR, having the
+    ! dot before the NDOT'th item in its right hand side and context
+    ! NSET, to the basis at IPTR.
+
+    ! The items of the basis of the configuration set are stored in
+    ! reverse order starting at the end of the BASIS array.
+
+    integer, intent(in) :: IPTR, NPR, NDOT, NSET
+
+    ! *****     Local Variables     ************************************
+
+    ! INDITM  is the index for the next available space to store an
+    !         item.  INDITM is available from BASIS(IPTR+5).
+
+    integer INDITM
+
+    ! *****     Procedures     *****************************************
+
+    inditm = basis(iptr+5)
+    ! Leave room for one more basis state in the bottom of the BASIS
+    ! array, because the extent of the items in the BASIS array,
+    ! the extent of transitions in the TRAN array, and the extent of
+    ! reductions in the RED array are indicated by the difference
+    ! between the starting pointers in two consecutive state records.
+    if (inditm <= indbas+4) call error ('BASIS area overflow',2)
+    basis(inditm) = npr
+    basis(inditm+1) = ndot
+    basis(inditm+2) = nset
+    basis(iptr+5) = inditm - 3
+
+  end subroutine ADDBAS
+
+! ====================================================     DEQUE     =====
+  subroutine DEQUE (IPTR)
+    !   Removes the basis at the head of the queue and returns a pointer
+    !   to it in IPTR.
+
+    integer, intent(out) :: IPTR
+
+    iptr = qhead
+    if (qhead  /=  0) then
+       qhead = basis(qhead+1)
+       basis(iptr+1) = -1
+    end if
+
+  end subroutine DEQUE
+
+! ====================================================     ENQUE     =====
+  subroutine ENQUE (IPTR)
+    !   Enters the basis pointed at by IPTR at the tail of the queue of
+    !   BASIS objects to be processed.
+
+    integer, intent(in) :: IPTR
+
+    if (basis(iptr+1)  ==  -1) then
+      basis(iptr+1) = 0
+      if (qhead  ==  0) then
+        qhead = iptr
+      else
+        basis(qtail+1) = iptr
+        end if
+        qtail = iptr
+     end if
+
+  end subroutine ENQUE
+
+! ===================================================     NEWBAS     =====
+  subroutine NEWBAS (INDEX)
+
+    use ANACOM, only: INDBAS
+    use Error_Handler, only: Error
+
+    implicit NONE
+
+    ! Prepare space for a new basis.  Return the pointer to the space in
+    ! INDEX.
+
+    ! A BASIS record contains information about the configuration:
+    !   BASIS(INDEX) = pointer to first item of the configuration
+    !                  set.  The items are stored in reverse order
+    !                  starting at the end of the BASIS array.  The
+    !                  number of items for the configuration set
+    !                  is given by (BASIS(INDEX) - BASIS(INDEX+5)) / 3.
+    !   BASIS(INDEX+1) = pointer to next configuration set to be
+    !                  processed, or -1 if the configuration set is not
+    !                  on the queue.  It is not added to the queue again
+    !                  if it is already on the queue.
+    !   BASIS(INDEX+2) = pointer to next configuration set having the
+    !                  same entrance symbol.
+    !   BASIS(INDEX+3) = pointer to first transition from the state.
+    !                  Transitions are stored in TRAN as positions in
+    !                  the BASIS array.  The number of transitions from
+    !                  the state is given by
+    !                  BASIS(INDEX+3) - BASIS(INDEX+8).
+    !   BASIS(INDEX+4) = pointer to first reduction from the state.
+    !                  Reductions are stored in RED as a pair consisting
+    !                  of the number of the production to be reduced and
+    !                  a pointer to the context set.  The number of
+    !                  reductions from the state is given by
+    !                  (BASIS(INDEX+4) - BASIS(INDEX+9)) / 2.
+
+    ! Let P be the pointer to the first item = BASIS(INDEX).  Then
+    ! for the I'th item in the configuration set,
+    !    BASIS(P+3-3*I) = production number.
+    !    BASIS(P+4-3*I) = position of scanning of the production (index
+    !                     of the next symbol in the RHS to be scanned).
+    !    BASIS(P+5-3*I) = pointer to the context list.
+
+
+    integer, intent(out) :: INDEX
+
+    ! *****     External References     ********************************
+
+    ! ERROR   prints error messages.
+
+    ! *****     Procedures     *****************************************
+
+    ! Make sure there is room for the current configuration set, the
+    ! next configuration set (which if this is the last is used to
+    ! calculate the number of items, transitions and reductions),
+    ! and one item.
+    if (indbas+13 >= basis(indbas)) call error ('BASIS area overflow',2)
+    basis(indbas+5) = basis(indbas)
+    basis(indbas+8) = maxtrn + 1
+    basis(indbas+9) = maxred + 2
+    ! Store pointer to next basis to be processed, -1 means this basis
+    ! is not on a queue.
+    basis(indbas+1) = -1
+    ! Store pointer to next basis having same entry symbol.
+    basis(indbas+2) = 0
+    index = indbas
+    indbas = indbas + 5
+
+  end subroutine NEWBAS
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: s5.f90,v 1.1 2013/10/24 22:41:14 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module S5
+
+! $Log: s5.f90,v $
+! Revision 1.1  2013/10/24 22:41:14  vsnyder
+! Initial commit
+!
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d36 1
+a36 1
+       "$RCSfile: parser.f90,v $"
+d186 1
+a186 1
+       "$Id: parser.f90,v 2.29 2013/10/02 01:35:46 vsnyder Exp $"
+d195 4
+a198 1
+! $Log: $
+@
+

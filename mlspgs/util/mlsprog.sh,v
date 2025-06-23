@@ -1,0 +1,739 @@
+head	1.17;
+access;
+symbols
+	v5-02-NRT-19:1.17
+	v6-00:1.17
+	v5-02-NRT-18:1.17
+	v5-02:1.17
+	v5-01-NRT-17:1.17
+	v5-01-NRT-16:1.17
+	v5-01-NRT-15:1.17
+	v5-01-NRT-14:1.17
+	neuralnetworks-1-0:1.17.0.4
+	cfm-single-freq-0-1:1.17.0.2
+	v5-01:1.17
+	v5-00:1.17
+	v4-23-TA133:1.16.0.2
+	mus-emls-1-70:1.15.0.4
+	rel-1-0-englocks-work:1.15.0.2
+	VUMLS1-00:1.15
+	VPL1-00:1.14
+	V4-22-NRT-08:1.14
+	VAM1-00:1.10
+	V4-21:1.10.0.2
+	V4-13:1.10
+	V4-12:1.10
+	V4-11:1.10
+	V4-10:1.10
+	V3-43:1.9
+	M4-00:1.10
+	V3-41:1.9
+	V3-40-PlusGM57:1.9.0.2
+	V2-24-NRT-04:1.5
+	V3-33:1.9
+	V2-24:1.5
+	V3-31:1.9
+	V3-30-NRT-05:1.9
+	cfm-01-00:1.9
+	V3-30:1.9
+	V3-20:1.9
+	V3-10:1.9
+	V2-23-NRT-02:1.5
+	V2-23:1.5
+	V2-22-NRT-01:1.5
+	V2-22:1.5
+	V2-21:1.5
+	V2-20:1.5
+	V2-11:1.5
+	V2-10:1.5
+	V2-00:1.5
+	V1-51:1.2
+	V1-50:1.2
+	V1-45:1.2
+	V1-44:1.2
+	V1-43:1.2
+	V1-42:1.2
+	V1-41:1.2
+	V1-32:1.2
+	V1-40:1.2
+	V1-31:1.2
+	V1-30:1.2
+	V1-13:1.2
+	V1-12:1.2
+	V1-11:1.2
+	V1-10:1.2
+	newfwm-feb03:1.2.0.2
+	V1-04:1.2
+	V1-03:1.2
+	V1-02:1.2
+	V1-00:1.2
+	newfwm-sep01:1.1.0.2
+	V0-7:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.17
+date	2019.07.17.20.23.28;	author pwagner;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2019.01.31.19.17.11;	author pwagner;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2017.02.09.23.33.17;	author pwagner;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2016.05.17.17.07.14;	author pwagner;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2016.05.12.17.00.14;	author pwagner;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2015.11.02.23.20.47;	author pwagner;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2015.10.07.22.58.42;	author pwagner;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2012.02.15.18.12.06;	author pwagner;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2009.04.18.00.51.24;	author pwagner;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2009.02.13.17.37.05;	author pwagner;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2009.01.16.01.51.39;	author pwagner;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2008.09.09.16.55.48;	author pwagner;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2006.04.12.22.39.24;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2006.04.03.23.09.09;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2005.06.23.22.20.45;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2002.02.21.21.57.40;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.08.07.20.57.47;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.17
+log
+@Try to makee error mesgs more helpful and conspicuous
+@
+text
+@#!/bin/sh
+# mlsxxyyzz.sh
+# run a program specified as the variable MLSPROG
+# assuming that it's in directory MLSBIN
+# Then return an exit status of:
+# 1 if program's exit status is different from
+# the variable specified as NORMAL_STATUS; otherwise
+# 0
+#
+# Copyright 2005, by the California Institute of Technology. ALL
+# RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+# commercial use must be negotiated with the Office of Technology Transfer
+# at the California Institute of Technology.
+
+# This software may be subject to U.S. export control laws. By accepting this
+# software, the user agrees to comply with all applicable U.S. export laws and
+# regulations. User has the responsibility to obtain export licenses, or other
+# export authority as may be required before exporting such information to
+# foreign countries or providing access to foreign persons.
+
+# usage: mlsxxyyzz.sh [option_1] [option_2] ..
+
+# Used by mlspgs/MakeFC to install script versions of each mls program
+# MLSPROG. The script version returns a status of 0 only if 
+# the MLSPROG goes past some "finish" line in the code
+# causing it to exit with status=NORMAL_STATUS
+# MakeFC sed's this file to replace xxyyzz, hhoommee, etc. as appropriate
+
+# Now if the tool h5repack in the same directory as MLSPROG
+# and if the current working directory houses the product files
+# then as a final step repack them
+
+# For this final step to operate we must be able to recognize the product files
+# A regular expression rreeggeexx will be sed-ed by the install script
+#------------------------------- extant_files ------------
+#
+# Function to return only those files among the args
+# that actually exist
+# Useful when passed something like *.f which may 
+# (1) expand to list of files, returned as extant_files_result, or
+# (2) stay *.f, in which case a blank is returned as extant_files_result 
+#     (unless you have perversely named a file '*.f')
+# usage: extant_files arg1 [arg2] ..
+
+extant_files()
+{
+   extant_files_result=
+   # Trivial case ($# = 0)
+   if [ "$1" != "" ]
+   then
+      for file
+      do
+         if [ -f "$file" ]
+         then
+               extant_files_result="$extant_files_result $file"
+         fi
+      done
+   fi
+   echo $extant_files_result
+}
+
+run_prog()
+{
+  if [ "$PGE_BINARY" = "" ]
+  then
+    PGE_BINARY=$BIN_DIR/$MLSPROG
+  fi
+  echo $PGE_BINARY $EXTRA_OPTIONS "$@@"
+  
+  if [ ! -x "$PGE_BINARY"  ]
+  then
+    echo "************************************************************************"
+    echo "$PGE_BINARY doesn't exist!"
+    echo "Check for typos in its path and program names"
+    echo "************************************************************************"
+    exit 1
+  fi
+  if [ -f $BIN_DIR/license.txt ]
+  then
+    cat $BIN_DIR/license.txt
+  fi
+  echo $PGE_BINARY $EXTRA_OPTIONS "$@@"
+  if [ "$CAPTURE_MT" = "yes" -a "$STDERRFILE" = "" ]
+  then
+    STDERRFILE=$MLSPROG.stderr
+  fi
+  if [ "$CAPTURE_MT" = "yes" ]
+  then
+    /usr/bin/time -f 'M: %M t: %e' $PGE_BINARY $EXTRA_OPTIONS "$@@" 2> "$STDERRFILE"
+  elif [ "$STDERRFILE" != "" ]
+  then
+    $PGE_BINARY $EXTRA_OPTIONS "$@@" 2> "$STDERRFILE"
+  else
+    $PGE_BINARY $EXTRA_OPTIONS "$@@"
+  fi
+  return_status=`expr $?`
+  H5REPACK=$BIN_DIR/h5repack
+  MISALIGNMENT=$BIN_DIR/misalignment
+}
+
+#------------------------------- Main Program ------------
+
+#****************************************************************
+#                                                               *
+#                  * * * Main Program  * * *                    *
+#                                                               *
+#                                                               *
+#	The entry point where control is given to the script         *
+#****************************************************************
+#
+
+echo "We were called as $0 $@@"
+NORMAL_STATUS=2
+
+# We print the file license.txt to stdout
+if [ -f $PGE_BINARY_DIR/license.txt ]
+then
+  cat $PGE_BINARY_DIR/license.txt
+fi
+
+# If the first arguments is "-Ef" then source the file of environment settings"
+if [ "$1" = "-Ef" ]
+then
+  shift
+  . $1
+  shift
+elif [ -r "$JOBDIR/job.env"  ]
+then
+  . $JOBDIR/job.env
+elif [ -r "$PGE_ROOT/science_env.sh"  ]
+then
+  . ${PGE_ROOT}/science_env.sh
+elif [ -r "$PGSBIN/pgs-env.ksh" ]
+then
+  # Oops, this stomps on any PCF we might have selected
+  # so save it to be restored
+  PCF=$PGS_PC_INFO_FILE
+  . $PGSBIN/pgs-env.ksh
+  export PGS_PC_INFO_FILE=$PCF
+fi
+# Use the following line to add extra options to MLSPROG
+EXTRA_OPTIONS="$OTHEROPTS mlseexxttrraa"
+
+MLSPROG=mlsxxyyzz
+
+# So far only mlsl2 can accept cmdline options
+# If 
+# (1) we are invoked as mlsl2; and if 
+# (2) HOSTNAME is defined 
+# it will be stored in metadata as ProductionLocation
+if [ "$MLSPROG" = "mlsl2"  -a "$HOSTNAME" != "" ]
+then
+  EXTRA_OPTIONS="--loc $HOSTNAME $EXTRA_OPTIONS"
+fi
+# This directory may be a relative path or an absolute one
+MLSBIN=mlsbbiinn
+# If relative, it must be relative to the following absolute path
+MLSHOME=mlshhoommee
+
+GZIPLEVEL="1"
+#          ^^^---- compression level ("" means none)
+
+# The following environmental variable may already have been set
+if [ "$PGSMEM_USESHM" = "" ]
+then
+  PGSMEM_USESHM=NO
+fi
+ulimit -s unlimited
+ulimit -a
+export FLIB_DVT_BUFFER=0
+# Does MLSBIN start with "/" or not?
+# (in other words is it absolute or relative?)
+
+is_absolute=`echo "$MLSBIN" | grep '^\/'`
+
+if [ "$PGE_BINARY_DIR" != "" ]
+then
+  BIN_DIR=$PGE_BINARY_DIR
+elif [ "$is_absolute" = "" ]
+then
+  BIN_DIR=$MLSHOME/$MLSBIN
+else
+  BIN_DIR=$MLSBIN
+fi
+
+run_prog $@@
+
+# Last chance to find h5repack
+if [ ! -x "$H5REPACK" ]
+then
+  H5REPACK=$HDFTOOLS/h5repack
+fi
+
+# repack level 2 product files to speed things up
+if [ -x "$H5REPACK" ]
+then
+  files=`extant_files rreeggeexx`
+  if [ "$files" = "" ]
+  then
+    if [ -d "outputs" ]
+    then
+      cd "outputs"
+      files=`extant_files rreeggeexx`
+    fi
+  fi
+  for file in $files
+  do
+    if [ -w "$file" ]
+    then
+      packed="$file".p
+      if [ "$GZIPLEVEL" != "" ] 
+      then
+        filter="-f GZIP=$GZIPLEVEL"
+      else
+        filter=""
+      fi
+      echo "Packing $file into $packed"
+      echo $H5REPACK -i "$file" -o "$packed" $filter
+      $H5REPACK -i "$file" -o "$packed" $filter
+      # Here we could insert some check involving h5diff if we were dubious
+      mv "$packed" "$file"
+    fi
+  done
+fi
+
+# Check products for misaligned geolocations
+# If they are found to be misaligned, set return_status to 99
+if [ -x "$MISALIGNMENT" ]
+then
+  files=`extant_files *L2GP-DGG_*.he5`
+  if [ "$files" = "" ]
+  then
+    if [ -d "outputs" ]
+    then
+      cd "outputs"
+      files=`extant_files *L2GP-DGG_*.he5`
+    fi
+  fi
+  a=""
+  if [ "$files" != "" ]
+  then
+    echo $MISALIGNMENT -silent *L2GP-DGG_*.he5
+    $MISALIGNMENT -silent *L2GP-DGG_*.he5
+    a=`$MISALIGNMENT -silent *L2GP-DGG_*.he5`
+  fi
+  if [ "$a" != "" ]
+  then
+    echo $a
+    return_status=99
+  fi
+fi
+
+echo "return_status $return_status"
+
+if [ $return_status != $NORMAL_STATUS ]
+then
+   exit 1
+else
+   exit 0
+fi
+
+# $Log: mlsprog.sh,v $
+# Revision 1.16  2019/01/31 19:17:11  pwagner
+# Pass HOSTNAME on commandline to mlsl2
+#
+# Revision 1.15  2017/02/09 23:33:17  pwagner
+# Avoid stomping on any already-selected PCF
+#
+# Revision 1.14  2016/05/17 17:07:14  pwagner
+# 'dot' job.env if found
+#
+# Revision 1.13  2016/05/12 17:00:14  pwagner
+# Obey CAPTURE_MT by capturing time, mmory footpint to stderr
+#
+# Revision 1.12  2015/11/02 23:20:47  pwagner
+# Now checks for mialigned geolocations
+#
+# Revision 1.11  2015/10/07 22:58:42  pwagner
+# Automtically stores stderr to STDERRFILE; housekeeping
+#
+# Revision 1.10  2012/02/15 18:12:06  pwagner
+# Offer last chance to find h5repack in HDFTOOLS directory
+#
+# Revision 1.9  2009/04/18 00:51:24  pwagner
+# May use environment variable OTHEROPTS in command line options
+#
+# Revision 1.8  2009/02/13 17:37:05  pwagner
+# Running mlspgs automatically prints license text
+#
+# Revision 1.7  2009/01/16 01:51:39  pwagner
+# Takes -Ef settings.env as optional args
+#
+# Revision 1.6  2008/09/09 16:55:48  pwagner
+# May h5repack even products in outputs subdirectory
+#
+# Revision 1.5  2006/04/12 22:39:24  pwagner
+# Needed to define H5REPACK before its use
+#
+# Revision 1.4  2006/04/03 23:09:09  pwagner
+# Added repacking
+#
+# Revision 1.3  2005/06/23 22:20:45  pwagner
+# Reworded Copyright statement
+#
+# Revision 1.2  2002/02/21 21:57:40  pwagner
+# EXTRA_OPTIONS now settable
+#
+# Revision 1.1  2001/08/07 20:57:47  pwagner
+# First commit
+#
+@
+
+
+1.16
+log
+@Pass HOSTNAME on commandline to mlsl2
+@
+text
+@d69 9
+d263 3
+@
+
+
+1.15
+log
+@Avoid stomping on any already-selected PCF
+@
+text
+@d136 10
+d254 3
+@
+
+
+1.14
+log
+@'dot' job.env if found
+@
+text
+@d106 6
+d126 3
+d130 1
+d244 3
+@
+
+
+1.13
+log
+@Obey CAPTURE_MT by capturing time, mmory footpint to stderr
+@
+text
+@d112 9
+d234 3
+@
+
+
+1.12
+log
+@Now checks for mialigned geolocations
+@
+text
+@d73 9
+a81 1
+  if [ "$STDERRFILE" != "" ]
+d225 3
+@
+
+
+1.11
+log
+@Automtically stores stderr to STDERRFILE; housekeeping
+@
+text
+@d64 5
+a68 1
+  echo $BIN_DIR/$MLSPROG $EXTRA_OPTIONS "$@@"
+d75 1
+a75 1
+    $BIN_DIR/$MLSPROG $EXTRA_OPTIONS "$@@" 2> "$STDERRFILE"
+d77 1
+a77 1
+    $BIN_DIR/$MLSPROG $EXTRA_OPTIONS "$@@"
+d81 1
+d140 1
+a140 1
+run_prog
+d180 29
+d217 3
+@
+
+
+1.10
+log
+@Offer last chance to find h5repack in HDFTOOLS directory
+@
+text
+@d62 17
+d127 1
+a127 8
+   echo $PGE_BINARY_DIR/$MLSPROG $EXTRA_OPTIONS "$@@"
+   if [ -f $PGE_BINARY_DIR/license.txt ]
+   then
+     cat $PGE_BINARY_DIR/license.txt
+   fi
+   $PGE_BINARY_DIR/$MLSPROG $EXTRA_OPTIONS "$@@"
+   return_status=`expr $?`
+   H5REPACK=$PGE_BINARY_DIR/h5repack
+d130 1
+a130 8
+   echo $MLSHOME/$MLSBIN/$MLSPROG $EXTRA_OPTIONS "$@@"
+   if [ -f $MLSHOME/$MLSBIN/license.txt ]
+   then
+     cat $MLSHOME/$MLSBIN/license.txt
+   fi
+   $MLSHOME/$MLSBIN/$MLSPROG $EXTRA_OPTIONS "$@@"
+   return_status=`expr $?`
+   H5REPACK=$MLSHOME/$MLSBIN/h5repack
+d132 1
+a132 8
+   echo $MLSBIN/$MLSPROG $EXTRA_OPTIONS "$@@"
+   if [ -f $MLSBIN/license.txt ]
+   then
+     cat $MLSBIN/license.txt
+   fi
+   $MLSBIN/$MLSPROG $EXTRA_OPTIONS "$@@"
+   return_status=`expr $?`
+   H5REPACK=$MLSBIN/h5repack
+d135 2
+d183 3
+@
+
+
+1.9
+log
+@May use environment variable OTHEROPTS in command line options
+@
+text
+@d139 6
+d185 3
+@
+
+
+1.8
+log
+@Running mlspgs automatically prints license text
+@
+text
+@d84 1
+a84 1
+EXTRA_OPTIONS=mlseexxttrraa
+d179 3
+@
+
+
+1.7
+log
+@Takes -Ef settings.env as optional args
+@
+text
+@d111 4
+d121 4
+d130 4
+d179 3
+@
+
+
+1.6
+log
+@May h5repack even products in outputs subdirectory
+@
+text
+@d73 1
+d75 8
+d95 8
+d108 7
+a114 1
+if [ "$is_absolute" = "" ]
+d167 3
+@
+
+
+1.5
+log
+@Needed to define H5REPACK before its use
+@
+text
+@d35 37
+d107 9
+a115 1
+  files=`echo rreeggeexx`
+d144 3
+@
+
+
+1.4
+log
+@Added repacking
+@
+text
+@d58 2
+d63 2
+a66 2
+return_status=`expr $?`
+
+d99 3
+@
+
+
+1.3
+log
+@Reworded Copyright statement
+@
+text
+@d29 7
+d46 3
+d65 24
+d97 3
+@
+
+
+1.2
+log
+@EXTRA_OPTIONS now settable
+@
+text
+@d10 10
+a19 2
+# Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d63 3
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d5 4
+a8 4
+# Then return an exit status
+# of 1 if program's exit status is different from
+# the variable specified as TARGET_STATUS
+# else 0
+d10 1
+a10 1
+# Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+d13 1
+a13 1
+# usage: mlsxxyyzz.sh
+d18 2
+a19 1
+# causing it to exit with status=TARGET_STATUS
+d21 3
+a23 1
+TARGET_STATUS=2
+d38 2
+a39 2
+   echo $MLSHOME/$MLSBIN/$MLSPROG "$@@"
+   $MLSHOME/$MLSBIN/$MLSPROG "$@@"
+d41 2
+a42 2
+   echo $MLSBIN/$MLSPROG "$@@"
+   $MLSBIN/$MLSPROG "$@@"
+d47 1
+a47 1
+if [ $return_status != $TARGET_STATUS ]
+d55 3
+@
+

@@ -1,0 +1,2199 @@
+head	2.46;
+access;
+symbols
+	v5-02-NRT-19:2.46
+	v6-00:2.46
+	v5-02-NRT-18:2.46
+	v5-02:2.44
+	v5-01-NRT-17:2.46
+	v5-01-NRT-16:2.46
+	v5-01-NRT-15:2.46
+	v5-01-NRT-14:2.46
+	neuralnetworks-1-0:2.46.0.4
+	cfm-single-freq-0-1:2.46.0.2
+	v5-01:2.44
+	v5-00:2.44
+	v4-23-TA133:2.44.0.2
+	mus-emls-1-70:2.43.0.4
+	rel-1-0-englocks-work:2.43.0.2
+	VUMLS1-00:2.43
+	VPL1-00:2.43
+	V4-22-NRT-08:2.43
+	VAM1-00:2.42
+	V4-21:2.42.0.2
+	V4-13:2.42
+	V4-12:2.41
+	V4-11:2.41
+	V4-10:2.41
+	V3-43:2.17
+	M4-00:2.21
+	V3-41:2.17
+	V3-40-PlusGM57:2.17.0.2
+	V2-24-NRT-04:2.16
+	V3-33:2.17
+	V2-24:2.16
+	V3-31:2.17
+	V3-30-NRT-05:2.17
+	cfm-01-00:2.17
+	V3-30:2.17
+	V3-20:2.17
+	V3-10:2.17
+	V2-23-NRT-02:2.16
+	V2-23:2.16
+	V2-22-NRT-01:2.16
+	V2-22:2.16
+	V2-21:2.14
+	V2-20:2.14
+	V2-11:2.14
+	V2-10:2.14
+	V2-00:2.12
+	V1-51:2.11
+	V1-50:2.11
+	V1-45:2.11
+	V1-44:2.11
+	V1-43:2.11
+	V1-42:2.11
+	V1-41:2.11
+	V1-32:2.11
+	V1-40:2.11
+	V1-31:2.11
+	V1-30:2.11
+	V1-13:2.11
+	V1-12:2.11
+	V1-11:2.11
+	V1-10:2.11
+	newfwm-feb03:2.11.0.2
+	V1-04:2.10
+	V1-03:2.10
+	V1-02:2.10
+	V1-00:2.10
+	newfwm-sep01:2.8.0.2
+	V0-7:2.8
+	V0-5-Level2:2.8
+	V0-5-SIPS:2.3;
+locks; strict;
+comment	@# @;
+
+
+2.46
+date	2020.05.14.15.09.52;	author pwagner;	state Exp;
+branches;
+next	2.45;
+
+2.45
+date	2020.04.30.23.19.52;	author pwagner;	state Exp;
+branches;
+next	2.44;
+
+2.44
+date	2018.08.04.00.30.16;	author vsnyder;	state Exp;
+branches;
+next	2.43;
+
+2.43
+date	2016.03.25.00.38.43;	author pwagner;	state Exp;
+branches;
+next	2.42;
+
+2.42
+date	2014.09.05.00.30.59;	author vsnyder;	state Exp;
+branches;
+next	2.41;
+
+2.41
+date	2014.03.20.01.30.23;	author vsnyder;	state Exp;
+branches;
+next	2.40;
+
+2.40
+date	2014.02.13.00.04.29;	author pwagner;	state Exp;
+branches;
+next	2.39;
+
+2.39
+date	2014.01.28.02.59.50;	author vsnyder;	state Exp;
+branches;
+next	2.38;
+
+2.38
+date	2014.01.11.01.41.02;	author vsnyder;	state Exp;
+branches;
+next	2.37;
+
+2.37
+date	2013.11.18.22.24.03;	author pwagner;	state Exp;
+branches;
+next	2.36;
+
+2.36
+date	2013.11.13.19.05.01;	author pwagner;	state Exp;
+branches;
+next	2.35;
+
+2.35
+date	2013.11.04.22.52.39;	author pwagner;	state Exp;
+branches;
+next	2.34;
+
+2.34
+date	2013.11.01.00.04.11;	author pwagner;	state Exp;
+branches;
+next	2.33;
+
+2.33
+date	2013.10.02.01.28.36;	author vsnyder;	state Exp;
+branches;
+next	2.32;
+
+2.32
+date	2013.09.21.00.21.39;	author pwagner;	state Exp;
+branches;
+next	2.31;
+
+2.31
+date	2013.09.12.03.12.13;	author vsnyder;	state Exp;
+branches;
+next	2.30;
+
+2.30
+date	2013.09.04.02.49.35;	author vsnyder;	state Exp;
+branches;
+next	2.29;
+
+2.29
+date	2013.08.31.02.26.21;	author vsnyder;	state Exp;
+branches;
+next	2.28;
+
+2.28
+date	2013.08.31.02.01.51;	author vsnyder;	state Exp;
+branches;
+next	2.27;
+
+2.27
+date	2013.08.31.01.24.01;	author vsnyder;	state Exp;
+branches;
+next	2.26;
+
+2.26
+date	2013.08.30.23.13.20;	author pwagner;	state Exp;
+branches;
+next	2.25;
+
+2.25
+date	2013.08.30.03.55.49;	author vsnyder;	state Exp;
+branches;
+next	2.24;
+
+2.24
+date	2013.08.23.02.50.47;	author vsnyder;	state Exp;
+branches;
+next	2.23;
+
+2.23
+date	2013.08.17.03.10.13;	author vsnyder;	state Exp;
+branches;
+next	2.22;
+
+2.22
+date	2013.06.28.18.06.14;	author pwagner;	state Exp;
+branches;
+next	2.21;
+
+2.21
+date	2012.05.24.01.35.59;	author vsnyder;	state Exp;
+branches;
+next	2.20;
+
+2.20
+date	2011.12.13.01.09.00;	author pwagner;	state Exp;
+branches;
+next	2.19;
+
+2.19
+date	2011.10.14.00.33.17;	author pwagner;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2011.03.31.19.55.22;	author vsnyder;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2009.06.23.18.25.44;	author pwagner;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2007.08.13.17.38.42;	author pwagner;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2007.07.27.00.20.51;	author vsnyder;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2006.07.28.01.59.42;	author vsnyder;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2006.07.19.22.26.04;	author vsnyder;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2005.06.22.17.25.51;	author pwagner;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2002.10.08.00.09.15;	author pwagner;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2001.11.09.23.14.08;	author vsnyder;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2001.09.13.19.36.50;	author livesey;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2001.05.03.02.13.25;	author vsnyder;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2001.05.01.23.53.40;	author vsnyder;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2001.04.25.00.08.26;	author vsnyder;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2001.04.24.23.33.56;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2001.04.24.20.12.47;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2001.04.17.20.56.10;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2001.03.16.21.01.17;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2000.10.11.18.33.25;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.46
+log
+@Repair slowdown resulting from last commit
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module TRACE_M
+
+  implicit none
+  private
+
+  public :: Trace_Begin, Trace_End
+
+  interface Trace_Begin
+    module procedure Trace_Begin_B, Trace_Begin_C, Trace_Begin_I
+  end interface
+
+  character (len=8), save :: PreviousDate = ' '
+  logical, parameter      :: DEEBUG = .false.
+  logical, parameter      :: VERBOSE = .false.
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: trace_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains ! ====     Public Procedures     ==============================
+
+! ------------------------------------------------  Trace_Begin_B  -----
+  subroutine Trace_Begin_B ( Name_Input, Name_C, Root, Index, String, Cond, Advance )
+  ! If Name_I <= 0, use Create_String ( Name_C ) to give it a value.
+  ! We assume the actual argument is a SAVE variable.  Thereby, if
+  ! Name_I is positive, we assume it's the result of entering Name_C,
+  ! and it isn't done again.
+
+  ! Print "ENTER NAME with ROOT = <node_id(root)>" with DEPTH dots in
+  ! front.  Increment DEPTH.
+
+    use Output_m, only: Output
+    use String_Table, only: Create_String, String_Table_Size
+
+    integer, intent(in          ) :: Name_Input
+    character(len=*), intent(in)  :: Name_C
+    integer, intent(in), optional :: Root
+    integer, intent(in), optional :: Index
+    integer, intent(in), optional :: String ! To display after Name_I
+    logical, intent(in), optional :: Cond   ! Print if true, default true
+    character(len=*), intent(in), optional :: Advance
+    integer                       :: Name_i
+    name_i = name_input
+    if ( Verbose ) then
+      call output( string_table_size(), &
+        & before='Trace_Begin_B ' // trim(Name_c) // ' ', advance='yes' )
+      call output ( name_i, before='name_i: ' )
+      call output ( ' name_c: ' // trim(name_c), advance='yes' )
+    endif
+    if ( string_table_size() < 1 ) return
+    if ( name_i <= 0 ) name_i = create_string ( trim(name_c) )
+    call trace_begin ( name_i, root, index, string, cond, advance )
+
+  end subroutine Trace_Begin_B
+
+! ------------------------------------------------  Trace_Begin_C  -----
+  subroutine Trace_Begin_C ( Name_C, Root, Index, String, Cond, Advance )
+  ! Print "ENTER NAME with ROOT = <node_id(root)>" with DEPTH dots in
+  ! front.  Increment DEPTH.
+
+    use Output_m, only: Output
+    use String_Table, only: Create_String, String_Table_Size
+
+    character(len=*), intent(in) :: Name_C
+    integer, intent(in), optional :: Root
+    integer, intent(in), optional :: Index
+    integer, intent(in), optional :: String ! To display after Name_C
+    logical, intent(in), optional :: Cond   ! Print if true, default true
+    character(len=*), intent(in), optional :: Advance
+
+    integer :: Name_I
+
+    if ( Verbose ) &
+      & call output( string_table_size(), &
+        & before='Trace_Begin_C ' // trim(Name_c) // ' ', advance='yes' )
+    if ( string_table_size() < 1 ) return
+    name_i = create_string ( trim(name_c) )
+
+    call trace_begin ( name_i, root, index, string, cond, advance )
+
+  end subroutine Trace_Begin_C
+
+! ------------------------------------------------  Trace_Begin_I  -----
+  subroutine Trace_Begin_I ( Name, Root, Index, String, Cond, Advance )
+  ! Print "Enter NAME with ROOT = <node_id(root)>" with DEPTH dots in
+  ! front.  Increment DEPTH.
+
+    use Call_Stack_m, only: Stack_t, Push_Stack, Top_Stack
+    use MLSCommon, only: MLSDebug, MLSVerbose, &
+      & MLSDebugSticky, MLSVerboseSticky, MLSNamesAreVerbose, MLSNamesAreDebug
+    use MLSMessageModule, only: MLSMessageCalls
+    use MLSStringLists, only: SwitchDetail
+    use Output_m, only: NewLine, Output, OutputOptions
+    use String_Table, only: Get_String, String_Table_Size
+
+    integer, intent(in) :: Name
+    integer, intent(in), optional :: Root
+    integer, intent(in), optional :: Index
+    integer, intent(in), optional :: String ! To display after Name_I
+    logical, intent(in), optional :: Cond   ! Print if true, default true
+    character(len=*), intent(in), optional :: Advance
+
+    type(stack_t) :: Frame
+    logical :: MyCond
+    character(32) :: ParentName
+
+    ! Executable
+    if ( Verbose ) &
+      & call output( string_table_size(), &
+        & before='Trace_Begin_I ', advance='yes' )
+
+    if ( string_table_size() < 1 ) return
+    call Checkdate
+    myCond = .true.
+    if ( present(cond) ) myCond = cond
+
+    if ( myCond ) then
+      call push_stack ( name, root, index, string, before='Enter ', &
+        & where=.true., advance=advance )
+    else
+      if ( verbose ) then
+        call output ( name, before='name: ' )
+        if ( present(root) ) call output ( root, before=' root: ' )
+        if ( present(index) ) call output ( index, before=' index: ' )
+        if ( present(string) ) call output ( string, before=' string: ' )
+        call newLine
+      end if
+      call push_stack ( name, root, index, string )
+    end if
+
+    ! Must we set debug or verbose based on the module name?
+    call top_stack ( frame )
+    call get_string ( frame%text, parentName )
+    if ( switchDetail( MLSNamesAreDebug, parentName, options='-fc' ) > -1 &
+      & .and. .not. MLSDebugSticky ) then
+      MLSDebug = .true.
+    end if
+    if ( switchDetail( MLSNamesAreVerbose, parentName, options='-fc' ) > -1 &
+      & .and. .not. MLSVerboseSticky ) then
+      MLSVerbose = .true.
+    end if
+
+    call get_string ( name, outputOptions%parentName )
+    call MLSMessageCalls( 'push', name=outputOptions%parentName )
+
+  end subroutine Trace_Begin_I
+
+! --------------------------------------------------    Trace_End  -----
+  subroutine Trace_End ( Name, Index, String, StringIndex, Cond )
+  ! Decrement DEPTH.  Print "EXIT NAME" with DEPTH dots in front.
+
+  ! The only reason to provide Name is if you want to check whether stack
+  ! pushes and pops match, by setting -Schktr.  You probably don't need to
+  ! bother with this if you can see both Trace_Begin and Trace_end, and
+  ! they're invoked with the same condition.
+
+    use Call_Stack_m, only: Pop_Call_Stack=>Pop_Stack, Stack_T, Stack_Depth
+    use MLSMessageModule, only: MLSMessageCalls
+    use MLSStringLists, only: SwitchDetail
+    use Output_m, only: NewLine, Output, OutputOptions
+    use String_Table, only: Create_String, Display_String, String_Table_Size
+    use Toggles, only: Switches
+
+    character(len=*), optional, intent(in) :: Name ! Checked but taken from stack
+    integer, intent(in), optional :: Index ! Use value from stack if not present
+    character(len=*), intent(in), optional :: String
+    integer, intent(in), optional :: StringIndex
+    logical, intent(in), optional :: Cond  ! Print if true, default true
+
+    integer :: Check = -2
+    type(stack_t) :: Frame
+
+    ! logical :: PrintMemoryReport ! Report on mem usage so far
+    logical :: MyCond
+
+    ! Executable
+    if ( string_table_size() < 1 ) return
+    call Checkdate
+    if ( Verbose ) then
+      call output( 'Trace_End ', advance='no' )
+      if ( present(name) ) call output( trim(Name), advance='no' )
+      call newLine
+    end if
+
+    if ( check < -1 ) check = switchDetail ( switches, 'chktr' )
+
+    myCond = merge(.true., .false., present(name))
+    if ( present(cond) ) myCond = cond
+    if ( myCond ) then
+      call pop_call_stack ( 'Exit ', .true., frame=frame, index=index, string=string, &
+        & stringIndex=stringIndex, showTime=.true., &
+        & PrintMemoryReport = switchDetail ( switches, 'trmem' ) > -1 )
+    else
+      call Pop_Call_Stack ( frame=frame, index=index, Silent = .true. )
+    end if
+
+    if ( check > -1 ) then
+      if ( frame%tree < 0 .or. stack_depth() <= 0 ) then
+        call output ( 'In Trace_End, stack underflow noticed ' )
+        if ( present(name) ) call output ( 'with NAME = ' // trim(name) )
+        if ( present(index) ) call output ( index, before=' INDEX = ' )
+        call newLine
+      else
+        if ( present(name) ) then
+          if ( frame%text /= create_string(trim(name)) ) then
+            call display_string ( frame%text, &
+              & before='In Trace_End, name at top of stack = "' )
+            call output ( '" but NAME = "' // trim(name) // '"', advance='yes' )
+          end if
+        end if
+        if ( present(index) ) then
+          if ( frame%index /= index ) then
+            call display_string ( frame%text, &
+              & before='In Trace_End, in frame for "' )
+            call output ( frame%index, before='", INDEX at top of stack = ' )
+            call output ( index, before=' but INDEX argument = ', advance='yes' )
+          end if
+        end if
+      end if
+    end if
+
+!   call top_stack ( frame )
+!   call get_string ( frame%text, outputOptions%parentName )
+    call MLSMessageCalls( 'pop' )
+    call MLSMessageCalls( 'top', outputOptions%parentName )  
+
+  end subroutine Trace_End
+
+!------------------------ private procedures ---------------------
+  ! -- CheckDate
+  ! Checks for a jump in the date --
+  ! So that we don't accidentally drop (multiples of) 24 hours in 
+  ! marking times entering and exiting Named process
+  subroutine CheckDate
+    character (len=8) :: CurrentDate
+    ! Executable
+    call date_and_time( date=CurrentDate )
+    if ( len_trim(PreviousDate) > 0 ) then
+      if ( PreviousDate /= CurrentDate .or. DEEBUG ) &
+        & call DateLine ( PreviousDate, CurrentDate )
+    end if
+    PreviousDate = CurrentDate
+  end subroutine CheckDate
+  
+  subroutine DateLine( olddate, newdate )
+    use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT
+    character(len=*), intent(in) :: olddate, newdate
+    ! Executable
+    call blanks( 15, fillChar='-' )
+    call output( ' Crossed date boundary from ' )
+    call output( olddate )
+    call output( ' to ' )
+    call output( newdate )
+    call blanks( 1 )
+    call blanks( 15, fillChar='-' )
+    call newline
+  end subroutine DateLine
+  
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: trace_m.f90,v 2.45 2020/04/30 23:19:52 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module TRACE_M
+
+! $Log: trace_m.f90,v $
+! Revision 2.45  2020/04/30 23:19:52  pwagner
+! Added switch trmem to trace memory allocates/deallocates, too
+!
+! Revision 2.44  2018/08/04 00:30:16  vsnyder
+! Undo ALL CAPSing.  Remove dependence upon HighOutput
+!
+! Revision 2.43  2016/03/25 00:38:43  pwagner
+! Must not change name input to TRACE_BEGIN_B
+!
+! Revision 2.42  2014/09/05 00:30:59  vsnyder
+! Some cannonball polishing
+!
+! Revision 2.41  2014/03/20 01:30:23  vsnyder
+! Check String_Table_Size, not How_Many_Strings, some cannonball polishing
+!
+! Revision 2.40  2014/02/13 00:04:29  pwagner
+! Revert to older appearance on Exit WALK_TREE..
+!
+! Revision 2.39  2014/01/28 02:59:50  vsnyder
+! Add StringIndex argument to Trace_End
+!
+! Revision 2.38  2014/01/11 01:41:02  vsnyder
+! Decruftification
+!
+! Revision 2.37  2013/11/18 22:24:03  pwagner
+! Sticky versions of verbose, debug available
+!
+! Revision 2.36  2013/11/13 19:05:01  pwagner
+! Replaced idea of saving and restoring previous states of verbose, debug with stack
+!
+! Revision 2.35  2013/11/04 22:52:39  pwagner
+! Treat MLSNamesAreDebug, MLSNamesAreVerbose like switches
+!
+! Revision 2.34  2013/11/01 00:04:11  pwagner
+! Verbose tracks begin, end
+!
+! Revision 2.33  2013/10/02 01:28:36  vsnyder
+! Add 'string' argument to trace_end
+!
+! Revision 2.32  2013/09/21 00:21:39  pwagner
+! Check if string table initialized first
+!
+! Revision 2.31  2013/09/12 03:12:13  vsnyder
+! Add Advance to Trace_Begin, pass Index through Trace_End to Pop_Stack
+!
+! Revision 2.30  2013/09/04 02:49:35  vsnyder
+! Simplify stack handling in Trace_End
+!
+! Revision 2.29  2013/08/31 02:26:21  vsnyder
+! Better debugging output
+!
+! Revision 2.28  2013/08/31 02:01:51  vsnyder
+! Always trim names sent to string table
+!
+! Revision 2.27  2013/08/31 01:24:01  vsnyder
+! Better debugging output
+!
+! Revision 2.26  2013/08/30 23:13:20  pwagner
+! Prevent unwanted printing during routine trace_end
+!
+! Revision 2.25  2013/08/30 03:55:49  vsnyder
+! Add String argument to Trace_Begin
+!
+! Revision 2.24  2013/08/23 02:50:47  vsnyder
+! Use Call_Stack
+!
+! Revision 2.23  2013/08/17 03:10:13  vsnyder
+! Use Call_Stack
+!
+! Revision 2.22  2013/06/28 18:06:14  pwagner
+! Automatically set parentName
+!
+! Revision 2.21  2012/05/24 01:35:59  vsnyder
+! Clean up output
+!
+! Revision 2.20  2011/12/13 01:09:00  pwagner
+! Automatically turns on MLSVerbose or MLSDebug according to MLSNamesAre..
+!
+! Revision 2.19  2011/10/14 00:33:17  pwagner
+! Prints notice if date boundary crossed
+!
+! Revision 2.18  2011/03/31 19:55:22  vsnyder
+! Cannonball polishing
+!
+! Revision 2.17  2009/06/23 18:25:44  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.16  2007/08/13 17:38:42  pwagner
+! Push named procedures automatically onto new MLSCallStack
+!
+! Revision 2.15  2007/07/27 00:20:51  vsnyder
+! Spiff up printing, work on memory tracking
+!
+! Revision 2.14  2006/07/28 01:59:42  vsnyder
+! Correct bug in memory reporting, plus cannonball polishing
+!
+! Revision 2.13  2006/07/19 22:26:04  vsnyder
+! Report memory size changes in trace_end, plus some cannonball polishing
+!
+! Revision 2.12  2005/06/22 17:25:51  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.11  2002/10/08 00:09:15  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.10  2001/11/09 23:14:08  vsnyder
+! Use Time_Now instead of CPU_TIME
+!
+! Revision 2.9  2001/09/13 19:36:50  livesey
+! Added optional index arguments
+!
+! Revision 2.8  2001/05/03 02:13:25  vsnyder
+! Trying to print time exclusive of calls isn't working
+!
+! Revision 2.7  2001/05/01 23:53:40  vsnyder
+! Print CPU time exclusive of deeper ones at each end_trace
+!
+! Revision 2.6  2001/04/25 00:08:26  vsnyder
+! Use 'fill' argument of 'output' to get leading zeroes on milliseconds
+!
+! Revision 2.5  2001/04/24 23:33:56  vsnyder
+! Add timing
+!
+! Revision 2.4  2001/04/24 20:12:47  vsnyder
+! Emit blanks before 'Enter' if no tree node supplied
+!
+! Revision 2.3  2001/04/17 20:56:10  vsnyder
+! Emit 'depth' dots in trace_begin even if 'root' is absent
+!
+! Revision 2.2  2001/03/16 21:01:17  vsnyder
+! Make ROOT optional in Trace_Begin
+!
+! Revision 2.1  2000/10/11 18:33:25  vsnyder
+! Move from lib/cf_parser to lib; insert copyright notice
+!
+! Revision 2.0  2000/09/05 17:41:51  dcuddy
+! Change revision to 2.0
+!
+! Revision 1.1  2000/07/06 01:43:12  vsnyder
+! Initial check-in
+!
+@
+
+
+2.45
+log
+@Added switch trmem to trace memory allocates/deallocates, too
+@
+text
+@d186 1
+a186 1
+    logical :: PrintMemoryReport ! Report on mem usage so far
+a198 1
+    PrintMemoryReport = switchDetail ( switches, 'trmem' ) > -1
+d205 1
+a205 1
+        & PrintMemoryReport=PrintMemoryReport )
+d275 1
+a275 1
+       "$Id: trace_m.f90,v 2.44 2018/08/04 00:30:16 vsnyder Exp $"
+d285 3
+@
+
+
+2.44
+log
+@Undo ALL CAPSing.  Remove dependence upon HighOutput
+@
+text
+@d170 1
+a170 1
+    use Call_Stack_m, only: Pop_Stack, Stack_T, Stack_Depth ! , Top_Stack
+d174 1
+a174 1
+    use String_Table, only: create_String, Display_String, String_Table_Size
+d186 1
+d199 1
+d204 3
+a206 2
+      call pop_stack ( 'Exit ', .true., frame=frame, index=index, string=string, &
+        & stringIndex=stringIndex, showTime=.true. )
+d208 1
+a208 1
+      call pop_stack ( frame=frame, index=index, Silent = .true. )
+d276 1
+a276 1
+       "$Id: trace_m.f90,v 2.43 2016/03/25 00:38:43 pwagner Exp $"
+d286 3
+@
+
+
+2.43
+log
+@Must not change name input to TRACE_BEGIN_B
+@
+text
+@d35 2
+a36 2
+! ------------------------------------------------  TRACE_BEGIN_B  -----
+  subroutine TRACE_BEGIN_B ( NAME_INPUT, NAME_C, ROOT, INDEX, String, Cond, Advance )
+d45 7
+a51 8
+    use highoutput, only: outputnamedValue
+    use OUTPUT_M, only: OUTPUT
+    use STRING_TABLE, only: CREATE_STRING, STRING_TABLE_SIZE
+
+    integer, intent(in          ) :: NAME_INPUT
+    character(len=*), intent(in)  :: NAME_C
+    integer, intent(in), optional :: ROOT
+    integer, intent(in), optional :: INDEX
+d55 1
+a55 1
+    integer                       :: name_i
+d60 2
+a61 2
+      call outputnamedValue( 'name_i', name_i )
+      call outputnamedValue( 'name_c', name_c )
+d67 1
+a67 1
+  end subroutine TRACE_BEGIN_B
+d69 2
+a70 2
+! ------------------------------------------------  TRACE_BEGIN_C  -----
+  subroutine TRACE_BEGIN_C ( NAME_C, ROOT, INDEX, String, Cond, Advance )
+d74 2
+a75 2
+    use OUTPUT_M, only: OUTPUT
+    use STRING_TABLE, only: CREATE_STRING, STRING_TABLE_SIZE
+d77 3
+a79 3
+    character(len=*), intent(in) :: NAME_C
+    integer, intent(in), optional :: ROOT
+    integer, intent(in), optional :: INDEX
+d94 1
+a94 1
+  end subroutine TRACE_BEGIN_C
+d96 3
+a98 3
+! ------------------------------------------------  TRACE_BEGIN_I  -----
+  subroutine TRACE_BEGIN_I ( NAME, ROOT, INDEX, String, Cond, Advance )
+  ! Print "ENTER NAME with ROOT = <node_id(root)>" with DEPTH dots in
+d101 1
+a101 2
+    use highoutput, only: outputanynamedvalue
+    use CALL_STACK_M, only: STACK_T, PUSH_STACK, TOP_STACK
+d104 8
+a111 8
+    use MLSMESSAGEMODULE, only: MLSMESSAGECALLS
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use OUTPUT_M, only: Output, OUTPUTOPTIONS
+    use STRING_TABLE, only: GET_STRING, STRING_TABLE_SIZE
+
+    integer, intent(in) :: NAME
+    integer, intent(in), optional :: ROOT
+    integer, intent(in), optional :: INDEX
+d118 1
+a118 1
+    character(32) :: PARENTNAME
+d135 5
+a139 4
+        call outputanynamedvalue ( 'name', ivalue=name )
+        call outputanynamedvalue ( 'root', ivalue=root )
+        call outputanynamedvalue ( 'index', ivalue=index )
+        call outputanynamedvalue ( 'string', ivalue=string )
+d159 1
+a159 1
+  end subroutine TRACE_BEGIN_I
+d161 2
+a162 2
+! --------------------------------------------------    TRACE_END  -----
+  subroutine TRACE_END ( NAME, INDEX, String, StringIndex, Cond )
+d170 6
+a175 6
+    use CALL_STACK_M, only: POP_STACK, STACK_T, STACK_DEPTH ! , TOP_STACK
+    use MLSMESSAGEMODULE, only: MLSMESSAGECALLS
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use OUTPUT_M, only: NEWLINE, OUTPUT, OUTPUTOPTIONS
+    use STRING_TABLE, only: CREATE_STRING, DISPLAY_STRING, STRING_TABLE_SIZE
+    use TOGGLES, only: SWITCHES
+d177 2
+a178 2
+    character(len=*), optional, intent(in) :: NAME ! Checked but taken from stack
+    integer, intent(in), optional :: INDEX ! Use value from stack if not present
+d238 1
+a238 1
+  end subroutine TRACE_END
+d273 1
+a273 1
+       "$Id: trace_m.f90,v 2.42 2014/09/05 00:30:59 vsnyder Exp $"
+d283 3
+@
+
+
+2.42
+log
+@Some cannonball polishing
+@
+text
+@d36 1
+a36 1
+  subroutine TRACE_BEGIN_B ( NAME_I, NAME_C, ROOT, INDEX, String, Cond, Advance )
+d45 1
+d49 2
+a50 2
+    integer, intent(inout) :: NAME_I
+    character(len=*), intent(in) :: NAME_C
+d56 4
+a59 2
+    if ( Verbose ) &
+      & call output( string_table_size(), &
+d61 3
+d102 1
+d136 6
+d274 1
+a274 1
+       "$Id: trace_m.f90,v 2.41 2014/03/20 01:30:23 vsnyder Exp $"
+d284 3
+@
+
+
+2.41
+log
+@Check String_Table_Size, not How_Many_Strings, some cannonball polishing
+@
+text
+@d183 1
+a183 1
+    endif
+d240 1
+a240 1
+    endif
+d261 1
+a261 1
+       "$Id: trace_m.f90,v 2.40 2014/02/13 00:04:29 pwagner Exp $"
+d271 3
+@
+
+
+2.40
+log
+@Revert to older appearance on Exit WALK_TREE..
+@
+text
+@d46 1
+a46 1
+    use STRING_TABLE, only: CREATE_STRING, HOW_MANY_STRINGS
+d55 4
+a58 1
+    if ( how_many_strings() < 1 ) return
+a59 2
+    if ( Verbose ) &
+      & call output( 'Trace_Begin ' // trim(Name_c), advance='yes' )
+d70 1
+a70 1
+    use STRING_TABLE, only: CREATE_STRING, HOW_MANY_STRINGS
+d81 4
+a84 1
+    if ( how_many_strings() < 1 ) return
+a85 2
+    if ( Verbose ) &
+      & call output( 'Trace_Begin ' // trim(Name_c), advance='yes' )
+d101 2
+a102 2
+    use OUTPUT_M, only: OUTPUTOPTIONS
+    use STRING_TABLE, only: GET_STRING, HOW_MANY_STRINGS
+d116 5
+a120 1
+    if ( how_many_strings() < 1 ) return
+d162 1
+a162 1
+    use STRING_TABLE, only: CREATE_STRING, DISPLAY_STRING, HOW_MANY_STRINGS
+d177 1
+a177 1
+    if ( how_many_strings() < 1 ) return
+d261 1
+a261 1
+       "$Id: trace_m.f90,v 2.39 2014/01/28 02:59:50 vsnyder Exp $"
+d271 3
+@
+
+
+2.39
+log
+@Add StringIndex argument to Trace_End
+@
+text
+@d185 1
+a185 1
+        & stringIndex=stringIndex )
+d255 1
+a255 1
+       "$Id: trace_m.f90,v 2.38 2014/01/11 01:41:02 vsnyder Exp $"
+d265 3
+@
+
+
+2.38
+log
+@Decruftification
+@
+text
+@d144 1
+a144 1
+  subroutine TRACE_END ( NAME, INDEX, String, Cond )
+d161 2
+a162 1
+    character(len=*), optional, intent(in) :: String
+d184 2
+a185 1
+      call pop_stack ( 'Exit ', .true., frame=frame, index=index, string=string )
+d255 1
+a255 1
+       "$Id: trace_m.f90,v 2.37 2013/11/18 22:24:03 pwagner Exp $"
+d265 3
+@
+
+
+2.37
+log
+@Sticky versions of verbose, debug available
+@
+text
+@d85 1
+a85 1
+    call trace_begin ( name_i, root, index, string, cond )
+d95 1
+a95 1
+    use MLSCommon, only: MLSFile_T, MLSDebug, MLSVerbose, &
+d100 1
+a100 1
+    use STRING_TABLE, only: CREATE_STRING, GET_STRING, HOW_MANY_STRINGS
+d152 1
+a152 1
+    use CALL_STACK_M, only: POP_STACK, STACK_T, STACK_DEPTH, TOP_STACK
+d156 1
+a156 1
+    use STRING_TABLE, only: CREATE_STRING, DISPLAY_STRING, HOW_MANY_STRINGS, GET_STRING
+a165 1
+    character(32) :: PARENTNAME
+d253 1
+a253 1
+       "$Id: trace_m.f90,v 2.36 2013/11/13 19:05:01 pwagner Exp $"
+d263 3
+@
+
+
+2.36
+log
+@Replaced idea of saving and restoring previous states of verbose, debug with stack
+@
+text
+@d95 2
+a96 1
+    use MLSCOMMON, only: MLSDEBUG, MLSVERBOSE, MLSNAMESAREDEBUG, MLSNAMESAREVERBOSE
+d130 1
+a130 1
+      & .and. .not. MLSDebug ) then
+d134 1
+a134 1
+      & .and. .not. MLSVerbose ) then
+a152 1
+    use MLSCOMMON, only: MLSDEBUG, MLSVERBOSE, MLSNAMESAREDEBUG, MLSNAMESAREVERBOSE
+d254 1
+a254 1
+       "$Id: trace_m.f90,v 2.35 2013/11/04 22:52:39 pwagner Exp $"
+d264 3
+@
+
+
+2.35
+log
+@Treat MLSNamesAreDebug, MLSNamesAreVerbose like switches
+@
+text
+@a23 2
+  logical, save           :: PreviousDebug
+  logical, save           :: PreviousVerbose
+a125 2
+    ! (Actually this "prior state" is among the things that Call_Stack
+    ! might track for us)
+a129 1
+      PreviousDebug = MLSDebug
+a133 1
+      PreviousVerbose = MLSVerbose
+a213 12
+    ! Have we set debug or verbose based on the module name?
+    ! If so, revert to the previous values
+    call get_string ( frame%text, parentName )
+    if ( switchDetail( MLSNamesAreDebug, parentName, options='-fc' ) > -1 &
+      & .and. MLSDebug ) then
+      MLSDebug = PreviousDebug
+    end if
+    if ( switchDetail( MLSNamesAreVerbose, parentName, options='-fc' ) > -1 &
+      & .and. MLSVerbose ) then
+      MLSVerbose = PreviousVerbose
+    end if
+
+d254 1
+a254 1
+       "$Id: trace_m.f90,v 2.34 2013/11/01 00:04:11 pwagner Exp $"
+d264 3
+@
+
+
+2.34
+log
+@Verbose tracks begin, end
+@
+text
+@d96 1
+a96 1
+    use CALL_STACK_M, only: PUSH_STACK
+d99 1
+d110 1
+d112 1
+a114 1
+ 
+d127 7
+a133 1
+    if ( create_string(MLSNamesAreDebug) == name .and. .not. MLSDebug ) then
+d137 2
+a138 1
+    if ( create_string(MLSNamesAreVerbose) == name .and. .not. MLSVerbose ) then
+d162 1
+a162 1
+    use STRING_TABLE, only: CREATE_STRING, DISPLAY_STRING, HOW_MANY_STRINGS !, Get_String
+a176 1
+
+d220 6
+a225 3
+    if ( create_string(trim(MLSNamesAreDebug)) == frame%text .and. .not. MLSDebug ) then
+      PreviousDebug = MLSDebug
+      MLSDebug = .true.
+d227 3
+a229 3
+    if ( create_string(trim(MLSNamesAreVerbose)) == frame%text .and. .not. MLSVerbose ) then
+      PreviousVerbose = MLSVerbose
+      MLSVerbose = .true.
+d272 1
+a272 1
+       "$Id: trace_m.f90,v 2.33 2013/10/02 01:28:36 vsnyder Exp $"
+d282 3
+@
+
+
+2.33
+log
+@Add 'string' argument to trace_end
+@
+text
+@d27 1
+d47 1
+d59 2
+d70 1
+d84 3
+a114 1
+
+d171 5
+d261 1
+a261 1
+       "$Id: trace_m.f90,v 2.32 2013/09/21 00:21:39 pwagner Exp $"
+d271 3
+@
+
+
+2.32
+log
+@Check if string table initialized first
+@
+text
+@d133 1
+a133 1
+  subroutine TRACE_END ( NAME, INDEX, Cond )
+d151 1
+d170 1
+a170 1
+      call pop_stack ( 'Exit ', .true., frame=frame, index=index )
+d249 1
+a249 1
+       "$Id: trace_m.f90,v 2.31 2013/09/12 03:12:13 vsnyder Exp $"
+d259 3
+@
+
+
+2.31
+log
+@Add Advance to Trace_Begin, pass Index through Trace_End to Pop_Stack
+@
+text
+@d46 1
+a46 1
+    use String_Table, only: Create_String
+d55 1
+a55 1
+
+d66 1
+a66 1
+    use STRING_TABLE, only: CREATE_STRING
+d77 1
+d92 1
+a92 1
+    use STRING_TABLE, only: CREATE_STRING, GET_STRING
+d105 1
+d146 1
+a146 1
+    use STRING_TABLE, only: CREATE_STRING, DISPLAY_STRING !, Get_String
+d161 1
+d248 1
+a248 1
+       "$Id: trace_m.f90,v 2.30 2013/09/04 02:49:35 vsnyder Exp $"
+d258 3
+@
+
+
+2.30
+log
+@Simplify stack handling in Trace_End
+@
+text
+@d37 1
+a37 1
+  subroutine TRACE_BEGIN_B ( NAME_I, NAME_C, ROOT, INDEX, String, Cond )
+d54 1
+d57 1
+a57 1
+    call trace_begin ( name_i, root, index, string, cond )
+d62 1
+a62 1
+  subroutine TRACE_BEGIN_C ( NAME_C, ROOT, INDEX, String, Cond )
+d73 1
+d83 1
+a83 1
+  subroutine TRACE_BEGIN_I ( NAME, ROOT, INDEX, String, Cond )
+d98 1
+d110 2
+a111 1
+      call push_stack ( name, root, index, string, before='Enter ', where=.true. )
+a138 3
+  ! Index is no longer used.  It's taken from the stack, but retained for
+  ! compatibility.
+
+d148 1
+a148 1
+    integer, intent(in), optional :: INDEX ! No longer used -- taken from stack
+d166 1
+a166 1
+      call pop_stack ( 'Exit ', .true., frame=frame )
+d168 1
+a168 1
+      call pop_stack ( frame=frame, Silent = .true. )
+d245 1
+a245 1
+       "$Id: trace_m.f90,v 2.29 2013/08/31 02:26:21 vsnyder Exp $"
+d255 3
+@
+
+
+2.29
+log
+@Better debugging output
+@
+text
+@d143 1
+a143 1
+    use STRING_TABLE, only: CREATE_STRING, DISPLAY_STRING
+d162 8
+a169 1
+    call top_stack ( frame )
+d204 2
+a208 8
+    myCond = .true.
+    if ( present(cond) ) myCond = cond
+    if ( myCond ) then
+      call pop_stack ( 'Exit ', .true. )
+    else
+      call pop_stack ( Silent = .true. )
+    end if
+
+d244 1
+a244 1
+       "$Id: trace_m.f90,v 2.28 2013/08/31 02:01:51 vsnyder Exp $"
+d254 3
+@
+
+
+2.28
+log
+@Always trim names sent to string table
+@
+text
+@d165 1
+a165 1
+        call output ( 'Stack underflow noticed ' )
+d171 3
+a173 2
+          if ( frame%text /= create_string(name) ) then
+            call display_string ( frame%text, before='Name at top of stack = "' )
+d179 2
+a180 1
+            call display_string ( frame%text, before='In frame for "' )
+d243 1
+a243 1
+       "$Id: trace_m.f90,v 2.27 2013/08/31 01:24:01 vsnyder Exp $"
+d253 3
+@
+
+
+2.27
+log
+@Better debugging output
+@
+text
+@d26 1
+a26 1
+  logical, parameter      :: DEEBUG = .true.
+d55 1
+a55 1
+    if ( name_i <= 0 ) name_i = create_string ( name_c )
+d75 1
+a75 1
+    name_i = create_string ( name_c )
+d186 1
+a186 1
+    if ( create_string(MLSNamesAreDebug) == frame%text .and. .not. MLSDebug ) then
+d190 1
+a190 1
+    if ( create_string(MLSNamesAreVerbose) == frame%text .and. .not. MLSVerbose ) then
+d218 1
+a218 2
+      if ( PreviousDate /= CurrentDate ) &
+!???  if ( PreviousDate /= CurrentDate .or. DEEBUG ) &
+d241 1
+a241 1
+       "$Id: trace_m.f90,v 2.26 2013/08/30 23:13:20 pwagner Exp $"
+d251 3
+@
+
+
+2.26
+log
+@Prevent unwanted printing during routine trace_end
+@
+text
+@d107 1
+a107 1
+      call push_stack ( name, root, index, before='Enter ', where=.true. )
+d109 1
+a109 1
+      call push_stack ( name, root, index )
+d164 1
+a164 1
+      if ( stack_depth() <= 0 ) then
+d178 2
+a179 1
+            call output ( frame%index, before='INDEX at top of stack = ' )
+d242 1
+a242 1
+       "$Id: trace_m.f90,v 2.25 2013/08/30 03:55:49 vsnyder Exp $"
+d252 3
+@
+
+
+2.25
+log
+@Add String argument to Trace_Begin
+@
+text
+@d65 1
+a65 1
+    use String_Table, only: Create_String
+d85 5
+a89 5
+    use Call_Stack_m, only: Push_Stack
+    use MLSCommon, only: MLSDebug, MLSVerbose, MLSNamesAreDebug, MLSNamesAreVerbose
+    use MLSMessagemodule, only: MLSMessagecalls
+    use Output_m, only: OutputOptions
+    use String_Table, only: Create_String, Get_String
+d138 7
+a144 7
+    use Call_Stack_m, only: Pop_Stack, Stack_t, Stack_Depth, Top_Stack
+    use MLSCommon, only: MLSDebug, MLSVerbose, MLSNamesAreDebug, MLSNamesAreVerbose
+    use MLSMessageModule, only: MLSMessageCalls
+    use MLSStringLists, only: SwitchDetail
+    use Output_m, only: NewLine, Output, OutputOptions
+    use String_Table, only: Create_String, Display_String
+    use Toggles, only: Switches
+d202 1
+a202 1
+      call pop_stack
+d241 1
+a241 1
+       "$Id: trace_m.f90,v 2.24 2013/08/23 02:50:47 vsnyder Exp $"
+d251 3
+@
+
+
+2.24
+log
+@Use Call_Stack
+@
+text
+@d37 1
+a37 1
+  subroutine TRACE_BEGIN_B ( NAME_I, NAME_C, ROOT, INDEX, Cond )
+d39 4
+a42 1
+  ! We assume the actual argument is a SAVE variable.
+d52 2
+a53 1
+    logical, intent(in), optional :: Cond  ! Print if true, default true
+d56 1
+a56 1
+    call trace_begin ( name_i, root, index, cond )
+d61 1
+a61 1
+  subroutine TRACE_BEGIN_C ( NAME_C, ROOT, INDEX, Cond )
+d70 2
+a71 1
+    logical, intent(in), optional :: Cond  ! Print if true, default true
+d76 1
+a76 1
+    call trace_begin ( name_i, root, index, cond )
+d81 1
+a81 1
+  subroutine TRACE_BEGIN_I ( NAME, ROOT, INDEX, Cond )
+d94 2
+a95 1
+    logical, intent(in), optional :: Cond  ! Print if true, default true
+d130 9
+a138 1
+    use Call_Stack_m, only: Pop_Stack, Stack_t, Top_Stack
+d164 1
+a164 2
+      if ( frame%now == '' ) then
+        ! Push_Stack always fills Now, so this must be the empty stack default
+d241 1
+a241 1
+       "$Id: trace_m.f90,v 2.23 2013/08/17 03:10:13 vsnyder Exp $"
+d251 3
+@
+
+
+2.23
+log
+@Use Call_Stack
+@
+text
+@a13 3
+  use MLSCOMMON, only: MLSDEBUG, MLSVERBOSE, MLSNAMESAREDEBUG, MLSNAMESAREVERBOSE
+  use MLSSTRINGLISTS, only: SWITCHDETAIL
+
+d19 4
+d36 41
+a76 2
+! --------------------------------------------------  TRACE_BEGIN  -----
+  subroutine TRACE_BEGIN ( NAME, ROOT, INDEX, Cond )
+d81 4
+a84 2
+    use MLSMESSAGEMODULE, only: MLSMESSAGECALLS
+    use OUTPUT_M, only: OUTPUTOPTIONS
+d86 1
+a86 1
+    character(len=*), intent(in) :: NAME
+d106 1
+a106 4
+    call MLSMessageCalls( 'push', constantName=Name )
+    outputOptions%parentName = Name
+    if ( switchDetail( MLSNamesAreDebug, Name, options='-fc' ) > -1 .and. &
+      & .not. MLSDebug ) then
+d110 1
+a110 2
+    if ( switchDetail( MLSNamesAreVerbose, Name, options='-fc' ) > -1 .and. &
+      & .not. MLSVerbose ) then
+d115 4
+a118 1
+  end subroutine TRACE_BEGIN
+d125 1
+d127 1
+d130 1
+d132 1
+a132 1
+    character(len=*), intent(in) :: NAME   ! No longer used -- taken from stack
+d136 1
+d146 1
+a146 2
+    myCond = .true.
+    if ( present(cond) ) myCond = cond
+d148 10
+a157 9
+    if ( myCond ) then
+      if ( deebug ) then
+        call top_stack ( frame )
+        if ( frame%now == '' ) then
+          ! Push_Stack always fills Now, so this must be the empty stack default
+          call output ( 'Stack underflow noticed with NAME = ' // trim(name) )
+          if ( present(index) ) call output ( index, before=' INDEX = ' )
+          call newLine
+        else
+d162 5
+a166 5
+          if ( present(index) ) then
+            if ( frame%index /= index ) then
+              call output ( frame%index, before='INDEX at top of stack = ' )
+              call output ( index, before=' but INDEX argument = ', advance='yes' )
+            end if
+d170 17
+a191 10
+    call MLSMessageCalls( 'pop' )
+    call MLSMessageCalls( 'top', parentName )
+    outputOptions%parentName = parentName
+    if ( switchDetail( MLSNamesAreDebug, Name, options='-fc' ) > -1 ) then
+      MLSDebug = PreviousDebug
+    end if
+    if ( switchDetail( MLSNamesAreVerbose, Name, options='-fc' ) > -1 ) then
+      MLSVerbose = PreviousVerbose
+    end if
+
+d228 1
+a228 1
+       "$Id: trace_m.f90,v 2.22 2013/06/28 18:06:14 pwagner Exp $"
+d238 3
+@
+
+
+2.22
+log
+@Automatically set parentName
+@
+text
+@d13 1
+d16 1
+d19 1
+a20 1
+  integer, public, save :: DEPTH   ! Depth in tree.  Used for trace printing.
+a21 3
+  integer, parameter :: ClockStackMax = 100
+  real :: ClockStack(0:clockStackMax) = 0.0
+  double precision :: Memory(0:clockStackMax) = 0.0d0
+d25 1
+a25 1
+  logical, parameter      :: DEEBUG = .false.
+d34 1
+d36 1
+a36 1
+  subroutine TRACE_BEGIN ( NAME, ROOT, INDEX )
+d40 1
+a40 1
+    use ALLOCATE_DEALLOCATE, only: MEMORY_UNITS, NOBYTESALLOCATED
+d42 1
+a42 3
+    use OUTPUT_M, only: OUTPUTOPTIONS, DUMPSIZE, OUTPUT
+    use TIME_M, only: TIME_NOW
+    use TREE, only: DUMP_TREE_NODE
+d47 4
+a50 2
+    integer :: I              ! Loop inductor
+    character(len=10) :: Now  ! For Date_and_time
+d52 1
+d54 6
+a59 4
+    if ( depth < 0 ) call output ( depth, before='***** Why is depth = ', &
+      & after=' negative?', advance='yes' )
+    if ( present(root) ) then
+      call output ( root, 6 ); call output ( ': ' )
+d61 1
+a61 1
+      call output ( '        ' )
+d63 1
+a63 21
+    do i = 1, depth
+      call output ( '.' )
+    end do
+    call output ( 'Enter ' ); call output ( name )
+    if ( present(index) ) call output( index, before=' ' )
+    call date_and_time ( time=now )
+    call output ( ' at ' // now(1:2) // ':' // now(3:4) // ':' // now(5:) )
+    if ( present(root) ) then
+      call output ( ' with ' );
+      call dump_tree_node ( root, 0 )
+    else
+      call output ( ' ' )
+    end if
+    if ( depth >= 0 .and. depth < clockStackMax ) then
+      call time_now ( clockStack(depth) )
+      clockStack(depth+1) = 0.0
+      memory(depth) = NoBytesAllocated
+    end if
+    call dumpsize ( memory_units * nobytesallocated, before = 'Memory ', &
+      & advance='yes' )
+    depth = depth + 1
+d70 1
+a70 1
+    endif
+d75 2
+a76 1
+    endif
+d78 1
+d80 1
+a80 1
+  subroutine TRACE_END ( NAME, INDEX )
+d83 8
+a90 4
+    use ALLOCATE_DEALLOCATE, only: MEMORY_UNITS, NOBYTESALLOCATED
+    use MLSMESSAGEMODULE, only: MLSMESSAGECALLS
+    use OUTPUT_M, only: OUTPUTOPTIONS, DUMPSIZE, NEWLINE, OUTPUT
+    use TIME_M, only: TIME_NOW
+d92 1
+a92 5
+    character(len=*), intent(in) :: NAME
+    integer, intent(in), optional :: INDEX
+    double precision :: Delta ! memory
+    integer :: I              ! Loop inductor
+    character(len=10) :: Now  ! For Date_and_time
+d94 3
+a96 3
+    integer :: Values(8)      ! For Date_and_time
+    real :: T                 ! For timing
+    character(12) :: Used     ! For timing
+d98 1
+d100 12
+a111 22
+    depth = depth - 1
+    if ( depth < 0 ) call output ( depth, before='***** Why is depth = ', &
+      & after=' negative?', advance='yes' )
+    call output ( '        ' )
+    do i = 1, depth
+      call output ( '.' )
+    end do
+    call output ( 'Exit ' ); call output ( name )
+    if ( present(index) ) call output( index, before=' ' )
+    call date_and_time ( time=now, values=values )
+    call output ( ' at ' // now(1:2) // ':' // now(3:4) // ':' // now(5:) )
+    if ( depth >= 0 .and. depth < clockStackMax ) then
+      call time_now ( t )
+      clockStack(depth) = t - clockStack(depth)
+!     call output ( clockStack(depth) - clockStack(depth+1), &
+!       & format='(g10.3)', before=' used ' )
+      write ( used, '(g10.3)' ) clockStack(depth)
+      call output ( ' used ' // trim(adjustl(used)) // ' cpu' )
+      if ( memory(depth) /= noBytesAllocated ) then
+        delta = memory_units * (noBytesAllocated-memory(depth))
+        if ( abs(delta) < huge(1) ) then
+          call dumpSize ( int(delta), before=', Memory changed by ' )
+d113 10
+a122 1
+          call dumpSize ( delta, before=', Memory changed by ' )
+a123 2
+        call dumpSize ( memory_units * nobytesallocated, before = ' to ' )
+        memory(depth) = nobytesallocated
+d125 3
+d129 1
+a129 1
+    call newLine
+d135 1
+a135 1
+    endif
+d138 2
+a139 1
+    endif
+d146 1
+a146 1
+  ! marking times entering and exiting q Naamed process
+d152 2
+a153 1
+      if ( PreviousDate /= CurrentDate .or. DEEBUG ) &
+d176 1
+a176 1
+       "$Id: trace_m.f90,v 2.21 2012/05/24 01:35:59 vsnyder Exp $"
+d186 3
+@
+
+
+2.21
+log
+@Clean up output
+@
+text
+@d42 1
+a42 1
+    use OUTPUT_M, only: DUMPSIZE, OUTPUT
+d82 1
+d100 1
+a100 1
+    use OUTPUT_M, only: DUMPSIZE, NEWLINE, OUTPUT
+d108 1
+d145 2
+d188 1
+a188 1
+       "$Id: trace_m.f90,v 2.20 2011/12/13 01:09:00 pwagner Exp $"
+d198 3
+@
+
+
+2.20
+log
+@Automatically turns on MLSVerbose or MLSDebug according to MLSNamesAre..
+@
+text
+@d64 1
+a64 1
+    if ( present(index) ) call output( index )
+d120 1
+a120 1
+    if ( present(index) ) call output( index )
+d184 1
+a184 1
+       "$Id: trace_m.f90,v 2.19 2011/10/14 00:33:17 pwagner Exp $"
+d194 3
+@
+
+
+2.19
+log
+@Prints notice if date boundary crossed
+@
+text
+@d13 3
+a15 1
+
+d24 2
+d82 10
+d143 6
+d184 1
+a184 1
+       "$Id: trace_m.f90,v 2.18 2011/03/31 19:55:22 vsnyder Exp $"
+d194 3
+@
+
+
+2.18
+log
+@Cannonball polishing
+@
+text
+@d21 2
+d36 3
+a38 3
+    use Allocate_Deallocate, only: Memory_Units, NoBytesAllocated
+    use MLSMessageModule, only: MLSMessageCalls
+    use OUTPUT_M, only: DumpSize, OUTPUT
+d47 2
+d83 3
+a85 3
+    use Allocate_Deallocate, only: Memory_Units, NoBytesAllocated
+    use MLSMessageModule, only: MLSMessageCalls
+    use OUTPUT_M, only: DumpSize, NewLine, OUTPUT
+d96 2
+d131 30
+d164 1
+a164 1
+       "$Id: trace_m.f90,v 2.17 2009/06/23 18:25:44 pwagner Exp $"
+d174 3
+@
+
+
+2.17
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d24 1
+a24 1
+       "$RCSfile: $"
+d117 1
+a117 1
+        call dumpSize ( memory_units * nobytesallocated, before = 'to ' )
+d128 1
+a128 1
+       "$Id: read_apriori.f90 is it here $"
+d138 3
+@
+
+
+2.16
+log
+@Push named procedures automatically onto new MLSCallStack
+@
+text
+@d24 1
+a24 1
+       "$RCSfile: trace_m.f90,v $"
+d125 1
+a126 1
+!---------------------------- RCS Ident Info -------------------------------
+d128 2
+a129 3
+       "$Id: trace_m.f90,v 2.15 2007/07/27 00:20:51 vsnyder Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d131 1
+d133 1
+d138 3
+@
+
+
+2.15
+log
+@Spiff up printing, work on memory tracking
+@
+text
+@d35 1
+d73 1
+d80 1
+d122 1
+d128 1
+a128 1
+       "$Id: trace_m.f90,v 2.14 2006/07/28 01:59:42 vsnyder Exp $"
+d137 3
+@
+
+
+2.14
+log
+@Correct bug in memory reporting, plus cannonball polishing
+@
+text
+@d69 1
+a69 1
+    call dumpsize ( memory_units * nobytesallocated, before = 'Memory', &
+d83 1
+d88 1
+a88 1
+    double precision :: Delta ! memory
+d105 2
+a106 1
+      call output ( clockStack(depth), format='(g10.3)', before=' used ' )
+d110 1
+a110 1
+          call dumpSize ( int(delta), before=' Memory changed by ' )
+d112 1
+a112 1
+          call dumpSize ( delta, before=' Memory changed by ' )
+d114 1
+a114 1
+        call dumpsize ( memory_units * nobytesallocated, before = 'to' )
+d124 1
+a124 1
+       "$Id: trace_m.f90,v 2.13 2006/07/19 22:26:04 vsnyder Exp $"
+d133 3
+@
+
+
+2.13
+log
+@Report memory size changes in trace_end, plus some cannonball polishing
+@
+text
+@d34 2
+a35 3
+    use Allocate_Deallocate, only: NoBytesAllocated
+    use LEXER_CORE, only: PRINT_SOURCE
+    use OUTPUT_M, only: NewLine, OUTPUT
+d37 1
+a37 1
+    use TREE, only: DUMP_TREE_NODE, SOURCE_REF
+d44 2
+d61 2
+a62 2
+      call output ( ' at ' )
+      call print_source ( source_ref(root), advance='yes' )
+d69 2
+a70 1
+    call newLine
+d78 1
+a78 1
+    use OUTPUT_M, only: NewLine, OUTPUT
+d89 2
+d102 3
+a104 4
+      call output ( ' used ' )
+!     call output ( dble(clockStack(depth) - clockStack(depth+1)), &
+!       & format='(g10.3)' )
+      call output ( dble(clockStack(depth)), format='(g10.3)' )
+d106 1
+a106 1
+        delta = Memory_Units * (noBytesAllocated-memory(depth))
+d108 1
+a108 1
+          call output ( int(delta), before=' Memory changed by ' )
+d110 1
+a110 1
+          call output ( delta, before=' Memory changed by ' )
+d112 2
+d118 1
+d122 1
+a122 1
+       "$Id: trace_m.f90,v 2.12 2005/06/22 17:25:51 pwagner Exp $"
+d131 3
+@
+
+
+2.12
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@a13 5
+  use LEXER_CORE, only: PRINT_SOURCE
+  use OUTPUT_M, only: OUTPUT
+  use TIME_M, only: TIME_NOW
+  use TREE, only: DUMP_TREE_NODE, SOURCE_REF
+
+d20 1
+d24 1
+a24 1
+       "$RCSfile: $"
+d33 7
+d46 1
+a46 1
+      call output ( root, 4 ); call output ( ': ' )
+d48 1
+a48 1
+      call output ( '      ' )
+a61 2
+    else
+      call output ( '', advance='yes' )
+d66 1
+d68 1
+d73 6
+a78 1
+  ! Decrement DEPTH.  Print "EXIT NAME with DEPTH dots in front.
+d85 1
+d87 1
+a87 1
+    call output ( '      ' )
+d102 8
+d111 1
+a111 1
+    call output ( '', advance='yes' )
+d116 1
+a116 1
+       "$Id: $"
+d125 3
+@
+
+
+2.11
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d26 1
+a26 4
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
+       "$Id: trace_m.f90,v 2.10 2001/11/09 23:14:08 vsnyder Exp $"
+  character (len=len(idParm)), private :: Id = idParm
+d28 1
+a28 1
+       "$RCSfile: trace_m.f90,v $"
+d97 5
+d108 3
+@
+
+
+2.10
+log
+@Use Time_Now instead of CPU_TIME
+@
+text
+@d20 1
+a20 1
+       "$Id: trace_m.f90,v 2.9 2001/09/13 19:36:50 livesey Exp $"
+d24 1
+d91 4
+d98 3
+@
+
+
+2.9
+log
+@Added optional index arguments
+@
+text
+@d8 1
+d20 1
+a20 1
+       "$Id: trace_m.f90,v 2.8 2001/05/03 02:13:25 vsnyder Exp $"
+d35 1
+a35 1
+    integer :: Values(8)      ! For Date_and_time
+d46 2
+a47 6
+    call date_and_time ( values=values )
+    call output ( ' at ' )
+    call output ( values(5) ); call output ( ':' )     ! The hour
+    call output ( values(6) ); call output ( ':' )     ! The minute
+    call output ( values(7) ); call output ( '.' )     ! The second
+    call output ( values(8), places=3, fill=.true. )   ! The milliseconds
+d57 1
+a57 1
+      call cpu_time ( clockStack(depth) )
+d68 1
+d78 2
+a79 5
+    call date_and_time ( values=values )
+    call output ( ' at ' )
+    call output ( values(5) ); call output ( ':' ) ! hour
+    call output ( values(6) ); call output ( ':' ) ! minute
+    call output ( values(7) ); call output ( '.' ) ! second
+d81 1
+a81 1
+      call cpu_time ( t )
+a82 1
+      call output ( values(8) )        ! milliseconds
+d85 2
+a86 4
+!       & format='(g10.3)', advance='yes' )
+      call output ( dble(clockStack(depth)), format='(g10.3)', advance='yes' )
+    else
+      call output ( values(8), advance='yes' )        ! milliseconds
+d88 1
+d93 3
+@
+
+
+2.8
+log
+@Trying to print time exclusive of calls isn't working
+@
+text
+@d19 1
+a19 1
+       "$Id: trace_m.f90,v 2.7 2001/05/01 23:53:40 vsnyder Exp $"
+d27 1
+a27 1
+  subroutine TRACE_BEGIN ( NAME, ROOT )
+d32 1
+d44 1
+d66 1
+a66 1
+  subroutine TRACE_END ( NAME )
+d69 1
+d79 1
+d82 3
+a84 3
+    call output ( values(5), 2, 'no', .true. ); call output ( ':' ) ! hour
+    call output ( values(6), 2, 'no', .true. ); call output ( ':' ) ! minute
+    call output ( values(7), 2, 'no', .true. ); call output ( '.' ) ! second
+d88 1
+a88 1
+      call output ( values(8), 3, 'no', .true. )        ! milliseconds
+d94 1
+a94 1
+      call output ( values(8), 3, 'yes', .true. )        ! milliseconds
+d100 3
+@
+
+
+2.7
+log
+@Print CPU time exclusive of deeper ones at each end_trace
+@
+text
+@d19 1
+a19 1
+       "$Id: trace_m.f90,v 2.6 2001/04/25 00:08:26 vsnyder Exp $"
+d86 3
+a88 2
+      call output ( dble(clockStack(depth) - clockStack(depth+1)), &
+        & format='(g10.3)', advance='yes' )
+d96 3
+@
+
+
+2.6
+log
+@Use 'fill' argument of 'output' to get leading zeroes on milliseconds
+@
+text
+@d10 2
+d14 3
+d19 1
+a19 1
+       "$Id: trace_m.f90,v 2.5 2001/04/24 23:33:56 vsnyder Exp $"
+d57 4
+d69 1
+d78 13
+a90 4
+    call output ( values(5) ); call output ( ':' )     ! The hour
+    call output ( values(6) ); call output ( ':' )     ! The minute
+    call output ( values(7) ); call output ( '.' )     ! The second
+    call output ( values(8), 3, 'yes', .true. )        ! The milliseconds
+d95 3
+@
+
+
+2.5
+log
+@Add timing
+@
+text
+@d14 1
+a14 1
+       "$Id: $"
+d17 1
+a17 1
+       "$RCSfile: $"
+d40 4
+a43 4
+    call output ( values(5) ); call output ( ':' ) ! The hour
+    call output ( values(6) ); call output ( ':' ) ! The minute
+    call output ( values(7) ); call output ( '.' ) ! The second
+    call output ( values(8), places=3 )            ! The milliseconds
+d71 1
+a71 1
+    call output ( values(8), advance='yes', places=3 ) ! The milliseconds
+d76 3
+@
+
+
+2.4
+log
+@Emit blanks before 'Enter' if no tree node supplied
+@
+text
+@d10 1
+a10 1
+  integer, public :: DEPTH   ! Depth in tree.  Used for trace printing.
+d13 3
+a15 2
+  character (len=256), private :: Id = &
+       "$Id: trace_m.f90,v 2.3 2001/04/17 20:56:10 vsnyder Exp $"
+d17 1
+a17 1
+       "$RCSfile: trace_m.f90,v $"
+d28 1
+d37 7
+a43 1
+    call output ( 'Enter ' ); call output ( name );
+d59 1
+d65 7
+a71 1
+    call output ( 'Exit ' ); call output ( name, advance='yes' );
+d76 3
+@
+
+
+2.3
+log
+@Emit 'depth' dots in trace_begin even if 'root' is absent
+@
+text
+@d14 1
+a14 1
+       "$Id: trace_m.f90,v 2.2 2001/03/16 21:01:17 vsnyder Exp $"
+d29 2
+d61 3
+@
+
+
+2.2
+log
+@Make ROOT optional in Trace_Begin
+@
+text
+@d14 1
+a14 1
+       "$Id: trace_m.f90,v 2.1 2000/10/11 18:33:25 vsnyder Exp $"
+a28 3
+      do i = 1, depth
+        call output ( '.' )
+      end do
+d30 3
+d59 3
+@
+
+
+2.1
+log
+@Move from lib/cf_parser to lib; insert copyright notice
+@
+text
+@d14 1
+a14 1
+       "$Id: trace_m.f90,v 2.0 2000/09/05 17:41:51 dcuddy Exp $"
+d25 1
+a25 1
+    integer, intent(in) :: ROOT
+d27 6
+a32 4
+    call output ( root, 4 ); call output ( ': ' )
+    do i = 1, depth
+      call output ( '.' )
+    end do
+d34 8
+a41 4
+    call output ( ' with ' );
+    call dump_tree_node ( root, 0 )
+    call output ( ' at ' )
+    call print_source ( source_ref(root), advance='yes' )
+d59 3
+@
+

@@ -1,0 +1,197 @@
+head	2.4;
+access;
+symbols
+	V0-5-Level2:2.3
+	V0-5-SIPS:2.3;
+locks; strict;
+comment	@# @;
+
+
+2.4
+date	2001.05.11.00.52.00;	author fkrogh;	state dead;
+branches;
+next	2.3;
+
+2.3
+date	2000.11.15.01.04.17;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2000.10.12.00.37.57;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2000.10.10.20.33.32;	author vsnyder;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2000.09.05.18.57.42;	author ahanzel;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2000.09.02.02.02.11;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.4
+log
+@Wrong directory
+@
+text
+@# $Id: Makefile,v 2.3 2000/11/15 01:04:17 vsnyder Exp $
+
+# End of the path to this Makefile:
+ME = LF95
+
+# Fortran compiler:
+F90 = lf95
+
+# Compiler options:
+FOPTS = -g --chk --info
+#FOPTS = -O
+
+# Path to source files:
+S = ..
+
+# Path to MLS library source files:
+MLS = $S/../lib
+
+# Path to .mod files:
+M = $(MLS)/$(ME)
+
+# Path to MLS source library files:
+MLSS = $S/../srclib
+
+# Option to specify path to .mod files:
+I = -I
+
+# Beginning of path to toolkit libraries:
+TOOLKIT = /software/SRC/TOOLKIT-5.2.6v1.00.NAG
+
+# Beginning of path to HDFEOS libraries:
+HDFEOS = /van1/opt/TOOLKIT
+#HDFEOS = $(TOOLKIT)
+
+# Platform (used within directory paths in ../Makefile.inc):
+PLATFORM = linux
+
+# Path to libPGSTK.a
+PGSTK = $(HOME)/mlspgs/SDPToolkit/$(ME)
+#PGSTK = $(TOOLKIT)/lib/$(PLATFORM)
+
+include $S/Makefile.inc
+
+# $Log: Makefile,v $
+# Revision 2.3  2000/11/15 01:04:17  vsnyder
+# Add MLSS symbol, use it to correct pathname for tree_checker.f90 and getCF.f90
+#
+# Revision 2.2  2000/10/12 00:37:57  vsnyder
+# Account for lib/cf_parser moving to lib
+#
+# Revision 2.1  2000/10/10 20:33:32  vsnyder
+# Repairs to get rid of WVS pathnames
+#
+@
+
+
+2.3
+log
+@Add MLSS symbol, use it to correct pathname for tree_checker.f90 and getCF.f90
+@
+text
+@d1 1
+a1 1
+# $Id: Makefile,v 2.2 2000/10/12 00:37:57 vsnyder Exp $
+d45 3
+@
+
+
+2.2
+log
+@Account for lib/cf_parser moving to lib
+@
+text
+@d1 1
+a1 1
+# $Id: Makefile,v 2.1 2000/10/10 20:33:32 vsnyder Exp $
+d22 3
+d45 3
+@
+
+
+2.1
+log
+@Repairs to get rid of WVS pathnames
+@
+text
+@d1 4
+a4 1
+# $Id: $
+d7 1
+a7 1
+FC = lf95
+d16 3
+d20 1
+a20 1
+M = $(HOME)/mlspgs/lib/LF95
+a31 3
+# Path to Configuration parser
+C = $(HOME)/mlspgs/lib/cf_parser/LF95
+
+d36 1
+a36 1
+PGSTK = $(HOME)/mlspgs/SDPToolkit/LF95
+d41 4
+a44 1
+# $Log: $
+@
+
+
+2.0
+log
+@Changing file revision to 2.0.
+@
+text
+@d1 2
+d7 2
+a8 1
+FOPTS = -g --chk
+d19 2
+a20 3
+# Beginning of path to libraries:
+L = /nas/software/SRC/TOOLKIT-5.2.6v1.00
+#L = /nas/software/SRC/TOOLKIT-5.2.6v1.00.NAG
+d22 3
+a24 2
+# Beginning of path to HDFEOS  libraries:
+E = /van1/opt/TOOLKIT
+d29 6
+a34 2
+# Platform (used in a directory path in ../Makefile.inc):
+P = linux
+d36 1
+a36 2
+machine.o: machine.f90
+	$(FC) -c $(FOPTS) machine.f90
+d38 1
+a38 1
+include ../Makefile.inc
+@
+
+
+1.1
+log
+@Initial entry
+@
+text
+@@
+

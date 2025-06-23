@@ -1,0 +1,473 @@
+head	1.4;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.4
+date	2000.01.20.23.14.36;	author livesey;	state dead;
+branches;
+next	1.3;
+
+1.3
+date	2000.01.07.19.50.13;	author lungu;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2000.01.07.01.55.07;	author lungu;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2000.01.05.02.12.39;	author lungu;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.4
+log
+@Removed, as now in l2
+@
+text
+@
+
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+!=============================================================================
+MODULE OpenInit ! Opens and reads l2cf info, NCEP, DAO and climatology files
+!=============================================================================
+
+
+USE MLSCommon
+USE MLSL2Common
+USE MLSMessageModule
+USE ReadParseL2cf
+!USE GriddedData
+USE MLSPCF
+
+IMPLICIT NONE
+PUBLIC
+
+PRIVATE :: Id, ModuleName
+!------------------------------- RCS Ident Info ------------------------------
+CHARACTER(LEN=130) :: id = & 
+   "$Id: open_init.f90,v 1.3 2000/01/07 19:50:13 lungu Exp $"
+CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile: open_init.f90,v $"
+!-----------------------------------------------------------------------------
+CONTAINS
+SUBROUTINE OpenAndInitialize(processingRange, l1bInfo, l2cf_data, aprioriData)
+
+! Arguments
+
+
+TYPE (DataProcessingRange_T) :: processingRange ! Data processing range
+TYPE (L1BInfo_T) :: l1bInfo   ! File handles etc. for L1B dataset
+TYPE (L2CF) :: l2cf_data        ! The information from the l2cf file
+!TYPE (GridDatabase_T) :: aprioriData ! Input a priori database
+
+
+INTEGER ::  returnStatus
+Integer :: L1_Version, sd_id
+CHARACTER (LEN=132) :: L1physicalFilename
+CHARACTER (LEN=32) :: mnemonic
+CHARACTER (LEN=256) :: msg
+
+! Open, read and parse L2cf file
+
+Call read_parse_l2cf(mlspcf_l2cf_start, l2cf_data)
+
+
+!Open L1 file
+! Get the l1 file name from the PCF
+
+
+!returnStatus = Pgs_pc_getReference(L1FileHandle, L1_Version, L1physicalFilename)
+
+!IF(returnStatus /= PGS_S_SUCCESS) THEN
+!  call Pgs_smf_getMsg(returnStatus, mnemonic, msg)
+!  CALL MLSMessage (MLSMSG_Error, &
+!                  ModuleName, "Error opening L1:  "//mnemonic//" "//msg)
+!ENDIF
+
+! Open the HDF file and initialize the SD interface
+
+
+!sd_id = sfstart(physicalFilename, DFACC_READ)
+!IF (sd_id == -1) THEN
+!  CALL MLSMessage (MLSMSG_Error, &
+!                  ModuleName, "Error opening L1 file"//physicalFilename)
+!ENDIF
+
+!CALL Obtain_NCEP()
+!CALL Obtain_DAO()
+!Call Obtain_Clim ()
+
+RETURN
+
+END Subroutine OpenAndInitialize
+
+!=============================================================================
+END MODULE OpenInit
+!=============================================================================
+
+!
+! $Log: open_init.f90,v $
+! Revision 1.3  2000/01/07 19:50:13  lungu
+! "Clean" version, ready to handle read_parse_l2cf.
+!
+! Revision 1.2  2000/01/07 01:55:07  lungu
+! Release containing only open l1 and obtain a priori subroutines.
+!
+! Revision 1.1  2000/01/05 02:12:39  lungu
+! Added subroutines to handle GriddedData
+!
+
+!
+
+@
+
+
+1.3
+log
+@"Clean" version, ready to handle read_parse_l2cf.
+@
+text
+@d24 1
+a24 1
+   "$Id: open_init.f90,v 1.2 2000/01/07 01:55:07 lungu Exp $"
+d85 3
+@
+
+
+1.2
+log
+@Release containing only open l1 and obtain a priori subroutines.
+@
+text
+@d7 1
+a7 2
+MODULE OpenInit ! Opens and reads l2cf info, NCEP, DAO and climatology(ies) file
+s
+d12 1
+d14 3
+a16 1
+USE GriddedData
+d24 2
+a25 2
+   "$Id:$"
+CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
+d28 10
+a38 1
+Subroutine Open_Init (returnStatus )
+d41 1
+a41 1
+CHARACTER (LEN=135) :: L1physicalFilename
+d43 5
+a47 1
+CHARACTER (LEN=480) :: msg
+d54 1
+a54 1
+returnStatus = Pgs_pc_getReference(L1FileHandle, L1_Version, L1physicalFilename)
+d56 5
+a60 5
+IF(returnStatus /= PGS_S_SUCCESS) THEN
+  call Pgs_smf_getMsg(returnStatus, mnemonic, msg)
+  CALL MLSMessage (MLSMSG_Error, &
+                  ModuleName, "Error opening L1:  "//mnemonic//" "//msg)
+ENDIF
+d65 9
+a73 9
+sd_id = sfstart(physicalFilename, DFACC_READ)
+IF (sd_id == -1) THEN
+  CALL MLSMessage (MLSMSG_Error, &
+                  ModuleName, "Error opening L1 file"//physicalFilename)
+ENDIF
+
+CALL Obtain_NCEP()
+CALL Obtain_DAO()
+Call Obtain_Clim ()
+d77 1
+a77 1
+END Subroutine Open_Init
+d85 3
+@
+
+
+1.1
+log
+@Added subroutines to handle GriddedData
+@
+text
+@d12 51
+a62 259
+  USE MLSCommon
+  USE MLSMessageModule
+  USE MLSSignalNomenclature
+  USE VGrid
+
+  IMPLICIT NONE
+  PUBLIC
+
+  PRIVATE :: Id,ModuleName
+  !------------------------------- RCS Ident Info ------------------------------
+  CHARACTER(LEN=130) :: id = & 
+       "$Id:"
+  CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCS$"
+  !-----------------------------------------------------------------------------
+
+ 
+
+ 
+
+  ! First we'll define some global parameters and data types.
+
+! This datatype stores a single gridded atmospheric quantity.  For example
+! temperature, if an uncertainty field is also required, this is stored in a
+! separate quantity.
+!
+! This type reflects the format of the Level 3 ASCII files, though note that
+! these files can store multiple quantities such as these.
+!
+TYPE GriddedData_T
+   !
+   ! First the comment line(s) from the relevant input file
+   !
+   CHARACTER (LEN=LineLen), POINTER, DIMENSION(:) :: fileComments
+   !
+   ! Now the name, description and units information
+   !
+   CHARACTER (LEN=NameLen) :: quantityName ! From input file
+   CHARACTER (LEN=LineLen) :: description ! Quantity description
+   CHARACTER (LEN=NameLen) :: units ! Units for quantity
+   !
+   ! Now define the various coordinate systems, first vertical
+   !
+   INTEGER :: verticalCoordinate ! An 'enumerated' type
+   INTEGER :: noHeights         ! Number of surfaces
+   DOUBLE PRECISION, POINTER, DIMENSION(:) :: heights 
+             ! Surfaces (e.g. pressures etc.) [noHeights]
+   !
+   ! Now the latitudinal coordinate
+   !
+   LOGICAL :: equivalentLatitude ! If set, coordinate is equivalent latitude
+   INTEGER :: noLats            ! Number of latitudes
+   DOUBLE PRECISION, POINTER, DIMENSION(:) :: lats ! Latitudes [noLats]
+   !
+   INTEGER :: noLons            ! Number of longitudes
+   DOUBLE PRECISION, POINTER, DIMENSION(:) :: lons ! Longitudes [noLons]
+   !
+   INTEGER noLsts               ! Number of local times
+   DOUBLE PRECISION, POINTER, DIMENSION(:) :: lsts ! Local times [noLsts]
+   !
+   INTEGER noSzas               ! Number of solar zenith angles
+   DOUBLE PRECISION, POINTER, DIMENSION(:) :: szas ! Zenith angles [noSzas]
+   !
+   INTEGER noDates              ! Number of dates in data
+   DOUBLE PRECISION, POINTER, DIMENSION(:) :: dateStarts
+      ! Starting dates in SDP toolkit format
+   DOUBLE PRECISION, POINTER, DIMENSION(:) :: dateEnds
+      ! Ending dates in SDP toolkit format
+   !
+   DOUBLE PRECISION, POINTER, DIMENSION(:,:,:,:,:,:) :: field
+   !
+   ! The data itself.  This is stored as
+   !  [noHeights, noLats, noLons, noLsts, noSzas, noDates]
+   !
+END TYPE GriddedData_T
+
+
+
+
+  ! --------------------------------------------------------------------------
+
+  CONTAINS
+
+  ! Now we have some subroutines to deal with these quantitites
+
+  ! This first routine sets up a new quantity template according to the user
+  ! input.  This may be based on a previously supplied template (with possible
+  ! modifications), or created from scratch.
+
+  SUBROUTINE SetupNewGridTemplate(qty, source)
+
+    ! Dummy arguments
+    TYPE (GriddedData_T), INTENT(OUT) :: qty ! Result
+
+    TYPE (GriddedData_T), OPTIONAL, INTENT(IN) :: source ! Template
+
+    ! Local variables
+    INTEGER :: status           ! Status from allocates etc.
+
+    ! Executable code
+
+    ! First, if we have a template setup according to that
+    IF (PRESENT(source)) THEN
+       qty%noHeights=source%noHeights
+       qty%noLats=source%noLats
+       qty%noLons=source%noLons
+      
+    ELSE ! We have no template, setup a very bare quantity
+       qty%noHeights=1
+       qty%noLats=1
+       qty%noLons=1
+
+    ENDIF
+
+    ! Now, see if the user asked for modifications to this
+    IF (PRESENT(noHeights)) qty%noHeights=noHeights
+    IF (PRESENT(noLats)) qty%noLats=noLats
+    IF (PRESENT(noLons)) qty%noLons=noLons
+
+
+    ! First the vertical coordinates
+
+    ALLOCATE (qty%surfs(qty%noLats,noHeightsToAllocate),STAT=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"surfs")
+
+    ! Now the horizontal coordinates
+
+    ALLOCATE (qty%phi(noLatsToAllocate,qty%noHeights),STAT=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"phi")
+
+    ALLOCATE (qty%geodLat(noLatsToAllocate,qty%noHeights),STAT=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"geodLat")
+
+    ALLOCATE (qty%lon(noLatsToAllocate,qty%noHeights),STAT=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"lon")
+
+    ALLOCATE (qty%time(noLatsToAllocate,qty%noHeights),STAT=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"time")
+
+    ALLOCATE (qty%solarTime(noLatsToAllocate,qty%noHeights),STAT=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"solarTime")
+
+    ALLOCATE (qty%solarZenith(noLatsToAllocate,qty%noHeights),STAT=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"solarZenith")
+
+    ALLOCATE (qty%losAngle(noLatsToAllocate,qty%noHeights),STAT=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"losAngle")
+
+    ! Now some other stuff to allocate
+    ALLOCATE (qty%subVectorIndex(qty%noHeights),STAT=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"subVectorIndex")
+
+    IF (.NOT. qty%regular) THEN
+       ALLOCATE (qty%surfIndex(qty%subVectorLen,qty%noHeights),STAT=status)
+       IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+            & MLSMSG_Allocate//"surfIndex")
+
+       ALLOCATE (qty%chanIndex(qty%subVectorLen,qty%noHeights),STAT=status)
+       IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+            & MLSMSG_Allocate//"chanIndex")
+    ENDIF
+
+    ! Se the id field and increment the counter
+    qty%id=quantityTemplateCounter
+    quantityTemplateCounter=quantityTemplateCounter+1
+  END SUBROUTINE SetupNewGriddedDataTemplate
+
+  ! --------------------------------------------------------------------------
+
+  ! This subroutine destroys a quantity template
+
+  SUBROUTINE DestroyGriddedDataTemplateContents(qty)
+
+    ! Dummy argument
+    TYPE (GriddedData_T), INTENT(INOUT) :: qty
+
+    ! Executable code
+
+    DEALLOCATE (qty%surfs)
+    DEALLOCATE (qty%phi)
+    DEALLOCATE (qty%geodLat)
+    DEALLOCATE (qty%lon)
+    DEALLOCATE (qty%time)
+    DEALLOCATE (qty%solarTime)
+    DEALLOCATE (qty%solarZenith)
+    DEALLOCATE (qty%losAngle)
+    DEALLOCATE (qty%subVectorIndex)
+    
+    IF (.NOT. qty%regular) THEN
+       DEALLOCATE (qty%surfIndex)
+       DEALLOCATE (qty%chanIndex)
+    ENDIF
+
+  END SUBROUTINE DestroyGriddedDataTemplateContents
+
+  ! --------------------------------------------------------------------------
+
+  ! This subroutine adds a quantity template to a database, or creates the
+  ! database if it doesn't yet exist
+
+  SUBROUTINE AddGriddedDataTemplateToDatabase(database,qty)
+
+    ! Dummy arguments
+    TYPE (GriddedData_T), DIMENSION(:), POINTER :: database
+    TYPE (GriddedData_T), INTENT(IN) :: qty
+
+    ! Local variables
+    TYPE (GriddedData_T), DIMENSION(:), POINTER :: tempDatabase
+    INTEGER :: newSize,status
+
+    ! Executable code
+
+    IF (ASSOCIATED(database)) THEN
+       ! Check we don't already have one of this name
+       IF (LinearSearchStringArray(database%name,qty%name, &
+            & caseInsensitive=.TRUE.)/=0) CALL MLSMessage(MLSMSG_Error,&
+            & ModuleName,MLSMSG_Duplicate//qty%name)
+       newSize=SIZE(database)+1
+    ELSE
+       newSize=1
+    ENDIF
+
+    ALLOCATE(tempDatabase(newSize),STAT=status)
+    IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & "Allocation failed for tempDatabase")
+
+    IF (newSize>1) tempDatabase(1:newSize-1)=database
+    tempDatabase(newSize)=qty
+    DEALLOCATE(database)
+    database=>tempDatabase
+  END SUBROUTINE AddGriddedDataTemplateToDatabase
+
+  ! --------------------------------------------------------------------------
+
+  ! This subroutine destroys a quantity template database
+
+  SUBROUTINE DestroyGriddedDataTemplateDatabase(database)
+
+    ! Dummy argument
+    TYPE (GriddedData_T), DIMENSION(:), POINTER :: database
+
+    ! Local variables
+    INTEGER :: qtyIndex
+
+    IF (ASSOCIATED(database)) THEN
+       DO qtyIndex=1,SIZE(database)
+          CALL DestroyGriddedDataTemplateContents(database(qtyIndex))
+       ENDDO
+       DEALLOCATE(database)
+    ENDIF
+  END SUBROUTINE DestroyGriddedDataTemplateDatabase
+d69 4
+a72 1
+! $Log:  $
+@
+

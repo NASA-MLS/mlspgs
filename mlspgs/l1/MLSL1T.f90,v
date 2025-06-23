@@ -1,0 +1,294 @@
+head	2.4;
+access;
+symbols
+	v5-02-NRT-19:2.4
+	v6-00:2.4
+	v5-02-NRT-18:2.4
+	v5-02:2.4
+	v5-01-NRT-17:2.4
+	v5-01-NRT-16:2.4
+	v5-01-NRT-15:2.4
+	v5-01-NRT-14:2.4
+	neuralnetworks-1-0:2.4.0.10
+	cfm-single-freq-0-1:2.4.0.8
+	v5-01:2.4
+	v5-00:2.4
+	v4-23-TA133:2.4.0.6
+	mus-emls-1-70:2.4.0.4
+	rel-1-0-englocks-work:2.4.0.2
+	VUMLS1-00:2.4
+	VPL1-00:2.4
+	V4-22-NRT-08:2.4
+	whdrel10_merged_to_here:2.4
+	merge_whdrel10_from_here:2.3.6.1
+	TAG_TRUNK_AFTER_PW_CHANGES:2.3
+	TAG_TRUNK_BEFORE_PW_CHANGES:2.3
+	VAM1-00:2.3
+	whd-rel-1-0:2.3.0.6
+	V4-21:2.3.0.4
+	V4-13:2.3
+	V4-12:2.3
+	V4-11:2.3
+	V4-10:2.3
+	V3-43:2.3
+	M4-00:2.3
+	V3-41:2.3
+	V3-40-PlusGM57:2.3.0.2
+	V2-24-NRT-04:2.3
+	V3-33:2.3
+	V2-24:2.3
+	V3-31:2.3
+	V3-30-NRT-05:2.3
+	cfm-01-00:2.3
+	V3-30:2.3
+	V3-20:2.3
+	V3-10:2.3
+	V2-23-NRT-02:2.3
+	V2-23:2.3
+	V2-22-NRT-01:2.3
+	V2-22:2.3
+	V2-21:2.3
+	V2-20:2.3
+	V2-11:2.3
+	V2-10:2.3
+	V2-00:2.3
+	V1-51:2.1
+	V1-50:2.1
+	V1-45:2.1
+	V1-44:2.1
+	V1-43:2.1
+	V1-42:2.1
+	V1-41:2.1
+	V1-32:2.1
+	V1-40:2.1
+	V1-31:2.1
+	V1-30:2.1
+	V1-13:2.1
+	V1-12:2.1
+	V1-11:2.1
+	V1-10:2.1
+	newfwm-feb03:2.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+2.4
+date	2016.03.15.22.17.59;	author whdaffer;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2006.03.24.15.13.35;	author perun;	state Exp;
+branches
+	2.3.6.1;
+next	2.2;
+
+2.2
+date	2005.06.23.18.41.36;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2003.01.31.18.13.34;	author perun;	state Exp;
+branches;
+next	;
+
+2.3.6.1
+date	2015.10.09.10.21.38;	author whdaffer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.4
+log
+@Merged whd-rel-1-0 back onto main branch. Most changes
+are to comments, but there's some modification to Calibration.f90
+and MLSL1Common to support some new modules: MLSL1Debug and SnoopMLSL1.
+@
+text
+@! Copyright 2006, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!============================================================================
+PROGRAM MLSL1T      ! MLS Level 1 software for the THz module
+!============================================================================
+
+  USE MLSL1RunConfig, ONLY : MLSL1Executable ! name of current executable
+  USE MLSL1Common, ONLY : L1ProgType, THzType
+  USE OpenInit, ONLY : OpenAndInitialize
+  USE SortQualifyTHz, ONLY : SortAndQualifyTHz
+  USE THzCalibration, ONLY : CalibrateTHz
+  USE THzRadiances, ONLY : ProcessLimbData
+  USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Info, MLSMessageExit
+  USE Close_Files, ONLY: CloseFiles
+
+  IMPLICIT NONE
+
+!---------------------------- RCS Ident Info ------------------------------
+  CHARACTER (len=*), PARAMETER :: ModuleName= &
+       "$RCSfile: MLSL1T.f90,v $"
+  CHARACTER (len=*), PARAMETER :: IdParm = &
+       "$Id: MLSL1T.f90,v 2.3.6.1 2015/10/09 10:21:38 whdaffer Exp $"
+  CHARACTER (len=LEN(idParm)) :: Id = idParm
+!---------------------------------------------------------------------------
+
+  INTEGER, PARAMETER :: NORMAL_EXIT_STATUS = 2
+  character(len=256):: msg
+
+  MLSL1Executable='mlsl1t'
+  msg="Start EOS MLS Level 1 THz processing."
+  print *,"++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+  PRINT *,TRIM(msg)
+  print *,"++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+  CALL MLSMessage (MLSMSG_Info, ModuleName, TRIM(msg))
+
+  L1ProgType = THzType
+
+  CALL OpenAndInitialize
+
+  CALL SortAndQualifyTHz
+
+  CALL CalibrateTHz
+
+  CALL ProcessLimbData
+
+  CALL CloseFiles
+
+  CALL MLSMessage (MLSMSG_Info, ModuleName, &
+       & "EOS MLS Level 1 THz data processing successfully completed!")
+
+  CALL MLSMessageExit (NORMAL_EXIT_STATUS)
+
+
+!=============================================================================
+END PROGRAM MLSL1T
+!=============================================================================
+
+! $Log: MLSL1T.f90,v $
+! Revision 2.3.6.1  2015/10/09 10:21:38  whdaffer
+! checkin of continuing work on branch whd-rel-1-0
+!
+! Revision 2.3  2006/03/24 15:13:35  perun
+! Remove DO processing for CalibrateTHz and ProcessLimbData
+!
+! Revision 2.2  2005/06/23 18:41:36  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.1  2003/01/31 18:13:34  perun
+! Version 1.1 commit
+!
+!
+@
+
+
+2.3
+log
+@Remove DO processing for CalibrateTHz and ProcessLimbData
+@
+text
+@d16 1
+d31 1
+a31 1
+       "$Id: MLSL1T.f90,v 2.2 2005/06/23 18:41:36 pwagner Exp $"
+d36 1
+d38 6
+a43 2
+  CALL MLSMessage (MLSMSG_Info, ModuleName, &
+       & "Start EOS MLS Level 1 THz processing.")
+d68 6
+@
+
+
+2.3.6.1
+log
+@checkin of continuing work on branch whd-rel-1-0
+@
+text
+@a15 1
+  USE MLSL1RunConfig, ONLY : MLSL1Executable ! name of current executable
+d30 1
+a30 1
+       "$Id: MLSL1T.f90,v 2.3 2006/03/24 15:13:35 perun Exp $"
+a34 1
+  character(len=256):: msg
+d36 2
+a37 6
+  MLSL1Executable='mlsl1t'
+  msg="Start EOS MLS Level 1 THz processing."
+  print *,"++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+  PRINT *,TRIM(msg)
+  print *,"++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+  CALL MLSMessage (MLSMSG_Info, ModuleName, TRIM(msg))
+a61 3
+! Revision 2.3  2006/03/24 15:13:35  perun
+! Remove DO processing for CalibrateTHz and ProcessLimbData
+!
+@
+
+
+2.2
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d1 1
+a1 1
+! Copyright 2005, by the California Institute of Technology. ALL
+d27 5
+a31 5
+  character (len=*), parameter :: ModuleName= &
+       "$RCSfile: MLSL2.f90,v $"
+  character (len=*), parameter :: IdParm = &
+       "$Id: MLSL2.f90,v 2.138 2005/06/22 18:57:02 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+a34 1
+  LOGICAL :: more_data = .TRUE.
+d45 1
+a45 1
+  DO
+d47 1
+a47 7
+     CALL CalibrateTHz (more_data)
+
+     CALL ProcessLimbData
+
+     IF (.NOT. more_data) EXIT   !all done
+
+  ENDDO
+d62 3
+@
+
+
+2.1
+log
+@Version 1.1 commit
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d26 7
+a32 5
+  !------------------------------- RCS Ident Info ------------------------------
+  CHARACTER(LEN=130) :: id = &
+       "$Id: $"
+  CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile: $"
+  !-----------------------------------------------------------------------------
+d68 4
+a71 1
+! $Log: $
+@
+

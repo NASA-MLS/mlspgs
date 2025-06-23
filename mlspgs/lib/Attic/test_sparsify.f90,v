@@ -1,0 +1,110 @@
+head	2.4;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+2.4
+date	2000.11.16.02.40.04;	author vsnyder;	state dead;
+branches;
+next	2.3;
+
+2.3
+date	2000.10.12.20.10.36;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2000.10.10.23.14.22;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2000.10.04.20.23.13;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.4
+log
+@Moved to tests/test_sparsify
+@
+text
+@! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+! $Id: test_sparsify.f90,v 2.3 2000/10/12 20:10:36 vsnyder Exp $
+
+program TEST_SPARSIFY
+
+  use MatrixModule_0, only: Dump, MatrixElement_T, Sparsify
+  use MLSCommon, only: R8
+
+  real(r8), allocatable :: Z(:,:)
+  type(MatrixElement_T) :: B
+
+  integer :: NR, NC
+
+  write(0,*) "Enter number of rows and columns in Z:"
+  read *, NR, NC
+  allocate ( Z(NR,NC) )
+  write(0,*) "Enter Z, a column at a time"
+  read *, Z
+  call dump ( z, name="Input =" )
+  call sparsify ( z, b )
+  call dump ( b )
+end program TEST_SPARSIFY
+
+! $Log: test_sparsify.f90,v $
+! Revision 2.3  2000/10/12 20:10:36  vsnyder
+! Get R8 from MLSCommon instead of MatrixMultiply_0
+!
+! Revision 2.2  2000/10/10 23:14:22  vsnyder
+! Added copyright, cvs Id and Log
+!
+@
+
+
+2.3
+log
+@Get R8 from MLSCommon instead of MatrixMultiply_0
+@
+text
+@d4 1
+a4 1
+! $Id: test_sparsify.f90,v 2.2 2000/10/10 23:14:22 vsnyder Exp $
+d27 3
+@
+
+
+2.2
+log
+@Added copyright, cvs Id and Log
+@
+text
+@d4 1
+a4 1
+! $Id: $
+d8 2
+a9 1
+  use MatrixModule_0, only: Dump, MatrixElement_T, R8, Sparsify
+d26 4
+a29 1
+! $Log: $
+@
+
+
+2.1
+log
+@Moved from mlspgs/l2
+@
+text
+@d1 5
+d24 2
+@
+

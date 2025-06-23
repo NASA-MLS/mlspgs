@@ -1,0 +1,372 @@
+head	2.10;
+access;
+symbols
+	v5-02-NRT-19:2.10
+	v6-00:2.10
+	v5-02-NRT-18:2.10
+	v5-02:2.10
+	v5-01-NRT-17:2.10
+	v5-01-NRT-16:2.10
+	v5-01-NRT-15:2.10
+	v5-01-NRT-14:2.10
+	neuralnetworks-1-0:2.10.0.10
+	cfm-single-freq-0-1:2.10.0.8
+	v5-01:2.10
+	v5-00:2.10
+	v4-23-TA133:2.10.0.6
+	mus-emls-1-70:2.10.0.4
+	rel-1-0-englocks-work:2.10.0.2
+	VUMLS1-00:2.8
+	VPL1-00:2.8
+	V4-22-NRT-08:2.7
+	VAM1-00:2.7
+	V4-21:2.7.0.2
+	V4-13:2.7
+	V4-12:2.7
+	V4-11:2.7
+	V4-10:2.7
+	V3-43:2.2
+	M4-00:2.7
+	V3-41:2.2
+	V3-40-PlusGM57:2.2.0.2
+	V3-33:2.3
+	V3-31:2.3
+	V3-30-NRT-05:2.2
+	cfm-01-00:2.2
+	V3-30:2.2
+	V3-20:2.2
+	V3-10:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.10
+date	2018.03.05.19.27.04;	author pwagner;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2017.07.19.22.49.46;	author pwagner;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2016.07.28.01.42.27;	author vsnyder;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2012.06.22.20.24.26;	author pwagner;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2011.07.12.00.11.29;	author pwagner;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2011.04.20.22.25.07;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2011.03.08.00.03.34;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2011.02.05.00.56.34;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2009.11.20.01.11.27;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2009.06.24.22.34.21;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.10
+log
+@Try harder to avoid double-printing the name
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id: dump1d.f9h,v 2.9 2017/07/19 22:49:46 pwagner Exp $
+
+! subroutine DUMP_1D_INTEGER ( ARRAY, NAME, &                                 
+!   & FILLVALUE, FORMAT, WIDTH, LBOUND, OPTIONS )                             
+!   integer, intent(in) :: ARRAY(:)                                           
+!   character(len=*), intent(in), optional :: NAME                            
+!   integer, intent(in), optional :: FILLVALUE                                
+!   character(len=*), intent(in), optional :: FORMAT                          
+!   integer, intent(in), optional :: WIDTH ! How many numbers per line (10)?  
+!   integer, intent(in), optional :: LBOUND ! Low bound for Array             
+!   character(len=*), optional, intent(in) :: options                         
+!   integer, dimension(MAXNUMELEMENTS) :: counts
+!   integer, dimension(MAXNUMELEMENTS) :: elements
+!   integer :: myFillValue
+!   integer :: Base, J, K
+!   integer :: MyWidth
+!   integer :: NumZeroRows
+!   integer :: nUnique
+    ! Executable
+    call theDumpBegins ( options, Name=Name )
+    myRank = 1
+    myFillValue = 0
+    if ( present(FillValue) ) myFillValue=FillValue
+    if ( dopts(unique)%v ) then
+      call FindUnique( array, elements, nUnique, counts )
+      if ( nUnique < 2 ) then
+        call output( 'Every value is ', advance='no' )
+        call output( elements(1), advance='yes' )
+      else
+        call output( '    value             counts', advance='yes' )
+        do j=1, nUnique
+          call output( j , advance='no' )
+          call blanks( 3 )
+          call output( elements(j) , advance='no' )
+          call blanks( 3 )
+          call output( counts(j), advance='yes' )
+        enddo
+      endif
+      if ( uniqueonly ( options ) ) return
+    endif
+    include 'dumpstats.f9h'
+    nameHasBeenPrinted = .true. ! So we don't double-print
+    myWidth = 10
+    if ( present(width) ) myWidth = width
+    if ( present(format) ) myFormat = format
+    if ( index(myFormat, '*') > 0 ) then
+      myFormat = numNeedsFormat( maxval(abs(array)), format )
+    endif
+    base = 0
+    if ( present(lbound) ) base = lbound - 1
+
+!    include 'dump1db.f9h'
+!   end subroutine DUMP_1D_INTEGER
+! $Log: dump1d.f9h,v $
+! Revision 2.9  2017/07/19 22:49:46  pwagner
+! Pass Name to theDumpBegins
+!
+! Revision 2.8  2016/07/28 01:42:27  vsnyder
+! Refactoring dump and diff
+!
+! Revision 2.7  2012/06/22 20:24:26  pwagner
+! Specify advance arg because we may now set default to 'yes'
+!
+! Revision 2.6  2011/07/12 00:11:29  pwagner
+! whoarray dump moved to dump[123]db.f9h
+!
+! Revision 2.5  2011/04/20 22:25:07  pwagner
+! Made all dumpnd.f9h files consistent
+!
+! Revision 2.4  2011/03/08 00:03:34  pwagner
+! Skip printing row of zeros only if multiple
+!
+! Revision 2.3  2011/02/05 00:56:34  pwagner
+! L(aconic) option skips printing array name and size
+!
+! Revision 2.2  2009/11/20 01:11:27  pwagner
+! Added new options to just show array rank, shape
+!
+! Revision 2.1  2009/06/24 22:34:21  pwagner
+! First commit
+!
+@
+
+
+2.9
+log
+@Pass Name to theDumpBegins
+@
+text
+@d12 1
+a12 1
+! $Id: dump1d.f9h,v 2.8 2016/07/28 01:42:27 vsnyder Exp $
+d53 1
+d66 3
+@
+
+
+2.8
+log
+@Refactoring dump and diff
+@
+text
+@d12 1
+a12 1
+! $Id: dump1d.f9h,v 2.7 2012/06/22 20:24:26 pwagner Exp $
+d31 1
+a31 1
+    call theDumpBegins ( options )
+d65 3
+@
+
+
+2.7
+log
+@Specify advance arg because we may now set default to 'yes'
+@
+text
+@d12 1
+a12 1
+! $Id: dump1d.f9h,v 2.6 2011/07/12 00:11:29 pwagner Exp $
+d35 1
+a35 1
+    if ( myUnique ) then
+d65 3
+@
+
+
+2.6
+log
+@whoarray dump moved to dump[123]db.f9h
+@
+text
+@d12 1
+a12 1
+! $Id: dump1d.f9h,v 2.5 2011/04/20 22:25:07 pwagner Exp $
+d43 1
+a43 1
+          call output( j )
+d45 1
+a45 1
+          call output( elements(j) )
+d65 3
+@
+
+
+2.5
+log
+@Made all dumpnd.f9h files consistent
+@
+text
+@d12 1
+a12 1
+! $Id: dump1d.f9h,v 2.4 2011/03/08 00:03:34 pwagner Exp $
+d56 3
+d62 1
+a62 30
+    numZeroRows = 0
+    if ( any(shape(array) == 0) ) then
+      call empty ( name )
+    else if ( size(array) == 1 .and. base == 0 ) then
+      call name_and_size ( name, myClean, 1 )
+      call output ( array(1), advance='yes' )
+    else
+      call name_and_size ( name, myClean, size(array) )
+      if ( present(name) .and. .not. mylaconic ) call newLine
+      do j = 1, size(array), myWidth
+        DumpTheseZeros = myClean .or. &
+          & any(array(j:min(j+2*myWidth-1, size(array))) /= myFillValue)
+        if (.not. myClean) then
+          if ( DumpTheseZeros ) then
+            call say_fill ( (/ j-1+base, size(array) /), numZeroRows, myFillValue, inc=1 )
+          else
+            numZeroRows = numZeroRows + 1
+          end if
+        end if
+        if ( DumpTheseZeros ) then
+          do k = j, min(j+myWidth-1, size(array))
+            call output ( array(k), format=myformat )
+          end do
+          call newLine
+          numZeroRows = 0
+        end if
+      end do ! j
+      call say_fill ( (/ j-myWidth, size(array) /), numZeroRows, myFillValue )
+    end if
+    call theDumpEnds
+d65 3
+@
+
+
+2.4
+log
+@Skip printing row of zeros only if multiple
+@
+text
+@d12 1
+a12 1
+! $Id: dump1d.f9h,v 2.3 2011/02/05 00:56:34 pwagner Exp $
+d60 1
+a60 1
+    if ( size(array) == 0 ) then
+d91 3
+@
+
+
+2.3
+log
+@L(aconic) option skips printing array name and size
+@
+text
+@d12 1
+a12 1
+! $Id: dump1d.f9h,v 2.2 2009/11/20 01:11:27 pwagner Exp $
+d69 2
+d72 1
+a72 1
+          if ( any(array(j:min(j+myWidth-1, size(array))) /= myFillValue) ) then
+d78 1
+a78 1
+        if ( myClean .or. any(array(j:min(j+myWidth-1, size(array))) /= myFillValue) ) then
+d83 1
+d91 3
+@
+
+
+2.2
+log
+@Added new options to just show array rank, shape
+@
+text
+@d12 1
+a12 1
+! $Id: dump2d.f9h,v 2.1 2009/06/24 22:34:21 pwagner Exp $
+d67 1
+a67 1
+      if ( present(name) ) call output ( '', advance='yes' )
+d80 1
+a80 1
+          call output ( '', advance='yes' )
+d88 3
+@
+
+
+2.1
+log
+@First commit
+@
+text
+@d1 13
+a29 3
+
+! $Id: diff.f9h,v 2.18 2009/06/16 17:12:55 pwagner Exp $
+
+d32 1
+d87 4
+a90 1
+! $Log: diff.f9h,v $
+@
+

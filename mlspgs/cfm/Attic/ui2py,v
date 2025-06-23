@@ -1,0 +1,44 @@
+head	1.1;
+access;
+symbols
+	cfm-single-freq-0-1:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2021.07.19.20.25.11;	author whdaffer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2021.07.19.20.25.11;	author whdaffer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@file ui2py was initially added on branch cfm-single-freq-0-1.
+@
+text
+@@
+
+
+1.1.2.1
+log
+@initial rev
+@
+text
+@a0 4
+#!/bin/bash
+file=$1
+cp -f $file ${file}.keep
+pyuic5 -x ${file} -o ${file/ui/py}
+@
+

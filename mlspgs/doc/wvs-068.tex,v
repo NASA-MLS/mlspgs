@@ -1,0 +1,322 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.12
+	cfm-single-freq-0-1:1.2.0.10
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.8
+	mus-emls-1-70:1.2.0.6
+	rel-1-0-englocks-work:1.2.0.4
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.2
+	V4-21:1.2.0.2
+	V4-13:1.2
+	V4-12:1.2
+	V4-11:1.2
+	V4-10:1.2
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.2
+date	2013.07.17.02.13.39;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2008.06.11.20.14.55;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Add references suggested by Igor
+@
+text
+@\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9in
+
+\newcommand{\docname}{\bf wvs-068r2}
+\newcommand{\docdate}{16 July 2013}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\renewcommand{\d}{\text{d}}
+\ifx\dvidir\undefined
+  \newcommand\hr[1]{\href{#1.dvi}{dvi} \href{#1.pdf}{pdf}}
+\else
+  \newcommand\hr[1]{\href{\dvidir/#1.dvi}{dvi} \href{\pdfdir/#1.pdf}{pdf}}
+\fi
+\newcommand\h[1]{#1 \hr{#1}}
+\newcommand\hh[2]{#1 \hr{#2}}
+\newcommand\hrpdf[1]{\href{#1.pdf}{pdf}}
+\newcommand\hpdf[1]{#1 \hrpdf{#1}}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Dong, Igor, Van\\
+Subject: \>Mie phase function, integrated scattering, and derivatives\\
+From: \>Van Snyder\\
+Reference: \>\h{wvs-058}, \h{wvs-066}
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-10pt}
+
+From the cloud ATBD JPL D-19299 (4 June 2004), the phase function is
+
+\begin{equation}\label{one}
+p(\theta,r) = \frac{p_0(\theta,r)}{C(r)}
+\end{equation}
+
+where
+
+\begin{equation}\begin{split}\label{two}
+p_0(\theta,r) =\,& |S_1(\theta,r)|^2 + |S_2(\theta,r)|^2 =
+  \Re (S_1(\theta,r))^2 + \Im (S_1(\theta,r))^2 +
+  \Re (S_2(\theta,r))^2 + \Im (S_2(\theta,r))^2 \\
+S_1 =\,& \sum_{j=1}^\infty \frac{2j+1}{j(j+1)} \left(
+ a_j(r,T) \frac{\d P_j^1(\cos\theta)}{\d \theta} +
+ b_j(r,T) \frac{P_j^1(\cos\theta)}{\sin\theta} \right) \\
+S_2 =\,& \sum_{j=1}^\infty \frac{2j+1}{j(j+1)} \left(
+ a_j(r,T) \frac{P_j^1(\cos\theta)}{\sin\theta} +
+ b_j(r,T) \frac{\d P_j^1(\cos\theta)}{\d \theta} \right) \\
+C(r) =\,& \frac12 \int_0^\pi p_0(\theta,r) \sin\theta \, \d \theta \,. \\
+\end{split}\end{equation}
+
+$P_j^1(\cos\theta)$ is the associated Legendre function of the first kind,
+which satisfies the following recurrence, from which it can be computed stably:
+
+\begin{equation}
+\frac{P_j^1(\cos\theta)}{\sin\theta} = \left\{
+\begin{array}{ll}
+0 & j = 0 \\
+1 & j = 1 \\
+ \cos\theta\, \frac{2j-1}{j-1} \frac{P_{j-1}^1(\cos\theta)}{\sin\theta} -
+ \frac{j}{j-1} \frac{P_{j-2}^1(\cos\theta)}{\sin\theta} & j > 1\,.\\
+\end{array}\right.
+\end{equation}
+
+The derivatives of $P_j^1(\cos\theta)$ w.r.t.\ $\theta$ can be computed from the
+following relations:
+
+\begin{equation}
+\frac{\d P_j^1(\cos\theta)}{\d\theta}  = \left\{
+\begin{array}{ll}
+0 & j \leq 1 \\
+ & \\
+\begin{split}
+ j\,& \frac{P_{j+1}^1(\cos\theta)}{\sin\theta} -
+ (j+1) \cos\theta\, \frac{P_j^1(\cos\theta)}{\sin\theta} \\
+=\,&
+ j \cos\theta\, \frac{P_j^1(\cos\theta)}{\sin\theta} -
+ (j+1)\, \frac{P_{j-1}^1(\cos\theta)}{\sin\theta}
+\end{split} & j > 1
+\end{array} \right.
+\end{equation}
+
+(see Equation 8.5.4 in National Bureau of Standards AMS 55, or Equations
+14.10.4-5 in the NIST Handbook of Mathematical Functions).  $P^1_j(\cos m
+\pi) = 0$, but $\frac{P^1_j(\cos m\pi)}{\sin(m\pi)}$ is undefined, for $m
+= 0, 1, 2, \dots.$
+
+$\theta$ is independent of $T$ and IWC, and $a_j(r,T)$ and $b_j(r,T)$ are
+independent of IWC, so derivatives of $S_1$ and $S_2$ w.r.t.\ IWC are zero
+and derivatives w.r.t.\ $T$ depend upon derivatives of $a_j(r,T)$ and
+$b_j(r,T)$ w.r.t.\ $T$ in an obvious straight-forward way (see {\tt
+wvs-066} for $a_j(r,T)$ and $b_j(r,T)$ and their derivatives w.r.t.\ $T$).
+
+From the definition of the quantity $p_0(\theta,r)$ in Equation (\ref{two}),
+
+\begin{equation}\begin{split}
+\frac{\partial p_0(\theta,r)}{\partial T} = 2 & \left(
+ \Re S_1(\theta,r) \frac{\partial \Re S_1(\theta,r)}{\partial T} +
+ \Im S_1(\theta,r) \frac{\partial \Im S_1(\theta,r)}{\partial T} \right.\, + \\
+  \,& \left. \phantom{ (\,\,\,}
+ \Re S_2(\theta,r) \frac{\partial \Re S_2(\theta,r)}{\partial T} +
+ \Im S_2(\theta,r) \frac{\partial \Im S_2(\theta,r)}{\partial T} \right) \,.
+  \\
+\end{split}\end{equation}
+
+Using this and the definitions of $p(\theta,r)$ and $C(r)$ from Equations
+(\ref{one}) and (\ref{two}),
+
+\begin{equation}\begin{split}
+\frac{\partial p(\theta,r)}{\partial T} =\,&
+ \frac1{C(r)} \left( \frac{\partial p_0(\theta,r)}{\partial T} -
+ p(\theta,r) \frac{\partial C(r)}{\partial T} \right) \\
+=\,& \frac1{C(r)} \left( \frac{\partial p_0(\theta,r)}{\partial T} -
+ \frac{p(\theta,r)}2 \int_0^\pi \frac{\partial p_0(\theta,r)}{\partial T}
+ \sin\theta\, \d \theta \right) .
+\end{split}\end{equation}
+
+Since $a_j(r,T)$ and $b_j(r,T)$ do not depend on IWC, the phase function does
+not depend on IWC.
+
+The integrated phase function is
+
+\begin{equation}
+P(\theta) =
+ \frac{\pi}{\beta_{c\_s}} \int_0^\infty r^2\, n(r)\, \xi_s(r)\, p(\theta,r)\, \d r
+\end{equation}
+
+from which
+
+\begin{equation}\begin{split}
+\frac{\partial P(\theta)}{\partial T} =\,&
+ \frac{\pi}{\beta_{c\_s}} \int_0^\infty r^2\, n(r)\, \xi_s(r)\, p(\theta,r)\,
+ \left( \frac1{n(r)}\, \frac{\partial n(r)}{\partial T} +
+        \frac1{\xi_s(r)}\, \frac{\partial \xi_s(r)}{\partial T} +
+        \frac1{p(\theta,r)}\, \frac{\partial p(\theta,r)}{\partial T}
+ \right) \, \d r \\
+ \,&
+ -\frac{P(\theta)}{\beta_{c\_s}}\, \frac{\partial \beta_{c\_s}}{\partial T} \\
+\end{split}\end{equation}
+and
+\begin{equation}
+ \frac{\partial P(\theta)}{\partial \text{IWC}} =
+ \frac{\pi}{\beta_{c\_s}} \int_0^\infty r^2\,
+  \frac{\partial n(r)}{\partial \text{IWC}} \,
+  \xi_s(r)\, p(\theta,r)\, \d r
+ -\frac{P(\theta)}{\beta_{c\_s}}\,
+  \frac{\partial \beta_{c\_s}}{\partial\text{IWC}}\,.
+\end{equation}
+
+See \h{wvs-066} for derivatives of $\beta_{c\_s}$ and $n(r)$ w.r.t.\ $T$
+and IWC, and the derivative of $\xi_s(r)$ w.r.t.\ $T$.
+
+\label{lastpage}
+\end{document}
+% $Id: wvs-068.tex,v 1.1 2008/06/11 20:14:55 vsnyder Exp $
+
+% $Log: $
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d8 44
+a51 2
+\newcommand{\docname}{\bf wvs-068r1}
+\newcommand{\docdate}{17 January 2008}
+d77 1
+a77 1
+To: \>Dong, Van\\
+d80 1
+a80 1
+Reference: \>wvs-058, {\tt wvs-066}
+a85 2
+\renewcommand{\d}{\text{d}}
+
+d121 1
+a121 1
+following relation:
+d123 7
+a129 3
+\begin{equation}\begin{split}
+\frac{\d P_j^1(\cos\theta)}{\d\theta}  =\,&
+ j\, \frac{P_{j+1}^1(\cos\theta)}{\sin\theta} -
+d133 9
+a141 2
+ (j+1)\, \frac{P_{j-1}^1(\cos\theta)}{\sin\theta}\,. \\
+\end{split}\end{equation}
+d144 4
+a147 4
+independent of IWC, so derivatives of $S_1$ and $S_2$ w.r.t.\ IWC are zero and
+derivatives w.r.t.\ $T$ depend upon derivatives of $a_j(r,T)$ and $b_j(r,T)$
+w.r.t.\ $T$ in an obvious straight-forward way (see {\tt wvs-066} for
+$a_j(r,T)$ and $b_j(r,T)$ and their derivatives w.r.t.\ $T$).
+d205 2
+a206 2
+See {\tt wvs-066} for derivatives of $\beta_{c\_s}$ and $n(r)$ w.r.t.\ $T$ and
+IWC, and the derivative of $\xi_s(r)$ w.r.t.\ $T$.
+d210 3
+a212 1
+% $Id: wvs-068r1.tex,v 1.1 2008/06/11 20:14:55 vsnyder Exp $
+@
+

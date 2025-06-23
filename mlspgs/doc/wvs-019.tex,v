@@ -1,0 +1,163 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.14
+	cfm-single-freq-0-1:1.1.0.12
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.10
+	mus-emls-1-70:1.1.0.8
+	rel-1-0-englocks-work:1.1.0.6
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2008.06.11.20.14.51;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\documentclass[12pt]{article}
+
+\usepackage[fleqn]{amsmath}\textwidth 6.25in
+\oddsidemargin -0.25in
+\evensidemargin -0.25in
+\topmargin -0.5in
+\textheight 9.00in
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\settowidth{\hW}{\bf Page 1 of 1}
+%\settowidth{\hW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    7 December 2004\hfill\parbox[t]{\hW}{{\bf wvs-019}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill\\
+Subject: \>Betas, {\tt slabs\_sw\_m}\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 3pt
+\vspace{-20pt}
+
+The subroutine {\tt Slabswint} in the module {\tt slabs\_sw\_m}
+computes
+
+\begin{equation}
+\beta = S_1 \frac{\nu}{\nu_0} \tanh\left(\frac{h \nu}{2 k T}\right)
+ \left( V(a,y) + \frac{(y - \sigma x_1 y_i) D_1}{\sqrt{\pi}}
+   + \frac{y_i a D_2}{\sqrt{\pi}} \right),
+\end{equation}
+
+where $V(a,y)$ is the Voigt function (the real part of the Fadeeva function),
+$\delta = \nu-\nu_{0_s}$, $\sigma = \nu + \nu_{0_s}$, $a = x_1 \delta$, $D_1 =
+\frac1{\sigma^2 x_1^2 + y^2}$ and $D_2 = \frac1{a^2 + y^2}$.
+
+If we write the $y_i$ dependence as a separate term, we have
+
+\begin{equation}\label{SW}
+\beta = S_1 \frac{\nu}{\nu_0} \tanh\left(\frac{h \nu}{2 k T}\right)
+\left( V(a,y) + \frac{y D_1}{\sqrt{\pi}} +
+                \frac{y_i}{\sqrt{\pi}} \left(a D_2 - \sigma x_1 D_1 \right)
+\right).
+\end{equation}
+
+The subroutine {\tt Voigt\_Lorentz} computes
+
+\begin{equation}
+\beta = S_1 \frac{\nu}{\nu_0} \tanh\left(\frac{h \nu}{2 k T}\right)
+\left( V(a,y) + \frac{(y - \sigma x_1 y_i) D_1}{\sqrt{\pi}}
+  + y_i L(a,y) \right),
+\end{equation}
+where $L(a,y)$ is the Lorentz function (the imaginary part of the Fadeeva
+function).
+
+Again collecting the dependence of $y_i$ as a separate term, we have
+
+\begin{equation}\label{VL}
+\beta = S_1 \frac{\nu}{\nu_0} \tanh\left(\frac{h \nu}{2 k T}\right)
+\left( V(a,y) + \frac{y D_1}{\sqrt{\pi}} +
+                y_i \left( L(a,y) - \frac{\sigma x_1 D_1}{\sqrt{\pi}} \right)
+\right).
+\end{equation}
+
+The difference between equations (\ref{SW}) and (\ref{VL}) is the explicit use
+of $L(a,y)$ in the latter.  The term $\frac{a D_2}{\sqrt{\pi}}$ is a low-order
+asymptotic approximation to $L(a,y)$, appropriate with $y + \frac23 a > 100$.
+But the subroutines in the module {\tt get\_beta\_path} use equation (\ref{VL})
+when $y + \frac23 a > 100$ and spectroscopy derivatives are requested.  This
+probably accounts for the difference in $\beta$ when computing spectroscopy
+derivatives and when not.
+
+Is $\frac{a D_2}{\sqrt{\pi}}$ an adequate approximation for $L(a,y)$ over the
+entire range?  I think it would be better to use the {\tt Simple\_Voigt}
+routine, which calculates both Voigt and Lorentz (using $\frac{a
+D_2}{\sqrt{\pi}}$ for Lorentz where appropriate).  This would simplify
+{\tt Slabswint}, with a slight trade of performance for accuracy when $y_i >
+10^{-6}$ and $y + \frac23 a \leq 100$.  Should I do this?
+
+The subroutines in {\tt get\_beta\_path} have a test whether to use {\tt
+Slabswint} or {\tt Slabs}.  This same test could be put within {\tt Slabswint},
+with the possibility of a slight improvement in performance. In the case $y_i$
+is small for all lines, there is one less loop to set up. In the case $y_i$ is
+small for some lines and large for others, the interference term would only be
+calculated for those lines with large $y_i$, not for all lines.  Should I do
+this?
+
+\label{lastpage}
+\end{document}
+% $Id: $
+@

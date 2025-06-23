@@ -1,0 +1,359 @@
+head	2.6;
+access;
+symbols
+	v5-02-NRT-19:2.6
+	v6-00:2.6
+	v5-02-NRT-18:2.6
+	v5-02:2.6
+	v5-01-NRT-17:2.6
+	v5-01-NRT-16:2.6
+	v5-01-NRT-15:2.6
+	v5-01-NRT-14:2.6
+	neuralnetworks-1-0:2.6.0.14
+	cfm-single-freq-0-1:2.6.0.12
+	v5-01:2.6
+	v5-00:2.6
+	v4-23-TA133:2.6.0.10
+	mus-emls-1-70:2.6.0.8
+	rel-1-0-englocks-work:2.6.0.6
+	VUMLS1-00:2.6
+	VPL1-00:2.6
+	V4-22-NRT-08:2.6
+	VAM1-00:2.6
+	V4-21:2.6.0.4
+	V4-13:2.6
+	V4-12:2.6
+	V4-11:2.6
+	V4-10:2.6
+	V3-43:2.6
+	M4-00:2.6
+	V3-41:2.6
+	V3-40-PlusGM57:2.6.0.2
+	V2-24-NRT-04:2.6
+	V3-33:2.6
+	V2-24:2.6
+	V3-31:2.6
+	V3-30-NRT-05:2.6
+	cfm-01-00:2.6
+	V3-30:2.6
+	V3-20:2.6
+	V3-10:2.6
+	V2-23-NRT-02:2.6
+	V2-23:2.6
+	V2-22-NRT-01:2.6
+	V2-22:2.6
+	V2-21:2.6
+	V2-20:2.6
+	V2-11:2.6
+	V2-10:2.6
+	V2-00:2.6
+	V1-51:2.5
+	V1-50:2.5
+	V1-45:2.5
+	V1-44:2.5
+	V1-43:2.5
+	V1-32:2.5
+	V1-31:2.5
+	V1-30:2.5
+	V1-13:2.5
+	V1-12:2.5
+	V1-11:2.5
+	V1-10:2.5
+	newfwm-feb03:2.5.0.2
+	V1-04:2.0
+	V1-03:2.0
+	V1-02:2.0
+	JointForwardModel:2.0.0.2
+	V1-00:2.0
+	newfwm-sep01:1.4.0.2
+	V0-7:1.4
+	V0-5-Level2:1.3
+	V0-5-SIPS:1.3
+	V0_1:1.1;
+locks; strict;
+comment	@# @;
+
+
+2.6
+date	2005.06.22.18.14.01;	author pwagner;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2003.02.05.21.47.16;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2002.10.12.01.36.17;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2002.10.02.16.53.48;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2002.10.02.15.50.39;	author bwknosp;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2002.09.27.00.08.55;	author vsnyder;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2001.09.17.20.26.27;	author livesey;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.06.07.23.39.32;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2000.11.22.23.10.04;	author zvi;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2000.11.22.23.07.31;	author zvi;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2000.05.05.00.04.02;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.6
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! pure function ?_STAT_TEMP ( TEMP, FREQ ) result ( STAT_TEMP )
+
+!{ Compute $B = \frac{h \nu}
+!                    {k \left [ \exp \left ( \frac{h \nu}{k T} \right ) - 1 \right ]}$.
+
+! $Id: stat_temp.f9h,v 2.5 2003/02/05 21:47:16 vsnyder Exp $
+! $RCSfile: stat_temp.f9h,v $
+
+    real(rk) :: STAT_TEMP
+    real(rk), intent(in) :: TEMP
+    real(r8), intent(in) :: FREQ
+
+    real(r8), parameter :: THIRD = 1.0_r8/3.0_r8
+    real(r8) :: A, R, HXF
+
+    hxf = h_over_k * freq
+    r = hxf / temp
+    if ( abs(r) > 6.0e-2_r8 ) then
+      a = exp(r) - 1.0_r8
+      stat_temp = hxf / a
+    else ! if ( abs(r) > 1.0e-5_r8 ) then ! use a short series for (exp(r)-1)/r
+      ! Three terms is enough for 1.0e-10 absolute accuracy with T = 300
+      ! and \nu in [100 ... 2500] mHz.  Smaller R makes it better.
+      a = 1.0_r8 + 0.5_r8 * r * (1.0_r8 + third * r)
+!     a = 1.0_r8 + 0.5_r8 * r * (1.0_r8 + third * r * (1.0_r8 + 0.25_r8 * r))
+      stat_temp = temp / a
+!   else
+!{ Apply L'Hospital's rule: $B = T ~ \exp(- \frac{h \nu}{k T})$
+
+!     Don't do this.  FREQ has to be really dinky (<0.1 mHz to get < 1.0e-6
+!     absolute accuracy), and the middle branch works much better in this
+!     region anyway.
+!     a = 1.0_r8 - r * (1.0_r8 - 0.5_r8 * r * (1.0_r8 - third * r) )
+!     a = 1.0_r8 - r * (1.0_r8 - 0.5_r8 * r * (1.0_r8 - third * r * &
+!                    & (1.0_r8 - 0.25_r8 * r) ) )
+!     stat_temp = temp * a
+!     stat_temp = temp * exp(-r)
+    end if
+
+    return
+! End function ?_STAT_TEMP
+
+! $Log: stat_temp.f9h,v $
+! Revision 2.5  2003/02/05 21:47:16  vsnyder
+! Cosmetic change
+!
+! Revision 2.4  2002/10/12 01:36:17  vsnyder
+! Better comments, more RCS comments, cosmetic changes
+!
+! Revision 2.3  2002/10/02 16:53:48  pwagner
+! Removed RCS Ident Block
+!
+! Revision 2.2  2002/10/02 15:50:39  bwknosp
+! Added Id and RCS info
+!
+! Revision 2.1  2002/09/27 00:08:55  vsnyder
+! cosmetic changes, CVS comments
+!
+@
+
+
+2.5
+log
+@Cosmetic change
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d17 1
+a17 1
+! $Id: stat_temp.f9h,v 2.4 2002/10/12 01:36:17 vsnyder Exp $
+d55 3
+@
+
+
+2.4
+log
+@Better comments, more RCS comments, cosmetic changes
+@
+text
+@d9 2
+a10 2
+! $Id: $
+! $RCSfile: $
+d32 1
+d47 3
+@
+
+
+2.3
+log
+@Removed RCS Ident Block
+@
+text
+@a4 1
+!
+d6 13
+a18 7
+    Real(rk) :: STAT_TEMP
+    Real(rk), intent(in) :: TEMP
+    Real(r8), intent(in) :: FREQ
+!
+    Real(r8), Parameter :: THIRD = 1.0_r8/3.0_r8
+    Real(r8) :: a, r, hxf
+!
+d24 3
+a26 5
+    else
+!{ Apply L'Hospital's rule: $B = T ~ \exp(- \frac{h \nu}{k T})$
+! Zvi:  I would write either stat_temp = temp * ( 1.0 - 0.5*r*(1.0 - third*r) )
+!                         or stat_temp = temp * exp(-r),
+! the latter if you need relative accuracy better than 9.0e-6.  Van
+d28 1
+a28 1
+!     a = 1.0_r8 + 0.5_r8 * r * (1.0_r8 + third * r * (1.0_r8 + r/4.0_r8))
+d30 10
+d41 2
+a42 2
+!
+    Return
+d46 3
+@
+
+
+2.2
+log
+@Added Id and RCS info
+@
+text
+@a3 7
+!---------------------------- RCS Ident Info -------------------------------
+  CHARACTER (LEN=256) :: Id = &
+       "$Id: stat_temp.f9h,v 2.1 2002/04/18 10:46:24 zvi Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile: stat_temp.f9h,v $"
+!---------------------------------------------------------------------------
+
+
+d33 3
+@
+
+
+2.1
+log
+@cosmetic changes, CVS comments
+@
+text
+@d4 7
+a12 1
+! $Id: $
+d39 4
+a42 1
+! $Log: $
+@
+
+
+2.0
+log
+@New forward model
+@
+text
+@d6 2
+d17 1
+a17 1
+    if(abs(r) > 6.0e-2_r8) then
+d28 1
+a28 1
+    endif
+d32 2
+@
+
+
+1.4
+log
+@Added Copyright statement
+@
+text
+@@
+
+
+1.3
+log
+@Re-add basic stuff
+@
+text
+@d1 3
+@
+
+
+1.2
+log
+@New version
+@
+text
+@a16 1
+
+@
+
+
+1.1
+log
+@Initial conversion to Fortran 90
+@
+text
+@@
+

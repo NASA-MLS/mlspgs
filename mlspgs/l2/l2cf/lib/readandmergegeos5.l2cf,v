@@ -1,0 +1,493 @@
+head	1.10;
+access;
+symbols
+	v5-02-NRT-19:1.10
+	v6-00:1.10
+	v5-02-NRT-18:1.10
+	v5-02:1.10
+	v5-01-NRT-17:1.10
+	v5-01-NRT-16:1.10
+	v5-01-NRT-15:1.10
+	v5-01-NRT-14:1.10
+	neuralnetworks-1-0:1.10.0.10
+	cfm-single-freq-0-1:1.10.0.8
+	v5-01:1.10
+	v5-00:1.10
+	v4-23-TA133:1.10.0.6
+	mus-emls-1-70:1.10.0.4
+	rel-1-0-englocks-work:1.10.0.2
+	VUMLS1-00:1.10
+	VPL1-00:1.10
+	V4-22-NRT-08:1.10
+	VAM1-00:1.9
+	V4-21:1.9.0.4
+	V4-13:1.9
+	V4-12:1.9
+	V4-11:1.9
+	V4-10:1.9
+	V3-43:1.9
+	M4-00:1.9
+	V3-41:1.9
+	V3-40-PlusGM57:1.9.0.2
+	V2-24-NRT-04:1.4
+	V3-33:1.9
+	V2-24:1.4
+	V3-31:1.9
+	V3-30-NRT-05:1.9
+	cfm-01-00:1.9
+	V3-30:1.9
+	V3-20:1.9
+	V3-10:1.6
+	V2-23-NRT-02:1.4
+	V2-23:1.4
+	V2-22-NRT-01:1.4
+	V2-22:1.4
+	V2-21:1.2
+	V2-20:1.2
+	V2-11:1.2
+	V2-10:1.2
+	V2-00:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.10
+date	2015.10.23.16.38.05;	author pwagner;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2009.11.20.01.38.39;	author pwagner;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2009.11.05.23.39.22;	author pwagner;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2009.08.17.17.06.42;	author pwagner;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2008.06.06.21.18.20;	author michael;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2007.11.05.23.06.22;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2007.04.03.20.15.12;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2007.01.25.19.06.28;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2006.07.07.23.14.55;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2006.06.15.00.04.35;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.10
+log
+@Now consistent with Concatenate command api
+@
+text
+@; ----------------------------------------------- Read / merge geos5
+
+; Assume the geos5 filenames obey the following format:
+; {something}_{typ}_v.{vers}.{yyyy}{mm}{dd}_{hhhh}.V01.hdf
+; where
+;   typ   is one of "dyn" or "prs"
+;   yyyy  is the year; e.g. 2009
+;   mm    is the month; e.g. 06
+;   dd    is the day; e.g. 09
+;   hhhh  is the time starting from 0000 and ending at 2359
+
+; This L2CF fragment reads and merges the geos5 data.
+; If given merra data instead, automatically read and sum the delp field
+begin ReadApriori
+  !ifdef(flagUsingPCF,
+    {!define(geos5TFile1,{})!define(geos5TFile2,{})!define(geos5TFile3,{})!define(geos5TFile4,{})
+     !define(geos5PFile1,{})!define(geos5PFile2,{})!define(geos5PFile3,{})!define(geos5PFile4,{})
+     !define(geos5TFileN,{})!define(geos5PFileN,{})
+     },{
+      !define(geos5Day1,{!TrimLastChar(!esyscmd(dateconverter -o yyyymmdd "!day"))})
+      !define(geos5Day2,{!TrimLastChar(!esyscmd(dateconverter +1 -o yyyymmdd "!day"))})
+      !ifdef(flagUsingMERRA,
+      {!dnl
+        !define(geos5TFile1,{, file='!inpathmerradd/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day1.hdf'})
+        !define(geos5TFile2,{, file='!inpathmerradd/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day1.hdf'})
+        !define(geos5TFile3,{, file='!inpathmerradd/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day1.hdf'})
+        !define(geos5TFile4,{, file='!inpathmerradd/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day1.hdf'})
+        !define(geos5TFileN,{, file='!inpathmerradn/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day2.hdf'})
+        !define(geos5PFile1,{, file='!inpathmerrapd/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day1.hdf'})
+        !define(geos5PFile2,{, file='!inpathmerrapd/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day1.hdf'})
+        !define(geos5PFile3,{, file='!inpathmerrapd/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day1.hdf'})
+        !define(geos5PFile4,{, file='!inpathmerrapd/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day1.hdf'})
+        !define(geos5PFileN,{, file='!inpathmerrapn/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day2.hdf'})
+      },{
+        !ifdef(geos5Version,{},{!define(geos5Version,{GEOS510})})
+        !ifdef(geos5Head,{},{!define(geos5Head,{DAS.ops.asm.tavg3d})})
+        !define(geos5TFile1,{, file='!inpathgeos5dd/!geos5Head_dyn_v.!geos5Version.!geos5Day1_0000.V01.hdf'})
+        !define(geos5TFile2,{, file='!inpathgeos5dd/!geos5Head_dyn_v.!geos5Version.!geos5Day1_0600.V01.hdf'})
+        !define(geos5TFile3,{, file='!inpathgeos5dd/!geos5Head_dyn_v.!geos5Version.!geos5Day1_1200.V01.hdf'})
+        !define(geos5TFile4,{, file='!inpathgeos5dd/!geos5Head_dyn_v.!geos5Version.!geos5Day1_1800.V01.hdf'})
+        !define(geos5TFileN,{, file='!inpathgeos5dn/!geos5Head_dyn_v.!geos5Version.!geos5Day2_0000.V01.hdf'})
+        !define(geos5PFile1,{, file='!inpathgeos5pd/!geos5Head_prs_v.!geos5Version.!geos5Day1_0000.V01.hdf'})
+        !define(geos5PFile2,{, file='!inpathgeos5pd/!geos5Head_prs_v.!geos5Version.!geos5Day1_0600.V01.hdf'})
+        !define(geos5PFile3,{, file='!inpathgeos5pd/!geos5Head_prs_v.!geos5Version.!geos5Day1_1200.V01.hdf'})
+        !define(geos5PFile4,{, file='!inpathgeos5pd/!geos5Head_prs_v.!geos5Version.!geos5Day1_1800.V01.hdf'})
+        !define(geos5PFileN,{, file='!inpathgeos5pn/!geos5Head_prs_v.!geos5Version.!geos5Day2_0000.V01.hdf'})
+        })
+    })
+!ifdef(flagUseOperationalGPH, {
+  geos5GPHInput1: gridded, origin=geos5, field='HGHT', $
+    dimList='XDim,YDim,Height,Time' !geos5TFile1
+  geos5GPHInput2: gridded, origin=geos5, field='HGHT', $
+    dimList='XDim,YDim,Height,Time' !geos5TFile2
+  geos5GPHInput3: gridded, origin=geos5, field='HGHT', $
+    dimList='XDim,YDim,Height,Time' !geos5TFile3
+  geos5GPHInput4: gridded, origin=geos5, field='HGHT', $
+    dimList='XDim,YDim,Height,Time' !geos5TFile4
+  geos5GPHInputNext: gridded, origin=geos5, field='HGHT', $
+    dimList='XDim,YDim,Height,Time' !geos5TFileN})
+  geos5TemperatureInput1: gridded, origin=geos5, field='T', $
+    dimList='XDim,YDim,Height,Time' !geos5TFile1, date='00:00:00'
+  geos5TemperatureInput2: gridded, origin=geos5, field='T', $
+    dimList='XDim,YDim,Height,Time' !geos5TFile2, date='06:00:00'
+  geos5TemperatureInput3: gridded, origin=geos5, field='T', $
+    dimList='XDim,YDim,Height,Time' !geos5TFile3, date='12:00:00'
+  geos5TemperatureInput4: gridded, origin=geos5, field='T', $
+    dimList='XDim,YDim,Height,Time' !geos5TFile4, date='18:00:00'
+  geos5TemperatureInputNext: gridded, origin=geos5, field='T', $
+    dimList='XDim,YDim,Height,Time' !geos5TFileN, date='00:00:00'
+  geos5PressureInput1: gridded, origin=geos5, field='PL,DELP', $
+    dimList='XDim,YDim,Height,Time' !geos5PFile1, /sum, date='00:00:00'
+  geos5PressureInput2: gridded, origin=geos5, field='PL,DELP', $
+    dimList='XDim,YDim,Height,Time' !geos5PFile2, /sum, date='06:00:00'
+  geos5PressureInput3: gridded, origin=geos5, field='PL,DELP', $
+    dimList='XDim,YDim,Height,Time' !geos5PFile3, /sum, date='12:00:00'
+  geos5PressureInput4: gridded, origin=geos5, field='PL,DELP', $
+    dimList='XDim,YDim,Height,Time' !geos5PFile4, /sum, date='18:00:00'
+  geos5PressureInputNext: gridded, origin=geos5, field='PL,DELP', $
+    dimList='XDim,YDim,Height,Time' !geos5PFileN, /sum, date='00:00:00'
+end ReadApriori
+
+!define(convertEtaToPGPH,{!dnl
+  geos5ConvertedGPH$1: ConvertEtaToP, $
+    a=geos5GPHInput$1, b=geos5PressureInput$1, Grid=gridTemperature
+   delete, grid=geos5GPHInput$1
+})
+!define(convertEtaToP,{!dnl
+  geos5Converted$1: ConvertEtaToP, $
+    a=geos5TemperatureInput$1, b=geos5PressureInput$1, Grid=gridTemperature
+    delete, grid=geos5TemperatureInput$1
+    delete, grid=geos5PressureInput$1
+})
+
+!ifdef( flagUseOperationalGPH,{
+begin MergeGrids
+  ;; to save memory convert before catenating, not after
+  !forall( convertEtaToPGPH,1,2,3,4,Next)
+
+  mergedGPH: Concatenate, $
+    sourceGrid=[geos5ConvertedGPH1, geos5ConvertedGPH2, $
+    geos5ConvertedGPH3, geos5ConvertedGPH4, geos5ConvertedGPHNext]
+  delete, grid=geos5ConvertedGPH1
+  delete, grid=geos5ConvertedGPH2
+  delete, grid=geos5ConvertedGPH3
+  delete, grid=geos5ConvertedGPH4
+  delete, grid=geos5ConvertedGPHNext
+end MergeGrids })
+
+
+
+begin MergeGrids
+  ;; wmo p trop (using the values from mid-day)
+  geos5EtaWMOPTrop: wmoTrop, $
+    a=geos5TemperatureInput3, b=geos5PressureInput3
+  !define(flagUseGEOS5PTrop,{yes})
+    
+  ;; to save memory convert before catenating, not after
+  !forall( convertEtaToP,1,2,3,4,Next)
+
+  geos5Concatenate: Concatenate, $
+    sourceGrid=[geos5Converted1, geos5Converted2, $
+    geos5Converted3, geos5Converted4, geos5ConvertedNext]
+  delete, grid=geos5Converted1
+  delete, grid=geos5Converted2
+  delete, grid=geos5Converted3
+  delete, grid=geos5Converted4
+  delete, grid=geos5ConvertedNext
+  mergedTemperature: Merge, operational=geos5Concatenate, $
+    climatology=gridTemperature, height=1mb, scale=5km
+  !define(flagUseOperationalTemperature,{yes})
+  delete, grid=geos5Concatenate
+end MergeGrids
+
+@
+
+
+1.9
+log
+@merra paths added when building without PCF
+@
+text
+@d100 1
+a100 1
+    grid=[geos5ConvertedGPH1, geos5ConvertedGPH2, $
+d121 1
+a121 1
+    grid=[geos5Converted1, geos5Converted2, $
+@
+
+
+1.8
+log
+@date field needed when reading merra, ignored if geos5
+@
+text
+@d18 31
+a48 17
+     !define(geos5TFileN,{})!define(geos5PFileN,{})},
+    {
+    !ifdef(geos5Version,{},{!define(geos5Version,{GEOS510})})
+    !ifdef(geos5Head,{},{!define(geos5Head,{DAS.ops.asm.tavg3d})})
+    !define(geos5Day1,{!TrimLastChar(!esyscmd(dateconverter -o yyyymmdd "!day"))})
+    !define(geos5Day2,{!TrimLastChar(!esyscmd(dateconverter +1 -o yyyymmdd "!day"))})
+    !define(geos5TFile1,{, file='!inpathgeos5dd/!geos5Head_dyn_v.!geos5Version.!geos5Day1_0000.V01.hdf'})
+    !define(geos5TFile2,{, file='!inpathgeos5dd/!geos5Head_dyn_v.!geos5Version.!geos5Day1_0600.V01.hdf'})
+    !define(geos5TFile3,{, file='!inpathgeos5dd/!geos5Head_dyn_v.!geos5Version.!geos5Day1_1200.V01.hdf'})
+    !define(geos5TFile4,{, file='!inpathgeos5dd/!geos5Head_dyn_v.!geos5Version.!geos5Day1_1800.V01.hdf'})
+    !define(geos5TFileN,{, file='!inpathgeos5dn/!geos5Head_dyn_v.!geos5Version.!geos5Day2_0000.V01.hdf'})
+    !define(geos5PFile1,{, file='!inpathgeos5pd/!geos5Head_prs_v.!geos5Version.!geos5Day1_0000.V01.hdf'})
+    !define(geos5PFile2,{, file='!inpathgeos5pd/!geos5Head_prs_v.!geos5Version.!geos5Day1_0600.V01.hdf'})
+    !define(geos5PFile3,{, file='!inpathgeos5pd/!geos5Head_prs_v.!geos5Version.!geos5Day1_1200.V01.hdf'})
+    !define(geos5PFile4,{, file='!inpathgeos5pd/!geos5Head_prs_v.!geos5Version.!geos5Day1_1800.V01.hdf'})
+    !define(geos5PFileN,{, file='!inpathgeos5pn/!geos5Head_prs_v.!geos5Version.!geos5Day2_0000.V01.hdf'})})
+
+@
+
+
+1.7
+log
+@Can handle either GEOS5 or MERRA data
+@
+text
+@d47 1
+a47 1
+    dimList='XDim,YDim,Height,Time' !geos5TFile1
+d49 1
+a49 1
+    dimList='XDim,YDim,Height,Time' !geos5TFile2
+d51 1
+a51 1
+    dimList='XDim,YDim,Height,Time' !geos5TFile3
+d53 1
+a53 1
+    dimList='XDim,YDim,Height,Time' !geos5TFile4
+d55 1
+a55 1
+    dimList='XDim,YDim,Height,Time' !geos5TFileN
+d57 1
+a57 1
+    dimList='XDim,YDim,Height,Time' !geos5PFile1, /sum
+d59 1
+a59 1
+    dimList='XDim,YDim,Height,Time' !geos5PFile2, /sum
+d61 1
+a61 1
+    dimList='XDim,YDim,Height,Time' !geos5PFile3, /sum
+d63 1
+a63 1
+    dimList='XDim,YDim,Height,Time' !geos5PFile4, /sum
+d65 1
+a65 1
+    dimList='XDim,YDim,Height,Time' !geos5PFileN, /sum
+@
+
+
+1.6
+log
+@changed version from geos501 to geos 510
+added UseOperationalGPH flag
+@
+text
+@d3 8
+a10 4
+; A note of caution.  If !inpathdao includes the year (as it will at the
+; SCF), then expect this to fail when the first day is 31 December, as
+; the second day will be in the next year.  It will get the filename
+; right though.
+d13 1
+a14 17
+  !ifdef(flagUsingGEOS4,
+  {
+  !ifdef(flagUsingPCF,
+    {!define(daoFile1,{})!define(daoFile2,{})},
+    {
+    !ifdef(daoVersion,{},{!define(daoVersion,{GEOS403})})
+    !define(daoDay1,!ccsdsbtodao(!day))
+    !define(daoDay2,!ccsdsbtodao(!ccsdsbadd(!day,1)))
+    !define(daoFile1,{, file='!inpathdao/DAS.flk.asm.tsyn3d_mis_p.!daoVersion.!daoDay1{}00.!daoDay1{}18.V01'})
+    !define(daoFile2,{, file='!inpathdao/DAS.flk.asm.tsyn3d_mis_p.!daoVersion.!daoDay2{}00.!daoDay2{}18.V01'})})
+
+  daoTemperatureInputThis: gridded, origin=dao, field='TMPU', $
+    dimList='XDim,YDim,Height,Time' !daoFile1
+  daoTemperatureInputNext: gridded, origin=dao, field='TMPU', $
+    dimList='XDim,YDim,Height,Time' !daoFile2
+  },{
+
+d22 2
+a23 2
+    !define(geos5Day1,!ccsdsbtodao(!day))
+    !define(geos5Day2,!ccsdsbtodao(!ccsdsbadd(!day,1)))
+d56 10
+a65 11
+  geos5PressureInput1: gridded, origin=geos5, field='PL', $
+    dimList='XDim,YDim,Height,Time' !geos5PFile1
+  geos5PressureInput2: gridded, origin=geos5, field='PL', $
+    dimList='XDim,YDim,Height,Time' !geos5PFile2
+  geos5PressureInput3: gridded, origin=geos5, field='PL', $
+    dimList='XDim,YDim,Height,Time' !geos5PFile3
+  geos5PressureInput4: gridded, origin=geos5, field='PL', $
+    dimList='XDim,YDim,Height,Time' !geos5PFile4
+  geos5PressureInputNext: gridded, origin=geos5, field='PL', $
+    dimList='XDim,YDim,Height,Time' !geos5PFileN
+  })
+a81 10
+  !ifdef(flagUsingGEOS4,
+  {
+  daoGPHInput: Concatenate, $
+    a=daoGPHInputThis, b=daoGPHInputNext
+  delete, grid=daoGPHInputThis
+  delete, grid=daoGPHInputNext
+  mergedGPH: Merge, operational=daoGPHInput, $
+    climatology=gridGPH, height=1mb, scale=5km
+  delete, grid=daoGPHInput
+  },{    
+a92 1
+  })
+a97 11
+  !ifdef(flagUsingGEOS4,
+  {
+  daoTemperatureInput: Concatenate, $
+    a=daoTemperatureInputThis, b=daoTemperatureInputNext
+  delete, grid=daoTemperatureInputThis
+  delete, grid=daoTemperatureInputNext
+  mergedTemperature: Merge, operational=daoTemperatureInput, $
+    climatology=gridTemperature, height=1mb, scale=5km
+  !define(flagUseOperationalTemperature,{yes})
+  delete, grid=daoTemperatureInput
+  },{
+a117 1
+  })
+@
+
+
+1.5
+log
+@Reflects new paths, names for geos5 0.1
+@
+text
+@d32 2
+a33 2
+    !ifdef(geos5Version,{},{!define(geos5Version,{GEOS501})})
+    !ifdef(geos5Head,{},{!define(geos5Head,{DAS.ops.gzip.asm.tavg3d})})
+d47 11
+d81 5
+d92 29
+@
+
+
+1.4
+log
+@Fixed misspelled pathnames
+@
+text
+@d33 1
+d36 10
+a45 10
+    !define(geos5TFile1,{, file='!inpathgeos5d/DAS.ops.asm.tavg3d_dyn_v.!geos5Version.!geos5Day1_0000.V01.hdf'})
+    !define(geos5TFile2,{, file='!inpathgeos5d/DAS.ops.asm.tavg3d_dyn_v.!geos5Version.!geos5Day1_0600.V01.hdf'})
+    !define(geos5TFile3,{, file='!inpathgeos5d/DAS.ops.asm.tavg3d_dyn_v.!geos5Version.!geos5Day1_1200.V01.hdf'})
+    !define(geos5TFile4,{, file='!inpathgeos5d/DAS.ops.asm.tavg3d_dyn_v.!geos5Version.!geos5Day1_1800.V01.hdf'})
+    !define(geos5TFileN,{, file='!inpathgeos5d/DAS.ops.asm.tavg3d_dyn_v.!geos5Version.!geos5Day2_0000.V01.hdf'})
+    !define(geos5PFile1,{, file='!inpathgeos5p/DAS.ops.asm.tavg3d_prs_v.!geos5Version.!geos5Day1_0000.V01.hdf'})
+    !define(geos5PFile2,{, file='!inpathgeos5p/DAS.ops.asm.tavg3d_prs_v.!geos5Version.!geos5Day1_0600.V01.hdf'})
+    !define(geos5PFile3,{, file='!inpathgeos5p/DAS.ops.asm.tavg3d_prs_v.!geos5Version.!geos5Day1_1200.V01.hdf'})
+    !define(geos5PFile4,{, file='!inpathgeos5p/DAS.ops.asm.tavg3d_prs_v.!geos5Version.!geos5Day1_1800.V01.hdf'})
+    !define(geos5PFileN,{, file='!inpathgeos5p/DAS.ops.asm.tavg3d_prs_v.!geos5Version.!geos5Day2_0000.V01.hdf'})})
+@
+
+
+1.3
+log
+@geos5version and inpathgeos5(pd) brought up-to-date
+@
+text
+@d35 10
+a44 10
+    !define(geos5TFile1,{, file='!inpathgoes5d/DAS.ops.asm.tavg3d_dyn_v.!geos5Version.!geos5Day1_0000.V01'})
+    !define(geos5TFile2,{, file='!inpathgoes5d/DAS.ops.asm.tavg3d_dyn_v.!geos5Version.!geos5Day1_0600.V01'})
+    !define(geos5TFile3,{, file='!inpathgoes5d/DAS.ops.asm.tavg3d_dyn_v.!geos5Version.!geos5Day1_1200.V01'})
+    !define(geos5TFile4,{, file='!inpathgoes5d/DAS.ops.asm.tavg3d_dyn_v.!geos5Version.!geos5Day1_1800.V01'})
+    !define(geos5TFileN,{, file='!inpathgoes5d/DAS.ops.asm.tavg3d_dyn_v.!geos5Version.!geos5Day2_0000.V01'})
+    !define(geos5PFile1,{, file='!inpathgoes5p/DAS.ops.asm.tavg3d_prs_v.!geos5Version.!geos5Day1_0000.V01'})
+    !define(geos5PFile2,{, file='!inpathgoes5p/DAS.ops.asm.tavg3d_prs_v.!geos5Version.!geos5Day1_0600.V01'})
+    !define(geos5PFile3,{, file='!inpathgoes5p/DAS.ops.asm.tavg3d_prs_v.!geos5Version.!geos5Day1_1200.V01'})
+    !define(geos5PFile4,{, file='!inpathgoes5p/DAS.ops.asm.tavg3d_prs_v.!geos5Version.!geos5Day1_1800.V01'})
+    !define(geos5PFileN,{, file='!inpathgoes5p/DAS.ops.asm.tavg3d_prs_v.!geos5Version.!geos5Day2_0000.V01'})})
+@
+
+
+1.2
+log
+@Automatically sets flagUseGEOS5PTrop
+@
+text
+@d32 1
+a32 1
+    !ifdef(geos5Version,{},{!define(geos5Version,{GEOS500})})
+d35 10
+a44 10
+    !define(geos5TFile1,{, file='!inpathdao/DAS.ops.asm.tavg3d_dyn_v.!geos5Version.!geos5Day1_0000.V01'})
+    !define(geos5TFile2,{, file='!inpathdao/DAS.ops.asm.tavg3d_dyn_v.!geos5Version.!geos5Day1_0600.V01'})
+    !define(geos5TFile3,{, file='!inpathdao/DAS.ops.asm.tavg3d_dyn_v.!geos5Version.!geos5Day1_1200.V01'})
+    !define(geos5TFile4,{, file='!inpathdao/DAS.ops.asm.tavg3d_dyn_v.!geos5Version.!geos5Day1_1800.V01'})
+    !define(geos5TFileN,{, file='!inpathdao/DAS.ops.asm.tavg3d_dyn_v.!geos5Version.!geos5Day2_0000.V01'})
+    !define(geos5PFile1,{, file='!inpathdao/DAS.ops.asm.tavg3d_prs_v.!geos5Version.!geos5Day1_0000.V01'})
+    !define(geos5PFile2,{, file='!inpathdao/DAS.ops.asm.tavg3d_prs_v.!geos5Version.!geos5Day1_0600.V01'})
+    !define(geos5PFile3,{, file='!inpathdao/DAS.ops.asm.tavg3d_prs_v.!geos5Version.!geos5Day1_1200.V01'})
+    !define(geos5PFile4,{, file='!inpathdao/DAS.ops.asm.tavg3d_prs_v.!geos5Version.!geos5Day1_1800.V01'})
+    !define(geos5PFileN,{, file='!inpathdao/DAS.ops.asm.tavg3d_prs_v.!geos5Version.!geos5Day2_0000.V01'})})
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d90 1
+@
+

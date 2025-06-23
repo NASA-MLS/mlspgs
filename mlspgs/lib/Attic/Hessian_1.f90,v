@@ -1,0 +1,139 @@
+head	2.2;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+2.2
+date	2010.02.13.03.26.51;	author livesey;	state dead;
+branches;
+next	2.1;
+
+2.1
+date	2010.02.12.21.10.13;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.2
+log
+@Renamed HessianModule_n
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=============================================================================
+module HessianModule_1          ! High-level Hessians in the MLS PGS suite
+!=============================================================================
+
+! This module provides the elementary Hessian type.  Blocks of this
+! type are used to compose block Hessians.
+
+  use HessianModule_0, only: Hessian_0
+  use MLSKinds, only: RM
+  use MatrixModule_1, only: RC_Info
+
+  implicit NONE
+  private
+
+  type :: Hessian_1
+    integer :: Name = 0  ! Sub-rosa index of hHessian name, if any, else zero
+    integer :: Where = 0 ! Source_ref for creation if by L2CF
+    type(RC_Info) :: Col, Row  ! Column and row info
+    type(Hessian_0), dimension(:,:,:), pointer :: H => NULL()
+  end type Hessian_1
+
+  interface Multiply
+    module procedure Hessian_Vector_Vector_Multiply
+  end interface
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: Hessian_1.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  ! ------------------------------- Hessian_Vector_Vector_Multiply -----
+  subroutine Hessian_Vector_Vector_Multiply ( H, V, P, Update )
+  !{ Multiply a Hessian {\tt H} by {\tt V} twice, with a factor of $\frac12$,
+  !  giving {\tt P}: $P^k = \frac12 H^k_{ij} V^i V^j$ or $P^k = P^k + \frac12
+  !  H^k_{ij} V^i V^j$, depending upon {\tt Update}.  This is the
+  !  second-order term of a Taylor series.  {\tt P} is initially set to zero
+  !  unless {\tt Update} is present and true.
+
+    use HessianModule_0, only: Multiply
+    use VectorsModule, only: Vector_T
+
+    type(Hessian_1), intent(in) :: H
+    type(Vector_T), intent(in) :: V
+    type(Vector_T), intent(inout) :: P
+    logical, intent(in), optional :: Update
+
+    integer :: I, J, K, L
+
+    ! Error checking on campatibility of H%row with P and H%col with V here.
+
+    do k = 1, size(h%h,3)
+      do j = 1, size(h%h,2)
+        do i = 1, size(h%h,1)
+          do l = 1, size(p%quantities(k)%values,2)
+            call multiply ( h%h(i,j,k), v%quantities(i)%values(:,l), &
+              & v%quantities(j)%values(:,l), p%quantities(k)%values(:,l), &
+              & update )
+          end do
+        end do
+      end do
+    end do
+
+  end subroutine Hessian_Vector_Vector_Multiply
+
+  logical function not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id: Hessian_1.f90,v 2.1 2010/02/12 21:10:13 vsnyder Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
+end module HessianModule_1
+
+! $Log: Hessian_1.f90,v $
+! Revision 2.1  2010/02/12 21:10:13  vsnyder
+! Initial commit, much work remaining
+!
+@
+
+
+2.1
+log
+@Initial commit, much work remaining
+@
+text
+@d39 1
+a39 1
+       "$RCSfile: Hessian_0.f90,v $"
+d82 1
+a82 1
+       "$Id: Hessian_0.f90,v 2.1 2010/02/12 20:20:26 vsnyder Exp $"
+d90 4
+a93 1
+! $Log: $
+@
+

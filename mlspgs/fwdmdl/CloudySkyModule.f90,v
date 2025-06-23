@@ -1,0 +1,838 @@
+head	2.10;
+access;
+symbols
+	v5-02-NRT-19:2.10
+	v6-00:2.10
+	v5-02-NRT-18:2.10
+	v5-02:2.10
+	v5-01-NRT-17:2.10
+	v5-01-NRT-16:2.10
+	v5-01-NRT-15:2.10
+	v5-01-NRT-14:2.10
+	neuralnetworks-1-0:2.10.0.12
+	cfm-single-freq-0-1:2.10.0.10
+	v5-01:2.10
+	v5-00:2.10
+	v4-23-TA133:2.10.0.8
+	mus-emls-1-70:2.10.0.6
+	rel-1-0-englocks-work:2.10.0.4
+	VUMLS1-00:2.10
+	VPL1-00:2.10
+	V4-22-NRT-08:2.10
+	VAM1-00:2.10
+	V4-21:2.10.0.2
+	V4-13:2.10
+	V4-12:2.10
+	V4-11:2.10
+	V4-10:2.10
+	V3-43:2.9
+	M4-00:2.9
+	V3-41:2.9
+	V3-40-PlusGM57:2.9.0.2
+	V2-24-NRT-04:2.7
+	V3-33:2.9
+	V2-24:2.7
+	V3-31:2.9
+	V3-30-NRT-05:2.9
+	cfm-01-00:2.9
+	V3-30:2.9
+	V3-20:2.9
+	V3-10:2.9
+	V2-23-NRT-02:2.7
+	V2-23:2.7
+	V2-22-NRT-01:2.7
+	V2-22:2.7
+	V2-21:2.5
+	V2-20:2.5
+	V2-11:2.5
+	V2-10:2.5
+	V2-00:2.5
+	V1-51:2.4
+	V1-50:2.4
+	V1-45:2.4
+	V1-44:2.4
+	V1-43:2.4
+	V1-32:2.4
+	V1-31:2.4
+	V1-30:2.3
+	V1-13:2.1
+	V1-12:2.1
+	V1-11:2.1
+	V1-10:2.1
+	newfwm-feb03:2.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+2.10
+date	2013.06.12.02.18.01;	author vsnyder;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2009.06.23.18.26.10;	author pwagner;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2009.05.13.20.03.01;	author vsnyder;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2007.10.06.00.00.38;	author vsnyder;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2007.07.25.20.11.00;	author vsnyder;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2005.06.22.18.08.18;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2003.10.09.18.25.24;	author jonathan;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2003.05.14.23.13.00;	author dwu;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2003.05.05.23.00.24;	author livesey;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2003.01.31.18.35.55;	author jonathan;	state Exp;
+branches
+	2.1.2.1;
+next	;
+
+2.1.2.1
+date	2003.04.16.00.50.33;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.10
+log
+@Cruft removal
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module CloudySkyModule
+
+! -------------------------------------------------------------------------  
+! MLS CLOUD RADIANCE MODEL
+! -------------------------------------------------------------------------
+
+      IMPLICIT NONE
+      Private
+      Public :: CLOUDY_SKY, CLOUD_MODEL
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: CloudySkyModule.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+      
+contains
+
+  SUBROUTINE CLOUDY_SKY(ISPI,CWC,TEMP,F,NU,U,DU,PH,RC,IPSD,Dm, &
+                 &          PH1,NAB,P,DP,NR,R,RN,BC,A,B,NABR)
+
+!=======================================================
+!     >>>>>>>>CLOUDY-SKY RADIATION SCHEME<<<<<<<<<<
+!
+!     CALCULATE CLOUD SCATTERING AND EXTINCTION
+!     LATEST UPDATE: J.JIANG, MAY 20, 2001
+!=======================================================
+
+      use MieTheory, only: MieCoeff, Ice, Water
+      use MLSKinds, only: r8      
+      use PhaseFunction, only: PFsetup
+      use SizeDistribution, only: DRP_SIZE
+      use Constants, only: Pi
+
+      REAL(r8) :: F                            ! FREQUENCY IN GHz
+
+!---------------------------------------
+!     CLOUD PARAMETERS
+!---------------------------------------
+
+      INTEGER :: ISPI                          ! CLOUD TYPE (ICE,WATER)
+
+      INTEGER :: IPSD                          ! SIZE-DISTRIBUTION FLAG
+                                               ! IILL     (I=ICE, L=LIQUID)
+                                               ! 1000:     I->MH, L->GAMMA 
+                                               ! 1100:     I->LIU-CURRY
+                                               ! 2000-3900:I->MODIFIED GAMMA
+                                               !              WITH VARIOUS De,
+                                               !              alpha
+                                               ! 4000-5900:I->KNOLLENBERG WITH 
+                                               !              VARIOUS b1
+                                               ! 6000:     I->PSD FOR PSC
+      
+      INTEGER :: NR                            ! NO OF PARTICLE SIZE BINS
+      INTEGER :: NAB                           ! MAXIMUM NO OF A, B TERMS
+      INTEGER :: NU                            ! DIMENSION FOR U
+
+      INTEGER :: NABR(NR)                      ! TRUNCATION FOR A, B AT R
+
+      REAL(r8) :: U(NU)                        ! COSINE OF SCATTERING ANGLES
+      REAL(r8) :: DU(NU)                       ! DELTA U
+      REAL(r8) :: CWC                          ! ICE WATER CONTENT
+      REAL(r8) :: R(NR)                        ! PARTICLE RADIUS
+      REAL(r8) :: RN(NR)                       ! NUMBER OF PARTICLES IN EACH BIN
+      REAL(r8) :: TEMP                         ! TEMPERATURE (K)
+      REAL(r8) :: BC(3,NR)                     ! SINGLE PARTICLE ABS,SCAT,EXT COEFFS
+      REAL(r8) :: RC(3)                        ! VOLUME ABS,SCAT,EXT COEFFS
+      REAL(r8) :: Dm                           ! MASS-MEAN-DIAMETER
+
+      COMPLEX(r8) :: A(NR,NAB),B(NR,NAB)       ! MIE COEFFICIENCIES
+
+      REAL(r8) :: PH(NU)                       ! INTERGRATED PHASE FUNCTION
+      REAL(r8) :: PH1(NU)                      ! SINGLE PARTICLE PHASE FUNCTION
+
+      COMPLEX(r8) :: S1,S2                     ! SINGLE PARTICLE AMPLITUDE FUNCTION
+
+      REAL(r8) :: P(NAB,NU)                    ! LEGENDRE POLYNOMIALS l=1
+      REAL(r8) :: DP(NAB,NU)                   ! Delt LEGENDRE POLYNOMIALS l=1
+      
+!---------------------------------------
+!     WORK SPACES
+!---------------------------------------
+
+      INTEGER :: I,J,K
+      REAL(r8) :: W1,SUM,DD,US
+
+!-----------------------------------------------------------------------------
+
+      IF (ISPI == ice) THEN
+
+        ! DEFINE SIZE BINS FOR ICE CLOUD
+          DD=(2000._r8/NR**2)/(F/200._r8)  
+!          DD=2000._r8/NR**2
+
+      ELSE IF (ISPI == water) THEN
+
+        ! DEFINE SIZE BINS FOR WATER CLOUD
+          DD=200._r8/NR**2/(F/200._r8)                    
+
+      ENDIF
+
+      DO I=1,NR
+         R(I)=1+I**2*DD
+         RN(I)=0.
+      ENDDO
+
+      CALL PFSETUP(NAB,P,DP,U,NU)       
+      CALL DRP_SIZE(ISPI,R,RN,NR,CWC,TEMP,IPSD,Dm)
+      CALL MIECOEFF(ISPI,F,TEMP,NR,R,A,B,NAB,NABR,BC)
+
+      DO I=1,3
+         RC(I)=0.
+      ENDDO
+
+      DO I=1,NR
+         RC(2)=RC(2)+BC(2,I)*RN(I)*PI*R(I)*R(I)*1.E-12   ! SCATTERING
+         RC(3)=RC(3)+BC(3,I)*RN(I)*PI*R(I)*R(I)*1.E-12   ! EXTINCTION
+      ENDDO
+      RC(1)=RC(3)-RC(2)                                  ! ABSORPTION
+
+      DO K=1,NU
+         PH(K)=0.
+      ENDDO
+
+      DO I=1,NR
+
+         W1=PI*R(I)*R(I)*1.E-12*RN(I)*BC(2,I)
+         
+         IF(W1 .GT. 0.) THEN
+            SUM = 0.
+
+            DO K=1,NU
+
+               US=SQRT(1-U(K)*U(K))
+               S1=CMPLX(0.)
+               S2=CMPLX(0.)
+
+               DO J=1,NABR(I)
+                  S1=S1+(2*J+1.)/J/(J+1.)*(A(I,J)*DP(J,K)      &
+     &               +B(I,J)*P(J,K)/US)
+                  S2=S2+(2*J+1.)/J/(J+1.)*(A(I,J)*P(J,K)/US    &
+     &               +B(I,J)*DP(J,K))
+               END DO
+               PH1(K)=ABS(S1)**2+ABS(S2)**2
+               SUM=SUM+PH1(K)*DU(K)
+
+            END DO   ! angle nu
+   
+            SUM=SUM*2           ! FACTOR 2 ACCOUNTS FOR HALF PLANE
+
+            DO K=1,NU
+               PH(K)=PH(K)+PH1(K)*W1/RC(2)/SUM
+            ENDDO
+         ENDIF       ! w1
+      End do         ! particle radius 1-nr
+
+   END SUBROUTINE CLOUDY_SKY
+
+
+   SUBROUTINE CLOUD_MODEL(ITYPE,CHT,YZ,NH,WC,Ncldsps)
+
+!=========================================================================C
+!  DEFINE VERTICAL PROFILES OF CLOUD ICE-WATER-CONTENT                    C
+!  J.JIANG -05/18/2001                                                    C
+!          -10/05/2001, MODIFIED TO FIT CLOUD RETREVIAL REQUIREMENTS      C
+!=========================================================================C
+      use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+      use MLSCommon, only: r8      
+
+      CHARACTER :: ITYPE
+
+      INTEGER :: NH,Ncldsps,isps
+
+      REAL(r8) :: YZ(NH)
+      REAL(r8) :: WC(Ncldsps,NH)
+
+      REAL(r8) :: CLD_TOP
+      REAL(r8) :: CLD_BASE
+      REAL(r8) :: UPPER_LAG
+      REAL(r8) :: LOWER_LAG
+      REAL(r8) :: HT, CHT, WCscale
+
+!--------------------------------------------------------------------
+
+      IF (CHT .EQ. 0._r8) THEN
+         HT = 16000. + CHT*1000.
+      ELSE
+         HT=CHT
+      ENDIF
+
+      WCscale=0.1
+      WC = 0.0
+
+      do isps=1,Ncldsps
+        Select case (itype)
+           case ('C')
+              if(isps == 1) call convective_ice
+!              if(isps == 2) call convective_liquid
+           case ('F')
+              call frontal_ice
+           case ('A')
+              call anvil_ice
+           case ('T')
+              call thin_ice
+           case default
+              call MLSMessage ( MLSMSG_Error, ModuleName, &
+               'invalid cloud profile model' )
+        end select
+      end do 
+
+      WC=WCscale*WC
+
+    contains
+      
+        ! ---------- Ice CLOUDs
+        subroutine convective_ice
+        integer :: i
+         CLD_TOP   = HT + 1000.         ! CONVECTIVE CLOUD-TOP
+         CLD_BASE  = HT - 11600.        ! CONVECTIVE CLOUD-BASE
+         UPPER_LAG = HT - 8000.
+         LOWER_LAG = HT - 10000.
+         DO I=1,NH
+            IF (YZ(I) .GT. CLD_TOP .OR. YZ(I) .LT. CLD_BASE) THEN
+               WC(1,I) = 0.0
+            ELSE IF (YZ(I).LE.UPPER_LAG .AND. YZ(I).GE.LOWER_LAG) THEN
+               WC(1,I) = 1.0
+            ELSE IF (YZ(I).GT.UPPER_LAG .AND. YZ(I).LE.CLD_TOP) THEN
+               WC(1,I) = 1.0*EXP(-(YZ(I)-UPPER_LAG)/5000.)
+            ELSE IF (YZ(I).LT.LOWER_LAG .AND. YZ(I).GE.CLD_BASE) THEN
+               WC(1,I) = 1.0*EXP(-(LOWER_LAG-YZ(I))/500.)
+            ENDIF
+         ENDDO
+        end subroutine convective_ice
+
+        subroutine frontal_ice
+        integer :: i
+         CLD_TOP   = HT - 5000.         ! FRONTAL CLOUD-TOP
+         CLD_BASE  = HT - 11000.        ! FRONTAL CLOUD-BASE
+         UPPER_LAG = HT - 7000.
+         LOWER_LAG = HT - 9000.
+
+         DO I=1,NH
+            IF (YZ(I) .GT. CLD_TOP .OR. YZ(I) .LT. CLD_BASE) THEN
+               WC(1,I) = 0.0
+            ELSE IF (YZ(I).LE.UPPER_LAG .AND. YZ(I).GE.LOWER_LAG) THEN
+               WC(1,I) = 1.0
+            ELSE IF (YZ(I).GT.UPPER_LAG .AND. YZ(I).LE.CLD_TOP) THEN
+               WC(1,I) = 1.0*EXP(-(YZ(I)-UPPER_LAG)/500.)
+            ELSE IF (YZ(I).LT.LOWER_LAG .AND. YZ(I).GE.CLD_BASE) THEN
+               WC(1,I) = 1.0*EXP(-(LOWER_LAG-YZ(I))/500.)
+            ENDIF
+         ENDDO
+        end subroutine frontal_ice
+
+
+        subroutine anvil_ice
+        integer :: i
+         CLD_TOP   = HT - 4000.         !ANVIL CLOUD-TOP
+         CLD_BASE  = HT - 11000.        !ANVIL CLOUD-BASE
+         UPPER_LAG = HT - 5000.
+         LOWER_LAG = HT - 6000.
+
+         DO I=1,NH
+            IF (YZ(I) .GT. CLD_TOP .OR. YZ(I) .LT. CLD_BASE) THEN
+               WC(1,I) = 0.0
+            ELSE IF (YZ(I).LE.UPPER_LAG .AND. YZ(I).GE.LOWER_LAG) THEN
+               WC(1,I) = 1.0
+            ELSE IF (YZ(I).GT.UPPER_LAG .AND. YZ(I).LE.CLD_TOP) THEN
+               WC(1,I) = 1.0*EXP(-(YZ(I)-UPPER_LAG)/500.)
+            ELSE IF (YZ(I).LT.LOWER_LAG .AND. YZ(I).GE.CLD_BASE) THEN
+               WC(1,I) = 1.0*EXP(-(LOWER_LAG-YZ(I))/600.)
+            ENDIF
+         ENDDO
+        end subroutine anvil_ice
+
+        subroutine thin_ice
+        integer :: i
+         CLD_TOP   = HT + 500.         !1KM THICK CLOUD LAYER
+         CLD_BASE  = HT - 500.
+         UPPER_LAG = HT + 200.
+         LOWER_LAG = HT - 200.
+
+         DO I=1,NH
+            IF (YZ(I) .GT. CLD_TOP .OR. YZ(I) .LT. CLD_BASE) THEN
+               WC(1,I) = 0.0
+            ELSE IF (YZ(I).LE.UPPER_LAG .AND. YZ(I).GE.LOWER_LAG) THEN
+               WC(1,I) = 1.0
+            ELSE IF (YZ(I).GT.UPPER_LAG .AND. YZ(I).LE.CLD_TOP) THEN
+               WC(1,I) = 1.0*EXP(-(YZ(I)-HT)/500.)
+            ELSE IF (YZ(I).LT.LOWER_LAG .AND. YZ(I).GE.CLD_BASE) THEN
+               WC(1,I) = 1.0*EXP(-(HT-YZ(I))/500.)
+            ENDIF
+         ENDDO
+        end subroutine thin_ice
+
+        ! ---------- LIQUID WATER CLOUDs
+        subroutine convective_liquid
+        integer :: i
+         do i=1,nh            
+            IF (YZ(I).GT.5000. .AND. YZ(I).LT. 10000.) THEN
+               WC(2,I) = 0.1
+            ENDIF
+         end do
+        end subroutine convective_liquid
+
+!------------------------------------------------------
+
+  END SUBROUTINE CLOUD_MODEL
+
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: CloudySkyModule.f90,v 2.9 2009/06/23 18:26:10 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module CloudySkyModule
+
+! $Log: CloudySkyModule.f90,v $
+! Revision 2.9  2009/06/23 18:26:10  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.8  2009/05/13 20:03:01  vsnyder
+! Get constants from Constants, kinds from MLSKinds
+!
+! Revision 2.7  2007/10/06 00:00:38  vsnyder
+! Use new Water, Ice named constants from MieTheory
+!
+! Revision 2.6  2007/07/25 20:11:00  vsnyder
+! Delete USE for unreferenced entities
+!
+! Revision 2.5  2005/06/22 18:08:18  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.4  2003/10/09 18:25:24  jonathan
+! some changes
+!
+! Revision 2.3  2003/05/14 23:13:00  dwu
+! fix a dimension problem and modify the structure
+!
+! Revision 2.2  2003/05/05 23:00:24  livesey
+! Merged in feb03 newfwm branch
+!
+! Revision 2.1.2.1  2003/04/16 00:50:33  vsnyder
+! Move USE statements from module scope to procedure scope
+!
+! Revision 2.1  2003/01/31 18:35:55  jonathan
+! moved from cldfwm
+!
+! Revision 1.11  2002/10/08 17:08:07  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 1.10  2002/04/17 20:08:47  jonathan
+! add freq dependent to water cloud size bin
+!
+! Revision 1.9  2002/04/16 03:42:06  jonathan
+! adjust size bin
+!
+! Revision 1.8  2002/04/15 22:22:40  jonathan
+! check bug
+!
+! Revision 1.7  2002/04/15 20:08:04  jonathan
+! add frequency-dependent size bin
+!
+! Revision 1.6  2001/10/08 21:40:21  jonathan
+! add cloud_model sub
+!
+! Revision 1.5  2001/09/21 15:51:37  jonathan
+! modified F95 version
+!
+
+@
+
+
+2.9
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d24 1
+a24 1
+       "$RCSfile: $"
+a46 1
+      REAL(r8) :: WL                           ! WAVELENGTH IN METERS
+a99 2
+      WL=0.3/F
+      
+d325 1
+a325 1
+       "$Id: read_apriori.f90 is it here $"
+d335 3
+@
+
+
+2.8
+log
+@Get constants from Constants, kinds from MLSKinds
+@
+text
+@d24 1
+a24 1
+       "$RCSfile: CloudySkyModule.f90,v $"
+d325 1
+a326 1
+!---------------------------- RCS Ident Info -------------------------------
+d328 2
+a329 3
+       "$Id: CloudySkyModule.f90,v 2.7 2007/10/06 00:00:38 vsnyder Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d331 1
+d333 1
+d338 3
+@
+
+
+2.7
+log
+@Use new Water, Ice named constants from MieTheory
+@
+text
+@d44 1
+a44 1
+      use Units, only: Pi
+d328 1
+a328 1
+       "$Id: CloudySkyModule.f90,v 2.6 2007/07/25 20:11:00 vsnyder Exp $"
+d337 3
+@
+
+
+2.6
+log
+@Delete USE for unreferenced entities
+@
+text
+@d40 2
+a41 2
+      use MieTheory, only: MieCoeff
+      use MLSCommon, only: r8      
+d53 1
+a53 1
+      INTEGER :: ISPI                          ! CLOUD TYPE (1:ICE,2:WATER)
+d103 1
+a103 1
+      IF (ISPI .EQ. 1) THEN
+d109 1
+a109 1
+      ELSE IF (ISPI .EQ. 2) THEN
+d328 1
+a328 1
+       "$Id: CloudySkyModule.f90,v 2.5 2005/06/22 18:08:18 pwagner Exp $"
+d337 3
+@
+
+
+2.5
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d24 1
+a24 1
+       "$RCSfile: $"
+d181 1
+a181 2
+      use MLSMessageModule, only: MLSMessage, MLSMSG_Error, &
+                                        & MLSMSG_Warning, MLSMSG_Deallocate
+d328 1
+a328 1
+       "$Id: $"
+d337 3
+@
+
+
+2.4
+log
+@some changes
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d22 3
+a24 6
+ !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm =                          &
+    "$Id: CloudySkyModule.f90,v 2.3 2003/05/14 23:13:00 dwu Exp $"
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName=                       &
+    "$RCSfile: CloudySkyModule.f90,v $"
+d26 1
+a26 1
+ !---------------------------------------------------------------------------
+d327 5
+d338 3
+@
+
+
+2.3
+log
+@fix a dimension problem and modify the structure
+@
+text
+@d16 1
+a16 1
+    "$Id: CloudySkyModule.f90,v 2.2 2003/05/05 23:00:24 livesey Exp $"
+d90 1
+d328 3
+@
+
+
+2.2
+log
+@Merged in feb03 newfwm branch
+@
+text
+@d16 1
+a16 1
+    "$Id$"
+d19 1
+a19 1
+    "$RCSfile$"
+d25 1
+a25 1
+      SUBROUTINE CLOUDY_SKY(ISPI,CWC,TEMP,F,NU,U,DU,PH,RC,IPSD,Dm, &
+d133 1
+a133 1
+      DO 200 I=1,NR
+d140 1
+a140 1
+            DO 100 K=1,NU
+d151 1
+a151 1
+               ENDDO
+d155 1
+a155 1
+ 100        ENDDO
+d162 2
+a163 3
+         ENDIF
+   
+ 200  CONTINUE   
+d165 1
+a165 1
+      END SUBROUTINE CLOUDY_SKY
+d168 1
+a168 1
+      SUBROUTINE CLOUD_MODEL(ITYPE,CHT,YZ,NH,WC)
+d175 2
+a176 1
+
+d181 1
+a181 1
+      INTEGER :: NH,I
+d184 1
+a184 1
+      REAL(r8) :: WC(2,NH)
+d201 1
+d203 16
+a218 1
+      IF(ITYPE .EQ. 'C') THEN
+d220 1
+a220 2
+!         PRINT*,' '
+!         PRINT*,' -> CLOUD-TYPE: DEEP-CONVECTIVE SYSTEM '
+d222 5
+a230 1
+
+a231 1
+
+a240 6
+
+            ! LIQUID WATER CLOUD
+            
+            IF (YZ(I).GT.5000. .AND. YZ(I).LT. 10000.) THEN
+               WC(2,I) = 0.1*0.
+            ENDIF
+d242 1
+d244 2
+a245 6
+
+      ELSE IF (ITYPE .EQ. 'F') THEN
+
+!         PRINT*,' '
+!         PRINT*,' -> CLOUD-TYPE: FRONTAL SYSTEM '
+
+a260 1
+            WC(2,I) = 0.0
+d262 1
+a263 4
+      ELSE IF (ITYPE .EQ. 'A') THEN
+
+!         PRINT*,' '
+!         PRINT*,' -> CLOUD-TYPE: ANVILS'
+d265 2
+a281 1
+            WC(2,I) = 0.0
+d283 1
+d285 2
+a286 5
+      ELSE IF (ITYPE .EQ. 'T') THEN
+
+!         PRINT*,' '
+!         PRINT*,' -> CLOUD-TYPE: THIN-LAYER CIRRUS'
+
+a301 1
+            WC(2,I)=0.0
+d303 1
+a303 17
+ 
+      ELSE
+
+        PRINT*, 'NO CLOUDS'
+       
+        DO I=1,NH
+            WC(1,I)=0.0
+            WC(2,I)=0.0
+        ENDDO
+
+      ENDIF
+
+
+        DO I=1,NH
+            WC(1,I)=WCscale*WC(1,I)
+            WC(2,I)=WCscale*WC(2,I)
+        ENDDO
+d305 9
+d317 1
+a317 1
+      END SUBROUTINE CLOUD_MODEL
+d326 4
+a329 1
+! $Log$
+@
+
+
+2.1
+log
+@moved from cldfwm
+@
+text
+@a9 4
+      use MieTheory, only: MieCoeff
+      use MLSCommon, only: r8      
+      use PhaseFunction, only: pfsetup
+      use SizeDistribution, only: DRP_SIZE
+d16 1
+a16 1
+    "$Id: CloudySkyModule.f90,v 1.11 2002/10/08 17:08:07 pwagner Exp $"
+d19 1
+a19 1
+    "$RCSfile: CloudySkyModule.f90,v $"
+d35 6
+a40 2
+      REAL :: PI
+      PARAMETER (PI=3.1415926)
+d177 2
+d330 7
+a336 1
+! $Log: CloudySkyModule.f90,v $
+@
+
+
+2.1.2.1
+log
+@Move USE statements from module scope to procedure scope
+@
+text
+@d10 4
+d20 1
+a20 1
+    "$Id: CloudySkyModule.f90,v 2.1 2003/01/31 18:35:55 jonathan Exp $"
+d39 2
+a40 6
+      use MieTheory, only: MieCoeff
+      use MLSCommon, only: r8      
+      use PhaseFunction, only: PFsetup
+      use SizeDistribution, only: DRP_SIZE
+      use Units, only: Pi
+
+a176 2
+      use MLSCommon, only: r8      
+
+a328 3
+! Revision 2.1  2003/01/31 18:35:55  jonathan
+! moved from cldfwm
+!
+@
+

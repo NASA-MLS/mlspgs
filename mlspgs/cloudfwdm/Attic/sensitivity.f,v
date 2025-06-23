@@ -1,0 +1,350 @@
+head	1.6;
+access;
+symbols;
+locks; strict;
+comment	@c @;
+
+
+1.6
+date	2001.07.25.17.58.00;	author jonathan;	state dead;
+branches;
+next	1.5;
+
+1.5
+date	2001.07.11.17.27.15;	author jonathan;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.07.09.20.35.55;	author jonathan;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2001.06.08.22.31.42;	author jonathan;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.06.04.19.07.15;	author jonathan;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.05.29.21.18.39;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.6
+log
+@deleted .f files, jonathan
+@
+text
+@
+      SUBROUTINE SENSITIVITY(DTcir,ZT,NT,YP,YZ,NH,PRESSURE,NZ,
+     >                       delTAU,delTAUc,TAUeff,SS,
+     >                       BETA,BETAc,DDm,Dm,DDZ,DZ,
+     >                       N,NF,IRF,ISWI,RE)
+C----------------------------------------------------------------
+
+      INTEGER NH,NZ
+
+      REAL ZT(NT)                              ! TANGENT HEIGHT
+      REAL YP(NH)                              ! MODEL PRESSURE LEVEL
+      REAL YZ(NH)                              ! MODEL PRESSURE HEIGHT
+      REAL PRESSURE(NZ)                        ! L2 PRESSURE LEVEL
+      REAL DTcir(NT,NF)                      ! CLOUD-INDUCED RADIANCE
+      REAL SS(NT,NF)                         ! CLOUD RADIANCE SENSITIVITY
+      REAL TAUeff(NT,NF)                     ! CLOUD EFFECTIVE OPTICAL DEPTH
+
+      REAL delTAU(NH-1)                        ! TOTAL EXTINCTION 
+      REAL delTAUc(NH-1)                       ! CLOUDY-SKY EXTINCTION
+
+      REAL BETA(NZ,NF)                         ! TOTAL EXTINCTION
+      REAL BETAc(NZ,NF)                        ! CLOUDY-SKY EXTINCTION
+      REAL DDm(N,NH-1)                         ! MASS-MEAN-DIAMETER
+      REAL Dm(N,NZ-1)                          ! MASS-MEAN-DIAMETER
+      REAL DDZ(NH-1)                           ! MODEL LEYER THICKNESS
+      REAL DZ(NZ-1)                            ! L2 LAYER THICKNESS
+
+      REAL*8 RE
+      REAL HT,C_EXT,A_EXT,TGT,DS,DTAU,A_COL
+      REAL ZH(NH),ZA(NZ)
+      INTEGER I,K,J,iflag
+C-----------------------------------------------------------------------------
+
+C===============================================================
+C     INTERPOLATE PARAMETERS FROM MODEL LEVEL NH TO L2 LEVEL NZ
+C===============================================================
+
+      DO I=1,NH-1
+         ZH(I)=-ALOG10( (YP(I+1)+YP(I))/2. )
+      END DO
+
+      DO I=1,NZ-1
+         ZA(I)=-ALOG10( (PRESSURE(I+1)+PRESSURE(I))/2. )
+      END DO
+
+      DO J=1,NZ-1
+      
+         CALL LOCATE (ZH,NH,NZ,ZA(J),JM)
+         
+         BETA(J,IRF)=((ZH(JM+1)-ZA(J))*delTAU(JM)+(ZA(J)-ZH(JM))*
+     >                delTAU(JM+1))/(ZH(JM+1)-ZH(JM))             
+
+         BETAc(J,IRF)=((ZH(JM+1)-ZA(J))*delTAUc(JM)+(ZA(J)-ZH(JM))*
+     >                delTAUc(JM+1))/(ZH(JM+1)-ZH(JM))             
+
+         Dm(1,J)=((ZH(JM+1)-ZA(J))*DDm(1,JM)+(ZA(J)-ZH(JM))*
+     >                DDm(1,JM+1))/(ZH(JM+1)-ZH(JM))             
+
+         Dm(2,J)=((ZH(JM+1)-ZA(J))*DDm(2,JM)+(ZA(J)-ZH(JM))*
+     >                DDm(2,JM+1))/(ZH(JM+1)-ZH(JM))             
+
+         DZ(J)=((ZH(JM+1)-ZA(J))*DDZ(JM)+(ZA(J)-ZH(JM))*
+     >                DDZ(JM+1))/(ZH(JM+1)-ZH(JM))             
+
+      ENDDO
+
+      DO J=1,NZ-1
+            IF (DZ(J) .GT. 0.) THEN 
+               BETA(J,IRF)=BETA(J,IRF)/DZ(J)
+               BETAc(J,IRF)=BETAc(J,IRF)/DZ(J)
+            ELSE
+               BETA(J,IRF)=0.
+               BETAc(J,IRF)=0.
+            ENDIF
+      ENDDO
+
+C==========================================================================
+C     RADIANCE SENSITIVITY CALCULATIONS
+C==========================================================================
+
+      IF (ISWI .EQ. 0) THEN
+
+         DO I=1,NT
+
+            HT = ZT(I)   
+
+            IF (HT .GE. 0.) THEN
+
+               do j=1,nh
+                  if (yz(j) .ge. ht) then
+                     iflag=j
+                     goto 100
+                  endif
+               enddo
+
+ 100           continue
+
+               C_EXT = 0.
+               A_EXT = 0.
+            
+               DO K=NH-1,iflag+1,-1
+
+                  IF (YZ(K) .GT. HT) THEN
+                     TGT=YZ(K-1) 
+                     IF(YZ(K).EQ.HT)THEN
+                        TGT=HT
+                     ENDIF
+                     DS = SQRT((RE+YZ(K))**2-(RE+HT)**2)-
+     >                    SQRT((RE+TGT)**2-(RE+HT)**2)
+                     DTAU = DS * delTAU(K)/(YZ(K)-YZ(K-1))
+                     A_COL = A_EXT + DTAU/2.
+                     C_EXT=C_EXT + delTAUc(K)*EXP(-A_COL)*
+     >                     DS/(YZ(K)-YZ(K-1))
+                     A_EXT = A_EXT + DTAU
+                  ENDIF
+
+               ENDDO
+
+               DO K=iflag+1,NH-1
+
+                  IF (YZ(K) .LT. HT) THEN
+                     TGT=YZ(K-1)
+                     IF(YZ(K).EQ.HT)THEN
+                        TGT=HT
+                     ENDIF 
+                     DS = SQRT((RE+YZ(K))**2-(RE+HT)**2)-
+     >                    SQRT((RE+TGT)**2-(RE+HT)**2)
+                     DTAU = DS * delTAU(K)/(YZ(K)-YZ(K-1))
+                     A_COL = A_EXT + DTAU/2.
+                     C_EXT=C_EXT + delTAUc(K)*EXP(-A_COL)*
+     >                     DS/(YZ(K)-YZ(K-1))
+                     A_EXT = A_EXT + DTAU
+                  ENDIF
+
+               ENDDO
+
+               TAUeff(I,IRF)=C_EXT
+               SS(I,IRF)=DTcir(I,IRF)/TAUeff(I,IRF)
+
+            ENDIF
+         ENDDO
+      
+      ENDIF
+
+C--------------------------------------------------------------------------
+      RETURN
+      END
+
+! $Log: sensitivity.f,v      
+
+
+
+
+
+
+
+
+
+@
+
+
+1.5
+log
+@change demension NT+1 to NT
+@
+text
+@@
+
+
+1.4
+log
+@modified, jonathan
+@
+text
+@d14 3
+a16 3
+      REAL DTcir(NT+1,NF)                      ! CLOUD-INDUCED RADIANCE
+      REAL SS(NT+1,NF)                         ! CLOUD RADIANCE SENSITIVITY
+      REAL TAUeff(NT+1,NF)                     ! CLOUD EFFECTIVE OPTICAL DEPTH
+@
+
+
+1.3
+log
+@First working version
+@
+text
+@d4 1
+d18 1
+a18 1
+      REAL delTAU(NH-1)                        ! CLEAR-SKY  
+d21 7
+d30 1
+d33 43
+@
+
+
+1.2
+log
+@FIRST WORKING VERSION OF FULL_CLOUD_FORWARD_MODEL
+@
+text
+@d3 2
+a4 2
+     >                       delTAU,delTAUc,DTAUt,DTAUc,TAUeff,SS,
+     >                       DDm,Dm,N,NF,IRF,ISWI,RE)
+a18 5
+      REAL DTAUt(NZ,NF)                        ! TOTAL EXTINCTION
+      REAL DTAUc(NZ,NF)                        ! CLOUDY-SKY EXTINCTION
+
+      REAL DDm(N,NH-1)                         ! MASS-MEAN-DIAMETER
+      REAL Dm(N,NZ-1)                          ! MASS-MEAN-DIAMETER
+a21 1
+      REAL ZH(2000),ZA(2000)
+a24 30
+C===============================================================
+C     INTERPOLATE PARAMETERS FROM MODEL LEVEL NH TO L2 LEVEL NZ
+C===============================================================
+
+      DO I=1,NH-1
+         ZH(I)=-ALOG10( (YP(I+1)+YP(I))/2. )
+      END DO
+
+      DO I=1,NZ-1
+         ZA(I)=-ALOG10( (PRESSURE(I+1)+PRESSURE(I))/2. )
+      END DO
+
+      DO J=1,NZ-1
+      
+         CALL LOCATE (ZH,NH,NZ,ZA(J),JM)
+         
+         DTAUt(J,IRF)=((ZH(JM+1)-ZA(J))*delTAU(JM)+(ZA(J)-ZH(JM))*
+     >                delTAU(JM+1))/(ZH(JM+1)-ZH(JM))             
+
+         DTAUc(J,IRF)=((ZH(JM+1)-ZA(J))*delTAUc(JM)+(ZA(J)-ZH(JM))*
+     >                delTAUc(JM+1))/(ZH(JM+1)-ZH(JM))             
+
+         Dm(1,J)=((ZH(JM+1)-ZA(J))*DDm(1,JM)+(ZA(J)-ZH(JM))*
+     >                DDm(1,JM+1))/(ZH(JM+1)-ZH(JM))             
+
+         Dm(2,J)=((ZH(JM+1)-ZA(J))*DDm(2,JM)+(ZA(J)-ZH(JM))*
+     >                DDm(2,JM+1))/(ZH(JM+1)-ZH(JM))             
+
+      ENDDO
+
+d98 6
+@
+
+
+1.1
+log
+@First version
+@
+text
+@d4 1
+a4 1
+     >                       DDm,Dm,DDZ,DZ,N,NF,IRF,ISWI)
+d15 1
+a15 1
+      REAL TAUeff(NT,NF)                       ! CLOUD EFFECTIVE OPTICAL DEPTH
+a23 2
+      REAL DDZ(NH-1)                           ! MODEL LEYER THICKNESS
+      REAL DZ(NZ-1)                            ! L2 LAYER THICKNESS
+d25 2
+a26 1
+      REAL RE,HT,C_EXT,A_EXT,TGT,DS,DTAU,A_COL
+d28 1
+a28 1
+      INTEGER I,K,J
+a34 2
+      RE = 6400.
+
+a58 3
+         DZ(J)=((ZH(JM+1)-ZA(J))*DDz(JM)+(ZA(J)-ZH(JM))*
+     >                DDz(JM+1))/(ZH(JM+1)-ZH(JM))             
+
+d65 1
+a65 1
+      IWSI = 0
+d67 1
+a67 1
+      IF (IWSI .EQ. 1) THEN
+d69 1
+a69 1
+         DO I=1,NT
+a70 1
+            HT = ZT(I)         
+d73 9
+d85 1
+a85 1
+               DO K=NH-1,1,-1
+d103 1
+a103 1
+               DO K=1,NH-1
+d115 1
+a115 1
+     >                    DS/(YZ(K)-YZ(K-1))
+d120 1
+a120 1
+            
+d132 2
+@
+

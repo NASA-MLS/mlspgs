@@ -1,0 +1,57 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.8
+	cfm-single-freq-0-1:1.1.0.6
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.4
+	mus-emls-1-70:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2018.06.15.23.09.25;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@First commit
+@
+text
+@; Example with the Retrieve command
+; input: the measurement vector yInitPtan
+; output: the state vector xInitPtan
+begin Retrieve
+  Snoop, comment='Inside retreival', phaseName='InitPtan'
+  Retrieve, $
+  state=xInitPtan, fwdModelExtra=state, $
+  measurements=yInitPtan, measurementSD=yNoiseInitPtan, $
+  apriori=aInitPtan, covariance=SaInitPtan, $
+  outputSD=sdOutInitPtan, fwdModelOut=fInitPtan, $
+  vRegWeightVec=vrInitPtan, hRegWeightVec=hrInitPtan, $
+      lowBound=lbInitPtan, highBound=hbInitPtan, diagnostics=diagInitPtan, $
+    forwardModel = [l2pcRetFwm1,  l2pcRetFwm32, l2pcRetFwm34, $
+    FwmBaselineMAFR1AX, FwmBaselineMAFR1BX, scanFwmGHz ], $
+    columnScale=norm, maxJ=8, lambda=0.0, Ftolerance=0.01, $
+    vRegOrders=2, regAfter=false, hRegOrders=2, regApriori=true, $
+    vRegQuants=[temperature_hr],hRegQuants=[temperature_hr, refGPH]
+  dump, details= -3, /allVectors
+  dumpBlocks, details= -3, /allMatrices
+end Retrieve
+@

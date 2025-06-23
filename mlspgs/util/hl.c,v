@@ -1,0 +1,458 @@
+head	1.9;
+access;
+symbols
+	v5-02-NRT-19:1.9
+	v6-00:1.9
+	v5-02-NRT-18:1.9
+	v5-02:1.9
+	v5-01-NRT-17:1.9
+	v5-01-NRT-16:1.9
+	v5-01-NRT-15:1.9
+	v5-01-NRT-14:1.9
+	neuralnetworks-1-0:1.9.0.12
+	cfm-single-freq-0-1:1.9.0.10
+	v5-01:1.9
+	v5-00:1.9
+	v4-23-TA133:1.9.0.8
+	mus-emls-1-70:1.9.0.6
+	rel-1-0-englocks-work:1.9.0.4
+	VUMLS1-00:1.9
+	VPL1-00:1.9
+	V4-22-NRT-08:1.9
+	VAM1-00:1.9
+	V4-21:1.9.0.2
+	V4-13:1.9
+	V4-12:1.9
+	V4-11:1.9
+	V4-10:1.9
+	V3-43:1.8
+	M4-00:1.9
+	V3-41:1.8
+	V3-40-PlusGM57:1.8.0.2
+	V2-24-NRT-04:1.8
+	V3-33:1.8
+	V2-24:1.8
+	V3-31:1.8
+	V3-30-NRT-05:1.8
+	cfm-01-00:1.8
+	V3-30:1.8
+	V3-20:1.8
+	V3-10:1.8
+	V2-23-NRT-02:1.8
+	V2-23:1.8
+	V2-22-NRT-01:1.8
+	V2-22:1.8
+	V2-21:1.8
+	V2-20:1.8
+	V2-11:1.8
+	V2-10:1.8
+	V2-00:1.8
+	V1-51:1.6
+	V1-50:1.6
+	V1-45:1.4
+	V1-44:1.4
+	V1-43:1.4
+	V1-42:1.4
+	V1-41:1.4
+	V1-32:1.4
+	V1-40:1.4
+	V1-31:1.4
+	V1-30:1.4
+	V1-13:1.4
+	V1-12:1.4
+	V1-11:1.4
+	V1-10:1.4
+	newfwm-feb03:1.4.0.4
+	V1-04:1.4
+	V1-03:1.4
+	V1-02:1.4
+	V1-00:1.4
+	newfwm-sep01:1.4.0.2
+	V0-7:1.4
+	V0-5-Level2:1.4
+	V0-5-SIPS:1.4;
+locks; strict;
+comment	@ * @;
+
+
+1.9
+date	2011.02.24.01.43.34;	author vsnyder;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2005.06.04.02.51.46;	author vsnyder;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2005.03.04.18.46.26;	author pwagner;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2004.10.30.00.32.46;	author vsnyder;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2004.10.06.23.44.46;	author vsnyder;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.03.03.02.15.48;	author vsnyder;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2001.03.03.02.04.24;	author vsnyder;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.03.03.02.00.46;	author vsnyder;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2001.03.03.01.59.37;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.9
+log
+@Allow mixed case for first letter of pattern
+@
+text
+@/* 
+Copyright 2005, by the California Institute of Technology. ALL
+RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+commercial use must be negotiated with the Office of Technology Transfer
+at the California Institute of Technology.
+
+This software may be subject to U.S. export control laws. By accepting this
+software, the user agrees to comply with all applicable U.S. export laws and
+regulations. User has the responsibility to obtain export licenses, or other
+export authority as may be required before exporting such information to
+*/
+
+#include <stdio.h>
+#include <regex.h>
+
+/* Highlight patterns in the input by coloring them in the output. */
+/* "regex" is used to find the patterns.                           */
+/* The exit status if zero if no "red" patterns are found, else 1. */
+
+  static char Id[] = "$Id: hl.c,v 1.8 2005/06/04 02:51:46 vsnyder Exp $";
+
+main ( int argc, char* argv[] )
+{ char b[256];                      /* input buffer */
+  char after[] = "\033[0;0m";       /* Normal on normal background */
+  char blue[] = "\033[00;34;1m";    /* Bold blue on transparent background */
+  char magenta[] = "\033[00;35;1m"; /* Bold magenta on transparent background */
+  char red[] = "\033[00;31;1m";     /* Bold red on transparent background */
+  int any;                          /* 1 + index of leftmost match; 0 => none */
+  int i;                            /* Subscript/loop inductor */
+  int left;                         /* Lefthand end of leftmost match */
+  int next;                         /* Next element of b to search or print */
+  int result;                       /* Zero = no red messages, else 1 */
+  int right;                        /* Righthand end of leftmost match */
+  _IO_FILE *where;                  /* Where to output -- stdout or stderr */
+
+  typedef struct
+  { char* find;          /* Pattern to find */
+    char* color;         /* String to but before it */
+    regex_t preg;        /* Compiled pattern -- from regcomp */
+  } pat;
+
+  regmatch_t match;      /* Where is the string that matches the pattern? */
+
+  pat pats[] = { "[0-9]+-[SU]", red, {},     /* lf95 errors */
+                 "[0-9]+-W", blue, {},       /* lf95 warnings */
+                 "[0-9]+-I", magenta, {},    /* lf95 informative */
+                 /* NAG f95 patterns: */
+                 "[Dd]eleted", red, {},      "[Ee]rror", red, {},
+                 "[Ff]atal", red, {},        "[Pp]anic", red, {},
+                 "[Ww]arning", blue, {},     "[Ee]xtension", blue, {},
+                 "[Oo]bsolescent", blue, {}, "[Ii]nfo", magenta, {},
+                 "[Uu]ndefined", red, {} };     /* during linking */
+
+#define NPAT ( sizeof pats / sizeof pats[0] )
+
+  /* Compile the patterns */
+  for ( i=0; i<NPAT ; i++ ) regcomp ( &pats[i].preg, pats[i].find, REG_EXTENDED );
+
+  setvbuf ( stdout, (char*)NULL, _IONBF, 1 ); /* unbuffer the output */
+  setvbuf ( stderr, (char*)NULL, _IONBF, 1 ); /* unbuffer the output */
+
+  result = 0;
+  while (1)
+  { /* Get a line: */
+    next = 0;
+    if ( fgets ( b, sizeof b, stdin ) == NULL ) return(result);
+    any = 1;
+    where = stdout;
+    while ( any ) { /* Look for pattern matches */
+      left = sizeof(b) + 1;
+      any = 0;
+      for ( i=0; i<NPAT; i++ )
+      { if ( regexec ( &pats[i].preg, &b[next], 1, &match, 0 ) == 0 )
+        { /* Got a match */
+          /* Is it a "red" pattern? */
+          if ( pats[i].color == red )
+          { where = stderr; /* output line to stderr */
+            result = 1;     /* return status is 1 */
+          }
+          /* Is it the leftmost? */
+          if ( match.rm_so < left )
+          { left = match.rm_so;
+            right = match.rm_eo;
+            any = i + 1;
+          }
+        }
+      }
+      if ( any )
+      { /* Got a match; put the desired color around it */
+        fwrite ( &b[next], sizeof(char), left, where );
+        fprintf ( where, "%s", pats[any-1].color );
+        fwrite ( &b[next+left], sizeof(char), right - left, where );
+        fprintf ( where, "%s", after);
+        next = next + right;
+      }
+    }
+    /* Echo the rest of the input (or all of it if no matches) */
+    fprintf ( where, "%s", &b[next] );
+  }
+}
+
+/*
+$Log: hl.c,v $
+Revision 1.8  2005/06/04 02:51:46  vsnyder
+Colorize as many patterns per line as necessary.  Send lines with "red"
+patterns to stderr.  Return 1 if any red patterns, else zero.
+
+Revision 1.7  2005/03/04 18:46:26  pwagner
+Changed to compile under gcc 3.4.3
+
+Revision 1.6  2004/10/30 00:32:46  vsnyder
+Changed 'puce' to 'magenta'
+
+Revision 1.5  2004/10/06 23:44:46  vsnyder
+Add 'colors' bash script at the end as a comment
+
+Revision 1.4  2001/03/03 02:15:48  vsnyder
+Correct misunderstanding about usage of regex
+
+Revision 1.3  2001/03/03 02:04:24  vsnyder
+Committing working version
+
+*/
+
+/*
+#!/bin/bash
+# Display ANSI colours.
+#
+esc="\033["
+echo -n "FG/ BG: _40_ _ _ 41 _ _ _42_ _ _ 43"
+echo " _ _ 44 _ _ _45_ _ _ 46 _ _ _47_ _ _ 00_"
+for fore in 30 31 32 33 34 35 36 37 00; do
+  line1="$fore  "
+  line2="    "
+  for back in 40 41 42 43 44 45 46 47 00; do
+    line1="${line1}${esc}${back};${fore}m Normal ${esc}0m"
+    line2="${line2}${esc}${back};${fore};1m Bold   ${esc}0m"
+  done
+  echo -e "$line1\n$line2"
+done
+*/
+@
+
+
+1.8
+log
+@Colorize as many patterns per line as necessary.  Send lines with "red"
+patterns to stderr.  Return 1 if any red patterns, else zero.
+@
+text
+@d20 1
+a20 1
+  static char Id[] = "$Id: hl.c,v 1.7 2005/03/04 18:46:26 pwagner Exp $";
+d48 5
+a52 5
+                 "Deleted", red, {},       "Error", red, {},
+                 "Fatal", red, {},         "Panic", red, {},
+                 "Warning", blue, {},      "Extension", blue, {},
+                 "Obsolescent", blue, {},  "Info", magenta, {},
+                 "undefined", red, {} };     /* during linking */
+d104 4
+@
+
+
+1.7
+log
+@Changed to compile under gcc 3.4.3
+@
+text
+@d2 9
+a10 2
+Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
+d12 1
+d16 3
+a18 2
+/* Highlight a pattern in the input by coloring it in the output. */
+/* "regex" is used to find the patterns.                          */
+d20 1
+a20 1
+  static char Id[] = "$Id: hl.c,v 1.6 2004/10/30 00:32:46 vsnyder Exp $";
+d24 5
+a28 4
+  char after[] = "\033[0m";         /* black on transparent background */
+  char blue[] = "\033[00;34;1m";    /* bold blue on transparent background */
+  char magenta[] = "\033[00;35;1m"; /* bold magenta on transparent background */
+  char red[] = "\033[00;31;1m";     /* bold red on transparent background */
+d30 5
+d54 1
+a54 1
+#define NPAT sizeof pats / sizeof pats[0]
+d60 1
+d62 1
+d65 30
+a94 10
+    if ( fgets ( b, sizeof b, stdin ) == NULL ) return(0);
+    /* Look for a pattern match */
+    for ( i=0; i<NPAT; i++ )
+    { if ( regexec ( &pats[i].preg, b, 1, &match, 0 ) == 0 )
+      /* Got a match; put the desired color around it */
+      { fwrite ( b, sizeof(char), match.rm_so, stdout );
+        printf ( "%s", pats[i].color );
+        fwrite ( &b[match.rm_so], sizeof(char), match.rm_eo - match.rm_so, stdout );
+        printf ( "%s%s", after, &b[match.rm_eo] );
+        goto cycle;
+d97 2
+a98 5
+    /* No match; just echo the input */
+    printf ( "%s", b );
+  cycle:
+  /* Nonsense to get around "label at end of compound statement" prohobition */
+  i++;
+d104 3
+@
+
+
+1.6
+log
+@Changed 'puce' to 'magenta'
+@
+text
+@d1 4
+d11 1
+a11 1
+  static char Id[] = "$Id: hl.c,v 1.5 2004/10/06 23:44:46 vsnyder Exp $";
+d63 2
+d70 3
+@
+
+
+1.5
+log
+@Add 'colors' bash script at the end as a comment
+@
+text
+@d7 1
+a7 1
+  static char Id[] = "$Id: hl.c,v 1.4 2001/03/03 02:15:48 vsnyder Exp $";
+d10 6
+a15 6
+{ char b[256];                     /* input buffer */
+  char after[] = "\033[0m";        /* black on transparent background */
+  char blue[] = "\033[00;34;1m";   /* bold blue on transparent background */
+  char puce[] = "\033[00;35;1m";   /* bold puce on transparent background */
+  char red[] = "\033[00;31;1m";    /* bold red on transparent background */
+  int i;                           /* Subscript/loop inductor */
+d27 1
+a27 1
+                 "[0-9]+-I", puce, {},       /* lf95 informative */
+d32 1
+a32 1
+                 "Obsolescent", blue, {},  "Info", puce, {},
+d64 3
+@
+
+
+1.4
+log
+@Correct misunderstanding about usage of regex
+@
+text
+@d7 1
+a7 1
+  static char Id[] = "$Id: hl.c,v 1.3 2001/03/03 02:04:24 vsnyder Exp $";
+d64 3
+d70 18
+@
+
+
+1.3
+log
+@Committing working version
+@
+text
+@d7 1
+a7 1
+  static char Id[] = "$Id: hl.c,v 1.1 2001/03/03 01:59:37 vsnyder Exp $";
+a16 2
+#define PSIZ 256         /* Compiled pattern buffer size */
+
+d20 1
+a20 1
+    regex_t preg[PSIZ];  /* Compiled pattern -- from regcomp */
+d38 1
+a38 1
+  for ( i=0; i<NPAT ; i++ ) regcomp ( pats[i].preg, pats[i].find, REG_EXTENDED );
+d47 1
+a47 1
+    { if ( regexec ( pats[i].preg, b, 1, &match, 0 ) == 0 )
+d64 3
+@
+
+
+1.2
+log
+@Botched it
+@
+text
+@d7 1
+a7 1
+  static char[] = "$Id: hl.c,v 1.1 2001/03/03 01:59:37 vsnyder Exp $";
+d30 1
+a30 1
+                 /* NAG patterns: */
+d64 3
+a66 4
+/* $Log: hl.c,v $
+/* Revision 1.1  2001/03/03 01:59:37  vsnyder
+/* Initial commit
+/* */
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d7 1
+a7 1
+  static char[] = "$Id: $";
+d64 4
+a67 1
+/* $Log: $ */
+@
+

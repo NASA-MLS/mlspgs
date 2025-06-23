@@ -1,0 +1,389 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.14
+	cfm-single-freq-0-1:1.1.0.12
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.10
+	mus-emls-1-70:1.1.0.8
+	rel-1-0-englocks-work:1.1.0.6
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2008.06.11.20.14.53;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.2in
+\textheight 9.2in
+
+\newcommand{\docname}{\bf wvs-049}
+\newcommand{\docdate}{27 November 2006}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Paul, Alyn, Bill\\
+Subject: \>Making PFA tables\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-20pt}
+
+L2CF's for making PFA tables are quite simple.
+
+The only required sections are {\tt MLSSignals}, {\tt Spectroscopy}, and {\tt
+GlobalSettings}.
+
+The {\tt MLSSignals} section is the same as for any other run.
+
+The {\tt Spectroscopy} section defines the spectroscopic tables for which to
+generate the PFA tables.  It could be done either with a {\tt readSpectroscopy}
+command, or an m4 include of a spectroscopy text file.  I prefer to use HDF
+spectroscopy tables.  Here's an L2CF to generate one:
+
+{\small\tt\begin{verbatim}
+include(m4defs.l2cf)
+!include(setupcalfiles.l2cf)
+
+!include(/data/emls/l2cal/MLS-Aura_L2Cal-Signals_v1-5-0_0000d000.l2cf)
+
+!include(/users/vsnyder/mlspgs/tables/MLS-Aura_L2Cal-Spectroscopy_v2-0-6_0000d000.l2cf)
+
+begin spectroscopy
+
+  writeSpectroscopy, $
+    file='/users/vsnyder/mlspgs/tables/MLS-Aura_L2Cal-Spectroscopy_v2-0-6_0000d000.h5'
+
+end spectroscopy
+
+begin globalsettings
+
+  dump,/stop ; so it doesn't snivel about not having L1BOA
+
+end globalsettings
+\end{verbatim}}
+
+The {\tt GlobalSettings} section is where the work is done.
+
+The {\tt ForwardModelGlobal} command only needs to specify the {\tt
+filterShapes} file name.  Here's an example:
+
+{\small\tt\begin{verbatim}
+  ForwardModelGlobal, $
+    filterShapes='/testing/emls/l2cal/MLS-Aura_L2Cal-Filters_v1-5-0_0000d000.txt'
+\end{verbatim}}
+
+Then a {\tt tGrid} and {\tt vGrid} need to be defined.  Here are examples:
+
+{\small\tt\begin{verbatim}
+pfaTgrid: tGrid, number = 7, start = 180 K, step = log(300/180)/6
+
+pfaVgrid: vGrid, type=Logarithmic, coordinate=Zeta, $
+    start=(10 ^ (3+1/6))mb, formula=[87:12]
+\end{verbatim}}
+
+At this point, I insert {\tt dump,/mark ; Mark current CPU time}, but it's not
+necessary.
+
+Then the {\tt makePFA} command does the work.  {\tt MakePFA} has a {\tt
+temperatures} field that names the {\tt tGrid}, a {\tt vGrid} field that names
+the {\tt vGrid}, a {\tt losVel} field that gives the line-of-sight velocity that
+should be used to generate the PFA tables, a {\tt signals} field that names the signals for which PFA
+tables are to be generated, and a {\tt molecules} field that names the molecules
+for which PFA tables are to be generated.  It also has a switch {\tt
+/allLinesForRadiometer} that ought to be set.  PFA tables are generated for the
+Cartesian product of the specified signals and molecules.  Here's an example for
+R1A:
+
+{\tt\begin{verbatim}
+ makePFA, /allLinesForRadiometer, $
+  temperatures=pfaTgrid, vGrid=pfaVgrid, losVel= -6.80kms, $
+  signals = [ $
+   "B1LF", "B32LW" $
+  ], $
+  molecules = [ $
+  ; Molecules to do from scratch
+  ; do this one by hand for each radiometer:
+   H2O_R1A                , $
+   ; do this one by hand for each radiometer:
+ ; O3_R1A                 , $ ; no lines or continuum
+ ; BR_79_O                , $ ; no lines or continuum
+ ; BR_79_O_V1             , $ ; no lines or continuum
+ ; BR_81_O                , $ ; no lines or continuum
+ ; BR_81_O_V1             , $ ; no lines or continuum
+ ; BRO                    , $ ; no catalog
+ ; C_13_H2CHCN            , $ ; no lines or continuum
+ ; C_13_H3CN              , $ ; no lines or continuum
+ ; C_13_O                 , $ ; no lines or continuum
+ ; CH2C_13_HCN            , $ ; no lines or continuum
+ ; CH2CDCN                , $ ; no lines or continuum
+ ; CH2CHC_13_N            , $ ; no lines or continuum
+ ; CH2CHCN                , $ ; no lines or continuum
+ ; CH2OHCOCH2OH           , $ ; no catalog
+ ; CH3C_13_N              , $ ; no lines or continuum
+ ; CH3CH2CH3              , $ ; no lines or continuum
+ ; CH3CH2CN               , $ ; no lines or continuum
+ ; CH3CH2OH               , $ ; no lines or continuum
+ ; CH3CL_35               , $ ; no lines or continuum
+ ; CH3CL_37               , $ ; no lines or continuum
+ ; CH3CL                  , $ ; no catalog
+ ; CH3CN                  , $ ; no lines or continuum
+ ; CH3CN_15               , $ ; no lines or continuum
+ ; CH3COCH3               , $ ; no lines or continuum
+ ; CH3D                   , $ ; no lines or continuum
+ ; CH3O                   , $ ; no lines or continuum
+ ; CH3OH                  , $ ; no lines or continuum
+ ; CH3OOH                 , $ ; no lines or continuum
+ ; CH4                    , $ ; no catalog
+ ; CL_35_NO2              , $ ; no lines or continuum
+ ; CL_35_O                , $ ; no lines or continuum
+ ; CL_35_ONO2             , $ ; no lines or continuum
+ ; CL_35_OOCL_35          , $ ; no lines or continuum
+ ; CL_35_OOCL_37          , $ ; no lines or continuum
+ ; CL_35_O_V1             , $ ; no lines or continuum
+ ; CL_37_NO2              , $ ; no catalog
+ ; CL_37_O                , $ ; no lines or continuum
+ ; CL_37_ONO2             , $ ; no lines or continuum
+ ; CL_37_O_V1             , $ ; no lines or continuum
+ ; CLNO2                  , $ ; no catalog
+ ; CLONO2                 , $ ; no catalog
+ ; CLO                    , $ ; no catalog
+ ; CLOOCL                 , $ ; no catalog
+   CLOUD_A                , $
+   CLOUD_S                , $
+   CO                     , $
+ ; CO_17                  , $ ; no lines or continuum
+ ; CO_18                  , $ ; no lines or continuum
+ ; CO2                    , $ ; no catalog
+ ; COF2                   , $ ; no lines or continuum
+ ; D2O                    , $ ; no lines or continuum
+ ; DCL_35                 , $ ; no lines or continuum
+ ; DCL_37                 , $ ; no lines or continuum
+ ; DF                     , $ ; no lines or continuum
+ ; DNO3                   , $ ; no lines or continuum
+   EXTINCTION             , $
+ ; H2C_13_O               , $ ; no lines or continuum
+ ; H2CO                   , $ ; no lines or continuum
+ ; H2CO_18                , $ ; no lines or continuum
+   H2O                    , $
+ ; H2O_17                 , $ ; no lines or continuum
+ ; H2O_17_V2              , $ ; no lines or continuum
+ ; H2O_18                 , $ ; no lines or continuum
+ ; H2O_18_V2              , $ ; no lines or continuum
+ ; H2O_V2                 , $ ; no lines or continuum
+ ; H2O2                   , $ ; no lines or continuum
+ ; H2S_32                 , $ ; no lines or continuum
+ ; H2S_32_O4              , $ ; no lines or continuum
+ ; H2S                    , $ ; no catalog
+ ; H2SO4                  , $ ; no catalog
+ ; HBR_79                 , $ ; no lines or continuum
+ ; HBR_81                 , $ ; no lines or continuum
+ ; HBR                    , $ ; no catalog
+ ; HC_13_N                , $ ; no lines or continuum
+ ; HCL_35                 , $ ; no lines or continuum
+ ; HCL_35_O               , $ ; no lines or continuum
+ ; HCL_37                 , $ ; no lines or continuum
+ ; HCL_37_O               , $ ; no lines or continuum
+ ; HCL                    , $ ; no catalog
+ ; HCLO                   , $ ; no catalog
+ ; HCN                    , $ ; no lines or continuum
+ ; HCN_15                 , $ ; no lines or continuum
+ ; HCN_V2                 , $ ; no lines or continuum
+ ; HCOCH2OH               , $ ; no lines or continuum
+ ; HCOOH                  , $ ; no lines or continuum
+   HDO                    , $
+ ; HDO_17                 , $ ; no catalog
+ ; HDO_18                 , $ ; no lines or continuum
+ ; HDO_V2                 , $ ; no lines or continuum
+ ; HF                     , $ ; no lines or continuum
+ ; HN_15_O3               , $ ; no lines or continuum
+   HNO3                   , $
+ ; HNO3_V5                , $ ; no lines or continuum
+ ; HNO3_V6                , $ ; no lines or continuum
+ ; HNO3_V7                , $ ; no lines or continuum
+ ; HNO3_V8                , $ ; no lines or continuum
+ ; HNO3_V9                , $ ; no lines or continuum
+ ; HO_18_NO2              , $ ; no lines or continuum
+ ; HO2                    , $ ; no lines or continuum
+ ; HOBR_79                , $ ; no lines or continuum
+ ; HOBR_81                , $ ; no lines or continuum
+ ; HOBR                   , $ ; no catalog
+ ; HOCL_35                , $ ; no lines or continuum
+ ; HOCL_37                , $ ; no lines or continuum
+ ; HOCL                   , $ ; no catalog
+ ; HONO                   , $ ; no lines or continuum
+ ; HONO_18_O              , $ ; no lines or continuum
+ ; HONOO_18               , $ ; no lines or continuum
+ ; HOONO                  , $ ; no lines or continuum
+ ; HOONO2                 , $ ; no lines or continuum
+ ; N_15_H3                , $ ; no lines or continuum
+ ; N_15_NO                , $ ; no lines or continuum
+   N2                     , $
+ ; N2O                    , $ ; no lines or continuum
+ ; N2O_17                 , $ ; no lines or continuum
+ ; N2O_18                 , $ ; no lines or continuum
+ ; N2O_2V2                , $ ; no lines or continuum
+ ; N2O_V1                 , $ ; no lines or continuum
+ ; N2O_V2                 , $ ; no lines or continuum
+ ; NH2CH2CH2OH            , $ ; no lines or continuum
+ ; NH3                    , $ ; no lines or continuum
+ ; NH3_V2                 , $ ; no lines or continuum
+ ; NN_15_O                , $ ; no lines or continuum
+ ; NO                     , $ ; no lines or continuum
+ ; NO2                    , $ ; no lines or continuum
+ ; NO_PLUS                , $ ; no lines or continuum
+ ; O                      , $ ; no lines or continuum
+ ; O_17                   , $ ; no catalog
+   O_17_O                 , $
+ ; O_18_H                 , $ ; no lines or continuum
+ ; O_18                   , $ ; no catalog
+   O_18_O                 , $
+ ; O_18_O_V1              , $ ; no lines or continuum
+   O2                     , $
+   O2_V1                  , $
+   O3                     , $
+ ; O3_2V2                 , $ ; no lines or continuum
+ ; O3_ASYM_O_17           , $ ; no lines or continuum
+   O3_ASYM_O_18           , $
+ ; O3_ASYM_O_18_V2        , $ ; no lines or continuum
+ ; O3_SYM_O_17            , $ ; no lines or continuum
+   O3_SYM_O_18            , $
+ ; O3_SYM_O_18_V2         , $ ; no lines or continuum
+   O3_V1_3                , $
+ ; O3_V1_3_V2             , $ ; no lines or continuum
+   O3_V2                  , $
+ ; OBR_79_O               , $ ; no lines or continuum
+ ; OBR_81_O               , $ ; no lines or continuum
+ ; OBRO                   , $ ; no catalog
+ ; OC_13_S_32             , $ ; no lines or continuum
+ ; OCL_35_O               , $ ; no lines or continuum
+ ; OCL_37_O               , $ ; no lines or continuum
+ ; OCLO                   , $ ; no catalog
+ ; OCO_18                 , $ ; no lines or continuum
+ ; OCS_32                 , $ ; no lines or continuum
+ ; OCS_34                 , $ ; no lines or continuum
+ ; OCS                    , $ ; no catalog
+ ; OD                     , $ ; no lines or continuum
+ ; OH                     , $ ; no lines or continuum
+ ; OH_V1_2                , $ ; no lines or continuum
+ ; S_32_O_18_O            , $ ; no lines or continuum
+   S_32_O2                  $
+ ; S_32_O2_V2             , $ ; no lines or continuum
+ ; S_33_O2                , $ ; no lines or continuum
+ ; S_34_O2                , $ ; no lines or continuum
+ ; SNGLT_DLTA_O_18_O      , $ ; no lines or continuum
+ ; SNGLT_DLTA_O2          , $ ; no lines or continuum
+ ; SO2                      $ ; no catalog
+ ]
+\end{verbatim}}
+
+At this point I insert {\tt dump, text="Used \%C to compute PFA for R1A"} to
+report the CPU time used to make the tables.
+
+Then, to write the generated tables to a file, use something like
+
+{\tt\begin{verbatim}
+writePFA, file='/user5/vsnyder/mlspgs/tables/PFAData_R1A_v2-0-6.h5', /allpfa
+\end{verbatim}}
+
+Finally, {\tt dump, /stop ; avoid gripe from global\_settings about not having
+L1BOA.}
+
+It's also possible to update PFA tables.  After defining the grids, read the PFA
+file to be updated using something like
+{\tt
+readPFA, file='/user5/vsnyder/mlspgs/tables/PFAData\_R4\_v2-0-6.h5'
+}
+
+Then clear the tables to be regenerated using something like
+
+{\tt\begin{verbatim}
+flushPFA, molecules = [ $
+  ; Molecules changed since v2-0-6 on 2006-05-31
+    O3                     , $                           ; 2-0-6_2006-05-31
+    O3_V1_3                , $
+    O3_ASYM_O_18           , $
+    O3_ASYM_O_18_V2          $
+   ]
+\end{verbatim}}
+
+Then use a makePFA command that only names the molecules to be revised.
+
+The L2CF's used to make V2-0-6 PFA tables are in {\tt
+/users/vsnyder/mlspgs/l2/runs/V2-0-6/}.  The file {\tt
+write\_R4\_PFA\_alyn\_2006-05-31.l2cf} was an update run.  The others created
+PFA tables ab initio.  The ones with dates in their file names were done more
+than once, but I forgot why.
+
+\label{lastpage}
+\end{document}
+% $Id: wvs-049r0.tex,v 1.1 2008/06/11 20:14:53 vsnyder Exp $
+@

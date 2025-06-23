@@ -1,0 +1,846 @@
+head	2.16;
+access;
+symbols
+	v5-02-NRT-19:2.16
+	v6-00:2.16
+	v5-02-NRT-18:2.16
+	v5-02:2.16
+	v5-01-NRT-17:2.16
+	v5-01-NRT-16:2.16
+	v5-01-NRT-15:2.16
+	v5-01-NRT-14:2.16
+	neuralnetworks-1-0:2.16.0.10
+	cfm-single-freq-0-1:2.16.0.8
+	v5-01:2.16
+	v5-00:2.16
+	v4-23-TA133:2.16.0.6
+	mus-emls-1-70:2.16.0.4
+	rel-1-0-englocks-work:2.16.0.2
+	VUMLS1-00:2.16
+	VPL1-00:2.16
+	V4-22-NRT-08:2.16
+	whdrel10_merged_to_here:2.16
+	merge_whdrel10_from_here:2.15.6.1
+	TAG_TRUNK_AFTER_PW_CHANGES:2.15
+	TAG_TRUNK_BEFORE_PW_CHANGES:2.15
+	VAM1-00:2.15
+	whd-rel-1-0:2.15.0.6
+	V4-21:2.15.0.4
+	V4-13:2.15
+	V4-12:2.15
+	V4-11:2.15
+	V4-10:2.15
+	V3-43:2.15
+	M4-00:2.15
+	V3-41:2.15
+	V3-40-PlusGM57:2.15.0.2
+	V2-24-NRT-04:2.15
+	V3-33:2.15
+	V2-24:2.15
+	V3-31:2.15
+	V3-30-NRT-05:2.15
+	cfm-01-00:2.15
+	V3-30:2.15
+	V3-20:2.15
+	V3-10:2.15
+	V2-23-NRT-02:2.15
+	V2-23:2.15
+	V2-22-NRT-01:2.15
+	V2-22:2.15
+	V2-21:2.15
+	V2-20:2.15
+	V2-11:2.15
+	V2-10:2.15
+	V2-00:2.15
+	V1-51:2.12
+	V1-50:2.12
+	V1-45:2.11
+	V1-44:2.11
+	V1-43:2.10
+	V1-42:2.10
+	V1-41:2.10
+	V1-32:2.9
+	V1-40:2.10
+	V1-31:2.9
+	V1-30:2.9
+	V1-13:2.6
+	V1-12:2.6
+	V1-11:2.6
+	V1-10:2.6
+	newfwm-feb03:2.6.0.2
+	V1-04:2.4
+	V1-03:2.4
+	V1-02:2.2
+	V1-00:2.2
+	newfwm-sep01:2.1.0.2
+	V0-7:2.1
+	V0-5-Level2:2.1
+	V0-5-SIPS:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.16
+date	2016.03.15.22.17.59;	author whdaffer;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2006.06.14.13.46.34;	author perun;	state Exp;
+branches
+	2.15.6.1;
+next	2.14;
+
+2.14
+date	2005.08.24.15.50.57;	author perun;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2005.06.23.18.41.35;	author pwagner;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2004.11.10.15.32.44;	author perun;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2004.08.12.13.51.49;	author perun;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2004.01.09.17.46.22;	author perun;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2003.08.15.14.25.04;	author perun;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2003.07.08.00.17.11;	author pwagner;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2003.05.30.23.47.51;	author pwagner;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2003.01.31.18.13.34;	author perun;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2002.11.07.21.55.23;	author jdone;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2002.07.17.14.27.26;	author perun;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2002.07.17.14.19.54;	author perun;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2002.03.29.20.18.34;	author perun;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.02.23.20.49.58;	author perun;	state Exp;
+branches;
+next	;
+
+2.15.6.1
+date	2015.10.09.10.21.38;	author whdaffer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.16
+log
+@Merged whd-rel-1-0 back onto main branch. Most changes
+are to comments, but there's some modification to Calibration.f90
+and MLSL1Common to support some new modules: MLSL1Debug and SnoopMLSL1.
+@
+text
+@! Copyright 2006, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=============================================================================
+MODULE L1BOutUtils
+!=============================================================================
+
+  IMPLICIT NONE
+
+  PRIVATE
+
+  PUBLIC :: OutputL1Bdata, OutputL1BOA, WriteHdrAnnots
+
+!---------------------------- RCS Module Info ------------------------------
+  CHARACTER (len=*), PRIVATE, PARAMETER :: ModuleName= &
+       "$RCSfile: L1BOutUtils.f90,v $"
+  PRIVATE :: not_used_here 
+!---------------------------------------------------------------------------
+
+CONTAINS
+
+!=============================================================================
+  SUBROUTINE OutputL1BOA (CurMAFdata)
+!=============================================================================
+
+    USE MLSL1Common, ONLY: L1BFileInfo, MAFinfo, MaxMIFs
+    USE Orbit, ONLY: altG, altT, ascTAI, dscTAI, numOrb
+    USE TkL1B, ONLY: L1BOA_MAF
+    USE MLSL1Config, ONLY: L1Config
+    USE Calibration, ONLY: MAFdata_T
+
+    TYPE (MAFdata_T) :: CurMAFdata
+    INTEGER, SAVE :: MAFno = 0, counterMAF
+    INTEGER :: i, MIFsPerMAF
+    INTEGER, PARAMETER :: last_MIF_indx = MaxMIFs - 1
+    REAL :: scAngleG(0:last_MIF_indx), scAngleT(0:last_MIF_indx)
+    REAL :: encAngleG(0:last_MIF_indx), encAngleT(0:last_MIF_indx)
+    REAL :: APE_pos_P(2,0:last_MIF_indx), TSSM_pos_P(2,0:last_MIF_indx)
+
+    IF (.NOT. L1Config%Globals%ProduceL1BOA) RETURN
+
+    counterMAF = CurMAFdata%EMAF%TotalMAF
+    MIFsPerMAF = CurMAFdata%EMAF%MIFsPerMAF
+
+    MAFno = MAFno + 1
+
+    DO i = 0, last_MIF_indx
+       scAngleG(i) = CurMAFdata%SciPkt(i)%scAngleG
+       scAngleT(i) = CurMAFdata%SciPkt(i)%scAngleT
+       encAngleG(i) = CurMAFdata%SciPkt(i)%APE_theta
+       encAngleT(i) = CurMAFdata%SciPkt(i)%TSSM_theta
+       IF (i > 0) THEN  ! use previous until further notice
+          IF (scAngleG(i) < 0.0) scAngleG(i) = scAngleG(i-1)
+          IF (scAngleT(i) < 0.0) scAngleT(i) = scAngleT(i-1)
+       ENDIF
+       APE_pos_P(:,i) = CurMAFdata%SciPkt(i)%APE_pos_P
+       TSSM_pos_P(:,i) = CurMAFdata%SciPkt(i)%TSSM_pos_P
+    ENDDO
+
+    CALL L1BOA_MAF (altG, altT, ascTAI, counterMAF, dscTAI, &
+         l1bFileInfo%OAId, MAFinfo, MAFno, MIFsPerMAF, numOrb, scAngleG, &
+         scAngleT, encAngleG, encAngleT, APE_pos_P, TSSM_pos_P)
+
+  END SUBROUTINE OutputL1BOA
+
+!=============================================================================
+  SUBROUTINE OutputL1Bdata
+!=============================================================================
+
+    USE MLSL1Common, ONLY: L1BFileInfo, MAFinfo, OA_counterMAF, &
+         OA_counterIndex, MaxMIFs, DACSnum
+    USE OutputL1B, ONLY: OutputL1B_rad, OutputL1B_diags
+    USE MLSL1Rad, ONLY: L1Brad
+    USE EngTbls, ONLY: Reflec
+    USE Calibration, ONLY: CalWin, MAFdata_T
+
+    INTEGER, SAVE :: MAFno = 0, counterMAF, MAFindex = 1
+    INTEGER :: bank, MIF
+    TYPE (MAFdata_T), POINTER :: CurMAFdata
+    INTEGER, PARAMETER :: last_MIF = MaxMIFs - 3
+    REAL :: TP(0:last_MIF,DACSnum), TPdigP(0:last_MIF,DACSnum), &
+         TPdigN(0:last_MIF,DACSnum)
+
+    CurMAFdata => CalWin%MAFdata(CalWin%central)
+    counterMAF = CurMAFdata%EMAF%TotalMAF
+
+    IF (OA_counterIndex == 0) THEN   ! No OA data available
+       MAFno = MAFno + 1
+    ELSE
+       DO
+          IF (counterMAF == OA_counterMAF(MAFindex)) EXIT
+          MAFindex = MAFindex + 1
+       ENDDO
+       MAFno = MAFindex
+    ENDIF
+
+    PRINT *, "outputting l1b rads for MAF no ", MAFno
+    CALL OutputL1B_rad (MAFno, L1BFileInfo, counterMAF, Reflec, &
+         MAFinfo%startTAI, L1Brad)
+
+! Save DACS TP values:
+
+    DO bank = 1, DACSnum
+       DO MIF = 0, last_MIF
+          TP(MIF,bank) = CurMAFdata%SciPkt(MIF)%TP(bank)
+          TPdigP(MIF,bank) = CurMAFdata%SciPkt(MIF)%TPdigP(bank)
+          TPdigN(MIF,bank) = CurMAFdata%SciPkt(MIF)%TPdigN(bank)
+       ENDDO
+    ENDDO
+
+    PRINT *, "outputting l1b diags for MAF no ", MAFno
+    CALL OutputL1B_diags (L1BFileInfo%DiagId, MAFno, counterMAF, &
+         MAFinfo%startTAI, TP=TP, TPdigP=TPdigP, TPdigN=TPdigN)
+
+
+
+  END SUBROUTINE OutputL1Bdata
+
+!=============================================================================
+  SUBROUTINE WriteHdrAnnots (FileName, HDFversion)
+!=============================================================================
+
+    USE INTRINSIC, ONLY: l_hdf
+    USE OpenInit, ONLY: antextPCF, antextCF
+    USE PCFHdr, ONLY: WritePCF2Hdr
+
+    CHARACTER(LEN=*), INTENT(IN) :: Filename
+    INTEGER, INTENT(IN) :: HDFversion
+
+    CALL WritePCF2Hdr (FileName, anTextPCF, hdfVersion=HDFversion, &
+         & fileType=l_hdf)
+    CALL WritePCF2Hdr (FileName, anTextCF, hdfVersion=HDFversion, &
+         & fileType=l_hdf, name='/LCF')
+
+  END SUBROUTINE WriteHdrAnnots
+
+  LOGICAL FUNCTION not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  CHARACTER (len=*), PARAMETER :: IdParm = &
+       "$Id: L1BOutUtils.f90,v 2.15.6.1 2015/10/09 10:21:38 whdaffer Exp $"
+  CHARACTER (len=LEN(idParm)), SAVE :: Id = idParm
+!---------------------------------------------------------------------------
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  END FUNCTION not_used_here
+END MODULE L1BOutUtils
+
+! $Log: L1BOutUtils.f90,v $
+! Revision 2.15.6.1  2015/10/09 10:21:38  whdaffer
+! checkin of continuing work on branch whd-rel-1-0
+!
+! Revision 2.15  2006/06/14 13:46:34  perun
+! Assemble TP data for output to the DIAG file
+!
+! Revision 2.14  2005/08/24 15:50:57  perun
+! Assemble and pass APE and TSSM pos_P for output
+!
+! Revision 2.13  2005/06/23 18:41:35  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.12  2004/11/10 15:32:44  perun
+! Output encoder values; deal with gaps compared to L1BOA records
+!
+! Revision 2.11  2004/08/12 13:51:49  perun
+! Version 1.44 commit
+!
+! Revision 2.10  2004/01/09 17:46:22  perun
+! Version 1.4 commit
+!
+! Revision 2.9  2003/08/15 14:25:04  perun
+! Version 1.2 commit
+!
+! Revision 2.8  2003/07/08 00:17:11  pwagner
+! fileType now a lit_name instead of a char string
+!
+! Revision 2.7  2003/05/30 23:47:51  pwagner
+! Prefers to use WritePCF2Hdr for either hdf version
+!
+! Revision 2.6  2003/01/31 18:13:34  perun
+! Version 1.1 commit
+!
+! Revision 2.4  2002/07/17 14:27:26  perun
+! Added ProduceL1BOA flag
+!
+! Revision 2.3  2002/07/17 14:19:54  perun
+! Uncommented L1BOA_MAF
+!
+! Revision 2.2  2002/03/29 20:18:34  perun
+! Version 1.0 commit
+!
+! Revision 2.1  2001/02/23 20:49:58  perun
+! Version 0.5 commit
+!
+@
+
+
+2.15
+log
+@Assemble TP data for output to the DIAG file
+@
+text
+@d105 1
+d119 1
+d123 1
+a123 1
+    PRINT *, "outputting l1b for MAF no ", MAFno
+d148 1
+a148 1
+       "$Id: L1BOutUtils.f90,v 2.14 2005/08/24 15:50:57 perun Exp $"
+d156 6
+@
+
+
+2.15.6.1
+log
+@checkin of continuing work on branch whd-rel-1-0
+@
+text
+@a104 1
+    PRINT *, "outputting l1b rads for MAF no ", MAFno
+a117 1
+    PRINT *, "outputting l1b diags for MAF no ", MAFno
+d121 1
+a121 1
+
+d146 1
+a146 1
+       "$Id: L1BOutUtils.f90,v 2.15 2006/06/14 13:46:34 perun Exp $"
+a153 3
+! Revision 2.15  2006/06/14 13:46:34  perun
+! Assemble TP data for output to the DIAG file
+!
+@
+
+
+2.14
+log
+@Assemble and pass APE and TSSM pos_P for output
+@
+text
+@d1 1
+a1 1
+! Copyright 2005, by the California Institute of Technology. ALL
+d23 1
+a23 1
+  character (len=*), private, parameter :: ModuleName= &
+d25 1
+a25 1
+  private :: not_used_here 
+d79 1
+a79 1
+         OA_counterIndex
+d86 1
+d88 3
+d108 10
+d119 1
+a119 1
+         MAFinfo%startTAI)
+d129 1
+a129 1
+    USE Intrinsic, ONLY: l_hdf
+d143 1
+a143 1
+  logical function not_used_here()
+d145 3
+a147 3
+  character (len=*), parameter :: IdParm = &
+       "$Id: L1BOutUtils.f90,v 2.13 2005/06/23 18:41:35 pwagner Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+d150 1
+a150 1
+  end function not_used_here
+d154 3
+@
+
+
+2.13
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d24 1
+a24 1
+       "$RCSfile: $"
+d46 1
+d64 2
+d70 1
+a70 1
+         scAngleT, encAngleG, encAngleT)
+d132 1
+a132 1
+       "$Id: $"
+d140 3
+@
+
+
+2.12
+log
+@Output encoder values; deal with gaps compared to L1BOA records
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d22 5
+a26 5
+  !------------------------------- RCS Ident Info ------------------------------
+  CHARACTER(LEN=130) :: id = &
+       "$Id: L1BOutUtils.f90,v 2.11 2004/08/12 13:51:49 perun Exp $"
+  CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile: L1BOutUtils.f90,v $"
+  !-----------------------------------------------------------------------------
+d126 8
+d137 3
+@
+
+
+2.11
+log
+@Version 1.44 commit
+@
+text
+@d16 1
+a16 1
+       "$Id: L1BOutUtils.f90,v 2.10 2004/01/09 17:46:22 perun Exp $"
+d34 1
+a34 1
+    INTEGER :: i
+d37 1
+d42 1
+d49 2
+d58 2
+a59 1
+         l1bFileInfo%OAId, MAFinfo, MAFno, numOrb, scAngleG, scAngleT)
+d67 2
+a68 1
+    USE MLSL1Common, ONLY: L1BFileInfo, MAFinfo
+d74 1
+a74 1
+    INTEGER, SAVE :: MAFno = 0, counterMAF
+d80 9
+a88 3
+    MAFno = MAFno + 1
+
+!    CALL OutputL1BOA (CurMAFdata)
+d121 3
+@
+
+
+2.10
+log
+@Version 1.4 commit
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+d12 1
+a12 1
+  PUBLIC :: OutputL1Bdata, WriteHdrAnnots
+d16 1
+a16 1
+       "$Id: L1BOutUtils.f90,v 2.9 2003/08/15 14:25:04 perun Exp $"
+d23 1
+a23 1
+  SUBROUTINE OutputL1Bdata
+a28 3
+    USE OutputL1B, ONLY: OutputL1B_rad, OutputL1B_diags
+    USE MLSL1Rad, ONLY: L1Brad
+    USE EngTbls, ONLY: Reflec
+d30 1
+a30 1
+    USE Calibration, ONLY: CalWin, MAFdata_T
+d32 1
+a36 1
+    TYPE (MAFdata_T), POINTER :: CurMAFdata
+d38 2
+a39 1
+    CurMAFdata => CalWin%MAFdata(CalWin%central)
+d44 13
+a56 1
+    IF (L1Config%Globals%ProduceL1BOA) THEN
+d58 3
+a60 8
+       DO i = 0, last_MIF_indx
+          scAngleG(i) = CurMAFdata%SciPkt(i)%scAngleG
+          scAngleT(i) = CurMAFdata%SciPkt(i)%scAngleT
+          IF (i > 0) THEN  ! use previous until further notice
+             IF (scAngleG(i) < 0.0) scAngleG(i) = scAngleG(i-1)
+             IF (scAngleT(i) < 0.0) scAngleT(i) = scAngleT(i-1)
+          ENDIF
+       ENDDO
+d62 13
+a74 2
+       CALL L1BOA_MAF (altG, altT, ascTAI, counterMAF, dscTAI, &
+            l1bFileInfo%OAId, MAFinfo, MAFno, numOrb, scAngleG, scAngleT)
+d76 1
+a76 1
+    ENDIF
+d81 1
+a81 1
+    CALL OutputL1B_diags (MAFno, L1BFileInfo%DiagId, counterMAF, &
+d109 3
+@
+
+
+2.9
+log
+@Version 1.2 commit
+@
+text
+@d16 1
+a16 1
+       "$Id: L1BOutUtils.f90,v 2.8 2003/07/08 00:17:11 pwagner Exp $"
+d29 1
+a29 1
+    USE OutputL1B, ONLY: OutputL1B_rad
+d37 2
+a38 1
+    REAL :: scAngleG(0:(MaxMIFs-1)), scAngleT(0:(MaxMIFs-1))
+d48 1
+a48 1
+       DO i = 0, (MaxMIFs - 1)
+d65 3
+a78 1
+    USE MLSFiles, ONLY: HDFVERSION_4, HDFVERSION_5
+d83 1
+a83 5
+    IF (HDFversion == HDFVERSION_4) THEN
+       CALL WritePCF2Hdr (FileName, anTextPCF, hdfVersion=HDFVERSION_4)
+       CALL WritePCF2Hdr (FileName, anTextCF, hdfVersion=HDFVERSION_4)
+    ELSE IF (HDFversion == HDFVERSION_5) THEN
+       CALL WritePCF2Hdr (FileName, anTextPCF, hdfVersion=HDFVERSION_5, &
+d85 1
+a85 1
+       CALL WritePCF2Hdr (FileName, anTextCF, hdfVersion=HDFVERSION_5, &
+a86 3
+    ELSE
+       PRINT *, 'Unknown HDF type!'
+    ENDIF
+d93 3
+@
+
+
+2.8
+log
+@fileType now a lit_name instead of a char string
+@
+text
+@d16 1
+a16 1
+       "$Id: L1BOutUtils.f90,v 2.7 2003/05/30 23:47:51 pwagner Exp $"
+a19 2
+    logical, parameter :: USEPCF2HDRFORHDF5 = .true.
+
+d26 2
+a27 3
+    USE MLSL1Common, ONLY: L1BFileInfo, MAFinfo
+    USE Orbit, ONLY: altG, altT, ascTAI, dscTAI, numOrb, orbIncline, &
+         orbitNumber, scanRate, scanRateT
+d31 1
+d33 1
+a33 1
+    USE Calibration, ONLY: CalWin
+d36 6
+a42 1
+    counterMAF = CalWin%MAFdata(CalWin%central)%EMAF%TotalMAF
+d47 9
+d57 1
+a57 2
+            l1bFileInfo%OAId, MAFinfo, MAFno, numOrb, orbIncline, &
+            orbitNumber, scanRate, scanRateT, L1BFileInfo)
+d61 2
+a62 2
+    CALL OutputL1B_rad (MAFno, L1BFileInfo, counterMAF, MAFinfo%startTAI, &
+         L1Brad)
+d69 1
+a69 1
+  SUBROUTINE WriteHdrAnnots (FileName, File_id, HDFversion)
+a75 2
+    USE MLS_DataProducts, ONLY: DataProducts_T, Deallocate_DataProducts
+    USE MLSAuxData, ONLY: Build_MLSAuxData, MaxCharFieldLen
+d78 1
+a78 4
+    INTEGER, INTENT(IN) :: File_id, HDFversion
+    CHARACTER(len=MaxCharFieldLen) :: cbuf
+
+    TYPE (DataProducts_T) :: dataset
+d83 1
+a83 1
+    elseif (USEPCF2HDRFORHDF5) THEN
+d89 1
+a89 10
+       CALL Deallocate_DataProducts (dataset)
+       dataset%name      = 'TextPCF'
+       dataset%data_type = 'character'
+       cbuf = TRANSFER (anTextPCF, cbuf)
+       CALL Build_MLSAuxData (File_id, dataset, cbuf, &
+            char_length=SIZE(anTextPCF))
+       dataset%name      = 'TextCF'
+       cbuf = TRANSFER (anTextCF, cbuf)
+       CALL Build_MLSAuxData (File_id, dataset, cbuf, &
+            char_length=SIZE(anTextCF))
+d97 3
+@
+
+
+2.7
+log
+@Prefers to use WritePCF2Hdr for either hdf version
+@
+text
+@d16 1
+a16 1
+       "$Id: L1BOutUtils.f90,v 2.6 2003/01/31 18:13:34 perun Exp $"
+d61 1
+d79 1
+a79 1
+         & fileType='hdf')
+d81 1
+a81 1
+         & fileType='hdf', name='/LCF')
+d100 3
+@
+
+
+2.6
+log
+@Version 1.1 commit
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+d16 1
+a16 1
+       "$Id: L1BOutUtils.f90,v 2.1 2001/02/23 20:49:58 perun Exp $"
+d20 2
+d63 1
+a63 1
+    USE MLSFiles, ONLY: HDFVERSION_4
+d74 7
+a80 2
+       CALL WritePCF2Hdr (FileName, anTextPCF)
+       CALL WritePCF2Hdr (FileName, anTextCF)
+d99 3
+@
+
+
+2.5
+log
+@Added HDF4/HDF5 switch.
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+d8 3
+a10 8
+  USE MLSL1Common, ONLY: L1BFileInfo
+  USE Orbit, ONLY: altG, altT, ascTAI, dscTAI, numOrb, orbIncline, &
+         orbitNumber, scanRate, scanRateT
+  USE TkL1B, ONLY: L1BOA_MAF
+  USE SortQualify, ONLY: MAFinfo
+  USE OutputL1B, ONLY: OutputL1B_rad
+  USE MLSL1Rad, ONLY: L1Brad
+  USE MLSL1Config, ONLY: L1Config
+d12 1
+a12 1
+  IMPLICIT NONE
+a13 1
+  PRIVATE :: Id, ModuleName
+d16 1
+a16 1
+       "$Id: L1BOutUtils.f90,v 2.4 2002/07/17 14:27:26 perun Exp $"
+d22 1
+d24 10
+d37 1
+a37 1
+    counterMAF = MAFno
+d48 4
+a51 1
+    CALL OutputL1B_rad (MAFno, L1BFileInfo, counterMAF, L1Brad)
+d54 34
+@
+
+
+2.4
+log
+@Added ProduceL1BOA flag
+@
+text
+@d22 1
+a22 1
+       "$Id: L1BOutUtils.f90,v 2.3 2002/07/17 14:19:54 perun Exp $"
+d39 1
+a39 1
+            orbitNumber, scanRate, scanRateT)
+a44 2
+    print *, "outputting l1b for MAF no ", MAFno
+
+d50 3
+@
+
+
+2.3
+log
+@Uncommented L1BOA_MAF
+@
+text
+@d15 1
+d22 1
+a22 1
+       "$Id: L1BOutUtils.f90,v 2.2 2002/03/29 20:18:34 perun Exp $"
+d35 7
+a41 3
+    CALL L1BOA_MAF (altG, altT, ascTAI, counterMAF, dscTAI, &
+         l1bFileInfo%OAId, MAFinfo, MAFno, numOrb, orbIncline, &
+         orbitNumber, scanRate, scanRateT)
+d52 3
+@
+
+
+2.2
+log
+@Version 1.0 commit
+@
+text
+@d21 1
+a21 1
+       "$Id: L1BOutUtils.f90,v 2.1 2001/02/23 20:49:58 perun Exp $"
+d34 3
+a36 3
+!!$    CALL L1BOA_MAF (altG, altT, ascTAI, counterMAF, dscTAI, &
+!!$         l1bFileInfo%OAId, MAFinfo, MAFno, numOrb, orbIncline, &
+!!$         orbitNumber, scanRate, scanRateT)
+d47 3
+@
+
+
+2.1
+log
+@Version 0.5 commit
+@
+text
+@d21 2
+a22 2
+       "$Id:$"
+  CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile:$"
+d34 3
+a36 3
+    CALL L1BOA_MAF (altG, altT, ascTAI, counterMAF, dscTAI, &
+         l1bFileInfo%OAId, MAFinfo, MAFno, numOrb, orbIncline, &
+         orbitNumber, scanRate, scanRateT)
+d46 4
+a49 1
+! $Log:$
+@
+

@@ -1,0 +1,1262 @@
+head	1.25;
+access;
+symbols
+	v5-02-NRT-19:1.25
+	v6-00:1.25
+	v5-02-NRT-18:1.25
+	v5-02:1.25
+	v5-01-NRT-17:1.25
+	v5-01-NRT-16:1.25
+	v5-01-NRT-15:1.25
+	v5-01-NRT-14:1.25
+	neuralnetworks-1-0:1.25.0.12
+	cfm-single-freq-0-1:1.25.0.10
+	v5-01:1.25
+	v5-00:1.25
+	v4-23-TA133:1.25.0.8
+	mus-emls-1-70:1.25.0.6
+	rel-1-0-englocks-work:1.25.0.4
+	VUMLS1-00:1.25
+	VPL1-00:1.25
+	V4-22-NRT-08:1.25
+	VAM1-00:1.25
+	V4-21:1.25.0.2
+	V4-13:1.25
+	V4-12:1.25
+	V4-11:1.25
+	V4-10:1.25
+	V3-43:1.23
+	M4-00:1.25
+	V3-41:1.23
+	V3-40-PlusGM57:1.23.0.2
+	V2-24-NRT-04:1.22
+	V3-33:1.24
+	V2-24:1.22
+	V3-31:1.24
+	V3-30-NRT-05:1.23
+	cfm-01-00:1.23
+	V3-30:1.23
+	V3-20:1.23
+	V3-10:1.22
+	V2-23-NRT-02:1.22
+	V2-23:1.22
+	V2-22-NRT-01:1.22
+	V2-22:1.22
+	V2-21:1.22
+	V2-20:1.22
+	V2-11:1.22
+	V2-10:1.22
+	V2-00:1.22
+	V1-51:1.18
+	V1-50:1.18
+	V1-45:1.18
+	V1-44:1.17
+	V1-43:1.17
+	V1-42:1.15
+	V1-41:1.15
+	V1-32:1.15
+	V1-40:1.15
+	V1-31:1.15
+	V1-30:1.14
+	V1-13:1.12
+	V1-12:1.12
+	V1-11:1.12
+	V1-10:1.12
+	newfwm-feb03:1.12.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.25
+date	2012.04.04.00.45.10;	author pwagner;	state Exp;
+branches;
+next	1.24;
+
+1.24
+date	2010.10.02.00.47.12;	author pwagner;	state Exp;
+branches;
+next	1.23;
+
+1.23
+date	2009.10.08.23.06.52;	author pwagner;	state Exp;
+branches;
+next	1.22;
+
+1.22
+date	2006.04.03.22.12.40;	author pwagner;	state Exp;
+branches;
+next	1.21;
+
+1.21
+date	2006.04.01.01.14.50;	author pwagner;	state Exp;
+branches;
+next	1.20;
+
+1.20
+date	2006.03.28.21.54.58;	author pwagner;	state Exp;
+branches;
+next	1.19;
+
+1.19
+date	2005.09.08.00.25.01;	author pwagner;	state Exp;
+branches;
+next	1.18;
+
+1.18
+date	2004.08.19.00.07.46;	author pwagner;	state Exp;
+branches;
+next	1.17;
+
+1.17
+date	2004.05.20.22.58.55;	author pwagner;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2004.03.26.21.16.53;	author pwagner;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2003.10.08.21.13.15;	author pwagner;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2003.05.21.17.46.02;	author pwagner;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2003.05.17.00.04.52;	author pwagner;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2003.02.01.00.01.35;	author pwagner;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2002.11.08.01.18.22;	author pwagner;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2002.08.23.20.32.23;	author pwagner;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2002.07.25.20.58.57;	author pwagner;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2002.07.22.22.07.49;	author pwagner;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2002.07.19.17.40.08;	author pwagner;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2002.07.18.18.01.36;	author pwagner;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2002.07.15.23.20.19;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2002.07.12.20.33.46;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2002.07.03.00.22.39;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2002.07.01.20.50.29;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2002.07.01.17.24.32;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.25
+log
+@Makes use of common Makefile.h file
+@
+text
+@# "$Id: LF95.Linux,v 1.24 2010/10/02 00:47:12 pwagner Exp $"
+
+#	special options for compiling some modules--override .f90 rules
+
+# Should put this elsewhere--but in a hurry
+TABLES_DIR=../../tables
+
+# split_path.sh can split off a file name from any prefixed paths
+SPLIT_PATH=$(UTILDIR)/split_path.sh
+
+# FC_NAME may be something like f95 if we need a real compiler, or
+# mark_as_uptodate.sh if we're being asked just to touch targets
+FC_NAME := $(shell ${SPLIT_PATH} -f $(FC))
+
+BUGGY := $(shell echo ${FOPTS} | sed 's/-O[0-9]*//')
+DUSTIER := $(DUSTY)
+
+# Where we and the configuration-specific files that include us are to be
+custom = $(CONFDIR)/customblds
+
+include $(custom)/Makefile.h
+
+ifeq ($(short_name),cfm)
+libcfm.so: $(prereqs) libcfm.a
+		$(FC) $(LDOPTS) --shared -o libcfm.so $(PVM_OBJS)  \
+                      -L./ -lcfm \
+        $(l_specials) $(LAFTER) \
+
+libcfm_all.so: $(prereqs) libcfm_all.a
+		$(FC) $(LDOPTS) --shared -o libcfm_all.so $(PVM_OBJS)  \
+                      -L./ -lcfm_all \
+        $(l_specials) $(LAFTER) \
+
+endif
+
+# $Log: LF95.Linux,v $
+# Revision 1.24  2010/10/02 00:47:12  pwagner
+# Should be able to build shared objects no matter what
+#
+# Revision 1.23  2009/10/08 23:06:52  pwagner
+# Added workarounds for buggy Intel v11 handling of strings
+#
+# Revision 1.22  2006/04/03 22:12:40  pwagner
+# Uniform changes to accommodate buggy Lahey optimizer in l1
+#
+# Revision 1.21  2006/04/01 01:14:50  pwagner
+# Fixed error in build command for L1LogUtils
+#
+# Revision 1.20  2006/03/28 21:54:58  pwagner
+# Must turn off optimization to work around Lahey bug
+#
+# Revision 1.19  2005/09/08 00:25:01  pwagner
+# Fixed bug is build command for l1/EngTbls.o
+#
+# Revision 1.18  2004/08/19 00:07:46  pwagner
+# Fixed missing mod dependencies for machine.o
+#
+# Revision 1.17  2004/05/20 22:58:55  pwagner
+# Added build rules for ieee-arithmetic module for mod-variant depends
+#
+# Revision 1.16  2004/03/26 21:16:53  pwagner
+# Added dependency of ieee on infnan
+#
+# Revision 1.15  2003/10/08 21:13:15  pwagner
+# Changed options to sort to tolerate duplicate entries
+#
+# Revision 1.14  2003/05/21 17:46:02  pwagner
+# Commands to build mol_...f9h now formatted correctly
+#
+# Revision 1.13  2003/05/17 00:04:52  pwagner
+# Now create mol_.. files in lib to be used by Molecules.f90 there
+#
+# Revision 1.12  2003/02/01 00:01:35  pwagner
+# Changed for new l1 with 3 executables
+#
+# Revision 1.11  2002/11/08 01:18:22  pwagner
+# Added l1/OutputL1B_HDF4.f90 which needs (DUSTY)
+#
+# Revision 1.10  2002/08/23 20:32:23  pwagner
+# Removed lib trickery L2GPData, MLSFiles, etc.
+#
+# Revision 1.9  2002/07/25 20:58:57  pwagner
+# No custom builds for Lahey-specific 3 lib modules if marking uptodate
+#
+# Revision 1.8  2002/07/22 22:07:49  pwagner
+# Removed custom builds for Lahey and LinearizedForwardModel
+#
+# Revision 1.7  2002/07/19 17:40:08  pwagner
+# Slow down LF95 build of LinearizedFM by custom build
+#
+# Revision 1.6  2002/07/18 18:01:36  pwagner
+# .o now depends on file_name even if .mod mediated; special lib hdf4 moved here
+#
+# Revision 1.5  2002/07/15 23:20:19  pwagner
+# Added build instructions for getcf_m.mod
+#
+# Revision 1.4  2002/07/12 20:33:46  pwagner
+# l2/init_tables_module does not require custom build
+#
+# Revision 1.3  2002/07/03 00:22:39  pwagner
+# Added line to build l2/init_tables_module.mod
+#
+# Revision 1.2  2002/07/01 20:50:29  pwagner
+# Rebuilds object file when deleted
+#
+# Revision 1.1  2002/07/01 17:24:32  pwagner
+# First commit
+#
+@
+
+
+1.24
+log
+@Should be able to build shared objects no matter what
+@
+text
+@d1 1
+a1 1
+# "$Id: LF95.Linux,v 1.23 2009/10/08 23:06:52 pwagner Exp $"
+d16 1
+a16 2
+ifndef CASCADE
+#	l1
+d18 2
+a19 82
+CalibWeightsFlags.o: calibweightsflags.mod
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T CalibWeightsFlags.o calibweightsflags.mod
+calibweightsflags.mod:
+	$(UTILDIR)/newAifBdiff.sh -a calibweightsflags.mod $(FC) -c $(BUGGY) \
+   $(INC_PATHS) $(S)/CalibWeightsFlags.f90 $(FAFTER)
+EngTbls.o: engtbls.mod
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T EngTbls.o engtbls.mod 
+engtbls.mod:
+	$(UTILDIR)/newAifBdiff.sh -a engtbls.mod $(FC) -c $(DUSTY) \
+   $(INC_PATHS) $(S)/EngTbls.f90 $(FAFTER)
+L1LogUtils.o: l1logutils.mod
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T L1LogUtils.o l1logutils.mod
+l1logutils.mod:
+	$(UTILDIR)/newAifBdiff.sh -a l1logutils.mod $(FC) -c $(BUGGY) \
+   $(INC_PATHS) $(S)/L1LogUtils.f90 $(FAFTER)
+OutputL1B.o: outputl1b.mod
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T OutputL1B.o outputl1b.mod 
+outputl1b.mod:
+	$(UTILDIR)/newAifBdiff.sh -a outputl1b.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/OutputL1B.f90 $(FAFTER)
+OutputL1B_HDF4.o: outputl1b_hdf4.mod
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T OutputL1B_HDF4.o outputl1b_hdf4.mod 
+outputl1b_hdf4.mod:
+	$(UTILDIR)/newAifBdiff.sh -a outputl1b_hdf4.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/OutputL1B_HDF4.f90 $(FAFTER)
+tree_checker.mod: tree_checker.f90 init_tables_module.mod
+	$(UTILDIR)/newAifBdiff.sh -a tree_checker.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(srclib)/tree_checker.f90 $(FAFTER)
+tree_checker.o: tree_checker.mod tree_checker.f90
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T tree_checker.o tree_checker.mod 
+
+# l2
+# This keeps switch_usage up-to-date with notes/switches
+# (and similarly for options)
+MLSL2.o: $(CONFDIR)/notes/switches $(CONFDIR)/notes/options $(S)/MLSL2.f90
+	@@rm -f MLSL2.f90 part_1 part_2 part_3 ; \
+	sed -n '1,/=== (start of automatic usage lines) ===/ p' $(S)/MLSL2.f90 > part_1 ; \
+	sed -n '/=== (end of automatic usage lines) ===/,$$ p' $(S)/MLSL2.f90 > part_3 ; \
+	sed -n '/mlsl2 =========/,/mlsl2 ========/p' $(CONFDIR)/notes/switches > part_2 ; \
+	sed '1 d; $$ d' part_2 > MLSL2.f90 ; \
+	mv MLSL2.f90 part_2 ; \
+	sed -n -f $(CONFDIR)/notes/switch_usage.sed part_2 > MLSL2.f90 ; \
+	mv MLSL2.f90 part_2 ; \
+	cat part_1 part_2 part_3 > MLSL2.f90 ; \
+	rm -f part_1 part_2 part_3 ; \
+	sed -n '1,/=== (start of automatic option lines) ===/ p' MLSL2.f90 > part_1 ; \
+	sed -n '/=== (end of automatic option lines) ===/,$$ p' MLSL2.f90 > part_3 ; \
+	sed -n '/mlsl2 =========/,/mlsl2 ========/p' $(CONFDIR)/notes/options > part_2 ; \
+	sed '1 d; $$ d' part_2 > MLSL2.f90 ; \
+	mv MLSL2.f90 part_2 ; \
+	sed -n -f $(CONFDIR)/notes/switch_usage.sed part_2 > MLSL2.f90 ; \
+	mv MLSL2.f90 part_2 ; \
+	cat part_1 part_2 part_3 > MLSL2.f90
+	$(FC) -c $(FOPTS) $(INC_PATHS) MLSL2.f90 $(FAFTER)
+	rm -f MLSL2.f90 part_1 part_2 part_3
+
+#tree_checker.mod: init_tables_module.mod
+#	$(UTILDIR)/newAifBdiff.sh -a tree_checker.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(srclib)/tree_checker.f90 $(FAFTER)
+
+ifeq ($(short_name),l2)
+# This uses the utility program init_gen to create two
+# up-to-date prereqs for init_tables_module
+$(INSTALLDIR)/init_gen: $(UTILDIR)/init_gen.f90
+	$(UTILDIR)/build_f90_in_misc.sh -p init_gen \
+	-d $(INSTALLDIR) -t $(TESTSDIR) -M $(MAKE) \
+	-FC $(FC) -CC $(CC) -C $(MLSCFILE) \
+   $(UTILDIR)/init_gen.f90
+
+$(S)/field_parm.f9h $(S)/field_add.f9h: $(S)/field_names.txt $(INSTALLDIR)/init_gen
+	sort -f -u $(S)/field_names.txt | $(INSTALLDIR)/init_gen \
+          -f"last_Spectroscopy_Field + 1" -l field_last -pF_ \
+          -j field_names.txt \
+          $(S)/field_parm.f9h $(S)/field_add.f9h field_indices
+
+$(S)/lit_parm.f9h $(S)/lit_add.f9h: $(S)/lit_names.txt $(INSTALLDIR)/init_gen
+	sort -f -u $(S)/lit_names.txt | $(INSTALLDIR)/init_gen \
+          -f"last_Spectroscopy_Lit + 1" -l last_lit -pl_ \
+          -j lit_names.txt \
+          $(S)/lit_parm.f9h $(S)/lit_add.f9h lit_indices
+d21 1
+a21 245
+endif
+#	l3
+
+l2interface.mod:
+	$(UTILDIR)/newAifBdiff.sh -a l2interface.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L2Interface.f90 $(FAFTER)
+L2Interface.o: l2interface.mod
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T L2Interface.o l2interface.mod 
+l3dmdata.mod:
+	$(UTILDIR)/newAifBdiff.sh -a l3dmdata.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DMData.f90 $(FAFTER)
+L3DMData.o: l3dmdata.mod
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T L3DMData.o l3dmdata.mod 
+#tree_checker.mod: init_tables_module.mod
+#	$(UTILDIR)/newAifBdiff.sh -a tree_checker.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(srclib)/tree_checker.f90 $(FAFTER)
+getcf_m.mod: init_tables_module.mod tree_checker.mod
+	$(UTILDIR)/newAifBdiff.sh -a getcf_m.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(srclib)/getCF_m.f90 $(FAFTER)
+getCF_m.o: getcf_m.mod
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T getCF_m.o getcf_m.mod 
+
+#  l3m
+l3dzdata.mod:
+	$(UTILDIR)/newAifBdiff.sh -a l3dzdata.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DZData.f90 $(FAFTER)
+L3DZData.o: l3dzdata.mod
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T L3DZData.o l3dzdata.mod 
+
+l3mzdata.mod:
+	$(UTILDIR)/newAifBdiff.sh -a l3mzdata.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3MZData.f90 $(FAFTER)
+L3MZData.o: l3mzdata.mod
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T L3MZData.o l3mzdata.mod 
+
+l3mmdata.mod:
+	$(UTILDIR)/newAifBdiff.sh -a l3mmdata.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3MMData.f90 $(FAFTER)
+L3MMData.o: l3mmdata.mod
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T L3MMData.o l3mmdata.mod 
+
+# lib
+
+ifeq ($(short_name),lib)
+# This uses the utility program init_gen to create two
+# up-to-date prereqs for intrinsic
+$(INSTALLDIR)/init_gen: $(UTILDIR)/init_gen.f90
+	$(UTILDIR)/build_f90_in_misc.sh -p init_gen \
+	-d $(INSTALLDIR) -t $(TESTSDIR) -M $(MAKE) \
+	-FC $(FC) -CC $(CC) -C $(MLSCFILE) \
+   $(UTILDIR)/init_gen.f90
+
+$(S)/lit_parm.f9h $(S)/lit_add.f9h: $(S)/lit_names.txt $(INSTALLDIR)/init_gen
+	sort -f -u $(S)/lit_names.txt | $(INSTALLDIR)/init_gen \
+          -l last_intrinsic_lit -pl_ \
+          -j lit_names.txt \
+          $(S)/lit_parm.f9h $(S)/lit_add.f9h lit_indices
+
+$(S)/mol_parm.f9h $(S)/mol_add.f9h: $(TABLES_DIR)/sps_cross_ref_table.txt $(INSTALLDIR)/init_gen
+	sed -n '/---\*/,$$ p' $(TABLES_DIR)/sps_cross_ref_table.txt | sed '1 d' | \
+          sed '/H2O_R/ d' | awk ' {print $$2}' | sort -f -u| \
+          $(INSTALLDIR)/init_gen \
+          -f "last_rxx_molecule+1" -l last_molecule -pl_ \
+          -j sps_cross_ref_table.txt \
+          $(S)/mol_parm.f9h $(S)/mol_add.f9h lit_indices
+
+machine.mod: $(MACH_DIR)/machine.f90
+	rm -f machine.f90 ; \
+	sed '/Start $(BAD_MATCH)/,/End $(BAD_MATCH)/ d' $(MACH_DIR)/machine.f90 \
+     > machine.f90
+	$(UTILDIR)/newAifBdiff.sh -a machine.mod $(FC) -c $(FOPTS) $(INC_PATHS) machine.f90 $(FAFTER)
+	rm -f machine.f90
+machine.o: machine.mod $(MACH_DIR)/machine.f90
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T machine.o machine.mod 
+
+ieee_arithmetic.o: ieee_arithmetic.mod ieee_arithmetic.f90 
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t -T ieee_arithmetic.o ieee_arithmetic.mod 
+ieee_arithmetic.mod: ieee_arithmetic.f90 inf_nan_detection.mod
+	$(UTILDIR)/newAifBdiff.sh -a ieee_arithmetic.mod $(FC) -c $(FOPTS) $(INC_PATHS) $(MACH_DIR)/ieee_arithmetic.f90 $(FAFTER)
+
+infnan.o: inf_nan_detection.mod infnan.f90 
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t -T infnan.o inf_nan_detection.mod 
+inf_nan_detection.mod: infnan.f90
+	$(UTILDIR)/newAifBdiff.sh -a inf_nan_detection.mod $(FC) -c $(FOPTS) $(INC_PATHS) $(MACH_DIR)/infnan.f90 $(FAFTER)
+
+intrinsic.o: $(S)/lit_parm.f9h $(S)/lit_add.f9h
+
+endif
+
+NOUNASS := $(shell echo ${FOPTS} | sed 's/\(--chk [aesx,]*\),u\([aesx,]*\)/\1\2/')
+SLOWASMOLASSES := -g --ap --pca --f95 --chk a,e,s
+
+DUSTY_NO_OPT := $(shell echo ${DUSTY} | sed 's/-O[0-9]*//')
+
+hdf.mod:
+	$(UTILDIR)/newAifBdiff.sh -a hdf.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/Hdf.f90 $(FAFTER)
+Hdf.o: hdf.mod
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T Hdf.o hdf.mod 
+string_table.mod:
+	$(UTILDIR)/newAifBdiff.sh -a string_table.mod $(FC) -c $(BUGGY) $(INC_PATHS) $(S)/string_table.f90 $(FAFTER)
+string_table.o: string_table.mod
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T string_table.o string_table.mod 
+
+# ncep_dao module doesn't play well with the lf95 undefined variable
+# runtime checker because of endian swapping
+ncep_dao.mod:
+	$(UTILDIR)/newAifBdiff.sh -a ncep_dao.mod $(FC) -c $(NOUNASS) $(INC_PATHS) $(S)/ncep_dao.f90 $(FAFTER)
+ncep_dao.o: ncep_dao.mod
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T ncep_dao.o ncep_dao.mod 
+
+# Intel's ifort compiler v11.x for 32-bit architecture has a string-handling bug
+# unless treated very carefully
+MLSStringLists.o: mlsstringlists.mod MLSStringLists.f90 
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t -T MLSStringLists.o mlsstringlists.mod 
+mlsstringlists.mod: MLSStringLists.f90 mlscommon.mod mlsmessagemodule.mod \
+	mlssets.mod mlsstrings.mod
+	$(UTILDIR)/newAifBdiff.sh -a mlsstringlists.mod $(FC) -c $(FOPTS) $(PRE) $(INC_PATHS) $(S)/MLSStringLists.f90 $(FAFTER)
+MLSStrings.o: mlsstrings.mod MLSStrings.f90 
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t -T MLSStrings.o mlsstrings.mod 
+mlsstrings.mod: MLSStrings.f90 mlscommon.mod ReadANumFromChars.f9h
+	$(UTILDIR)/newAifBdiff.sh -a mlsstrings.mod $(FC) -c $(FOPTS) $(PRE) $(INC_PATHS) $(S)/MLSStrings.f90 $(FAFTER)
+
+else
+#	l1
+
+CalibWeightsFlags.o: $(S)/CalibWeightsFlags.f90
+	$(FC) -c $(BUGGY) $(INC_PATHS) $(S)/CalibWeightsFlags.f90 $(FAFTER)
+EngTbls.o: $(S)/EngTbls.f90
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/EngTbls.f90 $(FAFTER)
+L1LogUtils.o: $(S)/L1LogUtils.f90
+	$(FC) -c $(BUGGY) $(INC_PATHS) $(S)/L1LogUtils.f90 $(FAFTER)
+OutputL1B.o: $(S)/OutputL1B.f90
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/OutputL1B.f90 $(FAFTER)
+OutputL1B_HDF4.o: $(S)/OutputL1B_HDF4.f90
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/OutputL1B_HDF4.f90 $(FAFTER)
+
+# l2
+# This keeps switch_usage up-to-date with notes/switches
+# (and similarly for options)
+MLSL2.o: $(CONFDIR)/notes/switches $(CONFDIR)/notes/options $(S)/MLSL2.f90
+	@@rm -f MLSL2.f90 part_1 part_2 part_3 ; \
+	sed -n '1,/=== (start of automatic usage lines) ===/ p' $(S)/MLSL2.f90 > part_1 ; \
+	sed -n '/=== (end of automatic usage lines) ===/,$$ p' $(S)/MLSL2.f90 > part_3 ; \
+	sed -n '/mlsl2 =========/,/mlsl2 ========/p' $(CONFDIR)/notes/switches > part_2 ; \
+	sed '1 d; $$ d' part_2 > MLSL2.f90 ; \
+	mv MLSL2.f90 part_2 ; \
+	sed -n -f $(CONFDIR)/notes/switch_usage.sed part_2 > MLSL2.f90 ; \
+	mv MLSL2.f90 part_2 ; \
+	cat part_1 part_2 part_3 > MLSL2.f90 ; \
+	rm -f part_1 part_2 part_3 ; \
+	sed -n '1,/=== (start of automatic option lines) ===/ p' MLSL2.f90 > part_1 ; \
+	sed -n '/=== (end of automatic option lines) ===/,$$ p' MLSL2.f90 > part_3 ; \
+	sed -n '/mlsl2 =========/,/mlsl2 ========/p' $(CONFDIR)/notes/options > part_2 ; \
+	sed '1 d; $$ d' part_2 > MLSL2.f90 ; \
+	mv MLSL2.f90 part_2 ; \
+	sed -n -f $(CONFDIR)/notes/switch_usage.sed part_2 > MLSL2.f90 ; \
+	mv MLSL2.f90 part_2 ; \
+	cat part_1 part_2 part_3 > MLSL2.f90
+	$(FC) -c $(FOPTS) $(INC_PATHS) MLSL2.f90 $(FAFTER)
+	rm -f MLSL2.f90 part_1 part_2 part_3
+
+ifeq ($(short_name),l2)
+# This uses the utility program init_gen to create two
+# up-to-date prereqs for init_tables_module
+$(INSTALLDIR)/init_gen: $(UTILDIR)/init_gen.f90
+	$(UTILDIR)/build_f90_in_misc.sh -p init_gen \
+	-d $(INSTALLDIR) -t $(TESTSDIR) -M $(MAKE) \
+	-FC $(FC) -CC $(CC) -C $(MLSCFILE) \
+   $(UTILDIR)/init_gen.f90
+
+$(S)/field_parm.f9h $(S)/field_add.f9h: $(S)/field_names.txt $(INSTALLDIR)/init_gen
+	sort -f -u $(S)/field_names.txt | $(INSTALLDIR)/init_gen \
+          -f"last_Spectroscopy_Field + 1" -l field_last -pF_ \
+          -j field_names.txt \
+          $(S)/field_parm.f9h $(S)/field_add.f9h field_indices
+
+$(S)/lit_parm.f9h $(S)/lit_add.f9h: $(S)/lit_names.txt $(INSTALLDIR)/init_gen
+	sort -f -u $(S)/lit_names.txt | $(INSTALLDIR)/init_gen \
+          -f"last_Spectroscopy_Lit + 1" -l last_lit -pl_ \
+          -j lit_names.txt \
+          $(S)/lit_parm.f9h $(S)/lit_add.f9h lit_indices
+
+endif
+#	l3
+
+L2Interface.o: $(S)/L2Interface.f90
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L2Interface.f90 $(FAFTER)
+L3DMData.o: $(S)/L3DMData.f90
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DMData.f90 $(FAFTER)
+L3DMDiag.o: $(S)/L3DMDiag.f90
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DMDiag.f90 $(FAFTER)
+
+#  l3m
+L3DZData.o: $(S)/L3DZData.f90
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DZData.f90 $(FAFTER)
+
+L3MZData.o: $(S)/L3MZData.f90
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3MZData.f90 $(FAFTER)
+
+L3MMData.o: $(S)/L3MMData.f90
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3MMData.f90 $(FAFTER)
+
+L3DZDiag.o: $(S)/L3DZDiag.f90
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DZDiag.f90 $(FAFTER)
+
+L3MZDiag.o: $(S)/L3MZDiag.f90
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3MZDiag.f90 $(FAFTER)
+
+L3MMDiag.o: $(S)/L3MMDiag.f90
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3MMDiag.f90 $(FAFTER)
+
+# Custom build commands for some modules
+
+ifeq ($(short_name),lib)
+# This uses the utility program init_gen to create two
+# up-to-date prereqs for intrinsic
+$(INSTALLDIR)/init_gen: $(UTILDIR)/init_gen.f90
+	$(UTILDIR)/build_f90_in_misc.sh -p init_gen \
+	-d $(INSTALLDIR) -t $(TESTSDIR) -M $(MAKE) \
+	-FC $(FC) -CC $(CC) -C $(MLSCFILE) \
+   $(UTILDIR)/init_gen.f90
+
+$(S)/lit_parm.f9h $(S)/lit_add.f9h: $(S)/lit_names.txt $(INSTALLDIR)/init_gen
+	sort -f -u $(S)/lit_names.txt | $(INSTALLDIR)/init_gen \
+          -l last_intrinsic_lit -pl_ \
+          -j lit_names.txt \
+          $(S)/lit_parm.f9h $(S)/lit_add.f9h lit_indices
+
+$(S)/mol_parm.f9h $(S)/mol_add.f9h: $(TABLES_DIR)/sps_cross_ref_table.txt $(INSTALLDIR)/init_gen
+	sed -n '/---\*/,$$ p' $(TABLES_DIR)/sps_cross_ref_table.txt | sed '1 d' | \
+          sed '/H2O_R/ d' | awk ' {print $$2}' | sort -f -u| \
+          $(INSTALLDIR)/init_gen \
+          -f "last_rxx_molecule+1" -l last_molecule -pl_ \
+          -j sps_cross_ref_table.txt \
+          $(S)/mol_parm.f9h $(S)/mol_add.f9h lit_indices
+
+machine.o: $(MACH_DIR)/machine.f90
+	rm -f machine.f90 ; \
+	sed '/Start $(BAD_MATCH)/,/End $(BAD_MATCH)/ d' $(MACH_DIR)/machine.f90 \
+     > machine.f90
+	$(FC) -c $(FOPTS) $(INC_PATHS) machine.f90 $(FAFTER)
+	rm -f machine.f90
+a22 28
+ieee_arithmetic.o: infnan.o
+
+intrinsic.o: $(S)/lit_parm.f9h $(S)/lit_add.f9h
+
+endif
+
+NOUNASS := $(shell echo ${FOPTS} | sed 's/\(--chk [aesx,]*\),u\([aesx,]*\)/\1\2/')
+
+DUSTY_NO_OPT := $(shell echo ${DUSTY} | sed 's/-O[0-9]*//')
+
+Hdf.o:
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/Hdf.f90 $(FAFTER)
+string_table.o:
+	$(FC) -c $(BUGGY) $(INC_PATHS) $(S)/string_table.f90 $(FAFTER)
+
+# ncep_dao module doesn't play well with the lf95 undefined variable
+# runtime checker because of endian swapping
+ncep_dao.o:
+	$(FC) -c $(NOUNASS) $(INC_PATHS) $(S)/ncep_dao.f90 $(FAFTER)
+
+# Intel's ifort compiler v11.x for 32-bit architecture has a string-handling bug
+# unless treated very carefully
+MLSStringLists.o:
+	$(FC) -c ${FOPTS} $(PRE) $(INC_PATHS) $(S)/MLSStringLists.f90 $(FAFTER)
+MLSStrings.o:
+	$(FC) -c ${FOPTS} $(PRE) $(INC_PATHS) $(S)/MLSStrings.f90 $(FAFTER)
+
+endif
+d35 1
+d37 3
+@
+
+
+1.23
+log
+@Added workarounds for buggy Intel v11 handling of strings
+@
+text
+@d1 1
+a1 1
+# "$Id: LF95.Linux,v 1.22 2006/04/03 22:12:40 pwagner Exp $"
+d376 12
+d389 3
+@
+
+
+1.22
+log
+@Uniform changes to accommodate buggy Lahey optimizer in l1
+@
+text
+@d1 1
+a1 1
+# "$Id: LF95.Linux,v 1.21 2006/04/01 01:14:50 pwagner Exp $"
+d215 11
+a225 10
+#ifeq ($(short_name),fwdmdl)
+# LinearizedForwardModel_m.f90 must be compiled with checks on to keep
+# resulting executable from bombing on some chunks
+# --  f i x e d  --
+#linearizedforwardmodel_m.mod:
+#	$(UTILDIR)/newAifBdiff.sh -a linearizedforwardmodel_m.mod $(FC) -c $(SLOWASMOLASSES) $(INC_PATHS) $(S)/LinearizedForwardModel_m.f90 $(FAFTER)
+#LinearizedForwardModel_m.o: linearizedforwardmodel_m.mod
+#	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+#   -T LinearizedForwardModel_m.o linearizedforwardmodel_m.mod 
+#endif
+d368 6
+a373 7
+#ifeq ($(short_name),fwdmdl)
+# LinearizedForwardModel_m.f90 must be compiled with checks on to keep
+# resulting executable from bombing on some chunks
+# --  f i x e d  --
+#LinearizedForwardModel_m.o:
+#	$(FC) -c $(SLOWASMOLASSES) $(INC_PATHS) $(S)/LinearizedForwardModel_m.f90 $(FAFTER) 
+#endif
+d377 3
+@
+
+
+1.21
+log
+@Fixed error in build command for L1LogUtils
+@
+text
+@d1 1
+a1 1
+# "$Id: LF95.Linux,v 1.20 2006/03/28 21:54:58 pwagner Exp $"
+d35 1
+a35 1
+	$(UTILDIR)/newAifBdiff.sh -a calibweightsflags.mod $(FC) -c $(BUGGY) \
+d377 3
+@
+
+
+1.20
+log
+@Must turn off optimization to work around Lahey bug
+@
+text
+@d1 1
+a1 1
+# "$Id: LF95.Linux,v 1.19 2005/09/08 00:25:01 pwagner Exp $"
+d36 1
+a36 1
+   $(INC_PATHS) $(S)/CalibWeightsFlags.f90 $(FAFTER)
+d377 3
+@
+
+
+1.19
+log
+@Fixed bug is build command for l1/EngTbls.o
+@
+text
+@d1 1
+a1 1
+# "$Id: LF95.Linux,v 1.18 2004/08/19 00:07:46 pwagner Exp $"
+d15 1
+d19 6
+d31 6
+a190 1
+BUGGY := $(shell echo ${FOPTS} | sed 's/-O[0-9]*//')
+d229 2
+d233 2
+a352 1
+BUGGY := $(shell echo ${FOPTS} | sed 's/-O[0-9]*//')
+d377 3
+@
+
+
+1.18
+log
+@Fixed missing mod dependencies for machine.o
+@
+text
+@d1 1
+a1 1
+# "$Id: LF95.Linux,v 1.17 2004/05/20 22:58:55 pwagner Exp $"
+d20 1
+a20 1
+   -T EngTbls.o outputl1b.mod 
+d218 1
+a218 1
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/OutputL1B.f90 $(FAFTER)
+d362 3
+@
+
+
+1.17
+log
+@Added build rules for ieee-arithmetic module for mod-variant depends
+@
+text
+@d1 1
+a1 1
+# "$Id: LF95.Linux,v 1.16 2004/03/26 21:16:53 pwagner Exp $"
+d154 1
+a154 1
+machine.mod:
+d160 1
+a160 1
+machine.o: machine.mod
+d362 3
+@
+
+
+1.16
+log
+@Added dependency of ieee on infnan
+@
+text
+@d1 1
+a1 1
+# "$Id: LF95.Linux,v 1.15 2003/10/08 21:13:15 pwagner Exp $"
+d164 9
+a172 1
+ieee_arithmetic.o: infnan.o
+d362 3
+@
+
+
+1.15
+log
+@Changed options to sort to tolerate duplicate entries
+@
+text
+@d1 1
+a1 1
+# "$Id: LF95.Linux,v 1.14 2003/05/21 17:46:02 pwagner Exp $"
+d164 2
+d323 2
+d354 3
+@
+
+
+1.14
+log
+@Commands to build mol_...f9h now formatted correctly
+@
+text
+@d1 1
+a1 1
+# "$Id: LF95.Linux,v 1.13 2003/05/17 00:04:52 pwagner Exp $"
+d78 1
+a78 1
+	sort -f $(S)/field_names.txt | $(INSTALLDIR)/init_gen \
+d84 1
+a84 1
+	sort -f $(S)/lit_names.txt | $(INSTALLDIR)/init_gen \
+d141 1
+a141 1
+	sort -f $(S)/lit_names.txt | $(INSTALLDIR)/init_gen \
+d148 1
+a148 1
+          sed '/H2O_R/ d' | awk ' {print $$2}' | sort -f | \
+d249 1
+a249 1
+	sort -f $(S)/field_names.txt | $(INSTALLDIR)/init_gen \
+d255 1
+a255 1
+	sort -f $(S)/lit_names.txt | $(INSTALLDIR)/init_gen \
+d301 1
+a301 1
+	sort -f $(S)/lit_names.txt | $(INSTALLDIR)/init_gen \
+d308 1
+a308 1
+          sed '/H2O_R/ d' | awk ' {print $$2}' | sort -f | \
+d350 3
+@
+
+
+1.13
+log
+@Now create mol_.. files in lib to be used by Molecules.f90 there
+@
+text
+@d1 1
+a1 1
+# "$Id: LF95.Linux,v 1.12 2003/02/01 00:01:35 pwagner Exp $"
+d147 1
+a147 1
+	sed -n '/---\*/, $$ p' $(TABLES_DIR)/sps_cross_ref_table.txt | sed '1 d' | \
+d307 1
+a307 1
+	sed -n '/---\*/, $$ p' $(TABLES_DIR)/sps_cross_ref_table.txt | sed '1 d' | \
+d350 3
+@
+
+
+1.12
+log
+@Changed for new l1 with 3 executables
+@
+text
+@d1 1
+a1 1
+# "$Id: LF95.Linux,v 1.11 2002/11/08 01:18:22 pwagner Exp $"
+d5 3
+a88 7
+# > init_tables_module.mod: $(S)/field_parm.f9h $(S)/field_add.f9h \
+# >    $(S)/lit_parm.f9h $(S)/lit_add.f9h $(S)/init_tables_module.f90
+# > 	$(UTILDIR)/newAifBdiff.sh -a init_tables_module.mod $(FC) -c $(FOPTS) $(INC_PATHS) $(S)/init_tables_module.f90 $(FAFTER)
+# > init_tables_module.o: init_tables_module.mod
+# > 	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+# >    -T init_tables_module.o init_tables_module.mod 
+
+d146 8
+a259 3
+# > init_tables_module.o: $(S)/field_parm.f9h $(S)/field_add.f9h \
+# >    $(S)/lit_parm.f9h $(S)/lit_add.f9h $(S)/init_tables_module.f90
+
+d306 8
+d350 3
+@
+
+
+1.11
+log
+@Added l1/OutputL1B_HDF4.f90 which needs (DUSTY)
+@
+text
+@d1 1
+a1 1
+# "$Id: LF95.Linux,v 1.10 2002/08/23 20:32:23 pwagner Exp $"
+d15 6
+d203 2
+d341 3
+@
+
+
+1.10
+log
+@Removed lib trickery L2GPData, MLSFiles, etc.
+@
+text
+@d1 1
+a1 1
+# "$Id: LF95.Linux,v 1.9 2002/07/25 20:58:57 pwagner Exp $"
+d20 5
+d199 2
+d333 3
+@
+
+
+1.9
+log
+@No custom builds for Lahey-specific 3 lib modules if marking uptodate
+@
+text
+@d1 1
+a1 1
+# "$Id: LF95.Linux,v 1.8 2002/07/22 22:07:49 pwagner Exp $"
+a150 62
+ifeq ($(FC_NAME),mark_as_uptodate.sh)
+
+# No custom builds if we're just marking targets as up to date
+l2gpdata.mod:
+	$(UTILDIR)/newAifBdiff.sh -a l2gpdata.mod $(FC) -c $(FOPTS) $(INC_PATHS) $(S)/L2GPData.f90 $(FAFTER)
+L2GPData.o:
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T L2GPData.o l2gpdata.mod 
+
+l2pc_m.mod:
+	$(UTILDIR)/newAifBdiff.sh -a l2pc_m.mod $(FC) -c $(FOPTS) $(INC_PATHS) $(S)/L2PC_m.f90 $(FAFTER)
+L2PC_m.o:
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T L2PC_m.o l2pc_m.mod 
+
+mlsfiles.mod:
+	$(UTILDIR)/newAifBdiff.sh -a mlsfiles.mod $(FC) -c $(FOPTS) $(INC_PATHS) $(S)/MLSFiles.f90 $(FAFTER)
+MLSFiles.o:
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T MLSFiles.o mlsfiles.mod 
+
+else
+# Custom builds for some modules needed to fool LF95 compiler
+# (for now anyway) so it won't take forever to finish
+# Use the obsolete directory to find hdf5-agnostic versions
+hdf4dir = $(CONFDIR)/lib/obsolete
+
+l2gpdata.mod:
+	$(UTILDIR)/newAifBdiff.sh -a l2gpdata.mod $(FC) -c $(FOPTS) $(INC_PATHS) $(hdf4dir)/L2GPData.f90 $(FAFTER)
+	mv l2gpdata.mod l2gpdata.mod-hdf4
+	$(FC) -c $(FOPTS) $(INC_PATHS) $(S)/L2GPData.f90 $(FAFTER)
+	mv l2gpdata.mod-hdf4 l2gpdata.mod
+L2GPData.o:
+#	$(MAKE) l2gpdata.mod 
+	mv l2gpdata.mod l2gpdata.mod-hdf4
+	$(FC) -c $(FOPTS) $(INC_PATHS) $(S)/L2GPData.f90 $(FAFTER)
+	mv l2gpdata.mod-hdf4 l2gpdata.mod
+
+l2pc_m.mod:
+	$(UTILDIR)/newAifBdiff.sh -a l2pc_m.mod $(FC) -c $(FOPTS) $(INC_PATHS) $(hdf4dir)/L2PC_m.f90 $(FAFTER)
+	mv l2pc_m.mod l2pc_m.mod-hdf4
+	$(FC) -c $(FOPTS) $(INC_PATHS) $(S)/L2PC_m.f90 $(FAFTER)
+	mv l2pc_m.mod-hdf4 l2pc_m.mod
+L2PC_m.o:
+#	$(MAKE) l2gpdata.mod 
+	mv l2pc_m.mod l2pc_m.mod-hdf4
+	$(FC) -c $(FOPTS) $(INC_PATHS) $(S)/L2PC_m.f90 $(FAFTER)
+	mv l2pc_m.mod-hdf4 l2pc_m.mod
+
+mlsfiles.mod:
+	$(UTILDIR)/newAifBdiff.sh -a mlsfiles.mod $(FC) -c $(FOPTS) $(INC_PATHS) $(hdf4dir)/MLSFiles.f90 $(FAFTER)
+	mv mlsfiles.mod mlsfiles.mod-hdf4
+	$(FC) -c $(FOPTS) $(INC_PATHS) $(S)/MLSFiles.f90 $(FAFTER)
+	mv mlsfiles.mod-hdf4 mlsfiles.mod
+MLSFiles.o:
+#	$(MAKE) l2gpdata.mod 
+	mv mlsfiles.mod mlsfiles.mod-hdf4
+	$(FC) -c $(FOPTS) $(INC_PATHS) $(S)/MLSFiles.f90 $(FAFTER)
+	mv mlsfiles.mod-hdf4 mlsfiles.mod
+
+endif
+
+a298 43
+ifeq ($(FC_NAME),mark_as_uptodate.sh)
+
+# No custom builds if we're just marking targets as up to date
+# (though actually we should never get here anyway--why
+# mark as up to date if CASCADE=yes? But just in case ...)
+L2GPData.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $(S)/L2GPData.f90 $(FAFTER)
+
+L2PC_m.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $(S)/L2PC_m.f90 $(FAFTER)
+
+MLSFiles.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $(S)/MLSFiles.f90 $(FAFTER)
+
+else
+# Custom builds for some modules needed to fool LF95 compiler
+# (for now anyway) so it won't take forever to finish
+# Use the obsolete directory to find hdf5-agnostic versions
+hdf4dir = $(CONFDIR)/lib/obsolete
+
+L2GPData.o:
+#	$(MAKE) l2gpdata.mod 
+	$(FC) -c $(FOPTS) $(INC_PATHS) $(hdf4dir)/L2GPData.f90 $(FAFTER)
+	mv l2gpdata.mod l2gpdata.mod-hdf4
+	$(FC) -c $(FOPTS) $(INC_PATHS) $(S)/L2GPData.f90 $(FAFTER)
+	mv l2gpdata.mod-hdf4 l2gpdata.mod
+
+L2PC_m.o:
+#	$(MAKE) l2gpdata.mod 
+	$(FC) -c $(FOPTS) $(INC_PATHS) $(hdf4dir)/L2PC_m.f90 $(FAFTER)
+	mv l2pc_m.mod l2pc_m.mod-hdf4
+	$(FC) -c $(FOPTS) $(INC_PATHS) $(S)/L2PC_m.f90 $(FAFTER)
+	mv l2pc_m.mod-hdf4 l2pc_m.mod
+
+MLSFiles.o:
+#	$(MAKE) l2gpdata.mod 
+	$(FC) -c $(FOPTS) $(INC_PATHS) $(hdf4dir)/MLSFiles.f90 $(FAFTER)
+	mv mlsfiles.mod mlsfiles.mod-hdf4
+	$(FC) -c $(FOPTS) $(INC_PATHS) $(S)/MLSFiles.f90 $(FAFTER)
+	mv mlsfiles.mod-hdf4 mlsfiles.mod
+
+endif
+
+d326 3
+@
+
+
+1.8
+log
+@Removed custom builds for Lahey and LinearizedForwardModel
+@
+text
+@d1 1
+a1 1
+# "$Id: LF95.Linux,v 1.7 2002/07/19 17:40:08 pwagner Exp $"
+d5 7
+d151 22
+d213 2
+d361 15
+d404 2
+d431 3
+@
+
+
+1.7
+log
+@Slow down LF95 build of LinearizedFM by custom build
+@
+text
+@d1 1
+a1 1
+# "$Id: LF95.Linux,v 1.6 2002/07/18 18:01:36 pwagner Exp $"
+d209 1
+a209 1
+ifeq ($(short_name),fwdmdl)
+d212 7
+a218 6
+linearizedforwardmodel_m.mod:
+	$(UTILDIR)/newAifBdiff.sh -a linearizedforwardmodel_m.mod $(FC) -c $(SLOWASMOLASSES) $(INC_PATHS) $(S)/LinearizedForwardModel_m.f90 $(FAFTER)
+LinearizedForwardModel_m.o: linearizedforwardmodel_m.mod
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T LinearizedForwardModel_m.o linearizedforwardmodel_m.mod 
+endif
+d373 1
+a373 1
+ifeq ($(short_name),fwdmdl)
+d376 4
+a379 3
+LinearizedForwardModel_m.o:
+	$(FC) -c $(SLOWASMOLASSES) $(INC_PATHS) $(S)/LinearizedForwardModel_m.f90 $(FAFTER) 
+endif
+d383 3
+@
+
+
+1.6
+log
+@.o now depends on file_name even if .mod mediated; special lib hdf4 moved here
+@
+text
+@d1 1
+a1 1
+# "$Id: LF95.Linux,v 1.5 2002/07/15 23:20:19 pwagner Exp $"
+d186 1
+d209 10
+d372 7
+d381 3
+@
+
+
+1.5
+log
+@Added build instructions for getcf_m.mod
+@
+text
+@d1 1
+a1 1
+# "$Id: LF95.Linux,v 1.4 2002/07/12 20:33:46 pwagner Exp $"
+d13 1
+a13 1
+tree_checker.mod: init_tables_module.mod
+d15 1
+a15 1
+tree_checker.o: tree_checker.mod
+d144 38
+d318 26
+d363 3
+@
+
+
+1.4
+log
+@l2/init_tables_module does not require custom build
+@
+text
+@d1 1
+a1 1
+# "$Id: LF95.Linux,v 1.3 2002/07/03 00:22:39 pwagner Exp $"
+d90 5
+d299 3
+@
+
+
+1.3
+log
+@Added line to build l2/init_tables_module.mod
+@
+text
+@d1 1
+a1 1
+# "$Id: LF95.Linux,v 1.2 2002/07/01 20:50:29 pwagner Exp $"
+d68 6
+a73 6
+init_tables_module.mod: $(S)/field_parm.f9h $(S)/field_add.f9h \
+   $(S)/lit_parm.f9h $(S)/lit_add.f9h $(S)/init_tables_module.f90
+	$(UTILDIR)/newAifBdiff.sh -a init_tables_module.mod $(FC) -c $(FOPTS) $(INC_PATHS) $(S)/init_tables_module.f90 $(FAFTER)
+init_tables_module.o: init_tables_module.mod
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T init_tables_module.o init_tables_module.mod 
+d217 2
+a218 2
+init_tables_module.o: $(S)/field_parm.f9h $(S)/field_add.f9h \
+   $(S)/lit_parm.f9h $(S)/lit_add.f9h $(S)/init_tables_module.f90
+d294 3
+@
+
+
+1.2
+log
+@Rebuilds object file when deleted
+@
+text
+@d1 1
+a1 1
+# "$Id: LF95.Linux,v 1.1 2002/07/01 17:24:32 pwagner Exp $"
+d70 1
+d294 3
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d1 1
+a1 1
+# "$Id: LF95.Linux,v 1.12 2002/06/21 00:16:43 pwagner Exp $"
+d9 2
+a10 1
+	touch OutputL1B.o
+d16 2
+a17 1
+	touch tree_checker.o
+d71 2
+a72 1
+	touch init_tables_module.o
+d80 2
+a81 1
+	touch L2Interface.o
+d85 2
+a86 1
+	touch L3DMData.o
+d94 2
+a95 1
+	touch L3DZData.o
+d100 2
+a101 1
+	touch L3MZData.o
+d106 2
+a107 1
+	touch L3MMData.o
+d133 2
+a134 1
+	touch machine.o
+d148 2
+a149 1
+	touch Hdf.o
+d153 2
+a154 1
+	touch string_table.o
+d161 2
+a162 1
+	touch ncep_dao.o
+d293 3
+@
+

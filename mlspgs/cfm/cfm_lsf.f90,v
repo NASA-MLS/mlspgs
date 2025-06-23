@@ -1,0 +1,2126 @@
+head	1.9;
+access;
+symbols
+	v5-02-NRT-19:1.9
+	v6-00:1.9
+	v5-02-NRT-18:1.9
+	v5-02:1.9
+	v5-01-NRT-17:1.9
+	v5-01-NRT-16:1.9
+	v5-01-NRT-15:1.9
+	v5-01-NRT-14:1.9
+	neuralnetworks-1-0:1.9.0.12
+	cfm-single-freq-0-1:1.9.0.10
+	TES-MLuo-01:1.9
+	TES-UNKNOWN:1.9
+	v5-01:1.9
+	v5-00:1.9
+	v4-23-TA133:1.9.0.8
+	mus-emls-1-70:1.9.0.6
+	rel-1-0-englocks-work:1.9.0.4
+	VUMLS1-00:1.9
+	VPL1-00:1.9
+	V4-22-NRT-08:1.9
+	VAM1-00:1.9
+	V4-21:1.9.0.2
+	V4-13:1.9
+	V4-12:1.9
+	V4-11:1.9
+	V4-10:1.9
+	M4-00:1.9
+	V3-33:1.6
+	V3-31:1.6
+	V3-30-NRT-05:1.5
+	cfm-01-00:1.5;
+locks; strict;
+comment	@# @;
+
+
+1.9
+date	2011.10.19.09.36.13;	author honghanh;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2011.10.18.16.59.29;	author honghanh;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2011.10.18.16.56.47;	author honghanh;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2010.11.03.18.34.46;	author honghanh;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2010.06.29.17.02.47;	author honghanh;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2010.06.29.16.40.23;	author honghanh;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2010.06.29.15.53.45;	author honghanh;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2010.06.15.16.14.38;	author honghanh;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2010.05.25.18.02.11;	author honghanh;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.9
+log
+@Refractor some more constants from CFM_LSF_m that I missed.
+@
+text
+@! Copyright 2010, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+module cfm_lsf_m ! This module is to help cfm_mlssetup subroutine.
+                 ! Quantities allocated in here should be deallocate by cfm_mlssetup_m
+    use MLSCommon, only: r8
+    use CFM_Constants_m
+
+    implicit none
+
+    private
+
+    public :: CreateLimbSidebandFractions, FillLimbSidebandFractions
+
+!---------------------------- RCS Ident Info -------------------------------
+   character(len=*), private, parameter :: ModuleName= &
+       "$RCSfile: cfm_lsf.f90,v $"
+   private :: not_used_here
+!---------------------------------------------------------------------------
+
+    integer :: limbSidebandFraction1L = 0
+    integer :: limbSidebandFraction2L = 0
+    integer :: limbSidebandFraction3L = 0
+    integer :: limbSidebandFraction4L = 0
+    integer :: limbSidebandFraction5L = 0
+    integer :: limbSidebandFraction6L = 0
+    integer :: limbSidebandFraction7L = 0
+    integer :: limbSidebandFraction8L = 0
+    integer :: limbSidebandFraction9L = 0
+    integer :: limbSidebandFraction10L = 0
+    integer :: limbSidebandFraction11L = 0
+    integer :: limbSidebandFraction12L = 0
+    integer :: limbSidebandFraction13L = 0
+    integer :: limbSidebandFraction14L = 0
+    integer :: limbSidebandFraction15L = 0
+    integer :: limbSidebandFraction16L = 0
+    integer :: limbSidebandFraction17L = 0
+    integer :: limbSidebandFraction18L = 0
+    integer :: limbSidebandFraction19L = 0
+    integer :: limbSidebandFraction20L = 0
+    integer :: limbSidebandFraction21L = 0
+    integer :: limbSidebandFraction22L = 0
+    integer :: limbSidebandFraction23L = 0
+    integer :: limbSidebandFraction24L = 0
+    integer :: limbSidebandFraction25L = 0
+    integer :: limbSidebandFraction26L = 0
+    integer :: limbSidebandFraction27L = 0
+    integer :: limbSidebandFraction28L = 0
+    integer :: limbSidebandFraction29L = 0
+    integer :: limbSidebandFraction30L = 0
+    integer :: limbSidebandFraction31L = 0
+    integer :: limbSidebandFraction32L = 0
+    integer :: limbSidebandFraction33L = 0
+    integer :: limbSidebandFraction34L = 0
+
+    integer :: limbSidebandFraction2U = 0
+    integer :: limbSidebandFraction3U = 0
+    integer :: limbSidebandFraction4U = 0
+    integer :: limbSidebandFraction5U = 0
+    integer :: limbSidebandFraction6U = 0
+    integer :: limbSidebandFraction7U = 0
+    integer :: limbSidebandFraction8U = 0
+    integer :: limbSidebandFraction9U = 0
+    integer :: limbSidebandFraction10U = 0
+    integer :: limbSidebandFraction11U = 0
+    integer :: limbSidebandFraction12U = 0
+    integer :: limbSidebandFraction13U = 0
+    integer :: limbSidebandFraction14U = 0
+    integer :: limbSidebandFraction15U = 0
+    integer :: limbSidebandFraction16U = 0
+    integer :: limbSidebandFraction17U = 0
+    integer :: limbSidebandFraction18U = 0
+    integer :: limbSidebandFraction19U = 0
+    integer :: limbSidebandFraction20U = 0
+    integer :: limbSidebandFraction23U = 0
+    integer :: limbSidebandFraction24U = 0
+    integer :: limbSidebandFraction25U = 0
+    integer :: limbSidebandFraction27U = 0
+    integer :: limbSidebandFraction28U = 0
+    integer :: limbSidebandFraction29U = 0
+    integer :: limbSidebandFraction30U = 0
+    integer :: limbSidebandFraction31U = 0
+    integer :: limbSidebandFraction33U = 0
+
+    contains
+
+    ! InitQuantityTemplates should be called priori to this subroutine
+    subroutine CreateLimbSidebandFractions (chunk, filedatabase, qtyTemplates)
+       use CFM_QuantityTemplate_m, only: CreateQtyTemplate
+       use QuantityTemplates, only: AddQuantityTemplateToDatabase, &
+                                    QuantityTemplate_T
+       use INIT_TABLES_MODULE, only: l_limbsidebandFraction
+       use Chunks_m, only: MLSChunk_T
+       use MLSCommon, only: MLSFile_T
+
+       type(MLSChunk_T), intent(in) :: chunk
+       type (MLSFile_T), dimension(:), pointer :: filedatabase
+       type (QuantityTemplate_T), dimension(:), pointer :: qtyTemplates
+
+       type(QuantityTemplate_T) :: lsbFraction
+
+       ! Executables
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band1L, &
+          qName='limbSidebandFraction1L')
+       limbSidebandFraction1L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band2L, &
+          qName='limbSidebandFraction2L')
+       limbSidebandFraction2L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band3L, &
+          qName='limbSidebandFraction3L')
+       limbSidebandFraction3L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band4L, &
+          qName='limbSidebandFraction4L')
+       limbSidebandFraction4L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band5L, &
+          qName='limbSidebandFraction5L')
+       limbSidebandFraction5L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band6L, &
+          qName='limbSidebandFraction6L')
+       limbSidebandFraction6L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band7L, &
+          qName='limbSidebandFraction7L')
+       limbSidebandFraction7L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band8L, &
+          qName='limbSidebandFraction8L')
+       limbSidebandFraction8L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band9L, &
+          qName='limbSidebandFraction9L')
+       limbSidebandFraction9L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band10L, &
+          qName='limbSidebandFraction10L')
+       limbSidebandFraction10L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band11L, &
+          qName='limbSidebandFraction11L')
+       limbSidebandFraction11L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band12L, &
+          qName='limbSidebandFraction12L')
+       limbSidebandFraction12L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band13L, &
+          qName='limbSidebandFraction13L')
+       limbSidebandFraction13L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band14L, &
+          qName='limbSidebandFraction14L')
+       limbSidebandFraction14L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band15L, &
+          qName='limbSidebandFraction15L')
+       limbSidebandFraction15L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band16L, &
+          qName='limbSidebandFraction16L')
+       limbSidebandFraction16L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band17L, &
+          qName='limbSidebandFraction17L')
+       limbSidebandFraction17L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band18L, &
+          qName='limbSidebandFraction18L')
+       limbSidebandFraction18L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band19L, &
+          qName='limbSidebandFraction19L')
+       limbSidebandFraction19L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band20L, &
+          qName='limbSidebandFraction20L')
+       limbSidebandFraction20L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band21L, &
+          qName='limbSidebandFraction21L')
+       limbSidebandFraction21L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band22L, &
+          qName='limbSidebandFraction22L')
+       limbSidebandFraction22L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band23L, &
+          qName='limbSidebandFraction23L')
+       limbSidebandFraction23L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band24L, &
+          qName='limbSidebandFraction24L')
+       limbSidebandFraction24L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band25L, &
+          qName='limbSidebandFraction25L')
+       limbSidebandFraction25L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band26L, &
+          qName='limbSidebandFraction26L')
+       limbSidebandFraction26L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band27L, &
+          qName='limbSidebandFraction27L')
+       limbSidebandFraction27L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band28L, &
+          qName='limbSidebandFraction28L')
+       limbSidebandFraction28L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band29L, &
+          qName='limbSidebandFraction29L')
+       limbSidebandFraction29L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band30L, &
+          qName='limbSidebandFraction30L')
+       limbSidebandFraction30L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band31L, &
+          qName='limbSidebandFraction31L')
+       limbSidebandFraction31L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band32L, &
+          qName='limbSidebandFraction32L')
+       limbSidebandFraction32L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band33L, &
+          qName='limbSidebandFraction33L')
+       limbSidebandFraction33L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band34L, &
+          qName='limbSidebandFraction34L')
+       limbSidebandFraction34L = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       ! Now the the upper band
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band2U, &
+          qName='limbSidebandFraction2U')
+       limbSidebandFraction2U = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band3U, &
+          qName='limbSidebandFraction3U')
+       limbSidebandFraction3U = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band4U, &
+          qName='limbSidebandFraction4U')
+       limbSidebandFraction4U = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band5U, &
+          qName='limbSidebandFraction5U')
+       limbSidebandFraction5U = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band6U, &
+          qName='limbSidebandFraction6U')
+       limbSidebandFraction6U = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band7U, &
+          qName='limbSidebandFraction7U')
+       limbSidebandFraction7U = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band8U, &
+          qName='limbSidebandFraction8U')
+       limbSidebandFraction8U = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band9U, &
+          qName='limbSidebandFraction9U')
+       limbSidebandFraction9U = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band10U, &
+          qName='limbSidebandFraction10U')
+       limbSidebandFraction10U = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band11U, &
+          qName='limbSidebandFraction11U')
+       limbSidebandFraction11U = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band12U, &
+          qName='limbSidebandFraction12U')
+       limbSidebandFraction12U = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band13U, &
+          qName='limbSidebandFraction13U')
+       limbSidebandFraction13U = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band14U, &
+          qName='limbSidebandFraction14U')
+       limbSidebandFraction14U = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band15U, &
+          qName='limbSidebandFraction15U')
+       limbSidebandFraction15U = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band16U, &
+          qName='limbSidebandFraction16U')
+       limbSidebandFraction16U = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band17U, &
+          qName='limbSidebandFraction17U')
+       limbSidebandFraction17U = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band18U, &
+          qName='limbSidebandFraction18U')
+       limbSidebandFraction18U = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band19U, &
+          qName='limbSidebandFraction19U')
+       limbSidebandFraction19U = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band20U, &
+          qName='limbSidebandFraction20U')
+       limbSidebandFraction20U = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band23U, &
+          qName='limbSidebandFraction23U')
+       limbSidebandFraction23U = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band24U, &
+          qName='limbSidebandFraction24U')
+       limbSidebandFraction24U = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band25U, &
+          qName='limbSidebandFraction25U')
+       limbSidebandFraction25U = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band27U, &
+          qName='limbSidebandFraction27U')
+       limbSidebandFraction27U = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band28U, &
+          qName='limbSidebandFraction28U')
+       limbSidebandFraction28U = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band29U, &
+          qName='limbSidebandFraction29U')
+       limbSidebandFraction29U = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band30U, &
+          qName='limbSidebandFraction30U')
+       limbSidebandFraction30U = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band31U, &
+          qName='limbSidebandFraction31U')
+       limbSidebandFraction31U = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+       lsbFraction = CreateQtyTemplate(l_limbsidebandFraction, &
+          filedatabase=filedatabase, chunk=chunk, qSignal=band33U, &
+          qName='limbSidebandFraction33U')
+       limbSidebandFraction33U = AddQuantityTemplateToDatabase(qtyTemplates, lsbFraction)
+
+    end subroutine
+
+    subroutine FillLimbSidebandFractions (stateVectorExtra)
+       use VectorsModule, only: Vector_T, VectorValue_T, Dump, &
+                                GetVectorQtyByTemplateIndex
+       use CFM_Fill_M, only: ExplicitFillVectorQuantity, SpreadFillVectorQuantity
+
+       type (Vector_T), intent(in) :: stateVectorExtra
+       type(VectorValue_T) :: quantity
+
+       ! Executables
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction1L)
+       call SpreadFillVectorQuantity (quantity, vlimbSidebandFraction1L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction2L)
+       call ExplicitFillVectorQuantity (quantity, vlimbSidebandFraction2L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction3L)
+       call ExplicitFillVectorQuantity (quantity, vlimbSidebandFraction3L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction4L)
+       call ExplicitFillVectorQuantity (quantity, vlimbSidebandFraction4L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction5L)
+       call ExplicitFillVectorQuantity (quantity, vlimbSidebandFraction5L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction6L)
+       call ExplicitFillVectorQuantity (quantity, vlimbSidebandFraction6L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction7L)
+       call ExplicitFillVectorQuantity (quantity, vlimbSidebandFraction7L)
+       !print *, "LimbSidebandFraction7L value"
+       !call dump(quantity, details=3)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction8L)
+       call ExplicitFillVectorQuantity (quantity, vlimbSidebandFraction8L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction9L)
+       call ExplicitFillVectorQuantity (quantity, vlimbSidebandFraction9L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction10L)
+       call SpreadFillVectorQuantity (quantity, vlimbSidebandFraction10L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction11L)
+       call SpreadFillVectorQuantity (quantity, vlimbSidebandFraction11L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction12L)
+       call SpreadFillVectorQuantity (quantity, vlimbSidebandFraction12L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction13L)
+       call SpreadFillVectorQuantity (quantity, vlimbSidebandFraction13L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction14L)
+       call SpreadFillVectorQuantity (quantity, vlimbSidebandFraction14L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction15L)
+       call ExplicitFillVectorQuantity (quantity, vlimbSidebandFraction15L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction16L)
+       call ExplicitFillVectorQuantity (quantity, vlimbSidebandFraction16L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction17L)
+       call ExplicitFillVectorQuantity (quantity, vlimbSidebandFraction17L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction18L)
+       call ExplicitFillVectorQuantity (quantity, vlimbSidebandFraction18L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction19L)
+       call ExplicitFillVectorQuantity (quantity, vlimbSidebandFraction19L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction20L)
+       call ExplicitFillVectorQuantity (quantity, vlimbSidebandFraction20L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction21L)
+       call SpreadFillVectorQuantity (quantity, vlimbSidebandFraction21L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction22L)
+       call SpreadFillVectorQuantity (quantity, vlimbSidebandFraction22L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction23L)
+       call ExplicitFillVectorQuantity (quantity, vlimbSidebandFraction23L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction24L)
+       call ExplicitFillVectorQuantity (quantity, vlimbSidebandFraction24L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction25L)
+       call ExplicitFillVectorQuantity (quantity, vlimbSidebandFraction25L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction26L)
+       call SpreadFillVectorQuantity (quantity, vlimbSidebandFraction26L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction27L)
+       call ExplicitFillVectorQuantity (quantity, vlimbSidebandFraction27L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction28L)
+       call SpreadFillVectorQuantity (quantity, vlimbSidebandFraction28L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction29L)
+       call SpreadFillVectorQuantity (quantity, vlimbSidebandFraction29L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction30L)
+       call SpreadFillVectorQuantity (quantity, vlimbSidebandFraction30L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction31L)
+       call SpreadFillVectorQuantity (quantity, vlimbSidebandFraction31L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction32L)
+       call ExplicitFillVectorQuantity (quantity, vlimbSidebandFraction32L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction33L)
+       call ExplicitFillVectorQuantity (quantity, vlimbSidebandFraction33L)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction34L)
+       call ExplicitFillVectorQuantity (quantity, vlimbSidebandFraction34L)
+
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction2U)
+       call ExplicitFillVectorQuantity (quantity, vlimbSidebandFraction2U)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction3U)
+       call ExplicitFillVectorQuantity (quantity, vlimbSidebandFraction3U)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction4U)
+       call ExplicitFillVectorQuantity (quantity, vlimbSidebandFraction4U)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction5U)
+       call ExplicitFillVectorQuantity (quantity, vlimbSidebandFraction5U)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction6U)
+       call ExplicitFillVectorQuantity (quantity, vlimbSidebandFraction6U)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction7U)
+       call ExplicitFillVectorQuantity (quantity, vlimbSidebandFraction7U)
+       !print *, "LimbSidebandFraction7U value"
+       !call dump(quantity, details=3)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction8U)
+       call ExplicitFillVectorQuantity (quantity, vlimbSidebandFraction8U)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction9U)
+       call ExplicitFillVectorQuantity (quantity, vlimbSidebandFraction9U)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction10U)
+       call SpreadFillVectorQuantity (quantity, vlimbSidebandFraction10U)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction11U)
+       call SpreadFillVectorQuantity (quantity, vlimbSidebandFraction11U)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction12U)
+       call SpreadFillVectorQuantity (quantity, vlimbSidebandFraction12U)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction13U)
+       call SpreadFillVectorQuantity (quantity, vlimbSidebandFraction13U)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction14U)
+       call SpreadFillVectorQuantity (quantity, vlimbSidebandFraction14U)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction15U)
+       call ExplicitFillVectorQuantity (quantity, vlimbSidebandFraction15U)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction16U)
+       call ExplicitFillVectorQuantity (quantity, vlimbSidebandFraction16U)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction17U)
+       call ExplicitFillVectorQuantity (quantity, vlimbSidebandFraction17U)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction18U)
+       call ExplicitFillVectorQuantity (quantity, vlimbSidebandFraction18U)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction19U)
+       call ExplicitFillVectorQuantity (quantity, vlimbSidebandFraction19U)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction20U)
+       call ExplicitFillVectorQuantity (quantity, vlimbSidebandFraction20U)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction23U)
+       call ExplicitFillVectorQuantity (quantity, vlimbSidebandFraction23U)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction24U)
+       call ExplicitFillVectorQuantity (quantity, vlimbSidebandFraction24U)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction25U)
+       call ExplicitFillVectorQuantity (quantity, vlimbSidebandFraction25U)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction27U)
+       call ExplicitFillVectorQuantity (quantity, vlimbSidebandFraction27U)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction28U)
+       call SpreadFillVectorQuantity (quantity, vlimbSidebandFraction28U)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction29U)
+       call SpreadFillVectorQuantity (quantity, vlimbSidebandFraction29U)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction30U)
+       call SpreadFillVectorQuantity (quantity, vlimbSidebandFraction30U)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction31U)
+       call SpreadFillVectorQuantity (quantity, vlimbSidebandFraction31U)
+       quantity = GetVectorQtyByTemplateIndex (stateVectorExtra, limbSidebandFraction33U)
+       call ExplicitFillVectorQuantity (quantity, vlimbSidebandFraction33U)
+
+    end subroutine
+
+!--------------------------- end bloc --------------------------------------
+   logical function not_used_here()
+   character (len=*), parameter :: IdParm = &
+       "$Id: cfm_lsf.f90,v 1.8 2011/10/18 16:59:29 honghanh Exp $"
+   character (len=len(idParm)) :: Id = idParm
+      not_used_here = (id(1:1) == ModuleName(1:1))
+      print *, Id ! .mod files sometimes change if PRINT is added
+   end function not_used_here
+!---------------------------------------------------------------------------
+end module
+
+! $Log: cfm_lsf.f90,v $
+! Revision 1.8  2011/10/18 16:59:29  honghanh
+! Removing declaration of constants since they were already refractored.
+!
+! Revision 1.7  2011/10/18 16:56:47  honghanh
+! Refractoring limb sideband constants to CFM_Constants_m.
+!
+! Revision 1.6  2010/11/03 18:34:46  honghanh
+! Add qName as an optional argument to CreateQtyTemplate.
+! This is to help debugging process.
+!
+! Revision 1.5  2010/06/29 17:02:47  honghanh
+! Change the identifier 'fakeChunk' to 'chunk' because
+! since it is created with ChunkDivide, it's as real as a chunk
+! can get.
+!
+! Revision 1.4  2010/06/29 16:40:23  honghanh
+! Remove all function/subroutine and user type forwarding from
+! all CFM modules except for from cfm.f90
+!
+! Revision 1.3  2010/06/29 15:53:45  honghanh
+! Add copyright comments and support for CVS log in the file
+!
+@
+
+
+1.8
+log
+@Removing declaration of constants since they were already refractored.
+@
+text
+@d434 1
+a434 1
+       call SpreadFillVectorQuantity (quantity, 0.97333_r8)
+d439 6
+d454 1
+a454 1
+       call SpreadFillVectorQuantity (quantity, 0.50882_r8)
+d456 1
+a456 1
+       call SpreadFillVectorQuantity (quantity, 0.50882_r8)
+d458 1
+a458 1
+       call SpreadFillVectorQuantity (quantity, 0.50690_r8)
+d460 1
+a460 1
+       call SpreadFillVectorQuantity (quantity, 0.51563_r8)
+d462 1
+a462 1
+       call SpreadFillVectorQuantity (quantity, 0.51563_r8)
+d476 1
+a476 1
+       call SpreadFillVectorQuantity (quantity, 0.94708_r8)
+d478 1
+a478 1
+       call SpreadFillVectorQuantity (quantity, 0.97333_r8)
+d486 1
+a486 1
+       call SpreadFillVectorQuantity (quantity, 0.94708_r8)
+d490 1
+a490 1
+       call SpreadFillVectorQuantity (quantity, 0.50882_r8)
+d492 1
+a492 1
+       call SpreadFillVectorQuantity (quantity, 0.50882_r8)
+d494 1
+a494 1
+       call SpreadFillVectorQuantity (quantity, 0.51563_r8)
+d496 1
+a496 1
+       call SpreadFillVectorQuantity (quantity, 0.51563_r8)
+d523 1
+a523 1
+       call SpreadFillVectorQuantity (quantity, 0.46045_r8)
+d525 1
+a525 1
+       call SpreadFillVectorQuantity (quantity, 0.46045_r8)
+d527 1
+a527 1
+       call SpreadFillVectorQuantity (quantity, 0.46232_r8)
+d529 1
+a529 1
+       call SpreadFillVectorQuantity (quantity, 0.45360_r8)
+d531 1
+a531 1
+       call SpreadFillVectorQuantity (quantity, 0.45360_r8)
+d553 1
+a553 1
+       call SpreadFillVectorQuantity (quantity, 0.46045_r8)
+d555 1
+a555 1
+       call SpreadFillVectorQuantity (quantity, 0.46045_r8)
+d557 1
+a557 1
+       call SpreadFillVectorQuantity (quantity, 0.45360_r8)
+d559 1
+a559 1
+       call SpreadFillVectorQuantity (quantity, 0.45360_r8)
+d568 1
+a568 1
+       "$Id: cfm_lsf.f90,v 1.7 2011/10/18 16:56:47 honghanh Exp $"
+d577 3
+@
+
+
+1.7
+log
+@Refractoring limb sideband constants to CFM_Constants_m.
+@
+text
+@a27 329
+    real(r8), dimension(25), parameter :: vlimbSidebandFraction2L = &
+    (/0.54213_r8, 0.53927_r8, 0.53572_r8, 0.53244_r8, 0.52971_r8, 0.52693_r8, 0.52451_r8, &
+      0.52279_r8, 0.52160_r8, 0.52076_r8, 0.52018_r8, 0.51977_r8, 0.51948_r8, 0.51919_r8, &
+      0.51878_r8, 0.51822_r8, 0.51742_r8, 0.51632_r8, 0.51479_r8, 0.51273_r8, 0.51052_r8, &
+      0.50846_r8, 0.50613_r8, 0.50368_r8, 0.50160_r8/)
+    real(r8), dimension(25), parameter :: vlimbSidebandFraction3L = &
+    (/0.52287_r8, 0.51885_r8, 0.51507_r8, 0.51216_r8, 0.50998_r8, 0.50797_r8, 0.50635_r8, &
+      0.50526_r8, 0.50455_r8, 0.50405_r8, 0.50372_r8, 0.50348_r8, 0.50332_r8, 0.50316_r8, &
+      0.50293_r8, 0.50263_r8, 0.50220_r8, 0.50163_r8, 0.50088_r8, 0.49992_r8, 0.49898_r8, &
+      0.49819_r8, 0.49741_r8, 0.49676_r8, 0.49637_r8/)
+    real(r8), dimension(25), parameter :: vlimbSidebandFraction7L = &
+    (/0.48358_r8, 0.48470_r8, 0.48580_r8, 0.48669_r8, 0.48739_r8, 0.48807_r8, 0.48865_r8, &
+      0.48905_r8, 0.48932_r8, 0.48950_r8, 0.48964_r8, 0.48973_r8, 0.48979_r8, 0.48985_r8, &
+      0.48995_r8, 0.49007_r8, 0.49024_r8, 0.49047_r8, 0.49078_r8, 0.49116_r8, 0.49153_r8, &
+      0.49178_r8, 0.49191_r8, 0.49171_r8, 0.49100_r8/)
+    real(r8), dimension(25), parameter :: vlimbSidebandFraction8L = &
+    (/0.47597_r8, 0.47481_r8, 0.47369_r8, 0.47277_r8, &
+      0.47205_r8, 0.47135_r8, 0.47076_r8, 0.47034_r8, 0.47006_r8, &
+      0.46987_r8, 0.46972_r8, 0.46962_r8, 0.46956_r8, 0.46949_r8, &
+      0.46940_r8, 0.46927_r8, 0.46907_r8, 0.46882_r8, 0.46846_r8, &
+      0.46799_r8, 0.46747_r8, 0.46700_r8, 0.46645_r8, 0.46589_r8, &
+      0.46543_r8/)
+    real(r8), dimension(25), parameter :: vlimbSidebandFraction9L = &
+    (/0.47767_r8, 0.47701_r8, 0.47627_r8, 0.47565_r8, &
+      0.47517_r8, 0.47471_r8, 0.47433_r8, 0.47408_r8, 0.47390_r8, &
+      0.47379_r8, 0.47371_r8, 0.47365_r8, 0.47361_r8, 0.47357_r8, &
+      0.47352_r8, 0.47344_r8, 0.47333_r8, 0.47319_r8, 0.47299_r8, &
+      0.47274_r8, 0.47248_r8, 0.47224_r8, 0.47195_r8, 0.47165_r8, &
+      0.47136_r8/)
+    real(r8), dimension(25), parameter :: vlimbSidebandFraction15L = &
+    (/0.95750_r8, 0.95800_r8, 0.95850_r8, 0.95890_r8, &
+      0.95920_r8, 0.95960_r8, 0.95990_r8, 0.96010_r8, 0.96020_r8, &
+      0.96030_r8, 0.96040_r8, 0.96040_r8, 0.96050_r8, 0.96050_r8, &
+      0.96060_r8, 0.96060_r8, 0.96070_r8, 0.96090_r8, 0.96110_r8, &
+      0.96140_r8, 0.96170_r8, 0.96210_r8, 0.96250_r8, 0.96300_r8, &
+      0.96350_r8/)
+    real(r8), dimension(25), parameter :: vlimbSidebandFraction16L = &
+    (/0.80400_r8, 0.80870_r8, 0.81290_r8, 0.81670_r8, &
+      0.81960_r8, 0.82270_r8, 0.82520_r8, 0.82710_r8, 0.82840_r8, &
+      0.82940_r8, 0.83000_r8, 0.83050_r8, 0.83080_r8, 0.83110_r8, &
+      0.83160_r8, 0.83220_r8, 0.83310_r8, 0.83440_r8, 0.83630_r8, &
+      0.83890_r8, 0.84170_r8, 0.84490_r8, 0.84840_r8, 0.85320_r8, &
+      0.85720_r8/)
+    real(r8), dimension(25), parameter :: vlimbSidebandFraction17L = &
+    (/0.42500_r8, 0.41920_r8, 0.41350_r8, 0.40850_r8, &
+      0.40450_r8, 0.40030_r8, 0.39680_r8, 0.39440_r8, 0.39270_r8, &
+      0.39150_r8, 0.39060_r8, 0.39000_r8, 0.38950_r8, 0.38910_r8, &
+      0.38850_r8, 0.38760_r8, 0.38640_r8, 0.38460_r8, 0.38220_r8, &
+      0.37860_r8, 0.37490_r8, 0.37090_r8, 0.36590_r8, 0.36010_r8, &
+      0.35400_r8/)
+    real(r8), dimension(25), parameter :: vlimbSidebandFraction18L = &
+    (/0.94650_r8, 0.94680_r8, 0.94700_r8, 0.94730_r8, &
+      0.94740_r8, 0.94760_r8, 0.94780_r8, 0.94790_r8, 0.94800_r8, &
+      0.94800_r8, 0.94800_r8, 0.94810_r8, 0.94810_r8, 0.94810_r8, &
+      0.94810_r8, 0.94820_r8, 0.94820_r8, 0.94830_r8, 0.94840_r8, &
+      0.94860_r8, 0.94870_r8, 0.94890_r8, 0.94910_r8, 0.94940_r8, &
+      0.94970_r8/)
+    real(r8), dimension(25), parameter :: vlimbSidebandFraction19L = &
+    (/0.78500_r8, 0.78980_r8, 0.79410_r8, 0.79800_r8, &
+      0.80110_r8, 0.80400_r8, 0.80670_r8, 0.80860_r8, 0.80990_r8, &
+      0.81090_r8, 0.81160_r8, 0.81200_r8, 0.81240_r8, 0.81270_r8, &
+      0.81320_r8, 0.81380_r8, 0.81470_r8, 0.81600_r8, 0.81810_r8, &
+      0.82060_r8, 0.82370_r8, 0.82670_r8, 0.83040_r8, 0.83510_r8, &
+      0.83960_r8/)
+    real(r8), dimension(25), parameter :: vlimbSidebandFraction20L = &
+    (/0.41870_r8, 0.41310_r8, 0.40650_r8, 0.40200_r8, &
+      0.39800_r8, 0.39370_r8, 0.39040_r8, 0.38790_r8, 0.38620_r8, &
+      0.38500_r8, 0.38410_r8, 0.38350_r8, 0.38300_r8, 0.38260_r8, &
+      0.38200_r8, 0.38120_r8, 0.37990_r8, 0.37810_r8, 0.37570_r8, &
+      0.37200_r8, 0.36850_r8, 0.36450_r8, 0.35930_r8, 0.35380_r8, &
+      0.34760_r8/)
+    real(r8), dimension(129), parameter :: vlimbSidebandFraction23L = &
+    (/0.51922_r8, 0.51923_r8, 0.51923_r8, 0.51923_r8, &
+      0.51924_r8, 0.51924_r8, 0.51924_r8, 0.51925_r8, 0.51925_r8, &
+      0.51925_r8, 0.51926_r8, 0.51926_r8, 0.51926_r8, 0.51927_r8, &
+      0.51927_r8, 0.51927_r8, 0.51928_r8, 0.51928_r8, 0.51928_r8, &
+      0.51929_r8, 0.51929_r8, 0.51929_r8, 0.51930_r8, 0.51930_r8, &
+      0.51930_r8, 0.51931_r8, 0.51931_r8, 0.51931_r8, 0.51932_r8, &
+      0.51932_r8, 0.51932_r8, 0.51933_r8, 0.51933_r8, 0.51933_r8, &
+      0.51934_r8, 0.51934_r8, 0.51934_r8, 0.51935_r8, 0.51935_r8, &
+      0.51935_r8, 0.51936_r8, 0.51936_r8, 0.51936_r8, 0.51937_r8, &
+      0.51937_r8, 0.51937_r8, 0.51938_r8, 0.51938_r8, 0.51938_r8, &
+      0.51939_r8, 0.51939_r8, 0.51939_r8, 0.51940_r8, 0.51940_r8, &
+      0.51940_r8, 0.51941_r8, 0.51941_r8, 0.51941_r8, 0.51942_r8, &
+      0.51942_r8, 0.51942_r8, 0.51943_r8, 0.51943_r8, 0.51943_r8, &
+      0.51944_r8, 0.51944_r8, 0.51944_r8, 0.51945_r8, 0.51945_r8, &
+      0.51945_r8, 0.51946_r8, 0.51946_r8, 0.51946_r8, 0.51947_r8, &
+      0.51947_r8, 0.51947_r8, 0.51948_r8, 0.51948_r8, 0.51948_r8, &
+      0.51949_r8, 0.51949_r8, 0.51949_r8, 0.51950_r8, 0.51950_r8, &
+      0.51950_r8, 0.51951_r8, 0.51951_r8, 0.51951_r8, 0.51952_r8, &
+      0.51952_r8, 0.51952_r8, 0.51953_r8, 0.51953_r8, 0.51953_r8, &
+      0.51954_r8, 0.51954_r8, 0.51954_r8, 0.51955_r8, 0.51955_r8, &
+      0.51955_r8, 0.51956_r8, 0.51956_r8, 0.51957_r8, 0.51957_r8, &
+      0.51957_r8, 0.51958_r8, 0.51958_r8, 0.51958_r8, 0.51959_r8, &
+      0.51959_r8, 0.51959_r8, 0.51960_r8, 0.51960_r8, 0.51960_r8, &
+      0.51961_r8, 0.51961_r8, 0.51961_r8, 0.51962_r8, 0.51962_r8, &
+      0.51962_r8, 0.51963_r8, 0.51963_r8, 0.51963_r8, 0.51964_r8, &
+      0.51964_r8, 0.51964_r8, 0.51965_r8, 0.51965_r8, 0.51965_r8/)
+    real(r8), dimension(129), parameter :: vlimbSidebandFraction24L = &
+    (/0.48982_r8, 0.48982_r8, 0.48982_r8, 0.48982_r8, &
+      0.48982_r8, 0.48982_r8, 0.48982_r8, 0.48982_r8, 0.48982_r8, &
+      0.48982_r8, 0.48982_r8, 0.48982_r8, 0.48982_r8, 0.48982_r8, &
+      0.48982_r8, 0.48982_r8, 0.48982_r8, 0.48981_r8, 0.48981_r8, &
+      0.48981_r8, 0.48981_r8, 0.48981_r8, 0.48981_r8, 0.48981_r8, &
+      0.48981_r8, 0.48981_r8, 0.48981_r8, 0.48981_r8, 0.48981_r8, &
+      0.48981_r8, 0.48981_r8, 0.48981_r8, 0.48981_r8, 0.48981_r8, &
+      0.48981_r8, 0.48981_r8, 0.48981_r8, 0.48981_r8, 0.48981_r8, &
+      0.48981_r8, 0.48980_r8, 0.48980_r8, 0.48980_r8, 0.48980_r8, &
+      0.48980_r8, 0.48980_r8, 0.48980_r8, 0.48980_r8, 0.48980_r8, &
+      0.48980_r8, 0.48980_r8, 0.48980_r8, 0.48980_r8, 0.48980_r8, &
+      0.48980_r8, 0.48980_r8, 0.48980_r8, 0.48980_r8, 0.48980_r8, &
+      0.48980_r8, 0.48980_r8, 0.48980_r8, 0.48980_r8, 0.48979_r8, &
+      0.48979_r8, 0.48979_r8, 0.48979_r8, 0.48979_r8, 0.48979_r8, &
+      0.48979_r8, 0.48979_r8, 0.48979_r8, 0.48979_r8, 0.48979_r8, &
+      0.48979_r8, 0.48979_r8, 0.48979_r8, 0.48979_r8, 0.48979_r8, &
+      0.48979_r8, 0.48979_r8, 0.48979_r8, 0.48979_r8, 0.48979_r8, &
+      0.48979_r8, 0.48979_r8, 0.48979_r8, 0.48979_r8, 0.48979_r8, &
+      0.48979_r8, 0.48979_r8, 0.48979_r8, 0.48979_r8, 0.48979_r8, &
+      0.48979_r8, 0.48979_r8, 0.48979_r8, 0.48979_r8, 0.48979_r8, &
+      0.48979_r8, 0.48979_r8, 0.48979_r8, 0.48979_r8, 0.48979_r8, &
+      0.48979_r8, 0.48979_r8, 0.48979_r8, 0.48979_r8, 0.48979_r8, &
+      0.48978_r8, 0.48978_r8, 0.48978_r8, 0.48978_r8, 0.48978_r8, &
+      0.48978_r8, 0.48978_r8, 0.48978_r8, 0.48978_r8, 0.48978_r8, &
+      0.48978_r8, 0.48978_r8, 0.48978_r8, 0.48978_r8, 0.48978_r8, &
+      0.48978_r8, 0.48978_r8, 0.48978_r8, 0.48978_r8, 0.48978_r8/)
+    real(r8), dimension(129), parameter :: vlimbSidebandFraction25L = &
+    (/0.47355_r8, 0.47355_r8, 0.47355_r8, 0.47355_r8, 0.47355_r8, 0.47355_r8, 0.47355_r8, &
+      0.47355_r8, 0.47355_r8, 0.47355_r8, 0.47356_r8, 0.47356_r8, 0.47356_r8, 0.47356_r8, &
+      0.47356_r8, 0.47356_r8, 0.47356_r8, 0.47356_r8, 0.47356_r8, 0.47356_r8, 0.47356_r8, &
+      0.47356_r8, 0.47356_r8, 0.47356_r8, 0.47357_r8, 0.47357_r8, 0.47357_r8, 0.47357_r8, &
+      0.47357_r8, 0.47357_r8, 0.47357_r8, 0.47357_r8, 0.47357_r8, 0.47357_r8, 0.47357_r8, &
+      0.47357_r8, 0.47357_r8, 0.47358_r8, 0.47358_r8, 0.47358_r8, 0.47358_r8, 0.47358_r8, &
+      0.47358_r8, 0.47358_r8, 0.47358_r8, 0.47358_r8, 0.47358_r8, 0.47358_r8, 0.47358_r8, &
+      0.47358_r8, 0.47359_r8, 0.47359_r8, 0.47359_r8, 0.47359_r8, 0.47359_r8, 0.47359_r8, &
+      0.47359_r8, 0.47359_r8, 0.47359_r8, 0.47359_r8, 0.47359_r8, 0.47359_r8, 0.47359_r8, &
+      0.47360_r8, 0.47360_r8, 0.47360_r8, 0.47360_r8, 0.47360_r8, 0.47360_r8, 0.47360_r8, &
+      0.47360_r8, 0.47360_r8, 0.47360_r8, 0.47360_r8, 0.47360_r8, 0.47360_r8, 0.47361_r8, &
+      0.47361_r8, 0.47361_r8, 0.47361_r8, 0.47361_r8, 0.47361_r8, 0.47361_r8, 0.47361_r8, &
+      0.47361_r8, 0.47361_r8, 0.47361_r8, 0.47361_r8, 0.47361_r8, 0.47362_r8, 0.47362_r8, &
+      0.47362_r8, 0.47362_r8, 0.47362_r8, 0.47362_r8, 0.47362_r8, 0.47362_r8, 0.47362_r8, &
+      0.47362_r8, 0.47362_r8, 0.47362_r8, 0.47362_r8, 0.47362_r8, 0.47363_r8, 0.47363_r8, &
+      0.47363_r8, 0.47363_r8, 0.47363_r8, 0.47363_r8, 0.47363_r8, 0.47363_r8, 0.47363_r8, &
+      0.47363_r8, 0.47363_r8, 0.47363_r8, 0.47363_r8, 0.47364_r8, 0.47364_r8, 0.47364_r8, &
+      0.47364_r8, 0.47364_r8, 0.47364_r8, 0.47364_r8, 0.47364_r8, 0.47364_r8, 0.47364_r8, &
+      0.47364_r8, 0.47364_r8, 0.47364_r8/)
+    real(r8), dimension(11), parameter :: vlimbSidebandFraction27L = &
+    (/0.48916_r8, 0.48929_r8, 0.48940_r8, 0.48948_r8, 0.48955_r8, 0.48959_r8, 0.48963_r8, &
+      0.48971_r8, 0.48981_r8, 0.48998_r8, 0.49023_r8/)
+    real(r8), dimension(4), parameter :: vlimbSidebandFraction32L = &
+    (/0.97293_r8, 0.97144_r8, 0.97015_r8, 0.96945_r8/)
+    real(r8), dimension(4), parameter :: vlimbSidebandFraction33L = &
+    (/0.48936_r8, 0.48045_r8, 0.46610_r8, 0.46746_r8/)
+    real(r8), dimension(4), parameter :: vlimbSidebandFraction34L = &
+    (/0.95080_r8, 0.94541_r8, 0.94532_r8, 0.94825_r8/)
+
+    real(r8), dimension(25), parameter :: vlimbSidebandFraction2U = &
+    (/0.43731_r8, 0.44019_r8, 0.44373_r8, 0.44702_r8, 0.44975_r8, 0.45254_r8, 0.45496_r8, &
+      0.45668_r8, 0.45787_r8, 0.45871_r8, 0.45929_r8, 0.45970_r8, 0.45999_r8, 0.46028_r8, &
+      0.46069_r8, 0.46126_r8, 0.46205_r8, 0.46316_r8, 0.46469_r8, 0.46675_r8, 0.46896_r8, &
+      0.47102_r8, 0.47335_r8, 0.47581_r8, 0.47789_r8/)
+    real(r8), dimension(25), parameter :: vlimbSidebandFraction3U = &
+    (/0.45660_r8, 0.46062_r8, 0.46440_r8, 0.46732_r8, 0.46950_r8, 0.47151_r8, 0.47314_r8, &
+      0.47422_r8, 0.47494_r8, 0.47544_r8, 0.47577_r8, 0.47601_r8, 0.47616_r8, 0.47633_r8, &
+      0.47656_r8, 0.47686_r8, 0.47729_r8, 0.47786_r8, 0.47861_r8, 0.47958_r8, 0.48052_r8, &
+      0.48130_r8, 0.48208_r8, 0.48274_r8, 0.48312_r8/)
+    real(r8), dimension(25), parameter :: vlimbSidebandFraction4U = &
+    (/0.47677_r8, 0.47733_r8, 0.47796_r8, 0.47853_r8, 0.47900_r8, 0.47948_r8, 0.47991_r8, &
+      0.48020_r8, 0.48042_r8, 0.48056_r8, 0.48067_r8, 0.48074_r8, 0.48079_r8, 0.48085_r8, &
+      0.48092_r8, 0.48102_r8, 0.48116_r8, 0.48136_r8, 0.48162_r8, 0.48198_r8, 0.48235_r8, &
+      0.48266_r8, 0.48298_r8, 0.48320_r8, 0.48324_r8/)
+    real(r8), dimension(25), parameter :: vlimbSidebandFraction5U = &
+    (/0.48466_r8, 0.48401_r8, 0.48333_r8, 0.48276_r8, 0.48229_r8, 0.48181_r8, 0.48140_r8, &
+      0.48110_r8, 0.48089_r8, 0.48075_r8, 0.48064_r8, 0.48057_r8, 0.48051_r8, 0.48046_r8, &
+      0.48039_r8, 0.48029_r8, 0.48014_r8, 0.47993_r8, 0.47964_r8, 0.47924_r8, 0.47880_r8, &
+      0.47836_r8, 0.47785_r8, 0.47727_r8, 0.47675_r8/)
+    real(r8), dimension(25), parameter :: vlimbSidebandFraction6U = &
+    (/0.48836_r8, 0.48881_r8, 0.48923_r8, 0.48956_r8, 0.48979_r8, 0.49001_r8, 0.49016_r8, &
+      0.49027_r8, 0.49033_r8, 0.49037_r8, 0.49039_r8, 0.49041_r8, 0.49042_r8, 0.49043_r8, &
+      0.49045_r8, 0.49047_r8, 0.49049_r8, 0.49051_r8, 0.49052_r8, 0.49049_r8, 0.49038_r8, &
+      0.49018_r8, 0.48979_r8, 0.48903_r8, 0.48789_r8/)
+    real(r8), dimension(25), parameter :: vlimbSidebandFraction7U = &
+    (/0.48639_r8, 0.48527_r8, 0.48417_r8, 0.48328_r8, 0.48258_r8, 0.48190_r8, 0.48132_r8, &
+      0.48092_r8, 0.48065_r8, 0.48046_r8, 0.48033_r8, 0.48024_r8, 0.48017_r8, 0.48012_r8, &
+      0.48002_r8, 0.47990_r8, 0.47973_r8, 0.47949_r8, 0.47918_r8, 0.47881_r8, 0.47844_r8, &
+      0.47818_r8, 0.47806_r8, 0.47826_r8, 0.47897_r8/)
+    real(r8), dimension(25), parameter :: vlimbSidebandFraction8U = &
+    (/0.49391_r8, 0.49506_r8, 0.49619_r8, 0.49711_r8, &
+      0.49783_r8, 0.49853_r8, 0.49912_r8, 0.49954_r8, 0.49982_r8, &
+      0.50001_r8, 0.50016_r8, 0.50025_r8, 0.50032_r8, 0.50039_r8, &
+      0.50048_r8, 0.50061_r8, 0.50081_r8, 0.50106_r8, 0.50142_r8, &
+      0.50189_r8, 0.50241_r8, 0.50288_r8, 0.50343_r8, 0.50399_r8, &
+      0.50446_r8/)
+    real(r8), dimension(25), parameter :: vlimbSidebandFraction9U = &
+    (/0.49235_r8, 0.49301_r8, 0.49375_r8, 0.49437_r8, &
+      0.49485_r8, 0.49531_r8, 0.49569_r8, 0.49594_r8, 0.49612_r8, &
+      0.49623_r8, 0.49631_r8, 0.49637_r8, 0.49641_r8, 0.49645_r8, &
+      0.49651_r8, 0.49658_r8, 0.49669_r8, 0.49684_r8, 0.49703_r8, &
+      0.49728_r8, 0.49754_r8, 0.49779_r8, 0.49807_r8, 0.49837_r8, &
+      0.49866_r8/)
+    real(r8), dimension(25), parameter :: vlimbSidebandFraction15U = &
+    (/0.04250_r8, 0.04200_r8, 0.04150_r8, 0.04110_r8, &
+      0.04080_r8, 0.04040_r8, 0.04010_r8, 0.03990_r8, 0.03980_r8, &
+      0.03970_r8, 0.03960_r8, 0.03960_r8, 0.03950_r8, 0.03950_r8, &
+      0.03940_r8, 0.03940_r8, 0.03930_r8, 0.03910_r8, 0.03890_r8, &
+      0.03860_r8, 0.03830_r8, 0.03790_r8, 0.03750_r8, 0.03700_r8, &
+      0.03650_r8/)
+    real(r8), dimension(25), parameter :: vlimbSidebandFraction16U = &
+    (/0.19600_r8, 0.19130_r8, 0.18710_r8, 0.18330_r8, &
+      0.18040_r8, 0.17730_r8, 0.17480_r8, 0.17290_r8, 0.17160_r8, &
+      0.17060_r8, 0.17000_r8, 0.16950_r8, 0.16920_r8, 0.16890_r8, &
+      0.16840_r8, 0.16780_r8, 0.16690_r8, 0.16560_r8, 0.16370_r8, &
+      0.16110_r8, 0.15830_r8, 0.15510_r8, 0.15160_r8, 0.14680_r8, &
+      0.14280_r8/)
+    real(r8), dimension(25), parameter :: vlimbSidebandFraction17U = &
+    (/0.57500_r8, 0.58080_r8, 0.58650_r8, 0.59150_r8, &
+      0.59550_r8, 0.59970_r8, 0.60320_r8, 0.60560_r8, 0.60730_r8, &
+      0.60850_r8, 0.60940_r8, 0.61000_r8, 0.61050_r8, 0.61090_r8, &
+      0.61150_r8, 0.61240_r8, 0.61360_r8, 0.61540_r8, 0.61780_r8, &
+      0.62140_r8, 0.62510_r8, 0.62910_r8, 0.63410_r8, 0.63990_r8, &
+      0.64600_r8/)
+    real(r8), dimension(25), parameter :: vlimbSidebandFraction18U = &
+    (/0.05350_r8, 0.05320_r8, 0.05300_r8, 0.05270_r8, &
+      0.05260_r8, 0.05240_r8, 0.05220_r8, 0.05210_r8, 0.05200_r8, &
+      0.05200_r8, 0.05200_r8, 0.05190_r8, 0.05190_r8, 0.05190_r8, &
+      0.05190_r8, 0.05180_r8, 0.05180_r8, 0.05170_r8, 0.05160_r8, &
+      0.05140_r8, 0.05130_r8, 0.05110_r8, 0.05090_r8, 0.05060_r8, &
+      0.05030_r8/)
+    real(r8), dimension(25), parameter :: vlimbSidebandFraction19U = &
+    (/0.21500_r8, 0.21020_r8, 0.20590_r8, 0.20200_r8, &
+      0.19890_r8, 0.19600_r8, 0.19330_r8, 0.19140_r8, 0.19010_r8, &
+      0.18910_r8, 0.18840_r8, 0.18800_r8, 0.18760_r8, 0.18730_r8, &
+      0.18680_r8, 0.18620_r8, 0.18530_r8, 0.18400_r8, 0.18190_r8, &
+      0.17940_r8, 0.17630_r8, 0.17330_r8, 0.16960_r8, 0.16490_r8, &
+      0.16040_r8/)
+    real(r8), dimension(25), parameter :: vlimbSidebandFraction20U = &
+    (/0.58130_r8, 0.58690_r8, 0.59350_r8, 0.59800_r8, &
+      0.60200_r8, 0.60630_r8, 0.60960_r8, 0.61210_r8, 0.61380_r8, &
+      0.61500_r8, 0.61590_r8, 0.61650_r8, 0.61700_r8, 0.61740_r8, &
+      0.61800_r8, 0.61880_r8, 0.62010_r8, 0.62190_r8, 0.62430_r8, &
+      0.62800_r8, 0.63150_r8, 0.63550_r8, 0.64070_r8, 0.64620_r8, &
+      0.65240_r8/)
+    real(r8), dimension(129), parameter :: vlimbSidebandFraction23U = &
+    (/0.46025_r8, 0.46024_r8, 0.46024_r8, 0.46024_r8, &
+      0.46023_r8, 0.46023_r8, 0.46023_r8, 0.46022_r8, 0.46022_r8, &
+      0.46022_r8, 0.46021_r8, 0.46021_r8, 0.46021_r8, 0.46020_r8, &
+      0.46020_r8, 0.46020_r8, 0.46019_r8, 0.46019_r8, 0.46019_r8, &
+      0.46018_r8, 0.46018_r8, 0.46018_r8, 0.46017_r8, 0.46017_r8, &
+      0.46017_r8, 0.46016_r8, 0.46016_r8, 0.46016_r8, 0.46015_r8, &
+      0.46015_r8, 0.46015_r8, 0.46014_r8, 0.46014_r8, 0.46014_r8, &
+      0.46013_r8, 0.46013_r8, 0.46013_r8, 0.46012_r8, 0.46012_r8, &
+      0.46012_r8, 0.46011_r8, 0.46011_r8, 0.46011_r8, 0.46010_r8, &
+      0.46010_r8, 0.46010_r8, 0.46009_r8, 0.46009_r8, 0.46009_r8, &
+      0.46008_r8, 0.46008_r8, 0.46008_r8, 0.46007_r8, 0.46007_r8, &
+      0.46007_r8, 0.46006_r8, 0.46006_r8, 0.46006_r8, 0.46005_r8, &
+      0.46005_r8, 0.46005_r8, 0.46004_r8, 0.46004_r8, 0.46004_r8, &
+      0.46003_r8, 0.46003_r8, 0.46003_r8, 0.46002_r8, 0.46002_r8, &
+      0.46002_r8, 0.46001_r8, 0.46001_r8, 0.46001_r8, 0.46000_r8, &
+      0.46000_r8, 0.46000_r8, 0.45999_r8, 0.45999_r8, 0.45999_r8, &
+      0.45998_r8, 0.45998_r8, 0.45998_r8, 0.45997_r8, 0.45997_r8, &
+      0.45997_r8, 0.45996_r8, 0.45996_r8, 0.45996_r8, 0.45995_r8, &
+      0.45995_r8, 0.45995_r8, 0.45994_r8, 0.45994_r8, 0.45994_r8, &
+      0.45994_r8, 0.45994_r8, 0.45994_r8, 0.45993_r8, 0.45993_r8, &
+      0.45993_r8, 0.45992_r8, 0.45992_r8, 0.45991_r8, 0.45991_r8, &
+      0.45991_r8, 0.45990_r8, 0.45990_r8, 0.45990_r8, 0.45989_r8, &
+      0.45989_r8, 0.45989_r8, 0.45988_r8, 0.45988_r8, 0.45988_r8, &
+      0.45987_r8, 0.45987_r8, 0.45987_r8, 0.45986_r8, 0.45986_r8, &
+      0.45986_r8, 0.45985_r8, 0.45985_r8, 0.45985_r8, 0.45984_r8, &
+      0.45984_r8, 0.45984_r8, 0.45983_r8, 0.45983_r8, 0.45983_r8/)
+    real(r8), dimension(129), parameter :: vlimbSidebandFraction24U = &
+    (/0.48014_r8, 0.48014_r8, 0.48014_r8, 0.48014_r8, &
+      0.48014_r8, 0.48014_r8, 0.48014_r8, 0.48014_r8, 0.48014_r8, &
+      0.48014_r8, 0.48014_r8, 0.48014_r8, 0.48014_r8, 0.48014_r8, &
+      0.48014_r8, 0.48014_r8, 0.48014_r8, 0.48015_r8, 0.48015_r8, &
+      0.48015_r8, 0.48015_r8, 0.48015_r8, 0.48015_r8, 0.48015_r8, &
+      0.48015_r8, 0.48015_r8, 0.48015_r8, 0.48015_r8, 0.48015_r8, &
+      0.48015_r8, 0.48015_r8, 0.48015_r8, 0.48015_r8, 0.48015_r8, &
+      0.48015_r8, 0.48015_r8, 0.48015_r8, 0.48015_r8, 0.48015_r8, &
+      0.48015_r8, 0.48016_r8, 0.48016_r8, 0.48016_r8, 0.48016_r8, &
+      0.48016_r8, 0.48016_r8, 0.48016_r8, 0.48016_r8, 0.48016_r8, &
+      0.48016_r8, 0.48016_r8, 0.48016_r8, 0.48016_r8, 0.48016_r8, &
+      0.48016_r8, 0.48016_r8, 0.48016_r8, 0.48016_r8, 0.48016_r8, &
+      0.48016_r8, 0.48016_r8, 0.48016_r8, 0.48016_r8, 0.48017_r8, &
+      0.48017_r8, 0.48017_r8, 0.48017_r8, 0.48017_r8, 0.48017_r8, &
+      0.48017_r8, 0.48017_r8, 0.48017_r8, 0.48017_r8, 0.48017_r8, &
+      0.48017_r8, 0.48017_r8, 0.48017_r8, 0.48017_r8, 0.48017_r8, &
+      0.48017_r8, 0.48017_r8, 0.48017_r8, 0.48017_r8, 0.48017_r8, &
+      0.48017_r8, 0.48017_r8, 0.48018_r8, 0.48018_r8, 0.48018_r8, &
+      0.48018_r8, 0.48018_r8, 0.48018_r8, 0.48018_r8, 0.48018_r8, &
+      0.48018_r8, 0.48018_r8, 0.48018_r8, 0.48018_r8, 0.48018_r8, &
+      0.48018_r8, 0.48018_r8, 0.48018_r8, 0.48018_r8, 0.48018_r8, &
+      0.48018_r8, 0.48018_r8, 0.48018_r8, 0.48018_r8, 0.48018_r8, &
+      0.48019_r8, 0.48019_r8, 0.48019_r8, 0.48019_r8, 0.48019_r8, &
+      0.48019_r8, 0.48019_r8, 0.48019_r8, 0.48019_r8, 0.48019_r8, &
+      0.48019_r8, 0.48019_r8, 0.48019_r8, 0.48019_r8, 0.48019_r8, &
+      0.48019_r8, 0.48019_r8, 0.48019_r8, 0.48019_r8, 0.48019_r8/)
+    real(r8), dimension(129), parameter :: vlimbSidebandFraction25U = &
+    (/0.49647_r8, 0.49647_r8, 0.49647_r8, 0.49647_r8, &
+      0.49647_r8, 0.49647_r8, 0.49647_r8, 0.49647_r8, 0.49647_r8, &
+      0.49647_r8, 0.49646_r8, 0.49646_r8, 0.49646_r8, 0.49646_r8, &
+      0.49646_r8, 0.49646_r8, 0.49646_r8, 0.49646_r8, 0.49646_r8, &
+      0.49646_r8, 0.49646_r8, 0.49646_r8, 0.49646_r8, 0.49646_r8, &
+      0.49645_r8, 0.49645_r8, 0.49645_r8, 0.49645_r8, 0.49645_r8, &
+      0.49645_r8, 0.49645_r8, 0.49645_r8, 0.49645_r8, 0.49645_r8, &
+      0.49645_r8, 0.49645_r8, 0.49645_r8, 0.49644_r8, 0.49644_r8, &
+      0.49644_r8, 0.49644_r8, 0.49644_r8, 0.49644_r8, 0.49644_r8, &
+      0.49644_r8, 0.49644_r8, 0.49644_r8, 0.49644_r8, 0.49644_r8, &
+      0.49644_r8, 0.49643_r8, 0.49643_r8, 0.49643_r8, 0.49643_r8, &
+      0.49643_r8, 0.49643_r8, 0.49643_r8, 0.49643_r8, 0.49643_r8, &
+      0.49643_r8, 0.49643_r8, 0.49643_r8, 0.49643_r8, 0.49642_r8, &
+      0.49642_r8, 0.49642_r8, 0.49642_r8, 0.49642_r8, 0.49642_r8, &
+      0.49642_r8, 0.49642_r8, 0.49642_r8, 0.49642_r8, 0.49642_r8, &
+      0.49642_r8, 0.49642_r8, 0.49641_r8, 0.49641_r8, 0.49641_r8, &
+      0.49641_r8, 0.49641_r8, 0.49641_r8, 0.49641_r8, 0.49641_r8, &
+      0.49641_r8, 0.49641_r8, 0.49641_r8, 0.49641_r8, 0.49641_r8, &
+      0.49640_r8, 0.49640_r8, 0.49640_r8, 0.49640_r8, 0.49640_r8, &
+      0.49640_r8, 0.49640_r8, 0.49640_r8, 0.49640_r8, 0.49640_r8, &
+      0.49640_r8, 0.49640_r8, 0.49640_r8, 0.49640_r8, 0.49639_r8, &
+      0.49639_r8, 0.49639_r8, 0.49639_r8, 0.49639_r8, 0.49639_r8, &
+      0.49639_r8, 0.49639_r8, 0.49639_r8, 0.49639_r8, 0.49639_r8, &
+      0.49639_r8, 0.49639_r8, 0.49638_r8, 0.49638_r8, 0.49638_r8, &
+      0.49638_r8, 0.49638_r8, 0.49638_r8, 0.49638_r8, 0.49638_r8, &
+      0.49638_r8, 0.49638_r8, 0.49638_r8, 0.49638_r8, 0.49638_r8/)
+    real(r8), dimension(11), parameter :: vlimbSidebandFraction27U = &
+    (/0.49004_r8, 0.48991_r8, 0.48981_r8, 0.48973_r8, &
+      0.48966_r8, 0.48962_r8, 0.48957_r8, 0.48949_r8, 0.48939_r8, &
+      0.48923_r8, 0.48897_r8/)
+    real(r8), dimension(4), parameter :: vlimbSidebandFraction33U = &
+    (/0.48061_r8, 0.48947_r8, 0.50383_r8, 0.50247_r8/)
+
+d562 1
+a562 1
+       "$Id: cfm_lsf.f90,v 1.6 2010/11/03 18:34:46 honghanh Exp $"
+d571 3
+@
+
+
+1.6
+log
+@Add qName as an optional argument to CreateQtyTemplate.
+This is to help debugging process.
+@
+text
+@d14 1
+d441 1
+a441 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R1A:118.B1LF:PT", &
+d446 1
+a446 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B2LF:H2O", &
+d451 1
+a451 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B3LF:N2O", &
+d456 1
+a456 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B4LF:HNO3", &
+d461 1
+a461 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B5LF:ClO", &
+d466 1
+a466 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B6LF:O3", &
+d471 1
+a471 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B7LF:O3", &
+d476 1
+a476 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B8LF:PT", &
+d481 1
+a481 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B9LF:CO", &
+d486 1
+a486 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B10LF:ClO", &
+d491 1
+a491 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B11LF:BrO", &
+d496 1
+a496 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B12LF:N2O", &
+d501 1
+a501 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B13LF:HCl", &
+d506 1
+a506 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B14LF:O3", &
+d511 1
+a511 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5H:2T5.B15LF:OH", &
+d516 1
+a516 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5H:2T5.B16LF:OH", &
+d521 1
+a521 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5H:2T5.B17LF:PT", &
+d526 1
+a526 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5V:2T5.B18LF:OH", &
+d531 1
+a531 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5V:2T5.B19LF:OH", &
+d536 1
+a536 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5V:2T5.B20LF:PT", &
+d541 1
+a541 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R1B:118.B21LF:PT", &
+d546 1
+a546 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R1A:118.B22LD:PT", &
+d551 1
+a551 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B23LD:H2O", &
+d556 1
+a556 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B24LD:O3", &
+d561 1
+a561 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B25LD:CO", &
+d566 1
+a566 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R1B:118.B26LD:PT", &
+d571 1
+a571 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B27LM:HCN", &
+d576 1
+a576 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B28LM:HO2", &
+d581 1
+a581 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B29LM:HOCl", &
+d586 1
+a586 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B30LM:HO2", &
+d591 1
+a591 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B31LM:BrO", &
+d596 1
+a596 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R1A:118.B32LW:PT", &
+d601 1
+a601 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B33LW:O3", &
+d606 1
+a606 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R1B:118.B34LW:PT", &
+d612 1
+a612 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B2UF:H2O", &
+d617 1
+a617 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B3UF:N2O", &
+d622 1
+a622 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B4UF:HNO3", &
+d627 1
+a627 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B5UF:ClO", &
+d632 1
+a632 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B6UF:O3", &
+d637 1
+a637 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B7UF:O3", &
+d642 1
+a642 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B8UF:PT", &
+d647 1
+a647 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B9UF:CO", &
+d652 1
+a652 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B10UF:ClO", &
+d657 1
+a657 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B11UF:BrO", &
+d662 1
+a662 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B12UF:N2O", &
+d667 1
+a667 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B13UF:HCl", &
+d672 1
+a672 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B14UF:O3", &
+d677 1
+a677 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5H:2T5.B15UF:OH", &
+d682 1
+a682 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5H:2T5.B16UF:OH", &
+d687 1
+a687 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5H:2T5.B17UF:PT", &
+d692 1
+a692 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5V:2T5.B18UF:OH", &
+d697 1
+a697 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5V:2T5.B19UF:OH", &
+d702 1
+a702 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5V:2T5.B20UF:PT", &
+d707 1
+a707 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B23UD:H2O", &
+d712 1
+a712 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B24UD:O3", &
+d717 1
+a717 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B25UD:CO", &
+d722 1
+a722 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B27UM:HCN", &
+d727 1
+a727 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B28UM:HO2", &
+d732 1
+a732 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B29UM:HOCl", &
+d737 1
+a737 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B30UM:HO2", &
+d742 1
+a742 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B31UM:BrO", &
+d747 1
+a747 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B33UW:O3", &
+d891 1
+a891 1
+       "$Id: cfm_lsf.f90,v 1.5 2010/06/29 17:02:47 honghanh Exp $"
+d900 4
+@
+
+
+1.5
+log
+@Change the identifier 'fakeChunk' to 'chunk' because
+since it is created with ChunkDivide, it's as real as a chunk
+can get.
+@
+text
+@d440 2
+a441 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R1A:118.B1LF:PT")
+d445 2
+a446 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B2LF:H2O")
+d450 2
+a451 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B3LF:N2O")
+d455 2
+a456 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B4LF:HNO3")
+d460 2
+a461 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B5LF:ClO")
+d465 2
+a466 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B6LF:O3")
+d470 2
+a471 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B7LF:O3")
+d475 2
+a476 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B8LF:PT")
+d480 2
+a481 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B9LF:CO")
+d485 2
+a486 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B10LF:ClO")
+d490 2
+a491 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B11LF:BrO")
+d495 2
+a496 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B12LF:N2O")
+d500 2
+a501 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B13LF:HCl")
+d505 2
+a506 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B14LF:O3")
+d510 2
+a511 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5H:2T5.B15LF:OH")
+d515 2
+a516 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5H:2T5.B16LF:OH")
+d520 2
+a521 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5H:2T5.B17LF:PT")
+d525 2
+a526 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5V:2T5.B18LF:OH")
+d530 2
+a531 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5V:2T5.B19LF:OH")
+d535 2
+a536 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5V:2T5.B20LF:PT")
+d540 2
+a541 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R1B:118.B21LF:PT")
+d545 2
+a546 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R1A:118.B22LD:PT")
+d550 2
+a551 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B23LD:H2O")
+d555 2
+a556 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B24LD:O3")
+d560 2
+a561 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B25LD:CO")
+d565 2
+a566 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R1B:118.B26LD:PT")
+d570 2
+a571 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B27LM:HCN")
+d575 2
+a576 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B28LM:HO2")
+d580 2
+a581 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B29LM:HOCl")
+d585 2
+a586 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B30LM:HO2")
+d590 2
+a591 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B31LM:BrO")
+d595 2
+a596 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R1A:118.B32LW:PT")
+d600 2
+a601 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B33LW:O3")
+d605 2
+a606 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R1B:118.B34LW:PT")
+d611 2
+a612 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B2UF:H2O")
+d616 2
+a617 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B3UF:N2O")
+d621 2
+a622 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B4UF:HNO3")
+d626 2
+a627 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B5UF:ClO")
+d631 2
+a632 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B6UF:O3")
+d636 2
+a637 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B7UF:O3")
+d641 2
+a642 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B8UF:PT")
+d646 2
+a647 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B9UF:CO")
+d651 2
+a652 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B10UF:ClO")
+d656 2
+a657 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B11UF:BrO")
+d661 2
+a662 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B12UF:N2O")
+d666 2
+a667 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B13UF:HCl")
+d671 2
+a672 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B14UF:O3")
+d676 2
+a677 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5H:2T5.B15UF:OH")
+d681 2
+a682 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5H:2T5.B16UF:OH")
+d686 2
+a687 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5H:2T5.B17UF:PT")
+d691 2
+a692 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5V:2T5.B18UF:OH")
+d696 2
+a697 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5V:2T5.B19UF:OH")
+d701 2
+a702 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R5V:2T5.B20UF:PT")
+d706 2
+a707 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B23UD:H2O")
+d711 2
+a712 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B24UD:O3")
+d716 2
+a717 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B25UD:CO")
+d721 2
+a722 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R2:190.B27UM:HCN")
+d726 2
+a727 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B28UM:HO2")
+d731 2
+a732 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B29UM:HOCl")
+d736 2
+a737 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B30UM:HO2")
+d741 2
+a742 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R4:640.B31UM:BrO")
+d746 2
+a747 1
+          filedatabase=filedatabase, chunk=chunk, qSignal="R3:240.B33UW:O3")
+d890 1
+a890 1
+       "$Id: cfm_lsf.f90,v 1.4 2010/06/29 16:40:23 honghanh Exp $"
+d899 5
+@
+
+
+1.4
+log
+@Remove all function/subroutine and user type forwarding from
+all CFM modules except for from cfm.f90
+@
+text
+@d423 1
+a423 1
+    subroutine CreateLimbSidebandFractions (fakeChunk, filedatabase, qtyTemplates)
+d431 1
+a431 1
+       type(MLSChunk_T), intent(in) :: fakeChunk
+d440 1
+a440 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R1A:118.B1LF:PT")
+d444 1
+a444 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R2:190.B2LF:H2O")
+d448 1
+a448 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R2:190.B3LF:N2O")
+d452 1
+a452 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R2:190.B4LF:HNO3")
+d456 1
+a456 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R2:190.B5LF:ClO")
+d460 1
+a460 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R2:190.B6LF:O3")
+d464 1
+a464 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R3:240.B7LF:O3")
+d468 1
+a468 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R3:240.B8LF:PT")
+d472 1
+a472 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R3:240.B9LF:CO")
+d476 1
+a476 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R4:640.B10LF:ClO")
+d480 1
+a480 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R4:640.B11LF:BrO")
+d484 1
+a484 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R4:640.B12LF:N2O")
+d488 1
+a488 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R4:640.B13LF:HCl")
+d492 1
+a492 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R4:640.B14LF:O3")
+d496 1
+a496 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R5H:2T5.B15LF:OH")
+d500 1
+a500 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R5H:2T5.B16LF:OH")
+d504 1
+a504 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R5H:2T5.B17LF:PT")
+d508 1
+a508 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R5V:2T5.B18LF:OH")
+d512 1
+a512 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R5V:2T5.B19LF:OH")
+d516 1
+a516 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R5V:2T5.B20LF:PT")
+d520 1
+a520 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R1B:118.B21LF:PT")
+d524 1
+a524 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R1A:118.B22LD:PT")
+d528 1
+a528 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R2:190.B23LD:H2O")
+d532 1
+a532 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R3:240.B24LD:O3")
+d536 1
+a536 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R3:240.B25LD:CO")
+d540 1
+a540 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R1B:118.B26LD:PT")
+d544 1
+a544 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R2:190.B27LM:HCN")
+d548 1
+a548 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R4:640.B28LM:HO2")
+d552 1
+a552 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R4:640.B29LM:HOCl")
+d556 1
+a556 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R4:640.B30LM:HO2")
+d560 1
+a560 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R4:640.B31LM:BrO")
+d564 1
+a564 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R1A:118.B32LW:PT")
+d568 1
+a568 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R3:240.B33LW:O3")
+d572 1
+a572 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R1B:118.B34LW:PT")
+d577 1
+a577 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R2:190.B2UF:H2O")
+d581 1
+a581 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R2:190.B3UF:N2O")
+d585 1
+a585 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R2:190.B4UF:HNO3")
+d589 1
+a589 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R2:190.B5UF:ClO")
+d593 1
+a593 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R2:190.B6UF:O3")
+d597 1
+a597 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R3:240.B7UF:O3")
+d601 1
+a601 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R3:240.B8UF:PT")
+d605 1
+a605 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R3:240.B9UF:CO")
+d609 1
+a609 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R4:640.B10UF:ClO")
+d613 1
+a613 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R4:640.B11UF:BrO")
+d617 1
+a617 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R4:640.B12UF:N2O")
+d621 1
+a621 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R4:640.B13UF:HCl")
+d625 1
+a625 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R4:640.B14UF:O3")
+d629 1
+a629 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R5H:2T5.B15UF:OH")
+d633 1
+a633 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R5H:2T5.B16UF:OH")
+d637 1
+a637 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R5H:2T5.B17UF:PT")
+d641 1
+a641 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R5V:2T5.B18UF:OH")
+d645 1
+a645 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R5V:2T5.B19UF:OH")
+d649 1
+a649 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R5V:2T5.B20UF:PT")
+d653 1
+a653 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R2:190.B23UD:H2O")
+d657 1
+a657 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R3:240.B24UD:O3")
+d661 1
+a661 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R3:240.B25UD:CO")
+d665 1
+a665 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R2:190.B27UM:HCN")
+d669 1
+a669 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R4:640.B28UM:HO2")
+d673 1
+a673 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R4:640.B29UM:HOCl")
+d677 1
+a677 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R4:640.B30UM:HO2")
+d681 1
+a681 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R4:640.B31UM:BrO")
+d685 1
+a685 1
+          filedatabase=filedatabase, chunk=fakeChunk, qSignal="R3:240.B33UW:O3")
+d828 1
+a828 1
+       "$Id: cfm_lsf.f90,v 1.3 2010/06/29 15:53:45 honghanh Exp $"
+d837 4
+@
+
+
+1.3
+log
+@Add copyright comments and support for CVS log in the file
+@
+text
+@d424 3
+a426 2
+       use CFM_QuantityTemplate_m, only: CreateQtyTemplate, AddQuantityTemplateToDatabase, &
+                                         QuantityTemplate_T
+d691 2
+a692 2
+       use CFM_Vector_m, only: Vector_T, VectorValue_T, Dump
+       use CFM_Vector_m, only: GetVectorQtyByTemplateIndex
+d828 1
+a828 1
+       "$Id: cfm_lsf.f90,v 1.1 2010/05/25 7:50:33 honghanh Exp $"
+d837 3
+@
+
+
+1.2
+log
+@Fix minor differences in radiances returned by the forward model
+@
+text
+@d1 10
+d834 2
+@
+
+
+1.1
+log
+@Fill elevation offsets and limb sideband fractions
+@
+text
+@d18 4
+a21 4
+    (/0.54213, 0.53927, 0.53572, 0.53244, 0.52971, 0.52693, 0.52451, &
+      0.52279, 0.52160, 0.52076, 0.52018, 0.51977, 0.51948, 0.51919, &
+      0.51878, 0.51822, 0.51742, 0.51632, 0.51479, 0.51273, 0.51052, &
+      0.50846, 0.50613, 0.50368, 0.50160/)
+d23 4
+a26 4
+    (/0.52287, 0.51885, 0.51507, 0.51216, 0.50998, 0.50797, 0.50635, &
+      0.50526, 0.50455, 0.50405, 0.50372, 0.50348, 0.50332, 0.50316, &
+      0.50293, 0.50263, 0.50220, 0.50163, 0.50088, 0.49992, 0.49898, &
+      0.49819, 0.49741, 0.49676, 0.49637/)
+d28 4
+a31 4
+    (/0.48358, 0.48470, 0.48580, 0.48669, 0.48739, 0.48807, 0.48865, &
+      0.48905, 0.48932, 0.48950, 0.48964, 0.48973, 0.48979, 0.48985, &
+      0.48995, 0.49007, 0.49024, 0.49047, 0.49078, 0.49116, 0.49153, &
+      0.49178, 0.49191, 0.49171, 0.49100/)
+d33 6
+a38 6
+    (/0.47597, 0.47481, 0.47369, 0.47277, &
+      0.47205, 0.47135, 0.47076, 0.47034, 0.47006, &
+      0.46987, 0.46972, 0.46962, 0.46956, 0.46949, &
+      0.46940, 0.46927, 0.46907, 0.46882, 0.46846, &
+      0.46799, 0.46747, 0.46700, 0.46645, 0.46589, &
+      0.46543/)
+d40 6
+a45 6
+    (/0.47767, 0.47701, 0.47627, 0.47565, &
+      0.47517, 0.47471, 0.47433, 0.47408, 0.47390, &
+      0.47379, 0.47371, 0.47365, 0.47361, 0.47357, &
+      0.47352, 0.47344, 0.47333, 0.47319, 0.47299, &
+      0.47274, 0.47248, 0.47224, 0.47195, 0.47165, &
+      0.47136/)
+d47 6
+a52 6
+    (/0.95750, 0.95800, 0.95850, 0.95890, &
+      0.95920, 0.95960, 0.95990, 0.96010, 0.96020, &
+      0.96030, 0.96040, 0.96040, 0.96050, 0.96050, &
+      0.96060, 0.96060, 0.96070, 0.96090, 0.96110, &
+      0.96140, 0.96170, 0.96210, 0.96250, 0.96300, &
+      0.96350/)
+d54 6
+a59 6
+    (/0.80400, 0.80870, 0.81290, 0.81670, &
+      0.81960, 0.82270, 0.82520, 0.82710, 0.82840, &
+      0.82940, 0.83000, 0.83050, 0.83080, 0.83110, &
+      0.83160, 0.83220, 0.83310, 0.83440, 0.83630, &
+      0.83890, 0.84170, 0.84490, 0.84840, 0.85320, &
+      0.85720/)
+d61 6
+a66 6
+    (/0.42500, 0.41920, 0.41350, 0.40850, &
+      0.40450, 0.40030, 0.39680, 0.39440, 0.39270, &
+      0.39150, 0.39060, 0.39000, 0.38950, 0.38910, &
+      0.38850, 0.38760, 0.38640, 0.38460, 0.38220, &
+      0.37860, 0.37490, 0.37090, 0.36590, 0.36010, &
+      0.35400/)
+d68 6
+a73 6
+    (/0.94650, 0.94680, 0.94700, 0.94730, &
+      0.94740, 0.94760, 0.94780, 0.94790, 0.94800, &
+      0.94800, 0.94800, 0.94810, 0.94810, 0.94810, &
+      0.94810, 0.94820, 0.94820, 0.94830, 0.94840, &
+      0.94860, 0.94870, 0.94890, 0.94910, 0.94940, &
+      0.94970/)
+d75 6
+a80 6
+    (/0.78500, 0.78980, 0.79410, 0.79800, &
+      0.80110, 0.80400, 0.80670, 0.80860, 0.80990, &
+      0.81090, 0.81160, 0.81200, 0.81240, 0.81270, &
+      0.81320, 0.81380, 0.81470, 0.81600, 0.81810, &
+      0.82060, 0.82370, 0.82670, 0.83040, 0.83510, &
+      0.83960/)
+d82 6
+a87 6
+    (/0.41870, 0.41310, 0.40650, 0.40200, &
+      0.39800, 0.39370, 0.39040, 0.38790, 0.38620, &
+      0.38500, 0.38410, 0.38350, 0.38300, 0.38260, &
+      0.38200, 0.38120, 0.37990, 0.37810, 0.37570, &
+      0.37200, 0.36850, 0.36450, 0.35930, 0.35380, &
+      0.34760/)
+d89 26
+a114 26
+    (/0.51922, 0.51923, 0.51923, 0.51923, &
+      0.51924, 0.51924, 0.51924, 0.51925, 0.51925, &
+      0.51925, 0.51926, 0.51926, 0.51926, 0.51927, &
+      0.51927, 0.51927, 0.51928, 0.51928, 0.51928, &
+      0.51929, 0.51929, 0.51929, 0.51930, 0.51930, &
+      0.51930, 0.51931, 0.51931, 0.51931, 0.51932, &
+      0.51932, 0.51932, 0.51933, 0.51933, 0.51933, &
+      0.51934, 0.51934, 0.51934, 0.51935, 0.51935, &
+      0.51935, 0.51936, 0.51936, 0.51936, 0.51937, &
+      0.51937, 0.51937, 0.51938, 0.51938, 0.51938, &
+      0.51939, 0.51939, 0.51939, 0.51940, 0.51940, &
+      0.51940, 0.51941, 0.51941, 0.51941, 0.51942, &
+      0.51942, 0.51942, 0.51943, 0.51943, 0.51943, &
+      0.51944, 0.51944, 0.51944, 0.51945, 0.51945, &
+      0.51945, 0.51946, 0.51946, 0.51946, 0.51947, &
+      0.51947, 0.51947, 0.51948, 0.51948, 0.51948, &
+      0.51949, 0.51949, 0.51949, 0.51950, 0.51950, &
+      0.51950, 0.51951, 0.51951, 0.51951, 0.51952, &
+      0.51952, 0.51952, 0.51953, 0.51953, 0.51953, &
+      0.51954, 0.51954, 0.51954, 0.51955, 0.51955, &
+      0.51955, 0.51956, 0.51956, 0.51957, 0.51957, &
+      0.51957, 0.51958, 0.51958, 0.51958, 0.51959, &
+      0.51959, 0.51959, 0.51960, 0.51960, 0.51960, &
+      0.51961, 0.51961, 0.51961, 0.51962, 0.51962, &
+      0.51962, 0.51963, 0.51963, 0.51963, 0.51964, &
+      0.51964, 0.51964, 0.51965, 0.51965, 0.51965/)
+d116 26
+a141 26
+    (/0.48982, 0.48982, 0.48982, 0.48982, &
+      0.48982, 0.48982, 0.48982, 0.48982, 0.48982, &
+      0.48982, 0.48982, 0.48982, 0.48982, 0.48982, &
+      0.48982, 0.48982, 0.48982, 0.48981, 0.48981, &
+      0.48981, 0.48981, 0.48981, 0.48981, 0.48981, &
+      0.48981, 0.48981, 0.48981, 0.48981, 0.48981, &
+      0.48981, 0.48981, 0.48981, 0.48981, 0.48981, &
+      0.48981, 0.48981, 0.48981, 0.48981, 0.48981, &
+      0.48981, 0.48980, 0.48980, 0.48980, 0.48980, &
+      0.48980, 0.48980, 0.48980, 0.48980, 0.48980, &
+      0.48980, 0.48980, 0.48980, 0.48980, 0.48980, &
+      0.48980, 0.48980, 0.48980, 0.48980, 0.48980, &
+      0.48980, 0.48980, 0.48980, 0.48980, 0.48979, &
+      0.48979, 0.48979, 0.48979, 0.48979, 0.48979, &
+      0.48979, 0.48979, 0.48979, 0.48979, 0.48979, &
+      0.48979, 0.48979, 0.48979, 0.48979, 0.48979, &
+      0.48979, 0.48979, 0.48979, 0.48979, 0.48979, &
+      0.48979, 0.48979, 0.48979, 0.48979, 0.48979, &
+      0.48979, 0.48979, 0.48979, 0.48979, 0.48979, &
+      0.48979, 0.48979, 0.48979, 0.48979, 0.48979, &
+      0.48979, 0.48979, 0.48979, 0.48979, 0.48979, &
+      0.48979, 0.48979, 0.48979, 0.48979, 0.48979, &
+      0.48978, 0.48978, 0.48978, 0.48978, 0.48978, &
+      0.48978, 0.48978, 0.48978, 0.48978, 0.48978, &
+      0.48978, 0.48978, 0.48978, 0.48978, 0.48978, &
+      0.48978, 0.48978, 0.48978, 0.48978, 0.48978/)
+d143 19
+a161 19
+    (/0.47355, 0.47355, 0.47355, 0.47355, 0.47355, 0.47355, 0.47355, &
+      0.47355, 0.47355, 0.47355, 0.47356, 0.47356, 0.47356, 0.47356, &
+      0.47356, 0.47356, 0.47356, 0.47356, 0.47356, 0.47356, 0.47356, &
+      0.47356, 0.47356, 0.47356, 0.47357, 0.47357, 0.47357, 0.47357, &
+      0.47357, 0.47357, 0.47357, 0.47357, 0.47357, 0.47357, 0.47357, &
+      0.47357, 0.47357, 0.47358, 0.47358, 0.47358, 0.47358, 0.47358, &
+      0.47358, 0.47358, 0.47358, 0.47358, 0.47358, 0.47358, 0.47358, &
+      0.47358, 0.47359, 0.47359, 0.47359, 0.47359, 0.47359, 0.47359, &
+      0.47359, 0.47359, 0.47359, 0.47359, 0.47359, 0.47359, 0.47359, &
+      0.47360, 0.47360, 0.47360, 0.47360, 0.47360, 0.47360, 0.47360, &
+      0.47360, 0.47360, 0.47360, 0.47360, 0.47360, 0.47360, 0.47361, &
+      0.47361, 0.47361, 0.47361, 0.47361, 0.47361, 0.47361, 0.47361, &
+      0.47361, 0.47361, 0.47361, 0.47361, 0.47361, 0.47362, 0.47362, &
+      0.47362, 0.47362, 0.47362, 0.47362, 0.47362, 0.47362, 0.47362, &
+      0.47362, 0.47362, 0.47362, 0.47362, 0.47362, 0.47363, 0.47363, &
+      0.47363, 0.47363, 0.47363, 0.47363, 0.47363, 0.47363, 0.47363, &
+      0.47363, 0.47363, 0.47363, 0.47363, 0.47364, 0.47364, 0.47364, &
+      0.47364, 0.47364, 0.47364, 0.47364, 0.47364, 0.47364, 0.47364, &
+      0.47364, 0.47364, 0.47364/)
+d163 2
+a164 2
+    (/0.48916, 0.48929, 0.48940, 0.48948, 0.48955, 0.48959, 0.48963, &
+      0.48971, 0.48981, 0.48998, 0.49023/)
+d166 1
+a166 1
+    (/0.97293, 0.97144, 0.97015, 0.96945/)
+d168 1
+a168 1
+    (/0.48936, 0.48045, 0.46610, 0.46746/)
+d170 1
+a170 1
+    (/0.95080, 0.94541, 0.94532, 0.94825/)
+d173 4
+a176 4
+    (/0.43731, 0.44019, 0.44373, 0.44702, 0.44975, 0.45254, 0.45496, &
+      0.45668, 0.45787, 0.45871, 0.45929, 0.45970, 0.45999, 0.46028, &
+      0.46069, 0.46126, 0.46205, 0.46316, 0.46469, 0.46675, 0.46896, &
+      0.47102, 0.47335, 0.47581, 0.47789/)
+d178 4
+a181 4
+    (/0.45660, 0.46062, 0.46440, 0.46732, 0.46950, 0.47151, 0.47314, &
+      0.47422, 0.47494, 0.47544, 0.47577, 0.47601, 0.47616, 0.47633, &
+      0.47656, 0.47686, 0.47729, 0.47786, 0.47861, 0.47958, 0.48052, &
+      0.48130, 0.48208, 0.48274, 0.48312/)
+d183 4
+a186 4
+    (/0.47677, 0.47733, 0.47796, 0.47853, 0.47900, 0.47948, 0.47991, &
+      0.48020, 0.48042, 0.48056, 0.48067, 0.48074, 0.48079, 0.48085, &
+      0.48092, 0.48102, 0.48116, 0.48136, 0.48162, 0.48198, 0.48235, &
+      0.48266, 0.48298, 0.48320, 0.48324/)
+d188 4
+a191 4
+    (/0.48466, 0.48401, 0.48333, 0.48276, 0.48229, 0.48181, 0.48140, &
+      0.48110, 0.48089, 0.48075, 0.48064, 0.48057, 0.48051, 0.48046, &
+      0.48039, 0.48029, 0.48014, 0.47993, 0.47964, 0.47924, 0.47880, &
+      0.47836, 0.47785, 0.47727, 0.47675/)
+d193 4
+a196 4
+    (/0.48836, 0.48881, 0.48923, 0.48956, 0.48979, 0.49001, 0.49016, &
+      0.49027, 0.49033, 0.49037, 0.49039, 0.49041, 0.49042, 0.49043, &
+      0.49045, 0.49047, 0.49049, 0.49051, 0.49052, 0.49049, 0.49038, &
+      0.49018, 0.48979, 0.48903, 0.48789/)
+d198 4
+a201 4
+    (/0.48639, 0.48527, 0.48417, 0.48328, 0.48258, 0.48190, 0.48132, &
+      0.48092, 0.48065, 0.48046, 0.48033, 0.48024, 0.48017, 0.48012, &
+      0.48002, 0.47990, 0.47973, 0.47949, 0.47918, 0.47881, 0.47844, &
+      0.47818, 0.47806, 0.47826, 0.47897/)
+d203 6
+a208 6
+    (/0.49391, 0.49506, 0.49619, 0.49711, &
+      0.49783, 0.49853, 0.49912, 0.49954, 0.49982, &
+      0.50001, 0.50016, 0.50025, 0.50032, 0.50039, &
+      0.50048, 0.50061, 0.50081, 0.50106, 0.50142, &
+      0.50189, 0.50241, 0.50288, 0.50343, 0.50399, &
+      0.50446/)
+d210 6
+a215 6
+    (/0.49235, 0.49301, 0.49375, 0.49437, &
+      0.49485, 0.49531, 0.49569, 0.49594, 0.49612, &
+      0.49623, 0.49631, 0.49637, 0.49641, 0.49645, &
+      0.49651, 0.49658, 0.49669, 0.49684, 0.49703, &
+      0.49728, 0.49754, 0.49779, 0.49807, 0.49837, &
+      0.49866/)
+d217 6
+a222 6
+    (/0.04250, 0.04200, 0.04150, 0.04110, &
+      0.04080, 0.04040, 0.04010, 0.03990, 0.03980, &
+      0.03970, 0.03960, 0.03960, 0.03950, 0.03950, &
+      0.03940, 0.03940, 0.03930, 0.03910, 0.03890, &
+      0.03860, 0.03830, 0.03790, 0.03750, 0.03700, &
+      0.03650/)
+d224 6
+a229 6
+    (/0.19600, 0.19130, 0.18710, 0.18330, &
+      0.18040, 0.17730, 0.17480, 0.17290, 0.17160, &
+      0.17060, 0.17000, 0.16950, 0.16920, 0.16890, &
+      0.16840, 0.16780, 0.16690, 0.16560, 0.16370, &
+      0.16110, 0.15830, 0.15510, 0.15160, 0.14680, &
+      0.14280/)
+d231 6
+a236 6
+    (/0.57500, 0.58080, 0.58650, 0.59150, &
+      0.59550, 0.59970, 0.60320, 0.60560, 0.60730, &
+      0.60850, 0.60940, 0.61000, 0.61050, 0.61090, &
+      0.61150, 0.61240, 0.61360, 0.61540, 0.61780, &
+      0.62140, 0.62510, 0.62910, 0.63410, 0.63990, &
+      0.64600/)
+d238 6
+a243 6
+    (/0.05350, 0.05320, 0.05300, 0.05270, &
+      0.05260, 0.05240, 0.05220, 0.05210, 0.05200, &
+      0.05200, 0.05200, 0.05190, 0.05190, 0.05190, &
+      0.05190, 0.05180, 0.05180, 0.05170, 0.05160, &
+      0.05140, 0.05130, 0.05110, 0.05090, 0.05060, &
+      0.05030/)
+d245 6
+a250 6
+    (/0.21500, 0.21020, 0.20590, 0.20200, &
+      0.19890, 0.19600, 0.19330, 0.19140, 0.19010, &
+      0.18910, 0.18840, 0.18800, 0.18760, 0.18730, &
+      0.18680, 0.18620, 0.18530, 0.18400, 0.18190, &
+      0.17940, 0.17630, 0.17330, 0.16960, 0.16490, &
+      0.16040/)
+d252 6
+a257 6
+    (/0.58130, 0.58690, 0.59350, 0.59800, &
+      0.60200, 0.60630, 0.60960, 0.61210, 0.61380, &
+      0.61500, 0.61590, 0.61650, 0.61700, 0.61740, &
+      0.61800, 0.61880, 0.62010, 0.62190, 0.62430, &
+      0.62800, 0.63150, 0.63550, 0.64070, 0.64620, &
+      0.65240/)
+d259 26
+a284 26
+    (/0.46025, 0.46024, 0.46024, 0.46024, &
+      0.46023, 0.46023, 0.46023, 0.46022, 0.46022, &
+      0.46022, 0.46021, 0.46021, 0.46021, 0.46020, &
+      0.46020, 0.46020, 0.46019, 0.46019, 0.46019, &
+      0.46018, 0.46018, 0.46018, 0.46017, 0.46017, &
+      0.46017, 0.46016, 0.46016, 0.46016, 0.46015, &
+      0.46015, 0.46015, 0.46014, 0.46014, 0.46014, &
+      0.46013, 0.46013, 0.46013, 0.46012, 0.46012, &
+      0.46012, 0.46011, 0.46011, 0.46011, 0.46010, &
+      0.46010, 0.46010, 0.46009, 0.46009, 0.46009, &
+      0.46008, 0.46008, 0.46008, 0.46007, 0.46007, &
+      0.46007, 0.46006, 0.46006, 0.46006, 0.46005, &
+      0.46005, 0.46005, 0.46004, 0.46004, 0.46004, &
+      0.46003, 0.46003, 0.46003, 0.46002, 0.46002, &
+      0.46002, 0.46001, 0.46001, 0.46001, 0.46000, &
+      0.46000, 0.46000, 0.45999, 0.45999, 0.45999, &
+      0.45998, 0.45998, 0.45998, 0.45997, 0.45997, &
+      0.45997, 0.45996, 0.45996, 0.45996, 0.45995, &
+      0.45995, 0.45995, 0.45994, 0.45994, 0.45994, &
+      0.45994, 0.45994, 0.45994, 0.45993, 0.45993, &
+      0.45993, 0.45992, 0.45992, 0.45991, 0.45991, &
+      0.45991, 0.45990, 0.45990, 0.45990, 0.45989, &
+      0.45989, 0.45989, 0.45988, 0.45988, 0.45988, &
+      0.45987, 0.45987, 0.45987, 0.45986, 0.45986, &
+      0.45986, 0.45985, 0.45985, 0.45985, 0.45984, &
+      0.45984, 0.45984, 0.45983, 0.45983, 0.45983/)
+d286 26
+a311 26
+    (/0.48014, 0.48014, 0.48014, 0.48014, &
+      0.48014, 0.48014, 0.48014, 0.48014, 0.48014, &
+      0.48014, 0.48014, 0.48014, 0.48014, 0.48014, &
+      0.48014, 0.48014, 0.48014, 0.48015, 0.48015, &
+      0.48015, 0.48015, 0.48015, 0.48015, 0.48015, &
+      0.48015, 0.48015, 0.48015, 0.48015, 0.48015, &
+      0.48015, 0.48015, 0.48015, 0.48015, 0.48015, &
+      0.48015, 0.48015, 0.48015, 0.48015, 0.48015, &
+      0.48015, 0.48016, 0.48016, 0.48016, 0.48016, &
+      0.48016, 0.48016, 0.48016, 0.48016, 0.48016, &
+      0.48016, 0.48016, 0.48016, 0.48016, 0.48016, &
+      0.48016, 0.48016, 0.48016, 0.48016, 0.48016, &
+      0.48016, 0.48016, 0.48016, 0.48016, 0.48017, &
+      0.48017, 0.48017, 0.48017, 0.48017, 0.48017, &
+      0.48017, 0.48017, 0.48017, 0.48017, 0.48017, &
+      0.48017, 0.48017, 0.48017, 0.48017, 0.48017, &
+      0.48017, 0.48017, 0.48017, 0.48017, 0.48017, &
+      0.48017, 0.48017, 0.48018, 0.48018, 0.48018, &
+      0.48018, 0.48018, 0.48018, 0.48018, 0.48018, &
+      0.48018, 0.48018, 0.48018, 0.48018, 0.48018, &
+      0.48018, 0.48018, 0.48018, 0.48018, 0.48018, &
+      0.48018, 0.48018, 0.48018, 0.48018, 0.48018, &
+      0.48019, 0.48019, 0.48019, 0.48019, 0.48019, &
+      0.48019, 0.48019, 0.48019, 0.48019, 0.48019, &
+      0.48019, 0.48019, 0.48019, 0.48019, 0.48019, &
+      0.48019, 0.48019, 0.48019, 0.48019, 0.48019/)
+d313 26
+a338 26
+    (/0.49647, 0.49647, 0.49647, 0.49647, &
+      0.49647, 0.49647, 0.49647, 0.49647, 0.49647, &
+      0.49647, 0.49646, 0.49646, 0.49646, 0.49646, &
+      0.49646, 0.49646, 0.49646, 0.49646, 0.49646, &
+      0.49646, 0.49646, 0.49646, 0.49646, 0.49646, &
+      0.49645, 0.49645, 0.49645, 0.49645, 0.49645, &
+      0.49645, 0.49645, 0.49645, 0.49645, 0.49645, &
+      0.49645, 0.49645, 0.49645, 0.49644, 0.49644, &
+      0.49644, 0.49644, 0.49644, 0.49644, 0.49644, &
+      0.49644, 0.49644, 0.49644, 0.49644, 0.49644, &
+      0.49644, 0.49643, 0.49643, 0.49643, 0.49643, &
+      0.49643, 0.49643, 0.49643, 0.49643, 0.49643, &
+      0.49643, 0.49643, 0.49643, 0.49643, 0.49642, &
+      0.49642, 0.49642, 0.49642, 0.49642, 0.49642, &
+      0.49642, 0.49642, 0.49642, 0.49642, 0.49642, &
+      0.49642, 0.49642, 0.49641, 0.49641, 0.49641, &
+      0.49641, 0.49641, 0.49641, 0.49641, 0.49641, &
+      0.49641, 0.49641, 0.49641, 0.49641, 0.49641, &
+      0.49640, 0.49640, 0.49640, 0.49640, 0.49640, &
+      0.49640, 0.49640, 0.49640, 0.49640, 0.49640, &
+      0.49640, 0.49640, 0.49640, 0.49640, 0.49639, &
+      0.49639, 0.49639, 0.49639, 0.49639, 0.49639, &
+      0.49639, 0.49639, 0.49639, 0.49639, 0.49639, &
+      0.49639, 0.49639, 0.49638, 0.49638, 0.49638, &
+      0.49638, 0.49638, 0.49638, 0.49638, 0.49638, &
+      0.49638, 0.49638, 0.49638, 0.49638, 0.49638/)
+d340 3
+a342 3
+    (/0.49004, 0.48991, 0.48981, 0.48973, &
+      0.48966, 0.48962, 0.48957, 0.48949, 0.48939, &
+      0.48923, 0.48897/)
+d344 1
+a344 1
+    (/0.48061, 0.48947, 0.50383, 0.50247/)
+d680 1
+a680 1
+       use CFM_Vector_m, only: Vector_T, VectorValue_T
+d696 2
+d765 2
+@
+

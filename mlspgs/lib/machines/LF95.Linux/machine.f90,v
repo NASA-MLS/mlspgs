@@ -1,0 +1,519 @@
+head	1.9;
+access;
+symbols
+	v5-02-NRT-19:1.9
+	v6-00:1.9
+	v5-02-NRT-18:1.9
+	v5-02:1.9
+	v5-01-NRT-17:1.9
+	v5-01-NRT-16:1.9
+	v5-01-NRT-15:1.9
+	v5-01-NRT-14:1.9
+	neuralnetworks-1-0:1.9.0.14
+	cfm-single-freq-0-1:1.9.0.12
+	v5-01:1.9
+	v5-00:1.9
+	v4-23-TA133:1.9.0.10
+	mus-emls-1-70:1.9.0.8
+	rel-1-0-englocks-work:1.9.0.6
+	VUMLS1-00:1.9
+	VPL1-00:1.9
+	V4-22-NRT-08:1.9
+	VAM1-00:1.9
+	V4-21:1.9.0.4
+	V4-13:1.9
+	V4-12:1.9
+	V4-11:1.9
+	V4-10:1.9
+	V3-43:1.9
+	M4-00:1.9
+	V3-41:1.9
+	V3-40-PlusGM57:1.9.0.2
+	V2-24-NRT-04:1.8
+	V3-33:1.9
+	V2-24:1.8
+	V3-31:1.9
+	V3-30-NRT-05:1.9
+	cfm-01-00:1.9
+	V3-30:1.9
+	V3-20:1.9
+	V3-10:1.9
+	V2-23-NRT-02:1.8
+	V2-23:1.8
+	V2-22-NRT-01:1.8
+	V2-22:1.8
+	V2-21:1.8
+	V2-20:1.8
+	V2-11:1.8
+	V2-10:1.8
+	V2-00:1.8
+	V1-51:1.7
+	V1-50:1.7
+	V1-45:1.7
+	V1-44:1.6
+	V1-43:1.6
+	V1-42:1.6
+	V1-41:1.6
+	V1-32:1.6
+	V1-40:1.6
+	V1-31:1.6
+	V1-30:1.6
+	V1-13:1.6
+	V1-12:1.6
+	V1-11:1.6
+	V1-10:1.6
+	newfwm-feb03:1.6.0.2
+	V1-04:1.6
+	V1-03:1.6
+	V1-02:1.6
+	V1-00:1.6
+	newfwm-sep01:1.3.0.2
+	V0-7:1.3
+	V0-5-Level2:1.1
+	V0-5-SIPS:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.9
+date	2009.06.23.19.58.52;	author pwagner;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2005.06.22.20.26.22;	author pwagner;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2004.08.19.00.13.12;	author pwagner;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2002.02.05.00.38.39;	author pwagner;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2002.01.30.19.51.11;	author vsnyder;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2002.01.30.00.23.31;	author vsnyder;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2001.07.25.19.36.18;	author vsnyder;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.05.04.23.25.10;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.01.13.00.29.44;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.9
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module MACHINE
+  implicit none
+
+  character(LEN=2) :: END_LINE = ' ' // char(10)
+  character(LEN=1) :: FILSEP = '/'      ! '/' for Unix, '\' for DOS or NT
+  integer, parameter :: HP = 0          ! Offset for first argument for GETARG
+
+  public :: CRASH_BURN
+
+  public :: GETARG
+  interface
+    subroutine GETARG ( ARGNUM, ARGVAL )
+      integer, intent(in) :: ARGNUM  ! 0 = command name, 1 = first arg, etc.
+      character(len=*), intent(out) :: ARGVAL   ! Blank if argnum out-of-range
+    end subroutine GETARG
+  end interface
+
+  interface IO_ERROR; module procedure IO_ERROR_; end interface
+  private :: IO_ERROR_
+
+  public :: SHELL_COMMAND
+  public :: MLS_DISABLE_AUTOGC, MLS_GC_NOW, MLS_HOWMANY_GC, MLS_CONFIG_GC
+
+  logical, public, save :: NEVERCRASH = .true. ! Change to false for testing
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  ! -------------------------------------------------  CRASH_BURN  -----
+  subroutine CRASH_BURN ( CODE, MSG, OPT )
+  ! Print CODE and MSG if they're present.
+  ! Try to make the processor crash, so it produces a walkback if it
+  ! supports such a thing.
+  ! DON'T put an optional argument corresponding to OPT.  It may be
+  ! referenced on some systems in an attempt to make the processor crash.
+  ! STOP as a last resort.
+  
+  ! Crash is provoked by one of available methods:
+  ! (a) rewind illegal unit number (default)
+  ! (b) acos(2.)
+  ! You may select which method to use by setting msg = '!x (rest of message)'
+  ! where x is the method
+    integer, intent(in), optional :: CODE
+    character(len=*), intent(in), optional :: MSG
+    integer, intent(in), optional :: OPT(:)
+    integer :: I = -huge(0)
+    real :: arg
+    character(len=*), parameter :: DEFAULTMETHOD = 'a' ! 'a' or 'b'
+    character(len=1) :: method
+    if ( present(code) ) print *, 'In LF95 MACHINE%CRASH_BURN, CODE =', code
+    if ( present(msg) ) print *, 'In LF95 MACHINE%CRASH_BURN, MSG = ', trim(msg)
+    method = DEFAULTMETHOD
+    if ( NEVERCRASH ) then
+      method = 's' ! Just stop, don't crash nor burn
+    elseif ( present(msg) ) then
+      if ( msg(1:1) == '!' ) method = adjustl(msg(2:))
+    endif
+    select case (method)
+    case (' ', 'a', 'A')
+      rewind i
+    case ('b', 'B')
+      arg = 1.
+      if ( .not. present(opt) ) arg = arg + 1.
+      arg = acos(arg)
+      if ( arg > 0. ) print *, 'arg ', arg
+    case default
+      ! When you just want to land safely; e.g., a sips production run
+    end select
+    stop
+  end subroutine CRASH_BURN
+
+  ! -------------------------------------------  EXIT_WITH_STATUS  -----
+  subroutine EXIT_WITH_STATUS ( STATUS )
+  ! Exit and return STATUS to the invoking process
+    integer, intent(in) :: STATUS
+    external :: SETRCD
+    call setrcd ( status )
+    stop
+  end subroutine EXIT_WITH_STATUS
+
+  ! --------------------------------------------------  IO_ERROR_  -----
+  subroutine IO_ERROR_ ( MESSAGE, IOSTAT, FILE )
+  ! Print MESSAGE and FILE, and then do something reasonable with IOSTAT.
+
+    character(len=*), intent(in) :: MESSAGE
+    integer, intent(in) :: IOSTAT
+    character(len=*), intent(in), optional :: FILE
+
+    integer :: L
+    character(len=127) :: MSG           ! From the Lahey IOSTAT_MSG intrinsic
+
+    write (*,*) message(:len_trim(message))
+    if ( present(file) ) then
+      l = len_trim(file)
+      write (*,*) file(:l)
+    end if
+    call iostat_msg (iostat, msg)       ! Lahey intrinsic
+    write (*,*) msg(:len_trim(msg))     ! Print the error message
+    write (*,*) 'Error status code =', iostat
+    return
+  end subroutine IO_ERROR_
+
+  ! ----------------------------------------------  SHELL_COMMAND  -----
+  subroutine SHELL_COMMAND ( Command, Status, Error )
+  ! Submit a character variable to the system as a shell command.
+
+    character(len=*), intent(in) :: Command  ! The command
+    integer, intent(out), optional :: Status ! Its status, if the system
+                                        !  has such a concept, else zero
+    integer, intent(out), optional :: Error  ! Status of the routine to submit
+                                        ! the command, if the system has
+                                        ! such a concept, else zero
+
+    integer :: MyStatus
+
+    interface
+      integer function system ( CH )
+        character(len=*), intent(in) :: CH
+      end function system
+    end interface
+
+    myStatus = system(command)
+    if ( present(error) ) error = 0
+    if ( present(status) ) status = myStatus
+  end subroutine SHELL_COMMAND
+
+  ! ----------------------------------------------
+  ! The following are merely introduced to satisfy 
+  ! NAG call interfaces to f90_gc
+  ! Not yet functional
+  ! ----------------------------------------------  MLS_CONFIG_GC  -----
+  subroutine MLS_CONFIG_GC ( EXPAND, FREQUENCY, RETRIES, SILENT )
+  ! Configures various parameters affecting garbage collection
+   logical dont_EXPAND, SILENT_GC
+   integer full_frequency, max_retries
+    logical, optional, intent(in) :: expand    ! Autoexpand heap?
+    integer, optional, intent(in) :: frequency ! How many incremental colls. betw. fulls
+    integer, optional, intent(in) :: retries   ! How many attempts before giving up
+    logical, optional, intent(in) :: silent    ! Quash report on each collection?
+    if ( present(expand) ) dont_expand = .not. expand
+    if ( present(frequency) ) full_frequency = frequency
+    if ( present(retries) ) max_retries = retries
+    if ( present(silent) ) silent_gc = silent
+  end subroutine MLS_CONFIG_GC
+
+  ! -----------------------------------------  MLS_DISABLE_AUTOGC  -----
+  subroutine MLS_DISABLE_AUTOGC ( Which )
+  ! Turns automatic garbage collection on/off
+    character(len=*), intent(in) :: Which  ! 'On' or 'Off'
+    logical dont_gc
+    if ( Which == 'On' .or. Which == 'ON' &
+      & .or. Which == 'on' ) then
+      DONT_GC = .false.
+    else
+      DONT_GC = .true.
+    endif
+  end subroutine MLS_DISABLE_AUTOGC
+
+  ! -------------------------------------------------  MLS_GC_NOW  -----
+  subroutine MLS_GC_NOW
+  ! Manually collects garbage when called
+  !    CALL GCOLLECT
+  end subroutine MLS_GC_NOW
+
+  ! ---------------------------------------------  MLS_HOWMANY_GC  -----
+  integer function MLS_HOWMANY_GC()
+  ! Returns how many garbage collections have been performed
+    MLS_HOWMANY_GC = 0 ! NCOLLECTIONS()
+  end function MLS_HOWMANY_GC
+
+  ! ----------------------------------------------  not_used_here  -----
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: read_apriori.f90 is it here $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module MACHINE
+
+! $Log: machine.f90,v $
+! Revision 1.8  2005/06/22 20:26:22  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 1.7  2004/08/19 00:13:12  pwagner
+! Added crash_burn to provoke crash with walkback
+!
+! Revision 1.6  2002/02/05 00:38:39  pwagner
+! Added NAG-like interfaces for garbage collection; not functional (yet)
+!
+! Revision 1.5  2002/01/30 19:51:11  vsnyder
+! Added ERROR argument to Shell_Command subroutine
+!
+! Revision 1.4  2002/01/30 00:23:31  vsnyder
+! Add Shell_Command subroutine
+!
+! Revision 1.3  2001/07/25 19:36:18  vsnyder
+! Added an interface for GETARG
+!
+! Revision 1.2  2001/05/04 23:25:10  vsnyder
+! Added Exit_With_Status routine
+!
+! Revision 1.1  2001/01/13 00:29:44  pwagner
+! moved to lib/machines/MLSCONFG/machine.f90
+!
+! Revision 1.1  2000/10/19 17:41:17  pwagner
+! first commit
+!
+! Revision 2.1  2000/10/09 22:16:14  vsnyder
+! Moved machine.f90 from l2 to lib
+!
+! Revision 2.0  2000/09/05 18:57:42  ahanzel
+! Changing file revision to 2.0.
+@
+
+
+1.8
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d188 1
+a189 1
+!---------------------------- RCS Ident Info -------------------------------
+d191 2
+a192 3
+       "$Id: $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d194 1
+d196 1
+d201 3
+@
+
+
+1.7
+log
+@Added crash_burn to provoke crash with walkback
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d37 1
+a37 6
+  private :: NOT_USED_HERE
+
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
+       "$Id: machine.f90,v 1.6 2002/02/05 00:38:39 pwagner Exp $"
+  character (len=len(idParm)), private :: Id = idParm
+d39 2
+a40 1
+       "$RCSfile: machine.f90,v $"
+d189 5
+d200 3
+@
+
+
+1.6
+log
+@Added NAG-like interfaces for garbage collection; not functional (yet)
+@
+text
+@d11 2
+d27 4
+d33 1
+a33 1
+       "$Id: machine.f90,v 1.5 2002/01/30 19:51:11 vsnyder Exp $"
+d41 44
+d93 1
+d115 1
+d143 1
+d158 1
+d171 1
+d177 1
+d183 5
+d191 3
+@
+
+
+1.5
+log
+@Added ERROR argument to Shell_Command subroutine
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+d23 1
+d27 1
+a27 1
+       "$Id: machine.f90,v 1.4 2002/01/30 00:23:31 vsnyder Exp $"
+d87 40
+d130 3
+@
+
+
+1.4
+log
+@Add Shell_Command subroutine
+@
+text
+@d26 1
+a26 1
+       "$Id: machine.f90,v 1.3 2001/07/25 19:36:18 vsnyder Exp $"
+d63 1
+a63 1
+  subroutine SHELL_COMMAND ( Command, Status )
+d69 3
+d82 1
+d89 3
+@
+
+
+1.3
+log
+@Added an interface for GETARG
+@
+text
+@d22 2
+d26 1
+a26 1
+       "$Id: machine.f90,v 1.2 2001/05/04 23:25:10 vsnyder Exp $"
+d63 19
+d85 3
+@
+
+
+1.2
+log
+@Added Exit_With_Status routine
+@
+text
+@d11 8
+d20 1
+a20 1
+  private IO_ERROR_
+d24 1
+a24 1
+       "$Id: $"
+d27 1
+a27 1
+       "$RCSfile: $"
+d64 3
+@
+
+
+1.1
+log
+@moved to lib/machines/MLSCONFG/machine.f90
+@
+text
+@d1 3
+d15 3
+a17 2
+  character (len=256), private :: Id = &
+       "$Id: LF95.Linux.machine,v 1.1 2000/10/19 17:41:17 pwagner Exp $"
+d19 1
+a19 1
+       "$RCSfile: LF95.Linux.machine,v $"
+d24 8
+d55 4
+a58 1
+! $Log: LF95.Linux.machine,v $
+@
+

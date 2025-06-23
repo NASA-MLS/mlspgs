@@ -1,0 +1,88 @@
+head	2.2;
+access;
+symbols
+	v5-02-NRT-19:2.2
+	v6-00:2.2
+	v5-02-NRT-18:2.2
+	v5-02:2.2
+	v5-01-NRT-17:2.2
+	v5-01-NRT-16:2.2
+	v5-01-NRT-15:2.2
+	v5-01-NRT-14:2.2
+	neuralnetworks-1-0:2.2.0.10
+	cfm-single-freq-0-1:2.2.0.8
+	v5-01:2.2
+	v5-00:2.2
+	v4-23-TA133:2.2.0.6
+	mus-emls-1-70:2.2.0.4
+	rel-1-0-englocks-work:2.2.0.2
+	VUMLS1-00:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.2
+date	2017.08.28.20.27.47;	author livesey;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2016.11.29.00.07.58;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.2
+log
+@Changed the n,nf,np,nz elements to j,jf,...
+@
+text
+@! Copyright 2015, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! subroutine Interpolate_1D_List_* ( Field, Eta, Path )
+!   ! Interpolate Field * Eta to Path
+!   real(rk), intent(in) :: Field(:)
+!   type(value_1D_list_t), intent(in) :: Eta(:) ! Size(Eta) assumed to be
+!   real(rk), intent(out) :: Path(:)            ! the same as Size(Path)
+
+    integer :: I, J
+
+    do i = 1, size(eta)
+      path(i) = sum( [ ( eta(i)%v(j)%v * &
+                       & field(eta(i)%v(j)%j), &
+                       & j = 1, eta(i)%n ) ] )
+    end do
+
+! $Log: Interpolate_1D_List.f9h,v $
+! Revision 2.1  2016/11/29 00:07:58  vsnyder
+! Initial commit
+!
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d22 1
+a22 1
+                       & field(eta(i)%v(j)%n), &
+d26 4
+a29 1
+! $Log: $
+@
+

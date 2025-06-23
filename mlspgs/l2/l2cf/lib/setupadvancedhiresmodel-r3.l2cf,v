@@ -1,0 +1,514 @@
+head	1.12;
+access;
+symbols
+	v5-02-NRT-19:1.12
+	v6-00:1.12
+	v5-02-NRT-18:1.12
+	v5-02:1.12
+	v5-01-NRT-17:1.12
+	v5-01-NRT-16:1.12
+	v5-01-NRT-15:1.12
+	v5-01-NRT-14:1.12
+	neuralnetworks-1-0:1.12.0.12
+	cfm-single-freq-0-1:1.12.0.10
+	v5-01:1.12
+	v5-00:1.12
+	v4-23-TA133:1.12.0.8
+	mus-emls-1-70:1.12.0.6
+	rel-1-0-englocks-work:1.12.0.4
+	VUMLS1-00:1.12
+	VPL1-00:1.12
+	V4-22-NRT-08:1.12
+	VAM1-00:1.12
+	V4-21:1.12.0.2
+	V4-13:1.12
+	V4-12:1.12
+	V4-11:1.12
+	V4-10:1.11
+	V3-43:1.9
+	M4-00:1.11
+	V3-41:1.9
+	V3-40-PlusGM57:1.9.0.2
+	V2-24-NRT-04:1.9
+	V3-33:1.9
+	V2-24:1.9
+	V3-31:1.9
+	V3-30-NRT-05:1.9
+	cfm-01-00:1.9
+	V3-30:1.9
+	V3-20:1.9
+	V3-10:1.9
+	V2-23-NRT-02:1.9
+	V2-23:1.9
+	V2-22-NRT-01:1.9
+	V2-22:1.9
+	V2-21:1.9
+	V2-20:1.9
+	V2-11:1.5
+	V2-10:1.5;
+locks; strict;
+comment	@# @;
+
+
+1.12
+date	2014.06.03.22.36.13;	author pwagner;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2013.04.11.16.35.34;	author pwagner;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2012.06.19.20.10.57;	author pwagner;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2006.08.11.00.50.40;	author lambert;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2006.08.08.22.39.05;	author lambert;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2006.08.05.01.57.58;	author lambert;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2006.08.03.00.55.04;	author lambert;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2006.07.19.18.15.00;	author lambert;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2006.07.10.19.29.12;	author lambert;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2006.06.29.17.57.14;	author bill;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2006.06.29.02.30.04;	author lambert;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2006.06.27.00.25.34;	author lambert;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.12
+log
+@Reverted phiWindowSetup to 4 degrees; phiWindowAdvancedSetup may override this
+@
+text
+@;$Id: setupadvancedhiresmodel-r3.l2cf,v 1.11 2013/04/11 16:35:34 pwagner Exp $
+;; setupadvancedhiresmodel-r3
+;; This L2CF fragment is for use when we wish to setup an 'advanced'
+;; linear forward model (one that is linearised about a different state
+;; from the one in the l2pc files).
+;;
+;; We have two phi windows:
+;;    phiWindowSetup      used during the a sids to find y*
+;;    phiWindowAdvanced   used by the advanced linears fwdmdls themselves
+!ifdef(phiWindowAdvancedSetup,
+{!define(phiWindowSetup,{!phiWindowAdvancedSetup})},
+{!define(phiWindowSetup,{4 degrees})})
+begin Construct
+  r3SetupModel_HR: ForwardModel, type=full, $
+    signals=['R3:240.B8F:PT.C1:11+15:25','R3:240.B33W:O3.C3'], $
+    phiWindow=!phiWindowSetup, $
+    molecules= [ extinction, [ O2, O_18_O ],[ SO2, S_32_O2 ],$
+    [ O3, O3, O3_R3, O3_V1_3, O3_V2, O3_ASYM_O_18, O3_SYM_O_18 ], [HNO3, HNO3]], $
+    LSBlblMolecules=[EXTINCTION,O3,O3_R3,O_18_O],$
+    USBlblMolecules=[EXTINCTION,O3,O3_R3],$
+    specificquantities = [temperature_hr,totalextinctionr3], $
+    integrationGrid=vGridTangent, $
+    tangentGrid=vGridTangent, $
+    tolerance= 0.05K,$
+    /do_conv, /do_freq_avg 
+;; We skip the baseline deliberately
+
+end Construct
+
+begin Construct
+  r3YTemplate_HR: VectorTemplate, quantities=[band8, band33]
+end Construct
+
+;; Setup the vectors
+begin Fill
+  r3X_HR: Vector, template=stateTemplate
+  r3Y_HR: Vector, template=r3YTemplate_HR
+end Fill
+
+;; Now we construct the advanced linear models to use these
+begin Construct
+
+  advancedL2PCFwmR3B8: ForwardModel, type=linear, $
+    signals= ['R3:240.B8F:PT'], $
+    molecules=[extinction, O_18_O, O3, SO2, HNO3], $
+    specificQuantities=[temperature_HR,totalextinctionr3], $
+    /temp_der, $
+    phiWindow=!phiWindowAdvanced, !ifdef(flagDontLockBins,{},{/lockBins, })$
+    binSelectors=[latBin,scalarbin, hrBin, latCost], $
+    xStar=r3X_HR, yStar=r3Y_HR
+
+  advancedL2PCFwmR3B33: ForwardModel, type=linear, $
+    signals= ['R3:240.B33W:O3.C3'], $
+    molecules=[extinction, O_18_O, O3, SO2, HNO3], $
+    specificQuantities=[temperature_HR,totalextinctionr3], $
+    /temp_der, $
+    phiWindow=!phiWindowAdvanced, !ifdef(flagDontLockBins,{},{/lockBins, })$
+    binSelectors=[latBin,scalarbin, hrBin, latCost], $
+    xStar=r3X_HR, yStar=r3Y_HR
+
+end Construct
+
+;$Log: setupadvancedhiresmodel-r3.l2cf,v $
+;Revision 1.11  2013/04/11 16:35:34  pwagner
+;Replaced 4 degree phiWindows with 5 profiles
+;
+;Revision 1.10  2012/06/19 20:10:57  pwagner
+;flagDontLockBins removes /lockBins switch
+;
+;Revision 1.9  2006/08/11 00:50:40  lambert
+;added band33
+;
+@
+
+
+1.11
+log
+@Replaced 4 degree phiWindows with 5 profiles
+@
+text
+@d1 1
+a1 1
+;$Id: setupadvancedhiresmodel-r3.l2cf,v 1.10 2012/06/19 20:10:57 pwagner Exp $
+d6 7
+a12 2
+!ifdef(flagStrict1D,{!define(phiWindowSetup,{0 profiles})},
+{!define(phiWindowSetup,{5 profiles})})
+d29 1
+a29 2
+!ifdef(flagStrict1D,{!define(phiWindowAdvanced,{0 profiles})},
+{!define(phiWindowSetup,{100 profiles})})
+d64 3
+@
+
+
+1.10
+log
+@flagDontLockBins removes /lockBins switch
+@
+text
+@d1 1
+a1 1
+;$Id: setupadvancedhiresmodel-r3.l2cf,v 1.9 2006/08/11 00:50:40 lambert Exp $
+d7 1
+a7 1
+{!define(phiWindowSetup,{4 degrees})})
+d60 3
+@
+
+
+1.9
+log
+@added band33
+@
+text
+@d1 1
+a1 1
+;$Id$
+d6 2
+a7 1
+
+a8 1
+
+d11 1
+a11 1
+    phiWindow=4 degrees, $
+d24 2
+a25 1
+
+d44 1
+a44 1
+    phiWindow=100 profiles, /lockBins, $
+d53 1
+a53 1
+    phiWindow=100 profiles, /lockBins, $
+d59 4
+a62 1
+;$Log$
+@
+
+
+1.8
+log
+@removed reference to band33
+@
+text
+@d1 1
+a1 1
+;$Id: setupadvancedhiresmodel-r3.l2cf,v 1.7 2006/08/05 01:57:58 lambert Exp $
+d10 1
+a10 1
+    signals=['R3:240.B8F:PT.C1:11+15:25'], $
+d12 3
+a14 4
+    molecules= [ extinction, [ O2, O_18_O ], [HNO3, HNO3], $
+               [ O3, O3, O3_R3, O3_V1_3, O3_V2, O3_ASYM_O_18, O3_SYM_O_18 ]], $
+    moleculeDerivatives=[EXTINCTION], /atmos_der, $
+    LSBlblMolecules=[EXTINCTION,O_18_O,O3,O3_R3,O_18_O],$
+d26 1
+a26 1
+  r3YTemplate_HR: VectorTemplate, quantities=[band8]
+d40 1
+a40 2
+    molecules=[extinction, O_18_O, HNO3, O3], $
+    moleculeDerivatives=[EXTINCTION], /atmos_der, $
+d46 10
+a55 1
+ 
+d58 1
+a58 7
+;$Log: setupadvancedhiresmodel-r3.l2cf,v $
+;Revision 1.7  2006/08/05 01:57:58  lambert
+;removed atmos_der
+;
+;Revision 1.6  2006/08/03 00:55:04  lambert
+;used once before calladvancedhiresmodel
+;
+@
+
+
+1.7
+log
+@removed atmos_der
+@
+text
+@d1 1
+a1 1
+;$Id: setupadvancedhiresmodel-r3.l2cf,v 1.6 2006/08/03 00:55:04 lambert Exp $
+d12 5
+a16 3
+    molecules= [ extinction, [ O2, O_18_O ], [HNO3, HNO3]], $
+    LSBlblMolecules=[EXTINCTION,O_18_O],$
+    USBlblMolecules=[EXTINCTION],$
+d27 1
+a27 1
+  r3YTemplate_HR: VectorTemplate, quantities=[band8, band33]
+d41 2
+a42 1
+    molecules=[extinction, O_18_O, HNO3], $
+d52 3
+@
+
+
+1.6
+log
+@used once before calladvancedhiresmodel
+@
+text
+@d1 1
+a1 1
+;$Id$
+d10 1
+a10 1
+    signals=['R3:240.B8F:PT.C1:11+15:25','R3:240.B33W:O3.C3'], $
+d12 3
+a14 4
+    molecules= [ extinction, [ O2, O_18_O ],[ SO2, S_32_O2 ],$
+    [ O3, O3, O3_R3, O3_V1_3, O3_V2, O3_ASYM_O_18, O3_SYM_O_18 ], [HNO3, HNO3]], $
+    LSBlblMolecules=[EXTINCTION,O3,O3_R3,O_18_O],$
+    USBlblMolecules=[EXTINCTION,O3,O3_R3],$
+d39 1
+a39 2
+    molecules=[extinction, O_18_O, O3, SO2, HNO3], $
+    moleculeDerivatives=[extinction, O3, SO2, HNO3], $
+d41 1
+a41 1
+    /atmos_der, /temp_der, $
+d45 1
+a45 11
+
+  advancedL2PCFwmR3B33: ForwardModel, type=linear, $
+    signals= ['R3:240.B33W:O3.C3'], $
+    molecules=[extinction, O_18_O, O3, SO2, HNO3], $
+    moleculeDerivatives=[extinction, O3, SO2, HNO3], $
+    specificQuantities=[temperature_HR,totalextinctionr3], $
+    /atmos_der, /temp_der, $
+    phiWindow=100 profiles, /lockBins, $
+    binSelectors=[latBin,scalarbin, hrBin, latCost], $
+    xStar=r3X_HR, yStar=r3Y_HR
+
+d48 4
+a51 1
+;$Log$
+@
+
+
+1.5
+log
+@removed unnecessary /atmos_der, /temp_der
+@
+text
+@d1 2
+a2 4
+;$Id: setupadvancedhiresmodel-r3.l2cf,v 1.4 2006/07/10 19:29:12 lambert Exp $
+;; setupadvancedhiresmodel
+;; updates version of setupadvancedmodel for R3
+
+a6 4
+;; This simply takes the current 'state' and produces a full forward
+;; model estimtate of bands 8, 33
+
+
+d13 1
+a13 1
+    [ O3, O3, O3_R3, O3_V1_3, O3_V2, O3_ASYM_O_18, O3_SYM_O_18 ]], $
+a32 1
+  Transfer, source=state, destination=r3X_HR
+a34 7
+;; Do a sids calculation
+begin Retrieve
+  !ifdef(flagSkipAdvancedSids,{},{
+  sids, fwdModelIn=state, fwdModelOut=[r3Y_HR], $
+        forwardModel=[r3SetupModel_HR]})
+end Retrieve
+
+d40 2
+a41 2
+    molecules=[extinction, O_18_O, O3, SO2], $
+    moleculeDerivatives=[extinction, O3, SO2], $
+d50 2
+a51 2
+    molecules=[extinction, O_18_O, O3, SO2], $
+    moleculeDerivatives=[extinction, O3, SO2], $
+d60 1
+a60 13
+;$Log: setupadvancedhiresmodel-r3.l2cf,v $
+;Revision 1.4  2006/07/10 19:29:12  lambert
+;removed moleculederivatives from  r3SetupModel_HR
+;
+;Revision 1.3  2006/06/29 17:57:14  bill
+;tidied up the R3 model
+;
+;Revision 1.2  2006/06/29 02:30:04  lambert
+;corrections to handle totalextinctionr3
+;
+;Revision 1.1  2006/06/27 00:25:34  lambert
+;advanced forward model for R3 bands 8 and 33
+;
+@
+
+
+1.4
+log
+@removed moleculederivatives from  r3SetupModel_HR
+@
+text
+@d1 1
+a1 1
+;$Id: setupadvancedhiresmodel-r3.l2cf,v 1.3 2006/06/29 17:57:14 bill Exp $
+d26 1
+a26 1
+    /do_conv, /atmos_der, /temp_der, /do_freq_avg 
+d75 3
+@
+
+
+1.3
+log
+@tidied up the R3 model
+@
+text
+@d1 1
+a1 1
+;$Id: setupadvancedhiresmodel-r3.l2cf,v 1.2 2006/06/29 02:30:04 lambert Exp $
+a19 1
+    moleculeDerivatives = [EXTINCTION,O3,O2], $
+d54 2
+a55 2
+    molecules=[extinction, O_18_O, HNO3, O3, SO2], $
+    moleculeDerivatives=[extinction, HNO3, O3, SO2], $
+d64 2
+a65 2
+    molecules=[extinction, O_18_O, HNO3, O3, SO2], $
+    moleculeDerivatives=[extinction, HNO3, O3, SO2], $
+d75 3
+@
+
+
+1.2
+log
+@corrections to handle totalextinctionr3
+@
+text
+@d1 1
+a1 1
+;$Id: setupadvancedhiresmodel-r3.l2cf,v 1.1 2006/06/27 00:25:34 lambert Exp $
+d20 3
+a22 2
+    ;LSBlblMolecules=[EXTINCTION,O3,O3_R3,O_18_O],$
+    ;USBlblMolecules=[EXTINCTION,O3,O3_R3],$
+d27 2
+a28 1
+    /do_conv, /temp_der, /do_freq_avg;; We skip the baseline deliberately
+d55 2
+a56 2
+    molecules=[ O_18_O, HNO3, O3, SO2], $
+    moleculeDerivatives=[ HNO3, O3, SO2], $
+d65 2
+a66 2
+    molecules=[ O_18_O, HNO3, O3, SO2], $
+    moleculeDerivatives=[ HNO3, O3, SO2], $
+d76 3
+@
+
+
+1.1
+log
+@advanced forward model for R3 bands 8 and 33
+@
+text
+@d1 1
+a1 1
+;$Id$
+d20 2
+a21 2
+    ;LSBlblMolecules=[EXTINCTION,O2,O3,O3_R3,O_18_O],$
+    ;USBlblMolecules=[EXTINCTION,O2,O3,O3_R3],$
+d53 3
+a55 3
+    molecules=[ H2O, HNO3, N2, O2, O3, SO2], $
+    moleculeDerivatives=[ H2O, HNO3, N2, O2, O3, SO2], $
+    specificQuantities=[temperature_HR, h2o_HR], $
+d63 3
+a65 3
+    molecules=[ H2O, HNO3, N2, O2, O3, SO2], $
+    moleculeDerivatives=[ H2O, HNO3, N2, O2, O3, SO2], $
+    specificQuantities=[temperature_HR, h2o_HR], $
+d73 4
+a76 1
+;$Log$
+@
+

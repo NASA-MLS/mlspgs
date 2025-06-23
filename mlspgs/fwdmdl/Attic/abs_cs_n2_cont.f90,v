@@ -1,0 +1,169 @@
+head	2.5;
+access;
+symbols
+	V1-04:2.3
+	V1-03:2.3
+	V1-02:2.3
+	JointForwardModel:2.3.0.2
+	V1-00:2.3;
+locks; strict;
+comment	@# @;
+
+
+2.5
+date	2002.09.24.00.50.27;	author vsnyder;	state dead;
+branches;
+next	2.4;
+
+2.4
+date	2002.07.19.23.34.38;	author bill;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2002.02.19.19.08.19;	author bill;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2001.10.17.17.03.17;	author zvi;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.10.16.14.45.02;	author zvi;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.5
+log
+@Moved into create_beta as internal procedures.
+@
+text
+@module ABS_CS_N2_CONT_M
+  implicit NONE
+  private
+  public :: ABS_CS_N2_CONT
+!---------------------------- RCS Ident Info -------------------------------
+  CHARACTER (LEN=256) :: Id = &
+       "$Id: abs_cs_n2_cont.f90,v 2.4 2002/07/19 23:34:38 bill Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= &
+       "$RCSfile: abs_cs_n2_cont.f90,v $"
+!---------------------------------------------------------------------------
+  integer, private, parameter :: RK = kind(0.0d0)
+
+contains
+
+! This function computes the N2 continuum contribution
+
+  real(rk) Function ABS_CS_N2_CONT (cont, temperature, pressure, frequency )
+
+    real(rk), intent(in) :: CONT(:)     ! continuum parameters
+    real(rk), intent(in) :: TEMPERATURE ! in Kelvin
+    real(rk), intent(in) :: PRESSURE    ! in mbar
+    real(rk), intent(in) :: FREQUENCY   ! in MegaHertz
+!
+    real(rk) :: THETA, FSQR, FSXT
+!
+    theta = 300.0_rk / temperature
+    fsqr = frequency * frequency
+    fsxt = fsqr * theta
+    abs_cs_n2_cont = pressure * pressure * fsqr * (theta**cont(2)) * &
+                   & ( cont(1) * EXP(-cont(3) * fsxt * theta) + &
+                   &   cont(4) * EXP(-cont(5) * fsxt * theta) * &
+                   & (cont(6)**2 + fsqr))
+!
+  End function abs_cs_n2_cont
+end module ABS_CS_N2_CONT_M
+! $Log: abs_cs_n2_cont.f90,v $
+! Revision 2.4  2002/07/19 23:34:38  bill
+! wrong function fixed
+!
+! Revision 2.3  2002/02/19 19:08:19  bill
+! constants in exp need to be negative--wgr
+!
+! Revision 2.2  2001/10/17 17:03:17  zvi
+! Fix a bug
+!
+! Revision 2.1  2001/10/16 14:45:02  zvi
+! New Dry air function (N2) with continuum parameters passed in
+!
+! Revision 1.1  2000/05/04 18:12:04  vsnyder
+! Initial conversion to Fortran 90
+@
+
+
+2.4
+log
+@wrong function fixed
+@
+text
+@d7 1
+a7 1
+       "$Id: abs_cs_n2_cont.f90,v 2.3 2002/02/19 19:08:19 bill Exp $"
+d37 3
+@
+
+
+2.3
+log
+@constants in exp need to be negative--wgr
+@
+text
+@d7 1
+a7 1
+       "$Id: abs_cs_n2_cont.f90,v 2.2 2001/10/17 17:03:17 zvi Exp $"
+d30 3
+a32 2
+                   & ( cont(1) * EXP(-cont(3) * fsxt) +               &
+                   &   cont(4) * EXP(-cont(5) * fsxt) * (cont(6)**2 + fsqr))
+d37 3
+@
+
+
+2.2
+log
+@Fix a bug
+@
+text
+@d7 1
+a7 1
+       "$Id: abs_cs_n2_cont.f90,v 2.1 2001/10/16 14:45:02 zvi Exp $"
+d30 2
+a31 2
+                   & ( cont(1) * exp(cont(3) * fsxt) +               &
+                   &   cont(4) * exp(cont(5) * fsxt) * (cont(6)**2 + fsqr))
+d36 3
+@
+
+
+2.1
+log
+@New Dry air function (N2) with continuum parameters passed in as part of the Catalog
+@
+text
+@d7 1
+a7 1
+       "$Id: abs_cs_n2_cont_m.f90,v 1.1 2000/05/04 18:12:04 vsnyder Exp $"
+d9 1
+a9 1
+       "$RCSfile: abs_cs_n2_cont_m.f90,v $"
+d12 1
+d14 2
+a15 1
+! This function computes the water continuum contribution to the dry air
+d29 3
+a31 3
+    abs_cs_n2_cont = pressure * pressure * fsqr * (theta ** cont(2)) * &
+                   & ( cont(1) * exp(cont(3) * fsxt) +                 &
+                   &   cont(4) * exp(cont(5) * fsxt) * (cont(6) + fsqr))
+d35 4
+a38 1
+! $Log: abs_cs_n2_cont_m.f90,v $
+@
+

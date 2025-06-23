@@ -1,0 +1,287 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.12
+	cfm-single-freq-0-1:1.2.0.10
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.8
+	mus-emls-1-70:1.2.0.6
+	rel-1-0-englocks-work:1.2.0.4
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.2
+	V4-21:1.2.0.2
+	V4-13:1.2
+	V4-12:1.2
+	V4-11:1.2
+	V4-10:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2014.06.13.17.55.12;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2013.05.23.17.49.52;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Added Catenate command to unsplit DGG/DGM files
+@
+text
+@!divert(-1)
+; $Id: outputstate-noiwc.l2cf,v 1.1 2013/05/23 17:49:52 pwagner Exp $
+;; All the stuff related to the outmoded operations of
+;; outputting standard products in any manner except
+;; that controlled by flagCopyStandardProducts
+;; is slated to removed in a future revision of this file.
+;; In particular, all the early stuff immediately below the
+;; section header will be gone soon
+!divert!dnl
+begin Output
+
+;; We might make up a bunch of m4 flags to control the next two things
+Sleep, time=10000us
+Catenate
+
+;; Skip all output if requested to do so
+!ifdef(flagSuppressRegularOutput,{
+!clearDivert(!joinedDGGDivert,!joinedDGMDivert)
+},{
+;; Do any standard outputs, otherwise it was done with direct write
+!ifdef(flagAvoidDirectWrite,{
+;; --------------------------------- Standard product L2GP files ---
+;; First those with columns
+!define(outputStandardProductWithColumn, {Output, $
+  quantities=[joined_$1,joined_$1_column], type=l2gp, $
+  hdfVersion=!hdfVersion, $
+  file='!l2gpFileName($1)'!nl})
+!forall(outputStandardProductWithColumn,!allStandardProductsWithColumns)
+
+;; Now those without columns
+!define(outputStandardProductWithoutColumn, {Output, $
+  quantities=[joined_$1], type=l2gp, $
+  hdfVersion=!hdfVersion, $
+  file='!l2gpFileName($1)'!nl})
+!forall(outputStandardProductWithoutColumn,!allStandardProductsWithoutColumns)
+
+;; --------------------------------- Other files ---
+},{
+
+;; These macros relate to storing standard products
+;; Special cases are handled by lists ending with 'StdProds' mostly
+;; Some are stored at high resolution: HiResStdProds
+;; Some are stored accompanied by a column abundance: ColumnStdProds
+;; Some are stored w/o a column abundance: NonColumnStdProds
+!define(HiResStdProds,{H2O, Temperature, RHI, GPH})!dnl
+;; We're planning on only O3 accompanying its column
+!ifdef(ColumnStdProds,{},{!define(ColumnStdProds,{O3})})!dnl
+;; (OH, IWC and RHI will be treated separately below)
+!ifdef(NonColumnStdProds,{},{!define(NonColumnStdProds,{BrO,CH3CN,CH3Cl,ClO,CO,H2O,HCl,HCN,HNO3,HO2,HOCl,N2O,SO2,Temperature,GPH})})!dnl
+
+!ifdef(flagCopyStandardProducts,{
+
+  ;; Don't copy anything if we skipped some phases
+  BrOEmpty: Boolean, formula="false"
+  isSwathEmpty, type=l2dgg, swath='BrO-StdProd', file='!DGGFileName', Boolean=BrOEmpty
+  Dump, Boolean=BrOEmpty
+  Skip, Boolean=BrOEmpty  ;; No need if we skipped the BrO phase
+;; Here we carry out the idea of copying standard Products out of the
+;; DGG file and into their "proper" l2gp files
+;;
+;; for this to work, we must have added an invocation of
+;; storeStandardProductWithColumn or
+;; storeStandardProductWithoutColumn to the template
+;; l2cf for each of the Standard Products
+;; Otherwise, Output will complain "Swath not found"
+;; and the run will stop
+;;
+
+!define(copyStandardProductWithoutColumn, {!dnl
+!define(StdProductPhase,{$1-!phase$1})!dnl
+Copy, $
+!ifdef(flagNRT,
+{  type=l2gp, hdfVersion=5, $
+    inputFile='!DGGFileName', swath='!StdProductPhase', inputtype=l2dgg, $
+    file='!l2gpFileName($1)', rename='$1', $
+    /create
+},
+{  type=l2gp, hdfVersion=5, $
+    inputFile='!DGGFileName', swath='$1-StdProd', inputtype=l2dgg, $
+    file='!l2gpFileName($1)', rename='$1', $
+    /create
+})!dnl
+})
+;; What if we wish to Copy APriori?
+!define(copyApriori, {Copy, $
+  type=l2gp, hdfVersion=5, $
+    inputFile='!DGGFileName', swath='$1-APriori', inputtype=l2dgg, $
+    file='!l2gpFileName($1)'
+})
+
+!forall(copyStandardProductWithoutColumn,!NonColumnStdProds)
+!ifdef(flagCopyAPiori,{
+!forall(copyApriori,!NonColumnStdProds)
+})
+!define(copyStandardProductWithColumn, {Copy, $
+  type=l2gp, hdfVersion=5, $
+    inputFile='!DGGFileName', swath='$1-StdProd column,$1-StdProd', inputtype=l2dgg, $
+    file='!l2gpFileName($1)', rename='$1 column,$1', $
+    /create
+})
+;; This is the way we'll do it if we store both column abundances
+;; (one found using mls tropopause, the other using the GMAO tropopause)
+!define(copyStandardProductWith2Columns, {Copy, $
+  type=l2gp, hdfVersion=5, $
+    inputFile='!DGGFileName', swath='$1-StdProd column-MLS,$1-StdProd column-GEOS5,$1-StdProd', inputtype=l2dgg, $
+    file='!l2gpFileName($1)', rename='$1 column-MLS,$1 column-GEOS5,$1', $
+    /create
+})
+
+!ifdef(flagNRT,{
+!forall(copyStandardProductWithoutColumn,!ColumnStdProds)
+},{
+!ifdef(flagUseGEOS5PTrop,{!dnl
+!forall(copyStandardProductWith2Columns,!ColumnStdProds)
+},{!dnl
+!forall(copyStandardProductWithColumn,!ColumnStdProds)
+})
+})
+!ifdef(flagCopyAPiori,{
+!forall(copyApriori,!ColumnStdProds)
+})
+
+!ifdef(flagNRT,{},
+{
+;; --------------------------------- Other files ---
+
+Copy, type=l2gp, hdfVersion=!hdfVersion, $
+    inputFile='!DGGFileName', swath='RHI-StdProd', inputtype=l2dgg, $
+    file='!l2gpFileName(RHI)', rename='RHI', $
+    /create
+
+Copy, type=l2gp, hdfVersion=!hdfVersion, $
+    inputFile='!DGGFileName', swath='UTRHI-StdProd', inputtype=l2dgg, $
+    file='!l2gpFileName(RHI)', rename='UTRHI'
+
+!ifdef(flagCopyAPiori,{
+Copy, type=l2gp, hdfVersion=!hdfVersion, $
+    inputFile='!DGGFileName', swath='RHI-APriori', inputtype=l2dgg, $
+    file='!l2gpFileName(RHI)'
+
+Copy, type=l2gp, hdfVersion=!hdfVersion, $
+    inputFile='!DGGFileName', swath='UTRHI-APriori', inputtype=l2dgg, $
+    file='!l2gpFileName(RHI)'
+
+})
+
+!ifdef(flagUseGEOS5PTrop,
+{!dnl
+Copy, type=l2gp, hdfVersion=!hdfVersion, $
+    inputFile='!DGGFileName', swath='WMOTPPressure-StdProd-MLS', inputtype=l2dgg, $
+    file='!l2gpFileName(Temperature)', rename='WMOTPPressure-MLS'
+Copy, type=l2gp, hdfVersion=!hdfVersion, $
+    inputFile='!DGGFileName', swath='WMOTPPressure-StdProd-GEOS5', inputtype=l2dgg, $
+    file='!l2gpFileName(Temperature)', rename='WMOTPPressure-GEOS5'
+},{!dnl
+Copy, type=l2gp, hdfVersion=!hdfVersion, $
+    inputFile='!DGGFileName', swath='WMOTPPressure-StdProd', inputtype=l2dgg, $
+    file='!l2gpFileName(Temperature)', rename='WMOTPPressure'
+
+})
+})
+})
+
+})
+
+;; Now output the joined DGG file.
+!ifdef(flagGotJoinedDGGs,{
+Output, quantities=[ !undivert(!joinedDGGDivert) ], type=l2dgg, $
+  hdfVersion=!hdfVersion, $
+  file='!DGGFileName'})
+
+;; Now output the joined DGM file
+!ifdef(flagGotJoinedDGMs,{
+Output, quantities=[ !undivert(!joinedDGMDivert) ], type=l2aux, $
+  hdfVersion=!hdfVersion, $
+  file='!DGMFileName'})
+
+})
+
+;; Now output the L2CF (but only if asked)
+!ifdef(flagWriteL2CFToDGM,{
+Output, type=l2cf, $
+  file='!DGMFileName'})
+
+;; Now output the L2CF template file (but only if asked)
+!ifdef(flagWriteL2CFTemplateToDGM,{
+Copy, inputFile='l2cf.template', inputtype=ascii, type=l2aux, $
+  file='!DGMFileName'})
+
+;; Now output the master ident file (but only if asked)
+!ifdef(flagWriteIdentToDGM,{
+Copy, inputFile='master.ident', inputtype=ascii, type=l2aux, $
+  file='!DGMFileName'})
+
+;; These days pretty well everything is written with directWrite
+;; statements
+
+;; Now output any averaging kernel.
+!ifdef(matrixFilenameWord,{},{!define(matrixFilenameWord,{Full})})
+!ifdef(flagGotMatrices,{
+Output,  quantities=[ !undivert(!matrixDivert) ], type=l2pc, $
+  file='!outpathl2mtx/MLS-Aura_L2MTX-!matrixFilenameWord_!l2version_!day.h5'})
+
+!ifdef(flagCopyStandardProducts,{
+  ;; Copy OH swath out to l2gp file unless empty
+  Band15OFFALLDAY: Boolean, formula="false"
+  isSwathEmpty, type=l2dgg, swath='OH-StdProd', file='!DGGFileName', Boolean=Band15OFFALLDAY
+  Dump, Boolean=Band15OFFALLDAY
+  Skip, Boolean=Band15OFFALLDAY  ;; No need to create OH if THz is off
+  !copyStandardProductWithoutColumn({OH})
+  !ifdef(flagCopyAPiori,{
+    !copyApriori(OH)
+  })
+})
+end Output
+!divert(-1)
+; $Log: outputstate-noiwc.l2cf,v $
+; Revision 1.1  2013/05/23 17:49:52  pwagner
+; First commit
+;
+!divert!dnl
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d2 1
+a2 1
+; $Id: outputstate-noiwc.l2cf,v 1.49 2013/01/24 22:40:47 pwagner Exp $
+d12 4
+d218 3
+@
+

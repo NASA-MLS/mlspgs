@@ -1,0 +1,338 @@
+head	1.8;
+access;
+symbols
+	v5-02-NRT-19:1.8
+	v6-00:1.8
+	v5-02-NRT-18:1.8
+	v5-02:1.8
+	v5-01-NRT-17:1.8
+	v5-01-NRT-16:1.8
+	v5-01-NRT-15:1.8
+	v5-01-NRT-14:1.8
+	neuralnetworks-1-0:1.8.0.14
+	cfm-single-freq-0-1:1.8.0.12
+	v5-01:1.8
+	v5-00:1.8
+	v4-23-TA133:1.8.0.10
+	mus-emls-1-70:1.8.0.8
+	rel-1-0-englocks-work:1.8.0.6
+	VUMLS1-00:1.8
+	VPL1-00:1.8
+	V4-22-NRT-08:1.8
+	VAM1-00:1.8
+	V4-21:1.8.0.4
+	V4-13:1.8
+	V4-12:1.8
+	V4-11:1.8
+	V4-10:1.8
+	V3-43:1.8
+	M4-00:1.8
+	V3-41:1.8
+	V3-40-PlusGM57:1.8.0.2
+	V2-24-NRT-04:1.7
+	V3-33:1.8
+	V2-24:1.7
+	V3-31:1.8
+	V3-30-NRT-05:1.8
+	cfm-01-00:1.8
+	V3-30:1.8
+	V3-20:1.8
+	V3-10:1.8
+	V2-23-NRT-02:1.7
+	V2-23:1.7
+	V2-22-NRT-01:1.7
+	V2-22:1.7
+	V2-21:1.7
+	V2-20:1.7
+	V2-11:1.7
+	V2-10:1.7
+	V2-00:1.7
+	V1-51:1.6
+	V1-50:1.6
+	V1-45:1.6
+	V1-44:1.6
+	V1-43:1.6
+	V1-42:1.6
+	V1-41:1.6
+	V1-32:1.6
+	V1-40:1.6
+	V1-31:1.6
+	V1-30:1.6
+	V1-13:1.6
+	V1-12:1.6
+	V1-11:1.6
+	V1-10:1.6
+	newfwm-feb03:1.6.0.2
+	V1-04:1.3
+	V1-03:1.3
+	V1-02:1.3
+	V1-00:1.3;
+locks; strict;
+comment	@# @;
+
+
+1.8
+date	2009.06.23.18.21.13;	author pwagner;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2005.06.22.19.45.19;	author pwagner;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2002.10.10.23.48.57;	author pwagner;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2002.09.13.22.50.51;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2002.09.13.18.04.31;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2001.11.08.02.37.50;	author vsnyder;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.11.03.00.56.36;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.11.03.00.46.57;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.8
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Dot_M
+
+  implicit NONE
+  public
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+! === (start of toc) ===
+! dot         Returns dot product of two vectors
+! === (end of toc) ===
+
+! === (start of api) ===
+! value dot ( int n, val1 x(:), int incx, val2 y(:), int incy )
+!      where val1, val2 can be any of the types:
+!      { real, double precision }
+! === (end of api) ===
+  interface DOT
+    real function SDOT ( N, X, INCX, Y, INCY )
+      integer, intent(in) :: N, INCX, INCY
+      real, intent(in) :: X, Y
+    end function SDOT
+    double precision function DDOT ( N, X, INCX, Y, INCY )
+      integer, intent(in) :: N, INCX, INCY
+      double precision, intent(in) :: X, Y
+    end function DDOT
+    double precision function MSDDOT ( N, X, INCX, Y, INCY )
+      integer, intent(in) :: N, INCX, INCY
+      real, intent(in) :: X
+      double precision, intent(in) :: Y
+    end function MSDDOT
+    double precision function MDSDOT ( N, X, INCX, Y, INCY )
+      integer, intent(in) :: N, INCX, INCY
+      double precision, intent(in) :: X
+      real, intent(in) :: Y
+    end function MDSDOT
+  end interface
+contains 
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: read_apriori.f90 is it here $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Dot_M
+
+! $Log: dot_external_m.f90,v $
+! Revision 1.7  2005/06/22 19:45:19  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 1.6  2002/10/10 23:48:57  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 1.5  2002/09/13 22:50:51  pwagner
+! Change external names to MSDDOT and MDSDOT; removed pointer copies
+!
+! Revision 1.4  2002/09/13 18:04:31  pwagner
+! Added mixed type dot products: a_r4 . b_r8 and a_r8 . b_r4
+!
+! Revision 1.3  2001/11/08 02:37:50  vsnyder
+! Make real argumemnts of ?DOT scalar
+!
+! Revision 1.2  2001/11/03 00:56:36  pwagner
+! Added Copyright statement
+!
+@
+
+
+1.7
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d53 1
+a54 1
+!---------------------------- RCS Ident Info -------------------------------
+d56 2
+a57 3
+       "$Id: $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d59 1
+d61 1
+d66 3
+@
+
+
+1.6
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d17 1
+a17 4
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
+       "$Id: dot_external_m.f90,v 1.5 2002/09/13 22:50:51 pwagner Exp $"
+  character (len=len(idParm)), private :: Id = idParm
+d19 1
+a19 1
+       "$RCSfile: dot_external_m.f90,v $"
+d54 5
+d65 3
+@
+
+
+1.5
+log
+@Change external names to MSDDOT and MDSDOT; removed pointer copies
+@
+text
+@d11 1
+a11 1
+       "$Id: dot_external_m.f90,v 1.4 2002/09/13 18:04:31 pwagner Exp $"
+d15 1
+d18 9
+d47 5
+d55 3
+@
+
+
+1.4
+log
+@Added mixed type dot products: a_r4 . b_r8 and a_r8 . b_r4
+@
+text
+@d11 1
+a11 1
+       "$Id: dot_external_m.f90,v 1.3 2001/11/08 02:37:50 vsnyder Exp $"
+d26 1
+a26 1
+    double precision function SDDOT ( N, X, INCX, Y, INCY )
+d30 2
+a31 2
+    end function SDDOT
+    double precision function DSDOT ( N, X, INCX, Y, INCY )
+d35 1
+a35 1
+    end function DSDOT
+d40 3
+@
+
+
+1.3
+log
+@Make real argumemnts of ?DOT scalar
+@
+text
+@d11 1
+a11 1
+       "$Id: dot_external_m.f90,v 1.2 2001/11/03 00:56:36 pwagner Exp $"
+d26 10
+a36 1
+
+d40 3
+@
+
+
+1.2
+log
+@Added Copyright statement
+@
+text
+@d11 1
+a11 1
+       "$Id: dot_external_m.f90,v 1.1 2001/11/03 00:46:57 pwagner Exp $"
+d20 1
+a20 1
+      real, intent(in) :: X(*), Y(*)
+d24 1
+a24 1
+      double precision, intent(in) :: X(*), Y(*)
+d31 3
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d1 3
+d11 1
+a11 1
+       "$Id: MatrixModule_0.f90,v 2.55 2001/10/26 18:08:57 livesey Exp $"
+d14 1
+a14 1
+       "$RCSfile: MatrixModule_0.f90,v $"
+d30 1
+a30 1
+!$Log: !
+@
+

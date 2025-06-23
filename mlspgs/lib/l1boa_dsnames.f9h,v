@@ -1,0 +1,104 @@
+head	2.1;
+access;
+symbols
+	v5-02-NRT-19:2.1
+	v6-00:2.1
+	v5-02-NRT-18:2.1
+	v5-01-NRT-17:2.1
+	v5-01-NRT-16:2.1
+	v5-01-NRT-15:2.1
+	v5-01-NRT-14:2.1
+	neuralnetworks-1-0:2.1.0.4
+	cfm-single-freq-0-1:2.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+2.1
+date	2020.01.15.00.38.29;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.1
+log
+@First commit
+@
+text
+@! Copyright 2020, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id: dump1d.f9h,v 2.10 2018/03/05 19:27:04 pwagner Exp $
+
+  character(len=*), dimension(2,56), parameter :: L1BOADSNames = reshape((/ &
+    "counterMAF          ",   "counterMAF          ", &
+    "GHz.encoderAngle    ",   "GHz/encoderAngle    ", &
+    "GHz.scanAngle       ",   "GHz/scanAngle       ", &
+    "GHz.scAngle         ",   "GHz/scAngle         ", &
+    "GHz.scanRate        ",   "GHz/scanRate        ", &
+    "GHz.tpECI           ",   "GHz/ECI             ", &
+    "GHz.tpECR           ",   "GHz/ECR             ", &
+    "GHz.tpECRtoFOV      ",   "GHz/ECRtoFOV        ", &
+    "GHz.tpGeocAlt       ",   "GHz/GeocAlt         ", &
+    "GHz.tpGeocAltRate   ",   "GHz/GeocAltRate     ", &
+    "GHz.tpGeocLat       ",   "GHz/GeocLat         ", &
+    "GHz.tpGeodAlt       ",   "GHz/GeodAlt         ", &
+    "GHz.tpGeodAltRate   ",   "GHz/GeodAltRate     ", &
+    "GHz.tpGeodAngle     ",   "GHz/GeodAngle       ", &
+    "GHz.tpGeodLat       ",   "GHz/GeodLat         ", &
+    "GHz.tpLon           ",   "GHz/Lon             ", &
+    "GHz.tpLosAngle      ",   "GHz/LosAngle        ", &
+    "GHz.tpLosVel        ",   "GHz/LosVel          ", &
+    "GHz.tpOrbY          ",   "GHz/OrbY            ", &
+    "GHz.tpSolarTime     ",   "GHz/SolarTime       ", &
+    "GHz.tpSolarZenith   ",   "GHz/SolarZenith     ", &
+    "MAFStartTimeTAI     ",   "MAFStartTimeTAI     ", &
+    "MAFStartTimeUTC     ",   "MAFStartTimeUTC     ", &
+    "MIF_TAI             ",   "sc/MIF_TAI          ", &
+    "ypr                 ",   "sc/ypr              ", &
+    "yprRate             ",   "sc/yprRate          ", &
+    "scECI               ",   "sc/ECI              ", &
+    "scECR               ",   "sc/ECR              ", &
+    "scGeocAlt           ",   "sc/GeocAlt          ", &
+    "scGeocLat           ",   "sc/GeocLat          ", &
+    "scGeodAlt           ",   "sc/GeodAlt          ", &
+    "scGeodAngle         ",   "sc/GeodAngle        ", &
+    "scGeodLat           ",   "sc/GeodLat          ", &
+    "scLon               ",   "sc/Lon              ", &
+    "scOrbIncl           ",   "sc/OrbIncl          ", &
+    "scVelECI            ",   "sc/VelECI           ", &
+    "scVelECR            ",   "sc/VelECR           ", &
+    "THz.encoderAngle    ",   "THz/encoderAngle    ", &
+    "THz.scanAngle       ",   "THz/scanAngle       ", &
+    "THz.scAngle         ",   "THz/scAngle         ", &
+    "THz.scanRate        ",   "THz/scanRate        ", &
+    "THz.tpECI           ",   "THz/ECI             ", &
+    "THz.tpECR           ",   "THz/ECR             ", &
+    "THz.tpGeocAlt       ",   "THz/GeocAlt         ", &
+    "THz.tpGeocAltRate   ",   "THz/GeocAltRate     ", &
+    "THz.tpGeocLat       ",   "THz/GeocLat         ", &
+    "THz.tpGeodAlt       ",   "THz/GeodAlt         ", &
+    "THz.tpGeodAltRate   ",   "THz/GeodAltRate     ", &
+    "THz.tpGeodAngle     ",   "THz/GeodAngle       ", &
+    "THz.tpGeodLat       ",   "THz/GeodLat         ", &
+    "THz.tpLon           ",   "THz/Lon             ", &
+    "THz.tpLosAngle      ",   "THz/LosAngle        ", &
+    "THz.tpLosVel        ",   "THz/LosVel          ", &
+    "THz.tpOrbY          ",   "THz/OrbY            ", &
+    "THz.tpSolarTime     ",   "THz/SolarTime       ", &
+    "THz.tpSolarZenith   ",   "THz/SolarZenith     " &
+    /) , (/ 2,56 /) )
+! $Log: dump1d.f9h,v $
+@

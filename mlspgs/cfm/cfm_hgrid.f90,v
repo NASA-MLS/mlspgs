@@ -1,0 +1,697 @@
+head	1.13;
+access;
+symbols
+	v5-02-NRT-19:1.13
+	v6-00:1.13
+	v5-02-NRT-18:1.13
+	v5-02:1.13
+	v5-01-NRT-17:1.13
+	v5-01-NRT-16:1.13
+	v5-01-NRT-15:1.13
+	v5-01-NRT-14:1.13
+	neuralnetworks-1-0:1.13.0.10
+	cfm-single-freq-0-1:1.13.0.8
+	TES-MLuo-01:1.13
+	TES-UNKNOWN:1.13
+	v5-01:1.13
+	v5-00:1.13
+	v4-23-TA133:1.13.0.6
+	mus-emls-1-70:1.13.0.4
+	rel-1-0-englocks-work:1.13.0.2
+	VUMLS1-00:1.13
+	VPL1-00:1.13
+	V4-22-NRT-08:1.11
+	VAM1-00:1.11
+	V4-21:1.11.0.2
+	V4-13:1.11
+	V4-12:1.11
+	V4-11:1.11
+	V4-10:1.11
+	V3-43:1.1
+	M4-00:1.11
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.9
+	V3-31:1.9
+	V3-30-NRT-05:1.9
+	cfm-01-00:1.9
+	V3-30:1.1
+	V3-20:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.13
+date	2016.08.12.16.16.17;	author pwagner;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2016.07.06.22.11.16;	author pwagner;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2011.12.15.23.47.49;	author honghanh;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2011.10.19.16.06.13;	author honghanh;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2010.06.29.17.02.47;	author honghanh;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2010.06.29.16.40.23;	author honghanh;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2010.06.29.15.53.45;	author honghanh;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2010.03.26.15.35.18;	author honghanh;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2010.03.24.17.44.48;	author honghanh;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2010.03.24.16.26.17;	author honghanh;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2010.03.16.22.20.53;	author honghanh;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2010.03.09.22.39.38;	author honghanh;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2010.02.17.19.15.01;	author honghanh;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.13
+log
+@Made consistent with new api for ChooseOptimumLon0
+@
+text
+@! Copyright 2010, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+module CFM_HGrid_m
+   use HGridsDatabase, only: HGrid_T, CreateEmptyHGrid, TrimHGrid, &
+                             FindClosestMatch
+   use MLSKinds, only: R8
+   use L1BData, only: L1BData_T, ReadL1BData, DeallocateL1BData, AssembleL1BQtyName
+   use MLSCommon, only: NameLen, MLSFile_T
+   use Constants, only: Deg2Rad, Rad2Deg
+   use MLSNumerics, only: Hunt, InterpolateValues
+   use EmpiricalGeometry, only: EmpiricalLongitude, ChooseOptimumLon0
+   use Allocate_Deallocate, only : allocate_test, deallocate_test
+   use MLSFiles, only: GetMLSFileByType
+   use Chunks_m, only: MLSChunk_T
+   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+
+   implicit none
+
+   public :: CreateRegularHGrid
+
+   interface CreateRegularHGrid
+       module procedure CreateRegularHGrid_maf, CreateRegularHGrid_chunk
+   end interface
+
+!---------------------------- RCS Ident Info -------------------------------
+   character(len=*), private, parameter :: ModuleName= &
+       "$RCSfile: cfm_hgrid.f90,v $"
+   private :: not_used_here
+!---------------------------------------------------------------------------
+
+   private
+
+   contains
+
+   ! Use the input given, and the L1BOA file to create a regular hGrid.
+   type(HGrid_T) function CreateRegularHGrid_maf (instrumentModuleName, origin, &
+                  spacing, insetOverLaps, filedatabase, &
+                  firstL1Maf, lastL1Maf) result(hgrid)
+
+       ! The (x,y) origin of coordinate
+      real(r8), intent(in) :: origin
+      real(r8), intent(in) :: spacing
+      ! the filedatabase must contains L1BOA file (see CFM_MLSSetup)
+      type(MLSFile_T), dimension(:), pointer :: filedatabase
+      ! Either "GHz" or "THz" but the string is case-insensitive.
+      character(len=*), intent(in) :: instrumentModuleName
+      logical, intent(in) :: insetOverlaps
+      ! Start of the maf range in the given L1BOA in the filedatabase
+      integer, intent(in) :: firstL1Maf
+      ! End of the maf range in the given L1BOA in the filedatabase
+      integer, intent(in) :: lastL1Maf
+
+      ! Contains the time range of the data to be gotten out of L1BOA
+      ! (see CFM_MLSSetup)
+      type(MLSChunk_T) :: chunk
+
+      chunk%firstMafIndex = firstL1Maf
+      chunk%lastMafIndex = lastL1Maf
+
+      hgrid = CreateRegularHGrid_chunk(instrumentModuleName, origin, &
+              spacing, insetOverlaps, filedatabase, chunk)
+   end function
+
+   ! Use the input given, and the L1BOA file to create a regular hGrid.
+   type(HGrid_T) function CreateRegularHGrid_chunk (instrumentModuleName, origin, &
+                  spacing, insetOverLaps, filedatabase, &
+                  chunk) result(hgrid)
+      ! The (x,y) origin of coordinate
+      real(r8), intent(in) :: origin
+      real(r8), intent(in) :: spacing
+      ! the filedatabase must contains L1BOA file (see CFM_MLSSetup)
+      type(MLSFile_T), dimension(:), pointer :: filedatabase
+      ! Either "GHz" or "THz" but the string is case-insensitive.
+      character(len=*), intent(in) :: instrumentModuleName
+      logical, intent(in) :: insetOverlaps
+      ! Contains the time range of the data to be gotten out of L1BOA
+      ! (see CFM_MLSSetup)
+      type(MLSChunk_T) :: chunk
+
+      type(MLSFile_T), pointer :: l1bfile
+      real(r8) :: minAngle, maxAngle
+      type(L1BData_T) :: l1bField
+      integer :: nomafs
+      integer :: flag
+      character(len=NameLen) :: l1bitemname
+      real(r8) :: last, first
+      real(r8) :: delta
+      real(r8) :: incline
+      real(r8), parameter :: secondsInDay = 24*60*60
+      ! Note this next one is ONLY NEEDED for the case where we have only
+      ! one MAF in the chunk
+      real(r8), parameter :: ORBITALPERIOD = 98.8418*60.0
+      real(r8), dimension(:), pointer :: mif1GeodAngle
+      integer :: i ! Common counter for loops
+      integer :: n, extra, left, right
+      real(r8), dimension(:), pointer :: TMPANGLE ! A temporary array for the single case
+
+      L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
+      call ChooseOptimumLon0( filedatabase, chunk, 'GHz' )
+      l1bItemName = AssembleL1BQtyName (instrumentModuleName // ".tpGeodAngle", &
+                                        l1bfile%hdfVersion, .false.)
+      call ReadL1BData (L1BFile, trim(l1bItemName), l1bField, noMafs, flag, &
+                        firstMaf=chunk%firstMafIndex, lastMaf=chunk%lastMafIndex, &
+                        dontPad=.true.)
+      nullify (mif1GeodAngle)
+      call Allocate_Test (mif1geodangle, nomafs, "mif1geodangle", modulename)
+      mif1GeodAngle = l1bField%dpField(1,1,1:noMAFs)
+
+      maxAngle = maxval (l1bField%dpField(1,:,nomafs))
+
+      ! Now choose the geodetic angles for the hGrid
+      mif1geodangle = l1bfield%dpField(1,1,1:nomafs)
+      minAngle = minval(l1bField%dpField(1,:,1))
+      first = origin + spacing * int ((minAngle-origin)/spacing)
+      delta = first - minAngle ! it means first could be smaller
+      if (delta > spacing/2) then
+         first = first - spacing
+      else if (delta < -spacing/2) then
+         first = first + spacing
+      end if
+
+      ! Now work out the last point in a similar manner
+      last = origin + spacing * int ((maxAngle-origin)/spacing)
+      delta = last - maxAngle ! So +ve means last could be smaller
+      if (delta > spacing/2) then
+         last = last - spacing
+      else if (delta < -spacing/2) then
+         last = last + spacing
+      end if
+
+      call DeallocateL1BData ( l1bField )
+
+      ! single is a non-existent concept for CFM
+      ! Because the GMAO people, don't know of the existence of profiles
+      if (.not. insetOverlaps) then
+         if (first > minAngle) first = first - spacing
+         if (last < maxAngle) last = last + spacing
+      end if
+
+      if ( chunk%firstMafIndex >= chunk%lastMafIndex ) last = first
+      hgrid%noProfs = nint ( (last - first) / spacing ) + 1
+      call CreateEmptyHGrid(hgrid)
+      do i = 1, hgrid%noProfs
+         hGrid%phi(1,i) = first + (i-1)*spacing
+      end do
+
+      ! Now fill the other geolocation information, first latitude
+      ! Get orbital inclination
+      l1bItemName = AssembleL1BQtyName ( "scOrbIncl", l1bfile%hdfVersion, .false. )
+      call ReadL1BData ( L1BFile, l1bItemName, &
+          & l1bField, noMAFs, flag, &
+          & firstMAF=chunk%firstMAFIndex, &
+          & lastMAF=chunk%lastMAFIndex, &
+          & dontPad=.true. )
+      incline = sum(l1bField%dpField(1,1,:)) / nomafs
+      call deallocateL1bData(l1bfield)
+
+      hgrid%geodlat = rad2deg * asin (sin(deg2rad*hgrid%phi) * sin(deg2rad*incline))
+
+      call EmpiricalLongitude(hgrid%phi(1,:), hgrid%lon(1,:))
+
+      l1bitemname = AssembleL1BQtyName("MAFStartTimeTAI", l1bfile%hdfversion, .false.)
+      call ReadL1BData(l1bfile, l1bItemName, l1bfield, nomafs, &
+                       flag, firstMaf=chunk%firstMafIndex, &
+                       lastMaf=chunk%lastMafIndex, dontpad=.true.)
+      if (chunk%firstMafIndex /= chunk%lastMafIndex) then
+         call InterpolateValues(mif1GeodAngle, l1bfield%dpField(1,1,:), &
+                                hgrid%phi(1,:), hgrid%time(1,:), &
+                                method='Linear', extrapolate='Allow')
+      else
+         ! Case where only single MAF per chunk, treat it specially
+         hgrid%time = l1bfield%dpfield(1,1,1) + &
+                      (OrbitalPeriod / 360.0) * &
+                      (hgrid%phi - mif1GeodAngle(1))
+      end if
+      call DeallocateL1BData(l1bfield)
+      ! First get fractional day, note this neglects leap seconds.
+      ! Perhaps fix this later !???????? NJL. We do have access to the
+      ! UTC ascii time field, perhaps we could use that?
+      hgrid%solartime = modulo (hgrid%time, secondsInday) / secondsInDay
+      ! Now correct for longitude and convert to hours
+      hgrid%solarTime = 24.0 * (hgrid%solarTime + hGrid%lon/360.0)
+      hgrid%solarTime = modulo (hGrid%solarTime, 24.0_r8)
+
+      ! Solar zenith
+      l1bItemName = AssembleL1BQtyName(instrumentModuleName//".tpSolarZenith", &
+                                       l1bfile%hdfVersion, .false. )
+      call ReadL1BData (l1bfile, l1bitemname, l1bfield, nomafs, &
+                        flag, firstMaf=chunk%firstMafIndex, &
+                        lastMaf=chunk%lastMafIndex, dontpad=.true.)
+      call InterpolateValues (mif1GeodAngle, l1bField%dpField(1,1,:), &
+                              hgrid%phi(1,:), hgrid%solarZenith(1,:), &
+                              method='Linear', extrapolate='Allow')
+      call DeallocateL1BData(l1bfield)
+
+      ! Line of sight angle
+      ! This we'll have to do with straight interpolation
+      l1bitemname = AssembleL1BQtyName(instrumentModuleName//".tpLosAngle", &
+                                       l1bfile%hdfVersion, .false.)
+      call ReadL1BData(l1bfile, l1bitemname, l1bfield, nomafs, flag, &
+                       firstMaf=chunk%firstMafIndex, &
+                       lastMaf=chunk%lastMafIndex, dontPad=.true.)
+      call InterpolateValues (mif1geodangle, l1bfield%dpField(1,1,:), &
+                              hgrid%phi(1,:), hGrid%losAngle(1,:), &
+                              method='Linear', extrapolate='Allow')
+      call DeallocateL1BData(l1bfield)
+      hgrid%losAngle = modulo(hgrid%losAngle, 360.0_r8)
+
+      ! Done
+      call Deallocate_test(mif1GeodAngle, 'mif1GeodAngle', modulename)
+
+   end function
+
+!--------------------------- end bloc --------------------------------------
+   logical function not_used_here()
+   character (len=*), parameter :: IdParm = &
+       "$Id: cfm_hgrid.f90,v 1.12 2016/07/06 22:11:16 pwagner Exp $"
+   character (len=len(idParm)) :: Id = idParm
+      not_used_here = (id(1:1) == ModuleName(1:1))
+      print *, Id ! .mod files sometimes change if PRINT is added
+   end function not_used_here
+!---------------------------------------------------------------------------
+
+end module
+
+! $Log: cfm_hgrid.f90,v $
+! Revision 1.12  2016/07/06 22:11:16  pwagner
+! We seem to ned this change sometimes
+!
+! Revision 1.11  2011/12/15 23:47:49  honghanh
+! Add documentation for CreateStandardHGrid
+!
+! Revision 1.10  2011/10/19 16:06:13  honghanh
+! Add function to create hgrid with start maf and end maf.
+!
+! Revision 1.9  2010/06/29 17:02:47  honghanh
+! Change the identifier 'fakeChunk' to 'chunk' because
+! since it is created with ChunkDivide, it's as real as a chunk
+! can get.
+!
+! Revision 1.8  2010/06/29 16:40:23  honghanh
+! Remove all function/subroutine and user type forwarding from
+! all CFM modules except for from cfm.f90
+!
+! Revision 1.7  2010/06/29 15:53:45  honghanh
+! Add copyright comments and support for CVS log in the file
+!
+@
+
+
+1.12
+log
+@We seem to ned this change sometimes
+@
+text
+@d107 1
+a107 1
+      call ChooseOptimumLon0(filedatabase, chunk)
+d225 1
+a225 1
+       "$Id: cfm_hgrid.f90,v 1.11 2011/12/15 23:47:49 honghanh Exp $"
+d235 3
+@
+
+
+1.11
+log
+@Add documentation for CreateStandardHGrid
+@
+text
+@d148 1
+d225 1
+a225 1
+       "$Id: cfm_hgrid.f90,v 1.10 2011/10/19 16:06:13 honghanh Exp $"
+d235 3
+@
+
+
+1.10
+log
+@Add function to create hgrid with start maf and end maf.
+@
+text
+@d56 1
+d58 1
+d224 1
+a224 1
+       "$Id: cfm_hgrid.f90,v 1.9 2010/06/29 17:02:47 honghanh Exp $"
+d234 3
+@
+
+
+1.9
+log
+@Change the identifier 'fakeChunk' to 'chunk' because
+since it is created with ChunkDivide, it's as real as a chunk
+can get.
+@
+text
+@d29 4
+d44 28
+a71 1
+   type(HGrid_T) function CreateRegularHGrid (instrumentModuleName, origin, &
+d222 1
+a222 1
+       "$Id: cfm_hgrid.f90,v 1.8 2010/06/29 16:40:23 honghanh Exp $"
+d232 5
+@
+
+
+1.8
+log
+@Remove all function/subroutine and user type forwarding from
+all CFM modules except for from cfm.f90
+@
+text
+@d42 1
+a42 1
+                  fakeChunk) result(hgrid)
+d53 1
+a53 1
+      type(MLSChunk_T) :: fakeChunk
+d74 1
+a74 1
+      call ChooseOptimumLon0(filedatabase, fakeChunk)
+d78 1
+a78 1
+                        firstMaf=fakeChunk%firstMafIndex, lastMaf=fakeChunk%lastMafIndex, &
+d126 2
+a127 2
+          & firstMAF=fakeChunk%firstMAFIndex, &
+          & lastMAF=fakeChunk%lastMAFIndex, &
+d138 3
+a140 3
+                       flag, firstMaf=fakeChunk%firstMafIndex, &
+                       lastMaf=fakeChunk%lastMafIndex, dontpad=.true.)
+      if (fakeChunk%firstMafIndex /= fakeChunk%lastMafIndex) then
+d163 2
+a164 2
+                        flag, firstMaf=fakeChunk%firstMafIndex, &
+                        lastMaf=fakeChunk%lastMafIndex, dontpad=.true.)
+d175 2
+a176 2
+                       firstMaf=fakeChunk%firstMafIndex, &
+                       lastMaf=fakeChunk%lastMafIndex, dontPad=.true.)
+d191 1
+a191 1
+       "$Id: cfm_hgrid.f90,v 1.7 2010/06/29 15:53:45 honghanh Exp $"
+d201 4
+@
+
+
+1.7
+log
+@Add copyright comments and support for CVS log in the file
+@
+text
+@d13 1
+a13 1
+                             FindClosestMatch, DestroyHGridContents, Dump
+d27 1
+a27 2
+   public :: CreateRegularHGrid, DestroyHGridContents, Dump
+   public :: HGrid_T
+d191 1
+a191 1
+       "$Id: cfm_hgrid.f90,v 1.1 2010/06/29 8:06:33 honghanh Exp $"
+d201 3
+@
+
+
+1.6
+log
+@Add more comments to everything
+@
+text
+@d1 10
+d30 6
+a36 1
+   character(len=20), parameter :: moduleName = "CFM_HGrid"
+d189 10
+d200 2
+@
+
+
+1.5
+log
+@Conformed all module names to end with _m, changed file names to all
+lowercase, add comments
+@
+text
+@d29 1
+a29 1
+
+d32 1
+d34 1
+d37 2
+@
+
+
+1.4
+log
+@Adjustments made to add startTime and endTime as inputs to CFM_MLSSetup.
+Tested successfully
+@
+text
+@d1 1
+a1 1
+module CFM_HGrid
+d24 2
+d27 1
+a27 1
+                  spacing, insetOverLaps, single, filedatabase, &
+a34 1
+      logical, intent(in) :: single
+a54 1
+      ! Executables
+d69 17
+a85 42
+      if (.not. single) then
+         mif1geodangle = l1bfield%dpField(1,1,1:nomafs)
+         minAngle = minval(l1bField%dpField(1,:,1))
+         first = origin + spacing * int ((minAngle-origin)/spacing)
+         delta = first - minAngle ! it means first could be smaller
+         if (delta > spacing/2) then
+            first = first - spacing
+         else if (delta < -spacing/2) then
+            first = first + spacing
+         end if
+
+         ! Now work out the last point in a similar manner
+         last = origin + spacing * int ((maxAngle-origin)/spacing)
+         delta = last - maxAngle ! So +ve means last could be smaller
+         if (delta > spacing/2) then
+            last = last - spacing
+         else if (delta < -spacing/2) then
+            last = last + spacing
+         end if
+      else
+         ! The 'single' option is typically used for running single profile retrievals
+         ! in a debug mode.  In order to ensure we choose the same profile for each MAF
+         ! that a phiWindow=0 forward model would select, we have to do some extra work.
+
+         ! First check this is a sane request
+         if ( noMAFs /= 1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+           & 'Single hGrid option set but more than one MAF in chunk' )
+
+         ! Now construct a temporary HGrid that spans an orbit either side of this MAF
+         ! Overkill I know but not harmful
+         first = origin + spacing * int ( (minAngle-origin)/spacing ) - 360.0_r8
+         last = first + 720.0_r8
+         n = (last - first) / spacing
+         nullify(tmpAngle)
+         call Allocate_test ( tmpAngle, n, 'tmpAngle', ModuleName )
+         do i = 1,n
+            tmpAngle(i) = first + (i-1) * spacing
+         end do
+         i = FindClosestMatch ( tmpAngle, l1bField%dpField(1,:,:), 1 )
+         first = tmpAngle(i)
+         last = first
+         call Deallocate_test ( tmpAngle, 'tmpAngle', ModuleName )
+d90 3
+a92 1
+      if (.not. insetOverlaps .and. .not. single) then
+a164 9
+      if (single) then
+         ! Delete all but the 'center' profile
+         extra = hGrid%noProfs - 1
+         left = extra / 2
+         right = extra - left
+         if (left > 0) call TrimHGrid(hGrid, -1, left)
+         if (right > 0) call TrimHGrid(hGrid, -1, right)
+      end if !We know that upper/lower overlap is guaranteed to be 0
+
+@
+
+
+1.3
+log
+@Fixed, and tested for HGrid creation
+@
+text
+@d2 2
+a3 1
+   use HGridsDatabase, only: HGrid_T, CreateEmptyHGrid, TrimHGrid, FindClosestMatch
+d15 1
+a15 1
+   implicit none 
+d17 2
+a18 1
+   public :: CreateRegularHGrid
+d20 1
+a20 1
+   private 
+d23 1
+a23 1
+   contains 
+d54 1
+d75 1
+a75 1
+            first = first - spacing 
+d88 1
+a88 1
+      else 
+d140 1
+a140 1
+      
+@
+
+
+1.2
+log
+@Example for filling vector
+@
+text
+@d2 1
+a2 1
+   use HGridsDatabase, only: HGrid_T, CreateEmptyHGrid
+d12 1
+d23 2
+a24 1
+                  spacing, filedatabase, fakeChunk) result(hgrid)
+d30 2
+d49 2
+d61 1
+d63 45
+a107 8
+      mif1geodangle = l1bfield%dpField(1,1,1:nomafs)
+      minAngle = minval(l1bField%dpField(1,:,1))
+      first = origin + spacing * int ((minAngle-origin)/spacing)
+      delta = first - minAngle ! it means first could be smaller
+      if (delta > spacing/2) then
+         first = first - spacing 
+      else if (delta < -spacing/2) then
+         first = first + spacing
+d110 5
+a114 7
+      maxAngle = maxval (l1bField%dpField(1,:,nomafs))
+      last = origin + spacing * int ((maxAngle-origin)/spacing)
+      delta = last - maxAngle ! So +ve means last could be smaller
+      if (delta > spacing/2) then
+         last = last - spacing
+      else if (delta < -spacing/2) then
+         last = last + spacing
+d122 9
+d133 1
+d135 1
+d140 2
+a141 1
+                       flag, dontpad=.true.)
+d165 2
+a166 1
+                        flag, dontpad=.true.)
+d177 2
+a178 1
+                       dontPad=.true.)
+d184 10
+@
+
+
+1.1
+log
+@Mockup with an example to create HGrid
+@
+text
+@d51 1
+d67 1
+a67 1
+      last = origin + spacing + int ((maxAngle-origin)/spacing)
+@
+

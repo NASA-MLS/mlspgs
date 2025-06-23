@@ -1,0 +1,255 @@
+head	1.4;
+access;
+symbols
+	v5-02-NRT-19:1.4
+	v6-00:1.4
+	v5-02-NRT-18:1.4
+	v5-02:1.4
+	v5-01-NRT-17:1.4
+	v5-01-NRT-16:1.4
+	v5-01-NRT-15:1.4
+	v5-01-NRT-14:1.4
+	neuralnetworks-1-0:1.4.0.6
+	cfm-single-freq-0-1:1.4.0.4
+	v5-01:1.4
+	v5-00:1.4
+	v4-23-TA133:1.4.0.2
+	mus-emls-1-70:1.3.0.6
+	rel-1-0-englocks-work:1.3.0.4
+	VUMLS1-00:1.3
+	VPL1-00:1.3
+	V4-22-NRT-08:1.3
+	VAM1-00:1.3
+	V4-21:1.3.0.2
+	V4-13:1.3
+	V4-12:1.3
+	V4-11:1.3
+	V4-10:1.3
+	V3-43:1.2
+	M4-00:1.3
+	V3-41:1.2
+	V3-40-PlusGM57:1.2.0.2
+	V2-24-NRT-04:1.1
+	V3-33:1.2
+	V2-24:1.1
+	V3-31:1.2
+	V3-30-NRT-05:1.2
+	cfm-01-00:1.2
+	V3-30:1.2
+	V3-20:1.2
+	V3-10:1.1
+	V2-23-NRT-02:1.1
+	V2-23:1.1
+	V2-22-NRT-01:1.1
+	V2-22:1.1
+	V2-21:1.1
+	V2-20:1.1
+	V2-11:1.1
+	V2-10:1.1
+	V2-00:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.4
+date	2018.08.03.19.56.02;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2012.12.20.01.03.31;	author vsnyder;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2009.10.03.00.37.30;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2006.01.05.03.27.59;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.4
+log
+@Handles cases when sizes of XOld, YOld may be 1
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id: Interp_Bilinear_2d_1d.f9h,v 1.3 2012/12/20 01:03:31 vsnyder Exp $
+
+! subroutine Interp_Bilinear_2d_1d_r* ( XOld, Xnew, YOld, YNew, Zold, Znew, &
+!   & Update )
+
+  ! Given ZOld on coordinates (XOld x YOld), interpolate to (XNew,YNew)
+  ! to give ZNew.  ZOld must have shape (size(xOld),size(yOld)), while
+  ! XNew, YNew and ZNew must have the same shape.
+
+  real(rk) :: DX(2), DY(2) ! Interpolation factors.  Xi, Eta in wvs-083.
+  real(rk) :: Z            ! Interpolated result
+  integer, dimension(size(zNew)) :: HX, HY ! Hunt indices
+  integer :: I, IX, IY
+  real(rk) :: U
+
+  u = 0.0
+  if ( present(update) ) u = merge(1.0,0.0,update)
+
+  ! Hunt for xNew, yNew in xOld, zOld
+  call hunt ( xOld, xNew, hx )
+  call hunt ( yOld, yNew, hy )
+  if ( size(XOld) < 2 ) then
+    if ( size(YOld) < 2 ) then
+      ! Don't interpolate at all
+      zNew(1) = u * zNew(1) + zOld(1,1)
+    else
+      ! 1d interpolation in y only
+      do i = 1, size(zNew)
+        iy = hy(i)
+        dy(1) = ( yOld(iy+1) - yNew(i) ) / ( yOld(iy+1) - yOld(iy) )
+        dy(2) = 1.0 - dy(1)
+        z = &
+          & dy(1) * zOld(1,iy)    + &
+          & dy(2) * zOld(1,iy+1) 
+        zNew(i) = u * zNew(i) + z
+      end do
+    endif
+  elseif ( size(YOld) < 2 ) then
+    ! 1d interpolation in x only
+    do i = 1, size(zNew)
+      ix = hx(i)
+      dx(1) = ( xOld(ix+1) - xNew(i) ) / ( xOld(ix+1) - xOld(ix) )
+      dx(2) = 1.0 - dx(1)
+      z = &
+        & dx(1) * zOld(ix,1)    + &
+        & dx(2) * zOld(ix+1,1) 
+      zNew(i) = u * zNew(i) + z
+    end do
+  else
+    ! Interpolate in both x and y.  See wvs-083.  zOld here is z^T in wvs-083.
+    do i = 1, size(zNew)
+      ix = hx(i)
+      iy = hy(i)
+      dx(1) = ( xOld(ix+1) - xNew(i) ) / ( xOld(ix+1) - xOld(ix) )
+      dx(2) = 1.0 - dx(1)
+      dy(1) = ( yOld(iy+1) - yNew(i) ) / ( yOld(iy+1) - yOld(iy) )
+      dy(2) = 1.0 - dy(1)
+      z = &
+        & dy(1) * ( dx(1) * zOld(ix,iy)   + dx(2) * zOld(ix+1,iy)   ) + &
+        & dy(2) * ( dx(1) * zOld(ix,iy+1) + dx(2) * zOld(ix+1,iy+1) )
+      zNew(i) = u * zNew(i) + z
+    end do
+  endif
+
+! end subroutine Interp_Bilinear_2d_1d_r*
+
+! $Log: Interp_Bilinear_2d_1d.f9h,v $
+! Revision 1.3  2012/12/20 01:03:31  vsnyder
+! Revise to be consistent with notation in wvs-083.  Hopefully, the results
+! are not changed.
+!
+! Revision 1.2  2009/10/03 00:37:30  vsnyder
+! zNew needs a subscript everywhere
+!
+! Revision 1.1  2006/01/05 03:27:59  vsnyder
+! Initial commit
+!
+@
+
+
+1.3
+log
+@Revise to be consistent with notation in wvs-083.  Hopefully, the results
+are not changed.
+@
+text
+@d12 1
+a12 1
+! $Id: Interp_Bilinear_2d_1d.f9h,v 1.2 2009/10/03 00:37:30 vsnyder Exp $
+d33 42
+a74 13
+  do i = 1, size(zNew)
+  ! Interpolate.  See wvs-083.  zOld here is z^T in wvs-083.
+    ix = hx(i)
+    iy = hy(i)
+    dx(1) = ( xOld(ix+1) - xNew(i) ) / ( xOld(ix+1) - xOld(ix) )
+    dx(2) = 1.0 - dx(1)
+    dy(1) = ( yOld(iy+1) - yNew(i) ) / ( yOld(iy+1) - yOld(iy) )
+    dy(2) = 1.0 - dy(1)
+    z = &
+      & dy(1) * ( dx(1) * zOld(ix,iy)   + dx(2) * zOld(ix+1,iy)   ) + &
+      & dy(2) * ( dx(1) * zOld(ix,iy+1) + dx(2) * zOld(ix+1,iy+1) )
+    zNew(i) = u * zNew(i) + z
+  end do
+d79 4
+@
+
+
+1.2
+log
+@zNew needs a subscript everywhere
+@
+text
+@d12 1
+a12 1
+! $Id: Interp_Bilinear_2d_1d.f9h,v 1.1 2006/01/05 03:27:59 vsnyder Exp $
+d21 2
+a22 2
+  real(rk) :: DX, DY ! Interpolation factors
+  real(rk) :: Z      ! Interpolated result
+d25 1
+a25 1
+  logical :: U
+d27 2
+a28 2
+  u = .false.
+  if ( present(update) ) u = update
+d34 1
+d37 4
+a40 2
+    dx = ( xNew(i) - xOld(ix) ) / ( xOld(ix+1) - xOld(ix) )
+    dy = ( yNew(i) - yOld(iy) ) / ( yOld(iy+1) - yOld(iy) )
+d42 3
+a44 7
+      & ( 1.0 - dy ) * (( 1.0 - dx ) * zOld(ix,iy) + dx * zOld(ix+1,iy)) + &
+      & dy * (( 1.0 - dx ) * zOld(ix,iy+1) + dx * zOld(ix+1,iy+1) )
+    if ( u ) then
+      zNew(i) = zNew(i) + z
+    else
+      zNew(i) = z
+    end if
+d50 3
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d12 1
+a12 1
+! $Id: InterpolateArray.f9h,v 1.7 2005/08/03 16:34:20 pwagner Exp $
+d44 1
+a44 1
+      zNew = z
+d50 4
+a53 1
+! $Log: InterpolateArray.f9h,v $
+@
+

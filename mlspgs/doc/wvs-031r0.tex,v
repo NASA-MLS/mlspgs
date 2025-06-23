@@ -1,0 +1,129 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.14
+	cfm-single-freq-0-1:1.1.0.12
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.10
+	mus-emls-1-70:1.1.0.8
+	rel-1-0-englocks-work:1.1.0.6
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2008.06.11.20.14.52;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\documentclass[11pt]{article}
+
+\usepackage[fleqn]{amsmath}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9.00in
+
+\newcommand{\docname}{\bf wvs-031}
+\newcommand{\docdate}{8 February 2006}
+
+\begin{document}
+
+\renewcommand{\d}{\text{d}}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[u]{\hW}{{\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill, Dong, Mike, Nathaniel\\
+Subject: \>Relative humidity configuration\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 3pt
+\vspace{-20pt}
+
+To compute relative humidity in the full forward model, the following
+transformations of $\beta$ and $\frac{\d \beta}{\d T}$ are applied:
+
+\begin{equation}\begin{split}
+e_s =\,& \exp\left(19.6783-\frac{6140.4}T\right)\\
+\beta^{\text{RHi}} =\,& \beta^{\text{H}_2\text{O}} \frac{e_s}P\\
+\frac{\d \beta^{\text{RHi}}}{\d T} =\,&
+ \frac{e_s}P \frac{\d \beta^{\text{H}_2\text{O}}}{\d T} +
+ \frac{6140.4}{T^2} \beta^{\text{RHi}}
+\end{split}\end{equation}
+
+To request this transformation in the forward model configuration, define a
+molecule group with a group name {\tt RHI} and members the desired water
+molecules.  {\tt RHI} is defined to be a molecule, but there is no spectroscopy
+information for it, so (as a molecule) it can only be used as a molecule group
+name.
+
+It is possible to retrieve relative humidity and specific humidity in the same
+run.  The forward model configurator will snivel about duplicate molecules, but
+will nevertheless continue.
+
+\label{lastpage}
+\end{document}
+% $Id: $
+@

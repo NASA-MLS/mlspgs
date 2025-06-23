@@ -1,0 +1,768 @@
+head	1.22;
+access;
+symbols
+	V2-21:1.20
+	V2-20:1.20
+	V2-11:1.20
+	V2-10:1.20
+	V2-00:1.20
+	V1-51:1.20
+	V1-50:1.20
+	V1-45:1.20
+	V1-44:1.20
+	V1-43:1.20
+	V1-42:1.20
+	V1-41:1.20
+	V1-32:1.20
+	V1-40:1.20
+	V1-31:1.20
+	V1-30:1.20
+	V1-13:1.20
+	V1-12:1.20
+	V1-11:1.20
+	V1-10:1.20
+	newfwm-feb03:1.20.0.2
+	V1-04:1.17
+	V1-03:1.17
+	V1-02:1.17
+	V1-00:1.17
+	newfwm-sep01:1.13.0.2
+	V0-7:1.12
+	V0-5-Level2:1.10
+	V0-5-SIPS:1.10;
+locks; strict;
+comment	@# @;
+
+
+1.22
+date	2007.06.07.19.55.30;	author pwagner;	state dead;
+branches;
+next	1.21;
+
+1.21
+date	2007.04.14.00.39.59;	author vsnyder;	state Exp;
+branches;
+next	1.20;
+
+1.20
+date	2002.07.11.22.00.17;	author pwagner;	state Exp;
+branches;
+next	1.19;
+
+1.19
+date	2002.07.01.17.32.22;	author pwagner;	state Exp;
+branches;
+next	1.18;
+
+1.18
+date	2002.06.21.00.16.44;	author pwagner;	state Exp;
+branches;
+next	1.17;
+
+1.17
+date	2002.02.08.18.33.08;	author pwagner;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2002.02.06.00.42.59;	author pwagner;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2001.11.15.00.07.57;	author pwagner;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2001.11.02.01.03.30;	author pwagner;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2001.09.05.20.51.08;	author pwagner;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2001.08.15.21.03.28;	author pwagner;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2001.08.14.22.19.37;	author pwagner;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2001.03.12.23.57.47;	author pwagner;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2001.02.26.21.14.39;	author pwagner;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2001.02.08.00.31.44;	author pwagner;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2001.02.05.23.12.30;	author pwagner;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2001.01.13.00.24.42;	author pwagner;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2000.11.27.18.17.06;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2000.11.16.22.57.02;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2000.10.27.23.03.18;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2000.10.21.00.15.39;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2000.10.18.22.10.48;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.22
+log
+@compiler-specific pieces removed from platforms directory
+@
+text
+@#a file full of macros to be included by a Makefile
+#to compile a Fortran 9x program or library
+
+# "$Id: NAG.Linux,v 1.21 2007/04/14 00:39:59 vsnyder Exp $"
+
+SHELL = /bin/sh
+
+# Path to source files:
+S = ..
+# Path to root directory of l2, lib, etc.:
+CONFDIR=../..
+
+UTILDIR=../../util
+
+# reecho.sh can filter out globbed file expansions that fail
+# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
+# However we will be using it just to create lapack_linker_line 
+# where LIB_LAPACK may contain multiple libraries
+REECHO=$(UTILDIR)/reecho.sh
+
+TESTSDIR=../../tests
+
+# include files %.f9h shared by l2, lib are in $(srclib)
+srclib = $(CONFDIR)/srclib
+
+# Set paths for finding source files (different from .o and .mod)
+
+# .mod files needed by lib are in $(blaslib)
+blaslib = $(CONFDIR)/blas/$(MLSCONFG)
+
+# This is the machines directory--its files are compiled directly into libdir
+dir1 =
+
+# This is the srclib directory--its files are compiled directly into libdir
+dir2 =
+
+# This is the blas directory
+dir3 = $(blaslib)/
+
+# Do the load options include garbage collection?
+# The answer  will determine what we do to the machine.f90 file from
+MACH_DIR=../machines/$(MLSCONFG)
+GC_IN_LDOPTS := $(shell echo ${LDOPTS} | grep '\-gc')
+ifeq ($(GC_IN_LDOPTS),)
+BAD_MATCH=-gc
+else
+BAD_MATCH=no -gc
+endif
+
+# Set paths for finding source files (different from .o and .mod)
+
+vpath %.mod ./
+vpath %.o ./
+vpath %.f90 ../ $(MACH_DIR)
+vpath %.F90 ../ $(MACH_DIR)
+vpath %.f9h ../ $(srclib)
+vpath %.f ../ $(PGSINC)
+vpath %.c ../
+
+FC = f95
+
+DUSTY = $(FOPTS) -dusty
+
+# Use the lib directory, too
+libdir = $(CONFDIR)/lib/$(MLSCONFG)
+
+# All the paths to supply .mod and INCLUDE files used in compiling %.f90
+# Precede each path by "-I "
+#INC_PATHS = $(EXTRA_PATHS) -I $(PGSINC) -I $(srclib) -I $S -I $(blaslib)
+PATHS_PREFXD := $(shell ${REECHO} -d -prefix=-I $(UNPREFXDPTHS))
+INC_PATHS = $(EXTRA_PATHS) $(PATHS_PREFXD) \
+   -I $(PGSINC) -I $(srclib) -I $S -I $(blaslib)
+
+# Define some suffix rules
+
+.SUFFIXES:
+.SUFFIXES: .o .dbg.o .f90 .F90 .f .c
+.f90.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
+
+.F90.f90:
+	cpp $(PRE) $< $@@
+
+.f90.dbg.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< -o $*.dbg.o $(FAFTER)
+
+.f.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
+
+.c.o:
+	$(CC) -c ${INC_PATHS} -DNAGf90Fortran $<
+
+# $Log: NAG.Linux,v $
+# Revision 1.21  2007/04/14 00:39:59  vsnyder
+# Added vpath for F90
+#
+# Revision 1.20  2002/07/11 22:00:17  pwagner
+# Changes to support unprefxdpaths
+#
+# Revision 1.19  2002/07/01 17:32:22  pwagner
+# No longer compiles some sources twice
+#
+# Revision 1.18  2002/06/21 00:16:44  pwagner
+# Enroute to ending cascading recompiles
+#
+# Revision 1.17  2002/02/08 18:33:08  pwagner
+# Defines BAD_MATCH for machine.f90 depending on whether collecting garbage
+#
+# Revision 1.16  2002/02/06 00:42:59  pwagner
+# Where to get machine.f90 now depends on whether to collect garbage
+#
+# Revision 1.15  2001/11/15 00:07:57  pwagner
+# Now works with new libmlspack.a and .mod files in blas
+#
+# Revision 1.14  2001/11/02 01:03:30  pwagner
+# Added stuff for lapack, inrinsic BLAS
+#
+# Revision 1.13  2001/09/05 20:51:08  pwagner
+# Deleted refs to MATRIX_OBJS
+#
+# Revision 1.12  2001/08/15 21:03:28  pwagner
+# Default rules for .f and .c; EXTRA_PATHS added to INC_PATHS
+#
+# Revision 1.11  2001/08/14 22:19:37  pwagner
+# New autobuild rules for .f and .c sources
+#
+# Revision 1.10  2001/03/12 23:57:47  pwagner
+# New FAFTER, LAFTER flags to postprocess compile & link steps
+#
+# Revision 1.9  2001/02/26 21:14:39  pwagner
+# Commented out FOPTS assignment; now part of .configure setting
+#
+# Revision 1.8  2001/02/08 00:31:44  pwagner
+# Conditionally links sdot and ddot unless BLAS defined
+#
+# Revision 1.7  2001/02/05 23:12:30  pwagner
+# DUSTY now based directly on FOPTS
+#
+# Revision 1.6  2001/01/13 00:24:42  pwagner
+# uses lib/machines/MLSCONFG/machine.f90
+#
+# Revision 1.5  2000/11/27 18:17:06  pwagner
+# MatrixModules part of lib only for LF95
+#
+# Revision 1.4  2000/11/16 22:57:02  pwagner
+# Looks for %.f9h in srclib
+#
+# Revision 1.3  2000/10/27 23:03:18  pwagner
+# Added PGSINC to vpath .f
+#
+# Revision 1.2  2000/10/21 00:15:39  pwagner
+# Removed hardwired PGSINC
+#
+# Revision 1.1  2000/10/18 22:10:48  pwagner
+# First commit
+#
+@
+
+
+1.21
+log
+@Added vpath for F90
+@
+text
+@d4 1
+a4 1
+# "$Id: NAG.Linux,v 1.20 2002/07/11 22:00:17 pwagner Exp $"
+d94 3
+@
+
+
+1.20
+log
+@Changes to support unprefxdpaths
+@
+text
+@d4 1
+a4 1
+# "$Id: NAG.Linux,v 1.19 2002/07/01 17:32:22 pwagner Exp $"
+d55 1
+d77 1
+a77 1
+.SUFFIXES: .o .dbg.o .f90 .f .c
+d81 3
+d94 3
+@
+
+
+1.19
+log
+@No longer compiles some sources twice
+@
+text
+@d4 1
+a4 1
+# "$Id: NAG.Linux,v 1.18 2002/06/21 00:16:44 pwagner Exp $"
+d68 4
+a71 1
+INC_PATHS = $(EXTRA_PATHS) -I $(PGSINC) -I $(srclib) -I $S -I $(blaslib)
+d90 3
+@
+
+
+1.18
+log
+@Enroute to ending cascading recompiles
+@
+text
+@d4 1
+a4 1
+# "$Id: NAG.Linux,v 1.17 2002/02/08 18:33:08 pwagner Exp $"
+a22 8
+ifdef MLSINSTALLDIR
+   INSTALLDIR:=$(MLSINSTALLDIR)
+else
+ifndef INSTALLDIR
+   INSTALLDIR:=$(CONFDIR)/bin/$(MLSCONFG)
+endif
+endif
+
+a85 52
+# Custom build commands for some modules
+
+# This uses the utility program init_gen to create two
+# up-to-date prereqs for intrinsic
+$(INSTALLDIR)/init_gen: $(UTILDIR)/init_gen.f90
+	$(UTILDIR)/build_f90_in_misc.sh -p init_gen \
+	-d $(INSTALLDIR) -t $(TESTSDIR) -M $(MAKE) \
+	-FC $(FC) -CC $(CC) -C $(MLSCFILE) \
+   $(UTILDIR)/init_gen.f90
+
+$(S)/lit_parm.f9h $(S)/lit_add.f9h: $(S)/lit_names.txt $(INSTALLDIR)/init_gen
+	sort -f $(S)/lit_names.txt | $(INSTALLDIR)/init_gen \
+          -l last_intrinsic_lit -pl_ \
+          -j lit_names.txt \
+          $(S)/lit_parm.f9h $(S)/lit_add.f9h lit_indices
+
+machine.mod:
+	rm -f machine.f90 ; \
+	sed '/Start $(BAD_MATCH)/,/End $(BAD_MATCH)/ d' $(MACH_DIR)/machine.f90 \
+     > machine.f90
+	$(UTILDIR)/newAifBdiff.sh -a machine.mod $(FC) -c $(FOPTS) $(INC_PATHS) machine.f90 $(FAFTER)
+	rm -f machine.f90
+machine.o: $(MACH_DIR)/machine.f90
+	rm -f machine.f90 ; \
+	sed '/Start $(BAD_MATCH)/,/End $(BAD_MATCH)/ d' $(MACH_DIR)/machine.f90 \
+     > machine.f90
+	$(UTILDIR)/newAifBdiff.sh -a machine.mod $(FC) -c $(FOPTS) $(INC_PATHS) machine.f90 $(FAFTER)
+	rm -f machine.f90
+
+intrinsic.o: $(S)/lit_parm.f9h $(S)/lit_add.f9h
+
+BUGGY := $(shell echo ${FOPTS} | sed 's/-O[0-9]*//')
+NOUNASS := $(shell echo ${FOPTS} | sed 's/\(--chk [aesx,]*\),u\([aesx,]*\)/\1\2/')
+
+DUSTY_NO_OPT := $(shell echo ${DUSTY} | sed 's/-O[0-9]*//')
+
+hdf.mod:
+	$(UTILDIR)/newAifBdiff.sh -a hdf.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/Hdf.f90 $(FAFTER)
+Hdf.o:
+	$(UTILDIR)/newAifBdiff.sh -a hdf.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/Hdf.f90 $(FAFTER)
+string_table.mod:
+	$(UTILDIR)/newAifBdiff.sh -a string_table.mod $(FC) -c $(BUGGY) $(INC_PATHS) $(S)/string_table.f90 $(FAFTER)
+string_table.o:
+	$(UTILDIR)/newAifBdiff.sh -a string_table.mod $(FC) -c $(BUGGY) $(INC_PATHS) $(S)/string_table.f90 $(FAFTER)
+
+# ncep_dao module doesn't play well with the lf95 undefined variable
+# runtime checker because of endian swapping
+ncep_dao.mod:
+	$(UTILDIR)/newAifBdiff.sh -a ncep_dao.mod $(FC) -c $(NOUNASS) $(INC_PATHS) $(S)/ncep_dao.f90 $(FAFTER)
+ncep_dao.o:
+	$(UTILDIR)/newAifBdiff.sh -a ncep_dao.mod $(FC) -c $(NOUNASS) $(INC_PATHS) $(S)/ncep_dao.f90 $(FAFTER)
+
+d87 3
+@
+
+
+1.17
+log
+@Defines BAD_MATCH for machine.f90 depending on whether collecting garbage
+@
+text
+@d4 1
+a4 1
+# "$Id: NAG.Linux,v 1.16 2002/02/06 00:42:59 pwagner Exp $"
+d8 1
+a8 1
+## Path to source files:
+d10 20
+d32 1
+a32 1
+srclib = ../../srclib
+d37 1
+a37 1
+blaslib = ../../blas/$(MLSCONFG)
+d60 1
+d72 1
+a72 1
+libdir = ../../lib/$(MLSCONFG)
+d94 52
+d147 3
+@
+
+
+1.16
+log
+@Where to get machine.f90 now depends on whether to collect garbage
+@
+text
+@d4 1
+a4 1
+# "$Id: NAG.Linux,v 1.15 2001/11/15 00:07:57 pwagner Exp $"
+d29 2
+a30 1
+# The answer  will determine where we get out machine.f90 file from
+d33 1
+a33 1
+MACH_DIR=../machines/NAG.nogc
+d35 1
+a35 1
+MACH_DIR=../machines/$(MLSCONFG)
+d74 3
+@
+
+
+1.15
+log
+@Now works with new libmlspack.a and .mod files in blas
+@
+text
+@d4 1
+a4 1
+# "$Id: NAG.Linux,v 1.14 2001/11/02 01:03:30 pwagner Exp $"
+a13 1
+
+d28 9
+d40 1
+a40 1
+vpath %.f90 ../ ../machines/$(MLSCONFG)
+d73 3
+@
+
+
+1.14
+log
+@Added stuff for lapack, inrinsic BLAS
+@
+text
+@d4 1
+a4 1
+# "$Id: NAG.Linux,v 1.13 2001/09/05 20:51:08 pwagner Exp $"
+d17 11
+a27 2
+# include files %.fneeded by lib are in $(blaslib)
+blaslib = ../../blas
+d32 1
+a32 1
+vpath %.f90 ../ ../machines/$(MLSCONFG) $(blaslib)
+d34 1
+a34 1
+vpath %.f ../ $(PGSINC) $(blaslib)
+d46 1
+a46 1
+INC_PATHS = $(EXTRA_PATHS) -I $(PGSINC) -I $(srclib) -I $S 
+d65 3
+@
+
+
+1.13
+log
+@Deleted refs to MATRIX_OBJS
+@
+text
+@d4 1
+a4 1
+# "$Id: NAG.Linux,v 1.12 2001/08/15 21:03:28 pwagner Exp $"
+d23 1
+a23 1
+vpath %.f90 ../ ../machines/$(MLSCONFG)
+d56 3
+@
+
+
+1.12
+log
+@Default rules for .f and .c; EXTRA_PATHS added to INC_PATHS
+@
+text
+@d4 1
+a4 1
+# "$Id: NAG.Linux,v 1.11 2001/08/14 22:19:37 pwagner Exp $"
+a54 6
+# Modules needed by test programs
+# They currently compile only under Lahey's LF95
+MATRIX_OBJS = 
+
+#SDP =SDPToolkitSubstitute.o
+#GD=GDapi.o
+d56 3
+@
+
+
+1.11
+log
+@New autobuild rules for .f and .c sources
+@
+text
+@d4 1
+a4 1
+# "$Id: NAG.Linux,v 1.10 2001/03/12 23:57:47 pwagner Exp $"
+a29 3
+# Compiler options:
+#FOPTS = -g -C=all
+
+a31 9
+# Beginning of path to libraries:
+#L = /nas/software/SRC/TOOLKIT-5.2.6v1.00
+#L = /nas/software/SRC/TOOLKIT-5.2.6v1.00.NAG
+
+#PGSINC = /software/SRC/TOOLKIT-5.2.6v1.00.NAG/include
+
+# Beginning of path to HDFEOS  libraries:
+#E = /van1/opt/TOOLKIT
+
+d37 1
+a37 1
+INC_PATHS = -I $(PGSINC) -I $(srclib) -I $S 
+d62 3
+@
+
+
+1.10
+log
+@New FAFTER, LAFTER flags to postprocess compile & link steps
+@
+text
+@d4 1
+a4 1
+# "$Id: NAG.Linux,v 1.9 2001/02/26 21:14:39 pwagner Exp $"
+d25 2
+a26 1
+vpath %.f $(PGSINC) $(blaslib)
+d54 1
+a54 1
+.SUFFIXES: .o .dbg.o .f90 .f
+d64 3
+d74 3
+@
+
+
+1.9
+log
+@Commented out FOPTS assignment; now part of .configure setting
+@
+text
+@d4 1
+a4 1
+# "$Id: NAG.Linux,v 1.8 2001/02/08 00:31:44 pwagner Exp $"
+d55 1
+a55 1
+	$(FC) -c $(FOPTS) $(INC_PATHS) $<
+d58 1
+a58 1
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< -o $*.dbg.o
+d61 1
+a61 1
+	$(FC) -c $(FOPTS) $(INC_PATHS) $<
+d70 3
+@
+
+
+1.8
+log
+@Conditionally links sdot and ddot unless BLAS defined
+@
+text
+@d4 1
+a4 1
+# "$Id: NAG.Linux,v 1.7 2001/02/05 23:12:30 pwagner Exp $"
+d30 1
+a30 1
+FOPTS = -g -C=all
+d70 3
+@
+
+
+1.7
+log
+@DUSTY now based directly on FOPTS
+@
+text
+@d4 1
+a4 1
+# "$Id: NAG.Linux,v 1.6 2001/01/13 00:24:42 pwagner Exp $"
+d17 5
+d25 1
+a25 1
+vpath %.f $(PGSINC)
+d53 1
+a53 1
+.SUFFIXES: .o .dbg.o .f90
+d60 3
+d70 3
+@
+
+
+1.6
+log
+@uses lib/machines/MLSCONFG/machine.f90
+@
+text
+@d4 1
+a4 1
+# "$Id: NAG.Linux,v 1.5 2000/11/27 18:17:06 pwagner Exp $"
+d27 1
+a27 1
+DUSTY = -g -dusty
+d62 3
+@
+
+
+1.5
+log
+@MatrixModules part of lib only for LF95
+@
+text
+@d4 1
+a4 1
+# "$Id: NAG.Linux,v 1.4 2000/11/16 22:57:02 pwagner Exp $"
+d18 1
+a18 1
+vpath %.f90 ../
+d62 3
+@
+
+
+1.4
+log
+@Looks for %.f9h in srclib
+@
+text
+@d4 1
+a4 1
+# "$Id: NAG.Linux,v 1.3 2000/10/27 23:03:18 pwagner Exp $"
+d55 4
+d62 3
+@
+
+
+1.3
+log
+@Added PGSINC to vpath .f
+@
+text
+@d4 1
+a4 1
+# "$Id: NAG.Linux,v 1.2 2000/10/21 00:15:39 pwagner Exp $"
+d8 1
+a8 1
+# Path to source files:
+d11 4
+d19 1
+a19 1
+vpath %.f9h ../
+d41 5
+a45 1
+# Define some suffix rules (after clearing the old ones)
+d50 1
+a50 1
+	$(FC) -c $(FOPTS) -I $(PGSINC) -I $S -I $(libdir) $<
+d53 1
+a53 1
+	$(FC) -c $(FOPTS) -I $(PGSINC) -I $S -I $(libdir) $< -o $*.dbg.o
+d58 3
+@
+
+
+1.2
+log
+@Removed hardwired PGSINC
+@
+text
+@d4 1
+a4 1
+# "$Id: NAG.Linux,v 1.1 2000/10/18 22:10:48 pwagner Exp $"
+d16 1
+d50 3
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d4 1
+a4 1
+# "$Id:  $"
+d26 1
+a26 1
+L = /nas/software/SRC/TOOLKIT-5.2.6v1.00.NAG
+d28 1
+a28 1
+PGSINC = /software/SRC/TOOLKIT-5.2.6v1.00.NAG/include
+d31 1
+a31 1
+E = /van1/opt/TOOLKIT
+d48 4
+a51 1
+# $Log: $
+@
+

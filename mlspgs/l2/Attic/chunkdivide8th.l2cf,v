@@ -1,0 +1,69 @@
+head	2.3;
+access;
+symbols
+	V1-04:2.2
+	V1-03:2.2
+	V1-02:2.2
+	V1-00:2.2;
+locks; strict;
+comment	@# @;
+
+
+2.3
+date	2002.05.22.00.50.15;	author livesey;	state dead;
+branches;
+next	2.2;
+
+2.2
+date	2001.11.20.00.50.00;	author livesey;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.10.09.01.10.43;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.3
+log
+@L2CFs no longer belong in l2
+@
+text
+@; --------------------------------------------- ChunkDivide ----
+begin ChunkDivide
+  ChunkDivide, method=orbital, maxLength=0.125 orbits, overlap=5 MAFs, $
+    homeGeodAngle=0 degrees, homeModule=GHz, criticalModules=none, maxGap=2 MAFs
+end ChunkDivide
+@
+
+
+2.2
+log
+@New versions for new ChunkDivide
+@
+text
+@@
+
+
+2.1
+log
+@Regular commit, new m4 version
+@
+text
+@d3 2
+a4 8
+  idealLength = 0.125 orbits
+  overlap = 5 MAFs
+  homeGeodAngle =           0 degrees
+  homeModule =              GHz
+  scanLowerLimit =          -10 km : 20 km
+  scanUpperLimit =          40 km : 100 km
+  criticalScanningModules = Both
+  maxGap =                  1.5 minutes
+@
+

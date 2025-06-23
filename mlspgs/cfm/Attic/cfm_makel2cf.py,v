@@ -1,0 +1,1191 @@
+head	1.1;
+access;
+symbols
+	cfm-single-freq-0-1:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2021.06.30.14.57.47;	author whdaffer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2021.06.30.14.57.47;	author whdaffer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2021.07.13.15.16.52;	author whdaffer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2021.08.16.17.34.38;	author whdaffer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2021.08.17.15.46.04;	author whdaffer;	state Exp;
+branches;
+next	1.1.2.5;
+
+1.1.2.5
+date	2021.08.17.20.28.58;	author whdaffer;	state Exp;
+branches;
+next	;
+
+
+desc
+@script to write l2cf and associated .org file
+@
+
+
+1.1
+log
+@file cfm_makel2cf.py was initially added on branch cfm-single-freq-0-1.
+@
+text
+@@
+
+
+1.1.2.1
+log
+@Initial revision
+@
+text
+@a0 507
+#!/usr/bin/env python
+import os, sys, re 
+import argparse as ap
+import pickle
+# Good code examples here.
+# https://www.tutorialspoint.com/python3/python_classes_objects.htm
+#import subprocess as sp
+#import glob
+
+# Good python info here
+# https://www.python-course.eu/python3_sets_frozensets.php
+
+class fwmdl():
+  '''A Class to handle all the various types of fields in a ForwardModel 
+  declaration in a MLS L2 L2CF file.'''
+
+  def __init__(self):
+    self.signal=None
+    self.radiometer=None
+    self.band=None
+    self.channels=[]
+    
+    # end __init__
+  def signal(self):
+    pass
+  # end signal
+  def radiometer(self):
+    pass
+    # end radiometer
+    
+  def spectrometer_type(self):
+    pass
+  # end radiometer
+      
+  def binSelectors(self):
+      pass
+  # end binSelectors
+  def cloud_der(self):
+    pass
+  # end 
+  def i_saturation(self):
+    pass
+  # end 
+  def integrationGrid(self):
+    pass
+  # end 
+  def MIFTangent(self):
+    pass
+  # end MIFTangent
+  def module(self):
+    pass
+  # end module
+  def signals(self):
+    pass
+  # end signals
+  def specificQuantities(self):
+    pass
+  # end specificQuantities
+  def tangentGrid(self):
+    pass
+  # end
+  def trapezoid(self):
+    pass
+  # end
+  def type(self):
+    pass
+  # end
+  def xStar(self):
+    pass
+  # end
+  def yStar(self):
+    pass
+  # end
+  def phiWindow(self):
+    pass
+  # end
+  def prompt_for_array(verbose=False):
+    '''Function that handles prompting for array-like data (e.g. molecule = [...])
+    Such data may have arrays within arrays, e.g. 
+
+    molecules = [ EXTINCTIONV2, $                         
+    [ HNO3, HNO3, HNO3_V7, HNO3_V9 ], $
+    [ O2, O_18_O ], $
+    [ O3, O3, O3_V1_3, O3_V2, O3_ASYM_O_18, O3_SYM_O_18 ], $
+    [ SO2, S_32_O2 ] ] 
+
+    The function returns a list: (True|False, string). The first element
+    is True if the parsing worked, False otherwise.The second element is
+    the string you would append to the statement 'molecule = ' in the
+    forwardModel line
+
+    '''
+    if verbose:
+      multiLineString="Enter the *interior* of array, that is, \n" \
+      " start at the first square bracket.\n " \
+      "Typing 'ctrl-d' at any time will abort *all* input (that is\n" \
+      "all input is lost and you will return to the step immediately prior \n" \
+      "to when you started inputting the array.\n\n" \
+      "Use two <returns> in a row to indicate that you're done with\n" \
+      "the your input. \n\n" \
+      "The entry must begin with an open square bracket ('[') and \n" \
+      "end with a closing bracket in such a way that all sub-arrays are closed.\n"\
+      "The prompts will change as you add input to indicate what the parser is expecting\n" \
+      "depending on whether you have a 'hanging' \n" \
+      "closing bracket needed.\n" \
+      "For example, if you've typed in the following\n\n" \
+
+      "[ EXTINCTIONV2, [ HNO3, HNO3, HNO3_V7,<return>\n" \
+      "the prompt will change from \n" \
+        "'] :?'\n to \n" \
+        "']] : ?' to indicate that you now have two subarrays you need to close by typing\n"\
+        "two close brackets\n\n"\
+        "If you're in a (sub)?array you can only exit the input process by hitting 1\n"\
+        "(or more) close brackets. \n"\
+        "The only other way to exit the input process is to nuke it completely \n"\
+        "By using  Ctrl-d\n\n"\
+
+      "Inside the (sub-)array, you nust pass lists of comma-separated values\n"\
+      "Nothing is checked (except that they're comma-separated!)\n" \
+            "this routine gives you the rope to hang yourself\n\n" \
+      "Use <return><return> to signal that you're done\n" \
+      "If you get a "']: ?'" prompt you haven't closed the whole construct\n" \
+        "type a ']' and hit return, then <return><return>\n" \
+
+      haveSeenEOM = False
+      haveSeen2LFs = False 
+      openSqBrktRE = re.compile('^\s*\[')
+      closeSqBrktRE = re.compile('^\s*\[')
+      commaSepRE  = re.compile("^[^,](\w+,)+(\w+)[^,]$")
+
+      print("Start with '['..., comma-seperated lists thereafter")
+      try: 
+        text=input("Start array/molecule entry: ")
+      except EOFError:
+        print("\nInput aborted by user!\n")
+        return((False,''))
+      # end except of try-block
+
+      # keep track of the closed brackets we need.  Update with one ']'
+      # for every unmatched '[' we see in the input. decrement as needed
+      waitingOn=[]
+
+
+      # accumulate parts of the molecules = string
+      array=[]
+      last2=[]
+      cnt=0
+      array.append(text)
+      while not haveSeen2LFs:
+        try: 
+          text=input("... ")
+        except EOFError:
+          # the user has pressed 'ctrl-d' to exit
+          returnString = ""
+          retVal=False
+        # end try
+        if cnt > 1:
+          lastSeen.pop(0)
+        array.append(text.rstrip("\n"))
+        lastSee.append(text)
+        test="".lastSeen 
+        if len(test) == 0:
+          # end of input
+          returnString="".join(array)
+          haveSeen2LFs=True
+        #endif 
+      # endwhile
+      return( (retVal,returnString) )
+  # end cfm_ml_prompt_for_array
+
+# end cfm_fwmdl
+
+
+
+if __name__ == '__main__':
+
+  usage='''%(prog)s [options] configFile signal 
+
+  If `configFile' is present (it must be a pickle file!), skip parsing
+  user input and use the config file to create the L2CF file.
+
+  Otherwise, given user input, write the L2CF file that will be used
+  in a run of the callable forward model. The L2CF file has 2 parts,
+
+  1) The MLSSignals part, wherein the Radiometer, Spectrometer_Type,
+  Band and Signal statements are defined, Since these statements can
+  have quite a few parts, these will be done using prompts from the
+  script with response from the user.
+
+  2) the GlobalSettings part: This is where the `forwardModel'
+  statement will be defined. Since this line may have things like
+  'molecules = ...' statements, this will also be handled by prompting
+  the user
+
+  Some of the configurations of the foward model are boolean or take a
+  single value. The former can be handled by options which will look
+  like --option (e.g. do_conv can be handled as --do_conf. In the
+  script, that will be interpreted as 'do_conv=True', exactly
+  analogous to the IDL syntax /do_conv). similarly for --do_freq_avg,
+  --skipOverlaps, --atmos_der and --allLinesInRadiometer
+
+  Items that take a single value will be passed as, e.g. phiWindow=0
+  (with the units understood to be `degrees'), or tolerance=-1 (with
+  the units understood to be Kelvin)
+
+  Items that require arrays (e.g. molecules, {L,U}SBlblModlecules,
+  modleculeDerivatives) will be handled by prompting (with a lot of
+  help!)
+'''
+
+  p=ap.ArgumentParser(usage=usage, 
+                      formatter_class=ap.RawTextHelpFormatter)
+  p.add_argument('configFile',
+                 nargs="?", 
+                 help="""saved configuration from previous runs
+                 If you pass this file and other arguments/options those will be
+                 added to/overwritten whatever is in `configFile'""")
+  p.add_argument('signal',
+                 nargs="?", 
+                 help="""Signal name, using established MLS nomenclature""",
+                 default=None)
+
+  p.add_argument('-o','--output',
+                 help='''write to this file, instead of the default: %(default)s''',
+                 action='store',
+                 dest='output',
+                 default='config-from-python.pickle')
+  p.add_argument('-v','--verbose',
+                 help='''emit more messages''',
+                 action='store_true',
+                 default=False)
+  
+  # the one required argument
+  p.add_argument('--fwmType',
+                 nargs=1,
+                help='''The `type=' argument in the forwardModel L2CF line. ,
+                 REQUIRED!.,
+                  --- Allowed types ....,
+                 full,
+                 baseline,
+                 linear,
+                 cloudFull,
+                 hybrid,
+                 scan,
+                 scan2d,
+                 switchingMirror,
+                 polarLinear''',
+                 default = None)
+
+  # The boolean arguments
+
+  p.add_argument('--allLinesForRadiometer',
+                 help='''Set /allLinesForRadiometer''',
+                 action='store_true',
+                 default=False)
+  
+  p.add_argument('--allLinesInCatalog',
+                 help='''Set /allLinesInCatalog''',
+                 action='store_true',
+                 default=False)
+
+  p.add_argument('--atmos_der',
+                 help='''Set  /atmos_der ''',
+                 action='store_true',
+                 default=False)
+  
+  p.add_argument('--atmos_second_der',
+                 help='''Set  /atmos_second_der''',
+                 action='store_true',
+                 default=False)
+  
+  p.add_argument('--default_spectroscopy',
+                 help='''Set  /default_spectroscopy''',
+                 action='store_true',
+                 default=False)
+  
+  p.add_argument('--differentialScan',
+                 help='''Set  /differentialScan''',
+                 action='store_true',
+                 default=False)
+  
+  p.add_argument('--do_baseline',
+                 help='''Set  /do_baseline''',
+                 action='store_true',
+                 default=False)
+  
+  p.add_argument('--do_conv',
+                 help='''Set  /do_conv''',
+                 action='store_true',
+                 default=False)
+  
+  p.add_argument('--do_freq_avg',
+                 help='''Set  /do_freq_avg''',
+                 action='store_true',
+                 default=False)
+  
+  p.add_argument('--do_1d',
+                 help='''Set  /do_1d''',
+                 action='store_true',
+                 default=False)
+  
+  p.add_argument('--forceSidebandFraction',
+                 help='''Set  /forceSidebandFraction''',
+                 action='store_true',
+                 default=False)
+  
+  p.add_argument('--ignoreHessian',
+                 help='''Set  /ignoreHessian''',
+                 action='store_true',
+                 default=False)
+  
+  p.add_argument('--incl_cld',
+                 help='''Set  /incl_cld''',
+                 action='store_true',
+                 default=False)
+  
+  p.add_argument('--lockBins',
+                 help='''Set  /lockBins''',
+                 action='store_true',
+                 default=False)
+  
+  p.add_argument('--no_dup_mol',
+                 help='''Set  /no_dup_mol''',
+                 action='store_true',
+                 default=False)
+  
+  p.add_argument('--noMagneticField',
+                 help='''Set  /noMagneticField''',
+                 action='store_true',
+                 default=False)
+  
+  p.add_argument('--pathNorm',
+                 help='''Set  /pathNorm''',
+                 action='store_true',
+                 default=False)
+  
+  p.add_argument('--polarized',
+                 help='''Set  /polarized''',
+                 action='store_true',
+                 default=False)
+  
+  p.add_argument('--refract',
+                 help='''Set  /refract''',
+                 action='store_true',
+                 default=False)
+  
+  p.add_argument('--scanAverage',
+                 help='''Set  /scanAverage''',
+                 action='store_true',
+                 default=False)
+  
+  p.add_argument('--skipOverlaps',
+                 help='''Set  /skipOverlaps''',
+                 action='store_true',
+                 default=False)
+  
+  p.add_argument('--switchingMirror',
+                 help='''Set  /switchingMirror''',
+                 action='store_true',
+                 default=False)
+  
+  p.add_argument('--spect_der',
+                 help='''Set  /spect_der''',
+                 action='store_true',
+                 default=False)
+  
+  p.add_argument('--temp_der',
+                 help='''Set  /temp_der''',
+                 action='store_true',
+                 default=False)
+  
+  p.add_argument('--transformMIFextinction',
+                 help='''Set  /transformMIFextinction''',
+                 action='store_true',
+                 default=False)
+  
+  p.add_argument('--transformMIFRHI',
+                 help='''Set  /transformMIFRHI''',
+                 action='store_true',
+                 default=False)
+  
+  p.add_argument('--useTScat',
+                 help='''Set  /useTScat''',
+                 action='store_true',
+                 default=False)
+  
+  # boolean keywords 
+  booleanKeywords = ['allLinesForRadiometer',
+                     'allLinesInCatalog',
+                     'atmos_der',
+                     'atmos_second_der',
+                     'default_spectroscopy',
+                     'differentialScan',
+                     'do_baseline',
+                     'do_conv',
+                     'do_freq_avg',
+                     'do_1d',
+                     'forceSidebandFraction',
+                     'ignoreHessian',
+                     'incl_cld',
+                     'lockBins',
+                     'no_dup_mol',
+                     'noMagneticField',
+                     'pathNorm',
+                     'polarized',
+                     'refract',
+                     'scanAverage',
+                     'skipOverlaps',
+                     'switchingMirror',
+                     'spect_der',
+                     'temp_der',
+                     'transformMIFextinction',
+                     'transformMIFRHI',
+                     'useTScat']
+  from cfm_makel2cf import fwmdl as fwmdl
+  l2cf=fwmdl()
+
+  # Keywords that require numeric arguments
+  # name: (dimension, allowed keywords)
+  numericKeywords={ 'frqTol' : ('frequency', ['KHz','MHz','GHz','THz']),
+                    'linearSideband': ('dimensionless',""),
+                    'nabterms': ('dimensionless',""),
+                    'nazimuthangles': ('dimensionless',""),
+                    'ncloudspecies': ('dimensionless',""),
+                    'nmodelsurfs': ('dimensionless',""),
+                    'nscatteringangles': ('dimensionless',""),
+                    'ncloudspecies': ('dimensionless',""),
+                    'nsizebins': ('dimensionless',""),
+                    'referenceMIF': ('dimensionless',""),
+                    'tolerance': ('temperature',['F','C','K']), # Do they allow Fahrenheit?
+                    'TScatMIF': ('dimensionless',"")}
+  
+  # Keywords that require array like arguments (.e.g molecule=)
+
+  
+  # Keywords that require other sorts of the arguments. These will be
+  # handled by their own functions
+  theRest={'binSelectors':fwmdl.binSelectors,
+           'cloud_der':fwmdl.cloud_der,
+           'i_saturation':fwmdl.i_saturation,
+           'integrationGrid':fwmdl.integrationGrid,
+           'MIFTangent':fwmdl.MIFTangent,
+           'module':fwmdl.module,
+           'signals':fwmdl.signals,
+           'specificQuantities':fwmdl.specificQuantities,
+           'tangentGrid':fwmdl.tangentGrid,
+           'trapezoid':fwmdl.trapezoid,
+           'type':fwmdl.type,
+           'xStar':fwmdl.xStar,
+           'yStar':fwmdl.yStar,
+           'phiWindow':fwmdl.phiWindow}
+
+              
+  
+  # contains the MLSSignals part of the configuration
+  # for the pat of the signals database that isn't
+  # expected to change.
+  signals1Conf={} 
+  
+  # Contains the part that will change
+  signals2Conf={}
+                                
+
+  # the GlobalSettings part of the configuration. (just a single
+  # statement defining the FWMDL?
+  globalSettingsConf={}
+
+  args=p.parse_args()
+  if args.configFile:
+    try:
+      ff=file.open(args.configFile,'rb')
+    except (OSError, IOError) as e:
+      print(f"open of {args.configFile} failed {e}")
+      sys.exit(1)
+    # end except
+    try: 
+      allConfig=pickle.load(ff)
+    except:
+      print(f"{args.configFile} doesn't seem to be a pickle file!")
+      sys.exit(2)
+    # end except
+
+    
+  
+#
+# $Id$
+#
+# $Name$
+#
+# Modifications:
+# $Log$
+#                
+# Copyright <year>, by the California Institute of
+# Technology. ALL RIGHTS RESERVED. United States Government
+# Sponsorship acknowledged. Any commercial use must be
+# negotiated with the Office of Technology Transfer at the
+# California Institute of Technology. 
+#
+# This software may be subject to U.S. export control
+# laws. By accepting this software, the user agrees to
+# comply with all applicable U.S. export laws and
+# regulations. User has the responsibility to obtain export
+# licenses, or other export authority as may be required
+# before exporting such information to foreign countries or
+# providing access to foreign persons. 
+#
+# Last Modified : Thu Apr 12 10:41:13 2012
+@
+
+
+1.1.2.2
+log
+@Continuing work
+@
+text
+@a481 3
+  if args.signal:
+    pass
+  
+d486 1
+a486 1
+# $Id: cfm_makel2cf.py,v 1.1.2.1 2021/06/30 14:57:47 whdaffer Exp $
+d488 1
+a488 1
+# $Name: cfm-single-freq-0-1 $
+d491 1
+a491 4
+# $Log: cfm_makel2cf.py,v $
+# Revision 1.1.2.1  2021/06/30 14:57:47  whdaffer
+# Initial revision
+#
+@
+
+
+1.1.2.3
+log
+@Saving array parsing code in fwmdl class
+@
+text
+@d171 1
+a171 1
+from cfm_makel2cf import fwmdl as fwmdl
+d179 2
+a180 2
+  If `configFile' is present (it must be a pickle file!). If there is
+  any other user input, modify the contents of the config file.
+d182 2
+a183 7
+  Then write the L2CF file that will be used in a run of the callable
+  forward model. This file will be written to a generic filename
+  'cfm.l2cf' unless the user modifies that using -o/--output
+  keyword. Whatever the name, the file will be overwritten unless
+  -c/--check is set.
+
+  The output L2CF file has 2 parts,
+a212 1
+
+d222 1
+a227 18
+
+  p.add_argument('-o','--output',
+                 help='''write to this picklfile, instead of the default: %(default)s''',
+                 action='store',
+                 dest='output',
+                 default='cfm.pickle')
+
+  p.add_argument('-l','--l2cf',
+                 help='''write to this l2cf, instead of the default: %(default)s''',
+                 action='store',
+                 dest='output',
+                 default='cfm.l2cf')
+  
+  p.add_argument('-c','--check',
+                 help='''Don't write the output l2cf file if it exists''',
+                 action='store_true',
+                 default=False)
+
+d415 3
+a483 5
+
+
+  l2cf=fwmdl(signal=args.signal, radiometer=args.radiometer,
+             spectometerType=args.spectrometerType,
+             band=args.band)
+a485 2
+
+
+d489 1
+a489 1
+# $Id: cfm_makel2cf.py,v 1.1.2.2 2021/07/13 15:16:52 whdaffer Exp $
+d491 1
+a491 1
+# $Name:  $
+a494 3
+# Revision 1.1.2.2  2021/07/13 15:16:52  whdaffer
+# Continuing work
+#
+@
+
+
+1.1.2.4
+log
+@Stirring in cfm_fwdmdl.py
+@
+text
+@d5 167
+a171 1
+from cfm_fwdmdl import cfm_fwdmdl as fwdmdl
+a173 3
+def printConfiguration(fwdmdl):
+    fwdmdl.printConfig()
+# end printConfiguration
+d177 1
+a177 1
+    usage='''%(prog)s [options] fwmdlDesignation configFile 
+d179 2
+a180 2
+    If `configFile' is present (it must be a pickle file!). If there is
+    any other user input, modify the contents of the config file.
+d182 272
+a453 360
+    Then write the L2CF file that will be used in a run of the callable
+    forward model. This file will be written to a generic filename
+    'cfm.l2cf' unless the user modifies that using -o/--output
+    keyword. Whatever the name, the file will be overwritten unless
+    -c/--check is set.
+
+    The output L2CF file has 2 parts,
+
+    1) The MLSSignals part, wherein the Radiometer, Spectrometer_Type,
+    Band and Signal statements are defined, Since these statements can
+    have quite a few parts, these will be done using prompts from the
+    script with response from the user.
+
+    2) the GlobalSettings part: This is where the `forwardModel'
+    statement will be defined. Since this line may have things like
+    'molecules = ...' statements, this will also be handled by prompting
+    the user
+
+    Some of the configurations of the foward model are boolean or take a
+    single value. The former can be handled by options which will look
+    like --option (e.g. do_conv can be handled as --do_conf. In the
+    script, that will be interpreted as 'do_conv=True', exactly
+    analogous to the IDL syntax /do_conv). similarly for --do_freq_avg,
+    --skipOverlaps, --atmos_der and --allLinesInRadiometer
+
+    Items that take a single value will be passed as, e.g. phiWindow=0
+    (with the units understood to be `degrees'), or tolerance=-1 (with
+    the units understood to be Kelvin)
+
+    Items that require arrays (e.g. molecules, {L,U}SBlblModlecules,
+    modleculeDerivatives) will be handled by prompting (with a lot of
+    help!)
+  '''
+
+    p=ap.ArgumentParser(usage=usage, 
+                        formatter_class=ap.RawTextHelpFormatter)
+
+    p.add_argument('fwdmdlDesignation',
+                   nargs=1, 
+                   help="""The designation for the `fowardModel' l2cf line"""
+                   '''e.g., if the `forwardModel line in the l2cf is to read `sidsFwm:ForwoardModel...', '''
+                   '''then this parameter will be the string "sidsFwm"''')
+
+    p.add_argument('fwmType',
+                   nargs=1,
+                  help='''The `type=' argument in the forwardModel L2CF line. ,
+                   REQUIRED!.,
+                    --- Allowed types ....,
+                   full,
+                   baseline,
+                   linear,
+                   cloudFull,
+                   hybrid,
+                   scan,
+                   scan2d,
+                   switchingMirror,
+                   polarLinear''',
+                   default = None)
+    
+    p.add_argument('configFile',
+                   nargs="?", 
+                   help="""saved configuration from previous runs
+                   If you pass this file and other arguments/options those will be
+                   added to/overwritten whatever is in `configFile'""")
+
+    p.add_argument('--signal',
+                   nargs=1,
+                   help="""Signal name, using established MLS nomenclature""",
+                   action='store',
+                   dest='signal',
+                   default=None)
+    p.add_argument('--radiometer',
+                   nargs=1,
+                   help='''The name of the radiometer''',
+                   action='store',
+                   dest='radiometer',
+                   default=None)
+    p.add_argument('--spectrometerType',
+                   nargs=1,
+                   help='''The name of the spectrometerType''',
+                   action='store',
+                   dest='spectrometerType',
+                   default=None)
+    p.add_argument('--band',
+                   nargs=1,
+                   help='''The name of the band''',
+                   action='store',
+                   dest='band',
+                   default=None)
+
+    p.add_argument('--channels',
+                   nargs=1,
+                   help='''a string containing the channels''',
+                   action='store',
+                   dest='channels',
+                   default=None)
+    
+    p.add_argument('-p','--pickleFile',
+                   help='''write to this picklefile. If `configFile' is present, '''
+                   '''the output picklefile will have the same name, '''
+                   '''unless this keyword is set. Default %(default)s''',
+                   action='store',
+                   dest='output',
+                   default='cfm.pickle')
+
+    p.add_argument('-l','--l2cfFile',
+                   help='''write to this l2cf, instead of the default: %(default)s''',
+                   action='store',
+                   dest='output',
+                   default='cfm.l2cf')
+
+    p.add_argument('--checkL2CF',
+                   help='''Don't write the output l2cf file if it exists''',
+                   action='store_true',
+                   default=False)
+
+    p.add_argument('--checkPickle',
+                   help='''Don't write the output l2cf file if it exists''',
+                   action='store_true',
+                   default=False)
+
+    p.add_argument('-v','--verbose',
+                   help='''emit more messages''',
+                   action='store_true',
+                   default=False)
+
+    # the one required argument
+
+    # The boolean arguments
+    p.add_argument('--overwrite',
+                   help='''If set and there is a config file that has '''
+                   '''values for `signal',`radiometer',`spectrometerType','''
+                   '''`band', and/or `channels' that differ from what's passed on the '''
+                   '''command line, overwrite them after issuing a message. '''
+                   '''The default is to prompt for each of these `protected' quantities'''
+                   '''that differ''',
+                   action='store_true',
+                   dest='overwrite',
+                   default=False)
+
+    p.add_argument('--allLinesForRadiometer',
+                   help='''Boolean; Set /allLinesForRadiometer''',
+                   action='store_true',
+                   default=False)
+
+    p.add_argument('--allLinesInCatalog',
+                   help='''Boolean; Set /allLinesInCatalog''',
+                   action='store_true',
+                   default=False)
+
+    p.add_argument('--atmos_der',
+                   help='''Boolean; Set  /atmos_der ''',
+                   action='store_true',
+                   default=False)
+
+    p.add_argument('--atmos_second_der',
+                   help='''Boolean; Set  /atmos_second_der''',
+                   action='store_true',
+                   default=False)
+
+    p.add_argument('--default_spectroscopy',
+                   help='''Boolean; Set  /default_spectroscopy''',
+                   action='store_true',
+                   default=False)
+
+    p.add_argument('--differentialScan',
+                   help='''Boolean; Set  /differentialScan''',
+                   action='store_true',
+                   default=False)
+
+    p.add_argument('--do_baseline',
+                   help='''Boolean; Set  /do_baseline''',
+                   action='store_true',
+                   default=False)
+
+    p.add_argument('--do_conv',
+                   help='''Boolean; Set  /do_conv''',
+                   action='store_true',
+                   default=False)
+
+    p.add_argument('--do_freq_avg',
+                   help='''Boolean; Set  /do_freq_avg''',
+                   action='store_true',
+                   default=False)
+
+    p.add_argument('--do_1d',
+                   help='''Boolean; Set  /do_1d''',
+                   action='store_true',
+                   default=False)
+
+    p.add_argument('--forceSidebandFraction',
+                   help='''Boolean; Set  /forceSidebandFraction''',
+                   action='store_true',
+                   default=False)
+
+    p.add_argument('--ignoreHessian',
+                   help='''Boolean; Set  /ignoreHessian''',
+                   action='store_true',
+                   default=False)
+
+    p.add_argument('--incl_cld',
+                   help='''Boolean; Set  /incl_cld''',
+                   action='store_true',
+                   default=False)
+
+    p.add_argument('--lockBins',
+                   help='''Boolean; Set  /lockBins''',
+                   action='store_true',
+                   default=False)
+
+    p.add_argument('--no_dup_mol',
+                   help='''Boolean; Set  /no_dup_mol''',
+                   action='store_true',
+                   default=False)
+
+    p.add_argument('--noMagneticField',
+                   help='''Boolean; Set  /noMagneticField''',
+                   action='store_true',
+                   default=False)
+
+    p.add_argument('--pathNorm',
+                   help='''Boolean; Set  /pathNorm''',
+                   action='store_true',
+                   default=False)
+
+    p.add_argument('--polarized',
+                   help='''Boolean; Set  /polarized''',
+                   action='store_true',
+                   default=False)
+
+    p.add_argument('--refract',
+                   help='''Boolean; Set  /refract''',
+                   action='store_true',
+                   default=False)
+
+    p.add_argument('--scanAverage',
+                   help='''Boolean; Set  /scanAverage''',
+                   action='store_true',
+                   default=False)
+
+    p.add_argument('--skipOverlaps',
+                   help='''Boolean; Set  /skipOverlaps''',
+                   action='store_true',
+                   default=False)
+
+    p.add_argument('--switchingMirror',
+                   help='''Boolean; Set  /switchingMirror''',
+                   action='store_true',
+                   default=False)
+
+    p.add_argument('--spect_der',
+                   help='''Boolean; Set  /spect_der''',
+                   action='store_true',
+                   default=False)
+
+    p.add_argument('--temp_der',
+                   help='''Boolean; Set  /temp_der''',
+                   action='store_true',
+                   default=False)
+
+    p.add_argument('--transformMIFextinction',
+                   help='''Boolean; Set  /transformMIFextinction''',
+                   action='store_true',
+                   default=False)
+
+    p.add_argument('--transformMIFRHI',
+                   help='''Boolean; Set  /transformMIFRHI''',
+                   action='store_true',
+                   default=False)
+
+    p.add_argument('--useTScat',
+                   help='''Boolean; Set  /useTScat''',
+                   action='store_true',
+                   default=False)
+
+    # boolean keywords 
+    booleanKeywords = ['allLinesForRadiometer',
+                       'allLinesInCatalog',
+                       'atmos_der',
+                       'atmos_second_der',
+                       'default_spectroscopy',
+                       'differentialScan',
+                       'do_baseline',
+                       'do_conv',
+                       'do_freq_avg',
+                       'do_1d',
+                       'forceSidebandFraction',
+                       'ignoreHessian',
+                       'incl_cld',
+                       'lockBins',
+                       'no_dup_mol',
+                       'noMagneticField',
+                       'pathNorm',
+                       'polarized',
+                       'refract',
+                       'scanAverage',
+                       'skipOverlaps',
+                       'switchingMirror',
+                       'spect_der',
+                       'temp_der',
+                       'transformMIFextinction',
+                       'transformMIFRHI',
+                       'useTScat']
+    # Keywords that require numeric arguments
+    # name: (dimension, allowed keywords)
+    numericKeywords={ 'frqTol' : ('frequency', ['KHz','MHz','GHz','THz']),
+                      'linearSideband': ('dimensionless',""),
+                      'nabterms': ('dimensionless',""),
+                      'nazimuthangles': ('dimensionless',""),
+                      'ncloudspecies': ('dimensionless',""),
+                      'nmodelsurfs': ('dimensionless',""),
+                      'nscatteringangles': ('dimensionless',""),
+                      'ncloudspecies': ('dimensionless',""),
+                      'nsizebins': ('dimensionless',""),
+                      'referenceMIF': ('dimensionless',""),
+                      'tolerance': ('temperature',['F','C','K']), # Do they allow Fahrenheit?
+                      'TScatMIF': ('dimensionless',"")}
+
+    # Keywords that require array like arguments (.e.g molecule=)
+
+
+
+    # contains the MLSSignals part of the configuration
+    # for the pat of the signals database that isn't
+    # expected to change.
+    signals1Conf={} 
+
+    # Contains the part that will change
+    signals2Conf={}
+
+
+    # the GlobalSettings part of the configuration. (just a single
+    # statement defining the FWMDL?
+    globalSettingsConf={}
+
+    args=p.parse_args()
+    if args.configFile:
+        try:
+            configFile=args.configFile
+            print(f'================== configFile = {configFile} ==================')
+            fd=open(configFile,'rb')
+        except (OSError, IOError) as e:
+            print(f"open of {args.configFile} failed {e}")
+            sys.exit(1)
+        # end except
+        try: 
+          allConfig=pickle.load(fd)
+          fd.close()
+          fwdmdl=fwdmdl(config=allConfig)
+        except:
+          print(f"{args.configFile} doesn't seem to be a pickle file!")
+          sys.exit(2)
+        # end except
+    else:
+        if args.verbose:
+            print("=================== No configfile! ===============")
+        # Instantiate the instance to get ready to accept arguments
+        # passed in, since there's not configFile
+        fwdmdl=fwdmdl()
+    argsDict=vars(args)
+d455 17
+d473 37
+a509 27
+
+    # Set these here. setArgs depends 
+    fwdmdl.verbose=args.verbose
+    fwdmdl.overwrite=args.overwrite
+    # This should work whether there's a configFile or not.    
+    fwdmdl.setArgs(argsDict)
+    fwdmdl.printConfig(showTrue=True)
+    sys.exit(0)
+  
+
+    # Keywords that require other sorts of the arguments. These will be
+    # handled by their own functions
+    theRest={'binSelectors':fwmdl.binSelectors,
+             'cloud_der':fwmdl.cloud_der,
+             'i_saturation':fwmdl.i_saturation,
+             'integrationGrid':fwmdl.integrationGrid,
+             'MIFTangent':fwmdl.MIFTangent,
+             'module':fwmdl.module,
+             'signals':fwmdl.signals,
+             'specificQuantities':fwmdl.specificQuantities,
+             'tangentGrid':fwmdl.tangentGrid,
+             'trapezoid':fwmdl.trapezoid,
+             'type':fwmdl.type,
+             'xStar':fwmdl.xStar,
+             'yStar':fwmdl.yStar,
+             'phiWindow':fwmdl.phiWindow}
+
+d516 1
+a516 1
+# $Id: cfm_makel2cf.py,v 1.1.2.3 2021/08/16 17:34:38 whdaffer Exp $
+a521 3
+# Revision 1.1.2.3  2021/08/16 17:34:38  whdaffer
+# Saving array parsing code in fwmdl class
+#
+@
+
+
+1.1.2.5
+log
+@Continuing work. Almost there.
+@
+text
+@d27 4
+a30 5
+    1) The MLSSignals part, wherein the forward model designation,
+    Radiometer, Spectrometer_Type, Band and Signals statements are
+    defined, Some of these statements can have quite a few parts, these
+    will be done using prompts from the script with response from the
+    user.
+d37 6
+a42 19
+    The user may specify some of the parts of the L2CF statement in
+    the config file (which is a python picklefile) and some on the
+    command line. In all cases ecept for the exceptions I will soon
+    discuss, the command line arguments take precedence. For the
+    arguments `fwdmdlDesignation', `signals', `radiometer',
+    `spectrometerType', `band', and `channels', if they have values in
+    the config file, will occasion a prompt to make sure the user wants to change them. 
+
+    Doing it this way allows the user to use a previous version of the
+    configuration, but change a small(ish) number of configuration
+    settings without having to rewrite everything.
+
+    Some of the configurations of the foward model are boolean or take
+    a single value. The former can be handled by options which will
+    look like --option (e.g. do_conv can be handled as --do_conf. In
+    the script, that will be interpreted as 'do_conv=True', exactly
+    analogous to the IDL syntax /do_conv, which is exactly how they
+    will appear in the finished l2cf). similarly for --do_freq_avg,
+    --skipOverlaps, --atmos_der and --allLinesInRadiometer. 
+d56 1
+a56 1
+    p.add_argument('designation',
+d59 1
+a59 1
+                   '''e.g., if the `forwardModel line in the l2cf is to read `sidsFwm:ForwardModel...', '''
+d62 1
+a62 1
+    p.add_argument('type',
+a65 2
+                  So, if the line is sidsFwm:FowardModle,type=full... then this field would== 'full',
+
+d84 1
+a84 1
+    p.add_argument('--signals',
+d86 1
+a86 1
+                   help="""Signal(s) name(s), using established MLS nomenclature""",
+d88 1
+a88 1
+                   dest='signals',
+d121 1
+a121 1
+                   dest='pickleFile',
+d127 1
+a127 1
+                   dest='l2cfFile',
+d150 1
+a150 1
+                   '''values for `signals',`radiometer',`spectrometerType','''
+a380 1
+    
+d382 1
+a382 1
+    # Set these here. setArgs depends on them.
+d388 2
+d393 14
+a406 30
+    theRest={'binSelectors':fwdmdl.binSelectors,
+             'cloud_der':fwdmdl.cloud_der,
+             'i_saturation':fwdmdl.i_saturation,
+             'integrationGrid':fwdmdl.integrationGrid,
+             'MIFTangent':fwdmdl.MIFTangent,
+             'module':fwdmdl.module,
+             'signals':fwdmdl.signals,
+             'specificQuantities':fwdmdl.specificQuantities,
+             'tangentGrid':fwdmdl.tangentGrid,
+             'trapezoid':fwdmdl.trapezoid,
+             'type':fwdmdl.type,
+             'xStar':fwdmdl.xStar,
+             'yStar':fwdmdl.yStar,
+             'phiWindow':fwdmdl.phiWindow}
+
+    ## Wrap it up, write stuff out -----------------------------------------------------
+
+    # Save the configuration
+    yesno=fwdmdl.YesNo(f"Write {fwdmdl.pickleFile}?")
+    if yesno:
+        fwdmdl.writePicklefile()
+
+    # Write l2cf file
+    yesno=fwdmdl.YesNo(f"Write {fwdmdl.l2cfFile}")
+    if yesno:
+        fwdmdl.writeL2CFFile()
+        
+    sys.exit(0)
+  
+
+d414 1
+a414 1
+# $Id: cfm_makel2cf.py,v 1.1.2.4 2021/08/17 15:46:04 whdaffer Exp $
+a419 3
+# Revision 1.1.2.4  2021/08/17 15:46:04  whdaffer
+# Stirring in cfm_fwdmdl.py
+#
+@
+
+

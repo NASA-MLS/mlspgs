@@ -1,0 +1,585 @@
+head	1.9;
+access;
+symbols
+	v5-02-NRT-19:1.9
+	v6-00:1.9
+	v5-02-NRT-18:1.9
+	v5-02:1.9
+	v5-01-NRT-17:1.9
+	v5-01-NRT-16:1.9
+	v5-01-NRT-15:1.9
+	v5-01-NRT-14:1.9
+	neuralnetworks-1-0:1.9.0.4
+	cfm-single-freq-0-1:1.9.0.2
+	v5-01:1.9
+	v5-00:1.9
+	v4-23-TA133:1.8.0.8
+	mus-emls-1-70:1.8.0.6
+	rel-1-0-englocks-work:1.8.0.4
+	VUMLS1-00:1.8
+	VPL1-00:1.8
+	V4-22-NRT-08:1.8
+	VAM1-00:1.8
+	V4-21:1.8.0.2
+	V4-13:1.8
+	V4-12:1.8
+	V4-11:1.8
+	V4-10:1.8
+	V3-43:1.3
+	M4-00:1.7
+	V3-41:1.3
+	V3-40-PlusGM57:1.3.0.2
+	V3-33:1.3
+	V3-31:1.3
+	V3-30-NRT-05:1.3
+	cfm-01-00:1.3
+	V3-30:1.3
+	V3-20:1.3
+	V3-10:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.9
+date	2019.05.23.00.46.42;	author vsnyder;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2013.06.04.00.54.24;	author vsnyder;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2013.03.28.19.16.25;	author vsnyder;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2013.03.25.22.53.44;	author vsnyder;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2012.10.23.02.01.26;	author vsnyder;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2012.03.30.20.41.42;	author vsnyder;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2009.09.17.18.27.11;	author vsnyder;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2009.07.29.03.08.53;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2008.06.11.20.14.55;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.9
+log
+@Add referenced papers to 'References' line below subject
+@
+text
+@\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9.0in
+
+\newcommand{\docname}{\bf wvs-074r7}
+\newcommand{\docdate}{22 May 2019}
+
+\usepackage{graphicx}
+
+\usepackage{floatflt}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Van\\
+Subject: \>Tangent heights and angles for scattering calculations\\
+From: \>Van Snyder\\
+References: \>wvs-068, wvs-070, wvs-071\\
+\end{tabbing}
+
+\parindent 0pt \parskip 8pt
+\vspace{-20pt}
+
+\newcommand{\pC}{{\bfseries\sffamily C}}
+\newcommand{\pO}{{\bfseries\sffamily O}}
+\newcommand{\pP}{{\bfseries\sffamily P}}
+
+We wish to calculate paths to \pP\ at various angles, along which
+radiation arriving at \pP\ would be scattered toward an observer at \pO. 
+Ultimately, this radiation will be convolved with the scattering phase
+function at \pP\ to calculate radiation scattered at \pP\ in the
+direction of \pO, but that is the subject of memos wvs-068, wvs-070 and
+wvs-071.
+
+Consider first the case when rays do not reflect from the Earth's surface. 
+
+\ifnum\pdfoutput>0
+{\includegraphics[width=450pt,height=500pt,clip=true,keepaspectratio=true,
+viewport=20 126 553 600]{./wvs-074-scatter-1}}
+\else
+{\includegraphics[width=450pt,height=500pt,clip=true,keepaspectratio=true,
+bb=20 126 553 600]{./wvs-074-scatter-1}}
+\fi
+
+We wish to calculate the angles $\xi_1$ and $\xi_2$ with respect to the
+horizon defined by the line \pP\pO, to characterize rays along which to
+calculate radiative transfer to \pP\ at specified coordinates $(H,\phi)$,
+where $H$ is height measured from the center \pC\ of the equivalent
+circular earth and $\phi$ is the angle at \pC\ measured anti-clockwise
+from the reference (red) line, which is normal to the horizon and passes
+through the center of the equivalent circular Earth.  The angles $\xi_1$
+and $\xi_2$ at \pP\ between the ray and the line \pP\pO, measured
+anti-clockwise at \pP\ from the horizon, are calculated from $H,\,\phi$,
+and the tangent heights $Ht_1$ and $Ht_2$ at the tangent points $t_1$ and
+$t_2$, which in turn are calculated from specified log pressure $\zeta$
+using hydrostatic equilibrium.  Although $\zeta$ is the same at $t_1$ and
+$t_2$, $Ht_1$ and $Ht_2$ are not necessarily equal because of the
+possibility of different temperature profiles below $t_1$ and $t_2$.  In
+any case, neither $Ht_1$ nor $Ht_2$ exceeds $H$.
+
+Radiation can arrive at \pP\ along two rays that pass through $t_1$ and
+$t_2$. Along one ray the angle at \pP\ is $\xi_1$, and along the other it
+is $\xi_2$.  Radiation can arrive at \pP\ along opposite rays, that would
+pass through $t_1$ and $t_2$ if they continued past \pP, at angles
+$\pi+\xi_1$ and $\pi+\xi_2$.
+
+The angle $\psi_1 = \angle t_1$\pC\pP\ at \pC\ between lines to the limb
+ray tangent point $t_1$ and the scattering point \pP\ is
+%
+\begin{equation}
+  \psi_1 = \cos^{-1} \frac{Ht_1}{H} \,.
+\end{equation}
+%
+and similarly for the angle $\psi_2 = \angle$\pP\pC$t_2$.  The value of
+$\xi_1$ at which a ray arriving at \pP\ from the direction nearest to \pO\
+is tangent to the Earth's surface is denoted $\xi_c$ (not shown in the
+figure).  If $|\xi_1| > |\xi_c|$, the ray is an earth-intersecting ray,
+described below.  The value of $\xi_c$ is
+%
+\begin{equation}
+%  \xi_c = -\left(\frac\pi2 - \phi - \psi(R) \right)\,,\,\,
+   \xi_c = \phi - \psi(R)\,,\,\,
+    \phi-\frac\pi2 \leq \xi_c \leq 0\,,\,\,\psi(R) = \cos^{-1} \frac{R}H\,,
+\end{equation}
+%
+where $R$ is the radius of the equivalent circular earth.  The angle
+$\xi_1$ below the horizon of the ray arriving at \pP\ from the direction
+nearer to \pO\ is
+%
+\begin{equation}
+  \xi_1 = \phi - \psi_1\,,\,\, \xi_c \leq \xi_1 \leq 0\,.
+\end{equation}
+%
+The angle $\xi_2$ below the horizon of the ray arriving at \pP\ from the
+direction opposite \pO\ is
+%
+\begin{equation}
+  \xi_2 = \psi_1 + \psi_2 - \pi + \xi_1 = \psi_2 + \phi-\pi\,,\,\,
+    -\pi \leq \xi_2 \leq -2 \psi(R) + \xi_c\,.
+\end{equation}
+%
+If we assume $Ht_1 = Ht_2$, that is, the same equivalent circular earth is
+sufficiently accurate at both limb tangent angles, this becomes
+%
+\begin{equation}
+  \xi_2 = \psi_1 + \phi-\pi\,,\,\,
+    -\pi \leq \xi_2 \leq -2 \psi(R) + \xi_c = 
+      -\left(\frac\pi2 - \phi + \psi(R) \right)\,.
+\end{equation}
+%
+The angles at \pC\ from the reference line to the tangent points $t_1$
+and $t_2$ are $\xi_1$ and $\psi_1+\psi_2+\xi_1 = \pi+\xi_2$, respectively
+(remember that $\xi_1$ is negative in the figure).
+
+\newpage
+
+Consider now the case when rays reflect from the Earth's surface ($|\xi_3| >
+|\xi_c|$).
+
+\ifnum\pdfoutput>0
+{\includegraphics[width=450pt,height=500pt,clip,clip=true,keepaspectratio=true,
+viewport=89 126 560 625]{./wvs-074-scatter-2}}
+\else
+{\includegraphics[width=450pt,height=500pt,clip,clip=true,keepaspectratio=true,
+bb=89 126 560 625]{./wvs-074-scatter-2}}
+\fi
+
+The tangent point for a ray reflected from the Earth's surface would be
+below the surface.  Therefore the height cannot be specified by $\zeta$
+and hydrostatic equilibrium.  Rather $\xi_3$ is specified and $Ht_3 =
+Ht_4$ is calculated:
+%
+\begin{equation}
+  Ht_3 = H | \cos(\phi-\xi_3)|\,,
+\end{equation}
+%
+The angle $\theta = \angle t_4$\pC$\rho$ at \pC\ between the rays to the
+reflection point $\rho$ and $t_4$ is
+%
+\begin{equation}
+  \theta = \cos^{-1} \frac{Ht_4}R \,.
+\end{equation}
+%
+and the angle $\angle t_3$\pC$\rho$ has the same magnitude. The angle at
+\pC\ between rays to the direct and scattered ray tangents $t_3$ and
+$t_4$ is therefore $2 \theta$.
+
+The angles at \pC\ from the reference line to the rays to the tangent
+points $t_3$ and $t_4$ are $\xi_3$ and $2\theta+\xi_3$, respectively.
+
+The same formulae are valid when $\xi_3 < -\phi$, that is, when the
+incident ray arrives at $\rho$ from the direction opposite to the
+direction from \pP\ to \pO.
+
+\label{lastpage}
+\end{document}
+
+% $Id: wvs-074.tex,v 1.8 2013/06/04 00:54:24 vsnyder Exp $
+
+% $Log: wvs-074.tex,v $
+% Revision 1.8  2013/06/04 00:54:24  vsnyder
+% Correct mistake Igor found in equation for xi_c
+%
+% Revision 1.7  2013/03/28 19:16:25  vsnyder
+% Improve wording as Igor suggested
+%
+% Revision 1.6  2013/03/25 22:53:44  vsnyder
+% Improve exposition and graphics
+%
+% Revision 1.5  2012/10/23 02:01:26  vsnyder
+% Correct some typos
+%
+% Revision 1.4  2012/03/30 20:41:42  vsnyder
+% Repair graphics stuff
+%
+% Revision 1.3  2009/09/17 18:27:11  vsnyder
+% Typo
+%
+% Revision 1.2  2009/07/29 03:08:53  vsnyder
+% R2
+%
+@
+
+
+1.8
+log
+@Correct mistake Igor found in equation for xi_c
+@
+text
+@d8 2
+a9 2
+\newcommand{\docname}{\bf wvs-074r6}
+\newcommand{\docdate}{3 June 2013}
+d72 1
+d212 1
+a212 1
+% $Id: wvs-074.tex,v 1.7 2013/03/28 19:16:25 vsnyder Exp $
+d215 3
+@
+
+
+1.7
+log
+@Improve wording as Igor suggested
+@
+text
+@d8 2
+a9 2
+\newcommand{\docname}{\bf wvs-074r5}
+\newcommand{\docdate}{28 March 2013}
+d134 2
+a135 1
+  \xi_c = -\left(\frac\pi2 - \phi - \psi(R) \right)\,,\,\,
+d211 1
+a211 1
+% $Id: wvs-074.tex,v 1.6 2013/03/25 22:53:44 vsnyder Exp $
+d214 3
+@
+
+
+1.6
+log
+@Improve exposition and graphics
+@
+text
+@d8 2
+a9 2
+\newcommand{\docname}{\bf wvs-074r4}
+\newcommand{\docdate}{25 March 2013}
+d99 14
+a112 14
+horizon defined by the line from \pP\ to \pO, to characterize rays along
+which to calculate radiative transfer to \pP\ at specified coordinates
+$(H,\phi)$, where $H$ is height measured from the center \pC\ of the
+equivalent circular earth and $\phi$ is the angle at \pC\ measured
+anti-clockwise from the reference (red) line, which is normal to the
+horizon and passes through the center of the equivalent circular Earth. 
+The angles $\xi_1$ and $\xi_2$ at \pP\ between the ray and the observer
+at \pO, measured anti-clockwise at \pP\ from the horizon, are calculated
+from $H,\,\phi$, and the tangent heights $Ht_1$ and $Ht_2$ at the tangent
+points $t_1$ and $t_2$, which in turn are calculated from specified log
+pressure $\zeta$ using hydrostatic equilibrium.  Although $\zeta$ is the
+same at $t_1$ and $t_2$, $Ht_1$ and $Ht_2$ are not necessarily equal
+because of the possibility of different temperature profiles below $t_1$
+and $t_2$.  In any case, neither $Ht_1$ nor $Ht_2$ exceeds $H$.
+d210 1
+a210 1
+% $Id: wvs-074.tex,v 1.5 2012/10/23 02:01:26 vsnyder Exp $
+d213 3
+@
+
+
+1.5
+log
+@Correct some typos
+@
+text
+@d8 2
+a9 2
+\newcommand{\docname}{\bf wvs-074r3}
+\newcommand{\docdate}{22 October 2012}
+d15 30
+d90 4
+d96 1
+d127 5
+a131 3
+and similarly for the angle $\psi_2 = \angle$\pP\pC$t_2$.  The angle
+$\xi_c$ below the horizon of the ray arriving at \pP\ from the direction
+nearest to \pO\ and tangent to the Earth's surface is
+d135 1
+a135 1
+    \phi-\frac\pi2 \leq \xi_c \leq 0\,,\,\,\psi(R) = \cos^{-1} \frac{R}H\,.
+d138 3
+a140 2
+The angle $\xi_1$ below the horizon of the ray arriving at \pP\ from the
+direction nearer to \pO\ is
+d169 2
+a170 1
+Consider now the case when rays reflect from the Earth's surface.
+d172 4
+d178 1
+d210 1
+a210 1
+% $Id: wvs-074.tex,v 1.4 2012/03/30 20:41:42 vsnyder Exp $
+d213 3
+@
+
+
+1.4
+log
+@Repair graphics stuff
+@
+text
+@d8 2
+a9 2
+\newcommand{\docname}{\bf wvs-074r2}
+\newcommand{\docdate}{9 April 2009}
+d82 1
+a82 1
+pass through $t_1$ and $t_t$ if they continued past \pP, at angles
+d145 2
+a146 2
+The angle $\theta = \angle t_3$\pC$\rho$ at \pC\ between the rays to the
+reflection point $\rho$ and $t_3$ is
+d149 1
+a149 1
+  \theta = \cos^{-1} \frac{Ht_3}R \,.
+d152 1
+a152 1
+and the angle $\angle \rho$\pC$t_4$ has the same magnitude. The angle at
+d166 1
+a166 1
+% $Id: wvs-074.tex,v 1.3 2009/09/17 18:27:11 vsnyder Exp $
+d169 3
+@
+
+
+1.3
+log
+@Typo
+@
+text
+@d60 2
+a61 1
+{\includegraphics[width=450pt,height=375pt,clip]{./wvs-074-scatter-1.eps}}
+d133 2
+a134 1
+{\includegraphics[width=450pt,height=400pt,clip]{./wvs-074-scatter-2.eps}}
+d166 1
+a166 1
+% $Id: wvs-074.tex,v 1.2 2009/07/29 03:08:53 vsnyder Exp $
+d169 3
+@
+
+
+1.2
+log
+@R2
+@
+text
+@d55 1
+a55 1
+direction of \pO, but that is the subject of memos wvs-068, wvs-070 nd
+d164 1
+a164 1
+% $Id: wvs-074.tex,v 1.1 2008/06/11 20:14:55 vsnyder Exp $
+d166 4
+a169 1
+% $Log: $
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d8 2
+a9 2
+\newcommand{\docname}{\bf wvs-074}
+\newcommand{\docdate}{27 March 2008}
+d39 1
+a39 1
+To: \>Bill\\
+d44 1
+a44 1
+\parindent 0pt \parskip 10pt
+d47 80
+a126 1
+{\includegraphics[width=474pt,height=563pt,clip]{./wvs-074-scatter.eps}}
+d130 1
+a130 2
+Assume a set of points are given, each one specified by its height and
+angle from a reference line.
+d132 1
+a132 18
+We wish to calculate the tangent heights and angles to produce radiative
+transfer through each of the points P at specified coordinates
+$(H,\phi)$, where $H$ is height measured from the center of the
+equivalent circular earth and $\phi$ is the angle measured anti-clockwise
+from the reference (red) line, at specified angles $-\pi \leq \xi \leq 0$,
+i.e., below the horizon, where the horizon is defined to be perpendicular
+to the reference line.  In the figure, radiation is considered to be
+transferred from below the horizon if $\xi \geq \xi_c$ or $\xi \leq
+\xi_c-\pi$, and above the horizon followed by reflection from the surface
+otherwise.  The other segment of the path, i.e., the part above the
+horizon, can be used to calculate radiative transfer from opposite
+directions.
+
+Ultimately, we wish to calculate the radiance scattered from the source
+to an observer at the right on the horizon.
+
+The critical angle $\xi_c$ is the angle at which a ray reaching
+the point P from the source is just tangent to the earth's surface.
+d134 5
+d140 1
+a140 1
+\xi_c = \phi - \cos^{-1} \frac{R}H
+d142 4
+a145 6
+
+Case 1: The given angle is $\xi = \xi_2 \geq \xi_c$ or $\xi_2 \leq -\xi_c
+- \pi$
+
+The tangent height is $Ht_2$ and the tangent angle is $\xi_2$, where
+
+d147 1
+a147 1
+Ht_2 = H | \cos (\phi - \xi_2) |
+d149 11
+d161 2
+a162 3
+Case 2: The given angle is $\xi = \xi_3$ and $-\pi - \xi_c < \xi_3 < \xi_c$
+
+The tangent height is $Ht_3$ and the tangent angle is $\xi_4$, where
+d164 1
+a164 10
+\begin{equation}\begin{split}
+Ht_3 =\,& H | \cos (\phi - \xi_3) | = R \cos \theta \\
+\theta =\,& \cos^{-1} \frac{Ht_3}R =
+            \cos^{-1} \left| \frac{\cos(\phi-\xi_3)}{\cos(\phi-\xi_c)}
+                     \right| \\
+\xi_4 =\,&\left\{ \begin{array}{ll}
+  2 \theta + \xi_3 & \xi_3 > \phi-\frac\pi2 \\
+  -2\theta - \xi_3 & \text{otherwise} \\
+  \end{array} \right.
+\end{split}\end{equation}
+d166 1
+a166 3
+\label{lastpage}
+\end{document}
+% $Id: wvs-074r0.tex,v 1.1 2008/06/11 20:14:55 vsnyder Exp $
+@
+

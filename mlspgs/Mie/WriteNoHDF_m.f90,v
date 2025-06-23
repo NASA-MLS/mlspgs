@@ -1,0 +1,132 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.14
+	cfm-single-freq-0-1:1.1.0.12
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.10
+	mus-emls-1-70:1.1.0.8
+	rel-1-0-englocks-work:1.1.0.6
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2009.08.05.01.22.38;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module WriteHDF_m
+
+  implicit NONE
+
+  private
+
+  public :: WriteHDF
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: P1_m.f90,v $"
+  private :: not_used_here
+!---------------------------------------------------------------------------
+
+contains
+
+  subroutine WriteHDF ( File, R_max, R_min, N_cut, IWC_s, T_s, Theta_s, F_s, &
+    & Beta, Eest, nFunc, MaxOrd, P, E_P, nFuncP, MaxOrdP, &
+    & WantBeta, WantIWC, WantP, &
+    & dBeta_dIWC, E_dBeta_dIWC, dBeta_dT, E_dBeta_dT, &
+    & dP_dIWC, E_dP_dIWC, dP_dT, E_dP_dT )
+
+    ! A stub that doesn't write the tables as HDF5 datasets
+    use MLSKinds, only: R8
+
+    character(len=*), intent(in) :: File
+    real(r8), intent(in) :: R_Max
+    real(r8), intent(in) :: R_Min
+    integer, intent(in) :: N_Cut
+    real(r8), intent(in) :: IWC_s(:)
+    real(r8), intent(in) :: T_s(:)
+    real(r8), intent(in) :: Theta_s(:)
+    real(r8), intent(in) :: F_s(:)
+    real(r8), intent(in) :: Beta(:,:,:,:)
+    real(r8), intent(in) :: Eest(:,:,:,:)
+    integer, intent(in) :: nFunc(:,:,:,:,:)
+    integer, intent(in) :: MaxOrd(:,:,:,:)
+    real(r8), intent(in) :: P(:,:,:,:)
+    real(r8), intent(in) :: E_P(:,:,:,:)
+    integer, intent(in) :: nFuncP(:,:,:,:,:,:)
+    integer, intent(in) :: MaxOrdP(:,:,:,:,:)
+    logical, intent(in) :: WantBeta, WantIWC, WantP
+    real(r8), intent(in), optional :: dBeta_dIWC(:,:,:,:)
+    real(r8), intent(in), optional :: E_dBeta_dIWC(:,:,:,:)
+    real(r8), intent(in), optional :: dBeta_dT(:,:,:,:)
+    real(r8), intent(in), optional :: E_dBeta_dT(:,:,:,:)
+    real(r8), intent(in), optional :: dP_dIWC(:,:,:,:)
+    real(r8), intent(in), optional :: E_dP_dIWC(:,:,:,:)
+    real(r8), intent(in), optional :: dP_dT(:,:,:,:)
+    real(r8), intent(in), optional :: E_dP_dT(:,:,:,:)
+
+  end subroutine WriteHDF
+
+  logical function not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id: P1_m.f90,v 1.1 2008/04/19 01:15:27 vsnyder Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, id
+  end function not_used_here
+
+end module WriteHDF_m
+@

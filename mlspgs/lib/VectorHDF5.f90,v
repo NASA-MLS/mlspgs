@@ -1,0 +1,810 @@
+head	2.9;
+access;
+symbols
+	v5-02-NRT-19:2.9
+	v6-00:2.9
+	v5-02-NRT-18:2.9
+	v5-02:2.9
+	v5-01-NRT-17:2.9
+	v5-01-NRT-16:2.9
+	v5-01-NRT-15:2.9
+	v5-01-NRT-14:2.9
+	neuralnetworks-1-0:2.9.0.10
+	cfm-single-freq-0-1:2.9.0.8
+	v5-01:2.9
+	v5-00:2.9
+	v4-23-TA133:2.9.0.6
+	mus-emls-1-70:2.9.0.4
+	rel-1-0-englocks-work:2.9.0.2
+	VUMLS1-00:2.9
+	VPL1-00:2.9
+	V4-22-NRT-08:2.9
+	VAM1-00:2.9
+	V4-21:2.8.0.4
+	V4-13:2.8
+	V4-12:2.8
+	V4-11:2.8
+	V4-10:2.8
+	V3-43:2.8
+	M4-00:2.8
+	V3-41:2.8
+	V3-40-PlusGM57:2.8.0.2
+	V2-24-NRT-04:2.7
+	V3-33:2.8
+	V2-24:2.7
+	V3-31:2.8
+	V3-30-NRT-05:2.8
+	cfm-01-00:2.8
+	V3-30:2.8
+	V3-20:2.8
+	V3-10:2.8
+	V2-23-NRT-02:2.7
+	V2-23:2.7
+	V2-22-NRT-01:2.7
+	V2-22:2.7
+	V2-21:2.7
+	V2-20:2.7
+	V2-11:2.6
+	V2-10:2.6
+	V2-00:2.6
+	V1-51:2.5
+	V1-50:2.5
+	V1-45:2.4
+	V1-44:2.4
+	V1-43:2.4
+	V1-42:2.4
+	V1-41:2.4
+	V1-32:2.4
+	V1-40:2.4
+	V1-31:2.4
+	V1-30:2.4;
+locks; strict;
+comment	@# @;
+
+
+2.9
+date	2015.06.02.23.59.03;	author vsnyder;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2009.06.23.18.25.43;	author pwagner;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2006.08.03.01.10.06;	author vsnyder;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2005.06.22.17.25.51;	author pwagner;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2004.12.28.00.23.48;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2003.07.07.20.21.45;	author livesey;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2003.06.20.19.33.53;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2003.05.19.22.06.31;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2003.05.13.20.32.50;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.9
+log
+@Cannonball polishing
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module VectorHDF5
+  ! This module reads and writes vectors (complete with quantity templates etc.
+  ! to and from HDF5 files.
+
+  implicit none
+  private
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: VectorHDF5.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+  public :: WriteVectorAsHDF5, ReadVectorFromHDF5
+
+contains ! ========================================= Module procedures =======
+
+  subroutine WriteQuantityTemplateAsHDF5 ( location, qt, index )
+    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
+    use QuantityTemplates, only: QUANTITYTEMPLATE_T
+    use String_table, only: GET_STRING
+    use MLSHDF5, only: MAKEHDF5ATTRIBUTE, WRITESTRINGINDEXASHDF5ATTRIBUTE, &
+      & WRITELITINDEXASHDF5ATTRIBUTE, SAVEASHDF5DS
+    use HDF5, only: H5GCREATE_F, H5GCLOSE_F
+
+    ! Arguments
+    integer, intent(in) :: LOCATION     ! HDF location
+    type(QuantityTemplate_T), intent(in) :: QT
+    integer, intent(in) :: INDEX        ! Index into parent vector
+
+    ! Local variables
+    character(len=132) :: QNAME         ! Name of quantity
+    integer :: QID                      ! HDF5 ID of quantity
+    integer :: STATUS                   ! Flag from HDF5
+    ! Executable code
+    ! Create a group for the quantity
+    call get_string ( qt%name, qName )
+    call h5gCreate_f ( location, trim(qName), qID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to create group for quantity ' // trim(qName) )
+
+    ! Write the low level stuff as attributes
+    call WriteStringIndexAsHDF5Attribute ( qID, 'name',qt%name )
+    call MakeHDF5Attribute ( qID, 'index', index )
+    call WriteLitIndexAsHDF5Attribute ( qID, 'quantityType', qt%quantityType )
+    call MakeHDF5Attribute ( qID, 'noChans', qt%noChans )
+    call MakeHDF5Attribute ( qID, 'noSurfs', qt%noSurfs )
+    call MakeHDF5Attribute ( qID, 'noInstances', qt%noInstances )
+    call MakeHDF5Attribute ( qID, 'instanceLen', qt%instanceLen )
+    call MakeHDF5Attribute ( qID, 'coherent', qt%coherent )
+    call MakeHDF5Attribute ( qID, 'stacked', qt%stacked )
+    call MakeHDF5Attribute ( qID, 'regular', qt%regular )
+    call MakeHDF5Attribute ( qID, 'minorFrame', qt%minorFrame )
+    call MakeHDF5Attribute ( qID, 'majorFrame', qt%majorFrame )
+    call MakeHDF5Attribute ( qID, 'logBasis', qt%logBasis )
+    call MakeHDF5Attribute ( qID, 'minValue', qt%minValue )
+    call MakeHDF5Attribute ( qID, 'noInstancesLowerOverlap', qt%noInstancesLowerOverlap )
+    call MakeHDF5Attribute ( qID, 'noInstancesUpperOverlap', qt%noInstancesUpperOverlap )
+    call MakeHDF5Attribute ( qID, 'instanceOffset', qt%instanceOffset )
+    call MakeHDF5Attribute ( qID, 'grandTotalInstances', qt%grandTotalInstances )
+    call WriteLitIndexAsHDF5Attribute ( qID, 'verticalCoordinate', qt%verticalCoordinate )
+    call MakeHDF5Attribute ( qID, 'badValue', qt%badValue )
+    call WriteLitIndexAsHDF5Attribute ( qID, 'unit', qt%unit )
+
+    call WriteLitIndexAsHDF5Attribute ( qID, 'frequencyCoordinate', qt%frequencyCoordinate )
+    call MakeHDF5Attribute ( qID, 'lo', qt%lo )
+    call MakeHDF5Attribute ( qID, 'signal', qt%signal )
+    call MakeHDF5Attribute ( qID, 'sideband', qt%sideband )
+    call MakeHDF5Attribute ( qID, 'instrumentModule', qt%instrumentModule )
+    call MakeHDF5Attribute ( qID, 'reflector', qt%reflector )
+    call MakeHDF5Attribute ( qID, 'radiometer', qt%radiometer )
+    call MakeHDF5Attribute ( qID, 'molecule', qt%molecule )
+
+    ! Now write the coordinates
+    call SaveAsHDF5DS ( qID, 'surfs', qt%surfs )
+    call SaveAsHDF5DS ( qID, 'phi', qt%phi )
+    call SaveAsHDF5DS ( qID, 'geodLat', qt%geodLat )
+    call SaveAsHDF5DS ( qID, 'lon', qt%lon )
+    call SaveAsHDF5DS ( qID, 'time', qt%time )
+    call SaveAsHDF5DS ( qID, 'solarTime', qt%solarTime )
+    call SaveAsHDF5DS ( qID, 'solarZenith', qt%solarZenith )
+    call SaveAsHDF5DS ( qID, 'losAngle', qt%losAngle )
+
+    ! These may or may not be present
+    if ( associated ( qt%frequencies ) ) &
+      & call SaveAsHDF5DS ( qID, 'frequencies', qt%frequencies )
+    if ( associated ( qt%surfIndex ) ) &
+      & call SaveAsHDF5DS ( qID, 'surfIndex', qt%surfIndex )
+    if ( associated ( qt%chanIndex ) ) &
+      & call SaveAsHDF5DS ( qID, 'chanIndex', qt%chanIndex )
+
+    ! Close the group
+    call h5gClose_f ( qID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close quantity group for ' // trim(qName) )
+  end subroutine WriteQuantityTemplateAsHDF5
+
+  ! ----------------------------------------- WriteVectorAsHDF5 -----
+  subroutine WriteVectorAsHDF5 ( location, name, vector )
+    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
+    use String_table, only: GET_STRING
+    use VectorsModule, only: VECTOR_T
+    use MLSHDF5, only: MAKEHDF5ATTRIBUTE, WRITESTRINGINDEXASHDF5ATTRIBUTE, &
+      & SAVEASHDF5DS
+    use HDF5, only: H5GCREATE_F, H5GCLOSE_F
+    ! Arguments
+    integer, intent(in) :: LOCATION     ! HDF location
+    character(len=*), intent(in) :: NAME ! Name of group to put it in
+    type(Vector_T), intent(in) :: VECTOR
+
+    ! Local variables
+    integer :: VID                      ! HDF5 ID of vector
+    integer :: STATUS                   ! Flag from HDF5
+    integer :: GID                      ! HDF5 ID of subgroup
+    integer :: Q                        ! Loop counter
+    character(len=132) :: WORD          ! A name for something
+
+    ! Executable code
+    ! Create group for vector
+    call h5gCreate_f ( location, trim(name), vID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to create group for vector ' // trim(name) )
+
+    ! Annotate it
+    call MakeHDF5Attribute ( vID, 'noQuantities', size(vector%quantities) )
+    call MakeHDF5Attribute ( vID, 'totalInstances', vector%template%totalInstances )
+    call MakeHDF5Attribute ( vID, 'totalElements', vector%template%totalElements )
+    call WriteStringIndexAsHDF5Attribute ( vID, 'templateName', vector%template%name )
+
+    ! Stick quantity templates in one group
+    call h5gCreate_f( vId, 'templates', gid, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to create templates group for vector ' // trim(name) )
+    ! Write out the quantity templates
+    do q = 1, size ( vector%quantities )
+      call WriteQuantityTemplateAsHDF5 ( gid, vector%quantities(q)%template, q )
+    end do
+    ! Close the group
+    call h5gClose_f ( gid, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close templates group for vector ' // trim(name) )
+
+    ! Create a group for the quantity values
+    call h5gCreate_f( vId, 'values', gid, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to create values group for vector ' // trim(name) )
+    ! Write out the quantity values
+    do q = 1, size ( vector%quantities )
+      call get_string ( vector%quantities(q)%template%name, word, &
+        & strip=.true., noError=.true. )
+      call SaveAsHDF5DS ( gid, trim(word), vector%quantities(q)%values )
+    end do
+    ! Close the group
+    call h5gClose_f ( gid, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close values group for vector ' // trim(name) )
+
+    ! Create a group for the quantity masks
+    call h5gCreate_f( vId, 'masks', gid, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to create masks group for vector ' // trim(name) )
+    ! Write out the quantity values
+    do q = 1, size ( vector%quantities )
+      if ( associated ( vector%quantities(q)%mask ) ) then
+        call get_string ( vector%quantities(q)%template%name, word, &
+          & strip=.true., noError=.true. )
+        call SaveAsHDF5DS ( gid, trim(word), vector%quantities(q)%mask )
+      end if
+    end do
+    ! Close the group
+    call h5gClose_f ( gid, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close masks group for vector ' // trim(name) )
+
+    ! Finished, close the group
+    call h5gClose_f ( vid, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close group for vector ' // trim(name) )
+
+  end subroutine WriteVectorAsHDF5
+
+  ! ----------------------------------- ReadQuantityTemplateFromHDF5 ---
+  subroutine ReadQuantityTemplateFromHDF5 ( Location, Name, QT )
+    use HDF5, only: H5Gopen_F, H5GClose_F
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use MLSHDF5, only: LoadFromHDF5DS, GetHDF5Attribute, &
+      & ReadStringIndexFromHDF5Attr, ReadLitIndexFromHDF5Attr
+    use QuantityTemplates, only: QuantityTemplate_t, SetupNewQuantityTemplate
+    ! Arguments
+    integer, intent(in) :: Location     ! HDF5 location of parent group
+    character(len=*), intent(in) :: NAME ! Name of quantity template
+    type(QuantityTemplate_T), intent(out) :: QT ! Template for quantity
+    
+    ! Local variables
+    integer :: NoInstances              ! Dimension
+    integer :: NoSurfs                  ! Dimension
+    integer :: NoChans                  ! Dimension
+    integer :: InstanceLen              ! Dimension
+    logical :: Coherent                 ! Flag
+    logical :: Stacked                  ! Flag
+    logical :: Regular                  ! Flag
+    logical :: MajorFrame               ! Flag
+    logical :: MinorFrame               ! Flag
+    integer :: QID                      ! HDF5 ID of quantity template
+    integer :: Status                   ! Flag from HDF
+
+    ! Executable code
+    ! Attach to the group
+    call h5gOpen_f ( location, trim(name), qID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open group for quantity template '//trim(name) )
+
+    ! Get the fundamentals
+    call GetHDF5Attribute ( qID, 'noChans', noChans )
+    call GetHDF5Attribute ( qID, 'noSurfs', noSurfs )
+    call GetHDF5Attribute ( qID, 'noInstances', noInstances )
+    call GetHDF5Attribute ( qID, 'instanceLen', instanceLen )
+    call GetHDF5Attribute ( qID, 'coherent', coherent )
+    call GetHDF5Attribute ( qID, 'stacked', stacked )
+    call GetHDF5Attribute ( qID, 'regular', regular )
+    call GetHDF5Attribute ( qID, 'minorFrame', minorFrame )
+    call GetHDF5Attribute ( qID, 'majorFrame', majorFrame )
+    
+    call ReadStringIndexFromHDF5Attr ( qID, 'name', qt%name )
+    call SetupNewQuantityTemplate ( qt, noChans=noChans, noSurfs=noSurfs, &
+      & noInstances=noInstances, coherent=coherent, stacked=stacked, &
+      & regular=regular, minorFrame=minorFrame, majorFrame=majorFrame, &
+      & instanceLen=instanceLen )
+
+    ! Get the remaining stuff
+    ! Write the low level stuff as attributes
+    call ReadLitIndexFromHDF5Attr ( qID, 'quantityType', qt%quantityType )
+    call GetHDF5Attribute ( qID, 'noChans', qt%noChans )
+    call GetHDF5Attribute ( qID, 'noSurfs', qt%noSurfs )
+    call GetHDF5Attribute ( qID, 'noInstances', qt%noInstances )
+    call GetHDF5Attribute ( qID, 'instanceLen', qt%instanceLen )
+    call GetHDF5Attribute ( qID, 'coherent', qt%coherent )
+    call GetHDF5Attribute ( qID, 'stacked', qt%stacked )
+    call GetHDF5Attribute ( qID, 'regular', qt%regular )
+    call GetHDF5Attribute ( qID, 'minorFrame', qt%minorFrame )
+    call GetHDF5Attribute ( qID, 'majorFrame', qt%majorFrame )
+    call GetHDF5Attribute ( qID, 'logBasis', qt%logBasis )
+    call GetHDF5Attribute ( qID, 'minValue', qt%minValue )
+    call GetHDF5Attribute ( qID, 'instanceOffset', qt%instanceOffset )
+    call GetHDF5Attribute ( qID, 'grandTotalInstances', qt%grandTotalInstances )
+    call GetHDF5Attribute ( qID, 'noInstancesLowerOverlap', qt%noInstancesLowerOverlap )
+    call GetHDF5Attribute ( qID, 'noInstancesUpperOverlap', qt%noInstancesUpperOverlap )
+    call ReadLitIndexFromHDF5Attr ( qID, 'verticalCoordinate', qt%verticalCoordinate )
+    call GetHDF5Attribute ( qID, 'badValue', qt%badValue )
+    call ReadLitIndexFromHDF5Attr ( qID, 'unit', qt%unit )
+    call ReadLitIndexFromHDF5Attr ( qID, 'frequencyCoordinate', qt%frequencyCoordinate )
+    call GetHDF5Attribute ( qID, 'lo', qt%lo )
+    call GetHDF5Attribute ( qID, 'signal', qt%signal )
+    call GetHDF5Attribute ( qID, 'sideband', qt%sideband )
+    call GetHDF5Attribute ( qID, 'instrumentModule', qt%instrumentModule )
+    call GetHDF5Attribute ( qID, 'reflector', qt%reflector )
+    call GetHDF5Attribute ( qID, 'radiometer', qt%radiometer )
+    call GetHDF5Attribute ( qID, 'molecule', qt%molecule )
+
+    ! Now write the coordinates
+    call LoadFromHDF5DS ( qID, 'surfs', qt%surfs )
+    call LoadFromHDF5DS ( qID, 'phi', qt%phi )
+    call LoadFromHDF5DS ( qID, 'geodLat', qt%geodLat )
+    call LoadFromHDF5DS ( qID, 'lon', qt%lon )
+    call LoadFromHDF5DS ( qID, 'time', qt%time )
+    call LoadFromHDF5DS ( qID, 'solarTime', qt%solarTime )
+    call LoadFromHDF5DS ( qID, 'solarZenith', qt%solarZenith )
+    call LoadFromHDF5DS ( qID, 'losAngle', qt%losAngle )
+
+    ! These may or may not be present
+    if ( associated ( qt%frequencies ) ) &
+      & call LoadFromHDF5DS ( qID, 'frequencies', qt%frequencies )
+    if ( associated ( qt%surfIndex ) ) &
+      & call LoadFromHDF5DS ( qID, 'surfIndex', qt%surfIndex )
+    if ( associated ( qt%chanIndex ) ) &
+      & call LoadFromHDF5DS ( qID, 'chanIndex', qt%chanIndex )
+
+    ! Close the group
+    call h5gClose_f ( qID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close quantity group for ' // trim(name) )
+  end subroutine ReadQuantityTemplateFromHDF5
+
+  ! -------------------------------------------- ReadVectorFromHDF5
+  subroutine ReadVectorFromHDF5 ( location, name, vector, &
+    & quantities, noQuantityTemplates )
+    use Allocate_Deallocate, only: ALLOCATE_TEST
+    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
+    use VectorsModule, only: VECTOR_T, VECTORTEMPLATE_T, CREATEVECTOR, CREATEMASK
+    use MoreTree, only: GETSTRINGINDEXFROMSTRING
+    use String_Table, only: GET_STRING
+    use QuantityTemplates, only: NULLIFYQUANTITYTEMPLATE, QUANTITYTEMPLATE_T, &
+      & ADDQUANTITYTEMPLATETODATABASE, INFLATEQUANTITYTEMPLATEDATABASE
+    use MLSHDF5, only: ISHDF5DSPRESENT, GETHDF5ATTRIBUTE, LOADFROMHDF5DS, &
+      & READSTRINGINDEXFromHDF5Attr
+    use HDF5, only: H5GOPEN_F, H5GCLOSE_F, H5GGET_OBJ_INFO_IDX_F
+
+    ! Arguments
+    integer, intent(in) :: LOCATION     ! HDF5 location
+    character(len=*), intent(in) :: NAME ! Name of group vector is in
+    type (Vector_T), intent(out) :: VECTOR ! Resulting vector
+    type (QuantityTemplate_T), dimension(:), pointer :: QUANTITIES
+    integer, intent(inout), optional :: NOQUANTITYTEMPLATES
+
+    ! Local parameters 
+    integer, parameter :: DATABASEINFLATION = 500
+
+    ! Local variables
+    integer :: VID                      ! Group ID for vector
+    integer :: GID                      ! A subgroup id
+    integer :: QID                      ! A quantity template id
+    integer :: STATUS                   ! Flag from HDF
+    integer :: OBJTYPE                  ! From HDF5
+    integer :: MYNOQUANTITYTEMPLATES    ! Number of quantity templates
+    integer :: Q                        ! Loop counter
+    integer :: I                        ! Index of quantity
+    character (len=64), pointer, dimension(:) :: QUANTITYNAMES ! Names of quantities
+    character (len=64) :: WORD          ! Name of quantity
+
+    type (VectorTemplate_T) :: VT       ! Vector template
+    type (QuantityTemplate_T) :: QT     ! QuantityTemplate
+    
+    ! Executable code
+    if ( associated ( quantities ) ) then
+      myNoQuantityTemplates = size ( quantities )
+      if ( present ( noQuantityTemplates ) ) &
+        & myNoQuantityTemplates = noQuantityTemplates
+    else
+      myNoQuantityTemplates = 0
+    end if
+
+    ! Attach to group for vector
+    call h5gOpen_f ( location, trim(name), vID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open group for vector ' // trim(name) )
+
+    ! Get the information we need.
+    call GetHDF5Attribute ( vID, 'noQuantities', vt%noQuantities )
+    call GetHDF5Attribute ( vID, 'totalInstances', vt%totalInstances )
+    call GetHDF5Attribute ( vID, 'totalElements', vt%totalElements )
+    call ReadStringIndexFromHDF5Attr ( vID, 'templateName', vt%name )
+
+    ! Open the quantity templates
+    call h5gOpen_f ( vId, 'templates', gId, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open templates group for vector ' // trim(name) )
+
+    ! Work out the quantity names in order
+    nullify ( quantityNames )
+    call Allocate_test ( quantityNames, vt%noQuantities, 'quantityNames', ModuleName )
+    call Allocate_test ( vt%quantities, vt%noQuantities, 'templates', ModuleName )
+
+    do q = 1, vt%noQuantities
+      call h5gget_obj_info_idx_f ( vId, 'templates', q-1, word, &
+        & objType, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to identify a quantity within '//trim(name) )
+      call h5gOpen_f ( gId, trim(word), qId, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to open quantity '//trim(word)//' in vector '//trim(name) )
+      call GetHDF5Attribute ( qId, 'index', i )
+      quantityNames ( i ) = word
+      call h5gClose_f ( qId, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to close quantity '//trim(word)//' in vector '//trim(name) )
+    end do
+
+    ! Now read the quantity templates
+    do q = 1, vt%noQuantities
+      ! First make sure we don't tread on previous quantities
+      ! I know the read routine is intent(out) but you never know
+      call NullifyQuantityTemplate ( qt )
+      call ReadQuantityTemplateFromHDF5 ( gId, trim(quantityNames(q)), qt )
+      ! Now add this to our database
+      if ( present ( noQuantityTemplates ) ) then
+        ! Do this by inflation
+        if ( myNoQuantityTemplates > size ( quantities ) ) &
+          & myNoQuantityTemplates = InflateQuantityTemplateDatabase ( &
+          & quantities, DatabaseInflation )
+        myNoQuantityTemplates = myNoQuantityTemplates + 1
+        quantities ( myNoQuantityTemplates ) = qt
+      else
+        myNoQuantityTemplates = AddQuantityTemplateToDatabase ( &
+          & quantities, qt )
+      end if
+      vt%quantities ( q ) = myNoQuantityTemplates
+    end do
+
+    ! Close the quantity templates
+    call h5gClose_F ( gId, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close templates group for vector ' // trim(name) )
+
+    ! Now setup the result
+    vector = CreateVector ( GetStringIndexFromString ( trim(name) ), &
+      & vt, quantities )
+
+    ! Now loop over the quantities and read the results
+    call h5gOpen_f ( vId, 'values', gId, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open values group for vector ' // trim(name) )
+    ! Read in the quantity values
+    do q = 1, vt%noQuantities
+      call get_string ( vector%quantities(q)%template%name, word, &
+        & strip=.true., noError=.true. )
+      call LoadFromHDF5DS ( gId, trim(word), vector%quantities(q)%values )
+    end do
+    ! Close the group
+    call h5gClose_f ( gId, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close values group for vector ' // trim(name) )
+
+    ! Now loop over the quantities and perhaps read the masks
+    call h5gOpen_f ( vId, 'masks', gId, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open masks group for vector ' // trim(name) )
+    ! Read in the masks
+    do q = 1, vt%noQuantities
+      call get_string ( vector%quantities(q)%template%name, word, &
+        & strip=.true., noError=.true. )
+      if ( IsHDF5DSPresent ( gId, trim(word) ) ) then
+        call CreateMask ( vector%quantities(q) )
+        call LoadFromHDF5DS ( gId, trim(word), vector%quantities(q)%mask )
+      end if
+    end do
+
+    ! Close the group
+    call h5gClose_f ( gId, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close values group for vector ' // trim(name) )
+
+    ! Close the group
+    call h5gClose_f ( vId, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close group for vector ' // trim(name) )
+
+  end subroutine ReadVectorFromHDF5
+    
+  ! ----------------------------------------------------------------------------    
+    
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: VectorHDF5.f90,v 2.8 2009/06/23 18:25:43 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module VectorHDF5
+
+! $Log: VectorHDF5.f90,v $
+! Revision 2.8  2009/06/23 18:25:43  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.7  2006/08/03 01:10:06  vsnyder
+! Put l2cf names in leak track database
+!
+! Revision 2.6  2005/06/22 17:25:51  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.5  2004/12/28 00:23:48  vsnyder
+! Remove unused declarations and use names
+!
+! Revision 2.4  2003/07/07 20:21:45  livesey
+! New stuff in quantity templates written
+!
+! Revision 2.3  2003/06/20 19:33:53  pwagner
+! Quanities now share grids stored separately in databses
+!
+! Revision 2.2  2003/05/19 22:06:31  pwagner
+! Shortened names to Read..IndexFromHDF5Attr to comply with namelength standard
+!
+! Revision 2.1  2003/05/13 20:32:50  livesey
+! First version
+!
+@
+
+
+2.8
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d21 1
+a21 1
+       "$RCSfile: $"
+d194 6
+a199 6
+  subroutine ReadQuantityTemplateFromHDF5 ( location, name, qt )
+    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
+    use HDF5, only: H5GOPEN_F, H5GCLOSE_F
+    use QuantityTemplates, only: QUANTITYTEMPLATE_T, SETUPNEWQUANTITYTEMPLATE
+    use MLSHDF5, only: LOADFROMHDF5DS, GETHDF5ATTRIBUTE, &
+      & READSTRINGINDEXFromHDF5Attr, READLITINDEXFromHDF5Attr
+d201 1
+a201 1
+    integer, intent(in) :: LOCATION     ! HDF5 location of parent group
+d206 11
+a216 11
+    integer :: NOINSTANCES              ! Dimension
+    integer :: NOSURFS                  ! Dimension
+    integer :: NOCHANS                  ! Dimension
+    integer :: INSTANCELEN              ! Dimension
+    logical :: COHERENT                 ! Flag
+    logical :: STACKED                  ! Flag
+    logical :: REGULAR                  ! Flag
+    logical :: MAJORFRAME               ! Flag
+    logical :: MINORFRAME               ! Flag
+    integer :: QID                     ! HDF5 ID of quantity template
+    integer :: STATUS                   ! Flag from HDF
+d455 1
+a455 1
+       "$Id: read_apriori.f90 is it here $"
+d465 3
+@
+
+
+2.7
+log
+@Put l2cf names in leak track database
+@
+text
+@d21 1
+a21 1
+       "$RCSfile: VectorHDF5.f90,v $"
+d452 1
+a453 1
+!---------------------------- RCS Ident Info -------------------------------
+d455 2
+a456 3
+       "$Id: VectorHDF5.f90,v 2.6 2005/06/22 17:25:51 pwagner Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d458 1
+d460 1
+d465 3
+@
+
+
+2.6
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d21 1
+a21 1
+       "$RCSfile: $"
+d235 1
+a242 1
+    call ReadStringIndexFromHDF5Attr ( qID, 'name', qt%name )
+d455 1
+a455 1
+       "$Id: $"
+d464 3
+@
+
+
+2.5
+log
+@Remove unused declarations and use names
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d19 1
+a19 4
+  !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
+       "$Id"
+  character (len=len(idParm)), private :: Id = idParm
+d21 1
+a21 1
+       "$RCSfile"
+d23 1
+a23 1
+  !---------------------------------------------------------------------------
+d453 5
+d464 3
+@
+
+
+2.4
+log
+@New stuff in quantity templates written
+@
+text
+@d293 1
+a293 1
+    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+a318 1
+    integer :: NOQUANTITIES             ! Number of vector quantities
+d454 3
+@
+
+
+2.3
+log
+@Quanities now share grids stored separately in databses
+@
+text
+@d65 2
+d76 1
+d250 2
+d262 1
+d455 3
+@
+
+
+2.2
+log
+@Shortened names to Read..IndexFromHDF5Attr to comply with namelength standard
+@
+text
+@a49 1
+    call MakeHDF5Attribute ( qID, 'id', qt%id )
+a67 1
+    call MakeHDF5Attribute ( qID, 'scaleFactor', qt%scaleFactor )
+a87 4
+    if ( associated ( qt%mafIndex ) ) &
+      & call SaveAsHDF5DS ( qID, 'mafIndex', qt%mafIndex )
+    if ( associated ( qt%mafCounter ) ) &
+      & call SaveAsHDF5DS ( qID, 'mafCounter', qt%mafCounter )
+a128 1
+    call MakeHDF5Attribute ( vID, 'id', vector%template%id )
+a234 1
+    call GetHDF5Attribute ( qID, 'id', qt%id )
+a251 1
+    call GetHDF5Attribute ( qID, 'scaleFactor', qt%scaleFactor )
+a270 4
+    if ( associated ( qt%mafIndex ) ) &
+      & call LoadFromHDF5DS ( qID, 'mafIndex', qt%mafIndex )
+    if ( associated ( qt%mafCounter ) ) &
+      & call LoadFromHDF5DS ( qID, 'mafCounter', qt%mafCounter )
+a339 1
+    call GetHDF5Attribute ( vID, 'id', vt%id )
+d449 3
+@
+
+
+2.1
+log
+@First version
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+d198 1
+a198 1
+      & READSTRINGINDEXFROMHDF5ATTRIBUTE, READLITINDEXFROMHDF5ATTRIBUTE
+d241 1
+a241 1
+    call ReadStringIndexFromHDF5Attribute ( qID, 'name', qt%name )
+d243 1
+a243 1
+    call ReadLitIndexFromHDF5Attribute ( qID, 'quantityType', qt%quantityType )
+d257 1
+a257 1
+    call ReadLitIndexFromHDF5Attribute ( qID, 'verticalCoordinate', qt%verticalCoordinate )
+d259 1
+a259 1
+    call ReadLitIndexFromHDF5Attribute ( qID, 'unit', qt%unit )
+d261 1
+a261 1
+    call ReadLitIndexFromHDF5Attribute ( qID, 'frequencyCoordinate', qt%frequencyCoordinate )
+d308 1
+a308 1
+      & READSTRINGINDEXFROMHDF5ATTRIBUTE
+d356 1
+a356 1
+    call ReadStringIndexFromHDF5Attribute ( vID, 'templateName', vt%name )
+d462 4
+a465 1
+! $Log$
+@
+

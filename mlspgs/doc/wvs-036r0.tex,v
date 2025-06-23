@@ -1,0 +1,261 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.14
+	cfm-single-freq-0-1:1.1.0.12
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.10
+	mus-emls-1-70:1.1.0.8
+	rel-1-0-englocks-work:1.1.0.6
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2008.06.11.20.14.52;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.6in
+\textheight 9.20in
+
+\newcommand{\docname}{\bf wvs-036}
+\newcommand{\docdate}{13 June 2006}
+
+\usepackage{longtable}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Alyn, Bill, Dong, Herb, Michael, Nathaniel\\
+Subject: \>Retrieval diagnostic vector quantities\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-20pt}
+
+The following are output by the retrieval module if there are quantities of the
+specified {\tt type} in the vector mentioned in the {\tt diagnostics}
+field of the {\tt retrieve} command, e.g.,
+
+{\tt \hspace*{0.5in}dnwt\_ajn: Quantity, type=dnwt\_ajn,
+     vGrid=vGridIterations}\\
+{\tt \hspace*{0.5in}retrievalDiagnosticsTemplate: VectorTemplate, 
+     quantities = [ dnwt\_ajn,\dots ]}\\
+{\tt \hspace*{0.5in}diagvec: Vector, template=retrievalDiagnosticsTemplate}\\
+{\tt\hspace*{0.5in} retrieve, \dots\ diagnostics=diagvec, \dots}
+
+\begin{longtable}{|l|l|}
+\caption{\bf Quantities in the Retrieval diagnostic vector}\\
+\hline
+Quantity type       & Description \\
+\hline
+\endhead
+\hline
+\multicolumn{2}{|l|}{Continued\dots} \\
+\hline
+\endfoot
+\hline
+\endlastfoot
+dnwt\_ajn           & Largest $L_1$ norm of column in Jacobian factor \\
+dnwt\_axmax         & MAXVAL(ABS(X)) \\
+dnwt\_cait          & Aitken acceleration parameter \\
+dnwt\_chiSqMinNorm  & {\tt fnmin}$^2$ / (rows - columns ) \\
+dnwt\_chiSqNorm     & {\tt fnorm}$^2$ / (rows - columns ) \\
+dnwt\_diag          & Smallest ABS(diagonal element) of Jacobian factor \\
+dnwt\_dxdx          & {\tt dot\_product}(DX, DX)\\
+dnwt\_dxdxl         & {\tt dot\_product}(``candidate DX'', last DX)\\
+dnwt\_dxn           & $L_2$ norm of ``candidate DX''\\
+dnwt\_dxnl          & $L_2$ norm of last DX \\
+dnwt\_fnmin         & Norm of solution if problem were linear = \\
+                    & Norm of solution not in column space of Jacobian \\
+dnwt\_fnorm         & Norm of solution \\
+dnwt\_gdx           & {\tt dot\_product}(gradient, ``candidate DX'')\\
+dnwt\_gfac          & Amount of gradient to use for DX \\
+dnwt\_gradn         & $L_2$ norm of gradient \\
+dnwt\_sq            & Levenberg-Marquardt parameter \\
+dnwt\_sqt           & Levenberg-Marquardt parameter unscaled by {\tt ajn}\\
+numGrad             & Number of gradient moves \\
+numJ                & Number of Jacobian evaluations \\
+numNewt             & Number of Newton moves \\
+dnwt\_flag          & Action flag from DNWT, see table \ref{flags}\\
+jacobian\_rows      & Number of rows in Jacobian \\
+jacobian\_cols      & Number of columns in Jacobian \\
+\end{longtable}
+
+Two quantities that are of interest but not output directly can be computed
+from the above.  The first is the cosine of the angle between consecutive
+Newton directions, which is {\tt dxdxl / ( dxn dxnl~)}.  If this is
+consistently negative, it means the Newton moves are oscillating back and forth
+across the solution. The second is the cosine of the angle between the Newton
+and gradient directions, which is {\tt gdx / ( dxn gradn~)}.  If this is near
+zero, i.e., the Newton and gradient directions are nearly orthogonal, it
+usually indicates that the Jacobian is poorly posed.
+
+If either of these conditions hold, or if a gradient move is taken ({\tt
+numGrad $>$ 0}), or if a chunk is abandoned because the Jacobian cannot be
+factored, check the bounds on all quantities.  In the last case, if the chunk
+is run with {\tt -Smst} on the command line, the retriever will print the
+unfactorable block along with the state vector, and lower and upper bounds
+vectors if they are specified.  It may be a good idea to run with this switch
+set as a matter of course.
+
+\begin{longtable}{|r|l|l|}
+\caption{\bf Meaning of dnwt\_flag quantity}\label{flags}\\
+\hline
+Flag & Name           & Description \\
+\hline
+0   & NF\_START       & Starting \\
+-1  & NF\_EVALF       & Evaluate ${\bf F}$, or ${\bf F}$ and ${\bf J}$\\
+-2  & NF\_EVALJ       & Evaluate ${\bf J}$ if not done at EVALF \\
+-3  & NF\_LEV         & Compute $q_n$ for Mor\'e and Sorensen \\
+-4  & NF\_SOLVE       & Solve for Newton move \\
+-5  & NF\_NEWX        & Set {\bf X} := {\bf X} + {\bf DX} \\
+-6  & NF\_GMOVE       & Set {\bf X} :=  ``best'' {\bf X}, set {\bf DX} :=
+                        {\tt gfac} * best gradient \\
+-7  & NF\_BEST        & Set ``best'' {\bf X} := {\bf X}, ``best'' gradient :=
+                        gradient \\
+-8  & NF\_AITKEN      & Compute quantities to determine Aitken acceleration \\
+-9  & NF\_DX          & Set {\bf DX} := Newton move \\
+-10 & NF\_DX\_AITKEN  & Set {\bf DX} := {\tt cait} * Newton move \\
+1   & NF\_TOLX        & Convergence because of small move \\
+2   & NF\_TOLX\_BEST  & Convergence because of small move, use ``best'' {\bf X} \\
+3   & NF\_TOLF        & Convergence because $\frac{|{\bf F}| -
+                        |{\bf F}|_{\text{min}}}{|{\bf F}|_{\text{min}}}$ is small \\
+4   & NF\_TOO\_SMALL  & Move is too small \\
+5   & NF\_FANDJ       & ${\bf F}$ and ${\bf J}$ appear not to be consistent \\
+6   & NF\_TOO\_MANY   & Too many iterations \\
+\hline
+\end{longtable}
+
+The diagnostic vector is not filled after every return from DNWT, so some of the
+above do not appear in the diagnostic vector.  They do, however, appear in the
+detailed output that can be requested by setting command-line switches or
+switches in the {\tt switches} field of the {\tt retrieve} command.  In that
+output, they appear by name, not by number.
+
+\begin{longtable}{|l|l|}
+\caption{Command-line switches respected by the retriever} \\
+\hline
+Switch & Description: print\dots \\
+\hline
+\endfirsthead
+\hline
+Switch & Description: print\dots (continued)\\
+\hline
+\endhead
+\hline
+\multicolumn{2}{|l|}{Continued \dots...}\\
+\hline
+\endfoot
+\hline
+\endlastfoot
+      & \\[-12pt]
+atb   & ${\bf A}^T b$ -- RHS of system \\
+col   & Column scale vector \\
+cov   & Solution covariance \\
+diag  & Diagonal of normal equations factor \\
+dvec  & DX vector \\
+FAC   & Full normal equations factor (if you dare) \\
+fac   & $L_\infty$ norms of blocks of normal equations factor \\
+fnorm & Contributions to $|{\bf F|}$ \\
+gvec  & Gradient vector \\
+JAC   & Full Jacobian (if you dare) \\
+jac   & $L_\infty$ norms of Jacobian blocks \\
+mas   & Announce master triggering slaves \\
+mst   & Block causing factoring abnormal status \\
+ndb   & Minimum Newton method debugging output \\
+Ndb   & Medium Newton method debugging output \\
+NDB   & Maximium Newton method debugging output \\
+NEQ   & Full normal equations (if you dare) \\
+neq   & $L_\infty$ norms of Normal equation blocks \\
+nin   & Newton method's internal output \\
+nwt   & Commands from Newton method \\
+reg   & Tikhonov regularization \\
+sca   & Newton method's scalars \\
+spa   & Sparsity structure of matrices \\
+svec  & Final state vector \\
+vir   & Virgin matrix, before KTK \\
+xvec  & Current state vector \\
+\hline
+\end{longtable}
+
+If the retriever is having trouble, and you'd like to find out why, and the
+information in the diagnostic vector is not sufficient for a diagnosis, run
+with {\tt -Smst,nwt,NDB,sca} on the command line.  If the problem is in a phase
+other than the first one, and you want to reduce the amount of potential
+output, put these switches, without {\tt -S}, in the {\tt switches} field of
+the {\tt retrieve} command.  It may also be reasonable to set the {\tt xvec}
+switch and to inspect the state vector when the retriever gets into trouble:
+maybe the retriever is struggling because the model is in an unphysical state
+due to a missing or incorrect bound.
+
+\label{lastpage}
+\end{document}
+% $Id: $
+@

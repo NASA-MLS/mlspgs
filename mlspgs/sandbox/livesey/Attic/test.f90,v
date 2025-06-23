@@ -1,0 +1,297 @@
+head	1.8;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.8
+date	99.11.30.03.51.30;	author livesey;	state dead;
+branches;
+next	1.7;
+
+1.7
+date	99.11.12.01.05.51;	author livesey;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	99.11.11.01.58.03;	author livesey;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	99.11.10.03.39.31;	author livesey;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	99.11.10.01.52.01;	author livesey;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	99.11.09.00.30.03;	author livesey;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	99.11.04.05.54.47;	author livesey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	99.11.04.02.35.15;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.8
+log
+@Nightly commit
+@
+text
+@PROGRAM Test
+USE MLSSignalNomenclature
+IMPLICIT NONE
+
+TYPE (MLSSignalsDatabase_T) :: database
+TYPE (MLSSignal_T), POINTER, DIMENSION(:) :: signalA,signalB,signalResult
+INTEGER :: i
+CHARACTER (LEN=120) :: request
+
+OPEN(UNIT=9,FILE="../../tables/emls-signals.dat",STATUS="OLD",ACTION="READ")
+!OPEN(UNIT=9,FILE="umls-signals.dat",STATUS="OLD",ACTION="READ")
+CALL ReadSignalsDatabase(9,database)
+CLOSE(UNIT=9)
+
+READ*,request
+CALL ParseMLSSignalRequest(request,database,signalA)
+DO i=1,SIZE(signalA)
+   CALL GetFullMLSSignalName(signalA(i),request,showChannel=.TRUE.)
+   PRINT*,'SignalA: '//TRIM(request)
+ENDDO
+
+READ*,request
+CALL ParseMLSSignalRequest(request,database,signalB)
+DO i=1,SIZE(signalB)
+   CALL GetFullMLSSignalName(signalB(i),request,showChannel=.TRUE.)
+   PRINT*,'SignalB: '//TRIM(request)
+ENDDO
+
+CALL IntersectionMLSSignalsInfo(signalA,signalB,signalResult)
+PRINT*,"Done"
+
+IF (ASSOCIATED(signalResult)) THEN
+   DO i=1,SIZE(signalResult)
+      CALL GetFullMLSSignalName(signalResult(i),request,showChannel=.TRUE.)
+      PRINT*,'Intersection: '//TRIM(request)
+   ENDDO
+   CALL DestroyMLSSignalsInfo(signalResult)
+ENDIF
+
+CALL DestroyMLSSignalsInfo(signalA)
+CALL DestroyMLSSignalsInfo(signalB)
+
+CALL DestroySignalsDatabase(database)
+END PROGRAM Test
+
+
+
+@
+
+
+1.7
+log
+@Nightly commit
+@
+text
+@@
+
+
+1.6
+log
+@Done for the day
+@
+text
+@d6 1
+a6 1
+TYPE (MLSSignal_T), POINTER, DIMENSION(:) :: signal
+d14 22
+a35 35
+! DO i=1,database%noRadiometers
+!    PRINT*,'--------------------'
+!    PRINT*,database%radiometerInfo(i)%name
+!    PRINT*,database%radiometerInfo(i)%lo
+!    PRINT*,database%radiometerInfo(i)%prefix
+!    PRINT*,database%radiometerInfo(i)%suffix
+!    PRINT*,database%radiometerInfo(i)%number
+! ENDDO
+
+! DO i=1,database%noBands
+!    PRINT*,'--------------------'
+!    PRINT*,database%bandInfo(i)%name
+!    PRINT*,database%bandInfo(i)%suffix
+!    PRINT*,database%bandInfo(i)%number
+!    PRINT*,database%bandInfo(i)%centerFreqIF
+!    PRINT*,database%bandInfo(i)%spectrometerFamily
+!    PRINT*,database%bandInfo(i)%spectrometerFamilyIndex
+! ENDDO
+
+! DO i=1,database%noSpectrometers
+!    PRINT*,'--------------------'
+!    PRINT*,database%spectrometerInfo(i)%name
+!    PRINT*,database%spectrometerInfo(i)%fullFamily
+!    PRINT*,database%spectrometerInfo(i)%number
+!    PRINT*,database%spectrometerInfo(i)%familyIndex
+! ENDDO   
+
+loop: DO
+   READ*,request
+   IF (TRIM(request)=="DONE") EXIT loop
+   CALL ParseMLSSignalRequest(request,database,signal)
+   DO i=1,SIZE(signal)
+      CALL GetFullMLSSignalName(signal(i),request)
+      PRINT*,'You mean: '//TRIM(request)
+      ! PRINT*,PACK(signal(i)%channelPosition,signal(i)%channelIncluded)
+d37 6
+a42 2
+   CALL DestroyMLSSignalsInfo(signal)
+END DO loop
+@
+
+
+1.5
+log
+@Fixed some bugs and made to work under absoft f90
+@
+text
+@d11 1
+d14 26
+d45 1
+a45 1
+   DO i=LBOUND(signal,1),UBOUND(signal,1)
+d48 1
+a48 1
+      PRINT*,signal(i)%channelIncluded
+d50 1
+d52 1
+@
+
+
+1.4
+log
+@Transfer to home
+@
+text
+@a12 26
+! DO i=0,database%noRadiometers-1
+!    PRINT*,'--------------------'
+!    PRINT*,database%radiometerInfo(i)%name
+!    PRINT*,database%radiometerInfo(i)%lo
+!    PRINT*,database%radiometerInfo(i)%prefix
+!    PRINT*,database%radiometerInfo(i)%suffix
+!    PRINT*,database%radiometerInfo(i)%number
+! ENDDO
+
+! DO i=0,database%noBands-1
+!    PRINT*,'--------------------'
+!    PRINT*,database%bandInfo(i)%name
+!    PRINT*,database%bandInfo(i)%suffix
+!    PRINT*,database%bandInfo(i)%number
+!    PRINT*,database%bandInfo(i)%centerFreqIF
+!    PRINT*,database%bandInfo(i)%spectrometerFamily
+!    PRINT*,database%bandInfo(i)%spectrometerFamilyIndex
+! ENDDO
+
+! DO i=0,database%noSpectrometers-1
+!    PRINT*,'--------------------'
+!    PRINT*,database%spectrometerInfo(i)%name
+!    PRINT*,database%spectrometerInfo(i)%fullFamily
+!    PRINT*,database%spectrometerInfo(i)%number
+!    PRINT*,database%spectrometerInfo(i)%familyIndex
+! ENDDO   
+d21 1
+a21 3
+      PRINT*,'Position: ',PACK(signal(i)%channelPosition+signal(i)%lo, &
+           & signal(i)%channelIncluded)
+      signal(i)%channelPosition=0.0
+@
+
+
+1.3
+log
+@Transfer home
+@
+text
+@d2 1
+a2 1
+USE SignalsFile
+d5 2
+a6 1
+TYPE (MLS_SignalsDatabase_T) :: database
+d8 1
+a9 1
+PRINT*,"Hello"
+d13 8
+a20 8
+DO i=0,database%noRadiometers-1
+   PRINT*,'--------------------'
+   PRINT*,database%radiometerInfo(i)%name
+   PRINT*,database%radiometerInfo(i)%lo
+   PRINT*,database%radiometerInfo(i)%prefix
+   PRINT*,database%radiometerInfo(i)%suffix
+   PRINT*,database%radiometerInfo(i)%number
+ENDDO
+d22 9
+a30 9
+DO i=0,database%noBands-1
+   PRINT*,'--------------------'
+   PRINT*,database%bandInfo(i)%name
+   PRINT*,database%bandInfo(i)%suffix
+   PRINT*,database%bandInfo(i)%number
+   PRINT*,database%bandInfo(i)%centerFreqIF
+   PRINT*,database%bandInfo(i)%spectrometerFamily
+   PRINT*,database%bandInfo(i)%spectrometerFamilyIndex
+ENDDO
+d32 20
+a51 7
+DO i=0,database%noSpectrometers-1
+   PRINT*,'--------------------'
+   PRINT*,database%spectrometerInfo(i)%name
+   PRINT*,database%spectrometerInfo(i)%fullFamily
+   PRINT*,database%spectrometerInfo(i)%number
+   PRINT*,database%spectrometerInfo(i)%familyIndex
+ENDDO   
+@
+
+
+1.2
+log
+@Sent from home back to work
+@
+text
+@d9 1
+a9 1
+OPEN(UNIT=9,FILE="emls-signals.dat",STATUS="OLD",ACTION="READ")
+d12 1
+a12 1
+DO i=0,database%noRadiometers
+d15 1
+a18 1
+   PRINT*,database%radiometerInfo(i)%modifier
+d21 17
+@
+
+
+1.1
+log
+@Added test.f90
+@
+text
+@d8 1
+@

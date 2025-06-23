@@ -1,0 +1,222 @@
+head	1.2;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2014.01.14.00.09.33;	author vsnyder;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2013.10.24.22.41.14;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Revised LR doesn't need it
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module S1
+
+  use SIZES, only: MAXSHD, MAXSST
+
+  implicit NONE
+
+  public
+  integer :: STHEAD(MAXSHD+1)
+  character, private :: SSTORE(MAXSST)
+! First production data:
+  data SSTORE(1),SSTORE(2),SSTORE(3),SSTORE(4) /'S','O','G','<'/
+  data SSTORE(5),SSTORE(6),SSTORE(7),SSTORE(8) /'G','O','A','L'/
+  data SSTORE(9),SSTORE(10),SSTORE(11),SSTORE(12) /'>','E','O','G'/
+  data STHEAD(1),STHEAD(2),STHEAD(3),STHEAD(4) /1,4,10,13/
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: s1.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+! ======================================     BUILD_SYMBOL_TABLE     ======
+  subroutine BUILD_SYMBOL_TABLE ( CHAR )
+    use Error_Handler, only: Error
+    use STRING, only: SSTPTR
+    character, intent(in) :: CHAR
+    sstptr = sstptr + 1
+    if (sstptr > maxsst) call error ('String storage (SSTORE) overflow',12)
+    sstore(sstptr) = char
+  end subroutine BUILD_SYMBOL_TABLE
+
+! ====================================================     ENTER     =====
+  subroutine ENTER ( IPTR, IRSLT )
+    ! Lookup the string pointed to by SHDPTR.  If it is found, return the
+    ! pointer to it in IRSLT.  If it is not found, insert it and return
+    ! IRSLT = IPTR.  Uses linear hashing.
+
+    use Error_Handler, only: Error
+    integer, intent(in) :: IPTR
+    integer, intent(out) :: IRSLT
+
+    ! HASHSZ  is the hash table size.
+
+    integer HASHSZ
+    parameter (HASHSZ = 511)
+
+    !     *****     External References     ******************************
+
+    ! ERROR   prints error messages.
+
+    !     *****     Local Variables     **********************************
+
+    ! HASHPT  is the hash table.  HASHPT is a save variable.
+    ! I       holds the initial probe in the hash table.
+    ! J       is a loop induction variable.
+    ! K       is a subscript for HASHPT.
+
+    integer, save :: HASHPT(HASHSZ) = 0
+    integer I, J, K
+
+    i = mod(ichar(sstore(sthead(iptr))) * ichar(sstore(sthead(iptr+1)-1)) &
+    ,       hashsz) + 1
+    if (hashpt(i) == 0) then
+      hashpt(i) = iptr
+      irslt = iptr
+    else
+      do j = 1, hashsz
+        k = mod(i+j-2, hashsz) + 1
+        if (hashpt(k) == 0) then
+          hashpt(k) = iptr
+          irslt = iptr
+          return
+        end if
+        if (strcmp(iptr,hashpt(k)) == 0) then
+          irslt = hashpt(k)
+          return
+        end if
+      end do
+      call error ('Hash table overflow',2)
+    end if
+
+  end subroutine ENTER
+
+! ==================================================     LENGTH     ======
+
+  integer function LENGTH (IPTR)
+  ! Returns the length of the vocabulary symbol indexed by IPTR.
+    integer, intent(in) :: IPTR
+
+    length = sthead(iptr+1) - sthead(iptr)
+
+  end function LENGTH
+
+! ==================================================     MOVSTR     ======
+
+  subroutine MOVSTR (IPTR, LINE, ISTART, IEND)
+  ! Move the vocabulary symbol indexed by IPTR to LINE starting at
+  ! position ISTART, and extending no farther than IEND.  ISTART is
+  ! then set to one more than the last character position used.
+
+    integer, intent(in) :: IPTR, IEND
+    integer, intent(inout) :: ISTART
+    character(len=*), intent(inout) :: LINE
+
+    ! I       is a loop induction variable and subscript for LINE.
+    ! IE      is the last position to be used in LINE.
+    ! J       is a subscript for SSTORE.
+
+    integer I, IE, J
+
+    ie = min(sthead(iptr+1)-sthead(iptr)+istart-1, iend)
+    j = sthead(iptr)
+    do i = istart, ie
+      line(i:i) = sstore(j)
+      j = j + 1
+    end do
+    istart = ie + 1
+
+  end subroutine MOVSTR
+
+! ==================================================     STRCMP     ======
+
+  integer function STRCMP (IPTR1, IPTR2)
+  ! Compare the strings pointed to by IPTR1 and IPTR2.  Return 0 if
+  ! they are equal, < 0 if the string pointed to by IPTR1 < string
+  ! pointed to by IPTR2, and > 0 otherwise.
+    integer, intent(in) :: IPTR1, IPTR2
+
+    ! I       is a loop induction variable and subscript.
+    ! I1, I2  are the starting positions in SSTORE of the strings.
+    ! LEN1, LEN2 are the lengths of the strings being compared.
+
+    integer I, I1, I2, LEN1, LEN2
+
+    strcmp = 0
+    i1 = sthead(iptr1)
+    i2 = sthead(iptr2)
+    len1 = sthead(iptr1+1) - i1
+    len2 = sthead(iptr2+1) - i2
+    do i = 1, min(len1, len2)
+       strcmp = ichar(sstore(i1+i-1))-ichar(sstore(i2+i-1))
+       if (strcmp /= 0) return
+    end do
+    strcmp = len1 - len2
+
+  end function STRCMP
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: s1.f90,v 1.1 2013/10/24 22:41:14 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module S1
+
+! $Log: s1.f90,v $
+! Revision 1.1  2013/10/24 22:41:14  vsnyder
+! Initial commit
+!
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d29 1
+a29 1
+       "$RCSfile: parser.f90,v $"
+d164 1
+a164 1
+       "$Id: parser.f90,v 2.29 2013/10/02 01:35:46 vsnyder Exp $"
+d173 4
+a176 1
+! $Log: $
+@
+

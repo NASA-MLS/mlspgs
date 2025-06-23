@@ -1,0 +1,49 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.4
+	cfm-single-freq-0-1:1.1.0.2
+	v5-01:1.1
+	v5-00:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2019.06.18.20.21.42;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit -- extracted from Igor's big bibliography
+@
+text
+@@@BOOK{rod00,
+  author = {Rodgers, Clive},
+  year = 2000,
+  title = {Inverse Methods for Atmospheric Sounding : {T}heory and Practice},
+  publisher = {World Scientific Publishing Company}
+}
+
+
+@@ARTICLE{iy005,
+  author = {Yanovsky, Igor},
+  year = 2010,
+  title = {Inverse Problems in Atmospheric Sciences},
+  journal = {MLS iy-005}
+  }
+@

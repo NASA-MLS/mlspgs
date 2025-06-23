@@ -1,0 +1,5873 @@
+head	1.54;
+access;
+symbols
+	v5-02-NRT-19:1.54
+	v6-00:1.54
+	v5-02-NRT-18:1.54
+	v5-02:1.53
+	v5-01-NRT-17:1.54
+	v5-01-NRT-16:1.54
+	v5-01-NRT-15:1.54
+	v5-01-NRT-14:1.54
+	neuralnetworks-1-0:1.54.0.4
+	cfm-single-freq-0-1:1.54.0.2
+	v5-01:1.53
+	v5-00:1.53
+	v4-23-TA133:1.53.0.6
+	mus-emls-1-70:1.53.0.4
+	rel-1-0-englocks-work:1.53.0.2
+	VUMLS1-00:1.53
+	VPL1-00:1.52
+	V4-22-NRT-08:1.51
+	VAM1-00:1.51
+	V4-21:1.51.0.2
+	V4-13:1.50
+	V4-12:1.50
+	V4-11:1.50
+	V4-10:1.50
+	V3-43:1.28
+	M4-00:1.35
+	V3-41:1.28
+	V3-40-PlusGM57:1.28.0.2
+	V2-24-NRT-04:1.28
+	V3-33:1.29
+	V2-24:1.28
+	V3-31:1.29
+	V3-30-NRT-05:1.28
+	cfm-01-00:1.28
+	V3-30:1.28
+	V3-20:1.28
+	V3-10:1.28
+	V2-23-NRT-02:1.28
+	V2-23:1.28
+	V2-22-NRT-01:1.28
+	V2-22:1.28
+	V2-21:1.28
+	V2-20:1.28
+	V2-11:1.27
+	V2-10:1.27
+	V2-00:1.27
+	V1-51:1.24
+	V1-50:1.24
+	V1-45:1.23
+	V1-44:1.23
+	V1-43:1.18
+	V1-42:1.16
+	V1-41:1.16
+	V1-32:1.16
+	V1-40:1.16
+	V1-31:1.16
+	V1-30:1.16
+	V1-13:1.15
+	V1-12:1.15
+	V1-11:1.15
+	V1-10:1.15
+	newfwm-feb03:1.15.0.2
+	V1-04:1.12
+	V1-03:1.12
+	V1-02:1.12
+	V1-00:1.12
+	newfwm-sep01:1.9.0.2
+	V0-7:1.9
+	V0-5-Level2:1.7
+	V0-5-SIPS:1.7;
+locks; strict;
+comment	@# @;
+
+
+1.54
+date	2020.07.28.20.34.03;	author vsnyder;	state Exp;
+branches;
+next	1.53;
+
+1.53
+date	2016.11.02.22.18.57;	author vsnyder;	state Exp;
+branches;
+next	1.52;
+
+1.52
+date	2016.05.25.00.17.29;	author vsnyder;	state Exp;
+branches;
+next	1.51;
+
+1.51
+date	2015.02.05.21.51.26;	author vsnyder;	state Exp;
+branches;
+next	1.50;
+
+1.50
+date	2014.04.09.00.41.26;	author vsnyder;	state Exp;
+branches;
+next	1.49;
+
+1.49
+date	2014.03.20.18.36.11;	author vsnyder;	state Exp;
+branches;
+next	1.48;
+
+1.48
+date	2014.02.27.02.37.18;	author vsnyder;	state Exp;
+branches;
+next	1.47;
+
+1.47
+date	2014.02.21.19.19.01;	author vsnyder;	state Exp;
+branches;
+next	1.46;
+
+1.46
+date	2014.01.11.01.42.25;	author vsnyder;	state Exp;
+branches;
+next	1.45;
+
+1.45
+date	2013.12.12.01.54.53;	author vsnyder;	state Exp;
+branches;
+next	1.44;
+
+1.44
+date	2013.10.16.01.06.45;	author vsnyder;	state Exp;
+branches;
+next	1.43;
+
+1.43
+date	2013.10.12.01.19.04;	author vsnyder;	state Exp;
+branches;
+next	1.42;
+
+1.42
+date	2013.10.11.00.46.16;	author vsnyder;	state Exp;
+branches;
+next	1.41;
+
+1.41
+date	2013.09.24.23.28.00;	author vsnyder;	state Exp;
+branches;
+next	1.40;
+
+1.40
+date	2013.09.20.00.56.18;	author vsnyder;	state Exp;
+branches;
+next	1.39;
+
+1.39
+date	2013.09.19.23.34.33;	author vsnyder;	state Exp;
+branches;
+next	1.38;
+
+1.38
+date	2013.08.31.01.26.06;	author vsnyder;	state Exp;
+branches;
+next	1.37;
+
+1.37
+date	2013.08.30.03.53.10;	author vsnyder;	state Exp;
+branches;
+next	1.36;
+
+1.36
+date	2013.08.17.02.54.54;	author vsnyder;	state Exp;
+branches;
+next	1.35;
+
+1.35
+date	2012.05.24.21.05.49;	author vsnyder;	state Exp;
+branches;
+next	1.34;
+
+1.34
+date	2012.05.05.00.12.36;	author vsnyder;	state Exp;
+branches;
+next	1.33;
+
+1.33
+date	2011.08.20.00.48.34;	author vsnyder;	state Exp;
+branches;
+next	1.32;
+
+1.32
+date	2011.04.20.17.32.28;	author vsnyder;	state Exp;
+branches;
+next	1.31;
+
+1.31
+date	2011.04.19.02.00.31;	author vsnyder;	state Exp;
+branches;
+next	1.30;
+
+1.30
+date	2011.04.19.00.58.16;	author vsnyder;	state Exp;
+branches;
+next	1.29;
+
+1.29
+date	2011.01.29.00.46.15;	author vsnyder;	state Exp;
+branches;
+next	1.28;
+
+1.28
+date	2006.10.10.23.49.40;	author vsnyder;	state Exp;
+branches;
+next	1.27;
+
+1.27
+date	2006.03.23.01.50.43;	author vsnyder;	state Exp;
+branches;
+next	1.26;
+
+1.26
+date	2005.06.22.20.03.55;	author pwagner;	state Exp;
+branches;
+next	1.25;
+
+1.25
+date	2004.12.31.02.11.34;	author vsnyder;	state Exp;
+branches;
+next	1.24;
+
+1.24
+date	2004.11.17.20.23.30;	author vsnyder;	state Exp;
+branches;
+next	1.23;
+
+1.23
+date	2004.06.23.02.12.24;	author vsnyder;	state Exp;
+branches;
+next	1.22;
+
+1.22
+date	2004.05.29.02.42.16;	author vsnyder;	state Exp;
+branches;
+next	1.21;
+
+1.21
+date	2004.05.29.00.54.46;	author vsnyder;	state Exp;
+branches;
+next	1.20;
+
+1.20
+date	2004.05.28.23.44.28;	author vsnyder;	state Exp;
+branches;
+next	1.19;
+
+1.19
+date	2004.05.28.23.15.15;	author vsnyder;	state Exp;
+branches;
+next	1.18;
+
+1.18
+date	2004.02.14.00.15.18;	author vsnyder;	state Exp;
+branches;
+next	1.17;
+
+1.17
+date	2004.01.14.02.19.51;	author vsnyder;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2003.08.29.00.14.43;	author vsnyder;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2002.10.02.00.43.41;	author vsnyder;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2002.07.25.00.25.10;	author vsnyder;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2002.05.23.20.35.57;	author vsnyder;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2001.11.28.23.48.30;	author vsnyder;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2001.11.28.03.15.37;	author vsnyder;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2001.11.27.00.50.45;	author vsnyder;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2001.06.07.21.56.55;	author pwagner;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2001.05.18.21.24.26;	author vsnyder;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2001.03.09.22.08.27;	author vsnyder;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2001.03.06.22.50.11;	author vsnyder;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2001.03.05.23.20.09;	author vsnyder;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.02.22.19.43.04;	author vsnyder;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2001.02.07.19.42.06;	author vsnyder;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.02.02.00.04.36;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2000.11.02.21.36.45;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.54
+log
+@Added check whether array can have elements that are arrays
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+module TREE_CHECKER
+
+! Traverse the tree output by the parser, which includes definitions
+! put into it by init_tables_module before the parser runs.  Check
+! that things fit together.  Fill in the declaration table.  Decorate
+! cross-references within the tree with anything that might be useful.
+! Decorate internal vertices in expressions with the index of the
+! result type from Declaration_Table.
+
+  use DECLARATION_TABLE, only: DECLARATION, DECLARE, DECLARED, DECLS, &
+    &                          DO_LABEL, DUMP_1_DECL, EMPTY, ENUM_VALUE, &
+    &                          FIELD, FUNCTION, GET_DECL, LABEL, LOG_VALUE, &
+    &                          NAMED_VALUE, NULL_DECL, NUM_VALUE, &
+    &                          PRIOR_DECL, RANGE, REDECLARE, SECTION, SPEC, &
+    &                          STR_Range, STR_VALUE, TYPE_NAME, UNITS_NAME, &
+    &                          VALUE_T, VARIABLE
+  use INIT_TABLES_MODULE, only: DATA_TYPE_INDICES, FIELD_FIRST, FIELD_INDICES, &
+    &                           FIELD_LAST, LIT_INDICES, PHYQ_DIMENSIONLESS, &
+    &                           SECTION_FIRST, SECTION_INDICES, SECTION_LAST, &
+    &                           SECTION_ORDERING
+  use INTRINSIC, only: ALL_FIELDS, Array_Array, DOT => T_A_dot_B, EMPTY_OK, &
+    &                  EXPR_OK, L_True, L_False, NO_ARRAY, NO_CHECK_EQ, NO_DUP, &
+    &                  NO_POSITIONAL, PHYQ_INVALID, REQ_FLD, SPEC_INDICES, &
+    &                  T_BOOLEAN, U
+  use LEXER_CORE, only: PRINT_SOURCE
+  use MoreTree, only: Scalar, StartErrorMessage
+  use OUTPUT_M, only: NEWLINE, OUTPUT
+  use STRING_TABLE, only: DISPLAY_STRING, FLOAT_VALUE
+  use TOGGLES, only: CON, Levels, TOGGLE
+  use TRACE_M, only: TRACE_BEGIN, TRACE_END
+  use TREE, only: DECORATE, DECORATION, DUMP_TREE_NODE, &
+                  NODE_ID, NODE_KIND, NSONS, NULL_TREE, PSEUDO, SUB_ROSA, &
+                  SUBTREE
+  use TREE_TYPES ! Everything, especially everything beginning with N_
+  implicit NONE
+  private
+
+  public :: CHECK_TREE, CHECK_TYPE
+
+! -----     Private declarations     -----------------------------------
+  integer, private :: ERROR        ! 0 => No errors
+  integer, private :: NUM_SECTIONS ! Number of begin ... ends
+
+! Error codes for "announce_error"
+  integer, private, parameter :: ALREADY_DECLARED = 1
+  integer, private, parameter :: ARRAY_NOT_ALLOWED = ALREADY_DECLARED + 1
+  integer, private, parameter :: EMPTY_NOT_ALLOWED = ARRAY_NOT_ALLOWED + 1
+  integer, private, parameter :: IMPROPER_CYCLE = EMPTY_NOT_ALLOWED + 1
+  integer, private, parameter :: IMPROPER_CYCLE_EXIT = IMPROPER_CYCLE + 1
+  integer, private, parameter :: INCONSISTENT_DATA_TYPES = IMPROPER_CYCLE_EXIT + 1
+  integer, private, parameter :: INCONSISTENT_TYPES = INCONSISTENT_DATA_TYPES + 1
+  integer, private, parameter :: INCONSISTENT_UNITS = INCONSISTENT_TYPES + 1
+  integer, private, parameter :: LABEL_CONFLICT = INCONSISTENT_UNITS + 1
+  integer, private, parameter :: MISSING_FIELD = LABEL_CONFLICT + 1
+  integer, private, parameter :: NO_ARRAY_ARRAY = MISSING_FIELD + 1
+  integer, private, parameter :: NO_CODE_FOR = NO_ARRAY_ARRAY + 1
+  integer, private, parameter :: NO_CYCLE_EXIT_TARGET = NO_CODE_FOR + 1
+  integer, private, parameter :: NO_DECLARATION = NO_CYCLE_EXIT_TARGET + 1
+  integer, private, parameter :: NO_DOT = NO_DECLARATION + 1
+  integer, private, parameter :: NO_DUPLICATE_FIELDS = NO_DOT + 1
+  integer, private, parameter :: NO_EXPR = NO_DUPLICATE_FIELDS + 1
+  integer, private, parameter :: NO_POSITIONAL_FIELDS = NO_EXPR + 1
+  integer, private, parameter :: NO_SUCH_FIELD = NO_POSITIONAL_FIELDS + 1
+  integer, private, parameter :: NO_SUCH_REFERENCE = NO_SUCH_FIELD + 1
+  integer, private, parameter :: NOT_FIELD_OF = NO_SUCH_REFERENCE + 1
+  integer, private, parameter :: NOT_FUNC = NOT_FIELD_OF + 1
+  integer, private, parameter :: NOT_LIT_OF_TYPE = NOT_FUNC + 1
+  integer, private, parameter :: NOT_LOG_VALUE = NOT_LIT_OF_TYPE + 1
+  integer, private, parameter :: NOT_NAME = NOT_LOG_VALUE + 1
+  integer, private, parameter :: NOT_NAME_OR_STRING = NOT_NAME + 1
+  integer, private, parameter :: NOT_NUMERIC = NOT_NAME_OR_STRING + 1
+  integer, private, parameter :: NOT_SECTION = NOT_NUMERIC + 1
+  integer, private, parameter :: NOT_SPEC = NOT_SECTION + 1
+  integer, private, parameter :: NOT_STRING = NOT_SPEC + 1
+  integer, private, parameter :: NOT_UNITLESS = NOT_STRING + 1
+  integer, private, parameter :: NOT_UNITS = NOT_UNITLESS + 1
+  integer, private, parameter :: OUT_OF_PLACE = NOT_UNITS + 1
+  integer, private, parameter :: SECTION_ORDER = OUT_OF_PLACE + 1
+  integer, private, parameter :: VARIABLE_CONFLICT = SECTION_ORDER + 1
+  integer, private, parameter :: WRONG_ARG_TYPE = VARIABLE_CONFLICT + 1
+  integer, private, parameter :: WRONG_EXPR_TYPE = WRONG_ARG_TYPE + 1
+  integer, private, parameter :: WRONG_NUM_ARGS = WRONG_EXPR_TYPE + 1
+  integer, private, parameter :: WRONG_TYPE = WRONG_NUM_ARGS + 1
+  integer, private, parameter :: WRONG_UNITS = WRONG_TYPE + 1
+
+  logical, private :: ALL_FIELDS_FLAG   ! All fields are required
+  integer, private :: CURRENT_SECTION = section_first - 1
+  logical, private :: GOT(field_first:field_last)
+  logical, private :: NO_DUP_FLAG       ! Duplicate named fields prohibited
+
+  ! Do_Construct_Stack is for checking whether EXIT and CYCLE are inside of
+  ! the DO construct named in the label, or for getting the nearest DO
+  ! construct if there is no label.  Its value is the root of a DO construct.
+  integer, private, allocatable :: Do_Construct_Stack(:)
+  integer, private :: Do_Stack_Top
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: tree_checker.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains ! ====     Public Procedures     ==============================
+
+! ---------------------------------------------------  CHECK_TREE  -----
+  subroutine CHECK_TREE ( ROOT, ERROR_FLAG, FIRST_SECTION, &
+    & HOW_MANY_SECTIONS  )
+  ! Traverse the abstract syntax tree starting at ROOT, which should
+  ! be a N_CFS node (but we don't check).
+    integer, intent(in) :: ROOT               ! Root of the tree
+    integer, intent(out), optional :: ERROR_FLAG    ! /=0 means trouble
+    integer, intent(out), optional :: FIRST_SECTION ! Which son of root is
+                                                    ! first CF, IF or SELECT?
+    integer, intent(out), optional :: HOW_MANY_SECTIONS ! Number of begin ... ends
+
+    integer :: I              ! Loop inductor
+    integer :: Me = -1        ! String index for trace
+    integer :: MyFirst
+    integer :: SON            ! Son of root
+
+    do_stack_top = 0
+    error = 0
+    myFirst = -1
+    num_sections = 0
+    if ( present(first_section) ) first_section = 0
+    call trace_begin ( me, 'CHECK_TREE', root, cond=toggle(con) )
+    do i = 1, nsons(root)
+      son = subtree(i,root)
+      select case ( node_id(son) )
+      case ( n_cf )         ! A begin-end block's subtree
+        if ( myFirst < 0 ) myFirst = i
+        call one_section ( son )
+      case ( n_cycle, n_exit); call cycle_exit ( root, +1 ) ! +1 => Enclosing sections
+      case ( n_do );        call do_construct ( son )
+                            if ( myFirst < 0 ) myFirst = i
+      case ( n_dt_def );    call def_type ( son ) ! Declare lits in the type
+      case ( n_func_def );  call def_func ( son ) ! Declare function
+      case ( n_if );        call if_construct ( son )
+                            if ( myFirst < 0 ) myFirst = i
+      case ( n_section );   call def_section ( son )
+      case ( n_spec_def );  call def_spec ( son )
+      case ( n_select );    call select_construct ( son )
+                            if ( myFirst < 0 ) myFirst = i
+      case ( n_variable );  call variable_def ( son )
+                            if ( myFirst < 0 ) myFirst = i
+      case ( n_while );     call while_construct ( son )
+                            if ( myFirst < 0 ) myFirst = i
+      case default ;        call announce_error ( son, no_code_for )
+      end select
+    end do
+    if ( present(error_flag) ) error_flag = error
+    if ( present(how_many_sections) ) how_many_sections = num_sections
+    call trace_end ( 'CHECK_TREE', cond=toggle(con) )
+    if ( present(first_section) ) first_section = myFirst
+  end subroutine CHECK_TREE
+
+  ! -------------------------------------------------  Check_Type  -----
+  logical function Check_Type ( Type_Index, Lit_Index )
+  ! Return answer to "Is Lit_Index a literal of type Type_Index?"
+  ! This function is not used by other procedures in this module.
+  ! It is here instead of in declaration_table because this module has
+  ! access to data_type_indices and lit_indices from init_tables_module,
+  ! no matter which init_tables_module is used.
+
+    integer, intent(in) :: Type_Index
+    integer, intent(in) :: Lit_Index
+
+    type(decls) :: Lit_Decl, Type_Decl
+
+    ! This presumably succeeds:
+    type_decl = get_decl(data_type_indices(type_index), type_name)
+    ! This presumably also succeeds:
+    lit_decl = get_decl(lit_indices(lit_index), enum_value)
+    check_type = .true.
+    do
+      if ( lit_decl%tree == type_decl%tree ) &
+  return
+      if ( lit_decl%prior == null_decl ) exit
+      lit_decl = prior_decl(lit_decl, enum_value)
+    end do
+    check_type = .false.
+  end function Check_Type
+
+! =====     Private Procedures     =====================================
+! -----------------------------------------------  ANNOUNCE_ERROR  -----
+  subroutine ANNOUNCE_ERROR ( WHERE, CODE, SONS, FIELDS, EXPECT, GOT  )
+    use Intrinsic, only: PHYQ_Indices
+    use Tree, only: Node_Kind, Pseudo, Where_At => Where
+    integer, intent(in) :: WHERE   ! Tree node where error was noticed
+    integer, intent(in) :: CODE    ! Code for error message
+    integer, intent(in), optional :: SONS(:) ! Tree nodes, maybe sons of
+                                   ! "where".  If they're pseudo_terminal,
+                                   ! their declarations are dumped.
+    integer, intent(in), optional :: FIELDS(:) ! Field indices
+    integer, intent(in), optional :: EXPECT    ! Something expected
+    integer, intent(in), optional :: GOT       ! Got this instead of expected
+    integer :: I                   ! Index for "sons" or "section_ordering"
+                                   ! or subtrees of "sons" or subtree of "expect"
+
+    error = max(error,1)
+    call startErrorMessage ( where )
+    select case ( code )
+    case ( already_declared )
+      call dump_tree_node ( where, 0 )
+      call output ( ' is already defined.', advance='yes' )
+    case ( array_not_allowed )
+      call display_string ( field_indices(fields(1)), &
+        & before='an array value is not allowed for the "' )
+      call output ( '" field.', advance='yes' )
+    case ( empty_not_allowed )
+      call display_string ( field_indices(fields(1)), &
+        & before='an empty value is not allowed for the "' )
+      call output ( '" field.', advance='yes' )
+    case ( improper_cycle )
+      call output ( 'CYCLE does not refer to a DO or WHILE construct.', &
+        & advance='yes' )
+    case ( improper_cycle_exit )
+      call output ( 'CYCLE or EXIT within a section cannot refer to' )
+      call output ( ' a construct enclosing a section.', advance='yes' )
+    case ( inconsistent_data_types )
+      call output ( 'data types are not consistent' )
+      if ( present(expect) ) &
+        & call display_string ( data_type_indices(expect), before=', expected ' )
+      if ( present(got) ) &
+        & call display_string ( data_type_indices(got), before=', got ' )
+      call output ( '.', advance='yes' )
+    case ( inconsistent_types )
+      call output ( 'types are not consistent' )
+      if ( present(expect) ) &
+        & call display_string ( data_type_indices(expect), before=', expected ' )
+      if ( present(got) ) &
+        & call display_string ( data_type_indices(got), before=', got ' )
+      call output ( '.', advance='yes' )
+    case ( inconsistent_units )
+      call output ( 'units are not consistent.', advance = 'yes' )
+      if ( present(expect) ) &
+        & call display_string ( phyq_indices(expect), before=', expected ' )
+      if ( present(got) )&
+        & call display_string ( phyq_indices(got), before=', expected ' )
+    case ( label_conflict )
+      call display_string ( got, before='A label ' )
+      call output ( ' shall not be the same as an enumeration literal,' )
+      call output ( ' a named value, or a variable.', advance='yes' )
+    case ( missing_field )
+      call display_string ( field_indices(fields(1)), before='the "' )
+      call output ( '" field is required but not present.', advance='yes' )
+    case ( no_array_array )
+      call display_string ( field_indices(fields(1)), &
+        & before='an array element is not allowed to be an array in the "' )
+      call output ( '" field.', advance='yes' )
+    case ( no_code_for )
+      call output ( 'there is no code to analyze ' )
+      call dump_tree_node ( where, 0, advance='yes' )
+    case ( no_cycle_exit_target )
+      call output ( 'there is no target for the CYCLE or EXIT statement.', &
+        & advance='yes' )
+    case ( no_declaration )
+      call display_string ( sub_rosa(where), before='the symbol ' )
+      call output ( ' does not appear as a label of a specification', advance='yes' )
+    case ( no_dot )
+      call output ( 'a reference of the form X.Y is not allowed.', &
+        advance='yes' )
+    case ( no_duplicate_fields )
+      call display_string ( field_indices(fields(1)), before='the "' )
+      call output ( '" field shall not be specified twice.', advance='yes' )
+    case ( no_expr )
+      call display_string ( field_indices(fields(1)), &
+        & before='an expression value is not allowed for the "' )
+      call output ( '" field.', advance='yes' )
+    case ( no_positional_fields )
+      call output ( 'positional fields are not allowed.', advance='yes' )
+    case ( no_such_field )
+      call display_string ( field_indices(fields(1)), before='a required field "' )
+      call output ( '" is absent in the chain of specifications.', &
+        advance='yes' )
+    case ( no_such_reference )
+      call display_string ( sub_rosa(where), before='there is no reference to ' )
+      call output ( ' in the field at ' )
+      if ( present(sons) ) call print_source ( where_at(sons(1)), advance='yes' )
+    case ( not_field_of )
+      call display_string ( sub_rosa(where) )
+      call display_string ( sub_rosa(subtree(1,fields(1))), &
+        & before=' is not a field of ', advance='yes' )
+    case ( not_func )
+      call display_string ( fields(1) )
+      call output ( ' is not a valid function.', advance='yes' )
+    case ( not_log_value )
+      call output ( 'is not boolean.', advance = 'yes' )
+    case ( not_name )
+      call output ( 'is not a name.', advance = 'yes' )
+    case ( not_name_or_string )
+      call output ( 'is not a name or a string.', advance = 'yes' )
+    case ( not_numeric )
+       call output ( 'is not numeric.', advance = 'yes' )
+    case ( not_section )
+      call display_string ( sub_rosa(where) )
+      call output ( ' is not a section name.', advance = 'yes' )
+    case ( not_spec )
+      if ( present(expect) ) then
+        call display_string ( expect )
+      else
+        call display_string ( sub_rosa(where) )
+      end if
+      call output ( ' is not a spec name.', advance = 'yes' )
+    case ( not_string )
+      call output ( 'is not a string or of logical type.', &
+                    advance = 'yes' )
+    case ( not_unitless )
+      if ( present(fields) ) then
+        call display_string ( fields(1), before='Argument of ' )
+      else
+        call output ( 'Operand' )
+      end if
+      call output ( ' is not unitless.', advance='yes' )
+    case ( not_units )
+      call dump_tree_node ( where, 0 )
+      call output ( ' is not a units name.', advance = 'yes' )
+    case ( out_of_place )
+      call display_string ( sub_rosa(where) )
+      call display_string ( sub_rosa(sons(1)), before=' is not allowed in a ' )
+      call output ( ' section.', advance='yes' )
+    case ( section_order )
+      call output ( 'Section '); call display_string ( sub_rosa(where) )
+      call output ( ' is out of order.', advance='yes' )
+      call output ( '***** Expected' )
+      do i = section_first, section_last
+        if ( section_ordering(i,current_section) /= 0 ) then
+          call output ( ' ' ); call display_string ( section_indices(i) )
+        end if
+      end do
+      call newLine
+    case ( variable_conflict )
+      call display_string ( got, before='A variable name ' )
+      call output ( ' shall not be the same as an enumeration literal,' )
+      call output ( ' a label, or a named value.', advance='yes' )
+    case ( wrong_arg_type )
+      call display_string ( fields(1), before='Argument of ' )
+      call output ( ' is not the correct type' )
+      if ( present(expect) ) &
+        & call display_string ( sub_rosa(expect), before=', expected ' )
+      call output ( '.', advance='yes' )
+    case ( wrong_expr_type )
+      call display_string ( data_type_indices(expect), &
+        & before='Expression type is not correct.  Expected "' )
+      call output ( '"', advance='yes' )
+    case ( wrong_num_args )
+      call display_string ( fields(1), before='Incorrect number of arguments for ', &
+        & advance='yes' )
+    case ( wrong_type, wrong_units )
+      i = node_kind(where)
+      if ( present(fields) ) i = node_kind(fields(1))
+      if ( i == pseudo ) then
+        call output ( 'the "' )
+        if ( present(fields) ) then
+          call display_string ( sub_rosa(fields(1)) )
+        else
+          call display_string ( sub_rosa(where) )
+        end if
+        call output ( '" field has the wrong ' )
+      else
+        call output ( 'the field has the wrong ' )
+      end if
+      if ( code == wrong_type ) then
+        call output ( 'type of associated value' )
+        if ( present(expect) ) then
+          if ( expect == 0 ) then
+            call output ( '.', advance='yes' )
+          else
+            call output ( ', expected ' )
+            if ( node_id(expect) /= n_or ) then
+              call theType ( expect, 2 )
+            else
+              call output ( 'one of' )
+              do i = 2, nsons(expect)
+                call output ( ' ' )
+                call theType ( subtree(i,expect), 1 )
+              end do
+            end if
+            call newLine
+          end if
+        else
+          call output ( '.', advance='yes' )
+        end if
+      else
+        call display_string ( phyq_indices(expect), before='units, ' )
+        call output ( ' expected.', advance='yes' )
+      end if
+      if ( present(sons) ) then
+        call output ( '         Expected' )
+        if ( nsons(sons(1)) > 2 ) call output ( ' one of' )
+        do i = 2, nsons(sons(1))
+          if ( i > 2 ) call output ( ',' )
+          call output ( ' ' )
+          if ( i > 2 .and. i == nsons(sons(1)) ) call output ( 'or ' )
+          call display_string ( sub_rosa(subtree(i,sons(1))) )
+        end do
+        call newLine
+      end if
+    case default
+      call output ( code, before='No message in TREE_CHECKER for error code ', &
+        & advance='yes' )
+      stop
+    end select
+    if ( present(sons) ) then
+      do i = 1, size(sons)
+        if ( node_kind(sons(i)) == pseudo ) &
+          call dump_1_decl ( sub_rosa(sons(i)) )
+      end do
+    end if
+  contains
+    subroutine TheType ( Where, Start )
+      integer, intent(in) :: Where ! The type tree node
+      integer, intent(in) :: Start ! for index for sons of Where
+      integer :: I
+      do i = start, nsons(where)
+        call display_string ( sub_rosa(subtree(i,where)) )
+        if ( i /= nsons(where) ) call output ( '.' )
+      end do
+    end subroutine TheType
+  end subroutine ANNOUNCE_ERROR
+
+! ----------------------------------------------------  ASSIGN  -----
+  subroutine ASSIGN ( ROOT, TYPE, UNITS, VALUE )
+  ! Analyze a son of "n_spec_args" of the form "name = expr+",
+  ! starting at ROOT
+
+    integer, intent(in) :: ROOT            ! Index of the n_asg node
+    integer, intent(out) :: TYPE, UNITS    ! Output from "expr"
+    double precision, intent(out) :: VALUE ! Output from "expr"
+
+    integer :: F         ! Index of son, grandson of Field
+    integer :: FIELD     ! Tree node of field's declaration
+    integer :: FIELD_LIT ! f_... for a field
+    integer :: FIELD_LOOK ! A field being sought during n_dot checking in AssignBody
+    integer :: FIELD_TEST ! A son of Field_Ref in AssignBody
+    integer :: I         ! Index of son of "root"
+    integer :: LOOK_FOR  ! Look for an enum_value or a spec?
+    integer :: MaxStat   ! of sons of OR
+    integer :: Me = -1   ! String index for trace
+    logical :: NO_ARRAY_ALLOWED ! Field is n_field_type and is required to be scalar
+    logical :: OK        ! At least one of sons of OR was OK
+    integer :: SON1, SON ! Sons of "root"
+    integer :: SPEC_DECL ! Tree node of the spec's declaration
+    integer :: Stat      ! From AssignBody
+
+    call trace_begin ( me, 'ASSIGN', root, cond=toggle(con) )
+    son1 = subtree(1,root)
+    if ( node_id(son1) == n_identifier ) then
+      spec_decl = decoration(root)
+      field = check_field(son1,spec_decl)   ! Is field a field of spec?
+      if ( field == 0 ) then
+        call announce_error ( son1, not_field_of, &
+          & fields=(/ spec_decl /) )
+      else
+        no_array_allowed = mod(decoration(field)/no_array,2) /= 0
+        if ( node_id(field) == n_field_type ) then
+          look_for = enum_value
+        else if ( node_id(field) == n_variable_ref ) then
+          look_for = variable
+        else ! node_id(field) == n_field_spec or node_id(field) == n_dot
+          look_for = label
+        end if
+        call decorate ( root, field )
+        field_lit = decoration(subtree(1,field))
+        if ( no_dup_flag ) then
+          if ( got(field_lit) ) &
+            & call announce_error ( root, no_duplicate_fields, &
+            & fields=(/ field_lit /) )
+        end if
+        got(field_lit) = .true.
+        call decorate ( son1, field_lit )
+        if ( mod(decoration(field)/empty_ok,2) == 0 .and. nsons(root) == 1 ) &
+          & call announce_error ( root, empty_not_allowed, fields=(/ field_lit /) )
+        if ( node_id(field) /= n_unchecked ) then
+          do i = 2, nsons(root)
+            son = subtree(i,root)
+            if ( node_id(field) /= n_or ) then
+              ! First son of field is the field name; the rest are types.
+              stat = assignBody ( son, field, 2 )
+            else
+              ok = .false.
+              maxStat = 0
+              do f = 2, nsons(field)
+                if ( node_id(subtree(f,field)) == n_unchecked ) then
+                  ok = .true.
+                  stat = 0
+              cycle
+                end if
+                ! First son of n_or is the field name.  All sons of n_or
+                ! are types.
+                no_array_allowed = no_array_allowed .or. &
+                                   mod(decoration(subtree(f,field))/no_array,2) /= 0
+                stat = assignBody ( son, subtree(f,field), 1 )
+                maxStat = max(stat,maxStat)
+                if ( stat == 0 ) then
+                  ok = .true.
+              cycle
+                end if
+              end do
+              stat = maxStat
+              if ( ok ) stat = 0
+            end if
+            select case ( stat )
+            case ( 0 )
+            case ( no_array_array )
+              call announce_error ( subtree(1,son), no_array_array, fields=(/ field_lit /) )
+            case ( no_declaration )
+              call announce_error ( subtree(1,son), no_declaration )
+            case ( no_expr )
+              call announce_error ( subtree(2,son), no_expr, fields=(/ field_lit /) )
+            case ( no_such_field )
+              call announce_error ( subtree(2,son), no_such_field, &
+                & fields=(/ field_look /) )
+            case ( no_such_reference )
+              call announce_error ( subtree(2,son), no_such_reference, &
+                & (/ subtree(1,field_test) /) )
+            case ( not_spec )
+              call announce_error ( subtree(2,son), not_spec, expect=field_last )
+            case ( wrong_type )
+              call announce_error ( son, wrong_type, fields=(/son1/), &
+                & expect=field )
+            case default
+              call announce_error ( son1, wrong_units, fields = (/ son1 /), &
+                & expect=-stat )
+            end select
+          end do ! i = 2, nsons(root)
+          if ( no_array_allowed .and. .not. scalar(root) ) &
+            & call announce_error ( root, array_not_allowed, fields=(/ field_lit /) )
+        end if
+      end if
+    else
+      call announce_error ( son1, not_name )
+    end if
+    call trace_end ( 'ASSIGN', cond=toggle(con) )
+
+  contains
+
+    recursive integer function AssignBody ( Root, Field, Start ) result ( Stat )
+      integer, intent(in) :: Root   ! of son of n_asg or n_array
+      integer, intent(in) :: Field  ! spec of field to check
+      integer, intent(in) :: Start  ! index of sons of field
+
+      logical :: Array_Array_OK ! OK for array element to be an array
+      type(decls) :: DECL  ! Declaration of a name
+      integer :: Gson      ! Son of son
+      integer :: J         ! Index of root of "field"
+      integer :: Me = -1   ! String index for trace
+      integer :: TEST_TYPE ! Used to test the tree-node for a type reference
+      integer :: TYPE_DECL ! Tree node of declaration of name of field's type
+
+      call trace_begin ( me, 'AssignBody', root, index=field, cond=toggle(con) )
+
+      ! Stat = 0 => Type and units OK
+      !      else wrong type
+      !      or   no such field
+      !      or   no such reference
+      !      or   no such label
+      !      < 0 => Expecting units |stat|
+
+      stat = 0 ! Assume normal return status
+      select case ( node_id(root) )
+      case ( n_dot ) ! label_ref.field
+        if ( node_id(field) == n_dot ) then      ! dot allowed
+          stat = check_dot ( root, field, start, field_look, field_test )
+        else
+          stat = wrong_type ! Wrong type
+        end if
+      case ( n_identifier )
+        if ( node_id(field) == n_variable_ref ) then
+          decl = get_decl(sub_rosa(root),look_for)
+          if  ( decl%type /= null_decl ) &
+    go to 9
+        else if ( node_id(field) /= n_dot ) then ! Field doesn't need x.y
+          do j = start, nsons(field)             ! Try all of the types
+            type_decl = decoration(subtree(j,field))
+            decl = get_decl(sub_rosa(root),[look_for,variable])
+            do while ( decl%tree /= null_tree )
+              if ( decl%type==variable ) then
+                ! Type of variable is not the tree that represents the type,
+                ! so check for the type, not the tree that represents it.
+                if ( node_id(type_decl) == n_dt_def ) &
+                  & type_decl = decoration(subtree(1,type_decl))
+                stat = expr (root, type, units, value, field, start, field_look, field_test)
+                if ( type == enum_value ) then
+                  test_type = units ! The enumeration type
+                else
+                  test_type = type
+                end if
+              else
+                test_type = decl%tree
+                select case ( decl%type )
+                case ( do_label, enum_value, function, label, named_value, &
+                     & type_name ) ! decl%tree is a tree node index
+                  if ( node_id(type_decl) == n_spec_def ) &
+                     & test_type = decoration(subtree(1,decl%tree))
+                end select
+              end if
+              if ( test_type == type_decl ) then  ! right type
+                if ( look_for == enum_value ) then
+                  call decorate ( root, decl%units ) ! decorate root with lit#
+                else
+                  call decorate ( root, decl%tree )  ! decorate root with tree
+                end if
+    go to 9
+              end if
+              decl = prior_decl(decl,[look_for,variable])
+            end do
+          end do
+        end if
+        ! Either field needs x.y, or an allowed type was not found
+        stat = wrong_type
+      case ( n_array )
+        if ( mod(decoration(field)/array_array,2) == 0 ) then
+            stat = no_array_array
+    go to 9
+        end if
+        do j = 1, nsons(root)
+          gson = subtree(j,root)
+          stat = assignBody ( subtree(j,root), field, start )
+          if ( stat /= 0 ) &
+    go to 9
+        end do
+      case default
+        stat = expr (root, type, units, value, field, start, field_look, field_test)
+        if ( node_id(field) == n_dot ) then ! Field needs x.y
+          stat = merge(no_expr,0,mod(decoration(field)/expr_ok,2) == 0)
+          if ( stat == 0 ) stat = merge(0,wrong_type,type==dot)
+        else ! Field doesn't need x.y; check the type
+          if ( type == enum_value ) then
+            test_type = units ! The enumeration type
+          else
+            test_type = type
+          end if
+          stat = check_field_type(field, test_type, units, start)
+        end if
+      end select
+    9 call trace_end ( 'AssignBody', stat, cond=toggle(con) )
+    end function AssignBody
+
+  end subroutine ASSIGN
+
+! ----------------------------------------------------  Check_Dot  -----
+  integer function Check_Dot ( Root, Field, Start, Field_Look, Field_Test ) &
+    & result ( Stat )
+
+    ! Check label.field
+    integer, intent(in) :: Root  ! n_dot node of tree to check
+    integer, intent(in) :: Field ! Declaration of the field types
+    integer, intent(in) :: Start ! of sons of Field
+    integer, intent(out) :: Field_Look ! expected f_field index, for error message
+    integer, intent(out) :: Field_Test ! parent of checked field, for error message
+    type(decls) :: Decl   ! Declaration of a name
+    integer :: Field_Got  ! The field that was the desired one
+    integer :: Field_Last ! Sub_rosa of Last
+    integer :: Field_Ref  ! The value of a field -- a ref to a n_spec_arg
+    integer :: First      ! label in <dot label field> son of root
+    integer :: Last       ! field in <dot label field> son of root
+    integer :: Me = -1    ! String index for trace
+    integer :: Test_Type  ! Used to test the tree-node for a type reference
+    integer :: Type_Decl  ! Tree node of declaration of name of field's type
+
+    call trace_begin ( me, 'Check_Dot', root, cond=toggle(con), advance='no' )
+    if ( toggle(con) ) then
+      call output ( field, before=' Field = ', advance='no' )
+      call output ( start, before=' Start = ', advance='yes' )
+    end if
+
+    stat = no_such_reference ! Assume no label referenced in <dot label field>
+    type_decl = decoration(subtree(start,field)) ! Required spec
+    first = subtree(1,root) ! label in <dot label field>
+    last = subtree(2,root)  ! field in <dot label field>
+    field_last = sub_rosa(last)
+    decl = get_decl(sub_rosa(first),label)
+    if ( decl%tree /= null_tree ) then
+      do while ( decl%tree /= null_tree )
+        test_type = decoration(subtree(1,decl%tree)) ! spec's index
+        if ( test_type == type_decl ) then  ! right kind of spec
+          field_ref = decl%tree
+          call decorate ( first, field_ref ) ! decorate label_ref with tree
+          stat = check_deep ( start+1, nsons(field), field_ref )
+          if ( stat == 0 ) exit
+        end if
+        decl = prior_decl(decl,label)
+      end do
+    else
+      stat = no_declaration
+      field_look = -1 ! The name before the dot doesn't exist
+      field_test = -1 ! The name before the dot doesn't exist
+    end if
+    call trace_end ( 'Check_Dot', stat, cond=toggle(con) )
+
+  contains
+
+    recursive integer function Check_Deep ( Start, End, Field_Ref ) &
+      & result ( Stat )
+      integer, intent(in) :: Start      ! of sons of Field
+      integer, intent(in) :: End        ! of sons of Field
+      integer, intent(in) :: Field_Ref  ! spec_arg tree to check against son
+                                        ! Start of Field
+      integer :: Field_Chk  ! index of n_asg vertex
+      integer :: K     ! Index of sons of Field_Ref, to find N_Asg vertex
+      integer :: L     ! Index of sons of Field_Test, to find next spec_arg
+      integer :: Me = -1    ! String index for trace
+      integer :: Name_Look  ! sub_rosa of Start son of Field
+
+      call trace_begin ( me, 'Check_Deep', subtree(start,field), field_ref, &
+        & cond=toggle(con) )
+
+      stat = 0 ! Assume success
+      field_look = decoration(subtree(start,field))
+      name_look = sub_rosa(subtree(start,field))
+      do k = 2, nsons(field_ref)
+        field_chk = subtree(k,field_ref)
+        field_test = field_chk
+        ! Check for n_asg son of field_ref
+        if ( node_id(field_chk) == n_asg ) then
+          if ( sub_rosa(subtree(1,field_chk)) == name_look ) then
+            ! The field in the spec_arg is the same as the Start son of Field
+            field_got = field_chk
+            if ( start == end ) then
+              ! Check whether a son of the n_asg at field_chk is the field in
+              ! <dot label field> to be checked
+              do l = 2, nsons(field_chk)
+                if ( sub_rosa(subtree(l,field_got)) == field_last ) then
+                  call decorate ( last, subtree(l,field_got) )
+                  go to 9
+                end if
+              end do
+              field_test = field_last
+              stat = not_spec ! No such referenced spec
+              go to 9
+            else
+              ! Check whether a son of the n_asg at field_chk is another field
+              ! of the same name as the Start son of Field
+              do l = 2, nsons(field_chk)
+                stat = check_deep ( start, end, decoration(subtree(l,field_chk)) )
+                if ( stat == 0 ) go to 9
+              end do
+              ! Check whether a son of the n_asg at field_chk is
+              ! the same name as the Start+1 son of Field
+              do l = 2, nsons(field_chk)
+                stat = check_deep ( start+1, end, decoration(subtree(l,field_chk)) )
+                if ( stat == 0 ) go to 9
+              end do
+            end if
+          end if
+        end if
+      end do ! k
+      stat = no_such_field ! no such field
+    9 call trace_end ( 'Check_Deep', cond=toggle(con) )
+    end function Check_Deep
+
+  end function Check_Dot
+
+! --------------------------------------------------  CHECK_FIELD  -----
+  integer function CHECK_FIELD ( FIELD, SPEC )
+  ! Return position in tree of "n_field_type" or "n_field_spec" node of
+  ! field definition if "field" is a field of "spec," else return zero.
+
+    integer, intent(in) :: FIELD
+    integer, intent(in) :: SPEC
+    integer :: I         ! Index of sons of "spec_def"
+    integer :: Me = -1   ! String index for trace cacheing
+    integer :: SUB_FIELD ! Sub_rosa = string index of "field"
+
+    call trace_begin ( me, 'CHECK_FIELD', field, cond=toggle(con) )
+    sub_field = sub_rosa(field)    ! String index of field
+    do i = 2, nsons(spec)
+      check_field = subtree(i,spec)
+      if ( sub_rosa(subtree(1,check_field)) == sub_field ) go to 9
+    end do
+    check_field = 0
+  9 call trace_end ( 'CHECK_FIELD', check_field, cond=toggle(con) )
+  end function CHECK_FIELD
+
+! ---------------------------------------------  CHECK_FIELD_TYPE  -----
+  integer function CHECK_FIELD_TYPE ( FIELD, TYPE, UNITS, START )
+  ! Return zero if 'type' is allowed for 'field' of 'spec' "
+  ! or if 'type' is allowed for parameter declared at 'field' ".
+  ! Return Wrong_Type if type is wrong.
+  ! Return -(required PHYQ_...) if type is correct but units are wrong.
+    integer, intent(in) :: FIELD   ! Field declaration, from "check_field"
+                                   ! or a parameter declaration from
+                                   ! "check_section"
+    integer, intent(in) :: TYPE    ! A "t_type" name from Init_Tables_Module
+    integer, intent(in), optional :: UNITS ! From EXPR
+    integer, intent(in), optional :: START
+    type(decls) :: DECL            ! Declaration of "type"
+    integer :: I                   ! Index of sons of "spec_def"
+    integer :: Me = -1             ! String index for trace
+    integer :: MyStart             ! Either 2 or start
+    integer :: REQ_U               ! Required units of a son of FIELD
+
+    call trace_begin ( me, 'Check_Field_Type', field, cond=toggle(con) )
+    myStart = 2
+    if ( present(start) ) myStart = start
+    check_field_type = merge( wrong_type, 0, &
+      &  type < lbound(data_type_indices,1) .or. &
+      &  type > ubound(data_type_indices,1) )
+    if ( check_field_type /= 0 ) &
+  go to 9
+    decl = get_decl(data_type_indices(type), type_name)
+    req_u = decoration(field) / u
+    do i = myStart, nsons(field)
+      check_field_type = merge( 0, wrong_type, &
+                              & decoration(subtree(i,field)) == decl%tree )
+      if ( check_field_type == 0 ) then
+        if ( req_u > 0 .and. present(units) ) then
+          if ( req_u /= units ) check_field_type = -req_u
+        end if
+  go to 9
+      end if
+    end do
+    check_field_type = wrong_type
+  9 continue
+    call trace_end ( 'Check_Field_Type', check_field_type, cond=toggle(con) )
+  end function CHECK_FIELD_TYPE
+
+! --------------------------------------------------  Check_Label  -----
+  logical function Check_Label ( Root ) result ( OK )
+  ! Check that a label definition is not already a label, do_label, named_value,
+  ! or variable.
+    integer, intent(in) :: Root    ! Son of N_Named vertex
+
+    type(decls) :: Decl            ! Declaration of a label
+    integer :: Me = -1             ! String index for trace
+    integer :: String1             ! Text of Gson1, which is a label
+
+    call trace_begin ( me, 'Check_Label', root, cond=toggle(con) )
+    ok = .false.
+    string1 = sub_rosa(root)
+    decl = get_decl ( string1, [ do_label, enum_value, label, named_value, &
+                                & variable ] )
+    select case ( decl%type )
+    case ( label, do_label )
+      call announce_error ( root, already_declared )
+    case ( named_value, variable )
+      call announce_error ( root, label_conflict, got=string1 )
+    case default
+      ok = .true.
+    end select
+    call trace_end ( 'Check_Label', cond=toggle(con) )
+
+  end function Check_Label
+
+! ------------------------------------------------  CHECK_SECTION  -----
+  integer function CHECK_SECTION ( SPEC_CHECK, SECTION )
+  ! Return subtree of "section" where "spec_check" is found, else zero.
+  ! "spec_check" is a pseudo-terminal name of a spec name or a
+  ! parameter name.
+    integer, intent(in) :: SPEC_CHECK
+    integer, intent(in) :: SECTION
+    integer :: I           ! Index of sons of "sect_def"
+    integer :: SUB_SPEC    ! Sub_rosa = string index of 
+
+    sub_spec = sub_rosa(spec_check)    ! String index of spec_check
+    do i = 2, nsons(section)           ! specs allowed in section
+      check_section = subtree(i,section)
+      if ( node_kind(check_section) == pseudo ) then
+        if ( sub_rosa(check_section) == sub_spec ) &
+  return
+      else ! Must be n_name_def
+        if ( sub_rosa(subtree(1,check_section)) == sub_spec ) &
+  return
+      end if
+    end do
+    check_section = 0
+  end function CHECK_SECTION
+
+! ---------------------------------------------------  Cycle_Exit  -----
+  subroutine Cycle_Exit ( Root, In_Or_Out )
+  ! If a CYCLE or EXIT statement has a label, make sure the label is the
+  ! label of an enclosing DO construct.  If it doesn't have a label, make
+  ! sure the statement is within at least one DO construct.  Decorate the
+  ! root with the DO construct.
+    integer, intent(in) :: Root      ! Of the CYCLE or EXIT statement
+    integer, intent(in) :: In_Or_Out ! +1 => Outside a section, -1 => Inside
+
+    integer :: Do_Tree               ! The referenced DO construct
+    integer :: I                     ! For hunting in the DO construct stack
+    integer :: Me = -1               ! String index for trace cacheing
+    integer :: Son                   ! of a DO construct root
+
+    call trace_begin ( me, 'Cycle_Exit', root, cond=toggle(con) )
+
+    if ( do_stack_top <= 0 ) then
+      call announce_error ( root, no_cycle_exit_target )
+    else
+      if ( nsons(root) == 0 ) then ! EXIT or CYCLE that doesn't name a construct
+        do_tree = 0
+        ! Hunt for DO or WHILE construct
+        do i = do_stack_top, 1, -1
+          if ( node_id(do_construct_stack(i)) == n_do .or. &
+             & node_id(do_construct_stack(i)) == n_while ) then
+            do_tree = do_construct_stack(i)
+            exit
+          end if
+        end do
+      else                         ! EXIT or CYCLE that does name a construct
+        do_tree = 0
+        ! Hunt for the label on DO constructs in the stack
+        do i = do_stack_top, 1, -1
+          son = subtree(1,do_construct_stack(i))
+          if ( node_id(son) == n_named ) then
+            if ( sub_rosa(subtree(1,son)) == sub_rosa(subtree(1,root)) ) then
+              do_tree = do_construct_stack(i)
+              exit
+            end if
+          end if
+        end do
+      end if
+      if ( do_tree == 0 ) then
+        call announce_error ( root, no_cycle_exit_target )
+      else
+        if ( node_id(root) == n_cycle .and. node_id(do_tree) /= n_do .and. &
+             node_id(do_tree) /= n_while ) then
+          call announce_error ( root, improper_cycle )
+        else if ( decoration(do_tree) /= in_or_out ) then
+          call announce_error ( root, improper_cycle_exit )
+        else
+          call decorate ( root, do_tree )
+        end if
+      end if
+    end if
+
+    call trace_end ( 'Cycle_Exit', cond=toggle(con) )
+
+  contains
+
+    subroutine Check_In_Out ( Do_Tree )
+      integer, intent(in) :: Do_Tree
+    end subroutine Check_In_Out
+
+  end subroutine Cycle_Exit
+
+! -----------------------------------------------------  DEF_FUNC  -----
+  subroutine DEF_FUNC ( ROOT )
+  ! Process a definition of a function: Enter it into the declaration
+  ! table.
+    integer, intent(in) :: ROOT    ! Root of tree being worked ( n_dt_def )
+
+    integer :: Me = -1   ! String index for trace
+    integer :: SON       ! Son of Root
+
+    call trace_begin ( me, 'DEF_FUNC', root, cond=toggle(con) )
+    son = subtree(1,root)
+    !              String         Value                Type
+    call declare ( sub_rosa(son), sub_rosa(son)+0.0d0, function, &
+    !              Units            Tree
+                 & decoration(son), root )
+    call trace_end ( 'DEF_FUNC', cond=toggle(con) )
+  end subroutine DEF_FUNC
+
+! --------------------------------------------------  DEF_SECTION  -----
+  subroutine DEF_SECTION ( ROOT )
+  ! Process a definition of a section:  Enter the section name in the
+  ! declaration.  Decorate the section name with the section definition.
+  ! If the section has name definitions, enter them in the declaration
+  ! table, with the "units" field equal to the decoration of the type
+  ! name (second son of the "name_def" node) and the "tree" field indexing
+  ! the "name_def" node.
+    integer, intent(in) :: ROOT    ! Root of tree being worked ( n_dt_def )
+
+    type(decls) :: DECL  ! Declaration of a parameter type
+    integer :: GSON      ! The type name node for a parameter declaration
+    integer :: I         ! Loop inductor
+    integer :: Me = -1   ! String index for trace
+    integer :: SON       ! Son of Root
+
+    call trace_begin ( me, 'DEF_SECTION', root, cond=toggle(con) )
+    son = subtree(1,root)
+                 ! String         Value                Type
+    call declare ( sub_rosa(son), sub_rosa(son)+0.0d0, section, &
+                 ! Units            Tree
+                 & decoration(son), root )
+    do i = 2, nsons(root)
+      son = subtree(i,root)
+      if ( node_id(son) == n_name_def ) then
+        gson = subtree(1,son)
+                     ! String          Value                 Type
+        call declare ( sub_rosa(gson), sub_rosa(gson)+0.0d0, named_value, &
+                     ! Units            Tree
+                       decoration(gson), son )
+        gson = subtree(2,son)
+        decl = get_decl(sub_rosa(gson),type_name)
+        call decorate ( gson, decl%tree )    ! the dt_def
+      end if
+    end do
+    call trace_end ( 'DEF_SECTION', cond=toggle(con) )
+  end subroutine DEF_SECTION
+
+! -----------------------------------------------------  DEF_SPEC  -----
+  recursive subroutine DEF_SPEC ( ROOT )
+  ! Process a definition of a specification:  Enter the specification and field
+  ! names in the declaration table.  Decorate the specification name with
+  ! the root. Decorate each field_type node with the specification name.
+  ! Decorate each field name with its parent field_type node.  Decorate
+  ! each field type name with the dt_def node for the type.
+
+    integer, intent(in) :: ROOT      ! Root of tree being worked ( n_spec_def )
+
+    type(decls) :: DECL       ! Current declaration of "son"
+    integer :: FIELD_NAME, FIELD_TYPE   ! Grandsons
+    integer :: I, J           ! Loop inductors
+    integer :: Me = -1        ! String index for trace
+    integer :: SON            ! I'th son of "root"
+    integer :: SPEC_NAME      ! First son of "root"
+
+    call trace_begin ( me, 'DEF_SPEC', root, cond=toggle(con) )
+    spec_name = subtree(1,root)
+                 ! String               Value                      Type
+    call declare ( sub_rosa(spec_name), sub_rosa(spec_name)+0.0d0, spec, &
+                 ! Units                  Tree
+                 & decoration(spec_name), root )
+!   call decorate ( spec_name, root )
+    do i = 2, nsons(root)
+      son = subtree(i,root)
+      son=son ! Without this, the LF95 compiler inexplicably uses "root"
+              ! instead of "son" below ???
+      field_name = subtree(1,son)
+      decl = get_decl(sub_rosa(field_name),field)
+      if ( decl%tree == null_tree ) then ! don't make several
+                       ! String                Value       Type
+        call redeclare ( sub_rosa(field_name), decl%value, field, &
+                       ! Units                   Tree
+                         decoration(field_name), son )
+      else ! need to make several -- one for each
+                     ! String                Value       Type
+        call declare ( sub_rosa(field_name), decl%value, field, &
+                     ! Units                   Tree
+                     & decoration(field_name), son )
+      end if
+      if ( node_id(son) /= n_or ) then
+        ! First son is the field name
+        call def_one_spec ( son, 2 )
+      else
+        do j = 2, nsons(son)
+          ! First son of n_or is the field name, not first son of son
+          call def_one_spec ( subtree(j,son), 1 )
+        end do
+      end if
+    end do
+    call trace_end ( 'DEF_SPEC', cond=toggle(con) )
+
+  contains
+
+    subroutine DEF_ONE_SPEC ( SON, START )
+      integer, intent(in) :: SON   ! of spec_def or n_or
+      integer, intent(in) :: START ! of sons of SON
+      integer :: J                 ! Loop inductor
+      integer :: Me = -1           ! String index for trace
+      call trace_begin ( me, 'DEF_ONE_SPEC', root, cond=toggle(con) )
+      select case ( node_id(son) )
+      case ( n_field_type )
+        do j = start, nsons(son)
+          field_type = subtree(j,son)
+          decl = get_decl(sub_rosa(field_type),type_name)
+          call decorate ( field_type, decl%tree )   ! the dt_def
+        end do
+      case ( n_field_spec )
+        do j = start, nsons(son)
+          field_type = subtree(j,son)
+          decl = get_decl(sub_rosa(field_type),spec)
+          call decorate ( field_type, decl%tree )   ! the spec_def
+        end do
+      case ( n_dot )
+        field_type = subtree(start,son)
+        decl = get_decl(sub_rosa(field_type),spec)
+        call decorate ( field_type, decl%tree )   ! the spec_def
+        ! The rest of the sons are field names, for which new decorations
+        ! Won't help -- in fact, the f_field_name's index is best.
+      end select
+      call trace_end ( 'DEF_ONE_SPEC', cond=toggle(con) )
+    end subroutine DEF_ONE_SPEC
+
+  end subroutine DEF_SPEC
+
+! -----------------------------------------------------  DEF_TYPE  -----
+  subroutine DEF_TYPE ( ROOT )
+  ! Process a definition of a type:  Enter the names in the declaration
+  ! table.  The type name and literals are decorated with their indices
+  ! in Init_Tables. These decorations are entered into the declaration
+  ! table.  Then each one is decorated with Root.
+    integer, intent(in) :: ROOT    ! Root of tree being worked ( n_dt_def )
+
+    integer :: I              ! Loop inductor
+    integer :: Me = -1        ! String index for trace
+    integer :: SON            ! I'th son of "root"
+
+    call trace_begin ( me, 'DEF_TYPE', root, cond=toggle(con) )
+    son = subtree(1,root)
+                 ! String         Value                Type
+    call declare ( sub_rosa(son), sub_rosa(son)+0.0d0, type_name, &
+                 ! Units            Tree
+                 & decoration(son), root )
+!   call decorate ( son, root )
+    do i = 2, nsons(root)
+      son = subtree(i,root)
+      !              String         Value                Type
+      call declare ( sub_rosa(son), sub_rosa(son)+0.0d0, enum_value, &
+      !              Units            Tree
+                     decoration(son), root )
+!     call decorate ( son, root )
+    end do
+    call trace_end ( 'DEF_TYPE', cond=toggle(con) )
+  end subroutine DEF_TYPE
+
+! -------------------------------------------------  Do_Construct  -----
+  recursive subroutine Do_Construct ( Root, Son1, Decl )
+  ! Analyze a DO construct of the form DO name := exprs cfs END DO,
+  ! starting at ROOT
+    integer, intent(in) :: Root
+    integer, intent(in), optional :: Son1 ! First son of parent CF
+    type(decls), intent(in), optional :: DECL ! Declaration of "name" on "begin name"
+    integer :: Gson, I, Son, Start, String
+    integer :: Me = -1             ! String index for trace
+    integer :: Type
+    double precision :: Value      ! not used
+
+    call trace_begin ( me, 'DO_Construct', root, cond=toggle(con) )
+
+    call push_do_stack ( root )
+
+    start = 2 ! Assume first son is not n_named
+    son = subtree(1,root)
+    if ( node_id(son) == n_named ) then
+      gson = subtree(1,son)
+      if ( check_label(gson) ) then
+        string = sub_rosa(gson)
+        call declare ( string, 0.0d0+string, do_label, phyq_invalid, root )
+      end if
+      start = 3
+      son = subtree(2,root)
+    end if
+
+    call variable_def ( son, type ) ! Treat name := exprs as variable def
+
+    ! If there's more than one expr, the type has to be numeric
+    i = nsons(son)
+    if ( i > 2 .and. type /= num_value ) call announce_error ( &
+      & subtree(1,son), wrong_expr_type, expect=num_value )
+
+    if ( present(son1) ) then
+      call decorate ( root, -1 ) ! -1 => inside section
+      do i = start, nsons(root)
+        gson = subtree(i,root)
+        if ( node_id(gson) == n_cf ) then
+          call one_section ( gson )
+        else
+          call one_cf ( gson, son1, decl )
+        end if
+      end do
+    else
+      call decorate ( root, +1 ) ! +1 => enclosing sections
+      do i = start, nsons(root)
+        call one_section ( subtree(i,root) )
+      end do
+    end if
+
+    do_stack_top = do_stack_top - 1 ! Pop the DO construct stack
+
+    call trace_end ( 'DO_Construct', cond=toggle(con) )
+
+  end subroutine Do_Construct
+
+! --------------------------------------------------------  EQUAL  -----
+  subroutine EQUAL ( ROOT )
+  ! Analyze a specification of the form NAME = EXPR, starting at ROOT
+    integer, intent(in) :: ROOT
+    integer :: CHECK          ! At first, subtree where NAME is declared;
+                              ! later, output from Check_Field_Type
+    type(decls) :: DECL       ! Declaration of son1
+    integer :: Me = -1        ! String index for trace
+    integer :: SECT           ! The section the parameter appears in
+    integer :: SON1, SON2     ! Sons of Root
+    integer :: Stat           ! From EXPR
+    integer :: TYPE           ! Output from "expr", not otherwise used
+    integer :: TYPE_DECL      ! Tree node of declaration of name of param's type
+    integer :: UNITS          ! Output from "expr"
+    double precision :: VALUE ! Output from "expr", not otherwise used
+
+    call trace_begin ( me, 'EQUAL', root, cond=toggle(con) )
+    sect = decoration(root)
+    decl = get_decl(sub_rosa(sect), section )   ! Known to be a
+                             ! valid section name if we get this far
+    son1 = subtree(1,root)
+    ! Is spec allowed in section?
+    check = check_section(son1,decl%tree)
+    if ( check == 0 ) then
+      call announce_error ( son1, out_of_place, (/ sect /) )
+    else
+      decl = get_decl(sub_rosa(son1), named_value)
+      call decorate ( son1, decl%units )
+      son2 = subtree(2,root)
+      if ( node_id(son2) == n_dot ) then
+      ! ??? Need some checking here
+      else
+        if ( node_id(son2) == n_identifier ) then
+          decl = get_decl(sub_rosa(son2), enum_value)
+          type_decl = decoration(subtree(2,check)) ! decl of allowed type
+          do
+            if ( decl%tree == null_tree ) then ! no more decls of id
+              call announce_error ( son2, wrong_type, fields=(/son1/) )
+          exit
+            end if
+            if ( decl%tree == type_decl ) then ! right type
+              call decorate ( son2, decl%units )! decorate son2 with lit#
+          exit
+            end if
+            decl = prior_decl(decl,enum_value)
+          end do
+        else
+          stat = expr( son2, type, units, value )
+          stat = check_field_type(check,type,units)
+          if ( stat == wrong_type ) then
+            call announce_error ( son2, wrong_type, fields=(/son1/), expect=check )
+          else if ( stat > 1 ) then
+            call announce_error ( son2, wrong_units, fields=(/son1/), expect=-stat )
+          end if
+        end if
+      end if
+    end if
+    call trace_end ( 'EQUAL', cond=toggle(con) )
+  end subroutine EQUAL
+
+! ---------------------------------------------------------  EXPR  -----
+  recursive integer function EXPR ( ROOT, TYPE, UNITS, VALUE, FIELD, &
+    &                               START, FIELD_LOOK, FIELD_TEST, Tree ) &
+    & result ( Stat )
+
+  ! Analyze an expression, check units of everything in it, return its
+  ! units.
+
+    use Call_Stack_m, only: Stack_Depth
+
+    integer, intent(in) :: ROOT    ! Root of expression subtree
+    integer, intent(out) :: TYPE   ! Type of the expression value
+    integer, intent(out) :: UNITS  ! Units of expression value if type is
+                                   ! num_value, else type if type is enum_value
+    double precision, intent(out) :: VALUE   ! Expression value, if any
+    integer, intent(in), optional :: FIELD    ! What TO_CHECK should be
+    integer, intent(in), optional :: START    ! of sons of FIELD
+    integer, intent(out), optional :: Field_Look ! Last name of x.y, for error message
+    integer, intent(out), optional :: Field_Test ! Allowed field name, for error message
+    integer, intent(out), optional :: Tree    ! Decl%Tree if identifier
+
+    ! Stat is zero unless TO_CHECK, FIELD, and START are present,
+    ! node_id(ROOT) == n_dot, and the operands of n_dot are wrong for
+    ! FIELD.
+
+    integer :: Arg_Tree            ! Root of tree of allowed argument types
+    integer :: Decor               ! Decoration of a tree node
+    type(decls) :: DECL, DECL2     ! Declaration record for "root", function arg
+    integer :: I, J
+    integer :: ME                  ! node_id(root)
+    integer :: SON1, SON2, SON3    ! Sons of "root"
+    integer :: STRING              ! sub_rosa(root)
+    integer :: Trace = -1          ! String index for trace
+    integer :: Tree2
+    integer :: TYPE2, TYPE3        ! Types for sons of "root"
+    integer :: TypeString          ! String index of defined type, else zero
+    integer :: UNITS2, UNITS3      ! Units for sons of "root"
+    double precision :: VALUE2, VALUE3 ! Values for sons of "root"
+
+    call trace_begin ( trace, 'EXPR', root, cond=toggle(con) )
+    stat = 0 ! Assume status is OK
+    typeString = 0                 ! Assume not a defined type
+    units = phyq_dimensionless     ! default
+    value = 0.0d0                  ! default
+    if ( present(tree) ) tree = -1 ! default
+    me = node_id(root)
+    select case ( me )
+    case ( n_identifier, n_number, n_string ) ! ----------------------------
+      string = sub_rosa(root)
+      if ( .not. declared(string) ) then
+        select case ( me )
+        case ( n_identifier )
+                       ! String  Value  Type   Units         Tree
+          call declare ( string, 0.0d0, empty, phyq_invalid, root )
+        case ( n_number )
+                       ! String  Value                Type
+          call declare ( string, float_value(string), num_value, &
+                       ! Units               Tree
+                       & phyq_dimensionless, root )
+        case ( n_string )
+                       ! String  Value         Type       Units         Tree
+          call declare ( string, 0.0d0+string, str_value, phyq_invalid, root )
+        end select
+      end if
+      decl = get_decl(string, [do_label,enum_value,label,named_value,num_value, &
+                            &  str_value,variable] )
+      if ( decl%type == null_decl ) decl = declaration(string)
+      type = decl%type
+      if ( type == null_decl ) then
+        type = empty
+        go to 9
+      end if
+      select case ( type )
+      case ( enum_value )
+        value = decl%units ! Lit index
+        units = decoration(subtree(1,decl%tree))
+        typeString = data_type_indices(units)
+      case ( label, named_value )
+        value = decl%units ! Spec_index
+      case ( variable )
+        if ( decl%units == enum_value ) then
+          type = decl%units
+          units = decl%values(1)%type
+          typeString = data_type_indices(units)
+        else
+          type = decl%values(1)%type
+          units = decl%values(1)%units(1)
+        end if
+        value = decl%values(1)%value(1)
+      case default
+        units = decl%units
+        value = decl%value
+      end select
+      if ( type == log_value ) then
+        type = enum_value
+        units = t_boolean
+        typeString = units
+      end if
+      if ( present(tree) ) tree=decl%tree
+    case ( n_unit ) ! ------------------------------------------------------
+      son1 = subtree(1,root)
+      stat = expr (son1, type, units, value, field, start, field_look, field_test)
+      if ( stat /= 0 ) &
+  go to 9
+      son2 = subtree(2,root)
+      decl = get_decl(sub_rosa(subtree(2,root)), units_name)
+      if ( decl%type /= units_name ) then
+        call local_error ( son2, not_units )
+      else if ( units /= phyq_dimensionless .and. units /= decl%units .and. &
+        & decl%units /= phyq_dimensionless ) then
+        call local_error ( root, inconsistent_units, (/ son1, son2 /) )
+      else
+        units = decl%units
+        if ( decl%value > 0 ) then
+          value = value * decl%value
+        else
+          value = value - decl%value
+        end if
+      end if
+    case ( n_cond ) ! ------------------------------------------------------
+      son1 = subtree(1,root); son2 = subtree(2,root); son3 = subtree(3,root)
+      stat = expr ( son1, type, units, value, field, start, field_look, field_test )
+      if ( stat /= 0 ) &
+  go to 9
+      if ( type /= enum_value .or. units /= t_boolean ) &
+        & call local_error ( root, not_log_value )
+      stat = expr ( son2, type2, units2, value2, field, start, field_look, field_test )
+      if ( stat /= 0 ) &
+  go to 9
+      stat = expr ( son3, type3, units3, value3, field, start, field_look, field_test )
+      if ( stat /= 0 ) &
+  go to 9
+      type = type2
+      if ( type2 /= type3 ) &
+        & call local_error ( son3, inconsistent_types, got=type3, expect=type2 )
+    case ( n_colon, n_colon_less, n_less_colon, n_less_colon_less ) ! ------
+      son1 = subtree(1,root); son2 = subtree(2,root)
+      stat = expr ( son1, type, units, value, field, start, field_look, field_test )
+      if ( stat /= 0 ) &
+  go to 9
+      stat = expr ( son2, type2, units2, value2, field, start, field_look, field_test )
+      if ( stat /= 0 ) &
+  go to 9
+      if ( type /= type2 ) then
+        call local_error ( son2, inconsistent_types, (/ son1, son2 /) )
+      end if
+! Don't test units here.  The field might use : for something other than range.
+!       if ( type == num_value .and. type2 == num_value .and. &
+!            units /= phyq_dimensionless .and. &
+!            units2 /= phyq_dimensionless .and. &
+!            units /= units2 ) then
+!         call local_error ( root, inconsistent_units, (/ son1, son2 /) )
+!       end if
+      if ( type == num_value ) type = range
+      if ( type == str_value ) type = str_range
+    case ( n_less, n_less_eq, n_greater, n_greater_eq, n_equal_equal, n_not_equal )
+      ! Value is zero if expression is false, or if either operand is not numeric
+      son1 = subtree(1,root); son2 = subtree(2,root)
+      stat = expr ( son1, type, units, value )
+      if ( stat /= 0 ) &
+  go to 9
+      stat = expr ( son2, type2, units2, value2 )
+      if ( stat /= 0 ) &
+  go to 9
+      if ( type /= type2 ) then
+        call local_error ( son2, inconsistent_types, (/ son1, son2 /) )
+      end if
+      type = enum_value
+      units = t_boolean
+      select case ( me )
+      case ( n_equal_equal )
+        value = merge ( l_true, l_false, value == value2 )
+  go to 9
+      case ( n_not_equal )
+        value = merge ( l_true, l_false, value /= value2 )
+  go to 9
+      end select
+      if ( type /= variable .and. type2 /= variable ) stat = dot_or_num ()
+      if ( type == num_value .and. type2 == num_value ) then
+        if ( units /= phyq_dimensionless .and. &
+             units2 /= phyq_dimensionless .and. &
+             units /= units2 ) then
+          call local_error ( root, inconsistent_units, (/ son1, son2 /) )
+        end if
+        select case ( me )
+        case ( n_less )
+          value = merge ( l_true, l_false, value < value2 )
+        case ( n_less_eq )
+          value = merge ( l_true, l_false, value <= value2 )
+        case ( n_greater )
+          value = merge ( l_true, l_false, value > value2 )
+        case ( n_greater_eq )
+          value = merge ( l_true, l_false, value >= value2 )
+        end select
+      end if
+    case ( n_and, n_or ) ! -------------------------------------------------
+      son1 = subtree(1,root); son2 = subtree(2,root)
+      stat = expr ( son1, type, units, value, field, start, field_look, field_test )
+      if ( stat /= 0 ) &
+  go to 9
+      stat = expr ( son2, type2, units2, value2, field, start, field_look, field_test )
+      if ( stat /= 0 ) &
+  go to 9
+      if ( type /= str_value .and. &
+           & ( type /= enum_value .or. units /= t_boolean ) ) then
+        call local_error ( son1, not_string )
+      else if ( type2 /= str_value .and. &
+           & ( type2 /= enum_value .or. units /= t_boolean ) ) then
+        call local_error ( son2, not_string )
+      else
+        if ( me == n_and ) then
+          value = merge(l_true, l_false, value==l_true .and. value2 == l_true )
+        else ! node_id(root) == n_or
+          value = merge(l_true, l_false, value==l_true .or. value2 == l_true )
+        end if
+      end if
+      type = enum_value
+      units = t_boolean
+    case ( n_not )
+      son1 = subtree(1,root)
+      stat = expr ( son1, type, units, value, field, start, field_look, field_test )
+      if ( stat /= 0 ) &
+  go to 9
+      if ( type /= str_value .and. &
+           & ( type /= enum_value .or. units /= t_boolean ) ) then
+        call local_error ( son1, not_string )
+      else
+        value = merge(l_true, l_false, value==l_false)
+      end if
+      type = enum_value
+      units = t_boolean
+    case ( n_plus, n_minus ) ! ---------------------------------------------
+      son1 = subtree(1,root)
+      stat = expr ( son1, type, units, value, field, start, field_look, field_test )
+      if ( stat /= 0 ) &
+  go to 9
+      if ( nsons(root) > 1 ) then
+        son2 = subtree(2,root)
+        stat = expr ( son2, type2, units2, value2, field, start, field_look, field_test )
+        if ( stat /= 0 ) &
+  go to 9
+        stat = dot_or_num ()
+        if ( type /= num_value ) &
+  go to 9
+        if ( type == num_value .and. type2 == num_value ) then
+          if ( units /= phyq_dimensionless .and. &
+               units2 /= phyq_dimensionless .and. &
+               units /= units2 ) then
+            call local_error ( root, inconsistent_units, (/ son1, son2 /) )
+          end if
+          if ( me == n_plus ) then
+            value = value + value2
+          else !  me == n_minus
+            value = value - value2
+          end if
+        else if ( type == dot .or. type2 == dot ) then
+          type = dot
+        end if
+      else if ( me == n_minus ) then
+        value = - value
+      end if
+    case ( n_mult ) ! ------------------------------------------------------
+      son1 = subtree(1,root) ; son2 = subtree(2,root)
+      stat = expr ( son1, type, units, value, field, start, field_look, field_test )
+      if ( stat /= 0 ) &
+  go to 9
+      stat = expr ( son2, type2, units2, value2, field, start, field_look, field_test )
+      if ( stat /= 0 ) &
+  go to 9
+      stat = dot_or_num ()
+      if ( type /= num_value ) &
+  go to 9
+      if ( type == num_value .and. type2 == num_value .and. &
+           units /= phyq_dimensionless .and. &
+           units2 /= phyq_dimensionless .and. &
+           units /= units2 ) then
+        call local_error ( root, inconsistent_units, (/ son1, son2 /) )
+      else
+        value = value * value2
+        if ( units == phyq_dimensionless ) units = units2
+      end if
+    case ( n_div, n_into ) ! -----------------------------------------------
+      son1 = subtree(1,root) ; son2 = subtree(2,root)
+      stat = expr ( son1, type, units, value, field, start, field_look, field_test )
+      if ( stat /= 0 ) &
+  go to 9
+      stat = expr ( son2, type2, units2, value2, field, start, field_look, field_test )
+      if ( stat /= 0 ) &
+  go to 9
+      stat = dot_or_num ()
+      if ( type /= num_value ) &
+  go to 9
+      if ( type == num_value .and. type2 == num_value .and. &
+           units /= phyq_dimensionless .and. &
+           units2 /= phyq_dimensionless .and. &
+           units /= units2 ) then
+        call local_error ( root, inconsistent_units, (/ son1, son2 /) )
+      else if ( me == n_div ) then
+        value = value / value2
+      else ! me == n_into
+        value = value2 / value
+        units = units2
+      end if
+    case ( n_pow ) ! -------------------------------------------------------
+      value = 1.0
+      do i = nsons(root), 1, -1 ! POW is right associative
+        son1 = subtree(i,root)
+        stat = expr ( son1, type, units, value2, field, start, field_look, field_test )
+        if ( stat /= 0 ) &
+  go to 9
+        if ( type /= num_value ) then
+          call local_error ( root, not_numeric, (/ son1 /) )
+          stat = wrong_type
+        else if ( units /= phyq_dimensionless ) then
+          call local_error ( son1, not_unitless )
+          stat = wrong_type
+        else
+          value = value2 ** value
+        end if
+      end do
+    case ( n_func_ref ) ! --------------------------------------------------
+      type = num_value ! Default, otherwise same as last arg if arg types checked
+      son1 = subtree(1,root)
+      ! Look up the function name
+      string = sub_rosa(son1)
+      decl = get_decl(string,function)
+      do while ( decl%tree /= null_tree )
+        if ( decl%type == function ) then
+          if ( nsons(decl%tree) < 2 ) then ! Check only consistency of args
+            decor = decoration(decl%tree)
+            if ( decor > 0 ) then
+              son1 = subtree(2,root)
+              type = empty
+              if ( nsons(root) > 1 ) then
+                stat = expr ( son1, type, units, value, &
+                            & field, start, field_look, field_test )
+                if ( stat /= 0 ) &
+  go to 9
+              end if
+              if ( mod(decor,u) /= 0 ) then ! Uniform argument types required
+                do i = 3, nsons(root)
+                  son2 = subtree(i,root)
+                  stat = expr ( son2, type2, units2, value, &
+                              & field, start, field_look, field_test )
+                  if ( stat /= 0 ) &
+  go to 9
+                  if ( type /= empty .and. type /= type2 ) then
+                    call local_error ( son2, inconsistent_types, &
+                      & (/ son1, son2 /), expect=type, got=type2 )
+                  else if ( type == enum_value ) then
+                    decl2 = get_decl(sub_rosa(son2),enum_value)
+                    type = decl2%tree
+                    units = decl%units
+                  else if ( type == num_value .and. units /= units2 ) then
+                    call local_error ( root, inconsistent_units, (/ son1, son2 /) )
+                  end if
+                end do
+              end if
+              if ( decor >= u ) type = decor / u
+            end if
+          else ! check argument number and types
+            arg_tree = subtree(2,decl%tree)
+            if ( node_id(arg_tree) /= n_arg_def ) & ! No argument # or type checking
+  go to 9
+            if ( node_id(arg_tree) == n_arg_def ) then
+              if ( nsons(root) /= 1 + nsons(arg_tree) ) then
+                call local_error ( root, wrong_num_args, fields=(/string/) )
+  go to 9
+              end if
+            end if
+            if ( node_id(arg_tree) == n_arg_def ) then
+              do i = 1, nsons(arg_tree)
+                stat = expr ( subtree(i+1,root), type, units, value, &
+                            & field, start, field_look, field_test )
+                if ( stat /= 0 ) &
+  go to 9
+                son2 = subtree(i,arg_tree)
+                if ( node_id(subtree(i,arg_tree)) == n_or ) then
+                  do j = 1, nsons(son2)
+                    if ( type == decoration(subtree(j,son2)) ) then
+                      if ( type == num_value .and. units /= phyq_dimensionless ) &
+                        & call local_error ( subtree(i+1,root), not_unitless, fields=(/string/) )
+  go to 9
+                    end if
+                  end do
+                else
+                  if ( type /= decoration(son2) ) then
+                    call local_error ( subtree(i+1,root), wrong_arg_type, &
+                      & fields=(/string/), expect=subtree(i,arg_tree) )
+                  else if ( units /= phyq_dimensionless ) then
+                    call local_error ( subtree(i+1,root), not_unitless, fields=(/string/) )
+                  end if
+                end if
+              end do
+            end if
+          end if
+  go to 9
+        end if
+        decl = prior_decl(decl,function)
+      end do
+      call local_error ( son1, not_func, fields=(/string/) )
+    case ( n_dot ) ! -------------------------------------------------------
+      stat = check_dot ( root, field, start, field_look, field_test )
+      type = empty
+      if ( stat /= 3 ) type = dot
+    case ( n_array )
+      son1 = subtree(1,root)
+      stat = expr ( son1, type, units, value, tree=tree )
+      if ( stat /= 0 ) &
+  go to 9
+      do i = 2, nsons(root)
+        son2 = subtree(i,root)
+        stat = expr ( son2, type2, units2, value2, tree=tree2 )
+        if ( stat /= 0 ) &
+  go to 9
+        if ( type /= type2 ) then
+          call local_error ( son2, inconsistent_types, (/ son1, son2 /) )
+        else if ( (type == enum_value .or. type == label .or. type == do_label) &
+                  & .and. tree /= tree2 ) then
+          call local_error ( son2, inconsistent_types, (/ son1, son2 /) )
+        end if
+      end do
+    case default ! ---------------------------------------------------------
+      call local_error ( root, no_code_for )
+    end select
+  9 if ( stat == 0 ) then
+      select case ( me )
+      case ( n_identifier, n_number, n_string ) ! ----------------------------
+      case default
+        call decorate ( root, type )
+      end select
+    end if
+    if ( toggle(con) .and. levels(con) > 0 ) then
+      do i = 0, stack_depth()
+        call output ( '_' )
+      end do
+      call display_string ( data_type_indices(type) )
+      select case ( type )
+      case ( enum_value )
+        call display_string ( data_type_indices(units), before=' ' )
+        call display_string ( lit_indices(nint(value)), before=' ' )
+      case ( label )
+        call display_string ( spec_indices(nint(value)), before=' ' )
+      case ( num_value, range )
+        call output ( value, before=' ' )
+      case ( str_range, str_value )
+        call display_string ( nint(value), before=' ' )
+      end select
+      call newLine
+    end if
+    if ( typeString == 0 ) typeString = data_type_indices(type)
+    call trace_end ( 'EXPR', index=stat, & ! string=trim(type_names(type)), 
+      & stringIndex=typeString, cond=toggle(con) )
+
+  contains
+
+    integer function Dot_or_Num ( )
+      ! If type and type2 are both dot, or if one is dot and the other
+      ! is numeric the type is dot.  Otherwise if both are numeric
+      ! it is num_value.  Otherwise it is empty, and an error has been
+      ! announced.  If the type is empty, the result is wrong_type, else
+      ! it is zero.
+      dot_or_num = wrong_type ! Assume wrong
+      if ( type == type2 ) then
+        if ( type == dot .or. type == num_value ) then
+          dot_or_num = 0
+        end if
+      else if ( type == dot .and. type2 == num_value .or. &
+                type == num_value .and. type2 == dot  ) then
+        type = dot
+        dot_or_num = 0
+      end if
+      if ( dot_or_num /= 0 ) call local_error ( root, wrong_type )
+    end function Dot_or_Num
+
+    subroutine LOCAL_ERROR ( WHERE, CODE, SONS, FIELDS, EXPECT, GOT )
+      integer, intent(in) :: WHERE   ! Tree node where error was noticed
+      integer, intent(in) :: CODE    ! Code for error message
+      integer, intent(in), optional :: SONS(:) ! Tree nodes, maybe sons of
+                                     ! "where".  If they're pseudo_terminal,
+                                     ! their declarations are dumped.
+      integer, intent(in), optional :: FIELDS(:) ! Field indices
+      integer, intent(in), optional :: EXPECT    ! Expected type
+      integer, intent(in), optional :: GOT       ! Actual type
+      call announce_error ( where, code, sons, fields, expect, got )
+      type = empty
+      units = phyq_invalid
+    end subroutine LOCAL_ERROR
+
+  end function EXPR
+
+! -------------------------------------------------  IF_Construct  -----
+  recursive subroutine IF_Construct ( Root, Son1, Decl )
+    ! < n_if <n_test expr spec*>* <n_else spec*>? >
+    integer, intent(in) :: Root ! N_If node
+    integer, intent(in), optional :: Son1 ! First son of parent CF
+    type(decls), intent(in), optional :: DECL ! Declaration of "name" on "begin name"
+    integer :: Begin, Gson, I, J
+    integer :: Me = -1             ! String index for trace
+    integer :: Son, Start, Stat, String, Type, Units
+    double precision :: Value      ! not used
+
+    call trace_begin ( me, 'IF_Construct', root, cond=toggle(con) )
+    begin = 1 ! Assume first son is not n_named
+    son = subtree(1,root)
+    if ( node_id(son) == n_named ) then
+      gson = subtree(1,son)
+      if ( check_label(gson) ) then
+        string = sub_rosa(gson)
+        call declare ( string, 0.0d0+string, do_label, phyq_invalid, root )
+      end if
+      begin = 2
+    end if
+    do i = begin, nsons(root)
+      son = subtree(i,root)
+      start = begin   ! Assume ELSE
+      if ( node_id(son) == n_test ) then ! if ( expr ) or else if ( expr )
+        stat = expr(subtree(1,son),type,units,value)
+        if ( type /= enum_value .or. units /= t_boolean ) call announce_error ( &
+          & subtree(1,son), wrong_expr_type, expect=log_value )
+        start = begin+1 ! ELSE IF, skip the EXPR we just processed
+      end if
+      if ( present(son1) ) then
+        do j = start, nsons(son)
+          gson = subtree(j,son)
+          if ( node_id(gson) == n_cf ) then
+            call one_section ( gson )
+          else
+            call one_cf ( gson, son1, decl )
+          end if
+        end do
+      else
+        do j = start, nsons(son)
+          call one_section ( subtree(j,son) )
+        end do
+      end if
+    end do
+    call trace_end ( 'IF_Construct', cond=toggle(con) )
+
+  end subroutine IF_Construct
+
+! -------------------------------------------------------  ONE_CF  -----
+  recursive subroutine ONE_CF ( ROOT, SON1, Decl )
+  ! Analyze one configuration, with abstract syntax tree rooted at ROOT.
+    integer, intent(in) :: ROOT
+    integer, intent(in) :: SON1    ! First son of CF
+    type(decls), intent(in) :: DECL ! Declaration of "name" on "begin name"
+
+    integer :: GSON1, GSON2        ! Grandsons of ROOT being analyzed
+    integer :: Me = -1             ! String index for trace
+    integer :: STRING1             ! Sub_Rosa
+
+    call trace_begin ( me, 'ONE_CF', root, cond=toggle(con) )
+    select case ( node_id(root) )
+    case ( n_cycle, n_exit)
+      call cycle_exit ( root, -1 )  ! -1 => Inside section
+    case ( n_do )                   ! DO construct
+      call do_construct ( root, son1, decl )
+    case ( n_equal )                ! x = expr
+      call decorate ( root, son1 )  ! show equal the section name
+      if ( decoration(decl%tree) /= no_check_eq ) call equal ( root )
+    case ( n_if )                   ! IF construct
+      call if_construct ( root, son1, decl )
+    case ( n_named )                ! label:x,(y[=expr])+
+      gson1 = subtree(1,root)       ! Label
+      if ( check_label(gson1) ) then
+        gson2 = subtree(2,root)       ! spec_args tree or DO construct tree
+        call decorate ( gson1, gson2 )
+        string1 = sub_rosa(gson1)
+        call decorate ( gson2, son1 ) ! show spec_args the section name
+        call spec_args ( gson2 )
+        call declare ( string1, 0.0d0+string1, label, &
+                     ! units = spec index
+          &            decoration(subtree(1,decoration(subtree(1,gson2)))), &
+                     ! tree
+          &            gson2 )
+      end if
+    case ( n_select )               ! SELECT construct
+      call select_construct ( root, son1, decl )
+    case ( n_spec_args )            ! x,(y[=expr])+
+      call decorate ( root, son1 )  ! show spec_args the section name
+      call spec_args ( root )
+    case ( n_variable )
+      call variable_def ( root )
+    case ( n_while )                ! WHILE construct
+      call while_construct ( root, son1, decl )
+    case default
+      call announce_error ( root, no_code_for )
+    end select
+    call trace_end ( 'ONE_CF', cond=toggle(con) )
+  end subroutine ONE_CF
+
+! --------------------------------------------------  ONE_SECTION  -----
+  recursive subroutine ONE_SECTION ( ROOT )
+  ! Analyze one section, with abstract syntax tree rooted at ROOT.
+  ! Check that the names at BEGIN and END are the same.
+    use Tree, Only: Where
+    integer, intent(in) :: ROOT
+
+    type(decls) :: DECL            ! Declaration of "name" on "begin name"
+    integer :: I, N                ! Loop inductor, number of sons
+    integer :: Me = -1             ! String index for trace
+    integer :: SON1, SONN          ! Sons of ROOT being analyzed
+    integer :: STRING1, STRINGN    ! Sub_Rosa of first and last sons
+
+    call trace_begin ( me, 'ONE_SECTION', root, cond=toggle(con) )
+    num_sections = num_sections + 1
+    n = nsons(root)
+    son1 = subtree(1,root) ;   sonn = subtree(n,root)
+    string1 = sub_rosa(son1) ; stringn = sub_rosa(sonn)
+    if ( string1 /= stringn ) then
+      call output ( '***** Names on BEGIN at ' )
+      call print_source ( where(subtree(1,root)), advance='yes' )
+      call output ( '*****      and END at ' )
+      call print_source ( where(subtree(n,root)) )
+      call output ( ' are not the same.', advance='yes' )
+!     call output ( '***** Processing suppressed.', advance='yes' )
+      error = max(error,1)
+    end if
+    decl = get_decl(sub_rosa(son1),section)
+    if ( decl%type /= section ) &
+      call announce_error ( son1, not_section )
+    if ( section_ordering(decl%units,current_section) /= 1 ) &
+      call announce_error ( son1, section_order )
+    current_section = decl%units
+    if ( decl%tree /= null_tree ) &
+      & call decorate ( son1, decoration(subtree(1,decl%tree)) )
+    do i = 2, n-1
+      call one_cf ( subtree(i,root), son1, decl )
+    end do
+    call trace_end ( 'ONE_SECTION', cond=toggle(con) )
+  end subroutine ONE_SECTION
+
+! ------------------------------------------------  Push_Do_Stack  -----
+  subroutine Push_Do_Stack ( Root )
+  ! Allocate or reallocate the do construct stack if necessary.
+  ! Push Root on the stack.
+    use Allocate_Deallocate, only: Bytes, Test_Allocate
+    integer, intent(in) :: Root
+    integer :: Me = -1             ! String index for trace
+    integer :: N, Stat             ! Size of old stack, status from (de)allocate
+    integer, allocatable :: Temp_Stack(:)
+
+    call trace_begin ( me, 'Push_Do_Stack', root, cond=toggle(con) )
+    if ( .not. allocated(do_construct_stack) ) then
+      allocate ( do_construct_stack(10), stat=stat )
+      call test_allocate ( stat, moduleName, 'Do_Construct_Stack', ubounds=[10], &
+        & elementSize=bytes(do_construct_stack) )
+    end if
+    do_stack_top = do_stack_top + 1
+    if ( do_stack_top > ubound(do_construct_stack,1) ) then
+      n = size(do_construct_stack)
+      allocate ( temp_stack(2*n), stat=stat )
+      call test_allocate ( stat, moduleName, 'Temp_Stack', ubounds=[10], &
+        & elementSize=bytes(do_construct_stack) )
+      temp_stack(:n) = do_construct_stack
+      call move_alloc ( temp_stack, do_construct_stack )
+    end if
+    do_construct_stack(do_stack_top) = root
+    call trace_end ( 'Push_Do_Stack', cond=toggle(con) )
+
+  end subroutine Push_Do_Stack
+
+! ---------------------------------------------  Select_Construct  -----
+  subroutine Select_Construct ( Root, Son1, Decl )
+    ! < n_select expr <n_case expr spec*>* <n_default spec*>? >
+    integer, intent(in) :: Root ! N_Select node
+    integer, intent(in), optional :: Son1 ! First son of parent CF
+    type(decls), intent(in), optional :: DECL ! Declaration of "name" on "begin name"
+    integer :: Begin, Gson, I, J
+    integer :: Me = -1        ! String index for trace
+    integer :: Son, Start, Stat, String, Type1, Type2, Units
+    double precision :: Value ! not used
+    call trace_begin ( me, 'Select_Construct', root, cond=toggle(con) )
+    begin = 1 ! Assume first son is not n_named
+    son = subtree(1,root)
+    if ( node_id(son) == n_named ) then
+      gson = subtree(1,son)
+      if ( check_label(gson) ) then
+        string = sub_rosa(gson)
+        call declare ( string, 0.0d0+string, do_label, phyq_invalid, root )
+      end if
+      begin = 2
+    end if
+    stat = expr(subtree(begin,root),type1,units,value)
+    do i = begin+1, nsons(root)
+      son = subtree(i,root)
+      start = begin    ! Assume CASE DEFAULT
+      if ( node_id(son) == n_test ) then
+        stat = expr(subtree(1,son),type2,units,value)
+        if ( type1 /= type2 ) call announce_error ( &
+          & subtree(1,son), wrong_expr_type, expect=type1 )
+        start = 2  ! CASE ( expr ), skip the expr we just processed 
+      end if
+      if ( present(son1) ) then
+        do j = start, nsons(son)
+          gson = subtree(j,son)
+          if ( node_id(gson) == n_cf ) then
+            call one_section ( gson )
+          else
+            call one_cf ( gson, son1, decl )
+          end if
+        end do
+      else
+        do j = start, nsons(son)
+          call one_section ( subtree(j,son) )
+        end do
+      end if
+    end do
+    call trace_end ( 'Select_Construct', cond=toggle(con) )
+  end subroutine Select_Construct
+
+! ------------------------------------------------------  SET_ONE  -----
+  subroutine SET_ONE ( ROOT )
+  ! Analyze a field of a specification of the form "/name" --
+  ! make sure "name" is a field of the specification.
+    integer, intent(in) :: ROOT    ! Index of the "n_set_one" tree node
+    integer :: FIELD               ! Tree node of field's declaration
+    integer :: FIELD_LIT           ! f_... for a field
+    integer :: Me = -1             ! String index for trace
+    integer :: SON                 ! Son of n_set_one tree node
+    integer :: SPEC_DECL           ! Tree node of the spec's declaration
+
+    call trace_begin ( me, 'SET_ONE', root, cond=toggle(con) )
+    son = subtree(1,root)
+    spec_decl = decoration(root)
+    field = check_field(son,spec_decl)
+    if ( field == 0 ) then
+      call announce_error ( son, not_field_of, fields=(/ spec_decl /) )
+      call dump_1_decl ( sub_rosa(son) )
+    else
+      if ( check_field_type(field,t_boolean) == 0 ) then
+        call decorate ( root, field )
+        field_lit = decoration(subtree(1,field))
+        call decorate ( son, field_lit )
+        if ( no_dup_flag ) then
+          if ( got(field_lit) ) &
+            & call announce_error ( root, no_duplicate_fields, &
+            & fields=(/ field_lit /) )
+        end if
+        got(field_lit) = .true.
+      else
+        call announce_error ( son, wrong_type )
+      end if
+    end if
+    call trace_end ( 'SET_ONE', cond=toggle(con) )
+  end subroutine SET_ONE
+
+! ----------------------------------------------------  SPEC_ARGS  -----
+  subroutine SPEC_ARGS ( ROOT )
+  ! Analyze a specification of the form NAME (, EXPR ( = EXPR)? )+
+  ! starting at ROOT
+    integer, intent(in) :: ROOT
+
+    integer :: FIELD_LIT      ! f_... for a field
+    integer :: FLAGS          ! Flags from decoration(spec_decl)
+    integer :: I              ! Loop inductor
+    integer :: Me = -1        ! String index for trace
+    integer :: SECT           ! The section the spec appears in
+    integer :: SON            ! I'th son of "root"
+    type(decls) :: SPEC_DECL  ! Declaration of first son, if any
+    integer :: STAT           ! from "expr"
+    integer :: TYPE, UNITS    ! Output from "expr"
+    double precision :: VALUE ! Output from "expr"
+
+    call trace_begin ( me, 'SPEC_ARGS', root, cond=toggle(con) )
+    sect = decoration(root)
+    spec_decl = get_decl( sub_rosa(sect), section )   ! Known to be a
+                             ! valid section name if we get this far
+    son = subtree(1,root)
+    ! Is spec allowed in section?
+    if ( check_section(son,spec_decl%tree) == 0 ) then
+      call announce_error ( son, out_of_place, (/ sect /) )
+    else
+      spec_decl = get_decl( sub_rosa(son), spec ) ! Decl of son of type "spec"
+      if ( spec_decl%type == empty ) then
+        call announce_error ( son, not_spec )
+      else
+        call decorate ( son, spec_decl%tree )
+        flags = decoration(spec_decl%tree)
+        all_fields_flag = mod(flags/all_fields,2) /= 0
+        no_dup_flag = mod(flags/no_dup,2) /= 0
+        got = .false.
+        do i = 2, nsons(root)
+          son = subtree(i,root)
+          select case ( node_id(son) )
+          case ( n_asg )
+            call decorate ( son, spec_decl%tree )
+            call assign ( son, type, units, value )
+          case ( n_set_one )
+            call decorate ( son, spec_decl%tree )
+            call set_one ( son )
+          case ( n_dot )
+          ! ??? Need some checking and generation here
+          case default
+            if ( mod(flags/no_positional,2) /= 0 ) then
+              call announce_error ( son, no_positional_fields )
+            else
+              stat = expr ( son, type, units, value )
+              ! ??? Generate some table here
+            end if
+          end select
+        end do
+        do i = 2, nsons(spec_decl%tree)
+          son = subtree(i,spec_decl%tree)
+          field_lit = decoration(subtree(1,son))
+          if ( .not. got(field_lit) ) then
+            if ( all_fields_flag .or. &
+              & mod(decoration(son)/req_fld,2) /= 0 .and. decoration(son) < u ) &
+              & call announce_error ( root, missing_field, &
+                & fields=(/ field_lit /) )
+          end if
+        end do
+      end if
+    end if
+    call trace_end ( 'SPEC_ARGS', cond=toggle(con) )
+  end subroutine SPEC_ARGS
+
+! -------------------------------------------------  Variable_Def  -----
+  subroutine Variable_Def ( Root, Type )
+    ! Verify that the expressions in the right-hand side of := all have the
+    ! same type.
+    ! If the first son of Root has previously appeared on the left side of :=
+    ! check that the type of the left-hand side is the same as the right.
+    ! If the first son of Root has not previously appeared, declare it with
+    ! the type of the right-hand side.
+
+    use Declaration_Table, only: Allocate_Test, Empty
+    integer, intent(in) :: Root ! Tree index of n_variable from := operator
+    integer, intent(out), optional :: Type
+    type(decls) :: Decl
+    integer :: Me = -1          ! String index for trace cacheing
+    integer :: Son1             ! Left son
+    integer :: String           ! String index of variable at Son1
+    integer :: Units1           ! Of right sons
+    integer :: Type1            ! Types of right sons
+    double precision :: Value   ! Lit index of enumerator, or...
+    type(value_t), allocatable :: Values(:)
+    integer :: What1            ! What is RHS of :=
+
+    call trace_begin ( me, 'Variable_Def', root, cond=toggle(con) )
+    son1 = subtree(1,root)
+    string = sub_rosa(son1)
+    if ( nsons(root) < 2 ) then ! "variable :=" case
+      if ( present(type) ) type = empty
+                   ! String  Value         Type      Units  Tree
+      call declare ( string, string+0.0d0, variable, empty, son1, values )
+      call trace_end ( 'Variable_Def', stringIndex=string, cond=toggle(con) )
+      return
+    end if
+    type1 = -1
+    what1 = -1
+    units1 = -1
+    call check_type ( root, 2, what1, units1, type1, value )
+    decl = get_decl ( string, [ enum_value, label, named_value, variable ] )
+    select case ( decl%type )
+    case ( enum_value, label, named_value )
+      call announce_error ( son1, variable_conflict, got=string )
+    case ( variable )
+      select case ( what1 )
+      case ( enum_value )
+        if ( decl%values(1)%type /= units1 ) then
+          call announce_error ( root, inconsistent_data_types, &
+            & expect=decl%values(1)%type, got=type1 )
+        end if
+      case ( label )
+        if ( decl%values(1)%type /= type1 ) then
+          call announce_error ( root, inconsistent_data_types, &
+            & expect=decl%values(1)%type, got=type1 )
+        end if
+      case default
+        if ( decl%units /= what1 ) then
+          call announce_error ( root, inconsistent_types, expect=decl%units, &
+            & got=what1 )
+        end if
+      end select
+    case default
+      call allocate_test ( values, 1, 'Values', moduleName )
+      select case ( type1 )
+      case ( enum_value )
+                     !   what   type   value  units
+        values = value_t(type1, units1,value, 0 )
+      case ( str_value )
+                     !   what   type   value  units
+        values = value_t(what1, type1, value, units1 )
+      case default
+                     !   what   type   value  units
+        values = value_t(what1, type1, value, units1 )
+      end select
+                   ! String  Value         Type      Units  Tree
+      call declare ( string, string+0.0d0, variable, what1, son1, values )
+      decl = get_decl ( string, variable )
+    end select
+
+    select case ( what1 )
+    case ( enum_value, label )
+      call decorate ( son1, type1 ) ! Type def tree of enums
+    case default
+      call decorate ( son1, subtree(2,root) )
+    end select
+
+    if ( present(type) ) type = type1
+
+    if ( decl%type /= variable ) then
+      call trace_end ( 'Variable_Def', cond=toggle(con) )
+    else
+      call trace_end ( 'Variable_Def', &
+        & stringIndex=data_type_indices(decl%units), cond=toggle(con) )
+    end if
+
+  contains
+
+    recursive subroutine Check_Type ( Root, Start, What, Units, Type, Value )
+      integer, intent(in) :: Root   ! of subtree to check
+      integer, intent(in) :: Start  ! First son of Root to check
+      integer, intent(inout) :: What  ! -1 initially, then type if type /=
+                                      ! enum_value, data type index (t_...)
+                                      ! if type == enum_value, or spec index
+                                      ! (s_...) if type == label.  The sons
+                                      ! must agree.
+      integer, intent(inout) :: Units ! the sons must agree.
+      integer, intent(inout) :: Type ! -1 if not yet set, the sons need to agree
+      double precision, intent(out) :: Value
+
+      type(decls) :: Decl ! of Sonn
+      integer :: I
+      integer :: Me = -1  ! String index for tracing
+      logical :: Numeric
+      integer :: Sonn     ! of Root
+      integer :: Tree     ! Decl%Tree if sonn is identifier
+      integer :: Type2    ! of Sonn
+      integer :: Units2   ! of Sonn
+      integer :: Unused
+      integer :: What2    ! of Sonn
+
+      call trace_begin ( me, 'Check_Type', root, cond=toggle(con) )
+      do i = start, nsons(root)
+        sonn = subtree(i,root)
+        if ( node_id(sonn) == n_array ) then
+          call check_type ( sonn, 1, what, units, type, value )
+        else
+          unused = expr ( sonn, type2, units2, value, tree=tree )
+          numeric = type2 == num_value
+          what2 = type2
+          if ( type < 0 ) then
+            units = units2
+            what = what2
+            type = type2
+          end if
+          if ( node_id(sonn) == n_identifier ) then
+            select case ( type2 )
+            case ( enum_value, label )
+              decl = get_decl ( sub_rosa(sonn), type2 )
+              call decorate ( sonn, decl%units )
+            end select
+          end if
+          if ( type /= type2 .or. what /= what2 ) then
+            call announce_error ( sonn, inconsistent_data_types, expect=type, &
+              & got=type2 )
+          end if
+          if ( numeric .and. units /= units2 ) then
+            call announce_error ( sonn, inconsistent_units, expect=units, &
+              & got=units2 )
+          end if
+        end if
+      end do
+      call trace_end ( 'Check_Type', cond=toggle(con) )
+
+    end subroutine Check_Type
+
+  end subroutine Variable_Def
+
+! ----------------------------------------------  While_Construct  -----
+  recursive subroutine While_Construct ( ROOT, Son1, Decl )
+  ! Analyze a WHILE construct of the form DO WHILE ( expr ) cfs END DO,
+  ! starting at ROOT
+
+    integer, intent(in) :: ROOT
+    integer, intent(in), optional :: Son1 ! First son of parent CF
+    type(decls), intent(in), optional :: DECL ! Declaration of "name" on "Begin"
+    integer :: Gson, I, Son, Start, String
+    integer :: Me = -1             ! String index for trace
+    integer :: Stat, Type, Units
+    double precision :: Value      ! not used
+
+    call trace_begin ( me, 'WHILE_Construct', root, cond=toggle(con) )
+
+    call push_do_stack ( root )
+
+    son = subtree(1,root)
+    start = 2 ! Assume first son is not n_named
+    if ( node_id(son) == n_named ) then
+      gson = subtree(1,son)
+      if ( check_label(gson) ) then
+        string = sub_rosa(gson)
+        call declare ( string, 0.0d0+string, do_label, phyq_invalid, root )
+      end if
+      start = 3
+      son = subtree(2,root)
+    end if
+
+    stat = expr(son,type,units,value)
+    if ( type /= enum_value .or. units /= t_boolean ) call announce_error ( &
+      & son, wrong_expr_type, expect=log_value )
+    if ( present(son1) ) then
+      call decorate ( root, -1 ) ! -1 => inside section
+      do i = start, nsons(root)
+        gson = subtree(i,root)
+        if ( node_id(gson) == n_cf ) then
+          call one_section ( gson )
+        else
+          call one_cf ( gson, son1, decl )
+        end if
+      end do
+    else
+      call decorate ( root, 1 ) ! +1 => enclosing sections
+      do i = start, nsons(root)
+        call one_section ( subtree(i,root) )
+      end do
+    end if
+
+    do_stack_top = do_stack_top - 1 ! Pop the DO construct stack
+
+    call trace_end ( 'WHILE_Construct', cond=toggle(con) )
+
+  end subroutine While_Construct
+
+  logical function not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id: tree_checker.f90,v 1.53 2016/11/02 22:18:57 vsnyder Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
+end module TREE_CHECKER
+
+! $Log: tree_checker.f90,v $
+! Revision 1.53  2016/11/02 22:18:57  vsnyder
+! Don't use decl%tree as a tree node index if it isn't one
+!
+! Revision 1.52  2016/05/25 00:17:29  vsnyder
+! Decruftication
+!
+! Revision 1.51  2015/02/05 21:51:26  vsnyder
+! Work related to variable definitions
+!
+! Revision 1.50  2014/04/09 00:41:26  vsnyder
+! Repair problem finding variables
+!
+! Revision 1.49  2014/03/20 18:36:11  vsnyder
+! Unified type system instead of one in Intrinsic and one in Declaration_Table
+!
+! Revision 1.48  2014/02/27 02:37:18  vsnyder
+! EXIT referring to IF and SELECT CASE constructs
+!
+! Revision 1.47  2014/02/21 19:19:01  vsnyder
+! More work on variables, especially those with enumerator values
+!
+! Revision 1.46  2014/01/11 01:42:25  vsnyder
+! Stuff for variables, some decruftification
+!
+! Revision 1.45  2013/12/12 01:54:53  vsnyder
+! Provide variable assignment, and IF, and SELECT constructs
+!
+! Revision 1.44  2013/10/16 01:06:45  vsnyder
+! Correct typo in first call to Declare in Def_Spec
+!
+! Revision 1.43  2013/10/12 01:19:04  vsnyder
+! Handle undefined vector correctly in Check_Dot
+!
+! Revision 1.42  2013/10/11 00:46:16  vsnyder
+! Variables and functions
+!
+! Revision 1.41  2013/09/24 23:28:00  vsnyder
+! Use Where instead of Source_Ref for messages
+!
+! Revision 1.40  2013/09/20 00:56:18  vsnyder
+! Allow relational operators to have dot operands
+!
+! Revision 1.39  2013/09/19 23:34:33  vsnyder
+! Type-check and decorate dots in expressions
+!
+! Revision 1.38  2013/08/31 01:26:06  vsnyder
+! Don't pass root as index to trace_end
+!
+! Revision 1.37  2013/08/30 03:53:10  vsnyder
+! Revise use of trace_begin and trace_end
+!
+! Revision 1.36  2013/08/17 02:54:54  vsnyder
+! Remove references to DEPTH from trace_m
+!
+! Revision 1.35  2012/05/24 21:05:49  vsnyder
+! Allow check_dot to have reflexive elements in the required spec tree, i.e.
+! <dot a b ... z> really means <dot a b+ ... z>.  The first and last ones
+! are not reflexive.  This allows, for example, a vectorTemplate to get
+! its quantities from other vector templates.
+!
+! Revision 1.34  2012/05/05 00:12:36  vsnyder
+! Add support for 'not' operator
+!
+! Revision 1.33  2011/08/20 00:48:34  vsnyder
+! Remove unused use names and variable declarations
+!
+! Revision 1.32  2011/04/20 17:32:28  vsnyder
+! Undo ill-advised units check, correct some error messages
+!
+! Revision 1.31  2011/04/19 02:00:31  vsnyder
+! Support == and /= relational operators too
+!
+! Revision 1.30  2011/04/19 00:58:16  vsnyder
+! Allow several types for a field
+!
+! Revision 1.29  2011/01/29 00:46:15  vsnyder
+! Add units checking
+!
+! Revision 1.28  2006/10/10 23:49:40  vsnyder
+! Repair bugs that resulted in not verifying that a field is of the form x.y
+! when it should be, or that it is not of the form x.y when it shouldn't be.
+!
+! Revision 1.27  2006/03/23 01:50:43  vsnyder
+! Check for empty fields
+!
+! Revision 1.26  2005/06/22 20:03:55  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 1.25  2004/12/31 02:11:34  vsnyder
+! Simplify constructing some error messages
+!
+! Revision 1.24  2004/11/17 20:23:30  vsnyder
+! Add checking for scalar field
+!
+! Revision 1.23  2004/06/23 02:12:24  vsnyder
+! Add Check_Type
+!
+! Revision 1.22  2004/05/29 02:42:16  vsnyder
+! Rearrange function definition stuff
+!
+! Revision 1.21  2004/05/29 00:54:46  vsnyder
+! Improve some error checking and handling
+!
+! Revision 1.20  2004/05/28 23:44:28  vsnyder
+! Get units from either operand of *, second operand of \\
+!
+! Revision 1.19  2004/05/28 23:15:15  vsnyder
+! Add power (^) operator, functions
+!
+! Revision 1.18  2004/02/14 00:15:18  vsnyder
+! More precise error message for wrong type
+!
+! Revision 1.17  2004/01/14 02:19:51  vsnyder
+! Get PHYQ_INVALID from Intrinsic instead of Init_Tables_Module
+!
+! Revision 1.16  2003/08/29 00:14:43  vsnyder
+! Correct out-of-bounds subscript
+!
+! Revision 1.15  2002/10/02 00:43:41  vsnyder
+! Remove check for consistent units
+!
+! Revision 1.14  2002/07/25 00:25:10  vsnyder
+! In Check_Field_Type, say NO if type is out-of-range -- i.e., don't crash
+!
+! Revision 1.13  2002/05/23 20:35:57  vsnyder
+! Eliminate two unused variables
+!
+! Revision 1.12  2001/11/28 23:48:30  vsnyder
+! Correct blunders in arrays-of-arrays
+!
+! Revision 1.11  2001/11/28 03:15:37  vsnyder
+! Implement arrays of arrays
+!
+! Revision 1.10  2001/11/27 00:50:45  vsnyder
+! Implement (partially) open ranges
+!
+! Revision 1.9  2001/06/07 21:56:55  pwagner
+! Added Copyright statement
+!
+! Revision 1.8  2001/05/18 21:24:26  vsnyder
+! Missing 'sub_rosa' around a 'son' in a call to 'dump_1_decl'
+!
+! Revision 1.7  2001/03/09 22:08:27  vsnyder
+! Improve error message for wrong type of field value
+!
+! Revision 1.6  2001/03/06 22:50:11  vsnyder
+! Correct processing of /foo when it's not a valid field.
+!
+! Revision 1.5  2001/03/05 23:20:09  vsnyder
+! Correct obscure problem that only occurs if you have erroneous input
+!
+! Revision 1.4  2001/02/22 19:43:04  vsnyder
+! Improve some messages
+!
+! Revision 1.3  2001/02/07 19:42:06  vsnyder
+! Add checking for duplicate fields, all fields and no-positional.
+!
+! Revision 1.2  2001/02/02 00:04:36  vsnyder
+! Improved some error messages
+!
+! Revision 1.1  2000/11/02 21:36:45  vsnyder
+! Initial entry into CVS
+!
+! Revision 2.1  2000/10/11 18:33:25  vsnyder
+! Move from lib/cf_parser to lib; insert copyright notice
+!
+! Revision 2.0  2000/09/05 17:41:51  dcuddy
+! Change revision to 2.0
+!
+! Revision 1.3  2000/07/28 18:31:04  vsnyder
+! Added support for checking for "x.y" fields.
+!
+@
+
+
+1.53
+log
+@Don't use decl%tree as a tree node index if it isn't one
+@
+text
+@d35 2
+a36 2
+  use INTRINSIC, only: ALL_FIELDS, DOT => T_A_dot_B, EMPTY_OK, EXPR_OK, L_True, &
+    &                  L_True, L_False, NO_ARRAY, NO_CHECK_EQ, NO_DUP, &
+d69 2
+a70 1
+  integer, private, parameter :: NO_CODE_FOR = MISSING_FIELD + 1
+d261 4
+d519 2
+d556 2
+d559 1
+d627 4
+d632 1
+d2270 1
+a2270 1
+       "$Id: tree_checker.f90,v 1.52 2016/05/25 00:17:29 vsnyder Exp $"
+d2279 3
+@
+
+
+1.52
+log
+@Decruftication
+@
+text
+@d27 4
+a30 4
+    &                          NAMED_VALUE, NULL_DECL, NUM_VALUE, PRIOR_DECL, &
+    &                          RANGE, REDECLARE, SECTION, SPEC, STR_Range, &
+    &                          STR_VALUE, TYPE_NAME, UNITS_NAME, VALUE_T, &
+    &                          VARIABLE
+d582 1
+a582 3
+              if ( node_id(type_decl) == n_spec_def ) then
+                test_type = decoration(subtree(1,decl%tree))
+              else if ( decl%type==variable ) then
+d595 6
+a881 1
+    integer :: String1               ! Text of Gson1, which is a label
+d2150 1
+a2150 1
+      integer :: I, J
+d2157 1
+d2166 1
+a2166 1
+          j = expr ( sonn, type2, units2, value, tree=tree )
+d2255 1
+a2255 1
+       "$Id: tree_checker.f90,v 1.51 2015/02/05 21:51:26 vsnyder Exp $"
+d2264 3
+@
+
+
+1.51
+log
+@Work related to variable definitions
+@
+text
+@a128 1
+    integer :: Gson1, Gson2   ! Sons of N_Named vertex
+a873 1
+    type(decls) :: Decl              ! Declaration of a label
+a1769 1
+    type(decls) :: DECL2           ! Declaration of a label
+a2204 1
+    type(decls) :: Var_Decl ! Declaration of expr as variable
+d2251 1
+a2251 1
+       "$Id: tree_checker.f90,v 1.50 2014/04/09 00:41:26 vsnyder Exp $"
+d2260 3
+@
+
+
+1.50
+log
+@Repair problem finding variables
+@
+text
+@d1292 4
+d2052 1
+a2052 1
+    use Declaration_Table, only: Allocate_Test
+d2066 9
+a2078 2
+    son1 = subtree(1,root)
+    string = sub_rosa(son1)
+d2255 1
+a2255 1
+       "$Id: tree_checker.f90,v 1.49 2014/03/20 18:36:11 vsnyder Exp $"
+d2264 3
+@
+
+
+1.49
+log
+@Unified type system instead of one in Intrinsic and one in Declaration_Table
+@
+text
+@d576 1
+a576 1
+          if  ( decl%tree /= null_tree ) &
+d2244 1
+a2244 1
+       "$Id: tree_checker.f90,v 1.48 2014/02/27 02:37:18 vsnyder Exp $"
+d2253 3
+@
+
+
+1.48
+log
+@EXIT referring to IF and SELECT CASE constructs
+@
+text
+@d25 1
+a25 1
+    &                          DOT, DO_LABEL, DUMP_1_DECL, EMPTY, ENUM_VALUE, &
+d29 2
+a30 2
+    &                          STR_VALUE, TYPE_NAMES, UNDECLARED, TYPE_MAP, &
+    &                          TYPE_NAME, UNITS_NAME, VALUE_T, VARIABLE
+d35 4
+a38 3
+  use INTRINSIC, only: ALL_FIELDS, EMPTY_OK, EXPR_OK, L_True, L_False,&
+    &                  NO_ARRAY, NO_CHECK_EQ, NO_DUP, NO_POSITIONAL, &
+    &                  PHYQ_INVALID, REQ_FLD, SPEC_INDICES, T_BOOLEAN, U
+d236 4
+a239 8
+      if ( present(expect) ) then
+        call output ( ', expected ' )
+        call display_string ( data_type_indices(expect) )
+      end if
+      if ( present(got) ) then
+        call output ( ', got ' )
+        call display_string ( data_type_indices(got) )
+      end if
+d243 4
+a246 8
+      if ( present(expect) ) then
+        call output ( ', expected ' )
+        call output ( trim(type_names(expect)) )
+      end if
+      if ( present(got) ) then
+        call output ( ', got ' )
+        call output ( trim(type_names(got)) )
+      end if
+d250 4
+a253 6
+      if ( present(expect) ) then
+        call display_string ( phyq_indices(expect), before=', expected ' )
+      end if
+      if ( present(got) ) then
+        call display_string ( phyq_indices(got), before=', expected ' )
+      end if
+d353 2
+a354 2
+      call output ( 'Expression type is not correct.  Expected "' )
+      call output ( trim(type_names(expect)) )
+d585 11
+d628 1
+a628 1
+            test_type = type_map(type) ! from declaration table type
+d1212 1
+a1212 1
+          stat = check_field_type(check,type_map(type),units)
+d1276 2
+a1277 2
+                       ! String  Value  Type        Units         Tree
+          call declare ( string, 0.0d0, undeclared, phyq_invalid, root )
+d1288 2
+a1289 1
+      decl = get_decl(string, [enum_value,named_value,variable,label,do_label] )
+d1316 1
+a1316 1
+        typeString = 0
+d1599 1
+a1599 1
+                    if ( type_map(type) == decoration(subtree(j,son2)) ) then
+d1606 1
+a1606 1
+                  if ( type_map(type) /= decoration(son2) ) then
+d1623 1
+a1623 1
+      type = undeclared
+d1656 1
+a1656 1
+      call output ( trim(type_names(type)) )
+d1670 2
+a1671 1
+    call trace_end ( 'EXPR', index=stat, string=trim(type_names(type)), &
+d2120 2
+a2121 2
+      call trace_end ( 'Variable_Def', string=trim(type_names(decl%units)), &
+        & cond=toggle(con) )
+d2244 1
+a2244 1
+       "$Id: tree_checker.f90,v 1.47 2014/02/21 19:19:01 vsnyder Exp $"
+d2253 3
+@
+
+
+1.47
+log
+@More work on variables, especially those with enumerator values
+@
+text
+@d61 2
+a62 1
+  integer, private, parameter :: IMPROPER_CYCLE_EXIT = EMPTY_NOT_ALLOWED + 1
+d227 3
+d232 1
+a232 1
+      call output ( ' a DO construct enclosing a section.', advance='yes' )
+d886 9
+a894 1
+        do_tree = do_construct_stack(do_stack_top)
+d911 6
+a916 1
+        if ( decoration(do_tree) == in_or_out ) then
+a917 2
+        else
+          call announce_error ( root, improper_cycle_exit )
+d1371 1
+d1713 1
+a1713 1
+    integer :: Gson, I, J, Son, Start
+d1715 1
+a1715 1
+    integer :: Stat, Type, Units
+d1719 11
+a1729 1
+    do i = 1, nsons(root)
+d1731 1
+a1731 1
+      start = 1   ! Assume ELSE
+d1736 1
+a1736 1
+        start = 2 ! ELSE IF, skip the EXPR we just processed
+d1886 1
+a1886 1
+    integer :: Gson, I, J, Son, Start
+d1888 1
+a1888 1
+    integer :: Stat, Type1, Type2, Units
+d1891 12
+a1902 2
+    stat = expr(subtree(1,root),type1,units,value)
+    do i = 2, nsons(root)
+d1904 1
+a1904 1
+      start = 1    ! Assume CASE DEFAULT
+d1906 1
+a1906 1
+        stat = expr(subtree(1,root),type2,units,value)
+d2240 1
+a2240 1
+       "$Id: tree_checker.f90,v 1.46 2014/01/11 01:42:25 vsnyder Exp $"
+d2249 3
+@
+
+
+1.46
+log
+@Stuff for variables, some decruftification
+@
+text
+@d25 2
+a26 2
+    &                          DOT, DUMP_1_DECL, EMPTY, ENUM_VALUE, FIELD, &
+    &                          FUNCTION, GET_DECL, LABEL, LOG_VALUE, &
+d28 3
+a30 3
+    &                          RANGE, REDECLARE, SECTION, SPEC, STR_VALUE, &
+    &                          TYPE_NAMES, UNDECLARED, TYPE_MAP, TYPE_NAME, &
+    &                          UNITS_NAME, VALUE_T, VARIABLE
+d33 5
+a37 5
+    &                           SECTION_FIRST,SECTION_INDICES, SECTION_LAST, &
+    &                           SECTION_ORDERING, T_BOOLEAN
+  use INTRINSIC, only: ALL_FIELDS, EMPTY_OK, EXPR_OK, NO_ARRAY,&
+    &                  NO_CHECK_EQ, NO_DUP, NO_POSITIONAL, PHYQ_INVALID, &
+    &                  REQ_FLD, U
+d42 1
+a42 1
+  use TOGGLES, only: CON, TOGGLE
+d61 2
+a62 1
+  integer, private, parameter :: INCONSISTENT_DATA_TYPES = EMPTY_NOT_ALLOWED + 1
+d68 2
+a69 1
+  integer, private, parameter :: NO_DECLARATION = NO_CODE_FOR + 1
+d102 6
+d126 2
+d132 2
+d145 3
+d158 2
+d226 3
+d233 1
+a233 1
+        call display_string ( sub_rosa(subtree(1,expect)) )
+d237 1
+a237 1
+        call display_string ( sub_rosa(subtree(1,got)) )
+d269 3
+d473 1
+a473 1
+        else if  ( node_id(field) == n_variable_ref ) then
+d586 1
+a586 1
+            decl = get_decl(sub_rosa(root),look_for)
+d601 1
+a601 1
+              decl = prior_decl(decl,look_for)
+d619 6
+a624 1
+          stat = check_field_type(field, type_map(type), units, start)
+d770 1
+a770 1
+  ! Return 1 if type is wrong.
+d780 1
+d784 1
+d787 1
+a787 1
+    check_field_type = merge( 1, 0, &
+d790 2
+a791 2
+    if ( check_field_type > 0 ) &
+  return
+d795 2
+a796 1
+      check_field_type = merge( 0, 1, decoration(subtree(i,field)) == decl%tree )
+d801 1
+a801 1
+  return
+d804 3
+a806 1
+    check_field_type = 1
+d809 27
+d860 57
+d1089 58
+d1196 1
+a1196 1
+          if ( stat == 1 ) then
+d1215 2
+d1219 2
+a1220 1
+    integer, intent(out) :: UNITS  ! Units of expression value
+d1242 1
+d1248 1
+d1271 1
+a1271 5
+      decl = get_decl(string, named_value)
+      do while ( decl%type /= null_decl .and. decl%type /= variable .and. &
+        decl%type /= label )
+        decl = prior_decl(decl)
+      end do
+d1274 26
+a1299 2
+      units = decl%units
+      value = decl%value
+d1326 2
+a1327 1
+      if ( type /= log_value ) call local_error ( root, not_log_value )
+d1359 1
+a1359 1
+      stat = expr ( son1, type, units, value, field, start, field_look, field_test )
+d1362 1
+a1362 1
+      stat = expr ( son2, type2, units2, value2, field, start, field_look, field_test )
+d1365 13
+a1378 5
+      if ( type /= num_value .or. type2 /= num_value ) then
+        type = log_value
+  go to 9
+      end if
+      type = log_value
+d1387 1
+a1387 1
+          value = merge ( 1, 0, value < value2 )
+d1389 1
+a1389 1
+          value = merge ( 1, 0, value <= value2 )
+d1391 1
+a1391 1
+          value = merge ( 1, 0, value > value2 )
+d1393 1
+a1393 5
+          value = merge ( 1, 0, value >= value2 )
+        case ( n_equal_equal )
+          value = merge ( 1, 0, value == value2 )
+        case ( n_not_equal )
+          value = merge ( 1, 0, value /= value2 )
+d1404 2
+a1405 1
+      if ( type /= str_value .and. type /= log_value ) then
+d1407 2
+a1408 1
+      else if ( type2 /= str_value .and. type2 /= log_value ) then
+d1412 1
+a1412 1
+          value = value * value2
+d1414 1
+a1414 1
+          value = max(value, value2)
+d1417 2
+a1418 1
+      type = log_value
+d1424 2
+a1425 1
+      if ( type /= str_value .and. type /= log_value ) then
+d1428 1
+a1428 1
+        value = 1 - value
+d1430 2
+a1431 1
+      type = log_value
+d1457 1
+a1457 1
+            type = dot
+d1553 1
+d1618 2
+a1619 2
+        else if ( (type == enum_value .or. type == label) .and. &
+                & tree /= tree2 ) then
+d1633 18
+d1652 1
+a1652 1
+      & cond=toggle(con) )
+d1701 1
+d1708 1
+a1708 1
+        if ( type /= log_value ) call announce_error ( &
+d1728 1
+d1745 4
+d1756 12
+a1767 14
+      gson2 = subtree(2,root)       ! spec_args tree
+      string1 = sub_rosa(gson1)
+      decl2 = get_decl ( string1, [ enum_value, label, named_value, variable ] )
+      select case ( decl2%type )
+      case ( label )
+        call announce_error ( gson1, already_declared )
+      case ( named_value, variable )
+        call announce_error ( gson1, label_conflict, got=string1 )
+      case ( empty, enum_value )
+        call declare ( string1, 0.0d0+string1, label, phyq_invalid, gson2 )
+      end select
+      call decorate ( gson1, gson2 )
+      call decorate ( gson2, son1 ) ! show spec_args the section name
+      call spec_args ( gson2 )
+d1775 2
+d1824 30
+d2000 1
+a2000 1
+  subroutine Variable_Def ( Root )
+d2008 1
+d2010 1
+d2017 1
+d2019 1
+a2019 1
+    integer :: What1
+d2025 1
+a2025 1
+    call check_type ( root, 2, what1, units1, type1 )
+d2034 6
+a2039 1
+      case ( enum_value, label )
+d2051 13
+a2063 4
+      allocate ( values(1) )
+                   !   what1  type   value                        units
+      values = value_t(what1, type1, [string+0.0d0,string+0.0d0], [units1,units1] )
+                   ! String  Value         Type      Units Tree
+d2075 2
+d2086 1
+a2086 1
+    recursive subroutine Check_Type ( Root, Start, What, Units, Type )
+d2089 6
+a2094 1
+      integer, intent(inout) :: What, Units ! the sons need to agree
+d2096 2
+a2105 1
+      double precision :: Value
+d2112 1
+a2112 1
+          call check_type ( sonn, 1, what, units, type )
+d2121 6
+a2126 6
+            select case ( type )
+            case ( enum_value, label, variable )
+              if ( tree > 0 ) then
+                type = tree
+                if ( what == label ) type = decoration(subtree(1,type))
+              end if
+a2128 9
+          select case ( type2 )
+          case ( enum_value, label )
+            decl = get_decl ( sub_rosa(sonn), type2 )
+            type2 = tree ! dt_def node if enum_value, first son is type name
+                         ! spec_args node if label, first son is spec name,
+                         ! decoration of first son is spec_def node
+            if ( what2 == label ) type2 = decoration(subtree(1,type2))
+            call decorate ( sonn, decl%units )
+          end select
+d2145 56
+d2204 1
+a2204 1
+       "$Id: tree_checker.f90,v 1.45 2013/12/12 01:54:53 vsnyder Exp $"
+d2213 3
+@
+
+
+1.45
+log
+@Provide variable assignment, and IF, and SELECT constructs
+@
+text
+@d35 1
+a35 1
+  use INTRINSIC, only: ALL_FIELDS, DU, EMPTY_OK, EXPR_OK, NO_ARRAY,&
+d46 1
+a46 1
+                  SUBTREE, THE_FILE
+d141 2
+a142 2
+      case ( n_variable )
+        call variable_def ( son )
+d1033 2
+a1034 2
+  recursive integer function EXPR ( ROOT, TYPE, UNITS, VALUE, &
+    &                               FIELD, START, FIELD_LOOK, FIELD_TEST ) &
+d1048 1
+d1062 1
+d1071 1
+d1092 2
+a1093 1
+      do while ( decl%type /= null_decl .and. decl%type /= variable )
+d1100 1
+d1397 1
+a1397 1
+      stat = expr ( son1, type, units, value )
+d1402 1
+a1402 1
+        stat = expr ( son2, type2, units2, value2 )
+d1405 4
+a1408 1
+        if ( type /= type2 ) &
+d1410 1
+a1502 1
+    use Tree, Only: Where
+a1555 1
+    integer :: GSON1, GSON2        ! Grandsons of ROOT being analyzed
+a1744 1
+    integer :: I, J
+d1746 1
+a1746 2
+    logical :: Numeric
+    integer :: Son1, Son2, Sonn ! Left son, right sons
+d1748 2
+a1749 4
+    integer :: Units1, Units2   ! Of right sons
+    integer :: Type1, Type2     ! Types of right sons
+    type(decls) :: Type_Decl    ! For an enumerator
+    double precision :: Value
+d1751 1
+a1751 1
+    integer :: What, What2
+d1754 4
+a1757 38
+    son2 = subtree(2,root)
+    j = expr ( son2, type1, units1, value )
+    what = type1
+    units2 = units1 ! In case of scalar value
+    numeric = type1 == num_value
+    select case ( type1 )
+    case ( enum_value, label )
+      string = sub_rosa(son2)
+      decl = get_decl ( string, type1 )
+      type1 = decl%tree ! dt_def node if enum_value, first son is type name
+                        ! spec_args node if label, first son is spec name,
+                        ! decoration of first son is spec_def node
+      if ( what == label ) type1 = decoration(subtree(1,type1))
+    end select
+
+    do i = 3, nsons(root)
+      sonn = subtree(i,root)
+      j = expr ( sonn, type2, units2, value )
+      what2 = type2
+      select case ( type2 )
+      case ( enum_value, label )
+        string = sub_rosa(sonn)
+        decl = get_decl ( string, type2 )
+        type2 = decl%tree ! dt_def node if enum_value, first son is type name
+                          ! spec_args node if label, first son is spec name,
+                          ! decoration of first son is spec_def node
+        if ( what2 == label ) type2 = decoration(subtree(1,type2))
+      end select
+      if ( type1 /= type2 .or. what /= what2 ) then
+        call announce_error ( sonn, inconsistent_data_types, expect=type1, &
+          & got=type2 )
+      end if
+      if ( numeric .and. units1 /= units2 ) then
+        call announce_error ( sonn, inconsistent_units, expect=units1, &
+          & got=units2 )
+      end if
+    end do
+
+d1765 1
+a1765 1
+      select case ( what )
+d1767 1
+a1767 1
+        if ( values(1)%type /= type1 ) then
+d1769 1
+a1769 1
+            & expect=values(1)%type, got=type1 )
+d1772 1
+a1772 1
+        if ( decl%units /= what ) then
+d1774 1
+a1774 1
+            & got=what )
+d1779 2
+a1780 2
+                   !   what      type   value                        units
+      values = value_t(what, type1, [string+0.0d0,string+0.0d0], [units1,units2] )
+d1782 2
+a1783 2
+      call declare ( string, string+0.0d0, variable, what, son1, values )
+      if ( toggle(con) ) decl = get_decl ( string, variable )
+d1786 1
+a1786 1
+    select case ( what )
+d1790 1
+a1790 1
+      call decorate ( son1, son2 )
+d1799 63
+d1867 1
+a1867 1
+       "$Id: tree_checker.f90,v 1.44 2013/10/16 01:06:45 vsnyder Exp $"
+d1876 3
+@
+
+
+1.44
+log
+@Correct typo in first call to Declare in Def_Spec
+@
+text
+@d25 6
+a30 7
+    &                          DOT, DUMP_A_DECL, DUMP_1_DECL, EMPTY, &
+    &                          ENUM_VALUE, FIELD, FUNCTION, GET_DECL, &
+    &                          LABEL, LOG_VALUE,  NAMED_VALUE, NULL_DECL, &
+    &                          NUM_VALUE, PRIOR_DECL, RANGE, REDECLARE, &
+    &                          SECTION, SPEC, STR_VALUE, UNDECLARED, &
+    &                          TYPE_MAP, TYPE_NAME, TYPE_NAMES, UNITS_NAME, &
+    &                          VARIABLE
+d54 2
+a55 1
+  integer, private :: ERROR   ! 0 => No errors
+d61 2
+a62 1
+  integer, private, parameter :: INCONSISTENT_TYPES = EMPTY_NOT_ALLOWED + 1
+d64 2
+a65 1
+  integer, private, parameter :: MISSING_FIELD = INCONSISTENT_UNITS + 1
+d88 4
+a91 2
+  integer, private, parameter :: WRONG_ARG_TYPE = SECTION_ORDER + 1
+  integer, private, parameter :: WRONG_NUM_ARGS = WRONG_ARG_TYPE + 1
+d109 2
+a110 1
+  subroutine CHECK_TREE ( ROOT, ERROR_FLAG, FIRST_SECTION, HOW_MANY_SECTIONS )
+d114 3
+a116 2
+    integer, intent(out) :: ERROR_FLAG        ! /=0 means trouble
+    integer, intent(out), optional :: FIRST_SECTION     ! Which son of root?
+d120 1
+a120 1
+    integer :: NUM_SECTIONS   ! Number of begin ... ends
+d123 1
+d131 2
+a132 5
+        if ( present(first_section) ) then
+          if ( first_section == 0 ) first_section = i
+        end if
+        call one_cf ( son )
+        num_sections = num_sections + 1
+d135 2
+d139 4
+d146 1
+a146 1
+    error_flag = error
+d149 1
+d209 11
+d233 10
+d324 4
+d334 4
+d413 1
+d737 1
+d775 1
+d799 1
+d817 1
+d855 1
+d941 1
+d1036 1
+d1039 1
+d1079 2
+a1080 2
+                       ! String  Value                        Type
+          call declare ( string, float_value(sub_rosa(root)), num_value, &
+d1084 2
+a1085 2
+                       ! String  Value  Type        Units         Tree
+          call declare ( string, 0.0d0, str_value, phyq_invalid, root )
+d1088 5
+a1092 1
+      decl = declaration(string)
+d1159 3
+a1161 2
+      stat = dot_or_num ()
+      if ( type /= num_value ) &
+d1163 2
+a1185 1
+      type = log_value
+d1328 1
+a1328 1
+                  stat = expr ( son2, type2, units, value, &
+d1338 2
+d1453 38
+d1492 1
+a1492 1
+  subroutine ONE_CF ( ROOT )
+d1494 50
+a1543 1
+  ! The root is an N_CF node.
+d1554 2
+a1555 1
+    call trace_begin ( me, 'ONE_CF', root, cond=toggle(con) )
+d1577 40
+a1616 26
+      sonn = subtree(i,root)
+      select case ( node_id(sonn) )
+      case ( n_equal )                ! x = expr
+        call decorate ( sonn, son1 )  ! show equal the section name
+        if ( decoration(decl%tree) /= no_check_eq ) call equal ( sonn )
+      case ( n_named )                ! label:x,(y[=expr])+
+        gson1 = subtree(1,sonn)       ! Label
+        gson2 = subtree(2,sonn)       ! spec_args tree
+        string1 = sub_rosa(gson1)
+        decl = get_decl ( string1, label )
+        if ( decl%type == label ) then
+          call announce_error ( gson1, already_declared )
+        else
+          call declare ( string1, 0.0d0, label, phyq_invalid, gson2 )
+        end if
+        call decorate ( gson1, gson2 )
+        call decorate ( gson2, son1 ) ! show spec_args the section name
+        call spec_args ( gson2 )
+      case ( n_spec_args )            ! x,(y[=expr])+
+        call decorate ( sonn, son1 )  ! show spec_args the section name
+        call spec_args ( sonn )
+      case ( n_variable )
+        call variable_def ( sonn )
+      case default
+        call announce_error ( sonn, no_code_for )
+      end select
+d1618 3
+a1620 2
+    call trace_end ( 'ONE_CF', cond=toggle(con) )
+  end subroutine ONE_CF
+d1656 1
+d1735 1
+d1737 1
+a1737 1
+    type(decls) :: Decl         ! of left son
+d1740 1
+d1743 1
+a1743 1
+    integer :: Units            ! Of right sons
+d1745 1
+d1747 2
+d1752 14
+a1765 1
+    j = expr ( son2, type1, units, value )
+d1768 13
+a1780 3
+      j = expr ( sonn, type2, units, value )
+      if ( type1 /= type2 ) then
+        call announce_error ( sonn, inconsistent_types, expect=type1, &
+d1783 4
+d1788 1
+d1791 33
+a1823 1
+    decl = get_decl ( string, variable )
+d1825 1
+a1825 3
+                   ! String  Value         Type      Units  Tree
+      call declare ( string, string+0.0d0, variable, type1, son1 )
+      if ( toggle(con) ) decl = get_decl ( string, variable )
+d1827 2
+a1828 4
+      if ( decl%units /= type1 ) then
+        call announce_error ( root, inconsistent_types, expect=decl%units, &
+          & got=type1 )
+      end if
+a1829 3
+    call decorate ( son1, son2 )
+    call trace_end ( 'Variable_Def', string=trim(type_names(decl%units)), &
+      & cond=toggle(con) )
+d1835 1
+a1835 1
+       "$Id: tree_checker.f90,v 1.43 2013/10/12 01:19:04 vsnyder Exp $"
+d1844 3
+@
+
+
+1.43
+log
+@Handle undefined vector correctly in Check_Dot
+@
+text
+@d817 1
+d829 2
+a830 2
+                 ! String               Value                Type
+    call declare ( sub_rosa(spec_name), sub_rosa(son)+0.0d0, spec, &
+d1616 1
+a1616 1
+       "$Id: tree_checker.f90,v 1.42 2013/10/11 00:46:16 vsnyder Exp $"
+d1625 3
+@
+
+
+1.42
+log
+@Variables and functions
+@
+text
+@d65 2
+a66 1
+  integer, private, parameter :: NO_DOT = NO_CODE_FOR + 1
+d217 3
+d239 1
+a239 1
+      call print_source ( where_at(sons(1)), advance='yes' )
+d456 2
+d595 16
+a610 10
+    do while ( decl%tree /= null_tree )
+      test_type = decoration(subtree(1,decl%tree)) ! spec's index
+      if ( test_type == type_decl ) then  ! right kind of spec
+        field_ref = decl%tree
+        call decorate ( first, field_ref ) ! decorate label_ref with tree
+        stat = check_deep ( start+1, nsons(field), field_ref )
+        if ( stat == 0 ) exit
+      end if
+      decl = prior_decl(decl,label)
+    end do
+d767 4
+a770 1
+    call declare ( sub_rosa(son), 0.0d0, function, decoration(son), root )
+d791 4
+a794 1
+    call declare ( sub_rosa(son), 0.0d0, section, decoration(son), root )
+d799 3
+a801 1
+        call declare ( sub_rosa(gson), 0.0d0, named_value, &
+d828 4
+a831 2
+    call declare ( sub_rosa(spec_name), 0.0d0, spec, decoration(spec_name), &
+                   root )
+d835 2
+a836 2
+      son=son ! Without this, the compiler inexplicably uses "root" instead
+              ! of "son" below ???
+d840 1
+d842 1
+d845 1
+d847 2
+a848 1
+                       decoration(field_name), son )
+d908 4
+a911 1
+    call declare ( sub_rosa(son), 0.0d0, type_name, decoration(son), root )
+d915 3
+a917 1
+      call declare ( sub_rosa(son), decoration(son) + 0.0d0, enum_value, &
+d1026 1
+d1029 1
+d1031 2
+a1032 1
+                         phyq_dimensionless, root )
+d1034 1
+d1598 2
+a1599 1
+      call declare ( string, 0.0d0, variable, type1, son1 )
+d1615 1
+a1615 1
+       "$Id: tree_checker.f90,v 1.41 2013/09/24 23:28:00 vsnyder Exp $"
+d1624 3
+@
+
+
+1.41
+log
+@Use Where instead of Source_Ref for messages
+@
+text
+@d20 3
+a22 2
+! cross-references within the tree with anything that might be useful
+! in table_generator.
+d25 7
+a31 5
+    &                          DOT, DUMP_1_DECL, EMPTY, ENUM_VALUE, FIELD, &
+    &                          FUNCTION, GET_DECL, LABEL, LOG_VALUE, &
+    &                          NAMED_VALUE, NULL_DECL, NUM_VALUE, PRIOR_DECL, &
+    &                          RANGE, REDECLARE, SECTION, SPEC, STR_VALUE, &
+    &                          UNDECLARED, TYPE_MAP, TYPE_NAME, UNITS_NAME
+d36 3
+a38 2
+  use INTRINSIC, only: ALL_FIELDS, EMPTY_OK, EXPR_OK, NO_ARRAY, NO_CHECK_EQ, &
+    &                  NO_DUP, NO_POSITIONAL, PHYQ_INVALID, REQ_FLD, U
+d74 2
+a75 1
+  integer, private, parameter :: NOT_NAME = NOT_LIT_OF_TYPE + 1
+d169 1
+a169 1
+  subroutine ANNOUNCE_ERROR ( WHERE, CODE, SONS, FIELDS, EXPECT )
+d179 1
+d198 10
+a207 1
+      call output ( 'types are not consistent.', advance = 'yes' )
+d243 2
+d405 2
+d491 1
+a491 1
+      call trace_begin ( me, 'AssignBody', root, cond=toggle(con) )
+d509 5
+a513 1
+        if ( node_id(field) /= n_dot ) then      ! Field doesn't need x.y
+d973 2
+a974 1
+    type(decls) :: DECL            ! Declaration record for "root"
+d977 1
+a977 1
+    integer :: SON1, SON2          ! Sons of "root"
+d980 3
+a982 3
+    integer :: TYPE2               ! Type for a son of "root"
+    integer :: UNITS2              ! Units for a son of "root"
+    double precision :: VALUE2     ! Value for a son of "root"
+d1027 15
+d1051 1
+a1051 1
+        call local_error ( root, inconsistent_types, (/ son1, son2 /) )
+d1150 2
+a1152 2
+      else if ( type == dot .or. type2 == dot ) then
+        type = dot
+d1223 9
+a1231 1
+          if ( nsons(decl%tree) == 1 ) & ! No argument # or type checking
+d1233 26
+a1258 2
+          arg_tree = subtree(2,decl%tree)
+          if ( node_id(arg_tree) /= n_arg_def ) & ! No argument # or type checking
+d1260 14
+a1273 14
+          if ( nsons(root) /= 1 + nsons(arg_tree) ) then
+            call local_error ( root, wrong_num_args, fields=(/string/) )
+          else
+            do i = 1, nsons(arg_tree)
+              stat = expr ( subtree(i+1,root), type, units, value, &
+                          & field, start, field_look, field_test )
+              if ( stat /= 0 ) &
+  go to 9
+              son2 = subtree(i,arg_tree)
+              if ( node_id(subtree(i,arg_tree)) == n_or ) then
+                do j = 1, nsons(son2)
+                  if ( type_map(type) == decoration(subtree(j,son2)) ) then
+                    if ( type == num_value .and. units /= phyq_dimensionless ) &
+                      & call local_error ( subtree(i+1,root), not_unitless, fields=(/string/) )
+d1275 8
+a1283 7
+                end do
+              else
+                if ( type_map(type) /= decoration(son2) ) then
+                  call local_error ( subtree(i+1,root), wrong_arg_type, &
+                    & fields=(/string/), expect=subtree(i,arg_tree) )
+                else if ( units /= phyq_dimensionless ) then
+                  call local_error ( subtree(i+1,root), not_unitless, fields=(/string/) )
+d1285 3
+a1287 2
+              end if
+            end do
+a1288 1
+          end if
+d1297 13
+d1313 9
+a1321 1
+  9 call trace_end ( 'EXPR', index=stat, cond=toggle(con) )
+d1329 4
+a1332 12
+      ! announced.  If the type is empty, the result is stat=wrong_type, else
+      ! it is stat=0.
+      stat = wrong_type ! Assume wrong
+      if ( type == dot ) then
+        if ( type2 == dot .or. type2 == num_value ) then
+          dot_or_num = 0
+        else
+          call local_error ( root, wrong_type )
+        end if
+  return
+      end if
+      if ( type2 == dot ) then
+a1333 1
+          type = dot
+a1334 2
+        else
+          call local_error ( root, wrong_type )
+d1336 4
+a1339 1
+  return
+d1341 1
+a1341 1
+      if ( type == num_value .and. type2 == num_value ) dot_or_num = 0
+d1344 1
+a1344 1
+    subroutine LOCAL_ERROR ( WHERE, CODE, SONS, FIELDS, EXPECT )
+d1352 2
+a1353 1
+      call announce_error ( where, code, sons, fields, expect )
+d1417 2
+d1530 46
+d1579 1
+a1579 1
+       "$Id: tree_checker.f90,v 1.40 2013/09/20 00:56:18 vsnyder Exp $"
+d1588 3
+@
+
+
+1.40
+log
+@Allow relational operators to have dot operands
+@
+text
+@d42 2
+a43 2
+                  NODE_ID, NODE_KIND, NSONS, NULL_TREE, PSEUDO, SOURCE_REF,  &
+                  SUB_ROSA, SUBTREE
+d166 1
+a166 1
+    use Tree, only: Node_Kind, Pseudo
+d178 1
+a178 1
+    call StartErrorMessage ( where )
+d220 1
+a220 1
+      call print_source ( source_ref(sons(1)), advance='yes' )
+d1278 1
+d1294 1
+a1294 1
+      call print_source ( source_ref(subtree(1,root)), advance='yes' )
+d1296 1
+a1296 1
+      call print_source ( source_ref(subtree(n,root)) )
+d1445 1
+a1445 1
+       "$Id: tree_checker.f90,v 1.39 2013/09/19 23:34:33 vsnyder Exp $"
+d1454 3
+@
+
+
+1.39
+log
+@Type-check and decorate dots in expressions
+@
+text
+@d1031 3
+d1100 6
+a1105 6
+        if ( type == num_value .and. type2 == num_value .and. &
+           units /= phyq_dimensionless .and. &
+           units2 /= phyq_dimensionless .and. &
+           units /= units2 ) then
+          call local_error ( root, inconsistent_units, (/ son1, son2 /) )
+        else
+d1444 1
+a1444 1
+       "$Id: tree_checker.f90,v 1.38 2013/08/31 01:26:06 vsnyder Exp $"
+d1453 3
+@
+
+
+1.38
+log
+@Don't pass root as index to trace_end
+@
+text
+@d24 1
+a24 1
+    &                          DUMP_1_DECL, EMPTY, ENUM_VALUE, FIELD, &
+d33 2
+a34 2
+  use INTRINSIC, only: ALL_FIELDS, EMPTY_OK, NO_ARRAY, NO_CHECK_EQ, NO_DUP, &
+    &                  NO_POSITIONAL, PHYQ_INVALID, REQ_FLD, U
+d63 2
+a64 1
+  integer, private, parameter :: NO_POSITIONAL_FIELDS = NO_DUPLICATE_FIELDS + 1
+d154 2
+a155 1
+      if ( lit_decl%tree == type_decl%tree ) return
+d166 1
+d207 4
+d281 10
+a290 3
+      call output ( 'the "' )
+      if ( present(fields) ) then
+        call display_string ( sub_rosa(fields(1)) )
+d292 1
+a292 1
+        call display_string ( sub_rosa(where) )
+a293 1
+      call output ( '" field has the wrong ' )
+d356 1
+d368 1
+d371 1
+d409 2
+d413 1
+d415 1
+a415 1
+              exit
+d419 2
+d422 5
+a426 2
+                if ( stat == 0 ) &
+              exit
+d428 2
+d433 3
+a435 4
+            case ( 1 )
+              call announce_error ( son, wrong_type, fields=(/son1/), &
+                & expect=field )
+            case ( 2 )
+d438 1
+a438 1
+            case ( 3 )
+d441 1
+a441 1
+            case ( 4 )
+d443 3
+d448 1
+a448 1
+                & expect=stat-10 )
+d475 5
+a479 5
+      !      = 1 => wrong type
+      !      = 2 => no such field
+      !      = 3 => no such reference
+      !      = 4 => no such label
+      !      > 10 => Expecting units stat-10
+d487 1
+a487 1
+          stat = 1 ! Wrong type
+d506 1
+a506 2
+                call trace_end ( 'AssignBody', cond=toggle(con) )
+    return
+d513 1
+a513 1
+        stat = 1
+d517 2
+a518 1
+          if ( stat /= 0 ) return
+d521 5
+a525 2
+        if ( node_id(field) /= n_dot ) then ! Field doesn't need x.y
+          stat = expr (root, type, units, value, field, start, field_look, field_test)
+a526 2
+        else
+          stat = 1
+d529 1
+a529 1
+      call trace_end ( 'AssignBody', cond=toggle(con) )
+d537 1
+d554 5
+a558 1
+    call trace_begin ( me, 'Check_Dot', root, cond=toggle(con) )
+d560 1
+a560 1
+    stat = 3 ! Assume no label referenced in <dot label field>
+d576 1
+a576 1
+    call trace_end ( 'Check_Dot', cond=toggle(con) )
+d616 1
+a616 1
+              stat = 4 ! No such referenced spec
+d635 1
+a635 1
+      stat = 2 ! no such field
+d645 1
+d649 1
+d652 1
+d656 1
+a656 1
+      if ( sub_rosa(subtree(1,check_field)) == sub_field ) return
+d659 1
+d666 1
+a666 1
+  ! Return 10+required PHYQ_... if type is correct but units are wrong.
+d683 2
+a684 1
+    if ( check_field_type > 0 ) return
+d691 1
+a691 1
+          if ( req_u /= units ) check_field_type = 10 + req_u
+d693 1
+a693 1
+        return
+d712 2
+a713 1
+        if ( sub_rosa(check_section) == sub_spec ) return
+d715 2
+a716 1
+        if ( sub_rosa(subtree(1,check_section)) == sub_spec ) return
+d922 1
+a922 1
+            call announce_error ( son2, wrong_units, fields=(/son1/), expect=stat-10 )
+d951 1
+a951 1
+    integer :: I
+d987 1
+a987 1
+  return
+d1007 1
+a1007 1
+  return
+d1010 1
+a1010 1
+  return
+d1023 1
+d1027 1
+a1027 1
+  return
+d1030 21
+a1050 6
+  return
+      if ( type == num_value .and. type2 == num_value .and. &
+           units /= phyq_dimensionless .and. &
+           units2 /= phyq_dimensionless .and. &
+           units /= units2 ) then
+        call local_error ( root, inconsistent_units, (/ son1, son2 /) )
+d1057 1
+a1057 1
+  return
+d1060 1
+a1060 1
+  return
+d1077 1
+a1077 1
+  return
+d1088 1
+a1088 1
+  return
+d1093 4
+a1096 1
+  return
+d1101 1
+a1101 1
+        call local_error ( root, inconsistent_units, (/ son1, son2 /) )
+d1109 2
+d1118 2
+a1119 2
+  return
+      stat = expr ( son2, type, units2, value2, field, start, field_look, field_test )
+d1121 4
+a1124 1
+  return
+d1138 1
+a1138 1
+  return
+d1141 4
+a1144 1
+  return
+d1160 1
+a1160 1
+        stat = expr ( son1, type, units, value2, field_look, field_test )
+d1162 5
+a1166 2
+  return
+        if ( units /= phyq_dimensionless ) then
+d1168 1
+a1168 2
+        else if ( type /= num_value ) then
+          call local_error ( root, not_numeric, (/ son1 /) )
+d1182 1
+a1182 1
+  return
+d1185 1
+a1185 1
+  return
+d1193 17
+a1209 6
+  return
+              if ( type_map(type) /= decoration(subtree(i,arg_tree)) ) then
+                call local_error ( subtree(i+1,root), wrong_arg_type, &
+                  & fields=(/string/), expect=subtree(i,arg_tree) )
+              else if ( units /= phyq_dimensionless ) then
+                call local_error ( subtree(i+1,root), not_unitless, fields=(/string/) )
+d1212 1
+a1212 1
+  return
+d1220 2
+d1225 1
+a1225 1
+    call trace_end ( 'EXPR', cond=toggle(con) )
+d1229 27
+d1441 1
+a1441 1
+       "$Id: tree_checker.f90,v 1.37 2013/08/30 03:53:10 vsnyder Exp $"
+d1450 3
+@
+
+
+1.37
+log
+@Revise use of trace_begin and trace_end
+@
+text
+@d542 1
+a542 1
+    call trace_end ( 'Check_Dot', stat, cond=toggle(con) )
+d602 1
+a602 1
+    9 call trace_end ( 'Check_Deep', stat, cond=toggle(con) )
+d692 1
+a692 1
+    call trace_end ( 'DEF_FUNC', root, cond=toggle(con) )
+d724 1
+a724 1
+    call trace_end ( 'DEF_SECTION', root, cond=toggle(con) )
+d800 1
+a800 1
+      call trace_end ( 'DEF_ONE_SPEC', root, cond=toggle(con) )
+d1331 1
+a1331 1
+       "$Id: tree_checker.f90,v 1.36 2013/08/17 02:54:54 vsnyder Exp $"
+d1340 3
+@
+
+
+1.36
+log
+@Remove references to DEPTH from trace_m
+@
+text
+@d106 1
+d112 1
+a112 1
+    if ( toggle(con) ) call trace_begin ( 'CHECK_TREE', root )
+d131 1
+a131 1
+    if ( toggle(con) ) call trace_end ( 'CHECK_TREE' )
+d354 1
+d360 1
+a360 1
+    if ( toggle(con) ) call trace_begin ( 'ASSIGN', root )
+d430 2
+a431 1
+    if ( toggle(con) ) call trace_end ( 'ASSIGN' )
+d440 1
+d444 1
+a444 1
+      if ( toggle(con) ) call trace_begin ( 'AssignBody', root )
+d478 1
+a478 1
+                if ( toggle(con) ) call trace_end ( 'AssignBody' )
+d500 1
+a500 1
+      if ( toggle(con) ) call trace_end ( 'AssignBody' )
+d520 1
+d524 1
+a524 1
+    if ( toggle(con) ) call trace_begin ( 'Check_Dot', root )
+d542 1
+a542 1
+    if ( toggle(con) ) call trace_end ( 'Check_Dot', stat )
+d555 1
+d558 2
+a559 2
+      if ( toggle(con) ) &
+        & call trace_begin ( 'Check_Deep', subtree(start,field), field_ref )
+d602 1
+a602 1
+    9 if ( toggle(con) ) call trace_end ( 'Check_Deep', stat )
+d686 1
+d689 1
+a689 1
+    if ( toggle(con) ) call trace_begin ( 'DEF_FUNC', root )
+d692 1
+a692 1
+    if ( toggle(con) ) call trace_end ( 'DEF_FUNC', root )
+d707 1
+d710 1
+a710 1
+    if ( toggle(con) ) call trace_begin ( 'DEF_SECTION', root )
+d724 1
+a724 1
+    if ( toggle(con) ) call trace_end ( 'DEF_SECTION', root )
+d738 1
+d742 1
+a742 1
+    if ( toggle(con) ) call trace_begin ( 'DEF_SPEC', root )
+d770 2
+a771 1
+    if ( toggle(con) ) call trace_end ( 'DEF_SPEC' )
+d777 3
+a779 2
+      integer :: J               ! Loop inductor
+      if ( toggle(con) ) call trace_begin ( 'DEF_ONE_SPEC', root )
+d800 1
+a800 1
+      if ( toggle(con) ) call trace_end ( 'DEF_ONE_SPEC', root )
+d813 1
+d816 1
+a816 1
+    if ( toggle(con) ) call trace_begin ( 'DEF_TYPE', root )
+d826 1
+a826 1
+    if ( toggle(con) ) call trace_end ( 'DEF_TYPE' )
+d836 1
+d844 2
+a845 1
+    if ( toggle(con) ) call trace_begin ( 'EQUAL', root )
+d886 1
+a886 1
+    if ( toggle(con) ) call trace_end ( 'EQUAL' )
+d914 1
+d919 1
+a919 1
+    if ( toggle(con) ) call trace_begin ( 'EXPR', root )
+d1142 2
+a1143 1
+    if ( toggle(con) ) call trace_end ( 'EXPR' )
+d1145 1
+d1158 1
+d1170 1
+d1174 1
+a1174 1
+    if ( toggle(con) ) call trace_begin ( 'ONE_CF', root )
+d1221 1
+a1221 1
+    if ( toggle(con) ) call trace_end ( 'ONE_CF' )
+d1230 1
+d1233 2
+a1234 1
+    if ( toggle(con) ) call trace_begin ( 'SET_ONE', root )
+d1256 1
+a1256 1
+    if ( toggle(con) ) call trace_end ( 'SET_ONE' )
+d1267 1
+d1275 1
+a1275 1
+    if ( toggle(con) ) call trace_begin ( 'SPEC_ARGS', root )
+d1325 1
+a1325 1
+    if ( toggle(con) ) call trace_end ( 'SPEC_ARGS' )
+d1331 1
+a1331 1
+       "$Id: tree_checker.f90,v 1.35 2012/05/24 21:05:49 vsnyder Exp $"
+d1340 3
+@
+
+
+1.35
+log
+@Allow check_dot to have reflexive elements in the required spec tree, i.e.
+<dot a b ... z> really means <dot a b+ ... z>.  The first and last ones
+are not reflexive.  This allows, for example, a vectorTemplate to get
+its quantities from other vector templates.
+@
+text
+@d40 1
+a40 1
+  use TRACE_M, only: DEPTH, TRACE_BEGIN, TRACE_END
+a107 1
+    depth = 0
+d1309 1
+a1309 1
+       "$Id: tree_checker.f90,v 1.34 2012/05/05 00:12:36 vsnyder Exp $"
+d1318 6
+@
+
+
+1.34
+log
+@Add support for 'not' operator
+@
+text
+@d207 1
+a207 1
+      call display_string ( field_indices(sons(1)), before='a required field "' )
+d231 5
+a235 1
+      call display_string ( sub_rosa(where) )
+d407 2
+a408 1
+              call announce_error ( son, wrong_type, fields=(/son1/), expect=field )
+d410 2
+a411 1
+              call announce_error ( subtree(2,son), no_such_field, (/ field_look /) )
+d415 2
+d441 2
+d447 1
+d475 1
+d497 1
+d509 12
+a520 9
+    integer, intent(out) :: Field_Look ! Subrosa of last name of x.y, for error message
+    integer, intent(out) :: Field_Test ! Allowed field name, for error message
+    type(decls) :: DECL  ! Declaration of a name
+    integer :: FIELD_REF ! The value of a field -- a ref to a n_spec_arg
+    integer :: J         ! Index of son of "field"
+    integer :: K         ! Index of a son of a n_spec_args
+    integer :: Son       ! of root
+    integer :: TEST_TYPE ! Used to test the tree-node for a type reference
+    integer :: TYPE_DECL ! Tree node of declaration of name of field's type
+d522 1
+a522 1
+    stat = 0 ! Assume normal return status
+d524 4
+a527 2
+    son = subtree(1,root) ! label
+    decl = get_decl(sub_rosa(son),label)
+d532 3
+a534 37
+        call decorate ( son, field_ref ) ! decorate label_ref with tree
+m:      do j = start+1, nsons(field)
+        ! This loop assumes there is only one field of the required
+        ! name.  If it is desired to search through several fields,
+        ! it will be necessary to have a stack to keep track of the
+        ! subtree indices.  It goes through the field names that are
+        ! given by sons 3-n of the n_dot vertex of the definition,
+        ! looking for fields of the same name, starting at the first
+        ! son of the n_dot vertex in the input, and thence from the
+        ! decoration of the brother of the found field name.
+          field_look = decoration(subtree(j,field))
+          do k = 2, nsons(field_ref)
+            field_test = subtree(k,field_ref)
+            if ( node_id(field_test) == n_asg ) then
+              if ( decoration(subtree(1,field_test)) == field_look ) then
+                ! Get the next n_spec_arg tree in the chain
+                field_ref = decoration(subtree(2,field_test))
+        cycle m
+              end if
+            end if
+          end do ! k
+          stat = 2 ! No such field
+  return
+        end do m ! j
+        ! The final field_test is the parent n_asg of the field
+        ! that should have the same name as the second son of the
+        ! n_dot vertex in the input.
+        son = subtree(2,root) ! field
+        field_look = sub_rosa(son)
+        do k = 2, nsons(field_test)
+          if ( sub_rosa(subtree(k,field_test)) == field_look ) then
+            call decorate ( son, subtree(k,field_test) )
+  return
+          end if
+        end do ! k
+        stat = 3 ! No such reference
+  return
+d538 62
+d721 3
+a723 3
+  ! Process a definition of a structure:  Enter the structure and field
+  ! names in the declaration table.  Decorate the structure name with
+  ! the root. Decorate each field_type node with the structure name.
+d1310 1
+a1310 1
+       "$Id: tree_checker.f90,v 1.33 2011/08/20 00:48:34 vsnyder Exp $"
+d1319 3
+@
+
+
+1.33
+log
+@Remove unused use names and variable declarations
+@
+text
+@d637 1
+d640 1
+d657 1
+d671 1
+d723 1
+d744 1
+d759 1
+a759 1
+    if ( toggle(con) ) call trace_begin ( 'DEF', root )
+d769 1
+a769 1
+    if ( toggle(con) ) call trace_end ( 'DEF' )
+d956 11
+d1264 1
+a1264 1
+       "$Id: tree_checker.f90,v 1.32 2011/04/20 17:32:28 vsnyder Exp $"
+d1273 3
+@
+
+
+1.32
+log
+@Undo ill-advised units check, correct some error messages
+@
+text
+@d41 1
+a41 1
+  use TREE, only: DECORATE, DECORATION, DUMP_TREE_NODE, DUMP_TREE_NODE_NAME, &
+d171 1
+a171 1
+    integer :: I, J                ! Index for "sons" or "section_ordering"
+d343 1
+a343 1
+    integer :: F, GF     ! Index of son, grandson of Field
+a347 1
+    integer :: GSON      ! Son of Son in AssignBody
+d1247 1
+a1247 1
+       "$Id: tree_checker.f90,v 1.31 2011/04/19 02:00:31 vsnyder Exp $"
+d1256 3
+@
+
+
+1.31
+log
+@Support == and /= relational operators too
+@
+text
+@d406 1
+a406 1
+              call announce_error ( gson, no_such_field, (/ field_look /) )
+d408 1
+a408 1
+              call announce_error ( gson, no_such_reference, &
+d908 7
+a914 5
+!     if ( units /= phyq_dimensionless .and. &
+!          units2 /= phyq_dimensionless .and. &
+!          units /= units2 ) then
+!       call local_error ( root, inconsistent_units, (/ son1, son2 /) )
+!     end if
+d924 6
+a929 5
+!     if ( units /= phyq_dimensionless .and. &
+!          units2 /= phyq_dimensionless .and. &
+!          units /= units2 ) then
+!       call local_error ( root, inconsistent_units, (/ son1, son2 /) )
+!     end if
+d961 5
+a965 2
+        if ( units /= units2 ) then
+          call local_error ( root, inconsistent_units, (/ son1, son2 /) )
+d1028 1
+d1248 1
+a1248 1
+       "$Id: tree_checker.f90,v 1.30 2011/04/19 00:58:16 vsnyder Exp $"
+d1257 3
+@
+
+
+1.30
+log
+@Allow several types for a field
+@
+text
+@d71 2
+a72 1
+  integer, private, parameter :: NOT_SECTION = NOT_NAME_OR_STRING + 1
+d225 2
+d860 1
+a860 1
+    case ( n_identifier, n_number, n_string )
+d877 1
+a877 1
+    case ( n_unit )
+d897 1
+a897 1
+    case ( n_colon, n_colon_less, n_less_colon, n_less_colon_less )
+d914 15
+a928 1
+    case ( n_and, n_or )
+d948 1
+a948 1
+    case ( n_plus, n_minus )
+d970 1
+a970 1
+    case ( n_mult )
+d978 2
+a979 1
+      if ( units /= phyq_dimensionless .and. &
+d987 1
+a987 1
+    case ( n_div, n_into )
+d995 2
+a996 1
+      if ( units /= phyq_dimensionless .and. &
+d1006 1
+a1006 1
+    case ( n_pow )
+d1013 7
+a1019 3
+        if ( units /= phyq_dimensionless ) &
+          & call local_error ( son1, not_unitless )
+        value = value2 ** value
+d1021 1
+a1021 1
+    case ( n_func_ref )
+d1054 1
+a1054 1
+    case ( n_dot )
+d1056 1
+a1056 1
+    case default
+d1241 1
+a1241 1
+       "$Id: tree_checker.f90,v 1.29 2011/01/29 00:46:15 vsnyder Exp $"
+d1250 3
+@
+
+
+1.29
+log
+@Add units checking
+@
+text
+@d41 2
+a42 2
+  use TREE, only: DECORATE, DECORATION, DUMP_TREE_NODE, NODE_ID, &
+                  NODE_KIND, NSONS, NULL_TREE, PSEUDO, SOURCE_REF, &
+d71 1
+a71 2
+  integer, private, parameter :: NOT_NUMERIC = NOT_NAME_OR_STRING + 1
+  integer, private, parameter :: NOT_SECTION = NOT_NUMERIC + 1
+d78 2
+a79 1
+  integer, private, parameter :: WRONG_NUM_ARGS = SECTION_ORDER + 1
+d170 2
+a171 2
+    integer :: I                   ! Index for "sons" or "section_ordering"
+                                   ! or subtrees of "sons"
+a221 3
+    case ( not_numeric )
+      call display_string ( fields(1), before='Argument of ' )
+      call output ( ' is not numeric.', advance='yes' )
+d257 6
+d275 20
+a294 1
+        call output ( 'type of associated value.', advance='yes'  )
+d321 10
+d340 1
+d343 3
+d351 1
+d379 36
+a414 6
+        do i = 2, nsons(root)
+          son = subtree(i,root)
+          call assignBody ( son )
+        end do ! i = 2, nsons(root)
+        if ( no_array_allowed .and. .not. scalar(root) ) &
+          & call announce_error ( root, array_not_allowed, fields=(/ field_lit /) )
+d421 5
+a425 2
+    recursive subroutine AssignBody ( Son )
+      integer, intent(in) :: Son   ! of n_asg or n_array
+d427 1
+a427 6
+      integer :: FIELD_LOOK ! A field being sought during n_dot checking
+      integer :: FIELD_REF ! The value of a field -- a ref to a n_spec_arg
+      integer :: FIELD_TEST ! A son of Field_Ref
+      integer :: GSON      ! Son of Son
+      integer :: J         ! Index of son of "field"                
+      integer :: K         ! Index of a son of a n_spec_args
+d431 8
+a438 1
+      select case ( node_id(son) )
+d441 3
+a443 49
+          gson = subtree(1,son)
+          type_decl = decoration(subtree(2,field)) ! Required spec
+          decl = get_decl(sub_rosa(gson),label)
+          do while ( decl%tree /= null_tree )
+            test_type = decoration(subtree(1,decl%tree)) ! spec's index
+            if ( test_type == type_decl ) then  ! right kind of spec
+              field_ref = decl%tree
+              call decorate ( gson, field_ref ) ! decorate label_ref with tree
+m:            do j = 3, nsons(field)
+              ! This loop assumes there is only one field of the required
+              ! name.  If it is desired to search through several fields,
+              ! it will be necessary to have a stack to keep track of the
+              ! subtree indices.  It goes through the field names that are
+              ! given by sons 3-n of the n_dot vertex of the definition,
+              ! looking for fields of the same name, starting at the first
+              ! son of the n_dot vertex in the input, and thence from the
+              ! decoration of the brother of the found field name.
+                field_look = decoration(subtree(j,field))
+                do k = 2, nsons(field_ref)
+                  field_test = subtree(k,field_ref)
+                  if ( node_id(field_test) == n_asg ) then
+                    if ( decoration(subtree(1,field_test)) == &
+                      &  field_look ) then
+                      ! Get the next n_spec_arg tree in the chain
+                      field_ref = decoration(subtree(2,field_test))
+              cycle m
+                    end if
+                  end if
+                end do ! k
+                call announce_error ( gson, no_such_field, (/ field_look /) )
+    return
+              end do m ! j
+              ! The final field_test is the parent n_asg of the field
+              ! that should have the same name as the second son of the
+              ! n_dot vertex in the input.
+              gson = subtree(2,son)
+              field_look = sub_rosa(gson)
+              do k = 2, nsons(field_test)
+                if ( sub_rosa(subtree(k,field_test)) == field_look ) then
+                  call decorate ( gson, subtree(k,field_test) )
+    return
+                end if
+              end do ! k
+              call announce_error ( gson, no_such_reference, &
+                & (/ subtree(1,field_test) /) )
+    return
+            end if
+            decl = prior_decl(decl,label)
+          end do
+a444 1
+        call announce_error ( son, wrong_type, fields=(/son1/) )
+d447 1
+a447 1
+          do j = 2, nsons(field)                 ! Try all of the types
+d449 1
+a449 1
+            decl = get_decl(sub_rosa(son),look_for)
+d458 1
+a458 1
+                  call decorate ( son, decl%units ) ! decorate son with lit#
+d460 1
+a460 1
+                  call decorate ( son, decl%tree )  ! decorate son with tree
+d469 1
+a469 1
+        call announce_error ( son, wrong_type, fields=(/son1/) )
+d471 3
+a473 2
+        do j = 1, nsons(son)
+          call assignBody ( subtree(j,son) )
+d477 2
+a478 7
+          call expr ( son, type, units, value )
+          j = check_field_type(field,type_map(type), units)
+          if ( j == 1 ) then
+            call announce_error ( son1, wrong_type, fields = (/ son1 /) )
+          else if ( j > 1 ) then
+            call announce_error ( son1, wrong_units, fields = (/ son1 /), expect=j-10 )
+          end if
+d480 1
+a480 1
+          call announce_error ( son1, wrong_type, fields = (/ son1 /) )
+d483 2
+a484 1
+    end subroutine AssignBody
+d486 68
+d571 1
+a571 1
+  integer function CHECK_FIELD_TYPE ( FIELD, TYPE, UNITS )
+d581 1
+d584 1
+d587 2
+d595 1
+a595 1
+    do i = 2, nsons(field)
+d599 1
+a599 4
+          if ( req_u /= units ) then
+            check_field_type = 10 + req_u
+            return
+          end if
+d601 1
+a601 1
+        if ( check_field_type == 0 ) return
+d668 1
+a668 1
+  subroutine DEF_SPEC ( ROOT )
+d674 1
+a674 1
+    integer, intent(in) :: ROOT    ! Root of tree being worked ( n_spec_def )
+d700 17
+d719 1
+a719 1
+        do j = 2, nsons(son)
+d725 1
+a725 1
+        do j = 2, nsons(son)
+d731 1
+a731 1
+        field_type = subtree(2,son)
+d737 2
+a738 2
+    end do
+    if ( toggle(con) ) call trace_end ( 'DEF_SPEC' )
+d763 1
+d773 1
+d809 6
+a814 6
+          call expr( son2, type, units, value )
+          check = check_field_type(check,type_map(type),units)
+          if ( check == 1 ) then
+            call announce_error ( son2, wrong_type, fields=(/son1/) )
+          else if ( check > 1 ) then
+            call announce_error ( son2, wrong_units, fields=(/son1/), expect=check-10 )
+d821 1
+d823 3
+a825 1
+  recursive subroutine EXPR ( ROOT, TYPE, UNITS, VALUE )
+d832 8
+d841 1
+d852 1
+d876 3
+a878 1
+      call expr ( son1, type, units, value )
+d896 6
+a901 2
+      call expr ( son1, type, units, value )
+      call expr ( son2, type2, units2, value2 )
+d913 6
+a918 2
+      call expr ( son1, type, units, value )
+      call expr ( son2, type2, units2, value2 )
+d933 3
+a935 1
+      call expr ( son1, type, units, value )
+d938 3
+a940 1
+        call expr ( son2, type2, units2, value2 )
+d955 6
+a960 2
+      call expr ( son1, type, units, value )
+      call expr ( son2, type, units2, value2 )
+d971 6
+a976 2
+      call expr ( son1, type, units, value )
+      call expr ( son2, type2, units2, value2 )
+d991 3
+a993 1
+        call expr ( son1, type, units, value2 )
+d1003 23
+a1025 11
+      if ( decl%type /= function ) then
+        call local_error ( son1, not_func, fields=(/string/) )
+      else
+        if ( nsons(root) /= 2 ) then
+          call local_error ( root, wrong_num_args, fields=(/string/) )
+        else
+          call expr ( subtree(2,root), type, units, value )
+          if ( type /= num_value ) then
+            call local_error ( subtree(2,root), not_numeric, fields=(/string/) )
+          else if ( units /= phyq_dimensionless ) then
+            call local_error ( subtree(2,root), not_unitless, fields=(/string/) )
+d1028 3
+a1030 1
+      end if
+d1032 1
+a1032 1
+      call local_error ( root, no_dot )
+d1038 1
+a1038 1
+    subroutine LOCAL_ERROR ( WHERE, CODE, SONS, FIELDS )
+d1045 2
+a1046 1
+      call announce_error ( where, code, sons, fields )
+d1050 2
+a1051 1
+  end subroutine EXPR
+d1158 1
+d1195 1
+a1195 1
+              call expr ( son, type, units, value )
+d1218 1
+a1218 1
+       "$Id: tree_checker.f90,v 1.28 2006/10/10 23:49:40 vsnyder Exp $"
+d1227 3
+@
+
+
+1.28
+log
+@Repair bugs that resulted in not verifying that a field is of the form x.y
+when it should be, or that it is not of the form x.y when it shouldn't be.
+@
+text
+@d34 1
+a34 1
+    &                  NO_POSITIONAL, PHYQ_INVALID, REQ_FLD
+d81 1
+d161 2
+a162 1
+  subroutine ANNOUNCE_ERROR ( WHERE, CODE, SONS, FIELDS )
+d169 1
+d263 1
+a263 1
+    case ( wrong_type )
+d270 7
+a276 2
+      call output ( '" field has the wrong type of associated value.', &
+        & advance='yes'  )
+d452 2
+a453 1
+          if ( .not. check_field_type(field,type_map(type)) ) then
+d455 2
+d481 5
+a485 3
+  logical function CHECK_FIELD_TYPE ( FIELD, TYPE )
+  ! Return " 'type' is allowed for 'field' of 'spec' "
+  ! or " 'type' is allowed for parameter declared at 'field' ".
+d490 1
+d493 1
+d495 4
+a498 3
+    check_field_type = type >= lbound(data_type_indices,1) .and. &
+      &                type <= ubound(data_type_indices,1)
+    if ( .not. check_field_type ) return
+d500 1
+d502 10
+a511 2
+      check_field_type = decoration(subtree(i,field)) == decl%tree
+      if ( check_field_type ) return
+d513 1
+a513 1
+    check_field_type = .false.
+d659 2
+a660 1
+    integer :: CHECK          ! Subtree where NAME is declared
+d666 1
+a666 1
+    integer :: UNITS          ! Output from "expr", not otherwise used
+d700 2
+a701 1
+          if ( .not. check_field_type(check,type_map(type)) ) then
+d703 2
+d967 1
+a967 1
+      if ( check_field_type(field,t_boolean) ) then
+d1040 2
+a1041 1
+            if ( all_fields_flag .or. mod(decoration(son)/req_fld,2) /= 0) &
+d1054 1
+a1054 1
+       "$Id: tree_checker.f90,v 1.27 2006/03/23 01:50:43 vsnyder Exp $"
+d1063 4
+@
+
+
+1.27
+log
+@Check for empty fields
+@
+text
+@d360 28
+a387 26
+        gson = subtree(1,son)
+        type_decl = decoration(subtree(2,field)) ! Required spec
+        decl = get_decl(sub_rosa(gson),label)
+        do while ( decl%tree /= null_tree )
+          test_type = decoration(subtree(1,decl%tree)) ! spec's index
+          if ( test_type == type_decl ) then  ! right kind of spec
+            field_ref = decl%tree
+            call decorate ( gson, field_ref ) ! decorate label_ref with tree
+m:          do j = 3, nsons(field)
+            ! This loop assumes there is only one field of the required
+            ! name.  If it is desired to search through several fields,
+            ! it will be necessary to have a stack to keep track of the
+            ! subtree indices.  It goes through the field names that are
+            ! given by sons 3-n of the n_dot vertex of the definition,
+            ! looking for fields of the same name, starting at the first
+            ! son of the n_dot vertex in the input, and thence from the
+            ! decoration of the brother of the found field name.
+              field_look = decoration(subtree(j,field))
+              do k = 2, nsons(field_ref)
+                field_test = subtree(k,field_ref)
+                if ( node_id(field_test) == n_asg ) then
+                  if ( decoration(subtree(1,field_test)) == &
+                    &  field_look ) then
+                    ! Get the next n_spec_arg tree in the chain
+                    field_ref = decoration(subtree(2,field_test))
+            cycle m
+d389 13
+d404 2
+a405 1
+              call announce_error ( gson, no_such_field, (/ field_look /) )
+d407 4
+a410 18
+            end do m ! j
+            ! The final field_test is the parent n_asg of the field
+            ! that should have the same name as the second son of the
+            ! n_dot vertex in the input.
+            gson = subtree(2,son)
+            field_look = sub_rosa(gson)
+            do k = 2, nsons(field_test)
+              if ( sub_rosa(subtree(k,field_test)) == field_look ) then
+                call decorate ( gson, subtree(k,field_test) )
+    return
+              end if
+            end do ! k
+            call announce_error ( gson, no_such_reference, &
+              & (/ subtree(1,field_test) /) )
+    return
+          end if
+          decl = prior_decl(decl,label)
+        end do
+d413 7
+a419 12
+        do j = 2, nsons(field)                 ! Try all of the types
+          type_decl = decoration(subtree(j,field))
+          decl = get_decl(sub_rosa(son),look_for)
+          do while ( decl%tree /= null_tree )
+            if ( node_id(type_decl) == n_spec_def ) then
+              test_type = decoration(subtree(1,decl%tree))
+            else
+              test_type = decl%tree
+            end if
+            if ( test_type == type_decl ) then  ! right type
+              if ( look_for == enum_value ) then
+                call decorate ( son, decl%units ) ! decorate son with lit#
+d421 1
+a421 1
+                call decorate ( son, decl%tree )  ! decorate son with tree
+d423 6
+d430 3
+a432 2
+            end if
+            decl = prior_decl(decl,look_for)
+d434 2
+a435 1
+        end do
+d442 6
+a447 2
+        call expr ( son, type, units, value )
+        if ( .not. check_field_type(field,type_map(type)) ) then
+d1024 1
+a1024 1
+       "$Id: tree_checker.f90,v 1.26 2005/06/22 20:03:55 pwagner Exp $"
+d1033 3
+@
+
+
+1.26
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d33 2
+a34 2
+  use INTRINSIC, only: ALL_FIELDS, NO_ARRAY, NO_CHECK_EQ, NO_DUP, NO_POSITIONAL, &
+    &                  PHYQ_INVALID, REQ_FLD
+d56 2
+a57 1
+  integer, private, parameter :: INCONSISTENT_TYPES = ARRAY_NOT_ALLOWED + 1
+d89 1
+a89 1
+       "$RCSfile: $"
+d180 4
+d332 2
+d1015 1
+a1015 1
+       "$Id: $"
+d1024 3
+@
+
+
+1.25
+log
+@Simplify constructing some error messages
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d86 1
+a86 4
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
+       "$Id: tree_checker.f90,v 1.24 2004/11/17 20:23:30 vsnyder Exp $"
+  character (len=len(idParm)), private :: Id = idParm
+d88 1
+a88 1
+       "$RCSfile: tree_checker.f90,v $"
+d1006 5
+d1017 3
+@
+
+
+1.24
+log
+@Add checking for scalar field
+@
+text
+@d80 1
+a80 1
+       "$Id: tree_checker.f90,v 1.23 2004/06/23 02:12:24 vsnyder Exp $"
+d171 2
+a172 2
+      call output ( 'an array value is not allowed for the "')
+      call display_string ( field_indices(fields(1)) )
+d179 1
+a179 2
+      call output ( 'the "' )
+      call display_string ( field_indices(fields(1)) )
+d188 1
+a188 2
+      call output ( 'the "' )
+      call display_string ( field_indices(fields(1)) )
+d193 1
+a193 2
+      call output ( 'a required field "' )
+      call display_string ( field_indices(sons(1)) )
+d197 1
+a197 2
+      call output ( 'there is no reference to ' )
+      call display_string ( sub_rosa(where) )
+d202 2
+a203 2
+      call output ( ' is not a field of ' )
+      call display_string ( sub_rosa(subtree(1,fields(1))), advance='yes' )
+d210 1
+a210 2
+      call output ( 'Argument of ' )
+      call display_string ( fields(1) )
+d225 1
+a225 2
+        call output ( 'Argument of ' )
+        call display_string ( fields(1) )
+d235 1
+a235 2
+      call output ( ' is not allowed in a ' )
+      call display_string ( sub_rosa(sons(1)) )
+d248 2
+a249 2
+      call output ( 'Incorrect number of arguments for ' )
+      call display_string ( fields(1), advance='yes' )
+d271 2
+a272 2
+      call output ( 'No message in TREE_CHECKER for error code ' )
+      call output ( code, advance='yes' )
+d1007 3
+@
+
+
+1.23
+log
+@Add Check_Type
+@
+text
+@d25 1
+a25 1
+  use INTRINSIC, only: ALL_FIELDS, NO_CHECK_EQ, NO_DUP, NO_POSITIONAL, &
+d28 1
+a28 1
+  use MoreTree, only: StartErrorMessage
+d47 2
+a48 1
+  integer, private, parameter :: INCONSISTENT_TYPES = ALREADY_DECLARED + 1
+d80 1
+a80 1
+       "$Id: init_tables_module.f90,v 2.375 2004/06/16 01:23:28 vsnyder Exp $"
+d83 1
+a83 1
+       "$RCSfile: init_tables_module.f90,v $"
+d170 4
+d301 1
+d314 1
+d333 2
+d363 1
+a363 1
+m:              do j = 3, nsons(field)
+d970 2
+a971 2
+        all_fields_flag = mod(flags/all_fields,2) .ne. 0
+        no_dup_flag = mod(flags/no_dup,2) .ne. 0
+d1014 3
+@
+
+
+1.22
+log
+@Rearrange function definition stuff
+@
+text
+@d22 1
+a22 1
+    &                           FIELD_LAST, PHYQ_DIMENSIONLESS, &
+d40 1
+a40 1
+  public :: CHECK_TREE
+d58 2
+a59 1
+  integer, private, parameter :: NOT_NAME = NOT_FUNC + 1
+d78 3
+a80 2
+  character (len=256), private :: Id = &
+       "$Id: tree_checker.f90,v 1.21 2004/05/29 00:54:46 vsnyder Exp $"
+d82 2
+a83 1
+       "$RCSfile: tree_checker.f90,v $"
+d87 1
+d124 27
+d956 1
+a956 1
+      if ( spec_decl%type == null_decl ) then
+d997 5
+d1005 3
+@
+
+
+1.21
+log
+@Improve some error checking and handling
+@
+text
+@d78 1
+a78 1
+       "$Id: tree_checker.f90,v 1.20 2004/05/28 23:44:28 vsnyder Exp $"
+d110 1
+d457 11
+d969 3
+@
+
+
+1.20
+log
+@Get units from either operand of *, second operand of \\
+@
+text
+@d78 1
+a78 1
+       "$Id: tree_checker.f90,v 1.19 2004/05/28 23:15:15 vsnyder Exp $"
+d662 4
+a665 3
+        call announce_error ( son2, not_units )
+      else if ( units /= phyq_dimensionless .and. units /= decl%units ) then
+        call announce_error ( root, inconsistent_units, (/ son1, son2 /) )
+d668 5
+a672 1
+        value = value * decl%value
+d679 1
+a679 1
+        call announce_error ( root, inconsistent_types, (/ son1, son2 /) )
+d684 1
+a684 1
+!       call announce_error ( root, inconsistent_units, (/ son1, son2 /) )
+d692 1
+a692 1
+        call announce_error ( son1, not_string )
+d694 1
+a694 1
+        call announce_error ( son2, not_string )
+d710 1
+a710 1
+          call announce_error ( root, inconsistent_units, (/ son1, son2 /) )
+d728 1
+a728 1
+        call announce_error ( root, inconsistent_units, (/ son1, son2 /) )
+d740 1
+a740 1
+        call announce_error ( root, inconsistent_units, (/ son1, son2 /) )
+d753 1
+a753 1
+          & call announce_error ( son1, not_unitless )
+a760 1
+      type = empty ! in case of error
+d762 1
+a762 1
+        call announce_error ( son1, not_func, fields=(/string/) )
+d765 1
+a765 1
+          call announce_error ( root, wrong_num_args, fields=(/string/) )
+d769 1
+a769 1
+            call announce_error ( subtree(2,root), not_numeric, fields=(/string/) )
+d771 1
+a771 1
+            call announce_error ( subtree(2,root), not_unitless, fields=(/string/) )
+d776 1
+a776 1
+      call announce_error ( root, no_dot )
+d778 1
+a778 1
+      call announce_error ( root, no_code_for )
+d781 12
+d957 3
+@
+
+
+1.19
+log
+@Add power (^) operator, functions
+@
+text
+@d78 1
+a78 1
+       "$Id: tree_checker.f90,v 1.18 2004/02/14 00:15:18 vsnyder Exp $"
+d726 1
+d740 1
+d941 3
+@
+
+
+1.18
+log
+@More precise error message for wrong type
+@
+text
+@d16 5
+a20 5
+    &                          DUMP_1_DECL, ENUM_VALUE, FIELD, GET_DECL, &
+    &                          LABEL, LOG_VALUE, NAMED_VALUE, NULL_DECL, &
+    &                          NUM_VALUE, PRIOR_DECL, RANGE, REDECLARE, &
+    &                          SECTION, SPEC, STR_VALUE, UNDECLARED, &
+    &                          TYPE_MAP, TYPE_NAME, UNITS_NAME
+d28 2
+a29 1
+  use OUTPUT_M, only: OUTPUT
+d57 2
+a58 1
+  integer, private, parameter :: NOT_NAME = NOT_FIELD_OF + 1
+d60 2
+a61 1
+  integer, private, parameter :: NOT_SECTION = NOT_NAME_OR_STRING + 1
+d64 2
+a65 1
+  integer, private, parameter :: NOT_UNITS = NOT_STRING + 1
+d68 2
+a69 1
+  integer, private, parameter :: WRONG_TYPE = SECTION_ORDER + 1
+d78 1
+a78 1
+       "$Id: tree_checker.f90,v 1.17 2004/01/14 02:19:51 vsnyder Exp $"
+d132 1
+a132 3
+    call output ( '***** At ', from_where = "type checker" )
+    call print_source ( source_ref(where) )
+    call output ( ': ' )
+d171 3
+d176 4
+d191 8
+d216 4
+a219 1
+      call output ( '', advance='yes' )
+d238 1
+a238 1
+        call output ( '', advance='yes' )
+d393 1
+a393 1
+          call announce_error ( son1, wrong_type, fields = (/ field /) )
+d626 1
+d740 29
+d939 3
+@
+
+
+1.17
+log
+@Get PHYQ_INVALID from Intrinsic instead of Init_Tables_Module
+@
+text
+@d73 1
+a73 1
+       "$Id: tree_checker.f90,v 1.16 2003/08/29 00:14:43 vsnyder Exp $"
+d201 5
+a205 1
+      call display_string ( sub_rosa(where) )
+d342 1
+a342 1
+        call announce_error ( son1, wrong_type )
+d364 1
+a364 1
+        call announce_error ( son1, wrong_type )
+d372 1
+a372 1
+          call announce_error ( son1, wrong_type, sons = (/ field /) )
+d576 1
+a576 1
+              call announce_error ( son1, wrong_type )
+d588 1
+a588 1
+            call announce_error ( son1, wrong_type )
+d888 3
+@
+
+
+1.16
+log
+@Correct out-of-bounds subscript
+@
+text
+@d16 5
+a20 5
+                               DUMP_1_DECL, ENUM_VALUE, FIELD, GET_DECL, &
+                               LABEL, LOG_VALUE, NAMED_VALUE, NULL_DECL, &
+                               NUM_VALUE, PRIOR_DECL, RANGE, REDECLARE, &
+                               SECTION, SPEC, STR_VALUE, UNDECLARED, &
+                               TYPE_MAP, TYPE_NAME, UNITS_NAME
+d22 5
+a26 5
+                                FIELD_LAST, PHYQ_DIMENSIONLESS, &
+                                PHYQ_INVALID, SECTION_FIRST, &
+                                SECTION_INDICES, SECTION_LAST, &
+                                SECTION_ORDERING, T_BOOLEAN
+  use INTRINSIC, only: ALL_FIELDS, NO_DUP, NO_POSITIONAL, REQ_FLD
+d73 1
+a73 1
+       "$Id: tree_checker.f90,v 1.15 2002/10/02 00:43:41 vsnyder Exp $"
+d701 1
+a701 1
+    case ( n_div )
+d709 1
+a709 1
+      else
+d711 2
+d759 1
+a759 1
+        call equal ( sonn )
+d884 3
+@
+
+
+1.15
+log
+@Remove check for consistent units
+@
+text
+@d73 1
+a73 1
+       "$Id: tree_checker.f90,v 1.14 2002/07/25 00:25:10 vsnyder Exp $"
+d210 1
+a210 1
+          if ( i > 2 .and. i == nsons(sons(i)) ) call output ( 'or ' )
+d882 3
+@
+
+
+1.14
+log
+@In Check_Field_Type, say NO if type is out-of-range -- i.e., don't crash
+@
+text
+@d73 1
+a73 1
+       "$Id: tree_checker.f90,v 1.13 2002/05/23 20:35:57 vsnyder Exp $"
+d650 5
+a654 5
+      if ( units /= phyq_dimensionless .and. &
+           units2 /= phyq_dimensionless .and. &
+           units /= units2 ) then
+        call announce_error ( root, inconsistent_units, (/ son1, son2 /) )
+      end if
+d882 3
+@
+
+
+1.13
+log
+@Eliminate two unused variables
+@
+text
+@d73 1
+a73 1
+       "$Id: tree_checker.f90,v 1.12 2001/11/28 23:48:30 vsnyder Exp $"
+d400 3
+d882 3
+@
+
+
+1.12
+log
+@Correct blunders in arrays-of-arrays
+@
+text
+@d73 1
+a73 1
+       "$Id: tree_checker.f90,v 1.11 2001/11/28 03:15:37 vsnyder Exp $"
+a281 1
+      integer :: I         ! subtree index and loop inductor        
+a597 1
+    integer :: I                   ! Subtree index, loop inductor
+d879 3
+@
+
+
+1.11
+log
+@Implement arrays of arrays
+@
+text
+@d73 1
+a73 1
+       "$Id: tree_checker.f90,v 1.10 2001/11/27 00:50:45 vsnyder Exp $"
+a234 1
+    type(decls) :: DECL  ! Declaration of a name
+a236 4
+    integer :: FIELD_LOOK ! A field being sought during n_dot checking
+    integer :: FIELD_REF ! The value of a field -- a ref to a n_spec_arg
+    integer :: FIELD_TEST ! A son of Field_Ref
+    integer :: GSON      ! Son of Son
+a237 2
+    integer :: J         ! Index of son of "field"
+    integer :: K         ! Index of a son of a n_spec_args
+a240 2
+    integer :: TEST_TYPE ! Used to test the tree-node for a type reference
+    integer :: TYPE_DECL ! Tree node of declaration of name of field's type
+d265 1
+a265 1
+o:      do i = 2, nsons(root)
+d267 2
+a268 80
+          if ( node_id(son) == n_dot ) then ! label_ref.field
+            gson = subtree(1,son)
+            type_decl = decoration(subtree(2,field)) ! Required spec
+            decl = get_decl(sub_rosa(gson),label)
+            do while ( decl%tree /= null_tree )
+              test_type = decoration(subtree(1,decl%tree)) ! spec's index
+              if ( test_type == type_decl ) then  ! right kind of spec
+                field_ref = decl%tree
+                call decorate ( gson, field_ref ) ! decorate label_ref with tree
+m:              do j = 3, nsons(field)
+                ! This loop assumes there is only one field of the required
+                ! name.  If it is desired to search through several fields,
+                ! it will be necessary to have a stack to keep track of the
+                ! subtree indices.  It goes through the field names that are
+                ! given by sons 3-n of the n_dot vertex of the definition,
+                ! looking for fields of the same name, starting at the first
+                ! son of the n_dot vertex in the input, and thence from the
+                ! decoration of the brother of the found field name.
+                  field_look = decoration(subtree(j,field))
+                  do k = 2, nsons(field_ref)
+                    field_test = subtree(k,field_ref)
+                    if ( node_id(field_test) == n_asg ) then
+                      if ( decoration(subtree(1,field_test)) == &
+                        &  field_look ) then
+                        ! Get the next n_spec_arg tree in the chain
+                        field_ref = decoration(subtree(2,field_test))
+                cycle m
+                      end if
+                    end if
+                  end do ! k
+                  call announce_error ( gson, no_such_field, (/ field_look /) )
+        cycle o
+                end do m ! j
+                ! The final field_test is the parent n_asg of the field
+                ! that should have the same name as the second son of the
+                ! n_dot vertex in the input.
+                gson = subtree(2,son)
+                field_look = sub_rosa(gson)
+                do k = 2, nsons(field_test)
+                  if ( sub_rosa(subtree(k,field_test)) == field_look ) then
+                    call decorate ( gson, subtree(k,field_test) )
+        cycle o
+                  end if
+                end do ! k
+                call announce_error ( gson, no_such_reference, &
+                  & (/ subtree(1,field_test) /) )
+        cycle o
+              end if
+              decl = prior_decl(decl,label)
+            end do
+            call announce_error ( son1, wrong_type )
+          else if ( node_id(son) == n_identifier ) then
+            do j = 2, nsons(field)                 ! Try all of the types
+              type_decl = decoration(subtree(j,field))
+              decl = get_decl(sub_rosa(son),look_for)
+              do while ( decl%tree /= null_tree )
+                if ( node_id(type_decl) == n_spec_def ) then
+                  test_type = decoration(subtree(1,decl%tree))
+                else
+                  test_type = decl%tree
+                end if
+                if ( test_type == type_decl ) then  ! right type
+                  if ( look_for == enum_value ) then
+                    call decorate ( son, decl%units ) ! decorate son with lit#
+                  else
+                    call decorate ( son, decl%tree )  ! decorate son with tree
+                  end if
+        cycle o
+                end if
+                decl = prior_decl(decl,look_for)
+              end do
+            end do
+            call announce_error ( son1, wrong_type )
+          else
+            call expr ( son, type, units, value )
+            if ( .not. check_field_type(field,type_map(type)) ) then
+              call announce_error ( son1, wrong_type, sons = (/ field /) )
+            end if
+          end if
+        end do o ! i = 2, nsons(root)
+d274 99
+a641 11
+    case ( n_array )
+      son1 = subtree(1,root)
+      call expr ( son1, type, units, value )
+      do i = 2, nsons(root)
+        call expr ( son2, type2, units2, value2 )
+        if ( units /= units2 ) &
+          & call announce_error ( root, inconsistent_units, (/ son1, son2 /) )
+        if ( type /= type2 ) &
+          & call announce_error ( root, inconsistent_types, (/ son1, son2 /) )
+      end do
+      value = 0.0d0
+d881 3
+@
+
+
+1.10
+log
+@Implement (partially) open ranges
+@
+text
+@d73 1
+a73 1
+       "$Id: tree_checker.f90,v 1.9 2001/06/07 21:56:55 pwagner Exp $"
+d587 1
+d630 11
+d880 3
+@
+
+
+1.9
+log
+@Added Copyright statement
+@
+text
+@d73 1
+a73 1
+       "$Id: tree_checker.f90,v 1.8 2001/05/18 21:24:26 vsnyder Exp $"
+d629 1
+a629 1
+    case ( n_colon )
+d868 3
+@
+
+
+1.8
+log
+@Missing 'sub_rosa' around a 'son' in a call to 'dump_1_decl'
+@
+text
+@d4 3
+d73 1
+a73 1
+       "$Id: tree_checker.f90,v 1.7 2001/03/09 22:08:27 vsnyder Exp $"
+d868 3
+@
+
+
+1.7
+log
+@Improve error message for wrong type of field value
+@
+text
+@d70 1
+a70 1
+       "$Id: tree_checker.f90,v 1.6 2001/03/06 22:50:11 vsnyder Exp $"
+d778 1
+a778 1
+      call dump_1_decl ( son )
+d865 3
+@
+
+
+1.6
+log
+@Correct processing of /foo when it's not a valid field.
+@
+text
+@d70 1
+a70 1
+       "$Id: tree_checker.f90,v 1.5 2001/03/05 23:20:09 vsnyder Exp $"
+d121 1
+d201 11
+d349 1
+a349 1
+              call announce_error ( son1, wrong_type )
+d865 3
+@
+
+
+1.5
+log
+@Correct obscure problem that only occurs if you have erroneous input
+@
+text
+@d70 1
+a70 1
+       "$Id: tree_checker.f90,v 1.4 2001/02/22 19:43:04 vsnyder Exp $"
+d163 1
+a163 1
+      call display_string ( sub_rosa(fields(1)), advance='yes' )
+d243 1
+a243 1
+          & fields=(/ subtree(1,spec_decl) /) )
+d765 1
+a765 1
+      call announce_error ( son, not_field_of, (/ spec_decl /) )
+d853 3
+@
+
+
+1.4
+log
+@Improve some messages
+@
+text
+@d70 1
+a70 1
+       "$Id: tree_checker.f90,v 1.3 2001/02/07 19:42:06 vsnyder Exp $"
+d123 1
+a123 1
+    call output ( '***** At ' )
+d125 1
+a125 1
+    call output ( ' the type checker detected: ' )
+d712 1
+a712 1
+      call output ( '***** Processing suppressed.', advance='yes' )
+a713 36
+    else
+      decl = get_decl(sub_rosa(son1),section)
+      if ( decl%type /= section ) &
+        call announce_error ( son1, not_section )
+      if ( section_ordering(decl%units,current_section) /= 1 ) &
+        call announce_error ( son1, section_order )
+      current_section = decl%units
+!     call decorate ( son1, decl%tree )
+      call decorate ( son1, decoration(subtree(1,decl%tree)) )
+!     call declare ( sub_rosa(son1) 0.0d0, section_node, decl%units, root )
+      do i = 2, n-1
+        sonn = subtree(i,root)
+        select case ( node_id(sonn) )
+        case ( n_equal )                ! x = expr
+          call decorate ( sonn, son1 )  ! show equal the section name
+          call equal ( sonn )
+        case ( n_named )                ! label:x,(y[=expr])+
+          gson1 = subtree(1,sonn)       ! Label
+          gson2 = subtree(2,sonn)       ! spec_args tree
+          string1 = sub_rosa(gson1)
+          decl = get_decl ( string1, label )
+          if ( decl%type == label ) then
+            call announce_error ( gson1, already_declared )
+          else
+            call declare ( string1, 0.0d0, label, phyq_invalid, gson2 )
+          end if
+          call decorate ( gson1, gson2 )
+          call decorate ( gson2, son1 ) ! show spec_args the section name
+          call spec_args ( gson2 )
+        case ( n_spec_args )            ! x,(y[=expr])+
+          call decorate ( sonn, son1 )  ! show spec_args the section name
+          call spec_args ( sonn )
+        case default
+          call announce_error ( sonn, no_code_for )
+        end select
+      end do
+d715 34
+d853 3
+@
+
+
+1.3
+log
+@Add checking for duplicate fields, all fields and no-positional.
+@
+text
+@d23 1
+a23 1
+  use INTRINSIC, only: ALL_FIELDS, NO_DUP, NO_POSITIONAL
+d70 1
+a70 1
+       "$Id: tree_checker.f90,v 1.2 2001/02/02 00:04:36 vsnyder Exp $"
+d125 1
+a125 1
+    call output ( ' the tree_checker detected: ' )
+d135 1
+a135 1
+      call output ( 'the field "' )
+d137 1
+a137 1
+      call output ( '" is required but not present.', advance='yes' )
+d145 1
+a145 1
+      call output ( 'the field "' )
+d147 1
+a147 1
+      call output ( '" shall not be specified twice.', advance='yes' )
+d151 1
+a151 1
+      call output ( 'a required field ' )
+d153 1
+a153 1
+      call output ( ' is absent in the chain of specifications.', &
+d196 1
+a196 1
+      call output ( '"' )
+d198 2
+a199 1
+      call output ( '" has the wrong type of associated value.', advance='yes'  )
+a418 1
+!   call decorate ( son, root )
+a463 1
+!     call decorate ( field_name, son )
+a483 1
+      call decorate ( son, spec_name )
+d839 6
+a844 5
+        if ( all_fields_flag ) then
+          do i = 2, nsons(spec_decl%tree)
+            field_lit = decoration(subtree(1,subtree(i,spec_decl%tree)))
+            if ( .not. got(field_lit) ) &
+              call announce_error ( root, missing_field, &
+d846 2
+a847 2
+          end do
+        end if
+d855 3
+@
+
+
+1.2
+log
+@Improved some error messages
+@
+text
+@d7 1
+a7 1
+! put into it before the parser runs by init_tables_module.  Check
+d13 9
+a21 8
+                               DUMP_1_DECL, ENUM_VALUE, &
+                               FIELD, GET_DECL, LABEL, LOG_VALUE, NAMED_VALUE, &
+                               NULL_DECL, NUM_VALUE, PRIOR_DECL, RANGE, &
+                               REDECLARE, SECTION, SPEC, STR_VALUE, &
+                               UNDECLARED, TYPE_MAP, TYPE_NAME, UNITS_NAME
+  use INIT_TABLES_MODULE, only: DATA_TYPE_INDICES, FIELD_INDICES, &
+                                PHYQ_DIMENSIONLESS, PHYQ_INVALID, &
+                                SECTION_FIRST, SECTION_INDICES, SECTION_LAST, &
+d23 1
+d43 19
+a61 16
+  integer, private, parameter :: INCONSISTENT_TYPES = 2
+  integer, private, parameter :: INCONSISTENT_UNITS = 3
+  integer, private, parameter :: NO_CODE_FOR = 4
+  integer, private, parameter :: NO_DOT = 5
+  integer, private, parameter :: NO_SUCH_FIELD = 6
+  integer, private, parameter :: NO_SUCH_REFERENCE = 7
+  integer, private, parameter :: NOT_FIELD_OF = 8
+  integer, private, parameter :: NOT_NAME = 9
+  integer, private, parameter :: NOT_NAME_OR_STRING = 10
+  integer, private, parameter :: NOT_SECTION = 11
+  integer, private, parameter :: NOT_SPEC = 12
+  integer, private, parameter :: NOT_STRING = 13
+  integer, private, parameter :: NOT_UNITS = 14
+  integer, private, parameter :: OUT_OF_PLACE = 15
+  integer, private, parameter :: SECTION_ORDER = 16
+  integer, private, parameter :: WRONG_TYPE = 17
+d63 1
+d65 2
+d70 1
+a70 1
+       "$Id: tree_checker.f90,v 1.1 2000/11/02 21:36:45 vsnyder Exp $"
+d113 1
+a113 1
+  subroutine ANNOUNCE_ERROR ( WHERE, CODE, SONS )
+d119 1
+d131 1
+a131 1
+      call output ( ' types are not consistent.', advance = 'yes' )
+d133 5
+a137 1
+      call output ( ' units are not consistent.', advance = 'yes' )
+d139 1
+a139 1
+      call output ( ' there is no code to analyze ' )
+d142 1
+a142 1
+      call output ( ' a reference of the form X.Y is not allowed.', &
+d144 6
+d151 1
+a151 1
+      call output ( ' a required field ' )
+d156 1
+a156 1
+      call output ( ' there is no reference to ' )
+a160 1
+      call output ( ' ' )
+d163 1
+a163 1
+      call display_string ( sub_rosa(sons(1)), advance='yes' )
+d165 1
+a165 1
+      call output ( ' is not a name.', advance = 'yes' )
+d167 1
+a167 1
+      call output ( ' is not a name or a string.', advance = 'yes' )
+a168 1
+      call output ( ' ' )
+a171 1
+      call output ( ' ' )
+d175 1
+a175 1
+      call output ( ' is not a string or of logical type.', &
+d221 1
+d241 2
+a242 1
+        call announce_error ( son1, not_field_of, (/ spec_decl /) )
+d250 8
+a257 1
+        call decorate ( son1, decoration(subtree(1,field)) )
+d761 1
+d774 8
+a781 1
+        call decorate ( son, decoration(subtree(1,field)) )
+d794 2
+d817 4
+d833 6
+a838 2
+            call expr ( son, type, units, value )
+            ! ??? Generate some table here
+d841 8
+d856 3
+@
+
+
+1.1
+log
+@Initial entry into CVS
+@
+text
+@d62 1
+a62 1
+       "$Id: tree_checker.f90,v 2.1 2000/10/11 18:33:25 vsnyder Exp $"
+d116 1
+a116 1
+    call output ( ': ' )
+d805 3
+@
+

@@ -1,0 +1,338 @@
+head	1.3;
+access;
+symbols
+	v5-02-NRT-19:1.3
+	v6-00:1.3
+	v5-02-NRT-18:1.3
+	v5-02:1.3
+	v5-01-NRT-17:1.3
+	v5-01-NRT-16:1.3
+	v5-01-NRT-15:1.3
+	v5-01-NRT-14:1.3
+	neuralnetworks-1-0:1.3.0.4
+	cfm-single-freq-0-1:1.3.0.2
+	v5-01:1.3
+	v5-00:1.3
+	v4-23-TA133:1.2.0.10
+	mus-emls-1-70:1.2.0.8
+	rel-1-0-englocks-work:1.2.0.6
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.2
+	V4-21:1.2.0.4
+	V4-13:1.2
+	V4-12:1.2
+	V4-11:1.2
+	V4-10:1.2
+	V3-43:1.2
+	M4-00:1.2
+	V3-41:1.2
+	V3-40-PlusGM57:1.2.0.2
+	V3-33:1.2
+	V3-31:1.2
+	V3-30-NRT-05:1.2
+	cfm-01-00:1.2
+	V3-30:1.2
+	V3-20:1.2
+	V3-10:1.2;
+locks; strict;
+comment	@% @;
+
+
+1.3
+date	2019.05.22.20.52.02;	author vsnyder;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2008.06.12.01.17.48;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2008.06.11.20.14.53;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@correct a typo
+@
+text
+@\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9in
+
+\newcommand{\docname}{\bf wvs-051r1}
+\newcommand{\docdate}{22 May 2018}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Nathaniel, Bill, Dave\\
+Subject: \>Speeding up MLS Level 2 retrievals, with possible application to SMLS\\
+From: \>Van Snyder, Fred Krogh\\
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-20pt}
+
+Fred and I discussed several methods to speed up MLS Level 2 retrievals.  Some,
+such as the multigrid method are simple, almost sure to work well, and could be
+applied quickly; others, such as decoupling by tomographic methods are more
+speculative or would require substantial software development.  Ultimately, to
+get sufficient accuracy and meaningful solution covariance, it may be necessary
+to run a full retrieval, so the efficacy of any of the methods depends upon
+whether and how well approximate solutions thereby developed can reduce the
+number of iterations of a full retrieval.
+
+Some of the proposals, for example \emph{multigrid} and \emph{process fewer
+data}, can be combined.
+
+The following sections are arranged in descending order corresponding to our
+estimate of utility, cost and achievability.
+
+The tomographic decoupling and neural net methods may be the only hope for
+SMLS, unless the other approaches could conspire to achieve a factor of 1000 or
+so reduction in the number of elements of the Jacobian matrix of the
+least-squares problem.
+
+\begin{description}
+
+\item[Multigrid] A multigrid approach consists of retrieving on a coarse grid,
+then interpolating that solution to a finer grid as a starting point for a
+subsequent retrieval, or using the interpolated result if model radiances from
+that result agree sufficiently well with measurements.  This has the effect of
+reducing the number of columns of the Jacobian matrix of the least-squares
+problem.  Furthermore, when solution on a coarse vertical grid is desired, it
+is possible not to use every MIF, which reduces the number of rows.  Both of
+these effects reduce the number of derivatives the forward model must compute. 
+The apriori for the subsequent retrieval could be the same as apriori at the
+starting point, but on the finer grid, or it could be the output of the
+coarse-grid step.  Variations on this theme include using the linear or PFA
+models on the coarse grids and the full model on the fine grid.  This would be
+simple to implement in {\tt mlsl2}, requiring only to add an {\tt interpolate}
+method to the {\tt fill} command; thereafter, some tuning of the L2CF would be
+needed to exploit the method.  If {\tt mlsl2} input includes only a fine-grid
+apriori, it would be necessary to have an {\tt average} method for the {\tt
+fill} command to create apriori on the coarse grid.  The starting point for
+retrieval iterations is already distinct from apriori, so no changes to the
+retriever are needed to use one solution as the starting point to develop
+another.
+
+\item[Process fewer data] It might be possible to reduce the number of
+frequencies or MIFs analyzed, even when solving on a fine grid in the
+\emph{multigrid} method, by using principal-component analysis of the observed
+spectra to separate redundant frequencies or MIFs in each chunk from
+frequencies or MIFs that contain most of the information.  To avoid ignoring
+weak but meaningful signals, e.g.\ a CO signal in the same band as an ozone
+signal, subtract radiances from the previous iteration (start with apriori
+radiances) from each MIF before reducing the dimensionality, and then add a
+projection of the previous radiances onto the same basis as the
+reduced-dimensionality data before each Newton iteration.  To handle linear
+combinations of channels, their filter functions must be combined using the
+same matrix of singular vectors used to compress the data.  Both the
+measurements and their variances must be compressed in the same way, else the
+solution would be different, and its covariance would be meaningless.  This has
+the effect of reducing the number of rows of the Jacobian matrix of the
+least-squares problem, and therefore the number of derivatives and radiances
+the forward model must compute.  A solution obtained in this way might be used
+to get a starting point for Newton iterations using all or more of the data.
+
+See http://en.wikipedia.org/wiki/Principal\_components\_analysis for a
+discussion of dimensionality reduction using principal-component analysis.  The
+discussion is posed in terms of an eigenvalue-eigenvector analysis of the
+empirical covariance matrix, but it could have been posed in terms of
+singular-value decomposition of the data matrix.  Consider the data to be
+arranged in a matrix, say $\mathbf{X}$, with rows labeled by MIF and columns
+labeled by channel.  Then the left singular vectors of $\mathbf{X}$ are the
+eigenvectors of $\mathbf{X} \mathbf{X}^T$, the right singular vectors are the
+eigenvectors of $\mathbf{X}^T \mathbf{X}$, and the eigenvalues are the squares
+of the singular values.
+
+Some retrieval steps are presently run with fewer than all channels from a
+radiometer.  Even when the {\tt allLinesForRadiometer} and {\tt
+allLinesInCatalog} switches are not set, however, the forward model is
+evaluated at all points in the preselected frequency grid between the minimum
+frequency in all selected channels and the maximum frequency in all selected
+channels.  Some efficiency may be gained by not evaluating the forward model at
+frequencies that are not within any selected channel.
+
+\item[Solve for feature parameters] Rather than solving directly for
+temperature and composition, solve for parameters of a representation of those
+quantities as a function of, say, altitude, pressure, or $\zeta$.  As an
+oversimplified example, consider representing a temperature profile by the
+tropopause and stratopause temperatures and pressures, and the slopes of
+straight lines connecting those points to each other, the Earth surface, and
+outer space.  There are only seven parameters here, not the seventy or so we
+usually have in a profile.  This has the effect of reducing the number of
+columns of the Jacobian matrix of the least-squares problem, and therefore the
+number of derivatives the forward model must compute.  Substantial changes
+would be required in the forward model to produce radiances from these
+parameters instead of from the intereresting quantities.
+
+\item[Different quadrature] As the incremental optical depth is integrated
+along the line-of-sight path, if the difference between a rectangular and
+trapezoidal estimate of the integral on one panel is larger than an input
+tolerance, a three-point Gauss-Legendre quadrature is used instead.  Thus,
+assuming the boundary points are used in adjacent panels, four iterations of
+the inner loop of the forward model are required instead of one.  There are two
+possibilities to reduce the amount of work.  First, instead of immediately
+replacing the trapezoidal estimate by a three-point Gauss-Legendre estimate,
+use Simpson's rule.  If that's still not good enough, at least the midpoint can
+be reused in the Gauss-Legendre formula.  Second, A four-point Gauss-Lobatto
+quadrature would have the same algebraic order of error as a three-point
+Gauss-Legendre quadrature (both would exactly integrate a fifth-order
+polynomial), and the error coefficient of the four-point Gauss-Lobatto
+quadrature is only 3/2 the error coefficient of the three-point Gauss-Legendre
+quadrature.  Since the Gauss-Lobatto quadrature uses the same end-point values
+as the rectangular and trapezoidal estimates, only three iterations of the
+inner loop of the forward model are needed instead of four.  This results in a
+25\% savings on panels where higher accuracy is needed.  One of the steps of
+the retrieval is run with tolerance = $-1$, so every panel along the line of
+sight is integrated with Gauss-Legendre quadrature.  Several steps are run with
+small tolerance, e.g. $0.001$, but this only results in requiring
+higher-accuracy quadrature where the incremental optical depth is changing
+quickly, e.g., at the stratopause and tropopause, so only very small reductions
+in run time would be realized by integrating those paths using Gauss-Lobatto
+quadrature instead of Gauss-Legendre quadrature.
+
+\item[Finer apriori] Better starting points for the retrieval might be gotten
+be computing apriori on finer spatial grids.  If this would be useful, the
+amount of storage could be reduced to compensate for the finer grid by using
+dimensionality reduction as in the \emph{process fewer data} method to extract
+only those parts of the apriori that contain the most information.  An off-line
+preprocessing program would be needed, as well as changes in the retriever to
+reconstruct an apriori field from the compressed representation.
+
+\item[New Newton solver] More modern and more ambitious Newton solvers than
+DNWT would probably take fewer iterations, although probably not dramatically
+fewer.  Two that we have in hand are DQED, which was written by Fred Krogh and
+Dick Hanson and is used in trajectory planning, and DNLAGB, which was written
+by David Gay and Linda Kaufman at AT\&T Bell Laboratories and is included in
+the Math77 library.  DNLAGB can exploit separable linearity, which immediately
+puts parameters that appear linearly onto their solutions.  Both are large
+codes that include their own linear algebra.  It would be quite a bit of work
+to arrange for them to use our matrix and vector representations and our linear
+algebra software.
+
+\item[Decoupling by tomographic methods] Our limb-viewing geometry is such that
+the radiance from each parcel of the atmosphere is conflated with the radiance
+from all other parcels on the same line of sight.  By having several lines of
+sight through each parcel, each conflating the radiances from a different set
+of parcels, we are able to attribute the observed radiance to temperature and
+composition in each parcel separately.  By applying tomographic methods based
+on the Radon transform (see http://mathworld.wolfram.com/RadonTransform.html)
+to the input data, the radiance from each parcel could be separated from the
+radiance from every other parcel, and the temperature and composition could
+then be calculated separately for each parcel.  I don't understand how to
+handle antenna convolution, filter shapes, or maintaining correct dependence of
+solution covariance upon measurement covariance, but I assume these problems
+can be solved.  Even if they cannot, it is likely this method would yield a
+good starting point for retrievals based upon the full forward model.  A
+substantial software development effort would be necessary, probably the least
+being to construct a simple forward model that does not do radiative
+transport.  It is unlikely that tomographic methods could yield temperature and
+composition directly.  After the radiances from each parcel are decoupled,
+however, there is a finer grain of parallelism, so more processors could be
+deployed.
+
+\item[Neural nets] Neural nets that apply functions that are just guessed or
+taken from tradition (e.g. tanh) without much thought to how they apply to our
+problem will probably not give sufficiently good results to be used as the
+final product, and might not give better results than apriori as starting
+points for Newton iterations.  Neural nets that are constructed using knowledge
+of the physics of our problem might be more helpful, but even so might not work
+well.  Fred is skeptical of the utility of neural nets unless functions that
+are related to the physics of the problem are used.  Fortunately, the software
+to evaluate neural nets and their derivatives with respect to their parameters
+is quite simple.  ``Training'' a neural net, i.e., calculating values for its
+adjustable parameters, is also conceptually simple, although substantial
+computation might be needed.  A single neural net to compute all outputs of
+interest would be quite large, as its input would be all channels in all MIFs
+in a chunk, and its output would be all interesting quantities in all profiles
+in the chunk.  To the extent that subsets of input data are relevant only to
+subsets of output quantities, and these subsets are not conflated, it is
+desirable to construct independent nets.
+
+\end{description}
+
+\newpage
+
+\input wvs-051-neural_body
+
+\label{lastpage}
+\end{document}
+% $Id: wvs-051.tex,v 1.2 2008/06/12 01:17:48 vsnyder Exp $
+
+% $Log: wvs-051.tex,v $
+% Revision 1.2  2008/06/12 01:17:48  vsnyder
+% Change name of included file
+%
+@
+
+
+1.2
+log
+@Change name of included file
+@
+text
+@d8 2
+a9 2
+\newcommand{\docname}{\bf wvs-051}
+\newcommand{\docdate}{8 January 2007}
+d210 1
+a210 1
+are related the the physics of the problem are used.  Fortunately, the software
+d229 1
+a229 1
+% $Id: wvs-051.tex,v 1.1 2008/06/11 20:14:53 vsnyder Exp $
+d231 4
+a234 1
+% $Log: $
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d225 1
+a225 1
+\input neural_body
+d229 3
+a231 1
+% $Id: wvs-051r0.tex,v 1.1 2008/06/11 20:14:53 vsnyder Exp $
+@
+

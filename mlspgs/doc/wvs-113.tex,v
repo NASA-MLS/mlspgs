@@ -1,0 +1,235 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.12
+	cfm-single-freq-0-1:1.1.0.10
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.8
+	mus-emls-1-70:1.1.0.6
+	rel-1-0-englocks-work:1.1.0.4
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.2
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2013.07.23.20.51.54;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9in
+
+\newcommand{\docname}{wvs-113}
+\newcommand{\docdate}{30 May 2013}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Nathaniel, Bill\\
+Subject: \>Considerations for out-of-orbit-plane modeling\\
+From: \>Van Snyder\\
+%Reference: \> \\
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-10pt}
+
+\paragraph*{Introduction.}
+
+The simplest modification of the forward model that does not require the
+solutions to be reported in the orbit plane is to assume that the
+solutions are reported on a plane that is parallel to the orbit plane, and
+corresponds on average to the locus of tangent points.  If there is one
+out-of-orbit scan, as in UARS, there is one plane, but if there are
+several, as for SMLS, there would be several planes, but the forward model
+could consider them one at a time.  There are (at least) four
+possibilities concerning where in that plane to report the solutions.
+
+The forward model currently develops interpolation coefficients between
+points on each integration path and the set of points on which solutions
+are to be reported.  These interpolation coefficients appear in the
+expressions for derivatives.  Since solutions are reported in the orbit
+plane, there are two directions of interpolation, one in $\phi$ and the
+other in $\zeta$.  A third interpolation direction, call it azimuth, will
+be needed in some of the possible solution-reporting methods.
+
+In all cases, azimuthal interpolation coefficients might be needed to
+connect the MIF tangent points to the model tangent points, for purposes
+of antenna convolution.
+
+\paragraph*{Vertical profile, fixed viewing azimuth.}
+
+The first possibility is to report vertical profiles, which means each
+profile has one (lat,lon) and several $\zeta$s.  If the lines of sight are
+at a constant azimuth from the orbit plane, since the position of each
+tangent point in the solution plane advances as the spacecraft proceeds in
+its orbit, the locus of tangent points is not a vertical line.  This means
+that the forward model needs azimuthal interpolation coefficients from the
+tangent points' positions to the profile positions, in order to compute
+derivatives of radiance with respect to quantities on the reporting
+profile.
+
+\paragraph*{Vertical profile, variable viewing azimuth.}
+
+The second possibility is also to report vertical profiles but to
+integrate along lines of sight from the spacecraft position to the
+vertical profile line, i.e., the tangent points are roughly on a vertical
+line, but each line of sight is at a different azimuth.  The azimuth of
+each line of sight would be computed from the profile (lat,lon) and the
+spacecraft (lat,lon).  The profile (lat,lon) could, in turn, be computed
+by specifying the viewing azimuth from the spacecraft (lat,lon) at some
+representative average orbit angle during the MAF.  This wouldn't require
+azimuthal interpolation coefficients.
+
+\paragraph*{Slanted profile.}
+
+The third possibility is to report profiles that are slanted to correspond
+to the positions of the tangent points.  In this case, the forward model
+doesn't need azimuthal interpolation coefficients, and the lines of sight
+are all at the same azimuth from the orbit plane.  The points in the
+profile are located by (lat,lon,$zeta$) for each solution point. 
+Alternatively, the normal to the solution plane, and the plane's
+displacement from the center of the earth, can be reported.  Then, only
+$\zeta$ and an angular coordinate within this plane need be reported for
+each solution point.
+
+\paragraph*{Solutions at MIF tangent points.}
+
+The fourth possibility is to assume a constant azimuth and report the
+solutions along the path in the reporting plane that is formed by where
+the MIFs' lines of sight pierce it, but not necessarily at those points. 
+This is very much like the \emph{slanted profile} report, but it does not
+assume that the locus of those points is a straight line.  This also
+requires (lat,lon,$\zeta$), or solution plane plus (angle,$\zeta$) for
+each solution, but no azimuth interpolation coefficients.
+
+\paragraph*{Further considerations.}
+
+The most general solution, applicable in all cases, is to provide for
+three-dimensional interpolation from the set of reporting points to the
+forward model tangent points, and allow the forward model to combine those
+coefficients with the ones it currently develops to interpolate to the
+lines of sight.  This allows the solutions to be reported on an arbitrary
+grid.  It might be better to remove this calculation from the forward
+model in all cases.  This would require removing the calculation of the
+set of $\zeta$s used by the forward model from the forward model as well. 
+Some benefit to performance might be gained if the forward model knows the
+dimensionality of interpolation.  Alternatively, a general system of
+sparse interpolation, based upon the matrix and vector modules, might be
+developed.
+
+If we assume that the forward model operates on one vertical scan, the
+lines of sight still form a 2-D surface in all cases, but in the second
+and fourth cases they are not in a plane.
+
+If we do not assume homogeneity along the line of sight, a 3-D temperature
+field is needed for the hydrostatic routine to compute height and pressure
+on this surface.
+
+In the SMLS case a 3-D temperature field would be needed, but presumably
+we would have it anyway.
+
+The existing metrics routine could probably be used, or would require at
+most modest revisions.
+
+\label{lastpage}
+\end{document}
+
+% $Id: $
+
+% $Log: $
+@

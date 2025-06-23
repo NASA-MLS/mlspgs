@@ -1,0 +1,214 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.14
+	cfm-single-freq-0-1:1.1.0.12
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.10
+	mus-emls-1-70:1.1.0.8
+	rel-1-0-englocks-work:1.1.0.6
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2008.06.11.20.14.52;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\documentclass[11pt]{article}
+
+\usepackage[fleqn]{amsmath}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9.00in
+
+\newcommand{\docname}{\bf wvs-030}
+\newcommand{\docdate}{13 January 2006}
+
+\begin{document}
+
+\renewcommand{\d}{\text{d}}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[u]{\hW}{{\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Nathaniel\\
+Subject: \>Points on line and surface of oblate spheroid that are nearest
+to each other\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 3pt
+\vspace{-20pt}
+
+Define an oblate spheroid $\mathcal{S}(r)$
+
+\begin{equation}\label{spheroid}
+\frac{x^2}{a^2} + \frac{y^2}{a^2} + \frac{z^2}{c^2} = r^2
+\end{equation}
+
+and a line $\mathcal{L}$
+
+\begin{equation}\begin{split}\label{line}
+x =\,& x_0 + \alpha t \\
+y =\,& y_0 + \beta  t \\
+z =\,& z_0 + \gamma t \,.
+\end{split}\end{equation}
+
+There is a value of $r$ such that these intersect in one point, specified
+by $t$.  At that point, the gradient of $\mathcal{S}(r)$ is orthogonal to
+$\mathcal{L}$.  Substitute Equation (\ref{line}) into Equation
+(\ref{spheroid}) giving
+
+\begin{equation}\label{spheroid-t}
+\frac{(x_0+\alpha t)^2}{a^2} + \frac{(y_0+\beta t)^2}{a^2} +
+\frac{(z_0+\gamma t)^2}{c^2} = r^2 \,.
+\end{equation}
+
+Substitute Equation (\ref{line}) into the gradient  of Equation
+(\ref{spheroid}), take the inner product with the vector parallel to
+$\mathcal{L}$, \emph{viz.} $(\alpha,\beta,\gamma)$, and set the result to
+zero, giving
+
+\begin{equation}
+\frac{\alpha(x_0+\alpha t)}{a^2} + \frac{\beta(y_0+\beta t)}{a^2} +
+\frac{\gamma(z_0+\gamma t)}{c^2} = 0 \,.
+\end{equation}
+
+Solve for $t$ giving
+
+\begin{equation}\label{t}
+t_1 = -\frac{c^2 (\alpha x_0 + \beta y_0 ) + a^2 z_0 \gamma}
+          {c^2 ( \alpha^2 + \beta^2) + a^2 \gamma^2} \,.
+\end{equation}
+
+Substituting this value into Equation (\ref{spheroid-t}) gives $r$, while
+substituting it into Equation (\ref{line}) gives $(x_1,y_1,z_1)$, the
+point where $\mathcal{L}$ intersects $\mathcal{S}(r)$.  If $r \leq 1$
+then $\mathcal{L}$ intersects $\mathcal{S}(1)$.  If $r \approx 1$ then
+$(x_1,y_1,z_1)$ is very close to the point on $\mathcal{L}$ that is
+nearest to $\mathcal{S}(1)$, and $(x_1/r,y_1/r,z_1/r)$ is very close to
+the point on $\mathcal{S}(1)$ that is closest to $\mathcal{L}$.
+
+To find the point on $\mathcal{S}(1)$ that is nearest to $(x_1,y_1,z_1)$,
+define the surface of $\mathcal{S}(1)$ parametrically in spherical
+coordinates:
+
+\begin{equation}\label{spherical}\begin{split}
+x =\,& a \cos \phi \cos \theta \\
+y =\,& a \cos \phi \sin \theta \\
+z =\,& c \sin \phi \,.
+\end{split}\end{equation}
+
+The distance from ($x_1,y_1,z_1$) to $\mathcal{S}(1)$ (\ref{spherical}) is
+
+\begin{equation}\begin{split}
+s^2 =\,& (x-x_1)^2 + (y-y_1)^2 + (z-z_1)^2\\
+    =\,& (a\cos\theta\cos\phi-x_1)^2+(a\sin\theta\cos\phi-y_1)^2+(c\sin\phi-z_1)^2
+\,.
+\end{split}\end{equation}
+
+The derivatives with respect to $\theta$ and $\phi$ are
+\begin{equation}\begin{split}
+-\frac1{2a}\frac{\partial s}{\partial \theta} =\,&
+(x_1\sin\theta-y_1\cos\theta)\cos\phi \\
+-\frac12\frac{\partial s}{\partial \phi} =\,& 
+ a \sin\phi \left( a \cos\phi - y_1\sin\theta - x_1\cos\theta \right) -
+ c \cos\phi \left( c \sin\phi - z_1 \right)
+\,.
+\end{split}\end{equation}
+
+Setting both derivatives to zero and solving for $\theta$ and $\phi$ gives
+\begin{equation}\label{on-ellipse}\begin{split}
+\theta =\,& \tan^{-1} \frac{y_1}{x_1} \\
+\phi   =\,& \tan^{-1} \frac{g}{1 - v}
+\end{split}\end{equation}
+
+where $g = \frac{c z_1}{a \rho_1}$, $h = \frac{e^2}{a \rho_1}$, $e^2 = a^2-c^2$,
+$\rho_1^2 = x_1^2+y_1^2$ and
+$ v^4 - 2v^3 + (1+g^2-h^2)v^2 + 2 h^2 v - h^2 = 0$.
+As a sanity check, consider the case $a=c$, equivalently $h=0$.  We have
+$v^4 - 2v^3 + (1+g^2)v^2 = 0$, or $v = \{0,0,1+ig,1-ig\}$, giving for the
+real roots, as expected, $\phi = \tan^{-1}g =
+\tan^{-1}\frac{z_1}{\rho_1}$.
+
+
+Let $(x_2,y_2,z_2) = (a \cos\phi \cos\theta, a \cos\phi \sin\theta, c
+\sin\phi)$.  The point on $\mathcal{L}$ nearest to $(x_2,y_2,z_2)$ is given by
+\begin{equation}\label{on-line}
+t_2 = \frac{(x_2-x_0)\alpha+(y_2-y_0)\beta+(z_2-z_0)\gamma}
+      {\alpha^2+\beta^2+\gamma^2}
+\,.
+\end{equation}
+
+If $|(x_2,y_2,z_2) - (x_1,y_1,z_1)| <
+    |(x_1/r, y_1/r, z_1/r) - (x_1,y_1,z_1)|$
+Equations (\ref{line}), (\ref{on-ellipse}) and (\ref{on-line}) can be
+iterated.
+
+\label{lastpage}
+\end{document}
+% $Id: $
+@

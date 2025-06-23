@@ -1,0 +1,1707 @@
+head	1.25;
+access;
+symbols
+	newfwm-sep01:1.19.0.2
+	V0-7:1.18;
+locks; strict;
+comment	@# @;
+
+
+1.25
+date	2001.09.19.17.26.14;	author jonathan;	state dead;
+branches;
+next	1.24;
+
+1.24
+date	2001.09.19.15.53.35;	author jonathan;	state Exp;
+branches;
+next	1.23;
+
+1.23
+date	2001.09.18.20.49.48;	author jonathan;	state Exp;
+branches;
+next	1.22;
+
+1.22
+date	2001.09.14.19.40.03;	author jonathan;	state Exp;
+branches;
+next	1.21;
+
+1.21
+date	2001.09.06.18.41.14;	author jonathan;	state Exp;
+branches;
+next	1.20;
+
+1.20
+date	2001.09.06.16.00.13;	author jonathan;	state Exp;
+branches;
+next	1.19;
+
+1.19
+date	2001.09.04.16.08.20;	author jonathan;	state Exp;
+branches;
+next	1.18;
+
+1.18
+date	2001.08.17.21.48.50;	author jonathan;	state Exp;
+branches;
+next	1.17;
+
+1.17
+date	2001.08.08.03.49.08;	author jonathan;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2001.08.08.03.47.06;	author jonathan;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2001.08.08.02.47.34;	author jonathan;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2001.08.08.00.18.21;	author jonathan;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2001.08.07.17.41.48;	author jonathan;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2001.08.02.16.19.48;	author jonathan;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2001.08.02.01.06.02;	author dwu;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2001.08.02.01.02.57;	author dwu;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2001.08.01.20.51.21;	author dwu;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2001.08.01.20.01.17;	author dwu;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2001.07.31.16.41.37;	author jonathan;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2001.07.31.16.38.54;	author jonathan;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2001.07.27.20.30.49;	author jonathan;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.07.27.20.26.33;	author jonathan;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2001.07.27.15.17.58;	author jonathan;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.07.25.23.44.00;	author jonathan;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.07.25.17.59.34;	author jonathan;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.25
+log
+@remove
+@
+text
+@      SUBROUTINE CloudForwardModel (doChannel, NF, NZ, NT, NS, N, &
+             &   NZmodel,                                         &
+             &   FREQUENCY, PRESSURE, HEIGHT, TEMPERATURE, VMRin, &
+             &   WCin, IPSDin, ZT, RE, ISURF, ISWI, ICON, IFOV,   &
+             &   phi_tan, h_obs, elev_offset, AntennaPattern,     &
+             &   TB0, DTcir, Trans, BETA, BETAc, Dm, TAUeff, SS,  &
+             &   NU, NUA, NAB, NR)
+
+!============================================================================C
+!   >>>>>>>>> FULL CLOUD FORWARD MODEL FOR MICROWAVE LIMB SOUNDER >>>>>>>>   C
+!----------------------------------------------------------------------------C
+!                                                                            C
+!     THIS PROGRAM IS USED IN LEVEL 2 DATA PROCESSING TO SIMULATE CLOUD      C
+!     INDUCED RADIANCES AND CLOUD RADIANCE SENSITIVITY.  IT CAN ALSO BE      C
+!     IN CLEAR-SKY CONDITION AS A CLEAR-SKY FORWARD MODEL, THAT WILL BE      C
+!     IN CLOUD FLAGING PROCESS. IN THE CLOUD FLAGING CASE, THIS PROGRAM      C
+!     MUST BE CALLED TWICE TO COMPUTE CLEAR-SKY RADIANCES IN BOTH DRY &      C
+!     WET (100% RELATIVE HUMIDITY) CONDITIONS.                               C
+!                                                                            C
+!     JONATHAN H. JIANG                                                      C
+!     -- MAY 18, 2001: FIRST WORKING VERSION.                                C
+!     -- JUNE 9, 2001: ELIMINATE INTERNAL GRID SO THAT THE INPUT/OUTPUT      C
+!                      GRID ARE THE SAME AS THE INTERNAL GRID. HOWEVER,      C
+!                      THE NUMBER OF MODEL PARAMETER NEEDED TO PASSE TO      C
+!                      LEVEL 2 WAS THEREFORE INCREASED.                      C
+!----------------------------------------------------------------------------C
+!                                                                            C
+!     <<< INPUT PARAMETERS >>>                                               C
+!     ------------------------                                               C
+!                                                                            C
+!     0. DEMENSION:                                                          C
+!     -------------                                                          C
+!     NF:             -> Number of Frequencies.                              C
+!     NZ:             -> Number of Pressure Levels.                          C
+!                        -------------------------------------------------   C
+!               NOTE:    The internal model grid resuires NZ=640, and        C
+!                        PRESSURE levels are defined as the following:       C
+!                            NZ=640                                          C
+!                            Ptop = 40./16.-3.                               C
+!                            Pbottom=-ALOG10(PRESSURE(lowest-level))         C
+!                            dP=(Ptop-Pbottom)/NZ                            C
+!                            ZH(I)=Pbottom+(I-1)*dP,      I=1,NZ             C
+!                            PRESSURE(I) = 10**(-ZH(I)) , I=1,NZ             C
+!                        -------------------------------------------------   C
+!     NT:             -> Number of Tangent Pressures.                        C
+!     NS:             -> Number of Chemical Species.                         C
+!     N:              -> Number of Cloud Species.                            C
+!                                                                            C
+!     1. ATMOSPHERIC PROFILES:                                               C
+!     ------------------------                                               C
+!     FREQUENCY  (NF) -> Frequency (GHz).                                    C 
+!     PRESSURE   (NZ) -> Pressure (hPa).                                     C
+!     HEIGHT     (NZ) -> Geopotential Height (hPa).                          C
+!     TEMPERATURE(NZ) -> Temperature (K).                                    C 
+!     VMRin   (NS,NZ) -> NS=1: H2O Volumn Mixing Ratios (ppm).               C
+!                        NS=2: O3 Volumn Mixing Ratio (ppm).                 C
+!                                                                            C
+!     2. CLOUD PARAMETERS:                                                   C
+!     --------------------                                                   C
+!     WCin     (N,NZ) -> N=1: Cloud Ice Water Content (g/m3).                C
+!                        N=2: Cloud Liquid Water Content (g/m3).             C
+!     IPSDin     (NZ) -> Particle Size Distribution Flag.                    C
+!                                                                            C
+!     3. OTHER PARAMETERS:                                                   C
+!     --------------------                                                   C
+!     ZT         (NT) -> Tangent Pressure (hPa).                             C
+!     RE              -> Radius of Earth (m).                                C
+!     ISURE           -> Surface Types (Default: 0).                         C
+!     ISWI            -> Switch for Sensitivity Calculation (Default: 0).    C
+!     ICON            -> Cloud Control Switch (Default: 2).                  C
+!     -----------------------------------------------                        C
+!                                                                            C
+!     >>> OUTPUT PARAMETERS <<<                                              C
+!     -------------------------                                              C
+!                                                                            C
+!     4. STANDARD OUTPUTS:                                                   C
+!     --------------------                                                   C
+!     TB0     (NT,NF) -> Background Clear-sky Radiance (K).                  C 
+!     DRcir   (NT,NF) -> Cloud Induced Radiance (K).                         C
+!     TAUeff  (NT,NF) -> Effective Cloud Optical Depth.                      C
+!     SS      (NT,NF) -> Cloud Radiance Sensitivity (K).                     C
+!     BETA  (NZ-1,NF) -> Total Extinction Profile (m-1).                     C
+!     BETAc (NZ-1,NF) -> Cloud Extinction Profile (m-1).                     C
+!     Dm     (N,NZ-1) -> Mass-Mean-Diameters (micron). Note:1=Ice,2=Liquid.  C
+!                                                                            C
+!     -----------------------------------------------                        C
+!                                                                            C
+!     ((( INTERNAL MODEL PARAMETERS )))                                      C
+!                                                                            C
+!     5. INTERNAL MODEL PARAMETERS                                           C
+!     ----------------------------                                           C
+!     NU  = 16        -> Number of scattering angles.                        C
+!     NUA = 8         -> Number of azimuth angles.                           C
+!     NAB = 50        -> Maximum number of truncation terms.                 C
+!     NR  = 40        -> Number of particle size bins.                       C 
+!     --------------------------------------------------------------         C
+!                                                                            C
+!     FREQUENCY RANGE: 1-3000GHz                                             C
+!                                                                            C
+!     VERSION: 1.0, MAY 18, 2001                                             C
+!     MICROWAVE ATMOSPHERIC SCIENCE TEAM                                     C
+!     JET PROPULSION LABORATORY                                              C
+!     CALIFORNIA INSTITUTE OF TECHNOLOGY                                     C
+!     4800 OAK GROVE DRIVE                                                   C
+!     PASADENA, CA 91109-8099                                                C
+!                                                                            C
+!     EMAIL: JONATHAN@@MLS.JPL.NASA.GOV                                       C
+!     PHONE: (818) 354-7135                                                  C
+!     FAX:   (818) 393-5065                                                  C
+!============================================================================C
+
+      use AntennaPatterns_m, only: AntennaPattern_T
+      use DCSPLINE_DER_M, only: CSPLINE_DER
+      use FOV_CONVOLVE_M, only: FOV_CONVOLVE
+      use HYDROSTATIC_INTRP, only: GET_PRESSURES
+      use L2PC_FILE_PARAMETERS, only: DEG2RAD
+      use MLSCommon, only: r8
+      use MLSNumerics, only: INTERPOLATEVALUES
+
+      IMPLICIT NONE
+
+!---------------------------------------
+!     INPUT PARAMETERS (INPUTS FROM L2)        ! -- INTERFACE AEA -- ! 
+!---------------------------------------
+      INTEGER :: NF                            ! NUMBER OF FREQUENCIES
+      LOGICAL :: doChannel(NF)                 ! do only true channels
+      INTEGER :: NZ                            ! NUMBER OF PRESSURE LEVELS
+      INTEGER :: NT                            ! NUMBER OF TANGENT HEIGHTS
+      INTEGER :: NS                            ! NUMBER OF CHEMICAL SPECIES
+      INTEGER :: N                             ! NUMBER OF CLOUD SPECIES
+      INTEGER :: NZmodel                       ! NUMBER OF INTERNAL MODEL LEVELS
+      INTEGER :: MULTI
+
+      INTEGER :: IPSDin(NZ)                    ! SIZE-DISTRIBUTION FLAG
+                                               ! IILL     (I=ICE, L=LIQUID)
+                                               ! 1000:     I->MH, L->GAMMA 
+                                               ! 1100:     I->LIU-CURRY
+                                               ! 2000-3900:I->MODIFIED GAMMA
+                                               !              WITH VARIOUS De,
+                                               !              alpha
+                                               ! 4000-5900:I->KNOLLENBERG WITH 
+                                               !              VARIOUS b1
+                                               ! 6000:     I->PSD FOR PSC
+
+      INTEGER :: ISURF                         ! SURFACE TYPE
+                                               ! 0 = SIMPLE MODEL
+                                               ! 1 = LAND
+                                               ! 2 = SEA 
+  
+      INTEGER :: ISWI                          ! SENSITIVITY SWITCH
+                                               ! 0 = OFF
+                                               ! 1 = ON
+
+      INTEGER :: ICON                          ! CONTROL SWITCH
+                                               ! 0 = CLEAR-SKY
+                                               ! 1 = 100% R.H. BELOW CLOUD
+                                               ! 2 = DEFAULT
+                                               ! 3 = NEAR SIDE CLOUD ONLY
+
+      INTEGER :: IFOV                          ! FIELD OF VIEW AVERAGING SWITCH
+                                               ! 0 = OFF
+                                               ! 1 = ON
+
+      REAL(r8) :: FREQUENCY(NF)                ! FREQUENCIES (GHz)
+      REAL(r8) :: PRESSURE(NZ)                 ! PRESSURE LEVEL
+      REAL(r8) :: HEIGHT(NZ)                   ! PRESSURE HEIGHT
+      REAL(r8) :: TEMPERATURE(NZ)              ! ATMOSPHERIC TEMPERATURE
+      REAL(r8) :: VMRin(NS,NZ)                 ! 1=H2O VOLUME MIXING RATIO
+                                               ! 2=O3 VOLUME MIXING RATIO
+
+      REAL(r8) :: WCin(N,NZ)                   ! CLOUD WATER CONTENT
+                                               ! N=1: ICE; N=2: LIQUID
+      REAL(r8) :: ZT(NT)                       ! TANGENT PRESSURE
+      REAL(r8) :: RE                           ! EARTH RADIUS
+
+      REAL(r8) :: phi_tan, h_obs, Rs_eq, elev_offset, pp, ti, rr,freq
+
+!--------------------------------------
+!     OUTPUT PARAMETERS (OUTPUT TO L2)        
+!--------------------------------------
+
+      REAL(r8) :: TB0(NT,NF)                   ! CLEAR-SKY TB AT ZT
+      REAL(r8) :: DTcir(NT,NF)                 ! CLOUD-INDUCED RADIANCE
+      REAL(r8) :: TAUeff(NT,NF)                ! CLOUD EFFECTIVE OPTICAL DEPTH
+      REAL(r8) :: SS(NT,NF)                    ! CLOUD RADIANCE SENSITIVITY
+                                               ! (NT+1) FOR ZENITH LOOKING) 
+
+      REAL(r8) :: Trans(NZ-1,NF)               ! Clear Trans Func
+      REAL(r8) :: BETA(NZ-1,NF)                ! TOTAL OPTICAL DEPTH
+      REAL(r8) :: BETAc(NZ-1,NF)               ! CLOUDY OPTICAL DEPTH
+
+      REAL(r8) :: Dm(N,NZ-1)                   ! MASS-MEAN-DIAMETER
+
+                                               ! -- END OF INTERFACE AREA -- !
+
+!-----------------------------------------------------------------------------
+                                               
+!-------------------------------
+!     INTERNAL MODEL PARAMETERS                ! -- INTERNAL AREA -- !
+!-------------------------------
+
+      REAL :: PI
+      PARAMETER (PI=3.1415926)
+      
+      INTEGER :: NU                            ! NO. OF SCATTERING ANGLES
+      INTEGER :: NUA                           ! NO. OF SCAT. AZIMUTH ANGLES
+      INTEGER :: NIWC                          ! NO. OF ICE WATER CONTENTS
+
+      INTEGER :: NAB                           ! MAX. NO. OF 
+      INTEGER :: NR                            ! NUMBER OF SIZE BINS
+      INTEGER :: NABR(NR)                      ! TRUNCATION FOR A, B
+
+      INTEGER :: LORS                          ! SURFACE TYPE: LAND OR SEA
+
+      REAL(r8) :: U(NU)                        ! COSINE OF SCATTERING ANGLES
+      REAL(r8) :: DU(NU)                       ! DELTA U
+      REAL(r8) :: UA(NUA)                      ! COSINE OF SCAT AZIMUTH ANGLES
+      REAL(r8) :: THETA(NU)                    ! SCATTERING ANGLES
+      REAL(r8) :: PHI(NUA)                     ! SCATTERING AZIMUTH ANGLES
+      REAL(r8) :: UI(NU,NU,NUA)                ! COSINE OF INCIDENT TB ANGLES
+      REAL(r8) :: THETAI(NU,NU,NUA)            ! ANGLES FOR INCIDENT TB
+      REAL(r8) :: PHH(N,NU,NZmodel-1)          ! PHASE FUNCTION 
+      REAL(r8) :: TAU(NZmodel-1)               ! TOTAL OPTICAL DEPTH
+      REAL(r8) :: TAU100(NZmodel-1)            ! TOTAL OPTICAL DEPTH AT 100%RH
+      REAL(r8) :: W0(N,NZmodel-1)              ! SINGLE SCATTERING ALBEDO
+      
+      REAL(r8) :: S                            ! SALINITY
+      REAL(r8) :: SWIND                        ! SEA SURFACE WIND
+      REAL(r8) :: TS                           ! SURFACE TEMPERATURE (K)
+      REAL(r8) :: RS(NU/2)                     ! SURFACE REFLECTIVITY
+      REAL(r8) :: RC0(3)                       ! GAS ABS.SCAT.EXT COEFFS.
+      REAL(r8) :: RC(N,3)                      ! CLOUD ABS.SCAT.EXT COEFFS.
+      REAL(r8) :: RC_TOT(3)                    ! TOTAL ABS.SCAT.EXT COEFFS.
+      REAL(r8) :: Z(NZmodel-1)                 ! MODEL LAYER THICKNESS (m)
+      REAL(r8) :: TAU0(NZmodel-1)              ! CLEAR-SKY OPTICAL DEPTH
+      REAL(r8) :: TEMP(NZmodel-1)              ! MEAN LAYER TEMPERATURE (K)
+
+      REAL(r8) :: TT(NZmodel/8,NZmodel)        ! CLOUDY-SKY TB AT TANGENT 
+                                               ! HEIGHT ZT (LAST INDEX FOR 
+                                               ! ZENITH LOOKING)
+      REAL(r8) :: TT0(NZmodel/8,NZmodel)       ! CLEAR-SKY TB AT TANGENT
+                                               ! HEIGHT ZT
+
+!---------------------------------------------
+!     INTERNAL ATMOSPHERIC PROFILE PARAMETERS
+!---------------------------------------------
+
+      INTEGER :: IPSD (NZmodel)
+
+      REAL(r8) :: WC (N,NZmodel)
+      REAL(r8) :: YP (NZmodel)
+      REAL(r8) :: YZ (NZmodel)
+      REAL(r8) :: YT (NZmodel)
+      REAL(r8) :: YQ (NZmodel)                 ! H2O VOLUME MIXING RATIO
+      REAL(r8) :: VMR(NS,NZmodel)              ! 1=O3 VOLUME MIXING RATIO
+      REAL(r8) :: DDm(N,NZmodel)                         
+
+!----------------------------
+!     CLOUD MODEL PARAMETERS
+!----------------------------
+
+      REAL(r8) :: CWC                          ! CLOUD WATER CONTENT (g/m3)
+      REAL(r8) :: CDEPTH(N)                    ! CLOUD OPTICAL DEPTH
+      REAL(r8) :: DEPTH                        ! TOTAL OPTICAL DEPTH
+                                               ! (CLEAR+CLOUD)
+
+      REAL(r8) :: delTAU100(NZmodel-1)         ! TOTAL AIR EXTINCTION for 100%RHi
+      REAL(r8) :: delTAU(NZmodel-1)            ! TOTAL EXTINCTION
+      REAL(r8) :: delTAUc(NZmodel-1)           ! CLOUDY-SKY EXTINCTION
+      
+!---------------------------
+!     WORK SPACE PARAMETERS
+!---------------------------
+
+      INTEGER :: I
+      INTEGER :: J
+      INTEGER :: K
+      INTEGER :: IFR 
+      INTEGER :: ILYR
+      INTEGER :: IL
+      INTEGER :: ISPI
+      INTEGER :: IIWC
+      INTEGER :: ICLD_TOP                     ! cloud top index
+      INTEGER :: I100_TOP                     ! 100 mb index
+      INTEGER :: MY_NIWC
+      INTEGER :: L
+
+      REAL(r8) :: DMA
+      REAL(r8) :: RATIO
+      REAL(r8) :: PH0(N,NU,NZmodel-1)
+      REAL(r8) :: W00(N,NZmodel-1)  
+      REAL(r8) :: P11(NU)
+      REAL(r8) :: RC11(3)
+      REAL(r8) :: RC_TMP(N,3)
+      REAL(r8) :: CHK_CLD(NZmodel)                        
+      REAL(r8) :: ZZT(NT)                      ! TANGENT HEIGHTS (meters)
+
+      REAL(r8) :: ZZT1(NZmodel/8-1)            ! TANGENT HEIGHTS (meters) FOR CALCULATION 
+                                               ! (a subset OF YZ)
+                                               ! THE RESULT WILL BE INTERPOLATED TO ZZT
+
+      REAL(r8) :: ZPT1(NZmodel/8-1)            ! TANGENT PRESSURE (mb) FOR CALCULATION 
+                                               ! (a subset OF YP)
+                                               ! THIS IS ASSOCIATED WITH ZZT1
+
+      REAL(r8) :: ZTT1(NZmodel/8-1)            ! TEMPERATURE CORRESPONDING TO TANGENT PRESSURE 
+                                               ! (a subset OF YT)
+                                               ! THIS IS ASSOCIATED WITH ZZT1
+
+      REAL(r8) :: ZVT1(NZmodel/8-1) 
+      REAL(r8) :: ZNT1(NZmodel/8-1) 
+
+      REAL(r8) :: ptg_angle(NZmodel/8-1)       ! POINTING ANGLES CORRESPONDING TO ZZT1
+
+      type(antennaPattern_T), intent(in) :: AntennaPattern
+      integer :: FFT_INDEX(size(antennaPattern%aaap))
+      integer :: FFT_pts, ntr, ier, is, ktr, Ptg_i, brkpt
+      REAL(r8) :: schi, center_angle, Q
+      Real(r8) :: dTB0_dZT(NT,NF), dDTcir_dZT(NT,NF)
+
+      Real(r8), dimension(size(fft_index)) :: FFT_ANGLES, FFT_PRESS, RAD0, RAD
+
+!      REAL(r8) :: TMP(NZmodel/8-1)                 
+
+      REAL(r8) :: PH1(NU)                      ! SINGLE PARTICLE PHASE FUNCTION
+      REAL(r8) :: P(NAB,NU)                    ! LEGENDRE POLYNOMIALS l=1
+      REAL(r8) :: DP(NAB,NU)                   ! Delt LEGENDRE POLYNOMIALS l=1
+      
+      REAL(r8) :: R(NR)                        ! PARTICLE RADIUS
+      REAL(r8) :: RN(NR)                       ! NUMBER OF PARTICLES IN EACH BIN
+      REAL(r8) :: BC(3,NR)                     ! SINGLE PARTICLE ABS/SCAT/EXT 
+                                               ! COEFFS
+      REAL(r8) :: DZ(NZ-1)
+
+      REAL(r8), PARAMETER :: CONST1 = 0.0000776_r8
+      REAL(r8), PARAMETER :: CONST2 = 4810.0_r8
+
+      COMPLEX(r8) A(NR,NAB),B(NR,NAB)          ! MIE COEFFICIENCIES
+
+!---------------<<<<<<<<<<<<< START EXCUTION >>>>>>>>>>>>-------------------C
+
+      CALL HEADER(1)
+
+!=========================================================================
+!                    >>>>>> CHECK MODEL-INPUT <<<<<<< 
+!-------------------------------------------------------------------------
+!     CHECK IF THE INPUT PROFILE MATCHS THE MODEL INTERNAL GRID; 
+!     SET TANGENT PRESSURE (hPa) TO TANGENT HEIGHT (km)
+!=========================================================================
+
+      CALL MODEL_ATMOS(PRESSURE,HEIGHT,TEMPERATURE,VMRin,NZ,NS,N,   &
+           &           WCin,IPSDin,                                 &
+           &           YP,YZ,YT,YQ,VMR,WC,NZmodel,CHK_CLD,IPSD,     &
+           &           ZT,ZZT,NT)
+ 
+!     TAKE FIRST NT ELEMENT OF YZ AS TANGENT Z
+
+      IF (NZmodel-1 .LE. NT) THEN
+        PRINT*,'TOO MANY TANGENT HEIGHTS'
+        STOP
+      ENDIF
+
+! ----------------------------------
+! DEFINE INTERNAL TANGENT PRESSURES 
+! ----------------------------------
+
+      MULTI=NZmodel/8-1
+
+      IF (IFOV .EQ. 0) THEN       
+         DO I=1, Multi
+            ZZT1(I)=YZ(I*8-7)
+         ENDDO
+      ENDIF
+
+      IF (IFOV .EQ. 1) THEN 
+         DO I=1, Multi
+            ZZT1(I)=YZ(I*8-7)
+            ZPT1(I)=YP(I*8-7)
+            ZTT1(I)=YT(I*8-7)
+            ZVT1(I)=YQ(I*8-7)
+         ENDDO
+!      DO I=1, Multi
+!        if (i .lt. 10) zzt1(i) = -200000.0_r8 + i*20000.0_r8 
+!        if (i .ge. 10) zzt1(i) = 1000._r8*i-10000._r8
+!      ENDDO
+!
+!      CALL GET_TAN_PRESS ( YP, YZ, YT, YQ, NZmodel,        &
+!           &               ZPT1, ZZT1, ZTT1, ZVT1, Multi )
+      ENDIF
+
+!-----------------------------------------------
+!     INITIALIZE SCATTERING AND INCIDENT ANGLES 
+!-----------------------------------------------
+
+      CALL ANGLE(THETA,U,DU,NU,PHI,UA,NUA,UI,THETAI)
+
+!----------------------------------
+!     SURFACE INFORMATION
+!----------------------------------
+
+      LORS  = ISURF          
+!      lors=0
+
+      TS    = 288._r8
+      S     = 35._r8
+      SWIND = 0._r8
+      NIWC  = 10
+
+      IF (ISWI .EQ. 0) THEN                  
+         RATIO=1._r8
+         MY_NIWC=1                ! SKIP FULL SENSITIVITY CALCULATION
+      ELSE
+          MY_NIWC=NIWC
+      ENDIF
+
+!------------------------------------------
+!     PERFORM FULL SENSITIVITY CALCULATION
+!------------------------------------------
+
+      DO 3000 IIWC=1, MY_NIWC    ! START OF IWC LOOP
+         IF (ISWI .EQ. 0) THEN
+            RATIO=1._r8
+         ELSE
+            RATIO = 10.*(IIWC-1)**2*0.004+1.0E-9_r8
+         ENDIF
+
+!=========================================================================
+!                   >>>>>>> CLEAR-SKY MODULE <<<<<<<<
+!-------------------------------------------------------------------------
+!     COMPUTE CLEAR-SKY ABSORPTION COEFFICIENTS, INCLUDING DRY, WET 
+!     CONTINUMA AND LINE EMISSIONS.   
+!=========================================================================
+
+      DO 2000 IFR=1, NF
+      IF ( doChannel(IFR) ) then
+        
+         CALL CLEAR_SKY(NZmodel-1,NU,TS,S,LORS,SWIND,           &
+              &         YZ,YP,YT,YQ,VMR,NS,                     &
+              &         FREQUENCY(IFR),RS,U,TEMP,TAU0,Z,TAU100) 
+
+         CALL HEADER(3)
+
+!-----------------------------------------------------------------------------
+!        ASSUME 100% SATURATION IN CLOUD LAYER
+! 	 N.B.	ICON=0 is Clear-Sky only 
+!		ICON=1 is for 100%RH inside and below Cloud
+!		ICON=2 is default for 100%RH inside cloud ONLY
+!		ICON=3 is for near-side cloud only 
+!-----------------------------------------------------------------------------
+
+         ICLD_TOP = 0
+         I100_TOP = 0
+
+         DO IL=1, NZmodel-1  
+            IF(CHK_CLD(IL) .NE. 0.)THEN
+               ICLD_TOP=IL                    ! FIND INDEX FOR CLOUD-TOP 
+               TAU0(IL)=TAU100(IL)            ! 100% SATURATION INSIDE CLOUD 
+            ENDIF
+            IF(YP(IL) .GE. 100._r8) THEN      ! IF BELOW 100MB                    
+               I100_TOP=IL                    ! FIND INDEX FOR 100MB
+            ENDIF
+         ENDDO
+
+         IF (ICON .EQ. 1) THEN
+            DO IL=1, ICLD_TOP                 
+               TAU0(IL)=TAU100(IL)            ! 100% SATURATION BELOW CLOUD
+            ENDDO
+         ENDIF   
+
+         DO IL=1,MAX(ICLD_TOP,I100_TOP)       ! THIS IS FOR RETRIEVAL PURPOSE 
+              delTAU100(IL)=TAU100(IL)        ! MASK 100% SATURATION BELOW
+         ENDDO                                ! 100MB
+
+!----------------------------------------------------------------------------------
+
+         DO 1000 ILYR=1, NZmodel-1            ! START OF MODEL LAYER LOOP:   
+ 
+            RC0(1)=TAU0(ILYR)/Z(ILYR)         ! GAS ABSORPTION COEFFICIENT
+            RC0(2)=0._r8
+            RC0(3)=RC0(1)                     ! CLEAR-SKY EXTINCTION COEFFICIENT
+
+            DO J=1,3
+               RC_TOT(J) = 0._r8
+               RC11(J)=0._r8
+            ENDDO
+
+            DO ISPI=1,2
+               DO J=1,3
+                  RC(ISPI,J)=0._r8
+                  RC_TMP(ISPI,J)=0._r8
+               ENDDO
+               CDEPTH(ISPI) = 0._r8
+               DO K=1,NU
+                  PHH(ISPI,K,ILYR) = 0._r8
+                  PH0(ISPI,K,ILYR)=0._r8
+               ENDDO
+               DDm(ISPI,ILYR)=0._r8
+               W0(ISPI,ILYR)=0._r8
+               W00(ISPI,ILYR)=0._r8
+            ENDDO
+
+            DEPTH  = 0._r8
+            CWC = 1.E-9_r8
+
+            IF(CHK_CLD(ILYR) .NE. 0.) THEN 
+
+               DO ISPI=1,N
+                  CWC = RATIO*WC(ISPI,ILYR) 
+                  CWC = MAX(1.E-9_r8,CWC)
+              
+!=================================================
+!    >>>>>>>>> CLOUDY-SKY MODULE <<<<<<<<<<<
+!=================================================
+
+                  CALL CLOUDY_SKY ( ISPI,CWC,TEMP(ILYR),FREQUENCY(IFR),  &
+                       &          NU,U,DU,P11,RC11,IPSD(ILYR),DMA,       &
+                       &          PH1,NAB,P,DP,NR,R,RN,BC,A,B,NABR)
+
+                  DO K=1,NU
+                     PHH(ISPI,K,ILYR)=P11(K)      ! INTERGRATED PHASE FUNCTION
+                  ENDDO
+                  CDEPTH(ISPI)=RC11(3)*Z(ILYR)
+                  
+                  DO J=1,3
+                     RC_TMP(ISPI,J)=RC11(J)       ! VOLUME EXT/SCAT/ABS COEFFS
+                  ENDDO
+               ENDDO
+            ENDIF
+                              
+            DO J=1,3                               ! ADD CLEAR-SKY COEFFICIENTS
+               RC_TOT(J)=RC0(J)+RC_TMP(1,J)+RC_TMP(2,J)
+            ENDDO
+
+            DO ISPI=1,N        
+                                        
+               W0(ISPI,ILYR)=RC_TMP(ISPI,2)/RC_TOT(3) ! SINGLE SCATTERING ALBEDO   
+               IF(W0(ISPI,ILYR) .GT. 1.) THEN         
+                  W0(ISPI,ILYR)=1.
+               ENDIF
+               DDm(ISPI,ILYR)=DMA                     ! MASS-MEAN-DIAMETER
+            ENDDO
+
+            TAU(ILYR)=RC_TOT(3)*Z(ILYR)
+            DEPTH=RC_TOT(3)*Z(ILYR)
+
+            delTAU100(ILYR) = TAU100(ILYR)
+            delTAU(ILYR) = max(0._r8, DEPTH )
+            delTAUc(ILYR)= max(0._r8, CDEPTH(1) )
+
+ 1000    CONTINUE                         ! END OF MODEL LAYER LOOP
+
+!==================================================
+!    >>>>>>> RADIATIVE TRANSFER MODULE <<<<<<<<<<
+!==================================================
+
+         CALL HEADER(4)
+
+         CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PH0,MULTI,ZZT1,W00,TAU0,RS,TS,&
+              &     FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,        &
+              &     UI,UA,TT0,0,RE)                          !CLEAR-SKY
+
+         IF(ICON .GE. 1) THEN                               
+
+           CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PHH,MULTI,ZZT1,W0,TAU,RS,TS,&
+                &  FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,         &
+                &  UI,UA,TT,ICON,RE)                            !CLOUDY-SKY
+
+         ENDIF
+
+         IF (IFOV .EQ. 1) THEN       ! **** BEGIN FOV AVERAGING ****
+! ==========================================================================
+!    >>>>>> ADDS THE EFFECTS OF ANTENNA SMEARING TO THE RADIANCE <<<<<<
+! ==========================================================================
+	 Ier = 0
+!	 Rs_eq = h_obs + 38.9014 * Sin(2.0*(phi_tan - 51.6814 * deg2rad)) 
+	 Rs_eq = h_obs
+
+         znt1 = const1 * zpt1 / ztt1
+         znt1 = znt1*(1.0_r8 + const2*zvt1/ztt1)
+
+!---------------------------------------------------------------------------
+!	 FIRST COMPUTE THE POINTING ANGLES (ptg_angle) 
+!---------------------------------------------------------------------------
+
+  	 DO I = 1, Multi
+
+            schi = (1+znt1(i))*(ZZT1(I) + RE) / Rs_eq    ! approximition account for 
+                                                         ! refractive effect
+    	    IF(ABS(schi) > 1.0) THEN
+      	       PRINT *,'*** ERROR IN COMPUTING POINTING ANGLES'
+               PRINT *,'    arg > 1.0 in ArcSin(arg) ..'
+               STOP
+            END IF
+    	    ptg_angle(i) = Asin(schi) + elev_offset
+!            print*, ptg_angle(i), elev_offset
+  	 END DO
+!         stop
+!	 center_angle = ptg_angle(1)
+!	 center_angle = Asin(RE/Rs_eq)        ! ptg_angle for zero tangent height         
+         center_angle = (ptg_angle(1) + ptg_angle(79)) /2.
+
+!         print*,center_angle
+!         stop
+
+! ----------------------------------------------------------------
+! 	 THEN DO THE FIELD OF VIEW AVERAGING
+! ----------------------------------------------------------------
+
+         ntr = size(antennaPattern%aaap)
+
+	 fft_pts = nint(log(real(size(AntennaPattern%aaap)))/log(2.0))
+
+         RAD0=0.0
+         RAD0(1:Multi)=TT0(1:Multi,NZmodel)
+
+         RAD=0.0
+         RAD(1:Multi)=TT(1:Multi,NZmodel)
+
+         fft_angles=0.0
+         fft_angles(1:Multi) = ptg_angle(1:Multi)    ! Multi = No. of tangent heights
+	
+         Call fov_convolve ( fft_angles, RAD0, center_angle, 1, Multi,   &
+              &              fft_pts, AntennaPattern, Ier )
+              if ( Ier /= 0) then
+	         print*,'error in FOV CONV'
+	         stop
+	      endif
+
+         Call fov_convolve ( fft_angles, RAD, center_angle, 1, Multi,   &
+              &              fft_pts, AntennaPattern, Ier )
+              if ( Ier /= 0) then
+	         print*,'error in FOV CONV'
+	         stop
+	      endif
+
+              !------------------------------------------------------------------
+              !  TT   ___                                     RAD  ___|___
+              !          \                                        /   |   \
+              !           \          after fov_convolve ==>      /    |    \
+              !            \                                    /  -  | +   \
+              !             \___                            ___/      |      \___
+              !-------------------------------------------------------------------
+
+
+         !  Get 'ntr' pressures associated with the fft_angles:
+         Call get_pressures ( 'a', ptg_angle, ZTT1, -log10(ZPT1), Multi,     &
+              &                    fft_angles, fft_press, Ntr, Ier )
+              if ( Ier /= 0) then
+	         print*,'error in get_pressures'
+	         stop
+	      endif
+           
+
+!              print*,fft_press, rad0
+!              stop
+
+         ! Make sure the fft_press array is MONOTONICALY increasing:
+         is = 1
+         do while (is < Ntr-1  .and.  fft_press(is) >= fft_press(is+1)) 
+            is = is + 1                                                  
+         end do                                                         
+          ! There is an error in zvi's code, in which he wrote is<Ntr. This will cause 
+          ! subscript fft_press(is+1) out of range when run the program after compile 
+          ! with -C, as "Subscript 1 of FFT_PRESS (value 1025) is out of range (1:1024)"
+          ! UPDATE: zvi and I have fixed above error on 08/29/01
+
+         Ktr = 1
+         Rad0(Ktr) = Rad0(is)
+         Rad(Ktr) = Rad(is)
+         fft_index(Ktr) = is
+         fft_press(Ktr) = fft_press(is)
+
+         do ptg_i = is+1, Ntr
+           q = fft_press(ptg_i)
+           if ( q > fft_press(Ktr)) then
+             Ktr = Ktr + 1
+             fft_press(Ktr) = q
+             Rad0(Ktr) = Rad0(ptg_i)
+             Rad(Ktr) = Rad(ptg_i)
+             fft_index(Ktr) = ptg_i
+           end if
+         end do
+ 
+! ----------------------------------------------------------------------------
+!        INTERPOLATE THE OUTPUT VALUES RAD0 TO TB0 WITH RESPECT TO L2 TANGENT
+!        PRESSURES ZT (i.e. ptan).
+!        (ALSO STORE THE RADIANCE DERIVATIVES WITH RESPECT TO ZT)
+! ----------------------------------------------------------------------------
+
+         Call Cspline_der ( fft_press, -log10(ZT), RAD0, TB0(:,IFR), dTB0_dZT(:,IFR), Ktr, NT )
+         Call Cspline_der ( fft_press, -log10(ZT), RAD-RAD0, DTcir(:,IFR), dDTcir_dZT(:,IFR), Ktr, NT )
+
+         END IF     ! **** END OF FOV AVERAGING ****
+
+!====================================
+!    >>>>>>> MODEL-OUTPUT <<<<<<<<<
+!====================================
+
+         IF (IFOV .EQ. 0) THEN       
+
+         ! CLEAR-SKY BACKGROUND
+         CALL INTERPOLATEVALUES(ZZT1,TT0(:,NZmodel),ZZT,TB0(:,IFR),method='Linear')
+
+         ! CLOUD-INDUCED RADIANCE
+         CALL INTERPOLATEVALUES(ZZT1,TT(:,NZmodel)-TT0(:,NZmodel),ZZT,DTcir(:,IFR), &
+              &                 method='Linear')
+
+         ENDIF
+           
+         CALL SENSITIVITY (DTcir(:,IFR),ZZT,NT,YP,YZ,NZmodel,PRESSURE,NZ, &
+              &            delTAU,delTAUc,delTAU100,TAUeff(:,IFR),SS(:,IFR), &
+              &            Trans(:,IFR), BETA(:,IFR), BETAc(:,IFR), DDm, Dm, Z, DZ, &
+              &            N,ISWI,RE) ! COMPUTE SENSITIVITY
+
+
+      ELSE IF ( .NOT. doChannel(IFR) ) then
+         DO I = 1, NZ-1
+            BETA(I,IFR) = 0.0_r8
+            BETAc(I,IFR)= 0.0_r8
+            do j=1,N
+               Dm(J,I)  = 0.0_r8
+            end do  
+         END DO
+         DO K = 1, NT
+            TB0(K,IFR)  = 0.0_r8 
+            DTcir(K,IFR)= 0.0_r8 
+         END DO
+      END IF                                 ! END OF DO CHANNEL
+
+ 2000 CONTINUE                               ! END OF FREQUENCY LOOP   
+
+ 3000 CONTINUE                               ! END OF IWC LOOP
+
+      CALL HEADER(5)
+
+!-----------------------<<<<<<<<<<<<< END >>>>>>>>>>>>------------------------C
+
+      RETURN
+      END
+
+! $Log: CloudForwardModel.f90,v      
+
+
+
+
+
+@
+
+
+1.24
+log
+@*** empty log message ***
+@
+text
+@@
+
+
+1.23
+log
+@*** empty log message ***
+@
+text
+@d310 3
+d334 4
+d370 3
+a372 5
+      DO I=1, Multi
+         ZZT1(I)=YZ(I*8)
+         ZPT1(I)=YP(I*8)
+         ZTT1(I)=YT(I*8)         
+      ENDDO
+d376 13
+a388 7
+      DO I=1, Multi
+        if (i .lt. 10) zzt1(i) = -200000.0_r8 + i*20000.0_r8 
+        if (i .ge. 10) zzt1(i) = 1000._r8*i-10000._r8
+      ENDDO
+
+      CALL GET_TAN_PRESS ( YP, YZ, YT, NZmodel,    &
+           &               ZPT1, ZZT1, ZTT1, Multi )
+d575 5
+a579 2
+	 Rs_eq = h_obs + 38.9014 * Sin(2.0*(phi_tan - 51.6814 * deg2rad)) 
+!	 Rs_eq = h_obs
+a580 2
+!         print*,h_obs, Rs_eq
+!         stop
+a585 11
+!            brkpt = minloc(abs(YZ(:)-zzt1(i)))
+!            print*, brkpt, zzt1(i)
+!            ti = 1.0_r8 / ztt1(i)
+!            n_r = 7.76e-5 * zpt1(i) * ti
+!            n_r = n_r * (1.0_r8 + 4810.0_r8 * vmr * ti)            
+
+            if (zzt1(i) .lt. 5000.0) then
+              schi = (ZZT1(I)*1.2 + RE) / Rs_eq    ! approximition account for 
+            else                                   ! refractive effect
+              schi = (ZZT1(I) + RE) / Rs_eq
+            endif
+d587 2
+@
+
+
+1.22
+log
+@*** empty log message ***
+@
+text
+@d176 1
+a176 1
+      REAL(r8) :: phi_tan, h_obs, Rs_eq, elev_offset, pp, ti, rr
+d314 1
+a314 1
+      integer :: FFT_pts, ntr, ier, is, ktr, Ptg_i
+d425 1
+a425 1
+
+d574 5
+d712 14
+a725 1
+      END IF
+a738 7
+
+
+
+
+
+
+
+@
+
+
+1.21
+log
+@*** empty log message ***
+@
+text
+@d176 1
+a176 1
+      REAL(r8) :: phi_tan, h_obs, Rs_eq, elev_offset
+d296 2
+a297 1
+      REAL(r8) :: ZZT(NT)
+d356 4
+a359 1
+      ! DEFINE INTERNAL TANGENT PRESSURES 
+d361 2
+d364 3
+a366 3
+        ZZT1(I)=YZ(I*8)
+        ZPT1(I)=YP(I*8)
+        ZTT1(I)=YT(I*8)
+d368 12
+a379 1
+ 
+a558 1
+
+d567 2
+d574 7
+a580 1
+            schi = (ZZT1(I) + RE) / Rs_eq
+d587 1
+d589 4
+d594 2
+a595 2
+!	 center_angle = ptg_angle(1)
+	 center_angle = Asin(RE/Rs_eq)        ! ptg_angle for zero tangent height
+d645 4
+d691 2
+d694 1
+a694 1
+!         CALL INTERPOLATEVALUES(ZZT1,TT0(:,NZmodel),ZZT,TB0(:,IFR),method='Linear')
+d697 4
+a700 2
+!         CALL INTERPOLATEVALUES(ZZT1,TT(:,NZmodel)-TT0(:,NZmodel),ZZT,DTcir(:,IFR), &
+!              &                 method='Linear')
+@
+
+
+1.20
+log
+@*** empty log message ***
+@
+text
+@d355 1
+a356 1
+
+d362 1
+a362 1
+     
+d548 2
+a549 2
+!	 Rs_eq = h_obs + 38.9014 * Sin(2.0*(phi_tan - 51.6814 * deg2rad)) 
+	 Rs_eq = h_obs
+d565 2
+a566 1
+	 center_angle = ptg_angle(1)
+d583 1
+a583 1
+         fft_angles(1:Multi) = ptg_angle(1:Multi)             ! Multi = No. of tangent heights
+@
+
+
+1.19
+log
+@*** empty log message ***
+@
+text
+@d543 1
+a543 1
+         IF (IFOV .EQ. 1) THEN       ! BEGIN FOV AVERAGING
+d623 2
+a624 1
+ 
+d651 1
+a651 1
+         END IF     ! END FOV AVERAGING
+@
+
+
+1.18
+log
+@Added FOV average, Jonathan
+@
+text
+@d4 1
+a4 1
+             &   WCin, IPSDin, ZT, RE, ISURF, ISWI, ICON,         &
+d160 4
+d406 2
+a407 2
+       DO 2000 IFR=1, NF
+       IF ( doChannel(IFR) ) then
+d542 2
+d649 2
+@
+
+
+1.17
+log
+@*** empty log message ***
+@
+text
+@d4 2
+a5 2
+             &   WCin, IPSDin,                                    &
+             &   ZT, RE, ISURF, ISWI, ICON,                       &
+d112 5
+d172 2
+d234 1
+a234 1
+      REAL(r8) :: TT(NZmodel/8,NZmodel)             ! CLOUDY-SKY TB AT TANGENT 
+d237 1
+a237 1
+      REAL(r8) :: TT0(NZmodel/8,NZmodel)            ! CLEAR-SKY TB AT TANGENT
+d293 1
+a293 1
+      REAL(r8) :: ZZT1(NZmodel/8-1)            ! ZT LEVEL FOR CALCULATION 
+d297 18
+d355 2
+d411 1
+a411 1
+!-----------------------------------------------------
+d413 5
+a417 7
+!-----------------------------------------------------
+! ==============================================================================
+! My original intention is that ICON=0 is Clear-Sky only 
+!                               ICON=1 is for 100%RH inside and below Cloud
+!                               ICON=2 is default for 100%RH inside cloud ONLY
+!                               ICON=3 is for near-side cloud only 
+! ==============================================================================
+d530 1
+a530 1
+        IF(ICON .GE. 1) THEN                               
+d538 106
+d649 1
+a649 1
+         CALL INTERPOLATEVALUES(ZZT1,TT0(:,NZmodel),ZZT,TB0(:,IFR),method='Linear')
+d652 2
+a653 1
+         CALL INTERPOLATEVALUES(ZZT1,TT(:,NZmodel)-TT0(:,NZmodel),ZZT,DTcir(:,IFR),method='Linear')
+a659 1
+
+d674 4
+@
+
+
+1.16
+log
+@*** empty log message ***
+@
+text
+@d518 1
+a518 1
+            CALL INTERPOLATEVALUES(ZZT1,TT0(:,NZmodel),ZZT,TB0(:,IFR),method='Linear')
+d521 1
+a521 1
+            CALL INTERPOLATEVALUES(ZZT1,TT(:,NZmodel)-TT0(:,NZmodel),ZZT,DTcir(:,IFR),method='Linear')
+@
+
+
+1.15
+log
+@*** empty log message ***
+@
+text
+@d151 1
+a151 2
+                                               ! 1 = CLEAR-SKY, 100% R.H. 
+                                               !     BELOW 100hPa
+d388 4
+a391 4
+! my original intention is that ICON=0 is Clear-Sky only
+!                               ICON=1 is Clear-Sky but 100RH below 100mb
+!                               ICON=2 is default for both cloudy and clear-sky
+!                                         calculations
+d397 1
+a397 1
+         DO IL=1, NZmodel-1                   ! 100% SATURATION INSIDE CLOUD 
+d399 5
+a403 5
+               ICLD_TOP=IL
+               IF(YZ(IL) .LT. 20.)THEN
+                  TAU0(IL)=TAU100(IL)
+                  I100_TOP=IL 
+               ENDIF
+d408 2
+a409 2
+            DO IL=1,ICLD_TOP                  ! 100% SATURATION BELOW CLOUD 
+               TAU0(IL)=TAU100(IL)       
+d413 3
+a415 3
+         DO IL=1,MAX(ICLD_TOP,I100_TOP)             ! 100% SATURATION BELOW CLOUD 
+              delTAU100(IL)=TAU100(IL)      
+         ENDDO
+d417 1
+a417 1
+!--------------------------------------------------------
+d419 1
+a419 1
+         DO 1000 ILYR=1, NZmodel-1        ! START OF MODEL LAYER LOOP:   
+d421 1
+a421 1
+            RC0(1)=TAU0(ILYR)/Z(ILYR)     ! GAS ABSORPTION COEFFICIENT
+d423 1
+a423 1
+            RC0(3)=RC0(1)                 ! CLEAR-SKY EXTINCTION COEFFICIENT
+d499 1
+a499 1
+!         CALL HEADER(4)
+d505 1
+a505 1
+        IF(ICON .GT. 1) THEN                               
+@
+
+
+1.14
+log
+@*** empty log message ***
+@
+text
+@a384 2
+!         print*, tau0
+!         stop
+d388 1
+a388 4
+!         print*, chk_cld
+!         stop
+
+! =========================================================================
+d391 3
+a393 3
+!                               ICON=2 is default cloudy and clear-sky
+!                                      calculations
+! =========================================================================
+d396 10
+a405 4
+         DO IL=1, NZmodel-1 
+            IF(CHK_CLD(IL) .NE. 0._r8) ICLD_TOP=IL
+!            IF(YP(IL) .LE. 100._r8) I100_TOP=IL  !this is wrong
+            IF(YP(IL) .GE. 100._r8) I100_TOP=IL   !this is right
+d408 3
+a410 3
+         IF (ICON .GE. 1) THEN
+            DO IL=1,MAX(ICLD_TOP,I100_TOP)          ! 100% SATURATION BELOW CLOUD 
+               TAU0(IL)=TAU100(IL)      
+d415 1
+a415 1
+            delTAU100(IL)=TAU100(IL)      
+a417 3
+!         print*, tau0
+!         stop
+
+a457 2
+!                  write(11,*) 'cloud'
+!                  write(11,*) ISPI,CWC,TEMP(ILYR),FREQUENCY(IFR)
+a462 2
+!                  write(11,*) PH1,NAB,P,DP,NR,R,RN,BC,A,B,NABR
+
+a504 3
+
+!         print*, tt0
+!         stop
+@
+
+
+1.13
+log
+@*** empty log message ***
+@
+text
+@d2 1
+a2 1
+             &   NZmodel,   &
+d306 1
+a306 1
+!      CALL HEADER(1)
+d383 1
+a383 1
+!         CALL HEADER(3)
+d385 2
+d390 9
+d403 2
+a404 1
+            IF(YP(IL) .LE. 100._r8) I100_TOP=IL
+d416 4
+d512 4
+a515 1
+         IF(ICON .GT. 1) THEN                               
+@
+
+
+1.12
+log
+@*** empty log message ***
+@
+text
+@d364 1
+a364 1
+            RATIO=1.
+d420 1
+a420 1
+                  RC_TMP(ISPI,J)=0.
+d521 1
+@
+
+
+1.11
+log
+@add doChannel to frequency loop
+@
+text
+@a7 7
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm =                          &
+    "$Id: CloudForwardModel.f90,v 1.8 2001/08/02 01:03:16 dwu Exp $"
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName=                       &
+    "$RCSfile: CloudForwardModel.f90,v $"
+!---------------------------------------------------------------------------
+@
+
+
+1.10
+log
+@add doChannel to frequency loop
+@
+text
+@d8 7
+@
+
+
+1.9
+log
+@add delTau100
+@
+text
+@d1 2
+a2 1
+      SUBROUTINE CloudForwardModel (NF, NZ, NT, NS, N, NZmodel,   &
+a119 1
+
+d121 1
+d377 1
+d520 1
+a520 1
+
+@
+
+
+1.8
+log
+@minor
+@
+text
+@d5 1
+a5 1
+             &   TB0, DTcir, BETA, BETAc, Dm, TAUeff, SS,         &
+d177 1
+d256 1
+d272 2
+a273 1
+      INTEGER :: ICLD_TOP
+d305 1
+a305 2
+      CALL HEADER(1)
+      RE = 6370000._r8
+d381 1
+a381 1
+         CALL HEADER(3)
+d387 4
+a390 7
+         DO IL=1, NZmodel-1                   ! 100% SATURATION INSIDE CLOUD 
+            IF(CHK_CLD(IL) .NE. 0._r8)THEN
+               ICLD_TOP=IL
+               IF(YZ(IL) .LT. 20.)THEN
+                  TAU0(IL)=TAU100(IL)
+               ENDIF
+            ENDIF
+d393 3
+a395 3
+         IF (ICON .EQ. 1) THEN
+            DO IL=1,ICLD_TOP             ! 100% SATURATION BELOW CLOUD 
+               TAU0(IL)=TAU100(IL)       
+d399 3
+d478 1
+d488 1
+a488 1
+         CALL HEADER(4)
+d513 2
+a514 2
+              &            delTAU,delTAUc,TAUeff(:,IFR),SS(:,IFR),               &
+              &            BETA(:,IFR), BETAc(:,IFR), DDm, Dm, Z, DZ,            &
+@
+
+
+1.7
+log
+@improved efficiency, jonathan
+@
+text
+@d493 1
+a493 1
+           CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PHH,MULTI,ZZT,W0,TAU,RS,TS,&
+a512 4
+
+
+            CALL INTERPOLATEVALUES(ZZT1,TT0(:,NZmodel),ZZT,TB0(:,IFR),method='Linear')
+            CALL INTERPOLATEVALUES(ZZT1,TT0(:,NZmodel),ZZT,TB0(:,IFR),method='Linear')
+@
+
+
+1.6
+log
+@improved efficiency, jonathan
+@
+text
+@a7 2
+          use MLSNumerics, only: INTERPOLATEVALUES
+
+d112 2
+@
+
+
+1.5
+log
+@*** empty log message ***
+@
+text
+@d8 2
+d126 1
+a126 1
+
+a172 1
+
+d226 1
+a226 1
+      REAL(r8) :: TT(NT+1,NZmodel)             ! CLOUDY-SKY TB AT TANGENT 
+d229 1
+a229 1
+      REAL(r8) :: TT0(NT+1,NZmodel)            ! CLEAR-SKY TB AT TANGENT
+d283 6
+a296 1
+
+d315 3
+a317 1
+           &           ZT,ZZT,NT) 
+d319 11
+d349 1
+a349 1
+         RATIO=1.
+d363 1
+a363 1
+            RATIO = 10.*(IIWC-1)**2*0.004+1.0E-9
+d386 1
+a386 1
+            IF(CHK_CLD(IL) .NE. 0.)THEN
+d402 1
+a402 1
+         DO 1000 ILYR=1, NZmodel-1             ! START OF MODEL LAYER LOOP:   
+d405 1
+a405 1
+            RC0(2)=0.
+d409 2
+a410 2
+               RC_TOT(J) = 0.
+               RC11(J)=0.
+d415 1
+a415 1
+                  RC(ISPI,J)=0.
+d418 1
+a418 1
+               CDEPTH(ISPI) = 0.
+d420 2
+a421 2
+                  PHH(ISPI,K,ILYR) = 0.
+                  PH0(ISPI,K,ILYR)=0.
+d423 3
+a425 3
+               DDm(ISPI,ILYR)=0.
+               W0(ISPI,ILYR)=0.
+               W00(ISPI,ILYR)=0.
+d428 1
+a428 1
+            DEPTH  = 0.
+d460 1
+a460 1
+            DO J=1,3                    ! ADD CLEAR-SKY COEFFICIENTS
+d487 1
+a487 1
+         CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PH0,NT,ZZT,W00,TAU0,RS,TS,&
+d489 1
+a489 1
+              &     UI,UA,TT0,NT,ICON,RE)                          !CLEAR-SKY
+d493 1
+a493 1
+           CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PHH,NT,ZZT,W0,TAU,RS,TS,&
+d495 1
+a495 1
+                &  UI,UA,TT,NT,ICON,RE)                            !CLOUDY-SKY
+d503 15
+a517 4
+         DO I=1,NT
+            TB0(I,IFR)=TT0(I,NZmodel)                  ! CLEAR-SKY BACKGROUND
+            DTcir(I,IFR)=TT(I,NZmodel)-TT0(I,NZmodel)  ! CLOUD-INDUCED RADIANCE
+         ENDDO
+a518 4
+         CALL SENSITIVITY (DTcir,ZZT,NT,YP,YZ,NZmodel,PRESSURE,NZ, &
+              &            delTAU,delTAUc,TAUeff,SS,               &
+              &            BETA, BETAc, DDm, Dm, Z, DZ,            &
+              &            N,NF,IFR,ISWI,RE) ! COMPUTE SENSITIVITY
+@
+
+
+1.4
+log
+@jonathan
+@
+text
+@d457 2
+a458 2
+            delTAU(ILYR) = abs(DEPTH)
+            delTAUc(ILYR)= abs(CDEPTH(1))
+@
+
+
+1.3
+log
+@First Successful f90 runs
+@
+text
+@d457 2
+a458 2
+            delTAU(ILYR) = DEPTH
+            delTAUc(ILYR)= CDEPTH(1)
+d489 4
+a492 4
+!         CALL SENSITIVITY (DTcir,ZZT,NT,YP,YZ,NZmodel,PRESSURE,NZ, &
+!              &            delTAU,delTAUc,TAUeff,SS,               &
+!              &            BETA, BETAc, DDm, Dm, Z, DZ,            &
+!              &            N,NF,IFR,ISWI,RE) ! COMPUTE SENSITIVITY
+@
+
+
+1.2
+log
+@new f90 version of cloudfwm, jonathan
+@
+text
+@d322 5
+a326 3
+      TS    = 288.
+      S     = 35.
+      SWIND = 0.
+d357 1
+a357 1
+              &         YZ,YP,YT,YQ,VMR,                        &
+d489 4
+a492 4
+         CALL SENSITIVITY (DTcir,ZZT,NT,YP,YZ,NZmodel,PRESSURE,NZ, &
+              &            delTAU,delTAUc,TAUeff,SS,               &
+              &            BETA, BETAc, DDm, Dm, Z, DZ,            &
+              &            N,NF,IFR,ISWI,RE) ! COMPUTE SENSITIVITY
+@
+
+
+1.1
+log
+@new .f90 version, jonathan
+@
+text
+@d111 1
+d118 6
+a123 6
+      INTEGER NF                               ! NUMBER OF FREQUENCIES
+      INTEGER NZ                               ! NUMBER OF PRESSURE LEVELS
+      INTEGER NT                               ! NUMBER OF TANGENT HEIGHTS
+      INTEGER NS                               ! NUMBER OF CHEMICAL SPECIES
+      INTEGER N                                ! NUMBER OF CLOUD SPECIES
+      INTEGER NZmodel                          ! NUMBER OF INTERNAL MODEL LEVELS
+d126 1
+a126 1
+      INTEGER IPSDin(NZ)                       ! SIZE-DISTRIBUTION FLAG
+d137 1
+a137 1
+      INTEGER ISURF                            ! SURFACE TYPE
+d142 1
+a142 1
+      INTEGER ISWI                             ! SENSITIVITY SWITCH
+d146 1
+a146 1
+      INTEGER ICON                             ! CONTROL SWITCH
+d153 5
+a157 5
+      REAL FREQUENCY(NF)                       ! FREQUENCIES (GHz)
+      REAL PRESSURE(NZ)                        ! PRESSURE LEVEL
+      REAL HEIGHT(NZ)                          ! PRESSURE HEIGHT
+      REAL TEMPERATURE(NZ)                     ! ATMOSPHERIC TEMPERATURE
+      REAL VMRin(NS,NZ)                        ! 1=H2O VOLUME MIXING RATIO
+d160 1
+a160 1
+      REAL WCin(N,NZ)                            ! CLOUD WATER CONTENT
+d162 2
+a163 2
+      REAL ZT(NT)                              ! TANGENT PRESSURE
+      REAL*8 RE                                ! EARTH RADIUS
+d169 2
+a170 2
+      REAL TB0(NT,NF)                          ! CLEAR-SKY TB AT ZT
+      REAL DTcir(NT,NF)                        ! CLOUD-INDUCED RADIANCE
+d172 2
+a173 2
+      REAL TAUeff(NT,NF)                       ! CLOUD EFFECTIVE OPTICAL DEPTH
+      REAL SS(NT,NF)                           ! CLOUD RADIANCE SENSITIVITY
+d176 2
+a177 2
+      REAL BETA(NZ-1,NF)                       ! TOTAL OPTICAL DEPTH
+      REAL BETAc(NZ-1,NF)                      ! CLOUDY OPTICAL DEPTH
+d179 1
+a179 1
+      REAL Dm(N,NZ-1)                          ! MASS-MEAN-DIAMETER
+d189 1
+a189 1
+      REAL PI
+d192 21
+a212 21
+      INTEGER NU                               ! NO. OF SCATTERING ANGLES
+      INTEGER NUA                              ! NO. OF SCAT. AZIMUTH ANGLES
+      INTEGER NIWC                             ! NO. OF ICE WATER CONTENTS
+
+      INTEGER NAB                              ! MAX. NO. OF 
+      INTEGER NR                               ! NUMBER OF SIZE BINS
+      INTEGER NABR(NR)                         ! TRUNCATION FOR A, B
+
+      INTEGER LORS                             ! SURFACE TYPE: LAND OR SEA
+
+      REAL U(NU)                               ! COSINE OF SCATTERING ANGLES
+      REAL DU(NU)                              ! DELTA U
+      REAL UA(NUA)                             ! COSINE OF SCAT AZIMUTH ANGLES
+      REAL THETA(NU)                           ! SCATTERING ANGLES
+      REAL PHI(NUA)                            ! SCATTERING AZIMUTH ANGLES
+      REAL UI(NU,NU,NUA)                       ! COSINE OF INCIDENT TB ANGLES
+      REAL THETAI(NU,NU,NUA)                   ! ANGLES FOR INCIDENT TB
+      REAL PHH(N,NU,NZmodel-1)                      ! PHASE FUNCTION 
+      REAL TAU(NZmodel-1)                           ! TOTAL OPTICAL DEPTH
+      REAL TAU100(NZmodel-1)                        ! TOTAL OPTICAL DEPTH AT 100%RH
+      REAL W0(N,NZmodel-1)                          ! SINGLE SCATTERING ALBEDO
+d214 10
+a223 10
+      REAL S                                   ! SALINITY
+      REAL SWIND                               ! SEA SURFACE WIND
+      REAL TS                                  ! SURFACE TEMPERATURE (K)
+      REAL RS(NU/2)                            ! SURFACE REFLECTIVITY
+      REAL RC0(3)                              ! GAS ABS.SCAT.EXT COEFFS.
+      REAL RC(N,3)                             ! CLOUD ABS.SCAT.EXT COEFFS.
+      REAL RC_TOT(3)                           ! TOTAL ABS.SCAT.EXT COEFFS.
+      REAL Z(NZmodel-1)                        ! MODEL LAYER THICKNESS (m)
+      REAL TAU0(NZmodel-1)                     ! CLEAR-SKY OPTICAL DEPTH
+      REAL TEMP(NZmodel-1)                     ! MEAN LAYER TEMPERATURE (K)
+d225 1
+a225 1
+      REAL TT(NT+1,NZmodel)                         ! CLOUDY-SKY TB AT TANGENT 
+d228 1
+a228 1
+      REAL TT0(NT+1,NZmodel)                        ! CLEAR-SKY TB AT TANGENT
+d235 1
+a235 1
+      INTEGER IPSD (NZmodel)
+d237 7
+a243 7
+      REAL WC (N,NZmodel)
+      REAL YP (NZmodel)
+      REAL YZ (NZmodel)
+      REAL YT (NZmodel)
+      REAL YQ (NZmodel)                             ! H2O VOLUME MIXING RATIO
+      REAL VMR(NS,NZmodel)                          ! 1=O3 VOLUME MIXING RATIO
+      REAL DDm(N,NZmodel)                         
+d249 3
+a251 3
+      REAL CWC                                 ! CLOUD WATER CONTENT (g/m3)
+      REAL CDEPTH(N)                           ! CLOUD OPTICAL DEPTH
+      REAL DEPTH                               ! TOTAL OPTICAL DEPTH
+d254 2
+a255 2
+      REAL delTAU(NZmodel-1)                   ! TOTAL EXTINCTION
+      REAL delTAUc(NZmodel-1)                  ! CLOUDY-SKY EXTINCTION
+d261 24
+a284 10
+      INTEGER I, J, K, IFR, ILYR, IL,ISPI,IIWC, ICLD_TOP,MY_NIWC,L
+
+      REAL HT,DMA,RATIO
+      REAL PH0(N,NU,NZmodel-1),W00(N,NZmodel-1)  
+      REAL P11(NU), RC11(3),RC_TMP(N,3)
+      REAL CHK_CLD(NZmodel)                        
+      REAL ZZT(NT)
+      REAL PH1(NU)                             ! SINGLE PARTICLE PHASE FUNCTION
+      REAL P(NAB,NU)                           ! LEGENDRE POLYNOMIALS l=1
+      REAL DP(NAB,NU)                          ! Delt LEGENDRE POLYNOMIALS l=1
+d286 3
+a288 3
+      REAL R(NR)                               ! PARTICLE RADIUS
+      REAL RN(NR)                              ! NUMBER OF PARTICLES IN EACH BIN
+      REAL BC(3,NR)                            ! SINGLE PARTICLE ABS/SCAT/EXT 
+d291 2
+a292 2
+      REAL DZ(NZ-1)
+      COMPLEX A(NR,NAB),B(NR,NAB)              ! MIE COEFFICIENCIES
+d297 1
+a297 1
+      RE = 6370.D3
+d307 1
+a307 1
+           &                WCin,IPSDin,                            &
+d310 1
+d408 1
+a408 1
+            CWC = 1.E-9
+d414 1
+a414 1
+                  CWC = MAX(1.E-9,CWC)
+@
+

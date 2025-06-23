@@ -1,0 +1,202 @@
+head	2.1;
+access;
+symbols
+	V0_1:1.13;
+locks; strict;
+comment	@# @;
+
+
+2.1
+date	2000.11.15.02.09.08;	author vsnyder;	state dead;
+branches;
+next	2.0;
+
+2.0
+date	2000.09.05.17.41.07;	author dcuddy;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2000.06.30.22.55.24;	author lungu;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	99.11.04.02.46.22;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.1
+log
+@Replaced by Makefile.inc and a Makefile in each compiler/platform directory
+@
+text
+@# $Id: make.inc,v 2.0 2000/09/05 17:41:07 dcuddy Exp $
+#
+# This is an include file for makefiles that is intended to be as
+# platform independent as possible.  Where things are platform dependent,
+# an if statement is used.
+#
+F90=f95
+#
+# First define some suffix rules
+#
+.SUFFIXES: .o .dbg.o .f90
+.f90.o:
+	${F90} ${F90FLAGS}${INCLUDEPATHPREFIX}  ${MODULEPATHPREFIX}${MODULEPATH} -c -C -g  -mismatch $<
+
+.f90.dbg.o:
+	${F90} ${F90DEBUGFLAGS} ${MODULEPATHPREFIX}${MODULEPATH} ${INCLUDEPATHPREFIX} \
+		-c -g $*.dbg.o $<
+#
+# Now include the nasty platform dependent stuff
+#
+ostype = $(OSTYPE)
+#
+# Check for Solaris OS which is the same as SunOS
+#
+ifeq ($(ostype),solaris)
+ostype = SunOS
+endif
+
+# First the linux dependent stuff, this assumes absoft Fortran for the moment
+#
+ifeq ($(ostype),linux)
+MODULEPATHPREFIX=-p
+F90DEBUGFLAGS=-g
+INCLUDEPATHPREFIX=-I/software/SRC/TOOLKIT-5.2.6v1.00.NAG/include
+endif
+#
+ifeq ($(ostype),IRIX)
+MODULEPATHPREFIX=-I
+F90DEBUGFLAGS=-g -C
+INCLUDEPATHPREFIX=-I/software/SRC/TOOLKIT-5.2.6v1.00.NAG/include
+endif
+#
+ifeq ($(ostype),IRIX64)
+MODULEPATHPREFIX=-I
+F90DEBUGFLAGS=-g -C
+INCLUDEPATHPREFIX=-I/software/SRC/TOOLKIT-5.2.6v1.00.NAG/include
+endif
+#
+ifeq ($(ostype),SunOS)
+MODULEPATHPREFIX=-I
+INCLUDEPATHPREFIX=-I/software/SRC/TOOLKIT-5.2.6v1.00.NAG/include
+F90FLAGS=-g 
+F90DEBUGFLAGS=-g
+endif
+
+#
+# $Log: make.inc,v $
+# Revision 2.0  2000/09/05 17:41:07  dcuddy
+# Change revision to 2.0
+#
+# Revision 1.13  2000/06/30 22:55:24  lungu
+# updated for NAG.
+#
+# Revision 1.12  2000/06/20 00:01:20  lungu
+# Added include files path /usr/local/TOOLKIT/include.
+#
+# Revision 1.11  2000/05/18 00:12:06  lungu
+# added INCLUDEPATHPREFIX=-I/usr/local/TOOLKIT/include
+#
+# Revision 1.10  2000/05/17 19:38:52  livesey
+# Added IRIX64 option for abacus.
+#
+# Revision 1.9  2000/02/23 20:34:16  perun
+# Changed .o_debug to .dbg.o for SunOS
+#
+# Revision 1.8  2000/02/22 19:12:45  perun
+# Added F90FLAGS for SunOS
+#
+# Revision 1.7  2000/01/18 15:19:04  perun
+# Make solaris same as SunOS
+#
+# Revision 1.6  1999/12/02 01:56:11  livesey
+# Changed filenames to mixed case, redid makefiles.
+#
+# Revision 1.5  1999/11/04 23:31:27  livesey
+# Made the SunOS stuff correct!
+#
+# Revision 1.4  1999/11/04 23:29:56  livesey
+# Added the stuff for SunOS
+#
+# Revision 1.3  1999/11/04 03:06:49  livesey
+# Got the make stuff working I think
+#
+# Revision 1.2  1999/11/04 02:51:15  livesey
+# Fixed bug
+#
+# Revision 1.1  1999/11/04 02:46:22  livesey
+# Added make.inc
+#
+#
+@
+
+
+2.0
+log
+@Change revision to 2.0
+@
+text
+@d1 1
+a1 1
+# $Id: make.inc,v 1.13 2000/06/30 22:55:24 lungu Exp $
+d58 3
+@
+
+
+1.13
+log
+@updated for NAG.
+@
+text
+@d1 1
+a1 1
+# $Id: make.inc,v 1.13 2000/06/30 22:55:24 lungu Exp $
+d58 3
+@
+
+
+1.1
+log
+@Added make.inc
+@
+text
+@d1 1
+a1 1
+# $Id: make.inc,v 1.1 1999/11/04 02:46:22 livesey Exp $
+d7 1
+a7 1
+F90=f90
+d9 3
+a11 1
+.SUFFIXES: .o .o_debug .f90
+d13 1
+a13 1
+	${F90} ${F90FLAGS} ${MODULEPATHPREFIX}${MODULEPATH} -c $<
+d15 3
+a17 3
+.f90.o_debug:
+	${F90} ${F90DEBUGFLAGS} ${MODULEPATHPREFIX}${MODULEPATH} \
+		-c -o $*.o_debug $<
+d21 8
+d31 16
+a46 2
+ifeq (${OSTYPE},linux)
+	MODULEPATHPREFIX=-p
+d49 5
+a53 2
+ifeq (${OSTYPE},IRIX)
+	MODULEPATHPREFIX=-I
+d55 1
+d58 36
+a97 1
+
+@
+

@@ -1,0 +1,2588 @@
+head	1.54;
+access;
+symbols
+	v5-02-NRT-19:1.54
+	v6-00:1.54
+	v5-02-NRT-18:1.54
+	v5-02:1.44
+	v5-01-NRT-17:1.54
+	v5-01-NRT-16:1.54
+	v5-01-NRT-15:1.53
+	v5-01-NRT-14:1.53
+	neuralnetworks-1-0:1.52.0.4
+	cfm-single-freq-0-1:1.52.0.2
+	v5-01:1.44
+	v5-00:1.44
+	v4-23-TA133:1.35.0.2
+	mus-emls-1-70:1.33.0.2
+	rel-1-0-englocks-work:1.31.0.2
+	VUMLS1-00:1.25
+	VPL1-00:1.23
+	V4-22-NRT-08:1.21
+	VAM1-00:1.18
+	V4-21:1.16.0.2
+	V4-13:1.16
+	V4-12:1.16
+	V4-11:1.16
+	V4-10:1.12
+	M4-00:1.2;
+locks; strict;
+comment	@ * @;
+
+
+1.54
+date	2022.02.15.00.35.43;	author pwagner;	state Exp;
+branches;
+next	1.53;
+
+1.53
+date	2021.04.21.23.49.35;	author pwagner;	state Exp;
+branches;
+next	1.52;
+
+1.52
+date	2020.06.10.21.01.51;	author pwagner;	state Exp;
+branches;
+next	1.51;
+
+1.51
+date	2020.04.21.23.14.08;	author pwagner;	state Exp;
+branches;
+next	1.50;
+
+1.50
+date	2020.04.21.00.07.27;	author pwagner;	state Exp;
+branches;
+next	1.49;
+
+1.49
+date	2020.01.15.00.23.38;	author pwagner;	state Exp;
+branches;
+next	1.48;
+
+1.48
+date	2020.01.09.21.15.36;	author pwagner;	state Exp;
+branches;
+next	1.47;
+
+1.47
+date	2019.12.23.18.09.34;	author pwagner;	state Exp;
+branches;
+next	1.46;
+
+1.46
+date	2019.12.20.21.16.59;	author pwagner;	state Exp;
+branches;
+next	1.45;
+
+1.45
+date	2019.09.27.17.40.49;	author pwagner;	state Exp;
+branches;
+next	1.44;
+
+1.44
+date	2019.09.24.18.04.39;	author pwagner;	state Exp;
+branches;
+next	1.43;
+
+1.43
+date	2019.09.19.22.19.57;	author pwagner;	state Exp;
+branches;
+next	1.42;
+
+1.42
+date	2019.09.19.16.08.12;	author pwagner;	state Exp;
+branches;
+next	1.41;
+
+1.41
+date	2019.09.11.16.45.39;	author pwagner;	state Exp;
+branches;
+next	1.40;
+
+1.40
+date	2019.09.10.17.37.47;	author pwagner;	state Exp;
+branches;
+next	1.39;
+
+1.39
+date	2019.06.18.23.37.22;	author pwagner;	state Exp;
+branches;
+next	1.38;
+
+1.38
+date	2019.06.18.20.26.51;	author pwagner;	state Exp;
+branches;
+next	1.37;
+
+1.37
+date	2019.05.31.20.07.51;	author pwagner;	state Exp;
+branches;
+next	1.36;
+
+1.36
+date	2019.05.31.17.19.10;	author pwagner;	state Exp;
+branches;
+next	1.35;
+
+1.35
+date	2018.11.30.22.31.43;	author pwagner;	state Exp;
+branches;
+next	1.34;
+
+1.34
+date	2018.07.27.00.21.02;	author pwagner;	state Exp;
+branches;
+next	1.33;
+
+1.33
+date	2018.07.11.16.46.07;	author pwagner;	state Exp;
+branches;
+next	1.32;
+
+1.32
+date	2018.06.04.23.04.05;	author pwagner;	state Exp;
+branches;
+next	1.31;
+
+1.31
+date	2017.10.20.18.16.27;	author pwagner;	state Exp;
+branches;
+next	1.30;
+
+1.30
+date	2017.10.13.16.33.48;	author pwagner;	state Exp;
+branches;
+next	1.29;
+
+1.29
+date	2017.09.25.23.20.15;	author pwagner;	state Exp;
+branches;
+next	1.28;
+
+1.28
+date	2017.09.22.17.58.52;	author pwagner;	state Exp;
+branches;
+next	1.27;
+
+1.27
+date	2017.09.06.18.59.05;	author pwagner;	state Exp;
+branches;
+next	1.26;
+
+1.26
+date	2017.03.28.23.58.10;	author pwagner;	state Exp;
+branches;
+next	1.25;
+
+1.25
+date	2017.03.08.00.11.55;	author pwagner;	state Exp;
+branches;
+next	1.24;
+
+1.24
+date	2016.11.04.23.26.58;	author pwagner;	state Exp;
+branches;
+next	1.23;
+
+1.23
+date	2016.06.08.00.00.41;	author pwagner;	state Exp;
+branches;
+next	1.22;
+
+1.22
+date	2016.05.31.23.41.16;	author pwagner;	state Exp;
+branches;
+next	1.21;
+
+1.21
+date	2016.04.06.22.15.21;	author pwagner;	state Exp;
+branches;
+next	1.20;
+
+1.20
+date	2016.03.15.18.38.22;	author pwagner;	state Exp;
+branches;
+next	1.19;
+
+1.19
+date	2015.11.18.17.45.06;	author pwagner;	state Exp;
+branches;
+next	1.18;
+
+1.18
+date	2015.09.18.23.38.34;	author pwagner;	state Exp;
+branches;
+next	1.17;
+
+1.17
+date	2015.04.23.17.51.38;	author whdaffer;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2014.06.16.20.27.21;	author pwagner;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2014.05.24.00.23.52;	author vsnyder;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2014.05.22.01.18.44;	author vsnyder;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2014.05.20.23.41.29;	author vsnyder;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2014.02.21.22.32.28;	author pwagner;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2014.01.29.21.03.41;	author pwagner;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2014.01.24.00.58.08;	author pwagner;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2014.01.22.18.22.15;	author pwagner;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2014.01.18.00.56.45;	author pwagner;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2014.01.15.19.12.19;	author pwagner;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2013.12.03.00.03.29;	author pwagner;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2013.10.28.23.12.17;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2013.08.28.00.39.46;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2013.06.12.18.18.04;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2012.04.20.00.43.26;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2012.04.04.00.45.40;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.54
+log
+@Uses MF and GFTOPK variables
+@
+text
+@#	Makefile.h
+# An include file for all mainline Makefiles
+# We assemble here all the dependencies, including hierarchical ones,
+# to avoid having to repeat them when, e.g., building in l2 what
+# we already had to say about when and how to build ib lib
+#
+# Copyright 2012, by the California Institute of Technology. ALL
+# RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+# commercial use must be negotiated with the Office of Technology Transfer
+# at the California Institute of Technology.
+
+# This software may be subject to U.S. export control laws. By accepting this
+# software, the user agrees to comply with all applicable U.S. export laws and
+# regulations. User has the responsibility to obtain export licenses, or other
+# export authority as may be required before exporting such information to
+# foreign countries or providing access to foreign persons.
+
+# "$Id: Makefile.h,v 1.53 2021/04/21 23:49:35 pwagner Exp $"
+
+# What is your preferred language?
+# Choose one of Eng, Es, Fr, De, It
+PREFERREDLANG=Eng
+
+# Oh, man do we really need this? Only if lit_names.txt has changed
+EVERY_MLSCONFG = $(shell ${REECHO} -d -dirn $(CONFDIR)/lib/machines -excl CVS -excl NAG.nogc)
+
+# Two useful utilities
+$(INSTALLDIR)/init_gen: $(UTILDIR)/init_gen.f90
+	$(UTILDIR)/build_f90_in_misc.sh -p init_gen \
+	-d $(INSTALLDIR) -t $(TESTSDIR) -M $(MAKE) \
+	-C $(MLSCFILE) \
+   $(UTILDIR)/init_gen.f90
+$(INSTALLDIR)/lr: $(UTILDIR)/lr/*.f90
+	$(UTILDIR)/build_f90_in_misc.sh -d $(INSTALLDIR) -t $(TESTSDIR) \
+	-c $(MLSCONFG) -p lr -M $(MAKE) -O short_name=lr_custom -m lib \
+	-C $(MLSCFILE) \
+        $(UTILDIR)/lr/*.[Ff]9[0h] $(UTILDIR)/lr/*.grm \
+        $(CONFDIR)/lib/symbol_table.f90 $(CONFDIR)/lib/tree.f90
+
+# Used only by wvs-149.tex
+$(INSTALLDIR)/wvs-149: $(DOCDIR)/*.f90 $(DOCDIR)/Math77/*.f
+	$(UTILDIR)/build_f90_in_misc.sh -d $(INSTALLDIR) -t $(TESTSDIR) \
+	-c $(MLSCONFG) -p wvs-149 -M $(MAKE)  \
+	-C $(MLSCFILE) \
+        $(DOCDIR)/wvs-149.f90 $(DOCDIR)/Math77/*.f
+
+ifneq ($(short_name),doc)
+ifndef CASCADE
+#	l1
+
+CalibWeightsFlags.o: calibweightsflags.mod
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+          -T CalibWeightsFlags.o calibweightsflags.mod
+calibweightsflags.mod:
+	$(UTILDIR)/newAifBdiff.sh -a calibweightsflags.mod $(FC) -c $(BUGGY) \
+          $(INC_PATHS) $(S)/CalibWeightsFlags.f90 $(FAFTER)
+EngTbls.o: engtbls.mod
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+          -T EngTbls.o engtbls.mod 
+engtbls.mod:
+	$(UTILDIR)/newAifBdiff.sh -a engtbls.mod $(FC) -c $(DUSTIER) \
+          $(INC_PATHS) $(S)/EngTbls.f90 $(FAFTER)
+L1LogUtils.o: l1logutils.mod
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+          -T L1LogUtils.o l1logutils.mod
+l1logutils.mod:
+	$(UTILDIR)/newAifBdiff.sh -a l1logutils.mod $(FC) -c $(BUGGY) \
+          $(INC_PATHS) $(S)/L1LogUtils.f90 $(FAFTER)
+OutputL1B.o: outputl1b.mod
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+          -T OutputL1B.o outputl1b.mod 
+outputl1b.mod:
+	$(UTILDIR)/newAifBdiff.sh -a outputl1b.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/OutputL1B.f90 $(FAFTER)
+OutputL1B_HDF4.o: outputl1b_hdf4.mod
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+          -T OutputL1B_HDF4.o outputl1b_hdf4.mod 
+outputl1b_hdf4.mod:
+	$(UTILDIR)/newAifBdiff.sh -a outputl1b_hdf4.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/OutputL1B_HDF4.f90 $(FAFTER)
+parser_tables_l2cf.mod: Parser_Tables_L2CF.f90 Parser_L2CF.f9h
+	$(UTILDIR)/newAifBdiff.sh -a parser_tables_l2cf.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(srclib)/Parser_Tables_L2CF.f90 $(FAFTER)
+
+Parser_L2CF.f9h $(srclib)/Parser_L2CF.f9h: $(UTILDIR)/lr/l2cf.grm $(INSTALLDIR)/lr
+	$(INSTALLDIR)/lr \
+          $(UTILDIR)/lr/l2cf.grm \
+          $(srclib)/Parser_L2CF.f9h $(UTILDIR)/lr/l2cf.lls $(LRAFTER)
+Parser_Tables_L2CF.o: Parser_Tables_L2CF.f90 Parser_L2CF.f9h
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+          -T Parser_Tables_L2CF.o parser_tables_l2cf.mod 
+tree_checker.mod: tree_checker.f90 init_tables_module.mod
+	$(UTILDIR)/newAifBdiff.sh -a tree_checker.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(srclib)/tree_checker.f90 $(FAFTER)
+tree_checker.o: tree_checker.mod tree_checker.f90
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+          -T tree_checker.o tree_checker.mod 
+
+# l2
+# This keeps switch_usage up-to-date with notes/switches
+# (and similarly for options)
+MLSL2.o: $(CONFDIR)/notes/switches $(CONFDIR)/notes/options $(S)/MLSL2.f90
+	@@rm -f MLSL2.f90 part_1 part_2 part_3 ; \
+	sed -n '1,/=== (start of automatic usage lines) ===/ p' $(S)/MLSL2.f90 > part_1 ; \
+	sed -n '/=== (end of automatic usage lines) ===/,$$ p' $(S)/MLSL2.f90 > part_3 ; \
+	sed -n '/mlsl2 =========/,/mlsl2 ========/p' $(CONFDIR)/notes/switches > part_2 ; \
+	sed '1 d; $$ d' part_2 > MLSL2.f90 ; \
+	mv MLSL2.f90 part_2 ; \
+	sed -n -f $(CONFDIR)/notes/switch_usage.sed part_2 > MLSL2.f90 ; \
+	mv MLSL2.f90 part_2 ; \
+	cat part_1 part_2 part_3 > MLSL2.f90 ; \
+	rm -f part_1 part_2 part_3 ; \
+	sed -n '1,/=== (start of automatic option lines) ===/ p' MLSL2.f90 > part_1 ; \
+	sed -n '/=== (end of automatic option lines) ===/,$$ p' MLSL2.f90 > part_3 ; \
+	sed -n '/mlsl2 =========/,/mlsl2 ========/p' $(CONFDIR)/notes/options > part_2 ; \
+	sed '1 d; $$ d' part_2 > MLSL2.f90 ; \
+	mv MLSL2.f90 part_2 ; \
+	sed -n -f $(CONFDIR)/notes/switch_usage.sed part_2 > MLSL2.f90 ; \
+	mv MLSL2.f90 part_2 ; \
+	cat part_1 part_2 part_3 > MLSL2.f90
+	$(FC) -c $(FOPTS) $(INC_PATHS) MLSL2.f90 $(FAFTER)
+	rm -f MLSL2.f90 part_1 part_2 part_3
+
+#tree_checker.mod: init_tables_module.mod
+#	$(UTILDIR)/newAifBdiff.sh -a tree_checker.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(srclib)/tree_checker.f90 $(FAFTER)
+
+ifeq ($(short_name),l2)
+# This uses the utility program init_gen to create two
+# up-to-date prereqs for init_tables_module
+$(S)/field_parm.f9h $(S)/field_add.f9h: $(S)/field_names.txt $(INSTALLDIR)/init_gen
+	sort -f -u $(S)/field_names.txt | $(INSTALLDIR)/init_gen \
+          -f"last_Spectroscopy_Field + 1" -l field_last -pF_ \
+          -j field_names.txt \
+          $(S)/field_parm.f9h $(S)/field_add.f9h field_indices
+
+$(S)/lit_parm.f9h $(S)/lit_add.f9h: $(S)/lit_names.txt $(INSTALLDIR)/init_gen
+	sort -f -u $(S)/lit_names.txt | $(INSTALLDIR)/init_gen \
+          -f"last_Spectroscopy_Lit + 1" -l last_lit -pl_ \
+          -j lit_names.txt \
+          $(S)/lit_parm.f9h $(S)/lit_add.f9h lit_indices
+
+init_tables_module.mod init_tables_module.o: $(CONFDIR)/lib/lit_add.f9h \
+        $(CONFDIR)/lib/lit_parm.f9h
+endif # short_name == l2
+
+#	l3
+
+l2interface.mod:
+	$(UTILDIR)/newAifBdiff.sh -a l2interface.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L2Interface.f90 $(FAFTER)
+L2Interface.o: l2interface.mod
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T L2Interface.o l2interface.mod 
+l3dmdata.mod:
+	$(UTILDIR)/newAifBdiff.sh -a l3dmdata.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DMData.f90 $(FAFTER)
+L3DMData.o: l3dmdata.mod
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T L3DMData.o l3dmdata.mod 
+#tree_checker.mod: init_tables_module.mod
+#	$(UTILDIR)/newAifBdiff.sh -a tree_checker.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(srclib)/tree_checker.f90 $(FAFTER)
+getcf_m.mod: init_tables_module.mod tree_checker.mod
+	$(UTILDIR)/newAifBdiff.sh -a getcf_m.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(srclib)/getCF_m.f90 $(FAFTER)
+getCF_m.o: getcf_m.mod
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T getCF_m.o getcf_m.mod 
+
+#  l3m
+l3dzdata.mod:
+	$(UTILDIR)/newAifBdiff.sh -a l3dzdata.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DZData.f90 $(FAFTER)
+L3DZData.o: l3dzdata.mod
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T L3DZData.o l3dzdata.mod 
+
+l3mzdata.mod:
+	$(UTILDIR)/newAifBdiff.sh -a l3mzdata.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3MZData.f90 $(FAFTER)
+L3MZData.o: l3mzdata.mod
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T L3MZData.o l3mzdata.mod 
+
+l3mmdata.mod:
+	$(UTILDIR)/newAifBdiff.sh -a l3mmdata.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3MMData.f90 $(FAFTER)
+L3MMData.o: l3mmdata.mod
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T L3MMData.o l3mmdata.mod 
+
+# lib
+
+ifeq ($(short_name),lib)
+# This uses the utility program init_gen to create two
+# up-to-date prereqs for intrinsic
+# Due to a strange error in level 2, we also create a sentinel file, 
+# new_lit_names.txt
+# whose existence will be detected later in l2 to trigger linking mlsl2 twice
+# We must copy that sentienel file to each MLSCONFG
+# because oherwise the .f9h will be already up-to-date and so no sentinel
+# file will becreated if you change one MLSCONFG for another
+$(S)/lit_parm.f9h $(S)/lit_add.f9h: $(S)/lit_names.txt $(INSTALLDIR)/init_gen
+	sort -f -u $(S)/lit_names.txt | $(INSTALLDIR)/init_gen \
+          -l last_intrinsic_lit -pl_ \
+          -j lit_names.txt \
+          $(S)/lit_parm.f9h $(S)/lit_add.f9h lit_indices
+	echo "new lit_names" > new_lit_names.txt
+	@@for dir in $(EVERY_MLSCONFG); do \
+          if [ -d ../$$dir ]; then \
+            cp new_lit_names.txt ../$$dir 2>/dev/null; \
+          fi; \
+        done
+
+$(S)/mol_parm.f9h $(S)/mol_add.f9h: $(TABLES_DIR)/sps_cross_ref_table.txt $(INSTALLDIR)/init_gen
+	sed -n '/---\*/,$$ p' $(TABLES_DIR)/sps_cross_ref_table.txt | sed '1 d' | \
+          sed '/H2O_R/ d' | awk ' {print $$2}' | sort -f -u| \
+          $(INSTALLDIR)/init_gen \
+          -f "last_rxx_molecule+1" -l last_molecule -pl_ \
+          -j sps_cross_ref_table.txt \
+          $(S)/mol_parm.f9h $(S)/mol_add.f9h lit_indices
+
+machine.mod: $(MACH_DIR)/machine.f90
+	rm -f machine.f90 ; \
+	sed '/Start $(BAD_MATCH)/,/End $(BAD_MATCH)/ d' $(MACH_DIR)/machine.f90 \
+     > machine.f90
+	$(UTILDIR)/newAifBdiff.sh -a machine.mod $(FC) -c $(FOPTS) $(INC_PATHS) machine.f90 $(FAFTER)
+	rm -f machine.f90
+machine.o: machine.mod $(MACH_DIR)/machine.f90
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T machine.o machine.mod 
+
+ieee_arithmetic.o: ieee_arithmetic.mod ieee_arithmetic.f90
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t -T ieee_arithmetic.o ieee_arithmetic.mod
+ieee_arithmetic.mod: ieee_arithmetic.f90
+	$(UTILDIR)/newAifBdiff.sh -a ieee_arithmetic.mod $(FC) -c $(FOPTS) $(INC_PATHS) $(MACH_DIR)/ieee_arithmetic.f90 $(FAFTER)
+
+
+intrinsic.o: $(S)/lit_parm.f9h $(S)/lit_add.f9h
+
+dates_module.o: $(S)/DayMonthNames.f9h $(S)/LeapSecDates.f9h
+
+$(S)/DayMonthNames.f9h: $(S)/DayMonthNames_${PREFERREDLANG}.f9h
+	cp -a $(S)/DayMonthNames_${PREFERREDLANG}.f9h $(S)/DayMonthNames.f9h
+
+NUMDATES := $(shell sed -n '2,$$ p' $(PGSTK)/../../database/common/TD/leapsec.dat | wc -l)
+
+$(S)/LeapSecDates.f9h: $(PGSTK)/../../database/common/TD/leapsec.dat
+# The first and last lines are merely Fortran boiler plate.
+# The long sequence beginning with 'sed' is the real meat of the sandwich.
+#
+# Bugs and Limitations
+# (1) If the format of the toolkit's leapsec.dat file ever changes
+#     it will break spectacularly.
+# (2) If the leapsec.dat file is merely checked, its log and
+#     modification dates are updated and so make must rebuild LeapSecDates.f9h
+#     We could ameliorate this shortcoming if we used the script
+#     $(UTILDIR)/newAifBdiff.sh
+	echo \
+	  'character(len=*), dimension($(NUMDATES)), parameter :: LeapSecDates = (/ &' \
+	  > $(S)/LeapSecDates.f9h
+	sed -n '2,$$ p' $< | \
+	  awk '{print $$1, $$2, $$3}' | sed 's/^/    \"/' | \
+	  sed 's/$$/\", \&/' | \
+	  sed '$$ s/,//' \
+	  >> $(S)/LeapSecDates.f9h
+	echo \
+	  '    /) ' \
+	  >> $(S)/LeapSecDates.f9h
+
+endif # end short_name == lib
+
+NOUNASS := $(shell echo ${DUSTY} | sed 's/\(--chk [aesx,]*\),u\([aesx,]*\)/\1\2/')
+
+DUSTY_NO_OPT := $(shell echo ${DUSTY} | sed 's/-O[0-9]*//')
+DONT_OPT := $(shell echo ${FOPTS} | sed 's/-O[0-9]*//; a-O0')
+
+hdf.mod:
+	$(UTILDIR)/newAifBdiff.sh -a hdf.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/Hdf.f90 $(FAFTER)
+Hdf.o: hdf.mod
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T Hdf.o hdf.mod 
+string_table.mod:
+	$(UTILDIR)/newAifBdiff.sh -a string_table.mod $(FC) -c $(BUGGY) $(INC_PATHS) $(S)/string_table.f90 $(FAFTER)
+string_table.o: string_table.mod
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T string_table.o string_table.mod 
+
+# readGriddedUtils module doesn't play well with the lf95 undefined variable
+# runtime checker because of endian swapping
+readgriddedutils.mod:
+	$(UTILDIR)/newAifBdiff.sh -a readgriddedutils.mod $(FC) -c $(NOUNASS) $(INC_PATHS) $(S)/readGriddedUtils.f90 $(FAFTER)
+readGriddedUtils.o: readgriddedutils.mod
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T readGriddedUtils.o readgriddedutils.mod 
+
+else # end ifndef CASCADE
+# i.e. CASCADE IS defined
+
+#	l1
+
+CalibWeightsFlags.o: $(S)/CalibWeightsFlags.f90
+	$(FC) -c $(BUGGY) $(INC_PATHS) $(S)/CalibWeightsFlags.f90 $(FAFTER)
+EngTbls.o: $(S)/EngTbls.f90
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/EngTbls.f90 $(FAFTER)
+L1LogUtils.o: $(S)/L1LogUtils.f90
+	$(FC) -c $(BUGGY) $(INC_PATHS) $(S)/L1LogUtils.f90 $(FAFTER)
+OutputL1B.o: $(S)/OutputL1B.f90
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/OutputL1B.f90 $(FAFTER)
+OutputL1B_HDF4.o: $(S)/OutputL1B_HDF4.f90
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/OutputL1B_HDF4.f90 $(FAFTER)
+
+# l2
+# This keeps switch_usage up-to-date with notes/switches
+# (and similarly for options)
+MLSL2.o: $(CONFDIR)/notes/switches $(CONFDIR)/notes/options $(S)/MLSL2.f90
+	@@rm -f MLSL2.f90 part_1 part_2 part_3 ; \
+	sed -n '1,/=== (start of automatic usage lines) ===/ p' $(S)/MLSL2.f90 > part_1 ; \
+	sed -n '/=== (end of automatic usage lines) ===/,$$ p' $(S)/MLSL2.f90 > part_3 ; \
+	sed -n '/mlsl2 =========/,/mlsl2 ========/p' $(CONFDIR)/notes/switches > part_2 ; \
+	sed '1 d; $$ d' part_2 > MLSL2.f90 ; \
+	mv MLSL2.f90 part_2 ; \
+	sed -n -f $(CONFDIR)/notes/switch_usage.sed part_2 > MLSL2.f90 ; \
+	mv MLSL2.f90 part_2 ; \
+	cat part_1 part_2 part_3 > MLSL2.f90 ; \
+	rm -f part_1 part_2 part_3 ; \
+	sed -n '1,/=== (start of automatic option lines) ===/ p' MLSL2.f90 > part_1 ; \
+	sed -n '/=== (end of automatic option lines) ===/,$$ p' MLSL2.f90 > part_3 ; \
+	sed -n '/mlsl2 =========/,/mlsl2 ========/p' $(CONFDIR)/notes/options > part_2 ; \
+	sed '1 d; $$ d' part_2 > MLSL2.f90 ; \
+	mv MLSL2.f90 part_2 ; \
+	sed -n -f $(CONFDIR)/notes/switch_usage.sed part_2 > MLSL2.f90 ; \
+	mv MLSL2.f90 part_2 ; \
+	cat part_1 part_2 part_3 > MLSL2.f90
+	$(FC) -c $(FOPTS) $(INC_PATHS) MLSL2.f90 $(FAFTER)
+	rm -f MLSL2.f90 part_1 part_2 part_3
+
+ifeq ($(short_name),l2)
+# This uses the utility program init_gen to create two
+# up-to-date prereqs for init_tables_module
+$(S)/field_parm.f9h $(S)/field_add.f9h: $(S)/field_names.txt $(INSTALLDIR)/init_gen
+	sort -f -u $(S)/field_names.txt | $(INSTALLDIR)/init_gen \
+          -f"last_Spectroscopy_Field + 1" -l field_last -pF_ \
+          -j field_names.txt \
+          $(S)/field_parm.f9h $(S)/field_add.f9h field_indices
+
+$(S)/lit_parm.f9h $(S)/lit_add.f9h: $(S)/lit_names.txt $(INSTALLDIR)/init_gen
+	sort -f -u $(S)/lit_names.txt | $(INSTALLDIR)/init_gen \
+          -f"last_Spectroscopy_Lit + 1" -l last_lit -pl_ \
+          -j lit_names.txt \
+          $(S)/lit_parm.f9h $(S)/lit_add.f9h lit_indices
+
+init_tables_module.o: $(CONFDIR)/lib/lit_add.f9h \
+        $(CONFDIR)/lib/lit_parm.f9h
+endif # end short_name==l2
+#	l3
+
+L2Interface.o: $(S)/L2Interface.f90
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L2Interface.f90 $(FAFTER)
+L3DMData.o: $(S)/L3DMData.f90
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DMData.f90 $(FAFTER)
+L3DMDiag.o: $(S)/L3DMDiag.f90
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DMDiag.f90 $(FAFTER)
+
+#  l3m
+L3DZData.o: $(S)/L3DZData.f90
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DZData.f90 $(FAFTER)
+
+L3MZData.o: $(S)/L3MZData.f90
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3MZData.f90 $(FAFTER)
+
+L3MMData.o: $(S)/L3MMData.f90
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3MMData.f90 $(FAFTER)
+
+L3DZDiag.o: $(S)/L3DZDiag.f90
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DZDiag.f90 $(FAFTER)
+
+L3MZDiag.o: $(S)/L3MZDiag.f90
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3MZDiag.f90 $(FAFTER)
+
+L3MMDiag.o: $(S)/L3MMDiag.f90
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3MMDiag.f90 $(FAFTER)
+
+
+# Custom build commands for some modules
+
+ifeq ($(short_name),lib)
+# This uses the utility program init_gen to create two
+# up-to-date prereqs for intrinsic
+$(S)/lit_parm.f9h $(S)/lit_add.f9h: $(S)/lit_names.txt $(INSTALLDIR)/init_gen
+	sort -f -u $(S)/lit_names.txt | $(INSTALLDIR)/init_gen \
+          -l last_intrinsic_lit -pl_ \
+          -j lit_names.txt \
+          $(S)/lit_parm.f9h $(S)/lit_add.f9h lit_indices
+	echo "new lit_names" > new_lit_names.txt
+	@@for dir in $(EVERY_MLSCONFG); do \
+          if [ -d ../$$dir ]; then \
+            cp new_lit_names.txt ../$$dir 2>/dev/null; \
+          fi; \
+        done
+
+$(S)/mol_parm.f9h $(S)/mol_add.f9h: $(TABLES_DIR)/sps_cross_ref_table.txt $(INSTALLDIR)/init_gen
+	sed -n '/---\*/,$$ p' $(TABLES_DIR)/sps_cross_ref_table.txt | sed '1 d' | \
+          sed '/H2O_R/ d' | awk ' {print $$2}' | sort -f -u| \
+          $(INSTALLDIR)/init_gen \
+          -f "last_rxx_molecule+1" -l last_molecule -pl_ \
+          -j sps_cross_ref_table.txt \
+          $(S)/mol_parm.f9h $(S)/mol_add.f9h lit_indices
+
+machine.o: $(MACH_DIR)/machine.f90
+	rm -f machine.f90 ; \
+	sed '/Start $(BAD_MATCH)/,/End $(BAD_MATCH)/ d' $(MACH_DIR)/machine.f90 \
+     > machine.f90
+	$(FC) -c $(FOPTS) $(INC_PATHS) machine.f90 $(FAFTER)
+	rm -f machine.f90
+
+intrinsic.o: $(S)/lit_parm.f9h $(S)/lit_add.f9h
+
+$(srclib)/Parser_L2CF.f9h: $(UTILDIR)/lr/l2cf.grm $(INSTALLDIR)/lr
+	$(INSTALLDIR)/lr \
+          $(UTILDIR)/lr/l2cf.grm \
+          $(srclib)/Parser_L2CF.f9h $(UTILDIR)/lr/l2cf.lls $(LRAFTER)
+
+endif # end short_name == lib
+
+NOUNASS := $(shell echo ${FOPTS} | sed 's/\(--chk [aesx,]*\),u\([aesx,]*\)/\1\2/')
+
+DUSTY_NO_OPT := $(shell echo ${DUSTY} | sed 's/-O[0-9]*//')
+DONT_OPT := $(shell echo ${FOPTS} | sed 's/-O[0-9]*//; a-O0')
+
+Hdf.o:
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/Hdf.f90 $(FAFTER)
+string_table.o:
+	$(FC) -c $(BUGGY) $(INC_PATHS) $(S)/string_table.f90 $(FAFTER)
+
+# readGriddedUtils module doesn't play well with the lf95 undefined variable
+# runtime checker because of endian swapping
+readGriddedUtils.o:
+	$(FC) -c $(NOUNASS) $(INC_PATHS) $(S)/readGriddedUtils.f90 $(FAFTER)
+
+endif  # end CASCADE
+endif  # END not doc
+
+# Some custom builds for the doc subdirectory
+ifeq ($(short_name),doc)
+# graphic for wvs-010
+# Note this pattern for turning a .obj into LaTeX-useable files
+# (the same pattern will be reused often)
+# (1) an eps-type file
+sparse.eps: sparse.obj
+
+# (2) a pdf-type file
+sparse.pdf: sparse.obj
+
+wvs-010.dvi: wvs-010.tex sparse.eps
+
+wvs-010.pdf: wvs-010.tex sparse.pdf
+
+wvs-030-nearest.eps: wvs-030-nearest.obj
+
+wvs-030-nearest.pdf: wvs-030-nearest.obj
+
+wvs-030.dvi: wvs-030.tex wvs-030-nearest.eps
+
+wvs-030.pdf: wvs-030.tex wvs-030-nearest.pdf
+
+wvs-048-grid2.eps: wvs-048-grid2.obj
+
+wvs-048-grid2.pdf: wvs-048-grid2.obj
+
+wvs-048.dvi: wvs-048.tex wvs-048-grid2.eps
+
+wvs-048.pdf: wvs-048.tex wvs-048-grid2.pdf
+
+wvs-063-eq-circ.eps: wvs-063-eq-circ.obj
+
+wvs-063-eq-circ.pdf: wvs-063-eq-circ.obj
+
+wvs-063-grids_t.eps: wvs-063-grids_t.obj
+
+wvs-063-grids_t.pdf: wvs-063-grids_t.obj
+
+wvs-063-diag.eps: wvs-063-diag.obj
+
+wvs-063-diag.pdf: wvs-063-diag.obj
+
+wvs-063.dvi: wvs-063.tex wvs-063-eq-circ.eps wvs-063-grids_t.eps wvs-048-grid2.eps wvs-063-diag.eps
+
+wvs-063.pdf: wvs-063.tex wvs-063-eq-circ.pdf wvs-063-grids_t.pdf wvs-048-grid2.pdf wvs-063-diag.pdf
+
+wvs-074-scatter-1.eps: wvs-074-scatter.obj
+	tgif -print -eps -page 1 -color wvs-074-scatter.obj
+	mv wvs-074-scatter.eps wvs-074-scatter-1.eps
+
+wvs-074-scatter-2.eps: wvs-074-scatter.obj
+	tgif -print -eps -page 2 -color wvs-074-scatter.obj
+	mv wvs-074-scatter.eps wvs-074-scatter-2.eps
+
+wvs-074-scatter-1.pdf: wvs-074-scatter.obj
+	tgif -print -pdf -page 1 -color wvs-074-scatter.obj
+	mv wvs-074-scatter.pdf wvs-074-scatter-1.pdf
+
+wvs-074-scatter-2.pdf: wvs-074-scatter.obj
+	tgif -print -pdf -page 2 -color wvs-074-scatter.obj
+	mv wvs-074-scatter.pdf wvs-074-scatter-2.pdf
+
+wvs-074.dvi: wvs-074.tex wvs-074-scatter-1.eps wvs-074-scatter-2.eps
+
+wvs-074.pdf: wvs-074.tex wvs-074-scatter-1.pdf wvs-074-scatter-2.pdf
+
+wvs-083-grid.eps: wvs-083-grid.obj
+
+wvs-083-grid.pdf: wvs-083-grid.obj
+
+wvs-083.dvi: wvs-083.tex wvs-083-grid.eps
+
+wvs-083.pdf: wvs-083.tex wvs-083-grid.pdf
+
+wvs-089-pic.eps: wvs-089-pic.obj
+
+wvs-089-pic.pdf: wvs-089-pic.obj
+
+wvs-089.dvi: wvs-089.tex wvs-089-pic.eps
+
+wvs-089.pdf: wvs-089.tex wvs-089-pic.pdf
+
+wvs-095-eta.eps: wvs-095-eta.obj
+
+wvs-095-eta.pdf: wvs-095-eta.obj
+
+wvs-095.dvi: wvs-095.tex wvs-095-eta.eps
+#	$(LATEX) wvs-095
+#	$(LATEX) wvs-095
+
+wvs-095.pdf: wvs-095.tex wvs-095-eta.pdf
+#	pdf$(LATEX) wvs-095
+#	pdf$(LATEX) wvs-095
+
+wvs-111-MinLambda-not=0.eps: wvs-111-MinLambda-not=0.jpg
+
+wvs-111-MinLambda=0.eps: wvs-111-MinLambda=0.jpg
+
+wvs-111.dvi: wvs-111.tex wvs-111-MinLambda=0.eps wvs-111-MinLambda-not=0.eps
+
+wvs-111.pdf: wvs-111.tex wvs-111-MinLambda=0.eps wvs-111-MinLambda-not=0.eps
+
+wvs-126.dvi: wvs-126.tex wvs-126-1.eps
+
+wvs-126.pdf: wvs-126.tex wvs-126-1.pdf
+
+wvs-126-1.eps: wvs-126-1.obj
+
+wvs-126-1.pdf: wvs-126-1.obj
+
+wvs-128.dvi: wvs-128.tex wvs-128-QTM-2.eps wvs-128-QTM-3.eps
+
+wvs-128.pdf: wvs-128.tex wvs-128-QTM-2.pdf wvs-128-QTM-3.pdf
+
+wvs-128-QTM-2.eps: wvs-128-QTM-2.obj
+
+wvs-128-QTM-2.pdf: wvs-128-QTM-2.obj
+
+wvs-128-QTM-3.eps: wvs-128-QTM-3.obj
+
+wvs-128-QTM-3.pdf: wvs-128-QTM-3.obj
+
+wvs-133.dvi: wvs-133.tex wvs-133-fig.eps
+
+wvs-133.pdf: wvs-133.tex wvs-133-fig.pdf
+
+wvs-133-fig.eps: wvs-133-fig.obj
+
+wvs-133-fig.pdf: wvs-133-fig.obj
+
+
+wvs-134.dvi: wvs-134.tex wvs-134-1.eps
+
+wvs-134.pdf: wvs-134.tex wvs-134-1.pdf
+
+wvs-134-1.eps: wvs-134-1.obj
+
+wvs-134-1.pdf: wvs-134-1.obj
+
+wvs-136.dvi: wvs-136.tex wvs-136-lines.eps
+
+wvs-136.pdf: wvs-136.tex wvs-136-lines.pdf
+
+wvs-136-lines.eps: wvs-136-lines.obj
+
+wvs-136-lines.pdf: wvs-136-lines.obj
+
+wvs-137.dvi: wvs-137.tex wvs-137-1.eps wvs-137-2.eps wvs-137-3.eps
+
+wvs-137.pdf: wvs-137.tex wvs-137-1.pdf wvs-137-2.pdf wvs-137-3.pdf
+
+wvs-137-1.eps: wvs-137-1.obj
+
+wvs-137-1.pdf: wvs-137-1.obj
+
+wvs-137-2.eps: wvs-137-2.obj
+
+wvs-137-2.pdf: wvs-137-2.obj
+
+wvs-137-3.eps: wvs-137-3.obj
+
+wvs-137-3.pdf: wvs-137-3.obj
+
+wvs-138.dvi: wvs-138.tex wvs-138-1.eps
+
+wvs-138.pdf: wvs-138.tex wvs-138-1.pdf
+
+wvs-138-1.eps: wvs-138-1.obj
+
+wvs-138-1.pdf: wvs-138-1.obj
+
+wvs-139.dvi: wvs-139.tex wvs-139-1.eps
+
+wvs-139.pdf: wvs-139.tex wvs-139-1.pdf
+
+wvs-139-1.eps: wvs-139-1.obj
+
+wvs-139-1.pdf: wvs-139-1.obj
+
+wvs-141.dvi: wvs-141.tex wvs-141-1.eps
+
+wvs-141.pdf: wvs-141.tex wvs-141-1.pdf
+
+wvs-141-1.eps: wvs-141-1.obj
+
+wvs-141-1.pdf: wvs-141-1.obj
+
+wvs-142.dvi: wvs-142.tex wvs-142-1.eps
+
+wvs-142.pdf: wvs-142.tex wvs-142-1.pdf
+
+wvs-142-1.eps: wvs-142-1.obj
+
+wvs-142-1.pdf: wvs-142-1.obj
+
+wvs-143.dvi: wvs-143.tex wvs-143-1.eps wvs-143-2.eps
+
+wvs-143.pdf: wvs-143.tex wvs-143-1.pdf wvs-143-2.pdf
+
+wvs-143-1.eps: wvs-143-1.obj
+
+wvs-143-1.pdf: wvs-143-1.obj
+
+wvs-143-2.eps: wvs-143-2.obj
+
+wvs-143-2.pdf: wvs-143-2.obj
+
+wvs-144.dvi: wvs-144.tex Sparse.eps
+
+wvs-144.pdf: wvs-144.tex Sparse.pdf
+
+Sparse.eps: Sparse.obj
+
+Sparse.pdf: Sparse.obj
+
+wvs-145.dvi: wvs-145.tex wvs-145-1.eps wvs-145-2.eps
+
+wvs-145.pdf: wvs-145.tex wvs-145-1.pdf wvs-145-2.pdf
+
+wvs-145-1.eps: wvs-145-1.obj
+
+wvs-145-1.pdf: wvs-145-1.obj
+
+wvs-145-2.eps: wvs-145-2.obj
+
+wvs-145-2.pdf: wvs-145-2.obj
+
+wvs-146.dvi: wvs-146.tex wvs-146-1.eps wvs-146-2.eps wvs-146-3.eps
+
+wvs-146.pdf: wvs-146.tex wvs-146-1.pdf wvs-146-2.pdf wvs-146-3.pdf
+
+wvs-146-1.eps: wvs-146-1.obj
+
+wvs-146-1.pdf: wvs-146-1.obj
+
+wvs-146-2.eps: wvs-146-2.obj
+
+wvs-146-2.pdf: wvs-146-2.obj
+
+wvs-146-3.eps: wvs-146-3.obj
+
+wvs-146-3.pdf: wvs-146-3.obj
+
+wvs-147.dvi: wvs-147.tex \
+             wvs-147-1.eps wvs-147-2.eps wvs-147-3.eps \
+             wvs-147-4.eps wvs-147-5.eps wvs-147-6.eps \
+             wvs-147-7.eps wvs-147-2-5.eps wvs-147-0.eps 
+
+wvs-147.pdf: wvs-147.tex \
+             wvs-147-1.pdf wvs-147-2.pdf wvs-147-3.pdf \
+             wvs-147-4.pdf wvs-147-5.pdf wvs-147-6.pdf \
+             wvs-147-7.pdf wvs-147-2-5.pdf wvs-147-0.pdf 
+
+wvs-147-1.eps: wvs-147-1.obj
+
+wvs-147-1.pdf: wvs-147-1.obj
+
+wvs-147-2.eps: wvs-147-2.obj
+
+wvs-147-2.pdf: wvs-147-2.obj
+
+wvs-147-3.eps: wvs-147-3.obj
+
+wvs-147-3.pdf: wvs-147-3.obj
+
+wvs-147-0.eps: wvs-147-0.obj
+
+wvs-147-0.pdf: wvs-147-0.obj
+
+wvs-147-4.eps: wvs-147-4.obj
+
+wvs-147-4.pdf: wvs-147-4.obj
+
+wvs-147-5.eps: wvs-147-5.obj
+
+wvs-147-5.pdf: wvs-147-5.obj
+
+wvs-147-6.eps: wvs-147-6.obj
+
+wvs-147-6.pdf: wvs-147-6.obj
+
+wvs-147-7.eps: wvs-147-7.obj
+
+wvs-147-7.pdf: wvs-147-7.obj
+
+wvs-147-2-5.eps: wvs-147-2-5.obj
+
+wvs-147-2-5.pdf: wvs-147-2-5.obj
+
+wvs-149.dvi: wvs-149.tex wvs-149-1.txp wvs-149.bbl wvs-149-1.600pk
+
+wvs-149.pdf: wvs-149.tex wvs-149-1.txp wvs-149.bbl wvs-149-1.600pk
+
+wvs-149-1.txp: $(INSTALLDIR)/wvs-149
+	$(INSTALLDIR)/wvs-149
+
+wvs-149.aux: wvs-149.tex
+	$(LATEX) wvs-149.tex
+
+wvs-149.bbl: wvs-149.bib wvs-149.aux
+	$(BIBTEX) wvs-149
+
+wvs-149-1.600gf: wvs-149-1.txp
+	$(MF) '\mode=localfont; ' input wvs-149-1
+
+wvs-149-1.600pk: wvs-149-1.600gf
+	$(GFTOPK) wvs-149-1.600gf
+
+dnwt.ps: dnwt.dot
+	dot -Tps dnwt.dot > dnwt.ps
+
+dnwt.pdf: dnwt.ps
+	ps2pdf dnwt.ps dnwt.pdf
+
+wvs-150.dvi: wvs-150.tex dnwt.epsi
+
+wvs-150.pdf: wvs-150.tex dnwt.pdf
+
+wvs-151.dvi: wvs-151.tex wvs-151-1.eps wvs-151-2.eps wvs-151-3.eps
+
+wvs-151.pdf: wvs-151.tex wvs-151-1.pdf wvs-151-2.pdf wvs-151-3.pdf
+
+wvs-151-1.eps: wvs-151-1.obj
+
+wvs-151-1.pdf: wvs-151-1.obj
+
+wvs-151-2.eps: wvs-151-2.obj
+
+wvs-151-2.pdf: wvs-151-2.obj
+
+wvs-151-3.eps: wvs-151-3.obj
+
+wvs-151-3.pdf: wvs-151-3.obj
+
+dnwt.epsi: dnwt.ps
+	ps2epsi dnwt.ps
+        
+wvs-154.dvi: wvs-154.tex wvs-154-1.eps
+
+wvs-154.pdf: wvs-154.tex wvs-154-1.pdf
+
+wvs-154-1.eps: wvs-154-1.obj
+
+wvs-154-1.pdf: wvs-154-1.obj
+
+wvs-155.dvi: wvs-155.tex Barycentric.eps wvs-151-QTM-1.eps
+
+wvs-155.pdf: wvs-155.tex Barycentric.pdf wvs-151-QTM-1.pdf
+
+Barycentric.eps: Barycentric.obj
+
+Barycentric.pdf: Barycentric.obj
+
+wvs-157.dvi: wvs-157.tex wvs-157-circ.eps wvs-146.dvi
+
+wvs-157.pdf: wvs-157.tex wvs-157-circ.pdf wvs-146.pdf
+
+wvs-157-circ.eps: wvs-157-circ.obj
+
+wvs-157-circ.pdf: wvs-157-circ.obj
+
+wvs-151-QTM-1.eps: wvs-151-QTM-1.obj
+
+wvs-151-QTM-1.pdf: wvs-151-QTM-1.obj
+
+wvs-160-1.eps: wvs-160-1.obj
+
+wvs-160-1.pdf: wvs-160-1.obj
+
+wvs-160-2.eps: wvs-160-2.obj
+
+wvs-160-2.pdf: wvs-160-2.obj
+
+wvs-160-facets.eps: wvs-160-facets.obj
+
+wvs-160-facets.pdf: wvs-160-facets.obj
+
+wvs-160-surf.eps: wvs-160-surf.obj
+
+wvs-160-surf.pdf: wvs-160-surf.obj
+
+wvs-160-cone.eps: wvs-160-cone.obj
+
+wvs-160-cone.pdf: wvs-160-cone.obj
+
+wvs-160-plane.eps: wvs-160-plane.obj
+
+wvs-160-plane.pdf: wvs-160-plane.obj
+
+wvs-160.dvi: wvs-160.tex wvs-160-1.eps wvs-160-2.eps wvs-160-facets.eps wvs-160-surf.eps wvs-160-cone.eps wvs-160-plane.eps
+
+wvs-160.pdf: wvs-160.tex wvs-160-1.pdf wvs-160-2.pdf wvs-160-facets.pdf wvs-160-surf.pdf wvs-160-cone.pdf wvs-160-plane.pdf
+
+# We discovered these by grep 'wvs-146' doc/*.tex
+wvs-030.pdf wvs-131.pdf wvs-132.pdf wvs-157.pdf wvs-158.pdf wvs-159.pdf wvs-160.pdf: wvs-146.pdf
+
+wvs-030.dvi wvs-131.dvi wvs-132.dvi wvs-157.dvi wvs-158.dvi wvs-159.dvi wvs-160.dvi: wvs-146.dvi
+
+# We discovered these by grep 'externaldocument' doc/*.tex
+wvs-030.pdf wvs-160.pdf: wvs-131.pdf
+
+wvs-030.dvi wvs-160.dvi: wvs-131.dvi
+
+wvs-102.pdf wvs-104.pdf : wvs-095.pdf wvs-100.pdf
+
+wvs-102.dvi wvs-104.dvi : wvs-095.dvi wvs-100.dvi
+
+wvs-160.pdf: wvs-146.pdf
+
+wvs-160.dvi: wvs-146.dvi
+
+wvs-128.aux: wvs-128.tex
+	$(LATEX) wvs-128.tex
+
+iy-005.aux: iy-005.tex
+	$(LATEX) iy-005.tex
+
+iy-005.dvi: iy-005.tex iy-005.bbl
+
+iy-005.pdf: iy-005.tex iy-005.bbl
+
+iy-005.bbl: yanovsky.bib iy-005.aux
+	$(BIBTEX) iy-005
+
+iy-006.aux: iy-006.tex
+	$(LATEX) iy-006.tex
+
+iy-006.dvi: iy-006.tex iy-006.bbl
+
+iy-006.pdf: iy-006.tex iy-006.bbl
+
+iy-006.bbl: yanovsky.bib iy-006.aux
+	$(BIBTEX) iy-006
+
+
+endif # end shortn_name == doc
+# $Log: Makefile.h,v $
+# Revision 1.53  2021/04/21 23:49:35  pwagner
+# Added some robustness
+#
+# Revision 1.52  2020/06/10 21:01:51  pwagner
+# Builds wvs-160 OK, now
+#
+# Revision 1.51  2020/04/21 23:14:08  pwagner
+# Added more interdependencies among wvs in doc
+#
+# Revision 1.50  2020/04/21 00:07:27  pwagner
+# Removed custom build for wvs-157; added more dependncies on wvs-146
+#
+# Revision 1.49  2020/01/15 00:23:38  pwagner
+# Attempt to correct ties between wvs-157 and wvs-146
+#
+# Revision 1.48  2020/01/09 21:15:36  pwagner
+# Can now build changed wvs-146.tex and new wvs-157.tex
+#
+# Revision 1.47  2019/12/23 18:09:34  pwagner
+# Intel hates deferring size of parameter arrays
+#
+# Revision 1.46  2019/12/20 21:16:59  pwagner
+# Builds .f9h files for lib/dates_module.f90
+#
+# Revision 1.45  2019/09/27 17:40:49  pwagner
+# Builds wvs-155.tex with new wvs-151-QTM-1 dependencies (why name it that?)
+#
+# Revision 1.44  2019/09/24 18:04:39  pwagner
+# Can now build wvs-155.tex
+#
+# Revision 1.43  2019/09/19 22:19:57  pwagner
+# Use default build rules for .obj files
+#
+# Revision 1.42  2019/09/19 16:08:12  pwagner
+# Added build commands for wvs-154
+#
+# Revision 1.41  2019/09/11 16:45:39  pwagner
+# Augmented dependencies for wvs-063
+#
+# Revision 1.40  2019/09/10 17:37:47  pwagner
+# Copes with new wvs-063-eq-circ.obj
+#
+# Revision 1.39  2019/06/18 23:37:22  pwagner
+# Can now build iy-005.tex in doc
+#
+# Revision 1.38  2019/06/18 20:26:51  pwagner
+# Added cmds to build iy-006.tex in doc
+#
+# Revision 1.37  2019/05/31 20:07:51  pwagner
+# Needed actual build cmds for wvs-111
+#
+# Revision 1.36  2019/05/31 17:19:10  pwagner
+# We can now build wvs-111 and wvs-139
+#
+# Revision 1.35  2018/11/30 22:31:43  pwagner
+# Can now build wvs-147 and wvs-151
+#
+# Revision 1.34  2018/07/27 00:21:02  pwagner
+# Now builds wvs-150.tex
+#
+# Revision 1.33  2018/07/11 16:46:07  pwagner
+# Can now build wvs-149
+#
+# Revision 1.32  2018/06/04 23:04:05  pwagner
+# Incorporates changes to build wvs-138
+#
+# Revision 1.31  2017/10/20 18:16:27  pwagner
+# Added build cmds for wvs-145.tex
+#
+# Revision 1.30  2017/10/13 16:33:48  pwagner
+# Added build cmds for wvs-143
+#
+# Revision 1.29  2017/09/25 23:20:15  pwagner
+# Can now build wvs-144
+#
+# Revision 1.28  2017/09/22 17:58:52  pwagner
+# Added wvs-142
+#
+# Revision 1.27  2017/09/06 18:59:05  pwagner
+# Now builds wvs-141.tex successfully
+#
+# Revision 1.26  2017/03/28 23:58:10  pwagner
+# Now builds  doc/wvs-137 properly
+#
+# Revision 1.25  2017/03/08 00:11:55  pwagner
+# ncep_dao doesn't need custom, but readGriddedUtils does
+#
+# Revision 1.24  2016/11/04 23:26:58  pwagner
+# Now builds  doc/wvs-136 properly
+#
+# Revision 1.23  2016/06/08 00:00:41  pwagner
+# Prevent creating unwanted text files in lib, etc. with names of machine directories
+#
+# Revision 1.22  2016/05/31 23:41:16  pwagner
+# Tried again to fix need to build mlsl2 twice; added graphic to wvs-030
+#
+# Revision 1.21  2016/04/06 22:15:21  pwagner
+# Now builds  doc/wvs-134 properly
+#
+# Revision 1.20  2016/03/15 18:38:22  pwagner
+# Added wvs-133
+#
+# Revision 1.19  2015/11/18 17:45:06  pwagner
+# Now builds wvs-128.tex
+#
+# Revision 1.18  2015/09/18 23:38:34  pwagner
+# Added custom builds for wvs-126.tex
+#
+# Revision 1.17  2015/04/23 17:51:38  whdaffer
+# Added some comments to make the conditional includes a little easier
+# to understand
+#
+# Revision 1.16  2014/06/16 20:27:21  pwagner
+# Fixed bug in building lr
+#
+# Revision 1.15  2014/05/24 00:23:52  vsnyder
+# Make Parser_L2CF.f9h in the right place
+#
+# Revision 1.14  2014/05/22 01:18:44  vsnyder
+# Moved Parser_Tables_L2CF.f90 from lib to srclib
+#
+# Revision 1.13  2014/05/20 23:41:29  vsnyder
+# New parser, simplified build
+#
+# Revision 1.12  2014/02/21 22:32:28  pwagner
+# Uses Parser_Tables.wc to trigger two-phase build
+#
+# Revision 1.11  2014/01/29 21:03:41  pwagner
+# Shorten make update
+#
+# Revision 1.10  2014/01/24 00:58:08  pwagner
+# Removed certain amount of clumsiness
+#
+# Revision 1.9  2014/01/22 18:22:15  pwagner
+# More changes, bug fixes
+#
+# Revision 1.8  2014/01/18 00:56:45  pwagner
+# Redirect lr stdout
+#
+# Revision 1.7  2014/01/15 19:12:19  pwagner
+# Compatible with new lr
+#
+# Revision 1.6  2013/12/03 00:03:29  pwagner
+# Fixed bugs in building lr; added LRAFTER
+#
+# Revision 1.5  2013/10/28 23:12:17  pwagner
+# May build parser.f9h
+#
+# Revision 1.4  2013/08/28 00:39:46  pwagner
+# Lifted custom builds from MLSStrings.f90 MLSStringLists.f90
+#
+# Revision 1.3  2013/06/12 18:18:04  pwagner
+# Changes to pass most FOPTS for Strings modules
+#
+# Revision 1.2  2012/04/20 00:43:26  pwagner
+# Fixed NOUNASS so it works again with NAG
+#
+# Revision 1.1  2012/04/04 00:45:40  pwagner
+# First commit
+#
+@
+
+
+1.53
+log
+@Added some robustness
+@
+text
+@d18 1
+a18 1
+# "$Id: Makefile.h,v 1.52 2020/06/10 21:01:51 pwagner Exp $"
+d737 1
+a737 1
+	mf '\mode=localfont; ' input wvs-149-1
+d740 1
+a740 1
+	gftopk wvs-149-1.600gf
+d871 3
+@
+
+
+1.52
+log
+@Builds wvs-160 OK, now
+@
+text
+@d18 1
+a18 1
+# "$Id: Makefile.h,v 1.51 2020/04/21 23:14:08 pwagner Exp $"
+d521 2
+a522 2
+#	latex wvs-095
+#	latex wvs-095
+d525 2
+a526 2
+#	pdflatex wvs-095
+#	pdflatex wvs-095
+d731 1
+a731 1
+	latex wvs-149.tex
+d734 1
+a734 1
+	bibtex wvs-149
+d846 1
+a846 1
+	latex wvs-128.tex
+d849 1
+a849 1
+	latex iy-005.tex
+d856 1
+a856 1
+	bibtex iy-005
+d859 1
+a859 1
+	latex iy-006.tex
+d866 1
+a866 1
+	bibtex iy-006
+d871 3
+@
+
+
+1.51
+log
+@Added more interdependencies among wvs in doc
+@
+text
+@d18 1
+a18 1
+# "$Id: Makefile.h,v 1.50 2020/04/21 00:07:27 pwagner Exp $"
+d799 28
+d828 1
+a828 1
+wvs-030.pdf wvs-131.pdf wvs-132.pdf wvs-157.pdf wvs-158.pdf wvs-159.pdf: wvs-146.pdf
+d830 1
+a830 1
+wvs-030.dvi wvs-131.dvi wvs-132.dvi wvs-157.dvi wvs-158.dvi wvs-159.dvi: wvs-146.dvi
+d833 1
+a833 1
+wvs-030.pdf: wvs-131.pdf
+d835 1
+a835 1
+wvs-030.dvi: wvs-131.dvi
+d841 7
+d871 3
+@
+
+
+1.50
+log
+@Removed custom build for wvs-157; added more dependncies on wvs-146
+@
+text
+@d18 1
+a18 1
+# "$Id: Makefile.h,v 1.49 2020/01/15 00:23:38 pwagner Exp $"
+a798 1
+# According to Van, many more depend on wvs-146
+d804 9
+d836 3
+@
+
+
+1.49
+log
+@Attempt to correct ties between wvs-157 and wvs-146
+@
+text
+@d18 1
+a18 1
+# "$Id: Makefile.h,v 1.48 2020/01/09 21:15:36 pwagner Exp $"
+a787 6
+	cp $(LOGDIR)/wvs-146.aux $(DOCDIR)
+	echo "\def\dvidir{../dvi}" | cat - $< > $*.temp
+	echo "\def\pdfdir{../pdf}" | cat - $*.temp > $(TEXDIR)/$<
+	echo "\end" | latex $(TEXDIR)/$<; \
+	echo "\end" | latex $(TEXDIR)/$<
+	mv $@@ $(DVIDIR)
+a789 12
+	cp $(LOGDIR)/wvs-146.aux $(DOCDIR)
+	if [ "$*" != "index" ]; then \
+	  echo "\end" | latex $(TEXDIR)/$*.tex; \
+	  echo "\end" | latex $(TEXDIR)/$*.tex; \
+	  mv $*.dvi $(DVIDIR); \
+	  dvipdf $(DVIDIR)/$*.dvi; \
+	else \
+	  pdflatex $(TEXDIR)/$*.tex; \
+	fi
+	mv $@@ $(PDFDIR)
+	mv `${REECHO} $*.log $*.aux $*.out` $(LOGDIR)
+	rm -f $*.dvi $*.temp
+d799 6
+d828 3
+@
+
+
+1.48
+log
+@Can now build changed wvs-146.tex and new wvs-157.tex
+@
+text
+@d18 1
+a18 1
+# "$Id: Makefile.h,v 1.47 2019/12/23 18:09:34 pwagner Exp $"
+d788 6
+d796 12
+d840 3
+@
+
+
+1.47
+log
+@Intel hates deferring size of parameter arrays
+@
+text
+@d18 1
+a18 1
+# "$Id: Makefile.h,v 1.46 2019/12/20 21:16:59 pwagner Exp $"
+d661 15
+d787 8
+d822 3
+@
+
+
+1.46
+log
+@Builds .f9h files for lib/dates_module.f90
+@
+text
+@d18 1
+a18 1
+# "$Id: Makefile.h,v 1.45 2019/09/27 17:40:49 pwagner Exp $"
+d235 2
+d249 1
+a249 1
+	  'character(len=*), dimension(:), parameter :: LeapSecDates = (/ &' \
+d799 3
+@
+
+
+1.45
+log
+@Builds wvs-155.tex with new wvs-151-QTM-1 dependencies (why name it that?)
+@
+text
+@d18 5
+a22 1
+# "$Id: Makefile.h,v 1.44 2019/09/24 18:04:39 pwagner Exp $"
+d230 28
+d797 3
+@
+
+
+1.44
+log
+@Can now build wvs-155.tex
+@
+text
+@d18 1
+a18 1
+# "$Id: Makefile.h,v 1.43 2019/09/19 22:19:57 pwagner Exp $"
+d730 1
+a730 1
+wvs-155.dvi: wvs-155.tex Barycentric.eps
+d732 1
+a732 1
+wvs-155.pdf: wvs-155.tex Barycentric.pdf
+d738 4
+d765 3
+@
+
+
+1.43
+log
+@Use default build rules for .obj files
+@
+text
+@d18 1
+a18 1
+# "$Id: Makefile.h,v 1.42 2019/09/19 16:08:12 pwagner Exp $"
+d730 8
+d761 3
+@
+
+
+1.42
+log
+@Added build commands for wvs-154
+@
+text
+@d18 1
+a18 1
+# "$Id: Makefile.h,v 1.41 2019/09/11 16:45:39 pwagner Exp $"
+a405 1
+	tgif -print -eps -page 1 -color sparse.obj
+a408 1
+	tgif -print -pdf -page 1 -color sparse.obj
+a414 1
+	tgif -print -eps -page 1 -color wvs-030-nearest.obj
+a416 1
+	tgif -print -pdf -page 1 -color wvs-030-nearest.obj
+a422 1
+	tgif -print -eps -page 1 -color wvs-048-grid2.obj
+a424 1
+	tgif -print -pdf -page 1 -color wvs-048-grid2.obj
+a430 1
+	tgif -print -eps -page 1 -color wvs-063-eq-circ.obj
+a432 1
+	tgif -print -pdf -page 1 -color wvs-063-eq-circ.obj
+a434 1
+	tgif -print -eps -page 1 -color wvs-063-grids_t.obj
+a436 1
+	tgif -print -pdf -page 1 -color wvs-063-grids_t.obj
+a438 1
+	tgif -print -eps -page 1 -color wvs-063-diag.obj
+a440 1
+	tgif -print -pdf -page 1 -color wvs-063-diag.obj
+a466 1
+	tgif -print -eps -page 1 -color wvs-083-grid.obj
+a468 1
+	tgif -print -pdf -page 1 -color wvs-083-grid.obj
+a474 1
+	tgif -print -eps -page 1 -color wvs-089-pic.obj
+a476 1
+	tgif -print -pdf -page 1 -color wvs-089-pic.obj
+a482 1
+	tgif -print -eps -page 1 -color wvs-095-eta.obj
+a484 1
+	tgif -print -pdf -page 1 -color wvs-095-eta.obj
+a506 1
+	tgif -print -eps -page 1 -color wvs-126-1.obj
+a508 1
+	tgif -print -pdf -page 1 -color wvs-126-1.obj
+a514 1
+	tgif -print -eps -page 1 -color wvs-128-QTM-2.obj
+a516 1
+	tgif -print -pdf -page 1 -color wvs-128-QTM-2.obj
+a518 1
+	tgif -print -eps -page 1 -color wvs-128-QTM-3.obj
+a520 1
+	tgif -print -pdf -page 1 -color wvs-128-QTM-3.obj
+a526 1
+	tgif -print -eps -page 1 -color wvs-133-fig.obj
+a528 1
+	tgif -print -pdf -page 1 -color wvs-133-fig.obj
+a535 1
+	tgif -print -eps -page 1 -color wvs-134-1.obj
+a537 1
+	tgif -print -pdf -page 1 -color wvs-134-1.obj
+a543 1
+	tgif -print -eps -page 1 -color wvs-136-lines.obj
+a545 1
+	tgif -print -pdf -page 1 -color wvs-136-lines.obj
+a551 1
+	tgif -print -eps -page 1 -color wvs-137-1.obj
+a553 1
+	tgif -print -pdf -page 1 -color wvs-137-1.obj
+a555 1
+	tgif -print -eps -page 1 -color wvs-137-2.obj
+a557 1
+	tgif -print -pdf -page 1 -color wvs-137-2.obj
+a559 1
+	tgif -print -eps -page 1 -color wvs-137-3.obj
+a561 1
+	tgif -print -pdf -page 1 -color wvs-137-3.obj
+a567 1
+	tgif -print -eps -page 1 -color wvs-138-1.obj
+a569 1
+	tgif -print -pdf -page 1 -color wvs-138-1.obj
+a575 1
+	tgif -print -eps -page 1 -color wvs-139-1.obj
+a577 1
+	tgif -print -pdf -page 1 -color wvs-139-1.obj
+a583 1
+	tgif -print -eps -page 1 -color wvs-141-1.obj
+a585 1
+	tgif -print -pdf -page 1 -color wvs-141-1.obj
+a591 1
+	tgif -print -eps -page 1 -color wvs-142-1.obj
+a593 1
+	tgif -print -pdf -page 1 -color wvs-142-1.obj
+a599 1
+	tgif -print -eps -page 1 -color wvs-143-1.obj
+a601 1
+	tgif -print -pdf -page 1 -color wvs-143-1.obj
+a603 1
+	tgif -print -eps -page 1 -color wvs-143-2.obj
+a605 1
+	tgif -print -pdf -page 1 -color wvs-143-2.obj
+a611 1
+	tgif -print -eps -page 1 -color Sparse.obj
+a613 1
+	tgif -print -pdf -page 1 -color Sparse.obj
+a619 1
+	tgif -print -eps -page 1 -color wvs-145-1.obj
+a621 1
+	tgif -print -pdf -page 1 -color wvs-145-1.obj
+a623 1
+	tgif -print -eps -page 1 -color wvs-145-2.obj
+a625 1
+	tgif -print -pdf -page 1 -color wvs-145-2.obj
+a638 1
+	tgif -print -eps -page 1 -color wvs-147-1.obj
+a640 1
+	tgif -print -pdf -page 1 -color wvs-147-1.obj
+a642 1
+	tgif -print -eps -page 1 -color wvs-147-2.obj
+a644 1
+	tgif -print -pdf -page 1 -color wvs-147-2.obj
+a646 1
+	tgif -print -eps -page 1 -color wvs-147-3.obj
+a648 1
+	tgif -print -pdf -page 1 -color wvs-147-3.obj
+a650 1
+	tgif -print -eps -page 1 -color wvs-147-0.obj
+a652 1
+	tgif -print -pdf -page 1 -color wvs-147-0.obj
+a654 1
+	tgif -print -eps -page 1 -color wvs-147-4.obj
+a656 1
+	tgif -print -pdf -page 1 -color wvs-147-4.obj
+a658 1
+	tgif -print -eps -page 1 -color wvs-147-5.obj
+a660 1
+	tgif -print -pdf -page 1 -color wvs-147-5.obj
+a662 1
+	tgif -print -eps -page 1 -color wvs-147-6.obj
+a664 1
+	tgif -print -pdf -page 1 -color wvs-147-6.obj
+a666 1
+	tgif -print -eps -page 1 -color wvs-147-7.obj
+a668 1
+	tgif -print -pdf -page 1 -color wvs-147-7.obj
+a670 1
+	tgif -print -eps -page 1 -color wvs-147-2-5.obj
+a672 1
+	tgif -print -pdf -page 1 -color wvs-147-2-5.obj
+a707 1
+	tgif -print -eps -page 1 -color wvs-151-1.obj
+a709 1
+	tgif -print -pdf -page 1 -color wvs-151-1.obj
+a711 1
+	tgif -print -eps -page 1 -color wvs-151-2.obj
+a713 1
+	tgif -print -pdf -page 1 -color wvs-151-2.obj
+a715 1
+	tgif -print -eps -page 1 -color wvs-151-3.obj
+a717 1
+	tgif -print -pdf -page 1 -color wvs-151-3.obj
+a726 1
+	tgif -print -eps -page 1 -color wvs-154-1.obj
+a728 1
+	tgif -print -pdf -page 1 -color wvs-154-1.obj
+d753 3
+@
+
+
+1.41
+log
+@Augmented dependencies for wvs-063
+@
+text
+@d18 1
+a18 1
+# "$Id: Makefile.h,v 1.40 2019/09/10 17:37:47 pwagner Exp $"
+d800 10
+d833 3
+@
+
+
+1.40
+log
+@Copes with new wvs-063-eq-circ.obj
+@
+text
+@d18 1
+a18 1
+# "$Id: Makefile.h,v 1.39 2019/06/18 23:37:22 pwagner Exp $"
+d442 2
+a443 1
+wvs-063.dvi: wvs-063.tex wvs-063-eq-circ.eps
+d445 12
+a456 1
+wvs-063.pdf: wvs-063.tex wvs-063-eq-circ.pdf
+d823 3
+@
+
+
+1.39
+log
+@Can now build iy-005.tex in doc
+@
+text
+@d18 1
+a18 1
+# "$Id: Makefile.h,v 1.38 2019/06/18 20:26:51 pwagner Exp $"
+d436 10
+d811 3
+@
+
+
+1.38
+log
+@Added cmds to build iy-006.tex in doc
+@
+text
+@d18 1
+a18 1
+# "$Id: Makefile.h,v 1.37 2019/05/31 20:07:51 pwagner Exp $"
+d778 10
+d801 3
+@
+
+
+1.37
+log
+@Needed actual build cmds for wvs-111
+@
+text
+@d18 1
+a18 1
+# "$Id: Makefile.h,v 1.36 2019/05/31 17:19:10 pwagner Exp $"
+d777 11
+d791 3
+@
+
+
+1.36
+log
+@We can now build wvs-111 and wvs-139
+@
+text
+@d18 1
+a18 1
+# "$Id: Makefile.h,v 1.35 2018/11/30 22:31:43 pwagner Exp $"
+d490 8
+d780 3
+@
+
+
+1.35
+log
+@Can now build wvs-147 and wvs-151
+@
+text
+@d18 1
+a18 1
+# "$Id: Makefile.h,v 1.34 2018/07/27 00:21:02 pwagner Exp $"
+d579 10
+d772 3
+@
+
+
+1.34
+log
+@Now builds wvs-150.tex
+@
+text
+@d18 1
+a18 1
+# "$Id: Makefile.h,v 1.33 2018/07/11 16:46:07 pwagner Exp $"
+d641 65
+d735 22
+d762 3
+@
+
+
+1.33
+log
+@Can now build wvs-149
+@
+text
+@d18 1
+a18 1
+# "$Id: Makefile.h,v 1.32 2018/06/04 23:04:05 pwagner Exp $"
+d660 13
+d675 3
+@
+
+
+1.32
+log
+@Incorporates changes to build wvs-138
+@
+text
+@d18 1
+a18 1
+# "$Id: Makefile.h,v 1.31 2017/10/20 18:16:27 pwagner Exp $"
+d36 7
+d641 19
+d662 3
+@
+
+
+1.31
+log
+@Added build cmds for wvs-145.tex
+@
+text
+@d18 1
+a18 1
+# "$Id: Makefile.h,v 1.30 2017/10/13 16:33:48 pwagner Exp $"
+d562 10
+d636 3
+@
+
+
+1.30
+log
+@Added build cmds for wvs-143
+@
+text
+@d18 1
+a18 1
+# "$Id: Makefile.h,v 1.29 2017/09/25 23:20:15 pwagner Exp $"
+d608 16
+d626 3
+@
+
+
+1.29
+log
+@Can now build wvs-144
+@
+text
+@d18 1
+a18 1
+# "$Id: Makefile.h,v 1.28 2017/09/22 17:58:52 pwagner Exp $"
+d582 16
+d610 3
+@
+
+
+1.28
+log
+@Added wvs-142
+@
+text
+@d18 1
+a18 1
+# "$Id: Makefile.h,v 1.27 2017/09/06 18:59:05 pwagner Exp $"
+d582 10
+d594 3
+@
+
+
+1.27
+log
+@Now builds wvs-141.tex successfully
+@
+text
+@d18 1
+a18 1
+# "$Id: Makefile.h,v 1.26 2017/03/28 23:58:10 pwagner Exp $"
+d572 10
+d584 3
+@
+
+
+1.26
+log
+@Now builds  doc/wvs-137 properly
+@
+text
+@d18 1
+a18 1
+# "$Id: Makefile.h,v 1.25 2017/03/08 00:11:55 pwagner Exp $"
+d562 10
+d574 3
+@
+
+
+1.25
+log
+@ncep_dao doesn't need custom, but readGriddedUtils does
+@
+text
+@d18 1
+a18 1
+# "$Id: Makefile.h,v 1.24 2016/11/04 23:26:58 pwagner Exp $"
+d540 22
+d564 3
+@
+
+
+1.24
+log
+@Now builds  doc/wvs-136 properly
+@
+text
+@d18 1
+a18 1
+# "$Id: Makefile.h,v 1.23 2016/06/08 00:00:41 pwagner Exp $"
+d237 1
+a237 1
+# ncep_dao module doesn't play well with the lf95 undefined variable
+d239 3
+a241 3
+ncep_dao.mod:
+	$(UTILDIR)/newAifBdiff.sh -a ncep_dao.mod $(FC) -c $(NOUNASS) $(INC_PATHS) $(S)/ncep_dao.f90 $(FAFTER)
+ncep_dao.o: ncep_dao.mod
+d243 1
+a243 1
+   -T ncep_dao.o ncep_dao.mod 
+d384 1
+a384 1
+# ncep_dao module doesn't play well with the lf95 undefined variable
+d386 2
+a387 2
+ncep_dao.o:
+	$(FC) -c $(NOUNASS) $(INC_PATHS) $(S)/ncep_dao.f90 $(FAFTER)
+d542 3
+@
+
+
+1.23
+log
+@Prevent creating unwanted text files in lib, etc. with names of machine directories
+@
+text
+@d18 1
+a18 1
+# "$Id: Makefile.h,v 1.22 2016/05/31 23:41:16 pwagner Exp $"
+d530 10
+d542 3
+@
+
+
+1.22
+log
+@Tried again to fix need to build mlsl2 twice; added graphic to wvs-030
+@
+text
+@d18 1
+a18 1
+# "$Id: Makefile.h,v 1.21 2016/04/06 22:15:21 pwagner Exp $"
+d188 3
+a190 1
+          cp new_lit_names.txt ../$$dir 2>/dev/null; \
+d345 3
+a347 1
+          cp new_lit_names.txt ../$$dir 2>/dev/null; \
+d532 3
+@
+
+
+1.21
+log
+@Now builds  doc/wvs-134 properly
+@
+text
+@d18 5
+a22 1
+# "$Id: Makefile.h,v 1.20 2016/03/15 18:38:22 pwagner Exp $"
+d127 2
+d175 6
+d186 4
+d299 2
+d341 4
+d391 3
+d397 1
+a397 1
+# graphic for wvs-010
+d405 10
+d528 3
+@
+
+
+1.20
+log
+@Added wvs-133
+@
+text
+@d18 1
+a18 1
+# "$Id: Makefile.h,v 1.19 2015/11/18 17:45:06 pwagner Exp $"
+d480 11
+d493 3
+@
+
+
+1.19
+log
+@Now builds wvs-128.tex
+@
+text
+@d18 1
+a18 1
+# "$Id: Makefile.h,v 1.18 2015/09/18 23:38:34 pwagner Exp $"
+d470 10
+d482 3
+@
+
+
+1.18
+log
+@Added custom builds for wvs-126.tex
+@
+text
+@d18 1
+a18 1
+# "$Id: Makefile.h,v 1.17 2015/04/23 17:51:38 whdaffer Exp $"
+d454 16
+d472 3
+@
+
+
+1.17
+log
+@Added some comments to make the conditional includes a little easier
+to understand
+@
+text
+@d18 1
+a18 1
+# "$Id: Makefile.h,v 1.16 2014/06/16 20:27:21 pwagner Exp $"
+d443 11
+d456 4
+@
+
+
+1.16
+log
+@Fixed bug in building lr
+@
+text
+@d18 1
+a18 1
+# "$Id: Makefile.h,v 1.15 2014/05/24 00:23:52 vsnyder Exp $"
+d123 2
+a124 1
+endif
+d201 1
+a201 1
+endif
+d227 3
+a229 1
+else
+d283 1
+a283 1
+endif
+d312 1
+d346 1
+a346 1
+endif
+d363 2
+a364 2
+endif
+endif
+d443 1
+a443 1
+endif
+d445 3
+@
+
+
+1.15
+log
+@Make Parser_L2CF.f9h in the right place
+@
+text
+@d18 1
+a18 1
+# "$Id: Makefile.h,v 1.14 2014/05/22 01:18:44 vsnyder Exp $"
+d28 3
+a30 1
+	-C $(MLSCFILE) $(UTILDIR)/lr/*.[Ff]9[0h]
+a225 12
+# Intel's ifort compiler v11.x for 32-bit architecture has a string-handling bug
+# unless treated very carefully
+#MLSStringLists.o:
+#	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t -T MLSStringLists.o mlsstringlists.mod 
+#mlsstringlists.mod: MLSStringLists.f90 mlscommon.mod mlsmessagemodule.mod \
+#	mlssets.mod mlsstrings.mod
+#	$(UTILDIR)/newAifBdiff.sh -a mlsstringlists.mod $(FC) -c $(DONT_OPT) $(PRE) $(INC_PATHS) $(S)/MLSStringLists.f90 $(FAFTER)
+#MLSStrings.o: mlsstrings.mod MLSStrings.f90 
+#	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t -T MLSStrings.o mlsstrings.mod 
+#mlsstrings.mod: MLSStrings.f90 mlscommon.mod ReadANumFromChars.f9h
+#	$(UTILDIR)/newAifBdiff.sh -a mlsstrings.mod $(FC) -c $(DONT_OPT) $(PRE) $(INC_PATHS) $(S)/MLSStrings.f90 $(FAFTER)
+
+a358 7
+# Intel's ifort compiler v11.x for 32-bit architecture has a string-handling bug
+# unless treated very carefully
+#MLSStringLists.o:
+#	$(FC) -c $(DONT_OPT) $(PRE) $(INC_PATHS) $(S)/MLSStringLists.f90 $(FAFTER)
+#MLSStrings.o:
+#	$(FC) -c $(DONT_OPT) $(PRE) $(INC_PATHS) $(S)/MLSStrings.f90 $(FAFTER)
+
+d441 3
+@
+
+
+1.14
+log
+@Moved Parser_Tables_L2CF.f90 from lib to srclib
+@
+text
+@d18 1
+a18 1
+# "$Id: Makefile.h,v 1.13 2014/05/20 23:41:29 vsnyder Exp $"
+d64 5
+a197 5
+$(srclib)/Parser_L2CF.f9h: $(UTILDIR)/lr/l2cf.grm $(INSTALLDIR)/lr
+	$(INSTALLDIR)/lr \
+          $(UTILDIR)/lr/l2cf.grm \
+          $(srclib)/Parser_L2CF.f9h $(UTILDIR)/lr/l2cf.lls $(LRAFTER)
+
+d458 3
+@
+
+
+1.13
+log
+@New parser, simplified build
+@
+text
+@d18 1
+a18 1
+# "$Id: Makefile.h,v 1.12 2014/02/21 22:32:28 pwagner Exp $"
+d28 1
+a28 1
+	-C $(MLSCFILE) $(UTILDIR)/lr/*.f90
+d36 1
+a36 1
+   -T CalibWeightsFlags.o calibweightsflags.mod
+d39 1
+a39 1
+   $(INC_PATHS) $(S)/CalibWeightsFlags.f90 $(FAFTER)
+d42 1
+a42 1
+   -T EngTbls.o engtbls.mod 
+d45 1
+a45 1
+   $(INC_PATHS) $(S)/EngTbls.f90 $(FAFTER)
+d48 1
+a48 1
+   -T L1LogUtils.o l1logutils.mod
+d51 1
+a51 1
+   $(INC_PATHS) $(S)/L1LogUtils.f90 $(FAFTER)
+d54 1
+a54 1
+   -T OutputL1B.o outputl1b.mod 
+d59 1
+a59 1
+   -T OutputL1B_HDF4.o outputl1b_hdf4.mod 
+d62 5
+d71 1
+a71 1
+   -T tree_checker.o tree_checker.mod 
+d193 1
+a193 1
+$(S)/Parser_L2CF.f9h: $(UTILDIR)/lr/l2cf.grm $(INSTALLDIR)/lr
+d196 1
+a196 1
+          $(S)/Parser_L2CF.f9h $(UTILDIR)/lr/l2cf.lls $(LRAFTER)
+d347 1
+a347 1
+$(S)/Parser_L2CF.f9h: $(UTILDIR)/lr/l2cf.grm $(INSTALLDIR)/lr
+d350 1
+a350 1
+          $(S)/Parser_L2CF.f9h $(UTILDIR)/lr/l2cf.lls $(LRAFTER)
+d458 3
+@
+
+
+1.12
+log
+@Uses Parser_Tables.wc to trigger two-phase build
+@
+text
+@d18 1
+a18 1
+# "$Id: Makefile.h,v 1.11 2014/01/29 21:03:41 pwagner Exp $"
+a25 11
+# First, we must hide parser.f90, then rebuild lib
+	pwd; echo $(CONFDIR); echo $(UTILDIR); if [ -f $(CONFDIR)/lib/parser.f90 ] ; then \
+	mv $(CONFDIR)/lib/parser.f90 $(CONFDIR)/lib/parser.f90.hideme; \
+        $(MAKE) -C $(CONFDIR)/lib update; \
+        $(MAKE) -C $(CONFDIR)/lib; \
+        fi
+# Second build lr with the truncated lib
+#	$(UTILDIR)/build_f90_in_misc.sh -d $(INSTALLDIR) -t $(TESTSDIR) \
+#        -p lr -M $(MAKE) -O short_name=lr_custom -m lib \
+#	-FC $(FC) -CC $(CC) -C $(MLSCFILE) \
+#        $(UTILDIR)/lr/*.f90
+d28 1
+a28 7
+	-C $(MLSCFILE) \
+	$(UTILDIR)/lr/*.f90
+# Third, undo the damage to lib
+	if [ -f $(CONFDIR)/lib/parser.f90.hideme ] ; then \
+	mv $(CONFDIR)/lib/parser.f90.hideme $(CONFDIR)/lib/parser.f90; \
+        $(MAKE) -C $(CONFDIR)/lib update; \
+        fi
+d188 1
+a188 8
+parser.o parser.mod: parser_tables.mod
+
+# The extra file $(S)/Parser_Tables.wc is part of some hackery-quackery
+# aimed at forcing libmls.a to be built twice:
+# the first time without parser.o, 
+# the second time with
+# see lib/MakeFC for how $(S)/Parser_Tables.wc acts to trigger the sequence
+$(S)/Parser_Tables.f90: $(UTILDIR)/lr/l2cf.grm $(INSTALLDIR)/lr
+d191 1
+a191 8
+          $(S)/Parser_Tables.f90 $(UTILDIR)/lr/l2cf.lls $(LRAFTER); \
+          wc $(S)/Parser_Tables.f90 > $(S)/Parser_Tables.wc; \
+          cd $(S); $(MAKE) -f MakeFC update JUSTSUBDIRS=yes
+
+Parser_Tables.o: 
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t -T Parser_Tables.o parser_tables.mod
+parser_tables.mod: Parser_Tables.f90
+	$(UTILDIR)/newAifBdiff.sh -a parser_tables.mod $(FC) -c $(FOPTS) $(INC_PATHS) $(S)/Parser_Tables.f90 $(FAFTER)
+d342 1
+a342 8
+parser.o: Parser_Tables.o
+
+# The extra file $(S)/Parser_Tables.wc is part of some hackery-quackery
+# aimed at forcing libmls.a to be built twice:
+# the first time without parser.o, 
+# the second time with
+# see lib/MakeFC for how $(S)/Parser_Tables.wc acts to trigger the sequence
+$(S)/Parser_Tables.f90: $(UTILDIR)/lr/l2cf.grm $(INSTALLDIR)/lr
+d345 1
+a345 6
+          $(S)/Parser_Tables.f90 $(UTILDIR)/lr/l2cf.lls $(LRAFTER); \
+          wc $(S)/Parser_Tables.f90 > $(S)/Parser_Tables.wc; \
+          cd $(S); $(MAKE) -f MakeFC update JUSTSUBDIRS=yes
+
+Parser_Tables.o: $(S)/Parser_Tables.f90
+	$(FC) -c $(FOPTS) $(INC_PATHS) $(S)/Parser_Tables.f90 $(FAFTER)
+d453 3
+@
+
+
+1.11
+log
+@Shorten make update
+@
+text
+@d18 1
+a18 1
+# "$Id: Makefile.h,v 1.10 2014/01/24 00:58:08 pwagner Exp $"
+d207 5
+d216 1
+d375 5
+d384 1
+d496 3
+@
+
+
+1.10
+log
+@Removed certain amount of clumsiness
+@
+text
+@d18 1
+a18 1
+# "$Id: Makefile.h,v 1.9 2014/01/22 18:22:15 pwagner Exp $"
+d211 1
+a211 1
+          cd $(S); $(MAKE) -f MakeFC update
+d373 1
+a373 1
+          cd $(S); $(MAKE) -f MakeFC update
+d484 3
+@
+
+
+1.9
+log
+@More changes, bug fixes
+@
+text
+@d18 1
+a18 1
+# "$Id: Makefile.h,v 1.8 2014/01/18 00:56:45 pwagner Exp $"
+d205 1
+a205 1
+parser.o parser.mod: $(S)/Parser_Tables.f90
+d211 6
+a216 1
+          cd $(S); $(MAKE) -f MakeFC depends
+d367 1
+a367 1
+parser.o: $(S)/Parser_Tables.f90
+d373 4
+a376 1
+          cd $(S); $(MAKE) -f MakeFC depends
+d484 3
+@
+
+
+1.8
+log
+@Redirect lr stdout
+@
+text
+@d18 1
+a18 1
+# "$Id: Makefile.h,v 1.7 2014/01/15 19:12:19 pwagner Exp $"
+d23 1
+a23 1
+	-FC $(FC) -CC $(CC) -C $(MLSCFILE) \
+d33 4
+d38 3
+a40 3
+   -p lr -M $(MAKE) -O short_name=lr -m lib \
+	-FC $(FC) -CC $(CC) -C $(MLSCFILE) \
+        $(UTILDIR)/lr/*.f90
+d42 1
+d44 2
+a45 1
+        $(MAKE) -C $(CONFDIR)/lib update
+d476 3
+@
+
+
+1.7
+log
+@Compatible with new lr
+@
+text
+@d18 1
+a18 1
+# "$Id: Makefile.h,v 1.6 2013/12/03 00:03:29 pwagner Exp $"
+d204 1
+a204 1
+          $(S)/Parser_Tables.f90 $(LRAFTER); \
+d361 1
+a361 1
+          $(S)/Parser_Tables.f90 $(LRAFTER); \
+d470 3
+@
+
+
+1.6
+log
+@Fixed bugs in building lr; added LRAFTER
+@
+text
+@d18 1
+a18 1
+# "$Id: Makefile.h,v 1.5 2013/10/28 23:12:17 pwagner Exp $"
+d26 7
+d34 1
+a34 1
+   -p lr -M $(MAKE) \
+d37 3
+d199 3
+a201 1
+$(S)/parser.f9h: $(UTILDIR)/lr/l2cf.grm $(INSTALLDIR)/lr
+d204 2
+a205 1
+          $(S)/parser.f9h $(LRAFTER)
+d234 1
+a234 1
+# unless treated vry carefully
+d356 3
+a358 1
+$(S)/parser.f9h: $(UTILDIR)/lr/l2cf.grm $(INSTALLDIR)/lr
+d361 2
+a362 1
+          $(S)/parser.f9h $(LRAFTER)
+d470 3
+@
+
+
+1.5
+log
+@May build parser.f9h
+@
+text
+@d18 1
+a18 1
+# "$Id: Makefile.h,v 1.4 2013/08/28 00:39:46 pwagner Exp $"
+d26 4
+a29 3
+	$(UTILDIR)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@@ -M $(MAKE) -O LDOPTS=-static \
+	-C $(MLSCFILE) $(UTILDIR)/lr/*.f90
+d192 1
+a192 1
+          $(S)/parser.f9h
+d346 1
+a346 1
+          $(S)/parser.f9h
+d454 3
+@
+
+
+1.4
+log
+@Lifted custom builds from MLSStrings.f90 MLSStringLists.f90
+@
+text
+@d18 12
+a29 1
+# "$Id: Makefile.h,v 1.3 2013/06/12 18:18:04 pwagner Exp $"
+a98 6
+$(INSTALLDIR)/init_gen: $(UTILDIR)/init_gen.f90
+	$(UTILDIR)/build_f90_in_misc.sh -p init_gen \
+	-d $(INSTALLDIR) -t $(TESTSDIR) -M $(MAKE) \
+	-FC $(FC) -CC $(CC) -C $(MLSCFILE) \
+   $(UTILDIR)/init_gen.f90
+
+a155 6
+$(INSTALLDIR)/init_gen: $(UTILDIR)/init_gen.f90
+	$(UTILDIR)/build_f90_in_misc.sh -p init_gen \
+	-d $(INSTALLDIR) -t $(TESTSDIR) -M $(MAKE) \
+	-FC $(FC) -CC $(CC) -C $(MLSCFILE) \
+   $(UTILDIR)/init_gen.f90
+
+d188 5
+a272 6
+$(INSTALLDIR)/init_gen: $(UTILDIR)/init_gen.f90
+	$(UTILDIR)/build_f90_in_misc.sh -p init_gen \
+	-d $(INSTALLDIR) -t $(TESTSDIR) -M $(MAKE) \
+	-FC $(FC) -CC $(CC) -C $(MLSCFILE) \
+   $(UTILDIR)/init_gen.f90
+
+a318 6
+$(INSTALLDIR)/init_gen: $(UTILDIR)/init_gen.f90
+	$(UTILDIR)/build_f90_in_misc.sh -p init_gen \
+	-d $(INSTALLDIR) -t $(TESTSDIR) -M $(MAKE) \
+	-FC $(FC) -CC $(CC) -C $(MLSCFILE) \
+   $(UTILDIR)/init_gen.f90
+
+d342 5
+d453 3
+@
+
+
+1.3
+log
+@Changes to pass most FOPTS for Strings modules
+@
+text
+@d18 1
+a18 1
+# "$Id: Makefile.h,v 1.2 2012/04/20 00:43:26 pwagner Exp $"
+d217 9
+a225 9
+MLSStringLists.o:
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t -T MLSStringLists.o mlsstringlists.mod 
+mlsstringlists.mod: MLSStringLists.f90 mlscommon.mod mlsmessagemodule.mod \
+	mlssets.mod mlsstrings.mod
+	$(UTILDIR)/newAifBdiff.sh -a mlsstringlists.mod $(FC) -c $(DONT_OPT) $(PRE) $(INC_PATHS) $(S)/MLSStringLists.f90 $(FAFTER)
+MLSStrings.o: mlsstrings.mod MLSStrings.f90 
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t -T MLSStrings.o mlsstrings.mod 
+mlsstrings.mod: MLSStrings.f90 mlscommon.mod ReadANumFromChars.f9h
+	$(UTILDIR)/newAifBdiff.sh -a mlsstrings.mod $(FC) -c $(DONT_OPT) $(PRE) $(INC_PATHS) $(S)/MLSStrings.f90 $(FAFTER)
+d369 4
+a372 4
+MLSStringLists.o:
+	$(FC) -c $(DONT_OPT) $(PRE) $(INC_PATHS) $(S)/MLSStringLists.f90 $(FAFTER)
+MLSStrings.o:
+	$(FC) -c $(DONT_OPT) $(PRE) $(INC_PATHS) $(S)/MLSStrings.f90 $(FAFTER)
+d456 3
+@
+
+
+1.2
+log
+@Fixed NOUNASS so it works again with NAG
+@
+text
+@d18 1
+a18 1
+# "$Id: Makefile.h,v 1.1 2012/04/04 00:45:40 pwagner Exp $"
+a191 1
+SLOWASMOLASSES := -g --ap --pca --f95 --chk a,e,s
+d194 1
+d221 1
+a221 1
+	$(UTILDIR)/newAifBdiff.sh -a mlsstringlists.mod $(FC) -c -O0 $(PRE) $(INC_PATHS) $(S)/MLSStringLists.f90 $(FAFTER)
+d225 1
+a225 1
+	$(UTILDIR)/newAifBdiff.sh -a mlsstrings.mod $(FC) -c -O0 $(PRE) $(INC_PATHS) $(S)/MLSStrings.f90 $(FAFTER)
+d355 1
+d370 1
+a370 1
+	$(FC) -c -O0 $(PRE) $(INC_PATHS) $(S)/MLSStringLists.f90 $(FAFTER)
+d372 1
+a372 1
+	$(FC) -c -O0 $(PRE) $(INC_PATHS) $(S)/MLSStrings.f90 $(FAFTER)
+d456 3
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d18 1
+a18 1
+# "$Id: Makefile.h,v 1.4 2011/11/18 23:37:22 pwagner Exp $"
+d191 1
+a191 1
+NOUNASS := $(shell echo ${FOPTS} | sed 's/\(--chk [aesx,]*\),u\([aesx,]*\)/\1\2/')
+d455 3
+@
+

@@ -1,0 +1,327 @@
+head	2.4;
+access;
+symbols
+	v5-02-NRT-19:2.4
+	v6-00:2.4
+	v5-02-NRT-18:2.4
+	v5-02:2.4
+	v5-01-NRT-17:2.4
+	v5-01-NRT-16:2.4
+	v5-01-NRT-15:2.4
+	v5-01-NRT-14:2.4
+	neuralnetworks-1-0:2.4.0.12
+	cfm-single-freq-0-1:2.4.0.10
+	v5-01:2.4
+	v5-00:2.4
+	v4-23-TA133:2.4.0.8
+	mus-emls-1-70:2.4.0.6
+	rel-1-0-englocks-work:2.4.0.4
+	VUMLS1-00:2.4
+	VPL1-00:2.4
+	V4-22-NRT-08:2.4
+	VAM1-00:2.4
+	V4-21:2.4.0.2
+	V4-13:2.4
+	V4-12:2.4
+	V4-11:2.4
+	V4-10:2.4
+	V3-43:2.3
+	M4-00:2.4
+	V3-41:2.3
+	V3-40-PlusGM57:2.3.0.2
+	V2-24-NRT-04:2.3
+	V3-33:2.4
+	V2-24:2.3
+	V3-31:2.4
+	V3-30-NRT-05:2.3
+	cfm-01-00:2.3
+	V3-30:2.3
+	V3-20:2.3
+	V3-10:2.3
+	V2-23-NRT-02:2.3
+	V2-23:2.3
+	V2-22-NRT-01:2.3
+	V2-22:2.3
+	V2-21:2.3
+	V2-20:2.3
+	V2-11:2.3
+	V2-10:2.3
+	V2-00:2.3
+	V1-51:2.2
+	V1-50:2.2
+	V1-45:2.2
+	V1-44:2.2
+	V1-43:2.2
+	V1-42:2.2
+	V1-41:2.2
+	V1-32:2.2
+	V1-40:2.2
+	V1-31:2.2
+	V1-30:2.2;
+locks; strict;
+comment	@# @;
+
+
+2.4
+date	2010.11.30.00.34.52;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2005.06.22.17.44.11;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2003.06.20.01.34.30;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2003.06.20.00.17.51;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.4
+log
+@NaNs now sort to the end
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+!     .  NASA contract NAS7-918 is acknowledged.
+
+!     Sort the M:N-vector A.
+!     A is not disturbed.  P is set so that A(P(J)) is the J'th element
+!     of the sorted sequence.
+!
+!     To sort an array A' into descending order, let A = -A'
+!     To sort an array A' into ascending order according to the
+!     absolute value of the elements let A = ABS(A').
+!     To sort an array A' into decending order according to the
+!     absolute value of the elements let A = -ABS(A').
+!
+!     subroutine *SORTQ (A, M, N, P)
+      integer, intent(in) :: M, N
+      integer, intent(inout) :: P(*)
+!
+!     *****     Local Variables     ************************************
+!
+! BL      is the left bound of the sub-array to be sorted at the next
+!         step.
+! BR      is the right bound of the sub-array to be sorted at the next
+!         step.
+! CL      is the current left bound of the unsorted sub-array.
+! CR      is the current right bound of the unsorted sub-array.
+! PARTN   is the partition element.
+! PTEMP   holds elements of P during exchanges.
+! STACKL  keeps track of the left bounds of sub-arrays waiting to be
+!         sorted.
+! STACKR  keeps track of the right bounds of sub-arrays waiting to be
+!         sorted.
+! STKTOP  keeps track of the top of the stacks.
+!
+      integer BL,BR,CL,CR
+      integer, parameter :: INSERT = 10
+      integer PTEMP, STACKL(32), STACKR(32), STKTOP
+      integer :: mm, nm
+!
+!     *****     Executable Statements     ******************************
+!
+      if ( all(is_what_ieee(nan_signal, A(M:N))) ) then
+        return
+      elseif ( any(is_what_ieee(nan_signal, A(M:N))) ) then
+        call moveNaNsToEnd ( mm, nm )
+      else
+        mm = M
+        nm = N
+      endif
+      if ( nm-mm >= insert ) then
+         stktop = 1
+         stackl(1) = mm
+         stackr(1) = nm
+         do while ( stktop /=  0 )
+            bl = stackl(stktop)
+            br = stackr(stktop)
+            stktop = stktop-1
+!           Choose a partitioning element.  Use the median of the first,
+!           middle and last elements.  Sort them so the extreme elements
+!           can serve as sentinels during partitioning.
+            cl = (bl+br)/2
+            ptemp = p(cl)
+            if (a(p(bl)) > a(ptemp)) then
+               p(cl) = p(bl)
+               p(bl) = ptemp
+               ptemp = p(cl)
+            end if
+            if (a(p(bl)) > a(p(br))) then
+               cr = p(bl)
+               p(bl) = p(br)
+               p(br) = cr
+            end if
+            if (a(ptemp)> a(p(br))) then
+               p(cl) = p(br)
+               p(br) = ptemp
+               ptemp = p(cl)
+            end if
+            p(cl) = p(br-1)
+            p(br-1) = ptemp
+            partn = a(ptemp)
+!           Partition the sub-array around PARTN.  Exclude the above
+!           considered elements from partitioning because they're al-
+!           ready in the correct subfiles.  Stop scanning on equality to
+!           prevent files containing equal values from causing a loop.
+            cl = bl
+            cr = br-1
+            do
+  30           cl = cl+1
+                  if (a(p(cl)) < partn) go to 30
+  40           cr = cr-1
+                  if (a(p(cr)) > partn) go to 40
+               if (cl > cr) exit
+               ptemp = p(cl)
+               p(cl) = p(cr)
+               p(cr) = ptemp
+            end do
+!           Put sub-arrays on the stack if they're big enough.  Put the
+!           larger under the smaller, so the smaller will be done next.
+!           This makes the upper bound of the stack depth log2 (n-m+1).
+!           (The "Hibbard" modification of quicksort).
+            if (cl-bl > br-cr) then
+               if ( cl-bl> insert ) then
+                  stktop = stktop+1
+                  stackl(stktop) = bl
+                  stackr(stktop) = cr
+               end if
+               if ( br-cr > insert ) then
+                  stktop = stktop+1
+                  stackl(stktop) = cl
+                  stackr(stktop) = br
+               end if
+            else
+               if ( br-cr > insert ) then
+                  stktop = stktop+1
+                  stackl(stktop) = cl
+                  stackr(stktop) = br
+               end if
+               if ( cl-bl > insert) then
+                  stktop = stktop+1
+                  stackl(stktop) = bl
+                  stackr(stktop) = cr
+               end if
+            end if
+         end do
+      end if
+!     Clean up small subfiles using insertion sort on everything.
+      do cr  =  mm+1, nm
+         ptemp = p(cr)
+         partn = a(ptemp)
+         cl = cr
+  60     if ( a(p(cl-1)) > partn ) then
+            p(cl) = p(cl-1)
+            cl = cl-1
+            if (cl > mm ) go to 60 
+         end if
+         p(cl) = ptemp
+      end do
+      return
+  contains
+    subroutine moveNaNsToEnd ( mm, nm )
+      ! Move NaNs to end of A
+      ! Args:
+      integer, intent(out) :: mm, nm
+      ! Internal variables
+      integer :: k
+      ! Executable
+      mm = M
+      nm = N
+      k = M - 1
+      do
+        k = k + 1
+        if ( k <= nm ) exit
+        if ( .not. is_what_ieee(nan_signal, A(p(k))) ) cycle
+        ! swap NaN for current last element
+        ptemp = p(k)
+        p(k) = p(nm)
+        p(nm) = ptemp
+        nm = nm - 1
+      enddo
+    end subroutine moveNaNsToEnd
+!     end
+
+! $Log: sortq.f9h,v $
+! Revision 2.3  2005/06/22 17:44:11  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.2  2003/06/20 01:34:30  vsnyder
+! Change intent for A and P
+!
+! Revision 2.1  2003/06/20 00:17:51  vsnyder
+! Initial commit
+!
+@
+
+
+2.3
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d46 1
+d50 9
+a58 1
+      if ( n-m >= insert ) then
+d60 2
+a61 2
+         stackl(1) = m
+         stackr(1) = n
+d135 1
+a135 1
+      do cr  =  m+1, n
+d142 1
+a142 1
+            if (cl > m ) go to 60 
+d147 22
+d172 3
+@
+
+
+2.2
+log
+@Change intent for A and P
+@
+text
+@d1 10
+a10 2
+!     .  Copyright (C) 1989, California Institute of Technology.
+!     .  All rights reserved.  U. S. Government sponsorship under
+d141 3
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d17 1
+a17 1
+      integer, intent(out) :: P(*)
+d132 4
+a135 1
+! $Log: $
+@
+

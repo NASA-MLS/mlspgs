@@ -1,0 +1,297 @@
+head	1.2;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2013.10.26.00.37.35;	author vsnyder;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2013.10.24.22.41.14;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Shouldn't have been checked in
+@
+text
+@program LR_to_Data
+
+  ! Read the file output by LR and write a file of a file of declarations.
+
+  ! Command-line arguments are input file and declaration file names.
+
+  implicit NONE
+
+  integer, parameter :: Debug = 1
+
+  character(len=255) :: Arg, IOMSG
+  integer :: IOSTAT
+
+  ! Unit numbers for files
+  integer, parameter :: In = 10, Decl = 11
+
+  ! Quantities used to determine size of parser table
+  integer :: IFINAL
+  integer :: INIT
+  integer :: LONGRS
+  integer :: LONGVC
+  integer :: LSETS
+  integer :: NCSETS, NCSET1
+  integer :: NLOOKS
+  integer :: NSTATE, NSTP1
+  integer :: NTERMS
+  integer :: NTRANS
+  integer :: NUMPRD
+  integer :: NVOC, NTVOC
+
+  integer :: NELTS, NSETS, NSETV, NSETP1, RFDSZ, TSIZE
+
+  ! Parser table arrays:
+  integer, allocatable :: ACT(:)  ! Actions
+  integer, allocatable :: ENT(:)  ! Entry symbols
+  integer, allocatable :: FRED(:) ! First lookahead set when
+                                  ! state <= maxred, else prod number
+  integer, allocatable :: FTRN(:) ! First transition
+  integer, allocatable :: LENS(:) ! RHS lengths
+  integer, allocatable :: LHS(:)  ! Left-hand-sides of productions
+  integer, allocatable :: LSET(:) ! Lookahead sets
+  integer, allocatable :: LS(:)   ! Lookahead sets
+  integer, allocatable :: LVOC(:) ! Last character of vocabulary item
+  integer, allocatable :: NSET(:) ! Lookahead set numbers
+  integer, allocatable :: PROD(:) ! Production numbers, used when
+                                  ! state <= maxred
+  integer, allocatable :: SET(:)  ! Lookahead set forest
+  integer, allocatable :: TRAN(:) ! Transition vector
+  integer, allocatable :: VAL(:)  ! Vocabulary indices
+  character, allocatable :: VOC(:) ! Vocabulary
+
+  ! Parser table scalars:
+  integer :: MAXRED               ! maximum state index in which a 
+  ! reduction depends on lookahead, else state is LR(0) adequate
+  integer :: MAXTRN               ! maximum state index in which a
+                                        ! transition happens
+  integer :: MINRED               ! minimum state index in which a
+                                        ! reduction happens
+
+  integer :: I, ITS, IVOC, LLS, N, NS
+
+  ! Open files
+
+  call get_command_argument ( 1, arg )
+  if ( arg == '' ) call usage
+  open ( in, file=trim(arg), status='old', form='formatted', &
+    & iostat=iostat, iomsg=iomsg )
+  if ( iostat /= 0 ) call io_error ( 'Unable to open input file "' // trim(arg) // '"' )
+  call get_command_argument ( 2, arg )
+  if ( arg == '' ) call usage
+  open ( decl, file=trim(arg), form='formatted', iostat=iostat, iomsg=iomsg )
+  if ( iostat /= 0 ) call io_error ( 'Unable to open declarations file "' // trim(arg) // '"' )
+  call get_command_argument ( 3, arg )
+
+  ! Read sizes
+  read ( in, '(10i5)', iostat=iostat, iomsg=iomsg ) nstate, ifinal, init, &
+       & nvoc, nterms, longvc, nlooks, ntrans, ncsets, numprd, longrs, lsets
+  if ( iostat /= 0 ) call io_error ( 'Unable to read table sizes' )
+
+  ! Compute some more sizes
+  nstp1=nstate+1
+  ncset1=ncsets+1
+  tsize=nstate+ntrans
+  nelts=ntrans
+  nsets=nstate
+  nsetv=nstate
+  nsetp1=nsetv+1
+  rfdsz=nsetv+nsetv
+
+  its = numprd+nstate+nstp1+nstp1+numprd+numprd+lsets+ncset1+nlooks &
+      & + nlooks+ntrans+nvoc
+
+  if ( debug > 0 ) &
+    & write ( *, 10 ) numprd, nstate, nstp1, nstp1, numprd, numprd, lsets, &
+                    & ncset1, nlooks, nlooks, ntrans, nvoc, its
+10 format (' Space requirements for original parser:'/  &
+ &/     i6,' for ACT'   &
+ &/     i6,' for ENT'   &
+ &/     i6,' for FRED'  &
+ &/     i6,' for FTRN'  &
+ &/     i6,' for LENS'  &
+ &/     i6,' for LHS'   &
+ &/     i6,' for LS'    &
+ &/     i6,' for LSET'  &
+ &/     i6,' for NSET'  &
+ &/     i6,' for PROD'  &
+ &/     i6,' for TRAN'  &
+ &/     i6,' for VOC'/  &
+ &/     i6,' TOTAL')
+
+  write ( decl, 20 ) 'IFINAL', ifinal, 'NUMPRD', numprd, 'NSTATE', nstate, &
+    &                'LSETS',  lsets,  'NLOOKS', nlooks, 'NTRANS', ntrans, &
+    &                'NVOC', nvoc
+20 format ( 2x, 'integer, parameter :: ', a, ' = ', i0 )
+
+  ! Determine vocabulary size
+  allocate ( lvoc(0:nvoc) )
+  lvoc(0) = 0
+  ntvoc=0
+  do i = 1, nvoc
+    read ( in, 30 ) ivoc
+30  format (i5,75a1)
+    ntvoc = ntvoc+ivoc
+    lvoc(i) = ntvoc
+  end do
+  if ( debug > 0 ) write ( *, 40 ) nvoc+1,ntvoc
+40 format (/'Additional space for vocabulary:'/  &
+ &/    i6,' For pointers'  &
+ &/    i6,' For text')
+
+  allocate ( voc(ntvoc) )
+  rewind in
+  ! Skip table sizes
+  read ( in, '(10i5)', iostat=iostat, iomsg=iomsg ) nstate, ifinal, init, &
+       & nvoc, nterms, longvc, nlooks, ntrans, ncsets, numprd, longrs, lsets
+  ! Read vocabulary
+  do i = 1, nvoc
+    read ( in, 30 ) ivoc, voc(lvoc(i-1)+1:lvoc(i))
+  end do
+
+  if ( debug > 1 ) then
+    write ( *, '(/a)' ) 'Vocabulary:'
+    do i = 1, nvoc
+      write ( *, '(2i3,": ",78(a:))' ) i, lvoc(i)-lvoc(i-1), voc(lvoc(i-1)+1:lvoc(i))
+    end do
+  end if
+
+  call charData ( 'VOC', voc(1:ntvoc) )
+
+  allocate ( ent(nstate) )
+  read ( in, 50 ) ent
+50 format (10i5)
+  allocate ( fred(nstp1) )
+  read ( in, 50 ) fred
+  allocate ( ftrn(ntrans+1:tsize+1) )
+  read ( in, 50 ) ftrn(ntrans+1:tsize+1)
+  allocate ( tran(ntrans) )
+  read ( in, 50 ) tran
+  allocate ( nset(nlooks) )
+  read ( in, 50 ) nset
+  allocate ( prod(nlooks) )
+  read ( in, 50 ) prod
+  allocate ( lset(lsets+1:ncset1+lsets) )
+  lset(:ncsets) = 0
+  allocate ( ls(lsets) )
+  lls=1
+  do i = 1, ncsets
+    lset(lsets+i) = lls
+    read ( in, 50 ) ns, ls(lls:lls+ns-1)
+    lls=lls+ns
+  end do
+  lset(ncset1+lsets) = lls
+  allocate ( lens(numprd) )
+  read ( in, 50 ) lens
+  allocate ( lhs(numprd) )
+  read ( in, 50 ) lhs
+  allocate ( act(numprd) )
+  read ( in, 50 ) act
+  allocate ( val(nvoc) )
+  read ( in, 50 ) val
+
+  call intData ( 'ENT', ent )
+  call intData ( 'FRED', fred )
+  call intData ( 'FTRN', ftrn, ntrans+1 )
+  call intData ( 'TRAN', tran )
+  call intData ( 'NSET', nset )
+  call intData ( 'PROD', prod )
+  call intData ( 'LSET', lset, lsets+1 )
+  call intData ( 'LS', ls )
+  call intData ( 'LENS', lens )
+  call intData ( 'LHS', lhs )
+  call intData ( 'ACT', act )
+  call intData ( 'VAL', val )
+
+  ! Don't bother reading the RHS and BASE arrays.
+
+contains
+
+  subroutine CharData ( Name, Data )
+    character(len=*), intent(in) :: Name
+    character, intent(in) :: Data(:)
+    integer :: I, J
+    write ( decl, '(3a,i0,a)' ) '  character, parameter :: ', name, '(', &
+      & size(data), ') = [ &'
+    do i = 1, size(data), 15
+      do j = i, min(i+14,size(data))
+        if ( data(j) == "'" ) then
+          write ( decl, 10, advance='no' ) data(j)
+       10 format ( '"', a, '"' )
+        else
+          write ( decl, 20, advance='no' ) data(j)
+       20 format ( "'", a, "'" )
+        end if
+        if ( j /= size(data) ) write ( decl, '(", ")', advance='no' )
+      end do
+      if ( i+14 >= size(data) ) then
+        write ( decl, '(" ]")' )
+      else
+        write ( decl, '(" &")' )
+      end if
+    end do
+  end subroutine CharData
+
+  subroutine IntData ( Name, Data, First )
+    character(len=*), intent(in) :: Name
+    integer, intent(in) :: Data(:)
+    integer, intent(in), optional :: First
+    integer :: I, J
+    if ( present(first) ) then
+      write ( decl, '(3a,i0,":",i0,a)' ) '  integer, parameter :: ', name, '(', &
+        & first, first+size(data)-1, ') = [ &'
+    else
+      write ( decl, '(3a,i0,a)' ) '  integer, parameter :: ', name, '(', &
+        & size(data), ') = [ &'
+    end if
+    do i = 1, size(data), 10
+      write ( decl, '(4x, 10(i5,:", "))', advance='no' ) &
+        data(i:min(i+9,size(data)))
+      if ( i+9 >= size(data) ) then
+        write ( decl, '(" ]")' )
+      else
+        write ( decl, '(", &")' )
+      end if
+    end do
+  end subroutine IntData
+
+  subroutine IO_Error ( Msg )
+    character(len=*), intent(in) :: Msg
+    write ( *, '(a)' ) msg
+    write ( *, '(a,i0)' ) 'IOSTAT = ', iostat
+    write ( *, '(a)' ) trim(iomsg)
+    stop
+  end subroutine IO_Error
+
+  subroutine Usage
+    call get_command_argument ( 0, arg )
+    print '(a)', 'Usage: ' // trim(arg) // ' input decl data'
+  end subroutine Usage
+
+end program LR_to_Data
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@@
+

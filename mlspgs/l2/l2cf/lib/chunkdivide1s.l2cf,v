@@ -1,0 +1,190 @@
+head	1.7;
+access;
+symbols
+	v5-02-NRT-19:1.7
+	v6-00:1.7
+	v5-02-NRT-18:1.7
+	v5-02:1.7
+	v5-01-NRT-17:1.7
+	v5-01-NRT-16:1.7
+	v5-01-NRT-15:1.7
+	v5-01-NRT-14:1.7
+	neuralnetworks-1-0:1.7.0.12
+	cfm-single-freq-0-1:1.7.0.10
+	v5-01:1.7
+	v5-00:1.7
+	v4-23-TA133:1.7.0.8
+	mus-emls-1-70:1.7.0.6
+	rel-1-0-englocks-work:1.7.0.4
+	VUMLS1-00:1.7
+	VPL1-00:1.7
+	V4-22-NRT-08:1.7
+	VAM1-00:1.7
+	V4-21:1.7.0.2
+	V4-13:1.7
+	V4-12:1.7
+	V4-11:1.7
+	V4-10:1.7
+	V3-43:1.6
+	M4-00:1.7
+	V3-41:1.6
+	V3-40-PlusGM57:1.6.0.2
+	V2-24-NRT-04:1.5
+	V3-33:1.6
+	V2-24:1.5
+	V3-31:1.6
+	V3-30-NRT-05:1.6
+	cfm-01-00:1.6
+	V3-30:1.6
+	V3-20:1.6
+	V3-10:1.6
+	V2-23-NRT-02:1.5
+	V2-23:1.5
+	V2-22-NRT-01:1.5
+	V2-22:1.5
+	V2-21:1.5
+	V2-20:1.5
+	V2-11:1.5
+	V2-10:1.5
+	V2-00:1.4
+	V1-51:1.4
+	V1-50:1.4
+	V1-45:1.4
+	V1-44:1.4
+	V1-43:1.4
+	V1-32:1.4
+	V1-31:1.4
+	V1-30:1.4
+	V1-13:1.1
+	V1-12:1.1
+	V1-11:1.1
+	V1-10:1.1
+	newfwm-feb03:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.7
+date	2012.03.12.17.02.36;	author pwagner;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2009.07.31.17.19.32;	author pwagner;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2006.07.27.01.00.21;	author lambert;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2003.08.15.05.50.10;	author livesey;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2003.07.16.22.40.20;	author livesey;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2003.05.05.23.46.25;	author dwu;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2002.09.16.17.32.45;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.7
+log
+@Correct typo; may skip l1b check if flag says to
+@
+text
+@; --------------------------------------------- ChunkDivide ----
+;
+; This l2cf fragment gives a single chunk of length 1 MAF with
+; no overlaps.
+begin ChunkDivide
+  ChunkDivide, method=fixed, !ifdef(flagSkipL1BCheck,{/skipL1BCheck,}) $
+    maxLength=1 MAFs, overlap=0 MAFs, noChunks=3496
+end ChunkDivide
+@
+
+
+1.6
+log
+@Reduced noChunks to stop sids date from crashing
+@
+text
+@d3 1
+a3 1
+; This l2cf fragment gives a signle chunk of length 1 MAF with
+d6 2
+a7 1
+  ChunkDivide, method=fixed, maxLength=1 MAFs, overlap=0 MAFs, noChunks=3496
+@
+
+
+1.5
+log
+@changed vReg.hclfillapriori.l2cf
+@
+text
+@d6 1
+a6 1
+  ChunkDivide, method=fixed, maxLength=1 MAFs, overlap=0 MAFs, noChunks=3500
+@
+
+
+1.4
+log
+@Added a few more MAFs
+@
+text
+@d6 1
+a6 1
+  ChunkDivide, method=fixed, maxLength=1 MAFs, overlap=0 MAFs, noChunks=300
+@
+
+
+1.3
+log
+@Cut down on the number of chunks
+@
+text
+@d6 1
+a6 1
+  ChunkDivide, method=fixed, maxLength=1 MAFs, overlap=0 MAFs, noChunks=200
+@
+
+
+1.2
+log
+@up to 2000
+@
+text
+@d6 1
+a6 1
+  ChunkDivide, method=fixed, maxLength=1 MAFs, overlap=0 MAFs, noChunks=2000
+@
+
+
+1.1
+log
+@First version
+@
+text
+@d6 1
+a6 1
+  ChunkDivide, method=fixed, maxLength=1 MAFs, overlap=0 MAFs, noChunks=1000
+@
+

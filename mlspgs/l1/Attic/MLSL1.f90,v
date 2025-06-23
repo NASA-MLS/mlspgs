@@ -1,0 +1,420 @@
+head	2.6;
+access;
+symbols
+	V1-13:2.5
+	V1-12:2.5
+	V1-11:2.5
+	V1-10:2.5
+	newfwm-feb03:2.5.0.2
+	V1-04:2.2
+	V1-03:2.2
+	V1-02:2.2
+	V1-00:2.2
+	newfwm-sep01:2.1.0.2
+	V0-7:2.1
+	V0-5-Level2:2.1
+	V0-5-SIPS:2.1
+	V0_1:1.3;
+locks; strict;
+comment	@# @;
+
+
+2.6
+date	2003.08.15.14.25.04;	author perun;	state dead;
+branches;
+next	2.5;
+
+2.5
+date	2002.11.13.15.26.42;	author perun;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2002.11.12.21.50.03;	author jdone;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2002.11.07.21.35.33;	author jdone;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2002.04.03.21.42.00;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.02.23.18.26.11;	author perun;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2000.09.05.18.55.14;	author ahanzel;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2000.02.15.19.01.59;	author nakamura;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2000.02.08.20.36.13;	author perun;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.6
+log
+@Version 1.2 commit
+@
+text
+@! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+!============================================================================
+PROGRAM MLSL1       ! MLS Level 1 software
+!============================================================================
+
+  USE OpenInit, ONLY : OpenAndInitialize
+  USE SortQualify, ONLY : SortAndQualify
+  USE Calibration, ONLY : Calibrate
+  USE Radiances, ONLY : CalcLimbRads
+  USE L1BOutUtils, ONLY : OutputL1Bdata
+  USE Close_Files, ONLY: CloseFiles
+  USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Info, MLSMessageExit
+
+  IMPLICIT NONE
+
+  !------------------------------- RCS Ident Info ------------------------------
+  CHARACTER(LEN=130) :: id = &
+       "$Id: MLSL1.f90,v 2.5 2002/11/13 15:26:42 perun Exp $"
+  CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile: MLSL1.f90,v $"
+  !-----------------------------------------------------------------------------
+
+  INTEGER, PARAMETER :: NORMAL_EXIT_STATUS = 2
+  LOGICAL :: more_data, do_calib
+
+  CALL MLSMessage (MLSMSG_Info, ModuleName, &
+       & "Start EOS MLS Level 1 data processing.")
+
+  CALL OpenAndInitialize
+
+  DO
+
+     CALL SortAndQualify (more_data, do_calib)
+
+     IF (do_calib) THEN
+
+        CALL Calibrate
+
+        CALL CalcLimbRads
+
+        CALL OutputL1Bdata
+
+     ENDIF
+
+     IF (.NOT. more_data) EXIT
+
+  ENDDO
+
+  CALL CloseFiles
+
+  CALL MLSMessage (MLSMSG_Info, ModuleName, &
+       & "EOS MLS Level 1 data processing successfully completed!")
+
+  CALL MLSMessageExit (NORMAL_EXIT_STATUS)
+
+!=============================================================================
+END PROGRAM MLSL1
+!=============================================================================
+
+! $Log: MLSL1.f90,v $
+! Revision 2.5  2002/11/13 15:26:42  perun
+! Restore consistent coding style
+!
+! Revision 2.4  2002/11/12 21:50:03  jdone
+! Remove obsolete variables from previous.
+!
+! Revision 2.3  2002/11/07 21:35:33  jdone
+! Added HDF4/HDF5 switch.
+!
+! Revision 2.2  2002/04/03 21:42:00  pwagner
+! Sets status on normal exit to 2
+!
+! Revision 2.1  2001/02/23 18:26:11  perun
+! Version 0.5 commit
+!
+@
+
+
+2.5
+log
+@Restore consistent coding style
+@
+text
+@d20 1
+a20 1
+       "$Id: MLSL1.f90,v 2.4 2002/11/12 21:50:03 jdone Exp $"
+d62 3
+@
+
+
+2.4
+log
+@Remove obsolete variables from previous.
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+d5 1
+a5 1
+  PROGRAM MLSL1       ! MLS Level 1 software
+d14 2
+a15 1
+  USE MLSMessageModule, ONLY: MLSMSG_Info, MLSMessage, MLSMessageExit
+d20 1
+a20 1
+       "$Id: MLSL1.f90,v 2.3 2002/11/07 21:35:33 jdone Exp $"
+d23 3
+a25 2
+  integer, parameter :: NORMAL_EXIT_STATUS = 2
+  logical :: more_data, do_calib
+d33 1
+d54 3
+a56 1
+  call MLSMessageExit(NORMAL_EXIT_STATUS)
+d58 1
+a58 1
+ END PROGRAM MLSL1
+d62 3
+@
+
+
+2.3
+log
+@Added HDF4/HDF5 switch.
+@
+text
+@d14 1
+a14 3
+  USE MACHINE, only: GETARG, HP
+  USE MLSMessageModule, ONLY: MLSMSG_Info, MLSMSG_Error, MLSMSG_Warning, MLSMessage, &
+       MLSMessageExit
+d19 1
+a19 1
+       "$Id: MLSL1.f90,v 2.2 2002/04/03 21:42:00 pwagner Exp $"
+a21 1
+  character(len=10) :: char_argument
+d25 3
+a30 1
+
+d57 3
+@
+
+
+2.2
+log
+@Sets status on normal exit to 2
+@
+text
+@d5 1
+a5 1
+PROGRAM MLSL1       ! MLS Level 1 software
+a12 1
+  USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Info, MLSMessageExit
+d14 3
+a16 1
+
+d21 1
+a21 1
+       "$Id: MLSL1.f90,v 2.1 2001/02/23 18:26:11 perun Exp $"
+d24 1
+a24 2
+
+  LOGICAL :: more_data, do_calib
+d26 1
+a26 3
+
+  CALL MLSMessage (MLSMSG_Info, ModuleName, &
+       & "Start EOS MLS Level 1 processing.")
+a51 1
+
+d54 1
+a54 1
+END PROGRAM MLSL1
+d58 3
+@
+
+
+2.1
+log
+@Version 0.5 commit
+@
+text
+@d13 1
+a13 1
+  USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Info
+d20 2
+a21 2
+       "$Id$"
+  CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
+d25 1
+d55 1
+d60 4
+a63 1
+! $Log$
+@
+
+
+2.0
+log
+@Changing file revision to 2.0.
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
+d8 7
+a14 11
+  USE SDPToolkit
+  USE MLSL1Common
+  USE MLSL1Rad
+  USE MLSMessageModule
+  USE OpenInit
+  USE OutputL1B
+  USE Orbit
+  USE TkL1B
+  USE SortQualify
+  USE Calib
+  USE Close_files
+d18 7
+a24 23
+  !--------------------------- RCS Ident Info -------------------------------
+  CHARACTER (LEN=130) :: Id = &
+       "$Id: MLSL1.f90,v 1.3 2000/02/15 19:01:59 nakamura Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName="$RCSfile: MLSL1.f90,v $"
+  !--------------------------------------------------------------------------
+
+  INTEGER :: returnstatus, counterMAF, i, numOrb
+  INTEGER :: orbitNumber(max_orbits)
+  LOGICAL :: more_data
+
+  CHARACTER (LEN=27) :: UTC_start, UTC_end
+
+  REAL :: scanRate(lenG)
+  REAL :: scanRateT(lenT)
+  REAL(r8) :: altG, altT, orbIncline
+  REAL(r8) :: ascTAI(max_orbits), dscTAI(max_orbits)
+
+  TYPE (TAI93_Range_T) :: procRange
+  TYPE (L0Info_T) :: l0Info
+  TYPE (L1BInfo_T) :: l1bInfo
+  TYPE (L0Sci_T) :: L0Sci(MaxMIFs) ! will allocate this in future versions
+  TYPE (Radiance_T), DIMENSION (:), POINTER :: L1Brad
+  TYPE (MAFinfo_T) :: MAFinfo
+d27 3
+a29 1
+       & "EOS MLS Level 1 data processing started")
+d31 1
+a31 1
+  CALL OpenAndInitialize (procRange, l0Info, l1bInfo, L1Brad)
+d33 1
+a33 2
+  returnstatus = PGS_TD_TAItoUTC (procRange%startTime, UTC_start)
+  returnstatus = PGS_TD_TAItoUTC (procRange%endTime, UTC_end)
+d35 1
+a35 2
+  CALL Orbit_init(procRange, UTC_start, altG, altT, ascTAI, dscTAI, numOrb, &
+                  orbIncline, orbitNumber, scanRate, scanRateT)
+d37 1
+a37 4
+  CALL MLSMessage (MLSMSG_Info, ModuleName, &
+       & "Processing start time: "//UTC_start)
+  CALL MLSMessage (MLSMSG_Info, ModuleName, &
+       & "Processing end time: "//UTC_end)
+d39 1
+a39 2
+  more_data = .true.
+  i = 0
+d41 1
+a41 1
+  DO WHILE (more_data)
+a42 11
+     counterMAF = i
+     i = i+1
+  
+     CALL SortAndQualify (l0Info, l1bInfo, l0Sci, MAFinfo, more_data)
+
+     IF (more_data) THEN
+        CALL L1boa_MAF(altG, altT, ascTAI, counterMAF, dscTAI, &
+                       l1bInfo%L1BOAId, MAFinfo, i, numOrb, orbIncline, &
+                       orbitNumber, scanRate, scanRateT)
+        CALL Calibrate (l1bInfo, l0Sci, L1Brad, more_data)
+        CALL OutputL1B_rad(i,l1bInfo, counterMAF, L1Brad)
+d45 3
+a47 1
+  END DO
+d49 1
+a49 1
+  CALL CloseFiles (l0Info, l1bInfo)
+d58 1
+a58 6
+!
+! $Log: MLSL1.f90,v $
+! Revision 1.3  2000/02/15 19:01:59  nakamura
+! Modified code for parametrization of lenG & lenT, moving _init subroutine to Orbit module.
+!
+
+@
+
+
+1.3
+log
+@Modified code for parametrization of lenG & lenT, moving _init subroutine to Orbit module.
+@
+text
+@d24 1
+a24 1
+       "$Id: MLSL1.f90,v 1.3 2000/02/15 19:01:59 nakamura Exp $"
+d93 3
+d99 1
+a99 7
+! Revision 1.2  2000/02/10 17:08:02  nakamura
+! Added code for filling the L1BOA records, and writing all the L1B data to output files.
+!
+! Revision 1.1  2000/02/08 20:36:13  perun
+! Initial version
+!
+!
+@
+
+
+1.1
+log
+@Initial version
+@
+text
+@d13 3
+d24 1
+a24 1
+       "$Id: MLSL1.f90,v 1.1 2000/02/08 20:36:13 perun Exp $"
+d28 2
+a29 1
+  INTEGER :: returnstatus
+d34 5
+d54 3
+d63 1
+d66 3
+d73 3
+d77 1
+d93 6
+@
+
+

@@ -1,0 +1,175 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.16
+	cfm-single-freq-0-1:1.2.0.14
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.12
+	mus-emls-1-70:1.2.0.10
+	rel-1-0-englocks-work:1.2.0.8
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.2
+	V4-21:1.2.0.6
+	V4-13:1.2
+	V4-12:1.2
+	V4-11:1.2
+	V4-10:1.2
+	V3-43:1.2
+	M4-00:1.2
+	V3-41:1.2
+	V3-40-PlusGM57:1.2.0.4
+	V2-24-NRT-04:1.2
+	V3-33:1.2
+	V2-24:1.2
+	V3-31:1.2
+	V3-30-NRT-05:1.2
+	cfm-01-00:1.2
+	V3-30:1.2
+	V3-20:1.2
+	V3-10:1.2
+	V2-23-NRT-02:1.2
+	V2-23:1.2
+	V2-22-NRT-01:1.2
+	V2-22:1.2
+	V2-21:1.2
+	V2-20:1.2
+	V2-11:1.2
+	V2-10:1.2
+	V2-00:1.2
+	V1-51:1.2
+	V1-50:1.2
+	V1-45:1.2
+	V1-44:1.2
+	V1-43:1.2
+	V1-42:1.2
+	V1-41:1.2
+	V1-32:1.2
+	V1-40:1.2
+	V1-31:1.2
+	V1-30:1.2
+	V1-13:1.2
+	V1-12:1.2
+	V1-11:1.2
+	V1-10:1.2
+	newfwm-feb03:1.2.0.2
+	V1-04:1.1
+	V1-03:1.1
+	V1-02:1.1
+	V1-00:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2002.06.21.00.10.13;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2002.02.06.00.45.24;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@First commit
+@
+text
+@#	Makefile
+#
+#  Lost? Type 'make help -f uptodate.make' from the directory where you see this file
+#
+# Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+# ---------------------- The name of this file (is the right-hand-side below)
+MakeFName = uptodate.make
+# All the implicit pattern-matching involving suffixes
+# are irrelevant to us. We make our own rules.
+.SUFFIXES:
+
+SHELL = /bin/sh
+
+MLSBIN=./util
+REECHO=$(MLSBIN)/reecho.sh
+
+# --------------- uptodate.make help
+# Usage: make -f uptodate.make SOURCE=sourcefile TARGET=targetfile targetfile
+# Purpose: keep targetfile up-to-date with sourcefile
+# If target's modification date is newer or the same as sourcefile's--do nothing
+# Otherwise, targetfile is presumed out-of-date--cp sourcefile over it
+
+# --------------- End uptodate.make help
+help:
+	@@sed -n '/'$(MakeFName)' help/,/End '$(MakeFName)' help/ p' \
+      $(MLSBIN)/uptodate.make \
+		| sed -n 's/^..//p' | sed '1 d; $$ d'
+
+# These are just dummy names
+SOURCE=sourcefile
+TARGET=targetfile
+CP=cp
+
+$(TARGET): $(SOURCE)
+	cp $(SOURCE) $(TARGET)
+
+.PHONY: help directory
+#
+# An obvious improvement would be
+# a special target named 'directory'
+# So that if given say
+#  make -f uptodate.make SOURCEDIR=sourcedir TARGETDIR=targetdir directory
+# we would form a list of all the files in sourcedir
+# and check that all the ones in targetdir were up-to-date with them
+# This would proceed probably along the following lines
+#EVERY_FILE = $(shell ${REECHO} -dirn $(SOURCEDIR))
+#directory:
+#	for file in $(EVERY_FILE); do\
+#	   $(MAKE) -f $(MakeFName) SOURCE=$(SOURCEDIR)/$$file \
+#      TARGET=$(TARGETDIR)/$$file $(TARGETDIR)/$$file ;\
+#	done
+
+# Another improvement would be to turn cp into a make variable
+# so that the actual command carried out would be
+#  $(CP) $(SOURCE) $(TARGET)
+# thus the user could summon it with
+# make -f uptodate.make SOURCE=sourcefile TARGET=targetfile targetfile CP=foo
+# where foo could be a shell script, perl script, executable binary, etc.
+
+# $Log: uptodate.make,v $
+# Revision 1.1  2002/02/06 00:45:24  pwagner
+# First commit
+#
+
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d27 2
+a28 1
+	@@sed -n '/'$(MakeFName)' help/,/End '$(MakeFName)' help/ p' $(MLSBIN)/uptodate.make \
+d34 1
+d55 7
+d63 3
+@
+

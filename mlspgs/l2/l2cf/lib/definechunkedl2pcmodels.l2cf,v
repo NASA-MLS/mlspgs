@@ -1,0 +1,516 @@
+head	1.10;
+access;
+symbols
+	v5-02-NRT-19:1.10
+	v6-00:1.10
+	v5-02-NRT-18:1.10
+	v5-02:1.10
+	v5-01-NRT-17:1.10
+	v5-01-NRT-16:1.10
+	v5-01-NRT-15:1.10
+	v5-01-NRT-14:1.10
+	neuralnetworks-1-0:1.10.0.12
+	cfm-single-freq-0-1:1.10.0.10
+	v5-01:1.10
+	v5-00:1.10
+	v4-23-TA133:1.10.0.8
+	mus-emls-1-70:1.10.0.6
+	rel-1-0-englocks-work:1.10.0.4
+	VUMLS1-00:1.10
+	VPL1-00:1.10
+	V4-22-NRT-08:1.10
+	VAM1-00:1.10
+	V4-21:1.10.0.2
+	V4-13:1.10
+	V4-12:1.10
+	V4-11:1.10
+	V4-10:1.10
+	V3-43:1.9
+	M4-00:1.10
+	V3-41:1.9
+	V3-40-PlusGM57:1.9.0.2
+	V2-24-NRT-04:1.9
+	V3-33:1.9
+	V2-24:1.9
+	V3-31:1.9
+	V3-30-NRT-05:1.9
+	cfm-01-00:1.9
+	V3-30:1.9
+	V3-20:1.9
+	V3-10:1.9
+	V2-23-NRT-02:1.9
+	V2-23:1.9
+	V2-22-NRT-01:1.9
+	V2-22:1.9
+	V2-21:1.9
+	V2-20:1.9
+	V2-11:1.9
+	V2-10:1.9
+	V2-00:1.9
+	V1-51:1.9
+	V1-50:1.9
+	V1-45:1.9
+	V1-44:1.9
+	V1-43:1.9
+	V1-32:1.8
+	V1-31:1.8
+	V1-30:1.8
+	V1-13:1.8
+	V1-12:1.8
+	V1-11:1.8
+	V1-10:1.7
+	newfwm-feb03:1.7.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.10
+date	2012.06.19.20.10.14;	author pwagner;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2004.01.16.15.32.18;	author mjf;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2003.02.27.00.39.38;	author livesey;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2003.01.26.04.43.54;	author livesey;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2003.01.22.07.09.32;	author livesey;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2002.12.19.12.00.10;	author livesey;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2002.12.19.11.53.55;	author livesey;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2002.12.16.15.56.25;	author mjf;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2002.11.26.23.39.05;	author livesey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2002.11.07.23.48.53;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.10
+log
+@flagDontLockBins removes /lockBins switch
+@
+text
+@;; $Id: definechunkedl2pcmodels.l2cf,v 1.9 2004/01/16 15:32:18 mjf Exp $
+
+;; This is like definel2pcmodels in that it defines a set of l2pc
+;; models.  However, these use the specificQuantities and molecules2X to
+;; do there stuff, so need to be defined inside construct rather than
+;; globalsettings.  Hence also, they need to have a phase name handle
+
+!ifdef(doBaseline,{},{!define(doBaseline,{true})})
+
+;; We choose 100.0 for the phiWindow to ensure we use the full l2pc
+;; information available.
+
+!define(chunkedL2pcF,{
+;; First the single extinction cases
+;; Now the double exinction cases
+;; When /packed becomes the normal format for the L2PC files, then the
+;; specific quantities for the standard vs hiRes may not be needed.
+l2pcSidsFwm2X$1: forwardModel, type=linear, signals=!signal($1), $
+  molecules=!moleculeFamilies2X($1), do_baseline=!doBaseline, phiWindow=100 profiles, $
+  !ifdef(flagDontLockBins,{},{/lockBins, })specificQuantities=[extinctionShaped!radiometerForBand($1), $
+  extinctionConstant!radiometerForBand($1), $
+  temperature, !allLinearHRMolecules, !allLogHRMolecules]
+l2pcSidsFwm2X$1_1D: forwardModel, type=linear, signals=!signal($1), $
+  molecules=!moleculeFamilies2X($1), do_baseline=!doBaseline, phiwindow=0 profiles, $
+  !ifdef(flagDontLockBins,{},{/lockBins, })specificQuantities=[extinctionShaped!radiometerForBand($1), $
+  extinctionConstant!radiometerForBand($1), $
+  temperature, !allLinearHRMolecules, !allLogHRMolecules]
+l2pcODFwm2X$1: forwardModel, type=linear, signals=!signal($1), $
+  molecules=!moleculeFamilies2X($1), phiWindow=100 profiles, $
+  !ifdef(flagDontLockBins,{},{/lockBins, })specificQuantities=[extinctionShaped!radiometerForBand($1), $
+  extinctionConstant!radiometerForBand($1), $
+  temperature, !allLinearHRMolecules, !allLogHRMolecules]
+l2pcODFwm2X$1_1D: forwardModel, type=linear, signals=!signal($1), $
+  molecules=!moleculeFamilies2X($1), phiwindow=0 profiles, $
+  !ifdef(flagDontLockBins,{},{/lockBins, })specificQuantities=[extinctionShaped!radiometerForBand($1), $
+  extinctionConstant!radiometerForBand($1), $
+  temperature, !allLinearHRMolecules, !allLogHRMolecules]
+l2pcRetFwm2X$1: forwardModel, type=linear, signals=!signal($1), $
+  molecules=!moleculeFamilies2X($1), moleculeDerivatives=!moleculeFamilies2X($1), $
+  /atmos_der, /temp_der, do_baseline=!doBaseline, phiWindow=100 profiles, $
+  !ifdef(flagDontLockBins,{},{/lockBins, })specificQuantities=[extinctionShaped!radiometerForBand($1), $
+  extinctionConstant!radiometerForBand($1), $
+  temperature, !allLinearHRMolecules, !allLogHRMolecules]
+l2pcRetFwm2X$1_1D: forwardModel, type=linear, signals=!signal($1), $
+  molecules=!moleculeFamilies2X($1), moleculeDerivatives=!moleculeFamilies2X($1), $
+  /atmos_der, /temp_der, do_baseline=!doBaseline, phiwindow=0 profiles, $
+  !ifdef(flagDontLockBins,{},{/lockBins, })specificQuantities=[extinctionShaped!radiometerForBand($1), $
+  extinctionConstant!radiometerForBand($1), $
+  temperature, !allLinearHRMolecules, !allLogHRMolecules]
+l2pcRetFwmRad2X$1: forwardModel, type=linear, signals=!signal($1), $
+  molecules=!moleculeFamilies2X(!radiometerForBand($1)), $
+  moleculeDerivatives=!moleculeFamilies2X(!radiometerForBand($1)), $
+  /atmos_der, /temp_der, do_baseline=!doBaseline, phiWindow=100 profiles, $
+  !ifdef(flagDontLockBins,{},{/lockBins, })specificQuantities=[extinctionShaped!radiometerForBand($1), $
+  extinctionConstant!radiometerForBand($1), $
+  temperature, !allLinearHRMolecules, !allLogHRMolecules]
+l2pcRetFwmRad2X$1_1D: forwardModel, type=linear, signals=!signal($1), $
+  molecules=!moleculeFamilies2X(!radiometerForBand($1)), $
+  moleculeDerivatives=!moleculeFamilies2X(!radiometerForBand($1)), $
+  /atmos_der, /temp_der, do_baseline=!doBaseline, phiwindow=0 profiles, $
+  !ifdef(flagDontLockBins,{},{/lockBins, })specificQuantities=[extinctionShaped!radiometerForBand($1), $
+  extinctionConstant!radiometerForBand($1), $
+  temperature, !allLinearHRMolecules, !allLogHRMolecules]
+!ifdef(skipHiRes,{},{
+l2pcSidsFwm2X$1_HR: forwardModel, type=linear, signals=!signal($1), $
+  molecules=!moleculeFamilies2X($1), do_baseline=!doBaseline, phiWindow=100 profiles, $
+  !ifdef(flagDontLockBins,{},{/lockBins, })specificQuantities=[extinctionShaped!radiometerForBand($1)_HR, $
+  extinctionConstant!radiometerForBand($1)_HR,temperature_HR, !allHiResMolecules]
+l2pcSidsFwm2X$1_HR_1D: forwardModel, type=linear, signals=!signal($1), $
+  molecules=!moleculeFamilies2X($1), do_baseline=!doBaseline, phiwindow=0 profiles, $
+  !ifdef(flagDontLockBins,{},{/lockBins, })specificQuantities=[extinctionShaped!radiometerForBand($1)_HR, $
+  extinctionConstant!radiometerForBand($1)_HR,temperature_HR, !allHiResMolecules]
+l2pcODFwm2X$1_HR: forwardModel, type=linear, signals=!signal($1), $
+  molecules=!moleculeFamilies2X($1), phiWindow=100 profiles, $
+  !ifdef(flagDontLockBins,{},{/lockBins, })specificQuantities=[extinctionShaped!radiometerForBand($1)_HR, $
+  extinctionConstant!radiometerForBand($1)_HR,temperature_HR, !allHiResMolecules]
+l2pcODFwm2X$1_HR_1D: forwardModel, type=linear, signals=!signal($1), $
+  molecules=!moleculeFamilies2X($1), phiwindow=0 profiles, $
+  !ifdef(flagDontLockBins,{},{/lockBins, })specificQuantities=[extinctionShaped!radiometerForBand($1)_HR, $
+  extinctionConstant!radiometerForBand($1)_HR,temperature_HR, !allHiResMolecules]
+l2pcRetFwm2X$1_HR: forwardModel, type=linear, signals=!signal($1), $
+  molecules=!moleculeFamilies2X($1), moleculeDerivatives=!moleculeFamilies2X($1), $
+  /atmos_der, /temp_der, do_baseline=!doBaseline, phiWindow=100 profiles, $
+  !ifdef(flagDontLockBins,{},{/lockBins, })specificQuantities=[extinctionShaped!radiometerForBand($1)_HR, $
+  extinctionConstant!radiometerForBand($1)_HR,temperature_HR, !allHiResMolecules]
+l2pcRetFwm2X$1_HR_1D: forwardModel, type=linear, signals=!signal($1), $
+  molecules=!moleculeFamilies2X($1), moleculeDerivatives=!moleculeFamilies2X($1), $
+  /atmos_der, /temp_der, do_baseline=!doBaseline, phiwindow=0 profiles, $
+  !ifdef(flagDontLockBins,{},{/lockBins, })specificQuantities=[extinctionShaped!radiometerForBand($1)_HR, $
+  extinctionConstant!radiometerForBand($1)_HR,temperature_HR, !allHiResMolecules]
+l2pcRetFwmRad2X$1_HR: forwardModel, type=linear, signals=!signal($1), $
+  molecules=!moleculeFamilies2X(!radiometerForBand($1)), $
+  moleculeDerivatives=!moleculeFamilies2X(!radiometerForBand($1)), $
+  /atmos_der, /temp_der, do_baseline=!doBaseline, phiWindow=100 profiles, $
+  !ifdef(flagDontLockBins,{},{/lockBins, })specificQuantities=[extinctionShaped!radiometerForBand($1)_HR, $
+  extinctionConstant!radiometerForBand($1)_HR,temperature_HR, !allHiResMolecules]
+l2pcRetFwmRad2X$1_HR_1D: forwardModel, type=linear, signals=!signal($1), $
+  molecules=!moleculeFamilies2X(!radiometerForBand($1)), $
+  moleculeDerivatives=!moleculeFamilies2X(!radiometerForBand($1)), $
+  /atmos_der, /temp_der, do_baseline=!doBaseline, phiwindow=0 profiles, $
+  !ifdef(flagDontLockBins,{},{/lockBins, })specificQuantities=[extinctionShaped!radiometerForBand($1)_HR, $
+  extinctionConstant!radiometerForBand($1)_HR,temperature_HR, !allHiResMolecules]})
+})
+
+;; Do all the 'standard' bands only this time.
+!forall(chunkedL2pcF,!allBands)
+!forall(chunkedL2pcF,!allBandLSBs)
+!forall(chunkedL2pcF,!allBandUSBs)
+@
+
+
+1.9
+log
+@Updates for hiRes.
+@
+text
+@d1 1
+a1 1
+;; $Id: definechunkedl2pcmodels.l2cf,v 1.8 2003/02/27 00:39:38 livesey Exp $
+d20 1
+a20 1
+  lockBins=true, specificQuantities=[extinctionShaped!radiometerForBand($1), $
+d25 1
+a25 1
+  lockBins=true, specificQuantities=[extinctionShaped!radiometerForBand($1), $
+d30 1
+a30 1
+  lockBins=true, specificQuantities=[extinctionShaped!radiometerForBand($1), $
+d35 1
+a35 1
+  lockBins=true, specificQuantities=[extinctionShaped!radiometerForBand($1), $
+d41 1
+a41 1
+  lockBins=true, specificQuantities=[extinctionShaped!radiometerForBand($1), $
+d47 1
+a47 1
+  lockBins=true, specificQuantities=[extinctionShaped!radiometerForBand($1), $
+d54 1
+a54 1
+  lockBins=true, specificQuantities=[extinctionShaped!radiometerForBand($1), $
+d61 1
+a61 1
+  lockBins=true, specificQuantities=[extinctionShaped!radiometerForBand($1), $
+d67 1
+a67 1
+  lockBins=true, specificQuantities=[extinctionShaped!radiometerForBand($1)_HR, $
+d71 1
+a71 1
+  lockBins=true, specificQuantities=[extinctionShaped!radiometerForBand($1)_HR, $
+d75 1
+a75 1
+  lockBins=true, specificQuantities=[extinctionShaped!radiometerForBand($1)_HR, $
+d79 1
+a79 1
+  lockBins=true, specificQuantities=[extinctionShaped!radiometerForBand($1)_HR, $
+d84 1
+a84 1
+  lockBins=true, specificQuantities=[extinctionShaped!radiometerForBand($1)_HR, $
+d89 1
+a89 1
+  lockBins=true, specificQuantities=[extinctionShaped!radiometerForBand($1)_HR, $
+d95 1
+a95 1
+  lockBins=true, specificQuantities=[extinctionShaped!radiometerForBand($1)_HR, $
+d101 1
+a101 1
+  lockBins=true, specificQuantities=[extinctionShaped!radiometerForBand($1)_HR, $
+@
+
+
+1.8
+log
+@General tidy up and dead wood removal
+@
+text
+@d1 1
+a1 1
+;; $Id: definechunkedl2pcmodels.l2cf,v 1.7 2003/01/26 04:43:54 livesey Exp $
+d67 2
+a68 2
+  lockBins=true, specificQuantities=[extinctionShaped!radiometerForBand($1), $
+  extinctionConstant!radiometerForBand($1),temperature_HR, !allHiResMolecules]
+d71 2
+a72 2
+  lockBins=true, specificQuantities=[extinctionShaped!radiometerForBand($1), $
+  extinctionConstant!radiometerForBand($1),temperature_HR, !allHiResMolecules]
+d75 2
+a76 2
+  lockBins=true, specificQuantities=[extinctionShaped!radiometerForBand($1), $
+  extinctionConstant!radiometerForBand($1),temperature_HR, !allHiResMolecules]
+d79 2
+a80 2
+  lockBins=true, specificQuantities=[extinctionShaped!radiometerForBand($1), $
+  extinctionConstant!radiometerForBand($1),temperature_HR, !allHiResMolecules]
+d84 2
+a85 2
+  lockBins=true, specificQuantities=[extinctionShaped!radiometerForBand($1), $
+  extinctionConstant!radiometerForBand($1),temperature_HR, !allHiResMolecules]
+d89 2
+a90 2
+  lockBins=true, specificQuantities=[extinctionShaped!radiometerForBand($1), $
+  extinctionConstant!radiometerForBand($1),temperature_HR, !allHiResMolecules]
+d95 2
+a96 2
+  lockBins=true, specificQuantities=[extinctionShaped!radiometerForBand($1), $
+  extinctionConstant!radiometerForBand($1),temperature_HR, !allHiResMolecules]
+d101 2
+a102 2
+  lockBins=true, specificQuantities=[extinctionShaped!radiometerForBand($1), $
+  extinctionConstant!radiometerForBand($1),temperature_HR, !allHiResMolecules]})
+d107 2
+@
+
+
+1.7
+log
+@Added units for phiWindow
+@
+text
+@d1 1
+a1 1
+;; $Id: definechunkedl2pcmodels.l2cf,v 1.6 2003/01/22 07:09:32 livesey Exp $
+a55 7
+  temperature, !allLinearHRMolecules, !allLogHRMolecules]
+l2pcRetFwmRadSpecific2X$1: forwardModel, type=linear, signals=!signal($1), $
+  molecules=!moleculeFamilies2X(!radiometerForBand($1)), $
+  moleculeDerivatives=!moleculeFamilies2X(!radiometerForBand($1)), $
+  /atmos_der, /temp_der, do_baseline=!doBaseline, phiWindow=100 profiles, $
+  lockBins=true, specificQuantities=[extinctionShapedLinear!radiometerForBand($1), $
+  extinctionConstantLinear!radiometerForBand($1), $
+@
+
+
+1.6
+log
+@Added split full/linear extinctions
+@
+text
+@d1 1
+a1 1
+;; $Id: definechunkedl2pcmodels.l2cf,v 1.5 2002/12/19 12:00:10 livesey Exp $
+d19 1
+a19 1
+  molecules=!moleculeFamilies2X($1), do_baseline=!doBaseline, phiWindow=100.0, $
+d24 1
+a24 1
+  molecules=!moleculeFamilies2X($1), do_baseline=!doBaseline, phiWindow=0, $
+d29 1
+a29 1
+  molecules=!moleculeFamilies2X($1), phiWindow=100.0, $
+d34 1
+a34 1
+  molecules=!moleculeFamilies2X($1), phiWindow=0, $
+d40 1
+a40 1
+  /atmos_der, /temp_der, do_baseline=!doBaseline, phiWindow=100.0, $
+d46 1
+a46 1
+  /atmos_der, /temp_der, do_baseline=!doBaseline, phiWindow=0, $
+d53 1
+a53 1
+  /atmos_der, /temp_der, do_baseline=!doBaseline, phiWindow=100.0, $
+d60 1
+a60 1
+  /atmos_der, /temp_der, do_baseline=!doBaseline, phiWindow=100.0, $
+d67 1
+a67 1
+  /atmos_der, /temp_der, do_baseline=!doBaseline, phiWindow=0, $
+d73 1
+a73 1
+  molecules=!moleculeFamilies2X($1), do_baseline=!doBaseline, phiWindow=100.0, $
+d77 1
+a77 1
+  molecules=!moleculeFamilies2X($1), do_baseline=!doBaseline, phiWindow=0, $
+d81 1
+a81 1
+  molecules=!moleculeFamilies2X($1), phiWindow=100.0, $
+d85 1
+a85 1
+  molecules=!moleculeFamilies2X($1), phiWindow=0, $
+d90 1
+a90 1
+  /atmos_der, /temp_der, do_baseline=!doBaseline, phiWindow=100.0, $
+d95 1
+a95 1
+  /atmos_der, /temp_der, do_baseline=!doBaseline, phiWindow=0, $
+d101 1
+a101 1
+  /atmos_der, /temp_der, do_baseline=!doBaseline, phiWindow=100.0, $
+d107 1
+a107 1
+  /atmos_der, /temp_der, do_baseline=!doBaseline, phiWindow=0, $
+@
+
+
+1.5
+log
+@Another bug fix!
+@
+text
+@d1 1
+a1 1
+;; $Id: definechunkedl2pcmodels.l2cf,v 1.4 2002/12/19 11:53:55 livesey Exp $
+d56 7
+@
+
+
+1.4
+log
+@Fixed a couple of bugs
+@
+text
+@d1 1
+a1 1
+;; $Id: definechunkedl2pcmodels.l2cf,v 1.3 2002/12/16 15:56:25 mjf Exp $
+d102 1
+a102 1
+  extinctionConstant!radiometerForBand($1),temperature_HR, !allHiResMolecules]
+@
+
+
+1.3
+log
+@Added specificQuantities for HiRes vs Standard.
+@
+text
+@d1 1
+a1 1
+;; $Id: definechunkedl2pcmodels.l2cf,v 1.2 2002/11/26 23:39:05 livesey Exp $
+d90 1
+a90 1
+  extinctionConstant!radiometerForBand($1),temperature_HR, !allHiResMolecules]})
+d96 1
+a96 1
+  extinctionConstant!radiometerForBand($1),temperature_HR, !allHiResMolecules]})
+d102 1
+a102 1
+  extinctionConstant!radiometerForBand($1),temperature_HR, !allHiResMolecules]})
+@
+
+
+1.2
+log
+@Added the 'Rad' models, which include all the molecues etc. from the
+radiometer.
+@
+text
+@d1 1
+a1 1
+;; $Id: definechunkedl2pcmodels.l2cf,v 1.1 2002/11/07 23:48:53 livesey Exp $
+d8 2
+d16 2
+d21 2
+a22 1
+  extinctionConstant!radiometerForBand($1)]
+d26 2
+a27 1
+  extinctionConstant!radiometerForBand($1)]
+d31 2
+a32 1
+  extinctionConstant!radiometerForBand($1)]
+d36 2
+a37 1
+  extinctionConstant!radiometerForBand($1)]
+d42 2
+a43 1
+  extinctionConstant!radiometerForBand($1)]
+d48 2
+a49 1
+  extinctionConstant!radiometerForBand($1)]
+d55 2
+a56 1
+  extinctionConstant!radiometerForBand($1)]
+d62 42
+a103 1
+  extinctionConstant!radiometerForBand($1)]})
+@
+
+
+1.1
+log
+@First version, should have checked in earlier!
+@
+text
+@d1 1
+a1 1
+;; $Id$
+d37 12
+@
+

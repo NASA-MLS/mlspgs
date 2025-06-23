@@ -1,0 +1,6332 @@
+head	2.80;
+access;
+symbols
+	v5-02-NRT-19:2.80
+	v6-00:2.80
+	v5-02-NRT-18:2.80
+	v5-02:2.75
+	v5-01-NRT-17:2.78
+	v5-01-NRT-16:2.78
+	v5-01-NRT-15:2.78
+	v5-01-NRT-14:2.78
+	neuralnetworks-1-0:2.78.0.4
+	cfm-single-freq-0-1:2.78.0.2
+	v5-01:2.75
+	v5-00:2.75
+	v4-23-TA133:2.74.0.2
+	mus-emls-1-70:2.73.0.2
+	rel-1-0-englocks-work:2.69.0.2
+	VUMLS1-00:2.68
+	VPL1-00:2.68
+	V4-22-NRT-08:2.67
+	VAM1-00:2.67
+	V4-21:2.66.0.2
+	V4-13:2.64
+	V4-12:2.62
+	V4-11:2.62
+	V4-10:2.62
+	V3-43:2.54
+	M4-00:2.57
+	V3-41:2.54
+	V3-40-PlusGM57:2.54.0.2
+	V2-24-NRT-04:2.42
+	V3-33:2.55
+	V2-24:2.42
+	V3-31:2.55
+	V3-30-NRT-05:2.54
+	cfm-01-00:2.54
+	V3-30:2.54
+	V3-20:2.54
+	V3-10:2.47
+	V2-23-NRT-02:2.42
+	V2-23:2.42
+	V2-22-NRT-01:2.42
+	V2-22:2.42
+	V2-21:2.40
+	V2-20:2.39
+	V2-11:2.39
+	V2-10:2.39
+	V2-00:2.39
+	V1-51:2.33
+	V1-50:2.33
+	V1-45:2.33
+	V1-44:2.33
+	V1-43:2.31
+	V1-42:2.28
+	V1-41:2.28
+	V1-32:2.30
+	V1-40:2.28
+	V1-31:2.28
+	V1-30:2.26
+	V1-13:2.18
+	V1-12:2.18
+	V1-11:2.16
+	V1-10:2.10
+	newfwm-feb03:2.13.0.2
+	V1-04:2.5
+	V1-03:2.5
+	V1-02:2.5
+	V1-00:2.5
+	newfwm-sep01:2.5.0.2
+	V0-7:2.5
+	V0-5-Level2:2.5
+	V0-5-SIPS:2.5;
+locks; strict;
+comment	@# @;
+
+
+2.80
+date	2023.01.31.23.45.10;	author pwagner;	state Exp;
+branches;
+next	2.79;
+
+2.79
+date	2022.12.20.23.32.07;	author pwagner;	state Exp;
+branches;
+next	2.78;
+
+2.78
+date	2020.03.20.23.02.10;	author pwagner;	state Exp;
+branches;
+next	2.77;
+
+2.77
+date	2020.03.04.21.22.20;	author pwagner;	state Exp;
+branches;
+next	2.76;
+
+2.76
+date	2019.10.30.20.08.40;	author pwagner;	state Exp;
+branches;
+next	2.75;
+
+2.75
+date	2019.07.09.23.05.59;	author pwagner;	state Exp;
+branches;
+next	2.74;
+
+2.74
+date	2019.01.29.21.47.37;	author pwagner;	state Exp;
+branches;
+next	2.73;
+
+2.73
+date	2018.05.31.22.43.56;	author pwagner;	state Exp;
+branches;
+next	2.72;
+
+2.72
+date	2018.05.31.18.06.49;	author pwagner;	state Exp;
+branches;
+next	2.71;
+
+2.71
+date	2018.05.22.23.04.41;	author pwagner;	state Exp;
+branches;
+next	2.70;
+
+2.70
+date	2018.04.19.00.47.54;	author vsnyder;	state Exp;
+branches;
+next	2.69;
+
+2.69
+date	2017.07.25.22.29.35;	author pwagner;	state Exp;
+branches;
+next	2.68;
+
+2.68
+date	2016.07.26.17.44.31;	author pwagner;	state Exp;
+branches;
+next	2.67;
+
+2.67
+date	2015.08.12.20.36.38;	author pwagner;	state Exp;
+branches;
+next	2.66;
+
+2.66
+date	2015.02.27.23.57.21;	author pwagner;	state Exp;
+branches;
+next	2.65;
+
+2.65
+date	2015.01.21.19.28.17;	author pwagner;	state Exp;
+branches;
+next	2.64;
+
+2.64
+date	2014.10.02.17.20.46;	author pwagner;	state Exp;
+branches;
+next	2.63;
+
+2.63
+date	2014.09.05.00.15.47;	author vsnyder;	state Exp;
+branches;
+next	2.62;
+
+2.62
+date	2014.04.14.16.59.02;	author pwagner;	state Exp;
+branches;
+next	2.61;
+
+2.61
+date	2014.04.02.23.04.06;	author pwagner;	state Exp;
+branches;
+next	2.60;
+
+2.60
+date	2014.03.27.23.59.16;	author pwagner;	state Exp;
+branches;
+next	2.59;
+
+2.59
+date	2014.03.26.17.43.38;	author pwagner;	state Exp;
+branches;
+next	2.58;
+
+2.58
+date	2014.01.09.00.24.29;	author pwagner;	state Exp;
+branches;
+next	2.57;
+
+2.57
+date	2012.09.18.18.49.27;	author pwagner;	state Exp;
+branches;
+next	2.56;
+
+2.56
+date	2011.07.12.22.35.44;	author honghanh;	state Exp;
+branches;
+next	2.55;
+
+2.55
+date	2010.11.10.02.01.57;	author pwagner;	state Exp;
+branches;
+next	2.54;
+
+2.54
+date	2010.02.04.23.08.00;	author vsnyder;	state Exp;
+branches;
+next	2.53;
+
+2.53
+date	2010.01.15.01.12.37;	author pwagner;	state Exp;
+branches;
+next	2.52;
+
+2.52
+date	2010.01.11.18.36.07;	author pwagner;	state Exp;
+branches;
+next	2.51;
+
+2.51
+date	2010.01.08.00.10.46;	author pwagner;	state Exp;
+branches;
+next	2.50;
+
+2.50
+date	2009.10.05.23.37.59;	author pwagner;	state Exp;
+branches;
+next	2.49;
+
+2.49
+date	2009.09.29.23.36.28;	author pwagner;	state Exp;
+branches;
+next	2.48;
+
+2.48
+date	2009.08.26.16.33.58;	author pwagner;	state Exp;
+branches;
+next	2.47;
+
+2.47
+date	2009.06.23.18.25.42;	author pwagner;	state Exp;
+branches;
+next	2.46;
+
+2.46
+date	2008.12.02.23.10.30;	author pwagner;	state Exp;
+branches;
+next	2.45;
+
+2.45
+date	2008.04.25.22.52.47;	author pwagner;	state Exp;
+branches;
+next	2.44;
+
+2.44
+date	2008.03.07.01.37.36;	author pwagner;	state Exp;
+branches;
+next	2.43;
+
+2.43
+date	2008.02.22.21.32.43;	author pwagner;	state Exp;
+branches;
+next	2.42;
+
+2.42
+date	2007.10.04.20.43.36;	author vsnyder;	state Exp;
+branches;
+next	2.41;
+
+2.41
+date	2007.06.21.00.49.52;	author vsnyder;	state Exp;
+branches;
+next	2.40;
+
+2.40
+date	2007.01.12.00.27.10;	author pwagner;	state Exp;
+branches;
+next	2.39;
+
+2.39
+date	2005.09.22.23.34.31;	author pwagner;	state Exp;
+branches;
+next	2.38;
+
+2.38
+date	2005.08.15.20.38.39;	author pwagner;	state Exp;
+branches;
+next	2.37;
+
+2.37
+date	2005.07.12.17.14.22;	author pwagner;	state Exp;
+branches;
+next	2.36;
+
+2.36
+date	2005.06.22.17.25.50;	author pwagner;	state Exp;
+branches;
+next	2.35;
+
+2.35
+date	2005.06.14.20.35.24;	author pwagner;	state Exp;
+branches;
+next	2.34;
+
+2.34
+date	2005.02.03.19.06.01;	author pwagner;	state Exp;
+branches;
+next	2.33;
+
+2.33
+date	2004.08.16.17.05.38;	author pwagner;	state Exp;
+branches;
+next	2.32;
+
+2.32
+date	2004.08.04.23.19.01;	author pwagner;	state Exp;
+branches;
+next	2.31;
+
+2.31
+date	2004.03.24.23.53.02;	author pwagner;	state Exp;
+branches;
+next	2.30;
+
+2.30
+date	2004.02.26.22.01.04;	author pwagner;	state Exp;
+branches;
+next	2.29;
+
+2.29
+date	2004.02.13.00.17.12;	author pwagner;	state Exp;
+branches;
+next	2.28;
+
+2.28
+date	2003.10.30.00.03.02;	author pwagner;	state Exp;
+branches;
+next	2.27;
+
+2.27
+date	2003.10.28.00.39.00;	author pwagner;	state Exp;
+branches;
+next	2.26;
+
+2.26
+date	2003.09.15.17.13.57;	author cvuu;	state Exp;
+branches;
+next	2.25;
+
+2.25
+date	2003.09.12.16.39.05;	author cvuu;	state Exp;
+branches;
+next	2.24;
+
+2.24
+date	2003.08.15.20.41.50;	author pwagner;	state Exp;
+branches;
+next	2.23;
+
+2.23
+date	2003.08.11.17.40.42;	author cvuu;	state Exp;
+branches;
+next	2.22;
+
+2.22
+date	2003.07.07.23.46.54;	author pwagner;	state Exp;
+branches;
+next	2.21;
+
+2.21
+date	2003.06.11.19.33.33;	author pwagner;	state Exp;
+branches;
+next	2.20;
+
+2.20
+date	2003.05.30.23.47.00;	author pwagner;	state Exp;
+branches;
+next	2.19;
+
+2.19
+date	2003.04.11.23.33.13;	author pwagner;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2003.03.20.01.27.00;	author jdone;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2003.03.19.23.57.56;	author jdone;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2003.03.11.00.20.14;	author pwagner;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2003.03.07.00.37.24;	author pwagner;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2003.02.27.21.52.48;	author pwagner;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2003.02.12.21.47.05;	author pwagner;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2003.02.10.22.07.23;	author pwagner;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2003.02.08.00.32.11;	author pwagner;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2003.02.06.00.30.19;	author pwagner;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2003.01.30.00.57.24;	author pwagner;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2002.10.08.00.09.13;	author pwagner;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2002.10.01.22.03.54;	author pwagner;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2002.08.29.16.54.44;	author pwagner;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2001.04.06.16.54.57;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2001.04.04.22.23.03;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2001.04.04.19.37.25;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2001.03.09.21.32.45;	author nakamura;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.03.09.21.10.32;	author nakamura;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.80
+log
+@Fixed a few apparent bugs with hdfeos global attributes
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. user has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!===============================================================================
+module PCFHdr
+!===============================================================================
+! Dsepite an unfortunate choice of name, which fails to clearly 
+! indicate it, this module contains ways to annotate, write
+! attributes, and otherwise do miscellaneous things to mls product files.
+! It might have been better named PCFHdrAndGlobalAttributes
+! or split off global attribute stuff into a separate module
+
+! See Background below for background and suggestion
+
+! -------------------------------------------------------------
+! Warning:
+! Due to a regrettable feature of the hdfeos library, if HE5_WriteGlobalAttr
+! is called more than once, the string length of the attribute
+! values can't be extended in subsequent calls. In particular,
+! if an attribute's value was initially blank, i.e. "", it
+! will remain blank despite later calls.
+! -------------------------------------------------------------
+  use Dates_Module, only: Utc_To_Date, Utc_To_Yyyymmdd, Utcform, &
+    & Yyyymmdd_To_Doy, YyyyDoy_To_Mmdd
+  use HDF, only: Dfacc_Rdwr, Dfacc_Write, An_File_Desc
+  use HighOutput, only: OutputNamedValue
+  use Intrinsic, only: L_HDFeos, L_HDF, L_Swath
+  use MLSCommon, only: Filenamelen, MLSFile_T, Filenamelen, Namelen
+  use MLSFiles, only: GetPCFromRef, HDFversion_4, HDFversion_5, &
+    & IniTializeMLSFile, MLS_CloseFile, MLS_OpenFile, MLS_OpenFile, MLS_CloseFile
+  use MLSKinds, only: R8
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Fileopen, &
+    & MLSMSG_Warning
+  use MLSStrings, only: Lowercase
+  use Output_M, only: Output
+  use Sdptoolkit, only: Pgsd_Pc_Uref_Length_Max, Pgs_S_Success, &
+    & Pgsd_Met_Group_Name_L, Pgs_Io_Gen_Closef, Pgs_Io_Gen_Openf, &
+    & Pgsd_Io_Gen_Rdirunf, Pgs_Pc_Getreference, &
+    & Pgs_Td_Asciitime_Atob, Pgs_Td_Asciitime_Btoa, &
+    & Max_Orbits
+  implicit none
+  public :: GlobalAttributes_T, SomeGlobalAttributes_T, &
+    & CreatePCFAnnotation, DumpGlobalAttributes, &
+    & FillTAI93Attribute, &
+    & GranuleDay, GranuleDayOfYear, GranuleMonth, GranuleYear, &
+    & H5_ReadGlobalAttr, H5_ReadMLSFileAttr, He5_ReadMLSFileAttr, &
+    & H5_WriteGlobalAttr, He5_WriteglobalAttr, He5_ReadGlobalAttr, &
+    & H5_WriteMLSFileAttr, He5_WriteMLSFileAttr, &
+    & InputInputPointer, ProcessLevelFun, SomeToGlobalAttributes, &
+    & WriteInputPointer, &
+    & WriteLeapSecHDFEOSAttr, WriteLeapSecHDF5DS, WritePCF2Hdr, &
+    & WriteUTCPoleHDFEOSAttr, WriteUTCPoleHDF5DS
+   private
+
+! === (start of toc) ===                                                 
+!     c o n t e n t s                                                    
+!     - - - - - - - -                                                    
+
+!     (data types and parameters)
+! Inputptr_string_length   String length used by Inputpointer procedures
+! Ga_value_length          String length used by GlobalAttributes_T
+! MiscNotesLength          String length used by MiscNotes field
+! Utc_a_value_length       String length used to encode utc version 'a'
+! Utc_b_value_length       String length used to encode utc version 'b'
+! GlobalAttributes         Which attributes to write to product files
+! SomeGlobalAttributes     Which of them can be read from an opts file
+
+!     (subroutines and functions)
+! CreatePCFAnnotation      Read the PCF file into a character array
+! DumpGlobalAttributes     Dumps the global attributes
+! FillTAI93Attribute       Fill the TAI93 component of the global attribute 
+!                           based on theStartUTC component
+! GranuleDay               Return the granule's day in its month
+! GranuleDayOfYear         Return the granule's day in its year
+! GranuleMonth             Return the granule's month
+! GranuleYear              Return the granule's year
+! H5_readglobalattr        Reads the global attributes from an hdf5-formatted file
+! H5_writeglobalattr       Writes the global attributes to an hdf5-formatted file
+! He5_writeglobalattr      Writes the global attributes to an hdfeos5-formatted file
+! He5_readglobalattr       Reads the global attributes from an hdfeos5-formatted file
+! InputInputpointer        Prepare Input for WriteInputpointer
+! ProcessLevelFun          Return the Current ProcessLevel (Default: 'L2')
+! SomeToGlobalAttributes   Copy some of the attributes read into the global ones
+! Sw_writeglobalattr       Writes the global attributes for an hdfeos5 swath
+! WriteInputpointer        Write Inputpointer metadata
+! WriteLeapSecHDFEOSAttr   Write contents of leapsec file as hdfeos5 attribute
+! WriteLeapSecHDF5DS       Write contents of leapsec file as hdf5 dataset
+! WritePCF2Hdr             Write the PCF into an HDF or HDF-EOS file
+! WriteutcPoleHDFEOSAttr   Write contents of utcPole file as hdfeos5 attribute
+! WriteutcPoleHDF5DS       Write contents of utcPole file as hdf5 dataset
+! === (end of toc) ===      
+                                             
+! === (start of api) ===
+! CreatePCFAnnotation ( int mlspcfN_pcf_start, char* anText(:) )
+! DumpGlobalAttributes     Dumps the global attributes
+! FillTAI93Attribute       Fill the TAI93 component of the global attribute 
+!                           based on theStartUTC component
+! GranuleDay               Return the granule's day in its month
+! GranuleDayOfYear         Return the granule's day in its year
+! GranuleMonth             Return the granule's month
+! GranuleYear              Return the granule's year
+! H5_readglobalattr        Reads the global attributes from an hdf5-formatted file
+! H5_writeglobalattr       Writes the global attributes to an hdf5-formatted file
+! He5_writeglobalattr      Writes the global attributes to an hdfeos5-formatted file
+! He5_readglobalattr       Reads the global attributes from an hdfeos5-formatted file
+! InputInputpointer        Prepare Input for WriteInputpointer
+! Sw_writeglobalattr       Writes the global attributes for an hdfeos5 swath
+! WriteInputpointer        Write Inputpointer metadata
+! WriteLeapSecHDFEOSAttr   Write contents of leapsec file as hdfeos5 attribute
+! WriteLeapSecHDF5DS       Write contents of leapsec file as hdf5 dataset
+! WritePCF2Hdr             Write the PCF into an HDF or HDF-EOS file
+! WriteutcPoleHDFEOSAttr   Write contents of utcPole file as hdfeos5 attribute
+! WriteutcPoleHDF5DS       Write contents of utcPole file as hdf5 dataset
+! === (end of api) ===
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: PCFHdr.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+! Contents:
+
+! Background:  This module still contains subroutines for writing the PCF as an 
+! annotation to HDF files, a use now mostly obsolete.
+! Thus its inappropriate name.
+
+! It also contains 
+! (a) two routines that prepare and write the input pointer
+! to metadata, still used by Level 1
+! (b) routines for dumping, reading and writing file-level attributes
+! in particular hdfeos5 and plain hdf5
+! (c) functions returning the day, month, etc. of the data date, aka granule
+
+! Suggestion:
+! Create a brand new module, named something like GlobalAttributes.f90
+! and move the non-obsolete procedures and datatypes there.
+  integer, parameter, public :: INPUTPTR_STRING_LENGTH = PGSd_PC_UREF_LENGTH_MAX
+  integer, parameter, public :: GA_VALUE_LENGTH = 40
+  integer, parameter, public :: MiscNotesLENGTH = 4096
+  integer, parameter, public :: UTC_A_VALUE_LENGTH = 27
+  integer, parameter, public :: UTC_B_VALUE_LENGTH = 25
+  character(len=*), parameter, private :: PCFATTRIBUTENAME = 'PCF'
+  character(len=*), parameter, private :: PCFPATHNAME = '/PCF'
+  character(len=*), parameter, private :: HDFEOSINPTPTRVALUE = 'Found at ' // &
+    & '/HDFEOS/ADDITIONAL/FILE_ATTRIBUTES/PCF'
+  character(len=*), parameter, private :: HDFINPTPTRVALUE = 'Found at ' // &
+    & '/PCF'
+  character(len=*), parameter, private :: DEFAULTPROCESSLEVEL = 'L2'
+
+  ! No MAF number can ever be this big (as in L1BData module)
+  integer, parameter :: BIGGESTMAFCTR = huge(0)/2
+
+   ! May we get some of these from a new module, e.g. MLSLibOptions? 
+  type SomeGlobalAttributes_T
+    character(len=GA_VALUE_LENGTH) :: InstrumentName = 'MLS Aura'
+    character(len=GA_VALUE_LENGTH) :: ProcessLevel   = ''
+    character(len=GA_VALUE_LENGTH) :: HostName       = ''  ! E.g. 'lightspeed'
+    character(len=GA_VALUE_LENGTH) :: PGEVersion     = ''
+    character(len=MiscNotesLENGTH) :: MiscNotes      = ''
+    character(len=GA_VALUE_LENGTH) :: StartUTC       = ''
+    character(len=GA_VALUE_LENGTH) :: EndUTC         = ''
+    character(len=GA_VALUE_LENGTH) :: DOI            = '' ! E.g., '10.5083/AURA/MLS/DATA201'
+    character(len=GA_VALUE_LENGTH) :: productionLoc  = ' '
+  end type SomeGlobalAttributes_T
+
+  ! Note that we repeat some of the above
+  ! Sad but necessary because we want to be able to read some
+  ! global attributes from a text file
+  ! yet Fortran in its mighty wisdom forbids io if  any list item is a pointer
+  type GlobalAttributes_T
+    character(len=FileNameLen)     :: FileAttributesCopiedFrom = ' '  
+    integer                        :: OrbNum(max_orbits)              
+    real(r8)                       :: OrbPeriod(max_orbits)           
+    integer, pointer, dimension(:,:) :: OrbNumDays => Null()
+    real(r8), pointer, dimension(:,:) :: OrbPeriodDays => Null()
+    character(len=GA_VALUE_LENGTH) :: InstrumentName = 'MLS Aura'
+    character(len=GA_VALUE_LENGTH) :: ProcessLevel = ''
+    character(len=GA_VALUE_LENGTH) :: HostName = ''  ! E.g. 'lightspeed'
+    character(len=GA_VALUE_LENGTH) :: PGEVersion = ''
+    character(len=MiscNotesLENGTH) :: MiscNotes = ''
+    character(len=GA_VALUE_LENGTH) :: StartUTC = ''
+    character(len=GA_VALUE_LENGTH) :: EndUTC = ''
+    character(len=GA_VALUE_LENGTH) :: DOI = '' ! E.g., '10.5083/AURA/MLS/DATA201'
+    character(len=GA_VALUE_LENGTH) :: productionLoc = ' '
+    character(len=GA_VALUE_LENGTH) :: geos5_type = ' '
+    ! Note that the next 3 may refer to either of 2 formats
+    ! (a) yyyy-mm-dd if GranuleMonth > 0
+    ! (b) yyyy-Doy if GranuleMonth < 0
+    integer                        :: GranuleMonth                  = 0 ! < 0 if day is Doy
+    integer                        :: GranuleDay                    = 0 ! 0 < Day < 32 of month > 0
+    integer                        :: GranuleYear                   = 0
+    integer                        :: DayOfYear                     = 0
+
+    real(r8)                       :: TAI93At0zOfGranule            = 0.d0
+    integer                        :: FirstMAFCtr                   = BIGGESTMAFCTR
+    integer                        :: LastMAFCtr                    = 0
+    character(len=GA_VALUE_LENGTH) :: PhaseNames                    = ' '
+    character(len=GA_VALUE_LENGTH) :: ForwardModelNames             = ''
+    ! character(len=GA_VALUE_LENGTH) :: ProductionLocation            = ''
+    integer                        :: NumCompletedChunks            = 0
+    integer                        :: NumFailedChunks               = 0
+    character(len=GA_VALUE_LENGTH) :: FailedChunks                  = ''
+    character(len=GA_VALUE_LENGTH) :: FailedMachines                = ''
+    character(len=GA_VALUE_LENGTH) :: FailedMsgs                    = ''
+  end type GlobalAttributes_T
+
+  ! This variable describes the global attributes
+  type (SomeGlobalAttributes_T), public, save :: SomeGlobalAttributes
+  type (GlobalAttributes_T), public, save :: GlobalAttributes
+  ! use this in case hdfVersion omitted from call to WritePCF2Hdr
+  ! E.g., in level 3 prior to conversion
+  integer, public, save            :: PCFHDR_DEFAULT_HDFVERSION = HDFVERSION_5
+  logical, parameter               :: DEBUG = .false.
+
+  interface DumpGlobalAttributes
+    module procedure DumpGlobalAttributes_global, dumpGlobalAttributes_local
+  end interface
+  
+  interface GranuleDay
+    module procedure GranuleDay_Fun
+  end interface
+  
+  interface GranuleDayOfYear
+    module procedure GranuleDayOfYear_fun
+  end interface
+  
+  interface GranuleMonth
+    module procedure GranuleMonth_Fun
+  end interface
+  
+  interface GranuleYear
+    module procedure GranuleYear_Fun
+  end interface
+  
+  interface h5_writeglobalattr
+    module procedure h5_writeglobalattr_fileID, h5_writeglobalattr_MLSFile
+  end interface
+  
+  interface he5_writeglobalattr
+    module procedure he5_writeglobalattr_fileID, he5_writeglobalattr_MLSFile
+  end interface
+  
+contains
+
+!--------------------------------------------------------------
+   subroutine CreatePCFAnnotation ( mlspcfN_pcf_start, anText )
+!--------------------------------------------------------------
+
+      use Allocate_Deallocate, only: Allocate_Test
+
+! Brief description of subroutine
+! This subroutine stores the PCF as an annotation for writing to file headers.
+
+! Arguments
+
+      integer, intent(in) :: mlspcfN_pcf_start
+
+      character (len=1), pointer :: anText(:)
+
+! Parameters
+
+! Functions
+
+      integer, external :: Pgs_pc_getFileSize
+
+! Variables
+
+      character (len=10) :: mnemonic
+      character (len=480) :: msg, msr
+
+      integer :: ios, pcfHandle, returnStatus, size, version
+
+! Get the size of the PCF
+
+      version = 1
+      returnStatus = Pgs_pc_getFileSize(mlspcfN_pcf_start, version, size)
+      nullify( anText )
+      call allocate_test ( anText, size, "anText", moduleName )
+
+! Open the PCF for reading
+
+      version = 1
+      returnStatus = Pgs_io_gen_openF (mlspcfN_pcf_start, PGSd_IO_Gen_RDirUnf, &
+                                       size, pcfHandle, version)
+      IF (returnStatus /= PGS_S_SUCCESS) THEN
+         call Pgs_smf_getMsg(returnStatus, mnemonic, msg)
+         msr = mnemonic // ':  ' // msg
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      END IF
+
+! Read the PCF text into the CHAR anText variable
+
+      READ(UNIT=pcfHandle, REC=1, IOSTAT=ios) anText
+
+! Close the PCF
+
+      returnStatus = Pgs_io_gen_closeF (pcfHandle)
+      IF (returnStatus /= PGS_S_SUCCESS) THEN
+         call Pgs_smf_getMsg(returnStatus, mnemonic, msg)
+         msr = mnemonic // ':  ' // msg
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+!------------------------------------
+   end subroutine CreatePCFAnnotation
+!------------------------------------
+
+!----------------------------------------
+   subroutine DumpGlobalAttributes_global
+     call DumpGlobalAttributes_local ( GlobalAttributes )
+   end subroutine DumpGlobalAttributes_global
+!----------------------------------------
+   
+   subroutine DumpGlobalAttributes_local ( GlobalAttributes )
+     use Dates_Module, only: MonthName
+     use HighOutput, only: AddRow, AddRow_Divider, AddRow_Header, &
+       & OutputTable, StartTable
+     type(GlobalAttributes_T), intent(in)       :: GlobalAttributes
+     ! Local variables
+     integer                                    :: DayofYear, month
+     character(len=16)                          :: month_name
+     ! Executable
+     DayOfYear = GranuleDayOfYear_fun()
+     month_name = 'unknown'
+     month = abs(GlobalAttributes%GranuleMonth )
+     if ( month > 0 .and. month < 13) month_name = MonthName(month)
+     call startTable
+     call addRow_header ( 'Global attributes', 'c' )
+     call addRow_divider ( '-' )
+     call addRow ('Start UTC                    ', trim( GlobalAttributes%StartUTC        ) )
+     call addRow ('End UTC                      ', trim( GlobalAttributes%EndUTC          )) 
+     call addRow ('Granule day of year          ', DayOfYear )
+     call addRow ('Granule month                ', trim(Month_Name) )
+     call addRow ('Granule day                  ', GlobalAttributes%GranuleDay  )
+     call addRow ('Granule year                 ', GlobalAttributes%GranuleYear )
+     call addRow ('FirstMAFCtr                  ', GlobalAttributes%FirstMAFCtr )
+     call addRow ('LastMAFCtr                   ', GlobalAttributes%LastMAFCtr )
+     call addRow ('NumCompletedChunks           ', GlobalAttributes%NumCompletedChunks )
+     call addRow ('NumFailedChunks              ', GlobalAttributes%NumFailedChunks )
+     call addRow ('FailedMsgs                   ', trim( GlobalAttributes%FailedMsgs          ), &
+       & BlocLen=38, options='-w' )
+     call addRow ('FailedChunks                 ', trim( GlobalAttributes%FailedChunks        ), &
+       & BlocLen=38, options='-w' )
+     call addRow ('FailedMachines               ', trim( GlobalAttributes%FailedMachines      ), &
+       & BlocLen=38, options='-w' )
+     call addRow ('FileAttributesCopiedFrom     ', trim( GlobalAttributes%FileAttributesCopiedFrom ) )
+     call addRow ('Equator crossing time (tai93)', GlobalAttributes%TAI93At0zOfGranule )
+     call addRow ('ProductionLocation           ', trim( GlobalAttributes%productionLoc ))
+     call addRow ('HostName                     ', trim( GlobalAttributes%HostName        ))
+     call addRow ('InstrumentName               ', trim( GlobalAttributes%InstrumentName  ) )
+     call addRow ('Process level                ', trim( GlobalAttributes%ProcessLevel    ) )
+     call addRow ('PGE version                  ', trim( GlobalAttributes%PGEVersion      ) )
+     call addRow ('DOI                          ', trim( GlobalAttributes%DOI             ) )
+     call addRow ('Misc Notes                   ', trim( GlobalAttributes%MiscNotes       ), &
+       & BlocLen=38, options='-w', wrappingChar=',' )
+     call addRow ('DOI                          ', trim( GlobalAttributes%DOI             ))
+     call outputTable ( sep='|', border='-' )
+     call outputNamedValue('Orbit numbers       ', GlobalAttributes%orbNum)
+     call outputNamedValue('Orbit Periods       ', GlobalAttributes%orbPeriod)
+   end subroutine DumpGlobalAttributes_local
+
+!----------------------------------------
+   subroutine FillTAI93Attribute ( LeapSecFileName )
+!----------------------------------------
+
+    use SDPToolkit, only: MLS_UTCToTAI, PGS_TD_UTCToTAI
+!  Fill the TAI93 component of the global attribute based on the
+!  StartUTC component
+
+!  Arguments
+    character(len=*), optional :: LeapSecFileName
+    character(len=NameLen)     :: start_time_string
+!  Local variables
+    integer             :: returnStatus
+    character(len=16)   :: date
+!   Executable statements
+    if ( GlobalAttributes%StartUTC /= ' ' ) then
+      call utc_to_date(GlobalAttributes%StartUTC, returnStatus, &
+        & date, utcAt0z=start_time_string)
+      if ( present(LeapSecFileName) ) then
+        returnStatus = mls_utctotai(trim(LeapSecFileName), start_time_string, &
+        & GlobalAttributes%TAI93At0zOfGranule )
+        if ( returnStatus /= 0 ) then
+          CALL MLSMessage(MLSMSG_Warning, ModuleName, &
+            & 'Unable to get convert utc to tai using leapsecfile ' &
+            & // trim(LeapSecFileName) // ' Error number ' &
+            & // trim(int_to_char(returnStatus)) &
+            & )
+        end if
+      else
+        returnStatus = pgs_td_utctotai (start_time_string, &
+        & GlobalAttributes%TAI93At0zOfGranule )
+        if ( returnStatus /= 0 ) then
+          CALL MLSMessage(MLSMSG_Warning, ModuleName, &
+            & 'Unable to get convert utc to tai using toolbox; Error number ' &
+            & // trim(int_to_char(returnStatus)) &
+            & )
+        end if
+      endif
+    endif
+    if ( DEBUG ) call outputnamedValue ( 'FillTAI93Attribute', &
+      & GlobalAttributes%TAI93At0zOfGranule )
+
+!------------------------------------
+   end subroutine FillTAI93Attribute
+!------------------------------------
+
+  ! ------------ GranuleDayOfYear ---------------
+  ! These functions return day, month, etc. of the current data date
+  function GranuleDayOfYear_fun () result (dayOfYear)
+    ! Arguments
+    integer :: month
+    ! Local variables
+    integer :: year
+    integer :: dayOfYear
+    integer :: status
+    character (len=UTC_A_VALUE_LENGTH) :: asciiutc_a
+    character (len=UTC_B_VALUE_LENGTH) :: asciiutc_b
+    character(len=1) :: whatUTCForm
+    ! Executable
+    dayofYear = -999
+    if ( GlobalAttributes%GranuleYear <= 0 ) then
+      whatUTCForm = utcForm(GlobalAttributes%StartUTC)
+      if ( DEBUG ) then
+        call outputNamedValue( 'utc form', whatUTCForm )
+        call outputNamedValue( 'StartUTC', trim(GlobalAttributes%StartUTC) )
+      endif
+      select case (whatUTCForm)
+      case ('a')
+        asciiutc_a = GlobalAttributes%StartUTC
+        status = pgs_td_asciitime_atob(asciiutc_a, asciiutc_b)
+        if ( status /= 0 ) then
+          call outputNamedValue( 'StartUTC', GlobalAttributes%StartUTC )
+          CALL MLSMessage(MLSMSG_Error, ModuleName, &
+          & 'Unable to convert utc A to B formats')
+        endif
+      case ('b')
+        asciiutc_b = GlobalAttributes%StartUTC
+      case default
+        asciiutc_b = GlobalAttributes%StartUTC
+      end select
+      call utc_to_yyyymmdd(asciiutc_b, status, &
+        & year, month, dayOfYear) 
+      if ( DEBUG ) call outputNamedValue( 'asciiutc_b', trim(asciiutc_b) )
+      if ( status /= 0 ) &
+        & CALL MLSMessage(MLSMSG_Warning, ModuleName, &
+        & 'Unable to extract year, day of year from utc B format')
+    elseif ( GlobalAttributes%GranuleMonth <= 0 ) then
+      dayOfYear = GlobalAttributes%GranuleDay
+    else
+      call yyyymmdd_to_Doy ( GlobalAttributes%GranuleYear, &
+        & GlobalAttributes%GranuleMonth, &
+        & GlobalAttributes%GranuleDay, dayOfYear )
+    endif
+  end function GranuleDayOfYear_fun
+
+  function GranuleDay_fun () result (day)
+    ! Arguments
+    integer :: month
+    ! Local variables
+    integer :: year
+    integer :: day
+    integer :: status
+    character (len=UTC_A_VALUE_LENGTH) :: asciiutc_a
+    character (len=UTC_B_VALUE_LENGTH) :: asciiutc_b
+    ! Executable
+    day = 0
+    if ( GlobalAttributes%GranuleYear <= 0 ) then
+      asciiutc_b = GlobalAttributes%StartUTC
+      status = pgs_td_asciitime_btoa(asciiutc_b, asciiutc_a)
+      if ( status /= 0 ) &
+        & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+        & 'Unable to convert utc B to A formats')
+      call utc_to_yyyymmdd(asciiutc_a, status, &
+        & year, month, day) 
+      if ( status /= 0 ) &
+        & CALL MLSMessage(MLSMSG_Warning, ModuleName, &
+        & 'Unable to extract year, month, day from utc A format')
+    elseif ( GlobalAttributes%GranuleMonth > 0 ) then
+      day = GlobalAttributes%GranuleDay
+    else
+      call yyyyDoy_to_mmdd ( GlobalAttributes%GranuleYear, &
+        & Month, Day, &
+        & GlobalAttributes%GranuleDay )
+    endif
+  end function GranuleDay_fun
+
+  function GranuleMonth_fun () result (month)
+    ! Arguments
+    integer :: month
+    ! Local variables
+    integer :: year
+    integer :: day
+    integer :: status
+    character (len=UTC_A_VALUE_LENGTH) :: asciiutc_a
+    character (len=UTC_B_VALUE_LENGTH) :: asciiutc_b
+    ! Executable
+    month = 0
+    if ( GlobalAttributes%GranuleYear <= 0 ) then
+      asciiutc_b = GlobalAttributes%StartUTC
+      status = pgs_td_asciitime_btoa(asciiutc_b, asciiutc_a)
+      if ( status /= 0 ) &
+        & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+        & 'Unable to convert utc B to A formats')
+      call utc_to_yyyymmdd(asciiutc_a, status, &
+        & year, month, day) 
+      if ( status /= 0 ) &
+        & CALL MLSMessage(MLSMSG_Warning, ModuleName, &
+        & 'Unable to extract year, month, day from utc A format')
+    elseif ( GlobalAttributes%GranuleMonth > 0 ) then
+      month = GlobalAttributes%GranuleMonth
+    else
+      call yyyyDoy_to_mmdd ( GlobalAttributes%GranuleYear, &
+        & Month, Day, &
+        & GlobalAttributes%GranuleDay )
+    endif
+  end function GranuleMonth_fun
+
+  function GranuleYear_fun () result (Year)
+    ! Arguments
+    integer :: Year
+    ! Local variables
+    integer :: month
+    integer :: day
+    integer :: status
+    character (len=UTC_A_VALUE_LENGTH) :: asciiutc_a
+    character (len=UTC_B_VALUE_LENGTH) :: asciiutc_b
+    ! Executable
+    Year = 0
+    if ( GlobalAttributes%GranuleYear <= 0 ) then
+      asciiutc_b = GlobalAttributes%StartUTC
+      status = pgs_td_asciitime_btoa(asciiutc_b, asciiutc_a)
+      if ( status /= 0 ) &
+        & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+        & 'Unable to convert utc B to A formats')
+      call utc_to_yyyymmdd(asciiutc_a, status, &
+        & year, Year, day) 
+      if ( status /= 0 ) &
+        & CALL MLSMessage(MLSMSG_Warning, ModuleName, &
+        & 'Unable to extract year, Year, day from utc A format')
+    else
+      Year = GlobalAttributes%GranuleYear
+    endif
+  end function GranuleYear_fun
+
+!------------------------------------------------------------
+   subroutine h5_readMLSFileAttr ( MLSFile )
+!------------------------------------------------------------
+
+      use HDF5, only: H5GClose_f, H5GOpen_f
+      use MLSHDF5, only: GetHDF5Attribute, IsHDF5AttributePresent
+! Brief description of subroutine
+! This subroutine reads the components of an MLSFile_t 
+! as attributes from an hdf5-formatted file
+! It does so at the root '/' group level
+
+! Arguments
+
+      type(MLSFile_T)       :: MLSFile
+! Local variables
+      integer :: fileID
+      integer :: grp_id
+      integer :: status
+      integer, dimension(2) :: ints
+
+      ! Executable code
+      if ( .not. MLSFile%stillOpen ) then
+        call MLS_OpenFile( MLSFile )
+      endif
+      fileID = MLSFile%FileID%f_id
+      if ( IsHDF5AttributePresent('/', fileID, 'ShortName') ) &
+        & return
+      call h5gopen_f(fileID, '/', grp_id, status)
+      MLSFile%FileID%grp_id = grp_id
+      MLSFile%FileID%sd_id = 0
+      call GetHDF5Attribute(MLSFile, &
+       & 'content', MLSFile%content)
+      call GetHDF5Attribute(MLSFile, &
+       & 'lastOperation', MLSFile%lastOperation)
+      call GetHDF5Attribute(MLSFile, &
+       & 'name', MLSFile%name)
+      call GetHDF5Attribute(MLSFile, &
+       & 'ShortName', MLSFile%ShortName)
+      call GetHDF5Attribute(MLSFile, &
+       & 'typeStr', MLSFile%typeStr)
+      call GetHDF5Attribute(MLSFile, &
+       & 'type', MLSFile%type)
+      call GetHDF5Attribute(MLSFile, &
+       & 'access', MLSFile%access)
+      call GetHDF5Attribute(MLSFile, &
+       & 'HDFVersion', MLSFile%HDFVersion)
+      call GetHDF5Attribute(MLSFile, &
+       & 'PCFID', MLSFile%PCFId)
+      call GetHDF5Attribute(MLSFile, &
+       & 'recordLength', MLSFile%recordLength)
+      call GetHDF5Attribute(MLSFile, &
+       & 'errorCode', MLSFile%errorCode)
+      call GetHDF5Attribute( MLSFile, &
+       & 'PCFIDRange', ints )
+      MLSFile%PCFIdRange%Bottom = ints(1)
+      MLSFile%PCFIdRange%Top    = ints(2)
+      call h5gclose_f(grp_id, status)
+
+!------------------------------------------------------------
+   end subroutine h5_readMLSFileAttr
+!------------------------------------------------------------
+
+!------------------------------------------------------------
+   subroutine he5_readMLSFileAttr (MLSFile)
+!------------------------------------------------------------
+
+    use MLSHDFEOS, only: HE5_EHRDGlAtt
+! Brief description of subroutine
+! This subroutine reads the components of an MLSFile_t 
+! as attributes from an hdfeos5-formatted file
+
+! Arguments
+
+      type(MLSFile_T)       :: MLSFile
+! Local variables
+      integer :: fileID, status
+      integer, dimension(2) :: ints
+
+      ! Executable code
+      if ( .not. MLSFile%stillOpen ) then
+        call MLS_OpenFile( MLSFile )
+      endif
+      fileID = MLSFile%FileID%f_id
+      status = HE5_EHRDGLATT( fileID, &
+       & 'content', &
+       &  MLSFile%content )
+      status = HE5_EHRDGLATT( fileID, &
+       & 'lastOperation', &
+       &  MLSFile%lastOperation )
+      status = HE5_EHRDGLATT( fileID, &
+       & 'name', &
+       &  MLSFile%name )
+      status = HE5_EHRDGLATT( fileID, &
+       & 'ShortName', &
+       &  MLSFile%ShortName )
+      status = HE5_EHRDGLATT( fileID, &
+       & 'typeStr', &
+       &  MLSFile%typeStr )
+      status = he5_EHrdglatt( fileID, &
+       & 'type', MLSFile%type )
+      status = he5_EHrdglatt( fileID, &
+       & 'access', MLSFile%access )
+      status = he5_EHrdglatt( fileID, &
+       & 'HDFVersion', MLSFile%HDFVersion )
+      status = he5_EHrdglatt( fileID, &
+       & 'PCFID', MLSFile%PCFId )
+      status = he5_EHrdglatt( fileID, &
+       & 'recordlength', MLSFile%recordlength )
+      status = he5_EHrdglatt( fileID, &
+       & 'errorCode', MLSFile%errorCode )
+      status = he5_EHrdglatt( fileID, &
+       & 'PCFIDRange', ints )
+      MLSFile%PCFIDRange%Bottom = ints(1)
+      MLSFile%PCFIDRange%Top    = ints(2)
+
+!------------------------------------------------------------
+   end subroutine he5_readMLSFileAttr
+!------------------------------------------------------------
+
+!------------------------------------------------------------
+   subroutine h5_ReadGlobalAttr ( MLSFile )
+!------------------------------------------------------------
+
+      use HDF5, only: H5GClose_f, H5GOpen_f
+      use MLSHDF5, only: GetHDF5Attribute, IsHDF5AttributePresent
+! Brief description of subroutine
+! Reads the global attributes from an hdf5-formatted file
+! It finds them at the root '/' group level
+
+! Arguments
+
+      type(MLSFile_T)       :: MLSFile
+! Local variables
+      logical :: copiedFromAnEarlerFile
+      integer :: fileID
+      integer :: grp_id
+      integer :: status
+      integer, dimension(2) :: ints
+
+      ! Executable code
+      if ( .not. MLSFile%stillOpen ) then
+        call MLS_OpenFile( MLSFile )
+      endif
+      fileID = MLSFile%FileID%f_id
+      if ( IsHDF5AttributePresent( '/', fileID, 'InstrumentName') ) &
+        & return
+      copiedFromAnEarlerFile = &
+        & IsHDF5AttributePresent( '/', fileID, 'FileAttributesCopiedFrom' )
+      call h5gopen_f(fileID, '/', grp_id, status)
+      MLSFile%FileID%grp_id = grp_id
+
+      call GetHDF5Attribute( MLSFile, 'InstrumentName        ', GlobalAttributes%InstrumentName        )
+      call GetHDF5Attribute( MLSFile, 'ProcessLevel          ', GlobalAttributes%ProcessLevel          )
+      call GetHDF5Attribute( MLSFile, 'HostName              ', GlobalAttributes%HostName              )
+      call GetHDF5Attribute( MLSFile, 'PGEVersion            ', GlobalAttributes%PGEVersion            )
+      call GetHDF5Attribute( MLSFile, 'StartUTC              ', GlobalAttributes%StartUTC              )
+      call GetHDF5Attribute( MLSFile, 'EndUTC                ', GlobalAttributes%EndUTC                )
+      call GetHDF5Attribute( MLSFile, 'ProductionLoc         ', GlobalAttributes%productionLoc         )
+      call GetHDF5Attribute( MLSFile, 'GranuleMonth          ', GlobalAttributes%GranuleMonth          )
+      call GetHDF5Attribute( MLSFile, 'GranuleDay            ', GlobalAttributes%GranuleDay            )
+      call GetHDF5Attribute( MLSFile, 'GranuleYear           ', GlobalAttributes%GranuleYear           )
+      call GetHDF5Attribute( MLSFile, 'TAI93At0zOfGranule    ', GlobalAttributes%TAI93At0zOfGranule    )
+      call GetHDF5Attribute( MLSFile, 'FirstMAFCtr           ', GlobalAttributes%FirstMAFCtr           )
+      call GetHDF5Attribute( MLSFile, 'LastMAFCtr            ', GlobalAttributes%LastMAFCtr            )
+      call GetHDF5Attribute( MLSFile, 'PhaseNames            ', GlobalAttributes%PhaseNames            )
+      call GetHDF5Attribute( MLSFile, 'ForwardModelNames     ', GlobalAttributes%ForwardModelNames     )
+      call GetHDF5Attribute( MLSFile, 'MiscNotes             ', GlobalAttributes%MiscNotes             )
+      call GetHDF5Attribute( MLSFile, 'identifier_product_doi', GlobalAttributes%DOI                   )
+!      call GetHDF5Attribute( MLSFile, 'ProductionLocation    ', GlobalAttributes%ProductionLocation    )
+      call GetHDF5Attribute( MLSFile, 'NumCompletedChunks    ', GlobalAttributes%NumCompletedChunks    )
+      call GetHDF5Attribute( MLSFile, 'NumFailedChunks       ', GlobalAttributes%NumFailedChunks       )
+      call GetHDF5Attribute( MLSFile, 'FailedChunks          ', GlobalAttributes%FailedChunks          )
+      call GetHDF5Attribute( MLSFile, 'FailedMachines        ', GlobalAttributes%FailedMachines        )
+      call GetHDF5Attribute( MLSFile, 'FailedMsgs            ', GlobalAttributes%FailedMsgs            )
+
+      call h5gclose_f(grp_id, status)
+
+!------------------------------------------------------------
+   end subroutine h5_ReadGlobalAttr
+!------------------------------------------------------------
+
+!------------------------------------------------------------
+   subroutine h5_writeglobalattr_fileID ( fileID, skip_if_already_there, DOI )
+!------------------------------------------------------------
+
+      use HDF5, only: H5GClose_f, H5GOpen_f
+      use MLSHDF5, only: MakeHDF5Attribute, IsHDF5AttributePresent
+      ! Brief description of subroutine
+      ! This subroutine writes the global attributes for an hdf5-formatted file
+      ! It does so at the root '/' group level
+
+      ! Arguments
+
+      integer, intent(in) :: fileID
+      logical, intent(in), optional :: skip_if_already_there
+      logical, intent(in), optional :: doi
+      ! Local variables
+      logical, parameter :: DeeBug = .false.
+      integer :: grp_id
+      integer :: status
+      logical :: my_skip
+      logical :: myDOI
+      logical, parameter :: WRITE_ORBIT = .false.
+      character(len=GA_VALUE_LENGTH) :: ProcessLevel = ''
+
+      ! Executable code
+      if ( deebug ) then
+        call output( 'Writing global attributes', advance='yes' )
+        call dumpGlobalAttributes
+      endif
+      myDOI = len_trim(GlobalAttributes%FileAttributesCopiedFrom) > 0 ! .false.
+      if ( present(DOI) ) myDOI=DOI
+      my_skip = .false.
+      if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
+      if ( my_skip ) then
+        if ( IsHDF5AttributePresent('/', fileID, 'InstrumentName') ) &
+          & return
+      endif
+      call h5gopen_f(fileID, '/', grp_id, status)
+      if (WRITE_ORBIT) then
+          call MakeHDF5Attribute(grp_id, &
+             & 'OrbitNumber', GlobalAttributes%OrbNum, .true.)
+          call MakeHDF5Attribute(grp_id, &
+             & 'OrbitPeriod', GlobalAttributes%OrbPeriod, .true.)
+      end if
+      call MakeHDF5Attribute(grp_id, &
+        & 'InstrumentName', GlobalAttributes%InstrumentName, .true.)
+      if ( len_trim(GlobalAttributes%HostName) > 0 ) then
+        call MakeHDF5Attribute(grp_id, &
+          & 'HostName', GlobalAttributes%HostName, .true.)
+      else
+        call MakeHDF5Attribute(grp_id, &
+          & 'HostName', GlobalAttributes%ProductionLoc, .true.)
+      endif
+      ProcessLevel = ProcessLevelFun()
+      call MakeHDF5Attribute(grp_id, &
+       & 'ProcessLevel', ProcessLevel, .true.)
+      call MakeHDF5Attribute(grp_id, &
+       & 'PGEVersion', GlobalAttributes%PGEVersion, .true.)
+      call MakeHDF5Attribute(grp_id, &
+       & 'StartUTC', GlobalAttributes%StartUTC, .true.)
+      call MakeHDF5Attribute(grp_id, &
+       & 'EndUTC', GlobalAttributes%EndUTC, .true.)
+      if ( GlobalAttributes%GranuleDay < 1 &
+        & .and. &
+        & (len_trim(GlobalAttributes%FileAttributesCopiedFrom) < 1 ) ) return
+      call MakeHDF5Attribute(grp_id, &
+       & 'GranuleMonth', GranuleMonth_fun() , .true.)
+      call MakeHDF5Attribute(grp_id, &
+       & 'GranuleDay', GranuleDay_fun(), .true.)
+      call MakeHDF5Attribute(grp_id, &
+       & 'GranuleDayOfYear', GranuleDayOfYear_fun(), .true.)
+      call MakeHDF5Attribute(grp_id, &
+       & 'GranuleYear', GlobalAttributes%GranuleYear, .true.)
+      call MakeHDF5Attribute(grp_id, &
+       & 'TAI93At0zOfGranule', GlobalAttributes%TAI93At0zOfGranule, .true.)
+      if ( lowercase(ProcessLevel(1:2)) == 'l2' ) then
+        call MakeHDF5Attribute(grp_id, &
+         & 'FirstMAF', GlobalAttributes%FirstMAFCtr, .true.)
+        call MakeHDF5Attribute(grp_id, &
+         & 'LastMAF', GlobalAttributes%LastMAFCtr, .true.)
+      endif
+      if ( len_trim(GlobalAttributes%FileAttributesCopiedFrom) > 0 ) then
+        call MakeHDF5Attribute(grp_id, &
+         & 'FileAttributesCopiedFrom', GlobalAttributes%FileAttributesCopiedFrom, .true.)
+      endif
+      ! We don't write these here (the master would insert an erroneous value)
+      ! Instead we write them during DirectWrite operations
+      ! call MakeHDF5Attribute(grp_id, &
+      !  & 'MiscNotes', GlobalAttributes%MiscNotes, .true.)
+      if ( len_trim(GlobalAttributes%DOI) > 0 .and. myDOI ) &
+        & call MakeHDF5Attribute(grp_id, &
+        & 'identifier_product_doi', GlobalAttributes%DOI, .false.)
+      if ( len_trim(GlobalAttributes%productionLoc) > 0 .and. myDOI ) &
+        & call MakeHDF5Attribute(grp_id, &
+        & 'ProductionLocation', GlobalAttributes%productionLoc, .false.)
+      call h5gclose_f(grp_id, status)
+
+!------------------------------------------------------------
+   end subroutine h5_writeglobalattr_fileID
+!------------------------------------------------------------
+
+!------------------------------------------------------------
+   subroutine h5_writeglobalattr_MLSFile ( MLSFile, skip_if_already_there, DOI )
+!------------------------------------------------------------
+
+      ! Brief description of subroutine
+      ! This subroutine writes the global attributes for an hdf5-formatted file
+      ! It does so at the root '/' group level
+
+      ! Arguments
+
+      type(MLSFile_T)       :: MLSFile
+      logical, intent(in), optional :: skip_if_already_there
+      logical, intent(in), optional :: doi
+      ! Local variables
+      logical :: alreadyOpen
+      integer :: returnStatus
+      ! Executable
+      alreadyOpen = MLSFile%stillOpen
+      if ( .not. alreadyOpen ) then
+        call mls_openFile( MLSFile, returnStatus )
+        if ( returnStatus /= 0 ) &
+          call MLSMessage( MLSMSG_Error, ModuleName, &
+          & 'Unable to open hdf file', MLSFile=MLSFile )
+      endif
+      call h5_writeglobalattr_fileID ( MLSFile%fileID%f_id, &
+        & skip_if_already_there, DOI )
+      if ( .not. alreadyOpen ) call mls_closeFile( MLSFile, returnStatus )
+   end subroutine h5_writeglobalattr_MLSFile
+
+!------------------------------------------------------------
+   subroutine h5_writeMLSFileAttr ( MLSFile, skip_if_already_there )
+!------------------------------------------------------------
+
+      use HDF5, only:  H5GClose_f, H5GOpen_f
+      use MLSHDF5, only: ISHDF5AttributePresent, makeHDF5Attribute
+      use HighOutput, only: BeVerbose
+      ! Brief description of subroutine
+      ! This subroutine writes the components of an MLSFile_t 
+      ! as attributes for an hdf5-formatted file
+      ! It does so at the root '/' group level
+
+      ! Warning: Don't confuse this with h5_writeGlobalAttr
+      ! which writes the run's global attributes (StartUTC, PGEVersion, etc.)
+
+      ! Arguments
+
+      type(MLSFile_T)       :: MLSFile
+      logical, intent(in), optional :: skip_if_already_there
+      ! Local variables
+      integer :: fileID
+      ! logical, parameter :: DeeBug = .false.
+      logical :: DeeBug
+      integer :: grp_id
+      integer :: status
+      logical :: my_skip
+
+      ! Executable code
+      Deebug = BeVerbose ( 'file', 0 )
+      if ( .not. MLSFile%stillOpen ) then
+        call MLS_OpenFile( MLSFile )
+      endif
+      if ( deebug ) then
+        call output( 'Writing file attributes as global attributes', advance='yes' )
+        call dumpGlobalAttributes
+      endif
+      my_skip = .false.
+      if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
+      fileID = MLSFile%FileID%f_id
+      if ( my_skip ) then
+        if ( IsHDF5AttributePresent('/', fileID, 'ShortName') ) &
+          & return
+      endif
+      call h5gopen_f(fileID, '/', grp_id, status)
+      call MakeHDF5Attribute(grp_id, &
+       & 'content', MLSFile%content, .true.)
+      call MakeHDF5Attribute(grp_id, &
+       & 'lastOperation', MLSFile%lastOperation, .true.)
+      call MakeHDF5Attribute(grp_id, &
+       & 'name', MLSFile%name, .true.)
+      call MakeHDF5Attribute(grp_id, &
+       & 'ShortName', MLSFile%ShortName, .true.)
+      call MakeHDF5Attribute(grp_id, &
+       & 'typeStr', MLSFile%typeStr, .true.)
+      call MakeHDF5Attribute(grp_id, &
+       & 'type', MLSFile%type, .true.)
+      call MakeHDF5Attribute(grp_id, &
+       & 'access', MLSFile%access, .true.)
+      call MakeHDF5Attribute(grp_id, &
+       & 'HDFVersion', MLSFile%HDFVersion, .true.)
+      call MakeHDF5Attribute(grp_id, &
+       & 'PCFID', MLSFile%PCFId, .true.)
+      call MakeHDF5Attribute(grp_id, &
+       & 'recordLength', MLSFile%recordLength, .true.)
+      call MakeHDF5Attribute(grp_id, &
+       & 'errorCode', MLSFile%errorCode, .true.)
+      call MakeHDF5Attribute(grp_id, &
+       & 'PCFIDRange', (/MLSFile%PCFIdRange%Bottom, MLSFile%PCFIdRange%Top/), .true.)
+      call MakeHDF5Attribute(grp_id, &
+       & 'FileID', &
+       & (/MLSFile%FileID%f_id, MLSFile%FileID%grp_id, MLSFile%FileID%sd_id/), &
+       & .true.)
+      call h5gclose_f(grp_id, status)
+
+!------------------------------------------------------------
+   end subroutine h5_writeMLSFileAttr
+!------------------------------------------------------------
+
+!------------------------------------------------------------
+   subroutine he5_writeglobalattr_MLSFile ( MLSFile, dayNum, DOI, skip_if_already_there )
+!------------------------------------------------------------
+
+! Brief description of subroutine
+! This subroutine writes the global attributes for an hdfeos5 file
+
+! Arguments
+
+      type(MLSFile_T)       :: MLSFile
+      integer, intent(in), optional :: dayNum
+      logical, intent(in), optional :: doi
+      logical, intent(in), optional :: skip_if_already_there
+      ! Local variables
+      logical :: alreadyOpen
+      integer :: returnStatus
+      ! Executable
+      alreadyOpen = MLSFile%stillOpen
+      if ( .not. alreadyOpen ) then
+        call mls_openFile( MLSFile, returnStatus )
+        if ( returnStatus /= 0 ) &
+          call MLSMessage( MLSMSG_Error, ModuleName, &
+          & 'Unable to open hdfeos file', MLSFile=MLSFile )
+      endif
+      call he5_writeglobalattr_FileID ( MLSFile%fileID%f_id, &
+        & dayNum, DOI, skip_if_already_there )
+      if ( .not. alreadyOpen ) call mls_closeFile( MLSFile, returnStatus )
+   end subroutine he5_writeglobalattr_MLSFile
+
+!------------------------------------------------------------
+   subroutine he5_writeglobalattr_FileID ( fileID, &
+     & dayNum, DOI, skip_if_already_there )
+!------------------------------------------------------------
+
+    use HDFEOS5, only: HE5T_Native_Int, &
+      & HE5T_Native_Double, MLS_CharType
+    use MLSHDFEOS, only: He5_Ehrdglatt, HE5_EHWRGlAtt, HSize, &
+      & MLS_EhwrGlAtt, MLS_IsGlAtt
+! Brief description of subroutine
+! This subroutine writes the global attributes for an hdfeos5 file
+!
+! Optionally, either some, most, or all such attributes will be written
+! Warning:
+! As noted in the module's opening comments, if this routine
+! is called more than once, the string length of the attribute
+! values can't be extended in subsequent calls. In particular,
+! if an attribute's value was initially blank, i.e. "", it
+! will remain blank despite later calls.
+
+! Arguments
+
+      integer, intent(in) :: fileID
+      integer, intent(in), optional :: dayNum
+      logical, intent(in), optional :: doi
+      logical, intent(in), optional :: skip_if_already_there
+! Internal variables
+      integer :: status
+      character(len=GA_VALUE_LENGTH) :: ProcessLevel = ''
+      ! Be careful here (the master would insert an erroneous value)
+      ! That's why we use the clunky myDOI to control the attribue writing for
+      ! these three:
+      !   identifier_product_doi
+      !   MiscNotes
+      !   ProductionLocation
+      logical :: myDOI
+      logical, parameter :: DeeBug = .false.
+      ! Another clunky mechanism
+      ! If set by the optional arg skip_if_already_there
+      ! skips writing all the global attributes *except for*
+      ! the three:
+      !   identifier_product_doi
+      !   MiscNotes
+      !   ProductionLocation
+      logical :: my_skip
+! Executable
+!  if ( MLS_IsGlAtt ( fileID, 'StartUTC' ) ) &
+!    & call output ( 'Warning--StartUTC attribute already written', advance='yes' )
+!  if ( MLS_IsGlAtt ( fileID, 'EndUTC' ) ) &
+!    & call output ( 'Warning--EndUTC attribute already written', advance='yes' )
+      myDOI = .false.
+      if ( present(DOI) ) myDOI=DOI
+      my_skip = .false.
+      if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
+      if ( deebug ) then
+        call output( 'Writing global attributes', advance='yes' )
+        call dumpGlobalAttributes
+      endif
+      if ( len_trim(GlobalAttributes%DOI) > 0 .and. myDOI ) &
+       & status = mls_EHwrglatt(fileID, &
+       & 'identifier_product_doi', MLS_CHARTYPE, 1, &
+       &  GlobalAttributes%DOI)
+      if ( len_trim(GlobalAttributes%productionLoc) > 0 .and. myDOI ) &
+       & status = mls_EHwrglatt(fileID, &
+       & 'ProductionLocation', MLS_CHARTYPE, 1, &
+       &  GlobalAttributes%productionLoc)
+      if ( len_trim(GlobalAttributes%MiscNotes) > 0 .and. myDOI ) &
+       & status = mls_EHwrglatt(fileID, &
+       & 'MiscNotes', MLS_CHARTYPE, 1, &
+       &  GlobalAttributes%MiscNotes)
+      if ( my_skip .and. DeeBug ) &
+        & call output( 'Global attributes already there; skipping', advance='yes' )
+      if ( my_skip ) then
+        if ( MLS_IsGlAtt ( fileID, 'OrbitNumber' ) ) &
+          & return
+      endif
+      if (present(dayNum)) then
+         status = he5_EHwrglatt(fileID, &
+            & 'OrbitNumber', HE5T_NATIVE_INT, hsize(max_orbits), &
+            &  GlobalAttributes%OrbNumDays(:,dayNum))
+         status = he5_EHwrglatt(fileID, &
+            & 'OrbitPeriod', HE5T_NATIVE_DOUBLE, hsize(max_orbits), &
+            &  GlobalAttributes%OrbPeriodDays(:,dayNum))
+      else
+         status = he5_EHwrglatt(fileID, &
+            & 'OrbitNumber', HE5T_NATIVE_INT, hsize(max_orbits), &
+            &  GlobalAttributes%OrbNum)
+         status = he5_EHwrglatt(fileID, &
+            & 'OrbitPeriod', HE5T_NATIVE_DOUBLE, hsize(max_orbits), &
+            &  GlobalAttributes%OrbPeriod)
+      end if
+      status = mls_EHwrglatt(fileID, &
+       & 'InstrumentName', MLS_CHARTYPE, 1, &
+       &  GlobalAttributes%InstrumentName)
+      if ( len_trim(GlobalAttributes%HostName) > 0 ) then
+        status = mls_EHwrglatt(fileID, &
+         & 'HostName', MLS_CHARTYPE, 1, &
+         &  GlobalAttributes%HostName)
+      else
+        status = mls_EHwrglatt(fileID, &
+         & 'HostName', MLS_CHARTYPE, 1, &
+         &  GlobalAttributes%ProductionLoc)
+      endif
+      ProcessLevel = ProcessLevelFun()
+      if ( deebug ) call outputNamedValue ( 'ProcessLevel', ProcessLevel )
+      status = mls_EHwrglatt(fileID, &
+       & 'ProcessLevel', MLS_CHARTYPE, 1, &
+       &  ProcessLevel)
+      status = mls_EHwrglatt(fileID, &
+       & 'PGEVersion', MLS_CHARTYPE, 1, &
+       &  GlobalAttributes%PGEVersion)
+      status = mls_EHwrglatt(fileID, &
+       & 'StartUTC', MLS_CHARTYPE, 1, &
+       &  GlobalAttributes%StartUTC)
+      if ( status /= 0 .and. deebug ) then
+        call outputNamedValue ( 'mls_EHwrglatt status returned', status )
+      endif
+      if ( deebug ) call outputNamedValue ( 'StartUTC', GlobalAttributes%StartUTC )
+      status = he5_EHrdglatt(fileID, &
+       & 'StartUTC', &
+       &  GlobalAttributes%StartUTC)
+      if ( status /= 0 .and. deebug ) then
+        call outputNamedValue ( 'he5_EHrdglatt status returned', status )
+      endif
+      if ( deebug ) call outputNamedValue ( 'StartUTC', GlobalAttributes%StartUTC )
+      
+      status = mls_EHwrglatt(fileID, &
+       & 'EndUTC', MLS_CHARTYPE, 1, &
+       &  GlobalAttributes%EndUTC)
+      if ( status /= 0 .and. deebug ) then
+        call outputNamedValue ( 'mls_EHwrglatt status returned', status )
+      endif
+      if ( deebug ) call outputNamedValue ( 'EndUTC', GlobalAttributes%EndUTC )
+      status = he5_EHrdglatt(fileID, &
+       & 'EndUTC', &
+       &  GlobalAttributes%EndUTC)
+      if ( status /= 0 .and. deebug ) then
+        call outputNamedValue ( 'he5_EHrdglatt status returned', status )
+      endif
+      if ( deebug ) call outputNamedValue ( 'EndUTC', GlobalAttributes%EndUTC )
+      ! if ( GlobalAttributes%GranuleDay == ' ') return
+      ! if ( GlobalAttributes%GranuleMonth == ' ') &
+      if ( GlobalAttributes%GranuleDay < 1 ) return
+      status = he5_EHwrglatt(fileID, &
+       & 'GranuleMonth', HE5T_NATIVE_INT, hsize(1), &
+       &  (/ GranuleMonth_fun() /) )
+      status = he5_EHwrglatt(fileID, &
+       & 'GranuleDay', HE5T_NATIVE_INT, hsize(1), &
+       &  (/ GranuleDay_fun() /) )
+      status = he5_EHwrglatt(fileID, &
+       & 'GranuleDayOfYear', HE5T_NATIVE_INT, hsize(1), &
+       &  (/ GranuleDayOfYear_fun() /) )
+      status = he5_EHwrglatt(fileID, &
+       & 'GranuleYear', HE5T_NATIVE_INT, hsize(1), &
+       &  (/ GlobalAttributes%GranuleYear/) )
+      status = he5_EHwrglatt(fileID, &
+       & 'TAI93At0zOfGranule', HE5T_NATIVE_DOUBLE, hsize(1), &
+       &  (/ GlobalAttributes%TAI93At0zOfGranule/) )
+      if ( lowercase(ProcessLevel(1:2)) == 'l2' ) then
+        status = he5_EHwrglatt(fileID, &
+         & 'FirstMAF', HE5T_NATIVE_INT, hsize(1), &
+         &  (/ GlobalAttributes%FirstMAFCtr /) )
+        status = he5_EHwrglatt(fileID, &
+         & 'LastMAF', HE5T_NATIVE_INT, hsize(1), &
+         &  (/ GlobalAttributes%LastMAFCtr /) )
+      endif
+!------------------------------------------------------------
+   end subroutine he5_writeglobalattr_FileID
+!------------------------------------------------------------
+
+!------------------------------------------------------------
+   subroutine he5_writeMLSFileAttr ( MLSFile )
+!------------------------------------------------------------
+
+   use HDFeos5, only: He5t_Native_Int, MLS_Chartype
+   use MLSHDFeos, only: He5_Ehwrglatt, Hsize, MLS_Ehwrglatt
+! Brief description of subroutine
+! This subroutine writes the components of an MLSFile_t 
+! as attributes for an hdfeos5-formatted file
+
+! Arguments
+
+      ! integer, intent(in) :: fileID
+      type(MLSFile_T)       :: MLSFile
+! Local variables
+      integer :: fileID
+      integer :: status
+
+      ! Executable code
+      if ( .not. MLSFile%stillOpen ) then
+        call MLS_OpenFile( MLSFile )
+      endif
+      fileID = MLSFile%FileID%f_id
+      status = mls_EHwrglatt(fileID, &
+       & 'content', MLS_CHARTYPE, 1, &
+       &  MLSFile%content)
+      status = mls_EHwrglatt(fileID, &
+       & 'lastOperation', MLS_CHARTYPE, 1, &
+       &  MLSFile%lastOperation)
+      status = mls_EHwrglatt(fileID, &
+       & 'name', MLS_CHARTYPE, 1, &
+       &  MLSFile%name)
+      status = mls_EHwrglatt(fileID, &
+       & 'ShortName', MLS_CHARTYPE, 1, &
+       &  MLSFile%ShortName)
+      status = mls_EHwrglatt(fileID, &
+       & 'typeStr', MLS_CHARTYPE, 1, &
+       &  MLSFile%typeStr)
+      status = he5_EHwrglatt(fileID, &
+       & 'type', HE5T_NATIVE_INT, hsize(1), &
+       &  (/ MLSFile%type /) )
+      status = he5_EHwrglatt(fileID, &
+       & 'access', HE5T_NATIVE_INT, hsize(1), &
+       &  (/ MLSFile%access /) )
+      status = he5_EHwrglatt(fileID, &
+       & 'HDFVersion', HE5T_NATIVE_INT, hsize(1), &
+       &  (/ MLSFile%HDFVersion /) )
+      status = he5_EHwrglatt(fileID, &
+       & 'PCFID', HE5T_NATIVE_INT, hsize(1), &
+       &  (/ MLSFile%PCFId /) )
+      status = he5_EHwrglatt(fileID, &
+       & 'recordlength', HE5T_NATIVE_INT, hsize(1), &
+       &  (/ MLSFile%recordlength /) )
+      status = he5_EHwrglatt(fileID, &
+       & 'errorCode', HE5T_NATIVE_INT, hsize(1), &
+       &  (/ MLSFile%errorCode /) )
+      status = he5_EHwrglatt(fileID, &
+       & 'PCFIDRange', HE5T_NATIVE_INT, hsize(2), &
+       &  (/ MLSFile%PCFIDRange%Bottom, MLSFile%PCFIDRange%Top /) )
+      status = he5_EHwrglatt(fileID, &
+       & 'FileID', HE5T_NATIVE_INT, hsize(3), &
+       &  (/MLSFile%FileID%f_id, MLSFile%FileID%grp_id, MLSFile%FileID%sd_id/) )
+
+!------------------------------------------------------------
+   end subroutine he5_writeMLSFileAttr
+!------------------------------------------------------------
+
+!------------------------------------------------------------
+   subroutine he5_readglobalattr ( fileID, gAttributes, &
+     & ProcessLevel, DayofYear, TAI93At0zOfGranule, &
+     & HostName, MiscNotes, DOI, returnStatus )
+!------------------------------------------------------------
+
+     use MLSHDFeos, only: Maxdlistlength, He5_Ehrdglatt, MLS_IsGlatt
+! Brief description of subroutine
+! This subroutine reads the global attributes from an hdf-eos5 file
+
+! Arguments
+
+      integer, intent(in)                      :: fileID
+      type (GlobalAttributes_T), intent(inout) :: gAttributes
+      character(len=*), intent(out), optional  :: ProcessLevel
+      integer, intent(out), optional           :: DayofYear
+      double precision, optional, intent(out)  :: TAI93At0zOfGranule
+      character(len=*), intent(out), optional  :: HostName
+      character(len=*), intent(out), optional  :: MiscNotes
+      character(len=*), intent(out), optional  :: DOI
+      integer, optional, intent(out)           :: returnStatus
+! Internal variables
+      integer :: status
+      integer, dimension(1) :: ibuf
+      real(r8), dimension(1) :: dbuf
+      ! character(len=MAXDLISTLENGTH) :: attrList
+      ! integer :: listSize
+! Executable
+      if ( DEBUG ) call output( 'Reading global attributes', advance='yes' )
+      !status = he5_EHinqglatts(fileID, attrList, listSize)
+      !status = 0
+      ! if ( status /= 0 ) then
+      if ( present(returnStatus) ) returnStatus = 1
+      if ( .not. MLS_IsGlatt ( FileID, 'OrbitNumber') ) then
+        call MLSMessage(MLSMSG_Warning, ModuleName, &
+            & 'No global attributes in file: ' )
+        return
+      endif
+      status = he5_EHrdglatt(fileID, &
+         & 'OrbitNumber', &
+         &  gAttributes%OrbNum )
+      status = he5_EHrdglatt(fileID, &
+         & 'OrbitPeriod', &
+         &  gAttributes%OrbPeriod )
+      status = he5_EHrdglatt(fileID, &
+       & 'InstrumentName', &
+       &  gAttributes%InstrumentName)
+      if ( DEBUG ) call outputNamedValue('InstrumentName (read) ', trim(gattributes%InstrumentName) )
+      if ( present(HostName) ) then
+       status = he5_EHrdglatt(fileID, &
+        & 'HostName', &
+        &  HostName)
+      endif
+      status = he5_EHrdglatt(fileID, &
+       & 'ProcessLevel', &
+       &  gattributes%ProcessLevel)
+      if ( DEBUG ) call outputNamedValue('Process Level (read) ', trim(gattributes%ProcessLevel) )
+      if ( present(ProcessLevel) ) ProcessLevel = gattributes%ProcessLevel
+      status = he5_EHrdglatt(fileID, &
+       & 'PGEVersion', &
+       &  gAttributes%PGEVersion)
+      if ( present(MiscNotes) ) then
+       status = he5_EHrdglatt(fileID, &
+       & 'MiscNotes', &
+       &  MiscNotes)
+       if ( DEBUG ) call outputNamedValue('Misc Notes (read) ', trim(MiscNotes) )
+      endif
+      status = he5_EHrdglatt(fileID, &
+       & 'StartUTC', &
+       &  gAttributes%StartUTC)
+      status = he5_EHrdglatt(fileID, &
+       & 'EndUTC', &
+       &  gAttributes%EndUTC)
+      status = he5_EHrdglatt(fileID, &
+       & 'GranuleMonth', &
+       &  ibuf  )
+      gAttributes%GranuleMonth = ibuf(1)
+      status = he5_EHrdglatt(fileID, &
+       & 'GranuleDay', &
+       &  ibuf  )
+      gAttributes%GranuleDay = ibuf(1)
+      status = he5_EHrdglatt(fileID, &
+       & 'GranuleDayOfYear', &
+       &  ibuf  )
+      if ( present(DayofYear) ) DayOfYear=ibuf(1)
+      status = he5_EHrdglatt(fileID, &
+       & 'GranuleYear', &
+       &  ibuf  )
+      gAttributes%GranuleYear = ibuf(1)
+      if ( present(TAI93At0zOfGranule) ) then
+        status = he5_EHrdglatt(fileID, &
+         & 'TAI93At0zOfGranule', dbuf )
+        TAI93At0zOfGranule = dbuf(1)
+      endif
+      if ( lowercase(gAttributes%ProcessLevel(1:2)) == 'l2' ) then
+        status = he5_EHrdglatt(fileID, &
+         & 'FirstMAF', &
+         &  ibuf  )
+        gAttributes%FirstMAFCtr = ibuf(1)
+        status = he5_EHrdglatt(fileID, &
+         & 'LastMAF', &
+         &  ibuf  )
+        gAttributes%LastMAFCtr = ibuf(1)
+      endif
+      if ( present(DOI) ) then
+       status = he5_EHrdglatt(fileID, &
+       & 'identifier_product_doi', &
+       &  DOI)
+       if ( DEBUG ) call outputNamedValue('identifier_product_doi ', trim(DOI) )
+      endif
+      ! if ( present(returnStatus) ) returnStatus = status
+      if ( DEBUG ) call dumpGlobalAttributes ( gAttributes )
+      if ( present(returnStatus) ) returnStatus = 0
+!------------------------------------------------------------
+   end subroutine he5_readglobalattr
+!------------------------------------------------------------
+
+!----------------------------------------
+   subroutine InputInputpointer (urefs, fileIDArray, fileNameArray, &
+     & PCBottom, PCTop )
+!----------------------------------------
+!  Prepare Input for WriteInputpointer consisting of universal refs
+!  This can be done for an array of fileids or of file names or both
+!  that were input during the run; e.g., l1brads for level 2
+!  If no universal refs are found, as always happens with my test cases,
+!  then put the file names as returned by pgs_pc_getReference in their place
+!  for the fileIDArray, or else the fileNameArray itself if appropriate
+!  Arguments
+    character (len=INPUTPTR_STRING_LENGTH), intent(out)    :: urefs(:)
+    character (len=*), dimension(:), intent(in), optional  :: fileNameArray
+    integer, dimension(:), intent(in), optional            :: fileIDArray
+    integer,  intent(in), optional                 :: PCBottom, PCTop
+!  Local variables
+   integer  :: i
+   integer  :: ref
+   integer  :: returnStatus
+   integer  :: thePC
+   integer  :: version
+   character(len=INPUTPTR_STRING_LENGTH) :: sval
+   integer, external :: pgs_pc_getUniversalRef, pgs_pc_getReference
+
+ ! Executable
+   if (size(urefs) < 1) return
+   urefs = ' '
+   ref = 0
+   if ( size(fileIDArray) > 0 ) then
+      DO i = 1, size(fileIDArray)
+        version = 1
+        if ( fileIDArray(i) > 0 ) then
+          returnStatus = pgs_pc_getUniversalRef(fileIDArray(i), &
+           & version, sval)
+        else
+          returnStatus = PGS_S_SUCCESS + 1
+        endif
+        IF (returnStatus == PGS_S_SUCCESS) THEN 
+          ref = min(ref+1, size(urefs))
+          urefs(ref) = sval                     
+        elseif(fileIDArray(i) > 0) then
+          CALL MLSMessage(MLSMSG_Warning, ModuleName, &
+            & 'Unable to get Universal Ref for file ID ' &
+            & // trim(int_to_char(fileIDArray(i))) // ' Error number ' &
+            & // trim(int_to_char(returnStatus)) &
+            & )
+          returnStatus = pgs_pc_getReference(fileIDArray(i), &
+           & version, sval)
+          IF (returnStatus == PGS_S_SUCCESS) THEN 
+            ref = min(ref+1, size(urefs))
+            urefs(ref) = sval
+          else
+            CALL MLSMessage(MLSMSG_Error, ModuleName, &
+              & 'Unable to get even a file Ref for file ID ' &
+              & // trim(int_to_char(fileIDArray(i))) // ' Error number ' &
+              & // trim(int_to_char(returnStatus)) &
+              & )
+          endif
+        ENDIF                                   
+      ENDDO
+   endif
+
+   if ( size(fileNameArray) > 0 ) then
+      DO i = 1, size(fileNameArray)
+        version = 1
+        thePC = GetPCFromRef(trim(fileNameArray(i)), PCBottom, PCTop, &
+          & .true., returnStatus, version)
+        if ( thePC > 0 ) then
+         version = 1
+         returnStatus = pgs_pc_getUniversalRef(thePC, &
+           & version, sval)
+        else
+         returnStatus = PGS_S_SUCCESS + 1
+        endif
+        IF (returnStatus == PGS_S_SUCCESS) THEN 
+           ref = min(ref+1, size(urefs))
+           urefs(ref) = sval                     
+        else                                   
+           ref = min(ref+1, size(urefs))
+           urefs(ref) = fileNameArray(i)                     
+        ENDIF                                   
+      ENDDO
+   endif
+
+!------------------------------------
+   end subroutine InputInputpointer
+!------------------------------------
+
+!------------------------------------------------------------
+  subroutine SomeToGlobalAttributes
+    ! Copy SomeGlobalAttribues into the whole enchilada
+    ! (But only where Some is non-blank)
+    call CopyIfNonBlank ( SomeGlobalAttributes%InstrumentName  , GlobalAttributes%InstrumentName  )
+    call CopyIfNonBlank ( SomeGlobalAttributes%ProcessLevel    , GlobalAttributes%ProcessLevel    )
+    call CopyIfNonBlank ( SomeGlobalAttributes%HostName        , GlobalAttributes%HostName        )
+    call CopyIfNonBlank ( SomeGlobalAttributes%PGEVersion      , GlobalAttributes%PGEVersion      )
+    call CopyIfNonBlank ( SomeGlobalAttributes%MiscNotes       , GlobalAttributes%MiscNotes       )
+    call CopyIfNonBlank ( SomeGlobalAttributes%StartUTC        , GlobalAttributes%StartUTC        )
+    call CopyIfNonBlank ( SomeGlobalAttributes%EndUTC          , GlobalAttributes%EndUTC          )
+    call CopyIfNonBlank ( SomeGlobalAttributes%DOI             , GlobalAttributes%DOI             )
+    call CopyIfNonBlank ( SomeGlobalAttributes%productionLoc   , GlobalAttributes%productionLoc   )
+  contains
+    subroutine CopyIfNonBlank( FromMe, ToMe )
+      character(len=*), intent(in)    :: FromMe
+      character(len=*), intent(inout) :: ToMe
+      !
+      if ( len_trim(FromMe) > 0 ) ToMe = FromMe
+    end subroutine CopyIfNonBlank
+  end subroutine SomeToGlobalAttributes
+
+!------------------------------------------------------------
+   subroutine sw_writeglobalattr (swathID)
+!------------------------------------------------------------
+
+     use HDFeos5, only: He5t_Native_Int, He5t_Native_Double, MLS_Chartype
+     use He5_Swapi, only: He5_Swwrattr
+     use MLSHDFeos, only: Hsize, MLS_Swwrattr
+! Brief description of subroutine
+! This subroutine writes the global attributes for an hdfeos5 swath
+
+! Arguments
+
+      integer, intent(in) :: swathID
+!     integer, external ::   he5_SWwrattr
+! Internal variables
+      logical, parameter :: DeeBug = .false.
+      integer :: status
+      character(len=GA_VALUE_LENGTH) :: ProcessLevel = ''
+! Executable
+      if ( deeBug ) then
+        call output( 'Writing global attributes', advance='yes' )
+        call dumpGlobalAttributes
+      endif
+      status = he5_SWwrattr(swathID, &
+       & 'OrbitNumber', HE5T_NATIVE_INT, hsize(max_orbits), &
+       &  GlobalAttributes%OrbNum)
+      status = he5_SWwrattr(swathID, &
+       & 'OrbitPeriod', HE5T_NATIVE_DOUBLE, hsize(max_orbits), &
+       &  GlobalAttributes%OrbPeriod)
+      status = he5_SWwrattr(swathID, &
+       & 'InstrumentName', MLS_CHARTYPE, hsize(1), &
+       &  GlobalAttributes%InstrumentName)
+      if ( len_trim(GlobalAttributes%HostName) > 0 ) then
+        status = he5_SWwrattr(swathID, &
+         & 'HostName', MLS_CHARTYPE, hsize(1), &
+         &  GlobalAttributes%HostName)
+      else
+        status = he5_SWwrattr(swathID, &
+         & 'HostName', MLS_CHARTYPE, hsize(1), &
+         &  GlobalAttributes%ProductionLoc)
+      endif
+      ProcessLevel = ProcessLevelFun()
+      status = mls_SWwrattr(swathID, &
+       & 'ProcessLevel', MLS_CHARTYPE, 1, &
+       &  ProcessLevel)
+      status = mls_SWwrattr(swathID, &
+       & 'PGEVersion', MLS_CHARTYPE, 1, &
+       &  GlobalAttributes%PGEVersion)
+      status = mls_SWwrattr(swathID, &
+       & 'StartUTC', MLS_CHARTYPE, 1, &
+       &  GlobalAttributes%StartUTC)
+      status = mls_SWwrattr(swathID, &
+       & 'EndUTC', MLS_CHARTYPE, 1, &
+       &  GlobalAttributes%EndUTC)
+      if ( GlobalAttributes%GranuleDay < 1 ) return
+      if ( GlobalAttributes%GranuleMonth > 0 ) then
+        status = he5_SWwrattr(swathID, &
+         & 'GranuleMonth', HE5T_NATIVE_INT, hsize(1), &
+         &  (/ GlobalAttributes%GranuleMonth/) )
+        status = he5_SWwrattr(swathID, &
+         & 'GranuleDay', HE5T_NATIVE_INT, hsize(1), &
+         &  (/ GlobalAttributes%GranuleDay/) )
+      else
+        status = he5_SWwrattr(swathID, &
+         & 'GranuleDayOfYear', HE5T_NATIVE_INT, hsize(1), &
+         &  (/ GlobalAttributes%GranuleDay/) )
+      endif
+      status = he5_SWwrattr(swathID, &
+       & 'GranuleYear', HE5T_NATIVE_INT, hsize(1), &
+       &  (/ GlobalAttributes%GranuleYear/) )
+      status = he5_SWwrattr(swathID, &
+       & 'TAI93At0zOfGranule', HE5T_NATIVE_DOUBLE, hsize(1), &
+       &  (/ GlobalAttributes%TAI93At0zOfGranule/) )
+      if ( lowercase(ProcessLevel(1:2)) == 'l2' ) then
+        status = he5_SWwrattr(swathID, &
+         & 'FirstMAF', HE5T_NATIVE_INT, hsize(1), &
+         &  (/ GlobalAttributes%FirstMAFCtr/) )
+        status = he5_SWwrattr(swathID, &
+         & 'LastMAF', HE5T_NATIVE_INT, hsize(1), &
+         &  (/ GlobalAttributes%LastMAFCtr/) )
+      endif
+      ! We don't write these here (the master would insert an erroneous value)
+      ! Instead we write them during DirectWrite operations
+      ! status = he5_SWwrattr(swathID, &
+      ! & 'MiscNotes', MLS_CHARTYPE, hsize(1), &
+      !  &  GlobalAttributes%MiscNotes)
+!------------------------------------------------------------
+   end subroutine sw_writeglobalattr
+!------------------------------------------------------------
+
+!----------------------------------------
+   function WriteInputpointer (groups, attrName, inpt, fileType)
+!----------------------------------------
+
+!  Write Inputpointer metadata
+
+!  Arguments
+    character (len = PGSd_MET_GROUP_NAME_L) :: Groups
+    character (len=*), intent(in) :: Attrname
+    character (len=INPUTPTR_STRING_LENGTH), intent(in), optional  :: inpt(:)
+    ! character(len=*), intent(in), optional :: fileType   ! 'hdfeos', 'hdf', 'sw' or ..
+    integer, intent(in), optional :: fileType   ! l_swath, l_hdf, ...
+
+    integer             :: WriteInputpointer
+    integer, external   :: pgs_met_setAttr_s
+    ! character (len=6) :: the_type
+    integer :: the_type
+
+!   Executable statements
+    if ( present(inpt) ) then
+       WriteInputpointer = pgs_met_setAttr_s(groups, attrName, inpt)
+       return
+    endif
+    the_type = l_hdf
+    if ( present(fileType) ) the_type = fileType
+    select case(the_type)
+    case (l_hdf)
+      WriteInputpointer = pgs_met_setAttr_s (groups, attrName, &
+        &  (/HDFINPTPTRVALUE/) )
+    case default
+      WriteInputpointer = pgs_met_setAttr_s (groups, attrName, &
+        &  (/HDFEOSINPTPTRVALUE/) )
+    end select      
+    
+!------------------------------------
+   end function WriteInputpointer
+!------------------------------------
+
+   subroutine WriteLeapSecHDFEOSAttr (fileID)
+     ! Write contents of leapsec file as hdfeos5 attribute to file
+    use MLSHDFEOS, only: MLS_EHWrGlAtt
+     ! Args
+     integer, intent(in) :: fileID
+     ! Internal variables
+     character(len=FileNameLen) :: LeapSecFile
+     integer, parameter :: PCFid = 10301
+     integer :: status
+     integer :: version
+     ! Executable
+     version = 1
+     Status = Pgs_pc_getReference( PCFid, version, &
+       & LeapSecFile )
+     if ( Status /= PGS_S_SUCCESS ) then
+       call outputNamedValue( 'status', status )
+       CALL MLSMessage( MLSMSG_Warning, ModuleName, &
+         & 'Unable to get path, file name for Leap sec file using PCFid' )
+       return
+     end if
+     status = MLS_EHWRGLATT ( trim(leapSecFile), FILEID, &
+       & 'leap seconds' )
+   end subroutine WriteLeapSecHDFEOSAttr
+
+   subroutine WriteLeapSecHDF5DS (fileID)
+     ! Write contents of leapsec file as hdf5 dataset to file
+    use MLSHDF5, only: SaveAsHDF5DS
+     ! Args
+     integer, intent(in) :: fileID
+     ! Internal variables
+     character(len=FileNameLen) :: LeapSecFile
+     integer, parameter :: PCFid = 10301
+     integer :: status
+     integer :: version
+     ! Executable
+     version = 1
+     Status = Pgs_pc_getReference( PCFid, version, &
+       & LeapSecFile )
+     if ( Status /= PGS_S_SUCCESS ) then
+       call outputNamedValue( 'status', status )
+       CALL MLSMessage( MLSMSG_Warning, ModuleName, &
+         & 'Unable to get path, file name for Leap sec file using PCFid' )
+       return
+     end if
+     call SaveAsHDF5DS ( trim(leapSecFile), FILEID, &
+       & 'leap seconds' )
+     
+   end subroutine WriteLeapSecHDF5DS
+
+!----------------------------------------
+   subroutine WritePCF2Hdr (file, anText, hdfVersion, fileType, name)
+!----------------------------------------
+      use HDF5, only: H5F_AcC_Rdwr_F, &
+        & H5FOpen_F, H5FClosE_F
+
+! Brief description of subroutine
+! This subroutine writes the PCF into an HDF-EOS file as an annotation.
+
+! Arguments
+
+      character (len=FileNameLen), intent(in) :: file 
+
+      character (len=1), pointer              :: anText(:)
+      integer, intent(in), optional           :: hdfVersion
+      ! character(len=*), intent(in), optional  :: fileType ! 'sw', 'gd', 'hdf'
+      integer, intent(in), optional  :: fileType ! l_swath, l_hdf, ..
+      character(len=*), intent(in), optional :: name
+      ! logical, intent(in), optional         :: isHDFEOS
+
+! Parameters
+      integer :: fileID
+      type(MLSFile_T)                :: MLSFile
+      integer :: my_hdfVersion
+      ! logical :: myisHDFEOS
+    ! integer :: record_length
+      integer :: status
+      ! character (len=2) :: the_type
+      integer :: the_type
+! Executable
+      my_hdfVersion = PCFHDR_DEFAULT_HDFVERSION
+      if ( present(hdfVersion) ) my_hdfVersion = hdfVersion
+      the_type = l_hdf
+      if ( present(fileType) ) the_type = fileType
+      status = InitializeMLSFile ( MLSFile, type=the_Type, access=DFACC_RDWR, &
+       & name=trim(file), HDFVersion=my_hdfVersion )
+      select case(my_hdfVersion)
+      case (HDFVERSION_4)
+        call WritePCF2Hdr_hdf4 (file, anText)
+      case (HDFVERSION_5)
+        if ( the_type == l_swath ) then
+          ! fileID = mls_io_gen_openF(l_swath, .TRUE., status, &
+          ! & record_length, DFACC_RDWR, FileName=trim(file), &
+          ! & hdfVersion=hdfVersion, debugOption=.false. )
+          call MLS_OpenFile( MLSFile )
+          fileID = MLSFile%FileID%f_id
+          ! if ( status /= PGS_S_SUCCESS) &
+          !  & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+          !  & 'Error opening hdfeos5 swath file for annotating with PCF' )
+          call WritePCF2Hdr_hdfeos5 (fileID, anText)
+          ! status = mls_io_gen_closeF(l_swath, fileID, &
+          !  & hdfVersion=hdfVersion)
+          call MLS_CloseFile( MLSFile )
+          ! if ( status /= PGS_S_SUCCESS) &
+          !  & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+          !  & 'Error closing hdfeos5 swath file for annotating with PCF' )
+        elseif ( the_type == l_hdfeos ) then
+          ! fileID = mls_io_gen_openF(l_grid, .TRUE., status, &
+          !  & record_length, DFACC_RDWR, FileName=trim(file), &
+          !  & hdfVersion=hdfVersion, debugOption=.false. )
+          call MLS_OpenFile( MLSFile )
+          fileID = MLSFile%FileID%f_id
+          ! if ( status /= PGS_S_SUCCESS) &
+          !   & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+          !   & 'Error opening hdfeos5 grid file for annotating with PCF' )
+          call WritePCF2Hdr_hdfeos5 (fileID, anText)
+          ! status = mls_io_gen_closeF(l_grid, fileID, &
+          !  & hdfVersion=hdfVersion)
+          call MLS_CloseFile ( MLSFile )
+          ! if ( status /= PGS_S_SUCCESS) &
+          !  & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+          !  & 'Error closing hdfeos5 grid file for annotating with PCF' )
+        else
+          call h5fopen_f(trim(file), H5F_ACC_RDWR_F, fileID, status)
+          if ( status /= PGS_S_SUCCESS) &
+            & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+            & 'Error opening hdf5 file for annotating with PCF' )
+          call WritePCF2Hdr_hdf5 (fileID, anText, name)
+          call h5fclose_f(fileID, status)
+          if ( status /= PGS_S_SUCCESS) &
+            & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+            & 'Error closing hdf5 file for annotating with PCF' )
+        endif
+      case default
+         CALL MLSMessage(MLSMSG_Error, ModuleName, &
+           & 'Unrecognized hdfVersion in WritePCF2Hdr')
+      end select
+!-----------------------------
+   end subroutine WritePCF2Hdr
+!-----------------------------
+
+!----------------------------------------
+   subroutine WritePCF2Hdr_hdf4 (file, anText)
+!----------------------------------------
+
+! Brief description of subroutine
+! This subroutine writes the PCF into an HDF-EOS4 file as an annotation.
+
+! Arguments
+
+      character (len=FileNameLen), intent(in) :: file 
+
+      character (len=1), pointer              :: anText(:)
+
+! Parameters
+
+! Functions
+
+      integer, external :: afEnd, afEndAccess, afFCreate, afStart, afWriteAnn
+      integer, external :: hClose, hOpen
+
+! Variables
+
+      character (len=480) :: msr
+
+      integer :: anID, annID, fileID, status
+
+! Open the HDF-EOS file for writing
+
+      fileID = hOpen(file, DFACC_WRITE, 0)
+      IF (fileID == -1) THEN
+         msr = MLSMSG_Fileopen // file
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+! Initialize the AN interface
+
+      anID = afStart(fileID)
+      IF (anID == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
+                                              &initialize the AN interface.')
+
+! Create a file annotation
+
+      annID = afFCreate(anID, AN_FILE_DESC)
+      IF (annID == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
+                                               &create the file annotation.')
+
+! Write the PCF as an annotation to the file
+
+      status = afWriteAnn( annID, anText, SIZE(anText) )
+
+! Terminate access to the annotation
+
+      status = afEndAccess(annID)
+      IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
+                                    &terminate access to the file annotation.')
+
+! Terminate access to the AN interface
+
+      status = afEnd(anID)
+      IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
+                                       &terminate access to the AN interface.')
+
+! Close the HDF file
+
+      status = hClose(fileID)
+      IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
+                                                       &close the HDF file.')
+
+!-----------------------------
+   end subroutine WritePCF2Hdr_hdf4
+!-----------------------------
+
+!----------------------------------------
+   subroutine WritePCF2Hdr_hdf5 (fileID, anText, name)
+!----------------------------------------
+
+     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+     use HDF5, only: H5gclose_F, H5gopen_F
+     use MLSHDF5, only: IsHDF5dspresent, MakeHDF5attribute, SaveasHDF5ds
+! Brief description of subroutine
+! This subroutine writes the PCF into an HDF5 file as 
+! (1) a datset if MAKEDATASET is TRUE
+! (2) an attribute if MAKEATTRIBUTE is TRUE
+! It does (2) at the root '/' group level, treating the file as if
+! it were a plain hdf5 file
+! If the file were in fact an hdfeos5 file
+! this may result in the dread hybrid file syndrome which may
+! confuse some hdf-eos5 readers (not tested)
+
+! Arguments
+
+      integer :: fileID
+      character (len=1), pointer              :: anText(:)
+      character(len=*), intent(in), optional :: name
+
+! Local variables
+      integer :: grp_id
+      integer :: status
+      character (len=1), dimension(:), pointer              :: an40
+      integer :: how_big
+      logical, parameter :: useLENGTHONECHARS = .true.
+      logical, parameter :: MAKEDATASET = .true.
+      logical, parameter :: MAKEATTRIBUTE = .not. MAKEDATASET
+      character(len=size(anText)) :: anScalar
+      character(len=80) :: myPCFPATHNAME
+      ! Executable
+      myPCFPATHNAME = PCFPATHNAME
+      if ( present(name) ) myPCFPATHNAME = name
+      if ( MAKEDATASET ) then
+        if ( IsHDF5DSPresent(fileID, trim(myPCFPATHNAME) ) ) return
+        anScalar = transfer(anText, anScalar)
+        call SaveAsHDF5DS ( fileID, trim(myPCFPATHNAME), anScalar )
+      endif
+      if ( .not. MAKEATTRIBUTE ) return
+      myPCFPATHNAME = PCFATTRIBUTENAME
+      if ( present(name) ) myPCFPATHNAME = name
+      call h5gopen_f(fileID, '/', grp_id, status)
+      if ( status /= PGS_S_SUCCESS) &
+        & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+        & 'Error opening hdf5 file root group for annotating with PCF' )
+      if ( useLENGTHONECHARS ) then
+        call MakeHDF5Attribute(grp_id, &
+         & trim(myPCFPATHNAME), anText, .true.)
+         ! & 'PCF file text', anText, .true.)
+      else
+        ! Find how big an40 must be to hold anText
+        how_big = 1 + (size(anText)-1)/40
+        call allocate_test ( an40, how_big, "an40", moduleName )
+        an40 = ' '
+        ! Do some nonsense here
+        call MakeHDF5Attribute(grp_id, &
+         & trim(myPCFPATHNAME), an40, .true.)
+        call deallocate_test ( an40, "an40", moduleName )
+      end if
+      call h5gclose_f(grp_id, status)
+      if ( status /= PGS_S_SUCCESS) &
+        & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+        & 'Error closing hdf5 file root group for annotating with PCF' )
+!-----------------------------
+   end subroutine WritePCF2Hdr_hdf5
+!-----------------------------
+
+!----------------------------------------
+   subroutine WritePCF2Hdr_hdfeos5 (fileID, anText)
+!----------------------------------------
+
+     use HDFeos5, only: MLS_Chartype
+     use MLSHDFeos, only: Hsize, He5_Ehwrglatt
+! Brief description of subroutine
+! This subroutine writes the PCF into an HDF-EOS5 file as an attribute.
+! It does so as file level attributes
+! It does not do so as a dataset because that would create a hybrid file
+! For unclear reasons the attributes are stored as an array of 40-length chars
+! Unless the parameter useLENGTHONECHARS is true
+! Arguments
+
+! If the PCF file if bigger than 40,000 characters, need to break it down into 
+! multiple attribute names such as PCF1, PCF2, etc... up to PCF9
+! Do this to solve the probem of L3 PCF files 
+
+      character (len=1), pointer              :: anText(:)
+      integer, intent(in)                     :: fileID
+
+! Local variables
+      integer :: firstChar, lastChar, blockNumber
+      integer :: status
+      integer, parameter :: maxheadersize = 40000
+      character (len=3) :: blockChar 
+
+! Executable
+
+      blockNumber = 1
+      firstChar = 1
+
+      do
+        lastChar = min(firstChar-1+maxheadersize, size(anText))
+        ! i1 is for PCF filesize < 400,000 
+       write( blockChar, '(i1)') blockNumber
+       if ( blockNumber > 9 ) write( blockChar, '(i2)') blockNumber
+
+        status = he5_EHwrglatt(fileID, 'PCF'//TRIM(ADJUSTL(blockChar)), &
+                & MLS_CHARTYPE, hsize(lastChar-firstChar+1), &
+                & anText(firstChar:lastChar))
+        if ( status /= PGS_S_SUCCESS) then
+           CALL MLSMessage(MLSMSG_Error, ModuleName, &
+                & 'Error annotating with PCF')
+           return
+        end if
+        blockNumber = blockNumber + 1
+        firstChar = firstChar + maxheadersize
+        if ( firstChar > size(anText)) return
+      end do
+
+!-----------------------------
+   end subroutine WritePCF2Hdr_hdfeos5
+!-----------------------------
+
+   subroutine WriteutcPoleHDFEOSAttr (fileID)
+     ! Write contents of utcPole file as hdfeos5 attribute to file
+    use MLSHDFEOS, only: MLS_EHWrGlAtt
+     ! Args
+     integer, intent(in) :: fileID
+     ! Internal variables
+     character(len=FileNameLen) :: utcPoleFile
+     integer, parameter :: PCFid = 10401
+     integer :: status
+     integer :: version
+     ! Executable
+     version = 1
+     Status = Pgs_pc_getReference( PCFid, version, &
+       & utcPoleFile )
+     if ( Status /= PGS_S_SUCCESS ) then
+       call outputNamedValue( 'status', status )
+       CALL MLSMessage( MLSMSG_Warning, ModuleName, &
+         & 'Unable to get path, file name for utc pole file using PCFid' )
+       return
+     end if
+     status = MLS_EHWRGLATT ( trim(utcPoleFile), FILEID, &
+       & 'utc pole' )
+   end subroutine WriteutcPoleHDFEOSAttr
+
+   subroutine WriteutcPoleHDF5DS (fileID)
+     ! Write contents of leapsec file as hdf5 dataset to file
+    use MLSHDF5, only: SaveAsHDF5DS
+     ! Args
+     integer, intent(in) :: fileID
+     ! Internal variables
+     character(len=FileNameLen) :: utcPoleFile
+     integer, parameter :: PCFid = 10401
+     integer :: status
+     integer :: version
+     ! Executable
+     version = 1
+     Status = Pgs_pc_getReference( PCFid, version, &
+       & utcPoleFile )
+     if ( Status /= PGS_S_SUCCESS ) then
+       call outputNamedValue( 'status', status )
+       CALL MLSMessage( MLSMSG_Warning, ModuleName, &
+         & 'Unable to get path, file name for utc pole file using PCFid' )
+       return
+     end if
+     call SaveAsHDF5DS ( trim(utcPoleFile), FILEID, &
+       & 'utc pole' )
+     
+   end subroutine WriteutcPoleHDF5DS
+
+!----------- Internal Procedures --------------
+  function int_to_char (int) result (chars)
+    ! Arguments
+    integer , intent(in) :: int
+    character(len=16) :: chars
+    ! Executable
+    write(chars, * ) int
+    chars = adjustl(chars)
+  end function int_to_char
+
+  function ProcessLevelFun () result (ProcessLevel)
+    ! Take '1', '2', '3' and return 'L1', 'L2', etc.
+    ! Leaves 'L*' unchanged
+    ! Arguments
+    character(len=GA_VALUE_LENGTH) :: ProcessLevel
+    ! Executable
+    if ( GlobalAttributes%ProcessLevel == ' ' ) then
+      ProcessLevel = DEFAULTPROCESSLEVEL   ! 'unknown'
+    elseif ( GlobalAttributes%ProcessLevel(1:1) /= 'L' ) then
+      ProcessLevel = 'L' // trim(GlobalAttributes%ProcessLevel)
+    else
+      ProcessLevel = GlobalAttributes%ProcessLevel
+    endif
+  end function ProcessLevelFun
+
+!================
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: PCFHdr.f90,v 2.79 2022/12/20 23:32:07 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module PCFHdr
+!================
+
+!# $Log: PCFHdr.f90,v $
+!# Revision 2.79  2022/12/20 23:32:07  pwagner
+!# Added two more file attributes
+!#
+!# Revision 2.78  2020/03/20 23:02:10  pwagner
+!# Attempt to relieve confusion between ProductionLocation and ProductionLoc; may optionally read DOI, etc.
+!#
+!# Revision 2.77  2020/03/04 21:22:20  pwagner
+!# Make ProcessLevelFun public
+!#
+!# Revision 2.76  2019/10/30 20:08:40  pwagner
+!# Dumping Misc Notes spans lines properly
+!#
+!# Revision 2.75  2019/07/09 23:05:59  pwagner
+!# Use Table cells to DumpGlobalAttributes
+!#
+!# Revision 2.74  2019/01/29 21:47:37  pwagner
+!# Uses MLS_IsGlatt; light housekeeping
+!#
+!# Revision 2.73  2018/05/31 22:43:56  pwagner
+!# Changed name of attribute to identifier_product_doi to please DAAC
+!#
+!# Revision 2.72  2018/05/31 18:06:49  pwagner
+!# We can now copy over globalattributes
+!#
+!# Revision 2.71  2018/05/22 23:04:41  pwagner
+!# Correct initial value of FailedChunks; may dump user-supplied GlobalAttribute_T
+!#
+!# Revision 2.70  2018/04/19 00:47:54  vsnyder
+!# Remove USE statements for unused names
+!#
+!# Revision 2.69  2017/07/25 22:29:35  pwagner
+!# Made 4 functions public that return granules day, month, dayofyear, year
+!#
+!# Revision 2.68  2016/07/26 17:44:31  pwagner
+!# Deebug may be turned on by switch; print clearer message
+!#
+!# Revision 2.67  2015/08/12 20:36:38  pwagner
+!# Added some missing global attrs; added h5_readGlobalAttr
+!#
+!# Revision 2.66  2015/02/27 23:57:21  pwagner
+!# Take pains to ensure HostName is not blank
+!#
+!# Revision 2.65  2015/01/21 19:28:17  pwagner
+!# Prevent unassociated anText error
+!#
+!# Revision 2.64  2014/10/02 17:20:46  pwagner
+!# Avoid letting master write erroneous MiscNotes
+!#
+!# Revision 2.63  2014/09/05 00:15:47  vsnyder
+!# More complete and accurate allocate/deallocate size tracking.  Remove
+!# USE for unreferenced names.
+!#
+!# Revision 2.62  2014/04/14 16:59:02  pwagner
+!# he5_writeglobalattr may skip writing if already there
+!#
+!# Revision 2.61  2014/04/02 23:04:06  pwagner
+!# Removed redundant open_ and close_MLSFile
+!#
+!# Revision 2.60  2014/03/27 23:59:16  pwagner
+!# he5_writeglobalattr now generic; DOI optional arg controls wwhether to write DOI, prodLoc
+!#
+!# Revision 2.59  2014/03/26 17:43:38  pwagner
+!# Added ProductionLocation, identifier_product_DOI to attributes
+!#
+!# Revision 2.58  2014/01/09 00:24:29  pwagner
+!# Some procedures formerly in output_m now got from highOutput
+!#
+!# Revision 2.57  2012/09/18 18:49:27  pwagner
+!# Reduced severity when unable to convert utc; capitalize names in use statements
+!#
+!# Revision 2.56  2011/07/12 22:35:44  honghanh
+!# Change l_grid to l_hdfeos
+!#
+!# Revision 2.55  2010/11/10 02:01:57  pwagner
+!# Extra output if DEBUG
+!#
+!# Revision 2.54  2010/02/04 23:08:00  vsnyder
+!# Remove use or declaration for unused names
+!#
+!# Revision 2.53  2010/01/15 01:12:37  pwagner
+!# Added routines to read MLSFile_T components
+!#
+!# Revision 2.52  2010/01/11 18:36:07  pwagner
+!# Changed attribute names to 'PCFID..'
+!#
+!# Revision 2.51  2010/01/08 00:10:46  pwagner
+!# Added ability to write MLSFile_T fields as attributes
+!#
+!# Revision 2.50  2009/10/05 23:37:59  pwagner
+!# Moved use mlshdfeos statements from module scope to speedup Lahey; this is the last time we do that
+!#
+!# Revision 2.49  2009/09/29 23:36:28  pwagner
+!# Changes needed by 64-bit build
+!#
+!# Revision 2.48  2009/08/26 16:33:58  pwagner
+!# Workaround for buggy hdfeos function he5_EHinqglatts; added dumpGlobalAttributes
+!#
+!# Revision 2.47  2009/06/23 18:25:42  pwagner
+!# Prevent Intel from optimizing ident string away
+!#
+!# Revision 2.46  2008/12/02 23:10:30  pwagner
+!# mls_io_gen_[openF,closeF] functions now private; use MLSFile_T interfaces instead
+!#
+!# Revision 2.45  2008/04/25 22:52:47  pwagner
+!# Remove unused 'use ..'
+!#
+!# Revision 2.44  2008/03/07 01:37:36  pwagner
+!# Relies on MLSHDFEOS to subdivide long textfiles into attributes
+!#
+!# Revision 2.43  2008/02/22 21:32:43  pwagner
+!# Can now write leapsecfile, utcpole files as attrs, DS
+!#
+!# Revision 2.42  2007/10/04 20:43:36  vsnyder
+!# Remove unused symbols
+!#
+!# Revision 2.41  2007/06/21 00:49:52  vsnyder
+!# Remove tabs, which are not part of the Fortran standard
+!#
+!# Revision 2.40  2007/01/12 00:27:10  pwagner
+!# New HostName global attribute written to product files
+!#
+!# Revision 2.39  2005/09/22 23:34:31  pwagner
+!# date conversion procedures and functions all moved into dates module
+!#
+!# Revision 2.38  2005/08/15 20:38:39  pwagner
+!# FirstMAf, LastMAF global attributes written for level 2 files only
+!#
+!# Revision 2.37  2005/07/12 17:14:22  pwagner
+!# Global attribute MiscNotes added; InputVersion dropped
+!#
+!# Revision 2.36  2005/06/22 17:25:50  pwagner
+!# Reworded Copyright statement, moved rcs id
+!#
+!# Revision 2.35  2005/06/14 20:35:24  pwagner
+!# Changed interface to mls_io_gen functions
+!#
+!# Revision 2.34  2005/02/03 19:06:01  pwagner
+!# utc_to_date used to find 0 crossing
+!#
+!# Revision 2.33  2004/08/16 17:05:38  pwagner
+!# First,LastMAFCtr now global attributes
+!#
+!# Revision 2.32  2004/08/04 23:19:01  pwagner
+!# Much moved from MLSStrings to MLSStringLists
+!#
+!# Revision 2.31  2004/03/24 23:53:02  pwagner
+!# Switched from HE5T_NATIVE_SCHAR to MLS_CHARTYPE
+!#
+!# Revision 2.30  2004/02/26 22:01:04  pwagner
+!# Acts more gracefully if l2gp file lacks global attributes
+!#
+!# Revision 2.29  2004/02/13 00:17:12  pwagner
+!# New stuff for reading swath attributes
+!#
+!# Revision 2.28  2003/10/30 00:03:02  pwagner
+!# Prepends 'L' to GlobalAttributes%ProcessLevel if necessary
+!#
+!# Revision 2.27  2003/10/28 00:39:00  pwagner
+!# Fixed bug where character-vlaued attributes were only 1 char long
+!#
+!# Revision 2.26  2003/09/15 17:13:57  cvuu
+!# Optional writing Orbit info to global attribute for h5_writeglobal
+!#
+!# Revision 2.25  2003/09/12 16:39:05  cvuu
+!# Add attributes OrbitNumber and OrbitPeriod in the global attributes
+!#
+!# Revision 2.24  2003/08/15 20:41:50  pwagner
+!# Wont try to write another /PCF dataset if already there
+!#
+!# Revision 2.23  2003/08/11 17:40:42  cvuu
+!# Write anotating with multiple attributes PCF to handle big size of PCF file for hdfeos5
+!#
+!# Revision 2.22  2003/07/07 23:46:54  pwagner
+!# Changed in interfaces to make filetype a lit_name
+!#
+!# Revision 2.21  2003/06/11 19:33:33  pwagner
+!# No longer tries to write hdf5 pcf as both ds and attr
+!#
+!# Revision 2.20  2003/05/30 23:47:00  pwagner
+!# Now standardized to write PCF, Inputpointer for all levels
+!#
+!# Revision 2.19  2003/04/11 23:33:13  pwagner
+!# Gets he5_EHwrglatt from new MLSHDFEOS module
+!#
+!# Revision 2.18  2003/03/20 01:27:00  jdone
+!# variable length string FileType used in WritePCF2Hdr
+!#
+!# Revision 2.17  2003/03/19 23:57:56  jdone
+!# changed length of string fileType from wildcard to 2
+!#
+!# Revision 2.16  2003/03/11 00:20:14  pwagner
+!# can WritePCF2Hdr for swath, grid, or hdf files
+!#
+!# Revision 2.15  2003/03/07 00:37:24  pwagner
+!# Write GranuleDay -Month and -Year even if StartUTC in format yyy-ddd
+!#
+!# Revision 2.14  2003/02/27 21:52:48  pwagner
+!# Added FillTAI93Attribute; tweaks to PCF as attribute; unsatisfactory for hdfeos5
+!#
+!# Revision 2.13  2003/02/12 21:47:05  pwagner
+!# Optional skip_if_already_there arg to h5_writeglobalattr
+!#
+!# Revision 2.12  2003/02/10 22:07:23  pwagner
+!# Granule Month, Day, Year now ints; he5 global attributes leave file pure hdfeos5
+!#
+!# Revision 2.11  2003/02/08 00:32:11  pwagner
+!# Gets he5_EHwrglatt from he5_swapi
+!#
+!# Revision 2.10  2003/02/06 00:30:19  pwagner
+!# Added h5_ and he5_writeglobalattr
+!#
+!# Revision 2.9  2003/01/30 00:57:24  pwagner
+!# Added much new stuff for global attributes with hdf5
+!#
+!# Revision 2.8  2002/10/08 00:09:13  pwagner
+!# Added idents to survive zealous Lahey optimizer
+!#
+!# Revision 2.7  2002/10/01 22:03:54  pwagner
+!# Fixed RCS Ident Block
+!#
+!# Revision 2.6  2002/08/29 16:54:44  pwagner
+!# Added WriteInputpointer
+!#
+!# Revision 2.5  2001/04/06 16:54:57  pwagner
+!# Reverting to version 2.2
+!#
+!# Revision 2.2  2001/03/09 21:32:45  nakamura
+!# Added intent(in) for pcf number arg.
+!#
+!# Revision 2.1  2001/03/09 21:10:32  nakamura
+!# Routines for writing the PCF to an HDF file as an annotation.
+!#
+!#
+@
+
+
+2.79
+log
+@Added two more file attributes
+@
+text
+@d23 8
+d973 2
+a974 1
+   subroutine he5_writeglobalattr_FileID ( fileID, dayNum, DOI, skip_if_already_there )
+d979 2
+a980 1
+    use MLSHDFEOS, only: HE5_EHWRGlAtt, HSize, MLS_EhwrGlAtt, MLS_IsGlAtt
+d983 8
+d1001 6
+d1009 7
+d1018 4
+d1038 6
+d1076 1
+d1086 12
+d1101 11
+a1137 6
+      ! if ( DEBUG ) call outputNamedValue( 'GlobalAttributes%MiscNotes: ', GlobalAttributes%MiscNotes )
+      ! We don't write these here (the master would insert an erroneous value)
+      ! Instead we write them during DirectWrite operations
+      ! status = mls_EHwrglatt(fileID, &
+      ! & 'MiscNotes', MLS_CHARTYPE, 1, &
+      !  &  GlobalAttributes%MiscNotes)
+d1256 1
+d1265 1
+d1320 1
+a1320 1
+      if ( DEBUG ) call dumpGlobalAttributes
+d1979 1
+a1979 1
+       "$Id: PCFHdr.f90,v 2.78 2020/03/20 23:02:10 pwagner Exp $"
+d1990 3
+@
+
+
+2.78
+log
+@Attempt to relieve confusion between ProductionLocation and ProductionLoc; may optionally read DOI, etc.
+@
+text
+@d172 3
+a174 3
+    character(len=FileNameLen) :: FileAttributesCopiedFrom = ' '
+    integer :: OrbNum(max_orbits)
+    real(r8) :: OrbPeriod(max_orbits)
+d186 1
+d193 1
+d1918 1
+a1918 1
+       "$Id: PCFHdr.f90,v 2.77 2020/03/04 21:22:20 pwagner Exp $"
+d1929 3
+@
+
+
+2.77
+log
+@Make ProcessLevelFun public
+@
+text
+@d198 1
+a198 1
+    character(len=GA_VALUE_LENGTH) :: ProductionLocation            = ''
+d347 1
+a347 1
+     call addRow ('HostName                     ', trim( GlobalAttributes%HostName  ))
+d351 2
+a352 1
+     call addRow ('Misc Notes                   ', trim( GlobalAttributes%MiscNotes      ), &
+d354 1
+a354 1
+     call addRow ('DOI                          ', trim( GlobalAttributes%DOI          ))
+d701 1
+a701 1
+      call GetHDF5Attribute( MLSFile, 'productionLoc         ', GlobalAttributes%productionLoc         )
+d712 1
+a712 1
+      call GetHDF5Attribute( MLSFile, 'ProductionLocation    ', GlobalAttributes%ProductionLocation    )
+d1149 3
+a1151 2
+   subroutine he5_readglobalattr (fileID, gAttributes, &
+     & ProcessLevel, DayofYear, TAI93At0zOfGranule, returnStatus)
+d1165 3
+d1195 5
+a1199 3
+      ! status = he5_EHrdglatt(fileID, &
+      !  & 'HostName', &
+      !  &  gAttributes%HostName)
+d1207 6
+a1212 4
+      ! status = he5_EHrdglatt(fileID, &
+      ! & 'MiscNotes', &
+      ! &  gAttributes%MiscNotes)
+      ! if ( DEBUG ) call outputNamedValue('Misc Notes (read) ', trim(gAttributes%MiscNotes) )
+d1250 6
+a1255 4
+      ! status = he5_EHrdglatt(fileID, &
+      ! & 'identifier_product_doi', &
+      ! &  gAttributes%DOI)
+      ! if ( DEBUG ) call outputNamedValue('identifier_product_doi ', trim(gAttributes%DOI) )
+d1916 1
+a1916 1
+       "$Id: PCFHdr.f90,v 2.76 2019/10/30 20:08:40 pwagner Exp $"
+d1927 3
+@
+
+
+2.76
+log
+@Dumping Misc Notes spans lines properly
+@
+text
+@d49 2
+a50 2
+    & InputInputPointer, WriteInputPointer, &
+    & SomeToGlobalAttributes, &
+d82 1
+d1905 1
+a1905 1
+       "$Id: PCFHdr.f90,v 2.75 2019/07/09 23:05:59 pwagner Exp $"
+d1916 3
+@
+
+
+2.75
+log
+@Use Table cells to DumpGlobalAttributes
+@
+text
+@d351 1
+a351 1
+       & BlocLen=38, options='-w' )
+d1904 1
+a1904 1
+       "$Id: PCFHdr.f90,v 2.74 2019/01/29 21:47:37 pwagner Exp $"
+d1915 3
+@
+
+
+2.74
+log
+@Uses MLS_IsGlatt; light housekeeping
+@
+text
+@d309 1
+d312 44
+a355 28
+!----------------------------------------
+      type(GlobalAttributes_T), intent(in)       :: GlobalAttributes
+      integer                           :: DayofYear
+      DayOfYear = GranuleDayOfYear_fun()
+      call outputNamedValue('Orbit numbers', GlobalAttributes%orbNum)
+      call outputNamedValue('Orbit Periods', GlobalAttributes%orbPeriod)
+      call output ('ProductionLocation: '  // trim( GlobalAttributes%productionLoc ), advance='yes' )
+      call output ('HostName:       ' // trim( GlobalAttributes%HostName  ), advance='yes' )
+      call output ('InstrumentName: ' // trim( GlobalAttributes%InstrumentName  ), advance='yes' )
+      call output ('Process level: ' // trim(  GlobalAttributes%ProcessLevel    ), advance='yes' )
+      call output ('PGE version: ' // trim(    GlobalAttributes%PGEVersion      ), advance='yes' )
+      call output ('Misc Notes: ' // trim(     GlobalAttributes%MiscNotes      ), advance='yes' )
+      call output ('Start UTC: ' // trim(      GlobalAttributes%StartUTC        ), advance='yes' )
+      call output ('End UTC: ' // trim(        GlobalAttributes%EndUTC          ), advance='yes' )
+      call output ('DOI: '    // trim(         GlobalAttributes%DOI          ), advance='yes' )
+      call outputNamedValue ( 'Granule month:', GlobalAttributes%GranuleMonth )
+      call outputNamedValue ( 'Granule day:' , GlobalAttributes%GranuleDay  )
+      call outputNamedValue ( 'Granule year:' ,GlobalAttributes%GranuleYear )
+      call outputNamedValue ( 'Granule day of year:', DayOfYear )
+      call outputNamedValue ( 'Equator crossing time (tai93):', GlobalAttributes%TAI93At0zOfGranule )
+      call outputNamedValue ( 'FirstMAFCtr:', GlobalAttributes%FirstMAFCtr )
+      call outputNamedValue ( 'LastMAFCtr:', GlobalAttributes%LastMAFCtr )
+      call outputNamedValue ( 'NumCompletedChunks:', GlobalAttributes%NumCompletedChunks )
+      call outputNamedValue ( 'NumFailedChunks:', GlobalAttributes%NumFailedChunks )
+      call output ('FailedChunks: '      // trim(         GlobalAttributes%FailedChunks        ), advance='yes' )
+      call output ('FailedMachines: '    // trim(         GlobalAttributes%FailedMachines      ), advance='yes' )
+      call output ('FailedMsgs: '        // trim(         GlobalAttributes%FailedMsgs          ), advance='yes' )
+      call output ('FileAttributesCopiedFrom: ' // trim(  GlobalAttributes%FileAttributesCopiedFrom ), advance='yes' )
+d1904 1
+a1904 1
+       "$Id: PCFHdr.f90,v 2.73 2018/05/31 22:43:56 pwagner Exp $"
+d1915 3
+@
+
+
+2.73
+log
+@Changed name of attribute to identifier_product_doi to please DAAC
+@
+text
+@d40 1
+a40 1
+    & Usesdptoolkit, Max_Orbits
+d60 7
+a66 7
+! Inputptr_string_length   string length used by Inputpointer procedures
+! Ga_value_length          string length used by GlobalAttributes_T
+! MiscNotesLength          string length used by MiscNotes field
+! Utc_a_value_length       string length used to encode utc version 'a'
+! Utc_b_value_length       string length used to encode utc version 'b'
+! GlobalAttributes         which attributes to write to product files
+! SomeGlobalAttributes     which of them can be read from an opts file
+d69 2
+a70 2
+! CreatePCFAnnotation      read the PCF file into a character array
+! DumpGlobalAttributes     dumps the global attributes
+d77 4
+a80 4
+! H5_readglobalattr        reads the global attributes from an hdf5-formatted file
+! H5_writeglobalattr       writes the global attributes to an hdf5-formatted file
+! He5_writeglobalattr      writes the global attributes to an hdfeos5-formatted file
+! He5_readglobalattr       reads the global attributes from an hdfeos5-formatted file
+d83 1
+a83 1
+! Sw_writeglobalattr       writes the global attributes for an hdfeos5 swath
+d94 1
+a94 1
+! DumpGlobalAttributes     dumps the global attributes
+d101 4
+a104 4
+! H5_readglobalattr        reads the global attributes from an hdf5-formatted file
+! H5_writeglobalattr       writes the global attributes to an hdf5-formatted file
+! He5_writeglobalattr      writes the global attributes to an hdfeos5-formatted file
+! He5_readglobalattr       reads the global attributes from an hdfeos5-formatted file
+d106 1
+a106 1
+! Sw_writeglobalattr       writes the global attributes for an hdfeos5 swath
+d135 1
+a135 1
+! Create a brrand new module, named something like GlobalAttributes.f90
+a861 1
+      logical, parameter :: WRITE_ORBIT = .false.
+a1078 1
+      logical, parameter :: WRITE_ORBIT = .false.
+d1134 1
+a1134 2
+     use HDFeos5, only: He5_Ehinqglatts
+     use MLSHDFeos, only: Maxdlistlength, He5_Ehrdglatt
+d1150 2
+a1151 2
+      character(len=MAXDLISTLENGTH) :: attrList
+      integer :: listSize
+d1154 6
+a1159 7
+      status = he5_EHinqglatts(fileID, attrList, listSize)
+      status = 0
+      if ( status /= 0 ) then
+        if ( present(returnStatus) ) then
+          returnStatus = 1
+        else
+          call MLSMessage(MLSMSG_Warning, ModuleName, &
+a1160 1
+        endif
+d1227 1
+a1227 1
+      if ( present(returnStatus) ) returnStatus = status
+d1229 1
+d1524 2
+a1525 2
+      use HDF5, only: H5F_ACC_RDWR_F, &
+        & H5FOPEN_F, H5FCLOSE_F
+a1814 1
+     integer, parameter :: maxheadersize = 40000
+d1887 1
+a1887 1
+       "$Id: PCFHdr.f90,v 2.72 2018/05/31 18:06:49 pwagner Exp $"
+d1898 3
+@
+
+
+2.72
+log
+@We can now copy over globalattributes
+@
+text
+@d692 1
+a692 1
+      call GetHDF5Attribute( MLSFile, 'identifier_product_DOI', GlobalAttributes%DOI                   )
+d797 1
+a797 1
+        & 'identifier_product_DOI', GlobalAttributes%DOI, .false.)
+d977 1
+a977 1
+       & 'identifier_product_DOI', MLS_CHARTYPE, 1, &
+d1228 4
+d1892 1
+a1892 1
+       "$Id: PCFHdr.f90,v 2.71 2018/05/22 23:04:41 pwagner Exp $"
+d1903 3
+@
+
+
+2.71
+log
+@Correct initial value of FailedChunks; may dump user-supplied GlobalAttribute_T
+@
+text
+@d42 1
+a42 1
+  public :: GlobalAttributes_T, &
+d50 1
+d66 1
+d82 1
+d154 16
+d206 1
+d1323 22
+d1435 1
+a1435 1
+   FUNCTION WriteInputpointer (groups, attrName, inpt, fileType)
+d1469 1
+a1469 1
+   END FUNCTION WriteInputpointer
+d1888 1
+a1888 1
+       "$Id: PCFHdr.f90,v 2.70 2018/04/19 00:47:54 vsnyder Exp $"
+d1899 3
+@
+
+
+2.70
+log
+@Remove USE statements for unused names
+@
+text
+@d59 2
+a60 2
+! inputptr_string_length   string length used by Inputpointer procedures
+! ga_value_length          string length used by GlobalAttributes_T
+d62 2
+a63 2
+! utc_a_value_length       string length used to encode utc version 'a'
+! utc_b_value_length       string length used to encode utc version 'b'
+d68 1
+a68 1
+! dumpGlobalAttributes     dumps the global attributes
+d75 4
+a78 4
+! h5_readglobalattr        reads the global attributes from an hdf5-formatted file
+! h5_writeglobalattr       writes the global attributes to an hdf5-formatted file
+! he5_writeglobalattr      writes the global attributes to an hdfeos5-formatted file
+! he5_readglobalattr       reads the global attributes from an hdfeos5-formatted file
+d80 1
+a80 1
+! sw_writeglobalattr       writes the global attributes for an hdfeos5 swath
+d91 1
+a91 1
+! dumpGlobalAttributes     dumps the global attributes
+d98 4
+a101 4
+! h5_readglobalattr        reads the global attributes from an hdf5-formatted file
+! h5_writeglobalattr       writes the global attributes to an hdf5-formatted file
+! he5_writeglobalattr      writes the global attributes to an hdfeos5-formatted file
+! he5_readglobalattr       reads the global attributes from an hdfeos5-formatted file
+d103 1
+a103 1
+! sw_writeglobalattr       writes the global attributes for an hdfeos5 swath
+d181 1
+a181 1
+    character(len=GA_VALUE_LENGTH) :: FailedChunks                  = 'MLS Aura'
+d193 4
+d224 1
+a224 1
+   SUBROUTINE CreatePCFAnnotation ( mlspcfN_pcf_start, anText )
+d282 1
+a282 1
+   END SUBROUTINE CreatePCFAnnotation
+d286 5
+a290 1
+   SUBROUTINE dumpGlobalAttributes
+d292 1
+d319 1
+a319 1
+   end SUBROUTINE dumpGlobalAttributes
+d322 1
+a322 1
+   SUBROUTINE FillTAI93Attribute ( LeapSecFileName )
+d364 1
+a364 1
+   END SUBROUTINE FillTAI93Attribute
+d506 1
+a506 1
+   SUBROUTINE h5_readMLSFileAttr ( MLSFile )
+d564 1
+a564 1
+   END SUBROUTINE h5_readMLSFileAttr
+d568 1
+a568 1
+   SUBROUTINE he5_readMLSFileAttr (MLSFile)
+d621 1
+a621 1
+   END SUBROUTINE he5_readMLSFileAttr
+d625 1
+a625 1
+   SUBROUTINE h5_ReadGlobalAttr ( MLSFile )
+d683 1
+a683 1
+   END SUBROUTINE h5_ReadGlobalAttr
+d687 1
+a687 1
+   SUBROUTINE h5_writeglobalattr_fileID ( fileID, skip_if_already_there, DOI )
+d784 1
+a784 1
+   END SUBROUTINE h5_writeglobalattr_fileID
+d788 1
+a788 1
+   SUBROUTINE h5_writeglobalattr_MLSFile ( MLSFile, skip_if_already_there, DOI )
+d814 1
+a814 1
+   end SUBROUTINE h5_writeglobalattr_MLSFile
+d817 1
+a817 1
+   SUBROUTINE h5_writeMLSFileAttr ( MLSFile, skip_if_already_there )
+d892 1
+a892 1
+   END SUBROUTINE h5_writeMLSFileAttr
+d896 1
+a896 1
+   SUBROUTINE he5_writeglobalattr_MLSFile ( MLSFile, dayNum, DOI, skip_if_already_there )
+d922 1
+a922 1
+   end SUBROUTINE he5_writeglobalattr_MLSFile
+d925 1
+a925 1
+   SUBROUTINE he5_writeglobalattr_FileID ( fileID, dayNum, DOI, skip_if_already_there )
+d1040 1
+a1040 1
+   END SUBROUTINE he5_writeglobalattr_FileID
+d1044 1
+a1044 1
+   SUBROUTINE he5_writeMLSFileAttr ( MLSFile )
+d1108 1
+a1108 1
+   END SUBROUTINE he5_writeMLSFileAttr
+d1112 1
+a1112 1
+   SUBROUTINE he5_readglobalattr (fileID, gAttributes, &
+d1211 1
+a1211 1
+   END SUBROUTINE he5_readglobalattr
+d1215 1
+a1215 1
+   SUBROUTINE InputInputpointer (urefs, fileIDArray, fileNameArray, &
+d1299 1
+a1299 1
+   END SUBROUTINE InputInputpointer
+d1303 1
+a1303 1
+   SUBROUTINE sw_writeglobalattr (swathID)
+d1389 1
+a1389 1
+   END SUBROUTINE sw_writeglobalattr
+d1480 1
+a1480 1
+   SUBROUTINE WritePCF2Hdr (file, anText, hdfVersion, fileType, name)
+d1567 1
+a1567 1
+   END SUBROUTINE WritePCF2Hdr
+d1571 1
+a1571 1
+   SUBROUTINE WritePCF2Hdr_hdf4 (file, anText)
+d1639 1
+a1639 1
+   END SUBROUTINE WritePCF2Hdr_hdf4
+d1643 1
+a1643 1
+   SUBROUTINE WritePCF2Hdr_hdf5 (fileID, anText, name)
+d1709 1
+a1709 1
+   END SUBROUTINE WritePCF2Hdr_hdf5
+d1713 1
+a1713 1
+   SUBROUTINE WritePCF2Hdr_hdfeos5 (fileID, anText)
+d1764 1
+a1764 1
+   END SUBROUTINE WritePCF2Hdr_hdfeos5
+d1846 1
+a1846 1
+       "$Id: PCFHdr.f90,v 2.69 2017/07/25 22:29:35 pwagner Exp $"
+d1857 3
+@
+
+
+2.69
+log
+@Made 4 functions public that return granules day, month, dayofyear, year
+@
+text
+@d223 1
+a223 1
+      use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+d1837 1
+a1837 1
+       "$Id: PCFHdr.f90,v 2.68 2016/07/26 17:44:31 pwagner Exp $"
+d1848 3
+@
+
+
+2.68
+log
+@Deebug may be turned on by switch; print clearer message
+@
+text
+@d23 29
+a51 27
+   use Dates_module, only: utc_to_date, utc_to_yyyymmdd, utcform
+   use HDF, only: dfacc_rdwr, dfacc_write, an_file_desc
+   use HighOutput, only: outputNamedValue
+   use Intrinsic, only: l_hdfeos, l_hdf, l_swath
+   use MLSCommon, only: filenamelen, mlsfile_t, filenamelen, namelen
+   use MLSFiles, only: getPCFromRef, hdfversion_4, hdfversion_5, &
+     & IniTializeMLSFile, mls_closefile, mls_openfile, mls_openfile, mls_closefile
+   use MLSKinds, only: r8
+   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Fileopen, &
+     & MLSMSG_Warning
+   use MLSStrings, only: lowercase
+   use Output_m, only: output
+   use Sdptoolkit, only: pgsd_pc_uref_length_max, pgs_s_success, &
+     & Pgsd_met_group_name_l, pgs_io_gen_closef, pgs_io_gen_openf, &
+     & Pgsd_io_gen_rdirunf, pgs_pc_getreference, &
+     & Pgs_td_asciitime_atob, pgs_td_asciitime_btoa, &
+     & Usesdptoolkit, max_orbits
+   implicit none
+   public :: globalAttributes_t, &
+     & createPCFAnnotation, dumpGlobalAttributes,  &
+     & fillTAI93Attribute, &
+     & h5_readGlobalAttr, h5_readMLSFileAttr, he5_readMLSFileAttr, &
+     & h5_writeGlobalAttr, he5_writeglobalAttr, he5_readGlobalAttr, &
+     & h5_writeMLSFileAttr, he5_writeMLSFileAttr, &
+     & inputInputPointer, writeInputPointer, &
+     & writeLeapSecHDFEOSAttr, writeLeapSecHDF5DS, writePCF2Hdr, &
+     & writeUTCPoleHDFEOSAttr, writeUTCPoleHDF5DS
+d71 4
+d87 2
+a88 1
+! === (end of toc) ===                                                   
+d90 20
+a109 2
+! log inRange( int arg, Range_T range )
+! log is_what_ieee( int what, num arg )
+d127 1
+a127 1
+! (b) routines for reading and writing file-level attributes
+d129 1
+d166 5
+a170 2
+    integer                        :: GranuleMonth                  = 0
+    integer                        :: GranuleDay                    = 0
+d172 1
+d193 16
+d316 1
+a316 1
+    use SDPTOOLKIT, only: MLS_UTCTOTAI, PGS_TD_UTCTOTAI
+d358 138
+d562 1
+a562 1
+    use MLSHDFEOS, only: HE5_EHRDGLATT
+d813 1
+a813 1
+      use highOutput, only: BeVerbose
+d919 2
+a920 2
+    use HDFEOS5, only: HE5T_Native_int, &
+      & HE5T_Native_Double, MLS_Chartype
+d1038 2
+a1039 2
+    use HDFEOS5, only: HE5T_NATIVE_INT, MLS_CHARTYPE
+    use MLSHDFEOS, only: HE5_EHWRGLATT, HSIZE, MLS_EHWRGLATT
+d1107 2
+a1108 2
+    use HDFEOS5, only: HE5_EHINQGLATTS
+    use MLSHDFEOS, only: MAXDLISTLENGTH, HE5_EHRDGLATT
+d1297 3
+a1299 3
+      use HDFEOS5, only: HE5T_NATIVE_INT, HE5T_NATIVE_DOUBLE, MLS_charType
+      use HE5_SWAPI, only: HE5_SWWRATTR
+      use MLSHDFEOS, only: HSIZE, MLS_SWWRATTR
+d1423 1
+a1423 1
+    use MLSHDFEOS, only: MLS_EHWRGLATT
+d1447 1
+a1447 1
+    use MLSHDF5, only: SAVEASHDF5DS
+d1637 3
+a1639 3
+      use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+      use HDF5, only: H5GCLOSE_F, H5GOPEN_F
+      use MLSHDF5, only: ISHDF5DSPRESENT, MAKEHDF5ATTRIBUTE, SAVEASHDF5DS
+d1707 2
+a1708 2
+      use HDFEOS5, only: MLS_CHARTYPE
+      use MLSHDFEOS, only: HSIZE, HE5_EHWRGLATT
+d1760 1
+a1760 1
+    use MLSHDFEOS, only: MLS_EHWRGLATT
+d1785 1
+a1785 1
+    use MLSHDF5, only: SAVEASHDF5DS
+a1808 97
+  function GranuleDayOfYear_fun () result (dayOfYear)
+    ! Arguments
+    integer :: month
+    ! Local variables
+    integer :: year
+    integer :: dayOfYear
+    integer :: status
+    character (len=UTC_A_VALUE_LENGTH) :: asciiutc_a
+    character (len=UTC_B_VALUE_LENGTH) :: asciiutc_b
+    character(len=1) :: whatUTCForm
+    ! Executable
+    dayofYear = -999
+    if ( GlobalAttributes%GranuleMonth <= 0 .or. .not. useSDPToolkit ) then
+      dayOfYear = GlobalAttributes%GranuleDay
+    else
+      whatUTCForm = utcForm(GlobalAttributes%StartUTC)
+      if ( DEBUG ) then
+        call outputNamedValue( 'utc form', whatUTCForm )
+        call outputNamedValue( 'StartUTC', trim(GlobalAttributes%StartUTC) )
+      endif
+      select case (whatUTCForm)
+      case ('a')
+        asciiutc_a = GlobalAttributes%StartUTC
+        status = pgs_td_asciitime_atob(asciiutc_a, asciiutc_b)
+        if ( status /= 0 ) then
+          call outputNamedValue( 'StartUTC', GlobalAttributes%StartUTC )
+          CALL MLSMessage(MLSMSG_Error, ModuleName, &
+          & 'Unable to convert utc A to B formats')
+        endif
+      case ('b')
+        asciiutc_b = GlobalAttributes%StartUTC
+      case default
+        asciiutc_b = GlobalAttributes%StartUTC
+      end select
+      call utc_to_yyyymmdd(asciiutc_b, status, &
+        & year, month, dayOfYear) 
+      if ( DEBUG ) call outputNamedValue( 'asciiutc_b', trim(asciiutc_b) )
+      if ( status /= 0 ) &
+        & CALL MLSMessage(MLSMSG_Warning, ModuleName, &
+        & 'Unable to extract year, day of year from utc B format')
+    endif
+  end function GranuleDayOfYear_fun
+
+  function GranuleDay_fun () result (day)
+    ! Arguments
+    integer :: month
+    ! Local variables
+    integer :: year
+    integer :: day
+    integer :: status
+    character (len=UTC_A_VALUE_LENGTH) :: asciiutc_a
+    character (len=UTC_B_VALUE_LENGTH) :: asciiutc_b
+    ! Executable
+    day = 0
+    if ( GlobalAttributes%GranuleMonth > 0 .or. .not. useSDPToolkit ) then
+      day = GlobalAttributes%GranuleDay
+    else
+      asciiutc_b = GlobalAttributes%StartUTC
+      status = pgs_td_asciitime_btoa(asciiutc_b, asciiutc_a)
+      if ( status /= 0 ) &
+        & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+        & 'Unable to convert utc B to A formats')
+      call utc_to_yyyymmdd(asciiutc_a, status, &
+        & year, month, day) 
+      if ( status /= 0 ) &
+        & CALL MLSMessage(MLSMSG_Warning, ModuleName, &
+        & 'Unable to extract year, month, day from utc A format')
+    endif
+  end function GranuleDay_fun
+
+  function GranuleMonth_fun () result (month)
+    ! Arguments
+    integer :: month
+    ! Local variables
+    integer :: year
+    integer :: day
+    integer :: status
+    character (len=UTC_A_VALUE_LENGTH) :: asciiutc_a
+    character (len=UTC_B_VALUE_LENGTH) :: asciiutc_b
+    ! Executable
+    month = 0
+    if ( GlobalAttributes%GranuleMonth > 0 .or. .not. useSDPToolkit ) then
+      month = GlobalAttributes%GranuleMonth
+    else
+      asciiutc_b = GlobalAttributes%StartUTC
+      status = pgs_td_asciitime_btoa(asciiutc_b, asciiutc_a)
+      if ( status /= 0 ) &
+        & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+        & 'Unable to convert utc B to A formats')
+      call utc_to_yyyymmdd(asciiutc_a, status, &
+        & year, month, day) 
+      if ( status /= 0 ) &
+        & CALL MLSMessage(MLSMSG_Warning, ModuleName, &
+        & 'Unable to extract year, month, day from utc A format')
+    endif
+  end function GranuleMonth_fun
+
+d1837 1
+a1837 1
+       "$Id: PCFHdr.f90,v 2.67 2015/08/12 20:36:38 pwagner Exp $"
+d1848 3
+@
+
+
+2.67
+log
+@Added some missing global attrs; added h5_readGlobalAttr
+@
+text
+@d627 3
+a629 2
+      use HDF5, only:  H5GCLOSE_F, H5GOPEN_F
+      use MLSHDF5, only: ISHDF5ATTRIBUTEPRESENT, MAKEHDF5ATTRIBUTE
+d644 2
+a645 1
+      logical, parameter :: DeeBug = .false.
+d652 1
+d657 1
+a657 1
+        call output( 'Writing global attributes', advance='yes' )
+d735 3
+a737 3
+    use HDFEOS5, only: HE5T_NATIVE_INT, &
+      & HE5T_NATIVE_DOUBLE, MLS_CHARTYPE
+    use MLSHDFEOS, only: HE5_EHWRGLATT, HSIZE, MLS_EHWRGLATT, MLS_Isglatt
+d771 1
+a771 1
+        if ( mls_isglatt ( fileID, 'OrbitNumber' ) ) &
+d1750 1
+a1750 1
+       "$Id: PCFHdr.f90,v 2.66 2015/02/27 23:57:21 pwagner Exp $"
+d1761 3
+@
+
+
+2.66
+log
+@Take pains to ensure HostName is not blank
+@
+text
+@d21 19
+a39 17
+   use DATES_MODULE, only: UTC_TO_DATE, UTC_TO_YYYYMMDD, UTCFORM
+   use HDF, only: DFACC_RDWR, DFACC_WRITE, AN_FILE_DESC
+   use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
+   use INTRINSIC, only: L_HDFEOS, L_HDF, L_SWATH
+   use MLSCOMMON, only: FILENAMELEN, MLSFILE_T, NAMELEN
+   use MLSFILES, only: GETPCFROMREF, HDFVERSION_4, HDFVERSION_5, &
+     & INITIALIZEMLSFILE, MLS_CLOSEFILE, MLS_OPENFILE, MLS_OpenFile, MLS_CloseFile
+   use MLSKINDS, only: R8
+   use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_FILEOPEN, &
+     & MLSMSG_WARNING
+   use MLSSTRINGS, only: LOWERCASE
+   use OUTPUT_M, only: OUTPUT
+   use SDPTOOLKIT, only: PGSD_PC_UREF_LENGTH_MAX, PGS_S_SUCCESS, &
+     & PGSD_MET_GROUP_NAME_L, PGS_IO_GEN_CLOSEF, PGS_IO_GEN_OPENF, &
+     & PGSD_IO_GEN_RDIRUNF, PGS_PC_GETREFERENCE, &
+     & PGS_TD_ASCIITIME_ATOB, PGS_TD_ASCIITIME_BTOA, &
+     & useSDPTOOLKIT, MAX_ORBITS
+d41 9
+a49 9
+   public :: GLOBALATTRIBUTES_T, &
+     & CREATEPCFANNOTATION, DUMPGLOBALATTRIBUTES,  &
+     & FILLTAI93ATTRIBUTE, &
+     & H5_READMLSFILEATTR, HE5_READMLSFILEATTR, &
+     & H5_WRITEGLOBALATTR, HE5_WRITEGLOBALATTR, HE5_READGLOBALATTR, &
+     & H5_WRITEMLSFILEATTR, HE5_WRITEMLSFILEATTR, &
+     & INPUTINPUTPOINTER, WRITEINPUTPOINTER, &
+     & WRITELEAPSECHDFEOSATTR, WRITELEAPSECHDF5DS, WRITEPCF2HDR, &
+     & WRITEUTCPOLEHDFEOSATTR, WRITEUTCPOLEHDF5DS
+d69 1
+d95 8
+a102 5
+! Remarks:  This module contains subroutines for writing the PCF as an 
+! annotation to HDF files. (obsolete)
+! It also contains the two routines that prepare and write the input pointer
+! to metadata
+! and the routines for writing attributes to the various files requiring them
+d104 4
+d120 1
+a120 1
+  ! logical, parameter, private          :: SKIPDOIPRODLOC      = .false.
+d124 1
+a124 1
+   ! May get some of these from MLSLibOptions? 
+d126 1
+d140 14
+a153 6
+    integer :: GranuleMonth                  = 0
+    integer :: GranuleDay                    = 0
+    integer :: GranuleYear                   = 0
+    real(r8) :: TAI93At0zOfGranule           = 0.d0
+    integer :: FirstMAFCtr                   = BIGGESTMAFCTR
+    integer :: LastMAFCtr                    = 0
+d256 8
+d267 1
+a267 1
+   SUBROUTINE FillTAI93Attribute (LeapSecFileName)
+d313 1
+a313 1
+   SUBROUTINE h5_readMLSFileAttr (MLSFile)
+d316 2
+a317 2
+      use HDF5, only: H5GCLOSE_F, H5GOPEN_F
+      use MLSHDF5, only: GETHDF5ATTRIBUTE, ISHDF5ATTRIBUTEPRESENT
+d432 62
+d497 2
+a498 2
+      use HDF5, only:  H5GCLOSE_F, H5GOPEN_F
+      use MLSHDF5, only: ISHDF5ATTRIBUTEPRESENT, MAKEHDF5ATTRIBUTE
+d522 1
+a522 1
+      myDOI = .false.
+d555 3
+a557 1
+      if ( GlobalAttributes%GranuleDay < 1 ) return
+d574 4
+d1747 1
+a1747 1
+       "$Id: PCFHdr.f90,v 2.65 2015/01/21 19:28:17 pwagner Exp $"
+d1758 3
+@
+
+
+2.65
+log
+@Prevent unassociated anText error
+@
+text
+@d223 9
+a231 8
+      call output ('ProductionLocation: '  // trim( GlobalAttributes%productionLoc          ))
+      call output ('InstrumentName: ' // trim( GlobalAttributes%InstrumentName  ))
+      call output ('Process level: ' // trim(  GlobalAttributes%ProcessLevel    ))
+      call output ('PGE version: ' // trim(    GlobalAttributes%PGEVersion      ))
+      call output ('Misc Notes: ' // trim(     GlobalAttributes%MiscNotes      ))
+      call output ('Start UTC: ' // trim(      GlobalAttributes%StartUTC        ))
+      call output ('End UTC: ' // trim(        GlobalAttributes%EndUTC          ))
+      call output ('DOI: '    // trim(         GlobalAttributes%DOI          ))
+d420 1
+d429 4
+d449 8
+a456 3
+       & 'InstrumentName', GlobalAttributes%InstrumentName, .true.)
+      call MakeHDF5Attribute(grp_id, &
+       & 'HostName', GlobalAttributes%HostName, .true.)
+d548 1
+d558 4
+d653 1
+d660 1
+a660 1
+      if ( DEBUG ) then
+d694 9
+a702 3
+      status = mls_EHwrglatt(fileID, &
+       & 'HostName', MLS_CHARTYPE, 1, &
+       &  GlobalAttributes%HostName)
+d866 3
+a868 3
+      status = he5_EHrdglatt(fileID, &
+       & 'HostName', &
+       &  gAttributes%HostName)
+d1026 1
+d1030 4
+d1043 9
+a1051 3
+      status = he5_SWwrattr(swathID, &
+       & 'HostName', MLS_CHARTYPE, hsize(1), &
+       &  GlobalAttributes%HostName)
+d1652 1
+a1652 1
+       "$Id: PCFHdr.f90,v 2.64 2014/10/02 17:20:46 pwagner Exp $"
+d1663 3
+@
+
+
+2.64
+log
+@Avoid letting master write erroneous MiscNotes
+@
+text
+@d158 1
+a158 1
+      use Allocate_Deallocate, only: Allocate_Test
+d186 1
+a186 1
+
+a211 1
+
+d1618 1
+a1618 1
+       "$Id: PCFHdr.f90,v 2.63 2014/09/05 00:15:47 vsnyder Exp $"
+d1629 3
+@
+
+
+2.63
+log
+@More complete and accurate allocate/deallocate size tracking.  Remove
+USE for unreferenced names.
+@
+text
+@d473 4
+a476 2
+      call MakeHDF5Attribute(grp_id, &
+       & 'MiscNotes', GlobalAttributes%MiscNotes, .true.)
+d720 6
+a725 4
+      if ( DEBUG ) call outputNamedValue( 'GlobalAttributes%MiscNotes: ', GlobalAttributes%MiscNotes )
+      status = mls_EHwrglatt(fileID, &
+       & 'MiscNotes', MLS_CHARTYPE, 1, &
+       &  GlobalAttributes%MiscNotes)
+d854 4
+a857 4
+      status = he5_EHrdglatt(fileID, &
+       & 'MiscNotes', &
+       &  gAttributes%MiscNotes)
+      if ( DEBUG ) call outputNamedValue('Misc Notes (read) ', trim(gAttributes%MiscNotes) )
+d1059 5
+a1063 3
+      status = he5_SWwrattr(swathID, &
+       & 'MiscNotes', MLS_CHARTYPE, hsize(1), &
+       &  GlobalAttributes%MiscNotes)
+d1619 1
+a1619 1
+       "$Id: PCFHdr.f90,v 2.62 2014/04/14 16:59:02 pwagner Exp $"
+d1630 4
+@
+
+
+2.62
+log
+@he5_writeglobalattr may skip writing if already there
+@
+text
+@d29 2
+a30 2
+   use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_ERROR, &
+     & MLSMSG_WARNING, MLSMSG_DEALLOCATE, MLSMSG_FILEOPEN
+d154 5
+a158 3
+!------------------------------------------------------------
+   SUBROUTINE CreatePCFAnnotation (mlspcfN_pcf_start, anText)
+!------------------------------------------------------------
+d180 1
+a180 1
+      integer :: err, ios, pcfHandle, returnStatus, size, version
+d187 1
+a187 5
+      ALLOCATE(anText(size), STAT=err)
+      IF ( err /= 0 ) THEN
+         msr = MLSMSG_Allocate // ' anText PCF array.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+d198 1
+a198 1
+      ENDIF
+a490 2
+      use HDF5, only:  H5GCLOSE_F, H5GOPEN_F
+      use MLSHDF5, only: ISHDF5ATTRIBUTEPRESENT, MAKEHDF5ATTRIBUTE
+a590 3
+    use HDFEOS5, only: HE5T_NATIVE_INT, &
+      & HE5T_NATIVE_DOUBLE, MLS_CHARTYPE
+    use MLSHDFEOS, only: HE5_EHWRGLATT, HSIZE, MLS_EHWRGLATT
+d622 1
+a622 1
+    use MLSHDFEOS, only: HE5_EHWRGLATT, HSIZE, MLS_EHWRGLATT, mls_isglatt
+d730 1
+a730 2
+    use HDFEOS5, only: HE5T_NATIVE_INT, &
+      & MLS_CHARTYPE
+d1316 1
+d1367 1
+a1367 4
+        allocate(an40(how_big), stat=status)
+        if ( status /= 0 ) &
+          & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+          & MLSMSG_Allocate // 'an40 for annotating hdfeos5 PCF' )
+d1372 2
+a1373 5
+        deallocate(an40, stat=status)
+        if ( status /= PGS_S_SUCCESS) &
+          & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+          & MLSMSG_DeAllocate // 'an40 annotating hdf5 with PCF' )
+      endif
+d1613 1
+a1613 1
+       "$Id: PCFHdr.f90,v 2.61 2014/04/02 23:04:06 pwagner Exp $"
+d1624 3
+@
+
+
+2.61
+log
+@Removed redundant open_ and close_MLSFile
+@
+text
+@d521 1
+a521 1
+   SUBROUTINE h5_writeMLSFileAttr (MLSFile, skip_if_already_there)
+d592 1
+a592 1
+   SUBROUTINE he5_writeglobalattr_MLSFile ( MLSFile, dayNum, DOI )
+d606 1
+d618 2
+a619 1
+      call he5_writeglobalattr_FileID ( MLSFile%fileID%f_id, dayNum, DOI )
+d624 1
+a624 1
+   SUBROUTINE he5_writeglobalattr_FileID ( fileID, dayNum, DOI )
+d629 1
+a629 1
+    use MLSHDFEOS, only: HE5_EHWRGLATT, HSIZE, MLS_EHWRGLATT
+d638 1
+d643 1
+d647 2
+d653 12
+a728 8
+      if ( len_trim(GlobalAttributes%DOI) > 0 .and. myDOI ) &
+       & status = mls_EHwrglatt(fileID, &
+       & 'identifier_product_DOI', MLS_CHARTYPE, 1, &
+       &  GlobalAttributes%DOI)
+      if ( len_trim(GlobalAttributes%productionLoc) > 0 .and. myDOI ) &
+       & status = mls_EHwrglatt(fileID, &
+       & 'ProductionLocation', MLS_CHARTYPE, 1, &
+       &  GlobalAttributes%productionLoc)
+d1626 1
+a1626 1
+       "$Id: PCFHdr.f90,v 2.60 2014/03/27 23:59:16 pwagner Exp $"
+d1637 3
+@
+
+
+2.60
+log
+@he5_writeglobalattr now generic; DOI optional arg controls wwhether to write DOI, prodLoc
+@
+text
+@d27 1
+a27 1
+     & INITIALIZEMLSFILE, MLS_CLOSEFILE, MLS_OPENFILE, OPEN_MLSFILE, CLOSE_MLSFILE
+d309 1
+a309 1
+        call open_MLSFile( MLSFile )
+d367 1
+a367 1
+        call open_MLSFile( MLSFile )
+d547 1
+a547 1
+        call open_MLSFile( MLSFile )
+d745 1
+a745 1
+        call open_MLSFile( MLSFile )
+d1191 1
+a1191 1
+          call open_MLSFile( MLSFile )
+d1199 1
+a1199 1
+          call close_MLSFile( MLSFile )
+d1207 1
+a1207 1
+          call open_MLSFile( MLSFile )
+d1215 1
+a1215 1
+          call close_MLSFile ( MLSFile )
+d1616 1
+a1616 1
+       "$Id: PCFHdr.f90,v 2.59 2014/03/26 17:43:38 pwagner Exp $"
+d1627 3
+@
+
+
+2.59
+log
+@Added ProductionLocation, identifier_product_DOI to attributes
+@
+text
+@d110 1
+d142 1
+a142 1
+  logical, parameter :: DEBUG = .false.
+d148 4
+d407 1
+a407 1
+   SUBROUTINE h5_writeglobalattr_fileID (fileID, skip_if_already_there)
+d420 1
+d425 1
+d430 2
+d477 6
+a482 4
+      call MakeHDF5Attribute(grp_id, &
+      & 'identifier_product_DOI', GlobalAttributes%DOI, .true.)
+      call MakeHDF5Attribute(grp_id, &
+      & 'ProductionLocation', GlobalAttributes%productionLoc, .true.)
+d490 1
+a490 1
+   SUBROUTINE h5_writeglobalattr_MLSFile ( MLSFile, skip_if_already_there )
+d503 1
+a506 2
+      logical :: grp_id
+      integer :: status
+d516 1
+a516 1
+        & skip_if_already_there )
+d592 31
+a622 1
+   SUBROUTINE he5_writeglobalattr ( fileID, dayNum )
+d635 1
+d639 1
+d641 2
+d711 2
+a712 1
+      status = mls_EHwrglatt(fileID, &
+d715 2
+a716 1
+      status = mls_EHwrglatt(fileID, &
+d720 1
+a720 1
+   END SUBROUTINE he5_writeglobalattr
+d724 1
+a724 1
+   SUBROUTINE he5_writeMLSFileAttr (MLSFile)
+d1616 1
+a1616 1
+       "$Id: PCFHdr.f90,v 2.58 2014/01/09 00:24:29 pwagner Exp $"
+d1627 3
+@
+
+
+2.58
+log
+@Some procedures formerly in output_m now got from highOutput
+@
+text
+@d27 1
+a27 1
+     & INITIALIZEMLSFILE, OPEN_MLSFILE, CLOSE_MLSFILE
+d126 2
+d143 5
+a147 1
+CONTAINS
+d221 1
+a223 1
+      ! call output ('Input version: ' // trim(  GlobalAttributes%inputVersion    ))
+d228 1
+d402 1
+a402 1
+   SUBROUTINE h5_writeglobalattr (fileID, skip_if_already_there)
+d407 3
+a409 3
+! Brief description of subroutine
+! This subroutine writes the global attributes for an hdf5-formatted file
+! It does so at the root '/' group level
+d411 1
+a411 1
+! Arguments
+d415 1
+a415 1
+! Local variables
+d468 4
+d475 5
+a479 1
+   END SUBROUTINE h5_writeglobalattr
+d482 28
+d516 7
+a522 4
+! Brief description of subroutine
+! This subroutine writes the components of an MLSFile_t 
+! as attributes for an hdf5-formatted file
+! It does so at the root '/' group level
+d524 1
+a524 1
+! Arguments
+d528 1
+a528 1
+! Local variables
+d667 6
+d1570 1
+a1570 1
+       "$Id: PCFHdr.f90,v 2.57 2012/09/18 18:49:27 pwagner Exp $"
+d1581 3
+@
+
+
+2.57
+log
+@Reduced severity when unable to convert utc; capitalize names in use statements
+@
+text
+@d23 1
+d32 1
+a32 1
+   use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
+d1518 1
+a1518 1
+       "$Id: PCFHdr.f90,v 2.56 2011/07/12 22:35:44 honghanh Exp $"
+d1529 3
+@
+
+
+2.56
+log
+@Change l_grid to l_hdfeos
+@
+text
+@d8 1
+a8 1
+! regulations. User has the responsibility to obtain export licenses, or other
+d13 1
+a13 1
+MODULE PCFHdr
+d21 2
+a22 2
+   use dates_module, only: utc_to_date, utc_to_yyyymmdd, utcForm
+   use Hdf, only: DFACC_RDWR, DFACC_WRITE, AN_FILE_DESC
+d24 9
+a32 9
+   use MLSCommon, only: FileNameLen, MLSFile_T, NameLen
+   use MLSFiles, only: GetPCFromRef, HDFVERSION_4, HDFVERSION_5, &
+     & InitializeMLSFile, open_MLSFile, close_MLSFile
+   use MLSKinds, only: R8
+   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error, &
+     & MLSMSG_Warning, MLSMSG_DeAllocate, MLSMSG_FILEOPEN
+   use MLSStrings, only: lowerCase
+   use output_m, only: output, outputNamedValue
+   use SDPToolkit, only: PGSD_PC_UREF_LENGTH_MAX, PGS_S_SUCCESS, &
+d34 1
+a34 1
+     & PGSD_IO_GEN_RDIRUNF, Pgs_pc_getReference, &
+d36 1
+a36 1
+     & UseSDPToolkit, max_orbits
+d38 9
+a46 9
+   public :: GlobalAttributes_T, &
+     & CreatePCFAnnotation, dumpGlobalAttributes,  &
+     & FillTAI93Attribute, &
+     & h5_readMLSFileAttr, he5_readMLSFileAttr, &
+     & h5_writeglobalattr, he5_writeglobalattr, he5_readglobalattr, &
+     & h5_writeMLSFileAttr, he5_writeMLSFileAttr, &
+     & InputInputPointer, WriteInputPointer, &
+     & WriteLeapSecHDFEOSAttr, WriteLeapSecHDF5DS, WritePCF2Hdr, &
+     & WriteutcPoleHDFEOSAttr, WriteutcPoleHDF5DS
+d54 1
+a54 1
+! inputptr_string_length   string length used by InputPointer procedures
+d69 1
+a69 1
+! InputInputPointer        Prepare Input for WriteInputPointer
+d71 1
+a71 1
+! WriteInputPointer        Write InputPointer metadata
+d135 1
+a135 1
+  ! Use this in case hdfVersion omitted from call to WritePCF2Hdr
+d151 1
+a151 1
+      INTEGER, INTENT(IN) :: mlspcfN_pcf_start
+d153 1
+a153 1
+      CHARACTER (LEN=1), POINTER :: anText(:)
+d159 1
+a159 1
+      INTEGER, EXTERNAL :: Pgs_pc_getFileSize
+d163 2
+a164 2
+      CHARACTER (LEN=10) :: mnemonic
+      CHARACTER (LEN=480) :: msg, msr
+d166 1
+a166 1
+      INTEGER :: err, ios, pcfHandle, returnStatus, size, version
+d232 1
+a232 1
+    use SDPTOOLKIT, only: mls_utctotai, pgs_td_utctotai
+d237 1
+a237 1
+    character(LEN=*), optional :: LeapSecFileName
+d278 2
+a279 2
+      use HDF5, only: h5gclose_f, h5gopen_f
+      USE MLSHDF5, only: GetHDF5Attribute, IsHDF5AttributePresent
+d397 2
+a398 2
+      use HDF5, only: h5gclose_f, h5gopen_f
+      USE MLSHDF5, only: IsHDF5AttributePresent, MakeHDF5Attribute
+d405 1
+a405 1
+      INTEGER, INTENT(IN) :: fileID
+d470 2
+a471 2
+      use HDF5, only: h5gclose_f, h5gopen_f
+      USE MLSHDF5, only: IsHDF5AttributePresent, MakeHDF5Attribute
+d535 1
+a535 1
+   SUBROUTINE he5_writeglobalattr (fileID,dayNum)
+d539 2
+a540 2
+      & HE5T_NATIVE_DOUBLE, MLS_charType
+    use MLSHDFEOS, only: he5_EHwrglatt, hsize, mls_EHwrglatt
+d546 2
+a547 2
+      INTEGER, INTENT(IN) :: fileID
+      INTEGER, INTENT(IN), optional :: dayNum
+d552 4
+d629 2
+a630 2
+      & MLS_charType
+    use MLSHDFEOS, only: he5_EHwrglatt, hsize, mls_EHwrglatt
+d637 1
+a637 1
+      ! INTEGER, INTENT(IN) :: fileID
+d698 2
+a699 2
+    use HDFEOS5, only: he5_EHinqglatts
+    use MLSHDFEOS, only: MAXDLISTLENGTH, he5_EHrdglatt
+d705 1
+a705 1
+      INTEGER, INTENT(IN)                      :: fileID
+d718 1
+d791 1
+d797 1
+a797 1
+   SUBROUTINE InputInputPointer (urefs, fileIDArray, fileNameArray, &
+d800 1
+a800 1
+!  Prepare Input for WriteInputPointer consisting of universal refs
+d807 2
+a808 2
+    CHARACTER (LEN=INPUTPTR_STRING_LENGTH), intent(out)    :: urefs(:)
+    CHARACTER (LEN=*), dimension(:), intent(in), optional  :: fileNameArray
+d810 1
+a810 1
+    integer,  intent(IN), optional                 :: PCBottom, PCTop
+d818 1
+a818 1
+   INTEGER, EXTERNAL :: pgs_pc_getUniversalRef, pgs_pc_getReference
+d881 1
+a881 1
+   END SUBROUTINE InputInputPointer
+d889 2
+a890 2
+      use HE5_SWAPI, only: he5_SWwrattr
+      use MLSHDFEOS, only: hsize, mls_SWwrattr
+d896 1
+a896 1
+      INTEGER, INTENT(IN) :: swathID
+d962 1
+a962 1
+   FUNCTION WriteInputPointer (groups, attrName, inpt, fileType)
+d965 1
+a965 1
+!  Write InputPointer metadata
+d970 1
+a970 1
+    CHARACTER (LEN=INPUTPTR_STRING_LENGTH), intent(in), optional  :: inpt(:)
+d974 1
+a974 1
+    integer             :: WriteInputPointer
+d981 1
+a981 1
+       WriteInputPointer = pgs_met_setAttr_s(groups, attrName, inpt)
+d988 1
+a988 1
+      WriteInputPointer = pgs_met_setAttr_s (groups, attrName, &
+d991 1
+a991 1
+      WriteInputPointer = pgs_met_setAttr_s (groups, attrName, &
+d996 1
+a996 1
+   END FUNCTION WriteInputPointer
+d1001 1
+a1001 1
+    use MLSHDFEOS, only: mls_EHwrglatt
+d1025 1
+a1025 1
+    use MLSHDF5, only: SaveAsHDF5DS
+d1052 1
+a1052 1
+        & h5fopen_f, h5fclose_f
+d1059 1
+a1059 1
+      CHARACTER (LEN=FileNameLen), INTENT(IN) :: file 
+d1061 1
+a1061 1
+      CHARACTER (LEN=1), POINTER              :: anText(:)
+d1148 1
+a1148 1
+      CHARACTER (LEN=FileNameLen), INTENT(IN) :: file 
+d1150 1
+a1150 1
+      CHARACTER (LEN=1), POINTER              :: anText(:)
+d1156 2
+a1157 2
+      INTEGER, EXTERNAL :: afEnd, afEndAccess, afFCreate, afStart, afWriteAnn
+      INTEGER, EXTERNAL :: hClose, hOpen
+d1161 1
+a1161 1
+      CHARACTER (LEN=480) :: msr
+d1163 1
+a1163 1
+      INTEGER :: anID, annID, fileID, status
+d1215 2
+a1216 2
+      use HDF5, only: h5gclose_f, h5gopen_f
+      USE MLSHDF5, only: IsHDF5DSPresent, MakeHDF5Attribute, SaveAsHDF5DS
+d1230 1
+a1230 1
+      CHARACTER (LEN=1), POINTER              :: anText(:)
+d1236 1
+a1236 1
+      CHARACTER (LEN=1), dimension(:), POINTER              :: an40
+d1238 1
+a1238 1
+      logical, parameter :: USELENGTHONECHARS = .true.
+d1258 1
+a1258 1
+      if ( USELENGTHONECHARS ) then
+d1290 2
+a1291 2
+      use HDFEOS5, only: MLS_charType
+      use MLSHDFEOS, only: hsize, he5_EHwrglatt
+d1297 1
+a1297 1
+! Unless the parameter USELENGTHONECHARS is true
+d1304 1
+a1304 1
+      CHARACTER (LEN=1), POINTER              :: anText(:)
+d1311 1
+a1311 1
+      CHARACTER (LEN=3) :: blockChar 
+d1343 1
+a1343 1
+    use MLSHDFEOS, only: mls_EHwrglatt
+d1368 1
+a1368 1
+    use MLSHDF5, only: SaveAsHDF5DS
+d1403 2
+a1404 1
+    if ( GlobalAttributes%GranuleMonth <= 0 .or. .not. UseSDPToolkit ) then
+d1408 4
+a1411 1
+      ! call outputNamedValue( 'utc form', whatUTCForm )
+d1428 1
+d1430 1
+a1430 1
+        & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+d1445 2
+a1446 1
+    if ( GlobalAttributes%GranuleMonth > 0 .or. .not. UseSDPToolkit ) then
+d1457 1
+a1457 1
+        & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+d1472 2
+a1473 1
+    if ( GlobalAttributes%GranuleMonth > 0 .or. .not. UseSDPToolkit ) then
+d1484 1
+a1484 1
+        & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+d1517 1
+a1517 1
+       "$Id: PCFHdr.f90,v 2.55 2010/11/10 02:01:57 pwagner Exp $"
+d1528 3
+d1535 1
+a1535 1
+!# Remove USE or declaration for unused names
+d1637 1
+a1637 1
+!# Now standardized to write PCF, InputPointer for all levels
+d1679 1
+a1679 1
+!# Added WriteInputPointer
+d1685 1
+a1685 1
+!# Added INTENT(IN) for pcf number arg.
+@
+
+
+2.55
+log
+@Extra output if DEBUG
+@
+text
+@d23 1
+a23 1
+   use INTRINSIC, only: L_GRID, L_HDF, L_SWATH
+d1098 1
+a1098 1
+        elseif ( the_type == l_grid ) then
+d1504 1
+a1504 1
+       "$Id: PCFHdr.f90,v 2.54 2010/02/04 23:08:00 vsnyder Exp $"
+d1515 3
+@
+
+
+2.54
+log
+@Remove USE or declaration for unused names
+@
+text
+@d24 1
+a24 1
+   use MLSCommon, only: r8, FileNameLen, MLSFile_T, NameLen
+d27 1
+d267 2
+d1504 1
+a1504 1
+       "$Id: PCFHdr.f90,v 2.53 2010/01/15 01:12:37 pwagner Exp $"
+d1515 3
+@
+
+
+2.53
+log
+@Added routines to read MLSFile_T components
+@
+text
+@a21 1
+   use dump_0, only: dump
+d276 1
+a276 1
+      USE MLSHDF5, only: GetHDF5Attribute, IsHDF5AttributePresent, MakeHDF5Attribute
+a289 1
+      character(len=GA_VALUE_LENGTH) :: ProcessLevel = ''
+a336 2
+    use HDFEOS5, only: HE5T_NATIVE_INT, &
+      & HE5T_NATIVE_DOUBLE, MLS_charType
+a347 1
+      character(len=GA_VALUE_LENGTH) :: ProcessLevel = ''
+a483 1
+      character(len=GA_VALUE_LENGTH) :: ProcessLevel = ''
+d622 1
+a622 1
+      & HE5T_NATIVE_DOUBLE, MLS_charType
+a634 1
+      logical :: my_skip
+a635 1
+      character(len=GA_VALUE_LENGTH) :: ProcessLevel = ''
+d1064 1
+a1064 1
+      integer :: record_length
+d1501 1
+a1501 1
+       "$Id: PCFHdr.f90,v 2.52 2010/01/11 18:36:07 pwagner Exp $"
+d1512 3
+@
+
+
+2.52
+log
+@Changed attribute names to 'PCFID..'
+@
+text
+@d41 1
+d273 123
+a480 1
+      ! INTEGER, INTENT(IN) :: fileID
+d497 1
+a501 1
+      fileID = MLSFile%FileID%f_id
+d1509 1
+a1509 1
+       "$Id: PCFHdr.f90,v 2.51 2010/01/08 00:10:46 pwagner Exp $"
+d1520 3
+@
+
+
+2.51
+log
+@Added ability to write MLSFile_T fields as attributes
+@
+text
+@d397 1
+a397 1
+       & 'PCFId', MLSFile%PCFId, .true.)
+d403 1
+a403 1
+       & 'PCFIdRange', (/MLSFile%PCFIdRange%Bottom, MLSFile%PCFIdRange%Top/), .true.)
+d552 1
+a552 1
+       & 'PCFId', HE5T_NATIVE_INT, hsize(1), &
+d1386 1
+a1386 1
+       "$Id: PCFHdr.f90,v 2.50 2009/10/05 23:37:59 pwagner Exp $"
+d1397 3
+@
+
+
+2.50
+log
+@Moved use mlshdfeos statements from module scope to speedup Lahey; this is the last time we do that
+@
+text
+@d42 1
+d48 34
+a89 8
+! Subroutines -- CreatePCFAnnotation
+!                WritePCF2Hdr
+!                WriteInputPointer
+!                InputInputPointer
+!                h5_writeglobalattr
+!                he5_writeglobalattr
+!                he5_readglobalattr
+!                sw_writeglobalatt
+d345 70
+d422 1
+a422 1
+! This subroutine writes the global attributes for an hdf-eos5 file
+d501 71
+d768 1
+a768 1
+! This subroutine writes the global attributes for an hdf-eos5 swath
+d1386 1
+a1386 1
+       "$Id: PCFHdr.f90,v 2.49 2009/09/29 23:36:28 pwagner Exp $"
+d1397 3
+@
+
+
+2.49
+log
+@Changes needed by 64-bit build
+@
+text
+@a27 1
+   use MLSHDFEOS, only: HSIZE
+d323 1
+a323 1
+    use MLSHDFEOS, only: he5_EHwrglatt, mls_EHwrglatt
+d598 1
+a598 1
+      use MLSHDFEOS, only: mls_SWwrattr
+d999 1
+a999 1
+      use MLSHDFEOS, only: he5_EHwrglatt
+d1218 1
+a1218 1
+       "$Id: PCFHdr.f90,v 2.48 2009/08/26 16:33:58 pwagner Exp $"
+d1229 3
+@
+
+
+2.48
+log
+@Workaround for buggy hdfeos function he5_EHinqglatts; added dumpGlobalAttributes
+@
+text
+@d23 4
+a26 4
+   USE Hdf, only: DFACC_RDWR, DFACC_WRITE, AN_FILE_DESC
+   USE INTRINSIC, only: L_GRID, L_HDF, L_SWATH
+   USE MLSCommon, only: r8, FileNameLen, MLSFile_T, NameLen
+   USE MLSFiles, only: GetPCFromRef, HDFVERSION_4, HDFVERSION_5, &
+d28 2
+a29 1
+   USE MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error, &
+d33 1
+a33 1
+   USE SDPToolkit, only: PGSD_PC_UREF_LENGTH_MAX, PGS_S_SUCCESS, &
+d38 2
+a39 2
+   IMPLICIT NONE
+   PUBLIC :: GlobalAttributes_T, &
+d338 1
+a338 1
+            & 'OrbitNumber', HE5T_NATIVE_INT, max_orbits, &
+d341 1
+a341 1
+            & 'OrbitPeriod', HE5T_NATIVE_DOUBLE, max_orbits, &
+d345 1
+a345 1
+            & 'OrbitNumber', HE5T_NATIVE_INT, max_orbits, &
+d348 1
+a348 1
+            & 'OrbitPeriod', HE5T_NATIVE_DOUBLE, max_orbits, &
+d374 1
+a374 1
+       & 'GranuleMonth', HE5T_NATIVE_INT, 1, &
+d377 1
+a377 1
+       & 'GranuleDay', HE5T_NATIVE_INT, 1, &
+d380 1
+a380 1
+       & 'GranuleDayOfYear', HE5T_NATIVE_INT, 1, &
+d383 1
+a383 1
+       & 'GranuleYear', HE5T_NATIVE_INT, 1, &
+d386 1
+a386 1
+       & 'TAI93At0zOfGranule', HE5T_NATIVE_DOUBLE, 1, &
+d390 1
+a390 1
+         & 'FirstMAF', HE5T_NATIVE_INT, 1, &
+d393 1
+a393 1
+         & 'LastMAF', HE5T_NATIVE_INT, 1, &
+d612 1
+a612 1
+       & 'OrbitNumber', HE5T_NATIVE_INT, max_orbits, &
+d615 1
+a615 1
+       & 'OrbitPeriod', HE5T_NATIVE_DOUBLE, max_orbits, &
+d618 1
+a618 1
+       & 'InstrumentName', MLS_CHARTYPE, 1, &
+d621 1
+a621 1
+       & 'HostName', MLS_CHARTYPE, 1, &
+d639 1
+a639 1
+         & 'GranuleMonth', HE5T_NATIVE_INT, 1, &
+d642 1
+a642 1
+         & 'GranuleDay', HE5T_NATIVE_INT, 1, &
+d646 1
+a646 1
+         & 'GranuleDayOfYear', HE5T_NATIVE_INT, 1, &
+d650 1
+a650 1
+       & 'GranuleYear', HE5T_NATIVE_INT, 1, &
+d653 1
+a653 1
+       & 'TAI93At0zOfGranule', HE5T_NATIVE_DOUBLE, 1, &
+d657 1
+a657 1
+         & 'FirstMAF', HE5T_NATIVE_INT, 1, &
+d660 1
+a660 1
+         & 'LastMAF', HE5T_NATIVE_INT, 1, &
+d664 1
+a664 1
+       & 'MiscNotes', MLS_CHARTYPE, 1, &
+d1034 1
+a1034 1
+                & MLS_CHARTYPE, lastChar-firstChar+1, &
+d1219 1
+a1219 1
+       "$Id: PCFHdr.f90,v 2.47 2009/06/23 18:25:42 pwagner Exp $"
+d1230 3
+@
+
+
+2.47
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d15 1
+a15 1
+! Unfortunately from the point of view of its name, which fails to clearly 
+d20 3
+d31 1
+a31 2
+   use dates_module, only: utc_to_date, utc_to_yyyymmdd
+   use output_m, only: outputNamedValue
+d39 1
+a40 1
+     & CreatePCFAnnotation,  &
+d49 1
+a49 1
+       "$RCSfile: $"
+d71 1
+a71 1
+  integer, parameter, public :: MiscNotesLENGTH = 1024
+d110 1
+d180 21
+d395 1
+d429 1
+d459 4
+d1109 1
+d1114 16
+a1129 5
+      asciiutc_a = GlobalAttributes%StartUTC
+      status = pgs_td_asciitime_atob(asciiutc_a, asciiutc_b)
+      if ( status /= 0 ) &
+        & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+        & 'Unable to convert utc A to B formats')
+d1218 1
+a1218 1
+       "$Id: read_apriori.f90 is it here $"
+d1229 3
+@
+
+
+2.46
+log
+@mls_io_gen_[openF,closeF] functions now private; use MLSFile_T interfaces instead
+@
+text
+@d47 1
+a47 1
+       "$RCSfile: PCFHdr.f90,v $"
+d1173 1
+a1174 1
+!---------------------------- RCS Ident Info -------------------------------
+d1176 2
+a1177 3
+       "$Id: PCFHdr.f90,v 2.45 2008/04/25 22:52:47 pwagner Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d1179 1
+a1179 1
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
+d1181 1
+d1187 3
+@
+
+
+2.45
+log
+@Remove unused 'use ..'
+@
+text
+@d22 1
+a22 1
+   USE MLSCommon, only: r8, FileNameLen, NameLen
+d24 1
+a24 1
+     & MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF
+d748 1
+d760 2
+d767 8
+a774 6
+          fileID = mls_io_gen_openF(l_swath, .TRUE., status, &
+           & record_length, DFACC_RDWR, FileName=trim(file), &
+           & hdfVersion=hdfVersion, debugOption=.false. )
+          if ( status /= PGS_S_SUCCESS) &
+            & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+            & 'Error opening hdfeos5 swath file for annotating with PCF' )
+d776 6
+a781 5
+          status = mls_io_gen_closeF(l_swath, fileID, &
+            & hdfVersion=hdfVersion)
+          if ( status /= PGS_S_SUCCESS) &
+            & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+            & 'Error closing hdfeos5 swath file for annotating with PCF' )
+d783 8
+a790 6
+          fileID = mls_io_gen_openF(l_grid, .TRUE., status, &
+           & record_length, DFACC_RDWR, FileName=trim(file), &
+           & hdfVersion=hdfVersion, debugOption=.false. )
+          if ( status /= PGS_S_SUCCESS) &
+            & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+            & 'Error opening hdfeos5 grid file for annotating with PCF' )
+d792 6
+a797 5
+          status = mls_io_gen_closeF(l_grid, fileID, &
+            & hdfVersion=hdfVersion)
+          if ( status /= PGS_S_SUCCESS) &
+            & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+            & 'Error closing hdfeos5 grid file for annotating with PCF' )
+d1176 1
+a1176 1
+       "$Id: PCFHdr.f90,v 2.44 2008/03/07 01:37:36 pwagner Exp $"
+d1180 1
+d1187 3
+@
+
+
+2.44
+log
+@Relies on MLSHDFEOS to subdivide long textfiles into attributes
+@
+text
+@d679 1
+a679 4
+    use MLSHDFEOS, only: he5_EHwrglatt, mls_EHwrglatt
+    use MLSSets, only: FindFirst
+    use MLSHDF5, only: MAXCHFIELDLENGTH
+    use HDFEOS5, only: MLS_charType
+d1012 1
+a1012 4
+    use MLSHDFEOS, only: he5_EHwrglatt, mls_EHwrglatt
+    use MLSSets, only: FindFirst
+    use MLSHDF5, only: MAXCHFIELDLENGTH
+    use HDFEOS5, only: MLS_charType
+d1167 1
+a1167 1
+       "$Id: PCFHdr.f90,v 2.43 2008/02/22 21:32:43 pwagner Exp $"
+d1177 3
+@
+
+
+2.43
+log
+@Can now write leapsecfile, utcpole files as attrs, DS
+@
+text
+@d679 4
+a682 1
+    use MLSHDFEOS, only: mls_EHwrglatt
+a701 5
+     if ( Status /= PGS_S_SUCCESS ) then
+       CALL MLSMessage( MLSMSG_Warning, ModuleName, &
+         & 'Unable to write leap seconds as global attribute' )
+     end if
+     
+d993 2
+a994 1
+        write( blockChar, '(i1)') blockNumber
+a1014 1
+    use MLSFiles, only: textFile_to_chars
+d1016 1
+a1022 3
+     character (LEN=3) :: blockChar 
+     character(len=MAXCHFIELDLENGTH) :: BUFFER  ! Buffer to hold contents
+     integer :: firstChar, lastChar, blockNumber
+d1037 2
+a1038 22
+     ! status = MLS_EHWRGLATT ( trim(utcPoleFile), FILEID, &
+     !   & 'utc pole' )
+     call textFile_to_Chars ( utcPoleFile, buffer )
+     blockNumber = 1
+     firstChar = 1
+
+     do
+       lastChar = min( firstChar-1+maxheadersize, len_trim(buffer) )
+       ! i1 is for PCF filesize < 400,000 
+       write( blockChar, '(i1)') blockNumber
+
+       status = he5_EHwrglatt( fileID, 'utcPole'//TRIM(ADJUSTL(blockChar)), &
+               & MLS_CHARTYPE, lastChar-firstChar+1, &
+               & buffer(firstChar:lastChar) )
+       if ( Status /= PGS_S_SUCCESS ) then
+         CALL MLSMessage( MLSMSG_Warning, ModuleName, &
+         & 'Unable to write utc pole as global attribute' )
+       end if
+       blockNumber = blockNumber + 1
+       firstChar = firstChar + maxheadersize
+       if ( firstChar > len_trim(buffer) ) return
+     enddo
+d1173 1
+a1173 1
+       "$Id: PCFHdr.f90,v 2.42 2007/10/04 20:43:36 vsnyder Exp $"
+d1183 3
+@
+
+
+2.42
+log
+@Remove unused symbols
+@
+text
+@a21 2
+!  USE Hdf, only: hOpen, afStart, afFCreate, afWriteAnn, afEndAccess, &
+!    & afEnd, hClose
+d29 1
+d32 1
+a32 1
+     & PGSD_IO_GEN_RDIRUNF, &
+d40 3
+a42 2
+     & InputInputPointer, &
+     & WritePCF2Hdr, WriteInputPointer
+d107 1
+a107 1
+  integer, public, save            :: PCFHDR_DEFAULT_HDFVERSION = HDFVERSION_4
+d677 54
+a761 2
+      ! myisHDFEOS = .false.
+      ! if ( present(isHDFEOS) ) myisHDFEOS = isHDFEOS
+a768 1
+          ! fileID = mls_io_gen_openF('swopen', .TRUE., status, &
+a775 1
+          ! status = mls_io_gen_closeF('swclose', fileID, &
+a781 1
+          ! fileID = mls_io_gen_openF('gdopen', .TRUE., status, &
+a788 1
+          ! status = mls_io_gen_closeF('gdclose', fileID, &
+a798 1
+          ! call WritePCF2Hdr_hdf5 (file, anText)
+d1014 77
+d1197 1
+a1197 1
+       "$Id: PCFHdr.f90,v 2.41 2007/06/21 00:49:52 vsnyder Exp $"
+d1207 3
+@
+
+
+2.41
+log
+@Remove tabs, which are not part of the Fortran standard
+@
+text
+@d21 1
+a21 1
+   USE INTRINSIC, only: L_GRID, L_HDF, L_HDFEOS, L_SWATH
+d24 1
+a24 1
+   USE MLSCommon, only: i4, r4, r8, FileNameLen, NameLen
+d28 1
+a28 1
+     & MLSMSG_Warning, MLSMSG_DeAllocate, MLSMSG_FILEOPEN,MLSMSG_Info
+d918 1
+a918 1
+      use MLSHDFEOS, only: he5_EHwrglatt, mls_EHwrglatt
+d1073 1
+a1073 1
+       "$Id: PCFHdr.f90,v 2.40 2007/01/12 00:27:10 pwagner Exp $"
+d1083 3
+@
+
+
+2.40
+log
+@New HostName global attribute written to product files
+@
+text
+@d298 1
+a298 1
+	& HE5T_NATIVE_DOUBLE, MLS_charType
+d313 1
+a313 1
+       	    & 'OrbitNumber', HE5T_NATIVE_INT, max_orbits, &
+d318 1
+a318 1
+      else	
+d946 3
+a948 3
+	lastChar = min(firstChar-1+maxheadersize, size(anText))
+	! i1 is for PCF filesize < 400,000 
+	write( blockChar, '(i1)') blockNumber
+d951 2
+a952 2
+		& MLS_CHARTYPE, lastChar-firstChar+1, &
+		& anText(firstChar:lastChar))
+d956 5
+a960 5
+	   return
+	end if
+	blockNumber = blockNumber + 1
+	firstChar = firstChar + maxheadersize
+	if ( firstChar > size(anText)) return
+d1073 1
+a1073 1
+       "$Id: PCFHdr.f90,v 2.39 2005/09/22 23:34:31 pwagner Exp $"
+d1083 3
+@
+
+
+2.39
+log
+@date conversion procedures and functions all moved into dates module
+@
+text
+@d90 1
+a90 1
+    ! character(len=GA_VALUE_LENGTH) :: InputVersion = ''  ! may drop eventually
+d257 2
+a261 2
+!     call MakeHDF5Attribute(grp_id, &
+!      & 'InputVersion', GlobalAttributes%InputVersion, .true.)
+d329 3
+a335 3
+!     status = he5_EHwrglatt(fileID, &
+!      & 'InputVersion', MLS_CHARTYPE, 1, &
+!      &  GlobalAttributes%InputVersion)
+d423 3
+d589 3
+a595 3
+!     status = he5_SWwrattr(swathID, &
+!      & 'InputVersion', MLS_CHARTYPE, 1, &
+!      &  GlobalAttributes%InputVersion)
+d1073 1
+a1073 1
+       "$Id: PCFHdr.f90,v 2.38 2005/08/15 20:38:39 pwagner Exp $"
+d1083 3
+@
+
+
+2.38
+log
+@FirstMAf, LastMAF global attributes written for level 2 files only
+@
+text
+@d30 1
+a30 1
+   use MLSStringLists, only: utc_to_date, utc_to_yyyymmdd
+d1070 1
+a1070 1
+       "$Id: PCFHdr.f90,v 2.37 2005/07/12 17:14:22 pwagner Exp $"
+d1080 3
+@
+
+
+2.37
+log
+@Global attribute MiscNotes added; InputVersion dropped
+@
+text
+@d279 6
+a284 4
+      call MakeHDF5Attribute(grp_id, &
+       & 'FirstMAF', GlobalAttributes%FirstMAFCtr, .true.)
+      call MakeHDF5Attribute(grp_id, &
+       & 'LastMAF', GlobalAttributes%LastMAFCtr, .true.)
+d363 8
+a370 6
+      status = he5_EHwrglatt(fileID, &
+       & 'FirstMAF', HE5T_NATIVE_INT, 1, &
+       &  (/ GlobalAttributes%FirstMAFCtr /) )
+      status = he5_EHwrglatt(fileID, &
+       & 'LastMAF', HE5T_NATIVE_INT, 1, &
+       &  (/ GlobalAttributes%LastMAFCtr /) )
+d422 1
+a422 1
+      if ( present(ProcessLevel) ) status = he5_EHrdglatt(fileID, &
+d424 2
+a425 1
+       &  ProcessLevel)
+d456 10
+a465 8
+      status = he5_EHrdglatt(fileID, &
+       & 'FirstMAF', &
+       &  ibuf  )
+      gAttributes%FirstMAFCtr = ibuf(1)
+      status = he5_EHrdglatt(fileID, &
+       & 'LastMAF', &
+       &  ibuf  )
+      gAttributes%LastMAFCtr = ibuf(1)
+d621 8
+a628 6
+      status = he5_SWwrattr(swathID, &
+       & 'FirstMAF', HE5T_NATIVE_INT, 1, &
+       &  (/ GlobalAttributes%FirstMAFCtr/) )
+      status = he5_SWwrattr(swathID, &
+       & 'LastMAF', HE5T_NATIVE_INT, 1, &
+       &  (/ GlobalAttributes%LastMAFCtr/) )
+d1070 1
+a1070 1
+       "$Id: PCFHdr.f90,v 2.36 2005/06/22 17:25:50 pwagner Exp $"
+d1080 3
+@
+
+
+2.36
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d47 1
+a47 1
+       "$RCSfile: $"
+d69 1
+d90 1
+a90 1
+    character(len=GA_VALUE_LENGTH) :: InputVersion = ''  ! may drop eventually
+d92 1
+a94 3
+    ! character(len=GA_VALUE_LENGTH) :: GranuleMonth = ''
+    ! character(len=GA_VALUE_LENGTH) :: GranuleDay   = ''
+    ! character(len=GA_VALUE_LENGTH) :: GranuleYear  = ''
+d283 2
+d367 3
+d620 3
+d1061 1
+a1061 1
+       "$Id: $"
+d1071 3
+@
+
+
+2.35
+log
+@Changed interface to mls_io_gen functions
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
+d45 3
+a47 6
+  !---------------------------- RCS Ident Info -------------------------------
+  character(len=*), private, parameter :: IdParm = &
+    & "$Id: PCFHdr.f90,v 2.34 2005/02/03 19:06:01 pwagner Exp $"
+  character(len=len(idparm)), private :: Id = idParm
+  character(len=*), private, parameter :: ModuleName = &
+       & "$RCSfile: PCFHdr.f90,v $"
+d49 1
+a49 1
+  !---------------------------------------------------------------------------
+d1052 5
+d1064 3
+@
+
+
+2.34
+log
+@utc_to_date used to find 0 crossing
+@
+text
+@d39 1
+a39 1
+    & "$Id: PCFHdr.f90,v 2.33 2004/08/16 17:05:38 pwagner Exp $"
+d693 2
+a694 1
+          fileID = mls_io_gen_openF('swopen', .TRUE., status, &
+d701 2
+a702 1
+          status = mls_io_gen_closeF('swclose', fileID, &
+d708 2
+a709 1
+          fileID = mls_io_gen_openF('gdopen', .TRUE., status, &
+d716 2
+a717 1
+          status = mls_io_gen_closeF('gdclose', fileID, &
+d1054 3
+@
+
+
+2.33
+log
+@First,LastMAFCtr now global attributes
+@
+text
+@d1 2
+a2 2
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d22 1
+a22 1
+   use MLSStringLists, only: utc_to_yyyymmdd
+d39 1
+a39 1
+    & "$Id: PCFHdr.f90,v 2.32 2004/08/04 23:19:01 pwagner Exp $"
+d185 1
+a185 1
+    character(len=16)   :: year, month, day
+d188 2
+a189 2
+      call utc_to_yyyymmdd(GlobalAttributes%StartUTC, returnStatus, &
+        & year, month, day, utcAt0z=start_time_string)
+d1050 3
+@
+
+
+2.32
+log
+@Much moved from MLSStrings to MLSStringLists
+@
+text
+@d39 1
+a39 1
+    & "$Id: PCFHdr.f90,v 2.31 2004/03/24 23:53:02 pwagner Exp $"
+d73 2
+d95 2
+a216 57
+   SUBROUTINE gd_writeglobalattr (gridID)
+!------------------------------------------------------------
+
+      use HDFEOS5, only: HE5T_NATIVE_INT, HE5T_NATIVE_DOUBLE, MLS_charType
+      use MLSHDFEOS, only: mls_GDwrattr
+! Brief description of subroutine
+! This subroutine writes the global attributes for an hdf-eos5 grid
+
+! Arguments
+
+      INTEGER, INTENT(IN) :: gridID
+! Internal variables
+      integer :: status
+      character(len=GA_VALUE_LENGTH) :: ProcessLevel = ''
+! Executable
+      !status = he5_GDwrattr(gridID, &
+      ! & 'OrbitNumber', HE5T_NATIVE_INT, max_orbits, &
+      ! &  GlobalAttributes%OrbNum)
+      !status = he5_GDwrattr(gridID, &
+      ! & 'OrbitPeriod', HE5T_NATIVE_DOUBLE, max_orbits, &
+      ! &  GlobalAttributes%OrbPeriod)
+      status = mls_GDwrattr(gridID, &
+       & 'InstrumentName', MLS_CHARTYPE, 1, &
+       &  GlobalAttributes%InstrumentName)
+      ProcessLevel = ProcessLevelFun()
+      status = mls_GDwrattr(gridID, &
+       & 'ProcessLevel', MLS_CHARTYPE, 1, &
+       &  ProcessLevel)
+!     status = he5_GDwrattr(gridID, &
+!      & 'InputVersion', MLS_CHARTYPE, 1, &
+!      &  GlobalAttributes%InputVersion)
+      status = mls_GDwrattr(gridID, &
+       & 'PGEVersion', MLS_CHARTYPE, 1, &
+       &  GlobalAttributes%PGEVersion)
+      status = mls_GDwrattr(gridID, &
+       & 'StartUTC', MLS_CHARTYPE, 1, &
+       &  GlobalAttributes%StartUTC)
+      status = mls_GDwrattr(gridID, &
+       & 'EndUTC', MLS_CHARTYPE, 1, &
+       &  GlobalAttributes%EndUTC)
+! >       status = he5_GDwrattr(gridID, &
+! >        & 'GranuleMonth', HE5T_NATIVE_INT, 1, &
+! >        &  GlobalAttributes%GranuleMonth)
+! >       status = he5_GDwrattr(gridID, &
+! >        & 'GranuleDay', HE5T_NATIVE_INT, 1, &
+! >        &  GlobalAttributes%GranuleDay)
+! >       status = he5_GDwrattr(gridID, &
+! >        & 'GranuleYear', HE5T_NATIVE_INT, 1, &
+! >        &  GlobalAttributes%GranuleYear)
+! >       status = he5_GDwrattr(gridID, &
+! >        & 'TAI93At0zOfGranule', HE5T_NATIVE_DOUBLE, 1, &
+! >        &  GlobalAttributes%TAI93At0zOfGranule )
+!------------------------------------------------------------
+   END SUBROUTINE gd_writeglobalattr
+!------------------------------------------------------------
+
+!------------------------------------------------------------
+d275 4
+d355 6
+d442 8
+d605 6
+d1050 3
+@
+
+
+2.31
+log
+@Switched from HE5T_NATIVE_SCHAR to MLS_CHARTYPE
+@
+text
+@d21 2
+a22 1
+   use MLSStrings, only: utc_to_yyyymmdd, lowerCase
+d39 1
+a39 1
+    & "$Id: PCFHdr.f90,v 2.30 2004/02/26 22:01:04 pwagner Exp $"
+a172 1
+    use MLSSTRINGS, only: utc_to_yyyymmdd
+d1079 3
+@
+
+
+2.30
+log
+@Acts more gracefully if l2gp file lacks global attributes
+@
+text
+@d38 1
+a38 1
+    & "$Id: PCFHdr.f90,v 2.29 2004/02/13 00:17:12 pwagner Exp $"
+d216 1
+a216 1
+      use HDFEOS5, only: HE5T_NATIVE_SCHAR, HE5T_NATIVE_INT, HE5T_NATIVE_DOUBLE
+d235 1
+a235 1
+       & 'InstrumentName', HE5T_NATIVE_SCHAR, 1, &
+d239 1
+a239 1
+       & 'ProcessLevel', HE5T_NATIVE_SCHAR, 1, &
+d242 1
+a242 1
+!      & 'InputVersion', HE5T_NATIVE_SCHAR, 1, &
+d245 1
+a245 1
+       & 'PGEVersion', HE5T_NATIVE_SCHAR, 1, &
+d248 1
+a248 1
+       & 'StartUTC', HE5T_NATIVE_SCHAR, 1, &
+d251 1
+a251 1
+       & 'EndUTC', HE5T_NATIVE_SCHAR, 1, &
+d338 2
+a339 2
+    use HDFEOS5, only: HE5T_NATIVE_SCHAR, HE5T_NATIVE_INT, &
+	& HE5T_NATIVE_DOUBLE
+d368 1
+a368 1
+       & 'InstrumentName', HE5T_NATIVE_SCHAR, 1, &
+d372 1
+a372 1
+       & 'ProcessLevel', HE5T_NATIVE_SCHAR, 1, &
+d375 1
+a375 1
+!      & 'InputVersion', HE5T_NATIVE_SCHAR, 1, &
+d378 1
+a378 1
+       & 'PGEVersion', HE5T_NATIVE_SCHAR, 1, &
+d381 1
+a381 1
+       & 'StartUTC', HE5T_NATIVE_SCHAR, 1, &
+d384 1
+a384 1
+       & 'EndUTC', HE5T_NATIVE_SCHAR, 1, &
+d582 1
+a582 1
+      use HDFEOS5, only: HE5T_NATIVE_SCHAR, HE5T_NATIVE_INT, HE5T_NATIVE_DOUBLE
+d603 1
+a603 1
+       & 'InstrumentName', HE5T_NATIVE_SCHAR, 1, &
+d607 1
+a607 1
+       & 'ProcessLevel', HE5T_NATIVE_SCHAR, 1, &
+d610 1
+a610 1
+!      & 'InputVersion', HE5T_NATIVE_SCHAR, 1, &
+d613 1
+a613 1
+       & 'PGEVersion', HE5T_NATIVE_SCHAR, 1, &
+d616 1
+a616 1
+       & 'StartUTC', HE5T_NATIVE_SCHAR, 1, &
+d619 1
+a619 1
+       & 'EndUTC', HE5T_NATIVE_SCHAR, 1, &
+d918 1
+a918 1
+      use HDFEOS5, only: HE5T_NATIVE_SCHAR
+d952 1
+a952 1
+		& HE5T_NATIVE_SCHAR, lastChar-firstChar+1, &
+d1079 3
+@
+
+
+2.29
+log
+@New stuff for reading swath attributes
+@
+text
+@d38 1
+a38 1
+    & "$Id: PCFHdr.f90,v 2.28 2003/10/30 00:03:02 pwagner Exp $"
+d410 1
+a410 1
+     & ProcessLevel, DayofYear, TAI93At0zOfGranule)
+d413 2
+a414 1
+    use MLSHDFEOS, only: he5_EHrdglatt
+d425 1
+d430 2
+d433 10
+d480 6
+a485 3
+      if ( present(TAI93At0zOfGranule) ) status = he5_EHrdglatt(fileID, &
+       & 'TAI93At0zOfGranule', dbuf )
+      TAI93At0zOfGranule = dbuf(1)
+d1079 3
+@
+
+
+2.28
+log
+@Prepends 'L' to GlobalAttributes%ProcessLevel if necessary
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+d31 1
+a31 1
+     & h5_writeglobalattr, he5_writeglobalattr, &
+d38 1
+a38 1
+    & "$Id: PCFHdr.f90,v 2.27 2003/10/28 00:39:00 pwagner Exp $"
+d53 1
+d408 65
+d1062 3
+@
+
+
+2.27
+log
+@Fixed bug where character-vlaued attributes were only 1 char long
+@
+text
+@d38 1
+a38 1
+    & "$Id: PCFHdr.f90,v 2.26 2003/09/15 17:13:57 cvuu Exp $"
+d70 1
+d216 1
+a216 1
+      ! use he5_gdapi, only: he5_GDwrattr    ! Not coded yet
+a222 1
+      integer, external ::   he5_GDwrattr
+d225 1
+d233 1
+a233 1
+      status = he5_GDwrattr(gridID, &
+d236 2
+a237 1
+      status = he5_GDwrattr(gridID, &
+d239 1
+a239 1
+       &  GlobalAttributes%ProcessLevel)
+d243 1
+a243 1
+      status = he5_GDwrattr(gridID, &
+d246 1
+a246 1
+      status = he5_GDwrattr(gridID, &
+d249 1
+a249 1
+      status = he5_GDwrattr(gridID, &
+d287 1
+d305 1
+d307 1
+a307 1
+       & 'ProcessLevel', GlobalAttributes%ProcessLevel, .true.)
+d349 1
+d369 1
+d372 1
+a372 1
+       &  GlobalAttributes%ProcessLevel)
+d501 1
+d511 1
+d522 2
+a523 1
+      status = he5_SWwrattr(swathID, &
+d525 1
+a525 1
+       &  GlobalAttributes%ProcessLevel)
+d529 1
+a529 1
+      status = he5_SWwrattr(swathID, &
+d532 1
+a532 1
+      status = he5_SWwrattr(swathID, &
+d535 1
+a535 1
+      status = he5_SWwrattr(swathID, &
+d972 15
+d996 3
+@
+
+
+2.26
+log
+@Optional writing Orbit info to global attribute for h5_writeglobal
+@
+text
+@d38 1
+a38 1
+    & "$Id: PCFHdr.f90,v 2.25 2003/09/12 16:39:05 cvuu Exp $"
+d333 1
+a333 1
+      use HDFEOS5, only: HE5T_NATIVE_SCHAR, HE5T_NATIVE_INT, &
+d335 1
+a335 1
+      use MLSHDFEOS, only: he5_EHwrglatt
+d361 1
+a361 1
+      status = he5_EHwrglatt(fileID, &
+d364 1
+a364 1
+      status = he5_EHwrglatt(fileID, &
+d370 1
+a370 1
+      status = he5_EHwrglatt(fileID, &
+d373 1
+a373 1
+      status = he5_EHwrglatt(fileID, &
+d376 1
+a376 1
+      status = he5_EHwrglatt(fileID, &
+d827 1
+a827 1
+      use MLSHDFEOS, only: he5_EHwrglatt
+d972 3
+@
+
+
+2.25
+log
+@Add attributes OrbitNumber and OrbitPeriod in the global attributes
+@
+text
+@d38 1
+a38 1
+    & "$Id: PCFHdr.f90,v 2.24 2003/08/15 20:41:50 pwagner Exp $"
+d284 1
+d294 6
+a299 4
+      call MakeHDF5Attribute(grp_id, &
+       & 'OrbitNumber', GlobalAttributes%OrbNum, .true.)
+      call MakeHDF5Attribute(grp_id, &
+       & 'OrbitPeriod', GlobalAttributes%OrbPeriod, .true.)
+d972 3
+@
+
+
+2.24
+log
+@Wont try to write another /PCF dataset if already there
+@
+text
+@d26 1
+a26 1
+     & UseSDPToolkit
+d38 1
+a38 1
+    & "$Id: PCFHdr.f90,v 2.23 2003/08/11 17:40:42 cvuu Exp $"
+d73 4
+d226 6
+d294 4
+d327 1
+a327 1
+   SUBROUTINE he5_writeglobalattr (fileID)
+d330 2
+a331 1
+      use HDFEOS5, only: HE5T_NATIVE_SCHAR, HE5T_NATIVE_INT, HE5T_NATIVE_DOUBLE
+d339 1
+d343 15
+d503 6
+d969 3
+@
+
+
+2.23
+log
+@Write anotating with multiple attributes PCF to handle big size of PCF file for hdfeos5
+@
+text
+@d38 1
+a38 1
+    & "$Id: PCFHdr.f90,v 2.22 2003/07/07 23:46:54 pwagner Exp $"
+d712 1
+a712 1
+      USE MLSHDF5, only: MakeHDF5Attribute, SaveAsHDF5DS
+d743 1
+d932 3
+@
+
+
+2.22
+log
+@Changed in interfaces to make filetype a lit_name
+@
+text
+@d20 1
+a20 1
+     & MLSMSG_Warning, MLSMSG_DeAllocate, MLSMSG_FILEOPEN
+d38 1
+a38 1
+    & "$Id: PCFHdr.f90,v 2.21 2003/06/11 19:33:33 pwagner Exp $"
+d795 4
+d803 1
+a803 4
+      integer :: divisor
+      integer :: grp_id
+      integer :: i
+      integer :: remainder
+d805 3
+a807 3
+      CHARACTER (LEN=40), POINTER             :: an40(:)
+      integer :: how_big
+      logical, parameter :: USELENGTHONECHARS = .true.
+d809 22
+a830 39
+      if ( USELENGTHONECHARS ) then
+        status = he5_EHwrglatt(fileID, &
+         & PCFATTRIBUTENAME, HE5T_NATIVE_SCHAR, size(anText), anText)
+         ! & 'PCF', HE5T_NATIVE_SCHAR, size(anText), anText)
+        if ( status /= PGS_S_SUCCESS) &
+          & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+          & 'Error annotating with PCF using length one chars' )
+        return
+      endif
+      ! Find how big an40 must be to hold anText
+      how_big = 1 + (size(anText)-1)/40
+      allocate(an40(how_big), stat=status)
+      if ( status /= 0 ) &
+        & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+        & MLSMSG_Allocate // 'an40 for annotating hdfeos5 PCF' )
+      an40 = ' '
+      ! Do some nonsense here
+      ! (This is clever, but is it necessary?)
+      do i=1, size(anText)
+        divisor = (i-1) / 40
+        remainder = mod(i-1, 40)
+        an40(divisor+1)(remainder+1:remainder+1) = anText(i)
+      enddo
+      ! print *, 'size(anText) ', size(anText)
+      ! print *, 'how_big ', how_big
+      ! print *, 'an40 '
+      ! do i=1, how_big
+      !  print *, trim(an40(i))
+      ! enddo
+      status = he5_EHwrglatt(fileID, &
+       & PCFATTRIBUTENAME, HE5T_NATIVE_SCHAR, how_big, an40)
+       ! & 'PCF', HE5T_NATIVE_SCHAR, how_big, an40)
+      if ( status /= PGS_S_SUCCESS) &
+        & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+        & 'Error annotating with PCF using length 40 chars' )
+      deallocate(an40, stat=status)
+      if ( status /= PGS_S_SUCCESS) &
+        & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+        & MLSMSG_DeAllocate // 'an40 annotating hdfeos5 with PCF' )
+d931 3
+@
+
+
+2.21
+log
+@No longer tries to write hdf5 pcf as both ds and attr
+@
+text
+@d13 1
+d38 1
+a38 1
+    & "$Id: PCFHdr.f90,v 2.20 2003/05/30 23:47:00 pwagner Exp $"
+d522 2
+a523 1
+    character(len=*), intent(in), optional :: fileType   ! 'hdfeos', 'hdf', 'sw' or ..
+d527 2
+a528 1
+    character (len=6) :: the_type
+d535 2
+a536 2
+    the_type = 'hdf'
+    if ( present(fileType) ) the_type = lowercase(fileType)
+d538 1
+a538 1
+    case ('hdf')
+d565 2
+a566 1
+      character(len=*), intent(in), optional  :: fileType ! 'sw', 'gd', 'hdf'
+d576 2
+a577 1
+      character (len=2) :: the_type
+d583 2
+a584 2
+      the_type = 'hd'
+      if ( present(fileType) ) the_type = lowercase(fileType)
+d589 1
+a589 1
+        if ( the_type == 'sw' ) then
+d602 1
+a602 1
+        elseif ( the_type == 'gd' ) then
+d947 3
+@
+
+
+2.20
+log
+@Now standardized to write PCF, InputPointer for all levels
+@
+text
+@d37 1
+a37 1
+    & "$Id: PCFHdr.f90,v 2.19 2003/04/11 23:33:13 pwagner Exp $"
+d731 1
+a731 1
+      logical, parameter :: MAKEATTRIBUTE = .true.
+d742 2
+d750 1
+a750 1
+         & PCFATTRIBUTENAME, anText, .true.)
+d762 1
+a762 1
+         & 'PCF file text', an40, .true.)
+d942 3
+@
+
+
+2.19
+log
+@Gets he5_EHwrglatt from new MLSHDFEOS module
+@
+text
+@d37 1
+a37 1
+    & "$Id: PCFHdr.f90,v 2.18 2003/03/20 01:27:00 jdone Exp $"
+d64 5
+d512 1
+a512 1
+   FUNCTION WriteInputPointer (groups, attrName, inpt)
+a515 2
+!  Moved here to hide inconsistency of arguments from NAGging inquiry
+!  in the style of Enron's offshore limited partnerships
+d519 3
+a521 2
+    character (len=132), intent(in) :: Attrname
+    CHARACTER (LEN=INPUTPTR_STRING_LENGTH), intent(in)  :: inpt(:)
+d525 1
+d528 1
+d530 13
+a542 1
+
+d548 1
+a548 1
+   SUBROUTINE WritePCF2Hdr (file, anText, hdfVersion, fileType)
+d563 1
+d616 1
+a616 1
+          call WritePCF2Hdr_hdf5 (fileID, anText)
+d703 1
+a703 1
+   SUBROUTINE WritePCF2Hdr_hdf5 (fileID, anText)
+d720 1
+d722 1
+a724 1
+      integer :: fileID
+d733 1
+d735 2
+d739 1
+a739 1
+        call SaveAsHDF5DS ( fileID, '/PCF', anScalar )
+d940 3
+@
+
+
+2.18
+log
+@variable length string FileType used in WritePCF2Hdr
+@
+text
+@d37 1
+a37 1
+    & "$Id: PCFHdr.f90,v 2.17 2003/03/19 23:57:56 jdone Exp $"
+a309 1
+!     use HDF5, only: H5T_NATIVE_CHARACTER
+d311 1
+a311 1
+      use he5_swapi, only: he5_EHwrglatt
+a317 1
+      ! integer, external ::   he5_EHwrglatt
+d756 1
+a756 1
+      use he5_swapi, only: he5_EHwrglatt
+d917 3
+@
+
+
+2.17
+log
+@changed length of string fileType from wildcard to 2
+@
+text
+@d37 1
+a37 1
+    & "$Id: PCFHdr.f90,v 2.16 2003/03/11 00:20:14 pwagner Exp $"
+d546 1
+a546 1
+      character(len=2), intent(in), optional  :: fileType ! 'sw', 'gd', 'hdf'
+d919 3
+@
+
+
+2.16
+log
+@can WritePCF2Hdr for swath, grid, or hdf files
+@
+text
+@d37 1
+a37 1
+    & "$Id: PCFHdr.f90,v 2.15 2003/03/07 00:37:24 pwagner Exp $"
+d546 1
+a546 1
+      character(len=*), intent(in), optional  :: fileType ! 'sw', 'gd', 'hdf'
+d919 3
+@
+
+
+2.15
+log
+@Write GranuleDay -Month and -Year even if StartUTC in format yyy-ddd
+@
+text
+@d20 1
+a20 1
+   use MLSStrings, only: utc_to_yyyymmdd
+d37 1
+a37 1
+    & "$Id: PCFHdr.f90,v 2.14 2003/02/27 21:52:48 pwagner Exp $"
+d532 1
+a532 1
+   SUBROUTINE WritePCF2Hdr (file, anText, hdfVersion, isHDFEOS)
+d546 2
+a547 1
+      logical, intent(in), optional           :: isHDFEOS
+d552 1
+a552 1
+      logical :: myisHDFEOS
+d555 1
+d559 4
+a562 2
+      myisHDFEOS = .false.
+      if ( present(isHDFEOS) ) myisHDFEOS = isHDFEOS
+d567 1
+a567 1
+        if ( myisHDFEOS ) then
+d573 1
+a573 1
+            & 'Error opening hdfeos5 file for annotating with PCF' )
+d579 14
+a592 1
+            & 'Error closing hdfeos5 file for annotating with PCF' )
+d919 3
+@
+
+
+2.14
+log
+@Added FillTAI93Attribute; tweaks to PCF as attribute; unsatisfactory for hdfeos5
+@
+text
+@d20 1
+d23 3
+a25 1
+     & PGSD_IO_GEN_RDIRUNF
+d37 1
+a37 1
+    & "$Id: PCFHdr.f90,v 2.13 2003/02/12 21:47:05 pwagner Exp $"
+d61 3
+a288 1
+      ! if ( GlobalAttributes%GranuleDay == ' ') return
+d290 6
+a295 10
+      ! if ( GlobalAttributes%GranuleMonth /= ' ') &
+      if ( GlobalAttributes%GranuleMonth > 0 ) then
+        call MakeHDF5Attribute(grp_id, &
+       & 'GranuleMonth', GlobalAttributes%GranuleMonth, .true.)
+        call MakeHDF5Attribute(grp_id, &
+       & 'GranuleDay', GlobalAttributes%GranuleDay, .true.)
+      else
+        call MakeHDF5Attribute(grp_id, &
+       & 'GranuleDayOfYear', GlobalAttributes%GranuleDay, .true.)
+      endif
+d344 1
+a344 2
+      if ( GlobalAttributes%GranuleMonth  > 0 ) then
+        status = he5_EHwrglatt(fileID, &
+d346 2
+a347 2
+       &  (/ GlobalAttributes%GranuleMonth/) )
+        status = he5_EHwrglatt(fileID, &
+d349 2
+a350 3
+       &  (/ GlobalAttributes%GranuleDay/) )
+      else
+        status = he5_EHwrglatt(fileID, &
+d352 1
+a352 2
+       &  (/ GlobalAttributes%GranuleDay/) )
+      endif
+d710 2
+a711 1
+         & 'PCF file text', anText, .true.)
+d765 2
+a766 2
+         & 'PCF', HE5T_NATIVE_SCHAR, size(anText), &
+         &  anText)
+d786 2
+a787 2
+      print *, 'size(anText) ', size(anText)
+      print *, 'how_big ', how_big
+d793 2
+a794 2
+       & 'PCF', HE5T_NATIVE_SCHAR, how_big, &
+       &  an40)
+d806 78
+d902 3
+@
+
+
+2.13
+log
+@Optional skip_if_already_there arg to h5_writeglobalattr
+@
+text
+@d15 1
+a15 1
+   USE MLSCommon, only: i4, r4, r8, FileNameLen
+d19 1
+a19 1
+     & MLSMSG_DeAllocate, MLSMSG_FILEOPEN
+d25 1
+d34 1
+a34 1
+    & "$Id: PCFHdr.f90,v 2.12 2003/02/10 22:07:23 pwagner Exp $"
+d73 1
+d149 45
+d198 1
+a198 1
+      use HDFEOS5, only: HE5T_NATIVE_SCHAR, HE5T_NATIVE_INT
+d237 3
+d297 2
+d310 1
+a310 1
+      use HDFEOS5, only: HE5T_NATIVE_SCHAR, HE5T_NATIVE_INT
+d358 3
+d372 3
+d387 1
+a387 1
+   INTEGER, EXTERNAL :: pgs_pc_getUniversalRef
+d394 1
+a394 1
+      DO i = 0, size(fileIDArray)
+d397 1
+a397 1
+         returnStatus = pgs_pc_getUniversalRef(fileIDArray(i), &
+d400 1
+a400 1
+         returnStatus = PGS_S_SUCCESS + 1
+d403 20
+a422 2
+           ref = min(ref+1, size(urefs))
+           urefs(ref) = sval                     
+d428 1
+a428 1
+      DO i = 0, size(fileNameArray)
+d442 3
+d457 1
+a457 1
+      use HDFEOS5, only: HE5T_NATIVE_SCHAR, HE5T_NATIVE_INT
+d503 3
+d675 1
+a675 1
+      USE MLSHDF5, only: MakeHDF5Attribute
+d677 4
+a680 2
+! This subroutine writes the PCF into an HDF5 file as an attribute.
+! It does so at the root '/' group level, treating the file as if
+d682 1
+a682 1
+! If the file were in fact and hdfeos5 file
+d694 12
+a705 1
+! Executable
+d710 19
+a728 2
+      call MakeHDF5Attribute(grp_id, &
+       & 'PCF file text', anText, .true.)
+d746 1
+d748 1
+a748 1
+
+d762 1
+d764 10
+a773 1
+! Find how big an40 must be to hold anText
+d780 2
+d787 6
+d798 1
+a798 1
+        & 'Error annotating with PCF' )
+d807 9
+d825 3
+@
+
+
+2.12
+log
+@Granule Month, Day, Year now ints; he5 global attributes leave file pure hdfeos5
+@
+text
+@d33 1
+a33 1
+    & "$Id: PCFHdr.f90,v 2.11 2003/02/08 00:32:11 pwagner Exp $"
+d195 1
+a195 1
+   SUBROUTINE h5_writeglobalattr (fileID)
+d199 1
+a199 1
+      USE MLSHDF5, only: MakeHDF5Attribute
+d207 1
+d211 9
+a219 1
+! Executable
+d685 3
+@
+
+
+2.11
+log
+@Gets he5_EHwrglatt from he5_swapi
+@
+text
+@d12 1
+a12 1
+   USE Hdf, only: DFACC_WRITE, AN_FILE_DESC
+d16 2
+a17 1
+   USE MLSFiles, only: GetPCFromRef, HDFVERSION_4, HDFVERSION_5
+d19 1
+a19 1
+     & MLSMSG_FILEOPEN
+d33 1
+a33 1
+    & "$Id: PCFHdr.f90,v 2.10 2003/02/06 00:30:19 pwagner Exp $"
+d66 6
+a71 6
+    character(len=GA_VALUE_LENGTH) :: GranuleMonth = ''
+    character(len=GA_VALUE_LENGTH) :: GranuleDay   = ''
+    character(len=GA_VALUE_LENGTH) :: GranuleYear  = ''
+    ! integer :: GranuleMonth                  = 0
+    ! integer :: GranuleDay                    = 0
+    ! integer :: GranuleYear                   = 0
+d151 2
+a152 2
+!     use HDF5, only: H5T_NATIVE_CHARACTER
+      use HDFEOS5, only: HE5T_NATIVE_SCHAR
+d181 9
+d224 5
+a228 3
+      if ( GlobalAttributes%GranuleDay == ' ') return
+      if ( GlobalAttributes%GranuleMonth == ' ') &
+       & call MakeHDF5Attribute(grp_id, &
+d230 1
+a230 1
+      call MakeHDF5Attribute(grp_id, &
+d232 4
+d249 1
+a249 1
+      use HDFEOS5, only: HE5T_NATIVE_SCHAR
+d279 15
+a293 8
+      if ( GlobalAttributes%GranuleDay == ' ') return
+      if ( GlobalAttributes%GranuleMonth == ' ') &
+       & status = he5_EHwrglatt(fileID, &
+       & 'GranuleMonth', HE5T_NATIVE_SCHAR, 1, &
+       &  GlobalAttributes%GranuleMonth)
+      status = he5_EHwrglatt(fileID, &
+       & 'GranuleDay', HE5T_NATIVE_SCHAR, 1, &
+       &  GlobalAttributes%GranuleDay)
+d295 2
+a296 2
+       & 'GranuleYear', HE5T_NATIVE_SCHAR, 1, &
+       &  GlobalAttributes%GranuleYear)
+d369 2
+a370 1
+      use HDFEOS5, only: HE5T_NATIVE_SCHAR
+d377 1
+a377 1
+      integer, external ::   he5_SWwrattr
+d399 16
+d443 1
+a443 1
+   SUBROUTINE WritePCF2Hdr (file, anText, hdfVersion)
+d457 1
+d460 1
+d462 3
+a464 1
+      integer :: fileID, status
+d468 2
+d474 25
+a498 10
+        call h5fopen_f(trim(file), H5F_ACC_RDWR_F, fileID, status)
+        if ( status /= PGS_S_SUCCESS) &
+          & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+          & 'Error opening hdf5 file for annotating with PCF' )
+!       call WritePCF2Hdr_hdf5 (file, anText)
+        call WritePCF2Hdr_hdf5 (fileID, anText)
+        call h5fclose_f(fileID, status)
+        if ( status /= PGS_S_SUCCESS) &
+          & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+          & 'Error closing hdf5 file for annotating with PCF' )
+a579 1
+!  SUBROUTINE WritePCF2Hdr_hdf5 (file, anText)
+a582 2
+!     use HDF5, only: H5F_ACC_RDWR_F, &
+!       & h5fopen_f, h5fclose_f, h5gclose_f, h5gopen_f
+d586 1
+a586 1
+! This subroutine writes the PCF into an HDF-EOS5 file as an attribute.
+d589 2
+a590 1
+! This may result in the dread hybrid file syndrome which may
+a594 2
+!      CHARACTER (LEN=FileNameLen), INTENT(IN) :: file 
+
+a601 4
+!      call h5fopen_f(trim(file), H5F_ACC_RDWR_F, fileID, status)
+      ! if ( status /= PGS_S_SUCCESS) &
+      !  & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+      !  & 'Error opening hdf5 file for annotating with PCF' )
+a611 4
+      ! call h5fclose_f(fileID, status)
+      ! if ( status /= PGS_S_SUCCESS) &
+      !  & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+      !  & 'Error closing hdf5 file for annotating with PCF' )
+d616 51
+d676 3
+@
+
+
+2.10
+log
+@Added h5_ and he5_writeglobalattr
+@
+text
+@d32 1
+a32 1
+    & "$Id: PCFHdr.f90,v 2.9 2003/01/30 00:57:24 pwagner Exp $"
+d234 1
+d241 1
+a241 1
+      integer, external ::   he5_EHwrglatt
+d576 3
+@
+
+
+2.9
+log
+@Added much new stuff for global attributes with hdf5
+@
+text
+@d24 2
+a25 1
+     & CreatePCFAnnotation, gd_writeglobalattr, h5_writeglobalattr, &
+d27 1
+a27 1
+     & sw_writeglobalattr, WritePCF2Hdr, WriteInputPointer
+d32 1
+a32 1
+    & "$Id: PCFHdr.f90,v 2.8 2002/10/08 00:09:13 pwagner Exp $"
+d45 3
+a47 3
+!                gd_writeglobalattr
+!                sw_writeglobalattr
+
+d53 1
+a53 1
+! in particular swath, grid, and plain hdf5
+d61 1
+a61 1
+    character(len=GA_VALUE_LENGTH) :: InputVersion = ''
+d65 6
+a70 3
+    integer :: GranuleMonth                  = 0
+    integer :: GranuleDay                    = 0
+    integer :: GranuleYear                   = 0
+d168 3
+a170 3
+      status = he5_GDwrattr(gridID, &
+       & 'InputVersion', HE5T_NATIVE_SCHAR, 1, &
+       &  GlobalAttributes%InputVersion)
+d206 2
+a207 2
+      call MakeHDF5Attribute(grp_id, &
+       & 'InputVersion', GlobalAttributes%InputVersion, .true.)
+d214 3
+a216 1
+      call MakeHDF5Attribute(grp_id, &
+d228 49
+a344 1
+!     use HDF5, only: H5T_NATIVE_CHARACTER
+d362 3
+a364 3
+      status = he5_SWwrattr(swathID, &
+       & 'InputVersion', HE5T_NATIVE_SCHAR, 1, &
+       &  GlobalAttributes%InputVersion)
+d575 3
+@
+
+
+2.8
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d1 1
+a1 2
+
+! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+d7 15
+a21 5
+
+   USE Hdf
+   USE MLSCommon
+   USE MLSMessageModule
+   USE SDPToolkit
+d23 5
+a27 1
+   PUBLIC
+d31 1
+a31 1
+    & "$Id: PCFHdr.f90,v 2.7 2002/10/01 22:03:54 pwagner Exp $"
+d43 31
+a73 3
+
+! Remarks:  This module contains subroutines for writing the PCF as an annotation
+! to HDF files.
+d142 182
+d334 2
+a335 2
+    character (len=132) :: Attrname
+    CHARACTER (LEN=98)  :: inpt(:)
+d348 1
+a348 1
+   SUBROUTINE WritePCF2Hdr (file, anText)
+d350 2
+d360 43
+a402 1
+      CHARACTER (LEN=1), POINTER :: anText(:)
+d460 50
+a509 1
+   END SUBROUTINE WritePCF2Hdr
+d521 3
+@
+
+
+2.7
+log
+@Fixed RCS Ident Block
+@
+text
+@d18 1
+a18 1
+    & "$Id: L2GPData.f90,v 2.47 2002/08/22 20:17:47 livesey Exp $"
+d21 2
+a22 1
+       & "$RCSfile: L2GPData.f90,v $"
+d197 5
+a201 1
+END MODULE PCFHdr
+d205 3
+@
+
+
+2.6
+log
+@Added WriteInputPointer
+@
+text
+@d16 7
+a22 7
+   PRIVATE :: ID, ModuleName
+
+!------------------- RCS Ident Info -----------------------
+   CHARACTER(LEN=130) :: Id = &                                                    
+   "$Id: PCFHdr.f90,v 2.5 2001/04/06 16:54:57 pwagner Exp $"
+   CHARACTER (LEN=*), PARAMETER :: ModuleName="$RCSfile: PCFHdr.f90,v $"
+!----------------------------------------------------------
+d200 3
+@
+
+
+2.5
+log
+@Reverting to version 2.2
+@
+text
+@d20 1
+a20 1
+   "$Id: PCFHdr.f90,v 2.2 2001/03/09 21:32:45 nakamura Exp $"
+d28 1
+d101 23
+d200 3
+@
+
+
+2.4
+log
+@Added announce_error; attempt recovery if PCF file not found
+@
+text
+@a9 1
+  use LEXER_CORE, only: PRINT_SOURCE
+d11 1
+a11 1
+  USE output_m, only: output
+a12 1
+  use TREE, only: DUMP_TREE_NODE, SOURCE_REF
+d20 1
+a20 1
+   "$Id: PCFHdr.f90,v 2.3 2001/04/04 19:37:25 vsnyder Exp $"
+a23 2
+  integer, private :: ERROR
+
+a58 3
+		integer, parameter :: DEFAULTANTEXTSIZE=1024
+		character(len=*), parameter :: DEFAULTANTEXT= &
+		& 'PCF file not found--check it has the right PCF number(900)'
+a61 1
+    error = 0
+a64 12
+      IF (returnStatus /= PGS_S_SUCCESS) THEN
+!         call Pgs_smf_getMsg(returnStatus, mnemonic, msg)
+!         msr = mnemonic // ':  ' // msg
+!         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+			call announce_error(0, &
+			& 'Failed to find PCF file--check its PCF number')
+			size = DEFAULTANTEXTSIZE
+      	ALLOCATE(anText(size), STAT=err)
+			anText(:len(DEFAULTANTEXT)) = DEFAULTANTEXT(:len(DEFAULTANTEXT))
+			return
+      ENDIF
+
+d67 2
+a68 4
+ !        msr = MLSMSG_Allocate // ' anText PCF array.'
+ !        CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+			call announce_error(0, &
+			& 'Failed to allocate anText for storing PCF contents')
+d77 3
+a79 5
+!         call Pgs_smf_getMsg(returnStatus, mnemonic, msg)
+!         msr = mnemonic // ':  ' // msg
+!         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+			call announce_error(0, &
+			& 'Failed to open PCF file--check its PCF number or name')
+d90 3
+a92 5
+!         call Pgs_smf_getMsg(returnStatus, mnemonic, msg)
+!         msr = mnemonic // ':  ' // msg
+!         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+			call announce_error(0, &
+			& 'Failed to close PCF file')
+a124 2
+    error = 0
+
+d129 2
+a130 4
+!         msr = MLSMSG_Fileopen // file
+!         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+			call announce_error(0, &
+			& 'Failed to open hdf-eos file: ' // file)
+d136 3
+a138 6
+      IF (anID == -1) then
+!			CALL MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
+!                                              &initialize the AN interface.')
+			call announce_error(0, &
+			& 'Failed to initialize AN interface')
+		endif
+d142 3
+a144 6
+      IF (annID == -1) then
+!			 CALL MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
+!                                               &create the file annotation.')
+			call announce_error(0, &
+			& 'Failed to create file annotation')
+		endif
+d152 3
+a154 6
+      IF (status == -1) then
+!			CALL MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
+!                                    &terminate access to the file annotation.')
+			call announce_error(0, &
+			& 'Failed to terminate access to annotation')
+		endif
+d158 3
+a160 6
+      IF (status == -1) then
+!			CALL MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
+!                                       &terminate access to the AN interface.')
+			call announce_error(0, &
+			& 'Failed to find terminate access to AN interface')
+		endif
+d164 3
+a166 6
+      IF (status == -1) then
+!			CALL MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
+!                                                       &close the HDF file.')
+			call announce_error(0, &
+			& 'Failed to close HDF file')
+		endif
+a170 61
+  ! ------------------------------------------------  announce_error  -----
+  subroutine announce_error ( lcf_where, full_message, use_toolkit, &
+  & error_number )
+  
+   ! Arguments
+	
+	integer, intent(in)    :: lcf_where
+	character(LEN=*), intent(in)    :: full_message
+	logical, intent(in), optional :: use_toolkit
+	integer, intent(in), optional    :: error_number
+
+	! Local
+  logical :: just_print_it
+  logical, parameter :: default_output_by_toolkit = .true.
+	
+	if(present(use_toolkit)) then
+		just_print_it = use_toolkit
+	elseif(default_output_by_toolkit) then
+		just_print_it = .false.
+	else
+		just_print_it = .true.
+	endif
+	
+	if(.not. just_print_it) then
+    error = max(error,1)
+    call output ( '***** At ' )
+
+	if(lcf_where > 0) then
+	    call print_source ( source_ref(lcf_where) )
+		else
+    call output ( '(no lcf node available)' )
+		endif
+
+    call output ( ': ' )
+    call output ( "The " );
+	if(lcf_where > 0) then
+    call dump_tree_node ( lcf_where, 0 )
+		else
+    call output ( '(no lcf tree available)' )
+		endif
+
+		CALL output("Caused the following error:", advance='yes', &
+		& from_where=ModuleName)
+		CALL output(trim(full_message), advance='yes', &
+		& from_where=ModuleName)
+		if(present(error_number)) then
+			CALL output('error number ', advance='no')
+			CALL output(error_number, places=9, advance='yes')
+		endif
+	else
+		print*, '***Error in module ', ModuleName
+		print*, trim(full_message)
+		if(present(error_number)) then
+			print*, 'error number ', error_number
+		endif
+	endif
+
+!===========================
+  end subroutine announce_error
+!===========================
+
+a175 3
+!# Revision 2.3  2001/04/04 19:37:25  vsnyder
+!# Try to produce an error message if there's no entry for the PCF in the PCF
+!#
+@
+
+
+2.3
+log
+@Try to produce an error message if there's no entry for the PCF in the PCF
+@
+text
+@d10 1
+d12 1
+a12 1
+   USE MLSMessageModule
+d14 1
+d22 1
+a22 1
+   "$Id: PCFHdr.f90,v 2.2 2001/03/09 21:32:45 nakamura Exp $"
+d26 2
+d63 3
+d69 1
+d74 9
+a82 3
+         call Pgs_smf_getMsg(returnStatus, mnemonic, msg)
+         msr = mnemonic // ':  ' // msg
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+d87 4
+a90 2
+         msr = MLSMSG_Allocate // ' anText PCF array.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+d99 5
+a103 3
+         call Pgs_smf_getMsg(returnStatus, mnemonic, msg)
+         msr = mnemonic // ':  ' // msg
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+d114 5
+a118 3
+         call Pgs_smf_getMsg(returnStatus, mnemonic, msg)
+         msr = mnemonic // ':  ' // msg
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+d151 2
+d157 4
+a160 2
+         msr = MLSMSG_Fileopen // file
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+d166 6
+a171 3
+      IF (anID == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
+                                              &initialize the AN interface.')
+
+d175 6
+a180 3
+      IF (annID == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
+                                               &create the file annotation.')
+
+d188 6
+a193 3
+      IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
+                                    &terminate access to the file annotation.')
+
+d197 6
+a202 3
+      IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
+                                       &terminate access to the AN interface.')
+
+d206 6
+a211 3
+      IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
+                                                       &close the HDF file.')
+
+d216 61
+d282 3
+@
+
+
+2.2
+log
+@Added INTENT(IN) for pcf number arg.
+@
+text
+@d20 1
+a20 1
+   "$Id: PCFHdr.f90,v 2.1 2001/03/09 21:10:32 nakamura Exp $"
+d65 6
+d182 3
+@
+
+
+2.1
+log
+@Routines for writing the PCF to an HDF file as an annotation.
+@
+text
+@d20 1
+a20 1
+   "$Id: PCFModule.f90,v 1.13 2001/02/22 20:37:03 nakamura Exp nakamura $"
+d34 1
+a34 1
+!--------------------------------------------------------
+d36 1
+a36 1
+!--------------------------------------------------------
+d43 2
+a46 2
+      INTEGER :: mlspcfN_pcf_start
+
+d175 4
+a178 1
+!# $Log: $
+@
+

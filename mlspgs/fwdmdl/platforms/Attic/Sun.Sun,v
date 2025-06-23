@@ -1,0 +1,270 @@
+head	2.5;
+access;
+symbols
+	V2-21:2.4
+	V2-20:2.4
+	V2-11:2.4
+	V2-10:2.4
+	V2-00:2.4
+	V1-51:2.4
+	V1-50:2.4
+	V1-45:2.4
+	V1-44:2.4
+	V1-43:2.4
+	V1-32:2.4
+	V1-31:2.4
+	V1-30:2.4
+	V1-13:2.4
+	V1-12:2.4
+	V1-11:2.4
+	V1-10:2.4
+	newfwm-feb03:2.4.0.2
+	V1-04:2.2
+	V1-03:2.2
+	V1-02:2.2
+	V1-00:2.2;
+locks; strict;
+comment	@# @;
+
+
+2.5
+date	2007.06.07.19.58.32;	author pwagner;	state dead;
+branches;
+next	2.4;
+
+2.4
+date	2002.06.21.23.24.09;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2002.06.21.00.16.43;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2002.01.19.00.27.39;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.11.15.00.07.57;	author pwagner;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2001.09.17.20.26.28;	author livesey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.09.10.18.39.07;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.5
+log
+@compiler-specific pieces removed from platforms directory
+@
+text
+@#Makefile.mac -- a file full of macros to be included by a Makefile
+#to compile a Fortran 9x program or library
+
+# "$Id: Sun.Sun,v 2.4 2002/06/21 23:24:09 pwagner Exp $"
+
+# Path to source files:
+S = ..
+# Path to root directory of l2, lib, etc.:
+CONFDIR=../..
+
+# Use the libmls.a directory, libdir, for .mod files
+# dir1 is the path prepended to its .o files in dependency lists
+libdir = $(CONFDIR)/lib/$(MLSCONFG)
+
+dir1 = $(libdir)/
+
+# sources shared by l2, l3 are in $(srclib)
+# these USE init_tables_module, which is different for l2 from the l3 version
+# while l2 and l3 use the same sources in srclib they do
+# require different objects--thus a source library instead of an object
+# library (such as libmls.a)
+# therefore we will tell make to add srclib to directories searched for .f90
+# while dir2, the path prepended to its .o files in dependency lists, is empty
+# so that its object files share the current working directory with those of l2
+srclib = $(CONFDIR)/srclib
+
+dir2 =
+
+# Use the libmlspack.a directory, blaslib, for .mod files
+blaslib = $(CONFDIR)/blas/$(MLSCONFG)
+
+UTILDIR=$(CONFDIR)/util
+
+# reecho.sh can filter out globbed file expansions that fail
+# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
+# However we will be using it just to create lapack_linker_line 
+# where LIB_LAPACK may contain multiple libraries
+REECHO=$(UTILDIR)/reecho.sh
+
+# Set paths for finding source files (different from .o and .mod)
+
+vpath %.mod ./
+vpath %.o ./
+vpath %.f90 ../ $(srclib) $(libdir)/../machines/$(MLSCONFG)
+vpath %.f9h ../ $(srclib)
+vpath %.f ../
+vpath %.c ../
+
+FC = f95
+
+DUSTY = $(FOPTS)
+
+# All the paths to supply .mod and INCLUDE files used in compiling %.f90
+# Precede each path by "-I" . Don't put spaces between "-I" and the path
+# Same goes for "-M" for module paths.
+PATHS_PREFXD := $(shell ${REECHO} -d -prefixn=-I $(UNPREFXDPTHS)) \
+                $(shell ${REECHO} -d -prefixn=-M $(UNPREFXDPTHS))
+INC_PATHS = $(PATHS_PREFXD) $(EXTRA_PATHS) \
+ -M$(PGSINC) -M$(srclib) -M$S -M$(libdir) -M$(blaslib) \
+ -I$(PGSINC) -I$(srclib) -I$S -I$(libdir) -I$(blaslib)
+
+# Define some suffix rules
+
+.SUFFIXES:
+.SUFFIXES: .o .dbg.o .f90 .f .c
+.f90.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
+
+.f90.dbg.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< -o $*.dbg.o $(FAFTER)
+
+.f.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
+
+.c.o:
+	$(CC) -c ${INC_PATHS} -DNAGf90Fortran $<
+
+#Special load libraries
+l_specials = -lnsl
+
+# $Log: Sun.Sun,v $
+# Revision 2.4  2002/06/21 23:24:09  pwagner
+# More steps enroute to ending cascades of recompiles
+#
+# Revision 2.3  2002/06/21 00:16:43  pwagner
+# Enroute to ending cascading recompiles
+#
+# Revision 2.2  2002/01/19 00:27:39  pwagner
+# made useful in he5lib by UNPREFXDPTHS
+#
+# Revision 2.1  2001/11/15 00:07:57  pwagner
+# Now works with new libmlspack.a and .mod files in blas
+#
+# Revision 2.0  2001/09/17 20:26:28  livesey
+# New forward model
+#
+# Revision 1.1  2001/09/10 18:39:07  pwagner
+# First commit
+#
+@
+
+
+2.4
+log
+@More steps enroute to ending cascades of recompiles
+@
+text
+@d4 1
+a4 1
+# "$Id: Sun.Sun,v 2.3 2002/06/21 00:16:43 pwagner Exp $"
+d82 3
+@
+
+
+2.3
+log
+@Enroute to ending cascading recompiles
+@
+text
+@d4 1
+a4 1
+# "$Id: Sun.Sun,v 2.2 2002/01/19 00:27:39 pwagner Exp $"
+d42 1
+d82 3
+@
+
+
+2.2
+log
+@made useful in he5lib by UNPREFXDPTHS
+@
+text
+@d4 1
+a4 1
+# "$Id: Sun.Sun,v 2.1 2001/11/15 00:07:57 pwagner Exp $"
+d8 2
+d13 1
+a13 1
+libdir = ../../lib/$(MLSCONFG)
+d25 1
+a25 1
+srclib = ../../srclib
+d30 1
+a30 1
+blaslib = ../../blas/$(MLSCONFG)
+d32 1
+a32 1
+UTILDIR=../../util
+d81 3
+@
+
+
+2.1
+log
+@Now works with new libmlspack.a and .mod files in blas
+@
+text
+@d4 1
+a4 1
+# "$Id: Sun.Sun,v 2.0 2001/09/17 20:26:28 livesey Exp $"
+d30 8
+d53 4
+a56 1
+INC_PATHS = $(EXTRA_PATHS) -M$(PGSINC) -M$(srclib) -M$S -M$(libdir) -M$(blaslib) \
+d79 3
+@
+
+
+2.0
+log
+@New forward model
+@
+text
+@d4 1
+a4 1
+# "$Id: Sun.Sun,v 1.1 2001/09/10 18:39:07 pwagner Exp $"
+d27 3
+d45 2
+a46 2
+INC_PATHS = $(EXTRA_PATHS) -M$(PGSINC) -M$(srclib) -M$S -M$(libdir) \
+ -I$(PGSINC) -I$(srclib) -I$S -I$(libdir)
+d68 3
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d4 1
+a4 1
+# "$Id: Sun.Sun,v 1.4 2001/08/15 21:03:28 pwagner Exp $"
+d65 3
+@
+

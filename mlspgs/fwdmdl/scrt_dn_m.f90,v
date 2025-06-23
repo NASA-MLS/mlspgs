@@ -1,0 +1,1960 @@
+head	2.22;
+access;
+symbols
+	v5-02-NRT-19:2.22
+	v6-00:2.22
+	v5-02-NRT-18:2.22
+	v5-02:2.22
+	v5-01-NRT-17:2.22
+	v5-01-NRT-16:2.22
+	v5-01-NRT-15:2.22
+	v5-01-NRT-14:2.22
+	neuralnetworks-1-0:2.22.0.8
+	cfm-single-freq-0-1:2.22.0.6
+	v5-01:2.22
+	v5-00:2.22
+	v4-23-TA133:2.22.0.4
+	mus-emls-1-70:2.22.0.2
+	rel-1-0-englocks-work:2.21.0.4
+	VUMLS1-00:2.21
+	VPL1-00:2.21
+	V4-22-NRT-08:2.21
+	VAM1-00:2.21
+	V4-21:2.21.0.2
+	V4-13:2.21
+	V4-12:2.21
+	V4-11:2.21
+	V4-10:2.21
+	V3-43:2.14
+	M4-00:2.21
+	V3-41:2.14
+	V3-40-PlusGM57:2.14.0.2
+	V2-24-NRT-04:2.12
+	V3-33:2.17
+	V2-24:2.12
+	V3-31:2.17
+	V3-30-NRT-05:2.17
+	cfm-01-00:2.16
+	V3-30:2.14
+	V3-20:2.14
+	V3-10:2.14
+	V2-23-NRT-02:2.12
+	V2-23:2.12
+	V2-22-NRT-01:2.12
+	V2-22:2.12
+	V2-21:2.11
+	V2-20:2.11
+	V2-11:2.11
+	V2-10:2.11
+	V2-00:2.11
+	V1-51:2.8
+	V1-50:2.8
+	V1-45:2.6
+	V1-44:2.6
+	V1-43:2.6
+	V1-32:2.6
+	V1-31:2.6
+	V1-30:2.6
+	V1-13:2.5
+	V1-12:2.5
+	V1-11:2.5
+	V1-10:2.5
+	newfwm-feb03:2.5.0.2
+	V1-04:2.0
+	V1-03:2.0
+	V1-02:2.0
+	JointForwardModel:2.1.0.2
+	V1-00:2.0
+	newfwm-sep01:1.6.0.2
+	V0-7:1.6
+	V0-5-Level2:1.5
+	V0-5-SIPS:1.5
+	V0_1:1.1;
+locks; strict;
+comment	@# @;
+
+
+2.22
+date	2018.05.14.23.33.27;	author vsnyder;	state Exp;
+branches;
+next	2.21;
+
+2.21
+date	2011.08.31.20.03.15;	author vsnyder;	state Exp;
+branches;
+next	2.20;
+
+2.20
+date	2011.07.29.01.48.13;	author vsnyder;	state Exp;
+branches;
+next	2.19;
+
+2.19
+date	2011.07.08.20.51.22;	author yanovsky;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2011.06.02.22.38.01;	author yanovsky;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2010.08.19.02.00.02;	author vsnyder;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2010.06.09.22.09.04;	author yanovsky;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2010.03.09.00.17.39;	author vsnyder;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2009.06.23.18.26.11;	author pwagner;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2009.01.16.23.40.03;	author vsnyder;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2006.12.13.02.32.03;	author vsnyder;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2005.11.21.22.57.27;	author vsnyder;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2005.11.01.23.02.21;	author vsnyder;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2005.06.22.18.08.19;	author pwagner;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2004.10.06.21.17.36;	author vsnyder;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2004.09.04.01.49.46;	author vsnyder;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2003.06.03.23.58.19;	author vsnyder;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2002.10.10.19.50.50;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2002.10.09.22.47.58;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2002.10.08.17.08.06;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2002.10.02.20.08.16;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2002.05.13.05.15.40;	author zvi;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2001.09.17.20.26.27;	author livesey;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2001.06.07.23.39.31;	author pwagner;	state Exp;
+branches
+	1.6.2.1;
+next	1.5;
+
+1.5
+date	2001.03.29.08.51.01;	author zvi;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.01.31.01.08.48;	author zvi;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2000.11.22.23.10.04;	author zvi;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2000.11.22.23.07.31;	author zvi;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2000.05.04.18.12.06;	author vsnyder;	state Exp;
+branches;
+next	;
+
+1.6.2.1
+date	2001.09.10.10.02.32;	author zvi;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.22
+log
+@Move Hessians stuff to Hessians_m
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module SCRT_DN_M
+
+! "Scalar Condensed Radiative Transfer Down."  "Down" is an anachronism.
+
+  implicit NONE
+  private
+  public :: SCRT, SCRT_PFA, DSCRT_DX, DSCRT_DT
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: scrt_dn_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+contains
+
+  ! -------------------------------------------------------  SCRT  -----
+  subroutine SCRT ( Tan_pt, T_SCRIPT, E_RFLTY, INCOPTDEPTH, TAU, RADIANCE, &
+                  & INC_RAD_PATH, I_STOP )
+    use MLSKinds, only: IP, RP
+
+!{ Accumulate the incremental opacities multiplied by the differential
+!  temperatures to get radiative transfer:
+!  $I(\mathbf{x}) = \sum_{i=1}^{2N} \Delta B_i \tau_i$
+!  In the code below, $\Delta B$ is called t_script.
+
+! inputs:
+
+    integer, intent(in) :: Tan_pt          ! Tangent point index in t_script
+    real(rp), intent(in) :: t_script(:)    ! differential temperatures (K).
+    real(rp), intent(in) :: e_rflty        ! Earth surface reflectivity (0--1).
+    real(rp), intent(in) :: incoptdepth(:) ! layer incremental optical depth,
+!                           this comes in as a positive number.
+! outputs:
+
+    real(rp), intent(out) :: tau(:)        ! transmission function
+    real(rp), intent(out) :: inc_rad_path(:) ! incremental radiance along the
+                                           ! path.  t_script * tau.
+    real(rp), intent(out) :: radiance      ! radiance(K).
+    integer(ip), intent(out) :: i_stop     ! integration stop index
+
+! internals
+
+    integer(ip) :: n_path
+    real(rp) :: total_opacity
+    real(rp), parameter :: black_out = -15.0_rp
+
+! begin code
+
+    n_path = size(t_script)
+    tau(1) = 1.0_rp
+    inc_rad_path(1) = t_script(1)
+    total_opacity = 0.0_rp
+    radiance = t_script(1)
+
+!{ Compute $\tau_i$ for $2 \leq i \leq t$, where $t$ is given by half_path.
+!  $\tau_i = \exp \left \{ - \sum_{j=2}^i \Delta \delta_{j \rightarrow j-1} \right \}$.
+!  $\Delta \delta_{j \rightarrow j-1}$ is given by incoptdepth and
+!  $- \sum_{j=2}^i \Delta \delta_{j \rightarrow j-1}$ is given by total_opacity.
+
+    do i_stop = 2, tan_pt
+      total_opacity = total_opacity - incoptdepth(i_stop)
+      tau(i_stop) = exp(total_opacity)
+      inc_rad_path(i_stop) = t_script(i_stop) * tau(i_stop)
+      radiance = radiance + inc_rad_path(i_stop)
+      if ( total_opacity < black_out ) then
+        tau(i_stop+1:n_path) = 0.0_rp
+        inc_rad_path(i_stop+1:n_path) = 0.0_rp
+        return
+      end if
+    end do
+
+!{ Account for earth reflectivity at the tangent to the surface:
+!  $\tau_{2N - t + 1} = \Upsilon \tau_t$.
+
+    tau(tan_pt+1) = e_rflty * tau(tan_pt)
+    inc_rad_path(tan_pt+1) = t_script(tan_pt+1) * tau(tan_pt+1)
+    radiance = radiance + inc_rad_path(tan_pt+1)
+
+!{ Compute $\tau_i$ for $i > 2 N - t + 1$, where $t$ is given by half_path.\\
+!  $\tau_i = \tau_{2N - t + 1} \exp \left \{ - \sum_{j=2N - t + 1}^i
+!    \Delta \delta_{j-1 \rightarrow j} \right \}$.
+
+! We don't reset total_opacity, so we compute e_rflty * exp(total_opacity)
+! instead of tau(tan_pt) * exp(total_opacity).  i_stop is tan_pt + 1 here.
+
+    do while ( total_opacity >= black_out .and. i_stop < n_path )
+      total_opacity = total_opacity - incoptdepth(i_stop)
+      i_stop = i_stop + 1
+      tau(i_stop) = e_rflty * exp(total_opacity)
+      inc_rad_path(i_stop) = t_script(i_stop) * tau(i_stop)
+      radiance = radiance + inc_rad_path(i_stop)
+    end do
+
+    tau(i_stop+1:n_path) = 0.0_rp
+    inc_rad_path(i_stop+1:n_path) = 0.0_rp
+
+  end subroutine SCRT
+
+!------------------------------------------------------  SCRT_PFA  -----
+
+  ! Combine the Tau's for PFA and non-PFA models.
+  ! We don't have to worry about the tangent point, because SCRT
+  ! already did when computing the Tau's.
+
+  subroutine SCRT_PFA ( Channel, Tau_LBL, Tau_PFA, T_Script_PFA, RadV )
+
+    use MLSKinds, only: RP
+    use Tau_M, only: Tau_T
+
+    integer, intent(in) :: Channel              ! Which channel in Tau_PFA?
+                                                ! Index in channels stru, not chan#
+    type(tau_t), intent(in) :: Tau_LBL, Tau_PFA ! Tau structures
+    real(rp), intent(in) :: T_Script_PFA(:,:)   ! Delta B, Path X Channels
+    real(rp), intent(out) :: RadV(:)            ! Radiances at frequencies
+                                                ! within the channel
+
+    integer :: FRQ_I                            ! Frequency index
+    integer :: N_Tau_PFA                        ! Tau_PFA%i_stop(channel)
+    integer :: PATH_I                           ! Path index
+
+    n_tau_PFA = tau_PFA%i_stop(channel)
+
+    do frq_i = 1, size(radV)
+      radV(frq_i) = 0.0
+      do path_i = 1, min(tau_LBL%i_stop(frq_i), n_tau_PFA)
+        radV(frq_i) = radV(frq_i) + &
+          & t_script_pfa(path_i,channel) * tau_lbl%tau(path_i,frq_i) * &
+          &                                tau_pfa%tau(path_i,channel)
+      end do ! path_i
+      ! Tau's after i_stop are 0.0.
+    end do ! frq_i
+
+  end subroutine SCRT_PFA
+
+!------------------------------------------------------  DSCRT_DT  -----
+! Compute the scalarized condensed radiative transfer derivatives,
+! with derivatives of the differential Temperatures.
+
+  subroutine DSCRT_DT ( TAN_PT, D_DELTA_DT, TAU, INC_RAD_PATH, DT_SCRIPT_DT, &
+                      & I_START, I_END, DRAD_DT )
+    use MLSKinds, only: IP, RP
+
+!{ $\frac{\text{d}I(\mathbf{x})}{\text{d}x} = \sum_{i=1}^{2N} Q_i \tau_i$,
+!  where $Q_i = \frac{\partial \Delta B_i}{\partial x} - \Delta B_i W_i$
+!  and $W_i$ is given below. The only difference from {\tt DSCRT_DX} is
+!  that $\frac{\partial \Delta B_i}{\partial x}$ is not assumed to be zero
+!  here. This works for any $x$, not just temperature.  $\Delta B$ is
+!  called T-script in some notes, so {\tt DT_SCRIPT_DT} is
+!  $\frac{\partial \Delta B_i}{\partial x}$.
+
+    integer, intent(in) :: Tan_pt           ! Tangent point index in inc_rad_path
+    integer(ip), intent(in) :: i_start      ! where non-zeros on the path begin
+    integer(ip), intent(in) :: i_end        ! where non-zeros on the path end
+    real(rp), intent(in) :: d_delta_dt(:)   ! path opacity derivatives wrt sve
+    real(rp), intent(in) :: tau(:)          ! path transmission
+    real(rp), intent(in) :: inc_rad_path(:) ! incremental radiance along the
+                                            ! path.  t_script * tau.
+    real(rp), intent(in) :: dt_script_dt(:) ! derivatives of differential temps
+    real(rp), intent(out) :: drad_dt        ! radiance derivative wrt temperature
+
+    integer(ip) :: i, n_path
+    real(rp) :: w
+
+    w = 0.0_rp
+    drad_dt = dt_script_dt(1)
+
+    n_path = size(inc_rad_path)
+
+!{ $-W_i = -\sum_{j=2}^i \frac{\partial \Delta \delta_{j \rightarrow j - 1}}
+!                           {\partial x}$,
+!  where the derivative is given by {\tt D_DELTA_DT}.
+!
+! $\frac{\text{d}I(\mathbf{x})}{\text{d}x} :=
+!  \frac{\text{d}I(\mathbf{x})}{\text{d}x}
+!  + \frac{\partial \Delta B_i}{\partial x} \mathcal{T}_i +
+!  \Delta B_i \mathcal{T}_i W_i$, where $\Delta B_i \mathcal{T}_i$ is given
+!  by {\tt INC_RAD_PATH(i)}. See {\tt wvs-024}.
+
+    do i = max(2,i_start), min(i_end,tan_pt)
+      w = w - d_delta_dt(i)
+      drad_dt = drad_dt + dt_script_dt(i) * tau(i) + inc_rad_path(i) * w
+    end do
+
+    if ( i_end <= tan_pt ) return
+
+! Tangent point or bounce off the earth's surface
+
+    drad_dt = drad_dt + dt_script_dt(tan_pt+1) * tau(tan_pt+1)  &
+            + inc_rad_path(tan_pt+1) * w
+
+! Same as above, but don't add in the zero-emission layer at the 
+! tangent point or earth's surface
+
+    do i = tan_pt+2, min(i_end,n_path)
+      w = w - d_delta_dt(i-1)
+      drad_dt = drad_dt + dt_script_dt(i) * tau(i) + inc_rad_path(i) * w
+    end do
+
+  end subroutine DSCRT_DT
+
+!------------------------------------------------------  DSCRT_DX  -----
+! Compute the scalarized condensed radiative transfer derivatives,
+! without derivatives of the differential Temperatures.
+
+  subroutine DSCRT_DX ( TAN_PT, D_DELTA_DX, INC_RAD_PATH, I_START, I_END, DRAD_DX )
+    use MLSKinds, only: IP, RP
+
+!{ $\frac{\partial I(\mathbf{x})}{\partial x_k} = \sum_{i=1}^{2N} Q_i \tau_i$,
+!  where $Q_i = \frac{\partial \Delta B_i}{\partial x_k} - \Delta B_i W_i$
+!  and $W_i$ is given below. The only difference from {\tt DSCRT_DT} is
+!  that $\frac{\partial \Delta B_i}{\partial x}$ is assumed to be zero here.
+
+! Inputs
+
+    integer, intent(in) :: Tan_pt         ! Tangent point index in inc_rad_path
+    real(rp), intent(in) :: d_delta_dx(:) ! path opacity derivatives
+    real(rp), intent(in) :: inc_rad_path(:) ! incremental radiance along the
+                                          ! path.  t_script * tau.
+
+    integer(ip), intent(in) :: i_start    ! where non-zeros on the path begin
+    integer(ip), intent(in) :: i_end      ! where non-zeros on path end
+
+! Output
+
+    real(rp), intent(out) :: drad_dx      ! radiance derivative wrt x
+
+! internals
+
+    integer(ip) :: i, n_path
+    real(rp) :: w
+
+    drad_dx = 0.0_rp
+    w = 0.0_rp
+    n_path = size(inc_rad_path)
+
+!{ $-W_i = -\sum_{j=2}^i \frac{\partial \Delta \delta_{j \rightarrow j - 1}}
+!                           {\partial x_k}$,
+!  where the derivative is given by d_delta_dx.
+
+    do i = max(2,i_start), min(i_end,tan_pt)
+      w = w - d_delta_dx(i)
+      drad_dx = drad_dx + inc_rad_path(i) * w
+    end do
+
+    if ( i_end <= tan_pt ) return
+
+! Tangent point or bounce off the earth's surface
+
+    if ( i_start <= tan_pt ) drad_dx = drad_dx + inc_rad_path(tan_pt+1) * w
+
+! Same as above, but don't add in the zero-emission layer at the 
+! tangent point or earth's surface
+
+    do i = max(i_start,tan_pt+2) , min(n_path,i_end)
+      w = w - d_delta_dx(i-1)
+      drad_dx = drad_dx + inc_rad_path(i) * w
+    end do
+
+  end subroutine DSCRT_DX
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: scrt_dn_m.f90,v 2.21 2011/08/31 20:03:15 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module SCRT_DN_M
+! $Log: scrt_dn_m.f90,v $
+! Revision 2.21  2011/08/31 20:03:15  vsnyder
+! TeXnicalities
+!
+! Revision 2.20  2011/07/29 01:48:13  vsnyder
+! Remove tabs (Intel compiler complains)
+!
+! Revision 2.19  2011/07/08 20:51:22  yanovsky
+! Minor comments changes
+!
+! Revision 2.18  2011/06/02 22:38:01  yanovsky
+! Add opacity second derivatives D2_DELTA_DX2_qr to subroutine D2SCRT_DX2
+! to allow for computations of analytical Hessians in logarithmic basis
+!
+! Revision 2.17  2010/08/19 02:00:02  vsnyder
+! Polish up TeXnicalities
+!
+! Revision 2.16  2010/06/09 22:09:04  yanovsky
+! d2scrt_dx2 subroutine
+!
+! Revision 2.15  2010/03/09 00:17:39  vsnyder
+! Repair TeXnicalities
+!
+! Revision 2.14  2009/06/23 18:26:11  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.13  2009/01/16 23:40:03  vsnyder
+! Correct case of starting point on path past the tangent point.
+! add PRINT statement to not_used_here.
+!
+! Revision 2.12  2006/12/13 02:32:03  vsnyder
+! Drag the tangent point around instead of assuming it's the middle one
+!
+! Revision 2.11  2005/11/21 22:57:27  vsnyder
+! PFA derivatives stuff
+!
+! Revision 2.10  2005/11/01 23:02:21  vsnyder
+! PFA Derivatives
+!
+! Revision 2.9  2005/06/22 18:08:19  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.8  2004/10/06 21:17:36  vsnyder
+! Make blacked-out Taus 1.0 instead of 0.0
+!
+! Revision 2.7  2004/09/04 01:49:46  vsnyder
+! Handle earth reflectivity at tangent point correctly in derivatives.
+!
+! Revision 2.6  2003/06/03 23:58:19  vsnyder
+! Correct a comment
+!
+! Revision 2.5  2002/10/10 19:50:50  vsnyder
+! Mostly cosmetic changes, including adding LaTeX equations
+!
+! Revision 2.4  2002/10/09 22:47:58  vsnyder
+! Don't set tau(i_stop) to zero at the end
+!
+! Revision 2.3  2002/10/08 17:08:06  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.2  2002/10/02 20:08:16  vsnyder
+! Insert copyright notice, other cosmetic changes
+!
+! Revision 2.1  2002/05/13 05:15:40  zvi
+! Adding missing intent on dummy variables
+!
+! Revision 2.0  2001/09/17 20:26:27  livesey
+! New forward model
+!
+! Revision 1.6.2.1  2001/09/10 10:02:32  zvi
+! Cleanup..comp_path_entities_m.f90
+!
+! Revision 1.1  2000/05/04 18:12:06  vsnyder
+! Initial conversion to Fortran 90
+@
+
+
+2.21
+log
+@TeXnicalities
+@
+text
+@d18 1
+a18 1
+  public :: SCRT, SCRT_PFA, DSCRT_DX, DSCRT_DT, D2SCRT_DX2
+a271 75
+
+!------------------------------------------------------  D2SCRT_DX2  -----
+! Compute the scalarized condensed radiative transfer second derivatives,
+! without derivatives of the differential Temperatures w.r.t. species.
+
+  subroutine D2SCRT_DX2 ( TAN_PT, D_DELTA_DX_q, D_DELTA_DX_r, D2_DELTA_DX2_qr, &
+                        &  INC_RAD_PATH, I_START, I_END, D2RAD_DX2 )
+    use MLSKinds, only: IP, RP
+
+! Linear basis: \\
+!{ $\frac{ \partial^2 I(x) }{ \partial f_q^k \partial f_{\tilde{q}}^{\tilde{k}} } = 
+! \sum_{i=1}^{2N} \triangle B_i W_{i, q}^{k} W_{i, \tilde{q}}^{\tilde{k}} \, \tau_i$
+! Logarithmic basis: \\
+
+! Inputs
+
+
+    integer, intent(in) :: Tan_pt               ! Tangent point index in inc_rad_path
+    real(rp), intent(in) :: d_delta_dx_q(:)     ! path opacity derivatives wrt x_q
+    real(rp), intent(in) :: d_delta_dx_r(:)     ! path opacity derivatives wrt x_r
+    real(rp), intent(in) :: d2_delta_dx2_qr(:)  ! path opacity derivatives wrt x_q and x_r
+    real(rp), intent(in) :: inc_rad_path(:)     ! incremental radiance along the
+                                                ! path.  t_script * tau.
+
+    integer(ip), intent(in) :: i_start    ! where non-zeros on the path begin
+    integer(ip), intent(in) :: i_end      ! where non-zeros on path end
+
+! Output
+
+    real(rp), intent(out) :: d2rad_dx2      ! radiance second derivative wrt x
+
+! internals
+
+    integer(ip) :: i, n_path
+    real(rp) :: wq
+    real(rp) :: wr
+    real(rp) :: dwqr
+
+    d2rad_dx2 = 0.0_rp
+    wq = 0.0_rp
+    wr = 0.0_rp
+    dwqr = 0.0_rp
+    n_path = size(inc_rad_path)
+
+!{ $W_{i,q} = \sum_{j=2}^i \frac{\partial \Delta \delta_{j \rightarrow j - 1}}
+!                           {\partial x_q}$,
+!  where the derivatives are given by d_delta_dx_q and d_delta_dx_r.
+
+    do i = max(2,i_start), min(i_end,tan_pt)
+      wq   = wq   + d_delta_dx_q(i)
+      wr   = wr   + d_delta_dx_r(i)
+      dwqr = dwqr + d2_delta_dx2_qr(i)
+      d2rad_dx2 = d2rad_dx2 + inc_rad_path(i) * (wq * wr - dwqr)
+    end do
+
+    if ( i_end <= tan_pt ) return
+
+! Tangent point or bounce off the earth's surface
+
+    if ( i_start <= tan_pt ) d2rad_dx2 = d2rad_dx2 + inc_rad_path(tan_pt+1) * (wq * wr - dwqr)
+    ! IGOR: Why wq,wr,dwqr are not recalculated here???
+
+! Same as above, but don't add in the zero-emission layer at the 
+! tangent point or earth's surface
+
+    do i = max(i_start,tan_pt+2) , min(n_path,i_end)
+      wq   = wq   + d_delta_dx_q(i-1)
+      wr   = wr   + d_delta_dx_r(i-1)
+      dwqr = dwqr + d2_delta_dx2_qr(i-1)
+      d2rad_dx2 = d2rad_dx2 + inc_rad_path(i) * (wq * wr - dwqr)
+    end do
+
+  end subroutine D2SCRT_DX2
+
+
+d275 1
+a275 1
+       "$Id: scrt_dn_m.f90,v 2.20 2011/07/29 01:48:13 vsnyder Exp $"
+d284 3
+@
+
+
+2.20
+log
+@Remove tabs (Intel compiler complains)
+@
+text
+@d181 1
+a181 1
+!                           {\partial x_k}$,
+d183 6
+d350 1
+a350 1
+       "$Id: scrt_dn_m.f90,v 2.19 2011/07/08 20:51:22 yanovsky Exp $"
+d359 3
+@
+
+
+2.19
+log
+@Minor comments changes
+@
+text
+@d326 1
+a326 1
+    		! IGOR: Why wq,wr,dwqr are not recalculated here???
+d344 1
+a344 1
+       "$Id: scrt_dn_m.f90,v 2.18 2011/06/02 22:38:01 yanovsky Exp $"
+d353 3
+@
+
+
+2.18
+log
+@Add opacity second derivatives D2_DELTA_DX2_qr to subroutine D2SCRT_DX2 to allow for computations of analytical Hessians in logarithmic basis
+@
+text
+@d344 1
+a344 1
+       "$Id: scrt_dn_m.f90,v 2.17 2010/08/19 02:00:02 vsnyder Exp $"
+d353 4
+@
+
+
+2.17
+log
+@Polish up TeXnicalities
+@
+text
+@d271 2
+a272 1
+  subroutine D2SCRT_DX2 ( TAN_PT, D_DELTA_DX_q, D_DELTA_DX_r, INC_RAD_PATH, I_START, I_END, D2RAD_DX2 )
+d275 1
+d278 1
+d283 6
+a288 5
+    integer, intent(in) :: Tan_pt            ! Tangent point index in inc_rad_path
+    real(rp), intent(in) :: d_delta_dx_q(:)  ! path opacity derivatives wrt x_q
+    real(rp), intent(in) :: d_delta_dx_r(:)  ! path opacity derivatives wrt x_r
+    real(rp), intent(in) :: inc_rad_path(:)  ! incremental radiance along the
+                                             ! path.  t_script * tau.
+d295 1
+a295 1
+    real(rp), intent(out) :: d2rad_dx2      ! radiance derivative wrt x
+d302 1
+d307 1
+d315 4
+a318 3
+      wq = wq + d_delta_dx_q(i)
+      wr = wr + d_delta_dx_r(i)
+      d2rad_dx2 = d2rad_dx2 + inc_rad_path(i) * wq * wr
+d325 2
+a326 1
+    if ( i_start <= tan_pt ) d2rad_dx2 = d2rad_dx2 + inc_rad_path(tan_pt+1) * wq * wr
+d332 4
+a335 3
+      wq = wq + d_delta_dx_q(i-1)
+      wr = wr + d_delta_dx_r(i-1)
+      d2rad_dx2 = d2rad_dx2 + inc_rad_path(i) * wq * wr
+d344 1
+a344 1
+       "$Id: scrt_dn_m.f90,v 2.16 2010/06/09 22:09:04 yanovsky Exp $"
+d353 3
+@
+
+
+2.16
+log
+@d2scrt_dx2 subroutine
+@
+text
+@d35 1
+a35 1
+!  In the code below, $\Delta B$ is called t\_script.
+d66 1
+a66 1
+!{ Compute $\tau_i$ for $2 \leq i \leq t$, where $t$ is given by half\_path.
+d69 1
+a69 1
+!  $- \sum_{j=2}^i \Delta \delta_{j \rightarrow j-1}$ is given by total\_opacity.
+d90 1
+a90 1
+!{ Compute $\tau_i$ for $i > 2 N - t + 1$, where $t$ is given by half\_path.\\
+d147 2
+a148 1
+! Compute the scalarized condensed radiative transfer derivatives.
+d154 7
+a160 2
+!{ $\frac{\text{d}I(\mathbf{x})}{\text{d}x_k} = \sum_{i=1}^{2N} Q_i \tau_i$,
+!  where $Q_i = \frac{\partial \Delta B_i}{\partial x_k} - \Delta B_i W_i$.
+d182 1
+a182 1
+!  where the derivative is given by d\_delta\_dt.
+d208 1
+a208 1
+! without derivatives of the differential Temperatures w.r.t. species.
+d215 2
+a216 2
+!  and $W_i$ is given below.
+!  We assume $\frac{\partial \Delta B_i}{\partial x_k}$ is zero here.
+d243 1
+a243 1
+!  where the derivative is given by d\_delta\_dx.
+d306 1
+a306 1
+!  where the derivatives are given by d\_delta\_dx\_q and d\_delta\_dx\_r.
+d335 1
+a335 1
+       "$Id: scrt_dn_m.f90,v 2.15 2010/03/09 00:17:39 vsnyder Exp $"
+d344 3
+@
+
+
+2.15
+log
+@Repair TeXnicalities
+@
+text
+@d18 1
+a18 1
+  public :: SCRT, SCRT_PFA, DSCRT_DX, DSCRT_DT
+d260 66
+d329 1
+a329 1
+       "$Id: scrt_dn_m.f90,v 2.14 2009/06/23 18:26:11 pwagner Exp $"
+d338 3
+@
+
+
+2.14
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d22 1
+a22 1
+       "$RCSfile: $"
+d176 1
+a176 1
+!  where the derivative is given by d_delta_dt.
+d263 1
+a263 1
+       "$Id: read_apriori.f90 is it here $"
+d272 3
+@
+
+
+2.13
+log
+@Correct case of starting point on path past the tangent point.
+add PRINT statement to not_used_here.
+@
+text
+@d22 1
+a22 1
+       "$RCSfile: scrt_dn_m.f90,v $"
+d260 1
+a261 1
+!---------------------------- RCS Ident Info -------------------------------
+d263 2
+a264 3
+       "$Id: scrt_dn_m.f90,v 2.12 2006/12/13 02:32:03 vsnyder Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d266 1
+a266 1
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
+d268 1
+d272 4
+@
+
+
+2.12
+log
+@Drag the tangent point around instead of assuming it's the middle one
+@
+text
+@d248 1
+a248 1
+    drad_dx = drad_dx + inc_rad_path(tan_pt+1) * w
+d253 1
+a253 1
+    do i = tan_pt+2 , min(n_path,i_end)
+d263 1
+a263 1
+       "$Id: scrt_dn_m.f90,v 2.11 2005/11/21 22:57:27 vsnyder Exp $"
+d267 1
+d272 3
+@
+
+
+2.11
+log
+@PFA derivatives stuff
+@
+text
+@d28 1
+a28 1
+  subroutine SCRT ( T_SCRIPT, E_RFLTY, INCOPTDEPTH, TAU, RADIANCE, &
+d39 1
+d54 1
+a54 1
+    integer(ip) :: n_path, half_path
+a60 1
+    half_path = n_path / 2
+d71 1
+a71 1
+    do i_stop = 2, half_path
+d86 3
+a88 3
+    tau(half_path+1) = e_rflty * tau(half_path)
+    inc_rad_path(half_path+1) = t_script(half_path+1) * tau(half_path+1)
+    radiance = radiance + inc_rad_path(half_path+1)
+d95 1
+a95 1
+! instead of tau(half_path) * exp(total_opacity).  i_stop is half_path + 1 here.
+d149 1
+a149 1
+  subroutine DSCRT_DT ( D_DELTA_DT, TAU, INC_RAD_PATH, DT_SCRIPT_DT, &
+d156 1
+d166 1
+a166 1
+    integer(ip) :: i, n_path, half_path
+a172 1
+    half_path = n_path/2
+d178 1
+a178 1
+    do i = max(2,i_start), min(i_end,half_path)
+d183 1
+a183 1
+    if ( i_end <= half_path ) return
+d187 2
+a188 2
+    drad_dt = drad_dt + dt_script_dt(half_path+1) * tau(half_path+1)  &
+            + inc_rad_path(half_path+1) * w
+d193 1
+a193 1
+    do i = half_path+2, min(i_end,n_path)
+d204 1
+a204 1
+  subroutine DSCRT_DX ( D_DELTA_DX, INC_RAD_PATH, I_START, I_END, DRAD_DX )
+d214 1
+d228 1
+a228 1
+    integer(ip) :: i, n_path, half_path
+a233 1
+    half_path = n_path/2
+d239 1
+a239 1
+    do i = max(2,i_start), min(i_end,half_path)
+d244 1
+a244 1
+    if ( i_end <= half_path ) return
+d248 1
+a248 1
+    drad_dx = drad_dx + inc_rad_path(half_path+1) * w
+d253 1
+a253 1
+    do i = half_path+2 , min(n_path,i_end)
+d263 1
+a263 1
+       "$Id: scrt_dn_m.f90,v 2.10 2005/11/01 23:02:21 vsnyder Exp $"
+d271 3
+@
+
+
+2.10
+log
+@PFA Derivatives
+@
+text
+@d223 1
+a223 1
+    real(rp), intent(inout) :: drad_dx    ! radiance derivative wrt x
+d230 1
+d263 1
+a263 1
+       "$Id: scrt_dn_m.f90,v 2.9 2005/06/22 18:08:19 pwagner Exp $"
+d271 3
+@
+
+
+2.9
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d14 2
+d18 1
+a18 1
+  public :: SCRT_DN, GET_DSCRT_NO_T_DN, GET_DSCRT_DN
+d22 1
+a22 1
+       "$RCSfile: $"
+d27 4
+a30 5
+  ! ----------------------------------------------------  SCRT_DN  -----
+  subroutine SCRT_DN ( T_SCRIPT, E_RFLTY, INCOPTDEPTH, TAU, RADIANCE, I_STOP )
+    use MLSCommon, only: IP, RP
+
+! "Scalar Radiative Transfer Down."  "Down" is an anachronism.
+d46 2
+d62 1
+d74 2
+a75 1
+      radiance = radiance + t_script(i_stop) * tau(i_stop)
+d77 2
+a78 1
+        tau(i_stop+1:n_path) = 1.0_rp
+d87 2
+a88 1
+    radiance = radiance + t_script(half_path+1) * tau(half_path+1)
+d101 2
+a102 1
+      radiance = radiance + t_script(i_stop) * tau(i_stop)
+d105 6
+a110 1
+    tau(i_stop+1:n_path) = 1.0_rp
+d112 3
+a114 1
+  end subroutine SCRT_DN
+d116 11
+a126 3
+!-------------------------------------------  GET_DSCRT_NO_T_DN  -------
+! Compute the scalarized condensed radiative transfer derivatives,
+! without derivatives of the differential Temperatures w.r.t. species.
+d128 3
+a130 3
+  subroutine GET_DSCRT_NO_T_DN ( D_DELTA_DX, T_SCRIPT, TAU, I_START, &
+    &                            I_END, DRAD_DX )
+    use MLSCommon, only: IP, RP
+d132 1
+a132 3
+!{ $\frac{\text{d}I(\mathbf{x})}{\text{d}x_k} = \sum_{i=1}^{2N} Q_i \tau_i$,
+!  where $Q_i = \frac{\partial \Delta B_i}{\partial x_k} - \Delta B_i W_i$.
+!  But we assume $\frac{\partial \Delta B_i}{\partial x_k}$ is zero here.
+d134 9
+a142 1
+! Inputs
+d144 1
+a144 3
+    real(rp), intent(in) :: d_delta_dx(:) ! path opacity derivatives
+    real(rp), intent(in) :: t_script(:)   ! differential temparatures
+    real(rp), intent(in) :: tau(:)        ! path transmission
+d146 2
+a147 2
+    integer(ip), intent(in) :: i_start    ! where non-zeros on the path begin
+    integer(ip), intent(in) :: i_end      ! where non-zeros on path end
+d149 3
+a151 1
+! Output
+d153 2
+a154 1
+    real(rp), intent(out) :: drad_dx      ! radiance derivative wrt x
+d156 8
+a163 1
+! internals
+d169 3
+a171 2
+    drad_dx = 0.0_rp
+    n_path = size(t_script)
+d176 1
+a176 1
+!  where the derivative is given by d\_delta\_dx.
+d179 2
+a180 2
+      w = w - d_delta_dx(i)
+      drad_dx = drad_dx + t_script(i) * w * tau(i)
+d185 1
+a185 1
+! Bounce off the earth's surface
+d187 2
+a188 1
+    drad_dx = drad_dx + t_script(half_path+1) * w * tau(half_path+1)
+d190 2
+a191 1
+! Same as above, but don't add in the zero-emission layer at the earth's surface
+d193 3
+a195 3
+    do i = half_path+2 , min(n_path,i_end)
+      w = w - d_delta_dx(i-1)
+      drad_dx = drad_dx + t_script(i) * w * tau(i)
+d198 22
+a219 3
+  end subroutine GET_DSCRT_NO_T_DN
+!--------------------------------------------------  GET_DSCRT_DN  -----
+! Compute the scalarized condensed radiative transfer derivatives.
+d221 1
+a221 3
+  subroutine GET_DSCRT_DN ( DDER, T_SCRIPT, TAU, DT_SCRIPT_DX, I_START, &
+                  &         I_END, DRAD_DX )
+    use MLSCommon, only: IP, RP
+d223 1
+a223 2
+!{ $\frac{\text{d}I(\mathbf{x})}{\text{d}x_k} = \sum_{i=1}^{2N} Q_i \tau_i$,
+!  where $Q_i = \frac{\partial \Delta B_i}{\partial x_k} - \Delta B_i W_i$.
+d225 1
+a225 7
+    integer(ip), intent(in) :: i_start      ! where non-zeros on the path begin
+    integer(ip), intent(in) :: i_end        ! where non-zeros on the path end
+    real(rp), intent(in) :: DDER(:)         ! path opacity derivatives wrt sve
+    real(rp), intent(in) :: T_SCRIPT(:)     ! differential temperatures
+    real(rp), intent(in) :: TAU(:)          ! path transmission
+    real(rp), intent(in) :: DT_SCRIPT_DX(:) ! derivatives of differential temps
+    real(rp), intent(out) :: drad_dx        ! radiance derivative wrt species
+d231 1
+a231 3
+    drad_dx = dt_script_dx(1)
+
+    n_path = size(t_script)
+d236 1
+a236 1
+!  where the derivative is given by dder.
+d239 2
+a240 2
+      w = w - dder(i)
+      drad_dx = drad_dx + (dt_script_dx(i) + t_script(i) * w) * tau(i)
+d245 1
+a245 1
+! Bounce off the earth's surface
+d247 1
+a247 2
+    drad_dx = drad_dx + (dt_script_dx(half_path+1)  &
+            + t_script(half_path+1) * w) * tau(half_path+1)
+d249 2
+a250 1
+! Same as above, but don't add in the zero-emission layer at the earth's surface
+d252 3
+a254 3
+    do i = half_path+2, min(i_end,n_path)
+      w = w - dder(i-1)
+      drad_dx = drad_dx + (dt_script_dx(i) + t_script(i) * w) * tau(i)
+d257 1
+a257 1
+  end subroutine GET_DSCRT_DN
+d262 1
+a262 1
+       "$Id: $"
+d270 3
+@
+
+
+2.8
+log
+@Make blacked-out Taus 1.0 instead of 0.0
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d18 3
+a20 5
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+    & "$Id: scrt_dn_m.f90,v 2.7 2004/09/04 01:49:46 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName= "$RCSfile: scrt_dn_m.f90,v $"
+d211 6
+a216 1
+  logical function NOT_USED_HERE()
+d218 1
+a218 1
+  end function NOT_USED_HERE
+d222 3
+@
+
+
+2.7
+log
+@Handle earth reflectivity at tangent point correctly in derivatives.
+@
+text
+@d12 1
+a12 1
+    & "$Id: scrt_dn_m.f90,v 2.6 2003/06/03 23:58:19 vsnyder Exp $"
+d66 1
+a66 1
+        tau(i_stop+1:n_path) = 0.0_rp
+d91 1
+a91 1
+    tau(i_stop+1:n_path) = 0.0_rp
+d94 1
+d211 3
+@
+
+
+2.6
+log
+@Correct a comment
+@
+text
+@d12 1
+a12 1
+    & "$Id: scrt_dn_m.f90,v 2.5 2002/10/10 19:50:50 vsnyder Exp $"
+d72 1
+a72 1
+!  $\tau_{2N - t + 1} = \Upsilon \tau_t$.  i\_stop is half\_path + 1 here.
+d74 2
+a75 2
+    tau(i_stop) = e_rflty * tau(i_stop-1)
+    radiance = radiance + t_script(i_stop) * tau(i_stop)
+d82 1
+a82 1
+! instead of tau(half_path) * exp(total_opacity).
+d142 1
+a142 1
+    drad_dx = drad_dx + t_script(half_path+1) * w * tau(half_path)
+d193 1
+a193 1
+            + t_script(half_path+1) * w) * tau(half_path)
+d210 3
+@
+
+
+2.5
+log
+@Mostly cosmetic changes, including adding LaTeX equations
+@
+text
+@d12 1
+a12 1
+    & "$Id: scrt_dn_m.f90,v 2.4 2002/10/09 22:47:58 vsnyder Exp $"
+d164 1
+a164 1
+    real(rp), intent(in) :: DDER(:)         ! path opacity derivatives wrt species
+d210 3
+@
+
+
+2.4
+log
+@Don't set tau(i_stop) to zero at the end
+@
+text
+@d12 1
+a12 1
+    & "$Id: scrt_dn_m.f90,v 2.3 2002/10/08 17:08:06 pwagner Exp $"
+d23 2
+d28 1
+a54 1
+    i_stop = 2
+d56 6
+a61 1
+    do while ( total_opacity >= black_out .and. i_stop <= half_path )
+d65 4
+a68 1
+      i_stop = i_stop + 1
+d71 2
+a72 7
+    if ( i_stop <= half_path ) then
+      tau(i_stop:n_path) = 0.0_rp
+      i_stop = i_stop - 1
+      return
+    end if
+
+! the tangent
+d77 7
+d87 1
+a87 1
+      tau(i_stop) = exp(total_opacity)
+d96 1
+a96 1
+! without Temperature derivatives
+d102 4
+d109 2
+a110 2
+    real(rp), intent(in) :: t_script(:) ! differential temparatures
+    real(rp), intent(in) :: tau(:) ! path transmission path
+d112 2
+a113 2
+    integer(ip), intent(in) :: i_start ! where non-zeros on the path begin
+    integer(ip), intent(in) :: i_end   ! where non-zeros on path end
+d117 1
+a117 1
+    real(rp), intent(out) :: drad_dx ! radiance derivative wrt x
+d129 5
+a133 1
+    do i = max(2,i_start),min(i_end,half_path)
+d140 2
+d144 2
+d153 1
+a153 1
+! Compute the scalarized condensed radiative transfer derivatives
+d156 1
+a156 1
+                  &         I_END, DRAD_DX)
+d159 10
+a168 3
+    integer(ip), intent(in) :: i_start, i_end
+    real(rp), intent(in) :: DDER(:), T_SCRIPT(:), TAU(:), DT_SCRIPT_DX(:)
+    real(rp), intent(out) :: drad_dx
+d179 5
+a183 1
+    do i = max(2,i_start),min(i_end,half_path)
+d190 2
+d195 3
+a197 1
+    do i = half_path+2 , min(n_path,i_end)
+d204 1
+a204 1
+  logical function not_used_here()
+d206 1
+a206 1
+  end function not_used_here
+d210 3
+@
+
+
+2.3
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d12 1
+a12 1
+    & "$Id: scrt_dn_m.f90,v 2.2 2002/10/02 20:08:16 vsnyder Exp $"
+d23 4
+d29 2
+a30 2
+    real(rp), intent(in) :: t_script(:) ! differential temperatures (K).
+    real(rp), intent(in) :: e_rflty ! Earth surface reflectivity (0--1).
+d35 3
+a37 3
+    real(rp), intent(out) :: tau(:) ! transmission function
+    real(rp), intent(out) :: radiance    ! radiance(K).
+    integer(ip), intent(out) :: i_stop ! integration stop index
+d48 1
+a48 1
+    half_path = n_path/2
+d54 1
+a54 2
+    do
+      if ( total_opacity < black_out .or. i_stop > half_path ) exit
+d72 1
+a72 2
+    do
+      if ( total_opacity < black_out .or. i_stop == n_path ) exit
+d79 1
+a79 1
+    tau(i_stop:n_path) = 0.0_rp
+d171 3
+@
+
+
+2.2
+log
+@Insert copyright notice, other cosmetic changes
+@
+text
+@d12 1
+a12 1
+    & "$Id: scrt_dn_m.f90,v 2.1 2002/05/13 05:15:40 zvi Exp $"
+d15 1
+d163 4
+d169 3
+@
+
+
+2.1
+log
+@Adding missing intent on dummy variables
+@
+text
+@d1 3
+d5 1
+a5 1
+  use MLSCommon, only: IP, RP
+d8 2
+a9 1
+  PUBLIC :: SCRT_DN, GET_DSCRT_NO_T_DN, GET_DSCRT_DN
+d11 4
+a14 4
+  private ID, ModuleName
+  CHARACTER (LEN=256) :: Id = &
+       "$Id: scrt_dn_m.f90,v 2.0 2001/09/17 20:26:27 livesey Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile: scrt_dn_m.f90,v $"
+d17 5
+a21 3
+!
+ SUBROUTINE scrt_dn(t_script,e_rflty,incoptdepth,tau,radiance,i_stop)
+!
+d23 5
+a27 5
+!
+  REAL(rp), INTENT(in) :: t_script(:) ! differential temperatures (K).
+  REAL(rp), INTENT(in) :: e_rflty ! Earth surface reflectivity (0--1).
+  REAL(rp), INTENT(in) :: incoptdepth(:) ! layer incremental optical depth,
+!                         this comes in as a positive number.
+d29 5
+a33 5
+!
+  REAL(rp), INTENT(out) :: tau(:) ! transmission function
+  REAL(rp), INTENT(out) :: radiance    ! radiance(K).
+  INTEGER(ip), INTENT(out) :: i_stop ! integration stop index
+!
+d35 5
+a39 5
+!
+  INTEGER(ip) :: n_path, half_path
+  REAL(rp) :: total_opacity
+  REAL(rp), PARAMETER :: black_out = -15.0_rp
+!
+d41 22
+a62 22
+!
+  n_path = SIZE(t_script)
+  half_path = n_path/2
+  tau(1) = 1.0_rp
+  total_opacity = 0.0_rp
+  radiance = t_script(1)
+  i_stop = 2
+!
+  DO
+    IF(total_opacity < black_out .or. i_stop > half_path) EXIT
+    total_opacity = total_opacity - incoptdepth(i_stop)
+    tau(i_stop) = EXP(total_opacity)
+    radiance = radiance + t_script(i_stop) * tau(i_stop)
+    i_stop = i_stop + 1
+  ENDDO
+!
+  IF(i_stop <= half_path) THEN
+    tau(i_stop:n_path) = 0.0_rp
+    i_stop = i_stop - 1
+    RETURN
+  ENDIF
+!
+d64 2
+a65 9
+!
+  tau(i_stop) = e_rflty * tau(i_stop-1)
+  radiance = radiance + t_script(i_stop) * tau(i_stop)
+!
+  DO
+    IF(total_opacity < black_out .or. i_stop == n_path) EXIT
+    total_opacity = total_opacity - incoptdepth(i_stop)
+    i_stop = i_stop + 1
+    tau(i_stop) = EXP(total_opacity)
+d67 9
+a75 3
+  ENDDO
+!
+  IF(i_stop < n_path) THEN
+d77 10
+a86 10
+    RETURN
+  ENDIF
+!
+ END SUBROUTINE scrt_dn
+!-------------------------------------------------------------------------
+! This subroutine computes the scalarized condensed radiative transfer
+! derivatives, without Temperature derivatives
+!
+  SUBROUTINE get_dscrt_no_t_dn(d_delta_dx,t_script,tau,i_start,i_end,drad_dx)
+!
+d88 8
+a95 8
+!
+  REAL(rp), INTENT(in) :: d_delta_dx(:) ! path opacity derivatives
+  REAL(rp), INTENT(in) :: t_script(:) ! differential temparatures
+  REAL(rp), INTENT(in) :: tau(:) ! path transmission path
+!
+  INTEGER(ip), INTENT(in) :: i_start ! where non-zeros on the path begin
+  INTEGER(ip), INTENT(in) :: i_end   ! where non-zeros on path end
+!
+d97 3
+a99 3
+!
+  REAL(rp), INTENT(out) :: drad_dx ! radiance derivative wrt x
+!
+a100 36
+!
+  Integer(ip) :: i, n_path, half_path
+  REAL(rp) :: w
+!
+  w = 0.0_rp
+  drad_dx = 0.0_rp
+  n_path = SIZE(t_script)
+  half_path = n_path/2
+!
+  DO i = MAX(2,i_start),MIN(i_end,half_path)
+    w = w - d_delta_dx(i)
+    drad_dx = drad_dx + t_script(i) * w * tau(i)
+  ENDDO
+!
+  IF(i_end <= half_path) RETURN
+!
+  drad_dx = drad_dx + t_script(half_path+1) * w * tau(half_path)
+!
+  DO i = half_path+2 , MIN(n_path,i_end)
+    w = w - d_delta_dx(i-1)
+    drad_dx = drad_dx + t_script(i) * w * tau(i)
+  END DO
+!
+  RETURN
+!
+ END  Subroutine get_dscrt_no_t_dn
+!---------------------------------------------------------------------------
+! This subroutine computes the scalarized condensed radiative transfer
+! derivatives
+!
+  Subroutine get_dscrt_dn(DDER, T_SCRIPT, TAU, DT_SCRIPT_DX, I_start, &
+                  &       i_end, drad_dx)
+!
+    Integer(ip), intent(in) :: i_start, i_end
+    Real(rp), intent(in) :: DDER(:), T_SCRIPT(:), TAU(:), DT_SCRIPT_DX(:)
+    Real(rp), intent(out) :: drad_dx
+d102 37
+a138 3
+    Integer(ip) :: i, n_path, half_path
+    Real(rp) :: w
+!
+d142 1
+a142 1
+    n_path = SIZE(t_script)
+d144 2
+a145 2
+!
+    DO i = MAX(2,i_start),MIN(i_end,half_path)
+d149 2
+a150 2
+!
+    IF(i_end <= half_path) RETURN
+d154 2
+a155 2
+!
+    DO i = half_path+2 , MIN(n_path,i_end)
+d159 7
+a166 6
+    Return
+!
+  END Subroutine get_dscrt_dn
+!
+END module SCRT_DN_M
+! $Log: scrt_dn_m.f90,v $
+@
+
+
+2.0
+log
+@New forward model
+@
+text
+@d9 1
+a9 1
+       "$Id: scrt_dn_m.f90,v 1.6.2.1 2001/09/10 10:02:32 zvi Exp $"
+d88 2
+a89 2
+  INTEGER(ip) :: i_start ! where non-zeros on the path begin
+  INTEGER(ip) :: i_end   ! where non-zeros on path end
+d93 1
+a93 1
+  REAL(rp) :: drad_dx ! radiance derivative wrt x
+d163 3
+@
+
+
+1.6
+log
+@Added Copyright statement
+@
+text
+@a0 3
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+d2 1
+a2 1
+  use MLSCommon, only: I4, R8
+d5 1
+a5 1
+  public :: SCRT_DN
+d9 1
+a9 1
+       "$Id: scrt_dn_m.f90,v 1.5 2001/03/29 08:51:01 zvi Exp $"
+a12 2
+  Subroutine Scrt_Dn (t_script, N_lvls, earth_ref, del_opacity, tau, &
+ &                    radiance, mid, ilo, ihi)
+d14 80
+a93 1
+!     SCRT = Scalar Condensed Radiative Transfer
+d95 1
+a95 3
+! This subroutine computes the radiative transfer using a
+! condensed algorithm. Enter t_script(*) in a quantity that is linear
+! in power.
+d97 35
+a131 2
+    integer(i4), intent(in) :: N_lvls
+    integer(i4), intent(in) :: mid
+d133 5
+a137 7
+    real(r8), intent(in) :: T_SCRIPT(:)
+    real(r8), intent(in) :: EARTH_REF, DEL_OPACITY(:)
+
+    real(r8), intent(out) :: TAU(:), RADIANCE
+    integer(i4), intent(out) :: ILO, IHI
+
+    Real(r8), Parameter :: cut_off = -15.0
+d139 2
+a140 2
+    Integer(i4) :: i, j, k
+    Real(r8)    :: r, total_opacity
+d142 3
+a144 18
+! First segment initialization (From the spacecraft to the tangent point)
+!
+    ihi = 0
+    ilo = 2
+    k = 2 * N_lvls
+!
+    tau(1) = 1.0
+    total_opacity = 0.0
+    radiance = t_script(1)
+!
+    i = 2
+    do while (total_opacity > cut_off .and. i <= mid)
+      total_opacity = total_opacity - del_opacity(i-1)
+      r = exp(total_opacity)
+      tau(i) = r
+      radiance = radiance + t_script(i) * r
+      ilo = i
+      i = i + 1
+d147 4
+a150 1
+    if (total_opacity <= cut_off) Return
+d152 3
+a154 13
+    i = mid + 1
+    tau(i) = earth_ref * tau(mid)
+    radiance = radiance + t_script(i) * tau(i)
+!
+    i = mid + 2
+    ihi = i
+!
+    j = k + 1
+    do 
+      j = j - 1
+      if(t_script(j) /= 0.0) EXIT 
+      if(del_opacity(j-2) /= 0.0) EXIT 
+      ihi = j - 1
+d157 3
+a159 10
+    j = ihi
+    ihi = i
+    do while (total_opacity > cut_off .and. i <= j)
+      total_opacity = total_opacity - del_opacity(i-2)
+      r = earth_ref * exp(total_opacity)
+      tau(i) = r
+      radiance = radiance + t_script(i) * r
+      ihi = i
+      i = i + 1
+    end do
+d161 1
+a161 3
+    Return
+  End Subroutine Scrt_Dn
+end module SCRT_DN_M
+d163 2
+a164 5
+! Revision 1.5  2001/03/29 08:51:01  zvi
+! Changing the (*) toi (:) everywhere
+!
+! Revision 1.4  2001/01/31 01:08:48  zvi
+! New version of forward model
+@
+
+
+1.6.2.1
+log
+@Cleanup..comp_path_entities_m.f90
+@
+text
+@d1 3
+d5 1
+a5 1
+  use MLSCommon, only: IP, RP
+d8 1
+a8 1
+  PUBLIC :: SCRT_DN, GET_DSCRT_NO_T_DN, GET_DSCRT_DN
+d12 1
+a12 1
+       "$Id: scrt_dn_m.f90,v 1.1 2000/05/04 18:12:06 vsnyder Exp $"
+d16 2
+d19 1
+a19 1
+ SUBROUTINE scrt_dn(t_script,e_rflty,incoptdepth,tau,radiance,i_stop)
+d21 3
+a23 1
+! inputs:
+d25 13
+a37 5
+  REAL(rp), INTENT(in) :: t_script(:) ! differential temperatures (K).
+  REAL(rp), INTENT(in) :: e_rflty ! Earth surface reflectivity (0--1).
+  REAL(rp), INTENT(in) :: incoptdepth(:) ! layer incremental optical depth,
+!                         this comes in as a positive number.
+! outputs:
+d39 1
+a39 3
+  REAL(rp), INTENT(out) :: tau(:) ! transmission function
+  REAL(rp), INTENT(out) :: radiance    ! radiance(K).
+  INTEGER(ip), INTENT(out) :: i_stop ! integration stop index
+d41 17
+a57 62
+! internals
+!
+  INTEGER(ip) :: n_path, half_path
+  REAL(rp) :: total_opacity
+  REAL(rp), PARAMETER :: black_out = -15.0_rp
+!
+! begin code
+!
+  n_path = SIZE(t_script)
+  half_path = n_path/2
+  tau(1) = 1.0_rp
+  total_opacity = 0.0_rp
+  radiance = t_script(1)
+  i_stop = 2
+!
+  DO
+    IF(total_opacity < black_out .or. i_stop > half_path) EXIT
+    total_opacity = total_opacity - incoptdepth(i_stop)
+    tau(i_stop) = EXP(total_opacity)
+    radiance = radiance + t_script(i_stop) * tau(i_stop)
+    i_stop = i_stop + 1
+  ENDDO
+!
+  IF(i_stop <= half_path) THEN
+    tau(i_stop:n_path) = 0.0_rp
+    i_stop = i_stop - 1
+    RETURN
+  ENDIF
+!
+! the tangent
+!
+  tau(i_stop) = e_rflty * tau(i_stop-1)
+  radiance = radiance + t_script(i_stop) * tau(i_stop)
+!
+  DO
+    IF(total_opacity < black_out .or. i_stop == n_path) EXIT
+    total_opacity = total_opacity - incoptdepth(i_stop)
+    i_stop = i_stop + 1
+    tau(i_stop) = EXP(total_opacity)
+    radiance = radiance + t_script(i_stop) * tau(i_stop)
+  ENDDO
+!
+  IF(i_stop < n_path) THEN
+    tau(i_stop:n_path) = 0.0_rp
+    RETURN
+  ENDIF
+!
+ END SUBROUTINE scrt_dn
+!-------------------------------------------------------------------------
+! This subroutine computes the scalarized condensed radiative transfer
+! derivatives, without Temperature derivatives
+!
+  SUBROUTINE get_dscrt_no_t_dn(d_delta_dx,t_script,tau,i_start,i_end,drad_dx)
+!
+! Inputs
+!
+  REAL(rp), INTENT(in) :: d_delta_dx(:) ! path opacity derivatives
+  REAL(rp), INTENT(in) :: t_script(:) ! differential temparatures
+  REAL(rp), INTENT(in) :: tau(:) ! path transmission path
+!
+  INTEGER(ip) :: i_start ! where non-zeros on the path begin
+  INTEGER(ip) :: i_end   ! where non-zeros on path end
+d59 1
+a59 1
+! Output
+d61 13
+a73 52
+  REAL(rp) :: drad_dx ! radiance derivative wrt x
+!
+! internals
+!
+  Integer(ip) :: i, n_path, half_path
+  REAL(rp) :: w
+!
+  w = 0.0_rp
+  drad_dx = 0.0_rp
+  n_path = SIZE(t_script)
+  half_path = n_path/2
+!
+  DO i = MAX(2,i_start),MIN(i_end,half_path)
+    w = w - d_delta_dx(i)
+    drad_dx = drad_dx + t_script(i) * w * tau(i)
+  ENDDO
+!
+  IF(i_end <= half_path) RETURN
+!
+  drad_dx = drad_dx + t_script(half_path+1) * w * tau(half_path)
+!
+  DO i = half_path+2 , MIN(n_path,i_end)
+    w = w - d_delta_dx(i-1)
+    drad_dx = drad_dx + t_script(i) * w * tau(i)
+  END DO
+!
+  RETURN
+!
+ END  Subroutine get_dscrt_no_t_dn
+!---------------------------------------------------------------------------
+! This subroutine computes the scalarized condensed radiative transfer
+! derivatives
+!
+  Subroutine get_dscrt_dn(DDER, T_SCRIPT, TAU, DT_SCRIPT_DX, I_start, &
+                  &       i_end, drad_dx)
+!
+    Integer(ip), intent(in) :: i_start, i_end
+    Real(rp), intent(in) :: DDER(:), T_SCRIPT(:), TAU(:), DT_SCRIPT_DX(:)
+    Real(rp), intent(out) :: drad_dx
+
+    Integer(ip) :: i, n_path, half_path
+    Real(rp) :: w
+!
+    w = 0.0_rp
+    drad_dx = dt_script_dx(1)
+
+    n_path = SIZE(t_script)
+    half_path = n_path/2
+!
+    DO i = MAX(2,i_start),MIN(i_end,half_path)
+      w = w - dder(i)
+      drad_dx = drad_dx + (dt_script_dx(i) + t_script(i) * w) * tau(i)
+d76 9
+a84 8
+    IF(i_end <= half_path) RETURN
+
+    drad_dx = drad_dx + (dt_script_dx(half_path+1)  &
+            + t_script(half_path+1) * w) * tau(half_path)
+!
+    DO i = half_path+2 , MIN(n_path,i_end)
+      w = w - dder(i-1)
+      drad_dx = drad_dx + (dt_script_dx(i) + t_script(i) * w) * tau(i)
+d88 5
+d94 2
+a95 1
+  END Subroutine get_dscrt_dn
+a96 2
+END module SCRT_DN_M
+! $Log: scrt_dn_m.f90,v $
+@
+
+
+1.5
+log
+@Changing the (*) toi (:) everywhere
+@
+text
+@d1 3
+d12 1
+a12 1
+       "$Id: scrt_dn_m.f90,v 1.4 2001/01/31 01:08:48 zvi Exp $"
+d91 3
+@
+
+
+1.4
+log
+@New version of forward model
+@
+text
+@d9 1
+a9 1
+       "$Id: scrt_dn_m.f90,v 1.1 2000/05/04 18:12:06 vsnyder Exp $"
+d25 2
+a26 2
+    real(r8), intent(in) :: T_SCRIPT(*)
+    real(r8), intent(in) :: EARTH_REF, DEL_OPACITY(*)
+d28 1
+a28 1
+    real(r8), intent(out) :: TAU(*), RADIANCE
+d88 3
+@
+
+
+1.3
+log
+@Re-add basic stuff
+@
+text
+@d22 3
+a25 1
+    integer(i4), intent(in) :: N_lvls
+d27 1
+a28 1
+    integer(i4), intent(in) :: mid
+d33 1
+a33 1
+    Integer(i4) :: i, k
+d65 11
+a75 1
+    do while (total_opacity > cut_off .and. i <= k)
+@
+
+
+1.2
+log
+@New version
+@
+text
+@d2 1
+a2 1
+  use MLSCommon, only: I4, R4
+a5 1
+
+a11 1
+
+d13 2
+a14 2
+  Subroutine Scrt_Dn ( t_script, N_lvls, earth_ref, del_opacity, tau, &
+ &                     radiance, IndxR, IndxL, ilo, ihi )
+d22 1
+a22 1
+    real(r4), intent(in) :: T_SCRIPT(*)
+d24 3
+a26 3
+    real(r4), intent(in) :: EARTH_REF, DEL_OPACITY(*)
+    real(r4), intent(out) :: TAU(*), RADIANCE
+    integer(i4), intent(in) :: IndxR, IndxL
+d29 4
+a32 3
+    Real(r4), Parameter :: cut_off = -15.0
+    Integer(i4) i, k
+    Real(r4) :: r, total_opacity
+d45 1
+a45 1
+    do while (total_opacity > cut_off .and. i <= IndxR)
+d56 3
+a58 2
+    tau(IndxL) = earth_ref * tau(IndxR)
+    radiance = radiance + t_script(IndxL) * tau(IndxL)
+d60 1
+a60 1
+    i = IndxL + 1
+a74 1
+
+a77 1
+!
+@
+
+
+1.1
+log
+@Initial conversion to Fortran 90
+@
+text
+@d10 1
+a10 1
+       "$Id: SCRT_DN_M,v 1.12 2000/02/08 19:54:57 vsnyder Exp $"
+d76 4
+a79 1
+! $Log: SCRT_DN_M,v $
+@
+

@@ -1,0 +1,3768 @@
+head	2.85;
+access;
+symbols
+	v5-02-NRT-19:2.85
+	v6-00:2.85
+	v5-02-NRT-18:2.85
+	v5-02:2.85
+	v5-01-NRT-17:2.85
+	v5-01-NRT-16:2.85
+	v5-01-NRT-15:2.85
+	v5-01-NRT-14:2.85
+	neuralnetworks-1-0:2.85.0.6
+	cfm-single-freq-0-1:2.85.0.4
+	v5-01:2.85
+	v5-00:2.85
+	v4-23-TA133:2.85.0.2
+	mus-emls-1-70:2.84.0.2
+	rel-1-0-englocks-work:2.83.0.2
+	VUMLS1-00:2.83
+	VPL1-00:2.80
+	V4-22-NRT-08:2.78
+	VAM1-00:2.76
+	V4-21:2.72.0.2
+	V4-13:2.72
+	V4-12:2.72
+	V4-11:2.72
+	V4-10:2.72
+	V3-43:2.63
+	M4-00:2.67
+	V3-41:2.63
+	V3-40-PlusGM57:2.63.0.2
+	V2-24-NRT-04:2.59
+	V3-33:2.64
+	V2-24:2.59
+	V3-31:2.64
+	V3-30-NRT-05:2.64
+	cfm-01-00:2.64
+	V3-30:2.63
+	V3-20:2.63
+	V3-10:2.63
+	V2-23-NRT-02:2.59
+	V2-23:2.59
+	V2-22-NRT-01:2.59
+	V2-22:2.59
+	V2-21:2.58
+	V2-20:2.58
+	V2-11:2.58
+	V2-10:2.58
+	V2-00:2.58
+	V1-51:2.49
+	V1-50:2.49
+	V1-45:2.48
+	V1-44:2.48
+	V1-43:2.45
+	V1-32:2.42
+	V1-31:2.42
+	V1-30:2.41
+	V1-13:2.38
+	V1-12:2.38
+	V1-11:2.38
+	V1-10:2.38
+	newfwm-feb03:2.38.0.2
+	V1-04:2.32
+	V1-03:2.32
+	V1-02:2.32
+	JointForwardModel:2.32.0.2
+	V1-00:2.32
+	newfwm-sep01:2.25.0.2
+	V0-7:2.25
+	V0-5-Level2:2.22
+	V0-5-SIPS:2.15
+	V0_1:1.13;
+locks; strict;
+comment	@# @;
+
+
+2.85
+date	2018.07.27.23.16.49;	author pwagner;	state Exp;
+branches;
+next	2.84;
+
+2.84
+date	2018.04.19.00.48.38;	author vsnyder;	state Exp;
+branches;
+next	2.83;
+
+2.83
+date	2017.02.23.21.45.18;	author pwagner;	state Exp;
+branches;
+next	2.82;
+
+2.82
+date	2016.11.08.17.33.51;	author pwagner;	state Exp;
+branches;
+next	2.81;
+
+2.81
+date	2016.11.04.19.35.06;	author pwagner;	state Exp;
+branches;
+next	2.80;
+
+2.80
+date	2016.08.25.22.58.43;	author pwagner;	state Exp;
+branches;
+next	2.79;
+
+2.79
+date	2016.08.09.18.55.26;	author pwagner;	state Exp;
+branches;
+next	2.78;
+
+2.78
+date	2016.05.18.01.37.30;	author vsnyder;	state Exp;
+branches;
+next	2.77;
+
+2.77
+date	2016.05.04.17.53.32;	author pwagner;	state Exp;
+branches;
+next	2.76;
+
+2.76
+date	2015.09.17.23.15.19;	author pwagner;	state Exp;
+branches;
+next	2.75;
+
+2.75
+date	2015.09.03.20.33.43;	author pwagner;	state Exp;
+branches;
+next	2.74;
+
+2.74
+date	2015.06.03.23.11.45;	author pwagner;	state Exp;
+branches;
+next	2.73;
+
+2.73
+date	2015.05.29.17.48.44;	author vsnyder;	state Exp;
+branches;
+next	2.72;
+
+2.72
+date	2014.01.11.01.44.18;	author vsnyder;	state Exp;
+branches;
+next	2.71;
+
+2.71
+date	2013.12.12.02.11.26;	author vsnyder;	state Exp;
+branches;
+next	2.70;
+
+2.70
+date	2013.10.09.23.41.00;	author vsnyder;	state Exp;
+branches;
+next	2.69;
+
+2.69
+date	2013.08.30.02.45.35;	author vsnyder;	state Exp;
+branches;
+next	2.68;
+
+2.68
+date	2013.08.21.00.23.01;	author pwagner;	state Exp;
+branches;
+next	2.67;
+
+2.67
+date	2012.08.16.17.55.00;	author pwagner;	state Exp;
+branches;
+next	2.66;
+
+2.66
+date	2012.01.05.01.20.17;	author pwagner;	state Exp;
+branches;
+next	2.65;
+
+2.65
+date	2011.06.29.21.54.51;	author pwagner;	state Exp;
+branches;
+next	2.64;
+
+2.64
+date	2010.04.05.17.32.04;	author honghanh;	state Exp;
+branches;
+next	2.63;
+
+2.63
+date	2009.06.23.18.46.18;	author pwagner;	state Exp;
+branches;
+next	2.62;
+
+2.62
+date	2007.12.07.01.13.18;	author pwagner;	state Exp;
+branches;
+next	2.61;
+
+2.61
+date	2007.11.15.22.51.10;	author pwagner;	state Exp;
+branches;
+next	2.60;
+
+2.60
+date	2007.10.24.00.14.58;	author pwagner;	state Exp;
+branches;
+next	2.59;
+
+2.59
+date	2007.03.23.00.24.12;	author pwagner;	state Exp;
+branches;
+next	2.58;
+
+2.58
+date	2006.06.12.16.28.56;	author pwagner;	state Exp;
+branches;
+next	2.57;
+
+2.57
+date	2006.03.07.00.51.32;	author pwagner;	state Exp;
+branches;
+next	2.56;
+
+2.56
+date	2006.03.04.00.20.45;	author pwagner;	state Exp;
+branches;
+next	2.55;
+
+2.55
+date	2006.02.10.21.19.07;	author pwagner;	state Exp;
+branches;
+next	2.54;
+
+2.54
+date	2006.01.06.01.16.34;	author pwagner;	state Exp;
+branches;
+next	2.53;
+
+2.53
+date	2006.01.04.01.27.11;	author vsnyder;	state Exp;
+branches;
+next	2.52;
+
+2.52
+date	2005.06.03.02.05.29;	author vsnyder;	state Exp;
+branches;
+next	2.51;
+
+2.51
+date	2005.05.31.17.51.16;	author pwagner;	state Exp;
+branches;
+next	2.50;
+
+2.50
+date	2005.03.12.00.50.27;	author pwagner;	state Exp;
+branches;
+next	2.49;
+
+2.49
+date	2004.10.13.02.24.02;	author livesey;	state Exp;
+branches;
+next	2.48;
+
+2.48
+date	2004.05.20.19.47.55;	author vsnyder;	state Exp;
+branches;
+next	2.47;
+
+2.47
+date	2004.05.19.19.16.09;	author vsnyder;	state Exp;
+branches;
+next	2.46;
+
+2.46
+date	2004.05.18.01.24.31;	author vsnyder;	state Exp;
+branches;
+next	2.45;
+
+2.45
+date	2004.05.11.02.54.36;	author vsnyder;	state Exp;
+branches;
+next	2.44;
+
+2.44
+date	2004.05.03.16.37.11;	author pwagner;	state Exp;
+branches;
+next	2.43;
+
+2.43
+date	2004.05.01.04.05.26;	author vsnyder;	state Exp;
+branches;
+next	2.42;
+
+2.42
+date	2003.10.22.21.17.06;	author pwagner;	state Exp;
+branches;
+next	2.41;
+
+2.41
+date	2003.07.15.18.18.16;	author livesey;	state Exp;
+branches;
+next	2.40;
+
+2.40
+date	2003.06.20.19.37.06;	author pwagner;	state Exp;
+branches;
+next	2.39;
+
+2.39
+date	2003.05.28.04.39.32;	author livesey;	state Exp;
+branches;
+next	2.38;
+
+2.38
+date	2002.10.08.17.36.19;	author pwagner;	state Exp;
+branches;
+next	2.37;
+
+2.37
+date	2002.10.05.00.43.47;	author livesey;	state Exp;
+branches;
+next	2.36;
+
+2.36
+date	2002.09.26.23.58.57;	author livesey;	state Exp;
+branches;
+next	2.35;
+
+2.35
+date	2002.09.25.20.07.41;	author livesey;	state Exp;
+branches;
+next	2.34;
+
+2.34
+date	2002.09.18.22.49.42;	author pwagner;	state Exp;
+branches;
+next	2.33;
+
+2.33
+date	2002.08.20.22.43.37;	author vsnyder;	state Exp;
+branches;
+next	2.32;
+
+2.32
+date	2001.12.16.00.57.00;	author livesey;	state Exp;
+branches;
+next	2.31;
+
+2.31
+date	2001.12.14.01.42.47;	author livesey;	state Exp;
+branches;
+next	2.30;
+
+2.30
+date	2001.11.09.23.17.22;	author vsnyder;	state Exp;
+branches;
+next	2.29;
+
+2.29
+date	2001.10.31.19.07.15;	author livesey;	state Exp;
+branches;
+next	2.28;
+
+2.28
+date	2001.10.05.23.30.37;	author pwagner;	state Exp;
+branches;
+next	2.27;
+
+2.27
+date	2001.09.28.23.59.20;	author pwagner;	state Exp;
+branches;
+next	2.26;
+
+2.26
+date	2001.09.28.17.50.30;	author pwagner;	state Exp;
+branches;
+next	2.25;
+
+2.25
+date	2001.05.21.20.57.55;	author livesey;	state Exp;
+branches;
+next	2.24;
+
+2.24
+date	2001.05.12.00.16.55;	author livesey;	state Exp;
+branches;
+next	2.23;
+
+2.23
+date	2001.05.10.00.43.12;	author livesey;	state Exp;
+branches;
+next	2.22;
+
+2.22
+date	2001.04.28.01.43.10;	author vsnyder;	state Exp;
+branches;
+next	2.21;
+
+2.21
+date	2001.04.26.02.44.17;	author vsnyder;	state Exp;
+branches;
+next	2.20;
+
+2.20
+date	2001.04.25.19.29.31;	author livesey;	state Exp;
+branches;
+next	2.19;
+
+2.19
+date	2001.04.23.23.53.03;	author livesey;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2001.04.23.23.24.55;	author livesey;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2001.04.21.01.25.23;	author livesey;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2001.04.20.23.11.26;	author livesey;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2001.04.10.23.44.44;	author vsnyder;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2001.04.10.22.27.47;	author vsnyder;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2001.04.07.01.50.48;	author vsnyder;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2001.03.28.18.09.24;	author vsnyder;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2001.03.28.01.24.55;	author vsnyder;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2001.03.15.21.09.52;	author vsnyder;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2001.03.15.21.03.46;	author vsnyder;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2001.03.03.00.07.51;	author livesey;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2001.03.02.01.28.12;	author livesey;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2001.02.09.00.38.22;	author livesey;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2001.01.03.17.51.05;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2000.11.16.02.15.14;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2000.11.16.02.00.48;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2000.09.11.19.23.48;	author ahanzel;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2000.09.05.18.57.02;	author ahanzel;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2000.06.29.23.45.53;	author lungu;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.85
+log
+@Renamed level 2-savvy MLSMessage MLSL2Message
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=============================================================================
+module Construct                ! The construct module for the MLS L2 sw.
+!=============================================================================
+
+  ! This module performs the `construct' task for the level 2 software.  This
+  ! task involves constructing templates for vector quantities, vectors and
+  ! matrices.
+
+  implicit none
+
+  private
+
+  public :: MLSL2Construct, MLSL2DeConstruct, &
+    & ConstructMIFGeolocation, DestroyMIFGeolocation
+  
+  !------------------------------- RCS Ident Info ------------------------------
+  character (len=*), parameter :: ModuleName="$RCSfile: Construct.f90,v $"
+  private :: not_used_here 
+  !-----------------------------------------------------------------------------
+
+
+! === (start of toc) ===
+!     c o n t e n t s
+!     - - - - - - - -
+!
+!     (subroutines and functions)
+! MLSL2Construct          Process l2cf Commands in the Construct section
+! ConstructMIFGeolocation Construct the template frameworks on which to base
+!                           minor frame quantities for all modules (e.g., GHz)
+! DestroyMIFGeolocation   deallocate the template frameworks
+! MLSL2DeConstruct        Deallocate the Vector template databases
+! === (end of toc) ===
+
+! === (start of api) ===
+! MLSL2Construct ( int root, MLSFile_T filedatabase(:), &
+!      TAI93_Range_T processingRange, MLSChunk_T chunk, &
+!      QuantityTemplate_T quantityTemplatesBase(:), &
+!      VectorTemplate_T vectorTemplates(:), &
+!      vector_T vectors(:), &
+!      FGrid_T FGrids(:), &
+!      HGrids_T HGrids(:), &
+!      L2GPData_T l2gpDatabase(:), &
+!      ForwardModelConfig_T ForwardModelConfigDatabase(:), &
+!      GriddedData_T griddedDataBase(:), &
+!      QuantityTemplate_T mifGeolocation(:) )
+! ConstructMIFGeolocation ( QuantityTemplate_T mifGeolocation(:), &
+!      MLSFile_T filedatabase(:), MLSChunk_T chunk )
+! DestroyMIFGeolocation ( QuantityTemplate_T mifGeolocation(:) )
+! MLSL2DeConstruct ( VectorTemplate_T vectorTemplates(:), HGrids_T HGrids(:) )
+! === (end of api) ===
+
+contains ! =====     Public Procedures     =============================
+
+  ! --------------------------------------------- DestroyMIFGeolocation --
+  subroutine DestroyMIFGeolocation ( mifGeolocation )
+    ! Deallocate mifGeolocations
+    use QuantityTemplates, only: DestroyQuantityTemplateDatabase, QuantityTemplate_T
+    use Toggles, only: Gen, Toggle
+    use Trace_M, only: Trace_Begin, Trace_End
+
+    type (QuantityTemplate_T), dimension(:), pointer :: mifGeolocation
+    
+    ! Local variables
+    integer :: Me = -1          ! String index for trace
+
+    call trace_begin ( me, "DestroyMIFGeolocation", 0, cond=toggle(gen) )
+    if ( associated ( mifGeolocation ) ) then
+      call DestroyQuantityTemplateDatabase( mifGeolocation )
+    end if
+    call trace_end ( "DestroyMIFGeolocation", cond=toggle(gen) )
+  end subroutine DestroyMIFGeolocation
+
+  ! --------------------------------------------- ConstructMIFGeolocation --
+  subroutine ConstructMIFGeolocation ( mifGeolocation, filedatabase, chunk )
+    ! mifGeolocation is just quantity templates containing geolocation
+    ! information for the GHz and THz modules.  The software can then
+    ! point to these for geolocation information for all minor frame
+    ! quantities saving file IO and memory.
+    use Chunks_M, only: MLSChunk_T
+    use ConstructQuantityTemplates, only: ConstructMinorFrameQuantity
+    use HighOutput, only: BeVerbose, OutputNamedValue
+    use QuantityTemplates, only: Dump, QuantityTemplate_T
+    use MLSCommon, only: MLSFile_T
+    use MLSL2Options, only: MLSL2Message
+    use MLSSignals_M, only: Modules
+    use MLSStringLists, only: SwitchDetail
+    use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Allocate
+    use Toggles, only: Gen, Switches, Toggle
+    use Trace_M, only: Trace_Begin, Trace_End
+
+    type (QuantityTemplate_T), dimension(:), pointer :: mifGeolocation
+    type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
+    type (MLSChunk_T), intent(in) :: chunk
+    
+    ! Local variables
+    integer :: details
+    integer :: INSTRUMENTMODULEINDEX    ! Loop counter
+    integer :: Me = -1          ! String index for trace
+    integer :: STATUS                   ! Flag
+    logical :: verbose
+
+    call trace_begin ( me, "ConstructMIFGeolocation", 0, cond=toggle(gen) )
+    verbose = BeVerbose( 'qtmp', 0 )
+    details = SwitchDetail( switches, 'qtmp' )
+    if ( .not. associated ( mifGeolocation ) ) then
+      ! Don't overwrite it if we already have it, e.g. from previous construct
+      ! or forge.
+      allocate ( mifGeolocation(size(modules)), STAT=status )
+      if ( status/=0 ) call MLSL2Message ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_Allocate//"mifGeolocation" )
+    
+      ! Now try to fill it if we have any L1BFiles
+      if (associated(filedatabase) ) then
+        if ( verbose ) &
+          & call outputNamedValue ( &
+          & 'Constructing how many mif geolocations?', size(modules) )
+        do instrumentModuleIndex = 1, size(modules)
+          call ConstructMinorFrameQuantity ( instrumentModuleIndex, &
+          mifGeolocation(instrumentModuleIndex), &
+          filedatabase=filedatabase, chunk=chunk )
+          if ( verbose ) &
+            & call Dump( mifGeolocation(instrumentModuleIndex), details=details )
+        end do
+      else
+        mifGeolocation%noSurfs = 0
+        mifGeolocation%noInstances = 0
+      end if
+    end if
+    call trace_end ( "ConstructMIFGeolocation", cond=toggle(gen) )
+  end subroutine ConstructMIFGeolocation
+
+  ! ---------------------------------------------  MLSL2Construct  -----
+  subroutine MLSL2Construct ( root, filedatabase, processingRange, chunk, &
+       & quantityTemplatesBase, vectorTemplates, vectors, FGrids, HGrids, &
+       & l2gpDatabase, ForwardModelConfigDatabase, griddedDataBase, &
+       & mifGeolocation )
+
+  ! This is the `main' subroutine for this module
+
+    use Chunks_M, only: MLSChunk_T
+    use ConstructQuantityTemplates, only: &
+      & CreateQtyTemplateFromMLSCFInfo, ForgeMinorFrames
+    use ConstructVectorTemplates, only: CreateVecTemplateFromMLSCFInfo
+    use DumpCommand_M, only: BooleanFromanyGoodRadiances, &
+      & BooleanFromAnyGoodValues, &
+      & BooleanFromCatchWarning, BooleanFromComparingQtys, BooleanFromFormula, &
+      & DumpCommand
+    use Fgrid, only: Fgrid_T
+    use ForwardModelConfig, only: AddForwardModelConfigToDatabase, &
+      & ForwardModelConfig_T
+    use ForwardModelSupport, only: ConstructForwardModelConfig
+    use GriddedData, only: GriddedData_T
+    use HGridsDatabase, only: AddHGridToDatabase, HGrids_T
+    use HGrid, only: CreateHGridFromMLSCFInfo
+    use Init_Tables_Module, only: F_Reset, &
+      & S_AnygoodValues, S_AnygoodRadiances, &
+      & S_Boolean, S_Catchwarning, S_Compare, S_Dump, &
+      & S_Forge, S_Forwardmodel, S_Hgrid, &
+      & S_Phase, S_Quantity, S_Reevaluate, S_Changesettings, S_Time, S_VectorTemplate
+    use L2GPData, only: L2GPData_T
+    use MLSCommon, only: MLSFile_T, Tai93_Range_T
+    use MLSL2Options, only: L2cfnode, Need_L1bFiles, SpecialDumpFile
+    use MLSL2Timings, only: Section_Times, AddphaseToPhaseNames
+    use MLSMessageModule, only: MLSMessageReset
+    use Moretree, only: Get_Field_Id, Get_Boolean, Get_Label_And_Spec, Get_Spec_Id
+    use Next_Tree_Node_M, only: Next_Tree_Node, Next_Tree_Node_State
+    use Output_M, only:  RevertOutput, SwitchOutput
+    use QuantityTemplates, only: AddQuantityTemplateToDatabase, &
+      & QuantityTemplate_T
+    use Time_M, only: SayTime, Time_Now
+    use Toggles, only: Gen, Levels, Toggle
+    use Trace_M, only: Trace_Begin, Trace_End
+    use Tree, only: Decorate, Nsons, Subtree
+    use VectorsModule, only: AddVectorTemplateToDatabase, &
+      & Vector_T, VectorTemplate_T
+
+    ! Dummy arguments
+    integer, intent(in) :: ROOT    ! Root of the tree for the Construct section
+    type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
+    type (TAI93_Range_T), intent(in) :: processingRange
+    type (MLSChunk_T), intent(in) :: chunk
+    type (QuantityTemplate_T), dimension(:), pointer :: quantityTemplatesBase
+    type (VectorTemplate_T), dimension(:), pointer :: vectorTemplates
+    type (vector_T), dimension(:), pointer :: Vectors
+    type (FGrid_T), dimension(:), pointer :: fGrids
+    type (HGrids_T), dimension(:), pointer :: HGrids
+    type (L2GPData_T), dimension(:), pointer :: L2GPDatabase
+    type (ForwardModelConfig_T), dimension(:), pointer :: ForwardModelConfigDatabase
+    type (GriddedData_T), dimension(:), pointer        :: griddedDataBase
+    type (QuantityTemplate_T), dimension(:), pointer :: mifGeolocation
+
+    ! Local variables
+
+    integer :: field
+    integer :: gson
+    integer :: j
+    integer :: KEY              ! S_... from Init_Tables_Module.
+    integer :: Me = -1          ! String index for trace
+    integer :: Me_Spec = -1     ! String index for trace
+    integer :: NAME             ! Sub-rosa index of name
+    logical :: reset
+    integer :: SON              ! Son or grandson of Root
+    type(next_tree_node_state) :: State ! of tree traverser
+    real :: T1                  ! for timing
+    logical :: TIMING
+
+    ! Executable code
+    timing = section_times
+    if ( timing ) call time_now ( t1 )
+
+    call trace_begin ( me, "MLSL2Construct", root, cond=toggle(gen) )
+    if ( specialDumpFile /= ' ' ) &
+      & call switchOutput( specialDumpFile, keepOldUnitOpen=.true. )
+
+    ! First we're going to setup our mifGeolocation quantityTemplates.
+    if ( NEED_L1BFILES ) &
+      & call ConstructMIFGeolocation ( mifGeolocation, filedatabase, chunk )
+
+    ! The rest is fairly simple really.  We just loop over the mlscf 
+    ! instructions and hand them off to people
+
+    do
+      son = next_tree_node ( root, state )
+      if ( son == 0 ) exit
+      call trace_begin ( me_spec, "Construct.spec", son, &
+        & cond=toggle(gen) .and. levels(gen) > 0 )
+      call get_label_and_spec ( son, name, key )
+      L2CFNODE = key
+      reset = .false.
+
+      do j = 2, nsons(key) ! fields of the "time" specification
+        gson = subtree(j, key)
+        field = get_field_id(gson)   ! tree_checker prevents duplicates
+        if (nsons(gson) > 1 ) gson = subtree(2,gson) ! Gson is value
+        select case ( field )
+        case ( f_reset )
+          reset = Get_Boolean ( gson )
+        case default
+          ! Shouldn't get here if the type checker worked
+        end select
+      end do ! j = 2, nsons(key)
+      ! Node_id(key) is now n_spec_args.
+
+      if ( get_spec_id(key) /= s_catchWarning ) &
+        & call MLSMessageReset( clearLastWarning=.true. )
+      select case( get_spec_id(key) )
+      case ( s_anygoodvalues )
+        call decorate ( key, &
+          & BooleanFromAnyGoodValues ( key, vectors ) )
+      case ( s_anygoodradiances )
+        call decorate ( key, &
+          & BooleanFromAnyGoodRadiances ( key, chunk, filedatabase ) )
+      case ( s_Boolean )
+        call decorate ( key,  BooleanFromFormula ( name, key ) )
+      case ( s_catchWarning )
+        call decorate ( key,  BooleanFromCatchWarning ( key ) )
+      case ( s_changeSettings )
+        call addPhaseToPhaseNames ( 0, key )
+
+      case ( s_compare )
+        call decorate ( key,  BooleanFromComparingQtys ( key, vectors ) )
+      case ( s_dump )
+        call dumpCommand ( key, quantityTemplatesBase, &
+          & vectorTemplates, forwardModelConfigs=forwardModelConfigDatabase, &
+          & hGrids=hGrids, griddedDataBase=griddedDataBase )
+      case ( s_forge )
+        call ForgeMinorFrames ( key, mifGeolocation )
+      case ( s_forwardModel )
+        call decorate ( key, AddForwardModelConfigToDatabase ( &
+          & forwardModelConfigDatabase, &
+          & ConstructForwardModelConfig ( name, key, .false. ) ) )
+      case ( s_hgrid )
+        call decorate ( key, AddHGridToDatabase ( hGrids, &
+          & CreateHGridFromMLSCFInfo ( name, key, filedatabase, l2gpDatabase, &
+          & processingRange, chunk ) ) )
+      case ( s_phase )
+        call addPhaseToPhaseNames ( name, key )
+      case ( s_quantity )
+        call decorate ( key, AddQuantityTemplateToDatabase ( &
+          & quantityTemplatesBase, CreateQtyTemplateFromMLSCfInfo ( name, key, &
+            & fGrids, hGrids, filedatabase, chunk, mifGeolocation ) ) )
+      case ( s_Reevaluate )
+        call decorate ( key,  BooleanFromFormula ( 0, key ) )
+      case ( s_time )
+        if ( timing .and. .not. reset ) then
+          call sayTime
+        else
+          call time_now ( t1 )
+          timing = .true.
+        end if
+      case ( s_vectortemplate )
+        call decorate ( key, AddVectorTemplateToDatabase ( vectorTemplates, &
+          & CreateVecTemplateFromMLSCfInfo ( name, key, quantityTemplatesBase ) ) )
+      case default ! Can't get here if tree_checker worked correctly
+      end select
+      call trace_end ( "Construct.spec", cond=toggle(gen) .and. levels(gen) > 0 )
+    end do
+
+    if ( specialDumpFile /= ' ' ) call revertOutput
+    call trace_end ( "MLSL2Construct", cond=toggle(gen) )
+
+    if ( timing ) call sayTIme( "Timing for MLSL2Construct" )
+  end subroutine MLSL2Construct
+
+  ! -------------------------------------------  MLSL2DeConstruct  -----
+  subroutine MLSL2DeConstruct ( vectorTemplates, hGrids )
+
+  ! DeConstruct the Vector template databases.
+
+    use HGridsDatabase, only: DestroyHGridDatabase, HGrids_T
+    use MLSStringLists, only: SwitchDetail
+    use Output_M, only: Output
+    ! use QuantityTemplates, only: DestroyQuantityTemplateDatabase, &
+    ! & QuantityTemplate_T
+    use Toggles, only: Switches
+    use VectorsModule, only: DestroyVectorTemplateDatabase, VectorTemplate_T
+
+    ! type (QuantityTemplate_T), dimension(:), pointer :: quantityTemplatesBase
+    type (VectorTemplate_T), dimension(:), pointer :: vectorTemplates
+    ! type (QuantityTemplate_T), dimension(:), pointer :: mifGeolocation
+    type (HGrids_T), dimension(:), pointer :: hGrids
+    logical :: verbose
+
+    ! Executable code
+    verbose = ( switchDetail(switches, 'destroy' ) > -1 )
+
+    if ( verbose ) call output( 'About to destroy vectortemplate db', advance='yes' )
+    call destroyVectorTemplateDatabase ( vectorTemplates )
+    if ( verbose ) call output( 'Failed to destroy quantitytemplate db', advance='yes' )
+    ! call destroyQuantityTemplateDatabase ( quantityTemplatesBase )
+    if ( verbose ) call output( 'Failed to destroy mifGeolocation db', advance='yes' )
+    ! call destroyQuantityTemplateDatabase ( mifGeolocation )
+    if ( verbose ) call output( 'About to destroy hGrid db', advance='yes' )
+    call destroyHGridDatabase ( hGrids )
+  end subroutine MLSL2DeConstruct
+
+!=============================================================================
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: Construct.f90,v 2.84 2018/04/19 00:48:38 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Construct
+!=============================================================================
+
+!
+! $Log: Construct.f90,v $
+! Revision 2.84  2018/04/19 00:48:38  vsnyder
+! Remove USE statements and declarations for unused names
+!
+! Revision 2.83  2017/02/23 21:45:18  pwagner
+! Removed unused internal subroutine; added toc and api
+!
+! Revision 2.82  2016/11/08 17:33:51  pwagner
+! process /reset field
+!
+! Revision 2.81  2016/11/04 19:35:06  pwagner
+! begin transition to sayTime from time_m
+!
+! Revision 2.80  2016/08/25 22:58:43  pwagner
+! Apply -Sqtmp switch level when dumping mifGeolocation
+!
+! Revision 2.79  2016/08/09 18:55:26  pwagner
+! Print how many mif geolocations if verbose
+!
+! Revision 2.78  2016/05/18 01:37:30  vsnyder
+! Change HGrids database from an array of HGrid_T to an array of pointers
+! to HGrid_T using the new type HGrids_T.
+!
+! Revision 2.77  2016/05/04 17:53:32  pwagner
+! Added DestroyMIFGeolocation; removed unused args from MLSL2DeConstruct
+!
+! Revision 2.76  2015/09/17 23:15:19  pwagner
+! Added changeSettings command
+!
+! Revision 2.75  2015/09/03 20:33:43  pwagner
+! -Sqtmpn for n gt 0 dumps mifGeolocation for each minor fram qty
+!
+! Revision 2.74  2015/06/03 23:11:45  pwagner
+! Crudely bypass destroyQuantityTemplateDatabase to avoid end-of-run crashes
+!
+! Revision 2.73  2015/05/29 17:48:44  vsnyder
+! Remove 'chunk' argument from MIFGeolocation
+!
+! Revision 2.72  2014/01/11 01:44:18  vsnyder
+! Decruftification
+!
+! Revision 2.71  2013/12/12 02:11:26  vsnyder
+! Use iterator to handle variables, and IF and SELECT constructs
+!
+! Revision 2.70  2013/10/09 23:41:00  vsnyder
+! Add Evaluate_Variable
+!
+! Revision 2.69  2013/08/30 02:45:35  vsnyder
+! Revise calls to trace_begin and trace_end
+!
+! Revision 2.68  2013/08/21 00:23:01  pwagner
+! -g[level] can trace individual Construct specs
+!
+! Revision 2.67  2012/08/16 17:55:00  pwagner
+! Exploit level 2-savvy MLSMessage
+!
+! Revision 2.66  2012/01/05 01:20:17  pwagner
+! Capitalized USEd stuff
+!
+! Revision 2.65  2011/06/29 21:54:51  pwagner
+! Some cases may safely omit l1b files
+!
+! Revision 2.64  2010/04/05 17:32:04  honghanh
+! Make filedatabase and chunk in ConstructMinorFrameQuantity optional
+!
+! Revision 2.63  2009/06/23 18:46:18  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.62  2007/12/07 01:13:18  pwagner
+! Lets us catch warnings and assign to runtime Booleans
+!
+! Revision 2.61  2007/11/15 22:51:10  pwagner
+! Boolean functions moved to DumpCommand
+!
+! Revision 2.60  2007/10/24 00:14:58  pwagner
+! Removed unused declarations
+!
+! Revision 2.59  2007/03/23 00:24:12  pwagner
+! Switch destroy warns when destroying dbs
+!
+! Revision 2.58  2006/06/12 16:28:56  pwagner
+! Added ability to dump Gridded Data
+!
+! Revision 2.57  2006/03/07 00:51:32  pwagner
+! May change already-set Booleans via reevaluate command
+!
+! Revision 2.56  2006/03/04 00:20:45  pwagner
+! May skip retrieval, directWrites depending on runtime Booleans
+!
+! Revision 2.55  2006/02/10 21:19:07  pwagner
+! dumps may go to special dumpfile
+!
+! Revision 2.54  2006/01/06 01:16:34  pwagner
+! silent boolean field can silence selected phases
+!
+! Revision 2.53  2006/01/04 01:27:11  vsnyder
+! Comment out use for unreference L1BInfo_T
+!
+! Revision 2.52  2005/06/03 02:05:29  vsnyder
+! New copyright notice, move Id to not_used_here to avoid cascades,
+! get VGrids from VGridsDatabase instead of passing as an argument.
+!
+! Revision 2.51  2005/05/31 17:51:16  pwagner
+! Began switch from passing file handles to passing MLSFiles
+!
+! Revision 2.50  2005/03/12 00:50:27  pwagner
+! May restart warnings counter at each phase
+!
+! Revision 2.49  2004/10/13 02:24:02  livesey
+! Added vGrids to Forge command
+!
+! Revision 2.48  2004/05/20 19:47:55  vsnyder
+! Do all dumping by way of DumpCommand
+!
+! Revision 2.47  2004/05/19 19:16:09  vsnyder
+! Move MLSChunk_t to Chunks_m
+!
+! Revision 2.46  2004/05/18 01:24:31  vsnyder
+! Add HGrids argument to DumpCommand
+!
+! Revision 2.45  2004/05/11 02:54:36  vsnyder
+! Remove USEs and declarations for unreferenced symbols
+!
+! Revision 2.44  2004/05/03 16:37:11  pwagner
+! Get dump from QuantityTemplates module
+!
+! Revision 2.43  2004/05/01 04:05:26  vsnyder
+! Add Dump command
+!
+! Revision 2.42  2003/10/22 21:17:06  pwagner
+! aPhaseName: Phase added to Fill, Construct sections to time phases
+!
+! Revision 2.41  2003/07/15 18:18:16  livesey
+! Change to forward model config call
+!
+! Revision 2.40  2003/06/20 19:37:06  pwagner
+! Quanities now share grids stored separately in databses
+!
+! Revision 2.39  2003/05/28 04:39:32  livesey
+! Removed some obsolete checking
+!
+! Revision 2.38  2002/10/08 17:36:19  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.37  2002/10/05 00:43:47  livesey
+! Split out ConstructMIFGeolocation
+!
+! Revision 2.36  2002/09/26 23:58:57  livesey
+! Bug fix, decorated wrong node
+!
+! Revision 2.35  2002/09/25 20:07:41  livesey
+! Can now construct forward models inside construct
+!
+! Revision 2.34  2002/09/18 22:49:42  pwagner
+! Receives returnStatus from CreateQtyTemplateFromMLSCFInfo
+!
+! Revision 2.33  2002/08/20 22:43:37  vsnyder
+! Move USE statements from module scope to procedure scope
+!
+! Revision 2.32  2001/12/16 00:57:00  livesey
+! Now takes all chunks as argument as HGrid needs them
+!
+! Revision 2.31  2001/12/14 01:42:47  livesey
+! Passes processingRange to HGrid construction
+!
+! Revision 2.30  2001/11/09 23:17:22  vsnyder
+! Use Time_Now instead of CPU_TIME
+!
+! Revision 2.29  2001/10/31 19:07:15  livesey
+! Added fGrid stuff
+!
+! Revision 2.28  2001/10/05 23:30:37  pwagner
+! Fixed small bug in destroyingQuantTempldb
+!
+! Revision 2.27  2001/09/28 23:59:20  pwagner
+! Fixed various timing problems
+!
+! Revision 2.26  2001/09/28 17:50:30  pwagner
+! MLSL2Timings module keeps timing info
+!
+! Revision 2.25  2001/05/21 20:57:55  livesey
+! Fixed bug, was overwriting mifGelocation with each new construct.
+!
+! Revision 2.24  2001/05/12 00:16:55  livesey
+! Big fix, only dump hGrids etc. if they exist.
+!
+! Revision 2.23  2001/05/10 00:43:12  livesey
+! Moved ownership of hGrids into tree walker to allow multiple calls
+!
+! Revision 2.22  2001/04/28 01:43:10  vsnyder
+! Improved the timing message
+!
+! Revision 2.21  2001/04/26 02:44:17  vsnyder
+! Moved *_indices declarations from init_tables_module to intrinsic
+!
+! Revision 2.20  2001/04/25 19:29:31  livesey
+! Fixed bug with forge, now sets mafIndex and mafCounter appropriately
+!
+! Revision 2.19  2001/04/23 23:53:03  livesey
+! Tidied up deallocation of minor frame quantities
+!
+! Revision 2.18  2001/04/23 23:24:55  livesey
+! Changed l2gpDatabase to pointer
+!
+! Revision 2.17  2001/04/21 01:25:23  livesey
+! New version, can construct h/v grids from l2gp
+!
+! Revision 2.16  2001/04/20 23:11:26  livesey
+! Added `Forge' stuff
+!
+! Revision 2.15  2001/04/10 23:44:44  vsnyder
+! Improve 'dump'
+!
+! Revision 2.14  2001/04/10 22:27:47  vsnyder
+! Nullify explicitly instead of with <initialization> so as not to give
+! pointers the SAVE attribute.  <initialization> is NOT executed on each
+! entry to a procedure.
+!
+! Revision 2.13  2001/04/07 01:50:48  vsnyder
+! Move some of VGrid to lib/VGridsDatabase.  Move ForwardModelConfig_T and
+! some related stuff to fwdmdl/ForwardModelConfig.
+!
+! Revision 2.12  2001/03/28 18:09:24  vsnyder
+! Cosmetic changes
+!
+! Revision 2.11  2001/03/28 01:24:55  vsnyder
+! Move vGrid from construct section to global settings section
+!
+! Revision 2.10  2001/03/15 21:09:52  vsnyder
+! Use 'get_spec_id' from More_Tree
+!
+! Revision 2.9  2001/03/15 21:03:46  vsnyder
+! Cross-references between databases are by database index, not tree index
+!
+! Revision 2.8  2001/03/03 00:07:51  livesey
+! New mifGeolocation stuff
+!
+! Revision 2.7  2001/03/02 01:28:12  livesey
+! Uses new MLSSignals
+!
+! Revision 2.6  2001/02/09 00:38:22  livesey
+! Various updates
+!
+! Revision 2.5  2001/01/03 17:51:05  pwagner
+! Changed types of t1, t2 to real
+!
+! Revision 2.4  2000/11/16 02:15:14  vsnyder
+! More work on timing.
+!
+! Revision 2.3  2000/11/16 02:00:48  vsnyder
+! Added timing.
+!
+! Revision 2.2  2000/09/11 19:23:48  ahanzel
+! Removed extra log entries in file.
+!
+! Revision 2.1  2000/09/08 22:55:56  vsnyder
+! Revised to use the tree output by the parser
+!
+
+@
+
+
+2.84
+log
+@Remove USE statements and declarations for unused names
+@
+text
+@d95 1
+a95 1
+    use MLSL2Options, only: MLSMessage
+d120 1
+a120 1
+      if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+d352 1
+a352 1
+       "$Id: Construct.f90,v 2.83 2017/02/23 21:45:18 pwagner Exp $"
+d364 3
+@
+
+
+2.83
+log
+@Removed unused internal subroutine; added toc and api
+@
+text
+@d174 1
+a174 1
+    use MLSL2Timings, only: Section_Times, Total_Times, AddphaseToPhaseNames
+d178 1
+a178 2
+    use Output_M, only: Blanks, Output, &
+      & RevertOutput, SwitchOutput
+d215 1
+a215 1
+    real :: T1, T2              ! for timing
+d352 1
+a352 1
+       "$Id: Construct.f90,v 2.82 2016/11/08 17:33:51 pwagner Exp $"
+d364 3
+@
+
+
+2.82
+log
+@process /reset field
+@
+text
+@d32 31
+d68 4
+a71 3
+    use QuantityTemplates, only: DestroyQuantityTemplateDatabase, quantityTemplate_t
+    use Toggles, only: gen, toggle
+    use Trace_m, only: trace_begin, trace_end
+d90 5
+a94 5
+    use Chunks_m, only: MLSChunk_t
+    use ConstructQuantityTemplates, only: constructMinorFrameQuantity
+    use HighOutput, only: BeVerbose, outputNamedValue
+    use QuantityTemplates, only: Dump, quantityTemplate_t
+    use MLSCommon, only: MLSFile_t
+d96 2
+a97 2
+    use MLSSignals_m, only: modules
+    use MLSStringLists, only: switchDetail
+d99 2
+a100 2
+    use Toggles, only: gen, switches, toggle
+    use Trace_m, only: trace_begin, trace_end
+d151 24
+a174 24
+    use chunks_m, only: MLSChunk_t
+    use constructQuantityTemplates, only: &
+      & createQtyTemplateFromMLSCFInfo, forgeMinorFrames
+    use constructVectorTemplates, only: createVecTemplateFromMLSCFInfo
+    use dumpCommand_m, only: booleanFromanyGoodRadiances, &
+      & booleanFromAnyGoodValues, &
+      & booleanFromCatchWarning, booleanFromComparingQtys, booleanFromFormula, &
+      & dumpCommand
+    use fgrid, only: fgrid_t
+    use forwardModelConfig, only: addForwardModelConfigToDatabase, &
+      & forwardModelConfig_t
+    use forwardModelSupport, only: constructForwardModelConfig
+    use griddedData, only: griddedData_t
+    use HGridsDatabase, only: addHGridToDatabase, HGrids_t
+    use HGrid, only: createHGridFromMLSCFInfo
+    use init_tables_module, only: f_reset, &
+      & s_anygoodvalues, s_anygoodradiances, &
+      & s_boolean, s_catchwarning, s_compare, s_dump, &
+      & s_forge, s_forwardmodel, s_hgrid, &
+      & s_phase, s_quantity, s_reevaluate, s_changesettings, s_time, s_vectortemplate
+    use L2GPdata, only: L2GPData_t
+    use MLSCommon, only: MLSFile_t, tai93_range_t
+    use MLSL2Options, only: l2cfnode, need_l1bfiles, specialDumpFile
+    use MLSL2Timings, only: section_times, total_times, addphaseToPhaseNames
+d176 12
+a187 12
+    use moretree, only: get_field_id, get_boolean, get_label_and_spec, get_spec_id
+    use Next_Tree_Node_m, only: Next_Tree_Node, Next_Tree_Node_State
+    use output_m, only: blanks, output, &
+      & revertOutput, switchOutput
+    use quantityTemplates, only: addQuantityTemplateToDatabase, &
+      & quantityTemplate_t
+    use time_m, only: SayTime, time_now
+    use toggles, only: gen, levels, toggle
+    use trace_m, only: trace_begin, trace_end
+    use tree, only: decorate, nsons, subtree
+    use vectorsModule, only: addVectorTemplateToDatabase, &
+      & vector_t, vectorTemplate_t
+d265 2
+d269 3
+a289 3
+      case ( s_changeSettings )
+        call addPhaseToPhaseNames ( 0, key )
+
+a293 2
+      case ( s_Boolean )
+        call decorate ( key,  BooleanFromFormula ( name, key ) )
+a295 3
+      case ( s_vectortemplate )
+        call decorate ( key, AddVectorTemplateToDatabase ( vectorTemplates, &
+          & CreateVecTemplateFromMLSCfInfo ( name, key, quantityTemplatesBase ) ) )
+d303 3
+a314 13
+
+  contains
+    subroutine SayTimeHere
+      call time_now ( t2 )
+      if ( total_times ) then
+        call output ( "Total time = " )
+        call output ( dble(t2), advance = 'no' )
+        call blanks ( 4, advance = 'no' )
+      end if
+      call output ( "Timing for MLSL2Construct = " )
+      call output ( DBLE(t2 - t1), advance = 'yes' )
+      timing = .false.
+    end subroutine SayTimeHere
+d322 7
+a328 7
+    use HGridsDatabase, only: destroyHGridDatabase, HGrids_t
+    use MLSStringLists, only: switchDetail
+    use output_m, only: output
+    ! use quantityTemplates, only: destroyQuantityTemplateDatabase, &
+    !   & quantityTemplate_t
+    use toggles, only: switches
+    use vectorsModule, only: destroyVectorTemplateDatabase, vectorTemplate_t
+d353 1
+a353 1
+       "$Id: Construct.f90,v 2.81 2016/11/04 19:35:06 pwagner Exp $"
+d365 3
+@
+
+
+2.81
+log
+@begin transition to sayTime from time_m
+@
+text
+@d134 2
+a135 1
+    use init_tables_module, only: s_anygoodvalues, s_anygoodradiances, &
+d144 1
+a144 1
+    use moretree, only: get_label_and_spec, get_spec_id
+d153 1
+a153 1
+    use tree, only: decorate
+d174 3
+d181 1
+d209 1
+d211 11
+d268 1
+a268 1
+        if ( timing ) then
+d334 1
+a334 1
+       "$Id: Construct.f90,v 2.80 2016/08/25 22:58:43 pwagner Exp $"
+d346 3
+@
+
+
+2.80
+log
+@Apply -Sqtmp switch level when dumping mifGeolocation
+@
+text
+@d149 1
+a149 1
+    use time_m, only: time_now
+d265 1
+a265 1
+    if ( timing ) call sayTIme
+d268 1
+a268 1
+    subroutine SayTime
+d278 1
+a278 1
+    end subroutine SayTime
+d317 1
+a317 1
+       "$Id: Construct.f90,v 2.79 2016/08/09 18:55:26 pwagner Exp $"
+d329 3
+@
+
+
+2.79
+log
+@Print how many mif geolocations if verbose
+@
+text
+@d65 1
+d67 1
+a67 1
+    use Toggles, only: gen, toggle
+d75 1
+d83 1
+d101 1
+a101 1
+            & call Dump( mifGeolocation(instrumentModuleIndex), details=0 )
+d287 1
+a287 1
+    use MLSStringLists, only: switchdetail
+d317 1
+a317 1
+       "$Id: Construct.f90,v 2.78 2016/05/18 01:37:30 vsnyder Exp $"
+d329 3
+@
+
+
+2.78
+log
+@Change HGrids database from an array of HGrid_T to an array of pointers
+to HGrid_T using the new type HGrids_T.
+@
+text
+@d37 3
+a39 4
+    use highOutput, only: BeVerbose
+    use quantityTemplates, only: DestroyQuantityTemplateDatabase, quantityTemplate_t
+    use toggles, only: gen, toggle
+    use trace_m, only: trace_begin, trace_end
+a43 1
+    logical :: verbose
+a45 1
+    verbose = BeVerbose( 'qtmp', 0 )
+d58 4
+a61 4
+    use chunks_m, only: MLSChunk_t
+    use constructQuantityTemplates, only: constructMinorFrameQuantity
+    use highOutput, only: BeVerbose
+    use quantityTemplates, only: Dump, quantityTemplate_t
+d66 2
+a67 2
+    use toggles, only: gen, toggle
+    use trace_m, only: trace_begin, trace_end
+d90 3
+d116 1
+a116 1
+    use chunks_m, only: mlschunk_t
+d314 1
+a314 1
+       "$Id: Construct.f90,v 2.77 2016/05/04 17:53:32 pwagner Exp $"
+d326 4
+@
+
+
+2.77
+log
+@Added DestroyMIFGeolocation; removed unused args from MLSL2DeConstruct
+@
+text
+@d129 1
+a129 1
+    use HGridsDatabase, only: addHGridToDatabase, HGrid_t
+d162 1
+a162 1
+    type (HGrid_T), dimension(:), pointer :: HGrids
+d283 1
+a283 1
+    use HGridsDatabase, only: destroyHGridDatabase, HGrid_t
+d294 1
+a294 1
+    type (HGrid_T), dimension(:), pointer :: hGrids
+d314 1
+a314 1
+       "$Id: Construct.f90,v 2.76 2015/09/17 23:15:19 pwagner Exp $"
+d326 3
+@
+
+
+2.76
+log
+@Added changeSettings command
+@
+text
+@d13 1
+a13 1
+MODULE Construct                ! The construct module for the MLS L2 sw.
+d24 2
+a25 1
+  public :: MLSL2Construct, MLSL2DeConstruct, ConstructMIFGeolocation
+d34 21
+d63 1
+a63 1
+    use highOutput, only: BeVerbose, outputNamedValue
+d69 2
+d78 1
+d82 1
+d96 3
+a98 2
+          filedatabase=filedatabase, chunk=chunk)
+          if ( verbose ) call Dump( mifGeolocation(instrumentModuleIndex) )
+d105 1
+d279 1
+a279 2
+  subroutine MLSL2DeConstruct ( quantityTemplatesBase, vectorTemplates, &
+    &                           mifGeolocation, hGrids )
+d281 1
+a281 1
+  ! DeConstruct the Quantity and Vector template databases.
+d286 2
+a287 2
+    use quantityTemplates, only: destroyQuantityTemplateDatabase, &
+      & quantityTemplate_t
+d291 1
+a291 1
+    type (QuantityTemplate_T), dimension(:), pointer :: quantityTemplatesBase
+d293 1
+a293 1
+    type (QuantityTemplate_T), dimension(:), pointer :: mifGeolocation
+d314 1
+a314 1
+       "$Id: Construct.f90,v 2.75 2015/09/03 20:33:43 pwagner Exp $"
+d321 1
+a321 1
+END MODULE Construct
+d326 3
+@
+
+
+2.75
+log
+@-Sqtmpn for n gt 0 dumps mifGeolocation for each minor fram qty
+@
+text
+@d39 2
+a40 2
+    use CHUNKS_M, only: MLSCHUNK_T
+    use CONSTRUCTQUANTITYTEMPLATES, only: CONSTRUCTMINORFRAMEQUANTITY
+d42 5
+a46 5
+    use QUANTITYTEMPLATES, only: Dump, QUANTITYTEMPLATE_T
+    use MLSCOMMON, only: MLSFILE_T
+    use MLSSIGNALS_M, only: MODULES
+    use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_ALLOCATE, &
+      & MLSMESSAGE
+d88 25
+a112 25
+    use CHUNKS_M, only: MLSCHUNK_T
+    use CONSTRUCTQUANTITYTEMPLATES, only: &
+      & CREATEQTYTEMPLATEFROMMLSCFINFO, FORGEMINORFRAMES
+    use CONSTRUCTVECTORTEMPLATES, only: CREATEVECTEMPLATEFROMMLSCFINFO
+    use DUMPCOMMAND_M, only: BOOLEANFROMANYGOODRADIANCES, &
+      & BOOLEANFROMANYGOODVALUES, &
+      & BOOLEANFROMCATCHWARNING, BOOLEANFROMCOMPARINGQTYS, BOOLEANFROMFORMULA, &
+      & DUMPCOMMAND
+    use FGRID, only: FGRID_T
+    use FORWARDMODELCONFIG, only: ADDFORWARDMODELCONFIGTODATABASE, &
+      & FORWARDMODELCONFIG_T
+    use FORWARDMODELSUPPORT, only: CONSTRUCTFORWARDMODELCONFIG
+    use GRIDDEDDATA, only: GRIDDEDDATA_T
+    use HGRIDSDATABASE, only: ADDHGRIDTODATABASE, HGRID_T
+    use HGRID, only: CREATEHGRIDFROMMLSCFINFO
+    use INIT_TABLES_MODULE, only: S_ANYGOODVALUES, S_ANYGOODRADIANCES, &
+      & S_BOOLEAN, S_CATCHWARNING, S_COMPARE, S_DUMP, &
+      & S_FORGE, S_FORWARDMODEL, S_HGRID, &
+      & S_PHASE, S_QUANTITY, S_REEVALUATE, S_TIME, S_VECTORTEMPLATE
+    use L2GPDATA, only: L2GPDATA_T
+    use MLSCOMMON, only: MLSFILE_T, TAI93_RANGE_T
+    use MLSL2OPTIONS, only: L2CFNODE, NEED_L1BFILES, SPECIALDUMPFILE
+    use MLSL2TIMINGS, only: SECTION_TIMES, TOTAL_TIMES, ADDPHASETOPHASENAMES
+    use MLSMESSAGEMODULE, only: MLSMESSAGERESET
+    use MORETREE, only: Get_Label_And_Spec, GET_SPEC_ID
+d114 10
+a123 10
+    use OUTPUT_M, only: BLANKS, OUTPUT, &
+      & REVERTOUTPUT, SWITCHOUTPUT
+    use QUANTITYTEMPLATES, only: ADDQUANTITYTEMPLATETODATABASE, &
+      & QUANTITYTEMPLATE_T
+    use TIME_M, only: TIME_NOW
+    use TOGGLES, only: GEN, LEVELS, TOGGLE
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+    use TREE, only: DECORATE
+    use VECTORSMODULE, only: ADDVECTORTEMPLATETODATABASE, &
+      & VECTOR_T, VECTORTEMPLATE_T
+d205 2
+d256 7
+a262 7
+    use HGRIDSDATABASE, only: DESTROYHGRIDDATABASE, HGRID_T
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use OUTPUT_M, only: OUTPUT
+    use QUANTITYTEMPLATES, only: DESTROYQUANTITYTEMPLATEDATABASE, &
+      & QUANTITYTEMPLATE_T
+    use TOGGLES, only: SWITCHES
+    use VECTORSMODULE, only: DESTROYVECTORTEMPLATEDATABASE, VECTORTEMPLATE_T
+d287 1
+a287 1
+       "$Id: Construct.f90,v 2.74 2015/06/03 23:11:45 pwagner Exp $"
+d299 3
+@
+
+
+2.74
+log
+@Crudely bypass destroyQuantityTemplateDatabase to avoid end-of-run crashes
+@
+text
+@d41 2
+a42 1
+    use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T
+d55 1
+d57 1
+d71 1
+d285 1
+a285 1
+       "$Id: Construct.f90,v 2.73 2015/05/29 17:48:44 vsnyder Exp $"
+d297 3
+@
+
+
+2.73
+log
+@Remove 'chunk' argument from MIFGeolocation
+@
+text
+@d269 4
+a272 4
+    if ( verbose ) call output( 'About to destroy quantitytemplate db', advance='yes' )
+    call destroyQuantityTemplateDatabase ( quantityTemplatesBase )
+    if ( verbose ) call output( 'About to destroy mifGeolocation db', advance='yes' )
+    call destroyQuantityTemplateDatabase ( mifGeolocation )
+d281 1
+a281 1
+       "$Id: Construct.f90,v 2.72 2014/01/11 01:44:18 vsnyder Exp $"
+d293 3
+@
+
+
+2.72
+log
+@Decruftification
+@
+text
+@d190 1
+a190 1
+        call ForgeMinorFrames ( key, chunk, mifGeolocation )
+d281 1
+a281 1
+       "$Id: Construct.f90,v 2.71 2013/12/12 02:11:26 vsnyder Exp $"
+d293 3
+@
+
+
+2.71
+log
+@Use iterator to handle variables, and IF and SELECT constructs
+@
+text
+@d117 1
+a117 1
+    use TREE, only: DECORATE, NODE_ID, NSONS, SUB_ROSA, SUBTREE
+a137 1
+    integer :: I                ! Loop counter
+d281 1
+a281 1
+       "$Id: Construct.f90,v 2.70 2013/10/09 23:41:00 vsnyder Exp $"
+d293 3
+@
+
+
+2.70
+log
+@Add Evaluate_Variable
+@
+text
+@a91 1
+    use Evaluate_Variable_m, only: Evaluate_Variable
+d108 2
+a109 1
+    use MORETREE, only: GET_SPEC_ID
+a117 1
+    use TREE_TYPES, only: N_NAMED, N_Variable
+d144 1
+d163 3
+a165 2
+    do i = 2, nsons(root)-1 ! Skip the section name at begin and end
+      son = subtree(i,root)
+d168 1
+a168 11
+      if ( node_id(son) == n_variable ) then
+        call evaluate_variable ( son )
+    go to 9
+      end if
+      if ( node_id(son) == n_named ) then ! Is spec labeled?
+        key = subtree(2,son)
+        name = sub_rosa(subtree(1,son))
+      else ! Son is n_spec_args
+        key = son
+        name = 0
+      end if
+d223 1
+a223 1
+    9 call trace_end ( "Construct.spec", cond=toggle(gen) .and. levels(gen) > 0 )
+d282 1
+a282 1
+       "$Id: Construct.f90,v 2.69 2013/08/30 02:45:35 vsnyder Exp $"
+d294 3
+@
+
+
+2.69
+log
+@Revise calls to trace_begin and trace_end
+@
+text
+@d92 1
+d118 1
+a118 1
+    use TREE_TYPES, only: N_NAMED
+d167 4
+d232 1
+a232 1
+      call trace_end ( "Construct.spec", cond=toggle(gen) .and. levels(gen) > 0 )
+d291 1
+a291 1
+       "$Id: Construct.f90,v 2.68 2013/08/21 00:23:01 pwagner Exp $"
+d303 3
+@
+
+
+2.68
+log
+@-g[level] can trace individual Construct specs
+@
+text
+@d140 2
+d151 1
+a151 1
+    if ( toggle(gen) ) call trace_begin ( "MLSL2Construct", root )
+d164 2
+a165 2
+      if ( toggle(gen) .and. levels(gen) > 0 ) &
+          & call trace_begin ( "Construct.spec", son )
+d227 1
+a227 2
+      if ( toggle(gen) .and. levels(gen) > 0 ) &
+          & call trace_end ( "Construct.spec" )
+d230 2
+a231 3
+    if ( specialDumpFile /= ' ' ) &
+      & call revertOutput
+    if ( toggle(gen) ) call trace_end ( "MLSL2Construct" )
+d286 1
+a286 1
+       "$Id: Construct.f90,v 2.67 2012/08/16 17:55:00 pwagner Exp $"
+d298 3
+@
+
+
+2.67
+log
+@Exploit level 2-savvy MLSMessage
+@
+text
+@d114 1
+a114 1
+    use TOGGLES, only: GEN, TOGGLE
+d162 2
+d225 2
+d286 1
+a286 1
+       "$Id: Construct.f90,v 2.66 2012/01/05 01:20:17 pwagner Exp $"
+d298 3
+@
+
+
+2.66
+log
+@Capitalized USEd stuff
+@
+text
+@d105 1
+a105 1
+    use MLSL2OPTIONS, only: NEED_L1BFILES, SPECIALDUMPFILE
+d169 1
+d282 1
+a282 1
+       "$Id: Construct.f90,v 2.65 2011/06/29 21:54:51 pwagner Exp $"
+d294 3
+@
+
+
+2.65
+log
+@Some cases may safely omit l1b files
+@
+text
+@d39 7
+a45 7
+    use Chunks_m, only: MLSCHUNK_T
+    use ConstructQuantityTemplates, only: ConstructMinorFrameQuantity
+    use QuantityTemplates, only: QUANTITYTEMPLATE_T
+    use MLSCommon, only: MLSFile_T
+    use MLSSignals_m, only: MODULES
+    use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Allocate, &
+      & MLSMessage
+d84 15
+a98 15
+    use Chunks_m, only: MLSChunk_T
+    use ConstructQuantityTemplates, only: &
+      & CreateQtyTemplateFromMLSCfInfo, ForgeMinorFrames
+    use ConstructVectorTemplates, only: CreateVecTemplateFromMLSCfInfo
+    use DumpCommand_m, only: BooleanFromAnyGoodRadiances, &
+      & BooleanFromAnyGoodValues, &
+      & BooleanFromCatchWarning, BooleanFromComparingQtys, BooleanFromFormula, &
+      & DumpCommand
+    use FGrid, only: FGrid_T
+    use ForwardModelConfig, only: AddForwardModelConfigToDatabase, &
+      & ForwardModelConfig_T
+    use ForwardModelSupport, only: ConstructForwardModelConfig
+    use GriddedData, only: GriddedData_T
+    use HGridsDatabase, only: ADDHGRIDTODATABASE, HGRID_T
+    use HGrid, only: CREATEHGRIDFROMMLSCFINFO
+d103 6
+a108 6
+    use L2GPData, only: L2GPDATA_T
+    use MLSCommon, only: MLSFile_T, TAI93_Range_T
+    use MLSL2Options, only: NEED_L1BFILES, SPECIALDUMPFILE
+    use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, addPhaseToPhaseNames
+    use MLSMessageModule, only: MLSMessageReset
+    use MoreTree, only: Get_Spec_ID
+d110 4
+a113 4
+      & revertoutput, switchOutput
+    use QuantityTemplates, only: AddQuantityTemplateToDatabase, &
+      & QuantityTemplate_T
+    use Time_M, only: Time_Now
+d118 2
+a119 2
+    use VectorsModule, only: AddVectorTemplateToDatabase, &
+      & Vector_T, VectorTemplate_T
+d250 5
+a254 5
+    use HGridsDatabase, only: DestroyHGridDatabase, HGrid_T
+    use MLSStringLists, only: SwitchDetail
+    use output_m, only: output
+    use QuantityTemplates, only: DestroyQuantityTemplateDatabase, &
+      & QuantityTemplate_T
+d256 1
+a256 1
+    use VectorsModule, only: DestroyVectorTemplateDatabase, VectorTemplate_T
+d281 1
+a281 1
+       "$Id: Construct.f90,v 2.64 2010/04/05 17:32:04 honghanh Exp $"
+d293 3
+@
+
+
+2.64
+log
+@Make filedatabase and chunk in ConstructMinorFrameQuantity optional
+@
+text
+@d105 1
+a105 1
+    use MLSL2Options, only: SPECIALDUMPFILE
+d154 2
+a155 1
+    call ConstructMIFGeolocation ( mifGeolocation, filedatabase, chunk )
+d281 1
+a281 1
+       "$Id: Construct.f90,v 2.63 2009/06/23 18:46:18 pwagner Exp $"
+d293 3
+@
+
+
+2.63
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d65 3
+a67 2
+          call ConstructMinorFrameQuantity ( filedatabase, chunk, &
+            & instrumentModuleIndex, mifGeolocation(instrumentModuleIndex) )
+d280 1
+a280 1
+       "$Id: read_apriori.f90 is it here $"
+d292 3
+@
+
+
+2.62
+log
+@Lets us catch warnings and assign to runtime Booleans
+@
+text
+@d276 1
+d278 3
+a280 5
+  !------------------------------- RCS Ident Info ------------------------------
+  character(len=*), parameter :: IdParm = &
+    & "$Id: Construct.f90,v 2.61 2007/11/15 22:51:10 pwagner Exp $"
+  character(len=len(idParm)), save :: Id = idParm
+  !-----------------------------------------------------------------------------
+d282 1
+d284 1
+d291 3
+@
+
+
+2.61
+log
+@Boolean functions moved to DumpCommand
+@
+text
+@d44 2
+a45 1
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate
+d88 2
+a89 1
+      & BooleanFromAnyGoodValues, BooleanFromComparingQtys, BooleanFromFormula, &
+d99 1
+a99 1
+      & S_BOOLEAN, S_COMPARE, S_DUMP, &
+d106 1
+d170 2
+d179 2
+d279 1
+a279 1
+    & "$Id: Construct.f90,v 2.60 2007/10/24 00:14:58 pwagner Exp $"
+d290 3
+@
+
+
+2.60
+log
+@Removed unused declarations
+@
+text
+@a32 265
+  ! ------------------------------------- BooleanFromAnyGoodRadiances --
+  function BooleanFromAnyGoodRadiances ( root, chunk, filedatabase ) &
+    & result(hashsize)
+    use Allocate_Deallocate, only: DEALLOCATE_TEST
+    use ConstructQuantityTemplates, only: AnyGoodSignalData
+    use Chunks_m, only: MLSCHUNK_T
+    use Dump_0, only: Dump
+    use INIT_TABLES_MODULE, only: F_SIGNAL, F_Boolean
+    use MLSCommon, only: MLSFile_T
+    use MLSL2Options, only: runTimeValues
+    use MLSSignals_m, only: GetSignalName, &
+      & SIGNALS
+    use MLSStringLists, only: NumStringElements, PutHashElement, &
+      & SwitchDetail
+    use MLSStrings, only: lowerCase
+    use output_m, only: output
+    use Parse_signal_m, only: Parse_signal
+    use String_Table, only: get_string
+    use TOGGLES, only: SWITCHES
+    use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
+    ! Dummy args
+    ! integer, intent(in) :: name
+    integer, intent(in) :: root
+    type (MLSChunk_T), intent(in) :: chunk
+    type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
+    integer             :: hashsize
+    ! Internal variables
+    logical, parameter :: countEmpty = .true.
+    integer :: field
+    integer :: field_index
+    integer :: fieldValue
+    integer :: keyNo
+    character(len=32) :: nameString
+    integer :: s
+    integer :: signalIndex
+    integer, pointer :: Signal_Indices(:)         ! Indices in the signals
+    character(len=32) :: signalString
+    integer :: son
+    character(len=32) :: subSignalString
+    logical :: tvalue
+    ! Executable
+    nullify(Signal_Indices)
+    ! call get_string(name, nameString)
+    ! nameString = lowerCase(nameString)
+    signalString = ' '
+    do keyNo = 2, nsons(root)
+      son = subtree(keyNo,root)
+      field = subtree(1,son)
+      if ( nsons(son) > 1 ) then
+        fieldValue = decoration(subtree(2,son)) ! The field's value
+      else
+        fieldValue = son
+      end if
+      field_index = decoration(field)
+
+      select case ( field_index )
+      case ( f_Boolean )
+        call get_string( sub_rosa(subtree(2,son)), nameString )
+      case ( f_signal )
+        call get_string( sub_rosa(subtree(2,son)), signalString, strip=.true. )
+      case default ! Can't get here if tree_checker works correctly
+      end select
+    end do
+
+    if ( signalString /= ' ' ) then
+      if ( switchDetail(switches, 'bool') > 0 ) &
+        & call output( 'signal: ' // trim(signalString), advance='yes' )
+      call Parse_signal(signalString, signal_indices)
+      tvalue = .false.
+      ! Loop over signals, or-ing them until we get TRUE
+      do s=1, size(signal_indices)
+        signalIndex = signal_indices(s)
+        if ( switchDetail(switches, 'bool') > 0 ) then
+          call GetSignalName ( signalIndex, subSignalString, &                   
+            & sideband=signals(signalIndex)%sideband, noChannels=.TRUE. )
+          call output( 'sub-signal: ' // trim(subSignalString), advance='yes' )
+        endif
+        tvalue = tvalue .or. &
+          & AnyGoodSignalData ( signalIndex, signals(signalIndex)%sideband, &
+          & filedatabase, chunk )
+        if ( tvalue ) then
+          if ( switchDetail(switches, 'bool') > 0 ) then
+            call output( 'good signal data found: ' &
+              & // trim(subSignalString), advance='yes' )
+          endif
+          exit
+        endif
+      enddo
+      call deallocate_test(Signal_Indices, 'Signal_Indices', ModuleName)
+    else
+      print *, 'Sorry-unable to parse ', trim(signalString)
+      tvalue = .false.
+    endif
+    call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
+      & lowercase(trim(nameString)), tvalue, countEmpty=countEmpty )
+    hashsize = NumStringElements( runTimeValues%lkeys, countEmpty=countEmpty )
+    if ( switchDetail(switches, 'bool') > 0 ) &
+      & call dump( countEmpty, runTimeValues%lkeys, runTimeValues%lvalues, &
+      & 'Run-time Boolean flags' )
+  end function BooleanFromAnyGoodRadiances
+
+  ! ------------------------------------- BooleanFromAnyGoodValues --
+  function BooleanFromAnyGoodValues ( root, vectors ) result(size)
+    use Dump_0, only: Dump
+    use INIT_TABLES_MODULE, only: F_PRECISION, F_QUALITY, &
+      & F_QUANTITY, F_Boolean, F_STATUS
+    use ManipulateVectorQuantities, only: AnyGoodDataInQty
+    use MLSCommon, only: rv
+    use MLSL2Options, only: runTimeValues
+    use MLSStringLists, only: NumStringElements, PutHashElement, &
+      & SwitchDetail
+    use MLSStrings, only: lowerCase
+    use String_Table, only: get_string
+    use TOGGLES, only: SWITCHES
+    use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
+    use VectorsModule, only: Vector_T, VectorValue_T, &
+      & GetVectorQtyByTemplateIndex
+    ! Dummy args
+    ! integer, intent(in) :: name
+    integer, intent(in) :: root
+    type (vector_T), dimension(:), pointer :: Vectors
+    integer             :: size
+    ! Internal variables
+    logical, parameter :: countEmpty = .true.
+    integer :: field
+    integer :: field_index
+    integer :: fieldValue
+    integer :: keyNo
+    character(len=32) :: nameString
+    type (vectorValue_T), pointer :: PRECISIONQUANTITY
+    integer :: QUANTITYINDEX
+    real(rv) :: QUALITY_MIN
+    type (vectorValue_T), pointer :: QUALITYQUANTITY
+    type (vectorValue_T), pointer :: Quantity
+    integer :: son
+    integer :: source
+    type (vectorValue_T), pointer :: STATUSQUANTITY
+    logical :: tvalue
+    integer :: VECTORINDEX
+    ! Executable
+    nullify( precisionquantity, qualityquantity, Quantity, statusquantity )
+    ! call get_string(name, nameString)
+    ! nameString = lowerCase(nameString)
+    do keyNo = 2, nsons(root)
+      son = subtree(keyNo,root)
+      field = subtree(1,son)
+      if ( nsons(son) > 1 ) then
+        fieldValue = decoration(subtree(2,son)) ! The field's value
+      else
+        fieldValue = son
+      end if
+      field_index = decoration(field)
+      source = subtree(2,son) ! required to be an n_dot vertex
+
+      select case ( field_index )
+      case ( f_Boolean )
+        call get_string( sub_rosa(subtree(2,son)), nameString )
+      case ( f_precision )
+        VectorIndex = decoration(decoration(subtree(1,source)))
+        QuantityIndex = decoration(decoration(decoration(subtree(2,source))))
+        precisionQuantity => GetVectorQtyByTemplateIndex( &
+          & vectors(VectorIndex), QuantityIndex )
+      case ( f_quality )
+        VectorIndex = decoration(decoration(subtree(1,source)))
+        QuantityIndex = decoration(decoration(decoration(subtree(2,source))))
+        qualityQuantity => GetVectorQtyByTemplateIndex( &
+          & vectors(VectorIndex), QuantityIndex )
+      case ( f_quantity )
+        VectorIndex = decoration(decoration(subtree(1,source)))
+        QuantityIndex = decoration(decoration(decoration(subtree(2,source))))
+        Quantity => GetVectorQtyByTemplateIndex( &
+          & vectors(VectorIndex), QuantityIndex )
+      case ( f_status )
+        VectorIndex = decoration(decoration(subtree(1,source)))
+        QuantityIndex = decoration(decoration(decoration(subtree(2,source))))
+        statusQuantity => GetVectorQtyByTemplateIndex( &
+          & vectors(VectorIndex), QuantityIndex )
+      case default ! Can't get here if tree_checker works correctly
+      end select
+    end do
+    tvalue = AnyGoodDataInQty ( a=Quantity, &
+      & precision=precisionQuantity, quality=qualityQuantity, &
+      & status=statusQuantity, quality_min=quality_min )
+    call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
+      & lowercase(trim(nameString)), tvalue, countEmpty=countEmpty )
+    size = NumStringElements( runTimeValues%lkeys, countEmpty=countEmpty )
+    if ( switchDetail(switches, 'bool') > 0 ) &
+      & call dump( countEmpty, runTimeValues%lkeys, runTimeValues%lvalues, &
+      & 'Run-time Boolean flags' )
+  end function BooleanFromAnyGoodValues
+
+  ! ------------------------------------- DealWithBooleanFromMLSCfInfo --
+  function DealWithBooleanFromMLSCfInfo ( name, root ) result(size)
+    ! Called either when a Boolean is first declared
+    ! syntax: 
+    ! name: Boolean, formula="formula"
+    !
+    ! or when it is reevaluated
+    ! syntax: 
+    ! Reevaluate, formula="formula", Boolean="name"
+    use Dump_0, only: Dump
+    use Expr_M, only: EXPR
+    use INIT_TABLES_MODULE, only: F_BOOLEAN, F_FORMULA, F_VALUES
+    use MLSCommon, only: r8
+    use MLSL2Options, only: runTimeValues
+    use MLSStringLists, only: BooleanValue, NumStringElements, PutHashElement, &
+      & SwitchDetail
+    use MLSStrings, only: lowerCase
+    use String_Table, only: get_string
+    use TOGGLES, only: SWITCHES
+    use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
+    ! Dummy args
+    integer, intent(in) :: name
+    integer, intent(in) :: root
+    integer             :: size
+    ! Internal variables
+    logical, parameter :: countEmpty = .true.
+    integer :: field
+    integer :: field_index
+    integer :: fieldValue
+    character(len=255) :: formula
+    integer :: keyNo
+    character(len=32) :: nameString
+    integer :: son
+    logical :: tvalue
+    integer, dimension(2) :: UNITASARRAY ! From expr
+    real(r8), dimension(2) :: VALUEASARRAY ! From expr
+    ! Executable
+    tvalue= .false.
+    if ( name > 0 ) then
+      call get_string(name, nameString)
+      nameString = lowerCase(nameString)
+    endif
+    do keyNo = 2, nsons(root)
+      son = subtree(keyNo,root)
+      field = subtree(1,son)
+      if ( nsons(son) > 1 ) then
+        fieldValue = decoration(subtree(2,son)) ! The field's value
+      else
+        fieldValue = son
+      end if
+      field_index = decoration(field)
+
+      select case ( field_index )
+      case ( f_Boolean )
+        call get_string ( sub_rosa(subtree(2,son)), nameString, strip=.true. )
+        nameString = lowerCase(nameString)
+      case ( f_formula )
+        call get_string ( sub_rosa(subtree(2,son)), formula, strip=.true. )
+        tvalue = BooleanValue (formula, runTimeValues%lkeys, runTimeValues%lvalues)
+      case ( f_values )
+        call expr ( son , unitAsArray, valueAsArray )
+        tvalue = ( valueAsArray(1) /= 0 )
+        ! badRange = valueAsArray
+      case default ! Can't get here if tree_checker works correctly
+      end select
+    end do
+    call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
+      & lowercase(trim(nameString)), tvalue, countEmpty=countEmpty )
+    size = NumStringElements( runTimeValues%lkeys, countEmpty=countEmpty )
+    if ( switchDetail(switches, 'bool') > 0 ) &
+      & call dump( countEmpty, runTimeValues%lkeys, runTimeValues%lvalues, &
+      & 'Run-time Boolean flags' )
+  end function DealWithBooleanFromMLSCfInfo
+
+d86 3
+a88 1
+    use DumpCommand_m, only: DumpCommand
+d97 1
+a97 1
+      & S_BOOLEAN, S_DUMP, &
+d174 2
+d198 1
+a198 1
+        call decorate ( key,  DealWithBooleanFromMLSCfInfo ( name, key ) )
+d200 1
+a200 1
+        call decorate ( key,  DealWithBooleanFromMLSCfInfo ( 0, key ) )
+d272 1
+a272 1
+    & "$Id: Construct.f90,v 2.59 2007/03/23 00:24:12 pwagner Exp $"
+d283 3
+@
+
+
+2.59
+log
+@Switch destroy warns when destroying dbs
+@
+text
+@d41 1
+a41 1
+    use MLSCommon, only: r8, MLSFile_T
+d52 1
+a52 1
+    use TREE, only: DECORATION, NODE_ID, NSONS, SUB_ROSA, SUBTREE
+a63 1
+    character(len=255) :: formula
+a136 1
+    use Expr_M, only: EXPR
+d140 1
+a140 1
+    use MLSCommon, only: r8, rv
+d142 1
+a142 1
+    use MLSStringLists, only: BooleanValue, NumStringElements, PutHashElement, &
+d147 1
+a147 1
+    use TREE, only: DECORATION, NODE_ID, NSONS, SUB_ROSA, SUBTREE
+a159 1
+    character(len=255) :: formula
+d243 1
+a243 1
+    use TREE, only: DECORATION, NODE_ID, NSONS, SUB_ROSA, SUBTREE
+d365 1
+a365 1
+    use MLSL2Options, only: RESTARTWARNINGS, SPECIALDUMPFILE
+d368 2
+a369 2
+    use OUTPUT_M, only: BLANKS, OUTPUT, RESUMEOUTPUT, &
+      & revertoutput, SUSPENDOUTPUT, switchOutput
+d533 1
+a533 1
+    & "$Id: Construct.f90,v 2.58 2006/06/12 16:28:56 pwagner Exp $"
+d544 3
+@
+
+
+2.58
+log
+@Added ability to dump Gridded Data
+@
+text
+@d506 2
+d510 1
+d517 1
+d519 4
+d524 1
+d526 1
+d528 1
+d536 1
+a536 1
+    & "$Id: Construct.f90,v 2.57 2006/03/07 00:51:32 pwagner Exp $"
+d547 3
+@
+
+
+2.57
+log
+@May change already-set Booleans via reevaluate command
+@
+text
+@d345 2
+a346 1
+       & l2gpDatabase, ForwardModelConfigDatabase, mifGeolocation )
+d359 1
+d395 1
+d404 1
+a404 1
+    REAL :: T1, T2              ! for timing
+d443 1
+a443 1
+          & hGrids=hGrids )
+d525 1
+a525 1
+    & "$Id: Construct.f90,v 2.56 2006/03/04 00:20:45 pwagner Exp $"
+d536 3
+@
+
+
+2.56
+log
+@May skip retrieval, directWrites depending on runtime Booleans
+@
+text
+@d229 7
+d238 1
+a238 1
+    use INIT_TABLES_MODULE, only: F_FORMULA, F_VALUES
+d264 5
+a268 2
+    call get_string(name, nameString)
+    nameString = lowerCase(nameString)
+d280 3
+d360 2
+a361 1
+    use INIT_TABLES_MODULE, only: S_ANYGOODVALUES, S_ANYGOODRADIANCES, S_DUMP, &
+d363 1
+a363 1
+      & S_PHASE, S_QUANTITY, S_Boolean, S_TIME, S_VECTORTEMPLATE
+d460 2
+d522 1
+a522 1
+    & "$Id: Construct.f90,v 2.55 2006/02/10 21:19:07 pwagner Exp $"
+d533 3
+@
+
+
+2.55
+log
+@dumps may go to special dumpfile
+@
+text
+@d33 255
+d331 1
+a331 1
+       & quantityTemplatesBase, vectorTemplates, FGrids, HGrids, &
+d347 3
+a349 2
+    use INIT_TABLES_MODULE, only: S_DUMP, S_FORGE, S_FORWARDMODEL, S_HGRID, &
+      & S_PHASE, S_QUANTITY, S_TIME, S_VECTORTEMPLATE
+d365 1
+a365 1
+      & VectorTemplate_T
+d374 1
+d417 6
+d444 2
+d506 1
+a506 1
+    & "$Id: Construct.f90,v 2.54 2006/01/06 01:16:34 pwagner Exp $"
+d517 3
+@
+
+
+2.54
+log
+@silent boolean field can silence selected phases
+@
+text
+@d96 1
+a96 1
+    use MLSL2Options, only: RESTARTWARNINGS
+d99 2
+a100 1
+    use OUTPUT_M, only: BLANKS, OUTPUT, RESUMEOUTPUT, SUSPENDOUTPUT
+d138 2
+d195 2
+d241 1
+a241 1
+    & "$Id: Construct.f90,v 2.53 2006/01/04 01:27:11 vsnyder Exp $"
+d252 3
+@
+
+
+2.53
+log
+@Comment out use for unreference L1BInfo_T
+@
+text
+@a33 1
+  ! subroutine ConstructMIFGeolocation ( mifGeolocation, l1bInfo, chunk )
+a41 1
+    ! use MLSCommon, only: L1BINFO_T
+a47 1
+    ! type (L1BInfo_T), intent(in) :: L1BINFO
+a74 1
+  ! subroutine MLSL2Construct ( root, l1bInfo, processingRange, chunk, &
+d97 1
+a97 2
+    use MLSMessageModule, only: MLSMessageReset
+    use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, add_to_phase_timing
+d99 1
+a99 1
+    use OUTPUT_M, only: BLANKS, OUTPUT
+a101 1
+    use String_Table, only: get_string
+a112 1
+    ! type (L1BInfo_T), intent(in) :: L1BINFO
+a127 1
+    character(len=80) :: PHASESTRING    ! E.g., 'Core'
+d172 2
+a173 3
+        call get_string(name, phaseString)
+        call add_to_phase_timing(trim(phaseString))
+        if ( RESTARTWARNINGS ) call MLSMessageReset(Warnings=.true.)
+a177 1
+            ! & fGrids, hGrids, l1bInfo, chunk, mifGeolocation ) ) )
+d236 1
+a236 1
+    & "$Id: Construct.f90,v 2.52 2005/06/03 02:05:29 vsnyder Exp $"
+d247 3
+@
+
+
+2.52
+log
+@New copyright notice, move Id to not_used_here to avoid cascades,
+get VGrids from VGridsDatabase instead of passing as an argument.
+@
+text
+@d43 2
+a44 1
+    use MLSCommon, only: L1BINFO_T, MLSFile_T
+d163 1
+a163 1
+      
+d246 1
+a246 1
+    & "$Id: Construct.f90,v 2.51 2005/05/31 17:51:16 pwagner Exp $"
+d257 4
+@
+
+
+2.51
+log
+@Began switch from passing file handles to passing MLSFiles
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
+a26 3
+  character(len=*), parameter :: IdParm = &
+    & "$Id: Construct.f90,v 2.50 2005/03/12 00:50:27 pwagner Exp $"
+  character(len=len(idParm)) :: Id = idParm
+d79 1
+a79 1
+       & quantityTemplatesBase, vectorTemplates, FGrids, VGrids, HGrids, &
+a114 2
+    use VGridsDatabase, only: VGrid_T
+
+a123 1
+    type (VGrid_T), dimension(:), pointer :: vGrids
+d169 1
+a169 1
+        call ForgeMinorFrames ( key, chunk, mifGeolocation, vGrids )
+d173 1
+a173 1
+          & ConstructForwardModelConfig ( name, key, vGrids, .false. ) ) )
+d185 2
+a186 2
+            & fGrids, vGrids, hGrids, filedatabase, chunk, mifGeolocation ) ) )
+            ! & fGrids, vGrids, hGrids, l1bInfo, chunk, mifGeolocation ) ) )
+d243 5
+d256 3
+@
+
+
+2.50
+log
+@May restart warnings counter at each phase
+@
+text
+@d20 1
+a20 1
+    & "$Id: Construct.f90,v 2.49 2004/10/13 02:24:02 livesey Exp $"
+d29 2
+a30 1
+  subroutine ConstructMIFGeolocation ( mifGeolocation, l1bInfo, chunk )
+d38 1
+a38 1
+    use MLSCommon, only: L1BINFO_T
+d43 2
+a44 1
+    type (L1BInfo_T), intent(in) :: l1bInfo
+d59 1
+a59 1
+      if (l1bInfo%l1boaID /= 0 ) then
+d61 1
+a61 1
+          call ConstructMinorFrameQuantity ( l1bInfo, chunk, &
+d72 2
+a73 1
+  subroutine MLSL2Construct ( root, l1bInfo, processingRange, chunk, &
+d93 1
+a93 1
+    use MLSCommon, only: L1BInfo_T, TAI93_Range_T
+d114 2
+a115 1
+    type (L1BInfo_T), intent(in) :: l1bInfo
+d144 1
+a144 1
+    call ConstructMIFGeolocation ( mifGeolocation, l1bInfo, chunk )
+d174 1
+a174 1
+          & CreateHGridFromMLSCFInfo ( name, key, l1bInfo, l2gpDatabase, &
+d183 2
+a184 1
+            & fGrids, vGrids, hGrids, l1bInfo, chunk, mifGeolocation ) ) )
+d249 3
+@
+
+
+2.49
+log
+@Added vGrids to Forge command
+@
+text
+@d1 2
+a2 2
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d20 1
+a20 1
+    & "$Id: Construct.f90,v 2.48 2004/05/20 19:47:55 vsnyder Exp $"
+d91 2
+d175 1
+d244 3
+@
+
+
+2.48
+log
+@Do all dumping by way of DumpCommand
+@
+text
+@d20 1
+a20 1
+    & "$Id: Construct.f90,v 2.47 2004/05/19 19:16:09 vsnyder Exp $"
+d161 1
+a161 1
+        call ForgeMinorFrames ( key, chunk, mifGeolocation )
+d241 3
+@
+
+
+2.47
+log
+@Move MLSChunk_t to Chunks_m
+@
+text
+@d20 1
+a20 1
+    & "$Id: Construct.f90,v 2.46 2004/05/18 01:24:31 vsnyder Exp $"
+a80 1
+    use Dumper, only: Dump
+d94 1
+a94 3
+    ! It shouldn't be necessary to get Dump from QuantityTemplates, since
+    ! Dumper already does, but NAG f95 v5.0(322) needs it.
+    use QuantityTemplates, only: AddQuantityTemplateToDatabase, Dump, &
+d98 1
+a98 1
+    use TOGGLES, only: GEN, LEVELS, TOGGLE
+d102 1
+a102 1
+    use VectorsModule, only: AddVectorTemplateToDatabase, Dump, &
+d191 1
+a191 11
+    if ( toggle(gen) ) then
+      if (  levels(gen) > 0 ) then
+        if (associated(hGrids) ) &
+          & call dump ( hgrids )
+        if (associated(quantityTemplatesBase) ) &
+          & call dump ( quantityTemplatesBase, details=levels(gen)-1 )
+        if (associated(vectorTemplates) ) &
+          & call dump ( vectorTemplates, details=levels(gen)-1 )
+      end if
+      call trace_end ( "MLSL2Construct" )
+    end if
+d241 3
+@
+
+
+2.46
+log
+@Add HGrids argument to DumpCommand
+@
+text
+@d20 1
+a20 1
+    & "$Id: Construct.f90,v 2.45 2004/05/11 02:54:36 vsnyder Exp $"
+d34 1
+d37 1
+a37 1
+    use MLSCommon, only: L1BINFO_T, MLSCHUNK_T
+d76 1
+d91 1
+a91 1
+    use MLSCommon, only: L1BInfo_T, MLSChunk_T, TAI93_Range_T
+d254 3
+@
+
+
+2.45
+log
+@Remove USEs and declarations for unreferenced symbols
+@
+text
+@d20 1
+a20 1
+    & "$Id: Construct.f90,v 2.44 2004/05/03 16:37:11 pwagner Exp $"
+d159 2
+a160 1
+          & vectorTemplates, forwardModelConfigs=forwardModelConfigDatabase )
+d252 3
+@
+
+
+2.44
+log
+@Get dump from QuantityTemplates module
+@
+text
+@d20 1
+a20 1
+    & "$Id: Construct.f90,v 2.43 2004/05/01 04:05:26 vsnyder Exp $"
+d75 1
+a75 1
+    use ConstructQuantityTemplates, only: ConstructMinorFrameQuantity, &
+a87 1
+    use Intrinsic, ONLY: L_None
+a90 1
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
+d93 3
+a95 1
+    use QuantityTemplates, only: AddQuantityTemplateToDatabase, dump, &
+d101 1
+a101 2
+    use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, NULL_TREE, SUB_ROSA, &
+      & SUBTREE
+a128 1
+    integer :: STATUS           ! Flag
+d251 3
+@
+
+
+2.43
+log
+@Add Dump command
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
+d20 1
+a20 1
+    & "$Id: Construct.f90,v 2.42 2003/10/22 21:17:06 pwagner Exp $"
+d95 1
+a95 1
+    use QuantityTemplates, only: AddQuantityTemplateToDatabase, &
+d253 3
+@
+
+
+2.42
+log
+@aPhaseName: Phase added to Fill, Construct sections to time phases
+@
+text
+@d20 1
+a20 1
+    & "$Id: Construct.f90,v 2.41 2003/07/15 18:18:16 livesey Exp $"
+d78 1
+d86 2
+a87 2
+    use INIT_TABLES_MODULE, only: S_FORGE, S_FORWARDMODEL, S_HGRID, S_QUANTITY, S_TIME, &
+      & S_VECTORTEMPLATE, S_PHASE
+d159 3
+d253 3
+@
+
+
+2.41
+log
+@Change to forward model config call
+@
+text
+@d20 1
+a20 1
+    & "$Id: Construct.f90,v 2.40 2003/06/20 19:37:06 pwagner Exp $"
+d86 1
+a86 1
+      & S_VECTORTEMPLATE
+d90 1
+a90 1
+    use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
+d96 1
+d127 1
+d168 3
+d249 3
+@
+
+
+2.40
+log
+@Quanities now share grids stored separately in databses
+@
+text
+@d20 1
+a20 1
+    & "$Id: Construct.f90,v 2.39 2003/05/28 04:39:32 livesey Exp $"
+d161 1
+a161 1
+          & ConstructForwardModelConfig ( son, vGrids, .false. ) ) )
+d244 3
+@
+
+
+2.39
+log
+@Removed some obsolete checking
+@
+text
+@d20 1
+a20 1
+    & "$Id: Construct.f90,v 2.38 2002/10/08 17:36:19 pwagner Exp $"
+d29 1
+a29 1
+  subroutine ConstructMIFGeolocation ( mifGeolocation, l1bInfo, chunks, chunkNo )
+d42 1
+a42 2
+    type (MLSChunk_T), dimension(:), intent(in) :: chunks
+    integer, intent(in) :: chunkNo
+d58 1
+a58 1
+          call ConstructMinorFrameQuantity ( l1bInfo, chunks(chunkNo), &
+d69 1
+a69 1
+  subroutine MLSL2Construct ( root, l1bInfo, processingRange, chunks, chunkNo, &
+d83 2
+a84 1
+    use HGrid, only: AddHGridToDatabase, CreateHGridFromMLSCFInfo, HGrid_T
+d111 1
+a111 2
+    type (MLSChunk_T), dimension(:), intent(in) :: chunks
+    integer, intent(in) :: chunkNo
+d138 1
+a138 1
+    call ConstructMIFGeolocation ( mifGeolocation, l1bInfo, chunks, chunkNo )
+d157 1
+a157 1
+        call ForgeMinorFrames ( key, chunks(chunkNo), mifGeolocation )
+d165 1
+a165 1
+          & processingRange, chunks, chunkNo ) ) )
+d169 1
+a169 1
+            & fGrids, vGrids, hGrids, l1bInfo, chunks(chunkNo), mifGeolocation ) ) )
+d218 1
+a218 1
+    use HGrid, only: DestroyHGridDatabase, HGrid_T
+d229 1
+a229 2
+    call destroyQuantityTemplateDatabase ( quantityTemplatesBase, &
+      & ignoreMinorFrame=.true., ignoreMajorFrame=.true. )
+d244 3
+@
+
+
+2.38
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d20 1
+a20 1
+    & "$Id: Construct.f90,v 2.37 2002/10/05 00:43:47 livesey Exp $"
+d170 1
+a170 4
+            & fGrids, vGrids, hGrids, l1bInfo, chunks(chunkNo), mifGeolocation,&
+            & status ) ) )
+          if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Failed to create quantity template from MLSCF info' )
+d246 3
+@
+
+
+2.37
+log
+@Split out ConstructMIFGeolocation
+@
+text
+@d20 1
+a20 1
+    & "$Id: Construct.f90,v 2.36 2002/09/26 23:58:57 livesey Exp $"
+d23 1
+d240 4
+d249 3
+@
+
+
+2.36
+log
+@Bug fix, decorated wrong node
+@
+text
+@d16 1
+a16 1
+  public :: MLSL2Construct, MLSL2DeConstruct
+d20 1
+a20 1
+    & "$Id: Construct.f90,v 2.35 2002/09/25 20:07:41 livesey Exp $"
+d27 41
+a90 1
+    use MLSSignals_m, only: Modules
+a123 1
+    integer :: InstrumentModuleIndex ! Loop counter
+d135 2
+d138 1
+a138 25
+    ! These are just two quantity templates containing geolocation
+    ! information for the GHz and THz modules.  The software can then
+    ! point to these for geolocation information for all minor frame
+    ! quantities saving file IO and memory.
+
+    if ( toggle(gen) ) call trace_begin ( "MLSL2Construct", root )
+    
+    if (.not. associated(mifGeolocation) ) then
+      ! Don't overwrite it if we already have it, e.g. from previous construct
+      ! or forge.
+      allocate ( mifGeolocation(size(modules)), STAT=status )
+      if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_Allocate//"mifGeolocation" )
+    
+      ! Now try to fill it if we have any L1BFiles
+      if (l1bInfo%l1boaID /= 0 ) then
+        do instrumentModuleIndex = 1, size(modules)
+          call ConstructMinorFrameQuantity ( l1bInfo, chunks(chunkNo), &
+            & instrumentModuleIndex, mifGeolocation(instrumentModuleIndex) )
+        end do
+      else
+        mifGeolocation%noSurfs = 0
+        mifGeolocation%noInstances = 0
+      end if
+    end if
+d244 3
+@
+
+
+2.35
+log
+@Can now construct forward models inside construct
+@
+text
+@d20 1
+a20 1
+    & "$Id: Construct.f90,v 2.34 2002/09/18 22:49:42 pwagner Exp $"
+d142 1
+a142 1
+        call decorate (son, AddForwardModelConfigToDatabase ( &
+d227 3
+@
+
+
+2.34
+log
+@Receives returnStatus from CreateQtyTemplateFromMLSCFInfo
+@
+text
+@d20 1
+a20 1
+    & "$Id: Construct.f90,v 2.33 2002/08/20 22:43:37 vsnyder Exp $"
+d30 1
+a30 1
+       & l2gpDatabase, mifGeolocation )
+d39 3
+d43 1
+a43 1
+    use INIT_TABLES_MODULE, only: S_FORGE, S_HGRID, S_QUANTITY, S_TIME, &
+d78 1
+d141 5
+a145 1
+      case( s_hgrid )
+d227 3
+@
+
+
+2.33
+log
+@Move USE statements from module scope to procedure scope
+@
+text
+@d20 1
+a20 1
+    & "$Id: Construct.f90,v 2.32 2001/12/16 00:57:00 livesey Exp $"
+d144 4
+a147 1
+            & fGrids, vGrids, hGrids, l1bInfo, chunks(chunkNo), mifGeolocation ) ) )
+d219 3
+@
+
+
+2.32
+log
+@Now takes all chunks as argument as HGrid needs them
+@
+text
+@d8 3
+a10 30
+  use Allocate_Deallocate, only: Deallocate_test
+  use ConstructQuantityTemplates, only: ConstructMinorFrameQuantity, &
+    & CreateQtyTemplateFromMLSCfInfo, ForgeMinorFrames
+  use ConstructVectorTemplates, only: CreateVecTemplateFromMLSCfInfo
+  use Dumper, only: Dump
+  use FGrid, only: FGrid_T
+  use HGrid, only: AddHGridToDatabase, CreateHGridFromMLSCFInfo, &
+    & DestroyHGridDatabase, HGrid_T
+  use INIT_TABLES_MODULE, only: S_FORGE, S_HGRID, S_QUANTITY, S_TIME, &
+    & S_VECTORTEMPLATE
+  use Intrinsic, ONLY: L_None
+  use L2GPData, only: L2GPDATA_T
+  use MLSCommon, only: L1BInfo_T, MLSChunk_T, TAI93_Range_T
+  use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
+  use MLSSignals_m, only: Modules
+  use MoreTree, only: Get_Spec_ID
+  use OUTPUT_M, only: BLANKS, OUTPUT
+  use QuantityTemplates, only: AddQuantityTemplateToDatabase, &
+    & DestroyQuantityTemplateDatabase, QuantityTemplate_T
+  use String_Table, ONLY: GET_STRING
+  use Time_M, only: Time_Now
+  use TOGGLES, only: GEN, LEVELS, TOGGLE
+  use TRACE_M, only: TRACE_BEGIN, TRACE_END
+  use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, NULL_TREE, SUB_ROSA, &
+    & SUBTREE
+  use TREE_TYPES, only: N_NAMED
+  use VectorsModule, only: AddVectorTemplateToDatabase, &
+    & DestroyVectorTemplateDatabase, Dump, VectorTemplate_T
+  use VGridsDatabase, only: VGrid_T
+d14 1
+a14 1
+  public
+d16 2
+a17 1
+  private :: Id, IdParm, ModuleName
+d20 1
+a20 1
+    & "$Id: Construct.f90,v 2.31 2001/12/14 01:42:47 livesey Exp $"
+a24 4
+  ! This module performs the `construct' task for the level 2 software.  This
+  ! task involves constructing templates for vector quantities, vectors and
+  ! matrices.
+
+d29 1
+a29 1
+       & quantityTemplates, vectorTemplates, FGrids, VGrids, HGrids, &
+d34 29
+d69 1
+a69 1
+    type (QuantityTemplate_T), dimension(:), pointer :: quantityTemplates
+d116 2
+a117 2
+      endif
+    endif
+d143 1
+a143 1
+          & quantityTemplates, CreateQtyTemplateFromMLSCfInfo ( name, key, &
+d147 1
+a147 1
+          & CreateVecTemplateFromMLSCfInfo ( name, key, quantityTemplates ) ) )
+d163 2
+a164 2
+        if (associated(quantityTemplates) ) &
+          & call dump ( quantityTemplates, details=levels(gen)-1 )
+d180 1
+a180 1
+      endif
+d188 1
+a188 1
+  subroutine MLSL2DeConstruct ( quantityTemplates, vectorTemplates, &
+d193 6
+a198 1
+    type (QuantityTemplate_T), dimension(:), pointer :: quantityTemplates
+d204 1
+a204 1
+    call destroyQuantityTemplateDatabase ( quantityTemplates, &
+d216 3
+@
+
+
+2.31
+log
+@Passes processingRange to HGrid construction
+@
+text
+@d46 1
+a46 1
+    & "$Id: Construct.f90,v 2.30 2001/11/09 23:17:22 vsnyder Exp $"
+d58 1
+a58 1
+  subroutine MLSL2Construct ( root, l1bInfo, processingRange, chunk, &
+d68 2
+a69 1
+    type (MLSChunk_T), intent(in) :: chunk
+d111 1
+a111 1
+          call ConstructMinorFrameQuantity ( l1bInfo, chunk, &
+d137 1
+a137 1
+        call ForgeMinorFrames ( key, chunk, mifGeolocation )
+d141 1
+a141 1
+          & processingRange, chunk ) ) )
+d145 1
+a145 1
+            & fGrids, vGrids, hGrids, l1bInfo, chunk, mifGeolocation ) ) )
+d212 3
+@
+
+
+2.30
+log
+@Use Time_Now instead of CPU_TIME
+@
+text
+@d20 1
+a20 1
+  use MLSCommon, only: L1BInfo_T, MLSChunk_T
+d46 1
+a46 1
+    & "$Id: Construct.f90,v 2.29 2001/10/31 19:07:15 livesey Exp $"
+d58 1
+a58 1
+  subroutine MLSL2Construct ( root, l1bInfo, chunk, &
+d67 1
+d139 2
+a140 1
+          & CreateHGridFromMLSCFInfo ( name, key, l1bInfo, l2gpDatabase, chunk ) ) )
+d211 3
+@
+
+
+2.29
+log
+@Added fGrid stuff
+@
+text
+@d29 1
+d46 1
+a46 1
+    & "$Id: Construct.f90,v 2.28 2001/10/05 23:30:37 pwagner Exp $"
+d89 1
+a89 1
+    if ( timing ) call cpu_time ( t1 )
+d150 1
+a150 1
+          call cpu_time ( t1 )
+d173 1
+a173 1
+      call cpu_time ( t2 )
+d209 3
+@
+
+
+2.28
+log
+@Fixed small bug in destroyingQuantTempldb
+@
+text
+@d13 1
+d45 1
+a45 1
+    & "$Id: Construct.f90,v 2.27 2001/09/28 23:59:20 pwagner Exp $"
+d58 1
+a58 1
+       & quantityTemplates, vectorTemplates, VGrids, HGrids, &
+d69 1
+d141 1
+a141 1
+            & hGrids, vGrids, l1bInfo, chunk, mifGeolocation ) ) )
+d208 3
+@
+
+
+2.27
+log
+@Fixed various timing problems
+@
+text
+@d44 1
+a44 1
+    & "$Id: Construct.f90,v 2.26 2001/09/28 17:50:30 pwagner Exp $"
+d194 2
+a195 1
+    call destroyQuantityTemplateDatabase ( quantityTemplates, ignoreMinorFrame=.true. )
+d206 3
+@
+
+
+2.26
+log
+@MLSL2Timings module keeps timing info
+@
+text
+@d44 1
+a44 1
+    & "$Id: Construct.f90,v 2.25 2001/05/21 20:57:55 livesey Exp $"
+d86 1
+d205 3
+@
+
+
+2.25
+log
+@Fixed bug, was overwriting mifGelocation with each new construct.
+@
+text
+@d20 1
+d24 1
+a24 1
+  use OUTPUT_M, only: OUTPUT
+d44 1
+a44 1
+    & "$Id: Construct.f90,v 2.24 2001/05/12 00:16:55 livesey Exp $"
+d85 1
+a85 1
+    timing = .false.
+d170 5
+d204 3
+@
+
+
+2.24
+log
+@Big fix, only dump hGrids etc. if they exist.
+@
+text
+@d43 1
+a43 1
+    & "$Id: Construct.f90,v 2.23 2001/05/10 00:43:12 livesey Exp $"
+a92 4
+
+    allocate ( mifGeolocation(size(modules)), STAT=status )
+    if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate//"mifGeolocation" )
+d94 17
+a110 9
+    ! Now try to fill it if we have any L1BFiles
+    if (l1bInfo%l1boaID /= 0 ) then
+      do instrumentModuleIndex = 1, size(modules)
+        call ConstructMinorFrameQuantity ( l1bInfo, chunk, &
+          & instrumentModuleIndex, mifGeolocation(instrumentModuleIndex) )
+      end do
+    else
+      mifGeolocation%noSurfs = 0
+      mifGeolocation%noInstances = 0
+d198 3
+@
+
+
+2.23
+log
+@Moved ownership of hGrids into tree walker to allow multiple calls
+@
+text
+@d43 1
+a43 1
+    & "$Id: Construct.f90,v 2.22 2001/04/28 01:43:10 vsnyder Exp $"
+d150 6
+a155 3
+        call dump ( hgrids )
+        call dump ( quantityTemplates, details=levels(gen)-1 )
+        call dump ( vectorTemplates, details=levels(gen)-1 )
+d194 3
+@
+
+
+2.22
+log
+@Improved the timing message
+@
+text
+@d43 1
+a43 1
+    & "$Id: Construct.f90,v 2.21 2001/04/26 02:44:17 vsnyder Exp $"
+d56 2
+a57 1
+       & quantityTemplates, vectorTemplates, VGrids, l2gpDatabase, mifGeolocation )
+d68 1
+a72 1
+    type (HGrid_T), dimension(:), pointer :: HGrids
+a93 2
+    nullify ( hGrids )
+
+a156 1
+    call destroyHGridDatabase ( hGrids )
+d170 1
+a170 1
+    &                           mifGeolocation )
+d177 1
+d182 1
+d191 3
+@
+
+
+2.21
+log
+@Moved *_indices declarations from init_tables_module to intrinsic
+@
+text
+@d43 1
+a43 1
+    & "$Id: Construct.f90,v 2.20 2001/04/25 19:29:31 livesey Exp $"
+d164 1
+a164 1
+      call output ( "Timing for MLSL2Construct =" )
+d191 3
+@
+
+
+2.20
+log
+@Fixed bug with forge, now sets mafIndex and mafCounter appropriately
+@
+text
+@d15 4
+a18 1
+  use INIT_TABLES_MODULE, only: S_FORGE, S_HGRID, S_QUANTITY, S_TIME, S_VECTORTEMPLATE
+d26 1
+a34 4
+  use Intrinsic, ONLY: L_None
+  use String_Table, ONLY: GET_STRING
+  use Init_tables_module, ONLY: LIT_INDICES
+  use L2GPData, only: L2GPDATA_T
+d43 1
+a43 1
+    & "$Id: Construct.f90,v 2.19 2001/04/23 23:53:03 livesey Exp $"
+d191 3
+@
+
+
+2.19
+log
+@Tidied up deallocation of minor frame quantities
+@
+text
+@d43 1
+a43 1
+    & "$Id: Construct.f90,v 2.18 2001/04/23 23:24:55 livesey Exp $"
+d127 1
+a127 1
+        call ForgeMinorFrames ( key, mifGeolocation )
+d191 3
+@
+
+
+2.18
+log
+@Changed l2gpDatabase to pointer
+@
+text
+@d43 1
+a43 1
+    & "$Id: Construct.f90,v 2.17 2001/04/21 01:25:23 livesey Exp $"
+d181 1
+a181 1
+    call destroyQuantityTemplateDatabase ( quantityTemplates )
+d191 3
+@
+
+
+2.17
+log
+@New version, can construct h/v grids from l2gp
+@
+text
+@d43 1
+a43 1
+    & "$Id: Construct.f90,v 2.16 2001/04/20 23:11:26 livesey Exp $"
+d67 1
+a67 1
+    type (L2GPData_T), dimension(:), intent(in) :: L2GPDatabase
+d191 3
+@
+
+
+2.16
+log
+@Added `Forge' stuff
+@
+text
+@d34 1
+d43 1
+a43 1
+    & "$Id: Construct.f90,v 2.15 2001/04/10 23:44:44 vsnyder Exp $"
+d56 1
+a56 1
+       & quantityTemplates, vectorTemplates, VGrids, mifGeolocation )
+d67 1
+d130 1
+a130 1
+          & CreateHGridFromMLSCFInfo ( name, key, l1bInfo, chunk ) ) )
+d191 3
+@
+
+
+2.15
+log
+@Improve 'dump'
+@
+text
+@d10 1
+a10 1
+    & CreateQtyTemplateFromMLSCfInfo
+d15 1
+a15 1
+  use INIT_TABLES_MODULE, only: S_HGRID, S_QUANTITY, S_TIME, S_VECTORTEMPLATE
+d42 1
+a42 1
+    & "$Id: Construct.f90,v 2.14 2001/04/10 22:27:47 vsnyder Exp $"
+d96 11
+a106 4
+    do instrumentModuleIndex = 1, size(modules)
+      call ConstructMinorFrameQuantity ( l1bInfo, chunk, &
+        & instrumentModuleIndex, mifGeolocation(instrumentModuleIndex) )
+    end do
+d124 2
+d132 1
+a132 1
+            & hGrids, vGrids, l1bInfo, chunk ) ) )
+d189 3
+@
+
+
+2.14
+log
+@Nullify explicitly instead of with <initialization> so as not to give
+pointers the SAVE attribute.  <initialization> is NOT executed on each
+entry to a procedure.
+@
+text
+@d42 1
+a42 1
+    & "$Id: Construct.f90,v 2.13 2001/04/07 01:50:48 vsnyder Exp $"
+d141 2
+a142 2
+        call dump ( quantityTemplates )
+        call dump ( vectorTemplates )
+d180 5
+@
+
+
+2.13
+log
+@Move some of VGrid to lib/VGridsDatabase.  Move ForwardModelConfig_T and
+some related stuff to fwdmdl/ForwardModelConfig.
+@
+text
+@d12 1
+a12 1
+  use DUMPER, only: DUMP
+d42 1
+a42 1
+    & "$Id: Construct.f90,v 2.12 2001/03/28 18:09:24 vsnyder Exp $"
+d69 1
+a69 1
+    type (HGrid_T), dimension(:), pointer :: hGrids => NULL()
+d91 2
+d180 4
+@
+
+
+2.12
+log
+@Cosmetic changes
+@
+text
+@d30 1
+a30 1
+  use VGrid, only: VGrid_T
+d42 1
+a42 1
+    & "$Id: Construct.f90,v 2.11 2001/03/28 01:24:55 vsnyder Exp $"
+d178 3
+@
+
+
+2.11
+log
+@Move vGrid from construct section to global settings section
+@
+text
+@d39 1
+a39 1
+  private :: Id, ModuleName
+d41 3
+a43 2
+  character(len=130) :: id = &
+       "$Id: Construct.f90,v 2.10 2001/03/15 21:09:52 vsnyder Exp $"
+d178 3
+@
+
+
+2.10
+log
+@Use 'get_spec_id' from More_Tree
+@
+text
+@d15 1
+a15 2
+  use INIT_TABLES_MODULE, only: S_HGRID, S_QUANTITY, S_TIME, S_VECTORTEMPLATE, &
+    & S_VGRID
+d30 1
+a30 2
+  use VGrid, only: AddVGridToDatabase, CreateVGridFromMLSCFInfo, &
+    & DestroyVGridDatabase, VGrid_T
+d42 1
+a42 1
+       "$Id: Construct.f90,v 2.9 2001/03/15 21:03:46 vsnyder Exp $"
+d54 1
+a54 1
+       & quantityTemplates, vectorTemplates, mifGeolocation )
+d64 1
+a67 1
+    type (VGrid_T), dimension(:), pointer :: vGrids => NULL()
+a116 3
+      case ( s_vgrid )
+        call decorate ( key, AddVGridToDatabase ( vGrids, &
+          & CreateVGridFromMLSCFInfo ( name, key ) ) )
+d119 2
+a120 2
+          quantityTemplates, CreateQtyTemplateFromMLSCfInfo ( name, key, &
+             & hGrids, vGrids, l1bInfo, chunk ) ) )
+a137 1
+        call dump ( vgrids )
+a144 1
+    call destroyVGridDatabase ( vGrids )
+d177 3
+@
+
+
+2.9
+log
+@Cross-references between databases are by database index, not tree index
+@
+text
+@d20 1
+d44 1
+a44 1
+       "$Id: Construct.f90,v 2.8 2001/03/03 00:07:51 livesey Exp $"
+d115 1
+a115 1
+      select case( decoration(subtree(1,decoration(subtree(1,key)))) )
+d184 3
+@
+
+
+2.8
+log
+@New mifGeolocation stuff
+@
+text
+@d19 1
+a19 1
+  use MLSSignals_m, only: GetAllModules
+d43 1
+a43 1
+       "$Id: Construct.f90,v 2.7 2001/03/02 01:28:12 livesey Exp $"
+d72 1
+a72 1
+    integer :: INSTRUMENTMODULEINDEX ! Loop counter
+a73 1
+    integer, dimension(:), pointer :: modules=>NULL() ! Tree indices of modules
+d77 1
+a77 2
+!    double precision :: T1, T2  ! for timing
+    REAL :: T1, T2  ! for timing
+a90 1
+    call GetAllModules(modules)
+d96 1
+a96 1
+        & modules(instrumentModuleIndex), mifGeolocation(instrumentModuleIndex) )
+a98 2
+    call Deallocate_test(modules,"Modules",ModuleName)
+
+d183 3
+@
+
+
+2.7
+log
+@Uses new MLSSignals
+@
+text
+@d8 1
+d19 1
+a19 1
+  use MLSSignals_m, only: Modules
+d43 1
+a43 1
+       "$Id: Construct.f90,v 2.6 2001/02/09 00:38:22 livesey Exp $"
+d74 1
+a81 1
+CHARACTER(LEN=132) :: dummy
+d93 1
+d97 3
+a99 3
+    do instrumentModuleIndex = 1, size(modules,1)
+      call ConstructMinorFrameQuantity ( l1bInfo, chunk, instrumentModuleIndex, &
+           mifGeolocation(instrumentModuleIndex) )
+d102 2
+d188 3
+@
+
+
+2.6
+log
+@Various updates
+@
+text
+@d18 1
+a18 1
+  use MLSSignalNomenclature
+d31 1
+a31 1
+  use Intrinsic, ONLY: L_None, L_GHz, L_THz
+d42 1
+a42 1
+       "$Id: Construct.f90,v 2.5 2001/01/03 17:51:05 pwagner Exp $"
+a65 5
+    ! Local parameters
+    INTEGER, PARAMETER :: MLSInstrumentNoModules=2
+    INTEGER, DIMENSION(MLSInstrumentNoModules), PARAMETER :: &
+         MLSInstrumentModules= (/L_GHz,L_THz/)
+
+d92 1
+a92 2
+    CALL Get_String(lit_indices(L_THz),dummy)
+    allocate ( mifGeolocation(MLSInstrumentNoModules), STAT=status )
+d95 2
+a96 3
+    do instrumentModuleIndex = 1, MLSInstrumentNoModules
+      call ConstructMinorFrameQuantity ( l1bInfo, chunk, &
+           MLSinstrumentModules(instrumentModuleIndex), &
+d184 3
+@
+
+
+2.5
+log
+@Changed types of t1, t2 to real
+@
+text
+@d16 1
+a16 1
+  use MLSCommon, only: L1BInfo_T, MLSChunk_T, MLSInstrumentNoModules
+d31 3
+d42 1
+a42 1
+       "$Id: Construct.f90,v 2.4 2000/11/16 02:15:14 vsnyder Exp $"
+d66 5
+d76 1
+a76 1
+    integer :: INSTRUMENTMODULE ! Loop counter
+d85 1
+d97 1
+d101 4
+a104 3
+    do instrumentModule = 1, MLSInstrumentNoModules
+      call ConstructMinorFrameQuantity ( l1bInfo, chunk, instrumentModule, &
+        & mifGeolocation(instrumentModule) )
+d121 1
+a121 1
+
+d191 3
+@
+
+
+2.4
+log
+@More work on timing.
+@
+text
+@d39 1
+a39 1
+       "$Id: Construct.f90,v 2.3 2000/11/16 02:00:48 vsnyder Exp $"
+d73 2
+a74 1
+    double precision :: T1, T2  ! for timing
+d154 1
+a154 1
+      call output ( t2 - t1, advance = 'yes' )
+d180 3
+@
+
+
+2.3
+log
+@Added timing.
+@
+text
+@d39 1
+a39 1
+       "$Id: Construct.f90,v 2.2 2000/09/11 19:23:48 ahanzel Exp $"
+d147 2
+d179 3
+@
+
+
+2.2
+log
+@Removed extra log entries in file.
+@
+text
+@d14 1
+a14 1
+  use INIT_TABLES_MODULE, only: S_HGRID, S_QUANTITY, S_VECTORTEMPLATE, &
+d19 1
+d39 1
+a39 1
+       "$Id: Construct.f90,v 2.1 2000/09/08 22:55:56 vsnyder Exp $"
+d73 2
+d77 1
+d124 7
+d147 7
+d177 3
+@
+
+
+2.0
+log
+@Changing file revision to 2.0.
+@
+text
+@d1 3
+d8 22
+a29 10
+  USE MLSL2Common
+  USE MLSStrings
+  USE MLSSignalNomenclature
+  USE QuantityTemplates
+  USE ConstructQuantityTemplates
+  USE ConstructVectorTemplates
+  USE VectorsModule
+  USE HGrid
+  USE VGrid
+  USE MLSCF
+d31 1
+a31 1
+  IMPLICIT NONE
+d33 1
+a33 1
+  PUBLIC
+d35 1
+a35 1
+  PRIVATE :: Id, ModuleName
+d37 3
+a39 3
+  CHARACTER(LEN=130) :: id = & 
+       "$Id: Construct.f90,v 2.0 2000/09/05 18:57:02 ahanzel Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName="$RCSfile: Construct.f90,v $"
+d46 1
+a46 1
+CONTAINS
+d48 3
+a50 1
+  ! --------------------------------------------------------------------------
+a53 3
+  SUBROUTINE MLSL2Construct(mlscf,l1bInfo,chunk,&
+       & quantityTemplates,vectorTemplates,mifGeolocation)
+
+d55 6
+a60 6
+    TYPE (MLSCF_T), INTENT(IN) :: mlscf
+    TYPE (L1BInfo_T), INTENT(IN) :: l1bInfo
+    TYPE (MLSChunk_T), INTENT(IN) :: chunk
+    TYPE (QuantityTemplate_T), DIMENSION(:), POINTER :: quantityTemplates
+    TYPE (VectorTemplate_T), DIMENSION(:), POINTER :: vectorTemplates
+    TYPE (QuantityTemplate_T), DIMENSION(:), POINTER :: mifGeolocation
+d63 9
+a71 12
+    TYPE (MLSCFSection_T) :: mlscfSection
+    TYPE (VGrid_T) :: vGrid
+    TYPE (HGrid_T) :: hGrid
+    TYPE (VGrid_T), DIMENSION(:), POINTER :: vGrids => null()
+    TYPE (HGrid_T), DIMENSION(:), POINTER :: hGrids => null()
+
+    TYPE (QuantityTemplate_T) :: quantityTemplate
+    TYPE (VectorTemplate_T) :: vectorTemplate
+
+    INTEGER :: mlscfLine         ! Loop counter
+    INTEGER :: instrumentModule ! Loop counter
+    INTEGER :: status           ! Flag
+d75 15
+a89 16
+    ! First we're going to setup our mifGeolocation quantityTemplates. These
+    ! are just two quantity templates containing geolocation information for
+    ! the GHz and THz modules.  The software can then point to these for
+    ! geolocation information for all minor frame quantities saving file IO and
+    ! memory.
+
+    mlscfSection=GetMLSCFSection(mlscf,"Construct")
+
+    ALLOCATE (mifGeolocation(MLSInstrumentNoModules),STAT=status)
+    IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,&
+         & MLSMSG_Allocate//"mifGeolocation")
+    DO instrumentModule=1,MLSInstrumentNoModules
+
+       CALL ConstructMinorFrameQuantity(l1bInfo,chunk,instrumentModule,&
+            & mifGeolocation(instrumentModule))
+    END DO
+d94 58
+a151 29
+    DO mlscfLine=1,mlscfSection%noSectionEntries
+       mlscfSection%entries(mlscfLine)%mlscfEntryName = &
+       Capitalize(mlscfSection%entries(mlscfLine)%mlscfEntryName)
+       SELECT CASE(TRIM(mlscfSection%entries(mlscfLine)%mlscfEntryName))
+       CASE("HGRID")
+          CALL CreateHGridFromMLSCFInfo(hGrid,mlscfSection%entries(mlscfLine), &
+               & l1bInfo,chunk)
+          CALL AddHGridToDatabase(hGrids,hGrid)
+       CASE ("VGRID")
+          CALL CreateVGridFromMLSCFInfo(vGrid,mlscfSection%entries(mlscfLine))
+          CALL AddVGridToDatabase(vGrids,vGrid)
+       CASE ("QUANTITY")
+          CALL CreateQtyTemplateFromMLSCfInfo(quantityTemplate, &
+               & mlscfSection%entries(mlscfLine), hGrids, vGrids, &
+               & l1bInfo, chunk)
+          CALL AddQuantityTemplateToDatabase(quantityTemplates,quantityTemplate)
+       CASE ("VECTORTEMPLATE")
+          CALL CreateVecTemplateFromMLSCfInfo(mlscfSection%entries(mlscfLine), &
+               & vectorTemplate, quantityTemplates)
+          CALL AddVectorTemplateToDatabase(vectorTemplates,vectorTemplate)
+       CASE DEFAULT
+          CALL MLSMessage(MLSMSG_Error,ModuleName,&
+               & "Unrecognised Construct command: "//&
+               & TRIM(mlscfSection%entries(mlscfLine)%mlscfEntryName))
+       END SELECT
+    END DO
+    CALL DestroyVGridDatabase(vGrids)
+    CALL DestroyHGridDatabase(hGrids)
+  END SUBROUTINE MLSL2Construct
+d159 2
+a160 2
+! Revision 2.0  2000/09/05 18:57:02  ahanzel
+! Changing file revision to 2.0.
+d162 2
+a163 4
+! Revision 1.13  2000/06/29 23:45:53  lungu
+! Initialized vgrids and hgrids => null.
+! Added    CALL DestroyVGridDatabase(vGrids)
+! and      CALL DestroyHGridDatabase(hGrids).
+d165 1
+@
+
+
+1.13
+log
+@Initialized vgrids and hgrids => null.
+Added    CALL DestroyVGridDatabase(vGrids)
+and      CALL DestroyHGridDatabase(hGrids).
+@
+text
+@d23 1
+a23 1
+       "$Id: Construct.f90,v 1.13 2000/06/29 23:45:53 lungu Exp $"
+d120 3
+a126 37
+!
+! Revision 1.12  2000/06/19 22:09:21  lungu
+! Removed debug print statements.
+!
+! Revision 1.11  2000/05/18 00:23:25  lungu
+! Capitalized (TRIM(mlscfSection%entries(mlscfLine)%mlscfEntryName)).
+!
+! Revision 1.10  2000/01/12 21:44:21  livesey
+! Modified to handle the minorFrame flag.
+!
+! Revision 1.9  2000/01/11 23:40:08  livesey
+! This version compiles and links for the first time!
+!
+! Revision 1.8  2000/01/07 23:53:33  livesey
+! Nearly integrated, just a few tweaks.
+!
+! Revision 1.7  1999/12/18 01:05:52  livesey
+! Regular nightly commit
+!
+! Revision 1.6  1999/12/18 00:32:56  livesey
+! Added the mifGeolocation functionality.
+!
+! Revision 1.5  1999/12/17 21:27:24  livesey
+! Ready to integrate with working mlscf
+!
+! Revision 1.4  1999/12/17 00:59:39  livesey
+! Nightly checkin
+!
+! Revision 1.3  1999/12/14 22:56:17  livesey
+! Regular commit
+!
+! Revision 1.2  1999/12/06 22:10:33  livesey
+! Nightly checkin
+!
+! Revision 1.1  1999/12/01 01:09:21  livesey
+! Nightly commit
+!
+@
+
+

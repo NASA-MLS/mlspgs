@@ -1,0 +1,1544 @@
+head	2.14;
+access;
+symbols
+	v5-02-NRT-19:2.14
+	v6-00:2.14
+	v5-02-NRT-18:2.14
+	v5-02:2.14
+	v5-01-NRT-17:2.14
+	v5-01-NRT-16:2.14
+	v5-01-NRT-15:2.14
+	v5-01-NRT-14:2.14
+	neuralnetworks-1-0:2.14.0.8
+	cfm-single-freq-0-1:2.14.0.6
+	v5-01:2.14
+	v5-00:2.14
+	v4-23-TA133:2.14.0.4
+	mus-emls-1-70:2.14.0.2
+	rel-1-0-englocks-work:2.13.0.2
+	VUMLS1-00:2.13
+	VPL1-00:2.13
+	V4-22-NRT-08:2.13
+	VAM1-00:2.12
+	V4-21:2.11.0.2
+	V4-13:2.10
+	V4-12:2.9
+	V4-11:2.9
+	V4-10:2.9
+	V3-43:2.4
+	M4-00:2.6
+	V3-41:2.4
+	V3-40-PlusGM57:2.4.0.2
+	V2-24-NRT-04:2.2
+	V3-33:2.4
+	V2-24:2.2
+	V3-31:2.4
+	V3-30-NRT-05:2.4
+	cfm-01-00:2.4
+	V3-30:2.4
+	V3-20:2.4
+	V3-10:2.4
+	V2-23-NRT-02:2.2
+	V2-23:2.2
+	V2-22-NRT-01:2.2
+	V2-22:2.2
+	V2-21:2.2
+	V2-20:2.2
+	V2-11:2.2
+	V2-10:2.2
+	V2-00:2.2
+	V1-51:2.1
+	V1-50:2.1
+	V1-45:2.1
+	V1-44:2.1
+	V1-43:2.1
+	V1-32:2.1
+	V1-31:2.1
+	V1-30:2.1
+	V1-13:2.1
+	V1-12:2.1
+	V1-11:2.1
+	V1-10:2.1
+	newfwm-feb03:2.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+2.14
+date	2018.04.19.00.54.55;	author vsnyder;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2016.01.23.02.51.35;	author vsnyder;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2015.03.28.02.07.25;	author vsnyder;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2015.02.05.21.48.29;	author vsnyder;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2014.09.05.21.12.56;	author vsnyder;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2014.01.11.01.28.53;	author vsnyder;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2013.08.16.02.29.46;	author vsnyder;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2013.06.12.02.30.07;	author vsnyder;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2012.03.29.20.15.15;	author vsnyder;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2012.03.15.22.48.05;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2009.06.23.18.26.11;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2009.05.13.20.03.02;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2005.06.22.18.08.19;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2003.01.14.21.37.31;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.14
+log
+@Remove USE statements for unused names
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module IGRF_INT
+
+! Model for magnetic field.
+
+! This version has the coefficients built in, instead of being read from
+! a file.
+
+! Based on the package by
+!               Dr. Dieter Bilitza, (301)513-1664
+!               GSFC, NSSDC, Code 933, Greenbelt, MD 20771, USA.
+!               BILITZA%NSSDCA.SPAN@@DFTNIC.BITNET
+
+  use Constants, only: Rad2Deg
+
+  implicit NONE
+  private
+  public :: Dump_GH, FeldCof, FeldC, FeldCM, FeldG, FindB0, IGRF_Sub, Read_GH
+!   public :: ShellC, ShellCM, ShellG
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: igrf_int.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+! *****     Private Type     *******************************************
+
+  type :: GH_T
+    real :: YEAR
+    integer :: FILE  ! Index in string table
+    integer :: NMAX  ! Maximum Degree
+    real :: ERAD     ! Earth radius used to compute coefficients
+    real, allocatable :: GH(:)
+  end type GH_T
+
+! *****     Private Variables     **************************************
+
+! Coefficients read from IGRF files
+
+  type(gh_t), save, pointer :: GHS(:) => NULL()
+
+! Earth radius (km) from GHS for the year for which FELDCOF was called:
+
+  real, save :: ERAD = 6371.200 ! Default in case FELDCOF has not been called.
+
+! Earth radius (m) from GHS for the year for which FELDCOF was called:
+
+  real, save :: ERADM = 6371200.0 ! Default in case FELDCOF has not been called.
+
+! G(M)    Normalized field coefficients (see FELDCOF)
+!         Size = NMAX*(NMAX+2)+1
+
+  real, save, allocatable :: G(:)
+
+! H       ??? (See FELDI)
+
+  real, save, allocatable :: H(:)
+
+! NMAX    Maximum order of spherical harmonics
+
+  integer, save ::           NMAX
+
+! SP      Dipole oriented coordinates from SHELLG; P(1,*),
+!         P(2,*), P(3,*) closest to magnetic equator
+
+  real, save ::              SP(3)
+
+! U       Used to convert between geographic and geomagnetic coordinates
+
+  real, parameter :: U(3,3) = reshape ( (/ +0.3511737,-0.9148385,-0.1993679, &
+    &                                      +0.9335804,+0.3583680,+0.0000000, &
+    &                                      +0.0714471,-0.1861260,+0.9799247 /), &
+    &                                   (/ 3,3 /) )
+
+! *****     Public Procedures     **************************************
+
+contains
+
+  ! ---------------------------------------------------  IGRF_SUB  -----
+  subroutine IGRF_SUB ( WHERE, YEAR, XL, ICODE, DIP, DEC )
+
+  !----------------------------------------------------------------
+  !   Input:
+  !	WHERE   (1) Geodetic latitude in degrees,
+  !	        (2) Geodetic longitude in degrees,
+  !	        (3) Height in km
+  !	YEAR    Decimal year (year+month/12.0-0.5 or year+day-of-year/365
+  !		Or 366 if leap year)
+  !   Output:
+  !     XL      L value                                  
+  !     ICODE   =1  L is correct; =2  L is not correct;  
+  !             =3  an approximation is used             
+  !     DIP     Geomagnetic inclination in degrees       
+  !     DEC     Geomagnetic declination in degress       
+  !----------------------------------------------------------------
+
+    real, intent(in) :: WHERE(3), YEAR
+    real, intent(out) :: XL, DIP, DEC
+    integer, intent(out) :: ICODE
+
+    real ::           BABS, BDOWN, BEAST, BNORTH, DIMO
+
+!----------------CALCULATE PROFILES-----------------------------------
+
+    call feldcof ( year, dimo )
+    call feldg ( where, bnorth, beast, bdown, babs )
+    call shellg ( where, dimo, xl, icode )
+    dip = asin(bdown/babs) * rad2Deg
+    dec = asin(beast/sqrt(beast*beast+bnorth*bnorth)) * rad2Deg
+
+  end subroutine IGRF_SUB
+
+  ! ------------------------------------------------------  FINDB0  -----
+  subroutine FINDB0 ( STPS, BDEL, VALUE, BEQU, RR0 )
+!--------------------------------------------------------------------
+! Find smallest magnetic field strength on field line
+
+! Input:   STPS   Step size for field line tracing
+!          BDEL   Required accuracy  = [ B(LAST) - BEQU ] / BEQU
+!                 B(LAST)  Is field strength before BEQU
+
+!          Module variable
+!          SP     Dipole oriented coordinates from SHELLG; P(1,*),
+!                 P(2,*), P(3,*) closest to magnetic equator
+
+! Output:  VALUE  =.FALSE. if BEQU is not minimal value on field line
+!          BEQU   Magnetic field strength at magnetic equator
+!          RR0    Equatorial radius normalized to earth radius
+!          BDEL   Final achieved accuracy
+!--------------------------------------------------------------------
+
+    real, intent(in) :: STPS
+    real, intent(inout) :: BDEL
+    logical, intent(out) :: VALUE
+    real, intent(out) :: BEQU
+    real, intent(out), optional :: RR0
+
+    real ::           B, BMIN, BDELTA, BOLD, BQ1, BQ2, BQ3, P(8,4)
+    real ::           R2, R3, ROLD, STEP, STEP12
+    integer ::        IRUN
+
+    step = stps
+    irun = 0
+    do
+      irun = irun+1
+      if ( irun > 5 ) then
+        value = .false.
+        exit
+      end if
+!*********************FIRST THREE POINTS
+      p(1:3,2) = sp(1:3)
+      call stoer_start ( p, step, bq1, bq2, bq3, r2, r3 )
+!******************INITIALIZATION
+      step12 = step/12.
+      value = .true.
+      bmin = huge(1.0)
+      bold = huge(1.0)
+!******************CORRECTOR (FIELD LINE TRACING)
+      do
+        p(1,3) = p(1,2) + step12*(5.*p(4,3)+8.*p(4,2)-p(4,1))
+        p(2,3) = p(2,2) + step12*(5.*p(5,3)+8.*p(5,2)-p(5,1))
+!******************PREDICTOR (FIELD LINE TRACING)
+        p(1,4) = p(1,3) + step12*(23.*p(4,3) - 16.*p(4,2)+5.*p(4,1))
+        p(2,4) = p(2,3) + step12*(23.*p(5,3) - 16.*p(5,2)+5.*p(5,1))
+        p(3,4) = p(3,3) + step
+        call stoer ( p(:,4), bq3, r3 )
+        p(1:8,1:3) = p(1:8,2:4)
+        b = sqrt(bq3)
+        if ( b < bmin) bmin = b
+        if ( b > bold ) exit
+        bold = b
+        rold = 1./r3
+        sp = p(1:3,4)
+      end do
+      if ( bold /= bmin ) value = .false.
+      bdelta = (b-bold)/bold
+      if ( bdelta <= bdel ) exit
+      step = step/10.
+    end do
+    rr0 = rold
+    bequ = bold
+    bdel = bdelta
+    if ( present(rr0) ) rr0 = rold
+  end subroutine FINDB0
+
+  ! ----------------------------------------------------  DUMP_GH  -----
+  subroutine DUMP_GH ( Details, Options )
+    ! Dump the GH database
+    use Dump_0, only: Dump
+    use Output_m, only: Newline, Output
+    use String_Table, only: Display_String
+    integer, intent(in), optional :: Details ! <= 0 don't dump the GH field
+                                             ! default 0
+    character(len=*), optional, intent(in) :: Options                         
+
+    ! This subterfuge is used to subvert compilers that use \ for escape
+    character(len=*), parameter :: BS2 = '\\'
+    character(len=2), parameter :: BS = ' ' // BS2(1:1)
+
+    logical :: Clean ! "c" or "C" appears in Options
+    integer :: I, MyDetails
+
+    myDetails = 0
+    if ( present(details) ) myDetails = details
+    clean = .false.
+    if ( present(options) ) clean = scan(options,'cC') /= 0
+
+    if ( .not. associated(ghs) ) then
+      call output ( 'No IGRF coefficients database', advance='yes' )
+      return
+    end if
+    call output ( 'IGRF coefficients database', advance='yes' )
+    do i = 1, size(ghs)
+      call output ( i, format='(i2)' )
+      call output ( ghs(i)%year, before=' Year = ' )
+      call output ( ghs(i)%erad, before=' Erad = ' )
+      call output ( ghs(i)%nmax, before=' Nmax = ', format='(i2)', after=' File: ' )
+      call display_string ( ghs(i)%file, strip=.true. )
+      if ( clean ) call output ( size(ghs(i)%gh), before=bs )
+      call newLine
+      if ( myDetails > 0 ) call dump ( ghs(i)%gh, options=options )
+    end do
+
+  end subroutine DUMP_GH
+
+  ! ----------------------------------------------------  READ_GH  -----
+  subroutine READ_GH ( ROOT )
+    ! Read IGRF files of GH coefficients
+
+    use Allocate_Deallocate, only: Test_Allocate
+    use IO_Stuff, only: Get_Lun
+    use Machine, only: IO_Error
+    use MLSMessageModule, only: MLSMSG_ERROR, MLSMESSAGE
+    use String_Table, only: Get_String
+    use Tree, only: NSons, Subtree, Sub_Rosa
+
+    integer, intent(in) :: Root ! of l2cf tree for P_IGRFFile
+
+    real :: G, H
+    integer :: I, J
+    integer :: M, MM, N, NN
+    character(255) :: Name  ! IGRF file name
+    type(gh_t) :: NewGH(2:nsons(root))
+    integer :: STAT         ! from I/O or allocate
+    integer :: U            ! File unit number
+
+    call get_lun ( u )
+
+    do i = 2, nsons(root)
+      newGH(i)%file = sub_rosa(subtree(i,root))
+      call get_string ( newGH(i)%file, name, strip=.true. )
+      ! ----------------------------------------------------------
+      !  Read the coefficient file, arranged as follows:
+      !
+      !                                  N     M     G     H
+      !                                  ----------------------
+      !                              /   1     0    GH(1)  -
+      !                             /    1     1    GH(2) GH(3)
+      !                            /     2     0    GH(4)  -
+      !                           /      2     1    GH(5) GH(6)
+      !      NMAX*(NMAX+3)/2     /       2     2    GH(7) GH(8)
+      !         records          \       3     0    GH(9)  -
+      !                           \      .     .     .     .
+      !                            \     .     .     .     .
+      !      NMAX*(NMAX+2)          \    .     .     .     .
+      !      elements in GH          \  NMAX  NMAX   .     .
+      !
+      !  N and M are, respectively, the degree and order of the
+      !  coefficient.
+      ! ----------------------------------------------------------
+      open ( u, file=trim(name), form='formatted', status='old', iostat=stat )
+      if ( stat /= 0 ) then
+        call io_error ( 'Unable to open IGRF file', stat, trim(name) )
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & 'Unable to open IGRF file' )
+      end if
+      read ( u, *, end=999 ) ! Skip file name in file
+      read ( u, *, err=666, end=999, iostat=stat ) &
+        & newGH(i)%nmax, newGH(i)%erad, newGH(i)%year
+      allocate ( newGH(i)%gh(newGH(i)%nmax*(newGH(i)%nmax+2)), stat=stat )
+      call test_allocate ( stat, moduleName, 'newGH%gh', &
+        & (/1/), (/newGH(i)%nmax*(newGH(i)%nmax+2) /), &
+        & (storage_size(newGH(i)%gh)+7)/8 )
+      j = 0
+      do nn = 1, newGH(i)%nmax
+        do mm = 0, nn
+          read ( u, *, err=666, end=999, iostat=stat ) n, m, g, h
+          if ( n /= nn .or. m /= mm ) call MLSMessage ( MLSMSG_Error, &
+            & moduleName, 'Structure error in IGRF file ' // trim(name) )
+          j = j + 1
+          newGH(i)%gh(j) = g
+          if ( m /= 0 ) then
+            j = j + 1
+            newGH(i)%gh(j) = h
+          end if
+        end do ! mm
+      end do ! nn
+      newGH(i)%gh(j+1:) = 0.0
+999   continue
+      close ( u )
+    end do ! i
+
+    n = 0
+    if ( associated(GHs) ) n = size(GHs)
+
+    ! Make space for the new items, but don't add them yet
+    call addGHToDatabase ( GHs, newGH, copy=.false. )
+
+    ! Use insertion sort to add the new items in year order
+    do j = 2, ubound(newGH,1)
+      do i = j+n-2, 1, -1
+        if ( newGH(j)%year >= GHs(i)%year ) exit
+        GHs(i+1) = GHs(i)
+      end do
+      GHs(i+1) = newGH(j)
+    end do
+
+    return
+
+666 continue
+    call io_error ( 'Error reading IGRF file', stat, trim(name) )
+    call MLSMessage ( MLSMSG_Error, moduleName, &
+      & 'Error reading IGRF file' // trim(name) )
+
+  contains
+    subroutine AddGHToDatabase ( Database, Items, copy )
+      use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+      type(gh_t), pointer :: Database(:)
+      type(gh_t), intent(in) :: Items(:)
+      logical, intent(in), optional :: Copy
+      type(gh_t), pointer :: tempDatabase(:)
+      include 'addItemsToDatabase.f9h'
+    end subroutine AddGHToDatabase
+  end subroutine READ_GH
+
+  ! -----------------------------------------------------  SHELLG  -----
+  subroutine SHELLG ( WHERE, DIMO, FL, ICODE, B0 )
+  !--------------------------------------------------------------------
+  ! Calculates L-value for specified geodetic coordinates, altitude
+  ! and geomagnetic field model.
+  !--------------------------------------------------------------------
+  !  Input:  WHERE  (1) Geodetic latitude in degrees (north),
+  !                 (2) Geodetic longitude in degrees (east)
+  !                 (3) Altitude in km above sea level
+  !          DIMO   Dipole moment in Gauss (normalized to earth radius)
+
+  !          Module variable
+  !          H(144)     Field model coefficients adjusted for SHELLG
+  !-----------------------------------------------------------------------
+  !  Output: FL           L-value
+  !          ICODE        =1 Normal completion
+  !                       =2 Unphysical conjugate point (FL meaningless)
+  !                       =3 Shell parameter greater than limit up to
+  !                          which accurate calculation is required;
+  !                          approximation is used.
+  !          B0           Magnetic field strength in gauss
+  !-----------------------------------------------------------------------
+
+    use Geometry, only: To_Cart
+
+    real, intent(in) :: WHERE(3), DIMO
+    real, intent(out) :: FL
+    integer, intent(out), optional :: ICODE
+    real, intent(out), optional :: B0
+
+    real ::           XI(3) ! (X,Y,Z) in Earth radii (ERAD km)
+
+    call to_cart ( where, xi )
+    call shellc ( xi, dimo, fl, icode, b0 )
+  end subroutine SHELLG
+
+  ! -----------------------------------------------------  SHELLC  -----
+  subroutine SHELLC ( XI, DIMO, FL, ICODE, B0 )
+  !--------------------------------------------------------------------
+  ! Calculate L-value for specified cartesian coordinates
+  ! and geomagnetic field model.
+  !-----------------------------------------------------------------------
+  ! REF: G. KLUGE, European Space Operations Center, Internal note
+  !      NO. 67, 1970.
+  !      G. KLUGE, Computer Physics Communications 3, 31-35, 1972
+  !--------------------------------------------------------------------
+  !  Input:
+  !          XI(3)  Cartesian coordinates in earth radii (ERAD km)     
+  !                  X-axis pointing to equator at 0 longitude           
+  !                  Y-axis pointing to equator at 90 long.              
+  !                  Z-axis pointing to north pole                       
+  !          DIMO   Dipole moment in Gauss (normalized to earth radius)
+
+  !          Module variable
+  !          H(144)     Field model coefficients adjusted for SHELLG
+  !-----------------------------------------------------------------------
+  !  Output: FL           L-value
+  !          ICODE        =1 Normal completion
+  !                       =2 Unphysical conjugate point (FL meaningless)
+  !                       =3 Shell parameter greater than limit up to
+  !                          which accurate calculation is required;
+  !                          approximation is used.
+  !          B0           Magnetic field strength in Gauss
+  !-----------------------------------------------------------------------
+    real, intent(in) :: XI(3), DIMO
+    real, intent(out) :: FL
+    integer, intent(out), optional :: ICODE
+    real, intent(out), optional :: B0
+
+    real ::           ARG1, ARG2, BEQU, BQ1, BQ2, BQ3, C0, C1, C2, C3
+    real ::           D0, D1, D2, DIMOB0, E0, E1, E2, FF, FI, GG, HLI
+    integer ::        IEQU, MyCode, N
+    real ::           MyB0, ORADIK, OTERM, P(8,100)
+    real ::           R2, R3, R3H, R, RADIK, RQ
+
+!-- RMIN, RMAX are boundaries for identification of ICODE=2 and 3
+    real, parameter :: RMIN = 0.05, RMAX = 1.01
+
+!-- STEP is step size for field line tracing
+!-- STEQ is step size for integration
+    real ::           STEP = 0.20, STEP2, STEP12, STEQ = 0.03, STP
+    real ::           T, TERM, XX, Z, ZQ
+
+    bequ = huge(1.0e0)
+    rq = 1./(xi(1)*xi(1)+xi(2)*xi(2)+xi(3)*xi(3))
+    r3h = sqrt(rq*sqrt(rq))
+    p(1,2) = (xi(1)*u(1,1)+xi(2)*u(2,1)+xi(3)*u(3,1))*r3h
+    p(2,2) = (xi(1)*u(1,2)+xi(2)*u(2,2)             )*r3h
+    p(3,2) = (xi(1)*u(1,3)+xi(2)*u(2,3)+xi(3)*u(3,3))*rq
+!*****FIRST THREE POINTS OF FIELD LINE
+    call stoer_start ( p, step, bq1, bq2, bq3, r2, r3 )
+    myb0 = sqrt(bq2)
+!*****SEARCH FOR LOWEST MAGNETIC FIELD STRENGTH
+    if ( bq1 < bequ ) then
+      bequ = bq1
+      iequ = 1
+    end if
+    if ( bq2 < bequ ) then
+      bequ = bq2
+      iequ = 2
+    end if
+    if ( bq3 < bequ ) then
+      bequ = bq3
+      iequ = 3
+    end if
+!*****INITIALIZATION OF INTEGRATION LOOPS
+    step12 = step/12.
+    step2 = step+step
+    steq = sign(steq,step)
+    fi = 0.
+    myCode = 1
+    oradik = 0.
+    oterm = 0.
+    stp = r2*steq
+    z = p(3,2)+stp
+    stp = stp/0.75
+    p(8,1) = step2*(p(1,1)*p(4,1)+p(2,1)*p(5,1))
+    p(8,2) = step2*(p(1,2)*p(4,2)+p(2,2)*p(5,2))
+!*****MAIN LOOP (FIELD LINE TRACING)
+o:  do n = 3, size(p,2)-1
+!*****CORRECTOR (FIELD LINE TRACING)
+      p(1,n) = p(1,n-1) + step12*(5.*p(4,n)+8.*p(4,n-1)-p(4,n-2))
+      p(2,n) = p(2,n-1) + step12*(5.*p(5,n)+8.*p(5,n-1)-p(5,n-2))
+!*****PREPARE EXPANSION COEFFICIENTS FOR INTERPOLATION
+!*****OF SLOWLY VARYING QUANTITIES
+      p(8,n) = step2*(p(1,n)*p(4,n)+p(2,n)*p(5,n))
+      c0 = p(1,n-1)**2 + p(2,n-1)**2
+      c1 = p(8,n-1)
+      c2 = (p(8,n) - p(8,n-2))*0.25
+      c3 = (p(8,n) + p(8,n-2)-c1-c1)/6.0
+      d0 = p(6,n-1)
+      d1 = (p(6,n) - p(6,n-2))*0.5
+      d2 = (p(6,n) + p(6,n-2)-d0-d0)*0.5
+      e0 = p(7,n-1)
+      e1 = (p(7,n) - p(7,n-2))*0.5
+      e2 = (p(7,n) + p(7,n-2)-e0-e0)*0.5
+!*****INNER LOOP (FOR QUADRATURE)
+      do
+        t = (z-p(3,n-1))/step
+        if ( t > 1.) exit
+        hli = 0.5*(((c3*t+c2)*t+c1)*t+c0)
+        zq = z*z
+        r = hli + sqrt(hli*hli+zq)
+        if ( r <= rmin) then
+          !*****APPROXIMATION FOR HIGH VALUES OF L.
+          myCode = 3
+          t = -p(3,n-1)/step
+          fl = 1./(abs(((c3*t+c2)*t+c1)*t+c0)+1e-15)
+          return
+        end if
+        rq = r*r
+        ff = sqrt(1.+3.*zq/rq)
+        radik = myb0-((d2*t+d1)*t+d0)*r*rq*ff
+        if ( r > rmax) then
+          myCode = 2
+          radik = radik-12.*(r-rmax)**2
+        end if
+        if ( radik+radik <= oradik) exit o
+        term = sqrt(radik)*ff*((e2*t+e1)*t+e0)/(rq+zq)
+        fi = fi + stp*(oterm+term)
+        oradik = radik
+        oterm = term
+        stp = r*steq
+        z = z+stp
+      end do
+!*****PREDICTOR (FIELD LINE TRACING)
+      p(1,n+1) = p(1,n) + step12*(23.*p(4,n)-16.*p(4,n-1)+5.*p(4,n-2))
+      p(2,n+1) = p(2,n) + step12*(23.*p(5,n)-16.*p(5,n-1)+5.*p(5,n-2))
+      p(3,n+1) = p(3,n) + step
+      call stoer ( p(:,n+1), bq3, r3 )
+!*****SEARCH FOR LOWEST MAGNETIC FIELD STRENGTH
+      if ( bq3 < bequ ) then
+        iequ = n + 1
+        bequ = bq3
+        end if
+    end do o
+    if ( iequ < 2) iequ = 2
+    sp = p(1:3,iequ-1)
+    if ( oradik >= 1e-15) fi = fi+stp/0.75*oterm*oradik/(oradik-radik)
+
+!-- The minimal allowable value of FI was changed from 1E-15 to 1E-12,
+!-- because 1E-38 is the minimal allowable arg. for LOG in our envir.
+!-- D. Bilitza, Nov 87.
+
+    fi = 0.5*abs(fi)/sqrt(myb0) + 1.0e-12
+
+!*****Compute L from B and I.  Same as CARMEL in INVAR.
+
+!-- Correct dipole moment is used here. D. Bilitza, Nov 87.
+
+    dimob0 = dimo/myb0
+    arg1 = log(fi)
+    arg2 = log(dimob0)
+    xx = 3*arg1-arg2
+    if ( xx > 23.0) then
+      gg = xx - 3.0460681e0
+    else if ( xx > 11.7) then
+      gg = (((((2.8212095e-8*xx-3.8049276e-6)*xx+2.170224e-4)*xx- &
+        & 6.7310339e-3 )*xx+1.2038224e-1)*xx-1.8461796e-1)*xx+2.0007187e0
+    else if ( xx > +3.0) then
+      gg = ((((((((6.3271665e-10*xx-3.958306e-8)*xx+9.9766148e-07)*xx- &
+        & 1.2531932e-5)*xx+7.9451313e-5)*xx-3.2077032e-4)*xx+2.1680398e-3)* &
+        & xx+1.2817956e-2)*xx+4.3510529e-1)*xx+6.222355e-1
+    else if ( xx > -3.0) then
+      gg = ((((((((2.6047023e-10*xx+2.3028767e-9)*xx-2.1997983e-8)*xx- &
+        & 5.3977642e-7)*xx-3.3408822e-6)*xx+3.8379917e-5)*xx+1.1784234e-3)* &
+        & xx+1.4492441e-2)*xx+4.3352788e-1)*xx+6.228644e-1
+    else if ( xx > -22.) then
+      gg = ((((((((-8.1537735e-14*xx+8.3232531e-13)*xx+1.0066362e-9)*xx+ &
+        & 8.1048663e-8)*xx+3.2916354e-6)*xx+8.2711096e-5)*xx+1.3714667e-3)* &
+        & xx+1.5017245e-2)*xx+4.3432642e-1)*xx+6.2337691e-1
+    else
+      gg = 3.33338e-1*xx+3.0062102e-1
+    end if
+    fl = exp(log((1.0+exp(gg))*dimob0)/3.0)
+    if ( present(icode) ) icode = mycode
+    if ( present(b0) ) b0 = myB0
+
+  end subroutine SHELLC
+
+  ! ----------------------------------------------------  SHELLCM  -----
+  subroutine SHELLCM ( XI, DIMO, FL, ICODE, B0 )
+  !--------------------------------------------------------------------
+  ! Calculate L-value for specified cartesian coordinates
+  ! and geomagnetic field model.
+  !-----------------------------------------------------------------------
+  ! REF: G. KLUGE, European Space Operations Center, Internal note
+  !      NO. 67, 1970.
+  !      G. KLUGE, Computer Physics Communications 3, 31-35, 1972
+  !--------------------------------------------------------------------
+  !  Input:
+  !          XI(3)  Cartesian coordinates in meters    
+  !                  X-axis pointing to equator at 0 longitude           
+  !                  Y-axis pointing to equator at 90 long.              
+  !                  Z-axis pointing to north pole                       
+  !          DIMO   Dipole moment in Gauss (normalized to earth radius)
+
+  !          Module variable
+  !          H(144)     Field model coefficients adjusted for SHELLG
+  !-----------------------------------------------------------------------
+  !  Output: FL           L-value
+  !          ICODE        =1 Normal completion
+  !                       =2 Unphysical conjugate point (FL meaningless)
+  !                       =3 Shell parameter greater than limit up to
+  !                          which accurate calculation is required;
+  !                          approximation is used.
+  !          B0           Magnetic field strength in Gauss
+  !-----------------------------------------------------------------------
+    real, intent(in) :: XI(3), DIMO
+    real, intent(out) :: FL
+    integer, intent(out), optional :: ICODE
+    real, intent(out), optional :: B0
+
+    call shellc ( xi / eradm, dimo, fl, icode, b0 )
+
+  end subroutine SHELLCM
+
+  ! ------------------------------------------------------  FELDG  -----
+  subroutine FELDG ( WHERE, BNORTH, BEAST, BDOWN, BABS )
+  !-------------------------------------------------------------------
+  ! Calculate earth magnetic field from spherical harmonics model
+  ! REF: G. KLUGE, European Space Operations Centre, Internal note 61,
+  !      1970.
+  !--------------------------------------------------------------------
+  !  Input:       WHERE  (1) Geodetic latitude in degrees (north),
+  !                      (2) Geodetic longitude in degrees (east),
+  !                      (3) Altitude in km above sea level
+
+  !------------------------------------------------------------------------
+  !  Output: BABS   Magnetic field strength in Gauss
+  !          BNORTH, BEAST, BDOWN   Components of the field with respect
+  !                 to the local geodetic coordinate system, with axis
+  !                 pointing in the tangential plane to the north, east
+  !                 and downward.
+  !-----------------------------------------------------------------------
+
+    use Geometry, only: To_Cart
+
+    real, intent(in) :: WHERE(3)
+    real, intent(out) :: BNORTH, BEAST, BDOWN, BABS
+
+    real ::           B(3), BRHO, CP, CT, SP, ST
+    real ::           V(3) ! (X,Y,Z) in Earth radii (ERAD km)
+
+    call to_cart ( where, v, ct, st, cp, sp )
+    call feldc ( v, b )
+    babs = sqrt(b(1)*b(1)+b(2)*b(2)+b(3)*b(3))   
+    beast = b(2)*cp-b(1)*sp                      
+    brho = b(2)*sp+b(1)*cp                       
+    bnorth = b(3)*st-brho*ct                     
+    bdown = -b(3)*ct-brho*st                     
+  end subroutine FELDG
+
+  ! ------------------------------------------------------  FELDC  -----
+  subroutine FELDC ( V, B )
+
+  !  Input:       V(3)  Cartesian coordinates in earth radii, km (ERAD)
+  !                       X-axis pointing to equator at 0 longitude
+  !                       Y-axis pointing to equator at 90 long.
+  !                       Z-axis pointing to north pole
+  !  Output:      B(3)  Components of the magnetic field with respect to
+  !                     cartesian coordinates
+
+    real, intent(in) :: V(3)
+    real, intent(out) :: B(3)
+    real :: RQ, S, T, XI(3)
+
+    rq = 1./(v(1)*v(1)+v(2)*v(2)+v(3)*v(3))
+    xi = v*rq
+    call feldi ( xi ) ! Fills H
+    s = .5*h(1)+2.*(h(2)*xi(3)+h(3)*xi(1)+h(4)*xi(2))
+    t = (rq+rq)*sqrt(rq)
+    b(1) = t*(h(3)-s*v(1))
+    b(2) = t*(h(4)-s*v(2))
+    b(3) = t*(h(2)-s*v(3))
+  end subroutine FELDC
+
+  ! -----------------------------------------------------  FELDCM  -----
+  subroutine FELDCM ( V, B )
+
+  !  Input:       V(3)  Cartesian coordinates in meters
+  !                       X-axis pointing to equator at 0 longitude
+  !                       Y-axis pointing to equator at 90 long.
+  !                       Z-axis pointing to north pole
+  !  Output:      B(3)  Components of the magnetic field with respect to
+  !                     cartesian coordinates
+
+    real, intent(in) :: V(3)
+    real, intent(out) :: B(3)
+
+    call feldc ( v / eradm, b )
+
+  end subroutine FELDCM
+
+  ! ----------------------------------------------------  FELDCOF  -----
+  subroutine FELDCOF ( YEAR, DIMO )
+  !------------------------------------------------------------------------
+  !  Determine coefficients and dipole moment from IGRF models
+
+  !  Input:       YEAR  Decimal year for which geomagnetic field is to  
+  !                     be calculated                                   
+  !  Output:      DIMO  Geomagnetic dipole moment in GAUSS (normalized  
+  !                     to earth's radius) at the time (year)           
+  !-----------------------------------------------------------------------
+
+    real, intent(in) :: YEAR
+    real, intent(out), optional :: DIMO
+
+    ! GHS     From coefficients file.  Created by Remake_GH program using
+    !         the original GETSHC subroutine.
+
+   include 'gh.f9h'
+
+    real, allocatable ::         GHA(:)
+    integer ::      I
+!   IS is .true. for Schmidt normalization, .false. for Gauss normalization
+    logical, parameter :: IS = .true.
+    integer ::      IYEA, J, L, M, N, NUMYE
+    real ::         SQRT2
+    double precision :: F, F0, X
+
+!     if ( .not. associated(ghs) ) call MLSMessage ( MLSMSG_Error, moduleName, &
+!       & 'No magnetic field model coefficient database' )
+
+    numye = size(ghs) - 1
+    ! Assume the years of the coefficient records are five years apart
+    iyea  =  int(year/5.)*5
+    l  =  max(1.0,min(real(numye),(iyea - ghs(1)%year)/5.0 + 1.0))
+    m = max(size(ghs(l)%gh), size(ghs(l+1)%gh))
+    if ( allocated(g) ) then
+      if ( size(g) < m+1 ) deallocate ( g )
+    end if
+    if ( allocated(h) ) then
+      if ( size(h) < m+1 ) deallocate ( h )
+    end if
+    allocate ( gha(m) )
+    if ( .not. allocated(g) ) allocate ( g(m+1) )
+    if ( .not. allocated(h) ) allocate ( h(m+1) )
+!-- Determine IGRF coefficients for year
+    if ( l < numye ) then
+      call intershc ( year, ghs(l), ghs(l+1), nmax, gha )
+      ! Interpolate earth radius used -- probably the same for both
+      ! years, but why take a chance?
+      erad = ( ( ghs(l+1)%year - year ) * ghs(l)%erad + &
+             & ( year - ghs(l)%year ) * ghs(l+1)%erad ) / &
+           & ( ghs(l+1)%year - ghs(l)%year )
+    else ! l == numye
+      ! Assume ghs(numye) is time derivatives, not coefficients.
+      call extrashc ( year, ghs(l), ghs(l+1), nmax, gha )
+      erad = ghs(l+1)%erad
+    end if
+    eradm = 1000.0 * erad ! Earth radius used, in meters
+!-- Determine magnetic dipole moment and coeffiecients G
+    f0 = 0.0d0
+    do j = 1, 3
+      f = gha(j) * 1.0d-5
+      f0 = f0 + f * f
+    end do
+    if ( present(dimo) ) dimo = sqrt(f0)
+
+    g(1) = 0.0
+    i = 2
+    f0 = 1.0d-5
+    if ( is ) f0 = -f0
+    sqrt2 = sqrt(2.)
+
+    do n = 1, nmax
+      x = n
+      f0 = f0 * x * x / (4.0d0 * x - 2.d0)
+      if ( is ) f0 = f0 * (2.0d0 * x - 1.0d0) / x
+      f = f0 * 0.5d0
+      if ( is ) f = f * sqrt2
+      g(i) = gha(i-1) * f0
+      i = i + 1
+      do m = 1 , n
+        f = f * (x + m) / (x - m + 1.d0)
+        if ( is ) f = f * sqrt((x - m + 1.0d0) / (x + m))
+        g(i) = gha(i-1) * f
+        g(i+1) = gha(i) * f
+        i = i + 2
+      end do
+    end do
+    deallocate ( gha )
+
+  contains
+
+    ! .................................................  INTERSHC  .....
+    subroutine INTERSHC ( DATE, GH1, GH2, NMAX, GH )
+
+    ! ===============================================================
+    !
+    !       Version 1.01
+    !
+    !       Interpolates linearly, in time, between two spherical
+    !       harmonic models.
+    !
+    !       Input:
+    !           DATE  - Date of resulting model (in decimal year)
+    !           GH1   - G and H structure, type GH_T, including
+    !              YEAR - year epoch for parameters
+    !              NMAX - Maximum degree and order
+    !              GH   - Schmidt quasi-normal internal spherical
+    !                   harmonic coefficients of earlier model
+    !           GH2   - Same as GH1, but for a later year
+    !
+    !       Output:
+    !           GH    - Coefficients of resulting model
+    !           NMAX  - Maximum degree and order of resulting model
+    !
+    !       A. Zunde
+    !       USGS, MS 964, Box 25046 Federal Center, Denver, CO  80225
+    !
+    ! ===============================================================
+
+      real, intent(in) :: DATE
+      type(gh_t), intent(in) :: GH1, GH2
+      real, intent(out) :: GH(:)
+      integer, intent(out) :: NMAX
+
+    ! ---------------------------------------------------------------
+    !       The coefficients (GH) of the resulting model, at date
+    !       DATE, are computed by linearly interpolating between the
+    !       coefficients of the earlier model (GH1), at date DTE1,
+    !       and those of the later model (GH2), at date DTE2. If one
+    !       model is smaller than the other, the interpolation is
+    !       performed with the missing coefficients assumed to be 0.
+    ! ---------------------------------------------------------------
+
+      real :: FACTOR
+      integer :: K, L
+
+      factor = (date - gh1%year) / (gh2%year - gh1%year)
+
+      if ( gh1%nmax == gh2%nmax ) then
+        k = gh1%nmax * (gh1%nmax + 2)
+        nmax = gh1%nmax
+      else if ( gh1%nmax > gh2%nmax ) then
+        k = gh2%nmax * (gh2%nmax + 2)
+        l = gh1%nmax * (gh1%nmax + 2)
+        gh(k+1:l) = gh1%gh(k+1:l) + factor * (-gh1%gh(k+1:l))
+        nmax = gh1%nmax
+      else
+        k = gh1%nmax * (gh1%nmax + 2)
+        l = gh2%nmax * (gh2%nmax + 2)
+        gh(k+1:l) = factor * gh2%gh(k+1:l)
+        nmax = gh2%nmax
+      end if
+
+      gh(1:k) = gh1%gh(1:k) + factor * (gh2%gh(1:k) - gh1%gh(1:k))
+
+    end subroutine INTERSHC
+
+    ! .................................................  EXTRASHC  .....
+    subroutine EXTRASHC ( DATE, GH1, GH2, NMAX, GH )
+
+    ! ===============================================================
+    !
+    !       Version 1.01
+    !
+    !       Extrapolates linearly a spherical harmonic model with a
+    !       rate-of-change model.
+    !
+    !       Input:
+    !           DATE  - Date of resulting model (in decimal year)
+    !           GH1   - G and H structure, type GH_T, including
+    !              YEAR - year epoch for parameters
+    !              NMAX - Maximum degree and order
+    !              GH   - Schmidt quasi-normal internal spherical
+    !                   harmonic coefficients of earlier model
+    !           GH2   - Same as GH1, but for a later year
+    !
+    !       Output:
+    !           GH    - Coefficients of resulting model
+    !           NMAX  - Maximum degree and order of resulting model
+    !
+    !       A. Zunde
+    !       USGS, MS 964, Box 25046 Federal Center, Denver, CO  80225
+    !
+    ! ===============================================================
+
+      real, intent(in) :: DATE
+      type(gh_t), intent(in) :: GH1, GH2
+      real, intent(out) :: GH(:)
+      integer, intent(out) :: NMAX
+
+    ! ---------------------------------------------------------------
+    !       The coefficients (GH) of the resulting model, at date
+    !       DATE, are computed by linearly extrapolating the coef-
+    !       ficients of the base model (GH1), at date DTE1, using
+    !       those of the rate-of-change model (GH2), at date DTE2. If
+    !       one model is smaller than the other, the extrapolation is
+    !       performed with the missing coefficients assumed to be 0.
+    ! ---------------------------------------------------------------
+
+      real :: FACTOR
+      integer :: K, L
+
+      factor = (date - gh1%year)
+
+      if ( gh1%nmax == gh2%nmax ) then
+        k = gh1%nmax * (gh1%nmax + 2)
+        nmax = gh1%nmax
+      else if ( gh1%nmax > gh2%nmax ) then
+        k = gh2%nmax * (gh2%nmax + 2)
+        l = gh1%nmax * (gh1%nmax + 2)
+        gh(k+1:l) = gh1%gh(k+1:l)
+        nmax = gh1%nmax
+      else
+        k = gh1%nmax * (gh1%nmax + 2)
+        l = gh2%nmax * (gh2%nmax + 2)
+        gh(k+1:l) = factor * gh2%gh(k+1:l)
+        nmax = gh2%nmax
+      end if
+
+      gh(1:k) = gh1%gh(1:k) + factor * gh2%gh(1:k)
+
+    end subroutine EXTRASHC
+
+  end subroutine FELDCOF
+
+! *****     Private Procedures     *************************************
+
+  ! ------------------------------------------------------  FELDI  -----
+  subroutine FELDI ( XI )
+  ! Get H from G -- used for L computation
+
+  !        Module variables
+  !             H       ???
+  !             NMAX    Maximum order of spherical harmonicS
+  !             G(M)    Normalized field coefficients (see FELDCOF)
+  !                     M=NMAX*(NMAX+2)
+
+    real, intent(in) :: XI(3) ! Cartesian coordinates
+
+    real ::           F
+    integer ::        I, IH, IHMAX, IL, IMAX, K, LAST, M
+    real ::           X, Y, Z
+
+    ihmax = nmax*nmax+1
+    last = ihmax+nmax+nmax
+    imax = nmax+nmax-1
+    h(ihmax:last) = g(ihmax:last)
+    do k = 1, 3, 2
+      i = imax
+      ih = ihmax
+      do
+        il = ih-i
+        f = 2./float(i-k+2)
+        x = xi(1)*f
+        y = xi(2)*f
+        z = xi(3)*(f+f)
+        i = i - 2
+        if ( i >= 1 ) then
+          do m = 3, i, 2
+            h(il+m+1) = g(il+m+1)+z*h(ih+m+1)+x*(h(ih+m+3)-h(ih+m-1)) &
+              &                              -y*(h(ih+m+2)+h(ih+m-2))
+            h(il+m) = g(il+m)+z*h(ih+m)+x*(h(ih+m+2)-h(ih+m-2)) &
+              &                        +y*(h(ih+m+3)+h(ih+m-1))
+          end do
+          h(il+2) = g(il+2)+z*h(ih+2)+x*h(ih+4)-y*(h(ih+3)+h(ih))
+          h(il+1) = g(il+1)+z*h(ih+1)+y*h(ih+4)+x*(h(ih+3)-h(ih))
+        end if
+        h(il) = g(il)+z*h(ih)+2.*(x*h(ih+1)+y*h(ih+2))
+        ih = il
+        if ( i < k ) exit
+      end do
+    end do
+  end subroutine FELDI
+
+  ! ------------------------------------------------------  STOER  -----
+  subroutine STOER ( P, BQ, R )
+!*******************************************************************
+!* Field line tracing for FINDB0 and SHELLG                        *
+!*******************************************************************
+    real, intent(inout) :: P(:) ! p(1:3) are in, p(4:7) are out
+    real, intent(out) :: BQ, R
+
+    ! *XM,*YM,*ZM  ARE GEOMAGNETIC CARTESIAN INVERSE CO-ORDINATES
+    real ::           DR, DSQ, DX, DXM, DY, DYM, DZ, DZM, FLI, Q, RQ, WR
+    real ::           XI(3), XM, YM, ZM
+
+    zm = p(3)
+    fli = p(1)*p(1)+p(2)*p(2)+1e-15
+    r = 0.5*(fli+sqrt(fli*fli+(zm+zm)**2))
+    rq = r*r
+    wr = sqrt(r)
+    xm = p(1)*wr
+    ym = p(2)*wr
+!*****TRANSFORM TO GEOGRAPHIC CO-ORDINATE SYSTEM
+    xi(1) = xm*u(1,1) + ym*u(1,2) + zm*u(1,3)
+    xi(2) = xm*u(2,1) + ym*u(2,2) + zm*u(2,3)
+    xi(3) = xm*u(3,1)             + zm*u(3,3)
+!*****COMPUTE DERIVATIVES
+    call feldi ( xi ) ! Fills H
+    q = h(1)/rq
+    dx = h(3) + h(3) + q*xi(1)
+    dy = h(4) + h(4) + q*xi(2)
+    dz = h(2) + h(2) + q*xi(3)
+!*****TRANSFORM BACK TO GEOMAGNETIC CO-ORDINATE SYSTEM
+    dxm = u(1,1)*dx + u(2,1)*dy + u(3,1)*dz
+    dym = u(1,2)*dx + u(2,2)*dy
+    dzm = u(1,3)*dx + u(2,3)*dy + u(3,3)*dz
+    dr = (xm*dxm+ym*dym+zm*dzm)/r
+!*****FORM SLOWLY VARYING EXPRESSIONS
+    p(4) = (wr*dxm-0.5*p(1)*dr)/(r*dzm)
+    p(5) = (wr*dym-0.5*p(2)*dr)/(r*dzm)
+    dsq = rq*(dxm*dxm+dym*dym+dzm*dzm)
+    bq = dsq*rq*rq
+    p(6) = sqrt(dsq/(rq+3.*zm*zm))
+    p(7) = p(6)*(rq+zm*zm)/(rq*dzm)
+
+  end subroutine STOER
+
+  ! ------------------------------------------------  STOER_START  -----
+  subroutine STOER_START ( P, STEP, BQ1, BQ2, BQ3, R2, R3 )
+    real, intent(inout) :: P(:,:), STEP
+    real, intent(out) :: BQ1, BQ2, BQ3, R2, R3
+    integer :: I
+    real :: R1, ZZ
+
+    step = -sign(step,p(3,2))
+    call stoer ( p(:,2), bq2, r2 )
+    p(1,3) = p(1,2) + 0.5*step*p(4,2)
+    p(2,3) = p(2,2) + 0.5*step*p(5,2)
+    p(3,3) = p(3,2) + 0.5*step
+    call stoer ( p(:,3), bq3, r3 )
+    p(1,1) = p(1,2) - step*(2.*p(4,2)-p(4,3))
+    p(2,1) = p(2,2) - step*(2.*p(5,2)-p(5,3))
+    p(3,1) = p(3,2) - step
+    call stoer ( p(:,1), bq1, r1 )
+    p(1,3) = p(1,2) + step*(20.*p(4,3)-3.*p(4,2)+p(4,1))/18.
+    p(2,3) = p(2,2) + step*(20.*p(5,3)-3.*p(5,2)+p(5,1))/18.
+    p(3,3) = p(3,2) + step
+    call stoer ( p(:,3), bq3, r3 )
+    !*****INVERT SENSE IF REQUIRED
+    if ( bq3 >  bq1) then
+      step = -step
+      r3 = r1
+      bq3 = bq1
+      do i = 1,7
+        zz = p(i,1)
+        p(i,1) = p(i,3)
+        p(i,3) = zz
+      end do
+    end if
+  end subroutine STOER_START
+
+  ! ----------------------------------------------  not_used_here  -----
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: igrf_int.f90,v 2.13 2016/01/23 02:51:35 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module IGRF_INT
+
+! $Log: igrf_int.f90,v $
+! Revision 2.13  2016/01/23 02:51:35  vsnyder
+! Add procedures that want coordinates in meters instead of ERad
+!
+! Revision 2.12  2015/03/28 02:07:25  vsnyder
+! Added stuff to trace allocate/deallocate addresses
+!
+! Revision 2.11  2015/02/05 21:48:29  vsnyder
+! Remove unused computations
+!
+! Revision 2.10  2014/09/05 21:12:56  vsnyder
+! More complete and accurate allocate/deallocate size tracking
+!
+! Revision 2.9  2014/01/11 01:28:53  vsnyder
+! Decruftification
+!
+! Revision 2.8  2013/08/16 02:29:46  vsnyder
+! Move To_Cart to Geometry
+!
+! Revision 2.7  2013/06/12 02:30:07  vsnyder
+! Cruft removal
+!
+! Revision 2.6  2012/03/29 20:15:15  vsnyder
+! Interim commit to make Dump_GH consistent with DumpCommand
+!
+! Revision 2.5  2012/03/15 22:48:05  vsnyder
+! Add Dump_GH and Read_GH
+!
+! Revision 2.4  2009/06/23 18:26:11  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.3  2009/05/13 20:03:02  vsnyder
+! Get constants from Constants, kinds from MLSKinds
+!
+! Revision 2.2  2005/06/22 18:08:19  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.1  2003/01/14 21:37:31  vsnyder
+! Initial conversion from Bilitza's F77 code
+!
+@
+
+
+2.13
+log
+@Add procedures that want coordinates in meters instead of ERad
+@
+text
+@a338 1
+      use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+d1038 1
+a1038 1
+       "$Id: igrf_int.f90,v 2.12 2015/03/28 02:07:25 vsnyder Exp $"
+d1048 3
+@
+
+
+2.12
+log
+@Added stuff to trace allocate/deallocate addresses
+@
+text
+@d28 2
+a29 2
+  public :: DUMP_GH, FELDCOF, FELDC, FELDG, FINDB0, IGRF_SUB, READ_GH
+  public :: SHELLC, SHELLG
+d53 8
+d568 37
+d665 17
+d729 5
+d737 1
+d739 1
+d1039 1
+a1039 1
+       "$Id: igrf_int.f90,v 2.11 2015/02/05 21:48:29 vsnyder Exp $"
+d1049 3
+@
+
+
+2.11
+log
+@Remove unused computations
+@
+text
+@d331 1
+d970 1
+a970 1
+       "$Id: igrf_int.f90,v 2.10 2014/09/05 21:12:56 vsnyder Exp $"
+d980 3
+@
+
+
+2.10
+log
+@More complete and accurate allocate/deallocate size tracking
+@
+text
+@d369 1
+a369 2
+    real ::           COSPHI, CT
+    real ::           SINPHI, ST, XI(3)
+d371 1
+a371 1
+    call to_cart ( where, xi, ct, st, cosphi, sinphi )
+d583 2
+a584 1
+    real ::           B(3), BRHO, CP, CT, SP, ST, V(3)
+d969 1
+a969 1
+       "$Id: igrf_int.f90,v 2.9 2014/01/11 01:28:53 vsnyder Exp $"
+d979 3
+@
+
+
+2.9
+log
+@Decruftification
+@
+text
+@d233 1
+a233 1
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+d330 1
+d969 1
+a969 1
+       "$Id: igrf_int.f90,v 2.8 2013/08/16 02:29:46 vsnyder Exp $"
+d979 3
+@
+
+
+2.8
+log
+@Move To_Cart to Geometry
+@
+text
+@d24 1
+a24 2
+  use Constants, only: Rad2Deg, Deg2Rad
+  use GEOMETRY, only: EarthRadA, EarthRadB
+d968 1
+a968 1
+       "$Id: igrf_int.f90,v 2.7 2013/06/12 02:30:07 vsnyder Exp $"
+d978 3
+@
+
+
+2.7
+log
+@Cruft removal
+@
+text
+@d30 1
+a30 1
+  public :: SHELLC, SHELLG, TO_CART
+a49 12
+! AQUAD   Square of major half axis for earth ellipsoid
+! BQUAD   Square of minor half axis for earth ellipsoid
+
+  real, parameter :: AQUAD = (EarthRadA/1000.0)**2 ! Km**2
+  real, parameter :: BQUAD = (EarthRadB/1000.0)**2 ! Km**2
+
+! ERAD    Earth radius for normalization of Cartesian
+!         coordinates (6371.2 Km) as recommended by the International
+!         Astronomical Union
+
+  real, save ::              ERAD = 6371.2
+
+d362 2
+d578 3
+a837 26
+  ! ----------------------------------------------------  To_Cart  -----
+  subroutine To_Cart ( WHERE, CART, CT, ST, CP, SP )
+  ! Convert Geodetic latitude and longitude, and altitude, to Cartesian
+    real, intent(in) :: WHERE(3)        ! Latitude, Longitude, Altitude
+    real, intent(out) :: CART(3)        ! X, Y, Z
+    real, intent(out), optional :: CT, ST, CP, SP ! Cosine, Sine of Lat, Lon
+    real :: D, MyCt, MySt, MyCp, MySp, RHO, RLAT, RLON
+
+    rlat = where(1)*deg2Rad
+    myct = sin(rlat)
+    myst = cos(rlat)
+    d = sqrt(aquad-(aquad-bquad)*myct*myct)
+    rlon = where(2)*deg2Rad
+    mycp = cos(rlon)
+    mysp = sin(rlon)
+    cart(3) = (where(3)+bquad/d)*myct/erad
+    rho = (where(3)+aquad/d)*myst/erad
+    cart(1) = rho*mycp
+    cart(2) = rho*mysp
+    if ( present(ct) ) ct = myct
+    if ( present(st) ) st = myst
+    if ( present(cp) ) cp = mycp
+    if ( present(sp) ) sp = mysp
+
+  end subroutine To_Cart
+
+d969 1
+a969 1
+       "$Id: igrf_int.f90,v 2.6 2012/03/29 20:15:15 vsnyder Exp $"
+d979 3
+@
+
+
+2.6
+log
+@Interim commit to make Dump_GH consistent with DumpCommand
+@
+text
+@d246 1
+a246 1
+    use Allocate_Deallocate, only: E_def, Test_Allocate, Test_Deallocate
+d298 2
+a299 1
+        & (/1/), (/newGH(i)%nmax*(newGH(i)%nmax+2) /), e_def )
+d636 1
+a636 1
+    use MLSMessageModule, only: MLSMSG_ERROR, MLSMESSAGE
+d1002 1
+a1002 1
+       "$Id: igrf_int.f90,v 2.5 2012/03/15 22:48:05 vsnyder Exp $"
+d1012 3
+@
+
+
+2.5
+log
+@Add Dump_GH and Read_GH
+@
+text
+@d203 1
+a203 1
+  subroutine DUMP_GH ( Details )
+d206 1
+a206 1
+    use Output_m, only: Output
+d210 7
+d221 2
+d232 6
+a237 3
+      call output ( ghs(i)%erad, before=' Erad = ', after=' File: ' )
+      call display_string ( ghs(i)%file, strip=.true., advance='yes' )
+      if ( myDetails > 0 ) call dump ( ghs(i)%gh )
+d635 1
+d642 1
+a642 1
+    include 'gh.f9h'
+d652 3
+d659 1
+a659 1
+    m = max(ghs(l)%ngh, ghs(l+1)%ngh)
+d672 2
+a673 1
+    else
+d1001 1
+a1001 1
+       "$Id: igrf_int.f90,v 2.4 2009/06/23 18:26:11 pwagner Exp $"
+d1011 3
+@
+
+
+2.4
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d29 2
+a30 1
+  public :: FELDCOF, FELDC, FELDG, FINDB0, IGRF_SUB, SHELLC, SHELLG, TO_CART
+d34 1
+a34 1
+       "$RCSfile: $"
+d38 10
+d56 1
+a56 1
+! ERAD    Earth radius for normalization of cartesian
+d62 4
+d202 136
+d640 1
+d984 1
+a984 1
+       "$Id: read_apriori.f90 is it here $"
+d994 3
+@
+
+
+2.3
+log
+@Get constants from Constants, kinds from MLSKinds
+@
+text
+@d33 1
+a33 1
+       "$RCSfile: igrf_int.f90,v $"
+d829 1
+a830 1
+!---------------------------- RCS Ident Info -------------------------------
+d832 2
+a833 3
+       "$Id: igrf_int.f90,v 2.2 2005/06/22 18:08:19 pwagner Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d835 1
+d837 1
+d842 3
+@
+
+
+2.2
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d24 1
+a24 1
+  use UNITS, only: Rad2Deg, Deg2Rad
+d33 1
+a33 1
+       "$RCSfile: $"
+d832 1
+a832 1
+       "$Id: $"
+d841 3
+@
+
+
+2.1
+log
+@Initial conversion from Bilitza's F77 code
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d31 4
+a34 7
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+    &  "$Id: $"
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName= &
+    &  "$RCSfile: $"
+  private :: not_used_here
+d830 5
+a834 2
+  ! This just makes sure ID and ModuleName get used, so eager optimizers
+  ! don't throw them away.  It's never referenced.
+d840 4
+a843 1
+! $Log: $
+@
+

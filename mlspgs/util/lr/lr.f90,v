@@ -1,0 +1,987 @@
+head	1.15;
+access;
+symbols
+	v5-02-NRT-19:1.15
+	v6-00:1.15
+	v5-02-NRT-18:1.15
+	v5-02:1.15
+	v5-01-NRT-17:1.15
+	v5-01-NRT-16:1.15
+	v5-01-NRT-15:1.15
+	v5-01-NRT-14:1.15
+	neuralnetworks-1-0:1.15.0.4
+	cfm-single-freq-0-1:1.15.0.2
+	v5-01:1.15
+	v5-00:1.15
+	v4-23-TA133:1.12.0.6
+	mus-emls-1-70:1.12.0.4
+	rel-1-0-englocks-work:1.12.0.2
+	VUMLS1-00:1.11
+	VPL1-00:1.11
+	V4-22-NRT-08:1.11
+	VAM1-00:1.10
+	V4-21:1.10.0.2
+	V4-13:1.10
+	V4-12:1.6
+	V4-11:1.6
+	V4-10:1.5;
+locks; strict;
+comment	@# @;
+
+
+1.15
+date	2019.07.31.20.43.13;	author vsnyder;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2019.07.31.20.08.14;	author vsnyder;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2019.07.09.20.28.04;	author vsnyder;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2017.08.07.19.59.45;	author vsnyder;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2016.01.29.23.26.52;	author pwagner;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2014.08.06.20.54.00;	author vsnyder;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2014.08.06.19.37.04;	author pwagner;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2014.08.05.18.24.06;	author pwagner;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2014.08.05.00.48.32;	author vsnyder;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2014.05.21.00.00.57;	author vsnyder;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2014.04.09.23.54.01;	author vsnyder;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2014.01.14.00.11.42;	author vsnyder;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2013.11.27.23.05.58;	author vsnyder;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2013.11.27.01.33.47;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2013.10.24.22.41.14;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.15
+log
+@Print the command line and version
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+program LR
+
+  use, intrinsic :: ISO_Fortran_Env, only: Error_Unit, Output_Unit
+
+  use Analysis, only: Analyz
+  use Chain_Context_Lists, only: CHNCSL
+  use Declaration_Table, only: Dump_Decl
+  use Declare_Vocabulary_m, only: Declare_Vocabulary
+  use Flatten_m, only: Flatten
+  use Generate_Table, only: GENTAB
+  use io_stuff, only: get_lun
+  use Lexer_Core, only: Init_Lexer
+  use Lists, only: Lists_Init
+  use Output_m, only: Output, OutputOptions
+  use Parser, only: Clean_Up_Parser, LR_Parser
+  use Parser_Table_m, only:  Destroy_Parser_Table, Parser_Table_t
+  use Parser_Tables_LR, only: Init_Parser_Table
+  use Print_Set, only: PNTSET
+  use Print_The_Grammar_m, only: Print_The_Grammar
+  use Print_The_Vocabulary_m, only: Print_The_Vocabulary ! Also sorts it
+  use String_Table, only: AddInUnit, Do_Listing, Open_Input
+  use Symbol_Table, only: Dump_Symbol_Table
+  use Tables, only: Actions, Productions, Prod_Ind, Vocab
+  use Toggles, only: GEN, Levels, LEX, PAR, Switches, TAB, Toggle
+  use Toggles_LR, only: Toggle_LR => Toggle
+  use Tree, only: Allocate_tree, Print_subtree
+  use Xref, only: Cross_Reference
+
+  integer :: List_Unit = Output_Unit ! Defaults to standard output
+  integer :: Table_Unit = -1         ! Defaults to no table output
+
+  logical :: Dump_Symbols = .false.
+  logical :: Dump_Tree = .false.
+  integer :: Depth = 0     ! For dumping the abstract syntax tree
+  logical :: Error = .false. ! Somebody detected an error
+  integer :: I, J          ! Loop indices
+  integer :: input_unit
+  character(1023) :: IOMSG ! From Open
+  integer :: IOSTAT        ! From Open
+  character(1023) :: Line  ! From command line
+  character(1023) :: Listing = '' ! list file name
+  integer :: LNADQT = 1    ! Last inadequate state number, zero if grammar is LR.
+                           ! Initially nonzero in case the grammar isn't analyzed.
+  type(Parser_Table_t) :: Parser_Table
+  integer :: Root          ! Of the abstract syntax tree
+  character(1023) :: Table = '' ! table file name
+
+!---------------------------- RCS Ident Info ------------------------------
+  character (len=*), parameter :: ModuleName= &
+       "$RCSfile: lr.f90,v $"
+!---------------------------------------------------------------------------
+
+  call init_lexer ( n_chars=80000, n_symbols=4000, hash_table_size=611957, &
+    & DEBUG=0 )
+  call allocate_tree ( n_tree=2000000 )
+
+  ! Process command line
+  i = 0
+  do
+    i = i + 1
+    call get_command_argument ( i, line )
+    if ( line(1:1) /= '-' ) exit
+    j = 1
+    do
+      j = j + 1
+      if ( j > len(line) ) exit
+      select case ( line(j:j) )
+      case ( ' ' )
+        exit
+      case ( 'A' ) ! Dump abstract syntax tree
+        dump_tree = .true.
+      case ( 'd' ) ! Trace declaration table actions
+        toggle(tab) = .true.
+        call digit_after_option ( j, tab )
+      case ( 'g' )
+        toggle(gen) = .true.
+        call digit_after_option ( j, gen )
+      case ( 'i' )
+        do_listing = .true.
+      case ( 'l' ) ! Specify listing file
+        if ( line(j+1:) == ' ' ) then
+          i = i + 1
+          call get_command_argument ( i, line(j+1:) )
+        end if
+        listing = line(j+1:)
+        j = len(line)+1
+      case ( 'L' ) ! Trace lexer
+        toggle(lex) = .true.
+        call digit_after_option ( j, lex )
+      case ( 'o' ) ! Output tables
+        if ( line(j+1:) == ' ' ) then
+          i = i + 1
+          call get_command_argument ( i, line(j+1:) )
+        end if
+        table = line(j+1:)
+        j = len(line)+1
+      case ( 'P' ) ! Trace parser
+        toggle(par) = .true.
+        call digit_after_option ( j, par )
+      case ( 's' ) ! Dump symbol table after the parser finishes
+        dump_symbols = .true.
+      case ( 'S' ) ! Set switches for debugging
+        if ( line(j+1:) == ' ' ) then
+          i = i + 1
+          call get_command_argument ( i, line(j+1:) )
+        end if
+        if ( line(j+1:j+1) == '?' ) call Switch_Usage
+        switches(len_trim(switches)+1:) = ',' // trim(line(j+1:))
+        j = len(line) + 1
+      case ( 'V' ) ! Print version and stop
+        call print_version
+        stop
+      case ( '2' : '4', 'C', 'M', 'X' )
+        toggle_lr(iachar(line(j:j))) = 1
+      case default
+        call usage
+      end select
+    end do
+  end do
+
+  if ( line(1:1) == ' ' ) call usage
+
+  ! Open input file
+  call get_lun( input_unit )
+  call open_input ( line, unit=input_unit )
+  call AddInUnit( input_unit )
+
+  ! Get output table file name
+  call get_command_argument ( i+1, line )
+  if ( line /= '' ) table = line
+
+  ! Open output listing file
+  call get_command_argument ( i+2, line )
+  if ( line /= '' ) listing = line
+  if ( listing /= '' ) then
+    open ( newunit=list_unit, file=listing, form='formatted', iostat=iostat, &
+      & iomsg=iomsg )
+    if ( iostat /= 0 ) then
+      write ( error_unit, '(3a,i0)' ) 'Error: Unable to open list file "', &
+        & trim(listing), '", IOSTAT = ', iostat
+      write ( error_unit,  '(a)') trim(iomsg)
+      stop 1
+    end if
+    outputOptions%prUnit = list_unit
+    outputOptions%prUnitLiteral = .true. ! Do output even if list_unit < 0
+  end if
+
+  call get_command ( line )
+  call output ( trim(line), advance='yes' )
+  call print_version ( use_output=.true. )
+
+  ! Parse the grammar, producing an abstract syntax tree
+  call init_parser_table ( parser_table )
+  call lr_parser ( root, parser_table )
+  call destroy_parser_table ( parser_table )
+  call clean_up_parser
+
+  if ( dump_symbols ) call dump_symbol_table
+
+  if ( root < 0 ) then
+    call output ( 'A syntax error occurred; there is no abstract syntax tree.', &
+      & advance='yes' )
+    stop
+  end if
+
+  if ( dump_tree ) then
+    call output ( 'Abstract syntax tree:', advance='yes' )
+    call print_subtree ( root, depth )
+    call output ( 'End of abstract syntax tree', advance='yes' )
+  end if
+
+  ! Declare symbols in the vocabulary according to whether they are
+  ! terminals, nonterminals, vocabulary names, or actions
+  call declare_vocabulary ( root, error )
+
+  ! Sort the vocabulary symbols first according to whether they are
+  ! terminals, nonterminals, vocabulary names, or actions, then according
+  ! to their text.  Then print the vocabulary.  The variable VOCAB
+  ! is the permutation vector for the sort; its values are string indices.
+  call print_the_vocabulary ( vocab )
+
+  if ( .not. error ) then
+    ! Flatten the abstract syntax tree into the data structures used to
+    ! analyze the grammar.  Also determine the goal symbol, make sure
+    ! every symbol is connected to the goal, and make sure every nonterminal
+    ! derives at least one terminal symbol.
+    call flatten ( root, vocab, error )
+  end if
+
+  if ( toggle(tab) ) then
+    call dump_symbol_table
+    call dump_decl
+  end if
+
+  if ( .not. error ) then
+
+    call print_the_grammar ( prod_ind, productions, actions, vocab )
+
+    ! Print the vocabulary cross reference
+    call cross_reference ( productions, prod_ind, vocab )
+
+    ! Set up to use the guts of the original LR from Shannon and Wetherell
+    call lists_init
+    call analyz
+    call pntset ( lnadqt )
+
+    if ( lnadqt /= 0 ) then
+      iomsg = 'Error: Grammar is not LR(1).  Last inadequate state is '
+      call output ( lnadqt, &
+        & before=trim(iomsg) // ' ', advance='yes' )
+      write ( error_unit,  '(a,1x,i0)') trim(iomsg), lnadqt
+      stop 1
+    end if
+
+    if ( table /= '' ) then
+      open ( newunit=table_unit, file=table, form='formatted', iostat=iostat, &
+        & iomsg=iomsg )
+      if ( iostat /= 0 ) then
+        write ( error_unit, '(3a,i0)' ) 'Error: Unable to open table output file "', &
+          & trim(table), '", IOSTAT = ', iostat
+        write ( error_unit,  '(a)') trim(iomsg)
+        stop 1
+      end if
+
+      call chncsl ! Chain context set lists
+      call gentab ( table_unit, vocab ) ! Generate parser tables
+    end if
+
+  end if
+
+contains
+
+  subroutine Digit_After_Option ( J, Tog )
+    character(len=*), parameter :: Digits = '0123456789'
+    integer, intent(inout) :: J  ! Position in LINE
+    integer, intent(in) :: Tog   ! Subscript of Toggles and Levels array
+    integer :: I, K              ! Loop inductor, subscript
+    k = j + 1
+    do i = k, len(line)
+      if ( verify(line(i:i),digits) /= 0 ) exit
+    end do
+    if ( i > k ) then
+      j = i
+      read ( line(k:i-1), * ) levels(tog)
+    end if
+  end subroutine Digit_After_Option
+
+  subroutine Print_Version ( Use_Output )
+    logical, intent(in), optional :: Use_Output ! call output if present
+    character (len=*), parameter :: IdParm = &
+      "$Id: lr.f90,v 1.14 2019/07/31 20:08:14 vsnyder Exp $"
+    character (len=len(idParm)) :: Id = idParm
+    integer :: I, J
+    i = index(idParm,",v")
+    if ( i == 0 ) i = -1
+    i = i + 2
+    j = index(idParm,":",back=.true.)
+    j = min(j+2,len(idParm))
+    if ( present(use_output) ) then
+      call output ( 'Version ' // trim(adjustl(idParm(i:j))), advance='yes' )
+    else
+      print '(2a)', 'Version ', trim(adjustl(idParm(i:j)))
+    end if
+  end subroutine Print_Version
+
+  subroutine Switch_Usage
+    print '(a)', 'Switch_Usage:'
+    print '(a)', ' dprod => Dump "productions" and related arrays in Flatten'
+    print '(a)', ' dvoc => Trace declaration of vocabulary and dump a summary'
+    stop
+  end subroutine Switch_Usage
+
+  subroutine Usage
+    call get_command_argument ( 0, line )
+    print '(3a)', 'Usage: ', trim(line), ' [options] input_file [ table_file [ listing_file ] ]'
+    print '(a)', ' Options:'
+    print '(a)', '  -A => Print syntax tree'
+    print '(a)', '  -C => Print the closure of every set, not just the basis'
+    print '(a)', '  -d[#] => Trace declaraction table actions at level #'
+    print '(a)', '  -g[#] => Trace generation at level #'
+    print '(a)', '  -i => List input as it is read'
+    print '(a)', '  -l[ ]file => Specify listing file, default standard output,'
+    print '(a)', '               overridden by listing_file field if both specified'
+    print '(a)', '  -L[#] => Trace lexer at level #'
+    print '(a)', '  -o[ ]file => Specify table file, default no table output,'
+    print '(a)', '               overridden by table_file field if both specified'
+    print '(a)', '  -M => Turn off printing the parsing automaton ("machine")'
+    print '(a)', '  -P[#] => Trace parser at level #; bits of # mean'
+    print '(a)', '           1 -> Show also top of stack'
+    print '(a)', '           2 -> Show state at every transition'
+    print '(a)', '           4 -> Show grammar and automaton when starting'
+    print '(a)', '           8 -> Show work table when starting'
+    print '(a)', '  -s => Dump symbol table'
+    print '(a)', '  -S[ ]string => Add string to debugging switches, see -S? for more'
+    print '(a)', '  -V => Print version and stop'
+    print '(a)', '  -X => Turn off printing the cross reference of the parsing automaton'
+    print '(a)', '  -2 => Print nullable and first sets'
+    print '(a)', '  -3 => Trace context set creation and destruction'
+    print '(a)', '  -4 => Trace list element creation and destruction'
+    print '(a)', '  -anything else => this output'
+    call print_version
+    stop
+  end subroutine Usage
+
+end program LR
+
+! $Log: lr.f90,v $
+! Revision 1.14  2019/07/31 20:08:14  vsnyder
+! Add 'C' option to print closures
+!
+! Revision 1.13  2019/07/09 20:28:04  vsnyder
+! Add option to print input as it is read
+!
+! Revision 1.12  2017/08/07 19:59:45  vsnyder
+! Repair error in processing table file name from command line
+!
+! Revision 1.11  2016/01/29 23:26:52  pwagner
+! Updated to conform with newer string_table
+!
+! Revision 1.10  2014/08/06 20:54:00  vsnyder
+! Simplify test for producing table file.  Print version with usage.
+! Add -V option to print version.
+!
+! Revision 1.9  2014/08/06 19:37:04  pwagner
+! Fixed some of the bugs added in last revision
+!
+! Revision 1.8  2014/08/05 18:24:06  pwagner
+! Sets prUnitLiteral to TRUE
+!
+! Revision 1.7  2014/08/05 00:48:32  vsnyder
+! Use NEWUNIT= in OPEN statements to get a new unit number.  Move List_Unit
+! and Table_Unit here from IO_Stuff.  Eliminate dependence on IO_Stuff.
+!
+! Revision 1.6  2014/05/21 00:00:57  vsnyder
+! New parser gets its tables from an argument instead of an include
+!
+! Revision 1.5  2014/04/09 23:54:01  vsnyder
+! Don't try to make the parser if there's a syntax error
+!
+! Revision 1.4  2014/01/14 00:11:42  vsnyder
+! Revised LR completely
+!
+@
+
+
+1.14
+log
+@Add 'C' option to print closures
+@
+text
+@d159 4
+d259 2
+a260 1
+  subroutine Print_Version
+d262 1
+a262 1
+      "$Id: lr.f90,v 1.13 2019/07/09 20:28:04 vsnyder Exp $"
+d270 5
+a274 1
+    print '(2a)', 'Version ', trim(adjustl(idParm(i:j)))
+d319 3
+@
+
+
+1.13
+log
+@Add option to print input as it is read
+@
+text
+@d124 1
+a124 1
+      case ( '2' : '4', 'M', 'X' )
+d257 1
+a257 1
+      "$Id: lr.f90,v 1.12 2017/08/07 19:59:45 vsnyder Exp $"
+d280 1
+d310 3
+@
+
+
+1.12
+log
+@Repair error in processing table file name from command line
+@
+text
+@d32 1
+a32 1
+  use String_Table, only: AddInUnit, Open_Input
+d89 2
+d257 1
+a257 1
+      "$Id: lr.f90,v 1.11 2016/01/29 23:26:52 pwagner Exp $"
+d282 1
+d309 3
+@
+
+
+1.11
+log
+@Updated to conform with newer string_table
+@
+text
+@d137 3
+a139 2
+  ! Open output table file
+  call get_command_argument ( i+1, table )
+d255 1
+a255 1
+      "$Id: lr.f90,v 1.10 2014/08/06 20:54:00 vsnyder Exp $"
+d306 3
+@
+
+
+1.10
+log
+@Simplify test for producing table file.  Print version with usage.
+Add -V option to print version.
+@
+text
+@d22 1
+d32 1
+a32 1
+  use String_Table, only: Open_Input
+d48 1
+d133 3
+a135 1
+  call open_input ( line )
+d254 1
+a254 1
+      "$Id: lr.f90,v 1.9  2014/08/06 19:37:04 pwagner Exp $"
+d305 4
+@
+
+
+1.9
+log
+@Fixed some of the bugs added in last revision
+@
+text
+@d117 3
+d134 1
+a134 14
+  call get_command_argument ( i+1, line )
+  if ( line /= '' ) table = line
+  if ( table /= '' ) then
+    open ( newunit=table_unit, file=table, form='formatted', iostat=iostat, &
+      & iomsg=iomsg )
+    if ( iostat /= 0 ) then
+      write ( error_unit, '(3a,i0)' ) 'Error: Unable to open table output file "', &
+        & trim(table), '", IOSTAT = ', iostat
+      write ( error_unit,  '(a)') trim(iomsg)
+      stop 1
+    end if
+    ! print *, 'table_unit: ', table_unit
+    ! print *, table
+  end if
+d149 1
+a149 3
+    outputOptions%prUnitLiteral = .true.
+    ! print *, 'list_unit: ', list_unit
+    ! print *, listing
+d208 1
+d210 2
+a211 2
+        & before='Error: Grammar is not LR(1).  Last inadequate state is ', &
+        & advance='yes' )
+d215 9
+a223 3
+    if ( len_trim(table) > 0 ) then ! -o option or table_file field was specified
+      outputOptions%prUnit = table_unit
+      outputOptions%prUnitLiteral = .true.
+d225 2
+a226 2
+      call chncsl
+      call gentab ( table_unit, vocab )
+d248 13
+d288 1
+d294 1
+d301 3
+@
+
+
+1.8
+log
+@Sets prUnitLiteral to TRUE
+@
+text
+@d142 2
+d158 4
+a163 3
+  outputOptions%prUnit = list_unit
+  outputOptions%prUnitLiteral = .true.
+
+d226 4
+a229 1
+    if ( table_unit > 0 ) then ! -o option or table_file field was specified
+d291 3
+@
+
+
+1.7
+log
+@Use NEWUNIT= in OPEN statements to get a new unit number.  Move List_Unit
+and Table_Unit here from IO_Stuff.  Eliminate dependence on IO_Stuff.
+@
+text
+@d159 1
+d285 4
+@
+
+
+1.6
+log
+@New parser gets its tables from an argument instead of an include
+@
+text
+@d14 1
+a14 1
+  use, intrinsic :: ISO_Fortran_Env, only: Error_Unit
+a21 1
+  use IO_Stuff, only: Get_Lun, List_Unit, Table_Unit
+d39 3
+d134 1
+a134 2
+    call get_lun ( table_unit )
+    open ( table_unit, file=table, form='formatted', iostat=iostat, &
+d148 1
+a148 2
+    call get_lun ( list_unit )
+    open ( list_unit, file=listing, form='formatted', iostat=iostat, &
+d284 3
+@
+
+
+1.5
+log
+@Don't try to make the parser if there's a syntax error
+@
+text
+@d26 3
+a28 1
+  use Parser, only: LR_Parser
+d51 1
+d161 4
+a164 1
+  call lr_parser ( root )
+d169 1
+a169 1
+    call output ( 'A syntax error occurred; there is no abstract syntax tree', &
+d184 1
+a184 1
+  ! Sort the vocabulary symbols first  according to whether they are
+d226 1
+d284 3
+@
+
+
+1.4
+log
+@Revised LR completely
+@
+text
+@d54 1
+a54 1
+       "$RCSfile: MLSL2.f90,v $"
+d197 3
+a199 1
+  call print_the_grammar ( prod_ind, productions, actions, vocab )
+d201 2
+a202 2
+  ! Print the vocabulary cross reference
+  call cross_reference ( productions, prod_ind, vocab )
+d204 11
+a214 11
+  ! Set up to use the guts of the original LR from Shannon and Wetherell
+  call lists_init
+  call analyz
+  call pntset ( lnadqt )
+
+  if ( lnadqt /= 0 ) then
+    call output ( lnadqt, &
+      & before='Error: Grammar is not LR(1).  Last inadequate state is ', &
+      & advance='yes' )
+    stop 1
+  end if
+d216 4
+a219 3
+  if ( table_unit > 0 ) then ! -o option or table_file field was specified
+    call chncsl
+    call gentab ( table_unit, vocab )
+d276 4
+a279 1
+! $Log: $
+@
+
+
+1.3
+log
+@Print error message on Error_Unit if the grammar is not LR(1)
+@
+text
+@d14 1
+a14 150
+! Grammar analysis and parser table generation.
+
+! The only known system dependent assumption is that all characters
+! can be represented by integers in the range 0...255.  If this is
+! not the case, change the declaration for TOGGLE in TOGCOM.
+
+! A subprogram INIT, that does nothing in the portable version, is
+! provided, in which one may perform system dependent initialization
+! such as reading the command line and opening files.
+
+! This is essentially a re-writing of the program LR, originally
+! written by Alfred Shannon at the University of California Davis
+! campus, under the direction of Charles Wetherell.  At the time of
+! this writing, Shannon was at IBM Poughkeepsie.
+
+! This version was written by:
+!      William V. Snyder
+!      Jet Propulsion Laboratory, Mail Stop 171-249
+!      4800 Oak Grove Drive
+!      Pasadena, CA 91109
+!      818/354-6271, FTS/792-6271
+
+! The input format for grammars is basically free-form.  In addition
+! there is a punctuation convention that provides delimiters for
+! productions and control for the program.  Almost any combination
+! of characters may be used to construct vocabulary entries.
+
+! The grammar should be translated to and input in a form similar to
+! Backus-Naur form (BNF), the essential difference being in the
+! punctuation.  The vocabulary of the language is inferred from the
+! grammar:  Any symbol that occurs only on the right side is a
+! terminal symbol and all others are nonterminal symbols.  If there
+! is only one nonterminal symbol that appears only on the left side
+! it is taken as the goal symbol.  If there is more than one the
+! grammar is erroneous (it has useless productions).  If there are
+! none the first nonterminal seen is taken as the goal symbol.  All
+! of the productions that define a single nonterminal must occur
+! together.
+
+! All punctuation and control uses the ampersand character '&'.
+! Whenever this character appears it signals a change into a mode
+! where the following character defines the meaning or action.
+! Normally, the two character string will then be discarded and
+! input scanning resumed.  Some of the punctuation pairs are:
+
+!     &A:  End of an alternate -- signals the end of one alternate
+!          definition of a nonterminal.
+!     &P:  End of productions -- signals the end of a group of
+!          alternative definitions.
+!     &G:  End of grammar -- terminate reading this grammar.
+
+! The three pairs &A, &P, and &G delimit the definitions of
+! nonterminals.  They are effective when they occur blank-delimited
+! outside a vocabulary item.  If they occur within a vocabulary item
+! they have the value of the null string, and any punctuation effect
+! they would have had will be lost.
+
+!     &S signals that the following token, which must be an integer,
+!        is a syntax action index to be associated with the right
+!        side currently being scanned.
+
+!     &V signals that the next pair of tokens provide a value for a
+!        vocabulary token.  The first item should be a terminal,
+!        and the second must be an integer.
+
+!     &B is an escaped blank -- create an item consisting of exactly
+!        one blank.
+
+!     && is an escaped & -- create an item consisting of exactly one
+!        ampersand.
+
+!     &< is an escaped < -- create an item consisting of exactly one
+!        < character.  The < character otherwise has a special
+!        meaning described below.
+
+!     &> is an escaped > -- create an item consisting of exactly one
+!        > character.  The > character otherwise has a special
+!        meaning described below.
+
+! The four previous pairs allow for the inclusion of characters that
+! would normally have a special meaning.
+
+!     &C signals the end of a line.  The rest of the line may be
+!        used for comments.
+
+! All other characters following an & invert control toggles.
+! Control toggles are a set of on off switches (one for each
+! character except those mentioned above) in the analyzer.  Every
+! time &X (where X is any character other than the above) is seen
+! in the input the state of the associated toggle is inverted.  The
+! toggles are examined during execution of the analyzer to determine
+! the selection of options.  Unless otherwise specified, toggles are
+! initially off.  The currently defined toggles are:
+
+!     &I list the input file.
+!     &L output tables (initially on).
+!     &M print the parsing machine (initially on).
+!     &N list the grammar neatly and then quit.
+!     &R list the grammar neatly (initially on).
+!     &X include a vocabulary cross reference (initially on).
+!     &2 print some debugging information about the configuration
+!        analysis phase.
+!     &3 print some more debugging information about the
+!        configuration analysis phase.
+
+! Vocabulary items are primarily blank delimited.  Blanks are
+! discarded until a non-blank character appears.  If the non-blank
+! character is an ampersand it is treated as described above.  If it
+! is anything other than an ampersand or an unescaped <, everything
+! up to the next blank is taken as one vocabulary item.  If the non-
+! blank character is an unescaped <, everything up to and including
+! the next unescaped > forms a vocabulary item.  The first item of
+! a set of productions is taken to be the left hand side.  The
+! following items up to the end of the productions make up the
+! alternative right hand sides.  Thus the BNF
+!     <EXPR> ::= <EXPR> + <TERM>
+!              ! <TERM>
+! would be input as
+!     <EXPR> <EXPR> + <TERM> &A <TERM> &P
+
+! The control and punctuation items must not appear within
+! vocabulary items, and must be separated from some of them by
+! blanks.  Also, the only vocabulary item that may begin with & is
+! just & itself (although & may be buried inside longer items).  The
+! effects of &A, &P and &G are cumulative.  That is, &P implies &A
+! and &G implies &P.  For safety sake, it is easiest to delimit all
+! items by blanks.
+
+! An example grammar might be
+
+!     S E &P
+!     E E + T &A
+!       T &P &C Ignore this part of the line.
+!     T P ** T &A
+!       P &P
+!     P <Identifier> &A
+!       ( E ) &G
+
+! S is the goal symbol; S, E, T and P are nonterminals; +, **,
+! <Identifier>, ( and ) are terminals.
+
+! There will be a zero'th production
+
+! <GOAL> ::= SOG S EOG
+
+! Added for purposes of analysis.  This production is partially
+! defined by block data.  The rest of the definition is created by
+! the initialization phase of RDGRAM and in FNDGOL.  The symbol
+! <GOAL> should not be used as a vocabulary item in the submitted
+! grammar.
+d18 3
+a20 3
+  use Connect, only: CONECT
+  use Cross_Reference, only: XREF
+  use Find_Goal, only: FNDGOL
+d22 5
+a26 5
+  use GRAMMAR, only: RDGRAM
+  use Grounded, only: GROUND
+  use, intrinsic :: ISO_Fortran_Env, only: Error_Unit
+  use LISTS, only: LISTS_INIT
+  use Print_Grammar, only: PRNTGM
+d28 23
+a50 5
+  use MD_INIT_M, only: MD_INIT
+  use S3, only: SORTGM
+  use TOGGLES, only: TOGGLE
+
+  implicit NONE
+d52 1
+a52 1
+!---------------------------- RCS Module Info ------------------------------
+d54 1
+a54 1
+       "$RCSfile: lr.f90,v $"
+d57 97
+a153 2
+  integer :: LNADQT = 1 ! Last inadequate state number, zero if grammar is LR.
+                        ! Initially nonzero in case the grammar isn't analyzed.
+d155 48
+a202 1
+  call md_init
+d204 2
+a205 25
+  call rdgram
+  call fndgol
+  call sortgm
+  call conect
+  call ground
+
+  ! Toggle N (initially off) lists the grammar neatly and then quits.
+  ! Toggle R (initially on) lists the grammar neatly.
+
+  if (toggle(ichar('N')) /=0 .or. toggle(ichar('R')) == 0 ) call prntgm
+
+  ! Toggle X (initially on) causes a cross reference to be printed.
+
+  if (toggle(ichar('X')) == 0) call xref
+  if (toggle(ichar('N')) == 0) then
+     call analyz
+     call pntset ( lnadqt )
+
+     ! Toggle L (initially on) outputs the tables.
+
+     if (toggle(ichar('L')) == 0) then
+        call chncsl
+        call gentab
+     end if
+  end if
+d208 3
+a210 2
+    write ( error_unit, '(a,i0)' ) &
+      'Error: Grammar is not LR(1), last inadequate state is ', lnadqt
+d214 57
+d273 1
+a273 7
+! $Log: lr.f90,v $
+! Revision 1.2  2013/11/27 01:33:47  vsnyder
+! Stop with stop-code 1 if not LR
+!
+! Revision 1.1  2013/10/24 22:41:14  vsnyder
+! Initial commit
+!
+@
+
+
+1.2
+log
+@Stop with stop-code 1 if not LR
+@
+text
+@d173 1
+d219 5
+a223 1
+  if ( lnadqt /= 0 ) stop 1
+d228 3
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d184 1
+a184 1
+       "$RCSfile: parser.f90,v $"
+d187 3
+d208 1
+a208 1
+     call pntset
+d218 2
+d222 4
+a225 1
+! $Log: $
+@
+

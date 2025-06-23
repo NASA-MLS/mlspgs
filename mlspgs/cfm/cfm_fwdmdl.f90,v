@@ -1,0 +1,812 @@
+head	1.12;
+access;
+symbols
+	v5-02-NRT-19:1.12
+	v6-00:1.12
+	v5-02-NRT-18:1.12
+	v5-02:1.12
+	v5-01-NRT-17:1.12
+	v5-01-NRT-16:1.12
+	v5-01-NRT-15:1.12
+	v5-01-NRT-14:1.12
+	neuralnetworks-1-0:1.12.0.12
+	cfm-single-freq-0-1:1.12.0.10
+	TES-MLuo-01:1.12
+	TES-UNKNOWN:1.12
+	v5-01:1.12
+	v5-00:1.12
+	v4-23-TA133:1.12.0.8
+	mus-emls-1-70:1.12.0.6
+	rel-1-0-englocks-work:1.12.0.4
+	VUMLS1-00:1.12
+	VPL1-00:1.12
+	V4-22-NRT-08:1.12
+	VAM1-00:1.12
+	V4-21:1.12.0.2
+	V4-13:1.12
+	V4-12:1.12
+	V4-11:1.12
+	V4-10:1.12
+	M4-00:1.12
+	V3-33:1.7
+	V3-31:1.7
+	V3-30-NRT-05:1.5
+	cfm-01-00:1.4;
+locks; strict;
+comment	@# @;
+
+
+1.12
+date	2011.12.25.03.39.06;	author honghanh;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2011.12.24.18.39.13;	author honghanh;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2011.12.23.22.56.12;	author honghanh;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2011.12.15.18.27.44;	author honghanh;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2011.06.21.18.54.28;	author honghanh;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2010.11.19.17.16.08;	author honghanh;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2010.11.19.01.04.51;	author livesey;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2010.08.05.16.23.03;	author honghanh;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2010.06.29.17.02.47;	author honghanh;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2010.06.29.15.53.45;	author honghanh;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2010.06.16.18.42.35;	author honghanh;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2010.05.23.01.31.41;	author honghanh;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.12
+log
+@Fix cloning and memory cleanup method
+in forwardmodel2 subroutines.
+@
+text
+@! Copyright 2010, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+module CFM_FWDMDL_M
+    use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T
+    use ForwardModelConfig, only: ForwardModelConfig_T
+    use FillUtils_1, only: AutoFillVector
+    use Init_tables_module, only: l_isotoperatio
+    use CFM_QuantityTemplate_m, only: CreateQtyTemplate
+    use QuantityTemplates, only: QuantityTemplate_T, &
+                                 DestroyQuantityTemplateContents
+    use VectorsModule, only: VectorValue_T, Vector_T
+    use CFM_Vector_m, only: CreateValue4AgileVector, CloneAgileVector, &
+                            AddValue2Vector, DestroyAgileVectorContent
+    use MatrixModule_1, only: MATRIX_T
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+
+    implicit none
+
+    public :: ForwardModel, ForwardModel2
+
+    interface ForwardModel
+        module procedure ForwardModelObsolete
+    end interface
+
+    interface ForwardModel2
+        module procedure ForwardModelWChunk, ForwardModelWMaf
+    end interface
+
+    private 
+!---------------------------- RCS Ident Info -------------------------------
+    character(len=*), parameter :: ModuleName= &
+        "$RCSfile: cfm_fwdmdl.f90,v $"
+    private :: not_used_here
+!---------------------------------------------------------------------------
+
+    type(QuantityTemplate_T), dimension(:), pointer :: qtemplates => NULL()
+
+    contains
+
+    ! Compute radiances based on atmospheric state information provided
+    ! by fwdModelIn and fwdModelExtra
+    ! This subroutine should be obsolete. Please use ForwardModelWChunk,
+    ! and ForwardModelWMaf.
+    subroutine ForwardModelObsolete (chunk, Config, FwdModelIn, FwdModelExtra, &
+                                     FwdModelOut, Jacobian, RequestedMAF )
+        use Chunks_m, only: MLSChunk_T
+        use ForwardModelWrappers, only: ForwardModelOrig => ForwardModel
+
+        ! the chunk carries the MAF to compute over
+        type(MLSChunk_T), intent(in) :: chunk
+        ! Configuration information for the forward model
+        type(ForwardModelConfig_T), dimension(:), intent(inout) :: CONFIG
+        ! Atmospheric input
+        type(vector_T), intent(inout) ::  FWDMODELIN, FwdModelExtra
+        ! This is the output vector where radiances are stored
+        type(vector_T), intent(inout) :: FWDMODELOUT  ! Radiances, etc.
+        ! The matrix equivalent of the forward model with the specific
+        ! setting in the config object.
+        type(matrix_T), intent(inout), optional :: JACOBIAN
+        ! The 0-based index of the instance (maf or profile) stored in
+        ! fwdModelIn to run the forward model over.
+        ! If there is only 1 instance, then this field should be 0.
+        ! If there is N instance, then the appropriate values for this
+        ! field is 0 to N-1.
+        integer, intent(in), optional :: REQUESTEDMAF
+
+        type(forwardModelStatus_t) :: FMSTAT ! Reverse comm. stuff
+        integer :: i
+        integer :: FinalMAF
+
+        fmStat%newScanHydros = .true.
+        if (present(jacobian)) then
+            call allocate_test(fmstat%rows, jacobian%row%nb, "fmStat%rows", moduleName)
+        end if
+      
+        do i=1, size(config)
+            if ( present ( requestedMAF ) ) then
+                fmStat%maf = requestedMAF
+                finalMAF = requestedMAF
+            else
+                fmStat%maf = 0
+                finalMAF = chunk%lastMAFIndex - chunk%firstMAFIndex
+            end if
+            ! Loop over MAFs
+            do while (fmStat%maf <= finalMAF )
+                fmStat%maf = fmStat%maf + 1
+                call ForwardModelOrig (config(i), fwdmodelIn, fwdModelExtra, fwdModelOut, &
+                fmStat, Jacobian)
+            end do
+        end do
+
+        if (present(jacobian)) then
+            call deallocate_test(fmStat%rows, "fmStat%rows", moduleName)
+        end if
+
+    end subroutine
+
+    subroutine PreForwardModel (config, fwdModelExtra, fmStat, jacobian)
+        type(ForwardModelConfig_T), dimension(:), intent(in) :: CONFIG
+        type(vector_T), intent(inout) ::  FwdModelExtra
+        type(forwardModelStatus_t), intent(inout) :: FMSTAT
+        type(matrix_T), intent(in), optional :: JACOBIAN
+
+        type(QuantityTemplate_T) :: qtemplate
+        type(VectorValue_T) :: value
+        integer :: i, b, m, sideband
+        integer :: counter
+
+        counter = 0
+        ! Insert isotope quantities into extra vector
+        sideband = 1
+        do i = 1, size(config)
+            do b = 1, size(config(i)%beta_group)
+                if (config(i)%beta_group(b)%group) then ! A molecule group
+                    ! First LBL molecules' ratios
+                    do m = 1, size(config(i)%beta_group(b)%lbl(sideband)%molecules)
+                        qtemplate = CreateQtyTemplate(l_isotoperatio, &
+                        qmolecule=config(i)%beta_group(b)%lbl(sideband)%molecules(m))
+                        value = CreateValue4AgileVector(qtemplate)
+                        call AddValue2Vector(fwdModelExtra, value)
+                        counter = counter + 1
+                    end do !m
+                    if (associated(config(i)%beta_group(b)%pfa(sideband)%molecules)) then
+                        ! Now PFA molecules' ratios
+                        do m = 1, size(config(i)%beta_group(b)%pfa(sideband)%molecules)
+                            qtemplate = CreateQtyTemplate(l_isotoperatio, &
+                            qmolecule=config(i)%beta_group(b)%pfa(sideband)%molecules(m))
+                            value = CreateValue4AgileVector(qtemplate)
+                            call AddValue2Vector(fwdModelExtra, value)
+                            counter = counter + 1
+                        end do !m
+                    end if
+                end if
+            end do ! b
+        end do ! i
+        ! Fill isotope in the fwdModelExtra vector
+        call AutoFillVector(fwdModelExtra)
+        ! Record newly created template object
+        allocate(qtemplates(counter), stat=b)
+        if (b /= 0) &
+            call MLSMessage (MLSMSG_Error, moduleName, &
+            "Cannot allocate qtemplates")
+        m = size(fwdModelExtra%quantities) - counter + 1
+        do i = 1, counter
+            qtemplates(i) = fwdModelExtra%quantities(m)%template
+            m = m + 1
+        end do
+ 
+        fmStat%newScanHydros = .true.
+        if (present(jacobian)) then
+            call allocate_test(fmstat%rows, jacobian%row%nb, "fmStat%rows", moduleName)
+        else
+            call allocate_test(fmstat%rows, 0, "fmStat%rows", moduleName)
+        end if
+    end subroutine
+
+    subroutine PostForwardModel (fmStat)
+        type(forwardModelStatus_t), intent(inout) :: FMSTAT
+        integer :: i
+
+        do i = 1, size(qtemplates)
+            call DestroyQuantityTemplateContents(qtemplates(i))
+        end do
+        deallocate(qtemplates)
+        call deallocate_test(fmStat%rows, "fmStat%rows", moduleName)
+    end subroutine
+
+    ! This method is obsolete.
+    ! Compute radiances based on atmospheric state information provided
+    ! by fwdModelIn and fwdModelExtra.
+    subroutine ForwardModelWChunk (chunk, Config, FwdModelIn, FwdModelExtra, &
+                                    FwdModelOut, Jacobian )
+        use Chunks_m, only: MLSChunk_T
+        use ForwardModelWrappers, only: ForwardModelOrig => ForwardModel
+
+        ! the chunk carries the MAF to compute over
+        type(MLSChunk_T), intent(in) :: chunk
+        ! Configuration information for the forward model
+        type(ForwardModelConfig_T), dimension(:), intent(inout) :: CONFIG
+        ! Atmospheric input
+        type(vector_T), intent(inout) ::  FWDMODELIN, FwdModelExtra
+        ! This is the output vector where radiances are stored
+        type(vector_T), intent(inout) :: FWDMODELOUT  ! Radiances, etc.
+        ! The matrix equivalent of the forward model with the specific
+        ! setting in the config object.
+        type(matrix_T), intent(inout), optional :: JACOBIAN
+
+        type(forwardModelStatus_t) :: FMSTAT ! Reverse comm. stuff
+        type(Vector_T) :: adjustedExtraInput
+        integer :: FinalMAF
+        integer :: i
+
+        call cloneAgileVector(adjustedExtraInput, fwdModelExtra)
+        call preForwardModel (config, adjustedExtraInput, fmStat, jacobian)
+
+        do i=1, size(config)
+            fmStat%maf = 0
+            finalMAF = chunk%lastMAFIndex - chunk%firstMAFIndex
+
+            ! Loop over MAFs
+            do while (fmStat%maf <= finalMAF )
+                fmStat%maf = fmStat%maf + 1
+                call ForwardModelOrig (config(i), fwdmodelIn, &
+                adjustedExtraInput, fwdModelOut, fmStat, Jacobian)
+            end do
+        end do
+
+        call DestroyAgileVectorContent(adjustedExtraInput)
+        call postForwardModel(fmStat)
+    end subroutine
+
+    ! Compute radiances based on atmospheric state information provided
+    ! by fwdModelIn and fwdModelExtra.
+    subroutine ForwardModelWMaf (RequestedMAF, Config, FwdModelIn, FwdModelExtra, &
+                                    FwdModelOut, Jacobian )
+        use ForwardModelWrappers, only: ForwardModelOrig => ForwardModel
+        use ForwardModelVectorTools
+        use init_tables_module, only: l_ptan
+
+        ! The 0-based index of the instance (maf or profile) stored in
+        ! fwdModelIn to run the forward model over.
+        ! If there is only 1 instance, then this field should be 0.
+        ! If there is N instance, then the appropriate values for this
+        ! field is 0 to N-1.
+        integer, intent(in) :: RequestedMAF
+        ! Configuration information for the forward model
+        type(ForwardModelConfig_T), dimension(:), intent(inout) :: CONFIG
+        ! Atmospheric input
+        type(vector_T), intent(inout) ::  FWDMODELIN, FwdModelExtra
+        ! This is the output vector where radiances are stored
+        type(vector_T), intent(inout) :: FWDMODELOUT  ! Radiances, etc.
+        ! The matrix equivalent of the forward model with the specific
+        ! setting in the config object.
+        type(matrix_T), intent(inout), optional :: JACOBIAN
+
+        type(forwardModelStatus_t) :: FMSTAT ! Reverse comm. stuff
+        type(Vector_T) :: adjustedExtraInput
+        integer :: i
+        type(VectorValue_T), pointer :: ptan
+
+        call cloneagilevector(adjustedExtraInput, fwdModelExtra)
+        call preForwardModel (config, adjustedExtraInput, fmStat, jacobian)
+
+        fmStat%maf = requestedMaf + 1
+        do i=1, size(config)
+            call ForwardModelOrig (config(i), fwdmodelIn, &
+            adjustedExtraInput, fwdModelOut, fmStat, Jacobian)
+        end do
+
+        call DestroyAgileVectorContent(adjustedExtraInput)
+        call postForwardModel(fmStat)
+        
+    end subroutine
+
+!--------------------------- end bloc --------------------------------------
+    logical function not_used_here()
+    character (len=*), parameter :: IdParm = &
+        "$Id: cfm_fwdmdl.f90,v 1.11 2011/12/24 18:39:13 honghanh Exp $"
+    character (len=len(idParm)) :: Id = idParm
+        not_used_here = (id(1:1) == ModuleName(1:1))
+        print *, Id ! .mod files sometimes change if PRINT is added
+    end function not_used_here
+!---------------------------------------------------------------------------
+
+end module
+
+! $Log: cfm_fwdmdl.f90,v $
+! Revision 1.11  2011/12/24 18:39:13  honghanh
+! Clean up unused imports and variables
+!
+! Revision 1.10  2011/12/23 22:56:12  honghanh
+! Add AutoFillVector call to ForwardModel2 subroutine,
+! to automatically add and fill isotope ratio in beta group
+! (according to L2CF configuration file)
+!
+! Revision 1.9  2011/12/15 18:27:44  honghanh
+! Documentation and code clean up, including removing unused and broken
+! subroutines.
+!
+! Revision 1.8  2011/06/21 18:54:28  honghanh
+! Obsoleting the old ForwardModel subroutine.
+! Instead, adding 2 new subroutines without using requested maf as an optional parameter.
+! Introducing ForwardModel2
+!
+! Revision 1.7  2010/11/19 17:16:08  honghanh
+! Add example to use the requestedMAF feature in forward model
+!
+! Revision 1.6  2010/11/19 01:04:51  livesey
+! Added the optional RequestdMAF argument
+!
+! Revision 1.5  2010/08/05 16:23:03  honghanh
+! Added Jacobian to forwardModel subroutine
+!
+! Revision 1.4  2010/06/29 17:02:47  honghanh
+! Change the identifier 'fakeChunk' to 'chunk' because
+! since it is created with ChunkDivide, it's as real as a chunk
+! can get.
+!
+! Revision 1.3  2010/06/29 15:53:45  honghanh
+! Add copyright comments and support for CVS log in the file
+!
+@
+
+
+1.11
+log
+@Clean up unused imports and variables
+@
+text
+@d17 4
+a20 4
+    use QuantityTemplates, only: QuantityTemplate_T
+    use VectorsModule, only: VectorValue_T, CloneVector, &
+                             DestroyVectorInfo, Vector_T
+    use CFM_Vector_m, only: CreateValue4AgileVector, &
+d24 1
+d38 1
+d40 1
+a40 1
+    character(len=*), private, parameter :: ModuleName= &
+d45 1
+a45 1
+    private
+d116 1
+d118 1
+d130 1
+d139 1
+d147 10
+d168 1
+d170 4
+d202 1
+a202 1
+        call clonevector(adjustedExtraInput, fwdModelExtra)
+d226 2
+d248 1
+d250 1
+a250 1
+        call clonevector(adjustedExtraInput, fwdModelExtra)
+d267 1
+a267 1
+        "$Id: cfm_fwdmdl.f90,v 1.10 2011/12/23 22:56:12 honghanh Exp $"
+d277 3
+@
+
+
+1.10
+log
+@Add AutoFillVector call to ForwardModel2 subroutine,
+to automatically add and fill isotope ratio in beta group
+(according to L2CF configuration file)
+@
+text
+@d21 1
+a21 1
+                            AddValue2Vector
+d196 1
+a196 1
+        call DestroyVectorInfo(adjustedExtraInput)
+d235 1
+a235 1
+        call DestroyVectorInfo(adjustedExtraInput)
+d243 1
+a243 1
+        "$Id: cfm_fwdmdl.f90,v 1.9 2011/12/15 18:27:44 honghanh Exp $"
+d253 5
+@
+
+
+1.9
+log
+@Documentation and code clean up, including removing unused and broken
+subroutines.
+@
+text
+@d14 10
+d47 35
+a81 38
+   ! Compute radiances based on atmospheric state information provided
+   ! by fwdModelIn and fwdModelExtra
+   ! This subroutine should be obsolete. Please use ForwardModelWChunk,
+   ! and ForwardModelWMaf.
+   subroutine ForwardModelObsolete (chunk, Config, FwdModelIn, FwdModelExtra, &
+                                    FwdModelOut, Jacobian, RequestedMAF )
+      use VectorsModule, only: Vector_T
+      use MatrixModule_1, only: MATRIX_T
+      use Chunks_m, only: MLSChunk_T
+      use ForwardModelWrappers, only: ForwardModelOrig => ForwardModel
+      use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+
+      ! the chunk carries the MAF to compute over
+      type(MLSChunk_T), intent(in) :: chunk
+      ! Configuration information for the forward model
+      type(ForwardModelConfig_T), dimension(:), intent(inout) :: CONFIG
+      ! Atmospheric input
+      type(vector_T), intent(in) ::  FWDMODELIN, FwdModelExtra
+      ! This is the output vector where radiances are stored
+      type(vector_T), intent(inout) :: FWDMODELOUT  ! Radiances, etc.
+      ! The matrix equivalent of the forward model with the specific
+      ! setting in the config object.
+      type(matrix_T), intent(inout), optional :: JACOBIAN
+      ! The 0-based index of the instance (maf or profile) stored in
+      ! fwdModelIn to run the forward model over.
+      ! If there is only 1 instance, then this field should be 0.
+      ! If there is N instance, then the appropriate values for this
+      ! field is 0 to N-1.
+      integer, intent(in), optional :: REQUESTEDMAF
+
+      type(forwardModelStatus_t) :: FMSTAT ! Reverse comm. stuff
+      integer :: i
+      integer :: FinalMAF
+
+      fmStat%newScanHydros = .true.
+      if (present(jacobian)) then
+         call allocate_test(fmstat%rows, jacobian%row%nb, "fmStat%rows", moduleName)
+      end if
+d83 62
+a144 4
+      do i=1, size(config)
+        if ( present ( requestedMAF ) ) then
+          fmStat%maf = requestedMAF
+          finalMAF = requestedMAF
+d146 1
+a146 2
+          fmStat%maf = 0
+          finalMAF = chunk%lastMAFIndex - chunk%firstMAFIndex
+d148 1
+a148 7
+        ! Loop over MAFs
+        do while (fmStat%maf <= finalMAF )
+          fmStat%maf = fmStat%maf + 1
+          call ForwardModelOrig (config(i), fwdmodelIn, fwdModelExtra, fwdModelOut, &
+            fmStat, Jacobian)
+        end do
+      end do
+d150 2
+a151 3
+      if (present(jacobian)) then
+         call deallocate_test(fmStat%rows, "fmStat%rows", moduleName)
+      end if
+d153 2
+a154 1
+   end subroutine
+a160 2
+        use VectorsModule, only: Vector_T
+        use MatrixModule_1, only: MATRIX_T
+a162 1
+        use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+d169 1
+a169 1
+        type(vector_T), intent(in) ::  FWDMODELIN, FwdModelExtra
+d177 2
+a179 1
+        integer :: FinalMAF
+d181 2
+a182 4
+        fmStat%newScanHydros = .true.
+        if (present(jacobian)) then
+            call allocate_test(fmstat%rows, jacobian%row%nb, "fmStat%rows", moduleName)
+        end if
+d191 2
+a192 2
+                call ForwardModelOrig (config(i), fwdmodelIn, fwdModelExtra, fwdModelOut, &
+                fmStat, Jacobian)
+d196 2
+a197 4
+        if (present(jacobian)) then
+            call deallocate_test(fmStat%rows, "fmStat%rows", moduleName)
+        end if
+
+a203 3
+        use VectorsModule, only: Vector_T
+        use MatrixModule_1, only: MATRIX_T
+        use Chunks_m, only: MLSChunk_T
+a204 1
+        use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+d215 1
+a215 1
+        type(vector_T), intent(in) ::  FWDMODELIN, FwdModelExtra
+d223 1
+a224 1
+        integer :: FinalMAF
+d226 2
+a227 4
+        fmStat%newScanHydros = .true.
+        if (present(jacobian)) then
+            call allocate_test(fmstat%rows, jacobian%row%nb, "fmStat%rows", moduleName)
+        end if
+d229 1
+d231 2
+a232 9
+            fmStat%maf = requestedMAF
+            finalMAF = requestedMAF
+
+            ! Loop over MAFs
+            do while (fmStat%maf <= finalMAF )
+                fmStat%maf = fmStat%maf + 1
+                call ForwardModelOrig (config(i), fwdmodelIn, fwdModelExtra, fwdModelOut, &
+                fmStat, Jacobian)
+            end do
+d235 3
+a237 4
+        if (present(jacobian)) then
+            call deallocate_test(fmStat%rows, "fmStat%rows", moduleName)
+        end if
+
+d241 7
+a247 7
+   logical function not_used_here()
+   character (len=*), parameter :: IdParm = &
+       "$Id: cfm_fwdmdl.f90,v 1.8 2011/06/21 18:54:28 honghanh Exp $"
+   character (len=len(idParm)) :: Id = idParm
+      not_used_here = (id(1:1) == ModuleName(1:1))
+      print *, Id ! .mod files sometimes change if PRINT is added
+   end function not_used_here
+d253 4
+@
+
+
+1.8
+log
+@Obsoleting the old ForwardModel subroutine.
+Instead, adding 2 new subroutines without using requested maf as an optional parameter.
+Introducing ForwardModel2
+@
+text
+@d60 5
+d98 1
+d158 5
+d204 1
+a204 1
+       "$Id: cfm_fwdmdl.f90,v 1.7 2010/11/19 17:16:08 honghanh Exp $"
+d214 5
+@
+
+
+1.7
+log
+@Add example to use the requestedMAF feature in forward model
+@
+text
+@d12 2
+a13 2
+   use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T
+   use ForwardModelConfig, only: ForwardModelConfig_T
+d15 1
+a15 1
+   implicit none
+d17 9
+a25 1
+   public :: ForwardModel
+d28 3
+a30 3
+   character(len=*), private, parameter :: ModuleName= &
+       "$RCSfile: cfm_fwdmdl.f90,v $"
+   private :: not_used_here
+d33 1
+a33 1
+   private
+d35 1
+a35 1
+   contains
+d39 4
+a42 2
+   subroutine ForwardModel (chunk, Config, FwdModelIn, FwdModelExtra, &
+                            FwdModelOut, Jacobian, RequestedMAF )
+d93 97
+d193 1
+a193 1
+       "$Id: cfm_fwdmdl.f90,v 1.6 2010/11/19 01:04:51 livesey Exp $"
+d203 3
+@
+
+
+1.6
+log
+@Added the optional RequestdMAF argument
+@
+text
+@d62 1
+a62 1
+        if ( present ( requstedMAF ) ) then
+d86 1
+a86 1
+       "$Id: cfm_fwdmdl.f90,v 1.5 2010/08/05 16:23:03 honghanh Exp $"
+d96 3
+@
+
+
+1.5
+log
+@Added Jacobian to forwardModel subroutine
+@
+text
+@d32 1
+a32 1
+                            FwdModelOut, Jacobian)
+d50 1
+d54 1
+d60 1
+a60 1
+
+d62 13
+a74 7
+         fmStat%maf = 0
+         ! Loop over MAFs
+         do while (fmStat%maf < chunk%lastMAFIndex-chunk%firstMAFIndex+1)
+            fmStat%maf = fmStat%maf + 1
+            call ForwardModelOrig (config(i), fwdmodelIn, fwdModelExtra, fwdModelOut, &
+                                   fmStat, Jacobian)
+         end do
+d86 1
+a86 1
+       "$Id: cfm_fwdmdl.f90,v 1.4 2010/06/29 17:02:47 honghanh Exp $"
+d96 3
+@
+
+
+1.4
+log
+@Change the identifier 'fakeChunk' to 'chunk' because
+since it is created with ChunkDivide, it's as real as a chunk
+can get.
+@
+text
+@d37 1
+d55 3
+d69 4
+d78 1
+a78 1
+       "$Id: cfm_fwdmdl.f90,v 1.3 2010/06/29 15:53:45 honghanh Exp $"
+d88 5
+@
+
+
+1.3
+log
+@Add copyright comments and support for CVS log in the file
+@
+text
+@d31 1
+a31 1
+   subroutine ForwardModel (fakeChunk, Config, FwdModelIn, FwdModelExtra, &
+d39 1
+a39 1
+      type(MLSChunk_T), intent(in) :: fakeChunk
+d58 1
+a58 1
+         do while (fmStat%maf < fakeChunk%lastMAFIndex-fakeChunk%firstMAFIndex+1)
+d70 1
+a70 1
+       "$Id: cfm_fwdmdl.f90,v 1.1 2010/06/29 8:06:33 honghanh Exp $"
+d80 3
+@
+
+
+1.2
+log
+@Remove Fill for GPH, since the forward model will fill GPH
+Add band 2 and band 8 in the measurement vector
+Change ForwardModel to handle an array of config objects instead of just 1
+@
+text
+@d1 10
+d18 8
+a25 1
+   public :: ForwardModelConfig_T, FORWARDMODELSTATUS_T
+d66 11
+d78 2
+@
+
+
+1.1
+log
+@Initial import
+@
+text
+@d1 1
+a1 1
+module CFM_FWDMDL
+d24 1
+a24 1
+      type(ForwardModelConfig_T), intent(inout) :: CONFIG
+d34 1
+a35 1
+      fmStat%maf = 0
+d38 8
+a45 5
+      ! Loop over MAFs
+      do while (fmStat%maf < fakeChunk%lastMAFIndex-fakeChunk%firstMAFIndex+1)
+         fmStat%maf = fmStat%maf + 1
+         call ForwardModelOrig (config, fwdmodelIn, fwdModelExtra, fwdModelOut, &
+                                fmStat, Jacobian)
+@
+

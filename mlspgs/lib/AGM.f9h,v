@@ -1,0 +1,61 @@
+head	2.1;
+access;
+symbols
+	v5-02-NRT-19:2.1
+	v6-00:2.1
+	v5-02-NRT-18:2.1
+	v5-01-NRT-17:2.1
+	v5-01-NRT-16:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.1
+date	2022.03.24.21.44.20;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.1
+log
+@First commit
+@
+text
+@! Copyright 2022, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id: AGM.f9h,v 2.1 2008/06/18 20:43:01 pwagner Exp $
+
+  ! double precision function AGM_D ( x, y ) result ( R )
+  !   double precision, intent(in) :: x, y
+    ! Internal variables
+  !   integer                      :: i
+  !   double precision             :: a0, g0, ai, gi
+    eps = epsilon(x) ! We'll iterate until successive values of R differ by eps
+    a0 = (x + y)/2
+    g0 = sqrt(x * y)
+    R = (a0 + g0)/2
+    do i=1, MAXITER
+      if ( abs(R-a0) <= eps ) return
+      ai = (a0 + g0)/2
+      gi = sqrt(a0 * g0)
+      a0 = ai
+      g0 = gi
+      R = (a0 + g0)/2
+    enddo
+  ! end function AGM_D
+
+! $Log: AGM.f9h,v $
+@

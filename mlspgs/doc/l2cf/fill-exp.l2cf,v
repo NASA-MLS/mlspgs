@@ -1,0 +1,79 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.8
+	cfm-single-freq-0-1:1.1.0.6
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.4
+	mus-emls-1-70:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2018.06.15.23.09.25;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@First commit
+@
+text
+@; ===================================================================
+; ==================================================================== Phase: APriori
+; ===================================================================
+begin Fill
+  ;; This sets the phase name used in timings
+  APriori: Phase
+  
+  ;; The next vector is an instance of the VectorTemplate defined earlier
+  apriori: Vector, template=stateTemplate
+
+  ;; This sets the values of a Quantity according to specific Fill method
+  Fill, quantity=apriori.TEMPERATURE, method=gridded, $
+    sourceGrid=gridTEMPERATURE
+
+  ;; Now we use Subset to restrict the range of a Fill
+  Subset, quantity=apriori.h2o, height=[1000mb:1000mb], mask=fill
+  Fill, quantity=apriori.h2o, method=explicit, explicitValues=4000ppmv, /spread
+  Subset, quantity=apriori.h2o, mask=fill, /reset
+
+  ;; The Destroy command deallocates the datatype to conserve scarce meemory
+  Destroy, grid=mergedTemperature
+  Destroy, matrix=SaInitPtan
+  Destroy, vector=xInitPtan
+  
+  ;; Another instance of the VectorTemplate
+  state: Vector, template=stateTemplate
+
+  ;; This copies all the Quantities from one Vector to another
+  Transfer, source=apriori, destination=state
+  
+  ;; This puases execution if you're Snooping
+  Snoop, comment='Right before retrieve', phaseName='InitPtan'
+  
+  ;; Set precision -ve when worse than 50% apriori precision
+  NegativePrecision, precision=outputPrecision, aprioriPrecision=aprioriPrecision
+  
+
+  ;; Another data type is the matrix
+  ;; Construct and fill state covariance
+  SaInitR2: matrix, columns=aInitR2, type=spd
+  FillCovariance, matrix=SaInitR2, diagonal=sdInInitR2, /invert
+end Fill
+@

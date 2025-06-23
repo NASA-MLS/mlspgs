@@ -1,0 +1,576 @@
+head	1.13;
+access;
+symbols
+	v5-02-NRT-19:1.13
+	v6-00:1.13
+	v5-02-NRT-18:1.13
+	v5-02:1.13
+	v5-01-NRT-17:1.13
+	v5-01-NRT-16:1.13
+	v5-01-NRT-15:1.13
+	v5-01-NRT-14:1.13
+	neuralnetworks-1-0:1.13.0.10
+	cfm-single-freq-0-1:1.13.0.8
+	v5-01:1.13
+	v5-00:1.13
+	v4-23-TA133:1.13.0.6
+	mus-emls-1-70:1.13.0.4
+	rel-1-0-englocks-work:1.13.0.2
+	VUMLS1-00:1.13
+	VPL1-00:1.12
+	V4-22-NRT-08:1.12
+	VAM1-00:1.12
+	V4-21:1.12.0.2
+	V4-13:1.12
+	V4-12:1.12
+	V4-11:1.12
+	V4-10:1.12
+	V3-43:1.9
+	M4-00:1.10
+	V3-41:1.9
+	V3-40-PlusGM57:1.9.0.2
+	V2-24-NRT-04:1.9
+	V3-33:1.9
+	V2-24:1.9
+	V3-31:1.9
+	V3-30-NRT-05:1.9
+	cfm-01-00:1.9
+	V3-30:1.9
+	V3-20:1.9
+	V3-10:1.9
+	V2-23-NRT-02:1.9
+	V2-23:1.9
+	V2-22-NRT-01:1.9
+	V2-22:1.9
+	V2-21:1.9
+	V2-20:1.9
+	V2-11:1.9
+	V2-10:1.9
+	V2-00:1.9
+	V1-51:1.8
+	V1-50:1.8
+	V1-45:1.8
+	V1-44:1.8
+	V1-43:1.7
+	V1-42:1.7
+	V1-41:1.7
+	V1-32:1.7
+	V1-40:1.7
+	V1-31:1.7
+	V1-30:1.7
+	V1-13:1.7
+	V1-12:1.7
+	V1-11:1.7
+	V1-10:1.7
+	newfwm-feb03:1.7.0.2
+	V1-04:1.5
+	V1-03:1.5
+	V1-02:1.5
+	V1-00:1.5
+	newfwm-sep01:1.5.0.2
+	V0-7:1.5
+	V0-5-Level2:1.4
+	V0-5-SIPS:1.4;
+locks; strict;
+comment	@# @;
+
+
+1.13
+date	2016.10.21.23.25.35;	author vsnyder;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2013.12.04.02.31.44;	author vsnyder;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2013.09.19.23.33.46;	author vsnyder;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2012.02.01.00.05.44;	author vsnyder;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2005.06.22.20.03.56;	author pwagner;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2004.05.29.02.42.16;	author vsnyder;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2002.10.02.16.00.27;	author bwknosp;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2002.07.18.22.01.58;	author vsnyder;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2001.06.07.21.56.55;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.04.04.17.59.17;	author vsnyder;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2001.04.03.19.07.06;	author vsnyder;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.03.02.20.44.45;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.03.02.20.42.56;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.13
+log
+@Remove unused USE name, some cannonball polishing
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! This subroutine only works in Init_Tables_Module, where it should be
+! included by an include line.
+
+! $Id: make_tree.f9h,v 1.12 2013/12/04 02:31:44 vsnyder Exp $
+
+  subroutine Make_Tree ( IDs, Continue, Trace )
+  ! Build a tree specified by the "ids" array.  "begin" marks the
+  ! beginning of a tree.  A tree-node marks the end of the corresponding
+  ! tree.  Pseudo-terminals are decorated with their indices.
+
+  ! If "continue" is absent or false, it is assumed that Make_Tree is starting
+  ! on an entirely new subtree.
+
+  ! If "continue" is present and true, it is assumed that Make_Tree is
+  ! continuing work on a previously-started subtree.  This is accomplished
+  ! by not making the internal stack initially empty.
+
+    ! You might need to copy these USE statements to the routines or modules
+    ! that incorporates this one by "include", because "make depends" can't
+    ! see through includes.  "use XYZ, only:" ought to be good enough.
+    use Symbol_Table, only: Symbol, Set_Symbol
+    use Symbol_Types, only: T_Identifier
+    use Tree, only: Build_Tree, Push_Pseudo_Terminal
+    implicit NONE
+
+    integer, intent(in) :: IDS(:)
+    logical, intent(in), optional :: Continue
+    integer, intent(in), optional :: Trace ! passed through to Build_Tree
+
+    integer, save :: CALLNO = 0    ! Which call to Make_Tree -- for error msg.
+    integer :: DECOR, I, J, K, ITEM, N_IDS, STRING, WHICH
+    integer, save :: M = 0, STACK(0:30) = 0
+    logical :: MyCont
+    integer :: Save_Symbol
+
+    myCont = .false.
+    if ( present(continue) ) myCont = continue
+
+    callno = callno + 1
+    n_ids = size(ids)
+
+    if ( .not. myCont ) then
+      m = 0
+      stack(0) = 0 ! just so it's defined, in case it gets incremented
+                   ! after build_tree
+      if ( ids(1) >= 0 ) then
+        m = 1
+        stack(1) = 0
+      end if
+    end if
+
+    do i = 1, n_ids
+      if ( ids(i) == begin ) then
+        m = m + 1
+        if ( m > ubound(stack,1) ) then
+          j = index(moduleName, ':') + 2
+          k = j + scan(moduleName(j:),'., $') - 2
+          if ( k == j-2 ) k = len(moduleName)
+          print *, adjustl(moduleName(j:k))//'%MAKE_TREE-E- Stack overflow!'
+          print *, 'Your tree is taller than ', ubound(stack,1), &
+            &      '.  Detected while'
+          print *, 'processing element ', i, ' of the list for call ', callno
+          stop
+        end if
+        stack(m) = 0
+      else
+        item = mod(ids(i), 1000)
+        which = mod(ids(i) / 1000, 1000)
+        decor = ids(i) / 1000000
+        select case ( which )
+        case ( f/1000 ) ! Fields
+          string = field_indices(item)
+        case ( g/1000 ) ! Functions
+          string = func_indices(item)
+        case ( l/1000 ) ! Enumeration literals
+          string = lit_indices(item)
+        case ( p/1000 ) ! Parameter names
+          string = parm_indices(item)
+        case ( s/1000 ) ! Specs
+          string = spec_indices(item)
+        case ( t/1000 ) ! Intrinsic data types
+          string = data_type_indices(item)
+        case ( z/1000 ) ! Sections
+          string = section_indices(item)
+        case ( n/1000 ) ! Tree nodes
+          call build_tree ( item, stack(m), decor, trace )
+          m = m - 1
+          if ( m < lbound(stack,1) ) then
+            j = index(moduleName, ':') + 2
+            k = j + scan(moduleName(j:),'., $') - 2
+            if ( k == j-2 ) k = len(moduleName)
+            print '(a)', adjustl(moduleName(j:k))//'%MAKE_TREE-E- Stack underflow!'
+            print '(a)', 'You probably forgot a "begin" or "l+" somewhere.  Detected'
+            print '(2(a,i0))', 'while processing element ', i, &
+                             & ' of the list for call ', callno
+            stop
+          end if
+          stack(m) = stack(m) + 1
+    cycle
+        end select
+        if ( string == 0 ) then
+          j = index(moduleName, ':') + 2
+          k = j + scan(moduleName(j:),'., $') - 2
+          if ( k == j-2 ) k = len(moduleName)
+          print *, adjustl(moduleName(j:k)) // &
+            & '%MAKE_TREE-E- The string for element ', i, ' of a list'
+          print *, 'is undefined.  Detected on call ', callno, ' to Make_Tree.'
+          stop
+        end if
+        save_symbol = symbol(string)
+        call set_symbol ( string, t_identifier ) ! make push_pseudo_terminal work
+        call push_pseudo_terminal ( string, 0, decor = item )
+        call set_symbol ( string, save_symbol ) ! in case it was a reserved word
+        stack(m) = stack(m) + 1
+      end if
+    end do
+  end subroutine Make_Tree
+
+! $Log: make_tree.f9h,v $
+! Revision 1.12  2013/12/04 02:31:44  vsnyder
+! Don't clobber reserved word definition
+!
+! Revision 1.11  2013/09/19 23:33:46  vsnyder
+! Provide for tracing
+!
+! Revision 1.10  2012/02/01 00:05:44  vsnyder
+! Spiff an error message
+!
+! Revision 1.9  2005/06/22 20:03:56  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 1.8  2004/05/29 02:42:16  vsnyder
+! Rearrange function definition stuff
+!
+! Revision 1.7  2002/10/02 16:00:27  bwknosp
+! Added Id and RCS info
+!
+! Revision 1.6  2002/07/18 22:01:58  vsnyder
+! Add CONTINUE optional argument so trees needing more than 40 lines of
+! Fortran can be constructed.
+!
+! Revision 1.5  2001/06/07 21:56:55  pwagner
+! Added Copyright statement
+!
+! Revision 1.4  2001/04/04 17:59:17  vsnyder
+! Add a comment about adding "USE TREE" in the including scoping unit, because
+! "make depends" can't see the "use" here (because of the "include").
+!
+! Revision 1.3  2001/04/03 19:07:06  vsnyder
+! Make it usable from any module
+!
+! Revision 1.2  2001/03/02 20:44:45  vsnyder
+! Improve some error messages
+!
+! Revision 1.1  2001/03/02 20:42:56  vsnyder
+! Extracted from init_tables_module; it should be the same in all versions
+! of init_tables_module.
+!
+@
+
+
+1.12
+log
+@Don't clobber reserved word definition
+@
+text
+@d15 1
+a15 1
+! $Id: make_tree.f9h,v 1.11 2013/09/19 23:33:46 vsnyder Exp $
+d17 1
+a17 1
+  subroutine MAKE_TREE ( IDS, CONTINUE, Trace )
+d29 1
+a29 1
+    ! You may need to copy this USE statement to the routine or module
+d31 1
+a31 1
+    ! see through includes:
+d33 2
+a34 2
+    use Symbol_Types, only: T_Identifier, T_Null
+    use TREE, only: BUILD_TREE, PUSH_PSEUDO_TERMINAL
+d38 1
+a38 1
+    logical, intent(in), optional :: CONTINUE
+d128 1
+a128 1
+  end subroutine MAKE_TREE
+d131 3
+@
+
+
+1.11
+log
+@Provide for tracing
+@
+text
+@d15 1
+a15 1
+! $Id: make_tree.f9h,v 1.10 2012/02/01 00:05:44 vsnyder Exp $
+d32 2
+d45 1
+d121 2
+d124 1
+d131 3
+@
+
+
+1.10
+log
+@Spiff an error message
+@
+text
+@d15 1
+a15 1
+! $Id: make_tree.f9h,v 1.9 2005/06/22 20:03:56 pwagner Exp $
+d17 1
+a17 1
+  subroutine MAKE_TREE ( IDS, CONTINUE )
+d37 1
+d94 1
+a94 1
+          call build_tree ( item, stack(m), decor )
+d125 3
+@
+
+
+1.9
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d15 1
+a15 1
+! $Id: HuntArray.f9h,v 1.6 2005/01/19 01:08:22 pwagner Exp $
+d99 4
+a102 3
+            print *, adjustl(moduleName(j:k))//'%MAKE_TREE-E- Stack underflow!'
+            print *, 'You probably forgot a "begin" somewhere.  Detected while'
+            print *, 'processing element ', i, ' of the list for call ', callno
+d124 3
+@
+
+
+1.8
+log
+@Rearrange function definition stuff
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d15 2
+d42 1
+a42 7
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id: make_tree.f9h,v 1.7 2002/10/02 16:00:27 bwknosp Exp $"
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName= &
+       "$RCSfile: make_tree.f9h,v $"
+!---------------------------------------------------------------------------
+d123 3
+@
+
+
+1.7
+log
+@Added Id and RCS info
+@
+text
+@d34 1
+a34 1
+       "$Id: make_tree.f9h,v 1.3 2002/09/13 22:47:14 pwagner Exp $"
+d76 2
+d119 3
+@
+
+
+1.6
+log
+@Add CONTINUE optional argument so trees needing more than 40 lines of
+Fortran can be constructed.
+@
+text
+@a31 1
+
+d34 1
+a34 1
+       "$Id: make_tree.f9h,v 1.5 2001/06/07 21:56:55 pwagner Exp $"
+d36 2
+a38 1
+
+d117 4
+@
+
+
+1.5
+log
+@Added Copyright statement
+@
+text
+@d7 1
+a7 1
+  subroutine MAKE_TREE ( IDS )
+d12 7
+d26 1
+d29 3
+a31 1
+    integer :: DECOR, I, J, K, ITEM, M, N_IDS, STACK(0:30), STRING, WHICH
+d35 1
+a35 1
+       "$Id: make_tree.f9h,v 1.4 2001/04/04 17:59:17 vsnyder Exp $"
+d39 3
+d44 9
+a52 6
+    m = 0
+    stack(0) = 0 ! just so it's defined, in case it gets incremented
+                 ! after build_tree
+    if ( ids(1) >= 0 ) then
+      m = 1
+      stack(1) = 0
+d54 1
+d117 3
+@
+
+
+1.4
+log
+@Add a comment about adding "USE TREE" in the including scoping unit, because
+"make depends" can't see the "use" here (because of the "include").
+@
+text
+@d1 3
+d25 1
+a25 1
+       "$Id: make_tree.f9h,v 1.3 2001/04/03 19:07:06 vsnyder Exp $"
+d100 4
+@
+
+
+1.3
+log
+@Make it usable from any module
+@
+text
+@d8 4
+d22 1
+a22 1
+       "$Id: make_tree.f9h,v 1.2 2001/03/02 20:44:45 vsnyder Exp $"
+d85 2
+a86 2
+          print *, adjustl(moduleName(j:k))//'%MAKE_TREE-E- The string for element ', &
+          & i, ' of a list'
+d97 3
+@
+
+
+1.2
+log
+@Improve some error messages
+@
+text
+@d14 1
+a14 1
+    integer :: DECOR, I, ITEM, M, N_IDS, STACK(0:30), STRING, WHICH
+d17 3
+a19 2
+  character (len=256) :: Id = &
+       "$Id: make_tree.f9h,v 1.1 2001/03/02 20:42:56 vsnyder Exp $"
+d35 4
+a38 1
+          print *, 'INIT_TABLES_MODULE%MAKE_TREE-E- Stack overflow!'
+d66 4
+a69 1
+            print *, 'INIT_TABLES_MODULE%MAKE_TREE-E- Stack underflow!'
+d78 5
+a82 2
+          print *, 'INIT_TABLES_MODULE%MAKE_TREE-E- The string for element ', &
+            & i, ' of a list'
+d93 3
+@
+
+
+1.1
+log
+@Extracted from init_tables_module; it should be the same in all versions
+of init_tables_module.
+@
+text
+@d18 1
+a18 3
+       "$Id: init_tables_module.f90,v 2.32 2001/03/02 03:28:39 vsnyder Exp $"
+  character (len=*), parameter :: ModuleName= &
+       "$RCSfile: init_tables_module.f90,v $"
+d34 1
+a34 2
+          print *, ModuleName(11:len(ModuleName)-8) // &
+            & '%MAKE_TREE-E- Stack overflow!'
+d62 1
+a62 2
+            print *, ModuleName(11:len(ModuleName)-8) // &
+              & '%MAKE_TREE-E- Stack underflow!'
+d71 2
+a72 2
+          print *, ModuleName(11:len(ModuleName)-8) // &
+            & '%MAKE_TREE-E- The string for element ', i, ' of a list'
+d82 5
+a86 1
+! $Log: $
+@
+

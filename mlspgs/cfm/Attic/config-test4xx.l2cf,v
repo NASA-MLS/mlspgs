@@ -1,0 +1,110 @@
+head	1.1;
+access;
+symbols
+	cfm-single-freq-0-1:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2021.08.30.18.36.41;	author whdaffer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2021.08.30.18.36.41;	author whdaffer;	state Exp;
+branches;
+next	;
+
+
+desc
+@config file for single freq tests
+@
+
+
+1.1
+log
+@file config-test4xx.l2cf was initially added on branch cfm-single-freq-0-1.
+@
+text
+@@
+
+
+1.1.2.1
+log
+@initial revision
+@
+text
+@a0 69
+BEGIN MLSSignals
+    ;; Custom Radiometer. Testing if we can add a signal from the
+    ;; config file, so that we can have a generic signals file.
+    R1000Custom: radiometer, suffix="dummy", $
+                             module=GHz, lo=239.66 GHz, singleSideband=0
+
+   ;;<whd> spectrometerType: custom: 
+   ;; Working up to running single frequency with two channels
+   ;; Not there yet. </whd>
+  FBCustom: spectrometerType, first=1, channels=[ $
+    -575.0 MHz: 96.0 MHz,  -479.0 MHz: 96.0 MHz, $
+    -383.0 MHz: 96.0 MHz,  -303.0 MHz: 64.0 MHz, $
+    -239.0 MHz: 64.0 MHz,  -175.0 MHz: 64.0 MHz, $
+    -119.0 MHz: 48.0 MHz,   -79.0 MHz: 32.0 MHz, $
+     -51.0 MHz: 24.0 MHz,   -31.0 MHz: 16.0 MHz, $
+     -17.0 MHz: 12.0 MHz,    -7.0 MHz:  8.0 MHz, $
+       0.0 MHz:  6.0 MHz,     7.0 MHz:  8.0 MHz, $
+      17.0 MHz: 12.0 MHz,    31.0 MHz: 16.0 MHz, $
+      51.0 MHz: 24.0 MHz,    79.0 MHz: 32.0 MHz, $
+     119.0 MHz: 48.0 MHz,   175.0 MHz: 64.0 MHz, $
+     239.0 MHz: 64.0 MHz,   303.0 MHz: 64.0 MHz, $
+     383.0 MHz: 96.0 MHz,   479.0 MHz: 96.0 MHz, $
+     575.0 MHz: 96.0 MHz ]
+
+  ;; <whd> Custom. Band: Test running on 2 channels from a custom
+  ;; frequency </whd>
+  B1000F: band, suffix="dummy", radiometer=R1000Custom, $
+                spectrometerType=FBcustom, $
+                centerFrequency= 3.94500 GHz ;0 GHz
+
+    ;; <whd> Custom signal. Test running a custom single frequency
+    ;; with 2 channels </whd>
+  signal, band=B1000F, switch=0, spectrometer=0, direction=-1 ;; **** CUSTOM
+END MLSSignals
+
+begin GlobalSettings
+
+  vGridTangent: vGrid, type=Logarithmic, coordinate=Zeta, $
+    start=1000mb, formula=[2:6,12:12,41:6]
+
+  ;; Setup the particular forward model we're going to use
+  ;; in computing analytical second derivatives
+
+  ;;<whd> single-frequency-work (CUSTOM)
+  analyticalL2pcFwm: forwardModel, type=full,  $
+    ;signals = 'R3:240.B7F:O3', $ ;<--- original. I'm assuming the 240 and the O3 are extraneous
+    signals='R1000Custom:dummy.B1000F:dummy', $
+    Molecules = [ [ HNO3, HNO3, HNO3_V7, HNO3_V9 ], $
+                  [ O2, O_18_O ], $
+                  [ O3, O3,  O3_V1_3, O3_V2, O3_ASYM_O_18, O3_SYM_O_18 ], $
+                  [ SO2, S_32_O2 ] ], $
+    ;; LSBlblMolecules = [EXTINCTIONV2,O3,O3_
+    ;; USBlblMolecules = [EXTINCTIONV2,O3,O3_V2],$
+                                   ;; removed extinctionv2
+  moleculederivatives = [ O3 ], $
+   ;;specificQuantities=[temperature_HR, h2o_HR], $
+   ;;                                   specificQuantities=[EXTINCTIONV2R3], $
+    phiWindow=0 degrees, $
+    /skipOverlaps, $
+     integrationGrid=vGridTangent, tangentGrid=vGridTangent, $
+    ;;/do_conv, $
+    ;;/do_freq_avg, $
+    ;;/temp_der, $
+    /atmos_der, $
+                                   /allLinesInCatalog
+    ;;tolerance= -1K, $
+    ;;/allLinesForRadiometer
+
+end GlobalSettings
+@
+

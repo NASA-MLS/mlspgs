@@ -1,0 +1,352 @@
+head	1.8;
+access;
+symbols
+	v5-02-NRT-19:1.8
+	v6-00:1.8
+	v5-02-NRT-18:1.8
+	v5-02:1.8
+	v5-01-NRT-17:1.8
+	v5-01-NRT-16:1.8
+	v5-01-NRT-15:1.8
+	v5-01-NRT-14:1.8
+	neuralnetworks-1-0:1.8.0.14
+	cfm-single-freq-0-1:1.8.0.12
+	v5-01:1.8
+	v5-00:1.8
+	v4-23-TA133:1.8.0.10
+	mus-emls-1-70:1.8.0.8
+	rel-1-0-englocks-work:1.8.0.6
+	VUMLS1-00:1.8
+	VPL1-00:1.8
+	V4-22-NRT-08:1.8
+	VAM1-00:1.8
+	V4-21:1.8.0.4
+	V4-13:1.8
+	V4-12:1.8
+	V4-11:1.8
+	V4-10:1.8
+	V3-43:1.8
+	M4-00:1.8
+	V3-41:1.8
+	V3-40-PlusGM57:1.8.0.2
+	V2-24-NRT-04:1.7
+	V3-33:1.8
+	V2-24:1.7
+	V3-31:1.8
+	V3-30-NRT-05:1.8
+	cfm-01-00:1.8
+	V3-30:1.8
+	V3-20:1.8
+	V3-10:1.8
+	V2-23-NRT-02:1.7
+	V2-23:1.7
+	V2-22-NRT-01:1.7
+	V2-22:1.7
+	V2-21:1.6
+	V2-20:1.6
+	V2-11:1.6
+	V2-10:1.6
+	V2-00:1.6
+	V1-51:1.5
+	V1-50:1.5
+	V1-45:1.5
+	V1-44:1.5
+	V1-43:1.5
+	V1-32:1.5
+	V1-31:1.5
+	V1-30:1.5
+	V1-13:1.5
+	V1-12:1.5
+	V1-11:1.5
+	V1-10:1.5
+	newfwm-feb03:1.5.0.2
+	V1-04:1.2
+	V1-03:1.2
+	V1-02:1.2
+	JointForwardModel:1.2.0.2
+	V1-00:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.8
+date	2009.06.23.18.26.19;	author pwagner;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2007.10.04.18.20.33;	author vsnyder;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2005.06.22.18.27.38;	author pwagner;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2002.10.30.01.04.10;	author jonathan;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2002.10.30.00.53.36;	author jonathan;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2002.10.08.17.08.08;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.09.21.15.51.38;	author jonathan;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.09.20.21.50.05;	author jonathan;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.8
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module WaterVapor
+
+! -------------------------------------------------------------------------  
+! COMPUTE VAPOR PRESSURE
+! -------------------------------------------------------------------------
+          use MLSCommon, only: r8      
+          IMPLICIT NONE
+          Private
+          Public :: RHtoEV
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+      
+contains
+ 
+          SUBROUTINE RHtoEV(t,RH,EV) 
+!         p ---- mb
+!         t,td ---- K
+!         RH --- %
+!         SD --- g/m3                 
+          REAL(r8) :: es, t, RH, EV, isat, t0
+          !... relative to water
+          !         ES=6.10779*EXP(17.28*(t-273.15)/(t-36.))
+          !... relative to ice
+
+        t0 = 273.16_r8
+        isat = -9.09718*(t0/t-1.0) + 0.78583503 - 3.56654*LOG10(t0/t) &
+          &                        + 0.876793 * (1.0-t/t0)
+
+        es=10**isat
+
+!        es=10**(-2667./t+10.555)
+
+!        print*, es                       
+!        print*, ' '                      
+!        print, 10**(-2667./t+10.555)     
+
+          if (ES.lt.0._r8) ES=0._r8
+          EV=ES*0.01*RH
+          
+          END SUBROUTINE RHtoEV
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: read_apriori.f90 is it here $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module WaterVapor
+
+! $Log: WaterVapor.f90,v $
+! Revision 1.7  2007/10/04 18:20:33  vsnyder
+! Remove tabs, which are not allowed by the Fortran standard
+!
+! Revision 1.6  2005/06/22 18:27:38  pwagner
+! Cant have access declared outside module scope
+!
+! Revision 1.5  2002/10/30 01:04:10  jonathan
+! change alog to log
+!
+! Revision 1.4  2002/10/30 00:53:36  jonathan
+! new water vapor formula
+!
+! Revision 1.3  2002/10/08 17:08:08  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 1.2  2001/09/21 15:51:38  jonathan
+! modified F95 version
+!
+@
+
+
+1.7
+log
+@Remove tabs, which are not allowed by the Fortran standard
+@
+text
+@d24 1
+a24 1
+       "$RCSfile: WaterVapor.f90,v $"
+d56 1
+a57 1
+!---------------------------- RCS Ident Info -------------------------------
+d59 2
+a60 3
+       "$Id: WaterVapor.f90,v 1.6 2005/06/22 18:27:38 pwagner Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d62 1
+d64 1
+d69 3
+@
+
+
+1.6
+log
+@Cant have access declared outside module scope
+@
+text
+@d24 1
+a24 1
+       "$RCSfile: $"
+d40 3
+a42 3
+	t0 = 273.16_r8
+	isat = -9.09718*(t0/t-1.0) + 0.78583503 - 3.56654*LOG10(t0/t) &
+          &     		+ 0.876793 * (1.0-t/t0)
+d46 1
+a46 1
+!	  es=10**(-2667./t+10.555)
+d48 3
+a50 3
+!        print*, es
+!        print*, ' '
+!        print, 10**(-2667./t+10.555)
+d59 1
+a59 1
+       "$Id: $"
+d68 3
+@
+
+
+1.5
+log
+@change alog to log
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d22 3
+a24 6
+ !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm =                          &
+    "$Id: WaterVapor.f90,v 1.4 2002/10/30 00:53:36 jonathan Exp $"
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName=                       &
+    "$RCSfile: WaterVapor.f90,v $"
+d26 1
+a26 1
+ !---------------------------------------------------------------------------
+d57 5
+d68 3
+@
+
+
+1.4
+log
+@new water vapor formula
+@
+text
+@d16 1
+a16 1
+    "$Id: WaterVapor.f90,v 1.3 2002/10/08 17:08:08 pwagner Exp $"
+d36 1
+a36 1
+	isat = -9.09718*(t0/t-1.0) + 0.78583503 - 3.56654*ALOG10(t0/t) &
+d58 3
+@
+
+
+1.3
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d16 1
+a16 1
+    "$Id: WaterVapor.f90,v 1.2 2001/09/21 15:51:38 jonathan Exp $"
+d30 1
+a30 1
+          REAL(r8) :: es, t, RH, EV
+d35 12
+a46 1
+	  es=10**(-2667./t+10.555)
+d58 3
+@
+
+
+1.2
+log
+@modified F95 version
+@
+text
+@d16 1
+a16 1
+    "$Id: WaterVapor.f90,v 1.1 2001/09/20 21:50:05 jonathan Exp $"
+d20 1
+d40 4
+d47 3
+@
+
+
+1.1
+log
+@*** empty log message ***
+@
+text
+@d16 1
+a16 1
+    "$Id: GasAbsorption.f90,v 1.2 2001/09/20 21:31:25 jonathan Exp $"
+d19 1
+a19 1
+    "$RCSfile: GasAbsorption.f90,v $"
+d41 1
+a41 5
+! $Log: WaterVapor.f90,v      
+
+
+
+
+@
+

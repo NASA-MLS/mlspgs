@@ -1,0 +1,65 @@
+head	1.2;
+access;
+symbols
+	V0_1:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2000.11.22.23.07.30;	author zvi;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2000.05.04.18.12.06;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@New version
+@
+text
+@module S_GET_ONE_ETA_M
+  use MLSCommon, only: I4, R4
+  implicit NONE
+  private
+  public :: S_GET_ONE_ETA, GET_ONE_ETA
+  interface GET_ONE_ETA; module procedure S_GET_ONE_ETA; end interface
+
+!---------------------------- RCS Ident Info -------------------------------
+  CHARACTER (LEN=256) :: Id = &
+       "$Id: s_get_one_eta_m.f90,v 1.1 2000/05/04 18:12:06 vsnyder Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile: s_get_one_eta_m.f90,v $"
+!---------------------------------------------------------------------------
+
+  integer, private, parameter :: RK = r4
+
+contains
+
+! This subroutine gets the eta function for temperature for one height & one
+! coefficient:
+!
+  Subroutine S_GET_ONE_ETA ( h, peaks, no_peaks, iq, eta )
+    include 'get_one_eta.f9h'
+  End Subroutine S_GET_ONE_ETA
+end module S_GET_ONE_ETA_M
+@
+
+
+1.1
+log
+@Initial conversion to Fortran 90
+@
+text
+@d10 1
+a10 1
+       "$Id: S_GET_ONE_ETA_M,v 1.12 2000/02/08 19:54:57 vsnyder Exp $"
+@
+

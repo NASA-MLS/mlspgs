@@ -1,0 +1,197 @@
+head	2.3;
+access;
+symbols
+	v5-02-NRT-19:2.3
+	v6-00:2.3
+	v5-02-NRT-18:2.3
+	v5-02:2.3
+	v5-01-NRT-17:2.3
+	v5-01-NRT-16:2.3
+	v5-01-NRT-15:2.3
+	v5-01-NRT-14:2.3
+	neuralnetworks-1-0:2.3.0.10
+	cfm-single-freq-0-1:2.3.0.8
+	v5-01:2.3
+	v5-00:2.3
+	v4-23-TA133:2.3.0.6
+	mus-emls-1-70:2.3.0.4
+	rel-1-0-englocks-work:2.3.0.2
+	VUMLS1-00:2.3
+	VPL1-00:2.3
+	V4-22-NRT-08:2.2;
+locks; strict;
+comment	@# @;
+
+
+2.3
+date	2016.08.23.00.39.23;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2016.03.25.00.25.06;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2016.02.23.00.46.49;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.3
+log
+@Add generic Dump for Dump_H_t and Dump_ZOT
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=============================================================================
+module Dump_Geolocation_m
+!=============================================================================
+
+  implicit none
+  private
+
+  public :: Dump     ! Generic for Dump_H_t and Dump_ZOT
+  public :: Dump_H_t ! Dump (lon,lat) array
+  public :: Dump_ZOT ! Dump ZOT coordinates array
+
+  interface Dump
+    module procedure Dump_H_t, Dump_ZOT
+  end interface
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: Dump_Geolocation_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  subroutine Dump_H_t ( G, Name, Format )
+
+    ! Dump an array of lon,lat pairs enclosed in parentheses.
+
+    use Geolocation_0, only: H_t
+    use Output_m, only: NewLine, Output
+
+    type(h_t), intent(in) :: G(:)
+    character(*), intent(in), optional :: Name
+    character(*), intent(in), optional :: Format ! Default '(f8.3)'
+
+    integer :: I, J, N
+    character(31) :: MyFmt
+
+    myFmt = '(f8.3)'
+    if ( present(format) ) myFmt = format
+    if ( present(name) ) call output ( name, advance='yes' )
+    n = size(g)
+    do i = 1, n, 5
+      call output ( i, 4, after=':' )
+      do j = i, min(i+4,n)
+        call output ( g(j)%lon%d, before=' (', format=myFmt )
+        call output ( g(j)%lat, before=',', format=myFmt, after=')' )
+      end do
+      call NewLine
+    end do
+
+  end subroutine Dump_H_t
+
+  subroutine Dump_ZOT ( G, Name, Format )
+
+    ! Dump an array of x,y pairs enclosed in parentheses.
+
+    use QTM_m, only: ZOT_t
+    use Output_m, only: NewLine, Output
+
+    type(ZOT_t), intent(in) :: G(:)
+    character(*), intent(in), optional :: Name
+    character(*), intent(in), optional :: Format ! Default '(f8.5)'
+
+    integer :: I, J, N
+    character(31) :: MyFmt
+
+    myFmt = '(f8.5)'
+    if ( present(format) ) myFmt = format
+    if ( present(name) ) call output ( name, advance='yes' )
+    n = size(g)
+    do i = 1, n, 5
+      call output ( i, 4, after=':' )
+      do j = i, min(i+4,n)
+        call output ( g(j)%x, before=' (', format=myFmt )
+        call output ( g(j)%y, before=',', format=myFmt, after=')' )
+      end do
+      call NewLine
+    end do
+
+  end subroutine Dump_ZOT
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: Dump_Geolocation_m.f90,v 2.2 2016/03/25 00:25:06 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Dump_Geolocation_m
+
+! $Log: Dump_Geolocation_m.f90,v $
+! Revision 2.2  2016/03/25 00:25:06  vsnyder
+! Lon component now needs to acces its %d component
+!
+! Revision 2.1  2016/02/23 00:46:49  pwagner
+! First commit
+!
+@
+
+
+2.2
+log
+@Lon component now needs to acces its %d component
+@
+text
+@d19 1
+d23 4
+d96 1
+a96 1
+       "$Id: Dump_Geolocation_m.f90,v 2.1 2016/02/23 00:46:49 pwagner Exp $"
+d106 3
+@
+
+
+2.1
+log
+@First commit
+@
+text
+@d24 1
+a24 1
+       "$RCSfile: HGrid.f90,v $"
+d51 1
+a51 1
+        call output ( g(j)%lon, before=' (', format=myFmt )
+d91 1
+a91 1
+       "$Id: HGrid.f90,v 2.127 2015/10/14 23:23:01 pwagner Exp $"
+d100 4
+a103 1
+! $Log: HGrid.f90,v $
+@
+

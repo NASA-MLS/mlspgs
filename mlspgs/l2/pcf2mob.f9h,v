@@ -1,0 +1,136 @@
+head	2.2;
+access;
+symbols
+	v5-02-NRT-19:2.2
+	v6-00:2.2
+	v5-02-NRT-18:2.2
+	v5-02:2.2
+	v5-01-NRT-17:2.2
+	v5-01-NRT-16:2.2
+	v5-01-NRT-15:2.2
+	v5-01-NRT-14:2.2
+	neuralnetworks-1-0:2.2.0.12
+	cfm-single-freq-0-1:2.2.0.10
+	v5-01:2.2
+	v5-00:2.2
+	v4-23-TA133:2.2.0.8
+	mus-emls-1-70:2.2.0.6
+	rel-1-0-englocks-work:2.2.0.4
+	VUMLS1-00:2.2
+	VPL1-00:2.2
+	V4-22-NRT-08:2.2
+	VAM1-00:2.2
+	V4-21:2.2.0.2
+	V4-13:2.2
+	V4-12:2.2
+	V4-11:2.2
+	V4-10:2.2
+	V3-43:2.1
+	M4-00:2.2
+	V3-41:2.1
+	V3-40-PlusGM57:2.1.0.2
+	V2-24-NRT-04:2.1
+	V3-33:2.1
+	V3-31:2.1
+	V3-30-NRT-05:2.1
+	cfm-01-00:2.1
+	V3-30:2.1
+	V3-20:2.1
+	V3-10:2.1
+	V2-23-NRT-02:2.1
+	V2-22-NRT-01:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.2
+date	2012.04.05.20.15.01;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2008.01.08.00.20.07;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.2
+log
+@Erased all traces of parallel staging file
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!  subroutine MovePCFIDs
+! $Id: pcf2mob.f9h,v 2.1 2008/01/08 00:20:07 pwagner Exp $
+
+   INTEGER :: mlspcf_l2cf_start       = mlspcf_mobile_l2cf_start
+   INTEGER :: mlspcf_l2cf_end         = mlspcf_mobile_l2cf_end  
+   !
+   INTEGER :: mlspcf_l1b_rad_start    = mlspcf_mobile_l1b_rad_start   
+   INTEGER :: mlspcf_l1b_rad_end      = mlspcf_mobile_l1b_rad_end     
+   !
+   INTEGER :: mlspcf_l1b_oa_start     = mlspcf_mobile_l1b_oa_start    
+   INTEGER :: mlspcf_l1b_oa_end       = mlspcf_mobile_l1b_oa_end      
+   !
+   INTEGER :: mlspcf_l2gp_start       = mlspcf_mobile_l2gp_start      
+   INTEGER :: mlspcf_l2gp_end         = mlspcf_mobile_l2gp_end        
+   !
+   INTEGER :: mlspcf_l2dgg_start      = mlspcf_mobile_l2dgg_start     
+   INTEGER :: mlspcf_l2dgg_end        = mlspcf_mobile_l2dgg_end       
+   !
+   INTEGER :: mlspcf_l2dgm_start      = mlspcf_mobile_l2dgm_start     
+   INTEGER :: mlspcf_l2dgm_end        = mlspcf_mobile_l2dgm_end       
+   !
+   INTEGER :: mlspcf_l2fwm_full_start = mlspcf_mobile_l2fwm_full_start
+   INTEGER :: mlspcf_l2fwm_full_end   = mlspcf_mobile_l2fwm_full_end  
+   !
+   INTEGER :: mlspcf_mcf_l2log_start  = mlspcf_mobile_mcf_l2log_start 
+   INTEGER :: mlspcf_mcf_l2log_end    = mlspcf_mobile_mcf_l2log_end   
+   !
+   INTEGER :: mlspcf_mcf_l2gp_start   = mlspcf_mobile_mcf_l2gp_start  
+   INTEGER :: mlspcf_mcf_l2gp_end     = mlspcf_mobile_mcf_l2gp_end    
+   !
+   INTEGER :: mlspcf_mcf_l2dgg_start  = mlspcf_mobile_mcf_l2dgg_start 
+   INTEGER :: mlspcf_mcf_l2dgg_end    = mlspcf_mobile_mcf_l2dgg_end   
+   !
+   INTEGER :: mlspcf_mcf_l2dgm_start  = mlspcf_mobile_mcf_l2dgm_start 
+   INTEGER :: mlspcf_mcf_l2dgm_end    = mlspcf_mobile_mcf_l2dgm_end   
+   !
+! $Log: pcf2mob.f9h,v $
+! Revision 2.1  2008/01/08 00:20:07  pwagner
+! First commit
+!
+@
+
+
+2.1
+log
+@First commit
+@
+text
+@d13 1
+a13 1
+! $Id: sharedpcf2.f9h,v 2.13 2007/10/24 23:58:49 pwagner Exp $
+a35 3
+   INTEGER :: mlspcf_l2parsf_start    = mlspcf_mobile_l2parsf_start   
+   INTEGER :: mlspcf_l2parsf_end      = mlspcf_mobile_l2parsf_end     
+   !
+d48 4
+a51 1
+! $Log: sharedpcf2.f9h,v $
+@
+

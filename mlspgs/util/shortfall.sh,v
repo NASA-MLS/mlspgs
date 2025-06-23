@@ -1,0 +1,256 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.4
+	cfm-single-freq-0-1:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2020.04.01.22.42.17;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@First commit
+@
+text
+@#!/bin/sh
+# Copyright 2020, by the California Institute of Technology. ALL
+# RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+# commercial use must be negotiated with the Office of Technology Transfer
+# at the California Institute of Technology.
+
+# This software may be subject to U.S. export control laws. By accepting this
+# software, the user agrees to comply with all applicable U.S. export laws and
+# regulations. User has the responsibility to obtain export licenses, or other
+# export authority as may be required before exporting such information to
+# foreign countries or providing access to foreign persons.
+
+# $Id: shortfall.sh,v 1.1 2015/11/03 17:33:42 pwagner Exp $
+
+# --------------- shortfall.sh help
+# shortfall.sh
+# checks for fewer profiles in version_2 than existed in version_1
+#
+# usage:
+# (1) shortfall.sh [-Ef envsettings-file] [options] file_2 file_1 date
+# (2) shortfall.sh [-Ef envsettings-file] [options] [years]
+#
+# where envsettings-file is a file of environmental settings
+#
+#    O p t i o n s
+# -Ef file            set environment according to definitions found in file
+# -dryrun             merely echo the command that would be executed
+# -v                  verbose
+# -h[elp]             print brief help message; exit
+#
+#
+# will run l2gpdump to discover the dates when there are fewer
+# good profiles in version_2 than in version_1
+#
+# You can use the envsettings file to change any of
+# species             defaults to CO
+# version_1           defaults to v04.23
+# version_2           defaults to v05.00
+# root                defaults to /data/emls/l2gp
+# Examples of usage:
+# 
+# (1) ~/mlspgs/util/shortfall.sh -v /testing/workspace/pwagner/l2tests/v5.00/SA-01/127/*CO*.he5 /testing/workspace/pwagner/l2tests/v5.00/SA-01/128/*CO*.he5 2019d095
+# (2) ~/mlspgs/util/shortfall.sh -v 2019
+#
+# --------------- End shortfall.sh help
+#------------------------------- check_if_fewer ------------
+check_if_fewer()
+{
+  # usage:
+  # check_if_fewer version_2_file version_1_file date
+  # will print
+  # date  n_2  n_1
+  # if n_2 < n_1 where
+  # n_2 is the num of good profiles in version_2_file
+  # n_1 is the num of good profiles in version_1_file
+  if [ "$verbose" = "yes" ]
+  then
+    echo $species $1 $2 $3
+    # exit
+    /software/toolkit/mlstools/l2gpdump -status -s $species $1 | grep 'Number of good profiles' | awk -F':' '{print $2}'
+    /software/toolkit/mlstools/l2gpdump -status -s $species $2 | grep 'Number of good profiles' | awk -F':' '{print $2}'
+  fi
+  if [ "$dryrun" = "yes" ]
+  then
+    echo "a=/software/toolkit/mlstools/l2gpdump -status -s $species $1 | grep 'Number of good profiles' | awk -F':' '{print $2}'"
+    echo "b=/software/toolkit/mlstools/l2gpdump -status -s $species $2 | grep 'Number of good profiles' | awk -F':' '{print $2}'"
+  else
+    a=`/software/toolkit/mlstools/l2gpdump -status -s $species $1 | grep 'Number of good profiles' | awk -F':' '{print $2}'`
+    b=`/software/toolkit/mlstools/l2gpdump -status -s $species $2 | grep 'Number of good profiles' | awk -F':' '{print $2}'`
+    if [ "$verbose" = "yes" ]
+    then
+      echo "a $a"
+      echo "b $b"
+    fi
+    if [ "$a" -lt "$b" ]
+    then
+      ratio=`echo "scale=2; $a/$b" | bc`
+      echo $3 $a $b $ratio
+    fi
+  fi
+}
+
+#------------------------------- Main Program ------------
+
+#****************************************************************
+#                                                               *
+#                  * * * Main Program  * * *                    *
+#                                                               *
+#                                                               *
+#	The entry point where control is given to the script    *
+#****************************************************************
+echo "Starting .."
+#exit
+cmdline=`echo $0 $@@`
+#my_name=shortfall.sh
+me=$0
+root="/data/emls/l2gp"
+# Were we called with a relative or absolute path prefix?
+# i.e., does dollar-0 begin with a slash?
+slashtest=`echo $0 | grep '^/.*'`
+if [ "$slashtest" != "" ]
+then
+  I=`echo $0 | sed 's:/.*/:/:g' | sed 's:/::' | sed 's/\.sh//'`
+else
+  I=`echo $0 | sed 's:.*/::g' | sed 's/\.sh//'`
+fi
+# $the_splitter is split_path with me's path prepended
+the_splitter="`echo $0 | sed 's/'$I'/split_path/'`"
+echo "0: $0"
+echo "I: $I"
+echo "the_splitter: $the_splitter"
+echo "me: $me"
+#exit
+my_name=` $the_splitter -f $me`
+species=CO
+dryrun="no"
+reuse="no"
+verbose="no"
+envfile="default-env.txt"
+years=""
+version_1=v04.23
+version_2=v05.00
+more_opts="yes"
+echo "Looping .."
+#exit
+while [ "$more_opts" = "yes" ] ; do
+    echo "option: $1"
+    case "$1" in
+
+    -dryrun )
+       dryrun="yes"
+       shift
+       ;;
+    -Ef )
+       shift
+       envfile="$1"
+       shift
+       ;;
+    -h | -help )
+       echo "my_name $my_name"
+       echo "me $me"
+       sed -n '/'$my_name' help/,/End '$my_name' help/ p' $me \
+           | sed -n 's/^.//p' | sed '1 d; $ d'
+       rm -f $settings_file
+       exit
+       ;;
+    -v )
+       verbose="yes"
+       shift
+       ;;
+    * )
+       more_opts="no"
+       ;;
+    esac
+done
+if [ -f "$envfile" ]
+then
+  . "$envfile"
+fi
+
+if [ "$verbose" = "yes" ]
+then
+  echo $cmdline
+fi
+
+if [ "$my_name" = "shortfall.sh" ]
+then
+  command=check_if_fewer
+else
+  echo "What am I doing here"
+fi
+# Do we loop over years? Or do we loop over file names?
+# If the first arg is a file name, then presumably your usage was
+#     shortfall.sh file_2 file_1 date
+# If the 1st arg is not a filename, we interpret it as a year number,
+#  e.g. "2004"
+echo "first arg: $1"
+#ls "$1"
+#exit
+if [ ! -f "$1" ]
+then
+  # Year number
+  # for v in $root/$version*
+  # do
+    # echo $version_2
+    # Loop over year numbers
+    for i
+    do
+      # echo $version_2/$i
+      if [ -d $root/$version_2/$i ]
+      then
+        cd $root/$version_2/$i
+        echo "Days in $i"
+        ls
+        # echo $v/$i
+        # exit
+        # Loop over days
+        for j in *
+        do
+          day=${i}d${j}
+          file_2=$root/$version_2/$i/$j/*$species*.he5
+          file_1=$root/$version_1/$i/$j/*$species*.he5
+          file_2=`echo $file_2`
+          file_1=`echo $file_1`
+          # echo $file_1
+          # echo $file_2
+          if [ "$dryrun" = "yes" ]
+          then
+            echo $command $file_2 $file_1 $day
+          elif [ ! -f "$file_1" ]
+          then
+            echo "Sorry, $file_1 not found"
+            echo "Do you need to change $version_1"
+          else
+            $command $file_2 $file_1 $day
+          fi
+        done
+      fi
+    done
+  # done
+else
+  $command $@@
+fi
+# $Log: shortfall.sh,v $
+@

@@ -1,0 +1,167 @@
+head	2.3;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+2.3
+date	2000.10.12.22.22.11;	author vsnyder;	state dead;
+branches;
+next	2.2;
+
+2.2
+date	2000.10.12.00.38.10;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2000.10.10.20.33.48;	author vsnyder;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2000.09.05.18.58.04;	author ahanzel;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2000.09.02.02.02.59;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.3
+log
+@Change directory name from NAG to pclinuxNAG
+@
+text
+@# $Id: Makefile,v 2.2 2000/10/12 00:38:10 vsnyder Exp $
+
+# End of the path to this Makefile:
+ME = NAG
+
+# Fortran compiler:
+F90 = f95
+
+# Compiler options:
+FOPTS = -g -C=all
+#FOPTS = -O
+
+# Path to source files:
+S = ..
+
+# Path to MLS library source files:
+MLS = $S/../lib
+
+# Path to .mod files:
+M = $(MLS)/$(ME)
+
+# Option to specify path to .mod files:
+I = -I
+
+# Beginning of path to libraries:
+TOOLKIT = /software/SRC/TOOLKIT-5.2.6v1.00.NAG
+
+# Beginning of path to HDFEOS libraries:
+HDFEOS = /van1/opt/TOOLKIT
+#HDFEOS = $(TOOLKIT)
+
+# Platform (used in a directory path in ../Makefile.inc):
+PLATFORM = linux
+
+# Path to libPGSTK
+PGSTK = $(HOME)/mlspgs/SDPToolkit/$(ME)
+#PGSTK = $(TOOLKIT)/lib/$(PLATFORM)
+
+include $S/Makefile.inc
+
+# $Log: Makefile,v $
+# Revision 2.2  2000/10/12 00:38:10  vsnyder
+# Account for lib/cf_parser moving to lib
+#
+# Revision 2.1  2000/10/10 20:33:48  vsnyder
+# Repairs to get rid of WVS pathnames
+#
+@
+
+
+2.2
+log
+@Account for lib/cf_parser moving to lib
+@
+text
+@d1 1
+a1 1
+# $Id: Makefile,v 2.1 2000/10/10 20:33:48 vsnyder Exp $
+d42 3
+@
+
+
+2.1
+log
+@Repairs to get rid of WVS pathnames
+@
+text
+@d1 4
+a4 1
+# $Id: $
+d7 1
+a7 1
+FC = f95
+d16 3
+d20 1
+a20 1
+M = $(HOME)/mlspgs/lib/NAG
+a31 3
+# Path to Configuration parser
+C = $(HOME)/mlspgs/lib/cf_parser/NAG
+
+d36 1
+a36 1
+PGSTK = $(HOME)/mlspgs/SDPToolkit/NAG
+d41 4
+a44 1
+# $Log: $
+@
+
+
+2.0
+log
+@Changing file revision to 2.0.
+@
+text
+@d1 2
+d8 1
+d20 1
+a20 2
+#L = /nas/software/SRC/TOOLKIT-5.2.6v1.00
+L = /nas/software/SRC/TOOLKIT-5.2.6v1.00.NAG
+d22 3
+a24 2
+# Beginning of path to HDFEOS  libraries:
+E = /van1/opt/TOOLKIT
+d30 5
+a34 1
+P = linux
+d36 1
+a36 2
+machine.o: machine.f90
+	$(FC) -c $(FOPTS) machine.f90
+d38 1
+a38 1
+include ../Makefile.inc
+@
+
+
+1.1
+log
+@Initial entry
+@
+text
+@@
+

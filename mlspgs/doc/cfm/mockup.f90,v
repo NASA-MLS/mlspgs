@@ -1,0 +1,1901 @@
+head	1.12;
+access;
+symbols
+	v5-02-NRT-19:1.12
+	v6-00:1.12
+	v5-02-NRT-18:1.12
+	v5-02:1.12
+	v5-01-NRT-17:1.12
+	v5-01-NRT-16:1.12
+	v5-01-NRT-15:1.12
+	v5-01-NRT-14:1.12
+	neuralnetworks-1-0:1.12.0.12
+	cfm-single-freq-0-1:1.12.0.10
+	v5-01:1.12
+	v5-00:1.12
+	v4-23-TA133:1.12.0.8
+	mus-emls-1-70:1.12.0.6
+	rel-1-0-englocks-work:1.12.0.4
+	VUMLS1-00:1.12
+	VPL1-00:1.12
+	V4-22-NRT-08:1.12
+	VAM1-00:1.12
+	V4-21:1.12.0.2
+	V4-13:1.12
+	V4-12:1.12
+	V4-11:1.12
+	V4-10:1.12
+	V3-43:1.4
+	M4-00:1.12
+	V3-41:1.4
+	V3-40-PlusGM57:1.4.0.2
+	V3-33:1.11
+	V3-31:1.11
+	V3-30-NRT-05:1.10
+	cfm-01-00:1.10
+	V3-30:1.4
+	V3-20:1.4;
+locks; strict;
+comment	@# @;
+
+
+1.12
+date	2011.12.16.01.19.40;	author honghanh;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2010.09.28.14.42.16;	author honghanh;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2010.06.29.19.51.14;	author honghanh;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2010.06.16.18.37.41;	author honghanh;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2010.06.02.14.32.55;	author honghanh;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2010.05.24.19.55.57;	author honghanh;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2010.05.24.18.35.58;	author honghanh;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2010.03.26.15.33.03;	author honghanh;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2009.12.22.00.11.08;	author honghanh;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2009.12.21.23.28.26;	author honghanh;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2009.12.18.23.33.55;	author honghanh;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2009.12.15.16.56.40;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.12
+log
+@Updated documentation for newer API centered on the use of agile vectors,
+and removed the concept of vector template and chunk from public API.
+@
+text
+@! Copyright 2010, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! This program is meant to serve as an example, and proof that the CFM library
+! is working. Consequently, the design of this program does not follow good
+! software design principles. This program should not be used as a part in
+! any programs or software suite meant for long-term use.
+program mockup
+
+    use CFM
+    use CFM, only: ForwardModelConfig_T 
+    use input
+    use machine, only: getarg
+
+    implicit none
+
+!---------------------------- RCS Ident Info ------------------------------
+    character (len=*), parameter :: ModuleName= &
+        "$RCSfile: mockup.f90,v $"
+    character (len=*), parameter :: IdParm = &
+        "$Id: mockup.f90,v 1.55 2011/12/15 16:53:24 honghanh Exp $"
+    character (len=len(idParm)) :: Id = idParm
+!---------------------------------------------------------------------------
+
+    integer :: i
+    type(ForwardModelConfig_T), dimension(:), pointer :: forwardModelConfigDatabase
+    type(MLSFile_T), dimension(:), pointer :: filedatabase
+    type(MLSFile_T) :: l1bfile
+    type(VGrid_T) :: vGridStandard55, vGridStandard37, vGridTESCO, vGridRefGPH
+    type(VGrid_T) :: vGridExtinction
+    type(HGrid_T) :: hGridStandard
+    type(FGrid_T) :: fGridExtinctionConstant
+    type(QuantityTemplate_T) :: qtemp, qCO, qso2, qhno3, qo3, qextinctionv2r3
+    type(QuantityTemplate_T) :: qphitanGhz, qrefGPH, qgph, qh2o, qisotoperatioO_18_O
+    type(QuantityTemplate_T) :: qisotoperatioO3_ASYM_O_18, qisotoperatioO3_V2
+    type(QuantityTemplate_T) :: qisotoperatioHNO3, qisotoperatioCO, qband9
+    type(QuantityTemplate_T) :: qptanGHz, qisotoperatioO3, qisotoperatioS_32_O2
+    type(QuantityTemplate_T) :: qisotoperatioO3_SYM_O_18, qbaseline9
+    type(Vector_T) :: state, stateExtra
+    type(Vector_T) :: radiance, diffVector
+    type(Vector_T) :: observed, obsPrecision
+    type(Vector_T) :: corrections, correctionNoise
+    character(len=3) :: GHz = "GHz"
+    character(len=2) :: sc = "sc"
+    type(VectorValue_T) :: temperature, co, o2, so2, hno3, o3, extinctionv2r3, ptanGHz
+    type(VectorValue_T) :: phitanGhz, refGPH, gph, h2o, isotoperatioO_18_O, 
+    type(VectorValue_T) :: isotoperatioO3, isotoperatioS_32_O2
+    type(VectorValue_T) :: isotoperatioO3_ASYM_O_18, isotoperatioO3_V2
+    type(VectorValue_T) :: isotoperatioHNO3, isotoperatioCO, limbSidebandFraction9L
+    type(VectorValue_T) :: limbSidebandFraction9U, elev9L, elev9U, earthReflectivity
+    type(VectorValue_T) :: orbitInclination, spaceRadiance, scGeocAlt, tngtGeocAltGHz
+    type(VectorValue_T) :: losVelGHz, band9, isotoperatioO3_SYM_O_18, precision9
+    type(VectorValue_T) :: correction9, noise9
+    character(len=256) :: signalFileName, configFileName
+    type(Matrix_T) :: jacobian
+    integer :: error
+
+    call getarg(1, signalFileName)
+    call getarg(2, configFileName)
+
+    nullify(filedatabase)
+
+    call CFM_MLSSetup(signalFileName, configFileName, forwardModelConfigDatabase)
+
+    !========================= Run the forward model ==========================
+
+    ! Read L1BOA file
+    error = InitializeMLSFile (l1bfile, content='l1boa', name=trim(l1boa), &
+    shortName='L1BOA', type=l_hdf, access=DFACC_RDONLY)
+    if (error /= 0) call MLSMessage (MLSMSG_Error, moduleName, &
+    "Error initializing " // trim(l1boa))
+    call mls_openfile (l1bfile, error)
+    if (error /= 0) call MLSMessage (MLSMSG_Error, moduleName, &
+    "Error opening " // trim(l1boa))
+    ! don't care about return value of the following function
+    i = AddFileToDatabase(filedatabase, l1bfile)
+
+    ! read MLS input data file
+    call Read_Spectroscopy (spectroscopy, 'HDF5')
+    call ReadAntennaPatterns (antennaPatterns)
+    call ReadFilterShapes(filterShapes)
+    call ReadDACSFilterShapes (DACSFilterShapes)
+    call ReadPointingGrids (pointingGrids)
+
+    do i = 1, size(pfaFiles)
+        call ReadPFAFile (pfaFiles(i))
+    end do
+
+    do i = 1, size(l2pc)
+        call ReadHDF5L2PC (l2pc(i))
+    end do
+
+    vGridStandard37 = CreateVGrid (l_zeta, phyq_pressure, l_logarithmic, &
+                                   start=1000.0d0, formula="37:6")
+
+    vGridRefGPH = CreateVGrid (l_zeta, phyq_pressure, l_explicit, &
+                               values=(/100.0_r8/))
+    vGridStandard55 = CreateVGrid (l_zeta, phyq_pressure, l_explicit, &
+    values=(/1000.00_r8,  825.404_r8,  681.292_r8,  562.341_r8,  464.159_r8,  &
+             383.119_r8,  316.228_r8,  261.016_r8,  215.443_r8,  177.828_r8,  &
+             146.780_r8,  121.153_r8,  100.000_r8,  82.5404_r8,  68.1292_r8,  &
+             56.2341_r8,  46.4159_r8,  38.3119_r8,  31.6228_r8, 26.1016_r8,  &
+             21.5443_r8,  17.7828_r8,  14.6780_r8,  12.1153_r8,  10.0000_r8, &
+             8.25404_r8,  6.81292_r8,  5.62341_r8,  4.64159_r8,  3.83119_r8,  &
+             3.16228_r8,  2.61016_r8,  2.15443_r8,  1.77828_r8,  1.46780_r8,  &
+             1.21153_r8,  1.00000_r8,  0.681292_r8, 0.464159_r8,  0.316228_r8, &
+             0.215443_r8, 0.146780_r8,  0.100000_r8,  0.0464159_r8, 0.0215443_r8, &
+             0.01000_r8,  0.00464159_r8, 0.00215443_r8, 0.00100_r8, 0.000464159_r8,&
+             0.000215443_r8, 0.000100_r8, 4.64159e-05_r8, 2.15443e-05_r8, &
+             1.00000e-05_r8 /))
+
+    vGridTESCO = CreateVGrid (l_zeta, phyq_pressure, l_explicit, &
+    values=(/1012.93_r8,  1000.00_r8,  908.514_r8,  825.402_r8,  749.893_r8,  &
+             681.291_r8,  618.966_r8,  562.342_r8, 510.898_r8,  464.160_r8,  421.698_r8, &
+             383.117_r8,  348.069_r8,  316.227_r8,  287.298_r8,  261.016_r8, 237.137_r8, &
+             215.444_r8,  195.735_r8,  177.829_r8,  161.561_r8,  146.779_r8,  133.352_r8, &
+             121.152_r8, 110.069_r8,  100.000_r8,  90.8518_r8,  82.5406_r8,  74.9896_r8, &
+             68.1295_r8,  61.8963_r8,  56.2339_r8, 51.0896_r8,  46.4158_r8,  42.1696_r8, &
+             38.3119_r8,  34.8071_r8,  31.6229_r8,  28.7299_r8,  26.1017_r8, 23.7136_r8, &
+             21.5443_r8,  19.5734_r8,  17.7828_r8,  16.1560_r8,  14.6780_r8,  13.3352_r8, &
+             12.1153_r8, 11.0070_r8,  10.0000_r8,  9.08514_r8,  8.25402_r8,  6.81291_r8, &
+             5.10898_r8,  4.64160_r8,  3.16227_r8, 2.61016_r8,  2.15443_r8,  1.61560_r8, &
+             1.33352_r8,  1.00000_r8,  0.681292_r8,  0.383118_r8,  0.215443_r8, &
+             0.100000_r8 /))
+
+    vGridExtinction = CreateVGrid (l_zeta, phyq_pressure, l_logarithmic, &
+    start=1000.0d0, formula="21:12,14:6,12:3")
+
+    ! Have insetoverlaps, and not single
+    hGridStandard = CreateRegularHGrid(GHz, 0.0_r8, 1.5_r8, .true., &
+                                       filedatabase, startL1Maf, endL1Maf)
+
+    fGridExtinctionConstant = CreateFGrid(L_IntermediateFrequency, (/0.0_r8/))
+
+    ! Construct state vector
+    state = CreateAgileVector(name='state')
+
+    qtemp = CreateQtyTemplate(l_temperature, qName='temperature', &
+                              avgrid=vGridStandard55, ahgrid=hGridStandard)
+    temperature = CreateValue4AgileVector(qtemp, value=TemperatureInput)
+    call AddValue2Vector(state, temperature)
+
+    qCO = CreateQtyTemplate(l_vmr, avgrid=vGridTESCO, ahgrid=hGridStandard, &
+    qMolecule=l_co, qName='CO')
+    co = CreateValue4AgileVector(qco, value=COInput)
+    call AddValue2Vector(state, co)
+
+    o2 = CreateMLSValue_O2 (vGridStandard37, hGridStandard, qname='O2')
+    call AddValue2Vector(state, o2)
+
+    qSO2 = CreateQtyTemplate(l_vmr, avgrid=vGridStandard37, ahgrid=hGridStandard, &
+    qMolecule=l_so2, qName='SO2')
+    so2 = CreateValue4AgileVector(qSO2, value=SO2Input)
+    call AddValue2Vector(state, so2)
+
+    qHNO3 = CreateQtyTemplate(l_vmr, avgrid=vGridStandard37, ahgrid=hGridStandard, &
+    qMolecule=l_hno3, qName='HNO3')
+    hno3 = CreateValue4AgileVector(qhno3, value=HNO3Input)
+    call AddValue2Vector(state, hno3)
+
+    qO3 = CreateQtyTemplate(l_vmr, avgrid=vGridStandard55, ahgrid=hGridStandard, &
+    qMolecule=l_o3, qName='O3')
+    o3 = CreateValue4AgileVector(qo3, value=O3Input)
+    call AddValue2Vector(state, o3)
+
+    qExtinctionv2r3 = CreateQtyTemplate(l_vmr, avgrid=vGridExtinction, &
+    ahgrid=hGridStandard, afgrid=fgridExtinctionConstant, qRadiometer="R3", &
+    qMolecule=l_extinctionv2)
+    extinctionv2r3 = CreateValue4AgileVector(qExtinctionv2r3, &
+                     value=extinctionV2R3Input)
+    call AddValue2Vector(state, extinctionv2r3)
+
+    stateExtra = CreateAgileVector(name='stateExtra')
+
+    qPtanGHz = CreateQtyTemplate(l_ptan, startL1Maf, endL1Maf, filedatabase, &
+    qInstModule=GHz, qName='ptanGHz')
+    ptanGHz = CreateValue4AgileVector(qPtanGhz)
+
+    qPhitanGHz = CreateQtyTemplate(l_phitan, startL1Maf, endL1Maf, qInstModule=GHz, &
+    filedatabase=filedatabase, qName='phitanGHz')
+    phitanGhz = CreateValue4AgileVector(qPhitanGhz)
+    call FillPhitanQuantity(phitanGhz)
+    call AddValue2Vector(stateExtra, phitanGhz)
+
+    qRefGPH = CreateQtyTemplate(l_refGPH, avgrid=vGridRefGPH, &
+    ahgrid=hGridStandard, qName='refGPH')
+    refGPH = CreateValue4AgileVector(qRefGPH, spreadvalue=refGPHInput) ! unit is meter
+    call AddValue2Vector(stateExtra, refGPH)
+
+    qGPH = CreateQtyTemplate(l_gph, avgrid=vGridStandard55, ahgrid=hGridStandard, &
+                             qName='GPH')
+    gph = CreateValue4AgileVector(qGPH)
+    call AddValue2Vector(stateExtra, gph)
+
+    qH2O = CreateQtyTemplate(l_vmr, avgrid=vGridStandard55, ahgrid=hGridStandard, &
+    qMolecule=l_h2o, qLogBasis=.true., qMinValue=0.1E-6_r8, qName='H2O')
+    h2o = CreateValue4AgileVector(qH2O, value=H2OInput)
+    call AddValue2Vector(stateExtra, H2O)
+
+    qIsotoperatioO_18_O = CreateQtyTemplate(l_isotoperatio, &
+    qName='isotoperatioO_18_O', qmolecule=l_o_18_o)
+    isotoperatioO_18_O = CreateValue4AgileVector(qIsotoperatioO_18_O, &
+    spreadvalue=0.00409000_r8)
+    call AddValue2Vector(stateExtra, isotoperatioO_18_O)
+
+    qIsotoperatioO3 = CreateQtyTemplate(l_isotoperatio, qName='isotoperatioO3', &
+    qmolecule=l_o3)
+    isotoperatioO3 = CreateValue4AgileVector(qIsotoperatioO3, &
+    spreadvalue=0.99290103_r8)
+    call AddValue2Vector(stateExtra, isotoperatioO3)
+
+    qIsotoperatioO3_ASYM_O_18 = CreateQtyTemplate(l_isotoperatio, &
+    qmolecule=l_o3_asym_o_18, qName='isotoperatioO3_ASYM_O_18')
+    isotoperatioO3_ASYM_O_18 = CreateValue4AgileVector(qIsotoperatioO3_ASYM_O_18, &
+    spreadvalue=0.00398194_r8)
+    call AddValue2Vector(stateExtra, isotoperatioO3_ASYM_O_18)
+
+    qIsotoperatioO3_SYM_O_18 = CreateQtyTemplate(l_isotoperatio, &
+    qmolecule=l_o3_sym_o_18, qName='isotoperatioO3_SYM_O_18')
+    isotoperatioO3_SYM_O_18 = CreateValue4AgileVector(qIsotoperatioO3_SYM_O_18, &
+    spreadvalue=0.00199097_r8)
+    call AddValue2Vector(stateExtra, isotoperatioO3_SYM_O_18)
+
+    qIsotoperatioO3_V2 = CreateQtyTemplate(l_isotoperatio, qmolecule=l_o3_v2, &
+    qName='isotoperatioO3_V2')
+    isotoperatioO3_V2 = CreateValue4AgileVector(qIsotoperatioO3_V2, &
+    spreadvalue=0.99290103_r8)
+    call AddValue2Vector(stateExtra, isotoperatioO3_V2)
+
+    qIsotoperatioS_32_O2 = CreateQtyTemplate(l_isotoperatio, qmolecule=l_s_32_o2, &
+    qName='isotoperatioS_32_O2')
+    isotoperatioS_32_O2 = CreateValue4AgileVector(qIsotoperatioS_32_O2, &
+    spreadvalue=0.94568002_r8)
+    call AddValue2Vector(stateExtra, isotoperatioS_32_O2)
+
+    qIsotoperatioHNO3 = CreateQtyTemplate(l_isotoperatio, qmolecule=l_hno3, &
+    qName='isotoperatioHNO3')
+    isotoperatioHNO3 = CreateValue4AgileVector(qIsotoperatioHNO3, &
+    spreadvalue=0.98910999_r8)
+    call AddValue2Vector(stateExtra, isotoperatioHNO3)
+
+    qIsotoperatioCO = CreateQtyTemplate(l_isotoperatio, qmolecule=l_co, &
+    qName='isotoperatioCO')
+    isotoperatioCO = CreateValue4AgileVector(qIsotoperatioCO, &
+    spreadvalue=0.98654002_r8)
+    call AddValue2Vector(stateExtra, isotoperatioCO)
+
+    ! Fill orbit inclination, tangent geocentric altitude with
+    ! data from MLS L1B file, and use them, along with other
+    ! quantities to calculate ptan
+    limbSidebandFraction9L = CreateMLSValue_LSF(9, .false., qname='lsf9L')
+    call AddValue2Vector(stateExtra, limbSidebandFraction9L)
+
+    limbSidebandFraction9U = CreateMLSValue_LSF(9, .true., qname='lsf9U')
+    call AddValue2Vector(stateExtra, limbSidebandFraction9U)
+
+    elev9L = CreateMLSValue_ElevationOffset(9, .false.)
+    call AddValue2Vector(stateExtra, elev9L)
+
+    elev9U = CreateMLSValue_ElevationOffset(9, .true.)
+    call AddValue2Vector(stateExtra, elev9U)
+
+    earthReflectivity = CreateMLSValue_EarthReflectivity()
+    call AddValue2Vector(stateExtra, earthReflectivity)
+
+    orbitInclination = CreateMLSValue_FromL1BOA (l_orbitInclination, sc, &
+    filedatabase, startL1Maf, endL1Maf)
+    call AddValue2Vector(stateExtra, orbitInclination)
+
+    spaceRadiance = CreateMLSValue_SpaceRadiance()
+    call AddValue2Vector(stateExtra, spaceRadiance)
+
+    scGeocAlt = CreateMLSValue_FromL1BOA(l_scgeocalt, sc, filedatabase, &
+    startL1Maf, endL1Maf)
+    call AddValue2Vector(stateExtra, scGeocAlt)
+
+    tngtGeocAltGHz = CreateMLSValue_FromL1BOA (l_tngtgeocalt, GHz, &
+    filedatabase, startL1Maf, endL1Maf)
+    call AddValue2Vector(stateExtra, tngtGeocAltGHz)
+
+    losVelGHz = CreateMLSValue_FromL1BOA(l_losVel, GHz, filedatabase, &
+    startL1Maf, endL1Maf)
+    call AddValue2Vector(stateExtra, losVelGHz)
+
+    radiance = CreateAgileVector(name='simulatedRadiance')
+
+    qband9 = CreateQtyTemplate(l_radiance, startL1Maf, endL1Maf, filedatabase, &
+                               qSignal="R3:240.B9F:CO", qName='band9')
+    band9 = CreateValue4AgileVector(qband9)
+    call AddValue2Vector(radiance, band9)
+
+    ! calculate ptan
+    call FillPtanQuantity (ptanGHz, temperature, refGPH, h2o, &
+    orbitInclination, phitanGhz, tngtGeocAltGHz)
+    call AddValue2Vector(stateExtra, ptanGhz)
+
+    ! We no longer need vGrid because the quantity templates have copied it
+    call DestroyVGridContents(vGridStandard55)
+    call DestroyVGridContents(vGridStandard37)
+    call DestroyVGridContents(vGridTESCO)
+    ! No long need hGrid, fGrid either
+    call DestroyHGridContents(hGridStandard)
+    call DestroyFGridContents(fGridExtinctionConstant)
+
+    ! GPH is filled by the forward model
+
+    ! Create jacobian
+    jacobian = CreatePlainMatrix(radiance, state)
+
+    ! Call the forward model
+!    call ForwardModel2 (0, forwardModelConfigDatabase, state, &
+!                        stateExtra, radiance, jacobian)
+!    call dump(radiance, details=1)
+
+    !call dump(jacobian, details=3)
+
+    !=================== Finish running the forward model =====================
+
+    !== Clean up anything that is not related to reading observed radiance ====
+    call DestroyMatrix(jacobian)
+    call DestroyAgileVectorContent (state)
+    call DestroyAgileVectorContent (stateExtra)
+    call Destroy_DACS_Filter_Database
+    call Destroy_Filter_Shapes_Database
+    call Destroy_Ant_Patterns_Database
+    call Destroy_SpectCat_Database
+    call Destroy_Line_Database
+    call Destroy_Pointing_Grid_Database
+    call DestroyL2PCDatabase
+    call Destroy_PFADataBase
+
+    ! Destroy all quantity templates that goes in state and stateExtra
+    call DestroyQuantityTemplateContents(qtemp)
+    call DestroyQuantityTemplateContents(qCO)
+    call DestroyQuantityTemplateContents(qSO2)
+    call DestroyQuantityTemplateContents(qHNO3)
+    call DestroyQuantityTemplateContents(qO3)
+    call DestroyQuantityTemplateContents(qExtinctionv2r3)
+    call DestroyQuantityTemplateContents(qPtanGHz)
+    call DestroyQuantityTemplateContents(qPhitanGHz)
+    call DestroyQuantityTemplateContents(qRefGPH)
+    call DestroyQuantityTemplateContents(qGPH)
+    call DestroyQuantityTemplateContents(qH2O)
+    call DestroyQuantityTemplateContents(qIsotoperatioO_18_O)
+    call DestroyQuantityTemplateContents(qIsotoperatioO3)
+    call DestroyQuantityTemplateContents(qIsotoperatioO3_ASYM_O_18)
+    call DestroyQuantityTemplateContents(qIsotoperatioO3_SYM_O_18)
+    call DestroyQuantityTemplateContents(qIsotoperatioO3_V2)
+    call DestroyQuantityTemplateContents(qIsotoperatioS_32_O2)
+    call DestroyQuantityTemplateContents(qIsotoperatioHNO3)
+    call DestroyQuantityTemplateContents(qIsotoperatioCO)
+    ! even quantities created by CFM subroutines has templates
+    call DestroyQuantityTemplateContents(o2%template)
+    call DestroyQuantityTemplateContents(limbSidebandFraction9L%template)
+    call DestroyQuantityTemplateContents(limbSidebandFraction9U%template)
+    call DestroyQuantityTemplateContents(elev9L%template)
+    call DestroyQuantityTemplateContents(elev9U%template)
+    call DestroyQuantityTemplateContents(earthReflectivity%template)
+    call DestroyQuantityTemplateContents(orbitInclination%template)
+    call DestroyQuantityTemplateContents(spaceRadiance%template)
+    call DestroyQuantityTemplateContents(scGeocAlt%template)
+    call DestroyQuantityTemplateContents(tngtGeocAltGHz%template)
+    call DestroyQuantityTemplateContents(losVelGHz%template)
+    !========================== finish cleaning ===============================
+
+    !====================== Read observed radiance ============================
+    ! Open l1brad
+    error = InitializeMLSFile(l1bfile, content='l1brad', &
+    name=trim(l1brad), shortName='L1BRAD', type=l_hdf, access=DFACC_RDONLY)
+    if (error /= 0) call MLSMessage (MLSMSG_Error, moduleName, &
+    "Error initializing " // trim(l1brad))
+
+    call mls_openFile(l1bfile, error)
+    if (error /= 0 ) call MLSMessage (MLSMSG_Error, moduleName, &
+    "Error opening " // trim(l1brad))
+
+    ! Add it to the filedatabase
+    ! AddFileToDatabase doesn't return an error.
+    ! I don't care about the return value of AddFileToDatabase,
+    ! but Fortran dictate that the return value has to be captured,
+    ! so error is being used as a dummy variable.
+    error = AddFileToDatabase(filedatabase, l1bfile)
+
+    observed = CreateAgileVector(name='observedRadiance')
+    obsPrecision = CreateAgileVector(name='observedRadiancePrecision')
+
+    ! need to read precision before reading quantity
+    band9 = CreateValue4AgileVector(qband9)
+    call AddValue2Vector(observed, band9)
+    ! precision of a quantity has the same template as the quantity
+    precision9 = CreateValue4AgileVector(qband9)
+    call AddValue2Vector(obsPrecision, precision9)
+
+    ! need to fill precision first
+    call FillVectorQuantityFromL1B(precision9, startL1Maf, endL1Maf, &
+    filedatabase, .true.)
+    ! then fill the quantity and setting precision at the same time
+    call FillVectorQuantityFromL1B(band9, startL1Maf, endL1Maf, &
+    filedatabase, .false., precisionQuantity=precision9)
+
+    ! then we need to get the baseline correction and noise
+    qbaseline9 = CreateQtyTemplate(l_l1bmafbaseline, startL1Maf, endL1Maf, &
+    filedatabase, qSignal="R3:240.B9F:CO", qname='baseline 9')
+
+    correction9 = CreateValue4AgileVector (qbaseline9)
+    ! the space in ' Baseline' is very important
+    call FillVectorQuantityFromL1B(correction9, startL1Maf, endL1Maf, &
+    filedatabase, .false., suffix=' Baseline')
+
+    ! apply correction to the quantity
+    call ApplyBaseline (band9, correction9, .false., .false.)
+
+    ! get the noise
+    noise9 = CreateValue4AgileVector(qbaseline9) ! same template as baseline
+    ! again, the string must match exactly
+    call FillVectorQuantityFromL1B(noise9, startL1Maf, endL1Maf, &
+    filedatabase, .false., suffix=' Baseline precision')
+
+    ! apply the noise to the precision
+    call ApplyBaseline (precision9, noise9, .true., .false.)
+    call dump(observed, details=1)
+
+    !==================== Finish reading observed radiance ====================
+
+    !============= At this point we don't need L1B file anymore ===============
+    do i = 1, size(filedatabase)
+        call mls_closefile(filedatabase(i))
+    end do
+
+    deallocate(filedatabase)
+    nullify(filedatabase)
+    !================== Done closing and clean up file objects ================
+
+    diffVector = observed - radiance
+    !call dump(diffVector, details=1)
+
+    !===== Clean up calculated and observed radiance and related vectors ======
+    call DestroyAgileVectorContent (radiance)
+    call DestroyAgileVectorContent (observed)
+    call DestroyAgileVectorContent (diffVector)
+    call DestroyAgileVectorContent (obsPrecision)
+
+    call DestroyVectorValueContent (noise9)
+    call DestroyVectorValueContent (correction9)
+
+    call DestroyQuantityTemplateContents(qband9)
+    call DestroyQuantityTemplateContents(qbaseline9)
+    !========================== Done cleaning up ==============================
+
+    call CFM_MLSCleanup(forwardModelConfigDatabase)
+
+end program
+
+@
+
+
+1.11
+log
+@Added document for jacobian feature
+@
+text
+@d18 4
+a21 3
+   use CFM
+   use input
+   use machine, only: getarg
+d23 1
+a23 1
+   implicit none
+d26 5
+a30 5
+   character (len=*), parameter :: ModuleName= &
+       "$RCSfile: mockup.f90,v $"
+   character (len=*), parameter :: IdParm = &
+       "$Id: mockup.f90,v 1.39 2010/08/06 14:15:06 honghanh Exp $"
+   character (len=len(idParm)) :: Id = idParm
+d33 67
+a99 2
+   type(Vector_T), target :: measurement, observed, obsPrecision
+   type(Vector_T), pointer :: pMeasurement, pObserved, pObsPrecision
+d101 1
+a101 67
+   pMeasurement => measurement
+   pObserved => observed
+   pObsPrecision => obsPrecision
+
+   call forwardModelExample(pMeasurement)
+   call getObservedRadiancesExample (pObserved, pObsPrecision)
+
+   ! if the measurement vector and the observed vector is calculated/read
+   ! between the same pair of CFM_MLSSetup and CFM_MLSCleanup
+   ! then you can compute the difference by doing
+   ! diffVector = observed - measurement
+   ! Don't forget to
+   ! call DestroyVectorInfo(diffVector)
+   ! at the end
+
+   contains
+   subroutine forwardModelExample (measurement)
+      integer :: i
+      type(ForwardModelConfig_T), dimension(:), pointer :: forwardModelConfigDatabase
+      type(MLSFile_T), dimension(:), pointer :: filedatabase
+      type(MLSChunk_T) :: chunk
+      type(VGrid_T) :: vGridStandard, vGridRefGPH
+      type(HGrid_T) :: hGridStandard
+      type(FGrid_T) :: fGridStandard
+      type(QuantityTemplate_T) :: temperature, GPH, H2O, O3, ptanGHz, band7, &
+                                  geodAltitude, orbincl, geocAlt, refGPH, band2, &
+                                  band8, phitanGHz
+      type(QuantityTemplate_T), dimension(:), pointer :: qtyTemplates
+      type(VectorTemplate_T) :: stateTemplate, measurementTemplate
+      type(Vector_T) :: state, stateExtra
+      type(Vector_T), pointer :: measurement
+      character(len=3) :: GHz = "GHz"
+      character(len=2) :: sc = "sc"
+      integer :: stateSelected(10), measurementSelected(3)
+      type(VectorValue_T), pointer :: quantity, h2o_vv, orbincl_vv, geocAlt_vv, &
+                                      ptanG_vv, temperature_vv, refGPH_vv, &
+                                      phitan_vv
+      integer :: temperature_index, h2o_index, band2_index
+      integer :: o3_index, ptanGHz_index, band7_index, phitanGHz_index
+      integer :: geodAlt_index, orbincl_index, gph_index
+      integer :: geocAlt_index, band8_index, refGPH_index
+      character(len=256) :: signalFileName, configFileName
+      type(Matrix_T) :: jacobian
+
+      call getarg(1, signalFileName)
+      call getarg(2, configFileName)
+
+      call CFM_MLSSetup(startTime, endTime, l1boa, leapsecFile, signalFileName, &
+      configFileName, filedatabase, qtyTemplates, chunk, &
+      forwardModelConfigDatabase, stateExtra)
+
+      ! read MLS input data file
+      call Read_Spectroscopy (spectroscopy, 'HDF5')
+      call ReadAntennaPatterns (antennaPatterns)
+      call ReadFilterShapes(filterShapes)
+      call ReadDACSFilterShapes (DACSFilterShapes)
+      call ReadPointingGrids (pointingGrids)
+
+      do i = 1, size(pfaFiles)
+         call ReadPFAFile (pfaFiles(i))
+      end do
+
+      do i = 1, size(l2pc)
+         call ReadHDF5L2PC (l2pc(i))
+      end do
+
+      vGridStandard = CreateVGrid (l_zeta, phyq_pressure, l_logarithmic, &
+d104 353
+a456 2
+      vGridRefGPH = CreateVGrid (l_zeta, phyq_pressure, l_explicit, &
+                                 values=(/100.0_r8/))
+d458 1
+a458 306
+      ! Have insetoverlaps, and not single
+      hGridStandard = CreateRegularHGrid(GHz, 0.0_r8, 1.5_r8, .true., &
+                                         filedatabase, chunk)
+
+      fGridStandard = CreateFGrid(L_IntermediateFrequency, (/0.0_r8/))
+
+      temperature = CreateQtyTemplate(l_temperature, filedatabase=filedatabase, &
+                                      chunk=chunk, &
+                                      avgrid=vGridStandard, ahgrid=hGridStandard)
+      GPH = CreateQtyTemplate(l_gph, filedatabase=filedatabase, chunk=chunk, &
+                              avgrid=vGridStandard, ahgrid=hGridStandard)
+      O3 = CreateQtyTemplate(l_vmr, filedatabase=filedatabase, chunk=chunk, &
+                             avgrid=vGridStandard, ahgrid=hGridStandard, qMolecule=l_o3)
+      H2O = CreateQtyTemplate(l_vmr, filedatabase=filedatabase, chunk=chunk, &
+                              avgrid=vGridStandard, ahgrid=hGridStandard, qMolecule=l_h2o, &
+                              qLogBasis=.true., qMinValue=0.1E-6_r8)
+      ptanGHz = CreateQtyTemplate(l_ptan, filedatabase=filedatabase, &
+                                  chunk=chunk, qInstModule=GHz)
+      ! band 2,7,8 is the band whose radiances are to be computed
+      ! see CFM document for a list of signals corresponding to bands
+      band7 = CreateQtyTemplate(l_radiance, filedatabase=filedatabase, chunk=chunk, &
+                                qSignal="R3:240.B7F:O3")
+      band2 = CreateQtyTemplate(l_radiance, filedatabase=filedatabase, chunk=chunk, &
+                                qSignal="R2:190.B2F:H2O")
+      band8 = CreateQtyTemplate(l_radiance, filedatabase=filedatabase, chunk=chunk, &
+                                qSignal="R3:240.B8F:PT")
+      geodAltitude = CreateQtyTemplate(l_tngtgeodalt, filedatabase=filedatabase, &
+                                       chunk=chunk, qInstModule=GHz)
+      geocAlt = CreateQtyTemplate(l_tngtgeocalt, filedatabase=filedatabase, &
+                                  chunk=chunk, qInstModule=GHz)
+      orbincl = CreateQtyTemplate(l_orbitInclination, filedatabase=filedatabase, &
+                                  chunk=chunk, qInstModule=sc)
+      refGPH = CreateQtyTemplate(l_refGPH, avgrid=vGridRefGPH, ahgrid=hGridStandard)
+      phitanGHz = CreateQtyTemplate(l_phitan, qInstModule="GHz", filedatabase=filedatabase, &
+                                    chunk=chunk)
+
+      ! We no longer need vGrid because the quantity templates have copied it
+      call DestroyVGridContents(vGridStandard)
+      ! No long need hGrid, fGrid either
+      call DestroyHGridContents(hGridStandard)
+      call DestroyFGridContents(fGridStandard)
+
+      temperature_index = AddQuantityTemplateToDatabase(qtyTemplates, temperature)
+      gph_index = AddQuantityTemplateToDatabase(qtyTemplates, GPH)
+      o3_index = AddQuantityTemplateToDatabase(qtyTemplates, O3)
+      h2o_index = AddQuantityTemplateToDatabase(qtyTemplates, H2O)
+      ptanGHz_index = AddQuantityTemplateToDatabase(qtyTemplates, ptanGHz)
+      geodAlt_index = AddQuantityTemplateToDatabase(qtyTemplates, geodAltitude)
+      geocAlt_index = AddQuantityTemplatetoDatabase(qtyTemplates, geocAlt)
+      orbincl_index = AddQuantityTemplateToDatabase(qtyTemplates, orbIncl)
+      refGPH_index = AddQuantityTemplateToDatabase(qtyTemplates, refGPH)
+      phitanGHz_index = AddQuantityTemplateToDatabase(qtyTemplates, phitanGHz)
+      band7_index = AddQuantityTemplateToDatabase(qtyTemplates, band7)
+      band2_index = AddQuantityTemplateToDatabase(qtyTemplates, band2)
+      band8_index = AddQuantityTemplateToDatabase(qtyTemplates, band8)
+
+      ! The numbers are the order that quantities template were added
+      stateSelected = (/temperature_index,o3_index,h2o_index, phitanGHz_index, &
+                        ptanGHz_index,geodAlt_index, geocAlt_index, &
+                        orbincl_index, gph_index, refGPH_index/)
+      stateTemplate = CreateVectorTemplate(qtyTemplates, stateSelected)
+
+      measurementSelected = (/band7_index, band2_index, band8_index/)
+      measurementTemplate = CreateVectorTemplate(qtyTemplates, measurementSelected)
+
+      state = CreateVector(stateTemplate, qtyTemplates)
+      measurement = CreateVector(measurementTemplate, qtyTemplates)
+
+      refGPH_vv => GetVectorQtyByTemplateIndex (state, refGPH_index) ! refGPH
+      call SpreadFillVectorQuantity (refGPH_vv, refGPHInput) ! unit is meter
+
+      ! supply temperature, GPH, H2O, and O3 data
+      temperature_vv => GetVectorQtyByTemplateIndex(state, temperature_index)
+      call ExplicitFillVectorQuantity(temperature_vv, TemperatureInput)
+
+      h2o_vv => GetVectorQtyByTemplateIndex(state, h2o_index)
+      call ExplicitFillVectorQuantity(h2o_vv, H2OInput)
+
+      quantity => GetVectorQtyByTemplateIndex(state, o3_index)
+      call ExplicitFillVectorQuantity(quantity, O3Input)
+
+      quantity => GetVectorQtyByTemplateIndex(state, geodAlt_index)
+      call FillVectorQuantityFromL1B(quantity, chunk, filedatabase, .false.)
+
+      ! Fill orbit inclination, tangent geocentric altitude with
+      ! data from MLS L1B file, and use them, along with other
+      ! quantities to calculate ptan
+      orbincl_vv => GetVectorQtyByTemplateIndex (state, orbincl_index)
+      call FillVectorQuantityFromL1B(orbincl_vv, chunk, filedatabase, .false.)
+
+      geocAlt_vv => GetVectorQtyByTemplateIndex (state, geocAlt_index)
+      call FillVectorQuantityFromL1B(geocAlt_vv, chunk, filedatabase, .false.)
+
+      ptanG_vv => GetVectorQtyByTemplateIndex (state, ptanGHz_index)
+
+      phitan_vv => GetVectorQtyByTemplateIndex (state, phitanGHz_index)
+      call FillPhitanQuantity(phitan_vv)
+
+      ! calculate ptan
+      !call dump(temperature_vv, details=3)
+      call FillPtanQuantity (ptanG_vv, temperature_vv, refGPH_vv, &
+                             h2o_vv, orbincl_vv, phitan_vv, geocAlt_vv)
+
+      ! GPH is filled by the forward model
+
+      !call ForwardModel (chunk, forwardModelConfigDatabase, state, &
+      !                   stateExtra, measurement)
+
+      ! Create jacobian
+      jacobian = CreatePlainMatrix(measurement, state)
+
+      ! Call the forward model
+      call ForwardModel (chunk, forwardModelConfigDatabase, state, &
+                         stateExtra, measurement, jacobian)
+
+      !call dump(measurement, details=3)
+      call dump(jacobian, details=3)
+
+      ! Re-supply temperature, GPH, H2O, and O3 data
+      call ExplicitFillVectorQuantity(temperature_vv, TemperatureInput2)
+      call ExplicitFillVectorQuantity(h2o_vv, H2OInput2)
+      quantity => GetVectorQtyByTemplateIndex(state, o3_index)
+      call ExplicitFillVectorQuantity(quantity, O3Input2)
+
+      ! Re-calculate ptan
+      call FillPtanQuantity (ptanG_vv, temperature_vv, refGPH_vv, &
+                             h2o_vv, orbincl_vv, phitan_vv, geocAlt_vv)
+
+      ! call the forward model the second time
+      call ForwardModel (chunk, forwardModelConfigDatabase, state, &
+                         stateExtra, measurement)
+      !call dump(measurement, details=3)
+
+      call DestroyVectorInfo (state)
+      call DestroyVectorInfo (measurement)
+      call DestroyVectorTemplateInfo(stateTemplate)
+      call DestroyVectorTemplateInfo(measurementTemplate)
+      call Destroy_DACS_Filter_Database
+      call Destroy_Filter_Shapes_Database
+      call Destroy_Ant_Patterns_Database
+      call Destroy_SpectCat_Database
+      call Destroy_Line_Database
+      call Destroy_Pointing_Grid_Database
+      call DestroyL2PCDatabase
+      call Destroy_PFADataBase
+
+      call CFM_MLSCleanup(filedatabase, qtyTemplates, &
+      forwardModelConfigDatabase, stateExtra)
+   end subroutine
+
+   subroutine getObservedRadiancesExample (observed, obsPrecision)
+
+      type(Vector_T), pointer :: observed, obsPrecision
+      type(Vector_T) :: corrections, correctionNoise, stateExtra
+      type(VectorTemplate_T) :: measurementTemplate, correctionTemplate
+      integer :: measurementSelected(3), baselineSelected(3)
+      integer :: band7_index, band2_index, band8_index
+      integer :: baseline7_index, baseline2_index, baseline8_index
+      type(QuantityTemplate_T), dimension(:), pointer :: qtyTemplates
+      character(len=256) :: signalFileName, configFileName
+      type(QuantityTemplate_T) :: band2, band7, band8, baseline2, baseline7, baseline8
+      integer :: error
+      type(VectorValue_T), pointer :: band2L1BMAFBaseline, band7L1BMAFBaseline, &
+                                      band8L1BMAFBaseline, quantity, precQty
+      type(ForwardModelConfig_T), dimension(:), pointer :: forwardModelConfigDatabase
+      type(MLSFile_T), dimension(:), pointer :: filedatabase
+      type(MLSChunk_T) :: chunk
+      type(MLSFile_T) :: l1bfile
+
+      call getarg(1, signalFileName)
+      call getarg(2, configFileName)
+
+      call CFM_MLSSetup(startTime, endTime, l1boa, leapsecFile, signalFileName, &
+      configFileName, filedatabase, qtyTemplates, chunk, &
+      forwardModelConfigDatabase, stateExtra)
+
+      ! band 2,7,8 is the band whose radiances are to be computed
+      ! see CFM document for a list of signals corresponding to bands
+      band7 = CreateQtyTemplate(l_radiance, filedatabase=filedatabase, chunk=chunk, &
+                                qSignal="R3:240.B7F:O3")
+      band2 = CreateQtyTemplate(l_radiance, filedatabase=filedatabase, chunk=chunk, &
+                                qSignal="R2:190.B2F:H2O")
+      band8 = CreateQtyTemplate(l_radiance, filedatabase=filedatabase, chunk=chunk, &
+                                qSignal="R3:240.B8F:PT")
+
+      band7_index = AddQuantityTemplateToDatabase(qtyTemplates, band7)
+      band2_index = AddQuantityTemplateToDatabase(qtyTemplates, band2)
+      band8_index = AddQuantityTemplateToDatabase(qtyTemplates, band8)
+
+      measurementSelected = (/band7_index, band2_index, band8_index/)
+      measurementTemplate = CreateVectorTemplate(qtyTemplates, measurementSelected)
+
+      ! Create an identical vector as simulated radiance vector for observed radiances
+      observed = CreateVector(measurementTemplate, qtyTemplates)
+      obsPrecision = CreateVector(measurementTemplate, qtyTemplates)
+
+      ! Open l1brad
+      error = InitializeMLSFile(l1bfile, content='l1brad', &
+      name=trim(l1brad), shortName='L1BRAD', type=l_hdf, access=DFACC_RDONLY)
+      if (error /= 0) &
+         call MLSMessage (MLSMSG_Error, moduleName, &
+         "Error initializing " // trim(l1brad))
+
+      call mls_openFile(l1bfile, error)
+      if (error /= 0 ) &
+         call MLSMessage (MLSMSG_Error, moduleName, &
+         "Error opening " // trim(l1brad))
+
+      ! Add it to the filedatabase
+      error = AddFileToDatabase(filedatabase, l1bfile)
+
+      ! Fill band 2,7,8
+      quantity => GetVectorQtyByTemplateIndex(observed, band2_index)
+      precQty => GetVectorQtyByTemplateIndex(obsPrecision, band2_index)
+
+      ! However, only band 9 and 25 have BOMask=1
+      ! Because these bands have bright object status read from L1BOA file,
+      ! we always have to have L1BOA file in the filedatabase.
+      ! You have to fill the precision quantity first
+      call FillVectorQuantityFromL1B(precQty, chunk, filedatabase, &
+      .true.)
+      call FillVectorQuantityFromL1B(quantity, chunk, filedatabase, &
+      .false., precisionQuantity=precQty)
+
+      quantity => GetVectorQtyByTemplateIndex(observed, band7_index)
+      precQty => GetVectorQtyByTemplateIndex(obsPrecision, band7_index)
+      call FillVectorQuantityFromL1B(precQty, chunk, filedatabase, &
+      .true.)
+      call FillVectorQuantityFromL1B(quantity, chunk, filedatabase, &
+      .false., precisionQuantity=precQty)
+
+      quantity => GetVectorQtyByTemplateIndex(observed, band8_index)
+      precQty => GetVectorQtyByTemplateIndex(obsPrecision, band8_index)
+      call FillVectorQuantityFromL1B(precQty, chunk, filedatabase, &
+      .true.)
+      call FillVectorQuantityFromL1B(quantity, chunk, filedatabase, &
+      .false., precisionQuantity=precQty)
+
+      ! For applying baseline corrections
+      baseline2 = CreateQtyTemplate(l_L1BMAFBaseline, filedatabase=filedatabase, &
+                                    chunk=chunk, qSignal="R2:190.B2F:H2O")
+      baseline7 = CreateQtyTemplate(l_L1BMAFBaseline, filedatabase=filedatabase, &
+                                    chunk=chunk, qSignal="R3:240.B7F:O3")
+      baseline8 = CreateQtyTemplate(l_L1BMAFBaseline, filedatabase=filedatabase, &
+                                    chunk=chunk, qSignal="R3:240.B8F:PT")
+      baseline2_index = AddQuantityTemplateToDatabase(qtyTemplates, baseline2)
+      baseline7_index = AddQuantityTemplateToDatabase(qtyTemplates, baseline7)
+      baseline8_index = AddQuantityTemplateToDatabase(qtyTemplates, baseline8)
+
+      baselineSelected = (/baseline2_index, baseline7_index, baseline8_index/)
+      correctionTemplate = CreateVectorTemplate(qtyTemplates, baselineSelected)
+      corrections = CreateVector(correctionTemplate, qtyTemplates)
+      correctionNoise = CreateVector(correctionTemplate, qtyTemplates)
+
+      band2L1BMAFBaseline => GetVectorQtyByTemplateIndex(corrections, baseline2_index)
+      band7L1BMAFBaseline => GetVectorQtyByTemplateIndex(corrections, baseline7_index)
+      band8L1BMAFBaseline => GetVectorQtyByTemplateIndex(corrections, baseline8_index)
+      call FillVectorQuantityFromL1B(band2L1BMAFBaseline, chunk, filedatabase, &
+      .false., suffix=' Baseline')
+      call FillVectorQuantityFromL1B(band7L1BMAFBaseline, chunk, filedatabase, &
+      .false., suffix=' Baseline')
+      call FillVectorQuantityFromL1B(band8L1BMAFBaseline, chunk, filedatabase, &
+      .false., suffix=' Baseline')
+
+      quantity => GetVectorQtyByTemplateIndex(observed, band2_index)
+      call ApplyBaseline(quantity, band2L1BMAFBaseline, .false., .false.)
+      quantity => GetVectorQtyByTemplateIndex(observed, band7_index)
+      call ApplyBaseline(quantity, band7L1BMAFBaseline, .false., .false.)
+      quantity => GetVectorQtyByTemplateIndex(observed, band8_index)
+      call ApplyBaseline(quantity, band8L1BMAFBaseline, .false., .false.)
+
+      band2L1BMAFBaseline => GetVectorQtyByTemplateIndex(correctionNoise, baseline2_index)
+      band7L1BMAFBaseline => GetVectorQtyByTemplateIndex(correctionNoise, baseline7_index)
+      band8L1BMAFBaseline => GetVectorQtyByTemplateIndex(correctionNoise, baseline8_index)
+      call FillVectorQuantityFromL1B(band2L1BMAFBaseline, chunk, filedatabase, &
+      .false., suffix=' Baseline precision')
+      call FillVectorQuantityFromL1B(band7L1BMAFBaseline, chunk, filedatabase, &
+      .false., suffix=' Baseline precision')
+      call FillVectorQuantityFromL1B(band8L1BMAFBaseline, chunk, filedatabase, &
+      .false., suffix=' Baseline precision')
+
+      ! quadrature is true because this is precision
+      quantity => GetVectorQtyByTemplateIndex(obsPrecision, band2_index)
+      call ApplyBaseline(quantity, band2L1BMAFBaseline, .true., .false.)
+      quantity => GetVectorQtyByTemplateIndex(obsPrecision, band7_index)
+      call ApplyBaseline(quantity, band7L1BMAFBaseline, .true., .false.)
+      quantity => GetVectorQtyByTemplateIndex(obsPrecision, band8_index)
+      call ApplyBaseline(quantity, band8L1BMAFBaseline, .true., .false.)
+
+      !call dump(observed, details=3)
+      !call dump(obsPrecision, details=3)
+
+      ! Clean up allocated memory for creating observed radiance vector
+      call DestroyVectorInfo(observed)
+      call DestroyVectorInfo(obsPrecision)
+      call DestroyVectorTemplateInfo(measurementTemplate)
+
+      ! Clean up For baseline
+      call DestroyVectorInfo(corrections)
+      call DestroyVectorInfo(correctionNoise)
+      call DestroyVectorTemplateInfo(correctionTemplate)
+
+      ! This subroutine will close all open file in filedatabase
+      call CFM_MLSCleanup(filedatabase, qtyTemplates, &
+      forwardModelConfigDatabase, stateExtra)
+   end subroutine
+a461 21
+! $Log: mockup.f90,v $
+! Revision 1.39  2010/08/06 14:15:06  honghanh
+! Call dump on diff vector instead of measurement vector.
+!
+! Revision 1.38  2010/08/05 16:23:03  honghanh
+! Added Jacobian to forwardModel subroutine
+!
+! Revision 1.36  2010/07/08 21:39:16  honghanh
+! Add ApplyBaseline to cfm_fill_m
+!
+! Revision 1.34  2010/06/29 17:02:47  honghanh
+! Change the identifier 'fakeChunk' to 'chunk' because
+! since it is created with ChunkDivide, it's as real as a chunk
+! can get.
+!
+! Revision 1.33  2010/06/29 15:29:33  honghanh
+! Develop FillPtanQuantity to compute ptan, instead of using
+! Get2DHydrostaticTangentPressure
+!
+! Revision 1.32  2010/06/29 02:28:17  honghanh
+! Change mockup to import functions and literals from CFM module
+@
+
+
+1.10
+log
+@Update the interface of 3 more subroutines: Dump, FillPhitanQuantity, FillPtanQuantity.
+Update mockup.f90, and update the document.
+@
+text
+@a16 1
+   use input   ! Provides hard-coded input for testing purposes only
+d18 2
+a19 31
+   use CFM, only: & 
+      ! Alphabetized, case-insensitive list (underscores are ignored though)
+      AddFileToDatabase, AddQuantityTemplateToDatabase, &
+      CFM_MLSCleanup, CFM_MLSSetup, CreateFGrid, CreateQtyTemplate, &
+      CreateRegularHGrid, CreateVector, CreateVectorTemplate, CreateVGrid, &
+      Destroy_Ant_Patterns_Database, DestroyFGridContents, &
+      Destroy_DACS_Filter_Database, Destroy_Filter_Shapes_Database, &
+      DestroyHGridContents, DestroyL2PCDatabase, Destroy_Line_Database, &
+      Destroy_PFADataBase, Destroy_Pointing_Grid_Database, &
+      DestroyQuantityTemplateDatabase, Destroy_SpectCat_Database, &
+      DestroyVectorInfo, DestroyVectorTemplateInfo, DestroyVGridContents, &
+      DFACC_RDONLY, Dump, &
+      ExplicitFillVectorQuantity, &
+      FGrid_T, FillPhitanQuantity, FillPtanQuantity, &
+      FillVectorQuantityFromL1B, ForwardModel, ForwardModelConfig_T, &
+      FORWARDMODELSTATUS_T, &
+      GetMLSFileByType, GetVectorQtyByTemplateIndex, &
+      HGrid_T, &
+      InitializeMLSFile, &
+      l_explicit, l_gph, l_h2o, l_hdf, L_IntermediateFrequency, &
+      l_logarithmic, l_o3, l_orbitInclination, l_phitan, l_ptan, &
+      l_radiance, l_refGPH, l_temperature, l_tngtgeocalt, &
+      l_tngtgeodalt, l_vmr, l_zeta, &
+      MLSChunk_T, MLSFile_T, MLSMessage, MLSMSG_Error, mls_openFile, &
+      operator(+), operator(-), &
+      phyq_angle, phyq_pressure, &
+      QuantityTemplate_T, &
+      r8, ReadAntennaPatterns, ReadDACSFilterShapes, ReadFilterShapes, &
+      ReadHDF5L2PC, ReadPFAFile, ReadPointingGrids, Read_Spectroscopy, &
+      SpreadFillVectorQuantity, &
+      Vector_T, VectorTemplate_T, VectorValue_T, VGrid_T
+d28 1
+a28 1
+       "$Id: mockup.f90,v 1.35 2010/06/29 18:49:32 honghanh Exp $"
+d32 2
+a33 256
+   integer :: error, i
+   type(ForwardModelConfig_T), dimension(:), pointer :: forwardModelConfigDatabase
+   type(MLSFile_T), dimension(:), pointer :: filedatabase
+   type(MLSChunk_T) :: chunk
+   type(VGrid_T) :: vGridStandard, vGridRefGPH
+   type(HGrid_T) :: hGridStandard
+   type(FGrid_T) :: fGridStandard
+   type(QuantityTemplate_T) :: temperature, GPH, H2O, O3, ptanGHz, band7, &
+                               geodAltitude, orbincl, geocAlt, refGPH, band2, &
+                               band8, phitanGHz
+   type(QuantityTemplate_T), dimension(:), pointer :: qtyTemplates
+   type(VectorTemplate_T) :: stateTemplate, measurementTemplate
+   type(Vector_T) :: state, measurement, stateExtra, observed, obsPrecision
+   type(Vector_T) :: diffVector
+   character(len=3) :: GHz = "GHz"
+   character(len=2) :: sc = "sc"
+   integer :: stateSelected(10), measurementSelected(3)
+   type(VectorValue_T), pointer :: quantity, h2o_vv, orbincl_vv, geocAlt_vv, &
+                          ptanG_vv, temperature_vv, refGPH_vv, precQty
+   integer :: temperature_index, h2o_index, band2_index
+   integer :: o3_index, ptanGHz_index, band7_index, phitanGHz_index
+   integer :: geodAlt_index, orbincl_index, gph_index
+   integer :: geocAlt_index, band8_index, refGPH_index
+   character(len=256) :: signalFileName, configFileName
+   type (MLSFile_T) :: l1bfile
+
+   call getarg(1, signalFileName)
+   call getarg(2, configFileName)
+
+   call CFM_MLSSetup(startTime, endTime, l1boa, leapsecFile, signalFileName, &
+   configFileName, filedatabase, qtyTemplates, chunk, &
+   forwardModelConfigDatabase, stateExtra)
+
+   ! read MLS input data file
+   call Read_Spectroscopy (spectroscopy, 'HDF5')
+   call ReadAntennaPatterns (antennaPatterns)
+   call ReadFilterShapes(filterShapes)
+   call ReadDACSFilterShapes (DACSFilterShapes)
+   call ReadPointingGrids (pointingGrids)
+
+   do i = 1, size(pfaFiles)
+      call ReadPFAFile (pfaFiles(i))
+   end do
+
+   do i = 1, size(l2pc)
+      call ReadHDF5L2PC (l2pc(i))
+   end do
+
+   vGridStandard = CreateVGrid (l_zeta, phyq_pressure, l_logarithmic, &
+                                start=1000.0d0, formula="37:6")
+   !call dump(vGridStandard, details=2)
+
+   vGridRefGPH = CreateVGrid (l_zeta, phyq_pressure, l_explicit, &
+                              values=(/100.0_r8/))
+
+   ! Have insetoverlaps, and not single
+   hGridStandard = CreateRegularHGrid(GHz, 0.0_r8, 1.5_r8, .true., &
+        filedatabase, chunk)
+   !call dump(hGridStandard)
+
+   fGridStandard = CreateFGrid(L_IntermediateFrequency, (/0.0_r8/))
+   !call dump(fGridStandard)
+
+   temperature = CreateQtyTemplate(l_temperature, filedatabase=filedatabase, &
+                                   chunk=chunk, &
+                                   avgrid=vGridStandard, ahgrid=hGridStandard)
+   GPH = CreateQtyTemplate(l_gph, filedatabase=filedatabase, chunk=chunk, &
+                           avgrid=vGridStandard, ahgrid=hGridStandard)
+   O3 = CreateQtyTemplate(l_vmr, filedatabase=filedatabase, chunk=chunk, &
+                          avgrid=vGridStandard, ahgrid=hGridStandard, qMolecule=l_o3)
+   H2O = CreateQtyTemplate(l_vmr, filedatabase=filedatabase, chunk=chunk, &
+                           avgrid=vGridStandard, ahgrid=hGridStandard, qMolecule=l_h2o, &
+                           qLogBasis=.true., qMinValue=0.1E-6_r8)
+   ptanGHz = CreateQtyTemplate(l_ptan, filedatabase=filedatabase, &
+                               chunk=chunk, qInstModule=GHz)
+   ! band 2,7,8 is the band whose radiances are to be computed
+   ! see CFM document for a list of signals corresponding to bands
+   band7 = CreateQtyTemplate(l_radiance, filedatabase=filedatabase, chunk=chunk, &
+                             qSignal="R3:240.B7F:O3")
+   band2 = CreateQtyTemplate(l_radiance, filedatabase=filedatabase, chunk=chunk, &
+                             qSignal="R2:190.B2F:H2O")
+   band8 = CreateQtyTemplate(l_radiance, filedatabase=filedatabase, chunk=chunk, &
+                             qSignal="R3:240.B8F:PT")
+   geodAltitude = CreateQtyTemplate(l_tngtgeodalt, filedatabase=filedatabase, &
+                                    chunk=chunk, qInstModule=GHz)
+   geocAlt = CreateQtyTemplate(l_tngtgeocalt, filedatabase=filedatabase, &
+                               chunk=chunk, qInstModule=GHz)
+   orbincl = CreateQtyTemplate(l_orbitInclination, filedatabase=filedatabase, &
+                               chunk=chunk, qInstModule=sc)
+   refGPH = CreateQtyTemplate(l_refGPH, avgrid=vGridRefGPH, ahgrid=hGridStandard)
+   phitanGHz = CreateQtyTemplate(l_phitan, qInstModule="GHz", filedatabase=filedatabase, &
+                                 chunk=chunk)
+
+   temperature_index = AddQuantityTemplateToDatabase(qtyTemplates, temperature)
+   gph_index = AddQuantityTemplateToDatabase(qtyTemplates, GPH)
+   o3_index = AddQuantityTemplateToDatabase(qtyTemplates, O3)
+   h2o_index = AddQuantityTemplateToDatabase(qtyTemplates, H2O)
+   ptanGHz_index = AddQuantityTemplateToDatabase(qtyTemplates, ptanGHz)
+   geodAlt_index = AddQuantityTemplateToDatabase(qtyTemplates, geodAltitude)
+   geocAlt_index = AddQuantityTemplatetoDatabase(qtyTemplates, geocAlt)
+   orbincl_index = AddQuantityTemplateToDatabase(qtyTemplates, orbIncl)
+   refGPH_index = AddQuantityTemplateToDatabase(qtyTemplates, refGPH)
+   phitanGHz_index = AddQuantityTemplateToDatabase(qtyTemplates, phitanGHz)
+   band7_index = AddQuantityTemplateToDatabase(qtyTemplates, band7)
+   band2_index = AddQuantityTemplateToDatabase(qtyTemplates, band2)
+   band8_index = AddQuantityTemplateToDatabase(qtyTemplates, band8)
+
+   ! We no longer need vGrid because the quantity templates have copied it
+   call DestroyVGridContents(vGridStandard)
+   ! No long need hGrid, fGrid either
+   call DestroyHGridContents(hGridStandard)
+   call DestroyFGridContents(fGridStandard)
+
+!   call dump(ptanGHz, details=2)
+!   call dump(ptanTHz, details=2)
+!   call dump(temperature, details=2)
+!   call dump(GPH, details=2)
+!   call dump(O3, details=2)
+!   call dump(H2O, details=2)
+!   call dump(band7, details=2)
+!   call dump(geodAltitude, details=2)
+
+   ! The numbers are the order that quantities template were added
+   stateSelected = (/temperature_index,o3_index,h2o_index, phitanGHz_index, &
+                     ptanGHz_index,geodAlt_index, geocAlt_index, &
+                     orbincl_index, gph_index, refGPH_index/)
+   stateTemplate = CreateVectorTemplate(qtyTemplates, stateSelected)
+!   call dump(stateTemplate, details=2, quantities=qtyTemplates)
+
+   measurementSelected = (/band7_index, band2_index, band8_index/)
+   measurementTemplate = CreateVectorTemplate(qtyTemplates, measurementSelected)
+!   call dump(measurementTemplate, details=2, quantities=qtyTemplates)
+
+   state = CreateVector(stateTemplate, qtyTemplates)
+   measurement = CreateVector(measurementTemplate, qtyTemplates)
+
+   refGPH_vv => GetVectorQtyByTemplateIndex (state, refGPH_index) ! refGPH
+   call SpreadFillVectorQuantity (refGPH_vv, refGPHInput) ! unit is meter
+
+   ! supply temperature, GPH, H2O, and O3 data
+   temperature_vv => GetVectorQtyByTemplateIndex(state, temperature_index)
+   call ExplicitFillVectorQuantity(temperature_vv, TemperatureInput)
+
+   h2o_vv => GetVectorQtyByTemplateIndex(state, h2o_index)
+   call ExplicitFillVectorQuantity(h2o_vv, H2OInput)
+
+   quantity => GetVectorQtyByTemplateIndex(state, o3_index)
+   call ExplicitFillVectorQuantity(quantity, O3Input)
+
+   quantity => GetVectorQtyByTemplateIndex(state, geodAlt_index)
+   call FillVectorQuantityFromL1B(quantity, chunk, filedatabase, &
+      .false.)
+
+   ! Fill orbit inclination, tangent geocentric altitude with
+   ! data from MLS L1B file, and use them, along with other
+   ! quantities to calculate ptan
+   orbincl_vv => GetVectorQtyByTemplateIndex (state, orbincl_index)
+   call FillVectorQuantityFromL1B(orbincl_vv, chunk, filedatabase, &
+      .false.)
+
+   geocAlt_vv => GetVectorQtyByTemplateIndex (state, geocAlt_index)
+   call FillVectorQuantityFromL1B(geocAlt_vv, chunk, filedatabase, &
+      .false.)
+
+   ptanG_vv => GetVectorQtyByTemplateIndex (state, ptanGHz_index)
+
+   quantity => GetVectorQtyByTemplateIndex (state, phitanGHz_index)
+   call FillPhitanQuantity(quantity)
+
+   ! calculate ptan
+   !call dump(temperature_vv, details=3)
+   call FillPtanQuantity (ptanG_vv, temperature_vv, refGPH_vv, &
+                          h2o_vv, orbincl_vv, quantity, geocAlt_vv)
+
+   ! GPH is filled by the forward model
+
+   ! Call the forward model
+   call ForwardModel (chunk, forwardModelConfigDatabase, state, &
+                      stateExtra, measurement)
+
+!   call dump(measurement, details=3)
+
+   ! Create an identical vector as simulated radiance vector for observed radiances
+   observed = CreateVector(measurementTemplate, qtyTemplates)
+   obsPrecision = CreateVector(measurementTemplate, qtyTemplates)
+
+   ! Open l1brad
+   error = InitializeMLSFile(l1bfile, content='l1brad', &
+   name=trim(l1brad), shortName='L1BRAD', type=l_hdf, access=DFACC_RDONLY)
+   if (error /= 0) &
+      call MLSMessage (MLSMSG_Error, moduleName, &
+      "Error initializing " // trim(l1brad))
+
+   call mls_openFile(l1bfile, error)
+   if (error /= 0 ) &
+      call MLSMessage (MLSMSG_Error, moduleName, &
+      "Error opening " // trim(l1brad))
+
+   ! Add it to the filedatabase
+   error = AddFileToDatabase(filedatabase, l1bfile)
+
+   ! Fill band 2,7,8
+   quantity => GetVectorQtyByTemplateIndex(observed, band2_index)
+   precQty => GetVectorQtyByTemplateIndex(obsPrecision, band2_index)
+
+   ! However, only band 9 and 25 have BOMask=1
+   ! Because these bands have bright object status read from L1BOA file,
+   ! we always have to have L1BOA file in the filedatabase.
+   ! You have to fill the precision quantity first
+   call FillVectorQuantityFromL1B(precQty, chunk, filedatabase, &
+   .true.)
+   call FillVectorQuantityFromL1B(quantity, chunk, filedatabase, &
+   .false., precisionQuantity=precQty)
+
+   quantity => GetVectorQtyByTemplateIndex(observed, band7_index)
+   precQty => GetVectorQtyByTemplateIndex(obsPrecision, band7_index)
+   call FillVectorQuantityFromL1B(precQty, chunk, filedatabase, &
+   .true.)
+   call FillVectorQuantityFromL1B(quantity, chunk, filedatabase, &
+   .false., precisionQuantity=precQty)
+
+   quantity => GetVectorQtyByTemplateIndex(observed, band8_index)
+   precQty => GetVectorQtyByTemplateIndex(obsPrecision, band8_index)
+   call FillVectorQuantityFromL1B(precQty, chunk, filedatabase, &
+   .true.)
+   call FillVectorQuantityFromL1B(quantity, chunk, filedatabase, &
+   .false., precisionQuantity=precQty)
+
+   ! CFM_MLSCleanup will close all files in the filedatabase
+
+!   call dump(observed, details=3)
+
+    diffVector = observed - measurement
+
+    call dump(diffVector, details=3)
+
+   ! Clean up allocated memory for creating observed radiance vector
+   call DestroyVectorInfo(observed)
+   call DestroyVectorInfo(obsPrecision)
+   ! the subtraction create internal field for diffVector
+   ! and we need to clean that up
+   call DestroyVectorInfo(diffVector)
+
+   ! Clean up memory
+   call DestroyVectorInfo (state)
+   call DestroyVectorInfo (measurement)
+   call DestroyVectorTemplateInfo(stateTemplate)
+   call DestroyVectorTemplateInfo(measurementTemplate)
+   call Destroy_DACS_Filter_Database
+   call Destroy_Filter_Shapes_Database
+   call Destroy_Ant_Patterns_Database
+   call Destroy_SpectCat_Database
+   call Destroy_Line_Database
+   call Destroy_Pointing_Grid_Database
+   call DestroyL2PCDatabase
+   call Destroy_PFADataBase
+d35 378
+a412 2
+   call CFM_MLSCleanup(filedatabase, qtyTemplates, &
+   forwardModelConfigDatabase, stateExtra)
+d416 21
+@
+
+
+1.9
+log
+@Updated interface for forward model
+@
+text
+@d1 15
+d19 31
+a49 40
+   use CFM_MLSSetup_m, only: CFM_MLSCleanup, MLSChunk_T, CFM_MLSSetup, &
+                             GetRefGPHIndexInStateExtra, &
+                             GetPhitanGHzIndexInStateExtra
+   use CFM_IO_M, only: Read_Spectroscopy, ReadDACSFilterShapes, &
+                     ReadAntennaPatterns, ReadFilterShapes, &
+                     ReadPointingGrids, ReadPFAFile, ReadHDF5L2PC, &
+                     Destroy_DACS_Filter_Database, &
+                     Destroy_Filter_Shapes_Database, &
+                     Destroy_Ant_Patterns_Database, &
+                     Destroy_SpectCat_Database, &
+                     Destroy_Line_Database, &
+                     Destroy_Pointing_Grid_Database, &
+                     DestroyL2PCDatabase, Destroy_PFADataBase
+   use CFM_VGrid_m, only: CreateVGrid, DestroyVGridContents, &
+                        VGrid_T, Dump
+   use CFM_HGrid_m, only: CreateRegularHGrid, HGrid_T, &
+                        DestroyHGridContents, Dump
+   use CFM_FGrid_m, only: CreateFGrid, FGrid_T, DestroyFGridContents, &
+                        Dump
+   use CFM_QuantityTemplate_m, only: CreateQtyTemplate, Dump, &
+                        AddQuantityTemplateToDatabase, &
+                        DestroyQuantityTemplateDatabase, &
+                        QuantityTemplate_T
+   use CFM_VectorTemplate_m, only: CreateVectorTemplate, Dump, &
+                        VectorTemplate_T, DestroyVectorTemplateInfo
+   use CFM_Vector_m, only: CreateVector, Dump, &
+                         Vector_T, VectorValue_T, &
+                         DestroyVectorInfo, GetVectorQtyByTemplateIndex
+   use CFM_Fill_m, only: ExplicitFillVectorQuantity, &
+                         FillVectorQuantityFromL1B
+   use CFM_FWDMDL_M, only: ForwardModel, FORWARDMODELSTATUS_T, &
+                         ForwardModelConfig_T
+   use MLSCommon, only: MLSFile_T, r8
+   use Init_tables_module, only: l_logarithmic, l_zeta, l_temperature, &
+                                 L_IntermediateFrequency, l_vmr, l_gph, &
+                                 l_ptan, l_radiance, l_orbitInclination, &
+                                 l_tngtgeodalt, l_tngtgeocalt, l_o3, &
+                                 phyq_pressure, phyq_angle, l_h2o
+   use MLSFiles, only: GetMLSFileByType
+   use ScanModelModule, only: Get2DHydrostaticTangentPressure
+d58 1
+a58 1
+       "$Id: mockup.f90,v 1.23 2010/05/23 02:10:06 honghanh Exp $"
+d65 2
+a66 2
+   type(MLSChunk_T) :: fakeChunk
+   type(VGrid_T) :: vGridStandard
+d71 1
+a71 1
+                               band8
+d74 2
+a75 1
+   type(Vector_T) :: state, measurement, stateExtra
+d78 3
+a80 3
+   integer :: stateSelected(8), measurementSelected(3)
+   type(VectorValue_T) :: quantity, h2o_vv, orbincl_vv, geocAlt_vv, &
+                          ptanG_vv, temperature_vv, refGPH_vv
+d82 1
+a82 1
+   integer :: o3_index, ptanGHz_index, band7_index
+d84 1
+a84 1
+   integer :: geocAlt_index, band8_index
+d86 1
+d92 1
+a92 1
+   configFileName, filedatabase, qtyTemplates, fakeChunk, &
+d114 3
+d119 1
+a119 1
+        filedatabase, fakeChunk)
+d126 1
+a126 1
+                                   chunk=fakeChunk, &
+d128 1
+a128 1
+   GPH = CreateQtyTemplate(l_gph, filedatabase=filedatabase, chunk=fakeChunk, &
+d130 1
+a130 1
+   O3 = CreateQtyTemplate(l_vmr, filedatabase=filedatabase, chunk=fakeChunk, &
+d132 1
+a132 1
+   H2O = CreateQtyTemplate(l_vmr, filedatabase=filedatabase, chunk=fakeChunk, &
+d136 1
+a136 1
+                               chunk=fakeChunk, qInstModule=GHz)
+d139 1
+a139 1
+   band7 = CreateQtyTemplate(l_radiance, filedatabase=filedatabase, chunk=fakeChunk, &
+d141 1
+a141 1
+   band2 = CreateQtyTemplate(l_radiance, filedatabase=filedatabase, chunk=fakeChunk, &
+d143 1
+a143 1
+   band8 = CreateQtyTemplate(l_radiance, filedatabase=filedatabase, chunk=fakeChunk, &
+d146 1
+a146 1
+                                    chunk=fakeChunk, qInstModule=GHz)
+d148 1
+a148 1
+                               chunk=fakeChunk, qInstModule=GHz)
+d150 4
+a153 1
+                               chunk=fakeChunk, qInstModule=sc)
+a159 1
+   band7_index = AddQuantityTemplateToDatabase(qtyTemplates, band7)
+d163 3
+d185 3
+a187 3
+   stateSelected = (/temperature_index,o3_index,h2o_index, &
+                     ptanGHz_index,geodAlt_index, &
+                     geocAlt_index,orbincl_index, gph_index/)
+d198 2
+a199 1
+   !call dump(measurement, details=3)
+d202 1
+a202 1
+   temperature_vv = GetVectorQtyByTemplateIndex(state, temperature_index)
+d205 1
+a205 1
+   h2o_vv = GetVectorQtyByTemplateIndex(state, h2o_index)
+d208 1
+a208 1
+   quantity = GetVectorQtyByTemplateIndex(state, o3_index)
+d211 2
+a212 2
+   quantity = GetVectorQtyByTemplateIndex(state, geodAlt_index)
+   call FillVectorQuantityFromL1B(quantity, fakeChunk, filedatabase, &
+d218 2
+a219 2
+   orbincl_vv = GetVectorQtyByTemplateIndex (state, orbincl_index)
+   call FillVectorQuantityFromL1B(orbincl_vv, fakeChunk, filedatabase, &
+d222 2
+a223 2
+   geocAlt_vv = GetVectorQtyByTemplateIndex (state, geocAlt_index)
+   call FillVectorQuantityFromL1B(geocAlt_vv, fakeChunk, filedatabase, &
+d226 1
+a226 1
+   refGPH_vv = GetVectorQtyByTemplateIndex(stateExtra, GetRefGPHIndexInStateExtra())
+d228 2
+a229 3
+   ptanG_vv = GetVectorQtyByTemplateIndex (state, ptanGHz_index)
+
+   quantity = GetVectorQtyByTemplateIndex (stateExtra, GetPhitanGHzIndexInStateExtra())
+d233 2
+a234 2
+   call Get2DHydrostaticTangentPressure(ptanG_vv, temperature_vv, refGPH_vv, &
+             h2o_vv, orbincl_vv, quantity, geocAlt_vv, 4, 0.0_r8, phyq_angle)
+d239 1
+a239 1
+   call ForwardModel (fakeChunk, forwardModelConfigDatabase, state, &
+d242 1
+a242 1
+   call dump(measurement, details=3)
+d244 60
+a303 2
+   ! MLS radiances are stored in measurement vector
+   ! do what you want with it
+d323 1
+@
+
+
+1.8
+log
+@Take out comments
+@
+text
+@d34 1
+a34 1
+   use CFM_FWDMDL, only: ForwardModel, FORWARDMODELSTATUS_T, &
+d52 1
+a52 1
+       "$Id: mockup.f90,v 1.26 2010/06/01 20:41:14 honghanh Exp $"
+d64 2
+a65 1
+                               geodAltitude, orbincl, geocAlt, refGPH
+d71 1
+a71 1
+   integer :: stateSelected(8), measurementSelected(1)
+d74 1
+a74 1
+   integer :: temperature_index, h2o_index
+d77 1
+a77 1
+   integer :: geocAlt_index
+d126 1
+a126 1
+   ! band 7 is the band whose radiances are to be computed
+d130 4
+d150 2
+d169 1
+a169 1
+   stateSelected = (/temperature_index,gph_index,o3_index,h2o_index, &
+d171 1
+a171 1
+                     geocAlt_index,orbincl_index/)
+d175 1
+a175 1
+   measurementSelected = (/band7_index/)
+a187 3
+   quantity = GetVectorQtyByTemplateIndex(state, gph_index)
+   call ExplicitFillVectorQuantity(quantity, GPHInput)
+
+d216 1
+d220 2
+d223 1
+a223 1
+   call ForwardModel (fakeChunk, forwardModelConfigDatabase(1), state, &
+@
+
+
+1.7
+log
+@More modifications
+@
+text
+@d52 1
+a52 1
+       "$Id: mockup.f90,v 1.24 2010/05/24 18:03:02 honghanh Exp $"
+d122 1
+a122 1
+                           qLogBasis=.true., qMinValue=0.1_r8)
+d175 1
+a175 2
+!   call dump(state, details=2)
+!   call dump(measurement, details=2)
+a214 3
+   !call dump(stateExtra, details=2)
+   !call dump(state, details=2)
+
+d219 2
+@
+
+
+1.6
+log
+@v0.5 updated document
+@
+text
+@d16 1
+a16 1
+                     DestroyL2PCDatabase
+d52 1
+a52 1
+       "$Id: mockup.f90,v 1.23 2010/05/23 02:10:06 honghanh Exp $"
+d238 1
+@
+
+
+1.5
+log
+@Update for v0.1 document
+Add subroutines creating grids
+Add ExplicitFillVectorQuantity subroutine
+Add FGrid_T data structure
+Modify mockup.f90
+Removing creating quantity template example because it can be found in the mockup
+@
+text
+@d4 13
+a16 1
+   use CFM_MLSSetup_m, only: CFM_MLSSetup, CFM_MLSCleanup, MLSChunk_T
+d26 1
+a26 2
+                        QuantityTemplate_T, InitQuantityTemplates, &
+                        ConstructMIFGeolocation
+d32 4
+a35 1
+   use CFM_Fill_m, only: ExplicitFillVectorQuantity
+d37 8
+a44 4
+
+   use ForwardModelConfig, only: ForwardModelConfig_T
+   use Init_tables_module, only: l_logarithmic, l_zeta, &
+                                 phyq_pressure, L_IntermediateFrequency
+d49 1
+a49 1
+  character (len=*), parameter :: ModuleName= &
+d51 3
+a53 3
+  character (len=*), parameter :: IdParm = &
+       "$Id: mockup.f90,v 1.19 2010/03/24 17:44:48 honghanh Exp $"
+  character (len=len(idParm)) :: Id = idParm
+d56 1
+a56 1
+   integer :: error, i, numQty
+d63 2
+a64 3
+   type(QuantityTemplate_T) :: temperature, GPH, H2O, O3, ptanGHz, ptanTHz, band7, &
+                               geodAltitude
+   type(QuantityTemplate_T), dimension(:), pointer :: mifGeoLocation => NULL()
+d67 1
+a67 1
+   type(Vector_T) :: state, measurement
+d69 31
+a99 9
+   character(len=3) :: THz = "THz"
+   integer :: stateSelected(7), measurementSelected(1)
+   type(VectorValue_T) :: quantity
+
+   ! Reads L2CF from standard input, populates ForwardModelConfigDatabase, filedatabase,
+   ! and fakeChunk
+   call CFM_MLSSetup(startTime, endTime, l1boa, error, filedatabase, fakeChunk, &
+                     ForwardModelConfigDatabase)
+   if (error /= 0 ) stop
+d101 2
+a102 1
+   vGridStandard = CreateVGrid (l_zeta, l_logarithmic, 1000.0d0, "37:6", phyq_pressure)
+d113 38
+a150 31
+   ! Have to initialize before we start creating quantity templates
+   call InitQuantityTemplates
+   ! Reading mifGeolocation from L1BOA file
+   call ConstructMIFGeolocation(mifGeoLocation, filedatabase, fakeChunk)
+   temperature = CreateQtyTemplate("temperature", filedatabase=filedatabase, &
+                                   avgrid=vGridStandard, ahgrid=hGridStandard, &
+                                   mifGeolocation=mifGeolocation)
+   GPH = CreateQtyTemplate("GPH", filedatabase=filedatabase, avgrid=vGridStandard, &
+                           ahgrid=hGridStandard, mifGeolocation=mifGeolocation)
+   O3 = CreateQtyTemplate("vmr", filedatabase=filedatabase, avgrid=vGridStandard, &
+                          ahgrid=hGridStandard, qMolecule="O3", mifGeolocation=mifGeolocation)
+   H2O = CreateQtyTemplate("vmr", filedatabase=filedatabase, avgrid=vGridStandard, &
+                           ahgrid=hGridStandard, qMolecule="H2O", &
+                           qLogBasis=.true., qMinValue=0.1_r8, mifGeolocation=mifGeolocation)
+   ptanGHz = CreateQtyTemplate("ptan", filedatabase=filedatabase, qInstModule=GHz, &
+                               mifGeoLocation=mifGeolocation)
+   ptanTHz = CreateQtyTemplate("ptan", filedatabase=filedatabase, qInstModule=THz, &
+                               mifGeolocation=mifGeolocation)
+   band7 = CreateQtyTemplate("radiance", filedatabase=filedatabase, chunk=fakeChunk, &
+                             qSignal="R3:240.B7F:O3", mifGeolocation=mifGeolocation)
+   geodAltitude = CreateQtyTemplate("geodAltitude", filedatabase=filedatabase, &
+                                    qInstModule=GHz, mifGeolocation=mifGeolocation)
+
+   numQty = AddQuantityTemplateToDatabase(qtyTemplates, temperature)
+   numQty = AddQuantityTemplateToDatabase(qtyTemplates, GPH)
+   numQty = AddQuantityTemplateToDatabase(qtyTemplates, O3)
+   numQty = AddQuantityTemplateToDatabase(qtyTemplates, H2O)
+   numQty = AddQuantityTemplateToDatabase(qtyTemplates, ptanGHz)
+   numQty = AddQuantityTemplateToDatabase(qtyTemplates, ptanTHz)
+   numQty = AddQuantityTemplateToDatabase(qtyTemplates, band7)
+   numQty = AddQuantityTemplateToDatabase(qtyTemplates, geodAltitude)
+d161 4
+a164 2
+   stateSelected = (/5,6,1,2,4,3,8/)   ! The numbers are the order that
+                                       ! quantities template were added
+d168 1
+a168 1
+   measurementSelected = (/7/)
+d178 3
+a180 2
+   quantity = GetVectorQtyByTemplateIndex(state, 1)
+   call ExplicitFillVectorQuantity(quantity, TemperatureInput)
+d182 1
+a182 1
+   quantity = GetVectorQtyByTemplateIndex(state, 2)
+d185 2
+a186 2
+   quantity = GetVectorQtyByTemplateIndex(state, 4)
+   call ExplicitFillVectorQuantity(quantity, H2OInput)
+d188 1
+a188 1
+   quantity = GetVectorQtyByTemplateIndex(state, 3)
+d191 18
+a208 1
+   call dump(state, details=2)
+d210 15
+a224 4
+   ! Temporarily take out the call to ForwardModel because this step is excluded
+   ! for v0.1 delivery
+   ! call ForwardModel (fmConfig, stateVector, stateVectorExtra, radiances, &
+   ! & fmStatus, jacobian=jacobianMatrix)
+d231 11
+a241 5
+   call DestroyQuantityTemplateDatabase (qtyTemplates)
+   call DestroyHGridContents(hGridStandard)
+   call DestroyVGridContents(vGridStandard)
+   call DestroyFGridContents(fGridStandard)
+   call CFM_MLSCleanup
+@
+
+
+1.4
+log
+@Fixing a couple of typos
+@
+text
+@d2 1
+d4 23
+a26 1
+   use CFM 
+d30 11
+a40 3
+   integer :: error
+   type(ForwardModelConfig_T) :: fmConfig
+   type(MLSFile_T), dimension(:), pointer :: filedatabase => NULL()
+d42 115
+a156 53
+   ! type(HGrid_T) ... more attributes for HGrid_T object(s)
+   ! type(VGrid_T) ... more attributes for VGrid_T object(s)
+   type(QuantityTemplate_T), dimension(:), pointer :: qtyTemplateDB => NULL()
+   logical, dimension(:), pointer :: stateSelected => NULL()
+   logical, dimension(:), pointer :: stateExtraSelected => NULL()
+   logical, dimension(:), pointer :: radianceSelected => NULL()
+   type(VectorTemplate_T) :: stateVectorTemplate
+   type(VectorTemplate_T) :: stateVectorExtraTemplate
+   type(VectorTemplate_T) :: radianceTemplate
+   type(Vector_T) :: stateVector
+   type(Vector_T) :: stateVectorExtra
+   type(Vector_T) :: radiances
+   type(ForwardModelStatus_T) :: fmStatus
+   type(Matrix_T) :: jacobianMatrix
+
+   !Executables
+
+   ! Create fmConfig
+   call CFM_MLSSetup(error, fmConfig, filedatabase, fakeChunk)
+   if (error /= 0) then
+      ! Print your choice of error message
+      stop
+   end if
+
+   ! You need to create vgrid and hgrid for a qtyTemplate
+
+   ! To create qtyTemplateDB, see the example for creating a quantity
+   ! template snippet
+   ! Initialize stateSelected, stateExtraSelected, radianceSelected 
+   ! as appropriate
+
+   ! Create vector template for stateVectorIn
+   stateVectorTemplate = CreateVectorTemplate (qtyTemplateDB, stateSelected)
+   ! Create stateVector
+   stateVector = CreateVector(stateVectorTemplate, qtyTemplateDB)
+   ! Fill stateVector%quantities, see VectorValue_T
+
+   ! Create vector template for stateVectorExtra
+   stateVectorExtraTemplate = CreateVectorTemplate (qtyTemplateDB, &
+           stateExtraSelected)
+   ! Create stateVectorExtra
+   stateVectorExtra = CreateVector(stateVectorExtraTemplate, &
+                                   qtyTemplateDB)
+   ! Fill stateVectorExtra%quantities, see VectorValue_T
+
+   ! You have to create an empty radiances vector
+   radianceTemplate = CreateVectorTemplate(qtyTemplateDB, radianceSelected)
+   radiances = CreateVector(radianceTemplate, qtyTemplateDB)
+ 
+   ! Invoke the forward model  
+   call ForwardModel (fmConfig, stateVector, stateVectorExtra, radiances, &
+                     & fmStatus, jacobian=jacobianMatrix)
+
+a157 1
+
+@
+
+
+1.3
+log
+@Replace description with code snippet in the procedure reference portion
+@
+text
+@d16 1
+d19 1
+d39 2
+a40 1
+   ! Initialize stateSelected and stateExtraSelected as appropriate
+d44 1
+a44 1
+   ! Create stateVectorIn
+d46 1
+a46 1
+   ! Fill stateVectorIn%quantities, see VectorValue_T
+d55 4
+d61 1
+a61 1
+   call ForwardModel (fmConfig, stateVectorIn, stateVectorExtra, radiances, &
+@
+
+
+1.2
+log
+@The reference portion of the CFM document
+@
+text
+@d40 1
+a40 1
+   stateVectorInTemplate = CreateVectorTemplate (qtyTemplateDB, stateSelected)
+d42 1
+a42 1
+   stateVectorIn = CreateVector(stateVectorTemplate, qtyTemplateDB)
+d46 1
+a46 1
+   stateVectorInTemplate = CreateVectorTemplate (qtyTemplateDB, &
+@
+
+
+1.1
+log
+@First version
+@
+text
+@d3 1
+a3 13
+   use CFM_MLSSetup_m, only: CFM_MLSSetup, CFM_MLSCleanup
+   use ForwardModelConfig, only: ForwardModelConfig_T
+   use ForwardModelWrappers, only: ForwardModel
+   use VectorsModule, only: Vector_T, VectorTemplate_T, CreateVector
+   use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T
+   use MatrixModule_1, only: Matrix_T
+   use QuantityTemplates, only: QuantityTemplate_T, &
+          AddQuantityTemplateToDatabase
+   use FGrid, only: FGrid_T
+   use HGridsDatabase, only: HGrid_T
+   use MLSCommon, only: MLSFile_T
+
+   use Dummy, only: dummyHGrid => dummyHGrid1
+d7 2
+a8 12
+   integer :: error 
+   type(ForwardModelConfig_T) :: aForwardModelConfig
+   type (ForwardModelConfig_T), pointer :: ForwardModelConfigDatabase(:) => NULL()
+   type(Vector_T) :: fwdModelIn, fwdModelExtra, fwdModelOut
+   type(VectorTemplate_T) :: inputVectorTemplate
+   type(QuantityTemplate_T), dimension(:), pointer :: qtyTemplates => NULL()
+   type(ForwardModelStatus_t) :: fwdStatus
+   type(Vector_T), dimension(:), pointer :: vectors => NULL()
+   type(Matrix_T) :: aJacobian
+   type(QuantityTemplate_T) :: qtyTemplate
+   type(FGrid_T), dimension(:), pointer :: fgrids => NULL()
+   type(HGrid_T), dimension(:), pointer :: hgrids => NULL()
+d10 13
+a22 1
+   real :: a
+a24 7
+   a = .0
+   print *, "Haley: a", a
+   call CFM_MLSSetup(error, ForwardModelConfigDatabase)
+
+   if (error /=0) stop
+
+   aForwardModelConfig = ForwardModelConfigDatabase(1)
+d26 30
+a55 9
+   call CreateQuantityTemplate(fgrids, hgrids, filedatabase, qtyTemplate)
+   allocate (qtyTemplates(1), stat=error)
+   if (error /= 0) stop
+   error = AddQuantityTemplateToDatabase (qtyTemplates, qtyTemplate)
+
+   call VectorFill (inputVectorTemplate, qtyTemplates, fwdModelIn)
+
+   call ForwardModel (aForwardModelConfig, fwdModelIn, fwdModelExtra, fwdModelOut, &
+                     & fwdStatus, jacobian=aJacobian, vectors=vectors)
+a58 22
+   contains 
+
+      subroutine VectorFill (inputVectorTemplate, qtyTemplates, vector)
+         type(VectorTemplate_T), intent(in) :: inputVectorTemplate
+         type(QuantityTemplate_T), dimension(:), pointer :: qtyTemplates
+         type(Vector_T), intent(out) :: vector
+
+         vector = CreateVector(-1, inputVectorTemplate, qtyTemplates)
+
+      end subroutine VectorFill
+
+      subroutine CreateQuantityTemplate (fgrids, hgrids, filedatabase, &
+                     qtyTemplate) 
+         type(FGrid_T), dimension(:), pointer :: fgrids
+         type(HGrid_T), dimension(:), pointer :: hgrids
+         type(MLSFile_T), dimension(:), pointer :: filedatabase
+         type(QuantityTemplate_T), intent(out) :: qtyTemplate
+
+         qtyTemplate%name = -1
+
+      end subroutine CreateQuantityTemplate
+
+@
+

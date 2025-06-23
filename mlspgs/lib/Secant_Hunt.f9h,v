@@ -1,0 +1,133 @@
+head	2.1;
+access;
+symbols
+	v5-02-NRT-19:2.1
+	v6-00:2.1
+	v5-02-NRT-18:2.1
+	v5-02:2.1
+	v5-01-NRT-17:2.1
+	v5-01-NRT-16:2.1
+	v5-01-NRT-15:2.1
+	v5-01-NRT-14:2.1
+	neuralnetworks-1-0:2.1.0.10
+	cfm-single-freq-0-1:2.1.0.8
+	v5-01:2.1
+	v5-00:2.1
+	v4-23-TA133:2.1.0.6
+	mus-emls-1-70:2.1.0.4
+	rel-1-0-englocks-work:2.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+2.1
+date	2018.02.02.03.32.36;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! subroutine Secant_Hunt_* ( Array, Target, Loc, Probes )
+
+    ! Look for Target in Array(1:N) using a secant method, which has log log N
+    ! complexity.  If Target < Array(1), Loc = 0.  If Target >= Array(N), Loc =
+    ! N.  Else Loc = I such that Array(i) <= Loc <= Array(i+1) with equality in
+    ! the upper case only if Array(i) == Array(i+1).  If Array(i) == Array(i+1)
+    ! for several values of I, any of those values of I could be reported.
+
+    ! Assumes Array(:) is ordered.  Will fail silently and badly otherwise.
+
+    integer :: D      ! Difference between array elements
+    integer :: H      ! Step away from Lo
+    integer :: Hi, Lo ! Bounds of where to look in Array
+    integer :: Times  ! How many places were examined
+
+    times = 0
+
+    hi = size(array)
+    if ( hi == 0 ) then
+      loc = 0
+      go to 9
+    end if
+    lo = 1
+
+    if ( target < array(1) ) then
+      loc = 0
+      go to 9
+    end if
+    if ( target >= array(hi) ) then
+      loc = hi
+      go to 9
+    end if
+
+    ! From here on, we have 1 <= lo <= hi <= size(Array) and
+    ! Array(lo) <= target <= Array(hi)
+    do
+      times = times + 1
+      d = array(hi) - array(lo)
+      if ( d <= 0 ) then ! Could happen with duplicate elements, or if
+                         ! Array isn't ordered (in which case you get what
+                         ! you deserve).
+        do
+          if ( target >= array(lo) ) then
+            loc = lo
+            go to 9
+          end if
+          ! Look backward from Lo.  This shouldn't happen, but just in case....
+          lo = lo - 1
+          times = times + 1
+        end do
+      else if ( hi == lo + 1 ) then
+        loc = lo
+        go to 9
+      end if
+      h = nint( ( real( target - array(lo) ) / d ) * ( hi - lo ) )
+      if ( h < 0 .or. lo + h >= hi ) then
+        loc = ( lo + hi ) / 2 ! Something bizarre happened, use binary search
+      else
+        loc = lo + max(h,1)
+      end if
+      if ( target >= array(loc) .and. target <= array(loc+1) ) then
+        if ( target == array(loc+1) ) loc = loc + 1
+        go to 9
+      end if
+      if ( target < array(loc) ) then
+        hi = loc
+      else
+        lo = loc
+      end if
+    end do
+
+  9 continue
+    if ( present(first) .and. loc > 0 ) then
+      if ( first .and. target == array(loc) ) then
+        do while ( loc > 1 )
+          if ( target /= array(loc-1) ) exit
+          loc = loc - 1 ! Find the first of several array elements == target
+          times = times + 1
+        end do
+      end if
+    end if
+    if ( present(probes) ) probes = times
+
+! $Log: path_contrib_m.f90,v $
+@

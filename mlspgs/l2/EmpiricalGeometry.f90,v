@@ -1,0 +1,1158 @@
+head	2.25;
+access;
+symbols
+	v5-02-NRT-19:2.25
+	v6-00:2.25
+	v5-02-NRT-18:2.25
+	v5-02:2.25
+	v5-01-NRT-17:2.25
+	v5-01-NRT-16:2.25
+	v5-01-NRT-15:2.25
+	v5-01-NRT-14:2.25
+	neuralnetworks-1-0:2.25.0.10
+	cfm-single-freq-0-1:2.25.0.8
+	v5-01:2.25
+	v5-00:2.25
+	v4-23-TA133:2.25.0.6
+	mus-emls-1-70:2.25.0.4
+	rel-1-0-englocks-work:2.25.0.2
+	VUMLS1-00:2.25
+	VPL1-00:2.25
+	V4-22-NRT-08:2.24
+	VAM1-00:2.24
+	V4-21:2.23.0.2
+	V4-13:2.23
+	V4-12:2.20
+	V4-11:2.20
+	V4-10:2.20
+	V3-43:2.15
+	M4-00:2.17
+	V3-41:2.15
+	V3-40-PlusGM57:2.15.0.2
+	V2-24-NRT-04:2.12
+	V3-33:2.17
+	V2-24:2.12
+	V3-31:2.17
+	V3-30-NRT-05:2.17
+	cfm-01-00:2.16
+	V3-30:2.15
+	V3-20:2.15
+	V3-10:2.14
+	V2-23-NRT-02:2.12
+	V2-23:2.12
+	V2-22-NRT-01:2.12
+	V2-22:2.12
+	V2-21:2.12
+	V2-20:2.12
+	V2-11:2.12
+	V2-10:2.12
+	V2-00:2.12
+	V1-51:2.10
+	V1-50:2.10
+	V1-45:2.10
+	V1-44:2.10
+	V1-43:2.9
+	V1-32:2.9
+	V1-31:2.9
+	V1-30:2.9
+	V1-13:2.8
+	V1-12:2.8
+	V1-11:2.8
+	V1-10:2.8
+	newfwm-feb03:2.8.0.2
+	V1-04:2.4
+	V1-03:2.4
+	V1-02:2.4
+	JointForwardModel:2.4.0.2
+	V1-00:2.4;
+locks; strict;
+comment	@# @;
+
+
+2.25
+date	2016.08.09.21.07.18;	author pwagner;	state Exp;
+branches;
+next	2.24;
+
+2.24
+date	2015.06.19.00.37.56;	author pwagner;	state Exp;
+branches;
+next	2.23;
+
+2.23
+date	2014.09.05.00.51.39;	author vsnyder;	state Exp;
+branches;
+next	2.22;
+
+2.22
+date	2014.09.05.00.49.06;	author vsnyder;	state Exp;
+branches;
+next	2.21;
+
+2.21
+date	2014.08.15.02.56.25;	author vsnyder;	state Exp;
+branches;
+next	2.20;
+
+2.20
+date	2014.03.07.19.21.44;	author pwagner;	state Exp;
+branches;
+next	2.19;
+
+2.19
+date	2014.03.04.17.37.48;	author pwagner;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2014.03.01.03.10.56;	author vsnyder;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2010.09.17.16.47.08;	author honghanh;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2010.05.23.03.27.32;	author honghanh;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2010.02.04.23.12.44;	author vsnyder;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2009.06.23.18.46.18;	author pwagner;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2009.05.13.20.41.55;	author vsnyder;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2005.06.22.18.57.01;	author pwagner;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2005.05.31.17.51.17;	author pwagner;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2004.05.19.19.16.09;	author vsnyder;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2003.08.15.23.58.20;	author vsnyder;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2002.12.11.22.17.05;	author pwagner;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2002.11.13.01.05.28;	author pwagner;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2002.10.08.17.36.20;	author pwagner;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2002.08.20.22.43.37;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2001.12.16.00.58.06;	author livesey;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2001.12.14.01.43.02;	author livesey;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2001.12.13.23.05.08;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.12.10.20.22.29;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.25
+log
+@Survives encounter with non-satellite data
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module EmpiricalGeometry                ! For empirically obtaining orbit information
+
+  use HGridsdatabase, only: L1BGeolocation, L1BSubsample
+  use MLSKinds, only: R8
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+
+  implicit none
+  private
+
+  public :: EmpiricalLongitude, InitEmpiricalGeometry, &
+            DestroyEmpiricalGeometry, &
+            ForgetOptimumLon0, CFM_InitEmpiricalGeometry, &
+            ChooseOptimumLon0, CFM_ResetEmpiricalGeometry
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: EmpiricalGeometry.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+  ! ---- Local private declations
+
+  real(r8), pointer, dimension(:), private, save :: &
+    & EMPIRICALTERMS => NULL() ! Fourier terms
+  real(r8), private, save :: LON0       ! Longitude of first equator crossing
+  logical, private, save :: LON0VALID = .false.
+  
+contains ! ========================= Public Procedures ====================
+
+  ! -----------------------------------------  EmpiricalLongitude  -----
+  subroutine EmpiricalLongitude ( geodAngle, lon, tryLon0  ) 
+    ! This function returns an empirical longitude for a given
+    ! geodetic angle.
+    use Constants, only: Deg2Rad
+
+    ! Arguments
+    real(r8), dimension(:), intent(in) :: GEODANGLE
+    real(r8), dimension(size(geodAngle)), intent(out) :: LON
+    real(r8), optional, intent(in) :: TRYLON0
+
+    ! Local variables
+    integer :: term
+    real(r8) :: useLon0
+
+    ! Executable code
+    if ( .not. associated ( empiricalTerms ) ) call MLSMessage ( &
+      & MLSMSG_Error, ModuleName, 'EmpiricalGeomtry information not given in l2cf' )
+
+    if ( present(tryLon0) ) then
+      useLon0 = tryLon0
+    else
+      if ( .not. lon0Valid ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & "Optimum lon0 has not been established" )
+      useLon0 = lon0
+    end if
+
+    lon = useLon0
+    lon = lon + empiricalTerms(1) * geodAngle
+
+    do term = 2, size(empiricalTerms)
+      lon = lon + empiricalTerms(term) * &
+        & sin ( deg2Rad * geodAngle * 2*(term-1) )
+    end do
+    lon = NormalizeLongitude ( lon )
+  end subroutine EmpiricalLongitude
+
+  ! ---------------------------------------  InitEmpiricalGeomtry  -----
+  subroutine InitEmpiricalGeometry ( root )
+    ! This subroutine sets up the empirical geometry from l2cf information
+
+    use Allocate_Deallocate, only: Allocate_test
+    use Expr_M, only: EXPR
+    use Init_Tables_Module, only: F_ITERATIONS, F_TERMS
+    use MoreTree, only: Get_Field_ID
+    use Toggles, only: gen, levels, toggle
+    use Trace_m, only: trace_begin, trace_end
+    use Tree, only: nsons, subtree
+
+    integer, intent(in) :: ROOT         ! Root of tree
+
+    ! Local variables
+    real(r8), dimension(2) :: VALUE     ! From EXPR
+    integer, dimension(2) :: TheUnits   ! From EXPR
+    integer :: I,J                      ! Loop inductors
+    integer :: Me = -1                  ! String index for trace
+    integer :: SON                      ! Son of root
+    integer :: NOTERMS                  ! Number of terms
+    integer :: FIELDINDEX               ! From parser
+
+    ! Executable code
+    call trace_begin ( me, "InitEmpiricalGeometry", root, &
+      & cond=toggle(gen) .and. levels(gen) > 0 )
+
+    ! First get the information from the l2cf
+    do i = 2, nsons(root)
+      son = subtree( i, root )
+      fieldIndex = get_field_id(son)
+      select case ( fieldIndex )
+      case ( f_terms )
+        noTerms = nsons ( son ) - 1
+        call Allocate_Test ( empiricalTerms, noTerms, 'empiricalTerms', &
+          & ModuleName )
+        do j = 2, noTerms + 1
+          call expr ( subtree(j,son), theUnits, value )
+          empiricalTerms(j-1) = value(1)
+        end do
+      case ( f_iterations )
+        call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          & "The Iterations field no longer does anything" )
+      end select
+    end do
+    call trace_end ( "InitEmpiricalGeometry", &
+      & cond=toggle(gen) .and. levels(gen) > 0 )
+
+  end subroutine InitEmpiricalGeometry
+
+  ! -----------------------------------  DestroyEmpiricalGeometry  -----
+
+  subroutine DestroyEmpiricalGeometry
+
+    use Allocate_Deallocate, only: Deallocate_test
+
+    call deallocate_test ( empiricalTerms, 'empiricalTerms', ModuleName )
+
+  end subroutine DestroyEmpiricalGeometry
+
+  ! -----------------------------------  CFM_InitEmpiricalGeomtry  -----
+  ! This module is for the callable forward model (CFM), in which no tree
+  ! is available, to set up EmpiricalGeometry
+  subroutine CFM_InitEmpiricalGeometry ( numberIterations, terms )
+     use Allocate_Deallocate, only: Allocate_test
+
+     integer, intent(in) :: numberIterations
+     real(r8), dimension(:), intent(in) :: terms
+
+     ! Executables
+     call Allocate_Test ( empiricalTerms, size(terms), 'empiricalTerms', &
+          & ModuleName )
+     empiricalTerms = terms
+
+  end subroutine
+
+  ! ----------------------------------  CFM_ResetEmpiricalGeomtry  -----
+  ! This module is for the callable forward model (CFM), in which
+  ! EmpiricalGeometry is expected to be called multiple times.
+  subroutine CFM_ResetEmpiricalGeometry
+
+     ! Excutables
+     call DestroyEmpiricalGeometry
+     call ForgetOptimumLon0
+
+  end subroutine
+
+  ! ------------------------------------------  ChooseOptimumLon0  -----
+  subroutine ChooseOptimumLon0 ( filedatabase, chunk, moduleStr )
+
+    use Allocate_Deallocate, only: allocate_test, deallocate_test
+    use Chunks_m, only: MLSChunk_t
+    use MLSCommon, only: MLSFile_t
+
+    type (MLSFile_T), dimension(:), pointer :: FILEDATABASE          
+    type (MLSChunk_T), intent(in)           :: CHUNK ! This chunk    
+    character(len=*), intent(in)            :: moduleStr             
+
+    ! Local variables
+    double precision, dimension(:), pointer :: FullArray
+    real(r8), dimension(:), pointer         :: TESTPHI ! Angle
+    real(r8), dimension(:), pointer         :: TESTLON ! Longitude to match
+    real(r8), dimension(:), pointer         :: GUESSLON ! Attempt at match
+
+    ! Executable code
+
+    ! Now we want to establish the value of lon0
+    nullify ( testPhi, testLon, guessLon )
+
+    call L1BGeoLocation ( filedatabase, "tpGeodAngle", moduleStr, fullArray )
+    call L1BSubsample ( chunk, FullArray, values=testPhi )
+    call Deallocate_test ( fullArray, 'fullArray', ModuleName )
+
+    call L1BGeoLocation ( filedatabase, "tpLon", moduleStr, fullArray )
+    call L1BSubsample ( chunk, FullArray, values=testLon )
+    call Deallocate_test ( fullArray, 'fullArray', ModuleName )
+
+    call Allocate_test ( guessLon, size(testLon), 'guessLon', ModuleName )
+
+    call EmpiricalLongitude ( testPhi, guessLon, tryLon0=0.0_r8 )
+    lon0 = - sum ( NormalizeLongitude ( guessLon - testLon ) ) / size(testLon)
+    lon0Valid = .true.
+
+    call Deallocate_test ( testPhi, 'testPhi', ModuleName )
+    call Deallocate_test ( testLon, 'testLon', ModuleName )
+    call Deallocate_test ( guessLon, 'guessLon', ModuleName )
+
+  end subroutine ChooseOptimumLon0
+
+  ! ------------------------------------------  ForgetOptimumLon0  -----
+  subroutine ForgetOptimumLon0
+    lon0Valid = .false.
+  end subroutine ForgetOptimumLon0
+
+  ! ========================================= PRIVATE PROCEUDRES ==========
+
+  ! -----------------------------------------  NormalizeLongitude  -----
+  elemental function NormalizeLongitude ( lon )
+    real(r8), intent(in) :: LON
+    real(r8) :: NormalizeLongitude
+    ! Executable code
+    NormalizeLongitude = modulo ( lon, 360.0_r8 )
+    if (NormalizeLongitude > 180.0) NormalizeLongitude = NormalizeLongitude - 360.0
+  end function NormalizeLongitude
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: EmpiricalGeometry.f90,v 2.24 2015/06/19 00:37:56 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module EmpiricalGeometry
+
+! $Log: EmpiricalGeometry.f90,v $
+! Revision 2.24  2015/06/19 00:37:56  pwagner
+! Changed to avoid reading L1BOA
+!
+! Revision 2.23  2014/09/05 00:51:39  vsnyder
+! Add DestroyEmpiricalGeometry, some cannonball polishing
+!
+! Revision 2.22  2014/09/05 00:49:06  vsnyder
+! EmpiricalGeometry.f90 -- wrong comment.
+!
+! Revision 2.21  2014/08/15 02:56:25  vsnyder
+! Remove noIterations, which was only used in code that was removed in 2001
+!
+! Revision 2.20  2014/03/07 19:21:44  pwagner
+! Name_Len changed to nameLen; got from MLSCommon
+!
+! Revision 2.19  2014/03/04 17:37:48  pwagner
+! Must not truncate f.p. terms
+!
+! Revision 2.18  2014/03/01 03:10:56  vsnyder
+! Move units checking to init_tables_module
+!
+! Revision 2.17  2010/09/17 16:47:08  honghanh
+! Add subroutine to deallocate empiricalTerms
+!
+! Revision 2.15  2010/02/04 23:12:44  vsnyder
+! Remove USE or declaration for unreferenced names
+!
+! Revision 2.14  2009/06/23 18:46:18  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.13  2009/05/13 20:41:55  vsnyder
+! Get constants from Constants, kinds from MLSKinds
+!
+! Revision 2.12  2005/06/22 18:57:01  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.11  2005/05/31 17:51:17  pwagner
+! Began switch from passing file handles to passing MLSFiles
+!
+! Revision 2.10  2004/05/19 19:16:09  vsnyder
+! Move MLSChunk_t to Chunks_m
+!
+! Revision 2.9  2003/08/15 23:58:20  vsnyder
+! Get PHYQ_... directly from Intrinsic instead of indirectly via Units
+!
+! Revision 2.8  2002/12/11 22:17:05  pwagner
+! Added error checks on hdf version
+!
+! Revision 2.7  2002/11/13 01:05:28  pwagner
+! Actually reads hdf5 radiances
+!
+! Revision 2.6  2002/10/08 17:36:20  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.5  2002/08/20 22:43:37  vsnyder
+! Move USE statements from module scope to procedure scope
+!
+! Revision 2.4  2001/12/16 00:58:06  livesey
+! New method for computing lon0 (much more efficient)
+!
+! Revision 2.3  2001/12/14 01:43:02  livesey
+! Various bug fixes
+!
+! Revision 2.2  2001/12/13 23:05:08  vsnyder
+! Add a kind parameter in MODULO; Add a CVS Log comment
+!
+@
+
+
+2.24
+log
+@Changed to avoid reading L1BOA
+@
+text
+@d14 1
+a14 2
+  use HGridsdatabase, only: HGrid_T, HGridGeolocations_T, HGridGeolocations, &
+    & L1BGeolocation, L1BSubsample
+d86 3
+a88 3
+    use TOGGLES, only: GEN, LEVELS, TOGGLE
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+    use Tree, only: NSONS, SUBTREE
+d141 1
+a141 1
+  subroutine CFM_InitEmpiricalGeometry (numberIterations, terms)
+d166 1
+a166 1
+  subroutine ChooseOptimumLon0 ( filedatabase, chunk )
+d168 7
+a174 10
+    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use Chunks_m, only: MLSCHUNK_T
+    use L1BData, only: L1BDATA_T, READL1BDATA, DEALLOCATEL1BDATA, &
+      & ASSEMBLEL1BQTYNAME
+    use MLSCommon, only: MLSFILE_T, NAMELEN
+    use MLSFiles, only: GETMLSFILEBYTYPE
+
+    type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
+    ! type (L1BInfo_T), intent(in) :: L1BINFO
+    type (MLSChunk_T), intent(in) :: CHUNK ! This chunk
+d178 3
+a180 10
+    type (L1BData_T) :: tpGeodAngle     ! From L1B
+    type (L1BData_T) :: tpLon           ! From L1B
+    integer :: NOMAFS                   ! From ReadL1B
+    integer :: FLAG                     ! From ReadL1B
+    real(r8), dimension(:), pointer :: TESTPHI ! Angle
+    real(r8), dimension(:), pointer :: TESTLON ! Longitude to match
+    real(r8), dimension(:), pointer :: GUESSLON ! Attempt at match
+    integer ::  hdfVersion
+    character(len=namelen) :: l1bItemName
+    type (MLSFile_T), pointer             :: L1BFile
+a183 7
+    L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
+    hdfversion = L1BFile%HDFVersion
+!     hdfVersion = mls_hdf_version(trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION)
+!     if ( hdfversion <= 0 ) &                                            
+!       & call MLSMessage ( MLSMSG_Error, ModuleName, &                      
+!       & 'Illegal hdf version for l1boa file (file missing or non-hdf?)' )    
+
+d186 2
+a187 4
+    l1bItemName = AssembleL1BQtyName ( "GHz.tpGeodAngle", hdfVersion, .false. )
+    ! call ReadL1BData ( L1BFile, trim(l1bItemName), tpGeodAngle, noMAFs, flag, &
+    !  & firstMAF = chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex)
+    call L1BGeoLocation ( filedatabase, "tpGeodAngle", fullArray )
+a188 3
+    ! call Allocate_test ( testPhi, noMAFs, 'testPhi', ModuleName )
+    ! testPhi = tpGeodAngle%DpField(1,1,:)
+    ! call DeallocateL1BData ( tpGeodAngle )
+d191 1
+a191 2
+    l1bItemName = AssembleL1BQtyName ( "GHz.tpLon", hdfVersion, .false. )
+    call L1BGeoLocation ( filedatabase, "tpLon", fullArray )
+a193 5
+    ! call ReadL1BData ( L1BFile, trim(l1bItemName), tpLon, noMAFs, flag, &
+    !  & firstMAF = chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex )
+    ! call Allocate_test ( testLon, noMAFs, 'testLon', ModuleName )
+    ! testLon = tpLon%DpField(1,1,:)
+    ! call DeallocateL1BData ( tpLon )
+d226 1
+a226 1
+       "$Id: EmpiricalGeometry.f90,v 2.23 2014/09/05 00:51:39 vsnyder Exp $"
+d236 3
+@
+
+
+2.23
+log
+@Add DestroyEmpiricalGeometry, some cannonball polishing
+@
+text
+@d14 2
+a166 1
+  ! subroutine ChooseOptimumLon0 ( l1bInfo, chunk )
+d181 1
+d205 8
+a212 5
+    call ReadL1BData ( L1BFile, trim(l1bItemName), tpGeodAngle, noMAFs, flag, &
+      & firstMAF = chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex)
+    call Allocate_test ( testPhi, noMAFs, 'testPhi', ModuleName )
+    testPhi = tpGeodAngle%DpField(1,1,:)
+    call DeallocateL1BData ( tpGeodAngle )
+d215 8
+a222 5
+    call ReadL1BData ( L1BFile, trim(l1bItemName), tpLon, noMAFs, flag, &
+      & firstMAF = chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex )
+    call Allocate_test ( testLon, noMAFs, 'testLon', ModuleName )
+    testLon = tpLon%DpField(1,1,:)
+    call DeallocateL1BData ( tpLon )
+d255 1
+a255 1
+       "$Id: EmpiricalGeometry.f90,v 2.22 2014/09/05 00:49:06 vsnyder Exp $"
+d265 3
+@
+
+
+2.22
+log
+@EmpiricalGeometry.f90
+@
+text
+@d247 1
+a247 1
+       "$Id: EmpiricalGeometry.f90,v 2.21 2014/08/15 02:56:25 vsnyder Exp $"
+d257 3
+@
+
+
+2.21
+log
+@Remove noIterations, which was only used in code that was removed in 2001
+@
+text
+@d21 1
+d40 1
+a40 1
+  ! ------------------------------------------------ EmpiricalLongitude ---
+d44 1
+a44 1
+    ! Argument
+d46 1
+a46 1
+    use Constants, only: Deg2Rad
+d77 1
+a77 1
+  ! ----------------------------------------------- InitEmpiricalGeomtry --
+d85 2
+d95 1
+d101 2
+d122 2
+d127 11
+a137 1
+  ! --------------------------- CFM_InitEmpiricalGeomtry ---------------------
+d153 3
+a155 3
+  ! --------------------------- CFM_ResetEmpiricalGeomtry ---------------------
+  ! This module is for the callable forward model (CFM), in which EmpiricalGeometry
+  ! is expected to call multiple times.
+a156 1
+     use Allocate_Deallocate, only: Deallocate_test
+d159 1
+a159 2
+     call Deallocate_test (empiricalTerms, 'empiricalTerms', ModuleName)
+     empiricalTerms => NULL()
+d161 1
+d164 1
+a164 1
+  ! -------------------------------------------------- ChooseOptimumLon0 -----
+d228 1
+a228 1
+  ! ------------------------------------------------ ForgetOptimumLon0 -----
+d235 1
+a235 1
+  ! ----------------------------------------------- NormalizeLongitude ----
+d247 1
+a247 1
+       "$Id: EmpiricalGeometry.f90,v 2.20 2014/03/07 19:21:44 pwagner Exp $"
+d257 3
+@
+
+
+2.20
+log
+@Name_Len changed to nameLen; got from MLSCommon
+@
+text
+@d15 1
+a15 1
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+a35 1
+  integer, private, save :: NOITERATIONS ! When finding lon0 
+a87 3
+    ! Local parameters
+    integer, parameter :: INITNOITERATIONS = 5
+
+a97 2
+     noIterations = initNoIterations
+
+d112 2
+a113 2
+        call expr ( subtree(2,son), theUnits, value )
+        noIterations = nint(value(1))
+a128 1
+     noIterations = numberIterations
+d230 1
+a230 1
+       "$Id: EmpiricalGeometry.f90,v 2.19 2014/03/04 17:37:48 pwagner Exp $"
+d240 3
+@
+
+
+2.19
+log
+@Must not truncate f.p. terms
+@
+text
+@d158 6
+a163 6
+    use Allocate_Deallocate, only: Allocate_test, Deallocate_test
+    use Chunks_m, only: MLSChunk_T
+    use L1BData, only: L1BData_T, ReadL1BData, DeallocateL1BData, Name_Len, &
+      & AssembleL1BQtyName
+    use MLSCommon, only: MLSFile_T
+    use MLSFiles, only: GetMLSFileByType
+d178 1
+a178 1
+    character(len=Name_Len) :: l1bItemName
+d237 1
+a237 1
+       "$Id: EmpiricalGeometry.f90,v 2.18 2014/03/01 03:10:56 vsnyder Exp $"
+d247 3
+@
+
+
+2.18
+log
+@Move units checking to init_tables_module
+@
+text
+@d115 1
+a115 1
+          empiricalTerms(j-1) = nint(value(1))
+d237 1
+a237 1
+       "$Id: EmpiricalGeometry.f90,v 2.17 2010/09/17 16:47:08 honghanh Exp $"
+d247 3
+@
+
+
+2.17
+log
+@Add subroutine to deallocate empiricalTerms
+@
+text
+@a83 1
+    use Intrinsic, only: PHYQ_DimensionLess
+d115 1
+a115 3
+          if ( theUnits(1) /= PHYQ_Dimensionless ) call MLSMessage ( MLSMSG_Error, &
+            & ModuleName, "No units expected for empirical terms" )
+          empiricalTerms(j-1) = value(1)
+d119 1
+a119 3
+        if ( theUnits(1) /= PHYQ_Dimensionless ) call MLSMessage ( MLSMSG_Error, &
+          & ModuleName, "No units expected for iterations" )
+        noIterations = value(1)
+d237 1
+a237 1
+       "$Id: EmpiricalGeometry.f90,v 2.15 2010/02/04 23:12:44 vsnyder Exp $"
+d247 3
+@
+
+
+2.16
+log
+@Add an Init empirical geometry method for CFM
+@
+text
+@d22 1
+a22 1
+            ChooseOptimumLon0
+d147 12
+@
+
+
+2.15
+log
+@Remove USE or declaration for unreferenced names
+@
+text
+@d20 3
+a22 2
+  public :: EmpiricalLongitude, InitEmpiricalGeometry, ForgetOptimumLon0, &
+    & ChooseOptimumLon0
+d55 1
+a55 2
+    ! Exectuable code
+
+d130 17
+d187 1
+a187 1
+      & firstMAF = chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex )
+d230 1
+a230 1
+       "$Id: EmpiricalGeometry.f90,v 2.14 2009/06/23 18:46:18 pwagner Exp $"
+d240 3
+@
+
+
+2.14
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d25 1
+a25 1
+       "$RCSfile: $"
+a144 3
+    ! Local parameters
+    integer, parameter :: NOLON0OPTIONS = 18
+
+a145 3
+    integer :: BESTOPTION(1)            ! With lowest cost
+    real(r8), dimension(noLon0Options) :: options
+    real(r8), dimension(noLon0Options) :: cost
+a149 1
+    integer :: I,J                      ! Loop counters
+a152 2
+    real(r8) :: LOWLIMIT, HILIMIT       ! For new options
+    real(r8) :: DELTA                   ! For new options
+d213 1
+a213 1
+       "$Id: read_apriori.f90 is it here $"
+d223 3
+@
+
+
+2.13
+log
+@Get constants from Constants, kinds from MLSKinds
+@
+text
+@d25 1
+a25 1
+       "$RCSfile: EmpiricalGeometry.f90,v $"
+d219 1
+a220 1
+!---------------------------- RCS Ident Info -------------------------------
+d222 2
+a223 3
+       "$Id: EmpiricalGeometry.f90,v 2.12 2005/06/22 18:57:01 pwagner Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d225 1
+a225 1
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
+d227 1
+d232 3
+@
+
+
+2.12
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d14 1
+a14 2
+  use Allocate_Deallocate, only: Allocate_test
+  use MLSCommon, only: R8
+d25 1
+a25 1
+       "$RCSfile: $"
+d45 1
+a45 1
+    use Units, only: Deg2Rad
+d81 1
+d134 1
+a134 1
+    use Allocate_Deallocate, only: Deallocate_test
+d222 1
+a222 1
+       "$Id: $"
+d226 1
+d232 3
+@
+
+
+2.11
+log
+@Began switch from passing file handles to passing MLSFiles
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d24 3
+a26 6
+  !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
+    "$Id: EmpiricalGeometry.f90,v 2.10 2004/05/19 19:16:09 vsnyder Exp $"
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName = &
+    "$RCSfile: EmpiricalGeometry.f90,v $"
+d28 1
+a28 1
+  !---------------------------------------------------------------------------
+d220 5
+d231 3
+@
+
+
+2.10
+log
+@Move MLSChunk_t to Chunks_m
+@
+text
+@d18 1
+a18 1
+    "$Id: EmpiricalGeometry.f90,v 2.9 2003/08/15 23:58:20 vsnyder Exp $"
+d126 2
+a127 1
+  subroutine ChooseOptimumLon0 ( l1bInfo, chunk )
+d133 2
+a134 3
+    use MLSCommon, only: L1BInfo_T
+    use MLSFiles, only: mls_hdf_version
+    use MLSL2Options, only: LEVEL1_HDFVERSION
+d136 2
+a137 1
+    type (L1BInfo_T), intent(in) :: L1BINFO ! Where to find L1 files
+d159 1
+d163 7
+a169 4
+    hdfVersion = mls_hdf_version(trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION)
+    if ( hdfversion <= 0 ) &                                                
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &                      
+      & 'Illegal hdf version for l1boa file (file missing or non-hdf?)' )    
+d173 2
+a174 3
+    call ReadL1BData ( l1bInfo%l1boaID, trim(l1bItemName), tpGeodAngle, noMAFs, flag, &
+      & firstMAF = chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
+      & hdfVersion=hdfVersion )
+d180 2
+a181 3
+    call ReadL1BData ( l1bInfo%l1boaID, trim(l1bItemName), tpLon, noMAFs, flag, &
+      & firstMAF = chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
+      & hdfVersion=hdfVersion )
+d221 3
+@
+
+
+2.9
+log
+@Get PHYQ_... directly from Intrinsic instead of indirectly via Units
+@
+text
+@d18 1
+a18 1
+    "$Id: EmpiricalGeometry.f90,v 2.8 2002/12/11 22:17:05 pwagner Exp $"
+d129 1
+d132 1
+a132 1
+    use MLSCommon, only: L1BInfo_T, MLSChunk_T
+d218 3
+@
+
+
+2.8
+log
+@Added error checks on hdf version
+@
+text
+@d18 1
+a18 1
+    "$Id: EmpiricalGeometry.f90,v 2.7 2002/11/13 01:05:28 pwagner Exp $"
+d79 1
+a81 1
+    use Units, only: PHYQ_DimensionLess
+d217 3
+@
+
+
+2.7
+log
+@Actually reads hdf5 radiances
+@
+text
+@d18 1
+a18 1
+    "$Id: EmpiricalGeometry.f90,v 2.6 2002/10/08 17:36:20 pwagner Exp $"
+d161 3
+d217 3
+@
+
+
+2.6
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+d18 1
+a18 1
+    "$Id: EmpiricalGeometry.f90,v 2.5 2002/08/20 22:43:37 vsnyder Exp $"
+d129 2
+a130 1
+    use L1BData, only: L1BData_T, ReadL1BData, DeallocateL1BData
+d132 2
+d155 2
+d160 1
+d163 4
+a166 2
+    call ReadL1BData ( l1bInfo%l1boaID, "GHz.tpGeodAngle", tpGeodAngle, noMAFs, flag, &
+      & firstMAF = chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex )
+d171 4
+a174 2
+    call ReadL1BData ( l1bInfo%l1boaID, "GHz.tpLon", tpLon, noMAFs, flag, &
+      & firstMAF = chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex )
+d214 3
+@
+
+
+2.5
+log
+@Move USE statements from module scope to procedure scope
+@
+text
+@d18 1
+a18 1
+    "$Id: EmpiricalGeometry.f90,v 2.4 2001/12/16 00:58:06 livesey Exp $"
+d22 1
+d197 4
+d204 3
+@
+
+
+2.4
+log
+@New method for computing lon0 (much more efficient)
+@
+text
+@d6 2
+a7 3
+  use Allocate_Deallocate, only: Allocate_test, Deallocate_test
+  use Expr_M, only: EXPR
+  use MLSCommon, only: L1BInfo_T, R8, MLSChunk_T
+a8 5
+  use MoreTree, only: Get_Field_ID
+  use Tree, only: NSONS, SUBTREE, NODE_ID
+  use Units, only: Deg2Rad, PHYQ_Angle, PHYQ_DimensionLess
+  use L1BData, only: L1BData_T, ReadL1BData, DeallocateL1BData
+  use Init_Tables_Module, only: F_ITERATIONS, F_TERMS
+d18 1
+a18 1
+    "$Id: EmpiricalGeometry.f90,v 2.3 2001/12/14 01:43:02 livesey Exp $"
+d39 2
+d75 7
+d89 1
+a89 1
+    integer, dimension(2) :: UNITS      ! From EXPR
+d109 2
+a110 2
+          call expr ( subtree(j,son), units, value )
+          if ( units(1) /= PHYQ_Dimensionless ) call MLSMessage ( MLSMSG_Error, &
+d115 2
+a116 2
+        call expr ( subtree(2,son), units, value )
+        if ( units(1) /= PHYQ_Dimensionless ) call MLSMessage ( MLSMSG_Error, &
+d126 5
+d199 3
+@
+
+
+2.3
+log
+@Various bug fixes
+@
+text
+@d24 1
+a24 1
+    "$Id: EmpiricalGeometry.f90,v 2.2 2001/12/13 23:05:08 vsnyder Exp $"
+d162 2
+a163 21
+    ! First get a dataset to compare against
+    do i = 1, noLon0Options
+      options(i) = -180.0 + (i-1) * 360.0 / noLon0Options
+    end do
+
+    do i = 1, noIterations
+      do j = 1, noLon0Options
+        call EmpiricalLongitude ( testPhi, guessLon, tryLon0=options(j) )
+        cost(j) = sum ( abs( NormalizeLongitude( testLon - guessLon ) ) )
+      end do
+      bestOption = minloc ( cost, 1 )
+      if ( i < noIterations ) then
+        lowLimit = options ( max ( bestOption(1)-1, 1 ) )
+        hiLimit = options ( min ( bestOption(1)+1, noLon0Options ) )
+        delta = (hiLimit-lowLimit)/(noLon0Options-1)
+        do j = 1, noLon0Options
+          options(j) = lowLimit + (j-1)*delta
+        end do
+      end if
+    end do
+    lon0 = options(bestOption(1))
+d191 3
+@
+
+
+2.2
+log
+@Add a kind parameter in MODULO; Add a CVS Log comment
+@
+text
+@d24 1
+a24 1
+    "$Id: EmpiricalGeometry.f90,v 2.1 2001/12/10 20:22:29 livesey Exp $"
+d127 1
+a127 1
+    integer, parameter :: NOLON0OPTIONS = 19
+d164 1
+a164 1
+      options(i) = -180.0 + (i-1) * 360.0 / (noLon0Options-1)
+a183 1
+    print*,'Choose lon0=',lon0
+d209 4
+a212 1
+! $Log: $
+@
+
+
+2.1
+log
+@First version
+@
+text
+@d24 1
+a24 1
+    "$Id: HGrid.f90,v 2.19 2001/07/09 20:15:07 livesey Exp $"
+d26 2
+a27 2
+  character (len=*), private, parameter :: ModuleName= &
+    "$RCSfile: HGrid.f90,v $"
+a202 2
+    ! Local variables
+    integer :: N
+d204 1
+a204 1
+    NormalizeLongitude = modulo ( lon, 360.0 )
+d209 2
+@
+

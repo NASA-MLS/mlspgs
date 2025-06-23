@@ -1,0 +1,210 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.14
+	cfm-single-freq-0-1:1.1.0.12
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.10
+	mus-emls-1-70:1.1.0.8
+	rel-1-0-englocks-work:1.1.0.6
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2008.06.11.20.14.52;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.25in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9.00in
+
+\newcommand{\docname}{\bf wvs-032}
+\newcommand{\docdate}{14 March 2006}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill, Nathaniel\\
+Subject: \>Incoherent-to-coherent fill\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-20pt}
+
+\section{The problem}
+
+Given a set of data $\{\zeta(\xi_i,\eta_i)\}$ where
+$\{(\xi_i,\eta_i)\}$ are not necessarily on a rectangular grid, produce
+another set of data $\{z_{jk}\} =
+\{\left.z(x,y)\right|_{(x,y)=(x_j,y_k)}\}$ that approximate the given
+data in some least-squares sense, where $\{(x_j,y_k)\}$ are on a
+rectangular but not necessarily regular grid, i.e., $\{(x_j,y_k)\} =
+\{x_j\} \times \{y_k\}$, where $|\{x_j\}|=m$ and  $|\{y_k\}|=n$.  The
+discussion assumes $x_j < x_{j+1}$ and $y_k < y_{k+1}$ but does not
+assume $x_{j+1}-x_j=x_j-x_{j-1}$ or $y_{k+1}-y_k=y_k-y_{k-1}$.
+
+\section{Solutions}
+
+The solutions proposed here all use low-order Taylor expansions. 
+Higher-order expansions could be used.
+
+\subsection{Local least-squares}\label{local}
+
+Construct a least-squares approximation of the form
+
+\begin{equation}\label{unweighted}
+\zeta(\xi_i,\eta_i) \simeq z_{jk} +
+\frac{\partial z_{jk}}{\partial x}(\xi_i-x_j) +
+\frac{\partial z_{jk}}{\partial y}(\eta_i-y_k) +
+\frac12\frac{\partial^2 z_{jk}}{\partial x \partial y} (\xi_i-x_j)(\eta_i-y_k)\,,
+\end{equation}
+
+using only data such that
+
+\begin{equation}\label{bounds}
+x_{j-p} \leq \xi_i \leq x_{j+p} \text{ and }
+y_{k-q} \leq \eta_i \leq y_{k+q}
+\end{equation}
+
+and solve for $z_{jk}$ and its derivatives.  If $p=q=1$ this is
+equivalent to the ``Gandalf's hat'' interpolation used in the full
+forward model.
+
+This solution method can be formulated as $mn$ (dense) least-squares
+problems, each with four columns and as many rows as satisfy
+Equation(\ref{bounds}), or as one least-squares problem of $4mn$
+columns.  In the latter case, the problem is block diagonal, with each of
+the $mn$ blocks corresponding to a particular $(x_j,y_k)$ and having four
+columns and a number of rows equal to $|\{(\xi,\eta): x_{j-p} \leq \xi_i
+\leq x_{j+p} \text{ and } y_{k-q} \leq \eta_i \leq y_{k+q}\}|$.  The
+number of rows might be as large as $4pqmn|\{(\xi,\eta)\}|$.
+
+\subsection{Global unweighted least squares}
+
+Construct a least-squares approximation of the same form as Equation
+(\ref{unweighted}), but using all data. If this is formulated as $mn$
+least-squares problems, each has four columns and a number of rows equal
+to $|\{(\xi,\eta)\}|$. If this is formulated as one least-squares
+problem, it has $4mn$ columns and a number of rows equal to
+$mn|\{(\xi,\eta)\}|$, but it is not sparse.
+
+\subsection{Global weighted least squares}
+
+Each equation in the global weighted least squares method is
+Equation(\ref{unweighted}), multiplied by a weight
+
+\begin{equation}
+\exp\left(-\left(\frac{x_j-\xi_i}{s_x}\right)^2-
+    \left(\frac{y_k-\eta_i}{s_y}\right)^2\right)\,,
+\end{equation}
+
+where $s_x$ and $s_y$ are scale factors that expresses one's confidence
+that a low-order Taylor approximation is appropriate over the distances
+$x_j-\xi_i$ and $y_k-\eta_i$.  One possible default for the scale factors
+is
+
+\begin{equation}\label{scales}
+s_x = \frac{x_m-x_1}{m-1} \text{ and } s_y = R\, \frac{y_n-y_1}{n-1}
+\end{equation}
+
+where $R$ converts $x$ and $y$ to the same units.  The default for $R$ is
+1.0.
+
+\subsection{Spline}
+
+By dividing the $(x_j,y_k)$ grid into cells, say midway between grid
+lines, imposing continuity constraints along the cell boundaries, and
+considering only data $\zeta(\xi_i,\eta_i)$ within each cell, a
+least-squares problem similar to the second formulation in \ref{local}
+can be formed.  Instead of being block diagonal, this problem is banded,
+with the band arising from the continuity constraints.  One usually
+thinks of a bicubic approximation and constraints on both the value and
+derivatives of the solution, instead of Equation (\ref{unweighted}), but
+the paradigm works equally well using Equation (\ref{unweighted}) and
+continuity constraints only on the value of the solution.
+
+This is not yet implemented.
+
+\section{Modifications to {\tt fill} command}
+
+Three new fill methods have been implemented, known as {\tt LSLocal},
+{\tt LSGlobal} and {\tt LSWeighted} to specify the local, global
+unweighted or global weighted methods described above, respectively. 
+These fill methods are specified similarly to {\tt BinMax}, {\tt
+BinMean}, {\tt BinMin} and {\tt BinTotal}.  In addition, if {\tt
+method=LSWeighted} the values of $s_x$, $s_y$ and $R$ in Equation
+(\ref{scales}) can be specified by {\tt ScaleInsts}, {\tt ScaleSurfs} and
+{\tt ScaleRatio} fields, respectively.  If any of these is not specified,
+the default in Equation (\ref{scales}) is used.  $s_y$ is always
+multiplied by $R$, even if {\tt ScaleSurfs} is specified.
+
+\label{lastpage}
+\end{document}
+% $Id: $
+@

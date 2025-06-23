@@ -1,0 +1,199 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.14
+	cfm-single-freq-0-1:1.1.0.12
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.10
+	mus-emls-1-70:1.1.0.8
+	rel-1-0-englocks-work:1.1.0.6
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V2-24-NRT-04:1.1
+	V3-33:1.1
+	V2-24:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1
+	V2-23-NRT-02:1.1
+	V2-23:1.1
+	V2-22-NRT-01:1.1
+	V2-22:1.1
+	V2-21:1.1
+	V2-20:1.1
+	V2-11:1.1
+	V2-10:1.1
+	V2-00:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2005.04.13.21.46.35;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@First commit
+@
+text
+@!=================================
+PROGRAM streqTest ! tests MLSStrings module
+!=================================
+
+   USE MLSStrings, ONLY: indexes, isRepeat, lowercase, NCopies, streq
+   IMPLICIT NONE
+
+!------------------- RCS Ident Info -----------------------
+   CHARACTER(LEN=130) :: Id = &                                                    
+   "$Id: ExtractSubStringTest.f90,v 1.1 2003/04/11 23:26:53 pwagner Exp $"
+   CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile: ExtractSubStringTest.f90,v $"
+!----------------------------------------------------------
+
+! Brief description of program
+! This program tests the streq and other new functions.
+
+! To use this, copy it into
+! mlspgs/tests/lib
+! then enter "make depends" followed by "make"
+
+
+! Then run it, entering comma-separated lists of words; a blank line terminates
+
+! Variables
+
+   INTEGER, PARAMETER                :: MAXARRAYLENGTH=100
+   INTEGER, PARAMETER                :: MAXLISTLENGTH=800
+	CHARACTER (LEN=MAXLISTLENGTH)     :: theString
+	CHARACTER (LEN=MAXLISTLENGTH)     :: pattern
+	CHARACTER (LEN=8            )     :: options
+	CHARACTER (LEN=8), dimension(MAXARRAYLENGTH)     :: substrings
+	CHARACTER (LEN=1            )     :: test
+   integer, dimension(MAXARRAYLENGTH):: ints
+   logical, dimension(MAXARRAYLENGTH):: logs
+   logical                           :: isit
+   integer                           :: highfit
+   integer                           :: nsubs
+   logical, parameter :: countEmpty=.true.
+
+ 	 print *, 'What test do you wish to run?'
+ 	 print *, 'streq (s), indexes (x), ncopies (n), isRepeat (r)'
+	 read(*, '(A)') test
+    select case (lowercase(test))
+    case ('s')
+
+ 	   print *, 'Enter pattern to be matched against'
+		read(*, '(A)') pattern
+      print *, 'You entered ', trim(pattern)
+ 	   print *, 'Enter options (e.g., -wcf)'
+		read(*, '(A)') options
+      print *, 'You entered ', trim(options)
+      do
+ 	     print *, 'Enter string to be processed'
+		  read(*, '(A)') theString
+		  IF(theString == ' ') exit
+        print *, 'You entered ', trim(theString)
+        isit = streq(theString, pattern, options)
+        print *, 'matches? ', isit
+		ENDDO
+    case ('x')
+
+ 	   print *, 'Enter string'
+		read(*, '(A)') theString
+      print *, 'You entered ', trim(theString)
+ 	   ! print *, 'Enter mode (left, right, first,last, wrap)'
+		! read(*, '(A)') options
+      ! print *, 'You entered ', trim(options)
+      nsubs = 0
+      do
+ 	     print *, 'Enter substring to be processed (blank after last one)'
+        nsubs = nsubs+1
+		  read(*, '(A)') substrings(nsubs)
+		  IF(substrings(nsubs) == ' ') exit
+		ENDDO
+      nsubs = nsubs - 1
+      if ( nsubs < 1 ) stop
+      ! ints(1:nsubs) = indexes(theString, substrings(1:nsubs), mode=options)
+      ints(1:nsubs) = indexes(theString, substrings(1:nsubs), mode='first')
+      print *, 'indexes (mode=first): ', ints(1:nsubs)
+      ints(1:nsubs) = indexes(theString, substrings(1:nsubs), mode='last')
+      print *, 'indexes (mode=last): ', ints(1:nsubs)
+      ints(1:nsubs) = indexes(theString, substrings(1:nsubs), mode='left')
+      print *, 'indexes (mode=left): ', ints(1:nsubs)
+      ints(1:nsubs) = indexes(theString, substrings(1:nsubs), mode='right')
+      print *, 'indexes (mode=right): ', ints(1:nsubs)
+      ints(1:nsubs) = indexes(theString, substrings(1:nsubs), mode='wrap')
+      print *, 'indexes (mode=wrap): ', ints(1:nsubs)
+    case ('n')
+
+ 	   print *, 'Enter string'
+		read(*, '(A)') theString
+      print *, 'You entered ', trim(theString)
+ 	   print *, 'Enter substring to be processed'
+		read(*, '(A)') substrings(1)
+		IF(substrings(1) == ' ') then
+        substrings(1) = theString(1:1)
+      endif
+        nsubs = 1
+ 	   ! print *, 'May substrings overlap?'
+		! read(*, '(L)') isit
+      nsubs = ncopies(theString, trim(substrings(1)), overlap=.false.)
+      print *, 'ncopies(non-overlapping): ', nsubs
+      nsubs = ncopies(theString, trim(substrings(1)), overlap=.true.)
+      print *, 'ncopies(overlapping): ', nsubs
+    case ('r')
+
+ 	   print *, 'Enter string'
+		read(*, '(A)') theString
+      print *, 'You entered ', trim(theString)
+ 	   print *, 'Enter substring to be processed (or blank if none)'
+		read(*, '(A)') substrings(1)
+		IF(substrings(1) == ' ') then
+        nsubs = 0
+      else
+        nsubs = 1
+      endif
+      if ( nsubs < 1 ) then
+        isit = isRepeat(theString)
+      else
+        isit = isRepeat(theString, substrings(1))
+      endif
+      print *, 'is repeat?: ', isit
+    case default
+      print *, 'Unrecognized test: ', test
+    end select
+!==================
+END PROGRAM streqTest
+!==================
+
+! $Log: ExtractSubStringTest.f90,v $
+@

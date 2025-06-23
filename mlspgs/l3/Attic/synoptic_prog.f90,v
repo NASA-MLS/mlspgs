@@ -1,0 +1,125 @@
+head	1.2;
+access;
+symbols
+	V0-5-Level2:1.1
+	V0-5-SIPS:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2001.05.04.18.22.42;	author nakamura;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2000.10.05.18.38.48;	author nakamura;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@No longer used.
+@
+text
+@
+! Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+!===============
+Program Synoptic
+!===============
+
+	Use global_data
+	Use main_func
+	Use MLSCommon
+
+	implicit none
+
+!------------------- RCS Ident Info -----------------------
+   CHARACTER(LEN=130) :: Id = &
+
+   "$Id: synoptic_prog.f90,v 1.1 2000/10/05 18:38:48 nakamura Exp $"
+   CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile: synoptic_prog.f90,v $"
+!----------------------------------------------------------
+
+! Brief description of program
+! This is the main program to run the Core processing.
+
+! Parameters
+
+	integer, Parameter :: nlons = 180
+
+	! Variable definitions
+
+        integer i, ctype
+        real(r8), Dimension(nlons) :: xlon, result
+	real xloni, xtemp, xtime
+ 
+        ctype = 1
+	xtime = 5.5
+
+ 	do i = 1, nlons 
+  		xlon(i) = ((i-1)*360.0/float(nlons)*PI/180.0 - PI)
+ 	end do
+
+	!call Init(nt_i=180, orbitfreq_i=32.0, c0_i=2.0*PI, lonD0_i=PI, tD0_i=0.0, lat_i=0.0)
+	!call Init(nt_i=128, orbitfreq_i=20.0, c0_i=2.0*PI, lonD0_i=0.8, tD0_i=0.0, lat_i=.0)
+	!call Init(nt_i=128, orbitfreq_i=15.0, c0_i=2.0*PI, lonD0_i=0.8, tD0_i=0.0, lat_i=.0)
+	call Init(ctype, nt_i=128, orbitfreq_i=20.0, c0_i=2.0*PI, lonDA0_i=0.8, tDA0_i=0.0, lat_i=0.0)
+
+        print *, orbitfreq, c0, lonD0, tD0
+
+        call cordTransform(ctype)
+        if(ctype == 0) then
+          call DataGenerate("cord.dat", "cord_rs.dat")
+ 	else
+          call DataGenerate1("cord.dat", "cord_rs.dat")
+ 	end if
+
+        if(ctype == 0) then
+	   call FFSM()
+ 	else
+	   call FFSM1()
+ 	end if
+
+        call Reconstruct(ctype, xtime, nlons, xlon, result)
+
+        open(3, file="synoptic.dat", status="replace")
+	write(3, *) nlons
+ 	do i = 1, nlons
+           xloni = xlon(i)
+	   xtemp = DataField(xloni, 0.0, xtime) 
+	   write(3, '(I5, 4F10.5)') i, xtemp, xlon(i), result(i)
+        end do
+        close(3)
+
+!===================
+End Program Synoptic
+!===================
+
+! $Log: synoptic_prog.f90,v $
+! Revision 1.1  2000/10/05 18:38:48  nakamura
+! Program split from synoptic.f90 and modified to be more like the standard template.
+!
+@
+
+
+1.1
+log
+@Program split from synoptic.f90 and modified to be more like the standard template.
+@
+text
+@d18 1
+a18 1
+   "$Id: synoptic_prog.f90,v 1.6 2000/06/13 20:04:15 nakamura Exp nakamura $"
+d77 4
+a80 1
+! $Log: $
+@
+

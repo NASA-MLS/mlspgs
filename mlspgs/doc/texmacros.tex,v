@@ -1,0 +1,229 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.12
+	cfm-single-freq-0-1:1.2.0.10
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.8
+	mus-emls-1-70:1.2.0.6
+	rel-1-0-englocks-work:1.2.0.4
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.2
+	V4-21:1.2.0.2
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	M4-00:1.1
+	V3-33:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.2
+date	2014.11.25.02.27.14;	author yanovsky;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2011.03.17.21.05.49;	author yanovsky;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Added additional macros
+@
+text
+@\usepackage[dvips]{color}
+%\usepackage{times}
+\usepackage{epsfig}
+\usepackage{graphicx}
+\usepackage{verbatim}
+\usepackage{amscd, amsfonts, amsmath, amssymb, amsthm}
+\usepackage{pifont}
+\usepackage[mathscr]{eucal}
+\usepackage{latexsym}
+\usepackage{graphics}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{enumitem}
+
+%\newcommand{\em}{\emph}
+
+\def\etal{\emph{et al. }}
+
+\def\Var{\mbox{Var}}
+\def\Cov{\mbox{Cov}}
+\def\diag{\mbox{diag}}
+\def\trace{\mbox{trace}}
+\def\divergence{\mbox{div}}
+\def\kron{\mbox{kron}}
+
+\def\va{{\bf a}}
+\def\vb{{\bf b}}
+\def\vc{{\bf c}}
+\def\vd{{\bf d}}
+\def\ve{{\bf e}}
+\def\vE{{\bf E}}
+\def\vf{{\bf f}}
+\def\vg{{\bf g}}
+\def\vh{{\bf h}}
+\def\vi{{\bf i}}
+\def\vj{{\bf j}}
+\def\vk{{\bf k}}
+\def\vr{{\bf r}}
+\def\vs{{\bf s}}
+\def\vS{{\bf S}}
+\def\vt{{\bf t}}
+\def\vT{{\bf T}}
+\def\vu{{\bf u}}
+\def\vv{{\bf v}}
+\def\vV{{\bf V}}
+\def\vw{{\bf w}}
+\def\vx{{\bf x}}
+\def\vy{{\bf y}}
+\def\vY{{\bf Y}}
+\def\vZ{{\bf Z}}
+
+\def\vid{{\bf id}}
+
+\def\vC{{\bf C}}
+\def\vF{{\bf F}}
+\def\vP{{\bf P}}
+\def\vR{{\bf R}}
+\def\vX{{\bf X}}
+
+\def\g{g}
+\def\pdf{p}
+
+\def\vn{{\textbf n}}
+
+\def\valpha{{\boldsymbol \alpha}}
+\def\vepsilon{{\boldsymbol \epsilon}}
+\def\veta{{\boldsymbol \eta}}
+\def\vgamma{{\boldsymbol \gamma}}
+\def\vnabla{{\bf \nabla}}
+\def\vnu{{\boldsymbol \nu}}
+\def\vomega{{\boldsymbol \omega}}
+\def\vsigma{\boldsymbol \sigma}
+\def\vSigma{\boldsymbol \Sigma}
+\def\vtau{{\boldsymbol \tau}}
+\def\vxi{{\boldsymbol \xi}}
+
+\def\I{\mathcal{I}}
+\def\D{\mathcal{D}}
+\def\E{\mathcal{E}}
+\def\R{\mathcal{R}}
+\def\S{\mathcal{S}}
+\def\T{\mathcal{T}}
+
+% UNITS:
+\def\m{\mbox{m}}
+\def\km{\mbox{km}}
+\def\nm{\mbox{nm}}
+\def\cm{\mbox{cm}}
+\def\s{\mbox{s}}
+\def\kg{\mbox{kg}}
+\def\K{\mbox{K}}
+\def\N{\mbox{N}}
+\def\J{\mbox{J}}
+\def\Pa{\mbox{Pa}}
+\def\hPa{\mbox{hPa}}
+\def\Hz{\mbox{Hz}}
+\def\MHz{\mbox{MHz}}
+\def\AMU{\mbox{AMU}}
+
+\def\NH{\mbox{NH}}
+\def\NP{\mbox{NP}}
+
+\def\tq{f_q^T}
+
+\def\btau{\mbox{{\mathversion{bold}$\mathcal{T}$}}}
+
+\def\insta{\mathfrak{M}}
+
+
+
+
+%\def\exp{\mbox{c}}
+
+\def\pf{p^{I_1}}  % \def\pf{p^{S}}
+\def\pgE{p^{I_2}_{{\textbf u}+\varepsilon\veta}} % \def\pgE{p^{T}_{{\bf u}+\varepsilon{\bf \eta}}}
+\def\pfgE{p^{I_1,I_2}_{{\textbf u}+\varepsilon \veta}}
+
+\def\pg{p^{I_2}_{{\textbf u}}} % \def\pg{p^{T}_{{\bf u}}}
+\def\pfg{p^{I_1,I_2}_{{\textbf u}}}
+
+\hyphenation{atmosphere}
+\hyphenation{considered}
+\hyphenation{defined}
+\hyphenation{Jacobian}
+\hyphenation{radiation}
+\hyphenation{reconstruction}
+\hyphenation{thermodynamic}
+\hyphenation{variation}
+\hyphenation{vector}
+
+% $Id:  $
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d1 2
+a2 2
+\usepackage[dvips]{graphics,color}
+\usepackage{times}
+d13 1
+d21 1
+d24 1
+a25 12
+\def\pdf{p}
+\def\vx{{\bf x}}
+\def\vy{{\bf y}}
+\def\vg{{\bf g}}
+\def\g{g}
+\def\vf{{\bf f}}
+\def\vF{{\bf F}}
+\def\vh{{\bf h}}
+\def\vu{{\bf u}}
+\def\vv{{\bf v}}
+\def\vnabla{{\bf \nabla}}
+\def\vid{{\bf id}}
+a26 1
+\def\vr{{\bf r}}
+d28 1
+d30 5
+a34 1
+\def\vt{{\bf t}}
+d38 13
+d52 10
+a63 1
+\def\vtau{{\boldsymbol \tau}}
+d65 7
+d73 2
+a75 1
+\def\veta{{\boldsymbol \eta}}
+d130 2
+@
+

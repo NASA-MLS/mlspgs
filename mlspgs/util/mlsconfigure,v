@@ -1,0 +1,3556 @@
+head	1.39;
+access;
+symbols
+	v5-02-NRT-19:1.39
+	v6-00:1.39
+	v5-02-NRT-18:1.39
+	v5-02:1.39
+	v5-01-NRT-17:1.39
+	v5-01-NRT-16:1.39
+	v5-01-NRT-15:1.39
+	v5-01-NRT-14:1.39
+	neuralnetworks-1-0:1.39.0.10
+	cfm-single-freq-0-1:1.39.0.8
+	v5-01:1.39
+	v5-00:1.39
+	v4-23-TA133:1.39.0.6
+	mus-emls-1-70:1.39.0.4
+	rel-1-0-englocks-work:1.39.0.2
+	VUMLS1-00:1.38
+	VPL1-00:1.38
+	V4-22-NRT-08:1.38
+	VAM1-00:1.38
+	V4-21:1.38.0.4
+	V4-13:1.38
+	V4-12:1.38
+	V4-11:1.38
+	V4-10:1.38
+	V3-43:1.38
+	M4-00:1.38
+	V3-41:1.38
+	V3-40-PlusGM57:1.38.0.2
+	V2-24-NRT-04:1.37
+	V3-33:1.38
+	V2-24:1.37
+	V3-31:1.38
+	V3-30-NRT-05:1.38
+	cfm-01-00:1.38
+	V3-30:1.38
+	V3-20:1.38
+	V3-10:1.38
+	V2-23-NRT-02:1.37
+	V2-23:1.37
+	V2-22-NRT-01:1.37
+	V2-22:1.37
+	V2-21:1.37
+	V2-20:1.37
+	V2-11:1.37
+	V2-10:1.37
+	V2-00:1.37
+	V1-51:1.36
+	V1-50:1.36
+	V1-45:1.35
+	V1-44:1.35
+	V1-43:1.35
+	V1-42:1.35
+	V1-41:1.35
+	V1-32:1.35
+	V1-40:1.35
+	V1-31:1.35
+	V1-30:1.35
+	V1-13:1.33
+	V1-12:1.33
+	V1-11:1.33
+	V1-10:1.33
+	newfwm-feb03:1.33.0.2
+	V1-04:1.29
+	V1-03:1.29
+	V1-02:1.29
+	V1-00:1.29
+	newfwm-sep01:1.21.0.2
+	V0-7:1.20
+	V0-5-Level2:1.11
+	V0-5-SIPS:1.11;
+locks; strict;
+comment	@# @;
+
+
+1.39
+date	2017.12.18.18.46.49;	author pwagner;	state Exp;
+branches;
+next	1.38;
+
+1.38
+date	2009.04.13.20.43.17;	author pwagner;	state Exp;
+branches;
+next	1.37;
+
+1.37
+date	2005.06.23.22.23.00;	author pwagner;	state Exp;
+branches;
+next	1.36;
+
+1.36
+date	2005.01.15.00.25.19;	author pwagner;	state Exp;
+branches;
+next	1.35;
+
+1.35
+date	2003.04.25.22.58.33;	author pwagner;	state Exp;
+branches;
+next	1.34;
+
+1.34
+date	2003.04.01.23.16.43;	author pwagner;	state Exp;
+branches;
+next	1.33;
+
+1.33
+date	2002.09.04.18.10.22;	author pwagner;	state Exp;
+branches;
+next	1.32;
+
+1.32
+date	2002.07.29.23.02.17;	author pwagner;	state Exp;
+branches;
+next	1.31;
+
+1.31
+date	2002.07.22.22.08.44;	author pwagner;	state Exp;
+branches;
+next	1.30;
+
+1.30
+date	2002.07.18.19.38.32;	author pwagner;	state Exp;
+branches;
+next	1.29;
+
+1.29
+date	2002.02.06.00.46.18;	author pwagner;	state Exp;
+branches;
+next	1.28;
+
+1.28
+date	2001.11.17.00.23.05;	author pwagner;	state Exp;
+branches;
+next	1.27;
+
+1.27
+date	2001.11.13.23.22.46;	author pwagner;	state Exp;
+branches;
+next	1.26;
+
+1.26
+date	2001.11.09.21.49.39;	author pwagner;	state Exp;
+branches;
+next	1.25;
+
+1.25
+date	2001.11.08.00.39.14;	author pwagner;	state Exp;
+branches;
+next	1.24;
+
+1.24
+date	2001.11.07.00.27.49;	author pwagner;	state Exp;
+branches;
+next	1.23;
+
+1.23
+date	2001.11.06.00.20.34;	author pwagner;	state Exp;
+branches;
+next	1.22;
+
+1.22
+date	2001.10.10.23.23.54;	author pwagner;	state Exp;
+branches;
+next	1.21;
+
+1.21
+date	2001.09.04.23.33.35;	author pwagner;	state Exp;
+branches;
+next	1.20;
+
+1.20
+date	2001.08.15.20.57.26;	author pwagner;	state Exp;
+branches;
+next	1.19;
+
+1.19
+date	2001.07.27.19.57.07;	author pwagner;	state Exp;
+branches;
+next	1.18;
+
+1.18
+date	2001.07.12.22.39.24;	author pwagner;	state Exp;
+branches;
+next	1.17;
+
+1.17
+date	2001.06.29.23.58.39;	author pwagner;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2001.06.11.20.52.41;	author pwagner;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2001.06.01.20.30.07;	author pwagner;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2001.05.31.23.25.02;	author pwagner;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2001.05.31.21.55.02;	author pwagner;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2001.05.14.17.37.14;	author pwagner;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2001.03.23.00.40.42;	author pwagner;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2001.03.16.18.53.28;	author pwagner;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2001.03.06.00.16.14;	author pwagner;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2001.02.27.18.10.44;	author pwagner;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2001.02.26.18.39.15;	author pwagner;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2001.02.26.00.26.49;	author pwagner;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2001.02.10.00.06.47;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.01.23.19.41.36;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2000.10.21.00.23.58;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2000.10.18.20.56.21;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2000.10.16.18.31.19;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@first commit
+@
+
+
+1.39
+log
+@Dont tell users to contact David.T.Cuddy
+@
+text
+@#!/bin/sh
+# --------------- mlsconfigure help
+#                 mlsconfigure    configures the mls for compiler, platform
+#
+# Called for either or both of two purposes:
+#   (Note that task (3) below has been taken on by a different script
+#    updatemf.sh)
+#
+# (1) Query user for: 
+#     (a) compiler and platform; 
+#     (b) SDP, HDF, HDF-EOS paths; 
+#     (c) paths to BLAS, LAPACK, PVM and FFTW (the "pv") libraries; 
+#     
+# Note: (1) not done if I am called with -nc option
+#     these get written to .configure
+# (2) Create a new directory $mcfg_dir/$MLSCONFG
+#      in parallel with $plat_dir/platforms; then
+#     put Makefile in it created from appropriate 2 files in platforms;
+#     e.g., say $MLSF95.$MLSPLAT is NAG.Linux
+#     this Makefile will then contain the following lines:
+#        # 1st: lines from .configure file
+#        MLSF95=NAG
+#        MLSPLAT=Linux
+#        # 2nd: lines from platforms/NAG.Linux
+#        FC=f95
+#         (etc.)
+#        # Last: lines from platforms/targets
+#        PROG=mlsl2
+#        $(PROG): $(OBJS) $(libdir)/libmls.a
+#         (etc.)
+#
+#     *.o, *.mod, etc. files will go in this new directory
+#     ((2) not done if $plat_dir/platforms directory fails to exist)
+#
+# (3) (superseded) In an existing directory $mcfg_dir/$MLSCONFG
+#        update the Makefile
+#
+#        O p t i o n s
+#  -h[elp]              (if present) Help (a work in progress)
+#  -help--brief         Brief overview
+#  -help--fopts         How to set compiler, linker opts
+#  -help--toolkit       How to set paths for the mandatory libraries
+#  -help--mlsconfigure  Help on mlsconfigure script
+#  -help--platform      How to configure for your platform
+#  -help--pvm           How to set paths for some optional libraries
+#  -c compiler_name     Name of Fortran compiler (Absoft, NAG, LF95, Sun)
+#  -confg confg_name    Name of configuration (chosen by user)
+#  -p platform_name     Name of computer or OS (Linux , sun, or sgi)
+#  -dc conf_dir         Directory where .configuration file is to be stored
+#  -pc plat_dir         Directory where platforms directory to be found
+#                        (defaults to ./)
+#  -mc mcfg_dir         Directory where $MLSCONFG directory will be created
+#                        (defaults to ./)
+#  -machine             (if present) Check that machine files up-to-date
+#  -nc                  (if present) Don't query nor change configuration
+#  -nd                  (if present) Don't delete ./$MLSCONFG if it already exists
+#  -pv                  (if present) Change PVM and FFTW settings
+#  -fl                  (if present) Change default FOPTS and LDOPTS
+#  -cf file_name        (if present) Use file_name instead of .configure
+# --------------- End mlsconfigure help
+#
+# Copyright 2005, by the California Institute of Technology. ALL
+# RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+# commercial use must be negotiated with the Office of Technology Transfer
+# at the California Institute of Technology.
+
+# This software may be subject to U.S. export control laws. By accepting this
+# software, the user agrees to comply with all applicable U.S. export laws and
+# regulations. User has the responsibility to obtain export licenses, or other
+# export authority as may be required before exporting such information to
+# foreign countries or providing access to foreign persons.
+
+# "$Id: mlsconfigure,v 1.38 2009/04/13 20:43:17 pwagner Exp $"
+
+#------------------------------- UserPrompt ------------
+# Function to prompt for user response
+#
+
+UserPrompt()
+{
+#    if [ "$BRAND" = "linux" ] ; then
+    if [ "$OSTYPE" = "linux" ] ; then
+	/bin/echo -n "$* " > /dev/tty
+    else
+	echo "$* \\c" > /dev/tty
+    fi
+    read user_response
+}
+
+#------------------------------- eecchhoo ------------
+# Function to echo each of its args on a separate line
+# unless there are no args, in which case echo the
+# current definition of BLANKLINE
+
+eecchhoo()
+{
+    if [ "$#" = 0 ] ; then
+	    echo $BLANKLINE
+    else
+       for line
+       do
+	       echo "$line"
+       done
+    fi
+}
+
+#---------------------------- get_unique_name
+#
+# Function returns a unique name based on arg, PID and HOSTNAME
+# e.g.,
+#           temp_file_name=`get_unique_name foo`
+#           echo $temp_file_name
+# might print foo.colossus.21455
+# if no arg, defaults to "temp" (very original name)
+# if two args present, assumes second is punctuation to
+# use in pace of "."
+
+get_unique_name()
+{
+
+   # How many args?
+      if [ $# -gt 1 ]
+      then
+        pt="$2"
+        temp="$1"
+      elif [ $# -gt 0 ]
+      then
+        pt="."
+        temp="$1"
+      else
+        pt="."
+        temp="temp"
+      fi
+   # Is $HOST defined?
+      if [ "$HOST" != "" ]
+      then
+         our_host_name="$HOST"
+      elif [ "$HOSTNAME" != "" ]
+      then
+         our_host_name="$HOSTNAME"
+      else
+         our_host_name="host"
+      fi
+    #  echo $our_host_name
+   # if in form host.moon.planet.star.. extract host
+      our_host_name=`echo $our_host_name | sed 's/\./,/g'`
+      our_host_name=`perl -e '@@parts=split(",","$ARGV[0]"); print $parts[0]' $our_host_name`
+      echo $temp${pt}$our_host_name${pt}$$
+}
+      
+#------------------------------- which_blas ------------
+#
+# Function to determine Which of possible BLAS options {a b c} is active
+# usage: which_blas $BLAS $LIB_BLAS
+# returns which_blas_option and which_blas_msg
+
+which_blas()
+{
+
+if [ "$1" != "" ] ; then
+#  Use externally-supplied library to satisfy blas calls
+#	which_blas_msg="$1/lib${2}.a"
+   which_blas_msg=`$REECHO -dir $1 -prefixn=-l -lib $2`
+   which_blas_msg="-L$1 ${which_blas_msg}"
+	which_blas_option="a"
+elif [ "$2" = "f95" ] ; then
+#  Use f95 intrinsic functions
+	which_blas_msg="(Use f95 intrinsic functions for any BLAS routines)"
+	which_blas_option="b"
+else
+#  Let the mls software build its own BLAS routines
+	which_blas_msg="(Let the mls software build its own BLAS routines)"
+	which_blas_option="c"
+fi
+
+}
+
+#------------------------------- which_lapack ------------
+#
+# Function to determine Which of possible lapack options {a b} is active
+# usage: which_lapack $LAPACK $LIB_LAPACK
+# returns which_lapack_option and which_lapack_msg
+
+which_lapack()
+{
+
+if [ "$1" != "" ] ; then
+#  Use externally-supplied library to satisfy lapack calls
+#	which_lapack_msg="$1/lib${2}.a"
+   which_lapack_msg=`$REECHO -dir $1 -prefixn=-l -lib $2`
+   which_lapack_msg="-L$1 ${which_lapack_msg}"
+	which_lapack_option="a"
+else
+#  Use f95 intrinsic functions
+	which_lapack_msg="(Use f95 intrinsic functions for any lapack routines)"
+	which_lapack_option="b"
+fi
+
+}
+
+#------------------------------- mega_buck ------------
+#
+# Function to force multiple-evaluation of its second arg
+# i.e., $$..$color (where the number of $ signs is n)
+# usage: mega_buck n color
+
+mega_buck()
+{
+   # Trivial case (n is 0)
+   if [ "$1" -lt 1 ]
+   then
+     mega_buck_result="$2"
+   elif [ "$2" = "" ]
+   then
+     mega_buck_result="$2"
+   else
+     mega_buck_result=`pr_mega_buck $1 $2`
+   fi
+}
+      
+pr_double_buck()
+{
+      eval echo $`echo $1`
+}
+      
+pr_mega_buck()
+{
+      number=0
+      mega_buck_temp=$2
+      while [ "$number" -lt "$1" ]
+      do
+        mega_buck_temp=`pr_double_buck $mega_buck_temp`
+        number=`expr $number + 1`
+      done
+      echo $mega_buck_temp
+}
+      
+#------------------------------- GetPlatform ------------
+
+GetPlatform()
+{
+        cat << EOF_1
+                    *        *        *
+
+The mls software requires that you configure it by responding to some
+questions; currently your platform, compiler and configuration name are given
+by:
+
+        platform:           $current_MLSPLAT
+        compiler:           $current_MLSF95
+        configuration name: $current_MLSCONFG
+
+If these settings are wrong, or you wish to change them in order to
+prepare multiple installations at your site, you will be given an
+opportunity to (re)set them momentarily.
+
+If your compiler or platform is not among the options to be presented,
+you may wish to try one of the options anyway, or else contact:
+
+	mls software team
+	jpl
+	Paul.A.Wagner@@jpl.nasa.gov
+	(818)354-6696
+
+and give the names of the compiler and platform you use.
+
+The name you choose for your configuration can reflect the choice of settings
+embodied in it. The default offered to you, based on the compiler and platform,
+should be accepted unless you intend to maintain multiple configurations
+simultaneously with different compiler or linker options, linked libraries, and
+so on.
+
+                    *        *        *
+
+Note that you must have a Fortran 95 or later compiler, and that you
+must first have installed the SDP Toolkit for the ECS Project. The
+latter, as well as useful documentation, may be obtained from the
+management of the EOSDIS Core System Data Handling System. At the time
+this configuration was being written (17 Oct 2000), the URL for them was
+	http://edhs1.gsfc.nasa.gov/
+
+EOF_1
+
+# Was this function called only as a help?
+if [ "$1" = "help" ]
+then
+   exit
+fi
+
+#accept user compiler and platforms settings to be written to file .configure
+
+   eecchhoo "" "f 9 5"
+ UserPrompt "Fortran 95 Compiler (Lahey, NAG, absoft, Sun, Intel, Gnu, Pathscale) [$current_MLSF95]"
+   if [ "$user_response" != "" ] ; then
+	case  "$user_response" in
+	    n* | N* )
+		echo "NAG compiler selected."
+		compiler=NAG
+	    ;;
+	    l* | L* )
+		echo "Lahey compiler selected."
+		compiler=LF95
+	    ;;
+	    i* | I* )
+		echo "Intel compiler selected."
+		compiler=IFC
+	    ;;
+	    g* | G* )
+		echo "Gnu compiler selected."
+		compiler=G95
+	    ;;
+	    a* | A* )
+		echo "Absoft compiler selected."
+		compiler=Abs
+	    ;;
+	    s* | S* )
+		echo "Sun's own (*not* NAG) f95 compiler selected."
+		compiler=Sun
+	    ;;
+	    p* | P* )
+		echo "Pathscale compiler selected."
+		compiler=PS
+	    ;;
+	    * )
+		echo "Unknown compiler selected."
+		compiler=Unknown
+	    ;;
+	esac
+   elif [ "$current_MLSF95" != "" ] ; then
+	echo "Compiler still $current_MLSF95."
+        compiler=$current_MLSF95
+   else
+	echo "Unknown compiler selected."
+	compiler=Unknown
+    fi
+
+#Check if changed compiler
+   if [ "$compiler" != "$current_MLSF95" ] ; then
+		chngd_confg="true"
+	fi
+
+   eecchhoo "" "p l a t f o r m"
+ UserPrompt "Platform (Linux, Sun, SGI) [$current_MLSPLAT]"
+   if [ "$user_response" != "" ] ; then
+	case  "$user_response" in
+	    su* | Su* | SU*)
+		echo "Sun platform selected."
+		platform=Sun
+	    ;;
+	    sg* | Sg* | SG* )
+		echo "SGI platform selected."
+		platform=SGI
+	    ;;
+	    l* | L* )
+		echo "Linux platform selected."
+		platform=Linux
+	    ;;
+	    * )
+		echo "No platform selected."
+		platform=None
+	    ;;
+	esac
+   elif [ "$current_MLSPLAT" != "" ] ; then
+	echo "Platform still $current_MLSPLAT."
+        platform=$current_MLSPLAT
+   else
+	echo "No platform selected."
+	platform=None
+   fi
+
+#Check if changed platform
+   if [ "$platform" != "$current_MLSPLAT" ] ; then
+		chngd_confg="true"
+	fi
+
+   if [ "$chngd_confg" = "true" ] ; then
+		current_MLSCONFG="$compiler.$platform"
+	fi
+   eecchhoo "" "c o n f i g u r a t i o n   n a m e"
+	echo "You may choose either a custom name or accept the default name"
+ UserPrompt "Name [$current_MLSCONFG]"
+   if [ "$user_response" != "" ] ; then
+      MLSCONFG="$user_response"
+   elif [ "$current_MLSCONFG" != "" ] ; then
+	echo "Defaulting to the name $current_MLSCONFG."
+        MLSCONFG=$current_MLSCONFG
+   else
+	   echo "(This should not have happened--no name possible)"
+	   MLSCONFG="."
+   fi
+
+#Check if changed configuration name
+#(Don't worry about current_MLSPLAT being different from the old one
+#--if that happened it was because chngd_confg was already true anyway)
+   if [ "$MLSCONFG" != "$current_MLSCONFG" ] ; then
+		chngd_confg="true"
+	fi
+
+export platform
+export compiler
+
+}
+
+#------------------------------- GetToolkit ------------
+
+GetToolkit()
+{
+        cat << EOF_2
+                    *        *        *
+
+To properly link the mls software requires that you set the paths to the
+libraries installed along with the SDP Toolkit. If you dont know these
+locations, you might have to ask the person at your site who installed this
+toolkit. It is possible that during the installation, these paths were
+automatically "hard wired" as environment variables, and if so the values shown
+below will be correct. If they are correct, simply answer Y[es] to the next
+question. Otherwise you will be asked to supply the correct paths. Except for
+hdf-eos(5) and hdf(5), all paths must be non-blank.
+
+Note: a path is a length of test that looks something like this:
+    /head/Toolkit/lib/linux
+would correspond to the path to the SDP Toolkit (called just "toolkit")
+
+EOF_2
+
+all_non_blank="true"
+
+if [ "$current_PGSINC" = "" ] ; then
+	all_non_blank="false"
+elif [ "$current_PGSTK" = "" ] ; then
+	all_non_blank="false"
+elif [ "$current_HDFEOS" = "" ] ; then
+	all_non_blank="false"
+elif [ "$current_HDF" = "" ] ; then
+	all_non_blank="false"
+elif [ "$current_GCTP" = "" ] ; then
+	all_non_blank="false"
+fi
+
+if [ "$all_non_blank" = "true" ] ; then
+
+        cat << EOF_3
+Currently your paths are given by:
+
+  "include" files:  $current_PGSINC
+  toolkit:          $current_PGSTK
+  hdf-eos(1):       $current_HDFEOS
+  hdf-eos(5):       $current_HDFEOS5
+  hdf(4):           $current_HDF
+  hdf(5):           $current_HDF5
+  gctp:             $current_GCTP
+
+If any of these settings are wrong or blank, or you wish to change them in
+order to prepare multiple installations at your site, you will be given an
+opportunity to (re)set them momentarily.
+
+EOF_3
+
+# Was this function called only as a help?
+if [ "$1" = "help" ]
+then
+   exit
+fi
+
+ UserPrompt "Are all of these paths correct?[Y[es] or N[o][default]]"
+   if [ "$user_response" != "" ] ; then
+	  case  "$user_response" in
+	      n* | N* )
+	     change_paths="true"
+	      ;;
+	      y* | Y* )
+	     change_paths="false"
+	      ;;
+	  esac
+   else
+	  change_paths="false"
+   fi
+
+else
+   # Was this function called only as a help?
+   if [ "$1" = "help" ]
+   then
+      echo "None of your library paths have been set yet"
+      exit
+   fi
+
+		change_paths="true"
+fi
+
+if [ $change_paths = "true" ] ; then
+#Change Includes path
+   eecchhoo "" "p g s i n c"
+ UserPrompt "include files path (must be non-blank) [$current_PGSINC]"
+   if [ "$user_response" != "" ] ; then
+	 PGSINC=$user_response
+   elif [ "$current_PGSINC" != "" ] ; then
+	echo "include files path is still $current_PGSINC."
+        PGSINC=$current_PGSINC
+   else
+	echo "Warning: No include files path selected; none found"
+	echo "mls software may not compile properly "
+	echo "unless you reconfigure; enter 'make configure'."
+	PGSINC="/"
+   fi
+
+#Change Toolkit path
+   eecchhoo "" "p g s t k"
+ UserPrompt "Toolkit path (must be non-blank) [$current_PGSTK]"
+   if [ "$user_response" != "" ] ; then
+	 PGSTK=$user_response
+   elif [ "$current_PGSTK" != "" ] ; then
+	echo "Toolkit path is still $current_PGSTK."
+        PGSTK=$current_PGSTK
+   else
+	echo "Warning: No toolkit path selected; none found"
+	echo "mls software levels 1 and 3 may not link properly "
+	echo "unless you reconfigure; enter 'make configure'."
+	PGSTK="/"
+   fi
+
+#Change hdfeos(1) path
+   eecchhoo "" "h d f e o s"
+ UserPrompt "HDFEOS(1) path (must be non-blank) [$current_HDFEOS]"
+   if [ "$user_response" != "" ] ; then
+	 HDFEOS=$user_response
+	 current_GCTP=$user_response
+	 GCTP=$user_response
+   elif [ "$current_HDFEOS" != "" ] ; then
+	echo "hdfeos(1) path is still $current_HDFEOS."
+        HDFEOS=$current_HDFEOS
+   else
+	echo "Warning: No HDFEOS(1) path selected; none found"
+	echo "mls software may not link properly "
+	echo "unless you reconfigure; enter 'make configure'."
+	HDFEOS="/"
+   fi
+
+#Change hdfeos(5) path
+   eecchhoo "" "h d f e o s 5"
+ UserPrompt "HDFEOS(5) path (may be blank) [$current_HDFEOS5]"
+   if [ "$user_response" = "<b>" ] ; then
+	 HDFEOS5=""
+	 echo "You will attempt build a mls software version without HDFEOS(5)"
+   elif [ "$user_response" != "" ] ; then
+	 HDFEOS5=$user_response
+   elif [ "$current_HDFEOS5" != "" ] ; then
+	echo "hdfeos(5) path is still $current_HDFEOS5."
+        HDFEOS5=$current_HDFEOS5
+   else
+	echo "Warning: No HDFEOS(5) path selected; none found"
+	echo "mls software may not link properly with newer Toolkit"
+	echo "unless you reconfigure; enter 'make configure'."
+	HDFEOS5="/"
+   fi
+
+#Change hdf(4) path
+   eecchhoo "" "h d f"
+ UserPrompt "HDF(4) path (must be non-blank) [$current_HDF]"
+   if [ "$user_response" != "" ] ; then
+	 HDF=$user_response
+   elif [ "$current_HDF" != "" ] ; then
+	echo "hdf(4) path is still $current_HDF."
+        HDF=$current_HDF
+   else
+	echo "Warning: No HDF path selected; none found"
+	echo "mls software may not link properly "
+	echo "unless you reconfigure; enter 'make configure'."
+	HDF="/"
+   fi
+
+#Change hdf(5) path
+   eecchhoo "" "h d f 5"
+ UserPrompt "HDF(5) path (may be blank) [$current_HDF5]"
+   if [ "$user_response" = "<b>" ] ; then
+	 HDF5=""
+	 echo "You will attempt build a mls software version without HDF(5)"
+   elif [ "$user_response" != "" ] ; then
+	 HDF5=$user_response
+   elif [ "$current_HDF5" != "" ] ; then
+	echo "hdf(5) path is still $current_HDF5."
+        HDF5=$current_HDF5
+   else
+	echo "Warning: No HDF(5) path selected; none found"
+	echo "mls software may not link properly with newer Toolkit"
+	echo "unless you reconfigure; enter 'make configure'."
+	HDF5=""
+   fi
+
+#Change gctp path
+   eecchhoo "" "g c t p"
+ UserPrompt "GCTP path [$current_GCTP]"
+   if [ "$user_response" != "" ] ; then
+	 GCTP=$user_response
+   elif [ "$current_GCTP" != "" ] ; then
+	echo "GCTP path is still $current_GCTP."
+        GCTP=$current_GCTP
+   else
+	echo "Warning: No GCTP path selected; none found"
+	echo "mls software may not link properly "
+	echo "unless you reconfigure; enter 'make configure'."
+	GCTP="/"
+   fi
+
+else
+    PGSINC=$current_PGSINC
+    PGSTK=$current_PGSTK
+    HDFEOS=$current_HDFEOS
+    HDFEOS5=$current_HDFEOS5
+    HDF=$current_HDF
+    HDF5=$current_HDF5
+    GCTP=$current_GCTP
+fi
+}
+
+#------------------------------- GetPVM ------------
+GetPVM()
+{
+
+which_blas "$current_BLAS" "$current_LIB_BLAS"
+which_lapack "$current_LAPACK" "$current_LIB_LAPACK"
+
+        cat << EOF_4
+                    *        *        *
+
+The next questions refer to four special libraries: BLAS, LAPACK, PVM and FFTW.
+Here too, it is possible that during the installation, these paths were
+automatically "hard wired" as environment variables, and if so the values shown
+below may be correct. If they are correct, simply answer Y[es] to the next
+question. Otherwise you will be asked to supply the correct paths.
+
+Currently these paths are given by:
+
+        BLAS option    :  $which_blas_option
+           meaning     :  $which_blas_msg
+        LAPACK option  :  $which_lapack_option
+           meaning     :  $which_lapack_msg
+        PVM root       :  $current_PVM_ROOT
+        FFTW path      :  $current_FFTW_ROOT
+
+If these settings are wrong, or you wish to change them in order to prepare
+multiple installations at your site, you will be given an opportunity to
+(re)set them momentarily.
+
+Note that if you wish to "unset" any, that is to give them blank values, you
+cannot simply hit enter when asked to supply the new value because that means
+"continue using the existing value" which is what you want only if the existing
+value is already blank. Instead, to unset a non-blank existing value, enter
+"<b>" (w/o the "" marks).
+EOF_4
+
+# Was this function called only as a help?
+if [ "$1" = "help" ]
+then
+   exit
+fi
+
+ UserPrompt "Are these paths correct [Y[es][default] or N[o]]"
+   if [ "$user_response" != "" ] ; then
+	case  "$user_response" in
+	    n* | N* )
+		change_paths="true"
+	    ;;
+	    y* | Y* )
+		change_paths="false"
+	    ;;
+	esac
+   else
+	change_paths="false"
+    fi
+
+if [ $change_paths = "true" ] ; then
+
+#BLAS options
+   eecchhoo "" "b l a s"
+   echo "The following options for satisfying BLAS routines are available"
+   echo "(a) Use an externally-supplied library of BLAS routines"
+   echo "(b) Use f95 intrinsics"
+   echo "(c) Let the mls software build its own BLAS routines"
+   echo "(Choose (a) only if you know your BLAS library path and name)"
+
+   UserPrompt "Which of (a b c) do you choose [$which_blas_option]"
+   case "$user_response" in
+     a | A)
+     #Change BLAS root path
+     UserPrompt "BLAS root [$current_BLAS]"
+     if [ "$user_response" = "<b>" ] ; then
+	   BLAS=""
+	   echo "You will rely upon internally-supplied BLAS"
+     elif [ "$user_response" != "" ] ; then
+	   BLAS=$user_response
+     elif [ "$current_BLAS" != "" ] ; then
+	   echo "BLAS root path is still $current_BLAS."
+          BLAS=$current_BLAS
+     else
+	   echo "You will rely upon internally-supplied BLAS"
+      echo "unless you reconfigure; enter 'make configure_pvm'."
+      BLAS=""
+     fi
+
+     #Since we are using an external, don't let a prior choice of intrinsic stand
+     if [ "$current_LIB_BLAS" = "f95" ] ; then
+        current_LIB_BLAS=""
+     fi                               
+
+     #Change BLAS library name                                               
+	  echo "(Enter multiple names on the same line like this: x y z)"
+     UserPrompt "BLAS library name(s) (if x, then libx.a) [$current_LIB_BLAS]"  
+     if [ "$user_response" = "<b>" ] ; then                                  
+      LIB_BLAS=""                                                            
+      echo "BLAS library name is blas (default)"                             
+     elif [ "$user_response" != "" ] ; then                                  
+      LIB_BLAS=$user_response                                                
+     elif [ "$current_LIB_BLAS" != "" ] ; then                               
+      echo "BLAS lib name is still $current_LIB_BLAS."                        
+          LIB_BLAS=$current_LIB_BLAS                                         
+     else                                                                    
+      echo "BLAS library name is blas (default)"                             
+      LIB_BLAS=""                                                            
+     fi                                                                      
+         ;;
+     b | B)
+      echo "Using f95 intrinsics to satisfy BLAS routines"                             
+	   BLAS=""
+      LIB_BLAS="f95"                                                            
+         ;;
+
+     # c | C)
+     *)
+      echo "Let the mls software build its own BLAS routines"                             
+	   BLAS=""
+      LIB_BLAS=""                                                            
+         ;;
+
+   esac
+   
+#LAPACK options
+   eecchhoo "" "l a p a c k"
+   echo "The following options for satisfying LAPACK routines are available"
+   echo "(a) Use an externally-supplied library of LAPACK routines"
+   echo "(b) Use f95 intrinsics"
+   echo "(Choose (a) only if you know your LAPACK library path and name)"
+
+   UserPrompt "Which of (a b) do you choose [$which_lapack_option]"
+   case "$user_response" in
+     a | A)
+     #Change LAPACK root path
+     UserPrompt "LAPACK root [$current_LAPACK]"
+     if [ "$user_response" = "<b>" ] ; then
+	   LAPACK=""
+	   echo "You will rely upon f95 intrinsics for LAPACK"
+     elif [ "$user_response" != "" ] ; then
+	   LAPACK=$user_response
+     elif [ "$current_LAPACK" != "" ] ; then
+	   echo "LAPACK root path is still $current_LAPACK."
+          LAPACK=$current_LAPACK
+     else
+	   echo "You will rely upon f95 intrinsics for LAPACK"
+      echo "unless you reconfigure; enter 'make configure_pvm'."
+      LAPACK=""
+     fi
+
+     #Since we are using an external, don't let a prior choice of intrinsic stand
+     if [ "$current_LIB_LAPACK" = "f95" ] ; then
+        current_LIB_LAPACK=""
+     fi                               
+
+     #Change LAPACK library name                                               
+	  echo "(Enter multiple names on the same line like this: x y z)"
+     UserPrompt "LAPACK library name(s) (if x, then libx.a) [$current_LIB_LAPACK]"  
+     if [ "$user_response" = "<b>" ] ; then                                  
+      LIB_LAPACK=""                                                            
+      echo "LAPACK library name is lapack (default)"                             
+     elif [ "$user_response" != "" ] ; then                                  
+      LIB_LAPACK=$user_response                                                
+     elif [ "$current_LIB_LAPACK" != "" ] ; then                               
+      echo "LAPACK lib name is still $current_LIB_LAPACK."                        
+          LIB_LAPACK=$current_LIB_LAPACK                                         
+     else                                                                    
+      echo "LAPACK library name is lapack (default)"                             
+      LIB_LAPACK=""                                                            
+     fi                                                                      
+         ;;
+     # b | B)
+     *)
+      echo "Using f95 intrinsics to satisfy LAPACK routines"                             
+	   LAPACK=""
+      LIB_LAPACK="f95"                                                            
+         ;;
+
+   esac
+   
+#Change PVM root path
+   eecchhoo "" "p v m"
+ UserPrompt "PVM root (enter <b> to force back to blank) [$current_PVM_ROOT]"
+   if [ "$user_response" = "<b>" ] ; then
+	 PVM_ROOT=""
+	 echo "You will build a mls software version without PVM support"
+   elif [ "$user_response" != "" ] ; then
+	 PVM_ROOT=$user_response
+   elif [ "$current_PVM_ROOT" != "" ] ; then
+	echo "PVM root path is still $current_PVM_ROOT."
+        PVM_ROOT=$current_PVM_ROOT
+   else
+	echo "Warning: No PVM ROOT path selected; none found"
+	echo "You will build a mls software version without PVM support"
+	echo "unless you reconfigure; enter 'make configure_pvm'."
+	PVM_ROOT=""
+   fi
+
+#Change FFTW root path
+   eecchhoo "" "f f t w"
+ UserPrompt "FFTW root (enter <b> to force back to blank) [$current_FFTW_ROOT]"
+   if [ "$user_response" = "<b>" ] ; then
+	 FFTW_ROOT=""
+	 echo "You will build a mls software version without FFTW support"
+   elif [ "$user_response" != "" ] ; then
+	 FFTW_ROOT=$user_response
+   elif [ "$current_FFTW_ROOT" != "" ] ; then
+	echo "FFTW path is still $current_FFTW_ROOT."
+        FFTW_ROOT=$current_FFTW_ROOT
+   else
+	echo "Warning: No FFTW root path selected; none found"
+	echo "The level 3 mls software will not link properly"
+	echo "unless you reconfigure; enter 'make configure_pvm'."
+	FFTW_ROOT=""
+   fi
+
+else
+    BLAS=$current_BLAS
+    LIB_BLAS=$current_LIB_BLAS
+    LAPACK=$current_LAPACK
+    LIB_LAPACK=$current_LIB_LAPACK
+    PVM_ROOT=$current_PVM_ROOT
+    FFTW_ROOT=$current_FFTW_ROOT
+fi
+
+#PVM arch is based on platform
+#platform        PVM_ARCH
+#  Sun           SUN4SOL2
+#  SGI            SGI6
+#  Linux         LINUX
+#  None          LINUX
+
+if [ "$platform" = "Sun" ] ; then
+	PVM_ARCH="SUN4SOL2"
+elif [ "$platform" = "SGI" ] ; then
+	PVM_ARCH="SGI6"
+else
+	PVM_ARCH="LINUX"
+fi
+}
+
+#------------------------------- GetFOPTS ------------
+
+GetFOPTS()
+{
+      default_LDOPTS="$MLS_default_LDOPTS"
+		if [ "$current_MLSF95" = "NAG" ] ; then
+			if [ "$current_MLSPLAT" = "SGI" ] ; then
+				default_FOPTS="$MLS_default_FOPTS_NAG_SGI"
+			else
+				default_FOPTS="$MLS_default_FOPTS_NAG"
+			fi
+		elif [ "$current_MLSF95" = "Abs" ] ; then
+			default_FOPTS="$MLS_default_FOPTS_Abs"
+		elif [ "$current_MLSF95" = "G95" ] ; then
+			default_FOPTS="$MLS_default_FOPTS_G95"
+		elif [ "$current_MLSF95" = "IFC" ] ; then
+			default_FOPTS="$MLS_default_FOPTS_IFC"
+         default_LDOPTS="$MLS_default_LDOPTS_IFC"
+		elif [ "$current_MLSF95" = "Sun" ] ; then
+			default_FOPTS="$MLS_default_FOPTS_Abs"
+		else
+			default_FOPTS="$MLS_default_FOPTS_LF95"
+		fi
+        cat << EOF_5
+                    *        *        *
+
+You may change the current options passed to the compiler and linker. Normally
+the default options work well, but you may wish to set debugging, turn on
+warning messages, or choose advanced optimizations. Consult your manual for
+the precise format before changing these. 
+
+To reset an option to its default enter the word "default" (w/o the "" marks)
+at the prompt.
+
+Currently these paths are given by:
+
+      compiler option  :  $current_FOPTS
+           default     :  $default_FOPTS
+        linker option  :  $current_LDOPTS
+           default     :  $default_LDOPTS
+
+EOF_5
+
+# Was this function called only as a help?
+if [ "$1" = "help" ]
+then
+   exit
+fi
+
+#accept user compiler/linker options to be written to file .configure
+
+   eecchhoo "" "F O P T S"
+ UserPrompt "Fortran 95 Compiler options [$current_FOPTS]"
+   if [ "$user_response" = "default" ] ; then
+		current_FOPTS=
+   elif [ "$user_response" != "" ] ; then
+		current_FOPTS="$user_response"
+	fi
+
+   eecchhoo "" "L D O P T S"
+ UserPrompt "Fortran 95 Linker options [$current_LDOPTS]"
+   if [ "$user_response" = "default" ] ; then
+		current_LDOPTS=
+   elif [ "$user_response" != "" ] ; then
+		current_LDOPTS="$user_response"
+	fi
+
+}
+
+#------------------------------- HelpBrief ------------
+#
+# Function to output brief help message and exit
+#
+
+HelpBrief()
+{
+
+        cat << EOF_6
+                    *        *        *
+
+In order to properly build the mls software, a configuration step is required.
+Normally this is done only once: immediately after un-tarring or copying the
+source onto your machine. However in case of trouble, to optimize speed, or for
+other reasons this may need to be done again.
+
+The configuration step can be subdivided into three sub-steps: the first is
+basic and an absolute prerequisite; the other two are optional
+(i)    Identify your compiler, platform type, and paths to installed libraries
+       of HDF, HDFEOS, and Toolkits. This is the most basic info and you will
+       automatically be prompted for it. To change these settings later,
+       enter "make configure"
+(ii)   Decide if you want to build the software with support for external BLAS,
+       LAPACK, PVM and FFTW. The first three may improve performance, while the
+       last is needed to build level 3. These require setting paths to installed
+       libraries. To learn where to obtain them, enter "BEFORE.mls". To 
+       change these settings later, enter "make configure_pvm"
+(iii)  Choose compiler and linker options. Although these are automatically
+       set to default values that work well, you may have a reason to prefer
+       different options.To change these settings later,
+       enter "make configure_fopts"
+       
+EOF_6
+
+#No further help available yet
+    exit
+}
+
+#------------------------------- Help ------------
+#
+# Function to output help options and exit
+#
+
+Help()
+{
+
+        cat << EOF_7
+To see help on specific topics:
+Topic                               Command
+Orientation (this screen)           'make help'
+Brief overview                      'make help--brief'
+Prerequisites                       'make firsthelp'
+Configuring make for your platform  'make help--platform'
+Picking out mandatory libraries     'make help--toolkit'
+Setting compiler, linker options    'make help--fopts'
+Picking optional libraries          'make help--pvm'
+In depth explanation                'make disthelp'
+Makefile scripts                    'make help--scripts'
+Makefiles                           'make help--Makefile'
+EOF_7
+
+#No further help available yet
+    exit
+}
+
+#---------------------------- lhs_eq_rhs
+#
+# Function to assign second arg to first: lhs=rhs
+# where (lhs rhs) = ($1 $2)
+# if given optional third arg "n"
+# assigns $$..$lhs = $$..$rhs
+
+lhs_eq_rhs()
+{
+
+      if [ $# -lt 3 ]
+      then
+         eval "$1"="'"$2"'"
+      else
+         mega_buck $3 $1
+         lhs=$mega_buck_result
+         mega_buck $3 $2
+         rhs=$mega_buck_result
+           eval "$lhs"="'"$rhs"'"
+      fi
+}
+      
+#------------------------------- Main Program ------------
+
+#****************************************************************
+#                                                               *
+#                  * * * Main Program  * * *                    *
+#                                                               *
+#                                                               *
+#	The entry point where control is given to the script         *
+#****************************************************************
+
+# Set the following to "on" to print degugging info
+debugging="off"
+
+#Default compiler and linker options
+MLS_default_FOPTS_NAG="-w"
+MLS_default_FOPTS_NAG_SGI="-w -abi=n32"
+MLS_default_FOPTS_LF95=
+MLS_default_FOPTS_G95=
+MLS_default_FOPTS_IFC=
+MLS_default_FOPTS_Abs="-w"
+MLS_default_LDOPTS=
+MLS_default_LDOPTS_IFC="-Vaxlib"
+
+#---------------------- variables controlling mlsconfigure
+#                        controllable by Options--see above
+
+#conf_dir     the directory where the .configure file is to be stored
+#plat_dir     the directory to keep the platforms subdirectories
+#get_confg    true if need to query for configuration; false if use input values
+#write_confg  true if need to (re)write .configure file
+#chngd_confg  true if user changed MLSF95 or MLSPLAT; else false
+#add_PVM_PATH true if need to query for PVM and FFTW paths; else false
+#add_FOPTS    true if need to query for FOPTS and LDOPTS; else false
+#del_exist_dir  
+#             true if need to delete existing uniquely-named sub-dir
+#made_new_dir true if created new uniquely-named sub-dir; else false
+
+#---------------------- Settings written to .configure file
+
+#MLSF95     name of the compiler: LF95, NAG, Sun, Abs, IFC, G95
+#MLSPLAT    name of the platform: Sun, SGI, or Linux
+#MLSCONFG   MLSF95.MLSPLAT or else a name chosen by user
+#PGSINC     path to the toolbox include files
+#PGSTK      path to the toolbox library libPGSTK.a
+#           if blank, then build w/o toolkit
+#HDFEOS     path to the hdfeos(1) library libhdfeos.a
+#HDFEOS5    path to the hdfeos(5) library libhe5_hdfeos.a
+#HDF        path to the hdf(4) library libmfhdf.a, etc.
+#HDF5       path to the hdf(5) library libhdf5_fortran.a, etc.
+#GCTP       path to the gctp library libGctp.a
+#PGSLIB     PGSTK (duplicate)
+#HDFEOS_LIB HDFEOS (duplicate)
+#HDFLIB     HDF (duplicate)
+#BLAS       if non-blank, root of path to the blas library BLAS/libblas.a,
+#           if blank, then use internally supplied library
+#LIB_BLAS   name x of the blas library BLAS/libx.a,
+#           if blank, then x of libx.a
+#LAPACK     if non-blank, root of path to the blas library LAPACK/liblapack.a,
+#           if blank, then use internally supplied library
+#LIB_LAPACK   name x of the blas library LAPACK/libx.a,
+#           if blank, then x of libx.a
+#PVM_ROOT   root of path to the pvm library lib/PVM_ARCH/libpvm3.a, etc.
+#PVM_ARCH   OS & platform type: LINUX, SGI6, SGI64, SUN4SOL2
+#FFTW_ROOT  path to the fftw library libfftw.a, etc.
+#FOPTS      options used in all .o build commands (except the custom ones)
+#LDOPTS     options used in all executable build commands
+
+#---------------------- Name given to .configure file
+
+#MLSCFILE     name of the .configure file; defaults to .configure
+
+#---------------------- 
+
+# List all settings (some are duplicates--see above)
+# Add any additional ones to this sh array
+# Be aware then of possibly needing to add current* settings below
+# Also, decide where to actually interactively read user input
+# e.g., GetPVM, GetFOPTS or GetPlatform
+all_my_opts="MLSF95 MLSPLAT MLSCONFG PGSINC PGSTK HDFEOS HDFEOS5 \
+HDF HDF5 GCTP PGSLIB HDFEOS_LIB HDFLIB BLAS LIB_BLAS LAPACK LIB_LAPACK \
+PVM_ROOT PVM_ARCH FFTW_ROOT FOPTS LDOPTS"
+
+MLSCFILE=.configure
+
+conf_dir="./"
+plat_dir="./"
+mcfg_dir="./"
+get_confg="true"
+del_exist_dir="true"
+chngd_confg="false"
+m_update="false"
+m_option=
+
+# These three used to stand out as poorly chosen--
+# They violated the pattern current_VARIABLE=$VARIABLE
+# which could itself be automated to loop over all_my_opts
+# and thus be shorter and easier to extend with something like
+   for path in $all_my_opts
+   do
+     lhs_arg="current_${path}"
+     lhs_eq_rhs lhs_arg $path 1
+#     lhs_eq_rhs current_${path} $path 1
+   done
+if [ "$debugging" = "on" ] ; then
+   for path in $all_my_opts
+   do
+      mega_buck 1 $path
+      echo "$path=$mega_buck_result"
+      mega_buck 1 current_${path}
+      echo "current_${path}=$mega_buck_result"
+   done
+   exit
+fi
+# We now try this out in this version of mlsconfigure
+# in which we made the replacements
+# current_compiler -> current_MLSF95
+# current_platform -> current_MLSPLAT
+# current_confg -> current_MLSCONFG
+
+# Whether to include PVM & FFTW paths in .configure
+add_PVM_PATH="false"
+
+# Whether to include default FOPTS and LDOPTS in .configure
+add_FOPTS="false"
+
+# Debugging--reveal starting values
+if [ "$debugging" = "on" ] ; then
+   for path in $all_my_opts
+   do
+      mega_buck 1 $path
+      echo "$path=$mega_buck_result"
+   done
+	echo "add_PVM_PATH=$add_PVM_PATH"
+	echo "MLSCFILE=$MLSCFILE"
+fi
+
+#
+# Get arguments from command line
+#
+
+me="$0"
+me_simple=mlsconfigure
+REECHO="`echo $0 | sed 's/mlsconfigure/reecho.sh/'`"
+UPDATEMF="`echo $0 | sed 's/mlsconfigure/updatemf.sh/'`"
+MYPATH="`echo $0 | sed 's/mlsconfigure//'`"
+
+while [ "$1" != "" ] ; do
+
+    case "$1" in
+
+	-h | -help )
+	    Help
+       exit
+	;;
+
+	-help--brief )
+	    HelpBrief
+       exit
+	;;
+
+	-help--fopts )
+	    GetFOPTS help
+       exit
+	;;
+
+	-help--mlsconfigure )
+	    sed -n '/'$me_simple' help/,/End '$me_simple' help/ p' $me \
+		| sed -n 's/^..//p' | sed '1 d; $ d'
+       exit
+	;;
+
+	-help--platform )
+	    GetPlatform help
+       exit
+	;;
+
+	-help--pvm )
+	    GetPVM help
+       exit
+	;;
+
+	-help--toolkit )
+	    GetToolkit help
+       exit
+	;;
+
+	-c )
+	    current_MLSF95=$2
+	    shift
+	;;
+
+	-confg )
+	    current_MLSCONFG=$2
+	    shift
+	;;
+
+	-p )
+	    current_MLSPLAT=$2
+	    shift
+	;;
+
+	-dc )
+	    conf_dir=$2
+	    shift
+	;;
+
+	-pc )
+	    plat_dir=$2
+	    shift
+	;;
+
+	-mc )
+	    mcfg_dir=$2
+	    shift
+	;;
+
+	-cf )
+	    MLSCFILE=$2
+	    shift
+	;;
+
+	-machine )
+	    m_update="true"
+       m_option="-machine"
+	;;
+
+	-nc )
+	    get_confg="false"
+	;;
+
+	-nd )
+	    del_exist_dir="false"
+	;;
+
+	-pv )
+	    add_PVM_PATH="true"
+	;;
+
+	-fl )
+	    add_FOPTS="true"
+	;;
+
+	* )
+       echo "Unrecognized option in util/mlsconfigure: $1"
+	    Help
+       exit
+	;;
+
+    esac
+    shift
+
+done
+
+if [ "$debugging" = "on" ] ; then
+	echo "get_confg=$get_confg"
+	echo "MLSCFILE=$MLSCFILE"
+	echo "add_FOPTS=$add_FOPTS"
+	echo "add_PVM_PATH=$add_PVM_PATH"
+fi
+
+write_confg="false"
+
+if [ $get_confg = "true" ] ; then
+   if [ "$debugging" = "on" ] ; then
+      echo "Calling GetPlatform and GetToolkit"
+   fi
+	GetPlatform
+   GetToolkit
+	write_confg="true"
+else
+        compiler=$current_MLSF95
+        platform=$current_MLSPLAT
+fi
+
+#If user changed the compiler or platform, automatically query
+#for new pvm path, etc. and FOPTS, etc.
+#also blank out existing settings for FOPTS and LDOPTS
+if [ $chngd_confg = "true" ] ; then
+	add_PVM_PATH="true"
+	add_FOPTS="true"
+	current_FOPTS=""
+	current_LDOPTS=""
+fi
+
+if [ $add_PVM_PATH = "true" ] ; then
+   if [ "$debugging" = "on" ] ; then
+      echo "Calling GetPVM"
+   fi
+	GetPVM
+	write_confg="true"
+fi
+
+if [ $add_FOPTS = "true" ] ; then
+   if [ "$debugging" = "on" ] ; then
+      echo "Calling GetFOPTS"
+   fi
+	GetFOPTS
+	write_confg="true"
+fi
+
+if [ "$current_FOPTS" = "" ] ; then
+		if [ "$compiler" = "NAG" ] ; then
+			if [ "$platform" = "SGI" ] ; then
+				FOPTS="$MLS_default_FOPTS_NAG_SGI"
+			else
+				FOPTS="$MLS_default_FOPTS_NAG"
+			fi
+		elif [ "$compiler" = "Abs" ] ; then
+			FOPTS="$MLS_default_FOPTS_Abs"
+		elif [ "$compiler" = "IFC" ] ; then
+			FOPTS="$MLS_default_FOPTS_IFC"
+		elif [ "$compiler" = "G95" ] ; then
+			FOPTS="$MLS_default_FOPTS_G95"
+		elif [ "$compiler" = "Sun" ] ; then
+			FOPTS="$MLS_default_FOPTS_Abs"
+		else
+			FOPTS="$MLS_default_FOPTS_LF95"
+		fi
+else
+	FOPTS=$current_FOPTS
+fi
+
+if [ "$current_LDOPTS" = "" ] ; then
+  if [ "$compiler" = "IFC" ] ; then
+         LDOPTS="$MLS_default_LDOPTS_IFC"
+  else
+			LDOPTS="$MLS_default_LDOPTS"
+  fi
+else
+	LDOPTS=$current_LDOPTS
+fi
+
+if [ $write_confg = "true" ] ; then
+# 1st--check on blank paths
+# if blank, attempt alternate settings
+# if that fails, echo regrets and abort
+	if [ "$PGSTK" = "" ] ; then
+		PGSTK=$PGSLIB
+	fi
+	if [ "$PGSTK" = "" ] ; then
+		echo " Warning--the toolkit path is blank--only level 2 may be built"
+	fi
+	
+	if [ "$HDF" = "" ] ; then
+		HDF=$HDFLIB
+	fi
+	if [ "$HDF" = "" ] ; then
+		echo " Sorry--the HDF path must not be blank"
+		exit
+	fi
+	
+	if [ "$HDFEOS" = "" ] ; then
+		HDFEOS=$HDFEOS_LIB
+	fi
+	if [ "$HDFEOS" = "" ] ; then
+		echo " Sorry--the HDFEOS path must not be blank"
+		exit
+	fi
+	
+	if [ "$GCTP" = "" ] ; then
+		GCTP=$HDFEOS_LIB
+	fi
+	if [ "$GCTP" = "" ] ; then
+		echo " Sorry--the GCTP path must not be blank"
+		exit
+	fi
+	
+#	Create .configure file
+	if [ -f $conf_dir/$MLSCFILE ] ; then
+		chmod u+w $conf_dir/$MLSCFILE
+		rm -f $conf_dir/$MLSCFILE
+      confg_is="changed"
+   else
+      confg_is="new"
+	fi
+
+#	Because MakeFC checks on whether MLSCONFG is empty, not whether it is "."
+#	MLSCONFG=$compiler.$platform
+	if [ "MLSCONFG" = "." ] ; then
+		MLSCONFG=
+	fi
+	
+	echo "#	.configure for mls" > $conf_dir/$MLSCFILE
+   # duplicate some settings (shouldn't you find a cleaner fix?)
+   MLSF95=$compiler
+   MLSPLAT=$platform
+#   MLSCONFG=$compiler.$platform
+   PGSLIB=$PGSTK
+   HDFEOS_LIB=$HDFEOS
+   HDFLIB=$HDF
+   for path in $all_my_opts
+   do
+      mega_buck 1 $path
+      echo "$path=$mega_buck_result" >> $conf_dir/$MLSCFILE
+   done
+   for path in $all_my_opts
+   do
+      echo "export $path" >> $conf_dir/$MLSCFILE
+   done
+else
+#	just re-use current settings
+	compiler=$current_MLSF95
+	platform=$current_MLSPLAT
+   MLSF95=$compiler
+   MLSPLAT=$platform
+#   MLSCONFG=$compiler.$platform
+   confg_is="the_same"
+fi
+
+export MLSF95
+export MLSPLAT
+export MLSCONFG
+
+if [ $get_confg = "true" -o $add_PVM_PATH = "true" -o $add_FOPTS = "true" ]
+then
+   for path in $all_my_opts
+   do
+      mega_buck 1 $path
+	   echo "$path is now $mega_buck_result"
+   done
+fi
+
+#  Warn of massive recompilation after changes to .configure file
+if [ "$confg_is" = "changed" ] ; then                                 
+   echo "   N o t i c e"                                              
+   echo "You have changed your .configure file: $conf_dir/$MLSCFILE"  
+   echo "(The next make command may trigger massive recompilation"    
+   echo "unless you do a 'make update' first or set NOCLEANING)"      
+fi                                                                    
+
+#Don't create object-file directory if platforms not a directory
+if [ ! -d $plat_dir/platforms ] ; then
+	exit
+fi
+
+#Use $UPDATEMF to update the Makefile in the object file directory
+#with the newest settings
+"$UPDATEMF" -cf $conf_dir/$MLSCFILE -pc "$plat_dir" $m_option
+exit
+
+# $Log: mlsconfigure,v $
+# Revision 1.38  2009/04/13 20:43:17  pwagner
+# Fixed a bug preventing macros file from using its own macros properly
+#
+# Revision 1.37  2005/06/23 22:23:00  pwagner
+# Reworded Copyright statement
+#
+# Revision 1.36  2005/01/15 00:25:19  pwagner
+# Changed all mores to cats
+#
+# Revision 1.35  2003/04/25 22:58:33  pwagner
+# Added gnu g95 compiler to list
+#
+# Revision 1.34  2003/04/01 23:16:43  pwagner
+# Added IFC to the alternative compilers
+#
+# Revision 1.33  2002/09/04 18:10:22  pwagner
+# LIB_BLAS may be multiple libraries (e.g., f77blas atlas)
+#
+# Revision 1.32  2002/07/29 23:02:17  pwagner
+# Replaced part of code to update Makefile in object directories with script updatemf.sh
+#
+# Revision 1.31  2002/07/22 22:08:44  pwagner
+# Uses get_unique_name for temp file names
+#
+# Revision 1.30  2002/07/18 19:38:32  pwagner
+# Replaced with temp.mega_buck with PID-derived unique_name
+#
+# Revision 1.29  2002/02/06 00:46:18  pwagner
+# Optionally checks that machine files are up-to-date
+#
+# Revision 1.28  2001/11/17 00:23:05  pwagner
+# New helps; split GetToolkit from GetPlatform; automated current_SETTING=SETTING
+#
+# Revision 1.27  2001/11/13 23:22:46  pwagner
+# Tweaked help; note added describing future current_VARIABLE method
+#
+# Revision 1.26  2001/11/09 21:49:39  pwagner
+# User-defined configuration names possible
+#
+# Revision 1.25  2001/11/08 00:39:14  pwagner
+# New help system; mention of NOCLEANING where appropriate
+#
+# Revision 1.24  2001/11/07 00:27:49  pwagner
+# Tells how to enter multiple LAPACK library names
+#
+# Revision 1.23  2001/11/06 00:20:34  pwagner
+# Sets BLAS, LAPACK options and paths in new, simpler way
+#
+# Revision 1.22  2001/10/10 23:23:54  pwagner
+# New parameter allows use of single platforms directory by > 1 (MLSCONFG)
+#
+# Revision 1.21  2001/09/04 23:33:35  pwagner
+# Added Sun's own f95 option for MLSF95
+#
+# Revision 1.20  2001/08/15 20:57:26  pwagner
+# Fixed bug--MLSF95 vand MLSPLAT were undefined
+#
+# Revision 1.19  2001/07/27 19:57:07  pwagner
+# Added mega_buck function; exports BLAS and LIB_BLAS
+#
+# Revision 1.18  2001/07/12 22:39:24  pwagner
+# Now exports HDFEOS5
+#
+# Revision 1.17  2001/06/29 23:58:39  pwagner
+# Added LIB_BLAS and HDFEOS5
+#
+# Revision 1.16  2001/06/11 20:52:41  pwagner
+# Fixed tiny error in blank assignment of HDF5
+#
+# Revision 1.15  2001/06/01 20:30:07  pwagner
+# New print statements if debugging on
+#
+# Revision 1.14  2001/05/31 23:25:02  pwagner
+# Slightly more consistent messages
+#
+# Revision 1.13  2001/05/31 21:55:02  pwagner
+# Now includes HDF5 in .configure
+#
+# Revision 1.12  2001/05/14 17:37:14  pwagner
+# .configure now a variable file name
+#
+# Revision 1.11  2001/03/23 00:40:42  pwagner
+# Better message if pvm, fftw not set
+#
+# Revision 1.10  2001/03/16 18:53:28  pwagner
+# Resets FOPTS, LDOPTS if chngd_config; also automatically full queries
+#
+# Revision 1.9  2001/03/06 00:16:14  pwagner
+# Added Absoft compiler
+#
+# Revision 1.8  2001/02/27 18:10:44  pwagner
+# exports FOPTS and LDOPTS; better Help
+#
+# Revision 1.7  2001/02/26 18:39:15  pwagner
+# Fixed problem with older .configure files
+#
+# Revision 1.6  2001/02/26 00:26:49  pwagner
+# default FOPTS and LDOPTS can be set,  saved to .configure
+#
+# Revision 1.5  2001/02/10 00:06:47  pwagner
+# update now a target of make -f MakeFC; replaces customized Makefiles with latest versions
+#
+# Revision 1.4  2001/01/23 19:41:36  pwagner
+# Adds support for PVM
+#
+# Revision 1.3  2000/10/21 00:23:58  pwagner
+# Added paths to .configure
+#
+# Revision 1.2  2000/10/18 20:56:21  pwagner
+# Fixed obvious bug; 1st step towards -h option
+#
+# Revision 1.1  2000/10/16 18:31:19  pwagner
+# first commit
+#
+
+@
+
+
+1.38
+log
+@Fixed a bug preventing macros file from using its own macros properly
+@
+text
+@d73 1
+a73 1
+# "$Id: mlsconfigure,v 1.37 2005/06/23 22:23:00 pwagner Exp $"
+d262 2
+a263 2
+	David.T.Cuddy@@jpl.nasa.gov
+	(818)354-2099
+d1450 3
+@
+
+
+1.37
+log
+@Reworded Copyright statement
+@
+text
+@d73 1
+a73 1
+# "$Id: mlsconfigure,v 1.36 2005/01/15 00:25:19 pwagner Exp $"
+a206 2
+# (uses PID to generate unique name) 
+
+a208 8
+
+#     if [ "$debugging" = "on" ] ; then
+#        echo "Now in mega_buck"
+#        echo "Number of args is $#"
+#        echo "1st arg is $1"
+#        echo "2nd arg is $2"
+#     fi
+
+d211 2
+a212 2
+      then
+         mega_buck_result="$2"
+d214 2
+a215 7
+      then
+         mega_buck_result="$2"
+   # Do we have write permission in ./?
+   elif [ ! -w "./" ]
+      then
+         echo "Sorry--need write permission in ./ to operate"
+         exit 1
+d217 3
+d221 7
+a227 5
+      unique_name=`get_unique_name`
+#      unique_name=temp.$$
+      rm -f $unique_name
+#      rm -f temp.mega_buck
+
+d229 1
+a229 1
+      mega_buck_result=$2
+d232 2
+a233 4
+         echo "echo \$arg" | sed 's/arg/'$mega_buck_result'/' > $unique_name
+         mega_buck_result=`. $unique_name`
+         rm -f $unique_name
+         number=`expr $number + 1`
+d235 1
+a235 1
+   fi
+d237 1
+a237 1
+
+d293 1
+a293 1
+ UserPrompt "Fortran 95 Compiler (Lahey, NAG, absoft, Sun, Intel, Gnu) [$current_MLSF95]"
+d320 4
+d412 1
+a412 1
+libraries installed along with the SDP Toolkit. If you don't know these
+d648 1
+a648 1
+"<b>" (w/o the " marks).
+d884 1
+a884 1
+To reset an option to its default enter the word "default" (w/o the " marks)
+d997 1
+a997 2
+   # Do we have write permission in ./?
+      if [ ! -w "./" ]
+d999 1
+a999 19
+         echo "Sorry--need write permission in ./ to operate"
+         exit 1
+      fi
+      
+# &     if [ "$debugging" = "on" ] ; then
+# &        echo "Now in lhs_eq_rhs"
+# &        echo "Number of args is $#"
+# &        echo "1st arg is $1"
+# &        echo "2nd arg is $2"
+# &        echo "3rd arg is $3"
+# &     fi
+
+      lhs_unique_name=`get_unique_name lhs`
+      rm -f $lhs_unique_name
+#      rm -f temp.lhs_eq_rhs
+      if [ $# -lt 3 -a "$1" != "" ]
+      then
+         echo "$1"="'"$2"'" > $lhs_unique_name
+         . $lhs_unique_name
+d1003 3
+a1005 6
+         if [ "$lhs" != "" ] ; then
+            mega_buck $3 $2
+            rhs=$mega_buck_result
+            echo "$lhs"="'"$rhs"'" > $lhs_unique_name
+            . $lhs_unique_name
+         fi
+a1006 5
+#     if [ "$debugging" = "on" ] ; then
+#        echo "listing of $lhs_unique_name
+#        cat "$lhs_unique_name"
+#     fi
+     rm -f $lhs_unique_name
+d1450 3
+@
+
+
+1.36
+log
+@Changed all mores to cats
+@
+text
+@d62 10
+a71 2
+# Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d73 1
+a73 1
+# "$Id: mlsconfigure,v 1.35 2003/04/25 22:58:33 pwagner Exp $"
+d1485 3
+@
+
+
+1.35
+log
+@Added gnu g95 compiler to list
+@
+text
+@d65 1
+a65 1
+# "$Id: mlsconfigure,v 1.34 2003/04/01 23:16:43 pwagner Exp $"
+d246 1
+a246 1
+        more << EOF_1
+d408 1
+a408 1
+        more << EOF_2
+d442 1
+a442 1
+        more << EOF_3
+d622 1
+a622 1
+        more << EOF_4
+d876 1
+a876 1
+        more << EOF_5
+d930 1
+a930 1
+        more << EOF_6
+d968 1
+a968 1
+        more << EOF_7
+d1477 3
+@
+
+
+1.34
+log
+@Added IFC to the alternative compilers
+@
+text
+@d65 1
+a65 1
+# "$Id: mlsconfigure,v 1.33 2002/09/04 18:10:22 pwagner Exp $"
+d297 1
+a297 1
+ UserPrompt "Fortran 95 Compiler (Lahey, NAG, absoft, Sun) [$current_MLSF95]"
+d312 4
+d866 2
+d1053 1
+d1075 1
+a1075 1
+#MLSF95     name of the compiler: LF95, NAG, Sun, Abs, IFC
+d1347 2
+d1477 3
+@
+
+
+1.33
+log
+@LIB_BLAS may be multiple libraries (e.g., f77blas atlas)
+@
+text
+@d22 1
+a22 1
+#        MLSF90=NAG
+d62 1
+a62 1
+# Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+d65 1
+a65 1
+# "$Id: mlsconfigure,v 1.32 2002/07/29 23:02:17 pwagner Exp $"
+d308 4
+d853 1
+d862 3
+a869 1
+
+d886 1
+a886 1
+           default     :  $MLS_default_LDOPTS
+d1047 1
+d1050 1
+d1068 1
+a1068 1
+#MLSF95     name of the compiler: LF95, NAG, Sun, Abs
+d1338 2
+d1350 3
+d1354 1
+d1468 3
+@
+
+
+1.32
+log
+@Replaced part of code to update Makefile in object directories with script updatemf.sh
+@
+text
+@d65 1
+a65 1
+# "$Id: mlsconfigure,v 1.31 2002/07/22 22:08:44 pwagner Exp $"
+d154 3
+a156 1
+	which_blas_msg="$1/lib${2}.a"
+d698 2
+a699 1
+     UserPrompt "BLAS library name (if x, then libx.a) [$current_LIB_BLAS]"  
+d761 1
+a761 1
+     UserPrompt "LAPACK library names (if x, then libx.a) [$current_LIB_LAPACK]"  
+d1453 3
+@
+
+
+1.31
+log
+@Uses get_unique_name for temp file names
+@
+text
+@d6 2
+d35 3
+d65 1
+a65 1
+# "$Id: mlsconfigure,v 1.30 2002/07/18 19:38:32 pwagner Exp $"
+d1108 1
+d1160 1
+d1240 1
+d1444 4
+a1447 33
+#Re-create object-file directory for this MLSCONFG
+#unless $del_exist_dir reset to false
+#(Because mlsconfigure may be called simply to update $MLSCONFG/Makefile)
+made_new_dir="false"
+
+if [ "$MLSCONFG" = "." -o "$MLSCONFG" = "" ] ; then
+	echo "MLSCONFG not yet defined--still $MLSCONFG"
+	echo "To repair this, enter 'make configure'"
+   exit
+elif [ "$del_exist_dir" != "true" ] ; then
+	if [ ! -d $mcfg_dir/$MLSCONFG ] ; then
+      mkdir $mcfg_dir/$MLSCONFG
+		made_new_dir="true"
+   else
+      rm -f $mcfg_dir/$MLSCONFG/Makefile
+	fi
+elif [ -d $mcfg_dir/$MLSCONFG ] ; then
+#	echo "Clearing out directory `pwd`$mcfg_dir/$MLSCONFG"
+#	echo "(Be careful that this is not too ambitious)"
+	chmod u+w $mcfg_dir/$MLSCONFG/*
+#	rm -f $mcfg_dir/$MLSCONFG/*.o
+#	rm -f $mcfg_dir/$MLSCONFG/*.mod
+#	rm -f $mcfg_dir/$MLSCONFG/Makefile
+	rm -f $mcfg_dir/$MLSCONFG/*
+else
+   mkdir $mcfg_dir/$MLSCONFG   
+	made_new_dir="true"        
+fi
+
+if [ ! -f $plat_dir/platforms/$MLSF95.$MLSPLAT ] ; then
+	echo "File $MLSF95.$MLSPLAT not found in $plat_dir/platforms"
+	exit
+fi
+a1448 53
+if [ ! -f $plat_dir/platforms/targets ] ; then
+	echo "File targets not found in $plat_dir/platforms"
+	exit
+fi
+
+cat $conf_dir/$MLSCFILE $plat_dir/platforms/$MLSF95.$MLSPLAT \
+   $plat_dir/platforms/targets > $mcfg_dir/$MLSCONFG/Makefile
+
+if [ "$made_new_dir" = "true" ] ; then
+	echo "Configured mls to use $mcfg_dir/$MLSCONFG "
+	echo "(This is where your object files, .mod files, libraries,"
+	echo "and executable programs will be created)"
+	echo "To build the software, enter the 'make' command again"
+	echo ""
+	echo "If you later wish to rebuild for a different compiler"
+	echo "or platform, enter 'make configure'"
+   if [ "$MLSCONFG" != "$MLSF95.$MLSPLAT" ] ; then
+     # Custom configuration name -- create a machines sub-directory for it
+     # We will assume that the machines sub-directories live under the path
+     # $conf_dir/lib/machines/$MLSCONFG
+     machines_root=$conf_dir/lib/machines
+     if [ ! -d "$machines_root" ] ; then
+        echo "Unable to locate root machines directory $machines_root"
+        exit
+     fi
+     machines_base=$machines_root/$MLSF95.$MLSPLAT
+     if [ ! -d "$machines_base" ] ; then
+        echo "Unable to locate base machines directory $machines_base"
+        exit
+     fi
+     if [ ! -d "$machines_root/$MLSCONFG" ] ; then
+        mkdir "$machines_root/$MLSCONFG"
+        cp $machines_base/*.f9* $machines_root/$MLSCONFG
+        echo "New directory $machines_root/$MLSCONFG based on $machines_base"
+     fi
+   fi
+fi
+
+if [ "$MLSCONFG" != "$MLSF95.$MLSPLAT" -a "$m_update" = "true" ] ; then
+# In case of a custom configuration name, make sure machine files are up-to-date
+  machines_root=$conf_dir/lib/machines            
+  machines_base=$machines_root/$MLSF95.$MLSPLAT   
+  the_files=`$REECHO -dirn $machines_root/$MLSCONFG`
+  echo "About to make sure $the_files"
+  echo "are up-to-date in $machines_root/$MLSCONFG"
+  for file in $the_files
+  do
+    make -f $MYPATH/uptodate.make \
+      SOURCE=$machines_base/$file TARGET=$machines_root/$MLSCONFG/$file \
+        $machines_root/$MLSCONFG/$file
+  done
+fi
+exit
+d1450 3
+@
+
+
+1.30
+log
+@Replaced with temp.mega_buck with PID-derived unique_name
+@
+text
+@d60 1
+a60 1
+# "$Id: mlsconfigure,v 1.29 2002/02/06 00:46:18 pwagner Exp $"
+d94 44
+d218 2
+a219 1
+      unique_name=temp.$$
+d991 3
+a993 1
+      rm -f temp.lhs_eq_rhs
+d996 2
+a997 2
+         echo "$1"="'"$2"'" > temp.lhs_eq_rhs
+         . temp.lhs_eq_rhs
+d1004 2
+a1005 2
+            echo "$lhs"="'"$rhs"'" > temp.lhs_eq_rhs
+            . temp.lhs_eq_rhs
+d1009 2
+a1010 2
+#        echo "listing of temp.lhs_eq_rhs"
+#        cat "temp.lhs_eq_rhs"
+d1012 1
+a1012 1
+     rm -f temp.lhs_eq_rhs
+d1524 3
+@
+
+
+1.29
+log
+@Optionally checks that machine files are up-to-date
+@
+text
+@d60 1
+a60 1
+# "$Id: mlsconfigure,v 1.28 2001/11/17 00:23:05 pwagner Exp $"
+d148 2
+d174 3
+a176 1
+      rm -f temp.mega_buck
+d182 3
+a184 3
+         echo "echo \$arg" | sed 's/arg/'$mega_buck_result'/' > temp.mega_buck
+         mega_buck_result=`. temp.mega_buck`
+         rm -f temp.mega_buck
+d1477 3
+@
+
+
+1.28
+log
+@New helps; split GetToolkit from GetPlatform; automated current_SETTING=SETTING
+@
+text
+@d12 1
+a12 1
+#     ((1)not done if I am called with -nc option)
+d49 1
+d57 1
+a57 1
+# Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+d60 1
+a60 1
+# "$Id: mlsconfigure,v 1.27 2001/11/13 23:22:46 pwagner Exp $"
+d1051 1
+d1103 1
+d1180 4
+d1457 14
+d1473 3
+@
+
+
+1.27
+log
+@Tweaked help; note added describing future current_VARIABLE method
+@
+text
+@d36 2
+d39 2
+d59 1
+a59 1
+# "$Id: mlsconfigure,v 1.26 2001/11/09 21:49:39 pwagner Exp $"
+d150 7
+d196 3
+a198 3
+        platform:           $current_platform
+        compiler:           $current_compiler
+        configuration name: $current_confg
+d231 6
+d240 1
+a240 1
+ UserPrompt "Fortran 95 Compiler (Lahey, NAG, absoft, Sun) [$current_compiler]"
+d264 3
+a266 3
+   elif [ "$current_compiler" != "" ] ; then
+	echo "Compiler still $current_compiler."
+        compiler=$current_compiler
+d273 1
+a273 1
+   if [ "$compiler" != "$current_compiler" ] ; then
+d278 1
+a278 1
+ UserPrompt "Platform (Linux, Sun, SGI) [$current_platform]"
+d298 3
+a300 3
+   elif [ "$current_platform" != "" ] ; then
+	echo "Platform still $current_platform."
+        platform=$current_platform
+d307 1
+a307 1
+   if [ "$platform" != "$current_platform" ] ; then
+d312 1
+a312 1
+		current_confg="$compiler.$platform"
+d316 1
+a316 1
+ UserPrompt "Name [$current_confg]"
+d319 3
+a321 3
+   elif [ "$current_confg" != "" ] ; then
+	echo "Defaulting to the name $current_confg."
+        MLSCONFG=$current_confg
+d328 1
+a328 1
+#(Don't worry about current_platform being different from the old one
+d330 1
+a330 1
+   if [ "$MLSCONFG" != "$current_confg" ] ; then
+d337 6
+d380 7
+a386 7
+        "include" files:  $current_PGSINC
+        toolkit:          $current_PGSTK
+        hdf-eos(1):       $current_HDFEOS
+        hdf-eos(5):       $current_HDFEOS5
+        hdf(4):           $current_HDF
+        hdf(5):           $current_HDF5
+        gctp:             $current_GCTP
+d394 6
+d402 8
+a409 8
+	case  "$user_response" in
+	    n* | N* )
+		change_paths="true"
+	    ;;
+	    y* | Y* )
+		change_paths="false"
+	    ;;
+	esac
+d411 2
+a412 2
+	change_paths="false"
+    fi
+d415 7
+a556 3
+if [ "$add_PVM_PATH" != "true" ] ; then
+	change_paths="false"
+else
+d586 6
+a605 2
+fi
+
+a767 1
+#    PVM_ARCH=$current_PVM_ARCH
+d791 14
+d816 7
+d825 6
+d851 1
+a851 1
+#------------------------------- Help ------------
+d899 11
+a909 6
+Topic                            Command
+Makefile scripts                 'make help--scripts'
+Makefiles                        'make help--Makefile'
+Prerequisites                    'make firsthelp'
+In depth explanation             'make disthelp'
+Brief overview                   'make help--brief'
+d933 8
+d942 1
+a942 1
+      if [ $# -lt 3 ]
+d944 1
+a944 1
+         echo "$1=$2" > temp.lhs_eq_rhs
+d949 6
+a954 4
+         mega_buck $3 $2
+         rhs=$mega_buck_result
+         echo "$lhs=$rhs" > temp.lhs_eq_rhs
+         . temp.lhs_eq_rhs
+d956 5
+a960 1
+      rm -f temp.lhs_eq_rhs
+d1051 2
+a1052 2
+# These three stand out as poorly chosen--
+# They violate the pattern current_VARIABLE=$VARIABLE
+d1055 18
+a1072 6
+#   for path in $all_my_opts
+#     lhs_eq_rhs current_${path} $path 2
+#   do
+#   done
+# We'll try this out in a future version of mlsconfigure
+# in which we make the replacements
+a1075 11
+current_compiler=$MLSF95
+current_platform=$MLSPLAT
+current_confg=$MLSCONFG
+
+current_PGSINC=$PGSINC
+current_PGSTK=$PGSLIB
+current_HDFEOS=$HDFEOS_LIB
+current_HDF=$HDFLIB
+current_GCTP=$HDFEOS_LIB
+current_HDF5=$HDF5
+current_HDFEOS5=$HDFEOS5
+a1078 7
+current_BLAS=$BLAS
+current_LIB_BLAS=$LIB_BLAS
+current_LAPACK=$LAPACK
+current_LIB_LAPACK=$LIB_LAPACK
+current_PVM_ROOT=$PVM_ROOT
+current_PVM_ARCH=$PVM_ARCH
+current_FFTW_ROOT=$FFTW_ROOT
+a1081 2
+current_FOPTS=$FOPTS
+current_LDOPTS=$LDOPTS
+d1116 5
+d1127 15
+d1143 1
+a1143 1
+	    current_compiler=$2
+d1148 1
+a1148 1
+	    current_confg=$2
+d1153 1
+a1153 1
+	    current_platform=$2
+d1215 1
+a1215 1
+      echo "Calling GetPlatform"
+d1218 1
+d1221 2
+a1222 2
+        compiler=$current_compiler
+        platform=$current_platform
+d1344 2
+a1345 2
+	compiler=$current_compiler
+	platform=$current_platform
+d1452 3
+@
+
+
+1.26
+log
+@User-defined configuration names possible
+@
+text
+@d55 1
+a55 1
+# "$Id: mlsconfigure,v 1.25 2001/11/08 00:39:14 pwagner Exp $"
+d837 1
+a837 1
+mlsconfigure script              'make help--mlsconfigure'
+d848 33
+d969 13
+d1357 3
+@
+
+
+1.25
+log
+@New help system; mention of NOCLEANING where appropriate
+@
+text
+@d17 1
+a17 1
+#     e.g., say $MLSCONFG is NAG.Linux
+d38 1
+d55 1
+a55 1
+# "$Id: mlsconfigure,v 1.24 2001/11/07 00:27:49 pwagner Exp $"
+d181 7
+a187 5
+The mls software requires that you configure it by responding to two
+questions; currently your platform and compiler are given by:
+
+        platform: $current_platform
+        compiler: $current_compiler
+d203 6
+d294 23
+d886 1
+a886 1
+#MLSCONFG   MLSF95.MLSPLAT
+d938 1
+d1007 5
+d1173 3
+d1179 1
+a1179 1
+	MLSCONFG=$compiler.$platform
+d1188 1
+a1188 1
+   MLSCONFG=$compiler.$platform
+d1207 2
+a1208 1
+   MLSCONFG=$compiler.$platform
+d1224 8
+d1242 1
+a1242 1
+if [ "$MLSCONFG" = "." ] ; then
+d1244 2
+d1266 2
+a1267 2
+if [ ! -f $plat_dir/platforms/$MLSCONFG ] ; then
+	echo "File $MLSCONFG not found in $plat_dir/platforms"
+d1276 1
+a1276 1
+cat $conf_dir/$MLSCFILE $plat_dir/platforms/$MLSCONFG \
+d1287 20
+d1311 3
+@
+
+
+1.24
+log
+@Tells how to enter multiple LAPACK library names
+@
+text
+@d2 1
+a4 1
+#
+d35 2
+d49 1
+d54 1
+a54 1
+# "$Id: mlsconfigure,v 1.23 2001/11/06 00:20:34 pwagner Exp $"
+d545 1
+d566 5
+d606 1
+d627 5
+d761 1
+a761 1
+Help()
+d787 1
+a787 1
+		 
+d794 22
+d837 1
+d839 3
+a841 3
+#conf_dir   the directory where the .configure file is to be stored
+#plat_dir   the directory to keep the platforms subdirectories
+#get_confg  true if need to query for configuration; false if use input values
+d844 5
+a848 4
+#add_PVM_PATH  true if need to query for PVM and FFTW paths; else false
+#add_FOPTS  true if need to query for FOPTS and LDOPTS; else false
+#del_exist_dir  true if need to delete existing uniquely-named sub-dir
+#made_new_dir  true if created new uniquely-named sub-dir; else false
+d887 4
+d946 1
+a953 1
+#            sed -n '2, 35 p' $me
+d955 12
+a966 1
+            exit
+d1015 6
+d1187 1
+a1187 1
+#Create object-file directory for this MLSCONFG
+d1189 1
+a1189 1
+# Because mlsconfigure may be called simply to update $MLSCONFG/Makefile
+d1196 4
+a1199 2
+        mkdir $mcfg_dir/$MLSCONFG
+			made_new_dir="true"
+d1210 2
+a1211 2
+        mkdir $mcfg_dir/$MLSCONFG
+			made_new_dir="true"
+d1225 1
+a1225 1
+       $plat_dir/platforms/targets > $mcfg_dir/$MLSCONFG/Makefile
+d1239 3
+@
+
+
+1.23
+log
+@Sets BLAS, LAPACK options and paths in new, simpler way
+@
+text
+@d51 1
+a51 1
+# "$Id: mlsconfigure,v 1.22 2001/10/10 23:23:54 pwagner Exp $"
+d121 3
+a123 1
+	which_lapack_msg="$1/lib${2}.a"
+d618 2
+a619 1
+     UserPrompt "LAPACK library name (if x, then libx.a) [$current_LIB_LAPACK]"  
+d903 1
+d976 3
+d997 3
+d1005 3
+d1177 3
+@
+
+
+1.22
+log
+@New parameter allows use of single platforms directory by > 1 (MLSCONFG)
+@
+text
+@d10 1
+a10 1
+#     (c) paths to BLAS, PVM and FFTW libraries; 
+d51 1
+a51 1
+# "$Id: mlsconfigure,v 1.21 2001/09/04 23:33:35 pwagner Exp $"
+d59 2
+a60 1
+    if [ "$BRAND" = "linux" ] ; then
+d68 63
+d208 1
+d246 1
+d354 1
+d369 1
+d384 1
+d401 1
+d419 1
+d434 1
+d452 1
+d481 3
+d490 2
+a491 2
+The next questions refer to three special libraries: BLAS, PVM and FFTW. Here
+too, it is possible that during the installation, these paths were
+d498 4
+a501 2
+        BLAS root      :  $current_BLAS
+        BLAS lib name  :  $current_LIB_BLAS
+a532 15
+#Change BLAS root path
+ UserPrompt "BLAS root (enter <b> to force back to blank) [$current_BLAS]"
+   if [ "$user_response" = "<b>" ] ; then
+	 BLAS=""
+	 echo "You will build a mls software version with internally-supplied BLAS"
+   elif [ "$user_response" != "" ] ; then
+	 BLAS=$user_response
+   elif [ "$current_BLAS" != "" ] ; then
+	echo "BLAS root path is still $current_BLAS."
+        BLAS=$current_BLAS
+   else
+	echo "You will build a mls software version with internally-supplied BLAS"
+	echo "unless you reconfigure; enter 'make configure_pvm'."
+	BLAS=""
+   fi
+d534 102
+a635 14
+#Change BLAS library name
+ UserPrompt "BLAS library name (if x, then libx.a) [$current_LIB_BLAS]"
+   if [ "$user_response" = "<b>" ] ; then
+	 LIB_BLAS=""
+	 echo "BLAS library name is blas (default)"
+   elif [ "$user_response" != "" ] ; then
+	 LIB_BLAS=$user_response
+   elif [ "$current_LIB_BLAS" != "" ] ; then
+	echo "BLAS lib name is still $current_LIB_BLAS."
+        LIB_BLAS=$current_LIB_BLAS
+   else
+	echo "BLAS library name is blas (default)"
+	LIB_BLAS=""
+   fi
+d637 2
+d640 1
+d658 1
+d678 2
+d720 1
+d728 1
+d761 2
+a762 2
+       PVM and FFTW. The first two may improve performance, while the third
+       is needed to build level 3. These require setting paths to installed
+d824 1
+a824 1
+#BLAS       root of path to the blas library BLAS/libblas.a,
+d827 5
+a831 1
+#           if blank, then libblas.a
+d846 2
+a847 2
+HDF HDF5 GCTP PGSLIB HDFEOS_LIB HDFLIB BLAS LIB_BLAS PVM_ROOT PVM_ARCH \
+FFTW_ROOT FOPTS LDOPTS"
+d873 2
+d1164 3
+@
+
+
+1.21
+log
+@Added Sun's own f95 option for MLSF95
+@
+text
+@d14 2
+a15 1
+# (2) Create a new directory ./$MLSCONFG in parallel with ./platforms; then
+d31 1
+a31 1
+#     ((2) not done if ./platforms directory fails to exist)
+d39 3
+d48 1
+a48 1
+# Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+d51 1
+a51 1
+# "$Id: mlsconfigure,v 1.20 2001/08/15 20:57:26 pwagner Exp $"
+d690 1
+d766 5
+d957 2
+a958 2
+	if [ ! -d $plat_dir/$MLSCONFG ] ; then
+        mkdir $plat_dir/$MLSCONFG
+d961 2
+a962 2
+elif [ -d $plat_dir/$MLSCONFG ] ; then
+#	echo "Clearing out directory `pwd`$plat_dir/$MLSCONFG"
+d964 5
+a968 5
+	chmod u+w $plat_dir/$MLSCONFG/*
+#	rm -f $plat_dir/$MLSCONFG/*.o
+#	rm -f $plat_dir/$MLSCONFG/*.mod
+#	rm -f $plat_dir/$MLSCONFG/Makefile
+	rm -f $plat_dir/$MLSCONFG/*
+d970 1
+a970 1
+        mkdir $plat_dir/$MLSCONFG
+d984 2
+a985 1
+cat $conf_dir/$MLSCFILE $plat_dir/platforms/$MLSCONFG $plat_dir/platforms/targets > $plat_dir/$MLSCONFG/Makefile
+d988 1
+a988 1
+	echo "Configured mls to use $plat_dir/platforms/$MLSCONFG "
+d999 3
+@
+
+
+1.20
+log
+@Fixed bug--MLSF95 vand MLSPLAT were undefined
+@
+text
+@d34 1
+a34 1
+#  -c compiler_name     Name of Fortran compiler (NAG or LF95)
+d47 1
+a47 1
+# "$Id: mlsconfigure,v 1.19 2001/07/27 19:57:07 pwagner Exp $"
+d140 1
+a140 1
+ UserPrompt "Fortran 95 Compiler (Lahey, NAG, absoft) [$current_compiler]"
+d155 4
+d647 1
+a647 1
+#MLSF95     name of the compiler: LF95, NAG, or Abs
+d833 2
+d988 3
+@
+
+
+1.19
+log
+@Added mega_buck function; exports BLAS and LIB_BLAS
+@
+text
+@d47 1
+a47 1
+# "$Id: mlsconfigure,v 1.18 2001/07/12 22:39:24 pwagner Exp $"
+d260 1
+a260 1
+ UserPrompt "Are all of these paths correct and non-blank?[Y[es] or N[o]]"
+d280 1
+a280 1
+ UserPrompt "include files path [$current_PGSINC]"
+d294 1
+a294 1
+ UserPrompt "Toolkit path [$current_PGSTK]"
+d308 1
+a308 1
+ UserPrompt "HDFEOS(1) path [$current_HDFEOS]"
+d324 1
+a324 1
+ UserPrompt "HDFEOS(5) path (enter <b> to force back to blank) [$current_HDFEOS5]"
+d341 1
+a341 1
+ UserPrompt "HDF(4) path [$current_HDF]"
+d355 1
+a355 1
+ UserPrompt "HDF(5) path (enter <b> to force back to blank) [$current_HDF5]"
+d426 1
+a426 1
+value is already blank. Instead, to unset a non-blank exisiting value, enter
+d430 1
+a430 1
+ UserPrompt "Are these paths correct [Y[es] or N[o]]"
+d891 3
+d910 3
+a914 3
+MLSF95=$compiler
+MLSPLAT=$platform
+MLSCONFG=$compiler.$platform
+d982 3
+@
+
+
+1.18
+log
+@Now exports HDFEOS5
+@
+text
+@d47 1
+a47 1
+# "$Id: mlsconfigure,v 1.17 2001/06/29 23:58:39 pwagner Exp $"
+d63 37
+d654 3
+a656 3
+#PGSLIB     PGSTK
+#HDFEOS_LIB HDFEOS
+#HDFLIB     HDF
+d673 5
+d710 1
+a710 1
+# Debugging
+d712 5
+a716 8
+	echo "MLSF95=$MLSF95"
+	echo "MLSPLAT=$MLSPLAT"
+	echo "PGSINC=$PGSINC"
+	echo "PGSLIB=$PGSLIB"
+	echo "HDFEOS_LIB=$HDFEOS_LIB"
+	echo "HDFEOS5=$HDFEOS5"
+	echo "HDFLIB=$HDFLIB"
+	echo "HDF5=$HDF5"
+a717 7
+	echo "BLAS=$BLAS"
+	echo "LIB_BLAS=$LIB_BLAS"
+	echo "PVM_ROOT=$PVM_ROOT"
+	echo "PVM_ARCH=$PVM_ARCH"
+	echo "FFTW_ROOT=$FFTW_ROOT"
+	echo "FOPTS=$FOPTS"
+	echo "LDOPTS=$LDOPTS"
+d890 13
+a902 38
+	echo "MLSF95=$compiler" >> $conf_dir/$MLSCFILE
+	echo "MLSPLAT=$platform" >> $conf_dir/$MLSCFILE
+	echo "MLSCONFG=$MLSCONFG" >> $conf_dir/$MLSCFILE
+	echo "PGSINC=$PGSINC" >> $conf_dir/$MLSCFILE
+	echo "PGSTK=$PGSTK" >> $conf_dir/$MLSCFILE
+	echo "HDFEOS=$HDFEOS" >> $conf_dir/$MLSCFILE
+	echo "HDFEOS5=$HDFEOS5" >> $conf_dir/$MLSCFILE
+	echo "HDF=$HDF" >> $conf_dir/$MLSCFILE
+	echo "HDF5=$HDF5" >> $conf_dir/$MLSCFILE
+	echo "GCTP=$GCTP" >> $conf_dir/$MLSCFILE
+	echo "PGSLIB=$PGSTK" >> $conf_dir/$MLSCFILE
+	echo "HDFEOS_LIB=$HDFEOS" >> $conf_dir/$MLSCFILE
+	echo "HDFLIB=$HDF" >> $conf_dir/$MLSCFILE
+	echo "BLAS=$BLAS" >> $conf_dir/$MLSCFILE
+	echo "LIB_BLAS=$LIB_BLAS" >> $conf_dir/$MLSCFILE
+	echo "PVM_ROOT=$PVM_ROOT" >> $conf_dir/$MLSCFILE
+	echo "PVM_ARCH=$PVM_ARCH" >> $conf_dir/$MLSCFILE
+	echo "FFTW_ROOT=$FFTW_ROOT" >> $conf_dir/$MLSCFILE
+	echo "FOPTS=$FOPTS" >> $conf_dir/$MLSCFILE
+	echo "LDOPTS=$LDOPTS" >> $conf_dir/$MLSCFILE
+	echo "export MLSF95" >> $conf_dir/$MLSCFILE
+	echo "export MLSPLAT" >> $conf_dir/$MLSCFILE
+	echo "export MLSCONFG" >> $conf_dir/$MLSCFILE
+	echo "export PGSINC" >> $conf_dir/$MLSCFILE
+	echo "export PGSLIB" >> $conf_dir/$MLSCFILE
+	echo "export HDFEOS_LIB" >> $conf_dir/$MLSCFILE
+	echo "export HDFLIB" >> $conf_dir/$MLSCFILE
+	echo "export PGSTK" >> $conf_dir/$MLSCFILE
+	echo "export HDFEOS" >> $conf_dir/$MLSCFILE
+	echo "export HDFEOS5" >> $conf_dir/$MLSCFILE
+	echo "export HDF" >> $conf_dir/$MLSCFILE
+	echo "export HDF5" >> $conf_dir/$MLSCFILE
+	echo "export GCTP" >> $conf_dir/$MLSCFILE
+	echo "export PVM_ROOT" >> $conf_dir/$MLSCFILE
+	echo "export PVM_ARCH" >> $conf_dir/$MLSCFILE
+	echo "export FFTW_ROOT" >> $conf_dir/$MLSCFILE
+	echo "export FOPTS" >> $conf_dir/$MLSCFILE
+	echo "export LDOPTS" >> $conf_dir/$MLSCFILE
+a908 2
+all_my_paths="PGSINC PGSTK HDFEOS HDFEOS5 HDF HDF5 GCTP"
+
+d916 7
+a922 25
+if [ $get_confg = "true" ] ; then
+	echo "MLSF95 is now $MLSF95"
+	echo "MLSPLAT is now $MLSPLAT"
+	echo "MLSCONFG is now $MLSCONFG"
+#   for path in $all_my_paths
+#   do
+#	echo "$path is now ${$path}"
+#   done
+fi
+
+if [ $add_PVM_PATH = "true" ] ; then
+	echo "BLAS root is now $BLAS"
+	if [ "$LIB_BLAS" = "" ] ; then
+		echo "BLAS library name is libx.a where x is blas"
+   else
+		echo "BLAS library name is libx.a where x is $LIB_BLAS"
+	fi
+	echo "PVM_ROOT is now $PVM_ROOT"
+	echo "PVM_ARCH is now $PVM_ARCH"
+	echo "FFTW_ROOT is now $FFTW_ROOT"
+fi
+
+if [ $add_FOPTS = "true" ] ; then
+	echo "FOPTS is now $FOPTS"
+	echo "LDOPTS is now $LDOPTS"
+d979 3
+@
+
+
+1.17
+log
+@Added LIB_BLAS and HDFEOS5
+@
+text
+@d47 1
+a47 1
+# "$Id: mlsconfigure,v 1.16 2001/06/11 20:52:41 pwagner Exp $"
+d887 1
+d992 3
+@
+
+
+1.16
+log
+@Fixed tiny error in blank assignment of HDF5
+@
+text
+@d10 1
+a10 1
+#     (c) paths to PVM and FFTW libraries; 
+d47 1
+a47 1
+# "$Id: mlsconfigure,v 1.15 2001/06/01 20:30:07 pwagner Exp $"
+d175 8
+a182 8
+To properly link the mls software requires that you set the paths to
+the libraries installed along with the SDP Toolkit. If you don't know these
+locations, you might have to ask the person at your site who installed
+this toolkit. It is possible that during the installation, these paths
+were automatically "hard wired" as environment variables, and if so the
+values shown below will be correct. If they are correct, simply answer
+Y[es] to the next question. Otherwise you will be asked to supply the
+correct paths.
+d211 2
+a212 1
+        hdf-eos:          $current_HDFEOS
+d270 2
+a271 2
+#Change hdfeos path
+ UserPrompt "HDFEOS path [$current_HDFEOS]"
+d277 1
+a277 1
+	echo "hdfeos path is still $current_HDFEOS."
+d280 1
+a280 1
+	echo "Warning: No HDFEOS path selected; none found"
+d286 17
+d318 5
+a322 2
+ UserPrompt "HDF(5) path [$current_HDF5]"
+   if [ "$user_response" != "" ] ; then
+d324 1
+a324 1
+   elif [ "$current_HDF" != "" ] ; then
+d331 1
+a331 1
+	HDF5="/"
+d352 1
+d369 5
+a373 5
+The next questions refer to two special libraries: PVM and FFTW. Here too,
+it is possible that during the installation, these paths were automatically
+"hard wired" as environment variables, and if so the values shown below may be
+correct. If they are correct, simply answer Y[es] to the next question.
+Otherwise you will be asked to supply the correct paths.
+d377 2
+d410 31
+d476 2
+d556 4
+a559 4
+(ii)   Decide if you want to build the software with support for PVM and FFTW.
+       The first may improve performance,  while the second is needed to build
+       level 3. These require setting paths to installed libraries of PVM and
+       FFTW software. To learn where to obtain them, enter "BEFORE.mls". To 
+d611 3
+a613 1
+#HDFEOS     path to the hdfeos library libhdfeos.a
+d616 1
+a616 1
+#GCTP       path to the hdfeos library libGctp.a
+d620 4
+d653 1
+d657 2
+d675 1
+d679 2
+d818 1
+a818 2
+		echo " Sorry--the toolkit path must not be blank"
+		exit
+d864 1
+d871 2
+d901 2
+d914 4
+d921 6
+d991 3
+@
+
+
+1.15
+log
+@New print statements if debugging on
+@
+text
+@d47 1
+a47 1
+# "$Id: mlsconfigure,v 1.14 2001/05/31 23:25:02 pwagner Exp $"
+d310 1
+a310 1
+	HDF="/"
+d908 3
+@
+
+
+1.14
+log
+@Slightly more consistent messages
+@
+text
+@d47 1
+a47 1
+# "$Id: mlsconfigure,v 1.13 2001/05/31 21:55:02 pwagner Exp $"
+d682 7
+d908 3
+@
+
+
+1.13
+log
+@Now includes HDF5 in .configure
+@
+text
+@d47 1
+a47 1
+# "$Id: mlsconfigure,v 1.12 2001/05/14 17:37:14 pwagner Exp $"
+d318 1
+a318 1
+	echo "Toolkit path is still $current_GCTP."
+d332 1
+d498 1
+a498 1
+       enter "make -f MakeFC configure"
+d503 1
+a503 1
+       change these settings later, enter "make -f MakeFC configure_pvm"
+d507 1
+a507 1
+       enter "make -f MakeFC configure_fopts"
+d555 2
+a556 1
+#HDF        path to the hdf library libmfhdf.a, etc.
+d901 3
+@
+
+
+1.12
+log
+@.configure now a variable file name
+@
+text
+@d47 1
+a47 1
+# "$Id: mlsconfigure,v 1.11 2001/03/23 00:40:42 pwagner Exp $"
+d212 2
+a213 1
+        hdf:              $current_HDF
+d276 1
+a276 1
+	echo "Toolkit path is still $current_HDFEOS."
+d285 2
+a286 2
+#Change hdf path
+ UserPrompt "HDF path [$current_HDF]"
+d290 1
+a290 1
+	echo "Toolkit path is still $current_HDF."
+d299 14
+d587 1
+d608 1
+d788 1
+d808 1
+d899 3
+@
+
+
+1.11
+log
+@Better message if pvm, fftw not set
+@
+text
+@d33 1
+a33 1
+#  -h[elp]              (if present) Help (not yet fully implemented)
+d42 1
+d47 1
+a47 1
+# "$Id: mlsconfigure,v 1.10 2001/03/16 18:53:28 pwagner Exp $"
+d263 1
+a263 1
+	echo "mls software may not link properly "
+d550 4
+d556 2
+d598 1
+d637 5
+d752 3
+a754 3
+	if [ -f $conf_dir/.configure ] ; then
+		chmod u+w $conf_dir/.configure
+		rm -f $conf_dir/.configure
+d763 33
+a795 33
+	echo "#	.configure for mls" > $conf_dir/.configure
+	echo "MLSF95=$compiler" >> $conf_dir/.configure
+	echo "MLSPLAT=$platform" >> $conf_dir/.configure
+	echo "MLSCONFG=$MLSCONFG" >> $conf_dir/.configure
+	echo "PGSINC=$PGSINC" >> $conf_dir/.configure
+	echo "PGSTK=$PGSTK" >> $conf_dir/.configure
+	echo "HDFEOS=$HDFEOS" >> $conf_dir/.configure
+	echo "HDF=$HDF" >> $conf_dir/.configure
+	echo "GCTP=$GCTP" >> $conf_dir/.configure
+	echo "PGSLIB=$PGSTK" >> $conf_dir/.configure
+	echo "HDFEOS_LIB=$HDFEOS" >> $conf_dir/.configure
+	echo "HDFLIB=$HDF" >> $conf_dir/.configure
+	echo "PVM_ROOT=$PVM_ROOT" >> $conf_dir/.configure
+	echo "PVM_ARCH=$PVM_ARCH" >> $conf_dir/.configure
+	echo "FFTW_ROOT=$FFTW_ROOT" >> $conf_dir/.configure
+	echo "FOPTS=$FOPTS" >> $conf_dir/.configure
+	echo "LDOPTS=$LDOPTS" >> $conf_dir/.configure
+	echo "export MLSF95" >> $conf_dir/.configure
+	echo "export MLSPLAT" >> $conf_dir/.configure
+	echo "export MLSCONFG" >> $conf_dir/.configure
+	echo "export PGSINC" >> $conf_dir/.configure
+	echo "export PGSLIB" >> $conf_dir/.configure
+	echo "export HDFEOS_LIB" >> $conf_dir/.configure
+	echo "export HDFLIB" >> $conf_dir/.configure
+	echo "export PGSTK" >> $conf_dir/.configure
+	echo "export HDFEOS" >> $conf_dir/.configure
+	echo "export HDF" >> $conf_dir/.configure
+	echo "export GCTP" >> $conf_dir/.configure
+	echo "export PVM_ROOT" >> $conf_dir/.configure
+	echo "export PVM_ARCH" >> $conf_dir/.configure
+	echo "export FFTW_ROOT" >> $conf_dir/.configure
+	echo "export FOPTS" >> $conf_dir/.configure
+	echo "export LDOPTS" >> $conf_dir/.configure
+d866 1
+a866 1
+cat $conf_dir/.configure $plat_dir/platforms/$MLSCONFG $plat_dir/platforms/targets > $plat_dir/$MLSCONFG/Makefile
+d880 3
+@
+
+
+1.10
+log
+@Resets FOPTS, LDOPTS if chngd_config; also automatically full queries
+@
+text
+@d46 1
+a46 1
+# "$Id: mlsconfigure,v 1.9 2001/03/06 00:16:14 pwagner Exp $"
+d382 1
+a382 1
+	echo "unless you reconfigure; enter 'make configure'."
+d399 1
+a399 1
+	echo "unless you reconfigure; enter 'make configure'."
+d867 3
+@
+
+
+1.9
+log
+@Added Absoft compiler
+@
+text
+@d46 1
+a46 1
+# "$Id: mlsconfigure,v 1.8 2001/02/27 18:10:44 pwagner Exp $"
+d130 5
+d163 5
+d513 1
+d518 2
+d522 29
+a550 1
+#get_confg  true if user queried about configuration; false if use input values
+d555 1
+d658 11
+a668 1
+ fi
+d682 5
+a686 1
+			FOPTS="$MLS_default_FOPTS_NAG"
+d744 6
+d753 1
+a753 1
+	echo "MLSCONFG=$compiler.$platform" >> $conf_dir/.configure
+d867 3
+@
+
+
+1.8
+log
+@exports FOPTS and LDOPTS; better Help
+@
+text
+@d46 1
+a46 1
+# "$Id: mlsconfigure,v 1.7 2001/02/26 18:39:15 pwagner Exp $"
+d102 1
+a102 1
+ UserPrompt "Fortran 95 Compiler (Lahey, NAG) [$current_compiler]"
+d113 4
+d504 1
+d631 2
+d805 3
+@
+
+
+1.7
+log
+@Fixed problem with older .configure files
+@
+text
+@d46 1
+a46 1
+# "$Id: mlsconfigure,v 1.6 2001/02/26 00:26:49 pwagner Exp $"
+d331 5
+a371 14
+#Change PVM architecture-dependent path
+# UserPrompt "PVM arch.-dep. path [$current_PVM_ARCH]"
+#   if [ "$user_response" != "" ] ; then
+#	 PVM_ARCH=$user_response
+#   elif [ "$current_PVM_ARCH" != "" ] ; then
+#	echo "PVM architecture path is still $current_PVM_ARCH."
+#        PVM_ARCH=$current_PVM_ARCH
+#   else
+#	echo "Warning: No PVM architecture path selected; none found"
+#	echo "mls software may not link properly "
+#	echo "unless you reconfigure; enter 'make configure'."
+#	PVM_ARCH=""
+#   fi
+
+d373 5
+a377 2
+ UserPrompt "FFTW root [$current_FFTW_ROOT]"
+   if [ "$user_response" != "" ] ; then
+d421 4
+a424 1
+the precise format before changing these.
+d431 3
+a433 1
+   if [ "$user_response" != "" ] ; then
+d438 3
+a440 1
+   if [ "$user_response" != "" ] ; then
+d448 1
+a448 1
+# Function to output help message and exit
+d454 27
+a480 1
+#No help available yet
+a483 1
+#!/bin/sh
+d557 1
+a557 1
+            sed -n '2, 35 p' $me
+d712 2
+d733 11
+d798 3
+@
+
+
+1.6
+log
+@default FOPTS and LDOPTS can be set,  saved to .configure
+@
+text
+@d46 1
+a46 1
+# "$Id: mlsconfigure,v 1.5 2001/02/10 00:06:47 pwagner Exp $"
+d435 1
+a435 1
+		currrent_FOPTS="$user_response"
+d457 1
+d603 2
+d609 2
+d614 35
+d759 3
+@
+
+
+1.5
+log
+@update now a target of make -f MakeFC; replaces customized Makefiles with latest versions
+@
+text
+@d40 2
+d46 1
+a46 1
+# "$Id: mlsconfigure,v 1.4 2001/01/23 19:41:36 pwagner Exp $"
+d48 1
+d61 3
+d100 1
+a100 1
+#accept user settings and write them to file .configure
+d173 19
+d200 2
+a201 2
+If these settings are wrong, or you wish to change them in order to
+prepare multiple installations at your site, you will be given an
+d204 1
+a204 1
+EOF_2
+d206 1
+a206 1
+ UserPrompt "Are these paths correct [Y[es] or N[o]]"
+d220 4
+d304 5
+d313 1
+a313 1
+        more << EOF_3
+d316 1
+a316 1
+The final questions refer to two more needed libraries: PVM and FFTW. Here too,
+d318 1
+a318 1
+"hard wired" as environment variables, and if so the values shown below will be
+d327 3
+a329 3
+If these settings are wrong, or you wish to change them in order to
+prepare multiple installations at your site, you will be given an
+opportunity to (re)set them momentarily.
+d331 1
+a331 1
+EOF_3
+d351 5
+a355 2
+ UserPrompt "PVM root [$current_PVM_ROOT]"
+   if [ "$user_response" != "" ] ; then
+d362 1
+a362 1
+	echo "mls software may not link properly "
+d390 1
+a390 1
+	echo "level 3 mls software may not link properly "
+d417 29
+d457 2
+d463 2
+d467 8
+d498 21
+d563 8
+d576 2
+d580 29
+d630 2
+d639 4
+d719 3
+@
+
+
+1.4
+log
+@Adds support for PVM
+@
+text
+@d38 2
+a39 1
+#  -nc                  (if present) Don't query to change configuration
+d44 1
+a44 1
+# "$Id: mlsconfigure,v 1.3 2000/10/21 00:23:58 pwagner Exp $"
+d403 1
+d460 4
+d515 5
+a519 3
+echo "MLSF95 is now $MLSF95"
+echo "MLSPLAT is now $MLSPLAT"
+echo "MLSCONFG is now $MLSCONFG"
+d527 4
+d533 5
+d548 1
+a560 1
+# Because mlsconfigure may be called simply to update $MLSCONFG/Makefile
+d563 9
+a571 7
+echo "Configured mls to use $plat_dir/platforms/$MLSCONFG "
+echo "(This is where your object files, .mod files, libraries,"
+echo "and executable programs will be created)"
+echo "To build the software, enter the 'make' command again"
+echo ""
+echo "If you later wish to rebuild for a different compiler"
+echo "or platform, enter 'make configure'"
+d575 3
+@
+
+
+1.3
+log
+@Added paths to .configure
+@
+text
+@d7 7
+a13 3
+# (1) Query user for compiler and platform; these get written to .configure
+#     ((1)not done if called with -nc option)
+#
+d33 1
+a33 1
+#  -h[elp]              (if present) Help (not yet implemented)
+d43 1
+a43 1
+# "$Id: mlsconfigure,v 1.2 2000/10/18 20:56:21 pwagner Exp $"
+d59 1
+a59 1
+        more << EOF
+d90 2
+a91 1
+EOF
+d147 2
+a148 2
+#export platform
+#export compiler
+d150 1
+a150 1
+        more << EOF
+d159 1
+a159 1
+Y[es] to the nest question. Otherwise you will be asked to supply the
+d178 1
+a178 1
+EOF
+a207 1
+ export PGSINC
+d227 2
+d275 102
+a395 4
+#
+# Get arguments from command line
+#
+
+d402 4
+d411 11
+d483 3
+d493 3
+d505 7
+d519 5
+a523 1
+if [ -d $plat_dir/$MLSCONFG ] ; then
+d525 4
+a528 3
+	rm -f $plat_dir/$MLSCONFG/*.o
+	rm -f $plat_dir/$MLSCONFG/*.mod
+	rm -f $plat_dir/$MLSCONFG/Makefile
+d543 1
+a543 1
+#cat $plat_dir/platforms/$MLSCONFG $plat_dir/platforms/targets > $plat_dir/$MLSCONFG/Makefile
+d556 3
+@
+
+
+1.2
+log
+@Fixed obvious bug; 1st step towards -h option
+@
+text
+@d39 1
+a39 1
+# "$Id: mlsconfigure,v 1.1 2000/10/16 18:31:19 pwagner Exp $"
+d144 125
+d298 5
+d356 8
+d367 4
+d388 1
+d419 3
+@
+
+
+1.1
+log
+@first commit
+@
+text
+@d1 1
+a1 1
+#/bin/sh
+d6 1
+d8 2
+a9 1
+#     (not done if called with -nc option)
+d12 13
+d26 1
+a26 1
+#     (not done if ./platforms directory fails to exist)
+d28 12
+a39 1
+# "$Id:  $"
+d76 1
+a76 1
+and be prepared to give them the names of your compiler and platform.
+d84 1
+a84 1
+this configuration was being written, the URL for them was
+d173 1
+d180 1
+d182 1
+d263 2
+a264 1
+cat $plat_dir/platforms/$MLSCONFG $plat_dir/platforms/targets > $plat_dir/$MLSCONFG/Makefile
+d275 4
+a278 1
+# $Log:  $
+@
+

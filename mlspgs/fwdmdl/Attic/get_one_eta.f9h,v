@@ -1,0 +1,219 @@
+head	1.7;
+access;
+symbols
+	newfwm-sep01:1.6.0.2
+	V0-7:1.6
+	V0-5-Level2:1.5
+	V0-5-SIPS:1.5
+	V0_1:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.7
+date	2001.09.17.20.26.27;	author livesey;	state dead;
+branches;
+next	1.6;
+
+1.6
+date	2001.06.07.23.43.53;	author pwagner;	state Exp;
+branches
+	1.6.2.1;
+next	1.5;
+
+1.5
+date	2001.04.13.01.45.28;	author vsnyder;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.04.13.01.44.36;	author vsnyder;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2000.11.22.23.10.03;	author zvi;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2000.11.22.23.07.27;	author zvi;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2000.05.05.00.04.02;	author vsnyder;	state Exp;
+branches;
+next	;
+
+1.6.2.1
+date	2001.09.10.10.00.38;	author zvi;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.7
+log
+@New forward model
+@
+text
+@! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+! Subroutine ?_GET_ONE_ETA ( h, peaks, no_peaks, iq, eta )
+    real(rk), intent(in) :: H, PEAKS(:)
+    integer(i4), intent(in) :: NO_PEAKS, IQ
+    real(rk), intent(out) :: ETA
+
+! -----     Local Variables     ----------------------------------------
+
+    real(rk) :: HQ, HQM1, HQP1
+    Integer(i4) :: N
+
+! -----     Executable statements     ----------------------------------
+
+! For the first coefficient Eta = 1 for all values of h below peaks(1)
+! until h = peaks(1),then it ramps down in the usual triangular sense
+
+! For the 'no_peaks' coefficient, Eta ramps up as a triangle until
+! h = peaks(no_peaks) then afterwards Eta is equal to one
+
+    n = no_peaks
+    hqm1 = peaks(1)
+    hqp1 = peaks(n)
+
+    eta = 1.0
+    if ((iq == 1 .and. h <= hqm1)  .or.  (iq == n.and.h >= hqp1)) Return
+
+! Normal triangular function for iq = 2   to: iq = no_peaks-1
+
+    eta = 0.0
+    if (iq > 1) hqm1 = peaks(iq-1)
+    if (iq < n) hqp1 = peaks(iq+1)
+    if (h <= hqm1 .or. h >= hqp1) Return
+
+    hq = peaks(iq)
+    if (h <= hq) then
+      eta = (h - hqm1) / (hq - hqm1)
+    else
+      eta = (hqp1 - h) / (hqp1 - hq)
+    end if
+
+    Return
+! End Subroutine ?_GET_ONE_ETA
+
+! $Log: get_one_eta.f9h,v $
+! Revision 1.6  2001/06/07 23:43:53  pwagner
+! Added Copyright statement
+!
+! Revision 1.5  2001/04/13 01:45:28  vsnyder
+! Add CVS comment at the end
+!
+@
+
+
+1.6
+log
+@Added Copyright statement
+@
+text
+@d47 3
+@
+
+
+1.6.2.1
+log
+@*** empty log message ***
+@
+text
+@a46 3
+! Revision 1.6  2001/06/07 23:43:53  pwagner
+! Added Copyright statement
+!
+@
+
+
+1.5
+log
+@Add CVS comment at the end
+@
+text
+@d1 3
+d46 4
+a49 1
+! $Log: $
+@
+
+
+1.4
+log
+@Work on moving window
+@
+text
+@d42 2
+@
+
+
+1.3
+log
+@Re-add basic stuff
+@
+text
+@d2 1
+a2 1
+    real(rk), intent(in) :: H, PEAKS(*)
+d5 1
+a5 1
+!
+d7 1
+a7 1
+!
+d10 1
+a10 1
+!
+d12 1
+a12 1
+!
+d15 1
+a15 1
+!
+d18 1
+a18 1
+!
+d22 1
+a22 1
+!
+d25 1
+a25 1
+!
+d27 1
+a27 1
+!
+d32 1
+a32 1
+!
+d39 1
+a39 1
+!
+@
+
+
+1.2
+log
+@New version
+@
+text
+@@
+
+
+1.1
+log
+@Initial conversion to Fortran 90
+@
+text
+@@
+

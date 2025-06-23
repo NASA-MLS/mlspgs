@@ -1,0 +1,766 @@
+head	1.15;
+access;
+symbols
+	V4-21:1.14.0.2
+	V4-13:1.14
+	V4-12:1.14
+	V4-11:1.14
+	V4-10:1.14
+	V3-43:1.13
+	M4-00:1.14
+	V3-41:1.13
+	V3-40-PlusGM57:1.13.0.2
+	V2-24-NRT-04:1.11
+	V3-33:1.14
+	V2-24:1.11
+	V3-31:1.14
+	V3-30-NRT-05:1.13
+	cfm-01-00:1.13
+	V3-30:1.13
+	V3-20:1.13
+	V3-10:1.13
+	V2-23-NRT-02:1.11
+	V2-23:1.11
+	V2-22-NRT-01:1.11
+	V2-22:1.11
+	V2-21:1.9
+	V2-20:1.9
+	V2-11:1.9
+	V2-10:1.9
+	V2-00:1.9
+	V1-51:1.7
+	V1-50:1.7
+	V1-45:1.7
+	V1-44:1.7
+	V1-43:1.7
+	V1-42:1.7
+	V1-41:1.7
+	V1-32:1.7
+	V1-40:1.7
+	V1-31:1.7
+	V1-30:1.7
+	V1-13:1.6
+	V1-12:1.6
+	V1-11:1.6
+	V1-10:1.6
+	newfwm-feb03:1.6.0.2
+	V1-04:1.4
+	V1-03:1.4
+	V1-02:1.4
+	V1-00:1.3;
+locks; strict;
+comment	@# @;
+
+
+1.15
+date	2015.08.11.16.37.15;	author pwagner;	state dead;
+branches;
+next	1.14;
+
+1.14
+date	2010.10.12.22.25.02;	author pwagner;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2008.07.11.23.59.19;	author pwagner;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2008.04.22.17.21.19;	author pwagner;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2007.05.31.18.31.02;	author pwagner;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2007.04.13.20.15.18;	author pwagner;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2006.03.27.19.20.10;	author pwagner;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2005.06.23.23.02.30;	author pwagner;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2003.04.30.23.04.55;	author pwagner;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2002.09.24.18.12.00;	author pwagner;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2002.09.06.22.57.54;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2002.05.02.00.16.32;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2002.01.15.00.40.18;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.11.15.00.11.47;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.11.13.23.01.42;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.15
+log
+@Replaced with Makefile
+@
+text
+@#	Makefile
+#
+#  Lost? Type 'cd ../; make help -f MakeFC' from this directory
+#
+# Copyright 2005, by the California Institute of Technology. ALL
+# RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+# commercial use must be negotiated with the Office of Technology Transfer
+# at the California Institute of Technology.
+
+# This software may be subject to U.S. export control laws. By accepting this
+# software, the user agrees to comply with all applicable U.S. export laws and
+# regulations. User has the responsibility to obtain export licenses, or other
+# export authority as may be required before exporting such information to
+# foreign countries or providing access to foreign persons.
+
+# "$Id: MakeFC,v 1.14 2010/10/12 22:25:02 pwagner Exp $"
+
+short_name=blas
+
+PROG=libmlspack.a
+
+# We store all the common Makefile things in one shared file
+SRCLIB=../srclib
+-include $(SRCLIB)/Makefile.h
+
+# This will set our MLS platform, compiler. etc.
+# w/o complaining if it does nor exist yet
+-include $(CONFDIR)/$(MLSCFILE)
+
+OMIT_SRCS := $(OMIT) xerbla.f
+
+ifdef BLAS
+   OMIT_SRCS := $(OMIT_SRCS) dot_intrinsic.f90
+else
+ifeq ($(LIB_BLAS),f95)
+   OMIT_SRCS := $(OMIT_SRCS) dot_external_m.f90
+else
+   OMIT_SRCS := $(OMIT_SRCS) dot_intrinsic.f90
+endif
+endif
+
+ifdef LAPACK
+   OMIT_SRCS := $(OMIT_SRCS) dgemm_intrinsic.f90 sgemm_intrinsic.f90 \
+                 dgemv_intrinsic.f90 sgemv_intrinsic.f90
+endif
+
+OMIT_PREFXD := $(shell ${REECHO} -prefix=-d $(OMIT_SRCS))
+
+#----------------------- Build instructions
+
+$(PROG): $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG)
+	@@cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) ; \
+        return_status=`expr $$?` ; \
+        if [ $$return_status != "0" ]; then \
+		     exit 2 ; \
+        elif [ "$(MARK_ALL_AS_UPTODATE)" != "no" ]; then \
+		     $(MAKE) mark_all_as_uptodate \
+           MARK_ALL_AS_UPTODATE= ;\
+         fi
+
+.PHONY: configure depends clean tar tarz targ mostlyclean \
+	all libmlspack.a ghostbuster update
+
+tar:
+
+configure:
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)" \
+          $(RECFG)
+
+$(CONFDIR)/$(MLSCFILE):
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)" \
+          $(RECFG)
+
+$(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/$(MLSCFILE)
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)" -nc  \
+          $(RECFG)
+
+depends:
+	$(MLSBIN)/makemakedep.sh -p $(PLATFORMS)/$(MLSCONFG)/Makefile.dep \
+   $(OMIT_PREFXD) $(UP_OR_LOW)
+
+ghostbuster:
+	$(MLSBIN)/ghostbuster.sh -lib $(OMIT_PREFXD) \
+      $(PLATFORMS)/$(MLSCONFG) ./ $(srclib)
+
+internalsaymake:
+	@@echo "Copying or linking MakeFC to Makefile in `pwd`"; \
+	if [ -f Makefile ] ; then \
+		rm -f Makefile.old ;\
+		mv Makefile Makefile.old ;\
+	fi ; \
+	cp MakeFC Makefile
+
+internalupdate:
+	@@echo "Updating the Makefile in `pwd`/$(MLSCONFG)"; \
+	  PLATFORMS=$(PLATFORMS) ; \
+     m_option="" ; \
+	  $(MLSBIN)/updatemf.sh -pc $$PLATFORMS \
+     -cf "$(CONFDIR)/$(MLSCFILE)" $$m_option; \
+
+update:
+	@@cd .. ; \
+   $(MAKE) update SUBDIRS=blas tests_sub_dirs=
+
+mostlyclean:
+	@@echo "Cleaning directory $(MLSCONFG)" ; \
+	if [ "$(MLSCONFG)" != "" ] ; then  \
+		echo "Deleting $(MLSCONFG) files" ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/* ; \
+	fi ; \
+	if [ -d "$(PLATFORMS)/$(MLSCONFG)" ] ; then  \
+		echo "Deleting $(MLSCONFG) directory" ; \
+		rmdir $(PLATFORMS)/$(MLSCONFG) ; \
+	fi ; \
+	rm -f Make.dep.*
+
+clean:
+	@@echo "Cleaning objects from directory $(MLSCONFG)" ; \
+	if [ "$(MLSCONFG)" != "" ] ; then  \
+		echo "Deleting $(MLSCONFG) files" ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/*.[ao] ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/*.mod ; \
+	fi; \
+	rm -f Make.dep.*
+
+tar:
+	rm -f ../lib.tar
+	@@echo "tar-ing libmlspack"; \
+	$(TAR) hcvf ../libmlspack.tar * --exclude CVS\
+	--exclude Make.dep\* --exclude blas/NAG.\* --exclude blas/LF95.\*
+
+tarz: tar
+	@@echo "... then gzipping it"; \
+	cd ..; rm -f libmlspack.tgz; gzip libmlspack.tar; mv libmlspack.tar.gz libmlspack.tgz
+
+targ:
+	rm -f ../libmlspack.tgz
+	$(TAR) hcvzf ../libmlspack.tgz * --exclude \*.o --exclude \*.mod
+
+# $Log: MakeFC,v $
+# Revision 1.14  2010/10/12 22:25:02  pwagner
+# Uses Makefile.h from srclib
+#
+# Revision 1.13  2008/07/11 23:59:19  pwagner
+# 1st changes to get sunstudio to link mlsl2
+#
+# Revision 1.12  2008/04/22 17:21:19  pwagner
+# CASCADE no longer affects where Makefile.dep goes
+#
+# Revision 1.11  2007/05/31 18:31:02  pwagner
+# Added Absoft to list of tested compilers
+#
+# Revision 1.10  2007/04/13 20:15:18  pwagner
+# Changes in line with Intel v9.1
+#
+# Revision 1.9  2006/03/27 19:20:10  pwagner
+# Makefile.dep now stored with objects
+#
+# Revision 1.8  2005/06/23 23:02:30  pwagner
+# Reworded Copyright statement
+#
+# Revision 1.7  2003/04/30 23:04:55  pwagner
+# Now lets you make update in each subdirectory
+#
+# Revision 1.6  2002/09/24 18:12:00  pwagner
+# Uses unique names for temp files
+#
+# Revision 1.5  2002/09/06 22:57:54  pwagner
+# sdot.f and cdot.f no longer excluded from libmlspack
+#
+# Revision 1.4  2002/05/02 00:16:32  pwagner
+# depends now creates Makefile.nodep, too
+#
+# Revision 1.3  2002/01/15 00:40:18  pwagner
+# Now uses user-settable OMIT and internal OMIT_SRCS and OMIT_PREFIXD variables
+#
+# Revision 1.2  2001/11/15 00:11:47  pwagner
+# Rename library to libmlspack.a; fixed OMIT_SRCS
+#
+# Revision 1.1  2001/11/13 23:01:42  pwagner
+# First commit
+#
+@
+
+
+1.14
+log
+@Uses Makefile.h from srclib
+@
+text
+@d16 1
+a16 1
+# "$Id: MakeFC,v 2.71 2010/08/27 20:56:39 pwagner Exp $"
+d144 3
+@
+
+
+1.13
+log
+@1st changes to get sunstudio to link mlsl2
+@
+text
+@d3 2
+a14 4
+#
+#special case:
+#the 1st time through, before .configure exists yet,
+#execute $(MLSBIN)/mlsconfigure to create .configure
+d16 1
+a16 5
+#This file name is usu. Makefile but may be different;
+#i.e., if you call are building this mls
+#by calling make with a different Makefile name,
+#say: make -f MakeFC
+#then rename the Makefiles in /l2 and /lib also MakeFC
+d18 1
+a18 1
+# "$Id: MakeFC,v 1.12 2008/04/22 17:21:19 pwagner Exp $"
+d20 1
+a20 4
+MakeFName = MakeFC
+
+# where to store .configure
+CONFDIR=..
+d22 3
+a24 19
+# where configure and makemakedep.sh are stored
+MLSBIN=../util
+
+# where the platforms directory is
+PLATFORMS = .
+
+# where sources (but not OBJS) shared with l3, etc. are stored
+srclib=../srclib
+
+# where sources (but not OBJS) shared with l3, etc. are stored
+#blaslib=../blas
+
+# This is the default name of the configure file
+# It may be overridden for multiple platforms, special options, etc.
+ifdef HOSTMLSCFILE
+   MLSCFILE=$(HOSTMLSCFILE)
+else
+   MLSCFILE=.configure
+endif
+a29 39
+# All the implicit pattern-matching involving suffixes
+# will be done in the uniquely-named sub-directories, not here--so
+.SUFFIXES:
+
+# This will filter out globbed file expansions that fail
+# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
+REECHO=$(MLSBIN)/reecho.sh
+UNIQUE_NAME=$(MLSBIN)/unique_name.sh
+
+# This is in case tar doesn't summon GNU tar, you may still use it via
+# something like
+#    make -f MakeFC tar_sips TAR=/usr/local/gnu/bin/tar
+TAR=tar
+
+SHELL = /bin/sh
+
+#--------------- Target definitions
+#            (code sub-directories of lib)
+# $PROG          -- automatic; built when target is not specified
+# all            -- only libmlspack.a; same as $PROG
+
+#                           (functional)
+# configure      -- runs mlsconfigure to (re)set compiler, platform, paths
+#                  also (re)creates uniquely-named sub-sub-directories
+#                  with custom Makefiles where *.o, *.mod, etc. built
+# depends        -- runs makemakedep.sh to calculate dependencies
+# mostlyclean    -- deletes uniquely-named sub-sub-directories
+# clean          -- deletes only *.o, *.mod from sub-subs
+# tar            -- creates a directory archive suitable for distribution
+#
+
+#----------------------------------------------------------
+PROG=libmlspack.a
+#PROG=all
+
+#In case this is called with "make libmlspack.a"
+libmlspack.a:
+
+#OMIT_SRCS := -d xerbla.f
+a31 17
+#CASCADE determines whether to create/use .mod dependencies:
+#if CASCADE, use older .o dependencies, which entail cascades
+#of massive recompilation
+#These are configurations for which I have tested CASCADE-avoidance
+CAN_AVOID="NAG.Linux LF95.Linux NAG.Sun Sun.Sun IFC.Linux Abs.Linux Sunst.Linux"
+#CAN_AVOID=""
+ifndef CASCADE
+  WE_CAN := $(shell echo $(CAN_AVOID) | grep $(MLSF95).$(MLSPLAT))
+ifndef WE_CAN
+  CASCADE := yes
+endif
+endif
+
+ifdef WE_CAN
+NOHUNTING := yes
+endif
+
+a32 2
+#   OMIT_SRCS := $(OMIT_SRCS) -d dot_intrinsic.f90 -d sdot.f -d ddot.f
+#   OMIT_SRCS := $(OMIT_SRCS) dot_intrinsic.f90 sdot.f ddot.f
+a35 2
+#   OMIT_SRCS := $(OMIT_SRCS) -d dot_external_m.f90 -d sdot.f -d ddot.f
+#   OMIT_SRCS := $(OMIT_SRCS) dot_external_m.f90 sdot.f ddot.f
+a37 1
+#   OMIT_SRCS := $(OMIT_SRCS) -d dot_intrinsic.f90
+a42 2
+#   OMIT_SRCS := $(OMIT_SRCS) -d dgemm_intrinsic.f90 -d sgemm_intrinsic.f90 \
+#                 -d dgemv_intrinsic.f90 -d sgemv_intrinsic.f90
+a48 16
+
+ifeq ($(MLSF95),Abs)
+  UP_OR_LOW := -mod UPPER
+else
+  UP_OR_LOW := -mod lower
+endif
+
+#NOCLEANING determines value of RECFG passed to mlsconfigure script
+#RECFG determines whether changing .configure triggers deleting
+#existing sub-directory, and thus recompiling every source file
+#Set NOCLEANING to "yes" if you want to preserve existing compiled objects
+#even when changing .configure file
+ifdef NOCLEANING
+   RECFG = -nd
+endif
+
+d52 1
+a52 8
+	@@case "$(MLSCONFG)" in \
+	"") \
+		echo "Sorry--your configuration is not yet defined" ; \
+		echo "Try make configure_full" ; \
+		exit 2 ; \
+		;; \
+	*) \
+		cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) ; \
+d56 4
+a59 23
+        elif [ "$(WE_CAN)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" ]; then \
+		     $(MAKE) mark_all_as_uptodate ;\
+         fi ; \
+		;; \
+	esac 
+
+$(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PROG)
+	@@case "$(MLSCONFG)" in \
+	"") \
+		echo "Sorry--your configuration is not yet defined" ; \
+		echo "Try make configure_full" ; \
+		exit 2 ; \
+		;; \
+	*) \
+		cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) ; \
+        return_status=`expr $$?` ; \
+        if [ $$return_status != "0" ]; then \
+		     exit 2 ; \
+        elif [ "$(WE_CAN)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" ]; then \
+		     $(MAKE) mark_all_as_uptodate ;\
+         fi ; \
+		;; \
+	esac 
+d144 3
+@
+
+
+1.12
+log
+@CASCADE no longer affects where Makefile.dep goes
+@
+text
+@d24 1
+a24 1
+# "$Id: MakeFC,v 1.11 2007/05/31 18:31:02 pwagner Exp $"
+d100 1
+a100 1
+CAN_AVOID="NAG.Linux LF95.Linux NAG.Sun Sun.Sun IFC.Linux Abs.Linux"
+d274 3
+@
+
+
+1.11
+log
+@Added Absoft to list of tested compilers
+@
+text
+@d24 1
+a24 1
+# "$Id: MakeFC,v 1.10 2007/04/13 20:15:18 pwagner Exp $"
+a211 12
+ifdef CASCADE
+	temp_name_1=`${UNIQUE_NAME} 1` ;\
+	$(MLSBIN)/makemakedep.sh -nodep -p $$temp_name_1 $(OMIT_PREFXD) ; \
+     mv $$temp_name_1 Makefile.nodep
+	temp_name_1=`${UNIQUE_NAME} 1` ;\
+	$(MLSBIN)/makemakedep.sh -p $$temp_name_1 $(OMIT_PREFXD) ; \
+     mv $$temp_name_1 Makefile.dep
+else
+	$(MAKE) depends--mod
+endif
+
+depends--mod:
+d274 3
+@
+
+
+1.10
+log
+@Changes in line with Intel v9.1
+@
+text
+@d24 1
+a24 1
+# "$Id: MakeFC,v 1.9 2006/03/27 19:20:10 pwagner Exp $"
+d100 1
+a100 1
+CAN_AVOID="NAG.Linux LF95.Linux NAG.Sun Sun.Sun IFC.Linux"
+d286 3
+@
+
+
+1.9
+log
+@Makefile.dep now stored with objects
+@
+text
+@d24 1
+a24 1
+# "$Id: MakeFC,v 1.8 2005/06/23 23:02:30 pwagner Exp $"
+d100 1
+a100 1
+CAN_AVOID="NAG.Linux LF95.Linux NAG.Sun Sun.Sun"
+d286 3
+@
+
+
+1.8
+log
+@Reworded Copyright statement
+@
+text
+@d24 1
+a24 1
+# "$Id: MakeFC,v 1.7 2003/04/30 23:04:55 pwagner Exp $"
+d96 17
+d137 7
+d164 6
+d182 6
+d212 1
+a212 2
+#	$(MLSBIN)/makemakedep.sh -nodep $(OMIT_PREFXD) ; \
+#     mv Makefile.dep Makefile.nodep
+a215 1
+#	$(MLSBIN)/makemakedep.sh $(OMIT_PREFXD)
+d219 7
+d286 3
+@
+
+
+1.7
+log
+@Now lets you make update in each subdirectory
+@
+text
+@d3 10
+a12 2
+# Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d24 1
+a24 1
+# "$Id: MakeFC,v 1.6 2002/09/24 18:12:00 pwagner Exp $"
+d245 3
+@
+
+
+1.6
+log
+@Uses unique names for temp files
+@
+text
+@d16 1
+a16 1
+# "$Id: MakeFC,v 1.5 2002/09/06 22:57:54 pwagner Exp $"
+d148 1
+a148 1
+	all libmlspack.a ghostbuster
+d182 19
+d237 3
+@
+
+
+1.5
+log
+@sdot.f and cdot.f no longer excluded from libmlspack
+@
+text
+@d16 1
+a16 1
+# "$Id: MakeFC,v 1.4 2002/05/02 00:16:32 pwagner Exp $"
+d54 1
+d168 9
+a176 3
+	$(MLSBIN)/makemakedep.sh -nodep $(OMIT_PREFXD) ; \
+     mv Makefile.dep Makefile.nodep
+	$(MLSBIN)/makemakedep.sh $(OMIT_PREFXD)
+d218 3
+@
+
+
+1.4
+log
+@depends now creates Makefile.nodep, too
+@
+text
+@d16 1
+a16 1
+# "$Id: MakeFC,v 1.3 2002/01/15 00:40:18 pwagner Exp $"
+d89 2
+a90 1
+   OMIT_SRCS := $(OMIT_SRCS) dot_intrinsic.f90 sdot.f ddot.f
+d94 2
+a95 1
+   OMIT_SRCS := $(OMIT_SRCS) dot_external_m.f90 sdot.f ddot.f
+d211 3
+@
+
+
+1.3
+log
+@Now uses user-settable OMIT and internal OMIT_SRCS and OMIT_PREFIXD variables
+@
+text
+@d16 1
+a16 1
+# "$Id: MakeFC,v 1.2 2001/11/15 00:11:47 pwagner Exp $"
+d165 2
+d209 3
+@
+
+
+1.2
+log
+@Rename library to libmlspack.a; fixed OMIT_SRCS
+@
+text
+@d3 1
+a3 1
+# Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+d16 1
+a16 1
+# "$Id: MakeFC,v 1.1 2001/11/13 23:01:42 pwagner Exp $"
+d51 4
+d84 2
+a85 1
+OMIT_SRCS := -d xerbla.f
+d88 2
+a89 1
+   OMIT_SRCS := $(OMIT_SRCS) -d dot_intrinsic.f90 -d sdot.f -d ddot.f
+d92 2
+a93 1
+   OMIT_SRCS := $(OMIT_SRCS) -d dot_external_m.f90 -d sdot.f -d ddot.f
+d95 2
+a96 1
+   OMIT_SRCS := $(OMIT_SRCS) -d dot_intrinsic.f90
+d101 4
+a104 2
+   OMIT_SRCS := $(OMIT_SRCS) -d dgemm_intrinsic.f90 -d sgemm_intrinsic.f90 \
+                 -d dgemv_intrinsic.f90 -d sgemv_intrinsic.f90
+d107 2
+d165 1
+a165 1
+	$(MLSBIN)/makemakedep.sh $(OMIT_SRCS)
+d168 1
+a168 1
+	$(MLSBIN)/ghostbuster.sh -lib $(OMIT_SRCS) \
+d207 3
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d16 1
+a16 1
+# "$Id: MakeFC,v 2.33 2001/11/09 21:52:10 pwagner Exp $"
+d61 1
+a61 1
+# all            -- only libblas.a; same as $PROG
+d74 1
+a74 1
+PROG=libblas.a
+d77 2
+a78 2
+#In case this is called with "make libblas.a"
+libblas.a:
+d88 1
+a88 1
+   OMIT_SRCS := $(OMIT_SRCS) -d dot_external_m.f90 -d dot_intrinsic.f90
+d93 2
+a94 1
+   OMIT_SRCS := $(OMIT_SRCS) -d dgemm_intrinsic.f90 -d sgemm_intrinsic.f90
+d133 1
+a133 1
+	all libblas.a ghostbuster
+d182 2
+a183 2
+	@@echo "tar-ing libblas"; \
+	$(TAR) hcvf ../libblas.tar * --exclude CVS\
+d188 1
+a188 1
+	cd ..; rm -f libblas.tgz; gzip libblas.tar; mv libblas.tar.gz libblas.tgz
+d191 2
+a192 2
+	rm -f ../libblas.tgz
+	$(TAR) hcvzf ../libblas.tgz * --exclude \*.o --exclude \*.mod
+d195 3
+@
+

@@ -1,0 +1,485 @@
+head	1.6;
+access;
+symbols
+	v5-02-NRT-19:1.6
+	v6-00:1.6
+	v5-02-NRT-18:1.6
+	v5-02:1.5
+	v5-01-NRT-17:1.6
+	v5-01-NRT-16:1.6
+	v5-01-NRT-15:1.6
+	v5-01-NRT-14:1.6
+	neuralnetworks-1-0:1.6.0.4
+	cfm-single-freq-0-1:1.6.0.2
+	v5-01:1.5
+	v5-00:1.5
+	v4-23-TA133:1.5.0.8
+	mus-emls-1-70:1.5.0.6
+	rel-1-0-englocks-work:1.5.0.4
+	VUMLS1-00:1.5
+	VPL1-00:1.5
+	V4-22-NRT-08:1.5
+	VAM1-00:1.5
+	V4-21:1.5.0.2
+	V4-13:1.5
+	V4-12:1.5
+	V4-11:1.5
+	V4-10:1.5
+	M4-00:1.5
+	V3-33:1.1
+	V3-31:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.6
+date	2020.04.21.00.05.49;	author pwagner;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2011.05.24.01.33.26;	author vsnyder;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2011.03.04.04.16.33;	author vsnyder;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2011.03.04.04.04.22;	author vsnyder;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2011.03.04.03.17.42;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2011.02.05.01.32.32;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.6
+log
+@Should work better with make
+@
+text
+@\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{longtable}
+\usepackage{xr}
+\externaldocument[100-]{\logdir/wvs-100}
+\externaldocument[095-]{\logdir/wvs-095}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9in
+
+\newcommand{\docname}{\bf wvs-102r4}
+\newcommand{\docdate}{24 May 2011}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\ifx\dvidir\undefined
+  \newcommand\hr[1]{\href{#1.dvi}{dvi} \href{#1.pdf}{pdf}}
+\else
+  \newcommand\hr[1]{\href{\dvidir/#1.dvi}{dvi} \href{\pdfdir/#1.pdf}{pdf}}
+\fi
+\newcommand\h[1]{#1 (\hr{#1})}
+\newcommand\hh[2]{#1 \hr{#2}}
+\newcommand\hrpdf[1]{\href{#1.pdf}{pdf}}
+\newcommand\hpdf[1]{#1 \hrpdf{#1}}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\renewcommand{\d}{\text{d}}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Van, Bill, Igor\\
+Subject: \>Derivatives of $\alpha$\\
+From: \>Van Snyder\\
+Reference: \>\h{wvs-100}
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-10pt}
+
+\section{$\alpha(s)$}
+
+For most species $k$ we think of $\alpha$ as
+
+\begin{equation}
+\alpha(s) = \sum_k f^k(s)\, \beta^k(s) \text{ where }
+ f^k(s) = \sum_{lm} \eta^k_{lm}(s) f^k_{lm}
+\end{equation}
+
+where $\eta^k_{lm}(s)$ is the interpolation factor from the solution grid
+$(\phi^k_l,\zeta^k_m)$ to the path.
+
+For some species, $k$, $\beta^k$ depends upon $f^k$.
+
+For some species, we interpolate $f^k$ logarithmically from the grid to
+the path, i.e.,
+
+\begin{equation}
+\alpha(s) = \sum_k \hat{f}^k(s)\, \beta^k(s) \text{ where }
+ \hat{f}^k(s) =
+ \exp\left( \sum_{lm} \eta^k_{lm}(s) \ln f^k_{lm} \right)
+\end{equation}
+
+\section{$\frac{\partial\alpha(s)}{\partial f^k_{lm}}$}
+
+In Equation (\ref{100-dI_dfklm}) in \h{wvs-100}, the expression for the
+derivative of the solution of the radiative-transfer equation with
+respect to mixing ratio, the integral
+
+\begin{equation}
+\int_s^{s_m} \frac{\partial \alpha(\sigma)}{\partial f^k_{lm}}
+ \d \sigma
+\end{equation}
+
+appears.  To incorporate TScat into the forward model, we will need
+$\frac{\partial \omega_{0_{ij}}}{\partial f^k_{lm}}$ (see Equation
+(\ref{095-twelve}) in \h{wvs-095}).  Since $\omega_{0_{ij}}$ depends upon
+$\alpha(s)$, we need its derivatives for this purpose as well.
+
+The combination of linear or logarithmic interpolation, and $\beta^k$
+depending or not depending upon $f^k$, leads to four possibilities. 
+Suppressing the superscript $k$ for clarity,
+
+\begin{equation}
+ \begin{array}{l|l}
+ \alpha(s) & \frac{\partial \alpha(s)}{\partial f^k_{lm}}
+\\[10pt]
+ \hline
+& \\[-5pt]
+ \sum_k f(s)\, \beta(s) & 
+ \beta(s) \eta_{lm}(s)
+\\
+ \sum_k f(s)\, \beta(s,f(s)) &
+  \left( \beta(s,f(s)) + f(s) \frac{\partial \beta(s,f(s))}
+                                         {\partial f(s)}
+  \right) \eta_{lm}(s)
+\\
+ \sum_k \hat{f}(s)\, \beta(s) &
+ \hat{f}(s)\, \beta(s)
+    \frac{\eta_{lm}(s)}{f_{lm}}
+\\
+ \sum_k \hat{f}(s)\, \beta(s,\hat{f}(s)) &
+ \hat{f}(s) \left( \beta(s,\hat{f}(s)) +
+      \hat{f}(s)\frac{\partial \beta(s,\hat{f}(s))}
+                       {\partial \hat{f}(s)} \right)
+     \frac{\eta_{lm}(s)}{f_{lm}}
+ \end{array}
+\end{equation}
+
+\section{$\frac{\partial^2\alpha(s)}
+               {\partial f^k_{lm}\partial f^{\tilde k}_{\tilde l \tilde m}}$}
+
+If $k \neq \tilde k$,
+   $\frac{\partial^2\alpha(s)}
+               {\partial f^k_{lm}\partial f^{\tilde k}_{\tilde l \tilde m}} =
+               0$.
+
+Suppressing the superscript $k$ and arguments of $\beta$ for clarity,
+
+\begin{equation}
+ \begin{array}{l|l}
+ \alpha(s) & \frac{\partial^2\alpha(s)}
+                  {\partial f^k_{lm}\partial f^k_{\tilde l \tilde m}}
+\\[10pt]
+ \hline
+& \\[-5pt]
+ \sum_k f(s)\, \beta(s) & 
+ 0
+\\
+ \sum_k f(s)\, \beta(s,f(s)) &
+  \left( 2 \frac{\partial \beta}{\partial f(s)} +
+         f(s) \frac{\partial^2 \beta}{\partial f(s)^2}
+  \right) \eta_{lm}(s) \eta_{\tilde l \tilde m}(s)
+\\
+ \sum_k \hat{f}(s)\, \beta(s) &
+ \beta \hat{f}(s)
+  \frac{\eta_{lm}(s)}{f_{lm}}
+  \frac{\eta_{\tilde l \tilde m}(s)}{f_{\tilde l \tilde m}} =
+ \frac{\partial \alpha(s)}{\partial f_{lm}}
+  \frac{\eta_{\tilde l \tilde m}(s)}{f_{\tilde l \tilde m}}
+\\
+ \sum_k \hat{f}(s)\, \beta(s,\hat{f}(s)) &
+ \hat{f}(s) \left( \beta +
+      3 \hat{f}(s)\frac{\partial \beta}
+                       {\partial \hat{f}(s)} +
+      (\hat{f}(s))^2 \frac{\partial^2 \beta}
+                       {\partial \hat{f}(s)^2} \right)
+     \frac{\eta_{lm}(s)}{f_{lm}}
+     \frac{\eta_{\tilde l \tilde m}(s)}{f_{\tilde l \tilde m}} =
+\\[7pt] &
+ \left[
+  \frac{\partial\alpha(s)}{\partial f_{lm}} +
+  \hat{f}(s)^2 \left(
+       2 \frac{\partial \beta}
+             {\partial \hat{f}(s)} +
+       \hat{f}(s) \frac{\partial^2 \beta}
+                       {\partial \hat{f}(s)^2} \right)
+     \frac{\eta_{lm}(s)}{f_{lm}}
+ \right]
+     \frac{\eta_{\tilde l \tilde m}(s)}{f_{\tilde l \tilde m}}
+ \end{array}
+\end{equation}
+
+So far, we don't have any species for which
+$\frac{\partial^2 \beta}{\partial \hat{f}(s)^2} \neq 0$.
+
+\newcommand{\T}{\mathcal{T}}
+\renewcommand{\d}{\,\text{d}}
+\section{$\frac{\partial\T}{\partial f^k_{lm}}$}
+
+\begin{equation}
+\T(s_1,s_2) = \exp\left( -\int_{s_1}^{s_2} \alpha(s) \d s \right)\,.
+\end{equation}
+
+Suppressing the integral limits for clarity,
+
+\begin{equation}
+\frac{\partial\T}{\partial f^k_{lm}} =
+ -\T \int \frac{\partial \alpha(s)}{\partial f^k_{lm}} \d s
+\end{equation}
+
+\section{$\frac{\partial^2\T}
+               {\partial f^k_{lm}\partial f^{\tilde k}_{\tilde l \tilde m}}$}
+
+\begin{equation}\begin{split}
+\frac{\partial^2\T}{\partial f^k_{lm}\partial f^{\tilde k}_{\tilde l \tilde m}}
+=\,&
+\T \left( \int \frac{\partial \alpha(s)}{\partial f^k_{lm}} \d s
+          \int \frac{\partial \alpha(s)}
+                    {\partial f^{\tilde k}_{\tilde l \tilde m}} \d s -
+          \int \frac{\partial^2 \alpha(s)}
+                    {\partial f^k_{lm}
+                     \partial f^{\tilde k}_{\tilde l \tilde m}} \d s
+   \right) \\
+=\,& \frac1{\T} \frac{\partial\T}{\partial f^k_{lm}}
+                \frac{\partial\T}{\partial f^{\tilde k}_{\tilde l \tilde m}}
+    -\T \int \frac{\partial^2 \alpha(s)}
+                    {\partial f^k_{lm}
+                     \partial f^{\tilde k}_{\tilde l \tilde m}} \d s
+\end{split}\end{equation}
+
+\label{lastpage}
+\end{document}
+
+% $Id: wvs-102.tex,v 1.5 2011/05/24 01:33:26 vsnyder Exp $
+
+% $Log: wvs-102.tex,v $
+% Revision 1.5  2011/05/24 01:33:26  vsnyder
+% Correct missing factor of 2
+%
+% Revision 1.4  2011/03/04 04:16:33  vsnyder
+% More cannonball polishing
+%
+% Revision 1.3  2011/03/04 04:04:22  vsnyder
+% Undo oversimplification, some cannonball polishing
+%
+% Revision 1.2  2011/03/04 03:17:42  vsnyder
+% Second derivatives
+%
+% Revision 1.1  2011/02/05 01:32:32  vsnyder
+% Initial commit
+%
+@
+
+
+1.5
+log
+@Correct missing factor of 2
+@
+text
+@d6 2
+a7 2
+\externaldocument[100-]{wvs-100}
+\externaldocument[095-]{wvs-095}
+d258 1
+a258 1
+% $Id: wvs-102.tex,v 1.4 2011/03/04 04:16:33 vsnyder Exp $
+d261 3
+@
+
+
+1.4
+log
+@More cannonball polishing
+@
+text
+@d15 2
+a16 2
+\newcommand{\docname}{\bf wvs-102r3}
+\newcommand{\docdate}{3 March 2011}
+d184 1
+a184 1
+  \left( \frac{\partial \beta}{\partial f(s)} +
+d258 1
+a258 1
+% $Id: wvs-102.tex,v 1.3 2011/03/04 04:04:22 vsnyder Exp $
+d261 3
+@
+
+
+1.3
+log
+@Undo oversimplification, some cannonball polishing
+@
+text
+@d15 1
+a15 1
+\newcommand{\docname}{\bf wvs-102r2}
+d96 1
+a96 1
+We normally think of $\alpha$ as
+d104 1
+a104 1
+to the path.
+d106 1
+a106 1
+For some species $k$, $\beta^k$ depends upon $f^k$.
+d108 2
+a109 2
+For others, we interpolate $f^k$ logarithmically from the grid to the
+path, i.e.,
+d258 1
+a258 1
+% $Id: wvs-102.tex,v 1.2 2011/03/04 03:17:42 vsnyder Exp $
+d261 3
+@
+
+
+1.2
+log
+@Second derivatives
+@
+text
+@d15 1
+a15 1
+\newcommand{\docname}{\bf wvs-102r1}
+d189 1
+a189 1
+ \beta \hat{f}
+d204 2
+a205 2
+  \frac{\partial\alpha(s)}{\partial f_{lm}}
+  \frac{\eta_{\tilde l \tilde m}(s)}{f_{\tilde l \tilde m}} +
+d212 1
+d217 3
+d258 1
+a258 1
+% $Id: wvs-102.tex,v 1.1 2011/02/05 01:32:32 vsnyder Exp $
+d261 3
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d15 2
+a16 2
+\newcommand{\docname}{\bf wvs-102}
+\newcommand{\docdate}{1 February 2011}
+d85 1
+a85 1
+To: \>Van, Bill\\
+d94 2
+d117 2
+d134 2
+a135 1
+depending or not depending upon $f^k$, leads to four possibilities:
+d143 51
+a193 2
+ \sum_k f^k(s)\, \beta^k(s) & 
+ \beta^k(s) \eta^k_{lm}(s)
+d195 18
+a212 14
+ \sum_k f^k(s)\, \beta^k(s,f^k(s)) &
+  \left( \beta^k(s,f^k(s)) + f^k(s) \frac{\partial \beta^k(s,f^k(s))}
+                                         {\partial f^k(s)}
+  \right) \eta^k_{lm}(s)
+\\
+ \sum_k \hat{f}^k(s)\, \beta^k(s) &
+ \hat{f}^k(s)\, \beta^k(s)
+    \frac{\eta^k_{lm}(s)}{f^k_{lm}}
+\\
+ \sum_k \hat{f}^k(s)\, \beta^k(s,\hat{f}^k(s)) &
+ \hat{f}^k(s) \left( \beta(s,\hat{f}^k(s)) +
+      \hat{f}^k(s)\frac{\partial \beta(s,\hat{f}^k(s))}
+                       {\partial \hat{f}^k(s)} \right)
+     \frac{\eta^k_{lm}(s)}{f^k_{lm}}
+d216 35
+d254 1
+a254 1
+% $Id: wvs-092.tex,v 1.1 2010/04/09 02:30:48 vsnyder Exp $
+d256 4
+a259 1
+% $Log: wvs-092.tex,v $
+@
+

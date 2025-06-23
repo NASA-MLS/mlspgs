@@ -1,0 +1,1271 @@
+head	1.19;
+access;
+symbols
+	v5-02-NRT-19:1.19
+	v6-00:1.19
+	v5-02-NRT-18:1.19
+	v5-02:1.19
+	v5-01-NRT-17:1.19
+	v5-01-NRT-16:1.19
+	v5-01-NRT-15:1.19
+	v5-01-NRT-14:1.19
+	neuralnetworks-1-0:1.19.0.12
+	cfm-single-freq-0-1:1.19.0.10
+	v5-01:1.19
+	v5-00:1.19
+	v4-23-TA133:1.19.0.8
+	mus-emls-1-70:1.19.0.6
+	rel-1-0-englocks-work:1.19.0.4
+	VUMLS1-00:1.19
+	VPL1-00:1.19
+	V4-22-NRT-08:1.19
+	VAM1-00:1.19
+	V4-21:1.19.0.2
+	V4-13:1.19
+	V4-12:1.19
+	V4-11:1.19
+	V4-10:1.18
+	V3-43:1.16
+	M4-00:1.17
+	V3-41:1.16
+	V3-40-PlusGM57:1.16.0.2
+	V2-24-NRT-04:1.15
+	V3-33:1.16
+	V2-24:1.15
+	V3-31:1.16
+	V3-30-NRT-05:1.16
+	cfm-01-00:1.16
+	V3-30:1.16
+	V3-20:1.16
+	V3-10:1.16
+	V2-23-NRT-02:1.15
+	V2-23:1.15
+	V2-22-NRT-01:1.15
+	V2-22:1.15
+	V2-21:1.15
+	V2-20:1.15
+	V2-11:1.15
+	V2-10:1.15
+	V2-00:1.15
+	V1-51:1.14
+	V1-50:1.14
+	V1-45:1.14
+	V1-44:1.14
+	V1-43:1.14
+	V1-42:1.14
+	V1-41:1.14
+	V1-32:1.14
+	V1-40:1.14
+	V1-31:1.14
+	V1-30:1.14
+	V1-13:1.13
+	V1-12:1.13
+	V1-11:1.13
+	V1-10:1.13
+	newfwm-feb03:1.13.0.2
+	V1-04:1.12
+	V1-03:1.12
+	V1-02:1.12
+	V1-00:1.10
+	newfwm-sep01:1.9.0.2
+	V0-7:1.9;
+locks; strict;
+comment	@# @;
+
+
+1.19
+date	2014.05.27.18.48.52;	author pwagner;	state Exp;
+branches;
+next	1.18;
+
+1.18
+date	2014.03.04.18.51.59;	author pwagner;	state Exp;
+branches;
+next	1.17;
+
+1.17
+date	2013.01.09.18.47.10;	author pwagner;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2008.06.27.16.59.15;	author pwagner;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2005.06.23.22.20.45;	author pwagner;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2003.06.05.16.22.16;	author pwagner;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2002.08.05.18.07.46;	author pwagner;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2002.05.03.18.02.56;	author pwagner;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2002.04.26.23.41.14;	author pwagner;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2002.01.22.21.42.59;	author pwagner;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2001.08.29.18.09.33;	author pwagner;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2001.08.28.18.26.32;	author pwagner;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2001.08.17.23.15.26;	author pwagner;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2001.08.14.23.45.41;	author pwagner;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2001.08.13.23.57.53;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.08.13.23.25.25;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2001.08.10.23.51.17;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.08.10.17.43.19;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.07.26.22.49.56;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.19
+log
+@Correct misleading error message
+@
+text
+@#!/bin/sh
+# build_f90_in_misc.sh
+
+# --------------- build_f90_in_misc.sh help
+# Usage: build_f90_in_misc.sh [options] file [files]
+# given fortran file(s) named as arg(s) on command line
+# builds an executable by
+# (1) hiding any .f90, .f, .h, .f9h or .c curently in tests/misc
+# (2) copying the arg(s) to tests/misc
+# (3) cd tests/misc; make depends; make
+# (4) installing via: mv \$MLSCONFG/test ../../bin/\$MLSCONFG/test
+
+# options
+# -h[elp]            brief summary of usage and options; then exit
+# -v                 verbose; echo most commands
+# -s                 silent; suppress most printing
+# -T target_name     make builds target_name instead of test e.g., lib)
+# -p prog_name       install resulting program as prog_name instead of test
+# -d prog_path       install resulting program in prog_path
+# -ni                don't install; i.e., skip step (4) above
+# -m test_dir_name   use tests/test_dir_name instead of tests/misc
+# -main main.c       edit main.c so main() -> MAIN__() to appease Lahey
+# -M MYMAKE          use MYMAKE for make command instead of make
+# -t test_dir_path   use test_dir_path/misc instead of tests/misc
+# -c MLSCONFG        use arg for MLSCONFG instead of any current setting
+# -C MLSCFILE        use arg for MLSCFILE instead of .configure
+# -CC compiler       use arg for c compiler instead of cc
+# -FC compiler       use arg for Fortran compiler instead of MLSCONFG
+# -O opt or X=y      add an extra option to those being sent to make
+#                     consisting of a single arg; eg., "VARIABLE=value" or "-s"
+#                     you may have multiple occurrences of '-O option'
+#                     that assemble a longer list of options
+#                     e.g., '-O -f -O alt.makefile ..' => "make -f alt.makefile"
+#                     while in principle this would also allow you build 
+#                     multiple targets, that is a risky step
+# -i INC_PATHS       let arg override usual value for INC_PATHS
+#                     used for search paths when compiling
+#                     e.g., -i "../ /software/SRC..."
+#                     these values can be relative or absolute
+#                     relative means w.r.t the current working directory
+#                     e.g., '../other/directory'
+#                     absolute means the path begins with "/"
+#                     e.g., '/usr/lib/gl'
+# -I PATH            add "-I PATH" to EXTRA_PATHS
+#                     you may have multiple occurrences of '-I PATH'
+#                     that assemble a longer EXTRA_PATHS
+#                     e.g., '-I path1 -I path2 ..'
+#                     however '-i INC_PATHS' would override these
+#                     therefore don't use the -i  and -I options simultaneously
+# --------------- End build_f90_in_misc.sh help
+
+# Copyright 2005, by the California Institute of Technology. ALL
+# RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+# commercial use must be negotiated with the Office of Technology Transfer
+# at the California Institute of Technology.
+
+# This software may be subject to U.S. export control laws. By accepting this
+# software, the user agrees to comply with all applicable U.S. export laws and
+# regulations. User has the responsibility to obtain export licenses, or other
+# export authority as may be required before exporting such information to
+# foreign countries or providing access to foreign persons.
+
+# "$Id: build_f90_in_misc.sh,v 1.18 2014/03/04 18:51:59 pwagner Exp $"
+
+# Known bugs and limitations
+# (1) Doesn't pick up MLSCONFG from .configure if run directly from command-line
+# (2) Doesn't allow you to override other .configure or make variables
+#----------------------- Implementation -----------------------
+#
+
+#****************************************************************
+#                                                               *
+#                   * * * Functions  * * *                      *
+#                                                               *
+#****************************************************************
+
+#
+# Function to mkdir each step or subpath along a path
+#
+
+mkpath()
+{
+
+   # Does path start with "/" or not?
+   # (in other words is it absolute or relative?)
+
+   is_absolute=`echo "$*" | grep '^\/'`
+
+   the_pn=`echo $* | sed 's;/; ;g'`
+
+   if [ "$is_absolute" = "" ]
+   then
+      the_path=
+   else
+      the_path="/"
+   fi
+
+   for p in $the_pn
+   do
+      the_path="${the_path}$p/"
+      if [ ! -d "$the_path" ]
+      then
+         mkdir "$the_path"
+   #      echo mkdir "$the_path"
+      fi
+   done
+
+}
+
+#
+# Function to repair each relative subpath among the args
+#
+
+repair_subpaths()
+{
+
+   repaired_subpaths=
+   # 1st delete all -I prefixes
+   unprefixed=`$REECHO -d $@@`
+
+   # Trivial case ($# = 0)
+   if [ "$unprefixed" != "" ]
+   then
+      for file in $unprefixed
+      do
+
+         # Does path start with "/" or not?
+         # (in other words is it absolute or relative?)
+
+         is_absolute=`echo "$file" | grep '^\/'`
+
+         the_pn=`echo $file | sed 's;/; ;g'`
+
+         if [ "$is_absolute" = "" ]
+         then
+         # Relative--Need to repair path
+            repaired_subpaths="`pwd`/$file $repaired_subpaths"
+        else
+         # Absolute path--no need to repair
+            repaired_subpaths="$file $repaired_subpaths"
+         fi
+
+      done
+   # Now that the sub_paths are repaired, re-prefix them
+   repaired_subpaths=`$REECHO -d -prefix=-I $repaired_subpaths`
+   fi
+
+}
+
+#****************************************************************
+#                                                               *
+#                  * * * Main Program  * * *                    *
+#                                                               *
+#****************************************************************
+
+if [ $# -lt 1 ]
+then
+   echo "Usage: build_f90_in_misc.sh [options] file [files]"
+   exit 1
+elif [ "$MLSCONFG" = "" ]
+then
+#   echo "Sorry--you must first configure the mls software"
+#   echo "(or at least define MLSCONFG)"
+#   exit 1
+   NEED_MLSCONFG="yes"
+else
+   NEED_MLSCONFG="no"
+fi
+
+# Initialize settings to defaults
+DEEBUG=off
+BUILD=on
+EXTRAOPTS=
+INSTALL=on
+verbose=off
+silent=off
+prog_name=test
+target_name=test
+test_dir_name=misc
+hidden_dir_name=hideme
+# The following paths work well starting from, say, mlspgs/l2
+test_dir_path=../tests
+prog_path=../bin/$MLSCONFG
+override_INC_PATHS="no"
+INC_PATHS=""
+EXTRA_PATHS=""
+MYMAKE=make
+MYMAKEOPTS=
+main=
+
+me="$0"
+my_name=build_f90_in_misc.sh
+args_dir=`pwd`
+REECHO="`echo $0 | sed 's/build_f90_in_misc.sh/reecho.sh/'`"
+#echo "args: $@@"
+arglist=
+
+#
+# Get arguments from command line
+#
+
+while [ "$1" != "" ] ; do
+
+    case "$1" in
+	-p )
+	    prog_name=$2
+	    shift
+	;;
+	-T )
+	    target_name=$2
+	    shift
+	;;
+	-d )
+	    prog_path=$2
+	    shift
+	;;
+	-m )
+	    test_dir_name=$2
+	    shift
+	;;
+	-main )
+	    main=$2
+	    shift
+	;;
+	-M )
+	    MYMAKE=$2
+	    shift
+	;;
+	-t )
+	    test_dir_path=$2
+	    shift
+	;;
+	-c )
+	    MLSCONFG=$2
+       NEED_MLSCONFG="no"
+	    shift
+	;;
+	-C )
+	    MYMAKEOPTS="MLSCFILE=$2 $MYMAKEOPTS"
+	    shift
+	;;
+	-CC )
+	    MYMAKEOPTS="CC=$2 $MYMAKEOPTS"
+	    shift
+	;;
+	-FC )
+	    MYMAKEOPTS="FC=$2 $MYMAKEOPTS"
+	    shift
+	;;
+	-O )
+	    MYMAKEOPTS="$2 $MYMAKEOPTS"
+	    shift
+	;;
+	-I )
+	    EXTRA_PATHS="-I $2 $EXTRA_PATHS"
+	    shift
+	;;
+	-i )
+	    INC_PATHS=$2
+       override_INC_PATHS="yes"
+	    shift
+	;;
+	-ni )
+	    INSTALL=off
+	;;
+	-s )
+	    silent=on
+	;;
+	-v )
+	    verbose=on
+	;;
+	-h | -help )
+	   sed -n '/'$my_name' help/,/End '$my_name' help/ p' $me \
+   		| sed -n 's/^..//p' | sed '1 d; $ d'
+        exit
+	;;
+	* )
+      arglist="$arglist $1"
+	;;
+    esac
+    shift
+
+done
+
+DEEBUG=$verbose
+
+if [ $silent = "on" ]
+then
+  MYMAKEOPTS="-s $MYMAKEOPTS"
+fi
+
+if [ $DEEBUG = "on" ]
+then
+   echo "Done with parsing control line"
+   echo "prog_name: $prog_name"
+   echo "prog_path: $prog_path"
+   echo "test_dir_name: $test_dir_name"
+   echo "test_dir_path: $test_dir_path"
+   echo "target_name: $target_name"
+   echo "main.c name: $main"
+   echo "make command: $MYMAKE"
+   echo "NEED_MLSCONFG: $NEED_MLSCONFG"
+   echo "MLSCONFG: $MLSCONFG"
+   echo "override_INC_PATHS: $override_INC_PATHS"
+   echo "INC_PATHS: $INC_PATHS"
+   echo "EXTRA_PATHS: $EXTRA_PATHS"
+   echo "extra make options: $MYMAKEOPTS"
+   echo "arglist: $arglist"
+   echo "BUILD: $BUILD"
+   echo "INSTALL: $INSTALL"
+fi
+
+# Check on args--need any more? Are they self-consistent?
+if [ "$NEED_MLSCONFG" = "yes" ]
+then
+   echo "Sorry--MLSCONFG must be defined"
+   echo "(Try running with -h option for help)"
+   exit 1
+elif [ "override_INC_PATHS" = "yes" -a "$EXTRA_PATHS" != "" ]
+then
+   echo "Warning--attempt to specify both -i and -I arguments"
+   exit 1
+fi
+
+# Check whether misc directory exists and that we have write permission
+if [ ! -w "$test_dir_path/$test_dir_name" ]
+then
+   echo "Sorry--you must have write permission to $test_dir_path/$test_dir_name"
+   exit 1
+elif [ -d "$prog_path" -a ! -w "$prog_path" ]
+then
+   echo "Sorry--you must have write permission to $prog_path"
+   exit 1
+elif [ "$arglist" = "" ]
+then
+   echo "Sorry--you must have at least one source file named as an arg"
+   exit 1
+fi
+
+# Check whether a hidden directory exists yet; if not make one
+if [ ! -d "$test_dir_path/$test_dir_name/$hidden_dir_name" ]
+then
+   if [ "$DEEBUG" = "on" ]
+   then
+      echo mkdir $test_dir_path/$test_dir_name/$hidden_dir_name
+   fi
+   if [ "$BUILD" = "on" ]
+   then
+      mkdir $test_dir_path/$test_dir_name/$hidden_dir_name
+   fi
+fi
+
+cd $test_dir_path/$test_dir_name
+
+# (1) Hide any pre-existing source files
+if [ $DEEBUG = "on" ]
+then
+   echo "Hiding any pre-existing source files"
+fi
+for source_suffix in c f f90 h f9h g90 .F .F90
+do
+   pre_files=*.$source_suffix
+   for file in $pre_files
+   do
+      if [ -f $file ]
+      then
+         if [ "$BUILD" = "on" ]
+         then
+            mv $file $hidden_dir_name
+         fi
+         if [ "$DEEBUG" = "on" ]
+         then
+            echo mv $file $hidden_dir_name
+         fi
+      fi
+   done
+done
+
+cd $args_dir
+
+# (2) Copy files to misc directory
+if [ $DEEBUG = "on" ]
+then
+   echo "Copying $arglist to misc"
+fi
+for file in $arglist
+do
+   if [ -r $file ]
+   then
+      if [ "$BUILD" = "on" ]
+      then
+         cp $file $test_dir_path/$test_dir_name
+      fi
+      if [ "$DEEBUG" = "on" ]
+      then
+         echo cp $file $test_dir_path/$test_dir_name
+      fi
+   fi
+done
+
+# (3) Build the executable
+if [ $DEEBUG = "on" ]
+then
+   echo "Building the executable"
+fi
+
+# The following nonsense is necessary only if your main program is
+# a c language program named main() and you're using Lahey:
+# Lahey insists then your main be renamed MAIN__()
+# (Why do we permit such behavior?)
+# Anyway, we'll try to rename our main to appease the Lahey monster
+is_lf95=`echo "$MYMAKEOPTS" | grep -i '=LF95'`
+if [ "$main" != "" -a -f "$test_dir_path/$test_dir_name/$main" \
+  -a "$is_lf95" != "" ]
+then
+   cd $test_dir_path/$test_dir_name
+   rm -f "temp"
+#  Sorry for the crude substitutions
+#  Should construct a more elegant method
+#  in a perl one-liner, perhaps
+   sed '/[^A-Za-z0-9]main[^A-Za-z0-9]/ s/main/MAIN__/' "$main" > "temp"
+   mv "temp" "$main"
+   sed '/^main[^A-Za-z0-9]/ s/main/MAIN__/' "$main" > "temp"
+   if [ $DEEBUG = "on" ]
+   then
+      echo "Lahey compiler: changing main c program in file $main"
+      echo "diffing changed and original:"
+      diff "temp" "$main"
+   fi
+   mv "temp" "$main"
+   cd $args_dir
+fi
+
+# The following nonsense is necessary only if your main program is
+# a c language program named main() and you're using the Intel compiler:
+# Intel requires that you add the command-line option -nofor-main
+is_ifort=`echo "$MYMAKEOPTS" | grep -i '=IFC'`
+if [ "$main" != "" -a -f "$test_dir_path/$test_dir_name/$main" \
+  -a "$is_ifort" != "" ]
+then
+  EXTRAOPTS="LAFTER=-nofor-main"
+fi
+if [ $DEEBUG = "on" ]
+then
+  echo "MYMAKEOPTS $MYMAKEOPTS"
+  echo "main: $main"
+  echo "is_ifort: $is_ifort"
+  echo "EXTRAOPTS: $EXTRAOPTS"
+fi
+if [ "$EXTRA_PATHS" != "" ]
+then
+   repair_subpaths $EXTRA_PATHS
+   EXTRA_PATHS=$repaired_subpaths
+   if [ "$BUILD" = "on" ]
+   then
+      cd $test_dir_path/$test_dir_name
+      $MYMAKE depends ghostbuster $MYMAKEOPTS
+      $MYMAKE EXTRA_PATHS="$EXTRA_PATHS" $EXTRAOPTS $MYMAKEOPTS "$target_name"
+   fi
+   if [ "$DEEBUG" = "on" ]
+   then
+      echo $MYMAKE EXTRA_PATHS="$EXTRA_PATHS" $EXTRAOPTS $MYMAKEOPTS "$target_name"
+   fi
+elif [ "$override_INC_PATHS" = "no" ]
+then
+   if [ "$BUILD" = "on" ]
+   then
+      cd $test_dir_path/$test_dir_name
+      $MYMAKE depends ghostbuster $MYMAKEOPTS
+      $MYMAKE $EXTRAOPTS  $MYMAKEOPTS "$target_name"
+   fi
+   if [ "$DEEBUG" = "on" ]
+   then
+      echo $MYMAKE $EXTRAOPTS  $MYMAKEOPTS "$target_name"
+   fi
+else
+   repair_subpaths $INC_PATHS
+   INC_PATHS=$repaired_subpaths
+   if [ "$BUILD" = "on" ]
+   then
+      cd $test_dir_path/$test_dir_name
+#      make depends ghostbuster
+#      make INC_PATHS="$INC_PATHS"
+      $MYMAKE depends ghostbuster $MYMAKEOPTS
+      $MYMAKE INC_PATHS="$INC_PATHS" $EXTRAOPTS $MYMAKEOPTS "$target_name"
+   fi
+   if [ "$DEEBUG" = "on" ]
+   then
+      echo $MYMAKE INC_PATHS="$INC_PATHS" $EXTRAOPTS $MYMAKEOPTS "$target_name"
+   fi
+fi
+
+# (4) Install
+if [ $INSTALL = "off" ]
+then
+   if [ "$silent" != "on" ]
+   then
+      echo "Done with build; INSTALL = off so exiting now"
+   fi
+   exit 0
+fi
+if [ "$silent" != "on" ]
+then
+   echo "Installing $prog_name in $prog_path"
+fi
+cd $args_dir
+
+# Check whether the final directory exists yet; if not make it
+if [ ! -d "$prog_path" -a "$BUILD" = "on" ]
+then
+   mkpath $prog_path
+fi
+
+if [ -x "$test_dir_path/$test_dir_name/$MLSCONFG/$target_name" -a "$BUILD" = "on" ]
+then
+   mv $test_dir_path/$test_dir_name/$MLSCONFG/$target_name $prog_path/$prog_name
+fi
+
+exit 0
+
+# $Log: build_f90_in_misc.sh,v $
+# Revision 1.18  2014/03/04 18:51:59  pwagner
+# Allow more source source file suffixes
+#
+# Revision 1.17  2013/01/09 18:47:10  pwagner
+# Add verbose, silent options; unless silent announce where installing
+#
+# Revision 1.16  2008/06/27 16:59:15  pwagner
+# Worked around Intel refusal to link when main program in c
+#
+# Revision 1.15  2005/06/23 22:20:45  pwagner
+# Reworded Copyright statement
+#
+# Revision 1.14  2003/06/05 16:22:16  pwagner
+# Internal function renamed mkpath()
+#
+# Revision 1.13  2002/08/05 18:07:46  pwagner
+# turns main to MAIN__ if MLSF95 is Lahey
+#
+# Revision 1.12  2002/05/03 18:02:56  pwagner
+# Fix bug (but who created it?)
+#
+# Revision 1.11  2002/04/26 23:41:14  pwagner
+# New options -T -O -ni; can build libutcttai.a now
+#
+# Revision 1.10  2002/01/22 21:42:59  pwagner
+# Turned debugging off
+#
+# Revision 1.9  2001/08/29 18:09:33  pwagner
+# Added C, CC, FC options
+#
+# Revision 1.8  2001/08/28 18:26:32  pwagner
+# Added -M option; no more bare make
+#
+# Revision 1.7  2001/08/17 23:15:26  pwagner
+# EXTRA_PATHS now implemented; relative paths w.r.t. cwd
+#
+# Revision 1.6  2001/08/14 23:45:41  pwagner
+# CHanged file requirement before hiding from -w to just -r
+#
+# Revision 1.5  2001/08/13 23:57:53  pwagner
+# Forgot ot turn DEEBUG off
+#
+# Revision 1.4  2001/08/13 23:25:25  pwagner
+# Added rules for compiling .c files, too
+#
+# Revision 1.3  2001/08/10 23:51:17  pwagner
+# Cosmetic changes only
+#
+# Revision 1.2  2001/08/10 17:43:19  pwagner
+# Fixed -h(elp) option; general housekeeping
+#
+# Revision 1.1  2001/07/26 22:49:56  pwagner
+# First commit
+#
+@
+
+
+1.18
+log
+@Allow more source source file suffixes
+@
+text
+@d63 1
+a63 1
+# "$Id: build_f90_in_misc.sh,v 1.17 2013/01/09 18:47:10 pwagner Exp $"
+d332 1
+a332 1
+   echo "Sorry--you must have write permission to $test_dir_path/$test_dir_name"
+d522 3
+@
+
+
+1.17
+log
+@Add verbose, silent options; unless silent announce where installing
+@
+text
+@d63 1
+a63 1
+# "$Id: build_f90_in_misc.sh,v 1.16 2008/06/27 16:59:15 pwagner Exp $"
+d360 1
+a360 1
+for source_suffix in c f f90 h f9h
+d522 3
+@
+
+
+1.16
+log
+@Worked around Intel refusal to link when main program in c
+@
+text
+@d15 2
+d63 1
+a63 1
+# "$Id: build_f90_in_misc.sh,v 1.15 2005/06/23 22:20:45 pwagner Exp $"
+d175 2
+d195 1
+a195 1
+# echo "args: $@@"
+d266 6
+d285 7
+a456 2
+#      make depends ghostbuster
+#      make EXTRA_PATHS="$EXTRA_PATHS"
+a468 2
+#      make depends ghostbuster
+#      make
+d496 1
+a496 1
+   if [ "$DEEBUG" = "on" ]
+d502 1
+a502 1
+if [ $DEEBUG = "on" ]
+d522 3
+@
+
+
+1.15
+log
+@Reworded Copyright statement
+@
+text
+@d61 1
+a61 1
+# "$Id: build_f90_in_misc.sh,v 1.14 2003/06/05 16:22:16 pwagner Exp $"
+d171 1
+d191 1
+a191 1
+
+d391 1
+a391 1
+# a c language program na,ed main() and you're using Lahey:
+d417 16
+d443 1
+a443 1
+      $MYMAKE EXTRA_PATHS="$EXTRA_PATHS" $MYMAKEOPTS "$target_name"
+d447 1
+a447 1
+      echo $MYMAKE EXTRA_PATHS="$EXTRA_PATHS" $MYMAKEOPTS "$target_name"
+d457 1
+a457 1
+      $MYMAKE $MYMAKEOPTS "$target_name"
+d461 1
+a461 1
+      echo $MYMAKE $MYMAKEOPTS "$target_name"
+d472 1
+a472 1
+      $MYMAKE INC_PATHS="$INC_PATHS" $MYMAKEOPTS "$target_name"
+d476 1
+a476 1
+      echo $MYMAKE INC_PATHS="$INC_PATHS" $MYMAKEOPTS "$target_name"
+d509 3
+@
+
+
+1.14
+log
+@Internal function renamed mkpath()
+@
+text
+@d50 10
+a59 2
+# Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d61 1
+a61 1
+# "$Id: build_f90_in_misc.sh,v 1.13 2002/08/05 18:07:46 pwagner Exp $"
+d492 3
+@
+
+
+1.13
+log
+@turns main to MAIN__ if MLSF95 is Lahey
+@
+text
+@d53 1
+a53 1
+# "$Id: build_f90_in_misc.sh,v 1.12 2002/05/03 18:02:56 pwagner Exp $"
+d71 1
+a71 1
+mkdir_cascade()
+d473 1
+a473 1
+   mkdir_cascade $prog_path
+d484 3
+@
+
+
+1.12
+log
+@Fix bug (but who created it?)
+@
+text
+@d20 1
+d53 1
+a53 1
+# "$Id: build_f90_in_misc.sh,v 1.11 2002/04/26 23:41:14 pwagner Exp $"
+d176 1
+d208 4
+d274 1
+d381 27
+d484 3
+@
+
+
+1.11
+log
+@New options -T -O -ni; can build libutcttai.a now
+@
+text
+@d52 1
+a52 1
+# "$Id: build_f90_in_misc.sh,v 1.10 2002/01/22 21:42:59 pwagner Exp $"
+d430 1
+a430 1
+cif [ $DEEBUG = "on" ]
+d450 3
+@
+
+
+1.10
+log
+@Turned debugging off
+@
+text
+@d11 1
+a11 1
+# (4) mv \$MLSCONFG/test ../../bin/\$MLSCONFG/test
+d15 2
+a16 1
+# -p prog_name       name resulting program prog_name instead of test
+d18 1
+d26 7
+d52 1
+a52 1
+# "$Id: build_f90_in_misc.sh,v 1.9 2001/08/29 18:09:33 pwagner Exp $"
+d162 1
+d164 1
+d194 4
+d231 4
+d244 3
+d267 1
+d276 2
+d384 1
+a384 1
+      $MYMAKE EXTRA_PATHS="$EXTRA_PATHS" $MYMAKEOPTS
+d388 1
+a388 1
+      echo $MYMAKE EXTRA_PATHS="$EXTRA_PATHS" $MYMAKEOPTS
+d398 5
+a402 1
+      $MYMAKE $MYMAKEOPTS
+d413 1
+a413 1
+      $MYMAKE INC_PATHS="$INC_PATHS" $MYMAKEOPTS
+d417 1
+a417 1
+      echo $MYMAKE INC_PATHS="$INC_PATHS" $MYMAKEOPTS
+d422 9
+a430 1
+if [ $DEEBUG = "on" ]
+d442 1
+a442 1
+if [ -x "$test_dir_path/$test_dir_name/$MLSCONFG/test" -a "$BUILD" = "on" ]
+d444 1
+a444 1
+   mv $test_dir_path/$test_dir_name/$MLSCONFG/test $prog_path/$prog_name
+d450 3
+@
+
+
+1.9
+log
+@Added C, CC, FC options
+@
+text
+@d40 1
+a40 1
+# Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+d43 1
+a43 1
+# "$Id: build_f90_in_misc.sh,v 1.8 2001/08/28 18:26:32 pwagner Exp $"
+d151 1
+a151 1
+DEEBUG=on
+d413 3
+@
+
+
+1.8
+log
+@Added -M option; no more bare make
+@
+text
+@d21 3
+d43 1
+a43 1
+# "$Id: build_f90_in_misc.sh,v 1.7 2001/08/17 23:15:26 pwagner Exp $"
+d151 1
+a151 1
+DEEBUG=off
+d163 1
+d204 12
+d251 1
+d255 1
+a255 1
+# Check on args--need any more? ARe they self-consistent?
+d358 2
+a359 2
+      $MYMAKE depends ghostbuster
+      $MYMAKE EXTRA_PATHS="$EXTRA_PATHS"
+d363 1
+a363 1
+      echo $MYMAKE EXTRA_PATHS="$EXTRA_PATHS"
+d372 2
+a373 2
+      $MYMAKE depends ghostbuster
+      $MYMAKE
+d383 2
+a384 2
+      $MYMAKE depends ghostbuster
+      $MYMAKE INC_PATHS="$INC_PATHS"
+d388 1
+a388 1
+      echo $MYMAKE INC_PATHS="$INC_PATHS"
+d413 3
+@
+
+
+1.7
+log
+@EXTRA_PATHS now implemented; relative paths w.r.t. cwd
+@
+text
+@d18 1
+d40 1
+a40 1
+# "$Id: build_f90_in_misc.sh,v 1.6 2001/08/14 23:45:41 pwagner Exp $"
+d159 1
+d187 4
+d229 1
+d339 4
+a342 2
+      make depends ghostbuster
+      make EXTRA_PATHS="$EXTRA_PATHS"
+d346 1
+a346 1
+      echo make EXTRA_PATHS="$EXTRA_PATHS"
+d353 4
+a356 2
+      make depends ghostbuster
+      make
+d364 4
+a367 2
+      make depends ghostbuster
+      make INC_PATHS="$INC_PATHS"
+d371 1
+a371 1
+      echo make INC_PATHS="$INC_PATHS"
+d396 3
+@
+
+
+1.6
+log
+@CHanged file requirement before hiding from -w to just -r
+@
+text
+@d20 1
+a20 2
+# -I PATH            add "-I PATH" to INC_PATHS
+# -i INC_PATHS       let arg override calculated value for INC_PATHS
+d22 12
+a33 3
+#                     e.g., -i "-I ../ -I /software/SRC..."
+#                     these values should be relative or absolute
+#                     if relative, ralative to tests/misc/MLSCONFG directory
+d39 1
+a39 1
+# "$Id: build_f90_in_misc.sh,v 1.5 2001/08/13 23:57:53 pwagner Exp $"
+d43 1
+a43 4
+# (2) Doesn't add extra_INC_PATHS to pre-existing ones in platforms/targets
+# (3) Doesn't allow you to override other .configure or make variables
+# (4) Requires you to calculate relative paths from tests/misc/MLSCONFG
+#     rather than from current working directory, which is awkward, confusing
+d86 40
+d148 1
+d157 1
+a157 1
+extra_INC_PATHS=""
+d162 1
+d195 1
+a195 2
+	    extra_INC_PATHS="-I $2 $extra_INC_PATHS"
+       override_INC_PATHS="yes"
+d227 1
+d231 1
+d234 1
+a234 1
+   echo "Sorry-- MLSCONFG must be defined"
+d237 4
+d261 8
+a268 1
+   mkdir $test_dir_path/$test_dir_name/$hidden_dir_name
+d285 8
+a292 1
+         mv $file $hidden_dir_name
+d308 8
+a315 1
+      cp $file $test_dir_path/$test_dir_name
+d324 16
+a339 3
+cd $test_dir_path/$test_dir_name
+make depends ghostbuster
+if [ $override_INC_PATHS = "no" ]
+d341 6
+a346 1
+   make
+d348 12
+a359 1
+   make INC_PATHS="$INC_PATHS $extra_INC_PATHS"
+d370 1
+a370 1
+if [ ! -d "$prog_path" ]
+d375 1
+a375 1
+if [ -x "$test_dir_path/$test_dir_name/$MLSCONFG/test" ]
+d383 3
+@
+
+
+1.5
+log
+@Forgot ot turn DEEBUG off
+@
+text
+@d31 1
+a31 1
+# "$Id: build_f90_in_misc.sh,v 1.4 2001/08/13 23:25:25 pwagner Exp $"
+d224 1
+a224 1
+      if [ -w $file ]
+d281 3
+@
+
+
+1.4
+log
+@Added rules for compiling .c files, too
+@
+text
+@d31 1
+a31 1
+# "$Id: build_f90_in_misc.sh,v 1.3 2001/08/10 23:51:17 pwagner Exp $"
+d102 1
+a102 1
+DEEBUG=on
+d281 3
+@
+
+
+1.3
+log
+@Cosmetic changes only
+@
+text
+@d8 1
+a8 1
+# (1) hiding any .f90, .f, or .c curently in tests/misc
+d19 7
+d31 1
+a31 1
+# "$Id: build_f90_in_misc.sh,v 1.2 2001/08/10 17:43:19 pwagner Exp $"
+d33 6
+a38 1
+#
+d93 6
+a98 3
+   echo "Sorry--you must first configure the mls software"
+   echo "(or at least define MLSCONFG)"
+   exit 1
+d102 1
+a102 1
+DEEBUG=off
+d109 3
+a125 1
+
+a129 1
+
+a133 1
+
+a137 1
+
+d142 15
+a156 1
+
+a161 1
+
+a164 1
+
+d177 4
+d184 7
+d219 1
+a219 1
+for source_suffix in c f f90
+d240 1
+a240 1
+   if [ -w $file ]
+d253 6
+a258 1
+make
+d273 4
+a276 1
+mv $test_dir_path/$test_dir_name/$MLSCONFG/test $prog_path/$prog_name
+d281 3
+@
+
+
+1.2
+log
+@Fixed -h(elp) option; general housekeeping
+@
+text
+@d14 1
+a14 1
+# -h                 helpful summary of usage and options
+d24 1
+a24 1
+# "$Id: build_f90_in_misc.sh,v 1.1 2001/07/26 22:49:56 pwagner Exp $"
+d131 1
+a131 1
+   		| sed -n 's/^..//p' | sed '$ d'
+d236 3
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d24 1
+a24 1
+# "$Id: build_f90_in_misc.sh,v 1.10 2001/05/30 17:37:51 pwagner Exp $"
+d87 1
+d131 1
+a131 3
+   		| sed -n 's/^..//p'
+#        sed -n '2, 17 p' $me
+#	     Help
+d144 9
+a152 6
+echo "Done with parsing control line"
+echo "prog_name: $prog_name"
+echo "prog_path: $prog_path"
+echo "test_dir_name: $test_dir_name"
+echo "test_dir_path: $test_dir_path"
+echo "arglist: $arglist"
+d178 4
+d197 4
+d210 4
+d219 4
+d235 4
+a238 1
+# $Log: makemakedep.sh,v $
+@
+

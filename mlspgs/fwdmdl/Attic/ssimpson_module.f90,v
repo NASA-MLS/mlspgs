@@ -1,0 +1,74 @@
+head	1.2;
+access;
+symbols
+	V0_1:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2000.11.22.23.07.31;	author zvi;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2000.05.04.18.12.06;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@New version
+@
+text
+@module SSIMPSON_MODULE
+  use MLSCommon, only: I4, R4
+  use S_CSPLINE_M, only: CSPLINE
+  implicit NONE
+  private
+  public SSIMPS, SIMPS
+  interface SIMPS; module procedure SSIMPS; end interface
+  integer, parameter :: RK = r4
+
+!---------------------------- RCS Ident Info -------------------------------
+  CHARACTER (LEN=256) :: Id = &
+       "$Id: ssimpson_module.f90,v 1.1 2000/05/04 18:12:06 vsnyder Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile: ssimpson_module.f90,v $"
+!---------------------------------------------------------------------------
+
+contains
+
+  Subroutine SSIMps ( F, DX, N, R )
+
+!  Simpson's Integration of discrete equal spacing
+
+    include 'simpson.inc'
+
+  End Subroutine SSIMps
+end module SSIMPSON_MODULE
+
+! $Log: ssimpson_module.f90,v $
+! Revision 1.1  2000/05/04 18:12:06  vsnyder
+! Initial conversion to Fortran 90
+!
+@
+
+
+1.1
+log
+@Initial conversion to Fortran 90
+@
+text
+@d12 1
+a12 1
+       "$Id: SSIMPSON_MODULE,v 1.12 2000/02/08 19:54:57 vsnyder Exp $"
+d27 4
+a30 1
+! $Log: SSIMPSON_MODULE,v $
+@
+

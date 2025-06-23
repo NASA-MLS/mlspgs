@@ -1,0 +1,1846 @@
+head	1.33;
+access;
+symbols
+	v5-02-NRT-19:1.33
+	v6-00:1.33
+	v5-02-NRT-18:1.33
+	v5-02:1.33
+	v5-01-NRT-17:1.33
+	v5-01-NRT-16:1.33
+	v5-01-NRT-15:1.33
+	v5-01-NRT-14:1.33
+	neuralnetworks-1-0:1.33.0.10
+	cfm-single-freq-0-1:1.33.0.8
+	v5-01:1.33
+	v5-00:1.33
+	v4-23-TA133:1.33.0.6
+	mus-emls-1-70:1.33.0.4
+	rel-1-0-englocks-work:1.33.0.2
+	VUMLS1-00:1.33
+	VPL1-00:1.32
+	V4-22-NRT-08:1.32
+	VAM1-00:1.32
+	V4-21:1.32.0.4
+	V4-13:1.32
+	V4-12:1.32
+	V4-11:1.32
+	V4-10:1.32
+	V3-43:1.32
+	M4-00:1.32
+	V3-41:1.32
+	V3-40-PlusGM57:1.32.0.2
+	V2-24-NRT-04:1.30
+	V3-33:1.32
+	V2-24:1.30
+	V3-31:1.32
+	V3-30-NRT-05:1.32
+	cfm-01-00:1.32
+	V3-30:1.32
+	V3-20:1.32
+	V3-10:1.32
+	V2-23-NRT-02:1.30
+	V2-23:1.30
+	V2-22-NRT-01:1.30
+	V2-22:1.30
+	V2-21:1.30
+	V2-20:1.30
+	V2-11:1.30
+	V2-10:1.30
+	V2-00:1.30
+	V1-51:1.29
+	V1-50:1.29
+	V1-45:1.29
+	V1-44:1.29
+	V1-43:1.29
+	V1-32:1.25
+	V1-31:1.25
+	V1-30:1.25
+	V1-13:1.14
+	V1-12:1.14
+	V1-11:1.14
+	V1-10:1.13
+	newfwm-feb03:1.14.0.2
+	V1-04:1.4
+	V1-03:1.4
+	V1-02:1.4
+	JointForwardModel:1.5.0.2
+	V1-00:1.4;
+locks; strict;
+comment	@# @;
+
+
+1.33
+date	2016.10.24.22.21.05;	author vsnyder;	state Exp;
+branches;
+next	1.32;
+
+1.32
+date	2009.06.23.18.26.19;	author pwagner;	state Exp;
+branches;
+next	1.31;
+
+1.31
+date	2008.10.03.21.04.26;	author livesey;	state Exp;
+branches;
+next	1.30;
+
+1.30
+date	2005.06.09.02.34.27;	author vsnyder;	state Exp;
+branches;
+next	1.29;
+
+1.29
+date	2004.04.02.01.15.14;	author jonathan;	state Exp;
+branches;
+next	1.28;
+
+1.28
+date	2004.03.30.00.44.42;	author vsnyder;	state Exp;
+branches;
+next	1.27;
+
+1.27
+date	2004.03.27.03.35.52;	author vsnyder;	state Exp;
+branches;
+next	1.26;
+
+1.26
+date	2004.03.19.00.46.49;	author vsnyder;	state Exp;
+branches;
+next	1.25;
+
+1.25
+date	2003.07.09.23.38.46;	author vsnyder;	state Exp;
+branches;
+next	1.24;
+
+1.24
+date	2003.07.09.23.30.16;	author vsnyder;	state Exp;
+branches;
+next	1.23;
+
+1.23
+date	2003.07.09.00.39.51;	author vsnyder;	state Exp;
+branches;
+next	1.22;
+
+1.22
+date	2003.07.09.00.00.20;	author vsnyder;	state Exp;
+branches;
+next	1.21;
+
+1.21
+date	2003.07.07.19.09.07;	author vsnyder;	state Exp;
+branches;
+next	1.20;
+
+1.20
+date	2003.07.04.02.49.12;	author vsnyder;	state Exp;
+branches;
+next	1.19;
+
+1.19
+date	2003.06.18.14.43.26;	author bill;	state Exp;
+branches;
+next	1.18;
+
+1.18
+date	2003.05.16.23.53.36;	author livesey;	state Exp;
+branches;
+next	1.17;
+
+1.17
+date	2003.05.09.19.43.11;	author jonathan;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2003.05.06.20.45.45;	author jonathan;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2003.05.05.23.01.13;	author livesey;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2003.02.11.00.48.22;	author jonathan;	state Exp;
+branches
+	1.14.2.1;
+next	1.13;
+
+1.13
+date	2003.02.06.00.21.10;	author jonathan;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2003.01.31.17.24.12;	author jonathan;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2003.01.30.18.25.06;	author pwagner;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2003.01.16.18.13.24;	author jonathan;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2002.12.13.02.07.18;	author vsnyder;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2002.10.08.17.08.06;	author pwagner;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2002.08.22.00.13.01;	author jonathan;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2002.08.08.22.45.37;	author jonathan;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2002.06.05.18.17.14;	author jonathan;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.11.16.00.40.44;	author jonathan;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2001.11.15.00.55.02;	author jonathan;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.11.14.00.40.11;	author jonathan;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.11.09.22.07.38;	author jonathan;	state Exp;
+branches;
+next	;
+
+1.14.2.1
+date	2003.02.13.17.35.20;	author bill;	state Exp;
+branches;
+next	1.14.2.2;
+
+1.14.2.2
+date	2003.02.27.23.31.16;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.33
+log
+@Make GL_Slabs allocatable instead of a pointer
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Bill_GasAbsorption
+
+  implicit NONE
+  private
+  public :: Get_Beta_Bill
+
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter, private :: ModuleName= &
+  "$RCSfile: Bill_GasAbsorption.f90,v $"
+!---------------------------------------------------------------------------
+
+contains
+
+  subroutine Get_Beta_Bill (T, PB, F, FLO, RH, VMR_in, NS, ABSC, Catalog, LosVel )
+
+!==============================================================
+!      CALCULATE CLEAR-SKY ABSORPTION COEFFICIENT AT F AND T
+!      USING BILL'S NEW SPECTROSCOPY DATA. 
+!==============================================================
+
+    use Get_Beta_Path_m, only: CREATE_BETA
+    use MLSCommon, only: RK => R8, RP, IP
+    use Molecules, only: L_H2O, L_H2O_18, L_HNO3, L_N2, L_N2O, L_O_18_O, &
+      & L_O2, L_O3
+    use Physics, only: H_OVER_K
+    use SLABS_SW_M, only: ALLOCATESLABS, DESTROYCOMPLETESLABS, &
+      & GET_GL_SLABS_ARRAYS, SLABS_STRUCT
+    use SpectroscopyCatalog_m, only: CATALOG_T
+    use WaterVapor, only: RHtoEV
+
+    !-----------------
+    ! INPUTS
+    !-----------------
+
+    INTEGER, INTENT(IN) :: NS
+    REAL(rk), INTENT(IN) :: F               ! FREQUENCY IN GHz
+    REAL(rk), INTENT(IN) :: T               ! TEMPERATURE (K)
+    REAL(rk), INTENT(IN) :: PB              ! TOTAL AIR PRESSURE (hPa)
+    REAL(rk), INTENT(IN) :: VMR_in(NS-1)    ! VMR OF SPECIES 
+    REAL(rk), INTENT(IN) :: RH              ! H2O VOLUME MIXING RATIO
+    REAL(rp), INTENT(IN) :: LosVel          !     OR RELATIVE HUMIDITY
+    
+    Type(Catalog_T), INTENT(IN) :: Catalog(:)
+    Type (slabs_struct), DIMENSION(:,:), allocatable :: gl_slabs
+
+    !------------------
+    ! OUTPUTS
+    !------------------
+    REAL(rk), INTENT(out) :: ABSC           ! ABSORPTION COEFFICIENT (1/m)
+
+    !------------------
+    ! LOCAL VARIABLES
+    !-----------------
+
+    REAL(rk) :: B                           ! BETA (1/m/ppv)                 
+    REAL(rk) :: FF                          ! FREQUENCY IN MHz               
+    REAL(rk) :: FLO                         ! LO Frequenct in MHZ
+    REAL(rp) :: myLosVel
+    REAL(rk) :: P                           ! DRY AIR PARTIAL PRESSURE (hPa) 
+    REAL(rk) :: VMR                         ! VOLUME MIXING RATIO            
+    REAL(rk) :: VMR_H2O                     ! H2O VOLUME MIXING RATIO        
+    REAL(rk) :: VMR_O3                      ! H2O VOLUME MIXING RATIO        
+    REAL(rk) :: VMR_O2                      ! O2    VOLUME MIXING RATIO      
+    REAL(rk) :: VMR_O_18_O                  ! O18O  VOLUME MIXING RATIO      
+    REAL(rk) :: VMR_H2O_18                  ! H2O18 VOLUME MIXING RATIO      
+    REAL(rk) :: VMR_N2                      ! N2 VOLUME MIXING RATIO         
+    REAL(rk) :: VMR_N2O                     ! N2O VOLUME MIXING RATIO        
+    REAL(rk) :: VMR_HNO3                    ! HNO3 VOLUME MIXING RATIO       
+    REAL(rk) :: VP                          ! VAPOR PARTIAL PRESSURE (hPa)
+
+    Integer(ip) :: n_sps, i
+    real(rp) :: bb, tanh1
+    real(rk), parameter :: Boltzmhz2 = 0.5 / h_over_k
+    logical :: Do_1D
+
+!-----------------------------------------------------------------------------
+    if ( rh == 0.0_rk ) then
+      p = pb
+      vmr_h2o = vp / max(1.e-19_rk, p)
+    else if ( rh == 110.0_rk ) then
+      call RHtoEV ( T, rh, VP )
+      P = PB - VP
+      vmr_h2o = vp / max(1.e-19_rk, p)
+    else
+      vmr_h2o = rh                     ! RH HERE IS WATER VAPOR MIXING RATIO
+      vp = vmr_h2o*pb                  ! VP IS VAPOR PRESSURE, PB IS TOTAL
+      p = pb - vp                      ! PRESSURE, P IS DRY-AIR PRESSURE
+    end if
+
+    VMR_O2     = 0.2095_rk
+    VMR_N2     = 0.805_rk
+    VMR_O_18_O = VMR_O2*0.00409524_rk 
+    VMR_H2O_18 = VMR_H2O*0.00204_rk
+    VMR_O3     = VMR_in(1)
+    VMR_N2O    = VMR_in(2)
+    VMR_HNO3   = VMR_in(3)
+
+    B = 0.0_rk
+    FF = F*1000.0_rk
+
+    n_sps = Size(Catalog)
+
+    call allocateSlabs ( gl_slabs, 1, catalog, moduleName )
+
+                              ! Bill uses km/sec 
+    myLosVel=losVel*0.00_rp   ! The Doppler correction has already been done 
+                              ! in the FullCloudForwardModel, so set it 0
+
+    call get_gl_slabs_arrays ( (/ p /), (/ t /), myLosVel, gl_slabs, Do_1D )
+
+    tanh1 = tanh( ff / ( boltzmhz2 * t))
+    do i = 1, n_sps
+
+      call create_beta ( PB, T, FF, FLO, gl_slabs(1,i), tanh1, bb, .false. )
+      
+      select case (catalog(i)%molecule)
+      case (L_H2O)
+        VMR = VMR_H2O
+      case (L_O2)
+        VMR = VMR_O2
+      case (L_N2)
+        VMR = VMR_N2
+      case (L_O_18_O)
+        VMR = VMR_O_18_O
+      case (L_H2O_18)
+        VMR = VMR_H2O_18
+      case (L_O3)
+        VMR = VMR_O3
+      case (L_N2O)
+        VMR = VMR_N2O
+      case (L_HNO3)
+        VMR = VMR_HNO3
+      case default
+        VMR=0.0_rk
+      end select
+
+      B = B + VMR*bb
+
+    end do
+
+    ABSC = B/1000.0_rk     ! convert km-1 to m-1
+
+    call DestroyCompleteSlabs ( gl_slabs )
+
+  end subroutine get_beta_bill 
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: Bill_GasAbsorption.f90,v 1.32 2009/06/23 18:26:19 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Bill_GasAbsorption
+
+! $Log: Bill_GasAbsorption.f90,v $
+! Revision 1.32  2009/06/23 18:26:19  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 1.31  2008/10/03 21:04:26  livesey
+! Added fixes to support EXTINCTIONV2 stuff
+!
+! Revision 1.30  2005/06/09 02:34:27  vsnyder
+! Move stuff from l2pc_pfa_structures to slabs_sw_m
+!
+! Revision 1.29  2004/04/02 01:15:14  jonathan
+! fix bug
+!
+! Revision 1.28  2004/03/30 00:44:42  vsnyder
+! Remove USE for unreferenced symbol
+!
+! Revision 1.27  2004/03/27 03:35:52  vsnyder
+! Use revised Create_Beta
+!
+! Revision 1.26  2004/03/19 00:46:49  vsnyder
+! Use line center instead of pressure-shifted line center in a few places
+!
+! Revision 1.25  2003/07/09 23:38:46  vsnyder
+! Rename R8 as RK locally, to make it easier to use something else later
+!
+! Revision 1.24  2003/07/09 23:30:16  vsnyder
+! Interpret RH correctly, remove some old unused stuff
+!
+! Revision 1.23  2003/07/09 00:39:51  vsnyder
+! Remove three unused variables
+!
+! Revision 1.22  2003/07/09 00:00:20  vsnyder
+! Remove arrays known to have length 1
+!
+! Revision 1.21  2003/07/07 19:09:07  vsnyder
+! Get Create_Beta from get_beta_path
+!
+! Revision 1.20  2003/07/04 02:49:12  vsnyder
+! Simplify interface to Get_GL_Slabs_Arrays
+!
+! Revision 1.19  2003/06/18 14:43:26  bill
+! modified interface to get_gl_slabs_arrays
+!
+! Revision 1.18  2003/05/16 23:53:36  livesey
+! Now uses molecule indices rather than spectags
+!
+! Revision 1.17  2003/05/09 19:43:11  jonathan
+! delete del_temp following Van's changes
+!
+! Revision 1.16  2003/05/06 20:45:45  jonathan
+! some fixing after the merge
+!
+! Revision 1.15  2003/05/05 23:01:13  livesey
+! Commented out call to create_beta for merge
+!
+! Revision 1.14  2003/02/11 00:48:22  jonathan
+! change call to create_beta
+!
+! Revision 1.13  2003/02/06 00:21:10  jonathan
+! change call to creat_beta
+!
+! Revision 1.12  2003/01/31 17:24:12  jonathan
+! add Incl_Cld. cld_ext
+!
+! Revision 1.11  2003/01/30 18:25:06  pwagner
+! Cosmetic changes; fixed bug where losVel was being changed
+!
+! Revision 1.10  2003/01/16 18:13:24  jonathan
+! add Do_1D option to get_gl_slabs_arrays
+!
+! Revision 1.9  2002/12/13 02:07:18  vsnyder
+! Use a SLABS structure for the slabs quantities, use spectag names
+!
+! Revision 1.8  2002/10/08 17:08:06  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 1.7  2002/08/22 00:13:01  jonathan
+! upgrade to include more molecules
+!
+! Revision 1.6  2002/08/08 22:45:37  jonathan
+! newly improved version
+!
+! Revision 1.5  2002/06/05 18:17:14  jonathan
+!  fix bug
+!
+! Revision 1.4  2001/11/16 00:40:44  jonathan
+! add losVel
+!
+! Revision 1.3  2001/11/15 00:55:02  jonathan
+! fixed a bug
+!
+! Revision 1.2  2001/11/14 00:40:11  jonathan
+! first working version
+!
+! Revision 1.1  2001/11/09 22:07:38  jonathan
+! using Bill Read's new spec data
+!
+@
+
+
+1.32
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d55 1
+a55 1
+    Type (slabs_struct), DIMENSION(:,:), POINTER :: gl_slabs
+d161 1
+a161 1
+       "$Id: read_apriori.f90 is it here $"
+d171 3
+@
+
+
+1.31
+log
+@Added fixes to support EXTINCTIONV2 stuff
+@
+text
+@d158 1
+d160 3
+a162 5
+  !---------------------------- RCS Ident Info -------------------------------
+    character (len=*), parameter :: IdParm = &
+    "$Id: Bill_GasAbsorption.f90,v 1.30 2005/06/09 02:34:27 vsnyder Exp $"
+    character (len=len(idParm)) :: Id = IdParm
+  !---------------------------------------------------------------------------
+d164 1
+d166 1
+d171 3
+@
+
+
+1.30
+log
+@Move stuff from l2pc_pfa_structures to slabs_sw_m
+@
+text
+@d25 1
+a25 1
+  subroutine Get_Beta_Bill (T, PB, F, RH, VMR_in, NS, ABSC, Catalog, LosVel )
+d68 1
+d125 1
+a125 1
+      call create_beta ( PB, T, FF, gl_slabs(1,i), tanh1, bb, .false. )
+d161 1
+a161 1
+    "$Id: Bill_GasAbsorption.f90,v 1.29 2004/04/02 01:15:14 jonathan Exp $"
+d170 3
+@
+
+
+1.29
+log
+@fix bug
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+a18 3
+  character (len=*), parameter, private :: IdParm = &
+  "$Id: Bill_GasAbsorption.f90,v 1.28 2004/03/30 00:44:42 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = IdParm
+d22 1
+a32 2
+    use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT, ALLOCATESLABS, &
+      & DESTROYCOMPLETESLABS
+d37 2
+a38 1
+    use SLABS_SW_M, only: GET_GL_SLABS_ARRAYS
+d158 5
+d169 3
+@
+
+
+1.28
+log
+@Remove USE for unreferenced symbol
+@
+text
+@d12 1
+a12 1
+  "$Id: Bill_GasAbsorption.f90,v 1.27 2004/03/27 03:35:52 vsnyder Exp $"
+d119 1
+a119 1
+      call create_beta ( PB, T, FF, gl_slabs(1,i), tanh1, bb )
+d159 3
+@
+
+
+1.27
+log
+@Use revised Create_Beta
+@
+text
+@d12 1
+a12 1
+  "$Id: Bill_GasAbsorption.f90,v 1.26 2004/03/19 00:46:49 vsnyder Exp $"
+d34 1
+a34 1
+    use SpectroscopyCatalog_m, only: CATALOG_T, LINES
+d159 3
+@
+
+
+1.26
+log
+@Use line center instead of pressure-shifted line center in a few places
+@
+text
+@d12 1
+a12 1
+  "$Id: Bill_GasAbsorption.f90,v 1.25 2003/07/09 23:38:46 vsnyder Exp $"
+d111 1
+a111 1
+    myLosVel=losVel*0.00_rp   ! The Doppler correction already been done 
+d114 1
+a114 2
+    call get_gl_slabs_arrays ( Catalog, (/ p /), (/ t /), myLosVel, gl_slabs, &
+      & Do_1D, (/ .true. /) )
+a115 1
+    ! Note that expa only depends on temperature.
+d119 1
+a119 3
+      call create_beta ( catalog(i)%molecule, Catalog(i)%continuum, PB, T, &
+        &  FF, Lines(Catalog(i)%Lines)%V0, Lines(Catalog(i)%Lines)%W,      &
+        &  gl_slabs(1,i), tanh1, bb )
+d159 3
+@
+
+
+1.25
+log
+@Rename R8 as RK locally, to make it easier to use something else later
+@
+text
+@d12 1
+a12 1
+  "$Id: Bill_GasAbsorption.f90,v 1.24 2003/07/09 23:30:16 vsnyder Exp $"
+d122 2
+a123 1
+        &  FF, Lines(Catalog(i)%Lines)%W, gl_slabs(1,i), tanh1, bb )
+d163 3
+@
+
+
+1.24
+log
+@Interpret RH correctly, remove some old unused stuff
+@
+text
+@d12 1
+a12 1
+  "$Id: Bill_GasAbsorption.f90,v 1.23 2003/07/09 00:39:51 vsnyder Exp $"
+d29 1
+a29 1
+    use MLSCommon, only: R8, RP, IP
+d42 5
+a46 5
+    REAL(r8), INTENT(IN) :: F               ! FREQUENCY IN GHz
+    REAL(r8), INTENT(IN) :: T               ! TEMPERATURE (K)
+    REAL(r8), INTENT(IN) :: PB              ! TOTAL AIR PRESSURE (hPa)
+    REAL(r8), INTENT(IN) :: VMR_in(NS-1)    ! VMR OF SPECIES 
+    REAL(r8), INTENT(IN) :: RH              ! H2O VOLUME MIXING RATIO
+d55 1
+a55 1
+    REAL(r8), INTENT(out) :: ABSC           ! ABSORPTION COEFFICIENT (1/m)
+d61 2
+a62 2
+    REAL(r8) :: B                           ! BETA (1/m/ppv)                 
+    REAL(r8) :: FF                          ! FREQUENCY IN MHz               
+d64 11
+a74 11
+    REAL(r8) :: P                           ! DRY AIR PARTIAL PRESSURE (hPa) 
+    REAL(r8) :: VMR                         ! VOLUME MIXING RATIO            
+    REAL(r8) :: VMR_H2O                     ! H2O VOLUME MIXING RATIO        
+    REAL(r8) :: VMR_O3                      ! H2O VOLUME MIXING RATIO        
+    REAL(r8) :: VMR_O2                      ! O2    VOLUME MIXING RATIO      
+    REAL(r8) :: VMR_O_18_O                  ! O18O  VOLUME MIXING RATIO      
+    REAL(r8) :: VMR_H2O_18                  ! H2O18 VOLUME MIXING RATIO      
+    REAL(r8) :: VMR_N2                      ! N2 VOLUME MIXING RATIO         
+    REAL(r8) :: VMR_N2O                     ! N2O VOLUME MIXING RATIO        
+    REAL(r8) :: VMR_HNO3                    ! HNO3 VOLUME MIXING RATIO       
+    REAL(r8) :: VP                          ! VAPOR PARTIAL PRESSURE (hPa)
+d78 1
+a78 1
+    real(r8), parameter :: Boltzmhz2 = 0.5 / h_over_k
+d82 1
+a82 1
+    if ( rh == 0.0_r8 ) then
+d84 5
+a88 5
+      vmr_h2o = vp / max(1.e-19_r8, p)
+    else if ( rh == 110.0_r8 ) then
+       call RHtoEV ( T, rh, VP )
+       P = PB - VP
+       vmr_h2o = vp / max(1.e-19_r8, p)
+d90 3
+a92 3
+       vmr_h2o = rh                     ! RH HERE IS WATER VAPOR MIXING RATIO
+       vp = vmr_h2o*pb                  ! VP IS VAPOR PRESSURE, PB IS TOTAL
+       p = pb - vp                      ! PRESSURE, P IS DRY-AIR PRESSURE
+d95 4
+a98 4
+    VMR_O2     = 0.2095_r8
+    VMR_N2     = 0.805_r8
+    VMR_O_18_O = VMR_O2*0.00409524_r8 
+    VMR_H2O_18 = VMR_H2O*0.00204_r8
+d103 2
+a104 2
+    B = 0.0_r8
+    FF = F*1000.0_r8
+d142 1
+a142 1
+        VMR=0.0_r8
+d149 1
+a149 1
+    ABSC = B/1000.0_r8     ! convert km-1 to m-1
+d162 3
+@
+
+
+1.23
+log
+@Remove three unused variables
+@
+text
+@d4 1
+a4 1
+Module Bill_GasAbsorption
+a5 1
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
+d12 1
+a12 1
+  "$Id: Bill_GasAbsorption.f90,v 1.22 2003/07/09 00:00:20 vsnyder Exp $"
+d27 1
+a27 1
+    use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT, ALLOCATEONESLABS, &
+d77 1
+a77 3
+    integer(ip), parameter :: IPSD=1000, NU=16, NUA=8, NAB=50, NR=40, NC=2
+    Integer(ip) :: status
+    real(rp) :: bb, WC(2), tanh1
+d82 5
+a86 7
+    WC= 0._r8
+    IF (RH /= 100.0_r8) THEN
+       VMR_H2O = RH                     ! RH HERE IS WATER VAPOR MIXING RATIO
+       VP = VMR_H2O*PB                  ! VP IS VAPOR PRESSURE, PB IS TOTAL
+       P = PB - VP                      ! PRESSURE, P IS DRY-AIR PRESSURE
+    ELSE IF (VMR_H2O == 100.0_r8) THEN
+       CALL RHtoEV ( T, 100.0_r8, VP )  ! RH HERE IS 100% RELATIVE HUMIDITY 
+d88 6
+a93 2
+       VMR_H2O = VP / max(1.e-19_r8, P)
+    END IF
+d108 1
+a108 7
+    allocate ( gl_slabs(1,n_sps), stat=status )
+    if ( status /= 0 ) &
+      & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate // ' gl_slabs ')
+    do i = 1, n_sps
+      Call AllocateOneSlabs ( gl_slabs(1, i), size(Catalog(i)%Lines) )
+    enddo
+d159 1
+a159 1
+End Module Bill_GasAbsorption
+d162 3
+@
+
+
+1.22
+log
+@Remove arrays known to have length 1
+@
+text
+@d6 1
+a6 1
+   USE MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
+d9 1
+a9 1
+  public :: get_beta_bill
+d13 1
+a13 1
+  "$Id: Bill_GasAbsorption.f90,v 1.21 2003/07/07 19:09:07 vsnyder Exp $"
+a16 1
+  private :: not_used_here 
+d20 1
+a20 1
+  SUBROUTINE get_beta_bill (T, PB, F, RH, VMR_in, NS, ABSC, Catalog, LosVel )
+a24 1
+!      LATEST UPDATE: J.JIANG, NOVEMBER 14, 2001
+d80 1
+a80 1
+    real(rp) :: bb, del_temp, cld_ext, WC(2), tanh1
+d82 1
+a82 1
+    logical :: Do_1D, Incl_Cld
+a107 1
+!    maxVert = Ng +1
+d124 1
+a124 1
+! Note that expa only depends on temperature.
+d169 3
+a234 4
+
+
+
+
+@
+
+
+1.21
+log
+@Get Create_Beta from get_beta_path
+@
+text
+@d6 1
+a6 2
+   USE MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error, &
+     & MLSMSG_DeAllocate
+d13 1
+a13 1
+  "$Id: Bill_GasAbsorption.f90,v 1.20 2003/07/04 02:49:12 vsnyder Exp $"
+d79 1
+a79 1
+    Integer(ip) :: n_sps, i, j, no_of_lines, n_ele
+d82 2
+a83 3
+    REAL(rp) :: bb, del_temp, cld_ext, WC(2), tanh1
+    real(r8), parameter :: Boltzmhz = 1 / h_over_k
+    real(rp), allocatable, dimension(:) :: PP, TT
+a84 1
+    LOGICAL, ALLOCATABLE, dimension(:) :: true_path_flags
+d89 3
+a91 3
+       VMR_H2O = RH                     ! PH HERE IS WATER VAPOR MIXING RATIO
+       VP=VMR_H2O*PB                    ! VP IS VAPOR PRESSURE, PB IS TOTAL
+       P=PB-VP                          ! PRESSURE, P IS DRY-AIR PRESSURE
+d93 3
+a95 3
+       CALL RHtoEV(T, 100.0_r8, VP)     ! RH HERE IS 100% RELATIVE HUMIDITY 
+       P = PB-VP
+       VMR_H2O = VP/(max(1.e-19_r8, P))
+a110 2
+!    n_ele = 2*maxVert
+    n_ele = 1  ! number of pressure levels along the path, in our case =1
+d112 1
+a112 3
+    allocate ( true_path_flags(n_ele), stat=status )
+    true_path_flags = .true.
+    allocate ( gl_slabs(n_ele,n_sps), stat=status )
+a115 8
+    allocate ( pp(n_ele), stat=status )
+    if ( status /= 0 ) &
+      & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate // ' pp ')
+    allocate ( tt(n_ele), stat=status )
+    if ( status /= 0 ) &
+      & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate // ' tt ')
+d117 1
+a117 4
+      no_of_lines =  size(Catalog(i)%Lines)
+      do j = 1, n_ele
+          Call AllocateOneSlabs ( gl_slabs(j, i), no_of_lines )
+      enddo
+a119 2
+    pp(1) = p
+    tt(1) = t
+d124 2
+a125 2
+    call get_gl_slabs_arrays ( Catalog, PP(1:n_ele), TT(1:n_ele), myLosVel, &
+      & gl_slabs, Do_1D, true_path_flags )
+d128 2
+a129 2
+    tanh1 = tanh( ff / (( 2.0 * boltzmhz ) * t))
+    DO i = 1, n_sps
+d131 2
+a132 2
+      CALL create_beta ( catalog(i)%molecule, Catalog(i)%continuum, PB, T, &
+        &  FF, Lines(Catalog(i)%Lines)%W, gl_slabs(n_ele,i), tanh1, bb )
+d157 1
+a157 1
+    ENDDO
+d159 1
+a159 1
+    ABSC=B/1000.0_r8     ! convert km-1 to m-1
+d161 3
+a163 10
+    Call DestroyCompleteSlabs ( gl_slabs )
+    Deallocate (pp, stat=status)
+    if ( status /= 0 ) &
+      & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+      & MLSMSG_DeAllocate // ' pp ')
+    Deallocate (tt, stat=status)
+    if ( status /= 0 ) &
+      & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+      & MLSMSG_DeAllocate // ' tt ')
+    Deallocate (true_path_flags,stat=status)
+a164 2
+  END SUBROUTINE get_beta_bill 
+ 
+d172 3
+@
+
+
+1.20
+log
+@Simplify interface to Get_GL_Slabs_Arrays
+@
+text
+@d14 1
+a14 1
+  "$Id: Bill_GasAbsorption.f90,v 1.19 2003/06/18 14:43:26 bill Exp $"
+d30 1
+a30 1
+    use CREATE_BETA_M, only: CREATE_BETA
+d144 1
+a144 1
+    call get_gl_slabs_arrays( Catalog, PP(1:n_ele), TT(1:n_ele), myLosVel, &
+d201 3
+@
+
+
+1.19
+log
+@modified interface to get_gl_slabs_arrays
+@
+text
+@d14 1
+a14 1
+  "$Id: Bill_GasAbsorption.f90,v 1.18 2003/05/16 23:53:36 livesey Exp $"
+d36 1
+d59 1
+a59 1
+    REAL(r8), INTENT(out) :: ABSC            ! ABSORPTION COEFFICIENT (1/m)
+d65 2
+a66 2
+    REAL(r8) :: B                            ! BETA (1/m/ppv)
+    REAL(r8) :: FF                          ! FREQUENCY IN MHz
+d68 10
+a77 10
+    REAL(r8) :: P                           ! DRY AIR PARTIAL PRESSURE (hPa)
+    REAL(r8) :: VMR                          ! VOLUME MIXING RATIO
+    REAL(r8) :: VMR_H2O                      ! H2O VOLUME MIXING RATIO
+    REAL(r8) :: VMR_O3                       ! H2O VOLUME MIXING RATIO
+    REAL(r8) :: VMR_O2                       ! O2    VOLUME MIXING RATIO
+    REAL(r8) :: VMR_O_18_O                   ! O18O  VOLUME MIXING RATIO
+    REAL(r8) :: VMR_H2O_18                   ! H2O18 VOLUME MIXING RATIO
+    REAL(r8) :: VMR_N2                       ! N2 VOLUME MIXING RATIO
+    REAL(r8) :: VMR_N2O                      ! N2O VOLUME MIXING RATIO
+    REAL(r8) :: VMR_HNO3                     ! HNO3 VOLUME MIXING RATIO
+d84 2
+a85 2
+    real(r8), parameter :: Boltzmhz = 20836.74_r8
+    REAL(rp), allocatable, dimension(:) :: PP, TT
+d91 1
+a91 1
+    IF (RH .NE. 100.0_r8) THEN
+d95 2
+a96 2
+    ELSE IF(VMR_H2O .EQ. 100.0_r8) THEN
+       CALL RHtoEV(T, 100.0_r8, VP)        ! RH HERE IS 100% RELATIVE HUMIDITY 
+d109 1
+a109 1
+    B=0.0_r8
+d117 1
+a117 1
+    ALLOCATE (true_path_flags(n_ele),stat=status)
+d119 1
+a119 1
+    allocate ( gl_slabs (n_ele,n_sps), stat=status )
+a132 1
+      gl_slabs(1:n_ele,i)%no_lines =  no_of_lines
+d145 1
+a145 1
+      & gl_slabs, n_ele, Do_1D, true_path_flags )
+d148 1
+a148 2
+    tanh1 = EXP(FF / (boltzmhz * t))
+    tanh1 = (1.0 - tanh1) / (1.0 + tanh1)
+d151 2
+a152 2
+       CALL create_beta ( catalog(i)%molecule, Catalog(i)%continuum, PB, T, &
+         &  FF, Lines(Catalog(i)%Lines)%W, gl_slabs(n_ele,i), tanh1, bb )
+d182 1
+a182 1
+    DEAllocate(pp, stat=status)
+d186 1
+a186 1
+    DEAllocate(tt, stat=status)
+d190 1
+a190 1
+    DEALLOCATE (true_path_flags,stat=status)
+d201 3
+@
+
+
+1.18
+log
+@Now uses molecule indices rather than spectags
+@
+text
+@d14 1
+a14 1
+  "$Id: Bill_GasAbsorption.f90,v 1.17 2003/05/09 19:43:11 jonathan Exp $"
+d86 1
+d116 2
+d145 1
+a145 1
+      & gl_slabs, n_ele, Do_1D )
+d191 1
+d202 3
+@
+
+
+1.17
+log
+@delete del_temp following Van's changes
+@
+text
+@d14 1
+a14 1
+  "$Id: Bill_GasAbsorption.f90,v 1.16 2003/05/06 20:45:45 jonathan Exp $"
+d34 2
+a35 2
+    use Molecules, only: SP_H2O, SP_H2O_18, SP_HNO3, SP_N2, SP_N2O, SP_O_18_O, &
+      & SP_O2, SP_O3
+d81 1
+a81 1
+    Integer(ip) :: Spectag, status
+a147 1
+      Spectag = Catalog(i)%Spec_Tag
+d149 1
+a149 1
+       CALL create_beta ( Spectag, Catalog(i)%continuum, PB, T, &
+d152 2
+a153 2
+      select case (Spectag)
+      case (SP_H2O)
+d155 1
+a155 1
+      case (SP_O2)
+d157 1
+a157 1
+      case (SP_N2)
+d159 1
+a159 1
+      case (SP_O_18_O)
+d161 1
+a161 1
+      case (SP_H2O_18)
+d163 1
+a163 1
+      case (SP_O3)
+d165 1
+a165 1
+      case (SP_N2O)
+d167 1
+a167 1
+      case (SP_HNO3)
+d198 3
+@
+
+
+1.16
+log
+@some fixing after the merge
+@
+text
+@d14 1
+a14 1
+  "$Id: Bill_GasAbsorption.f90,v 1.15 2003/05/05 23:01:13 livesey Exp $"
+a136 1
+    del_temp = 0.0_rp
+d142 1
+a142 1
+      & gl_slabs, n_ele, del_temp, Do_1D )
+d199 3
+@
+
+
+1.15
+log
+@Commented out call to create_beta for merge
+@
+text
+@d14 1
+a14 1
+  "$Id: Bill_GasAbsorption.f90,v 1.14 2003/02/11 00:48:22 jonathan Exp $"
+d79 2
+a80 1
+    Integer(ip) :: n_sps, i, j, no_of_lines, n_ele, IPSD, NU, NUA, NAB, NR, NC
+d82 2
+a83 2
+    REAL(rp) :: bb, del_temp, cld_ext, WC(2) 
+    parameter (NC=2, NU=16, NUA=8, NAB=50, NR=40, IPSD=1000)
+d110 1
+a111 2
+
+    n_sps = Size(Catalog)
+a112 1
+
+d145 3
+d151 2
+a152 3
+!       CALL create_beta ( Spectag, Catalog(i)%continuum, PB, T, &
+!         &  FF, Lines(Catalog(i)%Lines)%W, gl_slabs(n_ele,i), bb )
+! COMMENTED OUT FOR MERGE NJL
+a155 1
+!      IF (Spectag .EQ. SP_H2O) THEN
+a157 1
+!      ELSE IF (Spectag .EQ. SP_O2) THEN
+a159 1
+!      ELSE IF (Spectag .EQ. SP_N2) THEN
+a161 1
+!      ELSE IF (Spectag .EQ. SP_O_18_O) THEN
+a163 1
+!      ELSE IF (Spectag .EQ. SP_H2O_18) THEN
+a165 1
+!      ELSE IF (Spectag .EQ. SP_O3) THEN
+a167 1
+!      ELSE IF (Spectag .EQ. SP_N2O) THEN
+a169 1
+!      ELSE IF (Spectag .EQ. SP_HNO3) THEN
+a171 1
+!      ELSE
+a173 1
+!      ENDIF
+a180 2
+!    print*, B
+
+d200 3
+@
+
+
+1.14
+log
+@change call to create_beta
+@
+text
+@d14 1
+a14 1
+  "$Id: Bill_GasAbsorption.f90,v 1.13 2003/02/06 00:21:10 jonathan Exp $"
+d149 3
+a151 2
+      CALL create_beta ( Spectag, Catalog(i)%continuum, PB, T, &
+        &  FF, Lines(Catalog(i)%Lines)%W, gl_slabs(n_ele,i), bb )
+d211 3
+@
+
+
+1.14.2.1
+log
+@uses new slabs_sw
+@
+text
+@d14 1
+a14 1
+  "$Id: Bill_GasAbsorption.f90,v 1.14 2003/02/11 00:48:22 jonathan Exp $"
+d81 1
+a81 1
+    REAL(rp) :: bb, v0, vm, tm, tp, bp, bm, tanh1, del_temp, cld_ext, WC(2)
+a82 1
+    real(r8), parameter :: Boltzmhz = 20836.74_r8
+a145 3
+! Note that expa only depends on temperature.
+    tanh1 = EXP(FF / (boltzmhz * t))
+    tanh1 = (1.0 - tanh1) / (1.0 + tanh1)
+d150 1
+a150 1
+        &  FF, Lines(Catalog(i)%Lines)%W, gl_slabs(n_ele,i), tanh1, bb)
+a209 3
+! Revision 1.14  2003/02/11 00:48:22  jonathan
+! change call to create_beta
+!
+@
+
+
+1.14.2.2
+log
+@Remove declarations for unused variables, and cosmetic changes
+@
+text
+@d4 1
+a4 1
+module Bill_GasAbsorption
+d6 1
+a6 1
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error, &
+d10 1
+a10 1
+  public :: GET_BETA_BILL
+d14 1
+a14 1
+  "$Id: Bill_GasAbsorption.f90,v 1.14.2.1 2003/02/13 17:35:20 bill Exp $"
+d22 1
+a22 1
+  subroutine GET_BETA_BILL (T, PB, F, RH, VMR_in, NS, ABSC, Catalog, LosVel )
+d44 7
+a50 7
+    integer, intent(in) :: NS
+    real(r8), intent(in) :: F               ! FREQUENCY IN GHz
+    real(r8), intent(in) :: T               ! TEMPERATURE (K)
+    real(r8), intent(in) :: PB              ! TOTAL AIR PRESSURE (hPa)
+    real(r8), intent(in) :: VMR_in(NS-1)    ! VMR OF SPECIES 
+    real(r8), intent(in) :: RH              ! H2O VOLUME MIXING RATIO
+    real(rp), intent(in) :: LosVel          !     OR RELATIVE HUMIDITY
+d52 2
+a53 2
+    type(Catalog_T), intent(in) :: Catalog(:)
+    type(slabs_struct), dimension(:,:), pointer :: gl_slabs
+d58 1
+a58 1
+    real(r8), intent(out) :: ABSC            ! ABSORPTION COEFFICIENT (1/m)
+d64 19
+a82 19
+    real(r8) :: B                            ! BETA (1/m/ppv)
+    real(r8) :: FF                           ! FREQUENCY IN MHz
+    real(rp) :: MyLosVel
+    real(r8) :: P                            ! DRY AIR PARTIAL PRESSURE (hPa)
+    real(r8) :: VMR                          ! VOLUME MIXING RATIO
+    real(r8) :: VMR_H2O                      ! H2O VOLUME MIXING RATIO
+    real(r8) :: VMR_O3                       ! H2O VOLUME MIXING RATIO
+    real(r8) :: VMR_O2                       ! O2    VOLUME MIXING RATIO
+    real(r8) :: VMR_O_18_O                   ! O18O  VOLUME MIXING RATIO
+    real(r8) :: VMR_H2O_18                   ! H2O18 VOLUME MIXING RATIO
+    real(r8) :: VMR_N2                       ! N2 VOLUME MIXING RATIO
+    real(r8) :: VMR_N2O                      ! N2O VOLUME MIXING RATIO
+    real(r8) :: VMR_HNO3                     ! HNO3 VOLUME MIXING RATIO
+    real(r8) :: VP                           ! VAPOR PARTIAL PRESSURE (hPa)
+
+    integer(ip) :: n_sps, i, j, no_of_lines, n_ele
+    integer(ip), parameter :: IPSD=1000, NU=16, NUA=8, NAB=50, NR=40, NC=2
+    integer(ip) :: Spectag, status
+    real(rp) :: bb, v0, vm, tm, tp, bp, bm, tanh1, del_temp, cld_ext, WC(2)
+d84 1
+a84 1
+    real(rp), allocatable, dimension(:) :: PP, TT
+d88 10
+a97 10
+    wc= 0._r8
+    if (rh /= 100.0_r8) then
+       vmr_h2o = rh                     ! PH here is water vapor mixing ratio
+       vp=vmr_h2o*pb                    ! VP is vapor pressure, PB is total
+       p=pb - vp                        ! pressure, P is dry-air pressure
+    else if (vmr_h2o == 100.0_r8) then
+       call rhtoev(t, 100.0_r8, vp)     ! RH here is 100% relative humidity 
+       p = pb - vp
+       vmr_h2o = vp/(max(1.e-19_r8, p))
+    end if
+d101 2
+a102 2
+    VMR_O_18_O = VMR_O2 * 0.00409524_r8 
+    VMR_H2O_18 = VMR_H2O * 0.00204_r8
+d107 1
+a107 1
+    B = 0.0_r8
+d119 1
+a119 1
+      & call MLSMessage(MLSMSG_Error, ModuleName, &
+d123 1
+a123 1
+      & call MLSMessage(MLSMSG_Error, ModuleName, &
+d127 1
+a127 1
+      & call MLSMessage(MLSMSG_Error, ModuleName, &
+d133 3
+a135 3
+          call AllocateOneSlabs ( gl_slabs(j, i), no_of_lines )
+      end do
+    end do
+d150 1
+a150 1
+    do i = 1, n_sps
+d153 1
+a153 1
+      call create_beta ( Spectag, Catalog(i)%continuum, PB, T, &
+d158 1
+d161 1
+d164 1
+d167 1
+d170 1
+d173 1
+d176 1
+d179 1
+d182 2
+a183 1
+        VMR = 0.0_r8
+d185 1
+d189 1
+a189 1
+    end do
+d195 2
+a196 2
+    call DestroyCompleteSlabs ( gl_slabs )
+    deallocate ( pp, stat=status )
+d198 1
+a198 1
+      & call MLSMessage(MLSMSG_Error, ModuleName, &
+d202 1
+a202 1
+      & call MLSMessage(MLSMSG_Error, ModuleName, &
+d205 1
+a205 1
+  end subroutine GET_BETA_BILL 
+a213 3
+! Revision 1.14.2.1  2003/02/13 17:35:20  bill
+! uses new slabs_sw
+!
+@
+
+
+1.13
+log
+@change call to creat_beta
+@
+text
+@d14 1
+a14 1
+  "$Id: Bill_GasAbsorption.f90,v 1.12 2003/01/31 17:24:12 jonathan Exp $"
+d150 1
+a150 2
+        &  FF, Lines(Catalog(i)%Lines)%W, gl_slabs(n_ele,i), bb, Incl_Cld, cld_ext,&
+        &  IPSD, WC, NU, NUA, NAB, NR, NC )
+d210 3
+@
+
+
+1.12
+log
+@add Incl_Cld. cld_ext
+@
+text
+@d14 1
+a14 1
+  "$Id: Bill_GasAbsorption.f90,v 1.11 2003/01/30 18:25:06 pwagner Exp $"
+d79 1
+a79 1
+    Integer(ip) :: n_sps, i, j, no_of_lines, n_ele
+d81 2
+a82 1
+    REAL(rp) :: bb, del_temp, cld_ext
+d87 1
+a87 1
+
+d150 2
+a151 1
+        &  FF, Lines(Catalog(i)%Lines)%W, gl_slabs(n_ele,i), bb, Incl_Cld, cld_ext )
+d211 3
+@
+
+
+1.11
+log
+@Cosmetic changes; fixed bug where losVel was being changed
+@
+text
+@d14 1
+a14 1
+  "$Id: Bill_GasAbsorption.f90,v 1.10 2003/01/16 18:13:24 jonathan Exp $"
+d81 1
+a81 1
+    REAL(rp) :: bb, del_temp
+d83 1
+a83 1
+    logical :: Do_1D
+d149 1
+a149 1
+        &  FF, Lines(Catalog(i)%Lines)%W, gl_slabs(n_ele,i), bb )
+d209 3
+@
+
+
+1.10
+log
+@add Do_1D option to get_gl_slabs_arrays
+@
+text
+@d1 3
+d6 2
+d14 1
+a14 1
+  "$Id: Bill_GasAbsorption.f90,v 1.9 2002/12/13 02:07:18 vsnyder Exp $"
+d31 2
+a32 3
+    use GLNP, only: NG
+    use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT, ALLOCATEONESLABS, DESTROYCOMPLETESLABS
+    use Make_Z_Grid_M, only: MAKE_Z_GRID
+d44 1
+a44 1
+    INTEGER :: NS
+a45 1
+    REAL(r8) :: FF                          ! FREQUENCY IN MHz
+a46 2
+    REAL(r8) :: P                           ! DRY AIR PARTIAL PRESSURE (hPa)
+    REAL(r8) :: VP                          ! VAPOR PARTIAL PRESSURE (hPa)
+d48 3
+a50 3
+    REAL(r8) :: VMR_in(NS-1)                ! VMR OF SPECIES 
+    REAL(r8), INTENT(IN) :: RH              ! H2O VOLUME MIXING RATIO OR RELATIVE HUMIDITY
+    REAL(rp) :: LosVel
+d65 3
+d77 1
+d79 1
+a79 1
+    Integer(ip) :: n_sps, n_path, i, j, k, m, nl, no_of_lines, n_ele, maxvert
+d81 2
+a82 2
+    REAL(rp) :: bb, v0, vm, tm, tp, bp, bm, del_temp
+    REAL(rp), allocatable, dimension(:) :: PP, TT, z_psig
+d116 3
+d120 3
+d124 3
+a126 1
+
+d138 3
+d142 2
+a143 4
+    losVel=losVel*0.00_rp   ! Bill use km/sec ! The Doppler correction already been done 
+                                              ! in the FullCloudForwardModel, so set it 0
+
+    call get_gl_slabs_arrays( Catalog,PP(1:n_ele),TT(1:n_ele),losVel,gl_slabs,n_ele,del_temp, Do_1D)
+d151 3
+a153 1
+      IF (Spectag .EQ. SP_H2O) THEN
+d155 2
+a156 1
+      ELSE IF (Spectag .EQ. SP_O2) THEN
+d158 2
+a159 1
+      ELSE IF (Spectag .EQ. SP_N2) THEN
+d161 2
+a162 1
+      ELSE IF (Spectag .EQ. SP_O_18_O) THEN
+d164 2
+a165 1
+      ELSE IF (Spectag .EQ. SP_H2O_18) THEN
+d167 2
+a168 1
+      ELSE IF (Spectag .EQ. SP_O3) THEN
+d170 2
+a171 1
+      ELSE IF (Spectag .EQ. SP_N2O) THEN
+d173 2
+a174 1
+      ELSE IF (Spectag .EQ. SP_HNO3) THEN
+d176 2
+a177 1
+      ELSE
+d179 2
+a180 1
+      ENDIF
+d191 8
+a198 2
+    DEAllocate(pp)
+    DEAllocate(tt)
+d209 3
+@
+
+
+1.9
+log
+@Use a SLABS structure for the slabs quantities, use spectag names
+@
+text
+@d9 1
+a9 1
+  "$Id: Bill_GasAbsorption.f90,v 1.8 2002/10/08 17:08:06 pwagner Exp $"
+d78 1
+d129 1
+a129 1
+    call get_gl_slabs_arrays( Catalog,PP(1:n_ele),TT(1:n_ele),losVel,gl_slabs,n_ele,del_temp)
+d178 3
+@
+
+
+1.8
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d3 1
+a3 10
+  use GLNP, only: NG
+  use MLSCommon, only: r8, rp, ip
+  use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT, ALLOCATEONESLABS, DESTROYCOMPLETESLABS
+  use SpectroscopyCatalog_m, only: CATALOG_T, LINES
+  use SLABS_SW_M, only: GET_GL_SLABS_ARRAYS
+  use CREATE_BETA_M, only: CREATE_BETA
+  use WaterVapor, only: RHtoEV
+  USE Make_Z_Grid_M, only: MAKE_Z_GRID
+
+  Implicit NONE
+d5 1
+a5 1
+  PUBLIC :: get_beta_bill
+d9 1
+a9 1
+  "$Id: Bill_GasAbsorption.f90,v 1.7 2002/08/22 00:13:01 jonathan Exp $"
+d25 11
+d77 1
+a77 1
+    REAL(rp), allocatable, dimension(:) :: LineWidth, PP, TT, z_psig(:)
+d81 1
+a81 1
+    IF (RH .NE. 100._r8) THEN
+d85 2
+a86 2
+    ELSE IF(VMR_H2O .EQ. 100._r8) THEN
+       CALL RHtoEV(T, 100._r8, VP)        ! RH HERE IS 100% RELATIVE HUMIDITY 
+d99 2
+a100 2
+    B=0._r8
+    FF = F*1000._r8
+d132 3
+a134 11
+      no_of_lines =  size(Catalog(i)%Lines)
+      Allocate(LineWidth(no_of_lines))
+      do k = 1, no_of_lines
+        m = Catalog(i)%Lines(k)
+        LineWidth(k) = Lines(m)%W
+      end do
+
+      CALL create_beta(Spectag, Catalog(i)%continuum, PB, T,                 &
+        &  FF, no_of_lines, LineWidth, gl_slabs(n_ele,i)%v0s, gl_slabs(n_ele,i)%x1,  &
+        &  gl_slabs(n_ele,i)%y, gl_slabs(n_ele,i)%yi, gl_slabs(n_ele,i)%slabs1,  bb, &
+        &  gl_slabs(n_ele,i)%dslabs1_dv0 )
+d136 1
+a136 1
+      IF (Spectag .EQ. 18003) THEN
+d138 1
+a138 1
+      ELSE IF (Spectag .EQ. 32001) THEN
+d140 1
+a140 1
+      ELSE IF (Spectag .EQ. 28964) THEN
+d142 1
+a142 1
+      ELSE IF (Spectag .EQ. 34001) THEN
+d144 1
+a144 1
+      ELSE IF (Spectag .EQ. 20003) THEN
+d146 1
+a146 1
+      ELSE IF (Spectag .EQ. 48004) THEN
+d148 1
+a148 1
+      ELSE IF (Spectag .EQ. 44004) THEN
+d150 1
+a150 1
+      ELSE IF (Spectag .EQ. 63001) THEN
+d153 1
+a153 1
+        VMR=0._r8
+a157 2
+      DEAllocate(LineWidth)
+
+d160 1
+a160 1
+    ABSC=B/1000._r8     ! convert km-1 to m-1
+d177 3
+@
+
+
+1.7
+log
+@upgrade to include more molecules
+@
+text
+@d18 1
+a18 1
+  "$Id: Bill_GasAbsorption.f90,v 1.6 2002/08/08 22:45:37 jonathan Exp $"
+d22 1
+d178 4
+d185 3
+@
+
+
+1.6
+log
+@newly improved version
+@
+text
+@d18 1
+a18 1
+  "$Id: Bill_GasAbsorption.f90,v 1.5 2002/06/05 18:17:14 jonathan Exp $"
+d25 1
+a25 1
+  SUBROUTINE get_beta_bill (T, PB, F, RH, VMR_O3, ABSC, Catalog, LosVel )
+d37 1
+d44 1
+a44 1
+    REAL(r8) :: VMR_O3                      ! MINOR SPECIES 1-O3
+d47 1
+a47 1
+
+d63 1
+d68 2
+a87 3
+!    VMR_H2O    = MAX(1.e-29_r8, VMR_H2O)
+!    VMR_O3     = MAX(1.e-29_r8, VMR_O3)
+
+d92 3
+a121 2
+
+
+d153 6
+d180 3
+@
+
+
+1.5
+log
+@ fix bug
+@
+text
+@d5 1
+a5 1
+  use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT, ALLOCATEONESLABS
+d10 2
+d18 1
+a18 1
+  "$Id: Bill_GasAbsorption.f90,v 1.4 2001/11/16 00:40:44 jonathan Exp $"
+d65 1
+d67 1
+a67 1
+    Integer(ip) :: n_sps, n_path, i, j, k, m, nl, no_of_lines, n_ele
+d70 2
+a71 2
+    REAL(rp), allocatable, dimension(:) :: LineWidth, PP, TT
+    
+d81 1
+a81 1
+       VMR_H2O = VP/(max(1.e-9_r8, P))
+d86 3
+a88 1
+    VMR_O2     = 0.209476_r8
+d94 3
+d98 5
+a102 2
+    n_ele = 1
+    allocate ( gl_slabs (1,n_sps), stat=status )
+d108 4
+a111 2
+      gl_slabs(1,i)%no_lines =  no_of_lines
+      call AllocateOneSlabs ( gl_slabs(1, i), no_of_lines )
+a117 1
+    losVel=losVel*0.0001_rp   ! Bill use km/sec
+a118 1
+    call get_gl_slabs_arrays(Catalog,PP(1:n_ele),TT(1:n_ele),losVel,gl_slabs,1,del_temp)
+d120 4
+d135 3
+a137 3
+        &  FF, no_of_lines, LineWidth, gl_slabs(1,i)%v0s, gl_slabs(1,i)%x1,  &
+        &  gl_slabs(1,i)%y, gl_slabs(1,i)%yi, gl_slabs(1,i)%slabs1,  bb,     &
+        &  gl_slabs(1,i)%dslabs1_dv0 )
+d143 2
+d156 1
+d163 1
+a163 1
+    DEAllocate(gl_slabs)
+d172 3
+@
+
+
+1.4
+log
+@add losVel
+@
+text
+@d16 1
+a16 1
+  "$Id: Bill_GasAbsorption.f90,v 1.3 2001/11/15 00:55:02 jonathan Exp $"
+d122 1
+a122 1
+        &  gl_slabs(1,i)%dslabs1_dv0, DBETA_DW=v0,DBETA_DN=vp,DBETA_DV=vm )
+d154 3
+@
+
+
+1.3
+log
+@fixed a bug
+@
+text
+@d16 1
+a16 1
+  "$Id: Bill_GasAbsorption.f90,v 1.2 2001/11/14 00:40:11 jonathan Exp $"
+d23 1
+a23 1
+  SUBROUTINE get_beta_bill (T, PB, F, RH, VMR_O3, ABSC, Catalog )
+d43 1
+d66 1
+a66 1
+    REAL(rp) :: bb, v0, vm, tm, tp, bp, bm, del_temp, losVel
+d104 3
+a106 1
+    losVel=-6.8_rp
+d154 3
+@
+
+
+1.2
+log
+@first working version
+@
+text
+@d16 1
+a16 1
+  "$Id: Bill_GasAbsorption.f90,v 1.1 2001/11/09 22:07:38 jonathan Exp $"
+d38 1
+a38 1
+    REAL(r8) :: P               ! DRY AIR PARTIAL PRESSURE (hPa)
+d40 2
+a41 2
+    REAL(r8), INTENT(IN) :: PB                          ! TOTAL AIR PRESSURE (hPa)
+    REAL(r8), INTENT(IN) :: VMR_O3          ! MINOR SPECIES 1-O3
+d65 1
+a65 1
+    REAL(rp) :: bb, v0, vm, tm, tp, bp, bm, del_temp
+d80 2
+d83 2
+a84 2
+    VMR_O_18_O = VMR_O2*0.00409524 
+    VMR_H2O_18 = VMR_H2O*0.00204 
+d103 3
+a105 1
+    call get_gl_slabs_arrays(Catalog,PP(1:n_ele),TT(1:n_ele),0.0_rp,gl_slabs,1,del_temp)
+a112 1
+        print*, i,  Spectag
+d115 1
+a115 1
+      call AllocateOneSlabs ( gl_slabs(1, i), no_of_lines )
+d134 1
+d138 3
+a140 1
+    B=B/1000._r8     ! convert km-1 to m-1
+d151 3
+@
+
+
+1.1
+log
+@using Bill Read's new spec data
+@
+text
+@d3 1
+d5 1
+a5 1
+  use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
+d7 1
+d9 1
+d16 1
+a16 1
+  "$Id: Bill_GasAbsorption.f90,v 2.1 2001/10/16 15:07:18 jonathan Exp $"
+d23 1
+a23 1
+  SUBROUTINE get_beta_bill (T, PB, F, RH, VMR, ABSC, NS, Catalog )
+d28 1
+a28 1
+!      LATEST UPDATE: J.JIANG, NOVEMBER 10, 2001
+a33 1
+    INTEGER :: NS
+d35 8
+a42 9
+    REAL(r8) :: F                            ! FREQUENCY IN GHz
+    REAL(r8) :: FF                           ! FREQUENCY IN MHz
+    REAL(r8) :: T                            ! TEMPERATURE (K)
+    REAL(r8) :: P                            ! DRY AIR PARTIAL PRESSURE (hPa)
+    REAL(r8) :: PB                           ! TOTAL AIR PRESSURE (hPa)
+!    REAL(r8) :: VP                           ! VAPOR PARTIAL PRESSURE (hPa)
+    REAL(r8) :: VMR(NS)                      ! MINOR SPECIES 1-O3
+    REAL(r8) :: VMR_H2O                      ! H2O VOLUME MIXING RATIO
+    REAL(r8) :: VMR_O2                       ! O2 VOLUME MIXING RATIO
+d45 1
+a45 1
+    Type (slabs_struct), DIMENSION(:), POINTER :: gl_slabs
+d57 12
+a68 1
+    REAL(r8) :: RH                           ! Relative Humidity
+d70 13
+a82 4
+    Integer(ip) :: n_sps, n_path, i, j, k, m, nl, no_of_lines, Spectag, status
+    REAL(rp) :: bb, vp, v0, vm, tm, tp, bp, bm
+    REAL(rp), allocatable, dimension(:) :: LineWidth
+!-----------------------------------------------------------------------------
+d87 16
+a102 1
+    allocate ( gl_slabs (n_sps), stat=status )
+a105 1
+      gl_slabs(i)%no_lines =  no_of_lines
+d109 1
+d112 17
+d130 1
+a130 7
+      CALL create_beta(Spectag, Catalog(i)%continuum, PB, T, &
+        &  FF, no_of_lines, LineWidth, gl_slabs(i)%v0s, gl_slabs(i)%x1,  &
+        &  gl_slabs(i)%y, gl_slabs(i)%yi, gl_slabs(i)%slabs1,  bb,       &
+        &  gl_slabs(i)%dslabs1_dv0, DBETA_DW=v0,DBETA_DN=vp,DBETA_DV=vm )
+
+      B = B + bb
+
+a131 1
+      DEAllocate(gl_slabs)
+d134 5
+a138 5
+    !  spec_tags(l_h2o)          / 00018003 /
+    !  spec_tags(l_o2)           / 00032001 /
+    !  spec_tags(l_o_18_o)       / 00034001 /
+    !  spec_tags(l_h2o_18)       / 00020003 /
+    !  spec_tags(l_o3)           / 00048004 /
+d145 3
+@
+

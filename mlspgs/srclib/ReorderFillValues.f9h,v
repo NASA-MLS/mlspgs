@@ -1,0 +1,106 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.14
+	cfm-single-freq-0-1:1.1.0.12
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.10
+	mus-emls-1-70:1.1.0.8
+	rel-1-0-englocks-work:1.1.0.6
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V2-24-NRT-04:1.1
+	V3-33:1.1
+	V2-24:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1
+	V2-23-NRT-02:1.1
+	V2-23:1.1
+	V2-22-NRT-01:1.1
+	V2-22:1.1
+	V2-21:1.1
+	V2-20:1.1
+	V2-11:1.1
+	V2-10:1.1
+	V2-00:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2006.06.15.17.50.10;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@First commit
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id: ReorderFillValues.f9h,v 1.3 2005/08/15 20:37:07 pwagner Exp $
+!   subroutine ReorderFill* ( values, FillValue )
+!     real(r8), dimension(:, :, :), intent(inout) :: values
+!     real(r8), intent(in) :: FillValue
+!     !
+!     ! Local variables
+
+   integer :: fvindx
+   integer :: nfvindx
+   ! Method:
+   ! Find 1st fill value in array and last non-fill value in array
+   ! Swap them
+   
+   ! Save ourselves the trouble if task is trivial
+   if ( size(values) < 2 ) return
+   if ( count(values == FillValue) < 1 .or. &
+     &  count(values /= FillValue) < 1 ) return
+   do
+     fvindx = findFirst( values == FillValue )
+     nfvindx = findLast( values /= FillValue )
+     if ( nfvindx <= fvindx ) exit
+     call swap( values(fvindx), values(nfvindx) )
+   enddo
+! end subroutine ReorderFill*
+
+! $Log: ReorderFillValues.f9h,v $
+@

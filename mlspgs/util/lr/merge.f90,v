@@ -1,0 +1,315 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.12
+	cfm-single-freq-0-1:1.2.0.10
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.8
+	mus-emls-1-70:1.2.0.6
+	rel-1-0-englocks-work:1.2.0.4
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.2
+	V4-21:1.2.0.2
+	V4-13:1.2
+	V4-12:1.2
+	V4-11:1.2
+	V4-10:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2014.01.14.00.11.42;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2013.10.24.22.41.14;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Revised LR completely
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Merge_Sets
+
+  implicit NONE
+  private
+  public :: MERGE
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: merge.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  subroutine MERGE ( IBASIS, IRES, CHANGE )
+
+    use Basis_m, only: BASIS, INDBAS, Items
+    use Delete, only: DELCS
+    use LISTS, only: LINT, LIST
+    use Tables, only: HEADEN, PRDIND => Prod_Ind, PRODCN => Productions
+    use Union, only: CSUN
+
+    implicit NONE
+
+    ! Merge the configuration set at BASIS(IBASIS) into the set of
+    ! configuration sets.  Set IRES to the resulting configuration set
+    ! corresponding to IBASIS.  Set CHANGE false if a compatible set was
+    ! found.  Set CHANGE true if no compatible sets were found.
+
+    integer, intent(in) :: IBASIS
+    integer, intent(out) :: IRES
+    logical, intent(out) :: CHANGE
+
+    ! *****     External References     ************************************
+
+    ! CSUN    unions two context sets.
+    ! DELCS   deletes a reference to a context set.
+    ! LINT    inquires whether two context sets have an intersection.
+
+    ! *****     Local Variables     ****************************************
+
+    ! BPR     is the pointer to productions for the state at IBASIS.
+    ! CHU     "CSUN(A,B) says A added something to B."
+    ! I       is a loop induction variable and subscript.
+    ! IEND    is the upper limit for I.
+    ! IENT    is the entry symbol for IBASIS.
+    ! II      is a temporary variable.
+    ! IPTR    points to a basis being tested for compatibility with IBASIS.
+    ! J       is a loop induction variable and subscript.
+    ! JJ      is a temporary variable.
+    ! KK      is a temporary variable.
+    ! LL      is a temporary variable.
+    ! NIPTR   is the next value for IPTR
+    ! PPR     is the pointer to productions for the state at IPTR.
+    ! SAME    indicates two configuration sets are identical.
+
+    logical :: CHU
+    integer BPR, I, IEND, IENT, II, IPTR, J, JJ, KK, LL, NIPTR, PPR
+    logical SAME
+
+    ! *****     Procedures     *********************************************
+
+    ! Search the list of configuration sets having the same entrance
+    ! symbol as IBASIS.
+
+    bpr = basis(ibasis)%item     ! Context set
+    ient = prodcn(prdind(items(bpr)%prod)+items(bpr)%dot-1)
+    niptr = headen(ient)
+  o:do
+      iptr = niptr
+      if ( iptr == 0 ) exit
+      niptr = basis(iptr)%same ! Same entrance symbol
+      ppr = basis(iptr)%item   ! Context set
+
+      ! Does config IPTR have the same number of basis productions as
+      ! config IBASIS?
+
+      iend = basis(iptr+1)%item - ppr
+      if ( iend == basis(ibasis+1)%item - bpr ) then
+
+        ! Compare the basis configurations.
+
+        same = .true.
+        j = bpr
+        do i = ppr, basis(iptr+1)%item - 1
+          if ( items(i)%prod /= items(j)%prod ) cycle o
+          if ( items(i)%dot /= items(j)%dot ) cycle o
+          if ( items(i)%set /= items(j)%set ) same = .false.
+          j = j + 1
+        end do
+
+        ! Are the config sets compatible?  They are not if there would be
+        ! two intersecting context sets created by the merge where there
+        ! was no intersection before.
+
+        if ( .not. same ) then
+          do i = 1, iend-1
+            do j = i+1, iend
+              ii = items(ppr+i-1)%set
+              jj = items(bpr+j-1)%set
+              kk = items(ppr+j-1)%set
+              ll = items(bpr+i-1)%set
+              if (  .not. lint(list(ii)%next,list(jj)%next) &
+              .and. .not. lint(list(kk)%next,list(ll)%next) ) cycle
+              if ( lint(list(ii)%next,list(kk)%next)  ) cycle
+              if ( .not. lint(list(ll)%next,list(jj)%next) ) cycle o
+            end do
+          end do
+        end if
+
+        ! The configuration sets are compatible.  Merge them by unioning
+        ! the context set lists.  If the context set lists are equal then
+        ! no change will occur when they are merged.  Return the old basis
+        ! and delete the trial basis.  Then delete the context sets in the
+        ! trial basis
+
+        change = .false.
+        do i = 1, iend
+          call csun ( items(bpr+i-1)%set, items(ppr+i-1)%set, chu )
+          if ( chu ) change = .true.
+          call delcs (items(bpr+i-1)%set)
+        end do
+
+        ! The trial basis is always constructed as the last basis in the
+        ! BASIS array.  Since we have merged it into another basis we can
+        ! now delete it.  The context sets for the trial basis have already
+        ! been released.  All that remains is to reset the pointer into
+        ! the BASIS array.
+
+        indbas = ibasis
+        ires = iptr
+        return
+      end if
+
+      ! Try the next config set.
+
+    end do o
+
+    ! The trial set is not compatible with any existing config set.
+    ! Link the trial set into the entrance symbol chain and return it
+    ! as the resulting set.
+
+    change = .true.
+    ires = ibasis
+    basis(ibasis)%same = headen(ient)
+    headen(ient) = ibasis
+
+  end subroutine MERGE
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: merge.f90,v 1.1 2013/10/24 22:41:14 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Merge_Sets
+
+! $Log: merge.f90,v $
+! Revision 1.1  2013/10/24 22:41:14  vsnyder
+! Initial commit
+!
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d20 1
+a20 1
+       "$RCSfile: parser.f90,v $"
+d26 1
+a26 1
+  subroutine MERGE (IBASIS, IRES, ICHNG)
+d28 1
+a28 1
+    use ANACOM, only: INDBAS
+d30 2
+a31 3
+    use LISTS, only: LINT, NEXT
+    use S3, only: HEADEN, PRDIND, PRODCN
+    use S5, only: BASIS
+d38 2
+a39 2
+    ! corresponding to IBASIS.  Set ICHNG zero if a compatible set was
+    ! found.  Set ICHNG 1 if no compatible sets were found.
+d42 2
+a43 1
+    integer, intent(out) :: IRES, ICHNG
+d54 1
+a55 1
+    ! ICH     is the value of ICHNGE reported by CSUN.
+d68 2
+a69 1
+    integer BPR, I, ICH, IEND, IENT, II, IPTR, J, JJ, KK, LL, NIPTR, PPR
+d77 2
+a78 2
+    bpr = basis(ibasis)
+    ient = prodcn(prdind(basis(bpr))+basis(bpr+1)-1)
+d83 2
+a84 2
+      niptr = basis(iptr+2)
+      ppr = basis(iptr)
+d89 2
+a90 2
+      iend = ppr - basis(iptr+5)
+      if (iend == bpr - basis(ibasis+5)) then
+d96 5
+a100 5
+        do i = ppr, basis(iptr+5)+3, -3
+          if (basis(i) /= basis(j)) cycle o
+          if (basis(i+1) /= basis(j+1)) cycle o
+          if (basis(i+2) /= basis(j+2)) same = .false.
+          j = j - 3
+d107 11
+a117 11
+        if (.not. same) then
+          do i = 1, iend-3, 3
+            do j = i+3, iend, 3
+              ii = basis(ppr-i+3)
+              jj = basis(bpr-j+3)
+              kk = basis(ppr-j+3)
+              ll = basis(bpr-i+3)
+              if (  .not. lint(next(ii),next(jj)) &
+              .and. .not. lint(next(kk),next(ll)) ) cycle
+              if ( lint(next(ii),next(kk))  ) cycle
+              if ( .not. lint(next(ll),next(jj)) ) cycle o
+d128 5
+a132 5
+        ichng = 0
+        do i = 1, iend, 3
+          call csun (basis(bpr-i+3), basis(ppr-i+3), ich)
+          if (ich /= 0) ichng = 1
+          call delcs (basis(bpr-i+3))
+d154 1
+a154 1
+    ichng = 1
+d156 1
+a156 1
+    basis(ibasis+2) = headen(ient)
+d164 1
+a164 1
+       "$Id: parser.f90,v 2.29 2013/10/02 01:35:46 vsnyder Exp $"
+d173 4
+a176 1
+! $Log: $
+@
+

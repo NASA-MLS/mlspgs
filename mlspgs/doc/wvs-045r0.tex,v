@@ -1,0 +1,287 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.14
+	cfm-single-freq-0-1:1.1.0.12
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.10
+	mus-emls-1-70:1.1.0.8
+	rel-1-0-englocks-work:1.1.0.6
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2008.06.11.20.14.53;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9.2in
+
+\newcommand{\docname}{\bf wvs-045}
+\newcommand{\docdate}{11 October 2006}
+
+\usepackage{longtable}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill\\
+Subject: \>What to do in {\tt metrics\_m} to get $\zeta_{\text{min}}$\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-20pt}
+
+The relation between $\zeta$, $H$ and $T$ is $\Delta \zeta = 14.8 \Delta H /
+T$. Taking a first-order expansion around a reference point $\phi_i$, where the
+derivatives are taken along constant-pressure surfaces, we have
+
+\begin{equation}
+\Delta \zeta = \zeta - \zeta_i =
+ 14.8\, \frac{\Delta H + \frac{\partial H}{\partial \phi} \Delta \phi}
+      {T_i + \frac{\partial T}{\partial \phi} \Delta \phi}\,.
+\end{equation}
+
+Substituting $\hat\phi = \phi-\phi_t$, $\tilde \phi=\phi_t-\phi_i$, $\Delta
+\phi = \phi - \phi_i = \hat\phi+\tilde\phi$, and $\Delta H = H - H_t = H_t (
+\sec \hat\phi - 1 )$, where $\phi_i$ is not necessarily $\phi_t$, and
+approximating the derivatives by differences
+
+\begin{equation}
+ \frac1{H_t} \frac{\partial H}{\partial \phi} \approx G =
+  \frac1{H_t}\frac{H_{i+1}-H_i}{\phi_{i+1}-\phi_i} \text{ and }
+ \frac{\partial T}{\partial \phi} \approx \Gamma =
+  \frac{T_{i+1}-T_i}{\phi_{i+1}-\phi_i}\,,
+\end{equation}
+
+we have
+
+\begin{equation}
+\Delta \zeta = \zeta - \zeta_i =
+ 14.8 H_t\, \frac{\sec \hat\phi - 1 + G (\hat\phi+\tilde\phi)}
+      {T_i + \Gamma (\hat\phi+\tilde\phi)}\,,
+\end{equation}
+
+from which,
+
+\begin{equation}\label{four}
+\frac{\text{d} \zeta}{\text{d} \phi} =
+ \frac{14.8 H_t}{\left(T_i + \Gamma (\hat\phi+\tilde\phi) \right)^2}
+  \left[\left(\sec \hat\phi \tan \hat\phi + G \right)
+             (T_i + \Gamma (\hat\phi+\tilde\phi)) - 
+       \Gamma \left( \sec \hat\phi - 1 + G(\hat\phi+\tilde\phi) \right) \right]
+ \,.
+\end{equation}
+
+We can find $\hat\phi$ such that the second factor in Equation (\ref{four}) is
+zero using a one-dimensional zero finder, e.g., DZERO from Math77 (which uses
+an enhanced secant method) or, at the expense of some complication, using a
+Newton method.  Alternatively, since $\hat\phi$ will be small, we can expand
+the second factor in $\hat\phi$ and truncate at second order, giving
+
+\begin{equation}\label{five}
+ \Gamma \hat\phi^2 + 2 (T_i + \Gamma \tilde\phi) \hat\phi + 2 G T_i = 0\,.
+\end{equation}
+
+Observing that in general $|\Gamma| << 2|T_i+\Gamma \tilde\phi|$, and in
+particular when $|\Gamma| \rightarrow 0$, we should write the solution as
+
+\begin{equation}\label{six}
+\hat\phi =\frac{-2 G T_i}
+ {T_i + \Gamma \tilde\phi \pm
+  \sqrt{(T_i + \Gamma \tilde\phi)^2 - 2 G T_i \Gamma}}\,.
+\end{equation}
+
+If we write the second factor in Equation (\ref{four}) as
+
+\begin{equation}
+\left(\frac{\sin \hat\phi}{\cos^2 \hat\phi} + G \right)
+             (T_i + \Gamma (\hat\phi+\tilde\phi)) - 
+       \Gamma \left( \frac1{\cos \hat\phi} - 1 + G(\hat\phi+\tilde\phi) \right)
+ \,,
+\end{equation}
+
+then expand the trigonometric functions to second order (which amounts to
+constructing a rational approximation instead of a truncated Taylor series),
+and finally truncate the numerator to second order and set the result equal to
+zero we have
+
+\begin{equation}\label{eight}
+ %\frac12 (G T_i + \Gamma) \hat\phi^4 +
+ \left(\Gamma - 2 G T_i \right)\hat\phi^2 +
+ 2 (T_i + \Gamma \tilde\phi) \hat\phi + 2 G T_i = 0\,,
+\end{equation}
+
+which is somewhat different from Equation (\ref{five}).
+
+Similarly to Equation (\ref{five}), we expect $|\Gamma - 2 G T_i| << 2 |T_i +
+\Gamma \tilde\phi|$, so the solution of Equation (\ref{eight}) ought to be
+expressed as
+
+\begin{equation}\label{nine}
+\hat\phi =\frac{-2 G T_i}
+ {T_i + \Gamma \tilde\phi \pm
+  \sqrt{(T_i + \Gamma \tilde\phi)^2 - 2 G T_i(\Gamma - 2 G T_i)}}\,.
+\end{equation}
+
+The numerical experiments summarized in Table~\ref{table} suggest that Equation
+(\ref{eight}) is more accurate than Equation (\ref{five}), at least in the
+small regime explored.  The first (+) solutions from Equations (\ref{six}) and
+(\ref{nine}) are shown.  Throughout this regime, the second (-) solutions were
+large and negative.
+
+\begin{longtable}{c|c|c|c|c|c|c}
+\caption{Numerical experiments}\label{table}\\
+$6400\,G$ & $\Gamma$ & T & $\tilde\phi$ &             
+          \multicolumn{3}{c}{$\hat\phi\,\,(^\circ)$ from Equation \dots}\\
+\cline{5-7}
+ km/$^\circ$ & K/$^\circ$ & K & $^\circ$   & (\ref{four})
+                                        & (\ref{five})
+                                        & (\ref{eight}) \\
+\hline
+2.0          & 1.5        & 300 & 0     & -1.0282 & -1.0299 & -1.0282 \\
+2.5          & 1.5        & 300 & 0     & -1.2859 & -1.2886 & -1.2858 \\
+3.0          & 1.5        & 300 & 0     & -1.5438 & -1.5478 & -1.5437 \\
+2.0          & 2.0        & 300 & 0     & -1.0291 & -1.0312 & -1.0291 \\
+2.5          & 2.0        & 300 & 0     & -1.2873 & -1.2907 & -1.2872 \\
+3.0          & 2.0        & 300 & 0     & -1.5459 & -1.5508 & -1.5457 \\
+2.0          & 2.0        & 300 & 2.0   & -1.0155 & -1.0108 & -1.0155 \\
+2.5          & 2.0        & 300 & 2.0   & -1.2703 & -1.2650 & -1.2702 \\
+3.0          & 2.0        & 300 & 2.0   & -1.5253 & -1.5200 & -1.5251 \\
+\end{longtable}
+
+For $\Gamma=0$, Equation (\ref{four}) has two complex zeros and two real zeros for
+
+\begin{equation}
+\hat\phi = \tan^{-1} \pm \sqrt{\frac{\sqrt{1+4G^2}-1}2}
+\approx \pm \left( G -\frac56 G^3 + \frac{63}{40} G^5 + O(G^7) \right)
+\end{equation}
+
+while for $\Gamma=0$ Equation (\ref{nine}) gives
+
+\begin{equation}\label{eleven}
+\hat\phi = \left\{
+\begin{array}{l}
+\frac{-2G}{1 + \sqrt{1+4G^2}} \approx -G +G^3 -2 G^5 + O(G^7) \\
+\\
+\frac{-2G}{1 - \sqrt{1+4G^2}} \approx \frac1G + G - G^3 + 2 G^5 + O(G^7) \\
+\end{array} \right.
+\end{equation}
+
+It is clear from these series that the second (-) case of Equation (\ref{nine})
+is spurious, since it misbehaves as $G \rightarrow 0$.
+
+For $\Gamma=0$ Equation (\ref{five}) has the single solution $\hat\phi=-G$.
+Thus it is clear again by comparing series that Equation (\ref{eight}) is
+superior to Equation (\ref{five}) in the $\Gamma = 0 $ case.
+
+In the $G=0$ case, the second factor in Equation (\ref{four}) becomes
+
+\begin{equation}\label{twelve}
+\tan \hat \phi \sec \hat \phi ( T + \Gamma(\hat\phi + \tilde\phi) ) -
+ \Gamma(\sec \hat \phi - 1)\,,
+\end{equation}
+
+which has no explicit zero for $\Gamma \neq 0$ but has the trivial (and
+expected) zero $\hat\phi=0$ for $\Gamma = 0$.  At least for $\Gamma=20
+K/$radian$\approx 0.35K/{^\circ}$, $T=300 K$ and $\tilde\phi=0$, it has no
+other zeros for $\hat\phi \in [-\frac\pi2,\frac\pi2]$.  Equations (\ref{five})
+and (\ref{eight}) both become
+
+\begin{equation}
+\Gamma \hat \phi^2 + 2(T +\Gamma \tilde \phi) \phi = 0
+\end{equation}
+
+which has the solutions
+
+\begin{equation}
+\hat\phi = 0 \text{ and } \hat\phi = -\frac{2 (T+\Gamma \tilde \phi)}\Gamma\,.
+\end{equation}
+
+The first solution is the expected one in the $\Gamma=0$ case, while the second
+one clearly misbehaves as $\Gamma \rightarrow 0$.  Even so, the first (+) case
+of Equation (\ref{nine}) behaves well when either or both of $G$ and $\Gamma$
+are small or zero, as can be seen from its bivariate Taylor expansion, to third
+order
+
+\begin{equation}
+\hat\phi \approx -G \left[ 1 - \frac{\Gamma \tilde\phi}T +
+ \left(\frac{\Gamma\tilde\phi}T\right)^2 \right] - G^2 \frac{\Gamma}{2T} +
+ G^3 \,,
+\end{equation}
+
+from which the first case of Equation (\ref{eleven}) follows.  Every term of
+the bivariate Taylor expansion of the second (-) case of Equation (\ref{nine})
+is infinite.
+
+\label{lastpage}
+\end{document}
+% $Id: $
+@

@@ -1,0 +1,134 @@
+head	1.2;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2008.04.19.01.22.29;	author vsnyder;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2008.04.19.01.15.27;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Committed in error
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+program Mie_Efficiencies_p
+
+  use Mie_Efficiencies_m, only: Mie_Efficiencies
+  use MLSKinds, only: R8
+  use Physics, only: SpeedOfLight
+  use RefractiveIndex, only: UKISub, UKSub
+
+  implicit NONE
+
+  ! Inputs
+  logical :: Details = .false. ! Print a, b for each r.
+  real(r8) :: F = 118   ! Frequency, GHz
+  logical :: Ice = .true. ! .false. for liquid water, .true. for ice
+  integer :: NCut = 100 ! Cutoff for sum for Xi_e and Xi_s
+  integer :: NS = 100   ! Number of particle sizes
+  real(r8) :: Rmin = 20, RMax = 2000 ! Particle radii limits, micrometers
+  real(r8) :: T = -60.0 ! Temperature
+
+  ! Other variables
+  complex(r8), allocatable :: A(:,:), B(:,:) ! See Mie_Efficiencies_m
+  real(r8) :: Chi       ! 2 pi r / lambda
+  real(r8) :: dR        ! Delta R
+  integer :: I          ! Loop inductor, subscript
+  real(r8) :: Lambda    ! Wavelength (micrometers) = speedOfLight/f
+  real(r8) :: Pi2       ! 2 * Pi
+  complex(r8) :: RF     ! Refractive index = sqrt(eps)
+  real(r8) :: R         ! Particle radius, micrometers
+  real(r8), allocatable :: Xi_e(:), Xi_s(:)
+
+  real(r8), parameter :: C = 1.0e-3 * speedOfLight ! km/s
+
+  namelist /in/ Details, F, Ice, Ncut, NS, Rmax, Rmin, T
+
+  pi2 = 8.0_r8 * atan(1.0_r8)        ! 2 * Pi
+
+  do
+    read ( *, in, end=9 )
+
+    allocate ( Xi_e(ns), Xi_s(ns), a(nCut,ns), b(nCut,ns) )
+
+    if ( t < 0.0 ) t = t + 273.15
+    dr = (rMax - rMin) / (ns-1)
+    if ( ice ) then
+      call ukisub ( f, t, rf )           ! Get index of refraction for ice
+    else
+      call uksub ( f, t, rf )            ! Get index of refraction for water
+    end if
+    lambda = c / f                       ! Wavelength in micrometers
+
+    do i = 1, ns
+      r = (i-1)*dr + rMin
+      chi = pi2 * r / lambda
+      call mie_efficiencies ( rf, chi, xi_e(i), xi_s(i), a(:,ns), b(:,ns) )
+      if ( details ) then
+        write ( *, 8 ) 'Re(a)', real(a(:,ns))
+        write ( *, 8 ) 'Im(a)', aimag(a(:,ns))
+        write ( *, 8 ) 'Re(b)', real(b(:,ns))
+        write ( *, 8 ) 'Im(b)', aimag(b(:,ns))
+      end if
+    end do
+
+    if ( t > 100 ) t = t - 273.15
+    write ( *, 4 ) rf**2, f, t, ice, ncut, ns, rmin, rmax, lambda
+    4 format ( 'dielectric constant = (',f4.2,',',f7.4,'), f = ', f6.1,&
+      &        ' GHz, T =', f6.1, ' C, ice = ', l1 / &
+      &        'Ncut = ', i0, ', NumR = ', i0, ', Rmin = ', f6.1, &
+      &        ' um, Rmax = ', f6.1, ' um, lambda = ', f6.1, ' um' )
+    write ( *, 8, advance='no' ) "Xi_e", xi_e
+    8 format (a," = [ $"/1p,(5(g14.6:",")," $") )
+    write ( *, '("]")' )
+    write ( *, 8, advance='no' ) "Xi_s", xi_s
+    write ( *, '("]")' )
+
+    deallocate ( Xi_e, Xi_s, a, b )
+
+  end do
+9 continue
+end program Mie_Efficiencies_p
+
+! $Log: Mie_Efficiencies_p.f90,v $
+! Revision 1.1  2008/04/19 01:15:27  vsnyder
+! Initial commit
+!
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d91 4
+a94 1
+! $Log: $
+@
+

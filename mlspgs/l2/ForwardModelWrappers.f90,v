@@ -1,0 +1,5110 @@
+head	2.82;
+access;
+symbols
+	v5-02-NRT-19:2.82
+	v6-00:2.82
+	v5-02-NRT-18:2.82
+	v5-02:2.82
+	v5-01-NRT-17:2.82
+	v5-01-NRT-16:2.82
+	v5-01-NRT-15:2.82
+	v5-01-NRT-14:2.82
+	neuralnetworks-1-0:2.82.0.6
+	cfm-single-freq-0-1:2.82.0.4
+	v5-01:2.82
+	v5-00:2.82
+	v4-23-TA133:2.82.0.2
+	mus-emls-1-70:2.80.0.4
+	rel-1-0-englocks-work:2.80.0.2
+	VUMLS1-00:2.79
+	VPL1-00:2.79
+	V4-22-NRT-08:2.79
+	VAM1-00:2.78
+	V4-21:2.77.0.2
+	V4-13:2.75
+	V4-12:2.72
+	V4-11:2.70
+	V4-10:2.70
+	V3-43:2.32
+	M4-00:2.55
+	V3-41:2.32
+	V3-40-PlusGM57:2.32.0.2
+	V2-24-NRT-04:2.30
+	V3-33:2.33
+	V2-24:2.30
+	V3-31:2.33
+	V3-30-NRT-05:2.33
+	cfm-01-00:2.32
+	V3-30:2.32
+	V3-20:2.32
+	V3-10:2.31
+	V2-23-NRT-02:2.30
+	V2-23:2.30
+	V2-22-NRT-01:2.30
+	V2-22:2.30
+	V2-21:2.25
+	V2-20:2.25
+	V2-11:2.25
+	V2-10:2.25
+	V2-00:2.25
+	V1-51:2.24
+	V1-50:2.24
+	V1-45:2.24
+	V1-44:2.24
+	V1-43:2.24
+	V1-32:2.24
+	V1-31:2.24
+	V1-30:2.22
+	V1-13:2.15
+	V1-12:2.15
+	V1-11:2.15
+	V1-10:2.15
+	newfwm-feb03:2.15.0.2
+	V1-04:2.9
+	V1-03:2.9
+	V1-02:2.9
+	JointForwardModel:2.11.0.2
+	V1-00:2.9
+	newfwm-sep01:2.6.0.2
+	V0-7:2.6
+	V0-5-Level2:2.4;
+locks; strict;
+comment	@# @;
+
+
+2.82
+date	2018.09.05.20.56.36;	author vsnyder;	state Exp;
+branches;
+next	2.81;
+
+2.81
+date	2018.07.27.23.18.48;	author pwagner;	state Exp;
+branches;
+next	2.80;
+
+2.80
+date	2017.08.10.22.49.05;	author pwagner;	state Exp;
+branches;
+next	2.79;
+
+2.79
+date	2016.02.27.01.41.09;	author vsnyder;	state Exp;
+branches;
+next	2.78;
+
+2.78
+date	2015.03.28.02.44.39;	author vsnyder;	state Exp;
+branches;
+next	2.77;
+
+2.77
+date	2014.11.04.01.56.51;	author vsnyder;	state Exp;
+branches;
+next	2.76;
+
+2.76
+date	2014.10.14.21.40.12;	author pwagner;	state Exp;
+branches;
+next	2.75;
+
+2.75
+date	2014.09.30.02.17.15;	author vsnyder;	state Exp;
+branches;
+next	2.74;
+
+2.74
+date	2014.09.29.20.18.14;	author vsnyder;	state Exp;
+branches;
+next	2.73;
+
+2.73
+date	2014.08.06.23.29.19;	author vsnyder;	state Exp;
+branches;
+next	2.72;
+
+2.72
+date	2014.07.01.23.05.58;	author vsnyder;	state Exp;
+branches;
+next	2.71;
+
+2.71
+date	2014.07.01.01.24.37;	author vsnyder;	state Exp;
+branches;
+next	2.70;
+
+2.70
+date	2013.09.06.20.44.34;	author pwagner;	state Exp;
+branches;
+next	2.69;
+
+2.69
+date	2013.08.31.02.29.39;	author vsnyder;	state Exp;
+branches;
+next	2.68;
+
+2.68
+date	2013.08.30.02.45.40;	author vsnyder;	state Exp;
+branches;
+next	2.67;
+
+2.67
+date	2013.08.16.02.51.04;	author vsnyder;	state Exp;
+branches;
+next	2.66;
+
+2.66
+date	2013.08.08.02.36.58;	author vsnyder;	state Exp;
+branches;
+next	2.65;
+
+2.65
+date	2013.08.03.00.39.21;	author vsnyder;	state Exp;
+branches;
+next	2.64;
+
+2.64
+date	2013.07.26.18.20.26;	author vsnyder;	state Exp;
+branches;
+next	2.63;
+
+2.63
+date	2013.07.25.00.25.23;	author vsnyder;	state Exp;
+branches;
+next	2.62;
+
+2.62
+date	2013.07.17.16.26.21;	author wgread;	state Exp;
+branches;
+next	2.61;
+
+2.61
+date	2013.07.12.23.48.54;	author vsnyder;	state Exp;
+branches;
+next	2.60;
+
+2.60
+date	2013.07.12.23.25.28;	author vsnyder;	state Exp;
+branches;
+next	2.59;
+
+2.59
+date	2013.07.02.23.31.03;	author wgread;	state Exp;
+branches;
+next	2.58;
+
+2.58
+date	2013.05.21.23.52.47;	author vsnyder;	state Exp;
+branches;
+next	2.57;
+
+2.57
+date	2013.04.13.01.33.53;	author vsnyder;	state Exp;
+branches;
+next	2.56;
+
+2.56
+date	2013.04.12.00.30.06;	author vsnyder;	state Exp;
+branches;
+next	2.55;
+
+2.55
+date	2013.03.20.22.47.35;	author vsnyder;	state Exp;
+branches;
+next	2.54;
+
+2.54
+date	2013.03.15.20.35.26;	author vsnyder;	state Exp;
+branches;
+next	2.53;
+
+2.53
+date	2012.08.16.18.19.54;	author pwagner;	state Exp;
+branches;
+next	2.52;
+
+2.52
+date	2012.08.14.00.38.14;	author vsnyder;	state Exp;
+branches;
+next	2.51;
+
+2.51
+date	2012.08.10.22.49.26;	author vsnyder;	state Exp;
+branches;
+next	2.50;
+
+2.50
+date	2012.07.31.00.49.33;	author vsnyder;	state Exp;
+branches;
+next	2.49;
+
+2.49
+date	2012.07.06.01.54.33;	author vsnyder;	state Exp;
+branches;
+next	2.48;
+
+2.48
+date	2012.07.06.00.57.20;	author vsnyder;	state Exp;
+branches;
+next	2.47;
+
+2.47
+date	2012.07.04.02.15.01;	author vsnyder;	state Exp;
+branches;
+next	2.46;
+
+2.46
+date	2012.06.15.23.29.39;	author vsnyder;	state Exp;
+branches;
+next	2.45;
+
+2.45
+date	2012.06.07.00.47.16;	author vsnyder;	state Exp;
+branches;
+next	2.44;
+
+2.44
+date	2012.06.06.20.41.59;	author vsnyder;	state Exp;
+branches;
+next	2.43;
+
+2.43
+date	2012.05.01.22.24.06;	author vsnyder;	state Exp;
+branches;
+next	2.42;
+
+2.42
+date	2012.04.20.01.57.15;	author vsnyder;	state Exp;
+branches;
+next	2.41;
+
+2.41
+date	2012.03.28.00.56.49;	author vsnyder;	state Exp;
+branches;
+next	2.40;
+
+2.40
+date	2012.03.14.21.37.30;	author wgread;	state Exp;
+branches;
+next	2.39;
+
+2.39
+date	2012.02.23.00.59.43;	author vsnyder;	state Exp;
+branches;
+next	2.38;
+
+2.38
+date	2012.02.23.00.08.08;	author vsnyder;	state Exp;
+branches;
+next	2.37;
+
+2.37
+date	2012.02.14.19.01.29;	author pwagner;	state Exp;
+branches;
+next	2.36;
+
+2.36
+date	2012.02.11.21.28.31;	author vsnyder;	state Exp;
+branches;
+next	2.35;
+
+2.35
+date	2011.12.21.01.42.22;	author vsnyder;	state Exp;
+branches;
+next	2.34;
+
+2.34
+date	2011.05.09.18.10.02;	author pwagner;	state Exp;
+branches;
+next	2.33;
+
+2.33
+date	2010.08.27.06.25.38;	author yanovsky;	state Exp;
+branches;
+next	2.32;
+
+2.32
+date	2009.11.18.22.18.07;	author livesey;	state Exp;
+branches;
+next	2.31;
+
+2.31
+date	2009.06.23.18.46.18;	author pwagner;	state Exp;
+branches;
+next	2.30;
+
+2.30
+date	2007.10.04.01.48.30;	author vsnyder;	state Exp;
+branches;
+next	2.29;
+
+2.29
+date	2007.10.02.22.38.19;	author vsnyder;	state Exp;
+branches;
+next	2.28;
+
+2.28
+date	2007.08.20.22.05.06;	author pwagner;	state Exp;
+branches;
+next	2.27;
+
+2.27
+date	2007.06.29.19.32.07;	author vsnyder;	state Exp;
+branches;
+next	2.26;
+
+2.26
+date	2007.04.03.17.46.12;	author vsnyder;	state Exp;
+branches;
+next	2.25;
+
+2.25
+date	2005.06.03.02.08.24;	author vsnyder;	state Exp;
+branches;
+next	2.24;
+
+2.24
+date	2003.10.20.18.22.47;	author pwagner;	state Exp;
+branches;
+next	2.23;
+
+2.23
+date	2003.09.11.23.15.10;	author livesey;	state Exp;
+branches;
+next	2.22;
+
+2.22
+date	2003.08.16.01.18.29;	author livesey;	state Exp;
+branches;
+next	2.21;
+
+2.21
+date	2003.08.13.00.49.56;	author livesey;	state Exp;
+branches;
+next	2.20;
+
+2.20
+date	2003.07.15.22.11.12;	author livesey;	state Exp;
+branches;
+next	2.19;
+
+2.19
+date	2003.07.15.18.18.39;	author livesey;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2003.06.30.22.55.01;	author cvuu;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2003.06.03.19.24.56;	author livesey;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2003.05.29.16.42.34;	author livesey;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2002.10.08.17.36.20;	author pwagner;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2002.08.21.23.43.33;	author vsnyder;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2002.07.23.00.06.05;	author pwagner;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2002.07.22.22.51.56;	author pwagner;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2002.06.24.22.14.59;	author livesey;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2002.06.24.18.27.09;	author livesey;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2001.11.27.23.34.49;	author pwagner;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2001.10.02.16.55.10;	author livesey;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2001.10.02.16.53.18;	author livesey;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2001.07.17.22.36.32;	author jonathan;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2001.05.29.23.22.20;	author livesey;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2001.05.03.23.42.48;	author livesey;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2001.04.28.17.48.48;	author livesey;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2001.04.26.23.54.26;	author livesey;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.04.26.19.47.41;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.82
+log
+@Eliminate unused declarations
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module ForwardModelWrappers
+
+  ! This module contains a wrapper routine for calling the various forward
+  ! models we have.
+
+  implicit none
+  private
+
+  public :: ForwardModel
+
+  !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+    "$RCSfile: ForwardModelWrappers.f90,v $"
+  private :: not_used_here 
+  !---------------------------------------------------------------------------
+
+contains ! ============= Public Procedures ==========================
+
+  !----------------------------------------- ForwardModel -----------
+  subroutine ForwardModel ( Config, FwdModelIn, FwdModelExtra, &
+    & FwdModelOut, FmStat, Jacobian, Hessian, Vectors )
+
+    ! Call the forward model selected by Config.
+
+    use BaselineForwardModel_m, only: BaselineForwardModel
+    use ForwardModelConfig, only: DeriveFromForwardModelConfig, &
+      & DestroyForwardModelDerived, ForwardModelConfig_T, QtyStuff_t
+    use ForwardModelIntermediate, only: ForwardModelStatus_T
+    use ForwardModelVectorTools, only: GetQuantityForForwardModel, &
+      & GetQtyStuffForForwardModel
+    use FullCloudForwardModel, only: FullCloudForwardModelWrapper
+    use FullForwardModel_m, only: FullForwardModel
+    use HessianModule_1, only: Hessian_t
+    use HybridForwardModel_m, only: HybridForwardModel
+    use Init_Tables_Module, only: L_Baseline, L_CloudFull, &
+      & L_Extinction, L_ExtinctionV2, L_Full, L_Hybrid, L_Linear, &
+      & L_MagneticField, L_MIFExtinction, L_MIFExtinctionExtrapolation, &
+      & L_MIFExtinctionForm, L_MIFExtinctionV2, L_MIFRHI, L_PolarLinear, &
+      & L_PTan, L_RHI, L_Scan, L_Scan2d, L_SwitchingMirror
+    use Intrinsic, only: L_LowestRetrievedPressure, L_VMR, Lit_Indices
+    use LinearizedForwardModel_m, only: LinearizedForwardModel
+    use MatrixModule_1, only: CheckIntegrity, CreateEmptyMatrix, DestroyMatrix, &
+      & Matrix_t
+    use MLSKinds, only: RV
+    use MLSL2Timings, only: Add_To_Retrieval_Timing
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+    use MLSStringLists, only: SwitchDetail
+    use MoreMessage, only: MLSMessage
+    use PolarLinearModel_m, only: PolarLinearModel
+    use ScanModelModule, only: TwoDScanForwardModel
+    use String_Table, only: Create_String, Display_String
+    use SwitchingMirrorModel_m, only: SwitchingMirrorModel
+    use Time_m, only: Time_Now
+    use Toggles, only: EMIT, Switches, Toggle
+    use Trace_m, only: Trace_Begin, Trace_End
+    use VectorsModule, only: CheckNaN, Dump, Vector_t, VectorValue_t
+
+    ! Dummy arguments
+    type(forwardModelConfig_T), intent(inout) :: Config
+    type(vector_t), intent(inout), target :: FwdModelIn ! The state
+    type(vector_t), intent(in) :: FwdModelExtra
+    type(vector_t), intent(inout) :: FwdModelOut  ! Radiances, etc.
+    type(forwardModelStatus_t), intent(inout) :: FMStat ! Reverse comm. stuff
+    type(matrix_t), intent(inout), optional, target :: Jacobian ! The
+      ! Jacobian, used for the Newton iteration.
+    type(hessian_t), intent(inout), optional :: Hessian ! No transformation
+    type(vector_t), dimension(:), target, optional :: Vectors ! Vectors database
+
+    ! Local variables
+
+    integer, parameter :: NT = 3           ! Number of kinds of extinction to
+                                           ! transform.  1 = extinction,
+                                           ! 2 = extinctionV2, 3 = RHI
+    integer, parameter :: E1 = 1, E2 = 2   ! Limits for MIF extinction, see NT
+    integer, parameter :: R1 = 3, R2 = 3   ! Limits for MIF RHI, see NT
+
+    logical :: Clean                       ! Dumps are clean, from switch dxfc
+    real :: DeltaTime
+    logical :: Derivs(nt)                  ! Derivatives requested in config
+    logical :: DoTrans(nt)                 ! Both quantities specific
+    integer :: DumpTransform(3)            ! Dump levels for transformed stuff
+                                           ! 1 = 1's digit => Input and output
+                                           !     details = 1's digit - 2
+                                           ! 2 = 10's digit => FWM Jacobian
+                                           !     details = 10's digit - 4
+                                           ! 3 = 100's digit => Transformed Jacobian
+                                           !     details = 100's digit - 4
+    type(qtyStuff_t) :: FwmQty(nt)         ! forward model quantities, see NT
+    type(matrix_t), target :: ExtraJacobian ! for the forward model for profile
+                                           ! quantities when retrieving MIF
+                                           ! quantities
+    real(rv) :: ExtrapExponent             ! -exponent for extinction extrapolation
+    real(rv) :: ExtrapForm                 ! -exponent for extinction derivative extrapolation
+    integer :: FMNaN                       ! Level of fmnan switch
+    integer :: I, K
+    type(vectorValue_t), pointer :: LRP    ! Lowest Retrieved Pressure
+    integer :: Me = -1                     ! String index for trace
+    type(qtyStuff_t) :: MIFQty(nt)         ! MIF extinction quantity
+    ! MIF (quantity) types:
+    integer, parameter :: MTypes(nt) = &
+      & (/ l_MIFExtinction, l_MIFExtinctionv2, l_MIFRHI /)
+    integer :: Nobody = -1                 ! String index for trace
+    type(vectorValue_t), pointer :: Ptan   ! Tangent pressure
+    ! Profile (molecule) types corresponding to mTypes:
+    integer, parameter :: PTypes(nt) = &
+      & (/ l_Extinction, l_Extinctionv2, l_RHI /)
+    real :: Time_start, Time_end
+    integer :: T1, T2 ! Bounds for transform indices, 1:2, 3:3, or 1:3.  see NT.
+    integer :: Who    ! Either config%name or Nobody
+
+    ! Executable code
+    ! Report we're starting
+    who = config%name
+    if ( who == 0 ) then
+      if ( nobody <= 0 ) nobody = create_string ( '[unnamed]' )
+      who = nobody
+    end if
+
+    call trace_begin ( me, 'ForwardModel', string=who, cond=toggle(emit) )
+    ! Setup the timing
+    call time_now (time_start)
+
+    dumpTransform = switchDetail(switches,'dxfq')
+    if ( dumpTransform(1) >= 0 ) then
+      dumpTransform(3) = dumpTransform(3)/100
+      dumpTransform(2) = mod(dumpTransform(2)/10,10)
+      dumpTransform(1) = mod(dumpTransform(1),10)
+    end if
+    clean = switchDetail(switches,'dxfc') > -1
+
+    ! Make sure we have a magnetic field if a polarized model is selected
+    if ( config%polarized ) then
+      ! LRP is just a handy temp here.  We don't need the magnetic field,
+      ! just to verify it exists.
+      lrp => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+               & quantityType=l_magneticField, config=config )
+    end if
+
+    ! Do the actual forward models
+
+    if ( config%fwmType == l_full) call deriveFromForwardModelConfig ( config )
+
+    ! Look for specific MIF extinction quantities in the state vector, and
+    ! their corresponding extinction quantities.  If such are found,
+    ! transform the specified MIFextinction quantities to extinction
+    ! "molecules" before calling the forward model, and transform the
+    ! "molecules" and associated columns of the Jacobian to MIF extinction
+    ! quantities after return.  See wvs-107.
+
+    t1 = nt+1 ! Assume no transformations
+    t2 = 0
+    if ( config%transformMIFextinction ) then
+      t1 = min(t1,e1)
+      t2 = max(t2,e2)
+    end if
+    if ( config%transformMIFRHI ) then
+      t1 = min(t1,r1)
+      t2 = max(t2,r2)
+    end if
+    doTrans(t1:t2) = .false.
+    if ( t1 <= t2 ) then ! Do MIF extinction or MIF RHI transformation
+      if ( .not. associated(config%signals) ) &
+        & call MLSMessage ( MLSMSG_Error, moduleName, &
+          & 'TransformMIFextinction or Transform RHI requires SIGNALS in %S', &
+          & datum=config%name )
+      ! All signals in a single config are for the same radiometer
+      do i = t1, t2
+        derivs(i) = .false.
+        ! First, check whether the transformed profile quantity is in a
+        ! molecules field in the config.
+        MIFQty(i)%wasSpecific = any(config%molecules == pTypes(i))
+        if ( any(config%molecules == pTypes(i)) ) &
+          & MIFQty(i) = GetQtyStuffForForwardModel ( fwdModelIn,    &
+            & fwdModelExtra, quantityType=mTypes(i), config=config, &
+            & radiometer=config%signals(1)%radiometer, noError=.true. )
+
+        ! If MIFQty(i)%wasSpecific is false now, it either means MIFQty(i)
+        ! isn't specific, or there was no intersection between pTypes
+        ! and config%molecules
+
+        if ( MIFQty(i)%wasSpecific ) &
+          & fwmQty(i) = GetQtyStuffForForwardModel (                  &
+            & fwdModelExtra, quantityType=l_vmr, molecule=pTypes(i),  &
+            & config=config, radiometer=config%signals(1)%radiometer, &
+            & noError=.true. )
+        doTrans(i) = MIFQty(i)%wasSpecific .and. fwmQty(i)%wasSpecific
+        if ( doTrans(i) .and. associated(config%moleculeDerivatives) ) then
+!???      Use this when all compilers we use support FINDLOC (Fortran 2008)
+!???      derivs(i) = config%moleculeDerivatives(findloc(config%molecules,pTypes(i)))
+          do k = 1, size(config%molecules)
+            if ( config%molecules(k) == pTypes(i) ) then
+              derivs(i) = config%moleculeDerivatives(k)
+              exit
+            end if
+          end do
+          ! If molecule derivatives are requested for pTypes(i), make
+          ! sure there is a Jacobian, that MIFQty(i) is in the state
+          ! vector, and FwmQty(i) is in the extra vector.
+          if ( derivs(i) .and. .not. &
+            & ( present(Jacobian) .and. MIFQty(i)%foundInFirst .and. &
+            &   fwmQty(i)%foundInFirst ) ) then
+            call MLSMessage ( MLSMSG_Error, moduleName, &
+              & 'MIF Transformation requested with derivatives in %S, but ' // &
+              & 'Jacobian is not present, %S is not in the state vector, '  // &
+              & 'or $S is not in the extra vector', &
+              & datum=[config%name,lit_indices(mTypes(i)),lit_indices(mTypes(i))] )
+          end if
+        end if
+
+      end do
+
+      if ( .not. any(doTrans(t1:t2)) ) &
+        & call MLSMessage ( MLSMSG_Error, moduleName, &
+          & 'MIF Transformation requested, but necessary quantities are ' // &
+          & 'not specific' )
+    end if ! config%transformMIFextinction
+
+    if ( any(doTrans(t1:t2)) ) then
+      call createEmptyMatrix ( extraJacobian, 0, fwdModelOut, fwdModelExtra, &
+        & .not. jacobian%row%instFirst, .not. jacobian%col%instFirst )
+      ! Use lrp as a handy temporary vector quantity pointer
+      lrp => GetQuantityForForwardModel ( fwdModelExtra, noError=.true., &
+               & quantityType=l_MIFExtinctionExtrapolation, config=config )
+      extrapExponent = -2.0
+      if ( associated(lrp) ) extrapExponent = -lrp%values(1,1)
+      lrp => GetQuantityForForwardModel ( fwdModelExtra, noError=.true., &
+               & quantityType=l_MIFExtinctionForm, config=config )
+      extrapForm = -2.0
+      if ( associated(lrp) ) extrapForm = -lrp%values(1,1)
+      ! Lowest Returned Pressure is needed for extinction transformations
+      lrp => GetQuantityForForwardModel ( fwdModelExtra, &
+               & quantityType=l_lowestRetrievedPressure, config=config )
+      !??? Future upgrade ???:  Use the mask field on MIFExtinction
+      !??? to determine the lowest pressure.
+      ptan => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+               & quantityType=l_ptan, config=config, &
+               & instrumentModule=config%signals(1)%instrumentModule )
+      ! Transform MIF extinction quantity to extinction molecule
+      do i = t1, t2
+        if ( doTrans(i) ) then
+          call transform_MIF_Qty ( fmStat%MAF, MIFQty(i)%qty, ptan, &
+            & lrp%values(1,1), extrapExponent, fwmQty(i)%qty, dumpTransform )
+        end if
+      end do
+
+      ! Run the forward model with the transformed quantities
+      call doForwardModels ( extraJacobian )
+
+      ! Transform fwmJacobian and radiances for quantities for which
+      ! transformation is requested.
+      do i = t1, t2
+        if ( derivs(i) ) &
+          & call transform_FWM_Qty ( config, fmStat%MAF, fwdModelOut,   &
+            & fwmQty(i)%qty, MIFQty(i)%qty, ptan, extrapForm, Jacobian, &
+            & extraJacobian, dumpTransform, clean )
+      end do
+      call destroyMatrix ( extraJacobian )
+    else ! Run the forward model without transformation
+      call doForwardModels
+    end if
+
+    call destroyForwardModelDerived ( config )
+
+    fmnan = switchDetail(switches,'fmnan')
+    if ( fmnan > 0 ) then
+      ! Check radiances
+      if ( checkNaN(fwdModelOut, fmnan-1, 'ForwardModelOut') ) then
+        if ( fmnan > 1 ) then
+          call dump ( fwdModelIn, fmnan-1, 'ForwardModelIn' )
+          call dump ( fwdModelExtra, fmnan-1, 'ForwardModelExtra' )
+        end if
+        call display_string ( config%name, &
+          & before='Forward model config name: ', advance='yes' )
+        call MLSMessage ( merge(MLSMSG_Error,MLSMSG_Warning,fmnan>2), &
+          & ModuleName, 'NaNs found in forward model output' )
+      end if
+
+      ! Check Jacobians if relevant
+      if ( present ( Jacobian ) ) then 
+        if ( .not. checkIntegrity ( Jacobian, noError=.true. ) ) then
+          if ( fmnan > 2 ) then
+            k = MLSMSG_Error
+          else
+            k = MLSMSG_Warning
+          end if
+          call MLSMessage ( k, ModuleName, 'Problem (NANs?) found in Jacobians' )
+        end if
+      
+        ! Check Hessians if relevant
+        if ( present( Hessian ) ) then
+          if ( hessian%col%vec%template%name /= jacobian%col%vec%template%name &
+            & .or. hessian%row%vec%template%name /= jacobian%row%vec%template%name &
+            & .or. (hessian%col%instFirst .neqv. jacobian%col%instFirst) &
+            & .or. (hessian%row%instFirst .neqv. jacobian%row%instFirst) )&
+            & call MLSMessage( MLSMSG_Error, ModuleName, 'Hessian is not compatible with Jacobian' )
+        end if
+
+      else if ( present( Hessian ) ) then      
+        call MLSMessage ( MLSMSG_Error, ModuleName, 'Hessian is present without Jacobian' )
+      end if
+
+    end if
+
+    ! Do the timing stuff
+    call time_now (time_end)
+    deltaTime = time_end - time_start
+    config%Ntimes = config%Ntimes + 1
+    config%sum_DeltaTime = &
+      & config%sum_DeltaTime + deltaTime
+    config%sum_squareDeltaTime = &
+      & config%sum_squareDeltaTime + (deltaTime * deltaTime)
+
+    ! Report we're finished
+    call trace_end ( 'ForwardModel', cond=toggle(emit) )
+
+  contains
+
+    subroutine DoForwardModels ( ExtraJacobian )
+
+      type(matrix_t), optional, intent(inout) :: ExtraJacobian
+
+      integer :: Me_BaselineForwardModel   = -1 ! String index for trace
+      integer :: Me_CloudForwardModel      = -1 ! String index for trace
+      integer :: Me_FullForwardModel       = -1 ! String index for trace
+      integer :: Me_HybridForwardModel     = -1 ! String index for trace
+      integer :: Me_LinearizedForwardModel = -1 ! String index for trace
+      integer :: Me_PolarForwardModel      = -1 ! String index for trace
+!     integer :: Me_ScanForwardModel       = -1 ! String index for trace
+      integer :: Me_Scan2DForwardModel     = -1 ! String index for trace
+      integer :: Me_SwitchingForwardModel  = -1 ! String index for trace
+
+      select case (config%fwmType)
+      case ( l_baseline )
+        call trace_begin ( Me_BaselineForwardModel, 'BaselineForwardModel', &
+          & cond=.false. )
+        call BaselineForwardModel ( config, FwdModelIn, FwdModelExtra, &
+          FwdModelOut, fmStat, Jacobian )
+        call add_to_retrieval_timing( 'baseline' )
+      case ( l_cloudFull )
+        call trace_begin ( Me_CloudForwardModel, 'CloudForwardModel', &
+          & cond=.false. )
+        call FullCloudForwardModelWrapper ( config, FwdModelIn, FwdModelExtra, &
+          FwdModelOut, fmStat, Jacobian )
+        call add_to_retrieval_timing( 'fullcloud_fwm' )
+      case ( l_full )
+        call trace_begin ( Me_FullForwardModel, 'FullForwardModel', cond=.false. )
+        call FullForwardModel ( config, FwdModelIn, FwdModelExtra, &
+          FwdModelOut, fmStat, Jacobian, ExtraJacobian, Hessian )
+        call add_to_retrieval_timing( 'full_fwm' )
+      case ( l_hybrid )
+        call trace_begin ( Me_HybridForwardModel, 'HybridForwardModel', &
+          & cond=.false. )
+        call HybridForwardModel ( config, FwdModelIn, FwdModelExtra, &
+          FwdModelOut, fmStat, Jacobian, vectors )
+        call add_to_retrieval_timing( 'hybrid' )
+      case ( l_linear )
+        call trace_begin ( Me_LinearizedForwardModel, 'LinearizedForwardModel', &
+          & cond=.false. )
+        call LinearizedForwardModel ( config, FwdModelIn, FwdModelExtra, &
+          FwdModelOut, fmStat, Jacobian, vectors )
+        call add_to_retrieval_timing( 'linear_fwm' )
+      case ( l_polarLinear )
+        call trace_begin ( Me_PolarForwardModel, 'PolarForwardModel', &
+          & cond=.false. )
+        call PolarLinearModel ( config, FwdModelIn, FwdModelExtra, &
+          FwdModelOut, fmStat, Jacobian, vectors )
+        call add_to_retrieval_timing( 'polar_linear' )
+!       case ( l_scan )
+!         call MLSMessage ( MLSMSG_Error, moduleName, &
+!           & 'The 1d scan model is broken and will not be fixed; ' // &
+!           & 'please use type=scan2d instead', &
+!           & datum=config%name )
+!         call trace_begin ( Me_ScanForwardModel, 'ScanForwardModel', cond=.false. )
+!         call ScanForwardModel ( config, FwdModelIn, FwdModelExtra, &
+!           FwdModelOut, fmStat, Jacobian )
+!         call add_to_retrieval_timing( 'scan_fwm' )
+      case ( l_scan, l_scan2d )
+        if ( config%fwmType == l_scan ) &
+          & call MLSMessage ( MLSMSG_Warning, &
+          & ModuleName, 'The 1d scan model is broken; using 2d instead' )
+        call trace_begin ( Me_Scan2DForwardModel, 'Scan2DForwardModel', &
+          & cond=.false. )
+        call TwoDScanForwardModel ( config, FwdModelIn, FwdModelExtra, &
+          FwdModelOut, fmStat, Jacobian )
+        call add_to_retrieval_timing( 'twod_scan_fwm' )
+      case ( l_switchingMirror )
+        call trace_begin ( Me_SwitchingForwardModel, 'SwitchingForwardModel', &
+          & cond=.false. )
+        call SwitchingMirrorModel ( config, FwdModelIn, FwdModelExtra, &
+          FwdModelOut, fmStat, Jacobian )
+        call add_to_retrieval_timing( 'switching_mirror' )
+      case default ! Shouldn't get here if parser etc. worked
+      end select
+
+      if ( config%isRadianceModel ) then
+        call trace_begin ( Me_BaselineForwardModel, 'BaselineForwardModel', &
+          & cond=.false. )
+        call BaselineForwardModel ( config, FwdModelIn, FwdModelExtra, &
+          FwdModelOut, fmStat, Jacobian )
+        call trace_end ( cond=.false. )
+        call add_to_retrieval_timing( 'baseline' )
+        call trace_begin ( Me_SwitchingForwardModel, 'SwitchingForwardModel', &
+          & cond=.false. )
+        call SwitchingMirrorModel ( config, FwdModelIn, FwdModelExtra, &
+          FwdModelOut, fmStat, Jacobian )
+        call trace_end ( cond=.false. )
+        call add_to_retrieval_timing( 'switching_mirror' )
+      end if
+
+      call trace_end ( cond=.false. ) ! for all the cases
+
+    end subroutine DoForwardModels
+
+  end subroutine ForwardModel
+
+!{\cleardoublepage
+  subroutine Transform_FWM_Qty ( Config, MAF, FwdModelOut, F_Qty, S_Qty, &
+    &                            PTan, ExtrapForm, Jacobian, ExtraJacobian, &
+    &                            DumpTransform, Clean )
+    ! Transform blocks of the Jacobian associated with f_qty to blocks
+    ! associated with s_qty.
+    ! Transform the forward model radiances to retriever radiances.
+
+    ! See Equations (3) and (4) in wvs-107, and Equation (2) in wvs-114.
+
+    use ForwardModelConfig, only: ForwardModelConfig_t
+    use ForwardModelVectorTools, only: GetQuantityForForwardModel
+    use Init_Tables_Module, only: L_MIFExtinction, L_MIFExtinctionV2, L_MIFRHI
+    use Intrinsic, only: L_Radiance
+    use MatrixModule_0, only: DestroyBlock, M_Absent, M_Banded, M_Full
+    use MatrixModule_1, only: FindBlock, CreateBlock, Dump, Matrix_t
+    use MLSKinds, only: RM, RV
+    use MLSL2Options, only: MLSL2Message
+    use MLSMessageModule, only: MLSMSG_Error
+    use Output_m, only: Output
+    use Toggles, only: EMIT, Levels, Toggle
+    use Trace_m, only: Trace_Begin, Trace_End
+    use VectorsModule, only: Dump, Vector_t, VectorValue_t
+!     use VectorsModule, only: M_Linalg
+
+    type(forwardModelConfig_T), intent(in) :: Config
+    integer, intent(in) :: MAF               ! MAjor Frame number
+    type(vector_t), intent(inout) :: FwdModelOut  ! Radiances, etc.
+    type(vectorValue_t), intent(in) :: F_Qty ! Profile quantity in fwmState
+    type(vectorValue_t), intent(in) :: S_Qty ! MIF quantity in State
+    type(vectorValue_t), intent(in) :: PTan  ! Tangent pressure, for S_Qty
+    real(rv), intent(in) :: ExtrapForm       ! exponent for extrapolation
+    type(matrix_t), intent(inout), target :: Jacobian, ExtraJacobian
+    integer, intent(in) :: DumpTransform(3)
+    logical, intent(in) :: Clean             ! for the dumps
+
+    integer :: Chan    ! Index of channel in Config
+    integer :: CV      ! c in wvs-107
+    integer :: CZ      ! ci, channels X zetas, in wvs-107
+    integer :: FCols(f_qty%template%noInstances) ! of ExtraJacobian, j in wvs-107
+    integer :: Inst    ! Loop inductor to compute fCols, j in wvs-107
+    integer :: JCol    ! of Jacobian
+    integer :: JCols(s_qty%template%noInstances) ! of Jacobian, n in wvs-107
+    integer :: JRow    ! of Jacobian, n in wvs-107
+    integer :: Me = -1 ! String index for trace cacheing
+    integer :: NVecChans ! Number of channels in radiance
+    type(vectorValue_t), pointer :: O_Qty    ! Qty of output vector
+    real(rv) :: P(size(ptan%values,1),f_qty%template%noSurfs) ! 10**(-2*(zeta(surf)-zeta(vSurf)))
+                       ! for MIF extinction, or ProfileRHI/MIFRHI for MIF RHI.
+    real(rm) :: RowSum ! sum(extraJacobian%block(jRow,fCols)%values(cz,:))
+    integer :: SB      ! Sideband, zero or from the first signal in config
+    integer :: Surf    ! column of Jacobian%block(jRow,fCol)%values, 
+                       ! g in wvs-107
+    integer :: VSurf   ! Surface (zeta) index in a MIF, i in wvs-107
+
+    call trace_begin ( me, 'Transform_FWM_Qty', &
+      & cond=toggle(emit) .and. levels(emit) > 1 )
+
+    sb = merge( 0, config%signals(1)%sideband, config%forceFoldedOutput )
+
+    ! Get the block column subscripts for instances of f_qty.
+    do inst = 1, f_qty%template%noInstances
+      fCols(inst) = findBlock ( extraJacobian%col, f_qty%index, inst )
+    end do
+
+    ! Get the block column subscripts for instances of s_qty.
+    do inst = 1, s_qty%template%noInstances
+      jCols(inst) = findBlock ( Jacobian%col, s_qty%index, inst )
+    end do
+
+    select case ( s_qty%template%quantityType )
+    case ( l_MIFExtinction, l_MIFExtinctionV2 )
+      !{ Evaluate Equation (2) from wvs-107, \emph{viz.}
+      ! \begin{equation*}
+      ! 10^{-2(\zeta_g-\zeta_r)} = \left( \frac{P_g}{P_r} \right)^2
+      ! \end{equation*}
+      ! $-2$ is the default if {\tt extrapForm} is not specified.
+
+      forall ( vSurf=1:size(ptan%values,1), surf=1:f_qty%template%noSurfs ) &
+        & p(vSurf,surf) = &
+          & 10.0_rm ** ( extrapForm * ( f_qty%template%surfs(surf,1) - &
+                                      & ptan%values(vSurf,maf) ) )
+    case ( l_MIFRHI )
+      !{ Evaluate the ratio in Equation (2) from wvs-114, \emph{viz.}
+      ! \begin{equation*}
+      ! \frac{R^F_{g,j}}{R^R_{i,j}}
+      ! \end{equation*}
+
+      forall ( vSurf=1:size(ptan%values,1), surf=1:f_qty%template%noSurfs ) &
+        & p(vSurf,surf) = &
+          & f_qty%values(surf,1) / s_qty%values(vSurf,maf)
+    end select
+
+    do chan = 1, size(config%channels)
+      cv = config%channels(chan)%used + 1 - config%channels(chan)%origin
+      o_qty => getQuantityForForwardModel ( fwdModelOut, &
+        & quantityType=l_radiance, &
+        & signal=config%signals(config%channels(chan)%signal)%index, &
+        & sideband=sb, config=config )
+      jRow = findBlock ( Jacobian%row, o_qty%index, MAF )
+      nVecChans = o_qty%template%noChans
+      ! Dump the radiance, and Jacobian columns, to be transformed
+      if ( dumpTransform(1) >= 1 ) then
+        call output ( MAF, before='MAF ' )
+        call dump ( o_qty, dumpTransform(1)-2, &
+          & ' fwdModelOut before transformation', options=merge('-c','  ',clean) )
+      end if
+      if ( dumpTransform(2) >= 1 ) then
+        do inst = 1, size(fCols)
+          call dump ( extraJacobian, 'Jacobian from forward model', dumpTransform(2)-3, &
+            & row=jRow, column=fCols(inst) )
+        end do
+      end if
+      do jCol = 1, size(jCols)
+        if ( Jacobian%col%inst(jCols(jCol)) /= MAF .or. &
+           & all(extraJacobian%block(jRow,fCols)%kind == m_absent) ) then
+          ! Zero MIF blocks of Jacobian that are off-diagonal or would not
+          ! be filled because all corresponding MIF blocks are absent.
+          call destroyBlock ( Jacobian%block(jRow,jCols(jCol)) )
+        else ! (inst(jRow),inst(jCol)) = nn in wvs-107
+          select case ( Jacobian%block(jRow,jCols(jCol))%kind )
+          case ( m_absent )
+            call createBlock ( Jacobian, jrow, jCols(jCol), m_banded, &
+              & Jacobian%row%nelts(jRow), bandHeight=nVecChans, &
+              & forWhom='Transform_FWM_Qty' )
+              Jacobian%block(jRow,jCols(jCol))%values = 0
+          case ( m_banded )
+            if ( ubound(Jacobian%block(jRow,jCols(jCol))%values,1) /= &
+               & Jacobian%row%nelts(jRow) ) &
+                 & call MLSL2Message ( MLSMSG_Error, moduleName, &
+                   & 'Band structure wrong for Transformed MIF block' )
+          case default
+            call MLSL2Message ( MLSMSG_Error, moduleName, &
+              & 'Transformed MIF block neither absent or banded' )
+          end select
+          do vSurf = 1, size(ptan%values,1) ! i in wvs-107 and wvs-114,
+                                            ! same for all fCols
+            ! For what rows of the Jacobian and elements of the state vector
+            ! do we evaluate Equations (3) and (4)?
+            ! ??? Why doesn't this work?  Perhaps because it's  ???
+            ! ??? fiddling row (radiance) masks when it should  ???
+            ! ??? be fiddling column (MIFExtinction) masks?     ???
+!           if ( associated(s_qty%mask) ) then
+!             if ( iand(ichar(s_qty%mask(vsurf,1)), m_linAlg) /= 0 ) cycle
+!           end if
+            ! Retriever's Jacobian block is banded.  The only nonzeros in a
+            ! column are in rows for the same MIF as the column, and the
+            ! maximum number of nonzeros is the number of channels in the
+            ! band.  This could be sharpened to the range from the smallest
+            ! to largest channel numbers, but the computations would be
+            ! messier.
+            cz = cv + nVecChans*(vSurf-1) ! ci in wvs-107 and wvs-114
+            ! The surf loop runs in reverse order to sum rowSum*p in
+            ! small-to-large order, to reduce round-off errors.
+            do surf = f_qty%template%noSurfs, 1, -1 ! g in wvs-107
+
+      !{ Compute the inner sum in Equations (3) and (4) in wvs-107,
+      !  or Equation (2) in wvs-114.
+      ! \begin{equation*}
+      !  \sum_{j=1}^{N_\zeta} K^F_{nj,cig}
+      ! \end{equation*}
+      ! where $n$ is the Jacobian block row number,\\
+      ! $j$ is the Jacobian block column number,\\
+      ! $c$ is the channel number,\\
+      ! $i$ is the MIF number, and\\
+      ! $g$ is the surface ($\zeta$) number.
+
+      ! But we can't do
+      ! rowSum = sum(extraJacobian%block(jRow,fCols)%values(cz,surf))
+      ! because "values" has the POINTER attribute.
+
+              rowSum = 0.0
+              do inst = 1, size(fCols)
+                select case ( extraJacobian%block(jRow,fCols(inst))%kind )
+                case ( m_full )
+                  rowSum = rowSum + &
+                    & extraJacobian%block(jRow,fCols(inst))%values(cz,surf)
+                case ( m_absent )
+                case default
+                  call MLSL2Message ( MLSMSG_Error, moduleName, &
+                    & "Transform_FWM_Qty cannot handle sparse or banded blocks" )
+                end select
+              end do ! inst
+
+      !{Compute the retriever's Jacobian using Equation (3) in wvs-107
+      ! \begin{equation*}
+      ! \begin{array}{lll}
+      !  K^R_{nn,cii} = \sum_{g=1}^{N_\zeta}
+      !   \left( \sum_{j=1}^{N_\phi} K^F_{nj,cig} \right)
+      !   10^{-2(\zeta_g - \zeta_i)} & i = 1, \dots, N_m & c = 1, \dots, N_C\,, \\
+      ! \end{array}
+      ! \end{equation*}
+      ! or Equation (2) in wvs-114
+      ! \begin{equation}
+      ! \begin{array}{lll}
+      ! K^R_{nn,cii} = \sum_{g=1}^{N_\zeta}
+      !  \left( \sum_{j=1}^{N_\phi} K^F_{nj,cig} \right)
+      !  \frac{R^F_{g,j}}{R^R_{i,j}} & i = 1, \dots, N_m & c = 1, \dots, N_C\,. \\
+      ! \end{array}
+      ! \end{equation}
+      ! where the subscripts are as above.
+
+              Jacobian%block(jRow,jCols(jCol))%values(cz,1) = &
+                & Jacobian%block(jRow,jCols(jCol))%values(cz,1) + &
+                  & rowSum * p(vSurf,surf)
+
+              if ( s_qty%template%quantityType /= l_MIFRHI ) then
+
+      !{Compute radiance using Equation (4) in wvs-107
+      ! \begin{equation*}
+      ! \begin{array}{lll}
+      ! I^R_{ci,n} = I^F_{ci,n} + \sum_{g=1}^{N_\zeta}
+      !  \left( \sum_{j=1}^{N_\phi} K^F_{nj,cig} \right)
+      !  \left( E^R_{i,n} 10^{-2(\zeta_g - \zeta_i)} -
+      !   E^F_{g,1} \right) & i = 1, \dots, N_m & c = 1, \dots, N_C \,, \\
+      ! \end{array}
+      ! \end{equation*}
+      ! where the subscripts are as above.
+
+                o_qty%values(cz,maf) = o_qty%values(cz,maf) + &
+                  & rowSum * ( s_qty%values(vSurf,maf) * p(vSurf,surf) - &
+                             & f_qty%values(surf,1) )
+              end if
+            end do ! Surf
+
+          end do ! vSurf
+        end if
+      end do ! jCol
+      if ( dumpTransform(1) >= 1 ) then
+        call output ( MAF, before='MAF ' )
+        call dump ( o_qty, dumpTransform(1)-2, &
+          & ' fwdModelOut after transformation', options=merge('-c','  ',clean) )
+      end if
+      if ( dumpTransform(3) >= 1 ) then
+        do inst = 1, size(jCols)
+          call dump ( Jacobian, 'Transformed Jacobian', dumpTransform(3)-3, &
+            & row=jRow, column=jCols(inst) )
+        end do
+      end if
+    end do ! chan
+
+    call trace_end ( 'Transform_FWM_Qty', &
+      & cond=toggle(emit) .and. levels(emit) > 1 )
+
+  end subroutine Transform_FWM_Qty
+
+!{\cleardoublepage
+  subroutine Transform_MIF_Qty ( MAF, S_Qty, PTan, Lrp, &
+    &                            ExtrapExponent, F_Qty, DumpTransform )
+
+    ! Interpolate from a MAF-indexed minor-frame quantity to the first
+    ! column of an L2GP quantity.  Then spread it out in orbit geodetic
+    ! angle as if it were a 2D quantity.
+
+    ! Equations (1) and (2) in wvs-107.
+
+    use Dump_0, only: Dump
+    use Init_Tables_Module, only: L_MIFExtinction, L_MIFExtinctionV2, L_MIFRHI
+    use MLSKinds, only: RM, RV
+    use MLSNumerics, only: Hunt, InterpolateValues
+    use Output_m, only: Output
+    use Sort_m, only: Sortp
+    use Toggles, only: Emit, Levels, Toggle
+    use Trace_m, only: Trace_begin, Trace_end
+    use VectorsModule, only: Dump, VectorValue_t
+
+    integer, intent(in) :: MAF                ! MAjor Frame number
+    type(vectorValue_t), intent(in) :: S_Qty  ! State quantity to be transformed
+    type(vectorValue_t), intent(in) :: PTan   ! Zetas, for S_Qty, which has
+                                              ! altitudes in meters
+    real(rv), intent(in) :: LRP               ! Lowest retrieved pressure
+    real(rv), intent(in) :: ExtrapExponent    ! For extrapolation
+    type(vectorValue_t), intent(inout) :: F_Qty ! Forward model quantity
+    integer, intent(in) :: DumpTransform(3)   ! Dump S_Qty and F_Qty
+
+    integer :: F_LRP   ! Index in F_Qty%Surfs just below LRP
+    integer :: I       ! Subscript and loop inductor
+    integer :: Me = -1 ! String index for trace cacheing
+    integer :: P(s_qty%template%noSurfs)
+    integer :: S_LRP   ! Index in sorted Ptan%Values just below LRP
+
+    call trace_begin ( me, 'Transform_MIF_Qty', &
+      & cond=toggle(emit) .and. levels(emit) > 1 )
+
+    ! PTan might be out of order, so sort ptan%values
+    call sortp ( ptan%values(:,maf), 1, ptan%template%noSurfs, p )
+
+    ! Find indices in f_qty%template%surfs and ptan%values, of zetas
+    ! just below, but not equal to, LRP.  Hunt returns Index such that
+    ! Array(index) <= Value < Array(index+1). We want
+    ! Array(index) < Value <= Array(index+1).
+    call hunt ( f_qty%template%surfs(:,1), lrp, f_lrp )
+    if ( f_qty%template%surfs(f_lrp,1) == lrp ) f_lrp = f_lrp - 1
+    call hunt ( ptan%values(p,maf), lrp, s_lrp )
+    if ( ptan%values(p(s_lrp),maf) == lrp ) s_lrp = s_lrp - 1
+
+    ! Interpolate in Zeta only, from S_Qty to the first column of F_Qty,
+    ! above the lowest retrieved pressure
+    call interpolateValues (                              &
+      & ptan%values(p(s_lrp+1:),maf), s_qty%values(p(s_lrp+1:),maf), &
+      & f_qty%template%surfs(f_lrp+1:,1), f_qty%values(f_lrp+1:,1), 'L', 'C' )
+
+    ! Spread the interpolated values to all columns of F_Qty
+    do i = f_lrp+1, ubound(f_qty%values,1)
+      f_qty%values(i,2:) = f_qty%values(i,1)
+    end do
+
+    ! Now create F_Qty at and below the lowest retrieved pressure
+    select case ( s_qty%template%quantityType )
+    case ( L_MIFExtinction, L_MIFExtinctionV2 )
+
+       !{ Apply a $P^{-2}$ dependence, Equation (2) in wvs-107, to compute
+       !  extinction for the forward model, by extrapolating downward from
+       !  the zeta above, or equal to, LRP = $\zeta_r$.
+       !  $-2$ is the default if {\tt extrapExponent} is not specified.
+       ! \renewcommand{\arraystretch}{2}
+       ! \begin{equation*}
+       ! E^F_{g,j} = \left\{
+       ! \begin{array}{llll}
+       !  \overline{E}^R_{n}(\zeta_g)
+       !   & \zeta_g \geq \zeta_r & j = 1, \dots, N_\phi & g = 1, \dots, N_\zeta \\
+       !  \overline{E}^R_{n}(\zeta_r) \times 10^{-2(\zeta_g - \zeta_r)}
+       !   & \zeta_g < \zeta_r    & j = 1, \dots, N_\phi & g = 1, \dots, N_\zeta \\
+       ! \end{array} \right.
+       ! \end{equation*}
+       ! {\tt hGrids} of {\tt F_Qty} and {\tt S_Qty} have same extent and
+       ! spacing. Vertical coordinate is $\zeta = \log_{10}P$, so
+       ! $10^{-2\zeta}$ is $P^{-2}$).
+
+      do i = 1, f_lrp
+        f_qty%values(i,:) = f_qty%values(f_lrp+1,1) * &
+          & 10.0_rm ** ( extrapExponent * ( f_qty%template%surfs(i,1) - &
+                                          & ptan%values(p(s_lrp+1),maf) ) )
+      end do
+
+    case ( l_mifRHI )
+      ! Constant "extrapolation" below lowest retrieved pressure, see
+      ! Equation (1) in wvs-114.
+      f_qty%values(1:f_lrp,:) = s_qty%values(s_lrp,1)
+    end select
+
+    if ( dumpTransform(1) >= 1 ) then
+      if ( dumpTransform(1) > 1 ) &
+        & call dump ( ptan%values(p,maf), name='PTan zetas' )
+      call dump ( s_qty, details=dumpTransform(1)-2, name='from fwdModelIn' )
+      call output ( lrp, before='Lowest retrieved pressure = ', &
+                    after=' zeta', advance='yes' )
+      call dump ( f_qty, details=dumpTransform(1)-2, name='to forward model' )
+    end if
+
+    call trace_end ( 'Transform_MIF_Qty', &
+      & cond=toggle(emit) .and. levels(emit) > 1 )
+
+  end subroutine Transform_MIF_Qty
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: ForwardModelWrappers.f90,v 2.81 2018/07/27 23:18:48 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module ForwardModelWrappers
+
+! $Log: ForwardModelWrappers.f90,v $
+! Revision 2.81  2018/07/27 23:18:48  pwagner
+! Renamed level 2-savvy MLSMessage MLSL2Message
+!
+! Revision 2.80  2017/08/10 22:49:05  pwagner
+! Redirects any SScan forward model call to Scan2D
+!
+! Revision 2.79  2016/02/27 01:41:09  vsnyder
+! Don't get literal names from both Init_Tables_Module and Molecules; doing
+! so confuses ifort 16.0.2.
+!
+! Revision 2.78  2015/03/28 02:44:39  vsnyder
+! Delete Compute_Model_Plane.  Get the magnetic field from a vector
+! quantity instead of computing it.  Delete Fill_Magnetic_Field.
+!
+! Revision 2.77  2014/11/04 01:56:51  vsnyder
+! Revised computation of magnetic field geolocations
+!
+! Revision 2.76  2014/10/14 21:40:12  pwagner
+! uars magnetic field needs GPH qty
+!
+! Revision 2.75  2014/09/30 02:17:15  vsnyder
+! Remove some debugging output that shouldn't have been checked in
+!
+! Revision 2.74  2014/09/29 20:18:14  vsnyder
+! Add NoMagneticField switch to ForwardModel
+!
+! Revision 2.73  2014/08/06 23:29:19  vsnyder
+! Remove USE for L_Azimuth and Get_String, which are not referenced.
+! Remove declaration of Azimuth, MyJacobian, FWMJacobian, and ThisName,
+! which are not referenced.
+!
+! Revision 2.72  2014/07/01 23:05:58  vsnyder
+! Add switch to dump magnetic field if it's computed for each MAF
+!
+! Revision 2.71  2014/07/01 01:24:37  vsnyder
+! Unitize XYZ correctly, add comments
+!
+! Revision 2.70  2013/09/06 20:44:34  pwagner
+! Fixed bugs in Transform_MIF_Qty
+!
+! Revision 2.69  2013/08/31 02:29:39  vsnyder
+! Add tracing in MIF transformation, magnetic field
+!
+! Revision 2.68  2013/08/30 02:45:40  vsnyder
+! Revise calls to trace_begin and trace_end
+!
+! Revision 2.67  2013/08/16 02:51:04  vsnyder
+! Add Fill_Magnetic_Field
+!
+! Revision 2.66  2013/08/08 02:36:58  vsnyder
+! Use ExtraJacobian for profile quantity derivatives
+!
+! Revision 2.64  2013/07/26 18:20:26  vsnyder
+! Cannonball polishing, especially error messages
+!
+! Revision 2.63  2013/07/25 00:25:23  vsnyder
+! Add MIF RHI transformation
+!
+! Revision 2.62  2013/07/17 16:26:21  wgread
+! restore linear correction wgr
+!
+! Revision 2.61  2013/07/12 23:48:54  vsnyder
+! Some stuff for out-of-orbit-plane viewing
+!
+! Revision 2.60  2013/07/12 23:25:28  vsnyder
+! Bogus checkin: Remove unreferenced error messages
+!
+! Revision 2.59  2013/07/02 23:31:03  wgread
+! remove linear correction for transformed mif extinction-wgr
+!
+! Revision 2.58  2013/05/21 23:52:47  vsnyder
+! Add MIFExtinctionExtrapolation and MIFExtinctionForm
+!
+! Revision 2.57  2013/04/13 01:33:53  vsnyder
+! Fix a typo, polish some LaTeX stuff
+!
+! Revision 2.56  2013/04/12 00:30:06  vsnyder
+! Make f_lrp, s_lrp be indices just below lrp, not nearest to lrp
+!
+! Revision 2.55  2013/03/20 22:47:35  vsnyder
+! Add config to references to GetQuantityForForwardModel
+!
+! Revision 2.54  2013/03/15 20:35:26  vsnyder
+! Change debug print level threshold from zero to one
+!
+! Revision 2.53  2012/08/16 18:19:54  pwagner
+! Exploit level 2-savvy MLSMessage
+!
+! Revision 2.52  2012/08/14 00:38:14  vsnyder
+! Specify instrument module for PTAN instead of hoping for the best
+!
+! Revision 2.51  2012/08/10 22:49:26  vsnyder
+! Don't test linalg flag
+!
+! Revision 2.50  2012/07/31 00:49:33  vsnyder
+! Correct testing a dump switch
+!
+! Revision 2.49  2012/07/06 01:54:33  vsnyder
+! Transform only rows of Jacobian and radiance that are produced by current
+! forward model config.  Revise some dumps.
+!
+! Revision 2.48  2012/07/06 00:57:20  vsnyder
+! Bogus comment: ForwardModelWrappers.f90
+!
+! Revision 2.47  2012/07/04 02:15:01  vsnyder
+! Don't compute masked rows of Jacobian.
+!
+! Revision 2.46  2012/06/15 23:29:39  vsnyder
+! Spread extinction interpolated from MIF extinction, below the lowest
+! retrieved pressure, to every profile.  Change dump switch interpretation.
+!
+! Revision 2.45  2012/06/07 00:47:16  vsnyder
+! Handle switchDetail properly
+!
+! Revision 2.44  2012/06/06 20:41:59  vsnyder
+! More and better dumps and messages
+! don't clobber Jacobian from prior FWM for same MAF
+!
+! Revision 2.43  2012/05/01 22:24:06  vsnyder
+! Use IsRadianceModel component, some cannonball polishing
+!
+! Revision 2.42  2012/04/20 01:57:15  vsnyder
+! Add some dumps, add clean switch.  Handle MAF selection properly. Some
+! cannonball polishing.
+!
+! Revision 2.41  2012/03/28 00:56:49  vsnyder
+! Move check for signals with MIF extinction from Wrappers to Support
+!
+! Revision 2.40  2012/03/14 21:37:30  wgread
+! added mif extinction transform capability vws&wgr
+!
+! Revision 2.39  2012/02/23 00:59:43  vsnyder
+! Forgot to add RM in use for MLSKinds
+!
+! Revision 2.38  2012/02/23 00:08:08  vsnyder
+! Maybe MIF extinction transformations work now
+!
+! Revision 2.37  2012/02/14 19:01:29  pwagner
+! Fixed bug that broke nrt
+!
+! Revision 2.36  2012/02/11 21:28:31  vsnyder
+! Interim MIF extinction commit
+!
+! Revision 2.35  2011/12/21 01:42:22  vsnyder
+! Add MIFExtinction transformation
+!
+! Revision 2.34  2011/05/09 18:10:02  pwagner
+! Converted to using switchDetail
+!
+! Revision 2.33  2010/08/27 06:25:38  yanovsky
+! ForwardModel subroutine has Hessian as dummy argument.
+! Actual argument Hessian is passed in a call to FullForwardModel subroutine.
+!
+! Revision 2.32  2009/11/18 22:18:07  livesey
+! Added ability to check Jacobians as well as radiances is the various
+! fmNAN flags are set
+!
+! Revision 2.31  2009/06/23 18:46:18  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.30  2007/10/04 01:48:30  vsnyder
+! Make sure thisName has a value, handle call stack properly
+!
+! Revision 2.29  2007/10/02 22:38:19  vsnyder
+! Add code to check for NaNs in forward models' output
+!
+! Revision 2.28  2007/08/20 22:05:06  pwagner
+! Many procedures now push their names onto MLSCallStack
+!
+! Revision 2.27  2007/06/29 19:32:07  vsnyder
+! Make ForwardModelIntermediate_t private to ScanModelModule
+!
+! Revision 2.26  2007/04/03 17:46:12  vsnyder
+! Replace pointer attribute on VectorDatabase with target attribute
+!
+! Revision 2.25  2005/06/03 02:08:24  vsnyder
+! New copyright notice, move Id to not_used_here to avoid cascades
+!
+! Revision 2.24  2003/10/20 18:22:47  pwagner
+! New forwardModel types added to RetrievalTimings breakdown
+!
+! Revision 2.23  2003/09/11 23:15:10  livesey
+! Added vectors argument which is handed on to some but not all models.
+! This is needed to support the xStar/yStar capability of the linear
+! forward model (and by inference all those that call it.)
+!
+! Revision 2.22  2003/08/16 01:18:29  livesey
+! Added baseline forward model on its own.
+!
+! Revision 2.21  2003/08/13 00:49:56  livesey
+! Added PolarLinear model
+!
+! Revision 2.20  2003/07/15 22:11:12  livesey
+! Added hybrid model and slight reorganization
+!
+! Revision 2.19  2003/07/15 18:18:39  livesey
+! Made timing apply to all configs.
+!
+! Revision 2.18  2003/06/30 22:55:01  cvuu
+! Find mean, std dev timing of fullForwardModel calls
+!
+! Revision 2.17  2003/06/03 19:24:56  livesey
+! Added the ability to call the switching mirror model in isolation
+!
+! Revision 2.16  2003/05/29 16:42:34  livesey
+! Added calls to SwitchingMirrorModel
+!
+! Revision 2.15  2002/10/08 17:36:20  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.14  2002/08/21 23:43:33  vsnyder
+! Move USE statements from module scope to procedure scope
+!
+! Revision 2.13  2002/07/23 00:06:05  pwagner
+! No upper-case allowed in section names
+!
+! Revision 2.12  2002/07/22 22:51:56  pwagner
+! Restored name of 2d scan model in timings
+!
+! Revision 2.11  2002/06/24 22:14:59  livesey
+! Changed name of 2d scan model in timings
+!
+! Revision 2.10  2002/06/24 18:27:09  livesey
+! New 2D scan model
+!
+! Revision 2.9  2001/11/27 23:34:49  pwagner
+! Split forward model timings into four types
+!
+! Revision 2.8  2001/10/02 16:55:10  livesey
+! Bug fix, forgot use statement
+!
+! Revision 2.7  2001/10/02 16:53:18  livesey
+! Added call to BaselineForwardModel for Full and Linearized forward models.
+!
+! Revision 2.6  2001/07/17 22:36:32  jonathan
+! add cloud_width, jonathan/paul
+!
+! Revision 2.5  2001/05/29 23:22:20  livesey
+! FullForwardModel moved, also added (but commented out)
+! call to FullCloudForwardModelWrapper
+!
+! Revision 2.4  2001/05/03 23:42:48  livesey
+! Activated scan model.
+!
+! Revision 2.3  2001/04/28 17:48:48  livesey
+! Removed some unnecessary checks
+!
+! Revision 2.2  2001/04/26 23:54:26  livesey
+! Now uses linear forward model
+!
+! Revision 2.1  2001/04/26 19:47:41  livesey
+! First version
+!
+@
+
+
+2.81
+log
+@Renamed level 2-savvy MLSMessage MLSL2Message
+@
+text
+@d300 1
+a300 1
+      ! Check Hessians if relevant
+d339 1
+a339 1
+      integer :: Me_ScanForwardModel       = -1 ! String index for trace
+d445 1
+a445 1
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+d785 1
+a785 1
+       "$Id: ForwardModelWrappers.f90,v 2.80 2017/08/10 22:49:05 pwagner Exp $"
+d795 3
+@
+
+
+2.80
+log
+@Redirects any SScan forward model call to Scan2D
+@
+text
+@d444 2
+a445 2
+    use MLSL2Options, only: MLSMessage
+    use MLSMessageModule, only: MLSMSG_Error
+d556 1
+a556 1
+                 & call MLSMessage ( MLSMSG_Error, moduleName, &
+d559 1
+a559 1
+            call MLSMessage ( MLSMSG_Error, moduleName, &
+d606 1
+a606 1
+                  call MLSMessage ( MLSMSG_Error, moduleName, &
+d785 1
+a785 1
+       "$Id: ForwardModelWrappers.f90,v 2.79 2016/02/27 01:41:09 vsnyder Exp $"
+d795 3
+@
+
+
+2.79
+log
+@Don't get literal names from both Init_Tables_Module and Molecules; doing
+so confuses ifort 16.0.2.
+@
+text
+@d61 1
+a61 1
+    use ScanModelModule, only: ScanForwardModel, TwoDScanForwardModel
+d379 13
+a391 6
+      case ( l_scan )
+        call trace_begin ( Me_ScanForwardModel, 'ScanForwardModel', cond=.false. )
+        call ScanForwardModel ( config, FwdModelIn, FwdModelExtra, &
+          FwdModelOut, fmStat, Jacobian )
+        call add_to_retrieval_timing( 'scan_fwm' )
+      case ( l_scan2d )
+d785 1
+a785 1
+       "$Id: ForwardModelWrappers.f90,v 2.78 2015/03/28 02:44:39 vsnyder Exp $"
+d795 4
+@
+
+
+2.78
+log
+@Delete Compute_Model_Plane.  Get the magnetic field from a vector
+quantity instead of computing it.  Delete Fill_Magnetic_Field.
+@
+text
+@d50 1
+a50 1
+      & L_PTan, L_Scan, L_Scan2d, L_SwitchingMirror
+a58 1
+    use Molecules, only: L_Extinction, L_ExtinctionV2, L_RHI
+d778 1
+a778 1
+       "$Id: ForwardModelWrappers.f90,v 2.77 2014/11/04 01:56:51 vsnyder Exp $"
+d788 4
+@
+
+
+2.77
+log
+@Revised computation of magnetic field geolocations
+@
+text
+@a36 1
+    use Compute_Model_Plane_m, only: Compute_Model_Plane
+d48 3
+a50 3
+      & L_MIFExtinction, L_MIFExtinctionExtrapolation, L_MIFExtinctionForm, &
+      & L_MIFExtinctionV2, L_MIFRHI, L_PolarLinear, L_PTan, L_Scan, L_Scan2d, &
+      & L_SwitchingMirror
+a60 1
+    use output_m, only: output
+d66 1
+a66 1
+    use Toggles, only: EMIT, Levels, Switches, Toggle
+a107 1
+    logical :: InOrbitPlane                ! Model plane is orbit plane
+a114 1
+    real(rv) :: Normal(3)                  ! to the profile plane, XYZ
+d143 1
+d145 4
+a148 7
+      ! Compute a plane for the profile and the magnetic field,
+      ! if different from the orbit plane
+      call compute_model_plane ( fwdModelExtra, config, fmStat%MAF, &
+        & normal, inOrbitPlane )
+      if ( .not. inOrbitPlane ) &
+        & call fill_Magnetic_Field ( config, fwdModelIn, fwdModelExtra, &
+                                   & fmStat%MAF )
+a418 94
+    subroutine Fill_Magnetic_Field ( Config, FwdModelIn, FwdModelExtra, MAF )
+      ! Fill the magnetic field quantity in the model plane defined by
+      ! the geolocations of the reference MIF in the PTan and SCVelECR
+      ! quantities.
+      use Allocate_Deallocate, only: Same_Shape
+      use Constants, only: Deg2Rad, Rad2Deg
+      use FillUtils_1, only: UsingMagneticModel
+      use ForwardModelConfig, only: ForwardModelConfig_T
+      use ForwardModelVectorTools, only: GetQuantityForForwardModel
+      use Geometry, only: GeocToGeodLat, To_Cart
+      use Init_Tables_Module, only: L_PTan, L_ScVelECR
+      use Intrinsic, only: L_MagneticField, L_GPH
+      use MLSNumerics, only: Cross
+      use Output_m, only: Output
+      use QuantityTemplates, only: RT
+      use Rotation_m, only: Rotate_3d
+      use VectorsModule, only: CreateVectorValue, Dump, VectorValue_t
+
+      type(forwardModelConfig_T), intent(inout) :: Config
+      type(vector_t), intent(inout), target :: FwdModelIn ! The state
+      type(vector_t), intent(in) :: FwdModelExtra
+      integer, intent(in) :: MAF
+
+      type(vectorValue_t), pointer :: GPH      ! Geopotential height
+      integer :: I, J
+      integer :: MagDump   ! Switch level for "mag" switch
+      type(vectorValue_t), pointer :: MagQty   ! Magnetic field quantity
+      integer :: Me = -1   ! String index for trace cacheing
+      real(rt) :: N(3)     ! Normal to PTan-SC plane (doesn't need to be unit)
+      type(vectorValue_t), pointer :: PTan     ! Tangent pressure
+      real(rt) :: PTan_XYZ(3)
+      real(rt) :: R(3)     ! PTan rotated in the PTan-SC plane
+      type(vectorValue_t), pointer :: SCVelECR ! Spacecraft Velocity
+      real(rt) :: SC_XYZ(3)
+
+      ! For now, i.e., for UARS, not SMLS, assume the model plane includes
+      ! the PTan quantity and the SCVelECR quantity, the latter from which
+      ! we get the spacecraft ECR position (lat,lon).
+      ! Use magQuantity%phi, which is assumed to be zero at PTan, to compute
+      ! the spacing along the viewing direction.  From that, replace
+      ! (lat,lon) in magQty, then compute the magnetic field.
+
+      call trace_begin ( me, 'Fill_Magnetic_Field', &
+        & cond=toggle(emit) .and. levels(emit) > 0 )
+      magQty => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+              & quantityType=l_magneticField, config=config )
+
+      ! Get XYZ vectors for pTan and spacecraft position.
+      pTan => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+              & quantityType=l_ptan, config=config, &
+              & instrumentModule=config%signals(1)%instrumentModule )
+      call to_cart ( (/ pTan%template%geodLat(config%referenceMIF,MAF), &
+                     &  pTan%template%lon(config%referenceMIF,MAF), 0.0_rt /), &
+                     &  pTan_xyz )
+      scVelECR => GetQuantityForForwardModel ( fwdModelExtra, noError=.false., &
+              & quantityType=l_scVelECR, config=config )
+      call to_cart ( (/ scVelECR%template%geodLat(config%referenceMIF,MAF), &
+                     &  scVelECR%template%lon(config%referenceMIF,MAF), 0.0_rt /), &
+                     &  sc_xyz )
+      ! Compute normal to PTan-SC plane (doesn't need to be unit normal)
+      n = cross(pTan_xyz, sc_xyz )
+      ! Make sure geolocation fields are the same shapes.
+      call same_shape ( magQty%template%phi, magQty%template%geodLat, &
+        & "magQty%template%GeodLat", moduleName )
+      call same_shape ( magQty%template%phi, magQty%template%lon, &
+        & "magQty%template%Lon", moduleName )
+      ! Compute magQty geodLat and Lon.
+      do i = 1, size(magQty%template%phi,1)
+        do j = 1, size(magQty%template%phi,2)
+          ! Rotate PTan_xyz by magQty%template%phi(i,j) degrees about N giving R
+          call rotate_3d ( pTan_xyz, magQty%template%phi(i,j) * deg2rad, n, r )
+          magQty%template%geodLat(i,j) = geocToGeodLat ( asin(r(3)) ) * rad2deg
+          magQty%template%lon(i,j) = atan2(r(2),r(1)) * rad2deg
+        end do
+      end do
+      ! Compute the magnetic field at geolocations in magQty.
+      call createVectorValue ( magQty, "MagQty", moduleName )
+      if ( config%no_magnetic_field ) then
+        magQty%values = 0.0
+        call output( 'Magnetic field zero because config%no_magnetic_field', advance='yes' )
+      else
+        GPH => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+          & quantityType=l_GPH, config=config )
+        call usingMagneticModel ( magQty, GPH, config%where, MAF=MAF )
+!        call output( 'Magnetic field computed', advance='yes' )
+      end if
+      magDump = switchDetail(switches,'mag')
+      if ( magDump > -1 ) &
+        & call dump ( magQty, name='Magnetic field', details=magDump )
+      call trace_end ( 'Fill_Magnetic_Field', &
+        & cond=toggle(emit) .and. levels(emit) > 1 )
+
+    end subroutine Fill_Magnetic_Field
+
+d779 1
+a779 1
+       "$Id: ForwardModelWrappers.f90,v 2.76 2014/10/14 21:40:12 pwagner Exp $"
+d789 3
+@
+
+
+2.76
+log
+@uars magnetic field needs GPH qty
+@
+text
+@d147 9
+a155 6
+    ! Compute a plane for the profile, if different from the orbit plane
+    call compute_model_plane ( fwdModelExtra, config, fmStat%MAF, &
+      & normal, inOrbitPlane )
+    if ( .not. inOrbitPlane .and. config%polarized ) &
+      & call fill_Magnetic_Field ( config, fwdModelIn, fwdModelExtra, &
+                                 & fmStat%MAF )
+d430 1
+a430 1
+      use Constants, only: Rad2Deg
+d434 1
+a434 1
+      use Geometry, only: To_Cart
+d437 2
+a438 1
+      use output_m, only: output
+d440 1
+d448 1
+a448 2
+      real(rt) :: Angle    ! Between PTan and SC in degrees
+      real(rt) :: H        ! magQty%template%phi(.,.) / Angle
+d453 1
+d455 2
+a456 1
+      type(vectorValue_t), pointer :: GPH      ! Geopotential height
+d458 1
+a458 1
+      real(rt) :: XYZ(3,2) ! of PTan and SC
+d478 1
+a478 1
+                     &  xyz(:,1) )
+d483 3
+a485 6
+                     &  xyz(:,2) )
+      ! Make XYZ vectors unit length.
+      forall ( i = 1:2 ) &
+        & xyz(:,i) = xyz(:,i) / sqrt ( dot_product ( xyz(:,i),xyz(:,i) ) )
+      ! Get the angle between pTan and spacecraft position.
+      angle = rad2deg * acos ( dot_product ( xyz(:,1),xyz(:,2) ) )
+d494 4
+a497 5
+          h = magQty%template%phi(i,j) / angle
+          magQty%template%geodLat(i,j) = pTan%template%geodLat(i,j) + &
+            & h * ( scVelECR%template%geodLat(i,j) - pTan%template%geodLat(i,j) )
+          magQty%template%lon(i,j) = pTan%template%lon(i,j) + &
+            & h * ( scVelECR%template%lon(i,j) - pTan%template%lon(i,j) )
+d509 1
+a509 1
+        call output( 'Magnetic field computed', advance='yes' )
+d879 1
+a879 1
+       "$Id: ForwardModelWrappers.f90,v 2.75 2014/09/30 02:17:15 vsnyder Exp $"
+d889 3
+@
+
+
+2.75
+log
+@Remove some debugging output that shouldn't have been checked in
+@
+text
+@d62 1
+d433 2
+a434 1
+      use Intrinsic, only: L_MagneticField, L_RefGPH
+d450 1
+a450 1
+      type(vectorValue_t), pointer :: RefGPH   ! Geopotential height
+d502 1
+d504 4
+a507 3
+        refGPH => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+          & quantityType=l_refGPH, config=config )
+        call usingMagneticModel ( magQty, refGPH, config%where, MAF=MAF )
+d877 1
+a877 1
+       "$Id: ForwardModelWrappers.f90,v 2.74 2014/09/29 20:18:14 vsnyder Exp $"
+d887 3
+@
+
+
+2.74
+log
+@Add NoMagneticField switch to ForwardModel
+@
+text
+@a55 1
+use MatrixModule_1, only: Dump_Struct
+a137 2
+if ( present(Jacobian) ) call dump_struct ( Jacobian, name='From ForwardModelWrapper' )
+
+d873 1
+a873 1
+       "$Id: ForwardModelWrappers.f90,v 2.73 2014/08/06 23:29:19 vsnyder Exp $"
+d883 3
+@
+
+
+2.73
+log
+@Remove USE for L_Azimuth and Get_String, which are not referenced.
+Remove declaration of Azimuth, MyJacobian, FWMJacobian, and ThisName,
+which are not referenced.
+@
+text
+@d36 1
+a36 1
+    use BASELINEFORWARDMODEL_M, only: BASELINEFORWARDMODEL
+d38 4
+a41 4
+    use FORWARDMODELCONFIG, only: DERIVEFROMFORWARDMODELCONFIG, &
+      & DESTROYFORWARDMODELDERIVED, FORWARDMODELCONFIG_T, QtyStuff_t
+    use FORWARDMODELINTERMEDIATE, only: FORWARDMODELSTATUS_T
+    use ForwardModelVectorTools, only: GETQUANTITYFORFORWARDMODEL, &
+d43 9
+a51 9
+    use FULLCLOUDFORWARDMODEL, only: FULLCLOUDFORWARDMODELWRAPPER
+    use FULLFORWARDMODEL_M, only: FULLFORWARDMODEL
+    use HESSIANMODULE_1, only: HESSIAN_T
+    use HYBRIDFORWARDMODEL_M, only: HYBRIDFORWARDMODEL
+    use INIT_TABLES_MODULE, only: L_BASELINE, L_CLOUDFULL, &
+      & L_EXTINCTION, L_EXTINCTIONV2, L_FULL, L_HYBRID, L_LINEAR, &
+      & L_MIFEXTINCTION, L_MIFExtinctionExtrapolation, L_MIFExtinctionForm, &
+      & L_MIFEXTINCTIONV2, L_MIFRHI, L_POLARLINEAR, L_PTAN, L_SCAN, L_SCAN2D, &
+      & L_SWITCHINGMIRROR
+d53 4
+a56 3
+    use LINEARIZEDFORWARDMODEL_M, only: LINEARIZEDFORWARDMODEL
+    use MATRIXMODULE_1, only: CHECKINTEGRITY, CreateEmptyMatrix, DestroyMatrix, &
+      & MATRIX_T
+d58 4
+a61 4
+    use MLSL2TIMINGS, only: ADD_TO_RETRIEVAL_TIMING
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use Molecules, only: L_EXTINCTION, L_EXTINCTIONV2, L_RHI
+d63 8
+a70 8
+    use POLARLINEARMODEL_M, only: POLARLINEARMODEL
+    use SCANMODELMODULE, only: SCANFORWARDMODEL, TWODSCANFORWARDMODEL
+    use STRING_TABLE, only: Create_String, DISPLAY_STRING
+    use SWITCHINGMIRRORMODEL_M, only: SWITCHINGMIRRORMODEL
+    use TIME_M, only: TIME_NOW
+    use TOGGLES, only: EMIT, LEVELS, SWITCHES, TOGGLE
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+    use VECTORSMODULE, only: CHECKNAN, DUMP, VECTOR_T, VECTORVALUE_T
+d73 2
+a74 2
+    type(forwardModelConfig_T), intent(inout) :: CONFIG
+    type(vector_t), intent(inout), target :: FWDMODELIN ! The state
+d76 3
+a78 3
+    type(vector_t), intent(inout) :: FWDMODELOUT  ! Radiances, etc.
+    type(forwardModelStatus_t), intent(inout) :: FMSTAT ! Reverse comm. stuff
+    type(matrix_t), intent(inout), optional, target :: JACOBIAN ! The
+d80 2
+a81 2
+    type(hessian_t), intent(inout), optional :: HESSIAN ! No transformation
+    type(vector_t), dimension(:), target, optional :: VECTORS ! Vectors database
+d139 2
+d284 1
+a284 1
+      if ( checkNaN(fwdModelOut, k-1, 'ForwardModelOut') ) then
+d286 2
+a287 2
+          call dump ( fwdModelIn, k-1, 'ForwardModelIn' )
+          call dump ( fwdModelExtra, k-1, 'ForwardModelExtra' )
+d298 1
+a298 1
+          if ( k > 2 ) then
+d439 2
+a440 2
+      type(forwardModelConfig_T), intent(inout) :: CONFIG
+      type(vector_t), intent(inout), target :: FWDMODELIN ! The state
+d501 7
+a507 3
+      refGPH => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+        & quantityType=l_refGPH, config=config )
+      call usingMagneticModel ( magQty, refGPH, config%where, MAF=MAF )
+d528 2
+a529 2
+    use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T
+    use FORWARDMODELVECTORTOOLS, only: GETQUANTITYFORFORWARDMODEL
+d531 11
+a541 11
+    use INTRINSIC, only: L_RADIANCE
+    use MATRIXMODULE_0, only: DESTROYBLOCK, M_ABSENT, M_BANDED, M_FULL
+    use MATRIXMODULE_1, only: FINDBLOCK, CREATEBLOCK, DUMP, MATRIX_T
+    use MLSKINDS, only: RM, RV
+    use MLSL2OPTIONS, only: MLSMESSAGE
+    use MLSMESSAGEMODULE, only: MLSMSG_ERROR
+    use OUTPUT_M, only: OUTPUT
+    use TOGGLES, only: EMIT, LEVELS, TOGGLE
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+    use VECTORSMODULE, only: DUMP, VECTOR_T, VECTORVALUE_T
+!     use VECTORSMODULE, only: M_LINALG
+d543 1
+a543 1
+    type(forwardModelConfig_T), intent(in) :: CONFIG
+d545 1
+a545 1
+    type(vector_t), intent(inout) :: FWDMODELOUT  ! Radiances, etc.
+d876 1
+a876 1
+       "$Id: ForwardModelWrappers.f90,v 2.72 2014/07/01 23:05:58 vsnyder Exp $"
+d886 5
+@
+
+
+2.72
+log
+@Add switch to dump magnetic field if it's computed for each MAF
+@
+text
+@d47 1
+a47 1
+    use INIT_TABLES_MODULE, only: L_Azimuth, L_BASELINE, L_CLOUDFULL, &
+d64 1
+a64 1
+    use STRING_TABLE, only: Create_String, DISPLAY_STRING, GET_STRING
+a89 3
+    type(vectorValue_t), pointer :: Azimuth ! of profile plane, positive being
+                                           ! counterclockwise from the
+                                           ! spacecraft velocity vector
+a115 1
+    type(matrix_t), pointer :: MyJacobian  ! Either Jacobian or ExtraJacobian
+a121 1
+    character(len=132) :: ThisName
+a554 1
+    type(matrix_t), pointer :: FWMJacobian   ! Either Jacobian or ExtraJacobian
+d869 1
+a869 1
+       "$Id: ForwardModelWrappers.f90,v 2.71 2014/07/01 01:24:37 vsnyder Exp $"
+d879 3
+@
+
+
+2.71
+log
+@Unitize XYZ correctly, add comments
+@
+text
+@d439 1
+a439 1
+      use VectorsModule, only: CreateVectorValue, VectorValue_t
+d449 1
+d506 3
+d875 1
+a875 1
+       "$Id: ForwardModelWrappers.f90,v 2.70 2013/09/06 20:44:34 pwagner Exp $"
+d885 3
+@
+
+
+2.70
+log
+@Fixed bugs in Transform_MIF_Qty
+@
+text
+@d446 2
+a447 2
+      real(rt) :: Angle    ! Between PTan and SC
+      real(rt) :: H        ! magQty%template%phi(.) / Angle
+d467 2
+d480 1
+d482 2
+a483 1
+        & xyz(:,i) = xyz(:,i) / dot_product ( xyz(:,i),xyz(:,i) )
+d485 1
+d490 1
+d500 1
+d871 1
+a871 1
+       "$Id: ForwardModelWrappers.f90,v 2.69 2013/08/31 02:29:39 vsnyder Exp $"
+d881 3
+@
+
+
+2.69
+log
+@Add tracing in MIF transformation, magnetic field
+@
+text
+@d798 3
+a800 3
+    if ( f_qty%template%surfs(f_lrp,1) == f_lrp ) f_lrp = f_lrp - 1
+    call hunt ( ptan%values(p,1), lrp, s_lrp )
+    if ( ptan%values(p(s_lrp),1) == lrp ) s_lrp = s_lrp - 1
+d838 1
+a838 1
+                                          & ptan%values(p(s_lrp+1),1) ) )
+d864 1
+a864 1
+       "$Id: ForwardModelWrappers.f90,v 2.68 2013/08/30 02:45:40 vsnyder Exp $"
+d874 3
+@
+
+
+2.68
+log
+@Revise calls to trace_begin and trace_end
+@
+text
+@d67 1
+a67 1
+    use TOGGLES, only: EMIT, SWITCHES, TOGGLE
+d139 1
+a139 1
+    call trace_begin ( me, 'ForwardModel ', string=who, cond=toggle(emit) )
+d450 1
+d463 2
+d498 2
+d525 2
+d550 1
+d561 3
+d747 3
+d768 2
+d783 1
+d787 3
+d855 4
+d864 1
+a864 1
+       "$Id: ForwardModelWrappers.f90,v 2.67 2013/08/16 02:51:04 vsnyder Exp $"
+d874 3
+@
+
+
+2.67
+log
+@Add Fill_Magnetic_Field
+@
+text
+@d58 1
+a58 2
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECALLS, MLSMSG_ERROR, &
+      & MLSMSG_WARNING
+d64 1
+a64 1
+    use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
+d114 1
+d120 1
+d129 1
+d133 4
+a136 4
+    if ( config%name /= 0 ) then
+      call get_string ( config%name, thisName )
+    else
+      thisName = '[unnamed]'
+d139 1
+a139 5
+    if ( toggle(emit) ) then
+      call trace_begin ( 'ForwardModel ' // trim(thisName) )
+    else
+      call MLSMessageCalls( 'push', constantName='ForwardModel ' // trim(thisName) )
+    end if
+d333 1
+a333 5
+    if ( toggle(emit) ) then
+      call trace_end ( 'ForwardModel ' // trim(thisName) )
+    else
+      call MLSMessageCalls( 'pop' )
+    end if
+d341 10
+d353 2
+a354 1
+        call MLSMessageCalls( 'push', constantName='BaselineForwardModel' )
+d359 2
+a360 1
+        call MLSMessageCalls( 'push', constantName='CloudForwardModel' )
+d365 1
+a365 1
+        call MLSMessageCalls( 'push', constantName='FullForwardModel' )
+d369 6
+d376 2
+a377 1
+        call MLSMessageCalls( 'push', constantName='LinearizedForwardModel' )
+a380 5
+      case ( l_hybrid )
+        call MLSMessageCalls( 'push', constantName='HybridForwardModel' )
+        call HybridForwardModel ( config, FwdModelIn, FwdModelExtra, &
+          FwdModelOut, fmStat, Jacobian, vectors )
+        call add_to_retrieval_timing( 'hybrid' )
+d382 2
+a383 1
+        call MLSMessageCalls( 'push', constantName='PolarForwardModel' )
+d388 1
+a388 1
+        call MLSMessageCalls( 'push', constantName='ScanForwardModel' )
+d393 2
+a394 1
+        call MLSMessageCalls( 'push', constantName='TwoDForwardModel' )
+d399 2
+a400 1
+        call MLSMessageCalls( 'push', constantName='SwitchingForwardModel' )
+d408 2
+a409 1
+        call MLSMessageCalls( 'push', constantName='BaselinForwardModel' )
+d412 1
+a412 1
+        call MLSMessageCalls( 'pop' )
+d414 2
+a415 1
+        call MLSMessageCalls( 'push', constantName='SwitchingForwardModel' )
+d418 1
+a418 1
+        call MLSMessageCalls( 'pop' )
+d422 1
+a422 1
+      call MLSMessageCalls( 'pop' ) ! for all the cases
+d840 1
+a840 1
+       "$Id: ForwardModelWrappers.f90,v 2.66 2013/08/08 02:36:58 vsnyder Exp $"
+d850 3
+@
+
+
+2.66
+log
+@Use ExtraJacobian for profile quantity derivatives
+@
+text
+@d52 1
+a52 1
+    use Intrinsic, only: L_LOWESTRETRIEVEDPRESSURE, L_VMR, Lit_Indices
+d154 1
+a154 1
+    call compute_model_plane ( fwdModelExtra, config, fmStat%maf, &
+d156 3
+a158 2
+    if ( .not. inOrbitPlane ) then
+    end if
+d413 72
+d827 1
+a827 1
+       "$Id: ForwardModelWrappers.f90,v 2.64 2013/07/26 18:20:26 vsnyder Exp $"
+d837 3
+@
+
+
+2.65
+log
+@Pass Hessian as keyword argument; stopgap until new MIF transformations work
+@
+text
+@d54 2
+a55 1
+    use MATRIXMODULE_1, only: CHECKINTEGRITY, MATRIX_T
+d74 3
+a76 3
+    type(vector_T), intent(inout), target :: FWDMODELIN ! The state
+    type(vector_T), intent(in) :: FwdModelExtra
+    type(vector_T), intent(inout) :: FWDMODELOUT  ! Radiances, etc.
+d78 1
+a78 1
+    type(matrix_T), intent(inout), optional, target :: JACOBIAN ! The
+d80 1
+a80 1
+    type(hessian_T), intent(inout), optional :: HESSIAN ! No transformation
+d105 4
+a108 1
+    type(qtyStuff_t) :: EXTQty(nt)         ! extinction quantities, see NT
+d116 4
+a119 2
+    ! Molecule types corresponding to qTypes:
+    integer, parameter :: MTypes(nt) = (/ l_Extinction, l_Extinctionv2, l_RHI /)
+d122 3
+a124 3
+    ! Quantity types for MIF extinction:
+    integer, parameter :: QTypes(nt) = &
+      & (/ l_MIFExtinction, l_MIFExtinctionv2, l_MIFRHI /)
+d189 4
+a192 4
+        ! First, check whether the transformed extinction is in a
+        ! molecules field in the config.  MIFQty(i)%wasSpecific is a temp here.
+        MIFQty(i)%wasSpecific = any(config%molecules == mTypes(i))
+        if ( MIFQty(i)%wasSpecific ) &
+d194 1
+a194 1
+            & fwdModelExtra, quantityType=qTypes(i), config=config, &
+d196 4
+a199 1
+          ! MIFQty(i)%wasSpecific is no longer a temp here
+d202 2
+a203 2
+          & extQty(i) = GetQtyStuffForForwardModel ( fwdModelIn,      &
+            & fwdModelExtra, quantityType=l_vmr, molecule=mTypes(i),  &
+d206 1
+a206 1
+        doTrans(i) = MIFQty(i)%wasSpecific .and. extQty(i)%wasSpecific
+d208 11
+a218 5
+          derivs(i) = any( config%molecules == mTypes(i) .and. &
+                    &      config%moleculeDerivatives )
+          ! If molecule derivatives are requested for MTypes(i), make
+          ! sure there is a Jacobian, and that both MIFQty(i) and EXTQty(i)
+          ! are in the state vector, not the extra vector
+d221 1
+a221 1
+            &   extQty(i)%foundInFirst ) ) then
+d223 4
+a226 4
+              & 'TransformMIFextinction or TransformMIFRHI requested ' // &
+              & 'in %S with derivatives, but Jacobian is not present, ' // &
+              & 'or %S is not in state vector', &
+              & datum=[config%name,lit_indices(mTypes(i))] )
+d232 1
+a232 1
+      if ( .not. any(MIFqty%wasSpecific .and. extQty%wasSpecific) ) &
+d234 2
+a235 2
+          & 'TransformMIFextinction or TransformMIFRHI requested, but ' // &
+          & 'necessary quantities are not specific' )
+d239 2
+d262 1
+a262 1
+            & lrp%values(1,1), extrapExponent, extQty(i)%qty, dumpTransform )
+d267 1
+a267 1
+      call doForwardModels
+d273 3
+a275 3
+          & call transform_FWM_Qty ( config, fmStat%MAF, fwdModelOut, &
+            & extQty(i)%qty, MIFQty(i)%qty, ptan, extrapForm, Jacobian,      &
+            & dumpTransform, clean )
+d277 1
+d323 1
+a323 1
+      
+d342 3
+a344 1
+    subroutine DoForwardModels
+d360 1
+a360 1
+          FwdModelOut, fmStat, Jacobian, Hessian=Hessian )
+d416 1
+a416 1
+    &                            PTan, ExtrapForm, Jacobian, &
+d439 1
+a439 1
+    type(vector_T), intent(inout) :: FWDMODELOUT  ! Radiances, etc.
+d444 1
+a444 1
+    type(matrix_T), intent(inout) :: Jacobian
+d451 1
+a451 1
+    integer :: FCols(f_qty%template%noInstances) ! of Jacobian, j in wvs-107
+d456 1
+d458 1
+a458 1
+    type(vectorValue_t), pointer :: O_Qty        ! Qty of output vector
+d461 1
+a461 1
+    real(rm) :: RowSum ! sum(Jacobian%block(jRow,fCols)%values(cz,:))
+d471 1
+a471 1
+      fCols(inst) = findBlock ( Jacobian%col, f_qty%index, inst )
+d518 1
+a518 1
+          call dump ( Jacobian, 'Jacobian from forward model', dumpTransform(2)-3, &
+d524 1
+a524 1
+           & all(Jacobian%block(jRow,fCols)%kind == m_absent) ) then
+d577 1
+a577 1
+      ! rowSum = sum(Jacobian%block(jRow,fCols)%values(cz,surf))
+d582 1
+a582 1
+                select case ( Jacobian%block(jRow,fCols(inst))%kind )
+d585 1
+a585 1
+                    & Jacobian%block(jRow,fCols(inst))%values(cz,surf)
+a649 12
+    ! Destroy columns of Jacobian corresponding to f_qty so retriever has
+    ! no hope of trying to retrieve extinction.
+    do jCol = 1, size(fCols)
+      do jRow = 1, Jacobian%row%nb
+        call destroyBlock ( Jacobian%block(jRow,fCols(jCol)) )
+      end do ! jRow
+    end do ! jCol
+
+    ! Make values of f_Qty zero so as not to confuse the calculation of
+    ! aj%axmax in the retriever
+    f_qty%values = 0.0
+
+@
+
+
+2.64
+log
+@Cannonball polishing, especially error messages
+@
+text
+@d340 1
+a340 1
+          FwdModelOut, fmStat, Jacobian, Hessian )
+d745 1
+a745 1
+       "$Id: ForwardModelWrappers.f90,v 2.63 2013/07/25 00:25:23 vsnyder Exp $"
+d755 3
+@
+
+
+2.63
+log
+@Add MIF RHI transformation
+@
+text
+@d164 1
+a164 1
+    t1 = 3 ! Assume no transformations
+d167 2
+a168 2
+      t1 = e1
+      t2 = e2
+d174 1
+a174 1
+    doTrans = .false.
+d178 2
+a179 1
+          & 'TransformMIFextinction requires SIGNALS in %S', datum=config%name )
+d190 1
+d208 3
+a210 2
+              & 'TransformMIFextinction requested in %S with derivatives, ' // &
+              & 'but Jacobian is not present, or %S is not in state vector', &
+d219 2
+a220 1
+          & 'TransformMIFextinction requested, but necessary quantities are not specific' )
+d223 1
+a223 1
+    if ( any(doTrans) ) then
+d402 1
+a402 1
+    ! See Equations (3) and (4) in wvs-107.
+d420 2
+a421 2
+    type(vectorValue_t), intent(in) :: F_Qty ! Extinction quantity in fwmState
+    type(vectorValue_t), intent(in) :: S_Qty ! MIF Extinction quantity in State
+d518 1
+a518 1
+                   & 'Band structure wrong for Transformed MIF extinction block' )
+d521 1
+a521 1
+              & 'Transformed MIF extinction block neither absent or banded' )
+d544 2
+a545 1
+      !{ Compute the inner sum in Equations (3) and (4) in wvs-107.
+d687 2
+a688 1
+    ! Interpolate in Zeta only, from S_Qty to the first column of F_Qty
+d690 2
+a691 2
+      & ptan%values(p,maf), s_qty%values(p,maf), &
+      & f_qty%template%surfs(:,1), f_qty%values(:,1), 'L', 'C' )
+d693 6
+d727 2
+a731 4
+    do i = f_lrp+1, ubound(f_qty%values,1)
+      f_qty%values(i,2:) = f_qty%values(i,1)
+    end do
+
+d745 1
+a745 1
+       "$Id: ForwardModelWrappers.f90,v 2.62 2013/07/17 16:26:21 wgread Exp $"
+d755 3
+@
+
+
+2.62
+log
+@restore linear correction wgr
+@
+text
+@d50 1
+a50 1
+      & L_MIFEXTINCTIONV2, L_POLARLINEAR, L_PTAN, L_SCAN, L_SCAN2D, &
+d60 1
+a60 1
+    use Molecules, only: L_EXTINCTION, L_EXTINCTIONV2
+d84 1
+a84 1
+    integer, parameter :: NT = 2           ! Number of kinds of extinction to
+d86 3
+a88 1
+                                           ! 2 = extinctionV2
+d104 1
+a104 2
+    type(qtyStuff_t) :: EXTQty(nt)         ! extinction quantities
+                                           ! (1) is extinction, (2) is extinctionv2
+d113 1
+a113 1
+    integer, parameter :: MTypes(nt) = (/ l_Extinction, l_Extinctionv2 /)
+d117 2
+a118 1
+    integer, parameter :: QTypes(nt) = (/ l_MIFExtinction, l_MIFExtinctionv2 /)
+d120 2
+a121 1
+    real :: Time_start, Time_end 
+d164 10
+d175 1
+a175 1
+    if ( config%transformMIFextinction ) then
+d180 1
+a180 1
+      do i = 1, nt
+d238 1
+a238 1
+      do i = 1, nt
+d240 1
+a240 1
+          call transform_MIF_extinction ( fmStat%MAF, MIFQty(i)%qty, ptan, &
+d250 1
+a250 1
+      do i = 1, nt
+d252 1
+a252 1
+          & call transform_FWM_extinction ( config, fmStat%MAF, fwdModelOut, &
+d391 3
+a393 3
+  subroutine Transform_FWM_extinction ( Config, MAF, FwdModelOut, F_Qty, S_Qty, &
+    &                                   PTan, ExtrapForm, Jacobian, &
+    &                                   DumpTransform, Clean )
+d402 1
+d435 1
+d454 22
+a475 10
+    !{ Evaluate Equation (2) from wvs-107, \emph{viz.}
+    ! \begin{equation*}
+    ! 10^{-2(\zeta_g-\zeta_r)} = \left( \frac{P_g}{P_r} \right)^2
+    ! \end{equation*}
+    ! $-2$ is the default if {\tt extrapForm} is not specified.
+
+    forall ( vSurf=1:size(ptan%values,1), surf=1:f_qty%template%noSurfs ) &
+      & p(vSurf,surf) = &
+        & 10.0_rm ** ( extrapForm * ( f_qty%template%surfs(surf,1) - &
+                                    & ptan%values(vSurf,maf) ) )
+d500 2
+a501 3
+          ! Zero MIF extinction blocks of Jacobian that are off-diagonal
+          ! or would not be filled because all corresponding extinction
+          ! blocks are absent.
+d508 1
+a508 1
+              & forWhom='Transform_FWM_extinction' )
+d519 2
+a520 1
+          do vSurf = 1, size(ptan%values,1) ! i in wvs-107, Same for all fCols
+d526 10
+a535 9
+!             if ( associated(s_qty%mask) ) then
+!               if ( iand(ichar(s_qty%mask(vsurf,1)), m_linAlg) /= 0 ) cycle
+!             end if
+            ! Jacobian is banded.  The only nonzeros in a column are in
+            ! rows for the same MIF as the column, and the maximum number of
+            ! nonzeros is the number of channels in the band.  This could be
+            ! sharpened to the range from the smallest to largest channel
+            ! numbers, but the computations would be messier.
+            cz = cv + nVecChans*(vSurf-1) ! ci in wvs-107
+d537 1
+a537 1
+            ! small-to-large order
+d540 13
+a552 13
+    !{ Compute the inner sum in Equations (3) and (4) in wvs-107.
+    ! \begin{equation*}
+    !  \sum_{j=1}^{N_\zeta} K^F_{nj,cig}
+    ! \end{equation*}
+    ! where $n$ is the Jacobian block row number,\\
+    ! $j$ is the Jacobian block column number,\\
+    ! $c$ is the channel number,\\
+    ! $i$ is the MIF number, and\\
+    ! $g$ is the surface ($\zeta$) number.
+
+    ! But we can't do
+    ! rowSum = sum(Jacobian%block(jRow,fCols)%values(cz,surf))
+    ! because "values" has the POINTER attribute.
+d563 1
+a563 1
+                    & "Transform_FWM_extinction cannot handle sparse or banded blocks" )
+d567 17
+a583 9
+    !{Compute the retriever's Jacobian using Equation (3) in wvs-107
+    ! \begin{equation*}
+    ! \begin{array}{lll}
+    !  K^R_{nn,cii} = \sum_{g=1}^{N_\zeta}
+    !   \left( \sum_{j=1}^{N_\phi} K^F_{nj,cig} \right)
+    !   10^{-2(\zeta_g - \zeta_i)} & i = 1, \dots, N_m & c = 1, \dots, N_C\,, \\
+    ! \end{array}
+    ! \end{equation*}
+    ! where the subscripts are as above.
+d589 17
+a605 16
+    !{Compute radiance using Equation (4) in wvs-107
+    ! \begin{equation*}
+    ! \begin{array}{lll}
+    ! I^R_{ci,n} = I^F_{ci,n} + \sum_{g=1}^{N_\zeta}
+    !  \left( \sum_{j=1}^{N_\phi} K^F_{nj,cig} \right)
+    !  \left( E^R_{i,n} 10^{-2(\zeta_g - \zeta_i)} -
+    !   E^F_{g,1} \right) & i = 1, \dots, N_m & c = 1, \dots, N_C \,, \\
+    ! \end{array}
+    ! \end{equation*}
+    ! where the subscripts are as above.
+
+! Let's not do the linear radiance correction. This may improve the fit the
+! actual radiances. Works better with correction in place on actual data.
+              o_qty%values(cz,maf) = o_qty%values(cz,maf) + &
+                & rowSum * ( s_qty%values(vSurf,maf) * p(vSurf,surf) - &
+                           & f_qty%values(surf,1) )
+d607 1
+d636 1
+a636 1
+  end subroutine Transform_FWM_extinction
+d639 2
+a640 2
+  subroutine Transform_MIF_Extinction ( MAF, S_Qty, PTan, Lrp, &
+    &                                   ExtrapExponent, F_Qty, DumpTransform )
+d649 1
+d687 30
+a716 23
+     !{ Apply a $P^{-2}$ dependence, Equation (2) in wvs-107, to compute
+     !  extinction for the forward model, by extrapolating downward from
+     !  the zeta above, or equal to, LRP = $\zeta_r$.
+     !  $-2$ is the default if {\tt extrapExponent} is not specified.
+     ! \renewcommand{\arraystretch}{2}
+     ! \begin{equation*}
+     ! E^F_{g,j} = \left\{
+     ! \begin{array}{llll}
+     !  \overline{E}^R_{n}(\zeta_g)
+     !   & \zeta_g \geq \zeta_r & j = 1, \dots, N_\phi & g = 1, \dots, N_\zeta \\
+     !  \overline{E}^R_{n}(\zeta_r) \times 10^{-2(\zeta_g - \zeta_r)}
+     !   & \zeta_g < \zeta_r    & j = 1, \dots, N_\phi & g = 1, \dots, N_\zeta \\
+     ! \end{array} \right.
+     ! \end{equation*}
+     ! {\tt hGrids} of {\tt F_Qty} and {\tt S_Qty} have same extent and
+     ! spacing. Vertical coordinate is $\zeta = \log_{10}P$, so
+     ! $10^{-2\zeta}$ is $P^{-2}$).
+
+    do i = 1, f_lrp
+      f_qty%values(i,:) = f_qty%values(f_lrp+1,1) * &
+        & 10.0_rm ** ( extrapExponent * ( f_qty%template%surfs(i,1) - &
+                                        & ptan%values(p(s_lrp+1),1) ) )
+    end do
+d730 1
+a730 1
+  end subroutine Transform_MIF_Extinction
+d735 1
+a735 1
+       "$Id: ForwardModelWrappers.f90,v 2.61 2013/07/12 23:48:54 vsnyder Exp $"
+d745 3
+@
+
+
+2.61
+log
+@Some stuff for out-of-orbit-plane viewing
+@
+text
+@d565 4
+a568 4
+! actual radiances.
+!              o_qty%values(cz,maf) = o_qty%values(cz,maf) + &
+!                & rowSum * ( s_qty%values(vSurf,maf) * p(vSurf,surf) - &
+!                           & f_qty%values(surf,1) )
+d689 1
+a689 1
+       "$Id: ForwardModelWrappers.f90,v 2.60 2013/07/12 23:25:28 vsnyder Exp $"
+d699 3
+@
+
+
+2.60
+log
+@Remove unreferenced error messages
+@
+text
+@d89 2
+a90 1
+                                           ! counterclockwise from orbit plane
+d689 1
+a689 1
+       "$Id: ForwardModelWrappers.f90,v 2.59 2013/07/02 23:31:03 wgread Exp $"
+d699 3
+@
+
+
+2.59
+log
+@remove linear correction for transformed mif extinction-wgr
+@
+text
+@d32 1
+a32 1
+    & FwdModelOut, fmStat, Jacobian, Hessian, Vectors )
+d37 1
+d47 1
+a47 1
+    use INIT_TABLES_MODULE, only: L_BASELINE, L_CLOUDFULL, &
+a61 1
+    use Output_m, only: Output
+d88 2
+d106 2
+a107 1
+    integer :: I, J, K
+d112 1
+d143 6
+d395 2
+a396 1
+    use VECTORSMODULE, only: DUMP, M_IGNORE, M_LINALG, VECTOR_T, VECTORVALUE_T
+d688 1
+a688 1
+       "$Id: ForwardModelWrappers.f90,v 2.58 2013/05/21 23:52:47 vsnyder Exp $"
+d698 3
+@
+
+
+2.58
+log
+@Add MIFExtinctionExtrapolation and MIFExtinctionForm
+@
+text
+@d552 5
+a556 3
+              o_qty%values(cz,maf) = o_qty%values(cz,maf) + &
+                & rowSum * ( s_qty%values(vSurf,maf) * p(vSurf,surf) - &
+                           & f_qty%values(surf,1) )
+d677 1
+a677 1
+       "$Id: ForwardModelWrappers.f90,v 2.57 2013/04/13 01:33:53 vsnyder Exp $"
+d687 3
+@
+
+
+2.57
+log
+@Fix a typo, polish some LaTeX stuff
+@
+text
+@d48 3
+a50 2
+      & L_MIFEXTINCTION, L_MIFEXTINCTIONV2, L_POLARLINEAR, L_PTAN, L_SCAN, &
+      & L_SCAN2D, L_SWITCHINGMIRROR
+d54 1
+d101 2
+d196 9
+d216 2
+a217 2
+          call transform_MIF_extinction ( fmStat%MAF, MIFQty(i)%qty, &
+            & ptan, lrp%values(1,1), extQty(i)%qty, dumpTransform )
+d229 2
+a230 2
+            & extQty(i)%qty, MIFQty(i)%qty, ptan, Jacobian, dumpTransform,   &
+            & clean )
+d368 2
+a369 1
+    &                                   PTan, Jacobian, DumpTransform, Clean )
+d393 1
+d431 1
+d435 2
+a436 2
+        & 10.0_rm ** ( -2.0_rm * ( f_qty%template%surfs(surf,1) - &
+                                   ptan%values(vSurf,maf) ) )
+d587 2
+a588 2
+  subroutine Transform_MIF_Extinction ( MAF, S_Qty, PTan, Lrp, F_Qty, &
+    &                                   DumpTransform )
+d608 1
+d637 1
+d654 2
+a655 2
+        & 10.0_rm ** ( - 2.0 * ( f_qty%template%surfs(i,1) - &
+                               & ptan%values(p(s_lrp+1),1) ) )
+d675 1
+a675 1
+       "$Id: ForwardModelWrappers.f90,v 2.56 2013/04/12 00:30:06 vsnyder Exp $"
+d685 3
+@
+
+
+2.56
+log
+@Make f_lrp, s_lrp be indices just below lrp, not nearest to lrp
+@
+text
+@d603 4
+a606 2
+    ! Find indices in f_qty%template%surfs and ptan%values just below, but
+    ! not equal to, LRP
+d610 1
+a610 1
+    if ( ptan%values(p(s_lrp),1) == lrp ) s_lrp = s_lrp
+d616 4
+a619 2
+     !{ Apply a $P^{-2}$ dependence, Equation (2) in wvs-107,
+     !  to compute extinction for the forward model
+d630 3
+a632 3
+     ! {\tt hGrids} of {\tt F_Qty} and {\tt S_Qty} have same extent and spacing.
+     ! Vertical coordinate is $\zeta = \log_{10}P$,
+     ! so $10^{-2\zeta}$ is $P^{-2}$).
+d657 1
+a657 1
+       "$Id: ForwardModelWrappers.f90,v 2.55 2013/03/20 22:47:35 vsnyder Exp $"
+d667 3
+@
+
+
+2.55
+log
+@Add config to references to GetQuantityForForwardModel
+@
+text
+@d40 2
+a41 1
+    use ForwardModelVectorTools, only: GETQUANTITYFORFORWARDMODEL
+d50 1
+a50 1
+    use Intrinsic, only: L_LOWESTRETRIEVEDPRESSURE, L_VMR
+a52 1
+    use MLSL2OPTIONS, only: MLSMESSAGE
+d54 2
+a55 1
+    use MLSMESSAGEMODULE, only: MLSMESSAGECALLS, MLSMSG_ERROR, MLSMSG_WARNING
+d58 1
+d81 6
+a86 1
+    logical :: Clean                      ! Dumps are clean, from switch dxfc
+d88 21
+a108 18
+    integer :: DumpTransform(3)           ! Dump levels for transformed stuff
+                                          ! 1 = 1's digit => Input and output
+                                          !     details = 1's digit - 2
+                                          ! 2 = 10's digit => FWM Jacobian
+                                          !     details = 10's digit - 4
+                                          ! 3 = 100's digit => Transformed Jacobian
+                                          !     details = 100's digit - 4
+    integer :: FMNaN                      ! Level of fmnan switch
+    integer :: I, K
+    type(vectorValue_t), pointer :: LRP   ! Lowest Retrieved Pressure
+    integer :: NQty                       ! Number of quantities to transform
+    type(vectorValue_t), pointer :: Ptan  ! Tangent pressure
+    type(qtyStuff_t) :: &                 ! Pointers to MIF extinction quantities
+      & Qtys(count( &                     ! (:,1) are MIF-basis, (:,2) are gridded
+          &   fwdModelIn%quantities%template%quantityType == L_MIFExtinction .or. &
+          &   fwdModelIn%quantities%template%quantityType == L_MIFExtinctionV2    &
+        & ) ,2)
+    character(len=132) :: THISNAME
+a109 8
+    logical :: WasSpecific(count( &
+          &   fwdModelIn%quantities%template%quantityType == L_MIFExtinction .or. &
+          &   fwdModelIn%quantities%template%quantityType == L_MIFExtinctionV2    &
+        & ) )
+
+    interface MINLOC_S
+      module procedure MINLOC_S_S, MINLOC_S_D
+    end interface
+d139 8
+d148 1
+a148 5
+      ! Transform MIFextinction quantities to extinction molecules before
+      ! calling the forward model, and transform extinction molecules and
+      ! associated columns of the Jacobian to MIF extinction quantities after
+      ! return.  See wvs-107.
+      if ( size(qtys) == 0 ) &
+d150 32
+a181 25
+          & 'Forward model config ' // trim(thisName) // &
+          & ' requests MIF extinction transformation, but there are no' // &
+          & ' MIF extinction quantities' )
+      ! Find MIF extinction quantities in the state vector, and their
+      ! corresponding extinction quantities
+      nQty = 0
+      do i = 1, size(fwdModelIn%quantities)
+        if ( fwdModelIn%quantities(i)%template%radiometer /= &
+           & config%signals(1)%radiometer ) cycle
+        if ( fwdModelIn%quantities(i)%template%quantityType == l_MIFextinction ) then
+          nQty = nQty + 1
+          qtys(nQty,1)%qty => fwdModelIn%quantities(i)
+          qtys(nQty,2)%qty => GetQuantityForForwardModel ( fwdModelIn,     &
+               & quantityType=l_vmr, molecule=l_extinction, config=config, &
+               & radiometer=qtys(nQty,1)%qty%template%radiometer,          &
+               & foundInFirst=qtys(nQty,2)%foundInFirst,                   &
+               & wasSpecific=wasSpecific(nQty) )
+        else if( fwdModelIn%quantities(i)%template%quantityType == l_MIFextinctionv2 ) then
+          nQty = nQty + 1
+          qtys(nQty,1)%qty => fwdModelIn%quantities(i)
+          qtys(nQty,2)%qty => GetQuantityForForwardModel ( fwdModelIn,       &
+               & quantityType=l_vmr, molecule=l_extinctionv2, config=config, &
+               & radiometer=qtys(nQty,1)%qty%template%radiometer,            &
+               & foundInFirst=qtys(nQty,2)%foundInFirst,                     &
+               & wasSpecific=wasSpecific(nQty) )
+d183 1
+d185 7
+d200 5
+a204 8
+      ! Transform MIF extinction quantities to extinction molecules
+      do k = 1, nQty
+        call transform_MIF_extinction &
+          & ( fmStat%MAF, qtys(k,1)%qty, ptan, lrp%values(1,1), qtys(k,2)%qty, &
+            & dumpTransform )
+        if ( dumpTransform(1) >= 1 ) then
+          call output ( qtys(nQty,2)%foundInFirst, before='FoundInFirst =' )
+          call output ( wasSpecific(nQty), before=' WasSpecific =', advance='yes' )
+d213 5
+a217 3
+      do k = 1, nQty
+        call transform_FWM_extinction ( config, fmStat%MAF, fwdModelOut, &
+          & qtys(k,2)%qty, qtys(k,1)%qty, ptan, Jacobian, dumpTransform, clean )
+a218 1
+
+a352 16
+  pure integer function MINLOC_S_S ( A ) result ( MS )
+    ! Return the subscript in A of the minimum absolute value, as a scalar
+    real, intent(in) :: A(:)
+    integer :: M(1)
+    m = minloc(abs(a))
+    ms = m(1)
+  end function MINLOC_S_S
+
+  pure integer function MINLOC_S_D ( A ) result ( MS )
+    ! Return the subscript in A of the minimum absolute value, as a scalar
+    double precision, intent(in) :: A(:)
+    integer :: M(1)
+    m = minloc(abs(a))
+    ms = m(1)
+  end function MINLOC_S_D
+
+d438 1
+a438 1
+          call dump ( Jacobian, 'Jacobian from forward model', dumpTransform(2)-4, &
+d550 1
+a550 1
+          call dump ( Jacobian, 'Transformed Jacobian', dumpTransform(3)-4, &
+d582 2
+a583 1
+    use MLSNumerics, only: InterpolateValues
+d595 1
+a595 1
+    integer :: F_LRP   ! Index in F_Qty%Surfs of LRP
+d598 1
+a598 5
+    integer :: S_LRP   ! Index in S_Qty%Surfs of LRP
+
+    interface MINLOC_S
+      module procedure MINLOC_S_S, MINLOC_S_D
+    end interface
+d603 6
+a608 2
+    f_lrp = minloc_s(lrp - f_qty%template%surfs(:,1))
+    s_lrp = minloc_s(lrp - ptan%values(p,1))
+d630 2
+a631 2
+    do i = 1, f_lrp-1
+      f_qty%values(i,:) = f_qty%values(f_lrp,1) * &
+d633 1
+a633 1
+                               & ptan%values(p(s_lrp),1) ) )
+d636 1
+a636 1
+    do i = f_lrp, ubound(f_qty%values,1)
+d644 2
+d653 1
+a653 1
+       "$Id: ForwardModelWrappers.f90,v 2.54 2013/03/15 20:35:26 vsnyder Exp $"
+d663 3
+@
+
+
+2.54
+log
+@Change debug print level threshold from zero to one
+@
+text
+@d57 1
+d83 1
+d85 1
+d87 1
+d96 1
+a96 1
+        &     fwdModelIn%quantities%template%quantityType == L_MIFExtinctionV2 &
+d100 4
+d156 5
+a160 3
+          qtys(nQty,2)%qty => GetQuantityForForwardModel ( fwdModelIn, &
+               & quantityType=l_vmr, molecule=l_extinction, &
+               & radiometer=fwdModelIn%quantities(i)%template%radiometer )
+d164 5
+a168 3
+          qtys(nQty,2)%qty => GetQuantityForForwardModel ( fwdModelIn, &
+               & quantityType=l_vmr, molecule=l_extinctionv2, &
+               & radiometer=fwdModelIn%quantities(i)%template%radiometer )
+d173 1
+a173 1
+               & quantityType=l_lowestRetrievedPressure )
+d177 1
+a177 1
+               & quantityType=l_ptan, &
+d184 4
+d424 1
+a424 1
+        & sideband=sb )
+d430 1
+a430 1
+        call dump ( o_qty, dumpTransform(1), &
+d435 1
+a435 1
+          call dump ( Jacobian, 'Jacobian from forward model', dumpTransform(2), &
+d542 1
+a542 1
+        call dump ( o_qty, dumpTransform(1), &
+d547 1
+a547 1
+          call dump ( Jacobian, 'Transformed Jacobian', dumpTransform(3), &
+d637 4
+a640 3
+      call dump ( ptan%values(p,maf), name='PTan zetas' )
+      call dump ( s_qty, details=dumpTransform(1), name='from fwdModelIn' )
+      call dump ( f_qty, details=dumpTransform(1), name='to forward model' )
+d647 1
+a647 1
+       "$Id: ForwardModelWrappers.f90,v 2.53 2012/08/16 18:19:54 pwagner Exp $"
+d657 3
+@
+
+
+2.53
+log
+@Exploit level 2-savvy MLSMessage
+@
+text
+@d412 1
+a412 1
+      if ( dumpTransform(1) >= 0 ) then
+d417 1
+a417 1
+      if ( dumpTransform(2) >= 0 ) then
+d524 1
+a524 1
+      if ( dumpTransform(1) >= 0 ) then
+d529 1
+a529 1
+      if ( dumpTransform(3) >= 0 ) then
+d620 1
+a620 1
+    if ( dumpTransform(1) >= 0 ) then
+d630 1
+a630 1
+       "$Id: ForwardModelWrappers.f90,v 2.51 2012/08/10 22:49:26 vsnyder Exp $"
+d640 3
+@
+
+
+2.52
+log
+@Specify instrument module for PTAN instead of hoping for the best
+@
+text
+@d40 1
+a40 1
+    use ForwardModelVectorTools, only: GetQuantityForForwardModel
+d46 2
+a47 2
+      & L_Extinction, L_ExtinctionV2, L_FULL, L_HYBRID, L_LINEAR, &
+      & L_MIFExtinction, L_MIFExtinctionV2, L_POLARLINEAR, L_Ptan, L_SCAN, &
+d49 1
+a49 1
+    use Intrinsic, only: L_LowestRetrievedPressure, L_VMR
+d51 2
+a52 1
+    use MATRIXMODULE_1, only: CHECKINTEGRITY, FindBlock, MATRIX_T
+d54 1
+a54 1
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECALLS, MLSMSG_ERROR, MLSMSG_WARNING
+d56 1
+a56 1
+    use Molecules, only: L_Extinction, L_ExtinctionV2
+a83 1
+    integer :: FCol, FRow                 ! Column, Row of block in fwmJacobian
+a85 2
+    integer :: Inst                       ! Instance index
+    integer :: JRow, JCol                 ! Row, Column of block in Jacobian
+a93 2
+    type(vector_t), pointer :: TheState
+    type(matrix_T), pointer :: TheJacobian
+a95 1
+    logical :: Transform
+d343 10
+a352 9
+    use ForwardModelConfig, only: ForwardModelConfig_T
+    use ForwardModelVectorTools, only: GetQuantityForForwardModel
+    use Intrinsic, only: L_Radiance
+    use MatrixModule_0, only: DestroyBlock, M_Absent, M_Banded, M_Full
+    use MatrixModule_1, only: FindBlock, CreateBlock, Dump, Matrix_T
+    use MLSKinds, only: RM, RV
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
+    use Output_m, only: Output
+    use VectorsModule, only: Dump, M_Ignore, M_LinAlg, Vector_t, VectorValue_t
+d640 3
+@
+
+
+2.51
+log
+@Don't test linalg flag
+@
+text
+@d170 2
+a171 1
+               & quantityType=l_ptan )
+d453 3
+a455 1
+            ! ??? Why doesn't this work ???
+d541 2
+a542 1
+    ! Destroy columns of Jacobian corresponding to f_qty
+d634 1
+a634 1
+       "$Id: ForwardModelWrappers.f90,v 2.50 2012/07/31 00:49:33 vsnyder Exp $"
+d644 3
+@
+
+
+2.50
+log
+@Correct testing a dump switch
+@
+text
+@a374 1
+    integer :: Mask    ! LinAlg bit from S_Qty
+d450 6
+d477 1
+a477 1
+    ! rowSum = sum(Jacobian%block(jRow,fCols)%values(cz,:))
+d503 3
+a505 7
+              mask = 0
+              if ( associated(s_qty%mask) ) &
+                & mask = iand(ichar(s_qty%mask(vsurf,1)), m_ignore+m_linAlg)
+              if ( mask == 0 ) &
+                & Jacobian%block(jRow,jCols(jCol))%values(cz,1) = &
+                  & Jacobian%block(jRow,jCols(jCol))%values(cz,1) + &
+                    & rowSum * p(vSurf,surf)
+d519 3
+a521 3
+                  & rowSum * ( s_qty%values(vSurf,maf) * p(vSurf,surf) - &
+                             & f_qty%values(surf,1) )
+            end do ! surf
+d630 1
+a630 1
+       "$Id: ForwardModelWrappers.f90,v 2.49 2012/07/06 01:54:33 vsnyder Exp $"
+d640 3
+@
+
+
+2.49
+log
+@Transform only rows of Jacobian and radiance that are produced by current
+forward model config.  Revise some dumps.
+@
+text
+@d619 1
+a619 1
+    if ( dumpTransform(1) /= 0 ) then
+d629 1
+a629 1
+       "$Id: ForwardModelWrappers.f90,v 2.48 2012/07/06 00:57:20 vsnyder Exp $"
+d639 4
+@
+
+
+2.48
+log
+@ForwardModelWrappers.f90
+@
+text
+@d414 12
+a425 13
+      if ( any(dumpTransform(1:2) >= 0) ) then
+        ! Dump the radiance and Jacobian columns to be transformed
+        if ( dumpTransform(1) >= 0 ) then
+          call output ( MAF, before='MAF ' )
+          call dump ( o_qty, dumpTransform(1), &
+            & ' fwdModelOut before transformation', options=merge('-c','  ',clean) )
+        end if
+        if ( dumpTransform(2) >= 0 ) then
+          do inst = 1, size(fCols)
+            call dump ( Jacobian, 'Jacobian from forward model', dumpTransform(2), &
+              & row=jRow, column=fCols(inst) )
+          end do
+        end if
+a426 1
+      nVecChans = o_qty%template%noChans
+d524 12
+a535 1
+    end do ! jRow
+a547 19
+    if ( any(dumpTransform(1:3:2) >= 0) ) then
+      ! Dump the transformed parts of the radiance and Jacobian
+      do jRow = 1, Jacobian%row%nb
+        o_qty => fwdModelOut%quantities(Jacobian%row%quant(jRow))
+        if ( o_qty%template%quantityType /= l_radiance ) cycle
+        if ( dumpTransform(1) >= 0 ) then
+          call output ( MAF, before='MAF ' )
+          call dump ( o_qty, dumpTransform(1), &
+            & ' fwdModelOut after transformation', options=merge('-c','  ',clean) )
+        end if
+        if ( dumpTransform(3) >= 0 ) then
+          do inst = 1, size(jCols)
+            call dump ( Jacobian, 'Transformed Jacobian', dumpTransform(3), &
+              & row=jRow, column=jCols(inst) )
+          end do
+        end if
+      end do
+    end if
+
+d629 1
+a629 1
+       "$Id: ForwardModelWrappers.f90,v 2.47 2012/07/04 02:15:01 vsnyder Exp $"
+d639 3
+@
+
+
+2.47
+log
+@Don't compute masked rows of Jacobian.
+@
+text
+@d38 1
+a38 2
+      & DESTROYFORWARDMODELDERIVED, FORWARDMODELCONFIG_T
+    use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T, QtyStuff_t
+d184 1
+a184 1
+        call transform_FWM_extinction ( fmStat%MAF, fwdModelOut, &
+d339 2
+a340 2
+  subroutine Transform_FWM_extinction ( MAF, FwdModelOut, F_Qty, S_Qty, PTan, &
+    &                                   Jacobian, DumpTransform, Clean )
+d347 2
+d357 1
+d367 1
+d380 1
+d385 2
+d392 1
+d397 19
+a415 5
+    if ( any(dumpTransform(1:2) >= 0) ) then
+      ! Dump the radiance and Jacobian columns to be transformed
+      do jRow = 1, Jacobian%row%nb
+        o_qty => fwdModelOut%quantities(Jacobian%row%quant(jRow))
+        if ( o_qty%template%quantityType /= l_radiance ) cycle
+d427 1
+a427 17
+      end do
+    end if
+
+    !{ Evaluate Equation (2) from wvs-107, \emph{viz.}
+    ! \begin{equation*}
+    ! 10^{-2(\zeta_g-\zeta_r)} = \left( \frac{P_g}{P_r} \right)^2
+    ! \end{equation*}
+
+    forall ( vSurf=1:size(ptan%values,1), surf=1:f_qty%template%noSurfs ) &
+      & p(vSurf,surf) = &
+        & 10.0_rm ** ( -2.0_rm * ( f_qty%template%surfs(surf,1) - &
+                                   ptan%values(vSurf,maf) ) )
+
+    do jRow = 1, Jacobian%row%nb
+      if ( jacobian%row%inst(jRow) /= MAF ) cycle
+      o_qty => fwdModelOut%quantities(Jacobian%row%quant(jRow))
+      if ( o_qty%template%quantityType /= l_radiance ) cycle
+d458 4
+a461 5
+            do cv = 1, nVecChans
+              cz = cv + nVecChans*(vSurf-1) ! ci in wvs-107
+              ! The surf loop runs in reverse order to sum rowSum*p in
+              ! small-to-large order
+              do surf = f_qty%template%noSurfs, 1, -1 ! g in wvs-107
+d477 12
+a488 12
+                rowSum = 0.0
+                do inst = 1, size(fCols)
+                  select case ( Jacobian%block(jRow,fCols(inst))%kind )
+                  case ( m_full )
+                    rowSum = rowSum + &
+                      & Jacobian%block(jRow,fCols(inst))%values(cz,surf)
+                  case ( m_absent )
+                  case default
+                    call MLSMessage ( MLSMSG_Error, moduleName, &
+                      & "Transform_FWM_extinction cannot handle sparse or banded blocks" )
+                  end select
+                end do ! inst
+d500 7
+a506 7
+                mask = 0
+                if ( associated(s_qty%mask) ) &
+                  & mask = iand(ichar(s_qty%mask(vsurf,1)), m_ignore+m_linAlg)
+                if ( mask == 0 ) &
+                  & Jacobian%block(jRow,jCols(jCol))%values(cz,1) = &
+                    & Jacobian%block(jRow,jCols(jCol))%values(cz,1) + &
+                      & rowSum * p(vSurf,surf)
+d519 4
+a522 5
+                o_qty%values(cz,maf) = o_qty%values(cz,maf) + &
+                    & rowSum * ( s_qty%values(vSurf,maf) * p(vSurf,surf) - &
+                               & f_qty%values(surf,1) )
+              end do ! surf
+            end do ! cv
+d639 1
+a639 1
+       "$Id: ForwardModelWrappers.f90,v 2.46 2012/06/15 23:29:39 vsnyder Exp $"
+d649 3
+@
+
+
+2.46
+log
+@Spread extinction interpolated from MIF extinction, below the lowest
+retrieved pressure, to every profile.  Change dump switch interpretation.
+@
+text
+@d354 1
+a354 1
+    use VectorsModule, only: Dump, Vector_t, VectorValue_t
+d372 1
+d496 7
+a502 3
+                Jacobian%block(jRow,jCols(jCol))%values(cz,1) = &
+                  & Jacobian%block(jRow,jCols(jCol))%values(cz,1) + &
+                    & rowSum * p(vSurf,surf)
+a589 1
+    ! Interpolate in Zeta only, from S_Qty to the first column of F_Qty
+d592 5
+a599 2
+    f_lrp = minloc_s(lrp - f_qty%template%surfs(:,1))
+    s_lrp = minloc_s(lrp - ptan%values(p,1))
+d636 1
+a636 1
+       "$Id: ForwardModelWrappers.f90,v 2.45 2012/06/07 00:47:16 vsnyder Exp $"
+d646 4
+@
+
+
+2.45
+log
+@Handle switchDetail properly
+@
+text
+@d80 4
+a83 5
+    integer :: DumpTransform              ! Dump transformed stuff
+                                          ! 1 => Input
+                                          ! 2 => FWM Jacobian
+                                          ! 4 => Transformed Jacobian
+                                          ! Dump level is DumpTransform/10
+d123 6
+a128 1
+    dumpTransform = max(switchDetail(switches,'dxfq'),0)
+d362 1
+a362 1
+    integer, intent(in) :: DumpTransform
+d389 1
+a389 1
+    if ( iand(mod(dumpTransform,10),2) /= 0 ) then
+d394 6
+a399 4
+        call output ( MAF, before='MAF ' )
+        call dump ( o_qty, dumpTransform/10 + 1, &
+          & ' fwdModelOut before transformation', options=merge('-c','  ',clean) )
+        if ( dumpTransform/10 > 0 ) then
+d401 1
+a401 1
+            call dump ( Jacobian, 'Jacobian from forward model', dumpTransform, &
+d531 1
+a531 1
+    if ( iand(mod(dumpTransform,10),4) /= 0 ) then
+d536 6
+a541 4
+        call output ( MAF, before='MAF ' )
+        call dump ( o_qty, dumpTransform/10+1, &
+          & ' fwdModelOut after transformation', options=merge('-c','  ',clean) )
+        if ( dumpTransform/10 > 0 ) then
+d543 1
+a543 1
+            call dump ( Jacobian, 'Transformed Jacobian', dumpTransform, &
+d574 1
+a574 1
+    integer, intent(in) :: DumpTransform      ! Dump S_Qty and F_Qty
+d615 5
+a619 1
+    if ( iand(mod(dumpTransform,10),1) /= 0 ) then
+d621 2
+a622 2
+      call dump ( s_qty, details=dumpTransform/10, name='from fwdModelIn' )
+      call dump ( f_qty, details=dumpTransform/10, name='to forward model' )
+d629 1
+a629 1
+       "$Id: ForwardModelWrappers.f90,v 2.44 2012/06/06 20:41:59 vsnyder Exp $"
+d639 3
+@
+
+
+2.44
+log
+@More and better dumps and messages
+don't clobber Jacobian from prior FWM for same MAF
+@
+text
+@d124 1
+a124 1
+    dumpTransform = switchDetail(switches,'dxfq')
+a316 1
+
+d617 1
+a617 1
+       "$Id: ForwardModelWrappers.f90,v 2.43 2012/05/01 22:24:06 vsnyder Exp $"
+d627 4
+@
+
+
+2.43
+log
+@Use IsRadianceModel component, some cannonball polishing
+@
+text
+@d80 5
+a84 1
+    integer :: DumpTransform              ! Dump transformed vector quantities
+d360 1
+a360 1
+    logical, intent(in) :: Clean              ! for the dumps
+a376 8
+    if ( dumpTransform > -1 ) then
+      call output ( MAF, before='MAF ' )
+      call dump ( fwdModelOut, dumpTransform+1, &
+        & ' fwdModelOut before transformation', clean=clean )
+      if ( dumpTransform > 0 ) &
+        & call dump ( Jacobian, 'Jacobian from forward model', dumpTransform )
+    end if
+
+d386 17
+d419 5
+a423 2
+        if ( Jacobian%col%inst(jCols(jCol)) /= MAF ) then
+          ! Zero off-diagonal MIF extinction blocks of Jacobian
+d431 1
+d439 1
+a439 1
+              & 'Transformed MIF extinction block not absent or banded' )
+a440 1
+          Jacobian%block(jRow,jCols(jCol))%values = 0
+a510 10
+          if ( dumpTransform > 1 ) then
+            do inst = 1, size(fCols)
+              call dump ( Jacobian, details=dumpTransform, &
+                        & name='Forward model Jacobian', &
+                        & row=jrow, column=fCols(inst) )
+            end do
+            call dump ( Jacobian, details=dumpTransform, &
+                      & name='Transformed Jacobian', &
+                      & row=jrow, column=jCols(jCol) )
+          end if
+d526 15
+a540 4
+    if ( dumpTransform > -1 ) then
+      call output ( MAF, before='MAF ' )
+      call dump ( fwdModelOut, dumpTransform+1, &
+        & ' fwdModelOut after transformation', clean=clean )
+d608 1
+a608 1
+    if ( dumpTransform > -1 ) then
+d610 2
+a611 2
+      call dump ( s_qty, details=dumpTransform, name='from fwdModelIn' )
+      call dump ( f_qty, details=dumpTransform, name='to forward model' )
+d618 1
+a618 1
+       "$Id: ForwardModelWrappers.f90,v 2.42 2012/04/20 01:57:15 vsnyder Exp $"
+d628 3
+@
+
+
+2.42
+log
+@Add some dumps, add clean switch.  Handle MAF selection properly. Some
+cannonball polishing.
+@
+text
+@a93 1
+    logical :: RadianceModel
+d130 1
+a130 1
+      ! associated rows of the Jacobian to MIF extinction quantities after
+a186 17
+    call MLSMessageCalls( 'pop' ) ! for all the cases
+
+    radianceModel = any ( config%fwmType == &
+      & (/ l_full, l_linear, l_polarLinear, l_hybrid, l_cloudFull /) )
+    if ( radianceModel ) then
+      call MLSMessageCalls( 'push', constantName='BaselinForwardModel' )
+      call BaselineForwardModel ( config, FwdModelIn, FwdModelExtra, &
+        FwdModelOut, fmStat, Jacobian )
+      call MLSMessageCalls( 'pop' )
+      call add_to_retrieval_timing( 'baseline' )
+      call MLSMessageCalls( 'push', constantName='SwitchingForwardModel' )
+      call SwitchingMirrorModel ( config, FwdModelIn, FwdModelExtra, &
+        FwdModelOut, fmStat, Jacobian )
+      call MLSMessageCalls( 'pop' )
+      call add_to_retrieval_timing( 'switching_mirror' )
+    end if
+
+d246 1
+d253 5
+a287 5
+      case ( l_cloudFull )
+        call MLSMessageCalls( 'push', constantName='CloudForwardModel' )
+        call FullCloudForwardModelWrapper ( config, FwdModelIn, FwdModelExtra, &
+          FwdModelOut, fmStat, Jacobian )
+        call add_to_retrieval_timing( 'fullcloud_fwm' )
+d295 16
+d313 1
+d601 1
+a601 1
+       "$Id: ForwardModelWrappers.f90,v 2.41 2012/03/28 00:56:49 vsnyder Exp $"
+d611 4
+@
+
+
+2.41
+log
+@Move check for signals with MIF extinction from Wrappers to Support
+@
+text
+@d78 1
+d122 1
+d168 2
+a169 2
+          & ( fmStat%MAF, qtys(k,1)%qty, ptan, lrp%values(1,1), dumpTransform, &
+            & qtys(k,2)%qty )
+d179 1
+a179 1
+          & qtys(k,2)%qty, qtys(k,1)%qty, ptan, Jacobian, dumpTransform )
+d334 1
+a334 1
+    &                                   Jacobian, DumpTransform )
+d346 1
+d351 2
+a352 2
+    type(vectorValue_t), intent(in) :: F_Qty ! Transformed FWM quantity in fwmState
+    type(vectorValue_t), intent(in) :: S_Qty ! Quantity in State
+d356 1
+d373 7
+a379 2
+    if ( dumpTransform > -1 ) &
+      & call dump ( fwdModelOut, 1, 'fwdModelOut before transformation' )
+d401 1
+d406 1
+a406 1
+        if ( Jacobian%row%inst(jRow) /= Jacobian%col%inst(jCols(jCol)) ) then
+a414 1
+            Jacobian%block(jRow,jCols(jCol))%values = 0
+d422 1
+a422 1
+              & 'Transformed MIF extinction block not banded' )
+d424 1
+d516 2
+a517 2
+    ! Make values of f_Qty zero so as not to confuse the function norm
+    ! calculation in the retriever
+d520 5
+a524 2
+    if ( dumpTransform > -1 ) &
+      & call dump ( fwdModelOut, 1, 'fwdModelOut after transformation' )
+d529 2
+a530 2
+  subroutine Transform_MIF_Extinction ( MAF, S_Qty, PTan, Lrp, DumpTransform, &
+    &                                   F_Qty )
+a548 1
+    integer, intent(in) :: DumpTransform      ! Dump S_Qty and F_Qty at the end
+d550 1
+d586 1
+a586 1
+      f_qty%values(i,:) = s_qty%values(p(s_lrp),maf) * &
+d588 1
+a588 1
+                          & ptan%values(p(s_lrp),1) ) )
+d601 1
+a601 1
+       "$Id: ForwardModelWrappers.f90,v 2.40 2012/03/14 21:37:30 wgread Exp $"
+d611 3
+@
+
+
+2.40
+log
+@added mif extinction transform capability vws&wgr
+@
+text
+@d126 1
+a126 1
+    if ( config%transformMIFextinction .and. associated(config%signals) ) then
+d588 1
+a588 1
+       "$Id: ForwardModelWrappers.f90,v 2.39 2012/02/23 00:59:43 vsnyder Exp $"
+d598 3
+@
+
+
+2.39
+log
+@Forgot to add RM in use for MLSKinds
+@
+text
+@d32 1
+a32 1
+    & FwdModelOut, fmStat, Jacobian, Hessian, Vectors, FwmState, FwmJacobian )
+a35 4
+    ! If FwmState and FwmJacobian are present (both or neither), transform
+    ! FwdModelIn to FwmState before calling the forward model, and transform
+    ! FwmJacobian to Jacobian after returning from the forward model.
+
+d39 1
+a39 1
+    use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T
+d41 1
+d56 1
+a56 2
+    use Molecules, only: First_Molecule, Last_Molecule, &
+      & L_Extinction, L_ExtinctionV2
+d64 1
+a64 2
+    use VECTORSMODULE, only: CHECKNAN, DUMP, GetVectorQuantityByType, &
+      & MoveVectorQuantity, VECTOR_T, VECTORVALUE_T
+d68 1
+a68 2
+    type(vector_T), intent(inout), target :: FWDMODELIN ! The retriever state,
+      ! and the forward model state if no transformations are requested
+d72 4
+a75 10
+    type(matrix_T), intent(inout), optional, target :: JACOBIAN ! The retriever
+      ! Jacobian, used for the Newton iteration.  The Jacobian produced
+      ! by the forward model if no transformations are requested, else
+      ! transformed from FwmJacobian
+    type(Hessian_T), intent(inout), optional :: HESSIAN ! No transformation
+    type(Vector_t), dimension(:), target, optional :: VECTORS ! Vectors database
+    type(Vector_t), intent(in), optional, target :: FwmState ! The forward
+      ! model state, transformed from FwdModelIn if transformations requested
+    type(matrix_T), intent(inout), optional, target :: FwmJacobian ! The
+      ! Jacobian produced by the forward model if transformations are requested.
+d81 1
+a81 1
+    type(vectorValue_t), pointer :: F_Qty ! Transformed FWM quantity in fwmState
+d86 1
+d88 5
+a93 1
+    type(vectorValue_t), pointer :: S_Qty ! MIF-basis Quantity in State
+d98 1
+d126 30
+a155 1
+    if ( present(fwmJacobian) ) then ! Need transformations
+d157 1
+a157 1
+      lrp => getVectorQuantityByType ( fwdModelExtra, &
+d161 1
+a161 1
+      ptan => getVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+d163 5
+a167 26
+      ! Move quantities in the retriever's state vector (FwdModelIn) for which
+      ! no transformation is requested to FwmState.  Transform those for which
+      ! transformation is requested. We move the quantities so as to provide a
+      ! consistent view of the state to the Forward model.  The un-transformed
+      ! quantities in FwdModelIn are moved instead of copied to avoid aliasing
+      ! and memory leaks.
+      do k = 1, size(fwdModelIn%quantities)
+        s_qty => fwdModelIn%quantities(k)    ! State quantity to be transformed
+        select case ( s_qty%template%quantityType )
+        case ( l_MIFExtinction )
+          f_qty => getVectorQuantityByType ( & ! Transformed quantity
+            &    fwmState, quantityType=l_vmr, molecule=l_extinction, &
+            &    radiometer=s_qty%template%radiometer )
+          call transform_MIF_extinction &
+            & ( fmStat%MAF, s_qty, ptan, lrp%values(1,1), dumpTransform, f_qty )
+        case ( l_MIFExtinctionV2 )
+          f_qty => getVectorQuantityByType ( & ! Transformed quantity
+            &    fwmState, quantityType=l_vmr, molecule=l_extinctionV2, &
+            &    radiometer=s_qty%template%radiometer )
+          call transform_MIF_extinction &
+            & ( fmStat%MAF, s_qty, ptan, lrp%values(1,1), dumpTransform, f_qty )
+        case default ! Just move the quantity
+          f_qty => getVectorQuantityByType ( fwmState, &
+              &  quantityType=s_qty%template%quantityType )
+          call moveVectorQuantity ( s_qty, f_qty )
+        end select
+d171 1
+a171 1
+      call doForwardModels ( fwmState, fwmJacobian )
+d173 5
+a177 27
+      ! Move quantities in FwmState for which no transformation is requested
+      ! back to State.  Move columns in fwmJacobian for which no transformation
+      ! is requested back to Jacobian.  Transform fwmJacobian and radiances for
+      ! quantities for which transformation is requested.
+      do k = 1, size(fwdModelIn%quantities)
+        s_qty => fwdModelIn%quantities(k)
+        select case ( s_qty%template%quantityType )
+        case ( l_MIFExtinction )
+          f_qty => getVectorQuantityByType ( & ! Transformed quantity
+              &    fwmState, quantityType=l_vmr, molecule=l_extinction, &
+              &    radiometer=s_qty%template%radiometer )
+          call transform_FWM_extinction ( config, &
+            & fmStat%MAF, fwdModelOut, f_qty, s_qty, ptan, &
+            & fwmJacobian, Jacobian, dumpTransform )
+        case ( l_MIFExtinctionV2 )
+          f_qty => getVectorQuantityByType ( & ! Transformed quantity
+              &    fwmState, quantityType=l_vmr, molecule=l_extinctionV2, &
+              &    radiometer=s_qty%template%radiometer )
+          call transform_FWM_extinction ( config, &
+            & fmStat%MAF, fwdModelOut, f_qty, s_qty, ptan, &
+            & fwmJacobian, Jacobian, dumpTransform )
+        case default ! Just move the quantity and column
+          f_qty => getVectorQuantityByType ( fwmState, &
+              &  quantityType=s_qty%template%quantityType )
+          call moveVectorQuantity ( f_qty, s_qty )
+          call move_Jacobian_Columns ( f_qty, fwmJacobian, Jacobian )
+        end select
+d181 1
+a181 1
+      call doForwardModels ( fwdModelIn, Jacobian )
+d203 2
+a204 9
+    k = 0
+    if ( switchDetail(switches,'FMNAN') > -1 ) then
+      k = 3 ! Check, print and stop if any
+    else if ( switchDetail(switches,'fmNaN') > -1 ) then
+      k = 2 ! Check, print if any
+    else if ( switchDetail(switches,'fmnan') > -1 ) then
+      k = 1 ! Check, print name if any
+    end if
+    if ( k > 0 ) then
+d207 1
+a207 1
+        if ( k > 1 ) then
+d213 2
+a214 6
+        if ( k > 2 ) then
+          k = MLSMSG_Error
+        else
+          k = MLSMSG_Warning
+        end if
+        call MLSMessage ( k, ModuleName, 'NaNs found in forward model output' )
+d261 1
+a261 3
+    subroutine DoForwardModels ( FwdModelIn, Jacobian )
+      type(vector_t), intent(in) :: FwdModelIn
+      type(matrix_t), intent(inout), optional :: Jacobian
+d330 5
+a334 28
+  subroutine Move_Jacobian_Columns ( F_Qty, FwmJacobian, Jacobian )
+    ! Move the blocks in all rows in the columns of FwmJacobian corresponding
+    ! to F_Qty to Jacobian.
+
+    use MatrixModule_0, only: Move_Block
+    use MatrixModule_1, only: FindBlock, Matrix_T
+    use VectorsModule, only: Vector_t, VectorValue_t
+
+    type(vectorValue_t), intent(in) :: F_Qty ! FWM Quantity in fwmState
+    type(matrix_T), intent(inout) :: FwmJacobian
+    type(matrix_T), intent(inout) :: Jacobian
+
+    integer :: Chan, FCol, Inst, JCol, JRow
+
+    do jRow = 1, jacobian%row%nb
+      do inst = 1, f_qty%template%noInstances
+        jCol = findBlock ( Jacobian%col, f_qty%index, inst )
+        fCol = findBlock ( fwmJacobian%col, f_qty%index, inst )
+        call move_block ( fwmJacobian%block(jRow,fCol), Jacobian%block(jRow,jCol) )
+      end do
+    end do
+
+  end subroutine Move_Jacobian_Columns
+
+  subroutine Transform_FWM_extinction ( Config, MAF, FwdModelOut, F_Qty, S_Qty, &
+    &                                   PTan, FwmJacobian, Jacobian, DumpTransform )
+    ! Transform the forward model FwmJacobian to the retriever Jacobian
+    ! for the case of f_qty%template%quantityType == l_extinction[v2].
+d339 2
+a340 2
+    use ForwardModelConfig, only: ForwardModelConfig_T
+    use MatrixModule_0, only: DestroyBlock, Dump, M_Banded
+d342 2
+a343 1
+    use MLSKinds, only: RM, RP, RV
+a345 1
+    type(forwardModelConfig_T), intent(in) :: Config
+d347 1
+a347 1
+    type(vector_t), intent(inout) :: FwdModelOut
+a350 1
+    type(matrix_T), intent(in) :: FwmJacobian
+d354 1
+a354 2
+    integer :: Chan    ! c in wvs-107
+    integer :: CV      ! Subscript corresponding to Chan
+d356 1
+a356 1
+    integer :: FCols(f_qty%template%noInstances) ! of FwmJacobian, j in wvs-107
+d360 1
+a360 2
+    integer :: JRow    ! of both Jacobians, n in wvs-107
+    integer :: NConfigChans  ! Number of channels in configuration, N_C in wvs-107
+d362 4
+a365 4
+    integer :: NSurfs  ! Number of surfaces in MIF, N_m in wvs-107
+    real(rv) :: P      ! 10**(-2*(zeta(surf)-zeta(vSurf)))
+    real(rm) :: RowSum ! sum(FwmJacobian%block(jRow,fCols)%values(cz,surf))
+    integer :: Surf    ! column of FwmJacobian%block(jRow,fCol)%values, 
+d369 3
+d374 1
+a374 1
+      fCols(inst) = findBlock ( fwmJacobian%col, f_qty%index, inst )
+d381 10
+a390 3
+    if ( dumpTransform > -1 ) &
+      & call dump ( fwdModelOut, 1, 'fwdModelOut before transformation' )
+    nConfigChans = size(config%channels)
+d392 3
+a394 2
+      nSurfs = fwdModelOut%quantities(jRow)%template%noSurfs
+      nVecChans = fwdModelOut%quantities(jRow)%template%noChans
+d397 1
+a397 1
+          ! Zero off-diagonal extinction blocks of retriever Jacobian
+d400 16
+a415 5
+          call createBlock ( Jacobian, jrow, jCols(jCol), m_banded, &
+            & FwmJacobian%row%nelts(jRow), bandHeight=nVecChans, &
+            & forWhom='Transform_FWM_extinction' )
+          Jacobian%block(jRow,jCols(jCol))%values = 0
+          do vSurf = 1, nSurfs ! i in wvs-107, Same for all fCols
+d421 1
+a421 2
+            do chan = 1, nConfigChans
+              cv = config%channels(chan)%used + 1 - config%channels(chan)%origin
+d423 2
+a424 1
+              ! The surf loop runs in reverse order to sum small-to-large
+d426 1
+a426 2
+                rowSum = 0.0
+                do inst = 1, size(fCols)
+d431 4
+a434 4
+    ! where $n$ is the Jacobian block row number,
+    ! $j$ is the Jacobian block column number,
+    ! $c$ is the channel number,
+    ! $i$ is the MIF number, and
+d438 1
+a438 1
+    ! rowSum = sum(FwmJacobian%block(jRow,fCols)%values(cz,surf))
+d440 12
+a451 2
+                  rowSum = rowSum + &
+                    & FwmJacobian%block(jRow,fCols(inst))%values(cz,surf)
+a453 3
+                p = 10.0_rm ** ( -2.0_rm * ( f_qty%template%surfs(surf,1) - &
+                                             ptan%values(vSurf,maf) ) )
+
+d465 2
+a466 1
+                  & Jacobian%block(jRow,jCols(jCol))%values(cz,1) + rowSum * p
+d479 2
+a480 3
+                fwdModelOut%quantities(jRow)%values(cz,maf) = &
+                  & fwdModelOut%quantities(jRow)%values(cz,maf) + &
+                    & rowSum * ( s_qty%values(vSurf,maf) * p - &
+d483 1
+a483 1
+            end do ! chan
+d485 1
+a485 1
+          if ( dumpTransform > -1 ) then
+d487 2
+a488 1
+              call dump ( fwmJacobian, details=9, name='Forward model Jacobian', &
+d491 2
+a492 1
+            call dump ( Jacobian, details=9, name='Transformed Jacobian', &
+d498 12
+d515 1
+d577 1
+a577 3
+    do i = f_lrp, f_qty%template%noSurfs
+      f_qty%values(i,2:) = f_qty%values(i,1)
+    end do
+d581 1
+a581 1
+      call dump ( f_qty, details=dumpTransform, name='to fwmState' )
+d588 1
+a588 1
+       "$Id: ForwardModelWrappers.f90,v 2.38 2012/02/23 00:08:08 vsnyder Exp $"
+d598 3
+@
+
+
+2.38
+log
+@Maybe MIF extinction transformations work now
+@
+text
+@d542 1
+a542 1
+    use MLSKinds, only: RV
+d606 1
+a606 1
+       "$Id: ForwardModelWrappers.f90,v 2.37 2012/02/14 19:01:29 pwagner Exp $"
+d616 3
+@
+
+
+2.37
+log
+@Fixed bug that broke nrt
+@
+text
+@d136 2
+a394 1
+    use Dump_0, only: Dump
+a411 1
+    integer :: CG      ! cg, channels X zetas, in wvs-107
+d437 2
+a438 4
+    if ( dumpTransform > -1 ) then
+      call dump ( fwdModelOut, 1, 'fwdModelOut before transformation' )
+      call dump ( pTan%values, name='PTan zetas' )
+    end if
+a452 1
+            fwdModelOut%quantities(jRow)%values(vSurf,maf) = 0
+a479 3
+print '(4(a,i0),1p,2(a,g14.6))', &
+'FwmJacobian%block(',jrow,',',fcols(inst),')%values(',cz,',',surf,') =', &
+FwmJacobian%block(jRow,fCols(inst))%values(cz,surf),', rowSum =', rowSum
+a481 1
+                cg = cv + nVecChans*(surf-1) ! cg in wvs-107
+d484 1
+a484 3
+print '(a,i0,1p,a,g14.6,2(a,i0),2(a,g14.6))',&
+'f_qty%template%surfs(',surf,',1) =', f_qty%template%surfs(surf,1),&
+'ptan%values(',vSurf,',',maf,') =', ptan%values(vSurf,maf), ', p =', p
+d497 1
+a497 4
+print '(1p,a,g14.6,3(a,i0),a,g14.6)', &
+'rowSum*p =', rowSum*p, &
+', Jacobian%block(',jrow,',',jCols(jCol),')%values(',cz,',1) =', &
+Jacobian%block(jRow,jCols(jCol))%values(cz,1)
+d509 2
+a510 2
+                fwdModelOut%quantities(jRow)%values(vSurf,maf) = &
+                  & fwdModelOut%quantities(jRow)%values(vSurf,maf) + &
+d541 1
+d571 1
+a571 1
+    s_lrp = minloc_s(lrp - ptan%values(:,1))
+d589 3
+a591 3
+      f_qty%values(i,:) = s_qty%values(s_lrp,maf) * &
+        & 10 ** ( - 2.0 * ( f_qty%template%surfs(i,1)) - &
+                          & ptan%values(s_lrp,1) )              
+d597 1
+d606 1
+a606 1
+       "$Id: ForwardModelWrappers.f90,v 2.36 2012/02/11 21:28:31 vsnyder Exp $"
+d616 3
+@
+
+
+2.36
+log
+@Interim MIF extinction commit
+@
+text
+@d130 1
+a130 1
+    call deriveFromForwardModelConfig ( config )
+d616 1
+a616 1
+       "$Id: ForwardModelWrappers.f90,v 2.35 2011/12/21 01:42:22 vsnyder Exp $"
+d626 3
+@
+
+
+2.35
+log
+@Add MIFExtinction transformation
+@
+text
+@d41 2
+d49 4
+a52 3
+    use INIT_TABLES_MODULE, only: L_LINEAR, L_SCAN, L_SCAN2D, L_FULL, &
+      & L_CLOUDFULL, L_SWITCHINGMIRROR, L_HYBRID, L_MIFExtinction, &
+      & L_MIFExtinctionV2, L_POLARLINEAR, L_BASELINE
+d91 3
+a93 2
+    integer :: DumpTransform            ! Dump transformed vector quantities
+    integer :: FRow, FCol               ! Row, Column of block in fwmJacobian
+d95 4
+a98 4
+    integer :: Inst                     ! Instance index
+    integer :: JRow, JCol               ! Row, Column of block in Jacobian
+    type(vectorValue_t), pointer :: LRP ! Lowest Retrieved Pressure
+    type(vectorValue_t), pointer :: Qty ! Transformed quantity in fwmState
+d100 1
+a101 1
+    type(vectorValue_t), pointer :: T_Qty ! Quantity in State to be transformed
+d129 3
+d136 8
+a143 5
+      ! Move quantities in State for which no transformation is requested to
+      ! FwmState.  Transform those for which transformation is requested. We
+      ! move the quantities so as to provide a consistent view of the state
+      ! to the Forward model.  The un-transformed quantities in FwdModelIn
+      ! are moved instead of copied to avoid aliasing and memory leaks.
+d145 6
+a150 6
+        t_qty => fwdModelIn%quantities(k)    ! Quantity to be transformed
+        select case ( t_qty%template%quantityType )
+        case ( l_MIFExtinction, l_MIFExtinctionV2 )
+          qty => getVectorQuantityByType ( & ! Transformed quantity
+            &    fwmState, quantityType=t_qty%template%quantityType, &
+            &    radiometer=t_qty%template%radiometer )
+d152 7
+a158 1
+            & ( fmStat%MAF, T_Qty, lrp%values(1,1), dumpTransform, Qty )
+d160 3
+a162 3
+          qty => getVectorQuantityByType ( fwmState, &
+              &  quantityType=t_qty%template%quantityType )
+          call moveVectorQuantity ( t_qty, qty )
+d174 13
+a186 6
+        t_qty => fwdModelIn%quantities(k)
+        select case ( t_qty%template%quantityType )
+        case ( l_MIFExtinction, l_MIFExtinctionV2 )
+          qty => getVectorQuantityByType ( & ! Transformed quantity
+              &    fwmState, quantityType=t_qty%template%quantityType, &
+              &    radiometer=t_qty%template%radiometer )
+d188 2
+a189 1
+            & fmStat%MAF, fwdModelOut, qty, t_qty, fwmJacobian, Jacobian )
+d191 4
+a194 4
+          qty => getVectorQuantityByType ( fwmState, &
+              &  quantityType=t_qty%template%quantityType )
+          call moveVectorQuantity ( qty, t_qty )
+          call move_Jacobian_Columns ( qty, fwmJacobian, Jacobian )
+d202 2
+d361 1
+a361 1
+  subroutine Move_Jacobian_Columns ( Qty, FwmJacobian, Jacobian )
+d363 1
+a363 1
+    ! to Qty to Jacobian.
+a364 1
+    use ForwardModelVectorTools, only: GetQuantityForForwardModel
+d369 1
+a369 1
+    type(vectorValue_t), intent(in) :: Qty ! Quantity in fwmState
+d376 3
+a378 3
+      do inst = 1, qty%template%noInstances
+        jCol = findBlock ( Jacobian%col, qty%index, inst )
+        fCol = findBlock ( fwmJacobian%col, qty%index, inst )
+d385 2
+a386 2
+  subroutine Transform_FWM_extinction ( Config, MAF, FwdModelOut, Qty, T_Qty, &
+    &                                   FwmJacobian, Jacobian )
+d388 2
+a389 1
+    ! for the case of qty%template%quantityType == l_extinction[v2].
+d391 1
+a391 1
+    ! See Equations (2) and (3) in wvs-107.
+d393 1
+d395 4
+a398 5
+    use ForwardModelVectorTools, only: GetQuantityForForwardModel
+    use MatrixModule_0, only: DestroyBlock
+    use MatrixModule_1, only: FindBlock, GetFullBlock, Matrix_T
+    use MLSKinds, only: RM, RV
+    use VectorsModule, only: Vector_t, VectorValue_t
+d403 3
+a405 2
+    type(vectorValue_t), intent(in) :: Qty   ! Transformed quantity in fwmState
+    type(vectorValue_t), intent(in) :: T_Qty ! Quantity in State
+d408 1
+d411 2
+d414 1
+a414 1
+    integer :: FCols(qty%template%noInstances) ! of FwmJacobian, j in wvs-107
+d417 1
+a417 1
+    integer :: JCols(t_qty%template%noInstances) ! of Jacobian, n in wvs-107
+d419 2
+a420 1
+    integer :: NChans  ! Number of channels, N_C in wvs-107
+d422 1
+a422 1
+    real(rv) :: P      ! 10**(-2*(zeta(surf)-zeta(jRow)))
+d428 3
+a430 3
+    ! Get the block column subscripts for instances of qty.
+    do inst = 1, qty%template%noInstances
+      fCols(inst) = findBlock ( fwmJacobian%col, qty%index, inst )
+d433 2
+a434 2
+    do inst = 1, t_qty%template%noInstances
+      jCols(inst) = findBlock ( Jacobian%col, t_qty%index, inst )
+d437 6
+a442 2
+    nChans = size(config%channels)
+    do jRow = 1, jacobian%row%nb
+d444 1
+d447 1
+d449 17
+a465 11
+        else ! (jRow,jCol) = nn in wvs-107
+          call getFullBlock ( Jacobian, jrow, jCols(jCol), 'Transform_FWM_extinction' )
+          do chan = 1, nChans
+            do vSurf = 1, nSurfs ! Same for all fCols
+              cz = config%channels(chan)%used + 1 - & ! ci, Channel and Zeta
+                 & config%channels(chan)%origin + nChans*(vSurf-1)
+              do surf = 1, size(FwmJacobian%block(jRow,fCols(inst))%values,2) ! g
+                ! Compute the inner sum in Equations (3) and (4) in wvs-107. 
+                ! But we can't do
+                ! rowSum = sum(FwmJacobian%block(jRow,fCols)%values(cz,surf))
+                ! because "values" has the POINTER attribute.
+d468 13
+d483 49
+a531 14
+                end do
+
+                p = 10.0_rm ** ( -2.0_rm * ( qty%template%surfs(surf,1) - &
+                                             t_qty%template%surfs(jRow,maf) ) )
+
+                ! Equation (3) in wvs-107
+                Jacobian%block(jRow,jCols(jCol))%values(cz,1) = rowSum * p
+
+                ! Equation (4) in wvs-107
+                fwdModelOut%quantities(jRow)%values(cz,maf) = &
+                  & fwdModelOut%quantities(jRow)%values(cz,maf) + &
+                    & rowSum * ( t_qty%values(vSurf,maf) * p - &
+                               & qty%values(surf,maf) )
+              end do
+d533 3
+a535 1
+          end do
+d537 4
+a540 2
+      end do
+    end do
+d544 2
+a545 1
+  subroutine Transform_MIF_Extinction ( MAF, T_Qty, Lrp, DumpTransform, Qty )
+d551 1
+a551 1
+    ! Equation (1) in wvs-107.
+d559 3
+a561 1
+    type(vectorValue_t), intent(in) :: T_Qty  ! State quantity to be transformed
+d563 2
+a564 2
+    integer, intent(in) :: DumpTransform      ! Dump T_Qty and Qty at the end
+    type(vectorValue_t), intent(inout) :: Qty ! Forward model quantity
+d566 1
+d568 2
+a569 3
+    integer :: P(t_qty%template%noSurfs)
+    integer :: Q_LRP   ! Index in Qty%Surfs of LRP
+    integer :: T_LRP   ! Index in T_Qty%Surfs of LRP
+d575 3
+a577 3
+    ! Interpolate in Zeta only, from t_qty to the first column of qty
+    ! PTan might be out of order, so sort t_qty%template%surfs
+    call sortp ( t_qty%template%surfs(:,maf), 1, t_qty%template%noSurfs, p )
+d579 24
+a602 11
+      & t_qty%template%surfs(p,maf), t_qty%values(p,maf), &
+      & qty%template%surfs(:,1),   qty%values(:,1), 'L', 'C' )
+    q_lrp = minloc_s(lrp - qty%template%surfs(:,1))
+    t_lrp = minloc_s(lrp - t_qty%template%surfs(:,1))
+    ! Apply a P**(-2) dependence, Equation (2) in wvs-107
+    do i = 1, q_lrp-1
+      ! hGrids of qty and t_qty have same extent and spacing.
+      ! Vertical coordinate is zeta, so 10**(-2*zeta) is P**(-2).
+      qty%values(i,:) = t_qty%values(t_lrp,maf) * &
+        & 10 ** ( - 2.0 * ( qty%template%surfs(i,1)) - &
+                          & t_qty%template%surfs(t_lrp,1) )              
+d604 2
+a605 2
+    do i = q_lrp, qty%template%noSurfs
+      qty%values(i,2:) = qty%values(i,1)
+d608 2
+a609 2
+      call dump ( t_qty, details=dumpTransform, name='from fwdModelIn' )
+      call dump ( qty, details=dumpTransform, name='to fwmState' )
+d616 1
+a616 1
+       "$Id: ForwardModelWrappers.f90,v 2.34 2011/05/09 18:10:02 pwagner Exp $"
+d626 3
+@
+
+
+2.34
+log
+@Converted to using switchDetail
+@
+text
+@d27 1
+a27 1
+  
+d32 7
+a38 1
+    FwdModelOut, fmStat, Jacobian, Hessian, vectors )
+d47 4
+a50 2
+    use INIT_TABLES_MODULE, only: L_LINEAR, L_SCAN, L_SCAN2D, L_FULL, L_CLOUDFULL, &
+      & L_SWITCHINGMIRROR, L_HYBRID, L_POLARLINEAR, L_BASELINE
+d52 1
+a52 1
+    use MATRIXMODULE_1, only: MATRIX_T, CHECKINTEGRITY
+d56 2
+d65 2
+a66 1
+    use VECTORSMODULE, only: CHECKNAN, DUMP, VECTOR_T
+d69 4
+a72 2
+    type(ForwardModelConfig_T), intent(inout) :: CONFIG
+    type(vector_T), intent(in) ::  FWDMODELIN, FwdModelExtra
+d75 5
+a79 2
+    type(matrix_T),  intent(inout), optional :: JACOBIAN
+    type(hessian_T), intent(inout), optional :: HESSIAN
+d81 4
+d87 12
+a98 2
+    integer :: K
+    real :: time_start, time_end, deltaTime  
+d100 5
+a104 1
+    logical :: radianceModel
+d122 2
+d125 55
+a181 50
+    select case (config%fwmType)
+    case ( l_baseline )
+      call MLSMessageCalls( 'push', constantName='BaselineForwardModel' )
+      call BaselineForwardModel ( config, FwdModelIn, FwdModelExtra, &
+        FwdModelOut, fmStat, Jacobian )
+      call add_to_retrieval_timing( 'baseline' )
+    case ( l_full )
+      call MLSMessageCalls( 'push', constantName='FullForwardModel' )
+      call FullForwardModel ( config, FwdModelIn, FwdModelExtra, &
+        FwdModelOut, fmStat, Jacobian, Hessian )
+      call add_to_retrieval_timing( 'full_fwm' )
+    case ( l_linear )
+      call MLSMessageCalls( 'push', constantName='LinearizedForwardModel' )
+      call LinearizedForwardModel ( config, FwdModelIn, FwdModelExtra, &
+        FwdModelOut, fmStat, Jacobian, vectors )
+      call add_to_retrieval_timing( 'linear_fwm' )
+    case ( l_hybrid )
+      call MLSMessageCalls( 'push', constantName='HybridForwardModel' )
+      call HybridForwardModel ( config, FwdModelIn, FwdModelExtra, &
+        FwdModelOut, fmStat, Jacobian, vectors )
+      call add_to_retrieval_timing( 'hybrid' )
+    case ( l_polarLinear )
+      call MLSMessageCalls( 'push', constantName='PolarForwardModel' )
+      call PolarLinearModel ( config, FwdModelIn, FwdModelExtra, &
+        FwdModelOut, fmStat, Jacobian, vectors )
+      call add_to_retrieval_timing( 'polar_linear' )
+    case ( l_scan )
+      call MLSMessageCalls( 'push', constantName='ScanForwardModel' )
+      call ScanForwardModel ( config, FwdModelIn, FwdModelExtra, &
+        FwdModelOut, fmStat, Jacobian )
+      call add_to_retrieval_timing( 'scan_fwm' )
+    case ( l_scan2d )
+      call MLSMessageCalls( 'push', constantName='TwoDForwardModel' )
+      call TwoDScanForwardModel ( config, FwdModelIn, FwdModelExtra, &
+        FwdModelOut, fmStat, Jacobian )
+      call add_to_retrieval_timing( 'twod_scan_fwm' )
+    case ( l_cloudFull )
+      call MLSMessageCalls( 'push', constantName='CloudForwardModel' )
+      call FullCloudForwardModelWrapper ( config, FwdModelIn, FwdModelExtra, &
+        FwdModelOut, fmStat, Jacobian )
+      call add_to_retrieval_timing( 'fullcloud_fwm' )
+    case ( l_switchingMirror )
+      call MLSMessageCalls( 'push', constantName='SwitchingForwardModel' )
+      call SwitchingMirrorModel ( config, FwdModelIn, FwdModelExtra, &
+        FwdModelOut, fmStat, Jacobian )
+      call add_to_retrieval_timing( 'switching_mirror' )
+    case default ! Shouldn't get here if parser etc. worked
+    end select
+    call MLSMessageCalls( 'pop' ) ! for all the cases
+
+a231 2
+
+
+d262 55
+d319 183
+d505 1
+a505 1
+       "$Id: ForwardModelWrappers.f90,v 2.33 2010/08/27 06:25:38 yanovsky Exp $"
+d515 3
+@
+
+
+2.33
+log
+@ForwardModel subroutine has Hessian as dummy argument.
+Actual argument Hessian is passed in a call to FullForwardModel subroutine.
+@
+text
+@d34 8
+a41 8
+    use BaselineForwardModel_m, only: BASELINEFORWARDMODEL
+    use ForwardModelConfig, only: ForwardModelConfig_T
+    use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T
+    use FullCloudForwardModel, only: FULLCLOUDFORWARDMODELWRAPPER
+    use FullForwardModel_m, only: FULLFORWARDMODEL
+    use HessianModule_1, only: HESSIAN_T
+    use HybridForwardModel_m, only: HYBRIDFORWARDMODEL
+    use Init_tables_module, only: L_LINEAR, L_SCAN, L_SCAN2D, L_FULL, L_CLOUDFULL, &
+d43 13
+a55 12
+    use LinearizedForwardModel_m, only: LINEARIZEDFORWARDMODEL
+    use MatrixModule_1, only: MATRIX_T, CHECKINTEGRITY
+    use MLSL2Timings, only: Add_to_retrieval_timing
+    use MLSMessageModule, only: MLSMessage, MLSMessageCalls, MLSMSG_Error, MLSMSG_Warning
+    use PolarLinearModel_m, only: POLARLINEARMODEL
+    use ScanModelModule, only: SCANFORWARDMODEL, TWODSCANFORWARDMODEL
+    use String_table, only: Display_String, GET_STRING
+    use SwitchingMirrorModel_m, only: SWITCHINGMIRRORMODEL
+    use Time_M, only: Time_Now
+    use Toggles, only: Emit, Switches, Toggle
+    use Trace_M, only: TRACE_BEGIN, TRACE_END
+    use VectorsModule, only: CheckNaN, Dump, VECTOR_T
+d155 1
+a155 1
+    if ( index(switches,'FMNAN') > 0 ) then
+d157 1
+a157 1
+    else if ( index(switches,'fmNaN') > 0 ) then
+d159 1
+a159 1
+    else if ( index(switches,'fmnan') > 0 ) then
+d228 1
+a228 1
+       "$Id: ForwardModelWrappers.f90,v 2.32 2009/11/18 22:18:07 livesey Exp $"
+d238 4
+@
+
+
+2.32
+log
+@Added ability to check Jacobians as well as radiances is the various
+fmNAN flags are set
+@
+text
+@d32 1
+a32 1
+    FwdModelOut, fmStat, Jacobian, vectors )
+d39 1
+d61 2
+a62 1
+    type(matrix_T), intent(inout), optional :: JACOBIAN
+d99 1
+a99 1
+        FwdModelOut, fmStat, Jacobian )
+d188 14
+d203 1
+a203 1
+      
+d227 1
+a227 1
+       "$Id: ForwardModelWrappers.f90,v 2.31 2009/06/23 18:46:18 pwagner Exp $"
+d237 4
+@
+
+
+2.31
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d43 1
+a43 1
+    use MatrixModule_1, only: MATRIX_T
+d160 1
+d175 13
+d189 1
+a189 1
+
+d211 1
+a211 1
+       "$Id: read_apriori.f90 is it here $"
+d221 3
+@
+
+
+2.30
+log
+@Make sure thisName has a value, handle call stack properly
+@
+text
+@d194 1
+a195 1
+  !---------------------------- RCS Ident Info -------------------------------
+d197 1
+a197 1
+    "$Id: ForwardModelWrappers.f90,v 2.29 2007/10/02 22:38:19 vsnyder Exp $"
+a198 1
+  !---------------------------------------------------------------------------
+d200 1
+d202 1
+d207 3
+@
+
+
+2.29
+log
+@Add code to check for NaNs in forward models' output
+@
+text
+@d71 6
+d78 3
+a80 6
+      if ( config%name /= 0 ) then
+        call get_string ( config%name, thisName )
+      else
+        thisName = '[unnamed]'
+      end if
+      call trace_begin ( 'Forward model config: ' // trim(thisName) )
+a81 3
+
+    call MLSMessageCalls( 'push', &
+      & constantName='ForwardModel' // ' ' // trim(thisName) )
+d136 2
+a137 2
+    call MLSMessageCalls( 'pop' )
+    
+a175 5
+    ! Report we're finished
+    if ( toggle(emit) ) then
+      call trace_end ( 'Forward model config: ' // trim(thisName) )
+    end if
+
+d184 8
+a191 1
+    
+d197 1
+a197 1
+    "$Id: ForwardModelWrappers.f90,v 2.28 2007/08/20 22:05:06 pwagner Exp $"
+d206 3
+@
+
+
+2.28
+log
+@Many procedures now push their names onto MLSCallStack
+@
+text
+@a34 1
+    use HybridForwardModel_m, only: HYBRIDFORWARDMODEL
+d39 1
+a42 1
+    use PolarLinearModel_m, only: POLARLINEARMODEL
+d45 2
+a46 1
+    use MLSMessageModule, only: MLSMessageCalls
+d48 1
+a49 1
+    use VectorsModule, only: VECTOR_T
+d51 1
+a51 1
+    use String_table, only: GET_STRING
+d53 1
+a53 1
+    use Toggles, only: Emit, Toggle
+d64 1
+d151 25
+d195 1
+a195 1
+    "$Id: ForwardModelWrappers.f90,v 2.27 2007/06/29 19:32:07 vsnyder Exp $"
+d204 3
+@
+
+
+2.27
+log
+@Make ForwardModelIntermediate_t private to ScanModelModule
+@
+text
+@d46 1
+d79 2
+d89 1
+d94 1
+d99 1
+d104 1
+d109 1
+d114 1
+d119 1
+d124 1
+d129 1
+d135 1
+d138 1
+d141 1
+d143 1
+d146 1
+d169 1
+a169 1
+    "$Id: ForwardModelWrappers.f90,v 2.26 2007/04/03 17:46:12 vsnyder Exp $"
+d178 3
+@
+
+
+2.26
+log
+@Replace pointer attribute on VectorDatabase with target attribute
+@
+text
+@d32 1
+a32 1
+    FwdModelOut, Ifm, fmStat, Jacobian, vectors )
+d37 1
+a37 2
+    use ForwardModelIntermediate, only: FORWARDMODELINTERMEDIATE_T, &
+      & FORWARDMODELSTATUS_T
+a57 1
+    type(forwardModelIntermediate_T), intent(inout) :: IFM ! Workspace
+d87 1
+a87 1
+        FwdModelOut, Ifm, fmStat, Jacobian )
+d91 1
+a91 1
+        FwdModelOut, Ifm, fmStat, Jacobian )
+d95 1
+a95 1
+        FwdModelOut, Ifm, fmStat, Jacobian, vectors )
+d99 1
+a99 1
+        FwdModelOut, Ifm, fmStat, Jacobian, vectors )
+d103 1
+a103 1
+        FwdModelOut, Ifm, fmStat, Jacobian, vectors )
+d107 1
+a107 1
+        FwdModelOut, Ifm, fmStat, Jacobian )
+d111 1
+a111 1
+        FwdModelOut, Ifm, fmStat, Jacobian )
+d115 1
+a115 1
+        FwdModelOut, Ifm, fmStat, Jacobian )
+d119 1
+a119 1
+        FwdModelOut, Ifm, fmStat, Jacobian )
+d126 1
+a126 1
+        FwdModelOut, Ifm, fmStat, Jacobian )
+d129 1
+a129 1
+        FwdModelOut, Ifm, fmStat, Jacobian )
+d152 1
+a152 1
+    "$Id: ForwardModelWrappers.f90,v 2.25 2005/06/03 02:08:24 vsnyder Exp $"
+d161 3
+@
+
+
+2.25
+log
+@New copyright notice, move Id to not_used_here to avoid cascades
+@
+text
+@d62 1
+a62 1
+    type(Vector_t), dimension(:), pointer, optional :: VECTORS ! Vectors database
+d154 1
+a154 1
+    "$Id: ForwardModelWrappers.f90,v 2.24 2003/10/20 18:22:47 pwagner Exp $"
+d163 3
+@
+
+
+2.24
+log
+@New forwardModel types added to RetrievalTimings breakdown
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+a22 3
+  character (len=*), private, parameter :: IdParm = &
+    "$Id: ForwardModelWrappers.f90,v 2.23 2003/09/11 23:15:10 livesey Exp $"
+  character (len=len(idParm)), private :: Id = idParm
+d152 5
+d163 3
+@
+
+
+2.23
+log
+@Added vectors argument which is handed on to some but not all models.
+This is needed to support the xStar/yStar capability of the linear
+forward model (and by inference all those that call it.)
+@
+text
+@d16 1
+a16 1
+    "$Id: ForwardModelWrappers.f90,v 2.22 2003/08/16 01:18:29 livesey Exp $"
+d85 1
+d97 1
+a97 1
+      call add_to_retrieval_timing( 'full_fwm' )
+d101 1
+a101 1
+      call add_to_retrieval_timing( 'full_fwm' )
+d117 1
+d124 1
+d127 1
+d153 5
+@
+
+
+2.22
+log
+@Added baseline forward model on its own.
+@
+text
+@d16 1
+a16 1
+    "$Id: ForwardModelWrappers.f90,v 2.21 2003/08/13 00:49:56 livesey Exp $"
+d27 1
+a27 1
+    FwdModelOut, Ifm, fmStat, Jacobian )
+d57 2
+a58 1
+    
+d91 1
+a91 1
+        FwdModelOut, Ifm, fmStat, Jacobian )
+d95 1
+a95 1
+        FwdModelOut, Ifm, fmStat, Jacobian )
+d99 1
+a99 1
+        FwdModelOut, Ifm, fmStat, Jacobian )
+d149 3
+@
+
+
+2.21
+log
+@Added PolarLinear model
+@
+text
+@d16 1
+a16 1
+    "$Id: ForwardModelWrappers.f90,v 2.20 2003/07/15 22:11:12 livesey Exp $"
+d37 1
+a37 1
+      & L_SWITCHINGMIRROR, L_HYBRID, L_POLARLINEAR
+d81 3
+d148 3
+@
+
+
+2.20
+log
+@Added hybrid model and slight reorganization
+@
+text
+@d16 1
+a16 1
+    "$Id: ForwardModelWrappers.f90,v 2.19 2003/07/15 18:18:39 livesey Exp $"
+d37 1
+a37 1
+      & L_SWITCHINGMIRROR, L_HYBRID
+d39 1
+d79 1
+a79 1
+      & (/ l_full, l_linear, l_hybrid, l_cloudFull /) )
+d93 4
+d145 3
+@
+
+
+2.19
+log
+@Made timing apply to all configs.
+@
+text
+@d16 1
+a16 1
+    "$Id: ForwardModelWrappers.f90,v 2.18 2003/06/30 22:55:01 cvuu Exp $"
+d26 1
+a26 1
+  subroutine ForwardModel ( TheForwardModelConfig, FwdModelIn, FwdModelExtra, &
+d30 1
+d37 1
+a37 1
+      & L_SWITCHINGMIRROR
+d50 1
+a50 1
+    type(ForwardModelConfig_T), intent(inout) :: TheForwardModelConfig
+d60 1
+d65 2
+a66 2
+      if ( theForwardModelConfig%name /= 0 ) then
+        call get_string ( theForwardModelConfig%name, thisName )
+d77 3
+a79 1
+    select case (TheForwardModelConfig%fwmType)
+d81 1
+a81 5
+      call FullForwardModel ( TheForwardModelConfig, FwdModelIn, FwdModelExtra, &
+        FwdModelOut, Ifm, fmStat, Jacobian )
+      call BaselineForwardModel ( TheForwardModelConfig, FwdModelIn, FwdModelExtra, &
+        FwdModelOut, Ifm, fmStat, Jacobian )
+      call SwitchingMirrorModel ( TheForwardModelConfig, FwdModelIn, FwdModelExtra, &
+d85 1
+a85 1
+      call LinearizedForwardModel ( TheForwardModelConfig, FwdModelIn, FwdModelExtra, &
+d87 3
+a89 1
+      call BaselineForwardModel ( TheForwardModelConfig, FwdModelIn, FwdModelExtra, &
+d91 1
+a91 3
+      call SwitchingMirrorModel ( TheForwardModelConfig, FwdModelIn, FwdModelExtra, &
+        FwdModelOut, Ifm, fmStat, Jacobian )
+      call add_to_retrieval_timing( 'linear_fwm' )
+d93 1
+a93 1
+      call ScanForwardModel ( TheForwardModelConfig, FwdModelIn, FwdModelExtra, &
+d97 1
+a97 1
+      call TwoDScanForwardModel ( TheForwardModelConfig, FwdModelIn, FwdModelExtra, &
+d101 1
+a101 5
+      call FullCloudForwardModelWrapper ( TheForwardModelConfig, FwdModelIn, FwdModelExtra, &
+        FwdModelOut, Ifm, fmStat, Jacobian )
+      call BaselineForwardModel ( TheForwardModelConfig, FwdModelIn, FwdModelExtra, &
+        FwdModelOut, Ifm, fmStat, Jacobian )
+      call SwitchingMirrorModel ( TheForwardModelConfig, FwdModelIn, FwdModelExtra, &
+d105 1
+a105 1
+      call SwitchingMirrorModel ( TheForwardModelConfig, FwdModelIn, FwdModelExtra, &
+d109 7
+d125 5
+a129 5
+    TheForwardModelConfig%Ntimes = TheForwardModelConfig%Ntimes + 1
+    TheForwardModelConfig%sum_DeltaTime = &
+      & TheForwardModelConfig%sum_DeltaTime + deltaTime
+    TheForwardModelConfig%sum_squareDeltaTime = &
+      & TheForwardModelConfig%sum_squareDeltaTime + (deltaTime * deltaTime)
+d140 3
+@
+
+
+2.18
+log
+@Find mean, std dev timing of fullForwardModel calls
+@
+text
+@d16 1
+a16 1
+    "$Id: ForwardModelWrappers.f90,v 2.17 2003/06/03 19:24:56 livesey Exp $"
+d44 3
+d56 1
+d58 1
+d61 14
+a76 1
+      call time_now (time_start)
+a78 8
+      call time_now (time_end)
+      deltaTime = time_end - time_start
+      TheForwardModelConfig%Ntimes = TheForwardModelConfig%Ntimes + 1
+      TheForwardModelConfig%sum_DeltaTime = &
+	& TheForwardModelConfig%sum_DeltaTime + deltaTime
+      TheForwardModelConfig%sum_squareDeltaTime = &
+	& TheForwardModelConfig%sum_squareDeltaTime + (deltaTime * deltaTime)
+
+d113 15
+d137 3
+@
+
+
+2.17
+log
+@Added the ability to call the switching mirror model in isolation
+@
+text
+@d16 1
+a16 1
+    "$Id: ForwardModelWrappers.f90,v 2.16 2003/05/29 16:42:34 livesey Exp $"
+d43 1
+d52 2
+d58 1
+d61 8
+d112 3
+@
+
+
+2.16
+log
+@Added calls to SwitchingMirrorModel
+@
+text
+@d16 1
+a16 1
+    "$Id: ForwardModelWrappers.f90,v 2.15 2002/10/08 17:36:20 pwagner Exp $"
+d35 2
+a36 1
+    use Init_tables_module, only: L_LINEAR, L_SCAN, L_SCAN2D, L_FULL, L_CLOUDFULL
+d86 3
+d100 3
+@
+
+
+2.15
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d16 1
+a16 1
+    "$Id: ForwardModelWrappers.f90,v 2.14 2002/08/21 23:43:33 vsnyder Exp $"
+d40 1
+d58 2
+d66 2
+d80 4
+d96 3
+@
+
+
+2.14
+log
+@Move USE statements from module scope to procedure scope
+@
+text
+@d16 1
+a16 1
+    "$Id: ForwardModelWrappers.f90,v 2.13 2002/07/23 00:06:05 pwagner Exp $"
+d20 1
+d80 4
+d87 3
+@
+
+
+2.13
+log
+@No upper-case allowed in section names
+@
+text
+@a7 13
+  
+  use BaselineForwardModel_m, only: BASELINEFORWARDMODEL
+  use ForwardModelIntermediate, only: FORWARDMODELINTERMEDIATE_T, &
+    & FORWARDMODELSTATUS_T
+  use FullCloudForwardModel, only: FULLCLOUDFORWARDMODELWRAPPER
+  use FullForwardModel_m, only: FULLFORWARDMODEL
+  use ForwardModelConfig, only: FORWARDMODELCONFIG_T
+  use Init_tables_module, only: L_LINEAR, L_SCAN, L_SCAN2D, L_FULL, L_CLOUDFULL
+  use LinearizedForwardModel_m, only: LINEARIZEDFORWARDMODEL
+  use MatrixModule_1, only: MATRIX_T
+  use MLSL2Timings, only: add_to_retrieval_timing
+  use ScanModelModule, only: SCANFORWARDMODEL, TWODSCANFORWARDMODEL
+  use VectorsModule, only: VECTOR_T
+d16 1
+a16 1
+    "$Id: ForwardModelWrappers.f90,v 2.12 2002/07/22 22:51:56 pwagner Exp $"
+d25 1
+a25 1
+  subroutine ForwardModel ( ForwardModelConfig, FwdModelIn, FwdModelExtra, &
+d28 13
+d42 1
+a42 1
+    type(forwardModelConfig_T), intent(inout) :: FORWARDMODELCONFIG
+d50 1
+a50 1
+    select case (ForwardModelConfig%fwmType)
+d52 1
+a52 1
+      call FullForwardModel ( ForwardModelConfig, FwdModelIn, FwdModelExtra, &
+d54 1
+a54 1
+      call BaselineForwardModel ( ForwardModelConfig, FwdModelIn, FwdModelExtra, &
+d58 1
+a58 1
+      call LinearizedForwardModel ( ForwardModelConfig, FwdModelIn, FwdModelExtra, &
+d60 1
+a60 1
+      call BaselineForwardModel ( ForwardModelConfig, FwdModelIn, FwdModelExtra, &
+d64 1
+a64 1
+      call ScanForwardModel ( ForwardModelConfig, FwdModelIn, FwdModelExtra, &
+d68 1
+a68 1
+      call TwoDScanForwardModel ( ForwardModelConfig, FwdModelIn, FwdModelExtra, &
+d72 1
+a72 1
+      call FullCloudForwardModelWrapper ( ForwardModelConfig, FwdModelIn, FwdModelExtra, &
+d82 3
+@
+
+
+2.12
+log
+@Restored name of 2d scan model in timings
+@
+text
+@d29 1
+a29 1
+    "$Id: ForwardModelWrappers.f90,v 2.11 2002/06/24 22:14:59 livesey Exp $"
+d70 1
+a70 1
+      call add_to_retrieval_timing( 'twoDscan_fwm' )
+d82 3
+@
+
+
+2.11
+log
+@Changed name of 2d scan model in timings
+@
+text
+@d29 1
+a29 1
+    "$Id: ForwardModelWrappers.f90,v 2.10 2002/06/24 18:27:09 livesey Exp $"
+d70 1
+a70 1
+      call add_to_retrieval_timing( 'scan_fwm' )
+d82 3
+@
+
+
+2.10
+log
+@New 2D scan model
+@
+text
+@d29 1
+a29 1
+    "$Id: ForwardModelWrappers.f90,v 2.9 2001/11/27 23:34:49 pwagner Exp $"
+d70 1
+a70 1
+      call add_to_retrieval_timing( 'twoDscan_fwm' )
+d82 3
+@
+
+
+2.9
+log
+@Split forward model timings into four types
+@
+text
+@d15 1
+a15 1
+  use Init_tables_module, only: L_LINEAR, L_SCAN, L_FULL, L_CLOUDFULL
+d19 1
+a19 1
+  use ScanModelModule, only: SCANFORWARDMODEL
+d29 1
+a29 1
+    "$Id: ForwardModelWrappers.f90,v 2.8 2001/10/02 16:55:10 livesey Exp $"
+d67 4
+d82 3
+@
+
+
+2.8
+log
+@Bug fix, forgot use statement
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+d9 1
+d13 1
+a13 2
+  use VectorsModule, only: VECTOR_T
+  use MatrixModule_1, only: MATRIX_T
+a15 3
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+
+  use FullForwardModel_m, only: FULLFORWARDMODEL
+d17 2
+d20 1
+a20 1
+  use BaselineForwardModel_m, only: BASELINEFORWARDMODEL
+d29 1
+a29 1
+    "$Id: ForwardModelWrappers.f90,v 2.7 2001/10/02 16:53:18 livesey Exp $"
+d56 1
+d62 1
+d66 1
+d70 1
+d78 3
+@
+
+
+2.7
+log
+@Added call to BaselineForwardModel for Full and Linearized forward models.
+@
+text
+@d21 1
+d30 1
+a30 1
+    "$Id: ForwardModelWrappers.f90,v 2.6 2001/07/17 22:36:32 jonathan Exp $"
+d75 3
+@
+
+
+2.6
+log
+@add cloud_width, jonathan/paul
+@
+text
+@d29 1
+a29 1
+    "$Id: ForwardModelWrappers.f90,v 2.5 2001/05/29 23:22:20 livesey Exp $"
+d54 2
+d59 2
+d74 3
+@
+
+
+2.5
+log
+@FullForwardModel moved, also added (but commented out)
+call to FullCloudForwardModelWrapper
+@
+text
+@d11 1
+a11 1
+!  use FullCloudForwardModel, only: FULLCLOUDFORWARDMODELWRAPPER
+d29 1
+a29 1
+    "$Id: ForwardModelWrappers.f90,v 2.4 2001/05/03 23:42:48 livesey Exp $"
+d61 2
+a62 2
+!      call FullCloudForwardModelWrapper ( ForwardModelConfig, FwdModelIn, FwdModelExtra, &
+!        FwdModelOut, Ifm, fmStat, Jacobian )
+d70 4
+@
+
+
+2.4
+log
+@Activated scan model.
+@
+text
+@d11 1
+d15 1
+a15 1
+  use Init_tables_module, only: L_LINEAR, L_SCAN, L_FULL
+d18 1
+a18 1
+  use ForwardModelInterface, only: FULLFORWARDMODEL
+d29 1
+a29 1
+    "$Id: ForwardModelWrappers.f90,v 2.3 2001/04/28 17:48:48 livesey Exp $"
+d60 3
+d70 3
+@
+
+
+2.3
+log
+@Removed some unnecessary checks
+@
+text
+@d19 1
+a19 1
+!  use ScanModelModule, only: SCANFORWARDMODEL
+d28 1
+a28 1
+    "$Id: ForwardModelWrappers.f90,v 2.2 2001/04/26 23:54:26 livesey Exp $"
+d57 2
+a58 2
+      !call ScanForwardModel ( ForwardModelConfig, FwdModelIn, FwdModelExtra, &
+      !  FwdModelOut, Ifm, fmStat, Jacobian )
+d66 3
+@
+
+
+2.2
+log
+@Now uses linear forward model
+@
+text
+@d28 1
+a28 1
+    "$Id: ForwardModelWrappers.f90,v 2.1 2001/04/26 19:47:41 livesey Exp $"
+a48 5
+    if ( (.not. present(jacobian)) .and. &
+      &  (any (ForwardModelConfig%fwmType == (/ l_linear, l_scan /)))) &
+      & call MLSMessage(MLSMSG_Error,ModuleName, &
+      &   'Must have a jacobian for these forward models' )
+
+d66 3
+@
+
+
+2.1
+log
+@First version
+@
+text
+@d18 1
+a18 1
+!  use LinearForwardModel, only: LINEARFORWARDMODEL
+d28 1
+a28 1
+    "$Id: L2PC_m.f90,v 2.6 2001/04/26 19:33:03 livesey Exp $"
+d31 1
+a31 1
+    "$RCSfile: L2PC_m.f90,v $"
+d59 2
+a60 2
+      !call LinearForwardModel ( ForwardModelConfig, FwdModelIn, FwdModelExtra, &
+      !  FwdModelOut, Ifm, fmStat, Jacobian )
+d70 4
+a73 1
+! $Log$
+@
+

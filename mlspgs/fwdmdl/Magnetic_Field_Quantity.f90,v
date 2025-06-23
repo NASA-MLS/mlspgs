@@ -1,0 +1,745 @@
+head	2.12;
+access;
+symbols
+	v5-02-NRT-19:2.12
+	v6-00:2.12
+	v5-02-NRT-18:2.12
+	v5-02:2.12
+	v5-01-NRT-17:2.12
+	v5-01-NRT-16:2.12
+	v5-01-NRT-15:2.12
+	v5-01-NRT-14:2.12
+	neuralnetworks-1-0:2.12.0.10
+	cfm-single-freq-0-1:2.12.0.8
+	v5-01:2.12
+	v5-00:2.12
+	v4-23-TA133:2.12.0.6
+	mus-emls-1-70:2.12.0.4
+	rel-1-0-englocks-work:2.12.0.2
+	VUMLS1-00:2.12
+	VPL1-00:2.12
+	V4-22-NRT-08:2.12
+	VAM1-00:2.10
+	V4-21:2.3.0.2
+	V4-13:2.3
+	V4-12:2.3
+	V4-11:2.3
+	V4-10:2.3;
+locks; strict;
+comment	@# @;
+
+
+2.12
+date	2016.01.23.02.51.54;	author vsnyder;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2015.10.27.23.03.30;	author vsnyder;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2015.09.22.23.20.38;	author vsnyder;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2015.07.29.00.28.36;	author vsnyder;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2015.07.23.23.44.47;	author vsnyder;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2015.05.28.23.15.18;	author vsnyder;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2015.04.29.01.23.08;	author vsnyder;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2015.04.08.01.55.13;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2015.03.28.02.13.06;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2014.01.11.01.28.53;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2013.08.16.02.31.25;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2013.08.13.02.22.41;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.12
+log
+@Use procedures that want coordinates in meters instead of ERad
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Magnetic_Field_Quantity
+
+  implicit NONE
+  private
+  public :: Get_Magnetic_Field_Quantity
+  public :: Get_Magnetic_Field_Qty_Geoc, Get_Magnetic_Field_Qty_XYZ
+
+  interface Get_Magnetic_Field_Quantity
+    module procedure Get_Magnetic_Field_Qty_Geoc
+    module procedure Get_Magnetic_Field_Qty_XYZ
+  end interface
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: Magnetic_Field_Quantity.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  subroutine Get_Magnetic_Field_Qty_Geoc ( Qty, ScVelQuantity, &
+    & GeocAltitudeQuantity, GPHQuantity, Regular, ReferenceMIF )
+
+  ! Compute the magnetic field at the geolocations given by Qty (lat,lon,surfs).
+  ! Compute the orbit plane determined by the velocity and geolocation in
+  ! ScVelQuantity. Determine the viewing plane defined by GeocAltitudeQuantity
+  ! and ScVelQuantity. If that is not the same as the orbit plane, compute the
+  ! magnetic field at across-track positions given by Qty%Template%CrossAngles.
+  ! Put the values in Qty%Value4.
+
+  ! We assume that the quantity types have been checked, that the relationship
+  ! between the magnetic field's vertical coordinate and the existence of the
+  ! other quantities has been checked, and that the relationship between the
+  ! existence, number, and values of cross-angles and the existence of the other
+  ! quantities has been checked.
+
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use ForwardModelGeometry, only: Compute_Viewing_Plane
+    use QuantityTemplates, only: RT
+    use Toggles, only: Emit, Levels
+    use Trace_m, only: Trace_Begin, Trace_End
+    use VectorsModule, only: VectorValue_T
+
+    type (vectorValue_t), intent(inout) :: Qty
+    type (vectorValue_t), intent(in), optional :: ScVelQuantity
+    type (vectorValue_t), intent(in), optional :: GeocAltitudeQuantity ! tangent
+    type (vectorValue_t), intent(in), optional :: GPHQuantity
+    logical, intent(in), optional :: Regular ! coherent and stacked, default false
+    integer, intent(in), optional :: ReferenceMIF ! Used only if Regular
+
+    integer :: Me = -1                 ! String index for tracing
+    integer :: Stat                    ! From allocate or deallocate
+    real(rt), allocatable :: XYZs(:,:,:,:) ! Geocentric Cartesian coordinates
+                                       ! in viewing plane.
+                                       ! 3 X instances X surfs X cross angles
+
+    call trace_begin ( me, 'Get_Magnetic_Field_Qty_Geoc', &
+      & cond=levels(emit) > 1 )
+
+    allocate ( xyzs ( 3, &                     ! XYZ
+                    & size(qty%value4,2),   &  ! NoSurfs
+                    & size(qty%value4,3),   &  ! NoInstances or 1
+                    & size(qty%value4,4) ), &  ! NoCrossAngles
+                    & stat=stat )
+    call test_allocate ( stat, moduleName, 'XYZs' )
+    
+    call compute_viewing_plane ( Qty, ScVelQuantity, GeocAltitudeQuantity, &
+      gphQuantity, XYZs, regular, referenceMIF )
+
+    call get_magnetic_field_qty_XYZ ( Qty, XYZs )
+
+    deallocate ( xyzs, stat=stat )
+    call test_deallocate ( stat, moduleName, 'XYZs' )
+
+    call trace_end ( 'Get_Magnetic_Field_Qty_Geoc', cond=levels(emit) > 1 )
+
+  end subroutine Get_Magnetic_Field_Qty_Geoc
+
+  subroutine Get_Magnetic_Field_Qty_XYZ ( Qty, XYZs )
+
+  ! Compute the magnetic field at the geolocations given by XYZs, and
+  ! put the values in Qty%Value3.
+
+    use Geometry, only: SecPerYear
+    use IGRF_Int, only: Feldcm, FeldCof
+    use Intrinsic, only: PHYQ_Gauss
+    use MLSStringLists, only: SwitchDetail
+    use QuantityTemplates, only: Epoch, RT
+    use Toggles, only: Emit, Levels, Switches
+    use Trace_m, only: Trace_Begin, Trace_End
+    use VectorsModule, only: Dump, VectorValue_T
+
+    type (vectorValue_t), intent(inout) :: Qty
+    ! Cartesian ECR coordinates, meters:
+    real(rt), intent(in) :: XYZs(3,size(qty%value4,2),size(qty%value4,3),size(qty%value4,4))
+
+    integer :: Across                  ! Loop counter for cross-track angles
+    real :: B(3)                       ! Magnetic field
+    integer, save :: Details = -10     ! From switchDetails('gMag')
+    integer :: Inst                    ! Loop counter for instances
+    integer :: Me = -1                 ! String index for tracing
+    character(len=8), save :: Options = ''
+    integer :: Surf                    ! Loop counter for surfaces
+
+    call trace_begin ( me, 'Get_Magnetic_Field_Qty_XYZ', &
+      & cond=levels(emit) > 1 )
+
+    ! Assume the time is close enough to constant that one call to
+    ! FELDCOF is accurate enough.
+
+    call feldcof ( real(qty%template%time(1,1)/secPerYear + epoch) )
+
+    do across = 1, size(xyzs,4)
+      do inst = 1, size(xyzs,3)
+        do surf = 1, size(xyzs,2)
+          ! Compute the field at and w.r.t. cartesian coordinates in xyzs.
+          call feldcm ( real(xyzs(:3,surf,inst,across)), b )
+          ! The first dimension of value4 is field components, not channels.
+          qty%value4 ( 1:3, surf, inst, across ) = b
+        end do
+      end do
+    end do
+    qty%template%unit = phyq_gauss
+
+    if ( details < -1 ) then ! only once
+      details = switchDetail(switches,'gMag')
+      if ( switchDetail(switches,'clean') > -1 ) options = '-c'
+    end if
+    if ( details > -1 ) call dump ( qty, details=details, options=options )
+
+    call trace_end ( 'Get_Magnetic_Field_Qty_XYZ', cond=levels(emit) > 1 )
+
+  end subroutine Get_Magnetic_Field_Qty_XYZ
+
+  ! ----------------------------------------------  not_used_here  -----
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: Magnetic_Field_Quantity.f90,v 2.11 2015/10/27 23:03:30 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Magnetic_Field_Quantity
+
+! $Log: Magnetic_Field_Quantity.f90,v $
+! Revision 2.11  2015/10/27 23:03:30  vsnyder
+! Change dump switch from gmag to gMag because mag causes the forward model
+! to dump the magnetic field along the integration path.
+!
+! Revision 2.10  2015/09/22 23:20:38  vsnyder
+! Add a reference MIF number
+!
+! Revision 2.9  2015/07/29 00:28:36  vsnyder
+! Repair a comment
+!
+! Revision 2.8  2015/07/23 23:44:47  vsnyder
+! qty%template%unit should be phyq_gauss, not l_gauss
+!
+! Revision 2.7  2015/05/28 23:15:18  vsnyder
+! Fiddle with tracing
+!
+! Revision 2.6  2015/04/29 01:23:08  vsnyder
+! Coordinates now given as XYZ, not taken from the magnetic field quantity
+!
+! Revision 2.5  2015/04/08 01:55:13  vsnyder
+! Check for geocentric or geodetic altitude vertical coordinate
+!
+! Revision 2.4  2015/03/28 02:13:06  vsnyder
+! Add cross-track magnetic field grids
+!
+! Revision 2.3  2014/01/11 01:28:53  vsnyder
+! Decruftification
+!
+! Revision 2.2  2013/08/16 02:31:25  vsnyder
+! Add MAF argument, get To_Cart from Geometry
+!
+! Revision 2.1  2013/08/13 02:22:41  vsnyder
+! Initial commit
+!
+@
+
+
+2.11
+log
+@Change dump switch from gmag to gMag because mag causes the forward model
+to dump the magnetic field along the integration path.
+@
+text
+@d95 2
+a96 2
+    use Geometry, only: ERad, SecPerYear
+    use IGRF_Int, only: Feldc, FeldCof
+a115 2
+    real, parameter :: EradM = Erad * 1000.0 ! Average Earth radius, meters
+
+d128 2
+a129 2
+          call feldc ( real(xyzs(:3,surf,inst,across))/eRadM, b )
+          ! The first dimension of value3 is field components, not channels.
+d150 1
+a150 1
+       "$Id: Magnetic_Field_Quantity.f90,v 2.10 2015/09/22 23:20:38 vsnyder Exp $"
+d160 4
+@
+
+
+2.10
+log
+@Add a reference MIF number
+@
+text
+@d110 1
+a110 1
+    integer, save :: Details = -10     ! From switchDetails('gmag')
+d139 1
+a139 1
+      details = switchDetail(switches,'gmag')
+d152 1
+a152 1
+       "$Id: Magnetic_Field_Quantity.f90,v 2.9 2015/07/29 00:28:36 vsnyder Exp $"
+d162 3
+@
+
+
+2.9
+log
+@Repair a comment
+@
+text
+@d33 1
+a33 1
+    & GeocAltitudeQuantity, GPHQuantity )
+d59 2
+d79 1
+a79 1
+      gphQuantity, XYZs )
+d152 1
+a152 1
+       "$Id: Magnetic_Field_Quantity.f90,v 2.8 2015/07/23 23:44:47 vsnyder Exp $"
+d162 3
+@
+
+
+2.8
+log
+@qty%template%unit should be phyq_gauss, not l_gauss
+@
+text
+@d71 1
+a71 1
+                    & size(qty%value4,3),   &  ! NoInstances of 1
+d150 1
+a150 1
+       "$Id: Magnetic_Field_Quantity.f90,v 2.7 2015/05/28 23:15:18 vsnyder Exp $"
+d160 3
+@
+
+
+2.7
+log
+@Fiddle with tracing
+@
+text
+@d95 1
+a95 1
+    use Intrinsic, only: L_Gauss
+d134 1
+a134 1
+    qty%template%unit = l_gauss
+d150 1
+a150 1
+       "$Id: Magnetic_Field_Quantity.f90,v 2.6 2015/04/29 01:23:08 vsnyder Exp $"
+d160 3
+@
+
+
+2.6
+log
+@Coordinates now given as XYZ, not taken from the magnetic field quantity
+@
+text
+@a48 1
+    use Cross_m, only: Cross ! Vector cross product
+a49 1
+    use MLSStringLists, only: SwitchDetail
+d51 1
+a51 1
+    use Toggles, only: Emit, Levels, Switches, Toggle
+a59 2
+    real :: B(3)                       ! Magnetic field
+    integer, save :: Details = -10     ! From switchDetails('gmag')
+a60 1
+    character(len=8), save :: Options = ''
+a68 5
+    if ( details < -1 ) then ! only once
+      details = switchDetail(switches,'gmag')
+      if ( switchDetail(switches,'clean') > -1 ) options = '-c'
+    end if
+
+d98 1
+a98 1
+    use Toggles, only: Emit, Levels, Switches, Toggle
+d150 1
+a150 1
+       "$Id: Magnetic_Field_Quantity.f90,v 2.5 2015/04/08 01:55:13 vsnyder Exp $"
+d160 3
+@
+
+
+2.5
+log
+@Check for geocentric or geodetic altitude vertical coordinate
+@
+text
+@d32 2
+a33 2
+  subroutine Get_Magnetic_Field_Qty_Geoc ( Qty, GeocAltitudeQuantity, &
+    & ScVelQuantity, MAF )
+d36 11
+a46 4
+  ! Determine the viewing plane defined by GeocAltitudeQuantity and
+  ! ScVelQuantity. If that is not the same as the orbit plane, compute the
+  ! magnetic field at across-track positions given by
+  ! Qty%Template%CrossAngles. Put the values in Qty%Value4.
+d48 2
+a50 4
+    use Geometry, only: ERad, SecPerYear, To_Cart, To_XYZ
+    use IGRF_Int, only: Feldc, FeldCof
+    use Intrinsic, only: L_GeocAltitude, L_GeodAltitude, L_Gauss
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+d52 1
+a52 1
+    use QuantityTemplates, only: Epoch, RT
+d55 1
+a55 1
+    use VectorsModule, only: Dump, VectorValue_T
+d58 7
+a64 11
+    type (vectorValue_t), intent(in) :: GeocAltitudeQuantity
+    type (vectorValue_t), intent(in) :: ScVelQuantity
+    integer, intent(in), optional :: MAF ! to use for GPH quantity
+
+    real :: B(3)                      ! Magnetic field
+    integer :: Cross                  ! Index for cross-track angle
+    integer, save :: Details = -10    ! From switchDetails('gmag')
+    integer :: Instance               ! Loop counter
+    integer :: InstanceOr1            ! Index
+    integer :: MAF1, MAFn             ! MAFs to do
+    integer :: Me = -1                ! String index for tracing
+d66 4
+a69 5
+    integer :: Surf                   ! Loop counter
+    integer :: SurfOr1                ! Index
+    real    :: XYZ(3)                 ! ECR equivalent of (lat,lon,height),
+                                      ! first an unit vector, then in units of
+                                      ! ERad.
+d79 9
+a87 16
+    if ( qty%template%verticalCoordinate /= l_geocAltitude .and. &
+       & qty%template%verticalCoordinate /= l_geodAltitude ) then
+      call MLSMessage ( MLSMSG_Error, moduleName, &
+        & 'Magnetic field vertical coordinate is not geodetic or geocentric altitude' )
+      return ! Hopefully, we don't get here
+    end if
+
+    MAF1 = 1; MAFn = qty%template%noInstances
+    if ( present(MAF) ) then
+      MAF1 = MAF; MAFn = MAF
+    end if
+    call compute_viewing_plane ( Qty, GeocAltitudeQuantity, ScVelQuantity, &
+      MAF1, MAFn )
+
+    ! Assume the time is close enough to constant that one call to
+    ! FELDCOF is accurate enough.
+d89 1
+a89 1
+    call feldcof ( real(qty%template%time(1,1)/secPerYear + epoch) )
+d91 2
+a92 29
+    do instance = MAF1, MAFn
+      instanceOr1 = merge ( 1, instance, qty%template%coherent )
+      do surf = 1, qty%template%noSurfs
+        surfOr1 = merge ( 1, surf, qty%template%stacked )
+        do cross = 1, qty%template%noCrossTrack
+          if ( qty%template%verticalCoordinate == l_geocAltitude ) then
+            ! Convert lat(deg), lon(deg) to an unit vector in ECR.
+            xyz = to_xyz ( qty%template%geodLat3(surfOr1,instance,cross), &
+                         & qty%template%lon3(surfOr1,instance,cross) )
+            ! Make the length of XYZ the geocentric altitude in units of ERad.
+            xyz = xyz * qty%template%surfs(surf,instanceOr1) / ( 1.0e3 * ERad )
+          else ! Assume the vertical coordinate is geodetic altitude in meters.
+            ! To_Cart wants altitude in km above sea level.
+            ! Qty%Template%Surfs is in meters.
+            ! It produces a vector with a length in units of the Earth radius.
+            call to_cart ( real( [ qty%template%geodLat3(surfOr1,instance,cross), &
+                                 & qty%template%lon3(surfOr1,instance,cross), &
+                                 & qty%template%surfs(surf,instanceOr1) / 1.0e3 ] ), &
+                                 & xyz )
+          end if
+          ! Compute the field at and w.r.t. cartesian coordinates in XYZ.
+          call feldc ( xyz, b )
+          ! The first dimension of value3 is field components, not channels.
+          qty%value4 ( 1:3, surf, instance, cross ) = b
+        end do
+      end do
+    end do
+    if ( details > -1 ) call dump ( qty, details=details, options=options )
+    qty%template%unit = l_gauss
+d98 1
+a98 1
+  subroutine Get_Magnetic_Field_Qty_XYZ ( Qty, XYZ )
+d100 1
+a100 1
+  ! Compute the magnetic field at the geolocations given by XYZ, and
+d103 1
+a103 1
+    use Geometry, only: SecPerYear
+d105 1
+d107 1
+a107 1
+    use QuantityTemplates, only: Epoch
+d113 2
+a114 1
+    real, intent(in) :: XYZ(3,size(qty%value3,2),size(qty%value3,3))
+d116 5
+a120 4
+    real :: B(3)                      ! Magnetic field
+    integer, save :: Details = -10    ! From switchDetails('gmag')
+    integer :: INSTANCE               ! Loop counter
+    integer :: Me = -1                ! String index for tracing
+d122 3
+a124 2
+    integer :: SURF                   ! Loop counter
+    integer :: SURFOR1                ! Index
+a128 5
+    if ( details < -1 ) then ! only once
+      details = switchDetail(switches,'gmag')
+      if ( switchDetail(switches,'clean') > -1 ) options = '-c'
+    end if
+
+d134 8
+a141 11
+    do instance = 1, qty%template%noInstances
+      do surf = 1, qty%template%noSurfs
+        if ( qty%template%stacked ) then
+          surfOr1 = 1
+        else
+          surfOr1 = surf
+        end if
+        ! Compute the field at and w.r.t. cartesian coordinates in XYZ.
+        call feldc ( xyz(1:3,surfOr1,instance), b )
+        ! The first dimension of value3 is field components, not channels.
+        qty%value3 ( 1:3, surf, instance) = b
+d144 1
+d146 4
+d160 1
+a160 1
+       "$Id: Magnetic_Field_Quantity.f90,v 2.4 2015/03/28 02:13:06 vsnyder Exp $"
+d170 3
+@
+
+
+2.4
+log
+@Add cross-track magnetic field grids
+@
+text
+@d43 3
+a45 2
+    use IGRF_INT, only: FELDC, FELDCOF
+    use Intrinsic, only: L_GeocAltitude, L_Gauss
+d48 2
+a49 1
+    use Toggles, only: Switches
+d63 2
+a64 1
+    character(len=8), save :: options = ''
+d71 3
+d79 7
+d115 1
+a115 1
+                                 & qty%template%surfs(surfOr1,instanceOr1) / 1.0e3 ] ), &
+d128 2
+d138 1
+a138 1
+    use IGRF_INT, only: FELDC, FELDCOF
+d141 2
+a142 1
+    use Toggles, only: Switches
+d151 2
+a152 1
+    character(len=8), save :: options = ''
+d156 3
+d185 2
+d193 1
+a193 1
+       "$Id: Magnetic_Field_Quantity.f90,v 2.3 2014/01/11 01:28:53 vsnyder Exp $"
+d203 3
+@
+
+
+2.3
+log
+@Decruftification
+@
+text
+@d17 1
+a17 1
+  public :: Get_Magnetic_Field_Qty_GPH, Get_Magnetic_Field_Qty_XYZ
+d20 1
+a20 1
+    module procedure Get_Magnetic_Field_Qty_GPH
+d32 2
+a33 1
+  subroutine Get_Magnetic_Field_Qty_GPH ( Qty, GPHQty, MAF )
+d35 5
+a39 2
+  ! Compute the magnetic field at the geolocations given by Qty (lat,lon)
+  ! and GPHQty (altitude), and put the values in Qty%Value3.
+d41 2
+a42 1
+    use Geometry, only: SecPerYear, To_Cart
+d44 1
+d46 1
+a46 1
+    use QuantityTemplates, only: Epoch
+d51 2
+a52 1
+    type (vectorValue_t), intent(inout) :: GPHQty
+d56 5
+a60 3
+    integer, save :: Details = -10    ! From switchDetails('mag')
+    integer :: GPHInstance
+    integer :: INSTANCE               ! Loop counter
+d62 5
+a66 3
+    integer :: SURF                   ! Loop counter
+    integer :: SURFOR1                ! Index
+    real    :: XYZ(3)                 ! lat, lon, height for to_cart
+d69 1
+a69 1
+      details = switchDetail(switches,'mag')
+d73 7
+d85 2
+a86 3
+    do instance = 1, qty%template%noInstances
+      gphInstance = instance
+      if ( present(MAF) ) gphInstance = MAF
+d88 22
+a109 13
+        if ( qty%template%stacked ) then
+          surfOr1 = 1
+        else
+          surfOr1 = surf
+        end if
+        ! Convert (/ lat(deg), lon(deg), height(km) /) to cartesian (e-radius)
+        call to_cart ( real( (/ qty%template%geodLat(surfOr1,instance), &
+          &                     qty%template%lon(surfOr1,instance), &
+          &                     gphQty%values(surf,gphInstance)*1.0e-3 /) ), xyz )
+        ! Compute the field at and w.r.t. cartesian coordinates in XYZ.
+        call feldc ( xyz, b )
+        ! The first dimension of value3 is field components, not channels.
+        qty%value3 ( 1:3, surf, instance) = b
+a111 1
+
+d113 1
+d115 1
+a115 1
+  end subroutine Get_Magnetic_Field_Qty_GPH
+d133 1
+a133 1
+    integer, save :: Details = -10    ! From switchDetails('mag')
+d140 1
+a140 1
+      details = switchDetail(switches,'mag')
+d171 1
+a171 1
+       "$Id: Magnetic_Field_Quantity.f90,v 2.2 2013/08/16 02:31:25 vsnyder Exp $"
+d181 3
+@
+
+
+2.2
+log
+@Add MAF argument, get To_Cart from Geometry
+@
+text
+@d96 1
+a96 1
+    use Geometry, only: SecPerYear, To_Cart
+d145 1
+a145 1
+       "$Id: Magnetic_Field_Quantity.f90,v 2.1 2013/08/13 02:22:41 vsnyder Exp $"
+d155 3
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d26 1
+a26 1
+       "$RCSfile: igrf_int.f90,v $"
+d32 1
+a32 1
+  subroutine Get_Magnetic_Field_Qty_GPH ( Qty, GPHQty )
+d37 2
+a38 2
+    use Geometry, only: SecPerYear
+    use IGRF_INT, only: FELDC, FELDCOF, To_Cart
+d46 1
+d50 1
+d68 2
+d79 1
+a79 1
+          &                     gphQty%values(surf,instance)*1.0e-3 /) ), xyz )
+d96 2
+a97 2
+    use Geometry, only: SecPerYear
+    use IGRF_INT, only: FELDC, FELDCOF, To_Cart
+d145 1
+a145 1
+       "$Id: igrf_int.f90,v 2.7 2013/06/12 02:30:07 vsnyder Exp $"
+d154 4
+a157 1
+! $Log: $
+@
+

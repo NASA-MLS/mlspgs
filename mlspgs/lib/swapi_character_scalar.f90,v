@@ -1,0 +1,283 @@
+head	2.4;
+access;
+symbols
+	v5-02-NRT-19:2.4
+	v6-00:2.4
+	v5-02-NRT-18:2.4
+	v5-02:2.4
+	v5-01-NRT-17:2.4
+	v5-01-NRT-16:2.4
+	v5-01-NRT-15:2.4
+	v5-01-NRT-14:2.4
+	neuralnetworks-1-0:2.4.0.14
+	cfm-single-freq-0-1:2.4.0.12
+	v5-01:2.4
+	v5-00:2.4
+	v4-23-TA133:2.4.0.10
+	mus-emls-1-70:2.4.0.8
+	rel-1-0-englocks-work:2.4.0.6
+	VUMLS1-00:2.4
+	VPL1-00:2.4
+	V4-22-NRT-08:2.4
+	VAM1-00:2.4
+	V4-21:2.4.0.4
+	V4-13:2.4
+	V4-12:2.4
+	V4-11:2.4
+	V4-10:2.4
+	V3-43:2.4
+	M4-00:2.4
+	V3-41:2.4
+	V3-40-PlusGM57:2.4.0.2
+	V2-24-NRT-04:2.3
+	V3-33:2.4
+	V2-24:2.3
+	V3-31:2.4
+	V3-30-NRT-05:2.4
+	cfm-01-00:2.4
+	V3-30:2.4
+	V3-20:2.4
+	V3-10:2.4
+	V2-23-NRT-02:2.3
+	V2-23:2.3
+	V2-22-NRT-01:2.3
+	V2-22:2.3
+	V2-21:2.3
+	V2-20:2.3
+	V2-11:2.3
+	V2-10:2.3
+	V2-00:2.3
+	V1-51:2.2
+	V1-50:2.2
+	V1-45:2.2
+	V1-44:2.2
+	V1-43:2.2
+	V1-42:2.2
+	V1-41:2.2
+	V1-32:2.2
+	V1-40:2.2
+	V1-31:2.2
+	V1-30:2.2
+	V1-13:2.2
+	V1-12:2.2
+	V1-11:2.2
+	V1-10:2.2
+	newfwm-feb03:2.2.0.2
+	V1-04:2.1
+	V1-03:2.1
+	V1-02:2.1
+	V1-00:2.1
+	newfwm-sep01:2.1.0.2
+	V0-7:2.1
+	V0-5-Level2:2.0
+	V0-5-SIPS:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.4
+date	2009.06.23.18.25.44;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2005.06.22.17.25.50;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2002.10.08.00.09.14;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.06.07.21.59.41;	author pwagner;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2000.09.05.17.41.08;	author dcuddy;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2000.09.02.01.56.36;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.4
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module SWAPI_CHARACTER_SCALAR
+
+  public
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  integer function SWRDFLD_CHARACTER_SCALAR ( SWATHID, FIELDNAME, &
+    & STARTS, STRIDES, EDGES, BUFFER )
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: FIELDNAME     ! Field name
+    integer, intent(in) :: STARTS(*)    ! Start array
+    integer, intent(in) :: STRIDES(*)   ! Stride array
+    integer, intent(in) :: EDGES(*)     ! Edge array
+    character(len=*), intent(out) :: BUFFER  ! Buffer for read
+
+    integer, external :: SWRDFLD
+
+    swrdfld_character_scalar = swrdfld(swathid, fieldname, starts, strides, &
+      & edges, buffer )
+  end function SWRDFLD_CHARACTER_SCALAR
+
+  integer function SWWRFLD_CHARACTER_SCALAR ( SWATHID, FIELDNAME, &
+    & STARTS, STRIDES, EDGES, BUFFER )
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: FIELDNAME     ! Field name
+    integer, intent(in) :: STARTS(*)    ! Start array
+    integer, intent(in) :: STRIDES(*)   ! Stride array
+    integer, intent(in) :: EDGES(*)     ! Edge array
+    character(len=*), intent(in) :: BUFFER  ! Buffer for write
+
+    integer, external :: SWWRFLD
+
+    swwrfld_character_scalar = swwrfld(swathid, fieldname, starts, strides, &
+      & edges, buffer )
+  end function SWWRFLD_CHARACTER_SCALAR
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: read_apriori.f90 is it here $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module SWAPI_CHARACTER_SCALAR
+
+! $Log: swapi_character_scalar.f90,v $
+! Revision 2.3  2005/06/22 17:25:50  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.2  2002/10/08 00:09:14  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.1  2001/06/07 21:59:41  pwagner
+! Added Copyright statement
+!
+! Revision 2.0  2000/09/05 17:41:08  dcuddy
+! Change revision to 2.0
+!
+! Revision 1.1  2000/09/02 01:56:36  vsnyder
+! Initial code
+!
+@
+
+
+2.3
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d54 1
+a55 1
+!---------------------------- RCS Ident Info -------------------------------
+d57 2
+a58 3
+       "$Id: $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d60 1
+d62 1
+d67 3
+@
+
+
+2.2
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d16 3
+a18 5
+  !------------------------------- RCS Ident Info ----------------------------
+  character(len=256), private :: Id = &
+    & "$Id: swapi_character_scalar.f90,v 2.1 2001/06/07 21:59:41 pwagner Exp $"
+  character(len=*), private, parameter :: ModuleName = &
+    & "$RCSfile: swapi_character_scalar.f90,v $"
+d20 1
+a20 1
+  !---------------------------------------------------------------------------
+d55 5
+d66 3
+@
+
+
+2.1
+log
+@Added Copyright statement
+@
+text
+@d10 1
+a10 1
+    & "$Id: swapi_character_scalar.f90,v 2.0 2000/09/05 17:41:08 dcuddy Exp $"
+d13 1
+d48 4
+d55 3
+@
+
+
+2.0
+log
+@Change revision to 2.0
+@
+text
+@d1 3
+d10 1
+a10 1
+    & "$Id: swapi_character_scalar.f90,v 1.1 2000/09/02 01:56:36 vsnyder Exp $"
+d50 3
+@
+
+
+1.1
+log
+@Initial code
+@
+text
+@d7 1
+a7 1
+    & "$Id: swapi_character_scalar.f90,v 1.1 2000/09/02 01:56:36 vsnyder Exp $"
+d47 3
+@
+
+

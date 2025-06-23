@@ -1,0 +1,1406 @@
+head	2.3;
+access;
+symbols
+	V0_1:1.3;
+locks; strict;
+comment	@# @;
+
+
+2.3
+date	2000.09.15.21.50.18;	author livesey;	state dead;
+branches;
+next	2.2;
+
+2.2
+date	2000.09.13.22.44.47;	author ahanzel;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2000.09.05.18.57.04;	author ahanzel;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2000.06.30.00.02.59;	author lungu;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.3
+log
+@New version of L2GP data, moved some stuff from l2 to lib
+@
+text
+@
+! Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+!===============================================================================
+module OutputL2GP
+!===============================================================================
+
+   use Allocate_Deallocate, only: DEALLOCATE_TEST, DEALLOC_STATUS
+   use Hdf, only: DFNT_CHAR8, DFNT_FLOAT32, DFNT_INT32
+   use HDFEOS, only: SWATTACH, SWCREATE, SWDEFDFLD, SWDEFDIM, SWDEFGFLD, &
+     & SWDETACH
+   use L2GPData, only: L2GPData_T
+   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+   use STRING_TABLE, only: GET_STRING
+   use SWAPI, only: SWWRFLD
+   implicit none
+   public
+
+!------------------- RCS Ident Info -----------------------
+   character(len=130), private :: Id = &
+     & "$Id: OutputL2GP.f90,v 2.2 2000/09/13 22:44:47 ahanzel Exp $"
+   character (len=*), parameter, private :: ModuleName= &
+     & "$RCSfile: OutputL2GP.f90,v $"
+!----------------------------------------------------------
+
+! Contents:
+
+! Subroutines -- OutputL2GP_createFile
+!                OutputL2GP_writeGeo
+!                OutputL2GP_writeData
+!                DeallocateL2GP
+
+! Remarks:  This module contains parameters and subroutines used in
+!           producing an L2GP output file.
+
+! Parameters
+
+   character (len=*), parameter :: DATA_FIELD1 = 'l2gpValue'
+   character (len=*), parameter :: DATA_FIELD2 = 'l2gpPrecision'
+   character (len=*), parameter :: DATA_FIELD3 = 'l2gpStatus'
+   character (len=*), parameter :: DATA_FIELD4 = 'quality'
+
+   character (len=*), parameter :: GEO_FIELD1 = 'latitude'
+   character (len=*), parameter :: GEO_FIELD2 = 'longitude'
+   character (len=*), parameter :: GEO_FIELD3 = 'time'
+   character (len=*), parameter :: GEO_FIELD4 = 'ccsdsTime'
+   character (len=*), parameter :: GEO_FIELD5 = 'solarTime'
+   character (len=*), parameter :: GEO_FIELD6 = 'solarZenith'
+   character (len=*), parameter :: GEO_FIELD7 = 'losAngle'
+   character (len=*), parameter :: GEO_FIELD8 = 'geodAngle'
+   character (len=*), parameter :: GEO_FIELD9 = 'chunkNumber'
+   character (len=*), parameter :: GEO_FIELD10 = 'pressures'
+   character (len=*), parameter :: GEO_FIELD11 = 'frequency'
+
+   integer, parameter :: CCSDS_LEN = 27         ! len of CCSDS time string
+   integer, parameter :: HDFE_AUTOMERGE = 1     ! merge fields with share dim
+   integer, parameter :: HDFE_NOMERGE = 0       ! don't merge
+
+contains ! =====     Public Procedures     =============================
+
+  ! --------------------------------------  OutputL2GP_createFile  -----
+  subroutine OutputL2GP_createFile (L2FileHandle, l2gp, flag)
+
+  ! Brief description of subroutine
+  ! This subroutine sets up the structural definitions in an empty L2GP file.
+
+  ! Arguments
+
+    integer, intent(in) :: L2FileHandle
+
+    type( L2GPData_T ), intent(inout) :: l2gp
+
+    integer, intent(out) :: flag
+
+  ! Parameters
+
+    character (len=*), parameter :: DIM_NAME1 = 'noInstances'
+    character (len=*), parameter :: DIM_NAME2 = 'noSurfs'
+    character (len=*), parameter :: DIM_NAME3 = 'noFreqs'
+    character (len=*), parameter :: DIM_NAME4 = 'CCSDSLen,noInstances'
+    character (len=*), parameter :: DIM_NAME12 = 'noSurfs,noInstances'
+    character (len=*), parameter :: DIM_NAME123 = 'noFreqs,noSurfs,noInstances'
+    character (len=*), parameter :: DIM_NAME41 = 'CCSDSLen,noInstances'
+
+    character (len=*), parameter :: DIM_ERR = 'Failed to define dimension '
+    character (len=*), parameter :: GEO_ERR = &
+      & 'Failed to define geolocation field '
+    character (len=*), parameter :: DAT_ERR = 'Failed to define data field '
+
+  ! Variables
+
+    character (len=480) :: MSR
+    character (len=132) :: NAME   ! From l2gp%name
+
+    integer :: SWID, STATUS
+
+    flag = 0
+
+  ! Create the swath within the file
+
+    call get_string ( l2gp%name, name )
+    swid = swcreate(L2FileHandle, name)
+    if ( swid == -1 ) then
+      msr = 'Failed to create swath ' // name
+      call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+
+ ! Define dimensions
+
+    status = swdefdim(swid, DIM_NAME1, l2gp%noInstances)
+    if ( status == -1 ) then
+      msr = DIM_ERR // DIM_NAME1
+      call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+
+    if ( l2gp%noSurfs > 0 ) then
+      status = swdefdim(swid, DIM_NAME2, l2gp%noSurfs)
+      if ( status == -1 ) then
+        msr = DIM_ERR // DIM_NAME2
+        call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+      end if
+    end if
+
+    if ( l2gp%noFreqs > 0 ) then
+      status = swdefdim(swid, DIM_NAME3, l2gp%noFreqs)
+      if ( status == -1 ) then
+        msr = DIM_ERR // DIM_NAME3
+        call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+      end if
+    end if
+
+    status = swdefdim(swid, DIM_NAME4, l2gp%noInstances)
+    if ( status == -1 ) then
+      msr = DIM_ERR // DIM_NAME4
+      call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+
+  ! Define horizontal geolocation fields using above dimensions
+
+    status = swdefgfld(swid, GEO_FIELD1, DIM_NAME1, DFNT_FLOAT32, &
+                       HDFE_NOMERGE)
+    if ( status == -1 ) then
+      msr = GEO_ERR // GEO_FIELD1
+      call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+
+    status = swdefgfld(swid, GEO_FIELD2, DIM_NAME1, DFNT_FLOAT32, &
+                       HDFE_NOMERGE)
+    if ( status == -1 ) then
+      msr = GEO_ERR // GEO_FIELD2
+      call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+
+    status = swdefgfld(swid, GEO_FIELD3, DIM_NAME1, DFNT_FLOAT32, &
+                       HDFE_NOMERGE)
+    if ( status == -1 ) then
+      msr = GEO_ERR // GEO_FIELD3
+      call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+
+    status = swdefgfld(swid, GEO_FIELD4, DIM_NAME1, DFNT_CHAR8, &
+                       HDFE_NOMERGE)
+    if ( status == -1 ) then
+      msr = GEO_ERR // GEO_FIELD4
+      call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+
+    status = swdefgfld(swid, GEO_FIELD5, DIM_NAME1, DFNT_FLOAT32, &
+                       HDFE_NOMERGE)
+    if ( status == -1 ) then
+      msr = GEO_ERR // GEO_FIELD5
+      call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+
+    status = swdefgfld(swid, GEO_FIELD6, DIM_NAME1, DFNT_FLOAT32, &
+                       HDFE_NOMERGE)
+    if ( status == -1 ) then
+      msr = GEO_ERR // GEO_FIELD6
+      call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+
+    status = swdefgfld(swid, GEO_FIELD7, DIM_NAME1, DFNT_FLOAT32, &
+                       HDFE_NOMERGE)
+    if ( status == -1 ) then
+      msr = GEO_ERR // GEO_FIELD7
+      call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+
+    status = swdefgfld(swid, GEO_FIELD8, DIM_NAME1, DFNT_FLOAT32, &
+                       HDFE_NOMERGE)
+    if ( status == -1 ) then
+      msr = GEO_ERR // GEO_FIELD8
+      call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+
+    status = swdefgfld(swid, GEO_FIELD9, DIM_NAME1, DFNT_INT32, HDFE_NOMERGE)
+    if ( status == -1 ) then
+      msr = GEO_ERR // GEO_FIELD9
+      call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+
+    if ( l2gp%noSurfs > 0 ) then
+      status = swdefgfld(swid, GEO_FIELD10, DIM_NAME2, DFNT_FLOAT32, &
+                         HDFE_NOMERGE)
+      if ( status == -1 ) then
+        msr = GEO_ERR // GEO_FIELD10
+        call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+      end if
+    end if
+
+    if ( l2gp%noFreqs > 0 ) then
+      status = swdefgfld(swid, GEO_FIELD11, DIM_NAME3, DFNT_FLOAT32, &
+                         HDFE_NOMERGE)
+      if ( status == -1 ) then
+        msr = GEO_ERR // GEO_FIELD11
+        call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+      end if
+    end if
+
+  ! Define data fields using above dimensions
+
+    if ( (l2gp%noFreqs > 0) .and. (l2gp%noSurfs > 0) ) then
+
+      status = swdefdfld(swid, DATA_FIELD1, DIM_NAME123, DFNT_FLOAT32, &
+                         HDFE_NOMERGE)
+
+      if ( status == -1 ) then
+        msr = DAT_ERR // DATA_FIELD1 // ' for 3D quantity.'
+        call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+      end if
+
+
+      status = swdefdfld(swid, DATA_FIELD2, DIM_NAME123, DFNT_FLOAT32, &
+                         HDFE_NOMERGE)
+
+      if ( status == -1 ) then
+        msr = DAT_ERR // DATA_FIELD2 // ' for 3D quantity.'
+        call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+
+
+    else if ( l2gp%noSurfs > 0 ) then
+
+       status = swdefdfld(swid, DATA_FIELD1, DIM_NAME12, DFNT_FLOAT32, &
+                          HDFE_NOMERGE)
+
+       if ( status == -1 ) then
+         msr = DAT_ERR // DATA_FIELD1 //  ' for 2D quantity.'
+         call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+
+       status = swdefdfld(swid, DATA_FIELD2, DIM_NAME12, DFNT_FLOAT32, &
+                          HDFE_NOMERGE)
+
+       if ( status == -1 ) then
+         msr = DAT_ERR // DATA_FIELD2 //  ' for 2D quantity.'
+         call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+
+    else
+
+       status = swdefdfld(swid, DATA_FIELD1, DIM_NAME1, DFNT_FLOAT32, &
+                          HDFE_NOMERGE)
+
+       if ( status == -1 ) then
+         msr = DAT_ERR // DATA_FIELD1 // ' for 1D quantity.'
+         call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+
+       status = swdefdfld(swid, DATA_FIELD2, DIM_NAME1, DFNT_FLOAT32, &
+                          HDFE_NOMERGE)
+
+       if ( status == -1 ) then
+         msr = DAT_ERR // DATA_FIELD2 // ' for 1D quantity.'
+         call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+
+    end if
+
+    status = swdefdfld(swid, DATA_FIELD3, DIM_NAME1, DFNT_CHAR8, &
+                       HDFE_NOMERGE)
+    if ( status == -1 ) then
+      msr = DAT_ERR // DATA_FIELD3
+      call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+
+    status = swdefdfld(swid, DATA_FIELD4, DIM_NAME1, DFNT_FLOAT32, &
+                       HDFE_NOMERGE)
+    if ( status == -1 ) then
+      msr = DAT_ERR // DATA_FIELD4
+      call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+
+  ! Detach from the swath interface.  This stores the swath info within the
+  ! file and must be done before writing or reading data to or from the
+  ! swath.
+
+    status = swdetach(swid)
+    if ( status == -1 ) then
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & 'Failed to detach from swath interface after definition.' )
+      flag = -1
+
+    end if
+
+  !--------------------------------------
+  end subroutine OutputL2GP_createFile
+  !--------------------------------------
+
+  !-----------------------------------------  OutputL2GP_writeGeo  -----
+  subroutine OutputL2GP_writeGeo (l2gpGeo, swfid)
+
+  ! Brief description of subroutine
+  ! This subroutine writes the geolocation fields to an L2GP output file.
+
+  ! Arguments
+
+    type( L2GPData_T ), intent(inout) :: l2gpGeo
+
+    integer, intent(in) :: swfid
+
+  ! Parameters
+
+    character (len=*), parameter :: WR_ERR = &
+      & 'Failed to write geolocation field '
+
+  ! Variables
+
+    character (len=480) :: msr
+    character (len=132) :: NAME    ! From l2gpGeo%name
+
+    integer :: status, swid
+    integer :: start(2), stride(2), edge(2)
+
+    call get_string ( l2gpGeo%name, name )
+    swid = swattach (swfid, name)
+
+  ! Write data to the fields
+      
+    stride(1) = 1
+    start(1) = 0
+    edge(1) = l2gpGeo%noInstances
+
+    status = swwrfld(swid, GEO_FIELD1, start, stride, edge, &
+                     REAL(l2gpGeo%latitude))
+    if ( status == -1 ) then
+      msr = WR_ERR // GEO_FIELD1
+      call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+    status = swwrfld(swid, GEO_FIELD2, start, stride, edge, &
+                     REAL(l2gpGeo%longitude))
+
+    if ( status == -1 ) then
+      msr = WR_ERR // GEO_FIELD2
+      call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+    status = swwrfld(swid, GEO_FIELD3, start, stride, edge, &
+                     REAL(l2gpGeo%time))
+
+    if ( status == -1 ) then
+      msr = WR_ERR // GEO_FIELD3
+      call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+    status = swwrfld( swid, GEO_FIELD4, start, stride, edge, &
+                      l2gpGeo%ccsdsTime)
+
+    if ( status == -1 ) then
+      msr = WR_ERR // GEO_FIELD4
+      call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+    status = swwrfld(swid, GEO_FIELD5, start, stride, edge, &
+                     REAL(l2gpGeo%solarTime))
+
+    if ( status == -1 ) then
+      msr = WR_ERR // GEO_FIELD5
+      call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+    status = swwrfld(swid, GEO_FIELD6, start, stride, edge, &
+                     REAL(l2gpGeo%solarZenith))
+
+    if ( status == -1 ) then
+      msr = WR_ERR // GEO_FIELD6
+      call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+    status = swwrfld(swid, GEO_FIELD7, start, stride, edge, &
+                     REAL(l2gpGeo%losAngle))
+
+    if ( status == -1 ) then
+      msr = WR_ERR // GEO_FIELD7
+      call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+    status = swwrfld(swid, GEO_FIELD8, start, stride, edge, &
+                     REAL(l2gpGeo%geodAngle))
+
+    if ( status == -1 ) then
+      msr = WR_ERR // GEO_FIELD8
+      call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+    status = swwrfld(swid, GEO_FIELD9, start, stride, edge, &
+                     l2gpGeo%chunkNumber)
+
+    if ( status == -1 ) then
+      msr = WR_ERR // GEO_FIELD9
+      call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+    if ( l2gpGeo%noSurfs > 0 ) then
+
+      edge(1) = l2gpGeo%noSurfs
+
+      status = swwrfld(swid, GEO_FIELD10, start, stride, edge, &
+                       REAL(l2gpGeo%pressures))
+
+      if ( status == -1 ) then
+        msr = WR_ERR // GEO_FIELD10
+        call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+      end if
+    end if
+    if ( l2gpGeo%noFreqs > 0 ) then
+
+      edge(1) = l2gpGeo%noFreqs
+      l2gpGeo%frequency = 0
+      status = swwrfld(swid, GEO_FIELD11, start, stride, edge, &
+                       REAL(l2gpGeo%frequency))
+
+      if ( status == -1 ) then
+        msr = WR_ERR // GEO_FIELD11
+        call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+      end if
+    end if
+
+  ! Detach from the swath interface.  
+
+    status = swdetach(swid)
+
+    if ( status == -1 ) then
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & 'Failed to detach from swath interface' )
+    end if
+         
+  !------------------------------------
+  end subroutine OutputL2GP_writeGeo
+  !------------------------------------
+
+  !----------------------------------------  OutputL2GP_writeData  -----
+   subroutine OutputL2GP_writeData(l2gpData, swfid)
+
+  ! Brief description of subroutine
+  ! This subroutine writes the data fields to an L2GP output file.
+
+  ! Arguments
+
+    type( L2GPData_T ), intent(inout) :: l2gpData
+
+    integer, intent(in) :: swfid
+
+  ! Parameters
+
+    character (len=*), parameter :: WR_ERR = 'Failed to write data field '
+
+  ! Variables
+
+    character (len=480) :: msr
+   character (len=132) :: NAME     ! From l2gpData%name
+
+    integer :: status
+    integer :: start(3), stride(3), edge(3)
+    integer :: swid
+
+  ! Write data to the fields
+
+    start = 0
+    stride = 1
+    edge(1) = l2gpData%noFreqs
+    edge(2) = l2gpData%noSurfs
+    edge(3) = l2gpData%noInstances
+    call get_string ( l2gpData%name, name )
+    swid = swattach (swfid, name)
+    if ( l2gpData%noFreqs > 0 ) then
+
+  ! Value and Precision are 3-D fields
+
+      status = swwrfld(swid, DATA_FIELD1, start, stride, edge, &
+        & reshape(l2gpData%l2gpValue, (/size(l2gpData%l2gpValue)/)) )
+      if ( status == -1 ) then
+        msr = WR_ERR // DATA_FIELD1
+        call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+      end if
+      status = swwrfld(swid, DATA_FIELD2, start, stride, edge, &
+        & reshape(REAL(l2gpData%l2gpPrecision), (/size(l2gpData%l2gpPrecision)/)) )
+      if ( status == -1 ) then
+        msr = WR_ERR // DATA_FIELD2
+        call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+      end if
+
+    else if ( l2gpData%noSurfs > 0 ) then
+
+  ! Value and Precision are 2-D fields
+
+      status = swwrfld( swid, DATA_FIELD1, start(2:3), stride(2:3), &
+                        edge(2:3), REAL(l2gpData%l2gpValue(1,:,:) ))
+      if ( status == -1 ) then
+        msr = WR_ERR // DATA_FIELD1
+        call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+      end if
+      status = swwrfld( swid, DATA_FIELD2, start(2:3), stride(2:3), &
+                        edge(2:3), REAL(l2gpData%l2gpPrecision(1,:,:) ))
+      if ( status == -1 ) then
+        msr = WR_ERR // DATA_FIELD2
+        call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+      end if
+    else
+
+  ! Value and Precision are 1-D fields
+
+      status = swwrfld( swid, DATA_FIELD1, start(3:3), stride(3:3), edge(3:3), &
+                        REAL(l2gpData%l2gpValue(1,1,:) ))
+      if ( status == -1 ) then
+        msr = WR_ERR // DATA_FIELD1
+        call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+      end if
+      status = swwrfld( swid, DATA_FIELD2, start(3:3), stride(3:3), edge(3:3), &
+                        REAL(l2gpData%l2gpPrecision(1,1,:) ))
+      if ( status == -1 ) then
+        msr = WR_ERR // DATA_FIELD2
+        call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+      end if
+    end if
+
+! 1-D status & quality fields
+
+    status = swwrfld(swid, DATA_FIELD3, start(3:3), stride(3:3), edge(3:3), &
+                     l2gpData%l2gpStatus)
+    if ( status == -1 ) then
+      msr = WR_ERR // DATA_FIELD3
+      call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+    l2gpData%quality = 0
+    status = swwrfld(swid, DATA_FIELD4, start(3:3), stride(3:3), edge(3:3), &
+                     REAL(l2gpData%quality))
+    if ( status == -1 ) then
+      msr = WR_ERR // DATA_FIELD4
+      call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+
+  !     Detach from the swath interface.
+
+    status = swdetach(swid)
+    if ( status == -1 ) then
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & 'Failed to detach  from swath interface' )
+    end if
+
+
+  !-------------------------------------
+  end subroutine OutputL2GP_writeData
+  !-------------------------------------
+
+  !----------------------------------------------  DeallocateL2GP  -----
+  subroutine DeallocateL2GP ( l2gp, flag )
+
+  ! Brief description of subroutine
+  ! This subroutine deallocates the internal field pointers of the L2GP_T
+  ! derived type, after the calling program has finished with the data.
+
+  ! Arguments
+
+    type( L2GPData_T ), intent(inout) :: l2gp
+
+    integer, intent(out) :: flag
+
+  ! Parameters
+
+  ! Functions
+
+  ! Variables
+
+    flag = 0
+    dealloc_status = 0
+
+! Horizontal geolocation fields
+
+    if ( associated(l2gp%time) ) &
+      & call deallocate_test ( l2gp%time, "l2gp%time", ModuleName )
+    if ( associated(l2gp%chunkNumber) ) &
+      & call deallocate_test ( l2gp%chunkNumber, "l2gp%chunkNumber", ModuleName )
+    if ( associated(l2gp%latitude) ) &
+      & call deallocate_test ( l2gp%latitude, "l2gp%latitude", ModuleName )
+    if ( associated(l2gp%longitude) ) &
+      & call deallocate_test ( l2gp%longitude, "l2gp%longitude", ModuleName )
+    if ( associated(l2gp%solarTime) ) &
+      & call deallocate_test ( l2gp%solarTime, "l2gp%solarTime", ModuleName )
+    if ( associated(l2gp%solarZenith) ) &
+      & call deallocate_test ( l2gp%solarZenith, "l2gp%solarZenith", ModuleName )
+    if ( associated(l2gp%losAngle) ) &
+      & call deallocate_test ( l2gp%losAngle, "l2gp%losAngle", ModuleName )
+    if ( associated(l2gp%geodAngle) ) &
+      & call deallocate_test ( l2gp%geodAngle, "l2gp%geodAngle", ModuleName )
+    if ( associated(l2gp%ccsdsTime) ) &
+      & call deallocate_test ( l2gp%ccsdsTime, "l2gp%ccsdsTime", ModuleName )
+
+  ! Vertical geolocation field
+
+    if ( associated(l2gp%pressures) ) &
+      & call deallocate_test ( l2gp%pressures, "l2gp%pressures", ModuleName )
+
+  ! Frequency "geolocation field"
+
+    if ( associated(l2gp%frequency) ) &
+      & call deallocate_test ( l2gp%frequency, "l2gp%frequency", ModuleName )
+
+  ! Data fields
+
+    if ( associated(l2gp%l2gpValue) ) &
+      & call deallocate_test ( l2gp%l2gpValue, "l2gp%l2gpValue", ModuleName )
+    if ( associated(l2gp%l2gpPrecision) ) &
+      & call deallocate_test ( l2gp%l2gpPrecision, "l2gp%l2gpPrecision", &
+      & ModuleName )
+    if ( associated(l2gp%l2gpStatus) ) &
+      & call deallocate_test ( l2gp%l2gpStatus, "l2gp%l2gpStatus", ModuleName )
+    if ( associated(l2gp%quality) ) &
+      & call deallocate_test ( l2gp%quality, "l2gp%quality", ModuleName )
+
+    if ( dealloc_status /= 0 ) flag = -1
+
+  !-------------------------------
+  end subroutine DeallocateL2GP
+!-------------------------------
+
+!====================
+end module OutputL2GP
+!====================
+
+!# $Log: OutputL2GP.f90,v $
+!# Revision 2.2  2000/09/13 22:44:47  ahanzel
+!# Removed old log entries in file.
+!#
+!# Revision 2.1  2000/09/12 21:24:52  vsnyder
+!# Revised to use cf parser output directly.
+!#
+
+@
+
+
+2.2
+log
+@Removed old log entries in file.
+@
+text
+@d22 1
+a22 1
+     & "$Id: OutputL2GP.f90,v 2.1 2000/09/12 21:24:52 vsnyder Exp $"
+d635 3
+@
+
+
+2.0
+log
+@Changing file revision to 2.0.
+@
+text
+@d6 1
+a6 1
+MODULE OutputL2GP
+d9 10
+a18 8
+   USE Hdf
+   USE HDFEOS
+   USE L2GPData
+   USE MLSMessageModule
+   IMPLICIT NONE
+   PUBLIC
+
+   PRIVATE :: ID, ModuleName
+d21 4
+a24 3
+   CHARACTER(LEN=130) :: Id = &
+   "$Id: OutputL2GP.f90,v 2.0 2000/09/05 18:57:04 ahanzel Exp $"
+   CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile: OutputL2GP.f90,v $"
+d39 163
+a201 29
+   CHARACTER (LEN=*), PARAMETER :: DATA_FIELD1 = 'l2gpValue'
+   CHARACTER (LEN=*), PARAMETER :: DATA_FIELD2 = 'l2gpPrecision'
+   CHARACTER (LEN=*), PARAMETER :: DATA_FIELD3 = 'l2gpStatus'
+   CHARACTER (LEN=*), PARAMETER :: DATA_FIELD4 = 'quality'
+
+   CHARACTER (LEN=*), PARAMETER :: GEO_FIELD1 = 'latitude'
+   CHARACTER (LEN=*), PARAMETER :: GEO_FIELD2 = 'longitude'
+   CHARACTER (LEN=*), PARAMETER :: GEO_FIELD3 = 'time'
+   CHARACTER (LEN=*), PARAMETER :: GEO_FIELD4 = 'ccsdsTime'
+   CHARACTER (LEN=*), PARAMETER :: GEO_FIELD5 = 'solarTime'
+   CHARACTER (LEN=*), PARAMETER :: GEO_FIELD6 = 'solarZenith'
+   CHARACTER (LEN=*), PARAMETER :: GEO_FIELD7 = 'losAngle'
+   CHARACTER (LEN=*), PARAMETER :: GEO_FIELD8 = 'geodAngle'
+   CHARACTER (LEN=*), PARAMETER :: GEO_FIELD9 = 'chunkNumber'
+   CHARACTER (LEN=*), PARAMETER :: GEO_FIELD10 = 'pressures'
+   CHARACTER (LEN=*), PARAMETER :: GEO_FIELD11 = 'frequency'
+
+   INTEGER, PARAMETER :: CCSDS_LEN = 27		! len of CCSDS time string
+   INTEGER, PARAMETER :: HDFE_AUTOMERGE = 1	! merge fields with share dim
+   INTEGER, PARAMETER :: HDFE_NOMERGE = 0	! don't merge
+
+CONTAINS
+
+!-------------------------------------------------------------
+   SUBROUTINE OutputL2GP_createFile (L2FileHandle, l2gp, flag)
+!-------------------------------------------------------------
+
+! Brief description of subroutine
+! This subroutine sets up the structural definitions in an empty L2GP file.
+d203 8
+a210 1
+! Arguments
+d212 8
+a219 1
+      INTEGER, INTENT(IN) :: L2FileHandle
+d221 1
+a221 1
+      TYPE( L2GPData_T ), INTENT(INOUT) :: l2gp
+d223 1
+a223 1
+      INTEGER, INTENT(OUT) :: flag
+d225 2
+a226 1
+! Parameters
+d228 4
+a231 62
+      CHARACTER (LEN=*), PARAMETER :: DIM_NAME1 = 'noProfs'
+      CHARACTER (LEN=*), PARAMETER :: DIM_NAME2 = 'noSurfs'
+      CHARACTER (LEN=*), PARAMETER :: DIM_NAME3 = 'noFreqs'
+      CHARACTER (LEN=*), PARAMETER :: DIM_NAME4 = 'CCSDSLen,noProfs'
+      CHARACTER (LEN=*), PARAMETER :: DIM_NAME12 = 'noSurfs,noProfs'
+      CHARACTER (LEN=*), PARAMETER :: DIM_NAME123 = 'noFreqs,noSurfs,noProfs'
+      CHARACTER (LEN=*), PARAMETER :: DIM_NAME41 = 'CCSDSLen,noProfs'
+
+      CHARACTER (LEN=*), PARAMETER :: DIM_ERR = 'Failed to define dimension '
+      CHARACTER (LEN=*), PARAMETER :: GEO_ERR = 'Failed to define geolocation &
+                                                &field '
+      CHARACTER (LEN=*), PARAMETER :: DAT_ERR = 'Failed to define data field '  
+
+! Functions
+
+      INTEGER :: swcreate, swdefdfld, swdefdim, swdefgfld, swdetach
+
+! Variables
+
+      CHARACTER (LEN=480) :: msr
+   
+      INTEGER :: swid, status
+
+      flag = 0
+
+! Create the swath within the file
+
+      swid = swcreate(L2FileHandle, l2gp%name)
+      IF (swid == -1) THEN
+         msr = 'Failed to create swath ' // l2gp%name
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+! Define dimensions
+
+      status = swdefdim(swid, DIM_NAME1, l2gp%noProfs)
+      IF (status == -1) THEN
+         msr = DIM_ERR // DIM_NAME1
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      IF (l2gp%noSurfs > 0) THEN
+         status = swdefdim(swid, DIM_NAME2, l2gp%noSurfs)
+         IF (status == -1) THEN
+            msr = DIM_ERR // DIM_NAME2
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+      ENDIF
+
+      IF (l2gp%noFreqs > 0) THEN
+         status = swdefdim(swid, DIM_NAME3, l2gp%noFreqs)
+         IF (status == -1) THEN
+            msr = DIM_ERR // DIM_NAME3
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+      ENDIF
+
+      status = swdefdim(swid, DIM_NAME4, l2gp%noProfs)
+      IF (status == -1) THEN
+         msr = DIM_ERR // DIM_NAME4
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+a232 1
+! Define horizontal geolocation fields using above dimensions
+d234 1
+a234 1
+      status = swdefgfld(swid, GEO_FIELD1, DIM_NAME1, DFNT_FLOAT32, &
+a235 4
+      IF (status == -1) THEN
+         msr = GEO_ERR // GEO_FIELD1
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+d237 4
+a240 6
+      status = swdefgfld(swid, GEO_FIELD2, DIM_NAME1, DFNT_FLOAT32, &
+                         HDFE_NOMERGE)
+      IF (status == -1) THEN
+         msr = GEO_ERR // GEO_FIELD2
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+a241 6
+      status = swdefgfld(swid, GEO_FIELD3, DIM_NAME1, DFNT_FLOAT32, &
+                         HDFE_NOMERGE)
+      IF (status == -1) THEN
+         msr = GEO_ERR // GEO_FIELD3
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+d243 1
+a243 6
+      status = swdefgfld(swid, GEO_FIELD4, DIM_NAME1, DFNT_CHAR8, &
+                         HDFE_NOMERGE)
+      IF (status == -1) THEN
+         msr = GEO_ERR // GEO_FIELD4
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+d245 2
+a246 6
+      status = swdefgfld(swid, GEO_FIELD5, DIM_NAME1, DFNT_FLOAT32, &
+                         HDFE_NOMERGE)
+      IF (status == -1) THEN
+         msr = GEO_ERR // GEO_FIELD5
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+d248 4
+a251 6
+      status = swdefgfld(swid, GEO_FIELD6, DIM_NAME1, DFNT_FLOAT32, &
+                         HDFE_NOMERGE)
+      IF (status == -1) THEN
+         msr = GEO_ERR // GEO_FIELD6
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+d253 2
+a254 6
+      status = swdefgfld(swid, GEO_FIELD7, DIM_NAME1, DFNT_FLOAT32, &
+                         HDFE_NOMERGE)
+      IF (status == -1) THEN
+         msr = GEO_ERR // GEO_FIELD7
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+d256 4
+a259 94
+      status = swdefgfld(swid, GEO_FIELD8, DIM_NAME1, DFNT_FLOAT32, &
+                         HDFE_NOMERGE)
+      IF (status == -1) THEN
+         msr = GEO_ERR // GEO_FIELD8
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      status = swdefgfld(swid, GEO_FIELD9, DIM_NAME1, DFNT_INT32, HDFE_NOMERGE)
+      IF (status == -1) THEN
+         msr = GEO_ERR // GEO_FIELD9
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      IF (l2gp%noSurfs > 0) THEN
+         status = swdefgfld(swid, GEO_FIELD10, DIM_NAME2, DFNT_FLOAT32, &
+                            HDFE_NOMERGE)
+         IF (status == -1) THEN
+            msr = GEO_ERR // GEO_FIELD10
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+      ENDIF
+
+      IF (l2gp%noFreqs > 0) THEN
+         status = swdefgfld(swid, GEO_FIELD11, DIM_NAME3, DFNT_FLOAT32, &
+                            HDFE_NOMERGE)
+         IF (status == -1) THEN
+            msr = GEO_ERR // GEO_FIELD11
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+      ENDIF
+
+! Define data fields using above dimensions
+
+      IF ((l2gp%noFreqs > 0) .and. (l2gp%noSurfs > 0) ) THEN
+
+         status = swdefdfld(swid, DATA_FIELD1, DIM_NAME123, DFNT_FLOAT32, &
+                            HDFE_NOMERGE)
+
+         IF (status == -1) THEN
+            msr = DAT_ERR // DATA_FIELD1 // ' for 3D &
+                 &quantity.'
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+
+
+         status = swdefdfld(swid, DATA_FIELD2, DIM_NAME123, DFNT_FLOAT32, &
+                            HDFE_NOMERGE)
+
+         IF (status == -1) THEN
+            msr = DAT_ERR // DATA_FIELD2 // ' for 3D &
+                 &quantity.'
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+
+
+      ELSE IF (l2gp%noSurfs > 0) THEN
+
+         status = swdefdfld(swid, DATA_FIELD1, DIM_NAME12, DFNT_FLOAT32, &
+                            HDFE_NOMERGE)
+
+         IF (status == -1) THEN
+            msr = DAT_ERR // DATA_FIELD1 //  ' for 2D &
+                 &quantity.'
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+
+         status = swdefdfld(swid, DATA_FIELD2, DIM_NAME12, DFNT_FLOAT32, &
+                            HDFE_NOMERGE)
+
+         IF (status == -1) THEN
+            msr = DAT_ERR // DATA_FIELD2 //  ' for 2D &
+                 &quantity.'
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+
+      ELSE
+
+         status = swdefdfld(swid, DATA_FIELD1, DIM_NAME1, DFNT_FLOAT32, &
+                            HDFE_NOMERGE)
+
+         IF (status == -1) THEN
+            msr = DAT_ERR // DATA_FIELD1 // ' for 1D &
+                 &quantity.'
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+
+         status = swdefdfld(swid, DATA_FIELD2, DIM_NAME1, DFNT_FLOAT32, &
+                            HDFE_NOMERGE)
+
+         IF (status == -1) THEN
+            msr = DAT_ERR // DATA_FIELD2 // ' for 1D &
+                 &quantity.'
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+d261 1
+a261 1
+      ENDIF
+d263 2
+a264 6
+      status = swdefdfld(swid, DATA_FIELD3, DIM_NAME1, DFNT_CHAR8, &
+                         HDFE_NOMERGE)
+      IF (status == -1) THEN
+         msr = DAT_ERR // DATA_FIELD3
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+d266 4
+a269 6
+      status = swdefdfld(swid, DATA_FIELD4, DIM_NAME1, DFNT_FLOAT32, &
+                         HDFE_NOMERGE)
+      IF (status == -1) THEN
+         msr = DAT_ERR // DATA_FIELD4
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+d271 2
+a272 2
+! Detach from the swath interface.  This stores the swath info within the file
+! and must be done before writing or reading data to or from the swath.
+d274 4
+a277 5
+      status = swdetach(swid)
+      IF (status == -1) THEN
+         CALL MLSMessage(MLSMSG_Warning, ModuleName, 'Failed to detach from &
+                                         &swath interface after definition.')
+         flag = -1
+d279 1
+a279 1
+      ENDIF
+d281 6
+a286 3
+!--------------------------------------
+   END SUBROUTINE OutputL2GP_createFile
+!--------------------------------------
+d288 6
+a293 3
+!------------------------------------------------
+   SUBROUTINE OutputL2GP_writeGeo (l2gpGeo, swfid)
+!------------------------------------------------
+d295 3
+a297 2
+! Brief description of subroutine
+! This subroutine writes the geolocation fields to an L2GP output file.
+d299 5
+a303 1
+! Arguments
+d305 1
+a305 1
+      TYPE( L2GPData_T ), INTENT(INOUT) :: l2gpGeo
+d307 3
+a309 1
+      INTEGER, INTENT(IN) :: swfid
+d311 2
+a312 1
+! Parameters
+d314 2
+a315 2
+      CHARACTER (LEN=*), PARAMETER :: WR_ERR = 'Failed to write geolocation &
+                                               &field '
+d317 1
+a317 1
+! Functions
+d319 1
+a319 2
+      INTEGER :: swwrfld, swattach, swdetach
+! Variables
+d321 1
+a321 4
+      CHARACTER (LEN=480) :: msr
+   
+      INTEGER :: status, swid
+      INTEGER :: start(2), stride(2), edge(2)
+d323 1
+a323 1
+      swid = swattach (swfid, l2gpGeo%name)
+d325 2
+a326 104
+! Write data to the fields
+      
+      stride(1) = 1
+      start(1) = 0
+      edge(1) = l2gpGeo%noProfs
+   
+      status = swwrfld(swid, GEO_FIELD1, start, stride, edge, &
+                       REAL(l2gpGeo%latitude))
+      IF (status == -1) THEN
+         msr = WR_ERR // GEO_FIELD1
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+      status = swwrfld(swid, GEO_FIELD2, start, stride, edge, &
+                       REAL(l2gpGeo%longitude))
+
+      IF (status == -1) THEN
+         msr = WR_ERR // GEO_FIELD2
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+      status = swwrfld(swid, GEO_FIELD3, start, stride, edge, &
+                       REAL(l2gpGeo%time))
+
+      IF (status == -1) THEN
+         msr = WR_ERR // GEO_FIELD3
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+      status = swwrfld( swid, GEO_FIELD4, start, stride, edge, &
+                        l2gpGeo%ccsdsTime)
+
+      IF (status == -1) THEN
+         msr = WR_ERR // GEO_FIELD4
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+      status = swwrfld(swid, GEO_FIELD5, start, stride, edge, &
+                       REAL(l2gpGeo%solarTime))
+
+      IF (status == -1) THEN
+         msr = WR_ERR // GEO_FIELD5
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+      status = swwrfld(swid, GEO_FIELD6, start, stride, edge, &
+                       REAL(l2gpGeo%solarZenith))
+
+      IF (status == -1) THEN
+         msr = WR_ERR // GEO_FIELD6
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+      status = swwrfld(swid, GEO_FIELD7, start, stride, edge, &
+                       REAL(l2gpGeo%losAngle))
+
+      IF (status == -1) THEN
+         msr = WR_ERR // GEO_FIELD7
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+      status = swwrfld(swid, GEO_FIELD8, start, stride, edge, &
+                       REAL(l2gpGeo%geodAngle))
+
+      IF (status == -1) THEN
+         msr = WR_ERR // GEO_FIELD8
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+      status = swwrfld(swid, GEO_FIELD9, start, stride, edge, &
+                       l2gpGeo%chunkNumber)
+
+      IF (status == -1) THEN
+         msr = WR_ERR // GEO_FIELD9
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+      IF (l2gpGeo%noSurfs > 0) THEN
+
+         edge(1) = l2gpGeo%noSurfs
+
+         status = swwrfld(swid, GEO_FIELD10, start, stride, edge, &
+                          REAL(l2gpGeo%pressures))
+
+         IF (status == -1) THEN
+            msr = WR_ERR // GEO_FIELD10
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+      ENDIF
+      IF (l2gpGeo%noFreqs > 0) THEN
+
+         edge(1) = l2gpGeo%noFreqs
+         l2gpGeo%frequency = 0
+         status = swwrfld(swid, GEO_FIELD11, start, stride, edge, &
+                          REAL(l2gpGeo%frequency))
+
+         IF (status == -1) THEN
+            msr = WR_ERR // GEO_FIELD11
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+      ENDIF
+! Detach from the swath interface.  
+
+      status = swdetach(swid)
+
+      IF (status == -1) THEN
+         CALL MLSMessage(MLSMSG_Warning, ModuleName, 'Failed to detach from &
+                                         &swath interface')
+      ENDIF
+         
+!------------------------------------
+   END SUBROUTINE OutputL2GP_writeGeo
+!------------------------------------
+d328 1
+a328 3
+!-------------------------------------------------
+   SUBROUTINE OutputL2GP_writeData(l2gpData, swfid)
+!-------------------------------------------------
+d330 2
+a331 2
+! Brief description of subroutine
+! This subroutine writes the data fields to an L2GP output file.
+d333 2
+a334 1
+! Arguments
+d336 2
+a337 1
+      TYPE( L2GPData_T ), INTENT(INOUT) :: l2gpData
+d339 190
+a528 1
+      INTEGER, INTENT(IN) :: swfid
+d530 1
+a530 1
+! Parameters
+d532 13
+a544 1
+      CHARACTER (LEN=*), PARAMETER :: WR_ERR = 'Failed to write data field '
+d546 1
+a546 1
+! Functions
+d548 5
+a552 1
+      INTEGER :: swwrfld, swid, swattach, swdetach
+a553 1
+! Variables
+d555 3
+a557 62
+      CHARACTER (LEN=480) :: msr
+
+      INTEGER :: status
+      INTEGER :: start(3), stride(3), edge(3)
+
+! Write data to the fields
+
+      start = 0
+      stride = 1
+      edge(1) = l2gpData%noFreqs
+      edge(2) = l2gpData%noSurfs
+      edge(3) = l2gpData%noProfs
+      swid = swattach (swfid, l2gpData%name)
+      IF (l2gpData%noFreqs > 0) THEN
+
+! Value and Precision are 3-D fields
+
+         status = swwrfld(swid, DATA_FIELD1, start, stride, edge, &
+                          l2gpData%l2gpValue)
+         IF (status == -1) THEN
+            msr = WR_ERR // DATA_FIELD1
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+         status = swwrfld(swid, DATA_FIELD2, start, stride, edge, &
+                          REAL(l2gpData%l2gpPrecision))
+         IF (status == -1) THEN
+            msr = WR_ERR // DATA_FIELD2
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+
+      ELSE IF (l2gpData%noSurfs > 0) THEN
+! Value and Precision are 2-D fields
+         status = swwrfld( swid, DATA_FIELD1, start(2:3), stride(2:3), &
+                           edge(2:3), REAL(l2gpData%l2gpValue(1,:,:) ))
+         IF (status == -1) THEN
+            msr = WR_ERR // DATA_FIELD1
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+         status = swwrfld( swid, DATA_FIELD2, start(2:3), stride(2:3), &
+                           edge(2:3), REAL(l2gpData%l2gpPrecision(1,:,:) ))
+         IF (status == -1) THEN
+            msr = WR_ERR // DATA_FIELD2
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+      ELSE
+
+! Value and Precision are 1-D fields
+
+         status = swwrfld( swid, DATA_FIELD1, start(3), stride(3), edge(3), &
+                           REAL(l2gpData%l2gpValue(1,1,:) ))
+         IF (status == -1) THEN
+            msr = WR_ERR // DATA_FIELD1
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+         status = swwrfld( swid, DATA_FIELD2, start(3), stride(3), edge(3), &
+                           REAL(l2gpData%l2gpPrecision(1,1,:) ))
+         IF (status == -1) THEN
+            msr = WR_ERR // DATA_FIELD2
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+      ENDIF
+! 1-D status & quality fields
+d559 2
+a560 32
+      status = swwrfld(swid, DATA_FIELD3, start(3), stride(3), edge(3), &
+                       l2gpData%l2gpStatus)
+      IF (status == -1) THEN
+         msr = WR_ERR // DATA_FIELD3
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+      l2gpData%quality = 0
+      status = swwrfld(swid, DATA_FIELD4, start(3), stride(3), edge(3), &
+                       REAL(l2gpData%quality))
+      IF (status == -1) THEN
+         msr = WR_ERR // DATA_FIELD4
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+!     Detach from the swath interface.
+      status = swdetach(swid)
+      IF (status == -1) THEN
+         CALL MLSMessage(MLSMSG_Warning, ModuleName, 'Failed to detach  from &
+                                         &swath interface')
+      ENDIF
+
+
+!-------------------------------------
+   END SUBROUTINE OutputL2GP_writeData
+!-------------------------------------
+
+!----------------------------------------
+   SUBROUTINE DeallocateL2GP (l2gp, flag)
+!----------------------------------------
+
+! Brief description of subroutine
+! This subroutine deallocates the internal field pointers of the L2GP_T
+! derived type, after the calling program has finished with the data.
+d562 3
+a564 1
+! Arguments
+d566 1
+a566 1
+      TYPE( L2GPData_T ), INTENT(INOUT) :: l2gp
+d568 1
+a568 1
+      INTEGER, INTENT(OUT) :: flag
+d570 1
+a570 1
+! Parameters
+d572 1
+a572 1
+! Functions
+d574 1
+a574 1
+! Variables
+d576 1
+a576 1
+      INTEGER :: dealloc_err
+d578 2
+a579 1
+      flag = 0
+d583 42
+a624 45
+      IF ( ASSOCIATED(l2gp%time) ) DEALLOCATE (l2gp%time, STAT=dealloc_err)
+      IF ( ASSOCIATED(l2gp%chunkNumber) ) DEALLOCATE (l2gp%chunkNumber, &
+                                                      STAT=dealloc_err)
+      IF ( ASSOCIATED(l2gp%latitude) ) DEALLOCATE (l2gp%latitude, &
+                                                   STAT=dealloc_err)
+      IF ( ASSOCIATED(l2gp%longitude) ) DEALLOCATE (l2gp%longitude, &
+                                                    STAT=dealloc_err)
+      IF ( ASSOCIATED(l2gp%solarTime) ) DEALLOCATE (l2gp%solarTime, &
+                                                    STAT=dealloc_err)
+      IF ( ASSOCIATED(l2gp%solarZenith) ) DEALLOCATE (l2gp%solarZenith, &
+                                                      STAT=dealloc_err)
+      IF ( ASSOCIATED(l2gp%losAngle) ) DEALLOCATE (l2gp%losAngle, &
+                                                   STAT=dealloc_err)
+      IF ( ASSOCIATED(l2gp%geodAngle) ) DEALLOCATE (l2gp%geodAngle, &
+                                                    STAT=dealloc_err)
+      IF ( ASSOCIATED(l2gp%ccsdsTime) ) DEALLOCATE (l2gp%ccsdsTime, &
+                                                    STAT=dealloc_err)
+
+! Vertical geolocation field
+
+      IF ( ASSOCIATED(l2gp%pressures) ) DEALLOCATE (l2gp%pressures, &
+                                                   STAT=dealloc_err)
+! Frequency "geolocation field"
+
+      IF ( ASSOCIATED(l2gp%frequency) ) DEALLOCATE (l2gp%frequency, &
+                                                    STAT=dealloc_err)
+
+! Data fields
+
+      IF ( ASSOCIATED(l2gp%l2gpValue) ) DEALLOCATE (l2gp%l2gpValue, &
+                                                    STAT=dealloc_err)
+      IF ( ASSOCIATED(l2gp%l2gpPrecision) ) DEALLOCATE (l2gp%l2gpPrecision, &
+                                                        STAT=dealloc_err)
+      IF ( ASSOCIATED(l2gp%l2gpStatus) ) DEALLOCATE (l2gp%l2gpStatus, &
+                                                     STAT=dealloc_err)
+      IF ( ASSOCIATED(l2gp%quality) ) DEALLOCATE (l2gp%quality, &
+                                                  STAT=dealloc_err)
+
+! Error checking
+
+      IF ( dealloc_err /= 0 ) THEN
+         CALL MLSMessage(MLSMSG_Warning, ModuleName, 'Failed deallocation of &
+                                                     &L2GP pointers.')
+         flag = -1
+      ENDIF
+d626 2
+a627 2
+!-------------------------------
+   END SUBROUTINE DeallocateL2GP
+d631 1
+a631 1
+END MODULE OutputL2GP
+d635 2
+a636 2
+!# Revision 2.0  2000/09/05 18:57:04  ahanzel
+!# Changing file revision to 2.0.
+d638 2
+a639 3
+!# Revision 1.3  2000/06/30 00:02:59  lungu
+!# Zeroed out quality and frequency to avoid
+!# floating overflow in converting real*8 to real*4.
+@
+
+
+1.3
+log
+@Zeroed out quality and frequency to avoid
+floating overflow in converting real*8 to real*4.
+@
+text
+@d20 1
+a20 1
+   "$Id: OutputL2GP.f90,v 1.3 2000/06/30 00:02:59 lungu Exp $"
+d643 3
+d650 1
+a650 6
+!# Revision 1.2  2000/06/19 22:26:10  lungu
+!# Made l2gp quantities real*4; fixed a few typos.
+!#
+!# Revision 1.1  2000/01/17 17:48:33  nakamura
+!# Parameters and subroutines used to output L2GP data (supersedes module L2GP).
+!#
+@
+
+

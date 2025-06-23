@@ -1,0 +1,209 @@
+head	1.3;
+access;
+symbols
+	v5-02-NRT-19:1.3
+	v6-00:1.3
+	v5-02-NRT-18:1.3
+	v5-02:1.3
+	v5-01-NRT-17:1.3
+	v5-01-NRT-16:1.3
+	v5-01-NRT-15:1.3
+	v5-01-NRT-14:1.3
+	neuralnetworks-1-0:1.3.0.10
+	cfm-single-freq-0-1:1.3.0.8
+	v5-01:1.3
+	v5-00:1.3
+	v4-23-TA133:1.3.0.6
+	mus-emls-1-70:1.3.0.4
+	rel-1-0-englocks-work:1.3.0.2
+	VUMLS1-00:1.3
+	VPL1-00:1.3
+	V4-22-NRT-08:1.3
+	VAM1-00:1.2
+	V4-21:1.2.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.3
+date	2015.10.06.17.45.07;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2014.11.19.21.32.13;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2014.10.08.19.03.38;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@Consistent with latest FillMagneticField api
+@
+text
+@!divert(-1)
+;; $Id: filltruthuars-sids.l2cf,v 1.2 2014/11/19 21:32:13 pwagner Exp $
+
+;; This l2cf fragment is for constructing and filling the 'truth'
+;; state vector.
+
+!divert!dnl
+!define(flagGotTruth,1)
+;;!define(l2gpInputSpecies,{ClO,GPH,H2O,HNO3,HO2,IWC,N2O,O3,PSD,Temperature})
+!define(l2gpInputSpecies,{ClO,GPH,H2O,HNO3,HO2,N2O,O3,Temperature})
+begin Fill
+
+  ;; --------------------------------------------- Setup vector
+
+  ;; First define the vector in question
+  truth: Vector, template=stateTemplate
+
+  ;; Get the contents from apriori
+  Transfer, source=apriori, destination=truth
+
+  ;; Now, the rest of the l2cf fragment is replacing parts of this
+  ;; with truth data.
+
+  ;; --------------------------------------------- L2GPs
+  
+  ;; This macro fills one truth quantity with l2gp data
+  !define(fillWithL2GP,{Fill, quantity=truth.$1, method=l2gp, $
+    sourceL2GP={l2gpTruth}$1{Input},/interpolate!nl})
+
+  ;; Now execute this macro for all the species for which we have l2gp
+  ;; data
+  !forall(fillWithL2GP,!l2gpInputSpecies)
+
+  ;; We'll also do the same for refgph, which is a special case
+  Fill, quantity=truth.refGPH, method=l2gp, sourceL2GP=l2gpTruthGPHInput, /interpolate
+
+  ;; --------------------------------------------- RHi
+
+  ;; Get RHI from H2O
+  Fill, quantity=truth.rhi, h2oQuantity=truth.h2o, $
+    temperatureQuantity=truth.temperature, method=RHIFromH2O, /dontMask
+
+  ;; --------------------------------------------- hiRes Fills
+
+  !define(trimHR, {!substr($1,0,!eval(!len($1)-3))})
+  !define(fillWithL2GPHR,{Fill, quantity=truth.$1, method=l2gp, $
+    sourceL2GP={l2gpTruth}!trimHR($1){Input},/interpolate!nl})
+  !fillWithL2GPHR(O3_HR)
+  !fillWithL2GPHR(Temperature_HR)
+  !forall(fillWithL2GPHR,!allHiResMolecules)
+  ;; Get RHI_HR from RHI_HR.  Probably more accurate ways to do it.
+  ;; However, RHI is not an important input to e.g. sids.
+  ;; !interpolateToHiRes(truth.RHI_HR)
+
+  ;; --------------------------------------------- tpPressure
+  !ifdef(tpPressure,{
+    Fill, quantity=truth.tpPressure, method=explicit, $
+      explicitValues=!tpPressure, /spread
+  }{
+    Fill, quantity=truth.tpPressure, method=wmoTropopause, $
+      temperatureQuantity=truth.temperature, refGPHQuantity=truth.refGPH, $
+      internalVgrid=vGridWMO
+  })
+
+  ;; --------------------------------------------- Ptan
+
+  ;; Compute non refracted phitans for truth
+  Fill, quantity=truth.phiTanGHz, method=refract, $
+    ptanQuantity=truth.ptanGHz, $
+    h2oQuantity=truth.h2o, $
+    temperatureQuantity=truth.temperature, $
+    refract=false
+
+
+  ;; Get full gph profile
+  Fill, quantity=truth.gph, method=hydrostatic, $
+    temperatureQuantity=truth.temperature, $
+    refGPHquantity=truth.refGPH
+  !ifdef(flagSkipHydrostatic,{},{
+
+  ;; Now deduce a corresponding ptan for this using hydrostatic
+  ;; balance.
+  Fill, quantity=truth.ptanGHz, method=hydrostatic, $
+    h2oQuantity=truth.h2o, $
+    temperatureQuantity=truth.temperature, $
+    refGPHQuantity=truth.refGPH, $
+    geocAltitudeQuantity=truth.tngtGeocAltGHz, $
+    orbitInclination=truth.orbitInclination, $
+    phiTan=truth.phiTanGHz, $
+    maxIterations=20, $
+    !ifdef(flagStrict1D,{phiWindow=0 profiles},{phiWindow=13 profiles})
+
+  ;; Dump, details=1, options='1', quantity=truth.ptanGHz, /stop
+  ;; Re-Fill the magnetic field. We already got it from apriori
+  ;; but the gph may have changed
+!ifdef(flagMagneticFieldOnHeightGrid,{!dnl
+  Fill, quantity=truth.magneticField, method=magneticModel, $
+    scVelECR=truth.scVelECR, geocAltitudeQuantity=truth.tngtGeocAltGHz, $
+    /regular, referenceMIF=!referenceHeight
+  },{
+  Fill, quantity=truth.magneticField, method=magneticModel, $
+    GPHquantity=truth.gph
+  Fill, quantity=truth.fieldAzimuth, method=rotateField, $
+    fieldECR=truth.magneticField, ecrToFOV=truth.ecrToFOV
+  Fill, quantity=truth.fieldElevation, method=rotateField, $
+    fieldECR=truth.magneticField, ecrToFOV=truth.ecrToFOV
+  Fill, quantity=truth.fieldStrength, method=rotateField, $
+    fieldECR=truth.magneticField, ecrToFOV=truth.ecrToFOV
+  })
+  
+  })
+
+end Fill
+!divert(-1)
+; $Log: filltruthuars-sids.l2cf,v $
+; Revision 1.2  2014/11/19 21:32:13  pwagner
+; Removed outmoded azimuth quantity type
+;
+; Revision 1.1  2014/10/08 19:03:38  pwagner
+; First commit
+;
+!divert!dnl
+@
+
+
+1.2
+log
+@Removed outmoded azimuth quantity type
+@
+text
+@d2 1
+a2 1
+;; $Id: filltruthuars-sids.l2cf,v 1.1 2014/10/08 19:03:38 pwagner Exp $
+d94 7
+a100 1
+  ;; Fill the magnetic field.
+d109 1
+d116 3
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d2 1
+a2 1
+;; $Id: filltruth.l2cf,v 1.27 2013/04/11 16:35:34 pwagner Exp $
+a102 2
+  Fill, quantity=truth.azimuth, method=explicit, $
+    explicitValues= 90deg, /spread
+d108 4
+a111 1
+; $Log: filltruth.l2cf,v $
+@
+

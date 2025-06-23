@@ -1,0 +1,148 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.14
+	cfm-single-freq-0-1:1.2.0.12
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.10
+	mus-emls-1-70:1.2.0.8
+	rel-1-0-englocks-work:1.2.0.6
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.2
+	V4-21:1.2.0.4
+	V4-13:1.2
+	V4-12:1.2
+	V4-11:1.2
+	V4-10:1.2
+	V3-43:1.2
+	M4-00:1.2
+	V3-41:1.2
+	V3-40-PlusGM57:1.2.0.2
+	V2-24-NRT-04:1.1
+	V3-33:1.2
+	V2-24:1.1
+	V3-31:1.2
+	V3-30-NRT-05:1.2
+	cfm-01-00:1.2
+	V3-30:1.2
+	V3-20:1.2
+	V3-10:1.2
+	V2-23-NRT-02:1.1
+	V2-23:1.1
+	V2-22-NRT-01:1.1
+	V2-22:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2008.11.24.19.26.21;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2007.02.26.23.52.37;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Changed to be used more generically
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id: FindIntersection.f9h,v 1.1 2007/02/26 23:52:37 pwagner Exp $
+
+  ! ---------------------------------------------  FindIntersection  -----
+  ! This family of routines finds the indices of the intersection between
+  ! two similarly montonic sets
+  ! e.g. given set1 = /(1, 3, 5, 7 )/, set2 = /(1, 2, 3, 4, 5)/
+  ! produces which1 = /(1, 2, 3)/, 
+  !      which2 = /(1, 3, 5)/, 
+  ! and the optional arg      how_many = 3
+  
+  ! Note that which1 and which2 are arrays of array indices
+  ! and that they will be monotonic, too
+  
+  ! (Actually, set1 and set2 may be non-monotonic as long as each value is
+  ! unique within its own set)
+  ! subroutine FindIntersectionInteger ( set1, set2, WHICH1, which2, HOW_MANY )
+  !   ! Formal arguments
+  !   integer, dimension(:), intent(in)     :: set1
+  !   integer, dimension(:), intent(in)     :: set2
+  !   integer, dimension(:), intent(out)    :: which1
+  !   integer, dimension(:), intent(out)    :: which2
+  !   integer, optional, intent(out)        :: how_many
+  ! Internal variables
+  ! integer                               :: myTol
+  ! integer :: i1, i2
+  ! integer :: my_how_many
+  ! Executable
+  which1 = 0
+  which2 = 0
+  my_how_many = 0
+  if ( size(set1) == 0 .or. size(set2) == 0 .or. &
+    & size(which1) == 0 .or. size(which2) == 0 ) then
+    if ( present(how_many) ) how_many = my_how_many
+    return
+  endif
+  do i1=1, size(set1)
+    i2 = findfirst( set2, set1(i1), Tol=myTol )
+    if ( i2 < 1 ) cycle
+    my_how_many = my_how_many + 1
+    if ( my_how_many > min( size(which1), size(which2) ) ) cycle
+    which1(my_how_many) = i1
+    which2(my_how_many) = i2
+  enddo
+  if ( present(how_many) ) how_many = my_how_many
+  
+  ! end subroutine FindIntersectionInteger
+! $Log: FindIntersection.f9h,v $
+! Revision 1.1  2007/02/26 23:52:37  pwagner
+! First commit
+!
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d12 1
+a12 1
+! $Id: FindIntersection.f9h,v 1.7 2005/08/03 16:34:20 pwagner Exp $
+d48 1
+a48 1
+    i2 = findfirst( set2, set1(i1), myTol )
+d58 4
+a61 1
+! $Log: FindIntersection.f90,v $
+@
+

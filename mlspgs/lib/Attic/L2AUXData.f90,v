@@ -1,0 +1,728 @@
+head	1.15;
+access;
+symbols
+	V0_1:1.14;
+locks; strict;
+comment	@# @;
+
+
+1.15
+date	2000.09.05.17.21.15;	author dcuddy;	state dead;
+branches;
+next	1.14;
+
+1.14
+date	2000.06.30.00.39.07;	author lungu;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2000.06.19.22.57.08;	author lungu;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2000.05.17.23.36.58;	author lungu;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2000.01.20.00.26.50;	author livesey;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2000.01.19.23.52.15;	author livesey;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2000.01.19.23.45.42;	author livesey;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2000.01.19.21.42.18;	author livesey;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2000.01.07.23.53.34;	author livesey;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	99.12.18.01.06.28;	author livesey;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	99.12.17.21.41.00;	author livesey;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	99.12.14.00.53.17;	author livesey;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	99.12.03.22.25.57;	author livesey;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	99.12.03.21.22.23;	author livesey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	99.12.03.21.22.02;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.15
+log
+@moved to mlspgs/l2
+@
+text
+@! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+!=============================================================================
+MODULE L2AUXData                 ! Data types for storing L2AUX data internally
+!=============================================================================
+
+  USE MLSMessageModule
+  USE MLSCommon
+  USE MLSStrings
+
+  IMPLICIT NONE
+
+  PRIVATE :: Id, ModuleName
+  !---------------------------- RCS Ident Info -------------------------------
+  CHARACTER (LEN=256) :: Id = &
+       "$Id: L2AUXData.f90,v 1.14 2000/06/30 00:39:07 lungu Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile: L2AUXData.f90,v $"
+  !---------------------------------------------------------------------------
+
+
+  ! This module defines datatypes and gives basic routines for storing and
+  ! manipulating L2AUX data.
+
+  INTEGER, PARAMETER :: L2AUXNameLen=80
+  INTEGER, PARAMETER :: CCSDSLen=27
+
+  ! This is a set of possible values for dimension%dimensionFamily
+
+  INTEGER, PARAMETER :: NoL2AUXDimTypes=7
+  CHARACTER(LEN=25), DIMENSION(NoL2AUXDimTypes),PARAMETER::L2AUXDimNames= (/ &
+       & "MLS Channel             ", &
+       & "Intermediate Frequency  ", &
+       & "Upper sideband Frequency", &
+       & "Lower sideband Frequency", &
+       & "Minor Frame             ", &
+       & "Major Frame             ", &
+       & "Geodetic Angle          " /)
+  CHARACTER (LEN=10), DIMENSION(NoL2AUXDimTypes), PARAMETER::L2AUXDimUnits= (/ &
+       & "          ", &
+       & "MHz       ", &
+       & "MHz       ", &
+       & "MHz       ", &
+       & "          ", &
+       & "          ", &
+       & "Degrees   "/)
+
+  INTEGER, PARAMETER :: L2AUXDim_None=0
+  INTEGER, PARAMETER :: L2AUXDim_Channel=1
+  INTEGER, PARAMETER :: L2AUXDim_IntermediateFrequency=2
+  INTEGER, PARAMETER :: L2AUXDim_USBFrequency=3
+  INTEGER, PARAMETER :: L2AUXDim_LSBFrequency=4
+  INTEGER, PARAMETER :: L2AUXDim_MIF=5
+  INTEGER, PARAMETER :: L2AUXDim_MAF=6
+  INTEGER, PARAMETER :: L2AUXDim_GeodAngle=7
+
+  ! This datatype describes a dimension for an L2AUX quantity
+
+  TYPE L2AUX_Dimension_T
+     INTEGER :: noValues        ! Length of this dimension
+     INTEGER :: dimensionFamily ! What is this dimension
+     REAL(r8), DIMENSION(:), POINTER :: values ! (noValues)
+  END TYPE L2AUX_Dimension_T
+
+  ! This datatype describes an l2aux quantity itself.
+  ! The dimensions will typically be ordered as follows:
+  ! [Channel or frequency], MIF, [MAF or time or geodAngle]
+
+  TYPE L2AUXData_T
+
+    ! A name for the L2AUX quantity, goes into SD name
+    CHARACTER (LEN=L2AUXNameLen) :: Name ! Name for quantity to be output
+    INTEGER :: noDimensionsUsed ! Number of dimensions used in quantity (max 3)
+
+    ! The dimensions for the quantity
+    TYPE (L2AUX_Dimension_T), DIMENSION(3) :: dimensions
+
+    REAL(r8), POINTER, DIMENSION(:,:,:) :: values
+  END TYPE L2AUXData_T
+
+CONTAINS
+
+  !---------------------------------------------------------------------------
+
+  ! This first routine sets up the arrays for an l2aux datatype.
+  ! The user supplies a set of three dimensionFamilies (e.g. L2AUXDim_MAF)
+  ! Quantities can have upto three valid dimensions.  L2AUXDim_None can be used
+  ! to indicate later dimensions are invalid.
+
+  SUBROUTINE SetupNewL2AUXRecord(dimensionFamilies,dimSizes,l2aux)
+
+    ! Dummy arguments
+    INTEGER, DIMENSION(3), INTENT(IN) :: dimensionFamilies
+    INTEGER, DIMENSION(3), INTENT(IN) :: dimSizes
+    TYPE (L2AUXData_T), INTENT(OUT) :: l2aux
+
+    ! Local variables
+    INTEGER :: dimIndex
+    INTEGER :: status
+
+    ! Fill the dimensions data structure
+
+
+    l2aux%noDimensionsUsed=COUNT(dimensionFamilies /= L2AUXDim_None)
+    l2aux%dimensions%dimensionFamily=dimensionFamilies
+    l2aux%dimensions%noValues=dimSizes
+
+    ! Allocate the values for each dimension
+    DO dimIndex=1,3
+       IF (dimensionFamilies(dimIndex)/=L2AUXDim_None) THEN
+          ALLOCATE(l2aux%dimensions(dimIndex)%values(dimSizes(dimIndex)), &
+               & STAT=status)
+          IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+               & MLSMSG_Allocate//"l2aux dimension values")
+       ELSE
+          l2aux%dimensions(dimIndex)%noValues=1
+       END IF
+    END DO
+
+    ! Allocate the values for the data itself
+
+    ALLOCATE(l2aux%values( &
+         & l2aux%dimensions(1)%noValues, &
+         & l2aux%dimensions(2)%noValues, &
+         & l2aux%dimensions(3)%noValues), STAT=status)
+    IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,MLSMSG_Allocate// &
+         & "l2aux values")
+
+  END SUBROUTINE SetupNewL2AUXRecord
+    
+  !---------------------------------------------------------------------------
+
+  ! This routine deallocates all the arrays allocated above.
+
+  SUBROUTINE DestroyL2AUXContents(l2aux)
+
+    ! Dummy arguments
+    TYPE (L2AUXData_T), INTENT(INOUT) :: l2aux
+    ! Local variables
+    INTEGER :: status
+    ! Executable code
+    DEALLOCATE(l2aux%dimensions(1)%values, &
+         & l2aux%dimensions(2)%values, &
+         & l2aux%dimensions(3)%values, stat=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Warning,ModuleName, &
+         & MLSMSG_DeAllocate//"l2aux%dimensions") 
+    DEALLOCATE(l2aux%values, stat=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Warning,ModuleName, &
+         & MLSMSG_DeAllocate//"l2aux%values") 
+  END SUBROUTINE DestroyL2AUXContents
+
+  !---------------------------------------------------------------------------
+
+  ! This subroutine expands an L2AUXData_T in place, allowing the user to
+  ! add more `profiles' to it.  Note that the `profile' dimension is the last
+  ! one.
+
+  SUBROUTINE ExpandL2AUXDataInPlace(l2aux,newSize)
+
+    ! Dummy arguments
+    TYPE (L2AUXData_T), INTENT(INOUT) :: l2aux
+    INTEGER, INTENT(IN) :: newSize
+
+    ! Local variables
+    INTEGER :: status           ! From ALLOCATE
+    ! The following are temporary arrays for copying data around
+    REAL (r8), DIMENSION(:), POINTER :: temp1D
+    REAL (r8), DIMENSION(:,:,:), POINTER :: temp3D
+    INTEGER :: expandingDimension
+    INTEGER :: oldSize
+
+    ! Executable code
+
+    ! First identity which is the `last' dimension, this is the one to expand
+
+    expandingDimension=l2aux%noDimensionsUsed
+
+    ! Now see how long this is
+    oldSize=l2aux%dimensions(expandingDimension)%noValues
+    ! Do a sanity check
+    IF (newSize<oldSize) CALL MLSMessage(MLSMSG_Error,ModuleName,&
+         & "This l2aux is getting smaller not bigger")
+
+    ! Now expand this dimension
+    temp1D=>l2aux%dimensions(expandingDimension)%values
+    l2aux%dimensions(expandingDimension)%noValues = newSize
+    ALLOCATE(l2aux%dimensions(expandingDimension)%values(newSize),STAT=status)
+    IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & "New dimension information")
+    l2aux%dimensions(expandingDimension)%values(1:oldSize)=temp1D
+    DEALLOCATE(temp1D, stat=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"temp1D")
+
+    ! Now expand the data in this dimension
+    temp3d=>l2aux%values
+    SELECT CASE (expandingDimension)
+    CASE (1)
+       ALLOCATE(l2aux%values(newSize,1,1),STAT=status)
+       IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+            & "New l2aux values")
+       l2aux%values(1:oldSize,:,:)=temp3d
+    CASE(2)
+       ALLOCATE(l2aux%values(l2aux%dimensions(1)%noValues,newSize,1),&
+            & STAT=status)
+       IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+            & "New l2aux values")
+       l2aux%values(:,1:oldSize,:)=temp3d
+    CASE(3)
+       ALLOCATE(l2aux%values(l2aux%dimensions(1)%noValues, &
+            &                l2aux%dimensions(2)%noValues,&
+            &                newSize),STAT=status)
+       IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+            & "New l2aux values")
+       l2aux%values(:,:,1:oldSize)=temp3d
+    END SELECT
+    DEALLOCATE(temp3d, stat=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"temp3D")
+
+    ! That's it.
+
+  END SUBROUTINE ExpandL2AUXDataInPlace
+
+  !---------------------------------------------------------------------------
+
+  ! This subroutine adds an l2aux data type to a database of said types,
+  ! creating a new database if it doesn't exist
+
+  SUBROUTINE AddL2AUXToDatabase(database,l2aux)
+
+    ! Dummy arguments
+    TYPE (L2AUXData_T), DIMENSION(:), POINTER :: database
+    TYPE (L2AUXData_T), INTENT(IN) :: l2aux
+
+    ! Local variables
+    TYPE (L2AUXData_T), DIMENSION(:), POINTER :: tempDatabase
+    INTEGER :: newSize,status
+
+    ! Executable code
+
+    IF (ASSOCIATED(database)) THEN
+       ! Check we don't already have one of this name
+    !   IF (LinearSearchStringArray(database%name,l2aux%name, &
+    !        & caseInsensitive=.TRUE.)/=0) CALL MLSMessage(MLSMSG_Error,&
+    !        & ModuleName,MLSMSG_Duplicate//l2aux%name)
+       newSize=SIZE(database)+1
+    ELSE
+       newSize=1
+    ENDIF
+
+    ALLOCATE(tempDatabase(newSize),STAT=status)
+    IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & "Allocation failed for tempDatabase")
+
+    IF (newSize>1) tempDatabase(1:newSize-1)=database
+    tempDatabase(newSize)=l2aux
+    IF (ASSOCIATED(database))DEALLOCATE(database, stat=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"database")
+    database=>tempDatabase
+  END SUBROUTINE AddL2AUXToDatabase
+
+  ! --------------------------------------------------------------------------
+
+  ! This subroutine destroys a quantity template database
+
+  SUBROUTINE DestroyL2AUXDatabase(database)
+
+    ! Dummy argument
+    TYPE (L2AUXData_T), DIMENSION(:), POINTER :: database
+
+    ! Local variables
+    INTEGER :: l2auxIndex, status
+
+    IF (ASSOCIATED(database)) THEN
+       DO l2auxIndex=1,SIZE(database)
+          CALL DestroyL2AUXContents(database(l2auxIndex))
+       ENDDO
+       DEALLOCATE(database, stat=status)
+       IF (status /= 0) CALL MLSMessage(MLSMSG_Warning,ModuleName, &
+         & MLSMSG_DeAllocate//"database")
+    ENDIF
+  END SUBROUTINE DestroyL2AUXDatabase
+
+
+!=============================================================================
+END MODULE L2AUXData
+!=============================================================================
+
+!
+! $Log: L2AUXData.f90,v $
+! Revision 1.14  2000/06/30 00:39:07  lungu
+! Downgraded deallocation errors to warnings.
+!
+! Revision 1.13  2000/06/19 22:57:08  lungu
+! Added status check after each DEALLOCATE.
+!
+! Revision 1.12  2000/05/17 23:36:58  lungu
+! Added check "IF (ASSOCIATED(database))DEALLOCATE(database)" so it doesn't chrash trying to dealocate
+! an "empty" database.
+!
+! Revision 1.11  2000/01/20 00:26:50  livesey
+! Added some extra dimensions, took away time, just have geodetic angle
+! or MAF now.  Also added the L2AUXDimUnits array.
+!
+! Revision 1.10  2000/01/19 23:52:15  livesey
+! Added the noDimensionsUsed field.
+!
+! Revision 1.9  2000/01/19 23:45:42  livesey
+! Added ExpandL2AUXDataInPlace routine for Join.
+!
+! Revision 1.8  2000/01/19 21:42:18  livesey
+! Just tided up some comments.
+!
+! Revision 1.7  2000/01/07 23:53:34  livesey
+! Nearly integrated, just a few tweaks.
+!
+! Revision 1.6  1999/12/18 01:06:28  livesey
+! Added USE of MLSStrings
+!
+! Revision 1.5  1999/12/17 21:41:00  livesey
+! Added check for duplicate name
+!
+! Revision 1.4  1999/12/14 00:53:17  livesey
+! Changed DOUBLE PRECISION to REAL(r8)
+!
+! Revision 1.3  1999/12/03 22:25:57  livesey
+! Tidied up some of the INTENT stuff
+!
+! Revision 1.2  1999/12/03 21:22:23  livesey
+! Removed old log data
+!
+! Revision 1.1  1999/12/03 21:22:02  livesey
+! First versions, modified from L2GPData module
+!
+@
+
+
+1.14
+log
+@Downgraded deallocation errors to warnings.
+@
+text
+@d17 1
+a17 1
+       "$Id: L2AUXData.f90,v 1.13 2000/06/19 22:57:08 lungu Exp $"
+d293 3
+@
+
+
+1.13
+log
+@Added status check after each DEALLOCATE.
+@
+text
+@d17 1
+a17 1
+       "$Id: L2AUXData.f90,v 1.12 2000/05/17 23:36:58 lungu Exp $"
+d145 1
+a145 1
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+d148 1
+a148 1
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+d281 1
+a281 1
+       IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+d293 3
+@
+
+
+1.12
+log
+@Added check "IF (ASSOCIATED(database))DEALLOCATE(database)" so it doesn't chrash trying to dealocate
+an "empty" database.
+@
+text
+@d17 1
+a17 1
+       "$Id: L2AUXData.f90,v 1.11 2000/01/20 00:26:50 livesey Exp $"
+d26 1
+a26 1
+  INTEGER, PARAMETER, PRIVATE :: CCSDSLen=27
+d103 1
+a108 1
+
+d139 2
+a140 1
+
+d144 6
+a149 3
+         & l2aux%dimensions(3)%values)
+    DEALLOCATE(l2aux%values)
+
+a179 1
+
+d186 1
+d191 3
+a193 1
+    DEALLOCATE(temp1D)
+d217 3
+a219 1
+    DEALLOCATE(temp3d)
+d244 3
+a246 3
+       IF (LinearSearchStringArray(database%name,l2aux%name, &
+            & caseInsensitive=.TRUE.)/=0) CALL MLSMessage(MLSMSG_Error,&
+            & ModuleName,MLSMSG_Duplicate//l2aux%name)
+d258 3
+a260 1
+    IF (ASSOCIATED(database))DEALLOCATE(database)
+d274 1
+a274 1
+    INTEGER :: l2auxIndex
+d280 3
+a282 1
+       DEALLOCATE(database)
+d293 4
+@
+
+
+1.11
+log
+@Added some extra dimensions, took away time, just have geodetic angle
+or MAF now.  Also added the L2AUXDimUnits array.
+@
+text
+@d17 1
+a17 1
+       "$Id: L2AUXData.f90,v 1.10 2000/01/19 23:52:15 livesey Exp $"
+d250 1
+a250 1
+    DEALLOCATE(database)
+d281 4
+@
+
+
+1.10
+log
+@Added the noDimensionsUsed field.
+@
+text
+@d17 1
+a17 1
+       "$Id: L2AUXData.f90,v 1.9 2000/01/19 23:45:42 livesey Exp $"
+d30 17
+a46 8
+  INTEGER, PARAMETER :: NoL2AUXDimTypes=6
+  CHARACTER(LEN=12), DIMENSION(NoL2AUXDimTypes),PARAMETER::L2AUXDimNames= (/ &
+       & "Channel  ", &
+       & "Frequency", &
+       & "MIF      ", &
+       & "MAF      ", &
+       & "Time     ", &
+       & "GeodAngle" /)
+d50 6
+a55 5
+  INTEGER, PARAMETER :: L2AUXDim_Frequency=2
+  INTEGER, PARAMETER :: L2AUXDim_MIF=3
+  INTEGER, PARAMETER :: L2AUXDim_MAF=4
+  INTEGER, PARAMETER :: L2AUXDim_Time=5
+  INTEGER, PARAMETER :: L2AUXDim_GeodAngle=6
+d281 3
+@
+
+
+1.9
+log
+@Added ExpandL2AUXDataInPlace routine for Join.
+@
+text
+@d17 1
+a17 1
+       "$Id: L2AUXData.f90,v 1.8 2000/01/19 21:42:18 livesey Exp $"
+d63 1
+d93 1
+d160 1
+a160 1
+    ! First identity which is the `last' dimension.
+d162 1
+a162 5
+    expandingDimension=3
+    DO WHILE( (l2Aux%dimensions(expandingDimension)%dimensionFamily==&
+         & L2AUXDim_None).AND.(expandingDimension>1))
+       expandingDimension=expandingDimension-1
+    END DO
+d271 3
+@
+
+
+1.8
+log
+@Just tided up some comments.
+@
+text
+@d17 1
+a17 1
+       "$Id: L2AUXData.f90,v 1.7 2000/01/07 23:53:34 livesey Exp $"
+d138 73
+d273 3
+@
+
+
+1.7
+log
+@Nearly integrated, just a few tweaks.
+@
+text
+@d17 1
+a17 1
+       "$Id: L2AUXData.f90,v 1.6 1999/12/18 01:06:28 livesey Exp $"
+d55 3
+a57 1
+  ! This datatype describes an l2aux dimension.
+d200 3
+@
+
+
+1.6
+log
+@Added USE of MLSStrings
+@
+text
+@d17 1
+a17 1
+       "$Id: L2AUXData.f90,v 1.5 1999/12/17 21:41:00 livesey Exp $"
+d30 9
+d198 3
+@
+
+
+1.5
+log
+@Added check for duplicate name
+@
+text
+@d10 1
+d17 1
+a17 1
+       "$Id: L2AUXData.f90,v 1.4 1999/12/14 00:53:17 livesey Exp $"
+d189 3
+@
+
+
+1.4
+log
+@Changed DOUBLE PRECISION to REAL(r8)
+@
+text
+@d16 1
+a16 1
+       "$Id: L2AUXData.f90,v 1.3 1999/12/03 22:25:57 livesey Exp $"
+d142 4
+d188 3
+@
+
+
+1.3
+log
+@Tidied up some of the INTENT stuff
+@
+text
+@d9 1
+d16 1
+a16 1
+       "$Id: L2AUXData.f90,v 1.2 1999/12/03 21:22:23 livesey Exp $"
+d42 1
+a42 1
+     DOUBLE PRECISION, DIMENSION(:), POINTER :: values ! (noValues)
+d55 1
+a55 1
+    DOUBLE PRECISION, POINTER, DIMENSION(:,:,:) :: values
+d184 3
+@
+
+
+1.2
+log
+@Removed old log data
+@
+text
+@d15 1
+a15 1
+       "$Id: L2AUXData.f90,v 1.1 1999/12/03 21:22:02 livesey Exp $"
+d38 1
+a38 1
+  TYPE L2AUX_Dimension
+d42 1
+a42 1
+  END TYPE L2AUX_Dimension
+d46 1
+a46 1
+  TYPE L2AUX_T
+d52 1
+a52 1
+    TYPE (L2AUX_Dimension), DIMENSION(3) :: dimensions
+d55 1
+a55 1
+  END TYPE L2AUX_T
+d71 1
+a71 1
+    TYPE (L2AUX_T) :: l2aux
+d113 1
+a113 1
+    TYPE (L2AUX_T) :: l2aux
+d131 2
+a132 2
+    TYPE (L2AUX_T), DIMENSION(:), POINTER :: database
+    TYPE (L2AUX_T) :: l2aux
+d135 1
+a135 1
+    TYPE (L2AUX_T), DIMENSION(:), POINTER :: tempDatabase
+d163 1
+a163 1
+    TYPE (L2AUX_T), DIMENSION(:), POINTER :: database
+d183 3
+@
+
+
+1.1
+log
+@First versions, modified from L2GPData module
+@
+text
+@d15 1
+a15 1
+       "$Id: L2AUXData.f90,v 1.1 1999/12/03 19:10:34 livesey Exp $"
+d183 2
+a184 3
+! Revision 1.1  1999/12/03 19:10:34  livesey
+! First version
+!
+@
+

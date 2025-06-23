@@ -1,0 +1,1284 @@
+head	2.23;
+access;
+symbols
+	v5-02-NRT-19:2.23
+	v6-00:2.23
+	v5-02-NRT-18:2.23
+	v5-02:2.23
+	v5-01-NRT-17:2.23
+	v5-01-NRT-16:2.23
+	v5-01-NRT-15:2.23
+	v5-01-NRT-14:2.23
+	neuralnetworks-1-0:2.23.0.12
+	cfm-single-freq-0-1:2.23.0.10
+	v5-01:2.23
+	v5-00:2.23
+	v4-23-TA133:2.23.0.8
+	mus-emls-1-70:2.23.0.6
+	rel-1-0-englocks-work:2.23.0.4
+	VUMLS1-00:2.23
+	VPL1-00:2.23
+	V4-22-NRT-08:2.23
+	VAM1-00:2.23
+	V4-21:2.23.0.2
+	V4-13:2.23
+	V4-12:2.23
+	V4-11:2.23
+	V4-10:2.23
+	V3-43:2.16
+	M4-00:2.18
+	V3-41:2.16
+	V3-40-PlusGM57:2.16.0.2
+	V2-24-NRT-04:2.15
+	V3-33:2.16
+	V2-24:2.15
+	V3-31:2.16
+	V3-30-NRT-05:2.16
+	cfm-01-00:2.16
+	V3-30:2.16
+	V3-20:2.16
+	V3-10:2.16
+	V2-23-NRT-02:2.15
+	V2-23:2.15
+	V2-22-NRT-01:2.15
+	V2-22:2.15
+	V2-21:2.15
+	V2-20:2.15
+	V2-11:2.15
+	V2-10:2.15
+	V2-00:2.15
+	V1-51:2.12
+	V1-50:2.12
+	V1-45:2.11
+	V1-44:2.11
+	V1-43:2.7
+	V1-42:2.6
+	V1-41:2.6
+	V1-32:2.7
+	V1-40:2.6
+	V1-31:2.6
+	V1-30:2.6
+	V1-13:2.5
+	V1-12:2.5
+	V1-11:2.5
+	V1-10:2.5
+	newfwm-feb03:2.5.0.2
+	V1-04:2.1
+	V1-03:2.1
+	V1-02:2.1
+	V1-00:2.1
+	newfwm-sep01:2.1.0.2
+	V0-7:2.1
+	V0-5-Level2:2.1
+	V0-5-SIPS:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.23
+date	2014.02.21.19.25.24;	author vsnyder;	state Exp;
+branches;
+next	2.22;
+
+2.22
+date	2014.01.11.01.41.02;	author vsnyder;	state Exp;
+branches;
+next	2.21;
+
+2.21
+date	2013.12.12.01.56.44;	author vsnyder;	state Exp;
+branches;
+next	2.20;
+
+2.20
+date	2013.10.02.02.07.44;	author vsnyder;	state Exp;
+branches;
+next	2.19;
+
+2.19
+date	2013.09.30.23.59.57;	author vsnyder;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2012.05.07.23.00.57;	author vsnyder;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2012.05.05.00.12.15;	author vsnyder;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2009.06.23.18.25.42;	author pwagner;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2005.06.22.17.25.50;	author pwagner;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2005.05.02.22.57.29;	author vsnyder;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2005.01.20.01.31.07;	author vsnyder;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2004.11.17.20.24.20;	author vsnyder;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2004.06.16.19.51.25;	author vsnyder;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2004.06.16.01.45.13;	author vsnyder;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2004.05.28.00.57.25;	author vsnyder;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2004.05.21.22.52.33;	author vsnyder;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2004.01.22.00.41.40;	author pwagner;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2003.08.16.00.32.13;	author vsnyder;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2002.10.08.00.09.12;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2002.10.05.00.41.50;	author livesey;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2002.08.26.20.01.22;	author livesey;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2002.06.07.17.51.56;	author livesey;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.02.23.01.16.36;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.23
+log
+@Result of Get_Boolean depends on result of expr being l_true, not nonzero
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module MoreTree
+
+! Some routines for tree analysis that don't quite fit anywhere else.
+
+  use StartErrorMessage_m, only: StartErrorMessage ! Others use it from here too
+  use Tree, only: Decoration, Node_ID, NSons, Subtree
+
+  implicit NONE
+  public
+
+  interface FillArray
+    module procedure FillDecorArray_I, FillDecorArray_TX
+    module procedure FillStringArray_I, FillStringArray_TX
+  end interface FillArray
+
+  interface FillDecorArray
+    module procedure FillDecorArray_I, FillDecorArray_TX
+  end interface
+
+  interface FillStringArray
+    module procedure FillStringArray_I, FillStringArray_TX
+  end interface
+
+  interface FillSubrosaArray
+    module procedure FillSubrosaArray_I, FillSubrosaArray_TX
+  end interface
+
+  interface Get_Boolean
+    module procedure Get_Boolean_I, Get_Boolean_TX
+  end interface
+
+  interface Get_Dot_Decors
+    module procedure Get_Dot_Decors_I, Get_Dot_Decors_TX, Get_Dot_Decors_TX_TX
+  end interface
+
+  interface Get_Field_Id
+    module procedure Get_Field_Id_I, Get_Field_Id_TX
+  end interface
+
+  interface Get_Label_And_Spec
+    module procedure Get_Label_And_Spec_I, Get_Label_And_Spec_TX
+  end interface
+
+  interface Get_Spec_Id
+    module procedure Get_Spec_Id_I, Get_Spec_Id_TX
+  end interface
+
+  interface Scalar
+    module procedure Scalar_I, Scalar_TX
+  end interface
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: MoreTree.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains ! ====     Public Procedures     ==============================
+
+  ! -------------------------------------------  FillDecorArray_I  -----
+  integer function FillDecorArray_I ( Where, Array, ArrayName ) result(Error)
+    ! Fill Array with the decorations of sons 2..n of Where.
+    ! Result > 0 => field had a range in it.
+    ! Array is allocated here with Allocate_Test, so don't send me an
+    ! undefined pointer!
+    use Allocate_Deallocate, only: Allocate_Test
+    use Output_m, only: Output
+    use String_Table, only: Display_String
+    use Tree, only: Node_Kind, Pseudo, Sub_Rosa
+
+    integer, intent(in) :: Where ! in the tree
+    integer, pointer :: Array(:)
+    character(len=*), intent(in) :: ArrayName ! For error message
+    integer :: Gson, J, N
+
+    error = 0
+    n = nsons(where)
+    call allocate_test ( array, n-1, arrayName, moduleName )
+    do j = 2, n
+      gson = subtree(j,where)
+      if ( node_kind(gson) == pseudo ) then
+        array(j-1) = decoration(gson)
+      else
+        error = 1
+        call startErrorMessage ( where )
+        call output ( 'Range not allowed for ' )
+        call display_string ( sub_rosa(subtree(1,where)), advance='yes' )
+      end if
+    end do
+  end function FillDecorArray_I
+
+  ! ------------------------------------------  FillDecorArray_TX  -----
+  integer function FillDecorArray_TX ( Where, Array, ArrayName ) result(Error)
+    ! Fill Array with the decorations of sons 2..n of Where.
+    ! Result > 0 => field had a range in it.
+    ! Array is allocated here with Allocate_Test, so don't send me an
+    ! undefined pointer!
+    use Tree, only: TX
+    type(tx), intent(in) :: Where ! in the tree
+    integer, pointer :: Array(:)
+    character(len=*), intent(in) :: ArrayName ! For error message
+    error = fillDecorArray ( where%i, array, arrayName )
+  end function FillDecorArray_TX
+
+  ! ------------------------------------------  FillStringArray_I  -----
+  integer function FillStringArray_I ( Where, Array, ArrayName ) result(Error)
+    ! Fill Array with the sub-rosas of sons 2..n of Where.
+    ! Result > 0 => field had a range in it.
+    ! Array is allocated here with Allocate_Test, so don't send me an
+    ! undefined pointer!
+    use Allocate_Deallocate, only: Allocate_Test
+    use MLSStrings, only: Capitalize
+    use Output_m, only: Output
+    use String_Table, only: Display_String, Get_String
+    use Tree, only: Node_Kind, Pseudo, Sub_Rosa
+
+    integer, intent(in) :: Where ! in the tree
+    character(len=*), pointer :: Array(:)
+    character(len=*), intent(in) :: ArrayName ! For error message
+    integer :: Gson, J, N
+
+    error = 0
+    n = nsons(where)
+    call allocate_test ( array, n-1, arrayName, moduleName )
+    do j = 2, n
+      gson = subtree(j,where)
+      if ( node_kind(gson) == pseudo ) then
+        call get_string ( sub_rosa(gson), array(j-1), strip=.true. )
+        array(j-1) = capitalize(array(j-1))
+      else
+        error = 1
+        call startErrorMessage ( where )
+        call output ( 'Range not allowed for ' )
+        call display_string ( sub_rosa(subtree(1,where)), advance='yes' )
+      end if
+    end do
+  end function FillStringArray_I
+
+  ! -----------------------------------------  FillStringArray_TX  -----
+  integer function FillStringArray_TX ( Where, Array, ArrayName ) result(Error)
+    ! Fill Array with the sub-rosas of sons 2..n of Where.
+    ! Result > 0 => field had a range in it.
+    ! Array is allocated here with Allocate_Test, so don't send me an
+    ! undefined pointer!
+    use Tree, only: TX
+
+    type(tx), intent(in) :: Where ! in the tree
+    character(len=*), pointer :: Array(:)
+    character(len=*), intent(in) :: ArrayName ! For error message
+    error = fillStringArray ( where%i, array, arrayName )
+  end function FillStringArray_TX
+
+  ! -----------------------------------------  FillSubrosaArray_I  -----
+  integer function FillSubrosaArray_I ( Where, Array, ArrayName ) result(Error)
+    ! Fill Array with the decorations of sons 2..n of Where.
+    ! Result > 0 => field had a range in it.
+    ! Array is allocated here with Allocate_Test, so don't send me an
+    ! undefined pointer!
+    use Allocate_Deallocate, only: Allocate_Test
+    use Output_m, only: Output
+    use String_Table, only: Display_String
+    use Tree, only: Node_Kind, Pseudo, Sub_Rosa
+
+    integer, intent(in) :: Where ! in the tree
+    integer, pointer :: Array(:)
+    character(len=*), intent(in) :: ArrayName ! For error message
+    integer :: Gson, J, N
+
+    error = 0
+    n = nsons(where)
+    call allocate_test ( array, n-1, arrayName, moduleName )
+    do j = 2, n
+      gson = subtree(j,where)
+      if ( node_kind(gson) == pseudo ) then
+        array(j-1) = sub_rosa(gson)
+      else
+        error = 1
+        call startErrorMessage ( where )
+        call output ( 'Range not allowed for ' )
+        call display_string ( sub_rosa(subtree(1,where)), advance='yes' )
+      end if
+    end do
+  end function FillSubrosaArray_I
+
+  ! ----------------------------------------  FillSubrosaArray_TX  -----
+  integer function FillSubrosaArray_TX ( Where, Array, ArrayName ) result(Error)
+    ! Fill Array with the decorations of sons 2..n of Where.
+    ! Result > 0 => field had a range in it.
+    ! Array is allocated here with Allocate_Test, so don't send me an
+    ! undefined pointer!
+    use Tree, only: TX
+
+    type(tx), intent(in) :: Where ! in the tree
+    integer, pointer :: Array(:)
+    character(len=*), intent(in) :: ArrayName ! For error message
+    error = fillSubrosaArray ( where%i, array, arrayName )
+  end function FillSubrosaArray_TX 
+
+  ! ----------------------------------------------  Get_Boolean_I  -----
+  logical function Get_Boolean_I ( Root ) result ( Boolean )
+  ! Get the value of a field that is required to have type t_boolean.
+  ! Return true if node_id(root) is n_set_one.  Otherwise return decoration of
+  ! root, or of child of root if children
+    use Expr_m, only: Expr
+    use Intrinsic, only: L_true
+    use Tree_Types, only: N_identifier, N_Set_one
+    integer, intent(in) :: Root
+    integer :: Son, Units(2)
+    double precision :: Value(2)
+    if ( node_id(root) == n_set_one ) then
+      boolean = .true.
+    else
+      if ( nsons ( root ) /= 0 ) then
+        son = subtree(2,root)
+        if ( node_id(son) == n_identifier ) then
+          boolean = decoration(son) == l_true
+        else
+          call expr ( son, units, value )
+          boolean = nint(value(1)) == l_true
+        end if
+      else
+        boolean = decoration(root) == l_true
+      end if
+    end if
+  end function Get_Boolean_I
+
+  ! --------------------------------------------  Get_Boolean_TX  -----
+  logical function Get_Boolean_TX ( Root ) result ( Boolean )
+  ! Get the value of a field that is required to have type t_boolean.
+  ! Return true if node_id(root) is n_set_one.  Otherwise return decoration of
+  ! root, or of child of root if children
+    use Tree, only: TX
+    type(tx), intent(in) :: Root
+    boolean = get_boolean ( root%i )
+  end function Get_Boolean_TX
+
+  ! -------------------------------------------  Get_Dot_Decors_I  -----
+  subroutine Get_Dot_Decors_I ( Root, FirstDecor, SecondDecor )
+  ! Assume that node_id(root) is n_dot.
+  ! Set FirstDecor = the decoration of the declaration of the first son,
+  ! and SecondDecor = the decoration of the declaration of the second son.
+    integer, intent(in) :: Root
+    integer, intent(out) :: FirstDecor, SecondDecor
+    firstDecor = decoration(decoration(subtree(1,root)))
+    secondDecor = decoration(decoration(decoration(subtree(2,root))))
+  end subroutine Get_Dot_Decors_I
+
+  ! ------------------------------------------  Get_Dot_Decors_TX  -----
+  subroutine Get_Dot_Decors_TX ( Root, FirstDecor, SecondDecor )
+  ! Assume that node_id(root) is n_dot.
+  ! Set FirstDecor = the decoration of the declaration of the first son,
+  ! and SecondDecor = the decoration of the declaration of the second son.
+    use Tree, only: TX
+    type(tx), intent(in) :: Root
+    integer, intent(out) :: FirstDecor, SecondDecor
+    firstDecor = decoration(decoration(subtree(1,root)))
+    secondDecor = decoration(decoration(decoration(subtree(2,root))))
+  end subroutine Get_Dot_Decors_TX
+
+  ! ---------------------------------------  Get_Dot_Decors_TX_TX  -----
+  subroutine Get_Dot_Decors_TX_TX ( Root, FirstDecor, SecondDecor )
+  ! Assume that node_id(root) is n_dot.
+  ! Set FirstDecor = the decoration of the declaration of the first son,
+  ! and SecondDecor = the decoration of the declaration of the second son.
+    use Tree, only: TX, Decoration_TX_TX
+    type(tx), intent(in) :: Root
+    type(tx), intent(out) :: FirstDecor, SecondDecor
+    firstDecor = decoration_tx_tx(decoration_tx_tx(subtree(1,root)))
+    secondDecor = decoration_tx_tx(decoration_tx_tx(decoration_tx_tx(subtree(2,root))))
+  end subroutine Get_Dot_Decors_TX_TX
+
+  ! ---------------------------------------------  Get_Field_Id_I  -----
+  integer function Get_Field_Id_I ( Root ) result ( Get_Field_Id )
+  ! Assume that node_id(root) is either n_asg or n_set_one.
+  ! Return the field ID.
+    integer, intent(in) :: Root
+    get_field_id = decoration(subtree(1,root))
+  end function Get_Field_Id_I
+
+  ! ---------------------------------------------  Get_Field_Id_TX  -----
+  integer function Get_Field_Id_TX ( Root ) result ( Get_Field_Id )
+  ! Assume that node_id(root) is either n_asg or n_set_one.
+  ! Return the field ID.
+    use Tree, only: TX
+    type(tx), intent(in) :: Root
+    get_field_id = decoration(subtree(1,root))
+  end function Get_Field_Id_TX
+
+  ! ---------------------------------------  Get_Label_And_Spec_I  -----
+  subroutine Get_Label_And_Spec_I ( Root, Label, Spec )
+  ! Starting at root, if its node_id is n_named, get Label from sub_rosa
+  ! of its first son and Spec from its second.  Otherwise, set Label = 0
+  ! and Spec = Root.  If Spec is absent, set Root to what Spec would be.
+    use Tree, only: Sub_Rosa
+    use Tree_Types, only: N_Named
+    integer, intent(inout) :: Root ! inout in case Spec is absent
+    integer, intent(out) :: Label
+    integer, intent(out), optional :: Spec
+    integer :: MySpec
+    if ( node_id(root) == n_named ) then
+      label = sub_rosa(subtree(1,root))
+      mySpec = subtree(2,root)
+    else
+      label = 0
+      mySpec = root
+    end if
+    if ( present(spec) ) then
+      spec = mySpec
+    else
+      root = mySpec
+    end if
+  end subroutine Get_Label_And_Spec_I
+
+  ! --------------------------------------  Get_Label_And_Spec_TX  -----
+  subroutine Get_Label_And_Spec_TX ( Root, Label, Spec )
+  ! Starting at root, if its node_id is n_named, get Label from sub_rosa
+  ! of its first son and Spec from its second.  Otherwise, set Label = 0
+  ! and Spec = Root.
+    use Tree, only: Sub_Rosa, TX
+    use Tree_Types, only: N_Named
+    type(tx), intent(inout) :: Root ! inout in case Spec is absent
+    integer, intent(out) :: Label
+    type(tx), intent(out), optional :: Spec
+    type(tx) :: MySpec
+    if ( node_id(root) == n_named ) then
+      label = sub_rosa(subtree(1,root))
+      mySpec = subtree(2,root)
+    else
+      label = 0
+      mySpec = root
+    end if
+    if ( present(spec) ) then
+      spec = mySpec
+    else
+      root = mySpec
+    end if
+  end subroutine Get_Label_And_Spec_TX
+
+  ! ----------------------------------------------  Get_Spec_Id_I  -----
+  integer function Get_Spec_Id_I ( Root ) result ( Get_Spec_Id )
+  ! Assume that node_id(root) is n_spec_args.
+  ! Return the spec ID.
+    integer, intent(in) :: Root
+    get_spec_id = decoration(subtree(1,decoration(subtree(1,root))))
+  end function Get_Spec_Id_I
+
+  ! ----------------------------------------------  Get_Spec_Id_TX  -----
+  integer function Get_Spec_Id_TX ( Root ) result ( Get_Spec_Id )
+  ! Assume that node_id(root) is n_spec_args.
+  ! Return the spec ID.
+    use Tree, only: TX, Decoration_TX_TX
+    type(tx), intent(in) :: Root
+    get_spec_id = decoration(subtree(1,decoration_tx_tx(subtree(1,root))))
+  end function Get_Spec_Id_TX
+
+  ! --------------------------------------  GetLitIndexFromString  -----
+  integer function GetLitIndexFromString ( line, stringIndex )
+    use Declaration_Table, only: GET_DECL, DECLS, ENUM_VALUE
+
+    ! Return the lit index for a string if it's a lit, else -huge(0).
+    character (len=*), intent(in) :: LINE
+    integer, optional, intent(out) :: STRINGINDEX
+    ! Local variable
+    type (Decls) :: DECL
+    integer :: SI
+    ! Executable code
+    si = getStringIndexFromString(line)
+    if ( present ( stringIndex ) ) stringIndex = si
+    decl = get_decl ( si, type=enum_value )
+    getLitIndexFromString = decl%units
+    if ( decl%type /= enum_value )  getLitIndexFromString = -huge(0)
+  end function GetLitIndexFromString
+
+  ! -----------------------------------  GetStringIndexFromString  -----
+  integer function GetStringIndexFromString ( line, caseSensitive )
+    use Symbol_Types, only: T_IDENTIFIER
+    use Symbol_Table, only: ENTER_TERMINAL
+
+    character (len=*), intent(in) :: LINE
+    logical, optional, intent(in) :: CASESENSITIVE
+    ! Executable code
+    GetStringIndexFromString = enter_terminal ( trim(line), t_identifier, &
+      & caseSensitive=caseSensitive )
+  end function GetStringIndexFromString
+
+  ! ---------------------------------------------------  Scalar_I  -----
+  logical function Scalar_I ( Root ) result ( IsScalar )
+    use Tree, only: Node_Id, Nsons, SUbtree
+    use Tree_Types, only: N_Array
+
+    ! Return "root has two sons, and the second one is not N_Array"
+    integer, intent(in) :: Root
+
+    isScalar = .false.
+    if ( nsons(root) > 2 ) return
+    if ( node_id(subtree(2,root)) == n_array ) return
+    isScalar = .true.
+  end function Scalar_I
+
+  ! --------------------------------------------------  Scalar_TX  -----
+  logical function Scalar_TX ( Root ) result ( IsScalar )
+    use Tree, only: TX
+    ! Return "root has two sons, and the second one is not N_Array"
+    type(tx), intent(in) :: Root
+    isScalar = scalar(root%i)
+  end function Scalar_TX
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: MoreTree.f90,v 2.22 2014/01/11 01:41:02 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module MoreTree
+
+! $Log: MoreTree.f90,v $
+! Revision 2.22  2014/01/11 01:41:02  vsnyder
+! Decruftification
+!
+! Revision 2.21  2013/12/12 01:56:44  vsnyder
+! Add Get_Label_And_Spec
+!
+! Revision 2.20  2013/10/02 02:07:44  vsnyder
+! Cannonball polishing
+!
+! Revision 2.19  2013/09/30 23:59:57  vsnyder
+! Routines for TX type, move StartErrorMessage from include to module
+!
+! Revision 2.18  2012/05/07 23:00:57  vsnyder
+! StartErrorMessage moved to include to avoid a circular dependence
+! between expr_m and MoreTree
+!
+! Revision 2.17  2012/05/05 00:12:15  vsnyder
+! Process logical expressions in get_boolean
+!
+! Revision 2.16  2009/06/23 18:25:42  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.15  2005/06/22 17:25:50  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.14  2005/05/02 22:57:29  vsnyder
+! Add FillSubRosaArray
+!
+! Revision 2.13  2005/01/20 01:31:07  vsnyder
+! Add FillArray, FillIntegerArray, FillStringArray
+!
+! Revision 2.12  2004/11/17 20:24:20  vsnyder
+! Add SCALAR function to check for scalar field value
+!
+! Revision 2.11  2004/06/16 19:51:25  vsnyder
+! Move a use from module scope to procedure scope
+!
+! Revision 2.10  2004/06/16 01:45:13  vsnyder
+! Return -huge(0) from GetLitIndexFromString if the string isn't a lit
+!
+! Revision 2.9  2004/05/28 00:57:25  vsnyder
+! Move GetIndexFlagsFromList from MoreTree to Expr_m
+!
+! Revision 2.8  2004/05/21 22:52:33  vsnyder
+! Add StartErrorMessage routine
+!
+! Revision 2.7  2004/01/22 00:41:40  pwagner
+! GetStringIndexFromString takes optional arg caseSensitive
+!
+! Revision 2.6  2003/08/16 00:32:13  vsnyder
+! Push uses down to procedure scope, futzing
+!
+! Revision 2.5  2002/10/08 00:09:12  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.4  2002/10/05 00:41:50  livesey
+! Added GetStringIndexFromString and GetLitIndexFromString
+!
+! Revision 2.3  2002/08/26 20:01:22  livesey
+! Added GetIndexFlagsFromList
+!
+! Revision 2.2  2002/06/07 17:51:56  livesey
+! More versitility in get_boolean
+!
+! Revision 2.1  2001/02/23 01:16:36  vsnyder
+! Getting L_True from Intrinsic instead of Init_Tables_Module: move to lib
+!
+! Revision 1.1  2001/02/20 22:49:25  vsnyder
+! Initial commit
+!
+@
+
+
+2.22
+log
+@Decruftification
+@
+text
+@d230 1
+a230 1
+          boolean = nint(value(1)) /= 0
+d422 1
+a422 1
+       "$Id: MoreTree.f90,v 2.21 2013/12/12 01:56:44 vsnyder Exp $"
+d432 3
+@
+
+
+2.21
+log
+@Add Get_Label_And_Spec
+@
+text
+@d295 1
+a295 1
+    use Tree, only: TX, Decoration_TX_TX
+d422 1
+a422 1
+       "$Id: MoreTree.f90,v 2.20 2013/10/02 02:07:44 vsnyder Exp $"
+d432 3
+@
+
+
+2.20
+log
+@Cannonball polishing
+@
+text
+@d51 4
+d300 50
+d422 1
+a422 1
+       "$Id: MoreTree.f90,v 2.19 2013/09/30 23:59:57 vsnyder Exp $"
+d432 3
+@
+
+
+2.19
+log
+@Routines for TX type, move StartErrorMessage from include to module
+@
+text
+@d16 1
+a16 1
+  use StartErrorMessage_m, only: StartErrorMessage ! bacause others use it from here
+d368 1
+a368 1
+       "$Id: MoreTree.f90,v 2.18 2012/05/07 23:00:57 vsnyder Exp $"
+d378 3
+@
+
+
+2.18
+log
+@StartErrorMessage moved to include to avoid a circular dependence
+between expr_m and MoreTree
+@
+text
+@d16 1
+d18 1
+a18 1
+  
+d23 2
+a24 1
+    module procedure FillDecorArray, FillStringArray
+d27 32
+d67 2
+a68 2
+  ! ---------------------------------------------  FillDecorArray  -----
+  integer function FillDecorArray ( Where, Array, ArrayName ) result(Error)
+d97 1
+a97 1
+  end function FillDecorArray
+d99 15
+a113 2
+  ! --------------------------------------------  FillStringArray  -----
+  integer function FillStringArray ( Where, Array, ArrayName ) result(Error)
+d144 1
+a144 1
+  end function FillStringArray
+d146 16
+a161 2
+  ! -------------------------------------------  FillSubrosaArray  -----
+  integer function FillSubrosaArray ( Where, Array, ArrayName ) result(Error)
+d190 15
+a204 1
+  end function FillSubrosaArray
+d206 2
+a207 2
+  ! ------------------------------------------------  Get_Boolean  -----
+  logical function Get_Boolean ( Root )
+d218 1
+a218 1
+      get_boolean = .true.
+d223 1
+a223 1
+          get_boolean = decoration(son) == l_true
+d226 1
+a226 1
+          get_boolean = nint(value(1)) /= 0
+d229 1
+a229 1
+        get_boolean = decoration(root) == l_true
+d232 1
+a232 1
+  end function Get_Boolean
+d234 12
+a245 2
+  ! ---------------------------------------------  Get_Dot_Decors  -----
+  subroutine Get_Dot_Decors ( Root, FirstDecor, SecondDecor )
+d253 25
+a277 1
+  end subroutine Get_Dot_Decors
+d279 2
+a280 2
+  ! -----------------------------------------------  Get_Field_Id  -----
+  integer function Get_Field_Id ( Root )
+d285 10
+a294 1
+  end function Get_Field_Id
+d296 2
+a297 2
+  ! ------------------------------------------------  Get_Spec_Id  -----
+  integer function Get_Spec_Id ( Root )
+d302 10
+a311 1
+  end function Get_Spec_Id
+d343 2
+a344 2
+  ! -----------------------------------------------------  Scalar  -----
+  logical function Scalar ( Root )
+d351 1
+a351 1
+    scalar = .false.
+d354 2
+a355 2
+    scalar = .true.
+  end function Scalar
+d357 7
+a363 2
+  ! ------------------------------------------  StartErrorMessage  -----
+  include "StartErrorMessage.f9h"
+d368 1
+a368 1
+       "$Id: MoreTree.f90,v 2.17 2012/05/05 00:12:15 vsnyder Exp $"
+d378 4
+@
+
+
+2.17
+log
+@Process logical expressions in get_boolean
+@
+text
+@d231 1
+a231 13
+  subroutine StartErrorMessage ( where )
+    use LEXER_CORE, only: PRINT_SOURCE
+    use OUTPUT_M, only: OUTPUT
+    use TREE, only: SOURCE_REF
+    integer, intent(in) :: Where             ! Tree node index
+    call output ( '***** At ' )
+    if ( where > 0 ) then
+      call print_source ( source_ref(where) )
+    else
+      call output ( '(no tree available)' )
+    end if
+    call output ( ': ' )
+  end subroutine StartErrorMessage
+d236 1
+a236 1
+       "$Id: MoreTree.f90,v 2.16 2009/06/23 18:25:42 pwagner Exp $"
+d246 3
+@
+
+
+2.16
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d27 1
+a27 1
+       "$RCSfile: $"
+d136 1
+d138 1
+a138 1
+    use Tree_Types, only: N_Set_one
+d140 2
+d146 7
+a152 1
+        get_boolean = decoration(subtree(2,root)) == l_true
+d248 1
+a248 1
+       "$Id: read_apriori.f90 is it here $"
+d258 3
+@
+
+
+2.15
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d236 1
+a237 1
+!---------------------------- RCS Ident Info -------------------------------
+d239 2
+a240 3
+       "$Id: $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d242 1
+d244 1
+d249 3
+@
+
+
+2.14
+log
+@Add FillSubRosaArray
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d25 1
+a25 4
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
+       "$Id: MoreTree.f90,v 2.13 2005/01/20 01:31:07 vsnyder Exp $"
+  character (len=len(idParm)), private :: Id = idParm
+d27 1
+a27 1
+       "$RCSfile: MoreTree.f90,v $"
+d237 5
+d248 3
+@
+
+
+2.13
+log
+@Add FillArray, FillIntegerArray, FillStringArray
+@
+text
+@d14 1
+a14 1
+    module procedure FillIntegerArray, FillStringArray
+d19 1
+a19 1
+       "$Id: MoreTree.f90,v 2.12 2004/11/17 20:24:20 vsnyder Exp $"
+d28 2
+a29 2
+  ! -------------------------------------------  FillIntegerArray  -----
+  integer function FillIntegerArray ( Where, Array, ArrayName ) result(Error)
+d41 1
+a41 1
+    character(len=*), intent(in) :: ArrayName
+d58 1
+a58 1
+  end function FillIntegerArray
+d74 1
+a74 1
+    character(len=*), intent(in) :: ArrayName
+d94 32
+d238 3
+@
+
+
+2.12
+log
+@Add SCALAR function to check for scalar field value
+@
+text
+@d8 1
+a8 1
+  use Tree, only: Decoration, Node_ID, Subtree, nsons
+d13 4
+d19 1
+a19 1
+       "$Id: MoreTree.f90,v 2.11 2004/06/16 19:51:25 vsnyder Exp $"
+d28 66
+a139 12
+  ! -----------------------------------  GetStringIndexFromString  -----
+  integer function GetStringIndexFromString ( line, caseSensitive )
+    use Symbol_Types, only: T_IDENTIFIER
+    use Symbol_Table, only: ENTER_TERMINAL
+
+    character (len=*), intent(in) :: LINE
+    logical, optional, intent(in) :: CASESENSITIVE
+    ! Executable code
+    GetStringIndexFromString = enter_terminal ( trim(line), t_identifier, &
+      & caseSensitive=caseSensitive )
+  end function GetStringIndexFromString
+
+d158 12
+d206 3
+@
+
+
+2.11
+log
+@Move a use from module scope to procedure scope
+@
+text
+@d15 1
+a15 1
+       "$Id: init_tables_module.f90,v 2.375 2004/06/16 01:23:28 vsnyder Exp $"
+d18 1
+a18 1
+       "$RCSfile: init_tables_module.f90,v $"
+d100 14
+d136 3
+@
+
+
+2.10
+log
+@Return -huge(0) from GetLitIndexFromString if the string isn't a lit
+@
+text
+@a8 1
+  use Tree_Types, only: N_Set_one
+d14 3
+a16 2
+  character (len=256), private :: Id = &
+       "$Id: MoreTree.f90,v 2.9 2004/05/28 00:57:25 vsnyder Exp $"
+d18 1
+a18 1
+       "$RCSfile: MoreTree.f90,v $"
+d30 1
+d122 3
+@
+
+
+2.9
+log
+@Move GetIndexFlagsFromList from MoreTree to Expr_m
+@
+text
+@d16 1
+a16 1
+       "$Id: MoreTree.f90,v 2.8 2004/05/21 22:52:33 vsnyder Exp $"
+d85 1
+d92 1
+a92 1
+    si = GetStringIndexFromString(line)
+d95 2
+a96 1
+    GetLitIndexFromString = decl%units
+d121 3
+@
+
+
+2.8
+log
+@Add StartErrorMessage routine
+@
+text
+@a7 1
+  use Declaration_table, only: NUM_VALUE
+d9 1
+a9 2
+  use Tree_Types, only: N_colon, N_colon_less, N_less_colon, &
+    & N_less_colon_less, N_Set_one
+d16 1
+a16 1
+       "$Id: MoreTree.f90,v 2.7 2004/01/22 00:41:40 pwagner Exp $"
+a68 63
+  ! --------------------------------------  GetIndexFlagsFromList  -----
+
+  subroutine GetIndexFlagsFromList ( root, flags, status, lower, noError )
+    ! Given the root of a numeric/numeric range array
+    ! Set the flags array appropriately
+    use Expr_m, only: EXPR
+    use Intrinsic, only: PHYQ_DIMENSIONLESS
+    use MLSCommon, only: R8
+    integer, intent(in) :: ROOT         ! Tree node
+    logical, dimension(:), intent(inout) :: FLAGS ! Result
+    integer, intent(out) :: STATUS      ! Error flag, 0=success
+    integer, intent(in), optional :: LOWER ! Lower bound for result
+    logical, intent(in), optional :: NOERROR ! If set don't give bounds errors
+
+    ! Local variables
+    integer :: I,J                      ! Loop counters
+    real(r8), dimension(2) :: VALUE     ! From expr
+    integer, dimension(2) :: UNITS      ! From expr
+    integer :: TYPE                     ! From expr
+    integer :: RANGE_LOW, RANGE_HI      ! Range for flags
+    logical :: MYNOERROR                ! Copy of noError
+    integer :: MYLOWER                  ! Copy of lower
+    integer :: SON                      ! Tree node
+
+    ! Executable code
+    flags = .false.
+    status = 0
+    myNoError = .false.
+    if ( present ( noError ) ) myNoError = noError
+    mylower = 1
+    if ( present ( lower ) ) myLower = lower
+
+    do j = 2, nsons(root)
+      son = subtree ( j, root )
+      call expr ( son, units, value, type )
+      do i = 1, merge(1,2,type==num_value)
+        if ( units(i) /= phyq_dimensionless ) then
+          status = 1
+          return
+        end if
+      end do
+      range_low = nint(value(1))
+      range_hi = nint(value(merge(1,2,type==num_value)))
+      select case ( node_id(son) )
+      case ( n_colon_less )
+        range_hi = range_hi - 1
+      case ( n_less_colon )
+        range_low = range_low + 1
+      case ( n_less_colon_less )
+        range_low = range_low + 1
+        range_hi = range_hi - 1
+      end select
+      if ( .not. myNoError .and. &
+        & ( range_low < myLower .or. range_hi > myLower+size(flags)-1 ) ) then
+        status = 1
+        return
+      end if
+      range_low = max ( range_low, myLower )
+      range_hi = min ( range_hi, myLower+size(flags)-1 )
+      flags ( range_low-myLower+1 : range_hi-myLower+1 ) = .true.
+    end do
+  end subroutine GetIndexFlagsFromList
+
+d119 3
+@
+
+
+2.7
+log
+@GetStringIndexFromString takes optional arg caseSensitive
+@
+text
+@d18 1
+a18 1
+       "$Id: MoreTree.f90,v 2.6 2003/08/16 00:32:13 vsnyder Exp $"
+d71 1
+a71 1
+  ! ----------------------------------------------- GetIndexFlagsFromList
+d134 1
+a134 1
+  ! ------------------------------------------ GetStringIndexFromString ---
+d146 1
+a146 1
+  ! ------------------------------------------ GetLitIndexFromString ---
+d162 15
+d184 3
+@
+
+
+2.6
+log
+@Push uses down to procedure scope, futzing
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+d18 1
+a18 1
+       "$Id: MoreTree.f90,v 2.5 2002/10/08 00:09:12 pwagner Exp $"
+d135 1
+a135 1
+  integer function GetStringIndexFromString ( line )
+d140 1
+d142 2
+a143 1
+    GetStringIndexFromString = enter_terminal ( trim(line), t_identifier )
+d169 3
+@
+
+
+2.5
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d8 1
+a8 1
+  use Intrinsic, only: L_true
+a9 3
+  use Tree_Types, only: N_Set_one
+  use MLSCommon, only: R8
+  use Units, only: PHYQ_DIMENSIONLESS
+d11 1
+a11 3
+    & N_less_colon_less
+  use Expr_m, only: EXPR
+  use Declaration_table, only: NUM_VALUE
+a12 1
+
+d18 1
+a18 1
+       "$Id: MoreTree.f90,v 2.4 2002/10/05 00:41:50 livesey Exp $"
+d31 1
+d76 3
+d167 3
+@
+
+
+2.4
+log
+@Added GetStringIndexFromString and GetLitIndexFromString
+@
+text
+@d24 1
+a24 1
+       "$Id: MoreTree.f90,v 2.3 2002/08/26 20:01:22 livesey Exp $"
+d27 1
+d162 4
+d169 3
+@
+
+
+2.3
+log
+@Added GetIndexFlagsFromList
+@
+text
+@d24 1
+a24 1
+       "$Id: MoreTree.f90,v 2.2 2002/06/07 17:51:56 livesey Exp $"
+d135 26
+d164 3
+@
+
+
+2.2
+log
+@More versitility in get_boolean
+@
+text
+@d11 7
+d24 1
+a24 1
+       "$Id: MoreTree.f90,v 2.1 2001/02/23 01:16:36 vsnyder Exp $"
+d75 60
+d138 3
+@
+
+
+2.1
+log
+@Getting L_True from Intrinsic instead of Init_Tables_Module: move to lib
+@
+text
+@d9 1
+a9 1
+  use Tree, only: Decoration, Node_ID, Subtree
+d17 1
+a17 1
+       "$Id: MoreTree.f90,v 1.1 2001/02/20 22:49:25 vsnyder Exp $"
+d27 2
+a28 2
+  ! Return true if node_id(root) is n_set_one.  Otherwise return
+  ! decoration(subtree(2,root)) == l_true.
+d33 5
+a37 1
+      get_boolean = decoration(subtree(2,root)) == l_true
+d71 3
+@
+

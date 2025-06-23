@@ -1,0 +1,154 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.14
+	cfm-single-freq-0-1:1.2.0.12
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.10
+	mus-emls-1-70:1.2.0.8
+	rel-1-0-englocks-work:1.2.0.6
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.2
+	V4-21:1.2.0.4
+	V4-13:1.2
+	V4-12:1.2
+	V4-11:1.2
+	V4-10:1.2
+	V3-43:1.2
+	M4-00:1.2
+	V3-41:1.2
+	V3-40-PlusGM57:1.2.0.2
+	V2-24-NRT-04:1.2
+	V3-33:1.2
+	V2-24:1.2
+	V3-31:1.2
+	V3-30-NRT-05:1.2
+	cfm-01-00:1.2
+	V3-30:1.2
+	V3-20:1.2
+	V3-10:1.2
+	V2-23-NRT-02:1.2
+	V2-23:1.2
+	V2-22-NRT-01:1.2
+	V2-22:1.2
+	V2-21:1.2
+	V2-20:1.2
+	V2-11:1.2
+	V2-10:1.2
+	V2-00:1.2
+	V1-51:1.2
+	V1-50:1.2
+	V1-45:1.2
+	V1-44:1.2
+	V1-43:1.2
+	V1-32:1.2
+	V1-31:1.2
+	V1-30:1.2
+	V1-13:1.1
+	V1-12:1.1
+	V1-11:1.1
+	V1-10:1.1
+	newfwm-feb03:1.1.0.2
+	V1-04:1.1
+	V1-03:1.1
+	V1-02:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2003.04.24.20.00.55;	author dwu;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2002.04.29.21.54.58;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@add cldRadMin and cldRadMax
+@
+text
+@!divert(-1)
+;; $Id: joindgg.l2cf,v 1.1 2002/04/29 21:54:58 pwagner Exp $
+
+;; This l2cf fragment joins the diagnostic products dgg
+
+  !define(l2dggJoin,{joined_$1: l2gp, source=state.$2, $
+    precision=outputPrecision.$2, swath='$3'})
+
+!divert!dnl
+  !l2dggJoin(temp_118_a,temp,Temperature-118-a)
+  !l2dggJoin(temp_118_b,temp,Temperature-118-b)
+  !l2dggJoin(temp_240,temp,Temperature-240)
+  !l2dggJoin(gph_118_a,gph,GPH-118-a)
+  !l2dggJoin(gph_118_b,gph,GPH-118-b)
+  !l2dggJoin(gph_240,gph,GPH-240)
+  !l2dggJoin(trop_h2o_118,h2o,H2O-TROP-118)
+  !l2dggJoin(trop_h2o_190,h2o,H2O-TROP-190)
+  !l2dggJoin(trop_h2o_240,h2o,H2O-TROP-240)
+  !l2dggJoin(trop_h2o_640,h2o,H2O-TROP-640)
+  !l2dggJoin(trop_h2o_25T,h2o,H2O-TROP-2.5T)
+  !l2dggJoin(o3_190,o3,O3-190)
+  !l2dggJoin(o3_240_4,o3,O3-240-4)
+  !l2dggJoin(o3_240_9,o3,O3-240-9)
+  !l2dggJoin(o3_640,o3,O3-640)
+  !l2dggJoin(clo_240,clo,ClO-240)
+  !l2dggJoin(clo_640,clo,ClO-640)
+  !l2dggJoin(n2o_190,n2o,N2O-190)
+  !l2dggJoin(n2o_640,n2o,N2O-640)
+  !l2dggJoin(oh_2514_h,oh,OH-2514-H)
+  !l2dggJoin(oh_2514_v,oh,OH-2514-V)
+  !l2dggJoin(oh_2510_h,oh,OH-2510-H)
+  !l2dggJoin(oh_2510_v,oh,OH-2510-V)
+  !l2dggJoin(ho2_650,ho2,HO2-650)
+  !l2dggJoin(ho2_660,ho2,HO2-660)
+  !l2dggJoin(bro_625,bro,BrO-625)
+  !l2dggJoin(bro_650,bro,BrO-650)
+  !l2dggJoin(so2_204,so2,SO2-204)
+  !l2dggJoin(so2_640,so2,SO2-640)
+  !l2dggJoin(cldRadMin,cldRadMin,CldRadMin)
+  !l2dggJoin(cldRadMax,cldRadMax,CldRadMax)
+  !define(Alldgg, {joined_temp_118_a,joined_temp_118_b,joined_temp_240,$
+	joined_gph_118_a,joined_gph_118_b,joined_gph_240,joined_trop_h2o_118,$
+	joined_trop_h2o_190,joined_trop_h2o_240,joined_trop_h2o_640,$
+	joined_trop_h2o_25T,joined_o3_190,joined_o3_240_4,joined_o3_240_9,$
+	joined_o3_640,joined_clo_240,joined_clo_640,joined_n2o_190,$
+	joined_n2o_640,joined_oh_2514_h,joined_oh_2514_v,joined_oh_2510_h,$
+	joined_oh_2510_v,joined_ho2_650,joined_ho2_660,joined_bro_625,$
+	joined_bro_650,joined_so2_204,joined_so2_640 $
+	joined_cldRadMin, joined_cldRadMax $
+   } )!dnl
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d2 1
+a2 1
+;; $Id: joindgg.l2cf,v 2.1 2001/10/27 00:15:42 livesey Exp $
+d39 2
+d49 1
+@
+

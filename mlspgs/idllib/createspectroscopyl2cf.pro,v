@@ -1,0 +1,2378 @@
+head	1.29;
+access;
+symbols
+	v5-02-NRT-19:1.29
+	v6-00:1.29
+	v5-02-NRT-18:1.29
+	v5-02:1.29
+	v5-01-NRT-17:1.29
+	v5-01-NRT-16:1.29
+	v5-01-NRT-15:1.29
+	v5-01-NRT-14:1.29
+	neuralnetworks-1-0:1.29.0.14
+	cfm-single-freq-0-1:1.29.0.12
+	v5-01:1.29
+	v5-00:1.29
+	v4-23-TA133:1.29.0.10
+	mus-emls-1-70:1.29.0.8
+	rel-1-0-englocks-work:1.29.0.6
+	VUMLS1-00:1.29
+	VPL1-00:1.29
+	V4-22-NRT-08:1.29
+	VAM1-00:1.29
+	V4-21:1.29.0.4
+	V4-13:1.29
+	V4-12:1.29
+	V4-11:1.29
+	V4-10:1.29
+	V3-43:1.29
+	M4-00:1.29
+	V3-41:1.29
+	V3-40-PlusGM57:1.29.0.2
+	V2-24-NRT-04:1.27
+	V3-33:1.29
+	V2-24:1.27
+	V3-31:1.29
+	V3-30-NRT-05:1.29
+	cfm-01-00:1.29
+	V3-30:1.29
+	V3-20:1.29
+	V3-10:1.29
+	V2-23-NRT-02:1.27
+	V2-23:1.27
+	V2-22-NRT-01:1.27
+	V2-22:1.27
+	V2-21:1.27
+	V2-20:1.27
+	V2-11:1.27
+	V2-10:1.27
+	V2-00:1.27
+	V1-51:1.23
+	V1-50:1.23
+	V1-45:1.20
+	V1-44:1.20
+	V1-43:1.20
+	V1-42:1.17
+	V1-41:1.17
+	V1-32:1.17
+	V1-40:1.17
+	V1-31:1.17
+	V1-13:1.16
+	V1-12:1.16
+	V1-11:1.16
+	V1-10:1.16
+	newfwm-feb03:1.16.0.2
+	V1-04:1.8
+	V1-03:1.8
+	V1-02:1.8
+	V1-00:1.7;
+locks; strict;
+comment	@# @;
+
+
+1.29
+date	2008.10.03.16.25.47;	author livesey;	state Exp;
+branches;
+next	1.28;
+
+1.28
+date	2008.03.28.22.58.23;	author bill;	state Exp;
+branches;
+next	1.27;
+
+1.27
+date	2006.05.31.01.08.27;	author lambert;	state Exp;
+branches;
+next	1.26;
+
+1.26
+date	2006.04.27.22.55.02;	author lambert;	state Exp;
+branches;
+next	1.25;
+
+1.25
+date	2006.01.21.00.26.25;	author livesey;	state Exp;
+branches;
+next	1.24;
+
+1.24
+date	2006.01.18.01.16.02;	author livesey;	state Exp;
+branches;
+next	1.23;
+
+1.23
+date	2004.12.10.01.10.19;	author livesey;	state Exp;
+branches;
+next	1.22;
+
+1.22
+date	2004.10.08.16.33.47;	author livesey;	state Exp;
+branches;
+next	1.21;
+
+1.21
+date	2004.09.16.00.02.32;	author livesey;	state Exp;
+branches;
+next	1.20;
+
+1.20
+date	2004.04.01.00.23.21;	author livesey;	state Exp;
+branches;
+next	1.19;
+
+1.19
+date	2004.02.12.01.47.29;	author livesey;	state Exp;
+branches;
+next	1.18;
+
+1.18
+date	2004.02.12.01.46.15;	author livesey;	state Exp;
+branches;
+next	1.17;
+
+1.17
+date	2003.05.16.23.54.28;	author livesey;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2002.09.26.19.28.07;	author livesey;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2002.08.23.19.38.32;	author livesey;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2002.08.14.22.01.22;	author livesey;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2002.08.14.21.58.29;	author livesey;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2002.07.25.16.29.08;	author livesey;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2002.07.24.22.05.29;	author livesey;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2002.05.22.17.56.20;	author livesey;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2002.05.17.23.00.27;	author livesey;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2002.04.30.00.11.25;	author livesey;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2001.11.08.00.13.21;	author livesey;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2001.11.03.01.34.21;	author livesey;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2001.10.17.23.37.04;	author livesey;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.10.15.19.49.34;	author livesey;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2001.10.15.17.52.09;	author livesey;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.10.15.17.51.07;	author livesey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.10.15.17.46.17;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.29
+log
+@Removed the double extinction stuff (very old and not used for ages),
+but added EXTINCTIONV2
+@
+text
+@; $Id: createspectroscopyl2cf.pro,v 1.28 2008/03/28 22:58:23 bill Exp $
+
+pro CreateSpectroscopyL2CF, $
+                            molName=molName, $
+                            lineName=lineName, $
+                            crossRefName=crossRefName, $
+                            instrument=instrument, $
+                            fastRead=fastRead, $ ;; use fastRead for testing purposes only (otherwise cvs id info will be incorrect)
+                            outName=outName, $
+                            defsOnlyName=defsOnlyName, $
+                            threshold=threshold, $
+                            l2cfForPFAFwm=l2cfForPFAFwm
+; 1. make full spectroscopy
+; CreateSpectroscopyL2CF,molName='$HOME/mlspgs/tables/mol_data_table.tex',lineName=/users/bill/mlspgs/tables/line_data_table.tex',crossrefname='$HOME/mlspgs/tables/sps_cross_ref_table.txt',outname='$HOME/tables/MLS-Aura_L2Cal-Spectroscopy_v3-0-0_0000d000.l2cf'
+; 2 make file with all PFA molecules stripped out (assuming default
+; locations for standard files.
+; CreateSpectroscopyL2CF,outname='$HOME/mlspgs/tables/MLS-Aura_L2Cal-Spectroscopy-PFA_v3-0-0_0000d000.l2cf',/l2cfForPFAFwm
+
+
+if n_elements(instrument) eq 0 then instrument='emls'
+
+instrumentPrefixes=['emlsSignals=[ ', 'umlsSignals=[ ', 'xptl1Signals=[ ']
+noInstruments = n_elements(instrumentPrefixes)
+
+if n_elements(outName) eq 0 then outName = 'spectroscopy.l2cf'
+
+if n_elements(defsOnlyName) eq 0 then defsOnlyName = 'spectroscopy-defs.l2cf'
+
+if n_elements(molName) eq 0 then $
+  molName = getenv('HOME') + '/mlspgs/tables/mol_data_table.tex'
+if n_elements(lineName) eq 0 then $
+  lineName = getenv('HOME') + '/mlspgs/tables/line_data_table.tex'
+if n_elements(crossRefName) eq 0 then $
+  crossRefName = getenv('HOME') + '/mlspgs/tables/sps_cross_ref_table.txt'
+
+if keyword_set ( fastRead ) then begin
+    IF STRLEN(BYTE(fastread)) GT 1 THEN lineName = fastread ELSE $
+      lineName = getenv('HOME') +  '/mlspgs/tables/line_data_table.sav'
+    restore, lineName
+    data = sps_data
+    lineID = 'Restored from saveset'
+    readID = lineID
+    molID = lineID
+endif else begin
+    ;; Call Bills code to read the files
+    Read_Spect_Dbase, molName, lineName, '', data,  $
+      molID=molID, lineID=lineID, readID=readID
+endelse
+
+;; set default threshold for inclusion of molecule (kelvin)
+if N_ELEMENTS(threshold) EQ 0 THEN threshold=0.0
+
+if N_ELEMENTS(l2cfForPFAFwm) EQ 0 THEN l2cfForPFAFwm = 0
+
+l2cfSpectroscopyTableType = (['Full Spectroscopy', 'Reduced Spectroscopy for PFA Forward Models'])[l2cfForPFAFwm]
+
+
+if instrument eq 'emls' then begin
+    
+;; define list of mandatory lbl molecules for lower and upper sidebands in
+;; each band for use in the PFA forward models
+    
+    SIDSMandatoryLBLMoleculesBands = {  $
+                                       B1F:{lsb:['O2', 'O_18_O', 'O_17_O', 'O2_V1'], usb:'NONE'},$
+                                       B22D:{lsb:'O2', usb:'NONE'},$
+                                       B32W:{lsb:'NONE', usb:'NONE'},$
+                                       B21F:{lsb:['O2', 'O_18_O', 'O_17_O', 'O2_V1'], usb:'NONE'},$
+                                       B26D:{lsb:'O2', usb:'NONE'},$
+                                       B34W:{lsb:'NONE', usb:'NONE'},$
+                                       B2F:{lsb:'H2O', usb:'NONE'},$
+                                       B3F:{lsb:'H2O', usb:'NONE'},$
+                                       B4F:{lsb:'NONE', usb:'NONE'},$
+                                       B5F:{lsb:'NONE', usb:'NONE'},$
+                                       B6F:{lsb:'NONE', usb:'NONE'},$
+                                       B23D:{lsb:'H2O', usb:'NONE'},$
+                                       B27M:{lsb:'NONE', usb:'NONE'},$
+                                       B7F:{lsb:'O3', usb:['O3', 'O3_V2']},$
+                                       B8F:{lsb:'O_18_O', usb:'NONE'},$
+                                       B9F:{lsb:['CO', 'O3'], usb:'O3'},$
+                                       B24D:{lsb:'O3', usb:'NONE'},$
+                                       B25D:{lsb:'NONE', usb:'NONE'},$
+                                       B33W:{lsb:'NONE', usb:'O3'},$
+                                       B10F:{lsb:'NONE', usb:'NONE'},$
+                                       B11F:{lsb:'NONE', usb:'O3'},$
+                                       B12F:{lsb:'O3', usb:['N2O', 'O3', 'O3_V2']},$
+                                       B13F:{lsb:['HCL_35', 'O3'], usb:'NONE'},$
+                                       B14F:{lsb:['HCL_35', 'HCL_37', 'O3'], usb:'NONE'},$
+                                       B28M:{lsb:'NONE', usb:'NONE'},$
+                                       B29M:{lsb:'NONE', usb:'NONE'},$
+                                       B30M:{lsb:'O3', usb:'NONE'},$
+                                       B31M:{lsb:'NONE', usb:'NONE'},$         
+                                       B15F:{lsb:'OH', usb:'NONE'},$
+                                       B16F:{lsb:['OH', 'O3'], usb:'NONE'},$
+                                       B17F:{lsb:['O2', 'O3_V2'], usb:'O3'},$                   
+                                       B18F:{lsb:'OH', usb:'NONE'},$
+                                       B19F:{lsb:['OH', 'O3'], usb:'NONE'},$
+                                       B20F:{lsb:['O2', 'O3_V2'], usb:'O3'} }
+
+    MoleculesAlwaysPresent = [ 'H2O', 'N2', 'O2', 'O3', 'EXTINCTION', 'EXTINCTIONV2' ]
+    MoleculesR = ['H2O_', 'O3_']
+
+;; create list of all mandatory LBL molecules regardless of radiometer/sideband
+    AllLBLMolecules = MoleculesAlwaysPresent
+    FOR ib = 0,N_TAGS(SIDSMandatoryLBLMoleculesBands)-1 DO $ 
+      BEGIN
+        AllLBLMolecules = [AllLBLMolecules, SIDSMandatoryLBLMoleculesBands.(ib).lsb, SIDSMandatoryLBLMoleculesBands.(ib).usb]
+    ENDFOR;;ib
+
+    ;; tidy up the list
+    q = WHERE(AllLBLMolecules NE 'NONE', count)
+    IF q[0] NE -1 AND count NE N_ELEMENTS(AllLBLMolecules) THEN AllLBLMolecules = AllLBLMolecules[q]                
+    AllLBLMolecules = AllLBLMolecules[UNIQ(AllLBLMolecules, SORT(AllLBLMolecules))]
+   
+endif;;instrument EQ emls
+
+
+;; scan for molecules above threshold and set data to contain just
+;; those molecules
+selectedData = selectMolecules(threshold, data=data, fastRead=fastRead )
+data = selectedData
+
+
+myID='$Id: createspectroscopyl2cf.pro,v 1.28 2008/03/28 22:58:23 bill Exp $'
+
+; Read the cross reference information
+openr, unit, crossRefName, /get_lun
+line = ''
+firstLine = 1
+repeat begin
+    readf, unit, line, format='(a)'
+    if firstLine then crossRefID = line
+    firstLine = 0
+endrep until strmid(line,0,4) eq '----'
+while not eof ( unit ) do begin
+    readf, unit, line, format='(a)'
+    words = strsplit ( line, ' ', /extract )
+    if n_elements(words) gt 1 then begin
+        if n_elements(texNames) eq 0 then begin
+            texNames = words(0)
+            l2Names = words(1)
+            noChildren = fix ( words(3) )
+        endif else begin
+            texNames = [ texNames, words(0) ]
+            l2Names = [ l2Names, words(1) ]
+            noChildren = [ noChildren, fix ( words(3) ) ]
+        endelse
+    endif
+  endwhile
+free_lun, unit
+; Now work out the parents
+noCrossRefs = n_elements(texNames)
+parents = intarr ( noCrossRefs ) - 1
+for index = 0, noCrossRefs - 1 do begin
+    if noChildren(index) ne 0 then begin
+        if noChildren(index) < 0 then i0 = index else i0 = index + 1
+        i1 = index + abs(noChildren(index))
+        parents(i0:i1) = index
+    endif
+endfor  
+
+; set dummy unity partition functions to prevent warning when taking logs 
+change = where(data.name eq 'N$_{2}$' or data.name eq 'EXTINCTION' or data.name eq 'EXTINCTIONV2' $
+               or strmid(data.name,0,10) eq 'H$_{2}$O-r' or strmid(data.name,0,9) eq 'O$_{3}$-r' $
+               or strmid(data.name,0,7) eq 'CLOUD\_' )
+data(change).q=1.0
+
+; Open the output file
+Openw, unit, outName, /get_lun
+
+;; Open the defs only file
+openw, defsUnit, defsOnlyName, /get_lun
+
+;; Combine the units
+units = [ unit, defsUnit ]
+
+; Write in the appropriate header information
+printf, unit, '; --------------------------------------------- Spectroscopy ---- '
+printf, unit, '; ' + l2cfSpectroscopyTableType
+printf, unit, '; This file is automatically generated by the program'
+printf, unit, '; mlspgs/idllib/createspectroscopyl2cf.pro do NOT edit it by hand.'
+printf, unit, STRING('; Created with extra line selection threshold on input database = ',threshold,'K', FORMAT='(A,G10.4,1X,A)')
+printf, unit, ''
+
+
+printf, unit, '; Source file information:'
+printf, unit, '; '+strmid(molID,7,strlen(molID)-9)
+printf, unit, '; '+strmid(lineID,7,strlen(lineID)-9)
+printf, unit, '; '+strmid(crossRefID,5,strlen(crossRefID)-7)
+printf, unit, '; '+strmid(readID,5,strlen(readID)-7)
+printf, unit, '; '+strmid(myID,5,strlen(myID)-7)
+printf, unit, ''
+
+printf, unit, 'begin spectroscopy'
+
+noEMLSBands = 34
+noUMLSBands = 6
+noXPTL1Bands = 1                ; XPTL1 doesn't list any.
+noSidebands = 3
+
+noMols = n_elements(data)
+niceNames = strarr(noMols)
+parentNames = niceNames
+emlsMolecules = intarr ( noSidebands, noEMLSBands, noMols )
+umlsMolecules = intarr ( noSidebands, noUMLSBands, noMols )
+xptl1Molecules = intarr ( noSidebands, noXPTL1Bands, noMols )
+
+for mol = 0, noMols - 1 do begin
+
+    ;; First try to un TeXify the molecule names
+    ;; Also, after a space, add the name of the parent
+    ;; Did it after the space to avoid the case statement getting overly large
+    index = ( where ( data(mol).name eq texNames ) ) ( 0 )
+    if index eq -1 then begin
+        if strmid ( data(mol).name, 0, 10 ) eq 'H$_{2}$O-r' then begin
+            niceNames(mol) = 'H2O_R' + strupcase ( strmid ( data(mol).name, 10, 2 ) )
+            parentNames(mol) = 'H2O'
+        endif else if strmid ( data(mol).name, 0, 9 ) eq 'O$_{3}$-r' then begin
+            niceNames(mol) = 'O3_R' + strupcase ( strmid ( data(mol).name, 9, 2 ) )
+            parentNames(mol) = 'O3'
+        endif else begin
+            MyMessage, /error, "Unrecognized molecule: " + data(mol).name
+        endelse
+    endif else begin
+        niceNames(mol) = l2Names(index)
+        if parents(index) eq -1 then begin
+            parentNames(mol) = niceNames ( mol )
+        endif else begin
+            parentNames(mol) = l2Names ( parents (index) )
+        endelse
+    endelse
+    thisMolName = niceNames(mol)
+
+    ;; Look out for molecules that are radiometer specific
+    ;; Different algorithm for skipping lines on EOS vs. SMLS
+    if instrument eq 'emls' then begin
+        if ( min(data(mol).q) le 0.0 and data(mol).cont(0) eq 0.0 ) then begin
+            print, 'Skipping ' + thisMolName
+            niceNames ( mol ) = ''
+            continue
+        endif
+    endif else begin
+        if ( data(mol).no_lines eq 0 and data(mol).cont(0) eq 0.0 ) then begin
+            print, 'Skipping ' + thisMolName + ' (not EOS)'
+            niceNames ( mol ) = ''
+            continue
+        endif
+
+        if strmid ( thisMolName, 0, 5 ) eq 'H2O_R' or $
+          strmid ( thisMolName, 0, 4 ) eq 'O3_R' then begin
+            print, 'Skipping radiometer based ' + thisMolName + ' as not emls'
+            niceNames ( mol ) = ''
+            continue
+        endif
+    endelse
+
+    if n_elements(allNames) eq 0 then allNames = thisMolName $
+    else allNames = allNames + ', ' + thisMolName
+    
+    ;; Now print out a header line
+    printf,unit, ''
+    printf,unit, '  ;; ----------------------------------- '+thisMolName
+    if thisMolName ne 'EXTINCTION' and thisMolName ne 'EXTINCTIONV2' then begin
+        isotopeLine = '!define(isotoperatio' + thisMolName + ',{' + $
+          string ( data(mol).abun, format='(f10.8)' ) + '} )'
+        printf, unit, '  ' + isotopeLine
+        printf, defsUnit, isotopeLine
+    endif
+    printf,unit, ''
+
+    ;; Lines
+    ;; For l2cf PFA output we omit the line information
+    IF (l2cfForPFAFwm EQ 0) OR ((l2cfForPFAFwm EQ 1) AND ((WHERE(thisMolName EQ AllLBLMolecules))[0] NE -1)) THEN $
+    for line = 0, data(mol).no_Lines - 1 do begin
+        text= '  '+thisMolName + '_L' + string ( line+1, format='(I0)' ) + ': line, '
+        AddWordToLine,text,unit,4, $
+          'v0= '+strtrim(string( data(mol).frq(line), format='(f12.4)' ),2) + ' MHz, '
+        AddWordToLine,text,unit,4, $
+          'el= '+strtrim(string( data(mol).gse(line), format='(g13.8)' ),2) + ', '
+        AddWordToLine,text,unit,4, $
+          'str= '+strtrim(string( data(mol).ist(line), format='(f8.4)' ),2) + ', '
+        AddWordToLine,text,unit,4, $
+          'w= '+strtrim(string( data(mol).wc(line), format='(f8.4)' ),2) + ', '
+        AddWordToLine,text,unit,4, $
+          'n= '+strtrim(string(data(mol).nc(line), format='(f6.3)'),2) + ', '
+        AddWordToLine,text,unit,4, $
+          'ps= '+strtrim(string(data(mol).ps(line), format='(g15.5)'),2) + ', '
+        AddWordToLine,text,unit,4, $
+          'ns= '+strtrim(string(data(mol).ns(line), format='(f6.3)'),2) + ', '
+        AddWordToLine,text,unit,4, $
+          'delta= '+strtrim(string(data(mol).int1(line), format='(g15.5)'),2) + ', '
+        AddWordToLine,text,unit,4, $
+          'n1= '+strtrim(string(data(mol).n1(line), format='(f6.3)'),2) + ', '
+        AddWordToLine,text,unit,4, $
+          'gamma= '+strtrim(string(data(mol).int2(line), format='(g15.5)'),2) + ', '
+        AddWordToLine,text,unit,4, $
+          'n2= '+strtrim(string(data(mol).n2(line), format='(f6.3)'),2) + ', '
+
+        ;; Do the quantum numbers
+        noQNs = data(mol).qnfmt(line) mod 10
+        qns = data(mol).qnfmt(line)
+        for q = 0, noQNs - 1 do qns = [ qns, fix ( strmid ( data(mol).qnu(line), q*2, 2 ) ) ]
+        for q = 0, noQNs - 1 do qns = [ qns, fix ( strmid ( data(mol).qnl(line), q*2, 2 ) ) ]
+        AddWordToLine,text,unit,4, 'qn=[ '
+        for q = 0, n_elements(qns)-2 do $
+          AddWordToLine,text,unit,4, string(qns(q),format='(i0)')+', '
+        AddWordToLine,text,unit,3, string(qns(2*noQNS),format='(i0)') + ' ]'
+        
+        for i=0, noInstruments - 1 do begin
+            case i of
+                0 : begin 
+                    prefix = 'emlsSignals=[ '
+                    bands = data(mol).eos_bands(line)
+                end
+                1 : begin
+                    prefix = 'umlsSignals=[ '
+                    bands = data(mol).uars_bands(line)
+                end
+                2 : begin
+                    prefix = 'xptl1Signals=[ '
+                    bands = ''  ; data(mol).xptl1_bands(line)
+                end
+            endcase
+            bands = strtrim(strsplit(bands,',',/extract),2)
+            if bands(0) ne '' then begin
+                text = text + ', '
+                AddWordToLine,text,unit,4,prefix
+                for j = 0, n_elements(bands)-1 do begin
+                    thisBand = strupcase ( bands(j) )
+                    bandNo = fix(strmid(thisBand,1,strlen(thisBand)))
+                    case 1 of
+                        strpos(thisBand,'U') ne -1 : sideband = 1
+                        strpos(thisBand,'L') ne -1 : sideband = -1
+                        else : sideband = 0
+                    endcase
+                    case 1 of 
+                        bandNo le 21 : thisBand=thisBand+'F'
+                        bandNo le 26 : thisBand=thisBand+'D'
+                        bandNo le 31 : thisBand=thisBand+'M'
+                        bandNo le 34 : thisBand=thisBand+'W'
+                    endcase
+                    thisBand="'"+thisBand+"'"
+                    if j lt n_elements(bands)-1 $
+                      then thisBand=thisBand+', ' $
+                    else thisBand=thisBand+' ]'
+                    AddWordToLine,text,unit,4,thisBand
+                    ;; Keep track of the molecule by molecule usage
+                    case i of
+                        0 : emlsMolecules ( sideband+1, bandNo-1, mol ) = 1
+                        1 : umlsMolecules ( sideband+1, bandNo-1, mol ) = 1
+                        2 : xptl1Molecules ( sideband+1, bandNo-1, mol ) = 1
+                    endcase
+                endfor
+            endif               ; Any bands
+        endfor                  ; Loop over instruments
+
+        ;; Special case for O2 polarized 118 line
+        if thisMolName eq 'O2' and n_elements(qns) eq 5 and $
+          min ( qns eq [ 102, 1, 1, 1, 0 ] ) then begin
+            text = text + ', '
+            AddWordToLine, text, unit, 4, "emlsSignalsPol=[ 'B22LD', " 
+            AddWordToLine, text, unit, 4, "'B26LD' ]"
+        endif
+        
+        if strtrim(text,2) ne '' then printf,unit,text
+    endfor                      ; Loop over lines
+
+
+
+    ;; Now print out the molecule information
+    printf, unit, ''
+    text = '  spectra, molecule= '+thisMolName+', Qlog=[ '
+
+    for i = 0, 2 do begin
+        text = text + strtrim(string(alog10(data(mol).q(i)), $
+                                     format='(f10.4)'),2)
+        if i ne 2 then text = text + ', '
+    endfor
+
+    ;; Lines
+    ;; For l2cf PFA output we omit the line information
+    if (data(mol).no_lines gt 0) AND ((l2cfForPFAFwm EQ 0) OR ((l2cfForPFAFwm EQ 1) AND ((WHERE(thisMolName EQ AllLBLMolecules))[0] NE -1))) then $
+      begin
+        text = text + ' ], $'
+        printf, unit,text
+        text = '    lines=[ '
+        for line = 0, data(mol).no_lines - 2 do begin
+            AddWordToLine, text, unit, 4, $
+              thisMolName+'_L'+string(line+1,format='(I0)')+', '
+        endfor
+        AddWordToLine, text, unit, 4, $
+          thisMolName+'_L'+string(data(mol).no_lines,format='(I0)')+' ]'
+    endif else begin
+        text = text + ' ]'
+    endelse
+    
+    ;; Mass
+    text = text + ', '
+    AddWordToLine, text, unit, 4, $
+      'mass= ' + strtrim ( string ( data(mol).mass, format='(f9.5)' ), 2 )
+    
+    ;; Continuum
+    noNonZero = max(where(data(mol).cont ne 0.0))+1
+    if noNonZero ne 0 then begin
+        text = text + ', '
+        AddWordToLine, text, unit, 4, $
+          'continuum=[ '
+        for i=0,noNonZero-2 do begin
+            AddWordToLine, text, unit, 4, $
+              strtrim(string(data(mol).cont(i)),2)+', '
+        endfor
+        AddWordToLine, text, unit, 4, $
+          strtrim(string(data(mol).cont(noNonZero-1)),2)+' ]'
+    endif
+    
+    ;; Finish off the line
+    if strtrim(text,2) ne '' then printf,unit,text
+endfor;;loop over molecules
+
+printf, unit, ''
+printf, unit, 'end spectroscopy'
+printf, unit, ''
+
+;; ------------------------------------- End of the spectroscopy part
+
+;; Now write out the molecules per band stuff
+case strlowcase ( instrument ) of 
+    'umls'  : array=umlsMolecules
+    'emls'  : array=emlsMolecules
+    'xptl1' : array=xptl1Molecules
+    else : MyMessage,/error,'Unknown instrument'
+endcase
+
+;; Collapse the sidebands
+array(1,*,*) = array(0,*,*) or array(1,*,*) or array(2,*,*) 
+printf, unit, '; ----------------------------------------- Molecules per band'
+printf, defsUnit, '; ----------------------------------------- Molecules per band'
+printf, unit, ''
+printf, defsUnit, ''
+;; Make H2O, N2, O2, O3 and extinction used everywhere.
+array(*,*,where(niceNames eq 'H2O')) = 1
+array(*,*,where(niceNames eq 'N2')) = 1
+array(*,*,where(niceNames eq 'O2')) = 1
+array(*,*,where(niceNames eq 'O3')) = 1
+array(*,*,where(niceNames eq 'EXTINCTION')) = 1
+array(*,*,where(niceNames eq 'EXTINCTIONV2')) = 1
+sidebandStrings = ['L','','U']
+noBands = (size ( array ) ) (2)
+
+;; Get the instrument configuration
+database = ReadValidSignals()
+
+;; Make the H2O_<radiometer> species used where appropriate
+if instrument eq 'emls' then begin
+    for radiometer = 0, database.noRadiometers-1 do begin
+        relevantBands = where ( database.bands.radiometerIndex eq radiometer )
+        array(*,relevantBands, $
+              where(niceNames eq 'H2O_'+database.radiometers(radiometer).prefix ) ) = 1
+    endfor
+    ;; Make the O3_<radiometer> species used where appropriate
+    for radiometer = 0, database.noRadiometers-1 do begin
+        relevantBands = where ( database.bands.radiometerIndex eq radiometer )
+        o3rs = where(niceNames eq 'O3_'+database.radiometers(radiometer).prefix )
+        if o3rs(0) ne -1 then array(*,relevantBands, o3rs ) = 1
+    endfor
+endif
+
+;; Now, add some extra virtual bands which are the radiometers and one
+;; at the end which is the whole instrument (folded only)
+newArray = intarr ( noSidebands, noBands+database.noRadiometers+1, noMols )
+newArray(*,0:noBands-1,*) = array
+for radiometer = 0, database.noRadiometers-1 do begin
+    relevantBands = where ( database.bands.radiometerIndex eq radiometer )
+    collapsed = total ( array (*,relevantBands,*), 2 )
+    newArray(*,noBands+radiometer,*) = collapsed gt 0
+endfor
+;; Do the whole instrument
+newArray(1,noBands+database.noRadiometers,*) = niceNames ne ''
+
+;; Use this new array
+array=newArray
+
+if instrument eq 'emls' then begin
+
+;; now create the lsb,usb lists for the radiometers 
+
+    FOR radiometer = 0, database.noRadiometers-1 DO $
+      BEGIN
+        
+        relevantBands = where ( database.bands.radiometerIndex eq radiometer )
+        RadiometerName = (database.bands(relevantBands).radiometer)[0]
+        prefixList = database.bands(relevantBands).prefix
+
+        FOR sideband = 0,2,2 DO $ ;; 'L' and 'U' 
+          BEGIN
+            LBLMolecules = ['NONE']
+
+            FOR ip = 0,N_ELEMENTS(PrefixList)-1 DO $ ;; loop over bands in this radiometer
+              BEGIN
+                prefix = PrefixList(ip)
+                ib = WHERE(prefix EQ TAG_NAMES(SIDSMandatoryLBLMoleculesBands))
+                IF ib(0) EQ -1 THEN MESSAGE, 'prefix=' + prefix + ' not found in SIDSMandatoryLBLMoleculesBands'                        
+                
+                SIDSMandatoryLBLMolecules = (sideband EQ 0) ? SIDSMandatoryLBLMoleculesBands.(ib).lsb : SIDSMandatoryLBLMoleculesBands.(ib).usb
+                
+                LBLMolecules = [LBLMolecules,SIDSMandatoryLBLMolecules]                
+            ENDFOR;;ip
+
+            ;; tidy up the list
+            q = WHERE(LBLMolecules NE 'NONE', count)
+            IF q[0] NE -1 AND count NE N_ELEMENTS(LBLMolecules) THEN LBLMolecules = LBLMolecules[q]                
+            LBLMolecules = LBLMolecules[UNIQ(LBLMolecules, SORT(LBLMolecules))]
+
+            ;; make/append the lsb/usb structures
+            w = (sideband EQ 0) ?  Create_Struct( 'lsb', LBLMolecules) : Create_Struct( w, 'usb', LBLMolecules)
+
+        ENDFOR;;sideband
+
+        ;; add lsb/usb structure for this radiometer
+        SIDSMandatoryLBLMoleculesBands = Create_Struct( SIDSMandatoryLBLMoleculesBands, RadiometerName, w)
+
+    END;;radiometer
+
+endif;;instrument EQ emls
+
+    for band = 0, noBands + database.noRadiometers do begin
+        for sideband = 0, 2 do begin
+            ;; Which molecules does it use
+            usedMols = where ( reform ( array(sideband, band, *) ) )
+            ;; What parents do they have, get a unique list
+            if usedMols(0) ne -1 then begin
+                usedParents = parentNames ( usedMols )
+                usedParents = usedParents ( sort ( usedParents ) )
+                usedParents = usedParents ( uniq ( usedParents ) )
+                case 1 of
+                    band lt noBands : outName = string ( band+1, format='(i0)' )
+                    band ge noBands and band lt noBands + database.noRadiometers : $
+                      outName = database.radiometers(band-noBands).prefix
+                    else : outName = 'Instrument'
+                endcase
+                
+                ;; First do the comprehensive lists for full forward models.
+                line = '!define(moleculesFor' + outName + $
+                  sidebandStrings(sideband)+',{[ '
+                for p = 0, n_elements(usedParents)-1 do begin
+                    if p ne 0 then line = line +', '
+                    thisParent = usedParents(p)
+                    if thisParent ne 'EXTINCTION' and thisParent ne 'EXTINCTIONV2' then begin
+                        children = where ( parentNames eq thisParent and $
+                                           reform ( array(sideband, band, *) ) )
+                        AddWordToLine, line, units, 2, '[ '+thisParent
+                        ;; Format is [ parent, <children> ]
+                        ;; Note, having the only child be the same as the parent is fine
+                        ;; (e.g. [ H2O, H2O ])
+                        for c = 0, n_elements(children) - 1 do begin
+                            line = line + ', '
+                            AddWordToLine, line, units, 4, niceNames(children(c))
+                        endfor
+                        line = line + ' ]'
+                    endif else begin
+                        ;; For extinction just use extinction alone, no isotope
+                        AddWordToLine, line, units, 2, thisParent
+                    endelse
+                endfor
+                line = line + ' ]})'
+                printf, unit, line
+                printf, defsUnit, line
+
+                if instrument eq 'emls' then begin
+
+;; Now do the lbl molecule definitions per sideband for the PFA
+;; forward models
+                    
+                    IF sideband NE 1 THEN $ ;; output only for individual 'L' or 'U' sidebands
+                      BEGIN
+                        
+                        case 1 of
+                            band lt noBands : BEGIN
+                                prefix = database.bands(band).prefix  
+                                RadiometerName = database.bands(band).radiometer
+                            END
+                            band ge noBands and band lt noBands + database.noRadiometers : BEGIN                                
+                                prefix = database.radiometers(band-noBands).prefix 
+                                RadiometerName = prefix
+                            END
+                            else : MESSAGE,'Incorrect band index:' + STRING(band)
+                        endcase 
+
+                        ib = WHERE(prefix EQ TAG_NAMES(SIDSMandatoryLBLMoleculesBands))
+                        IF ib(0) EQ -1 THEN MESSAGE, 'prefix=' + prefix + ' not found in SIDSMandatoryLBLMoleculesBands'                        
+                        
+                        SIDSMandatoryLBLMolecules = (sideband EQ 0) ? SIDSMandatoryLBLMoleculesBands.(ib).lsb : SIDSMandatoryLBLMoleculesBands.(ib).usb
+                        
+                        IF TOTAL(SIDSMandatoryLBLMolecules EQ 'NONE') EQ 0 THEN $
+                          BEGIN                            
+                            RTVLMandatoryLBLMolecules = [SIDSMandatoryLBLMolecules, MoleculesAlwaysPresent, MoleculesR + RadiometerName]
+                        ENDIF ELSE BEGIN 
+                            RTVLMandatoryLBLMolecules = [MoleculesAlwaysPresent, MoleculesR + RadiometerName]
+                        ENDELSE
+                        
+                        ;; sort and uniq
+                        RTVLMandatoryLBLMolecules = RTVLMandatoryLBLMolecules[UNIQ(RTVLMandatoryLBLMolecules, SORT(RTVLMandatoryLBLMolecules))]
+
+;; output the RTVL/l2pc case
+                        line = '!define(RTVLMandatoryLBLMoleculesFor' + outName + $
+                          sidebandStrings(sideband) + ',{ '
+                        
+                        doneAny = 0
+                        for p = 0, n_elements(RTVLMandatoryLBLMolecules) - 1 do begin
+                            thisMolecule = RTVLMandatoryLBLMolecules(p)
+                            if doneAny then line = line + ', ' else doneAny = 1
+                            AddWordToLine, line, units, 4, thisMolecule
+                        endfor
+                        
+                        line = line + ' })'
+                        printf, unit, line
+                        printf, defsUnit, line
+                        
+                        
+;; output the SIDS case
+                        line = '!define(SIDSMandatoryLBLMoleculesFor' + outName + $
+                          sidebandStrings(sideband) + ',{ '
+                        
+                        doneAny = 0
+                        for p = 0, n_elements(SIDSMandatoryLBLMolecules) - 1 do begin
+                            thisMolecule = SIDSMandatoryLBLMolecules(p)
+                            if doneAny then line = line + ', ' else doneAny = 1
+                            AddWordToLine, line, units, 4, thisMolecule
+                        endfor
+                        
+                        line = line + ' })'
+                        printf, unit, line
+                        printf, defsUnit, line
+                        
+                    ENDIF;;sideband
+
+                endif ;;instrument EQ emls
+                
+                
+;; Now do just the parents for l2pc line forward models
+;; First do the comprehensive lists for full forward models.
+                line = '!define(moleculeFamiliesFor' + outName + $
+                  sidebandStrings(sideband)+',{[ '
+                for p = 0, n_elements(usedParents)-1 do begin
+                    if p ne 0 then line = line + ', '
+                    thisParent = usedParents(p)
+                    children = where ( parentNames eq thisParent and $
+                                       reform ( array(sideband, band, *) ) )
+                    AddWordToLine, line, units, 2, thisParent
+                endfor
+                line = line +' ]})'
+                printf, unit, line
+                printf, defsUnit, line
+            endif
+            
+        endfor                  ; Loop over sidebands
+        printf, unit, ''
+        printf, defsUnit, ''
+    endfor                      ; Loop over bands
+
+;; Print out a few more macro definitions
+isotopicMolecules = niceNames ( where ( nicenames ne 'EXTINCTION' and $
+                                        nicenames ne 'EXTINCTIONV2' and $
+                                        nicenames ne '' ) )
+
+units = [ unit, defsUnit ]
+for i = 0, 1 do begin
+    printf,units(i),'!define(molecules,{!moleculesFor$1})'
+    printf,units(i),'!define(moleculeFamilies,{!moleculeFamiliesFor$1})'
+;    printf,units(i),'!define(molecules2X,{!molecules2XFor$1})'
+;    printf,units(i),'!define(moleculeFamilies2X,{!moleculeFamilies2XFor$1})'
+    printf,units(i),'!define(isotopicMolecules,{' + strjoin(isotopicMolecules,',')+'})'
+endfor
+
+Free_lun, unit
+Free_lun, defsUnit
+
+end
+@
+
+
+1.28
+log
+@added some useage comments--WGR
+@
+text
+@d1 1
+a1 1
+; $Id: createspectroscopyl2cf.pro,v 1.27 2006/05/31 01:08:27 lambert Exp $
+a7 1
+                            maxExtinctions=maxExtinctions, $
+a19 1
+if n_elements(maxExtinctions) eq 0 then maxExtinctions = 1
+d99 1
+a99 1
+    MoleculesAlwaysPresent = [ 'H2O', 'N2', 'O2', 'O3', 'EXTINCTION' ]
+d123 1
+a123 1
+myID='$Id: createspectroscopyl2cf.pro,v 1.27 2006/05/31 01:08:27 lambert Exp $'
+d148 1
+a148 1
+endwhile
+d162 1
+a162 1
+change = where(data.name eq 'N$_{2}$' or data.name eq 'EXTINCTION' $
+d262 1
+a262 1
+    if thisMolName ne 'EXTINCTION' then begin
+d445 1
+a481 6
+if maxExtinctions ne 1 and maxExtinctions ne 2 then begin
+    print,'Illegal value of maxExtinctions'
+    stop
+endif
+
+
+a524 2
+for noExtinctions = 1, maxExtinctions do begin
+    if noExtinctions eq 1 then extraName='' else extraName='2X'
+d542 1
+a542 1
+                line = '!define(molecules' + extraName + 'For' + outName + $
+d547 1
+a547 1
+                    if thisParent ne 'EXTINCTION' then begin
+d561 1
+a561 5
+                        if noExtinctions eq 1 then begin
+                            AddWordToLine, line, units, 2, thisParent
+                        endif else begin
+                            AddWordToLine, line, units, 2, thisParent + ', ' + thisParent
+                        endelse
+d604 1
+a604 1
+                        line = '!define(RTVLMandatoryLBLMolecules' + extraName + 'For' + outName + $
+d620 1
+a620 1
+                        line = '!define(SIDSMandatoryLBLMolecules' + extraName + 'For' + outName + $
+d641 1
+a641 1
+                line = '!define(moleculeFamilies' + extraName + 'For' + outName + $
+d648 1
+a648 5
+                    if thisParent ne 'EXTINCTION' or noExtinctions eq 1 then begin
+                        AddWordToLine, line, units, 2, thisParent
+                    endif else begin
+                        AddWordToLine, line, units, 2, thisParent + ', ' + thisParent
+                    endelse
+a658 1
+endfor
+d662 1
+d669 2
+a670 2
+    printf,units(i),'!define(molecules2X,{!molecules2XFor$1})'
+    printf,units(i),'!define(moleculeFamilies2X,{!moleculeFamilies2XFor$1})'
+@
+
+
+1.27
+log
+@corrected error in definition of AllLBLMolecules
+@
+text
+@d1 1
+a1 1
+; $Id: createspectroscopyl2cf.pro,v 1.26 2006/04/27 22:55:02 lambert Exp $
+d14 6
+d39 2
+a40 1
+    lineName = getenv('HOME') +  '/mlspgs/tables/line_data_table.sav'
+d125 1
+a125 1
+myID='$Id: createspectroscopyl2cf.pro,v 1.26 2006/04/27 22:55:02 lambert Exp $'
+@
+
+
+1.26
+log
+@added mandatory lbl molecule lists for PFA forward models
+@
+text
+@d1 1
+a1 1
+; $Id: createspectroscopyl2cf.pro,v 1.25 2006/01/21 00:26:25 livesey Exp $
+d101 1
+a101 1
+        AllLBLMolecules = [AllLBLMolecules, SIDSMandatoryLBLMoleculesBands.(ib).lsb, SIDSMandatoryLBLMoleculesBands.(ib).lsb]
+d118 1
+a118 1
+myID='$Id: createspectroscopyl2cf.pro,v 1.25 2006/01/21 00:26:25 livesey Exp $'
+@
+
+
+1.25
+log
+@Bug fixes on forced filenames and on pfa listings
+@
+text
+@d1 1
+a1 1
+; $Id: createspectroscopyl2cf.pro,v 1.24 2006/01/18 01:16:02 livesey Exp $
+d4 10
+a13 9
+  molName=molName, $
+  lineName=lineName, $
+  crossRefName=crossRefName, $
+  instrument=instrument, $
+  retrieval=retrieval, $
+  maxExtinctions=maxExtinctions, $
+  fastRead=fastRead, $
+  outName=outName, $
+  defsOnlyName=defsOnlyName
+a16 2
+if keyword_set(retrieval) then MyMessage, /error, $
+  'The retrieval option no longer works, use the reduced source files instead'
+d21 1
+a21 7
+if n_elements(outName) eq 0 then begin
+  if keyword_set(retrieval) then begin
+    outName = 'spectroscopy-rtvl.l2cf'
+  endif else begin
+    outName = 'spectroscopy.l2cf'
+  endelse
+endif
+d23 1
+a23 7
+if n_elements(defsOnlyName) eq 0 then begin
+  if keyword_set(retrieval) then begin
+    defsOnlyName = 'spectroscopy-rtvl-defs.l2cf'
+  endif else begin
+    defsOnlyName = 'spectroscopy-defs.l2cf'
+  endelse
+endif
+d33 6
+a38 5
+  restore, lineName
+  data = sps_data
+  lineID = 'Restored from saveset'
+  readID = lineID
+  molID = lineID
+d40 3
+a42 3
+  ;; Call Bills code to read the files
+  Read_Spect_Dbase, molName, lineName, '', data,  $
+    molID=molID, lineID=lineID, readID=readID
+d45 71
+a115 1
+if keyword_set(retrieval) then TrimSpectroscopyForRetrieval, data
+d117 2
+a118 1
+myID='$Id: createspectroscopyl2cf.pro,v 1.24 2006/01/18 01:16:02 livesey Exp $'
+d125 3
+a127 3
+  readf, unit, line, format='(a)'
+  if firstLine then crossRefID = line
+  firstLine = 0
+d130 13
+a142 13
+  readf, unit, line, format='(a)'
+  words = strsplit ( line, ' ', /extract )
+  if n_elements(words) gt 1 then begin
+    if n_elements(texNames) eq 0 then begin
+      texNames = words(0)
+      l2Names = words(1)
+      noChildren = fix ( words(3) )
+    endif else begin
+      texNames = [ texNames, words(0) ]
+      l2Names = [ l2Names, words(1) ]
+      noChildren = [ noChildren, fix ( words(3) ) ]
+    endelse
+  endif
+d149 5
+a153 5
+  if noChildren(index) ne 0 then begin
+    if noChildren(index) < 0 then i0 = index else i0 = index + 1
+    i1 = index + abs(noChildren(index))
+    parents(i0:i1) = index
+  endif
+d156 1
+a156 1
+; Sort out nitrogen
+d158 2
+a159 2
+  or strmid(data.name,0,10) eq 'H$_{2}$O-r' or strmid(data.name,0,9) eq 'O$_{3}$-r' $
+  or strmid(data.name,0,7) eq 'CLOUD\_' )
+d173 1
+d176 1
+a178 2
+if keyword_set(retrieval) then $
+  printf, unit, '; NOTE**** This is the special file for doing fast retrievals'
+d192 1
+a192 1
+noXPTL1Bands = 1                        ; XPTL1 doesn't list any.
+d204 14
+a217 11
+  ;; First try to un TeXify the molecule names
+  ;; Also, after a space, add the name of the parent
+  ;; Did it after the space to avoid the case statement getting overly large
+  index = ( where ( data(mol).name eq texNames ) ) ( 0 )
+  if index eq -1 then begin
+    if strmid ( data(mol).name, 0, 10 ) eq 'H$_{2}$O-r' then begin
+      niceNames(mol) = 'H2O_R' + strupcase ( strmid ( data(mol).name, 10, 2 ) )
+      parentNames(mol) = 'H2O'
+    endif else if strmid ( data(mol).name, 0, 9 ) eq 'O$_{3}$-r' then begin
+      niceNames(mol) = 'O3_R' + strupcase ( strmid ( data(mol).name, 9, 2 ) )
+      parentNames(mol) = 'O3'
+d219 6
+a224 1
+      MyMessage, /error, "Unrecognized molecule: " + data(mol).name
+d226 10
+a235 4
+  endif else begin
+    niceNames(mol) = l2Names(index)
+    if parents(index) eq -1 then begin
+      parentNames(mol) = niceNames ( mol )
+d237 12
+a248 1
+      parentNames(mol) = l2Names ( parents (index) )
+a249 2
+  endelse
+  thisMolName = niceNames(mol)
+d251 11
+a261 13
+  ;; Look out for molecules that are radiometer specific
+  ;; Different algorithm for skipping lines on EOS vs. SMLS
+  if instrument eq 'emls' then begin
+    if ( min(data(mol).q) le 0.0 and data(mol).cont(0) eq 0.0 ) then begin
+      print, 'Skipping ' + thisMolName
+      niceNames ( mol ) = ''
+      continue
+    endif
+  endif else begin
+    if ( data(mol).no_lines eq 0 and data(mol).cont(0) eq 0.0 ) then begin
+      print, 'Skipping ' + thisMolName + ' (not EOS)'
+      niceNames ( mol ) = ''
+      continue
+d263 104
+d368 5
+a372 7
+    if strmid ( thisMolName, 0, 5 ) eq 'H2O_R' or $
+       strmid ( thisMolName, 0, 4 ) eq 'O3_R' then begin
+      print, 'Skipping radiometer based ' + thisMolName + ' as not emls'
+      niceNames ( mol ) = ''
+      continue
+    endif
+  endelse
+d374 25
+a398 65
+  if n_elements(allNames) eq 0 then allNames = thisMolName $
+  else allNames = allNames + ', ' + thisMolName
+  
+  ;; Now print out a header line
+  printf,unit, ''
+  printf,unit, '  ;; ----------------------------------- '+thisMolName
+  if thisMolName ne 'EXTINCTION' then begin
+    isotopeLine = '!define(isotoperatio' + thisMolName + ',{' + $
+    string ( data(mol).abun, format='(f10.8)' ) + '} )'
+    printf, unit, '  ' + isotopeLine
+    printf, defsUnit, isotopeLine
+  endif
+  printf,unit, ''
+  for line = 0, data(mol).no_Lines - 1 do begin
+    text= '  '+thisMolName + '_L' + string ( line+1, format='(I0)' ) + ': line, '
+    AddWordToLine,text,unit,4, $
+      'v0= '+strtrim(string( data(mol).frq(line), format='(f12.4)' ),2) + ' MHz, '
+    AddWordToLine,text,unit,4, $
+      'el= '+strtrim(string( data(mol).gse(line), format='(g13.8)' ),2) + ', '
+    AddWordToLine,text,unit,4, $
+      'str= '+strtrim(string( data(mol).ist(line), format='(f8.4)' ),2) + ', '
+    AddWordToLine,text,unit,4, $
+      'w= '+strtrim(string( data(mol).wc(line), format='(f8.4)' ),2) + ', '
+    AddWordToLine,text,unit,4, $
+      'n= '+strtrim(string(data(mol).nc(line), format='(f6.3)'),2) + ', '
+    AddWordToLine,text,unit,4, $
+      'ps= '+strtrim(string(data(mol).ps(line), format='(g15.5)'),2) + ', '
+    AddWordToLine,text,unit,4, $
+      'ns= '+strtrim(string(data(mol).ns(line), format='(f6.3)'),2) + ', '
+    AddWordToLine,text,unit,4, $
+      'delta= '+strtrim(string(data(mol).int1(line), format='(g15.5)'),2) + ', '
+    AddWordToLine,text,unit,4, $
+      'n1= '+strtrim(string(data(mol).n1(line), format='(f6.3)'),2) + ', '
+    AddWordToLine,text,unit,4, $
+      'gamma= '+strtrim(string(data(mol).int2(line), format='(g15.5)'),2) + ', '
+    AddWordToLine,text,unit,4, $
+      'n2= '+strtrim(string(data(mol).n2(line), format='(f6.3)'),2) + ', '
+
+    ;; Do the quantum numbers
+    noQNs = data(mol).qnfmt(line) mod 10
+    qns = data(mol).qnfmt(line)
+    for q = 0, noQNs - 1 do qns = [ qns, fix ( strmid ( data(mol).qnu(line), q*2, 2 ) ) ]
+    for q = 0, noQNs - 1 do qns = [ qns, fix ( strmid ( data(mol).qnl(line), q*2, 2 ) ) ]
+    AddWordToLine,text,unit,4, 'qn=[ '
+    for q = 0, n_elements(qns)-2 do $
+      AddWordToLine,text,unit,4, string(qns(q),format='(i0)')+', '
+    AddWordToLine,text,unit,3, string(qns(2*noQNS),format='(i0)') + ' ]'
+   
+    for i=0, noInstruments - 1 do begin
+      case i of
+        0 : begin 
+          prefix = 'emlsSignals=[ '
+          bands = data(mol).eos_bands(line)
+        end
+        1 : begin
+          prefix = 'umlsSignals=[ '
+          bands = data(mol).uars_bands(line)
+        end
+        2 : begin
+          prefix = 'xptl1Signals=[ '
+          bands = '' ; data(mol).xptl1_bands(line)
+        end
+      endcase
+      bands = strtrim(strsplit(bands,',',/extract),2)
+      if bands(0) ne '' then begin
+d400 5
+a404 26
+        AddWordToLine,text,unit,4,prefix
+        for j = 0, n_elements(bands)-1 do begin
+          thisBand = strupcase ( bands(j) )
+          bandNo = fix(strmid(thisBand,1,strlen(thisBand)))
+          case 1 of
+            strpos(thisBand,'U') ne -1 : sideband = 1
+            strpos(thisBand,'L') ne -1 : sideband = -1
+            else : sideband = 0
+          endcase
+          case 1 of 
+            bandNo le 21 : thisBand=thisBand+'F'
+            bandNo le 26 : thisBand=thisBand+'D'
+            bandNo le 31 : thisBand=thisBand+'M'
+            bandNo le 34 : thisBand=thisBand+'W'
+          endcase
+          thisBand="'"+thisBand+"'"
+          if j lt n_elements(bands)-1 $
+            then thisBand=thisBand+', ' $
+          else thisBand=thisBand+' ]'
+          AddWordToLine,text,unit,4,thisBand
+          ;; Keep track of the molecule by molecule usage
+          case i of
+            0 : emlsMolecules ( sideband+1, bandNo-1, mol ) = 1
+            1 : umlsMolecules ( sideband+1, bandNo-1, mol ) = 1
+            2 : xptl1Molecules ( sideband+1, bandNo-1, mol ) = 1
+          endcase
+d406 2
+a407 9
+      endif                             ; Any bands
+    endfor                              ; Loop over instruments
+
+    ;; Special case for O2 polarized 118 line
+    if thisMolName eq 'O2' and n_elements(qns) eq 5 and $
+      min ( qns eq [ 102, 1, 1, 1, 0 ] ) then begin
+      text = text + ', '
+      AddWordToLine, text, unit, 4, "emlsSignalsPol=[ 'B22LD', " 
+      AddWordToLine, text, unit, 4, "'B26LD' ]"
+d410 1
+d412 1
+a412 49
+  endfor                                ; Loop over lines
+
+  ;; Now print out the molecule information
+  printf, unit, ''
+  text = '  spectra, molecule= '+thisMolName+', Qlog=[ '
+
+  for i = 0, 2 do begin
+    text = text + strtrim(string(alog10(data(mol).q(i)), $
+      format='(f10.4)'),2)
+    if i ne 2 then text = text + ', '
+  endfor
+
+  ;; Lines
+  if data(mol).no_lines gt 0 then begin
+    text = text + ' ], $'
+    printf, unit,text
+    text = '    lines=[ '
+    for line = 0, data(mol).no_lines - 2 do begin
+      AddWordToLine, text, unit, 4, $
+        thisMolName+'_L'+string(line+1,format='(I0)')+', '
+    endfor
+    AddWordToLine, text, unit, 4, $
+      thisMolName+'_L'+string(data(mol).no_lines,format='(I0)')+' ]'
+  endif else begin
+    text = text + ' ]'
+  endelse
+
+  ;; Mass
+  text = text + ', '
+  AddWordToLine, text, unit, 4, $
+    'mass= ' + strtrim ( string ( data(mol).mass, format='(f9.5)' ), 2 )
+  
+  ;; Continuum
+  noNonZero = max(where(data(mol).cont ne 0.0))+1
+  if noNonZero ne 0 then begin
+    text = text + ', '
+    AddWordToLine, text, unit, 4, $
+      'continuum=[ '
+    for i=0,noNonZero-2 do begin
+      AddWordToLine, text, unit, 4, $
+        strtrim(string(data(mol).cont(i)),2)+', '
+    endfor
+    AddWordToLine, text, unit, 4, $
+      strtrim(string(data(mol).cont(noNonZero-1)),2)+' ]'
+  endif
+  
+  ;; Finish off the line
+  if strtrim(text,2) ne '' then printf,unit,text
+endfor                                  ; End loop over molecules
+d422 4
+a425 4
+  'umls'  : array=umlsMolecules
+  'emls'  : array=emlsMolecules
+  'xptl1' : array=xptl1Molecules
+  else : MyMessage,/error,'Unknown instrument'
+d434 1
+a434 1
+;; Make H2O, O3, N2 and extinction used everywhere.
+d448 11
+a458 11
+  for radiometer = 0, database.noRadiometers-1 do begin
+    relevantBands = where ( database.bands.radiometerIndex eq radiometer )
+    array(*,relevantBands, $
+      where(niceNames eq 'H2O_'+database.radiometers(radiometer).prefix ) ) = 1
+  endfor
+  ;; Make the O3_<radiometer> species used where appropriate
+  for radiometer = 0, database.noRadiometers-1 do begin
+    relevantBands = where ( database.bands.radiometerIndex eq radiometer )
+    o3rs = where(niceNames eq 'O3_'+database.radiometers(radiometer).prefix )
+    if o3rs(0) ne -1 then array(*,relevantBands, o3rs ) = 1
+  endfor
+d466 3
+a468 3
+  relevantBands = where ( database.bands.radiometerIndex eq radiometer )
+  collapsed = total ( array (*,relevantBands,*), 2 )
+  newArray(*,noBands+radiometer,*) = collapsed gt 0
+d477 2
+a478 2
+  print,'Illegal value of maxExtinctions'
+  stop
+d481 7
+a487 17
+for noExtinctions = 1, maxExtinctions do begin
+  if noExtinctions eq 1 then extraName='' else extraName='2X'
+  for band = 0, noBands + database.noRadiometers do begin
+    for sideband = 0, 2 do begin
+      ;; Which molecules does it use
+      usedMols = where ( reform ( array(sideband, band, *) ) )
+      ;; What parents do they have, get a unique list
+      if usedMols(0) ne -1 then begin
+        usedParents = parentNames ( usedMols )
+        usedParents = usedParents ( sort ( usedParents ) )
+        usedParents = usedParents ( uniq ( usedParents ) )
+        case 1 of
+          band lt noBands : outName = string ( band+1, format='(i0)' )
+          band ge noBands and band lt noBands + database.noRadiometers : $
+            outName = database.radiometers(band-noBands).prefix
+          else : outName = 'Instrument'
+        endcase
+d489 35
+a523 69
+        ;; First do the comprehensive lists for full forward models.
+        line = '!define(molecules' + extraName + 'For' + outName + $
+          sidebandStrings(sideband)+',{[ '
+        for p = 0, n_elements(usedParents)-1 do begin
+          if p ne 0 then line = line +', '
+          thisParent = usedParents(p)
+          if thisParent ne 'EXTINCTION' then begin
+            children = where ( parentNames eq thisParent and $
+              reform ( array(sideband, band, *) ) )
+            AddWordToLine, line, units, 2, '[ '+thisParent
+            ;; Format is [ parent, <children> ]
+            ;; Note, having the only child be the same as the parent is fine
+            ;; (e.g. [ H2O, H2O ])
+            for c = 0, n_elements(children) - 1 do begin
+              line = line + ', '
+              AddWordToLine, line, units, 4, niceNames(children(c))
+            endfor
+            line = line + ' ]'
+          endif else begin
+            ;; For extinction just use extinction alone, no isotope
+            if noExtinctions eq 1 then begin
+              AddWordToLine, line, units, 2, thisParent
+            endif else begin
+              AddWordToLine, line, units, 2, thisParent + ', ' + thisParent
+            endelse
+          endelse
+        endfor
+        line = line + ' ]})'
+        printf, unit, line
+        printf, defsUnit, line
+
+        ;; Now do the flat list for pfa stuff
+        line = '!define(PFAWorthyMolecules' + extraName + 'For' + outName + $
+          sidebandStrings(sideband) + ',{[ '
+        doneAny = 0
+        for p = 0, n_elements(usedParents) - 1 do begin
+          thisParent = usedParents(p)
+          if thisParent ne 'EXTINCTION' then begin ;; Skip extinction by definition
+            children = where ( parentNames eq thisParent and $
+              reform ( array(sideband, band, *) ) )
+            for c = 0, n_elements(children) - 1 do begin
+              if doneAny then line = line + ', ' else doneAny = 1
+              AddWordToLine, line, units, 4, niceNames(children(c))
+            endfor
+          endif
+        endfor
+        line = line + ' ]})'
+        printf, unit, line
+        printf, defsUnit, line
+
+        ;; Now do just the parents for l2pc line forward models
+        ;; First do the comprehensive lists for full forward models.
+        line = '!define(moleculeFamilies' + extraName + 'For' + outName + $
+          sidebandStrings(sideband)+',{[ '
+        for p = 0, n_elements(usedParents)-1 do begin
+          if p ne 0 then line = line + ', '
+          thisParent = usedParents(p)
+          children = where ( parentNames eq thisParent and $
+            reform ( array(sideband, band, *) ) )
+          if thisParent ne 'EXTINCTION' or noExtinctions eq 1 then begin
+            AddWordToLine, line, units, 2, thisParent
+          endif else begin
+            AddWordToLine, line, units, 2, thisParent + ', ' + thisParent
+          endelse
+        endfor
+        line = line +' ]})'
+        printf, unit, line
+        printf, defsUnit, line
+      endif
+d525 144
+a668 4
+    endfor                              ; Loop over sidebands
+    printf, unit, ''
+    printf, defsUnit, ''
+  endfor                                ; Loop over bands
+d673 1
+a673 1
+  nicenames ne '' ) )
+d677 5
+a681 5
+  printf,units(i),'!define(molecules,{!moleculesFor$1})'
+  printf,units(i),'!define(moleculeFamilies,{!moleculeFamiliesFor$1})'
+  printf,units(i),'!define(molecules2X,{!molecules2XFor$1})'
+  printf,units(i),'!define(moleculeFamilies2X,{!moleculeFamilies2XFor$1})'
+  printf,units(i),'!define(isotopicMolecules,{' + strjoin(isotopicMolecules,',')+'})'
+@
+
+
+1.24
+log
+@Various additions including the production of a definitions only file to
+be included when the bulk of the information is coming from a
+post-processed hdf file.
+@
+text
+@d1 1
+a1 1
+; $Id: createspectroscopyl2cf.pro,v 1.23 2004/12/10 01:10:19 livesey Exp $
+d6 1
+a6 1
+  crossRefName=crosRefName, $
+d59 1
+a59 1
+myID='$Id: createspectroscopyl2cf.pro,v 1.23 2004/12/10 01:10:19 livesey Exp $'
+d466 1
+d473 1
+a473 1
+              if p ne 0 or c ne 0 then line = line + ', '
+@
+
+
+1.23
+log
+@New version, retrieval option no longer works, do it by using Bill's
+alternative input file.
+@
+text
+@d1 1
+a1 1
+; $Id: createspectroscopyl2cf.pro,v 1.22 2004/10/08 16:33:47 livesey Exp $
+d11 2
+a12 1
+  outName=outName
+d30 8
+d59 1
+a59 1
+myID='$Id: createspectroscopyl2cf.pro,v 1.22 2004/10/08 16:33:47 livesey Exp $'
+d106 6
+d169 22
+a190 5
+  if ( min(data(mol).q) le 0.0 and data(mol).cont(0) eq 0.0 ) then begin
+    print, 'Skipping ' + thisMolName
+    niceNames ( mol ) = ''
+    continue
+  endif
+d198 2
+a199 2
+  if thisMolName ne 'EXTINCTION' then $
+    printf,unit, '  !define(isotoperatio' + thisMolName + ',{' + $
+d201 3
+d364 1
+d366 1
+d375 4
+d380 13
+a392 13
+database = ReadValidSignals()
+for radiometer = 0, database.noRadiometers-1 do begin
+  relevantBands = where ( database.bands.radiometerIndex eq radiometer )
+  array(*,relevantBands, $
+    where(niceNames eq 'H2O_'+database.radiometers(radiometer).prefix ) ) = 1
+endfor
+;; Make the O3_<radiometer> species used where appropriate
+database = ReadValidSignals()
+for radiometer = 0, database.noRadiometers-1 do begin
+  relevantBands = where ( database.bands.radiometerIndex eq radiometer )
+  o3rs = where(niceNames eq 'O3_'+database.radiometers(radiometer).prefix )
+  if o3rs(0) ne -1 then array(*,relevantBands, o3rs ) = 1
+endfor
+d441 1
+a441 1
+            AddWordToLine, line, unit, 2, '[ '+thisParent
+d447 1
+a447 1
+              AddWordToLine, line, unit, 4, niceNames(children(c))
+d453 1
+a453 1
+              AddWordToLine, line, unit, 2, thisParent
+d455 1
+a455 1
+              AddWordToLine, line, unit, 2, thisParent + ', ' + thisParent
+d461 19
+d491 1
+a491 1
+            AddWordToLine, line, unit, 2, thisParent
+d493 1
+a493 1
+            AddWordToLine, line, unit, 2, thisParent + ', ' + thisParent
+d498 1
+d503 1
+a507 5
+printf,unit,'!define(molecules,{!moleculesFor$1})'
+printf,unit,'!define(moleculeFamilies,{!moleculeFamiliesFor$1})'
+printf,unit,'!define(molecules2X,{!molecules2XFor$1})'
+printf,unit,'!define(moleculeFamilies2X,{!moleculeFamilies2XFor$1})'
+
+d511 8
+a518 1
+printf,unit,'!define(isotopicMolecules,{' + strjoin(isotopicMolecules,',')+'})'
+d521 1
+@
+
+
+1.22
+log
+@Bug fix in o3 continuum interpretation
+@
+text
+@d1 1
+a1 1
+; $Id: createspectroscopyl2cf.pro,v 1.21 2004/09/16 00:02:32 livesey Exp $
+d15 2
+d50 1
+a50 1
+myID='$Id: createspectroscopyl2cf.pro,v 1.21 2004/09/16 00:02:32 livesey Exp $'
+@
+
+
+1.21
+log
+@Added the radiometer dependent ozones
+@
+text
+@d1 1
+a1 1
+; $Id: createspectroscopyl2cf.pro,v 1.20 2004/04/01 00:23:21 livesey Exp $
+d48 1
+a48 1
+myID='$Id: createspectroscopyl2cf.pro,v 1.20 2004/04/01 00:23:21 livesey Exp $'
+d347 2
+a348 2
+  array(*,relevantBands, $
+    where(niceNames eq 'O3_'+database.radiometers(radiometer).prefix ) ) = 1
+@
+
+
+1.20
+log
+@Various changes, including more work to make it SMLS friendly.
+@
+text
+@d1 1
+a1 1
+; $Id: createspectroscopyl2cf.pro,v 1.19 2004/02/12 01:47:29 livesey Exp $
+d48 1
+a48 1
+myID='$Id: createspectroscopyl2cf.pro,v 1.19 2004/02/12 01:47:29 livesey Exp $'
+d87 3
+a89 2
+change = (where(data.name eq 'N$_{2}$' or data.name eq 'EXTINCTION' $
+  or strmid(data.name,0,10) eq 'H$_{2}$O-r') )
+d136 3
+d328 1
+a328 1
+;; Make H2O, N2 and extinction used everywhere.
+d332 1
+d342 7
+@
+
+
+1.19
+log
+@Added extra comment in output file.
+@
+text
+@d1 1
+a1 1
+; $Id: createspectroscopyl2cf.pro,v 1.18 2004/02/12 01:46:15 livesey Exp $
+d9 3
+a11 1
+  maxExtinctions=maxExtinctions
+d16 1
+a16 2
+; instrumentPrefixes=['emlsSignals=[ ', 'umlsSignals=[ ', 'xptl1Signals=[ ']
+instrumentPrefixes = [ 'emlsSignals=[ ', 'umlsSignals=[ ' ]
+d19 7
+a25 5
+if keyword_set(retrieval) then begin
+  outName = 'spectroscopy-rtvl.l2cf'
+endif else begin
+  outName = 'spectroscopy.l2cf'
+endelse
+d34 11
+a44 3
+; Call Bills code to read the files
+Read_Spect_Dbase, molName, lineName, '', data,  $
+  molID=molID, lineID=lineID, readID=readID
+d48 1
+a48 1
+myID='$Id: createspectroscopyl2cf.pro,v 1.18 2004/02/12 01:46:15 livesey Exp $'
+d115 1
+d123 1
+d209 4
+a212 4
+;         2 : begin
+;           prefix = 'xptl1Signals=[ '
+;           bands = data(mol).xptl1_bands(line)
+;         end
+d241 1
+a241 1
+;           2 : xptl1Molecues ( sideband+1, bandNo-1, mol ) = 1
+d314 3
+a316 3
+  'umls' : array=umlsMolecules
+  'emls' : array=emlsMolecules
+; 'xptl1' : array=xptl1Molecules
+d339 3
+a341 2
+;; Now, add some extra virtual bands which are the radiometers
+newArray = intarr ( noSidebands, noBands+database.noRadiometers, noMols )
+d348 4
+d361 1
+a361 1
+  for band = 0, noBands + database.noRadiometers - 1 do begin
+d366 48
+a413 14
+      usedParents = parentNames ( usedMols )
+      usedParents = usedParents ( sort ( usedParents ) )
+      usedParents = usedParents ( uniq ( usedParents ) )
+      if band lt noBands then $
+        outName = string ( band+1, format='(i0)' ) $
+      else outName = database.radiometers(band-noBands).prefix
+
+      ;; First do the comprehensive lists for full forward models.
+      line = '!define(molecules' + extraName + 'For' + outName + $
+        sidebandStrings(sideband)+',{[ '
+      for p = 0, n_elements(usedParents)-1 do begin
+        if p ne 0 then line = line +', '
+        thisParent = usedParents(p)
+        if thisParent ne 'EXTINCTION' then begin
+d416 1
+a416 12
+          AddWordToLine, line, unit, 2, '[ '+thisParent
+          ;; Format is [ parent, <children> ]
+          ;; Note, having the only child be the same as the parent is fine
+          ;; (e.g. [ H2O, H2O ])
+          for c = 0, n_elements(children) - 1 do begin
+            line = line + ', '
+            AddWordToLine, line, unit, 4, niceNames(children(c))
+          endfor
+          line = line + ' ]'
+        endif else begin
+          ;; For extinction just use extinction alone, no isotope
+          if noExtinctions eq 1 then begin
+d421 4
+a424 22
+        endelse
+      endfor
+      line = line + ' ]})'
+      printf, unit, line
+
+      ;; Now do just the parents for l2pc line forward models
+      ;; First do the comprehensive lists for full forward models.
+      line = '!define(moleculeFamilies' + extraName + 'For' + outName + $
+        sidebandStrings(sideband)+',{[ '
+      for p = 0, n_elements(usedParents)-1 do begin
+        if p ne 0 then line = line + ', '
+        thisParent = usedParents(p)
+        children = where ( parentNames eq thisParent and $
+          reform ( array(sideband, band, *) ) )
+        if thisParent ne 'EXTINCTION' or noExtinctions eq 1 then begin
+          AddWordToLine, line, unit, 2, thisParent
+        endif else begin
+          AddWordToLine, line, unit, 2, thisParent + ', ' + thisParent
+        endelse
+      endfor
+      line = line +' ]})'
+      printf, unit, line
+@
+
+
+1.18
+log
+@Added option to do retrieval spectroscopy.  Made the 2X stuff optional
+@
+text
+@d1 1
+a1 1
+; $Id: createspectroscopyl2cf.pro,v 1.17 2003/05/16 23:54:28 livesey Exp $
+d37 1
+a37 1
+myID='$Id: createspectroscopyl2cf.pro,v 1.17 2003/05/16 23:54:28 livesey Exp $'
+d88 4
+@
+
+
+1.17
+log
+@Modified for Bill's new spectroscopy data.
+@
+text
+@d1 1
+a1 1
+; $Id: createspectroscopyl2cf.pro,v 1.16 2002/09/26 19:28:07 livesey Exp $
+d7 16
+a22 3
+  uars=uars
+
+outName = 'spectroscopy.l2cf'
+d34 4
+a37 1
+myID='$Id: createspectroscopyl2cf.pro,v 1.16 2002/09/26 19:28:07 livesey Exp $'
+d182 1
+a182 1
+    for i=0,1 do begin
+d192 4
+d224 1
+d296 6
+a301 4
+
+if keyword_set(uars) $
+  then array = umlsMolecules $
+else array = emlsMolecules
+d332 6
+a337 1
+for noExtinctions = 1, 2 do begin
+@
+
+
+1.16
+log
+@Added the 2X family of extinction stuff
+@
+text
+@d1 1
+a1 1
+; $Id: createspectroscopyl2cf.pro,v 1.15 2002/08/23 19:38:32 livesey Exp $
+d5 3
+a7 1
+  lineName=lineName, uars=uars
+d12 1
+a12 1
+  molName = getenv('HOME')+'/mlspgs/tables/mol_data_table.tex'
+d14 3
+a16 1
+  lineName = getenv('HOME')+'/mlspgs/tables/line_data_table.tex'
+d21 37
+a57 1
+myID='$Id: createspectroscopyl2cf.pro,v 1.15 2002/08/23 19:38:32 livesey Exp $'
+d75 1
+d97 8
+a104 49
+  thisMolName = data(mol).name
+  case thisMolName of
+    '$^{81}$BrO'      : thisMolName = 'Br_81_O BrO'
+    '$^{79}$BrO'      : thisMolName = 'Br_79_O BrO'
+    'CH$_{3}$CN'      : thisMolName = 'CH3CN'
+    'CH$_{3}^{35}$Cl' : thisMolName = 'CH3Cl_35 CH3CL'
+    'CH$_{3}^{37}$Cl' : thisMolName = 'CH3Cl_37 CH3CL'
+    'CH$_{3}$CN'      : thisMolName = 'CH3CN'
+    'CH$_{3}$CN'      : thisMolName = 'CH3CN'
+    '$^{35}$ClO'      : thisMolName = 'Cl_35_O ClO'
+    'H$^{35}$Cl'      : thisMolName = 'HCl_35 HCl'
+    'H$^{37}$Cl'      : thisMolName = 'HCl_37 HCl'
+    'H$_{2}$O'        : thisMolName = 'H2O'
+    'H$_{2}$O-r1a'    : thisMolName = 'H2O_R1A H2O'
+    'H$_{2}$O-r1b'    : thisMolName = 'H2O_R1B H2O'
+    'H$_{2}$O-r2'     : thisMolName = 'H2O_R2 H2O'
+    'H$_{2}$O-r3'     : thisMolName = 'H2O_R3 H2O'
+    'H$_{2}$O-r4'     : thisMolName = 'H2O_R4 H2O'
+    'H$_{2}$O-r5h'    : thisMolName = 'H2O_R5H H2O'
+    'H$_{2}$O-r5v'    : thisMolName = 'H2O_R5V H2O'
+    'H$_{2}^{18}$O'   : thisMolName = 'H2O_18 H2O'
+    'H$_{2}$O$_{2}$'  : thisMolName = 'H2O2'
+    'HNO$_{3}$'       : thisMolName = 'HNO3'
+    'HNO$_{3}$-v5'    : thisMolName = 'HNO3_v5 HNO3'
+    'HNO$_{3}$-v6'    : thisMolName = 'HNO3_v6 HNO3'
+    'HNO$_{3}$-v7'    : thisMolName = 'HNO3_v7 HNO3'
+    'HNO$_{3}$-v8'    : thisMolName = 'HNO3_v8 HNO3'
+    'HNO$_{3}$-v9'    : thisMolName = 'HNO3_v9 HNO3'
+    'HO$^{35}$Cl'     : thisMolName = 'HOCl_35 HOCl'
+    'HO$^{37}$Cl'     : thisMolName = 'HOCl_37 HOCl'
+    'HO$_{2}$'        : thisMolName = 'HO2'
+    'N$_{2}$'         : thisMolName = 'N2'
+    'N$_{2}$O'        : thisMolName = 'N2O'
+    'O$_{2}$'         : thisMolName = 'O2'
+    'O$_{2}$-v1'      : thisMolName = 'O2_v1 O2'
+    'O$^{18}$O'       : thisMolName = 'O_18_O O2'
+    'O$_{3}$'         : thisMolName = 'O3'
+    'O$_{3}$-v1,3'    : thisMolName = 'O3_v1_3 O3'
+    'O$_{3}$-v2'      : thisMolName = 'O3_v2 O3'
+    'O$_{2}^{18}$O'   : thisMolName = 'O3_ASYM_O_18 O3'
+    'O$^{18}$OO'      : thisMolName = 'O3_SYM_O_18 O3'
+    '$^{32}$SO$_{2}$' : thisMolName = 'S_32_O2 SO2'
+    else: begin
+      print,'Uncertain about: ',thisMolName
+      thisMolName = thisMolName
+    end
+  endcase
+  if ( strpos ( thisMolName, ' ' ) eq -1 ) then begin
+    parentName = thisMolName
+d106 6
+a111 3
+    words = strsplit ( thisMolName,/extract )
+    thisMolName = words(0)
+    parentName = words(1)
+d113 7
+a120 2
+  niceNames(mol) = thisMolName
+  parentNames(mol) = parentName
+d154 1
+a154 1
+      'n2= '+strtrim(string(data(mol).n2(line), format='(f6.3)'),2)
+d156 10
+d179 1
+a179 1
+        AddWordToLine,text,unit,4,', '
+d208 8
+a223 1
+  ;; Qlog information
+d244 5
+d287 1
+d382 2
+a383 1
+isotopicMolecules = niceNames ( where ( nicenames ne 'EXTINCTION' ) )
+@
+
+
+1.15
+log
+@New hno3-v5 lines
+@
+text
+@d1 1
+a1 1
+; $Id: createspectroscopyl2cf.pro,v 1.14 2002/08/14 22:01:22 livesey Exp $
+d17 1
+a17 1
+myID='$Id: createspectroscopyl2cf.pro,v 1.14 2002/08/14 22:01:22 livesey Exp $'
+d180 1
+a180 1
+            else thisBand=thisBand+' ]'
+d188 2
+a189 2
+      endif                     ; Any bands
+    endfor                      ; Loop over instruments
+d192 1
+a192 1
+  endfor                        ; Loop over lines
+d224 2
+a225 2
+      AddWordToLine, text, unit, 4, $
+        'continuum=[ '
+d230 2
+a231 2
+      AddWordToLine, text, unit, 4, $
+        strtrim(string(data(mol).cont(noNonZero-1)),2)+' ]'
+d236 1
+a236 1
+endfor                          ; End loop over molecules
+a276 1
+  
+d278 51
+a328 19
+for band = 0, noBands + database.noRadiometers - 1 do begin
+  for sideband = 0, 2 do begin
+    ;; Which molecules does it use
+    usedMols = where ( reform ( array(sideband, band, *) ) )
+    ;; What parents do they have, get a unique list
+    usedParents = parentNames ( usedMols )
+    usedParents = usedParents ( sort ( usedParents ) )
+    usedParents = usedParents ( uniq ( usedParents ) )
+    if band lt noBands then $
+      outName = string ( band+1, format='(i0)' ) $
+    else outName = database.radiometers(band-noBands).prefix
+
+    ;; First do the comprehensive lists for full forward models.
+    line = '!define(moleculesFor' + outName + $
+      sidebandStrings(sideband)+',{[ '
+    for p = 0, n_elements(usedParents)-1 do begin
+      if p ne 0 then line = line +', '
+      thisParent = usedParents(p)
+      if thisParent ne 'EXTINCTION' then begin
+d331 13
+a343 34
+        AddWordToLine, line, unit, 2, '[ '+thisParent
+        ;; Format is [ parent, <children> ]
+        ;; Note, having the only child be the same as the parent is fine
+        ;; (e.g. [ H2O, H2O ])
+        for c = 0, n_elements(children) - 1 do begin
+          line = line + ', '
+          AddWordToLine, line, unit, 4, niceNames(children(c))
+        endfor
+        line = line + ' ]'
+      endif else begin
+        ;; For extinction just use extinction alone, no isotope
+        AddWordToLine, line, unit, 2, thisParent
+      endelse
+    endfor
+    line = line + ' ]})'
+    printf, unit, line
+
+    ;; Now do just the parents for l2pc line forward models
+    ;; First do the comprehensive lists for full forward models.
+    line = '!define(moleculeFamiliesFor' + outName + $
+      sidebandStrings(sideband)+',{[ '
+    for p = 0, n_elements(usedParents)-1 do begin
+      if p ne 0 then line = line + ', '
+      thisParent = usedParents(p)
+      children = where ( parentNames eq thisParent and $
+        reform ( array(sideband, band, *) ) )
+      AddWordToLine, line, unit, 2, thisParent
+    endfor
+    line = line +' ]})'
+    printf, unit, line
+
+  endfor                        ; Loop over sidebands
+  printf, unit, ''
+endfor                          ; Loop over bands
+d348 2
+@
+
+
+1.14
+log
+@Made extinction childless
+@
+text
+@d1 1
+a1 1
+; $Id: createspectroscopyl2cf.pro,v 1.13 2002/08/14 21:58:29 livesey Exp $
+d17 1
+a17 1
+myID='$Id: createspectroscopyl2cf.pro,v 1.13 2002/08/14 21:58:29 livesey Exp $'
+d79 1
+@
+
+
+1.13
+log
+@Made extinction used everywhere
+@
+text
+@d1 1
+a1 1
+; $Id: createspectroscopyl2cf.pro,v 1.12 2002/07/25 16:29:08 livesey Exp $
+d17 1
+a17 1
+myID='$Id: createspectroscopyl2cf.pro,v 1.12 2002/07/25 16:29:08 livesey Exp $'
+d296 16
+a311 11
+      children = where ( parentNames eq thisParent and $
+        reform ( array(sideband, band, *) ) )
+      AddWordToLine, line, unit, 2, '[ '+thisParent
+      ;; Format is [ parent, <children> ]
+      ;; Note, having the only child be the same as the parent is fine
+      ;; (e.g. [ H2O, H2O ])
+      for c = 0, n_elements(children) - 1 do begin
+        line = line + ', '
+        AddWordToLine, line, unit, 4, niceNames(children(c))
+      endfor
+      line = line + ' ]'
+@
+
+
+1.12
+log
+@Bug fix, get rid of -Infs
+@
+text
+@d1 1
+a1 1
+; $Id: createspectroscopyl2cf.pro,v 1.11 2002/07/24 22:05:29 livesey Exp $
+d17 1
+a17 1
+myID='$Id: createspectroscopyl2cf.pro,v 1.11 2002/07/24 22:05:29 livesey Exp $'
+d253 1
+a253 1
+;; Make H2O and N2 used everywhere.
+d256 1
+@
+
+
+1.11
+log
+@Added new molecules, in particular the radiometer dependent h2o continuum stuff.
+@
+text
+@d1 1
+a1 1
+; $Id: createspectroscopyl2cf.pro,v 1.10 2002/05/22 17:56:20 livesey Exp $
+d17 1
+a17 1
+myID='$Id: createspectroscopyl2cf.pro,v 1.10 2002/05/22 17:56:20 livesey Exp $'
+d20 2
+a21 1
+change = (where(data.name eq 'N$_{2}$' or data.name eq 'EXTINCTION' ) )
+@
+
+
+1.10
+log
+@Added ability to collapse molecule information into radiometers for
+complete radiometer runs
+@
+text
+@d1 1
+a1 1
+; $Id: createspectroscopyl2cf.pro,v 1.9 2002/05/17 23:00:27 livesey Exp $
+d17 1
+a17 1
+myID='$Id: createspectroscopyl2cf.pro,v 1.9 2002/05/17 23:00:27 livesey Exp $'
+d60 4
+d68 7
+d96 4
+a99 1
+    else: thisMolName = thisMolName
+d246 1
+a246 1
+else array=emlsMolecules
+d252 1
+d257 7
+a265 1
+database = ReadValidSignals()
+@
+
+
+1.9
+log
+@Moved molecules per band stuff into main output file.
+Also Dealt with molecule families etc.
+@
+text
+@d1 1
+a1 1
+; $Id: createspectroscopyl2cf.pro,v 1.8 2002/04/30 00:11:25 livesey Exp $
+d17 1
+a17 1
+myID='$Id: createspectroscopyl2cf.pro,v 1.8 2002/04/30 00:11:25 livesey Exp $'
+a239 1
+
+d242 14
+a255 1
+for band = 0, noBands - 1 do begin
+d263 3
+d268 1
+a268 1
+    line = '!define(moleculesFor' + string ( band+1, format='(i0)' ) + $
+d290 1
+a290 1
+    line = '!define(moleculeFamiliesFor' + string ( band+1, format='(i0)' ) + $
+@
+
+
+1.8
+log
+@Added ability to create molecules per band file.
+@
+text
+@d1 1
+a1 1
+; $Id: createspectroscopyl2cf.pro,v 1.7 2001/11/08 00:13:21 livesey Exp $
+d5 1
+a5 1
+  lineName=lineName
+a7 2
+umlsMolName = 'moleculesperband-umls.l2cf'
+emlsMolName = 'moleculesperband-emls.l2cf'
+d17 1
+a17 1
+myID='$Id: createspectroscopyl2cf.pro,v 1.7 2001/11/08 00:13:21 livesey Exp $'
+d30 1
+a30 1
+printf, unit, ';'
+d46 1
+d53 2
+d57 2
+a58 2
+    '$^{81}$BrO'      : thisMolName = 'Br_81_O'
+    '$^{79}$BrO'      : thisMolName = 'Br_79_O'
+d60 3
+a62 3
+    '$^{35}$ClO'      : thisMolName = 'Cl_35_O'
+    'H$^{35}$Cl'      : thisMolName = 'HCl_35'
+    'H$^{37}$Cl'      : thisMolName = 'HCl_37'
+d64 1
+a64 1
+    'H$_{2}^{18}$O'   : thisMolName = 'H2O_18'
+d67 6
+a72 6
+    'HNO$_{3}$-v6'    : thisMolName = 'HNO3_v6'
+    'HNO$_{3}$-v7'    : thisMolName = 'HNO3_v7'
+    'HNO$_{3}$-v8'    : thisMolName = 'HNO3_v8'
+    'HNO$_{3}$-v9'    : thisMolName = 'HNO3_v9'
+    'HO$^{35}$Cl'     : thisMolName = 'HOCl_35'
+    'HO$^{37}$Cl'     : thisMolName = 'HOCl_37'
+d77 2
+a78 2
+    'O$_{2}$-v1'      : thisMolName = 'O2_v1'
+    'O$^{18}$O'       : thisMolName = 'O_18_O'
+d80 6
+a85 6
+    'O$_{3}$-v1,3'    : thisMolName = 'O3_v1_3'
+    'O$_{3}$-v2'      : thisMolName = 'O3_v2'
+    'O$_{2}^{18}$O'   : thisMolName = 'O3_ASYM_O_18'
+    'O$^{18}$OO'      : thisMolName = 'O3_SYM_O_18'
+    '$^{32}$SO$_{2}$' : thisMolName = 'S_32_O2'
+    else:
+d87 8
+d96 3
+d103 3
+d218 1
+a218 1
+  ;; Finish off
+a224 1
+Free_lun, unit
+d226 62
+a287 25
+;; Now write out the two molecules per band files
+for i=0,1 do begin
+  case i of
+    0 : begin
+      filename = emlsMolName
+      array = emlsMolecules
+    end
+    1 : begin
+      filename = umlsMolName
+      array = umlsMolecules
+    end
+  endcase
+  ;; Collapse the sidebands
+  array(1,*,*) = array(0,*,*) or array(1,*,*) or array(2,*,*) 
+  openw, unit, filename, /get_lun
+  printf, unit, '; ----------------------------------------- Molecules per band'
+  printf, unit, ';'
+  printf, unit, '; This file is automatically generated by the program'
+  printf, unit, '; mlspgs/idllib/createspectroscopyl2cf.pro do NOT edit it by hand.'
+  printf, unit, ';'
+  printf, unit, '; Source file information:'
+  printf, unit, '; '+strmid(molID,7,strlen(molID)-9)
+  printf, unit, '; '+strmid(lineID,7,strlen(lineID)-9)
+  printf, unit, '; '+strmid(readID,5,strlen(readID)-7)
+  printf, unit, '; '+strmid(myID,5,strlen(myID)-7)
+d289 5
+d295 1
+a295 2
+  array(*,*,where(niceNames eq 'H2O')) = 1
+  array(*,*,where(niceNames eq 'N2')) = 1
+d297 3
+a299 16
+  sidebandStrings = ['L','','U']
+  noBands = (size ( array ) ) (2)
+  for band = 0, noBands - 1 do begin
+    for sideband = 0, 2 do begin
+      usedMols = where ( reform ( array(sideband, band, *) ) )
+      line = '!define(mol' + string ( band+1, format='(i0)' ) + $
+        sidebandStrings(sideband)+',{['
+      if usedMols(0) ne -1 then $
+        line = line + strjoin ( niceNames(usedMols),',' )
+      line = line + ']})'
+      printf, unit, line        
+    endfor                      ; Loop over sidebands
+    printf, unit
+  endfor                        ; Loop over bands
+  free_lun, unit
+endfor
+@
+
+
+1.7
+log
+@Sorted out extinction better
+@
+text
+@d1 1
+a1 1
+; $Id: createspectroscopyl2cf.pro,v 1.6 2001/11/03 01:34:21 livesey Exp $
+d5 5
+a9 2
+  lineName=lineName, $
+  outName=outName
+a10 2
+if n_elements(outName) eq 0 then $
+  outName = 'spectroscopy.l2cf'
+d19 1
+a19 1
+myID='$Id: createspectroscopyl2cf.pro,v 1.6 2001/11/03 01:34:21 livesey Exp $'
+d42 4
+d47 4
+d86 1
+d133 1
+a133 1
+          thisBand = bands(j)
+d135 5
+d151 5
+d211 47
+@
+
+
+1.6
+log
+@More molecules
+@
+text
+@d1 1
+a1 1
+; $Id: createspectroscopyl2cf.pro,v 1.5 2001/10/17 23:37:04 livesey Exp $
+d18 1
+a18 1
+myID='$Id: createspectroscopyl2cf.pro,v 1.5 2001/10/17 23:37:04 livesey Exp $'
+d21 2
+a22 5
+n2= (where(data.name eq 'N$_{2}$') )(0)
+data(n2).q=1.0
+
+; Remove extinction
+data = data(where(data.name ne 'EXTINCTION'))
+@
+
+
+1.5
+log
+@Swapped delta and gamma
+@
+text
+@d1 1
+a1 1
+; $Id: createspectroscopyl2cf.pro,v 1.4 2001/10/15 19:49:34 livesey Exp $
+d18 1
+a18 1
+myID='$Id: createspectroscopyl2cf.pro,v 1.4 2001/10/15 19:49:34 livesey Exp $'
+d24 3
+d60 4
+@
+
+
+1.4
+log
+@Added an L in front of the line number for each line.
+@
+text
+@d1 1
+a1 1
+; $Id: createspectroscopyl2cf.pro,v 1.3 2001/10/15 17:52:09 livesey Exp $
+d18 1
+a18 1
+myID='$Id: createspectroscopyl2cf.pro,v 1.3 2001/10/15 17:52:09 livesey Exp $'
+d95 1
+a95 1
+      'gamma= '+strtrim(string(data(mol).int1(line), format='(g15.5)'),2) + ', '
+d99 1
+a99 1
+      'delta= '+strtrim(string(data(mol).int2(line), format='(g15.5)'),2) + ', '
+@
+
+
+1.3
+log
+@Removed extra blank line
+@
+text
+@d1 1
+a1 1
+; $Id: createspectroscopyl2cf.pro,v 1.2 2001/10/15 17:51:07 livesey Exp $
+d18 1
+a18 1
+myID='$Id: createspectroscopyl2cf.pro,v 1.2 2001/10/15 17:51:07 livesey Exp $'
+d79 1
+a79 1
+    text= '  '+thisMolName + '_' + string ( line+1, format='(I0)' ) + ': line, '
+d157 1
+a157 1
+        thisMolName+'_'+string(line+1,format='(I0)')+', '
+d160 1
+a160 1
+      thisMolName+'_'+string(data(mol).no_lines,format='(I0)')+' ]'
+@
+
+
+1.2
+log
+@Tidied up.
+@
+text
+@d1 1
+a1 1
+; $Id: createspectroscopyl2cf.pro,v 1.1 2001/10/15 17:46:17 livesey Exp $
+d18 1
+a18 1
+myID='$Id: createspectroscopyl2cf.pro,v 1.1 2001/10/15 17:46:17 livesey Exp $'
+a180 1
+  printf,unit,''
+@
+
+
+1.1
+log
+@First version
+@
+text
+@d1 1
+a1 1
+; $Id$
+d16 3
+a18 3
+Read_Spect_Dbase, molName, lineName, '', data, molID=molID, lineID=lineID
+myID='$Id$'
+help,data,/st
+d35 2
+a36 1
+printf, unit, '; '+strmid(myID,5,strlen(lineID)-7)
+d176 1
+a176 1
+        strtrim(string(data(mol).cont(noNonZero-1)),2)+']'
+@
+

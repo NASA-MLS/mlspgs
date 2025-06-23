@@ -1,0 +1,133 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.1
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.12
+	cfm-single-freq-0-1:1.1.0.10
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.8
+	mus-emls-1-70:1.1.0.6
+	rel-1-0-englocks-work:1.1.0.4
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.2
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	M4-00:1.1
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2021.12.22.17.00.58;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2010.05.15.00.31.11;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Converted to python3
+@
+text
+@#! /usr/bin/python3
+# Copyright 2005, by the California Institute of Technology. ALL
+# RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+# commercial use must be negotiated with the Office of Technology Transfer
+# at the California Institute of Technology.
+
+# This software may be subject to U.S. export control laws. By accepting this
+# software, the user agrees to comply with all applicable U.S. export laws and
+# regulations. User has the responsibility to obtain export licenses, or other
+# export authority as may be required before exporting such information to
+# foreign countries or providing access to foreign persons.
+
+# "$Id: pyuniq.py,v 1.1 2010/05/15 00:31:11 pwagner Exp $"
+# Return the input list with duplicates removed
+# Usage
+# (1) pyuniq.py a
+#     remove duplicates from string a
+#     e.g., if a is "p,q,r,p"
+#     return        "p,q,r"
+# (2) pyuniq.py -s a
+#     treat s as the separator in (1) instead of ","
+# (3) pyuniq.py -c -s a
+#     treat s as the separator in (1) instead of ","
+#     and treat list a as case insensitive
+import sys
+from pyutils import uniq
+
+casesense = True
+# Find which usage (1) - (3)
+if len(sys.argv) > 3:
+# usage (3)
+    s = sys.argv[2][1]
+    a = sys.argv[3]
+    a = a.replace(s,',')
+    casesense = False
+elif len(sys.argv) > 2:
+# usage (2)
+    s = sys.argv[1][1]
+    a = sys.argv[2]
+    a = a.replace(s,',')
+else:
+# usage (1)
+  s = ","
+  a = sys.argv[1]
+
+if casesense == False:
+  a = a.upper()
+
+# print string for m4 to grab
+print(uniq(a), end=" ")
+
+# $Log: pyuniq.py,v $
+# Revision 1.1  2010/05/15 00:31:11  pwagner
+# First commit
+#
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d1 1
+a1 1
+#! /usr/bin/python
+d13 1
+a13 1
+# "$Id: reecho.sh,v 1.9 2009/09/22 17:44:15 pwagner Exp $"
+d50 1
+a50 1
+print uniq(a),
+d52 4
+a55 1
+# $Log: reecho.sh,v $
+@
+

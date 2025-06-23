@@ -1,0 +1,190 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.10
+	cfm-single-freq-0-1:1.2.0.8
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.6
+	mus-emls-1-70:1.2.0.4
+	rel-1-0-englocks-work:1.2.0.2;
+locks; strict;
+comment	@% @;
+
+
+1.2
+date	2017.09.23.00.11.42;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2017.09.21.23.12.46;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Correction and some clarification
+@
+text
+@\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9in
+
+\newcommand{\docname}{wvs-142r1}
+\newcommand{\docdate}{22 September 2017}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+   
+\usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Van\\
+Subject: \>Point on line nearest to a given point\\
+From: \>Van Snyder\\
+%Reference: \\
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-20pt}
+
+Given a point $\mathbf{P}$ and a line $\mathcal{L}(s) = \mathbf{C} + s\,
+\mathbf{U}$, where $\mathbf{C}$ is a point on the line and $\mathbf{U}$ is
+an unit vector along the line, find the value $\hat{s}$ such that the
+point $\mathbf{N}(\hat{s}) = \mathbf{C} + \hat{s}\, \mathbf{U}$ is the
+point on the line that is nearest to $\mathbf{P}$.
+
+\vspace*{0.1in}
+
+\includegraphics{wvs-142-1}
+
+The point $\mathbf{N}(\hat{s})$ on $\mathcal{L}(s)$ that is nearest to
+$\mathbf{P}$ is on a line that is perpendicular to $\mathcal{L}(s)$ and
+that passes through $\mathbf{P}$.
+
+From the diagram, it is clear that the distance $\hat{s}$ along
+$\mathcal{L}(s)$ from $\mathbf{C}$ to $\mathbf{N}(\hat{s})$ is the length
+of the projection of $\mathbf{P}-\mathbf{C}$ onto $\mathcal{L}(s)$, or
+$\hat{s} = (\mathbf{P} - \mathbf{C}) \cdot \mathbf{U}$.  Therefore the
+vector to the point $\mathbf{N}(\hat{s}) = \mathbf{C} + \hat{s}\,
+\mathbf{U}$.  The distance from $\mathbf{N}(\hat{s})$ to $\mathbf{P}$ is
+$|\mathbf{P} - \mathbf{N}(\hat{s})|$.
+
+\label{lastpage}
+\vspace*{-0.1in} % Somehow, this causes lastpage to be defined
+\end{document}
+
+% $Id: wvs-142.tex,v 1.1 2017/09/21 23:12:46 vsnyder Exp $
+
+% $Log: wvs-142.tex,v $
+% Revision 1.1  2017/09/21 23:12:46  vsnyder
+% Initial commit
+%
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d15 2
+a16 2
+\newcommand{\docname}{wvs-142}
+\newcommand{\docdate}{21 September 2017}
+d96 3
+a98 3
+The point $\mathbf{N}$ on $\mathcal{L}(s)$ that is nearest to $\mathbf{P}$
+is on a line that is perpendicular to $\mathcal{L}(s)$ and that passes
+through $\mathbf{P}$.
+d102 5
+a106 4
+of the projection of $\mathbf{P}$ onto $\mathcal{L}(s)$, or $\hat{s} =
+(\mathbf{P} - \mathbf{C}) \cdot \mathbf{U}$.  Therefore the point
+$\mathbf{N}(\hat{s}) = \mathbf{C} + \hat{s}\, \mathbf{U}$.  The distance
+from $\mathbf{N}$ to $\mathbf{P}$ is $|\mathbf{P} - \mathbf{N}|$.
+d112 1
+a112 1
+% $Id: wvs-141.tex,v 1.2 2017/08/31 23:37:30 vsnyder Exp $
+d114 4
+a117 1
+% $Log: wvs-141.tex,v $
+@
+

@@ -1,0 +1,2171 @@
+head	2.80;
+access;
+symbols
+	v5-02-NRT-19:2.80
+	v6-00:2.80
+	v5-02-NRT-18:2.79
+	v5-02:2.77
+	v5-01-NRT-17:2.79
+	v5-01-NRT-16:2.79
+	v5-01-NRT-15:2.79
+	v5-01-NRT-14:2.79
+	neuralnetworks-1-0:2.79.0.4
+	cfm-single-freq-0-1:2.79.0.2
+	v5-01:2.77
+	v5-00:2.77
+	v4-23-TA133:2.77.0.6
+	mus-emls-1-70:2.77.0.4
+	rel-1-0-englocks-work:2.77.0.2
+	VUMLS1-00:2.74
+	VPL1-00:2.72
+	V4-22-NRT-08:2.70
+	VAM1-00:2.68
+	V4-21:2.66.0.2
+	V4-13:2.66
+	V4-12:2.66
+	V4-11:2.66
+	V4-10:2.66
+	V3-43:2.55
+	M4-00:2.60
+	V3-41:2.55
+	V3-40-PlusGM57:2.55.0.2
+	V2-24-NRT-04:2.47
+	V3-33:2.56
+	V2-24:2.47
+	V3-31:2.56
+	V3-30-NRT-05:2.55
+	cfm-01-00:2.55
+	V3-30:2.55
+	V3-20:2.55
+	V3-10:2.53
+	V2-23-NRT-02:2.47
+	V2-23:2.47
+	V2-22-NRT-01:2.47
+	V2-22:2.47
+	V2-21:2.46
+	V2-20:2.46
+	V2-11:2.45
+	V2-10:2.45
+	V2-00:2.45
+	V1-51:2.38
+	V1-50:2.38
+	V1-45:2.36
+	V1-44:2.36
+	V1-43:2.34
+	V1-42:2.29
+	V1-41:2.29
+	V1-32:2.28
+	V1-40:2.29
+	V1-31:2.28
+	V1-30:2.28
+	V1-13:2.19
+	V1-12:2.19
+	V1-11:2.19
+	V1-10:2.18
+	newfwm-feb03:2.18.0.2
+	V1-04:2.9
+	V1-03:2.9
+	V1-02:2.9
+	V1-00:2.8;
+locks; strict;
+comment	@# @;
+
+
+2.80
+date	2024.02.02.21.29.11;	author pwagner;	state Exp;
+branches;
+next	2.79;
+
+2.79
+date	2020.02.21.21.08.24;	author pwagner;	state Exp;
+branches;
+next	2.78;
+
+2.78
+date	2019.10.07.20.03.18;	author vsnyder;	state Exp;
+branches;
+next	2.77;
+
+2.77
+date	2018.02.23.22.10.53;	author mmadatya;	state Exp;
+branches;
+next	2.76;
+
+2.76
+date	2017.12.18.16.41.37;	author mmadatya;	state Exp;
+branches;
+next	2.75;
+
+2.75
+date	2017.10.27.01.30.25;	author vsnyder;	state Exp;
+branches;
+next	2.74;
+
+2.74
+date	2016.12.15.18.22.54;	author pwagner;	state Exp;
+branches;
+next	2.73;
+
+2.73
+date	2016.08.30.23.43.45;	author vsnyder;	state Exp;
+branches;
+next	2.72;
+
+2.72
+date	2016.05.27.20.59.22;	author vsnyder;	state Exp;
+branches;
+next	2.71;
+
+2.71
+date	2016.05.27.01.10.27;	author vsnyder;	state Exp;
+branches;
+next	2.70;
+
+2.70
+date	2016.05.24.01.20.17;	author vsnyder;	state Exp;
+branches;
+next	2.69;
+
+2.69
+date	2016.02.25.21.00.18;	author vsnyder;	state Exp;
+branches;
+next	2.68;
+
+2.68
+date	2015.09.22.01.55.58;	author vsnyder;	state Exp;
+branches;
+next	2.67;
+
+2.67
+date	2015.03.28.00.55.37;	author vsnyder;	state Exp;
+branches;
+next	2.66;
+
+2.66
+date	2014.04.07.17.23.55;	author pwagner;	state Exp;
+branches;
+next	2.65;
+
+2.65
+date	2013.09.03.23.59.16;	author pwagner;	state Exp;
+branches;
+next	2.64;
+
+2.64
+date	2013.07.25.00.21.27;	author vsnyder;	state Exp;
+branches;
+next	2.63;
+
+2.63
+date	2013.07.18.01.10.28;	author vsnyder;	state Exp;
+branches;
+next	2.62;
+
+2.62
+date	2013.05.31.00.40.56;	author vsnyder;	state Exp;
+branches;
+next	2.61;
+
+2.61
+date	2013.05.21.23.52.47;	author vsnyder;	state Exp;
+branches;
+next	2.60;
+
+2.60
+date	2011.12.23.23.31.13;	author vsnyder;	state Exp;
+branches;
+next	2.59;
+
+2.59
+date	2011.08.25.22.41.27;	author vsnyder;	state Exp;
+branches;
+next	2.58;
+
+2.58
+date	2011.07.29.01.46.54;	author vsnyder;	state Exp;
+branches;
+next	2.57;
+
+2.57
+date	2011.07.12.22.35.44;	author honghanh;	state Exp;
+branches;
+next	2.56;
+
+2.56
+date	2011.01.13.00.29.42;	author vsnyder;	state Exp;
+branches;
+next	2.55;
+
+2.55
+date	2010.01.23.01.03.00;	author vsnyder;	state Exp;
+branches;
+next	2.54;
+
+2.54
+date	2009.09.19.00.34.47;	author vsnyder;	state Exp;
+branches;
+next	2.53;
+
+2.53
+date	2008.09.30.22.22.05;	author vsnyder;	state Exp;
+branches;
+next	2.52;
+
+2.52
+date	2008.06.09.20.33.46;	author vsnyder;	state Exp;
+branches;
+next	2.51;
+
+2.51
+date	2008.06.06.01.55.07;	author vsnyder;	state Exp;
+branches;
+next	2.50;
+
+2.50
+date	2008.06.05.02.04.11;	author vsnyder;	state Exp;
+branches;
+next	2.49;
+
+2.49
+date	2008.04.26.00.38.10;	author livesey;	state Exp;
+branches;
+next	2.48;
+
+2.48
+date	2008.04.11.01.16.42;	author livesey;	state Exp;
+branches;
+next	2.47;
+
+2.47
+date	2007.01.11.20.41.49;	author vsnyder;	state Exp;
+branches;
+next	2.46;
+
+2.46
+date	2006.10.11.00.14.57;	author pwagner;	state Exp;
+branches;
+next	2.45;
+
+2.45
+date	2006.05.02.18.51.42;	author pwagner;	state Exp;
+branches;
+next	2.44;
+
+2.44
+date	2006.01.26.00.30.35;	author pwagner;	state Exp;
+branches;
+next	2.43;
+
+2.43
+date	2006.01.11.16.54.37;	author pwagner;	state Exp;
+branches;
+next	2.42;
+
+2.42
+date	2005.08.03.18.00.24;	author vsnyder;	state Exp;
+branches;
+next	2.41;
+
+2.41
+date	2005.06.24.23.41.19;	author vsnyder;	state Exp;
+branches;
+next	2.40;
+
+2.40
+date	2005.06.08.21.44.27;	author pwagner;	state Exp;
+branches;
+next	2.39;
+
+2.39
+date	2005.04.19.19.12.54;	author livesey;	state Exp;
+branches;
+next	2.38;
+
+2.38
+date	2004.10.13.02.22.38;	author livesey;	state Exp;
+branches;
+next	2.37;
+
+2.37
+date	2004.09.27.20.10.18;	author livesey;	state Exp;
+branches;
+next	2.36;
+
+2.36
+date	2004.06.17.22.33.41;	author pwagner;	state Exp;
+branches;
+next	2.35;
+
+2.35
+date	2004.06.03.22.58.05;	author vsnyder;	state Exp;
+branches;
+next	2.34;
+
+2.34
+date	2004.04.16.00.44.04;	author livesey;	state Exp;
+branches;
+next	2.33;
+
+2.33
+date	2004.03.17.17.14.48;	author livesey;	state Exp;
+branches;
+next	2.32;
+
+2.32
+date	2004.02.10.21.16.46;	author livesey;	state Exp;
+branches;
+next	2.31;
+
+2.31
+date	2004.01.24.01.00.32;	author livesey;	state Exp;
+branches;
+next	2.30;
+
+2.30
+date	2004.01.23.05.35.00;	author livesey;	state Exp;
+branches;
+next	2.29;
+
+2.29
+date	2004.01.09.07.24.59;	author livesey;	state Exp;
+branches;
+next	2.28;
+
+2.28
+date	2003.08.16.00.55.19;	author vsnyder;	state Exp;
+branches;
+next	2.27;
+
+2.27
+date	2003.08.13.00.47.17;	author livesey;	state Exp;
+branches;
+next	2.26;
+
+2.26
+date	2003.08.08.23.04.31;	author livesey;	state Exp;
+branches;
+next	2.25;
+
+2.25
+date	2003.07.15.22.09.05;	author livesey;	state Exp;
+branches;
+next	2.24;
+
+2.24
+date	2003.07.07.23.45.46;	author pwagner;	state Exp;
+branches;
+next	2.23;
+
+2.23
+date	2003.05.29.16.35.55;	author livesey;	state Exp;
+branches;
+next	2.22;
+
+2.22
+date	2003.05.05.23.00.05;	author livesey;	state Exp;
+branches;
+next	2.21;
+
+2.21
+date	2003.04.22.00.18.33;	author dwu;	state Exp;
+branches;
+next	2.20;
+
+2.20
+date	2003.04.09.00.10.19;	author livesey;	state Exp;
+branches;
+next	2.19;
+
+2.19
+date	2003.03.06.19.46.49;	author pwagner;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2003.02.06.00.44.55;	author livesey;	state Exp;
+branches
+	2.18.2.1;
+next	2.17;
+
+2.17
+date	2003.01.26.04.41.38;	author livesey;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2003.01.09.00.07.59;	author pwagner;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2003.01.07.23.43.37;	author livesey;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2002.08.20.19.19.08;	author livesey;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2002.07.18.22.04.43;	author vsnyder;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2002.06.04.22.05.42;	author livesey;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2002.05.14.00.29.03;	author livesey;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2002.05.07.20.02.46;	author livesey;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2002.04.10.17.41.12;	author pwagner;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2002.03.15.21.22.07;	author livesey;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2002.03.14.00.32.15;	author pwagner;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2002.02.09.19.12.38;	author livesey;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2001.11.08.00.12.08;	author livesey;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2001.11.02.00.55.15;	author jonathan;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2001.11.02.00.37.03;	author jonathan;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2001.10.05.00.41.30;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.10.03.22.45.01;	author vsnyder;	state Exp;
+branches;
+next	;
+
+2.18.2.1
+date	2003.03.27.00.48.56;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.80
+log
+@Added CloudTopPressure as new Quantity type
+@
+text
+@# This file is processed by util/init_gen to produce parameter statements
+# and references to add_ident to put text into the string and symbol tables.
+
+# You can put one or two names on a line, separated by spaces.
+
+# The first name is the parameter name WITHOUT ITS PREFIX.  The
+# prefix comes from the command line.
+
+# The second name is the entity's text -- e.g. a field name.  If
+# it's not present, the first name is used for the entity's text.
+
+# Be careful of the case of names here.  L1BData uses these names
+# to open HDF thing-o's, and HDF is case sensitive.
+
+# The intent is that you can sort the file, and it will produce the
+# statements in parameter-name order.
+
+# Blank lines don't count.
+
+# Comments begin with #, ! or % and extend to the end of the line.
+
+# $Id: lit_names.txt,v 2.79 2020/02/21 21:08:24 pwagner Exp $
+
+a                # polarization
+adopted
+angle
+AscDescMode
+ascii
+asmls
+
+b                # polarization
+baseline
+binary
+boundarypressure
+
+C
+calSidebandFraction
+channel
+chunk
+clear
+clear_110RH_below_top
+clear_110RH_below_tropopause
+clear_0RH
+clear_lowest_0_110RH
+cloudExtinction
+cloudInducedRadiance
+cloudMinMax
+cloudRadSensitivity
+cloudWater
+cloudTemperature # temperature on a cloud grid
+CloudTopPressure
+cloudy_110RH_below_top
+cloudy_110RH_in_cloud
+cloudy_nearside_only
+columnabundance
+columns
+complete
+convergenceRatio
+correct # for trapezoidal quadrature in the full forward model
+create
+
+days
+deg
+degrees
+dimensionless
+dimless
+dl
+dobsonunits  # 1 DU = 2.687e20 molecules/m^2
+DU  # 1 DU = 2.687e20 molecules/m^2
+
+ECR
+ECRtoFOV
+earthradius
+earthRefl
+effectiveOpticalDepth
+elevOffset
+emls
+eta
+
+false
+fieldAzimuth
+fieldElevation
+fieldStrength
+frequency
+full
+
+gauss
+geocAltitude
+geodAltitude
+geocentric
+geodAngle
+geodetic
+geoHeight
+GHz
+gm3              # gm / meter^3
+gph
+gph_precision
+GHzAzim
+
+hdf
+hdfeos
+heightOffset
+hours
+hPa
+Hz
+hybrid
+
+IceDensity
+instECR
+integer
+intermediatefrequency
+invkm
+invm
+iteration
+isotopeRatio
+iwc              # gm / meter^3
+iwc_low_height
+iwc_high_height
+iwp
+
+K
+KHz
+km
+kms # km/s
+
+l1bMAFBaseline
+l1bMIF_TAI
+latitude
+limbSidebandFraction
+linear
+lineCenter       # \nu_0 offset from catalog
+lineWidth        # w     offset from catalog
+lineWidth_tDep   # n     offset from catalog
+logp
+LOSTransFunc
+LOSVel
+LowestRetrievedPressure
+LSBFrequency
+
+m
+maf
+mafs
+magAzEl
+magneticField
+magneticModel
+massMeanDiameterIce
+massMeanDiameterWater
+matrix3x3
+mb
+meters
+mgm3             # mg / meter^3
+MHz
+mif
+mifDeadTime      # How much of MIF is not collecting data
+mifExtinction    # Extinction as a minor-frame quantity
+mifExtinctionExtrapolation # exponent in MIF extinction extrapolation
+mifExtinctionForm # exponent in MIF extinction derivative extrapolation
+mifExtinctionV2  # Extinction as a minor-frame quantity
+mifRadC          # Semi-minor axis of ellipse at inclination mifIncline
+mifRHI           # RHI as a minor-frame quantity
+mifs
+minutes
+molcm2 # mol/cm^2
+ms # m/s
+
+nameFragment
+netCDF4
+noiseBandwidth
+none
+
+open
+opticalDepth
+orbitInclination
+orbits
+
+pa
+pctrhi
+phitan
+polarLinear
+ppbv
+ppmv
+pptv
+pressure
+primary
+profiles
+ptan
+
+QTM
+quality
+
+rad
+radiance
+radians
+rdonly
+rdwrite
+refGPH
+refltemp
+refltrans
+reflrefl
+reflspill
+# rhi Moved to tables/sps_cross_ref_table.txt
+rows
+
+s
+scanResidual
+scatteringAngle # for TScat calculations
+scECI
+scECR
+scGeocAlt
+scVelECI
+scVelECR
+secondary
+seconds
+singleChannelRadiance
+sizeDistribution
+spaceRadiance
+status
+strayRadiance
+surfaceHeight
+surfaceType
+swath
+systemTemperature
+sza
+
+temperature_prec temperature_precision
+tertiary
+theta
+THz
+time
+tkgen
+tngtECI
+tngtECR
+tngtGeocAlt
+tngtGeodAlt
+tngtGeodLat
+totalExtinction
+totalPowerWeight
+true
+TScat
+
+uncompressRadiance
+UMLS
+us
+USBFrequency
+
+vmr
+
+wrong # for trapezoidal quadrature in the full forward model
+
+xptl1
+xyz
+
+zeta
+zonalavg
+
+# Temperature has to be last so it can also be counted as a molecule
+# in Load_Sps_Data
+
+temperature
+
+# $Log: lit_names.txt,v $
+# Revision 2.79  2020/02/21 21:08:24  pwagner
+# Added netCDF4 in anticipation
+#
+# Revision 2.78  2019/10/07 20:03:18  vsnyder
+# Add Correct and Wrong for trapezoidal quadrature in FullForwardModel
+#
+# Revision 2.77  2018/02/23 22:10:53  mmadatya
+# Added instECR for ASMLS
+#
+# Revision 2.76  2017/12/18 16:41:37  mmadatya
+# Added geoHeight as new quantity template
+#
+# Revision 2.75  2017/10/27 01:30:25  vsnyder
+# Remove MIFLOS
+#
+# Revision 2.74  2016/12/15 18:22:54  pwagner
+# Added asmls instrument
+#
+# Revision 2.73  2016/08/30 23:43:45  vsnyder
+# Add ECR and TngtGeodLat
+#
+# Revision 2.72  2016/05/27 20:59:22  vsnyder
+# Remove l_mifIncline and l_mifTanHt because they are redundant to
+# l_OrbitInclination and l_tngtGeodAlt
+#
+# Revision 2.71  2016/05/27 01:10:27  vsnyder
+# Add L_mifTanHt
+#
+# Revision 2.70  2016/05/24 01:20:17  vsnyder
+# Add mifIncline, mifLOS, and mifRadC
+#
+# Revision 2.69  2016/02/25 21:00:18  vsnyder
+# Add QTM
+#
+# Revision 2.68  2015/09/22 01:55:58  vsnyder
+# Add GHzAzim, ScECR
+#
+# Revision 2.67  2015/03/28 00:55:37  vsnyder
+# Remove azimuth
+#
+# Revision 2.66  2014/04/07 17:23:55  pwagner
+# Added new l2gp data field AscDescMode
+#
+# Revision 2.65  2013/09/03 23:59:16  pwagner
+# Added us (microsecond)
+#
+# Revision 2.64  2013/07/25 00:21:27  vsnyder
+# Add MIFRHI
+#
+# Revision 2.63  2013/07/18 01:10:28  vsnyder
+# Remove scVel since it's ambiguous whether it's ECI or ECR, and nobody
+# uses it anyway.
+#
+# Revision 2.62  2013/05/31 00:40:56  vsnyder
+# Add geocentric and geodetic
+#
+# Revision 2.61  2013/05/21 23:52:47  vsnyder
+# Add MIFExtinctionExtrapolation and MIFExtinctionForm
+#
+# Revision 2.60  2011/12/23 23:31:13  vsnyder
+# Add LowestRetrievePressure and MIFExtinction[v2]
+#
+# Revision 2.59  2011/08/25 22:41:27  vsnyder
+# Move RHi to tables/sps_cross_ref_table.txt
+#
+# Revision 2.58  2011/07/29 01:46:54  vsnyder
+# Make CloudIce a molecule
+#
+# Revision 2.57  2011/07/12 22:35:44  honghanh
+# Change l_grid to l_hdfeos
+#
+# Revision 2.56  2011/01/13 00:29:42  vsnyder
+# Put temperature last, and a comment that it has to be last
+#
+# Revision 2.55  2010/01/23 01:03:00  vsnyder
+# Remove LogIWC
+#
+# Revision 2.54  2009/09/19 00:34:47  vsnyder
+# Add LogIWC
+#
+# Revision 2.53  2008/09/30 22:22:05  vsnyder
+# Add iwc, gm3, mgm3
+#
+# Revision 2.52  2008/06/09 20:33:46  vsnyder
+# Move TScat here from l2/lit_names
+#
+# Revision 2.51  2008/06/06 01:55:07  vsnyder
+# Add ScatteringAngle
+#
+# Revision 2.50  2008/06/05 02:04:11  vsnyder
+# Add cloudTemperature
+#
+# Revision 2.49  2008/04/26 00:38:10  livesey
+# Added totalPowerWeight
+#
+# Revision 2.48  2008/04/11 01:16:42  livesey
+# Added uncompressRadiance
+#
+# Revision 2.47  2007/01/11 20:41:49  vsnyder
+# Add SurfaceHeight
+#
+# Revision 2.46  2006/10/11 00:14:57  pwagner
+# Added convergenceRatio for new field in L2GP data type
+#
+# Revision 2.45  2006/05/02 18:51:42  pwagner
+# Added eta for leta-level gmao files
+#
+# Revision 2.44  2006/01/26 00:30:35  pwagner
+# DU synonym for DobsonUnits
+#
+# Revision 2.43  2006/01/11 16:54:37  pwagner
+# Added molcm2 for column abundances
+#
+# Revision 2.42  2005/08/03 18:00:24  vsnyder
+# Delete d[nvw], add L1BMIF_TAI and MifDeadTime
+#
+# Revision 2.41  2005/06/24 23:41:19  vsnyder
+# Add LineCenter, LineWidth and LineWidth_TDep
+#
+# Revision 2.40  2005/06/08 21:44:27  pwagner
+# Added more file-related lits
+#
+# Revision 2.39  2005/04/19 19:12:54  livesey
+# Renamed mls1 to xptl1
+#
+# Revision 2.38  2004/10/13 02:22:38  livesey
+# Added geocAltitude
+#
+# Revision 2.37  2004/09/27 20:10:18  livesey
+# Added L1BMAFBaseline
+#
+# Revision 2.36  2004/06/17 22:33:41  pwagner
+# Added integer
+#
+# Revision 2.35  2004/06/03 22:58:05  vsnyder
+# Add ms and kms literals
+#
+# Revision 2.34  2004/04/16 00:44:04  livesey
+# Added singleChannelRadiance
+#
+# Revision 2.33  2004/03/17 17:14:48  livesey
+# Added cloudMinMax
+#
+# Revision 2.32  2004/02/10 21:16:46  livesey
+# Added status and quality
+#
+# Revision 2.31  2004/01/24 01:00:32  livesey
+# Added adopted
+#
+# Revision 2.30  2004/01/23 05:35:00  livesey
+# Added rows and columns
+#
+# Revision 2.29  2004/01/09 07:24:59  livesey
+# Added the fictitious instrument mls1
+#
+# Revision 2.28  2003/08/16 00:55:19  vsnyder
+# Add MagAzEl
+#
+# Revision 2.27  2003/08/13 00:47:17  livesey
+# Added polarLinear model stuff
+#
+# Revision 2.26  2003/08/08 23:04:31  livesey
+# Added fieldAzimuth, fieldElevation and fieldStrength
+#
+# Revision 2.25  2003/07/15 22:09:05  livesey
+# Moved in forward model types from l2
+#
+# Revision 2.24  2003/07/07 23:45:46  pwagner
+# Added grid, hdf, hdfeos, and swath
+#
+# Revision 2.23  2003/05/29 16:35:55  livesey
+# New sideband fractions and reflector stuff
+#
+# Revision 2.22  2003/05/05 23:00:05  livesey
+# Merged in feb03 newfwm branch
+#
+# Revision 2.21  2003/04/22 00:18:33  dwu
+# move in boundarypressure from L2
+#
+# Revision 2.20  2003/04/09 00:10:19  livesey
+# Added literals for Dong and Jonathan
+#
+# Revision 2.19  2003/03/06 19:46:49  pwagner
+# columnAbundance moved to lib from l2
+#
+# Revision 2.18.2.1  2003/03/27 00:48:56  vsnyder
+# Add ECRtoFOV
+#
+# Revision 2.18  2003/02/06 00:44:55  livesey
+# Added nameFragment and sza for binSelector
+#
+# Revision 2.17  2003/01/26 04:41:38  livesey
+# Added profiles
+#
+# Revision 2.16  2003/01/09 00:07:59  pwagner
+# Newly added Chunk and Iteration
+#
+# Revision 2.15  2003/01/07 23:43:37  livesey
+# Literals for magnetic field
+#
+# Revision 2.14  2002/08/20 19:19:08  livesey
+# Moved in angle and pressure from l2
+#
+# Revision 2.13  2002/07/18 22:04:43  vsnyder
+# Add dn, dv, dw
+#
+# Revision 2.12  2002/06/04 22:05:42  livesey
+# Added phiTan
+#
+# Revision 2.11  2002/05/14 00:29:03  livesey
+# Added system temperature
+#
+# Revision 2.10  2002/05/07 20:02:46  livesey
+# Added noisebandwidth
+#
+# Revision 2.9  2002/04/10 17:41:12  pwagner
+# Added rhi-related lits
+#
+# Revision 2.8  2002/03/15 21:22:07  livesey
+# Added latitude
+#
+# Revision 2.7  2002/03/14 00:32:15  pwagner
+# Added scVelECI and scVelECR
+#
+# Revision 2.6  2002/02/09 19:12:38  livesey
+# Added optical depth
+#
+# Revision 2.5  2001/11/08 00:12:08  livesey
+# Removed extinction, it's now in molecules (not pretty, but unfortunately
+# necessary).
+#
+# Revision 2.4  2001/11/02 00:55:15  jonathan
+# rm IWC1
+#
+# Revision 2.3  2001/11/02 00:37:03  jonathan
+# add IWC1
+#
+# Revision 2.2  2001/10/05 00:41:30  vsnyder
+# Move DNWT lits to l2/lit_names.txt
+#
+# Revision 2.1  2001/10/03 22:45:01  vsnyder
+# Initial commit
+#
+@
+
+
+2.79
+log
+@Added netCDF4 in anticipation
+@
+text
+@d22 1
+a22 1
+# $Id: lit_names.txt,v 2.78 2019/10/07 20:03:18 vsnyder Exp $
+d51 1
+d262 3
+@
+
+
+2.78
+log
+@Add Correct and Wrong for trapezoidal quadrature in FullForwardModel
+@
+text
+@d22 1
+a22 1
+# $Id: lit_names.txt,v 2.77 2018/02/23 22:10:53 mmadatya Exp $
+d166 1
+d261 3
+@
+
+
+2.77
+log
+@Added instECR for ASMLS
+@
+text
+@d1 3
+d20 1
+a20 1
+# Comments begin with # and extend to the end of the line.
+d22 1
+a22 1
+# $Id: lit_names.txt,v 2.76 2017/12/18 16:41:37 mmadatya Exp $
+d58 1
+d246 2
+d260 3
+@
+
+
+2.76
+log
+@Added geoHeight as new quantity template
+@
+text
+@d19 1
+a19 1
+# $Id: lit_names.txt,v 2.75 2017/10/27 01:30:25 vsnyder Exp $
+d104 1
+d254 3
+@
+
+
+2.75
+log
+@Remove MIFLOS
+@
+text
+@d19 1
+a19 1
+# $Id: lit_names.txt,v 2.74 2016/12/15 18:22:54 pwagner Exp $
+d88 1
+d253 3
+@
+
+
+2.74
+log
+@Added asmls instrument
+@
+text
+@d19 1
+a19 1
+# $Id: lit_names.txt,v 2.73 2016/08/30 23:43:45 vsnyder Exp $
+a151 1
+mifLOS           # Line-of-sight C and U vectors
+d252 3
+@
+
+
+2.73
+log
+@Add ECR and TngtGeodLat
+@
+text
+@d19 1
+a19 1
+# $Id: lit_names.txt,v 2.72 2016/05/27 20:59:22 vsnyder Exp $
+d26 1
+d253 3
+@
+
+
+2.72
+log
+@Remove l_mifIncline and l_mifTanHt because they are redundant to
+l_OrbitInclination and l_tngtGeodAlt
+@
+text
+@d19 1
+a19 1
+# $Id: lit_names.txt,v 2.71 2016/05/27 01:10:27 vsnyder Exp $
+d65 1
+d223 5
+a227 3
+tngteci
+tngtgeocalt
+tngtgeodalt
+d252 4
+@
+
+
+2.71
+log
+@Add L_mifTanHt
+@
+text
+@d19 1
+a19 1
+# $Id: lit_names.txt,v 2.70 2016/05/24 01:20:17 vsnyder Exp $
+a149 1
+mifIncline       # Inclination of a plane defined by mifLOS
+a152 1
+mifTanHt         # Geodetic tangent height, meters
+d249 3
+@
+
+
+2.70
+log
+@Add mifIncline, mifLOS, and mifRadC
+@
+text
+@d19 1
+a19 1
+# $Id: lit_names.txt,v 2.69 2016/02/25 21:00:18 vsnyder Exp $
+d151 1
+a151 1
+mifLOS           # Line-of-sight C and U vectors for 3D model
+d154 1
+d251 3
+@
+
+
+2.69
+log
+@Add QTM
+@
+text
+@d19 1
+a19 1
+# $Id: lit_names.txt,v 2.68 2015/09/22 01:55:58 vsnyder Exp $
+d150 3
+d250 3
+@
+
+
+2.68
+log
+@Add GHzAzim, ScECR
+@
+text
+@d19 1
+a19 1
+# $Id: lit_names.txt,v 2.67 2015/03/28 00:55:37 vsnyder Exp $
+d177 1
+d247 3
+@
+
+
+2.67
+log
+@Remove azimuth
+@
+text
+@d19 1
+a19 1
+# $Id: lit_names.txt,v 2.66 2014/04/07 17:23:55 pwagner Exp $
+d90 1
+d196 1
+d246 3
+@
+
+
+2.66
+log
+@Added new l2gp data field AscDescMode
+@
+text
+@d19 1
+a19 1
+# $Id: lit_names.txt,v 2.65 2013/09/03 23:59:16 pwagner Exp $
+a25 1
+azimuth
+d244 3
+@
+
+
+2.65
+log
+@Added us (microsecond)
+@
+text
+@d19 1
+a19 1
+# $Id: lit_names.txt,v 2.64 2013/07/25 00:21:27 vsnyder Exp $
+d24 1
+d245 3
+@
+
+
+2.64
+log
+@Add MIFRHI
+@
+text
+@d19 1
+a19 1
+# $Id: lit_names.txt,v 2.63 2013/07/18 01:10:28 vsnyder Exp $
+d227 1
+d244 3
+@
+
+
+2.63
+log
+@Remove scVel since it's ambiguous whether it's ECI or ECR, and nobody
+uses it anyway.
+@
+text
+@d19 1
+a19 1
+# $Id: lit_names.txt,v 2.62 2013/05/31 00:40:56 vsnyder Exp $
+d149 1
+d243 4
+@
+
+
+2.62
+log
+@Add geocentric and geodetic
+@
+text
+@d19 1
+a19 1
+# $Id: lit_names.txt,v 2.61 2013/05/21 23:52:47 vsnyder Exp $
+a194 1
+scVel
+d242 3
+@
+
+
+2.61
+log
+@Add MIFExtinctionExtrapolation and MIFExtinctionForm
+@
+text
+@d19 1
+a19 1
+# $Id: lit_names.txt,v 2.60 2011/12/23 23:31:13 vsnyder Exp $
+d83 1
+d85 1
+d243 3
+@
+
+
+2.60
+log
+@Add LowestRetrievePressure and MIFExtinction[v2]
+@
+text
+@d19 1
+a19 1
+# $Id: lit_names.txt,v 2.59 2011/08/25 22:41:27 vsnyder Exp $
+d25 1
+d144 2
+d241 3
+@
+
+
+2.59
+log
+@Move RHi to tables/sps_cross_ref_table.txt
+@
+text
+@d19 1
+a19 1
+# $Id: lit_names.txt,v 2.58 2011/07/29 01:46:54 vsnyder Exp $
+d124 1
+d142 2
+d238 3
+@
+
+
+2.58
+log
+@Make CloudIce a molecule
+@
+text
+@d19 1
+a19 1
+# $Id: lit_names.txt,v 2.57 2011/07/12 22:35:44 honghanh Exp $
+d179 1
+a179 1
+rhi
+d235 3
+@
+
+
+2.57
+log
+@Change l_grid to l_hdfeos
+@
+text
+@d19 1
+a19 1
+# $Id: lit_names.txt,v 2.56 2011/01/13 00:29:42 vsnyder Exp $
+a40 1
+cloudIce
+d235 3
+@
+
+
+2.56
+log
+@Put temperature last, and a comment that it has to be last
+@
+text
+@d19 1
+a19 1
+# $Id: lit_names.txt,v 2.55 2010/01/23 01:03:00 vsnyder Exp $
+a87 1
+grid
+d236 3
+@
+
+
+2.55
+log
+@Remove LogIWC
+@
+text
+@d19 1
+a19 1
+# $Id: lit_names.txt,v 2.54 2009/09/19 00:34:47 vsnyder Exp $
+a204 1
+temperature
+d231 5
+d237 3
+@
+
+
+2.54
+log
+@Add LogIWC
+@
+text
+@d19 1
+a19 1
+# $Id: lit_names.txt,v 2.53 2008/09/30 22:22:05 vsnyder Exp $
+a122 1
+logIWC           # log10(iwc)
+d233 3
+@
+
+
+2.53
+log
+@Add iwc, gm3, mgm3
+@
+text
+@d19 1
+a19 1
+# $Id: lit_names.txt,v 2.52 2008/06/09 20:33:46 vsnyder Exp $
+d123 1
+d234 3
+@
+
+
+2.52
+log
+@Move TScat here from l2/lit_names
+@
+text
+@d19 1
+a19 1
+# $Id: lit_names.txt,v 2.51 2008/06/06 01:55:07 vsnyder Exp $
+d85 1
+d105 1
+d139 1
+d233 3
+@
+
+
+2.51
+log
+@Add ScatteringAngle
+@
+text
+@d19 1
+a19 1
+# $Id: lit_names.txt,v 2.50 2008/06/05 02:04:11 vsnyder Exp $
+d215 1
+d230 3
+@
+
+
+2.50
+log
+@Add cloudTemperature
+@
+text
+@d19 1
+a19 1
+# $Id: lit_names.txt,v 2.49 2008/04/26 00:38:10 livesey Exp $
+d183 1
+d229 3
+@
+
+
+2.49
+log
+@Added totalPowerWeight
+@
+text
+@d19 1
+a19 1
+# $Id: lit_names.txt,v 2.48 2008/04/11 01:16:42 livesey Exp $
+d46 1
+d228 3
+@
+
+
+2.48
+log
+@Added uncompressRadiance
+@
+text
+@d19 1
+a19 1
+# $Id: lit_names.txt,v 2.47 2007/01/11 20:41:49 vsnyder Exp $
+d211 1
+d227 3
+@
+
+
+2.47
+log
+@Add SurfaceHeight
+@
+text
+@d19 1
+a19 1
+# $Id: lit_names.txt,v 2.46 2006/10/11 00:14:57 pwagner Exp $
+d213 1
+d226 3
+@
+
+
+2.46
+log
+@Added convergenceRatio for new field in L2GP data type
+@
+text
+@d19 1
+a19 1
+# $Id: lit_names.txt,v 2.45 2006/05/02 18:51:42 pwagner Exp $
+d194 1
+d225 3
+@
+
+
+2.45
+log
+@Added eta for leta-level gmao files
+@
+text
+@d19 1
+a19 1
+# $Id: lit_names.txt,v 2.44 2006/01/26 00:30:35 pwagner Exp $
+d52 1
+d224 3
+@
+
+
+2.44
+log
+@DU synonym for DobsonUnits
+@
+text
+@d19 1
+a19 1
+# $Id: lit_names.txt,v 2.43 2006/01/11 16:54:37 pwagner Exp $
+d69 1
+d223 3
+@
+
+
+2.43
+log
+@Added molcm2 for column abundances
+@
+text
+@d19 1
+a19 1
+# $Id: lit_names.txt,v 2.42 2005/08/03 18:00:24 vsnyder Exp $
+d61 1
+d222 3
+@
+
+
+2.42
+log
+@Delete d[nvw], add L1BMIF_TAI and MifDeadTime
+@
+text
+@d19 1
+a19 1
+# $Id: lit_names.txt,v 2.41 2005/06/24 23:41:19 vsnyder Exp $
+d60 1
+a60 1
+dobsonunits
+d138 1
+d221 3
+@
+
+
+2.41
+log
+@Add LineCenter, LineWidth and LineWidth_TDep
+@
+text
+@d17 3
+a19 1
+# $Id: lit_names.txt,v 2.40 2005/06/08 21:44:27 pwagner Exp $
+a59 1
+dn
+a60 2
+dv
+dw
+d110 1
+d135 1
+d220 3
+@
+
+
+2.40
+log
+@Added more file-related lits
+@
+text
+@d17 1
+a17 1
+# $Id: lit_names.txt,v 2.39 2005/04/19 19:12:54 livesey Exp $
+d114 3
+a116 1
+linewidth
+d219 3
+@
+
+
+2.39
+log
+@Renamed mls1 to xptl1
+@
+text
+@d17 1
+a17 1
+# $Id: lit_names.txt,v 2.38 2004/10/13 02:22:38 livesey Exp $
+d22 1
+d26 1
+d50 1
+d141 1
+d163 2
+d198 1
+d214 1
+d217 3
+@
+
+
+2.38
+log
+@Added geocAltitude
+@
+text
+@d17 1
+a17 1
+# $Id: lit_names.txt,v 2.37 2004/09/27 20:10:18 livesey Exp $
+a131 1
+mls1
+d203 1
+d209 3
+@
+
+
+2.37
+log
+@Added L1BMAFBaseline
+@
+text
+@d17 1
+a17 1
+# $Id: lit_names.txt,v 2.36 2004/06/17 22:33:41 pwagner Exp $
+d75 1
+d209 3
+@
+
+
+2.36
+log
+@Added integer
+@
+text
+@d17 1
+a17 1
+# $Id: lit_names.txt,v 2.35 2004/06/03 22:58:05 vsnyder Exp $
+d106 1
+d208 3
+@
+
+
+2.35
+log
+@Add ms and kms literals
+@
+text
+@d17 1
+a17 1
+# $Id: lit_names.txt,v 2.34 2004/04/16 00:44:04 livesey Exp $
+d91 1
+d207 3
+@
+
+
+2.34
+log
+@Added singleChannelRadiance
+@
+text
+@d17 1
+a17 1
+# $Id: lit_names.txt,v 2.33 2004/03/17 17:14:48 livesey Exp $
+d103 1
+d130 1
+d206 3
+@
+
+
+2.33
+log
+@Added cloudMinMax
+@
+text
+@d17 1
+a17 1
+# $Id: lit_names.txt,v 2.32 2004/02/10 21:16:46 livesey Exp $
+d172 1
+d204 3
+@
+
+
+2.32
+log
+@Added status and quality
+@
+text
+@d17 1
+a17 1
+# $Id: lit_names.txt,v 2.31 2004/01/24 01:00:32 livesey Exp $
+d39 1
+d203 3
+@
+
+
+2.31
+log
+@Added adopted
+@
+text
+@d17 1
+a17 1
+# $Id: lit_names.txt,v 2.30 2004/01/23 05:35:00 livesey Exp $
+d149 2
+d173 1
+d202 3
+@
+
+
+2.30
+log
+@Added rows and columns
+@
+text
+@d17 1
+a17 1
+# $Id: lit_names.txt,v 2.29 2004/01/09 07:24:59 livesey Exp $
+d20 1
+d199 3
+@
+
+
+2.29
+log
+@Added the fictitious instrument mls1
+@
+text
+@d17 1
+a17 1
+# $Id: lit_names.txt,v 2.28 2003/08/16 00:55:19 vsnyder Exp $
+d44 1
+d157 1
+d198 3
+@
+
+
+2.28
+log
+@Add MagAzEl
+@
+text
+@d17 1
+a17 1
+# $Id: lit_names.txt,v 2.27 2003/08/13 00:47:17 livesey Exp $
+d125 1
+d196 3
+@
+
+
+2.27
+log
+@Added polarLinear model stuff
+@
+text
+@d17 1
+a17 1
+# $Id: lit_names.txt,v 2.26 2003/08/08 23:04:31 livesey Exp $
+d19 1
+d22 1
+d113 1
+d195 3
+@
+
+
+2.26
+log
+@Added fieldAzimuth, fieldElevation and fieldStrength
+@
+text
+@d17 1
+a17 1
+# $Id: lit_names.txt,v 2.25 2003/07/15 22:09:05 livesey Exp $
+d134 1
+a134 1
+ptan
+d141 1
+d192 3
+@
+
+
+2.25
+log
+@Moved in forward model types from l2
+@
+text
+@d17 1
+a17 1
+# $Id: lit_names.txt,v 2.24 2003/07/07 23:45:46 pwagner Exp $
+d63 3
+d191 3
+@
+
+
+2.24
+log
+@Added grid, hdf, hdfeos, and swath
+@
+text
+@d17 1
+a17 1
+# $Id: lit_names.txt,v 2.23 2003/05/29 16:35:55 livesey Exp $
+d64 1
+d80 1
+d98 1
+d188 3
+@
+
+
+2.23
+log
+@New sideband fractions and reflector stuff
+@
+text
+@d17 1
+a17 1
+# $Id: lit_names.txt,v 2.22 2003/05/05 23:00:05 livesey Exp $
+d71 1
+d73 2
+d159 1
+d185 3
+@
+
+
+2.22
+log
+@Merged in feb03 newfwm branch
+@
+text
+@d17 1
+a17 1
+# $Id$
+d25 1
+d42 1
+d92 1
+d130 1
+d137 4
+d150 1
+a151 1
+sidebandRatio
+d154 1
+d161 1
+d180 4
+a183 1
+# $Log$
+@
+
+
+2.21
+log
+@move in boundarypressure from L2
+@
+text
+@d17 1
+a17 1
+# $Id: lit_names.txt,v 2.20 2003/04/09 00:10:19 livesey Exp $
+d53 1
+d56 1
+a57 1
+effectiveOpticalDepth
+d103 1
+d112 1
+a113 1
+noiseBandwidth
+d170 4
+a173 1
+# $Log: lit_names.txt,v $
+d179 3
+@
+
+
+2.20
+log
+@Added literals for Dong and Jonathan
+@
+text
+@d17 1
+a17 1
+# $Id: lit_names.txt,v 2.19 2003/03/06 19:46:49 pwagner Exp $
+d22 1
+d29 1
+d169 3
+@
+
+
+2.19
+log
+@columnAbundance moved to lib from l2
+@
+text
+@d17 1
+a17 1
+# $Id: lit_names.txt,v 2.18 2003/02/06 00:44:55 livesey Exp $
+d26 4
+d35 3
+d78 3
+d167 3
+@
+
+
+2.18
+log
+@Added nameFragment and sza for binSelector
+@
+text
+@d17 1
+a17 1
+# $Id: lit_names.txt,v 2.17 2003/01/26 04:41:38 livesey Exp $
+d31 1
+d157 3
+@
+
+
+2.18.2.1
+log
+@Add ECRtoFOV
+@
+text
+@d17 1
+a17 1
+# $Id: lit_names.txt,v 2.18 2003/02/06 00:44:55 livesey Exp $
+a42 1
+ECRtoFOV
+d45 1
+a46 1
+elevOffset
+a88 1
+matrix3x3
+d97 1
+a98 1
+none
+a155 3
+# Revision 2.18  2003/02/06 00:44:55  livesey
+# Added nameFragment and sza for binSelector
+#
+@
+
+
+2.17
+log
+@Added profiles
+@
+text
+@d17 1
+a17 1
+# $Id: lit_names.txt,v 2.16 2003/01/09 00:07:59 pwagner Exp $
+d96 1
+d133 1
+d156 3
+@
+
+
+2.16
+log
+@Newly added Chunk and Iteration
+@
+text
+@d17 1
+a17 1
+# $Id: lit_names.txt,v 2.15 2003/01/07 23:43:37 livesey Exp $
+d111 1
+d154 3
+@
+
+
+2.15
+log
+@Literals for magnetic field
+@
+text
+@d17 1
+a17 1
+# $Id: lit_names.txt,v 2.14 2002/08/20 19:19:08 livesey Exp $
+d25 1
+d68 1
+d153 3
+@
+
+
+2.14
+log
+@Moved in angle and pressure from l2
+@
+text
+@d17 1
+a17 1
+# $Id: lit_names.txt,v 2.13 2002/07/18 22:04:43 vsnyder Exp $
+d51 1
+d83 2
+d151 3
+@
+
+
+2.13
+log
+@Add dn, dv, dw
+@
+text
+@d17 3
+a19 1
+# $Id: lit_names.txt,v 2.12 2002/06/04 22:05:42 livesey Exp $
+d105 1
+d148 3
+@
+
+
+2.12
+log
+@Added phiTan
+@
+text
+@d17 1
+a17 1
+# $Id: lit_names.txt,v 2.11 2002/05/14 00:29:03 livesey Exp $
+d35 1
+d37 2
+d145 3
+@
+
+
+2.11
+log
+@Added system temperature
+@
+text
+@d17 1
+a17 1
+# $Id: lit_names.txt,v 2.10 2002/05/07 20:02:46 livesey Exp $
+d95 1
+d142 3
+@
+
+
+2.10
+log
+@Added noisebandwidth
+@
+text
+@d17 1
+a17 1
+# $Id: lit_names.txt,v 2.9 2002/04/10 17:41:12 pwagner Exp $
+d118 1
+d141 3
+@
+
+
+2.9
+log
+@Added rhi-related lits
+@
+text
+@d17 1
+a17 1
+# $Id: lit_names.txt,v 2.8 2002/03/15 21:22:07 livesey Exp $
+d87 1
+d140 3
+@
+
+
+2.8
+log
+@Added latitude
+@
+text
+@d17 1
+a17 1
+# $Id: lit_names.txt,v 2.7 2002/03/14 00:32:15 pwagner Exp $
+d37 1
+d93 1
+a101 1
+earthradius
+d103 1
+d139 3
+@
+
+
+2.7
+log
+@Added scVelECI and scVelECR
+@
+text
+@d17 1
+a17 1
+# $Id: lit_names.txt,v 2.6 2002/02/09 19:12:38 livesey Exp $
+d66 1
+d137 3
+@
+
+
+2.6
+log
+@Added optical depth
+@
+text
+@d17 1
+a17 1
+# $Id: lit_names.txt,v 2.5 2001/11/08 00:12:08 livesey Exp $
+d107 2
+d136 3
+@
+
+
+2.5
+log
+@Removed extinction, it's now in molecules (not pretty, but unfortunately
+necessary).
+@
+text
+@d17 1
+a17 1
+# $Id: lit_names.txt,v 2.4 2001/11/02 00:55:15 jonathan Exp $
+d86 1
+d134 4
+@
+
+
+2.4
+log
+@rm IWC1
+@
+text
+@d17 1
+a17 1
+# $Id: lit_names.txt,v 2.3 2001/11/02 00:37:03 jonathan Exp $
+a40 1
+extinction
+d58 2
+d133 3
+@
+
+
+2.3
+log
+@add IWC1
+@
+text
+@d17 1
+a17 1
+# $Id: lit_names.txt,v 2.2 2001/10/05 00:41:30 vsnyder Exp $
+a59 1
+IWC1
+d132 3
+@
+
+
+2.2
+log
+@Move DNWT lits to l2/lit_names.txt
+@
+text
+@d17 1
+a17 1
+# $Id: lit_names.txt,v 2.1 2001/10/03 22:45:01 vsnyder Exp $
+d60 1
+d133 3
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d17 1
+a17 1
+# $Id: field_names.txt,v 2.8 2001/10/02 23:40:37 vsnyder Exp $
+a34 17
+# Quantities to report on progress of DNWT.  See NWT_T in dnwt_module
+dnwt_ajn
+dnwt_axmax
+dnwt_cait
+dnwt_diag
+dnwt_dxdx
+dnwt_dxdxl
+dnwt_dxn
+dnwt_dxnl
+dnwt_fnmin
+dnwt_fnorm
+dnwt_gdx
+dnwt_gfac
+dnwt_gradn
+dnwt_sq
+dnwt_sqt
+# End of quantities to report progress of DNWT
+a60 3
+jacobian_cols
+jacobian_rows
+
+d131 4
+a134 1
+# $Log: $
+@
+

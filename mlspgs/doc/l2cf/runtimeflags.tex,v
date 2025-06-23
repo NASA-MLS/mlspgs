@@ -1,0 +1,280 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.8
+	cfm-single-freq-0-1:1.2.0.6
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.4
+	mus-emls-1-70:1.2.0.2;
+locks; strict;
+comment	@% @;
+
+
+1.2
+date	2018.06.22.23.28.00;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2018.06.15.23.09.24;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Brought up-to-date
+@
+text
+@\section{Runtime Flags}
+\label{sec:Runtime Flags}
+
+The original purpose of mlsl2's Runtime Flags was to hold Boolean values so that
+mlsl2 could respond to a data condition appropriately by switching between
+different lines of the l2cf. 
+
+What has evolved is more flexible. The Runtime Flags
+can hold strings or numerical data, too. They can be used in control structures and
+to assign values to data internal to mlsl2.
+
+There are still places in the code and in the wiki pages where we refer to them
+as Runtime Booleans. Their evolution hasn't always been smooth and it's not yet
+complete.
+
+\citet{MLSWikiBooleans}
+
+
+\subsection{\snippet{Boolean}}
+The declaration of a Runtime Flag is one of the areas in which the older purpose
+can still be seen clearly.
+
+\lstinputlisting{declaration-1.l2cf}
+\subsection{\snippet{Logical formula}}
+The \snippet{formula} field is optional. If present it can refer to a
+previously-defined flag like this
+\lstinputlisting{declaration-2.l2cf}
+In most cases mlsl2 will automatically attempt to evaluate any names it finds in
+\snippet{formula} it has seen before. The \snippet{formula} must contain only
+previously-defined \snippet{Boolean}, \emph{true}, \emph{false}, the logical
+operators \emph{and, or, not}, and the logical relations 
+ \[
+ ==     \ equals
+ \]
+ \[
+ /=   \ does\ not\ equal
+ \]
+ \[
+ <    \ is\ less\ than
+ \]
+ \[
+ >    \ is\ greater\ than     
+ \]
+
+\subsection{\snippet{Literal}}
+To prevent mlsl2 attempting to interpret  \snippet{formula} as a logical value
+use the \snippet{/literal} flag. 
+\lstinputlisting{declaration-4.l2cf}
+
+If you combine the \snippet{/literal} and \snippet{/evaluate} flags you can
+achieve unique results, as in the next example which places the name of the
+current l2cf file in the \snippet{l2cf} Runtime Flag.
+\lstinputlisting{declaration-3.l2cf}
+
+This magic depends on the fact that there are \emph{special} Runtime Flags.
+
+\subsection{\snippet{Reevaluate}}
+You can change the value stored in a Runtime Flag using this command. 
+\lstinputlisting{reevaluate.l2cf}
+
+\subsection{\snippet{Other commands}}
+There are some other commands that can change the value stored in a Runtime
+Flag.
+\lstinputlisting{reevaluate.l2cf}
+
+\subsubsection{\snippet{IsGridEmpty, IsFileAbsent, AnyGoodRadiances, AnyGoodValues,
+IsSwathEmpty}}
+Except for the particular data type being tested, and the section type in which
+each can appear, these commands are very similar. The following examples attempt
+to demonstrate their use. 
+
+\lstinputlisting{readradiances.l2cf}
+
+\subsubsection{\snippet{CatchWarning}}
+This lets you set a Runtime Flag if the last warning message matches your
+supplied string. 
+
+\lstinputlisting{catchwarning.l2cf}
+
+\subsubsection{\snippet{Compare}}
+This lets you set a Runtime Flag by comparing one or more vector quantities.
+
+\lstinputlisting{compare.l2cf}
+
+\subsection{\snippet{Arrays}}
+You can store arrays in Runtime Flags. 
+
+\lstinputlisting{declaration-5.l2cf}
+
+Then you can use the arrays, assign new values to them, and even resize them.
+\lstinputlisting{reevaluate-2.l2cf}
+
+\subsection{\snippet{Skip}}
+The simplest \emph{Control structure} is the \snippet{Skip} command. If given
+without any fields, it results in mlsl2 skipping unconditionally to the end of
+the current section.
+
+A more useful application is to supply the \snippet{Boolean} field in which case
+it skips to the end of the current section if the \snippet{Boolean} is
+\emph{true}.
+\lstinputlisting{skip-1.l2cf}
+Similar is the effect of the \snippet{formula} field which causes mlsl2 to skip
+to the end of the current section if \snippet{formula} evaluates to
+\emph{true}.
+
+\snippet{Skip} is limited to act only within the current section unless you
+include the \snippet{/NextChunk} flag which skips over all the remaining l2cf
+lines and sections to the next chunk.
+
+
+\subsection{\snippet{Repeat}}
+The \snippet{Repeat} command loops over the remaining statements in the current
+section. It can appear bare, in which case only a subsequent \snippet{Skip} command can
+exit the endless loop as in this example combining the two commands
+\lstinputlisting{skip-2.l2cf}
+
+You can include the \snippet{formula} field on the same line as \snippet{Repeat}
+as this example shows
+\lstinputlisting{repeat-1.l2cf}
+in which case mlsl2 \snippet{Repeats} the section as long as \snippet{formula}
+is emph{true}.
+
+The final way \snippet{Repeat} can appear is with explicit values given in a
+\snippet{values} field as the following example shows
+\lstinputlisting{repeat-2.l2cf}
+
+\subsection{\snippet{Select .. Case .. End Select}}
+These span sections. Similar to Fortran's select case structure, they provide a
+clear layout for a multiple branch decision.
+
+While they may span sections, each of the special commands must appear within a section.
+
+\subsubsection{\snippet{Select}}
+\snippet{Select} begins the structure. It can take one of the following example forms 
+
+\lstinputlisting{select-1.l2cf}
+or
+
+\lstinputlisting{select-2.l2cf}
+After \snippet{Select}, all the subsequent l2cf lines will be skipped until a
+\snippet{Case} statement appears that matches the string in example (1) or the
+value of name in example (2). 
+
+\subsubsection{\snippet{Case}}
+The \snippet{Case} statement supplies a possible match for the string being
+sought. Assume the string set by the \snippet{Select} statement is \emph{faro}. Then if the
+\snippet{Case} statement supplies \emph{faro}, all the subsequent l2cf lines will be
+executed, until either another \snippet{Case} statement or a concluding
+\snippet{EndSelect} statement appears. If the \snippet{Case} statement supplies a
+different string, all the subsequent l2cf lines will be skipped, until either
+another \snippet{Case} statement or a concluding \snippet{EndSelect} statement
+appears.
+
+The \snippet{Case} statement can take one of two example forms
+
+\lstinputlisting{case-1.l2cf}
+or
+
+\lstinputlisting{case-2.l2cf}
+which should be clear from the explanation supplied about the two usages of 
+\snippet{Select}.
+
+
+There is a special value for string: if string=="default" it will match any
+pattern we are currently seeking. In other words, it acts like a \emph{wild card}. 
+\subsubsection{\snippet{EndSelect}}
+\snippet{EndSelect} terminates the control structure.
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "cfm"
+%%% End: 
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d13 1
+a13 1
+as Runtime Booleans. The evolution hasn't always been smooth and it's not yet
+d29 1
+a29 1
+\snippet{formula} until it can't find any more. The \snippet{formula} must contain only
+d33 1
+a33 1
+ ==     equals
+d36 1
+a36 1
+ /=   does\ not\ equal
+d39 1
+a39 1
+ <    is\ less\ than
+d42 1
+a42 1
+ >    is\ greater\ than     
+d46 2
+a47 2
+To prevent mlsl2 from interpreting \snippet{formula} as a logical use
+the \snippet{/literal} flag. 
+d50 1
+a50 1
+If you combine the \snippet{/literal} and \snippet{/reevaluate} flags you can
+d55 2
+d58 6
+a63 2
+You can change the value stored in a Runtime Flags using this command which
+looks a lot like a declaration 
+d66 19
+d90 1
+a90 2
+Then you can use the arrays, assign new
+values to them, and even resize them.
+d99 1
+a99 1
+it skips to the end of the current sction if the \snippet{Boolean} evaluates to
+d120 3
+d128 2
+a129 1
+These span sections. Similar to Fortran's select case structure, they provide a clearer layout for a multiple branch decision.
+d131 1
+a131 1
+While they may span sections, each of these special commands must appear within a section.
+d133 1
+d141 1
+a141 1
+\snippet{Select} statement appears that matches the string in example (1) or the
+d144 1
+d146 2
+a147 2
+sought. Assume the string set by the \snippet{Select} statement is "faro". Then if the
+\snippet{Case} statement supplies "faro", all the subsequent l2cf lines will be
+d165 3
+a167 2
+pattern we are currently seeking. In other words, it is a \emph{wild card}. 
+
+@
+

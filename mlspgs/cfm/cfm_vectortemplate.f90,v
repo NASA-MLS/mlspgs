@@ -1,0 +1,236 @@
+head	1.6;
+access;
+symbols
+	v5-02-NRT-19:1.6
+	v6-00:1.6
+	v5-02-NRT-18:1.6
+	v5-02:1.6
+	v5-01-NRT-17:1.6
+	v5-01-NRT-16:1.6
+	v5-01-NRT-15:1.6
+	v5-01-NRT-14:1.6
+	neuralnetworks-1-0:1.6.0.12
+	cfm-single-freq-0-1:1.6.0.10
+	TES-MLuo-01:1.6
+	TES-UNKNOWN:1.6
+	v5-01:1.6
+	v5-00:1.6
+	v4-23-TA133:1.6.0.8
+	mus-emls-1-70:1.6.0.6
+	rel-1-0-englocks-work:1.6.0.4
+	VUMLS1-00:1.6
+	VPL1-00:1.6
+	V4-22-NRT-08:1.6
+	VAM1-00:1.6
+	V4-21:1.6.0.2
+	V4-13:1.6
+	V4-12:1.6
+	V4-11:1.6
+	V4-10:1.6
+	M4-00:1.6
+	V3-33:1.6
+	V3-31:1.6
+	V3-30-NRT-05:1.6
+	cfm-01-00:1.6;
+locks; strict;
+comment	@# @;
+
+
+1.6
+date	2010.06.29.16.40.23;	author honghanh;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2010.06.29.15.53.45;	author honghanh;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2010.03.26.15.35.18;	author honghanh;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2010.03.24.17.44.48;	author honghanh;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2010.03.24.16.26.17;	author honghanh;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2010.03.02.22.10.23;	author honghanh;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.6
+log
+@Remove all function/subroutine and user type forwarding from
+all CFM modules except for from cfm.f90
+@
+text
+@! Copyright 2010, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+module CFM_VectorTemplate_m
+   use VectorsModule, only: VectorTemplate_T, NullifyVectorTemplate
+   use QuantityTemplates, only: QuantityTemplate_T
+   use Allocate_Deallocate, only: Allocate_test
+
+   implicit none
+
+   private
+
+   public :: CreateVectorTemplate
+
+!---------------------------- RCS Ident Info -------------------------------
+   character(len=*), private, parameter :: ModuleName= &
+       "$RCSfile: cfm_vectortemplate.f90,v $"
+   private :: not_used_here
+!---------------------------------------------------------------------------
+
+   contains
+
+   ! Create a VectorTemplate_T, which references one or many quantities.
+   ! To ensure correctness, the same qtyTemplateDB, must be passed to
+   ! CreateVector function in conjunction with the returned VectorTemplate_T.
+   type(VectorTemplate_T) function CreateVectorTemplate (qtyTemplateDB, selectedQty) &
+         result (vecTemplate)
+      ! a list of the array indices of the chosen quantity templates.
+      integer, intent(in) :: selectedQty(:)
+      ! a 1-based, 1-dimensional array of all QuantityTemplate_T objects
+      type(QuantityTemplate_T), intent(in) :: qtyTemplateDB(:)
+
+      call nullifyVectorTemplate(vecTemplate)
+      vecTemplate%name = 0
+      vecTemplate%noQuantities = size(selectedQty)
+      vecTemplate%totalInstances = sum(qtyTemplateDB(selectedQty)%noInstances)
+      vecTemplate%totalElements = &
+          sum(qtyTemplateDB(selectedQty)%noInstances &
+          *qtyTemplateDB(selectedQty)%instanceLen)
+      call allocate_test(vecTemplate%quantities, vecTemplate%noQuantities, &
+            'vecTemplate%quantities', moduleName)
+      vecTemplate%quantities = selectedQty
+   end function
+
+!--------------------------- end bloc --------------------------------------
+   logical function not_used_here()
+   character (len=*), parameter :: IdParm = &
+       "$Id: cfm_vectortemplate.f90,v 1.5 2010/06/29 15:53:45 honghanh Exp $"
+   character (len=len(idParm)) :: Id = idParm
+      not_used_here = (id(1:1) == ModuleName(1:1))
+      print *, Id ! .mod files sometimes change if PRINT is added
+   end function not_used_here
+!---------------------------------------------------------------------------
+
+end module
+
+! $Log: cfm_vectortemplate.f90,v $
+! Revision 1.5  2010/06/29 15:53:45  honghanh
+! Add copyright comments and support for CVS log in the file
+!
+@
+
+
+1.5
+log
+@Add copyright comments and support for CVS log in the file
+@
+text
+@d12 1
+a12 2
+   use VectorsModule, only: VectorTemplate_T, NullifyVectorTemplate, &
+                            DestroyVectorTemplateInfo, Dump
+d20 1
+a20 8
+   public :: CreateVectorTemplate, DestroyVectorTemplateInfo
+   ! Please see mockup.f90 for examples of using Dump subroutines.
+   ! Details level typically range from -3 to 3, for most subroutines
+   ! the domain for the details argument can be smaller. However,
+   ! passing a too big or too small number won't cause the subroutine
+   ! to crash. This applies to all Dump subroutines from all modules.
+   public :: Dump
+   public :: VectorTemplate_T
+d55 1
+a55 1
+       "$Id: cfm_vectortemplate.f90,v 1.1 2010/06/29 8:06:33 honghanh Exp $"
+d65 3
+@
+
+
+1.4
+log
+@Add more comments to everything
+@
+text
+@d1 10
+d30 5
+a34 1
+   character(len=20) :: moduleName = "CFM_VectorTemplate"
+d59 11
+d71 2
+@
+
+
+1.3
+log
+@Conformed all module names to end with _m, changed file names to all
+lowercase, add comments
+@
+text
+@d12 5
+d24 3
+a26 2
+   ! qtyTemplateDB is a 1-based, 1-dimensional array of QuantityTemplate_T
+   ! selectedQty is a list of the array indices of the chosen quantity templates.
+d29 1
+a29 1
+
+d31 1
+@
+
+
+1.2
+log
+@Adjustments made to add startTime and endTime as inputs to CFM_MLSSetup.
+Tested successfully
+@
+text
+@d1 1
+a1 1
+module CFM_VectorTemplate
+d19 2
+@
+
+
+1.1
+log
+@Example of creating vector template
+@
+text
+@d2 2
+a3 1
+   use VectorsModule, only: VectorTemplate_T, NullifyVectorTemplate
+d11 3
+a13 1
+   public :: CreateVectorTemplate
+d30 1
+a30 1
+          sum(qtyTemplateDB(selectedQty)%noInstances & 
+@
+

@@ -1,0 +1,41 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.8
+	cfm-single-freq-0-1:1.1.0.6
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.4
+	mus-emls-1-70:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2018.06.15.23.09.24;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@First commit
+@
+text
+@;   Example (1)
+begin ReadApriori
+  Case, Boolean=name
+end ReadApriori
+@

@@ -1,0 +1,4020 @@
+head	2.53;
+access;
+symbols
+	v5-02-NRT-19:2.53
+	v6-00:2.53
+	v5-02-NRT-18:2.53
+	v5-02:2.53
+	v5-01-NRT-17:2.53
+	v5-01-NRT-16:2.53
+	v5-01-NRT-15:2.53
+	v5-01-NRT-14:2.53
+	neuralnetworks-1-0:2.53.0.6
+	cfm-single-freq-0-1:2.53.0.4
+	v5-01:2.53
+	v5-00:2.53
+	v4-23-TA133:2.53.0.2
+	mus-emls-1-70:2.52.0.2
+	rel-1-0-englocks-work:2.51.0.2
+	VUMLS1-00:2.51
+	VPL1-00:2.51
+	V4-22-NRT-08:2.51
+	VAM1-00:2.50
+	V4-21:2.49.0.2
+	V4-13:2.49
+	V4-12:2.47
+	V4-11:2.47
+	V4-10:2.47
+	V3-43:2.42
+	M4-00:2.43
+	V3-41:2.42
+	V3-40-PlusGM57:2.42.0.2
+	V2-24-NRT-04:2.40
+	V3-33:2.42
+	V2-24:2.40
+	V3-31:2.42
+	V3-30-NRT-05:2.42
+	cfm-01-00:2.42
+	V3-30:2.42
+	V3-20:2.42
+	V3-10:2.41
+	V2-23-NRT-02:2.40
+	V2-23:2.40
+	V2-22-NRT-01:2.40
+	V2-22:2.40
+	V2-21:2.39
+	V2-20:2.39
+	V2-11:2.39
+	V2-10:2.39
+	V2-00:2.39
+	V1-51:2.37
+	V1-50:2.37
+	V1-45:2.37
+	V1-44:2.37
+	V1-43:2.36
+	V1-32:2.34
+	V1-31:2.34
+	V1-30:2.34
+	V1-13:2.34
+	V1-12:2.34
+	V1-11:2.34
+	V1-10:2.34
+	newfwm-feb03:2.34.0.2
+	V1-04:2.29
+	V1-03:2.29
+	V1-02:2.29
+	JointForwardModel:2.29.0.2
+	V1-00:2.29
+	newfwm-sep01:2.9.0.2
+	V0-7:2.9
+	V0-5-Level2:2.6
+	V0-5-SIPS:2.5;
+locks; strict;
+comment	@# @;
+
+
+2.53
+date	2018.09.13.20.23.00;	author pwagner;	state Exp;
+branches;
+next	2.52;
+
+2.52
+date	2018.04.19.01.14.16;	author vsnyder;	state Exp;
+branches;
+next	2.51;
+
+2.51
+date	2016.02.29.19.51.38;	author pwagner;	state Exp;
+branches;
+next	2.50;
+
+2.50
+date	2015.03.28.02.51.42;	author vsnyder;	state Exp;
+branches;
+next	2.49;
+
+2.49
+date	2014.09.05.01.22.30;	author vsnyder;	state Exp;
+branches;
+next	2.48;
+
+2.48
+date	2014.09.05.00.49.07;	author vsnyder;	state Exp;
+branches;
+next	2.47;
+
+2.47
+date	2014.04.10.00.43.58;	author pwagner;	state Exp;
+branches;
+next	2.46;
+
+2.46
+date	2013.09.24.23.47.22;	author vsnyder;	state Exp;
+branches;
+next	2.45;
+
+2.45
+date	2013.08.12.23.49.41;	author pwagner;	state Exp;
+branches;
+next	2.44;
+
+2.44
+date	2013.06.12.02.39.45;	author vsnyder;	state Exp;
+branches;
+next	2.43;
+
+2.43
+date	2011.05.09.18.25.47;	author pwagner;	state Exp;
+branches;
+next	2.42;
+
+2.42
+date	2010.02.04.23.12.44;	author vsnyder;	state Exp;
+branches;
+next	2.41;
+
+2.41
+date	2009.06.23.18.46.18;	author pwagner;	state Exp;
+branches;
+next	2.40;
+
+2.40
+date	2007.04.03.17.38.23;	author vsnyder;	state Exp;
+branches;
+next	2.39;
+
+2.39
+date	2005.06.22.18.57.02;	author pwagner;	state Exp;
+branches;
+next	2.38;
+
+2.38
+date	2005.03.15.23.50.52;	author pwagner;	state Exp;
+branches;
+next	2.37;
+
+2.37
+date	2004.06.10.00.58.45;	author vsnyder;	state Exp;
+branches;
+next	2.36;
+
+2.36
+date	2004.01.08.01.11.20;	author livesey;	state Exp;
+branches;
+next	2.35;
+
+2.35
+date	2004.01.07.23.49.49;	author livesey;	state Exp;
+branches;
+next	2.34;
+
+2.34
+date	2002.12.06.22.33.28;	author livesey;	state Exp;
+branches;
+next	2.33;
+
+2.33
+date	2002.10.08.17.36.23;	author pwagner;	state Exp;
+branches;
+next	2.32;
+
+2.32
+date	2002.09.13.18.10.10;	author pwagner;	state Exp;
+branches;
+next	2.31;
+
+2.31
+date	2002.08.21.23.05.59;	author livesey;	state Exp;
+branches;
+next	2.30;
+
+2.30
+date	2002.08.03.20.41.27;	author livesey;	state Exp;
+branches;
+next	2.29;
+
+2.29
+date	2002.02.08.22.52.34;	author livesey;	state Exp;
+branches;
+next	2.28;
+
+2.28
+date	2001.10.31.22.00.05;	author livesey;	state Exp;
+branches;
+next	2.27;
+
+2.27
+date	2001.10.27.00.14.48;	author livesey;	state Exp;
+branches;
+next	2.26;
+
+2.26
+date	2001.10.24.00.25.50;	author livesey;	state Exp;
+branches;
+next	2.25;
+
+2.25
+date	2001.10.22.22.40.39;	author livesey;	state Exp;
+branches;
+next	2.24;
+
+2.24
+date	2001.10.15.22.38.50;	author vsnyder;	state Exp;
+branches;
+next	2.23;
+
+2.23
+date	2001.10.06.23.52.01;	author livesey;	state Exp;
+branches;
+next	2.22;
+
+2.22
+date	2001.10.06.23.49.16;	author livesey;	state Exp;
+branches;
+next	2.21;
+
+2.21
+date	2001.10.05.20.19.21;	author vsnyder;	state Exp;
+branches;
+next	2.20;
+
+2.20
+date	2001.10.05.17.32.35;	author vsnyder;	state Exp;
+branches;
+next	2.19;
+
+2.19
+date	2001.10.02.00.44.46;	author livesey;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2001.09.28.23.39.09;	author livesey;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2001.09.27.23.39.22;	author livesey;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2001.09.22.15.49.54;	author livesey;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2001.09.21.22.04.16;	author livesey;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2001.09.20.23.08.21;	author livesey;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2001.09.20.00.27.21;	author livesey;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2001.09.19.23.47.39;	author livesey;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2001.09.19.23.33.16;	author livesey;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2001.09.19.23.32.49;	author livesey;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2001.07.17.17.32.26;	author livesey;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2001.05.23.01.44.49;	author livesey;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2001.05.15.16.44.12;	author livesey;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2001.05.03.20.34.08;	author vsnyder;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2001.03.15.05.48.32;	author livesey;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2001.03.15.05.23.33;	author livesey;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2001.03.15.00.58.57;	author livesey;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2001.03.14.05.34.00;	author livesey;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.01.24.21.50.43;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.53
+log
+@Moved changeable options to new L2Options; added DumpOptions
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module SnoopMLSL2               ! Interface between MLSL2 and IDL snooper via pvm3.
+
+  ! This module is the fortran end of an interaction between the MLS level 2
+  ! programmer and a user running an interactive IDL program to diagnose the
+  ! progress and behavior of the MLS level 2 program.  The idea is that one can
+  ! place a call to a Snoop routine, passing it any subset of relevant
+  ! information (e.g. vectors and matrix databases). The software will look for
+  ! an IDL program ready to accept snoop requests and if one is around will do
+  ! as instructed.
+
+  ! This will make heavy use of some low level routines in the PVM and PVMIDL
+  ! modules to do much of the communication.
+
+  ! Also note that multiple IDL snoopers can talk to one or many f90 procedures,
+  ! the little extra book keeping this involves is worth it.
+
+  use HighOutput, only: Banner
+  use Init_Tables_Module, only: F_Comment, F_Phasename
+  use Machine, only: Usleep
+  use Matrixmodule_0, only: MatrixElement_T
+  use Matrixmodule_1, only: Matrix_T, Rc_Info
+  use MLSL2options, only: L2Options
+  use MLSKinds, only: R8
+  use MLSMessagemodule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning, &
+    & PvmerrorMessage
+  use MLSFinds, only: Findfirst
+  use MLSL2Options, only: Snoopingactive, Snoopname
+  use Moretree, only: Get_Field_Id
+  use MLSStringlists, only: Switchdetail
+  use Pvm, only: PvmDatadefault, Pvmfinitsend, Pvmfmytid, &
+    & Pvmf90unpack, Pvmtaskexit, Pvmfnotify, Pvmfsend
+  use Pvmidl, only: Pvmidlpack, Pvmidlsend, Pvmidlunpack
+  use Quantitypvm, only: Pvmsendquantity
+  use Output_M, only: Output
+  use String_Table, only: Get_String, Display_String
+  use Symbol_Table, only: Enter_Terminal
+  use Symbol_Types, only: T_Identifier
+  use Tree, only: Nsons, Sub_Rosa, Subtree, Where
+  use Toggles, only: Switches
+  use Vectorsmodule, only: Vector_T, VectorValue_T
+
+  implicit none
+  private
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: SnoopMLSL2.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+  interface SnooperRequestedArray
+    module procedure SnooperRequestedArrayR1, SnooperRequestedArrayR2, &
+      & SnooperRequestedArrayR3
+  end interface
+
+  ! =============================================================================
+
+  ! The first main thing is a data type that describes each of the active
+  ! snoopers.
+
+  ! Part of this the following enumerated type, describing the `mode' of the
+  ! snooper.  The mode can be `observing', or `controling'. In observing mode
+  ! the snooper can only request copies of vectors etc.  In controling mode,
+  ! the snooper can write values back for these and to some extent control the
+  ! program (give up on iterations, exit etc.)
+
+  ! Note that snoopers communicate amongst themselves to arbitrate requests to
+  ! become controling, the succuesful one contacts the l2 code.
+
+  integer, parameter :: SnooperObserving =            0
+  integer, parameter :: SnooperControling =           SnooperObserving + 1
+
+  integer, parameter :: SnoopTag = 300
+  integer, parameter :: SnooperDiedTag = 301
+
+  character (LEN=*), parameter :: Level2CodeGroupName="MLSL2Executable"
+
+  ! Now the type definitions for snooping
+
+  type SnooperInfo_T
+    integer :: tid                      ! Task ID of snooper
+    integer :: mode                     ! Mode of the snooper
+  end type SnooperInfo_T
+
+  public :: SNOOPINGACTIVE, SNOOP, SNOOPNAME
+
+contains ! ========  Public Procedures ==========================================
+
+  ! ---------------------------------------  GetSnooperModeString  -----
+  subroutine GetSnooperModeString ( MODE, STRING )
+    integer, intent(in) :: MODE
+    character (len=*), intent(out) :: STRING
+
+    select case (mode)
+    case (SnooperObserving)
+      string='Observing'
+    case (SnooperControling)
+      string='Controling'
+    case default
+    end select
+  end subroutine GetSnooperModeString
+
+  ! ------------------------------------- SendMatrixListToSnooper ------
+  subroutine SendMatrixListToSnooper ( snooper, MatrixDatabase )
+    ! Arguments
+    type (SnooperInfo_T), intent(in) :: SNOOPER
+    type (Matrix_T), dimension(:), optional, intent(in) :: MATRIXDATABASE
+
+    ! Local variables
+    integer :: BUFFERID                 ! For PVM
+    integer :: INFO                     ! Flag
+    integer :: MATRIX                   ! Loop counter
+    character(len=132) :: LINE          ! A line of text
+    
+    if ( present ( MatrixDatabase ) ) then
+      if ( switchDetail ( switches, 'snoop' ) > -1 ) &
+        & call output ( 'Sending matrix list', advance='yes' )
+
+      call PVMFInitSend ( PvmDataDefault, bufferID )
+
+      call PVMIDLPack ( "Matrices", info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing 'Matrices'" )
+
+      call PVMIDLPack ( size(matrixDatabase), info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing number of matrices" )
+
+      do matrix = 1, size(matrixDatabase)
+        if ( matrixDatabase(matrix)%name /= 0 ) then
+          call get_string ( matrixDatabase(matrix)%name, line )
+        else
+          line = '<unknown>'
+        end if
+        call PVMIDLPack ( trim(line), info )
+        if (info /= 0) call PVMErrorMessage ( info, "packing matrix name:" &
+          & // trim(line) )
+        ! Don't think we need to send row/column vector information at this
+        ! stage.
+      end do
+
+      call PVMFSend ( snooper%tid, SnoopTag, info )
+      if (info /= 0) call PVMErrorMessage ( info, "sending matrix information" )
+      
+    else
+      if ( switchDetail ( switches, 'snoop' ) > -1 ) &
+        & call output ( 'Sending "No Matrices"', advance='yes' )
+
+      call PVMIDLSend ( "No Matrices", snooper%tid, info, msgTag=SnoopTag )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "Sending 'No Matrices'" )
+    endif
+  end subroutine SendMatrixListToSnooper
+
+  ! ------------------------------------ SendArrayListToSnooper --------
+  subroutine SendArrayListToSnooper ( SNOOPER, &
+    & r1a, r1b, r1c, r1d, &
+    & r2a, r2b, r2c, r2d, &
+    & r3a, r3b, r3c, r3d, &
+    & r1aName, r1bName, r1cName, r1dName, &
+    & r2aName, r2bName, r2cName, r2dName, &
+    & r3aName, r3bName, r3cName, r3dName )
+
+    ! Arguments
+    type (SnooperInfo_T), intent(in) :: SNOOPER
+    real (r8), dimension(:), intent(in), optional :: R1A, R1B, R1C, R1D
+    real (r8), dimension(:,:), intent(in), optional :: R2A, R2B, R2C, R2D
+    real (r8), dimension(:,:,:), intent(in), optional :: R3A, R3B, R3C, R3D
+    character(len=*), intent(in), optional :: &
+      & R1ANAME, R1BNAME, R1CNAME, R1DNAME, &
+      & R2ANAME, R2BNAME, R2CNAME, R2DNAME, &
+      & R3ANAME, R3BNAME, R3CNAME, R3DNAME
+
+    ! Local variables
+    integer :: BUFFERID                 ! For PVM
+    integer :: NOARRAYS                 ! Nummber of arrays supplied
+    integer :: INFO                     ! Flag from PVM
+
+    ! Executable code
+    noArrays = 0
+    noArrays = count ( (/ &
+      & present(r1a), present(r1b), present(r1c), present(r1d), &
+      & present(r2a), present(r2b), present(r2c), present(r2d), &
+      & present(r3a), present(r3b), present(r3c), present(r3d) /) )
+    if ( noArrays > 0 ) then
+      if ( switchDetail ( switches, 'snoop' ) > -1 ) &
+        & call output ( 'Sending arrays list', advance='yes' )
+
+      call PVMFInitSend ( PvmDataDefault, bufferID )
+
+      call PVMIDLPack ( "Arrays", info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing 'Arrays'" )
+
+      call PVMIDLPack ( noArrays, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing noArrays" )
+
+      if ( present ( r1a ) ) call PVMIDLPack ( 'R1A:'//r1aName, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing an array name" )
+      if ( present ( r1b ) ) call PVMIDLPack ( 'R1B:'//r1bName, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing an array name" )
+      if ( present ( r1c ) ) call PVMIDLPack ( 'R1C:'//r1cName, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing an array name" )
+      if ( present ( r1d ) ) call PVMIDLPack ( 'R1D:'//r1dName, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing an array name" )
+      if ( present ( r2a ) ) call PVMIDLPack ( 'R2A:'//r2aName, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing an array name" )
+      if ( present ( r2b ) ) call PVMIDLPack ( 'R2B:'//r2bName, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing an array name" )
+      if ( present ( r2c ) ) call PVMIDLPack ( 'R2C:'//r2cName, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing an array name" )
+      if ( present ( r2d ) ) call PVMIDLPack ( 'R2D:'//r2dName, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing an array name" )
+      if ( present ( r3a ) ) call PVMIDLPack ( 'R3A:'//r3aName, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing an array name" )
+      if ( present ( r3b ) ) call PVMIDLPack ( 'R3B:'//r3bName, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing an array name" )
+      if ( present ( r3c ) ) call PVMIDLPack ( 'R3C:'//r3cName, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing an array name" )
+      if ( present ( r3d ) ) call PVMIDLPack ( 'R3D:'//r3dName, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing an array name" )
+
+      ! Now send this buffer
+      call PVMFSend ( snooper%tid, SnoopTag, info )
+      if (info /= 0) call PVMErrorMessage ( info, "sending vector information" )
+      
+    else
+      if ( switchDetail ( switches, 'snoop' ) > -1 ) &
+        & call output ( 'Sending "No Arrays"', advance='yes' )
+
+      call PVMIDLSend ( "No Arrays", snooper%tid, info, msgTag=SnoopTag )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "sending 'No Arrays'" )
+    end if
+
+  end subroutine SendArrayListToSnooper
+
+  ! ------------------------------------- SendVectorsListToSnooper -----
+  subroutine SendVectorsListToSnooper ( SNOOPER, VectorDatabase, &
+    & AnotherVectorDatabase )
+
+    ! Arguments
+    type (SnooperInfo_T), intent(in) :: SNOOPER
+    type (Vector_T), dimension(:), optional :: VectorDatabase
+    type (Vector_T), dimension(:), optional, intent(in) :: AnotherVectorDatabase
+
+    ! Local variables
+    logical :: AnyMoreVectors, AnyVectors ! Flags
+    integer :: BUFFERID                 ! For PVM
+    integer :: INFO                     ! Flag
+    character (len=132) :: LINE         ! A line of text
+    integer :: TOTALVECTORS             ! In both databases
+    
+    anyVectors = present(vectorDatabase)
+    if ( anyVectors ) anyVectors = size(vectorDatabase) > 0
+    anyMoreVectors = present(anotherVectorDatabase)
+    if ( anyMoreVectors ) anyMoreVectors = size(anotherVectorDatabase) > 0
+    totalVectors = 0
+    if ( anyVectors ) totalVectors = totalVectors + count(vectorDatabase%name>0)
+    if ( anyMoreVectors ) totalVectors = totalVectors + count(anotherVectorDatabase%name>0)
+
+    if ( totalVectors > 0 ) then
+      if ( switchDetail ( switches, 'snoop' ) > -1 ) &
+        & call output ( 'Sending vectors list', advance='yes' )
+
+      call PVMFInitSend ( PvmDataDefault, bufferID )
+
+      call PVMIDLPack ( "Vectors", info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing 'Vectors'" )
+
+      call PVMIDLPack ( totalVectors, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing totalVectors" )
+
+      if ( anyVectors ) call SendVectorAndQuantityNames ( vectorDatabase )
+      if ( anyMoreVectors ) call SendVectorAndQuantityNames ( anotherVectorDatabase )
+
+      ! Now send this buffer
+      call PVMFSend ( snooper%tid, SnoopTag, info )
+      if (info /= 0) call PVMErrorMessage ( info, "sending vector information" )
+
+    else                                ! No vectors to send
+      if ( switchDetail ( switches, 'snoop' ) > -1 ) &
+        & call output ( 'Sending "No Vectors"', advance='yes' )
+
+      call PVMIDLSend ( "No Vectors", snooper%tid, info, msgTag=SnoopTag )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "sending 'No Vectors'" )
+    end if
+
+  contains
+    subroutine SendVectorAndQuantityNames ( Vectors )
+      type (Vector_T), dimension(:) :: Vectors
+      integer :: VECTOR, QUANTITY         ! Loop counters
+
+      do vector = 1, size(vectors)
+        if ( vectors(vector)%name > 0 ) then
+          call get_string ( vectors(vector)%name, line )
+          call PVMIDLPack ( trim(line), info )
+          if ( info /=0 ) call PVMErrorMessage ( info, "packing vector name:" &
+            & // TRIM(line) )
+
+          call PVMIDLPack ( size(vectors(vector)%quantities), info )
+          if ( info /=0 ) call PVMErrorMessage ( info, "packing no quantities for " &
+            & // TRIM(line) )
+
+          do quantity = 1, size(vectors(vector)%quantities)
+            call get_string &
+              & ( vectors(vector)%quantities(quantity)%template%name, line )
+            call PVMIDLPack ( TRIM(line), info )
+            if ( info /=0 ) call PVMErrorMessage ( info, "packing quantity name:" &
+              & // TRIM(line) )
+          end do
+        end if
+      end do
+    end subroutine SendVectorAndQuantityNames
+  end subroutine SendVectorsListToSnooper
+
+  ! ---------------------------------------- AddSnooperToDatabase ------
+  integer function AddSnooperToDatabase ( database, item )
+
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    type (SnooperInfo_T), dimension(:), pointer :: DATABASE
+    type (SnooperInfo_T), intent(in) :: ITEM
+    ! Local variables
+    type (SnooperInfo_T), dimension(:), pointer :: TEMPDATABASE
+    include "addItemToDatabase.f9h"
+    AddSnooperToDatabase=newSize
+
+  end function AddSnooperToDatabase
+
+  ! ------------------------------------------- RegisterNewSnooper -----
+  subroutine RegisterNewSnooper ( snoopers, snooperTid ) 
+    type (SnooperInfo_T), dimension(:), pointer :: snoopers
+    integer, intent(in) :: snooperTid
+
+    ! Local variables
+    integer :: INFO
+    type (SnooperInfo_T) :: NEWSNOOPER
+    integer :: NOSNOOPERS
+
+    ! Executable code
+
+    ! Setup the new snooper information
+    if ( switchDetail ( switches, 'snoop' ) > -1 ) &
+      & call output ( 'Registering new snooper', advance='yes' )
+
+    newSnooper%tid = snooperTid
+    newSnooper%mode = SnooperObserving
+    noSnoopers = AddSnooperToDatabase ( snoopers, newSnooper )
+
+    ! Ask to be notified of its death
+    call PVMFNotify ( PVMTaskExit, SnooperDiedTag, 1, &
+      (/ snooperTid /), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, &
+      & "calling PVMFNotify" )
+
+    ! Now if this is the first, let's have it controling us
+    if ( size(snoopers) == 1 ) then
+      snoopers(1)%mode = SnooperControling
+      call PVMIDLSend ( 'ControlAccept', snooperTid, info, msgTag=SnoopTag )
+      if ( info /= 0 ) call PVMErrorMessage ( info, &
+        & "sending control information" )
+    endif
+    
+  end subroutine RegisterNewSnooper
+
+  ! ------------------------------------------------ ForgetSnooper -----
+  subroutine ForgetSnooper ( snoopers, snooper )
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+    type (SnooperInfo_T), dimension(:), pointer :: SNOOPERS
+    integer, intent(in) :: SNOOPER
+
+    ! Local variables
+    type (SnooperInfo_T), dimension(:), pointer :: NEWSNOOPERS
+    integer(c_intptr_t) :: Addr         ! For tracing
+    integer :: S, STATUS
+
+    ! Executable code
+    if ( switchDetail ( switches, 'snoop' ) > -1 ) &
+      & call output ( 'Forgetting snooper', advance='yes' )
+
+    allocate ( newSnoopers(size(snoopers)-1), stat=status )
+    addr = 0
+    if ( status == 0 .and. size(snoopers)>1 ) addr = transfer(c_loc(newSnoopers(1)), addr)
+    call test_allocate ( status, moduleName, 'newSnoopers', &
+      & uBounds = size(snoopers)-1, elementSize = storage_size(newSnoopers) / 8, &
+      & address=addr )
+
+    if ( size(newSnoopers) > 0 ) then
+      newSnoopers(1:snooper-1) = snoopers(1:snooper-1)
+      newSnoopers(snooper:) = snoopers(snooper+1:)
+    end if
+    s = size(snoopers) * storage_size(snoopers) / 8
+    addr = 0
+    if ( s > 0 ) addr = transfer(c_loc(snoopers(1)), addr)
+    deallocate ( snoopers, stat=status )
+    call test_deallocate ( status, moduleName, 'newSnoopers', s, address=addr )
+
+    snoopers => newSnoopers
+
+  end subroutine ForgetSnooper
+
+  ! ------------------------------------------ SendStatusToSnooper -----
+  subroutine SendStatusToSnooper ( SNOOPER, STATUS, LOCATION, COMMENT, &
+    & PHASENAME, CONTROLED )
+    type (SnooperInfo_T), intent(INOUT) :: SNOOPER
+    character (len=*), intent(in) :: STATUS
+    character (len=*), intent(in) :: LOCATION
+    character (len=*), intent(in) :: COMMENT
+    character (len=*), intent(in) :: PHASENAME
+    logical, intent(in) :: CONTROLED
+
+    ! Local variables
+    integer :: BUFFERID                 ! ID for PVM
+    integer :: INFO                     ! Flag from PVM
+
+    ! Executable code
+    if ( switchDetail ( switches, 'snoop' ) > -1 ) &
+      & call output ( 'Sending status to snooper', advance='yes' )
+
+    call PVMFInitSend ( PvmDataDefault, bufferID )
+    call PVMIDLPack ( status, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing status" )
+    call PVMIDLPack ( location, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing location" )
+    call PVMIDLPack ( comment, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing comment" )
+    call PVMIDLPack ( phaseName, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing phaseName" )
+    call PVMIDLPack ( controled, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing controled" )
+    call PVMFSend ( snooper%tid, SnoopTag, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "sending status etc." )
+  end subroutine SendStatusToSnooper
+    
+  ! ------------------------------------------------------  SNOOP  -----
+
+  ! This is the main routine in the module.  It can be called from anywhere
+  ! within the code, and takes optional arguments which the user can supply
+  ! to pass to and from the IDL end of the snooper.
+
+  ! The r1a etc. variables are arrays one can pass around to do some
+  ! more intensive debugging.  Make sure to modify MaxArrayArguments if you
+  ! add or delete from these.
+
+  subroutine Snoop ( KEY, VectorDatabase, AnotherVectorDatabase, &
+    & AnotherComment, AnotherPhaseName, matrixDatabase,&
+    & r1a, r1b, r1c, r1d, &
+    & r2a, r2b, r2c, r2d, &
+    & r3a, r3b, r3c, r3d, &
+    & r1aName, r1bName, r1cName, r1dName, &
+    & r2aName, r2bName, r2cName, r2dName, &
+    & r3aName, r3bName, r3cName, r3dName )
+
+    use Allocate_Deallocate, only: Test_Allocate
+    use Lexer_Core, only: Get_Where
+    ! Arguments
+    integer, intent(in), optional :: KEY ! Tree node where snoop called
+    type (Vector_T), dimension(:), optional :: VectorDatabase
+    type (Vector_T), dimension(:), optional :: AnotherVectorDatabase
+    character(len=*), intent(in), optional :: AnotherComment
+    !    Replaces comment field of "snoop" command if present.
+    character(len=*), intent(in), optional :: AnotherPhaseName 
+    type (Matrix_T), dimension(:), optional :: MatrixDatabase
+
+    ! Rather boring arguments
+    real (r8), dimension(:), intent(in), optional :: R1A, R1B, R1C, R1D
+    real (r8), dimension(:,:), intent(in), optional :: R2A, R2B, R2C, R2D
+    real (r8), dimension(:,:,:), intent(in), optional :: R3A, R3B, R3C, R3D
+    character(len=*), intent(in), optional :: &
+      & R1ANAME, R1BNAME, R1CNAME, R1DNAME, &
+      & R2ANAME, R2BNAME, R2CNAME, R2DNAME, &
+      & R3ANAME, R3BNAME, R3CNAME, R3DNAME
+    
+    ! Local parameters
+    integer, parameter :: DELAY=50*1000  ! For Usleep, no. microsecs
+    character(len=*), parameter :: UNPACKERROR = &
+      & 'unpacking response from snooper'
+!     integer, parameter :: MAXARRAYARGUMENTS = 12 ! Total number of R1A etc. arguments above
+
+    ! Local variables, first the more exciting ones.
+    integer, save :: MYTID=0            ! Local task ID under PVM
+    type (SnooperInfo_T), dimension(:), pointer, save :: SNOOPERS => NULL()
+    ! For add/del ops.
+
+    ! Now the more mundane items
+    integer :: BYTES
+    integer :: BUFFERID, INFO           ! Flags and ids from PVM
+    character (len=132) :: COMMENT      ! Comment field to snoop command
+    integer :: I                        ! Loop inductor, subtree index
+    integer :: INUM                     ! Index in group
+    character (len=132) :: LINE         ! Line of text received
+    character (len=132) :: NEXTLINE     ! Line of text received
+    integer :: MSGTAG                   ! Incomming Message tag
+    character (len=132) :: LOCATION     ! Line of text to send off
+    character (len=132) :: PHASENAME    ! Line of text to send off
+    integer :: SNOOPER                  ! Loop counter
+    integer :: SNOOPERTID               ! Task ID for snooper
+    integer :: SON                      ! of Key
+    integer :: STATUS                   ! Status from allocate/deallocate
+    logical :: KEEPWAITING                ! First time snoop called
+    logical :: GOTSOMETHING             ! Set if we got a message
+    character (len=1024) :: TEMPLOCATION
+
+    ! Executable code
+    ! if ( .not. snoopingActive ) return
+
+    templocation = '????'
+    comment = 'Unknown'
+    phaseName = ''
+    if ( present(key) ) then
+      call get_where ( where(key), templocation )
+      do i = 2, nsons(key)
+        son = subtree(i,key)
+        select case ( get_field_id(son) )
+        case ( f_comment )
+          call get_string ( sub_rosa(subtree(2,son)), comment, strip=.true. )
+        case ( f_phaseName )
+          call get_string ( sub_rosa(subtree(2,son)), phaseName, strip=.true. )
+        end select
+      end do
+    end if
+    location = templocation
+    if ( present(anotherComment) ) comment = anotherComment
+    if ( present(anotherPhaseName) ) phaseName = anotherPhaseName
+    if ( .not. snoopingActive ) then
+    select case ( switchDetail(switches, 'snoop') )
+      case ( 0 )
+        call output( 'Snoop in ' // trim(location) // ' (' // &
+          & trim(L2Options%CurrentPhaseName) // ')', advance='yes' )
+      case ( 1: )
+        call banner( 'Snoop in ' // trim(location) // ' (' // &
+          & trim(L2Options%CurrentPhaseName) // ')' )
+      end select
+      return
+    endif
+
+    ! If this is the very first call enroll in PVM for the first time, allocate
+    ! 0 snoopers to start with.
+    if ( myTid==0 ) then
+      keepWaiting = .true.
+      call PVMfmytid ( myTid )
+      if ( myTid<=0 ) call PVMErrorMessage ( myTid, "Enroling in PVM" )
+      call PVMfjoingroup ( Level2CodeGroupName//trim(snoopName), inum )
+      if ( inum<0 ) call PVMErrorMessage ( inum, "Joining group " &
+        & // Level2CodeGroupName//trim(snoopName) )
+      allocate ( snoopers(0), stat=status )
+      call test_allocate ( status, moduleName, 'snoopers', uBounds = 0, &
+        & elementSize = storage_size(status) / 8 )
+    else
+      keepWaiting = .false.
+    end if
+
+    ! Tell all the snoopers we're ready to talk to them
+    do snooper = 1, size(snoopers)
+      call SendStatusToSnooper ( snoopers(snooper), 'Ready', location, comment, &
+        & phaseName, any ( snoopers%mode == SnooperControling ) )
+      call SendVectorsListToSnooper ( snoopers(snooper), vectorDatabase, &
+        & anotherVectorDatabase )
+      call SendMatrixListToSnooper ( snoopers(snooper), matrixDatabase ) 
+      call SendArrayListToSnooper ( snoopers(snooper), &
+        & r1a, r1b, r1c, r1d, &
+        & r2a, r2b, r2c, r2d, &
+        & r3a, r3b, r3c, r3d, &
+        & r1aName, r1bName, r1cName, r1dName, &
+        & r2aName, r2bName, r2cName, r2dName, &
+        & r3aName, r3bName, r3cName, r3dName )
+    end do
+
+    snoopEventLoop: do ! ---------------------------- Snoop event loop -----
+
+      gotSomething = .false.
+      ! Now try to receive a message
+      call PVMFNRecv ( -1, SnoopTag, bufferID )
+      if ( bufferID < 0 ) then
+        call PVMErrorMessage ( info, "checking for snoop message" )
+      else if ( bufferID > 0 ) then
+        ! We have something to look at
+        ! Get first line and find out who sent it.
+        gotSomething = .true.
+        call PVMFBufInfo ( bufferID, bytes, msgTag, snooperTid, info )
+        if ( info /= 0 ) &
+          & call PVMErrorMessage ( info, "calling PVMFBufInfo" )
+        snooper = FindFirst ( snoopers%tid == snooperTid )
+        call PVMIDLUnpack ( line, info )
+
+        if ( switchDetail ( switches, 'snoop' ) > -1 ) then
+          call output ( 'Got snooper message: ' )
+          call output ( trim(line), advance='yes' )
+        end if
+
+        select case ( trim(line) )
+
+        case ( 'Array' )
+          call PVMIDLUnpack ( nextLine, info )
+          if ( info /= 0 ) call PVMErrorMessage ( info, unpackError )
+          select case ( trim(nextLine) )
+          case ( 'R1A' ) ; call SnooperRequestedArray ( snoopers(snooper), r1a, trim(r1aName) )
+          case ( 'R1B' ) ; call SnooperRequestedArray ( snoopers(snooper), r1b, trim(r1bName) )
+          case ( 'R1C' ) ; call SnooperRequestedArray ( snoopers(snooper), r1c, trim(r1cName) )
+          case ( 'R1D' ) ; call SnooperRequestedArray ( snoopers(snooper), r1d, trim(r1dName) )
+          case ( 'R2A' ) ; call SnooperRequestedArray ( snoopers(snooper), r2a, trim(r2aName) )
+          case ( 'R2B' ) ; call SnooperRequestedArray ( snoopers(snooper), r2b, trim(r2bName) )
+          case ( 'R2C' ) ; call SnooperRequestedArray ( snoopers(snooper), r2c, trim(r2cName) )
+          case ( 'R2D' ) ; call SnooperRequestedArray ( snoopers(snooper), r2d, trim(r2dName) )
+          case ( 'R3A' ) ; call SnooperRequestedArray ( snoopers(snooper), r3a, trim(r3aName) )
+          case ( 'R3B' ) ; call SnooperRequestedArray ( snoopers(snooper), r3b, trim(r3bName) )
+          case ( 'R3C' ) ; call SnooperRequestedArray ( snoopers(snooper), r3c, trim(r3cName) )
+          case ( 'R3D' ) ; call SnooperRequestedArray ( snoopers(snooper), r3d, trim(r3dName) )
+          end select
+
+        case ( 'Continue' )
+          if ( snoopers(snooper)%mode == SnooperControling ) &
+            exit SnoopEventLoop
+
+        case ( 'Control' )
+          if ( any ( snoopers%mode == SnooperControling ) ) then
+            call PVMIDLSend ( 'ControlReject', snooperTid, info, msgTag=SnoopTag )
+          else
+            call PVMIDLSend ( 'ControlAccept', snooperTid, info, msgTag=SnoopTag )
+            snoopers(snooper)%mode = SnooperControling
+          end if
+          if ( info /= 0 ) call PVMErrorMessage ( info, &
+            & "sending control response" )
+
+        case ( 'Finishing' )
+          call ForgetSnooper ( snoopers, snooper )
+
+        case ( 'MatrixBlock' )
+          call PVMIDLUnpack ( nextLine, info )
+          if ( info /= 0 ) call PVMErrorMessage ( info, unpackError )
+          if ( present(matrixDatabase) ) then
+            call SnooperRequestedMatrixBlock ( snoopers(snooper), &
+              & trim(nextLine), matrixDatabase )
+          endif
+
+        case ( 'MatrixMap' )
+          call PVMIDLUnpack ( nextLine, info )
+          if ( info /= 0 ) call PVMErrorMessage ( info, unpackError )
+          if ( present(matrixDatabase) ) then
+            call SnooperRequestedMatrixMap ( snoopers(snooper), &
+              & trim(nextLine), matrixDatabase )
+          endif
+
+        case ( 'NewSnooper' )
+          keepWaiting = .false.
+          call RegisterNewSnooper ( snoopers, snooperTid )
+          snooper = FindFirst ( snoopers%tid == snooperTid )
+          ! Tell it where we are
+          call SendStatusToSnooper ( snoopers(snooper), 'Ready', location, comment, &
+            & phaseName, any(snoopers%mode == SnooperControling ) )
+          ! Send it vectors
+          call SendVectorsListToSnooper ( snoopers(snooper), vectorDatabase, &
+            & anotherVectorDatabase )
+          ! Send it matrices
+          call SendMatrixListToSnooper ( snoopers(snooper), matrixDatabase )
+          ! Send it arrays
+          call SendArrayListToSnooper ( snoopers(snooper), &
+            & r1a, r1b, r1c, r1d, &
+            & r2a, r2b, r2c, r2d, &
+            & r3a, r3b, r3c, r3d, &
+            & r1aName, r1bName, r1cName, r1dName, &
+            & r2aName, r2bName, r2cName, r2dName, &
+            & r3aName, r3bName, r3cName, r3dName )
+          
+        case ( 'Quantity' )
+          call PVMIDLUnpack ( nextLine, info )
+          if ( info /= 0 ) call PVMErrorMessage ( info, unpackError )
+          call SnooperRequestedQuantity ( snoopers(snooper), &
+            & trim(nextLine), vectorDatabase )
+          if ( present(anotherVectorDatabase) ) &
+            & call SnooperRequestedQuantity ( snoopers(snooper), &
+              & trim(nextLine), anotherVectorDatabase )
+
+        case ( 'Relinquish' )
+          snoopers(snooper)%mode = SnooperObserving
+          call PVMIDLSend ( 'Relinquished', snooperTid, info, msgTag=SnoopTag )
+          if ( info /= 0 ) call PVMErrorMessage ( info, &
+            & "sending relinquish response" )
+
+        case default
+          call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            & 'Got unexpected response from snooper:'//trim(line) )
+
+        end select
+      end if
+
+      ! Now check for dead task messages
+      call PVMFNRecv ( -1, SnooperDiedTag, bufferID )
+      if ( bufferID < 0 ) then
+        call PVMErrorMessage ( info, "checking for snooper died message" )
+      else if ( bufferID > 0 ) then     ! Got a message
+        gotSomething = .true.
+        call PVMF90Unpack ( snooperTid, info )
+        if ( info < 0 ) then
+          call PVMErrorMessage ( info, "unpacking dead snooper tid" )
+        end if
+        snooper = FindFirst ( snoopers%tid == snooperTid )
+        if ( snooper /= 0 ) then
+          call ForgetSnooper ( snoopers, snooper )
+        endif
+      endif ! Got a message
+
+      ! Shall we quit the loop?
+      if ( size(snoopers) == 0 ) then
+        if (.not. keepWaiting) exit SnoopEventLoop
+      else
+        if ( all ( snoopers%mode /= SnooperControling ) ) exit SnoopEventLoop
+      end if
+
+      if (.not. gotSomething) call usleep ( delay )
+    end do snoopEventLoop ! -------------- End of snoop event loop -----
+
+    ! Tell all the snoopers we're off and running again
+    do snooper = 1, size(snoopers)
+      call SendStatusToSnooper ( snoopers(snooper), 'Running', location, comment, &
+        & phaseName, any ( snoopers%mode == SnooperControling ) )
+    end do
+    
+  end subroutine Snoop
+
+  ! ------------------------------------- SnooperRequestedArrayR1 ------------
+  subroutine SnooperRequestedArrayR1 ( SNOOPER, M, NAME )
+    ! This routine sends the array to the given snooper
+
+    ! Dummy arguments
+    type (SnooperInfo_T), intent(in) :: SNOOPER ! This snooper
+    real(r8), dimension(:), intent(in) :: M
+    character(len=*), intent(in) :: NAME
+
+    ! Local variables
+    integer :: BUFFERID                 ! ID for PVM
+    integer :: INFO                     ! Flag from PVM
+
+    ! Executable code
+    call PVMFInitSend ( PvmDataDefault, bufferID )
+    call PVMIDLPACK ( 'Array', info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'packing "Array"' )
+    call PVMIDLPack ( trim(name), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'packing array name' )
+    call PVMIDLPack ( M, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'packing array values' )
+    call PVMFSend ( snooper%tid, SnoopTag, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'sending array' )
+  end subroutine SnooperRequestedArrayR1
+
+  ! ------------------------------------- SnooperRequestedArrayR1 ------------
+  subroutine SnooperRequestedArrayR2 ( SNOOPER, M, NAME )
+    ! This routine sends the array to the given snooper
+
+    ! Dummy arguments
+    type (SnooperInfo_T), intent(in) :: SNOOPER ! This snooper
+    real(r8), dimension(:,:), intent(in) :: M
+    character(len=*), intent(in) :: NAME
+
+    ! Local variables
+    integer :: BUFFERID                 ! ID for PVM
+    integer :: INFO                     ! Flag from PVM
+
+    ! Executable code
+    call PVMFInitSend ( PvmDataDefault, bufferID )
+    call PVMIDLPACK ( 'Array', info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'packing "Array"' )
+    call PVMIDLPack ( trim(name), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'packing array name' )
+    call PVMIDLPack ( M, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'packing array values' )
+    call PVMFSend ( snooper%tid, SnoopTag, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'sending array' )
+  end subroutine SnooperRequestedArrayR2
+
+  ! ------------------------------------- SnooperRequestedArrayR1 ------------
+  subroutine SnooperRequestedArrayR3 ( SNOOPER, M, NAME )
+    ! This routine sends the array to the given snooper
+
+    ! Dummy arguments
+    type (SnooperInfo_T), intent(in) :: SNOOPER ! This snooper
+    real(r8), dimension(:,:,:), intent(in) :: M
+    character(len=*), intent(in) :: NAME
+
+    ! Local variables
+    integer :: BUFFERID                 ! ID for PVM
+    integer :: INFO                     ! Flag from PVM
+
+    ! Executable code
+    call PVMFInitSend ( PvmDataDefault, bufferID )
+    call PVMIDLPACK ( 'Array', info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'packing "Array"' )
+    call PVMIDLPack ( trim(name), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'packing array name' )
+    call PVMIDLPack ( M, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'packing array values' )
+    call PVMFSend ( snooper%tid, SnoopTag, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'sending array' )
+  end subroutine SnooperRequestedArrayR3
+
+  ! ------------------------------------- SnooperRequestedMatrixBlockMap -----
+  subroutine SnooperRequestedMatrixMap ( SNOOPER, LINE, MATRIXDATABASE )
+    ! This routine sends a matrix (including the vectors associated
+    ! with it) to a snooping task.  It will probably take a while in many
+    ! cases.
+
+    ! Dummy arguments
+    type (SnooperInfo_T), intent(in) :: SNOOPER ! This snooper
+    character (len=*), intent(in) :: LINE ! Name of matrix to send
+    type (Matrix_T), dimension(:), target, intent(in) :: MATRIXDATABASE
+    type (Matrix_T), pointer :: M
+    type (RC_Info), pointer :: RC
+
+    ! Local variables
+    integer :: BUFFERID                 ! For PVM
+    integer :: MATRIXNAME               ! String index of matrix name
+    integer :: MATRIX                   ! Index of matrix in database
+    integer :: I                        ! Loop counter
+    integer :: INFO                     ! Flag for PVM
+    integer :: Q                        ! Loop counter
+    character(len=132) :: NAME          ! Text
+
+    ! Executable code
+
+    matrixName = enter_terminal ( line, t_identifier )
+    do matrix = 1, size(matrixDatabase)
+      if ( matrixDatabase(matrix)%name == matrixName ) exit
+    end do
+    if ( matrixDatabase(matrix)%name /= matrixName ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to find requested matrix:'//trim(line) )
+
+    ! OK, setup to send the result
+    m => matrixDatabase(matrix)
+    call PVMFInitSend ( PvmDataDefault, bufferID )
+    call PVMIDLPack ( 'MatrixMap', info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'packing "MatrixMap"' )
+    call PVMIDLPack ( trim(line), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'packing "'&
+      & // trim(line) // '"' )
+
+    if ( switchDetail ( switches, 'snoop' ) > -1 ) then
+      call output ( 'Sending snooper matrix map for ' )
+      call output ( trim(line), advance='yes' )
+    end if
+
+    ! Send information on rows and columns
+    do i = 1, 2
+      if ( i == 1 ) then
+        rc => m%row
+      else
+        rc => m%col
+      endif
+    
+      ! Pack the instance first flag
+      call PVMIDLPack ( rc%instFirst, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, 'packing rc%instFirst' )
+      ! Pack the number of quantities
+      call PVMIDLPack ( size(rc%vec%quantities), info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, 'packing rc%instFirst' )
+      ! Pack the quantity templates, that conveys all the other information
+      do q = 1, size(rc%vec%quantities)
+        call Get_string ( rc%vec%quantities(q)%template%name, name )
+        call PVMIDLPack ( trim(name), info )
+        if ( info /= 0 ) call PVMErrorMessage ( info, &
+          & 'packing rc%vec%quantities(?)%template%name' )
+        call PVMSendQuantity ( rc%vec%quantities(q), justPack=.true., noMask=.true., &
+          & noValues=.true. )
+      end do
+    end do
+    
+    ! Now send it all off
+    call PVMFSend ( snooper%tid, SnoopTag, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'sending MatrixMap' )
+
+  end subroutine SnooperRequestedMatrixMap
+  
+  ! ------------------------------------- Snooper requested matrixBlock -----
+  subroutine SnooperRequestedMatrixBlock ( SNOOPER, LINE, MATRIXDATABASE )
+    ! This routine sends a matrix (including the vectors associated
+    ! with it) to a snooping task.  It will probably take a while in many
+    ! cases.
+
+    ! Dummy arguments
+    type (SnooperInfo_T), intent(in) :: SNOOPER ! This snooper
+    character (len=*), intent(in) :: LINE ! Name of matrix to send
+    type (Matrix_T), dimension(:), intent(in) :: MATRIXDATABASE
+
+    ! Local variables
+    integer :: BUFFERID                 ! For PVM
+    integer :: MATRIXNAME               ! String index of matrix name
+    integer :: MATRIX                   ! Index of matrix in database
+    integer,dimension(2) :: RC          ! Index of row/column requested
+    integer :: INFO                     ! Flag from PVM
+    type (MatrixElement_T), pointer :: BLOCK ! The block of interest
+    real(r8), dimension(:,:), allocatable :: values
+    integer :: n_rows, n_cols, status
+
+    ! Executable code
+
+    matrixName = enter_terminal ( line, t_identifier )
+    do matrix = 1, size(matrixDatabase)
+      if ( matrixDatabase(matrix)%name == matrixName ) exit
+    end do
+    if ( matrixDatabase(matrix)%name /= matrixName ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to find requested matrix:'//trim(line) )
+    call PVMIDLUnpack ( rc, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'unpacking row/col index' )
+    
+    ! Now send the block
+    if ( switchDetail ( switches, 'snoop' ) > -1 ) then
+      call output ( 'Sending snooper matrix block ( ' )
+      call output ( rc(1) )
+      call output ( ', ' )
+      call output ( rc(2) )
+      call output ( ' ) of ' )
+      call output ( trim(line), advance='yes' )
+    end if
+
+    block => matrixDatabase(matrix)%block(rc(1),rc(2))
+    
+    call PVMFInitSend ( PVMDataDefault, bufferID )
+    call PVMIDLPack ( 'MatrixBlock', info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'packing "MatrixBlock"' )
+    call PVMIDLPack ( trim(line), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'packing matrix name' )
+    call PVMIDLPack ( rc, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'packing row/col index' )
+    call PVMIDLPack ( (/ block%kind, block%nRows, block%nCols /), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'packing kind, noRows, noCols' )
+
+    if ( associated ( block%values ) ) then
+      call PVMIDLPack ( real(block%values,r8), info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, 'packing block values' )
+    endif
+
+    if (associated(block%r1) .and. associated(block%r2)) then
+      call PVMIDLPack ( block%r1, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, 'packing r1' )
+      call PVMIDLPack ( block%r2, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, 'packing r2' )
+    end if
+
+    call PVMFSend ( snooper%tid, SnoopTag, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'Sending block' )
+
+  end subroutine SnooperRequestedMatrixBlock
+
+  ! ----------------------------------- Snooper requested quantity -----
+  subroutine SnooperRequestedQuantity ( SNOOPER, LINE, VectorDatabase )
+    ! This routine sends a quantity (including its template) to 
+    ! a snooping task.
+
+    ! Dummy arguments
+    type (SnooperInfo_T), intent(in) :: SNOOPER ! This snooper
+    character (len=*), intent(in) :: LINE ! Name of quantity to send
+    type (Vector_T), dimension(:), target :: VectorDatabase
+
+    ! Local variables
+    integer :: BUFFERID                 ! ID for PVM
+    integer :: INFO                     ! Flag from PVM
+    integer :: DOTPOS                   ! For parsing string
+    integer :: VECTORNAME               ! String index of vector name
+    integer :: QUANTITYNAME             ! String index of quantity name
+    integer :: VECTOR                   ! index
+    integer :: QUANTITY                 ! index
+
+    type (VectorValue_T), pointer :: q  ! This vector quantity
+
+    ! Executable code
+
+    dotPos = index ( line, '.' )
+    vectorName = enter_terminal ( line(1:dotPos-1), t_identifier )
+    quantityName = enter_terminal ( line(dotPos+1:), t_identifier )
+
+    do vector = 1, size(vectorDatabase)
+      if ( vectorDatabase(vector)%name == vectorName) exit
+    end do
+    if ( vector > size(vectorDatabase) ) return
+
+    do quantity = 1, size(vectorDatabase(vector)%quantities)
+      if ( vectorDatabase(vector)%quantities(quantity)%template%name == &
+        & quantityName ) exit
+    end do
+    if ( quantity > size(vectorDatabase(vector)%quantities ) ) return
+
+    q => vectorDatabase(vector)%quantities(quantity)
+
+    if ( switchDetail ( switches, 'snoop' ) > -1 ) then 
+      call output ( 'Sending snooper ' )
+      call display_string ( vectorDatabase(vector)%name, strip=.true. )
+      call output ( '.' )
+      call display_string ( q%template%name, advance='yes', strip=.true. )
+    end if
+
+    call PVMFInitSend ( PvmDataDefault, bufferID )
+    call PVMIDLPack ( 'Quantity', info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'packing "Quantity"' )
+    call PVMIDLPack ( trim(line), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'packing quantity name' )
+    call PVMSendQuantity( q, snooper%tid, justPack=.true., noMask=.false. )
+    call PVMFSend ( snooper%tid, SnoopTag, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'sending quantity' )
+
+  end subroutine SnooperRequestedQuantity
+  
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: SnoopMLSL2.f90,v 2.52 2018/04/19 01:14:16 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module SnoopMLSL2
+
+! $Log: SnoopMLSL2.f90,v $
+! Revision 2.52  2018/04/19 01:14:16  vsnyder
+! Remove USE statements for unused names
+!
+! Revision 2.51  2016/02/29 19:51:38  pwagner
+! Usleep got from machine module instead of being an external
+!
+! Revision 2.50  2015/03/28 02:51:42  vsnyder
+! Added stuff to trace allocate/deallocate addresses
+!
+! Revision 2.49  2014/09/05 01:22:30  vsnyder
+! More complete and accurate allocate/deallocate size tracking.  Convert
+! some local pointer temps to allocatable.
+!
+! Revision 2.48  2014/09/05 00:49:07  vsnyder
+! EmpiricalGeometry.f90 -- Wrong comment
+!
+! Revision 2.47  2014/04/10 00:43:58  pwagner
+! Moved SNOOPINGACTIVE, SNOOPNAME to MLSL2Options
+!
+! Revision 2.46  2013/09/24 23:47:22  vsnyder
+! Use Where instead of Source_Ref for messages
+!
+! Revision 2.45  2013/08/12 23:49:41  pwagner
+! FindSomethings moved to MLSFinds module
+!
+! Revision 2.44  2013/06/12 02:39:45  vsnyder
+! Cruft removal
+!
+! Revision 2.43  2011/05/09 18:25:47  pwagner
+! Converted to using switchDetail
+!
+! Revision 2.42  2010/02/04 23:12:44  vsnyder
+! Remove USE or declaration for unreferenced names
+!
+! Revision 2.41  2009/06/23 18:46:18  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.40  2007/04/03 17:38:23  vsnyder
+! Remove pointer attribute from VectorDatabase, which is allocated in
+! tree-walker, so we don't need to check whether it's associated.
+!
+! Revision 2.39  2005/06/22 18:57:02  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.38  2005/03/15 23:50:52  pwagner
+! PVMERRORMESSAGE now part of MLSMessageModule
+!
+! Revision 2.37  2004/06/10 00:58:45  vsnyder
+! Move FindFirst, FindNext from MLSCommon to MLSSets
+!
+! Revision 2.36  2004/01/08 01:11:20  livesey
+! Bug fix.
+!
+! Revision 2.35  2004/01/07 23:49:49  livesey
+! Added the ability to snoop simple arrays
+!
+! Revision 2.34  2002/12/06 22:33:28  livesey
+! Added the snoop name stuff
+!
+! Revision 2.33  2002/10/08 17:36:23  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.32  2002/09/13 18:10:10  pwagner
+! May change matrix precision rm from r8
+!
+! Revision 2.31  2002/08/21 23:05:59  livesey
+! Handles unknown matrices better
+!
+! Revision 2.30  2002/08/03 20:41:27  livesey
+! Added snoop toggle
+!
+! Revision 2.29  2002/02/08 22:52:34  livesey
+! Defaults to send mask now
+!
+! Revision 2.28  2001/10/31 22:00:05  livesey
+! Added phase name stuff
+!
+! Revision 2.27  2001/10/27 00:14:48  livesey
+! Removed a print statement
+!
+! Revision 2.26  2001/10/24 00:25:50  livesey
+! Got l2 side of matrix snooping working.
+!
+! Revision 2.25  2001/10/22 22:40:39  livesey
+! On the way to getting matrices working
+!
+! Revision 2.24  2001/10/15 22:38:50  vsnyder
+! Make anotherVectorsDatabase not a pointer
+!
+! Revision 2.23  2001/10/06 23:52:01  livesey
+! Bug fix with vector count
+!
+! Revision 2.22  2001/10/06 23:49:16  livesey
+! Decreased delay in the hope it makes it faster
+!
+! Revision 2.21  2001/10/05 20:19:21  vsnyder
+! Process arguments by name instead of position.
+! Add 'AnotherComment' optional argument.
+! Cosmetic changes.
+!
+! Revision 2.20  2001/10/05 17:32:35  vsnyder
+! Add 'AnotherVectorDatabase' argument; cosmetic changes
+!
+! Revision 2.19  2001/10/02 00:44:46  livesey
+! Bug fix
+!
+! Revision 2.18  2001/09/28 23:39:09  livesey
+! Now doesn't give error if unknown quantity/vector requested
+!
+! Revision 2.17  2001/09/27 23:39:22  livesey
+! Bug fix for going from one to zero snoopers
+!
+! Revision 2.16  2001/09/22 15:49:54  livesey
+! Made delay in loop optional, only if nothing received
+!
+! Revision 2.15  2001/09/21 22:04:16  livesey
+! Removed some print statements
+!
+! Revision 2.14  2001/09/20 23:08:21  livesey
+! New version, minor tidy ups etc.
+!
+! Revision 2.13  2001/09/20 00:27:21  livesey
+! Minor changes
+!
+! Revision 2.12  2001/09/19 23:47:39  livesey
+! Compilable version
+!
+! Revision 2.11  2001/09/19 23:33:16  livesey
+! New version of communication protocol
+!
+@
+
+
+2.52
+log
+@Remove USE statements for unused names
+@
+text
+@d28 24
+a51 24
+  use HIGHOUTPUT, only: BANNER
+  use INIT_TABLES_MODULE, only: F_COMMENT, F_PHASENAME
+  use machine, only: USleep
+  use MATRIXMODULE_0, only: MATRIXELEMENT_T
+  use MATRIXMODULE_1, only: MATRIX_T, RC_INFO
+  use MLSL2Options, only: currentPhaseName
+  use MLSKINDS, only: R8
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING, &
+    & PVMERRORMESSAGE
+  use MLSFINDS, only: FINDFIRST
+  use MLSL2Options, only: SNOOPINGACTIVE, SNOOPNAME
+  use MORETREE, only: GET_FIELD_ID
+  use MLSSTRINGLISTS, only: SWITCHDETAIL
+  use PVM, only: PVMDATADEFAULT, PVMFINITSEND, PVMFMYTID, &
+    & PVMF90UNPACK, PVMTASKEXIT, PVMFNOTIFY, PVMFSEND
+  use PVMIDL, only:  PVMIDLPACK, PVMIDLSEND, PVMIDLUNPACK
+  use QUANTITYPVM, only: PVMSENDQUANTITY
+  use OUTPUT_M, only: OUTPUT
+  use STRING_TABLE, only: GET_STRING, DISPLAY_STRING
+  use SYMBOL_TABLE, only: ENTER_TERMINAL
+  use SYMBOL_TYPES, only: T_IDENTIFIER
+  use TREE, only:  NSONS, SUB_ROSA, SUBTREE, Where
+  use TOGGLES, only: SWITCHES
+  use VECTORSMODULE, only: VECTOR_T, VECTORVALUE_T
+d536 1
+a536 1
+          & trim(currentPhaseName) // ')', advance='yes' )
+d539 1
+a539 1
+          & trim(currentPhaseName) // ')' )
+d1013 1
+a1013 1
+       "$Id: SnoopMLSL2.f90,v 2.51 2016/02/29 19:51:38 pwagner Exp $"
+d1023 3
+@
+
+
+2.51
+log
+@Usleep got from machine module instead of being an external
+@
+text
+@a326 1
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+d1013 1
+a1013 1
+       "$Id: SnoopMLSL2.f90,v 2.50 2015/03/28 02:51:42 vsnyder Exp $"
+d1023 3
+@
+
+
+2.50
+log
+@Added stuff to trace allocate/deallocate addresses
+@
+text
+@d30 1
+a486 2
+    ! External (C) function
+    external :: Usleep
+d1014 1
+a1014 1
+       "$Id: SnoopMLSL2.f90,v 2.49 2014/09/05 01:22:30 vsnyder Exp $"
+d1024 3
+@
+
+
+2.49
+log
+@More complete and accurate allocate/deallocate size tracking.  Convert
+some local pointer temps to allocatable.
+@
+text
+@d326 1
+d375 1
+d381 1
+d389 2
+d392 2
+a393 1
+      & uBounds = size(snoopers)-1, elementSize = storage_size(newSnoopers) / 8 )
+d400 2
+d403 1
+a403 1
+    call test_deallocate ( status, moduleName, 'newSnoopers', s )
+a886 1
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+d938 1
+a938 12
+!      if ( rm == r8 ) then
+!        call PVMIDLPack ( block%values, info )
+!      else
+        n_rows = size(block%values, 1)
+        n_cols = size(block%values, 2)
+        allocate ( values(n_rows, n_cols), stat=status )
+        call test_allocate ( status, moduleName, 'values' )
+        values = block%values
+        call PVMIDLPack ( values, info )
+        deallocate ( values, stat=status )
+        call test_deallocate ( status, moduleName, 'values' )
+!      endif
+d1015 1
+a1015 1
+       "$Id: SnoopMLSL2.f90,v 2.48 2014/09/05 00:49:07 vsnyder Exp $"
+d1025 4
+@
+
+
+2.48
+log
+@EmpiricalGeometry.f90
+@
+text
+@d1019 1
+a1019 1
+       "$Id: SnoopMLSL2.f90,v 2.47 2014/04/10 00:43:58 pwagner Exp $"
+d1029 3
+@
+
+
+2.47
+log
+@Moved SNOOPINGACTIVE, SNOOPNAME to MLSL2Options
+@
+text
+@d35 1
+a35 1
+    & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, PVMERRORMESSAGE
+d324 2
+d332 1
+d373 1
+d379 1
+a379 1
+    integer :: STATUS
+a384 1
+    nullify ( newSnoopers )
+d386 2
+a387 2
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate//'newSnoopers' )
+d392 2
+a393 1
+    endif
+d395 1
+a395 2
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_DeAllocate//'snoopers' )
+d453 1
+d548 2
+a549 2
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName,&
+        & MLSMSG_Allocate // "snoopers(0)" )
+d879 1
+d893 2
+a894 2
+    real(r8), dimension(:,:), pointer :: values
+    integer :: n_rows, n_cols
+d936 2
+a937 1
+        allocate(values(n_rows, n_cols))
+d940 2
+a941 1
+        deallocate(values)
+d1019 1
+a1019 1
+       "$Id: SnoopMLSL2.f90,v 2.46 2013/09/24 23:47:22 vsnyder Exp $"
+d1029 3
+@
+
+
+2.46
+log
+@Use Where instead of Source_Ref for messages
+@
+text
+@d28 1
+d32 1
+d37 1
+a94 3
+  logical, save :: SNOOPINGACTIVE = .false.
+  character (len=132), save :: SNOOPNAME = ''
+
+d499 1
+d502 1
+a502 1
+    if ( .not. snoopingActive ) return
+d504 1
+a504 1
+    location = '????'
+d508 1
+a508 1
+      call get_where ( where(key), location )
+d519 1
+d522 11
+d1012 1
+a1012 1
+       "$Id: SnoopMLSL2.f90,v 2.45 2013/08/12 23:49:41 pwagner Exp $"
+d1022 3
+@
+
+
+2.45
+log
+@FindSomethings moved to MLSFinds module
+@
+text
+@d45 1
+a45 1
+  use TREE, only:  NSONS, SOURCE_REF, SUB_ROSA, SUBTREE
+d450 1
+d507 1
+a507 2
+      write ( location, * ) source_ref(key)/256
+      location = adjustl(trim(location))
+d999 1
+a999 1
+       "$Id: SnoopMLSL2.f90,v 2.44 2013/06/12 02:39:45 vsnyder Exp $"
+d1009 3
+@
+
+
+2.44
+log
+@Cruft removal
+@
+text
+@d31 1
+a31 1
+  use MLSKINDS, only: R8, RM
+d34 1
+a34 1
+  use MLSSETS, only: FINDFIRST
+d999 1
+a999 1
+       "$Id: SnoopMLSL2.f90,v 2.43 2011/05/09 18:25:47 pwagner Exp $"
+d1009 3
+@
+
+
+2.43
+log
+@Converted to using switchDetail
+@
+text
+@d472 1
+a472 1
+    integer, parameter :: MAXARRAYARGUMENTS = 12 ! Total number of R1A etc. arguments above
+d999 1
+a999 1
+       "$Id: SnoopMLSL2.f90,v 2.42 2010/02/04 23:12:44 vsnyder Exp $"
+d1009 3
+@
+
+
+2.42
+log
+@Remove USE or declaration for unreferenced names
+@
+text
+@d28 13
+a40 12
+  use init_tables_module, only: F_Comment, F_PhaseName
+  use MatrixModule_0, ONLY: MatrixElement_T
+  use MatrixModule_1, ONLY: Matrix_T, RC_Info
+  use MLSCommon, only: R8, RM
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning, &
+    & MLSMSG_Allocate, MLSMSG_DeAllocate, PVMErrorMessage
+  use MLSSets, only: FINDFIRST
+  use MoreTree, only: Get_Field_Id
+  use PVM, only: PVMDataDefault, PVMFinitsend, PVMFmyTid, &
+    & PVMF90Unpack, PVMTaskExit, PVMFNotify, PVMFSend
+  use PVMIDL, only:  PVMIDLPack, PVMIDLSend, PVMIDLUnpack
+  use QuantityPVM, only: PVMSENDQUANTITY
+d43 2
+a44 2
+  use Symbol_Table, only: ENTER_TERMINAL
+  use Symbol_Types, only: T_IDENTIFIER
+d46 2
+a47 2
+  use Toggles, only: SWITCHES
+  use VectorsModule, only: Vector_T, VectorValue_T
+d126 1
+a126 1
+      if ( index ( switches, 'snoop' ) /= 0 ) &
+d154 1
+a154 1
+      if ( index ( switches, 'snoop' ) /= 0 ) &
+d193 1
+a193 1
+      if ( index ( switches, 'snoop' ) /= 0 ) &
+d234 1
+a234 1
+      if ( index ( switches, 'snoop' ) /= 0 ) &
+d268 1
+a268 1
+      if ( index ( switches, 'snoop' ) /= 0 ) &
+d287 1
+a287 1
+      if ( index ( switches, 'snoop' ) /= 0 ) &
+d345 1
+a345 1
+    if ( index ( switches, 'snoop' ) /= 0 ) &
+d378 1
+a378 1
+    if ( index ( switches, 'snoop' ) /= 0 ) &
+d413 1
+a413 1
+    if ( index ( switches, 'snoop' ) /= 0 ) &
+d570 1
+a570 1
+        if ( index ( switches, 'snoop' ) /= 0 ) then
+d821 1
+a821 1
+    if ( index ( switches, 'snoop' ) /= 0 ) then
+d891 1
+a891 1
+    if ( index ( switches, 'snoop' ) /= 0 ) then
+d978 1
+a978 1
+    if ( index ( switches, 'snoop' ) /= 0 ) then 
+d999 1
+a999 1
+       "$Id: SnoopMLSL2.f90,v 2.41 2009/06/23 18:46:18 pwagner Exp $"
+d1009 3
+@
+
+
+2.41
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@a28 2
+  use Intrinsic, only: LIT_INDICES
+  use LEXER_CORE, only: PRINT_SOURCE
+d31 1
+a31 1
+  use MLSCommon, only: R4, R8, I4, RM
+d33 1
+a33 1
+    & MLSMSG_Info, MLSMSG_Allocate, MLSMSG_DeAllocate, PVMErrorMessage
+a34 1
+  use MLSSignals_M, only: GETSIGNALNAME
+d36 1
+a36 1
+  use PVM, only: PVMDataDefault, PVMFinitsend, PVMFmyTid, PVMFgSize, &
+d38 1
+a38 1
+  use PVMIDL, only:  IDLMsgTag, PVMIDLPack, PVMIDLReceive, PVMIDLSend, PVMIDLUnpack
+a39 1
+  use QuantityTemplates, only: QuantityTemplate_T
+d44 1
+a44 1
+  use TREE, only:  DUMP_TREE_NODE, NSONS, SOURCE_REF, SUB_ROSA, SUBTREE
+d53 1
+a53 1
+       "$RCSfile: $"
+a477 1
+    type (SnooperInfo_T), dimension(:), pointer, save :: OLDSNOOPERS => NULL()
+a483 1
+    integer :: CONTROLINGSNOOPER        ! This one is controling
+a956 3
+    type (QuantityTemplate_T), pointer :: qt ! The quantity template
+
+    character (len=132) :: word         ! A line of text to send.
+d998 1
+a998 1
+       "$Id: read_apriori.f90 is it here $"
+d1008 3
+@
+
+
+2.40
+log
+@Remove pointer attribute from VectorDatabase, which is allocated in
+tree-walker, so we don't need to check whether it's associated.
+@
+text
+@d57 1
+a57 1
+       "$RCSfile: SnoopMLSL2.f90,v $"
+d1004 1
+a1005 1
+!---------------------------- RCS Ident Info -------------------------------
+d1007 2
+a1008 3
+       "$Id: SnoopMLSL2.f90,v 2.39 2005/06/22 18:57:02 pwagner Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d1010 1
+d1012 1
+d1017 4
+@
+
+
+2.39
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d57 1
+a57 1
+       "$RCSfile: $"
+d252 1
+a252 1
+    type (Vector_T), dimension(:), optional, pointer :: VectorDatabase
+a262 1
+    if ( anyVectors ) anyVectors = associated(vectorDatabase)
+d455 1
+a455 1
+    type (Vector_T), dimension(:), optional, pointer :: VectorDatabase
+d1007 1
+a1007 1
+       "$Id: $"
+d1016 3
+@
+
+
+2.38
+log
+@PVMERRORMESSAGE now part of MLSMessageModule
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
+d55 1
+a55 4
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
+       "$Id: SnoopMLSL2.f90,v 2.37 2004/06/10 00:58:45 vsnyder Exp $"
+  character (len=len(idParm)), private :: Id = idParm
+d57 1
+a57 1
+       "$RCSfile: SnoopMLSL2.f90,v $"
+d1006 5
+d1017 3
+@
+
+
+2.37
+log
+@Move FindFirst, FindNext from MLSCommon to MLSSets
+@
+text
+@d1 2
+a2 2
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d27 1
+a27 1
+    MLSMSG_Info, MLSMSG_Allocate, MLSMSG_DeAllocate
+d32 1
+a32 1
+    & PVMErrorMessage, PVMF90Unpack, PVMTaskExit, PVMFNotify, PVMFSend
+d49 1
+a49 1
+       "$Id: SnoopMLSL2.f90,v 2.36 2004/01/08 01:11:20 livesey Exp $"
+d1007 3
+@
+
+
+2.36
+log
+@Bug fix.
+@
+text
+@d25 1
+a25 1
+  use MLSCommon, only: FINDFIRST, R4, R8, I4, RM
+d28 1
+d49 1
+a49 1
+       "$Id: SnoopMLSL2.f90,v 2.35 2004/01/07 23:49:49 livesey Exp $"
+d1007 3
+@
+
+
+2.35
+log
+@Added the ability to snoop simple arrays
+@
+text
+@d48 1
+a48 1
+       "$Id: SnoopMLSL2.f90,v 2.34 2002/12/06 22:33:28 livesey Exp $"
+d203 1
+a203 1
+      if ( present ( r1b ) ) call PVMIDLPack ( 'R1B:'//r1aName, info )
+d205 1
+a205 1
+      if ( present ( r1c ) ) call PVMIDLPack ( 'R1C:'//r1aName, info )
+d207 1
+a207 1
+      if ( present ( r1d ) ) call PVMIDLPack ( 'R1D:'//r1aName, info )
+d209 1
+a209 1
+      if ( present ( r2a ) ) call PVMIDLPack ( 'R2A:'//r1aName, info )
+d211 1
+a211 1
+      if ( present ( r2b ) ) call PVMIDLPack ( 'R2B:'//r1aName, info )
+d213 1
+a213 1
+      if ( present ( r2c ) ) call PVMIDLPack ( 'R2C:'//r1aName, info )
+d215 1
+a215 1
+      if ( present ( r2d ) ) call PVMIDLPack ( 'R2D:'//r1aName, info )
+d217 1
+a217 1
+      if ( present ( r3a ) ) call PVMIDLPack ( 'R3A:'//r1aName, info )
+d219 1
+a219 1
+      if ( present ( r3b ) ) call PVMIDLPack ( 'R3B:'//r1aName, info )
+d221 1
+a221 1
+      if ( present ( r3c ) ) call PVMIDLPack ( 'R3C:'//r1aName, info )
+d223 1
+a223 1
+      if ( present ( r3d ) ) call PVMIDLPack ( 'R3D:'//r1aName, info )
+d1006 3
+@
+
+
+2.34
+log
+@Added the snoop name stuff
+@
+text
+@d48 1
+a48 1
+       "$Id: SnoopMLSL2.f90,v 2.33 2002/10/08 17:36:23 pwagner Exp $"
+d55 5
+d159 81
+d435 4
+d440 7
+a446 1
+    & AnotherComment, AnotherPhaseName, matrixDatabase )
+d456 9
+d470 1
+d544 8
+a551 1
+   end do
+d577 18
+d640 8
+d705 75
+d1006 3
+@
+
+
+2.33
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d48 1
+a48 1
+       "$Id: SnoopMLSL2.f90,v 2.32 2002/09/13 18:10:10 pwagner Exp $"
+d85 1
+d87 1
+a87 2
+  public :: SNOOPINGACTIVE
+  public :: SNOOP
+d421 1
+a421 1
+      call PVMfjoingroup ( Level2CodeGroupName, inum )
+d423 1
+a423 1
+        & // Level2CodeGroupName )
+d792 3
+@
+
+
+2.32
+log
+@May change matrix precision rm from r8
+@
+text
+@d48 1
+a48 1
+       "$Id: SnoopMLSL2.f90,v 2.31 2002/08/21 23:05:59 livesey Exp $"
+d52 1
+d785 4
+d792 3
+@
+
+
+2.31
+log
+@Handles unknown matrices better
+@
+text
+@d25 1
+a25 1
+  use MLSCommon, only: FINDFIRST, R4, R8, I4
+d48 1
+a48 1
+       "$Id: SnoopMLSL2.f90,v 2.30 2002/08/03 20:41:27 livesey Exp $"
+d660 2
+d698 10
+a707 1
+      call PVMIDLPack ( block%values, info )
+d787 3
+@
+
+
+2.30
+log
+@Added snoop toggle
+@
+text
+@d48 1
+a48 1
+       "$Id: SnoopMLSL2.f90,v 2.29 2002/02/08 22:52:34 livesey Exp $"
+d129 5
+a133 1
+        call get_string ( matrixDatabase(matrix)%name, line )
+d776 3
+@
+
+
+2.29
+log
+@Defaults to send mask now
+@
+text
+@d40 1
+d48 1
+a48 1
+       "$Id: SnoopMLSL2.f90,v 2.28 2001/10/31 22:00:05 livesey Exp $"
+d117 3
+d141 3
+d175 3
+d194 3
+d252 3
+d285 3
+d320 3
+d451 6
+d602 5
+d670 9
+d751 7
+d772 3
+@
+
+
+2.28
+log
+@Added phase name stuff
+@
+text
+@d47 1
+a47 1
+       "$Id: SnoopMLSL2.f90,v 2.27 2001/10/27 00:14:48 livesey Exp $"
+d714 1
+a714 1
+    call PVMSendQuantity( q, snooper%tid, justPack=.true., noMask=.true. )
+d723 3
+@
+
+
+2.27
+log
+@Removed a print statement
+@
+text
+@d20 1
+a20 1
+  use init_tables_module, only: F_Comment
+d47 1
+a47 1
+       "$Id: SnoopMLSL2.f90,v 2.26 2001/10/24 00:25:50 livesey Exp $"
+d288 1
+a288 1
+    & CONTROLED )
+d293 1
+d308 2
+d323 1
+a323 1
+    & AnotherComment, matrixDatabase )
+d329 3
+a331 1
+    character(len=*), intent(in), optional :: AnotherComment ! Replaces
+a332 1
+    ! comment field of "snoop" command if present.
+d358 1
+d371 1
+d377 6
+a382 2
+        if ( get_field_id(son) == f_comment ) &
+          & call get_string ( sub_rosa(subtree(2,son)), comment, strip=.true. )
+d386 1
+d407 1
+a407 1
+        & any ( snoopers%mode == SnooperControling ) )
+d470 1
+a470 1
+            & any(snoopers%mode == SnooperControling ) )
+d528 1
+a528 1
+        & any ( snoopers%mode == SnooperControling ) )
+d723 3
+@
+
+
+2.26
+log
+@Got l2 side of matrix snooping working.
+@
+text
+@d47 1
+a47 1
+       "$Id: SnoopMLSL2.f90,v 2.25 2001/10/22 22:40:39 livesey Exp $"
+a417 1
+        print*,'I got: ', trim(line)
+a621 1
+
+d712 3
+@
+
+
+2.25
+log
+@On the way to getting matrices working
+@
+text
+@d23 2
+a24 1
+  use MatrixModule_1, ONLY: Matrix_T
+d36 1
+a36 1
+  use STRING_TABLE, only: GET_STRING
+d47 1
+a47 1
+       "$Id: SnoopMLSL2.f90,v 2.24 2001/10/15 22:38:50 vsnyder Exp $"
+d133 3
+d418 1
+d532 3
+a534 1
+    type (Matrix_T), dimension(:), intent(in) :: MATRIXDATABASE
+d537 1
+d540 4
+d555 37
+a591 1
+    !call PVMSendMatrix ( matrixDatabase(matrix), snooper%tid )
+d607 1
+d610 3
+d624 2
+a625 1
+    !call PVMSendMatrix ( matrixDatabase(matrix), snooper%tid )
+d627 28
+d714 3
+@
+
+
+2.24
+log
+@Make anotherVectorsDatabase not a pointer
+@
+text
+@d46 1
+a46 1
+       "$Id: SnoopMLSL2.f90,v 2.23 2001/10/06 23:52:01 livesey Exp $"
+d102 36
+d145 1
+a145 1
+    type (Vector_T), dimension(:), optional :: AnotherVectorDatabase
+d172 2
+a173 2
+      if ( anyVectors ) call sendVectorAndQuantityNames ( vectorDatabase )
+      if ( anyMoreVectors ) call sendVectorAndQuantityNames ( anotherVectorDatabase )
+d192 1
+a192 1
+          call PVMIDLPack ( TRIM(line), info )
+d316 1
+a316 1
+    & AnotherComment )
+d323 1
+a324 1
+    !  TYPE (Matrix_T), DIMENSION(:), POINTER, OPTIONAL :: MATRIXDATABASE
+d326 1
+a326 1
+    ! Local parameter
+d328 2
+d395 2
+a396 1
+    end do
+a415 14
+        case ( 'NewSnooper' )
+          keepWaiting = .false.
+          call RegisterNewSnooper ( snoopers, snooperTid )
+          snooper = FindFirst ( snoopers%tid == snooperTid )
+          ! Tell it where we are
+          call SendStatusToSnooper ( snoopers(snooper), 'Ready', location, comment, &
+            & any(snoopers%mode == SnooperControling ) )
+          ! Send it vectors
+          call SendVectorsListToSnooper ( snoopers(snooper), vectorDatabase, &
+            anotherVectorDatabase )
+          
+        case ( 'Finishing' )
+          call ForgetSnooper ( snoopers, snooper )
+
+d430 18
+a447 5
+        case ( 'Relinquish' )
+          snoopers(snooper)%mode = SnooperObserving
+          call PVMIDLSend ( 'Relinquished', snooperTid, info, msgTag=SnoopTag )
+          if ( info /= 0 ) call PVMErrorMessage ( info, &
+            & "sending relinquish response" )
+d449 13
+d464 1
+a464 2
+          if ( info /=0 ) call PVMErrorMessage ( info, &
+            & "unpacking response from snooper" )
+d471 6
+d518 2
+a519 2
+  ! ------------------------------------- Snooper requested matrix -----
+  subroutine SnooperRequestedMatrix ( SNOOPER, LINE, MATRIXDATABASE )
+d527 1
+a527 1
+    type (Matrix_T), dimension(:), pointer :: MATRIXDATABASE
+d545 30
+a574 1
+  end subroutine SnooperRequestedMatrix
+d633 3
+@
+
+
+2.23
+log
+@Bug fix with vector count
+@
+text
+@d46 1
+a46 1
+       "$Id: SnoopMLSL2.f90,v 2.22 2001/10/06 23:49:16 livesey Exp $"
+d109 1
+a109 1
+    type (Vector_T), dimension(:), optional, pointer :: AnotherVectorDatabase
+a116 1
+    integer :: VECTOR, QUANTITY         ! Loop counters
+a121 1
+    if ( anyMoreVectors ) anyMoreVectors = associated(anotherVectorDatabase)
+d124 2
+a125 2
+    if ( anyVectors ) totalVectors = totalVectors + size(vectorDatabase)
+    if ( anyMoreVectors ) totalVectors = totalVectors + size(anotherVectorDatabase)
+d127 1
+a127 1
+    if ( anyVectors .or. anyMoreVectors) then
+d136 2
+a137 39
+      ! Send vector names and quantity names
+      do vector = 1, size(vectorDatabase)
+        call get_string ( vectorDatabase(vector)%name, line )
+        call PVMIDLPack ( TRIM(line), info )
+        if ( info /=0 ) call PVMErrorMessage ( info, "packing vector name:" &
+          & // TRIM(line) )
+        
+        call PVMIDLPack ( size(vectorDatabase(vector)%quantities), info )
+        if ( info /=0 ) call PVMErrorMessage ( info, "packing no quantities for " &
+          & // TRIM(line) )
+        
+        do quantity = 1, size(vectorDatabase(vector)%quantities)
+          call get_string &
+            & ( vectorDatabase(vector)%quantities(quantity)%template%name, line )
+          call PVMIDLPack ( TRIM(line), info )
+          if ( info /=0 ) call PVMErrorMessage ( info, "packing quantity name:" &
+            & // TRIM(line) )
+        end do
+      end do
+
+      ! Send more vector names and quantity names
+      do vector = 1, size(anotherVectorDatabase)
+        call get_string ( anotherVectorDatabase(vector)%name, line )
+        call PVMIDLPack ( TRIM(line), info )
+        if ( info /=0 ) call PVMErrorMessage ( info, "packing vector name:" &
+          & // TRIM(line) )
+        
+        call PVMIDLPack ( size(anotherVectorDatabase(vector)%quantities), info )
+        if ( info /=0 ) call PVMErrorMessage ( info, "packing no quantities for " &
+          & // TRIM(line) )
+        
+        do quantity = 1, size(anotherVectorDatabase(vector)%quantities)
+          call get_string &
+            & ( anotherVectorDatabase(vector)%quantities(quantity)%template%name, line )
+          call PVMIDLPack ( TRIM(line), info )
+          if ( info /=0 ) call PVMErrorMessage ( info, "packing quantity name:" &
+            & // TRIM(line) )
+        end do
+      end do
+d146 17
+a162 1
+    endif
+d164 10
+d284 2
+a285 2
+    type (Vector_T), dimension(:), pointer, optional :: VectorDatabase
+    type (Vector_T), dimension(:), pointer, optional :: AnotherVectorDatabase
+d499 1
+a499 1
+    type (Vector_T), dimension(:), pointer :: VectorDatabase
+d548 3
+@
+
+
+2.22
+log
+@Decreased delay in the hope it makes it faster
+@
+text
+@d46 1
+a46 1
+       "$Id: SnoopMLSL2.f90,v 2.21 2001/10/05 20:19:21 vsnyder Exp $"
+d112 6
+a117 5
+    logical :: AnyMoreVectors, AnyVectors    ! Flags
+    integer :: BUFFERID                      ! For PVM
+    integer :: INFO                          ! Flag
+    character (len=132) :: LINE              ! A line of text
+    integer :: VECTOR, QUANTITY              ! Loop counters
+d125 4
+d135 2
+a136 2
+      call PVMIDLPack ( size(vectorDatabase), info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing size(vectorDatabase)" )
+d561 3
+@
+
+
+2.21
+log
+@Process arguments by name instead of position.
+Add 'AnotherComment' optional argument.
+Cosmetic changes.
+@
+text
+@d46 1
+a46 1
+       "$Id: SnoopMLSL2.f90,v 2.20 2001/10/05 17:32:35 vsnyder Exp $"
+d299 1
+a299 2
+    integer, parameter :: DELAY=100000  ! For Usleep, no. microsecs
+
+d556 5
+@
+
+
+2.20
+log
+@Add 'AnotherVectorDatabase' argument; cosmetic changes
+@
+text
+@d20 3
+a22 2
+  use VectorsModule, only: Vector_T, VectorValue_T
+  use QuantityTemplates, only: QuantityTemplate_T
+d24 1
+a24 3
+
+  use Intrinsic, only: LIT_INDICES
+  use MLSCommon, only: R4, R8, I4
+d27 2
+d33 1
+a33 1
+  use TREE, only:  DUMP_TREE_NODE, SUB_ROSA, SUBTREE, SOURCE_REF
+a35 1
+  use LEXER_CORE, only: PRINT_SOURCE
+d38 2
+a39 2
+  use MLSSignals_M, only: GETSIGNALNAME
+  use MLSCommon, only: FINDFIRST
+d46 1
+a46 1
+       "$Id: SnoopMLSL2.f90,v 2.19 2001/10/02 00:44:46 livesey Exp $"
+d287 2
+a288 1
+  subroutine Snoop ( KEY, VectorDatabase, AnotherVectorDatabase )
+d294 2
+d315 1
+d323 1
+d331 2
+d335 8
+a342 6
+      location=adjustl(trim(location))
+      call get_string ( sub_rosa(subtree(2,subtree(2,key))), comment, strip=.true. )
+    else
+      location = '????'
+      comment = 'Unknown'
+    endif
+d557 3
+@
+
+
+2.19
+log
+@Bug fix
+@
+text
+@d46 1
+a46 1
+       "$Id: SnoopMLSL2.f90,v 2.18 2001/09/28 23:39:09 livesey Exp $"
+d88 1
+a88 1
+  ! ---------------------------------------  GETSNOOPERMODESTRING  -----
+d102 3
+a104 2
+  ! ------------------------------------------- SENDVECTORSLISTTOSNOOPER --------
+  subroutine SendVectorsListToSnooper ( SNOOPER, VECTORDATABASE )
+d108 2
+a109 1
+    type (Vector_T), dimension(:), optional, pointer :: VECTORDATABASE
+d112 5
+a116 5
+    logical :: ANYVECTORS               ! Flag
+    integer :: BUFFERID                 ! For PVM
+    integer :: INFO                     ! Flag
+    character (len=132) :: LINE         ! A line of text
+    integer :: VECTOR, QUANTITY         ! Loop counters
+d120 5
+a124 1
+    if ( anyVectors ) then
+d134 1
+a134 1
+      do vector = 1,size(vectorDatabase)
+d153 20
+d194 1
+a194 1
+  ! --------------------------------------- RegisterNewSnooper ---------
+d227 1
+a227 1
+  ! ---------------------------------------- ForgetSnooper -------------
+d254 3
+a256 2
+  ! ---------------------------------------- SendStatusToSnooper -------
+  subroutine SendStatusToSnooper ( SNOOPER, STATUS, LOCATION, COMMENT, CONTROLED )
+d284 2
+a285 2
+  ! within the code, and takes optional arguments which the user can supply to
+  ! pass to and from the IDL end of the snooper. 
+d287 1
+a287 1
+  subroutine Snoop ( KEY, VECTORDATABASE )
+d291 2
+a292 1
+    type (Vector_T), dimension(:), pointer, optional :: VECTORDATABASE
+d355 2
+a356 1
+      call SendVectorsListToSnooper ( snoopers(snooper), vectorDatabase )
+d359 1
+a359 1
+    snoopEventLoop: do ! --------------------------- Snoop event loop ------
+d385 2
+a386 1
+          call SendVectorsListToSnooper ( snoopers(snooper), vectorDatabase )
+d415 5
+a419 2
+          call SnooperRequestedQuantity(snoopers(snooper), &
+            & trim(nextLine), vectorDatabase)
+d452 1
+a452 1
+    end do snoopEventLoop ! ------------------ End of snoop event loop -----
+d462 1
+a462 1
+  ! ----------------------------------------- Snooper requested matrix -----
+d491 2
+a492 2
+  ! ----------------------------------------- Snooper requested quantity ---
+  subroutine SnooperRequestedQuantity ( SNOOPER, LINE, VECTORDATABASE )
+d499 1
+a499 1
+    type (Vector_T), dimension(:), pointer :: VECTORDATABASE
+d548 3
+@
+
+
+2.18
+log
+@Now doesn't give error if unknown quantity/vector requested
+@
+text
+@d46 1
+a46 1
+       "$Id: SnoopMLSL2.f90,v 2.17 2001/09/27 23:39:22 livesey Exp $"
+d491 1
+a491 1
+    if ( vectorDatabase(vector)%name /= vectorName ) return
+d497 1
+a497 2
+    if ( vectorDatabase(vector)%quantities(quantity)%template%name /= &
+      & quantityName ) return
+d515 3
+@
+
+
+2.17
+log
+@Bug fix for going from one to zero snoopers
+@
+text
+@d46 1
+a46 1
+       "$Id: SnoopMLSL2.f90,v 2.16 2001/09/22 15:49:54 livesey Exp $"
+d491 1
+a491 3
+    if ( vectorDatabase(vector)%name /= vectorName ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to find requested vector: '//trim(line) )
+d498 1
+a498 2
+      & quantityName ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to find requested vector quantity: '//line )
+d516 3
+@
+
+
+2.16
+log
+@Made delay in loop optional, only if nothing received
+@
+text
+@d46 1
+a46 1
+       "$Id: SnoopMLSL2.f90,v 2.15 2001/09/21 22:04:16 livesey Exp $"
+d216 4
+a219 2
+    newSnoopers(1:snooper-1) = snoopers(1:snooper-1)
+    newSnoopers(snooper:) = snoopers(snooper+1:)
+d292 1
+a292 1
+    logical :: FIRSTCALL                ! First time snoop called
+d310 1
+a310 1
+      firstCall = .true.
+d320 1
+a320 1
+      firstCall = .false.
+d349 1
+d413 1
+a413 1
+        if (.not. firstCall) exit SnoopEventLoop
+d519 3
+@
+
+
+2.15
+log
+@Removed some print statements
+@
+text
+@d46 1
+a46 1
+       "$Id: SnoopMLSL2.f90,v 2.14 2001/09/20 23:08:21 livesey Exp $"
+d291 1
+d330 1
+d338 1
+d397 1
+d415 1
+a415 1
+      call usleep ( delay )
+d516 3
+@
+
+
+2.14
+log
+@New version, minor tidy ups etc.
+@
+text
+@d46 1
+a46 1
+       "$Id: SnoopMLSL2.f90,v 2.13 2001/09/20 00:27:21 livesey Exp $"
+a249 1
+    print*,'Sent status to snooper'
+a340 1
+        print*,'Got: ',trim(line)
+a397 1
+        print*,'Got died message'
+d512 3
+@
+
+
+2.13
+log
+@Minor changes
+@
+text
+@d28 2
+a29 2
+  use PVM, only: PVMFbcast, PVMDataDefault, PVMFinitsend, PVMFmyTid, PVMFgSize, &
+    & PVMErrorMessage, PVMF90Unpack, PVMTaskExit, PVMFNotify
+d46 1
+a46 1
+       "$Id: SnoopMLSL2.f90,v 2.12 2001/09/19 23:47:39 livesey Exp $"
+d148 1
+a148 1
+      call PVMFSend ( snooper%tid, IDLMsgTag, info )
+d152 1
+a152 1
+      call PVMIDLSend ( "No Vectors", snooper%tid, info )
+d194 1
+a194 1
+      call PVMIDLSend ( 'ControlAccept', snooperTid, info )
+d227 1
+a227 1
+  subroutine SendStatusToSnooper ( SNOOPER, LOCATION, COMMENT, STATUS, CONTROLED )
+d229 1
+a231 1
+    character (len=*), intent(in) :: STATUS
+d240 2
+a245 2
+    call PVMIDLPack ( status, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing status" )
+d248 1
+a248 1
+    call PVMFSend ( snooper%tid, IDLMsgTag, info )
+d250 1
+d298 1
+a298 1
+      location='Line '//adjustl(trim(location))
+d301 1
+a301 1
+      location = 'Unknown'
+d323 2
+a324 2
+      call SendStatusToSnooper ( snoopers(snooper), location, comment, &
+        & 'Ready', any ( snoopers%mode == SnooperControling ) )
+d342 1
+a342 1
+
+d347 6
+d363 1
+a363 1
+            call PVMIDLSend ( 'ControlReject', snooperTid, info )
+d365 1
+a365 1
+            call PVMIDLSend ( 'ControlAccept', snooperTid, info )
+d373 3
+d400 1
+d419 2
+a420 2
+      call SendStatusToSnooper ( snoopers(snooper), location, comment, &
+        &  'Running', any ( snoopers%mode == SnooperControling ) )
+d501 8
+a508 1
+    call PVMSendQuantity( q, snooper%tid )
+d515 3
+@
+
+
+2.12
+log
+@Compilable version
+@
+text
+@d29 1
+a29 1
+    & PVMErrorMessage, PVMF90Unpack
+d46 1
+a46 1
+       "$Id: SnoopMLSL2.f90,v 2.11 2001/09/19 23:33:16 livesey Exp $"
+a71 1
+  character (LEN=*), parameter :: ReceptiveSnoopersGroupName="MLSL2ReceptiveSnoopers"
+d185 6
+a281 1
+    logical :: DONESNOOPINGFORNOW       ! Flag to end loop
+d290 1
+d307 1
+d316 2
+a326 3
+    doneSnoopingForNow = size(snoopers) /= 0 .and. &
+      & all ( snoopers%mode /= SnooperControling )
+
+d352 1
+a352 1
+            & doneSnoopingForNow = .true.
+d396 7
+a402 2
+      ! End of the loop
+      if ( doneSnoopingForNow ) exit snoopEventLoop
+d497 3
+@
+
+
+2.11
+log
+@New version of communication protocol
+@
+text
+@d29 1
+a29 1
+    & PVMErrorMessage
+d39 1
+d46 1
+a46 1
+       "$Id: SnoopMLSL2.f90,v 2.9 2001/07/17 17:32:26 livesey Exp $"
+d70 1
+a98 2
+    case (SnooperFinishing)
+      string='Finishing'
+d175 3
+a177 2
+    type (SnooperInfo_T) :: newSnooper
+    integer :: noSnoopers
+d184 1
+a184 1
+    noSnoopers = AddSnooperToDatabase ( snooper, newSnooper )
+d207 1
+a207 1
+    allocate ( newSnoopers, size(snoopers)-1, stat=status )
+d273 1
+a277 1
+    logical :: FIRSTTIME                ! First time round the polling loop
+d279 3
+d284 1
+d334 1
+a334 1
+        snooper = FindFirst ( snoopers%tid, snooperTid )
+d371 1
+a371 1
+            & 'Got unexpected response from snooper:'//line )
+d385 1
+a385 1
+        snooper = FindFirst ( snoopers%tid, snooperTid )
+d486 4
+a489 1
+! $Log$
+@
+
+
+2.10
+log
+@Before major rewrite
+@
+text
+@d41 1
+d67 2
+a68 1
+  integer, parameter :: SnooperFinishing =            SnooperControling + 1
+a77 1
+    logical :: new             ! Used as flag
+d80 5
+a102 85
+  ! --------------------------------------------  LOOKFORSNOOPERS  -----
+  subroutine LookForSnoopers ( MYTID, SNOOPERS )
+    ! This routine is called by snoop each time to keep an eye on snoopers. The
+    ! ins and outs of the protocol are discussed in the routine itself
+
+    ! Arguments
+    integer, intent(IN) :: MYTID
+    type (SnooperInfo_T), dimension(:), pointer :: SNOOPERS ! Info about each snooper
+
+    ! Local paramaters
+    integer, parameter :: SETUPMSGTAG = 50
+
+    ! Local variables
+    integer :: BUFFERID, INFO           ! PVM stuff
+    character (LEN=132) :: FRAGMENT     ! Fragment of said messages
+    integer :: GROUPMEMBER              ! Loop counter
+    integer :: GROUPSIZE                ! Number of receptive snoopers
+    character (LEN=132) :: MESSAGE      ! Messages that pass by
+    integer :: NOSNOOPERS               ! Number of active snoopers
+    integer :: STATUS                   ! From ALLOCATE/DEALLOCATE
+    integer :: THISSNOOPERTID           ! TaskID
+
+    type (SnooperInfo_T), dimension(:), pointer :: TEMPSNOOPERS
+
+    ! Executable code
+
+    ! First, we're going to see if there are any receptive snoopers
+    call PVMFgsize(ReceptiveSnoopersGroupName,groupSize)
+
+    ! If there are we're going to broadcast to them.
+    if ( groupSize > 0 ) then
+
+      call PVMFInitSend ( PVMDataDefault, bufferID )
+      write ( message,* ) myTid, "SolicitingSnoopers"
+      call PVMIDLPack ( message, info )
+      if ( info /= 0 ) &
+        & call PVMErrorMessage ( info, ' packing SolicitingSnoopers buffer.')
+      call PVMFbcast ( ReceptiveSnoopersGroupName, SetupMsgTag, info )
+
+
+      ! Now wait for a reply from each of them
+      if ( info == 0 ) then
+        do groupMember = 1,groupSize
+          call PVMIDLReceive ( message, -1, info, msgTag=SetupMsgTag )
+          if (info /= 0) call PVMErrorMessage ( info, &
+            ' getting reply from listening snooper' )
+          read ( message,* ) thisSnooperTid, fragment
+          if ( trim(fragment)/="ReadyToSnoop" ) &
+            call MLSMessage ( MLSMSG_Error, ModuleName, &
+            "Unexpected message from potential snooper: "//fragment )
+
+          ! If really a new snooper add it.
+          if ( all(thisSnooperTid /= snoopers%tid) ) then
+            tempSnoopers => snoopers
+            noSnoopers = SIZE(snoopers)+1
+            allocate ( snoopers(noSnoopers), STAT=status )
+            if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName,&
+              MLSMSG_Allocate//"snoopers in LookForSnoopers" )
+            if ( size(tempSnoopers) /= 0 ) snoopers(1:noSnoopers-1) = tempSnoopers
+            snoopers(noSnoopers)%tid = thisSnooperTid
+            if ( noSnoopers == 1 ) then
+              snoopers(noSnoopers)%mode = SnooperControling
+            else
+              snoopers(noSnoopers)%mode = SnooperObserving
+            endif
+            snoopers(noSnoopers)%new = .true.
+            if (size(snoopers)/=0) then
+              deallocate ( tempSnoopers, STAT=status )
+              if (status/=0) call MLSMessage(MLSMSG_Error,ModuleName,&
+                MLSMSG_Allocate//"tempSnoopers in LookForSnoopers")
+            end if
+
+            ! Now send the snooper a message indicating its mode
+            call GetSnooperModeString ( snoopers(noSnoopers)%mode, message )
+            call PVMIDLSend ( message, snoopers(noSnoopers)%tid, info, SetupMsgTag )
+            if ( info /= 0 ) call PVMErrorMessage ( info, &
+              & 'sending snooper mode' )
+          end if
+        end do
+      else
+        call PVMErrorMessage(info,' broadcasting.')
+      end if
+    end if
+  end subroutine LookForSnoopers
+
+d159 64
+a222 2
+  ! ---------------------------------------- TellSnoopersRunning -------
+  subroutine TellSnooperRunning ( LOCATION, COMMENT, SNOOPER )
+d225 2
+a226 1
+    type (SnooperInfo_T), intent(INOUT) :: SNOOPER
+d238 4
+a241 2
+    call PVMIDLPack ( 'Running', info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing 'Running'" )
+d244 1
+a244 1
+  end subroutine TellSnooperRunning
+a245 83
+  ! -----------------------------------------  DealWithOneSnooper  -----
+
+  subroutine DealWithOneSnooper ( MYTID, FIRSTTIME, NONECONTROLING, LOCATION, &
+    & COMMENT, SNOOPER, VECTORDATABASE, DONESNOOPINGFORNOW )
+
+    ! Arguments
+    integer, intent(IN) :: MYTID
+    logical, intent(IN) :: FIRSTTIME    ! First time for this snooper at this point
+    logical, intent(IN) :: NONECONTROLING ! So we can take control if we want
+    character (len=*), intent(in) :: LOCATION
+    character (len=*), intent(in) :: COMMENT
+    type (SnooperInfo_T), intent(INOUT) :: SNOOPER
+    type (Vector_T), dimension(:), pointer, optional :: VECTORDATABASE
+    !  TYPE (Matrix_T), DIMENSION(:), POINTER, OPTIONAL :: MATRIXDATABASE
+    logical, intent(INOUT), optional :: DONESNOOPINGFORNOW
+
+    ! Local variables
+    integer :: BUFFERID                 ! ID for PVM
+    integer :: INFO                     ! Flag from PVM
+    character (len=132) :: Line         ! Temporary string
+    character (len=132) :: NextLine     ! Temporary string
+    logical :: MyDone                   ! I'm done
+
+    ! Executable code
+    
+    ! First we send a message to the snooper to indicate our presence and our
+    ! location/comment.
+    print*,'Dealing with one snooper'
+    if ( firstTime .or. snooper%new ) then
+      snooper%new = .false.
+      call PVMFInitSend ( PvmDataDefault, bufferID )
+      call PVMIDLPack ( location, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing location" )
+      call PVMIDLPack ( comment, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing comment" )
+      call PVMIDLPack ( 'Ready', info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing 'Ready'" )
+      call PVMFSend ( snooper%tid, IDLMsgTag, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "sending status etc." )
+
+      ! Now we send our list of current vectors
+      call SendVectorsListToSnooper ( snooper, vectorDatabase )
+      
+      ! Now we send our list of current matrices
+      ! call SendMatricesListToSnooper(snooper, matrixDatabase)
+    endif
+
+    ! Now see if there are some instructions from the snooper
+    call PVMFNRecv ( snooper%tid, IDLMsgTag, bufferID )
+    if ( bufferID > 0 ) then
+      ! Something to hear
+      call PVMIDLUnpack ( line, info )
+      if ( info /=0 ) call PVMErrorMessage ( info, &
+        & "unpacking response from snooper" )
+      
+      select case ( trim(line) )
+      case ( 'Continue' )                ! Finished, program can continue
+        if ( present(doneSnoopingForNow) ) doneSnoopingForNow=.true.
+        myDone = .true.
+      case ( 'Control' )
+        if ( noneControling ) then
+          call PVMIDLSend ( 'OK', snooper%tid, info )
+          snooper%mode = SnooperControling
+        else
+          call PVMIDLSend ( 'NO', snooper%tid, info )
+        endif
+        if ( info /= 0 ) call PVMErrorMessage ( info, "sending control response" )
+      case ( 'Relinquish' )
+        snooper%mode = SnooperObserving
+      case ( 'Finishing' )
+        snooper%mode = SnooperFinishing
+      case ( 'Quantity' )
+        call PVMIDLUnpack ( nextLine, info )
+        if ( info /=0 ) call PVMErrorMessage ( info, &
+          & "unpacking response from snooper" )
+        call SnooperRequestedQuantity(snooper, trim(nextLine), vectorDatabase)
+      case default
+      end select
+
+    endif                               ! Something to hear
+
+  end subroutine DealWithOneSnooper
+
+d260 1
+a260 1
+    integer, parameter :: DELAY=200000  ! For Usleep, no. microsecs
+d283 1
+d307 6
+a312 2
+    ! Now look for snoopers
+    call LookForSnoopers ( myTid, snoopers )
+d314 33
+a346 12
+    ! Now if we have some snoopers talk to them, set loop to exit by default
+    ! for the case where there are now controling snoopers.
+    if ( size(snoopers) /= 0 ) then
+      doneSnoopingForNow = .false.
+      firstTime = .true.
+      snoopLoop: do
+        controlingSnooper=0
+
+        ! Go through all snoopers, deal with any non-controling ones first
+        do snooper = 1, size(snoopers)
+          if ( snoopers(snooper)%mode==SnooperControling ) then
+            controlingSnooper = snooper
+d348 2
+a349 4
+            call DealWithOneSnooper ( myTid, firstTime, &
+              & all(snoopers%mode /= SnooperControling), &
+              & trim(location), trim(comment), &
+              & snoopers(snooper), vectorDatabase )
+d351 19
+a369 1
+        end do
+d371 8
+a378 6
+        ! Deal with controling snooper if any
+        if ( controlingSnooper /= 0 ) then
+           call DealWithOneSnooper ( myTid, firstTime, .false., &
+                & TRIM(location), TRIM(comment), &
+                & snoopers(controlingSnooper), vectorDatabase, &
+                & doneSnoopingForNow=doneSnoopingForNow )
+d380 3
+a382 14
+
+        ! Deal with any snoopers about to finish
+        if ( any(snoopers%mode==SnooperFinishing) ) then 
+          allocate ( oldSnoopers(size(snoopers)), STAT=status )
+          if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & MLSMSG_Allocate//"oldSnoopers" )
+          oldSnoopers = snoopers
+          allocate ( snoopers(count(snoopers%mode/=SnooperFinishing)), STAT=status )
+          if ( status /= 0 ) call MLSMessage(MLSMSG_Error,ModuleName, &
+            MLSMSG_Allocate // "snoopers")
+          snoopers=pack(oldSnoopers,oldSnoopers%mode/=SnooperFinishing)
+          deallocate(oldSnoopers,STAT=status)
+          if (status/=0) call MLSMessage ( MLSMSG_Error, ModuleName, &
+            MLSMSG_DeAllocate // "oldSnoopers" )
+d384 1
+d386 11
+a396 15
+        ! This shouldn't be necessary, but just to be sure...
+        if ( (size(snoopers)==0) .or. (all(snoopers%mode/=SnooperControling)) ) &
+          & doneSnoopingForNow = .true.
+        firstTime = .false.
+        if ( doneSnoopingForNow ) exit snoopLoop
+
+        ! Now look for and new snoopers
+        call LookForSnoopers ( myTid, snoopers )
+        call usleep ( delay )
+      end do snoopLoop
+      do snooper = 1, size(snoopers)
+        call TellSnooperRunning ( trim(location), trim(comment), &
+          & snoopers(snooper) )
+      end do
+    end if
+d480 2
+@
+
+
+2.9
+log
+@Added matrix sending capability
+@
+text
+@d44 1
+a44 1
+       "$Id: SnoopMLSL2.f90,v 2.8 2001/05/23 01:44:49 livesey Exp $"
+d238 23
+a260 1
+  ! -----------------------------------------  DEALWITHONESNOOPER  -----
+d287 1
+a287 1
+
+d295 2
+d298 1
+a298 1
+      if ( info /= 0 ) call PVMErrorMessage ( info, "sending location comment" )
+d459 4
+@
+
+
+2.8
+log
+@Minor changes and movement
+@
+text
+@d22 1
+a22 1
+  !  USE MatrixModule_1, ONLY: Matrix_T
+d44 1
+a44 1
+       "$Id: SnoopMLSL2.f90,v 2.7 2001/05/15 16:44:12 livesey Exp $"
+d438 29
+d474 1
+a474 1
+    character (len=*), intent(in) :: LINE ! Name of quantity to watch
+d502 1
+a502 1
+      & 'Unable to find requested vector: '//line )
+@
+
+
+2.7
+log
+@New version, still in the development state
+@
+text
+@d28 2
+a29 1
+  use PVM, only: PVMFbcast, PVMDataDefault, PVMFinitsend, PVMFmyTid, PVMFgSize
+d31 1
+d44 1
+a44 1
+       "$Id: SnoopMLSL2.f90,v 2.6 2001/05/03 20:34:08 vsnyder Exp $"
+a96 13
+  ! --------------------------------------------  PVMERRORMESSAGE  -----
+  subroutine PVMErrorMessage ( INFO, PLACE )
+    ! This routine is called to log a PVM error
+    integer, intent(IN) :: INFO
+    character (LEN=*) :: PLACE
+
+    character (LEN=132) :: LINE
+
+    write (line, * ) info
+    call MLSMessage(MLSMSG_Error,ModuleName,'PVM error '//trim(place)//&
+      ' Info='//trim(adjustl(line)))
+  end subroutine PVMErrorMessage
+
+a483 70
+    qt => q%template
+
+    ! Now we simply pack the quantity up and send it down the pvm spigot
+    call PVMFInitSend ( PvmDataDefault, bufferID )
+
+    call PVMIDLPack ( (/ qt%noInstances, qt%noSurfs, qt%noChans /), &
+      & info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing quantity dimensions." )
+
+    call PVMIDLPack ( (/ qt%coherent, qt%stacked, qt%regular, qt%minorFrame, &
+      & qt%logBasis /), info ) 
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing quantity flags" )
+
+    call PVMIDLPack ( (/ qt%noInstancesLowerOverlap, &
+      & qt%noInstancesUpperOverlap, qt%sideband /), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing misc quantity stuff" )
+
+    ! Now pack some strings
+
+    call Get_String( lit_indices(qt%quantityType), word, noError=.true. )
+    call PVMIDLPack ( trim(word), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing quantityType" )
+
+    call Get_String( lit_indices(qt%verticalCoordinate), word, noError=.true. )
+    call PVMIDLPack ( trim(word), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing verticalCoordinate" )
+
+    call Get_String( lit_indices(qt%unit), word, noError=.true. )
+    call PVMIDLPack ( trim(word), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing unit" )
+
+    call Get_String( lit_indices(qt%frequencyCoordinate), word, noError=.true. )
+    call PVMIDLPack ( trim(word), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing frequencyCoordinate" )
+
+    call GetSignalName( lit_indices(qt%signal), word, sideband=qt%sideband )
+    call PVMIDLPack ( trim(word), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing signal" )
+
+    call Get_String( lit_indices(qt%instrumentModule), word, noError=.true. )
+    call PVMIDLPack ( trim(word), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing instrumentModule" )
+
+    call Get_String( lit_indices(qt%radiometer), word, noError=.true. )
+    call PVMIDLPack ( trim(word), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing radiometer" )
+
+    call Get_String( lit_indices(qt%molecule), word, noError=.true. )
+    call PVMIDLPack ( trim(word), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing molecule" )
+
+    ! Now pack the arrays
+
+    call PVMIDLPack ( qt%surfs, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing surfs" )
+
+    call PVMIDLPack ( qt%phi, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing phi" )
+
+    call PVMIDLPack ( qt%geodLat, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing geodLat" )
+
+    call PVMIDLPack ( qt%lon, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing lon" )
+
+    call PVMIDLPack ( qt%time, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing time" )
+
+    call PVMIDLPack ( qt%solarTime, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing solarTime" )
+d485 1
+a485 2
+    call PVMIDLPack ( qt%solarZenith, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing solarZenith" )
+a486 52
+    call PVMIDLPack ( qt%losAngle, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing losAngle" )
+
+    if ( associated ( qt%mafIndex ) ) then
+      call PVMIDLPack ( qt%mafIndex, info )
+    else
+      call PVMIDLPack ( (/ 0 /), info )
+    end if
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing mafIndex" )
+
+    if ( associated ( qt%mafCounter ) ) then
+      call PVMIDLPack ( qt%mafCounter, info )
+    else
+      call PVMIDLPack ( (/ 0 /), info )
+    end if
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing mafCounter" )
+
+    if ( associated ( qt%frequencies ) ) then
+      call PVMIDLPack ( qt%frequencies, info )
+    else
+      call PVMIDLPack ( (/ 0.0_r8 /), info )
+    end if
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing frequencies" )
+
+    ! Finally the two arrays for irregular quantities
+
+    if ( .not. qt%regular ) then
+      call PVMIDLPack ( qt%surfIndex, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing surfIndex" )
+
+      call PVMIDLPack ( qt%chanIndex, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing chanIndex" )
+    end if
+
+    ! Now we're going to send this to the snooper.
+
+    call PVMFSend ( snooper%tid, IDLMSGTag, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "sending vector template" )
+
+    ! Now we're going to send the values in a separate message
+    call PVMFInitSend ( PVMDataDefault, bufferID)
+
+    ! Pack the values
+    call PVMIDLPack ( q%values, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "sending values" )
+
+    ! Skip the mask for the moment.
+
+    ! Send this buffer
+    call PVMFSend ( snooper%tid, IDLMSGTag, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "sending vector values" )
+      
+@
+
+
+2.6
+log
+@Cosmetic changes
+@
+text
+@d20 2
+a21 1
+  use VectorsModule, only: Vector_T
+d24 1
+d34 3
+d42 1
+a42 1
+       "$Id: $"
+d45 1
+a45 1
+       "$RCSfile: $"
+d269 1
+a317 2
+      case ( 'QuantityTemplate' )
+        !call SnooperRequestedQtyTemplate(snooper, vectorDatabase)
+d319 4
+a322 1
+        !call SnooperRequestedQuantity(snooper, vectorDatabase)
+d449 174
+@
+
+
+2.5
+log
+@Sent back to work
+@
+text
+@d23 1
+a23 1
+  use MLSCommon, only: R4,R8,I4
+a32 1
+  !  USE VectorsModule, ONLY: 
+d35 7
+a41 5
+  !------------------------------- RCS Ident Info ------------------------------
+  character(LEN=130), private :: Id = &
+    "$Id: SnoopMLSL2.f90,v 2.4 2001/03/15 05:23:33 livesey Exp $"
+  character(LEN=*), parameter, private :: ModuleName="$RCSfile: SnoopMLSL2.f90,v $"
+  !-----------------------------------------------------------------------------
+d74 2
+a75 2
+  ! ---------------------------------------------------- GETSNOOPERMODESTRING ---
+  subroutine GetSnooperModeString(MODE, STRING)
+d90 2
+a91 2
+  ! -------------------------------------------------- PVMERRORMESSAGE ----------
+  subroutine PVMErrorMessage(INFO,PLACE)
+d103 2
+a104 2
+  ! -------------------------------------------------- LOOKFORSNOOPERS ----------
+  subroutine LookForSnoopers(MYTID,SNOOPERS)
+a116 1
+    character (LEN=132) :: MESSAGE      ! Messages that pass by
+d118 1
+d120 2
+a121 1
+    integer :: GROUPMEMBER              ! Loop counter
+a123 1
+    integer :: NOSNOOPERS               ! Number of active snoopers
+d133 1
+a133 1
+    if (groupSize>0) then
+d135 6
+a140 5
+      call PVMFInitSend(PVMDataDefault,bufferID)
+      write (message,*) myTid,"SolicitingSnoopers"
+      call PVMIDLPack(message,info)
+      if (info /= 0) call PVMErrorMessage(info,' packing SolicitingSnoopers buffer.')
+      call PVMFbcast(ReceptiveSnoopersGroupName,SetupMsgTag,info)
+d144 9
+a152 9
+      if (info == 0) then
+        do groupMember=1,groupSize
+          call PVMIDLReceive(message,-1,info,msgTag=SetupMsgTag)
+          if (info /= 0) call PVMErrorMessage(info,&
+            ' getting reply from listening snooper')
+          read (message,*) thisSnooperTid,fragment
+          if (trim(fragment)/="ReadyToSnoop") call MLSMessage(MLSMSG_Error, &
+            ModuleName, &
+            "Unexpected message from potential snooper: "//fragment)
+d155 7
+a161 7
+          if (all(thisSnooperTid /= snoopers%tid)) then
+            tempSnoopers=>snoopers
+            noSnoopers=SIZE(snoopers)+1
+            allocate(snoopers(noSnoopers),STAT=status)
+            if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName,&
+              MLSMSG_Allocate//"snoopers in LookForSnoopers")
+            if (size(tempSnoopers) /= 0) snoopers(1:noSnoopers-1) = tempSnoopers
+d163 1
+a163 1
+            if (noSnoopers == 1) then
+d170 1
+a170 1
+              deallocate(tempSnoopers, STAT=status)
+d176 4
+a179 4
+            call GetSnooperModeString( snoopers(noSnoopers)%mode, message)
+            call PVMIDLSend( message, snoopers(noSnoopers)%tid, info, SetupMsgTag)
+            if (info /= 0) call PVMErrorMessage(info,&
+              & 'sending snooper mode')
+d189 1
+a189 1
+  subroutine SendVectorsListToSnooper(SNOOPER, VECTORDATABASE)
+d196 2
+d199 1
+a199 1
+    integer :: BUFFERID                 ! For PVM
+a200 2
+    character (len=132) :: LINE         ! A line of text
+    logical :: ANYVECTORS               ! Flag
+d203 3
+a205 3
+    if (anyVectors) anyVectors = associated(vectorDatabase)
+    if (anyVectors) then
+      call PVMFInitSend(PvmDataDefault, bufferID)
+d207 2
+a208 2
+      call PVMIDLPack("Vectors", info)
+      if (info /= 0) call PVMErrorMessage(info, "packing 'Vectors'")
+d210 2
+a211 2
+      call PVMIDLPack(size(vectorDatabase), info)
+      if (info /= 0) call PVMErrorMessage(info, "packing size(vectorDatabase)")
+d214 5
+a218 5
+      do vector=1,size(vectorDatabase)
+        call get_string(vectorDatabase(vector)%name,line)
+        call PVMIDLPack(TRIM(line), info)
+        if (info /=0) call PVMErrorMessage(info, "packing vector name:" &
+          & // TRIM(line))
+d220 3
+a222 3
+        call PVMIDLPack(size(vectorDatabase(vector)%quantities), info)
+        if (info /=0) call PVMErrorMessage(info, "packing no quantities for " &
+          & // TRIM(line))
+d224 6
+a229 5
+        do quantity=1,size(vectorDatabase(vector)%quantities)
+          call get_string(vectorDatabase(vector)%quantities(quantity)%template%name,line)
+          call PVMIDLPack(TRIM(line), info)
+          if (info /=0) call PVMErrorMessage(info, "packing quantity name:" &
+            & // TRIM(line))
+d234 2
+a235 2
+      call PVMFSend(snooper%tid, IDLMsgTag, info)
+      if (info /= 0) call PVMErrorMessage(info, "sending vector information")
+d238 2
+a239 2
+      call PVMIDLSend("No Vectors", snooper%tid, info)
+      if (info /= 0) call PVMErrorMessage(info, "sending 'No Vectors'")
+d244 1
+a244 1
+  ! ---------------------------------------------- DEALWITHONESNOOPER -----------
+d246 2
+a247 2
+  subroutine DealWithOneSnooper(MYTID, FIRSTTIME, NONECONTROLING, LOCATION, COMMENT, &
+    & SNOOPER, VECTORDATABASE, DONESNOOPINGFORNOW)
+a259 1
+
+d263 2
+a264 2
+    character (len=132) :: line         ! Temporary string
+    logical :: myDone                   ! I'm done
+d271 1
+a271 1
+    if (firstTime .or. snooper%new) then
+d273 7
+a279 7
+      call PVMFInitSend(PvmDataDefault, bufferID)
+      call PVMIDLPack(location, info)
+      if (info /= 0) call PVMErrorMessage(info, "packing location")
+      call PVMIDLPack(comment, info)
+      if (info /= 0) call PVMErrorMessage(info, "packing comment")
+      call PVMFSend(snooper%tid, IDLMsgTag, info)
+      if (info /= 0) call PVMErrorMessage(info, "sending location comment")
+d282 1
+a282 1
+      call SendVectorsListToSnooper(snooper, vectorDatabase)
+d289 2
+a290 2
+    call PVMFNRecv(snooper%tid, IDLMsgTag, bufferID)
+    if (bufferID > 0) then
+d292 3
+a294 2
+      call PVMIDLUnpack(line,info)
+      if (info /=0) call PVMErrorMessage(info, "unpacking response from snooper")
+d296 7
+a302 7
+      select case (trim(line))
+      case ('Continue')                ! Finished, program can continue
+        if (present(doneSnoopingForNow)) doneSnoopingForNow=.true.
+        myDone=.true.
+      case ('Control')
+        if (noneControling) then
+          call PVMIDLSend('OK', snooper%tid, info)
+d305 1
+a305 1
+          call PVMIDLSend('NO', snooper%tid, info)
+d307 2
+a308 2
+        if (info /= 0) call PVMErrorMessage(info, "sending control response")
+      case ('Relinquish')
+d310 1
+a310 1
+      case ('Finishing')
+d312 1
+a312 1
+      case ('QuantityTemplate')
+d314 1
+a314 1
+      case ('Quantity')
+d323 1
+a323 1
+  ! ------------------------------------------------------ SNOOP ----------------
+d329 1
+a329 1
+  subroutine Snoop(KEY, VECTORDATABASE)
+d337 1
+a337 1
+    integer, parameter :: DELAY=200000  ! For sleep no microsecs
+d340 1
+a340 1
+    integer, external :: sleep
+d344 2
+a345 2
+    type (SnooperInfo_T), dimension(:), pointer, save :: SNOOPERS => null()
+    type (SnooperInfo_T), dimension(:), pointer, save :: OLDSNOOPERS => null()
+d350 4
+d355 1
+a356 1
+    integer :: CONTROLINGSNOOPER        ! This one is controling
+a357 2
+    logical :: DONESNOOPINGFORNOW       ! Flag to end loop
+    logical :: FIRSTTIME                ! First time round the polling loop
+a358 2
+    character (len=132) :: COMMENT      ! Comment field to snoop command
+    character (len=132) :: LOCATION     ! Line of text to send off
+d362 1
+a362 1
+      write (location,*) source_ref(key)/256
+d364 1
+a364 1
+      call get_string(sub_rosa(subtree(2,subtree(2,key))),comment,strip=.true.)
+d366 2
+a367 2
+      location='Unknown'
+      comment='Unknown'
+d373 8
+a380 8
+      call pvmfmytid(myTid)
+      if (myTid<=0) call PVMErrorMessage(myTid,"Enroling in pvm")
+      call pvmfjoingroup(Level2CodeGroupName,inum)
+      if (inum<0) call PVMErrorMessage(inum,"Joining group "&
+        &//Level2CodeGroupName)
+      allocate(snoopers(0), stat=status)
+      if (status /= 0) call MLSMessage ( MLSMSG_Error, ModuleName,&
+        & MLSMSG_Allocate // "snoopers(0)")
+d384 1
+a384 1
+    call LookForSnoopers(myTid,snoopers)
+d388 2
+a389 2
+    if (size(snoopers)/=0) then
+      doneSnoopingForNow= .false.
+d395 3
+a397 3
+        do snooper=1,size(snoopers)
+          if (snoopers(snooper)%mode==SnooperControling) then
+            controlingSnooper=snooper
+d399 1
+a399 1
+            call DealWithOneSnooper(myTid, firstTime, &
+d402 2
+a403 2
+              & snoopers(snooper), vectorDatabase)
+          endif
+d407 2
+a408 2
+        if (controlingSnooper/=0) then
+           call DealWithOneSnooper(myTid, firstTime, .false., &
+d411 1
+a411 1
+                & doneSnoopingForNow=doneSnoopingForNow)
+d415 8
+a422 8
+        if (any(snoopers%mode==SnooperFinishing)) then 
+          allocate(oldSnoopers(size(snoopers)),STAT=status)
+          if (status/=0) call MLSMessage(MLSMSG_Error,ModuleName,&
+            MLSMSG_Allocate//"oldSnoopers")
+          oldSnoopers=snoopers
+          allocate(snoopers(count(snoopers%mode/=SnooperFinishing)),STAT=status)
+          if (status/=0) call MLSMessage(MLSMSG_Error,ModuleName,&
+            MLSMSG_Allocate//"snoopers")
+d425 2
+a426 2
+          if (status/=0) call MLSMessage(MLSMSG_Error,ModuleName,&
+            MLSMSG_DeAllocate//"oldSnoopers")
+d431 1
+a431 1
+          & doneSnoopingForNow= .true.
+d433 1
+a433 1
+        if (doneSnoopingForNow) exit snoopLoop
+d436 2
+a437 2
+        call LookForSnoopers(myTid,snoopers)
+        call usleep(delay)
+@
+
+
+2.4
+log
+@Regular commit
+@
+text
+@d38 1
+a38 1
+    "$Id: SnoopMLSL2.f90,v 2.3 2001/03/15 00:58:57 livesey Exp $"
+d191 1
+a191 1
+    type (Vector_T), dimension(:), optional :: VECTORDATABASE
+d198 5
+a202 2
+
+    if (present(vectorDatabase)) then
+d253 1
+a253 1
+    type (Vector_T), dimension(:), optional :: VECTORDATABASE
+d404 6
+a409 5
+        if (controlingSnooper/=0) &
+          call DealWithOneSnooper(myTid, firstTime, .false., &
+          & TRIM(location), TRIM(comment), &
+          & snoopers(controlingSnooper), vectorDatabase, &
+          & doneSnoopingForNow=doneSnoopingForNow)
+d420 1
+a420 1
+          snoopers=pack(oldSnoopers,snoopers%mode/=SnooperFinishing)
+@
+
+
+2.3
+log
+@A version to let it compile
+@
+text
+@d38 1
+a38 1
+    "$Id: SnoopMLSL2.f90,v 2.2 2001/03/14 05:34:00 livesey Exp $"
+d304 2
+d423 2
+a424 1
+        if (size(snoopers)==0) doneSnoopingForNow= .true.
+@
+
+
+2.2
+log
+@Updated
+@
+text
+@d27 1
+a27 1
+  use PVMIDL, only:  IDLMsgTag, PVMIDLPack, PVMIDLReceive, PVMIDLSend
+d38 1
+a38 1
+    "$Id: SnoopMLSL2.f90,v 2.1 2001/01/24 21:50:43 livesey Exp $"
+d58 1
+a58 2
+  integer, parameter :: SnooperRequestingControling = SnooperControling + 1
+  integer, parameter :: SnooperFinishing =            SnooperRequestingControling + 1
+d66 3
+a68 2
+    integer :: tid             ! Task ID of snooper
+    integer :: mode            ! Mode of the snooper
+d73 16
+d161 6
+a166 1
+            snoopers(noSnoopers)%mode = SnooperObserving
+d172 6
+d186 2
+a187 4
+  ! ---------------------------------------------- DEALWITHONESNOOPER -----------
+
+  subroutine DealWithOneSnooper(MYTID, LOCATION, COMMENT, &
+    & SNOOPER, VECTORDATABASE,DONESNOOPINGFORNOW)
+d190 2
+a191 7
+    integer, intent(IN) :: MYTID
+    character (len=*), intent(in) :: LOCATION
+    character (len=*), intent(in) :: COMMENT
+    type (SnooperInfo_T), intent(INOUT) :: SNOOPER
+    type (Vector_T), dimension(:), pointer, optional :: VECTORDATABASE
+    !  TYPE (Matrix_T), DIMENSION(:), POINTER, OPTIONAL :: MATRIXDATABASE
+    logical, intent(OUT), optional :: DONESNOOPINGFORNOW
+d194 4
+a197 18
+    integer :: BUFFERID                 ! ID for PVM
+    integer :: INFO                     ! Flag from PVM
+    integer :: vector                   ! Loop counter
+    integer :: quantity                 ! Loop counter
+    character (len=132) :: line         ! Temporary string
+
+    ! Executable code
+    
+    ! First we send a message to the snooper to indicate our presence and our
+    ! location/comment.
+
+    call PVMFInitSend(PvmDataDefault, bufferID)
+    call PVMIDLPack(location, info)
+    if (info /= 0) call PVMErrorMessage(info, "packing location")
+    call PVMIDLPack(comment, info)
+    if (info /= 0) call PVMErrorMessage(info, "packing comment")
+    call PVMFSend(snooper%tid, IDLMsgTag, info)
+    if (info /= 0) call PVMErrorMessage(info, "sending location comment")
+d236 26
+d263 49
+a311 1
+    
+d327 6
+d347 1
+d381 2
+a382 1
+      doneSnoopingForNow=.true.
+d391 3
+a393 1
+            call DealWithOneSnooper(myTid, TRIM(location), TRIM(comment), &
+d400 2
+a401 1
+          call DealWithOneSnooper(myTid, TRIM(location), TRIM(comment), &
+a404 7
+        ! Deal with any snoopers requesting controling
+        if (any(snoopers%mode==SnooperRequestingControling)) then
+          if (controlingSnooper/=0) snoopers(controlingSnooper)%mode=SnooperObserving
+          where (snoopers%mode==SnooperRequestingControling) &
+            snoopers%mode=SnooperControling
+        end if
+
+d422 2
+d425 3
+a427 1
+        if (doneSnoopingForNow) exit snoopLoop
+@
+
+
+2.1
+log
+@First version
+@
+text
+@d4 1
+a4 1
+MODULE SnoopMLSL2               ! Interface between MLSL2 and IDL snooper via pvm3.
+d13 1
+a13 1
+  
+d20 1
+a20 1
+  USE VectorsModule, ONLY: Vector_T
+a21 2
+  USE L2GPData, ONLY: L2GPData_T
+  USE L2AUXData, ONLY: L2AUXData_T
+d23 9
+a31 4
+  USE MLSCommon, ONLY: R4,R8,I4
+  USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Warning, &
+       MLSMSG_Info, MLSMSG_Allocate, MLSMSG_DeAllocate
+  USE PVMIDL
+d34 1
+d37 3
+a39 3
+  CHARACTER(LEN=130), PRIVATE :: Id = &
+       "$Id: MLSL2.f90,v 2.3 2000/10/12 00:33:47 vsnyder Exp $"
+  CHARACTER(LEN=*), PARAMETER, PRIVATE :: ModuleName="$RCSfile: MLSL2.f90,v $"
+d48 4
+a51 8
+  ! snooper.  The mode can be `disinterested', `observing', or `controling'.  In 
+  ! disinterested mode, the snooper and the l2 code will exchange no
+  ! communication except a request to change to observing or controling on behalf of
+  ! the snooper.  In observing mode, the snooper expects updates of status and
+  ! possibly other parameters each invocation of Snoop.  In controling mode, the
+  ! l2 code is expected to wait for instructions from the snooper before
+  ! continuing.  Controling snoopers also have the right to change the contents
+  ! of vectors and matrices etc. Only one snooper may be controling at a time.
+d56 4
+a59 5
+  INTEGER, PARAMETER :: SnooperDisinterested=0
+  INTEGER, PARAMETER :: SnooperObserving=1
+  INTEGER, PARAMETER :: SnooperControling=2
+  INTEGER, PARAMETER :: SnooperRequestingControling=3
+  INTEGER, PARAMETER :: SnooperFinishing=4
+d61 2
+a62 2
+  CHARACTER (LEN=*), PARAMETER :: ReceptiveSnoopersGroupName="MLSL2ReceptiveSnoopers"
+  CHARACTER (LEN=*), PARAMETER :: Level2CodeGroupName="MLSL2Executable"
+d66 24
+a89 4
+  TYPE SnooperInfo_T
+     INTEGER :: tid             ! Task ID of snooper
+     INTEGER :: mode            ! Mode of the snooper
+  END TYPE SnooperInfo_T
+d91 3
+a93 14
+CONTAINS ! ========  Public Procedures ==========================================
+
+  ! This routine is called to log a PVM error
+
+  SUBROUTINE PVMErrorMessage(info,place)
+    INTEGER, INTENT(IN) :: info
+    CHARACTER (LEN=*) :: place
+
+    CHARACTER (LEN=132) :: line
+
+    WRITE (line,'(I)') info
+    CALL MLSMessage(MLSMSG_Error,ModuleName,'PVM error '//TRIM(place)//&
+         ' Info='//TRIM(ADJUSTL(line)))
+  END SUBROUTINE PVMErrorMessage
+d95 2
+a96 9
+  ! This routine is called by snoop each time to keep an eye on snoopers. The
+  ! ins and outs of the protocol are discussed in the routine itself
+
+  SUBROUTINE LookForSnoopers(myTid,snoopers,noSnoopers)
+
+    ! Arguments
+    INTEGER, INTENT(IN) :: myTid
+    INTEGER, INTENT(INOUT) :: noSnoopers ! Number of snoopers we know about
+    TYPE (SnooperInfo_T), DIMENSION(:), POINTER :: snoopers ! Info about each
+d99 8
+a106 6
+    INTEGER :: bufferID, info   ! PVM stuff
+    CHARACTER (LEN=132) :: message ! Messages that pass by
+    CHARACTER (LEN=132) :: fragment ! Fragment of said messages
+    INTEGER :: groupSize        ! Number of receptive snoopers
+    INTEGER :: groupMember      ! Loop counter
+    INTEGER :: status           ! From ALLOCATE/DEALLOCATE
+d108 1
+a108 1
+    TYPE (SnooperInfo_T), DIMENSION(:), POINTER :: tempSnoopers
+d113 1
+a113 1
+    CALL PVMFgsize(ReceptiveSnoopersGroupName,groupSize)
+d116 1
+a116 1
+    IF (groupSize>0) THEN
+d118 40
+a157 37
+       CALL PVMFInitSend(PVMDataDefault,bufferID)
+       WRITE (message,'(I,A)') myTid,"SolicitingSnoopers"
+       CALL PVMIDLPack(message,info)
+       IF (info==0) CALL PVMErrorMessage(info,' packing SolicitingSnoopers buffer.')
+       CALL PVMFbcast(ReceptiveSnoopersGroupName,IDLMsgTag,info)
+
+       ! Now wait for a reply from each of them
+       IF (info==0) THEN
+          DO groupMember=1,groupSize
+             CALL PVMIDLReceive(message,-1,info)
+             IF (info/=0) CALL PVMErrorMessage(info,&
+                  ' getting reply from listening snooper')
+             READ (message,'(I,A)') thisSnooperTid,fragment
+             IF (TRIM(fragment)/="ReadyToSnoop") CALL MLSMessage(MLSMSG_Error, &
+                  ModuleName, &
+                  "Unexpected message from potential snooper: "//fragment)
+
+             ! If really a new snooper add it.
+             IF (ALL(thisSnooperTid /= snoopers%tid)) THEN
+                noSnoopers=noSnoopers+1
+                IF (noSnoopers/=1) tempSnoopers=>snoopers
+                ALLOCATE(snoopers(noSnoopers),STAT=status)
+                IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,&
+                     MLSMSG_Allocate//"snoopers in LookForSnoopers")
+                IF (noSnoopers/=1) snoopers(1:noSnoopers-1)=tempSnoopers
+                snoopers(noSnoopers)%tid=thisSnooperTid
+                snoopers(noSnoopers)%mode=SnooperDisinterested
+                IF (noSnoopers/=1) THEN
+                   DEALLOCATE(tempSnoopers,STAT=status)
+                   IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,&
+                        MLSMSG_Allocate//"tempSnoopers in LookForSnoopers")
+                END IF
+             END IF
+          END DO
+       END IF
+    END IF
+  END SUBROUTINE LookForSnoopers
+d159 1
+a159 1
+  ! -----------------------------------------------------------------------------
+d161 2
+a162 2
+  SUBROUTINE DealWithOneSnooper(myTid,snooper, vectorDatabase,l2gpDatabase,&
+       l2auxDatabase,doneSnoopingForNow)
+d165 7
+a171 7
+    INTEGER, INTENT(IN) :: myTid
+    TYPE (SnooperInfo_T), INTENT(INOUT) :: snooper
+    TYPE (Vector_T), DIMENSION(:), POINTER, OPTIONAL :: vectorDatabase
+    !  TYPE (Matrix_T), DIMENSION(:), POINTER, OPTIONAL :: matrixDatabase
+    TYPE (L2GPData_T), DIMENSION(:), POINTER, OPTIONAL :: l2gpDatabase
+    TYPE (L2AUXData_T), DIMENSION(:), POINTER, OPTIONAL :: l2auxDatabase
+    LOGICAL, INTENT(OUT), OPTIONAL :: doneSnoopingForNow
+d174 5
+d181 53
+a233 1
+  END SUBROUTINE DealWithOneSnooper
+d235 1
+a235 1
+  ! -----------------------------------------------------------------------------
+d241 1
+a241 1
+  SUBROUTINE Snoop(vectorDatabase, l2gpdatabase, l2auxDatabase)
+d244 3
+a246 4
+    TYPE (Vector_T), DIMENSION(:), POINTER, OPTIONAL :: vectorDatabase
+    !  TYPE (Matrix_T), DIMENSION(:), POINTER, OPTIONAL :: matrixDatabase
+    TYPE (L2GPData_T), DIMENSION(:), POINTER, OPTIONAL :: l2gpDatabase
+    TYPE (L2AUXData_T), DIMENSION(:), POINTER, OPTIONAL :: l2auxDatabase
+d249 3
+a251 4
+    INTEGER, SAVE :: myTID=0                 ! Local task ID under PVM
+    INTEGER, SAVE :: noSnoopers=0            ! Number of snoopers
+    TYPE (SnooperInfo_T), DIMENSION(:), POINTER, SAVE :: snoopers
+    TYPE (SnooperInfo_T), DIMENSION(:), POINTER, SAVE :: oldSnoopers 
+d255 6
+a260 5
+    INTEGER (i4) :: bufferID, info           ! Flags and ids from PVM
+    INTEGER :: snooper                       ! Loop counter
+    INTEGER :: controlingSnooper               ! This one is controling
+    INTEGER :: status                        ! Status from allocate/deallocate
+    LOGICAL :: doneSnoopingForNow            ! Flag to end loop
+d262 2
+d266 21
+a286 7
+    ! If this is the very first call enroll in PVM for the first time.
+    IF ( myTid==0 ) THEN
+       CALL pvmfmytid(myTid)
+       IF (myTid<=0) CALL PVMErrorMessage(myTid,"Enroling in pvm")
+       CALL pvmfjoingroup(Level2CodeGroupName,inum)
+       IF (inum<0) CALL PVMErrorMessage(inum,"Joining group "//Level2CodeGroupName)
+    END IF
+d289 1
+a289 1
+    CALL LookForSnoopers(myTid,snoopers,noSnoopers)
+d293 50
+a342 51
+    IF (noSnoopers/=0) THEN
+       doneSnoopingForNow=.TRUE.
+       snoopLoop: DO
+          controlingSnooper=0
+          
+          ! Go through all snoopers, deal with any non-controling ones first
+          DO snooper=1,noSnoopers
+             IF (snoopers(snooper)%mode==SnooperControling) THEN
+                controlingSnooper=snooper
+             ELSE
+                CALL DealWithOneSnooper(myTid,snoopers(snooper),vectorDatabase,&
+                     l2gpDatabase,l2auxDatabase)
+             ENDIF
+          END DO
+          
+          ! Deal with controling snooper if any
+          IF (controlingSnooper/=0) &
+               CALL DealWithOneSnooper(myTid ,snoopers(controlingSnooper),&
+               vectorDatabase, l2gpDatabase, l2auxDatabase, &
+               doneSnoopingForNow=doneSnoopingForNow)
+          
+          ! Deal with any snoopers requesting controling
+          IF (ANY(snoopers%mode==RequestingControling)) THEN
+             IF (controlingSnooper/=0) snoopers(controlingSnooper)%mode=SnooperObserving
+             WHERE (snoopers%mode==SnooperRequestingControling) &
+                  snoopers%mode=SnooperControling
+          END IF
+          
+          ! Deal with any snoopers about to finish
+          IF (ANY(snoopers%mode==SnooperFinising)) THEN 
+             ALLOCATE(oldSnoopers(noSnoopers),STAT=status)
+             IF (status/=0) CALL MLSMessage(MLSMSG_Errors,ModuleName,&
+                  MLSMSG_Allocate//"oldSnoopers")
+             oldSnoopers=snoopers
+             noSnoopers=COUNT(snoopers%mode/=SnooperFinishing)
+             ALLOCATE(snoopers(noSnoopers),STAT=status)
+             IF (status/=0) CALL MLSMessage(MLSMSG_Errors,ModuleName,&
+                  MLSMSG_Allocate//"snoopers")
+             snoopers=PACK(oldSnoopers,snoopers%mode/=SnooperFinishing)
+             DEALLOCATE(oldSnoopers,STAT=status)
+             IF (status/=0) CALL MLSMessage(MLSMSG_Errors,ModuleName,&
+                  MLSMSG_DeAllocate//"oldSnoopers")
+          ENDIF
+          
+          ! This shouldn't be necessary, but just to be sure...
+          IF (noSnoopers==0) doneSnoopingForNow= .TRUE.
+          
+          IF (doneSnoopingForNow) EXIT snoopLoop
+       END DO snoopLoop
+    END IF
+  END SUBROUTINE Snoop
+d344 1
+a344 1
+END MODULE SnoopMLSL2
+@
+

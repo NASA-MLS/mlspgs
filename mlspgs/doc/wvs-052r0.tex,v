@@ -1,0 +1,326 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.14
+	cfm-single-freq-0-1:1.1.0.12
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.10
+	mus-emls-1-70:1.1.0.8
+	rel-1-0-englocks-work:1.1.0.6
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2008.06.11.20.14.53;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9.25in
+
+\newcommand{\docname}{\bf wvs-052}
+\newcommand{\docdate}{3 January 2007}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Van\\
+Subject: \>ATBD equations\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-20pt}
+
+% Set physical constants in bold sans-serif fonts within equations
+\newcommand{\con}[1]{\text{\bfseries\sffamily #1}}
+
+LineShape$(\delta,y,\sigma,Y,\nu) =$
+\begin{equation}\label{LineShape}
+\left( \frac\nu{\nu^k_{0_j}} \right)
+ \left\{ \frac1\pi \int_{-\infty}^\infty
+  \frac{\left[ y-Y(\delta-t)\right] \exp(-t^2)}
+       {y^2 + \left(\delta+t\right)^2}\, \text{d} t +
+  \frac1{\sqrt{\pi}} \frac{y-Y \sigma}
+                          {y^2 + \sigma^2}
+  \right\} =
+\end{equation}
+
+\begin{equation}
+\left(\frac\nu{\nu^k_{0_j}} \right)
+ \left\{
+\Re w \left(\delta+i y\right) +
+\Re w \left(\sigma+i y\right) -
+ Y \left[
+  \Im w \left(\delta+i y\right) +
+  \Im w \left(\sigma+i y\right) \right] \right\}
+\end{equation}
+
+where
+
+\begin{equation}
+w(x+iy) = \frac{i}{\pi} \int_{-\infty}^\infty \frac{\exp(-t^2)\, \text{d} t}
+                                                {x+iy-t} =
+\frac{y}{\pi} \int_{-\infty}^\infty \frac{\exp(-t^2)\, \text{d} t}
+                                         {(x-t)^2 + y^2} +
+\frac{i}{\pi} \int_{-\infty}^\infty \frac{\exp(-t^2) (x-t)\, \text{d} t}
+                                         {(x-t)^2 + y^2}
+\end{equation}
+
+is the Fadeeva function or the plasma dispersion function, a generalization of
+the error function to the complex plane.  $\Re w(x+iy)$ is frequently called
+the Voigt function.  The second term in Equation (\ref{LineShape}) is an
+asymptotic approximation, which is justified since $\sigma$ is known to be very
+large.
+
+\begin{equation}
+\beta^k(P,T,\nu) =
+ \frac{\mathcal{R}^k \sqrt{\frac{\ln 2}\pi} \frac{10^{-13}} {\con{k}} P}
+ {T\, w^k_d(T,\nu)}
+ \left[
+ \sum_j 10^{\mathcal{S}^k_j}
+ \text{LineShape}(x^k_j(\nu),y^k_j(P,T,\nu),z^k_j(\nu),Y^k_j,\nu) \right]\,
+\end{equation}
+
+where
+
+\begin{equation}\begin{split}
+\mathcal{S}^k_j & = \mathcal{I}^k_j(300) +
+ \frac{\con{h} \con{c} E \ell^k_j}{\con{k}}
+  \left( \frac1{300}-\frac1T \right) \\
+& + \log \left[
+  \frac{\mathcal{Q}^k(300) \tanh(\con{h}\nu/2 \con{k}T)
+        \left(1+\exp\left\{-\con{h} \nu^k_j/(\con{k}T)\right\}\right)}
+       {\mathcal{Q}^k(T)
+        \left(1-\exp\left\{-\con{h} \nu^k_{0j}/(\con{k}T)\right\}\right)}
+ \right]\,,
+\end{split}\end{equation}
+
+$k$ is the species index, $j$ is the line index,
+$x^k_j(\nu) = \frac{\sqrt{\ln 2} ( \nu - \nu^{\prime k}_j ) }
+                   {w^k_d(T,\nu)}$,
+$y^k_j(P,T,\nu) = \frac{\sqrt{\ln 2} w^k_{cj} P }
+                   {w^k_d(T,\nu)}
+       \left( \frac{300}T \right)^{n^k_{cj}}$,
+$z^k_j(\nu) = \frac{\sqrt{\ln 2} ( \nu + \nu^{\prime k}_j ) }
+                   {w^k_d(T,\nu)}$,
+$w^k_{cj}$ is the collision width in MHz hPa$^{-1}$ at 300 Kelvins,
+$n^k_{cj}$ is its temperature dependence,
+$Y^k_j$ is an intramolecular interference coefficient,
+$\nu^k_j$ is the center frequency of line $j$ in MHz, and
+$\nu$ is the radiation frequency in MHz,
+$T$ is temperature in Kelvins,
+$P$ is pressure in hPa,
+$\mathcal{R}^k$ is the isotopic fraction,
+$\mathcal{I}^k_j(300)$ is the logarithm of the integrated intensity in
+nm$^2$MHz at 300 K,
+$E\ell^k_j$ is the ground state energy in cm$^{-1}$,
+$\mathcal{Q}^k(T)$ is the partition function,
+$w^k_d(T,\nu)=\sqrt{2 \ln 2 \con{k}} \nu \sqrt{\frac{T}{\mathcal{M}^k}} /
+\con{c}$ is the doppler width in MHz,
+$\mathcal{M}^k$ is the absorber molecular mass in AMU,
+$\con{c}$ is the speed of light,
+$\con{k}$ is Boltzmann's constant, and
+$\con{h}$ is Planck's constant.
+The line center frequency is pressure and Doppler shifted according to
+
+\begin{equation}\begin{split}
+\nu^k_j =\,& \nu^k_{0j} +
+ \Delta \nu^k_{0j} P \left( \frac{300}T \right)^{n_{\Delta \nu^k_{0j}}} \\
+\nu^{\prime k}_j =\,& \nu^k_j v_c \\
+v_c =\,& 1 + \vec{v}_z\, / \,\con{c}
+\end{split}\end{equation}
+
+where $\nu^k_{0j}$ is the unshifted rest line center frequency in MHz, $P$ is
+the pressure in hPa, $v_c$ is the Doppler shift coefficient due to the $z$-axis
+(line of sight) component of the spacecraft and earth velocities, $\vec{v}$,
+$\Delta \nu^k_{0j}$ is the pressure shift parameter in MHz hPa$^{-1}$, and
+$n_{\Delta \nu^k_{0j}}$ is its temperature dependence.  The interference
+parameter $Y^k_j$ is only used for O$_2$ and is parameterized as
+
+\begin{equation}
+Y^k_j = P \left[ \delta^k_j \left( \frac{300}T \right)^{n^k_{\delta j}} +
+                 \gamma^k_j \left( \frac{300}T \right)^{n^k_{\gamma j}}
+          \right]
+\end{equation}
+
+where $\delta^k_j$ and $\gamma^k_j$ are empirical parameters and
+$n^k_{\delta j}$ and $n^k_{\gamma j}$ are their temperature dependences.
+
+The temperature dependence of
+the logarithm of the ratio of the partition function at 300 K to $T$ is
+approximated by
+
+\begin{equation}
+\log \left[ \frac{\mathcal{Q}^k(300)}{\mathcal{Q}^k(T)} \right] =
+\log \left[ \frac{\mathcal{Q}^k(300)}{\mathcal{Q}^k(T_0)} \right] +
+\frac{\log \left[ \frac{\mathcal{Q}^k(T_1}{\mathcal{Q}^k(T_0)} \right]}
+     {\log \left[ \frac{T_1}{T_0} \right] } \log\left[\frac{T_0}T \right]\,,
+\end{equation}
+
+where $\mathcal{Q}^k(300)$, $\mathcal{Q}^k(T_1)$ and $\mathcal{Q}^k(T_0)$ are
+tabulated partition functions.  In EOS MLS, $T_1 = 225$ K and $T_0 = 150$ K.
+
+The opacity integral for a segment of the path from point $i$ to $i-1$ is given
+by
+
+\begin{equation}
+\Delta \delta_{i \rightarrow i-1} = \sum_k \Delta \delta^k_{i \rightarrow i-1}
+\end{equation}
+
+where $\Delta \delta^k_{i \rightarrow i-1}$ is the contribution from a single
+species, given by
+
+\begin{equation}\begin{split}
+\Delta \delta^k_{i \rightarrow i-1} & =
+\frac{\Delta s^{\text{refr}}_{i \rightarrow i-1}}
+     {\Delta s_{i \rightarrow i-1}}
+\int_{\zeta_i}^{\zeta_{i-1}} \con{f}^k(\zeta,\phi(\zeta),\nu)\,
+ \beta^k(P(\zeta),T(\zeta),\nu) \\
+& \times \frac{h(\zeta) + H^\oplus(\phi_t)}
+              {\sqrt{\left(h(\zeta) + H^\oplus(\phi_t)\right)^2 -
+                     \left(h(\zeta_t) + H^\oplus(\phi_t)\right)^2}} \\
+& \times \frac{\left[ h(\zeta) + \stackrel{*}{R_0}(\phi(\zeta)) +
+               R^\oplus(\phi(\zeta))\right]^2 T(\zeta) \con{k} \ln 10}
+              {g_0(\phi(\zeta)) \stackrel{*}{R^2_0}(\phi(\zeta))
+              \mathcal{M}(\zeta)}\,
+  \text{d} \zeta
+\end{split}\end{equation}
+
+where the second and third factors in the integrand (after $\times$) are
+$\frac{\text{d}s}{\text{d}h}$ and $\frac{\text{d}h}{\text{d}\zeta}$,
+respectively, $\con{f}^k$ is the volume mixing rato for the $k^\text{th}$
+species, $\zeta$ is the line-of-sight path co\"{o}rdinate, which determines
+$\phi$ and $h$, and $H^\oplus$, $\stackrel{*}{R_0}$ and $R^\oplus$ are
+geometric parameters of the earth and the orbit.
+
+Radiance for a state vector {\bf x} of temperature, mixing ratio, and viewing
+geometry, is
+
+\begin{equation}
+I(\mathbf{x}) = \sum_{i=1}^{2N} \Delta B_i \mathcal{T}_i
+\end{equation}
+
+where $i$ indexes a boundary between layers of the atmosphere, and $\Delta B_i$
+is the source function given by
+
+\begin{equation}\begin{split}
+\Delta B_1        =\,& \frac{B_1+B_2}2\,, \\
+\Delta B_i        =\,& \frac{B_{i+1}-B_{i-1}}2\,,\, 1<i<t\,, \\
+\Delta B_t        =\,& \frac{B_{t+1}-B_{t-1}}2\,, \\
+\Delta B_{2N-t+1} =\,& \frac{B_{2N-t+2}-B_{2N-t}}2\,, \\
+\Delta B_{2N-i+1} =\,& \frac{B_{2N-i+2}-B_{2N-i}}2\,,\, 1<i<t\,, \\
+\Delta B_{2N}     =\,& I_0 + \frac{B_{2N-1}+B_{2N}}2,
+\end{split}\end{equation}
+
+where $I_0$ is the space radiance, $B$ is the thermal Planck radiation function
+
+\begin{equation}
+B_i = \frac{\con{h}\nu}
+           {\con{k} \left( \exp \left\{ \frac{\con{h}\nu}{\con{k}T_i}\right\} -1
+            \right) }\,
+\end{equation}
+
+and $\mathcal{T}_i$ is the transmission function at the $i^\text{th}$ level,
+given by
+
+\begin{equation}\begin{split}
+\mathcal{T}_1    = \,& 1\,,\\
+\mathcal{T}_i    = \,& \exp\left\{ -
+                    \sum_{j=2}^i \Delta \delta_{j \rightarrow j-1}
+                    \right\} \,,\, i \leq t\,, \\
+\mathcal{T}_i =    \,& 0 \,,\, t < i < 2N - t + 1\,, \\
+\mathcal{T}_i =    \,& \Upsilon \mathcal{T}_t \,,\,i = 2N - t + 1\,,\\
+\mathcal{T}_i =    \,& \mathcal{T}_{2N-t+1} \exp \left\{ -
+                    \sum_{j=2N-t+2}^i \Delta \delta_{j-1 \rightarrow j}
+                    \right\}\,,\,i > 2N - t + 1 \,.
+\end{split}\end{equation}
+
+Showing only terms near the tangent, with a little rearrangement, we have
+
+\begin{equation}
+I(\mathbf{x}) = \dots + \frac{B_t-B_{t-2}}2 (\mathcal{T}_{t-1}-\mathcal{T}_t) +
+ B_t(1-\Upsilon) \mathcal{T}_t +
+ \frac{B_{t+1}+B_t}2 \mathcal{T}_t \Upsilon
+  ( 1 - \Delta \mathcal{T}_{t+1 \rightarrow t+2}) + \dots
+\end{equation}
+
+At the tangent there is a zero-thickness layer to handle earth reflections, so
+$B_t = B_{t+1}$.  If the ray intersects the earth, $\Upsilon$ is set to the
+surface reflectivity.  If the ray does not intersect the earth, $\Upsilon = 1$,
+and the contribution from the zero-thickness tangent layer is therefore zero.
+
+We observe $\hat I (\mathbf{x})$.  Using $\hat I (\mathbf{x}) - I (\mathbf{x})$
+and derivatives of $I (\mathbf{x})$ with respect to $\con{f}^k$ and $T$ in a
+Newton iteration, we solve for the temperature, and the mixing ratio of about
+20 chemical species, at roughly 70 vertical points on 3500 profiles per day.
+
+\label{lastpage}
+\end{document}
+% $Id: $
+@

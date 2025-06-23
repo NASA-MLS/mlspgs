@@ -1,0 +1,246 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.14
+	cfm-single-freq-0-1:1.1.0.12
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.10
+	mus-emls-1-70:1.1.0.8
+	rel-1-0-englocks-work:1.1.0.6
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2008.06.11.20.14.49;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}
+
+\textwidth 6.25in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9.25in
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\settowidth{\hW}{\bf wvs-002r1}
+%\settowidth{\hW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    16 March 2000\hfill\parbox[t]{\hW}{{\bf wvs-002r1}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+%\thispagestyle{empty}
+%{\hfill\bf wvs-002r1}
+%\pagenumbering{arabic}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+Subject: \>The retrieval iteration in the form of a least-squares problem\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+
+\parindent 0pt
+\parskip 3pt
+
+\vspace{-20pt}
+
+\section{Introduction}
+
+According to Golub and Van Loan, section 4.5.5, the Cholesky factor of a
+Kronecker product is the Kronecker product of the Cholesky factors of the
+Kronecker factors.  Let $\mathbf{S_a} = \mathbf{W_a W_a^T}$, $\mathbf{H}
+= \mathbf{U U^T}$, and $\mathbf{S_v} = \mathbf{V V^T}$, where
+$\mathbf{S_a} = \mathbf{H} \otimes \mathbf{S_v}$ as in equation (4.9)
+in JPL D-16159.  Then
+
+\[
+\mathbf{S_a} = \mathbf{W_a W_a}^T = (\mathbf{U U}^T) \otimes (\mathbf{V V}^T) =
+( \mathbf{U} \otimes \mathbf{V} ) \: ( \mathbf{U}^T \otimes \mathbf{V}^T ) =
+( \mathbf{U} \otimes \mathbf{V} ) \: ( \mathbf{U} \otimes \mathbf{V} ) ^T \,
+.
+\]
+
+I.e. $\mathbf{W_a} = \mathbf{U} \otimes \mathbf{V}$.
+
+\section{The Newton iteration in least-squares form}
+
+Let $\mathbf{S_i}^{-1} = \mathbf{W_i}^{-T} \mathbf{W_i}^{-1}$. 
+Remembering that $\mathbf{W_a}^{-1} = ( \mathbf{U} \otimes \mathbf{V} )
+^{-1} = \mathbf{U}^{-1} \otimes \mathbf{V}^{-1}$, the Gauss-Newton
+iteration of equation (4.11) in JPL D-16159, together with the
+Levenberg-Marquardt modification described in equation (3.19), can be
+written as a least-squares problem:
+
+\[
+\left [ \begin{array}{c} \mathbf{W}_1^{-1} \mathbf{K}_1 \\
+                         \text{...} \\
+                         \mathbf{W}_i^{-1} \mathbf{K}_i \\
+                         \text{...} \\
+                         \mathbf{U}^{-1} \otimes \mathbf{V}^{-1} \\
+                         \, \\
+                         \lambda \mathbf{D}
+         \end{array} \right ]
+ [ \mathbf{x}^{(r+1)} - \mathbf{x}^{(r)} ] \;\simeq\;
+\left [ \begin{array}{c} \mathbf{W}_1^{-1} \: [
+                           \mathbf{y}_1 - \mathbf{f}_1(\mathbf{x}^{(r)}) ] \\
+                         \text{...} \\
+                         \mathbf{W}_i^{-1} \: [
+                           \mathbf{y}_i - \mathbf{f}_i(\mathbf{x}^{(r)}) ] \\
+                         \text{...} \\
+                         ( \mathbf{U}^{-1} \otimes \mathbf{V}^{-1} )
+                           \: [ \mathbf{a} - \mathbf{x}^{(r)} ] \\
+                         \, \\
+                         0
+         \end{array} \right ] \;,
+\]
+
+or, more briefly, $\mathbf{A \, \delta x} \simeq \mathbf{b}$.  Since each
+of the $\mathbf{S_i}$ are diagonal, each of the $\mathbf{W_i}$ are also
+diagonal.  The elements of $\mathbf{W_i}$ are the square roots of the
+corresponding elements of $\mathbf{S_i}$.
+
+The Levenberg-Marquardt stabilization $\lambda \mathbf{D}[
+\mathbf{x}^{(r+1)} - \mathbf{x}^{(r)} ] \simeq 0$ can be thought of as
+adding a gradient-descent direction to the Newton direction with a weight
+of $\lambda^2$.  (This isn't exactly true:  Adding a gradient-descent
+direction to the Newton direction is called the ``dog leg'' method.  It
+works poorly because it constrains the move to a two-dimensional
+subspace.)  The ``art'' in solving nonlinear least-squares problems
+appears in choosing $\lambda$, $\mathbf{D}$ and how much of $\mathbf{
+\delta x}$ to use (it is frequently too long a step).  For simplicity,
+$\mathbf{D}$ is frequently chosen to be $\mathbf{I}$.
+
+That this represents the same iteration as equations (3.19) and (4.11) in
+JPL D-16159 can be seen by forming normal equations $\mathbf{A^T A \,
+\delta x} = \mathbf{A^T \, b}$, and letting $\lambda^2 \mathbf{D}^2 = \gamma
+\mathbf{I}$.
+
+\section{Opportunities to exploit structure in the least-squares form}
+
+It is possible to accumulate the rows of a least-squares problem
+sequentially using Householder transformations.
+
+The banded and singly block bordered structure of $\mathbf{W_i^{-1} K_i}$
+can be exploited during this sequential accumulation. There is a
+procedure DBND, buried within an old Newton-method procedure DNWT, that
+is designed for exactly this structure.  The work for each block depends
+on the bandwidth, and one needs only enough storage for one row times the
+bandwidth.
+
+Although we as yet have no software that can exploit the Kronecker
+product structure of the Cholesky factor of the a priori covariance
+matrix during a sequential accumulation, it appears to be possible to
+develop a sequential accumulation based on Householder transformations
+(or perhaps on Givens rotations) that can exploit this structure.
+
+The result may be a solution that is superior in stability, storage
+requirements, and computing time, to conjugate gradient or any other
+iterative solver.  Whether it is superior depends on the number of
+iterations necessary for the iterative solver, which in turn usually
+depends on the condition number of the problem, and the effects of
+finite-precision arithmetic (see section \ref{cg} below).
+
+\section{Advantage of the least-squares form for a conjugate-gradient
+solver}
+
+The conjugate-gradient method is usually thought of as a method to solve
+linear equations, e.g. $\mathbf{A^T A \, \delta x} = \mathbf{A^T \, b}$. 
+If the Newton iteration is posed in the least-squares form, it can still
+be attacked by the conjugate-gradient method, by using two matrix-vector
+multiplies at each conjugate-gradient iteration instead of one.  That is,
+one need not form the normal equations explicitly, but rather one can
+form them implicitly during each iteration of the conjugate-gradient
+method.  This is less work than forming the normal equations explicitly
+unless $n$ iterations of the conjugate-gradient method are needed.  It
+also requires less storage because the matrix $\mathbf{A^T A}$ is not
+needed.  (The matrix $\mathbf{A^T A}$ cannot be formed in place of the
+matrix $\mathbf{A}$.  Even though, with dynamic storage allocation,
+$\mathbf{A}$ can be discarded after $\mathbf{A^T A}$ is formed, there is
+a period of time when both are needed.)
+
+One of the multiplies in the conjugate-gradient method of solving
+least-squares problems uses the transpose of the matrix used in the other
+multiply, so cache performance won't be the same for both multiplies. 
+The same problem arises, however, during formation of the normal
+equations, so this is not a disadvantage for the least-squares
+formulation.
+
+\section{Things to keep in mind about the conjugate-gradient
+method}\label{cg}
+
+\begin{itemize}
+
+\item The conjugate-gradient method will converge in one iteration if the
+  condition number of the least-squares problem is exactly 1.0.  As the
+  condition number increases, the number of iterations required for
+  convergence increases.
+
+\item Analytically, the conjugate-gradient method converges to the exact
+  solution in $n$ iterations, where $n$ is the number of columns in the
+  least-squares problem.  This result generally does not hold, however,
+  for finite-precision arithmetic.  Indeed, it sometimes fails to
+  converge altogether.  Therefore, high-quality automatically adaptive
+  software for the conjugate-gradient method includes elaborate
+  procedures to decide when to restart altogether.
+
+\end{itemize}
+
+\label{lastpage}
+\end{document}
+% $Id: $
+@

@@ -1,0 +1,130 @@
+head	1.4;
+access;
+symbols
+	V1-13:1.2
+	V1-12:1.2
+	V1-11:1.2
+	V1-10:1.2
+	newfwm-feb03:1.2.0.2
+	V1-04:1.1
+	V1-03:1.1
+	V1-02:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.4
+date	2003.05.10.22.22.17;	author livesey;	state dead;
+branches;
+next	1.3;
+
+1.3
+date	2003.05.08.20.50.56;	author livesey;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2002.12.16.16.03.59;	author mjf;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2002.04.29.21.54.58;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.4
+log
+@New approach to standard products, joining, output, columns etc.
+@
+text
+@!divert(-1)
+;; $Id: joincolumns.l2cf,v 1.3 2003/05/08 20:50:56 livesey Exp $
+
+;; This l2cf fragment joins the column abundances
+
+  !define(columnJoin,{$1_column: l2gp, source=$2.column_$1, $
+    precision=outputPrecision.column_$1, swath='$3 Column !TropoName'})
+
+!divert!dnl
+  !columnJoin(bro,state,BrO)
+  !columnJoin(ch3cn,state,CH3CN)
+  !columnJoin(clo,state,ClO)
+  !columnJoin(co,state,CO)
+  !columnJoin(h2o,state,H2O!swathRes)
+  !columnJoin(hcl,state,HCl)
+  !columnJoin(hcn,state,HCN)
+  !columnJoin(hno3,state,HNO3)
+  !columnJoin(ho2,state,HO2)
+  !columnJoin(hocl,state,HOCl)
+  !columnJoin(n2o,state,N2O)
+  !columnJoin(o3,state,O3!swathRes)
+  !columnJoin(oh,state,OH)
+  !columnJoin(so2,state,SO2)
+@
+
+
+1.3
+log
+@Got rid of !res
+@
+text
+@d2 1
+a2 1
+;; $Id: joincolumns.l2cf,v 1.2 2002/12/16 16:03:59 mjf Exp $
+@
+
+
+1.2
+log
+@Added outputPrecision
+@
+text
+@d2 1
+a2 1
+;; $Id: joincolumns.l2cf,v 1.1 2002/04/29 21:54:58 pwagner Exp $
+d14 1
+a14 1
+  !columnJoin(h2o!res,state,H2O!swathRes)
+d21 1
+a21 1
+  !columnJoin(o3!res,state,O3!swathRes)
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d2 1
+a2 1
+;; $Id: joincolumns.l2cf,v 2.1 2001/10/27 00:15:42 livesey Exp $
+d7 1
+a7 1
+    swath='$3 Column, !TropoName'})
+d10 14
+a23 16
+  !columnJoin(bro,aColumn,BrO)
+  !columnJoin(ch3cn,aColumn,CH3CN)
+  !columnJoin(clo,aColumn,ClO)
+  !columnJoin(co,aColumn,CO)
+  !columnJoin(h2o,aColumn,H2O)
+  !columnJoin(hcl,aColumn,HCl)
+  !columnJoin(hcn,aColumn,HCN)
+  !columnJoin(hno3,aColumn,HNO3)
+  !columnJoin(ho2,aColumn,HO2)
+  !columnJoin(hocl,aColumn,HOCl)
+  !columnJoin(n2,aColumn,N2)
+  !columnJoin(n2o,aColumn,N2O)
+  !columnJoin(o2,aColumn,O2)
+  !columnJoin(o3,aColumn,O3)
+  !columnJoin(oh,aColumn,OH)
+  !columnJoin(so2,aColumn,SO2)
+@
+

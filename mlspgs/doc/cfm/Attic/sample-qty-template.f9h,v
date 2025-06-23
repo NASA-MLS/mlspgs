@@ -1,0 +1,60 @@
+head	1.2;
+access;
+symbols
+	V3-43:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-30:1.1
+	V3-20:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2010.03.26.15.33.03;	author honghanh;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2009.12.18.23.42.07;	author honghanh;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Update for v0.1 document
+Add subroutines creating grids
+Add ExplicitFillVectorQuantity subroutine
+Add FGrid_T data structure
+Modify mockup.f90
+Removing creating quantity template example because it can be found in the mockup
+@
+text
+@use CFM
+
+type(QuantityTemplate_T), dimension(:), pointer :: qtyTemplateDB => NULL()
+type(QuantityTemplate_T) :: qtyTemplate
+integer :: error
+
+qtyTemplate = CreateQuantityTemplate (filedatabase, fakeChunk, &
+       hgrid=standardHGrid, vGrid=standardVGrid, qMinimumV=0.1, &
+       qType="vmr", qMolecule="H2O", qLogBasis=.true.)
+error = AddQuantityTemplateToDatabase (qtyTemplateDB, qtyTemplate)
+if (error /= 0) then
+   ! handle error
+end if
+@
+
+
+1.1
+log
+@Code snippets used in the document
+@
+text
+@@
+

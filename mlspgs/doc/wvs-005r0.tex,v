@@ -1,0 +1,131 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.14
+	cfm-single-freq-0-1:1.1.0.12
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.10
+	mus-emls-1-70:1.1.0.8
+	rel-1-0-englocks-work:1.1.0.6
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2008.06.11.20.14.50;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.25in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9.00in
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+%\settowidth{\hW}{\bf wvs-005}
+\settowidth{\hW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    1 May 2000\hfill\parbox[t]{\hW}{{\bf wvs-005}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Dave, Nathaniel, Joe\\
+Subject: \>What would Fred Krogh do for the Level 2 Program?\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 3pt
+\vspace{-20pt}
+
+The mathematical problem immanent in the level 2 retrieval is a nonlinear
+least-squares problem.
+
+Fred Krogh has an unique combination of knowledge, skills and talents in
+computational mathematics and mathematical software.  In particular, he
+has written two software packages to solve nonlinear least-squares
+problems.  One of these packages is used by the trajectory planning
+group; it routinely and efficiently solves problems that no other package
+is able to solve at all.
+
+Fred also has a deep understanding of the relation between linear
+algebra, software to solve problems in linear algebra, and the solution
+of nonlinear least-squares problems.
+
+Fred has already given me substantial advice on methods and software to
+solve nonlinear least-squares problems, and software and algorithms to
+solve the linear problems that arise in solving nonlinear least-squares
+problems.  In particular, he has given me software to solve nonlinear
+least-squares problems, that already has many of the features we will
+need in the level 2 program.  I would find his advice to be useful in the
+development of the level 2 program.
+
+I propose to institute a consulting contract with Fred, for 17 days of
+work (20 hours per month for the remainder of the fiscal year), at
+\$47.50 per hour.  This would cost \$6460.00.  I expect that exploiting
+his knowledge could well save several work months of effort, and result
+in software of superior reliability, accuracy and performance.
+
+Fred is a JPL retiree, and already has a consulting agreement with JPL,
+under which he provides services to three groups.  I understand that the
+paperwork to add funds and work authorization to an existing contract is
+substantially simpler than creating a new consulting agreement.
+
+\label{lastpage}
+\end{document}
+% $Id: $
+@

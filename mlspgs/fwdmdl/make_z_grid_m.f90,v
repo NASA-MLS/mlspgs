@@ -1,0 +1,961 @@
+head	2.14;
+access;
+symbols
+	v5-02-NRT-19:2.14
+	v6-00:2.14
+	v5-02-NRT-18:2.14
+	v5-02:2.14
+	v5-01-NRT-17:2.14
+	v5-01-NRT-16:2.14
+	v5-01-NRT-15:2.14
+	v5-01-NRT-14:2.14
+	neuralnetworks-1-0:2.14.0.10
+	cfm-single-freq-0-1:2.14.0.8
+	v5-01:2.14
+	v5-00:2.14
+	v4-23-TA133:2.14.0.6
+	mus-emls-1-70:2.14.0.4
+	rel-1-0-englocks-work:2.14.0.2
+	VUMLS1-00:2.14
+	VPL1-00:2.12
+	V4-22-NRT-08:2.12
+	VAM1-00:2.12
+	V4-21:2.12.0.2
+	V4-13:2.12
+	V4-12:2.12
+	V4-11:2.12
+	V4-10:2.12
+	V3-43:2.9
+	M4-00:2.9
+	V3-41:2.9
+	V3-40-PlusGM57:2.9.0.2
+	V2-24-NRT-04:2.8
+	V3-33:2.9
+	V2-24:2.8
+	V3-31:2.9
+	V3-30-NRT-05:2.9
+	cfm-01-00:2.9
+	V3-30:2.9
+	V3-20:2.9
+	V3-10:2.9
+	V2-23-NRT-02:2.8
+	V2-23:2.8
+	V2-22-NRT-01:2.8
+	V2-22:2.8
+	V2-21:2.7
+	V2-20:2.7
+	V2-11:2.7
+	V2-10:2.7
+	V2-00:2.7
+	V1-51:2.6
+	V1-50:2.6
+	V1-45:2.6
+	V1-44:2.6
+	V1-43:2.6
+	V1-32:2.6
+	V1-31:2.6
+	V1-30:2.5
+	V1-13:2.5
+	V1-12:2.5
+	V1-11:2.5
+	V1-10:2.5
+	newfwm-feb03:2.5.0.2
+	V1-04:2.2
+	V1-03:2.2
+	V1-02:2.2
+	JointForwardModel:2.2.0.2
+	V1-00:2.2;
+locks; strict;
+comment	@# @;
+
+
+2.14
+date	2016.09.08.20.52.22;	author vsnyder;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2016.09.03.00.29.14;	author vsnyder;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2014.01.11.01.28.53;	author vsnyder;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2013.06.14.20.23.02;	author vsnyder;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2013.06.12.02.32.06;	author vsnyder;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2009.06.23.18.26.11;	author pwagner;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2007.01.12.21.45.03;	author vsnyder;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2005.06.22.18.08.19;	author pwagner;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2003.09.19.18.10.51;	author vsnyder;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2002.10.08.17.08.05;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2002.10.07.19.27.50;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2002.10.04.00.04.09;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2002.02.13.20.35.35;	author livesey;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2002.02.02.11.20.17;	author zvi;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.14
+log
+@Add 'last' argument
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Make_Z_Grid_m
+
+  implicit NONE
+
+  private
+  public :: Make_Z_Grid, Default_Thresh
+
+  real, parameter :: Default_Thresh = 0.0001 ! Threshold for discarding dups
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: make_z_grid_m.f90,v $"
+  private :: not_used_here
+!---------------------------------------------------------------------------
+
+contains
+!---------------------------------------------------------------------------
+  subroutine Make_Z_Grid ( zetas, z_grid, logp_eq_th, mult, last )
+
+! This routine automatically makes an appropriate z_grid for the
+! users specified input
+
+    use Allocate_deallocate, only: Allocate_Test
+    use MLSCommon, only: rp, ip
+    use Sort_m, only: Sort
+
+    ! inputs:
+
+    real(rp), intent(in) :: zetas(:) ! this contains output pointing,
+                        !  vertical bases for all considered species,
+                        !  and a surface zeta (if desired) all concatenated
+                        !  into one vector.
+                        !  Elements in zetas do not need to be ordered.
+
+    ! outputs:
+
+    real(rp), allocatable, intent(out) :: z_grid(:) ! a suitable preselected
+                        !  integration grid, with duplicates or near-duplicates
+                        !  from zetas eliminated, and intermediate zetas
+                        !  inserted if Mult is present and > 1.
+
+    ! Keywords (Optional variables):
+
+    real(rp), optional, intent(in) :: logp_eq_th ! threshold value for
+                        !  eliminating duplicates
+    integer(ip), optional, intent(in) :: mult ! A multiplicative factor for
+                        !  increasing the z_grid density. N means have N
+                        !  additional grid points between the minimal
+                        !  necessary z_grid
+    logical, optional, intent(in) :: Last ! Keep the last of a set of (nearly)
+                        ! duplicate values.  Default: Keep the first one.
+
+    ! Local variables:
+
+    integer(ip) :: I      ! generic counter
+    integer(ip) :: Keep(size(zetas)) ! indices of non-duplicates
+    integer(ip) :: N      ! number of elements in minimal z_grid
+    integer(ip) :: N_Ele  ! number of elements in zetas
+    integer(ip) :: N_Grid ! number of elements in z_grid
+    integer(ip) :: M      ! grid resolution factor
+
+    logical :: First
+
+    real(rp), allocatable :: Frac(:) ! fractions [1,2,...m-1]/m, for subgridding
+    real(rp) :: Thresh    ! threshold for eliminating duplicates
+    real(rp) :: Z(size(zetas))
+
+    ! Sort the input
+
+    n_ele = size(zetas)
+    z = zetas
+    call sort ( z, 1, n_ele )
+
+    thresh = Default_Thresh
+    if ( present(logp_eq_th) ) thresh = logp_eq_th
+
+    ! Find non-duplicates.  This eliminates consecutive elements of Z that
+    ! are closer together than the threshold.  If your input grid spacing is
+    ! less than the threshold, it eliminates the entire grid, except for the
+    ! first (last) one, even if the difference between the first and last is
+    ! greater than the threshold. A more complicated method is required to
+    ! get a minimum spacing of the threshold even if consecutive elements are
+    ! all closer together.
+
+    first = .true.
+    if ( present(last) ) first = .not. last
+    if ( first ) then
+      n = 1
+      keep(1) = 1
+      do i = 2, n_ele
+        if ( z(i) - z(i-1) > thresh ) then
+          n = n + 1
+          keep(n) = i
+        end if
+      end do
+    else
+      n = 0
+      do i = 2, n_ele
+        if ( z(i) - z(i-1) > thresh ) then
+          n = n + 1
+          keep(n) = i - 1
+        end if
+      end do
+      if ( n == 0 ) then
+        n = 1
+        keep(1) = z(1)
+      else if ( z(n_ele) - z(keep(n)) > thresh ) then
+        n = n + 1
+        keep(n) = n_ele
+      end if
+    end if
+
+    ! Compute total grid points including subgrid points
+
+    m = 1
+    if ( present(mult) ) m = max(1,mult)
+    n_grid = m * (n - 1) + 1
+    call allocate_test ( z_grid, n_grid, 'Z_Grid', moduleName )
+
+    ! Fill the grid
+
+    z_grid(1:n_grid:m) = z(keep(1:n))
+
+    if ( m > 1 ) then
+
+      ! Insert subgridding.
+
+      allocate ( frac(m-1) )
+      frac = [ ( real(i,kind=rp), i = 1, m-1 ) ] / m
+      do i = 1, n_grid-m, m
+        z_grid(i+1:i+m-1) = z_grid(i) + ( z_grid(i+m) - z_grid(i) ) * frac
+      end do
+
+    end if
+
+  end subroutine Make_Z_Grid
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: make_z_grid_m.f90,v 2.13 2016/09/03 00:29:14 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Make_Z_Grid_m
+
+! $Log: make_z_grid_m.f90,v $
+! Revision 2.13  2016/09/03 00:29:14  vsnyder
+! Eliminate several array temps
+!
+! Revision 2.12  2014/01/11 01:28:53  vsnyder
+! Decruftification
+!
+! Revision 2.11  2013/06/14 20:23:02  vsnyder
+! Eliminate tan_press -- nobody used it
+!
+! Revision 2.10  2013/06/12 02:32:06  vsnyder
+! Make z_grid allocatable instead of pointer
+!
+! Revision 2.9  2009/06/23 18:26:11  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.8  2007/01/12 21:45:03  vsnyder
+! Make tolerance for discarding duplicates a parameter, publish it
+!
+! Revision 2.7  2005/06/22 18:08:19  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.6  2003/09/19 18:10:51  vsnyder
+! Make tangent point indices optional
+!
+! Revision 2.5  2002/10/08 17:08:05  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.4  2002/10/07 19:27:50  vsnyder
+! Use a simpler algorithm when not subgridding
+!
+! Revision 2.3  2002/10/04 00:04:09  vsnyder
+! Move USE statements from module scope to procedure scope.  Insert copyright
+! notice.  Cosmetic changes.
+!
+@
+
+
+2.13
+log
+@Eliminate several array temps
+@
+text
+@d29 1
+a29 1
+  subroutine Make_Z_Grid ( zetas, z_grid, logp_eq_th, mult )
+d31 2
+a32 2
+    ! This routine automatically makes an appropriate z_grid for the
+    ! users specified input
+d61 2
+d66 1
+a66 1
+    integer(ip) :: I           ! generic counter
+d68 6
+a73 4
+    integer(ip) :: N           ! number of elements in minimal z_grid
+    integer(ip) :: N_Ele       ! number of elements in zetas
+    integer(ip) :: N_Grid      ! number of elements in z_grid
+    integer(ip) :: M           ! grid resolution factor
+d76 1
+a76 1
+    real(rp) :: Thresh         ! threshold for eliminating duplicates
+d89 30
+a118 9
+    ! are closer together than the threshold.  If your input grid spacing
+    ! is less than the threshold, it eliminates the entire grid.  A more
+    ! complicated method is required to get a minimum spacing of the threshold
+    ! even if consecutive elements are all closer together.
+
+    n = 1
+    keep(1) = 1
+    do i = 2, n_ele
+      if ( z(i) - z(i-1) > thresh ) then
+d120 1
+a120 1
+        keep(n) = i
+d122 1
+a122 1
+    end do
+d152 1
+a152 1
+       "$Id: make_z_grid_m.f90,v 2.12 2014/01/11 01:28:53 vsnyder Exp $"
+d162 3
+@
+
+
+2.12
+log
+@Decruftification
+@
+text
+@d24 1
+a24 1
+  private :: not_used_here 
+d31 2
+a32 2
+! This routine automatically makes an appropriate z_grid for the
+! users specified input
+d34 1
+a34 1
+    use Allocate_deallocate, only: Bytes, Test_Allocate
+d38 1
+a38 1
+! inputs:
+d41 11
+a51 4
+!                          vertical bases for all considered species,
+!                          and a surface zeta (if desired) all concatenated
+!                          into one vector.
+!                          Elements in zetas do not need to be ordered.
+d53 1
+a53 1
+! outputs:
+d55 25
+a79 2
+    real(rp), allocatable :: z_grid(:) ! a suitable preselected integration
+!                          grid
+d81 2
+a82 1
+! Keywords (Optional variables):
+d84 14
+a97 6
+    real(rp), optional, intent(in) :: logp_eq_th ! threshold value for
+!                          eliminating duplicates
+    integer(ip), optional, intent(in) :: mult ! A multiplicative factor for
+!                          increasing the z_grid density. N means have N
+!                          additional grid points between the minimal
+!                          necessary z_grid
+d99 1
+a99 1
+! Local variables:
+d101 4
+a104 1
+    logical :: mask(size(zetas))
+d106 1
+a106 5
+    integer(ip) :: i      ! generic counter                      
+    integer(ip) :: n      ! number of elements in minimal z_grid 
+    integer(ip) :: n_ele  ! number of elements in zetas
+    integer(ip) :: n_grid ! number of elements in z_grid
+    integer(ip) :: m      ! grid resolution factor
+d108 1
+a108 2
+    real(rp) :: thresh    ! threshold for eliminating duplicates
+    real(rp) :: z(size(zetas))
+d110 1
+a110 1
+! BEGIN CODE
+d112 1
+a112 1
+! Sort the input
+d114 5
+a118 8
+    n_ele = size(zetas)
+    z = zetas
+    call sort ( z, 1, n_ele )
+    if ( present(logp_eq_th) ) then
+      thresh = logp_eq_th
+    else
+      thresh = Default_Thresh
+    end if
+a119 10
+    mask = (cshift(z,1) - z) > thresh
+    mask(n_ele) = .true.
+    n = count(mask)
+
+! compute total grid points including multiplicative factors
+
+    if ( present(mult) ) then
+      m = mult
+    else
+      m = 1
+a120 18
+    n_grid = m * (n - 1) + 1
+    allocate ( z_grid(n_grid), stat=i )
+    call test_allocate ( i, moduleName, 'Z_Grid', [1], [n_grid], &
+      & bytes(z_grid) )
+
+! Fill the grid
+
+    z_grid(1:n) = pack(z,mask)
+    if ( m == 1 ) return ! not subgridding
+
+! Create z_grid with subgridding: z_grid = z_grid + del_z * frac
+
+    z_grid(n_grid) = z_grid(n)
+    z_grid(1:n_grid-1) = &
+      & reshape(spread(z_grid(1:n-1),1,m) + &
+      &         spread(z_grid(2:n) - z_grid(1:n-1),1,m) * &
+      &         spread((/(real(i,kind=rp) / m, i = 0,m-1)/),2,n-1), &
+      &         (/n_grid - 1/))
+d127 1
+a127 1
+       "$Id: make_z_grid_m.f90,v 2.11 2013/06/14 20:23:02 vsnyder Exp $"
+d137 3
+@
+
+
+2.11
+log
+@Eliminate tan_press -- nobody used it
+@
+text
+@d34 1
+a34 1
+    use Allocate_deallocate, only: Allocate_test, Bytes, Test_Allocate
+d121 1
+a121 1
+       "$Id: make_z_grid_m.f90,v 2.10 2013/06/12 02:32:06 vsnyder Exp $"
+d131 3
+@
+
+
+2.10
+log
+@Make z_grid allocatable instead of pointer
+@
+text
+@d29 1
+a29 1
+  subroutine Make_Z_Grid ( zetas, z_grid, tan_inds, logp_eq_th, mult )
+d34 1
+a34 1
+    use Allocate_deallocate, only: Allocate_test, Test_Allocate
+d44 1
+a44 1
+!   elements in zetas do not need to be ordered.
+d48 2
+a49 2
+    real(rp), allocatable :: z_grid(:) ! a suitable
+!                  preselected integration grid
+a52 3
+    integer(ip),pointer, optional :: tan_inds(:) ! a suitable set of pointing
+!                  indicies (output).
+
+d54 1
+a54 1
+!                  eliminating duplicates
+d56 3
+a58 2
+!                  increasing the z_grid density. N means have N additional
+!                  grid points between the minimal necessary z_grid
+d70 1
+a70 1
+    real(rp) :: thresh    ! equality threshold
+d100 1
+a100 9
+      & (storage_size(z_grid)+7)/8 )
+
+! Create a tangent pointing array index
+
+    if ( present(tan_inds) ) then
+      nullify ( tan_inds )
+      call allocate_test ( tan_inds, n_grid, 'tan_inds', modulename )
+      tan_inds = (/(i,i = 1, n_grid)/)
+    end if
+d121 1
+a121 1
+       "$Id: make_z_grid_m.f90,v 2.9 2009/06/23 18:26:11 pwagner Exp $"
+d131 3
+@
+
+
+2.9
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d23 1
+a23 1
+       "$RCSfile: $"
+d34 1
+a34 1
+    use Allocate_deallocate, only: Allocate_test, Deallocate_test
+d48 1
+a48 1
+    real(rp), dimension(:), pointer :: z_grid(:) ! a suitable
+d53 2
+a54 2
+    integer(ip), dimension(:), pointer, optional :: tan_inds(:) ! a
+!                  suitable set of pointing indicies (output).
+d57 1
+a57 1
+!                                recognizing equality
+d59 3
+a61 2
+!                        increasing the z_grid density. ie 2 means have
+!                        a grid point between the minimal necessary z_grid
+d66 3
+a68 3
+    integer(ip) :: i ! generic counter
+    integer(ip) :: n ! number of elements in minimal z_grid
+    integer(ip) :: n_ele ! number of elements in zetas
+d70 1
+a70 1
+    integer(ip) :: m ! grid resolution factor
+d72 1
+a72 1
+    real(rp) :: thresh ! equality threshold
+a73 3
+    real(rp), dimension(:), pointer :: frac
+    real(rp), dimension(:), pointer :: z1
+    real(rp), dimension(:), pointer :: del_z
+d100 3
+a102 2
+    nullify ( z_grid )
+    call allocate_test ( z_grid, n_grid, 'z_grid', modulename )
+d114 2
+a115 11
+    if ( m == 1 ) then ! not subgridding -- use the simple algorithm
+      z_grid = pack(z,mask)
+      return
+    end if
+
+! Fill in sub interval scale factors
+
+    nullify ( frac, z1, del_z )
+    call allocate_test ( z1, n, 'z1', modulename )
+    call allocate_test ( del_z, n, 'del_z', modulename )
+    call allocate_test ( frac, m, 'frac', ModuleName )
+d117 1
+a117 3
+    z1 = pack(z,mask)
+    del_z = cshift(z1,1) - z1
+    frac = (/(real(i,kind=rp) / m, i = 0,m-1)/)
+d119 6
+a124 12
+! Create and compute z_grid
+
+    z_grid(1:n_grid-1) = reshape(spread(z1(1:n-1),1,m) &
+                       +  spread(del_z(1:n-1),1,m) &
+                       *  spread(frac,2,n-1), (/n_grid - 1/))
+    z_grid(n_grid) = z1(n)
+
+! Clean up
+
+    call deallocate_test ( frac, 'frac', modulename )
+    call deallocate_test ( del_z, 'del_z', modulename )
+    call deallocate_test ( z1, 'z1', modulename )
+d131 1
+a131 1
+       "$Id: read_apriori.f90 is it here $"
+d141 3
+@
+
+
+2.8
+log
+@Make tolerance for discarding duplicates a parameter, publish it
+@
+text
+@d23 1
+a23 1
+       "$RCSfile: make_z_grid_m.f90,v $"
+d146 1
+a147 1
+!---------------------------- RCS Ident Info -------------------------------
+d149 2
+a150 3
+       "$Id: make_z_grid_m.f90,v 2.7 2005/06/22 18:08:19 pwagner Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d152 1
+d154 1
+d159 3
+@
+
+
+2.7
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d17 3
+a19 1
+  public :: Make_Z_Grid
+d23 1
+a23 1
+       "$RCSfile: $"
+d87 1
+a87 1
+      thresh = 0.0001_rp
+d149 1
+a149 1
+       "$Id: $"
+d158 3
+@
+
+
+2.6
+log
+@Make tangent point indices optional
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d19 3
+a21 6
+!---------------------------- RCS Ident Info -------------------------------
+character (len=*), parameter :: IdParm = &
+    & "$Id: make_z_grid_m.f90,v 2.5 2002/10/08 17:08:05 pwagner Exp $"
+character (len=len(idParm)) :: Id = IdParm
+character (len=*), parameter :: ModuleName = &
+    & "$RCSfile: make_z_grid_m.f90,v $"
+d145 5
+d156 3
+@
+
+
+2.5
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d13 1
+a13 1
+    & "$Id: make_z_grid_m.f90,v 2.4 2002/10/07 19:27:50 vsnyder Exp $"
+a42 2
+    integer(ip), dimension(:), pointer:: tan_inds(:) ! a
+!                  suitable set of pointing indicies.
+d46 3
+d95 1
+a95 1
+    nullify ( z_grid, tan_inds )
+d100 5
+a104 2
+    call allocate_test ( tan_inds, n_grid, 'tan_inds', modulename )
+    tan_inds = (/(i,i = 1, n_grid)/)
+d146 3
+@
+
+
+2.4
+log
+@Use a simpler algorithm when not subgridding
+@
+text
+@d13 1
+a13 1
+    & "$Id: make_z_grid_m.f90,v 2.3 2002/10/04 00:04:09 vsnyder Exp $"
+d17 1
+d135 4
+d142 3
+@
+
+
+2.3
+log
+@Move USE statements from module scope to procedure scope.  Insert copyright
+notice.  Cosmetic changes.
+@
+text
+@d13 1
+a13 1
+    & "$Id: make_z_grid_m.f90,v 2.2 2002/02/13 20:35:35 livesey Exp $"
+d26 2
+a27 1
+    use MLSCommon, only: rp, r4, r8, ip
+a28 1
+    use Allocate_deallocate, only: Allocate_test, Deallocate_test
+a69 2
+    nullify ( frac, z1, del_z )
+    nullify ( z_grid, tan_inds )
+a83 4
+    call allocate_test ( z1, n, 'z1', modulename )
+    call allocate_test ( del_z, n, 'del_z', modulename )
+    z1 = pack(z,mask)
+    del_z = cshift(z1,1) - z1
+d93 9
+d103 6
+a108 1
+! Fill in sub interval points
+d110 3
+d114 3
+a120 1
+    call allocate_test ( z_grid, n_grid, 'z_grid', modulename )
+d126 1
+a126 1
+! Create a tangent pointing array index
+d128 2
+a129 2
+    call allocate_test ( tan_inds, n_grid, 'tan_inds', modulename )
+    tan_inds = (/(i,i = 1, n_grid)/)
+a130 2
+    call deallocate_test ( del_z, 'del_z', modulename )
+    call deallocate_test ( frac, 'frac', modulename )
+d136 5
+a140 1
+! $Log: $
+@
+
+
+2.2
+log
+@Added nullifies
+@
+text
+@d1 10
+a10 12
+!
+! This routine automatically makes an appropriate z_grid for the
+! users specified input
+!
+MODULE make_z_grid_m
+!
+  USE MLSCommon, ONLY: rp, r4, r8, ip
+  USE Sort_m
+  USE Allocate_deallocate, only: Allocate_test, Deallocate_test
+!
+  IMPLICIT NONE
+!
+d12 2
+a13 2
+character (len=*), parameter, private :: IdParm = &
+    & "$Id: make_z_grid_m.f90,v 2.1 2002/02/02 11:20:17 zvi Exp $"
+d15 1
+a15 1
+character (len=*), parameter, private :: ModuleName= &
+d18 2
+a19 2
+!
+  CONTAINS
+d21 9
+a29 2
+  SUBROUTINE make_z_grid(zetas,z_grid,tan_inds,logp_eq_th,mult)
+!
+d31 7
+a37 7
+!
+  REAL(rp), INTENT(in) :: zetas(:) ! This contains output pointing,
+!                        vertical bases for all considered species,
+!                        and a surface zeta (if desired) all concatenated
+!                        into one vector.
+! elements in zetas do not need to be ordered.
+!
+d39 6
+a44 6
+!
+  REAL(rp), DIMENSION(:), POINTER :: z_grid(:) ! a suitable
+!                preselected integration grid
+  INTEGER(ip), DIMENSION(:), POINTER:: tan_inds(:) ! a
+!                suitable set of pointing indicies.
+!
+d46 6
+a51 6
+!
+  REAL(rp), OPTIONAL, INTENT(in) :: logp_eq_th ! threshold value for
+!                              recognizing equality
+  INTEGER(ip), OPTIONAL, INTENT(in) :: mult ! A multiplicative factor for
+!                      increasing the z_grid density. ie 2 means have
+!                      a grid point between the minimal necessary z_grid
+d53 15
+a67 15
+!
+  LOGICAL,  DIMENSION(:), POINTER :: mask
+!
+  INTEGER(ip) :: i ! generic counter
+  INTEGER(ip) :: n ! number of elements in minimal z_grid
+  INTEGER(ip) :: n_ele ! number of elements in zetas
+  INTEGER(ip) :: n_grid ! number of elements in z_grid
+  INTEGER(ip) :: m ! grid resolution factor
+!
+  REAL(rp) :: thresh ! Equality threshold
+  REAL(rp), DIMENSION(:), POINTER :: z
+  REAL(rp), DIMENSION(:), POINTER :: frac
+  REAL(rp), DIMENSION(:), POINTER :: z1
+  REAL(rp), DIMENSION(:), POINTER :: del_z
+!
+d70 2
+a71 2
+  nullify ( mask, z, frac, z1, del_z )
+  nullify ( z_grid, tan_inds )
+d73 18
+a90 20
+!
+  n_ele = SIZE(zetas)
+  CALL ALLOCATE_TEST(z,n_ele,'z',ModuleName)
+  CALL ALLOCATE_TEST(mask,n_ele,'mask',ModuleName)
+  z = zetas
+  CALL SORT(z,1,n_ele)
+  IF (PRESENT(logp_eq_th)) THEN
+    thresh = logp_eq_th
+  ELSE
+    thresh = 0.0001_rp
+  ENDIF
+!
+  mask = (CSHIFT(z,1) - z) > thresh
+  mask(n_ele) = .true.
+  n = COUNT(mask)
+  CALL ALLOCATE_TEST(z1,n,'z1',ModuleName)
+  CALL ALLOCATE_TEST(del_z,n,'del_z',ModuleName)
+  z1 = PACK(z,mask)
+  del_z = CSHIFT(z1,1) - z1
+!
+d92 8
+a99 8
+!
+  IF (PRESENT(mult)) THEN
+    m = mult
+  ELSE
+    m = 1
+  ENDIF
+  n_grid = m * (n - 1) + 1
+!
+d101 4
+a104 4
+!
+  CALL ALLOCATE_TEST(frac,m,'frac',ModuleName)
+  frac = (/(REAL(i,KIND=rp) / m,i = 0,m-1)/)
+!
+d106 7
+a112 7
+!
+  CALL ALLOCATE_TEST(z_grid,n_grid,'z_grid',ModuleName)
+  z_grid(1:n_grid-1) = RESHAPE(SPREAD(z1(1:n-1),1,m) &
+                     +  SPREAD(del_z(1:n-1),1,m) &
+                     *  SPREAD(frac,2,n-1), (/n_grid - 1/))
+  z_grid(n_grid) = z1(n)
+!
+d114 12
+a125 12
+!
+  CALL ALLOCATE_TEST(tan_inds,n_grid,'tan_inds',ModuleName)
+  tan_inds = (/(i,i = 1, n_grid)/)
+  CALL DEALLOCATE_TEST(z,'z',ModuleName)
+  CALL DEALLOCATE_TEST(mask,'mask',ModuleName)
+  CALL DEALLOCATE_TEST(z1,'z1',ModuleName)
+  CALL DEALLOCATE_TEST(del_z,'del_z',ModuleName)
+  CALL DEALLOCATE_TEST(frac,'frac',ModuleName)
+!
+  END SUBROUTINE make_z_grid
+!
+END MODULE make_z_grid_m
+@
+
+
+2.1
+log
+@Code to overwrite the l2cf integration & tanget grids
+@
+text
+@d15 1
+a15 1
+    & "$Id: make_z_grid_m.f90,v 1.0 2002/01/30 01:11:21 bill Exp $"
+d64 3
+@
+

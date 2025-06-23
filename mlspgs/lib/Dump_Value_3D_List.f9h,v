@@ -1,0 +1,105 @@
+head	2.2;
+access;
+symbols
+	v5-02-NRT-19:2.2
+	v6-00:2.2
+	v5-02-NRT-18:2.2
+	v5-02:2.2
+	v5-01-NRT-17:2.2
+	v5-01-NRT-16:2.2
+	v5-01-NRT-15:2.2
+	v5-01-NRT-14:2.2
+	neuralnetworks-1-0:2.2.0.10
+	cfm-single-freq-0-1:2.2.0.8
+	v5-01:2.2
+	v5-00:2.2
+	v4-23-TA133:2.2.0.6
+	mus-emls-1-70:2.2.0.4
+	rel-1-0-englocks-work:2.2.0.2
+	VUMLS1-00:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.2
+date	2017.08.28.20.27.47;	author livesey;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2017.01.27.19.32.47;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.2
+log
+@Changed the n,nf,np,nz elements to j,jf,...
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! subroutine Dump_Value_3D_List* ( Value, Name )
+
+!     class(value_3D_list_t(rk)), intent(in) :: Value(:)
+!     class(value_3D_list_t), intent(in) :: Value(:)
+!     character(len=*), intent(in), optional :: Name
+
+    integer :: I, J
+    character(len=64) :: MyFormat
+    myFormat = sdFormatDefault
+    if ( present(format) ) myFormat = format
+
+    if ( present(name) ) call output ( name, advance='yes' )
+
+    do i = 1, size(value)
+      if ( value(i)%n == 0 ) cycle
+      if ( all(value(i)%v%j == 0) ) cycle
+      call output ( i, places=4, after='#' )
+      do j = 1, value(i)%n
+        call output ( value(i)%v(j)%jf, before=' (', after=',' )
+        call output ( value(i)%v(j)%j, after=',' )
+        call output ( value(i)%v(j)%jp, after='): ' )
+        call output ( value(i)%v(j)%v, format=myFormat )
+      end do
+      call newLine
+    end do
+
+! $Log: Dump_Value_3D_List.f9h,v $
+! Revision 2.1  2017/01/27 19:32:47  vsnyder
+! Initial commit
+!
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d27 1
+a27 1
+      if ( all(value(i)%v%n == 0) ) cycle
+d30 3
+a32 3
+        call output ( value(i)%v(j)%nf, before=' (', after=',' )
+        call output ( value(i)%v(j)%n, after=',' )
+        call output ( value(i)%v(j)%np, after='): ' )
+d38 4
+a41 1
+! $Log: $
+@
+

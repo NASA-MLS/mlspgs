@@ -1,0 +1,458 @@
+head	2.10;
+access;
+symbols
+	v5-02-NRT-19:2.10
+	v6-00:2.10
+	v5-02-NRT-18:2.10
+	v5-02:2.10
+	v5-01-NRT-17:2.10
+	v5-01-NRT-16:2.10
+	v5-01-NRT-15:2.10
+	v5-01-NRT-14:2.10
+	neuralnetworks-1-0:2.10.0.8
+	cfm-single-freq-0-1:2.10.0.6
+	v5-01:2.10
+	v5-00:2.10
+	v4-23-TA133:2.10.0.4
+	mus-emls-1-70:2.10.0.2
+	rel-1-0-englocks-work:2.9.0.2
+	VUMLS1-00:2.8
+	VPL1-00:2.8
+	V4-22-NRT-08:2.8
+	VAM1-00:2.8
+	V4-21:2.8.0.2
+	V4-13:2.8
+	V4-12:2.8
+	V4-11:2.8
+	V4-10:2.8
+	V3-43:2.4
+	M4-00:2.6
+	V3-41:2.4
+	V3-40-PlusGM57:2.4.0.2
+	V2-24-NRT-04:2.4
+	V3-33:2.4
+	V2-24:2.4
+	V3-31:2.4
+	V3-30-NRT-05:2.4
+	cfm-01-00:2.4
+	V3-30:2.4
+	V3-20:2.4
+	V3-10:2.4
+	V2-23-NRT-02:2.4
+	V2-23:2.4
+	V2-22-NRT-01:2.4
+	V2-22:2.4
+	V2-21:2.2
+	V2-20:2.2
+	V2-11:2.2
+	V2-10:2.2;
+locks; strict;
+comment	@# @;
+
+
+2.10
+date	2018.05.11.20.32.20;	author pwagner;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2017.09.29.00.21.18;	author pwagner;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2014.01.09.00.24.29;	author pwagner;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2013.11.21.21.21.41;	author pwagner;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2012.08.01.00.06.53;	author pwagner;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2012.07.17.16.38.55;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2007.09.20.17.35.41;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2007.01.13.01.48.43;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2006.06.27.23.57.20;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2006.06.24.23.16.21;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.10
+log
+@Make sure myChars long enough; reinitialize outputLines after use
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id: output_name_value_pair.f9h,v 2.9 2017/09/29 00:21:18 pwagner Exp $
+
+!  subroutine output_nvp_character ( name, value, &
+!    & ADVANCE, colon, Before, After, TABN, TABC, TABA, DONT_STAMP, options )
+!    character(len=*), intent(in)          :: name
+!    character(len=*), intent(in)          :: value
+    character(len=*), intent(in), optional :: ADVANCE
+    character(len=1), intent(in), optional :: COLON
+    character(len=1), intent(in), optional :: fillChar
+    integer, intent(in), optional :: TABN
+    integer, intent(in), optional :: TABC
+    integer, intent(in), optional :: TABA
+    logical, intent(in), optional :: DONT_STAMP
+    character(len=*), intent(in), optional :: Before, After ! text to print
+    character(len=*), intent(in), optional :: options
+    ! Local variables
+    character(len=3) :: my_advance
+    character(len=1) :: myColon
+    character(len=MAXOUTPUTLINESLEN+len(name)+1) :: myChars
+    character(len=len(name)+1) :: myName
+    integer :: oldUnit
+    logical, parameter :: DeeBug = .false.
+    ! Executable
+    ! "options" will let us utilize StyledOutput
+    if ( present(options) ) then
+      if ( len_trim(options) > 0 ) then
+        outputLines = ' '
+        oldUnit = outputOptions%prunit
+        outputOptions%prunit = OUTPUTLINESPRUNIT
+        call output( value, advance='no' )
+        outputOptions%prunit = oldUnit
+        ! Snip off trailing <NUL> in outputLines
+        myChars = trim(name) // ': ' // asciify( trim(outputLines), 'snip' )
+        outputLines = ' '
+        if ( DEEBUG ) then
+          call output( 'len(chars) ', advance='no' )
+          call output( len_trim(myChars), advance='yes' )
+          call output( trim(myChars), advance='yes' )
+        else
+          call setOutputStatus ( 'physicalcolumn', 1 )
+          call setOutputStatus ( 'start', 1 )
+        endif
+        call StyledOutput( trim(myChars), options )
+        return
+      endif
+    endif
+    my_advance = 'yes'
+    if ( present(advance) ) my_advance = advance
+    myColon = ':'
+    if ( present(colon) ) myColon = colon
+    myName = name
+    if ( myName // myColon /= ' ' ) myName = trim(name) // myColon
+    if ( present(Before) ) then
+      call output ( before, advance='no' )
+    endif
+    if ( present(tabn) ) then
+      call blanksToColumn( tabn , advance='no' )
+    endif
+    call output ( trim(myName), advance='no' )
+    
+    if ( present(tabc) ) then
+      call blanksToColumn( tabc, fillChar=fillChar, advance='no' )
+    endif
+    if ( present(after) ) then
+      if ( present(taba) ) then
+        oldWrapPastColnum = wrapPastColNum
+        wrapPastColNum = taba
+      endif
+      call output ( value, advance='no' )
+      if ( present(taba) ) then
+        call blanksToColumn( taba, advance='no' )
+        if ( taba >= getOutputStatus( 'column' ) ) then
+          call output ( after, advance=my_advance, dont_stamp=dont_stamp )
+        else
+          call output ( '', advance=my_advance, dont_stamp=dont_stamp )
+        endif
+        wrapPastColNum = oldWrapPastColnum
+        oldWrapPastColnum = 0
+      else
+        call output ( after, advance=my_advance, dont_stamp=dont_stamp )
+      endif
+    else
+      call output ( value, advance=my_advance, dont_stamp=dont_stamp )
+    endif
+! $Log: output_name_value_pair.f9h,v $
+! Revision 2.9  2017/09/29 00:21:18  pwagner
+! Added options as an arg to OutputNamedValue
+!
+! Revision 2.8  2014/01/09 00:24:29  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
+! Revision 2.7  2013/11/21 21:21:41  pwagner
+! Wrap lines at the right-hand border when outputting named arrays with borders
+!
+! Revision 2.6  2012/08/01 00:06:53  pwagner
+! Allows line advance even when past taba
+!
+! Revision 2.5  2012/07/17 16:38:55  pwagner
+! Simplified by using blanksToColumn
+!
+! Revision 2.4  2007/09/20 17:35:41  pwagner
+! Removed some unused declarations
+!
+! Revision 2.3  2007/01/13 01:48:43  pwagner
+! Silly, unused changes
+!
+! Revision 2.2  2006/06/27 23:57:20  pwagner
+! name_v_value works much better
+!
+! Revision 2.1  2006/06/24 23:16:21  pwagner
+! First commit
+!
+@
+
+
+2.9
+log
+@Added options as an arg to OutputNamedValue
+@
+text
+@d12 1
+a12 1
+! $Id: output_name_value_pair.f9h,v 2.8 2014/01/09 00:24:29 pwagner Exp $
+d30 1
+a30 1
+    character(len=1024) :: myChars
+d44 2
+a45 1
+        myChars = trim(name) // ': ' // asciify( outputLines, 'snip' )
+d97 3
+@
+
+
+2.8
+log
+@Some procedures formerly in output_m now got from highOutput
+@
+text
+@d12 1
+a12 1
+! $Id: output_name_value_pair.f9h,v 2.7 2013/11/21 21:21:41 pwagner Exp $
+d15 1
+a15 1
+!    & ADVANCE, colon, Before, After, TABN, TABC, TABA, DONT_STAMP )
+d26 1
+a27 1
+
+d30 1
+d32 2
+d35 22
+d96 3
+@
+
+
+2.7
+log
+@Wrap lines at the right-hand border when outputting named arrays with borders
+@
+text
+@d12 1
+a12 1
+! $Id: output_name_value_pair.f9h,v 2.6 2012/08/01 00:06:53 pwagner Exp $
+d57 1
+a57 1
+        if ( taba >= atColumnNumber) then
+d71 3
+@
+
+
+2.6
+log
+@Allows line advance even when past taba
+@
+text
+@d12 1
+a12 1
+! $Id: output_name_value_pair.f9h,v 2.5 2012/07/17 16:38:55 pwagner Exp $
+d50 4
+d62 2
+d71 3
+@
+
+
+2.5
+log
+@Simplified by using blanksToColumn
+@
+text
+@d12 1
+a12 1
+! $Id: output_name_value_pair.f9h,v 2.4 2007/09/20 17:35:41 pwagner Exp $
+d53 5
+a57 2
+        if ( taba >= atColumnNumber) &
+          & call output ( after, advance=my_advance, dont_stamp=dont_stamp )
+d65 3
+@
+
+
+2.4
+log
+@Removed some unused declarations
+@
+text
+@d12 1
+a12 1
+! $Id: output_name_value_pair.f9h,v 2.3 2007/01/13 01:48:43 pwagner Exp $
+d27 1
+a27 3
+    integer :: leftPadding
+    integer :: lostBeforeBefore ! E.g., space for ' Info (output_m): '
+    integer :: lostToBefore
+a30 2
+    integer :: myTabn
+    integer :: rightPadding
+a37 5
+    leftPadding = 0
+    lostToBefore = 0
+    lostBeforeBefore = len_trim( &
+        & MLSMessageInternalFile( outputOptions%MLSMSG_Level, ModuleName, '') &
+        & )
+a39 1
+      lostToBefore = len(before)
+d42 1
+a42 4
+      myTabn = tabn + lostBeforeBefore
+      leftPadding = tabn - 1 - lostToBefore
+      if ( leftPadding > 0 ) &
+        & call blanks ( leftPadding, advance='no' )
+a45 1
+    rightPadding = 0
+d47 1
+a47 4
+      ! leftpadding + len_trim(name) + rightpadding + 1 = tabc
+      rightpadding = tabc - leftpadding - len_trim(myName) - 1
+      if ( rightpadding > 0 ) &
+        & call blanks ( rightpadding, fillChar=fillChar, advance='no' )
+d52 3
+a54 15
+        if ( taba > atColumnNumber ) then
+          call blanks( taba-atColumnNumber, advance='no')
+        endif
+        ! Don't print After string if we're at too great a column
+        if ( taba >= atColumnNumber) then
+          ! call output ( '(', advance='no' )
+          ! call output ( atColumnNumber, advance='no' )
+          ! call output ( ')', advance='no' )
+          call output ( after, advance=my_advance, dont_stamp=dont_stamp )
+        else
+          ! call output ( '(', advance='no' )
+          ! call output ( atColumnNumber, advance='no' )
+          ! call output ( ')', advance='no' )
+          call blanks ( 0, advance=my_advance, dont_stamp=dont_stamp )
+        endif
+d62 3
+@
+
+
+2.3
+log
+@Silly, unused changes
+@
+text
+@d12 1
+a12 1
+! $Id: output_name_value_pair.f9h,v 2.2 2006/06/27 23:57:20 pwagner Exp $
+a29 1
+    integer :: morelostToBefore
+a32 2
+    integer :: myTaba
+    integer :: myTabc
+d91 3
+@
+
+
+2.2
+log
+@name_v_value works much better
+@
+text
+@d12 1
+a12 1
+! $Id: output_name_value_pair.f9h,v 2.1 2006/06/24 23:16:21 pwagner Exp $
+d28 1
+d30 1
+d34 3
+d47 3
+d55 1
+d57 2
+a58 2
+      if ( tabn > 1 + lostToBefore ) &
+        & call blanks ( tabn-1-lostToBefore, advance='no' )
+d66 2
+a67 1
+      if ( rightpadding > 0 ) call blanks ( rightpadding, fillChar=fillChar, advance='no' )
+d94 3
+@
+
+
+2.1
+log
+@First commit
+@
+text
+@d12 1
+a12 1
+! $Id: output_name_value_pair.f9h,v 2.3 2005/06/22 17:44:42 pwagner Exp $
+d15 1
+a15 1
+!    & ADVANCE, colon, TABN, TABC, DONT_STAMP )
+d23 1
+d25 1
+d28 1
+a28 1
+    integer :: rightPadding
+d31 2
+d36 4
+d41 5
+d47 3
+a49 2
+      leftPadding = tabn - 1
+      if ( tabn > 1 ) call blanks ( tabn-1, fillChar=fillChar, advance='no' )
+d51 2
+a52 1
+    call output ( trim(name), advance='no' )
+d56 1
+a56 1
+      rightpadding = tabc - leftpadding - len_trim(name) - 1
+d59 24
+a82 2
+    call output ( myColon, advance='no' )
+    call output ( value, advance=my_advance, dont_stamp=dont_stamp )
+d84 3
+@
+

@@ -1,0 +1,156 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.4
+	cfm-single-freq-0-1:1.2.0.2
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2019.09.12.00.16.20;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2018.07.25.03.23.02;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Make usual transitions broad red lines
+@
+text
+@digraph DNWT
+
+{
+
+size = "5.7,7.5";
+ratio = auto;
+layout = dot;
+
+Start [ style=filled, color=lawngreen, fontsize = 24 ] ;
+
+TolF [ style=filled, fillcolor = lightblue ] ;
+TolX [ style=filled, fillcolor = lightblue ] ;
+TolX_Best [ style=filled, fillcolor = lightblue label="TolX Best" ] ;
+
+too_small [ style=filled, fillcolor = pink label="Too Small" ] ;
+FandJ [ style=filled, fillcolor = pink ] ;
+
+Start -> EvalF [style=bold, color=red] ;
+Start -> Gmove ;
+
+EvalF ->FandJ ;
+EvalF -> Gmove ;
+EvalF -> EvalJ [style=bold, color=red] ;
+EvalF -> TolX [style=bold, color=red] ;
+EvalF -> TolX_Best ;
+
+EvalJ -> TolF [style=bold, color=red] ;
+EvalJ -> Solve [style=bold, color=red] ;
+
+Solve -> Gmove ;
+Solve -> Best ;
+Solve -> dx [style=bold, color=red] ;
+Solve -> Lev [style=bold, color=red] ;
+Solve -> TolX ;
+Solve -> TolX_Best ;
+
+Lev -> Solve [style=bold, color=red] ;
+
+NewX -> Gmove ;
+NewX -> too_small ;
+NewX -> EvalF [style=bold, color=red] ;
+
+Gmove -> NewX ;
+
+Best -> dx ;
+Best -> Aitken ;
+
+Aitken -> dx_Aitken ;
+Aitken -> dx ;
+
+dx -> NewX [style=bold, color=red] ;
+
+dx_Aitken [ label="dx Aitken" ] ;
+dx_Aitken -> NewX ;
+
+TolX -> Best ;
+
+TolX_Best -> Best ;
+
+TolF -> Solve ;
+
+too_small -> Gmove ;
+
+FandJ -> Gmove ;
+
+}
+
+// $Id: dnwt.dot,v 1.1 2018/07/25 03:23:02 vsnyder Exp $
+
+// $Log: dnwt.dot,v $
+// Revision 1.1  2018/07/25 03:23:02  vsnyder
+// Initial commit
+//
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d18 1
+a18 1
+Start -> EvalF ;
+d21 1
+a21 1
+EvalF -> FandJ ;
+d23 2
+a24 2
+EvalF -> EvalJ ;
+EvalF -> TolX ;
+d27 2
+a28 2
+EvalJ -> TolF ;
+EvalJ -> Solve ;
+d32 2
+a33 2
+Solve -> dx ;
+Solve -> Lev ;
+d37 1
+a37 1
+Lev -> Solve ;
+d41 1
+a41 1
+NewX -> EvalF ;
+d51 1
+a51 1
+dx -> NewX ;
+d68 1
+a68 1
+// $Id: $
+d70 4
+a73 1
+// $Log: $
+@
+

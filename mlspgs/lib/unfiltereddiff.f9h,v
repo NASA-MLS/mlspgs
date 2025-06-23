@@ -1,0 +1,1658 @@
+head	2.24;
+access;
+symbols
+	v5-02-NRT-19:2.24
+	v6-00:2.24
+	v5-02-NRT-18:2.24
+	v5-02:2.24
+	v5-01-NRT-17:2.24
+	v5-01-NRT-16:2.24
+	v5-01-NRT-15:2.24
+	v5-01-NRT-14:2.24
+	neuralnetworks-1-0:2.24.0.10
+	cfm-single-freq-0-1:2.24.0.8
+	v5-01:2.24
+	v5-00:2.24
+	v4-23-TA133:2.24.0.6
+	mus-emls-1-70:2.24.0.4
+	rel-1-0-englocks-work:2.24.0.2
+	VUMLS1-00:2.20
+	VPL1-00:2.18
+	V4-22-NRT-08:2.17
+	VAM1-00:2.16
+	V4-21:2.16.0.2
+	V4-13:2.16
+	V4-12:2.16
+	V4-11:2.16
+	V4-10:2.16
+	V3-43:2.9
+	M4-00:2.16
+	V3-41:2.9
+	V3-40-PlusGM57:2.9.0.2
+	V3-33:2.10
+	V3-31:2.10
+	V3-30-NRT-05:2.9
+	cfm-01-00:2.9
+	V3-30:2.9
+	V3-20:2.9
+	V3-10:2.2;
+locks; strict;
+comment	@# @;
+
+
+2.24
+date	2018.02.28.19.14.16;	author pwagner;	state Exp;
+branches;
+next	2.23;
+
+2.23
+date	2017.07.31.23.00.05;	author pwagner;	state Exp;
+branches;
+next	2.22;
+
+2.22
+date	2017.07.19.22.40.05;	author pwagner;	state Exp;
+branches;
+next	2.21;
+
+2.21
+date	2017.07.10.18.20.38;	author pwagner;	state Exp;
+branches;
+next	2.20;
+
+2.20
+date	2016.10.06.20.20.49;	author pwagner;	state Exp;
+branches;
+next	2.19;
+
+2.19
+date	2016.10.05.20.13.39;	author pwagner;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2016.07.28.01.42.27;	author vsnyder;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2016.03.23.00.22.48;	author pwagner;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2013.01.10.00.17.31;	author pwagner;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2012.09.11.21.11.25;	author pwagner;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2012.06.22.20.26.49;	author pwagner;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2012.01.09.22.25.33;	author pwagner;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2011.12.07.01.13.38;	author pwagner;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2011.07.26.20.52.19;	author pwagner;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2011.02.05.01.00.01;	author pwagner;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2010.02.04.23.04.29;	author vsnyder;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2009.11.20.01.16.17;	author pwagner;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2009.10.30.23.02.19;	author pwagner;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2009.10.19.17.32.51;	author pwagner;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2009.10.13.00.05.03;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2009.09.10.20.59.12;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2009.08.17.18.05.14;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2009.06.16.17.12.55;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2008.11.24.19.38.08;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.24
+log
+@Fixed error that prevented print namee of next item diffed
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id: unfiltereddiff.f9h,v 2.23 2017/07/31 23:00:05 pwagner Exp $
+
+!   subroutine DIFF_&D_* ( ARRAY1, NAME1, ARRAY2, NAME2, &
+!     & WIDTH, FORMAT, LBOUND, OPTIONS )
+!     integer, parameter :: RK = kind(1.0d0) ! or kind(1.0e0)
+!     real(rk), intent(in) :: ARRAY1(:)
+!     character(len=*), intent(in), optional :: NAME1
+!     real(rk), intent(in) :: ARRAY2(:)
+!     character(len=*), intent(in), optional :: NAME2
+!     integer, intent(in), optional :: WIDTH
+!     character(len=*), intent(in), optional :: FORMAT
+!     integer, intent(in), optional :: LBOUND ! Low bound for Array
+!     character(len=*), iptional, intent(in) :: OPTIONS
+! 
+    integer, parameter                       :: MAXPCTS = 10
+    logical                                  :: NaNsIn1, NaNsIn2
+    character(len=64)                        :: DiffName
+    logical                                  :: alreadySbtrcted = .false.
+    real(rk), dimension(3, MAXPCTS)          :: array1AtNAbs
+    real(rk), dimension(3, MAXPCTS)          :: array2AtNAbs
+    real(rk), dimension(3, MAXPCTS)          :: array1AtNRel
+    real(rk), dimension(3, MAXPCTS)          :: array2AtNRel
+    real(rk), dimension(2)                   :: exvalues
+    real(rk), dimension(2)                   :: exratios
+    real(rk)                                 :: fillvalue
+    real(rk), dimension(MAXPCTS)             :: gaps
+    type(Stat_T), dimension(MAXPCTS)         :: gapStat
+    real(rk), dimension(MAXPCTS)             :: gapratios
+    type(Stat_T), dimension(MAXPCTS)         :: gapRatioStat
+    real(rk)                                 :: minratio
+    real(rk)                                 :: maxratio
+    real(rk)                                 :: medianratio
+    real(rk)                                 :: meanratio
+    real(rk)                                 :: minvalue
+    real(rk)                                 :: maxvalue
+    real(rk)                                 :: medianvalue
+    real(rk)                                 :: meanvalue
+    real(rk)                                 :: rmsvalue
+    integer                                  :: numTot
+    integer                                  :: numEqual
+    real(rk)                                 :: pctDiff
+    real(rk)                                 :: pctEqual
+    real(rk), dimension(MAXPCTS)             :: pcts
+    real(rk), dimension(MAXPCTS)             :: pctratios
+    real(rk), dimension(MAXPCTS)             :: pctMaxGaps
+    real(rk), dimension(MAXPCTS)             :: pctMaxGapAsRatios
+    real(rk), dimension(MAXPCTS)             :: pctMeanGaps
+    real(rk), dimension(MAXPCTS)             :: pctMaxRatios
+    real(rk), dimension(MAXPCTS)             :: pctMaxRatioAsGaps
+    real(rk), dimension(MAXPCTS)             :: pctMeanRatios
+    real(rk)                                 :: refmin, refmax, refrms
+    real(rk)                                 :: rmsratio
+    real(rk)                                 :: stddev
+    real(rk)                                 :: stddevratio
+    real                                     :: sTime
+    real                                     :: t1
+    real                                     :: t2
+    real(rk), dimension(MAXPCTS,7)           :: TheTable
+    logical, parameter                       :: PrintReferenceValues = .false.
+    logical, parameter                       :: PrintExtraDump = .false.
+    logical, parameter                       :: DEBUG = .false.
+    real(rk), dimension(MAXPCTS), parameter  :: PCTAges = &
+      & (/ 99.9, 99.8, 99.7, 99.5, 99., 98., 97., 95., 90., 80. /)
+    real, dimension(MAXPCTS), parameter      :: PCTFactors = &
+      & (/ .01, .02, .05, .1, .2, .5, 1., 2., 5., 10. /)
+    logical, parameter                       :: unique = .true. 
+    ! Executable
+    t1 = 0.
+    t2 = 0.
+    sTime = 0.
+    thisIsADiff = .true.  ! For special dumps
+    myPCTFormat  = DefaultPCTFormat
+    if ( PCTFormat /= '*' ) myPCTFormat = PCTFormat
+
+    if ( len_trim(name1) < 1 ) then
+      DiffName = ' '
+    else if ( len_trim(name2) < 1 ) then
+      DiffName = trim(name1)
+    else
+      DiffName = trim(name1) // ' - ' // trim(name2)
+    end if
+    fillValue = NaNFunction( 1._rk )
+
+    if ( DEBUG ) then
+      call output( '(in unfiltered diff)', advance='yes' )
+      call outputNamedValue( 'name1', trim(name1 ) )
+      call outputNamedValue( 'name2', trim(name2 ) )
+      call outputNamedValue( 'options', trim(options ) )
+      call outputNamedValue( 'Stats', dopts(stats)%v )
+      call outputNamedValue( 'Ratios', dopts(myRatios)%v )
+      call outputNamedValue( 'RMS', dopts(RMS)%v )
+      call outputNamedValue( 'Table', dopts(table)%v )
+      call outputNamedValue( 'goldbrick', dopts(AuBrick)%v )
+      call outputNamedValue( 'WholeArray', dopts(wholeArray)%v )
+      call outputNamedValue( 'nameHasbeenPrinted', nameHasbeenPrinted )
+    end if
+    call theDumpBegins ( options, thisIsADiff, DiffName )
+    if ( dopts(wholeArray)%v ) then
+      call dump(array1-array2, trim(DiffName), &
+      & real(0.,rk), WIDTH, FORMAT, &
+      & LBOUND, OPTIONS )
+      return
+    end if
+
+    NaNsIn1 = any(.not. ieee_is_finite(array1))
+    if ( NaNsIn1 .and. dopts(direct)%v ) then
+      call output( '*** skipping: non-finite values found', advance='no' )
+      if ( len_trim(name1) > 0 ) then
+        call output( ' in ' // trim(name1), advance='yes')
+      else
+        call output( ' in first array', advance='yes')
+      end if
+      return
+    end if
+    if ( NaNsIn1 ) then
+      if ( .not. any(ieee_is_finite(array1)) ) then
+        call output( '*** skipping: no finite values found', advance='no' )
+        if ( len_trim(name1) > 0 ) then
+          call output( ' in ' // trim(name1), advance='yes')
+        else
+          call output( ' in first array', advance='yes')
+        end if
+        return
+      end if
+      call output( '*** non-finite values found', advance='no' )
+      if ( len_trim(name1) > 0 ) then
+        call output( ' in ' // trim(name1), advance='yes')
+      else
+        call output( ' in first array', advance='yes')
+      end if
+      if ( dopts(NaNs)%v ) then
+        call WhereAreTheInfs ( array1, which, how_many )
+        if ( how_many > 0 ) then
+          call outputNamedValue( 'num(Infs)', how_many )
+          if ( how_many < 50 ) call outputNamedValue( 'which', which(1:how_many) )
+        end if
+        call WhereAreTheNaNs ( array1, which, how_many )
+        if ( how_many > 0 ) then
+          call outputNamedValue( 'num(NaNs)', how_many )
+          if ( how_many < 50 ) call outputNamedValue( 'which', which(1:how_many) )
+        end if
+      end if
+    end if
+
+    NaNsIn2 = any(.not. ieee_is_finite(array2))
+    if ( NaNsIn1 .and. dopts(direct)%v ) then
+      call output( &
+        & '*** skipping: non-finite values found in ' // trim(name2), advance='yes')
+      return
+    end if
+    if ( NaNsIn2 ) then
+      if ( .not. any(ieee_is_finite(array2)) ) then
+        call output( '*** skipping: no finite values found', advance='no' )
+        if ( len_trim(name2) > 0 ) then
+          call output( ' in ' // trim(name2), advance='yes')
+        else
+          call output( ' in second array', advance='yes')
+        end if
+        return
+      end if
+      call output( '*** non-finite values found', advance='no' )
+      if ( len_trim(name2) > 0 ) then
+        call output( ' in ' // trim(name2), advance='yes')
+      else
+        call output( ' in second array', advance='yes')
+      end if
+      if ( dopts(NaNs)%v ) then
+        call WhereAreTheInfs ( array2, which, how_many )
+        if ( how_many > 0 ) then
+          call outputNamedValue( 'num(Infs)', how_many )
+          if ( how_many < 50 ) call outputNamedValue( 'which', which(1:how_many) )
+        end if
+        call WhereAreTheNaNs ( array2, which, how_many )
+        if ( how_many > 0 ) then
+          call outputNamedValue( 'num(NaNs)', how_many )
+          if ( how_many < 50 ) call outputNamedValue( 'which', which(1:how_many) )
+        end if
+      end if
+    end if
+
+    if ( DEBUG ) call SayTime( 'Checking for NaNs and Infs', stime )
+    stime = t2
+    if ( all(array1 == array2) ) then
+      call output( '(The two arrays are exactly equal)', advance='yes' )
+      return
+    end if
+    numTot = size( Array1  )
+    numEqual = count( (/ Array1 == Array2 /) )
+    if ( dopts(RMS)%v .or. dopts(myRatios)%v .or. dopts(AuBrick)%v ) then
+      call allstats(array1, &
+        & addedData=.false., min=refmin, max=refmax, rms=refrms)
+      call allstats(array2, &
+        & addedData=.true., min=refmin, max=refmax, rms=refrms)
+      if ( PRINTREFERENCEVALUES ) &
+        & call printRMSetc ( 'Reference values', refmin, refmax, refrms )
+    end if
+    if ( DEBUG ) call SayTime( 'statistics', stime )
+    stime = t2
+    if ( product(shape(array1)) > TOOMANYELEMENTS ) then
+      call outputNamedValue( 'Array size excessive for pcts', product(shape(array1)) )
+      call dump(array1-array2, trim(DiffName), &
+        & real(0.,rk), WIDTH, FORMAT, &
+        & LBOUND, OPTIONS )
+      return
+    else
+      call fillPcts
+    end if
+    if ( DEBUG ) call SayTime( 'percentages', stime )
+    stime = t2
+    call usePcts
+    if ( DEBUG ) call SayTime( 'ratios', stime )
+    stime = t2
+    if ( PRINTEXTRADUMP ) call dump(array1-array2, trim(DiffName), &
+      & real(0.,rk), WIDTH, FORMAT, &
+      & LBOUND, OPTIONS )
+    if ( DEBUG ) call SayTime( 'dump', stime )
+    stime = t2
+    call doneWithDiff
+    if ( DEBUG ) call output( 'DoneWithDiff', advance='yes' )
+    nameHasBeenPrinted = .false. ! So next name will be printed
+  contains
+    include "donewithdiff.f9h"
+!   end subroutine DIFF_1D_DOUBLE
+! $Log: unfiltereddiff.f9h,v $
+! Revision 2.23  2017/07/31 23:00:05  pwagner
+! Remove unneeded param
+!
+! Revision 2.22  2017/07/19 22:40:05  pwagner
+! May print Name during theDumpBegins
+!
+! Revision 2.21  2017/07/10 18:20:38  pwagner
+! Must not neglect to compute numTot, numEqual even if all equal
+!
+! Revision 2.20  2016/10/06 20:20:49  pwagner
+! parts commom to unfiltered and filtered diffs moved to donewithdiff.f9h
+!
+! Revision 2.19  2016/10/05 20:13:39  pwagner
+! Implemented Au (Gold) option
+!
+! Revision 2.18  2016/07/28 01:42:27  vsnyder
+! Refactoring dump and diff
+!
+! Revision 2.17  2016/03/23 00:22:48  pwagner
+! Diff now able to print name on each line
+!
+! Revision 2.16  2013/01/10 00:17:31  pwagner
+! Dumps with -N just show where NaNs are
+!
+! Revision 2.15  2012/09/11 21:11:25  pwagner
+! Requires 'N' option to show where NaNs, Infs are located
+!
+! Revision 2.14  2012/06/22 20:26:49  pwagner
+! Specify advance arg because we may now set default to 'yes'
+!
+! Revision 2.13  2012/01/09 22:25:33  pwagner
+! Distinguish 'r' option to print rms of ratios and 'R' option for rms of values
+!
+! Revision 2.12  2011/12/07 01:13:38  pwagner
+! Added option to show bandwidth of banded arrays
+!
+! Revision 2.11  2011/07/26 20:52:19  pwagner
+! Clearer, less redundant
+!
+! Revision 2.10  2011/02/05 01:00:01  pwagner
+! Consistent with new dopt_ dump options
+!
+! Revision 2.9  2010/02/04 23:04:29  vsnyder
+! Use kind=rk instead of double precision
+!
+! Revision 2.8  2009/11/20 01:16:17  pwagner
+! More protection against running out of memory diffing DACS datasets
+!
+! Revision 2.7  2009/10/30 23:02:19  pwagner
+! Should not double-print name if only whole array diff
+!
+! Revision 2.6  2009/10/19 17:32:51  pwagner
+! Trying to prevent double-printing of name
+!
+! Revision 2.5  2009/10/13 00:05:03  pwagner
+! Should print rms figures only when requested to
+!
+! Revision 2.4  2009/09/10 20:59:12  pwagner
+! 3 ways to summarize diffs: 'b' (table), 'r' (rms), 's' (number of differences)
+!
+! Revision 2.3  2009/08/17 18:05:14  pwagner
+! direct option skips diffing if non-finite values found
+!
+! Revision 2.2  2009/06/16 17:12:55  pwagner
+! Changed api for dump, diff routines; now rely on options for most optional behavior
+!
+! Revision 2.1  2008/11/24 19:38:08  pwagner
+! First commit
+!
+@
+
+
+2.23
+log
+@Remove unneeded param
+@
+text
+@d12 1
+a12 1
+! $Id: unfiltereddiff.f9h,v 2.22 2017/07/19 22:40:05 pwagner Exp $
+a94 2
+    call theDumpBegins ( options, thisIsADiff, DiffName )
+
+d97 3
+d106 1
+d108 1
+d231 1
+a231 1
+    nameHasBeenPrinted = .true.
+d236 3
+@
+
+
+2.22
+log
+@May print Name during theDumpBegins
+@
+text
+@d12 1
+a12 1
+! $Id: unfiltereddiff.f9h,v 2.21 2017/07/10 18:20:38 pwagner Exp $
+a70 1
+    logical, parameter                       :: PrintMinMaxWithRMS = .true.
+d233 3
+@
+
+
+2.21
+log
+@Must not neglect to compute numTot, numEqual even if all equal
+@
+text
+@d12 1
+a12 1
+! $Id: unfiltereddiff.f9h,v 2.20 2016/10/06 20:20:49 pwagner Exp $
+a85 1
+    call theDumpBegins ( options, thisIsADiff )
+d90 1
+a90 1
+      DiffName = trim(name1) // ' (diff)'
+d96 2
+d234 3
+@
+
+
+2.20
+log
+@parts commom to unfiltered and filtered diffs moved to donewithdiff.f9h
+@
+text
+@d12 1
+a12 1
+! $Id: unfiltereddiff.f9h,v 2.19 2016/10/05 20:13:39 pwagner Exp $
+d195 2
+d233 3
+@
+
+
+2.19
+log
+@Implemented Au (Gold) option
+@
+text
+@d12 1
+a12 1
+! $Id: unfiltereddiff.f9h,v 2.18 2016/07/28 01:42:27 vsnyder Exp $
+d29 1
+d36 1
+d95 1
+d195 1
+a195 1
+    if ( dopts(RMS)%v .or. dopts(myRatios)%v ) then
+d228 1
+a228 225
+    subroutine doneWithDiff
+      ! Internal variables
+      character(len=12), dimension(7) :: formats
+      character(len=16) :: originalSDFormat
+      !
+      originalSDFormat = outputOptions%sdFormatDefault
+      outputOptions%sdFormatDefault = rmsFormat
+      thisIsADiff = .false.   ! Reset
+      if ( .not. PRINTMINMAXWITHRMS ) return
+      originalSDFormat = outputOptions%sdFormatDefault
+      outputOptions%sdFormatDefault = rmsFormat
+      if ( DEBUG ) call outputNamedValue( 'maxarr(1-2)', maxval(array1-array2))
+      if ( SHORTCUTDIFFS .and. &
+        & (numEqual == numTot .or. stddev == real(0., kind(stddev))) ) then
+        exvalues = real(0., kind(stddev))
+        exratios = real(0., kind(stddev))
+        minratio = real(0., kind(stddev))
+        maxratio = real(0., kind(stddev))
+        meanratio = real(0., kind(stddev))
+        rmsratio = real(0., kind(stddev))
+        medianratio = real(0., kind(stddev))
+      else
+        call ratios( array1, array2, exvalues, exratios, &
+          & minratio, maxratio, meanratio, stddevratio, rmsratio, medianratio, &
+          & op='-' )
+        call allstats( array2-array1, min=minvalue, max=maxvalue, mean=meanvalue, &
+          & rms=rmsvalue, median=medianvalue )
+        ! call outputNamedValue( 'min(diff)', minval(array2-array1) )
+        ! call outputNamedValue( 'max(diff)', maxval(array2-array1) )
+      end if
+      if ( dopts(AuBrick)%v ) then
+        if ( .not. nameHasBeenPrinted ) then
+          if ( len_trim(DiffName) > 0 ) call output( trim(DiffName), advance='yes' )
+          nameHasBeenPrinted = .true.
+        end if
+        nameHasBeenPrinted = .false.
+        
+        call output( ' ** Reference values (min : max, rms): ', advance='no' )
+        call output( refmin, advance='no' )
+        call output( ' : ', advance='no' )
+        call output( refmax, advance='no' )
+        call output( ' , ', advance='no' )
+        call output( refrms, advance='no' )
+        call output( ' **', advance='no' )
+        call newLine
+        
+        call output( ' ** Max. absolute: ', advance='no' )
+        call output( exvalues(1), advance='no' )
+        call output( ' ( =  ', advance='no' )
+        call output( exratios(1), advance='no' )
+        call output( ' fractional ) ** ', advance='no' )
+        call newLine
+        
+        call output( ' ** Max. fractional: ', advance='no' )
+        call output( exratios(2), advance='no' )
+        call output( ' ( =  ', advance='no' )
+        call output( exvalues(2), advance='no' )
+        call output( ' absolute ) ** ', advance='no' )
+        call newLine
+      end if
+      if ( dopts(myRatios)%v ) then
+        if ( .not. nameHasBeenPrinted ) then
+          if ( len_trim(DiffName) > 0 ) call output( trim(DiffName), advance='yes' )
+          nameHasBeenPrinted = .true.
+        end if
+        call output( 'Maximum difference: ', advance='no' )
+        call output( exvalues(1), advance='no' )
+        call output( '  ( as ratio:  ', advance='no' )
+        call output( exratios(1), advance='no' )
+        call output( ' )', advance='no' )
+        call finishLine
+        call output( 'Maximum ratio: ', advance='no' )
+        call output( exratios(2), advance='no' )
+        call output( '  ( as difference:  ', advance='no' )
+        call output( exvalues(2), advance='no' )
+        call output( ' )', advance='no' )
+        call finishLine
+        nameHasBeenPrinted = .false.
+        call printRMSetc( 'ratio', minratio, maxratio, rmsratio, meanratio )
+      end if
+      if ( dopts(RMS)%v ) then
+        if ( .not. nameHasBeenPrinted ) then
+          if ( len_trim(DiffName) > 0 ) call output( trim(DiffName), advance='yes' )
+          nameHasBeenPrinted = .true.
+        end if
+        nameHasBeenPrinted = .false.
+        call printRMSetc( 'value', minvalue, maxvalue, rmsvalue, meanvalue )
+      end if
+      if ( dopts(table)%v ) then
+        if ( .not. nameHasBeenPrinted ) then
+          if ( len_trim(DiffName) > 0 ) call output( trim(DiffName), advance='yes' )
+          nameHasBeenPrinted = .true.
+        end if
+        call output( '% of arrays nearer than', advance='yes' )
+        theTable(:,1) = gaps
+        theTable(:,2) = pcts
+        theTable(:,3) = gapratios
+        theTable(:,4) = pctratios
+        formats(1:3:2) = rmsFormat
+        formats(2:4:2) = myPCTFormat ! '(0pf6.1)'
+        call dumpTable ( theTable(:,1:4), &
+          & (/ 'abs diff', &
+          &    '%       ', &
+          &    'as ratio', &
+          &    '%       ' /), &
+          & headside=dumpTableSide, formats=formats(1:4) )
+        call output( 'By keeping the closest % of arrays', advance='yes' )
+        theTable(:,1) = pctAges
+      if ( SHORTCUTDIFFS .and. &
+        & (numEqual == numTot .or. stddev == real(0., kind(stddev))) ) then
+          theTable(:,2:7) = real(0., kind(stddev))
+        else
+          theTable(:,2) = pctMaxGaps
+          theTable(:,3) = pctMaxGapAsRatios
+          theTable(:,4) = pctMeanGaps
+          theTable(:,5) = pctMaxRatios
+          theTable(:,6) = pctMaxRatioAsGaps
+          theTable(:,7) = pctMeanRatios
+        end if
+        formats(2:7) = rmsFormat
+        formats(1) = myPCTFormat ! '(0pf6.1)'
+        if ( .not. nameHasBeenPrinted ) then
+          if ( len_trim(DiffName) > 0 ) call output( trim(DiffName), advance='yes' )
+          nameHasBeenPrinted = .true.
+        end if
+        call dumpTable ( theTable, &
+          & (/ '%          ', &
+          &    'max diffs  ', &
+          &    '(as ratio) ', &
+          &    'mean diffs ', &
+          &    'max ratios ', &
+          &    '(as abs)   ', &
+          &    'mean ratios' /), &
+          & headside=dumpTableSide, formats=formats )
+      end if
+      if ( dopts(stats)%v ) then
+        if ( .not. nameHasBeenPrinted ) then
+          if ( len_trim(DiffName) > 0 ) call output( trim(DiffName), advance='yes' )
+          nameHasBeenPrinted = .true.
+        end if
+        ! Now to show how near the two arrays are
+        call output( '% of arrays equal ', advance='no' )
+        call output( pctEqual, format = myPCTFormat, advance='no' )
+        call output( '  (number of elements ', advance='no' )
+        call output( numEqual, advance='no' )
+        call output( ')', advance='no' )
+        call finishLine
+        call output( '% of arrays diff  ', advance='no' )
+        call output( pctDiff, format = myPCTFormat, advance='no' )
+        call output( '  (number of elements ', advance='no' )
+        call output( numTot - numEqual, advance='no' )
+        call output( ')', advance='no' )
+        call finishLine
+      end if
+      outputOptions%sdFormatDefault = originalSDFormat
+
+    end subroutine doneWithDiff
+
+    subroutine fillPcts
+      ! Executable
+      numTot = max( 1, product(shape(array1)) )
+      numEqual = count( array1 == array2 )
+      pctEqual = (100.*numEqual)/numTot
+      pctDiff = 100. - pctEqual
+      stddev = mlsstddev( array1-array2 )
+      gaps = PCTFACTORS*stddev
+      call hownear( array1, array2, pcts, gaps=gaps )
+      if ( DEBUG ) then
+        call outputNamedValue( 'maxarr(1-2)', maxval(array1-array2))
+        call outputNamedValue( 'stddev', stddev)
+        call outputNamedValue( 'gaps(1)', gaps(1))
+      end if
+      call ratios( array1, array2, exvalues, exratios, &
+        & stddevratio=stddevratio, op='-' )
+      gapratios = pctFactors*stddevratio
+      call hownear( array1, array2, pctratios, gapratios=gapratios )
+    end subroutine fillPcts
+
+    subroutine usePcts
+      ! Internal variables
+      integer :: i
+      real(rk) :: absdiff
+      ! Executable
+      do i=1, MAXPCTS
+        call reset(gapstat(i))
+        call reset(gapratiostat(i))
+      end do
+      call howfar( array1, array2, pctages, &
+        & gaps=gapstat, mode='abs', array1AtN=array1AtNAbs, &
+        & array2AtN=array2AtNAbs )
+      call howfar( array1, array2, pctages, &
+        & gaps=gapRatiostat, mode='rel', array1AtN=array1AtNRel, &
+        & array2AtN=array2AtNRel )
+      if ( DEBUG ) then
+        call outputNamedValue( 'maxarrpcts(1-2)', maxval(array1-array2))
+        call outputNamedValue( 'pctMaxGaps(1)', pctMaxGaps(1))
+        call outputNamedValue( 'pctMaxRatios(1)', pctMaxRatios(1))
+      end if
+      pctMaxGaps = gapStat%max
+      pctMeanGaps = gapStat%mean
+      pctMaxRatios = gapRatioStat%max
+      pctMeanRatios = gapRatioStat%mean
+      do i=1, MAXPCTS
+        pctMaxGapAsRatios(i) = 0.
+        absdiff = abs( array1AtNAbs(1, i) - array2AtNAbs(1, i) )
+        if ( absdiff > real(0.,rk) ) pctMaxGapAsRatios(i) = &
+          &  absdiff / max( abs(array1AtNAbs(1, i)), abs(array2AtNAbs(1, i)) )
+        pctMaxRatioAsGaps(i) = abs( array1AtNRel(1, i) - array2AtNRel(1, i) )
+      end do
+    end subroutine usePcts
+
+  subroutine SayTime ( What, startTime )
+    character(len=*), intent(in) :: What
+    real, intent(in), optional :: startTime
+    real :: myt1
+    if ( present(startTime) ) then
+      myt1 = startTime
+    else
+      myt1 = t1
+    end if
+    call time_now ( t2 )
+    call output ( "Timing for " // what // " = " , advance='no' )
+    call output ( dble(t2 - myt1), advance = 'yes' )
+  end subroutine SayTime
+
+d231 3
+@
+
+
+2.18
+log
+@Refactoring dump and diff
+@
+text
+@d12 1
+a12 1
+! $Id: unfiltereddiff.f9h,v 2.17 2016/03/23 00:22:48 pwagner Exp $
+d26 10
+a35 10
+    integer, parameter :: MAXPCTS = 10
+    logical :: NaNsIn1, NaNsIn2
+    character(len=64) :: DiffName
+    real(rk), dimension(3, MAXPCTS):: array1AtNAbs
+    real(rk), dimension(3, MAXPCTS):: array2AtNAbs
+    real(rk), dimension(3, MAXPCTS):: array1AtNRel
+    real(rk), dimension(3, MAXPCTS):: array2AtNRel
+    real(rk), dimension(2)         :: exvalues
+    real(rk), dimension(2)         :: exratios
+    real(rk), dimension(MAXPCTS)   :: gaps
+d37 1
+a37 1
+    real(rk), dimension(MAXPCTS)   :: gapratios
+d39 29
+a67 29
+    real(rk)                       :: minratio
+    real(rk)                       :: maxratio
+    real(rk)                       :: medianratio
+    real(rk)                       :: meanratio
+    real(rk)                       :: minvalue
+    real(rk)                       :: maxvalue
+    real(rk)                       :: medianvalue
+    real(rk)                       :: meanvalue
+    real(rk)                       :: rmsvalue
+    integer                        :: numTot
+    integer                        :: numEqual
+    real(rk)                       :: pctDiff
+    real(rk)                       :: pctEqual
+    real(rk), dimension(MAXPCTS)   :: pcts
+    real(rk), dimension(MAXPCTS)   :: pctratios
+    real(rk), dimension(MAXPCTS)   :: pctMaxGaps
+    real(rk), dimension(MAXPCTS)   :: pctMaxGapAsRatios
+    real(rk), dimension(MAXPCTS)   :: pctMeanGaps
+    real(rk), dimension(MAXPCTS)   :: pctMaxRatios
+    real(rk), dimension(MAXPCTS)   :: pctMaxRatioAsGaps
+    real(rk), dimension(MAXPCTS)   :: pctMeanRatios
+    real(rk)                       :: rmsratio
+    real(rk)                       :: stddev
+    real(rk)                       :: stddevratio
+    real(rk) :: refmin, refmax, refrms
+    real                           :: sTime
+    real                           :: t1
+    real                           :: t2
+    real(rk), dimension(MAXPCTS,7) :: TheTable
+d71 2
+a72 2
+    logical, parameter               :: DEBUG = .false.
+    real(rk), dimension(MAXPCTS), parameter :: PCTAges = &
+d74 1
+a74 1
+    real, dimension(MAXPCTS), parameter :: PCTFactors = &
+d76 1
+a76 1
+    logical, parameter :: unique = .true. 
+d100 1
+d255 30
+d452 3
+@
+
+
+2.17
+log
+@Diff now able to print name on each line
+@
+text
+@d12 1
+a12 1
+! $Id: unfiltereddiff.f9h,v 2.16 2013/01/10 00:17:31 pwagner Exp $
+d67 4
+a70 4
+    real(rk), dimension(MAXPCTS,7) :: table
+    logical, parameter                       :: PRINTREFERENCEVALUES = .false.
+    logical, parameter                       :: PRINTMINMAXWITHRMS = .true.
+    logical, parameter                       :: PRINTEXTRADUMP = .false.
+d72 1
+a72 1
+    real(rk), dimension(MAXPCTS), parameter :: PCTAGES = &
+d74 1
+a74 1
+    real, dimension(MAXPCTS), parameter :: PCTFACTORS = &
+d82 3
+a84 42
+    nameHasBeenPrinted = .false.
+    myPCTFormat  = DEFAULTPCTFORMAT
+    if ( PCTFORMAT /= '*' ) myPCTFormat = PCTFORMAT
+    myBandwidth  = theDefault('bandwidth') ! .false.
+    myClean      = theDefault('clean') ! .false.
+    myCollapse   = theDefault('collapse') ! .false.
+    myGaps       = theDefault('gaps')
+    myLaconic    = theDefault('laconic')
+    myNaNs       = theDefault('nans')   ! .false.
+    myRatios     = theDefault('ratios')   ! .false.
+    myRMS        = theDefault('rms')   ! .false.
+    myShape      = theDefault('shape')  ! .false.
+    myStats      = theDefault('stat')  ! .false.
+    myTable      = theDefault('table')  ! .false.
+    myTranspose  = theDefault('transpose')  ! .false.
+    myTrim       = theDefault('trim')  ! .false.
+    myUnique     = theDefault('unique')
+    myWholeArray = theDefault('wholearray')
+    if ( present(options) ) then
+      myBandwidth   =   index( options, dopt_bandwidth  ) > 0
+      myClean       =   index( options, dopt_clean      ) > 0
+      myCollapse    =   index( options, dopt_collapse   ) > 0
+      myCyclic      =   index( options, dopt_cyclic     ) > 0
+      myGaps        =   index( options, dopt_gaps       ) > 0
+      myLaconic     =   index( options, dopt_laconic    ) > 0
+      myNaNs        =   index( options, dopt_NaNs       ) > 0
+      myRatios      =   index( options, dopt_ratios     ) > 0
+      myRMS         =   index( options, dopt_rms        ) > 0
+      myShape       =   index( options, dopt_shape      ) > 0
+      myStats       =   index( options, dopt_stats      ) > 0
+      myTable       =   index( options, dopt_table      ) > 0
+      myTranspose   =   index( options, dopt_transpose  ) > 0
+      myTrim        =   index( options, dopt_trim       ) > 0
+      myUnique      =   index( options, dopt_unique     ) > 0
+      myWholeArray  = ( index( options, dopt_wholearray ) > 0 )
+    endif
+    myWholeArray = myWholeArray .or. &
+      & .not. (myBandwidth.or. myCollapse .or. myRatios .or. myRMS .or. myShape .or. myStats &
+      & .or. myTable .or. myNaNs)
+    onlyWholeArray = myWholeArray .and. &
+      & .not. (myBandwidth.or. myCollapse .or. myRatios .or. myRMS .or. myShape .or. myStats &
+      & .or. myTable .or. myNaNs)
+d88 1
+a88 1
+    elseif ( len_trim(name2) < 1 ) then
+d92 1
+a92 1
+    endif
+d96 7
+a102 7
+      call outputNamedValue( 'myStats', myStats )
+      call outputNamedValue( 'myRatios', myRatios)
+      call outputNamedValue( 'myRMS', myRMS)
+      call outputNamedValue( 'myTable', myTable )
+      call outputNamedValue( 'myWholeArray', myWholeArray )
+    endif
+    if ( myWholeArray ) then
+d107 2
+a108 2
+    endif
+    
+d110 1
+a110 1
+    if ( NaNsIn1 .and. myDirect ) then
+d116 1
+a116 1
+      endif
+d118 1
+a118 1
+    endif
+d126 1
+a126 1
+        endif
+d128 1
+a128 1
+      endif
+d134 2
+a135 2
+      endif
+      if ( myNaNs ) then
+d140 1
+a140 1
+        endif
+d145 3
+a147 3
+        endif
+      endif
+    endif
+d150 1
+a150 1
+    if ( NaNsIn1 .and. myDirect ) then
+d154 1
+a154 1
+    endif
+d162 1
+a162 1
+        endif
+d164 1
+a164 1
+      endif
+d170 2
+a171 2
+      endif
+      if ( myNaNs ) then
+d176 1
+a176 1
+        endif
+d181 3
+a183 3
+        endif
+      endif
+    endif
+d190 2
+a191 2
+    endif
+    if ( myRMS .or. myRatios ) then
+d198 1
+a198 1
+    endif
+d209 1
+a209 1
+    endif
+d253 2
+a254 2
+      endif
+      if ( myRatios ) then
+d258 1
+a258 1
+        endif
+d273 2
+a274 2
+      endif
+      if ( myRMS ) then
+d278 1
+a278 1
+        endif
+d281 2
+a282 2
+      endif
+      if ( myTABLE ) then
+d286 1
+a286 1
+        endif
+d288 4
+a291 4
+        table(:,1) = gaps
+        table(:,2) = pcts
+        table(:,3) = gapratios
+        table(:,4) = pctratios
+d294 1
+a294 1
+        call dumpTable ( table(:,1:4), &
+d301 1
+a301 1
+        table(:,1) = pctAges
+d304 1
+a304 1
+          table(:,2:7) = real(0., kind(stddev))
+d306 7
+a312 7
+          table(:,2) = pctMaxGaps
+          table(:,3) = pctMaxGapAsRatios
+          table(:,4) = pctMeanGaps
+          table(:,5) = pctMaxRatios
+          table(:,6) = pctMaxRatioAsGaps
+          table(:,7) = pctMeanRatios
+        endif
+d318 2
+a319 2
+        endif
+        call dumpTable ( table, &
+d328 2
+a329 2
+      endif
+      if ( myStats ) then
+d333 1
+a333 1
+        endif
+d347 1
+a347 1
+      endif
+d349 1
+a349 1
+      
+d365 1
+a365 1
+      endif
+d380 1
+a380 1
+      enddo
+d391 1
+a391 1
+      endif
+d402 1
+a402 1
+      enddo
+d413 1
+a413 1
+    endif
+d421 3
+@
+
+
+2.16
+log
+@Dumps with -N just show where NaNs are
+@
+text
+@d12 1
+a12 1
+! $Id: unfiltereddiff.f9h,v 2.15 2012/09/11 21:11:25 pwagner Exp $
+d302 2
+a303 1
+        call output( ' )', advance='yes' )
+d308 2
+a309 1
+        call output( ' )', advance='yes' )
+d378 2
+a379 1
+        call output( ')', advance='yes' )
+d384 2
+a385 1
+        call output( ')', advance='yes' )
+d460 3
+@
+
+
+2.15
+log
+@Requires 'N' option to show where NaNs, Infs are located
+@
+text
+@d12 1
+a12 1
+! $Id: unfiltereddiff.f9h,v 2.14 2012/06/22 20:26:49 pwagner Exp $
+d120 1
+a120 1
+      & .or. myTable)
+d123 1
+a123 1
+      & .or. myTable)
+d456 3
+@
+
+
+2.14
+log
+@Specify advance arg because we may now set default to 'yes'
+@
+text
+@d12 1
+a12 1
+! $Id: unfiltereddiff.f9h,v 2.13 2012/01/09 22:25:33 pwagner Exp $
+d90 1
+d107 1
+d125 3
+a127 1
+    if ( len_trim(name2) < 1 ) then
+d150 6
+a155 2
+      call output( &
+        & '*** skipping: non finite values found in ' // trim(name1), advance='yes')
+d160 6
+a165 2
+        call output( &
+          & '*** skipping: no finite values found in ' // trim(name1), advance='yes')
+d168 17
+a184 11
+      call output( &
+        & '*** non-finite values found in ' // trim(name1), advance='yes')
+      call WhereAreTheInfs ( array1, which, how_many )
+      if ( how_many > 0 ) then
+        call outputNamedValue( 'num(Infs)', how_many )
+        if ( how_many < 50 ) call outputNamedValue( 'which', which(1:how_many) )
+      endif
+      call WhereAreTheNaNs ( array1, which, how_many )
+      if ( how_many > 0 ) then
+        call outputNamedValue( 'num(NaNs)', how_many )
+        if ( how_many < 50 ) call outputNamedValue( 'which', which(1:how_many) )
+d191 1
+a191 1
+        & '*** skipping: non finite values found in ' // trim(name2), advance='yes')
+d196 6
+a201 2
+        call output( &
+          & '*** skipping: no finite values found in ' // trim(name2), advance='yes')
+d204 17
+a220 11
+      call output( &
+        & '*** non-finite values found in ' // trim(name2), advance='yes')
+      call WhereAreTheInfs ( array2, which, how_many )
+      if ( how_many > 0 ) then
+        call outputNamedValue( 'num(Infs)', how_many )
+        if ( how_many < 50 ) call outputNamedValue( 'which', which(1:how_many) )
+      endif
+      call WhereAreTheNaNs ( array2, which, how_many )
+      if ( how_many > 0 ) then
+        call outputNamedValue( 'num(NaNs)', how_many )
+        if ( how_many < 50 ) call outputNamedValue( 'which', which(1:how_many) )
+d295 1
+a295 1
+          call output( trim(DiffName), advance='yes' )
+d313 1
+a313 1
+          call output( trim(DiffName), advance='yes' )
+d321 1
+a321 1
+          call output( trim(DiffName), advance='yes' )
+d353 1
+a353 1
+          call output( trim(DiffName), advance='yes' )
+d368 1
+a368 1
+          call output( trim(DiffName), advance='yes' )
+d456 3
+@
+
+
+2.13
+log
+@Distinguish 'r' option to print rms of ratios and 'R' option for rms of values
+@
+text
+@d12 1
+a12 1
+! $Id: unfiltereddiff.f9h,v 2.12 2011/12/07 01:13:38 pwagner Exp $
+d422 1
+a422 1
+    call output ( "Timing for " // what // " = " )
+d428 3
+@
+
+
+2.12
+log
+@Added option to show bandwidth of banded arrays
+@
+text
+@d12 1
+a12 1
+! $Id: unfiltereddiff.f9h,v 2.11 2011/07/26 20:52:19 pwagner Exp $
+d43 7
+a49 2
+    integer                                  :: numTot
+    integer                                  :: numEqual
+d90 1
+d106 1
+d117 1
+a117 1
+      & .not. (myBandwidth.or. myCollapse .or. myRMS .or. myShape .or. myStats &
+d120 1
+a120 1
+      & .not. (myBandwidth.or. myCollapse .or. myRMS .or. myShape .or. myStats &
+d132 2
+a133 1
+      call outputNamedValue( 'myRMs', myRMS)
+d202 1
+a202 1
+    if ( myRMS ) then
+d260 4
+d265 1
+a265 1
+      if ( myRMS ) then
+d280 1
+d283 8
+d428 3
+@
+
+
+2.11
+log
+@Clearer, less redundant
+@
+text
+@d12 1
+a12 1
+! $Id: unfiltereddiff.f9h,v 2.10 2011/02/05 01:00:01 pwagner Exp $
+d80 1
+d92 1
+a92 2
+    myWholeArray = theDefault('wholearray') .or. &
+        & .not. (myStats .or. myRMS.or. myTable .or. myShape )
+d94 1
+d97 1
+d107 1
+a107 2
+      myWholeArray  = ( index( options, dopt_wholearray ) > 0 ) .or. &
+        & .not. (myCollapse .or. myStats .or. myRMS.or. myTable .or. myShape )
+d109 3
+d113 2
+a114 1
+      & .not. (myRMS .or. myStats .or. myTable)
+d254 4
+d271 4
+d303 4
+d318 4
+d407 3
+@
+
+
+2.10
+log
+@Consistent with new dopt_ dump options
+@
+text
+@d12 1
+a12 1
+! $Id: unfiltereddiff.f9h,v 2.9 2010/02/04 23:04:29 vsnyder Exp $
+d65 1
+a65 2
+    logical, parameter                       :: USEDUMPTABLE = .true.
+    ! character(len=*), parameter      :: HEADSIDE = 'top'
+d213 1
+a213 1
+    call dump(array1-array2, trim(DiffName), &
+d386 3
+@
+
+
+2.9
+log
+@Use kind=rk instead of double precision
+@
+text
+@d12 1
+a12 1
+! $Id: unfiltereddiff.f9h,v 2.8 2009/11/20 01:16:17 pwagner Exp $
+d82 1
+a82 1
+    myDirect     = theDefault('direct') ! .false.
+d84 1
+d86 1
+d93 1
+a93 1
+        & .not. (myStats .or. myRMS.or. myTable)
+d95 13
+a107 11
+      myClean       = index( options, 'c' ) > 0
+      myDirect      = index( options, 'd' ) > 0
+      myGaps        = index( options, 'g' ) > 0
+      myRMS         = index( options, 'r' ) > 0
+      myStats       = index( options, 's' ) > 0
+      myTable       = index( options, 'b' ) > 0
+      myTranspose   = index( options, 'p' ) > 0
+      myTrim        = index( options, 't' ) > 0
+      myUnique      = index( options, 'u' ) > 0
+      myWholeArray  = ( index( options, 'w' ) > 0 ) .or. &
+        & .not. (myStats .or. myRMS.or. myTable)
+d387 3
+@
+
+
+2.8
+log
+@More protection against running out of memory diffing DACS datasets
+@
+text
+@d12 1
+a12 1
+! $Id: unfiltereddiff.f9h,v 2.7 2009/10/30 23:02:19 pwagner Exp $
+d14 1
+a14 1
+!   subroutine DIFF_1D_DOUBLE ( ARRAY1, NAME1, ARRAY2, NAME2, &
+d16 2
+a17 1
+!     double precision, intent(in) :: ARRAY1(:)
+d19 1
+a19 1
+!     double precision, intent(in) :: ARRAY2(:)
+a25 2
+!     double precision, dimension(size(array1)) :: array1
+!     double precision, dimension(size(array2)) :: array2
+d29 7
+a35 7
+    real(kind(array1)), dimension(3, MAXPCTS):: array1AtNAbs
+    real(kind(array1)), dimension(3, MAXPCTS):: array2AtNAbs
+    real(kind(array1)), dimension(3, MAXPCTS):: array1AtNRel
+    real(kind(array1)), dimension(3, MAXPCTS):: array2AtNRel
+    real(kind(array1)), dimension(2)         :: exvalues
+    real(kind(array1)), dimension(2)         :: exratios
+    real(kind(array1)), dimension(MAXPCTS)   :: gaps
+d37 1
+a37 1
+    real(kind(array1)), dimension(MAXPCTS)   :: gapratios
+d39 4
+a42 4
+    real(kind(array1))                       :: minratio
+    real(kind(array1))                       :: maxratio
+    real(kind(array1))                       :: medianratio
+    real(kind(array1))                       :: meanratio
+d45 18
+a62 17
+    real(kind(array1))                       :: pctDiff
+    real(kind(array1))                       :: pctEqual
+    real(kind(array1)), dimension(MAXPCTS)   :: pcts
+    real(kind(array1)), dimension(MAXPCTS)   :: pctratios
+    real(kind(array1)), dimension(MAXPCTS)   :: pctMaxGaps
+    real(kind(array1)), dimension(MAXPCTS)   :: pctMaxGapAsRatios
+    real(kind(array1)), dimension(MAXPCTS)   :: pctMeanGaps
+    real(kind(array1)), dimension(MAXPCTS)   :: pctMaxRatios
+    real(kind(array1)), dimension(MAXPCTS)   :: pctMaxRatioAsGaps
+    real(kind(array1)), dimension(MAXPCTS)   :: pctMeanRatios
+    real(kind(array1))                       :: rmsratio
+    real(kind(array1))                       :: stddev
+    real(kind(array1))                       :: stddevratio
+    real                                     :: sTime
+    real                                     :: t1
+    real                                     :: t2
+    real(kind(array1)), dimension(MAXPCTS,7) :: table
+d68 1
+a68 1
+    real(kind(array1)), dimension(MAXPCTS), parameter :: PCTAGES = &
+d123 1
+a123 1
+      & real(0.,kind(array1)), WIDTH, FORMAT, &
+d199 1
+a199 1
+        & real(0.,kind(array1)), WIDTH, FORMAT, &
+d211 1
+a211 1
+      & real(0.,kind(array1)), WIDTH, FORMAT, &
+d337 1
+a337 1
+      real(kind(array1)) :: absdiff
+d361 1
+a361 1
+        if ( absdiff > real(0.,kind(array1)) ) pctMaxGapAsRatios(i) = &
+d383 3
+@
+
+
+2.7
+log
+@Should not double-print name if only whole array diff
+@
+text
+@d12 1
+a12 1
+! $Id: unfiltereddiff.f9h,v 2.6 2009/10/19 17:32:51 pwagner Exp $
+d72 1
+a72 1
+    logical, parameter :: unique = .false. 
+d115 1
+d196 9
+a204 1
+    call fillPcts
+d383 3
+@
+
+
+2.6
+log
+@Trying to prevent double-printing of name
+@
+text
+@d12 1
+a12 1
+! $Id: unfiltereddiff.f9h,v 2.5 2009/10/13 00:05:03 pwagner Exp $
+d105 2
+d374 3
+@
+
+
+2.5
+log
+@Should print rms figures only when requested to
+@
+text
+@d12 1
+a12 1
+! $Id: unfiltereddiff.f9h,v 2.4 2009/09/10 20:59:12 pwagner Exp $
+d78 1
+d206 1
+d372 3
+@
+
+
+2.4
+log
+@3 ways to summarize diffs: 'b' (table), 'r' (rms), 's' (number of differences)
+@
+text
+@d12 1
+a12 1
+! $Id: unfiltereddiff.f9h,v 2.3 2009/08/17 18:05:14 pwagner Exp $
+d232 13
+a244 11
+      call output( 'Maximum difference: ', advance='no' )
+      call output( exvalues(1), advance='no' )
+      call output( '  ( as ratio:  ', advance='no' )
+      call output( exratios(1), advance='no' )
+      call output( ' )', advance='yes' )
+      call output( 'Maximum ratio: ', advance='no' )
+      call output( exratios(2), advance='no' )
+      call output( '  ( as difference:  ', advance='no' )
+      call output( exvalues(2), advance='no' )
+      call output( ' )', advance='yes' )
+      call printRMSetc( 'ratio', minratio, maxratio, rmsratio, meanratio )
+d370 3
+@
+
+
+2.3
+log
+@direct option skips diffing if non-finite values found
+@
+text
+@d12 1
+a12 1
+! $Id: unfiltereddiff.f9h,v 2.2 2009/06/16 17:12:55 pwagner Exp $
+a28 2
+    ! This is terrible: don't use lengths of optional args
+    ! character(len(name1) + len(name2) + 8) :: DiffName
+d34 32
+a65 19
+    real(kind(array1)), dimension(2)      :: exvalues
+    real(kind(array1)), dimension(2)      :: exratios
+    real(kind(array1)), dimension(MAXPCTS):: gaps
+    type(Stat_T), dimension(MAXPCTS)      :: gapStat
+    real(kind(array1)), dimension(MAXPCTS):: gapratios
+    type(Stat_T), dimension(MAXPCTS)      :: gapRatioStat
+    real(kind(array1))                    :: minratio
+    real(kind(array1))                    :: maxratio
+    real(kind(array1))               :: medianratio
+    real(kind(array1))               :: meanratio
+    real(kind(array1))               :: rmsratio
+    real(kind(array1))               :: stddev
+    real(kind(array1))               :: stddevratio
+    real                             :: sTime
+    real                             :: t1
+    real                             :: t2
+    logical, parameter               :: PRINTREFERENCEVALUES = .false.
+    logical, parameter               :: PRINTMINMAXWITHRMS = .true.
+    logical, parameter               :: USEDUMPTABLE = .true.
+a71 9
+    real(kind(array1)), dimension(MAXPCTS) :: pcts
+    real(kind(array1)), dimension(MAXPCTS) :: pctratios
+    real(kind(array1)), dimension(MAXPCTS) :: pctMaxGaps
+    real(kind(array1)), dimension(MAXPCTS) :: pctMaxGapAsRatios
+    real(kind(array1)), dimension(MAXPCTS) :: pctMeanGaps
+    real(kind(array1)), dimension(MAXPCTS) :: pctMaxRatios
+    real(kind(array1)), dimension(MAXPCTS) :: pctMaxRatioAsGaps
+    real(kind(array1)), dimension(MAXPCTS) :: pctMeanRatios
+    real(kind(array1)), dimension(MAXPCTS,7) :: table
+d78 2
+d85 1
+d90 1
+a90 1
+        & .not. (myStats .or. myRMS)
+d97 1
+d102 1
+a102 1
+        & .not. (myStats .or. myRMS)
+d113 2
+a114 1
+      call outputNamedValue( 'myRMS', myRMS )
+d176 1
+a176 1
+    call SayTime( 'Checking for NaNs and Infs', stime )
+d217 15
+a231 3
+      call ratios( array1, array2, exvalues, exratios, &
+        & minratio, maxratio, meanratio, stddevratio, rmsratio, medianratio, &
+        & op='-' )
+d243 1
+a243 1
+      if ( myStats .and. USEDUMPTABLE ) then
+d250 1
+a250 1
+        formats(2:4:2) = '(0pf6.1)'
+d259 11
+a269 6
+        table(:,2) = pctMaxGaps
+        table(:,3) = pctMaxGapAsRatios
+        table(:,4) = pctMeanGaps
+        table(:,5) = pctMaxRatios
+        table(:,6) = pctMaxRatioAsGaps
+        table(:,7) = pctMeanRatios
+d271 1
+a271 1
+        formats(1) = '(0pf6.1)'
+d281 2
+a282 1
+      elseif ( myStats ) then
+d284 10
+a293 20
+        call output( '% of arrays nearer than', advance='yes' )
+        call output( '(abs diff) ', advance='no' )
+        call output( gaps, advance='yes' )
+        call output( '%          ', advance='no' )
+        call output( pcts, advance='yes' )
+        call output( '(ratio diff) ', advance='no' )
+        call output( gapratios, advance='yes' )
+        call output( '%            ', advance='no' )
+        call output( pctratios, advance='yes' )
+        call output( 'By keeping the closest % of arrays', advance='yes' )
+        call output( '%          ', advance='no' )
+        call output( pctAges, FORMAT='(0pf8.1)', advance='yes' )
+        call output( '(max diffs) ', advance='no' )
+        call output( pctMaxGaps, advance='yes' )
+        call output( '(mean diffs) ', advance='no' )
+        call output( pctMeanGaps, advance='yes' )
+        call output( '(max ratios) ', advance='no' )
+        call output( pctMaxRatios, advance='yes' )
+        call output( '(mean ratios) ', advance='no' )
+        call output( pctMeanRatios, advance='yes' )
+d300 5
+d308 5
+d334 5
+d368 3
+@
+
+
+2.2
+log
+@Changed api for dump, diff routines; now rely on options for most optional behavior
+@
+text
+@d12 1
+a12 1
+! $Id: unfiltereddiff.f9h,v 2.1 2008/11/24 19:38:08 pwagner Exp $
+d49 3
+d72 3
+d77 1
+d88 1
+d118 5
+d144 5
+d169 2
+d183 2
+d186 2
+d189 2
+d194 2
+d322 14
+d338 3
+@
+
+
+2.1
+log
+@First commit
+@
+text
+@d12 1
+a12 1
+! $Id: unfiltereddiff.f9h,v 2.16 2008/06/18 20:44:30 pwagner Exp $
+d15 1
+a15 1
+!     & CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS, LBOUND )
+a19 1
+!     logical, intent(in), optional :: CLEAN
+a21 3
+!     logical, intent(in), optional :: WHOLEARRAY
+!     logical, intent(in), optional :: STATS
+!     logical, intent(in), optional :: RMS
+d23 1
+d70 20
+a89 4
+    myStats = .false.
+    if ( present(stats) ) myStats = stats
+    myRMS = .false.
+    if ( present(RMS) ) myRMS = RMS
+a96 1
+    myWholeArray = .not. (myStats .or. myRMS)
+d104 2
+a105 2
+      & real(0.,kind(array1)), CLEAN, WIDTH, FORMAT, &
+      & WHOLEARRAY, STATS, RMS, unique, LBOUND )
+a107 1
+    if ( present(wholeArray) ) myWholeArray = wholeArray
+d166 2
+a167 2
+      & real(0.,kind(array1)), CLEAN, WIDTH, FORMAT, &
+      & WHOLEARRAY, STATS, RMS, unique, LBOUND )
+d296 3
+@
+

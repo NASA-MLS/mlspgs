@@ -1,0 +1,195 @@
+head	1.3;
+access;
+symbols
+	v5-02-NRT-19:1.3
+	v6-00:1.3
+	v5-02-NRT-18:1.3
+	v5-02:1.3
+	v5-01-NRT-17:1.3
+	v5-01-NRT-16:1.3
+	v5-01-NRT-15:1.3
+	v5-01-NRT-14:1.3
+	neuralnetworks-1-0:1.3.0.10
+	cfm-single-freq-0-1:1.3.0.8
+	v5-01:1.3
+	v5-00:1.3
+	v4-23-TA133:1.3.0.6
+	mus-emls-1-70:1.3.0.4
+	rel-1-0-englocks-work:1.3.0.2
+	VUMLS1-00:1.3
+	VPL1-00:1.3
+	V4-22-NRT-08:1.3
+	VAM1-00:1.2
+	V4-21:1.2.0.4
+	V4-13:1.2
+	V4-12:1.2
+	V4-11:1.2
+	V4-10:1.2
+	V3-43:1.2
+	M4-00:1.2
+	V3-41:1.2
+	V3-40-PlusGM57:1.2.0.2
+	V2-24-NRT-04:1.1
+	V3-33:1.2
+	V2-24:1.1
+	V3-31:1.2
+	V3-30-NRT-05:1.2
+	cfm-01-00:1.2
+	V3-30:1.2
+	V3-20:1.2
+	V3-10:1.2
+	V2-23-NRT-02:1.1
+	V2-23:1.1
+	V2-22-NRT-01:1.1
+	V2-22:1.1
+	V2-21:1.1
+	V2-20:1.1
+	V2-11:1.1
+	V2-10:1.1
+	V2-00:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.3
+date	2016.01.13.00.47.22;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2008.01.07.21.40.10;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.08.05.20.31.22;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@May optionally stutter instead of interpolate
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id: BridgeMissingValues.f9h,v 1.2 2008/01/07 21:40:10 pwagner Exp $
+!  subroutine BridgeMissingValues_1dr4(values, MissingValue)
+!     The basic idea is to bridge missing data by interpolating across the
+!     chasm
+!     There will be some cases where that won't work, e.g. longitudes
+!     so we allow the option DONTINTERPOLATE
+!     If set, we just stutter the last non-Fill value
+!     ! Args
+!     real(r4), dimension(:), intent(inout) :: values
+!     real(r4), intent(in), optional        :: missingValue
+!     ! Internal variables
+!     real(r4) :: dx
+!     real(r4) :: myMissingValue
+!     real(r4) :: x1
+!     real(r4) :: x2
+    logical :: bridging
+    integer :: i
+    integer :: i1
+    integer :: i2
+    integer :: ib
+    ! Executable
+    myMissingValue = undefinedValue
+    if ( present(MissingValue) ) myMissingValue = missingValue
+    if ( .not. any(IsFillValue(values, myMissingValue) ) ) return
+    x1 = myMissingValue
+    i1 = 0
+    if ( DONTINTERPOLATE .and. IsFillValue(values(1)) ) then
+      ! If the first value is a Fill, we can't choose the previous value, 
+      ! because there isn't one
+      ! So we'll choose the next non-Fill
+      i1 = FindFirst( .not. IsFillValue(values) )
+      if ( i1 > 0 ) x1 = values(i1)
+    endif
+    bridging = .false.
+    do i=1, size(values)
+      if ( DONTINTERPOLATE ) then
+        if ( IsFillValue(values(i)) ) then
+          if ( i == 1 ) then
+            values(i) = x1
+          else
+            values(i) = values(i-1)
+          endif
+        endif
+      elseif ( bridging ) then
+        if ( IsFillValue(values(i)) ) cycle
+        i2 = i
+        x2 = values(i)
+        dx = (x2 - x1) /max(1, i2-i1)
+        do ib=i1+1, i2-1
+          values(ib) = x1 + (ib-i1)*dx
+        enddo
+        i1 = i2
+        x1 = x2
+        bridging = .false.
+      elseif ( IsFillValue(values(i)) ) then
+        bridging = .true.
+      else
+        i1 = i
+        x1 = values(i)
+      endif
+    enddo
+!  end subroutine BridgeMissingValues_1dr4
+
+! $Log: BridgeMissingValues.f9h,v $
+! Revision 1.2  2008/01/07 21:40:10  pwagner
+! Replace DEFAULTUNDEFINEDVALUE with user-settable undefinedValue
+!
+! Revision 1.1  2005/08/05 20:31:22  pwagner
+! First commit
+!
+@
+
+
+1.2
+log
+@Replace DEFAULTUNDEFINEDVALUE with user-settable undefinedValue
+@
+text
+@d12 1
+a12 1
+! $Id: BridgeMissingValues.f9h,v 1.1 2005/08/05 20:31:22 pwagner Exp $
+d14 5
+d38 7
+d47 9
+a55 1
+      if ( bridging ) then
+d76 3
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d12 1
+a12 1
+! $Id: ReplaceFillValues.f9h,v 1.1 2005/08/03 16:35:16 pwagner Exp $
+d28 1
+a28 1
+    myMissingValue = DEFAULTUNDEFINEDVALUE
+d55 4
+a58 1
+! $Log: ReplaceFillValues.f9h,v $
+@
+

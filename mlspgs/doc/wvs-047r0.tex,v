@@ -1,0 +1,182 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.14
+	cfm-single-freq-0-1:1.1.0.12
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.10
+	mus-emls-1-70:1.1.0.8
+	rel-1-0-englocks-work:1.1.0.6
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2008.06.11.20.14.53;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9.25in
+
+\newcommand{\docname}{\bf wvs-047}
+\newcommand{\docdate}{16 October 2006}
+
+\newcommand{\diff}[2]{\frac{\text{d}#1}{\text{d}#2}}
+
+\usepackage{longtable}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace*{-35pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill\\
+Subject: \>Revised metrics plan\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-20pt}
+
+\begin{enumerate}
+
+\item\label{one} Compute an initial coarse $\zeta$ grid as the union of
+the $\zeta$ grids for temperature, the tangent grid, and all species.
+
+\item\label{two} Interpolate {\tt phitan} from the {\tt ptan} grid to the
+initial coarse zeta grid to get an initial set of tangent $\phi$s.
+
+\item Use the {\tt two\_d\_hydrostatic} routine to compute a
+reference height array on the initial coarse $\zeta$ grid and the
+temperature $\phi$ basis.
+
+\item Repeat
+
+\begin{enumerate}
+
+\item Calculate the minimum height for each $\zeta$ and its corresponding
+$\phi$ using interpolation in the reference height array.  See {\tt
+wvs-046}.
+
+\item Repeat
+
+\begin{enumerate}
+
+\item Interpolate from the $\phi$ basis to the tangent $\phi$ in the
+reference height array to get the tangent height for each $\zeta$.
+
+\item Use the $\phi$ for the minimum height at each $\zeta$ as the
+revised tangent $\phi$ for that $\zeta$.
+
+\end{enumerate}
+
+until the tangent $\phi$s don't change much.  The first estimate may be
+good enough, in which case iteration and step (\ref{two}) won't be
+necessary.
+
+\item Calculate heights on the $\zeta$ grid along the line of sight for
+each pointing, and calculate $\phi$s for each $\zeta$ along the line of
+sight using those heights.
+
+\item Using the $\phi$s and heights along each line of sight, the
+height reference grid, and inverse interpolation, calculate $\zeta$s for
+temperature basis $\phi$s for each pointing.
+
+\item Augment the $\zeta$ grid using the newly-calculated $\zeta$s,
+taking care not to insert new $\zeta$s too close to ones calculated in
+step (\ref{one}) and replacing ones calculated in this step in a prior
+iteration.
+
+\item Use the {\tt two\_d\_hydrostatic} routine to compute a reference
+height array on the augmented $\zeta$ grid and the temperature $\phi$
+basis.
+
+\end{enumerate}
+
+until no new zetas are inserted and revised zetas are close to previously
+inserted ones.  The first revision may be good enough.
+
+\item Revise the {\tt Estimate\_tan\_phi} routine in {\tt
+FullForwardModel\_m} to compute only the estimated spacecraft geocentric
+altitude and line-of-sight velocity at the tangent points for each zeta
+in the augmented coarse $\zeta$ grid, and rename it accordingly.
+
+\item Insert GL zetas into the augmented grid.
+
+\item Use the two\_d\_hydrostatic routine to compute
+temperature and height reference arrays on the fine $\zeta$ grid and the
+temperature $\phi$ basis.
+
+\item Use the temperature and height reference arrays on the fine $\zeta$
+grid to compute heights, $\phi$s and derivatives at each $\zeta$ along
+each line of sight.
+
+\end{enumerate}
+
+\label{lastpage}
+\end{document}
+% $Id: $
+@

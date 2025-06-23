@@ -1,0 +1,256 @@
+head	2.1;
+access;
+symbols
+	v5-02-NRT-19:2.1
+	v6-00:2.1
+	v5-02-NRT-18:2.1
+	v5-02:2.1
+	v5-01-NRT-17:2.1
+	v5-01-NRT-16:2.1
+	v5-01-NRT-15:2.1
+	v5-01-NRT-14:2.1
+	neuralnetworks-1-0:2.1.0.16
+	cfm-single-freq-0-1:2.1.0.14
+	v5-01:2.1
+	v5-00:2.1
+	v4-23-TA133:2.1.0.12
+	mus-emls-1-70:2.1.0.10
+	rel-1-0-englocks-work:2.1.0.8
+	VUMLS1-00:2.1
+	VPL1-00:2.1
+	V4-22-NRT-08:2.1
+	whdrel10_merged_to_here:2.1
+	merge_whdrel10_from_here:2.1
+	TAG_TRUNK_AFTER_PW_CHANGES:2.1
+	TAG_TRUNK_BEFORE_PW_CHANGES:2.1
+	VAM1-00:2.1
+	whd-rel-1-0:2.1.0.6
+	V4-21:2.1.0.4
+	V4-13:2.1
+	V4-12:2.1
+	V4-11:2.1
+	V4-10:2.1
+	V3-43:2.1
+	M4-00:2.1
+	V3-41:2.1
+	V3-40-PlusGM57:2.1.0.2
+	V2-24-NRT-04:2.1
+	V3-33:2.1
+	V2-24:2.1
+	V3-31:2.1
+	V3-30-NRT-05:2.1
+	cfm-01-00:2.1
+	V3-30:2.1
+	V3-20:2.1
+	V3-10:2.1
+	V2-23-NRT-02:2.1
+	V2-23:2.1
+	V2-22-NRT-01:2.1
+	V2-22:2.1
+	V2-21:2.1
+	V2-20:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.1
+date	2006.09.28.16.23.21;	author perun;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.1
+log
+@Removed WriteDiagOffsets parameter and increased MAFexpandNum to 6 MAFs
+@
+text
+@; Copyright (c) 2006, California Institute of Technology.  ALL RIGHTS RESERVED.
+; U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+;
+;------------------- RCS Ident Info -----------------------
+; $Id: l1-v210.cf,v 2.1 2006/08/02 19:08:51 perun Exp $
+;----------------------------------------------------------
+
+; This is the Configuration file for the MLSL1 program set
+; of the Level 1 software for the EOS Microwave Limb Sounder (MLS).
+;
+; -----------------------------------------------------------------------------
+;
+; This section of the l1cf gives parameters that are global settings to the
+; software, output file comments, file versions etc.  Note that while this
+; section must occur first in the l1cf, the ordering of the options within the
+; section is not critical.
+;
+BEGIN GlobalSettings
+    ;;
+    ;; Will check this version against the OutputVersion in the PCF
+    ;;
+    OutputVersionString="v02-20"
+    ;;
+    ;;
+    ;; Whether on not to read ephemeris data and produce L1BOA data
+    ;;
+    ProduceL1BOA = true
+    ;;
+    ;; Whether on not to simulate L1BOA data (default = false)
+    ;;
+    SimOA = false
+    ;;
+END GlobalSettings
+;
+; ----------------------------------------------------------------------------
+;
+; This section of the l1cf gives calibration parameters
+;
+;
+BEGIN Calibration
+    ;;
+    ;; Calibration window length in MAFs:
+    ;;
+    CalWindow = 6 MAFs
+    ;;
+    ;; MAFs to expand at both ends of time range:
+    ;;
+    MAFexpandNum = 6 MAFs
+    ;;
+    ;; Minimum limb MIFs considered for "Space" views:
+    ;;
+    MinSpaceLimbs = 5 MIFs
+    ;;
+    ;; Space temperature in degrees K:
+    ;;
+    GHzSpaceTemp = 2.7 K
+    ;;
+    ;; Target temperature in degrees K:
+    ;;
+    GHzTargetTemp = 0 K
+    ;;
+    ;; Space temperature in degrees K:
+    ;;
+    THzSpaceTemp = 0 K
+    ;;
+    ;; Target temperature in degrees K:
+    ;;
+    ;; THzTargetTemp = 0 K
+    ;;
+    ;; Space encoder angle in degrees:
+    ;;
+    THzSpaceAngle = 356.8 Deg
+    ;;
+    THzMaxBias = 2.8
+    ;;
+    ;; Whether to use Cold views for THz calibs:
+    ;;
+    THzColdCal = true
+    ;;
+    ;; Moon to Space port angle:
+    ;;
+    MoonToSpaceAngle = 5 Deg
+    ;;
+    ;; MIF duration in seconds:
+    ;;
+    MIF_Duration = 0.16702431 s
+    ;;
+    ;; MIF dead time in seconds:
+    ;;
+    MIF_DeadTime = 5.000e-3 s
+    ;;
+    ;; MIFs per MAF:
+    ;;
+    MIFsPerMAF = 148 MIFs
+    ;;
+    ;; Default gains flag:
+    ;;
+    UseDefaultGains = false
+    ;;
+    ;; Calib DACS flag:
+    ;;
+    CalibDACS = true
+    ;;
+    ;; window to use for DACS DC baseline
+    ;;
+    DACSwindow = 10 MAFs
+    ;;
+    ;; DACS TP digital flag:
+    ;;
+    TPdigital = false
+    ;;
+    ;; Mark bad channels/bands
+    ;;
+    MarkChanBad, chan=22, bandno=3
+    MarkChanBad, chan=22, bandno=4
+    MarkChanBad, chan=22, bandno=5
+    MarkChanBad, chan=21, bandno=15
+    MarkChanBad, chan=21, bandno=18
+    MarkChanBad, chan=9, bandno=27
+    MarkChanBad, chan=10, bandno=27
+    ;MarkChanBad, chan=2, bandno=32
+    ;MarkChanBad, chan=4, bandno=32
+    ;;
+    ;; Bright objects tolerances:
+    ;;
+    BrightObject, name=moon, angle=1.0, module=GHz, /negate
+    BrightObject, name=moon, angle=2.0, module=THz, /negate
+    BrightObject, name=mercury, angle=0.2, module=GHz
+    BrightObject, name=mercury, angle=0.2, module=THz
+    BrightObject, name=venus, angle=0.35, module=GHz
+    BrightObject, name=venus, angle=0.35, module=THz
+    BrightObject, name=mars, angle=0.2, module=GHz
+    BrightObject, name=mars, angle=0.2, module=THz
+    BrightObject, name=jupiter, angle=0.25, module=GHz
+    BrightObject, name=jupiter, angle=0.25, module=THz
+    BrightObject, name=saturn, angle=0.15, module=GHz
+    BrightObject, name=saturn, angle=0.15, module=THz
+    BrightObject, name=uranus, angle=0.05, module=GHz
+    BrightObject, name=uranus, angle=0.05, module=THz
+    BrightObject, name=galacticcenter, angle=0.0, module=GHz
+    BrightObject, name=galacticcenter, angle=0.0, module=THz
+    ;;
+    ;; GHz MIF definitions:
+    ;;
+    limbMIFs, MIFs=[2:122], use=match, module=GHz
+    ;;
+    spaceMIFs, MIFs=[126:137], use=match, module=GHz
+    ;;
+    targetMIFs, MIFs=[140:147], use=match, module=GHz
+    ;;
+    discardMIFs, MIFs=[0:1,123:125,138:139,148:149], use=match, module=GHz
+    ;;
+    ;; THz MIF definitions:
+    ;;
+    limbMIFs, MIFs=[0:116], use=match, module=THz
+    ;;
+    spaceMIFs, MIFs=[120:131], use=match, module=THz
+    ;;
+    targetMIFs, MIFs=[134:141], use=match, module=THz
+    ;;
+    discardMIFs, MIFs=[117:119,132:133,142:149], use=match, module=THz
+    ;;
+    ;; Use antenna offsets flag (true for production!):
+    ;;
+    UseAntOffsets = true
+    ;;
+END Calibration
+BEGIN Output
+    ;;
+    ;; whether or not to remove the GHz Baselines from the Rad output
+    ;;
+    RemoveBaseline = false
+    ;;
+    ;; whether or not to do DACS deconvolution
+    ;;
+    DeconvolveDACS = true
+    ;;
+    ;; The next entry determines if the precisions are scaled by the square
+    ;; root of the default values in the chi square table:
+    ;;
+    ; enablechi2err, bandno=1:34
+    ;;
+END Output
+;
+; ----------------------------------------------------------------------------
+@

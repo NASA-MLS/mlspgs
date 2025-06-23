@@ -1,0 +1,122 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.12
+	cfm-single-freq-0-1:1.1.0.10
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.8
+	mus-emls-1-70:1.1.0.6
+	rel-1-0-englocks-work:1.1.0.4
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.2
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	M4-00:1.1
+	V3-33:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2011.03.17.20.59.03;	author yanovsky;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\section{Radiative Transfer First Derivative}
+
+The radiative transfer equation \cite{iy001} is 
+\begin{eqnarray*}
+I(\vx) = \sum_{i=1}^{2N} \triangle B_i \mathcal{T}_i,
+\end{eqnarray*}
+where $\triangle B_i$ is the source function in differential temperature format, and
+\begin{eqnarray*}
+\mathcal{T}_{i} &=& \exp \Big( -\sum_{j=2}^{i} \triangle \delta_{j \rightarrow j-1} \Big).
+\end{eqnarray*}
+The derivative of the radiative transfer is
+\begin{eqnarray*}
+\frac{\partial I(\vx)}{\partial x_k} &=& \frac{\partial}{\partial x_k} \sum_{i=1}^{2N} \triangle B_i \mathcal{T}_i \\
+&=& \sum_{i=1}^{2N} \bigg[ \frac{\partial \triangle B_i}{\partial x_k} \mathcal{T}_i + \triangle B_i  \frac{\partial \mathcal{T}_i}{\partial x_k} \bigg] \\
+&=& \sum_{i=1}^{2N} \bigg[ \frac{\partial \triangle B_i}{\partial x_k} \exp \Big( -\sum_{j=2}^{i} \triangle \delta_{j \rightarrow j-1} \Big) + \triangle B_i  \frac{\partial}{\partial x_k} \exp \Big( -\sum_{j=2}^{i} \triangle \delta_{j \rightarrow j-1} \Big) \bigg] \\
+&=& \sum_{i=1}^{2N} \bigg[ \frac{\partial \triangle B_i}{\partial x_k} \exp \Big( -\sum_{j=2}^{i} \triangle \delta_{j \rightarrow j-1} \Big) - \triangle B_i  \Big( \sum_{j=2}^{i}  \frac{\partial \triangle \delta_{j \rightarrow j-1}}{\partial x_k} \Big) \exp \Big( -\sum_{j=2}^{i} \triangle \delta_{j \rightarrow j-1} \Big) \bigg] \\
+&=& \sum_{i=1}^{2N} \bigg[ \frac{\partial \triangle B_i}{\partial x_k} - \triangle B_i  \Big( \sum_{j=2}^{i} \frac{\partial \triangle \delta_{j \rightarrow j-1}}{\partial x_k} \Big) \bigg] \mathcal{T}_i \\
+&=& \sum_{i=1}^{2N} \bigg[ \frac{\partial \triangle B_i}{\partial x_k} - \triangle B_i \mathcal{W}_i \bigg]  \mathcal{T}_i,
+\end{eqnarray*}
+where
+\begin{eqnarray*}
+\mathcal{W}_1 &=& 0, \\
+\mathcal{W}_i &=& \sum_{j=2}^{i} \frac{\partial \triangle \delta_{j \rightarrow j-1}}{\partial x_k} \\
+&=& \sum_{j=2}^{i-1} \frac{\partial \triangle \delta_{j \rightarrow j-1}}{\partial x_k} + \frac{\partial \triangle \delta_{i \rightarrow i-1}}{\partial x_k}\\
+&=& \mathcal{W}_{i-1} + \frac{\partial \triangle \delta_{i \rightarrow i-1}}{\partial x_k}.
+\end{eqnarray*}
+
+
+\section{Radiative Transfer Second Derivative}
+
+
+The second derivative of the radiative transfer is
+\begin{eqnarray*}
+\frac{\partial^2 I(\vx)}{\partial x \partial y} &=& \frac{\partial}{\partial y} \Big( \frac{\partial I}{\partial x} \Big) \ = \  \frac{\partial}{\partial y} \bigg(  \sum_{i=1}^{2N} \bigg[ \frac{\partial \triangle B_i}{\partial x} - \triangle B_i  \sum_{j=2}^{i} \frac{\partial \triangle \delta_{j \rightarrow j-1}}{\partial x} \bigg] \mathcal{T}_i \bigg) \\
+&=& \sum_{i=1}^{2N} \Bigg(  \bigg[ \frac{\partial^2 \triangle B_i}{\partial x \partial y} - \frac{\partial \triangle B_i}{\partial y} \sum_{j=2}^{i} \frac{\partial \triangle \delta_{j \rightarrow j-1}}{\partial x} - \triangle B_i  \sum_{j=2}^{i} \frac{\partial^2 \triangle \delta_{j \rightarrow j-1}}{\partial x \partial y} \bigg] \mathcal{T}_i \\
+&& \ \ \ \ \ - \bigg[ \frac{\partial \triangle B_i}{\partial x} - \triangle B_i  \sum_{j=2}^{i} \frac{\partial \triangle \delta_{j \rightarrow j-1}}{\partial x} \bigg] \sum_{j=2}^{i} \frac{\partial \triangle \delta_{j \rightarrow j-1}}{\partial y} \, \mathcal{T}_i \Bigg) \\
+&=& \sum_{i=1}^{2N} \Bigg[ \frac{\partial^2 \triangle B_i}{\partial x \partial y} - \frac{\partial \triangle B_i}{\partial y} \sum_{j=2}^{i} \frac{\partial \triangle \delta_{j \rightarrow j-1}}{\partial x} - \frac{\partial \triangle B_i}{\partial x} \sum_{j=2}^{i} \frac{\partial \triangle \delta_{j \rightarrow j-1}}{\partial y} \\
+&& \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ + \; \triangle B_i \bigg(  \Big( \sum_{j=2}^{i} \frac{\partial \triangle \delta_{j \rightarrow j-1}}{\partial x} \Big) \Big( \sum_{j=2}^{i} \frac{\partial \triangle \delta_{j \rightarrow j-1}}{\partial y} \Big) - \sum_{j=2}^{i} \frac{\partial^2 \triangle \delta_{j \rightarrow j-1}}{\partial x \partial y} \bigg)  \Bigg] \, \mathcal{T}_i,
+\end{eqnarray*}
+or
+\begin{eqnarray*}
+\frac{\partial^2 I(\vx)}{\partial x \partial y} &=& \sum_{i=1}^{2N} \Bigg[ \frac{\partial^2 \triangle B_i}{\partial x \partial y} - \frac{\partial \triangle B_i}{\partial y} \mathcal{W}_i^x - \frac{\partial \triangle B_i}{\partial x} \mathcal{W}_i^y + \triangle B_i \bigg(  \mathcal{W}_i^{x} \, \mathcal{W}_i^{y} - \partial \mathcal{W}^{x,y}_i \bigg)  \Bigg] \, \mathcal{T}_i,
+\end{eqnarray*}
+where
+\begin{eqnarray*}
+\mathcal{W}_1^x &=& 0, \ \ \ \mathcal{W}_1^y \ = \ 0, \ \ \ \partial \mathcal{W}^{x,y}_1 \ = \ 0, \\
+\mathcal{W}_i^x &=& \sum_{j=2}^{i} \frac{\partial \triangle \delta_{j \rightarrow j-1}}{\partial x} \ = \ \sum_{j=2}^{i-1} \frac{\partial \triangle \delta_{j \rightarrow j-1}}{\partial x} + \frac{\partial \triangle \delta_{i \rightarrow i-1}}{\partial x}\\
+&=& \mathcal{W}_{i-1}^x + \frac{\partial \triangle \delta_{i \rightarrow i-1}}{\partial x}, \\
+\mathcal{W}_i^y &=& \sum_{j=2}^{i} \frac{\partial \triangle \delta_{j \rightarrow j-1}}{\partial y} \ = \ \sum_{j=2}^{i-1} \frac{\partial \triangle \delta_{j \rightarrow j-1}}{\partial y} + \frac{\partial \triangle \delta_{i \rightarrow i-1}}{\partial y}\\
+&=& \mathcal{W}_{i-1}^y + \frac{\partial \triangle \delta_{i \rightarrow i-1}}{\partial y}, \\
+\partial \mathcal{W}^{x,y}_i &=& \sum_{j=2}^{i} \frac{\partial^2 \triangle \delta_{j \rightarrow j-1}}{\partial x \partial y} \\
+&=& \partial \mathcal{W}_{i-1}^{x,y} + \frac{\partial^2 \triangle \delta_{i \rightarrow i-1}}{\partial x \partial y}.
+\end{eqnarray*}
+For $x = y$, the second derivative of the radiative transfer is
+\begin{eqnarray*}
+\frac{\partial^2 I(\vx)}{\partial x^2} &=& \sum_{i=1}^{2N} \Bigg[ \frac{\partial^2 \triangle B_i}{\partial x^2} - 2 \frac{\partial \triangle B_i}{\partial x} \sum_{j=2}^{i} \frac{\partial \triangle \delta_{j \rightarrow j-1}}{\partial x} + \triangle B_i \bigg(  \Big( \sum_{j=2}^{i} \frac{\partial \triangle \delta_{j \rightarrow j-1}}{\partial x} \Big)^2 - \sum_{j=2}^{i} \frac{\partial^2 \triangle \delta_{j \rightarrow j-1}}{\partial x^2} \bigg)  \Bigg] \, \mathcal{T}_i,
+\end{eqnarray*}
+or
+\begin{eqnarray*}
+\frac{\partial^2 I(\vx)}{\partial x^2} &=& \sum_{i=1}^{2N} \Bigg[ \frac{\partial^2 \triangle B_i}{\partial x^2} - 2 \frac{\partial \triangle B_i}{\partial x} \mathcal{W}_i + \triangle B_i \bigg(  \mathcal{W}_i^2 - \frac{\partial \mathcal{W}_i }{\partial x} \bigg)  \Bigg] \, \mathcal{T}_i,
+\end{eqnarray*}
+where
+\begin{eqnarray*}
+\mathcal{W}_1^x &=& 0, \ \ \ \ \ \ \partial \mathcal{W}^{x,x}_1 \ = \ 0, \\
+\mathcal{W}_i^x &=& \sum_{j=2}^{i} \frac{\partial \triangle \delta_{j \rightarrow j-1}}{\partial x} \ = \ \sum_{j=2}^{i-1} \frac{\partial \triangle \delta_{j \rightarrow j-1}}{\partial x} + \frac{\partial \triangle \delta_{i \rightarrow i-1}}{\partial x} \\
+&=& \mathcal{W}_{i-1}^x + \frac{\partial \triangle \delta_{i \rightarrow i-1}}{\partial x}, \\
+\partial \mathcal{W}^{x,x}_i &=& \sum_{j=2}^{i} \frac{\partial^2 \triangle \delta_{j \rightarrow j-1}}{\partial x^2} \\
+&=& \partial \mathcal{W}_{i-1}^{x,x} + \frac{\partial^2 \triangle \delta_{i \rightarrow i-1}}{\partial x^2}.
+\end{eqnarray*}
+
+
+
+% $Id:  $
+@

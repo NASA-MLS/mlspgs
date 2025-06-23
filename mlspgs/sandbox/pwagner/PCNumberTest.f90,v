@@ -1,0 +1,183 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.16
+	cfm-single-freq-0-1:1.1.0.14
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.12
+	mus-emls-1-70:1.1.0.10
+	rel-1-0-englocks-work:1.1.0.8
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.6
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.4
+	V2-24-NRT-04:1.1
+	V3-33:1.1
+	V2-24:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1
+	V2-23-NRT-02:1.1
+	V2-23:1.1
+	V2-22-NRT-01:1.1
+	V2-22:1.1
+	V2-21:1.1
+	V2-20:1.1
+	V2-11:1.1
+	V2-10:1.1
+	V2-00:1.1
+	V1-51:1.1
+	V1-50:1.1
+	V1-45:1.1
+	V1-44:1.1
+	V1-43:1.1
+	V1-42:1.1
+	V1-41:1.1
+	V1-32:1.1
+	V1-40:1.1
+	V1-31:1.1
+	V1-13:1.1
+	V1-12:1.1
+	V1-11:1.1
+	V1-10:1.1
+	newfwm-feb03:1.1.0.2
+	V1-04:1.1
+	V1-03:1.1
+	V1-02:1.1
+	V1-00:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2002.02.19.23.28.19;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@First commit
+@
+text
+@!=================================
+PROGRAM PCNumberTest ! tests MLSFiles module
+!=================================
+
+   USE MLSFiles , ONLY: GetPCFromRef
+   USE MLSStrings , ONLY: Capitalize
+
+   IMPLICIT NONE
+
+!------------------- RCS Ident Info -----------------------
+   CHARACTER(LEN=130) :: Id = &                                                    
+   "$Id: rl2_sub.f90,v 1.3 2001/01/30 17:24:25 nakamura Exp nakamura $"
+   CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile: rl2_sub.f90,v $"
+!----------------------------------------------------------
+
+! Brief description of program
+! This program tests the GetPCFromRef subroutine.
+
+! To use this, copy it into
+! mlspgs/tests/lib
+! then enter "make depends" followed by "make"
+
+
+! Then run it, enter a molecule name; e.g., "H2O" (w/o the "'s)
+
+! Variables
+
+	LOGICAL, PARAMETER                :: caseSensitive = .false.
+   character(LEN=32)                 :: theMolecule
+   character(LEN=132)                :: FileName
+   integer                           :: returnStatus, ErrType
+
+	DO
+
+! Prompt for input
+
+ 	  print *, 'Enter a molecule name'
+		read(*, '(A32)') theMolecule
+      print *, 'You entered ', trim(theMolecule)
+		IF(theMolecule == ' ' .or. Capitalize(theMolecule(1:4)) == 'STOP') THEN
+   		print *, 'GAME OVER'
+			STOP
+		ENDIF
+      
+!	Process theMolecule
+	   returnStatus = GetPCFromRef(theMolecule, 60000, 60018, &
+       & caseSensitive, ErrType, ExactName=FileName)
+      print *, 'returnStatus: ', returnStatus
+      print *, 'ErrType: ', ErrType
+      print *, 'ExactName: ', trim(FileName)
+	ENDDO
+!==================
+END PROGRAM PCNumberTest
+!==================
+integer function Pgs_fake_getReference(arg, version, fileName)
+! arguments
+  integer, intent(in)                  :: arg
+  integer, intent(in)                  :: version
+  character(LEN=*), intent(out)        :: fileName
+  ! Internal variables
+  integer, parameter                   :: PCOFFSET = 60000
+  integer, parameter                   :: FullNameLen = 132
+  character(LEN=*), dimension(17), parameter :: ALL_FILES = (/ &    
+    & '/my/path/to/here/MLS_AURA_L2GP_TEMP_V1_DATE_WHEN_TAKEN.dat', &       
+    & '/my/path/to/here/MLS_AURA_L2GP_GPH_V1_DATE_WHEN_TAKEN.dat ', &      
+    & '/my/path/to/here/MLS_AURA_L2GP_H2O_V1_DATE_WHEN_TAKEN.dat ', &      
+    & '/my/path/to/here/MLS_AURA_L2GP_HNO3_V1_DATE_WHEN_TAKEN.dat', &       
+    & '/my/path/to/here/MLS_AURA_L2GP_O3_V1_DATE_WHEN_TAKEN.dat  ', &       
+    & '/my/path/to/here/MLS_AURA_L2GP_HCL_V1_DATE_WHEN_TAKEN.dat ', &      
+    & '/my/path/to/here/MLS_AURA_L2GP_CLO_V1_DATE_WHEN_TAKEN.dat ', &      
+    & '/my/path/to/here/MLS_AURA_L2GP_N2O_V1_DATE_WHEN_TAKEN.dat ', &      
+    & '/my/path/to/here/MLS_AURA_L2GP_CO_V1_DATE_WHEN_TAKEN.dat  ', &      
+    & '/my/path/to/here/MLS_AURA_L2GP_OH_V1_DATE_WHEN_TAKEN.dat  ', &      
+    & '/my/path/to/here/MLS_AURA_L2GP_RHI_V1_DATE_WHEN_TAKEN.dat ', &      
+    & '/my/path/to/here/MLS_AURA_L2GP_SO2_V1_DATE_WHEN_TAKEN.dat ', &      
+    & '/my/path/to/here/MLS_AURA_L2GP_HO2_V1_DATE_WHEN_TAKEN.dat ', &      
+    & '/my/path/to/here/MLS_AURA_L2GP_BRO_V1_DATE_WHEN_TAKEN.dat ', &      
+    & '/my/path/to/here/MLS_AURA_L2GP_HOCL_V1_DATE_WHEN_TAKEN.dat', &      
+    & '/my/path/to/here/MLS_AURA_L2GP_HCN_V1_DATE_WHEN_TAKEN.dat ', &      
+    & '/my/path/to/here/MLS_AURA_L2GP_BULL_V1_DATE_WHEN_TAKEN.dat'/) 
+    
+  ! Executable statements
+  select case (arg-PCOFFSET)
+    case(:0)
+      Pgs_fake_getReference = -1
+    case(1:size(ALL_FILES))
+      Pgs_fake_getReference = 0
+      fileName = ALL_FILES(arg-PCOFFSET)
+    case default
+      Pgs_fake_getReference = 1
+  end select
+
+     
+end function Pgs_fake_getReference
+!# $Log: rl2_sub.f90,v $
+@

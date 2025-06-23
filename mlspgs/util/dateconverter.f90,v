@@ -1,0 +1,1248 @@
+head	1.14;
+access;
+symbols
+	v5-02-NRT-19:1.14
+	v6-00:1.14
+	v5-02-NRT-18:1.14
+	v5-02:1.14
+	v5-01-NRT-17:1.14
+	v5-01-NRT-16:1.14
+	v5-01-NRT-15:1.14
+	v5-01-NRT-14:1.14
+	neuralnetworks-1-0:1.14.0.6
+	cfm-single-freq-0-1:1.14.0.4
+	v5-01:1.14
+	v5-00:1.14
+	v4-23-TA133:1.14.0.2
+	mus-emls-1-70:1.13.0.2
+	rel-1-0-englocks-work:1.11.0.2
+	VUMLS1-00:1.10
+	VPL1-00:1.10
+	V4-22-NRT-08:1.10
+	VAM1-00:1.10
+	V4-21:1.8.0.2
+	V4-13:1.8
+	V4-12:1.8
+	V4-11:1.8
+	V4-10:1.8
+	V3-43:1.3
+	M4-00:1.6
+	V3-41:1.3
+	V3-40-PlusGM57:1.3.0.2
+	V2-24-NRT-04:1.3
+	V3-33:1.6
+	V2-24:1.3
+	V3-31:1.6
+	V3-30-NRT-05:1.5
+	cfm-01-00:1.5
+	V3-30:1.3
+	V3-20:1.3
+	V3-10:1.3
+	V2-23-NRT-02:1.3
+	V2-23:1.3
+	V2-22-NRT-01:1.3
+	V2-22:1.3
+	V2-21:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.14
+date	2018.10.19.01.18.07;	author pwagner;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2018.05.22.23.25.33;	author pwagner;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2018.05.04.16.38.11;	author pwagner;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2017.03.30.23.35.29;	author pwagner;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2015.06.24.18.03.01;	author pwagner;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2015.06.23.23.54.16;	author pwagner;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2014.03.05.20.16.04;	author pwagner;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2013.08.14.17.26.38;	author pwagner;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2011.01.04.00.53.04;	author pwagner;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2010.06.28.17.04.13;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2010.06.03.23.36.53;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2007.08.17.00.44.30;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2007.05.10.23.41.42;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2007.01.18.23.36.04;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.14
+log
+@removed unused stuff
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=================================
+program dateconverter
+!=================================
+
+   use Dates_Module, only: AddDaysToUTC, AddHoursToUTC, AddSecondsToUTC, &
+     & Dateform, DayOfWeek, FromUARSDate, HoursInDay, PrecedesUTC, &
+     & ReformatDate, ResetStartingDate, SecondsInDay, SplitDateTime, &
+     & Tai93s2utc, ToUARSDate
+   use Machine, only: Hp, Getarg
+   use MLSStringLists, only: ExpandStringRange
+   use MLSStrings, only: Lowercase, Ncopies, ReadNumsFromChars
+
+   implicit none
+
+!---------------------------- RCS Ident Info ------------------------------
+  character (len=*), parameter :: ModuleName= &
+       "$RCSfile: chunktimes.f90,v $"
+  character (len=*), parameter :: IdParm = &
+       "$Id: chunktimes.f90,v 1.30 2016/10/04 22:13:34 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+!---------------------------------------------------------------------------
+
+! Brief description of program
+! This program converts an input date to a different format
+
+! E.g., given "2004d274" it will output "2004 September 30"
+! Useful only because possibly one will use doy 
+! while the other uses month-and-day
+! Useful also in automatically computing gmao entries in PCF
+
+  type options_T
+    integer     :: offset = 0                  ! How many days to add/subtract
+    integer     :: hoursOffset = 0             ! How many hours to add/subtract
+    integer     :: weekdayLength= 0     ! how many chars to output day-of-week
+    double precision :: secondsOffset = 0.d0   ! How many seconds to add/subtract
+    logical     :: leapsec = .false.           ! account for leap seconds?
+    logical     :: utcFormat = .false.         ! output date+time?
+    logical     :: compare = .false.           ! compare pairs of dates
+    logical     :: debug = .false.
+    logical     :: verbose = .false.
+    character(len=255) :: outputFormat= ' '    ! output format
+    character(len=255) :: inputFormat= ' '     ! input format
+    character(len=255) :: inputTime= ' '       ! input time
+    character(len=255) :: argRange= ' '        ! which date numbers to do
+  end type options_T
+
+  type ( options_T ) :: options
+
+! Variables
+   integer, parameter :: MAXLISTLENGTH=24
+   integer, parameter ::          MAXDATES = 100
+   character (len=2)             :: comparison
+   character (len=MAXLISTLENGTH) :: converted_date
+   character (len=MAXLISTLENGTH) :: converted_time
+   character (len=MAXLISTLENGTH) :: date
+   character(len=MAXLISTLENGTH), dimension(MAXDATES) :: dates
+   logical, dimension(MAXDATES)  :: doThisDate
+   character(len=*), parameter   :: DOYFORMAT = 'yyyy-doy'
+   integer                       :: ErrTyp
+   character (len=MAXLISTLENGTH) :: fromForm
+   double precision              :: hours
+   integer                       :: i
+   character (len=MAXLISTLENGTH) :: intermediate_date
+   ! character (len=*), parameter  :: intermediateForm = 'yyyymmdd'
+   character(len=*), parameter   :: MFORMAT = 'yyyy M dd'
+   integer                       :: n_dates = 0
+   double precision              :: seconds
+   double precision              :: secondsperday = 24*3600.
+   double precision              :: tai
+   character (len=MAXLISTLENGTH) :: time
+   character (len=MAXLISTLENGTH) :: toForm
+   character (len=MAXLISTLENGTH) :: uars_date
+   character (len=16           ) :: weekday
+  ! Executable
+  do      ! Loop over options
+     call get_date(date, n_dates, options)
+     if ( index('-+', date(1:1)) > 0 ) cycle
+     if ( date == ' ' ) exit
+     if ( options%inputFormat /= ' ' ) then
+       ! Because the internal dateForm will not be needed
+     elseif ( index(dateForm(date), 'yyyy') == 0 ) then
+       print *, 'Sorry--date format not found: ', trim(date)
+       cycle
+     endif
+     n_dates = n_dates + 1
+     dates(n_dates) = date
+  enddo
+  doThisDate = .true.
+  time = options%inputTime
+  if ( options%inputTime == ' ' ) time = '00:00:00'
+  converted_time = time
+  if ( options%argRange /= ' ' ) &
+    & call ExpandStringRange ( options%argRange, doThisDate )
+  do i=1, n_dates
+    if ( .not. doThisDate(i)) cycle
+    date = dates(i)
+    if ( options%verbose ) print *, 'Input was ', trim(date)
+    fromForm = options%inputFormat
+    if ( len_trim(options%inputFormat) < 1 ) fromForm = dateForm(date)
+    if ( index(lowercase(options%inputFormat), 'uars' ) > 0 ) then
+      call resetStartingdate( newMLSDate='1980-01-01' )
+      call splitDateTime ( date, ErrTyp, uars_date, converted_time )
+      call FromUARSDate( uars_date, intermediate_date )
+      date = intermediate_date
+      if ( options%debug ) print *, 'uars_date: ', uars_date
+      if ( options%debug ) print *, 'date: ', date
+    elseif ( options%inputFormat == 'tai' ) then
+      call readNumsFromChars ( date, tai )
+      date = tai93s2utc( tai, options%leapsec )
+      fromForm = 'yyyy-mm-dd'
+      options%utcFormat = .true.
+      call splitDateTime ( date, ErrTyp, intermediate_date, converted_time )
+    endif
+    ! Figure out logical format to convert it to
+    if ( index(lowercase(options%outputFormat), 'utc' ) > 0 ) then
+      toForm = 'yyyy-Doy'
+      if ( index(lowercase(options%outputFormat), 'b' ) > 0 ) toForm = 'yyyy-mm-dd'
+      options%utcFormat = .true.
+    elseif ( index(lowercase(options%outputFormat), 'uars' ) > 0 ) then
+      ! Convert the date to its uars format; e.g. 'd0007'
+      toForm = 'uars'
+    elseif ( options%outputFormat /= ' ' ) then
+      toForm = options%outputFormat
+    elseif ( index(lowercase(fromForm), 'doy') > 0 ) then
+      toForm = MFORMAT
+    else
+      toForm = DOYFORMAT
+    endif
+    if ( options%verbose ) then
+      print *, 'Input format was ', trim(fromForm)
+      print *, 'We parsed it as ', trim(date)
+      print *, 'Output format is ', trim(toForm)
+      print *, 'input time is ', trim(options%inputTime)
+      print *, 'Offset days is ', options%offset
+      print *, 'Offset hours is ', options%hoursoffset
+      print *, 'Offset seconds is ', options%secondsoffset
+    endif
+    dates(i) = date    
+  enddo
+  ! Are we comparing pairs of dates?
+  if ( options%compare ) then
+    do i=1, n_dates, 2
+      ! A slight complication:
+      ! if the two dates are equal, then neither precedes the other
+      ! +: date1 < date2
+      ! -: date2 < date1
+      ! A hint of hackery-quackery now follows
+      ! We set the comparison string to one of 4 values
+      ! value           meaning
+      ! -----           -------
+      ! (blank)      date1 = date2
+      !    +         date1 < date2
+      !    -         date2 < date1
+      !    +-        date1 = date2
+      comparison = ' '
+      if ( PrecedesUTC( dates(i), dates(i+1) ) ) comparison = '+'
+      if ( PrecedesUTC( dates(i+1), dates(i) ) ) comparison = trim(comparison) // '-'
+      if ( len_trim(comparison) /= 1 ) comparison = '='
+      call print_string( trim(comparison) )
+    enddo
+    stop
+  endif
+  do i=1, n_dates
+    if ( .not. doThisDate(i)) cycle
+    date = dates(i)
+    ! Process date
+    ! First: three special codes
+    if ( index(options%outputFormat, 'sec') > 0 ) then
+      if ( index(date, 'T') < 1 ) date = 'T' // date
+      seconds = secondsinday(date)
+      write(*,'(f9.1, " s")') seconds
+      cycle
+    elseif ( index(lowercase(options%inputFormat), 'uars' ) > 0 ) then
+      ! Convert the date from its uars format; e.g. 'd0007'
+      ! Have you tested this yet?
+      call resetStartingdate( newMLSDate='1980-01-01' )
+      converted_date = reFormatDate(date, &
+        & fromForm='yyyy-mm-dd', toForm=trim(toForm))
+    elseif ( index(lowercase(options%outputFormat), 'uars' ) > 0 ) then
+      ! Convert the date to its uars format; e.g. 'd0007'
+      call resetStartingdate( newMLSDate='1980-01-01' )
+      call splitDateTime ( date, ErrTyp, converted_date, converted_time )
+      intermediate_date = reFormatDate( converted_date, &
+        & fromForm=trim(fromForm), toForm='yyyymmdd' )
+      call ToUARSDate( intermediate_date, converted_date )
+      if ( len_trim(converted_time) > 0 ) &
+        & converted_date = trim(converted_date) // 'T' // adjustl(Time)
+    elseif ( index(options%outputFormat, 'hour') > 0 ) then
+      if ( index(date, 'T') < 1 ) date = 'T' // date
+      hours = hoursinday(date)
+      write(*,'(f9.4, " h")') hours
+      cycle
+    elseif ( options%offset /= 0 ) then
+    ! We will always have an intermediate_date in yyyy-mm-dd format
+      converted_date = reFormatDate( date, &
+        & fromForm=trim(fromForm), toForm='yyyy-mm-dd' )
+      intermediate_date = trim(converted_date) // 'T' // &
+        & adjustl(Time)
+      if ( options%debug ) print *, 'intermediate_date', intermediate_date
+      converted_date = adddaystoutc( intermediate_date, options%offset )
+      if ( options%debug ) print *, 'intermediate_date (advanced)', converted_date
+      call splitDateTime( converted_date, ErrTyp, intermediate_date, converted_time )
+      converted_date = reFormatDate(intermediate_date, &
+        fromForm='yyyy-mm-dd', toForm=trim(toForm))
+    elseif ( options%hoursoffset /= 0 ) then
+      converted_date = reFormatDate( date, &
+        & fromForm=trim(fromForm), toForm='yyyy-mm-dd' )
+      if ( options%debug ) print *, '1st date: ', trim(converted_date)
+      ! if ( options%inputTime == ' ' ) options%inputTime = '00:00:00'
+      ! Mash date and time together in unholy union
+      intermediate_date = trim(converted_date) // 'T' // &
+        & adjustl(Time)
+      if ( options%debug ) print *, 'mash date: ', trim(intermediate_date)
+      converted_date = addhourstoutc( intermediate_date, options%hoursoffset )
+      if ( options%verbose ) print *, 'advanced date: ', trim(converted_date)
+      ! Now split them asunder
+      call splitDateTime( converted_date, ErrTyp, intermediate_date, converted_time )
+      converted_date = reFormatDate(intermediate_date, &
+        fromForm='yyyy-mm-dd', toForm=trim(toForm))
+    elseif ( options%secondsoffset /= 0 ) then
+      converted_date = reFormatDate( date, &
+        & fromForm=trim(fromForm), toForm='yyyy-mm-dd' )
+      if ( options%debug ) print *, '1st date: ', trim(converted_date)
+      ! if ( options%inputTime == ' ' ) options%inputTime = '00:00:00'
+      ! Mash date and time together in unholy union
+      intermediate_date = trim(converted_date) // 'T' // &
+        & adjustl(Time)
+      if ( options%debug ) print *, 'mash date: ', trim(intermediate_date)
+      converted_date = addsecondstoutc( intermediate_date, options%secondsoffset )
+      if ( options%verbose ) print *, 'advanced date: ', trim(converted_date)
+      ! Now split them asunder
+      call splitDateTime( converted_date, ErrTyp, intermediate_date, converted_time )
+      converted_date = reFormatDate(intermediate_date, &
+        fromForm='yyyy-mm-dd', toForm=trim(toForm))
+    else
+      intermediate_date = reFormatDate( date, &
+        & fromForm=trim(fromForm), toForm='yyyy-mm-dd' )
+      if ( options%debug ) print *, 'intermediate: ' // trim(intermediate_date)
+      converted_date = reFormatDate(intermediate_date, &
+        & fromForm='yyyy-mm-dd', toForm=trim(toForm))
+    endif
+    if ( options%weekdayLength > 0 ) then
+      weekday = dayOfWeek( intermediate_date, fromForm='yyyy-mm-dd' )
+      converted_date = weekday(1:options%weekdayLength) // ' ' // converted_date
+    endif
+    if ( options%utcFormat ) then
+      call print_string( trim(converted_date) // 'T' // trim(converted_time) // 'Z' )
+    elseif ( options%inputTime /= ' ' ) then
+      call print_string( trim(converted_date) // ' ' // trim(converted_time) )
+    else
+      call print_string( trim(converted_date) )
+    endif
+   enddo
+contains
+!------------------------- get_date ---------------------
+    subroutine get_date(date, n_dates, options)
+    ! Added for command-line processing
+     character(len=*), intent(out) :: date          ! date
+     integer, intent(in)             :: n_dates
+     type ( options_T ), intent(inout) :: options
+     ! Local variables
+     character(len=255) ::              arg
+     integer ::                         error = 1
+     integer, save ::                   i = 1
+  ! Get date, process command-line args
+  ! (which always start with -)
+    do
+      call getarg ( i+hp, date )
+      ! print *, i, ' th Arg: ', trim(date)
+      error = 0
+      if ( index('-+', date(1:1)) < 1 ) exit
+      if ( date(1:3) == '-h ' ) then
+        call print_help
+      elseif ( date(1:3) == '-H ' ) then
+        call getarg ( i+1+hp, arg )
+        call readNumsFromChars(arg, options%hoursOffset)
+        options%hoursOffset = - options%hoursOffset ! Because we will subtract
+        i = i + 1
+        exit
+      elseif ( date(1:3) == '+H ' ) then
+        call getarg ( i+1+hp, arg )
+        call readNumsFromChars(arg, options%hoursOffset)
+        i = i + 1
+        exit
+      elseif ( date(1:3) == '-R ' ) then
+        call getarg ( i+1+hp, arg )
+        call resetStartingdate( arg )
+        i = i + 1
+        exit
+      elseif ( date(1:3) == '-S ' ) then
+        call getarg ( i+1+hp, arg )
+        read(arg, * ) options%secondsOffset
+        options%secondsOffset = - options%secondsOffset ! Because we will subtract
+        i = i + 1
+        exit
+      elseif ( date(1:3) == '+S ' ) then
+        call getarg ( i+1+hp, arg )
+        read(arg, * ) options%secondsOffset
+        i = i + 1
+        exit
+      elseif ( date(1:4) == '-arg' ) then
+        call getarg ( i+1+hp, options%argRange )
+        i = i + 1
+        exit
+      elseif ( date(1:3) == '-i ' ) then
+        call getarg ( i+1+hp, options%inputFormat )
+        i = i + 1
+        exit
+      elseif ( date(1:3) == '-t ' ) then
+        call getarg ( i+1+hp, options%inputTime )
+        i = i + 1
+        exit
+      elseif ( date(1:3) == '-o ' ) then
+        call getarg ( i+1+hp, options%outputFormat )
+        i = i + 1
+        exit
+      elseif ( date(1:5) == '-leap' ) then
+        options%leapsec = .true.
+        exit
+      elseif ( date(1:3) == '-c ' ) then
+        options%compare = .true.
+        exit
+      elseif ( date(1:3) == '-d ' ) then
+        options%debug = .true.
+        options%verbose = .true.
+        exit
+      elseif ( date(1:3) == '-v ' ) then
+        options%verbose = .true.
+        exit
+      elseif ( date(1:3) == '-w ' ) then
+        options%weekdayLength = 2
+        exit
+      elseif ( date(1:2) == '-W' ) then
+        options%weekdayLength = ncopies( date, 'W' )
+        exit
+      elseif ( index('0123456789', date(2:2)) > 0 ) then
+        call readNumsFromChars(date, options%offset)
+        exit
+      else
+        call print_help
+      end if
+      i = i + 1
+    end do
+    if ( error /= 0 ) then
+      call print_help
+    endif
+    i = i + 1
+    if (trim(date) == ' ' .and. n_dates == 0) then
+
+    ! Last chance to enter date
+      ! print *,  "Enter the date you wish to convert."
+      read(*,'(a)') date
+    endif
+    
+  end subroutine get_date
+!------------------------- print_help ---------------------
+  subroutine print_help
+  ! Print brief but helpful message
+      write (*,*) &
+      & 'Usage:dateconverter [options] [dates]'
+      write (*,*) &
+      & ' If no dates supplied, you will be prompted to supply one'
+      write (*,*) &
+      & ' If no time-of-day supplied, none will be output'
+      write (*,*) ' Options:'
+      write (*,*) ' -o format   => output format to use (e.g. yyyymmdd)'
+      write (*,*) '               by default output will complement input'
+      write (*,*) '               e.g., "2004 October 01" <=> 2004-d275'
+      write (*,*) '               special codes:'
+      write (*,*) '               uars means uars dates'
+      write (*,*) '                    e.g., 1991-11-01 becomes d0051'
+      write (*,*) '               utc fuses date and time'
+      write (*,*) '                    e.g., 2007-274T23:59:59.9999Z'
+      write (*,*) '               sec prints seconds-in-day'
+      write (*,*) '                    e.g., 2007-274T00:01:59.99Z'
+      write (*,*) '                    prints 119.99'
+      write (*,*) '               hour prints hours-in-day'
+      write (*,*) '                    e.g., 2007-274T14:40:00Z'
+      write (*,*) '                    prints 14.66667'
+      write (*,*) ' -i format   => input format'
+      write (*,*) '               by default attempt to auto-recognize'
+      write (*,*) '               special codes:'
+      write (*,*) '               if format is "tai", treat input as '
+      write (*,*) '               (double-precision) seconds since'
+      write (*,*) '               1993-01-01T00:00:00'
+      write (*,*) ' -R date     => Reset starting date to "date"'
+      write (*,*) '               (needed if any dates prior to Jan 1 1993)'
+      write (*,*) ' -t time     => optional time-of-day (military-style)'
+      write (*,*) '               e.g., "06:53:10"'
+      write (*,*) ' -number     => subtract "number" days'
+      write (*,*) ' +number     => add "number" days'
+      write (*,*) ' -H number   => subtract "number" hours'
+      write (*,*) ' +H number   => add "number" hours'
+      write (*,*) ' -S number   => subtract "number" seconds'
+      write (*,*) ' +S number   => add "number" seconds'
+      write (*,*) ' -arg  range =>'
+      write (*,*) '       Run just the dates indexed by the expression range'
+      write (*,*) '       e.g., 7 means run only the 7th of the dates, '
+      write (*,*) '           1,3-9+2,12 means run dates 1,3,5,7,9,12'
+      write (*,*) ' -leapsec    => account for leap seconds; e.g. for "tai"'
+      write (*,*) ' -c          => compare date1 with date2:'
+      write (*,*) '                  condition         returns'
+      write (*,*) '                date1 < date2          +'
+      write (*,*) '                date2 < date1          -'
+      write (*,*) '                date1 = date2          ='
+      write (*,*) ' -d          => switch on debug mode'
+      write (*,*) ' -v          => switch on verbose mode'
+      write (*,*) ' -w          => print day-of-week in 2 characters'
+      write (*,*) ' -WW..       => print day-of-week'
+      write (*,*) '                in count[W] characters'
+      write (*,*) ' -h          => print brief help'
+      stop
+  end subroutine print_help
+!------------------------- print_string ---------------------
+  subroutine print_string(string)
+    character(len=*), intent(in) :: string
+    write(*,'(a)') trim(string)
+  end subroutine print_string
+
+!==================
+end program dateconverter
+!==================
+
+! $Log: dateconverter.f90,v $
+! Revision 1.13  2018/05/22 23:25:33  pwagner
+! Last update broke all cases except -c usage; ffixed
+!
+! Revision 1.12  2018/05/04 16:38:11  pwagner
+! Added new commandline option -c comparing 2 dates
+!
+! Revision 1.11  2017/03/30 23:35:29  pwagner
+! Add explanation of special uars formatting to help page
+!
+! Revision 1.10  2015/06/24 18:03:01  pwagner
+! Fix some bugs related to uars input
+!
+! Revision 1.9  2015/06/23 23:54:16  pwagner
+! Can canvert to and from uars dates
+!
+! Revision 1.8  2014/03/05 20:16:04  pwagner
+! New -leapsec option accounts for leap seconds
+!
+! Revision 1.7  2013/08/14 17:26:38  pwagner
+! Added -R comdline option to handle dates before Jan 1 1993
+!
+! Revision 1.6  2011/01/04 00:53:04  pwagner
+! Among other improvements, can now convert times to {hours,seconds}-in-day
+!
+! Revision 1.5  2010/06/28 17:04:13  pwagner
+! Added 'tai' format to convert l2gp%time field
+!
+! Revision 1.4  2010/06/03 23:36:53  pwagner
+! Added option to print day-of-week
+!
+! Revision 1.3  2007/08/17 00:44:30  pwagner
+! May add seconds offset; rely more completely on dates module
+!
+! Revision 1.2  2007/05/10 23:41:42  pwagner
+! Fixed error in declared char size of date; now assumed shape
+!
+! Revision 1.1  2007/01/18 23:36:04  pwagner
+! Moved here from sandbox
+!
+@
+
+
+1.13
+log
+@Last update broke all cases except -c usage; ffixed
+@
+text
+@d19 1
+a19 1
+     & Tai93s2utc, ToUARSDate, Yyyymmdd_To_Dai
+d26 7
+a32 5
+!------------------- RCS Ident Info -----------------------
+   character(len=130) :: Id = &                                                    
+   "$Id: dateconverter.f90,v 1.12 2018/05/04 16:38:11 pwagner Exp $"
+   character (len=*), parameter :: ModuleName= "$RCSfile: dateconverter.f90,v $"
+!----------------------------------------------------------
+a58 6
+! To use this, copy it into
+! mlspgs/tests/lib
+! then enter "make depends" followed by "make"
+
+
+! Then run it, entering quote-surrounded strings of chars; a blank line terminates
+a60 1
+
+a77 2
+   integer                       :: nDays
+   integer                       :: nDaysOffset
+a119 2
+      ! print *, 'tai: ', tai
+      !if ( options%leapsec ) then
+a120 12
+      !else
+      ! call yyyymmdd_to_dai( 2001, 1, 1, nDaysOffset, startingDate='19930101' )
+      ! ! print *, 'nDaysOffset: ', nDaysOffset
+      ! nDays = tai/secondsperday - nDaysOffset
+      ! ! print *, 'nDays: ', nDays
+      ! intermediate_date = adddaystoutc( '2001-01-01T00:00:00', nDays )
+      ! ! print *, 'date (no seconds): ', intermediate_date
+      ! tai = tai - (nDays+nDaysOffset)*secondsperday
+      ! ! print *, '(+ seconds): ', tai
+      ! date = addsecondstoutc( intermediate_date, tai )
+      !endif
+      ! print *, 'date (+ seconds): ', date
+d432 1
+a432 1
+END PROGRAM dateconverter
+d436 3
+@
+
+
+1.12
+log
+@Added new commandline option -c comparing 2 dates
+@
+text
+@d28 1
+a28 1
+   "$Id: dateconverter.f90,v 1.11 2017/03/30 23:35:29 pwagner Exp $"
+d193 1
+a194 1
+  stop
+d457 3
+@
+
+
+1.11
+log
+@Add explanation of special uars formatting to help page
+@
+text
+@d17 1
+a17 1
+     & Dateform, DayOfWeek, FromUARSDate, HoursInDay, &
+d27 3
+a29 3
+   CHARACTER(LEN=130) :: Id = &                                                    
+   "$Id: dateconverter.f90,v 1.10 2015/06/24 18:03:01 pwagner Exp $"
+   CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile: dateconverter.f90,v $"
+d47 1
+d68 4
+a71 3
+   character (LEN=MAXLISTLENGTH) :: converted_date
+   character (LEN=MAXLISTLENGTH) :: converted_time
+   character (LEN=MAXLISTLENGTH) :: date
+d76 1
+a76 1
+   character (LEN=MAXLISTLENGTH) :: fromForm
+d79 2
+a80 2
+   character (LEN=MAXLISTLENGTH) :: intermediate_date
+   ! character (LEN=*), parameter  :: intermediateForm = 'yyyymmdd'
+d88 4
+a91 4
+   character (LEN=MAXLISTLENGTH) :: time
+   character (LEN=MAXLISTLENGTH) :: toForm
+   character (LEN=MAXLISTLENGTH) :: uars_date
+   character (LEN=16           ) :: weekday
+d170 28
+a197 1
+    
+d206 2
+a207 1
+      ! Convert the date to its uars format; e.g. 'd0007'
+d290 1
+a290 1
+     character(LEN=*), intent(out) :: date          ! date
+d294 1
+a294 1
+     character(LEN=255) ::              arg
+d352 3
+d433 5
+d457 3
+@
+
+
+1.10
+log
+@Fix some bugs related to uars input
+@
+text
+@d16 7
+a22 7
+   use Dates_module, only: addDaysToUTC, addHoursToUTC, addSecondsToUTC, &
+     & Dateform, dayOfWeek, fromUARSDate, hoursInDay, &
+     & ReformatDate, resetStartingDate, secondsInDay, splitDateTime, &
+     & Tai93s2utc, toUARSDate, yyyymmdd_to_dai
+   use Machine, only: hp, getarg
+   use MLSStringLists, only: expandStringRange
+   use MLSStrings, only: lowercase, ncopies, readNumsFromChars
+d28 1
+a28 1
+   "$Id: dateconverter.f90,v 1.9 2015/06/23 23:54:16 pwagner Exp $"
+d369 2
+d419 3
+@
+
+
+1.9
+log
+@Can canvert to and from uars dates
+@
+text
+@d28 1
+a28 1
+   "$Id: dateconverter.f90,v 1.8 2014/03/05 20:16:04 pwagner Exp $"
+d121 2
+a122 2
+      print *, 'uars_date: ', uars_date
+      print *, 'date: ', date
+d176 5
+d417 3
+@
+
+
+1.8
+log
+@New -leapsec option accounts for leap seconds
+@
+text
+@d16 7
+a22 7
+   use DATES_MODULE, only: ADDDAYSTOUTC, ADDHOURSTOUTC, ADDSECONDSTOUTC, &
+     & DATEFORM, DAYOFWEEK, HOURSINDAY, &
+     & REFORMATDATE, RESETSTARTINGDATE, SECONDSINDAY, SPLITDATETIME, &
+     & TAI93S2UTC, YYYYMMDD_TO_DAI
+   use MACHINE, only: HP, GETARG
+   use MLSSTRINGLISTS, only: EXPANDSTRINGRANGE
+   use MLSSTRINGS, only: LOWERCASE, NCOPIES, READNUMSFROMCHARS
+d24 1
+a24 1
+   IMPLICIT NONE
+d28 1
+a28 1
+   "$Id: dateconverter.f90,v 1.7 2013/08/14 17:26:38 pwagner Exp $"
+d43 1
+a43 1
+    integer :: weekdayLength= 0     ! how many chars to output day-of-week
+d88 1
+d113 1
+d116 8
+a123 1
+    if ( options%inputFormat == 'tai' ) then
+d149 3
+a159 1
+      print *, 'Input was ', trim(date)
+d161 1
+d170 1
+a170 1
+    ! First: two special codes
+d176 9
+d374 1
+d412 3
+@
+
+
+1.7
+log
+@Added -R comdline option to handle dates before Jan 1 1993
+@
+text
+@d19 1
+a19 1
+     & YYYYMMDD_TO_DAI
+d28 1
+a28 1
+   "$Id: dateconverter.f90,v 1.6 2011/01/04 00:53:04 pwagner Exp $"
+d45 1
+d117 13
+a129 9
+      call yyyymmdd_to_dai( 2001, 1, 1, nDaysOffset, startingDate='19930101' )
+      ! print *, 'nDaysOffset: ', nDaysOffset
+      nDays = tai/secondsperday - nDaysOffset
+      ! print *, 'nDays: ', nDays
+      intermediate_date = adddaystoutc( '2001-01-01T00:00:00', nDays )
+      ! print *, 'date (no seconds): ', intermediate_date
+      tai = tai - (nDays+nDaysOffset)*secondsperday
+      ! print *, '(+ seconds): ', tai
+      date = addsecondstoutc( intermediate_date, tai )
+d293 3
+d370 1
+d390 3
+@
+
+
+1.6
+log
+@Among other improvements, can now convert times to {hours,seconds}-in-day
+@
+text
+@d16 7
+a22 7
+   use dates_module, ONLY: adddaystoutc, addhourstoutc, addsecondstoutc, &
+     & dai_to_yyyymmdd, dateForm, dayofweek, hoursinday, &
+     & reFormatDate, secondsinday, splitDateTime, &
+     & yyyymmdd_to_dai
+   use MACHINE, only: FILSEP, HP, IO_ERROR, GETARG
+   use MLSStringLists, ONLY: ExpandStringRange, StringElement
+   use MLSStrings, ONLY: lowerCase, ncopies, readNumsFromChars
+d28 1
+a28 1
+   "$Id: dateconverter.f90,v 1.5 2010/06/28 17:04:13 pwagner Exp $"
+d51 1
+a51 1
+    character(len=255) :: argRange= ' '        ! which arg numbers to do
+a67 1
+   integer                       :: dai
+d77 1
+a77 1
+   character (LEN=*), parameter  :: intermediateForm = 'yyyymmdd'
+d256 5
+d344 1
+d348 2
+a349 1
+      write (*,*) '               by default attempt to auto-recognize'
+d359 3
+a361 3
+      write (*,*) '       Run just the args defined by the expression range'
+      write (*,*) '       e.g., 7 means run only the 7th arg, '
+      write (*,*) '           1,3-9+2,12 means run args 1,3,5,7,9,12'
+d381 3
+@
+
+
+1.5
+log
+@Added 'tai' format to convert l2gp%time field
+@
+text
+@d17 2
+a18 1
+     & dai_to_yyyymmdd, dateForm, dayofweek, reFormatDate, splitDateTime, &
+d21 1
+a21 1
+   use MLSStringLists, ONLY: StringElement
+d28 1
+a28 1
+   "$Id: dateconverter.f90,v 1.4 2010/06/03 23:36:53 pwagner Exp $"
+d46 1
+d51 1
+d71 1
+d75 1
+d83 1
+d103 1
+d107 2
+d110 1
+d154 12
+a166 1
+    if ( options%offset /= 0 ) then
+d171 1
+a171 1
+      ! if ( options%verbose ) print *, 'intermediate_date', intermediate_date
+d173 1
+a173 1
+      ! if ( options%verbose ) print *, 'intermediate_date (advanced)', converted_date
+d180 1
+a180 1
+      ! if ( options%verbose ) print *, '1st date: ', trim(converted_date)
+d185 1
+a185 1
+      ! if ( options%verbose ) print *, 'mash date: ', trim(intermediate_date)
+d195 1
+a195 1
+      ! if ( options%verbose ) print *, '1st date: ', trim(converted_date)
+d200 1
+a200 1
+      ! if ( options%verbose ) print *, 'mash date: ', trim(intermediate_date)
+d210 1
+a210 1
+      ! print *, 'intermediate: ' // trim(intermediate_date)
+d268 4
+d284 4
+d326 36
+a361 23
+      write (*,*) ' Options: -o format   => output format to use (e.g. yyyymmdd)'
+      write (*,*) '                        by default output will complement input'
+      write (*,*) '                        e.g., "2004 October 01" <=> 2004-d275'
+      write (*,*) '                        a special code "utc" fuses date and time'
+      write (*,*) '                        e.g., "2007-274T23:59:59.9999Z'
+      write (*,*) '          -i format   => input format'
+      write (*,*) '                        if format is "tai", treat input as '
+      write (*,*) '                        (double-precision) seconds since'
+      write (*,*) '                        1993-01-01T00:00:00'
+      write (*,*) '                        by default attempt to auto-recognize'
+      write (*,*) '          -t time     => optional time-of-day (military-style)'
+      write (*,*) '                        e.g., "06:53:10"'
+      write (*,*) '          -number     => subtract "number" days'
+      write (*,*) '          +number     => add "number" days'
+      write (*,*) '          -H number   => subtract "number" hours'
+      write (*,*) '          +H number   => add "number" hours'
+      write (*,*) '          -S number   => subtract "number" seconds'
+      write (*,*) '          +S number   => add "number" seconds'
+      write (*,*) '          -v          => switch on verbose mode'
+      write (*,*) '          -w          => print day-of-week in 2 characters'
+      write (*,*) '          -WW..       => print day-of-week'
+      write (*,*) '                         in count[W] characters'
+      write (*,*) '          -h          => print brief help'
+d375 3
+@
+
+
+1.4
+log
+@Added option to print day-of-week
+@
+text
+@d17 2
+a18 1
+     & dai_to_yyyymmdd, dateForm, dayofweek, reFormatDate, splitDateTime
+d21 1
+a21 1
+   use MLSStrings, ONLY: lowerCase, ncopies, readIntsFromChars
+d27 1
+a27 1
+   "$Id: dateconverter.f90,v 1.3 2007/08/17 00:44:30 pwagner Exp $"
+d44 1
+a44 1
+    logical     :: utcFormat = .false.
+d69 1
+a69 1
+   integer :: ErrTyp
+d76 4
+d104 17
+d227 1
+a227 1
+        call readIntsFromChars(arg, options%hoursOffset)
+d233 1
+a233 1
+        call readIntsFromChars(arg, options%hoursOffset)
+d269 1
+a269 1
+        call readIntsFromChars(date, options%offset)
+d303 3
+d333 3
+@
+
+
+1.3
+log
+@May add seconds offset; rely more completely on dates module
+@
+text
+@d17 1
+a17 1
+     & dai_to_yyyymmdd, dateForm, reFormatDate, splitDateTime
+d20 1
+a20 1
+   use MLSStrings, ONLY: lowerCase, readIntsFromChars
+d26 1
+a26 1
+   "$Id: dateconverter.f90,v 1.2 2007/05/10 23:41:42 pwagner Exp $"
+d41 1
+d64 1
+a65 1
+   integer                       :: dai
+d77 1
+d122 1
+d165 9
+a173 2
+      converted_date = reFormatDate(date, &
+        & fromForm=trim(fromForm), toForm=trim(toForm))
+d240 6
+d291 3
+d308 3
+@
+
+
+1.2
+log
+@Fixed error in declared char size of date; now assumed shape
+@
+text
+@d13 1
+a13 1
+PROGRAM dateconverter
+d16 2
+a17 2
+   use dates_module, ONLY: addhourstoutc, &
+     & dai_to_yyyymmdd, reFormatDate, yyyymmdd_to_dai
+d26 1
+a26 1
+   "$Id: dateconverter.f90,v 1.1 2007/01/18 23:36:04 pwagner Exp $"
+d41 2
+a58 13
+   ! The following arrays contains the maximum permissible day for each month
+   ! where month=-1 means the whole year, month=1..12 means Jan, .., Dec
+   integer, dimension(-1:12), parameter :: DAYMAXLY = (/ &
+     & 366, 0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 &
+     & /)
+   integer, dimension(-1:12), parameter :: DAYMAXNY = (/ &
+     & 365, 0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 &
+     & /)
+  character(len=*), dimension(12), parameter :: MONTHNAME = (/ &
+    & 'January  ', 'February ', 'March    ', 'April    ', 'May      ', &
+    & 'June     ', 'July     ', 'August   ', 'September', 'October  ', &
+    & 'November ', 'December '/)
+
+d64 1
+a64 1
+   character (LEN=MAXLISTLENGTH) :: intermediate_date
+d66 2
+d69 2
+d72 2
+a75 5
+   character(len=*), parameter   :: MFORMAT = 'yyyy M dd'
+   character(len=*), parameter   :: DOYFORMAT = 'yyyy-doy'
+   integer                       :: dai
+   integer                       :: i
+   integer                       :: n_dates = 0
+d90 3
+d98 5
+a102 1
+    if ( options%outputFormat /= ' ' ) then
+d116 1
+d121 8
+a128 7
+      intermediate_date = reFormatDate(date, &
+        & fromForm=trim(fromForm), toForm=intermediateForm)
+      ! print *, 'intermediate_date', intermediate_date
+      call yyyymmdd_to_dai(intermediate_date, dai)
+      ! print *, 'dai', dai
+      dai = dai + options%offset
+      call dai_to_yyyymmdd(dai, intermediate_date)
+d130 1
+a130 1
+        fromForm=intermediateForm, toForm=trim(toForm))
+d135 1
+a135 1
+      if ( options%inputTime == ' ' ) options%inputTime = '00:00:00'
+d138 1
+a138 1
+        & adjustl(options%inputTime)
+d143 16
+a158 4
+      intermediate_date = StringElement( converted_date, 1, countEmpty=.true., &
+        & inseparator='T' )
+      converted_time = StringElement( converted_date, 2, countEmpty=.true., &
+        & inseparator='T' )
+d165 3
+a167 1
+    if ( options%inputTime /= ' ' ) then
+a173 137
+  subroutine advance ( values, dvalues )
+    integer, dimension(8), intent(inout) :: values
+    integer, dimension(8), intent(in)    :: dvalues
+    integer, dimension(8), parameter     :: lolimits = &
+      & (/1,     1,  1, 0,  0, 0,   0,  0/)
+    integer, dimension(8), parameter     :: uplimits = &
+      & (/2000, 12, -1, 0, 23, 59, 59, 999/)
+    integer :: hindx
+    integer :: indx
+    integer :: limit
+    integer, dimension(-1:12) :: DAYMAX
+    if ( leapyear(values(1)) ) then
+      DAYMAX = DAYMAXLY
+    else
+      DAYMAX = DAYMAXNY
+    endif
+    values = values + dvalues
+    do indx = 8, 2, -1
+      limit = uplimits(indx)
+      if ( limit == 0 ) cycle
+      if ( uplimits(indx-1) > 0 ) then
+        hindx = indx-1
+      else
+        hindx = indx-2
+      endif
+      if ( limit < 0 ) then
+        limit = DAYMAX(values(2))
+      endif
+      if ( values(indx) > limit ) then
+        values(hindx) = values(hindx) + 1
+        values(indx) = values(indx) - (limit+1) + lolimits(indx)
+      endif
+    enddo
+  end subroutine advance
+  logical function leapyear(year)
+    integer,intent(in) :: year
+     ! This is to capture rule that centuries are leap only
+     ! if divisible by 400
+     ! Otherwise, as prehaps you knew, leapyears are those years divisible by 4
+     if ( 100 * (year/100) >= year ) then
+       leapyear = ( 400 * (year/400) >= year )
+     else
+       leapyear = ( 4 * (year/4) >= year )
+     endif
+  end function leapyear
+  
+  function dateForm(date) result(form)
+    ! Determine what format the date is in
+    ! E.g., given '2004-d271' returns 'yyyy-doy'
+    ! Args
+    character(len=*), intent(in) :: date
+    character(len=len(date)+8) :: form
+    ! Internal variables
+    integer :: i
+    integer :: j
+    integer :: month
+    character(len=1)            :: s  ! The expected date field
+    character(len=1), parameter :: y = 'y'
+    character(len=1), parameter :: m = 'm'
+    character(len=1), parameter :: d = 'd'
+    ! Executable
+    form = 'unknown format'
+    if ( len_trim(date) < 1 ) return
+    form = ' '
+    s = 'y'
+    i = 0
+    j = 0
+    do
+      if ( j >= len_trim(date) ) exit
+      i = i + 1
+      j = j + 1
+      select case (date(j:j))
+      case ('d')
+        form(i:i+2) = 'doy'
+        i = i + 3
+        j = j + 3
+        ! print *, 'After d field: ', form
+      case ('J', 'F', 'M', 'A', 'S', 'O', 'N', 'D')
+        month = monthNameToNumber(date(j:))
+        if ( month < 1 .or. month > 12 ) then
+          form = 'month name uncrecognized in ' // trim(date(j:))
+          return
+        endif
+        j = j + len_trim(MONTHNAME(month)) - 1
+        form(i:i) = 'M'
+        s = 'd'
+        ! write(tempFormat(5:6),'(i2.2)') month
+        ! print *, 'After M field: ', form
+      case ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9')
+        select case (s)
+        case ('m')
+          ! Was yyyy, now mm
+          form(i:i+1) = 'mm'
+          s = 'd'
+          i = i + 1
+          j = j + 1
+          ! print *, 'After 0-9  m field: ', form
+        case ('d')
+          ! Was mm, now dd
+          form(i:i+1) = 'dd'
+          s = ' '
+          i = i + 1
+          j = j + 1
+          ! print *, 'After 0-9  d field: ', form
+        case ('y')
+          ! yyyy
+          form(i:i+3) = 'yyyy'
+          s = 'm'
+          i = i + 3
+          j = j + 3
+          ! print *, 'After 0-9  y field: ', form
+        case default
+          ! Huh? Already finished with dd
+          if ( options%verbose ) print *, 'Unexpected digit in dateForm'
+        end select
+      case default
+        form(i:i) = date(j:j)
+        ! print *, 'After default field: ', form
+      end select
+    enddo
+  end function dateForm
+  function monthNameToNumber(name) result(number)
+    ! Convert month name to corresponding number
+    ! E.g., given 'March', returns 3
+    ! As a courtesy, name may be case-insensitive
+    ! As a further courtesy, name may be followed by any junk you like
+    ! Thus 'March 23, 2004 01:59:59.999' still returns 3
+    ! If no such month is found, returns -1
+    ! Args
+    character(len=*), intent(in)             :: name
+    integer                                  :: number
+    do number=1, size(MONTHNAME)
+      if ( index(lowerCase(name), lowercase(trim(MONTHNAME(number)))) > 0 ) return
+    enddo
+    number = -1
+  end function monthNameToNumber
+
+d184 1
+a184 1
+  ! Get inputfile name, process command-line args
+d204 11
+d262 2
+d272 2
+d289 3
+@
+
+
+1.1
+log
+@Moved here from sandbox
+@
+text
+@d26 1
+a26 1
+   "$Id: dateconverter.f90,v 1.6 2006/11/01 20:48:52 pwagner Exp $"
+d301 1
+a301 1
+     character(LEN=255), intent(out) :: date          ! date
+d398 3
+@
+

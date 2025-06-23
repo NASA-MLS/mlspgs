@@ -1,0 +1,3098 @@
+head	2.76;
+access;
+symbols
+	v5-02-NRT-19:2.76
+	v6-00:2.76
+	v5-02-NRT-18:2.76
+	v5-02:2.75
+	v5-01-NRT-17:2.76
+	v5-01-NRT-16:2.76
+	v5-01-NRT-15:2.76
+	v5-01-NRT-14:2.76
+	neuralnetworks-1-0:2.76.0.4
+	cfm-single-freq-0-1:2.76.0.2
+	v5-01:2.75
+	v5-00:2.75
+	v4-23-TA133:2.74.0.6
+	mus-emls-1-70:2.74.0.4
+	rel-1-0-englocks-work:2.74.0.2
+	VUMLS1-00:2.74
+	VPL1-00:2.73
+	V4-22-NRT-08:2.73
+	VAM1-00:2.73
+	V4-21:2.73.0.2
+	V4-13:2.73
+	V4-12:2.73
+	V4-11:2.73
+	V4-10:2.72
+	V3-43:2.64
+	M4-00:2.67
+	V3-41:2.64
+	V3-40-PlusGM57:2.64.0.2
+	V2-24-NRT-04:2.60
+	V3-33:2.65
+	V2-24:2.60
+	V3-31:2.65
+	V3-30-NRT-05:2.64
+	cfm-01-00:2.64
+	V3-30:2.64
+	V3-20:2.64
+	V3-10:2.62
+	V2-23-NRT-02:2.60
+	V2-23:2.60
+	V2-22-NRT-01:2.60
+	V2-22:2.60
+	V2-21:2.60
+	V2-20:2.60
+	V2-11:2.60
+	V2-10:2.60
+	V2-00:2.60
+	V1-51:2.55
+	V1-50:2.55
+	V1-45:2.54
+	V1-44:2.54
+	V1-43:2.53
+	V1-42:2.52
+	V1-41:2.52
+	V1-32:2.51
+	V1-40:2.52
+	V1-31:2.51
+	V1-30:2.49
+	V1-13:2.46
+	V1-12:2.46
+	V1-11:2.46
+	V1-10:2.46
+	newfwm-feb03:2.46.0.2
+	V1-04:2.43
+	V1-03:2.43
+	V1-02:2.43
+	V1-00:2.42
+	newfwm-sep01:2.35.0.2
+	V0-7:2.35
+	V0-5-Level2:2.24
+	V0-5-SIPS:2.20;
+locks; strict;
+comment	@# @;
+
+
+2.76
+date	2020.07.28.20.31.43;	author vsnyder;	state Exp;
+branches;
+next	2.75;
+
+2.75
+date	2019.08.19.22.00.23;	author pwagner;	state Exp;
+branches;
+next	2.74;
+
+2.74
+date	2016.10.21.23.28.20;	author vsnyder;	state Exp;
+branches;
+next	2.73;
+
+2.73
+date	2014.05.20.22.16.24;	author vsnyder;	state Exp;
+branches;
+next	2.72;
+
+2.72
+date	2014.03.20.01.38.29;	author vsnyder;	state Exp;
+branches;
+next	2.71;
+
+2.71
+date	2013.12.12.01.59.44;	author vsnyder;	state Exp;
+branches;
+next	2.70;
+
+2.70
+date	2013.10.09.01.05.18;	author vsnyder;	state Exp;
+branches;
+next	2.69;
+
+2.69
+date	2013.09.19.23.26.44;	author vsnyder;	state Exp;
+branches;
+next	2.68;
+
+2.68
+date	2013.09.17.00.55.49;	author vsnyder;	state Exp;
+branches;
+next	2.67;
+
+2.67
+date	2012.01.05.01.14.11;	author pwagner;	state Exp;
+branches;
+next	2.66;
+
+2.66
+date	2011.04.18.19.28.05;	author vsnyder;	state Exp;
+branches;
+next	2.65;
+
+2.65
+date	2011.01.29.00.46.42;	author vsnyder;	state Exp;
+branches;
+next	2.64;
+
+2.64
+date	2010.02.04.23.03.25;	author vsnyder;	state Exp;
+branches;
+next	2.63;
+
+2.63
+date	2009.09.19.00.35.07;	author vsnyder;	state Exp;
+branches;
+next	2.62;
+
+2.62
+date	2009.06.23.18.25.43;	author pwagner;	state Exp;
+branches;
+next	2.61;
+
+2.61
+date	2008.08.27.19.58.30;	author vsnyder;	state Exp;
+branches;
+next	2.60;
+
+2.60
+date	2006.03.23.01.50.12;	author vsnyder;	state Exp;
+branches;
+next	2.59;
+
+2.59
+date	2006.01.11.16.59.36;	author pwagner;	state Exp;
+branches;
+next	2.58;
+
+2.58
+date	2005.12.29.01.09.49;	author vsnyder;	state Exp;
+branches;
+next	2.57;
+
+2.57
+date	2005.06.22.17.25.49;	author pwagner;	state Exp;
+branches;
+next	2.56;
+
+2.56
+date	2005.04.19.19.13.10;	author livesey;	state Exp;
+branches;
+next	2.55;
+
+2.55
+date	2004.11.17.20.23.09;	author vsnyder;	state Exp;
+branches;
+next	2.54;
+
+2.54
+date	2004.05.29.02.42.59;	author vsnyder;	state Exp;
+branches;
+next	2.53;
+
+2.53
+date	2004.01.14.18.50.25;	author vsnyder;	state Exp;
+branches;
+next	2.52;
+
+2.52
+date	2004.01.09.07.24.59;	author livesey;	state Exp;
+branches;
+next	2.51;
+
+2.51
+date	2003.09.15.17.01.09;	author livesey;	state Exp;
+branches;
+next	2.50;
+
+2.50
+date	2003.09.12.18.39.19;	author vsnyder;	state Exp;
+branches;
+next	2.49;
+
+2.49
+date	2003.08.16.01.14.03;	author vsnyder;	state Exp;
+branches;
+next	2.48;
+
+2.48
+date	2003.07.08.00.16.08;	author livesey;	state Exp;
+branches;
+next	2.47;
+
+2.47
+date	2003.05.29.16.36.09;	author livesey;	state Exp;
+branches;
+next	2.46;
+
+2.46
+date	2003.01.26.04.41.53;	author livesey;	state Exp;
+branches;
+next	2.45;
+
+2.45
+date	2003.01.07.23.43.59;	author livesey;	state Exp;
+branches;
+next	2.44;
+
+2.44
+date	2002.10.08.00.09.10;	author pwagner;	state Exp;
+branches;
+next	2.43;
+
+2.43
+date	2002.04.10.17.42.59;	author pwagner;	state Exp;
+branches;
+next	2.42;
+
+2.42
+date	2001.10.04.22.12.57;	author pwagner;	state Exp;
+branches;
+next	2.41;
+
+2.41
+date	2001.10.03.18.32.44;	author vsnyder;	state Exp;
+branches;
+next	2.40;
+
+2.40
+date	2001.10.03.17.38.11;	author vsnyder;	state Exp;
+branches;
+next	2.39;
+
+2.39
+date	2001.10.03.17.36.47;	author vsnyder;	state Exp;
+branches;
+next	2.38;
+
+2.38
+date	2001.10.02.23.39.39;	author vsnyder;	state Exp;
+branches;
+next	2.37;
+
+2.37
+date	2001.09.17.23.14.14;	author livesey;	state Exp;
+branches;
+next	2.36;
+
+2.36
+date	2001.09.17.22.53.23;	author livesey;	state Exp;
+branches;
+next	2.35;
+
+2.35
+date	2001.07.30.23.28.38;	author pwagner;	state Exp;
+branches;
+next	2.34;
+
+2.34
+date	2001.07.18.23.15.31;	author dwu;	state Exp;
+branches;
+next	2.33;
+
+2.33
+date	2001.07.17.18.53.31;	author jonathan;	state Exp;
+branches;
+next	2.32;
+
+2.32
+date	2001.07.13.19.04.56;	author dwu;	state Exp;
+branches;
+next	2.31;
+
+2.31
+date	2001.07.13.18.20.18;	author dwu;	state Exp;
+branches;
+next	2.30;
+
+2.30
+date	2001.07.10.23.46.35;	author jonathan;	state Exp;
+branches;
+next	2.29;
+
+2.29
+date	2001.07.06.18.55.40;	author jonathan;	state Exp;
+branches;
+next	2.28;
+
+2.28
+date	2001.05.31.22.07.33;	author livesey;	state Exp;
+branches;
+next	2.27;
+
+2.27
+date	2001.05.31.20.27.37;	author livesey;	state Exp;
+branches;
+next	2.26;
+
+2.26
+date	2001.05.29.22.45.45;	author livesey;	state Exp;
+branches;
+next	2.25;
+
+2.25
+date	2001.05.10.23.26.45;	author livesey;	state Exp;
+branches;
+next	2.24;
+
+2.24
+date	2001.05.03.22.27.04;	author livesey;	state Exp;
+branches;
+next	2.23;
+
+2.23
+date	2001.04.26.16.18.39;	author livesey;	state Exp;
+branches;
+next	2.22;
+
+2.22
+date	2001.04.26.02.33.03;	author vsnyder;	state Exp;
+branches;
+next	2.21;
+
+2.21
+date	2001.04.23.20.57.42;	author vsnyder;	state Exp;
+branches;
+next	2.20;
+
+2.20
+date	2001.04.09.20.59.35;	author vsnyder;	state Exp;
+branches;
+next	2.19;
+
+2.19
+date	2001.04.09.14.56.04;	author perun;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2001.04.04.17.56.42;	author vsnyder;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2001.04.04.17.21.12;	author pwagner;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2001.04.03.19.09.12;	author vsnyder;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2001.03.17.02.23.40;	author livesey;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2001.03.15.18.41.04;	author livesey;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2001.03.15.07.37.35;	author livesey;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2001.03.14.02.05.52;	author vsnyder;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2001.03.06.22.41.59;	author livesey;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2001.03.02.01.32.21;	author livesey;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2001.02.22.23.57.38;	author vsnyder;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2001.02.09.18.37.37;	author vsnyder;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2001.02.09.01.05.18;	author livesey;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2001.02.08.21.11.13;	author vsnyder;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2001.02.05.21.18.57;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2001.02.01.20.18.50;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2001.02.01.01.23.18;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2001.01.31.23.32.31;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2000.10.11.18.24.39;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.76
+log
+@Added ARRAY_ARRAY type-checker flag. Changed value of U flag
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module intrinsic
+
+! Intrinsic constants needed by Init_Tables_Module, DeclarationTable, etc.
+
+! Declaring the definitions is handled by the tree walker.
+
+  implicit none
+  public
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: intrinsic.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+! A "spec_def" vertex may be decorated with (sums of) the following flags:
+  integer, parameter :: NO_DUP = 1         ! Duplicate fields prohibited
+  integer, parameter :: ALL_FIELDS = 2     ! All fields required
+  integer, parameter :: NO_POSITIONAL = 4  ! Positional fields prohibited
+! A "field_type", "field_spec" or "dot" vertex may be decorated with (sums of)
+! the following flags:
+  integer, parameter :: NO_ARRAY = 1       ! Field must be scalar
+  integer, parameter :: ARRAY_ARRAY = 2    ! Array elements as arrays OK
+  integer, parameter :: REQ_FLD = 4        ! Required field
+  integer, parameter :: EMPTY_OK = 8       ! Field can have empty value
+  integer, parameter :: EXPR_OK = 16       ! Expr of dots is OK
+  integer, parameter :: U = 64             ! U*PHYQ_... requires those units
+! A "section" vertex may be decorated with the following flag:
+  integer, parameter :: NO_CHECK_EQ = 1    ! Don't check whether the section's
+                                           ! A=B contents are allowed.
+
+  integer, parameter :: T_First             = 1
+! Types of entities in the declaration table:
+  integer, parameter :: T_Unknown           = t_first
+  integer, parameter :: T_Empty             = t_unknown + 1
+  integer, parameter :: T_Do_label          = t_empty + 1 ! DO, CASE or IF
+  integer, parameter :: T_Enum_name         = t_do_label + 1
+  integer, parameter :: T_Field_name        = t_enum_name + 1
+  integer, parameter :: T_Function_name     = t_field_name + 1
+  integer, parameter :: T_Label             = t_function_name + 1 ! of a spec
+  integer, parameter :: T_Param_name        = t_label + 1 
+  integer, parameter :: T_Phys_unit_name    = t_param_name + 1    ! PHYS_....
+  integer, parameter :: T_Section_name      = t_phys_unit_name + 1
+  integer, parameter :: T_Spec_name         = t_section_name + 1
+  integer, parameter :: T_Tree_name         = t_spec_name + 1     ! e.g. n_plus
+  integer, parameter :: T_Type_name         = t_tree_name + 1
+  integer, parameter :: T_Unit_name         = t_type_name + 1
+  integer, parameter :: T_Variable_name     = t_unit_name + 1
+! Result type from Vector_Qty_Expr
+  integer, parameter :: T_A_DOT_B           = t_variable_name + 1
+! Declaration table types of names of LHS entities in Algebra_m
+  integer, parameter :: T_Exprn             = t_a_dot_b + 1 ! Scalar
+  integer, parameter :: T_Exprn_m           = t_exprn + 1         ! Matrix
+  integer, parameter :: T_Exprn_v           = t_exprn_m + 1       ! Vector
+! Data types that don't have enumerated literals:
+  integer, parameter :: T_Numeric           = t_exprn_v + 1
+  integer, parameter :: T_Numeric_range     = t_numeric + 1
+  integer, parameter :: T_String            = t_numeric_range + 1
+  integer, parameter :: T_String_range      = t_string + 1
+! Enumeration types:
+  integer, parameter :: T_Boolean           = t_string_range + 1
+  integer, parameter :: T_Instrument        = t_boolean + 1
+  integer, parameter :: T_Polarization      = t_instrument + 1
+  integer, parameter :: Last_Intrinsic_Type = t_polarization
+
+! We don't define any fields here, but here's the first index:
+  integer, parameter :: Field_First = 1
+
+! Abstract physical quantities:
+  integer, parameter :: First_PhyQ = 0
+  integer, parameter :: PhyQ_Invalid =         first_phyq ! Invalid unit given by user
+  integer, parameter :: PhyQ_Dimensionless =   phyq_invalid+1     ! Dimensionless quantity
+  integer, parameter :: PhyQ_Length =          phyq_dimensionless+1  ! Default meters
+  integer, parameter :: PhyQ_Time =            phyq_length+1         ! Default seconds
+  integer, parameter :: PhyQ_Pressure =        phyq_time+1        !  Default millibars
+  integer, parameter :: PhyQ_Temperature =     phyq_pressure+1    ! Default Kelvins
+  integer, parameter :: PhyQ_Vmr =             phyq_temperature+1 ! Default parts-per-one
+  integer, parameter :: PhyQ_Angle =           phyq_vmr+1         ! Default degrees
+  integer, parameter :: PhyQ_Mafs =            phyq_angle+1       ! Default MAFs
+  integer, parameter :: PhyQ_Mifs =            phyq_mafs+1        ! Default MIFs
+  integer, parameter :: PhyQ_Frequency =       phyq_mifs+1        ! Default MHz
+  integer, parameter :: PhyQ_Zeta =            phyq_frequency+1   ! log10(pressure/hPa)
+  integer, parameter :: PhyQ_Velocity =        phyq_zeta+1        ! Default meters/second
+  integer, parameter :: PhyQ_Extinction =      phyq_velocity+1    ! Default 1/meters
+  integer, parameter :: PhyQ_Icedensity =      phyq_extinction+1  ! Default g/meters^3
+  integer, parameter :: PhyQ_Colmabundance =   phyq_icedensity+1  ! Default log10 g/meters^3
+  integer, parameter :: PhyQ_Pctrhi =          phyq_colmabundance+1 ! default %RHI
+  integer, parameter :: PhyQ_Gauss =           phyq_pctrhi + 1
+  integer, parameter :: PhyQ_Profiles =        phyq_gauss + 1
+  integer, parameter :: Last_phyq = phyq_profiles
+  integer :: PhyQ_Indices(first_phyq:last_phyq)
+
+! Enumeration literals:
+  integer, parameter :: FIRST_LIT       = 1
+  integer, save      :: LAST_AUTO_LIT   = 0 ! INIT_TABLES_MODULE should reset 
+! Don't edit the following file directly -- it is generated automatically
+! based on the file lit_names.txt (which is the file you ought to edit).
+  include 'lit_parm.f9h'
+
+  ! Specifications
+  integer, parameter :: Spec_First = 1
+  integer, parameter :: S_TIME          = Spec_First
+  integer, parameter :: Last_Intrinsic_Spec = S_Time
+
+  ! The following parameters are for building trees:
+  integer, parameter :: BEGIN = -1  ! Start of a tree
+  integer, parameter :: D = 1000000 ! Decoration, D*1 on n_func_def requires
+                                    ! uniform but unspecified argument types
+  integer, parameter :: DU = d*u    ! DU*PHYQ_... on n_field_type requires those
+                                    ! units.  DU*type on n_func_def specifies
+                                    ! function result type, else the result
+                                    ! type is the same as the first argument.
+  integer, parameter :: F = 1000    ! Field index
+  integer, parameter :: G = 2000    ! Function index
+  integer, parameter :: L = 3000    ! Lit index
+  integer, parameter :: N = 0       ! Tree index
+  integer, parameter :: NADP = n+d*(all_fields+no_dup+no_positional)
+  integer, parameter :: NC = n+d*no_check_eq
+  integer, parameter :: ND = n+d*no_dup
+  integer, parameter :: NDP = n+d*(no_dup+no_positional)
+  integer, parameter :: NDR = n+d*(no_dup+req_fld)
+  integer, parameter :: NP = n+d*no_positional
+  integer, parameter :: NR = n+d*req_fld
+  integer, parameter :: NRS = n+d*(no_array+req_fld)
+  integer, parameter :: NS = n+d*no_array
+  integer, parameter :: P = 4000    ! Parameter index
+  integer, parameter :: S = 5000    ! Spec index
+  integer, parameter :: T = 6000    ! Type index
+  integer, parameter :: Z = 7000    ! Section index
+
+  ! Tables used for type checking:
+  integer, save, pointer, dimension(:) :: Data_Type_Indices  => NULL()
+  integer, save, pointer, dimension(:) :: Field_Indices      => NULL()
+  integer, save, pointer, dimension(:) :: Func_Indices       => NULL()
+  integer, save, pointer, dimension(:) :: Lit_Indices        => NULL()
+  integer, save, pointer, dimension(:) :: Parm_Indices       => NULL()
+  integer, save, pointer, dimension(:) :: Section_Indices    => NULL()
+  integer, save, pointer, dimension(:) :: Spec_Indices       => NULL()
+  
+  ! Private procedures
+  private :: allocate_test, deallocate_test
+
+contains ! =====     Public procedures     =============================
+! -----------------------------------------------  INIT_INTRINSIC  -----
+  subroutine INIT_INTRINSIC ( N_DATA_TYPE_INDICES, N_FIELD_INDICES, &
+    & N_LIT_INDICES, FIRST_PARM_INDEX, LAST_PARM_INDEX, N_SECTION_INDICES, &
+    & N_SPEC_INDICES, N_FUNC_INDICES )
+
+    ! This really belongs in make_tree, but "make depends" can't see it there
+    ! (because of the "include"):
+
+    ! use Allocate_Deallocate, only: Allocate_Test
+    use Tree, only: ! Build_tree, Push_pseudo_terminal
+    use Tree_Types, only: N_Dt_Def
+
+    integer, intent(in) :: N_DATA_TYPE_INDICES
+    integer, intent(in) :: N_FIELD_INDICES
+    integer, intent(in) :: N_LIT_INDICES
+    integer, intent(in) :: FIRST_PARM_INDEX, LAST_PARM_INDEX
+    integer, intent(in) :: N_SECTION_INDICES
+    integer, intent(in) :: N_SPEC_INDICES
+    integer, intent(in) :: N_FUNC_INDICES
+
+    ! Allocate the string index tables for the various categories of
+    ! names
+    call allocate_test ( data_type_indices, n_data_type_indices, &
+      & 'DATA_TYPE_INDICES', moduleName )
+    call allocate_test ( field_indices, n_field_indices, &
+      & 'FIELD_INDICES', moduleName )
+    call allocate_test ( lit_indices, n_lit_indices, &
+      & 'LIT_INDICES', moduleName )
+    call allocate_test ( parm_indices, last_parm_index, &
+      & 'PARM_INDICES', moduleName, lowBound=first_parm_index )
+    call allocate_test ( section_indices, n_section_indices, &
+      & 'SECTION_INDICES', moduleName )
+    call allocate_test ( spec_indices, n_spec_indices, &
+      & 'SPEC_INDICES', moduleName )
+    call allocate_test ( func_indices, n_func_indices, &
+      & 'FUNC_INDICES', moduleName )
+
+    ! Put intrinsic predefined identifiers into the symbol table.
+
+    ! Put declaration-table names into symbol table
+    data_type_indices(t_unknown) =         add_ident ( 'unknown' )
+    data_type_indices(t_empty) =           add_ident ( 'empty' )
+    data_type_indices(t_do_label) =        add_ident ( 'do label' )
+    data_type_indices(t_enum_name) =       add_ident ( 'enum name' )
+    data_type_indices(t_field_name) =      add_ident ( 'field name' )
+    data_type_indices(t_function_name) =   add_ident ( 'function name' )
+    data_type_indices(t_label) =           add_ident ( 'label' )
+    data_type_indices(t_param_name) =      add_ident ( 'param name' )
+    data_type_indices(t_phys_unit_name) =  add_ident ( 'phys unit name' )
+    data_type_indices(t_section_name) =    add_ident ( 'section name' )
+    data_type_indices(t_spec_name) =       add_ident ( 'spec name' )
+    data_type_indices(t_tree_name) =       add_ident ( 'tree name' )
+    data_type_indices(t_type_name) =       add_ident ( 'type name' )
+    data_type_indices(t_unit_name) =       add_ident ( 'unit name' )
+    data_type_indices(t_variable_name) =   add_ident ( 'variable name' )
+    ! Put result type from Vector_Qty_Expr into the symbol table
+    data_type_indices(t_a_dot_b) =         add_ident ( 'a.b' )
+    ! Put type names of declarations of Algebra_m LHS's into the symbol table
+    data_type_indices(t_exprn) =           add_ident ( 'exprn' )
+    data_type_indices(t_exprn_m) =         add_ident ( 'exprn_m' )
+    data_type_indices(t_exprn_v) =         add_ident ( 'exprn_v' )
+    ! Put intrinsic non-enumeration type names into the symbol table
+    data_type_indices(t_numeric) =         add_ident ( 'numeric' )
+    data_type_indices(t_numeric_range) =   add_ident ( 'numeric_range' )
+    data_type_indices(t_string) =          add_ident ( 'string' )
+    data_type_indices(t_string_range) =    add_ident ( 'string_range' )
+    ! Put intrinsic enumeration type names into the symbol table
+    data_type_indices(t_boolean) =         add_ident ( 'boolean' )
+    data_type_indices(t_instrument) =      add_ident ( 'instrument' )
+    data_type_indices(t_polarization) =    add_ident ( 'polarization' )
+    ! Put intrinsic enumeration literals into the symbol table:
+! Don't edit the following file directly--it is generated automatically
+! based on the file lit_names.txt
+    include 'lit_add.f9h'
+
+    ! Put spec names into the symbol table
+    spec_indices(s_time) =                 add_ident ( 'time' )
+
+    ! Put abstract physical quantities into the symbol table
+    phyq_indices(phyq_invalid) =           add_ident ( 'invalid' )
+    phyq_indices(phyq_dimensionless) =     add_ident ( 'dimensionless' )
+    phyq_indices(phyq_length) =            add_ident ( 'length' )
+    phyq_indices(phyq_time) =              add_ident ( 'time' )
+    phyq_indices(phyq_pressure) =          add_ident ( 'pressure' )
+    phyq_indices(phyq_temperature) =       add_ident ( 'temperature' )
+    phyq_indices(phyq_vmr) =               add_ident ( 'vmr' )
+    phyq_indices(phyq_angle) =             add_ident ( 'angle' )
+    phyq_indices(phyq_mafs) =              add_ident ( 'mafs' )
+    phyq_indices(phyq_mifs) =              add_ident ( 'mifs' )
+    phyq_indices(phyq_frequency) =         add_ident ( 'frequency' )
+    phyq_indices(phyq_velocity) =          add_ident ( 'velocity' )
+    phyq_indices(phyq_zeta) =              add_ident ( 'zeta' )
+    phyq_indices(phyq_extinction) =        add_ident ( 'extinction' )
+    phyq_indices(phyq_icedensity) =        add_ident ( 'iceDensity' )
+    phyq_indices(phyq_colmabundance) =     add_ident ( 'colmabundance' )
+    phyq_indices(phyq_pctrhi) =            add_ident ( 'pctrhi' )
+    phyq_indices(phyq_gauss) =             add_ident ( 'gauss' )
+    phyq_indices(phyq_profiles) =          add_ident ( 'profiles' )
+
+  ! Definitions are represented by trees.  The notation in the comments
+  ! for the trees is < root first_son ... last_son >.  This is sometimes
+  ! called "Cambridge Polish Notation."  It was developed to represent
+  ! LISP by McCarthy et. al. at MIT (in Cambridge, MA).
+
+  ! Notice that in the argument for make_tree, the tree node id is at
+  ! the END of the subtree, while in Cambridge Polish Notation it is at
+  ! the BEGINNING of the subtree!
+
+  ! Put the definition trees into the tree space before the parser runs.
+  ! After the parsing is done, they're automatically "glued in" to the
+  ! "left" of the trees that represent the input.  The tree-walker
+  ! stumbles upon them in its normal course of operation, never really
+  ! realizing they're special (because by then they're not).
+
+  ! Start with the definitions of types. These are represented by trees of
+  ! the form  < n_dt_def t_type_name l_lit ... l_lit >
+
+    ! Define the intrinsic data types
+    call make_tree ( (/ &
+      begin, t+t_numeric, n+n_dt_def, &
+      begin, t+t_numeric_range, n+n_dt_def, &
+      begin, t+t_string, n+n_dt_def, &
+      begin, t+t_string_range, n+n_dt_def /) )
+    ! Define the enumerated types
+    call make_tree ( (/ &
+      begin, t+t_boolean, l+l_true, l+l_false, n+n_dt_def,   &
+      begin, t+t_instrument, l+l_emls, l+l_umls, l+l_xptl1, n+n_dt_def, &
+      begin, t+t_polarization, l+l_a, l+l_b, n+n_dt_def /) )
+
+  contains
+    ! ................................................  MAKE_TREE  .....
+    include "make_tree.f9h"
+    
+  end subroutine INIT_INTRINSIC
+
+  ! --------------------------------------------------  Add_Ident  -----
+  integer function ADD_IDENT ( TEXT )
+    use Symbol_Table, only: Enter_Terminal
+    use Symbol_Types, only: T_Identifier
+    character(len=*), intent(in) :: TEXT
+    add_ident = enter_terminal ( text, t_identifier )
+  end function ADD_IDENT
+
+  ! -----------------------------------  DestroyTypeCheckerTables  -----
+  subroutine DestroyTypeCheckerTables
+    ! use Allocate_Deallocate, only: Deallocate_Test
+    call deallocate_test ( data_type_indices, 'DATA_TYPE_INDICES', moduleName )
+    call deallocate_test ( field_indices,     'FIELD_INDICES',     moduleName )
+    call deallocate_test ( lit_indices,       'LIT_INDICES',       moduleName )
+    call deallocate_test ( parm_indices,      'PARM_INDICES',      moduleName )
+    call deallocate_test ( section_indices,   'SECTION_INDICES',   moduleName )
+    call deallocate_test ( spec_indices,      'SPEC_INDICES',      moduleName )
+  end subroutine
+
+  ! ---------------------------------------------------  Get_Type  -----
+  integer function Get_Type ( Type_Index )
+    ! Return the string index for a type name.  The reason for the
+    ! existence of this function is to pass it to procedures that otherwise
+    ! do not need to access this module by use association.
+    integer, intent(in) :: Type_Index
+    if ( type_index >= lbound(data_type_indices,1) .and. &
+       & type_index <= ubound(data_type_indices,1) ) then
+      get_type = data_type_indices ( type_index )
+    else
+      get_type = 0
+    end if
+  end function Get_Type
+  
+  ! Try to avoid USE-ing Allocate_Deallocate to lift circular dependency
+  subroutine deallocate_test ( indices, type_str, whereami )
+    ! Args
+    integer, pointer, dimension(:)          :: indices
+    character(len=*), intent(in)            :: type_str, whereami
+    ! Internal variables
+    integer                                 :: status ! 0 success, ! 0 failure
+    character(len=127)                      :: ermsg  ! any clue why?
+    ! Executable
+    deallocate( indices, stat=status, errmsg=ermsg )
+    if ( status == 0 ) return
+    print *, 'Failed to deallocate ' // type_str // ' in ' // whereami
+    print *, trim(ermsg)
+  end subroutine deallocate_test
+
+  subroutine allocate_test ( indices, n, type_str, whereami, lowbound )
+    ! Args
+    integer, pointer, dimension(:)          :: indices
+    integer, intent(in)                     :: n
+    character(len=*), intent(in)            :: type_str, whereami
+    integer, intent(in), optional           :: lowbound
+    ! Internal variables
+    integer                                 :: n1 ! low bound of indices
+    integer                                 :: status ! 0 success, ! 0 failure
+    character(len=127)                      :: ermsg  ! any clue why?
+    ! Executable
+    n1 = 1
+    if ( present(lowbound) ) n1 = lowbound
+    allocate( indices(n1:n), stat=status, errmsg=ermsg )
+    if ( status == 0 ) return
+    print *, 'Failed to allocate ' // type_str // ' in ' // whereami
+    print *, trim(ermsg)
+  end subroutine allocate_test
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: intrinsic.f90,v 2.75 2019/08/19 22:00:23 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module INTRINSIC
+
+! $Log: intrinsic.f90,v $
+! Revision 2.75  2019/08/19 22:00:23  pwagner
+! Avoid USE-ing Allocate_Deallocate due to circular dependency
+!
+! Revision 2.74  2016/10/21 23:28:20  vsnyder
+! Remove unused USE name
+!
+! Revision 2.73  2014/05/20 22:16:24  vsnyder
+! Don't go out of bounds in Get_Type
+!
+! Revision 2.72  2014/03/20 01:38:29  vsnyder
+! Unify types in Intrinsic instead of having a separate system in
+! Declaration_Table.
+!
+! Revision 2.71  2013/12/12 01:59:44  vsnyder
+! Change type of debug from logical to integer, add 'unknown' type
+!
+! Revision 2.70  2013/10/09 01:05:18  vsnyder
+! Comments to clarify use of D and DU
+!
+! Revision 2.69  2013/09/19 23:26:44  vsnyder
+! Add Expr_OK
+!
+! Revision 2.68  2013/09/17 00:55:49  vsnyder
+! Add A_Dot_B type
+!
+! Revision 2.67  2012/01/05 01:14:11  pwagner
+! Added get_phyq function to phyq indices; also LAST_AUTO_LIT
+!
+! Revision 2.66  2011/04/18 19:28:05  vsnyder
+! Add NC for unchecked parameters in sections
+!
+! Revision 2.65  2011/01/29 00:46:42  vsnyder
+! Add units checking
+!
+! Revision 2.64  2010/02/04 23:03:25  vsnyder
+! Remove PHYQ_LOGICEDENSITY
+!
+! Revision 2.63  2009/09/19 00:35:07  vsnyder
+! Add phyq_logIceDensity
+!
+! Revision 2.62  2009/06/23 18:25:43  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.61  2008/08/27 19:58:30  vsnyder
+! Add PRINT to not_used_here
+!
+! Revision 2.60  2006/03/23 01:50:12  vsnyder
+! Add Empty_OK parameter
+!
+! Revision 2.59  2006/01/11 16:59:36  pwagner
+! Abstract phys quant now colmabundance
+!
+! Revision 2.58  2005/12/29 01:09:49  vsnyder
+! Add string for PHYQ_Profiles
+!
+! Revision 2.57  2005/06/22 17:25:49  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.56  2005/04/19 19:13:10  livesey
+! Changed mls1 to xptl1
+!
+! Revision 2.55  2004/11/17 20:23:09  vsnyder
+! Add NRS and NS (scalar required) tags for fields
+!
+! Revision 2.54  2004/05/29 02:42:59  vsnyder
+! Rearrange function definition stuff
+!
+! Revision 2.53  2004/01/14 18:50:25  vsnyder
+! Stuff to support the Algebra section
+!
+! Revision 2.52  2004/01/09 07:24:59  livesey
+! Added the fictitious instrument mls1
+!
+! Revision 2.51  2003/09/15 17:01:09  livesey
+! Put the use statement back, it's needed because the includes need
+! it and make doesn't spot it in there.
+!
+! Revision 2.49  2003/08/16 01:14:03  vsnyder
+! Add optional 'polarization' field to 'radiometer' spec
+!
+! Revision 2.48  2003/07/08 00:16:08  livesey
+! Added ndr
+!
+! Revision 2.47  2003/05/29 16:36:09  livesey
+! Added ident for phyq_gauss
+!
+! Revision 2.46  2003/01/26 04:41:53  livesey
+! Added phyq_profiles
+!
+! Revision 2.45  2003/01/07 23:43:59  livesey
+! Added Gauss
+!
+! Revision 2.44  2002/10/08 00:09:10  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.43  2002/04/10 17:42:59  pwagner
+! Added pctrhi unit
+!
+! Revision 2.42  2001/10/04 22:12:57  pwagner
+! Now includes files lit_add.f9h and lit_parm.f9h
+!
+! Revision 2.41  2001/10/03 18:32:44  vsnyder
+! OOPS, forgot some lit_indices(...) = add_ident(...)
+!
+! Revision 2.40  2001/10/03 17:38:11  vsnyder
+! OOPS, defined L_DNWT_SQ twice
+!
+! Revision 2.39  2001/10/03 17:36:47  vsnyder
+! Add lits for DNWT quantities
+!
+! Revision 2.38  2001/10/02 23:39:39  vsnyder
+! Add L_DegreesOfFreedom
+!
+! Revision 2.37  2001/09/17 23:14:14  livesey
+! Bug fix, added name for t_instrument
+!
+! Revision 2.36  2001/09/17 22:53:23  livesey
+! Added t_instrument, l_emls and l_umls
+!
+! Revision 2.35  2001/07/30 23:28:38  pwagner
+! Added columnAbundances scaffolding--needs fleshing out
+!
+! Revision 2.34  2001/07/18 23:15:31  dwu
+! rename l_radiusofearth as l_earthradius
+!
+! Revision 2.33  2001/07/17 18:53:31  jonathan
+! remove earthradius (redundant quantity),jonathan/wu
+!
+! Revision 2.32  2001/07/13 19:04:56  dwu
+! fix problem after adding lostransfunc
+!
+! Revision 2.31  2001/07/13 18:20:18  dwu
+! add quantity losTransFunc
+!
+! Revision 2.30  2001/07/10 23:46:35  jonathan
+! added l_icedensity, paul/jonathan
+!
+! Revision 2.29  2001/07/06 18:55:40  jonathan
+! Modified for cloud model, Paul/Jonathan
+!
+! Revision 2.28  2001/05/31 22:07:33  livesey
+! Updated cloud quantity types
+!
+! Revision 2.27  2001/05/31 20:27:37  livesey
+! New vector type associated with cloud quantities.
+!
+! Revision 2.26  2001/05/29 22:45:45  livesey
+! Moved some state vector component literals in from l2/init_tables_module.f90
+!
+! Revision 2.25  2001/05/10 23:26:45  livesey
+! Added isotope ratio vector quantity type.
+!
+! Revision 2.24  2001/05/03 22:27:04  livesey
+! Added l_heightoffset
+!
+! Revision 2.23  2001/04/26 16:18:39  livesey
+! Fixed bug. All those nice integer arrays weren't initially nullified, whoops!
+!
+! Revision 2.22  2001/04/26 02:33:03  vsnyder
+! Moved *_indices declarations from init_tables_module to intrinsic
+!
+! Revision 2.21  2001/04/23 20:57:42  vsnyder
+! Move the first spec (time) to 'intrinsic'
+!
+! Revision 2.20  2001/04/09 20:59:35  vsnyder
+! Add C (for Celsius) unit and l_c name for it
+!
+! Revision 2.19  2001/04/09 14:56:04  perun
+! Corrected enumeration literal definition for l_temperature
+!
+! Revision 2.18  2001/04/04 17:56:42  vsnyder
+! Insert "USE TREE" because "make depends" can't see the one in "make_tree"
+! (because of the "include").
+!
+! Revision 2.17  2001/04/04 17:21:12  pwagner
+! Added extra use tree line to tweak dependencies
+!
+! Revision 2.16  2001/04/03 19:09:12  vsnyder
+! Change the order of initialization to intrinsic, Molecules, MLSSignals.
+! Use the revised make_tree.f9h, which requires revision of init...
+! calling sequences.
+!
+! Revision 2.15  2001/03/17 02:23:40  livesey
+! Bug fix, defined phyq_indices(phyq_velocity)
+!
+! Revision 2.14  2001/03/15 18:41:04  livesey
+! Added some more, losvel etc.
+!
+! Revision 2.13  2001/03/15 07:37:35  livesey
+! Added l_frequency
+!
+! Revision 2.12  2001/03/14 02:05:52  vsnyder
+! Moved MLSSignals_m to mlspgs/lib.
+!
+! Revision 2.11  2001/03/06 22:41:59  livesey
+! Minor changes
+!
+! Revision 2.10  2001/03/02 01:32:21  livesey
+! Added some new PHYQs
+!
+! Revision 2.9  2001/02/22 23:57:38  vsnyder
+! Remove ", public" from parameters, because default accessibility is public
+!
+! Revision 2.8  2001/02/09 18:37:37  vsnyder
+! Add REQ_FLD flag for specification definitions
+!
+! Revision 2.7  2001/02/09 01:05:18  livesey
+! Thought I'd done this
+!
+! Revision 2.6  2001/02/08 21:11:13  vsnyder
+! Move "theta" from init_tables_module to intrinsic.
+!
+! Revision 2.5  2001/02/05 21:18:57  vsnyder
+! Add parameters for type checking rules.
+!
+! Revision 2.4  2001/02/01 20:18:50  vsnyder
+! Correct index and spelling for gph_precision and temperature_precision
+!
+! Revision 2.3  2001/02/01 01:23:18  vsnyder
+! Account for the Molecules module
+!
+! Revision 2.2  2001/01/31 23:32:31  vsnyder
+! Moved l_temperature l_temperature_prec l_ptan l_tangentheight l_sidebandratio
+! l_scvel l_orbitinclination l_geodaltitude l_radiance l_scanresidual l_gph
+! l_gph_precision l_refgph l_baseline l_extinction l_linewidth from L2's
+! init_tables_module
+!
+! Revision 2.1  2000/10/11 18:24:39  vsnyder
+! Initial entry
+!
+@
+
+
+2.75
+log
+@Avoid USE-ing Allocate_Deallocate due to circular dependency
+@
+text
+@d28 3
+a30 3
+  integer, parameter :: NO_DUP = 1        ! Duplicate fields prohibited
+  integer, parameter :: ALL_FIELDS = 2    ! All fields required
+  integer, parameter :: NO_POSITIONAL = 4 ! Positional fields prohibited
+d33 6
+a38 5
+  integer, parameter :: NO_ARRAY = 1      ! Field must be scalar
+  integer, parameter :: REQ_FLD = 2       ! Required field
+  integer, parameter :: EMPTY_OK = 4      ! Field can have empty value
+  integer, parameter :: EXPR_OK = 8       ! Expr of dots is OK
+  integer, parameter :: U = 20            ! U*PHYQ_... requires those units
+d40 2
+a41 2
+  integer, parameter :: NO_CHECK_EQ = 1   ! Don't check whether the section's
+                                          ! A=B contents are allowed.
+d360 1
+a360 1
+       "$Id: intrinsic.f90,v 2.74 2016/10/21 23:28:20 vsnyder Exp $"
+d370 3
+@
+
+
+2.74
+log
+@Remove unused USE name
+@
+text
+@d12 1
+a12 1
+module INTRINSIC
+d18 1
+a18 1
+  implicit NONE
+d42 1
+a42 1
+  integer, parameter :: T_FIRST             = 1
+d44 15
+a58 15
+  integer, parameter :: T_UNKNOWN           = t_first
+  integer, parameter :: T_EMPTY             = t_unknown + 1
+  integer, parameter :: T_DO_LABEL          = t_empty + 1 ! DO, CASE or IF
+  integer, parameter :: T_ENUM_NAME         = t_do_label + 1
+  integer, parameter :: T_FIELD_NAME        = t_enum_name + 1
+  integer, parameter :: T_FUNCTION_NAME     = t_field_name + 1
+  integer, parameter :: T_LABEL             = t_function_name + 1 ! of a spec
+  integer, parameter :: T_PARAM_NAME        = t_label + 1 
+  integer, parameter :: T_PHYS_UNIT_NAME    = t_param_name + 1    ! PHYS_....
+  integer, parameter :: T_SECTION_NAME      = t_phys_unit_name + 1
+  integer, parameter :: T_SPEC_NAME         = t_section_name + 1
+  integer, parameter :: T_TREE_NAME         = t_spec_name + 1     ! e.g. n_plus
+  integer, parameter :: T_TYPE_NAME         = t_tree_name + 1
+  integer, parameter :: T_UNIT_NAME         = t_type_name + 1
+  integer, parameter :: T_VARIABLE_NAME     = t_unit_name + 1
+d62 3
+a64 3
+  integer, parameter :: T_EXPRN             = t_a_dot_b + 1 ! Scalar
+  integer, parameter :: T_EXPRN_M           = t_exprn + 1         ! Matrix
+  integer, parameter :: T_EXPRN_V           = t_exprn_m + 1       ! Vector
+d66 4
+a69 4
+  integer, parameter :: T_NUMERIC           = t_exprn_v + 1
+  integer, parameter :: T_NUMERIC_RANGE     = t_numeric + 1
+  integer, parameter :: T_STRING            = t_numeric_range + 1
+  integer, parameter :: T_STRING_RANGE      = t_string + 1
+d71 4
+a74 4
+  integer, parameter :: T_BOOLEAN           = t_string_range + 1
+  integer, parameter :: T_INSTRUMENT        = t_boolean + 1
+  integer, parameter :: T_POLARIZATION      = t_instrument + 1
+  integer, parameter :: LAST_INTRINSIC_TYPE = t_polarization
+d80 22
+a101 22
+  integer, parameter :: FIRST_PHYQ = 0
+  integer, parameter :: PHYQ_INVALID =         first_phyq ! Invalid unit given by user
+  integer, parameter :: PHYQ_DIMENSIONLESS =   phyq_invalid+1     ! Dimensionless quantity
+  integer, parameter :: PHYQ_LENGTH =          phyq_dimensionless+1  ! Default meters
+  integer, parameter :: PHYQ_TIME =            phyq_length+1         ! Default seconds
+  integer, parameter :: PHYQ_PRESSURE =        phyq_time+1        !  Default millibars
+  integer, parameter :: PHYQ_TEMPERATURE =     phyq_pressure+1    ! Default Kelvins
+  integer, parameter :: PHYQ_VMR =             phyq_temperature+1 ! Default parts-per-one
+  integer, parameter :: PHYQ_ANGLE =           phyq_vmr+1         ! Default degrees
+  integer, parameter :: PHYQ_MAFS =            phyq_angle+1       ! Default MAFs
+  integer, parameter :: PHYQ_MIFS =            phyq_mafs+1        ! Default MIFs
+  integer, parameter :: PHYQ_FREQUENCY =       phyq_mifs+1        ! Default MHz
+  integer, parameter :: PHYQ_ZETA =            phyq_frequency+1   ! log10(pressure/hPa)
+  integer, parameter :: PHYQ_VELOCITY =        phyq_zeta+1        ! Default meters/second
+  integer, parameter :: PHYQ_EXTINCTION =      phyq_velocity+1    ! Default 1/meters
+  integer, parameter :: PHYQ_ICEDENSITY =      phyq_extinction+1  ! Default g/meters^3
+  integer, parameter :: PHYQ_COLMABUNDANCE =   phyq_icedensity+1  ! Default log10 g/meters^3
+  integer, parameter :: PHYQ_PCTRHI =          phyq_colmabundance+1 ! default %RHI
+  integer, parameter :: PHYQ_GAUSS =           phyq_pctrhi + 1
+  integer, parameter :: PHYQ_PROFILES =        phyq_gauss + 1
+  integer, parameter :: LAST_PHYQ = phyq_profiles
+  integer :: PHYQ_INDICES(first_phyq:last_phyq)
+d142 10
+a151 7
+  integer, save, pointer, dimension(:) :: DATA_TYPE_INDICES=>NULL()
+  integer, save, pointer, dimension(:) :: FIELD_INDICES=>NULL()
+  integer, save, pointer, dimension(:) :: FUNC_INDICES=>NULL()
+  integer, save, pointer, dimension(:) :: LIT_INDICES=>NULL()
+  integer, save, pointer, dimension(:) :: PARM_INDICES=>NULL()
+  integer, save, pointer, dimension(:) :: SECTION_INDICES=>NULL()
+  integer, save, pointer, dimension(:) :: SPEC_INDICES=>NULL()
+d162 3
+a164 3
+    use Allocate_Deallocate, only: Allocate_Test
+    use TREE, only: ! BUILD_TREE, PUSH_PSEUDO_TERMINAL
+    use TREE_TYPES, only: N_DT_DEF
+d291 2
+a292 2
+    use SYMBOL_TABLE, only: ENTER_TERMINAL
+    use SYMBOL_TYPES, only: T_IDENTIFIER
+d299 1
+a299 1
+    use Allocate_Deallocate, only: Deallocate_Test
+d321 34
+d359 1
+a359 1
+       "$Id: intrinsic.f90,v 2.73 2014/05/20 22:16:24 vsnyder Exp $"
+d369 3
+@
+
+
+2.73
+log
+@Don't go out of bounds in Get_Type
+@
+text
+@d160 1
+a160 1
+    use TREE, only: BUILD_TREE, PUSH_PSEUDO_TERMINAL
+d322 1
+a322 1
+       "$Id: intrinsic.f90,v 2.72 2014/03/20 01:38:29 vsnyder Exp $"
+d332 3
+@
+
+
+2.72
+log
+@Unify types in Intrinsic instead of having a separate system in
+Declaration_Table.
+@
+text
+@d311 6
+a316 1
+    get_type = data_type_indices ( type_index )
+d322 1
+a322 1
+       "$Id: intrinsic.f90,v 2.71 2013/12/12 01:59:44 vsnyder Exp $"
+d332 4
+@
+
+
+2.71
+log
+@Change type of debug from logical to integer, add 'unknown' type
+@
+text
+@a26 4
+  interface get_phyq
+    module procedure get_phyq_lit, get_phyq_str
+  end interface
+
+a41 1
+! Data types that don't have enumerated literals:
+d43 1
+d45 22
+a66 2
+  integer, parameter :: T_A_DOT_B           = t_unknown + 1
+  integer, parameter :: T_NUMERIC           = t_a_dot_b + 1
+d69 1
+d71 1
+a71 1
+  integer, parameter :: T_BOOLEAN           = t_string + 1
+d190 1
+a190 1
+    ! Put intrinsic non-enumeration type names into symbol table
+d192 15
+d208 5
+d216 1
+d272 2
+a273 1
+      begin, t+t_string, n+n_dt_def /) )
+d305 9
+a313 28
+  ! --------------------------------------------------  Get_Phyq  -----
+  ! Returns the phyq_index for a given string or its lit_index
+  function get_phyq_lit( lit_index ) result( phyq_index )
+    ! Args
+    integer, intent(in) :: lit_index
+    integer :: phyq_index
+    ! Executable
+    do phyq_index = first_phyq, last_phyq
+      if ( lit_indices(phyq_index) == lit_index ) return
+    enddo
+    phyq_index = -1 ! Not found
+  end function get_phyq_lit
+
+  function get_phyq_str( str ) result( phyq_index )
+    use STRING_TABLE, only: ADD_CHAR, LOOKUP
+    ! Args
+    character(len=*), intent(in) :: str
+    integer :: phyq_index
+    ! Internal variables
+    logical :: found
+    integer :: strID
+    ! Executable
+    phyq_index= -1 ! Not found
+    call add_char( trim(str) )
+    call lookup ( strID, found, caseless=.true., debug=0 )
+    if ( found ) phyq_index = get_phyq_lit( strID )
+  end function get_phyq_str
+    
+d317 1
+a317 1
+       "$Id: intrinsic.f90,v 2.70 2013/10/09 01:05:18 vsnyder Exp $"
+d327 3
+@
+
+
+2.70
+log
+@Comments to clarify use of D and DU
+@
+text
+@d48 2
+a49 1
+  integer, parameter :: T_A_DOT_B           = t_first
+d174 1
+a229 3
+  ! Start with the definitions of types. These are represented by trees of
+  ! the form  < n_dt_def t_type_name l_lit ... l_lit >
+
+d290 1
+a290 1
+    call lookup ( strID, found, caseless=.true., debug=.false. )
+d297 1
+a297 1
+       "$Id: intrinsic.f90,v 2.69 2013/09/19 23:26:44 vsnyder Exp $"
+d307 3
+@
+
+
+2.69
+log
+@Add Expr_OK
+@
+text
+@d99 6
+a104 2
+  integer, parameter :: D = 1000000 ! Decoration
+  integer, parameter :: DU = d*u    ! DU*PHYQ_... on n_field_type requires those units
+d294 1
+a294 1
+
+d298 1
+a298 1
+       "$Id: intrinsic.f90,v 2.68 2013/09/17 00:55:49 vsnyder Exp $"
+d308 3
+@
+
+
+2.68
+log
+@Add A_Dot_B type
+@
+text
+@d40 2
+a41 1
+  integer, parameter :: U = 10            ! U*PHYQ_... requires those units
+d294 1
+a294 1
+       "$Id: intrinsic.f90,v 2.67 2012/01/05 01:14:11 pwagner Exp $"
+d304 3
+@
+
+
+2.67
+log
+@Added get_phyq function to phyq indices; also LAST_AUTO_LIT
+@
+text
+@d47 2
+a48 1
+  integer, parameter :: T_NUMERIC           = t_first
+d62 1
+a62 1
+  integer, parameter :: PHYQ_INVALID =         FIRST_PHYQ ! Invalid unit given by user
+d168 1
+d293 1
+a293 1
+       "$Id: intrinsic.f90,v 2.66 2011/04/18 19:28:05 vsnyder Exp $"
+d303 3
+@
+
+
+2.66
+log
+@Add NC for unchecked parameters in sections
+@
+text
+@d27 4
+d85 1
+d238 1
+a238 1
+
+d260 28
+d291 1
+a291 1
+       "$Id: intrinsic.f90,v 2.65 2011/01/29 00:46:42 vsnyder Exp $"
+d301 3
+@
+
+
+2.65
+log
+@Add units checking
+@
+text
+@d99 1
+d258 1
+a258 1
+       "$Id: intrinsic.f90,v 2.64 2010/02/04 23:03:25 vsnyder Exp $"
+d268 3
+@
+
+
+2.64
+log
+@Remove PHYQ_LOGICEDENSITY
+@
+text
+@d36 1
+d56 2
+a57 1
+  integer, parameter :: PHYQ_INVALID =         0 ! Invalid unit given by user
+d76 1
+a76 1
+  integer, parameter :: FIRST_PHYQ = phyq_invalid, LAST_PHYQ = phyq_profiles
+d91 7
+a97 6
+  integer, parameter :: BEGIN = -1       ! Start of a tree
+  integer, parameter :: D = 1000000      ! Decoration
+  integer, parameter :: F = 1000         ! Field index
+  integer, parameter :: G = 2000         ! Function index
+  integer, parameter :: L = 3000         ! Lit index
+  integer, parameter :: N = 0            ! Tree index
+d106 4
+a109 4
+  integer, parameter :: P = 4000         ! Parameter index
+  integer, parameter :: S = 5000         ! Spec index
+  integer, parameter :: T = 6000         ! Type index
+  integer, parameter :: Z = 7000         ! Section index
+d257 1
+a257 1
+       "$Id: intrinsic.f90,v 2.63 2009/09/19 00:35:07 vsnyder Exp $"
+d267 3
+@
+
+
+2.63
+log
+@Add phyq_logIceDensity
+@
+text
+@d70 1
+a70 2
+  integer, parameter :: PHYQ_LOGICEDENSITY =   phyq_icedensity+1  ! Default log10 g/meters^3
+  integer, parameter :: PHYQ_COLMABUNDANCE =   phyq_logicedensity+1 ! Default molecules/cm^2
+a188 1
+    phyq_indices(phyq_logicedensity) =     add_ident ( 'logIceDensity' ) ! log10
+d254 1
+a254 1
+       "$Id: intrinsic.f90,v 2.62 2009/06/23 18:25:43 pwagner Exp $"
+d264 3
+@
+
+
+2.62
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d23 1
+a23 1
+       "$RCSfile: $"
+d70 2
+a71 1
+  integer, parameter :: PHYQ_COLMABUNDANCE =   phyq_icedensity+1  ! Default molecules/cm^2
+d189 2
+a190 1
+    phyq_indices(phyq_icedensity) =        add_ident ( 'icedensity' )
+d256 1
+a256 1
+       "$Id: read_apriori.f90 is it here $"
+d266 3
+@
+
+
+2.61
+log
+@Add PRINT to not_used_here
+@
+text
+@d23 1
+a23 1
+       "$RCSfile: intrinsic.f90,v $"
+d251 1
+a252 1
+!---------------------------- RCS Ident Info -------------------------------
+d254 2
+a255 3
+       "$Id: intrinsic.f90,v 2.60 2006/03/23 01:50:12 vsnyder Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d257 1
+a257 1
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
+d259 1
+d264 3
+@
+
+
+2.60
+log
+@Add Empty_OK parameter
+@
+text
+@d254 1
+a254 1
+       "$Id: intrinsic.f90,v 2.59 2006/01/11 16:59:36 pwagner Exp $"
+d258 1
+d264 3
+@
+
+
+2.59
+log
+@Abstract phys quant now colmabundance
+@
+text
+@d31 2
+a32 2
+! A "field_type", "field_spec" or "dot" vertex may be decorated with the
+! following flag:
+d35 1
+d254 1
+a254 1
+       "$Id: intrinsic.f90,v 2.58 2005/12/29 01:09:49 vsnyder Exp $"
+d263 3
+@
+
+
+2.58
+log
+@Add string for PHYQ_Profiles
+@
+text
+@d69 2
+a70 2
+  integer, parameter :: PHYQ_DOBSONUNITS =     phyq_icedensity+1  ! 1 DU = 2.687e20 molecules/m^2
+  integer, parameter :: PHYQ_PCTRHI =          phyq_dobsonunits+1 ! default %RHI
+d188 1
+a188 1
+    phyq_indices(phyq_dobsonunits) =       add_ident ( 'dobsonunits' )
+d253 1
+a253 1
+       "$Id: intrinsic.f90,v 2.57 2005/06/22 17:25:49 pwagner Exp $"
+d262 3
+@
+
+
+2.57
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d23 1
+a23 1
+       "$RCSfile: $"
+d191 1
+d253 1
+a253 1
+       "$Id: $"
+d262 3
+@
+
+
+2.56
+log
+@Changed mls1 to xptl1
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d21 1
+a21 4
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
+       "$Id: intrinsic.f90,v 2.55 2004/11/17 20:23:09 vsnyder Exp $"
+  character (len=len(idParm)), private :: Id = idParm
+d23 1
+a23 1
+       "$RCSfile: intrinsic.f90,v $"
+d250 5
+d261 3
+@
+
+
+2.55
+log
+@Add NRS and NS (scalar required) tags for fields
+@
+text
+@d15 1
+a15 1
+       "$Id: intrinsic.f90,v 2.54 2004/05/29 02:42:59 vsnyder Exp $"
+d216 1
+a216 1
+      begin, t+t_instrument, l+l_emls, l+l_umls, l+l_mls1, n+n_dt_def, &
+d251 3
+@
+
+
+2.54
+log
+@Rearrange function definition stuff
+@
+text
+@d15 1
+a15 1
+       "$Id: intrinsic.f90,v 2.53 2004/01/14 18:50:25 vsnyder Exp $"
+d28 2
+a29 1
+  integer, parameter :: REQ_FLD = 1       ! Required field
+d95 2
+d251 3
+@
+
+
+2.53
+log
+@Stuff to support the Algebra section
+@
+text
+@a9 2
+  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+
+a11 1
+  private :: Allocate_Test, Deallocate_Test ! may make .mod files smaller
+d15 1
+a15 1
+       "$Id: intrinsic.f90,v 2.52 2004/01/09 07:24:59 livesey Exp $"
+d72 2
+a73 2
+! Don't edit the following file directly--it is generated automatically
+! based on the file lit_names.txt
+d85 2
+a86 1
+  integer, parameter :: L = 2000         ! Lit index
+d94 4
+a97 4
+  integer, parameter :: P = 3000         ! Parameter index
+  integer, parameter :: S = 4000         ! Spec index
+  integer, parameter :: T = 5000         ! Type index
+  integer, parameter :: Z = 6000         ! Section index
+d102 1
+d112 1
+a112 1
+    & N_SPEC_INDICES )
+d116 2
+d127 1
+d143 2
+d232 1
+d248 3
+@
+
+
+2.52
+log
+@Added the fictitious instrument mls1
+@
+text
+@d18 1
+a18 1
+       "$Id: intrinsic.f90,v 2.51 2003/09/15 17:01:09 livesey Exp $"
+d32 3
+d243 3
+@
+
+
+2.51
+log
+@Put the use statement back, it's needed because the includes need
+it and make doesn't spot it in there.
+@
+text
+@d18 1
+a18 1
+       "$Id: intrinsic.f90,v 2.49 2003/08/16 01:14:03 vsnyder Exp $"
+d206 1
+a206 1
+      begin, t+t_instrument, l+l_emls, l+l_umls, n+n_dt_def, &
+d240 4
+@
+
+
+2.50
+log
+@Remove unused USE statement
+@
+text
+@d114 1
+@
+
+
+2.49
+log
+@Add optional 'polarization' field to 'radiometer' spec
+@
+text
+@d18 1
+a18 1
+       "$Id: intrinsic.f90,v 2.48 2003/07/08 00:16:08 livesey Exp $"
+a113 1
+    use TREE, only: BUILD_TREE, PUSH_PSEUDO_TERMINAL
+d239 3
+@
+
+
+2.48
+log
+@Added ndr
+@
+text
+@d18 1
+a18 1
+       "$Id: intrinsic.f90,v 2.47 2003/05/29 16:36:09 livesey Exp $"
+d41 2
+a42 1
+  integer, parameter :: LAST_INTRINSIC_TYPE = t_instrument
+d148 1
+d205 3
+a207 3
+      begin, t+t_boolean, l+l_true, l+l_false, n+n_dt_def /) )
+    call make_tree ( (/ &
+      begin, t+t_instrument, l+l_emls, l+l_umls, n+n_dt_def /) )
+d240 3
+@
+
+
+2.47
+log
+@Added ident for phyq_gauss
+@
+text
+@d18 1
+a18 1
+       "$Id: intrinsic.f90,v 2.46 2003/01/26 04:41:53 livesey Exp $"
+d89 1
+d238 3
+@
+
+
+2.46
+log
+@Added phyq_profiles
+@
+text
+@d18 1
+a18 1
+       "$Id: intrinsic.f90,v 2.45 2003/01/07 23:43:59 livesey Exp $"
+d172 1
+d237 3
+@
+
+
+2.45
+log
+@Added Gauss
+@
+text
+@d18 1
+a18 1
+       "$Id: intrinsic.f90,v 2.44 2002/10/08 00:09:10 pwagner Exp $"
+d65 2
+a66 1
+  integer, parameter :: FIRST_PHYQ = phyq_invalid, LAST_PHYQ = phyq_gauss
+d236 3
+@
+
+
+2.44
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d18 1
+a18 1
+       "$Id: intrinsic.f90,v 2.43 2002/04/10 17:42:59 pwagner Exp $"
+d64 2
+a65 1
+  integer, parameter :: FIRST_PHYQ = phyq_invalid, LAST_PHYQ = phyq_pctrhi
+d235 3
+@
+
+
+2.43
+log
+@Added pctrhi unit
+@
+text
+@d18 1
+a18 1
+       "$Id: intrinsic.f90,v 2.42 2001/10/04 22:12:57 pwagner Exp $"
+d22 1
+d227 4
+d234 3
+@
+
+
+2.42
+log
+@Now includes files lit_add.f9h and lit_parm.f9h
+@
+text
+@d18 1
+a18 1
+       "$Id: intrinsic.f90,v 2.41 2001/10/03 18:32:44 vsnyder Exp $"
+d62 2
+a63 1
+  integer, parameter :: FIRST_PHYQ = phyq_invalid, LAST_PHYQ = PHYQ_DobsonUnits
+d168 1
+d229 3
+@
+
+
+2.41
+log
+@OOPS, forgot some lit_indices(...) = add_ident(...)
+@
+text
+@d18 1
+a18 1
+       "$Id: intrinsic.f90,v 2.40 2001/10/03 17:38:11 vsnyder Exp $"
+d67 3
+a69 112
+  integer, parameter :: L_BASELINE      = first_lit
+  integer, parameter :: L_C             = l_baseline + 1
+  integer, parameter :: L_CHANNEL       = l_c + 1
+  integer, parameter :: L_CLOUDEXTINCTION      = l_channel + 1
+  integer, parameter :: L_CLOUDICE             = l_cloudExtinction + 1
+  integer, parameter :: L_CLOUDINDUCEDRADIANCE = l_cloudIce + 1
+  integer, parameter :: L_CLOUDOPTICALDEPTH    = l_cloudInducedRadiance + 1
+  integer, parameter :: L_CLOUDRADSENSITIVITY  = l_cloudOpticalDepth + 1
+  integer, parameter :: L_CLOUDWATER    = l_cloudRadSensitivity + 1
+  integer, parameter :: L_DAYS          = l_cloudWater + 1
+  integer, parameter :: L_DEG           = l_days + 1
+  integer, parameter :: L_DEGREES       = l_deg + 1
+  integer, parameter :: L_DIMENSIONLESS = l_degrees + 1
+  integer, parameter :: L_DIMLESS       = l_dimensionless + 1
+  integer, parameter :: L_DL            = l_dimless + 1
+  ! Quantities to report on progress of DNWT.  See NWT_T in dnwt_module
+  integer, parameter :: L_DNWT_AJN      = l_dl + 1
+  integer, parameter :: L_DNWT_AXMAX    = l_dnwt_ajn + 1
+  integer, parameter :: L_DNWT_CAIT     = l_dnwt_axmax + 1
+  integer, parameter :: L_DNWT_DIAG     = l_dnwt_cait + 1
+  integer, parameter :: L_DNWT_DXDX     = l_dnwt_diag + 1
+  integer, parameter :: L_DNWT_DXDXL    = l_dnwt_dxdx + 1
+  integer, parameter :: L_DNWT_DXN      = l_dnwt_dxdxl + 1
+  integer, parameter :: L_DNWT_DXNL     = l_dnwt_dxn + 1
+  integer, parameter :: L_DNWT_FNMIN    = l_dnwt_dxnl + 1
+  integer, parameter :: L_DNWT_FNORM    = l_dnwt_fnmin + 1
+  integer, parameter :: L_DNWT_GDX      = l_dnwt_fnorm + 1
+  integer, parameter :: L_DNWT_GFAC     = l_dnwt_gdx + 1
+  integer, parameter :: L_DNWT_GRADN    = l_dnwt_gfac + 1
+  integer, parameter :: L_DNWT_SQ       = l_dnwt_gradn + 1
+  integer, parameter :: L_DNWT_SQT      = l_dnwt_sq + 1
+  ! End of quantities to report progress of DNWT
+  integer, parameter :: L_DOBSONUNITS   = l_dnwt_sqt + 1
+  integer, parameter :: L_EARTHREFL     = l_dobsonunits + 1
+  integer, parameter :: L_EFFECTIVEOPTICALDEPTH = l_earthRefl + 1
+  integer, parameter :: L_ELEVOFFSET    = l_effectiveOpticalDepth + 1
+  integer, parameter :: L_EMLS          = l_elevOffset + 1
+  integer, parameter :: L_EXTINCTION    = l_emls + 1
+  integer, parameter :: L_FALSE         = l_extinction + 1
+  integer, parameter :: L_FREQUENCY     = l_false + 1
+  integer, parameter :: L_GEODALTITUDE  = l_frequency + 1
+  integer, parameter :: L_GEODANGLE     = l_geodaltitude + 1
+  integer, parameter :: L_GHZ           = l_geodangle + 1
+  integer, parameter :: L_GPH           = l_ghz + 1
+  integer, parameter :: L_GPH_PRECISION = l_gph + 1
+  integer, parameter :: L_HEIGHTOFFSET  = l_gph_precision + 1
+  integer, parameter :: L_HOURS         = l_heightOffset + 1
+  integer, parameter :: L_HPA           = l_hours + 1
+  integer, parameter :: L_HZ            = l_hpa + 1
+  integer, parameter :: L_ICEDENSITY    = l_hz + 1
+  integer, parameter :: L_INTERMEDIATEFREQUENCY= l_icedensity + 1
+  integer, parameter :: L_ISOTOPERATIO  = l_intermediatefrequency + 1
+  integer, parameter :: L_Jacobian_Cols = l_isotopeRatio + 1
+  integer, parameter :: L_Jacobian_Rows = l_jacobian_Cols + 1
+  integer, parameter :: L_K             = l_jacobian_Rows + 1
+  integer, parameter :: L_KHZ           = l_k  + 1
+  integer, parameter :: L_KM            = l_khz + 1
+  integer, parameter :: L_LINEWIDTH     = l_km + 1
+  integer, parameter :: L_LOGP          = l_linewidth + 1
+  integer, parameter :: L_LOSTRANSFUNC  = l_logp + 1
+  integer, parameter :: L_LOSVEL        = l_lostransfunc + 1
+  integer, parameter :: L_LSBFREQUENCY  = l_losvel + 1
+  integer, parameter :: L_M             = l_lsbfrequency + 1
+  integer, parameter :: L_MAF           = l_m + 1
+  integer, parameter :: L_MAFS          = l_maf + 1
+  integer, parameter :: L_MASSMEANDIAMETERICE   = l_mafs + 1
+  integer, parameter :: L_MASSMEANDIAMETERWATER = l_massMeanDiameterIce + 1
+  integer, parameter :: L_MB            = l_massMeanDiameterWater + 1
+  integer, parameter :: L_METERS        = l_mb + 1
+  integer, parameter :: L_MHZ           = l_meters  + 1
+  integer, parameter :: L_MIF           = l_mhz + 1
+  integer, parameter :: L_MIFS          = l_mif + 1
+  integer, parameter :: L_MINUTES       = l_mifs + 1
+  integer, parameter :: L_NONE          = l_minutes + 1
+  integer, parameter :: L_ORBITINCLINATION = l_none + 1
+  integer, parameter :: L_ORBITS        = l_orbitinclination + 1
+  integer, parameter :: L_PA            = l_orbits + 1
+  integer, parameter :: L_PPBV          = l_pa + 1
+  integer, parameter :: L_PPMV          = l_ppbv + 1
+  integer, parameter :: L_PPTV          = l_ppmv + 1
+  integer, parameter :: L_PTAN          = l_pptv + 1
+  integer, parameter :: L_RAD           = l_ptan + 1
+  integer, parameter :: L_RADIANCE      = l_rad + 1
+  integer, parameter :: L_RADIANS       = l_radiance + 1
+  integer, parameter :: L_EARTHRADIUS   = l_radians + 1
+  integer, parameter :: L_REFGPH        = l_earthradius + 1
+  integer, parameter :: L_S             = l_refgph + 1
+  integer, parameter :: L_SCANRESIDUAL  = l_s + 1
+  integer, parameter :: L_SCECI         = l_scanresidual + 1
+  integer, parameter :: L_SCGEOCALT     = l_scECI + 1
+  integer, parameter :: L_SCVEL         = l_scGeocAlt + 1
+  integer, parameter :: L_SECONDS       = l_scvel + 1
+  integer, parameter :: L_SIDEBANDRATIO = l_seconds + 1
+  integer, parameter :: L_SIZEDISTRIBUTION = l_sidebandratio + 1
+  integer, parameter :: L_SPACERADIANCE = l_sizeDistribution + 1
+  integer, parameter :: L_SURFACETYPE   = l_spaceRadiance + 1
+  integer, parameter :: L_TEMPERATURE   = l_surfaceType + 1
+  integer, parameter :: L_TEMPERATURE_PREC = l_temperature + 1
+  integer, parameter :: L_THETA         = l_temperature_prec + 1
+  integer, parameter :: L_THZ           = l_theta + 1
+  integer, parameter :: L_TIME          = l_thz + 1
+  integer, parameter :: L_TNGTECI       = l_time + 1
+  integer, parameter :: L_TNGTGEOCALT   = l_tngteci + 1
+  integer, parameter :: L_TNGTGEODALT   = l_tngtgeocalt + 1
+  integer, parameter :: L_TOTALEXTINCTION =  l_tngtgeodalt + 1
+  integer, parameter :: L_TRUE          =  l_totalExtinction + 1
+  integer, parameter :: L_UMLS          = l_true + 1
+  integer, parameter :: L_USBFREQUENCY  = l_umls + 1
+  integer, parameter :: L_VMR           = l_usbfrequency + 1
+  integer, parameter :: L_XYZ           = l_vmr + 1
+  integer, parameter :: L_ZETA          = l_xyz + 1
+  integer, parameter :: LAST_INTRINSIC_LIT = l_zeta
+d143 3
+a145 110
+    lit_indices(l_baseline) =              add_ident ( 'baseline' )
+    lit_indices(l_c) =                     add_ident ( 'C' )
+    lit_indices(l_channel) =               add_ident ( 'channel' )
+    lit_indices(l_cloudExtinction) =       add_ident ( 'cloudExtinction' )
+    lit_indices(l_cloudIce) =              add_ident ( 'cloudIce' )
+    lit_indices(l_cloudInducedRadiance) =  add_ident ( 'cloudInducedRadiance' )
+    lit_indices(l_cloudRadSensitivity) =   add_ident ( 'cloudRadSensitivity' )
+    lit_indices(l_cloudWater) =            add_ident ( 'cloudWater' )
+    lit_indices(l_days) =                  add_ident ( 'days' )
+    lit_indices(l_deg) =                   add_ident ( 'deg' )
+    lit_indices(l_degrees) =               add_ident ( 'degrees' )
+    lit_indices(l_dimensionless) =         add_ident ( 'dimensionless' )
+    lit_indices(l_dimless) =               add_ident ( 'dimless' )
+    lit_indices(l_dl) =                    add_ident ( 'dl' )
+    ! Quantities to report on progress of DNWT.  See NWT_T in dnwt_module
+    lit_indices(l_dnwt_ajn) =               add_ident ('dnwt_ajn' )
+    lit_indices(l_dnwt_axmax) =             add_ident ('dnwt_axmax' )
+    lit_indices(l_dnwt_cait) =              add_ident ('dnwt_cait' )
+    lit_indices(l_dnwt_diag) =              add_ident ('dnwt_diag' )
+    lit_indices(l_dnwt_dxdx) =              add_ident ('dnwt_dxdx' )
+    lit_indices(l_dnwt_dxdxl) =             add_ident ('dnwt_dxdxl' )
+    lit_indices(l_dnwt_dxn) =               add_ident ('dnwt_dxn' )
+    lit_indices(l_dnwt_dxnl) =              add_ident ('dnwt_dxnl' )
+    lit_indices(l_dnwt_fnmin) =             add_ident ('dnwt_fnmin' )
+    lit_indices(l_dnwt_fnorm) =             add_ident ('dnwt_fnorm' )
+    lit_indices(l_dnwt_gdx) =               add_ident ('dnwt_gdx' )
+    lit_indices(l_dnwt_gfac) =              add_ident ('dnwt_gfac' )
+    lit_indices(l_dnwt_gradn) =             add_ident ('dnwt_gradn' )
+    lit_indices(l_dnwt_sq) =                add_ident ('dnwt_sq' )
+    lit_indices(l_dnwt_sqt) =               add_ident ('dnwt_sqt' )
+    ! End of quantities to report progress of DNWT
+    lit_indices(l_dobsonunits) =           add_ident ( 'dobsonunits' )
+    lit_indices(l_earthRefl) =             add_ident ( 'earthRefl' )
+    lit_indices(l_elevOffset) =            add_ident ( 'elevOffset' )
+    lit_indices(l_effectiveOpticalDepth) = add_ident ( 'effectiveOpticalDepth' )
+    lit_indices(l_emls) =                  add_ident ( 'emls' )
+    lit_indices(l_extinction) =            add_ident ( 'extinction' )
+    lit_indices(l_false) =                 add_ident ( 'false' )
+    lit_indices(l_frequency) =             add_ident ( 'frequency' )
+    lit_indices(l_geodaltitude) =          add_ident ( 'geodAltitude' )
+    lit_indices(l_geodangle) =             add_ident ( 'geodAngle' )
+    lit_indices(l_ghz) =                   add_ident ( 'GHz' )
+    lit_indices(l_gph) =                   add_ident ( 'gph' )
+    lit_indices(l_gph_precision) =         add_ident ( 'gph_precision' )
+    lit_indices(l_heightOffset) =          add_ident ( 'heightOffset' )
+    lit_indices(l_hours) =                 add_ident ( 'hours' )
+    lit_indices(l_hpa) =                   add_ident ( 'hPa' )
+    lit_indices(l_hz) =                    add_ident ( 'Hz' )
+    lit_indices(l_icedensity) =            add_ident ( 'IceDensity' )
+    lit_indices(l_intermediatefrequency) = add_ident ( 'intermediatefrequency' )
+    lit_indices(l_isotopeRatio) =          add_ident ( 'isotopeRatio' )
+    lit_indices(l_jacobian_cols) =         add_ident ( 'jacobian_cols' )
+    lit_indices(l_jacobian_rows) =         add_ident ( 'jacobian_rows' )
+    lit_indices(l_k) =                     add_ident ( 'K' )
+    lit_indices(l_khz) =                   add_ident ( 'KHz' )
+    lit_indices(l_km) =                    add_ident ( 'km' )
+    lit_indices(l_linewidth) =             add_ident ( 'linewidth' )
+    lit_indices(l_logp) =                  add_ident ( 'logp' )
+    lit_indices(l_losTransFunc) =          add_ident ( 'LOSTransFunc' )
+    lit_indices(l_losVel) =                add_ident ( 'LOSVel' )
+    lit_indices(l_lsbfrequency) =          add_ident ( 'LSBFrequency' )
+    lit_indices(l_m) =                     add_ident ( 'm' )
+    lit_indices(l_maf) =                   add_ident ( 'maf' )
+    lit_indices(l_mafs) =                  add_ident ( 'mafs' )
+    lit_indices(l_massMeanDiameterIce) =   add_ident ( 'massMeanDiameterIce' )
+    lit_indices(l_massMeanDiameterWater) = add_ident ( 'massMeanDiameterWater' )
+    lit_indices(l_mb) =                    add_ident ( 'mb' )
+    lit_indices(l_meters) =                add_ident ( 'meters' )
+    lit_indices(l_mhz) =                   add_ident ( 'MHz' )
+    lit_indices(l_mif) =                   add_ident ( 'mif' )
+    lit_indices(l_mifs) =                  add_ident ( 'mifs' )
+    lit_indices(l_minutes) =               add_ident ( 'minutes' )
+    lit_indices(l_none) =                  add_ident ( 'none' )
+    lit_indices(l_orbitinclination) =      add_ident ( 'orbitInclination' )
+    lit_indices(l_orbits) =                add_ident ( 'orbits' )
+    lit_indices(l_pa) =                    add_ident ( 'pa' )
+    lit_indices(l_ptan) =                  add_ident ( 'ptan' )
+    lit_indices(l_ppbv) =                  add_ident ( 'ppbv' )
+    lit_indices(l_ppmv) =                  add_ident ( 'ppmv' )
+    lit_indices(l_pptv) =                  add_ident ( 'pptv' )
+    lit_indices(l_rad) =                   add_ident ( 'rad' )
+    lit_indices(l_radiance) =              add_ident ( 'radiance' )
+    lit_indices(l_radians) =               add_ident ( 'radians' )
+    lit_indices(l_earthradius) =           add_ident ( 'earthradius' )
+    lit_indices(l_refgph) =                add_ident ( 'refGPH' )
+    lit_indices(l_s) =                     add_ident ( 's' )
+    lit_indices(l_scanresidual) =          add_ident ( 'scanResidual' )
+    lit_indices(l_scECI) =                 add_ident ( 'scECI' )
+    lit_indices(l_scGeocAlt) =             add_ident ( 'scGeocAlt' )
+    lit_indices(l_scvel) =                 add_ident ( 'scVel' )
+    lit_indices(l_seconds) =               add_ident ( 'seconds' )
+    lit_indices(l_sidebandratio) =         add_ident ( 'sidebandRatio' )
+    lit_indices(l_sizeDistribution) =      add_ident ( 'sizeDistribution' )
+    lit_indices(l_spaceRadiance) =         add_ident ( 'spaceRadiance' )
+    lit_indices(l_surfaceType) =           add_ident ( 'surfaceType' )
+    lit_indices(l_temperature) =           add_ident ( 'temperature' )
+    lit_indices(l_temperature_prec) =      add_ident ( 'temperature_precision' )
+    lit_indices(l_theta) =                 add_ident ( 'theta' )
+    lit_indices(l_thz) =                   add_ident ( 'THz' )
+    lit_indices(l_time) =                  add_ident ( 'time' )
+    lit_indices(l_tngteci) =               add_ident ( 'tngteci' )
+    lit_indices(l_tngtgeocalt) =           add_ident ( 'tngtgeocalt' )
+    lit_indices(l_tngtgeodalt) =           add_ident ( 'tngtgeodalt' )
+    lit_indices(l_totalExtinction) =       add_ident ( 'totalExtinction' )
+    lit_indices(l_true) =                  add_ident ( 'true' )
+    lit_indices(l_umls) =                  add_ident ( 'UMLS')
+    lit_indices(l_usbfrequency) =          add_ident ( 'USBFrequency')
+    lit_indices(l_vmr) =                   add_ident ( 'vmr' )
+    lit_indices(l_xyz) =                   add_ident ( 'xyz' )
+    lit_indices(l_zeta) =                  add_ident ( 'zeta' )
+d227 3
+@
+
+
+2.40
+log
+@OOPS, defined L_DNWT_SQ twice
+@
+text
+@d18 1
+a18 1
+       "$Id: intrinsic.f90,v 2.39 2001/10/03 17:36:47 vsnyder Exp $"
+d266 17
+d303 2
+d443 3
+@
+
+
+2.39
+log
+@Add lits for DNWT quantities
+@
+text
+@d18 1
+a18 1
+       "$Id: intrinsic.f90,v 2.38 2001/10/02 23:39:39 vsnyder Exp $"
+a96 1
+  integer, parameter :: L_DNWT_SQ       = l_dnwt_gradn + 1
+d424 3
+@
+
+
+2.38
+log
+@Add L_DegreesOfFreedom
+@
+text
+@d18 1
+a18 1
+       "$Id: intrinsic.f90,v 2.37 2001/09/17 23:14:14 livesey Exp $"
+d79 1
+a79 2
+  integer, parameter :: L_DEGREESOFFREEDOM = l_degrees + 1
+  integer, parameter :: L_DIMENSIONLESS = l_degreesOfFreedom + 1
+d82 19
+a100 1
+  integer, parameter :: L_DOBSONUNITS   = l_dl + 1
+d120 3
+a122 1
+  integer, parameter :: L_K             = l_isotopeRatio + 1
+a263 1
+    lit_indices(l_degreesOfFreedom) =      add_ident ( 'degreesOfFreedom' )
+d425 3
+@
+
+
+2.37
+log
+@Bug fix, added name for t_instrument
+@
+text
+@d18 1
+a18 1
+       "$Id: intrinsic.f90,v 2.36 2001/09/17 22:53:23 livesey Exp $"
+d79 2
+a80 1
+  integer, parameter :: L_DIMENSIONLESS = l_degrees + 1
+d245 1
+d407 3
+@
+
+
+2.36
+log
+@Added t_instrument, l_emls and l_umls
+@
+text
+@d18 1
+a18 1
+       "$Id: intrinsic.f90,v 2.35 2001/07/30 23:28:38 pwagner Exp $"
+d231 1
+d405 3
+@
+
+
+2.35
+log
+@Added columnAbundances scaffolding--needs fleshing out
+@
+text
+@d18 1
+a18 1
+       "$Id: intrinsic.f90,v 2.34 2001/07/18 23:15:31 dwu Exp $"
+d39 2
+a40 1
+  integer, parameter :: LAST_INTRINSIC_TYPE = t_boolean
+d86 2
+a87 1
+  integer, parameter :: L_EXTINCTION    = l_elevOffset + 1
+d153 3
+a155 2
+  integer, parameter :: L_TRUE         =  l_totalExtinction + 1
+  integer, parameter :: L_USBFREQUENCY  = l_true + 1
+d250 1
+d318 1
+d374 2
+d404 3
+@
+
+
+2.34
+log
+@rename l_radiusofearth as l_earthradius
+@
+text
+@d18 1
+a18 1
+       "$Id: intrinsic.f90,v 2.33 2001/07/17 18:53:31 jonathan Exp $"
+d45 17
+a61 16
+  integer, parameter :: PHYQ_INVALID = 0 ! Invalid unit given by user
+  integer, parameter :: PHYQ_DIMENSIONLESS = 1 ! Dimensionless quantity
+  integer, parameter :: PHYQ_LENGTH = 2        ! Default meters
+  integer, parameter :: PHYQ_TIME = 3          ! Default seconds
+  integer, parameter :: PHYQ_PRESSURE = 4      ! Default millibars
+  integer, parameter :: PHYQ_TEMPERATURE = 5   ! Default Kelvins
+  integer, parameter :: PHYQ_VMR = 6           ! Default parts-per-one
+  integer, parameter :: PHYQ_ANGLE = 7         ! Default degrees
+  integer, parameter :: PHYQ_MAFS = 8          ! Default MAFs
+  integer, parameter :: PHYQ_MIFS = 9          ! Default MIFs
+  integer, parameter :: PHYQ_FREQUENCY = 10    ! Default MHz
+  integer, parameter :: PHYQ_ZETA = 11         ! log10(pressure/hPa)
+  integer, parameter :: PHYQ_VELOCITY = 12     ! Default meters/second
+  integer, parameter :: PHYQ_EXTINCTION =13    ! Default 1/meters
+  integer, parameter :: PHYQ_IceDensity =14    ! Default g/meters^3
+  integer, parameter :: FIRST_PHYQ = phyq_invalid, LAST_PHYQ = phyq_icedensity
+d81 2
+a82 1
+  integer, parameter :: L_EARTHREFL     = l_dl + 1
+d243 1
+d338 1
+d397 3
+@
+
+
+2.33
+log
+@remove earthradius (redundant quantity),jonathan/wu
+@
+text
+@d18 1
+a18 1
+       "$Id: intrinsic.f90,v 2.32 2001/07/13 19:04:56 dwu Exp $"
+d128 2
+a129 2
+  integer, parameter :: L_RADIUSOFEARTH = l_radians + 1
+  integer, parameter :: L_REFGPH        = l_radiusofearth + 1
+d289 1
+a289 1
+    lit_indices(l_radiusofearth) =         add_ident ( 'radiusofearth' )
+d393 3
+@
+
+
+2.32
+log
+@fix problem after adding lostransfunc
+@
+text
+@d18 1
+a18 1
+       "$Id: intrinsic.f90,v 2.31 2001/07/13 18:20:18 dwu Exp $"
+d80 1
+a80 2
+  integer, parameter :: L_EARTHRADIUS   = l_dl + 1
+  integer, parameter :: L_EARTHREFL     = l_earthRadius + 1
+a240 1
+    lit_indices(l_earthRadius) =           add_ident ( 'earthRadius' )
+d393 3
+@
+
+
+2.31
+log
+@add quantity losTransFunc
+@
+text
+@d18 1
+a18 1
+       "$Id: intrinsic.f90,v 2.30 2001/07/10 23:46:35 jonathan Exp $"
+d266 1
+d395 3
+@
+
+
+2.30
+log
+@added l_icedensity, paul/jonathan
+@
+text
+@d18 1
+a18 1
+       "$Id: intrinsic.f90,v 2.29 2001/07/06 18:55:40 jonathan Exp $"
+d104 2
+a105 1
+  integer, parameter :: L_LOSVEL        = l_logp + 1
+d394 3
+@
+
+
+2.29
+log
+@Modified for cloud model, Paul/Jonathan
+@
+text
+@d18 1
+a18 1
+       "$Id: intrinsic.f90,v 2.28 2001/05/31 22:07:33 livesey Exp $"
+d59 2
+a60 1
+  integer, parameter :: FIRST_PHYQ = phyq_invalid, LAST_PHYQ = phyq_extinction
+d96 2
+a97 1
+  integer, parameter :: L_INTERMEDIATEFREQUENCY= l_hz + 1
+d257 1
+d333 2
+d393 3
+@
+
+
+2.28
+log
+@Updated cloud quantity types
+@
+text
+@d18 1
+a18 1
+       "$Id: intrinsic.f90,v 2.27 2001/05/31 20:27:37 livesey Exp $"
+d71 2
+a72 2
+  integer, parameter :: L_CLOUDSENSITIVITY     = l_cloudOpticalDepth + 1
+  integer, parameter :: L_CLOUDWATER    = l_cloudSensitivity + 1
+d126 2
+a127 1
+  integer, parameter :: L_REFGPH        = l_radians + 1
+d231 1
+a231 1
+    lit_indices(l_cloudSensitivity) =      add_ident ( 'cloudSensitivity' )
+d286 1
+d388 3
+@
+
+
+2.27
+log
+@New vector type associated with cloud quantities.
+@
+text
+@d18 1
+a18 1
+       "$Id: intrinsic.f90,v 2.26 2001/05/29 22:45:45 livesey Exp $"
+d67 3
+a69 1
+  integer, parameter :: L_CLOUDINDUCEDRADIANCE = l_channel + 1
+d72 2
+a73 1
+  integer, parameter :: L_DAYS          = l_cloudSensitivity + 1
+d79 2
+a80 1
+  integer, parameter :: L_EARTHREFL     = l_dl + 1
+d134 4
+a137 2
+  integer, parameter :: L_SPACERADIANCE = l_sidebandratio + 1
+  integer, parameter :: L_TEMPERATURE   = l_spaceRadiance + 1
+d145 2
+a146 2
+  integer, parameter :: L_TOTALOPTICALDEPTH =  l_tngtgeodalt + 1
+  integer, parameter :: L_TRUE         =  l_totalOpticalDepth + 1
+d227 2
+a229 1
+    lit_indices(l_cloudOpticalDepth) =     add_ident ( 'cloudOpticalDepth' )
+d231 1
+d238 1
+d293 1
+d295 1
+d304 1
+a304 1
+    lit_indices(l_totalOpticalDepth) =     add_ident ( 'totalOpticalDepth' )
+d386 3
+@
+
+
+2.26
+log
+@Moved some state vector component literals in from l2/init_tables_module.f90
+@
+text
+@d18 1
+a18 1
+       "$Id: intrinsic.f90,v 2.25 2001/05/10 23:26:45 livesey Exp $"
+d67 4
+a70 1
+  integer, parameter :: L_DAYS          = l_channel + 1
+d77 2
+a78 1
+  integer, parameter :: L_ELEVOFFSET    = l_earthRefl + 1
+d103 3
+a105 1
+  integer, parameter :: L_MB            = l_mafs + 1
+d139 2
+a140 1
+  integer, parameter :: L_TRUE         =  l_tngtgeodalt + 1
+d221 3
+d232 1
+d257 2
+d293 1
+d375 3
+@
+
+
+2.25
+log
+@Added isotope ratio vector quantity type.
+@
+text
+@d18 1
+a18 1
+       "$Id: intrinsic.f90,v 2.24 2001/05/03 22:27:04 livesey Exp $"
+d73 3
+a75 1
+  integer, parameter :: L_EXTINCTION    = l_dl + 1
+d120 2
+a121 1
+  integer, parameter :: L_SCVEL         = l_scECI + 1
+d124 2
+a125 1
+  integer, parameter :: L_TEMPERATURE   = l_sidebandratio + 1
+d220 2
+d267 1
+d271 1
+d361 3
+@
+
+
+2.24
+log
+@Added l_heightoffset
+@
+text
+@d18 1
+a18 1
+       "$Id: intrinsic.f90,v 2.23 2001/04/26 16:18:39 livesey Exp $"
+d86 2
+a87 1
+  integer, parameter :: L_K             = l_intermediatefrequency + 1
+d229 1
+d353 3
+@
+
+
+2.23
+log
+@Fixed bug. All those nice integer arrays weren't initially nullified, whoops!
+@
+text
+@d18 1
+a18 1
+       "$Id: intrinsic.f90,v 2.22 2001/04/26 02:33:03 vsnyder Exp $"
+d81 2
+a82 1
+  integer, parameter :: L_HOURS         = l_gph_precision + 1
+d223 1
+d351 3
+@
+
+
+2.22
+log
+@Moved *_indices declarations from init_tables_module to intrinsic
+@
+text
+@d18 1
+a18 1
+       "$Id: intrinsic.f90,v 2.21 2001/04/23 20:57:42 vsnyder Exp $"
+d156 6
+a161 2
+  integer, save, pointer, dimension(:) :: DATA_TYPE_INDICES, FIELD_INDICES, &
+    & LIT_INDICES, PARM_INDICES, SECTION_INDICES, SPEC_INDICES
+d349 3
+@
+
+
+2.21
+log
+@Move the first spec (time) to 'intrinsic'
+@
+text
+@d10 2
+d14 1
+d18 1
+a18 1
+       "$Id: intrinsic.f90,v 2.20 2001/04/09 20:59:35 vsnyder Exp $"
+d41 3
+d155 4
+d161 3
+a163 2
+  subroutine INIT_INTRINSIC ( DATA_TYPE_INDICES, FIELD_INDICES, LIT_INDICES, &
+    & PARM_INDICES, SECTION_INDICES, SPEC_INDICES )
+d170 21
+a190 6
+    integer, intent(inout) :: DATA_TYPE_INDICES(:)
+    integer, intent(inout) :: FIELD_INDICES(:)
+    integer, intent(inout) :: LIT_INDICES(:)
+    integer, intent(inout) :: PARM_INDICES(:)
+    integer, intent(inout) :: SECTION_INDICES(:)
+    integer, intent(inout) :: SPEC_INDICES(:)
+d192 1
+a192 1
+  ! Put intrinsic predefined identifiers into the symbol table.
+d319 1
+a319 1
+    ! ------------------------------------------------  MAKE_TREE  -----
+d332 10
+d345 3
+@
+
+
+2.20
+log
+@Add C (for Celsius) unit and l_c name for it
+@
+text
+@d15 1
+a15 1
+       "$Id: intrinsic.f90,v 2.19 2001/04/09 14:56:04 perun Exp $"
+d128 5
+d244 3
+d309 3
+@
+
+
+2.19
+log
+@Corrected enumeration literal definition for l_temperature
+@
+text
+@d15 1
+a15 1
+       "$Id: intrinsic.f90,v 2.18 2001/04/04 17:56:42 vsnyder Exp $"
+d59 2
+a60 1
+  integer, parameter :: L_CHANNEL       = l_baseline + 1
+d171 1
+d191 1
+a191 1
+    lit_indices(l_k) =                     add_ident ( 'k' )
+d301 3
+@
+
+
+2.18
+log
+@Insert "USE TREE" because "make depends" can't see the one in "make_tree"
+(because of the "include").
+@
+text
+@d15 1
+a15 1
+       "$Id: intrinsic.f90,v 2.17 2001/04/04 17:21:12 pwagner Exp $"
+d112 1
+a112 1
+  integer, parameter :: L_TEMPERATURE   = l_seconds + 1
+d299 4
+@
+
+
+2.17
+log
+@Added extra use tree line to tweak dependencies
+@
+text
+@a9 4
+! We need this  because the  i n c l u d e  line below hides the
+! following  u s e  statement
+    use TREE, only: BUILD_TREE, PUSH_PSEUDO_TERMINAL
+
+d15 1
+a15 1
+       "$Id: intrinsic.f90,v 2.16 2001/04/03 19:09:12 vsnyder Exp $"
+d148 3
+d299 3
+@
+
+
+2.16
+log
+@Change the order of initialization to intrinsic, Molecules, MLSSignals.
+Use the revised make_tree.f9h, which requires revision of init...
+calling sequences.
+@
+text
+@d10 4
+d19 1
+a19 1
+       "$Id: intrinsic.f90,v 2.15 2001/03/17 02:23:40 livesey Exp $"
+d300 5
+@
+
+
+2.15
+log
+@Bug fix, defined phyq_indices(phyq_velocity)
+@
+text
+@a9 4
+  use MOLECULES ! everything, in particular FIRST_MOLECULE, INIT_MOLECULES,
+  !               and LAST_MOLECULE.  There is no "only" clause so as to
+  !               make all of the literals, e.g. l_h2o, available here, too.
+
+a11 1
+  private :: ENTER_TERMINAL, T_IDENTIFIER
+d15 1
+a15 1
+       "$Id: intrinsic.f90,v 2.14 2001/03/15 18:41:04 livesey Exp $"
+d30 4
+a33 4
+  integer, parameter :: T_FIRST          = 1
+  integer, parameter :: T_NUMERIC        = t_first
+  integer, parameter :: T_NUMERIC_RANGE  = t_numeric + 1
+  integer, parameter :: T_STRING         = t_numeric_range + 1
+d35 2
+a36 2
+  integer, parameter :: T_BOOLEAN        = t_string + 1
+  integer, parameter :: T_LAST_INTRINSIC = t_boolean
+d57 2
+a58 2
+  integer, parameter :: FIRST_LIT       = first_molecule
+  integer, parameter :: L_BASELINE      = last_molecule+1
+d145 3
+a147 1
+  subroutine INIT_INTRINSIC ( DATA_TYPE_INDICES, LIT_INDICES )
+d151 1
+d153 3
+a155 4
+
+  ! Put molecules into the symbol table.
+
+    call init_molecules ( lit_indices )
+d281 1
+a281 65
+
+    subroutine MAKE_TREE ( IDS )
+    ! Build a tree specified by the "ids" array.  "begin" marks the
+    ! beginning of a tree.  A tree-node marks the end of the corresponding
+    ! tree.  Pseudo-terminals are decorated with their indices.
+      use TREE, only: BUILD_TREE, PUSH_PSEUDO_TERMINAL
+      implicit NONE
+
+      integer, intent(in) :: IDS(:)
+
+      integer, save :: CALLNO = 0    ! Which call to Make_Tree -- for error msg.
+      integer :: DECOR, I, ITEM, M, N_IDS, STACK(0:30), STRING, WHICH
+
+      callno = callno + 1
+      n_ids = size(ids)
+      m = 0
+      stack(0) = 0 ! just so it's defined, in case it gets incremented
+                   ! after build_tree
+      if ( ids(1) >= 0 ) then
+        m = 1
+        stack(1) = 0
+      end if
+      do i = 1, n_ids
+        if ( ids(i) == begin ) then
+          m = m + 1
+          if ( m > ubound(stack,1) ) then
+            print *, 'INTRINSIC%MAKE_TREE-E- Stack overflow!'
+            print *, 'Your tree is taller than ', ubound(stack,1), &
+              &      '.  Detected while'
+            print *, 'processing element ', i, ' of the list for call ', callno
+            stop
+          end if
+          stack(m) = 0
+        else
+          item = mod(ids(i), 1000)
+          which = mod(ids(i) / 1000, 1000)
+          decor = ids(i) / 1000000
+          select case ( which )
+          case ( l/1000 ) ! Enumeration literals
+            string = lit_indices(item)
+          case ( t/1000 ) ! Intrinsic data types
+            string = data_type_indices(item)
+          case ( n/1000 ) ! Tree nodes
+            call build_tree ( item, stack(m), decor )
+            m = m - 1
+            if ( m < lbound(stack,1) ) then
+              print *, 'INTRINSIC%MAKE_TREE-E- Stack underflow!'
+              print *, 'You probably forgot a "begin" somewhere.  Detected while'
+              print *, 'processing element ', i, ' of the list for call ', callno
+              stop
+            end if
+            stack(m) = stack(m) + 1
+      cycle
+          end select
+          if ( string == 0 ) then
+            print *, 'INTRINSIC%MAKE_TREE-E- The string for element ', &
+              & i, ' of a list'
+            print *, 'is undefined.  Detected on call ', callno, ' to Make_Tree.'
+            stop
+          end if
+          call push_pseudo_terminal ( string, 0, decor = item )
+          stack(m) = stack(m) + 1
+        end if
+      end do
+    end subroutine MAKE_TREE
+d296 3
+@
+
+
+2.14
+log
+@Added some more, losvel etc.
+@
+text
+@d20 1
+a20 1
+       "$Id: intrinsic.f90,v 2.13 2001/03/15 07:37:35 livesey Exp $"
+d249 1
+d363 3
+@
+
+
+2.13
+log
+@Added l_frequency
+@
+text
+@d20 1
+a20 1
+       "$Id: intrinsic.f90,v 2.12 2001/03/14 02:05:52 vsnyder Exp $"
+d88 2
+a89 1
+  integer, parameter :: L_LSBFREQUENCY  = l_logp + 1
+d113 2
+a114 1
+  integer, parameter :: L_SCVEL         = l_scanresidual + 1
+d122 2
+a123 1
+  integer, parameter :: L_TNGTGEOCALT   = l_time + 1
+d125 2
+a126 2
+  integer, parameter :: L_TRUE          = l_tngtgeodalt + 1
+  integer, parameter :: L_USBFREQUENCY  = l_true + 1 !
+d128 2
+a129 1
+  integer, parameter :: L_ZETA          = l_vmr + 1
+d194 1
+d219 1
+d228 1
+d234 1
+d362 3
+@
+
+
+2.12
+log
+@Moved MLSSignals_m to mlspgs/lib.
+@
+text
+@d20 1
+a20 1
+       "$Id: intrinsic.f90,v 2.11 2001/03/06 22:41:59 livesey Exp $"
+d73 2
+a74 1
+  integer, parameter :: L_GEODALTITUDE  = l_false + 1
+d175 1
+d354 3
+@
+
+
+2.11
+log
+@Minor changes
+@
+text
+@a12 2
+  use SYMBOL_TABLE, only: ENTER_TERMINAL
+  use SYMBOL_TYPES, only: T_IDENTIFIER
+d19 3
+a21 2
+  character (len=256), private :: Id = &
+       "$Id: intrinsic.f90,v 2.10 2001/03/02 01:32:21 livesey Exp $"
+d33 1
+d127 16
+d146 2
+d241 30
+d272 1
+d274 64
+a337 4
+    integer function ADD_IDENT ( TEXT )
+      character(len=*), intent(in) :: TEXT
+      add_ident = enter_terminal ( text, t_identifier )
+    end function ADD_IDENT
+d341 8
+d352 3
+@
+
+
+2.10
+log
+@Added some new PHYQs
+@
+text
+@d22 1
+a22 1
+       "$Id: intrinsic.f90,v 2.9 2001/02/22 23:57:38 vsnyder Exp $"
+d64 2
+a65 1
+  integer, parameter :: L_DAYS          = l_baseline + 1
+d74 2
+a75 1
+  integer, parameter :: L_GHZ           = l_geodaltitude + 1
+d81 1
+a81 2
+  integer, parameter :: L_INSTRUMENTCHANNEL = l_hz + 1
+  integer, parameter :: L_INTERMEDIATEFREQUENCY=l_instrumentchannel + 1
+d118 2
+a119 1
+  integer, parameter :: L_TNGTGEOCALT   = l_thz + 1
+d147 1
+d157 1
+a163 1
+    lit_indices(l_instrumentchannel) =     add_ident ( 'instrumentchanel' )
+d201 1
+d235 3
+@
+
+
+2.9
+log
+@Remove ", public" from parameters, because default accessibility is public
+@
+text
+@d22 1
+a22 1
+       "$Id: intrinsic.f90,v 2.8 2001/02/09 18:37:37 vsnyder Exp $"
+d56 3
+a58 1
+  integer, parameter :: FIRST_PHYQ = phyq_invalid, LAST_PHYQ = phyq_zeta
+d231 3
+@
+
+
+2.8
+log
+@Add REQ_FLD flag for specification definitions
+@
+text
+@d18 1
+d22 1
+a22 1
+       "$Id: intrinsic.f90,v 2.7 2001/02/09 01:05:18 livesey Exp $"
+d28 3
+a30 3
+  integer, public, parameter :: NO_DUP = 1        ! Duplicate fields prohibited
+  integer, public, parameter :: ALL_FIELDS = 2    ! All fields required
+  integer, public, parameter :: NO_POSITIONAL = 4 ! Positional fields prohibited
+d33 1
+a33 1
+  integer, public, parameter :: REQ_FLD = 1       ! Required field
+d35 4
+a38 4
+  integer, public, parameter :: T_FIRST          = 1
+  integer, public, parameter :: T_NUMERIC        = t_first
+  integer, public, parameter :: T_NUMERIC_RANGE  = t_numeric + 1
+  integer, public, parameter :: T_STRING         = t_numeric_range + 1
+d40 2
+a41 2
+  integer, public, parameter :: T_BOOLEAN        = t_string + 1
+  integer, public, parameter :: T_LAST_INTRINSIC = t_boolean
+d44 14
+a57 14
+  integer, public, parameter :: PHYQ_INVALID = 0 ! Invalid unit given by user
+  integer, public, parameter :: PHYQ_DIMENSIONLESS = 1 ! Dimensionless quantity
+  integer, public, parameter :: PHYQ_LENGTH = 2        ! Default meters
+  integer, public, parameter :: PHYQ_TIME = 3          ! Default seconds
+  integer, public, parameter :: PHYQ_PRESSURE = 4      ! Default millibars
+  integer, public, parameter :: PHYQ_TEMPERATURE = 5   ! Default Kelvins
+  integer, public, parameter :: PHYQ_VMR = 6           ! Default parts-per-one
+  integer, public, parameter :: PHYQ_ANGLE = 7         ! Default degrees
+  integer, public, parameter :: PHYQ_MAFS = 8          ! Default MAFs
+  integer, public, parameter :: PHYQ_MIFS = 9          ! Default MIFs
+  integer, public, parameter :: PHYQ_FREQUENCY = 10    ! Default MHz
+  integer, public, parameter :: PHYQ_ZETA = 11         ! log10(pressure/hPa)
+  integer, public, parameter :: FIRST_PHYQ = phyq_invalid, LAST_PHYQ = phyq_zeta
+  integer, public :: PHYQ_INDICES(first_phyq:last_phyq)
+d60 62
+a121 62
+  integer, public, parameter :: FIRST_LIT       = first_molecule
+  integer, public, parameter :: L_BASELINE      = last_molecule+1
+  integer, public, parameter :: L_DAYS          = l_baseline + 1
+  integer, public, parameter :: L_DEG           = l_days + 1
+  integer, public, parameter :: L_DEGREES       = l_deg + 1
+  integer, public, parameter :: L_DIMENSIONLESS = l_degrees + 1
+  integer, public, parameter :: L_DIMLESS       = l_dimensionless + 1
+  integer, public, parameter :: L_DL            = l_dimless + 1
+  integer, public, parameter :: L_EXTINCTION    = l_dl + 1
+  integer, public, parameter :: L_FALSE         = l_extinction + 1
+  integer, public, parameter :: L_GEODALTITUDE  = l_false + 1
+  integer, public, parameter :: L_GHZ           = l_geodaltitude + 1
+  integer, public, parameter :: L_GPH           = l_ghz + 1
+  integer, public, parameter :: L_GPH_PRECISION = l_gph + 1
+  integer, public, parameter :: L_HOURS         = l_gph_precision + 1
+  integer, public, parameter :: L_HPA           = l_hours + 1
+  integer, public, parameter :: L_HZ            = l_hpa + 1
+  integer, public, parameter :: L_INSTRUMENTCHANNEL = l_hz + 1
+  integer, public, parameter :: L_INTERMEDIATEFREQUENCY=l_instrumentchannel + 1
+  integer, public, parameter :: L_K             = l_intermediatefrequency + 1
+  integer, public, parameter :: L_KHZ           = l_k  + 1
+  integer, public, parameter :: L_KM            = l_khz + 1
+  integer, public, parameter :: L_LINEWIDTH     = l_km + 1
+  integer, public, parameter :: L_LOGP          = l_linewidth + 1
+  integer, public, parameter :: L_LSBFREQUENCY  = l_logp + 1
+  integer, public, parameter :: L_M             = l_lsbfrequency + 1
+  integer, public, parameter :: L_MAF           = l_m + 1
+  integer, public, parameter :: L_MAFS          = l_maf + 1
+  integer, public, parameter :: L_MB            = l_mafs + 1
+  integer, public, parameter :: L_METERS        = l_mb + 1
+  integer, public, parameter :: L_MHZ           = l_meters  + 1
+  integer, public, parameter :: L_MIF           = l_mhz + 1
+  integer, public, parameter :: L_MIFS          = l_mif + 1
+  integer, public, parameter :: L_MINUTES       = l_mifs + 1
+  integer, public, parameter :: L_NONE          = l_minutes + 1
+  integer, public, parameter :: L_ORBITINCLINATION = l_none + 1
+  integer, public, parameter :: L_ORBITS        = l_orbitinclination + 1
+  integer, public, parameter :: L_PA            = l_orbits + 1
+  integer, public, parameter :: L_PPBV          = l_pa + 1
+  integer, public, parameter :: L_PPMV          = l_ppbv + 1
+  integer, public, parameter :: L_PPTV          = l_ppmv + 1
+  integer, public, parameter :: L_PTAN          = l_pptv + 1
+  integer, public, parameter :: L_RAD           = l_ptan + 1
+  integer, public, parameter :: L_RADIANCE      = l_rad + 1
+  integer, public, parameter :: L_RADIANS       = l_radiance + 1
+  integer, public, parameter :: L_REFGPH        = l_radians + 1
+  integer, public, parameter :: L_S             = l_refgph + 1
+  integer, public, parameter :: L_SCANRESIDUAL  = l_s + 1
+  integer, public, parameter :: L_SCVEL         = l_scanresidual + 1
+  integer, public, parameter :: L_SECONDS       = l_scvel + 1
+  integer, public, parameter :: L_SIDEBANDRATIO = l_seconds + 1
+  integer, public, parameter :: L_TEMPERATURE   = l_seconds + 1
+  integer, public, parameter :: L_TEMPERATURE_PREC = l_temperature + 1
+  integer, public, parameter :: L_THETA         = l_temperature_prec + 1
+  integer, public, parameter :: L_THZ           = l_theta + 1
+  integer, public, parameter :: L_TNGTGEOCALT   = l_thz + 1
+  integer, public, parameter :: L_TNGTGEODALT   = l_tngtgeocalt + 1
+  integer, public, parameter :: L_TRUE          = l_tngtgeodalt + 1
+  integer, public, parameter :: L_USBFREQUENCY  = l_true + 1 !
+  integer, public, parameter :: L_VMR           = l_usbfrequency + 1
+  integer, public, parameter :: L_ZETA          = l_vmr + 1
+  integer, public, parameter :: LAST_INTRINSIC_LIT = l_zeta
+d229 3
+@
+
+
+2.7
+log
+@Thought I'd done this
+@
+text
+@d21 1
+a21 1
+       "$Id: intrinsic.f90,v 2.6 2001/02/08 21:11:13 vsnyder Exp $"
+d30 3
+d228 3
+@
+
+
+2.6
+log
+@Move "theta" from init_tables_module to intrinsic.
+@
+text
+@d21 1
+a21 1
+       "$Id: intrinsic.f90,v 2.5 2001/02/05 21:18:57 vsnyder Exp $"
+d73 3
+a75 1
+  integer, public, parameter :: L_K             = l_hz + 1
+d80 2
+a81 1
+  integer, public, parameter :: L_M             = l_logp + 1
+d90 2
+a91 1
+  integer, public, parameter :: L_ORBITINCLINATION = l_minutes + 1
+d107 1
+a107 2
+  integer, public, parameter :: L_TANGENTHEIGHT = l_sidebandratio + 1
+  integer, public, parameter :: L_TEMPERATURE   = l_tangentheight + 1
+d111 5
+a115 2
+  integer, public, parameter :: L_TRUE          = l_thz + 1
+  integer, public, parameter :: L_VMR           = l_true + 1
+d154 2
+d161 1
+d171 1
+a187 1
+    lit_indices(l_tangentheight) =         add_ident ( 'tangentHeight' )
+d192 2
+d195 1
+d225 3
+@
+
+
+2.5
+log
+@Add parameters for type checking rules.
+@
+text
+@d21 1
+a21 1
+       "$Id: intrinsic.f90,v 2.4 2001/02/01 20:18:50 vsnyder Exp $"
+d106 2
+a107 1
+  integer, public, parameter :: L_THZ           = l_temperature_prec + 1
+d181 1
+d213 3
+@
+
+
+2.4
+log
+@Correct index and spelling for gph_precision and temperature_precision
+@
+text
+@d21 1
+a21 1
+       "$Id: intrinsic.f90,v 2.3 2001/02/01 01:23:18 vsnyder Exp $"
+d26 4
+d211 3
+@
+
+
+2.3
+log
+@Account for the Molecules module
+@
+text
+@d21 1
+a21 1
+       "$Id: intrinsic.f90,v 2.2 2001/01/31 23:32:31 vsnyder Exp $"
+d139 1
+a139 1
+    lit_indices(l_gph) =                   add_ident ( 'gph_precision' )
+d175 1
+a175 1
+    lit_indices(l_temperature) =           add_ident ( 'temperature_prec' )
+d207 3
+@
+
+
+2.2
+log
+@Moved l_temperature l_temperature_prec l_ptan l_tangentheight l_sidebandratio
+l_scvel l_orbitinclination l_geodaltitude l_radiance l_scanresidual l_gph
+l_gph_precision l_refgph l_baseline l_extinction l_linewidth from L2's
+init_tables_module
+@
+text
+@d10 3
+d21 1
+a21 1
+       "$Id: intrinsic.f90,v 2.1 2000/10/11 18:24:39 vsnyder Exp $"
+d52 2
+a53 2
+  integer, public, parameter :: FIRST_LIT       = 1
+  integer, public, parameter :: L_BASELINE      = first_lit
+d114 4
+d207 6
+@
+
+
+2.1
+log
+@Initial entry
+@
+text
+@d18 1
+a18 1
+       "$Id: $"
+d20 1
+a20 1
+       "$RCSfile: $"
+d50 3
+a52 2
+  integer, public, parameter :: L_DAYS 	        = first_lit
+  integer, public, parameter :: L_DEG 	        = l_days + 1
+d56 19
+a74 14
+  integer, public, parameter :: L_DL 	        = l_dimless + 1
+  integer, public, parameter :: L_FALSE         = l_dl + 1
+  integer, public, parameter :: L_GHZ           = l_false + 1
+  integer, public, parameter :: L_HOURS         = l_ghz + 1
+  integer, public, parameter :: L_HPA 	        = l_hours + 1
+  integer, public, parameter :: L_HZ 	        = l_hpa + 1
+  integer, public, parameter :: L_K 	        = l_hz + 1
+  integer, public, parameter :: L_KHZ 	        = l_k  + 1
+  integer, public, parameter :: L_KM 	        = l_khz + 1
+  integer, public, parameter :: L_LOGP 	        = l_km + 1
+  integer, public, parameter :: L_M 	        = l_logp + 1
+  integer, public, parameter :: L_MAF 	        = l_m + 1
+  integer, public, parameter :: L_MAFS 	        = l_maf + 1
+  integer, public, parameter :: L_MB 	        = l_mafs + 1
+d76 3
+a78 3
+  integer, public, parameter :: L_MHZ 	        = l_meters  + 1
+  integer, public, parameter :: L_MIF 	        = l_mhz + 1
+  integer, public, parameter :: L_MIFS 	        = l_mif + 1
+d80 20
+a99 10
+  integer, public, parameter :: L_ORBITS        = l_minutes + 1
+  integer, public, parameter :: L_PA 	        = l_orbits + 1
+  integer, public, parameter :: L_PPBV 	        = l_pa + 1
+  integer, public, parameter :: L_PPMV 	        = l_ppbv + 1
+  integer, public, parameter :: L_PPTV 	        = l_ppmv + 1
+  integer, public, parameter :: L_RAD 	        = l_pptv + 1
+  integer, public, parameter :: L_RADIANS       = l_rad + 1
+  integer, public, parameter :: L_S 	        = l_radians + 1
+  integer, public, parameter :: L_SECONDS       = l_s + 1
+  integer, public, parameter :: L_THZ 	        = l_seconds + 1
+d101 2
+a102 2
+  integer, public, parameter :: L_VMR 	        = l_true + 1
+  integer, public, parameter :: L_ZETA 	        = l_vmr + 1
+d120 1
+d127 1
+d129 1
+d131 2
+d139 1
+d150 1
+d153 1
+d158 1
+d160 1
+d162 2
+d165 4
+d199 4
+a202 1
+! $Log: $
+@
+

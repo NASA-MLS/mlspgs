@@ -1,0 +1,59 @@
+head	1.2;
+access;
+symbols
+	V0_1:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2000.09.05.17.17.10;	author dcuddy;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	99.12.17.00.58.29;	author lungu;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@remove old files
+@
+text
+@! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+! --------------------------------------------------
+module GEOSAVG_EOS_1         ! global declarations
+! --------------------------------------------------
+  integer,parameter :: XDIM=360
+  integer,parameter :: YDIM=181
+  integer,parameter :: ZDIM=36
+  integer, parameter :: DFACC_RDONLY=1
+end module 
+
+! declarations           type    declare flag locate dimension/init.
+string
+! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+-
+! XDIM                   INTEGER   const      global  =360
+! YDIM                   INTEGER   const      global  =181
+! ZDIM                   INTEGER   const      global  =36
+  
+
+@
+
+
+1.1
+log
+@Constants for HDF-EOS grid file types
+@
+text
+@@
+

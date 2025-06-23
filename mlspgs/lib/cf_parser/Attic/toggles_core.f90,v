@@ -1,0 +1,111 @@
+head	2.1;
+access;
+symbols
+	V0_1:1.1;
+locks; strict;
+comment	@# @;
+
+
+2.1
+date	2000.10.11.00.02.16;	author vsnyder;	state dead;
+branches;
+next	2.0;
+
+2.0
+date	2000.09.05.17.41.51;	author dcuddy;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2000.07.06.01.43.12;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.1
+log
+@Moved to ~/mlspgs/lib
+@
+text
+@module TOGGLES
+
+  implicit NONE
+  public
+
+  ! Toggle indices.  The parser uses PAR, and the symbol/declaration
+  ! table software uses TAB, but they can have any values.
+  integer, parameter :: CON = 1    ! Trace constrainers visitation of tree
+                                   ! nodes, inverted by @@C
+  integer, parameter :: EMIT = 2   ! Trace code emitting, inverted by @@E
+  integer, parameter :: GEN = 3    ! Trace code generator, inverted by @@G
+  integer, parameter :: LEX = 4    ! Print each token as lexer finishes,
+                                   ! inverted by @@L
+  integer, parameter :: PAR = 5    ! Trace parser actions, inverted by @@P
+  integer, parameter :: SYN = 6    ! Print abstract syntax tree, inverted
+                                   ! by @@A
+  integer, parameter :: TAB = 7    ! Trace symbol/declaration table
+                                   ! activity, inverted by @@S
+
+  ! Toggles:
+  logical :: TOGGLE(con:tab) = .false.
+
+  ! In case you want to have levels of output (not used in the parser):
+  integer :: LEVELS(con:tab) = 0
+
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=256), private :: Id = &
+       "$Id: toggles_core.f90,v 2.0 2000/09/05 17:41:51 dcuddy Exp $"
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: toggles_core.f90,v $"
+!---------------------------------------------------------------------------
+
+contains
+
+  subroutine INIT_TOGGLE
+    toggle = .false.
+  end subroutine INIT_TOGGLE
+
+end module TOGGLES
+
+! $Log: toggles_core.f90,v $
+! Revision 2.0  2000/09/05 17:41:51  dcuddy
+! Change revision to 2.0
+!
+! Revision 1.2  2000/08/01 01:01:45  vsnyder
+! Added "levels" for those who want to control the amount of output.
+!
+@
+
+
+2.0
+log
+@Change revision to 2.0
+@
+text
+@d28 1
+a28 1
+       "$Id: toggles_core.f90,v 1.2 2000/08/01 01:01:45 vsnyder Exp $"
+d42 3
+@
+
+
+1.1
+log
+@Initial check-in
+@
+text
+@d23 3
+d28 1
+a28 1
+       "$Id: toggles_core.f90,v 1.1 2000/07/06 01:43:12 vsnyder Exp $"
+d42 5
+a46 2
+! Revision 1.1  2000/07/06 01:43:12  vsnyder
+! Initial check-in
+@
+
+

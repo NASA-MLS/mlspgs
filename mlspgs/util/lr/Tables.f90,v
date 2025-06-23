@@ -1,0 +1,111 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.12
+	cfm-single-freq-0-1:1.1.0.10
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.8
+	mus-emls-1-70:1.1.0.6
+	rel-1-0-englocks-work:1.1.0.4
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.2
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2014.01.14.00.15.09;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit of new module for new LR
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Tables
+
+  ! Tables used throughout the LR parser generator.
+
+  implicit NONE
+  public
+  save ! The default since 2003
+
+  integer :: First_Nonterminal ! Position in sorted list
+  integer :: First_Terminal    ! Position in sorted list
+  integer :: Last_Nonterminal  ! Position in sorted list
+
+  integer :: NTERMS            ! Number of terminals
+  integer :: NUMPRD            ! Number of productions
+  integer :: NVOC              ! Number of symbols in the vocabulary
+
+  integer, allocatable :: Actions(:)  ! String index, indexed by production
+                               ! number, negative if "?" action
+
+  integer, allocatable :: First_Production(:) ! First element of Productions
+                               ! for a nonterminal; indexed by string index
+
+  integer, allocatable :: HEADCS(:) ! Head of list of context sets for a
+                               ! nonterminal symbol
+
+  integer, allocatable :: HEADEN(:) ! Head of list of states entered by a
+                               ! terminal symbol
+
+  integer, allocatable :: Productions(:) ! LHS, RHS... indices in the
+                               ! permutation table of sorted strings
+
+  integer, allocatable :: Prod_Ind(:) ! Index in Productions of beginning of
+                               ! each production; indexed by production number,
+                               ! 1 + NUMPRD elements.
+
+  integer, allocatable :: Vocab(:)    ! String indices of sorted vocabulary,
+                               ! in order first by Terminal, Nonterminal,
+                               ! Vocabulary name, and Action, then by string
+
+  integer, allocatable :: Vocab_Names(:) ! String indices of terminal symbols
+                               ! names, from "A = B" lines in the grammar, in
+                               ! the same order as the terminals are in VOCAB,
+                               ! if any, else the negative of the element's
+                               ! subscript.
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: parser.f90,v $"
+!---------------------------------------------------------------------------
+
+end module Tables
+
+! $Log: $
+@

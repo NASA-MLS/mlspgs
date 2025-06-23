@@ -1,0 +1,208 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.18
+	cfm-single-freq-0-1:1.1.0.16
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.14
+	mus-emls-1-70:1.1.0.12
+	rel-1-0-englocks-work:1.1.0.10
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.8
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.6
+	V2-24-NRT-04:1.1
+	V3-33:1.1
+	V2-24:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1
+	V2-23-NRT-02:1.1
+	V2-23:1.1
+	V2-22-NRT-01:1.1
+	V2-22:1.1
+	V2-21:1.1
+	V2-20:1.1
+	V2-11:1.1
+	V2-10:1.1
+	V2-00:1.1
+	V1-51:1.1
+	V1-50:1.1
+	V1-45:1.1
+	V1-44:1.1
+	V1-43:1.1
+	V1-42:1.1
+	V1-41:1.1
+	V1-32:1.1
+	V1-40:1.1
+	V1-31:1.1
+	V1-30:1.1
+	V1-13:1.1
+	V1-12:1.1
+	V1-11:1.1
+	V1-10:1.1
+	newfwm-feb03:1.1.0.4
+	V1-04:1.1
+	V1-03:1.1
+	V1-02:1.1
+	V1-00:1.1
+	newfwm-sep01:1.1.0.2
+	V0-7:1.1
+	V0-5-Level2:1.1
+	V0-5-SIPS:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2000.10.20.23.33.27;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@moved to test directory
+@
+text
+@! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+program TEST
+
+! A test harness for the MLS CF parser.  It also illustrates how to use
+! it, including how to cause the input to come from a Fortran unit instead
+! of standard input.
+
+  use GETCF_M, only: GetCF, InitGetCF
+  use MACHINE ! At least HP, for command lines, IO_ERROR, and maybe GETARG
+  use MLSCF, only: MLSCF_T
+  use OUTPUT_M, only: PRUNIT
+  use TOGGLES, only: CON, GEN, LEX, PAR, SYN, TAB, TOGGLE
+
+  type(mlscf_t) :: CF_DATA
+  logical :: DO_DUMP = .false.     ! Dump declaration table
+  logical :: DO_DUMP_EARLY = .false.    ! Dump declaration table before check
+  logical :: DO_LISTING = .false.  ! List input
+  logical :: DUMP_TREE = .false.   ! Dump tree after parsing
+  integer :: ERROR                 ! Error flag from GetCF
+  integer :: I                     ! counter for command line arguments
+  integer :: INUNIT = -1           ! Fortran unit number for input -1 = stdin
+  integer :: J                     ! index within option
+  character(len=80) :: LINE        ! to read command line arguments
+  integer :: STATUS
+
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=256) :: Id = &
+       "$Id: test.f90,v 1.1 2000/10/11 20:54:40 vsnyder Exp $"
+  character (len=*), parameter :: ModuleName= &
+       "$RCSfile: test.f90,v $"
+!---------------------------------------------------------------------------
+
+  call InitGetCF
+
+  i = 1+hp
+  do ! Process the command line options to set toggles
+    call getarg ( i, line )
+    if ( line(1:1) == '-' ) then
+      do j = 2, len(line)
+        if ( line(j:j) == 'c' ) then
+          toggle(con) = .true.
+        else if ( line(j:j) == 'g' ) then
+          toggle(gen) = .true.
+        else if ( line(j:j) == 'l' ) then
+          toggle(lex) = .true.
+        else if ( line(j:j) == 'p' ) then
+          toggle(par) = .true.
+        else if ( line(j:j) == 'a' ) then
+          toggle(syn) = .true.
+        else if ( line(j:j) == 'A' ) then
+          dump_tree = .true.
+        else if ( line(j:j) == 'd' ) then
+          do_dump = .true.
+        else if ( line(j:j) == 'D' ) then
+          do_dump_early = .true.
+        else if ( line(j:j) == 't' ) then
+          toggle(tab) = .true.
+        else if ( line(j:j) == 'v' ) then
+          do_listing = .true.
+        end if
+      end do
+    else
+  exit
+    end if
+    i = i + 1
+  end do
+
+  if ( line /= ' ' ) then     ! Process input file name
+    open ( 98, file=trim(line), form='formatted', iostat=status )
+    if ( status /= 0 ) then
+      call io_error ( 'While opening input file', status, trim(line) )
+      stop
+    end if
+    inUnit = 98
+    call getarg ( i+1, line )
+    if ( line /= ' ' ) then   ! Process output file name
+      open ( 99, file=trim(line), form='formatted', iostat=status )
+      if ( status /= 0 ) then
+        call io_error ( 'While opening output file', status, trim(line) )
+        stop
+      end if
+      prUnit = 99
+    end if
+  end if
+
+  call getCF ( cf_data, error, inUnit=inUnit, listing=do_listing, &
+    & dump=do_dump, dumpEarly=do_dump_early, dumpTree=dump_tree, &
+    & dumpTables=.true. )
+
+end program TEST
+
+! $Log: test.f90,v $
+! Revision 1.1  2000/10/11 20:54:40  vsnyder
+! Initial addition
+!
+! Revision 2.4  2000/10/03 01:39:10  vsnyder
+! Add the copyright notice.
+!
+! Revision 2.3  2000/10/03 01:09:19  vsnyder
+! Add getting input and output files from command line, and telling the
+! parser to use them.
+!
+! Revision 2.2  2000/10/03 00:54:44  vsnyder
+! Revised to account for changing getL2CF_m.f90 to getCF_m.f90
+!
+! Revision 2.1  2000/09/29 23:30:09  vsnyder
+! Revised to account for getL2CF_m
+!
+! Revision 2.0  2000/09/05 17:41:51  dcuddy
+! Change revision to 2.0
+!
+! Revision 1.1  2000/07/06 01:43:12  vsnyder
+! Initial check-in
+@

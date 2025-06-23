@@ -1,0 +1,718 @@
+head	1.8;
+access;
+symbols
+	v5-02-NRT-19:1.8
+	v6-00:1.8
+	v5-02-NRT-18:1.8
+	v5-02:1.8
+	v5-01-NRT-17:1.8
+	v5-01-NRT-16:1.8
+	v5-01-NRT-15:1.8
+	v5-01-NRT-14:1.8
+	neuralnetworks-1-0:1.8.0.6
+	cfm-single-freq-0-1:1.8.0.4
+	v5-01:1.8
+	v5-00:1.8
+	v4-23-TA133:1.8.0.2
+	mus-emls-1-70:1.6.0.4
+	rel-1-0-englocks-work:1.6.0.2
+	VUMLS1-00:1.6
+	VPL1-00:1.5
+	V4-22-NRT-08:1.5
+	VAM1-00:1.5
+	V4-21:1.5.0.2
+	V4-13:1.5
+	V4-12:1.5
+	V4-11:1.5
+	V4-10:1.5
+	V3-43:1.2
+	M4-00:1.5
+	V3-41:1.2
+	V3-40-PlusGM57:1.2.0.2
+	V3-33:1.2
+	V3-31:1.2
+	V3-30-NRT-05:1.2
+	cfm-01-00:1.2
+	V3-30:1.2
+	V3-20:1.2
+	V3-10:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.8
+date	2018.10.19.01.16.06;	author pwagner;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2018.08.13.23.14.16;	author pwagner;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2016.12.16.21.58.29;	author pwagner;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2012.08.14.21.15.43;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2012.08.07.18.04.46;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2012.08.03.16.54.04;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2008.06.17.00.05.15;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2008.05.22.17.39.37;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.8
+log
+@Corrected comments about lines with quote marks
+@
+text
+@! Copyright 2008, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+program wrapLines
+   use Io_Stuff, only: Get_Lun
+   use Machine, only: Hp, Getarg
+   use MLSMacros, only: Dump_Macros, Read_Macros, Expand_Line
+   use MLSStringlists, only: Wrap
+   use MLSStrings, only: Lentrimtoascii, Nappearances
+   use Output_M, only: Output
+   implicit none
+
+!---------------------------- RCS Ident Info ------------------------------
+  character (len=*), parameter :: ModuleName= &
+       "$RCSfile: chunktimes.f90,v $"
+  character (len=*), parameter :: IdParm = &
+       "$Id: chunktimes.f90,v 1.30 2016/10/04 22:13:34 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+!---------------------------------------------------------------------------
+  ! wrap lines in stdin (or -i inputFile)
+  ! so they do not exceed (by much) 128 chars in length
+  
+  ! Suggested use:
+  ! After m4, pipe l2cf through me before saving as *.l2cf
+  ! Then you'll be able to read the resulting l2cf more comfortably
+  
+  ! Notes and limitations
+  ! Input line must not exceed MAXLINELEN (24000) chars
+  ! (a bug in NAG makes it even less (1000), so .. don't build with NAG)
+
+  ! Lines will be split at a BREAK (','), unless that line contains quotes
+  ! In case you're wondering why we don't wrap lines with quoted strings,
+  ! it's because we're not smart enough to tell when a BREAK is embedded
+  ! within quotes
+  ! which could be trouble if you have directory/file names with BREAKs
+  ! in them.
+  
+  ! E.g., a line with 
+  !  ForwardModelGlobal, l2pc='/data/emls/l2cal/l2pc039,not,a,good,idea,to,use,commas,here/MLS-Aura_L2Cal-L2PC-band2-LATSCALARHIRES_v1-7-0-l2pc039_m01.h5'
+  ! would be erroneously split thus:
+  !  ForwardModelGlobal, l2pc='/data/emls/l2cal/l2pc039,not,a,good,idea,to,use,commas, $
+  !  here/MLS-Aura_L2Cal-L2PC-band2-LATSCALARHIRES_v1-7-0-l2pc039_m01.h5'
+  
+  ! Emerging use:
+  ! We hope to replace m4 eventually
+  ! Given a file of macros, use their definitions
+  ! to replace such occurrences as
+  ! (1) "!macro" 
+  !      is replaced with value of macro
+  ! (2) "!function(args)" 
+  !      is replaced with function evaluated for its args
+  ! (3) "!forall(function,args)"
+  !      is replaced one time for each arg with function evaluated ath that arg
+  ! The macros file may contain statements such as
+  !   macro_name=value
+  !   function(arg)="character string inluding $(arg)"
+  !   function()="character string inluding $(n)"
+
+  type options_T
+    logical             :: verbose            = .false.
+    logical             :: summarize          = .false.
+    logical             :: keepTrailingSpaces = .true. ! Less efficient if true
+    ! logical             :: wrapAllLines       = .false. ! Even with quoted strs
+    logical             :: doWrap             = .true. ! wrap?
+    integer             :: printCBL           = 0 ! How many consecutive bls
+    integer             :: linefeed           = 10
+    integer             :: width              = 128
+    character(len=1)    :: BREAK              = ','
+    character(len=1)    :: comment            = ';'
+    character(len=1)    :: MODE               = 's'
+    character(len=3)    :: eol                = ' $'
+    character(len=3)    :: quotes             = '''"'
+    character(len=255)  :: inputFile          = ' '     ! input filename       
+    character(len=255)  :: macrosFile         = 'none'  ! output filename       
+  end type options_T
+  
+  type ( options_T ) :: options
+
+  ! variables
+  integer, parameter :: MAXLINELEN = 24000
+  integer :: addedLines
+  character(len=3) :: advance
+  character(len=1) :: c
+  character(len=1), dimension(MAXLINELEN) :: cArray
+  logical :: containsQuotes
+  integer :: i
+  integer :: iounit
+  character(len=MAXLINELEN) :: lineIn
+  character(len=MAXLINELEN) :: lineOut
+  integer :: LineLengthRead ! Max encountered
+  integer :: nCommentsRead  ! number read
+  integer :: nConsectiveBlanks  ! number read
+  integer :: nLinesRead     ! number read
+  integer :: nQuotesRead    ! number read
+  integer :: pos
+  character(len=1), dimension(3) :: qArray ! array of quote chars
+  integer :: status
+  integer :: totalBlankLinesDropped
+  integer :: totalLinesAdded
+  integer :: totalLinesNeedWrapping
+  character(len=12) :: xfmt
+  character(len=8) :: xlen
+  ! Executable
+  ! write (*,*) 'starting'
+  call get_options (options)
+  ! What format do we use for reading each line?
+  xfmt = '(128a1)' ! This is the default
+  write( xlen, '(i8)' ) len(lineIn)
+  if ( index(xlen, '*') < 1 ) xfmt = '(' // trim(adjustl(xlen)) // 'a1)'
+  advance = 'yes'
+  if ( .not. options%keepTrailingSpaces ) advance = 'no'
+  c = options%comment
+  ! write (*,*) 'options%macrosfile ', options%macrosfile
+  if ( len_trim(options%macrosfile) > 0 .and. options%macrosfile /= 'none' ) then
+    call read_macros ( options%macrosFile, status )
+    call dump_macros
+  endif
+  ! Do we wrap a file or stdin?
+  if ( len_trim(options%inputFile) < 1 ) then
+    iounit = 5
+  else
+    call get_lun ( iounit )
+    open( iounit, status='OLD', form='FORMATTED', &
+      & recl=MAXLINELEN, file=options%inputFile )
+  endif
+  if ( options%verbose ) call dumpSettings( options )
+  LineLengthRead         = 0  
+  nCommentsRead          = 0  
+  nConsectiveBlanks      = 0
+  nLinesRead             = 0  
+  nQuotesRead            = 0  
+  totalBlankLinesDropped = 0
+  totalLinesAdded        = 0  
+  totalLinesNeedWrapping = 0
+  ! write (*,*) 'options%keepTrailingSpaces ', options%keepTrailingSpaces
+  do
+    if ( .not. options%keepTrailingSpaces ) then
+      read( iounit, '(a)', iostat=status ) lineIn
+      ! write (*,*) trim(lineIn)
+      if ( options%macrosFile /= 'none' ) then
+        call expand_line( LineIn, LineOut )
+        LineIn = LineOut
+      endif
+      LineLengthRead = max( LineLengthRead, len_trim(lineIn) )
+    else
+      i = 0
+      lineIn = ' '
+      status = 0
+      call null_fill_1d( carray )
+      read( iounit, fmt=xfmt, eor=50, end=500, err=50, advance='no' ) cArray
+500   status = -1
+50    if ( status /= 0 ) exit
+      ! write (*,*) 'Read a line starting with: ', cArray(1:1), ichar(cArray(1:1))
+      ! Possibly expand given line using macros
+      if ( options%macrosFile /= 'none' ) then
+        LineIn = transfer( cArray, LineIn )
+        pos = index( LineIn, achar(0) )
+        ! write(*,*) 'pos: ', pos
+        call expand_line( LineIn(:pos-1), LineOut )
+        cArray = transfer( LineOut, cArray )
+        lineIn = ' '
+      endif
+      ! write (*,*) 'Expanded, it starts with: ', cArray(1:1), ichar(cArray(1:1))
+      oneLine: do pos=1, len(lineIn) - 1
+        if ( any(carray(pos:pos+1) == achar(0)) ) exit oneLine
+        i = min(i + 1, len(lineIn))
+        lineIn(i:i) = carray(pos)
+      enddo oneLine
+      LineLengthRead = max( LineLengthRead, pos-1 )
+      i = min(i + 1, len(lineIn))
+      lineIn(i:i) = achar(options%linefeed)
+      ! write (*,*) trim(lineIn)
+    endif
+    ! write (*,*) 'status: ', status
+    if ( status /= 0 ) exit
+    nLinesRead = nLinesRead + 1
+    addedLines = 0
+    containsQuotes = .false.
+    if ( len_trim(options%quotes) > 0 ) then
+      qArray = transfer( options%quotes, qArray )
+      containsQuotes = any( &
+        & NAppearances( trim(lineIn), qArray(1:len_trim(options%quotes)) ) > 0 &
+        & )
+    endif
+    if ( containsQuotes ) nQuotesRead = nQuotesRead + 1
+    if ( lenTrimToAscii(lineIn) < 1 ) then
+      nConsectiveBlanks = nConsectiveBlanks + 1
+    else
+      nConsectiveBlanks = 0
+    endif
+    if ( 0 < options%printCBL .and. options%printCBL < nConsectiveBlanks ) then
+      totalBlankLinesDropped = totalBlankLinesDropped + 1
+      cycle
+    endif
+    if ( index(trim(lineIn), c) > 0 ) then
+      lineOut = lineIn
+      nCommentsRead = nCommentsRead + 1
+    elseif ( .not. options%doWrap .or. containsQuotes ) then
+      lineOut = lineIn
+    elseif ( len_trim(options%quotes) < 1 ) then
+      call wrap( lineIn, lineOut, options%width, &
+        & inseparator=trim(options%eol) // achar(options%linefeed), &
+        & break=options%break, mode=options%mode, &
+        & addedLines=addedLines )
+    else
+      call wrap( lineIn, lineOut, options%width, &
+        & inseparator=trim(options%eol) // achar(options%linefeed), &
+        & break=options%break, mode=options%mode, &
+        & quotes=trim(options%quotes), addedLines=addedLines )
+    endif
+    ! write (*,*) trim(lineOut)
+    ! Don't double-space unless you mean it
+    pos = len_trim( lineOut )
+    if ( lineOut(pos:pos) == achar(options%linefeed) ) then
+      call output( trim(lineOut), advance='no' )
+    else
+      call output( trim(lineOut), advance='yes' )
+    endif
+    totalLinesAdded = totalLinesAdded + addedLines
+    if ( addedLines > 0 ) totalLinesNeedWrapping = totalLinesNeedWrapping + 1
+  enddo
+  if ( options%verbose .or. options%summarize ) then
+     print *, c // ' ( I n p u t   f i l e   s u m m a r y )'
+     print *, c // 'lines read               ', nLinesRead
+     print *, c // 'longest line read        ', LineLengthRead
+     print *, c // 'lines with comments      ', nCommentsRead
+     print *, c // 'lines with quotes        ', nQuotesRead
+     print *, c // 'lines needed wrapping    ', totalLinesNeedWrapping
+     print *, c // 'lines added by wrapping  ', totalLinesAdded
+     print *, c // 'blank lines dropped      ', totalBlankLinesDropped
+  endif
+contains
+  subroutine null_fill_1d( array, nullChar )
+    ! Fill array with null chars
+    ! Args
+    character(len=*), dimension(:), intent(out) :: array
+    character(len=1), optional, intent(in)      :: nullChar
+    ! Internal variables
+    character(len=1) :: myNull
+    integer :: col
+    integer :: pos
+    ! Executable
+    myNull = achar(0)
+    if ( present(nullChar) ) myNull = nullChar
+    do col=1, size(array)
+      do pos=1, len(array(1))
+        array(col)(pos:pos) = myNull
+      enddo
+    enddo
+  end subroutine null_fill_1d
+
+!------------------------- dumpSettings ---------------------
+    subroutine dumpSettings( options )
+    ! Added for command-line processing
+     type ( options_T ), intent(in)   :: options
+     ! Local variables
+     print *, c // ' --- wrapLines settings ---'
+     print *, c // 'verbose?                 ', options%verbose
+     print *, c // 'summarize?               ', options%summarize
+     print *, c // 'wrap?                    ', options%doWrap
+     print *, c // 'keep trailing spaces  ?  ', options%keepTrailingSpaces
+     print *, c // 'width                    ', options%width
+     print *, c // 'print consec blanks      ', options%printCBL
+     print *, c // 'break                    ', options%break
+     print *, c // 'comment                  ', options%comment
+     print *, c // 'mode                     ', options%mode 
+     print *, c // 'eol                      ', options%eol  
+     print *, c // 'linefeed                 ', options%linefeed
+     print *, c // 'quotes                   ', options%quotes
+     print *, c // 'xfmt                     ', xfmt
+     print *, c // 'advance                  ', advance
+     if ( len_trim(options%inputFile) < 1 ) then
+     print *, c // 'input  file              ', '<STDIN>'
+     else
+     print *, c // 'input  file              ', trim(options%inputFile)
+     endif
+     print *, c // 'macros file              ', trim(options%macrosFile)
+     print *, c // ' --- End wrapLines settings ---'
+    end subroutine dumpSettings
+
+!------------------------- get_options  ---------------------
+    subroutine get_options ( options )
+    ! Added for command-line processing
+     type ( options_T ), intent(inout) :: options
+     ! Local variables
+     integer ::                         error = 1
+     character(len=255)       :: filename
+     integer, save ::                   i = 1
+     character(len=16)       :: number
+  ! Get inputfile name, process command-line args
+  ! (which always start with -)
+    do
+      call getarg ( i+hp, filename )
+      ! print *, i, ' th Arg: ', trim(filename)
+      error = 0
+      if ( filename(1:1) /= '-' ) exit
+      if ( filename(1:3) == '-h ' ) then
+        call print_help
+      elseif ( filename(1:3) == '-i ' ) then
+        call getarg ( i+1+hp, options%inputFile )
+        i = i + 1
+      elseif ( filename(1:3) == '-Df' ) then
+        call getarg ( i+1+hp, options%macrosFile )
+        i = i + 1
+      else if ( filename(1:6) == '-blank' ) then
+        call getarg ( i+1+hp, number )
+        read(number, *) options%printCBL
+        i = i + 1
+      else if ( filename(1:2) == '-b' ) then
+        call getarg ( i+1+hp, options%break )
+        options%break = adjustl(options%break)
+        i = i + 1
+      else if ( filename(1:2) == '-c' ) then
+        call getarg ( i+1+hp, options%comment )
+        options%comment = adjustl(options%comment)
+        i = i + 1
+      else if ( filename(1:5) == '-eol ' ) then
+        call getarg ( i+1+hp, options%eol )
+        options%eol = adjustl(options%eol)
+        i = i + 1
+      else if ( filename(1:2) == '-q' ) then
+        call getarg ( i+1+hp, options%quotes )
+        options%quotes = adjustl(options%quotes)
+        i = i + 1
+      else if ( filename(1:6) == '-mode ' ) then
+        call getarg ( i+1+hp, options%mode )
+        options%mode = adjustl(options%mode)
+        i = i + 1
+      else if ( filename(1:7) == '-width ' ) then
+        call getarg ( i+1+hp, number )
+        read(number, *) options%width
+        i = i + 1
+      elseif ( filename(1:5) == '-keep' ) then
+        options%keepTrailingSpaces = .true.
+      elseif ( filename(1:6) == '-nkeep' ) then
+        options%keepTrailingSpaces = .false.
+      elseif ( filename(1:5) == '-wrap' ) then
+        options%doWrap = .true.
+      elseif ( filename(1:6) == '-nwrap' ) then
+        options%doWrap = .false.
+      elseif ( filename(1:2) == '-s' ) then
+        options%summarize = .true.
+      elseif ( filename(1:3) == '-v ' ) then
+        options%verbose = .true.
+      else
+        call print_help
+      end if
+      i = i + 1
+    end do
+    if ( error /= 0 ) then
+      call print_help
+    endif
+    i = i + 1
+    
+  end subroutine get_options 
+!------------------------- print_help ---------------------
+  subroutine print_help
+  ! Print brief but helpful message
+      write (*,*) &
+      & 'Usage:wrapLines [options]'
+      write (*,*) ' Options: -v            => switch on verbose mode'  
+      write (*,*) '          -s            => print num of lines, longest'     
+      write (*,*) '                            at end of stdout'
+      write (*,*) '          -b char       => break lines at char'     
+      write (*,*) '                          (default is ",")'         
+      write (*,*) '          -blank n      => print no more than n consecutive'
+      write (*,*) '                          blank lines (default is infinite)'         
+      write (*,*) '          -c char       => treat char as comment'     
+      write (*,*) '                          (default is ";")'         
+      write (*,*) '          -i file       => wrap file'     
+      write (*,*) '                          (default is to wrap stdin)'         
+      write (*,*) '          -Df file      => get macros definitions from file'     
+      write (*,*) '                          (default is to do no macros expansion)'         
+      write (*,*) '          -eol chars    => glue chars to end of broken lines'
+      write (*,*) '                            (default is ", $")'
+      write (*,*) '          -[n]keep      => do [not] keep trailing spaces'     
+      write (*,*) '                            (default is to keep them)'
+      write (*,*) '          -[n]wrap      => do [not] wrap long lines'     
+      write (*,*) '                            (default is to wrap)'
+      write (*,*) '          -q chars      => let chars delimit quoted strings'     
+      write (*,*) '                           (a line with quotes will not wrap)'     
+      write (*,*) '                          (defaults are ''")'         
+      write (*,*) '          -mode mode    => set wrap mode'
+      write (*,*) '                            (default is "s" for soft)'
+      write (*,*) '          -width width  => wrap lines longer than width'
+      write (*,*) '                            (default is 128)'
+      write (*,*) '          -h            => print brief help'
+      stop
+  end subroutine print_help
+end program wrapLines
+! $Log: wrapLines.f90,v $
+! Revision 1.7  2018/08/13 23:14:16  pwagner
+! Use statements made Camel Case
+!
+! Revision 1.6  2016/12/16 21:58:29  pwagner
+! Works with new wrap
+!
+! Revision 1.5  2012/08/14 21:15:43  pwagner
+! l2cf could have uncommented comment lines; fixed
+!
+! Revision 1.4  2012/08/07 18:04:46  pwagner
+! Can wrap a supplied filename instead of stdin
+!
+! Revision 1.3  2012/08/03 16:54:04  pwagner
+! Can now expand some macros using definitions from separate macros file
+!
+! Revision 1.2  2008/06/17 00:05:15  pwagner
+! Can skip consecutive blanks
+!
+! Revision 1.1  2008/05/22 17:39:37  pwagner
+! First commit
+!
+@
+
+
+1.7
+log
+@Use statements made Camel Case
+@
+text
+@d21 8
+a28 6
+!------------------- RCS Ident Info -----------------------
+   CHARACTER(len=130) :: Id = &                                                    
+   "$Id: wrapLines.f90,v 1.6 2016/12/16 21:58:29 pwagner Exp $"
+   CHARACTER (len=*), PARAMETER :: ModuleName= "$RCSfile: wrapLines.f90,v $"
+!----------------------------------------------------------
+  ! wrap lines in stdin
+d37 1
+a37 1
+  ! (bug in NAG makes it even less (1000), so .. don't build with NAG)
+d39 5
+a43 3
+  ! Lines will be split at a BREAK (','), neglecting to check whether the comma
+  ! may be embedded within quotes
+  ! which could be trouble if you have directory/file names with commas
+d389 1
+d400 3
+@
+
+
+1.6
+log
+@Works with new wrap
+@
+text
+@d13 6
+a18 6
+   use IO_STUFF, only: GET_LUN
+   use MACHINE, only: HP, GETARG
+   use MLSMACROS, only: DUMP_MACROS, READ_MACROS, EXPAND_LINE
+   use MLSSTRINGLISTS, only: WRAP
+   use MLSSTRINGS, only: LENTRIMTOASCII, NAPPEARANCES
+   use OUTPUT_M, only: OUTPUT
+d22 3
+a24 3
+   CHARACTER(LEN=130) :: Id = &                                                    
+   "$Id: wrapLines.f90,v 1.5 2012/08/14 21:15:43 pwagner Exp $"
+   CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile: wrapLines.f90,v $"
+d291 1
+a291 1
+     character(LEN=255)       :: filename
+d293 1
+a293 1
+     character(LEN=16)       :: number
+d395 3
+@
+
+
+1.5
+log
+@l2cf could have uncommented comment lines; fixed
+@
+text
+@d23 1
+a23 1
+   "$Id: wrapLines.f90,v 1.4 2012/08/07 18:04:46 pwagner Exp $"
+d75 1
+a75 1
+    character(len=3)    :: eol                = ', $'
+d261 1
+d282 1
+d395 3
+@
+
+
+1.4
+log
+@Can wrap a supplied filename instead of stdin
+@
+text
+@d23 1
+a23 1
+   "$Id: wrapLines.f90,v 1.3 2012/08/03 16:54:04 pwagner Exp $"
+d278 1
+a278 1
+     print *, c // 'input  file              ', options%inputFile
+d280 1
+a280 1
+     print *, c // 'macros file              ', options%macrosFile
+d393 3
+@
+
+
+1.3
+log
+@Can now expand some macros using definitions from separate macros file
+@
+text
+@d13 1
+d23 1
+a23 1
+   "$Id: wrapLines.f90,v 1.2 2008/06/17 00:05:15 pwagner Exp $"
+d77 1
+d91 1
+d122 8
+d142 1
+a142 1
+      read( *, '(a)', iostat=status ) lineIn
+d154 1
+a154 1
+      read( *, fmt=xfmt, eor=50, end=500, err=50, advance='no' ) cArray
+d275 5
+d301 3
+d362 1
+a362 3
+      & 'Usage:wrapLines [options] [filenames]'
+      write (*,*) &
+      & ' If no filenames supplied, you will be prompted to supply one'
+d372 2
+d393 3
+@
+
+
+1.2
+log
+@Can skip consecutive blanks
+@
+text
+@d14 3
+a16 2
+   use MLSStringLists, only: List2Array, wrap
+   use MLSStrings, only: lenTrimToAscii, NAppearances
+d22 1
+a22 1
+   "$Id: wrapLines.f90,v 1.1 2008/05/22 17:39:37 pwagner Exp $"
+d46 15
+d66 4
+a69 2
+    logical             :: wrapAllLines       = .false. ! Even with quoted strs
+    integer             :: printCBL            = 0 ! How many consecutive bls
+d76 1
+d105 1
+d114 5
+d128 1
+d132 5
+d146 11
+d164 2
+a165 1
+      lineIn(i:i) = achar(13)
+d167 1
+d191 1
+a191 1
+    elseif ( .not. options%wrapAllLines .and. containsQuotes ) then
+d195 1
+a195 1
+        & inseparator=trim(options%eol) // achar(13), &
+d200 1
+a200 1
+        & inseparator=trim(options%eol) // achar(13), &
+d204 8
+a211 1
+    call output( trim(lineOut), advance='yes' )
+d252 1
+d260 1
+d264 1
+d285 3
+d320 4
+d355 2
+d361 2
+d374 3
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d15 1
+a15 1
+   use MLSStrings, only: NAppearances
+d21 2
+a22 2
+   "$Id: hhmmss_value_text.f90,v 1.1 2002/02/19 23:28:19 pwagner Exp $"
+   CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile: hhmmss_value_text.f90,v $"
+d51 1
+a62 1
+  ! logical, parameter :: DONTKEEPTRAILINGSPACES = .false. ! More efficient if true
+a63 4
+  ! integer, parameter :: WIDTH = 128
+  ! character(len=1), parameter :: BREAK = ','
+  ! character(len=1), parameter :: MODE = 's'
+  ! character(len=*), parameter :: eol = ', $'
+d74 1
+d80 1
+d97 1
+d100 1
+d135 9
+d172 1
+d203 1
+d231 4
+d290 2
+d308 4
+a311 1
+! $Log: dateconverter.f90,v $
+@
+

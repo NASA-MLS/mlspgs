@@ -1,0 +1,3561 @@
+head	2.41;
+access;
+symbols
+	v5-02-NRT-19:2.41
+	v6-00:2.41
+	v5-02-NRT-18:2.41
+	v5-02:2.41
+	v5-01-NRT-17:2.41
+	v5-01-NRT-16:2.41
+	v5-01-NRT-15:2.41
+	v5-01-NRT-14:2.41
+	neuralnetworks-1-0:2.41.0.4
+	cfm-single-freq-0-1:2.41.0.2
+	v5-01:2.41
+	v5-00:2.41
+	v4-23-TA133:2.40.0.6
+	mus-emls-1-70:2.40.0.4
+	rel-1-0-englocks-work:2.40.0.2
+	VUMLS1-00:2.40
+	VPL1-00:2.40
+	V4-22-NRT-08:2.40
+	VAM1-00:2.38
+	V4-21:2.38.0.2
+	V4-13:2.38
+	V4-12:2.38
+	V4-11:2.38
+	V4-10:2.38
+	V3-43:2.32
+	M4-00:2.35
+	V3-41:2.32
+	V3-40-PlusGM57:2.32.0.2
+	V2-24-NRT-04:2.30
+	V3-33:2.32
+	V2-24:2.30
+	V3-31:2.32
+	V3-30-NRT-05:2.32
+	cfm-01-00:2.32
+	V3-30:2.32
+	V3-20:2.32
+	V3-10:2.32
+	V2-23-NRT-02:2.30
+	V2-23:2.30
+	V2-22-NRT-01:2.30
+	V2-22:2.30
+	V2-21:2.30
+	V2-20:2.30
+	V2-11:2.30
+	V2-10:2.30
+	V2-00:2.30
+	V1-51:2.22
+	V1-50:2.22
+	V1-45:2.14
+	V1-44:2.14
+	V1-43:2.9
+	V1-32:2.8
+	V1-31:2.8
+	V1-30:2.7
+	newfwm-feb03:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+2.41
+date	2019.05.07.23.06.08;	author vsnyder;	state Exp;
+branches;
+next	2.40;
+
+2.40
+date	2016.05.05.23.29.45;	author vsnyder;	state Exp;
+branches;
+next	2.39;
+
+2.39
+date	2016.05.02.23.33.53;	author vsnyder;	state Exp;
+branches;
+next	2.38;
+
+2.38
+date	2014.04.22.00.37.18;	author vsnyder;	state Exp;
+branches;
+next	2.37;
+
+2.37
+date	2013.08.02.01.23.33;	author vsnyder;	state Exp;
+branches;
+next	2.36;
+
+2.36
+date	2013.05.15.03.08.54;	author vsnyder;	state Exp;
+branches;
+next	2.35;
+
+2.35
+date	2012.05.08.01.34.54;	author vsnyder;	state Exp;
+branches;
+next	2.34;
+
+2.34
+date	2011.05.09.17.48.06;	author pwagner;	state Exp;
+branches;
+next	2.33;
+
+2.33
+date	2011.03.31.19.52.49;	author vsnyder;	state Exp;
+branches;
+next	2.32;
+
+2.32
+date	2009.06.23.18.26.10;	author pwagner;	state Exp;
+branches;
+next	2.31;
+
+2.31
+date	2008.10.01.21.01.54;	author vsnyder;	state Exp;
+branches;
+next	2.30;
+
+2.30
+date	2006.04.05.21.46.44;	author vsnyder;	state Exp;
+branches;
+next	2.29;
+
+2.29
+date	2005.09.07.23.07.26;	author vsnyder;	state Exp;
+branches;
+next	2.28;
+
+2.28
+date	2005.09.03.01.21.33;	author vsnyder;	state Exp;
+branches;
+next	2.27;
+
+2.27
+date	2005.08.03.18.04.09;	author vsnyder;	state Exp;
+branches;
+next	2.26;
+
+2.26
+date	2005.06.22.18.08.19;	author pwagner;	state Exp;
+branches;
+next	2.25;
+
+2.25
+date	2005.05.05.01.11.49;	author vsnyder;	state Exp;
+branches;
+next	2.24;
+
+2.24
+date	2005.03.15.19.55.51;	author vsnyder;	state Exp;
+branches;
+next	2.23;
+
+2.23
+date	2005.02.16.23.16.49;	author vsnyder;	state Exp;
+branches;
+next	2.22;
+
+2.22
+date	2004.12.28.00.28.43;	author vsnyder;	state Exp;
+branches;
+next	2.21;
+
+2.21
+date	2004.12.13.20.38.24;	author vsnyder;	state Exp;
+branches;
+next	2.20;
+
+2.20
+date	2004.11.05.19.37.23;	author vsnyder;	state Exp;
+branches;
+next	2.19;
+
+2.19
+date	2004.11.04.03.40.54;	author vsnyder;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2004.11.01.20.26.35;	author vsnyder;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2004.10.07.23.26.09;	author vsnyder;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2004.10.06.21.24.07;	author vsnyder;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2004.09.01.01.48.13;	author vsnyder;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2004.08.05.20.58.23;	author vsnyder;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2004.08.03.22.46.30;	author vsnyder;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2004.08.03.22.06.45;	author vsnyder;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2004.07.08.21.00.23;	author vsnyder;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2004.06.10.00.59.56;	author vsnyder;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2004.03.22.18.23.56;	author livesey;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2003.10.09.23.32.31;	author pwagner;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2003.07.15.18.17.04;	author livesey;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2003.06.27.00.59.53;	author vsnyder;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2003.05.24.02.25.53;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2003.05.21.22.15.36;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2003.05.17.01.19.32;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2003.05.16.23.48.59;	author livesey;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2003.05.05.23.00.25;	author livesey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2003.02.14.23.27.06;	author vsnyder;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2003.02.14.23.27.06;	author vsnyder;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2003.02.18.22.58.37;	author pwagner;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2003.02.21.21.04.30;	author vsnyder;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2003.02.27.23.21.47;	author vsnyder;	state Exp;
+branches;
+next	1.1.2.5;
+
+1.1.2.5
+date	2003.03.01.03.18.39;	author vsnyder;	state Exp;
+branches;
+next	1.1.2.6;
+
+1.1.2.6
+date	2003.03.05.03.27.08;	author vsnyder;	state Exp;
+branches;
+next	1.1.2.7;
+
+1.1.2.7
+date	2003.03.13.02.03.09;	author vsnyder;	state Exp;
+branches;
+next	1.1.2.8;
+
+1.1.2.8
+date	2003.03.22.04.03.45;	author vsnyder;	state Exp;
+branches;
+next	1.1.2.9;
+
+1.1.2.9
+date	2003.05.01.23.53.03;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.41
+log
+@Handle no-species case
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Get_Species_Data_m
+
+  ! Get species data for the molecules in the beta groups.
+  ! Get the spectral parameters from the state vector.
+  ! Get the temperature quantity.
+
+  implicit NONE
+  private
+  public :: Get_Species_Data
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: Get_Species_Data_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  subroutine Get_Species_Data ( FwdModelConf, FwdModelIn, FwdModelExtra )
+
+    ! Fill in the Beta_Groups' isotope ratios in FwdModelConf.
+    ! Get vector quantities.
+
+    use ForwardModelConfig, only: Dump, ForwardModelConfig_t
+    use ForwardModelVectorTools, only: GetQuantityForForwardModel, &
+      GetQtyStuffForForwardModel
+    use Intrinsic, only: L_IsotopeRatio, L_LineCenter, L_LineWidth, &
+      & L_LineWidth_TDep, L_Temperature, L_VMR
+    use MLSStringLists, only: SwitchDetail
+    use SpectroscopyCatalog_m, only: Catalog, Dump
+    use Toggles, only: Emit, Levels, Switches, Toggle
+    use Trace_m, only: Trace_Begin, Trace_End
+    use VectorsModule, only: GetVectorQuantityByType, Vector_t, VectorValue_t
+
+    type(forwardModelConfig_t), intent(inout) :: FwdModelConf ! Fills Beta_Group
+    type(vector_T), intent(in) ::  FwdModelIn, FwdModelExtra
+
+    integer :: B         ! Index for beta groups 
+    integer, save :: DumpFWM = -2          ! -2 = not called yet, -1 = no dumps,
+                                           ! low-order digit: catalog dump level
+                                           ! high-order digit: 1 => stop
+    type (VectorValue_T), pointer :: F  ! An arbitrary species
+    integer :: L         ! Index in spectral parameter data structure
+    integer :: M         ! Index for molecules in beta groups, or size thereof
+    integer :: Me = -1   ! String index cache for tracing
+    integer :: Mol       ! Molecule in a beta group
+    integer :: S         ! Sideband index, 1 = LSB, 2 = USB
+    integer :: S1, S2    ! Bounds for sideband index S
+
+    call trace_begin ( me, 'Get_Species_Data', &
+      & cond=toggle(emit) .and. levels(emit) > 1 ) ! set by -f command-line switch
+
+    if ( dumpFWM < -1 ) dumpFwm = switchDetail(switches,'fwmd')
+
+    s1 = (fwdModelConf%sidebandStart+3)/2; s2 = (fwdModelConf%sidebandStop+3)/2
+
+    if ( associated(fwdModelConf%beta_group) ) then
+      ! Get isotope ratios for molecules in a beta group, else 1.0 if not a group
+      do b = 1, size(fwdModelConf%beta_group)
+        if ( fwdModelConf%beta_group(b)%group ) then ! A molecule group
+          ! First LBL molecules' ratios
+          do s = s1, s2
+            do m = 1, size(fwdModelConf%beta_group(b)%lbl(s)%molecules)
+              mol = fwdModelConf%beta_group(b)%lbl(s)%molecules(m)
+              f => getQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+                & quantityType=l_isotopeRatio,                             &
+                & molecule=mol, noError=.TRUE., config=fwdModelConf )
+              fwdModelConf%beta_group(b)%lbl(s)%ratio(m) = &
+                & catalog(mol)%defaultIsotopeRatio
+              if ( associated ( f ) ) & ! Have an isotope ratio
+                & fwdModelConf%beta_group(b)%lbl(s)%ratio(m) = f%values(1,1)
+            end do ! m
+            if ( associated(fwdModelConf%beta_group(b)%pfa(s)%molecules) ) then
+              ! Now PFA molecules' ratios
+              do m = 1, size(fwdModelConf%beta_group(b)%pfa(s)%molecules)
+                mol = fwdModelConf%beta_group(b)%pfa(s)%molecules(m)
+                f => getQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+                  & quantityType=l_isotopeRatio,                             &
+                  & molecule=mol, noError=.TRUE., config=fwdModelConf )
+                fwdModelConf%beta_group(b)%pfa(s)%ratio(m) = &
+                  & catalog(mol)%defaultIsotopeRatio
+                if ( associated ( f ) ) & ! Have an isotope ratio
+                  & fwdModelConf%beta_group(b)%pfa(s)%ratio(m) = f%values(1,1)
+              end do ! m
+            end if
+          end do ! s
+  !     else ! Not a molecule group, but this is handled in ForwardModelSupport
+  !       fwdModelConf%beta_group(b)%lbl_ratio(1)     = 1.0
+  !       fwdModelConf%beta_group(b)%pfa_ratio(1)     = 1.0
+        end if
+
+      ! Get state vector quantity for species
+        fwdModelConf%beta_group(b)%qty = GetQtyStuffForForwardModel ( &
+          &  fwdModelIn, fwdModelExtra, quantityType=l_vmr, molIndex=b,    &
+          &  config=fwdModelConf, radiometer=fwdModelConf%signals(1)%radiometer, &
+          &  noError=.false. )
+      end do ! b
+    ! else
+      ! No species, maybe doing a hydrostatic fill
+    end if
+
+    ! Get temperature vector quantity
+    fwdModelConf%temp = GetQtyStuffForForwardModel ( &
+        &  fwdModelIn, fwdModelExtra, quantityType=l_temperature, &
+        &  config=fwdModelConf )
+
+    ! Get state vector quantities for spectral parameters
+    ! fwdModelConf%line..._ix have indices into these
+    if ( associated(fwdModelConf%lineCenter) ) then
+      do l = 1, size(fwdModelConf%lineCenter)
+        fwdModelConf%lineCenter(l)%qty%qty => getVectorQuantityByType ( &
+        &  fwdModelIn, fwdModelExtra, quantityType=l_lineCenter, &
+        &  molecule=fwdModelConf%lineCenter(l)%molecule, &
+        &  foundInFirst=fwdModelConf%lineCenter(l)%qty%foundInFirst )
+        call check_no_frq_coord ( fwdModelConf%lineCenter(l)%qty%qty )
+      end do ! l
+    end if
+    if ( associated(fwdModelConf%lineWidth) ) then
+      do l = 1, size(fwdModelConf%lineWidth)
+        fwdModelConf%lineWidth(l)%qty%qty => getVectorQuantityByType ( &
+        &  fwdModelIn, fwdModelExtra, quantityType=l_lineWidth, &
+        &  molecule=fwdModelConf%lineWidth(l)%molecule, &
+        &  foundInFirst=fwdModelConf%lineWidth(l)%qty%foundInFirst )
+        call check_no_frq_coord ( fwdModelConf%lineWidth(l)%qty%qty )
+      end do
+    end if
+    if ( associated(fwdModelConf%lineWidth_TDep) ) then
+      do l = 1, size(fwdModelConf%lineWidth_TDep)
+        fwdModelConf%lineWidth_TDep(l)%qty%qty => getVectorQuantityByType ( &
+        &  fwdModelIn, fwdModelExtra, quantityType=l_lineWidth_TDep, &
+        &  molecule=fwdModelConf%lineWidth_TDep(l)%molecule, &
+        &  foundInFirst=fwdModelConf%lineWidth_TDep(l)%qty%foundInFirst )
+        call check_no_frq_coord ( fwdModelConf%lineWidth_TDep(l)%qty%qty )
+      end do
+    end if
+
+    if ( dumpFWM > -1 ) then
+      call dump ( fwdModelConf, moduleName(11:len_trim(moduleName)-8) )
+      call dump ( fwdModelConf%catalog, details=mod(dumpFwm,10) )
+      if ( dumpFWM > 9 ) stop
+    end if
+
+    call trace_end ( 'Get_Species_Data', &
+      & cond=toggle(emit) .and. levels(emit) > 1 )
+
+  contains
+
+    subroutine Check_No_Frq_Coord ( Qty )
+      use Intrinsic, only: L_None
+      use MLSMessageModule, only: MLSMSG_Error
+      use MoreMessage, only: MLSMessage
+      type(vectorValue_t), intent(in) :: Qty
+      if ( qty%template%frequencyCoordinate == l_none ) return
+      call MLSMessage ( MLSMSG_Error, moduleName, &
+        & 'The %s vector quantity shall not have a frequency coordinate', &
+        & (/ qty%template%name /) )
+    end subroutine Check_No_Frq_Coord
+
+  end subroutine Get_Species_Data
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: Get_Species_Data_m.f90,v 2.40 2016/05/05 23:29:45 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Get_Species_Data_m
+
+! $Log: Get_Species_Data_m.f90,v $
+! Revision 2.40  2016/05/05 23:29:45  vsnyder
+! Get temperature the same way it used to be gotten in FullForwardModel
+!
+! Revision 2.39  2016/05/02 23:33:53  vsnyder
+! Get the temperature QtyStuff into FwdModelConf
+!
+! Revision 2.38  2014/04/22 00:37:18  vsnyder
+! Add tracing
+!
+! Revision 2.37  2013/08/02 01:23:33  vsnyder
+! Use GetQtyStuffForForwardModel
+!
+! Revision 2.36  2013/05/15 03:08:54  vsnyder
+! Revise processing of dump switch
+!
+! Revision 2.35  2012/05/08 01:34:54  vsnyder
+! Get default isotope ratio from catalog, not from 1.0
+!
+! Revision 2.34  2011/05/09 17:48:06  pwagner
+! Converted to using switchDetail
+!
+! Revision 2.33  2011/03/31 19:52:49  vsnyder
+! Only get isotope ratios in the specified sidebands
+!
+! Revision 2.32  2009/06/23 18:26:10  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.31  2008/10/01 21:01:54  vsnyder
+! Require state vector to include all molecules; 2.30 was a bad idea
+!
+! Revision 2.30  2006/04/05 21:46:44  vsnyder
+! Allow state vector not to include all molecules
+!
+! Revision 2.29  2005/09/07 23:07:26  vsnyder
+! Find spectral parameters in FwdModelIn or FwdModelExtra
+!
+! Revision 2.28  2005/09/03 01:21:33  vsnyder
+! Spectral parameter offsets stuff
+!
+! Revision 2.27  2005/08/03 18:04:09  vsnyder
+! Some spectroscopy derivative stuff
+!
+! Revision 2.26  2005/06/22 18:08:19  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.25  2005/05/05 01:11:49  vsnyder
+! Don't inquire the size of fwdModelConf%beta_group(b)%pfa(s)%molecules if
+! it's not associated.
+!
+! Revision 2.24  2005/03/15 19:55:51  vsnyder
+! Spiff up a dump
+!
+! Revision 2.23  2005/02/16 23:16:49  vsnyder
+! Revise data structures for split-sideband PFA
+!
+! Revision 2.22  2004/12/28 00:28:43  vsnyder
+! Remove unused procedure and unreferenced use names
+!
+! Revision 2.21  2004/12/13 20:38:24  vsnyder
+! Moved stuff that doesn't depend on state vector to ForwardModelConfig
+!
+! Revision 2.20  2004/11/05 19:37:23  vsnyder
+! Move some stuff to ForwardModelConfig%DeriveFromForwardModel
+!
+! Revision 2.19  2004/11/04 03:40:54  vsnyder
+! Index spectroscopy catalog by molecule instead of searching
+!
+! Revision 2.18  2004/11/01 20:26:35  vsnyder
+! Reorganization of representation for molecules and beta groups; PFA may be broken for now
+!
+@
+
+
+2.40
+log
+@Get temperature the same way it used to be gotten in FullForwardModel
+@
+text
+@d35 2
+a36 2
+    use FORWARDMODELCONFIG, only: DUMP, FORWARDMODELCONFIG_T
+    use FORWARDMODELVECTORTOOLS, only: GETQUANTITYFORFORWARDMODEL, &
+d38 7
+a44 7
+    use INTRINSIC, only: L_ISOTOPERATIO, L_LINECENTER, L_LINEWIDTH, &
+      & L_LINEWIDTH_TDEP, L_Temperature, L_VMR
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use SPECTROSCOPYCATALOG_M, only: Catalog, DUMP
+    use TOGGLES, only: EMIT, LEVELS, SWITCHES, TOGGLE
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+    use VECTORSMODULE, only: GETVECTORQUANTITYBYTYPE, VECTOR_T, VECTORVALUE_T
+d68 8
+a75 19
+    ! Get isotope ratios for molecules in a beta group, else 1.0 if not a group
+    do b = 1, size(fwdModelConf%beta_group)
+      if ( fwdModelConf%beta_group(b)%group ) then ! A molecule group
+        ! First LBL molecules' ratios
+        do s = s1, s2
+          do m = 1, size(fwdModelConf%beta_group(b)%lbl(s)%molecules)
+            mol = fwdModelConf%beta_group(b)%lbl(s)%molecules(m)
+            f => getQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+              & quantityType=l_isotopeRatio,                             &
+              & molecule=mol, noError=.TRUE., config=fwdModelConf )
+            fwdModelConf%beta_group(b)%lbl(s)%ratio(m) = &
+              & catalog(mol)%defaultIsotopeRatio
+            if ( associated ( f ) ) & ! Have an isotope ratio
+              & fwdModelConf%beta_group(b)%lbl(s)%ratio(m) = f%values(1,1)
+          end do ! m
+          if ( associated(fwdModelConf%beta_group(b)%pfa(s)%molecules) ) then
+            ! Now PFA molecules' ratios
+            do m = 1, size(fwdModelConf%beta_group(b)%pfa(s)%molecules)
+              mol = fwdModelConf%beta_group(b)%pfa(s)%molecules(m)
+d79 1
+a79 1
+              fwdModelConf%beta_group(b)%pfa(s)%ratio(m) = &
+d82 1
+a82 1
+                & fwdModelConf%beta_group(b)%pfa(s)%ratio(m) = f%values(1,1)
+d84 28
+a111 7
+          end if
+        end do ! s
+!     else ! Not a molecule group, but this is handled in ForwardModelSupport
+!       fwdModelConf%beta_group(b)%lbl_ratio(1)     = 1.0
+!       fwdModelConf%beta_group(b)%pfa_ratio(1)     = 1.0
+      end if
+    end do ! b
+a117 8
+    ! Get state vector quantities for species
+    do b = 1, size(fwdModelConf%beta_group)
+      fwdModelConf%beta_group(b)%qty = GetQtyStuffForForwardModel ( &
+        &  fwdModelIn, fwdModelExtra, quantityType=l_vmr, molIndex=b,    &
+        &  config=fwdModelConf, radiometer=fwdModelConf%signals(1)%radiometer, &
+        &  noError=.false. )
+    end do ! b
+
+d175 1
+a175 1
+       "$Id: Get_Species_Data_m.f90,v 2.39 2016/05/02 23:33:53 vsnyder Exp $"
+d185 3
+@
+
+
+2.39
+log
+@Get the temperature QtyStuff into FwdModelConf
+@
+text
+@d106 1
+a106 2
+        &  config=fwdModelConf, radiometer=fwdModelConf%signals(1)%radiometer, &
+        &  noError=.false. )
+d173 1
+a173 1
+       "$Id: Get_Species_Data_m.f90,v 2.38 2014/04/22 00:37:18 vsnyder Exp $"
+d183 3
+@
+
+
+2.38
+log
+@Add tracing
+@
+text
+@d15 2
+a16 1
+  ! Get the spectal parameters from the state vector.
+d39 1
+a39 1
+      & L_LINEWIDTH_TDEP, L_VMR
+d103 6
+d174 1
+a174 1
+       "$Id: Get_Species_Data_m.f90,v 2.37 2013/08/02 01:23:33 vsnyder Exp $"
+d184 3
+@
+
+
+2.37
+log
+@Use GetQtyStuffForForwardModel
+@
+text
+@d41 2
+a42 1
+    use TOGGLES, only: SWITCHES
+d55 1
+d60 3
+d146 3
+d167 1
+a167 1
+       "$Id: Get_Species_Data_m.f90,v 2.36 2013/05/15 03:08:54 vsnyder Exp $"
+d177 3
+@
+
+
+2.36
+log
+@Revise processing of dump switch
+@
+text
+@d35 2
+a36 1
+    use FORWARDMODELVECTORTOOLS, only: GETQUANTITYFORFORWARDMODEL
+d99 1
+a99 1
+      fwdModelConf%beta_group(b)%qty%qty => getQuantityForForwardModel ( &
+a101 1
+        &  foundInFirst=fwdModelConf%beta_group(b)%qty%foundInFirst, &
+d159 1
+a159 1
+       "$Id: Get_Species_Data_m.f90,v 2.35 2012/05/08 01:34:54 vsnyder Exp $"
+d169 3
+@
+
+
+2.35
+log
+@Get default isotope ratio from catalog, not from 1.0
+@
+text
+@d47 3
+a49 1
+    integer, save :: DumpFWM = -1
+d57 1
+a57 4
+    if ( dumpFWM < 0 ) then ! done only once
+      if ( switchDetail(switches,'fwmg') > -1 ) dumpFWM = 1 ! Dump but don't stop
+      if ( switchDetail(switches,'fwmG') > -1 ) dumpFWM = 2 ! Dump and stop
+    end if
+d135 1
+a135 1
+    if ( dumpFWM > 0 ) then
+d137 2
+a138 2
+      call dump ( fwdModelConf%catalog )
+      if ( dumpFWM > 1 ) stop
+d159 1
+a159 1
+       "$Id: Get_Species_Data_m.f90,v 2.34 2011/05/09 17:48:06 pwagner Exp $"
+d169 3
+@
+
+
+2.34
+log
+@Converted to using switchDetail
+@
+text
+@d39 1
+a39 1
+    use SPECTROSCOPYCATALOG_M, only: DUMP
+d51 1
+d68 1
+d71 3
+a73 3
+              & molecule=fwdModelConf%beta_group(b)%lbl(s)%molecules(m), &
+              & noError=.TRUE., config=fwdModelConf )
+            fwdModelConf%beta_group(b)%lbl(s)%ratio(m)     = 1.0
+d80 1
+d83 3
+a85 3
+                & molecule=fwdModelConf%beta_group(b)%pfa(s)%molecules(m), &
+                & noError=.TRUE., config=fwdModelConf )
+              fwdModelConf%beta_group(b)%pfa(s)%ratio(m)     = 1.0
+d160 1
+a160 1
+       "$Id: Get_Species_Data_m.f90,v 2.33 2011/03/31 19:52:49 vsnyder Exp $"
+d170 3
+@
+
+
+2.33
+log
+@Only get isotope ratios in the specified sidebands
+@
+text
+@d34 3
+a36 3
+    use ForwardModelConfig, only: Dump, ForwardModelConfig_t
+    use ForwardModelVectorTools, only: GetQuantityForForwardModel
+    use Intrinsic, only: L_ISOTOPERATIO, L_LINECENTER, L_LINEWIDTH, &
+d38 4
+a41 3
+    use SpectroscopyCatalog_m, only: Dump
+    use Toggles, only: Switches
+    use VectorsModule, only: GetVectorQuantityByType, Vector_T, VectorValue_T
+d55 2
+a56 2
+      if ( index(switches,'fwmg') > 0 ) dumpFWM = 1 ! Dump but don't stop
+      if ( index(switches,'fwmG') > 0 ) dumpFWM = 2 ! Dump and stop
+d157 1
+a157 1
+       "$Id: Get_Species_Data_m.f90,v 2.32 2009/06/23 18:26:10 pwagner Exp $"
+d167 3
+@
+
+
+2.32
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d23 1
+a23 1
+       "$RCSfile: $"
+d51 1
+d58 2
+d64 1
+a64 1
+        do s = 1, 2
+d156 1
+a156 1
+       "$Id: read_apriori.f90 is it here $"
+d166 3
+@
+
+
+2.31
+log
+@Require state vector to include all molecules; 2.30 was a bad idea
+@
+text
+@d23 1
+a23 1
+       "$RCSfile: Get_Species_Data_m.f90,v $"
+d150 1
+a151 1
+!---------------------------- RCS Ident Info -------------------------------
+d153 2
+a154 3
+       "$Id: Get_Species_Data_m.f90,v 2.30 2006/04/05 21:46:44 vsnyder Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d156 1
+a156 1
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
+d158 1
+d163 3
+@
+
+
+2.30
+log
+@Allow state vector not to include all molecules
+@
+text
+@d96 1
+a96 1
+        &  noError=.true. )
+d153 1
+a153 1
+       "$Id: Get_Species_Data_m.f90,v 2.29 2005/09/07 23:07:26 vsnyder Exp $"
+d157 1
+d163 3
+@
+
+
+2.29
+log
+@Find spectral parameters in FwdModelIn or FwdModelExtra
+@
+text
+@d95 2
+a96 1
+        &  foundInFirst=fwdModelConf%beta_group(b)%qty%foundInFirst )
+d153 1
+a153 1
+       "$Id: Get_Species_Data_m.f90,v 2.28 2005/09/03 01:21:33 vsnyder Exp $"
+d162 3
+@
+
+
+2.28
+log
+@Spectral parameter offsets stuff
+@
+text
+@d103 3
+a105 2
+        &  fwdModelIn, quantityType=l_lineCenter, &
+        &  molecule=fwdModelConf%lineCenter(l)%molecule )
+a106 1
+        fwdModelConf%lineCenter(l)%qty%foundInFirst = .true.
+d112 3
+a114 2
+        &  fwdModelIn, quantityType=l_lineWidth, &
+        &  molecule=fwdModelConf%lineWidth(l)%molecule )
+a115 1
+        fwdModelConf%lineWidth(l)%qty%foundInFirst = .true.
+d121 3
+a123 2
+        &  fwdModelIn, quantityType=l_lineWidth_TDep, &
+        &  molecule=fwdModelConf%lineWidth_TDep(l)%molecule )
+a124 1
+        fwdModelConf%lineWidth_TDep(l)%qty%foundInFirst = .true.
+d152 1
+a152 1
+       "$Id: Get_Species_Data_m.f90,v 2.27 2005/08/03 18:04:09 vsnyder Exp $"
+d161 3
+@
+
+
+2.27
+log
+@Some spectroscopy derivative stuff
+@
+text
+@d99 1
+a99 1
+    ! fwdModelConf%beta_group(b)%LBL(s)%line... have indices into these
+d104 1
+a104 2
+        &  molecule=fwdModelConf%lineCenter(l)%molecule, &
+        &  radiometer=fwdModelConf%signals(1)%radiometer )
+d113 1
+a113 2
+        &  molecule=fwdModelConf%lineWidth(l)%molecule, &
+        &  radiometer=fwdModelConf%signals(1)%radiometer )
+d122 1
+a122 2
+        &  molecule=fwdModelConf%lineWidth_TDep(l)%molecule, &
+        &  radiometer=fwdModelConf%signals(1)%radiometer )
+d152 1
+a152 1
+       "$Id: Get_Species_Data_m.f90,v 2.26 2005/06/22 18:08:19 pwagner Exp $"
+d161 3
+@
+
+
+2.26
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d15 1
+d23 1
+a23 1
+       "$RCSfile: $"
+d36 2
+a37 1
+    use Intrinsic, only: L_ISOTOPERATIO, L_VMR
+d40 1
+a40 1
+    use VectorsModule, only: VECTOR_T, VECTORVALUE_T
+d48 1
+d98 33
+d137 13
+d155 1
+a155 1
+       "$Id: $"
+d164 3
+@
+
+
+2.25
+log
+@Don't inquire the size of fwdModelConf%beta_group(b)%pfa(s)%molecules if
+it's not associated.
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d20 5
+a24 7
+  !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter, private :: IdParm = &
+    & "$Id: Get_Species_Data_m.f90,v 2.24 2005/03/15 19:55:51 vsnyder Exp $"
+  character (len=len(idParm)), save :: Id = IdParm
+  character (len=*), parameter, private :: ModuleName= &
+    & "$RCSfile: Get_Species_Data_m.f90,v $"
+  !-----------------------------------------------------------------------
+d104 5
+d115 4
+@
+
+
+2.24
+log
+@Spiff up a dump
+@
+text
+@d14 1
+a14 1
+    & "$Id: Get_Species_Data_m.f90,v 2.23 2005/02/16 23:16:49 vsnyder Exp $"
+d62 12
+a73 10
+          ! Now PFA molecules' ratios
+          do m = 1, size(fwdModelConf%beta_group(b)%pfa(s)%molecules)
+            f => getQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+              & quantityType=l_isotopeRatio,                             &
+              & molecule=fwdModelConf%beta_group(b)%pfa(s)%molecules(m), &
+              & noError=.TRUE., config=fwdModelConf )
+            fwdModelConf%beta_group(b)%pfa(s)%ratio(m)     = 1.0
+            if ( associated ( f ) ) & ! Have an isotope ratio
+              & fwdModelConf%beta_group(b)%pfa(s)%ratio(m) = f%values(1,1)
+          end do ! m
+d104 3
+@
+
+
+2.23
+log
+@Revise data structures for split-sideband PFA
+@
+text
+@d14 1
+a14 1
+    & "$Id: Get_Species_Data_m.f90,v 2.22 2004/12/28 00:28:43 vsnyder Exp $"
+d88 1
+a88 1
+      call dump ( fwdModelConf, moduleName )
+d102 3
+@
+
+
+2.22
+log
+@Remove unused procedure and unreferenced use names
+@
+text
+@d14 1
+a14 1
+    & "$Id: Get_Species_Data_m.f90,v 2.21 2004/12/13 20:38:24 vsnyder Exp $"
+d41 1
+d52 21
+a72 19
+        do m = 1, size(fwdModelConf%beta_group(b)%lbl_molecules)
+          f => getQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+            & quantityType=l_isotopeRatio, &
+            & molecule=fwdModelConf%beta_group(b)%lbl_molecules(m), &
+            & noError=.TRUE., config=fwdModelConf )
+          fwdModelConf%beta_group(b)%lbl_ratio(m)     = 1.0
+          if ( associated ( f ) ) & ! Have an isotope ratio
+            & fwdModelConf%beta_group(b)%lbl_ratio(m) = f%values(1,1)
+        end do ! m
+        ! Now PFA molecules' ratios
+        do m = 1, size(fwdModelConf%beta_group(b)%pfa_molecules)
+          f => getQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+            & quantityType=l_isotopeRatio, &
+            & molecule=fwdModelConf%beta_group(b)%pfa_molecules(m), &
+            & noError=.TRUE., config=fwdModelConf )
+          fwdModelConf%beta_group(b)%pfa_ratio(m)     = 1.0
+          if ( associated ( f ) ) & ! Have an isotope ratio
+            & fwdModelConf%beta_group(b)%pfa_ratio(m) = f%values(1,1)
+        end do ! m
+d102 3
+@
+
+
+2.21
+log
+@Moved stuff that doesn't depend on state vector to ForwardModelConfig
+@
+text
+@d10 1
+a10 1
+  public :: Get_Species_Data, Destroy_Species_Data
+d14 1
+a14 1
+    & "$Id: Get_Species_Data_m.f90,v 2.20 2004/11/05 19:37:23 vsnyder Exp $"
+a26 1
+    use Allocate_Deallocate, only: Allocate_Test
+d29 2
+a30 7
+    use Intrinsic, only: LIT_INDICES, L_ISOTOPERATIO, L_NONE, L_VMR
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error, &
+      & MLSMSG_Warning
+    use MLSSignals_m, only: GetRadiometerFromSignal
+    use SpectroscopyCatalog_m, only: Catalog, Dump, Empty_Cat, Line_t, &
+      & Lines, MostLines
+    use String_table, only: GET_STRING
+a91 14
+  ! -------------------------------------------  Destroy_Species_Data  -----
+  subroutine Destroy_Species_Data ( FwdModelConf )
+
+  ! Destroy the spectroscopy catalog extract that was allocated by
+  ! Get_Species_Data.
+
+    use Allocate_Deallocate, only: Deallocate_Test
+    use ForwardModelConfig, only: ForwardModelConfig_t
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Deallocate, MLSMSG_Error
+
+    type(forwardModelConfig_t), intent(inout) :: FwdModelConf
+
+  end subroutine Destroy_Species_Data
+
+d99 3
+@
+
+
+2.20
+log
+@Move some stuff to ForwardModelConfig%DeriveFromForwardModel
+@
+text
+@d14 1
+a14 1
+    & "$Id: Get_Species_Data_m.f90,v 2.19 2004/11/04 03:40:54 vsnyder Exp $"
+d24 2
+a25 3
+    ! Fill in the Beta_Groups in FwdModelConf; create and fill fwdModelConf%catalog.
+    ! DeriveFromForwardModelConfig needs to be called BEFORE this routine,
+    ! because it allocates FwdModelConf%channels, which size is used here.
+a43 2
+    integer :: C         ! Index for fwdModelConf%catalog, or size(fwdModelConf%channels)
+    logical :: DoThis    ! Flag for lines in catalog item
+a45 4
+    integer :: I         ! Index for signals for a line
+    integer :: K         ! Index in main spectroscopy catalog
+    integer :: L         ! Index for lines, or number of lines
+    integer, pointer :: LINEFLAG(:) ! /= 0 => Use this line
+a46 9
+    integer, target :: MaxLineFlag(mostLines)
+    character(len=32) :: MolName
+    integer :: N         ! Molecule name
+    integer :: Polarized ! -1 => One of the selected lines is Zeeman split
+                         ! +1 => None of the selected lines is Zeeman split
+    integer :: S         ! Index for sidebands                
+    integer :: STAT      ! Status from allocate or deallocate 
+    type (line_T), pointer :: ThisLine
+    integer :: Z         ! Index for fwdModelConf%Signals
+a81 123
+    ! Allocate the spectroscopy catalog extract
+
+    c = 0
+    do b = 1, size(fwdModelConf%beta_group) ! Get total catalog size
+      c = c + size(fwdModelConf%beta_group(b)%lbl_molecules)
+    end do
+
+    allocate ( fwdModelConf%catalog(fwdModelConf%sidebandStart:fwdModelConf%sidebandStop,c), &
+      & stat=stat )
+    if ( stat /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+        & MLSMSG_Allocate//'fwdModelConf%catalog' )
+
+    fwdModelConf%catalog = empty_cat
+
+    ! Work out the spectroscopy we're going to need.
+    do s = fwdModelConf%sidebandStart, fwdModelConf%sidebandStop, 2
+      c = 0
+      do b = 1, size(fwdModelConf%beta_group)
+        do m = 1, size(fwdModelConf%beta_group(b)%lbl_molecules)
+          c = c + 1
+          fwdModelConf%beta_group(b)%cat_index(m) = c
+          n = fwdModelConf%beta_group(b)%lbl_molecules(m)
+          if ( catalog(n)%molecule == l_none ) then
+            call get_string ( lit_indices(n), molName )
+            call MLSMessage ( MLSMSG_Error, moduleName, &
+              & 'No spectroscopy catalog for ' // molName )
+          end if
+          fwdModelConf%catalog(s,c) = catalog(n)
+          ! Don't deallocate them by mistake -- fwdModelConf%catalog is a shallow copy
+          nullify ( fwdModelConf%catalog(s,c)%lines, fwdModelConf%catalog(s,c)%polarized )
+          if ( associated ( catalog(n)%lines ) ) then
+            ! Now subset the lines according to the signal we're using
+            lineFlag => MaxLineFlag(:size(catalog(n)%lines))
+            lineFlag = 0
+            if ( fwdModelConf%allLinesInCatalog ) then
+              ! NOTE: If allLinesInCatalog is set, then no lines can be polarized;
+              ! this is checked for in ForwardModelSupport.
+              lineFlag = 1
+            else
+              do l = 1, size ( catalog(n)%lines )
+                thisLine => lines(catalog(n)%lines(l))
+                if ( associated(thisLine%signals) ) then
+                  polarized = 1 ! not polarized
+                  ! Work out whether to do this line
+                  do z = 1, size(fwdModelConf%signals)
+                    if ( fwdModelConf%allLinesForRadiometer ) then
+                      doThis = .false.
+                      do i = 1, size(thisLine%signals)
+                        ! Tried to make GetRadiometerFromSignal elemental, but compile time
+                        ! in LF95 (optimized) for Construct.f90 went nuts! :-(
+                        if ( GetRadiometerFromSignal ( thisLine%signals(i) ) == &
+                          & fwdModelConf%signals(z)%radiometer ) then
+                          doThis = .true.
+                          if ( .not. fwdModelConf%polarized ) &
+                            exit   ! loop over signals for line -- no need to check for
+                          ! polarized lines
+                          if ( associated(thisLine%polarized) ) then
+                            if ( thisLine%polarized(i) ) then
+                              polarized = -1 ! polarized
+                              exit   ! loop over signals for line -- one signal
+                              ! that sees a polarized line is enough to turn on
+                              ! the polarized method
+                            end if
+                          end if
+                        end if
+                      end do ! End loop over signals for line
+                    else
+                      ! Not doing all lines for radiometer, be more selective
+                      doThis = any ( &
+                        & ( thisLine%signals == fwdModelConf%signals(z)%index ) .and. &
+                        & ( ( thisLine%sidebands == 0 ) .or. ( thisLine%sidebands == s ) ) )
+                      if ( fwdModelConf%polarized .and. doThis .and. &
+                        & associated(thisLine%polarized) ) then
+                        if ( any(thisLine%polarized) ) polarized = -1 ! polarized
+                      end if
+                    end if
+
+                    if ( fwdModelConf%sidebandStart == fwdModelConf%sidebandStop ) &
+                      & doThis = doThis .and. &
+                      & any( ( thisLine%sidebands == fwdModelConf%sidebandStart ) &
+                      & .or. ( thisLine%sidebands == 0 ) )
+                    if ( doThis ) then
+                      lineFlag(l) = polarized
+                      if ( polarized < 0 .or. .not. fwdModelConf%polarized ) &
+                        exit   ! loop over signals requested in fwm
+                    end if
+                  end do ! z End loop over signals requested in fwm
+                end if
+              end do     ! l End loop over lines
+            end if       ! End case where allLinesInCatalog not set
+
+            ! Check we have at least one line for this specie
+
+            l = count(lineFlag /= 0)
+            if ( l == 0 .and. all ( fwdModelConf%catalog(s,c)%continuum == 0.0 ) &
+              & .and. (index(switches, '0sl') > 0) ) then
+              call get_string ( lit_indices(n), molName )
+              call MLSMessage ( MLSMSG_Warning, ModuleName, &
+                & 'No relevant lines or continuum for '//trim(molName) )
+            end if
+            call allocate_test ( fwdModelConf%catalog(s,c)%lines, l, &
+              & 'fwdModelConf%catalog(?,?)%lines', moduleName )
+            call allocate_test ( fwdModelConf%catalog(s,c)%polarized, l, &
+              & 'fwdModelConf%catalog(?,?)%polarized', moduleName )
+            fwdModelConf%catalog(s,c)%lines = pack ( catalog(n)%lines, lineFlag /= 0 )
+            fwdModelConf%catalog(s,c)%polarized = pack ( lineFlag < 0, lineFlag /= 0 )
+
+          else
+
+            ! No lines for this species.  However, its continuum is still valid 
+            ! so don't set it to empty.
+            ! Won't bother checking that continuum /= 0 as if it were then
+            ! presumably having no continuum and no lines it wouldn't be in the
+            ! catalog!
+            call allocate_test ( fwdModelConf%catalog(s,c)%lines, 0, &
+              & 'fwdModelConf%catalog(?,?)%lines(0)', moduleName )
+            call allocate_test ( fwdModelConf%catalog(s,c)%polarized, 0, &
+              & 'fwdModelConf%catalog(?,?)%polarized(0)', moduleName )
+          end if
+        end do ! m Molecules in fwdModelConf
+      end do ! b Beta groups
+    end do ! s Sidebands
+
+a109 17
+    integer :: S, C ! Sideband index or status, catalog index
+
+    do s = lbound(fwdModelConf%catalog,1), ubound(fwdModelConf%catalog,1), 2
+      do c = 1, size(fwdModelConf%catalog,2)
+        ! Note that we don't deallocate the signals/sidebands stuff for each line
+        ! as these are shallow copies of the main spectroscopy catalog stuff
+        call deallocate_test ( fwdModelConf%catalog(s,c)%lines, &
+          & 'fwdModelConf%catalog(?,?)%lines', moduleName )
+        call deallocate_test ( fwdModelConf%catalog(s,c)%polarized, &
+          & 'fwdModelConf%catalog(?,?)%polarized', moduleName )
+      end do
+    end do
+
+    deallocate ( fwdModelConf%catalog, stat=s )
+    if ( s /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+      & MLSMSG_Deallocate // 'fwdModelConf%catalog' )
+
+d119 3
+@
+
+
+2.19
+log
+@Index spectroscopy catalog by molecule instead of searching
+@
+text
+@d14 1
+a14 1
+    & "$Id: Get_Species_Data_m.f90,v 2.18 2004/11/01 20:26:35 vsnyder Exp $"
+a68 15
+    ! Allocate the Cat_Index and PFA_Indices components in each Beta_Group
+    ! We could fuse this loop and the next one, but this is clearer and, with
+    ! these loop bodies, not measurably slower.
+    c = size(fwdModelConf%forwardModelDerived%channels)
+    do b = 1, size(fwdModelConf%beta_group)
+      m = size(fwdModelConf%beta_group(b)%lbl_molecules)
+      call allocate_test ( fwdModelConf%beta_group(b)%cat_index, m, &
+        & 'beta_group(b)%Cat_Index', moduleName )
+      m = size(fwdModelConf%beta_group(b)%pfa_molecules)
+      call allocate_test ( fwdModelConf%beta_group(b)%pfa_indices, &
+        & fwdModelConf%sidebandStop, c, m, 'Beta_group(b)%PFA_indices', &
+        & moduleName, lowBound_1=fwdModelConf%sidebandStart )
+      fwdModelConf%beta_group(b)%pfa_indices = 0 ! OK if some missing, but no junk
+    end do ! b
+
+d240 2
+a241 2
+  ! Destroy the stuff in Beta_Group that was allocated by Get_Species_Data.
+  ! Destroy the spectroscopy catalog extract.
+d249 1
+a249 9
+    integer :: B  ! Index for Beta_Group
+    integer :: I, J
+
+    do b = 1, size(fwdModelConf%beta_group)
+      call deallocate_test ( fwdModelConf%beta_group(b)%cat_index, &
+        'Beta_group(b)%Cat_index', moduleName )
+      call deallocate_test ( fwdModelConf%beta_group(b)%PFA_indices, &
+        'Beta_group(b)%PFA_indices', moduleName )
+    end do ! b
+d251 2
+a252 2
+    do j = lbound(fwdModelConf%catalog,1), ubound(fwdModelConf%catalog,1), 2
+      do i = 1, size(fwdModelConf%catalog,2)
+d255 1
+a255 1
+        call deallocate_test ( fwdModelConf%catalog(j,i)%lines, &
+d257 1
+a257 1
+        call deallocate_test ( fwdModelConf%catalog(j,i)%polarized, &
+d262 2
+a263 2
+    deallocate ( fwdModelConf%catalog, stat=i )
+    if ( i /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+d275 3
+@
+
+
+2.18
+log
+@Reorganization of representation for molecules and beta groups; PFA may be broken for now
+@
+text
+@d14 1
+a14 1
+    & "$Id: Get_Species_Data_m.f90,v 2.17 2004/10/07 23:26:09 vsnyder Exp $"
+d31 1
+a31 1
+    use Intrinsic, only: LIT_INDICES, L_ISOTOPERATIO, L_VMR
+a33 1
+    use MLSSets, only: FINDFIRST
+d35 2
+a36 2
+    use SpectroscopyCatalog_m, only: Catalog, Catalog_t, Dump, Empty_Cat, &
+      & Line_t, Lines, MostLines
+a60 1
+    type (catalog_T), pointer :: ThisCatalogEntry
+d69 1
+a69 1
+    ! Allocate the Cat_Index, PFA_Indices and Ratio components in each Beta_Group
+d81 1
+d87 1
+d93 1
+a93 1
+          fwdModelConf%beta_group(b)%ratio(m)     = 1.0
+d95 11
+a105 1
+            & fwdModelConf%beta_group(b)%ratio(m) = f%values(1,1)
+d108 2
+a109 1
+!     fwdModelConf%beta_group(b)%ratio(1)     = 1.0
+d114 1
+a114 5
+ 
+    if ( .not. associated ( catalog ) ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'No spectroscopy catalog has been defined.' )
+   
+d135 1
+a135 2
+          k = FindFirst(catalog%molecule, n )
+          if ( k == 0 ) then
+d140 1
+a140 2
+          thisCatalogEntry => Catalog(k)
+          fwdModelConf%catalog(s,c) = thisCatalogEntry
+d143 1
+a143 1
+          if ( associated ( thisCatalogEntry%lines ) ) then
+d145 1
+a145 1
+            lineFlag => MaxLineFlag(:size(thisCatalogEntry%lines))
+d152 2
+a153 2
+              do l = 1, size ( thisCatalogEntry%lines )
+                thisLine => lines(thisCatalogEntry%lines(l))
+d217 1
+a217 1
+            fwdModelConf%catalog(s,c)%lines = pack ( thisCatalogEntry%lines, lineFlag /= 0 )
+d297 4
+a300 1
+! $Log: $
+@
+
+
+2.17
+log
+@Changes in Beta_Group structure
+@
+text
+@d4 1
+a4 1
+module Get_Species_Data_M
+d6 1
+a6 3
+  use ForwardModelVectorTools, only: QtyStuff_T
+  use MLSCommon, only: RP
+  use SpectroscopyCatalog_m, only: Catalog_t
+d10 1
+a10 31
+  public :: Get_Species_Data, Destroy_Beta_Group, Destroy_Catalog_Extract
+  public :: Destroy_Species_Data, Dump
+
+! Species stuff
+  type, public :: SPS_T
+    integer :: No_Mol ! Size of several arrays == # molecule groups + # PFA
+    integer :: No_LBL ! Number of Line-by-line molecule groups, <= no_mol
+    type(beta_group_t), pointer :: Beta_Group(:) => NULL() ! 1:no_mol
+    type(catalog_t), pointer :: Catalog(:,:) => NULL()     ! sidebands,1:noNonPFA
+      ! Catalog's second subscript comes from Beta_Group%Cat_Index for each
+      ! element of the beta group.  We do this indirectly so that the whole
+      ! catalog can be turned into gl_slabs data at once, and then the gl_slabs
+      ! can be indexed by Beta_Group%Cat_Index as well.
+  end type SPS_T
+
+! Beta group type declaration.  Each entry in the Molecules list of the form
+! "m" has one of these with n_elements == 1, referring to "m".  Each entry
+! of the form "[m,m1,...,mn]" has one of these with n_elements == n, referring
+! to m1,...mn (but not m).
+  type, public :: Beta_Group_T
+    integer, pointer  :: Cat_Index(:) => NULL() ! 1:n_Elements.  Index for
+                                      ! sps%catalog and gl_slabs.  Not for PFA.
+    integer :: Mol_Cat_Index          ! Index of leading (positive) element in
+                                      ! config's molecules for this beta group
+    type(qtyStuff_t) :: Qty           ! The Qty's vector and foundInFirst
+    real(rp), pointer :: Ratio(:) => NULL()     ! 1:n_Elements.  Isotope ratio.
+  end type Beta_Group_T
+
+  interface Dump
+    module procedure Dump_Beta_Group, Dump_Sps_Data
+  end interface
+d14 2
+a15 2
+    & "$Id: Get_Species_Data_m.f90,v 2.16 2004/10/06 21:24:07 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = IdParm
+d18 2
+a19 1
+!-----------------------------------------------------------------------
+d22 1
+a22 3
+  ! -------------------------------------------  Get_Species_Data  -----
+  subroutine Get_Species_Data ( FwdModelConf, FwdModelIn, FwdModelExtra, &
+    & Radiometer, Sps )
+d24 5
+a28 1
+    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+a31 1
+    use MLSCommon, only: RP
+d36 2
+a37 2
+    use SpectroscopyCatalog_m, only: Catalog, Dump, Empty_Cat, &
+      & Line_t, Lines
+d42 1
+a42 3
+    ! Inputs
+
+    type(forwardModelConfig_T), intent(inout) :: FwdModelConf ! Only BetaIndex is changed
+a43 1
+    integer, intent(in) :: Radiometer
+d45 4
+a48 9
+    ! Outputs
+
+    type (sps_t), intent(out) :: Sps
+
+    ! Local variables
+
+    real(rp) :: Beta_Ratio
+    logical :: DoThis                   ! Flag for lines in catalog item
+    integer, save :: DumpFwm = -1, DumpSps = -1, DumpStop = -1
+d50 19
+a68 23
+    integer :: I, IER, J, K, L
+    integer, dimension(:), pointer :: LINEFLAG ! /= 0 => Use this line
+    ! (noLines per species)
+    character (len=32) :: MolName       ! Name of a molecule
+    integer :: N_elements(size(fwdModelConf%molecules) - 1) ! in beta group
+    integer :: NLines                   ! count(lineFlag)
+    integer :: NoCat                    ! Sum of sizes of sps%beta_group%cat_index
+    integer :: NoMol                    ! size(fwdModelConf%molecules) - 1; includes
+      ! negative ones that indicate molecule grouping
+    integer  :: NoNonPFA                ! No. of non-PFA Molecules under
+      ! consideration --  includes negative ones that indicate molecule grouping
+    integer :: Polarized                ! -1 => One of the selected lines is Zeeman split
+    ! +1 => None of the selected lines is Zeeman split
+    integer :: SIGIND                   ! Signal index, loop counter
+    integer :: SV_I
+    integer :: S                        ! Sideband index
+    type (catalog_T), pointer :: thisCatalogEntry
+    type (line_T), pointer :: thisLine
+
+    if ( dumpSps < 0 ) then ! Done only once
+      dumpFwm = max(index(switches,'fwmg'),index(switches,'fwmG'))
+      dumpSps = max(index(switches,'sps'),index(switches,'spS'))
+      dumpStop = max(index(switches,'fwmG'),index(switches,'spS'))
+d71 33
+d106 6
+a111 3
+      & 'No spectroscopy catalog has been defined' )
+
+    nullify ( lineFlag )
+d113 4
+a116 27
+    noMol = size(fwdModelConf%molecules) - 1
+    noNonPFA = fwdModelConf%firstPFA - 1
+    sps%no_lbl = count(fwdModelConf%molecules(1:noNonPFA) > 0)
+    sps%no_mol = sps%no_lbl + noMol - fwdModelConf%firstPFA + 1
+
+    if ( sps%no_mol == 0 ) return
+
+    allocate ( sps%beta_group(sps%no_mol), stat=ier )
+    if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate//'sps%beta_group' )
+
+    if ( noNonPFA == sps%no_lbl ) then ! No grouping, .eqv. sps%no_mol == noMol
+
+      ! Work out beta group etc for line-by-line
+      sv_i = 0
+      beta_ratio = 1.0_rp   ! Always, for single element (no grouping)
+      do j = 1, sps%no_lbl
+        l = fwdModelConf%molecules(j)
+        !        if ( l == l_extinction ) CYCLE
+        sv_i = sv_i + 1
+        call allocate_test ( sps%beta_group(sv_i)%cat_index, 1, 'beta_group%cat_index', moduleName )
+        call allocate_test ( sps%beta_group(sv_i)%ratio, 1, 'beta_group%ratio', moduleName )
+        sps%beta_group(sv_i)%cat_index(1)  = j
+        sps%beta_group(sv_i)%ratio(1)      = beta_ratio
+        sps%beta_group(sv_i)%mol_cat_index = j
+      end do
+      noCat = sps%no_lbl
+d118 1
+a118 1
+    else
+d120 13
+a132 47
+      ! Work out sizes for beta groups
+      ! Beta groups of form "molecule" have size 1 and beta ratio = 1
+      ! Beta groups of form "[m,m1,m2,...mn]" have size n and beta ratio(i) is
+      !   from isotope ratio quantity for mi if it exists, else 1.
+      sv_i = 0
+      do j = 1, noNonPFA
+        k = fwdModelConf%molecules(j)
+        !        if ( abs(k) == l_extinction ) CYCLE
+        if ( k > 0 ) then
+          sv_i = sv_i + 1
+          ! Last element is a huge sentinel, not a molecule
+          if ( fwdModelConf%molecules(j+1) > 0 ) then
+            ! Two consecutive positive ones => not a group
+            n_elements(sv_i) = 1
+          else
+            n_elements(sv_i) = 0
+          end if
+        else ! Negative one is group member
+          n_elements(sv_i) = n_elements(sv_i) + 1
+        end if
+      end do ! j
+
+      ! Allocate fields of beta_group
+      do sv_i = 1, sps%no_lbl
+        j = n_elements(sv_i)
+        call allocate_test ( sps%beta_group(sv_i)%cat_index, j, 'beta_group%cat_index', moduleName )
+        call allocate_test ( sps%beta_group(sv_i)%ratio, j, 'beta_group%ratio', moduleName )
+      end do
+
+      ! Fill beta_group fields for line-by-line
+      noCat = 0
+      sv_i = 0
+      do j = 1, noNonPFA
+        k = fwdModelConf%molecules(j)
+        l = abs(k)
+        !        if ( l == l_extinction ) CYCLE
+        beta_ratio = 1.0_rp
+        if ( k > 0 ) then ! Beginning of a group or lonesome molecule
+          i = 0
+          sv_i = sv_i + 1
+          sps%beta_group(sv_i)%mol_cat_index = j
+          ! Last element is a huge sentinel, not a molecule
+          if ( fwdModelConf%molecules(j+1) > 0 ) then
+            ! Two consecutive positive ones => first is lonesome molecule
+            noCat = noCat + 1
+            sps%beta_group(sv_i)%cat_index(1)  = noCat
+            sps%beta_group(sv_i)%ratio(1)      = beta_ratio
+d134 37
+a170 98
+        else ! Negative one is group member
+          i = i + 1
+          noCat = noCat + 1
+          f => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+            & quantityType=l_isotopeRatio, molecule=l, noError=.TRUE., &
+            & config=fwdModelConf )
+          if ( associated ( f ) ) beta_ratio = f%values(1,1)
+          sps%beta_group(sv_i)%cat_index(i)  = noCat
+          sps%beta_group(sv_i)%ratio(i)      = beta_ratio
+        end if
+      end do
+
+    end if
+
+    ! What's needed for PFA is sps%mol_cat_index(sv_i), to get values
+    ! for the second subscript for Beta_Path and dBetaD*
+    do j = noNonPFA+1, noMol
+      l = fwdModelConf%molecules(j)
+      !        if ( l == l_extinction ) CYCLE
+      sv_i = sv_i + 1
+      sps%beta_group(sv_i)%mol_cat_index = j
+    end do
+
+    ! Now that we have sps%beta_group%mol_cat_index, we can go through
+    ! FwdModelConf%forwardModelDerived%channels and fill in BetaIndex
+    ! (there has to be a better way to do this...).
+    do i = 1, size(fwdModelConf%forwardModelDerived%channels)
+      if ( .not. associated(fwdModelConf%forwardModelDerived%channels(i)%PFAMolecules) ) cycle
+      fwdModelConf%forwardModelDerived%channels(i)%betaIndex = 0
+      do j = 1, size(fwdModelConf%forwardModelDerived%channels(i)%PFAMolecules)
+        do sv_i = sps%no_lbl+1, sps%no_mol
+          if ( fwdModelConf%forwardModelDerived%channels(i)%PFAMolecules(j) == &
+               fwdModelConf%molecules(sps%beta_group(sv_i)%mol_cat_index) ) then
+            fwdModelConf%forwardModelDerived%channels(i)%betaIndex(j) = sv_i
+            exit
+          end if
+        end do ! sv_i
+        if ( fwdModelConf%forwardModelDerived%channels(i)%betaIndex(j) == 0 ) &
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'Unable to find index for PFA molecule' )
+      end do ! j
+    end do ! i
+
+    ! Work out which spectroscopy we're going to need ------------------------
+
+    allocate ( &
+      & sps%catalog(fwdModelConf%sidebandStart:fwdModelConf%sidebandStop,noCat), &
+      & stat=ier )
+    if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate//'sps%catalog' )
+
+    sps%catalog = empty_cat
+    do s = fwdModelConf%sidebandStart, fwdModelConf%sidebandStop, 2
+      j = 0
+      do sv_i = 1, noNonPFA
+        ! Skip if the next molecule is negative (indicates that this one is a
+        ! parent)
+        l = fwdModelConf%molecules(sv_i)
+        if ( l > 0 .and. fwdModelConf%molecules(sv_i+1) < 0 ) cycle
+        j = j + 1
+        l = abs(l)
+        thisCatalogEntry => Catalog(FindFirst(catalog%molecule, l ) )
+        sps%catalog(s,j) = thisCatalogEntry
+        ! Don't deallocate them by mistake -- sps%catalog is a shallow copy
+        nullify ( sps%catalog(s,j)%lines, sps%catalog(s,j)%polarized )
+        if ( associated ( thisCatalogEntry%lines ) ) then
+          ! Now subset the lines according to the signal we're using
+          call allocate_test ( lineFlag, size(thisCatalogEntry%lines), &
+            &  'lineFlag', moduleName )
+          lineFlag = 0
+          if ( fwdModelConf%allLinesInCatalog ) then
+            ! NOTE: If allLinesInCatalog is set, then no lines can be polarized,
+            ! this is checked for in ForwardModelSupport.
+            lineFlag = 1
+          else
+            do k = 1, size ( thisCatalogEntry%lines )
+              thisLine => lines(thisCatalogEntry%lines(k))
+              if ( associated(thisLine%signals) ) then
+                polarized = 1 ! not polarized
+                ! Work out whether to do this line
+                do sigInd = 1, size(fwdModelConf%signals)
+                  if ( fwdModelConf%allLinesForRadiometer ) then
+                    doThis = .false.
+                    do i = 1, size(thisLine%signals)
+                      ! Tried to make GetRadiometerFromSignal elemental, but compile time
+                      ! in LF95 (optimized) for Construct.f90 went nuts! :-(
+                      if ( GetRadiometerFromSignal ( thisLine%signals(i) ) == &
+                        & fwdModelConf%signals(sigInd)%radiometer ) then
+                        doThis = .true.
+                        if ( .not. fwdModelConf%polarized ) &
+                          exit   ! loop over signals for line -- no need to check for
+                        ! polarized lines
+                        if ( associated(thisLine%polarized) ) then
+                          if ( thisLine%polarized(i) ) then
+                            polarized = -1 ! polarized
+                            exit   ! loop over signals for line -- one signal that sees a
+                            ! polarized line is enough to turn on the polarized
+                            ! method
+d173 9
+a182 9
+                    end do ! End loop over signals for line
+                  else
+                    ! Not doing all lines for radiometer, be more selective
+                    doThis = any ( &
+                      & ( thisLine%signals == fwdModelConf%signals(sigInd)%index ) .and. &
+                      & ( ( thisLine%sidebands == 0 ) .or. ( thisLine%sidebands == s ) ) )
+                    if ( fwdModelConf%polarized .and. doThis .and. &
+                      & associated(thisLine%polarized) ) then
+                      if ( any(thisLine%polarized) ) polarized = -1 ! polarized
+d184 42
+a225 24
+                  end if
+                  
+                  if ( fwdModelConf%sidebandStart == fwdModelConf%sidebandStop ) &
+                    & doThis = doThis .and. &
+                    & any( ( thisLine%sidebands == fwdModelConf%sidebandStart ) .or. &
+                    & ( thisLine%sidebands == 0 ) )
+                  if ( doThis ) then
+                    lineFlag(k) = polarized
+                    if ( polarized < 0 .or. .not. fwdModelConf%polarized ) &
+                      exit   ! loop over signals requested in fwm
+                  end if
+                end do ! End loop over signals requested in fwm
+              end if
+            end do     ! End loop over lines
+          end if       ! End case where allLinesInCatalog not set
+
+          ! Check we have at least one line for this specie
+
+          nLines = count(lineFlag /= 0)
+          if ( nLines == 0 .and. all ( sps%catalog(s,j)%continuum == 0.0 ) &
+            & .and. (index(switches, '0sl') > 0) ) then
+            call get_string ( lit_indices(l), molName )
+            call MLSMessage ( MLSMSG_Warning, ModuleName, &
+              & 'No relevant lines or continuum for '//trim(molName) )
+d227 3
+a229 21
+          call allocate_test ( sps%catalog(s,j)%lines, nLines, &
+            & 'sps%catalog(?,?)%lines', moduleName )
+          call allocate_test ( sps%catalog(s,j)%polarized, nLines, &
+            & 'sps%catalog(?,?)%polarized', moduleName )
+          sps%catalog(s,j)%lines = pack ( thisCatalogEntry%lines, lineFlag /= 0 )
+          sps%catalog(s,j)%polarized = pack ( lineFlag < 0, lineFlag /= 0 )
+          call deallocate_test ( lineFlag, 'lineFlag', moduleName )
+
+        else
+
+          ! No lines for this species.  However, its continuum is still valid 
+          ! so don't set it to empty.
+          ! Won't bother checking that continuum /= 0 as if it was then
+          ! presumably having no continuum and no lines it wouldn't be in the catalog!
+          call allocate_test ( sps%catalog(s,j)%lines, 0, 'sps%catalog(?,?)%lines(0)', &
+            & moduleName )
+          call allocate_test ( sps%catalog(s,j)%polarized, 0, 'sps%catalog(?,?)%polarized(0)', &
+            & moduleName )
+        end if
+      end do         ! Loop over species
+    end do                              ! Loop over sidebands
+d232 12
+a243 11
+
+    do sv_i = 1 , sps%no_mol
+      sps%beta_group(sv_i)%qty%qty => GetQuantityForForwardModel(fwdmodelin, &
+        &  fwdmodelextra, quantitytype=l_vmr, molIndex=sps%beta_group(sv_i)%mol_cat_index, &
+        &  config=fwdModelConf, radiometer=radiometer, &
+        &  foundInFirst=sps%beta_group(sv_i)%qty%foundInFirst )
+    end do
+
+    if ( dumpSps > 0 ) call dump ( sps )
+    if ( dumpFwm > 0 ) call dump ( fwdModelConf, 'Get_Species_Data' )
+    if ( dumpStop > 0 ) stop
+d247 2
+a248 2
+  ! -----------------------------------------  Destroy_Beta_Group  -----
+  subroutine Destroy_Beta_Group ( Beta_Group )
+d250 2
+a251 1
+  ! Destroy the catalog extract prepared by Get_Species_Data
+d253 2
+a254 1
+    use Allocate_Deallocate, only: DEALLOCATE_TEST
+d257 1
+a257 1
+    type(beta_group_t), pointer :: Beta_Group(:)
+d259 2
+a260 12
+    integer :: I
+
+    do i = 1, size(beta_group)
+      call deallocate_test ( beta_group(i)%cat_index, 'beta_group(i)%cat_index', &
+        & moduleName )
+      call deallocate_test ( beta_group(i)%ratio, 'beta_group(i)%ratio', &
+        & moduleName )
+    end do
+
+    deallocate ( beta_group, stat=i )
+    if ( i /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+      & MLSMSG_Deallocate // 'beta_group' )
+d262 6
+a267 1
+  end subroutine Destroy_Beta_Group
+d269 2
+a270 13
+  ! ------------------------------------  Destroy_Catalog_Extract  -----
+  subroutine Destroy_Catalog_Extract ( My_Catalog )
+
+  ! Destroy the catalog extract prepared by Get_Species_Data
+
+    use Allocate_Deallocate, only: DEALLOCATE_TEST
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Deallocate, MLSMSG_Error
+
+    type(catalog_t), pointer :: My_Catalog(:,:)
+
+    integer :: I, J
+    do j = lbound(my_catalog,1), ubound(my_catalog,1), 2
+      do i = 1, size(my_catalog,2)
+d273 4
+a276 4
+        call deallocate_test ( my_catalog(j,i)%lines, 'my_catalog(?,?)%lines', &
+          & moduleName )
+        call deallocate_test ( my_catalog(j,i)%polarized, 'my_catalog(?,?)%polarized', &
+          & moduleName )
+d280 1
+a280 1
+    deallocate ( my_catalog, stat=i )
+d282 1
+a282 19
+      & MLSMSG_Deallocate // 'My_Catalog' )
+
+  end subroutine Destroy_Catalog_Extract
+
+  ! ---------------------------------------  Destroy_Species_Data  -----
+  subroutine Destroy_Species_Data ( Species_Data )
+
+  ! Destroy the SPS_T structure
+
+    use Allocate_Deallocate, only: DEALLOCATE_TEST
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Deallocate, MLSMSG_Error
+
+    type(sps_t), intent(inout) :: Species_Data
+
+    integer :: I
+
+    if ( species_data%no_mol == 0 ) return
+    call destroy_beta_group ( species_data%beta_group )
+    call destroy_catalog_extract ( species_data%catalog )
+a285 47
+  ! --------------------------------------------  Dump_Beta_Group  -----
+  subroutine Dump_Beta_Group ( Beta_Group, Name )
+
+    use Dump_0, only: Dump
+    use ForwardModelVectorTools, only: Dump
+    use Output_m, only: Output
+
+    type(beta_group_t), intent(in) :: Beta_Group(:)
+    character(len=*), intent(in), optional :: Name
+
+    integer :: I
+
+    call output ( 'Beta group' )
+    if ( present(name) ) call output ( ' ' // trim(name) )
+    call output ( size(beta_group), before=', SIZE = ', advance='yes' )
+    do i = 1, size(beta_group)
+      call output ( i, before='Item ' )
+      call output ( beta_group(i)%mol_cat_index, before=', Mol_Cat_Index = ', &
+        & advance='yes' )
+      call dump ( beta_group(i)%qty )
+      if ( .not. associated(beta_group(i)%cat_index) ) cycle
+      call dump ( beta_group(i)%cat_index, name=' Cat_Index' )
+      call dump ( beta_group(i)%ratio, name=' Ratio' )
+    end do
+  end subroutine Dump_Beta_Group
+
+  ! ----------------------------------------------  Dump_Sps_Data  -----
+  subroutine Dump_Sps_Data ( Sps, Details )
+
+    use Dump_0, only: Dump
+    use Output_m, only: NewLine, Output
+    use SpectroscopyCatalog_m, only: Dump
+
+    type(sps_t), intent(in) :: Sps
+    integer, intent(in), optional :: Details ! for dumping spectroscopy catalog
+
+    integer :: I
+
+    call output ( 'Species data', advance='yes' )
+    call output ( sps%no_mol, before=' Total molecules = ' )
+    call output ( sps%no_lbl, before=', Line-by-line molecules = ', advance='yes' )
+    call dump ( sps%beta_group )
+    call dump ( sps%catalog, details=details )
+    call output ( 'QtyStuff:', advance='yes' )
+
+  end subroutine Dump_Sps_Data
+
+d290 1
+a290 1
+end module  Get_Species_Data_M
+d292 1
+a292 75
+! $Log: Get_Species_Data_m.f90,v $
+! Revision 2.16  2004/10/06 21:24:07  vsnyder
+! Some field names in Channels_T were changed
+!
+! Revision 2.15  2004/09/01 01:48:13  vsnyder
+! Closing in on PFA
+!
+! Revision 2.14  2004/08/05 20:58:23  vsnyder
+! Exploit sentinel at end of %molecules to get rid of a temp
+!
+! Revision 2.13  2004/08/03 22:46:30  vsnyder
+! Destroy my_catalog(start:end:2) instead of (-1:1:2)
+!
+! Revision 2.12  2004/08/03 22:06:45  vsnyder
+! Inching further toward PFA
+!
+! Revision 2.11  2004/07/08 21:00:23  vsnyder
+! Inching toward PFA
+!
+! Revision 2.10  2004/06/10 00:59:56  vsnyder
+! Move FindFirst, FindNext from MLSCommon to MLSSets
+!
+! Revision 2.9  2004/03/22 18:23:56  livesey
+! Added handling of AllLinesInCatalog flag (precludes polarized)
+!
+! Revision 2.8  2003/10/09 23:32:31  pwagner
+! SIPS version should stop complaining about nolines
+!
+! Revision 2.7  2003/07/15 18:17:04  livesey
+! Catalog now split by sideband
+!
+! Revision 2.6  2003/06/27 00:59:53  vsnyder
+! Simplify interface to Get_Species_Data
+!
+! Revision 2.5  2003/05/24 02:25:53  vsnyder
+! Set the polarized flag correctly -- well, at least differently
+!
+! Revision 2.4  2003/05/21 22:15:36  vsnyder
+! Dump my_catalog and beta_group if the 'bgrp' switch is set
+!
+! Revision 2.3  2003/05/17 01:19:32  vsnyder
+! Remove unreferenced USE name, futzing
+!
+! Revision 2.2  2003/05/16 23:48:59  livesey
+! Removed references to spectags (note old code had a bug when looking for
+! h2o_r??, which led to a 0.08K error in band 2).
+!
+! Revision 2.1  2003/05/05 23:00:25  livesey
+! Merged in feb03 newfwm branch
+!
+! Revision 1.1.2.9  2003/05/01 23:53:03  livesey
+! Bug fix was being overzelous with setting my_catalog(j)=empty_cat
+!
+! Revision 1.1.2.8  2003/03/22 04:03:45  vsnyder
+! Move Beta_Group_T and Dump_Beta_Group from get_beta_path to Get_Species_Data.
+! Write Destroy_Beta_Group.
+!
+! Revision 1.1.2.7  2003/03/13 02:03:09  vsnyder
+! Initialize some uninitialized variables
+!
+! Revision 1.1.2.6  2003/03/05 03:27:08  vsnyder
+! Don't clobber spectroscopy catalog by way of shallow copy
+!
+! Revision 1.1.2.5  2003/03/01 03:18:39  vsnyder
+! Fix bugs in calculation of the 'polarized' field
+!
+! Revision 1.1.2.4  2003/02/27 23:21:47  vsnyder
+! Put polarized flag in my_catalog.  Add Destroy_Species_Data subroutine.
+!
+! Revision 1.1.2.3  2003/02/21 21:04:30  vsnyder
+! Just to make CVS happy about a merge that didn't do anything
+!
+! Revision 1.1.2.2  2003/02/18 22:58:37  pwagner
+! Compatible with FullForwardModel
+!
+@
+
+
+2.16
+log
+@Some field names in Channels_T were changed
+@
+text
+@a14 6
+! Beta group type declaration:
+  type, public :: Beta_Group_T
+    integer, pointer  :: Cat_Index(:) => NULL() ! 1:n_Elements
+    real(rp), pointer :: Ratio(:) => NULL()     ! 1:n_Elements
+  end type Beta_Group_T
+
+d19 1
+a19 1
+    type(beta_group_t), pointer :: Beta_Group(:) => NULL() ! 1:no_lbl
+d21 4
+a24 3
+    integer, pointer :: Mol_Cat_Index(:) => NULL()         ! 1:no_mol; indices
+      ! of elements of FwdModelConf%molecules that are positive.
+    type(qtyStuff_t), pointer :: Qtys(:) => NULL()         ! 1:no_mol
+d27 13
+d46 1
+a46 1
+    & "$Id: Get_Species_Data_m.f90,v 2.15 2004/09/01 01:48:13 vsnyder Exp $"
+d86 1
+d107 6
+d126 1
+a126 1
+    allocate ( sps%beta_group(sps%no_lbl), stat=ier )
+a129 2
+    call allocate_test ( sps%mol_cat_index, sps%no_mol, 'sps%mol_cat_index', moduleName )
+
+a138 1
+        sps%mol_cat_index(sv_i) = j
+d141 3
+a143 2
+        sps%beta_group(sv_i)%cat_index(1) = j
+        sps%beta_group(sv_i)%ratio(1)     = beta_ratio
+a158 1
+          sps%mol_cat_index(sv_i) = j
+d189 1
+d194 2
+a195 2
+            sps%beta_group(sv_i)%cat_index(1) = noCat
+            sps%beta_group(sv_i)%ratio(1)     = beta_ratio
+d204 2
+a205 2
+          sps%beta_group(sv_i)%cat_index(i) = noCat
+          sps%beta_group(sv_i)%ratio(i)     = beta_ratio
+d217 1
+a217 1
+      sps%mol_cat_index(sv_i) = j
+d220 1
+a220 1
+    ! Now that we have sps%mol_cat_index, we can go through
+d229 1
+a229 1
+               fwdModelConf%molecules(sps%mol_cat_index(sv_i)) ) then
+a355 3
+    allocate ( sps%qtys(sps%no_mol), stat = i )
+    if ( i /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+      & MLSMSG_Allocate // 'sps%qtys' )
+d358 4
+a361 3
+      sps%qtys(sv_i)%qty => GetQuantityForForwardModel(fwdmodelin, fwdmodelextra, &
+        &  quantitytype=l_vmr, molIndex=sps%mol_cat_index(sv_i), config=fwdModelConf, &
+        &  radiometer=radiometer, foundInFirst=sps%qtys(sv_i)%foundInFirst )
+d364 3
+a366 2
+    if ( index(switches,'sps') /= 0 ) call dump ( sps )
+    if ( index(switches,'fwmg') /= 0 ) call dump ( fwdModelConf, 'Get_Species_Data' )
+a437 4
+    call deallocate_test ( species_data%mol_cat_index, 'Mol_Cat_Index', moduleName )
+    deallocate ( species_data%qtys, stat=i )
+    if ( i /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+      & MLSMSG_Deallocate // 'Species_Data%Qtys' )
+d445 1
+d455 1
+a455 2
+    call output ( ', SIZE = ' )
+    call output ( size(beta_group), advance='yes' )
+d457 7
+a463 4
+      call output ( 'Item ' )
+      call output ( i, advance='yes' )
+      call dump ( beta_group(i)%cat_index, name='Cat_Index' )
+      call dump ( beta_group(i)%ratio, name='Ratio' )
+a472 1
+    use String_Table, only: Display_String
+a483 3
+    call dump ( sps%mol_cat_index(:sps%no_lbl), name='Mol_Cat_Index (non-PFA)' )
+    call dump ( sps%mol_cat_index(sps%no_lbl+1:sps%no_mol), &
+      & name='Mol_Cat_Index (PFA)', lbound=sps%no_lbl+1 )
+a484 10
+    do i = 1, size(sps%qtys)
+      call output ( ' Quantity ' )
+      if ( sps%qtys(i)%qty%template%name /= 0 ) then
+        call display_string ( sps%qtys(i)%qty%template%name )
+      else
+        call output ( '???' )
+      end if
+      if ( sps%qtys(i)%foundInFirst ) call output ( ', Found in first' )
+      call newLine
+    end do
+d495 3
+@
+
+
+2.15
+log
+@Closing in on PFA
+@
+text
+@d38 1
+a38 1
+    & "$Id: Get_Species_Data_m.f90,v 2.14 2004/08/05 20:58:23 vsnyder Exp $"
+d66 1
+a66 1
+    type(forwardModelConfig_T), intent(inout) :: FwdModelConf ! Only PFAIndex is changed
+d199 1
+a199 1
+    ! for the second subscript Beta_Path and dBetaD*
+d208 1
+a208 1
+    ! FwdModelConf%forwardModelDerived%channels and fill in PFAIndex
+d212 1
+a212 1
+      fwdModelConf%forwardModelDerived%channels(i)%PFAIndex = 0
+d217 1
+a217 1
+            fwdModelConf%forwardModelDerived%channels(i)%PFAIndex(j) = sv_i
+d221 1
+a221 1
+        if ( fwdModelConf%forwardModelDerived%channels(i)%PFAIndex(j) == 0 ) &
+d498 3
+@
+
+
+2.14
+log
+@Exploit sentinel at end of %molecules to get rid of a temp
+@
+text
+@d38 1
+a38 1
+    & "$Id: Get_Species_Data_m.f90,v 2.13 2004/08/03 22:46:30 vsnyder Exp $"
+d50 1
+a50 1
+    use ForwardModelConfig, only: ForwardModelConfig_t
+d66 1
+a66 1
+    type(forwardModelConfig_T), intent(in) :: FwdModelConf
+d82 2
+a83 1
+    character (len=32) :: molName       ! Name of a molecule
+d85 1
+a85 1
+    integer :: N_elements(size(fwdModelConf%molecules) - 1) ! in beta group
+d132 1
+d167 1
+d180 2
+a181 1
+            sps%beta_group(sv_i)%cat_index(1) = j
+d186 1
+d191 1
+a191 1
+          sps%beta_group(sv_i)%cat_index(i) = j
+d198 2
+a199 2
+    ! All that's needed for PFA is sps%mol_cat_index(sv_i), to get indices
+    ! for Beta_Path and dBetaD*
+d207 20
+d230 1
+a230 1
+      & sps%catalog(fwdModelConf%sidebandStart:fwdModelConf%sidebandStop,noNonPFA), &
+a238 1
+        j = j + 1
+d242 2
+a243 8
+        if ( l > 0 .and. fwdModelConf%molecules(sv_i+1) < 0 ) then
+          ! sps%catalog springs into existence with %lines and %polarized null
+          call allocate_test ( sps%catalog(s,j)%lines, 0, &
+            & 'sps%catalog(?,?)%lines(0)', moduleName )
+          call allocate_test ( sps%catalog(s,j)%polarized, 0, &
+            & 'sps%catalog(?,?)%polarized(0)', moduleName )
+          cycle
+        end if
+d354 1
+d498 3
+@
+
+
+2.13
+log
+@Destroy my_catalog(start:end:2) instead of (-1:1:2)
+@
+text
+@d17 2
+a18 3
+    integer :: N_Elements
+    integer, pointer  :: Cat_Index(:) => NULL()
+    real(rp), pointer :: Ratio(:) => NULL()
+d26 1
+a26 1
+    type(catalog_t), pointer :: Catalog(:,:) => NULL()     ! sidebands,1:no_species
+d38 1
+a38 1
+    & "$Id: Get_Species_Data_m.f90,v 2.12 2004/08/03 22:06:45 vsnyder Exp $"
+a81 1
+    integer, dimension(size(fwdModelConf%molecules,1)+1) :: Molecules_Temp
+d84 2
+a85 1
+    integer :: NoMol                    ! size(fwdModelConf%molecules) -- includes
+d103 1
+a103 1
+    noMol = size(fwdModelConf%molecules)
+a115 9
+    k = max(1,noNonPFA-sps%no_lbl)
+    do i = 1, sps%no_lbl
+      call allocate_test ( sps%beta_group(i)%cat_index, k, 'beta_group%cat_index', moduleName )
+      call allocate_test ( sps%beta_group(i)%ratio, k, 'beta_group%ratio', moduleName )
+      sps%beta_group(i)%n_elements = 0
+      sps%beta_group(i)%ratio = 0.0
+      sps%beta_group(i)%cat_index = 0
+    end do
+
+d126 2
+a127 1
+        sps%beta_group(sv_i)%n_elements   = 1
+a131 9
+      ! All that's needed for PFA is sps%mol_cat_index(sv_i), to get indices
+      ! for Beta_Path and dBetaD*
+      do j = 1, noNonPFA+1, noMol
+        l = fwdModelConf%molecules(j)
+        !        if ( l == l_extinction ) CYCLE
+        sv_i = sv_i + 1
+        sps%mol_cat_index(sv_i) = j
+      end do
+
+d134 22
+a155 2
+      molecules_temp(1:noMol) = fwdModelConf%molecules(1:noMol)
+      molecules_temp(noMol+1) = noMol ! Anything positive will do
+d157 6
+a162 1
+      sps%mol_cat_index = PACK((/(i,i=1,noMol)/), fwdModelConf%molecules > 0)
+d164 1
+a164 1
+      ! Work out beta group etc for line-by-line
+d167 1
+a167 1
+        k = molecules_temp(j)
+d171 6
+a176 4
+        if ( k > 0 ) then
+          if ( molecules_temp(j+1) > 0 ) then
+            sv_i = sv_i + 1
+            sps%beta_group(sv_i)%n_elements   = 1
+d180 2
+a181 2
+        else
+          if ( molecules_temp(j-1) > 0) sv_i = sv_i + 1
+a185 2
+          i = sps%beta_group(sv_i)%n_elements + 1
+          sps%beta_group(sv_i)%n_elements   = i
+d193 9
+d217 8
+a224 9
+        if ( (sv_i < noNonPFA) .and. (fwdModelConf%molecules(sv_i) > 0) ) then
+          if (fwdModelConf%molecules(sv_i+1) < 0 ) then
+            ! sps%catalog springs into existence with %lines and %polarized null
+            call allocate_test ( sps%catalog(s,j)%lines, 0, &
+              & 'sps%catalog(?,?)%lines(0)', moduleName )
+            call allocate_test ( sps%catalog(s,j)%polarized, 0, &
+              & 'sps%catalog(?,?)%polarized(0)', moduleName )
+            cycle
+          end if
+d226 1
+a226 1
+        l = abs(fwdModelConf%molecules(sv_i))
+d432 2
+a433 2
+      call dump ( beta_group(i)%cat_index(:beta_group(i)%n_elements), name='Cat_Index' )
+      call dump ( beta_group(i)%ratio(:beta_group(i)%n_elements), name='Ratio' )
+d479 3
+@
+
+
+2.12
+log
+@Inching further toward PFA
+@
+text
+@d39 1
+a39 1
+    & "$Id: Get_Species_Data_m.f90,v 2.11 2004/07/08 21:00:23 vsnyder Exp $"
+d360 1
+a360 1
+    do j = -1, 1, 2
+d464 3
+@
+
+
+2.11
+log
+@Inching toward PFA
+@
+text
+@d24 6
+a29 5
+    integer :: No_Mol ! Size of several arrays
+    integer :: No_LBL ! Number of Line-by-line molecules
+    type(beta_group_t), pointer :: Beta_Group(:) => NULL() ! 1:no_mol
+    type(catalog_t), pointer :: Catalog(:,:) => NULL()     ! -1:1,1:no_species
+    integer, pointer :: Mol_Cat_Index(:) => NULL()         ! 1:no_mol
+d39 1
+a39 1
+    & "$Id: Get_Species_Data_m.f90,v 2.10 2004/06/10 00:59:56 vsnyder Exp $"
+d86 4
+a89 1
+    integer  :: NoSpecies               ! No. of Molecules under consideration
+a92 1
+    integer :: Spec1, SpecN             ! First and last species in fwdModelConf%molecules
+d104 4
+a107 5
+    noSpecies = size(fwdModelConf%molecules)
+    sps%no_lbl = count(fwdModelConf%molecules(1:fwdModelConf%firstPFA-1) > 0)
+    sps%no_mol = sps%no_lbl + noSpecies - fwdModelConf%firstPFA + 1
+    spec1 = 1
+    specN = noSpecies
+d111 1
+a111 1
+    allocate ( sps%beta_group(sps%no_mol), stat=ier )
+d117 2
+a118 2
+    k = max(1,noSpecies-sps%no_mol)
+    do i = 1, sps%no_mol
+d126 1
+a126 1
+    if ( noSpecies == sps%no_mol ) then ! No grouping
+d128 1
+d131 1
+a131 1
+      do j = spec1, specN
+d141 9
+d152 2
+a153 2
+      molecules_temp(spec1:specN) = fwdModelConf%molecules(spec1:specN)
+      molecules_temp(specN+1) = noSpecies ! Anything positive will do
+d155 1
+a155 1
+      sps%mol_cat_index = PACK((/(i,i=spec1,specN)/), fwdModelConf%molecules(spec1:specN) > 0)
+d157 1
+d159 1
+a159 1
+      do j = spec1, specN
+d188 3
+a190 1
+    allocate ( sps%catalog(-1:1,noSpecies), stat=ier )
+d197 1
+a197 1
+      do sv_i = spec1, specN
+d201 1
+a201 1
+        if ( (sv_i < specN) .and. (fwdModelConf%molecules(sv_i) > 0) ) then
+d278 1
+a278 1
+          ! Check we have at least one line for this species
+d417 2
+a418 2
+      call dump ( beta_group(i)%cat_index, name='Cat_Index' )
+      call dump ( beta_group(i)%ratio, name='Ratio' )
+d423 1
+a423 1
+  subroutine Dump_Sps_Data ( Sps )
+d431 1
+d439 4
+a442 2
+    call dump ( sps%catalog )
+    call dump ( sps%mol_cat_index, name='Mol_Cat_Index' )
+d464 3
+@
+
+
+2.10
+log
+@Move FindFirst, FindNext from MLSCommon to MLSSets
+@
+text
+@d6 1
+d8 1
+d12 2
+a13 1
+  public :: Get_Species_Data, Destroy_Beta_Group, Destroy_Species_Data, Dump
+d15 1
+a15 1
+! *** Beta group type declaration:
+d17 3
+a19 3
+    integer :: n_elements
+    integer, pointer  :: cat_index(:)
+    real(rp), pointer :: ratio(:)
+d22 10
+d33 1
+a33 1
+    module procedure Dump_Beta_Group
+d38 1
+a38 1
+    & "$Id: Get_Species_Data_m.f90,v 2.9 2004/03/22 18:23:56 livesey Exp $"
+d47 1
+a47 1
+    & NoSpecies, No_Mol, Beta_Group, My_Catalog )
+d52 1
+a52 1
+    use Intrinsic, only: LIT_INDICES, L_ISOTOPERATIO
+d58 1
+a58 1
+    use SpectroscopyCatalog_m, only: Catalog, Catalog_t, Dump, Empty_Cat, &
+d68 1
+d72 1
+a72 4
+    integer, intent(out) :: NoSpecies   ! No. of Molecules under consideration
+    integer, intent(out) :: No_Mol      ! Number of major Molecules (NO iso/vib)
+    type (beta_group_T), dimension(:), pointer :: Beta_Group
+    type (catalog_T), dimension(:,:), pointer :: My_Catalog
+d85 1
+d89 1
+d101 7
+a107 2
+    noSpecies = size (fwdModelConf%molecules)
+    no_mol = count (fwdModelConf%molecules > 0)
+d109 1
+a109 1
+    allocate ( beta_group(no_mol), stat=ier )
+d111 1
+a111 1
+      & MLSMSG_Allocate//'beta_group' )
+d113 9
+a121 11
+    k = max(1,noSpecies-no_mol)
+    do i = 1, no_mol
+      allocate ( beta_group(i)%cat_index(k), stat=ier )
+      if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_Allocate//'beta_group%cat_index' )
+      allocate ( beta_group(i)%ratio(k), stat=ier )
+      if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_Allocate//'beta_group%ratio' )
+      beta_group(i)%n_elements = 0
+      beta_group(i)%ratio = 0.0
+      beta_group(i)%cat_index = 0
+d124 1
+a124 1
+    if ( noSpecies == no_mol ) then ! No grouping
+d128 1
+a128 1
+      do j = 1, noSpecies
+d132 4
+a135 3
+        beta_group(sv_i)%n_elements   = 1
+        beta_group(sv_i)%cat_index(1) = j
+        beta_group(sv_i)%ratio(1)     = beta_ratio
+d140 4
+a143 2
+      molecules_temp(1:noSpecies) = fwdModelConf%molecules(1:noSpecies)
+      molecules_temp(noSpecies+1) = noSpecies
+d146 1
+a146 1
+      do j = 1, noSpecies
+d154 3
+a156 3
+            beta_group(sv_i)%n_elements   = 1
+            beta_group(sv_i)%cat_index(1) = j
+            beta_group(sv_i)%ratio(1)     = beta_ratio
+d161 1
+a161 1
+            & quantityType=l_isotoperatio, molecule=l, noError=.TRUE., &
+d164 4
+a167 4
+          i = beta_group(sv_i)%n_elements + 1
+          beta_group(sv_i)%n_elements   = i
+          beta_group(sv_i)%cat_index(i) = j
+          beta_group(sv_i)%ratio(i)     = beta_ratio
+d175 1
+a175 1
+    allocate ( My_Catalog(-1:1,noSpecies), stat=ier )
+d177 1
+a177 1
+      & MLSMSG_Allocate//'my_catalog' )
+d179 1
+d181 3
+a183 1
+      do j = 1, noSpecies
+d186 7
+a192 8
+        if ( (j < noSpecies) .and. (fwdModelConf%molecules(j) > 0) ) then
+          if (fwdModelConf%molecules(j+1) < 0 ) then
+            my_catalog(s, j) = empty_cat
+            ! my_catalog springs into existence with %lines and %polarized null
+            call allocate_test ( my_catalog(s,j)%lines, 0, &
+              & 'my_catalog(?,?)%lines(0)', moduleName )
+            call allocate_test ( my_catalog(s,j)%polarized, 0, &
+              & 'my_catalog(?,?)%polarized(0)', moduleName )
+d196 1
+a196 1
+        l = abs(fwdModelConf%molecules(j))
+d198 3
+a200 3
+        My_Catalog(s,j) = thisCatalogEntry
+        ! Don't deallocate them by mistake -- my_catalog is a shallow copy
+        nullify ( my_catalog(s,j)%lines, my_catalog(s,j)%polarized )
+d266 1
+a266 1
+          if ( nLines == 0 .and. all ( my_catalog(s,j)%continuum == 0.0 ) &
+d272 6
+a277 6
+          call allocate_test ( my_catalog(s,j)%lines, nLines, &
+            & 'my_catalog(?,?)%lines', moduleName )
+          call allocate_test ( my_catalog(s,j)%polarized, nLines, &
+            & 'my_catalog(?,?)%polarized', moduleName )
+          my_catalog(s,j)%lines = pack ( thisCatalogEntry%lines, lineFlag /= 0 )
+          my_catalog(s,j)%polarized = pack ( lineFlag < 0, lineFlag /= 0 )
+d286 1
+a286 1
+          call allocate_test ( my_catalog(s,j)%lines, 0, 'my_catalog(?,?)%lines(0)', &
+d288 1
+a288 1
+          call allocate_test ( my_catalog(s,j)%polarized, 0, 'my_catalog(?,?)%polarized(0)', &
+d293 13
+a305 4
+    if ( index(switches,'bgrp') /= 0 ) then
+      call dump ( my_catalog, 'My_Catalog in Get_Species_Data' )
+      call dump ( beta_group )
+    end if
+d309 27
+a335 2
+  ! ---------------------------------------  Destroy_Species_Data  -----
+  subroutine Destroy_Species_Data ( My_Catalog )
+a340 1
+    use SpectroscopyCatalog_m, only: Catalog_t
+d360 1
+a360 1
+  end subroutine Destroy_Species_Data
+d362 2
+a363 2
+  ! -----------------------------------------  Destroy_Beta_Group  -----
+  subroutine Destroy_Beta_Group ( Beta_Group )
+d365 1
+a365 1
+  ! Destroy the catalog extract prepared by Get_Species_Data
+d370 1
+a370 1
+    type(beta_group_t), pointer :: Beta_Group(:)
+d374 5
+a378 8
+    do i = 1, size(beta_group)
+      call deallocate_test ( beta_group(i)%cat_index, 'beta_group(i)%cat_index', &
+        & moduleName )
+      call deallocate_test ( beta_group(i)%ratio, 'beta_group(i)%ratio', &
+        & moduleName )
+    end do
+
+    deallocate ( beta_group, stat=i )
+d380 1
+a380 1
+      & MLSMSG_Deallocate // 'beta_group' )
+d382 1
+a382 1
+  end subroutine Destroy_Beta_Group
+d407 32
+d446 3
+@
+
+
+2.9
+log
+@Added handling of AllLinesInCatalog flag (precludes polarized)
+@
+text
+@d25 1
+a25 1
+    & "$Id: Get_Species_Data_m.f90,v 2.8 2003/10/09 23:32:31 pwagner Exp $"
+d40 1
+a40 1
+    use MLSCommon, only: FINDFIRST, RP
+d43 1
+d176 1
+a176 1
+        thisCatalogEntry => Catalog(FindFirst(catalog%molecule == l ) )
+d363 3
+@
+
+
+2.8
+log
+@SIPS version should stop complaining about nolines
+@
+text
+@d25 1
+a25 1
+    & "$Id: Get_Species_Data_m.f90,v 2.7 2003/07/15 18:17:04 livesey Exp $"
+d81 4
+d184 29
+a212 22
+          do k = 1, size ( thisCatalogEntry%lines )
+            thisLine => lines(thisCatalogEntry%lines(k))
+            if ( associated(thisLine%signals) ) then
+              polarized = 1 ! not polarized
+              do sigInd = 1, size(fwdModelConf%signals)
+                if ( fwdModelConf%allLinesForRadiometer ) then
+                  doThis = .false.
+                  do i = 1, size(thisLine%signals)
+                    ! Tried to make GetRadiometerFromSignal elemental, but compile time
+                    ! in LF95 (optimized) for Construct.f90 went nuts! :-(
+                    if ( GetRadiometerFromSignal ( thisLine%signals(i) ) == &
+                      & fwdModelConf%signals(sigInd)%radiometer ) then
+                      doThis = .true.
+                      if ( .not. fwdModelConf%polarized ) &
+                        exit   ! loop over signals for line -- no need to check for
+                      ! polarized lines
+                      if ( associated(thisLine%polarized) ) then
+                        if ( thisLine%polarized(i) ) then
+                          polarized = -1 ! polarized
+                          exit   ! loop over signals for line -- one signal that sees a
+                          ! polarized line is enough to turn on the polarized
+                          ! method
+d215 9
+a224 9
+                  end do ! End loop over signals for line
+                else
+                  ! Not doing all lines for radiometer, be more selective
+                  doThis = any ( &
+                    & ( thisLine%signals == fwdModelConf%signals(sigInd)%index ) .and. &
+                    & ( ( thisLine%sidebands == 0 ) .or. ( thisLine%sidebands == s ) ) )
+                  if ( fwdModelConf%polarized .and. doThis .and. &
+                    & associated(thisLine%polarized) ) then
+                    if ( any(thisLine%polarized) ) polarized = -1 ! polarized
+d226 14
+a239 14
+                end if
+
+                if ( fwdModelConf%sidebandStart == fwdModelConf%sidebandStop ) &
+                  & doThis = doThis .and. &
+                  & any( ( thisLine%sidebands == fwdModelConf%sidebandStart ) .or. &
+                  & ( thisLine%sidebands == 0 ) )
+                if ( doThis ) then
+                  lineFlag(k) = polarized
+                  if ( polarized < 0 .or. .not. fwdModelConf%polarized ) &
+                    exit   ! loop over signals requested in fwm
+                end if
+              end do ! End loop over signals requested in fwm
+            end if
+          end do     ! End loop over lines
+d362 3
+@
+
+
+2.7
+log
+@Catalog now split by sideband
+@
+text
+@d25 1
+a25 1
+    & "$Id: Get_Species_Data_m.f90,v 2.6 2003/06/27 00:59:53 vsnyder Exp $"
+d233 2
+a234 1
+          if ( nLines == 0 .and. all ( my_catalog(s,j)%continuum == 0.0 ) ) then
+d351 3
+@
+
+
+2.6
+log
+@Simplify interface to Get_Species_Data
+@
+text
+@d25 1
+a25 1
+    & "$Id: Get_Species_Data_m.f90,v 2.5 2003/05/24 02:25:53 vsnyder Exp $"
+d50 1
+a50 1
+  ! Inputs
+d55 1
+a55 1
+  ! Outputs
+d60 1
+a60 1
+    type (catalog_T), dimension(:), pointer :: My_Catalog
+d62 1
+a62 1
+  ! Local variables
+d69 1
+a69 1
+                                        ! (noLines per species)
+d74 1
+a74 1
+                                        ! +1 => None of the selected lines is Zeeman split
+d77 1
+d109 1
+a109 1
+!        if ( l == l_extinction ) CYCLE
+d125 1
+a125 1
+!        if ( l == l_extinction ) CYCLE
+d137 2
+a138 2
+              & quantityType=l_isotoperatio, molecule=l, noError=.TRUE., &
+              & config=fwdModelConf )
+d149 1
+a149 1
+! Work out which spectroscopy we're going to need ------------------------
+d151 1
+a151 1
+    allocate ( My_Catalog(noSpecies), stat=ier )
+d155 14
+a168 12
+    do j = 1, noSpecies
+      ! Skip if the next molecule is negative (indicates that this one is a
+      ! parent)
+      if ( (j < noSpecies) .and. (fwdModelConf%molecules(j) > 0) ) then
+        if (fwdModelConf%molecules(j+1) < 0 ) then
+          my_catalog(j) = empty_cat
+          ! my_catalog springs into existence with %lines and %polarized null
+          call allocate_test ( my_catalog(j)%lines, 0, &
+                            & 'my_catalog(?)%lines(0)', moduleName )
+          call allocate_test ( my_catalog(j)%polarized, 0, &
+                            & 'my_catalog(?)%polarized(0)', moduleName )
+          cycle
+d170 33
+a202 33
+      end if
+      l = abs(fwdModelConf%molecules(j))
+      thisCatalogEntry => Catalog(FindFirst(catalog%molecule == l ) )
+      My_Catalog(j) = thisCatalogEntry
+      ! Don't deallocate them by mistake -- my_catalog is a shallow copy
+      nullify ( my_catalog(j)%lines, my_catalog(j)%polarized )
+      if ( associated ( thisCatalogEntry%lines ) ) then
+        ! Now subset the lines according to the signal we're using
+        call allocate_test ( lineFlag, size(thisCatalogEntry%lines), &
+                         &  'lineFlag', moduleName )
+        lineFlag = 0
+        do k = 1, size ( thisCatalogEntry%lines )
+          thisLine => lines(thisCatalogEntry%lines(k))
+          if ( associated(thisLine%signals) ) then
+            polarized = 1 ! not polarized
+            do sigInd = 1, size(fwdModelConf%signals)
+              if ( fwdModelConf%allLinesForRadiometer ) then
+                doThis = .false.
+                do i = 1, size(thisLine%signals)
+                  ! Tried to make GetRadiometerFromSignal elemental, but compile time
+                  ! in LF95 (optimized) for Construct.f90 went nuts! :-(
+                  if ( GetRadiometerFromSignal ( thisLine%signals(i) ) == &
+                    & fwdModelConf%signals(sigInd)%radiometer ) then
+                    doThis = .true.
+                    if ( .not. fwdModelConf%polarized ) &
+                exit   ! loop over signals for line -- no need to check for
+                       ! polarized lines
+                    if ( associated(thisLine%polarized) ) then
+                      if ( thisLine%polarized(i) ) then
+                        polarized = -1 ! polarized
+                exit   ! loop over signals for line -- one signal that sees a
+                       ! polarized line is enough to turn on the polarized
+                       ! method
+d205 9
+a214 7
+                end do ! End loop over signals for line
+              else
+                doThis = any ( thisLine%signals == &
+                  & fwdModelConf%signals(sigInd)%index )
+                if ( fwdModelConf%polarized .and. doThis .and. &
+                  & associated(thisLine%polarized) ) then
+                  if ( any(thisLine%polarized) ) polarized = -1 ! polarized
+a215 1
+              end if
+d217 20
+a236 11
+              ! If we're only doing one sideband, maybe we can remove some more lines
+              if ( fwdModelConf%sidebandStart == fwdModelConf%sidebandStop ) &
+                & doThis = doThis .and. &
+                & any( ( thisLine%sidebands == fwdModelConf%sidebandStart ) .or. &
+                & ( thisLine%sidebands == 0 ) )
+              if ( doThis ) then
+                lineFlag(k) = polarized
+                if ( polarized < 0 .or. .not. fwdModelConf%polarized ) &
+            exit   ! loop over signals requested in fwm
+              end if
+            end do ! End loop over signals requested in fwm
+d238 7
+a244 1
+        end do     ! End loop over lines
+d246 1
+a246 1
+! Check we have at least one line for this species
+d248 8
+a255 5
+        nLines = count(lineFlag /= 0)
+        if ( nLines == 0 .and. all ( my_catalog(j)%continuum == 0.0 ) ) then
+          call get_string ( lit_indices(l), molName )
+          call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            & 'No relevant lines or continuum for '//trim(molName) )
+d257 2
+a258 21
+        call allocate_test ( my_catalog(j)%lines, nLines, &
+          & 'my_catalog(?)%lines', moduleName )
+        call allocate_test ( my_catalog(j)%polarized, nLines, &
+          & 'my_catalog(?)%polarized', moduleName )
+        my_catalog(j)%lines = pack ( thisCatalogEntry%lines, lineFlag /= 0 )
+        my_catalog(j)%polarized = pack ( lineFlag < 0, lineFlag /= 0 )
+        call deallocate_test ( lineFlag, 'lineFlag', moduleName )
+
+      else
+
+        ! No lines for this species.  However, its continuum is still valid 
+        ! so don't set it to empty.
+        ! Won't bother checking that continuum /= 0 as if it was then
+        ! presumably having no continuum and no lines it wouldn't be in the catalog!
+        call allocate_test ( my_catalog(j)%lines, 0, 'my_catalog(?)%lines(0)', &
+          & moduleName )
+        call allocate_test ( my_catalog(j)%polarized, 0, 'my_catalog(?)%polarized(0)', &
+          & moduleName )
+      end if
+    end do         ! Loop over species
+
+d275 1
+a275 1
+    type(catalog_t), pointer :: My_Catalog(:)
+d277 10
+a286 9
+    integer :: I
+
+    do i = 1, size(my_catalog)
+      ! Note that we don't deallocate the signals/sidebands stuff for each line
+      ! as these are shallow copies of the main spectroscopy catalog stuff
+      call deallocate_test ( my_catalog(i)%lines, 'my_catalog(?)%lines', &
+        & moduleName )
+      call deallocate_test ( my_catalog(i)%polarized, 'my_catalog(?)%polarized', &
+        & moduleName )
+d350 3
+@
+
+
+2.5
+log
+@Set the polarized flag correctly -- well, at least differently
+@
+text
+@d25 1
+a25 1
+    & "$Id: Get_Species_Data_m.f90,v 2.4 2003/05/21 22:15:36 vsnyder Exp $"
+d33 1
+a33 2
+  subroutine Get_Species_Data ( TheMolecules, FwdModelConf, &
+    & FwdModelIn, FwdModelExtra, SidebandStart, SidebandStop, &
+a51 1
+    integer, intent(in) :: TheMolecules(:) ! List oftheMolecules
+a53 1
+    integer, intent(in) :: SidebandStart, SidebandStop
+d57 2
+a58 2
+    integer, intent(out) :: NoSpecies   ! No. oftheMolecules under consideration
+    integer, intent(out) :: No_Mol      ! Number of majortheMolecules (NO iso/vib)
+d70 1
+a70 1
+    integer, dimension(size(theMolecules,1)+1) :: Molecules_Temp
+d82 2
+a83 2
+    noSpecies = size (theMolecules)
+    no_mol = count (theMolecules > 0)
+d107 1
+a107 1
+        l = theMolecules(j)
+d117 1
+a117 1
+      molecules_temp(1:noSpecies) = theMolecules(1:noSpecies)
+d157 2
+a158 2
+      if ( (j < noSpecies) .and. (theMolecules(j) > 0) ) then
+        if (theMolecules(j+1) < 0 ) then
+d168 1
+a168 1
+      l = abs(theMolecules(j))
+d214 3
+a216 2
+              if ( sidebandStart==sidebandStop ) doThis = doThis .and. &
+                & any( ( thisLine%sidebands == sidebandStart ) .or. &
+d346 3
+@
+
+
+2.4
+log
+@Dump my_catalog and beta_group if the 'bgrp' switch is set
+@
+text
+@d25 1
+a25 1
+    & "$Id: Get_Species_Data_m.f90,v 2.3 2003/05/17 01:19:32 vsnyder Exp $"
+d68 1
+a68 1
+    logical :: doThis                   ! Flag for lines
+d191 6
+a196 3
+                  doThis = doThis .or. GetRadiometerFromSignal ( thisLine%signals(i) ) == &
+                    & fwdModelConf%signals(sigInd)%radiometer
+                  if ( doThis ) then
+d198 6
+a203 1
+                      if ( thisLine%polarized(i) ) polarized = -1
+a204 1
+                exit ! loop over signals
+d206 1
+a206 1
+                end do
+d210 3
+a212 2
+                if ( doThis .and. associated(thisLine%polarized) ) then
+                  if ( any(thisLine%polarized) ) polarized = -1
+d222 1
+d229 1
+a229 1
+! Check we have at least one line for this
+d247 1
+a247 1
+        ! No lines for this species.  However, it's continuum is still valid 
+d348 3
+@
+
+
+2.3
+log
+@Remove unreferenced USE name, futzing
+@
+text
+@d25 1
+a25 1
+    & "$Id: Get_Species_Data_m.f90,v 2.2 2003/05/16 23:48:59 livesey Exp $"
+d45 2
+a46 1
+    use SpectroscopyCatalog_m, only: Catalog_t, Line_t, Lines, Catalog, Empty_Cat
+d48 1
+d249 5
+d339 3
+@
+
+
+2.2
+log
+@Removed references to spectags (note old code had a bug when looking for
+h2o_r??, which led to a 0.08K error in band 2).
+@
+text
+@d6 1
+a6 1
+  use MLSCommon, only: RP, R8
+d25 1
+a25 1
+    & "$Id: Get_Species_Data_m.f90,v 2.1 2003/05/05 23:00:25 livesey Exp $"
+d45 1
+a45 1
+    use SpectroscopyCatalog_m, only: Catalog_t, Line_t, Lines, Catalog, Empty_Cat, DUMP
+a47 1
+    use Dump_0, only: Dump
+d332 4
+@
+
+
+2.1
+log
+@Merged in feb03 newfwm branch
+@
+text
+@d25 1
+a25 1
+    & "$Id$"
+d28 1
+a28 1
+    & "$RCSfile$"
+a44 1
+    use Molecules, only: SPEC_TAGS ! , L_EXTINCTION
+d171 1
+a171 1
+      thisCatalogEntry => Catalog(FindFirst(catalog%spec_tag == spec_tags(l) ) )
+d332 4
+a335 1
+! $Log$
+@
+
+
+1.1
+log
+@file Get_Species_Data_m.f90 was initially added on branch newfwm-feb03.
+@
+text
+@d1 358
+@
+
+
+1.1.2.1
+log
+@Initial commit
+@
+text
+@a0 220
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+module Get_Species_Data_M
+
+  implicit NONE
+  private
+  public :: Get_Species_Data
+
+  !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter, private :: IdParm = &
+    & "$Id: FullForwardModel_m.f90,v 2.126.2.4 2003/02/14 03:53:41 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = IdParm
+  character (len=*), parameter, private :: ModuleName= &
+    & "$RCSfile: FullForwardModel_m.f90,v $"
+!-----------------------------------------------------------------------
+contains
+
+  subroutine Get_Species_Data ( TheMolecules, FwdModelConf, &
+    & FwdModelIn, FwdModelExtra, SidebandStart, SidebandStop, &
+    & NoSpecies, No_Mol, Mol_Cat_Index, Beta_Group, My_Catalog )
+
+    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use ForwardModelConfig, only: ForwardModelConfig_t
+    use ForwardModelVectorTools, only: GetQuantityForForwardModel
+    use Get_Beta_Path_m, only: Beta_Group_t
+    use Intrinsic, only: LIT_INDICES, L_ISOTOPERATIO
+    use MLSCommon, only: FINDFIRST, RP
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Deallocate,&
+      & MLSMSG_Error, MLSMSG_Warning
+    use MLSSignals_m, only: GetRadiometerFromSignal
+    use Molecules, only: SPEC_TAGS ! , L_EXTINCTION
+    use SpectroscopyCatalog_m, only: Catalog_t, Line_t, Lines, Catalog
+    use String_table, only: GET_STRING
+    use VectorsModule, only: VECTOR_T, VECTORVALUE_T
+
+  ! Inputs
+
+    integer, intent(in) :: TheMolecules(:) ! List oftheMolecules
+    type(forwardModelConfig_T), intent(in) :: FwdModelConf
+    type(vector_T), intent(in) ::  FwdModelIn, FwdModelExtra
+    integer, intent(in) :: SidebandStart, SidebandStop
+
+  ! Outputs
+
+    integer, intent(out) :: NoSpecies   ! No. oftheMolecules under consideration
+    integer, intent(out) :: No_Mol      ! Number of majortheMolecules (NO iso/vib)
+    integer, dimension(:), pointer :: Mol_Cat_Index
+    type (beta_group_T), dimension(:), pointer :: Beta_Group
+    type (catalog_T), dimension(:), pointer :: My_Catalog
+
+  ! Local variables
+
+    real(rp) :: Beta_Ratio
+    logical :: doThis                   ! Flag for lines
+    type (VectorValue_T), pointer :: F  ! An arbitrary species
+    integer :: I, IER, J, K, L
+    logical, dimension(:), pointer :: LINEFLAG ! Use this line (noLines per species)
+    integer, dimension(size(theMolecules,1)+1) :: Molecules_Temp
+    character (len=32) :: molName       ! Name of a molecule
+    integer :: SIGIND                   ! Signal index, loop counter
+    integer :: SV_I
+    type (catalog_T), pointer :: thisCatalogEntry
+    type (line_T), pointer :: thisLine
+
+    nullify ( lineFlag )
+
+    noSpecies = size (theMolecules )
+    no_mol = count (theMolecules > 0)
+
+    call allocate_test ( mol_cat_index, no_mol, 'mol_cat_index', moduleName )
+
+    mol_cat_index = PACK((/(i,i=1,noSpecies)/), theMolecules > 0)
+
+    allocate ( beta_group(no_mol), stat=ier )
+    if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate//'beta_group' )
+
+    k = max(1,noSpecies-no_mol)
+    do i = 1, no_mol
+      allocate ( beta_group(i)%cat_index(k), stat=ier )
+      if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_Allocate//'beta_group%cat_index' )
+      allocate ( beta_group(i)%ratio(k), stat=ier )
+      if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_Allocate//'beta_group%ratio' )
+      beta_group(i)%n_elements = 0
+      beta_group(i)%ratio = 0.0
+      beta_group(i)%cat_index = 0
+    end do
+
+    if ( noSpecies == no_mol ) then ! No grouping
+
+      sv_i = 0
+      beta_ratio = 1.0_rp   ! Always, for single element (no grouping)
+      do j = 1, noSpecies
+        l =theMolecules(j)
+!        if ( l == l_extinction ) CYCLE
+        sv_i = sv_i + 1
+        beta_group(sv_i)%n_elements   = 1
+        beta_group(sv_i)%cat_index(1) = j
+        beta_group(sv_i)%ratio(1)     = beta_ratio
+      end do
+
+    else
+
+      molecules_temp(1:noSpecies) =theMolecules(1:noSpecies)
+      molecules_temp(noSpecies+1) = noSpecies
+
+      sv_i = 0
+      do j = 1, noSpecies
+        k = molecules_temp(j)
+        l = abs(k)
+!        if ( l == l_extinction ) CYCLE
+        beta_ratio = 1.0_rp
+        if ( k > 0 ) then
+          if ( molecules_temp(j+1) > 0 ) then
+            sv_i = sv_i + 1
+            beta_group(sv_i)%n_elements   = 1
+            beta_group(sv_i)%cat_index(1) = j
+            beta_group(sv_i)%ratio(1)     = beta_ratio
+          end if
+        else
+          if ( molecules_temp(j-1) > 0) sv_i = sv_i + 1
+          f => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+              & quantityType=l_isotoperatio, molecule=l, noError=.TRUE., &
+              & config=fwdModelConf )
+          if ( associated ( f ) ) beta_ratio = f%values(1,1)
+          i = beta_group(sv_i)%n_elements + 1
+          beta_group(sv_i)%n_elements   = i
+          beta_group(sv_i)%cat_index(i) = j
+          beta_group(sv_i)%ratio(i)     = beta_ratio
+        end if
+      end do
+
+    end if
+
+! Work out which spectroscopy we're going to need ------------------------
+
+    allocate ( My_Catalog(noSpecies), stat=ier )
+    if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate//'my_catalog' )
+
+    do j = 1, noSpecies
+      ! Skip if the next molecule is negative (indicates that this one is a
+      ! parent)
+      if ( (j < noSpecies) .and. (theMolecules(j) > 0) ) then
+        if (theMolecules(j+1) < 0 ) then
+          nullify ( my_catalog(j)%lines ) ! Don't deallocate it by mistake
+          call allocate_test ( my_catalog(j)%lines, 0, &
+                            & 'my_catalog(?)%lines(0)', moduleName )
+          cycle
+        end if
+      end if
+      l=abs(theMolecules(j))
+      thisCatalogEntry => Catalog(FindFirst(catalog%spec_tag == spec_tags(l) ) )
+      if ( associated ( thisCatalogEntry%lines ) ) then
+        ! Now subset the lines according to the signal we're using
+        call allocate_test ( lineFlag, size(thisCatalogEntry%lines), &
+                         &  'lineFlag', moduleName )
+        lineFlag = .FALSE.
+        do k = 1, size ( thisCatalogEntry%lines )
+          thisLine => lines(thisCatalogEntry%lines(k))
+          if ( associated(thisLine%signals) ) then
+            do sigInd = 1, size(fwdModelConf%signals)
+              if ( fwdModelConf%allLinesForRadiometer ) then
+                doThis = .false.
+                do i = 1, size(thisLine%signals)
+                  ! Tried to make GetRadiometerFromSignal elemental, but compile time
+                  ! in LF95 (optimized) for Construct.f90 went nuts! :-(
+                  doThis = doThis .or. GetRadiometerFromSignal ( thisLine%signals(i) ) == &
+                    & fwdModelConf%signals(sigInd)%radiometer
+                  if ( doThis ) exit
+                end do
+              else
+                doThis = any ( thisLine%signals == &
+                  & fwdModelConf%signals(sigInd)%index )
+              end if
+
+              ! If we're only doing one sideband, maybe we can remove some more lines
+              if ( sidebandStart==sidebandStop ) doThis = doThis .and. &
+                & any( ( thisLine%sidebands == sidebandStart ) .or. &
+                & ( thisLine%sidebands == 0 ) )
+              if ( doThis ) then
+                lineFlag(k) = .true.
+                exit
+              end if
+            end do ! End loop over signals requested in fwm
+          end if
+        end do               ! End loop over lines
+
+        My_Catalog(j) = thisCatalogEntry
+        nullify ( my_catalog(j)%lines ) ! Don't deallocate it by mistake
+
+! Check we have at least one line for this
+
+        if ( count(lineFlag) == 0 .and. all ( my_catalog(j)%continuum == 0.0 ) ) then
+          call get_string ( lit_indices(l), molName )
+          call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            & 'No relevant lines or continuum for '//trim(molName) )
+        end if
+        call allocate_test ( my_catalog(j)%lines, count(lineFlag), &
+          & 'my_catalog(?)%lines', moduleName )
+        my_catalog(j)%lines = pack ( thisCatalogEntry%lines, lineFlag )
+        call deallocate_test ( lineFlag, 'lineFlag', moduleName )
+
+      else
+
+        ! No lines for this species
+        my_catalog(j) = thisCatalogEntry
+        nullify ( my_catalog(j)%lines ) ! Don't deallocate it by mistake
+        call allocate_test ( my_catalog(j)%lines, 0, 'my_catalog(?)%lines(0)', &
+          & moduleName )
+      end if
+
+    end do         ! Loop over species
+
+  end subroutine Get_Species_Data
+
+end module  Get_Species_Data_M
+@
+
+
+1.1.2.2
+log
+@Compatible with FullForwardModel
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+d12 1
+a12 1
+    & "$Id: Get_Species_Data_m.f90,v 1.1.2.1 2003/02/14 23:27:06 vsnyder Exp $"
+d15 1
+a15 1
+    & "$RCSfile: Get_Species_Data_m.f90,v $"
+d21 1
+a21 1
+    & NoSpecies, No_Mol, Beta_Group, My_Catalog )
+d48 1
+d68 1
+a68 1
+    noSpecies = size (theMolecules)
+d71 4
+a156 1
+      My_Catalog(j) = thisCatalogEntry
+d192 1
+d209 3
+a211 1
+        ! No lines for this specie
+a220 2
+
+! $Log: $
+@
+
+
+1.1.2.3
+log
+@Just to make CVS happy about a merge that didn't do anything
+@
+text
+@d12 1
+a12 1
+    & "$Id: Get_Species_Data_m.f90,v 1.1.2.2 2003/02/18 22:58:37 pwagner Exp $"
+d102 1
+a102 1
+      molecules_temp(1:noSpecies) = theMolecules(1:noSpecies)
+d215 1
+a215 4
+! $Log: Get_Species_Data_m.f90,v $
+! Revision 1.1.2.2  2003/02/18 22:58:37  pwagner
+! Compatible with FullForwardModel
+!
+@
+
+
+1.1.2.4
+log
+@Put polarized flag in my_catalog.  Add Destroy_Species_Data subroutine.
+@
+text
+@d8 1
+a8 1
+  public :: Get_Species_Data, Destroy_Species_Data
+d12 1
+a12 1
+    & "$Id: Get_Species_Data_m.f90,v 1.1.2.3 2003/02/21 21:04:30 vsnyder Exp $"
+a18 1
+  ! -------------------------------------------  Get_Species_Data  -----
+d29 2
+a30 2
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error, &
+      & MLSMSG_Warning
+d57 1
+a57 2
+    integer, dimension(:), pointer :: LINEFLAG ! /= 0 => Use this line
+                                        ! (noLines per species)
+a59 2
+    integer :: NLines                   ! count(lineFlag)
+    integer :: Polarized                ! -1 => One of the selected lines is Zeeman split
+d92 1
+a92 1
+        l = theMolecules(j)
+d150 1
+a150 1
+      l = abs(theMolecules(j))
+d157 1
+a160 1
+            polarized = 1 ! not polarized
+d169 1
+a169 4
+                  if ( doThis ) then
+                    if ( thisLine%polarized(i) ) polarized = -1
+                    exit
+                  end if
+d181 2
+a182 2
+                lineFlag(k) = polarized
+                exit ! loop over signals requested in fwm
+d188 1
+a188 2
+        ! Don't deallocate them by mistake
+        nullify ( my_catalog(j)%lines, my_catalog(j)%polarized )
+d192 1
+a192 2
+        nLines = count(lineFlag /= 0)
+        if ( nLines == 0 .and. all ( my_catalog(j)%continuum == 0.0 ) ) then
+d197 1
+a197 1
+        call allocate_test ( my_catalog(j)%lines, nLines, &
+d199 1
+a199 4
+        call allocate_test ( my_catalog(j)%polarized, nLines, &
+          & 'my_catalog(?)%polarized', moduleName )
+        my_catalog(j)%lines = pack ( thisCatalogEntry%lines, lineFlag /= 0 )
+        my_catalog(j)%polarized = pack ( lineFlag < 0, lineFlag /= 0 )
+a206 2
+        call allocate_test ( my_catalog(j)%polarized, 0, 'my_catalog(?)%polarized(0)', &
+          & moduleName )
+a212 32
+  ! ---------------------------------------  Destroy_Species_Data  -----
+  subroutine Destroy_Species_Data ( My_Catalog )
+
+  ! Destroy the catalog extract prepared by Get_Species_Data
+
+    use Allocate_Deallocate, only: DEALLOCATE_TEST
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Deallocate, MLSMSG_Error
+    use SpectroscopyCatalog_m, only: Catalog_t
+
+    type(catalog_t), pointer :: My_Catalog(:)
+
+    integer :: I
+
+    do i = 1, size(my_catalog)
+      ! Note that we don't deallocate the signals/sidebands stuff for each line
+      ! as these are shallow copies of the main spectroscopy catalog stuff
+      call deallocate_test ( my_catalog(i)%lines, 'my_catalog(?)%lines', &
+        & moduleName )
+      call deallocate_test ( my_catalog(i)%polarized, 'my_catalog(?)%polarized', &
+        & moduleName )
+    end do
+
+    deallocate ( my_catalog, stat=i )
+    if ( i /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+      & MLSMSG_Deallocate // 'My_Catalog' )
+
+  end subroutine Destroy_Species_Data
+
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
+a215 3
+! Revision 1.1.2.3  2003/02/21 21:04:30  vsnyder
+! Just to make CVS happy about a merge that didn't do anything
+!
+@
+
+
+1.1.2.5
+log
+@Fix bugs in calculation of the 'polarized' field
+@
+text
+@d12 1
+a12 1
+    & "$Id: Get_Species_Data_m.f90,v 1.1.2.4 2003/02/27 23:21:47 vsnyder Exp $"
+a143 2
+      ! Don't deallocate them by mistake
+      nullify ( my_catalog(j)%lines, my_catalog(j)%polarized )
+d148 1
+a150 2
+          call allocate_test ( my_catalog(j)%polarized, 0, &
+                            & 'my_catalog(?)%polarized(0)', moduleName )
+d174 2
+a175 4
+                    if ( associated(thisLine%polarized) ) then
+                      if ( thisLine%polarized(i) ) polarized = -1
+                    end if
+                exit ! loop over signals
+a180 3
+                if ( doThis .and. associated(thisLine%polarized) ) then
+                  if ( any(thisLine%polarized) ) polarized = -1
+                end if
+d189 1
+a189 1
+            exit   ! loop over signals requested in fwm
+d193 4
+a196 1
+        end do     ! End loop over lines
+a261 3
+! Revision 1.1.2.4  2003/02/27 23:21:47  vsnyder
+! Put polarized flag in my_catalog.  Add Destroy_Species_Data subroutine.
+!
+@
+
+
+1.1.2.6
+log
+@Don't clobber spectroscopy catalog by way of shallow copy
+@
+text
+@d12 1
+a12 1
+    & "$Id: Get_Species_Data_m.f90,v 1.1.2.5 2003/03/01 03:18:39 vsnyder Exp $"
+d144 2
+a149 1
+          ! my_catalog springs into existence with %lines and %polarized null
+a159 2
+      ! Don't deallocate them by mistake -- my_catalog is a shallow copy
+      nullify ( my_catalog(j)%lines, my_catalog(j)%polarized )
+a266 3
+! Revision 1.1.2.5  2003/03/01 03:18:39  vsnyder
+! Fix bugs in calculation of the 'polarized' field
+!
+@
+
+
+1.1.2.7
+log
+@Initialize some uninitialized variables
+@
+text
+@d12 1
+a12 1
+    & "$Id: Get_Species_Data_m.f90,v 1.1.2.6 2003/03/05 03:27:08 vsnyder Exp $"
+d34 1
+a34 1
+    use SpectroscopyCatalog_m, only: Catalog_t, Line_t, Lines, Catalog, Empty_Cat
+a63 1
+                                        ! +1 => None of the selected lines is Zeeman split
+a147 1
+          my_catalog(j) = empty_cat
+a164 1
+        lineFlag = 0
+a221 1
+        my_catalog(j) = empty_cat
+a267 3
+! Revision 1.1.2.6  2003/03/05 03:27:08  vsnyder
+! Don't clobber spectroscopy catalog by way of shallow copy
+!
+@
+
+
+1.1.2.8
+log
+@Move Beta_Group_T and Dump_Beta_Group from get_beta_path to Get_Species_Data.
+Write Destroy_Beta_Group.
+@
+text
+@a5 2
+  use MLSCommon, only: RP, R8
+
+d8 1
+a8 12
+  public :: Get_Species_Data, Destroy_Beta_Group, Destroy_Species_Data, Dump
+
+! *** Beta group type declaration:
+  type, public :: Beta_Group_T
+    integer :: n_elements
+    integer, pointer  :: cat_index(:)
+    real(rp), pointer :: ratio(:)
+  end type Beta_Group_T
+
+  interface Dump
+    module procedure Dump_Beta_Group
+  end interface
+d12 1
+a12 1
+    & "$Id: Get_Species_Data_m.f90,v 1.1.2.7 2003/03/13 02:03:09 vsnyder Exp $"
+d27 1
+a264 48
+  ! -----------------------------------------  Destroy_Beta_Group  -----
+  subroutine Destroy_Beta_Group ( Beta_Group )
+
+  ! Destroy the catalog extract prepared by Get_Species_Data
+
+    use Allocate_Deallocate, only: DEALLOCATE_TEST
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Deallocate, MLSMSG_Error
+
+    type(beta_group_t), pointer :: Beta_Group(:)
+
+    integer :: I
+
+    do i = 1, size(beta_group)
+      call deallocate_test ( beta_group(i)%cat_index, 'beta_group(i)%cat_index', &
+        & moduleName )
+      call deallocate_test ( beta_group(i)%ratio, 'beta_group(i)%ratio', &
+        & moduleName )
+    end do
+
+    deallocate ( beta_group, stat=i )
+    if ( i /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+      & MLSMSG_Deallocate // 'beta_group' )
+
+  end subroutine Destroy_Beta_Group
+
+  ! --------------------------------------------  Dump_Beta_Group  -----
+  subroutine Dump_Beta_Group ( Beta_Group, Name )
+
+    use Dump_0, only: Dump
+    use Output_m, only: Output
+
+    type(beta_group_t), intent(in) :: Beta_Group(:)
+    character(len=*), intent(in), optional :: Name
+
+    integer :: I
+
+    call output ( 'Beta group' )
+    if ( present(name) ) call output ( ' ' // trim(name) )
+    call output ( ', SIZE = ' )
+    call output ( size(beta_group), advance='yes' )
+    do i = 1, size(beta_group)
+      call output ( 'Item ' )
+      call output ( i, advance='yes' )
+      call dump ( beta_group(i)%cat_index, name='Cat_Index' )
+      call dump ( beta_group(i)%ratio, name='Ratio' )
+    end do
+  end subroutine Dump_Beta_Group
+
+a271 3
+! Revision 1.1.2.7  2003/03/13 02:03:09  vsnyder
+! Initialize some uninitialized variables
+!
+@
+
+
+1.1.2.9
+log
+@Bug fix was being overzelous with setting my_catalog(j)=empty_cat
+@
+text
+@d25 1
+a25 1
+    & "$Id: Get_Species_Data_m.f90,v 1.1.2.8 2003/03/22 04:03:45 vsnyder Exp $"
+d46 1
+a46 1
+    use SpectroscopyCatalog_m, only: Catalog_t, Line_t, Lines, Catalog, Empty_Cat, DUMP
+a48 1
+    use Dump_0, only: Dump
+d237 2
+a238 4
+        ! No lines for this species.  However, it's continuum is still valid 
+        ! so don't set it to empty.
+        ! Won't bother checking that continuum /= 0 as if it was then
+        ! presumably having no continuum and no lines it wouldn't be in the catalog!
+d244 1
+a331 4
+! Revision 1.1.2.8  2003/03/22 04:03:45  vsnyder
+! Move Beta_Group_T and Dump_Beta_Group from get_beta_path to Get_Species_Data.
+! Write Destroy_Beta_Group.
+!
+@
+
+

@@ -1,0 +1,812 @@
+head	1.9;
+access;
+symbols
+	v5-02-NRT-19:1.9
+	v6-00:1.9
+	v5-02-NRT-18:1.9
+	v5-02:1.9
+	v5-01-NRT-17:1.9
+	v5-01-NRT-16:1.9
+	v5-01-NRT-15:1.9
+	v5-01-NRT-14:1.9
+	neuralnetworks-1-0:1.9.0.10
+	cfm-single-freq-0-1:1.9.0.8
+	v5-01:1.9
+	v5-00:1.9
+	v4-23-TA133:1.9.0.6
+	mus-emls-1-70:1.9.0.4
+	rel-1-0-englocks-work:1.9.0.2
+	VUMLS1-00:1.8
+	VPL1-00:1.8
+	V4-22-NRT-08:1.8
+	VAM1-00:1.8
+	V4-21:1.8.0.4
+	V4-13:1.8
+	V4-12:1.8
+	V4-11:1.8
+	V4-10:1.8
+	V3-43:1.8
+	M4-00:1.8
+	V3-41:1.8
+	V3-40-PlusGM57:1.8.0.2
+	V2-24-NRT-04:1.4
+	V3-33:1.8
+	V2-24:1.4
+	V3-31:1.8
+	V3-30-NRT-05:1.8
+	cfm-01-00:1.8
+	V3-30:1.8
+	V3-20:1.8
+	V3-10:1.6
+	V2-23-NRT-02:1.4
+	V2-23:1.4
+	V2-22-NRT-01:1.4
+	V2-22:1.4
+	V2-21:1.4
+	V2-20:1.4
+	V2-11:1.4
+	V2-10:1.4
+	V2-00:1.4
+	V1-51:1.2
+	V1-50:1.2
+	V1-45:1.2
+	V1-44:1.2
+	V1-43:1.2
+	V1-42:1.2
+	V1-41:1.2
+	V1-32:1.2
+	V1-40:1.2
+	V1-31:1.2
+	V1-30:1.1
+	V1-13:1.1
+	V1-12:1.1
+	V1-11:1.1
+	V1-10:1.1
+	newfwm-feb03:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.9
+date	2017.10.31.23.47.07;	author vsnyder;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2009.12.22.01.58.43;	author vsnyder;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2009.12.08.21.44.21;	author vsnyder;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2009.06.20.02.32.44;	author vsnyder;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2009.06.18.20.26.21;	author vsnyder;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2005.08.03.17.53.54;	author vsnyder;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2005.06.22.20.03.56;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2003.09.11.23.09.39;	author livesey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2002.11.23.02.31.15;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.9
+log
+@Make Coefficients and UnifDiscreteFn parameterized types
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!  subroutine InterpolateScalarUsingSetup_r* ( coeffs, oldX, oldY, newX, newY, &
+!    & method, extrapolate, badValue, missingRegions, dyByDx, skipNewY, IntYdX )
+    ! Local variables
+    logical, dimension(:), pointer :: Bad ! Where not to do the work
+    logical :: DoNewY              ! Not skipNewY (or true if absent)
+    character :: ExtrapolateMethod ! Tidy copy of extrapolate parameter
+    real(rk) :: Fill               ! Fill value for dyByDx or intYdX
+    integer :: Ind                 ! Loop counter
+    integer :: LB, UB              ! Bounds for oldSecond
+    integer :: NoOld, NoNew        ! Dimensions
+    real(rk), dimension(:), pointer :: OldSecond ! Second derivative, i.e.,
+                                   ! quadratic coefficient of spline.  Linear
+                                   ! and constant extrapolation cases are
+                                   ! handled by first and last elements being
+                                   ! zero.  Used for the RHS at first.
+    real(rk), dimension(:), pointer :: OldSecondLower ! At lower old X point
+    real(rk), dimension(:), pointer :: OldSecondUpper ! At upper old X point
+    real(rk), dimension(size(newX,1)) :: OldYlower, OldYupper
+    real(rk) :: R1, R2             ! Save first and last oldSecond for spline
+    logical :: UseMissingRegions   ! Copy of missing regions
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id: InterpolateScalarUsingSetup.f9h,v 1.8 2009/12/22 01:58:43 vsnyder Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+
+    ! Executable code
+
+    ! Size the problem, check sanity, set up arrays etc.
+
+    doNewY = .true.
+    if ( present(skipNewY)) doNewY = .not. skipNewY
+
+    if ( .not. (doNewY .or. present(dyByDx) .or. present(intYdX)) ) then
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & "Why bother interpolating if you're not doing anything")
+      return
+    end if
+
+    noOld=size(oldX,1)
+    noNew=size(newX,1)
+
+    extrapolateMethod="A"
+    if ( present(extrapolate)) extrapolateMethod=Capitalize(extrapolate(1:1))
+
+    ! Special case where only one input point
+    if ( noOld == 1 ) then
+      ! If extrapolating allowed or clamped, out values same as in
+      if ( extrapolateMethod=="A" .or. extrapolateMethod=="C" ) then
+        if ( doNewY ) newY = oldY(1)
+        ! Note these next two aren't totally gracefull with respect to 
+        ! the missingRegions flag.
+        if ( present(dyByDx) ) dyByDx = 0.0_rk
+      else
+        ! Else extrapolation forbidden
+        if ( doNewY ) then
+          where ( newX == oldX(1) )
+            newY = oldY(1)
+          elsewhere
+            newY = badValue
+          endwhere
+        end if
+        if ( present(dyByDx) ) then
+          where ( newX == oldX(1) )
+            dyByDx = 0.0_rk
+          elsewhere
+            dyByDx = badValue
+          end where
+        end if
+      end if
+      return
+    end if
+
+    useMissingRegions = .false.
+    if ( present(missingRegions)) useMissingRegions = missingRegions
+
+    ! Now we're ready to begin the real work.
+
+    ! Do linear interpolation where the data aren't bad
+    oldYlower = oldY(coeffs%lowerInds)
+    oldYupper = oldY(coeffs%lowerInds+1)
+
+    if ( extrapolateMethod=="B" .or. useMissingRegions ) then
+      if ( Capitalize(method(1:1))=="S" ) & ! Spline
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Cannot use "B" extrapolation or missing regions with spline')
+      nullify ( bad )
+      call allocate_test ( bad, noNew, "Bad", moduleName )
+      if ( extrapolateMethod=="B" ) then
+        bad = coeffs%badValue
+      else
+        bad = .false.
+      end if
+      if ( useMissingRegions ) bad = bad .or. &
+        & coeffs%badValue(coeffs%lowerInds) .or. &
+        & coeffs%badValue(coeffs%lowerInds+1)
+      if ( doNewY ) then
+        where ( bad )
+          newY = badValue
+        elsewhere
+          newY = coeffs%a*oldYlower + coeffs%b*oldYupper
+        endwhere
+      end if
+      if ( present(dyByDx) ) then
+        where ( bad )
+          dyByDx = badValue
+        elsewhere
+          dyByDx = (oldYupper-oldYlower) / coeffs%gap
+        endwhere
+      end if
+      if ( present(intYdX) ) then
+        where ( bad )
+          intYdX = badValue
+        elsewhere
+          intYdX = coeffs%ai*oldYlower+coeffs%bi*oldYupper
+        endwhere
+      end if
+      call deallocate_test ( bad, "Bad", moduleName )
+    else
+      if ( doNewY ) newY = coeffs%a*oldYlower + coeffs%b*oldYupper
+      if ( present(dyByDx) ) dyByDx = (oldYupper-oldYlower)/coeffs%gap
+      if ( present(intYdX) ) intYdX = coeffs%ai*oldYlower+coeffs%bi*oldYupper
+    end if
+
+    if ( Capitalize(method(1:1))=="S" ) then ! Spline
+
+      ! Do special stuff for the case of spline, allocate arrays, find 2nd
+      ! derivatives etc.
+
+      nullify ( oldSecond, oldSecondLower, oldSecondUpper )
+
+      lb = 2
+      ub = noOld-1
+      if ( allocated(coeffs%row) ) lb = 1 ! periodic continuity
+
+      call Allocate_Test ( oldSecondlower, noNew, "oldSecondlower", ModuleName )
+      call Allocate_Test ( oldSecondupper, noNew, "oldSecondupper", ModuleName )
+      call Allocate_Test ( oldSecond, noOld, "oldSecond", ModuleName )
+
+      ! Here we have to solve a linear equation A oldSecond = RHS.
+      ! A is symmetric.  It is tridiagonal except in the periodic continuity
+      ! case, when it has extra elements in the corners
+      ! A has been LU factored in InterpolateArraySetup.
+      ! Coeffs%p is the inverse of the diagonal of L.
+      ! Coeffs%o is the superdiagonal of U.
+      ! Coeffs%dx is the subdiagonal of L.  The diagonal of U is unity.
+      ! Coeffs%row is the bottom row of L in the periodic continuity case.
+      ! Coeffs%col is the right column of U in the periodic continuity case.
+      ! In the nonperiodic cases, this is a straight copy of Nathaniel's IDL
+      ! code, devectorized to avoid the need for array temporary values.
+      ! OldSecond is computed as it is so as to avoid dividing 0/0 if there
+      ! are identical abscissae having identical corresponding ordinates.  If
+      ! abscissae are identical but ordinates are not, x/0 occurs, and you
+      ! deserve the trap or NaN.
+
+      ! Start with \rho_i = 6.0 * ( y_{i+1} - y_i ) / h_i in OldSecond
+      do ind = 1, ub
+        oldSecond(ind) = oldY(ind+1) - oldY(ind)
+        if ( oldSecond(ind) /= 0.0_rk ) &
+          & oldSecond(ind) = 6.0 * oldSecond(ind) / coeffs%dx(ind)
+      end do
+      r1 = oldSecond(1)  ! in case of periodic continuity
+      r2 = oldSecond(ub) ! in case of periodic continuity
+
+      ! Now compute (most of) the RHS in oldSecond
+      oldSecond(2:ub) = oldSecond(2:ub) - oldSecond(1:ub-1)
+
+      if ( .not. allocated(coeffs%row) ) then ! not periodic continuity
+        ! RHS is already complete
+        call solve_factored_symm_tri ( coeffs%dx(lb:ub-1), coeffs%p, coeffs%o, &
+          oldSecond(lb:ub) )
+        oldSecond(lb-1) = 0.0_rk ! Linear extrapolation
+        oldSecond(ub+1) = 0.0_rk ! Linear extrapolation
+      else ! Periodic continuity
+        oldSecond(lb) = r1 - r2 ! Finish the RHS
+        call solve_factored_symm_tri ( coeffs%dx(lb:ub-1), coeffs%p, coeffs%row, &
+          coeffs%o, coeffs%col, oldSecond )
+        oldSecond(noOld) = oldSecond(1)
+      end if
+
+      oldSecondLower = oldSecond(coeffs%lowerInds)
+      oldSecondUpper = oldSecond(coeffs%lowerInds+1)
+
+      call Deallocate_Test ( oldSecond, "oldSecond", ModuleName )
+
+    ! Now do the spline calculation
+      if ( doNewY ) &
+        & newY = newY + coeffs%c*oldSecondLower + coeffs%d*oldSecondUpper
+      if ( present(dyByDx) ) &
+        & dyByDx = dyByDx + (coeffs%Gap/6.0_rk) * &
+        &   ( coeffs%f*oldSecondUpper - coeffs%e*oldSecondLower )
+      if ( present(intYdX) ) &
+        & intYdX = intYdX + coeffs%ci * oldSecondLower + &
+        &                   coeffs%di * oldSecondUpper
+
+      call Deallocate_Test ( oldSecondlower, "oldSecondlower", ModuleName )
+      call Deallocate_Test ( oldSecondupper, "oldSecondupper", ModuleName )
+
+    end if ! spline
+
+    ! Now make sure the dyByDX's are correct for extrapolated regions
+    if ( ( present (dyByDx) .or. present(intYdX) ) &
+      &  .and. scan(extrapolateMethod(1:1),"BC") > 0) then
+      select case ( extrapolateMethod(1:1) )
+      case ( "C" )
+        Fill = 0.0_rk
+      case ( "B" )
+        Fill = badValue
+      end select
+      if ( present (dyByDx) ) then
+        where ( ( newX >= oldX(noOld) ) .or. ( newX < oldX(1) ) ) &
+            & dyByDx = Fill
+      end if
+      if ( present (intYdX) ) then
+        where ( ( newX >= oldX(noOld) ) .or. ( newX < oldX(1) ) ) &
+            & intYdX = Fill
+      end if
+    end if
+
+! end subroutine InterpolateScalarUsingSetup_r*
+
+! $Log: InterpolateScalarUsingSetup.f9h,v $
+! Revision 1.8  2009/12/22 01:58:43  vsnyder
+! Compute RHS correctly -- stay within array bounds
+!
+! Revision 1.7  2009/12/08 21:44:21  vsnyder
+! Provide splines with periodic boundary conditions, use Symm_Tri
+!
+! Revision 1.6  2009/06/20 02:32:44  vsnyder
+! Precompute more stuff, handle identical abscissae, in spline case
+!
+! Revision 1.5  2009/06/18 20:26:21  vsnyder
+! Allow equal abscissae if corresponding ordinates are equal
+!
+! Revision 1.4  2005/08/03 17:53:54  vsnyder
+! Add antiderivatives
+!
+! Revision 1.3  2005/06/22 20:03:56  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 1.2  2003/09/11 23:09:39  livesey
+! Added handling of skipNewY argument
+!
+! Revision 1.1  2002/11/23 02:31:15  vsnyder
+! Initial commit
+!
+@
+
+
+1.8
+log
+@Compute RHS correctly -- stay within array bounds
+@
+text
+@d34 1
+a34 1
+       "$Id: InterpolateScalarUsingSetup.f9h,v 1.7 2009/12/08 21:44:21 vsnyder Exp $"
+d145 1
+a145 1
+      if ( associated(coeffs%row) ) lb = 1 ! periodic continuity
+d179 1
+a179 1
+      if ( .not. associated(coeffs%row) ) then ! not periodic continuity
+d234 3
+@
+
+
+1.7
+log
+@Provide splines with periodic boundary conditions, use Symm_Tri
+@
+text
+@d34 1
+a34 1
+       "$Id: InterpolateScalarUsingSetup.f9h,v 1.6 2009/06/20 02:32:44 vsnyder Exp $"
+d177 1
+a177 1
+      oldSecond(lb:ub) = oldSecond(lb:ub) - oldSecond(lb-1:ub-1)
+d234 3
+@
+
+
+1.6
+log
+@Precompute more stuff, handle identical abscissae, in spline case
+@
+text
+@d15 3
+d19 13
+a31 13
+    character :: extrapolateMethod ! Tidy copy of extrapolate parameter
+    integer :: ind                 ! Loop counter
+    real(rk), dimension(:), pointer :: oldSecond
+    real(rk), dimension(:), pointer :: oldSecondLower
+    real(rk), dimension(:), pointer :: oldSecondUpper
+!     real(rk), dimension(size(newX,1)) :: oldYlower
+!     real(rk), dimension(size(newX,1)) :: oldYupper
+    real(rk), dimension(size(newX,1)) :: oldYlower, oldYupper
+    integer :: noOld, noNew        ! Dimensions
+    real(rk) :: R1, R2             ! Ratios of oldY/oldX
+    real(rk), dimension(:), pointer :: temp ! For 2nd der. guess
+    logical :: useMissingRegions   ! Copy of missing regions
+    logical :: doNewY              ! Not skipNewY (or true if absent)
+d34 1
+a34 1
+       "$Id: InterpolateScalarUsingSetup.f9h,v 1.5 2009/06/18 20:26:21 vsnyder Exp $"
+a39 3
+    nullify ( oldSecond, oldSecondLower, oldSecondUpper, temp )
+!     nullify ( oldYlower, oldYupper )
+
+a87 3
+!     call Allocate_Test ( oldYlower, noNew, "oldYlower", ModuleName )
+!     call Allocate_Test ( oldYupper, noNew, "oldYupper", ModuleName )
+
+d90 1
+a90 22
+    if ( extrapolateMethod=="B" ) then
+      ! Extrapolate mode is "B"ad; deal with that
+      if ( doNewY ) then
+        where ( coeffs%badValue )
+          newY = badValue
+        elsewhere
+          newY = 0.0_rk
+        end where
+      end if
+      if ( present(dyByDx) ) then
+        where ( coeffs%badValue )
+          dyByDx = badValue
+        elsewhere
+          dyByDx = 0.0_rk
+        end where
+      end if
+    else
+      ! Clear the result array(s)
+      if ( doNewY ) newY = 0.0_rk
+      if ( present(dyByDx) ) dyByDx = 0.0_rk
+    end if
+
+d94 14
+a107 4
+    ! Now do the linear interpolation calculation.
+    ! If we were to spread coeffs%badValue, coeffs%a, coeffs%b and coeffs%gap,
+    ! the DO's could be WHERE's.
+    if ( useMissingRegions ) then ! worry about the missing regions flag
+d109 1
+a109 1
+        where ( coeffs%badValue(coeffs%lowerInds) .or. coeffs%badValue(coeffs%lowerInds+1) )
+d112 2
+a113 2
+          newY = newY + coeffs%a*oldYlower + coeffs%b*oldYupper
+        end where
+d116 1
+a116 1
+        where ( coeffs%badValue(coeffs%lowerInds) .or. coeffs%badValue(coeffs%lowerInds+1) )
+d120 1
+a120 1
+        end where
+d123 1
+a123 1
+        where ( coeffs%badValue(coeffs%lowerInds) .or. coeffs%badValue(coeffs%lowerInds+1) )
+d126 2
+a127 2
+          intYdX = (coeffs%bi*oldYupper-coeffs%ai*oldYlower) / coeffs%gap
+        end where
+d129 3
+a131 2
+    else  ! Don't worry about missing regions flag
+      if ( doNewY ) newY = newY + coeffs%a*oldYlower + coeffs%b*oldYupper
+d133 1
+a133 2
+      if ( present(intYdX) ) intYdX = (coeffs%bi*oldYupper-coeffs%ai*oldYlower) / &
+        &                             coeffs%gap
+d137 9
+a145 4
+      if ( useMissingRegions ) call MLSMessage &
+        & ( MLSMSG_Error, ModuleName, "Cannot use missing regions with spline")
+    ! Do special stuff for the case of spline, allocate arrays, find 2nd
+    ! derivatives etc.
+a149 1
+      call Allocate_Test ( temp, noOld-1, "temp", ModuleName )
+d151 21
+a171 16
+      ! Here we have to solve a tridiagonal equation
+      ! This is a straight copy of my (Nathaniel's) IDL code, devectorized
+      ! to avoid the need for array temporary values.  The quantities
+      ! r1 and r2 are computed as they are so as to avoid dividing 0/0
+      ! if there are identical abscissae having identical corresponding
+      ! ordinates.  If abscissae are identical but ordinates are not, x/0
+      ! occurs, and you deserve the trap or NaN.
+      temp(1) = 0.0 ! Just to start the iteration, not otherwise used
+      r2 = oldY(2) - oldY(1)
+      if ( r2 /= 0.0 ) r2 = r2 / coeffs%dx(2)
+      do ind = 2, noOld-1
+        r1 = r2
+        r2 = oldY(ind+1) - oldY(ind)
+        if ( r2 /= 0.0 ) r2 = r2 / coeffs%dx(ind+1)
+        temp(ind) = (6.0_rk*(r2 - r1) - coeffs%dx(ind)*temp(ind-1)) * &
+                   & coeffs%p(ind)
+d173 5
+d179 12
+a190 10
+      ! Now do the back substitution
+      oldSecond(noOld) = 0.0
+      do ind = noOld-1, 2, -1
+        oldSecond(ind) = coeffs%o(ind)*oldSecond(ind+1) + temp(ind)
+        ! coeffs%o could be eliminated at the cost of one multiply currently
+        ! done in InterpolateArraySetup:
+      ! oldSecond(ind) = -coeffs%dx(ind+1)*coeffs%p(ind)*oldSecond(ind+1) + &
+      !                & temp(ind)
+      end do
+      oldSecond(1) = 0.0
+a194 1
+      call Deallocate_test ( temp, "Temp", ModuleName ) 
+d199 1
+a199 1
+        & newY = newY + coeffs%C*oldSecondLower + coeffs%D*oldSecondUpper
+a230 4
+    ! Tidy up
+!     call Deallocate_Test ( oldYlower, "oldYlower", ModuleName )
+!     call Deallocate_Test ( oldYupper, "oldYupper", ModuleName )
+
+d234 3
+@
+
+
+1.5
+log
+@Allow equal abscissae if corresponding ordinates are equal
+@
+text
+@a11 2
+! $Id: InterpolateScalarUsingSetup.f9h,v 1.4 2005/08/03 17:53:54 vsnyder Exp $
+
+d21 3
+a23 3
+    real(rk), dimension(:), pointer :: oldYlower
+    real(rk), dimension(:), pointer :: oldYupper
+!   real(rk), dimension(size(newX,1)) :: oldYlower, oldYupper
+a24 1
+    real(rk) :: p                  ! For second derivative guesser
+a25 1
+    logical :: spline              ! Flag
+d29 5
+d38 1
+a38 1
+    nullify ( oldYlower, oldYupper )
+d42 9
+a56 3
+    doNewY = .true.
+    if ( present(skipNewY)) doNewY = .not. skipNewY
+
+a84 2
+    spline = (Capitalize(method(1:1))=="S")
+
+d88 2
+a89 48
+    if ( useMissingRegions .and. spline ) call MLSMessage &
+      & ( MLSMSG_Error, ModuleName, "Cannot use missing regions with spline")
+
+    call Allocate_Test ( oldYlower, noNew, "oldYlower", ModuleName )
+    call Allocate_Test ( oldYupper, noNew, "oldYupper", ModuleName )
+
+    ! Do special stuff for the case of spline, allocate arrays, find 2nd
+    ! derivatives etc.
+
+    if ( spline ) then
+      call Allocate_Test ( oldSecondlower, noNew, "oldSecondlower", ModuleName )
+      call Allocate_Test ( oldSecondupper, noNew, "oldSecondupper", ModuleName )
+      call Allocate_Test ( oldSecond, noOld, "oldSecond", ModuleName )
+      call Allocate_Test ( temp, noOld, "temp", ModuleName )
+
+      ! Here we have to solve a tridiagonal equation
+      ! This is a straight copy of my (Nathaniel's) IDL code, devectorized
+      ! to avoid the need for array temporary values.  The quantities
+      ! r1 and r2 are computed as they are so as to avoid dividing 0/0
+      ! if there are identical abscissae having identical corresponding
+      ! ordinates.  If abscissae are identical but ordinates are not, x/0
+      ! occurs.
+      oldSecond(1) = 0.0_rk
+      temp(1) = 0.0_rk
+      r2 = oldY(2) - oldY(1)
+      if ( r2 /= 0.0 ) r2 = r2 / ( oldX(2) - oldX(1) )
+      do ind = 2, noOld-1
+        p = 1.0_rk / (coeffs%sig(ind)*oldSecond(ind-1)+2.0_rk)
+        oldSecond(ind) = (coeffs%sig(ind)-1.0_rk) * p  
+        r1 = r2
+        r2 = oldY(ind+1) - oldY(ind)
+        if ( r2 /= 0.0 ) r2 = r2 / (oldX(ind+1)-oldX(ind))
+        temp(ind) = (6.0_rk*(r2 - r1)/(oldX(ind+1)-oldX(ind-1)) - &
+          & coeffs%sig(ind)*temp(ind-1)) * p
+      end do
+      oldSecond(noOld) = 0.0_rk
+
+      ! Now do the back substitution
+      do ind = noOld-1, 1, -1
+        oldSecond(ind) = oldSecond(ind)*oldSecond(ind+1)+temp(ind)
+      end do
+
+      oldSecondLower = oldSecond(coeffs%lowerInds)
+      oldSecondUpper = oldSecond(coeffs%upperInds)
+
+      call Deallocate_test ( temp, "Temp", ModuleName ) 
+      call Deallocate_Test ( oldSecond, "oldSecond", ModuleName )
+    end if
+d116 1
+a116 1
+    oldYupper = oldY(coeffs%upperInds)
+d123 1
+a123 1
+        where ( coeffs%badValue(coeffs%lowerInds) .or. coeffs%badValue(coeffs%upperInds) )
+d130 1
+a130 1
+        where ( coeffs%badValue(coeffs%lowerInds) .or. coeffs%badValue(coeffs%upperInds) )
+d137 1
+a137 1
+        where ( coeffs%badValue(coeffs%lowerInds) .or. coeffs%badValue(coeffs%upperInds) )
+d150 46
+a196 1
+    if ( spline ) then
+d205 5
+a209 1
+    end if
+d231 2
+a232 7
+    call Deallocate_Test ( oldYlower, "oldYlower", ModuleName )
+    call Deallocate_Test ( oldYupper, "oldYupper", ModuleName )
+
+    if ( spline ) then
+      call Deallocate_Test ( oldSecondlower, "oldSecondlower", ModuleName )
+      call Deallocate_Test ( oldSecondupper, "oldSecondupper", ModuleName )
+    end if
+d237 3
+@
+
+
+1.4
+log
+@Add antiderivatives
+@
+text
+@d12 1
+a12 1
+! $Id: InterpolateScalarUsingSetup.f9h,v 1.3 2005/06/22 20:03:56 pwagner Exp $
+d28 1
+d100 5
+a104 1
+      ! to avoid the need for array temporary values.
+d107 2
+d111 5
+a115 4
+        oldSecond(ind) = (coeffs%sig(ind)-1.0_rk) * p
+        temp(ind) = (oldY(ind+1)-oldY(ind))/(oldX(ind+1)-oldX(ind)) - &
+          & (oldY(ind)-oldY(ind-1))/(oldX(ind)-oldX(ind-1))
+        temp(ind) = (6.0_rk*temp(ind)/(oldX(ind+1)-oldX(ind-1)) - &
+d234 3
+@
+
+
+1.3
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d12 1
+a12 1
+! $Id: InterpolateScalarUsingSetup.f9h,v 1.2 2003/09/11 23:09:39 livesey Exp $
+d15 1
+a15 1
+!    & method, extrapolate, badValue, missingRegions, dyByDx )
+d17 1
+a17 1
+    real(rk) :: dyByDxFill         ! Fill value for dyByDx
+d169 7
+d179 2
+d187 1
+a187 1
+      if ( present(dyByDx)) &
+d190 3
+d196 2
+a197 1
+    if ( present ( dyByDx ) .and. scan(extrapolateMethod(1:1),"BC") > 0) then
+d200 1
+a200 1
+        dyByDxFill = 0.0_rk
+d202 1
+a202 1
+        dyByDxFill = badValue
+d204 8
+a211 2
+      where ( ( newX >= oldX(noOld) ) .or. ( newX < oldX(1) ) ) &
+          & dyByDx = dyByDXFill
+d226 3
+@
+
+
+1.2
+log
+@Added handling of skipNewY argument
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d12 1
+a12 1
+! $Id: InterpolateScalarUsingSetup.f9h,v 1.1 2002/11/23 02:31:15 vsnyder Exp $
+d207 3
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d4 1
+a4 1
+! $Id: InterpolateUsingSetup.f9h,v 1.1 2002/11/22 23:58:49 vsnyder Exp $
+d23 1
+d38 3
+d45 1
+a45 1
+        newY = oldY(1)
+d51 7
+a57 5
+        where ( newX == oldX(1) )
+          newY = oldY(1)
+        elsewhere
+          newY = badValue
+        endwhere
+d120 2
+a121 1
+      where ( coeffs%badValue )
+d123 1
+a123 1
+      elsewhere
+d125 9
+a133 2
+      end where
+      if ( present(dyByDx) ) dyByDx = newY
+d136 1
+a136 1
+      newY = 0.0_rk
+d147 2
+a148 2
+      where ( coeffs%badValue(coeffs%lowerInds) .or. &
+           &  coeffs%badValue(coeffs%upperInds) )
+d150 1
+a150 1
+      elsewhere
+d152 2
+a153 1
+      end where
+d155 2
+a156 3
+        where ( coeffs%badValue(coeffs%lowerInds) .or. &
+            &  coeffs%badValue(coeffs%upperInds) )
+            dyByDx = badValue
+d158 1
+a158 1
+            dyByDx = (oldYupper-oldYlower) / coeffs%gap
+d162 1
+a162 1
+      newY = newY + coeffs%a*oldYlower + coeffs%b*oldYupper
+d168 2
+a169 2
+
+      newY = newY + coeffs%C*oldSecondLower + coeffs%D*oldSecondUpper
+d172 1
+a172 1
+          &  ( coeffs%f*oldSecondUpper - coeffs%e*oldSecondLower )
+d198 4
+a201 1
+! $Log: InterpolateUsingSetup.f9h,v $
+@
+

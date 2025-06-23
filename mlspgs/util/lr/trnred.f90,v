@@ -1,0 +1,407 @@
+head	1.3;
+access;
+symbols
+	v5-02-NRT-19:1.3
+	v6-00:1.3
+	v5-02-NRT-18:1.3
+	v5-02:1.3
+	v5-01-NRT-17:1.3
+	v5-01-NRT-16:1.3
+	v5-01-NRT-15:1.3
+	v5-01-NRT-14:1.3
+	neuralnetworks-1-0:1.3.0.4
+	cfm-single-freq-0-1:1.3.0.2
+	v5-01:1.3
+	v5-00:1.3
+	v4-23-TA133:1.2.0.8
+	mus-emls-1-70:1.2.0.6
+	rel-1-0-englocks-work:1.2.0.4
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.2
+	V4-21:1.2.0.2
+	V4-13:1.2
+	V4-12:1.2
+	V4-11:1.2
+	V4-10:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.3
+date	2019.07.31.20.11.03;	author vsnyder;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2014.01.14.00.11.42;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2013.10.24.22.41.14;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@Make Items a dummy argument instead of using the SCRTCH array in Complt.
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Transitions_And_Reductions
+
+  implicit NONE
+  private
+  public :: Trnred
+
+  ! Red_t is the type of object used to keep track of reductions
+  type :: Red_t
+    integer :: Prod   ! Production number
+    integer :: Set    ! Context set index
+  end type Red_t
+
+  ! Red(state) keeps track of reductions for "state"
+  type(red_t), allocatable, save, public :: Red(:)
+  integer, parameter :: Red_Init = 1000
+  integer, save :: Red_Size = 0 
+
+  ! Tran(state) keeps track of transitions for "state".  The values are
+  ! other state numbers.
+  integer, allocatable, save, public :: Tran(:)
+  integer, parameter :: Tran_Init = 1000
+  integer, save :: Tran_Size = 0 
+
+  integer, public :: NXTRED = 1, NXTTRN = 1
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: trnred.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  subroutine Trnred ( Ibasis, Items )
+
+    use Basis_m, only: Addbas, Basis, Enque, Item_t, Newbas
+    use Tables, only: Prdind => Prod_Ind, Prodcn => Productions
+    use Merge_Sets, only: Merge
+    use Toggles, only: Gen, Levels
+    use Trace, only: Trace_Begin, Trace_End
+
+    implicit NONE
+
+  ! Attach lists of transitions and reductions to the state in Items.
+
+  ! Ibasis  is the point in the BASIS array corresponding to the state in
+  !         Items.
+
+    integer, intent(in) :: Ibasis
+    type(item_t), intent(in) :: Items(:)
+
+  ! *****     External References     ********************************
+
+  ! ADDBAS  adds an element to the BASIS array.
+  ! ENDBAS  cleans up after adding a new element to the BASIS array.
+  ! ENQUE   adds a basis to the queue for processing by ANALYZ.
+  ! NEWBAS  gets ready to add new elements to the BASIS array.
+
+  ! *****     Local Variables     ************************************
+
+  ! CHANGE  "MERGE made a change."
+  ! I       is a loop induction variable and subscript.
+  ! IPATH   indicates whether a path is found to a new configuration.
+  ! IRED    is the pointer to the next place a reduction may be stored in
+  !         RED.
+  ! ITRAN   is the pointer to the next place a transition may be stored in
+  !         TRAN.
+  ! JMAX    is the largest position in Items used by the state.
+  ! LHS     is the left side of a production.
+  ! NB      is the position in BASIS of a new state added by MERGE.
+  ! NBASIS  is the position in BASIS of a newly constructed basis, to be
+  !         merged into or added onto the existing set of configurations
+  !         by MERGE.
+  ! Temp_Red  is used to allocate a new Red array
+  ! Temp_Tran is used to allocater a new Tran array
+
+    logical :: Change
+    integer I, Ipath, Ired, Itran, Jmax, LHS, NB, Nbasis
+    type(red_t), allocatable :: Temp_Red(:)
+    integer, allocatable :: Temp_Tran(:)
+
+  ! *****     Procedures     *****************************************
+
+  ! Calculate how much space remains in TRAN.
+  ! If space was previously allocated for the transitions from Ibasis
+  ! then reuse that space.  The amount of space required will never
+  ! change since the transitions depend only on the completed basis.
+  ! The completed basis is never changed, but its contexts are.
+
+    if ( levels(gen) > 1 ) call trace_begin ( 'TRNRED' )
+
+    jmax = size(items)
+    itran = basis(ibasis)%tran   ! Start of transitions from this basis
+
+    i = 1
+    if (items(1)%dot < prdind(items(1)%prod+1) - prdind(items(1)%prod)) then
+      ipath = 1
+      do while (ipath /= 0)
+        lhs = prodcn(prdind(items(i)%prod)+items(i)%dot)
+        call newbas ( nbasis )
+        do while ( lhs == prodcn(prdind(items(i)%prod)+items(i)%dot) )
+          call addbas ( nbasis, items(i)%prod, items(i)%dot+1, items(i)%set )
+          i = i + 1
+          ipath = 0
+          if ( i > jmax ) go to 10
+          if ( items(i)%dot >= &
+               prdind(items(i)%prod+1) - prdind(items(i)%prod) ) go to 10
+        end do
+        ipath = 1
+  10    continue
+        call merge ( nbasis, nb, change )
+        if ( change ) call enque (nb)
+        ! Add a transition to NB to the basis at IBASIS.
+        if ( itran > tran_size ) then
+          if ( .not. allocated(tran) ) then
+            allocate ( tran(tran_init) )
+          else
+            allocate ( temp_tran(2*tran_size) )
+            temp_tran(:tran_size) = tran
+            call move_alloc ( temp_tran, tran )
+          end if
+          tran_size = size(tran)
+        end if
+        tran(itran) = nb
+        itran = itran + 1
+      end do
+    end if
+    nxttrn = max(nxttrn, itran)
+    basis(ibasis+1)%tran = itran
+
+    ! Calculate how much space remains in RED.
+    ! If space was previously allocated for the reductions from IBASIS
+    ! then reuse that space.  The amount of space required will never
+    ! change since the reductions depend only on the completed basis.
+    ! The completed basis is never changed, but its contexts are.
+
+    ired = basis(ibasis)%red   ! Start of reductions for this basis
+
+    ! Construct or reconstruct reductions.
+
+    do while (i <= jmax)
+    ! Add the reduction of production Items(I)%prod for context
+    ! Items(I)%set to the state at Ibasis.
+      if ( ired >= red_size ) then
+        if ( .not. allocated(red) ) then
+          allocate ( red(red_init) )
+        else
+          allocate ( temp_red(2*red_size) )
+          temp_red(:red_size) = red
+          call move_alloc ( temp_red, red )
+        end if
+        red_size = size(red)
+      end if
+      red(ired)%prod = items(i)%prod
+      red(ired)%set = items(i)%set
+      ired = ired + 1
+      i = i + 1
+    end do
+    nxtred = max(nxtred, ired)
+    basis(ibasis+1)%red = ired
+
+    if ( levels(gen) > 1 ) call trace_end ( 'TRNRED' )
+
+  end subroutine Trnred
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: trnred.f90,v 1.2 2014/01/14 00:11:42 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Transitions_And_Reductions
+
+! $Log: trnred.f90,v $
+! Revision 1.2  2014/01/14 00:11:42  vsnyder
+! Revised LR completely
+!
+! Revision 1.1  2013/10/24 22:41:14  vsnyder
+! Initial commit
+!
+@
+
+
+1.2
+log
+@Revised LR completely
+@
+text
+@d16 1
+a16 1
+  public :: TRNRED
+d45 1
+a45 1
+  subroutine TRNRED ( IBASIS, JMAX )
+d47 2
+a48 3
+    use Basis_m, only: ADDBAS, BASIS, ENQUE, NEWBAS
+    use Complete, only: Scrtch
+    use Tables, only: PRDIND => Prod_Ind, PRODCN => Productions
+d55 1
+a55 1
+  ! Attach lists of transitions and reductions to the state in SCRTCH.
+d57 2
+a58 3
+  ! IBASIS  is the point in the BASIS array corresponding to the state in
+  !         SCRTCH.
+  ! JMAX    is the largest position in SCRTCH used by the state.
+d60 2
+a61 1
+    integer, intent(in) :: IBASIS, JMAX
+d79 1
+d88 2
+a89 2
+    logical :: CHANGE
+    integer I, IPATH, IRED, ITRAN, LHS, NB, NBASIS
+d96 1
+a96 1
+  ! If space was previously allocated for the transitions from IBASIS
+d103 1
+d107 1
+a107 1
+    if (scrtch(1)%dot < prdind(scrtch(1)%prod+1) - prdind(scrtch(1)%prod)) then
+d110 1
+a110 1
+        lhs = prodcn(prdind(scrtch(i)%prod)+scrtch(i)%dot)
+d112 2
+a113 2
+        do while ( lhs == prodcn(prdind(scrtch(i)%prod)+scrtch(i)%dot) )
+          call addbas ( nbasis, scrtch(i)%prod, scrtch(i)%dot+1, scrtch(i)%set )
+d117 2
+a118 2
+          if ( scrtch(i)%dot >= &
+               prdind(scrtch(i)%prod+1) - prdind(scrtch(i)%prod) ) go to 10
+d153 2
+a154 2
+    ! Add the reduction of production SCRTCH(I)%prod for context
+    ! SCRTCH(I)%set to the state at IBASIS.
+d165 2
+a166 2
+      red(ired)%prod = scrtch(i)%prod
+      red(ired)%set = scrtch(i)%set
+d175 1
+a175 1
+  end subroutine TRNRED
+d180 1
+a180 1
+       "$Id: trnred.f90,v 1.1 2013/10/24 22:41:14 vsnyder Exp $"
+d190 3
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d18 19
+d39 1
+a39 1
+       "$RCSfile: parser.f90,v $"
+d45 1
+a45 1
+  subroutine TRNRED (IBASIS, JMAX)
+d47 3
+a49 2
+    use ANACOM, only: NXTRED, NXTTRN
+    use Error_Handler, only: Error
+d51 3
+a53 3
+    use SCRCOM
+    use S3, only: PRDIND, PRODCN
+    use S5, only: ADDBAS, BASIS, ENQUE, NEWBAS, RED, TRAN
+a68 1
+  ! ERROR   prints error messages.
+d73 1
+a74 1
+  ! ICH     indicates whether MERGE made a change.
+a80 2
+  ! MAXR    indicates the amount of space remaining in RED.
+  ! MAXT    indicates the amount of space remaining in TRAN.
+d85 2
+d88 4
+a91 1
+    integer I, ICH, IPATH, IRED, ITRAN, LHS, MAXR, MAXT, NB, NBASIS
+d101 3
+a103 2
+    maxt = basis(ibasis+8)
+    itran = basis(ibasis+3)
+d106 1
+a106 1
+    if (scrtch(2) < prdind(scrtch(1)+1) - prdind(scrtch(1))) then
+d109 5
+a113 5
+        lhs = prodcn(prdind(scrtch(i))+scrtch(i+1))
+        call newbas (nbasis)
+        do while (lhs == prodcn(prdind(scrtch(i))+scrtch(i+1)))
+          call addbas (nbasis,scrtch(i),scrtch(i+1)+1,scrtch(i+2))
+          i = i + 3
+d115 3
+a117 2
+          if (i > jmax) go to 10
+          if (scrtch(i+1) >= prdind(scrtch(i)+1) - prdind(scrtch(i))) go to 10
+d121 2
+a122 2
+        call merge (nbasis, nb, ich)
+        if (ich /= 0) call enque (nb)
+d124 10
+a133 1
+        if (itran >= maxt) call error ('Transition area (TRAN) overflow',2)
+d139 1
+a139 1
+    basis(ibasis+8) = itran
+d147 1
+a147 2
+    maxr = basis(ibasis+9)
+    ired = basis(ibasis+4)
+d152 16
+a167 7
+    ! Add the reduction of production SCRTCH(I) for context
+    ! SCRTCH(I+2) to the state at IBASIS.
+      if (ired >= maxr) call error ('Reduction area (RED) overflow',2)
+      red(ired) = scrtch(i)
+      red(ired+1) = scrtch(i+2)
+      ired = ired + 2
+      i = i + 3
+d170 3
+a172 1
+    basis(ibasis+9) = ired
+d179 1
+a179 1
+       "$Id: parser.f90,v 2.29 2013/10/02 01:35:46 vsnyder Exp $"
+d188 4
+a191 1
+! $Log: $
+@
+

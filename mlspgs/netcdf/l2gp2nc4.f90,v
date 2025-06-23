@@ -1,0 +1,832 @@
+head	1.6;
+access;
+symbols
+	v5-02-NRT-19:1.6
+	v6-00:1.6
+	v5-02-NRT-18:1.6
+	v5-01-NRT-17:1.3
+	v5-01-NRT-16:1.3
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.4
+	cfm-single-freq-0-1:1.2.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.6
+date	2023.10.12.22.38.49;	author pwagner;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2023.09.28.21.01.14;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2022.12.22.22.59.42;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2022.01.27.16.42.41;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2020.04.08.21.54.38;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2020.03.19.22.36.09;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.6
+log
+@Corrected 2 errors caught by NAG; housekeeping
+@
+text
+@! Copyright 2020, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=================================
+program l2gp2nc4 ! Rewrite L2GPData files as NetCDF4
+!=================================
+
+   use Dump_1, only: Dump
+   use HDF, only: Dfacc_Read, Dfacc_Create    
+   use HDF5, only: H5F_ACC_RDONLY_F, &
+     & H5fclose_F, H5fopen_F, H5gopen_F, H5gclose_F, H5fis_HDF5_F
+   use HighOutput, only: OutputNamedValue
+   use Intrinsic, only: L_HDF, L_Swath, L_NetCDF4
+   use L2GPData, only: L2GPData_T, L2GPnamelen, Maxswathnamesbufsize, &
+     & Dump, ReadL2GPData, DestroyL2GPcontents
+   use Machine, only: Hp, Getarg
+   use MLSCommon, only: MLSFile_T, Split_Path_Name, Split_Name_Extension
+   use MLSFiles, only: HDFversion_5, InitializeMLSFile, MLS_Inqswath, &
+     & MLS_CloseFile, MLS_OpenFile
+   use MLSHDF5, only: IsHDF5DSPresent, LoadFromHDF5DS, MLS_H5open, MLS_H5close
+   use MLSHDFeos, only: MLS_Isglatt, He5_Ehrdglatt
+   use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, &
+     & MLSMessage
+   use MLSNetCDF4, only: MLS_SwWrattr
+   use MLSStringLists, only: GetStringElement, NumStringElements, &
+     & ReplaceSubstring
+   use NCL2GP, only: WriteNCGlobalAttr, WriteNCL2GPData
+   use NetCDF, only: NF90_Char, NF90_Open, NF90_Def_Dim, NF90_Def_Grp, &
+     & NF90_Def_Var, NF90_Put_Var, NF90_StrError, NF90_Write
+   use Output_M, only: Output, &
+     & ResumeOutput, SwitchOutput
+   use Printit_M, only: Set_Config
+   implicit none
+
+!---------------------------- RCS Ident Info ------------------------------
+  character (len=*), parameter :: ModuleName= &
+       "$RCSfile: l2gp2nc4.f90,v $"
+  character (len=*), parameter :: IdParm = &
+       "$Id: l2gp2nc4.f90,v 1.5 2023/09/28 21:01:14 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+!---------------------------------------------------------------------------
+
+! Brief description of program
+! This program rewrites L2GPData files as netcdf4
+!
+! A test of the NCL2GPData module
+! To build it, 
+
+! From the root, mlspgs, level, just type
+!   make l2gp2nc4
+
+! Testing has taken place in
+! /users/pwagner/mlspgs/tests/lib/nctest
+! 
+
+  integer, parameter :: MetaDataSize = 65535 
+
+  type Options_T
+     logical ::             debug         = .false.
+     logical ::             verbose       = .false.
+     logical ::             attributesToo = .false.
+     logical ::             metaDataToo   = .false.
+     character(len=4)::     ncSuffix      = 'nc4'
+  end type Options_T
+
+  type ( Options_T ) :: options
+  character(len=255) :: filename          ! filename
+  integer            :: n_filenames
+  integer     ::  error ! Counting indices & Error flags
+  logical     :: is_hdf5
+  ! Executable
+  call set_config ( useToolkit = .false., logFileUnit = -1 )
+  call switchOutput( 'stdout' )
+  call mls_h5open(error)
+  n_filenames = 0
+  do      ! Loop over filenames
+     call get_filename(filename, n_filenames, options)
+     if ( filename == ' ' ) exit
+     n_filenames = n_filenames + 1
+     call h5fis_hdf5_f(trim(filename), is_hdf5, error)
+     if ( .not. is_hdf5 ) then
+       print *, 'Sorry--not recognized as hdf5 file: ', trim(filename)
+     endif
+     if ( options%verbose ) then
+       print *, 'Rewriting swaths in     ', trim(filename)
+       print *, 'attributes copied, too? ', options%attributesToo
+       print *, 'metadata copied, too?   ', options%metaDataToo
+     endif
+     call OutputNamedValue( 'HDFEOS5 L2GP File',  trim(filename), &
+       & options='--Headline' )
+     call rewrite_one_file( trim(filename), options )
+     call resumeOutput
+  enddo
+  call mls_h5close(error)
+contains
+!------------------------- get_filename ---------------------
+    subroutine get_filename( filename, n_filenames, options )
+    ! Added for command-line processing
+     character(len=255), intent(out) :: filename          ! filename
+     integer, intent(in) ::             n_filenames
+     type ( Options_T ) :: options
+     integer ::                         error = 1
+     integer, save ::                   i = 1
+  ! Get inputfile name, process command-line args
+  ! (which always start with -)
+    do
+      call getarg ( i+hp, filename )
+      ! print *, i, ' th Arg: ', trim(filename)
+      error = 0
+      if ( filename(1:1) /= '-' ) exit
+      if ( filename(1:3) == '-h ' ) then
+        call print_help
+      elseif ( filename(1:3) == '-d ' ) then
+        options%debug   = .true.
+        options%verbose = .true.
+      elseif ( filename(1:3) == '-v ' ) then
+        options%verbose = .true.
+      elseif ( filename(1:3) == '-a ' ) then
+        options%attributesToo = .true.
+      elseif ( filename(1:3) == '-m ' ) then
+        options%metadataToo = .true.
+      elseif ( filename(1:4) == '-nc ' ) then
+        options%ncSuffix = 'nc'
+      else if ( filename(1:3) == '-f ' ) then
+        call getarg ( i+1+hp, filename )
+        error = 0
+        i = i + 1
+        exit
+      else
+        call print_help
+      end if
+      i = i + 1
+    end do
+    if ( error /= 0 ) then
+      call print_help
+    endif
+    i = i + 1
+    if (trim(filename) == ' ' .and. n_filenames == 0) then
+
+    ! Last chance to enter filename
+      print *,  "Enter the name of the HDF5 file. " // &
+       &  "Datasets in the file will be listed shortly."
+      read(*,'(a)') filename
+    endif
+    
+  end subroutine get_filename
+!------------------------- print_help ---------------------
+  subroutine print_help
+  ! Print brief but helpful message
+      write (*,*) &
+      & ' l2gpnc4: Converts each hdfeos file to NetCDF4 format'
+      write (*,*) &
+      & ' replacing the .he5 suffix with .nc4'
+      write (*,*) &
+      & ' Usage: l2gp2nc4 [options] [hdfeos_filenames]'
+      write (*,*) &
+      & ' If no filenames supplied, you will be prompted to supply one'
+      write (*,*) ' Options:'
+      write (*,*) ' -f filename => use filename'
+      write (*,*) ' -h          => print brief help'
+      write (*,*) ' -a          => copy attributes, too'
+      write (*,*) ' -m          => copy metadata, too'
+      write (*,*) ' -v          => verbose'
+      write (*,*) ' -d          => debug'
+      write (*,*) ' -nc         => use .nc instead of .nc4 as NetCDF4 suffix'
+
+      stop
+  end subroutine print_help
+  
+  function IsAttributeInFile( file, attribute ) result(sooDesu)
+    use MLSHDF5, only: IsHDF5itempresent
+    use HDF5, only: H5fopen_F, H5f_Acc_Rdonly_F
+    ! Dummy args
+    character(len=*), intent(in) :: file
+    character(len=*), intent(in) :: attribute
+    logical :: sooDesu
+    ! Local variables
+    integer :: fileID
+    integer :: grpID
+    integer :: status
+    character(len=len(attribute)) :: path, name
+    ! TRUE if attribute in file
+    call h5fopen_f ( trim(file), H5F_ACC_RDONLY_F, fileID, status )
+    if ( status /= 0 ) call defeat('Opening file')
+    call split_path_name ( attribute, path, name )
+    call h5gopen_f( fileID, trim(path), grpID, status )
+    if ( status /= 0 ) call defeat('Opening group')
+    sooDesu = IsHDF5ItemPresent ( grpID, name, '-a' )
+    call h5gclose_f(grpID, status)
+    if ( status /= 0 ) call defeat('Closing group')
+    call h5fclose_f(fileID, status)
+    if ( status /= 0 ) call defeat('Closing file')
+  end function IsAttributeInFile
+
+  function IsDSInFile( file, DS ) result(sooDesu)
+    use MLSHDF5, only: IsHDF5itempresent
+    use HDF5, only: H5fopen_F, H5f_Acc_Rdonly_F
+    ! Dummy args
+    character(len=*), intent(in) :: file
+    character(len=*), intent(in) :: DS
+    logical :: sooDesu
+    ! Local variables
+    integer :: fileID
+    integer :: status
+    integer :: grpID
+    character(len=len(DS)) :: path, name
+    ! TRUE if DS in file
+    call h5fopen_f ( trim(file), H5F_ACC_RDONLY_F, fileID, status )
+    call split_path_name ( DS, path, name )
+    call h5gopen_f( fileID, trim(path), grpID, status )
+    sooDesu = IsHDF5ItemPresent ( grpID, name, '-d' )
+    call h5gclose_f(grpID, status)
+    call h5fclose_f(fileID, status)
+  end function IsDSInFile
+  
+  subroutine Defeat(msg)
+    character(len=*), intent(in) :: msg
+    call resumeOutput
+    call output('Serious error: ' // msg, advance='yes')
+    call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'stopping' )
+  end subroutine Defeat
+  
+   subroutine rewrite_one_file ( filename, options )
+     use MLSStrings, only:  Asciify
+     use PCFHdr, only:  GlobalAttributes_T, HE5_ReadGlobalAttr, &
+    & DumpGlobalAttributes, GlobalAttributes
+    type (GlobalAttributes_T)         :: gAttributes
+    ! Dummy args
+    character(len=*), intent(in)         :: filename ! filename
+    type ( Options_T )                   :: options
+    ! Local variables
+    logical, parameter                   :: countEmpty = .true.
+    integer :: File1
+    integer                              :: i
+    integer                              :: listsize
+    type (L2GPData_T)                    :: l2gp
+    type(MLSFile_T)                      :: MLSFile
+    type(MLSFile_T)                      :: NC4File
+    character(len=255)                   :: ncfilename ! filename
+    character(len=3)                     :: extension
+    character(len=255)                   :: purefilename ! w/o extension
+    integer                              :: noSwaths
+    integer                              :: status
+    character (len=L2GPNameLen)          :: swath
+    character (len=MAXSWATHNAMESBUFSIZE) :: SwathList
+    character(len=40)                    :: ProcessLevel       
+    double precision                     :: TAI93At0zOfGranule 
+    integer                              :: DayofYear          
+    character (len=L2GPNameLen)          :: HostName
+    character (len=MAXSWATHNAMESBUFSIZE) :: MiscNotes
+    character (len=L2GPNameLen)          :: DOI
+    ! Get swath list
+    noSwaths = mls_InqSwath ( filename, SwathList, listSize, &
+           & hdfVersion=HDFVERSION_5 )
+    if ( options%verbose ) then
+      call output('swaths in ' // trim(filename), advance='yes')
+      call dump(trim(swathList))
+      ! return
+    endif
+    ! Executable code
+    noSwaths = NumStringElements(trim(swathList), countEmpty)
+    if ( noSwaths < 1 ) then
+       call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            & 'No swaths to dump--unable to count swaths in ' // trim(swathList) )
+    endif
+    status = InitializeMLSFile ( MLSFile, type=l_swath, access=DFACC_READ, &
+     & name=filename, HDFVersion=HDFVERSION_5 )
+    ! Create nc4 file:
+    ! Assume the hdfeos file name is some_name.he5
+    ! We want                        some_name.nc4
+    call Split_Name_Extension( filename, purefilename, extension )
+    ncfilename = trim(purefilename) // '.' // options%ncSuffix
+    ! A trick!
+    ! Reversing the filenames means simply transform
+    ! 5eh.whatever -> 4cn.whatever
+    ! which is easy with substrings
+    ! We'll use thee index of the '.' to separate the file name 
+    ! from its extension. Some NetCDF4 files use ".nc4", others ".nc".
+!     ncfilename = Reverse(trim(filename))
+!     i = index( ncfilename, '.' )
+!     if ( i < 1 ) then
+!       print *, 'Sorry, coild not find file name extension in: ' // trim(filename)
+!       stop
+!     endif
+!     ncfilename = trim(options%ncSuffix) // ncfilename(i:)
+!     ncfilename = Reverse(trim(ncfilename))
+    call outputNamedValue( 'NetCDF4 file name', ncfilename )
+    status = InitializeMLSFile ( NC4File, type=l_netcdf4, access=DFACC_CREATE, &
+     & name=ncfilename )
+    if ( options%verbose ) call Dump ( NC4File )
+    ! Loop over swaths in file 1
+    do i = 1, noSwaths
+      call GetStringElement (trim(swathList), swath, i, countEmpty )
+      ! HDFEOS INFORMATION isn't a swath
+      if ( trim(swath) == 'HDFEOS INFORMATION' ) cycle
+    
+      ! Allocate and fill l2gp
+      ! print *, 'Reading swath from file: ', trim(swath)
+      call ReadL2GPData ( trim(filename), trim(swath), l2gp, &
+           & hdfVersion=HDFVERSION_5 )
+      ! Rewrite the swath- and file-level attributes
+      call output ( 'About to write the l2gp ' // &
+        & trim(swath) // '  to the NetCDF4 file', advance='yes' )
+      call WriteNCL2GPData( l2gp, NC4File, trim(swath) )
+      ! Should we default to writing attributes and metadata?
+      ! Maybe not metadata unless we figure out how to change
+      ! the suffix ".he5" in LocalGranuleID to ".nc4"
+      ! We're trying. We'll see how successful we are.
+      if ( options%attributesToo .and. i == 1 ) then
+        call MLS_OpenFile( MLSFile )
+        call MLS_OpenFile( NC4File )
+        file1 = MLSFile%FileID%f_id
+        call output ( '(Global Attributes) ', advance='yes' )
+        call he5_readglobalattr( file1, gAttributes, &
+         &  ProcessLevel, DayofYear, TAI93At0zOfGranule, &
+         & HostName, MiscNotes, DOI, returnStatus=status )
+        GlobalAttributes = gAttributes
+        if ( options%verbose ) then
+          call DumpGlobalAttributes
+          call OutputNamedValue ( 'DOI', trim(asciify( DOI, 'snip' ) ) )
+          call OutputNamedValue ( 'HostName', trim(asciify( HostName, 'snip' ) ) )
+          call OutputNamedValue ( 'MiscNotes', trim(asciify( MiscNotes, 'snip' ) ) )
+          call OutputNamedValue ( 'TAI93', TAI93At0zOfGranule )
+        endif
+        GlobalAttributes%HostName           = asciify( HostName, 'snip' )
+        GlobalAttributes%ProductionLoc      = asciify( HostName, 'snip' )
+        GlobalAttributes%MiscNotes          = asciify( MiscNotes, 'snip' )
+        GlobalAttributes%DOI                = asciify( DOI, 'snip' )     
+        GlobalAttributes%TAI93At0zOfGranule = TAI93At0zOfGranule
+        if ( status /= 0 ) then
+          call output ('No global attributes found in file', advance='yes')
+        endif
+        if ( options%verbose ) then
+          call dump( file1, l2gp )
+          print *, 'Attempting to copy attributes, too'
+          print *, 'ProductionLocation: ', trim(GlobalAttributes%ProductionLoc)
+        endif
+        call WriteNCGlobalAttr ( NC4File%FileID%f_id, &
+          & DOI=.true., MiscNotes=.true. )
+        call copyAprioriFileNamesAttr ( MLSFile%FileID%f_id, NC4File%FileID%f_id )
+        call MLS_CloseFile ( MLSFile )
+        call MLS_CloseFile ( NC4File )
+      endif
+      if ( options%metaDataToo .and. i == 1 ) then
+        ! For this operation we'll treat the hdfeos file like an hdf
+        MLSFile%type = l_hdf 
+        call output ( '(Meta data) ', advance='yes' )
+        call copyMetaData ( MLSFile, nc4File )
+      endif
+      call DestroyL2GPContents ( l2gp )
+    enddo
+   end subroutine rewrite_one_file
+
+   subroutine  copyMetaData ( hdf, nc4 )
+     ! Copy the metadata datasets
+     ! coremetadata.0
+     ! xmlmetadata
+     ! They will be put into a new group 
+     ! "HDFEOS INFORMATION"
+     ! Args
+     type(MLSFile_T), intent(inout)       :: hdf
+     type(MLSFile_T), intent(inout)       :: nc4
+     ! Internal variables
+     integer                              :: coredimid
+     integer                              :: corevarid
+     integer                              :: hdffid
+     integer                              :: ncfid
+     integer                              :: hdfgrpid
+     integer                              :: ncgrpid
+     integer                              :: status
+     character(len=1024)                  :: path
+     character(len=MetaDataSize)          :: strvalue
+     character(len=MetaDataSize)          :: tmpstr
+     integer, dimension(1)                :: dimids ! For scalar variables
+     integer                              :: xmldimid
+     integer                              :: xmlvarid
+     character(len=128)                   :: hdfname
+     character(len=128)                   :: nc4name
+     ! Executable
+     if ( options%debug ) print *, 'Attempting to copyMetaData'
+     call h5fopen_f ( trim(hdf%name), H5F_ACC_RDONLY_F, hdffID, status )
+     if ( .not. &
+       & IsHDF5DSPresent ( HDF, '/HDFEOS INFORMATION/coremetadata.0' ) &
+       & ) then
+       call h5fclose_f ( hdffID, status )
+       print *, 'cormetadata.0 not found in ', trim(HDF%name)
+       return 
+     endif
+     call split_path_name( trim(hdf%name), path, name=hdfname)
+     call split_path_name( trim(nc4%name), path, name=nc4name)
+     
+     call h5gopen_f ( hdffID, '/HDFEOS INFORMATION', hdfgrpID, status )
+     if ( status /= 0 ) call terror ( 'Opening hdf5 group', status )
+
+     status = nf90_open ( nc4%NAME, NF90_Write, ncfID )
+     if ( status /= 0 ) call terror ( 'Opening netcdf file', status )
+     ! Create nc4 top group
+     status = nf90_def_grp( ncfId, 'HDFEOS INFORMATION', ncgrpID )
+     if ( status /= 0 ) call terror ( 'Creating hdf5 group HDFEOS INFORMATION', status )
+     
+     ! Write the 1st metadata
+     call LoadFromHDF5DS ( hdfgrpID, 'coremetadata.0', strvalue )
+     ! Can we replace hdfname with nc4name? Let's try.
+     tmpstr = strvalue
+     call ReplaceSubString ( tmpstr, strvalue, trim(hdfname), trim(nc4name) )
+     if ( options%debug ) call output( strvalue(1:80), advance='yes' )
+     ! Why do we need dims? The metadata are scalars. Blame netcdf
+     ! for using c?
+     status = nf90_def_dim( ncgrpid, "coresize", len_trim(strvalue), coredimid )
+     dimids = coredimid
+     status = nf90_def_var( ncgrpID, "coremetadata.0", nf90_char, dimids, corevarid )
+     if ( status /= 0 ) call terror ( 'Creating var coremetadata.0', status )
+
+     status = nf90_put_var( ncgrpID, corevarid, trim(strvalue) )
+     if ( status /= 0 ) call terror ( 'Writing var coremetadata.0', status )
+
+     ! Write the 2nd metadata
+     call LoadFromHDF5DS ( hdfgrpID, 'xmlmetadata', strvalue )
+     ! Can we replace hdfname with nc4name? Let's try.
+     tmpstr = strvalue
+     call ReplaceSubString ( tmpstr, strvalue, trim(hdfname), trim(nc4name) )
+     if ( options%debug ) call output( strvalue(1:80), advance='yes' )
+     status = nf90_def_dim( ncgrpid, "xmlsize", len_trim(strvalue), xmldimid )
+     dimids = xmldimid
+     status = nf90_def_var( ncgrpID, "xmlmetadata", nf90_char, dimids, xmlvarid )
+     if ( status /= 0 ) call terror ( 'Creating var xmlmetadata', status )
+
+     status = nf90_put_var( ncgrpID, xmlvarid, trim(strvalue) )
+     if ( status /= 0 ) call terror ( 'Writing var xmlmetadata.0', status )
+
+   end subroutine  copyMetaData
+   subroutine terror ( message, status )
+     character(len=*), intent(in) :: message
+     integer, intent(in)          :: status
+     print *, 'status: ', status
+     call output( trim(nf90_strerror(status)), advance='yes' )
+     print *, message
+     stop
+   end subroutine terror
+
+   subroutine  copyAprioriFileNamesAttr ( hdfeosid, nc4id )
+     ! Copy the global attributes saying what
+     ! kind of meteorology apriori files were used, if any
+     ! Args
+     integer, intent(in)                  :: hdfeosid
+     integer, intent(in)                  :: nc4id
+     ! Internal variables
+     integer                              :: status
+     character(len=Maxswathnamesbufsize)  :: strvalue
+     ! Executable
+     if ( options%debug ) print *, 'Attempting to copyAprioriNames'
+     if ( .not. MLS_Isglatt ( hdfeosID, 'A Priori l2gp' ) ) then
+       print *, 'A Priori l2gp attribute not found in ', hdfeosID
+       return 
+     endif
+     status = HE5_EHRDGLATT( hdfeosID, &
+      & 'A Priori l2gp', strvalue )
+     status = MLS_Swwrattr ( nc4id, &
+     & 'A Priori l2gp', nf90_char, 1, strvalue )
+
+     status = HE5_EHRDGLATT( hdfeosID, &
+      & 'A Priori l2aux', strvalue )
+     status = MLS_Swwrattr ( nc4id, &
+     & 'A Priori l2aux', nf90_char, 1, strvalue )
+
+     status = HE5_EHRDGLATT( hdfeosID, &
+      & 'A Priori ncep', strvalue )
+     status = MLS_Swwrattr ( nc4id, &
+     & 'A Priori ncep', nf90_char, 1, strvalue )
+
+     status = HE5_EHRDGLATT( hdfeosID, &
+      & 'A Priori gmao', strvalue )
+     status = MLS_Swwrattr ( nc4id, &
+     & 'A Priori gmao', nf90_char, 1, strvalue )
+
+     status = HE5_EHRDGLATT( hdfeosID, &
+      & 'A Priori geos5', strvalue )
+     status = MLS_Swwrattr ( nc4id, &
+     & 'A Priori geos5', nf90_char, 1, strvalue )
+
+     status = HE5_EHRDGLATT( hdfeosID, &
+      & 'geos5 type', strvalue )
+     status = MLS_Swwrattr ( nc4id, &
+     & 'geos5 type', nf90_char, 1, strvalue )
+
+     status = HE5_EHRDGLATT( hdfeosID, &
+      & 'PCF1', strvalue )
+     status = MLS_Swwrattr ( nc4id, &
+      & 'PCF1', nf90_char, 1, strvalue )
+
+     ! Can it be that the hdfeos5 library treats strvalue as inout?
+     ! strvalue = ' '
+     status = HE5_EHRDGLATT( hdfeosID, &
+      & 'PCF2', strvalue )
+     status = MLS_Swwrattr ( nc4id, &
+      & 'PCF2', nf90_char, 1, strvalue )
+
+   end subroutine  copyAprioriFileNamesAttr
+
+!==================
+end program l2gp2nc4
+!==================
+
+! $Log: l2gp2nc4.f90,v $
+! Revision 1.5  2023/09/28 21:01:14  pwagner
+! Added -nc option to name converted file something.nc
+!
+! Revision 1.4  2022/12/22 22:59:42  pwagner
+! Fixed bugs, including LocalGranuleId
+!
+! Revision 1.3  2022/01/27 16:42:41  pwagner
+! Corrected build instructions
+!
+! Revision 1.2  2020/04/08 21:54:38  pwagner
+! Now copies metadata datasets, too
+!
+! Revision 1.1  2020/03/19 22:36:09  pwagner
+! First commit
+!
+@
+
+
+1.5
+log
+@Added -nc option to name converted file something.nc
+@
+text
+@a16 1
+   use Dump_Options, only: SDFormatDefault, DumpDumpOptions
+d22 1
+a22 1
+   use L2GPData, only: L2GPData_T, L2GPnamelen, Maxswathnamesbufsize, Rgp, &
+d25 1
+a25 1
+   use MLSCommon, only: MLSFile_T, Split_path_name
+d27 1
+a27 1
+     & MLS_CloseFile, MLS_OpenFile, Split_Path_Name
+a34 1
+   use MLSStrings, only: Lowercase, Reverse
+d38 2
+a39 3
+   use Optional_M, only: Default
+   use Output_M, only: Blanks, Newline, Output, &
+     & ResumeOutput, SuspendOutput, SwitchOutput
+d47 1
+a47 1
+       "$Id: l2gp2nc4.f90,v 1.4 2022/12/22 22:59:42 pwagner Exp $"
+a78 18
+  logical     :: is_present
+  integer, save                   :: numGood = 0
+  integer, save                   :: numGoodPrec = 0
+  integer, save                   :: numNotUseable = 0
+  integer, save                   :: numOddStatus = 0
+  integer, save                   :: numPostProcStatus = 0
+  real, dimension(3), save        :: numTest = 0.
+  integer, parameter              :: PostProcBitIndex = 4
+  integer, parameter              :: MAXNUMBITSUSED = 10 !9
+  ! The bit number starts at 0: bitNumber[1] = 0
+  integer, dimension(MAXNUMBITSUSED), parameter :: bitNumber = &
+    & (/ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 /)
+  integer, dimension(MAXNUMBITSUSED, 2), save :: bitCounts = 0
+  character(len=*), parameter     :: bitNames = &
+    & '  dontuse,   bewary,     info,postprocd,' // &
+    & '    hicld,    locld,   nogmao,abandoned,   toofew,    crash'
+  !   01234567890123456789012345678901234567890123456789012345678901234567890123456789
+  real(rgp), dimension(:), pointer :: values => null()
+a111 1
+     character(len=255) :: argstr
+a245 1
+    character (len=MAXSWATHNAMESBUFSIZE) :: matches
+d249 2
+d280 2
+d288 8
+a295 8
+    ncfilename = Reverse(trim(filename))
+    i = index( ncfilename, '.' )
+    if ( i < 1 ) then
+      print *, 'Sorry, coild not find file name extension in: ' // trim(filename)
+      stop
+    endif
+    ncfilename = trim(options%ncSuffix) // ncfilename(i:)
+    ncfilename = Reverse(trim(ncfilename))
+d370 2
+a371 2
+     type(MLSFile_T), intent(in)          :: hdf
+     type(MLSFile_T), intent(in)          :: nc4
+d514 3
+@
+
+
+1.4
+log
+@Fixed bugs, including LocalGranuleId
+@
+text
+@d50 1
+a50 1
+       "$Id: l2gp2nc4.f90,v 1.3 2022/01/27 16:42:41 pwagner Exp $"
+d74 1
+d152 2
+d181 5
+a185 3
+      & 'l2gpnc4: Converts each hdfeos file to NetCDF4 format' &
+      & // 'replacing the .he5 suffix with .nc4' &
+      & // 'Usage: l2gp2nc4 [options] [hdfeos_filenames]'
+d195 1
+d301 6
+d308 6
+a313 1
+    ncfilename = '4cn' // ncfilename(4:)
+d533 3
+@
+
+
+1.3
+log
+@Corrected build instructions
+@
+text
+@d26 1
+a26 1
+   use MLSCommon, only: MLSFile_T
+d34 2
+a35 1
+   use MLSStringLists, only: GetStringElement, NumStringElements
+d50 1
+a50 1
+       "$Id: l2gp2nc4.f90,v 1.2 2020/04/08 21:54:38 pwagner Exp $"
+d63 2
+a64 15
+! An older method requires you:
+! cp it to tests/lib
+! cd tests/lib
+! cp ../../netcdf/NCL2GP.f90 ../../netcdf/MLSNetCDF4.f90 ./
+! make update
+! make NEEDS_ITM=yes NETCDF=yes
+!
+! An older and even kludgier method required
+!
+! cp Makefile-IFC.Linux.ifc17 IFC.Linux.ifc17 
+! cp ../../netcdf/NCL2GP.f90 ../../netcdf/MLSNetCDF4.f90 ./
+! make NEEDS_ITM=yes
+!
+! To run the resulting executable
+! IFC.Linux.ifc17/test -v -a -m nctest/*.he5 
+a66 3
+  ! This is just the maximum num of chunks you wish
+  ! to dump individually in case you don't want to dump them all
+  ! It's not the actual maximum number of chunks.
+d70 1
+a70 1
+     logical ::             debug         = .true.
+d178 3
+a180 1
+      & 'Usage: l2gp2nc4 [options] [filenames]'
+a185 1
+      write (*,*) ' -ls         => dump only swath names'
+d187 1
+d189 1
+a189 4
+      write (*,*) ' (details level)'
+      write (*,*) ' -0          => dump only scalars, 1-d array'
+      write (*,*) ' -1          => dump only scalars'
+      write (*,*) ' -2          => dump only swath names (same as -ls)'
+d301 1
+a301 1
+     call Dump ( NC4File )
+d305 3
+d316 4
+d329 7
+d344 5
+a348 3
+        call dump( file1, l2gp )
+        print *, 'Attempting to copy attributes, too'
+        print *, 'ProductionLocation: ', trim(GlobalAttributes%ProductionLoc)
+d382 1
+d384 1
+d388 2
+d391 1
+a391 1
+     print *, 'Attempting to copyMetaData'
+d400 2
+a401 1
+
+d414 4
+a417 1
+     call output( strvalue(1:80), advance='yes' )
+d430 4
+a433 1
+     call output( strvalue(1:80), advance='yes' )
+d462 1
+a462 1
+     print *, 'Attempting to copyAprioriFileNamesAttr'
+d502 2
+d516 3
+@
+
+
+1.2
+log
+@Now copies metadata datasets, too
+@
+text
+@d49 1
+a49 1
+       "$Id: l2gp2nc4.f90,v 1.1 2020/03/19 22:36:09 pwagner Exp $"
+d54 1
+a54 1
+! This program rewritess L2GPData files as netcdf4
+d58 5
+d69 1
+a69 1
+! An older and even kludgier metod required
+d503 3
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d19 2
+a20 1
+   use HDF5, only: H5fclose_F, H5gopen_F, H5gclose_F, H5fis_HDF5_F
+d22 1
+a22 1
+   use Intrinsic, only: L_Swath, L_NetCDF4
+d29 1
+a29 1
+   use MLSHDF5, only: MLS_H5open, MLS_H5close
+d37 2
+a38 1
+   use NetCDF, only: NF90_Char
+a42 1
+   
+d49 1
+a49 1
+       "$Id: l2gp2nc4.f90,v 1.27 2019/08/08 16:47:23 pwagner Exp $"
+d60 1
+d62 4
+d69 3
+a71 1
+! IFC.Linux.ifc17/test -v -a nctest/*.he5 
+d77 1
+a77 1
+  integer, parameter :: MAXNCHUNKS = 50 
+d80 2
+a81 2
+     logical ::             debug = .true.
+     logical ::             verbose = .false.
+d83 1
+d123 3
+a125 2
+       print *, 'Rewriting swaths in ', trim(filename)
+       print *, 'attributes copied, too ', options%attributesToo
+d152 3
+d159 2
+d350 6
+d360 76
+d446 5
+a450 1
+     if ( .not. MLS_Isglatt ( hdfeosID, 'A Priori l2gp' ) ) return 
+d498 3
+@
+

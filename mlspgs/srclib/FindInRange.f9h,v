@@ -1,0 +1,191 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.14
+	cfm-single-freq-0-1:1.2.0.12
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.10
+	mus-emls-1-70:1.2.0.8
+	rel-1-0-englocks-work:1.2.0.6
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.2
+	V4-21:1.2.0.4
+	V4-13:1.2
+	V4-12:1.2
+	V4-11:1.2
+	V4-10:1.2
+	V3-43:1.2
+	M4-00:1.2
+	V3-41:1.2
+	V3-40-PlusGM57:1.2.0.2
+	V3-33:1.2
+	V3-31:1.2
+	V3-30-NRT-05:1.2
+	cfm-01-00:1.2
+	V3-30:1.2
+	V3-20:1.2
+	V3-10:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2010.02.04.23.15.49;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2008.09.03.20.08.46;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Remove declarations for unreferenced names
+@
+text
+@! Copyright 2008, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id: FindInRange.f9h,v 1.1 2008/09/03 20:08:46 pwagner Exp $
+
+    ! subroutine FindInRange_r4 ( list, vrange, which, how_many, options )
+    ! Return all indices at which
+    ! values of list are within vrange, inclusive
+    ! If none, return (/ 0, .., 0 /)
+    ! Special interpretation: inclusive means
+    ! if vrange(1) == vrange(2), any values of list also == vrange
+    ! are within that range
+    ! Unlike Hunt, list need not be monotonic
+    ! options may include any of the following characters
+    !    character            meaning
+    !    ---------            -------
+    !       a                 ignore sign
+    !       r                 reverse sense (i.e. find outside range)
+    !       c                 modulo 360 degress
+    ! Note: reversing sense reverses special interpretation, too
+    ! so if vrange(1) == vrange(2), will count only values of list /= vrange
+    ! I hope that's clear
+    ! (as mud)
+    ! Dummy args
+    ! real(rk), dimension(:)               :: list
+    ! real(rk), dimension(2)               :: vrange
+    character(len=*), optional, intent(in) :: options
+    integer, dimension(:), intent(out) ::     which
+    integer, optional, intent(out) ::         how_many
+    real(rk) :: arg
+    ! Local variables
+    logical :: absval
+    logical :: cyclic
+    logical :: isInCycle
+    logical :: isInRange
+    integer :: N
+    character(len=8) :: myOptions
+    integer :: i, nt, n1, n2
+    integer, parameter :: Period = 360
+    logical :: reverse
+    ! Executable
+    myOptions = ' '
+    if ( present(options) ) myOptions = options
+    reverse = index(myOptions, 'r') > 0
+    absval = ( index(myOptions, 'a') > 0 )
+    cyclic = ( index(myOptions, 'c') > 0 )
+    N = size(list)
+    which = 0
+    if ( present(how_many) ) how_many=0
+    ! Special cases
+    if ( N == 1 ) then
+      arg = list(1)
+      isInRange = ( arg-vrange(1) ) * ( vrange(2)-arg ) >= 0._rk
+      if ( absval ) isInRange = isInRange .or. &
+        & ( -arg-vrange(1) ) * ( vrange(2)+arg ) >= 0._rk
+      if ( cyclic ) then
+        ! Let y1 = vrange(1) and y2 - vrange(2)
+        ! Then let n1 = (y1 - arg)/Period and n2 = (y2 - arg)/Period
+        ! where n1, n2 are integers
+        ! Is n2 > n1?
+        n1 = (vrange(1) - arg)/Period
+        n2 = (vrange(2) - arg)/Period
+        if ( n1 < n2 .or. isInRange ) which = 1
+        if ( reverse ) which = 1 - which
+      elseif (  .not. reverse .and.  isInRange ) then
+        which = 1
+      elseif (  reverse .and. .not. isInRange ) then
+        which = 1
+      else
+        which = 0
+      endif
+      if ( which(1) > 0 .and. present(how_many) ) how_many = 1
+      return
+    endif
+    nt = 0
+    do i=1, N
+      arg = list(i)
+      isInRange = ( arg-vrange(1) ) * ( vrange(2)-arg ) >= 0._rk
+      if ( absval ) isInRange = isInRange .or. &
+        & ( -arg-vrange(1) ) * ( vrange(2)+arg ) >= 0._rk
+      if ( cyclic ) then
+        ! (See above explanation)
+        n1 = (vrange(1) - arg)/Period
+        n2 = (vrange(2) - arg)/Period
+        isInCycle = ( isInRange .or. n1 < n2 )
+        if ( ( isInCycle .and. .not. reverse ) .or. &
+          & ( .not. isInCycle .and. reverse ) ) then
+          nt = min( size(which), nt + 1 )
+          which(nt) = i
+        endif
+      elseif (  .not. reverse .and. isInRange ) then
+        nt = min( size(which), nt + 1 )
+        which(nt) = i
+      elseif (  reverse .and. .not. isInRange ) then
+        nt = min( size(which), nt + 1 )
+        which(nt) = i
+      endif
+    enddo
+    if ( present(how_many) ) how_many = nt
+! $Log: FindInRange.f9h,v $
+! Revision 1.1  2008/09/03 20:08:46  pwagner
+! First commit
+!
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d12 1
+a12 1
+! $Id: FindInRange.f9h,v 1.4 2008/01/07 21:40:29 pwagner Exp $
+a38 3
+    real(rk), dimension(size(list)) :: slist
+    real(rk), dimension(2) :: svrange
+    real(rk) :: smaller
+d109 3
+@
+

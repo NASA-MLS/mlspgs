@@ -1,0 +1,4482 @@
+head	2.62;
+access;
+symbols
+	v5-02-NRT-19:2.62
+	v6-00:2.62
+	v5-02-NRT-18:2.62
+	v5-02:2.59
+	v5-01-NRT-17:2.62
+	v5-01-NRT-16:2.60
+	v5-01-NRT-15:2.60
+	v5-01-NRT-14:2.60
+	neuralnetworks-1-0:2.60.0.4
+	cfm-single-freq-0-1:2.60.0.2
+	v5-01:2.59
+	v5-00:2.59
+	v4-23-TA133:2.59.0.2
+	mus-emls-1-70:2.51.0.4
+	rel-1-0-englocks-work:2.51.0.2
+	VUMLS1-00:2.43
+	VPL1-00:2.40
+	V4-22-NRT-08:2.40
+	VAM1-00:2.40
+	V4-21:2.36.0.2
+	V4-13:2.36
+	V4-12:2.35
+	V4-11:2.35
+	V4-10:2.34
+	V3-43:2.10
+	M4-00:2.21
+	V3-41:2.10
+	V3-40-PlusGM57:2.10.0.2
+	V2-24-NRT-04:2.5
+	V3-33:2.11
+	V2-24:2.5
+	V3-31:2.11
+	V3-30-NRT-05:2.10
+	cfm-01-00:2.10
+	V3-30:2.10
+	V3-20:2.10
+	V3-10:2.10
+	V2-23-NRT-02:2.5
+	V2-23:2.5
+	V2-22-NRT-01:2.5
+	V2-22:2.5;
+locks; strict;
+comment	@# @;
+
+
+2.62
+date	2022.09.02.21.23.33;	author pwagner;	state Exp;
+branches;
+next	2.61;
+
+2.61
+date	2022.07.13.20.45.16;	author pwagner;	state Exp;
+branches;
+next	2.60;
+
+2.60
+date	2020.04.30.23.13.21;	author pwagner;	state Exp;
+branches;
+next	2.59;
+
+2.59
+date	2019.04.09.20.33.56;	author pwagner;	state Exp;
+branches;
+next	2.58;
+
+2.58
+date	2019.03.18.22.04.40;	author pwagner;	state Exp;
+branches;
+next	2.57;
+
+2.57
+date	2019.02.21.22.33.30;	author pwagner;	state Exp;
+branches;
+next	2.56;
+
+2.56
+date	2019.01.24.18.29.45;	author pwagner;	state Exp;
+branches;
+next	2.55;
+
+2.55
+date	2018.11.05.18.17.57;	author pwagner;	state Exp;
+branches;
+next	2.54;
+
+2.54
+date	2018.08.13.22.52.26;	author pwagner;	state Exp;
+branches;
+next	2.53;
+
+2.53
+date	2018.08.06.22.41.28;	author pwagner;	state Exp;
+branches;
+next	2.52;
+
+2.52
+date	2018.08.06.20.22.55;	author pwagner;	state Exp;
+branches;
+next	2.51;
+
+2.51
+date	2018.03.27.22.08.06;	author pwagner;	state Exp;
+branches;
+next	2.50;
+
+2.50
+date	2018.03.15.16.39.22;	author pwagner;	state Exp;
+branches;
+next	2.49;
+
+2.49
+date	2018.03.14.21.49.34;	author pwagner;	state Exp;
+branches;
+next	2.48;
+
+2.48
+date	2018.02.28.19.56.23;	author pwagner;	state Exp;
+branches;
+next	2.47;
+
+2.47
+date	2018.02.08.23.20.55;	author pwagner;	state Exp;
+branches;
+next	2.46;
+
+2.46
+date	2017.12.07.02.21.32;	author vsnyder;	state Exp;
+branches;
+next	2.45;
+
+2.45
+date	2017.03.24.22.54.55;	author pwagner;	state Exp;
+branches;
+next	2.44;
+
+2.44
+date	2017.03.23.16.22.45;	author pwagner;	state Exp;
+branches;
+next	2.43;
+
+2.43
+date	2017.01.04.19.17.57;	author pwagner;	state Exp;
+branches;
+next	2.42;
+
+2.42
+date	2016.11.03.20.53.19;	author pwagner;	state Exp;
+branches;
+next	2.41;
+
+2.41
+date	2016.10.10.22.41.37;	author pwagner;	state Exp;
+branches;
+next	2.40;
+
+2.40
+date	2015.09.02.23.15.52;	author pwagner;	state Exp;
+branches;
+next	2.39;
+
+2.39
+date	2015.06.30.18.40.26;	author pwagner;	state Exp;
+branches;
+next	2.38;
+
+2.38
+date	2015.05.27.22.44.15;	author vsnyder;	state Exp;
+branches;
+next	2.37;
+
+2.37
+date	2015.03.28.01.14.28;	author vsnyder;	state Exp;
+branches;
+next	2.36;
+
+2.36
+date	2014.09.05.00.06.39;	author vsnyder;	state Exp;
+branches;
+next	2.35;
+
+2.35
+date	2014.05.29.18.16.12;	author pwagner;	state Exp;
+branches;
+next	2.34;
+
+2.34
+date	2014.04.22.16.28.59;	author pwagner;	state Exp;
+branches;
+next	2.33;
+
+2.33
+date	2013.11.18.22.22.48;	author pwagner;	state Exp;
+branches;
+next	2.32;
+
+2.32
+date	2013.11.15.00.15.11;	author pwagner;	state Exp;
+branches;
+next	2.31;
+
+2.31
+date	2013.11.13.18.57.50;	author pwagner;	state Exp;
+branches;
+next	2.30;
+
+2.30
+date	2013.11.01.00.06.33;	author pwagner;	state Exp;
+branches;
+next	2.29;
+
+2.29
+date	2013.09.14.01.21.30;	author vsnyder;	state Exp;
+branches;
+next	2.28;
+
+2.28
+date	2013.09.09.18.37.15;	author pwagner;	state Exp;
+branches;
+next	2.27;
+
+2.27
+date	2013.08.30.23.15.53;	author pwagner;	state Exp;
+branches;
+next	2.26;
+
+2.26
+date	2013.08.29.19.16.23;	author pwagner;	state Exp;
+branches;
+next	2.25;
+
+2.25
+date	2013.08.28.00.35.39;	author pwagner;	state Exp;
+branches;
+next	2.24;
+
+2.24
+date	2013.08.23.02.51.04;	author vsnyder;	state Exp;
+branches;
+next	2.23;
+
+2.23
+date	2013.07.30.23.19.53;	author pwagner;	state Exp;
+branches;
+next	2.22;
+
+2.22
+date	2013.06.28.18.15.51;	author pwagner;	state Exp;
+branches;
+next	2.21;
+
+2.21
+date	2012.08.21.23.52.32;	author pwagner;	state Exp;
+branches;
+next	2.20;
+
+2.20
+date	2012.08.16.17.35.30;	author pwagner;	state Exp;
+branches;
+next	2.19;
+
+2.19
+date	2012.07.18.00.36.03;	author pwagner;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2012.07.02.20.18.39;	author pwagner;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2012.05.16.19.23.26;	author vsnyder;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2011.10.10.23.56.02;	author pwagner;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2011.08.25.18.22.33;	author honghanh;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2011.07.22.19.47.00;	author vsnyder;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2011.06.29.21.40.11;	author pwagner;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2011.04.05.00.03.14;	author pwagner;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2010.10.07.23.29.26;	author pwagner;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2009.06.16.17.10.12;	author pwagner;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2008.05.28.21.01.48;	author pwagner;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2008.05.23.23.16.22;	author vsnyder;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2008.02.22.21.31.38;	author pwagner;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2007.12.07.01.10.36;	author pwagner;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2007.10.03.23.59.46;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2007.09.06.22.29.55;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2007.08.31.00.02.28;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2007.08.29.19.51.02;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2007.08.27.23.52.14;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.62
+log
+@Shows more if Details > 1
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id: MLSMessage.f9h,v 2.61 2022/07/13 20:45:16 pwagner Exp $
+
+! === (start of toc) ===
+!     c o n t e n t s
+!     - - - - - - - -
+
+!     (data type)
+! MLSMessageConfig         configuration controlling where to print, etc.
+!     (severity levels)
+! MLSMSG_Success           status returned when all went well
+! MLSMSG_Debug             should print only if debugging turned on
+! MLSMSG_Info              fyi only
+! MLSMSG_Warning           not fatal, but deserving of attention
+! MLSMSG_Error             quits after printing
+! MLSMSG_Crash             should give traceback before quitting
+! MLSMSG_Testwarning       test to see if we would print this warning
+! MLSMSG_Severity_so_far   worst severity level noted so far in this run
+! MLSMSG_Severity_to_quit  severity level needed to quit
+! MLSMSG_Severity_to_walkback
+!                          severity level needed to print callstack
+!     (message prefixes for errors during ..)
+! MLSMSG_Allocate          allocating an array
+! MLSMSG_Fileopen          opening a file
+! MLSMSG_Keyword           ???
+! MLSMSG_L1BRead           reading an l1b file
+! MLSMSG_Duplicate         ???
+! MLSMSG_DeAllocate        deallocating an array
+! MLSMSG_PVM               using a pvm library procedure
+
+!     (returned status values from MLSMessage_)
+! MLSMSGStatus_Normal      Everything normal
+! MLSMSGStatus_Suppressed  Did not print msg
+! MLSMSGStatus_Stopped     Called with severity >= MLSMSG_Severity_to_quit
+! MLSMSGStatus_Dumped      Called with severity >= MLSMSG_Severity_to_walkback
+
+!     (subroutines and functions)
+! Crash_burn               crash and burn unless called from an exempt module
+! DumpConfig               dump configuration
+! RestoreConfig            restore configuration to its default state
+! MLSMessage               main messaging routine
+! MLSMessageSetup          routine interface to change some parts of MLSMessageConfig
+! MLSMessageCalls          manage calling stack 
+! MLSMessageClose          close MLSMessage log file; but without exiting
+! MLSMessageExit           recommended way to finish main program
+! MLSMessageInquire        Returns the requested info
+! MLSMessageInternalFile   Returns the complete text that would be printed
+! MLSMessageReset          reset flags, counters, etc. during runtime
+! PVMErrorMessage          log a PVM error
+! ReportTKStatus           converts SDP status to seveMLSMessage.f9hrity, prints if needed
+! StopWithErrorMsg         report error msg, dump calling stack, stop
+! SummarizeWarnings        show summary of how many warnings received
+! === (end of toc) ===
+
+! === (start of api) ===
+! Crash_burn ( [char* module_name] )
+! DumpConfig ( [MLSMessageConfig_T config] )
+! RestoreConfig
+! MLSMessage ( int Severity, char* ModuleNameIn, char* Message, 
+!      [char* Advance], [MLSFile_T MLSFile], [status] )
+! MLSMessageCalls ( char* command, [char* name] )
+! MLSMessageClose
+! MLSMessageSetup ( [log SuppressDebugs], [int LogFileUnit], [char* Prefix],
+!      [log useToolkit], [log CrashOnAnyError] )
+! MLSMessageExit ( [int status], [char* farewell] )
+! MLSMessageInquire ( [char* Warning_msg], [int timesWarned], &
+!    [int totalnumwarnings], [char* LastWarningMsg]  )
+! char* MLSMessageInternalFile ( int Severity, char* ModuleNameIn, char* Message, 
+!      [char* Advance], [MLSFile_T MLSFile] ) 
+! MLSMessageReset ( [int logFileUnit], [log CrashOnAnyError], [log Warnings], &
+!       [log clearLastWarning] )
+! PVMErrorMessage ( int INFO, char* PLACE  )
+! ReportTKStatus( int status, char* ModuleNameIn, char* Message, 
+!      [int Threshold] )
+! StopWithErrorMsg ( char* Message, [MLSFile_T MLSFile] )
+! SummarizeWarnings
+! === (end of api) ===
+  ! ---------------------------------------------------------------------------
+
+  ! Returned status values of how MLSMessage fared or how message was treated
+  integer, public, parameter :: MLSMSGStatus_Normal     = PGS_S_SUCCESS ! == 0
+  integer, public, parameter :: MLSMSGStatus_Suppressed = MLSMSGSTATUS_Normal + 1
+  integer, public, parameter :: MLSMSGStatus_Stopped    = MLSMSGSTATUS_Suppressed + 1
+  integer, public, parameter :: MLSMSGStatus_Dumped     = MLSMSGSTATUS_Stopped + 1
+
+  ! If we are asked to exit, exit with this status instead of using Fortran STOP
+  integer, public, parameter :: DEFAULTSTOPEXITSTATUS = 0
+  ! So that we may limit the number of times warnings printed, messagewise
+  character(len=*), parameter :: WARNINGSSUPPRESSED = '(No more warnings of this)'
+  integer, parameter :: MAXNUMWARNINGS = 40 ! was 80, but most tests < 10
+  integer, parameter :: WARNINGMESSLENGTH = 80
+  integer, parameter :: TOTALNUMWARNINGSMAX = 10000000
+
+  type :: MLSMSGWarnings_T
+    character(len=WARNINGMESSLENGTH), dimension(MAXNUMWARNINGS) :: &
+      &                   warningmessages = ' '
+    integer, dimension(MAXNUMWARNINGS) :: timeswarned = 0
+    integer :: numwarnings = 0
+    integer :: totalnumwarnings = 0
+    character(len=128) :: lastWarningMsg = ' '
+    logical :: ALLCAPSSummaries    = .false. ! Print summary msgs in ALL CAPS
+  end type MLSMSGWarnings_T
+
+  integer, parameter :: MAXMESSLENGTH = 255 ! Max length to print on one line
+
+  ! This variable describes all the warnings we've recorded
+  type (MLSMSGWarnings_T), save :: MLSMSGWarnings
+
+  ! This set of parameters are simple prefixes for common messages
+  character (len=*), public, parameter :: MLSMSG_Fileopen = &
+     & "Failed to open file: "
+  character (len=*), public, parameter :: MLSMSG_Keyword = &
+     & "Unrecognized configuration file keyword: "
+  character (len=*), public, parameter :: MLSMSG_L1BRead = &
+     & "Unable to read L1B data item: "
+  character (len=*), public, parameter :: MLSMSG_Duplicate = &
+     & "There is already an entry with the name "
+  character (len=*), public, parameter :: MLSMSG_PVM = &
+     & "PVM Error: "
+
+  ! We add the following because the Intel compiler wraps stdout at 80 columns
+  ! when 'FMT=*' but lets it "all hang out" if FMT='(a)'
+  logical, private, parameter :: USEDEFAULTFORMATSTDOUT = .false. ! Use FMT=*
+  ! This datatype describes the configuration of the messaging suite
+
+ 
+  ! The following can be used to help trace the sequence of calls that led
+  ! to an error; 
+  
+  ! it will be dumped (if non-blank) on calls to
+  ! (1) StopWithErrorMsg
+  ! (2) MLSMessage, if MLSMSG_Severity_to_walkback is set appropriately
+  ! (3) MLSMessageCalls('dump')
+  ! You may push a name onto it, pop a name off, or clear it by
+  ! appropriate commands sent with subroutine MLSMessageCalls
+  
+  ! Note the following limitations:
+  ! Each name must be shorter than (MAXSTACKNAMELEN+1) chars.
+  ! Strung together, all the names must not exceed MaxTotalStackLen
+  ! characters in length
+  integer, parameter    ::    MaxStackNameLen  = 64
+  integer, parameter    ::    MaxTotalStackLen = 2048
+  integer, parameter    ::    MaxStackDepth    = 100
+  type :: MLSCallStack_t
+    character(len=maxTotalStackLen) :: Txt ! All the names, strung together
+    integer :: Ind(0:maxStackDepth) = 0  ! Ind(i) is end of ith name
+    integer :: Top = 0         ! Top of the stack, index into Ind
+    ! The next two apply only inside MLSCallStack procedures
+    logical :: silent  = .false. ! E.g., in case it becomes corrupted
+    logical :: verbose = .false.
+    ! These dbs affect other modules, letting us store and restore
+    ! the amount of extra printing each equires
+    logical :: verboseDB(1:maxStackDepth) = .false.
+    logical :: debugDB(1:maxStackDepth) = .false.
+  end type MLSCallStack_t
+  type(MLSCallStack_t), save :: MLSCallStack
+  
+  ! Public procedures
+  public :: Bummer, Crash_Burn, DumpConfig, RestoreConfig, SetConfig
+  public :: Dump_MLSFile
+  public :: MLSMessage, MLSMessage_, MLSMessageSetup
+  public :: MLSMessageexit, MLSMessageInquire, MLSMessageInternalFile
+  public :: MLSMessageClose, MLSMessageReset, PVMErrorMessage
+  public :: ReportTKStatus
+  public :: MLSMessageCalls, StopWithErrorMsg, SummarizeWarnings
+
+  interface MLSMessage
+    module procedure MLSMessage_
+  end interface
+
+  interface Bummer
+    module procedure Bummer_chars
+    module procedure Bummer_chararray
+  end interface
+
+contains
+
+  ! -----------------------------------------------------  Bummer  -----
+  ! Call banner to print your error message, then call MLSMessage to stop
+  subroutine Bummer_chars ( chars, &
+    & columnRange, alignment, skips, lineLength, severity )
+    character(len=*), intent(in)                :: CHARS
+    ! If columnRange(1) < 1, just use starting columns; otherwise move to
+    integer, dimension(2), optional, intent(in) :: COLUMNRANGE
+    character(len=1), intent(in), optional      :: ALIGNMENT ! L, R, C, or J
+    integer, optional, intent(in)               :: SKIPS ! How many spaces between chars
+    integer, optional, intent(in)               :: LINELENGTH
+    integer, optional, intent(in)               :: severity
+    !
+    ! Internal variables
+    integer :: mySeverity
+    ! Executable
+    mySeverity = MLSMSG_Error
+    if ( present(severity) ) mySeverity = severity
+    call banner(  chars, columnrange, alignment, skips, linelength, mode='s' )
+    call MLSMessage ( mySeverity, ModuleName, &
+                  & '(See error message above)' )
+  end subroutine Bummer_chars
+
+  subroutine Bummer_chararray ( charArray, &
+    & columnRange, alignment, skips, severity )
+    character(len=*), dimension(:), intent(in)  :: CHARARRAY
+    ! If columnRange(1) < 1, just use starting columns; otherwise move to
+    integer, dimension(2), optional, intent(in) :: COLUMNRANGE
+    character(len=1), intent(in), optional      :: ALIGNMENT ! L, R, C, or J
+    integer, optional, intent(in)               :: SKIPS ! How many spaces between chars
+    integer, optional, intent(in)               :: severity
+    !
+    ! Internal variables
+    integer :: mySeverity
+    ! Executable
+    mySeverity = MLSMSG_Error
+    if ( present(severity) ) mySeverity = severity
+    call banner(  charArray, columnrange, alignment, skips )
+    call MLSMessage ( mySeverity, ModuleName, &
+                  & '(See error message above)' )
+  end subroutine Bummer_chararray
+
+  ! ------------------------------------------------  Crash_Burn  -----
+  ! crash, burn unless ..
+  subroutine Crash_Burn( Name, Message )
+    ! arg
+    character(len=*), optional, intent(in) :: Name
+    character(len=*), optional, intent(in) :: Message
+    ! Internal args
+    character(len=prefixLen) :: myName
+    myName = '(undefined)'
+    if ( present(Name) ) myName = Name
+    if ( present(Message) ) call PrintItOut( Message, MLSMSG_Info )
+    if ( .not. dontCrashHere(myName) ) call crash_burn_rude
+  end subroutine Crash_Burn
+
+  ! ------------------------------------------------  DumpConfig  -----
+  ! dump the configuration
+
+  subroutine DumpConfig( config )
+    use PrintIt_m, only: Set_Config
+    ! Arg
+    type(MLSMessageConfig_T), optional, intent(in) :: config
+    ! Internal variables
+    integer :: LogFileUnit
+    type(MLSMessageConfig_T) :: myConfig
+    character(len=prefixLen) :: Prefix
+    logical :: Toolkit
+    character(len=*), parameter                    :: colonel  = &
+      & ': : : : : : : : : : : : : : : : : : :'
+    character(len=*), parameter                    :: header  = &
+      & 'dumping       :    MLS Message Config'
+    integer :: OldLogFileUnit
+    ! Executable
+    if ( present(config) ) then
+      myConfig = config
+    else
+      myConfig = MLSMessageConfig
+    end if
+    call get_config ( logFileUnit=OldLogFileUnit, prefix=prefix, useToolKit=toolkit )
+    call set_config ( logFileUnit=StdoutLogUnit )
+    call PrintItOut( colonel, MLSMSG_Info )
+    call PrintItOut( header,  MLSMSG_Info )
+    call PrintItOut( colonel, MLSMSG_Info )
+    call dump ( 'logFileUnit             ', intValue= OldLogFileUnit                     )
+    call dump ( 'meaning                 ', charValue= LogUnitName(OldLogFileUnit)       )
+    call dump ( 'limitWarnings           ', intValue= myConfig%limitWarnings          )
+    call dump ( 'masterTID               ', intValue= myConfig%masterTID              )
+    call dump ( 'extra prefix            ', charValue=prefix                          )
+    call dump ( 'extra Info              ', charValue=myConfig%Info                   )
+    call dump ( 'useToolkit              ', logValue= toolkit                         )
+    call dump ( 'Max Module name length  ', intValue= myConfig%MaxModuleNameLength    )
+    call dump ( 'Max Severity length     ', intValue= myConfig%MaxSeverityNameLength  )
+    call dump ( 'SendErrMsgToMaster      ', logValue= myConfig%SendErrMsgToMaster     )
+    call dump ( 'ShowCumulativeSeverity  ', logValue= myConfig%ShowCumulativeSeverity )
+    call dump ( 'Trace calls             ', logValue= myConfig%StackTrace             )
+    
+    call dump ( 'Status values           ', charValue=' '                             )
+    call dump ( '  Success               ', intValue=MLSMSG_Success                   )
+    call dump ( '  Debug                 ', intValue=MLSMSG_Debug                     )
+    call dump ( '  Info                  ', intValue=MLSMSG_Info                      )
+    call dump ( '  Warning               ', intValue=MLSMSG_Warning                   )
+    call dump ( '  Error                 ', intValue=MLSMSG_Error                     )
+    call dump ( '  Crash                 ', intValue=MLSMSG_Crash                     )
+    call dump ( 'Severity to quit        ', intValue=MLSMSG_Severity_to_quit          )
+    call dump ( 'Severity to crash       ', intValue=MLSMSG_Severity_to_walkback      )
+    call dump ( 'Severity so far         ', intValue=MLSMSG_Severity_so_far           )
+    
+    call dump ( 'Skip ModNames threshhold', intValue=myConfig%skipModuleNamesThr      )
+    call dump ( 'Skip Severity threshhold', intValue=myConfig%skipSeverityThr         )
+    call dump ( 'Skip Messages threshhold', intValue=myConfig%skipMessageThr          )
+    call dump ( 'Suppress Debugs         ', logValue=myConfig%suppressDebugs          )
+
+    call dump ( 'Allowed to crash        ', logValue= .not. NeverCrash                )
+    call dump ( 'Crash on any error      ', logValue= myConfig%CrashOnAnyError        )
+    call dump ( 'Crash on this message   ', charValue= myConfig%CrashIfMsgSays        )
+    call PrintItOut( colonel, MLSMSG_Info )
+    call set_config ( logFileUnit=OldLogFileUnit )
+  end subroutine DumpConfig
+
+  ! ------------------------------------------------  MLSMessage_  -----
+
+  ! This first routine is the main `messaging' code.
+  subroutine MLSMessage_( severity, ModuleNameIn, Message, &
+    & Advance, MLSFile, status )
+    ! A wraparound subroutine so we can 
+    ! (1) prevent excessively repeated warning messages
+    ! (2) intercept calls 
+    ! when the severity is MLSMSG_Error
+    ! allowing us to push ModuleNameIn onto the calling stack
+    integer, intent(in) :: Severity ! e.g. MLSMSG_Error
+    character (len=*), intent(in) :: ModuleNameIn ! Name of module (see below)
+    character (len=*), intent(in) :: Message ! Line of text
+    character (len=*), intent(in), optional :: Advance ! Do not advance
+    !                                 if present and the first character is 'N'
+    !                                 or 'n'
+    type(MLSFile_T), intent(in), optional :: MLSFile
+    integer, intent(out), optional :: status ! 0 if msg printed, 1 if suppressed
+    ! Internal variables
+    integer :: msgLength                  ! length to be printed
+    integer :: myStatus
+    logical :: nosubsequentwarnings
+    logical :: newwarning
+    integer :: warning_index
+    integer :: warningLength              ! length to be checked for repeats    
+    character(len=len(Message)+len(WARNINGSSUPPRESSED)) :: &
+      & msgPlusNotice                     ! actual message printed
+    ! Executable
+    msgPlusNotice = message
+    myStatus = MLSMSGSTATUS_Suppressed
+
+    ! Have we been asked to print an error message?
+    ! If so, try harder to print that error msg to stdout, too
+    if ( severity >= MLSMSG_Severity_to_quit ) then
+      if ( MLSMessageConfig%LogFileUnit == DefaultLogUnit .or. &
+        MLSMessageConfig%UseToolkit )  &
+        & MLSMessageConfig%LogFileUnit = BothLogUnit
+    endif
+    ! This is the smaller of the actual length and what we allow to be printed
+    msgLength = min( len(message), MAXMESSLENGTH )
+    msgLength = max( msgLength, 1 )
+    ! This is the smaller of the actual length and what we can check for repeats
+    warningLength = min( len(message), WARNINGMESSLENGTH )
+    warningLength = max( warningLength, 1 )
+    ! Here's where we suppress warning messages beyond a limit for each and all
+    if ( severity == MLSMSG_Warning ) &
+      & MLSMSGWarnings%totalnumwarnings = &
+      & min( TOTALNUMWARNINGSMAX, MLSMSGWarnings%totalnumwarnings + 1 )
+    if ( any( severity == (/MLSMSG_Warning, MLSMSG_TestWarning/) ) .and. &
+      & ( &
+      &  ( MLSMSGWarnings%totalnumwarnings > TOTALNUMWARNINGSMAX - 1 ) &
+      & .or. &
+      &  ( MLSMSGWarnings%numwarnings >= MAXNUMWARNINGS - 1 ) &
+      & ) &
+      & ) then
+      if ( present(status) ) status = myStatus
+      if ( MessageMeansCrash ( Message ) ) call Crash_Burn ( Message=Message )
+      return
+    else if ( MLSMSGWarnings%totalnumwarnings > TOTALNUMWARNINGSMAX - 2 ) then
+      msgPlusNotice = '(Max Warnings reached)' // message
+      msgLength = min(warningLength+len('(Max Warnings reached)'), MAXMESSLENGTH)
+    end if
+    if ( MessageMeansCrash ( Message ) ) call Crash_Burn ( Message=Message )
+    if ( severity == MLSMSG_Warning ) MLSMSGWarnings%lastWarningMsg = message
+    nosubsequentwarnings = .false.
+    if ( any( severity == (/MLSMSG_Warning, MLSMSG_TestWarning/) ) &
+      & .and. MLSMessageConfig%limitWarnings > -1 &
+      & .and. MLSMSGWarnings%numwarnings <= MAXNUMWARNINGS &
+      & .and. message /= ' ' ) then
+      ! See if we have seen this message before
+      newwarning = .true.
+      do warning_index = 1, MLSMSGWarnings%numwarnings
+        newwarning = newwarning .and. &
+          & ( MLSMSGWarnings%warningmessages(warning_index) /= &
+          &   trim(message(1:warningLength)) )
+      enddo
+      if ( newwarning .and. MLSMSGWarnings%numwarnings >= MAXNUMWARNINGS ) then
+        if ( severity == MLSMSG_TestWarning ) then
+          if ( present(status) ) status = myStatus
+          return
+        end if
+      else if ( newwarning .or. &
+        & MLSMSGWarnings%numwarnings < 1 ) then
+        if ( severity == MLSMSG_TestWarning ) then
+          if ( MLSMessageConfig%limitWarnings > 0 ) myStatus = 0
+          if ( present(status) ) status = myStatus
+          return
+        end if
+        MLSMSGWarnings%numwarnings = MLSMSGWarnings%numwarnings + 1
+        MLSMSGWarnings%warningmessages(MLSMSGWarnings%numwarnings) = message
+        MLSMSGWarnings%timeswarned(MLSMSGWarnings%numwarnings) = &
+          & MLSMSGWarnings%timeswarned(MLSMSGWarnings%numwarnings) + 1
+        if ( MLSMSGWarnings%timeswarned(MLSMSGWarnings%numwarnings) > &
+          & MLSMessageConfig%limitWarnings ) then
+          if ( present(status) ) status = myStatus
+          return
+        end if
+        MLSMSGWarnings%timeswarned(MLSMSGWarnings%numwarnings) = &
+          & min(MLSMSGWarnings%timeswarned(MLSMSGWarnings%numwarnings) + 1, &
+          & MLSMessageConfig%limitWarnings + 1 )
+        nosubsequentwarnings = &
+          & (MLSMSGWarnings%timeswarned(MLSMSGWarnings%numwarnings) > &
+          & MLSMessageConfig%limitWarnings)
+      else
+        do warning_index = 1, MLSMSGWarnings%numwarnings
+          if ( MLSMSGWarnings%warningmessages(warning_index) == &
+            & message(1:warningLength) ) exit
+        end do
+        if ( warning_index > MLSMSGWarnings%numwarnings ) then
+          if ( present(status) ) status = myStatus
+          return
+        else if ( severity == MLSMSG_TestWarning ) then
+          if ( MLSMSGWarnings%timeswarned(warning_index) < &
+            & MLSMessageConfig%limitWarnings  ) myStatus = 0
+          if ( present(status) ) status = myStatus
+          return
+        end if
+        ! Now we assure that the times warned array contains all
+        ! the times we were called, not just the times we printed
+        MLSMSGWarnings%timeswarned(warning_index) = &
+          & min(MLSMSGWarnings%timeswarned(warning_index) + 1, &
+          & TOTALNUMWARNINGSMAX )
+        if ( MLSMSGWarnings%timeswarned(warning_index) > &
+          & MLSMessageConfig%limitWarnings + 1 ) then
+          if ( present(status) ) status = myStatus
+          return
+        end if
+        nosubsequentwarnings = &
+          & (MLSMSGWarnings%timeswarned(warning_index) > &
+          & MLSMessageConfig%limitWarnings)
+      end if
+    end if
+
+    if ( nosubsequentwarnings ) then
+      msgPlusNotice = WARNINGSSUPPRESSED // msgPlusNotice
+      msgLength = min(msgLength+len(WARNINGSSUPPRESSED), MAXMESSLENGTH)
+    end if
+    if ( .not. any ( severity >= &
+      & (/ MLSMSG_Severity_to_quit, MLSMSG_Severity_to_walkback /) ) ) then
+      ! Unless special treatment, just pass args to MLSMessageStd
+      call MLSMessageStd( severity, ModuleNameIn, msgPlusNotice(1:msgLength), &
+        & Advance )
+      if ( present(status) ) status = MLSMSGSTATUS_Normal
+      return
+    end if
+    call MLSMessageCalls( 'push', constantName=ModuleNameIn )
+    if ( severity >= MLSMSG_Severity_to_quit ) then
+      call StopWithErrorMsg( Message, MLSFile, advance=advance, severity=severity )
+      myStatus = MLSMSGSTATUS_Stopped
+    else
+      call MLSMessageCalls( 'dump' )
+      call MLSMessageStd( severity, ModuleNameIn, msgPlusNotice(1:msgLength), &
+        & Advance, MLSFile=MLSFile )
+      myStatus = MLSMSGSTATUS_Dumped
+    end if
+    call MLSMessageCalls( 'pop' )
+    if ( present(status) ) status = myStatus
+  end subroutine MLSMessage_
+
+  ! --------------------------------------------  MLSMessageCalls  -----
+
+  ! Manage the calling stack MLSCallStack
+  ! It will be dumped on calling StopWithErrorMsg
+  ! possible commands are 
+  ! 'push'    push a new name onto MLSCallStack
+  ! 'pop'     pop the last name off
+  ! 'top'     just return the last name
+  ! 'invert'  invert the stack (top becomes bottom, etc.)
+  ! 'clear'   clear the stack
+  ! 'print'   print its contents as a single line
+  ! 'dump'    print a walkback, one name per line, top to bottom
+  ! 'dumpdb'  dump verboseDB and debugDB
+  ! 'depth'   return the number of elements on the stack
+  ! 'length'  return the total length taken by the elements on the stack
+  ! 'remain'  return the total length remaining before the stack is full
+  ! 'verbosedb' reset all the elements of verboseDB
+  !            (forgetting all the prior states of verboseness)
+  ! 'debugdb' reset all the elements of debugDB
+  !            (forgetting all the prior states of debugging)
+  
+  ! Every command except 'print', '[r]dump', 'depth', 'length', 'top',
+  ! and 'remain' change the stack
+  ! '[r]push' requires name as an input arg
+  ! '[r]pop', 'top', and '[r]dump' produce the topmost name as an output arg
+  ! 'depth', 'length', and 'remain' produce coded a integer name as output arg
+  ! e.g, '1249'
+
+  ! If name is omitted, it will be lost or assumed blank, as appropriate
+
+  ! --------------------------------------------  MLSMessageCalls  -----
+  subroutine MLSMessageCalls ( command, name, constantName, lvalue )
+    ! Args
+    character(len=*), intent(in)              :: command
+    ! Because name is (inout) you cannot call this with a constant
+    ! so if you wish to use a constant use constantName instead
+    character(len=*), optional, intent(inout) :: name
+    character(len=*), optional, intent(in)    :: constantName
+    logical, optional, intent(in)             :: lvalue
+    ! Internal variables
+    character(len=1), parameter :: comma = achar(0) ! '?' ! ','
+    integer :: i
+    integer :: m
+    logical :: myLValue
+    character(len=MAXSTACKNAMELEN) :: myName
+    logical, parameter  :: nosubsequentwarnings = .false.
+    ! Executable
+    myName = ' '
+    if ( MLSMessageConfig%stackTrace ) then
+      if ( present(name) ) myName = name
+      if ( present(constantName) ) myName = constantName
+      if ( present(name) .or. present(constantName) ) then
+        call printItOut ( 'MLSMessageCalls("' // trim(command) // '","' &
+          & // trim(myName) // '")', MLSMSG_info )
+      else
+        call printItOut ( 'MLSMessageCalls("' // trim(command) // '")', MLSMSG_info )
+      end if
+    end if
+    myName = ' '
+    myLValue = .false.
+    if ( present(lvalue) ) myLValue = lvalue
+    select case( command )
+    case ( 'push' )
+      if ( present(name) ) myName = name
+      if ( present(constantName) ) myName = constantName
+      call PushStack( myName )
+    case ( 'pop', 'top' )
+      call PopStack( name )
+      if ( command == 'pop' ) MLSCallStack%top = MLSCallStack%top - 1
+    case ( 'clear' )
+      MLSCallStack%txt = ' '
+      MLSCallStack%top = 0
+    case ( 'invert' )
+      MLSCallStack = InvertStack( MLSCallStack )
+    case ( 'dump' )
+      call dumpStack
+    case ( 'dumpdb', 'dumpDB' )
+      call dump( 'db', charValue='debug' )
+      do i = 1, MLSCallStack%top
+        write( myName, '(i2)' ) i
+        call dump( trim(myName), logValue=MLSCallStack%debugDB(i) )
+      end do
+      call dump( 'db', charValue='verbose' )
+      do i = 1, MLSCallStack%top
+        write( myName, '(i2)' ) i
+        call dump( trim(myName), logValue=MLSCallStack%verboseDB(i) )
+      end do
+    case ( 'print', 'rprint' )
+      if ( MLSCallStack%top < 0 ) then
+        call printItOut ( '.. Stack Underflow', MLSMSG_info )
+      else if ( MLSCallStack%top == 0 ) then
+        call printItOut ( '.. Stack Empty', MLSMSG_info )
+      else if ( MLSCallStack%top > maxStackDepth ) then
+        call printItOut ( '.. Stack Overflow', MLSMSG_info )
+      else if ( command == 'print' ) then
+        call printItOut ( MLSCallStack%txt(: &
+          & MLSCallStack%ind(min(MLSCallStack%top,maxStackDepth))), MLSMSG_info )
+      else if ( command == 'rprint' ) then
+        MLSCallStack = InvertStack( MLSCallStack )
+        call printItOut ( MLSCallStack%txt(: &
+          & MLSCallStack%ind(min(MLSCallStack%top,maxStackDepth))), MLSMSG_info )
+        MLSCallStack = InvertStack( MLSCallStack )
+      end if
+    case ( 'depth' )
+      write( myName, '(i8)' ) MLSCallStack%top
+      if ( present(name) ) name = myName
+    case ( 'length' )
+      write( myName, '(i8)' ) MLSCallStack%ind(min(MLSCallStack%top,maxStackDepth))
+      if ( present(name) ) name = myName
+    case ( 'remain' )
+      write( myName, '(i8)' ) len(MLSCallStack%txt) - &
+        & MLSCallStack%ind(min(MLSCallStack%top,maxStackDepth))
+      if ( present(name) ) name = myName
+    ! "r"-versions of the usual commands act on the Inverted CallStack
+    case ( 'rpop', 'rtop' )
+      MLSCallStack = InvertStack( MLSCallStack )
+      call PopStack( name )
+      if ( command == 'rpop' ) MLSCallStack%top = MLSCallStack%top - 1
+      MLSCallStack = InvertStack( MLSCallStack )
+    case ( 'rpush' )
+      if ( present(name) ) myName = name
+      if ( present(constantName) ) myName = constantName
+      MLSCallStack = InvertStack( MLSCallStack )
+      call PushStack( myName )
+      MLSCallStack = InvertStack( MLSCallStack )
+    case ( 'rdump' )
+      MLSCallStack = InvertStack( MLSCallStack )
+      call dumpStack
+      MLSCallStack = InvertStack( MLSCallStack )
+    case ( 'verbosedb', 'verboseDB' )
+      MLSCallStack%verboseDB = myLValue
+    case ( 'debugdb', 'debugDB' )
+      MLSCallStack%debugDB = myLValue
+    case default
+      ! Unrecognized command--we'll ignore it
+      if ( present(name) ) name = "What?"
+    end select
+    if ( MLSCallStack%verbose .and. command /= 'dump' ) call dumpStack
+
+  contains
+    subroutine PopStack ( Name )
+      character(len=*), optional, intent(inout) :: Name
+      ! Internal variables
+      integer :: newSize
+      integer :: oldSize
+      ! Executable
+      oldSize = MLSCallStack%top
+      if ( oldSize < 1 ) return
+      if ( present(name) ) then
+        if ( oldSize < 0 ) then
+          name = "Stack underflow"
+        else if ( oldSize >= maxStackDepth ) then
+          name = "Stack overflow"
+        else
+          ! name = MLSCallStack%txt(MLSCallStack%ind(oldSize)+1: &
+          !                        MLSCallStack%ind(oldSize+1))
+          m = min(oldSize,maxStackDepth) + 1
+          if ( MLSCallStack%ind(m-1) > len(MLSCallStack%txt) ) then
+            call printitout( 'Bad news--call stack is bursting', &
+              & MLSMSG_Error, 40, NoExit =.true. )
+            call DumpStack
+          endif
+          name = MLSCallStack%txt(MLSCallStack%ind(m-2)+1: &
+                                    MLSCallStack%ind(m-1))
+        end if
+      end if
+      newSize = max(oldsize-1,1)
+      if ( MLSVerboseSticky ) then
+        ! nothing--keep existing MLSVerbose
+      else if ( newSize > 0 ) then
+        MLSVerbose = MLSCallStack%VerboseDB(newSize)
+      else
+        MLSVerbose = .false.
+      end if
+      if ( MLSDebugSticky ) then
+        ! nothing--keep existing MLSDebug
+      else if ( newSize > 0 ) then
+        MLSDebug   = MLSCallStack%debugDB(newSize)
+      else
+        MLSDebug   = .false.
+      end if
+    end subroutine PopStack
+
+    subroutine PushStack ( myname )
+      character(len=*), intent(inout) :: myname
+      ! Internal variables
+      integer :: newSize
+      integer :: oldSize
+      ! Executable
+      oldSize = MLSCallStack%top
+      MLSCallStack%top = max(oldSize + 1, 1) ! MAX in case it underflowed earlier
+      newSize = MLSCallStack%top
+      myName = snipRCSFrom ( myName )
+      m = len_trim(myName)
+      if ( newSize > MaxStackDepth ) then
+        call dumpStack ( adjustl(myName(:m)) )
+        MLSCallStack%silent = .true.
+      else
+        MLSCallStack%ind(newSize) = MLSCallStack%ind(newSize-1) + m
+        MLSCallStack%txt(MLSCallStack%ind(newSize-1)+1:) = myName(:m) ! clear the rest
+        MLSCallStack%verboseDB(newSize) = MLSVerbose
+        MLSCallStack%debugDB(newSize) = MLSDebug
+      end if
+    end subroutine PushStack
+
+    subroutine DumpStack ( What )
+      character(len=*), intent(in), optional :: What
+      integer :: M
+      ! call printItOut ( trim(MLSCallStack), MLSMSG_info )
+      if ( MLSCallStack%silent ) return
+      if ( present(name) ) name = '' ! In case the stack is weird
+      call printItOut ( 'Calling stack (bottom-up)', MLSMSG_info )
+      if ( MLSCallStack%top < 0 ) then
+        call printItOut ( '.. Stack Underflow', MLSMSG_info )
+      else if ( MLSCallStack%top == 0 ) then
+        call printItOut ( '.. Stack Empty', MLSMSG_info )
+      else
+        do m = 1, min(MLSCallStack%top,maxStackDepth)
+          call printItOut ( '.. ' // &
+            & MLSCallStack%txt(MLSCallStack%ind(m-1)+1: &
+                               MLSCallStack%ind(m)), MLSMSG_info )
+        end do
+        if ( MLSCallStack%top > maxStackDepth ) then
+          if ( present(what) ) then
+            call printItOut ( '.. Stack Overflow when pushing ' // what, &
+            & MLSMSG_info )
+          else
+            write (myName(:12), '(i12)') MLSCallStack%top
+            call printItOut ( '.. Stack Overflow, top=' // trim(adjustl(myName(:12))), &
+              & MLSMSG_info )
+          end if
+        end if
+        if ( present(name) ) &
+          & name = MLSCallStack%txt(MLSCallStack%ind(m-2)+1: &
+                                    MLSCallStack%ind(m-1))
+      end if
+    end subroutine DumpStack
+
+    function InvertStack ( Stack ) result( Invert )
+      ! Return an inverted Stack; i.e. topmost now bottommost
+      ! 2nd from top now 2nd from bottom, etc.
+      ! Method: 
+      ! One-by-one pop items from input Stack, each time pushing them onto
+      ! inverted stack
+      type(MLSCallStack_t) :: STACK
+      ! Local variables
+      integer :: i
+      integer :: stackDepth
+      type(MLSCallStack_t) :: Invert
+      character(len=MAXSTACKNAMELEN) :: Name
+      ! Executable
+      if ( Stack%top <= 0 ) return
+      stackDepth = Stack%top
+      do i = 1, stackDepth
+        m = min(Stack%top,maxStackDepth) + 1
+        name = Stack%txt(Stack%ind(m-2)+1: &
+                                  Stack%ind(m-1))
+        Stack%top = Stack%top - 1
+        Invert%top = Invert%Top + 1
+        m = len_trim(name)
+        Invert%ind(Invert%top) = Invert%ind(Invert%top-1) + m
+        Invert%txt(Invert%ind(Invert%top-1)+1:) = Name(:m) ! clear the rest
+      enddo
+    end function InvertStack
+  end subroutine MLSMessageCalls
+
+  ! ------------------------------------------  MLSMessageInquire  -----
+
+  ! This routine returns requested info about Warnings
+  subroutine MLSMessageInquire( Warning_msg, timesWarned, &
+    &  totalnumwarnings, LastWarningMsg  )
+    ! Args
+    integer, optional, intent(out)          :: timesWarned ! how many times 
+    character(len=*), optional, intent(in)  :: Warning_msg ! this happened
+    integer, optional, intent(out)          :: totalnumwarnings ! grand total
+    character(len=*), optional, intent(out) :: LastWarningMsg ! Unless cleared
+    ! Internal variables
+    integer :: warning_index
+    ! Executable code
+    if ( present(Warning_msg) ) then
+      timesWarned = 0
+      do warning_index = 1, MLSMSGWarnings%numwarnings
+        if ( index( lowercase(MLSMSGWarnings%warningmessages(warning_index)), &
+          & trim(lowercase(Warning_msg)) &
+          & ) > 0 ) &
+          & timesWarned = timesWarned + MLSMSGWarnings%timeswarned(warning_index)
+      enddo
+    end if
+    if ( present(totalnumwarnings) ) &
+      & totalnumwarnings = MLSMSGWarnings%totalNumWarnings
+    if ( present(LastWarningMsg) ) &
+      & LastWarningMsg = MLSMSGWarnings%LastWarningMsg
+  end subroutine MLSMessageInquire
+
+  !--------------------------------------  MLSMessageInternalFile  -----
+  function MLSMessageInternalFile( Severity, ModuleNameIn, Message ) result(line)
+    integer, intent(in) :: Severity ! e.g. MLSMSG_Error
+    character (len=*), intent(in) :: ModuleNameIn ! Name of module (see below)
+    character (len=*), intent(in) :: Message ! Line of text
+    character (len=512)           :: Line   ! Line to output, should be long enough
+    integer                       :: Line_len
+    ! Internal variables
+    ! Executable
+    Line_len = 0
+    line = ' '
+    call assembleFullLine( Severity, ModuleNameIn, Message, line, line_len )
+  end function MLSMessageInternalFile
+
+  ! --------------------------------------------  MLSMessageSetup  -----
+
+  ! This routine sets up the MLSMessage suite.  The defaults are of course
+  ! sensible, but the user may wish to change things.
+  ! (Since we made MLSMessageConfig public, is there any reason to keep this?)
+  subroutine MLSMessageSetup ( SuppressDebugs, LogFileUnit, Prefix, useToolkit, &
+    & CrashOnAnyError  )
+
+    use PrintIt_M, only: Get_Config, Set_Config, StdoutLogunit
+
+    ! Dummy arguments
+    logical, optional, intent(in) :: SuppressDebugs
+    integer, optional, intent(in) :: LogFileUnit
+    character (len=*), optional, intent(in) :: Prefix
+    logical, optional, intent(in) :: useToolkit
+    logical, optional, intent(in) :: CrashOnAnyError
+
+    ! Local variables
+    integer :: MyLogFileUnit
+
+    ! Executable code
+    call get_config ( logFileUnit=myLogFileUnit )
+
+    if ( present(suppressDebugs) ) &
+      & MLSMessageConfig%suppressDebugs=suppressDebugs
+
+    if ( present(logFileUnit) ) then
+      if ( myLogFileUnit /= StdoutLogUnit ) call MLSMessage ( &
+        & MLSMSG_Warning, ModuleName,"Already writing to a log file" )
+    end if
+
+    call set_config ( logFileUnit=myLogFileUnit, prefix=prefix, &
+      & useToolkit=useToolkit )
+    if ( present(CrashOnAnyError) ) &
+      & MLSMessageConfig%CrashOnAnyError=CrashOnAnyError
+
+  end subroutine MLSMessageSetup
+
+  ! --------------------------------------------  MLSMessageClose  -----
+
+  ! This routine simply closes the MLSMessage log file if there is one.
+  ! It does so by pointing further logged messages at stdout
+  subroutine MLSMessageClose
+    use PrintIt_m, only: Set_Config
+    ! Executable code
+    call set_config ( logFileUnit = STDOUTLOGUNIT ) ! -1
+  end subroutine MLSMessageClose
+
+  ! ---------------------------------------------  MLSMessageExit  -----
+
+  ! This routine (optionally) logs farewell, advances
+  ! (hopefully) gracefully ends logging, and exits 
+  ! (optionally with status )
+  ! if farewell present, and non-blank, logs it
+  ! if farewell present,  but blank, logs default message
+  ! if farewell absent, does not log
+  subroutine MLSMessageExit ( status, farewell )
+  integer, optional, intent(in) :: STATUS
+  character(LEN=*), optional, intent(in) :: FAREWELL
+  CHARACTER(LEN=36) :: mesg
+
+    ! Executable code
+    if (present(status)) then
+      if (present(farewell)) then
+        if (farewell == ' ') then
+          write(mesg, '(A29, I2, A1)') 'Exiting with status (', &
+          status, ')'
+          call MLSMessage ( MLSMSG_Info, ModuleName, mesg, advance='y' )
+        else
+          call MLSMessage ( MLSMSG_Info, ModuleName, farewell, advance='y' )
+        end if
+      end if
+      call MLSMessageClose
+      if ( status == 1 .and. MLSMessageConfig%CrashOnAnyError ) &
+        & call crash_burn
+      call exit_with_status ( status  )
+    else
+      if (present(farewell)) then
+        if (farewell == ' ') then
+          mesg='exit with default status'
+          call MLSMessage ( MLSMSG_Info, ModuleName, mesg, advance='y' )
+        else
+          call MLSMessage ( MLSMSG_Info, ModuleName, farewell, advance='y' )
+        end if
+      end if
+      call MLSMessageClose
+      ! stop
+      ! call MLSMessage ( MLSMSG_Info, ModuleName, mesg, advance='y' )
+      call exit_with_status ( DEFAULTSTOPEXITSTATUS )
+    end if
+  end subroutine MLSMessageExit
+
+  ! --------------------------------------------  MLSMessageReset  -----
+
+  ! This routine allows you to reset flags, counters, etc. during runtime
+  ! (See also restoreConfig)
+  subroutine MLSMessageReset ( logFileUnit, CrashOnAnyError, Warnings, &
+    & clearLastWarning )
+    ! Various uses:
+    !   (if logFileUnit supplied)
+    ! (1) Close current log file and (re-)open logFileUnit for logging
+    !
+    !   (if CrashOnAnyError supplied)
+    ! (2) Set option so that any call with MLSMSG_Err will result in crash
+    !
+    !   (if Warnings supplied)
+    ! (3) Print summary of past warnings; clear records, rezero totals, etc.
+    !
+    !   (if clearLastWarning supplied)
+    ! (4) Clear last Warning Msg
+    !
+    ! (Would it be better to have 4 different routines?)
+    use PrintIt_m, only: Get_Config, Set_Config
+    ! Args
+    integer, intent(in), optional :: logFileUnit
+    logical, intent(in), optional :: CrashOnAnyError
+    logical, intent(in), optional :: Warnings
+    logical, intent(in), optional :: clearLastWarning
+    ! Local variables
+    character(len=6) :: logname
+    integer :: MyLogFileUnit
+    ! Executable code
+    call get_config ( logFileUnit=myLogFileUnit )
+    if ( present(logFileUnit) ) then
+      if ( logFileUnit /= myLogFileUnit ) then
+        write(logname, '(i6)') myLogFileUnit
+        call MLSMessage ( MLSMSG_Info, ModuleName, &
+          & 'Closing output on' // logname )
+        call MLSMessageClose
+        call set_config ( logFileUnit = logFileUnit )
+        write(logname, '(i6)') logFileUnit
+        call MLSMessage ( MLSMSG_Info, ModuleName, &
+          & 'Opening output on' // logname )
+      end if
+    end if
+    if ( present(CrashOnAnyError) ) MLSMessageConfig%CrashOnAnyError = CrashOnAnyError
+    if ( present(Warnings) ) then
+      if ( MLSMSGWarnings%totalNumWarnings > 0 ) then
+        call SummarizeWarnings
+        call PrintItOut( 'Forgetting old Warnings', MLSMSG_Info )
+      end if
+      MLSMSGWarnings%numwarnings = 0
+      MLSMSGWarnings%totalnumwarnings = 0
+      MLSMSGWarnings%timeswarned = 0
+      MLSMSGWarnings%warningmessages = ' '
+    end if
+    if ( present(clearLastWarning) ) MLSMSGWarnings%lastWarningMsg = ' '
+  end subroutine MLSMessageReset
+
+  ! --------------------------------------------  PVMERRORMESSAGE  -----
+  subroutine PVMErrorMessage ( INFO, PLACE  )
+    ! This routine is called to log a PVM error
+    integer, intent(in) :: INFO
+    character (LEN=*) :: PLACE
+
+    character (LEN=132) :: LINE
+
+    write (line, * ) info
+    call printitout(  MLSMSG_PVM // &
+    & ' Info='//trim(adjustl(line)) // ' ' // place, MLSMSG_Error )
+  end subroutine PVMErrorMessage
+
+  ! ----------------------------------------------  RestoreConfig  -----
+
+  ! restore the configuration to its default settings
+  ! where it makes sense
+  ! i.e., we wouldn't mess with masterTID or logFileUnit
+
+  subroutine RestoreConfig ( complete )
+    use PrintIt_m, only: Set_Config
+    ! The next won't work because of Intel v12 internal compiler error
+    ! MLSMessageConfig = MLSMessageConfig_T()
+    ! So instead,
+    ! Args
+    logical, intent(in), optional            :: complete ! Restore even quit, crash!
+    ! Internal variables
+    logical                                  :: myComplete
+    ! Executable
+    myComplete                               = present(complete)
+    if ( myComplete )   myComplete           = complete
+    MLSMessageConfig%limitWarnings           = 1000 
+    MLSMessageConfig%prefix                  = ' '  
+    MLSMessageConfig%skipModuleNamesThr      = MLSMSG_Success ! Always show module   
+    MLSMessageConfig%skipSeverityThr         = MLSMSG_Success ! Always show severit  
+    MLSMessageConfig%skipMessageThr          = MLSMSG_Success ! Always show messages  
+    MLSMessageConfig%suppressDebugs          = .false.                                
+    MLSMessageConfig%AsciifyMessages         = .true.                                                                            
+    MLSMessageConfig%MaxModuleNameLength     = 32
+    MLSMessageConfig%MaxSeverityNameLength   = 8 
+    MLSMessageConfig%CrashOnAnyError         = .false. ! See crash warning                                                       
+    MLSMessageConfig%SendErrMsgToMaster      = .false. ! send last gasp to master?                                               
+    MLSMessageConfig%ShowCumulativeSeverity  = .false. ! print severity_so_far?                
+    MLSMessageConfig%StackTrace              = .false. ! Trace via MLSMessageCalls?            
+    call set_config ( asciify=.true., prefix='' )
+    if ( .not. myComplete ) return
+    MLSMSG_Severity_to_quit                  = MLSMSG_Error
+    MLSMSG_Severity_to_walkback              = MLSMSG_Error
+  end subroutine RestoreConfig
+
+  ! --------------------------------------------------  SetConfig  -----
+  subroutine SetConfig ( Opts )
+    character(len=*), intent(in) :: Opts(:)
+    character(len=len(opts)) :: MyOpts(0:size(opts,1)+1)
+    namelist / in / MLSMessageConfig
+    myOpts(0) = '&in'
+    myOpts(1:size(opts,1)) = opts
+    myOpts(size(opts,1)+1) = '/'
+    read ( myOpts, in )
+  end subroutine SetConfig
+
+  ! -------------------------------------------  StopWithErrorMsg  -----
+  subroutine StopWithErrorMsg ( Message, MLSFile, Advance, severity )
+    ! Print Message, dump calling stack (if any) and stop
+    character (len=*), intent(in) :: Message ! Line of text
+    type(MLSFile_T), intent(in), optional  :: MLSFile
+    character(len=*), intent(in), optional :: Advance
+    integer, intent(in), optional          :: severity
+    ! Internal variables
+    character(len=32) :: name
+    integer :: mySeverity
+    ! Executable
+    mySeverity = MLSMSG_Error
+    if ( present(severity) ) mySeverity = severity
+    name = ' '
+    call MLSMessageCalls( 'dump', name )
+    if ( len_trim(name) < 1 ) name = ModuleName
+    call MLSMessageStd( mySeverity, name, Message, MLSFile=MLSFile, &
+      & advance=advance )
+  end subroutine StopWithErrorMsg
+
+  ! ------------------------------------------  SummarizeWarnings  -----
+  subroutine SummarizeWarnings
+    ! Print summary of warnings received
+    ! Internal variables
+    character(len=16) :: number
+    integer :: i
+    ! Executable
+    call PrintItOut( '=========== Warnings Summary (' // &
+      & trim(MLSMessageConfig%Info) // ') ==============', MLSMSG_Info )
+    write(number, '(i10)') MLSMSGWarnings%totalnumwarnings
+    call PrintItOut( 'Grand total' // ' ' // adjustl(number), MLSMSG_Info )
+    write(number, '(i10)') MLSMSGWarnings%numwarnings
+    call PrintItOut( 'Different' // ' ' // adjustl(number), MLSMSG_Info )
+    if ( MLSMSGWarnings%numwarnings < 1 ) return
+    call PrintItOut( 'number             message', MLSMSG_Info )
+    do i=1, MLSMSGWarnings%numwarnings
+      write(number, '(i10)') MLSMSGWarnings%timeswarned(i) - 1
+      ! So grep can quickly spot the summarized warnings by, e.g.
+      ! grep '##' mlsl2.log
+      if ( MLSMSGWarnings%ALLCAPSSummaries ) then
+        call PrintItOut( trim(number) // ' ## ' &
+          &  // trim(Capitalize(MLSMSGWarnings%warningmessages(i))), MLSMSG_Info )
+      else
+        call PrintItOut( trim(number) // ' ## ' &
+          &  // trim(MLSMSGWarnings%warningmessages(i)), MLSMSG_Info )
+      end if
+    enddo
+  end subroutine SummarizeWarnings
+
+  ! Private procedures
+  ! -----------------------------------------------------  dump  -----
+  subroutine dump ( name, intValue, charValue, logValue, trimName  )
+    ! Print
+    ! name : value
+    ! where value is one of {intValue, charValue, logValue}
+    character(len=*), intent(in) :: name
+    integer, intent(in), optional :: intValue
+    character(len=*), intent(in), optional :: charValue
+    logical, intent(in), optional :: logValue
+    logical, intent(in), optional :: trimName ! Print only leading non-blank
+    !
+    character(len=132) :: line
+    character(len=32)  :: value
+    logical            :: myTrim
+    integer            :: myLen
+    ! Executable
+    myTrim = .false.
+    if ( present(trimName) ) myTrim = trimName
+    value = ''
+    if ( present(intValue) ) then
+      write(value, '(i10)') intValue
+    else if ( present(logValue) ) then
+      write(value, '(l10)') logValue
+    elseif ( present(charValue) ) then
+      ! If th character length is < 10, we want to flush right
+      myLen = len_trim(charValue)
+      if ( myLen > 10 ) then
+         value(1:10) = charValue(1:10)
+       else
+         value(10-mylen+1:10) = charValue(1:myLen)
+       endif
+    endif
+    line = name // '  :' // trim(value)
+    if ( myTrim ) line = trim(name) // ' : ' // trim(value)
+    call PrintItOut( trim(line), MLSMSG_Info )
+  end subroutine dump
+
+  ! ------------------------------------------ Dump_MLSFile ------------
+  ! Uses  OutputTable 
+  subroutine Dump_MLSFile ( MLSFile, details )
+    use MLSCommon, only: AccessType, FileStringTable, Split_Path_Name
+    ! Dummy arguments
+    type (MLSFile_T), intent(in)         ::      MLSFile
+    integer, intent(in), optional        ::      details
+    ! Local variables
+    logical                              ::      mustShow
+    integer                              ::      myDetails
+    character(len=PGSd_Pc_File_Path_Max) ::      name
+    character(len=PGSd_Pc_File_Path_Max) ::      path
+    character(len=PGSd_Pc_File_Path_Max) ::      str
+
+    ! Executable code
+    myDetails = 0
+    if ( present(details) ) myDetails = details
+    mustShow = (MyDetails > 1)
+    call split_path_name(MLSFile%Name, Path, Name)
+    call startTable
+    call addRow_header ( 'File Info', 'c' )
+    call addRow_divider ( '-' )
+    if ( len_trim(path) > 0 ) call addRow ( 'path', trim(path) )
+    call addRow ( 'name', trim(name) )
+    ! If details < 0, show only this name
+    if ( myDetails > -1 ) then
+      if ( UseSDPToolkit .and. MLSFile%shortName /= ' ' ) &
+        & call addRow ( 'short name', trim(MLSFile%shortName) )
+      if ( len_trim(MLSFile%TypeStr) > 0 ) &
+        & call addRow ( 'Type', MLSFile%TypeStr )
+      if ( FILESTRINGTABLE ) then
+        call get_string ( lit_indices(MLSFile%Type), str, strip=.true. )
+        call addRow ( 'Type(int)', trim(str) )
+      endif
+      call addRow ( 'Access', trim(accessType(MLSFile%access)) )
+      call addRow ( 'Access (int)', MLSFile%access )
+      call addRow ( 'content', trim(MLSFile%content) )
+      call addRow ( 'last Operation', trim(MLSFile%lastOperation) )
+      call addRow ( 'still open?', MLSFile%stillOpen )
+      if ( &
+        & any(MLSFile%type == (/l_hdf, l_swath, l_hdfeos, l_zonalavg /) ) &
+        & .or. &
+        & MLSFile%TypeStr == 'hdf' &
+        & ) &
+        & call addRow ( 'hdf version', MLSFile%HDFVersion )
+      ! If details < 1, don't show any FileID info
+      if ( myDetails > 0 ) then
+        call addRow_divider ( '-' )
+        call addRow ( 'File ID', MLSFile%FileId%f_id )
+        if ( MLSFile%FileId%grp_id > 0 .or. MustShow ) &
+          & call addRow ( 'Group ID', MLSFile%FileId%grp_id )
+        if ( MLSFile%FileId%sd_id > 0 .or. MustShow  ) &
+          & call addRow ( 'Dataset ID', MLSFile%FileId%sd_id )
+        if ( UseSDPToolkit )  then
+          call addRow ( 'PCF ID', MLSFile%PCFId )
+          call addRow ( 'PCF Range', (/MLSFile%PCFidRange%Bottom, MLSFile%PCFidRange%Top /) )
+        endif
+        if ( MLSFile%recordLength > 0  .or. MustShow ) &
+          & call addRow ( 'record length', MLSFile%recordLength )
+        call addRow ( 'error code', MLSFile%errorCode )
+      endif
+    endif
+    call outputTable ( sep='|', border='-' )
+  end subroutine Dump_MLSFile
+
+  ! ---------------------------------------------------  MessageMeansCrash  -----
+  function MessageMeansCrash ( Message ) result ( goCrash )
+    ! Does the Message contain the fatal string causing us to Crash?
+    character(len=*), intent(in)        :: message
+    logical                             :: goCrash ! Does Message contain fatal string?
+    ! Executable
+    goCrash = .false.
+    if ( len_trim(Message) < 1 &
+      & .or. len_trim(MLSMessageConfig%CrashIfMsgSays) < 1 ) return
+    goCrash = index( trim(Message), trim(MLSMessageConfig%CrashIfMsgSays) ) > 0
+  end function MessageMeansCrash
+
+  ! ----------------------------------------------  MLSMessageStd  -----
+  ! After entering MLSMessage_,
+  ! this is where most calls to MLSMessage trickle down to
+
+    ! Print a message (unless printing is suppressed).  If it has %[Nn]
+    ! in it, replace that with newline.
+  subroutine MLSMessageStd ( Severity, ModuleNameIn, Message, &
+    & Advance, MLSFile )
+
+    use PrintIt_m, only: Get_Config
+    ! use CALL_STACK_M, only: DUMP_STACK
+    ! Dummy arguments
+    integer, intent(in) :: Severity ! e.g. MLSMSG_Error
+    character (len=*), intent(in) :: ModuleNameIn ! Name of module (see below)
+    character (len=*), intent(in) :: Message ! Line of text
+    character (len=*), intent(in), optional :: Advance ! Do not advance
+    !                                 if present and the first character is 'N'
+    !                                 or 'n'
+    type(MLSFile_T), intent(in), optional :: MLSFile
+
+    ! Local variables
+    !                                     If nonzero, do not insert prefix.
+    logical :: AllOfIt                  ! Print all of it (no %n or %N remains)
+    integer :: L1, L2                   ! How far in the line have we printed?
+    character (len=512), save :: Line   ! Line to output, should be long enough
+    integer, save :: Line_len=0         ! Number of saved characters in line.
+    integer :: LogFileUnit
+    logical :: My_adv
+    logical :: StackIsEmpty
+
+    ! Executable code
+    MLSMSG_Severity_so_far = max( MLSMSG_Severity_so_far, severity )
+    my_adv = .true.
+    if ( present(advance) ) &
+      & my_adv = advance(1:1) /= 'n' .and. advance(1:1) /= 'N'
+
+    my_adv = my_adv .and. ( severity >= MLSMessageConfig%skipMessageThr )
+    if ( (.not. MLSMessageConfig%suppressDebugs).OR. &
+         & (severity /= MLSMSG_Debug) ) then
+      l1 = 0
+      do
+        l2 = index(Message(l1+1:),'%n' )
+        if ( l2 == 0 ) l2 = index(Message(l1+1:),'%N')
+        allOfIt = l2 == 0
+        l2 = l2 + l1 - 1 ! Last character before %n or %N, if any
+        if ( allOfIt ) l2 = len(Message) ! no %n or %N
+        call assembleFullLine( Severity, ModuleNameIn, Message(l1+1:l2), &
+          & line, line_len )
+        l1 = l2 + 2 ! "n" or "N" of %n or %N
+         ! Log the message using the toolkit routine
+         ! (or its substitute )
+         ! if either using toolkit or severity is sufficient to
+         ! quit (which means we might have been called directly
+         ! rather than from output module )
+
+        if ( my_adv .or. .not. allOfIt ) then
+          call printitout( line, severity, line_len, NoExit =.true. )
+          line_len = 0
+          line = ' '
+        end if
+        if ( allOfIt ) exit
+      end do
+
+    end if
+
+    ! Now if it's an error, and the message is complete, then try to close
+    ! log file if any and quit (or crash)
+    if ( my_adv .and. severity >= MLSMSG_Severity_to_quit ) then
+      ! Here's a chance to dump facts about last file we were reading/writing
+      if ( present(MLSFile) ) then
+        call Dump_MLSFile( MLSFile )
+      else if ( MLSMessageConfig%MLSFile%name /= ' ' ) then
+        call Dump_MLSFile( MLSMessageConfig%MLSFile )
+      end if
+      ! Here's a chance to use our (separate) call stack
+      call dump_stack( where=.true., CPU=.true., &
+        & PrintMemoryReport=.true., StackIsEmpty=StackIsEmpty )
+      if ( MLSMessageConfig%SendErrMsgToMaster .and. &
+        & MLSMessageConfig%masterTID > 0 ) call LastGasp(ModulenameIn, Message )
+      call get_config ( logFileUnit = logFileUnit )
+      if ( logFileUnit > 0 ) close ( logFileUnit  )
+      if ( severity >= MLSMSG_Crash .or. MLSMessageConfig%CrashOnAnyError ) then
+        NEVERCRASH = .false.
+        call crash_burn
+      end if
+      call exit_with_status ( 1 )
+    end if
+  end subroutine MLSMessageStd
+
+!
+! $Log: MLSMessage.f9h,v $
+! Revision 2.61  2022/07/13 20:45:16  pwagner
+! Suppress dumping MLSFile%TypeStr if its not set
+!
+! Revision 2.60  2020/04/30 23:13:21  pwagner
+! If we are to quit, may  as well PrintFinalReport
+!
+! Revision 2.59  2019/04/09 20:33:56  pwagner
+! Remove redundant USE statement
+!
+! Revision 2.58  2019/03/18 22:04:40  pwagner
+! Try harder to Print Errors to stdout
+!
+! Revision 2.57  2019/02/21 22:33:30  pwagner
+! Improved DumpConfig
+!
+! Revision 2.56  2019/01/24 18:29:45  pwagner
+! Reorganized modules that print to simplify toolkit-free builds
+!
+! Revision 2.55  2018/11/05 18:17:57  pwagner
+! Prevent warning messages from overfilling %warningmessages array
+!
+! Revision 2.54  2018/08/13 22:52:26  pwagner
+! Improve DumpConfig; add items missing from toc
+!
+! Revision 2.53  2018/08/06 22:41:28  pwagner
+! Reorient DumpFile_old to Dump_MLSFile
+!
+! Revision 2.52  2018/08/06 20:22:55  pwagner
+! Warn and Dump if CallStack about to burst
+!
+! Revision 2.51  2018/03/27 22:08:06  pwagner
+! Where to find get_string moved to .f90 module or its substitute
+!
+! Revision 2.50  2018/03/15 16:39:22  pwagner
+! Moved 'Use' statement to .f90 where make can see it
+!
+! Revision 2.49  2018/03/14 21:49:34  pwagner
+! Corrected desciptions in toc section
+!
+! Revision 2.48  2018/02/28 19:56:23  pwagner
+! Improved appearance of DumpConfig
+!
+! Revision 2.47  2018/02/08 23:20:55  pwagner
+! Improved appearance of Dump_MLSFile by use of outputTable
+!
+! Revision 2.46  2017/12/07 02:21:32  vsnyder
+! Remove unused variable declaration
+!
+! Revision 2.45  2017/03/24 22:54:55  pwagner
+! Ensure Message is printed before MessageMeansCrash causes Crash_and_Burn
+!
+! Revision 2.44  2017/03/23 16:22:45  pwagner
+! Programs may optionally crash when MLSMessage logs fatal string
+!
+! Revision 2.43  2017/01/04 19:17:57  pwagner
+! Optional arg StackIsEmpty to Dump_Stack prevents printing if stackIsEmpty
+!
+! Revision 2.42  2016/11/03 20:53:19  pwagner
+! RestoreConfig defaults to being less complete
+!
+! Revision 2.41  2016/10/10 22:41:37  pwagner
+! Avoid the Call_Stack module if no toolkit
+!
+! Revision 2.40  2015/09/02 23:15:52  pwagner
+! Fixed bug that prevented dumping last MLSFile
+!
+! Revision 2.39  2015/06/30 18:40:26  pwagner
+! Added a conditional crash_burn
+!
+! Revision 2.38  2015/05/27 22:44:15  vsnyder
+! Use fixed-size arrays for verboseDB and debugDB rather than pointers to
+! variable size arrays.  NAG had been complaining that these pointers'
+! targets were somehow associated with other pointers, and that deallocating
+! them here resulted in dangling pointers elsewhere.
+!
+! Revision 2.37  2015/03/28 01:14:28  vsnyder
+! Added stuff to trace allocate/deallocate addresses
+!
+! Revision 2.36  2014/09/05 00:06:39  vsnyder
+! More complete and accurate allocate/deallocate size tracking.
+! Include addItemToDatabase instead of duplicating it here.
+!
+! Revision 2.35  2014/05/29 18:16:12  pwagner
+! Fixed bug affecting call stack and another in StopWithErrorMsg
+!
+! Revision 2.34  2014/04/22 16:28:59  pwagner
+! Added Bummer--writes error message as an eye-catching banner
+!
+! Revision 2.33  2013/11/18 22:22:48  pwagner
+! Sticky versions of verbose, debug available
+!
+! Revision 2.32  2013/11/15 00:15:11  pwagner
+! Remove MLSMESSAGESTD from public list
+!
+! Revision 2.31  2013/11/13 18:57:50  pwagner
+! verbose and debug dbs track and restore states in MLSCallStack
+!
+! Revision 2.30  2013/11/01 00:06:33  pwagner
+! Prevent dumps of a corrupt MLSCallStack
+!
+! Revision 2.29  2013/09/14 01:21:30  vsnyder
+! Repair stack underflow problem in MLSMessageCalls with 'push' option.
+! Add SetConfig.  Some cannonball polishing.
+!
+! Revision 2.28  2013/09/09 18:37:15  pwagner
+! Workaround for ifort v12 internal compiler error
+!
+! Revision 2.27  2013/08/30 23:15:53  pwagner
+! Fixed some bugs preventing effective dump_stack
+!
+! Revision 2.26  2013/08/29 19:16:23  pwagner
+! Prevent an odd error pop-ing an empty stack
+!
+! Revision 2.25  2013/08/28 00:35:39  pwagner
+! Moved more stuff from MLSMessage down to PrintIt module
+!
+! Revision 2.24  2013/08/23 02:51:04  vsnyder
+! Move PrintItOut to PrintIt_m
+!
+! Revision 2.23  2013/07/30 23:19:53  pwagner
+! Added a few extra cmds to MLSCallStack
+!
+! Revision 2.22  2013/06/28 18:15:51  pwagner
+! Eliminate bare stop; enhance call stack; treat each of line prefixes (severity, name) separately
+!
+! Revision 2.21  2012/08/21 23:52:32  pwagner
+! Removed comments about non-existent function; MaxModuleNameLength made adequate
+!
+! Revision 2.20  2012/08/16 17:35:30  pwagner
+! Changed how and when message lines are printed
+!
+! Revision 2.19  2012/07/18 00:36:03  pwagner
+! Replaced -1 and -2 for LogFileUnit with module parameters
+!
+! Revision 2.18  2012/07/02 20:18:39  pwagner
+! Added restoreConfig
+!
+! Revision 2.17  2012/05/16 19:23:26  vsnyder
+! Remove duplicate SendErrMsgToMaster dump, some cannonball polishing
+!
+! Revision 2.16  2011/10/10 23:56:02  pwagner
+! Prevent writing non-ascii chars to stdout
+!
+! Revision 2.15  2011/08/25 18:22:33  honghanh
+! Add fix to PVMErrorMessage to print custom error message.
+!
+! Revision 2.14  2011/07/22 19:47:00  vsnyder
+! Add Advance argument to StopWithErrorMsg, pass it through to MLSMessageStd.
+! Add %n and %N as newline characters in MLSMessageStd.
+!
+! Revision 2.13  2011/06/29 21:40:11  pwagner
+! Added ability to omit message prefixes, or entire messages according to sedverity
+!
+! Revision 2.12  2011/04/05 00:03:14  pwagner
+! MLSMSG_Severity_so_far now available as a return status if mlspgs treated as a function
+!
+! Revision 2.11  2010/10/07 23:29:26  pwagner
+! MLSMessage optionally returns status
+!
+! Revision 2.10  2009/06/16 17:10:12  pwagner
+! Can Capitalize messages in warnings summaries
+!
+! Revision 2.9  2008/05/28 21:01:48  pwagner
+! Break endless cycling between PVMErrorMessage and MLSMessage
+!
+! Revision 2.8  2008/05/23 23:16:22  vsnyder
+! Added tracing of call stack operations
+!
+! Revision 2.7  2008/02/22 21:31:38  pwagner
+! Can now dump messaging configuration
+!
+! Revision 2.6  2007/12/07 01:10:36  pwagner
+! Keeps track of and permits inquiries about warnings better
+!
+! Revision 2.5  2007/10/03 23:59:46  vsnyder
+! Simplify call stack
+!
+! Revision 2.4  2007/09/06 22:29:55  pwagner
+! Impose limit on total warnings
+!
+! Revision 2.3  2007/08/31 00:02:28  pwagner
+! Added procedure to summarize warnings
+!
+! Revision 2.2  2007/08/29 19:51:02  pwagner
+! Worked around Intel quirk that wraps stdout when 'FMT=*'
+!
+! Revision 2.1  2007/08/27 23:52:14  pwagner
+! First commit
+!
+@
+
+
+2.61
+log
+@Suppress dumping MLSFile%TypeStr if its not set
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.60 2020/04/30 23:13:21 pwagner Exp $
+d1079 1
+d1088 1
+d1120 1
+a1120 1
+        if ( MLSFile%FileId%grp_id > 0 ) &
+d1122 1
+a1122 1
+        if ( MLSFile%FileId%sd_id > 0 ) &
+d1128 1
+a1128 1
+        if ( MLSFile%recordLength > 0 ) &
+d1239 3
+@
+
+
+2.60
+log
+@If we are to quit, may  as well PrintFinalReport
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.59 2019/04/09 20:33:56 pwagner Exp $
+d1097 2
+a1098 1
+      call addRow ( 'Type', MLSFile%TypeStr )
+d1237 3
+@
+
+
+2.59
+log
+@Remove redundant USE statement
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.58 2019/03/18 22:04:40 pwagner Exp $
+d1220 2
+a1221 1
+      call dump_stack( where=.true., CPU=.true., StackIsEmpty=StackIsEmpty )
+d1230 1
+a1230 1
+      call exit_with_status ( 1  )
+d1236 3
+@
+
+
+2.58
+log
+@Try harder to Print Errors to stdout
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.57 2019/02/21 22:33:30 pwagner Exp $
+a736 1
+    use MLSStrings, only: Lowercase
+d1235 3
+@
+
+
+2.57
+log
+@Improved DumpConfig
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.56 2019/01/24 18:29:45 pwagner Exp $
+d338 7
+d1236 3
+@
+
+
+2.56
+log
+@Reorganized modules that print to simplify toolkit-free builds
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.55 2018/11/05 18:17:57 pwagner Exp $
+d247 2
+a248 1
+    ! arg
+d250 1
+a250 1
+    ! Internal args
+d259 1
+d266 2
+a267 1
+    call get_config ( logFileUnit=logFileUnit, prefix=prefix, useToolKit=toolkit )
+d271 2
+a272 2
+    call dump ( 'logFileUnit             ', intValue= logFileUnit                     )
+    call dump ( 'meaning                 ', charValue= LogUnitName(logFileUnit)       )
+d304 1
+d1229 3
+@
+
+
+2.55
+log
+@Prevent warning messages from overfilling %warningmessages array
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.54 2018/08/13 22:52:26 pwagner Exp $
+a47 1
+! Bummer                   print error message with eye-catching effects
+a65 3
+! Bummer ( char* chars, &
+!  [int columnRange(2)], [char alignment], [int skips], &
+!  [int severity] )
+a1063 2
+    use HighOutput, only: AddRow, AddRow_Divider, AddRow_Header, &
+      & OutputTable, StartTable
+d1225 3
+@
+
+
+2.54
+log
+@Improve DumpConfig; add items missing from toc
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.53 2018/08/06 22:41:28 pwagner Exp $
+d349 6
+a354 1
+      & ( MLSMSGWarnings%totalnumwarnings > TOTALNUMWARNINGSMAX - 1 ) ) then
+d1231 3
+@
+
+
+2.53
+log
+@Reorient DumpFile_old to Dump_MLSFile
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.52 2018/08/06 20:22:55 pwagner Exp $
+d41 6
+d61 1
+a61 1
+! ReportTKStatus           converts SDP status to severity, prints if needed
+d95 4
+a98 4
+  integer, public, parameter :: MLSMSGSTATUS_Normal = PGS_S_SUCCESS ! == 0
+  integer, public, parameter :: MLSMSGSTATUS_Suppressed = MLSMSGSTATUS_Normal + 1
+  integer, public, parameter :: MLSMSGSTATUS_Stopped = MLSMSGSTATUS_Suppressed + 1
+  integer, public, parameter :: MLSMSGSTATUS_Dumped = MLSMSGSTATUS_Stopped + 1
+d118 1
+a118 1
+  integer, parameter :: MAXMESSLENGTH = 255 ! Max length on one line
+a123 1
+
+d155 3
+a157 3
+  integer, parameter    ::    MaxStackNameLen = 64
+  integer, parameter :: MaxTotalStackLen = 2048
+  integer, parameter :: MaxStackDepth = 100
+d260 2
+d270 1
+a270 1
+    call dump ( 'dumping ', charValue='MLS Message Config'                            )
+a309 1
+
+a722 1
+
+d1226 3
+@
+
+
+2.52
+log
+@Warn and Dump if CallStack about to burst
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.51 2018/03/27 22:08:06 pwagner Exp $
+d1201 1
+a1201 1
+        call DumpFile_old( MLSFile )
+d1203 1
+a1203 1
+        call DumpFile_old( MLSMessageConfig%MLSFile )
+d1221 3
+@
+
+
+2.51
+log
+@Where to find get_string moved to .f90 module or its substitute
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.50 2018/03/15 16:39:22 pwagner Exp $
+d605 5
+a1054 31
+  ! ---------------------------------------------------  DumpFile_old  -----
+  subroutine DumpFile_old ( MLSFile  )
+    ! Show everything about it
+    type(MLSFile_T)      :: MLSFile
+    ! integer, parameter :: SEVERE = MLSMSG_Error
+    logical, parameter   :: UseMLSFileModuleDump = .true.
+    ! Executable code
+    if ( UseMLSFileModuleDump ) then
+      call Dump_MLSFile( MLSFile )
+      return
+    endif
+    call printitout ( 'MLS File Info: ', MLSMSG_Info )                                  
+    call dump ( '(name) ', charValue=trim(MLSFile%Name))                                  
+    call dump ( 'short name ', charValue=trim(MLSFile%shortName))                                  
+    call dump ( '    Type (int)   : ', MLSFile%Type)
+    call dump ( '    Type         : ', charValue=trim(MLSFile%TypeStr))
+    call dump ( '    Access       : ', charValue=trim(accessDFACCToStr(MLSFile%access)))
+    call dump ( '    content      : ', charValue=trim(MLSFile%content))
+    call dump ( '    last Operatn : ', charValue=trim(MLSFile%lastOperation))
+    call dump ( '    File ID      : ', MLSFile%FileId%f_id)
+    call dump ( '    Group ID     : ', MLSFile%FileId%grp_id)
+    call dump ( '    DataSet ID   : ', MLSFile%FileId%sd_id)
+    call dump ( '    PCF ID       : ', MLSFile%PCFId)
+    call dump ( '    PCF Range    : ', MLSFile%PCFidRange%Bottom)
+    call dump ( '                 : ', MLSFile%PCFidRange%Top)
+    call dump ( '    hdf version  : ', MLSFile%HDFVersion)
+    call dump ( '    record length: ', MLSFile%recordLength)
+    call dump ( '    Open?        : ', logValue= MLSFile%StillOpen)
+    call dump ( '    error code   : ', MLSFile%errorCode)
+  end subroutine DumpFile_old
+
+d1221 3
+@
+
+
+2.50
+log
+@Moved 'Use' statement to .f90 where make can see it
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.49 2018/03/14 21:49:34 pwagner Exp $
+a1086 1
+    use String_Table, only: Get_String
+d1247 3
+@
+
+
+2.49
+log
+@Corrected desciptions in toc section
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.48 2018/02/28 19:56:23 pwagner Exp $
+a1085 1
+    use Intrinsic, only: L_HDFeos, L_HDF, L_Swath, L_Zonalavg, Lit_Indices
+d1248 3
+@
+
+
+2.48
+log
+@Improved appearance of DumpConfig
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.47 2018/02/08 23:20:55 pwagner Exp $
+d18 10
+a27 8
+!     (parameters)
+! MLSMSG_SUCCESS           status returned when all went well
+! MLSMSG_DEBUG             should print only if debugging turned on
+! MLSMSG_INFO              fyi only
+! MLSMSG_WARNING           not fatal, but deserving of attention
+! MLSMSG_ERROR             quits after printing
+! MLSMSG_CRASH             should give traceback before quitting
+! MLSMSG_TESTWARNING       test to see if we would print this warning
+d32 8
+a39 8
+! MLSMSG_Allocate          mesg prefix for this type of error
+! MLSMSG_Fileopen          mesg prefix for this type of error
+! MLSMSG_Keyword           mesg prefix for this type of error
+! MLSMSG_L1BRead           mesg prefix for this type of error
+! MLSMSG_Duplicate         mesg prefix for this type of error
+! MLSMSG_DeAllocate        mesg prefix for this type of error
+! MLSMSG_PVM               mesg prefix for this type of error
+! MLSMessageConfig         configuration controlling where to print, etc.
+d42 4
+a45 4
+! bummer                   print error message with eye-catching effects
+! crash_burn               crash and burn unless called from an exempt module
+! dumpConfig               dump configuration
+! restoreConfig            restore configuration to its default state
+d49 1
+a49 1
+! MLSMessageClose          close MLSMessage log file; but see MLSMessageExit
+a57 1
+
+d61 1
+a61 1
+! bummer ( char* chars, &
+d64 3
+a66 3
+! crash_burn ( [char* module_name] )
+! dumpConfig ( [MLSMessageConfig_T config] )
+! restoreConfig
+d70 1
+d180 3
+a182 3
+  interface bummer
+    module procedure bummer_chars
+    module procedure bummer_chararray
+d187 1
+a187 1
+  ! -----------------------------------------------------  bummer  -----
+d189 1
+a189 1
+  subroutine bummer_chars ( chars, &
+d207 1
+a207 1
+  end subroutine bummer_chars
+d209 1
+a209 1
+  subroutine bummer_chararray ( charArray, &
+d226 1
+a226 1
+  end subroutine bummer_chararray
+d715 1
+a715 1
+    use MLSSTRINGS, only: LOWERCASE
+d761 1
+a761 1
+    use PrintIt_m, only: GET_CONFIG, SET_CONFIG, STDOUTLOGUNIT
+d796 1
+a796 1
+    use PrintIt_m, only: SET_CONFIG
+d865 1
+a865 1
+    use PrintIt_m, only: GET_CONFIG, SET_CONFIG
+d922 1
+a922 1
+    use PrintIt_m, only: SET_CONFIG
+d1015 3
+a1017 1
+    ! In any way we're asked
+d1022 1
+a1022 1
+    logical, intent(in), optional :: trimName
+d1082 1
+a1082 1
+
+d1160 2
+a1161 2
+  subroutine MLSMessageStd ( Severity, ModuleNameIn, Message, &
+    & Advance, MLSFile )
+d1165 2
+d1168 1
+a1168 1
+    use PRINTIT_M, only: GET_CONFIG
+d1249 3
+d1296 1
+a1296 1
+! Added bummer--writes error message as an eye-catching banner
+@
+
+
+2.47
+log
+@Improved appearance of Dump_MLSFile by use of outputTable
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.46 2017/12/07 02:21:32 vsnyder Exp $
+d287 3
+a289 3
+    call dump ( 'Skip ModNames thr       ', intValue=myConfig%skipModuleNamesThr      )
+    call dump ( 'Skip Severity thr       ', intValue=myConfig%skipSeverityThr         )
+    call dump ( 'Skip Messages thr       ', intValue=myConfig%skipMessageThr          )
+d294 1
+a294 1
+    call dump ( 'Crash on this msg       ', charValue= myConfig%CrashIfMsgSays        )
+d1023 1
+d1032 11
+a1042 8
+    end if
+    if ( present(charValue) ) then
+      line = name // '  :' // trim(charvalue)
+      if ( myTrim ) line = trim(name) // ' : ' // trim(charvalue)
+    else
+      line = name // '  :' // trim(value)
+      if ( myTrim ) line = trim(name) // ' : ' // trim(value)
+    end if
+d1243 3
+@
+
+
+2.46
+log
+@Remove unused variable declaration
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.45 2017/03/24 22:54:55 pwagner Exp $
+d167 1
+d1042 2
+a1043 2
+  ! ---------------------------------------------------  DumpFile  -----
+  subroutine DumpFile ( MLSFile  )
+d1045 3
+a1047 2
+    type(MLSFile_T) :: MLSFile
+    integer, parameter :: SEVERE = MLSMSG_Error
+d1049 4
+d1071 67
+a1137 1
+  end subroutine DumpFile
+d1219 1
+a1219 1
+        call dumpFile(MLSFile)
+d1221 1
+a1221 1
+        call dumpFile( MLSMessageConfig%MLSFile )
+d1239 3
+@
+
+
+2.45
+log
+@Ensure Message is printed before MessageMeansCrash causes Crash_and_Burn
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.44 2017/03/23 16:22:45 pwagner Exp $
+d647 1
+d1167 3
+@
+
+
+2.44
+log
+@Programs may optionally crash when MLSMessage logs fatal string
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.43 2017/01/04 19:17:57 pwagner Exp $
+d227 1
+a227 1
+  subroutine Crash_Burn( name )
+d229 2
+a230 1
+    character(len=*), optional, intent(in) :: name
+d234 2
+a235 1
+    if ( present(name) ) myName = name
+d342 1
+a342 1
+      if ( MessageMeansCrash ( Message ) ) call Crash_Burn
+d348 1
+a348 1
+    if ( MessageMeansCrash ( Message ) ) call Crash_Burn
+d822 2
+a823 1
+      if ( status == 1 .and. MLSMessageConfig%CrashOnAnyError ) call crash_burn
+d1166 3
+@
+
+
+2.43
+log
+@Optional arg StackIsEmpty to Dump_Stack prevents printing if stackIsEmpty
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.42 2016/11/03 20:53:19 pwagner Exp $
+d166 6
+a171 6
+  public :: bummer, crash_burn, dumpconfig, restoreconfig, setconfig
+  public :: MLSMessage, MLSMessage_, MLSMessagesetup
+  public :: MLSMessageexit, MLSMessageinquire, MLSMessageinternalfile
+  public :: MLSMessageclose, MLSMessagereset, pvmerrormessage
+  public :: reporttkstatus
+  public :: MLSMessagecalls, stopwitherrormsg, summarizewarnings
+d173 2
+a174 2
+  interface MLSMESSAGE
+    module procedure MLSMESSAGE_
+d248 2
+d257 5
+a261 4
+    call dump ( 'dumping ', charValue='MLS Message Config' )
+    call dump ( ':', charValue=': : : : : : : : : : : : :' )
+    call dump ( 'logFileUnit             ', intValue= logFileUnit )
+    call dump ( 'meaning                 ', charValue= LogUnitName(logFileUnit))
+d264 1
+a264 1
+    call dump ( 'extra prefix            ', charValue=prefix                 )
+d266 2
+a267 2
+    call dump ( 'useToolkit              ', logValue= toolkit             )
+    call dump ( 'Max Module name length  ', intValue= myConfig%MaxModuleNameLength  )
+a268 1
+    call dump ( 'CrashOnAnyError         ', logValue= myConfig%CrashOnAnyError        )
+d288 5
+d340 1
+d346 1
+a925 1
+    print *, 'Entered RestoreConfig; myComplete ', myComplete
+a1005 27
+
+  ! ---------------------------------------------------  dumpFile  -----
+  subroutine dumpFile ( MLSFile  )
+    ! Show everything about it
+    type(MLSFile_T) :: MLSFile
+    integer, parameter :: SEVERE = MLSMSG_Error
+    ! Executable code
+    call printitout ( 'MLS File Info: ', MLSMSG_Info )                                  
+    call dump ( '(name) ', charValue=trim(MLSFile%Name))                                  
+    call dump ( 'short name ', charValue=trim(MLSFile%shortName))                                  
+    call dump ( '    Type (int)   : ', MLSFile%Type)
+    call dump ( '    Type         : ', charValue=trim(MLSFile%TypeStr))
+    call dump ( '    Access       : ', charValue=trim(accessDFACCToStr(MLSFile%access)))
+    call dump ( '    content      : ', charValue=trim(MLSFile%content))
+    call dump ( '    last Operatn : ', charValue=trim(MLSFile%lastOperation))
+    call dump ( '    File ID      : ', MLSFile%FileId%f_id)
+    call dump ( '    Group ID     : ', MLSFile%FileId%grp_id)
+    call dump ( '    DataSet ID   : ', MLSFile%FileId%sd_id)
+    call dump ( '    PCF ID       : ', MLSFile%PCFId)
+    call dump ( '    PCF Range    : ', MLSFile%PCFidRange%Bottom)
+    call dump ( '                 : ', MLSFile%PCFidRange%Top)
+    call dump ( '    hdf version  : ', MLSFile%HDFVersion)
+    call dump ( '    record length: ', MLSFile%recordLength)
+    call dump ( '    Open?        : ', logValue= MLSFile%StillOpen)
+    call dump ( '    error code   : ', MLSFile%errorCode)
+  end subroutine dumpFile
+
+d1028 1
+a1028 1
+      line = name // ' : ' // trim(charvalue)
+d1031 1
+a1031 1
+      line = name // ' : ' // trim(value)
+d1034 1
+a1034 1
+    call printitout( trim(line), MLSMSG_Info )
+d1037 38
+d1163 3
+@
+
+
+2.42
+log
+@RestoreConfig defaults to being less complete
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.41 2016/10/10 22:41:37 pwagner Exp $
+d1082 1
+d1129 1
+a1129 1
+      call dump_stack( where=.true., CPU=.true. )
+d1144 3
+@
+
+
+2.41
+log
+@Avoid the Call_Stack module if no toolkit
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.40 2015/09/02 23:15:52 pwagner Exp $
+d905 1
+a905 1
+  subroutine RestoreConfig
+d910 8
+d931 2
+a932 1
+
+a934 1
+    call set_config ( asciify=.true., prefix='' )
+d1143 3
+@
+
+
+2.40
+log
+@Fixed bug that prevented dumping last MLSFile
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.39 2015/06/30 18:40:26 pwagner Exp $
+d1056 1
+a1056 1
+    use CALL_STACK_M, only: DUMP_STACK
+d1135 3
+@
+
+
+2.39
+log
+@Added a conditional crash_burn
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.38 2015/05/27 22:44:15 vsnyder Exp $
+d997 1
+a997 1
+    call printitout ( 'MLS File Info: ', MLSMSG_Error )                                  
+d1135 3
+@
+
+
+2.38
+log
+@Use fixed-size arrays for verboseDB and debugDB rather than pointers to
+variable size arrays.  NAG had been complaining that these pointers'
+targets were somehow associated with other pointers, and that deallocating
+them here resulted in dangling pointers elsewhere.
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.37 2015/03/28 01:14:28 vsnyder Exp $
+d41 1
+d63 1
+d166 6
+a171 6
+  public :: BUMMER, DUMPCONFIG, RESTORECONFIG, SETCONFIG
+  public :: MLSMESSAGE, MLSMESSAGE_, MLSMESSAGESETUP
+  public :: MLSMESSAGEEXIT, MLSMESSAGEINQUIRE, MLSMESSAGEINTERNALFILE
+  public :: MLSMESSAGECLOSE, MLSMESSAGERESET, PVMERRORMESSAGE
+  public :: REPORTTKSTATUS
+  public :: MLSMESSAGECALLS, STOPWITHERRORMSG, SUMMARIZEWARNINGS
+d225 12
+a237 1
+
+d1135 6
+@
+
+
+2.37
+log
+@Added stuff to trace allocate/deallocate addresses
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.36 2014/09/05 00:06:39 vsnyder Exp $
+d144 8
+a151 5
+  ! Strung together, all the names must not exceed 2048 characters in length
+  integer, parameter    ::    MAXSTACKNAMELEN = 64
+  type, public :: MLSCallStack_t
+    character(len=2048) :: Txt ! All the names, strung together
+    integer :: Ind(0:100) = 0  ! Ind(i) is end of ith name
+d158 2
+a159 2
+    logical, dimension(:), pointer :: verboseDB => null()
+    logical, dimension(:), pointer :: debugDB   => null()
+d161 1
+a161 1
+  type(MLSCallStack_t), public, save :: MLSCALLSTACK
+d498 10
+a507 14
+      if ( associated(  MLSCallStack%debugDB) ) then
+        call dump( 'db', charValue='debug' )
+        do i=1, size(MLSCallStack%debugDB)
+          write( myName, '(i2)' ) i
+          call dump( trim(myName), logValue=MLSCallStack%debugDB(i) )
+        enddo
+      end if
+      if ( associated(  MLSCallStack%verboseDB) ) then
+        call dump( 'db', charValue='verbose' )
+        do i=1, size(MLSCallStack%verboseDB)
+          write( myName, '(i2)' ) i
+          call dump( trim(myName), logValue=MLSCallStack%verboseDB(i) )
+        enddo
+      end if
+d513 1
+a513 1
+      else if ( MLSCallStack%top > ubound(MLSCallStack%ind,1) ) then
+d517 1
+a517 1
+          & MLSCallStack%ind(min(MLSCallStack%top,ubound(MLSCallStack%ind,1)))), MLSMSG_info )
+d521 1
+a521 1
+          & MLSCallStack%ind(min(MLSCallStack%top,ubound(MLSCallStack%ind,1)))), MLSMSG_info )
+d528 1
+a528 1
+      write( myName, '(i8)' ) MLSCallStack%ind(min(MLSCallStack%top,ubound(MLSCallStack%ind,1)))
+d532 1
+a532 1
+        & MLSCallStack%ind(min(MLSCallStack%top,ubound(MLSCallStack%ind,1)))
+d551 1
+a551 1
+      if ( associated(MLSCallStack%verboseDB) ) MLSCallStack%verboseDB = myLValue
+d553 1
+a553 1
+      if ( associated(MLSCallStack%debugDB) ) MLSCallStack%debugDB = myLValue
+d572 1
+a572 1
+        else if ( oldSize >= ubound(MLSCallStack%ind,1) ) then
+d577 1
+a577 1
+          m = min(oldSize,ubound(MLSCallStack%ind,1)) + 1
+d582 1
+a582 3
+      if ( .not. associated(MLSCallStack%verboseDB) ) return
+      oldSize = min( oldSize, size(MLSCallStack%verboseDB) )
+      newSize = RmLogicalFromDatabase( MLSCallStack%verboseDB, oldSize )
+a589 1
+      newSize = RmLogicalFromDatabase( MLSCallStack%debugDB, oldSize )
+a596 8
+     !  call PrintItOut ( 'After PopStack ', MLSMSG_Info )
+     !  call dump ( 'newSize ', intValue=MLSCallStack%top - 1 )
+     !  if ( associated(MLSCallStack%verboseDB) ) then
+     !    call dump ( 'size(MLSCallStack%verboseDB) ', intValue=size(MLSCallStack%verboseDB) )
+     !    call dump ( 'size(MLSCallStack%debugDB) ', intValue=size(MLSCallStack%debugDB) )
+     !  else
+     !    call PrintItOut ( 'verbose and debug dbs not associated ', MLSMSG_Info )
+     !  end if
+a606 2
+      newSize = AddLogicalToDatabase( MLSCallStack%verboseDB, MLSVerbose )
+      newSize = AddLogicalToDatabase( MLSCallStack%debugDB, MLSDebug )
+d610 1
+a610 1
+      if ( newSize > ubound(MLSCallStack%ind,1) ) then
+d616 2
+a618 6
+      ! MLSCallStack%top = min( MLSCallStack%top, newSize )
+     !  call PrintItOut ( 'After PushStack ' // trim(myname), MLSMSG_Info )
+     !  call dump ( 'oldSize ', intValue=oldSize )
+     !  call dump ( 'newSize ', intValue=MLSCallStack%top )
+     !  call dump ( 'size(MLSCallStack%verboseDB) ', intValue=size(MLSCallStack%verboseDB) )
+     !  call dump ( 'size(MLSCallStack%debugDB) ', intValue=size(MLSCallStack%debugDB) )
+d632 1
+a632 1
+        do m = 1, min(MLSCallStack%top,ubound(MLSCallStack%ind,1))
+d637 1
+a637 1
+        if ( MLSCallStack%top > ubound(MLSCallStack%ind,1) ) then
+d669 1
+a669 1
+        m = min(Stack%top,ubound(Stack%ind,1)) + 1
+a976 71
+  ! ------------------------------------------  AddLogicalToDatabase  -----
+  integer function AddLogicalToDatabase ( Database, Item )
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+    logical, dimension(:), pointer :: Database
+    logical, intent(in) :: Item
+
+    ! Local variables
+    logical, dimension(:), pointer :: tempDatabase
+
+    include "addItemToDatabase.f9h"
+
+    AddLogicalToDatabase = newSize
+  end function AddLogicalToDatabase
+
+  ! ------------------------------------------  RmLogicalFromDatabase  -----
+  integer function RmLogicalFromDatabase ( Database, itemIndex )
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+    logical, dimension(:), pointer :: Database
+    integer, intent(in) :: itemIndex   ! Index of item
+
+    ! Local variables
+    logical, dimension(:), pointer :: tempDatabase
+    logical, parameter :: okToDeallocEmptyDB = .true.
+
+    integer(c_intptr_t) :: Addr         ! For tracing
+    integer :: newSize, s, status
+    integer :: i
+    ! Executable code
+    newSize=0
+    if ( .not. associated(database) ) then
+      call MLSMessageStd ( MLSMSG_Error, ModuleName, &
+        & "Attempt to remove item from an empty database")
+    else if ( size(database) < itemIndex .or. itemIndex < 1) then
+      call dump ( 'size(database) ', intValue=size(database) )
+      call dump ( 'itemIndex ', intValue=itemIndex )
+      call MLSMessageStd ( MLSMSG_Error, ModuleName, &
+        & "Attempt to remove an item not found in database")
+    else if ( size(database) == 1) then
+      if ( okToDeallocEmptyDB ) then
+        s = storage_size(database) / 8
+        addr = transfer(c_loc(database(1)), addr)
+        deallocate ( database, stat=status )
+        call test_deallocate ( status, ModuleName, "database", s, address=addr )
+      end if
+    else
+      allocate(tempDatabase(SIZE(database)-1), STAT=status)
+      addr = 0
+      if ( status == 0 ) then
+        if ( size(tempDatabase) > 0 ) addr = transfer(c_loc(tempDatabase(1)), addr)
+      end if
+      call test_allocate ( status, ModuleName, "tempDatabase", &
+        & uBounds = SIZE(database)-1, elementSize = storage_size(tempDatabase) / 8, &
+        & address=addr )
+      do i = 1, SIZE(database)
+        if ( i /= itemIndex ) then
+          newSize = newSize + 1
+          tempDatabase(newSize) = database(i)
+        end if
+      end do
+      s = size(database) * storage_size(database) / 8
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(database(1)), addr)
+      deallocate ( database, stat=status )
+      call test_deallocate ( status, ModuleName, "database", s, address=addr )
+      database => tempDatabase
+    end if
+
+    RmLogicalFromDatabase = newSize
+  end function RmLogicalFromDatabase
+d1122 3
+@
+
+
+2.36
+log
+@More complete and accurate allocate/deallocate size tracking.
+Include addItemToDatabase instead of duplicating it here.
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.35 2014/05/29 18:16:12 pwagner Exp $
+d237 1
+a237 1
+    endif
+d318 1
+a318 1
+    elseif ( MLSMSGWarnings%totalnumwarnings > TOTALNUMWARNINGSMAX - 2 ) then
+d321 1
+a321 1
+    endif
+d339 1
+a339 1
+        endif
+d346 1
+a346 1
+        endif
+d355 1
+a355 1
+        endif
+d370 1
+a370 1
+        elseif ( severity == MLSMSG_TestWarning ) then
+d375 1
+a375 1
+        endif
+d385 1
+a385 1
+        endif
+d395 1
+a395 1
+    endif
+d403 1
+a403 1
+    endif
+d413 1
+a413 1
+    endif
+d501 1
+a501 1
+      endif
+d508 1
+a508 1
+      endif
+d516 1
+a516 1
+      elseif( command == 'print' ) then
+d519 1
+a519 1
+      elseif( command == 'rprint' ) then
+d524 1
+a524 1
+      endif
+d588 1
+a588 1
+      elseif ( newSize > 0 ) then
+d592 1
+a592 1
+      endif
+d596 1
+a596 1
+      elseif ( newSize > 0 ) then
+d600 1
+a600 1
+      endif
+d608 1
+a608 1
+     !  endif
+d722 1
+a722 1
+    endif
+d805 3
+a807 3
+    if(present(status)) then
+      if(present(farewell)) then
+        if(farewell == ' ') then
+d819 2
+a820 2
+      if(present(farewell)) then
+        if(farewell == ' ') then
+d882 1
+a882 1
+      endif
+d990 1
+a990 1
+      endif
+d998 1
+d1013 1
+d1021 1
+d1029 1
+a1029 1
+    elseif ( size(database) < itemIndex .or. itemIndex < 1) then
+d1034 1
+a1034 1
+    elseif ( size(database) == 1) then
+d1036 2
+a1037 1
+        s = size(database) * storage_size(database) / 8
+d1039 1
+a1039 1
+        call test_deallocate ( status, ModuleName, "database", s )
+d1043 4
+d1048 5
+a1052 4
+        & uBounds = SIZE(database)-1, elementSize = storage_size(tempDatabase) / 8 )
+      do i=1, SIZE(database)
+        if (i /= itemIndex) then
+          newSize = newSize+1
+d1054 2
+a1055 2
+        endif
+      enddo
+d1057 2
+d1060 1
+a1060 1
+      call test_deallocate ( status, ModuleName, "database", s )
+d1111 1
+a1111 1
+    elseif ( present(logValue) ) then
+d1113 1
+a1113 1
+    endif
+d1120 1
+a1120 1
+    endif
+d1192 1
+a1192 1
+      elseif( MLSMessageConfig%MLSFile%name /= ' ' ) then
+d1194 1
+a1194 1
+      endif
+d1204 1
+a1204 1
+      endif
+d1211 4
+@
+
+
+2.35
+log
+@Fixed bug affecting call stack and another in StopWithErrorMsg
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.34 2014/04/22 16:28:59 pwagner Exp $
+d997 1
+d1004 1
+a1004 20
+    integer :: newSize, status
+
+    ! Executable code
+
+    if ( associated(database) ) then ! tree_checker prevents duplicate names
+      newSize=SIZE(database)+1
+    else
+      newSize=1
+    end if
+
+    allocate(tempDatabase(newSize),STAT=status)
+    if ( status/=0 ) call MLSMessageStd ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate // "tempDatabase")
+
+    if ( newSize>1 ) tempDatabase(1:newSize-1) = database
+    if ( ASSOCIATED(database) ) deallocate ( database, stat=status )
+    if ( status /= 0 ) call MLSMessageStd ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_DeAllocate // "database" )
+    database => tempDatabase
+    database(newSize) = item
+d1011 1
+d1019 1
+a1019 1
+    integer :: newSize, status
+d1033 1
+d1035 2
+a1036 3
+        if ( status /= 0 ) call MLSMessageStd ( MLSMSG_Error, ModuleName, &
+          & MLSMSG_DeAllocate // "database" )
+      endif
+d1039 2
+a1040 2
+      if ( status/=0 ) call MLSMessageStd ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_Allocate // "tempDatabase")
+d1047 1
+d1049 1
+a1049 2
+      if ( status /= 0 ) call MLSMessageStd ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_DeAllocate // "database" )
+d1200 3
+@
+
+
+2.34
+log
+@Added bummer--writes error message as an eye-catching banner
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.33 2013/11/18 22:22:48 pwagner Exp $
+a618 1
+      newSize = MLSCallStack%top
+d621 1
+d957 1
+a957 1
+    if ( present(severity) ) mySeverity = MLSMSG_Error
+d1217 3
+@
+
+
+2.33
+log
+@Sticky versions of verbose, debug available
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.32 2013/11/15 00:15:11 pwagner Exp $
+d40 1
+d59 3
+d161 1
+a161 1
+  public :: DUMPCONFIG, RESTORECONFIG, SETCONFIG
+d172 5
+d179 41
+d1217 3
+@
+
+
+2.32
+log
+@Remove MLSMESSAGESTD from public list
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.31 2013/11/13 18:57:50 pwagner Exp $
+d146 1
+d149 2
+d380 1
+d384 4
+d399 1
+a399 1
+  subroutine MLSMessageCalls ( command, name, constantName )
+d406 1
+d409 1
+d411 1
+d427 2
+d444 15
+d501 4
+d536 7
+d544 3
+a546 1
+      if ( newSize > 0 ) then
+a547 1
+        MLSVerbose = MLSCallStack%VerboseDB(newSize)
+a549 1
+        MLSVerbose = .false.
+d1167 3
+@
+
+
+2.31
+log
+@verbose and debug dbs track and restore states in MLSCallStack
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.30 2013/11/01 00:06:33 pwagner Exp $
+d155 1
+a155 1
+  public :: MLSMESSAGE, MLSMESSAGE_, MLSMESSAGESTD, MLSMESSAGESETUP
+d1128 3
+@
+
+
+2.30
+log
+@Prevent dumps of a corrupt MLSCallStack
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.29 2013/09/14 01:21:30 vsnyder Exp $
+d148 2
+d154 2
+a155 2
+  public :: DUMPCONFIG, RESTORECONFIG, SetConfig
+  public :: MLSMESSAGE, MLSMESSAGE_, MLSMESSAGESETUP, MLSMESSAGECLOSE
+d157 1
+a157 1
+  public :: MLSMESSAGERESET, PVMERRORMESSAGE
+d482 6
+a487 1
+      if ( MLSCallStack%top < 1 ) return
+d489 1
+a489 1
+        if ( MLSCallStack%top < 0 ) then
+d491 1
+a491 1
+        else if ( MLSCallStack%top >= ubound(MLSCallStack%ind,1) ) then
+d494 3
+a496 3
+          ! name = MLSCallStack%txt(MLSCallStack%ind(MLSCallStack%top)+1: &
+          !                        MLSCallStack%ind(MLSCallStack%top+1))
+          m = min(MLSCallStack%top,ubound(MLSCallStack%ind,1)) + 1
+d501 19
+d524 9
+a532 1
+      MLSCallStack%top = max(MLSCallStack%Top + 1, 1) ! MAX in case it underflowed earlier
+d535 1
+a535 1
+      if ( MLSCallStack%Top > ubound(MLSCallStack%ind,1) ) then
+d539 2
+a540 2
+        MLSCallStack%ind(MLSCallStack%top) = MLSCallStack%ind(MLSCallStack%top-1) + m
+        MLSCallStack%txt(MLSCallStack%ind(MLSCallStack%top-1)+1:) = myName(:m) ! clear the rest
+d542 6
+d906 78
+d1048 1
+a1048 1
+    use PrintIt_m, only: GET_CONFIG
+d1128 3
+@
+
+
+2.29
+log
+@Repair stack underflow problem in MLSMessageCalls with 'push' option.
+Add SetConfig.  Some cannonball polishing.
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.28 2013/09/09 18:37:15 pwagner Exp $
+d146 1
+d503 1
+d513 1
+d1010 4
+@
+
+
+2.28
+log
+@Workaround for ifort v12 internal compiler error
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.27 2013/08/30 23:15:53 pwagner Exp $
+d151 1
+a151 1
+  public :: DUMPCONFIG, RESTORECONFIG
+d164 1
+a164 1
+  ! ------------------------------------------------  dumpConfig  -----
+d168 1
+a168 1
+  subroutine dumpConfig( config )
+d214 1
+a214 1
+  end subroutine dumpConfig
+d387 1
+d497 1
+a497 1
+      MLSCallStack%top = MLSCallStack%Top + 1
+d567 1
+a567 1
+  ! --------------------------------------------  MLSMessageInquire  -----
+d597 1
+a597 1
+  !-----------------------------------------  MLSMessageInternalFile  -----
+d659 1
+a659 1
+  ! --------------------------------------------  MLSMessageExit  -----
+d772 1
+a772 1
+  ! ------------------------------------------------  restoreConfig  -----
+d778 1
+a778 1
+  subroutine restoreConfig
+d800 12
+a811 1
+  end subroutine restoreConfig
+d813 1
+a813 1
+  ! ------------ StopWithErrorMsg ------------
+d833 1
+a833 1
+  ! ------------ SummarizeWarnings ------------
+d863 1
+a863 1
+  ! --------------------------------------------  dumpFile  -----
+d889 1
+a889 1
+  ! --------------------------------------------  dump  -----
+d920 1
+d1007 3
+@
+
+
+2.27
+log
+@Fixed some bugs preventing effective dump_stack
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.26 2013/08/29 19:16:23 pwagner Exp $
+d779 17
+a795 1
+    MLSMessageConfig = MLSMessageConfig_T()
+d994 3
+@
+
+
+2.26
+log
+@Prevent an odd error pop-ing an empty stack
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.25 2013/08/28 00:35:39 pwagner Exp $
+d350 1
+a350 1
+      call StopWithErrorMsg( Message, MLSFile, advance=advance )
+d572 1
+d779 1
+a779 11
+    MLSMessageConfig%limitWarnings           = 1000 
+    MLSMessageConfig%skipModuleNamesThr      = MLSMSG_Success ! Always show module   
+    MLSMessageConfig%skipSeverityThr         = MLSMSG_Success ! Always show severit  
+    MLSMessageConfig%skipMessageThr          = MLSMSG_Success ! Always show messages  
+    MLSMessageConfig%suppressDebugs          = .false.                                
+    MLSMessageConfig%MaxModuleNameLength     = 32
+    MLSMessageConfig%MaxSeverityNameLength   = 8 
+    MLSMessageConfig%CrashOnAnyError         = .false. ! See crash warning                                                       
+    MLSMessageConfig%SendErrMsgToMaster      = .false. ! send last gasp to master?                                               
+    MLSMessageConfig%ShowCumulativeSeverity  = .false. ! print severity_so_far?                
+    MLSMessageConfig%StackTrace              = .false. ! Trace via MLSMessageCalls?            
+d786 1
+a786 1
+  subroutine StopWithErrorMsg ( Message, MLSFile, Advance )
+d789 1
+a789 1
+    type(MLSFile_T), intent(in), optional :: MLSFile
+d791 1
+d794 1
+d796 2
+d801 1
+a801 1
+    call MLSMessageStd( MLSMSG_Error, name, Message, MLSFile=MLSFile, &
+a891 22
+  function LowerCase (str) result (outstr)
+    ! takes A-Z  and replaces with a-z
+    ! leaving other chars alone
+    !--------Argument--------!
+    character (len=*), intent(in) :: STR
+    character (len=len(str))      :: OUTSTR
+
+    !----------Local vars----------!
+    integer            :: i, icode
+    integer, parameter :: offset=IACHAR("a")-IACHAR("A")
+    !----------Executable part----------!
+    outstr=str
+
+    DO i = 1, LEN(str)
+       icode=IACHAR(outstr(i:i))
+       IF ( icode >=IACHAR("A") .AND. icode <= IACHAR("Z")) THEN
+          outstr(i:i)=achar(icode+offset)
+       END IF
+    END DO
+
+  END FUNCTION LowerCase
+
+d944 1
+a944 1
+          call printitout( line, severity, line_len )
+a954 1
+
+d978 3
+@
+
+
+2.25
+log
+@Moved more stuff from MLSMessage down to PrintIt module
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.24 2013/08/23 02:51:04 vsnyder Exp $
+d478 1
+d1006 3
+@
+
+
+2.24
+log
+@Move PrintItOut to PrintIt_m
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.23 2013/07/30 23:19:53 pwagner Exp $
+a79 34
+  ! Define some low level parameters.  These are used by the calling code to
+  ! indicate the severity or otherwise of the messages.
+  ! Normally, we treat any severity of Error or worse as reason to stop.
+  ! Any Warning is worth recording, and suppressed when too numerous.
+  ! Info may be customized to show, phase name, chunk number, etc.
+  ! Be advised, Crash may not properly close files opened by your run.
+  ! Use it only for specific debugging where you need a walkback.
+  ! See also MLSMessageConfig%crashOnAnyError
+
+  integer, public, parameter :: MLSMSG_Success     = PGS_S_SUCCESS ! == 0
+  integer, public, parameter :: MLSMSG_Debug       = MLSMSG_Success + 1
+  integer, public, parameter :: MLSMSG_Info        = MLSMSG_Debug + 1
+  integer, public, parameter :: MLSMSG_Warning     = MLSMSG_Info + 1
+  integer, public, parameter :: MLSMSG_Error       = MLSMSG_Warning + 1
+  integer, public, parameter :: MLSMSG_Crash       = MLSMSG_Error + 1
+  integer, public, parameter :: MLSMSG_TestWarning = MLSMSG_Crash + 1
+
+  ! MLSMSG_Severity_to_* can be reset in a main program to cause us
+  ! to become more lenient (set it higher) or strict (set it lower )
+  integer, public, save      :: MLSMSG_Severity_so_far      = PGS_S_SUCCESS
+  integer, public, save      :: MLSMSG_Severity_to_quit     = MLSMSG_Error
+  integer, public, save      :: MLSMSG_Severity_to_walkback = MLSMSG_Error
+
+  private :: SeverityNames
+  character (len=*), dimension(MLSMSG_Success:MLSMSG_Crash), parameter :: &
+     & SeverityNames = (/&
+     & "Success", &
+     & "Debug  ", &
+     & "Info   ", &
+     & "Warning", &
+     & "Error  ", &
+     & "Crash  " &
+     /)
+
+a110 2
+  character (len=*), public, parameter :: MLSMSG_Allocate = &
+     & "Allocation failed: "
+a118 2
+  character (len=*), public, parameter :: MLSMSG_DeAllocate = &
+     & "Deallocation failed: "
+d127 1
+a127 46
+  ! May get some of these from MLSCommon? 
+  type, public :: MLSMessageConfig_T
+    ! We log messages by toolkit (if useToolkit and UseSDPToolkit are TRUE )
+    ! In the following, values would have the effect of adding logged messages:
+    ! DEFAULTLOGUNIT: none added
+    ! STDOUTLOGUNIT:  to stdout
+    !  n > 0:         to ftn unit n
+    integer :: logFileUnit             = DEFAULTLOGUNIT ! -2
+    ! In the following, values would have the effect on identical warnings of:
+    ! -1: Print every one without suppression
+    !  0: Suppress every one
+    !  1: Print every one only once
+    integer :: limitWarnings           = 1000 ! Max number each warning
+    integer :: masterTID               = -1 ! Where to send error msg
+    character (len=prefixLen) :: prefix &
+      &                                = ''   ! Prefix to every msg
+    ! Instead of showing both module names and severity for every message
+    ! you can control thresholds
+    ! (1) the severity below which to skip showing module names
+    integer :: skipModuleNamesThr      = MLSMSG_Success ! Always show module
+    ! (2) the severity below which to skip showing severity
+    integer :: skipSeverityThr         = MLSMSG_Success ! Always show severity
+    ! (3) the severity below which to skip messages entirely
+    integer :: skipMessageThr          = MLSMSG_Success ! Always show messages
+    ! (4) simply skip every debug
+    logical :: suppressDebugs          = .false.
+
+    ! Instead of simply calling them Info, you could use something more
+    ! informative, like Phase names
+    character (len=prefixLen) :: Info   &
+      &                                = ''      ! What (else) to call Info
+    logical :: useToolkit              = .true.
+    integer :: MaxModuleNameLength     = 32      ! Abbreviate longer name
+    integer :: MaxSeverityNameLength   = 8       ! Abbreviate longer severity
+    logical :: CrashOnAnyError         = .false. ! See crash warning
+    logical :: SendErrMsgToMaster      = .false. ! send last gasp to master?
+    logical :: ShowCumulativeSeverity  = .false. ! print severity_so_far?
+    logical :: StackTrace              = .false. ! Trace via MLSMessageCalls?
+    ! Track the last file we were reading/writing if an error occurs and
+    ! that file isn't passed in the call statement
+    type(MLSFile_T) :: MLSFile ! which file were we reading/writing last?
+  end type MLSMessageConfig_T
+
+  ! This variable describes the configuration
+  type (MLSMessageConfig_T), public, save :: MLSMESSAGECONFIG
+  
+a168 1
+    use PrintIt_m, only: Get_Config, LogUnitName, PrefixLen
+d616 1
+a616 1
+    use PrintIt_m, only: Get_Config, Set_Config, StdoutLogUnit
+d651 1
+a651 1
+    use PrintIt_m, only: Set_Config
+d719 1
+a719 1
+    use PrintIt_m, only: Get_Config, Set_Config
+d776 1
+a776 1
+    use PrintIt_m, only: Set_Config
+a864 56
+  !-----------------------------------------  assembleFullLine  -----
+  ! Assemble the full line out of 
+  ! (1) A severity level
+  ! (2) The module name
+  ! (3) Whatever message we're asked to repeat
+  subroutine assembleFullLine( Severity, ModuleNameIn, Message, &
+    & line, line_len )
+    integer, intent(in)           :: Severity ! e.g. MLSMSG_Error
+    character (len=*), intent(in) :: ModuleNameIn ! Name of module (see below)
+    character (len=*), intent(in) :: Message ! Line of text
+    character(len=*)              :: Line
+    integer                       :: line_len
+    ! Assemble a full message line
+
+    if ( severity < MLSMessageConfig%skipMessageThr ) then
+      return
+    elseif ( line_len == 0 ) then
+      if ( severity < MLSMessageConfig%skipSeverityThr ) then
+        line = ' '
+      elseif ( severity > MLSMSG_Success-1 .and. severity < MLSMSG_Crash+1 ) then
+        line = trim(SeverityNamesFun(severity))
+        if ( MLSMessageConfig%ShowCumulativeSeverity .and. len_trim(line) > 0 ) then
+          line = trim(line) // ':' // &
+            & trim(SeverityNamesFun(MLSMSG_Severity_so_far))
+        endif
+        if ( severity == MLSMSG_Info .and. &
+          & len_trim(MLSMessageConfig%Info) > 0 ) &
+          & line = trim(line) // ' ' // MLSMessageConfig%Info
+      else
+        line = 'Unknown'
+      end if
+      line_len = len_trim(line)
+      if ( severity >= MLSMessageConfig%skipModuleNamesThr .and. &
+        & len_trim(snipRCSFrom ( moduleNameIn )) > 0 ) then
+        line(line_len+1:line_len+2) = ' ('
+        line(line_len+3:) = snipRCSFrom ( moduleNameIn )
+        line_len = len_trim(line) + 3
+        line(line_len-2:line_len-1) = '):'
+      elseif ( severity >= MLSMessageConfig%skipSeverityThr ) then
+        line_len = len_trim(line) + 1
+        line(line_len:line_len) = ':'
+      end if
+    end if
+    ! Make sure that we don't start prefixing with a blank
+    if ( any( severity >= &
+      & (/MLSMessageConfig%skipModuleNamesThr, MLSMessageConfig%skipSeverityThr/) &
+      & ) .and. line(1:1) == ' ' ) then
+      line_len = line_len - 1
+      line(1:line_len) = line(2:line_len+1)
+    endif
+    line(line_len+1:) = message
+    line_len = line_len + len(message) ! Not len_trim, so we can get
+    ! trailing blanks into a part of a message.  If there are trailing
+    ! blanks remaining when my_adv is true, they'll be trimmed off.
+  end subroutine assembleFullLine
+
+d893 1
+a893 1
+    call printitout(trim(line), MLSMSG_Error)
+d924 2
+a925 1
+    use PrintIt_m, only: Get_Config
+d989 2
+a1002 54
+  function ModuleNameFun ( moduleName ) result (name)
+    ! Return name of module unless asked to abbreviate
+    character(len=*), intent(in)    :: moduleName
+    character(len=len(ModuleName))  :: name
+    name = moduleName
+    if ( len_trim(moduleName) < 1 ) name = 'Unknown'
+    if ( MLSMessageConfig%MaxModuleNameLength < 1 ) then
+      name = ' '
+    elseif ( MLSMessageConfig%MaxModuleNameLength < len(ModuleName) ) then
+      name = name(1:MLSMessageConfig%MaxModuleNameLength) // ' '
+    endif
+  end function ModuleNameFun
+
+  function SeverityNamesFun ( severity ) result (name)
+    ! Return name of level corresponding to severity, if recognized
+    ! If not recignized, return  'Unknown'
+    ! Full name unless asked to abbreviate
+    integer, intent(in)                   :: severity
+    character(len=len(SeverityNames(1)))  :: name
+    if ( severity < MLSMSG_Success .or. severity > MLSMSG_Crash ) then
+      name = 'Unknown'
+    else
+      name = SeverityNames( severity )
+    endif
+    if ( MLSMessageConfig%MaxSeverityNameLength < 1 ) then
+      name = ' '
+    elseif ( MLSMessageConfig%MaxSeverityNameLength < len(SeverityNames(1)) ) then
+      name = name(1:MLSMessageConfig%MaxSeverityNameLength) // ' '
+    endif
+  end function SeverityNamesFun
+
+  function snipRCSFrom ( with ) result ( without )
+    ! Trim nonsense involving RCS system from input "with"
+    ! (if present)
+    ! Args
+    character(len=*), intent(in) :: with
+    character(len=len(with))     :: without
+    integer :: secondBuck
+      if ( with(1:1) == '$' ) then
+      ! The with is <dollar>RCSFile: <filename>,v <dollar><otherstuff>
+      ! The without is <filename><otherstuff>
+        secondBuck = 1 + index( with(2:),'$')
+        if ( secondBuck-3 > 11 .and. secondBuck < len_trim(with) ) then
+          ! without = with(11:(LEN_TRIM(with)-8))
+          without = with(11:secondBuck-4) // with(secondBuck+1:)
+        else
+          without = with(11:(LEN_TRIM(with)-8))
+        endif
+      else
+        without = with
+      end if
+      without = ModuleNameFun( without )
+  end function snipRCSFrom
+  
+d1005 3
+@
+
+
+2.23
+log
+@Added a few extra cmds to MLSCallStack
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.22 2013/06/28 18:15:51 pwagner Exp $
+a159 5
+  ! These apply if we don't log messages to a fortran unit number (which is > 0)
+  integer, parameter, public :: INVALIDLOGUNIT      = 0
+  integer, parameter, public :: STDOUTLOGUNIT       = INVALIDLOGUNIT - 1
+  integer, parameter, public :: DEFAULTLOGUNIT      = STDOUTLOGUNIT - 1
+
+a164 2
+  integer, private, parameter :: MLSMSG_PrefixLen = 32
+
+d179 1
+a179 1
+    character (len=MLSMSG_PrefixLen) :: prefix &
+d194 1
+a194 1
+    character (len=MLSMSG_PrefixLen) :: Info   &
+a196 1
+    logical :: AsciifyMessages         = .true.
+d252 1
+d256 1
+d258 2
+d266 1
+d269 2
+a270 2
+    call dump ( 'logFileUnit             ', intValue= myConfig%logFileUnit            )
+    call dump ( 'meaning                 ', charValue= LogUnitName(myConfig%logFileUnit))
+d273 1
+a273 1
+    call dump ( 'extra prefix            ', charValue=myConfig%prefix                 )
+d275 1
+a275 1
+    call dump ( 'useToolkit              ', logValue= myConfig%useToolkit             )
+a297 18
+  contains
+    function LogUnitName( LogUnit ) result( name )
+      ! Return an appropriate name for the LogUnit number
+      ! Args
+      integer, intent(in) :: LogUnit
+      character(len=12) :: name
+      ! Executable
+      select case ( LogUnit )
+      case ( STDOUTLogUnit )
+        name = 'stdout'
+      case ( DEFAULTLOGUNIT )
+        name = 'mls LogUnit'
+      case ( INVALIDLogUnit )
+        name = 'invalid'
+      case default ! > 0
+        name = 'Fortran unit'
+      end select
+    end function LogUnitName
+d700 2
+d710 1
+d713 1
+a717 3
+    if ( present(prefix) ) &
+      & MLSMessageConfig%prefix=prefix
+
+d719 1
+a719 1
+      if ( MLSMessageConfig%logFileUnit /= STDOUTLOGUNIT ) call MLSMessage ( &
+a720 1
+      MLSMessageConfig%logFileUnit = logFileUnit
+d723 2
+a724 2
+    if ( present(useToolkit) ) &
+      & MLSMessageConfig%useToolkit=useToolkit
+d735 1
+d737 1
+a737 1
+    MLSMessageConfig%logFileUnit = STDOUTLOGUNIT ! -1
+d803 1
+d809 1
+d811 1
+d813 1
+d815 2
+a816 2
+      if ( logFileUnit /= MLSMessageConfig%logFileUnit ) then
+        write(logname, '(i6)') MLSMessageConfig%logFileUnit
+d820 2
+a821 2
+        MLSMessageConfig%logFileUnit = logFileUnit
+        write(logname, '(i6)') MLSMessageConfig%logFileUnit
+d860 1
+a861 1
+    MLSMessageConfig%prefix                  = ' '  
+a865 1
+    MLSMessageConfig%AsciifyMessages         = .true.                                                                            
+d874 1
+a948 22
+  ! -------------------------------------------------  ASCIIFY  -----
+  ! takes input string and replaces any non-printing characters
+  ! with corresponding ones in range [32,126]
+  function ASCIIFY (STR) result (OUTSTR)
+    !--------Argument--------!
+    character (len=*), intent(in)           :: STR
+    character (len=5*len(str))              :: OUTSTR
+
+    !----------Local vars----------!
+    integer :: I
+    character(len=1), dimension(len(str)) :: mold
+    !----------Executable part----------!
+    outstr=str
+    mold = transfer(str,mold,size=len(str))
+    if ( all(isAscii(mold)) ) return
+    outstr = ' '
+    do i=1, len(str)
+      if ( isAscii(str(i:i)) ) cycle
+      outstr(i:i) = '@@'
+    end do
+  end function ASCIIFY
+
+a1035 15
+  ! ---------------------------------------------------  isAscii  -----
+  elemental function isAscii(arg) result(itIs)
+    ! Returns TRUE if arg is in range of printing chars [32,126]
+    ! Args
+    character(len=1), intent(in) :: arg
+    logical                      :: itIs
+    ! Internal variables
+    integer, parameter :: pcMin = iachar(' ')
+    integer, parameter :: pcMax = iachar('~')
+    integer :: icode
+    ! Executable
+    icode = iachar(arg)
+    itis = .not. ( icode < pcMin .or. icode > pcMax )
+  end function isAscii
+
+d1064 1
+d1080 1
+d1130 2
+a1131 2
+      if ( MLSMessageConfig%logFileUnit > 0 ) &
+        & close ( MLSMessageConfig%logFileUnit  )
+d1196 3
+@
+
+
+2.22
+log
+@Eliminate bare stop; enhance call stack; treat each of line prefixes (severity, name) separately
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.21 2012/08/21 23:52:32 pwagner Exp $
+d475 1
+d521 1
+a521 9
+      MLSCallStack%top = MLSCallStack%Top + 1
+      myName = snipRCSFrom ( myName )
+      m = len_trim(myName)
+      if ( MLSCallStack%Top > ubound(MLSCallStack%ind,1) ) then
+        call dumpStack ( adjustl(myName(:m)) )
+        return
+      end if
+      MLSCallStack%ind(MLSCallStack%top) = MLSCallStack%ind(MLSCallStack%top-1) + m
+      MLSCallStack%txt(MLSCallStack%ind(MLSCallStack%top-1)+1:) = myName(:m) ! clear the rest
+d523 1
+a523 13
+      if ( present(name) ) then
+        if ( MLSCallStack%top < 0 ) then
+          name = "Stack underflow"
+        else if ( MLSCallStack%top >= ubound(MLSCallStack%ind,1) ) then
+          name = "Stack overflow"
+        else
+          ! name = MLSCallStack%txt(MLSCallStack%ind(MLSCallStack%top)+1: &
+          !                        MLSCallStack%ind(MLSCallStack%top+1))
+          m = min(MLSCallStack%top,ubound(MLSCallStack%ind,1)) + 1
+          name = MLSCallStack%txt(MLSCallStack%ind(m-2)+1: &
+                                    MLSCallStack%ind(m-1))
+        end if
+      end if
+d528 2
+d532 1
+a532 1
+    case ( 'print' )
+d539 9
+a547 3
+      end if
+      call printItOut ( MLSCallStack%txt(: &
+        & MLSCallStack%ind(min(MLSCallStack%top,ubound(MLSCallStack%ind,1)))), MLSMSG_info )
+d558 16
+d581 30
+d641 27
+d790 1
+a790 1
+          mesg='Exiting normally with "stop"'
+d798 1
+a798 2
+      mesg='exit with default status'
+      call MLSMessage ( MLSMSG_Info, ModuleName, mesg, advance='y' )
+d1247 3
+@
+
+
+2.21
+log
+@Removed comments about non-existent function; MaxModuleNameLength made adequate
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.20 2012/08/16 17:35:30 pwagner Exp $
+d120 2
+d217 1
+a217 1
+  type (MLSMessageConfig_T), public, save :: MLSMessageConfig
+d237 1
+d239 1
+a239 1
+  type(MLSCallStack_t), public, save :: MLSCallStack
+d242 6
+a247 6
+  public :: dumpConfig, restoreConfig
+  public :: MLSMessage, MLSMessage_, MLSMessageSetup, MLSMessageClose
+  public :: MLSMessageExit, MLSMessageInquire, MLSMessageInternalFile
+  public :: MLSMessageReset, PVMErrorMessage
+  public :: ReportTKStatus
+  public :: MLSMessageCalls, StopWithErrorMsg, SummarizeWarnings
+d249 2
+a250 2
+  interface MLSMessage
+    module procedure MLSMessage_
+d474 1
+d482 1
+a482 1
+  ! Every command except 'print', '[r]dump', 'depth', 'length',
+d485 1
+a485 1
+  ! '[r]pop', and '[r]dump' produce the topmost name as an output arg
+d529 1
+a529 1
+    case ( 'pop' )
+d536 5
+a540 2
+          name = MLSCallStack%txt(MLSCallStack%ind(MLSCallStack%top)+1: &
+                                  MLSCallStack%ind(MLSCallStack%top+1))
+d543 1
+a543 1
+      MLSCallStack%top = MLSCallStack%top - 1
+d573 1
+d723 1
+d735 4
+a738 1
+      stop
+d936 1
+a936 1
+    character(len=*) ::              Line
+d964 3
+d969 7
+d1186 3
+@
+
+
+2.20
+log
+@Changed how and when message lines are printed
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.19 2012/07/18 00:36:03 pwagner Exp $
+a53 1
+! WasLastWarning           Returns TRUE if last warning matches string
+a76 1
+! log WasLastWarning ( char* str, char* opts )
+d203 1
+a203 1
+    integer :: MaxModuleNameLength     = 10      ! Abbreviate longer name
+d602 1
+a602 1
+  ! This routine returns requested info about MLSMessages
+d647 1
+a647 1
+
+d733 1
+a733 1
+
+d810 1
+a810 1
+    MLSMessageConfig%MaxModuleNameLength     = 10
+d1164 3
+@
+
+
+2.19
+log
+@Replaced -1 and -2 for LogFileUnit with module parameters
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.18 2012/07/02 20:18:39 pwagner Exp $
+d25 1
+d91 7
+a97 6
+  integer, public, parameter :: MLSMSG_Success = PGS_S_SUCCESS ! == 0
+  integer, public, parameter :: MLSMSG_Debug   = MLSMSG_Success + 1
+  integer, public, parameter :: MLSMSG_Info    = MLSMSG_Debug + 1
+  integer, public, parameter :: MLSMSG_Warning = MLSMSG_Info + 1
+  integer, public, parameter :: MLSMSG_Error   = MLSMSG_Warning + 1
+  integer, public, parameter :: MLSMSG_Crash   = MLSMSG_Error + 1
+d205 2
+a206 1
+    logical :: AbbreviateModSevNames   = .false. ! Abbreviate module and severity names
+d278 2
+a279 1
+    call dump ( 'AbbreviateModSevNames   ', logValue= myConfig%AbbreviateModSevNames  )
+d362 2
+a363 1
+    if ( MLSMSGWarnings%totalnumwarnings > TOTALNUMWARNINGSMAX - 1 ) then
+d372 4
+a375 2
+    if ( severity == MLSMSG_Warning .and. MLSMessageConfig%limitWarnings > -1 &
+      & .and. MLSMSGWarnings%numwarnings <= MAXNUMWARNINGS .and. message /= ' ' ) then
+d384 4
+d390 5
+d418 5
+d812 2
+a813 1
+    MLSMessageConfig%AbbreviateModSevNames   = .false. ! Abbreviate module and severity names                                    
+d917 4
+d937 1
+a937 1
+        if ( MLSMessageConfig%ShowCumulativeSeverity ) then
+d948 2
+a949 1
+      if ( severity >= MLSMessageConfig%skipModuleNamesThr ) then
+d1116 5
+a1120 1
+    if ( MLSMessageConfig%AbbreviateModSevNames ) name = name(1:2) // ' '
+a1130 1
+      if ( MLSMessageConfig%AbbreviateModSevNames ) name = name(1:1) // ' '
+d1133 5
+a1137 1
+      if ( MLSMessageConfig%AbbreviateModSevNames ) name = name(1:1) // ' '
+d1166 3
+@
+
+
+2.18
+log
+@Added restoreConfig
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.17 2012/05/16 19:23:26 vsnyder Exp $
+d158 5
+d170 1
+a170 1
+   ! May get some of these from MLSLibOptions? 
+d174 4
+a177 4
+    ! -2: none added
+    ! -1: to stdout
+    !  n: to ftn unit n
+    integer :: logFileUnit             = -2
+d269 1
+d296 18
+d650 1
+a650 1
+      if ( MLSMessageConfig%logFileUnit /= -1 ) call MLSMessage ( &
+d665 1
+a665 1
+
+d668 1
+a668 1
+    MLSMessageConfig%logFileUnit=-1
+d1132 3
+@
+
+
+2.17
+log
+@Remove duplicate SendErrMsgToMaster dump, some cannonball polishing
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.16 2011/10/10 23:56:02 pwagner Exp $
+d40 1
+d59 1
+d184 1
+a184 1
+    integer :: skipModuleNamesThr       = MLSMSG_Success ! Always show module
+d186 1
+a186 1
+    integer :: skipSeverityThr          = MLSMSG_Success ! Always show severity
+d233 1
+a233 1
+  public :: dumpConfig
+d753 23
+d857 1
+a857 2
+    integer :: I, K
+    character(len=5) :: insert
+d1108 3
+@
+
+
+2.16
+log
+@Prevent writing non-ascii chars to stdout
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.15 2011/08/25 18:22:33 honghanh Exp $
+d261 1
+a261 1
+    call dump ( 'logFileUnit             ', intValue= myConfig%logFileUnit       )
+a270 1
+    call dump ( 'SendErrMsgToMaster      ', logValue= myConfig%SendErrMsgToMaster     )
+d284 4
+a287 4
+    call dump ( 'Skip ModNames thr       ', intValue=myConfig%skipModuleNamesThr           )
+    call dump ( 'Skip Severity thr       ', intValue=myConfig%skipSeverityThr           )
+    call dump ( 'Skip Messages thr       ', intValue=myConfig%skipMessageThr           )
+    call dump ( 'Suppress Debugs         ', logValue=myConfig%suppressDebugs           )
+d1084 3
+@
+
+
+2.15
+log
+@Add fix to PVMErrorMessage to print custom error message.
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.14 2011/07/22 19:47:00 vsnyder Exp $
+d195 1
+d456 1
+d824 23
+d919 15
+d1085 3
+@
+
+
+2.14
+log
+@Add Advance argument to StopWithErrorMsg, pass it through to MLSMessageStd.
+Add %n and %N as newline characters in MLSMessageStd.
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.13 2011/06/29 21:40:11 pwagner Exp $
+d747 1
+a747 1
+    & ' Info='//trim(adjustl(line)), MLSMSG_Error )
+d1045 4
+@
+
+
+2.13
+log
+@Added ability to omit message prefixes, or entire messages according to sedverity
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.12 2011/04/05 00:03:14 pwagner Exp $
+d407 1
+a407 1
+      call StopWithErrorMsg( Message, MLSFile )
+d751 1
+a751 1
+  subroutine StopWithErrorMsg ( Message, MLSFile )
+d755 1
+d762 2
+a763 1
+    call MLSMessageStd( MLSMSG_Error, name, Message, MLSFile=MLSFile )
+d919 3
+d933 2
+d948 23
+a970 12
+      call assembleFullLine( Severity, ModuleNameIn, Message, line, line_len )
+       ! Log the message using the toolkit routine
+       ! (or its substitute )
+       ! if either using toolkit or severity is sufficient to
+       ! quit (which means we might have been called directly
+       ! rather than from output module )
+
+       if ( my_adv ) then
+         call printitout( line, severity, line_len )
+         line_len = 0
+         line = ' '
+       end if
+d1045 3
+@
+
+
+2.12
+log
+@MLSMSG_Severity_so_far now available as a return status if mlspgs treated as a function
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.11 2010/10/07 23:29:26 pwagner Exp $
+d179 11
+a193 1
+    logical :: suppressDebugs          = .false.
+d259 1
+a259 1
+    call dump ( ': ', charValue=':::::::::::::::::::::::::' )
+d283 5
+d830 6
+a835 2
+    if ( line_len == 0 ) then
+      if ( severity > MLSMSG_Success-1 .and. severity < MLSMSG_Crash+1 ) then
+d848 6
+a853 4
+      line(line_len+1:line_len+2) = ' ('
+      line(line_len+3:) = snipRCSFrom ( moduleNameIn )
+      line_len = len_trim(line) + 3
+      line(line_len-2:line_len-1) = '):'
+d856 1
+a856 1
+    line_len = line_len + len(message) ! Not len-trim, so we can get
+d862 1
+a862 1
+  subroutine dump ( name, intValue, charValue, logValue  )
+d868 1
+d871 5
+a875 1
+    character(len=32) :: value
+d883 2
+a884 1
+      line = trim(name) // ' : ' // trim(charvalue)
+d886 2
+a887 1
+      line = trim(name) // ' : ' // trim(value)
+d938 1
+d1027 3
+@
+
+
+2.11
+log
+@MLSMessage optionally returns status
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.10 2009/06/16 17:10:12 pwagner Exp $
+d25 1
+d97 2
+a98 1
+  integer, public, save      :: MLSMSG_Severity_to_quit = MLSMSG_Error
+d170 1
+a170 1
+    integer :: logFileUnit                     = -2
+d175 4
+a178 3
+    integer :: limitWarnings                   = 1000 ! Max number each warning
+    integer :: masterTID                       = -1 ! Where to send error msg
+    character (len=MLSMSG_PrefixLen) :: prefix = ''   ! Prefix to every msg
+d181 9
+a189 6
+    character (len=MLSMSG_PrefixLen) :: Info   = 'Info' ! What to call Info
+    logical :: suppressDebugs                  = .false.
+    logical :: useToolkit                      = .true.
+    logical :: CrashOnAnyError                 = .false. ! See crash warning
+    logical :: SendErrMsgToMaster              = .false. ! Whether to send last
+    logical :: StackTrace            = .false. ! Trace calls to MLSMessageCalls
+d209 1
+a209 1
+  ! Each name must be shorter than 65 chars.
+d211 1
+d250 12
+a261 9
+    call dump ( 'logFileUnit        ', intValue= myConfig%logFileUnit       )
+    call dump ( 'limitWarnings      ', intValue= myConfig%limitWarnings     )
+    call dump ( 'masterTID          ', intValue= myConfig%masterTID         )
+    call dump ( 'prefix             ', charValue=myConfig%prefix            )
+    call dump ( 'Info               ', charValue=myConfig%Info              )
+    call dump ( 'useToolkit         ', logValue= myConfig%useToolkit        )
+    call dump ( 'CrashOnAnyError    ', logValue= myConfig%CrashOnAnyError   )
+    call dump ( 'SendErrMsgToMaster ', logValue= myConfig%SendErrMsgToMaster)
+    call dump ( 'Trace calls        ', logValue= myConfig%StackTrace        )
+d263 10
+a272 9
+    call dump ( 'Status values      ', charValue=' '                        )
+    call dump ( '  Success          ', intValue=MLSMSG_Success              )
+    call dump ( '  Debug            ', intValue=MLSMSG_Debug                )
+    call dump ( '  Info             ', intValue=MLSMSG_Info                 )
+    call dump ( '  Warning          ', intValue=MLSMSG_Warning              )
+    call dump ( '  Error            ', intValue=MLSMSG_Error                )
+    call dump ( '  Crash            ', intValue=MLSMSG_Crash                )
+    call dump ( 'Severity to quit   ', intValue=MLSMSG_Severity_to_quit     )
+    call dump ( 'Severity to crash  ', intValue=MLSMSG_Severity_to_walkback )
+d437 1
+a437 1
+    character(len=64) :: myName
+d816 5
+a820 7
+      if ( severity == MLSMSG_Info ) then
+        line = MLSMessageConfig%Info
+      elseif ( severity > MLSMSG_Success-1 .and. severity < MLSMSG_Crash+1 ) then
+        line = SeverityNames(severity)
+        if ( MLSMessageConfig%Info /= SeverityNames(MLSMSG_Info) ) then
+          line = SeverityNames(severity) // ' ' // &
+            & MLSMessageConfig%Info
+d822 3
+d905 1
+d949 24
+d993 1
+d998 3
+@
+
+
+2.10
+log
+@Can Capitalize messages in warnings summaries
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.9 2008/05/28 21:01:48 pwagner Exp $
+d58 1
+a58 1
+!      [char* Advance], [MLSFile_T MLSFile] )
+d110 6
+d268 2
+a269 1
+  subroutine MLSMessage_( severity, ModuleNameIn,  Message, Advance, MLSFile )
+d282 1
+d285 1
+d294 1
+d307 1
+d332 4
+a335 1
+          & MLSMessageConfig%limitWarnings ) return
+d347 4
+a350 1
+        if ( warning_index > MLSMSGWarnings%numwarnings ) return
+d357 4
+a360 2
+          & MLSMessageConfig%limitWarnings + 1 ) &
+          & return
+d376 1
+d382 1
+d387 1
+d390 1
+d942 1
+d944 9
+a952 2
+      ! The with is <dollar>RCSFile: <filename>,v <dollar>
+        without = with(11:(LEN_TRIM(with)-8))
+d960 3
+@
+
+
+2.9
+log
+@Break endless cycling between PVMErrorMessage and MLSMessage
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.8 2008/05/23 23:16:22 vsnyder Exp $
+d123 1
+d734 7
+a740 2
+      call PrintItOut( trim(number) // ' ## ' &
+        &  // trim(MLSMSGWarnings%warningmessages(i)), MLSMSG_Info )
+d929 3
+@
+
+
+2.8
+log
+@Added tracing of call stack operations
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.7 2008/02/22 21:31:38 pwagner Exp $
+d244 1
+d696 2
+a697 2
+    call MLSMessage ( MLSMSG_Error, Place, MLSMSG_PVM // &
+      & ' Info='//trim(adjustl(line)))
+d923 3
+@
+
+
+2.7
+log
+@Can now dump messaging configuration
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.6 2007/12/07 01:10:36 pwagner Exp $
+d176 1
+d404 10
+a416 1
+      MLSCallStack%top = MLSCallStack%Top + 1
+d419 1
+d922 3
+@
+
+
+2.6
+log
+@Keeps track of and permits inquiries about warnings better
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.5 2007/10/03 23:59:46 vsnyder Exp $
+d38 1
+d56 1
+d205 1
+d218 37
+d911 3
+@
+
+
+2.5
+log
+@Simplify call stack
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.4 2007/09/06 22:29:55 pwagner Exp $
+d43 1
+d50 1
+d61 2
+d65 2
+a66 1
+! MLSMessageReset ( [int logFileUnit], [log CrashOnAnyError], [log Warnings] )
+d72 1
+d78 6
+a89 3
+  ! Warning--a Crash may not properly close files opened by your run
+  ! Use it only for specific debugging where you need a walkback
+  ! See also MLSMessageConfig%crashOnAnyError
+a111 3
+  character(len=WARNINGMESSLENGTH), dimension(MAXNUMWARNINGS), save :: &
+    &                   warningmessages = ' '
+  integer, dimension(MAXNUMWARNINGS), save :: timeswarned = 0
+d113 10
+a122 2
+  integer, save :: numwarnings = 0
+  integer, save :: totalnumwarnings = 0
+d124 4
+a179 1
+
+d204 1
+a204 1
+  public :: MLSMessageExit, MLSMessageInternalFile
+d251 3
+a253 2
+      & totalnumwarnings = min( TOTALNUMWARNINGSMAX, totalnumwarnings + 1 )
+    if ( totalnumwarnings > TOTALNUMWARNINGSMAX - 1 ) then
+d255 1
+a255 1
+    elseif ( totalnumwarnings > TOTALNUMWARNINGSMAX - 2 ) then
+d259 1
+d262 1
+a262 1
+      & .and. numwarnings <= MAXNUMWARNINGS .and. message /= ' ' ) then
+d265 1
+a265 1
+      do warning_index = 1, numwarnings
+d267 2
+a268 1
+          & ( warningmessages(warning_index) /= trim(message(1:warningLength)) )
+d270 1
+a270 1
+      if ( newwarning .and. numwarnings >= MAXNUMWARNINGS ) then
+d272 9
+a280 6
+        & numwarnings < 1 ) then
+        numwarnings = numwarnings + 1
+        warningmessages(numwarnings) = message
+        timeswarned(numwarnings) = timeswarned(numwarnings) + 1
+        if ( timeswarned(numwarnings) > MLSMessageConfig%limitWarnings ) return
+        timeswarned(numwarnings) = min(timeswarned(numwarnings) + 1, &
+d283 2
+a284 1
+          & (timeswarned(numwarnings) > MLSMessageConfig%limitWarnings)
+d286 3
+a288 2
+        do warning_index = 1, numwarnings
+          if ( warningmessages(warning_index) == message(1:warningLength) ) exit
+d290 1
+a290 1
+        if ( warning_index > numwarnings ) return
+d293 2
+a294 1
+        timeswarned(warning_index) = min(timeswarned(warning_index) + 1, &
+d296 2
+a297 1
+        if ( timeswarned(warning_index) > MLSMessageConfig%limitWarnings + 1 ) &
+d300 2
+a301 1
+          & (timeswarned(warning_index) > MLSMessageConfig%limitWarnings)
+a358 1
+    integer :: ind
+d452 29
+d586 16
+a601 1
+  subroutine MLSMessageReset ( logFileUnit, CrashOnAnyError, Warnings )
+d606 1
+d623 1
+a623 1
+      if ( totalNumWarnings > 0 ) then
+d627 4
+a630 4
+      numwarnings = 0
+      totalnumwarnings = 0
+      timeswarned = 0
+      warningmessages = ' '
+d632 1
+a665 1
+    character(len=32) :: name
+d671 1
+a671 1
+    write(number, '(i10)') totalnumwarnings
+d673 1
+a673 1
+    write(number, '(i10)') numwarnings
+d675 1
+a675 1
+    if ( numwarnings < 1 ) return
+d677 6
+a682 3
+    do i=1, numwarnings
+      write(number, '(i10)') timeswarned(i) - 1
+      call PrintItOut( number // ' ' // trim(warningmessages(i)), MLSMSG_Info )
+d771 22
+d871 3
+@
+
+
+2.4
+log
+@Impose limit on total warnings
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.3 2007/08/31 00:02:28 pwagner Exp $
+d176 8
+a183 4
+  ! Each name must be shorter than 65 chars, may not contain a '<null>' 
+  ! character  (such a name will be split at the '<null>')
+  ! strung together, all the names must not exceed 2048 characters in length
+  character(len=2048), public, save :: MLSCallStack = ' '
+a305 2
+  ! 'rpush'   push a new name underneath
+  ! 'rpop'    pop the first name out from underneath
+a308 1
+  ! 'rdump'   print a walkback, one name per line, bottom to top
+d337 3
+a339 1
+    if ( index( command, 'push' ) > 0 ) then
+d343 7
+a349 10
+    endif
+    ind = index( MLSCallStack, comma, back=.true. )
+    m = len_trim(MLSCallStack)
+    select case( command )
+    case ( 'push' )
+      if ( m < 1 ) then
+        MLSCallStack = myName
+      else
+        MLSCallStack = trim(myName) // comma // MLSCallStack
+      endif
+d351 11
+a361 24
+      ind = index( MLSCallStack, comma )
+      if ( ind < 1 ) then
+        myName = MLSCallStack
+        MLSCallStack = ' '
+      else
+        myName = MLSCallStack( 1 : ind-1 )
+        MLSCallStack = MLSCallStack( ind+1 : )
+      endif
+      if ( present(name) ) name = myName
+    case ( 'rpush' )
+      if ( m < 1 ) then
+        MLSCallStack = myName
+      else
+        MLSCallStack = trim(MLSCallStack) // comma // myName
+      endif
+    case ( 'rpop' )
+      if ( ind < 1 ) then
+        myName = MLSCallStack
+        MLSCallStack = ' '
+      else
+        myName = MLSCallStack( ind+1 : m )
+        MLSCallStack = MLSCallStack( 1 : ind-1 )
+      endif
+      if ( present(name) ) name = myName
+d363 2
+a364 11
+      MLSCallStack = ' '
+    case ( 'rdump' )
+      call printItOut ( 'Calling stack (top-down)', MLSMSG_info )
+      do
+        if ( m <= ind ) exit
+        myName = MLSCallStack( ind+1 : m )
+        call PrintItOut ( '.. ' // myName, MLSMSG_info )
+        m = ind - 1
+        ind = index( MLSCallStack(1:max(m,1)), comma, back=.true. )
+      end do
+      if ( present(name) ) name = myName
+d366 1
+a366 12
+      m = 0
+      ! call printItOut ( trim(MLSCallStack), MLSMSG_info )
+      call printItOut ( 'Calling stack (bottom-up)', MLSMSG_info )
+      do
+        ind = m + 1
+        m =   ind - 1 + index( MLSCallStack(ind:), comma )
+        if ( m < ind + 1 ) m = max( len_trim(MLSCallStack), ind ) + 1
+        myName = MLSCallStack( ind : m - 1 )
+        call printItOut ( '.. ' // myName, MLSMSG_info )
+        if ( present(name) .and. ind == 1 ) name = myName
+        if ( m > len_trim(MLSCallStack) - 1 ) exit
+      end do
+d368 9
+a376 2
+      if ( len_trim(MLSCallStack) > 0 ) &
+        & call printItOut ( trim(asciify(MLSCallStack, 'mnemonic')), MLSMSG_info )
+d378 1
+a378 8
+      m = 0
+      if ( len_trim(MLSCallStack) > 0 ) then
+        m = 1
+        do ind = 1, len_trim(MLSCallStack)
+          if ( MLSCallStack(ind:ind) == comma ) m = m + 1
+        enddo
+      endif
+      write( myName, '(i8)' ) m
+d381 1
+a381 1
+      write( myName, '(i8)' ) len_trim(MLSCallStack)
+d384 2
+a385 1
+      write( myName, '(i8)' ) len(MLSCallStack) - len_trim(MLSCallStack)
+d389 1
+d391 32
+d584 1
+a584 1
+    if ( len_trim(MLSCallStack) > 0 ) call MLSMessageCalls( 'dump', name )
+d774 3
+@
+
+
+2.3
+log
+@Added procedure to summarize warnings
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.2 2007/08/29 19:51:02 pwagner Exp $
+d106 1
+d109 1
+d199 3
+a201 1
+    ! A wraparound subroutine so we can intercept calls 
+d212 1
+a212 1
+    integer :: msgLength                  
+d216 3
+d220 1
+d222 3
+d226 11
+a236 3
+    msgLength = min(len(message), WARNINGMESSLENGTH)
+    ! Here's where we suppress warning messages beyond a limit for each
+    if ( severity == MLSMSG_Warning ) totalnumwarnings = totalnumwarnings + 1
+d244 1
+a244 1
+          & ( warningmessages(warning_index) /= trim(message(1:msgLength)) )
+d259 1
+a259 1
+          if ( warningmessages(warning_index) == message(1:msgLength) ) exit
+d262 2
+a263 1
+        if ( timeswarned(warning_index) > MLSMessageConfig%limitWarnings ) return
+d265 3
+a267 1
+          & MLSMessageConfig%limitWarnings + 1 )
+d273 4
+d279 3
+a281 3
+      ! For warnings and so on, just pass args to MLSMessageStd
+      call MLSMessageStd( severity, ModuleNameIn,  Message, &
+        & nosubsequentwarnings, Advance )
+d289 2
+a290 2
+      call MLSMessageStd( severity, ModuleNameIn, Message, &
+        & nosubsequentwarnings, Advance, MLSFile=MLSFile )
+d435 1
+a435 2
+    call assembleFullLine( Severity, ModuleNameIn, Message, line, line_len, &
+      & .false. )
+d596 2
+a597 1
+    call PrintItOut( ' Warnings Summary', MLSMSG_Info )
+d639 1
+a639 1
+    & line, line_len, nosubsequentwarnings )
+a644 1
+    logical, intent(in)           :: nosubsequentwarnings
+d665 4
+a668 9
+    if ( nosubsequentwarnings ) then
+      line(line_len+1:) = WARNINGSSUPPRESSED // message
+      line_len = line_len + len(WARNINGSSUPPRESSED) + len_trim(message)
+    else
+      line(line_len+1:) = message
+      line_len = line_len + len(message) ! Not len-trim, so we can get
+      ! trailing blanks into a part of a message.  If there are trailing
+      ! blanks remaining when my_adv is true, they'll be trimmed off.
+    end if
+d696 1
+a696 1
+    & nosubsequentwarningsIn, Advance, MLSFile )
+a701 1
+    logical, optional, intent(in) :: nosubsequentwarningsIn
+a711 1
+    logical :: nosubsequentwarnings
+a713 3
+    nosubsequentwarnings = .false.
+    if ( present(nosubsequentwarningsIn) ) &
+      & nosubsequentwarnings = nosubsequentwarningsIn
+d720 1
+a720 3
+      call assembleFullLine( Severity, ModuleNameIn, Message, line, line_len, &
+        & nosubsequentwarnings )
+
+d773 3
+@
+
+
+2.2
+log
+@Worked around Intel quirk that wraps stdout when 'FMT=*'
+@
+text
+@d12 1
+a12 1
+! $Id: MLSMessage.f9h,v 2.1 2007/08/27 23:52:14 pwagner Exp $
+d48 1
+d66 1
+d107 1
+d184 1
+a184 1
+  public :: MLSMessageCalls, StopWithErrorMsg
+d217 1
+d525 4
+d530 1
+d563 22
+d760 3
+@
+
+
+2.1
+log
+@First commit
+@
+text
+@d12 1
+a12 1
+! $Id: stats0.f9h,v 2.3 2006/03/08 01:13:38 pwagner Exp $
+d121 4
+d161 6
+a166 1
+  ! to an error; it will be dumped (if non-blank) on calling StopWithErrorMsg
+d372 1
+a372 1
+        & call printItOut ( trim(MLSCallStack), MLSMSG_info )
+d728 4
+a731 1
+! $Log: stats0.f9h,v $
+@
+

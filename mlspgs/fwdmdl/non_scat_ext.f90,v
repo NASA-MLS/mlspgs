@@ -1,0 +1,353 @@
+head	2.7;
+access;
+symbols
+	v5-02-NRT-19:2.7
+	v6-00:2.7
+	v5-02-NRT-18:2.7
+	v5-02:2.7
+	v5-01-NRT-17:2.7
+	v5-01-NRT-16:2.7
+	v5-01-NRT-15:2.7
+	v5-01-NRT-14:2.7
+	neuralnetworks-1-0:2.7.0.12
+	cfm-single-freq-0-1:2.7.0.10
+	v5-01:2.7
+	v5-00:2.7
+	v4-23-TA133:2.7.0.8
+	mus-emls-1-70:2.7.0.6
+	rel-1-0-englocks-work:2.7.0.4
+	VUMLS1-00:2.7
+	VPL1-00:2.7
+	V4-22-NRT-08:2.7
+	VAM1-00:2.7
+	V4-21:2.7.0.2
+	V4-13:2.7
+	V4-12:2.7
+	V4-11:2.7
+	V4-10:2.7
+	V3-43:2.5
+	M4-00:2.6
+	V3-41:2.5
+	V3-40-PlusGM57:2.5.0.2
+	V2-24-NRT-04:2.3
+	V3-33:2.6
+	V2-24:2.3
+	V3-31:2.6
+	V3-30-NRT-05:2.6
+	cfm-01-00:2.6
+	V3-30:2.5
+	V3-20:2.5
+	V3-10:2.5
+	V2-23-NRT-02:2.3
+	V2-23:2.3
+	V2-22-NRT-01:2.3
+	V2-22:2.3
+	V2-21:2.2
+	V2-20:2.2
+	V2-11:2.2
+	V2-10:2.2
+	V2-00:2.2
+	V1-51:2.1
+	V1-50:2.1
+	V1-45:2.1
+	V1-44:2.1
+	V1-43:2.1
+	V1-32:2.1
+	V1-31:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.7
+date	2013.06.12.02.32.47;	author vsnyder;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2010.06.07.23.21.30;	author vsnyder;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2009.06.23.18.26.11;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2008.05.02.23.42.34;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2007.07.25.20.21.33;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2005.06.22.18.08.19;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2003.11.17.17.50.52;	author jonathan;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.7
+log
+@Cruft removal
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Non_scat_ext
+
+  use GasAbsorption, only: GET_BETA
+  use MLSCommon, only: r8
+  use SpectraLines, only: SETUP_SPECTRA
+  
+
+  IMPLICIT NONE
+      Private
+      Public :: get_beta_clear
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: non_scat_ext.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+      SUBROUTINE GET_BETA_CLEAR ( L, F, T, P, VMR_H2O, VMR_O3, VmR_N2O, &
+        &                         NU, Ext_coeff )
+
+!========================================================================
+
+      INCLUDE 'spectra.f9h' 
+
+      INTEGER, intent(in) :: NU                ! 2 x NO. OF pts
+      INTEGER, intent(in) :: L                 ! NO. OF (levels?)
+      REAL(r8), intent(in) :: F                ! Frequency
+      REAL(r8), intent(in) :: T(L)
+      REAL(r8), intent(in) :: P(L)
+!!     REAL(r8), intent(in) :: Z(L)
+      REAL(r8), intent(in) :: VMR_H2O(:), VMR_O3(:), VMR_N2O(:)
+      REAL(r8), intent(out) :: Ext_coeff(L)
+
+! local variables
+
+      integer :: I
+!-------------------------------------------------------------------------
+
+      QLG   = 0.0_r8
+      V0    = 0.0_r8
+      GSE   = 0.0_r8
+      IST   = 0.0_r8
+      WTH   = 0.0_r8
+      NTH   = 0.0_r8
+      DELTA = 0.0_r8
+      N1    = 0.0_r8
+      GAMMA = 0.0_r8
+      N2    = 0.0_r8
+
+      CALL SETUP_SPECTRA(QLG,V0,GSE,IST,WTH,NTH,DELTA,N1,      &
+                  &      GAMMA,N2,MOL,NMOL,NCNT)
+
+      DO I=1,L
+
+        CALL GET_BETA(QLG,V0,GSE,IST,WTH,NTH,DELTA,N1,GAMMA,N2,NMOL,NCNT,  &
+          &           T(I),P(I),F,VMR_H2O(I),VMR_O3(I),VMR_N2O(I),Ext_coeff(I) )
+
+      ENDDO
+
+!      stop
+
+   end subroutine GET_BETA_CLEAR 
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: non_scat_ext.f90,v 2.6 2010/06/07 23:21:30 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Non_scat_ext
+
+! $Log: non_scat_ext.f90,v $
+! Revision 2.6  2010/06/07 23:21:30  vsnyder
+! Changed some calling sequences
+!
+! Revision 2.5  2009/06/23 18:26:11  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.4  2008/05/02 23:42:34  vsnyder
+! Simplify, remove array copies
+!
+! Revision 2.3  2007/07/25 20:21:33  vsnyder
+! Delete USE for unreferenced entities and declarations for unused variables
+!
+! Revision 2.2  2005/06/22 18:08:19  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.1  2003/11/17 17:50:52  jonathan
+! initial work module for cloud model
+!
+@
+
+
+2.6
+log
+@Changed some calling sequences
+@
+text
+@a49 1
+      integer :: J
+d80 1
+a80 1
+       "$Id: non_scat_ext.f90,v 2.5 2009/06/23 18:26:11 pwagner Exp $"
+d90 3
+@
+
+
+2.5
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d25 1
+a25 1
+       "$RCSfile: $"
+d31 2
+a32 1
+      SUBROUTINE GET_BETA_CLEAR ( L, F, T, P, VMR, NU, NS, Ext_coeff )
+a37 1
+      INTEGER, intent(in) :: NS                ! NO. OF CHEMICAL SPECIES
+d44 1
+a44 1
+      REAL(r8), intent(in) :: VMR(NS,L)
+d70 1
+a70 1
+          &           T(I),P(I),F,VMR(1,I),VMR(:NS-1,I),Ext_coeff(I),NS )   
+d81 1
+a81 1
+       "$Id: read_apriori.f90 is it here $"
+d91 3
+@
+
+
+2.4
+log
+@Simplify, remove array copies
+@
+text
+@d25 1
+a25 1
+       "$RCSfile: non_scat_ext.f90,v $"
+d78 1
+a79 1
+!---------------------------- RCS Ident Info -------------------------------
+d81 2
+a82 3
+       "$Id: non_scat_ext.f90,v 2.3 2007/07/25 20:21:33 vsnyder Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d84 1
+d86 1
+d91 3
+@
+
+
+2.3
+log
+@Delete USE for unreferenced entities and declarations for unused variables
+@
+text
+@a48 2
+      REAL(r8) :: VMR_H2O
+      REAL(r8) :: VMR1(NS-1)
+d64 2
+a65 2
+        CALL SETUP_SPECTRA(QLG,V0,GSE,IST,WTH,NTH,DELTA,N1,      &
+                    &      GAMMA,N2,MOL,NMOL,NCNT)
+d69 2
+a70 8
+        VMR_H2O = VMR(1,I)
+        do J=2,NS
+          VMR1(J-1) = VMR(J,I)
+        enddo 
+!        print*, VMR_H2O,VMR1(1), VMR1(2), T(I), P(I)
+        CALL GET_BETA(QLG,V0,GSE,IST,WTH,NTH,DELTA,N1,GAMMA,N2,  &
+                    &        NMOL,NCNT,T(I),P(I),F,VMR_H2O,VMR1,Ext_coeff(I),NS )   
+!        print*, Ext_Coeff(I), T(I), P(I), Z(I), VMR_H2O, VMR1(1), VMR1(2)
+d81 1
+a81 1
+       "$Id: non_scat_ext.f90,v 2.2 2005/06/22 18:08:19 pwagner Exp $"
+d90 3
+@
+
+
+2.2
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@a16 1
+  use SpectroscopyCatalog_m, only: CATALOG_T
+d25 1
+a25 1
+       "$RCSfile: $"
+a49 1
+      REAL(r8) :: Beta
+d89 1
+a89 1
+       "$Id: $"
+d98 3
+@
+
+
+2.1
+log
+@initial work module for cloud model
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d24 3
+a26 6
+ !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm =                          &
+    "$Id: non_scat_ext.f90,v 1.24 2003/05/07 23:14:22 jonathan Exp $"
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName=                       &
+    "$RCSfile: ClearSkyModule.f90,v $"
+d28 1
+a28 1
+ !---------------------------------------------------------------------------
+d89 5
+a94 1
+
+d99 4
+a102 1
+! $Log: ScatSourceFunc.f90,v $
+@
+

@@ -1,0 +1,139 @@
+head	1.3;
+access;
+symbols
+	v5-02-NRT-19:1.3
+	v6-00:1.3
+	v5-02-NRT-18:1.3
+	v5-02:1.2
+	v5-01-NRT-17:1.3
+	v5-01-NRT-16:1.3
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.14
+	cfm-single-freq-0-1:1.2.0.12
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.10
+	mus-emls-1-70:1.2.0.8
+	rel-1-0-englocks-work:1.2.0.6
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.2
+	V4-21:1.2.0.4
+	V4-13:1.2
+	V4-12:1.2
+	V4-11:1.2
+	V4-10:1.2
+	V3-43:1.2
+	M4-00:1.2
+	V3-41:1.2
+	V3-40-PlusGM57:1.2.0.2
+	V2-24-NRT-04:1.2
+	V3-33:1.2
+	V2-24:1.2
+	V3-31:1.2
+	V3-30-NRT-05:1.2
+	cfm-01-00:1.2
+	V3-30:1.2
+	V3-20:1.2
+	V3-10:1.2
+	V2-23-NRT-02:1.2
+	V2-23:1.2
+	V2-22-NRT-01:1.2
+	V2-22:1.2
+	V2-21:1.2
+	V2-20:1.2
+	V2-11:1.2
+	V2-10:1.2
+	V2-00:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.3
+date	2021.12.22.16.40.00;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2006.06.29.23.11.10;	author lambert;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2006.04.27.23.55.31;	author lambert;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@Converted to python3
+@
+text
+@#! /usr/bin/python3
+# $Id: pycatlblmolecules.py,v 1.2 2006/06/29 23:11:10 lambert Exp $
+# remove repeated molecules in the lbl molecule list used in the PFA forward model
+# handle (R1A,R1B) and (R5H,R5V) duplicate definitions
+# Converted to python3 (2021-12-22)
+
+import sys
+from pyutils import uniq 
+
+# read the args
+s = sys.argv[1:]
+
+#print 'xxx'+str(s)+'xxx'
+
+# force upper case
+u = str(s).upper()
+
+# replace 'NONE' with ''
+if u.find('NONE') >= 0 : u = u.replace('NONE','')
+
+# if both _R1A and _R1B are present then return only _R1A
+if u.find('_R1A') >= 0 & u.find('_R1B') >= 0 : u = u.replace('_R1B','_R1A')
+
+# if both _R5H and R5V are present then return only _R5H
+if u.find('_R5H') >= 0 & u.find('_R5V') >= 0 : u = u.replace('_R5V','_R5H')
+
+# print uniquified string for m4 to grab
+print(uniq(u), end=" ")
+# $Log: resed.sh,v $
+@
+
+
+1.2
+log
+@use pyutils module
+@
+text
+@d1 2
+a2 2
+#! /usr/bin/python
+# $Id: pycatlblmolecules.py,v 1.1 2006/04/27 23:55:31 lambert Exp $
+d5 1
+d28 2
+a29 1
+print uniq(u),
+@
+
+
+1.1
+log
+@handles mandatory lbl molecules for PFA forward models
+@
+text
+@d2 1
+a2 1
+# $Id$
+d7 1
+a7 1
+from uniq import uniq
+@
+

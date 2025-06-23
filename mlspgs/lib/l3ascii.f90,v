@@ -1,0 +1,3751 @@
+head	2.43;
+access;
+symbols
+	v5-02-NRT-19:2.43
+	v6-00:2.43
+	v5-02-NRT-18:2.43
+	v5-02:2.43
+	v5-01-NRT-17:2.43
+	v5-01-NRT-16:2.43
+	v5-01-NRT-15:2.43
+	v5-01-NRT-14:2.43
+	neuralnetworks-1-0:2.43.0.6
+	cfm-single-freq-0-1:2.43.0.4
+	v5-01:2.43
+	v5-00:2.43
+	v4-23-TA133:2.43.0.2
+	mus-emls-1-70:2.42.0.4
+	rel-1-0-englocks-work:2.42.0.2
+	VUMLS1-00:2.41
+	VPL1-00:2.41
+	V4-22-NRT-08:2.41
+	VAM1-00:2.41
+	V4-21:2.40.0.2
+	V4-13:2.39
+	V4-12:2.38
+	V4-11:2.38
+	V4-10:2.38
+	V3-43:2.35
+	M4-00:2.36
+	V3-41:2.35
+	V3-40-PlusGM57:2.35.0.2
+	V2-24-NRT-04:2.32
+	V3-33:2.35
+	V2-24:2.32
+	V3-31:2.35
+	V3-30-NRT-05:2.35
+	cfm-01-00:2.35
+	V3-30:2.35
+	V3-20:2.35
+	V3-10:2.35
+	V2-23-NRT-02:2.32
+	V2-23:2.32
+	V2-22-NRT-01:2.32
+	V2-22:2.32
+	V2-21:2.28
+	V2-20:2.28
+	V2-11:2.28
+	V2-10:2.28
+	V2-00:2.28
+	V1-51:2.26
+	V1-50:2.26
+	V1-45:2.26
+	V1-44:2.26
+	V1-43:2.25
+	V1-42:2.25
+	V1-41:2.25
+	V1-32:2.25
+	V1-40:2.25
+	V1-31:2.25
+	V1-30:2.25
+	V1-13:2.23
+	V1-12:2.23
+	V1-11:2.23
+	V1-10:2.21
+	newfwm-feb03:2.21.0.2
+	V1-04:2.13
+	V1-03:2.13
+	V1-02:2.13
+	V1-00:2.12
+	newfwm-sep01:2.11.0.2
+	V0-7:2.11
+	V0-5-Level2:2.9
+	V0-5-SIPS:2.8;
+locks; strict;
+comment	@# @;
+
+
+2.43
+date	2019.01.17.16.16.05;	author pwagner;	state Exp;
+branches;
+next	2.42;
+
+2.42
+date	2017.07.10.18.25.14;	author pwagner;	state Exp;
+branches;
+next	2.41;
+
+2.41
+date	2015.03.28.00.57.46;	author vsnyder;	state Exp;
+branches;
+next	2.40;
+
+2.40
+date	2015.01.29.00.59.20;	author vsnyder;	state Exp;
+branches;
+next	2.39;
+
+2.39
+date	2014.09.05.00.25.14;	author vsnyder;	state Exp;
+branches;
+next	2.38;
+
+2.38
+date	2014.01.09.00.24.29;	author pwagner;	state Exp;
+branches;
+next	2.37;
+
+2.37
+date	2013.09.24.23.27.14;	author vsnyder;	state Exp;
+branches;
+next	2.36;
+
+2.36
+date	2012.03.06.19.30.07;	author pwagner;	state Exp;
+branches;
+next	2.35;
+
+2.35
+date	2009.06.23.18.25.43;	author pwagner;	state Exp;
+branches;
+next	2.34;
+
+2.34
+date	2009.06.16.17.19.22;	author pwagner;	state Exp;
+branches;
+next	2.33;
+
+2.33
+date	2008.01.07.21.36.33;	author pwagner;	state Exp;
+branches;
+next	2.32;
+
+2.32
+date	2007.09.27.21.57.26;	author pwagner;	state Exp;
+branches;
+next	2.31;
+
+2.31
+date	2007.06.21.00.49.52;	author vsnyder;	state Exp;
+branches;
+next	2.30;
+
+2.30
+date	2007.03.07.01.22.46;	author pwagner;	state Exp;
+branches;
+next	2.29;
+
+2.29
+date	2007.01.11.20.39.50;	author vsnyder;	state Exp;
+branches;
+next	2.28;
+
+2.28
+date	2005.09.22.23.35.14;	author pwagner;	state Exp;
+branches;
+next	2.27;
+
+2.27
+date	2005.06.22.17.25.49;	author pwagner;	state Exp;
+branches;
+next	2.26;
+
+2.26
+date	2004.08.03.17.59.34;	author pwagner;	state Exp;
+branches;
+next	2.25;
+
+2.25
+date	2003.09.10.00.18.42;	author pwagner;	state Exp;
+branches;
+next	2.24;
+
+2.24
+date	2003.04.04.00.09.55;	author livesey;	state Exp;
+branches;
+next	2.23;
+
+2.23
+date	2003.02.28.02.27.37;	author livesey;	state Exp;
+branches;
+next	2.22;
+
+2.22
+date	2003.02.19.19.13.28;	author pwagner;	state Exp;
+branches;
+next	2.21;
+
+2.21
+date	2002.10.08.00.09.11;	author pwagner;	state Exp;
+branches;
+next	2.20;
+
+2.20
+date	2002.07.17.00.24.54;	author livesey;	state Exp;
+branches;
+next	2.19;
+
+2.19
+date	2002.07.17.00.21.07;	author livesey;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2002.07.11.12.43.52;	author hcp;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2002.07.11.11.30.59;	author mjf;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2002.07.02.19.55.49;	author livesey;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2002.07.01.23.56.37;	author livesey;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2002.07.01.23.52.19;	author vsnyder;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2002.05.02.09.48.40;	author hcp;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2002.01.09.23.46.42;	author pwagner;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2001.07.12.23.28.39;	author livesey;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2001.05.07.23.24.16;	author pwagner;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2001.04.27.07.48.54;	author pumphrey;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2001.04.13.02.08.23;	author vsnyder;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2001.04.12.22.56.11;	author vsnyder;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2001.03.30.00.25.20;	author pwagner;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2001.03.29.00.51.35;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2001.03.28.00.24.38;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2001.03.27.17.33.30;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2001.03.15.21.40.30;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.03.15.21.27.26;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.43
+log
+@Last commit re. idate1, idate2 was probably an error
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=============================================================================
+module L3ascii ! Collections of Hugh's subroutines to handle TYPE GriddedData_T
+!=============================================================================
+
+  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+  use Dump_0, only: Dump
+  use GriddedData, only: DestroygriddedData, GriddedData_T, V_Is_Pressure, &
+    & V_Is_Altitude, V_Is_Gph, V_Is_Theta, Rgr
+  use HighOutput, only: OutputnamedValue
+  use Lexer_Core, only: Print_Source
+  use MLSCommon, only: Linelen, Namelen, UndefinedValue
+  use MLSKinds, only: R4, R8
+  use MLSMessagemodule, only: MLSMessage, MLSMSG_Warning
+  use MLSStrings, only: Capitalize, &
+    & Count_Words, Readcompletelinewithoutcomments
+  use Output_M, only: Output
+  use Tree, only: Dump_Tree_Node, Where
+
+  implicit none
+  private
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: l3ascii.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+!     c o n t e n t s
+!     - - - - - - - -
+
+! L3ascii_open           Opens a l3ascii file, reads, prints
+! L3ascii_read_field     Read field info and all the axis info
+! L3ascii_interp_field   Get value in outval at the specified pressure, lat, etc
+! make_log_axis          Create log axis according to specified divisions
+! L3ascii_get_multiplier How much was the mixing ratio multiplied by?
+
+  public :: L3ascii_open, L3ascii_read_field, &
+    & L3ascii_interp_field, L3ascii_get_multiplier, Make_log_axis
+  !private :: get_next_noncomment_line, 
+  private :: Make_linear_axis
+  private :: Read_explicit_axis, Ilocate
+  integer, private :: ERROR
+
+  interface L3ascii_interp_field !And this does WTF? On-the-fly dumps; see l2/tree_walker.f90
+    module procedure L3ascii_interp_field_r4
+    module procedure L3ascii_interp_field_r8
+  end interface
+
+   ! --------------------------------------------------------------------------
+
+contains
+
+  subroutine L3ascii_open ( filename, unit )
+    ! opens a l3ascii file, reads, prints and discards the annoying
+    ! header line and returns the unit it chose. No special close routine.
+    ! just do close(unit=unit)
+    use IO_Stuff, only: Get_Lun
+    use Machine, only: IO_Error
+    !--------- argument ----------!
+    character(len=*),intent(in) :: filename
+    integer,intent(out) :: unit
+    !-------locals------!
+    integer :: status
+    !character(len=LineLen) :: headerline
+    !----executables----!
+    !----- Find first unattached unit -----!
+    error = 0
+    call get_lun ( unit, msg=.false. )
+    if ( unit < 0 ) then
+       call announce_error ( 0, "in subroutine l3ascii_open: No units left" )
+    else
+      open ( unit=unit, file=filename, status="old", action="read", iostat=status )
+      if ( status /= 0 ) then
+        call io_error ( "Unable to open l3ascii file ", status, filename )
+        call announce_error ( 0, "in subroutine l3ascii_open: Unable to open file" )
+        unit = -1
+      end if
+    end if
+
+    !First line is not prefaced with ; nor is it of any use. 
+    ! we read it to move the file position past it
+    !read(unit=unit,fmt="(a)")headerline
+    !    print*,headerline
+  end subroutine L3ascii_open
+
+  subroutine L3ascii_read_field ( Unit, Field, End_of_file, ErrType )
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use Dates_Module, only: Ccsds2tai    ! Shoud use SDP Toolkit eventually. 
+    use, Intrinsic :: ISO_C_Binding, only: C_Intptr_T, C_Loc
+    use Toggles, only: Gen, Levels, Toggle
+    use Trace_m, only: Trace_Begin, Trace_End
+    ! ----Arguments ----!
+    integer, intent(in) :: unit
+    integer, intent(out), optional :: ErrType
+    type(GriddedData_T), intent(inout) :: field
+    logical , intent(out) :: end_of_file
+    !-------Local Variables --------!
+    integer(c_intptr_t) :: Addr         ! For tracing
+    character(len=*),parameter :: DummyYear="1993"
+    logical :: opened
+    character(len=LineLen) :: inline
+    character(len=30) :: linetype, axistype, sdstring, edstring
+    character(len=LineLen) :: filename
+    integer :: Me = -1             ! String index for trace
+    character(len=80) :: unitstring
+    real(kind=r8), pointer, dimension(:) :: tmpaxis
+    real(kind=r8), pointer, dimension(:) :: dateStarts
+    real(kind=r8), pointer, dimension(:) :: dateEnds
+    integer :: idate, s, status, tmpaxis_len, word_count
+    integer, parameter :: maxNoDates = 30
+    real(kind=r8), allocatable, dimension(:,:,:,:,:,:) :: tmpfield
+    logical :: noYearStart, noYearEnd
+    ! real(rgr), parameter :: DefaultMissingValue = undefinedValue !-999.99
+
+    !---- Executable statements ----! 
+    call trace_begin ( me, "L3ascii_read_field", &
+      & cond=toggle(gen) .and. levels(gen) > 6 )
+
+    nullify ( tmpAxis, dateStarts, dateEnds )
+    error = 0
+    call destroyGriddedData ( field ) ! Avoid memory leaks
+
+    ! Abrupt termination--as with an error--means use field at own risk
+    if ( present(ErrType) ) then
+      ErrType = 1
+    end if
+
+    !    nullify(tmpaxis)
+    end_of_file = .TRUE. ! Terminate loops based around this on error
+
+    write(unit=unitstring,fmt="(i3)") unit ! For use in error reporting
+    inquire(unit=unit,opened=opened)
+    if ( .not. opened ) then
+      call announce_error(0, &
+        " in subroutine l3ascii_read_field, Unit "//trim(unitstring)//&
+        "is not connected to a file. Do call l3ascii_open(filename,unit) first")
+      go to 9
+    end if
+    inquire(unit=unit,name=filename) ! find the file name connected to this
+    ! unit for use in error messages.
+
+    field%sourceFileName = filename
+    field%missingValue = undefinedValue ! defaultMissingValue
+    field%empty = .false.
+
+    ! Fix axis arrays: set to default values with length 1 and a sensible 
+    ! value. These will be used if the file does not have variation 
+    ! along that axis
+
+    ! Automatically create a stub grid template with minimal size
+    ! Each component will be deallocated && reallocated with correct sizes later
+
+    call allocate_test ( field%heights, 1, 'field%heights', moduleName )
+    field%heights(1)=1000.0
+    field%noHeights=1
+    field%verticalCoordinate=1
+    call allocate_test ( field%lats, 1, 'field%lats', moduleName )
+    field%lats(1)=0.0
+    field%noLats=1
+    field%equivalentLatitude=.false.
+    call allocate_test ( field%lons, 1, 'field%lons', moduleName )
+    field%lons(1)=0.0
+    field%noLons=1
+    call allocate_test ( field%lsts, 1, 'field%lsts', moduleName )
+    field%lsts(1)=12.0
+    field%noLsts=1
+    call allocate_test ( field%szas, 1, 'field%szas', moduleName )
+    field%szas(1)=30.0
+    field%noSzas=1
+    call allocate_test ( field%dateStarts, 1, 'field%dateStarts', moduleName )
+    field%dateStarts(1)=30.0
+    field%noDates=1
+    call allocate_test ( field%dateEnds, 1, 'field%dateEnds', moduleName )
+    field%dateStarts(1)=30.0
+    field%noDates=1
+    allocate ( field%field(1:1,1:1,1:1,1:1,1:1,1:1), stat=status )
+    addr = 0
+    if ( status == 0 ) addr = transfer(c_loc(field%field(1,1,1,1,1,1)), addr)
+    call test_allocate ( status, moduleName, "field%field", uBounds=1, &
+      & elementSize = storage_size(field%field) / 8, address=addr )
+    field%dateStarts(1)=30.0
+    field%noDates=1
+    ! Dates are mandatory, so we don't have to give them a default value
+
+    !--- Read field info and all the axis info ---!
+    !    call get_next_noncomment_line(unit,inline)
+    end_of_file=.false.
+    call ReadCompleteLineWithoutComments ( unit, inline, eof=end_of_file )
+    !    print*,"Read line"
+    !    print*,inline
+    if ( Capitalize(inline(1:5)) /= "FIELD" ) then
+      call announce_error ( 0, &
+        & "in subroutine l3ascii_read_field, File "//trim(filename)// &
+        &  "on unit"//trim(unitstring)//" contains no more Fields" )
+      end_of_file=.true.
+      go to 9
+    end if
+
+    if ( end_of_file ) then
+      call announce_error ( 0,&
+        & "In subroutine l3ascii_read_field, End of File"//trim(filename)// &
+        & " on unit"//trim(unitstring))
+      go to 9
+    end if
+
+    read ( unit=inline, fmt=* ) linetype, field%quantityName, &
+      field%description, field%units
+    axesloop:do
+
+      call ReadCompleteLineWithoutComments ( unit, inline )
+      !print*,inline
+      read ( unit=inline, fmt=* ) linetype, axistype
+      linetype=Capitalize(linetype)
+      axistype=Capitalize(axistype)
+      if ( linetype(1:4) == "DATE" ) then ! This is always the last "axis"
+        exit axesloop                 ! and is different from the others
+      end if
+      if ( axistype(1:6) =="LINEAR" ) then
+                !print*,"Doing linear axis"
+        call make_linear_axis ( inline, tmpaxis, tmpaxis_len )
+               ! print*,"Done linear axis"
+      else if ( axistype(1:3) =="LOG" ) then
+       ! print*,"Doing log axis"
+        call make_log_axis ( inline, tmpaxis, tmpaxis_len )
+       ! print*,"Done log axis"
+      else if ( axistype(1:8) =="EXPLICIT" ) then
+            !   print*,"Doing explicit axis"
+        backspace(unit=unit)
+        call read_explicit_axis ( unit, tmpaxis, tmpaxis_len )
+                 !print*,"Done explicit axis"
+      else
+        end_of_file=.true.
+        call announce_error(0,&
+          "in subroutine l3ascii_read_field, File "//trim(filename)//&
+          " on unit"//trim(unitstring)//" contains coordinate"//&
+          " of invalid type "//trim(axistype)//"for axis"//&
+          trim(linetype))
+        go to 9
+      end if
+
+      ! I do not entirely grok what NJL intended verticalCoordinate to be.
+      if ( linetype(1:8) == "PRESSURE" .or. linetype(1:8) == "ALTITUDE" &
+        &  .or. linetype(1:3) == "GPH" .or. linetype(1:5) == "THETA" ) then
+        field%noHeights = tmpaxis_len
+        call allocate_test ( field%heights, tmpaxis_len, 'field%heights', moduleName )
+        field%heights = tmpaxis
+
+        if ( linetype(1:8) == "PRESSURE" ) then
+          field%verticalCoordinate = v_is_pressure ! 1
+        else if ( linetype(1:8) == "ALTITUDE" ) then
+          field%verticalCoordinate = v_is_altitude    ! 2
+        else if ( linetype(1:3) == "GPH" ) then
+          field%verticalCoordinate = v_is_gph ! 3
+        else if ( linetype(1:5) == "THETA" ) then
+          field%verticalCoordinate = v_is_theta ! 4
+        end if
+      else if ( linetype(1:8) == "LATITUDE" .or. &
+        &  linetype(1:8) == "EQUIVLAT" ) then
+        field%noLats = tmpaxis_len
+        call allocate_test ( field%lats, tmpaxis_len, 'field%lats', moduleName )
+        field%lats=tmpaxis
+        if ( linetype(1:8) == "LATITUDE" ) then
+          field%equivalentLatitude = .false.
+        else
+          field%equivalentLatitude = .true.
+        end if
+      else if ( linetype(1:9) == "LONGITUDE" ) then
+        field%noLons = tmpaxis_len
+        call allocate_test ( field%lons, tmpaxis_len, 'field%lons', moduleName )
+        field%lons = tmpaxis
+      else if ( linetype(1:9) == "LST" ) then
+        field%noLsts = tmpaxis_len
+        call allocate_test ( field%lsts, tmpaxis_len, 'field%lsts', moduleName )
+        field%lsts=tmpaxis
+      else if ( linetype(1:9) == "SZA" ) then
+        field%noSzas = tmpaxis_len
+        call allocate_test ( field%szas, tmpaxis_len, 'field%szas', moduleName )
+        field%szas = tmpaxis
+      end if
+    end do axesloop
+    call deallocate_test ( tmpaxis, 'tmpaxis', moduleName )
+
+    ! We already have the first date line read and the axis type extracted
+    ! It was the existence of a date line that caused us to exit from 
+    ! the loop axesloop. We don't know how many dates there are so we have to 
+    ! allocate large arrays and copy their contents to an array of the 
+    ! right size 
+    field%noDates=1
+    allocate ( tmpfield(1:field%noHeights,1:field%noLats,1:field%noLons, &
+      1:field%noLsts,1:field%noSzas,1:maxNoDates), stat=status )
+    addr = 0
+    if ( status == 0 ) then
+!       if ( size(tmpfield) > 0 ) addr = transfer(c_loc(tmpfield(1,1,1,1,1,1)), addr)
+    end if
+    call test_allocate ( status, moduleName, "tmpField", &
+      & uBounds = [ field%noHeights, field%noLats, field%noLons, &
+      &             field%noLsts, field%noSzas, maxNoDates ], &
+      & elementSize = storage_size(tmpfield) / 8, address=addr )
+    call allocate_test ( dateStarts, maxNoDates, 'dateStarts', moduleName )
+   call allocate_test ( dateEnds, maxNoDates, 'dateEnds', moduleName )
+
+    ! Loop to read in the data for the current date and check to see if 
+    ! there is another date
+    datesloop: do idate = 1, maxNoDates
+      !print*,"Datesloop: idate=",idate
+      word_count = count_words(inline)
+      if ( word_count == 3 ) then
+        read(unit=inline,fmt=*)linetype,axistype,sdstring
+        sdstring = adjustl(sdstring)
+        edstring = sdstring
+      else if ( word_count >= 4 ) then
+        read ( unit=inline, fmt=* ) linetype, axistype, sdstring, edstring
+        sdstring = adjustl(sdstring)
+        edstring  =adjustl(edstring)
+      else
+        call announce_error ( 0, &
+          & "in subroutine l3ascii_read_field: File"//trim(filename)//&
+          & "on unit"//trim(unitstring)//" contains a line beginning"//&
+          & trim(linetype)//"Date with too few words " )
+        end_of_file = .true.
+        go to 9
+      end if
+
+      ! Date strings can begin with - indicating the year is
+      ! missing and that the file belongs to no year in particular.
+      ! To convert dates to SDP toolkit (TAI) times (Seconds since start of
+      ! 1 Jan 1993) we need to stick on a dummy year
+      noYearStart = sdstring(1:1) == "-"
+      if ( noYearStart ) sdstring=dummyyear//sdstring
+      noYearEnd = edstring(1:1) == "-"
+      if ( noYearEnd ) edstring=dummyyear//edstring
+      if ( noYearStart .neqv. noYearEnd ) call announce_error ( 0, &
+        & "Start and end times irreconcilable, one is positive the other negative" )
+      if ( idate == 1 ) then
+        field%noYear = noYearStart
+      else
+        if ( noYearStart .neqv. field%noYear ) call announce_error ( 0, &
+          & "Field has mixed year and no year dates" )
+      end if
+
+      ! ccsds2tai returns days since 1 Jan 1993. 86400==no of secs per day
+      dateStarts(idate)=86400*ccsds2tai(sdstring)
+      dateEnds(idate)  =86400*ccsds2tai(edstring)
+      call ReadCompleteLineWithoutComments ( unit, inline )
+      backspace ( unit=unit )
+      !print*,"About to read data: inline=",inline
+      !print*,"tmpfield has size:",size(tmpfield),shape(tmpfield)
+
+      read ( unit=unit, fmt=* ) tmpfield(:,:,:,:,:,idate)
+      !print*,"Read data"
+      end_of_file = .false.
+      call ReadCompleteLineWithoutComments(unit,inline,eof=end_of_file)
+      ! print*,"Next date line:",inline,"EOF=",end_of_file
+      if ( end_of_file ) then
+        ! No more dates and nothing else either
+        exit datesloop
+      end if
+      read ( unit=inline, fmt=* ) linetype, axistype
+      linetype = Capitalize(linetype)
+      axistype = Capitalize(axistype)
+      if ( end_of_file .or. &
+        & linetype(1:5) == "FIELD" .or. linetype(1:3)=="END" ) then
+        !Oops! There were no more dates, but there is another field
+        backspace ( unit=unit )
+        exit datesloop
+      end if
+      if ( linetype(1:4) /= "DATE" ) then ! There should be another date here
+        call announce_error ( 0, &
+          & "in subroutine l3ascii_read_field: File"//trim(filename)//&
+          & "on unit"//trim(unitstring)//" contains a line beginning"//&
+          & trim(linetype)//"where I expected a line beginning Date " )
+        end_of_file = .true.
+        go to 9
+      end if
+      field%noDates = field%noDates+1
+
+    end do datesloop
+
+    s = size(field%field) * storage_size(field%field) / 8
+    addr = 0
+    if ( s > 0 ) addr = transfer(c_loc(field%field(1,1,1,1,1,1)), addr)
+    deallocate ( field%field, stat=status )
+    call test_deallocate ( status, moduleName, "field%field", s, address=addr )
+
+    allocate ( field%field(1:field%noHeights,1:field%noLats, &
+      & 1:field%noLons,1:field%noLsts,1:field%noSzas,1:field%noDates), &
+      & stat=status )
+    addr = 0
+    if ( status == 0 ) then
+      if ( size(field%field) > 0 ) addr = transfer(c_loc(field%field(1,1,1,1,1,1)), addr)
+    end if
+    call test_allocate ( status, moduleName, "field%field", &
+        uBounds = [ field%noHeights,field%noLats,field%noLons,field%noLsts,&
+                  & field%noSzas,field%noDates ], &
+      & elementSize = storage_size(field%field) / 8, address=addr )
+    call allocate_test ( field%dateStarts, field%noDates, 'field%dateStarts', &
+      & moduleName )
+    call allocate_test ( field%dateEnds, field%noDates, 'field%dateEnds', &
+      & moduleName )
+    field%dateStarts = dateStarts(1:field%noDates)
+    field%dateEnds = dateEnds(1:field%noDates)
+    field%field = tmpfield(:,:,:,:,:,1:field%noDates)
+    s = size(tmpField) * storage_size(tmpField) / 8
+    addr = 0
+!     if ( s > 0 ) addr = transfer(c_loc(tmpField(1,1,1,1,1,1)), addr)
+    deallocate ( tmpfield, stat=status )
+   call test_deallocate ( status, moduleName, "TmpField", s, address=addr )
+    call deallocate_test ( dateStarts, 'tdateStarts', moduleName )
+   call deallocate_test ( dateEnds, 'dateEnds', moduleName )
+
+    ! Normal termination--assume field is valid maybe even correct
+    if ( present(ErrType) ) then
+      ErrType = 0
+    end if
+9   continue
+    call trace_end ( "L3ascii_read_field", &
+      & cond=toggle(gen) .and. levels(gen) > 6 )
+  end subroutine L3ascii_read_field
+
+  subroutine L3ascii_interp_field_r4 ( field, outval, pressure, lat, lon, lst, &
+    & sza, date, debug )
+    ! Returns a value in outval containing the value of the 
+    ! gridded data set "field" at the pressure, lat, etc specified by 
+    ! the other args. Co-ordinates are 
+    ! all optional and suitably dull defaults are chosen if no 
+    ! arg is supplied. The date is supplied in tai format i.e. seconds since
+    ! Midnite, 1 Jan 1993. 
+    ! At the moment the height coord has to be pressure.
+    !--------------Arguments------------!
+    type(GriddedData_T),intent(in) :: field
+    real(kind=r4),intent(in),optional :: pressure
+    real(kind=r4),intent(in),optional :: lat
+    real(kind=r4),intent(in),optional :: lon
+    real(kind=r4),intent(in),optional :: lst
+    real(kind=r4),intent(in),optional :: sza
+    real(kind=r8),intent(in),optional :: date
+    logical, optional, intent(in) :: debug
+    real(kind=r4),intent(out) :: outval
+    !---- local vars: optional arg values ------!
+    real(kind=r8) :: inlat,inlon,inlst,insza,indate,inpressure,inalt
+    !---- local vars: others--------!
+    integer :: ilat1,ilat2,ilon1,ilon2,isza1,isza2,ilst1,ilst2,idate1,idate2
+    integer :: ialt1,ialt2
+    integer,dimension(1:6) :: hcshape 
+    real(kind=r8),pointer,dimension(:) :: tmpalt,tmpdate
+    real(kind=r8),allocatable,dimension(:,:,:,:,:,:) :: hcube
+
+    !----Executable code ---- !
+    include "l3ascii_interp_field.f9h" 
+  end subroutine L3ascii_interp_field_r4
+
+  subroutine L3ascii_interp_field_r8 ( field, outval, pressure, lat, lon, lst, &
+    & sza, date, debug )
+    ! Returns a value in outval containing the value of the 
+    ! gridded data set "field" at the pressure, lat, etc specified by 
+    ! the other args. Co-ordinates are 
+    ! all optional and suitably dull defaults are chosen if no 
+    ! arg is supplied. The date is supplied in tai format i.e. seconds since
+    ! Midnite, 1 Jan 1993. 
+    ! At the moment the height coord has to be pressure.
+    !--------------Arguments------------!
+    type(GriddedData_T),intent(in) :: field
+    real(kind=r8),intent(in),optional :: pressure
+    real(kind=r8),intent(in),optional :: lat
+    real(kind=r8),intent(in),optional :: lon
+    real(kind=r8),intent(in),optional :: lst
+    real(kind=r8),intent(in),optional :: sza
+    real(kind=r8),intent(in),optional :: date
+    logical, optional, intent(in) :: debug
+    real(kind=r8),intent(out) :: outval
+    !---- local vars: optional arg values ------!
+    real(kind=r8) :: inlat,inlon,inlst,insza,indate,inpressure,inalt
+    !---- local vars: others--------!
+    integer :: ilat1,ilat2,ilon1,ilon2,isza1,isza2,ilst1,ilst2,idate1,idate2
+    integer :: ialt1,ialt2
+    integer,dimension(1:6) :: hcshape 
+    real(kind=r8),pointer,dimension(:) :: tmpalt,tmpdate
+    real(kind=r8),allocatable,dimension(:,:,:,:,:,:) :: hcube
+
+    !----Executable code ---- !
+    include "l3ascii_interp_field.f9h" 
+  end subroutine L3ascii_interp_field_r8
+
+  subroutine Ilocate ( x, xval, ix1, ix2 )
+    ! This finds which two elements of x lie on either side of xval
+    ! x is assumed to be 1-based. 
+    !     *** arguments *** 
+    real(kind=r8), dimension(:) :: x
+    real(kind=r8),intent(in) :: xval
+    integer, intent(out) :: ix1,ix2
+    !     *** other variables ***                                           
+    integer :: j,dj,n 
+    !     *** executable statements ***                                     
+    n=size(x)
+    if ( n <= 1 ) then ! x has only one element: no interpolating to be done
+      ix1 = 1
+      ix2 = 1
+    else
+      if ( xval > x(n) ) then ! off top . Use end value
+        ix1 = n
+        ix2 = n
+      else if ( xval < x(1) ) then ! of bottom. Use end value
+        ix1 = 1
+        ix2 = 1
+      else ! in range of x. Do binary search.
+        j = n/2 
+        dj = n/2 
+binsearch: do  
+          if ( dj > 1 ) then 
+            dj = dj/2 
+          else 
+            dj = 1
+          end if
+          if ( x(j) > xval .and. x(j+1) > xval ) then 
+            j = j-dj 
+            cycle
+          else  if ( x(j) < xval .and. x(j+1) < xval ) then 
+            j = j+dj 
+            cycle 
+          else 
+            exit
+          end if
+        end do binsearch
+        ix1 = j
+        ix2 = j+1
+      end if
+    end if
+  end subroutine Ilocate
+
+!  subroutine get_next_noncomment_line(unit,line)
+!    !---Arguments----!
+!    integer,intent(in) :: unit
+!    character(len=*),intent(out) :: line
+!    !---------Local vars------!
+!    integer :: ioinfo
+!    !---Executable bit -----!
+!    line(1:1)=" "
+!    ioinfo=0
+!    rdloop:do
+!       read(unit=unit,fmt="(a)",iostat=ioinfo)line      !read a line
+!       if ( ioinfo /= 0 ) then
+!          line="End of File Found"
+!          exit rdloop
+!       else
+!          line=adjustl(line)                 ! remove blanks from start
+!          if ( line(1:1) /= ";" .and. line(1:1) /= " " ) then !not a comment
+!             exit rdloop                     ! so exit loop and return line
+!          end if
+!       end if
+!       !        print*,line(1:80)
+!    end do rdloop
+
+    !    print*,"Got non-comment line"
+    !    print*,line(1:80)
+
+!  end subroutine get_next_noncomment_line
+
+  subroutine make_log_axis ( inline, axis, axis_len )
+    !--------args------------!
+    character(len=*),intent(in) :: inline
+    real(kind=r8),pointer,dimension(:) :: axis ! Warning: must be nullified or associated!
+    integer,intent(out) :: axis_len
+    !-------locals--------------!
+    character(len=30) :: linetype,axistype
+    real(kind=r8) :: basepressure
+    integer,dimension(:),allocatable :: n_levs_in_sec, n_levs_per_dec, axints
+    integer :: i,j,nsections,nwords,st,stind
+    real(kind=r8) :: gridstep
+
+    !-------Executable----------!
+
+    if ( len(inline) <= 1 ) then
+      call announce_error ( 0, &
+        & "in make_log_axis: inline, <" // trim(inline)//">, too short" )
+    end if
+
+    !Count words in inline. 
+    nwords = 1
+    do j = 2, len(inline)
+      if ( inline(j:j) /= " " .and. inline(j-1:j-1) == " " ) then
+        nwords = nwords+1
+      end if
+    end do
+    nsections = (nwords-3)/2
+
+    if ( nsections < 1 ) then
+      call announce_error ( 0, "in make_log_axis: nsections < 1" )
+    end if
+
+    allocate ( n_levs_in_sec(1:nsections),n_levs_per_dec(1:nsections),&
+      &  axints(1:nsections*2) )
+    read ( unit=inline, fmt=* ) linetype, axistype, basepressure, axints
+    n_levs_in_sec = axints(1:nsections*2-1:2)
+    n_levs_per_dec = axints(2:nsections*2:2)
+
+    axis_len = sum(n_levs_in_sec)
+
+    if ( axis_len < 1 ) then
+      call announce_error ( 0, "in make_log_axis: axis_len < 1" )
+    end if
+
+    call allocate_test (axis, axis_len, 'axis', moduleName )
+    axis(1) = -log10(basepressure)
+    stind = 0
+    do j = 1, nsections
+      gridstep=1.0_r8/n_levs_per_dec(j)
+      if ( gridstep <= 0.d0 ) then
+        call announce_error ( 0, "in make_log_axis: gridstep <= 0" )
+        stop
+      end if
+      if ( j == 1 ) then
+        st = 2
+      else
+        st = 1
+      end if
+      do i = st, n_levs_in_sec(j)
+        axis(stind+i)=axis(stind+i-1)+gridstep
+      end do
+      stind = stind+n_levs_in_sec(j)
+    end do
+
+!    call dump ( axis, &
+!          & '  log(log axis) =' )
+
+! not sure why this doesn't always work, but it doesn't for paw
+!    axis=10.0_r8**(-axis)
+! (possibly a compiler bug for NAG on Linux)
+! so instead we'll use this equivalent. Note that it is _important_ to
+! specify the 10 as 10.0_r8 or the calculation is only done at single 
+! precision even though axis is double precision.
+
+    axis = exp(-log(10.0_r8)*axis)
+
+    deallocate ( n_levs_in_sec, n_levs_per_dec, axints )
+
+!        call dump ( axis, &
+!          & '  log axis =' )
+  end subroutine Make_log_axis
+
+  subroutine Make_linear_axis ( inline, axis, axis_len )
+    !--------args------------!
+    character(len=*),intent(in) :: inline
+    real(kind=r8),pointer,dimension(:) :: axis ! Warning: must be nullified or associated!
+    integer,intent(out) :: axis_len
+    !-------locals--------------!
+    character(len=30) :: linetype,axistype
+    real(kind=r8) :: baseval
+    integer,dimension(:),allocatable :: n_levs_in_sec
+    real(kind=r8),dimension(:),allocatable :: gridstep, axints
+    integer :: nwords,j,nsections,stind,st,i
+
+    !-------Executable----------!
+
+    ! Count words in inline. 
+
+    nwords = 1
+    do j = 2,len(inline)
+      if ( inline(j:j) /= " " .and. inline(j-1:j-1) == " " ) then
+        nwords = nwords+1
+      end if
+    end do
+    nsections = (nwords-3)/2
+
+    allocate ( n_levs_in_sec(1:nsections),gridstep(1:nsections),&
+      & axints(1:nsections*2) )
+
+    read ( unit=inline, fmt=* ) linetype, axistype, baseval, axints
+    n_levs_in_sec = nint(axints(1:nsections*2-1:2))
+    gridstep = axints(2:nsections*2:2)
+
+    axis_len = sum(n_levs_in_sec)
+
+    call allocate_test ( axis, axis_len, 'axis', moduleName )
+    axis(1) = baseval
+    stind = 0
+    do j = 1, nsections
+      if ( j == 1 ) then
+        st = 2
+      else
+        st = 1
+      end if
+      do i = st, n_levs_in_sec(j)
+        axis(stind+i) = axis(stind+i-1)+gridstep(j)
+      end do
+      stind = stind+n_levs_in_sec(j)
+    end do
+    deallocate ( axints,gridstep,n_levs_in_sec )
+
+  end subroutine Make_linear_axis
+
+  subroutine Read_explicit_axis ( unit, axis, axis_len )
+    !--------args------------!
+    integer,intent(in) :: unit
+    real(kind=r8),pointer,dimension(:) :: axis ! Warning: must be nullified or associated!
+    integer,intent(out) :: axis_len
+    !------- Local vars ---------!
+    integer,parameter :: ri_len=30
+    character(len=ri_len) :: readitem
+    character(len=1) :: rdchar
+    real(kind=r8),dimension(1:200) :: tmpaxis
+    integer :: i,iotest
+    logical :: foundcb
+
+    !Executables
+   
+    ! readitem needs to be initialised or there is a point where it 
+    ! can be used before being set.
+    readitem=""
+    ! An explicit axis is supplied as a parenthesised list, spread 
+    ! over several lines. This is a Royal PIA.
+    ! Read chars till we get to the (
+    do 
+      read ( unit=unit, fmt="(a)", advance="no" ) rdchar
+       !        write(unit=*,fmt="(a)",advance="no")rdchar 
+      if ( rdchar=="(" ) then
+        exit 
+      end if
+    end do
+    !    print*,"Got open paren"
+    ! now read items and add them to the axis until we get to the )
+    axis_len = 0
+    foundcb = .false.
+itemsloop:do
+      i = 1
+  charsloop:do
+        read ( unit=unit, fmt="(a)", advance="no", iostat=iotest ) rdchar
+          !write(unit=*,fmt="(a)",advance="no")rdchar 
+        if ( rdchar == ")" ) then
+             !print*,"Found ) at end of explicit axis"
+          foundcb = .true.
+          exit charsloop
+        end if
+        if ( rdchar == " " ) then
+           exit charsloop
+        end if
+        readitem(i:i) = rdchar
+        i = i+1
+      end do charsloop
+      if ( (i<=1 .and. .not.foundcb) .or. (i==2 .and. readitem(1:1)==" ") ) then
+        cycle itemsloop
+      end if
+      if ( i <= 1 .and. foundcb ) then
+        exit itemsloop
+      end if
+      !print*,"Axis item is",readitem(1:i-1)
+      axis_len = axis_len+1
+      read ( unit=readitem(1:i-1), fmt=* ) tmpaxis(axis_len)
+      !print*,"Element",axis_len," is ",tmpaxis(axis_len)
+      if ( foundcb ) then
+        exit itemsloop
+      end if
+    end do itemsloop
+    call allocate_test ( axis, axis_len, 'axis', moduleName )
+    axis = tmpaxis(1:axis_len)
+  end subroutine Read_explicit_axis
+
+  function L3ascii_get_multiplier ( field ) result ( multiplier )
+    ! This function attempts to return the number by which the mixing ratio
+    ! in the file was multiplied. If the data are mixing ratio or Kelvin, it 
+    ! returns 1, if they are ppmv, it returns 1.e6, if they are ppbv, it
+    ! returns 1.e9, if they are pptv it returns 1.e12. This is  just done by
+    ! parsing the "units" string in the file. If that is wrong, the function
+    ! won't be right either.
+    !------Argument)------!
+    type(GriddedData_T), intent(in) :: field
+    !---Function result-----!
+    real(kind=r8) :: multiplier
+    !---other vars-------!
+    character(len=NameLen) :: ucunits
+    integer :: ix
+    !----Executable functions---!
+    error = 0
+    ucunits = Capitalize(field%units)
+    ix = index(ucunits,"VMR ")
+    if ( ix > 0 ) then
+      multiplier = 1.0_r8
+      return
+    end if
+    ix = index(ucunits,"PPM")
+    if ( ix > 0 ) then
+      multiplier = 1.0e6_r8
+      return
+    end if
+    ix = index(ucunits,"PPB")
+    if ( ix > 0 ) then
+      multiplier = 1.0e9_r8
+      return
+    end if
+    ix = index(ucunits,"PPT")
+    if ( ix > 0 ) then
+      multiplier = 1.0e12_r8
+      return
+    end if
+    ix = index(ucunits,"K ")
+    if ( ix > 0 ) then
+      multiplier = 1.0_r8
+      return
+    end if
+    call announce_error ( 0, &
+      & "in function l3ascii_get_multiplier: Units "// &
+      & trim(field%units)//" for field "//trim(field%quantityName)// &
+      & "not known. Guessing multiplier=1.0" )
+    !print*,"in function l3ascii_get_multiplier: Units "//&
+    !     trim(field%units)//" for field "//trim(field%quantityName)//&
+    !     "not known. Guessing multiplier=1.0"
+   multiplier = 1.0_r8
+  end function L3ascii_get_multiplier
+
+  ! ------------------------------------------------  announce_error  -----
+  subroutine Announce_error ( lcf_where, full_message, use_toolkit, &
+  & error_number )
+  
+   ! Output an informative message about whatever error occurred
+   ! Don't be fooled by the word "toolkit" in use_toolkit
+   ! and in default_output_by_toolkit: all that happens is that
+   ! the output duty is given to the output module instead of the
+   ! print statement; by suitable choice of prunit
+   ! the output module knows when to use the toolkit and when not
+   
+   ! Arguments
+
+    integer, intent(in) :: lcf_where
+    character(LEN=*), intent(in) :: full_message
+    logical, intent(in), optional :: use_toolkit
+    integer, intent(in), optional :: error_number
+    ! Local
+    logical :: just_print_it
+    logical, parameter :: default_output_by_toolkit = .true.
+ 
+    if ( present(use_toolkit) ) then
+      just_print_it = .not. use_toolkit
+    else if ( default_output_by_toolkit ) then
+      just_print_it = .false.
+    else
+      just_print_it = .true.
+    end if
+ 
+    if ( .not. just_print_it ) then
+      error = max(error,1)
+      call output ( '***** At ' )
+
+      if ( lcf_where > 0 ) then
+          call print_source ( where(lcf_where) )
+      else
+        call output ( '(no lcf node available)' )
+      end if
+
+      call output ( ': ' )
+      call output ( "The " );
+      if ( lcf_where > 0 ) then
+        call dump_tree_node ( lcf_where, 0 )
+      else
+        call output ( '(no lcf tree available)' )
+      end if
+
+      call output ( " Caused the following error:", advance='yes', &
+        & from_where=ModuleName )
+      call output ( trim(full_message), advance='yes', &
+        & from_where=ModuleName )
+      if ( present(error_number) ) then
+        call output ( 'error number ', advance='no' )
+        call output ( error_number, places=9, advance='yes' )
+      end if
+    else
+      call output ( '***Error in module ' )
+      call output ( ModuleName, advance='yes' )
+      call output ( trim(full_message), advance='yes' )
+      if ( present(error_number) ) then
+        call output ( 'Error number ' )
+        call output ( error_number, advance='yes' )
+      end if
+    end if
+
+!===========================
+  end subroutine announce_error
+!===========================
+
+!=============================================================================
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: l3ascii.f90,v 2.42 2017/07/10 18:25:14 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module L3ascii
+!=============================================================================
+
+!
+! $Log: l3ascii.f90,v $
+! Revision 2.42  2017/07/10 18:25:14  pwagner
+! More CamelCase
+!
+! Revision 2.41  2015/03/28 00:57:46  vsnyder
+! Stuff to trace allocate/deallocate addresses -- mostly commented out
+! because NAG build 1017 doesn't yet allow arrays as arguments to C_LOC.
+!
+! Revision 2.40  2015/01/29 00:59:20  vsnyder
+! Make sure NoYearStart and NoYearEnd have values before references
+!
+! Revision 2.39  2014/09/05 00:25:14  vsnyder
+! More complete and accurate allocate/deallocate size tracking.
+! Add some tracing.
+!
+! Revision 2.38  2014/01/09 00:24:29  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
+! Revision 2.37  2013/09/24 23:27:14  vsnyder
+! Use Get_Where or Print_Source to start error messages
+!
+! Revision 2.36  2012/03/06 19:30:07  pwagner
+! Capitalize USEd stuff; R4 and R8 got from MLSKinds
+!
+! Revision 2.35  2009/06/23 18:25:43  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.34  2009/06/16 17:19:22  pwagner
+! Made default access private
+!
+! Revision 2.33  2008/01/07 21:36:33  pwagner
+! Replace DEFAULTUNDEFINEDVALUE with user-settable undefinedValue
+!
+! Revision 2.32  2007/09/27 21:57:26  pwagner
+! Uses MLSMessage to warn instead of output
+!
+! Revision 2.31  2007/06/21 00:49:52  vsnyder
+! Remove tabs, which are not part of the Fortran standard
+!
+! Revision 2.30  2007/03/07 01:22:46  pwagner
+! Side-step another log of non-positive args case lf6.2 caught
+!
+! Revision 2.29  2007/01/11 20:39:50  vsnyder
+! Use Get_Lun instead of having the code here
+!
+! Revision 2.28  2005/09/22 23:35:14  pwagner
+! date conversion procedures and functions all moved into dates module
+!
+! Revision 2.27  2005/06/22 17:25:49  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.26  2004/08/03 17:59:34  pwagner
+! Gets DEFAULTUNDEFINEDVALUE from MLSCommon
+!
+! Revision 2.25  2003/09/10 00:18:42  pwagner
+! Made filename length LineLen rather than 80
+!
+! Revision 2.24  2003/04/04 00:09:55  livesey
+! Added initialization for empty field
+!
+! Revision 2.23  2003/02/28 02:27:37  livesey
+! Now using missing value stuff
+!
+! Revision 2.22  2003/02/19 19:13:28  pwagner
+! new GriddedData_T with reduced precision
+!
+! Revision 2.21  2002/10/08 00:09:11  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.20  2002/07/17 00:24:54  livesey
+! Fixed another print statement
+!
+! Revision 2.19  2002/07/17 00:21:07  livesey
+! Commented out more print statements from Hugh
+!
+! Revision 2.18  2002/07/11 12:43:52  hcp
+! changed 10. to 10.0_r8 to make calculation be done in dble prec.
+!
+! Revision 2.17  2002/07/11 11:30:59  mjf
+! Nullified two pointers before using allocate_test
+!
+! Revision 2.16  2002/07/02 19:55:49  livesey
+! Fixed trivial problem caught by NAG
+!
+! Revision 2.15  2002/07/01 23:56:37  livesey
+! Added code to deal better with 'noYear' quantities
+!
+! Revision 2.14  2002/07/01 23:52:19  vsnyder
+! Plug some memory leaks, cosmetic changes
+!
+! Revision 2.13  2002/05/02 09:48:40  hcp
+! Removed a whittering print statement
+!
+! Revision 2.12  2002/01/09 23:46:42  pwagner
+! Added toc; removed debugging stuff
+!
+! Revision 2.11  2001/07/12 23:28:39  livesey
+! Tidied up a bit.  More work needs to come here.
+!
+! Revision 2.10  2001/05/07 23:24:16  pwagner
+! Removed unused prints; detached from toolkit
+!
+! Revision 2.9  2001/04/27 07:48:54  pumphrey
+! Many nested loops in l3ascii replaced with array ops. Small fixes
+! (e.g. spelling mistakes) in other modules.
+!
+! Revision 2.8  2001/04/13 02:08:23  vsnyder
+! Fix syntax error that Lahey let go by
+!
+! Revision 2.7  2001/04/12 22:56:11  vsnyder
+! Improve an error message, cosmetic changes
+!
+! Revision 2.6  2001/03/30 00:25:20  pwagner
+! Fills sourceFileName
+!
+! Revision 2.5  2001/03/29 00:51:35  pwagner
+! make_log_axis now always works
+!
+! Revision 2.4  2001/03/28 00:24:38  pwagner
+! Some error controls, ErrType added
+!
+! Revision 2.3  2001/03/27 17:33:30  pwagner
+! announce_error replaces MLSMessage
+!
+! Revision 2.2  2001/03/15 21:40:30  pwagner
+! Eliminated unused routines from USE statements
+!
+! Revision 2.1  2001/03/15 21:27:26  pwagner
+! Moved l3ascii methods from GriddedData here
+!
+!
+@
+
+
+2.42
+log
+@More CamelCase
+@
+text
+@d24 1
+a24 1
+  use MLSMessagemodule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+d893 1
+a893 1
+       "$Id: l3ascii.f90,v 2.41 2015/03/28 00:57:46 vsnyder Exp $"
+d905 3
+@
+
+
+2.41
+log
+@Stuff to trace allocate/deallocate addresses -- mostly commented out
+because NAG build 1017 doesn't yet allow arrays as arguments to C_LOC.
+@
+text
+@d16 13
+a28 13
+  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+  use DUMP_0, only: DUMP
+  use GRIDDEDDATA, only: DESTROYGRIDDEDDATA, GRIDDEDDATA_T, V_IS_PRESSURE, &
+    & V_IS_ALTITUDE, V_IS_GPH, V_IS_THETA, RGR
+  use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
+  use LEXER_CORE, only: PRINT_SOURCE
+  use MLSCOMMON, only: LINELEN, NAMELEN, UNDEFINEDVALUE
+  use MLSKINDS, only: R4, R8
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_WARNING
+  use MLSSTRINGS, only: CAPITALIZE, &
+    & COUNT_WORDS, READCOMPLETELINEWITHOUTCOMMENTS
+  use OUTPUT_M, only: OUTPUT
+  use TREE, only: DUMP_TREE_NODE, WHERE
+d30 1
+a30 1
+  implicit NONE
+d99 2
+a100 2
+    use Dates_module, only: ccsds2tai    ! Shoud use SDP Toolkit eventually. 
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+d893 1
+a893 1
+       "$Id: l3ascii.f90,v 2.40 2015/01/29 00:59:20 vsnyder Exp $"
+d905 4
+@
+
+
+2.40
+log
+@Make sure NoYearStart and NoYearEnd have values before references
+@
+text
+@d99 2
+a100 1
+    use dates_module, only: ccsds2tai    ! Shoud use SDP Toolkit eventually. 
+d109 1
+d163 1
+d188 2
+d191 1
+a191 1
+      & elementSize = storage_size(field%field) / 8 )
+d302 4
+d309 1
+a309 1
+      & elementSize = storage_size(tmpfield) / 8 )
+d311 1
+a311 1
+    call allocate_test ( dateEnds, maxNoDates, 'dateEnds', moduleName )
+d391 2
+d394 1
+a394 1
+    call test_deallocate ( status, moduleName, "field%field", s )
+d399 4
+d406 1
+a406 1
+      & elementSize = storage_size(field%field) / 8 )
+d415 2
+d418 1
+a418 1
+    call test_deallocate ( status, moduleName, "TmpField", s )
+d420 1
+a420 1
+    call deallocate_test ( dateEnds, 'dateEnds', moduleName )
+d893 1
+a893 1
+       "$Id: l3ascii.f90,v 2.39 2014/09/05 00:25:14 vsnyder Exp $"
+d905 3
+@
+
+
+2.39
+log
+@More complete and accurate allocate/deallocate size tracking.
+Add some tracing.
+@
+text
+@d330 4
+a333 8
+      if ( sdstring(1:1) == "-" ) then
+        sdstring=dummyyear//sdstring
+        noYearStart = .true.
+      end if
+      if ( edstring(1:1) == "-" ) then
+        edstring=dummyyear//edstring
+        noYearEnd = .true.
+      end if
+d876 1
+a876 1
+       "$Id: l3ascii.f90,v 2.38 2014/01/09 00:24:29 pwagner Exp $"
+d888 4
+@
+
+
+2.38
+log
+@Some procedures formerly in output_m now got from highOutput
+@
+text
+@d48 1
+a48 1
+  public::L3ascii_open, L3ascii_read_field, &
+d50 1
+a50 1
+  !private::get_next_noncomment_line, 
+d71 2
+a72 2
+    character(len=*),intent(in)::filename
+    integer,intent(out)::unit
+d74 2
+a75 2
+    integer:: status
+    !character(len=LineLen)::headerline
+d98 1
+d100 2
+d113 1
+d118 2
+a119 2
+    integer :: tmpaxis_len, idate, word_count
+    integer,parameter :: maxNoDates = 30
+d125 2
+d146 1
+a146 1
+      return
+d184 3
+a186 1
+    allocate ( field%field(1:1,1:1,1:1,1:1,1:1,1:1) )
+d202 1
+a202 1
+      return
+d209 1
+a209 1
+      return
+d244 1
+a244 1
+        return
+d296 5
+a300 1
+      1:field%noLsts,1:field%noSzas,1:maxNoDates) )
+d323 1
+a323 1
+        return
+d379 1
+a379 1
+        return
+d385 11
+a395 4
+    deallocate ( field%field )
+!
+    allocate ( field%field(1:field%noHeights,1:field%noLats,&
+      & 1:field%noLons,1:field%noLsts,1:field%noSzas,1:field%noDates) )
+d403 3
+a405 1
+    deallocate ( tmpfield )
+d413 3
+d428 9
+a436 9
+    type(GriddedData_T),intent(in)::field
+    real(kind=r4),intent(in),optional::pressure
+    real(kind=r4),intent(in),optional::lat
+    real(kind=r4),intent(in),optional::lon
+    real(kind=r4),intent(in),optional::lst
+    real(kind=r4),intent(in),optional::sza
+    real(kind=r8),intent(in),optional::date
+    logical, optional, intent(in)    :: debug
+    real(kind=r4),intent(out)::outval
+d438 1
+a438 1
+    real(kind=r8):: inlat,inlon,inlst,insza,indate,inpressure,inalt
+d440 5
+a444 5
+    integer:: ilat1,ilat2,ilon1,ilon2,isza1,isza2,ilst1,ilst2,idate1,idate2
+    integer:: ialt1,ialt2
+    integer,dimension(1:6)::hcshape 
+    real(kind=r8),pointer,dimension(:)::tmpalt,tmpdate
+    real(kind=r8),allocatable,dimension(:,:,:,:,:,:)::hcube
+d460 9
+a468 9
+    type(GriddedData_T),intent(in)::field
+    real(kind=r8),intent(in),optional::pressure
+    real(kind=r8),intent(in),optional::lat
+    real(kind=r8),intent(in),optional::lon
+    real(kind=r8),intent(in),optional::lst
+    real(kind=r8),intent(in),optional::sza
+    real(kind=r8),intent(in),optional::date
+    logical, optional, intent(in)    :: debug
+    real(kind=r8),intent(out)::outval
+d470 1
+a470 1
+    real(kind=r8):: inlat,inlon,inlst,insza,indate,inpressure,inalt
+d472 5
+a476 5
+    integer:: ilat1,ilat2,ilon1,ilon2,isza1,isza2,ilst1,ilst2,idate1,idate2
+    integer:: ialt1,ialt2
+    integer,dimension(1:6)::hcshape 
+    real(kind=r8),pointer,dimension(:)::tmpalt,tmpdate
+    real(kind=r8),allocatable,dimension(:,:,:,:,:,:)::hcube
+d486 3
+a488 3
+    real(kind=r8), dimension(:):: x
+    real(kind=r8),intent(in)::xval
+    integer, intent(out)::ix1,ix2
+d490 1
+a490 1
+    integer ::j,dj,n 
+d530 2
+a531 2
+!    integer,intent(in)::unit
+!    character(len=*),intent(out)::line
+d533 1
+a533 1
+!    integer:: ioinfo
+d558 3
+a560 3
+    character(len=*),intent(in)::inline
+    real(kind=r8),pointer,dimension(:)::axis ! Warning: must be nullified or associated!
+    integer,intent(out)::axis_len
+d562 5
+a566 5
+    character(len=30)::linetype,axistype
+    real(kind=r8)::basepressure
+    integer,dimension(:),allocatable::n_levs_in_sec,n_levs_per_dec,axints
+    integer::nwords,j,nsections,stind,st,i
+    real(kind=r8)::gridstep
+a630 1
+!
+d640 3
+a642 3
+    character(len=*),intent(in)::inline
+    real(kind=r8),pointer,dimension(:)::axis ! Warning: must be nullified or associated!
+    integer,intent(out)::axis_len
+d644 5
+a648 5
+    character(len=30)::linetype,axistype
+    real(kind=r8)::baseval
+    integer,dimension(:),allocatable::n_levs_in_sec
+    real(kind=r8),dimension(:),allocatable::gridstep,axints
+    integer::nwords,j,nsections,stind,st,i
+d652 1
+a652 1
+    !Count words in inline. 
+d691 3
+a693 3
+    integer,intent(in)::unit
+    real(kind=r8),pointer,dimension(:)::axis ! Warning: must be nullified or associated!
+    integer,intent(out)::axis_len
+d695 6
+a700 6
+    integer,parameter::ri_len=30
+    character(len=ri_len)::readitem
+    character(len=1)::rdchar
+    real(kind=r8),dimension(1:200)::tmpaxis
+    integer::i,iotest
+    logical::foundcb
+d820 2
+a821 2
+    integer, intent(in)    :: lcf_where
+    character(LEN=*), intent(in)    :: full_message
+d823 1
+a823 1
+    integer, intent(in), optional    :: error_number
+d880 1
+a880 1
+       "$Id: l3ascii.f90,v 2.37 2013/09/24 23:27:14 vsnyder Exp $"
+d892 3
+@
+
+
+2.37
+log
+@Use Get_Where or Print_Source to start error messages
+@
+text
+@d20 1
+d27 1
+a27 1
+  use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
+d857 1
+a857 1
+       "$Id: l3ascii.f90,v 2.36 2012/03/06 19:30:07 pwagner Exp $"
+d869 3
+@
+
+
+2.36
+log
+@Capitalize USEd stuff; R4 and R8 got from MLSKinds
+@
+text
+@d27 1
+a27 1
+  use TREE, only: DUMP_TREE_NODE, SOURCE_REF
+d817 1
+a817 1
+          call print_source ( source_ref(lcf_where) )
+d856 1
+a856 1
+       "$Id: l3ascii.f90,v 2.35 2009/06/23 18:25:43 pwagner Exp $"
+d868 3
+@
+
+
+2.35
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d16 4
+a19 3
+  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+  use GriddedData, only: DestroyGriddedData, GriddedData_T, V_is_pressure, &
+    & V_is_altitude, V_is_GPH, V_is_theta, RGR
+d21 6
+a26 5
+  USE MLSCommon, only: R4, R8, LineLen, NameLen, undefinedValue
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
+  USE MLSStrings, only: Capitalize, &
+    & Count_words, ReadCompleteLineWithoutComments
+  USE output_m, only: output, outputNamedValue
+d34 1
+a34 1
+       "$RCSfile: $"
+d394 1
+a394 1
+    & sza, date )
+d410 1
+d426 1
+a426 1
+    & sza, date )
+d442 1
+a460 1
+    ! real(kind=r8),pointer,dimension(:):: x
+d856 1
+a856 1
+       "$Id: read_apriori.f90 is it here $"
+d868 3
+@
+
+
+2.34
+log
+@Made default access private
+@
+text
+@d32 1
+a32 1
+       "$RCSfile: l3ascii.f90,v $"
+d850 1
+a851 1
+!---------------------------- RCS Ident Info -------------------------------
+d853 2
+a854 3
+       "$Id: l3ascii.f90,v 2.33 2008/01/07 21:36:33 pwagner Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d856 1
+a856 1
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
+d858 1
+d865 3
+@
+
+
+2.33
+log
+@Replace DEFAULTUNDEFINEDVALUE with user-settable undefinedValue
+@
+text
+@d28 1
+a28 1
+  public
+d45 2
+a46 2
+  public::L3ascii_open, L3ascii_read_field, L3ascii_interp_field, Make_log_axis
+  public::L3ascii_get_multiplier
+d853 1
+a853 1
+       "$Id: l3ascii.f90,v 2.32 2007/09/27 21:57:26 pwagner Exp $"
+d857 1
+d865 3
+@
+
+
+2.32
+log
+@Uses MLSMessage to warn instead of output
+@
+text
+@d20 1
+a20 1
+  USE MLSCommon, only: R4, R8, LineLen, NameLen, DEFAULTUNDEFINEDVALUE
+d115 1
+a115 1
+    real(rgr), parameter :: DefaultMissingValue = DEFAULTUNDEFINEDVALUE !-999.99
+d143 1
+a143 1
+    field%missingValue = defaultMissingValue
+d853 1
+a853 1
+       "$Id: l3ascii.f90,v 2.31 2007/06/21 00:49:52 vsnyder Exp $"
+d864 3
+@
+
+
+2.31
+log
+@Remove tabs, which are not part of the Fortran standard
+@
+text
+@d21 1
+d853 1
+a853 1
+       "$Id: l3ascii.f90,v 2.30 2007/03/07 01:22:46 pwagner Exp $"
+d864 3
+@
+
+
+2.30
+log
+@Side-step another log of non-positive args case lf6.2 caught
+@
+text
+@d128 1
+a128 1
+    end_of_file = .TRUE.	! Terminate loops based around this on error
+d545 1
+a545 1
+	
+d558 1
+a558 1
+	
+d570 1
+a570 1
+	
+d791 1
+a791 1
+	
+d852 1
+a852 1
+       "$Id: l3ascii.f90,v 2.29 2007/01/11 20:39:50 vsnyder Exp $"
+d863 3
+@
+
+
+2.29
+log
+@Use Get_Lun instead of having the code here
+@
+text
+@d23 1
+a23 1
+  USE output_m, only: output
+d852 1
+a852 1
+       "$Id: l3ascii.f90,v 2.28 2005/09/22 23:35:14 pwagner Exp $"
+d863 3
+@
+
+
+2.28
+log
+@date conversion procedures and functions all moved into dates module
+@
+text
+@d64 2
+d70 1
+a70 2
+    logical:: tiedup, found
+    integer:: j
+a73 1
+    found = .false.
+d75 9
+a83 7
+    do j = 1, 30
+      inquire ( unit=j, opened=tiedup )
+      if ( .not. tiedup ) then
+        found = .true.
+        unit = j
+        open ( unit=unit, file=filename, status="old", action="read" )
+        exit
+a84 5
+    end do
+    if ( .not. found ) then
+      unit = -1
+      call announce_error ( 0,&
+           "in subroutine l3ascii_open: No units left" )
+a148 1
+
+d228 1
+a228 1
+          "in subroutine l3ascii_read_field,File"//trim(filename)//&
+d852 1
+a852 1
+       "$Id: l3ascii.f90,v 2.27 2005/06/22 17:25:49 pwagner Exp $"
+d863 3
+@
+
+
+2.27
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d31 1
+a31 1
+       "$RCSfile: $"
+d97 1
+a97 1
+    use dates_module    ! Shoud use SDP Toolkit eventually. 
+d856 1
+a856 1
+       "$Id: $"
+d867 3
+@
+
+
+2.26
+log
+@Gets DEFAULTUNDEFINEDVALUE from MLSCommon
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d29 3
+a31 6
+  !------------------------------- RCS Ident Info ------------------------------
+  character(len=*), private, parameter :: IdParm = & 
+    & "$Id: l3ascii.f90,v 2.25 2003/09/10 00:18:42 pwagner Exp $"
+  character(len=len(idParm)), private :: Id = idParm
+  character(len=*), private, parameter :: ModuleName = &
+    & "$RCSfile: l3ascii.f90,v $"
+d33 1
+a33 1
+  !-----------------------------------------------------------------------------
+d854 5
+d867 3
+@
+
+
+2.25
+log
+@Made filename length LineLen rather than 80
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+d12 1
+a12 1
+  USE MLSCommon, only: R4, R8, LineLen, NameLen
+d23 1
+a23 1
+    & "$Id: l3ascii.f90,v 2.24 2003/04/04 00:09:55 livesey Exp $"
+d112 1
+a112 1
+    real(rgr), parameter :: DefaultMissingValue = -999.99
+d857 3
+@
+
+
+2.24
+log
+@Added initialization for empty field
+@
+text
+@d23 1
+a23 1
+    & "$Id: l3ascii.f90,v 2.23 2003/02/28 02:27:37 livesey Exp $"
+d103 2
+a104 1
+    character(len=80) :: filename, unitstring
+d857 3
+@
+
+
+2.23
+log
+@Now using missing value stuff
+@
+text
+@d23 1
+a23 1
+    & "$Id: l3ascii.f90,v 2.22 2003/02/19 19:13:28 pwagner Exp $"
+d140 1
+d856 3
+@
+
+
+2.22
+log
+@new GriddedData_T with reduced precision
+@
+text
+@d10 1
+a10 1
+    & V_is_altitude, V_is_GPH, V_is_theta
+d23 1
+a23 1
+    & "$Id: l3ascii.f90,v 2.21 2002/10/08 00:09:11 pwagner Exp $"
+d111 1
+d139 1
+d855 3
+@
+
+
+2.21
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d12 1
+a12 1
+  USE MLSCommon, only: R8, LineLen, NameLen
+d23 1
+a23 1
+    & "$Id: l3ascii.f90,v 2.20 2002/07/17 00:24:54 livesey Exp $"
+d46 5
+d385 32
+a416 1
+  subroutine L3ascii_interp_field ( field, outval, pressure, lat, lon, lst, &
+d428 5
+a432 1
+    real(kind=r8),intent(in),optional::lat,lon,lst,sza,date
+d444 2
+a445 167
+
+    nullify ( tmpalt, tmpdate )
+
+    ! --- Set default values for all optional parameters
+    if ( present(lat) ) then
+      inlat = lat
+    else
+      inlat = 30.0
+    end if
+
+    if ( present(pressure) ) then
+      inpressure = pressure
+    else
+      inpressure = 10.0
+    end if
+
+    if ( present(lon) ) then
+      inlon = lon
+    else
+      inlon = 0.0
+    end if
+
+    if ( present(sza) ) then
+      insza = sza
+    else
+      insza = 30.0
+    end if
+
+    if ( present(lst) ) then
+      inlst = lst
+    else
+      inlst = 12.0
+    end if
+
+    if ( present(date) ) then
+      indate = date
+    else
+      indate = 15768000.0 ! This should be June (ish)
+    end if
+
+    ! OK, that's the optional arguments sorted. 
+    ! Now, we have to find which two indices the chosen value lies between
+    ! for each of the six values.
+    call ilocate ( field%lats, inlat, ilat1, ilat2 )
+    call ilocate ( field%lons, inlon, ilon1, ilon2 )
+    call ilocate ( field%szas, insza, isza1, isza2 )
+    call ilocate ( field%lsts, inlst, ilst1, ilst2 )
+    ! We can't interpolate dates and prssures as they are. We construct
+    ! a mean date and a log pressure
+    call allocate_test ( tmpdate, field%noDates, 'tmpdate', moduleName )
+    call allocate_test ( tmpalt, field%noHeights, 'tmpalt', moduleName )
+    tmpdate = (field%dateStarts+field%dateEnds)/2.0
+    
+    ! Now think about cases when the gridded date is descriptive of no
+    ! particular year.
+    if ( field%noYear ) then
+      ! Subtract the year information from indate.
+      ! Note this (temporarily!?) brushes over issues to do with leap years.
+      inDate = modulo ( inDate, 60.0_r8*60.0*24.0*365.25 )
+    end if
+    tmpalt = -log10(field%heights)
+    inalt = -log10(inpressure)
+    call ilocate ( tmpdate, indate, idate1, idate2 )
+    call ilocate ( tmpalt, inalt, ialt1, ialt2 )
+    ! We now know that the desired point is inside the 6-D hypercuboid 
+    ! bin of the array field%field(ialt1:ialt2, ilat1:ilat2, .......)
+    ! Time to do the actual interpolation. Yuck. 
+    ! There are up to 2^6=64 values
+    ! to be taken into account. 
+
+    ! Lets try allocating a cube of the right shape.
+    if ( ialt1 == ialt2 ) then !test whether the altitude is between two of the 
+      hcshape(1) = 1       ! grid values (so we interpolate) or if there
+    else                   ! is only one value (so we just return that value)
+      hcshape(1) = 2
+    end if
+    if ( ilat1 == ilat2 ) then
+      hcshape(2) = 1
+    else
+      hcshape(2) = 2
+    end if
+    if ( ilon1 == ilon2 ) then
+      hcshape(3) = 1
+    else
+      hcshape(3) = 2
+    end if
+    if ( ilst1 == ilst2 ) then
+      hcshape(4) = 1
+    else
+      hcshape(4) = 2
+    end if
+    if ( isza1 == isza2 ) then
+      hcshape(5) = 1
+    else
+      hcshape(5) = 2
+    end if
+    if ( idate1 == idate2 ) then
+      hcshape(6) = 1
+    else
+      hcshape(6) = 2
+    end if
+
+
+    ! Allocate a 6-D hypercube that our point lies in. Some of the 
+    ! dimensions may be "collapsed" 
+    allocate ( hcube(1:hcshape(1),1:hcshape(2),1:hcshape(3), &
+      & 1:hcshape(4),1:hcshape(5),1:hcshape(6)) )
+    ! Copy data into hypercube
+    hcube = field%field(ialt1:ialt2, ilat1:ilat2, ilon1:ilon2, &
+      & ilst1:ilst2,isza1:isza2, idate1:idate2)
+
+    ! Now we interpolate along each of the axes where this is needed
+    ! Reduce 6-d to 5-d
+    if ( hcshape(6) == 2 ) then !Interpolate in date 
+       hcube(:,:,:,:,:,1) = hcube(:,:,:,:,:,1) + &
+            &  (hcube(:,:,:,:,:,2) - hcube(:,:,:,:,:,1)) * &
+            &  (indate-tmpdate(idate1)) / (tmpdate(idate2)-tmpdate(idate1))
+    endif
+    ! Reduce  5-d to 4d
+    if ( hcshape(5) == 2 ) then !Interpolate in local Solar zenith ang  SZA
+      hcube(:,:,:,:,1,1) = hcube(:,:,:,:,1,1) + &
+           &  (hcube(:,:,:,:,2,1) - &
+           &  hcube(:,:,:,:,1,1)) * &
+           &  (insza-field%szas(isza1)) / &
+           &  (field%szas(isza2)-field%szas(isza1))
+    end if
+
+    ! Reduce  4-d to 3d
+    if ( hcshape(4) == 2 ) then !Interpolate in local solar time
+       hcube(:,:,:,1,1,1) = hcube(:,:,:,1,1,1) + &
+            &  (hcube(:,:,:,2,1,1) - &
+            &  hcube(:,:,:,1,1,1)) * &
+            &  (inlst-field%lsts(ilst1)) / &
+            &  (field%lsts(ilst2)-field%lsts(ilst1))
+    end if
+
+    ! Reduce  3-d to 2d
+    if ( hcshape(3) == 2 ) then !Interpolate in longitude
+          hcube(:,:,1,1,1,1) = hcube(:,:,1,1,1,1) + &
+            &  (hcube(:,:,2,1,1,1) - &
+            &  hcube(:,:,1,1,1,1)) * &
+            &  (inlon-field%lons(ilon1)) / &
+            &  (field%lons(ilon2)-field%lons(ilon1))
+    end if
+    ! Reduce  2-d to 1d
+    if ( hcshape(2) == 2 ) then !Interpolate in latitude
+       
+       hcube(:,1,1,1,1,1) = hcube(:,1,1,1,1,1) + &
+            &  (hcube(:,2,1,1,1,1) - &
+            &  hcube(:,1,1,1,1,1)) * &
+            &  (inlat-field%lats(ilat1)) / &
+            &  (field%lats(ilat2)-field%lats(ilat1))
+    end if
+
+    ! Reduce  1-d to 0d
+    if ( hcshape(1) == 2 ) then !interpolate in altitude
+      hcube(1,1,1,1,1,1) = hcube(1,1,1,1,1,1) + &
+        &  (hcube(2,1,1,1,1,1) - &
+        &  hcube(1,1,1,1,1,1)) * &
+        &  (inalt-tmpalt(ialt1)) / &
+        &  (tmpalt(ialt2)-tmpalt(ialt1))
+    end if
+    outval = hcube(1,1,1,1,1,1)
+    call deallocate_test ( tmpdate, 'tmpdate', moduleName )
+    call deallocate_test ( tmpalt, 'tmpalt', moduleName )
+    deallocate ( hcube )
+  end subroutine L3ascii_interp_field
+d451 2
+a452 1
+    real(kind=r8),pointer,dimension(:):: x
+d853 3
+@
+
+
+2.20
+log
+@Fixed another print statement
+@
+text
+@d23 1
+a23 1
+    & "$Id: l3ascii.f90,v 2.19 2002/07/17 00:21:07 livesey Exp $"
+d27 1
+d968 5
+a972 1
+END MODULE L3ascii
+d977 3
+@
+
+
+2.19
+log
+@Commented out more print statements from Hugh
+@
+text
+@d23 1
+a23 1
+    & "$Id: l3ascii.f90,v 2.18 2002/07/11 12:43:52 hcp Exp $"
+d210 1
+a210 1
+               print*,"Doing explicit axis"
+d972 3
+@
+
+
+2.18
+log
+@changed 10. to 10.0_r8 to make calculation be done in dble prec.
+@
+text
+@d23 1
+a23 1
+    & "$Id: l3ascii.f90,v 2.17 2002/07/11 11:30:59 mjf Exp $"
+d194 1
+a194 1
+      print*,inline
+d202 1
+a202 1
+                print*,"Doing linear axis"
+d204 1
+a204 1
+                print*,"Done linear axis"
+d206 1
+a206 1
+        print*,"Doing log axis"
+d208 1
+a208 1
+        print*,"Done log axis"
+d213 1
+a213 1
+                 print*,"Done explicit axis"
+d280 1
+a280 1
+      print*,"Datesloop: idate=",idate
+d332 1
+a332 1
+      print*,"Next date line:",inline,"EOF=",end_of_file
+d972 3
+@
+
+
+2.17
+log
+@Nullified two pointers before using allocate_test
+@
+text
+@d23 1
+a23 1
+    & "$Id: l3ascii.f90,v 2.16 2002/07/02 19:55:49 livesey Exp $"
+d194 1
+a194 1
+      !print*,inline
+d202 1
+a202 1
+        !        print*,"Doing linear axis"
+d204 1
+a204 1
+        !        print*,"Done linear axis"
+d206 1
+a206 1
+        !print*,"Doing log axis"
+d208 1
+a208 1
+        !print*,"Done log axis"
+d210 1
+a210 1
+        !       print*,"Doing explicit axis"
+d213 1
+a213 1
+        !         print*,"Done explicit axis"
+d280 1
+a280 1
+      !print*,"Datesloop: idate=",idate
+d332 1
+a332 1
+      ! print*,"Next date line:",inline,"EOF=",end_of_file
+d715 5
+a719 2
+! so instead we'll use the equivalent:
+    axis = exp(-log(10.)*axis)
+d972 3
+@
+
+
+2.16
+log
+@Fixed trivial problem caught by NAG
+@
+text
+@d23 1
+a23 1
+    & "$Id: l3ascii.f90,v 2.15 2002/07/01 23:56:37 livesey Exp $"
+d404 2
+d969 3
+@
+
+
+2.15
+log
+@Added code to deal better with 'noYear' quantities
+@
+text
+@d23 1
+a23 1
+    & "$Id: l3ascii.f90,v 2.14 2002/07/01 23:52:19 vsnyder Exp $"
+d459 1
+a459 1
+      inDate = modulo ( inDate, 60.0*60.0*24.0*365.25 )
+d967 3
+@
+
+
+2.14
+log
+@Plug some memory leaks, cosmetic changes
+@
+text
+@d23 1
+a23 1
+    & "$Id: l3ascii.f90,v 2.13 2002/05/02 09:48:40 hcp Exp $"
+d104 1
+d305 1
+d309 1
+d311 9
+d453 8
+d967 3
+@
+
+
+2.13
+log
+@Removed a whittering print statement
+@
+text
+@d8 3
+a10 2
+  use GriddedData, only: GriddedData_T, v_is_pressure, v_is_altitude, &
+    & v_is_gph, v_is_theta
+d23 1
+a23 1
+    & "$Id: l3ascii.f90,v 2.12 2002/01/09 23:46:42 pwagner Exp $"
+d90 1
+a90 1
+    type(GriddedData_T), intent(out) :: field
+d93 1
+a93 1
+    character(len=*),parameter :: dummyyear="1993"
+d98 3
+a100 3
+    real(kind=r8), pointer, dimension(:) :: tmpaxis => null()
+    real(kind=r8), pointer, dimension(:) :: dateStarts => null()
+    real(kind=r8), pointer, dimension(:) :: dateEnds => null()
+d104 1
+d106 2
+d109 1
+d139 1
+a139 1
+    allocate(field%heights(1:1))
+d143 1
+a143 1
+    allocate(field%lats(1:1))
+d147 1
+a147 1
+    allocate(field%lons(1:1))
+d150 1
+a150 1
+    allocate(field%lsts(1:1))
+d153 1
+a153 1
+    allocate(field%szas(1:1))
+d156 1
+a156 1
+    allocate(field%dateStarts(1:1))
+d159 1
+a159 1
+    allocate(field%dateEnds(1:1))
+d162 1
+a162 1
+    allocate(field%field(1:1,1:1,1:1,1:1,1:1,1:1))
+d227 1
+a227 2
+        deallocate(field%heights)
+        allocate(field%heights(1:tmpaxis_len))
+d242 1
+a242 2
+        deallocate(field%lats)
+        allocate(field%lats(1:tmpaxis_len))
+d251 1
+a251 2
+        deallocate(field%lons)
+        allocate(field%lons(1:tmpaxis_len))
+d255 1
+a255 2
+        deallocate(field%lsts)
+        allocate(field%lsts(1:tmpaxis_len))
+d259 1
+a259 2
+        deallocate(field%szas)
+        allocate(field%szas(1:tmpaxis_len))
+d263 1
+a263 1
+    deallocate(tmpaxis)
+d271 4
+a274 3
+    allocate(tmpfield(1:field%noHeights,1:field%noLats,1:field%noLons, &
+      1:field%noLsts,1:field%noSzas,1:maxNoDates))
+    allocate(dateStarts(1:maxNoDates),dateEnds(1:maxNoDates))
+d346 1
+a346 1
+    deallocate(field%dateStarts, field%dateEnds, field%field)
+d348 6
+a353 4
+    allocate(field%field(1:field%noHeights,1:field%noLats,&
+      & 1:field%noLons,1:field%noLsts,1:field%noSzas,1:field%noDates))
+    allocate(field%dateStarts(1:field%noDates),&
+      & field%dateEnds(1:field%noDates))
+d357 3
+a359 1
+    deallocate(tmpfield,dateStarts,dateEnds)
+d438 2
+a439 1
+    allocate(tmpdate(1:field%noDates),tmpalt(1:field%noHeights))
+d486 2
+a487 2
+    allocate(hcube(1:hcshape(1),1:hcshape(2),1:hcshape(3), &
+      & 1:hcshape(4),1:hcshape(5),1:hcshape(6)))
+d544 3
+a546 1
+    deallocate(tmpdate,tmpalt,hcube)
+d626 1
+a626 1
+    real(kind=r8),pointer,dimension(:)::axis
+d634 1
+a636 5
+    ! Warning: axis must be nullified or associated!
+    if ( associated(axis) ) then 
+       deallocate(axis)
+    end if
+
+d655 2
+a656 2
+    allocate(n_levs_in_sec(1:nsections),n_levs_per_dec(1:nsections),&
+      &  axints(1:nsections*2))
+d667 1
+a667 1
+    allocate(axis(1:axis_len))
+d697 1
+a697 1
+    deallocate(n_levs_in_sec, n_levs_per_dec,axints)
+d706 1
+a706 1
+    real(kind=r8),pointer,dimension(:)::axis
+d714 1
+a715 4
+    ! Warning: axis must be nullified or associated!
+    if ( associated(axis) ) then 
+      deallocate(axis)
+    end if
+d727 2
+a728 2
+    allocate(n_levs_in_sec(1:nsections),gridstep(1:nsections),&
+      & axints(1:nsections*2))
+d736 1
+a736 1
+    allocate(axis(1:axis_len))
+d750 1
+a750 1
+    deallocate(axints,gridstep,n_levs_in_sec)
+d757 1
+a757 1
+    real(kind=r8),pointer,dimension(:)::axis
+d766 1
+d768 1
+a768 4
+    ! Warning: axis must be nullified or associated!
+    if ( associated(axis) ) then 
+      deallocate(axis)
+    end if
+d816 1
+a816 1
+    allocate(axis(1:axis_len))
+d947 3
+@
+
+
+2.12
+log
+@Added toc; removed debugging stuff
+@
+text
+@d22 1
+a22 1
+    & "$Id: l3ascii.f90,v 2.11 2001/07/12 23:28:39 livesey Exp $"
+d319 1
+a319 1
+      !print*,"Next date line:",inline,"EOF=",end_of_file
+d948 3
+@
+
+
+2.11
+log
+@Tidied up a bit.  More work needs to come here.
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+d22 1
+a22 1
+    & "$Id: l3ascii.f90,v 2.10 2001/05/07 23:24:16 pwagner Exp $"
+d28 9
+d929 3
+a931 2
+      print*, '***Error in module ', ModuleName
+      print*, trim(full_message)
+d933 2
+a934 1
+        print*, 'error number ', error_number
+d948 3
+@
+
+
+2.10
+log
+@Removed unused prints; detached from toolkit
+@
+text
+@d22 1
+a22 1
+    & "$Id: l3ascii.f90,v 2.9 2001/04/27 07:48:54 pumphrey Exp $"
+d80 1
+a80 1
+    type(GriddedData_T), intent(inout) :: field
+d96 2
+a97 2
+	 
+! Abrupt termination--as with an error--means use field at own risk
+d102 2
+a103 2
+!    nullify(tmpaxis)
+	 end_of_file = .TRUE.	! Terminate loops based around this on error
+d108 4
+a111 4
+        call announce_error(0, &
+       " in subroutine l3ascii_read_field, Unit "//trim(unitstring)//&
+       "is not connected to a file. Do call l3ascii_open(filename,unit) first")
+       return
+d116 1
+a116 1
+	field%sourceFileName = filename
+d122 3
+a124 24
+    ! Unfortunately, we can't tell if this defined type has
+    ! been used before by testing a pointer for being associated as for 
+    ! a new  struct they are in the undefined state. (This will change with 
+    ! Fortran 95, where you can define a pointer to be initialised to the 
+    ! nullified state)
+    ! We therefore use a special number field%reusing to test whether 
+    ! this defined type has been used before.  
+!    if ( field%reusing==313323435 ) then
+    if ( associated(field%field) ) then
+       !       print*,"This struct has been used before : deallocating"
+       deallocate(field%heights)
+       deallocate(field%lats)
+       deallocate(field%lons)
+       deallocate(field%lsts)
+       deallocate(field%szas)
+       deallocate(field%dateStarts)
+       deallocate(field%dateEnds)
+       deallocate(field%field)
+!    else
+       !       print*,"This is a new struct"
+!       field%reusing=313323435
+    end if
+! Automatically create a stub grid template with minimal size
+! Each component will be deallocated && reallocated with correct sizes later
+d154 1
+a154 1
+!    call get_next_noncomment_line(unit,inline)
+d157 2
+a158 2
+!    print*,"Read line"
+!    print*,inline
+d163 1
+a163 1
+	     end_of_file=.true.
+d166 1
+a166 1
+    
+d175 2
+a176 2
+         field%description, field%units
+axesloop:do
+d187 1
+a187 1
+!        print*,"Doing linear axis"
+d189 1
+a189 1
+!        print*,"Done linear axis"
+d195 1
+a195 1
+!       print*,"Doing explicit axis"
+d198 1
+a198 1
+!         print*,"Done explicit axis"
+d200 7
+a206 7
+                   end_of_file=.true.
+         call announce_error(0,&
+              "in subroutine l3ascii_read_field,File"//trim(filename)//&
+              " on unit"//trim(unitstring)//" contains coordinate"//&
+              " of invalid type "//trim(axistype)//"for axis"//&
+              trim(linetype))
+         return
+d218 1
+a218 1
+           field%verticalCoordinate = v_is_pressure ! 1
+d220 1
+a220 1
+           field%verticalCoordinate = v_is_altitude    ! 2
+d222 1
+a222 1
+           field%verticalCoordinate = v_is_gph ! 3
+d224 1
+a224 1
+           field%verticalCoordinate = v_is_theta ! 4
+d233 1
+a233 1
+           field%equivalentLatitude = .false.
+d235 1
+a235 1
+           field%equivalentLatitude = .true.
+d263 1
+a263 1
+         1:field%noLsts,1:field%noSzas,1:maxNoDates))
+d268 1
+a268 1
+datesloop: do idate = 1, maxNoDates
+d287 1
+a287 1
+ 
+d305 1
+a305 1
+ 
+d347 1
+a347 1
+! Normal termination--assume field is valid maybe even correct
+d937 3
+@
+
+
+2.9
+log
+@Many nested loops in l3ascii replaced with array ops. Small fixes
+(e.g. spelling mistakes) in other modules.
+@
+text
+@d22 1
+a22 1
+    & "$Id: l3ascii.f90,v 2.8 2001/04/13 02:08:23 vsnyder Exp $"
+a66 2
+!      call MLSMessage ( MLSMSG_Error, ModuleName,&
+!           "in subroutine l3ascii_open: No units left" )
+a110 3
+!        call MLSMessage(MLSMSG_Error,ModuleName,&
+!       " in subroutine l3ascii_read_field, Unit "//trim(unitstring)//&
+!       "is not connected to a file. Do call l3ascii_open(filename,unit) first")
+a183 3
+!      call MLSMessage(MLSMSG_Error,ModuleName,&
+!           "in subroutine l3ascii_read_field, File "//trim(filename)// &
+!           "on unit"//trim(unitstring)//" contains no more Fields")
+a191 3
+!       call MLSMessage(MLSMSG_Error,ModuleName,&
+!       "In subroutine l3ascii_read_field, End of File"//trim(filename)// &
+!       " on unit"//trim(unitstring))
+a226 5
+!         call MLSMessage(MLSMSG_Error,ModuleName,&
+!              "in subroutine l3ascii_read_field,File"//trim(filename)//&
+!              " on unit"//trim(unitstring)//" contains coordinate"//&
+!              " of invalid type "//trim(axistype)//"for axis"//&
+!              trim(linetype))
+a304 4
+!         call MLSMessage(MLSMSG_Error,ModuleName,&
+!              "in subroutine l3ascii_read_field: File"//trim(filename)//&
+!              "on unit"//trim(unitstring)//" contains a line beginning"//&
+!              trim(linetype)//"Date with too few words ")
+a349 4
+!         call MLSMessage(MLSMSG_Error,ModuleName,&
+!              "in subroutine l3ascii_read_field: File"//trim(filename)//&
+!              "on unit"//trim(unitstring)//" contains a line beginning"//&
+!              trim(linetype)//"where I expected a line beginning Date ")
+a657 2
+!    print*,"Inline=",inline
+!    print*,"Nwords=",nwords
+a665 2
+!    print*,"Linetype=",linetype," axistype=",axistype
+!    print*,"basepressure=",basepressure," Axints=",axints
+a674 1
+!    print*,"axis length=", axis_len
+a677 1
+!    print*,"nsections=", nsections
+a679 3
+!    print*,"j=", j
+!    print*,"n_levs_per_dec(j)=", n_levs_per_dec(j)
+!    print*,"gridstep=", gridstep
+a874 4
+!    call MLSMessage(MLSMSG_Warning,ModuleName,&
+!         "in function l3ascii_get_multiplier: Units "//&
+!         trim(field%units)//" for field "//trim(field%quantityName)//&
+!         "not known. Guessing multiplier=1.0")
+d889 7
+a902 2
+!    character (len=80) :: msg, mnemonic
+!    integer :: status
+d907 1
+a907 1
+      just_print_it = use_toolkit
+a914 3
+!      CALL Pgs_smf_getMsg(status, mnemonic, msg)
+!      CALL MLSMessage (level, ModuleName, &
+!                &trim(full_message)//" "//mnemonic//" "//msg)
+d958 4
+@
+
+
+2.8
+log
+@Fix syntax error that Lahey let go by
+@
+text
+@d22 1
+a22 1
+    & "$Id: l3ascii.f90,v 2.7 2001/04/12 22:56:11 vsnyder Exp $"
+d416 1
+a416 1
+    integer:: ialt1,ialt2,i0,i1,i2,i3,i4
+d525 4
+a528 16
+      do i0 = 1, hcshape(1)
+        do i1 = 1, hcshape(2)
+          do i2 = 1, hcshape(3)
+            do i3 = 1, hcshape(4)
+              do i4 = 1,hcshape(5)
+                hcube(i0,i1,i2,i3,i4,1) = hcube(i0,i1,i2,i3,i4,1) + &
+                  &  (hcube(i0,i1,i2,i3,i4,2) - &
+                  &  hcube(i0,i1,i2,i3,i4,1)) * &
+                  &  (indate-tmpdate(idate1)) / &
+                  &  (tmpdate(idate2)-tmpdate(idate1))
+              end do
+            end do
+          end do
+        end do
+      end do
+    end if
+d531 5
+a535 13
+      do i0 = 1, hcshape(1)
+        do i1 = 1, hcshape(2)
+          do i2 = 1, hcshape(3)
+            do i3 = 1, hcshape(4)
+              hcube(i0,i1,i2,i3,1,1) = hcube(i0,i1,i2,i3,1,1) + &
+                &  (hcube(i0,i1,i2,i3,2,1) - &
+                &  hcube(i0,i1,i2,i3,1,1)) * &
+                &  (insza-field%szas(isza1)) / &
+                &  (field%szas(isza2)-field%szas(isza1))
+            end do
+          end do
+        end do
+      end do
+d537 1
+d540 5
+a544 11
+      do i0 = 1, hcshape(1)
+        do i1 = 1, hcshape(2)
+          do i2 = 1, hcshape(3)
+            hcube(i0,i1,i2,1,1,1) = hcube(i0,i1,i2,1,1,1) + &
+              &  (hcube(i0,i1,i2,2,1,1) - &
+              &  hcube(i0,i1,i2,1,1,1)) * &
+              &  (inlst-field%lsts(ilst1)) / &
+              &  (field%lsts(ilst2)-field%lsts(ilst1))
+          end do
+        end do
+      end do
+d546 1
+d549 3
+a551 5
+      do i0 = 1, hcshape(1)
+        do i1 = 1, hcshape(2)
+          hcube(i0,i1,1,1,1,1) = hcube(i0,i1,1,1,1,1) + &
+            &  (hcube(i0,i1,2,1,1,1) - &
+            &  hcube(i0,i1,1,1,1,1)) * &
+a553 2
+        end do
+      end do
+d557 6
+a562 7
+      do i0 = 1, hcshape(1)
+        hcube(i0,1,1,1,1,1) = hcube(i0,1,1,1,1,1) + &
+          &  (hcube(i0,2,1,1,1,1) - &
+          &  hcube(i0,1,1,1,1,1)) * &
+          &  (inlat-field%lats(ilat1)) / &
+          &  (field%lats(ilat2)-field%lats(ilat1))
+      end do
+d993 3
+@
+
+
+2.7
+log
+@Improve an error message, cosmetic changes
+@
+text
+@d22 1
+a22 1
+    & "$Id: l3ascii.f90,v 2.6 2001/03/30 00:25:20 pwagner Exp $"
+d871 1
+a871 1
+        if ( rdchar = =" " ) then
+d1022 3
+@
+
+
+2.6
+log
+@Fills sourceFileName
+@
+text
+@d5 1
+a5 1
+MODULE l3ascii ! Collections of Hugh's subroutines to handle TYPE GriddedData_T
+d9 1
+a9 1
+  & v_is_gph, v_is_theta
+d13 1
+a13 1
+  & Count_words, ReadCompleteLineWithoutComments
+d17 2
+a18 2
+  IMPLICIT NONE
+  PUBLIC
+a19 1
+  PRIVATE :: Id,ModuleName
+d21 5
+a25 3
+  CHARACTER(LEN=130) :: id = & 
+       "$Id: l3ascii.f90,v 2.5 2001/03/29 00:51:35 pwagner Exp $"
+  CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile: l3ascii.f90,v $"
+d28 2
+a29 2
+  public::l3ascii_open,l3ascii_read_field,l3ascii_interp_field,make_log_axis
+  public::l3ascii_get_multiplier
+d31 2
+a32 2
+  private :: make_linear_axis
+  private::read_explicit_axis,ilocate
+d37 1
+a37 1
+  CONTAINS
+d39 1
+a39 1
+  subroutine l3ascii_open(filename,unit)
+d56 1
+a56 1
+      if (.not. tiedup) then
+d75 1
+a75 1
+  end subroutine l3ascii_open
+d77 1
+a77 1
+  subroutine l3ascii_read_field(unit, field, end_of_file, ErrType)
+d100 3
+a102 3
+	if(present(ErrType)) then
+	 ErrType = 1
+	endif
+d109 1
+a109 1
+    if (.not. opened) then
+d117 1
+a117 1
+    endif
+d134 2
+a135 2
+!    if (field%reusing==313323435) then
+    if (associated(field%field)) then
+d148 1
+a148 1
+    endif
+d182 1
+a182 1
+    call ReadCompleteLineWithoutComments(unit,inline,eof=end_of_file)
+d185 4
+a188 4
+   if(Capitalize(inline(1:5)) /= "FIELD" ) then
+      call announce_error(0, &
+           "in subroutine l3ascii_read_field, File "//trim(filename)// &
+           "on unit"//trim(unitstring)//" contains no more Fields")
+d194 1
+a194 1
+    endif
+d196 4
+a199 4
+    if(end_of_file) then
+       call announce_error(0,&
+       "In subroutine l3ascii_read_field, End of File"//trim(filename)// &
+       " on unit"//trim(unitstring))
+d203 42
+a244 2
+       return
+    endif
+d246 25
+a270 25
+    read(unit=inline,fmt=*)linetype,field%quantityName, &
+         field%description,field%units
+    axesloop:do
+
+        call ReadCompleteLineWithoutComments(unit,inline)
+        !print*,inline
+        read(unit=inline,fmt=*)linetype,axistype
+        linetype=Capitalize(linetype)
+        axistype=Capitalize(axistype)
+        if(linetype(1:4) == "DATE") then ! This is always the last "axis"
+           exit axesloop                 ! and is different from the others
+        endif
+        if (axistype(1:6) =="LINEAR") then
+!           print*,"Doing linear axis"
+           call make_linear_axis(inline,tmpaxis,tmpaxis_len)
+!           print*,"Done linear axis"
+        else if (axistype(1:3) =="LOG") then
+           !print*,"Doing log axis"
+           call make_log_axis(inline,tmpaxis,tmpaxis_len)
+           !print*,"Done log axis"
+        else if (axistype(1:8) =="EXPLICIT") then
+!           print*,"Doing explicit axis"
+           backspace(unit=unit)
+           call read_explicit_axis(unit,tmpaxis,tmpaxis_len)
+!           print*,"Done explicit axis"
+d272 19
+a290 59
+		     end_of_file=.true.
+           call announce_error(0,&
+                "in subroutine l3ascii_read_field,File"//trim(filename)//&
+                " on unit"//trim(unitstring)//" contains coordinate"//&
+                " of invalid type "//trim(axistype)//"for axis"//&
+                trim(linetype))
+!           call MLSMessage(MLSMSG_Error,ModuleName,&
+!                "in subroutine l3ascii_read_field,File"//trim(filename)//&
+!                " on unit"//trim(unitstring)//" contains coordinate"//&
+!                " of invalid type "//trim(axistype)//"for axis"//&
+!                trim(linetype))
+           return
+        endif
+
+        ! I do not entirely grok what NJL intended verticalCoordinate to be. 
+        if(linetype(1:8) == "PRESSURE" .or. linetype(1:8) == "ALTITUDE" &
+             .or. linetype(1:3) == "GPH" .or. linetype(1:5) == "THETA") then
+           field%noHeights=tmpaxis_len
+           deallocate(field%heights)
+           allocate(field%heights(1:tmpaxis_len))
+           field%heights=tmpaxis
+
+           if(linetype(1:8) == "PRESSURE") then
+              field%verticalCoordinate=v_is_pressure ! 1
+           else if (linetype(1:8) == "ALTITUDE") then
+              field%verticalCoordinate=v_is_altitude 	! 2
+           else if (linetype(1:3) == "GPH") then
+              field%verticalCoordinate=v_is_gph	! 3
+           else if (linetype(1:5) == "THETA") then
+              field%verticalCoordinate=v_is_theta ! 4
+           endif
+        else if(linetype(1:8) == "LATITUDE" .or. &
+             linetype(1:8) == "EQUIVLAT") then
+           field%noLats=tmpaxis_len
+           deallocate(field%lats)
+           allocate(field%lats(1:tmpaxis_len))
+           field%lats=tmpaxis
+           if (linetype(1:8) == "LATITUDE") then
+              field%equivalentLatitude=.false.
+           else 
+              field%equivalentLatitude=.true.
+           endif
+        else if(linetype(1:9) == "LONGITUDE") then
+           field%noLons=tmpaxis_len
+           deallocate(field%lons)
+           allocate(field%lons(1:tmpaxis_len))
+           field%lons=tmpaxis
+        else if(linetype(1:9) == "LST") then
+           field%noLsts=tmpaxis_len
+           deallocate(field%lsts)
+           allocate(field%lsts(1:tmpaxis_len))
+           field%lsts=tmpaxis
+        else if(linetype(1:9) == "SZA") then
+           field%noSzas=tmpaxis_len
+           deallocate(field%szas)
+           allocate(field%szas(1:tmpaxis_len))
+           field%szas=tmpaxis
+        endif
+    enddo axesloop
+d305 73
+a377 73
+    datesloop: do idate=1,maxNoDates
+       !print*,"Datesloop: idate=",idate
+       word_count=count_words(inline)
+       if (word_count == 3) then
+          read(unit=inline,fmt=*)linetype,axistype,sdstring
+          sdstring=adjustl(sdstring)
+          edstring=sdstring
+       else if(word_count >= 4 ) then
+          read(unit=inline,fmt=*)linetype,axistype,sdstring,edstring
+          sdstring=adjustl(sdstring)
+          edstring=adjustl(edstring)
+       else
+          call announce_error(0, &
+               "in subroutine l3ascii_read_field: File"//trim(filename)//&
+               "on unit"//trim(unitstring)//" contains a line beginning"//&
+               trim(linetype)//"Date with too few words ")
+!          call MLSMessage(MLSMSG_Error,ModuleName,&
+!               "in subroutine l3ascii_read_field: File"//trim(filename)//&
+!               "on unit"//trim(unitstring)//" contains a line beginning"//&
+!               trim(linetype)//"Date with too few words ")
+		     end_of_file=.true.
+				return
+       endif
+       
+        ! Date strings can begin with - indicating the year is 
+        ! missing and that the file belongs to no year in particular.
+        ! To convert dates to SDP toolkit (TAI) times (Seconds since start of 
+        ! 1 Jan 1993) we need to stick on a dummy year
+        if (sdstring(1:1) == "-") then
+           sdstring=dummyyear//sdstring
+        endif
+        if (edstring(1:1) == "-") then
+           edstring=dummyyear//edstring
+        endif
+        ! ccsds2tai returns days since 1 Jan 1993. 86400==no of secs per day
+        dateStarts(idate)=86400*ccsds2tai(sdstring)
+        dateEnds(idate)  =86400*ccsds2tai(edstring)
+        call ReadCompleteLineWithoutComments(unit,inline)
+        backspace(unit=unit)
+        !print*,"About to read data: inline=",inline
+        !print*,"tmpfield has size:",size(tmpfield),shape(tmpfield)
+        
+        read(unit=unit,fmt=*)tmpfield(:,:,:,:,:,idate)
+        !print*,"Read data"
+        end_of_file=.false.
+        call ReadCompleteLineWithoutComments(unit,inline,eof=end_of_file)
+        !print*,"Next date line:",inline,"EOF=",end_of_file
+        if(end_of_file) then 
+           ! No more dates and nothing else either
+           exit datesloop
+        endif
+        read(unit=inline,fmt=*)linetype,axistype        
+        linetype=Capitalize(linetype)
+        axistype=Capitalize(axistype)
+        if(end_of_file .or. &
+             linetype(1:5) == "FIELD" .or. linetype(1:3)=="END") then 
+           !Oops! There were no more dates, but there is another field
+           backspace(unit=unit)
+           exit datesloop                 
+        endif
+        if(linetype(1:4) /= "DATE") then ! There should be another date here
+           call announce_error(0, &
+                "in subroutine l3ascii_read_field: File"//trim(filename)//&
+                "on unit"//trim(unitstring)//" contains a line beginning"//&
+                trim(linetype)//"where I expected a line beginning Date ")
+!           call MLSMessage(MLSMSG_Error,ModuleName,&
+!                "in subroutine l3ascii_read_field: File"//trim(filename)//&
+!                "on unit"//trim(unitstring)//" contains a line beginning"//&
+!                trim(linetype)//"where I expected a line beginning Date ")
+		     end_of_file=.true.
+           return
+        endif
+        field%noDates=field%noDates+1
+d379 1
+a379 1
+    enddo datesloop
+d381 1
+a381 1
+	deallocate(field%dateStarts, field%dateEnds, field%field)
+d384 1
+a384 1
+         1:field%noLons,1:field%noLsts,1:field%noSzas,1:field%noDates))
+d386 4
+a389 4
+         field%dateEnds(1:field%noDates))
+    field%dateStarts=dateStarts(1:field%noDates)
+    field%dateEnds=dateEnds(1:field%noDates)
+    field%field=tmpfield(:,:,:,:,:,1:field%noDates)
+d393 4
+a396 4
+	if(present(ErrType)) then
+	 ErrType = 0
+	endif
+  end subroutine l3ascii_read_field
+d398 2
+a399 1
+  subroutine l3ascii_interp_field(field,outval,pressure,lat,lon,lst,sza,date)
+d424 2
+a425 2
+    if(present(lat)) then
+       inlat=lat
+d427 2
+a428 2
+       inlat=30.0
+    endif
+d430 2
+a431 2
+    if(present(pressure)) then
+       inpressure=pressure
+d433 2
+a434 2
+       inpressure=10.0
+    endif
+d436 2
+a437 2
+    if(present(lon)) then
+       inlon=lon
+d439 2
+a440 2
+       inlon=0.0
+    endif
+d442 2
+a443 2
+    if(present(sza)) then
+       insza=sza
+d445 2
+a446 2
+       insza=30.0
+    endif
+d448 2
+a449 2
+    if(present(lst)) then
+       inlst=lst
+d451 2
+a452 2
+       inlst=12.0
+    endif
+d454 2
+a455 2
+    if(present(date)) then
+       indate=date
+d457 2
+a458 2
+       indate=15768000.0 ! This should be June (ish)
+    endif
+d463 4
+a466 4
+    call ilocate(field%lats,inlat,ilat1,ilat2)
+    call ilocate(field%lons,inlon,ilon1,ilon2)
+    call ilocate(field%szas,insza,isza1,isza2)
+    call ilocate(field%lsts,inlst,ilst1,ilst2)
+d470 5
+a474 5
+    tmpdate=(field%dateStarts+field%dateEnds)/2.0
+    tmpalt=-log10(field%heights)
+    inalt=-log10(inpressure)
+    call ilocate(tmpdate,indate,idate1,idate2)
+    call ilocate(tmpalt,inalt,ialt1,ialt2)
+d482 2
+a483 2
+    if (ialt1==ialt2) then !test whether the altitude is between two of the 
+       hcshape(1)=1        ! grid values (so we interpolate) or if there
+d485 24
+a508 24
+       hcshape(1)=2
+    endif
+    if (ilat1==ilat2) then
+       hcshape(2)=1
+    else
+       hcshape(2)=2
+    endif
+    if (ilon1==ilon2) then
+       hcshape(3)=1
+    else
+       hcshape(3)=2
+    endif
+    if (ilst1==ilst2) then
+       hcshape(4)=1
+    else
+       hcshape(4)=2
+    endif
+    if (isza1==isza2) then
+       hcshape(5)=1
+    else
+       hcshape(5)=2
+    endif
+    if (idate1==idate2) then
+       hcshape(6)=1
+d510 2
+a511 2
+       hcshape(6)=2
+    endif
+d517 1
+a517 1
+         1:hcshape(4),1:hcshape(5),1:hcshape(6)))
+d519 2
+a520 2
+    hcube=field%field(ialt1:ialt2, ilat1:ilat2, ilon1:ilon2, &
+         ilst1:ilst2,isza1:isza2, idate1:idate2)
+d522 1
+a522 1
+    ! Now we interpolate along eahc of the axes where this is needed
+d524 17
+a540 17
+    if (hcshape(6) == 2 )then !Interpolate in date 
+       do i0=1,hcshape(1)
+          do i1=1,hcshape(2)
+             do i2=1,hcshape(3)
+                do i3=1,hcshape(4)
+                   do i4=1,hcshape(5)
+                      hcube(i0,i1,i2,i3,i4,1)=hcube(i0,i1,i2,i3,i4,1)+ &
+                           (hcube(i0,i1,i2,i3,i4,2)- &
+                           hcube(i0,i1,i2,i3,i4,1))* &
+                           (indate-tmpdate(idate1))/ &
+                           (tmpdate(idate2)-tmpdate(idate1))
+                   enddo
+                enddo
+             enddo
+          enddo
+       enddo
+    endif
+d542 15
+a556 15
+    if (hcshape(5) == 2 )then !Interpolate in local Solar zenith ang  SZA
+       do i0=1,hcshape(1)
+          do i1=1,hcshape(2)
+             do i2=1,hcshape(3)
+                do i3=1,hcshape(4)
+                   hcube(i0,i1,i2,i3,1,1)=hcube(i0,i1,i2,i3,1,1)+ &
+                        (hcube(i0,i1,i2,i3,2,1)- &
+                        hcube(i0,i1,i2,i3,1,1))* &
+                        (insza-field%szas(isza1))/ &
+                        (field%szas(isza2)-field%szas(isza1))
+                enddo
+             enddo
+          enddo
+       enddo
+    endif
+d558 13
+a570 13
+    if (hcshape(4) == 2 )then !Interpolate in local solar time
+       do i0=1,hcshape(1)
+          do i1=1,hcshape(2)
+             do i2=1,hcshape(3)
+                hcube(i0,i1,i2,1,1,1)=hcube(i0,i1,i2,1,1,1)+ &
+                     (hcube(i0,i1,i2,2,1,1)- &
+                     hcube(i0,i1,i2,1,1,1))* &
+                     (inlst-field%lsts(ilst1))/ &
+                     (field%lsts(ilst2)-field%lsts(ilst1))
+             enddo
+          enddo
+       enddo
+    endif
+d572 11
+a582 11
+    if (hcshape(3) == 2 )then !Interpolate in longitude
+       do i0=1,hcshape(1)
+          do i1=1,hcshape(2)
+             hcube(i0,i1,1,1,1,1)=hcube(i0,i1,1,1,1,1)+ &
+                  (hcube(i0,i1,2,1,1,1)- &
+                  hcube(i0,i1,1,1,1,1))* &
+                  (inlon-field%lons(ilon1))/ &
+                  (field%lons(ilon2)-field%lons(ilon1))
+          enddo
+       enddo
+    endif
+d584 9
+a592 9
+    if (hcshape(2) == 2 )then !Interpolate in latitude
+       do i0=1,hcshape(1)
+          hcube(i0,1,1,1,1,1)=hcube(i0,1,1,1,1,1)+ &
+               (hcube(i0,2,1,1,1,1)- &
+               hcube(i0,1,1,1,1,1))* &
+               (inlat-field%lats(ilat1))/ &
+               (field%lats(ilat2)-field%lats(ilat1))
+       enddo
+    endif
+d595 8
+a602 8
+    if (hcshape(1) == 2 )then !interpolate in altitude
+       hcube(1,1,1,1,1,1)=hcube(1,1,1,1,1,1)+ &
+            (hcube(2,1,1,1,1,1)- &
+            hcube(1,1,1,1,1,1))* &
+            (inalt-tmpalt(ialt1))/ &
+            (tmpalt(ialt2)-tmpalt(ialt1))
+    endif
+    outval=hcube(1,1,1,1,1,1)
+d604 1
+a604 1
+  end subroutine l3ascii_interp_field
+d606 1
+a606 1
+  subroutine ilocate(x,xval,ix1,ix2)
+d617 34
+a650 34
+    if (n <=1) then ! x has only one element: no interpolating to be done
+       ix1=1
+       ix2=1
+    else
+       if (xval > x(n)) then ! off top . Use end value
+          ix1=n
+          ix2=n
+       else if (xval < x(1)) then ! of bottom. Use end value
+          ix1=1
+          ix2=1
+       else ! in range of x. Do binary search.
+          j=n/2 
+          dj = n/2 
+          binsearch: do  
+             if (dj > 1) then 
+                dj=dj/2 
+             else 
+                dj=1 
+             end if
+             if(x(j) > xval .and. x(j+1) > xval) then 
+                j=j-dj 
+                cycle
+             else  if (x(j) < xval .and. x(j+1) < xval) then 
+                j=j+dj 
+                cycle 
+             else 
+                exit
+             endif
+          enddo binsearch
+          ix1=j
+          ix2=j+1
+       end if
+    endif
+  end subroutine ilocate
+d663 1
+a663 1
+!       if (ioinfo /= 0) then
+d668 1
+a668 1
+!          if(line(1:1) /= ";" .and. line(1:1) /= " ") then !not a comment
+d671 1
+a671 1
+!       endif
+d673 1
+a673 1
+!    enddo rdloop
+d680 1
+a680 1
+  subroutine make_log_axis(inline,axis,axis_len)
+d694 1
+a694 1
+    if (associated(axis)) then 
+d696 1
+a696 1
+    endif
+d698 4
+a701 5
+	if(len(inline) <= 1) then
+		call announce_error(0, &
+	& "in make_log_axis: inline, <"//&
+         trim(inline)//">, too short")
+	endif
+d704 7
+a710 7
+    nwords=1
+    do j=2,len(inline)
+       if(inline(j:j) /= " " .and. inline(j-1:j-1) == " ") then
+          nwords=nwords+1
+       endif
+    enddo
+    nsections=(nwords-3)/2
+d714 3
+a716 4
+	if(nsections < 1) then
+		call announce_error(0, &
+	& "in make_log_axis: nsections < 1")
+	endif
+d719 2
+a720 2
+         axints(1:nsections*2))
+    read(unit=inline,fmt=*)linetype,axistype,basepressure,axints
+d723 2
+a724 2
+    n_levs_in_sec=axints(1:nsections*2-1:2)
+    n_levs_per_dec=axints(2:nsections*2:2)
+d726 1
+a726 1
+    axis_len=sum(n_levs_in_sec)
+d728 3
+a730 4
+	if(axis_len < 1) then
+		call announce_error(0, &
+	& "in make_log_axis: axis_len < 1")
+	endif
+d734 2
+a735 2
+    axis(1)=-log10(basepressure)
+    stind=0
+d737 2
+a738 2
+    do j=1,nsections
+       gridstep=1.0_r8/n_levs_per_dec(j)
+d742 13
+a754 14
+	 if(gridstep <= 0.d0) then
+		call announce_error(0, &
+	& "in make_log_axis: gridstep <= 0")
+		stop
+	endif
+       if (j == 1) then
+          st=2
+       else
+          st=1
+       endif
+       do i=st,n_levs_in_sec(j)
+          axis(stind+i)=axis(stind+i-1)+gridstep
+       end do
+       stind=stind+n_levs_in_sec(j)
+d764 1
+a764 1
+    axis=exp(-log(10.)*axis)
+d771 1
+a771 1
+  end subroutine make_log_axis
+d773 1
+a773 1
+  subroutine make_linear_axis(inline,axis,axis_len)
+d786 3
+a788 3
+    if (associated(axis)) then 
+       deallocate(axis)
+    endif
+d792 7
+a798 7
+    nwords=1
+    do j=2,len(inline)
+       if(inline(j:j) /= " " .and. inline(j-1:j-1) == " ") then
+          nwords=nwords+1
+       endif
+    enddo
+    nsections=(nwords-3)/2
+d801 1
+a801 1
+         axints(1:nsections*2))
+d803 3
+a805 3
+    read(unit=inline,fmt=*)linetype,axistype,baseval,axints
+    n_levs_in_sec=nint(axints(1:nsections*2-1:2))
+    gridstep=axints(2:nsections*2:2)
+d807 1
+a807 1
+    axis_len=sum(n_levs_in_sec)
+d810 12
+a821 12
+    axis(1)=baseval
+    stind=0
+    do j=1,nsections
+       if (j == 1) then
+          st=2
+       else
+          st=1
+       endif
+       do i=st,n_levs_in_sec(j)
+          axis(stind+i)=axis(stind+i-1)+gridstep(j)
+       end do
+       stind=stind+n_levs_in_sec(j)
+d825 1
+a825 1
+  end subroutine make_linear_axis
+d827 1
+a827 1
+  subroutine read_explicit_axis(unit,axis,axis_len)
+d841 3
+a843 3
+    if (associated(axis)) then 
+       deallocate(axis)
+    endif
+d851 1
+a851 1
+       read(unit=unit,fmt="(a)",advance="no")rdchar
+d853 4
+a856 4
+       if(rdchar=="(") then
+          exit 
+       endif
+    enddo
+d859 6
+a864 6
+    axis_len=0
+    foundcb=.false.
+    itemsloop:do
+       i=1
+       charsloop:do
+          read(unit=unit,fmt="(a)",advance="no",iostat=iotest)rdchar
+d866 1
+a866 1
+          if(rdchar==")") then
+d868 22
+a889 22
+             foundcb=.true.
+             exit charsloop
+          endif
+          if (rdchar==" ") then
+             exit charsloop
+          endif
+          readitem(i:i)=rdchar
+          i=i+1
+       enddo charsloop
+       if ((i<=1 .and. .not.foundcb) .or. (i==2 .and. readitem(1:1)==" ")) then
+          cycle itemsloop
+       endif
+       if ( i <= 1 .and. foundcb) then
+          exit itemsloop
+       endif
+       !print*,"Axis item is",readitem(1:i-1)
+       axis_len=axis_len+1
+       read(unit=readitem(1:i-1),fmt=*)tmpaxis(axis_len)
+        !print*,"Element",axis_len," is ",tmpaxis(axis_len)
+        if (foundcb) then
+           exit itemsloop
+        endif
+d892 2
+a893 2
+    axis=tmpaxis(1:axis_len)
+  end subroutine read_explicit_axis
+d895 1
+a895 1
+  function l3ascii_get_multiplier(field) result(multiplier)
+d913 24
+a936 24
+    if (ix > 0) then
+       multiplier=1.0_r8
+       return
+    endif
+    ix=index(ucunits,"PPM")
+    if (ix > 0) then
+       multiplier=1.0e6_r8
+       return
+    endif
+    ix=index(ucunits,"PPB")
+    if (ix > 0) then
+       multiplier=1.0e9_r8
+       return
+    endif
+    ix=index(ucunits,"PPT")
+    if (ix > 0) then
+       multiplier=1.0e12_r8
+       return
+    endif
+    ix=index(ucunits,"K ")
+    if (ix > 0) then
+       multiplier=1.0_r8
+       return
+    endif
+d941 4
+a944 4
+	CALL announce_error( 0, &
+	&"in function l3ascii_get_multiplier: Units "//&
+         trim(field%units)//" for field "//trim(field%quantityName)//&
+         "not known. Guessing multiplier=1.0")
+d948 2
+a949 2
+   multiplier=1.0_r8
+  end function l3ascii_get_multiplier
+d952 1
+a952 1
+  subroutine announce_error ( lcf_where, full_message, use_toolkit, &
+d957 54
+a1010 54
+	integer, intent(in)    :: lcf_where
+	character(LEN=*), intent(in)    :: full_message
+	logical, intent(in), optional :: use_toolkit
+	integer, intent(in), optional    :: error_number
+	! Local
+!  character (len=80) :: msg, mnemonic
+!  integer :: status
+  logical :: just_print_it
+  logical, parameter :: default_output_by_toolkit = .true.
+	
+	if(present(use_toolkit)) then
+		just_print_it = use_toolkit
+	elseif(default_output_by_toolkit) then
+		just_print_it = .false.
+	else
+		just_print_it = .true.
+	endif
+	
+	if(.not. just_print_it) then
+!    CALL Pgs_smf_getMsg(status, mnemonic, msg)
+!    CALL MLSMessage (level, ModuleName, &
+!              &trim(full_message)//" "//mnemonic//" "//msg)
+    error = max(error,1)
+    call output ( '***** At ' )
+
+	if(lcf_where > 0) then
+	    call print_source ( source_ref(lcf_where) )
+		else
+    call output ( '(no lcf node available)' )
+		endif
+
+    call output ( ': ' )
+    call output ( "The " );
+	if(lcf_where > 0) then
+    call dump_tree_node ( lcf_where, 0 )
+		else
+    call output ( '(no lcf tree available)' )
+		endif
+
+		CALL output("Caused the following error:", advance='yes', &
+		& from_where=ModuleName)
+		CALL output(trim(full_message), advance='yes', &
+		& from_where=ModuleName)
+		if(present(error_number)) then
+			CALL output('error number ', advance='no')
+			CALL output(error_number, places=9, advance='yes')
+		endif
+	else
+		print*, '***Error in module ', ModuleName
+		print*, trim(full_message)
+		if(present(error_number)) then
+			print*, 'error number ', error_number
+		endif
+	endif
+d1017 1
+a1017 1
+END MODULE l3ascii
+d1022 3
+@
+
+
+2.5
+log
+@make_log_axis now always works
+@
+text
+@d23 1
+a23 1
+       "$Id: l3ascii.f90,v 2.4 2001/03/28 00:24:38 pwagner Exp $"
+d120 2
+d1024 3
+@
+
+
+2.4
+log
+@Some error controls, ErrType added
+@
+text
+@d23 1
+a23 1
+       "$Id: l3ascii.f90,v 2.3 2001/03/27 17:33:30 pwagner Exp $"
+d731 1
+d735 1
+d738 8
+d756 11
+a766 1
+    axis=10.0_r8**(-axis)
+d769 2
+d1022 3
+@
+
+
+2.3
+log
+@announce_error replaces MLSMessage
+@
+text
+@d23 1
+a23 1
+       "$Id: l3ascii.f90,v 2.2 2001/03/15 21:40:30 pwagner Exp $"
+d76 1
+a76 1
+  subroutine l3ascii_read_field(unit, field, end_of_file)
+d80 1
+d89 3
+a91 1
+    real(kind=r8), pointer, dimension(:) :: tmpaxis, dateStarts, dateEnds
+d97 7
+a103 1
+    nullify(tmpaxis)
+d389 4
+d694 6
+d710 6
+d726 5
+d1000 3
+@
+
+
+2.2
+log
+@Eliminated unused routines from USE statements
+@
+text
+@d10 1
+a11 2
+  USE MLSMessageModule, only: MLSMessage, MLSMSG_Error, &
+  & MLSMSG_Warning
+d14 2
+d23 1
+a23 1
+       "$Id: l3ascii.f90,v 2.1 2001/03/15 21:27:26 pwagner Exp $"
+d32 1
+d52 1
+d64 1
+a64 1
+      call MLSMessage ( MLSMSG_Error, ModuleName,&
+d66 2
+d93 1
+d100 1
+a100 1
+        call MLSMessage(MLSMSG_Error,ModuleName,&
+d103 3
+d137 2
+d156 9
+d174 1
+a174 1
+      call MLSMessage(MLSMSG_Error,ModuleName,&
+d177 5
+a181 1
+       return
+d185 1
+a185 1
+       call MLSMessage(MLSMSG_Error,ModuleName,&
+d188 3
+d220 2
+a221 1
+           call MLSMessage(MLSMSG_Error,ModuleName,&
+d226 5
+d305 1
+a305 1
+          call MLSMessage(MLSMSG_Error,ModuleName,&
+d309 6
+d354 1
+a354 1
+           call MLSMessage(MLSMSG_Error,ModuleName,&
+d358 5
+d369 2
+d858 1
+d885 6
+a890 2
+    call MLSMessage(MLSMSG_Warning,ModuleName,&
+         "in function l3ascii_get_multiplier: Units "//&
+d899 65
+d970 3
+@
+
+
+2.1
+log
+@Moved l3ascii methods from GriddedData here
+@
+text
+@d11 4
+a14 4
+  USE MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate, &
+  & MLSMSG_Deallocate, MLSMSG_Warning
+  USE MLSStrings, only: GetStringElement, NumStringElements, Capitalize, &
+  & Count_words, ReadCompleteLineWithoutComments, GetIntHashElement
+d22 2
+a23 2
+       "$Id: GriddedData.f90,v 2.8 2001/03/15 00:37:13 pwagner Exp $"
+  CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile: GriddedData.f90,v $"
+d853 4
+a856 1
+! $Log: GriddedData.f90,v $
+@
+

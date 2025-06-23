@@ -1,0 +1,441 @@
+head	2.9;
+access;
+symbols
+	v5-02-NRT-19:2.9
+	v6-00:2.9
+	v5-02-NRT-18:2.9
+	v5-02:2.9
+	v5-01-NRT-17:2.9
+	v5-01-NRT-16:2.9
+	v5-01-NRT-15:2.9
+	v5-01-NRT-14:2.9
+	neuralnetworks-1-0:2.9.0.10
+	cfm-single-freq-0-1:2.9.0.8
+	v5-01:2.9
+	v5-00:2.9
+	v4-23-TA133:2.9.0.6
+	mus-emls-1-70:2.9.0.4
+	rel-1-0-englocks-work:2.9.0.2
+	VUMLS1-00:2.8
+	VPL1-00:2.8
+	V4-22-NRT-08:2.7
+	VAM1-00:2.7
+	V4-21:2.7.0.2
+	V4-13:2.7
+	V4-12:2.7
+	V4-11:2.7
+	V4-10:2.7
+	M4-00:2.5
+	V3-33:2.4;
+locks; strict;
+comment	@# @;
+
+
+2.9
+date	2017.07.31.23.18.55;	author pwagner;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2016.07.28.01.42.27;	author vsnyder;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2013.06.19.23.13.44;	author pwagner;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2013.06.19.20.44.28;	author pwagner;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2012.06.22.20.25.18;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2011.12.15.01.44.33;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2011.07.26.20.45.21;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2011.07.15.23.22.16;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2011.07.12.00.09.03;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.9
+log
+@Try to avoid printing unwanted blank lines
+@
+text
+@! Copyright 2011, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id: dump3db.f9h,v 2.8 2016/07/28 01:42:27 vsnyder Exp $
+
+! subroutine DUMP_3D_COMPLEX ( ARRAY, NAME, &                 
+!   & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )            
+!   double precision, intent(in) :: ARRAY(:,:,:)             
+!   character(len=*), intent(in), optional :: NAME           
+!   double precision, intent(in), optional :: FILLVALUE      
+!   integer, intent(in), optional :: WIDTH                   
+!   character(len=*), intent(in), optional :: FORMAT         
+!   integer, intent(in), optional :: LBOUND  ! to print for first dimension              
+!   character(len=*), intent(in), optional :: options        
+!   integer :: I, J, K, L                                    
+!   integer :: NumZeroRows                                   
+!   double precision :: myFillValue                          
+!   character(len=64) :: myFormat                            
+!   integer :: nUnique                                       
+!   integer, dimension(MAXNUMELEMENTS) :: counts             
+!   double precision, dimension(MAXNUMELEMENTS) :: elements  
+    base = 2
+    if ( present(lbound) ) base = lbound + 1
+    myOptions = DEFAULTDUMPOPTIONS
+    MyWidth = 5
+    if ( present(width) ) MyWidth = width
+    if ( present(options) ) myOptions = options
+    indx2BSliced = 0
+    if ( optiondetail( myOptions, 'W' ) /= 'no' ) then
+      call readIntsFromChars( optiondetail( myOptions, 'W' ), indx2BSliced )
+    endif
+    numZeroRows = 0
+    if ( any(shape(array) == 0) ) then
+      call empty ( name )
+    else if ( size(array) == 1 ) then
+      if ( present(theShape) ) then
+        call name_and_size ( name, dopts(clean)%v, 1, theShape )
+      else
+        call name_and_size ( name, dopts(clean)%v, 1, '(1,1,1)' )
+      end if
+      call output ( base-1, before='(', after=') ' , advance='no' )
+      call output ( array(1,1,1), format=myFormat, advance='yes' )
+    else if ( size(array,1) == 1 ) then
+      if ( dopts(wholeArray)%v ) then
+        if ( present(theShape) ) then
+          call dump ( array(1,:,:), name, &
+            & fillValue=fillValue, format=format, options=options, theShape=theShape )
+        else
+          call dump ( array(1,:,:), name, &
+            & fillValue=fillValue, format=format, options=options, theShape='(1,:,:)' )
+        endif
+      else
+        call dump ( array(1,:,:), name, &
+          & fillValue=fillValue, format=format, options=options )
+      endif
+    else if ( size(array,2) == 1 ) then
+      if ( dopts(wholeArray)%v ) then
+        if ( present(theShape) ) then
+          call dump ( array(:,1,:), name, &
+            & fillValue=fillValue, format=format, options=options, theShape=theShape )
+        else
+          call dump ( array(:,1,:), name, &
+            & fillValue=fillValue, format=format, options=options, theShape='(:,1,:)' )
+        endif
+      else
+        call dump ( array(:,1,:), name, &
+          & fillValue=fillValue, format=format, options=options )
+      endif
+    else if ( size(array,3) == 1 ) then
+      if ( dopts(wholeArray)%v ) then
+        if ( present(theShape) ) then
+          call dump ( array(:,:,1), name, &
+            & fillValue=fillValue, format=format, options=options, theShape=theShape )
+        else
+          call dump ( array(:,:,1), name, &
+            & fillValue=fillValue, format=format, options=options, theShape='(:,:,1)' )
+        endif
+      else
+        call dump ( array(:,:,1), name, &
+          & fillValue=fillValue, format=format, options=options )
+      endif
+    else if ( indx2BSliced == 1 ) then
+      do iSlice=1, size(array, 1)
+        call output( '(' , advance='no' )
+        call output( iSlice , advance='no' )
+        call output( ',:,:)' , advance='no' )
+        call dump ( array(iSlice,:,:), name, &
+          & fillValue=fillValue, format=format, options=options )
+      enddo
+    else if ( indx2BSliced == 2 ) then
+      do iSlice=1, size(array, 2)
+        call output( '(:,' , advance='no' )
+        call output( iSlice , advance='no' )
+        call output( ',:)' , advance='no' )
+        call dump ( array(:,iSlice,:), name, &
+          & fillValue=fillValue, format=format, options=options )
+      enddo
+    else if ( indx2BSliced == 3 ) then
+      do iSlice=1, size(array, 3)
+        call output( '(:,:,' , advance='no' )
+        call output( iSlice , advance='no' )
+        call output( ')' , advance='no' )
+        call dump ( array(:,:,iSlice), name, &
+          & fillValue=fillValue, format=format, options=options )
+      enddo
+    else
+      call name_and_size ( name, dopts(clean)%v, size(array), theShape )
+      if ( present(name) .and. .not. dopts(laconic)%v ) &
+        & call newLine ( dont_make_blank_line=.true. )
+      do i = 1, size(array,1)
+        do j = 1, size(array,2)
+          do k = 1, size(array,3), myWidth
+            DumpTheseZeros = dopts(clean)%v .or. &
+              & any(array(i,j,k:min(k+2*MyWidth-1, size(array,3))) /= myFillValue) &
+              & .or. &
+              & ( k+MyWidth >= size(array,3) .and. &
+              & any(array(i,min(j+1, size(array,2)),1:min(1+MyWidth-1, size(array,3))) &
+              & /= myFillValue) &
+              & )
+            if (.not. dopts(clean)%v) then
+              if ( DumpTheseZeros ) then
+                call say_fill ( (/ i, size(array,1), j-1, size(array,2), &
+                  & k, size(array,3) /), numZeroRows, &
+                  & myFillValue, inc=3, format=myFormat )
+              else
+                numZeroRows = numZeroRows + 1
+              end if
+            end if
+            if ( DumpTheseZeros ) then
+              do l = k, min(k+myWidth-1, size(array,3))
+                call output ( array(i,j,l), format=myFormat , advance='no' )
+              end do
+              call newLine
+              numZeroRows = 0
+            endif
+          end do
+        end do
+      end do
+      call say_fill ( (/ i-1, size(array,1), j-1, size(array,2), &
+        & k-myWidth, size(array,3) /), numZeroRows, myFillValue, format=myFormat )
+   end if
+   call theDumpEnds
+! end subroutine DUMP_3D_DOUBLE
+! $Log: dump3db.f9h,v $
+! Revision 2.8  2016/07/28 01:42:27  vsnyder
+! Refactoring dump and diff
+!
+! Revision 2.7  2013/06/19 23:13:44  pwagner
+! Remove more unused stuff
+!
+! Revision 2.6  2013/06/19 20:44:28  pwagner
+! Now obeys -W[n] option
+!
+! Revision 2.5  2012/06/22 20:25:18  pwagner
+! Specify advance arg because we may now set default to 'yes'
+!
+! Revision 2.4  2011/12/15 01:44:33  pwagner
+! Tries to retain theShape if present
+!
+! Revision 2.3  2011/07/26 20:45:21  pwagner
+! Clearer, less redundant
+!
+! Revision 2.2  2011/07/15 23:22:16  pwagner
+! prints notice one of array sizes is 1
+!
+! Revision 2.1  2011/07/12 00:09:03  pwagner
+! First commit
+!
+@
+
+
+2.8
+log
+@Refactoring dump and diff
+@
+text
+@d12 1
+a12 1
+! $Id: dump3db.f9h,v 2.7 2013/06/19 23:13:44 pwagner Exp $
+d116 2
+a117 1
+      if ( present(name) .and. .not. dopts(laconic)%v ) call newLine
+d153 3
+@
+
+
+2.7
+log
+@Remove more unused stuff
+@
+text
+@d12 1
+a12 1
+! $Id: dump3db.f9h,v 2.6 2013/06/19 20:44:28 pwagner Exp $
+d45 1
+a45 1
+        call name_and_size ( name, myClean, 1, theShape )
+d47 1
+a47 1
+        call name_and_size ( name, myClean, 1, '(1,1,1)' )
+d52 1
+a52 1
+      if ( myWholeArray ) then
+d65 1
+a65 1
+      if ( myWholeArray ) then
+d78 1
+a78 1
+      if ( myWholeArray ) then
+d115 2
+a116 2
+      call name_and_size ( name, myClean, size(array), theShape )
+      if ( present(name) .and. .not. mylaconic ) call newLine
+d120 1
+a120 1
+            DumpTheseZeros = myClean .or. &
+d127 1
+a127 1
+            if (.not. myClean) then
+d152 3
+@
+
+
+2.6
+log
+@Now obeys -W[n] option
+@
+text
+@d12 1
+a12 1
+! $Id: dump3db.f9h,v 2.5 2012/06/22 20:25:18 pwagner Exp $
+d33 2
+d152 3
+@
+
+
+2.5
+log
+@Specify advance arg because we may now set default to 'yes'
+@
+text
+@d12 1
+a12 1
+! $Id: dump3db.f9h,v 2.4 2011/12/15 01:44:33 pwagner Exp $
+d32 6
+a37 1
+
+d88 24
+d150 3
+@
+
+
+2.4
+log
+@Tries to retain theShape if present
+@
+text
+@d12 1
+a12 1
+! $Id: dump3db.f9h,v 2.3 2011/07/26 20:45:21 pwagner Exp $
+d42 1
+a42 1
+      call output ( base-1, before='(', after=') ' )
+d107 1
+a107 1
+                call output ( array(i,j,l), format=myFormat )
+d121 3
+@
+
+
+2.3
+log
+@Clearer, less redundant
+@
+text
+@d12 1
+a12 1
+! $Id: dump3db.f9h,v 2.2 2011/07/15 23:22:16 pwagner Exp $
+d21 1
+a21 1
+!   integer, intent(in), optional :: LBOUND                  
+d30 3
+d36 8
+d45 12
+a56 3
+      if ( myWholeArray ) call output( '1st size is 1: reducing rank to 2', advance='yes' )
+      call dump ( array(1,:,:), name, &
+        & fillValue=fillValue, format=format, options=options )
+d58 12
+a69 3
+      if ( myWholeArray ) call output( '2nd size is 1: reducing rank to 2', advance='yes' )
+      call dump ( array(:,1,:), name, &
+        & fillValue=fillValue, format=format, options=options )
+d71 12
+a82 3
+      if ( myWholeArray ) call output( '3rd size is 1: reducing rank to 2', advance='yes' )
+      call dump ( array(:,:,1), name, &
+        & fillValue=fillValue, format=format, options=options )
+d84 1
+a84 1
+      call name_and_size ( name, myClean, size(array) )
+d121 3
+@
+
+
+2.2
+log
+@prints notice one of array sizes is 1
+@
+text
+@d12 1
+a12 1
+! $Id: dump3db.f9h,v 2.1 2011/07/12 00:09:03 pwagner Exp $
+d34 1
+a34 1
+      call output( '1st size is 1: reducing rank to 2', advance='yes' )
+d38 1
+a38 1
+      call output( '2nd size is 1: reducing rank to 2', advance='yes' )
+d42 1
+a42 1
+      call output( '3rd size is 1: reducing rank to 2', advance='yes' )
+d82 4
+a85 1
+! $Log: dump1db.f9h,v $
+@
+
+
+2.1
+log
+@First commit
+@
+text
+@d1 1
+a1 1
+! Copyright 2005, by the California Institute of Technology. ALL
+d12 1
+a12 1
+! $Id: dump3db.f9h,v 2.6 2011/04/20 22:25:07 pwagner Exp $
+d34 1
+d38 1
+d42 1
+d82 4
+@
+

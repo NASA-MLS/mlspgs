@@ -1,0 +1,390 @@
+head	1.3;
+access;
+symbols
+	v5-02-NRT-19:1.3
+	v6-00:1.3
+	v5-02-NRT-18:1.3
+	v5-02:1.3
+	v5-01-NRT-17:1.3
+	v5-01-NRT-16:1.3
+	v5-01-NRT-15:1.3
+	v5-01-NRT-14:1.3
+	neuralnetworks-1-0:1.3.0.8
+	cfm-single-freq-0-1:1.3.0.6
+	v5-01:1.3
+	v5-00:1.3
+	v4-23-TA133:1.3.0.4
+	mus-emls-1-70:1.3.0.2
+	rel-1-0-englocks-work:1.2.0.2;
+locks; strict;
+comment	@% @;
+
+
+1.3
+date	2018.05.10.00.26.17;	author vsnyder;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2017.06.07.22.14.21;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2017.06.05.20.55.13;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@Added more descriptions, noted that two arrays are removed
+@
+text
+@\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9in
+
+\newcommand{\docname}{wvs-138r3}
+\newcommand{\docdate}{9 May 2018}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\newcommand{\Z}{$\zeta$}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Van\\
+Subject: \>Interpolating coefficients, index arrays, and flags in the
+           forward model \\
+From: \>Van Snyder\\
+Reference: \>\h{wvs-090}, \h{wvs-093}, \h{wvs-140}\\
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-20pt}
+
+The forward model integrates the radiative-transfer equation along several
+lines of sight at several frequencies, and calculates derivatives of the
+computed radiance with respect to state vector elements.  See \h{wvs-090}
+and \h{wvs-093}.
+
+The \emph{state vector} is a one-dimensional concatenation of all species
+under consideration by the forward model.  Each element's value
+corresponds to a four-tuple $[f, \zeta, \phi, S]$, where $f$ is frequency,
+\Z\ is the negative base-10 logarithm of pressure, $\phi$ is orbit geodetic
+angle, and $S$ is a species index.  Most species' mixing ratios do not
+depend upon frequency.  The number of \Z\ indices could be different for
+each species.  The number of $\phi$ indices is assumed to be the same for
+all species.
+
+The {\tt Grids_f} structure defined in {\tt load_sps_data_m} is a
+representation of the state vector, including the frequencies and
+geolocations for each element, taken from \emph{vector quantities} of the
+{\tt Input} and {\tt Extra} \emph{vectors} provided to the forward model. 
+For details of the distinction between \emph{vector quantities} and
+\emph{vectors}, consult {\tt VectorsModule}.
+
+There are several arrays of indices and flags in the forward model that
+indicate where calculations are needed.
+
+The \emph{coarse path} is the set of points where the line of sight
+pierces surfaces of constant pressure.  The tangent point is represented
+twice so that we can multiply by Earth reflectivity if the ray is
+reflected from the Earth's surface, or 1.0 if it's not.
+
+The set of constant pressure surfaces that determines the coarse path is
+the union of the sets of pressure coordinates for all state vector
+elements.
+
+The \emph{fine path} is the coarse path with Gauss-Legendre quadrature
+abscissae inserted between every pair of coarse path points.  There is
+space for these abscissae between the two coarse path points that
+represent the tangent point, but they're never used.  We might someday
+choose to use Gauss-Lobatto quadrature.  ``GL'' is used below for either
+Gauss-Legendre quadrature or Gauss-Lobatto quadrature.
+
+\begin{description}
+
+\item[{\tt NG}] is the number of GL abscissae inserted between coarse path
+  points.
+
+\item[{\tt NGP1}] is {\tt NG + 1}
+
+\item[{\tt Eta_ZP}] is an rank-2 array of interpolating coefficients from
+  the \Z\ and $\phi$ coordinates of the state vector onto the fine path,
+  for all species including those that depend upon frequency.  Its extents
+  are the number of fine path points on the current line of sight, and the
+  total number of state-vector elements, not counting frequency
+  dependence.
+
+\item[{\tt Do_Calc_ZP}] is a rank-2 array of logical values indicating
+  where {\tt Eta_ZP} is not zero.  Its shape is the same as {\tt Eta_ZP}.
+
+  [This has been removed as of 2018 May 08.  Instead, one column of it is
+  computed from {\tt Eta_ZP} as needed when computing derivatives.]
+
+\item[{\tt Eta_FZP}] is a rank-2 array of interpolating coefficients from
+  the $f$, \Z\ and $\phi$ coordinates of the state vector onto the fine
+  path, also for all species.  Columns for species that do not depend upon
+  frequency are simply copies of corresponding columns of {\tt Eta_ZP}. 
+  For those quantities that depend upon frequency, a number of columns
+  equal to the number of frequencies in {\tt Grids_f} are copied from {\tt
+  Eta_ZP}, and then each of those columns is multiplied by the
+  interpolating coefficient from the frequency grid for the species to the
+  pointing frequency grid for the line of sight.  {\tt Eta_ZP} and {\tt
+  Eta_FZP} are separate because {\tt Eta_ZP} depends only upon the line of
+  sight, and is therefore computed outside the frequency loop.  The
+  frequency dependence of {\tt Eta_FZP} is computed within the frequency
+  loop.  Its extents are the number of fine path points on the current
+  line of sight, and the total number of state-vector elements, including
+  frequency dependence.
+
+\item[{\tt Do_Calc_FZP}] is a rank-2 array of logical values indicating
+  where {\tt Eta_FZP} is not zero.  Its shape is the same as {\tt
+  Eta_FZP}.
+
+  [This has been removed as of 2018 May 08.  Instead, one column of it is
+  computed from {\tt Eta_FZP} as needed when computing derivatives.]
+
+\item[{\tt Do_GL}] is a rank-1 logical array indexed by the coarse path
+  index that indicates it is necessary to use GL for sufficient accuracy. 
+  Otherwise, trapezoidal quadrature is used.
+
+\item[{\tt F_Inds}] is a rank-1 array of integers that gives the fine path
+  indices of all and only the GL abscissae.  This includes indices for GL
+  abscissae that are not used because trapezoidal quadrature is good
+  enough; it does not include the coarse path points.
+
+\item[{\tt GL_Inds}] is a rank-1 array of integers, a subset of {\tt
+  F_Inds}, that gives the fine path indices only of GL abscissae on panels
+  of the coarse path for which GL is necessary.  This does not include the
+  coarse path points, or fine path points on panels where GL is not
+  necessary.
+
+\end{description}
+
+Within {\tt rad_tran_m} the {\tt Get_Do_Calc_Indexed} subroutine uses {\tt
+GL_Inds} (which it confusingly calls {\tt F_Inds}) to calculate:
+
+\begin{description}
+
+\item[{\tt Do_Calc}] is a rank-1 logical array indexed by the coarse path
+  index that indicates that {\tt Do_Calc_FZP} is true for at least one GL
+  point in the panel.  {\tt Do_Calc} might be true even if neither of the
+  elements at coarse-path positions in {\tt Do_Calc_FZP} are true.
+
+\item[{\tt Inds}] are a rank-1 array of coarse path indices where {\tt
+Do_Calc} is true.
+
+\item[{\tt N_Inds}] is the number of true elements in {\tt Do_Calc}, and
+  the number of meaningful elements in {\tt Inds}.
+
+\end{description}
+
+Within {\tt Get_Do_Calc_Indexed} the {\tt Do_Calc_All} dummy argument is
+one column of {\tt Do_Calc_FZP}.
+
+Within {\tt rad_tran_m} the {\tt Get_All_d_delta_df} subroutine uses
+{\tt get_inds} to compute two more sets of indices
+
+\begin{description}
+
+\item[{\tt More_Inds}] are indices on the coarse path where GL gets
+  applied.
+
+\item[{\tt All_Inds}] are the first of the {\tt NG} indices in {\tt
+  GL_Inds} for which GL is used.  The remaining {\tt NG - 1} are
+  consecutive, so we don't need them.
+
+\end{description}
+
+\vspace*{0.25in}
+\includegraphics[scale=0.85]{wvs-138-1}\\
+
+\label{lastpage}
+\vspace*{-0.1in} % Somehow, this causes lastpage to be defined
+\end{document}
+
+% $Id: wvs-138.tex,v 1.2 2017/06/07 22:14:21 vsnyder Exp $
+
+% $Log: wvs-138.tex,v $
+% Revision 1.2  2017/06/07 22:14:21  vsnyder
+% Add description of All_Inds in Get_Do_Calc_Indexed
+%
+% Revision 1.1  2017/06/05 20:55:13  vsnyder
+% Initial commit
+%
+@
+
+
+1.2
+log
+@Add description of All_Inds in Get_Do_Calc_Indexed
+@
+text
+@d15 2
+a16 2
+\newcommand{\docname}{wvs-138r2}
+\newcommand{\docdate}{7 June 2017}
+d82 1
+a82 1
+Reference: \>\h{wvs-090}, \h{wvs-093}\\
+d96 5
+a100 5
+$\zeta$ is the negative base-10 logarithm of pressure, $\phi$ is orbit
+geodetic angle, and $S$ is a species index.  Most species' mixing ratios
+do not depend upon frequency.  The number of $\zeta$ indices could be
+different for each species.  The number of $\phi$ indices is assumed to be
+the same for all species.
+d113 1
+a113 1
+pierces a surface of constant pressure.  The tangent point is represented
+d117 3
+a119 2
+The set of constant pressure surfaces that the forward model uses is the
+union of the sets of pressure coordinates for all state vector elements.
+d129 1
+d132 1
+d134 21
+a154 9
+\item[{\tt Eta_ZP}] is an array of interpolating coefficients from the
+  $\zeta$ and $\phi$ coordinates of the state vector onto the fine path,
+  for all species including those that depend upon frequency.
+\item[{\tt Do_Calc_ZP}] is an array of logical values indicating where
+  {\tt Eta_ZP} is not zero.
+\item[{\tt Eta_FZP}] is an array of interpolating coefficients from the
+  $f$, $\zeta$ and $\phi$ coordinates of the state vector onto the fine
+  path, also for all species. It is initially spread from {\tt Eta_ZP} for
+  those quantities that depend upon frequency, and then multiplied by the
+d159 14
+a172 6
+  frequency dependency of {\tt Eta_FZP} is computed within the frequency
+  loop.
+\item[{\tt Do_Calc_FZP}] is an array of logical values indicating where
+  {\tt Eta_FZP} is not zero.
+\item[{\tt Do_GL}] is a logical array indexed by the coarse path index
+  that indicates it is necessary to use GL for sufficient accuracy. 
+d174 2
+a175 1
+\item[{\tt F_Inds}] is an array of integers that gives the fine path
+d179 7
+a185 4
+\item[{\tt GL_Inds}] is an array of integers, a subset of {\tt F_Inds},
+  that gives the fine path indices only of GL abscissae on panels of the
+  coarse path for which GL is necessary.  This does not include the coarse
+  path points, or fine path points on panels where GL is not necessary.
+d189 1
+a189 1
+GL_Inds} (which it confusingly calls {\tt F_Inds}) to calculate
+d192 4
+a195 3
+\item[{\tt Do_Calc}] is a logical array indexed by the coarse path index
+  that indicates that {\tt Do_Calc_FZP} is true for at least one GL point
+  in the panel.  {\tt Do_Calc} might be true even if neither of the
+d197 4
+a200 1
+\item[{\tt Inds}] are coarse path indices where {\tt Do_Calc} is true.
+d203 1
+d213 1
+d216 1
+d220 1
+d223 3
+d230 1
+a230 1
+% $Id: wvs-138.tex,v 1.1 2017/06/05 20:55:13 vsnyder Exp $
+d233 3
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d15 2
+a16 2
+\newcommand{\docname}{wvs-138}
+\newcommand{\docdate}{1 June 2017}
+d165 3
+a167 3
+\item[{\tt Do_Calc}] is a logical array indexed by the coarse path index that
+  indicates that {\tt Do_Calc_FZP} is true for at least one GL point in
+  the panel.  {\tt Do_Calc} might be true even if neither of the
+d174 14
+d192 1
+a192 1
+% $Id: wvs-137.tex,v 1.1 2017/03/11 00:20:59 vsnyder Exp $
+d194 4
+a197 1
+% $Log: $
+@
+

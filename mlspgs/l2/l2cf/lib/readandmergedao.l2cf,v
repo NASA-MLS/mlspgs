@@ -1,0 +1,222 @@
+head	1.7;
+access;
+symbols
+	v5-02-NRT-19:1.7
+	v6-00:1.7
+	v5-02-NRT-18:1.7
+	v5-02:1.7
+	v5-01-NRT-17:1.7
+	v5-01-NRT-16:1.7
+	v5-01-NRT-15:1.7
+	v5-01-NRT-14:1.7
+	neuralnetworks-1-0:1.7.0.14
+	cfm-single-freq-0-1:1.7.0.12
+	v5-01:1.7
+	v5-00:1.7
+	v4-23-TA133:1.7.0.10
+	mus-emls-1-70:1.7.0.8
+	rel-1-0-englocks-work:1.7.0.6
+	VUMLS1-00:1.7
+	VPL1-00:1.7
+	V4-22-NRT-08:1.7
+	VAM1-00:1.7
+	V4-21:1.7.0.4
+	V4-13:1.7
+	V4-12:1.7
+	V4-11:1.7
+	V4-10:1.7
+	V3-43:1.7
+	M4-00:1.7
+	V3-41:1.7
+	V3-40-PlusGM57:1.7.0.2
+	V2-24-NRT-04:1.7
+	V3-33:1.7
+	V2-24:1.7
+	V3-31:1.7
+	V3-30-NRT-05:1.7
+	cfm-01-00:1.7
+	V3-30:1.7
+	V3-20:1.7
+	V3-10:1.7
+	V2-23-NRT-02:1.7
+	V2-23:1.7
+	V2-22-NRT-01:1.7
+	V2-22:1.7
+	V2-21:1.7
+	V2-20:1.7
+	V2-11:1.7
+	V2-10:1.7
+	V2-00:1.7
+	V1-51:1.7
+	V1-50:1.7
+	V1-45:1.7
+	V1-44:1.7
+	V1-43:1.5
+	V1-32:1.4
+	V1-31:1.4
+	V1-30:1.3;
+locks; strict;
+comment	@# @;
+
+
+1.7
+date	2004.08.13.23.44.42;	author livesey;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2004.08.13.23.38.40;	author livesey;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2004.04.16.00.45.45;	author livesey;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2003.11.13.23.17.01;	author livesey;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2003.06.06.01.07.14;	author livesey;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2003.05.10.23.47.59;	author livesey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2003.05.10.21.29.45;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.7
+log
+@Changed dao version
+@
+text
+@; ----------------------------------------------- Read / merge dao
+
+; A note of caution.  If !inpathdao includes the year (as it will at the
+; SCF), then expect this to fail when the first day is 31 December, as
+; the second day will be in the next year.  It will get the filename
+; right though.
+
+; This L2CF fragment reads and merges the dao data.
+begin ReadApriori
+  !ifdef(flagUsingPCF,
+    {!define(daoFile1,{})!define(daoFile2,{})},
+    {
+    !ifdef(daoVersion,{},{!define(daoVersion,{GEOS403})})
+    !define(daoDay1,!ccsdsbtodao(!day))
+    !define(daoDay2,!ccsdsbtodao(!ccsdsbadd(!day,1)))
+    !define(daoFile1,{, file='!inpathdao/DAS.flk.asm.tsyn3d_mis_p.!daoVersion.!daoDay1{}00.!daoDay1{}18.V01'})
+    !define(daoFile2,{, file='!inpathdao/DAS.flk.asm.tsyn3d_mis_p.!daoVersion.!daoDay2{}00.!daoDay2{}18.V01'})})
+
+  daoTemperatureInputThis: gridded, origin=dao, field='TMPU', $
+    dimList='XDim,YDim,Height,Time' !daoFile1
+  daoTemperatureInputNext: gridded, origin=dao, field='TMPU', $
+    dimList='XDim,YDim,Height,Time' !daoFile2
+end ReadApriori
+
+begin MergeGrids
+  daoTemperatureInput: Concatenate, $
+    a=daoTemperatureInputThis, b=daoTemperatureInputNext
+  delete, grid=daoTemperatureInputThis
+  delete, grid=daoTemperatureInputNext
+  mergedTemperature: Merge, operational=daoTemperatureInput, $
+    climatology=gridTemperature, height=1mb, scale=5km
+  !define(flagUseOperationalTemperature,{yes})
+  delete, grid=daoTemperatureInput
+end MergeGrids
+
+@
+
+
+1.6
+log
+@Changed the DAO version
+@
+text
+@d13 1
+a13 1
+    !ifdef(daoVersion,{},{!define(daoVersion,{GEOS402})})
+@
+
+
+1.5
+log
+@Added options to make it more toolkit/pcf friendly.
+@
+text
+@d13 1
+a13 1
+    !ifdef(daoVersion,{},{!define(daoVersion,{GEOS401})})
+@
+
+
+1.4
+log
+@Attempt to make it more general, still more work needed
+@
+text
+@d10 9
+a18 3
+  !ifdef(daoVersion,{},{!define(daoVersion,{GEOS401})})
+  !define(daoDay1,!ccsdsbtodao(!day))
+  !define(daoDay2,!ccsdsbtodao(!ccsdsbadd(!day,1)))
+d20 1
+a20 2
+    dimList='XDim,YDim,Height,Time', $
+    file='!inpathdao/DAS.flk.asm.tsyn3d_mis_p.!daoVersion.!daoDay1{}00.!daoDay1{}18.V01'
+d22 1
+a22 2
+    dimList='XDim,YDim,Height,Time', $
+    file='!inpathdao/DAS.flk.asm.tsyn3d_mis_p.!daoVersion.!daoDay2{}00.!daoDay2{}18.V01'
+@
+
+
+1.3
+log
+@Added calls to delete grids.
+@
+text
+@d10 1
+d15 1
+a15 1
+    file='!inpathdao/DAS.flk.asm.tsyn3d_mis_p.GEOS401.!daoDay1{}00.!daoDay1{}18.V01'
+d18 1
+a18 1
+    file='!inpathdao/DAS.flk.asm.tsyn3d_mis_p.GEOS401.!daoDay2{}00.!daoDay2{}18.V01'
+@
+
+
+1.2
+log
+@Bug fix.
+@
+text
+@d23 2
+d28 1
+@
+
+
+1.1
+log
+@First version
+@
+text
+@d11 1
+a11 1
+  !define(dayDay2,!ccsdsbtodao(!ccsdsbadd(!day,1)))
+@
+

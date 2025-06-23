@@ -1,0 +1,238 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.14
+	cfm-single-freq-0-1:1.1.0.12
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.10
+	mus-emls-1-70:1.1.0.8
+	rel-1-0-englocks-work:1.1.0.6
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2008.06.11.20.14.51;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\documentclass[12pt]{article}
+
+\newcommand{\docnum}{wvs-017r4}
+\newcommand{\docdate}{13 September 2004}
+
+\usepackage[fleqn]{amsmath}\textwidth 6.25in
+\oddsidemargin -0.25in
+\evensidemargin -0.25in
+\topmargin -0.5in
+\textheight 9.00in
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\settowidth{\hW}{\bf \docnum}
+%\settowidth{\hW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\bf \docnum}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill\\
+Subject: \>Pre-frequency-averaging\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 3pt
+\vspace{-20pt}
+
+This note expands on and analyzes some aspects of pre-frequency-averaging.
+
+Consider the frequency-averaged radiance from one channel
+
+\begin{equation}\label{first}\begin{split}
+I =& \int \phi(\nu) \sum_{i=1}^{2N_p} \Delta B_i(\nu) \tau_i^s(\nu) \tau_i^w(\nu) \; d\nu
+\approx\ \sum_{n=1}^{N_f} \phi_n \Delta \nu_n \sum_{i=1}^{2N_p} \Delta B_{in}
+ \tau_{in}^s \tau_{in}^w \\
+ &\text{ where }
+ \tau_{in}^s =\; \exp\left(-\sum_{j=2}^i \sum_{l \in \text{strong}}
+ \delta_{jln}\right),\;
+ \tau_{in}^w =\; \exp\left(-\sum_{j=2}^i \sum_{l \in \text{weak}}
+ \delta_{jln}\right) \;,
+\end{split}\end{equation}
+
+$n$ indexes frequencies within the channel, $i$ and $j$ index path positions,
+$l$ indexes spectral lines, $\phi_n$ is the filter function for the
+$n^\text{th}$ frequency in the channel, and $\tau_{in}^s$ and $\tau_{in}^w$ are
+factors of the transmission due to sets of lines \{strong\} and \{weak\},
+respectively. The set \{weak\} is defined such that for each $l \in$ \{weak\},
+$\delta_{jln}$ changes slowly as a function of $n$, i.e., it represents a weak
+spectral line or a weak tail of a line that has its center far from the
+channel.  The set \{strong\} comprises the indexes of the remaining lines.
+
+Since $\delta_{jln}$ changes slowly as a function of $n$ for $l \in$
+\{weak\}, we can replace $\delta_{jln}$ for $l \in$ \{weak\} by some kind of
+average w.r.t. $n$, \emph{viz}. $\overline{\delta_{jl}^w}$.
+
+Since the differential Planck radiation function $\Delta B_{in}$ changes very
+slowly with frequency within one channel, we can replace it with a channel
+average $\overline{\Delta B_i}$, which can be adequately approximated by
+evaluating $\Delta B_{in}$ at the channel center frequency.
+
+Exchanging the orders of summation on $i$ and $n$, letting
+$\overline{\delta_j^w} = \sum_{l\in\text{weak}} \overline{\delta_{jl}^w}$ and
+$\overline{\phi_n} = \phi_n \Delta\nu_n$, and replacing $\Delta B_{in}$
+with $\overline{\Delta B_i}$, we have
+
+\begin{equation}\label{exp2}\begin{split}
+ I \approx\;& \sum_{i=1}^{2N_p} \overline{\Delta B_i}
+    \sum_{n=1}^{N_f} \overline{\phi_n} \tau_{in}^s \tau_{in}^w
+    \approx \sum_{i=1}^{2N_p} \overline{\Delta B_i}\; \overline{\tau_{i}^w}
+    \sum_{n=1}^{N_f} \overline{\phi_n} \tau_{in}^s =
+    \sum_{i=1}^{2N_p} \overline{\Delta B_i} \; \overline{\tau_i^s} \;
+     \overline{\tau_i^w}\;, \text{ where } \\
+ &
+ \overline{\tau_i^s} = \sum_{n=1}^{N_f} \overline{\phi_n} \tau_{in}^s
+ \text{ and } \overline{\tau_{i}^w} =
+  \exp\left(-\sum_{j=2}^i \overline{\delta_j^w} \right)
+ \approx
+  \exp\left(-\sum_{j=2}^i \sum_{l \in \text{weak}} \delta_{jln} \right) =\;
+   \tau_{in}^w\;.
+\end{split}\end{equation}
+
+The $\overline{\delta_j^w}$ quantities have the same functional form as the
+$\Delta\delta_{j \rightarrow j-1}^k$ quantities given by Equation (8.10) in
+JPL D-18130, with $\beta^k(P(\zeta),T(\zeta),\nu)$ replaced by a spectral
+average
+
+\begin{equation}
+\overline{\beta}^k(P(\zeta),T(\zeta)) =
+ \frac
+  {\int_{\nu_0}^{\nu_1} \phi(\nu) \beta^k(P(\zeta),T(\zeta),\nu)\; d \nu}
+  {\int_{\nu_0}^{\nu_1} \phi(\nu)\; d \nu}
+\end{equation}
+
+for each channel, which can be interpolated from tables that can be
+calculated off line.  The remaining quantities are calculated on line.
+
+The program is presently organized with the summation order as in
+Equation (\ref{first}).  It is tempting to compute $\overline{\tau_i^w}$
+first, and then multiply $\tau_{in}^s$ by it within the frequency loop.
+Unfortunately, this doesn't work because a particular frequency might
+appear in several channels (the filter grids overlap), so we don't know
+which channel's $\overline{\tau_i^w}$ to use (recall that Equation
+(\ref{first}) describes the frequency-averaged radiance from one
+channel).  If we just multiplied  $\tau_{in}^s$ by $\overline{\tau_i^w}$
+and called that $\tau_{in}$, it would be incorrect to use it in one
+channel or the other.
+
+There are two possibilities.  Both require that we compute and save
+$\overline{\tau_i^w}$ and $\tau_{in}^s$, and postpone the computation of
+radiance, and all derivatives other than mixing ratio derivatives.  The
+first possibility then brings them together as in Equation (\ref{exp2})
+during frequency averaging.  This is a bad idea because it puts frequency
+averaging as an inner loop.  Frequency averaging uses spline
+interpolation.  Putting that in the inner loop would make PFA slower than
+LBL.
+
+Instead, we compute the radiance for each channel as in Equation
+(\ref{first}).  We use the frequency grid for each channel to determine
+which $\tau_{in}^s$ to use with the $\overline{\tau_i^w}$ for that
+channel.
+
+Mixing ratio derivatives can be calculated as now because we do not allow any
+species to be computed both LBL and PFA within a single invocation of the
+forward model.
+
+For temperature derivatives we write
+
+\begin{equation}\begin{split}
+\frac{\partial I}{\partial T} =&
+  \frac{\partial}{\partial T} \sum_{n=1}^{N_f} \overline{\phi_n}
+   \sum_{i=1}^{2N_p} \Delta B_{in} \tau_{in}^s \overline{\tau_i^w} \\
+ =& \sum_{n=1}^{N_f} \overline{\phi_n} \sum_{i=1}^{2N_p} 
+      \left[ - \Delta B_{in}
+        \sum_{j=2}^i \left( \frac{\partial \overline{\delta_j}}{\partial T} +
+                            \sum_{l \in \text{strong}}
+                            \frac{\partial \delta_{jln}}{\partial T}
+                     \right) +
+        \frac{\partial \Delta B_{in}}{\partial T}
+      \right] \tau_{in}^s \overline{\tau_i^w}
+\end{split}\end{equation}
+
+For spectroscopic derivatives we write more simply
+
+\begin{equation}
+\frac{\partial I}{\partial x} =
+  \frac{\partial}{\partial x} \sum_{n=1}^{N_f} \overline{\phi_n}
+   \sum_{i=1}^{2N_p} \Delta B_{in} \tau_{in}^s \overline{\tau_i^w}
+ = - \sum_{n=1}^{N_f} \overline{\phi_n} \sum_{i=1}^{2N_p} 
+      \Delta B_{in} \tau_{in}^s \overline{\tau_i^w}
+        \sum_{j=2}^i \left( \frac{\partial \overline{\delta_j}}{\partial x} +
+                            \sum_{l \in \text{strong}}
+                            \frac{\partial \delta_{jln}}{\partial x}
+                     \right)
+\end{equation}
+
+since $\Delta B_{in}$ doesn't depend on spectroscopic parameters.
+
+Similarly to the case for the radiance, we need to store the derivatives
+of $\overline{\delta_j}$ and $\delta_{jln}$ for every channel and
+frequency in the frequency grid, respectively, and combine them with
+$\Delta B_{in}$ and its derivative immediately before frequency
+averaging.
+
+\label{lastpage}
+\end{document}
+% $Id: wvs-017r4.tex,v 1.1 2008/06/11 20:14:51 vsnyder Exp $
+@

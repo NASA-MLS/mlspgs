@@ -1,0 +1,1105 @@
+head	2.7;
+access;
+symbols
+	v5-02-NRT-19:2.7
+	v6-00:2.7
+	v5-02-NRT-18:2.7
+	v5-02:2.7
+	v5-01-NRT-17:2.7
+	v5-01-NRT-16:2.7
+	v5-01-NRT-15:2.7
+	v5-01-NRT-14:2.7
+	neuralnetworks-1-0:2.7.0.12
+	cfm-single-freq-0-1:2.7.0.10
+	v5-01:2.7
+	v5-00:2.7
+	v4-23-TA133:2.7.0.8
+	mus-emls-1-70:2.7.0.6
+	rel-1-0-englocks-work:2.7.0.4
+	VUMLS1-00:2.7
+	VPL1-00:2.7
+	V4-22-NRT-08:2.7
+	VAM1-00:2.7
+	V4-21:2.7.0.2
+	V4-13:2.7
+	V4-12:2.6
+	V4-11:2.6
+	V4-10:2.6
+	V3-43:2.6
+	M4-00:2.6
+	V3-41:2.6
+	V3-40-PlusGM57:2.6.0.2
+	V2-24-NRT-04:2.5
+	V3-33:2.6
+	V2-24:2.5
+	V3-31:2.6
+	V3-30-NRT-05:2.6
+	cfm-01-00:2.6
+	V3-30:2.6
+	V3-20:2.6
+	V3-10:2.6
+	V2-23-NRT-02:2.5
+	V2-23:2.5
+	V2-22-NRT-01:2.5
+	V2-22:2.5
+	V2-21:2.5
+	V2-20:2.5
+	V2-11:2.5
+	V2-10:2.5
+	V2-00:2.4
+	V1-51:2.3
+	V1-50:2.3
+	V1-45:2.3
+	V1-44:2.3
+	V1-43:2.3
+	V1-32:2.3
+	V1-31:2.3
+	V1-30:2.3
+	V1-13:2.3
+	V1-12:2.3
+	V1-11:2.3
+	V1-10:2.2
+	newfwm-feb03:2.3.0.2
+	V1-04:2.0
+	V1-03:2.0
+	V1-02:2.0
+	JointForwardModel:2.0.0.2
+	V1-00:2.0
+	newfwm-sep01:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+2.7
+date	2014.09.05.21.13.17;	author vsnyder;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2009.06.23.18.26.11;	author pwagner;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2006.07.21.00.16.48;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2005.06.22.18.08.19;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2003.02.08.00.58.42;	author bill;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2002.10.08.17.08.05;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2002.09.25.20.35.30;	author vsnyder;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2001.09.17.20.26.27;	author livesey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.09.10.10.09.38;	author zvi;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2001.09.10.10.09.38;	author zvi;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2001.09.12.21.38.52;	author zvi;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2001.09.13.22.51.23;	author zvi;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.7
+log
+@Get kinds from MLSKinds instead of MLSCommon.  Add more tracing.
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Piq_int_m
+
+  implicit none
+
+  private
+  public :: Piq_int
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: piq_int_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+contains
+!---------------------------------------------------------------------------
+
+  subroutine Piq_int ( z_grid, t_basis, z_ref, piq, z_mass, c_mass)
+
+! Compute the piq (sans mass) used in the L2PC
+! hydrostatic function
+! This assumes the mean molecular mass is invariant
+! between z_grid levels
+! uses L2PC style triangular temperature representation basis
+! argument z_ref allows a reference pressure that is /= z_grid(1)
+! however adding this feature will cause program to run twice as slow
+
+    use MLSKinds, only: RP
+    use Toggles, only: Emit, Levels, Toggle
+    use Trace_m, only: Trace_Begin, Trace_End
+
+    real(rp), intent(in) :: z_grid(:), t_basis(:), z_ref
+    real(rp), intent(out) :: piq(:,:)
+    real(rp), optional, intent(in) :: z_mass
+    real(rp), optional, intent(in) :: c_mass
+
+! inside code variables
+
+    real(rp) :: a,c,aa,cc, zm, mc
+    real(rp), dimension(1:size(z_grid)) :: b, d, bb, dd, ee, ff
+    integer :: n_coeffs, i, ind(1)
+    integer :: Me = -1          ! String index for trace
+
+! begin code
+
+    call trace_begin ( me, 'Piq_int', &
+      & cond=toggle(emit) .and. levels(emit) > 2 )
+
+    if (present(z_mass)) then
+      zm = z_mass
+      mc = c_mass
+    else
+      zm = 2.5_rp
+      mc = 0.02_rp
+    end if
+! Establish dimensions
+
+    n_coeffs = size(t_basis)
+
+    if (n_coeffs > 1) then
+    
+! locate z_ref relative to t_basis
+! I don't know if this is the fastest way to do this but this is a
+! method derived from idl's ind_scl routine
+
+      ind = min(max(pack((/(i,i=0,n_coeffs)/), &
+                         (/minval((/z_ref,t_basis/))-1.0_rp, t_basis/) <= z_ref &
+                            .and. &
+                         z_ref < (/t_basis, maxval((/z_ref,t_basis/))+1.0_rp/)), &
+                    2), &
+                n_coeffs-2)
+
+! NOTE it seems like MIN/MAX need to be done in pairs when comparing
+! against arrays and scalars.
+! for all coeffients below ind use initial coefficient
+
+      a = max(t_basis(1),z_ref)
+      b = max(min(max(z_grid,t_basis(1)),t_basis(2)),z_ref)
+      c = min(z_ref,t_basis(2))
+      d = min(min(max(z_grid,t_basis(1)),z_ref),t_basis(2))
+      piq(:,1) = max(min(z_grid,t_basis(1)),z_ref) - z_ref &
+               + min(min(z_grid,t_basis(1)),z_ref) - min(t_basis(1),z_ref) &
+               + ((t_basis(2)-0.5_rp*(a+b))*(b-a) &
+               -  (t_basis(2)-0.5_rp*(c+d))*(c-d))/(t_basis(2)-t_basis(1))
+
+! do mass reduction correction (2nd order approximation)
+      a = zm
+      b = MIN(MAX(zm,t_basis(1)),MAX(z_grid,zm))
+      c = MAX(zm,t_basis(1))
+      d = MIN(MAX(c,z_grid),MAX(t_basis(2),zm))
+      ff = 1.0 / (t_basis(2) - t_basis(1))
+      ee = t_basis(2) * ff
+      ff = -ff
+      piq(:,1) = piq(:,1) + mc * ((b**3-a**3)/3.0_rp &
+             & - zm * (b**2-a**2) + zm**2*(b-a) &
+             & + 0.25_rp*ff*(d**4-c**4) &
+             & + (ee - 2.0_rp*ff*zm)*(d**3-c**3)/3.0_rp &
+             & + 0.5_rp*zm*(ff*zm - 2.0_rp*ee)*(d**2-c**2) &
+             & + ee*zm**2*(d-c))
+
+! these are wholly negative contributions only
+
+      do i = 2,ind(1) - 1
+        b = MIN(MAX(z_grid,t_basis(i-1)),t_basis(i))
+        d = min(max(z_grid,t_basis(i)),t_basis(i+1))
+        piq(:,i) = (t_basis(i) - b)*(0.5_rp*(t_basis(i) - b) &
+                 / (t_basis(i) - t_basis(i-1)) - 1.0_rp) &
+                 - 0.5_rp*(t_basis(i+1) - d)**2 / (t_basis(i+1)-t_basis(i))
+! do mass reduction correction (2nd order approximation)
+        a = MAX(zm,t_basis(i-1))
+        b = MIN(MAX(a,z_grid),MAX(t_basis(i),zm))
+        c = MAX(zm,t_basis(i))
+        d = MIN(MAX(c,z_grid),MAX(t_basis(i+1),zm))
+        cc = 1.0 / (t_basis(i) - t_basis(i-1))
+        aa = -t_basis(i-1) * cc
+        ff = 1.0 / (t_basis(i+1) - t_basis(i))
+        ee = t_basis(i+1) * ff
+        ff = -ff
+        piq(:,i) = piq(:,i) + mc * (0.25_rp*cc*(b**4-a**4) &
+               & + (aa - 2.0_rp*cc*zm)*(b**3-a**3)/3.0_rp &
+               & + 0.5_rp*zm*(cc*zm - 2.0_rp*aa)*(b**2-a**2) + aa*zm**2*(b-a) &
+               & + 0.25_rp*ff*(d**4-c**4) &
+               & + (ee - 2.0_rp*ff*zm)*(d**3-c**3)/3.0_rp &
+               & + 0.5_rp*zm*(ff*zm - 2.0_rp*ee)*(d**2-c**2) + ee*zm**2*(d-c))
+      end do
+
+! coefficients where z_ref is amongst t_basis
+
+      do i = ind(1),ind(1)+1
+        a = max(t_basis(i-1),z_ref)
+        b = max(min(max(z_grid,t_basis(i-1)),t_basis(i)),z_ref)
+        c = min(z_ref,t_basis(i))
+        d = min(min(max(z_grid,t_basis(i-1)),z_ref),t_basis(i))
+        aa = max(t_basis(i),z_ref)
+        bb = max(min(max(z_grid,t_basis(i)),t_basis(i+1)),z_ref)
+        cc = min(z_ref,t_basis(i+1))
+        dd = min(min(max(z_grid,t_basis(i)),z_ref),t_basis(i+1))
+        piq(:,i) = ((0.5_rp*(a+b)-t_basis(i-1))*(b-a) &
+                 -  (0.5_rp*(c+d)-t_basis(i-1))*(c-d)) &
+                 / (t_basis(i)-t_basis(i-1)) &
+                 + ((t_basis(i+1)-0.5_rp*(aa+bb))*(bb-aa) &
+                 -  (t_basis(i+1)-0.5_rp*(cc+dd))*(cc-dd)) &
+                 / (t_basis(i+1)-t_basis(i))
+! do mass reduction correction (2nd order approximation)
+        a = MAX(zm,t_basis(i-1))
+        b = MIN(MAX(a,z_grid),MAX(t_basis(i),zm))
+        c = MAX(zm,t_basis(i))
+        d = MIN(MAX(c,z_grid),MAX(t_basis(i+1),zm))
+        cc = 1.0 / (t_basis(i) - t_basis(i-1))
+        aa = -t_basis(i-1) * cc
+        ff = 1.0 / (t_basis(i+1) - t_basis(i))
+        ee = t_basis(i+1) * ff
+        ff = -ff
+        piq(:,i) = piq(:,i) + mc * (0.25_rp*cc*(b**4-a**4) &
+               & + (aa - 2.0_rp*cc*zm)*(b**3-a**3)/3.0_rp &
+               & + 0.5_rp*zm*(cc*zm - 2.0_rp*aa)*(b**2-a**2) + aa*zm**2*(b-a) &
+               & + 0.25_rp*ff*(d**4-c**4) &
+               & + (ee - 2.0_rp*ff*zm)*(d**3-c**3)/3.0_rp &
+               & + 0.5_rp*zm*(ff*zm - 2.0_rp*ee)*(d**2-c**2) + ee*zm**2*(d-c))
+      end do
+
+! for all coeffients above ind use
+
+      do i = ind(1)+2,n_coeffs-1
+        b = min(max(z_grid,t_basis(i-1)),t_basis(i))
+        d = min(max(z_grid,t_basis(i)),t_basis(i+1))
+        piq(:,i) = 0.5_rp*(b - t_basis(i-1))**2 / (t_basis(i)-t_basis(i-1)) &
+                 + (d - t_basis(i))*(1.0 - 0.5_rp*(d - t_basis(i)) &
+                 / (t_basis(i+1)-t_basis(i)))
+! do mass reduction correction (2nd order approximation)
+        a = MAX(zm,t_basis(i-1))
+        b = MIN(MAX(a,z_grid),MAX(t_basis(i),zm))
+        c = MAX(zm,t_basis(i))
+        d = MIN(MAX(c,z_grid),MAX(t_basis(i+1),zm))
+        cc = 1.0 / (t_basis(i) - t_basis(i-1))
+        aa = -t_basis(i-1) * cc
+        ff = 1.0 / (t_basis(i+1) - t_basis(i))
+        ee = t_basis(i+1) * ff
+        ff = -ff
+        piq(:,i) = piq(:,i) + mc * (0.25_rp*cc*(b**4-a**4) &
+               & + (aa - 2.0_rp*cc*zm)*(b**3-a**3)/3.0_rp &
+               & + 0.5_rp*zm*(cc*zm - 2.0_rp*aa)*(b**2-a**2) + aa*zm**2*(b-a) &
+               & + 0.25_rp*ff*(d**4-c**4) &
+               & + (ee - 2.0_rp*ff*zm)*(d**3-c**3)/3.0_rp &
+               & + 0.5_rp*zm*(ff*zm - 2.0_rp*ee)*(d**2-c**2) + ee*zm**2*(d-c))
+      end do
+
+! upper coefficient
+
+      a = max(t_basis(n_coeffs-1),z_ref)
+      b = max(min(max(z_grid,t_basis(n_coeffs-1)),t_basis(n_coeffs)),z_ref)
+      c = min(z_ref,t_basis(n_coeffs))
+      d = min(min(max(z_grid,t_basis(n_coeffs-1)),z_ref),t_basis(n_coeffs))
+      piq(:,n_coeffs) = ((0.5_rp*(a+b)-t_basis(n_coeffs-1))*(b-a) &
+                      -  (0.5_rp*(c+d)-t_basis(n_coeffs-1))*(c-d)) &
+                      / (t_basis(n_coeffs)-t_basis(n_coeffs-1)) &
+                      + max(max(z_grid,t_basis(n_coeffs)),z_ref) &
+                      - max(t_basis(n_coeffs),z_ref) &
+                      - min(z_ref,max(z_grid,t_basis(n_coeffs))) &
+                      + min(t_basis(n_coeffs),z_ref)
+! do mass reduction correction (2nd order approximation)
+      a = MAX(zm,t_basis(n_coeffs-1))
+      b = MIN(MAX(a,z_grid),MAX(t_basis(n_coeffs),zm))
+      c = MAX(zm,t_basis(n_coeffs))
+      d = MAX(z_grid,c)
+      cc = 1.0 / (t_basis(n_coeffs) - t_basis(n_coeffs-1))
+      aa = -t_basis(n_coeffs-1) * cc
+      piq(:,n_coeffs) = piq(:,n_coeffs) + mc * (0.25_rp*cc*(b**4-a**4) &
+             & + (aa - 2.0_rp*cc*zm)*(b**3-a**3)/3.0_rp &
+             & + 0.5_rp*zm*(cc*zm - 2.0_rp*aa)*(b**2-a**2) + aa*zm**2*(b-a) &
+             & + (d**3-c**3)/3.0_rp - zm*(d**2-c**2) + zm**2*(d-c))
+    else
+
+      b = MAX(z_grid,zm)
+      piq(:,1) = z_grid - z_ref + mc*((b**3 - zm**3)/3.0_rp - zm*b*(b-zm))
+
+    end if
+
+    call trace_end ( 'Piq_int', cond=toggle(emit) .and. levels(emit) > 2 )
+
+  end subroutine Piq_int
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: piq_int_m.f90,v 2.6 2009/06/23 18:26:11 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Piq_int_m
+!---------------------------------------------------
+! $Log: piq_int_m.f90,v $
+! Revision 2.6  2009/06/23 18:26:11  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.5  2006/07/21 00:16:48  vsnyder
+! Simplify some array constructions
+!
+! Revision 2.4  2005/06/22 18:08:19  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.3  2003/02/08 00:58:42  bill
+! improved high altitude mass reduction calculation
+!
+! Revision 2.2  2002/10/08 17:08:05  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.1  2002/09/25 20:35:30  vsnyder
+! Move USE from module scope to procedure scope.  Change allocatable arrays
+! to automatic arrays.  Insert the copyright notice.  Cosmetic changes.
+!
+! Revision 2.0  2001/09/17 20:26:27  livesey
+! New forward model
+!
+! Revision 1.1.2.3  2001/09/13 22:51:23  zvi
+! Separating allocation stmts
+!
+! Revision 1.1.2.2  2001/09/12 21:38:52  zvi
+! Added CVS stuff
+!
+@
+
+
+2.6
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d20 1
+a20 1
+       "$RCSfile: $"
+d23 1
+a23 1
+  contains
+d36 3
+a38 1
+    use MLSCommon, only: RP
+d50 1
+d53 11
+a63 7
+  if (present(z_mass)) then
+    zm = z_mass
+    mc = c_mass
+  else
+    zm = 2.5_rp
+    mc = 0.02_rp
+  endif
+d66 1
+a66 1
+  n_coeffs = size(t_basis)
+d68 1
+a68 1
+  if (n_coeffs > 1) then
+d74 6
+a79 6
+    ind = min(max(pack((/(i,i=0,n_coeffs)/), &
+                       (/minval((/z_ref,t_basis/))-1.0_rp, t_basis/) <= z_ref &
+                          .and. &
+                       z_ref < (/t_basis, maxval((/z_ref,t_basis/))+1.0_rp/)), &
+                  2), &
+               n_coeffs-2)
+d85 8
+a92 8
+    a = max(t_basis(1),z_ref)
+    b = max(min(max(z_grid,t_basis(1)),t_basis(2)),z_ref)
+    c = min(z_ref,t_basis(2))
+    d = min(min(max(z_grid,t_basis(1)),z_ref),t_basis(2))
+    piq(:,1) = max(min(z_grid,t_basis(1)),z_ref) - z_ref &
+             + min(min(z_grid,t_basis(1)),z_ref) - min(t_basis(1),z_ref) &
+             + ((t_basis(2)-0.5_rp*(a+b))*(b-a) &
+             -  (t_basis(2)-0.5_rp*(c+d))*(c-d))/(t_basis(2)-t_basis(1))
+d95 13
+a107 13
+    a = zm
+    b = MIN(MAX(zm,t_basis(1)),MAX(z_grid,zm))
+    c = MAX(zm,t_basis(1))
+    d = MIN(MAX(c,z_grid),MAX(t_basis(2),zm))
+    ff = 1.0 / (t_basis(2) - t_basis(1))
+    ee = t_basis(2) * ff
+    ff = -ff
+    piq(:,1) = piq(:,1) + mc * ((b**3-a**3)/3.0_rp &
+           & - zm * (b**2-a**2) + zm**2*(b-a) &
+           & + 0.25_rp*ff*(d**4-c**4) &
+           & + (ee - 2.0_rp*ff*zm)*(d**3-c**3)/3.0_rp &
+           & + 0.5_rp*zm*(ff*zm - 2.0_rp*ee)*(d**2-c**2) &
+           & + ee*zm**2*(d-c))
+d111 6
+a116 6
+    do i = 2,ind(1) - 1
+      b = MIN(MAX(z_grid,t_basis(i-1)),t_basis(i))
+      d = min(max(z_grid,t_basis(i)),t_basis(i+1))
+      piq(:,i) = (t_basis(i) - b)*(0.5_rp*(t_basis(i) - b) &
+               / (t_basis(i) - t_basis(i-1)) - 1.0_rp) &
+               - 0.5_rp*(t_basis(i+1) - d)**2 / (t_basis(i+1)-t_basis(i))
+d118 16
+a133 16
+      a = MAX(zm,t_basis(i-1))
+      b = MIN(MAX(a,z_grid),MAX(t_basis(i),zm))
+      c = MAX(zm,t_basis(i))
+      d = MIN(MAX(c,z_grid),MAX(t_basis(i+1),zm))
+      cc = 1.0 / (t_basis(i) - t_basis(i-1))
+      aa = -t_basis(i-1) * cc
+      ff = 1.0 / (t_basis(i+1) - t_basis(i))
+      ee = t_basis(i+1) * ff
+      ff = -ff
+      piq(:,i) = piq(:,i) + mc * (0.25_rp*cc*(b**4-a**4) &
+             & + (aa - 2.0_rp*cc*zm)*(b**3-a**3)/3.0_rp &
+             & + 0.5_rp*zm*(cc*zm - 2.0_rp*aa)*(b**2-a**2) + aa*zm**2*(b-a) &
+             & + 0.25_rp*ff*(d**4-c**4) &
+             & + (ee - 2.0_rp*ff*zm)*(d**3-c**3)/3.0_rp &
+             & + 0.5_rp*zm*(ff*zm - 2.0_rp*ee)*(d**2-c**2) + ee*zm**2*(d-c))
+    end do
+d137 15
+a151 15
+    do i = ind(1),ind(1)+1
+      a = max(t_basis(i-1),z_ref)
+      b = max(min(max(z_grid,t_basis(i-1)),t_basis(i)),z_ref)
+      c = min(z_ref,t_basis(i))
+      d = min(min(max(z_grid,t_basis(i-1)),z_ref),t_basis(i))
+      aa = max(t_basis(i),z_ref)
+      bb = max(min(max(z_grid,t_basis(i)),t_basis(i+1)),z_ref)
+      cc = min(z_ref,t_basis(i+1))
+      dd = min(min(max(z_grid,t_basis(i)),z_ref),t_basis(i+1))
+      piq(:,i) = ((0.5_rp*(a+b)-t_basis(i-1))*(b-a) &
+               -  (0.5_rp*(c+d)-t_basis(i-1))*(c-d)) &
+               / (t_basis(i)-t_basis(i-1)) &
+               + ((t_basis(i+1)-0.5_rp*(aa+bb))*(bb-aa) &
+               -  (t_basis(i+1)-0.5_rp*(cc+dd))*(cc-dd)) &
+               / (t_basis(i+1)-t_basis(i))
+d153 16
+a168 16
+      a = MAX(zm,t_basis(i-1))
+      b = MIN(MAX(a,z_grid),MAX(t_basis(i),zm))
+      c = MAX(zm,t_basis(i))
+      d = MIN(MAX(c,z_grid),MAX(t_basis(i+1),zm))
+      cc = 1.0 / (t_basis(i) - t_basis(i-1))
+      aa = -t_basis(i-1) * cc
+      ff = 1.0 / (t_basis(i+1) - t_basis(i))
+      ee = t_basis(i+1) * ff
+      ff = -ff
+      piq(:,i) = piq(:,i) + mc * (0.25_rp*cc*(b**4-a**4) &
+             & + (aa - 2.0_rp*cc*zm)*(b**3-a**3)/3.0_rp &
+             & + 0.5_rp*zm*(cc*zm - 2.0_rp*aa)*(b**2-a**2) + aa*zm**2*(b-a) &
+             & + 0.25_rp*ff*(d**4-c**4) &
+             & + (ee - 2.0_rp*ff*zm)*(d**3-c**3)/3.0_rp &
+             & + 0.5_rp*zm*(ff*zm - 2.0_rp*ee)*(d**2-c**2) + ee*zm**2*(d-c))
+    end do
+d172 6
+a177 6
+    do i = ind(1)+2,n_coeffs-1
+      b = min(max(z_grid,t_basis(i-1)),t_basis(i))
+      d = min(max(z_grid,t_basis(i)),t_basis(i+1))
+      piq(:,i) = 0.5_rp*(b - t_basis(i-1))**2 / (t_basis(i)-t_basis(i-1)) &
+               + (d - t_basis(i))*(1.0 - 0.5_rp*(d - t_basis(i)) &
+               / (t_basis(i+1)-t_basis(i)))
+d179 16
+a194 16
+      a = MAX(zm,t_basis(i-1))
+      b = MIN(MAX(a,z_grid),MAX(t_basis(i),zm))
+      c = MAX(zm,t_basis(i))
+      d = MIN(MAX(c,z_grid),MAX(t_basis(i+1),zm))
+      cc = 1.0 / (t_basis(i) - t_basis(i-1))
+      aa = -t_basis(i-1) * cc
+      ff = 1.0 / (t_basis(i+1) - t_basis(i))
+      ee = t_basis(i+1) * ff
+      ff = -ff
+      piq(:,i) = piq(:,i) + mc * (0.25_rp*cc*(b**4-a**4) &
+             & + (aa - 2.0_rp*cc*zm)*(b**3-a**3)/3.0_rp &
+             & + 0.5_rp*zm*(cc*zm - 2.0_rp*aa)*(b**2-a**2) + aa*zm**2*(b-a) &
+             & + 0.25_rp*ff*(d**4-c**4) &
+             & + (ee - 2.0_rp*ff*zm)*(d**3-c**3)/3.0_rp &
+             & + 0.5_rp*zm*(ff*zm - 2.0_rp*ee)*(d**2-c**2) + ee*zm**2*(d-c))
+    end do
+d198 11
+a208 11
+    a = max(t_basis(n_coeffs-1),z_ref)
+    b = max(min(max(z_grid,t_basis(n_coeffs-1)),t_basis(n_coeffs)),z_ref)
+    c = min(z_ref,t_basis(n_coeffs))
+    d = min(min(max(z_grid,t_basis(n_coeffs-1)),z_ref),t_basis(n_coeffs))
+    piq(:,n_coeffs) = ((0.5_rp*(a+b)-t_basis(n_coeffs-1))*(b-a) &
+                    -  (0.5_rp*(c+d)-t_basis(n_coeffs-1))*(c-d)) &
+                    / (t_basis(n_coeffs)-t_basis(n_coeffs-1)) &
+                    + max(max(z_grid,t_basis(n_coeffs)),z_ref) &
+                    - max(t_basis(n_coeffs),z_ref) &
+                    - min(z_ref,max(z_grid,t_basis(n_coeffs))) &
+                    + min(t_basis(n_coeffs),z_ref)
+d210 14
+a223 11
+    a = MAX(zm,t_basis(n_coeffs-1))
+    b = MIN(MAX(a,z_grid),MAX(t_basis(n_coeffs),zm))
+    c = MAX(zm,t_basis(n_coeffs))
+    d = MAX(z_grid,c)
+    cc = 1.0 / (t_basis(n_coeffs) - t_basis(n_coeffs-1))
+    aa = -t_basis(n_coeffs-1) * cc
+    piq(:,n_coeffs) = piq(:,n_coeffs) + mc * (0.25_rp*cc*(b**4-a**4) &
+           & + (aa - 2.0_rp*cc*zm)*(b**3-a**3)/3.0_rp &
+           & + 0.5_rp*zm*(cc*zm - 2.0_rp*aa)*(b**2-a**2) + aa*zm**2*(b-a) &
+           & + (d**3-c**3)/3.0_rp - zm*(d**2-c**2) + zm**2*(d-c))
+  else
+d225 1
+a225 2
+    b = MAX(z_grid,zm)
+    piq(:,1) = z_grid - z_ref + mc*((b**3 - zm**3)/3.0_rp - zm*b*(b-zm))
+d227 1
+a227 1
+  endif
+d234 1
+a234 1
+       "$Id: read_apriori.f90 is it here $"
+d244 3
+@
+
+
+2.5
+log
+@Simplify some array constructions
+@
+text
+@d20 1
+a20 1
+       "$RCSfile: piq_int_m.f90,v $"
+d222 1
+a223 1
+!---------------------------- RCS Ident Info -------------------------------
+d225 2
+a226 3
+       "$Id: piq_int_m.f90,v 2.4 2005/06/22 18:08:19 pwagner Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d228 1
+d230 1
+d235 3
+@
+
+
+2.4
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d20 1
+a20 1
+       "$RCSfile: $"
+d26 1
+a26 1
+  SUBROUTINE Piq_int ( z_grid, t_basis, z_ref, piq, z_mass, c_mass)
+d36 1
+a36 1
+    use MLSCommon, only: RP, IP
+d40 2
+a41 2
+    REAL(rp), OPTIONAL, intent(in) :: z_mass
+    REAL(rp), OPTIONAL, intent(in) :: c_mass
+d45 3
+a47 3
+    REAL(rp) :: a,c,aa,cc, zm, mc
+    REAL(rp), DIMENSION(1:SIZE(z_grid)) :: b, d, bb, dd, ee, ff
+    INTEGER(ip) :: n_coeffs, i, ind(1)
+d68 3
+a70 4
+                       (/minval((/z_ref,(t_basis(i),i=1,n_coeffs)/))-1.0_rp, &
+                          (t_basis(i),i=1,n_coeffs)/) <= z_ref .and. &
+                          z_ref < (/(t_basis(i),i=1,n_coeffs), &
+                       maxval((/z_ref,(t_basis(i),i=1,n_coeffs)/))+1.0_rp/)), &
+d75 2
+a76 3
+! against arrays and scalers.
+! for all coeffients below ind use
+! initial coefficient
+d225 1
+a225 1
+       "$Id: $"
+d234 3
+@
+
+
+2.3
+log
+@improved high altitude mass reduction calculation
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 1999, California Institute of Technology. ALL RIGHTS RESERVED.
+! U.S. Government sponsorship under NASA Contract NAS7407 is acknowledged.
+d18 3
+a20 5
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+    & "$Id: piq_int_m.f90,v 2.2 2002/10/08 17:08:05 pwagner Exp $"
+  character ( len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName = "$RCSfile: piq_int_m.f90,v $"
+d225 5
+d236 3
+@
+
+
+2.2
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d12 1
+a12 1
+    & "$Id: piq_int_m.f90,v 2.1 2002/09/25 20:35:30 vsnyder Exp $"
+d20 1
+a20 1
+  subroutine Piq_int ( z_grid, t_basis, z_ref, piq )
+d34 2
+d39 3
+a41 3
+    real(rp) :: a,c,aa,cc
+    real(rp), dimension(1:size(z_grid)) :: b, d, bb, dd
+    integer(ip) :: n_coeffs, i, ind(1)
+d44 7
+d53 1
+a53 1
+    n_coeffs = size(t_basis)
+d55 2
+d83 15
+d101 1
+a101 1
+      b = min(max(z_grid,t_basis(i-1)),t_basis(i))
+d106 16
+d141 16
+d167 16
+d198 17
+d225 3
+@
+
+
+2.1
+log
+@Move USE from module scope to procedure scope.  Change allocatable arrays
+to automatic arrays.  Insert the copyright notice.  Cosmetic changes.
+@
+text
+@d12 1
+a12 1
+    & "$Id: piq_int_m.f90,v 2.0 2001/09/17 20:26:27 livesey Exp $"
+d15 1
+d127 4
+d134 4
+@
+
+
+2.0
+log
+@New forward model
+@
+text
+@d1 21
+a21 4
+MODULE piq_int_m
+  use MLSCommon, only: RP, IP
+!
+! This computes the piq (sans mass) used in the L2PC
+a27 13
+!
+  IMPLICIT none
+!
+  Private
+  Public :: piq_int
+!---------------------------- RCS Ident Info -------------------------------
+  CHARACTER (LEN=256) :: Id = &
+ "$Id: piq_int_m.f90,v 1.1.2.3 2001/09/13 22:51:23 zvi Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= &
+ "$RCSfile: piq_int_m.f90,v $"
+!---------------------------------------------------------------------------
+  CONTAINS
+!---------------------------------------------------------------------------
+d29 5
+a33 5
+SUBROUTINE piq_int(z_grid,t_basis,z_ref,piq)
+!
+  REAL(rp), INTENT(in) :: z_grid(:), t_basis(:), z_ref
+  REAL(rp), INTENT(out) :: piq(:,:)
+!
+d35 5
+a39 5
+!
+  REAL(rp) :: a,c,aa,cc
+  REAL(rp), DIMENSION(:), ALLOCATABLE :: b,d,bb,dd
+  INTEGER(ip) :: n_lvls,n_coeffs,i,ind(1)
+!
+d42 3
+a44 11
+!
+  n_lvls = SIZE(z_grid)
+  n_coeffs = SIZE(t_basis)
+!
+! allocate limit arrays
+!
+  ALLOCATE(b(1:n_lvls))
+  ALLOCATE(d(1:n_lvls))
+  ALLOCATE(bb(1:n_lvls))
+  ALLOCATE(dd(1:n_lvls))
+!
+d48 9
+a56 7
+!
+  ind = MIN(MAX(PACK((/(i,i=0,n_coeffs)/), &
+           (/MINVAL((/z_ref,(t_basis(i),i=1,n_coeffs)/))-1.0_rp, &
+           (t_basis(i),i=1,n_coeffs)/) <= z_ref .AND. &
+           z_ref < (/(t_basis(i),i=1,n_coeffs), &
+           MAXVAL((/z_ref,(t_basis(i),i=1,n_coeffs)/))+1.0_rp/)),2),n_coeffs-2)
+!
+d61 10
+a70 10
+!
+  a = MAX(t_basis(1),z_ref)
+  b = MAX(MIN(MAX(z_grid,t_basis(1)),t_basis(2)),z_ref)
+  c = MIN(z_ref,t_basis(2))
+  d = MIN(MIN(MAX(z_grid,t_basis(1)),z_ref),t_basis(2))
+  piq(:,1) = MAX(MIN(z_grid,t_basis(1)),z_ref) - z_ref &
+           + MIN(MIN(z_grid,t_basis(1)),z_ref) - MIN(t_basis(1),z_ref) &
+           + ((t_basis(2)-0.5_rp*(a+b))*(b-a) &
+           -  (t_basis(2)-0.5_rp*(c+d))*(c-d))/(t_basis(2)-t_basis(1))
+!
+d72 9
+a80 9
+!
+  DO i = 2,ind(1) - 1
+    b = MIN(MAX(z_grid,t_basis(i-1)),t_basis(i))
+    d = MIN(MAX(z_grid,t_basis(i)),t_basis(i+1))
+    piq(:,i) = (t_basis(i) - b)*(0.5_rp*(t_basis(i) - b) &
+             / (t_basis(i) - t_basis(i-1)) - 1.0_rp) &
+             - 0.5_rp*(t_basis(i+1) - d)**2 / (t_basis(i+1)-t_basis(i))
+  END DO
+!
+d82 18
+a99 18
+!
+  DO i = ind(1),ind(1)+1
+    a = MAX(t_basis(i-1),z_ref)
+    b = MAX(MIN(MAX(z_grid,t_basis(i-1)),t_basis(i)),z_ref)
+    c = MIN(z_ref,t_basis(i))
+    d = MIN(MIN(MAX(z_grid,t_basis(i-1)),z_ref),t_basis(i))
+    aa = MAX(t_basis(i),z_ref)
+    bb = MAX(MIN(MAX(z_grid,t_basis(i)),t_basis(i+1)),z_ref)
+    cc = MIN(z_ref,t_basis(i+1))
+    dd = MIN(MIN(MAX(z_grid,t_basis(i)),z_ref),t_basis(i+1))
+    piq(:,i) = ((0.5_rp*(a+b)-t_basis(i-1))*(b-a) &
+             -  (0.5_rp*(c+d)-t_basis(i-1))*(c-d)) &
+             / (t_basis(i)-t_basis(i-1)) &
+             + ((t_basis(i+1)-0.5_rp*(aa+bb))*(bb-aa) &
+             -  (t_basis(i+1)-0.5_rp*(cc+dd))*(cc-dd)) &
+             / (t_basis(i+1)-t_basis(i))
+  END DO
+!
+d101 9
+a109 9
+!
+  DO i = ind(1)+2,n_coeffs-1
+    b = MIN(MAX(z_grid,t_basis(i-1)),t_basis(i))
+    d = MIN(MAX(z_grid,t_basis(i)),t_basis(i+1))
+    piq(:,i) = 0.5_rp*(b - t_basis(i-1))**2 / (t_basis(i)-t_basis(i-1)) &
+             + (d - t_basis(i))*(1.0 - 0.5_rp*(d - t_basis(i)) &
+             / (t_basis(i+1)-t_basis(i)))
+  END DO
+!
+d111 16
+a126 23
+!
+  a = MAX(t_basis(n_coeffs-1),z_ref)
+  b = MAX(MIN(MAX(z_grid,t_basis(n_coeffs-1)),t_basis(n_coeffs)),z_ref)
+  c = MIN(z_ref,t_basis(n_coeffs))
+  d = MIN(MIN(MAX(z_grid,t_basis(n_coeffs-1)),z_ref),t_basis(n_coeffs))
+  piq(:,n_coeffs) = ((0.5_rp*(a+b)-t_basis(n_coeffs-1))*(b-a) &
+                  -  (0.5_rp*(c+d)-t_basis(n_coeffs-1))*(c-d)) &
+                  / (t_basis(n_coeffs)-t_basis(n_coeffs-1)) &
+                  + MAX(MAX(z_grid,t_basis(n_coeffs)),z_ref) &
+                  - MAX(t_basis(n_coeffs),z_ref) &
+                  - MIN(z_ref,MAX(z_grid,t_basis(n_coeffs))) &
+                  + MIN(t_basis(n_coeffs),z_ref)
+!
+! deallocate limit arrays
+!
+  DEALLOCATE(b)
+  DEALLOCATE(d)
+  DEALLOCATE(bb)
+  DEALLOCATE(dd)
+!
+  END SUBROUTINE piq_int
+!
+END MODULE piq_int_m
+d129 3
+@
+
+
+1.1
+log
+@file piq_int_m.f90 was initially added on branch newfwm-sep01.
+@
+text
+@d1 143
+@
+
+
+1.1.2.1
+log
+@Major Design change..
+@
+text
+@a0 93
+  MODULE piq_int_m
+  use MLSCommon, only: RP, IP
+! This computes the piq (sans mass) used in the L2PC
+! hydrostatic function
+! This assumes the mean molecular mass is invariant
+! between z_grid levels
+! uses L2PC style triangular temperature representation basis
+! argument z_ref allows a reference pressure that is /= z_grid(1)
+! however adding this feature will cause program to run twice as slow
+  IMPLICIT none
+  CONTAINS
+  SUBROUTINE piq_int(z_grid,t_basis,z_ref,piq)
+  REAL(rp), INTENT(in) :: z_grid(:), t_basis(:), z_ref
+  REAL(rp), INTENT(out) :: piq(:,:)
+! inside code variables
+  REAL(rp) :: a,c,aa,cc
+  REAL(rp), DIMENSION(:), ALLOCATABLE :: b,d,bb,dd
+  INTEGER(ip) :: n_lvls,n_coeffs,i,ind(1)
+! begin code
+! Establish dimensions
+  n_lvls = SIZE(z_grid)
+  n_coeffs = SIZE(t_basis)
+! allocate limit arrays
+  ALLOCATE(b(1:n_lvls),d(1:n_lvls),bb(1:n_lvls),dd(1:n_lvls))
+! locate z_ref relative to t_basis
+! I don't know if this is the fastest way to do this but this is a
+! method derived from idl's ind_scl routine
+  ind = MIN(MAX(PACK((/(i,i=0,n_coeffs)/), &
+           (/MINVAL((/z_ref,(t_basis(i),i=1,n_coeffs)/))-1.0_rp, &
+           (t_basis(i),i=1,n_coeffs)/) <= z_ref .AND. &
+           z_ref < (/(t_basis(i),i=1,n_coeffs), &
+           MAXVAL((/z_ref,(t_basis(i),i=1,n_coeffs)/))+1.0_rp/)),2),n_coeffs-2)
+! NOTE it seems like MIN/MAX need to be done in pairs when comparing
+! against arrays and scalers.
+! for all coeffients below ind use
+! initial coefficient
+  a = MAX(t_basis(1),z_ref)
+  b = MAX(MIN(MAX(z_grid,t_basis(1)),t_basis(2)),z_ref)
+  c = MIN(z_ref,t_basis(2))
+  d = MIN(MIN(MAX(z_grid,t_basis(1)),z_ref),t_basis(2))
+  piq(:,1) = MAX(MIN(z_grid,t_basis(1)),z_ref) - z_ref &
+           + MIN(MIN(z_grid,t_basis(1)),z_ref) - MIN(t_basis(1),z_ref) &
+           + ((t_basis(2)-0.5_rp*(a+b))*(b-a) &
+           -  (t_basis(2)-0.5_rp*(c+d))*(c-d))/(t_basis(2)-t_basis(1))
+! these are wholly negative contributions only
+  DO i = 2,ind(1) - 1
+    b = MIN(MAX(z_grid,t_basis(i-1)),t_basis(i))
+    d = MIN(MAX(z_grid,t_basis(i)),t_basis(i+1))
+    piq(:,i) = (t_basis(i) - b)*(0.5_rp*(t_basis(i) - b) &
+             / (t_basis(i) - t_basis(i-1)) - 1.0_rp) &
+             - 0.5_rp*(t_basis(i+1) - d)**2 / (t_basis(i+1)-t_basis(i))
+  END DO
+! coefficients where z_ref is amongst t_basis
+  DO i = ind(1),ind(1)+1
+    a = MAX(t_basis(i-1),z_ref)
+    b = MAX(MIN(MAX(z_grid,t_basis(i-1)),t_basis(i)),z_ref)
+    c = MIN(z_ref,t_basis(i))
+    d = MIN(MIN(MAX(z_grid,t_basis(i-1)),z_ref),t_basis(i))
+    aa = MAX(t_basis(i),z_ref)
+    bb = MAX(MIN(MAX(z_grid,t_basis(i)),t_basis(i+1)),z_ref)
+    cc = MIN(z_ref,t_basis(i+1))
+    dd = MIN(MIN(MAX(z_grid,t_basis(i)),z_ref),t_basis(i+1))
+    piq(:,i) = ((0.5_rp*(a+b)-t_basis(i-1))*(b-a) &
+             -  (0.5_rp*(c+d)-t_basis(i-1))*(c-d)) &
+             / (t_basis(i)-t_basis(i-1)) &
+             + ((t_basis(i+1)-0.5_rp*(aa+bb))*(bb-aa) &
+             -  (t_basis(i+1)-0.5_rp*(cc+dd))*(cc-dd)) &
+             / (t_basis(i+1)-t_basis(i))
+  END DO
+! for all coeffients above ind use
+  DO i = ind(1)+2,n_coeffs-1
+    b = MIN(MAX(z_grid,t_basis(i-1)),t_basis(i))
+    d = MIN(MAX(z_grid,t_basis(i)),t_basis(i+1))
+    piq(:,i) = 0.5_rp*(b - t_basis(i-1))**2 / (t_basis(i)-t_basis(i-1)) &
+             + (d - t_basis(i))*(1.0 - 0.5_rp*(d - t_basis(i)) &
+             / (t_basis(i+1)-t_basis(i)))
+  END DO
+! upper coefficient
+  a = MAX(t_basis(n_coeffs-1),z_ref)
+  b = MAX(MIN(MAX(z_grid,t_basis(n_coeffs-1)),t_basis(n_coeffs)),z_ref)
+  c = MIN(z_ref,t_basis(n_coeffs))
+  d = MIN(MIN(MAX(z_grid,t_basis(n_coeffs-1)),z_ref),t_basis(n_coeffs))
+  piq(:,n_coeffs) = ((0.5_rp*(a+b)-t_basis(n_coeffs-1))*(b-a) &
+                  -  (0.5_rp*(c+d)-t_basis(n_coeffs-1))*(c-d)) &
+                  / (t_basis(n_coeffs)-t_basis(n_coeffs-1)) &
+                  + MAX(MAX(z_grid,t_basis(n_coeffs)),z_ref) &
+                  - MAX(t_basis(n_coeffs),z_ref) &
+                  - MIN(z_ref,MAX(z_grid,t_basis(n_coeffs))) &
+                  + MIN(t_basis(n_coeffs),z_ref)
+! deallocate limit arrays
+  DEALLOCATE(b,d,bb,dd)
+  END SUBROUTINE piq_int
+  END MODULE piq_int_m
+@
+
+
+1.1.2.2
+log
+@Added CVS stuff
+@
+text
+@a10 8
+  Private
+  Public :: piq_int
+!---------------------------- RCS Ident Info -------------------------------
+  CHARACTER (LEN=256) :: Id = &
+ "$Id: two_d_hydrostatic_m.f90,v 1.9.2.1 2001/09/10 10:02:32 zvi Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= &
+ "$RCSfile: two_d_hydrostatic_m.f90,v $"
+!---------------------------------------------------------------------------
+a11 2
+!---------------------------------------------------------------------------
+
+d93 1
+a93 4
+END MODULE piq_int_m
+!---------------------------------------------------
+! $Log$
+!
+@
+
+
+1.1.2.3
+log
+@Separating allocation stmts
+@
+text
+@d1 1
+a1 1
+MODULE piq_int_m
+a2 1
+!
+a9 1
+!
+a10 1
+!
+d15 1
+a15 1
+ "$Id: piq_int_m.f90,v 1.1.2.2 2001/09/12 21:38:52 zvi Exp $"
+d17 1
+a17 1
+ "$RCSfile: piq_int_m.f90,v $"
+d22 1
+a22 2
+SUBROUTINE piq_int(z_grid,t_basis,z_ref,piq)
+!
+a24 1
+!
+a25 1
+!
+a28 1
+!
+a30 1
+!
+a32 1
+!
+d34 1
+a34 6
+!
+  ALLOCATE(b(1:n_lvls))
+  ALLOCATE(d(1:n_lvls))
+  ALLOCATE(bb(1:n_lvls))
+  ALLOCATE(dd(1:n_lvls))
+!
+a37 1
+!
+a42 1
+!
+a46 1
+!
+a54 1
+!
+a55 1
+!
+a62 1
+!
+a63 1
+!
+a79 1
+!
+a80 1
+!
+a87 1
+!
+a88 1
+!
+a99 1
+!
+d101 1
+a101 6
+!
+  DEALLOCATE(b)
+  DEALLOCATE(d)
+  DEALLOCATE(bb)
+  DEALLOCATE(dd)
+!
+a102 1
+!
+d105 1
+a105 3
+! $Log: piq_int_m.f90,v $
+! Revision 1.1.2.2  2001/09/12 21:38:52  zvi
+! Added CVS stuff
+@
+
+

@@ -1,0 +1,127 @@
+head	2.4;
+access;
+symbols
+	rel-1-0-englocks-work:2.3.0.2
+	VUMLS1-00:2.2;
+locks; strict;
+comment	@# @;
+
+
+2.4
+date	2018.05.14.23.26.39;	author vsnyder;	state dead;
+branches;
+next	2.3;
+
+2.3
+date	2017.08.28.20.27.47;	author livesey;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2016.12.02.02.03.54;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2016.11.23.21.30.30;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.4
+log
+@Change to sparse eta representation
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! subroutine Eta_List_1D_2D_3D_* ( A, B, C )
+
+    ! Compute the outer product C of interpolation matrices A and B,
+    ! each represented as a sparse list.
+
+!   type(value_1D_list_t(rk)), intent(in) :: A(:)
+!   type(value_2D_list_t(rk)), intent(in) :: B(:)
+!   type(value_3D_list_t(rk)), intent(out) :: C(:)
+
+    ! Assume size(A) == size(B) == size(C)
+
+    integer :: I, J, K, L
+
+    do i = 1, size(a)
+      c(i)%n = a(i)%n * b(i)%n
+      l = 0
+      do j = 1, a(i)%n
+        do k = 1, b(i)%n
+          l = l + 1
+          c(i)%v(l)%jf = a(i)%v(j)%j !  NJL *** Why Not JF?
+          c(i)%v(l)%j = b(i)%v(k)%j
+          c(i)%v(l)%jp = b(i)%v(k)%jp
+          c(i)%v(l)%v = a(i)%v(j)%v * b(i)%v(k)%v
+        end do
+      end do
+    end do
+
+! $Log: Eta_List_1D_2D_3D.f9h,v $
+! Revision 2.3  2017/08/28 20:27:47  livesey
+! Changed the n,nf,np,nz elements to j,jf,...
+!
+! Revision 2.2  2016/12/02 02:03:54  vsnyder
+! Move dummy argument declarations from include files to Indexed_Values_m
+!
+! Revision 2.1  2016/11/23 21:30:30  vsnyder
+! Initial commit
+!
+@
+
+
+2.3
+log
+@Changed the n,nf,np,nz elements to j,jf,...
+@
+text
+@d40 3
+@
+
+
+2.2
+log
+@Move dummy argument declarations from include files to Indexed_Values_m
+@
+text
+@d31 3
+a33 3
+          c(i)%v(l)%nf = a(i)%v(j)%n
+          c(i)%v(l)%n = b(i)%v(k)%n
+          c(i)%v(l)%np = b(i)%v(k)%np
+d40 3
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@a19 3
+    type(value_1D_list_t), intent(in) :: A(:)
+    type(value_2D_list_t), intent(in) :: B(:)
+    type(value_3D_list_t), intent(out) :: C(:)
+d39 4
+a42 1
+! $Log: $
+@
+

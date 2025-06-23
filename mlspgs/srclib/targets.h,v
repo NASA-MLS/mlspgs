@@ -1,0 +1,330 @@
+head	1.7;
+access;
+symbols
+	v5-02-NRT-19:1.7
+	v6-00:1.7
+	v5-02-NRT-18:1.7
+	v5-02:1.7
+	v5-01-NRT-17:1.7
+	v5-01-NRT-16:1.7
+	v5-01-NRT-15:1.7
+	v5-01-NRT-14:1.7
+	neuralnetworks-1-0:1.7.0.14
+	cfm-single-freq-0-1:1.7.0.12
+	v5-01:1.7
+	v5-00:1.7
+	v4-23-TA133:1.7.0.10
+	mus-emls-1-70:1.7.0.8
+	rel-1-0-englocks-work:1.7.0.6
+	VUMLS1-00:1.7
+	VPL1-00:1.7
+	V4-22-NRT-08:1.7
+	VAM1-00:1.7
+	V4-21:1.7.0.4
+	V4-13:1.7
+	V4-12:1.7
+	V4-11:1.7
+	V4-10:1.7
+	V3-43:1.7
+	M4-00:1.7
+	V3-41:1.7
+	V3-40-PlusGM57:1.7.0.2
+	V2-24-NRT-04:1.4
+	V3-33:1.7
+	V2-24:1.4
+	V3-31:1.7
+	V3-30-NRT-05:1.7
+	cfm-01-00:1.7
+	V3-30:1.7
+	V3-20:1.7
+	V3-10:1.5
+	V2-23-NRT-02:1.4
+	V2-23:1.4
+	V2-22-NRT-01:1.4
+	V2-22:1.4
+	V2-21:1.3
+	V2-20:1.3
+	V2-11:1.3
+	V2-10:1.3
+	V2-00:1.3;
+locks; strict;
+comment	@ * @;
+
+
+1.7
+date	2010.02.03.01.09.49;	author pwagner;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2010.01.29.18.14.11;	author pwagner;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2008.07.11.23.54.42;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2007.04.16.23.04.20;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2005.08.17.17.45.05;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2005.03.07.17.38.17;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.03.04.19.00.19;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.7
+log
+@Relocated compiler-specific macros to MLSF95.PLATFORM files
+@
+text
+@# "$Id: targets.h,v 1.6 2010/01/29 18:14:11 pwagner Exp $"
+PVM_PATH = ${PVM_ROOT}/lib/${PVM_ARCH}
+
+ifdef PVM_ROOT
+   pvm_linker_line=-L${PVM_PATH} -lfpvm3 -lgpvm3 -lpvm3
+   pvm_message=Building program with PVM support
+else
+   pvm_linker_line=
+   pvm_message=Building program without PVM support
+   # SnoopMLSL2.o: SnoopMLSL2.f90 $(OBJS) $(libdir)/libmls.a
+endif
+
+ifdef BLAS
+ifdef LIB_BLAS
+    blas_linker_line := $(shell ${REECHO} -dir ${BLAS} -prefixn=-l -lib ${LIB_BLAS})
+    blas_linker_line := -L${BLAS} ${blas_linker_line}
+else
+   blas_linker_line=-L${BLAS} -lblas
+endif
+   blas_message=Building program with externally-supplied BLAS
+else
+   blas_linker_line=
+   blas_message=Building program with internally-supplied BLAS
+endif
+
+ifdef LAPACK
+ifdef LIB_LAPACK
+    lapack_linker_line := $(shell ${REECHO} -dir ${LAPACK} -prefixn=-l -lib ${LIB_LAPACK})
+    lapack_linker_line := -L${LAPACK} ${lapack_linker_line}
+else
+   lapack_linker_line=-L${LAPACK} -llapack
+endif
+   lapack_message=Building program with externally-supplied LAPACK
+else
+   lapack_linker_line=
+   lapack_message=Building program with internally-supplied LAPACK
+endif
+
+ifdef PGSTK
+   tk_message=Building mlslib with toolkit
+   tk_linker_line=-L${PGSTK} -lPGSTK
+else
+   tk_message=Building mlslib without toolkit; using SDPToolkitSubstitute
+   tk_linker_line=
+endif
+
+fftw_linker_line = $(shell ${UTILDIR}/which_fftw.sh ${FFTW_ROOT} ${FFTW_PREC})
+
+mlspack_dir=$(CONFDIR)/blas/$(MLSCONFG)
+
+mlspack_linker_line=-L${mlspack_dir} -lmlspack
+mlspack_message=Building program with mlspack
+
+utctotai_linker_line=-L${INSTALLDIR} -lutctotai
+utctotai_message=Building program with toolkitless utc to tai conversion
+
+# $Log: targets.h,v $
+# Revision 1.6  2010/01/29 18:14:11  pwagner
+# Added -dl to Lahey link for xml compatibility
+#
+# Revision 1.5  2008/07/11 23:54:42  pwagner
+# 1st changes to get sunstudio to link mlsl2
+#
+# Revision 1.4  2007/04/16 23:04:20  pwagner
+# Changes in line with Intel v9.1
+#
+# Revision 1.3  2005/08/17 17:45:05  pwagner
+# Moved more definitions to srclib/targets.h
+#
+# Revision 1.2  2005/03/07 17:38:17  pwagner
+# Fixed bug in linking non-static LF95
+#
+# Revision 1.1  2005/03/04 19:00:19  pwagner
+# First commit
+#
+@
+
+
+1.6
+log
+@Added -dl to Lahey link for xml compatibility
+@
+text
+@d1 1
+a1 3
+# "$Id: targets.h,v 1.5 2008/07/11 23:54:42 pwagner Exp $"
+STATIC_LINK := $(shell echo $(LDOPTS) | grep -e "-static")
+
+a14 1
+#   blas_linker_line=-L${BLAS} -l${LIB_BLAS}
+a27 1
+#   lapack_linker_line=-L${LAPACK} -l${LIB_LAPACK}
+a46 57
+ifdef HDF5
+ifeq ($(MLSPLAT),Sun)
+   hdf5_linker_line=-L${HDF5} -lhdf5_fortran -lhdf5 -R${HDF5}
+else
+#   hdf5_linker_line=-L${HDF5} -lhdf5_fortran -lhdf5 -Xlinker -rpath=${HDF5} \
+#    -lssl -lz
+   hdf5_linker_line=-L${HDF5} -lhdf5_fortran -lhdf5 
+   l_specials := $(l_specials) -lz
+endif
+ifdef HDFEOS5
+   hdfeos5_linker_line=-L${HDFEOS5} -lhe5_hdfeos
+ifeq ($(MLSF95),LF95)
+   gcc_version=$(shell ${UTILDIR}/which_fftw.sh -gcc)
+   gcc_libloc=$(shell ${REECHO} -d /usr/lib/gcc*/i386-redhat-linux/${gcc_version})
+   static_object=$(shell ${UTILDIR}/which_fftw.sh -static)
+ifdef STATIC_LINK
+   l_specials=-lz -L${gcc_libloc} -lgcc -ldl \
+     ${static_object}
+else
+   l_specials=-lz -L${gcc_libloc} -lgcc -ldl
+endif
+endif
+
+ifeq ($(MLSF95),Sunst)
+   gcc_version=$(shell ${UTILDIR}/which_fftw.sh -gcc)
+   gcc_libloc=$(shell ${REECHO} -d /usr/lib/gcc*/i386-redhat-linux/${gcc_version})
+#  l_specials=-lz -L/usr/lib/gcc-lib/i386-redhat-linux/2.96/ -lgcc
+  l_specials=-lz -L${gcc_libloc} -lgcc
+endif
+
+ifeq ($(MLSF95),IFCold)
+   gcc_version=$(shell ${UTILDIR}/which_fftw.sh -gcc)
+   gcc_libloc=$(shell ${REECHO} -d /usr/lib/gcc*/i386-redhat-linux/${gcc_version})
+   static_object=$(shell ${UTILDIR}/which_fftw.sh -static)
+   STATIC_LINK := $(shell echo $(LDOPTS) | grep -e "-Bstatic")
+ifdef STATIC_LINK
+   l_specials=-lz -L${gcc_libloc} -lgcc \
+     ${static_object}
+else
+   l_specials=-lz -L${gcc_libloc} -lgcc
+endif
+endif
+else
+   hdfeos5_linker_line=
+endif
+ifdef HDFVERSIONS
+   he5lib_linker_line=-L$(CONFDIR)/he5lib/$(MLSCONFG) -lhe5
+   he5lib_message=program will support files with either hdf version
+   mlsl2_prereqs := $(mlsl2_prereqs) $(he5libdir)/libhe5.a
+endif
+   hdf5_message=Building program with hdf5
+else
+   hdf5_linker_line=
+   hdfeos5_linker_line=
+   hdf5_message=Building program without hdf5
+endif
+
+d58 3
+@
+
+
+1.5
+log
+@1st changes to get sunstudio to link mlsl2
+@
+text
+@d1 1
+a1 1
+# "$Id: targets.h,v 1.4 2007/04/16 23:04:20 pwagner Exp $"
+d67 1
+a67 1
+   l_specials=-lz -L${gcc_libloc} -lgcc \
+d70 1
+a70 1
+   l_specials=-lz -L${gcc_libloc} -lgcc
+d119 3
+@
+
+
+1.4
+log
+@Changes in line with Intel v9.1
+@
+text
+@d1 1
+a1 1
+# "$Id: targets.h,v 1.3 2005/08/17 17:45:05 pwagner Exp $"
+d73 8
+d119 3
+@
+
+
+1.3
+log
+@Moved more definitions to srclib/targets.h
+@
+text
+@d1 1
+a1 1
+# "$Id: targets.h,v 1.2 2005/03/07 17:38:17 pwagner Exp $"
+d73 1
+a73 1
+ifeq ($(MLSF95),IFC)
+d76 6
+d84 1
+d111 3
+@
+
+
+1.2
+log
+@Fixed bug in linking non-static LF95
+@
+text
+@d1 1
+a1 1
+# "$Id: targets.h,v 1.1 2005/03/04 19:00:19 pwagner Exp $"
+d83 1
+a83 1
+   he5lib_message=mlsl2 will support files with either hdf version
+d94 9
+d104 3
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d1 1
+a1 1
+# "$Id: targets.h,v 1.4 2002/09/18 22:47:02 pwagner Exp $"
+d70 1
+a70 1
+   l_specials=-lz -L/usr/lib/gcc/i386-redhat-linux/${gcc_version} -lgcc
+d95 3
+@
+

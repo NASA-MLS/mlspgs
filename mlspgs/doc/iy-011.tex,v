@@ -1,0 +1,896 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.12
+	cfm-single-freq-0-1:1.2.0.10
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.8
+	mus-emls-1-70:1.2.0.6
+	rel-1-0-englocks-work:1.2.0.4
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.2
+	V4-21:1.2.0.2
+	V4-13:1.1
+	V4-12:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.2
+date	2014.12.22.07.38.07;	author yanovsky;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2014.07.17.22.01.43;	author yanovsky;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Updated version.  Multiple sections added/updated
+@
+text
+@\documentclass[fleqn,10pt]{article}
+
+\setlength{\topmargin}{-1.5cm}
+\setlength{\headheight}{0.5cm}
+\setlength{\headsep}{0.7cm}
+\setlength{\topskip}{0.5cm}
+\setlength{\textheight}{23.0cm}
+\setlength{\footskip}{0.5cm}
+\setlength{\oddsidemargin}{0.5cm}
+\setlength{\evensidemargin}{0.5cm}
+\setlength{\textwidth}{14.5cm}
+
+%\input {../../Math/texmacros}
+\input {texmacros}
+
+\usepackage[mediumspace,mediumqspace,Grey,squaren]{SIunits}
+
+\def\IWC{\mathcal{I}}
+
+% For pasting into PPT presentation: 
+%\setlength{\textwidth}{10.5cm}
+
+
+
+
+\setcounter{tocdepth}{5}
+
+
+
+%\numberwithin{equation}{section}
+
+%\pagestyle{headings}
+%\markboth{Igor}{Yanovsky}
+
+
+
+
+
+
+\begin{document}
+
+\title{Radiative Transfer Equation for Cloudy Atmospheres}
+\author{Igor Yanovsky \\
+iy-011}
+
+%\date{}
+
+\maketitle
+
+\tableofcontents
+
+\clearpage
+
+
+\input{iy-definitions}
+
+
+{\it Total single scattering albedo}, $\omega_0$, is a quantity reflecting the relative importance of cloud scattering in a background atmosphere.  It is defined as the ratio of cloud volume scattering $\beta_{c\_s}$ and the total volume extinction $\beta_e$:
+\begin{equation}
+\omega_0 = \frac{\beta_{c\_s}}{\beta_e}.
+\label{eqn:omega_0}
+\end{equation}
+
+
+
+The area element on the sphere is given in {\it spherical coordinates} by $dA = r^2 \sin \theta \, d\theta \, d\phi$.  The total area can thus be obtained by integration:
+\begin{eqnarray*}
+A = \int_0^{2\pi} \int_0^{\pi} r^2 \sin \theta \, d\theta \, d\phi = 4 \pi r^2.
+\end{eqnarray*}
+
+
+\section{The Generalized Radiative Transfer Equation}
+
+
+The radiative process is described by the generalized radiative transfer equation: 
+\begin{eqnarray*}
+\frac{dI}{ds} = - \beta_{e} I + \beta_a B + \beta_s J_s,
+\end{eqnarray*}
+where
+\begin{eqnarray*}
+&\beta_{gas\_a} & \mbox{gas volume absorption coefficient}, \\
+&\beta_{c\_s} & \mbox{cloud volume scattering coefficient}, \\
+&\beta_{c\_a} & \mbox{cloud volume absorption coefficient}, \\
+&\beta_{e} = \beta_{gas\_a} + \beta_{c\_s} + \beta_{c\_a} & \mbox{total volume extinction coefficient}, \\
+&\beta_{a} = \beta_{gas\_a} + \beta_{c\_a} & \mbox{total volume absorption coefficient}, \\
+&\beta_{s} = \beta_{c\_s} & \mbox{total volume scattering coefficient}.
+\end{eqnarray*}
+One way to derive this equation is to consider the radiative transfer equation for a {\it nonscattering} atmosphere:
+\begin{equation}
+\frac{\partial I}{\partial s} = - \beta_{e} I + \beta_{e} B,
+\end{equation}
+and to replace $B$ with $\overline{B} = (1-\omega_0)B + \omega_0 T_{\mbox{scat}}$, where $\omega_0$ is defined in (\ref{eqn:omega_0}):
+\begin{eqnarray*}
+\frac{\partial I}{\partial s} &=& - \beta_{e} I + \beta_{e} \overline{B} \\
+&=& - \beta_{e} I + \beta_{e} (1-\omega_0)B + \beta_{e} \omega_0 T_{\mbox{scat}} \\
+&=& - \beta_{e} I + (\beta_{e} -  \beta_{s})B + \beta_{s} T_{\mbox{scat}} \\
+&=& - \beta_{e} I + \beta_{a}B + \beta_{s} T_{\mbox{scat}}.
+\end{eqnarray*}
+
+\subsection{Alternate form of radiative transfer equation}
+
+Starting with:
+\begin{eqnarray*}
+\frac{dI}{ds} + \beta_{e} I &=& \beta_a B + \beta_s J_s, \\
+\frac{1}{\beta_e} \frac{dI}{ds} + I &=& \frac{\beta_a}{\beta_e} B + \frac{\beta_s}{\beta_e} J_s, \\
+\frac{1}{\beta_e} \frac{dI}{ds} + I &=& \left( 1 - \frac{\beta_{c\_s}}{\beta_e} \right) B + \frac{\beta_{c\_s}}{\beta_e} J_s, \\
+\frac{1}{\beta_e} \frac{dI}{ds} + I &=& \left( 1 - \omega_0 \right) B + \omega_0 J_s.
+\end{eqnarray*}
+
+
+\subsection{Efficiency Factors}
+
+
+The {\bf absorption cross section} $C_a$ is defined as the ratio of {\it absorbed power} $P_a$ to the {\it incident power density}. \\
+The {\bf absorption efficiency} $\xi_a$ is defined as the ratio of $C_a$ to the particle cross-section-area $A$.  For a spherical particle of radius $r$, we have
+\begin{equation*}
+\xi_a = \frac{C_a}{\pi r^2}.
+\end{equation*}
+The {\bf scattering cross section} $C_s$ is defined as the ratio of {\it scattered power} $P_s$ to the {\it incident power density}. \\
+The {\bf scattering efficiency} $\xi_s$ is defined as the ratio $C_s$ to the particle cross-section-area $A$.  For a spherical particle of radius $r$, we have 
+\begin{equation*}
+\xi_s = \frac{C_s}{\pi r^2}.
+\end{equation*}
+The sum of $\xi_a$ and $\xi_s$ is the {\bf extinction efficiency} $\xi_e$:
+\begin{equation*}
+\xi_e = \xi_a + \xi_s.
+\end{equation*}
+
+
+\subsection{Scattering Phase Function}
+
+
+The angular distribution of the scattered light is represented by a phase function $P(\theta)$, where $\theta$ is the scattering solid angle (the difference between the solid angle of scattered radiation and incident radiation).  The phase function is normalized such that its integral over all angles is $4\pi$, that is,
+\begin{equation*}
+\frac{1}{4\pi} \oint P(\theta,\theta') d\theta' = 1.
+\end{equation*}
+
+
+\subsection{Particle Size Parameter}
+
+The particle size parameter $\chi$ is defined as the ratio of the circumference of a spherical particle to the wavelength:
+\begin{equation*}
+\chi = \frac{2\pi r}{\lambda}.
+\end{equation*}
+
+
+\subsection{Mie Efficiencies}
+\label{sec:Mie_Efficiencies}
+
+The Mie solution gives the scattering and extinction efficiencies \cite{wujia04} (Section 4.4.2.1), \cite{wvs-065,wvs-066,wvs-067}\footnote{Section 5 in \cite{wvs-066} is obsolete.} \footnote{$\xi_s$ and $\xi_e$ are computed by Mie$\_$efficiencies.}:
+\begin{eqnarray*}
+\xi_s &=& \frac{2}{\chi^2} \sum_{n=1}^{n_\text{cut}} (2n+1) (|a_n|^2 + |b_n|^2), \\
+&=& \frac{2}{\chi^2} \sum_{n=1}^{n_\text{cut}} (2n+1) \left[ \Re(a_n)^2 + \Im(a_n)^2 + \Re(b_n)^2 + \Im(b_n)^2 \right], \\
+\xi_e &=& \frac{2}{\chi^2} \sum_{n=1}^{n_\text{cut}} (2n+1) \, \Re(a_n + b_n),
+\end{eqnarray*}
+where $a_n$ and $b_n$ are complex Mie coefficients \cite{wvs-058}:
+\begin{eqnarray}
+a_n &=& \frac{(A_n/m + n/\chi) \Re(W_n) - \Re(W_{n-1})}{(A_n/m + n/\chi) W_n - W_{n-1}}, \label{eqn:an} \\
+b_n &=& \frac{(m A_n + n/\chi) \Re(W_n) - \Re(W_{n-1})}{(m A_n + n/\chi) W_n - W_{n-1}}. \label{eqn:bn}
+\end{eqnarray}
+Intermediate variables $W_n$ and $A_n$ are calculated from the recursive expressions:
+\footnote{wvs-058 derives and wvs-065,wvs-066,wvs-067 present expressions for $A_n$ and $W_n$ in terms of Bessel and Hankel functions.}
+\begin{eqnarray*}
+W_n = \left( \frac{2n-1}{\chi} \right) W_{n-1} - W_{n-2},
+\end{eqnarray*}
+where
+\begin{eqnarray*}
+W_0 = \sin \chi + i \cos \chi, \\
+W_{-1} = \cos \chi - i \sin \chi,
+\end{eqnarray*}
+and \footnote{Note that an equivalent relation to forward recurrence $A_n(m \chi) = -\frac{n}{m\chi} + \left( \frac{n}{m\chi} - A_{n-1}(m \chi) \right)^{-1}$ is backward recurrence $A_{n-1}(m \chi) = \frac{n}{m\chi} - \left( \frac{n}{m\chi} + A_{n}(m \chi) \right)^{-1}$, which is used in sphbes.f90.}
+\begin{eqnarray*}
+A_n &=& -\frac{n}{m\chi} + \left( \frac{n}{m\chi} - A_{n-1} \right)^{-1}, \\
+A_0 &=& \cot m \chi.
+\end{eqnarray*}
+The complex refractive index $m$ is given as
+\begin{eqnarray*}
+m = \sqrt{\varepsilon},
+\end{eqnarray*}
+where $\varepsilon$ is the complex dielectric constant \cite{wujia04} (Section 4.4.1.2 and Appendix C) with 
+\begin{eqnarray*}
+\Re(\varepsilon) &=& 3.15, \\
+\Im(\varepsilon) &=& \alpha(T)/\nu + \beta(T)\nu,
+\end{eqnarray*}
+where $\nu$ is frequency in GHz, and the temperature dependent parameters $\alpha(T)$ and $\beta(T)$ are given in  \cite{wujia04} (Appendix C). 
+
+\subsubsection*{Intermediate variables in terms of Bessel functions}
+
+Using notations for spherical Bessel functions in Appendix \ref{sec:Spherical_Bessel_and_Hankel_Functions}, rewrite
+\begin{eqnarray*}
+W_n = \left( \frac{2n-1}{\chi} \right) W_{n-1} - W_{n-2},
+\end{eqnarray*}
+where
+\[W_0 = \chi h_0^{(2)} (\chi) = \chi \left( j_0(\chi) - i y_0(\chi) \right),\]
+\[W_{-1} = \chi h_{-1}^{(2)} (\chi) = \chi \left( j_{-1}(\chi) - i y_{-1}(\chi) \right).\]
+\ \\
+From Appendix \ref{sec:Spherical_Bessel_and_Hankel_Functions}, we have
+\[h_{n-2}(\chi)+h_{n}(\chi)= \left( \frac{2n-1}{\chi} \right) h_{n-1}(\chi).\]
+Multiply by $\chi$:
+\[\chi h_{n-2}(\chi)+\chi h_{n}(\chi)= \left( \frac{2n-1}{\chi} \right) \chi h_{n-1}(\chi).\]
+or
+\[W_{n-2}+W_{n} = \left( \frac{2n-1}{\chi} \right) W_{n-1}.\]
+
+
+\subsection{Phase function}
+
+
+Since the intensity of the scattered radiation is proportional to the sum of the square of two amplitude functions $S_1(\theta,r,T)$ and $S_2(\theta,r,T)$ for electric fields perpendicular and parallel  to the plane of scattering, respectively, the phase function can be written as \cite{wujia04} (Section 4.4.2.2), \cite{wvs-065,wvs-068,wvs-070}:
+\begin{equation}
+p(\theta,r,T) = \frac{p_0(\theta,r,T)}{C(r,T)}
+\label{eqn:p}
+\end{equation}
+where
+\begin{eqnarray}
+p_0(\theta,r,T) &=& |S_1(\theta,r,T)|^2 + |S_2(\theta,r,T)|^2 \nonumber \\
+&=& \Re(S_1(\theta,r,T))^2 + \Im(S_1(\theta,r,T))^2 + \Re(S_2(\theta,r,T))^2 + \Im(S_2(\theta,r,T))^2,
+\label{eqn:p_0} 
+\end{eqnarray}
+and the normalization function is
+\begin{equation}
+C(r,T) = \frac{1}{2} \int_0^{\pi} p_0(\theta,r,T) \sin \theta \, d\theta.
+\label{eqn:C}
+\end{equation}
+The Mie solution for the two amplitude functions is given by \footnote{$a_j$ and $b_j$ are functions of $r$ through $\chi$ and are functions of $T$ through $\varepsilon$.}
+\begin{eqnarray}
+S_1(\theta,r,T) &=& \sum_{j=1}^{\infty} \frac{2j+1}{j(j+1)} \left( a_j(r,T) \frac{dP_j^1(\cos \theta)}{d\theta} + b_j(r,T) \frac{P_j^1(\cos \theta)}{\sin \theta} \right), \nonumber \\
+S_2(\theta,r,T) &=& \sum_{j=1}^{\infty} \frac{2j+1}{j(j+1)} \left( a_j(r,T) \frac{P_j^1(\cos \theta)}{\sin \theta} + b_j(r,T) \frac{dP_j^1(\cos \theta)}{d\theta} \right), \label{eqn:S1_and_S2}
+\end{eqnarray}
+where $a_j$ and $b_j$ are the Mie coefficients defined by equations (\ref{eqn:an}) and (\ref{eqn:bn}). \footnote{Here, $P_j^1$ are presumed to be functions of $\cos \theta$.  It is true for expressions in wvs-068.  It is not true for what is here and in Cloud ATBD ($P_1^1$ is not a function of $\cos \theta$). } \\
+\ \\
+The quantities $P_j^1$ are the associated Legendre polynomials, which are derived from the recurrence relations.  Given the initial values $P_1^1 = \sin \theta$ and $P_2^1 = 3 \cos \theta \sin \theta$, the subsequent polynomials and the corresponding derivatives are given as\footnote{These are equations (4.42) and (4.43) from \cite{wujia04}.  In wvs-068, equations are different.}
+\begin{eqnarray*}
+P_j^1 &=& \left( \frac{2j-1}{j-1} \right) P_{j-1}^1 \cos \theta - \left( \frac{j}{j-1} \right) P_{j-2}^1, \\
+\frac{dP_j^1}{d\theta} &=& \left( \frac{2j-1}{j-1} \right) \left( \cos \theta \frac{dP_{j-1}^1}{d\theta} -  P_{j-1}^1 \sin \theta \right) - \left(\frac{j}{j-1}\right)\frac{dP_{j-2}^1}{d\theta}.
+\end{eqnarray*}
+
+
+
+\subsection{Volume Scattering and Extinction Coefficients}
+
+The total cloud extinction coefficient is a direct summation of all the individual particle contributions, \cite{wujia04} (Section 4.4.3.1), \cite{wvs-065,wvs-066,wvs-067,wvs-071} i.e. \footnote{Note that in some documents (e.g. wvs-066), there is a factor of $2\pi$ instead of $\pi$.}
+\begin{equation*}
+\beta_{c\_e} = \pi \int_0^{\infty} n(r) r^2 \xi_e(r) \, dr.
+\end{equation*}
+The total cloud scattering coefficient is given by
+\begin{equation*}
+\beta_{c\_s} = \pi \int_0^{\infty} n(r) r^2 \xi_s(r) \, dr.
+\end{equation*}
+The total volume absorption coefficient is given by
+\begin{equation*}
+\beta_{c\_a} = \beta_{c\_e} - \beta_{c\_s}.
+\end{equation*}
+ 
+\subsubsection{McFarquhar-Heymsfield (MH) Distribution}
+
+The McFarquhar and Heymsfield particle-size distribution function $n(r)$ is composed of a first-order gamma distribution function for small particles ($D < 100 \micro$m) and log-normal distribution function for large particles ($D > 100 \micro$m), and is given by \cite{mcfhey97}, \cite{wujia04} (Section 5.3.2.1 and Appendix E1), \cite{wvs-065,wvs-066,wvs-067,wvs-071} \footnote{More details are given in the references above.  Note that in \cite{wujia04} (Appendix E1), $n(D)$ is given as two expressions, while in ATBD \cite{wujia04} (Section 5.3.2.1), wvs-065,wvs-066,wvs-067,wvs-071, it is expressed as summation, similar to here.}:
+\begin{equation*}
+n(r) = N_1 2r \exp(-\alpha 2r) + \frac{N_2}{2r} \exp{\left[ -\frac{1}{2} \left( \frac{\log (2r/D_0) - \mu}{\sigma} \right)^2 \right]},
+\end{equation*}
+where\footnote{Equation (5.3) in ATBD \cite{wujia04} has an exponent of $1$, not $3$, for $D_0$ in the denominator of the expression for $N_2$ in Equation (\ref{eqn:N_2}).  In Equation (4) in \cite{mcfhey97}, the exponent is $3$.}
+\begin{eqnarray}
+N_1 &=& \frac{\IWC_{< 100} \; \alpha^5}{4 \pi \rho_\text{ice}}, 
+\label{eqn:N_1} \\
+N_2 &=& \frac{6}{\sqrt{2 \pi^3}} \frac{\IWC_{> 100}}{\rho_\text{ice} D_0^3 \sigma \exp(3\mu + 4.5 \sigma^2)},
+\label{eqn:N_2}
+\end{eqnarray}
+and $D_0 = 1$ \micro m, $\rho_{\text{ice}} = 0.91$ g/m$^3$. \\
+The quantities $\IWC_{< 100}$ and $\IWC_{> 100}$ are the total ice content of particles with $D < 100 \micro$m and $D > 100 \micro$m, respectively.  They are calculated from parameters $\alpha$, $\mu$, and $\sigma$ for a given $\IWC$.  These parameters are defined as \footnote{Equation (5.6) in ATBD \cite{wujia04} has $+0.0494$ in the expression for $\alpha$ in Equation (\ref{eqn:alpha_mu_sigma}).  Equation (6) in \cite{mcfhey97} has $-0.0494$.}
+\begin{equation}\begin{split}
+ & \IWC_{<100} = \min[\IWC,
+                            0.252(\IWC/\IWC_0)^{0.837}]\,, \\
+ & \IWC_{>100} = \IWC - \IWC_{<100}\,, \\
+ & \alpha = -4.99\times 10^{-3} - 0.0494
+              \log_{10} (\IWC_{<100}/\IWC_0)\,, \\
+ & \mu = (5.2 + 0.0013 T) + (0.026 - 1.2 \times 10^{-3}T)
+          \log_{10} (\IWC_{>100}/\IWC_0)\,, \\
+ & \sigma = (0.47 + 2.1 \times 10^{-3}T) + (0.018 - 2.1 \times 10^{-4} T)
+             \log_{10} (\IWC_{>100}/\IWC_0).
+\end{split}
+\label{eqn:alpha_mu_sigma}
+\end{equation}
+$\IWC$ is the ice water content of the atmosphere in g/m$^3$, $\IWC_0$ = 1 g/m$^3$,
+ and $T$ is the atmospheric
+temperature in Celcius.\footnote{Tables 1 and 2 on page 2193 in \cite{mcfhey97} give coefficients as a function of degrees Celsius.} \\
+\ \\
+Note that $N_2, \mu, \sigma$ depend on both temperature $T$ and ice water content $\IWC$, and $N_1, \alpha$ depend on ice water content $\IWC$, but not on temperature $T$:
+\begin{equation*}
+\frac{\partial \alpha}{\partial T} = \frac{\partial N_1}{\partial T} = 0.
+\end{equation*}
+None of these quantities depend on $\theta$ nor $r$ \cite{wvs-071}.
+
+\subsubsection{IWC Derivatives}
+
+Since $\IWC_{<100} = \min[\IWC, 0.252(\IWC/\IWC_0)^{0.837}]\,$, there are two cases to consider. \\
+\ \\
+{\bf Case 1:} \ \ $\IWC \leq 0.252(\IWC/\IWC_0)^{0.837}$.  Therefore, $\IWC_{<100} = \IWC$ and $\IWC_{>100} = \IWC - \IWC_{<100} = 0$. \\
+From equations (\ref{eqn:N_1}), (\ref{eqn:N_2}), and (\ref{eqn:alpha_mu_sigma}): \footnote{$\displaystyle \frac{d}{dx} \log_b(x) = \frac{d}{dx} \left( \frac{1}{\ln(b)}\ln x \right) = \frac{1}{\ln(b)} \frac{d}{dx}\ln x = \frac{1}{x \ln (b)}$.}
+\begin{eqnarray*}
+\frac{\partial \alpha}{\partial \IWC} &=& - \frac{0.0494}{\IWC \ \ln 10} = - \frac{0.02145}{\IWC}, \\
+\frac{\partial N_1}{\partial \IWC} &=& \frac{1}{4 \pi \rho_\text{ice}}  \frac{\partial}{\partial \IWC} \left( \IWC \; \alpha^5 \right) = \frac{1}{4 \pi \rho_\text{ice}} \left( \alpha^5 + 5 \IWC \alpha^4 \frac{\partial \alpha}{\partial \IWC} \right), \ \ \ \mbox{or}\\
+\frac{1}{N_1} \frac{\partial N_1}{\partial \IWC} &=& \frac{1}{\IWC} + \frac{5}{\alpha} \frac{\partial \alpha}{\partial I},
+\end{eqnarray*}
+\ \\
+{\bf Case 2:} \ \ $\IWC > 0.252(\IWC/\IWC_0)^{0.837}$.  Therefore, $\IWC_{<100} = 0.252(\IWC/\IWC_0)^{0.837}$ and $\IWC_{>100} = \IWC - \IWC_{<100}$. \\
+\ \\
+Plotting $\IWC$ and $0.252(\IWC/\IWC_0)^{0.837}$ as functions of $\IWC$ with $\IWC_0$ = 1 g/m$^3$, we see that for Case 1, $\IWC < 2.1262 \times 10^{-4}$, and for Case 2, $\IWC > 2.1262 \times 10^{-4}$.
+
+
+\subsection{The Integrated Phase Function}
+
+
+The integrated phase function is computed by summing up all the individual phase functions from the {M}ie calculations and weighing each one by its scattering efficiency $\pi r^2 \xi_s$ \cite{wujia04} (Section 4.4.3.2),\cite{wvs-067,wvs-071}: 
+\begin{equation}
+P(\theta) = \frac{\pi}{\beta_{c\_s}} \int_0^{\infty} r^2 n(r) \xi_s(r) p(\theta,r) \, dr,
+\label{eqn:Integrated_Phase_Function}
+\end{equation}
+where $\theta$ is the scattering angle.
+
+
+\subsection{Derivatives of Phase Function}
+
+From equation (\ref{eqn:p_0}) defining $p_0$, we have \cite{wvs-068}:
+\begin{eqnarray*}
+\frac{\partial p_0(\theta,r,T)}{\partial T} &=& \frac{\partial}{\partial T} \left( \Re(S_1(\theta,r,T))^2 + \Im(S_1(\theta,r,T))^2 + \Re(S_2(\theta,r,T))^2 + \Im(S_2(\theta,r,T))^2 \right) \\
+&=& 2 \bigg( \Re(S_1(\theta,r,T)) \frac{\partial \Re(S_1(\theta,r,T))}{\partial T} + \Im(S_1(\theta,r,T)) \frac{\partial \Im(S_1(\theta,r,T))}{\partial T} \\
+& & \ + \ \Re(S_2(\theta,r,T)) \frac{\partial \Re(S_2(\theta,r,T))}{\partial T}  + \Im(S_2(\theta,r,T))  \frac{\partial \Im(S_2(\theta,r,T))}{\partial T} \bigg).
+\end{eqnarray*}
+Taking the derivative of the phase function $p$ in equation (\ref{eqn:p}) with respect to temperature $T$ and using (\ref{eqn:C}), we have
+\begin{subequations}
+\begin{align}
+\frac{\partial p(\theta,r,T)}{\partial T} &=\frac{\partial}{\partial T} \left( \frac{p_0(\theta,r,T)}{C(r,T)} \right) \\
+&=\frac{1}{C(r,T)^2} \left( \frac{\partial p_0(\theta,r,T)}{\partial T} C(r,T) - p_0(\theta,r,T) \frac{\partial C(r,T)}{\partial T}  \right) \\
+&=\frac{1}{C(r,T)} \left( \frac{\partial p_0(\theta,r,T)}{\partial T} - \frac{p_0(\theta,r,T)}{C(r,T)} \frac{\partial C(r,T)}{\partial T}  \right) \\
+&=\frac{1}{C(r,T)} \left( \frac{\partial p_0(\theta,r,T)}{\partial T} - p(\theta,r,T) \frac{\partial C(r,T)}{\partial T} \right) \label{eqn:dp_dT} \\
+&=\frac{1}{C(r,T)} \left( \frac{\partial p_0(\theta,r,T)}{\partial T} - \frac{p(\theta,r,T)}{2} \int_0^{\pi} \frac{ \partial p_0(\theta,r,T)}{\partial T} \sin \theta \, d\theta \right).
+\end{align}
+\end{subequations}
+Since $a_j(r,T)$ and $b_j(r,T)$ are not functions of ice water content $\IWC$, the derivative of the phase function with respect to $\IWC$ is $0$:
+\begin{equation}
+\frac{\partial p(\theta,r,T)}{\partial \IWC} = 0.
+\label{eqn:dp_dIWC}
+\end{equation}
+
+
+
+\subsection{Derivatives of the Integrated Phase Function}
+
+The derivative of the integrated phase function $P$ in (\ref{eqn:Integrated_Phase_Function}) with respect to temperature is \cite{wvs-068}:
+\begin{eqnarray*}
+\frac{\partial P(\theta)}{\partial T} &=& \frac{\partial}{\partial T} \left( \frac{\pi}{\beta_{c\_s}} \int_0^{\infty} r^2 n(r) \xi_s(r) p(\theta,r) \, dr \right) \\
+&=& \frac{\pi}{\beta_{c\_s}}  \frac{\partial}{\partial T} \left( \int_0^{\infty} r^2 n(r) \xi_s(r) p(\theta,r) \, dr \right) +\frac{\partial}{\partial T} \left( \frac{\pi}{\beta_{c\_s}} \right) \int_0^{\infty} r^2 n(r) \xi_s(r) p(\theta,r) \, dr \\
+&=&  \frac{\pi}{\beta_{c\_s}} \int_0^{\infty} r^2 \left( \frac{\partial n(r)}{\partial T} \xi_s(r) p(\theta,r) + n(r) \frac{\partial \xi_s(r)}{\partial T} p(\theta,r) + n(r) \xi_s(r) \frac{\partial p(\theta,r)}{\partial T} \right) \, dr \\ 
+& & - \ \frac{\pi}{\beta_{c\_s}^2} \frac{\partial \beta_{c\_s}}{\partial T} \int_0^{\infty} r^2 n(r) \xi_s(r) p(\theta,r) \, dr.
+\end{eqnarray*}
+\begin{eqnarray}
+\frac{\partial P(\theta)}{\partial T}  &=&  \frac{\pi}{\beta_{c\_s}} \int_0^{\infty} r^2 n(r) \xi_s(r) p(\theta,r) \left( \frac{1}{n(r)} \frac{\partial n(r)}{\partial T} + \frac{1}{\xi_s(r)} \frac{\partial \xi_s(r)}{\partial T} + \frac{1}{p(\theta,r)} \frac{\partial p(\theta,r)}{\partial T} \right) \, dr \nonumber \\ 
+& & - \ \frac{P(\theta)}{\beta_{c\_s}} \frac{\partial \beta_{c\_s}}{\partial T}.
+\label{eqn:dP_dT}
+\end{eqnarray}
+Considering equations (\ref{eqn:dp_dIWC}) and (\ref{eqn:dxi_dIWC}) the derivative of the integrated phase function $P$ in (\ref{eqn:Integrated_Phase_Function}) with respect to ice water content is \cite{wvs-068}:\footnote{The derivatives of $P$ in wvs-065 and wvs-067 are derived from a $P(\theta)$ written as a single integral version (unlike what was done here and in wvs-068).}
+\begin{eqnarray}
+\frac{\partial P(\theta)}{\partial \IWC} &=& \frac{\partial}{\partial \IWC} \left( \frac{\pi}{\beta_{c\_s}} \int_0^{\infty} r^2 n(r) \xi_s(r) p(\theta,r) \, dr \right) \nonumber \\
+&=& \frac{\pi}{\beta_{c\_s}}  \frac{\partial}{\partial \IWC} \left( \int_0^{\infty} r^2 n(r) \xi_s(r) p(\theta,r) \, dr \right) +\frac{\partial}{\partial \IWC} \left( \frac{\pi}{\beta_{c\_s}} \right) \int_0^{\infty} r^2 n(r) \xi_s(r) p(\theta,r) \, dr \nonumber \\
+&=&  \frac{\pi}{\beta_{c\_s}} \int_0^{\infty} r^2 \frac{\partial n(r)}{\partial \IWC} \xi_s(r) p(\theta,r) \, dr \ - \ \frac{P(\theta)}{\beta_{c\_s}} \frac{\partial \beta_{c\_s}}{\partial \IWC}. \label{eqn:dP_dIWC}
+\end{eqnarray}
+The derivatives of $n(r)$ with respect to temperature $T$ and ice water content $\IWC$ are given in \cite{wvs-066}.
+
+
+
+\subsubsection{Reducing Mie phase function integrated scattering from double to single integrals}
+
+The phase function is given by (\ref{eqn:p}), (\ref{eqn:p_0}), (\ref{eqn:C}), and (\ref{eqn:S1_and_S2}).  The integrated phase function is given by (\ref{eqn:Integrated_Phase_Function}).
+Consider \cite{wvs-070}:
+\begin{eqnarray}
+p_0(\theta,r,T) &=& |S_1(\theta,r,T)|^2 + |S_2(\theta,r,T)|^2 \label{eqn:p_0_equals_S1sqrd_S2sqrd} \\
+&=& \Re(S_1(\theta,r,T))^2 + \Im(S_1(\theta,r,T))^2 + \Re(S_2(\theta,r,T))^2 + \Im(S_2(\theta,r,T))^2, \nonumber
+\end{eqnarray}
+where
+\begin{subequations}
+\begin{align}
+|S_1(\theta,r,T)|^2 
+&= \Re \left( \sum_{j=1}^{\infty} \frac{2j+1}{j(j+1)} \left( a_j(r,T) \frac{dP_j^1(\cos \theta)}{d\theta} + b_j(r,T) \frac{P_j^1(\cos \theta)}{\sin \theta} \right) \right)^2 \nonumber \\
+&+ \Im \left( \sum_{j=1}^{\infty} \frac{2j+1}{j(j+1)} \left( a_j(r,T) \frac{dP_j^1(\cos \theta)}{d\theta} + b_j(r,T) \frac{P_j^1(\cos \theta)}{\sin \theta} \right) \right)^2 \nonumber \\
+&= \left( \sum_{j=1}^{\infty} \Re a_j \frac{2j+1}{j(j+1)} \frac{dP_j^1}{d\theta} + \Re b_j \frac{2j+1}{j(j+1)} \frac{P_j^1}{\sin \theta} \right)^2 \nonumber \\
+&+ \left( \sum_{j=1}^{\infty} \Im a_j \frac{2j+1}{j(j+1)} \frac{dP_j^1}{d\theta} + \Im b_j \frac{2j+1}{j(j+1)} \frac{P_j^1}{\sin \theta} \right)^2, \\
+|S_2(\theta,r,T)|^2 &= \Re \left( \sum_{j=1}^{\infty} \frac{2j+1}{j(j+1)} \left( a_j(r,T) \frac{P_j^1(\cos \theta)}{\sin \theta} + b_j(r,T) \frac{dP_j^1(\cos \theta)}{d\theta} \right) \right)^2 \nonumber \\
+&+ \Im \left( \sum_{j=1}^{\infty} \frac{2j+1}{j(j+1)} \left( a_j(r,T) \frac{P_j^1(\cos \theta)}{\sin \theta} + b_j(r,T) \frac{dP_j^1(\cos \theta)}{d\theta} \right) \right)^2 \nonumber \\
+&= \left( \sum_{j=1}^{\infty} \Re a_j \frac{2j+1}{j(j+1)} \frac{P_j^1}{\sin \theta} + \Re b_j \frac{2j+1}{j(j+1)} \frac{dP_j^1}{d\theta} \right)^2 \nonumber \\
+&+ \left( \sum_{j=1}^{\infty} \Im a_j \frac{2j+1}{j(j+1)} \frac{P_j^1}{\sin \theta} + \Im b_j \frac{2j+1}{j(j+1)} \frac{dP_j^1}{d\theta} \right)^2.
+\end{align}
+\label{eqn:terms_in_p_0}
+\end{subequations}
+Denote \footnote{Assumption: $\Re$ and $\Im$ in $u_j$ and $v_j$ result in the same expressions.}
+\begin{eqnarray*}
+u_j(r,T) &=& \Re a_j \ \ \mbox{or} \ \ \Im a_j, \\
+v_j(r,T) &=& \Re b_j \ \ \mbox{or} \ \ \Im b_j, \\
+x_j(\theta) &=& \frac{2j+1}{j(j+1)} \frac{dP_j^1}{d\theta}, \\
+y_j(\theta) &=& \frac{2j+1}{j(j+1)} \frac{P_j^1}{\sin \theta} .
+\end{eqnarray*}
+Thus, equations (\ref{eqn:terms_in_p_0}) can be written as
+\begin{eqnarray*}
+|S_1|^2 = \left( \sum_{j=1}^{\infty} u_j x_j + v_j y_j \right)^2 + \left( \sum_{j=1}^{\infty} u_j x_j + v_j y_j \right)^2, \\
+|S_2|^2 = \left( \sum_{j=1}^{\infty} u_j y_j + v_j x_j \right)^2 + \left( \sum_{j=1}^{\infty} u_j y_j + v_j x_j \right)^2,
+\end{eqnarray*}
+and could be expanded:
+\begin{eqnarray}
+|S_1|^2 &=& \left( \sum_{j=1}^{\infty} u_j x_j + v_j y_j \right)\left( \sum_{j=1}^{\infty} u_j x_j + v_j y_j \right) + \left( \sum_{j=1}^{\infty} u_j x_j + v_j y_j \right) \left( \sum_{j=1}^{\infty} u_j x_j + v_j y_j \right) \nonumber \\
+&=& 2 \sum_{i=1}^{\infty} \sum_{j=1}^{\infty} (u_i x_i + v_i y_i) (u_j x_j + v_j y_j) \nonumber \\
+&=& 2 \sum_{i=1}^{\infty} \sum_{j=1}^{\infty} u_i u_j x_i  x_j + u_i v_j x_i y_j + u_j v_i x_j y_i + v_i v_j y_i y_j, \nonumber \\
+|S_2|^2 &=& \left( \sum_{j=1}^{\infty} u_j y_j + v_j x_j \right)\left( \sum_{j=1}^{\infty} u_j y_j + v_j x_j \right) + \left( \sum_{j=1}^{\infty} u_j y_j + v_j x_j \right)\left( \sum_{j=1}^{\infty} u_j y_j + v_j x_j \right) \nonumber \\
+&=& 2 \sum_{i=1}^{\infty} \sum_{j=1}^{\infty} (u_i y_i + v_i x_i)(u_j y_j + v_j x_j) \nonumber \\
+&=& 2 \sum_{i=1}^{\infty} \sum_{j=1}^{\infty} u_i u_j y_i y_j +  u_i v_j x_j y_i  + u_j v_i x_i  y_j + v_i  v_j x_i x_j. \nonumber
+\end{eqnarray}
+Denote $f_{ijk}$ and $g_{ijk}$, for $k = 1, 2, 3$, as
+\begin{eqnarray}
+f_{ij1} = u_i u_j \ & & \ g_{ij1} = x_i x_j \nonumber \\ 
+f_{ij2} = u_i v_j \ & & \ g_{ij2} = x_i y_j \label{eqn:fijk_gijk} \\
+f_{ij3} = v_i v_j \ & & \ g_{ij3} = y_i y_j \nonumber
+\end{eqnarray}
+Using (\ref{eqn:fijk_gijk}), $|S_1|^2$ and $|S_2|^2$ can be written as \footnote{In wvs-070r5, factor of 2 is missing.}
+\begin{subequations}
+\begin{align}
+|S_1|^2 &= 2 \sum_{i=1}^{\infty} \sum_{j=1}^{\infty} f_{ij1} g_{ij1} + f_{ij2} g_{ij2} + f_{ji2} g_{ji2} + f_{ij3} g_{ij3}, \\
+|S_2|^2 &= 2 \sum_{i=1}^{\infty} \sum_{j=1}^{\infty} f_{ij1} g_{ij3} + f_{ij2} g_{ji2} + f_{ji2} g_{ij2} + f_{ij3} g_{ij1}.
+\end{align}
+\label{eqn:S1sqrd_S2sqrd_in_terms_of_fg}
+\end{subequations}
+Hence, $p_0$ in (\ref{eqn:p_0_equals_S1sqrd_S2sqrd}) can be written as
+\begin{eqnarray*}
+p_0(\theta,r,T) &=&  2 \sum_{i=1}^{\infty} \sum_{j=1}^{\infty} f_{ij1} g_{ij1} + f_{ij2} g_{ij2} + f_{ji2} g_{ji2} + f_{ij3} g_{ij3}, \nonumber \\
+&+& 2 \sum_{i=1}^{\infty} \sum_{j=1}^{\infty} f_{ij1} g_{ij3} + f_{ij2} g_{ji2} + f_{ji2} g_{ij2} + f_{ij3} g_{ij1}. \nonumber
+\end{eqnarray*}
+Thus, the normalization function $C(r,T)$ can be written as
+\begin{eqnarray}
+C(r,T) &=& \frac{1}{2} \int_0^{\pi} p_0(\theta,r,T) \sin \theta \, d\theta \nonumber \\
+&=& \int_0^{\pi} \sum_{i=1}^{\infty} \sum_{j=1}^{\infty} \Big( f_{ij1} g_{ij1} + f_{ij2} g_{ij2} + f_{ji2} g_{ji2} + f_{ij3} g_{ij3} \label{eqn:C_prelim} \\
+&& + f_{ij1} g_{ij3} + f_{ij2} g_{ji2} + f_{ji2} g_{ij2} + f_{ij3} g_{ij1} \Big) \sin \theta \, d\theta. \nonumber
+\end{eqnarray}
+Denote \footnote{Factor of $\frac{1}{2}$ difference from wvs-070r5 equation (6) and same as equation on the line below (12).}
+\begin{equation}
+G_{ijm} = \int_0^{\pi} g_{ijm}(\theta) \sin \theta \, d\theta,
+\label{eqn:G_in_terms_of_g}
+\end{equation}
+and observe that
+\begin{eqnarray*}
+\int_0^{\pi} \sum_{i=1}^{\infty} \sum_{j=1}^{\infty} f_{ijn}(r,T) g_{ijm}(\theta) \sin \theta \, d\theta &=& \sum_{i=1}^{\infty} \sum_{j=1}^{\infty} f_{ijn}(r,T) \int_0^{\pi} g_{ijm}(\theta) \sin \theta \, d\theta \\
+&=& \sum_{i=1}^{\infty} \sum_{j=1}^{\infty} f_{ijn}(r,T) G_{ijm}.
+\end{eqnarray*}
+Thus, $C(r,T)$ in (\ref{eqn:C_prelim}) can be written as
+\begin{eqnarray}
+C(r,T) &=& \sum_{i=1}^{\infty} \sum_{j=1}^{\infty} \Big( f_{ij1} G_{ij1} + f_{ij2} G_{ij2} + f_{ji2} G_{ji2} + f_{ij3} G_{ij3} \nonumber \\
+&& \ \ \ \ \ \ \ \ \ + f_{ij1} G_{ij3} + f_{ij2} G_{ji2} + f_{ji2} G_{ij2} + f_{ij3} G_{ij1} \Big). \label{eqn:CrT}
+\end{eqnarray}
+Thus, using this expression for $C(r,T)$, the integrated phase function $P(\theta)$ in (\ref{eqn:Integrated_Phase_Function}) is no longer double integral.  Also, the derivative of the integrated phase function with respect to ice water content $\displaystyle \frac{\partial P(\theta)}{\partial \IWC}$ in (\ref{eqn:dP_dIWC}) is no longer double integral. \\
+The derivative of (\ref{eqn:CrT}) is
+\begin{eqnarray*}
+\frac{\partial C(r,T)}{\partial T} &=& \sum_{m,n} \sum_{i=1}^{\infty} \sum_{j=1}^{\infty} \frac{ \partial f_{ijn}(r,T)}{\partial T} G_{ijm},
+\end{eqnarray*}
+with the abuse of notation in regards to indexes $m$ and $n$.  Note that
+\begin{eqnarray*}
+\frac{ \partial f_{ij1}}{\partial T} &=& u_i \frac{\partial u_j}{\partial T} + \frac{\partial u_i}{\partial T} u_j, \\
+\frac{ \partial f_{ij2}}{\partial T} &=& u_i \frac{\partial v_j}{\partial T} + \frac{\partial u_i}{\partial T} v_j, \\ 
+\frac{ \partial f_{ij3}}{\partial T} &=& v_i \frac{\partial v_j}{\partial T} + \frac{\partial v_i}{\partial T} v_j.
+\end{eqnarray*}
+Thus, the derivative $\displaystyle \frac{\partial p}{\partial T}$ in (\ref{eqn:dp_dT}) can be written in terms of the $G_{ijm}$.  Thus $\displaystyle \frac{\partial P}{\partial T}$ in (\ref{eqn:dP_dT}) is also no longer a double integral. \\
+\ \\
+Consider Equation (\ref{eqn:CrT}) for $C(r,T)$.  In \cite{wvs-070}, it was shown that 
+\begin{eqnarray}
+C(r,T) = \sum_{i=1}^{\infty} (f_{ii1} + f_{ii3})(G_{ii1} + G_{ii3}) \ = \ \sum_{i=1}^{\infty} (4i+2)(f_{ii1} + f_{ii3}).
+\end{eqnarray}
+Thus, $C(r,T)$ can be written in the form
+\begin{eqnarray}
+C(r,T) = \sum_{i=1}^{\infty} (2i+1)(\Re a_i^2 + \Im a_i^2 + \Re b_i^2 + \Im b_i^2 ) \ = \ \sum_{i=1}^{\infty} (2i+1)(|a_i|^2 + |b_i|^2).
+\end{eqnarray}
+
+
+\begin{figure}[t]
+\begin{center}
+    \epsfxsize=1.0\linewidth
+    \epsffile{eps/RTgeometry}
+\end{center}
+\caption{Geometry of discrete radiative transfer}
+\label{fig:RTgeometry}
+\end{figure}
+
+
+\section{Discrete Radiative Transfer Equation}
+
+See Figure~\ref{fig:RTgeometry} for geometry of discrete radiative transfer.   
+
+\subsection{Nonscattering Atmosphere}
+
+
+For {\it nonscattering} atmosphere, the radiative transfer equation is
+\begin{eqnarray*}
+I(\vx) &=& \sum_{i=1}^{2N} \triangle B_i \mathcal{T}_i \ = \ \triangle B_1 \mathcal{T}_1 + \triangle B_2 \mathcal{T}_2 + \ldots + \triangle B_{2N-1} \mathcal{T}_{2N-1} + \triangle B_{2N} \mathcal{T}_{2N} \\
+&\approx&   - \, \int_{B(s_0)}^{B(s_{\insta})} \T(s) \, dB(s) + \big( I(s_0) - B(s_0) \big) \T(s_0) \, + \, B(s_{\insta}),
+\end{eqnarray*}
+where
+\begin{eqnarray*}
+\triangle B_1 &=& \frac{B_1 + B_2}{2} \approx B(s_{\insta}), \\
+\triangle B_i &=& \frac{B_{i+1} - B_{i-1}}{2}, \\
+\triangle B_{2N} &=& I_0 - \frac{B_{2N-1} + B_{2N}}{2} \approx I(s_0) - B(s_0).
+\end{eqnarray*}
+
+
+\subsection{Scattering Atmosphere}
+
+
+For {\it scattering} atmosphere, the radiative transfer equation is \cite{wvs-095}
+\begin{eqnarray*}
+I(\vx) &=& \sum_{i=1}^{2N} \triangle \overline{B}_i \mathcal{T}_i \ = \ \triangle \overline{B}_1 \mathcal{T}_1 + \triangle \overline{B}_2 \mathcal{T}_2 + \ldots + \triangle \overline{B}_{2N-1} \mathcal{T}_{2N-1} + \triangle \overline{B}_{2N} \mathcal{T}_{2N} \\
+&\approx&   - \, \int_{\overline{B}(s_0)}^{\overline{B}(s_{\insta})} \T(s) \, d\overline{B}(s) + \big( I(s_0) - \overline{B}(s_0) \big) \T(s_0) \, + \, \overline{B}(s_{\insta}),
+\end{eqnarray*}
+where
+\begin{eqnarray*}
+\overline{B} = (1-\omega_0)B + \omega_0 T_{\mbox{scat}},
+\end{eqnarray*}
+and
+\begin{eqnarray*}
+\triangle \overline{B}_i &=& \frac{\overline{B}_{i+1} - \overline{B}_{i-1}}{2} \\
+&=& \frac{1}{2} \left( (1-\omega_{0_{i+1}})B_{i+1} + \omega_{0_{i+1}} T_{{\mbox{scat}}_{i+1}} - (1-\omega_{0_{i-1}})B_{i-1} - \omega_{0_{i-1}} T_{{\mbox{scat}_{i-1}}}   \right) \\
+&=& \frac{1}{2} \left( \left[ (1-\omega_{0_{i+1}})B_{i+1} - (1-\omega_{0_{i-1}})B_{i-1} \right]  + \left[ \omega_{0_{i+1}} T_{{\mbox{scat}}_{i+1}} - \omega_{0_{i-1}} T_{{\mbox{scat}_{i-1}}} \right]  \right) \\
+&=& \triangle \overline{B}_i^g + \triangle \overline{B}_i^s,
+\end{eqnarray*}
+where $\triangle \overline{B}_i^g$ and $\triangle \overline{B}_i^s$ are {\bf gas} and {\bf scattering} parts, respectively. \\
+For $i = 2, \ldots, 2N-1$, we have
+\begin{eqnarray*}
+\triangle \overline{B}_i^g &=& \frac{1}{2} \left( (1-\omega_{0_{i+1}})B_{i+1} - (1-\omega_{0_{i-1}})B_{i-1} \right) \ \ \ \ \ \mbox{and} \\
+\triangle \overline{B}_i^s &=& \frac{1}{2} \left( \omega_{0_{i+1}} T_{{\mbox{scat}}_{i+1}} - \omega_{0_{i-1}} T_{{\mbox{scat}_{i-1}}} \right).
+\end{eqnarray*}
+At one end of the path, closest to the instrument (for $i=1$), we have
+\begin{eqnarray*}
+\triangle \overline{B}_1^g &=& \frac{1}{2} \left( (1-\omega_{0_{1}})B_{1} + (1-\omega_{0_{2}})B_{2} \right), \\
+\triangle \overline{B}_1^s &=& \frac{1}{2} \left( \omega_{0_{1}} T_{{\mbox{scat}}_{1}} + \omega_{0_{2}} T_{{\mbox{scat}_{2}}} \right).
+\end{eqnarray*}
+At another end of the path, farther away from the instrument (for $i=2N$), we have
+\begin{eqnarray*}
+\triangle \overline{B}_{2N}^g &=& I_0 - \frac{1}{2} \left( (1-\omega_{0_{2N-1}})B_{2N-1} + (1-\omega_{0_{2N}})B_{2N} \right), \\
+\triangle \overline{B}_{2N}^s &=& - \frac{1}{2} \left( \omega_{0_{2N-1}} T_{{\mbox{scat}}_{2N-1}} + \omega_{0_{2N}} T_{{\mbox{scat}_{2N}}} \right).
+\end{eqnarray*}
+
+
+
+\section{Derivatives}
+
+
+\subsection{Derivatives of Complex Mie Coefficients $a_n$ and $b_n$}
+
+From Section \ref{sec:Mie_Efficiencies}
+\cite{wvs-066} 
+
+\subsection{Mie Efficiency Temperature and Ice Water Content Derivatives}
+
+
+Mie efficiency temperature derivatives \cite{wvs-066} are given by\footnote{Computed by Mie\_Efficiencies\_m, Mie\_Efficiencies\_Derivs function.}
+\begin{eqnarray*}
+\frac{\partial \xi_s}{\partial T} &=& \frac{4}{\chi^2} \sum_{n=1}^{n_\text{cut}} (2n+1) \left[ \Re a_n \Re \frac{\partial a_n}{\partial T} + \Im a_n \Im \frac{\partial a_n}{\partial T}  + \Re b_n \Re \frac{\partial b_n}{\partial T} + \Im b_n \Im \frac{\partial b_n}{\partial T}  \right], \\
+\frac{\partial \xi_e}{\partial T} &=& \frac{2}{\chi^2} \sum_{n=1}^{n_\text{cut}} (2n+1) \,  \left( \Re \frac{\partial a_n}{\partial T} + \Re \frac{\partial b_n}{\partial T} \right).
+\end{eqnarray*}
+Note that since $\xi_s$ and $\xi_e$ are not functions of Ice Water Content (IWC), we have 
+\begin{eqnarray}
+\frac{\partial \xi_s}{\partial \IWC} = 0, \nonumber \\
+\frac{\partial \xi_e}{\partial \IWC} = 0.
+\label{eqn:dxi_dIWC}
+\end{eqnarray}
+
+
+\subsection{Temperature and Ice Water Content Derivatives of $\beta$}
+
+
+The temperature derivatives of $\beta_{c\_e}$ and $\beta_{c\_s}$ \cite{wvs-066} are:  \footnote{Computed by Mie\_Tables, function Do\_dint\_dBeta\_dT.}
+\footnote{In Mie\_Tables.f90, the descriptions are missing a factor $\pi$.  However, calculations have a factor $2\pi$.}
+\begin{equation*}
+\frac{\partial \beta_{c\_e}}{\partial T} = \pi \int_0^{\infty} r^2 \left( \frac{\partial n(r)}{\partial T}  \xi_e(r)  + n(r) \frac{\partial \xi_e(r)}{\partial T} \right) \, dr,
+\end{equation*}
+\begin{equation*}
+\frac{\partial \beta_{c\_s}}{\partial T} = \pi \int_0^{\infty} r^2 \left( \frac{\partial n(r)}{\partial T} \xi_s(r) + n(r) \frac{\partial \xi_s(r)}{\partial T} \right) \, dr.
+\end{equation*}
+IWC derivatives of $\beta_{c\_e}$ and $\beta_{c\_s}$ \cite{wvs-066} are:
+\begin{equation*}
+\frac{\partial \beta_{c\_e}}{\partial \IWC} = \pi \int_0^{\infty} r^2 \frac{\partial n(r)}{\partial \IWC}  \xi_e(r) \, dr,
+\end{equation*}
+\begin{equation*}
+\frac{\partial \beta_{c\_s}}{\partial \IWC} = \pi \int_0^{\infty} r^2 \frac{\partial n(r)}{\partial \IWC} \xi_s(r) \, dr.
+\end{equation*}
+
+
+\section{Additional materials}
+
+
+Tangent heights and angles for scattering calculations \cite{wvs-074}. \\
+Organization of changes to Full Forward Model for TSCAT-computation mode \cite{wvs-076}. \\
+Tasks for cloud forward model \cite{wvs-078}. \\
+TScat and derivatives \cite{wvs-080}. \\
+Current status of scattering additions to forward model \cite{wvs-082}. \\
+Total IWC \cite{wvs-084}. \\
+Accessing the TScat Jacobian as a Matrix T object \cite{wvs-091}. \\
+Usage of Mie Tables program \cite{wvs-094}. \\
+Full forward model changes to combine LBL, PFA and Tscat \cite{wvs-097}.
+
+
+\newpage
+
+
+\section{Tscat Derivatives}
+
+
+\begin{figure}[h]
+\begin{center}
+    \epsfxsize=1.0\linewidth
+    \epsffile{eps/wvs-089-pic}
+\end{center}
+\caption{Tscat Geometry.  This figure is taken from \cite{wvs-089}.}
+\label{fig:Tscat_Geometry}
+\end{figure}
+
+
+The reference orbit geodetic angle $\phi$ is denoted by $\phi_i$. \\
+The scattering points in the set $\{S_{jk}\}$, in the orbit plane, are on a grid specified by $\{\phi_j\} \times \{\zeta_k\}$, where $\{\phi_j\}$ are orbit geodetic angles and $\{\zeta_k\}$ are negative log pressures. \\
+The reference horizon is the line in the orbit plane from the scattering point $S_{jk}$ and perpendicular to the line in the orbit plane from the center of the Earth $\phi_i$. \cite{wvs-089}, \cite{wujia04}. \\
+
+$P_{jk}(\xi)$ is the Mie scattering phase function, evaluated for ice water content and temperature at $S_{jk}$.  $\xi = 0$ is at the reference horizon. \\
+The radiance arriving at $S_{jk}$ from direction $\xi$ in the orbit plane is $I_{ijk}(\xi)$. \\
+The radiance arriving at $S_{jk}$ from all directions $\xi$ in the orbit plane, convolved with the Mie phase function, is
+\begin{eqnarray*}
+T_{{\mbox{scat}}_{ijk}} = \overline{I}_{ijk} =  \int_{-\pi}^{\pi} I_{ijk}(\xi) P_{jk}(\xi) d\xi.
+\end{eqnarray*}
+The derivative of phase-convolved radiance at $S_{jk}$ with respect to some quantity $x_{mn}$ at $A_{mn}$ is
+\begin{eqnarray*}
+\frac{\partial \overline{I}_{ijk}}{\partial x_{mn}} = 
+\begin{cases}
+\displaystyle \int_{-\pi}^{\pi} \frac{\partial I_{ijk}(\xi)}{\partial x_{mn}}  P_{jk}(\xi) + I_{ijk}(\xi)  \frac{\partial P_{jk}(\xi)}{\partial x_{mn}} \; d\xi, \ \ \ \ \ \mbox{if } jk = mn, \\
+\displaystyle \int_{-\pi}^{\pi} \frac{\partial I_{ijk}(\xi)}{\partial x_{mn}} P_{jk}(\xi) d\xi,  \ \ \ \ \ \mbox{if } jk \not= mn.
+\end{cases}
+\end{eqnarray*}
+{\bf Remark:} We can write $P_{jk}(\xi) = P(S_{jk}, \xi)$, $I_{ijk}(\xi) = I(\phi_i,S_{jk},\xi)$, and $T_{{\mbox{scat}}_{ijk}} = T_{\mbox{scat}}(\phi_i,S_{jk})$.
+
+
+
+\section{Combining LBL and PFA}
+
+
+References: \cite{wvs-024, wvs-027, wvs-096}, \cite{iy-001} (Frequency Averaging). \\
+\ \\
+The radiative transfer equation for line-by-line (LBL) calculations is
+\begin{eqnarray*}
+I_c &=& \sum_{n=1}^{N_f} \phi_{c}(\nu_n) \triangle \nu_n I(\nu_n) \\
+&=& \sum_{n=1}^{N_f} \phi_{c}(\nu_n) \triangle \nu_n \sum_{i=1}^{N_p} \triangle B_{i}(\nu_n) \mathcal{T}_{i}(\nu_n),
+\end{eqnarray*}
+
+\begin{eqnarray*}
+I_c &=& \sum_{n=1}^{N_f} \phi_{c}(\nu_n) \triangle \nu_n \sum_{i=1}^{N_p} \triangle B^g_{i}(\nu_n) \mathcal{T}_{i}(\nu_n) \\
+&+& \sum_{i=1}^{N_p} \left( \hat{\mathcal{T}}_{i+1,c} T_{\mbox{scat}_{i+1,c}} - \hat{\mathcal{T}}_{i-1,c} T_{\mbox{scat}_{i-1,c}}\right)
+\end{eqnarray*}
+
+
+
+\begin{eqnarray*}
+\frac{\partial \omega_0}{\partial x} &=&\frac{\partial}{\partial x} \left( \frac{\beta_{c\_s}}{\beta_e} \right) \ = \  \frac{1}{\beta_e^2} \left( \beta_e \frac{\partial \beta_{c\_s}}{\partial x} - \beta_{c\_s} \frac{\partial \beta_{e}}{\partial x}\right) \ = \ \frac{1}{\beta_e^2} \left( \beta_e \frac{\partial \beta_{c\_s}}{\partial x} - \beta_{c\_s} \frac{\partial \beta_{c\_e}}{\partial x} - \beta_{c\_s} \frac{\partial \alpha_{\mbox{gas}}}{\partial x}\right) \\
+&=& \frac{1}{\beta_e} \left( \frac{\partial \beta_{c\_s}}{\partial x} - \omega_0 \frac{\partial \beta_{c\_e}}{\partial x} - \omega_0  \frac{\partial \alpha_{\mbox{gas}}}{\partial x}\right).
+\end{eqnarray*}
+
+\begin{eqnarray*}
+\frac{\partial I_c}{\partial x} &=& \sum_{n=1}^{N_f} \phi_{c}(\nu_n) \triangle \nu_n \sum_{i=1}^{N_p} \left( \frac{\partial \triangle B^g_{i}(\nu_n)}{\partial x} \mathcal{T}_{i}(\nu_n) + \triangle B^g_{i}(\nu_n) \frac{\partial \mathcal{T}_{i}(\nu_n)}{\partial x} \right) \\
+&+& \sum_{i=1}^{N_p} \left( \frac{\partial \hat{\mathcal{T}}_{i+1,c}}{\partial x} T_{\mbox{scat}_{i+1,c}} + \hat{\mathcal{T}}_{i+1,c} \frac{\partial T_{\mbox{scat}_{i+1,c}}}{\partial x} - \frac{\partial \hat{\mathcal{T}}_{i-1,c}}{\partial x} T_{\mbox{scat}_{i-1,c}} - \hat{\mathcal{T}}_{i-1,c} \frac{ \partial T_{\mbox{scat}_{i-1,c}}}{\partial x} \right).
+\end{eqnarray*}
+
+
+
+
+
+\newpage
+
+
+\section{Appendix: Spherical Bessel and Hankel Functions}
+\label{sec:Spherical_Bessel_and_Hankel_Functions}
+
+$j_n(z)$ is the spherical Bessel function of first kind; \\
+$y_n(z)$ is the spherical Bessel function of second kind; \\
+$h_n^{(1)}(z)$ and $h_n^{(2)}(z)$ are the spherical Hankel function (or the spherical Bessel functions of the third kind).
+
+\subsection{Spherical Bessel Functions}
+
+When solving the Helmholtz equation in spherical coordinates by separation of variables, the radial equation has the form \cite{wiki:Bessel_function}:
+\[z^{2}\frac{{d}^{2}w}{{dz}^{2}}+2z\frac{dw}{dz}+\left(z^{2}-n(n+1)\right)w=0.\]
+\ \\
+The solutions to this equation are called the spherical Bessel functions $j_n$ and $y_n$, and are related to to the ordinary Bessel functions $J_n$ and $Y_n$ by:
+\[j_{n}(z)=\sqrt{\frac{\pi}{2z}}J_{n+\frac{1}{2}}(z)=(-1)^{n}\sqrt{\frac{\pi}{2z}}Y_{-n-\frac{1}{2}}(z),\]
+\[{y}_{n}(z)=\sqrt{\frac{\pi}{2z}}Y_{n+\frac{1}{2}}(z)=(-1)^{n+1}\sqrt{\frac{\pi}{2z}}J_{-n-\frac{1}{2}}(z).\]
+\ \\
+The spherical Bessel functions can also be written as:
+\[j_{n}(z)=(-z)^{n}\left(\frac{1}{z} \frac{d}{dz}\right)^{n}\frac{\sin z}{z},\]
+\[y_{n}(z)=-(-z)^{n}\left(\frac{1}{z}\frac{d}{dz}\right)^{n}\frac{\cos z}{z}.\]
+\ \\
+The first few spherical Bessel functions are:
+\[j_{0}(z)=\frac{\sin z}{z}\]
+\[j_{1}(z)=\frac{\sin z}{z^2} - \frac{\cos z}{z}\]
+\[j_{2}(z)=\left( \frac{3}{z^2} - 1 \right) \frac{\sin z}{z} - \frac{3 \cos z}{z^2},\]
+and
+\[y_{0}(z)=-\frac{\cos z}{z}\]
+\[y_{1}(z)=-\frac{\cos z}{z^2} - \frac{\sin z}{z}\]
+\[y_{2}(z)=\left( -\frac{3}{z^2} + 1 \right) \frac{\cos z}{z} - \frac{3 \sin z}{z^2}.\]
+
+
+\subsection{Spherical Hankel Functions}
+
+
+The spherical Hankel functions are:
+\[h_n^{(1)}(x) = j_n(x) + i y_n(x),\]
+\[h_n^{(2)}(x) = j_n(x) - i y_n(x).\]
+
+A simple closed-form expression for the Bessel functions of half-integer order in terms of the standard trigonometric functions, and therefore for the spherical Bessel functions, for non-negative integers $n$ is:
+\[h_n^{(1)}(x) = (-i)^{n+1} \frac{e^{ix}}{x} \sum_{m=0}^{n} \frac{i^m}{m!(2x)^m} \frac{(n+m)!}{(n-m)!}\]
+and $h_n^{(2)}$ is the complex-conjugate of this (for real $x$).  From this, it follows that
+\[h_0^{(1)}(x) = \frac{\sin x}{x} - i \frac{\cos x}{x}\]
+\[h_0^{(2)}(x) = \frac{\sin x}{x} + i \frac{\cos x}{x}\]
+\ \\
+\[h_1^{(1)}(x) = - \frac{\cos x}{x} + \frac{\sin x}{x^2} + i \left( -\frac{\sin x}{x} - \frac{\cos x}{x^2} \right)\]
+\[h_1^{(2)}(x) = - \frac{\cos x}{x} + \frac{\sin x}{x^2} - i \left( -\frac{\sin x}{x} - \frac{\cos x}{x^2} \right)\]
+
+
+{\bf In other words, Hankel functions have always division by $x$ to some power.}  This is what is done in sphbes.f90.  However, it does not agree with initial conditions as in wvs-058 and ATBD. \\
+
+
+
+\subsection{Recurrence Relations and Derivatives}
+
+
+If $f_{n}(z)$ is $j_n(z), y_n(z), h_n^{(1)}(z), h_n^{(2)}(z)$, then
+\[f_{n-1}(z)+f_{n+1}(z)= \left( \frac{2n+1}{z} \right) f_{n}(z).\]
+Substituting $n+1 \rightarrow n$, this can be re-written as
+\[f_{n-2}(z)+f_{n}(z)= \left( \frac{2n-1}{z} \right) f_{n-1}(z).\]
+Using these expressions, we can find:
+\[ j_{-1}(z) = \frac{\cos z}{z} \]
+\[ y_{-1}(z) = \frac{\sin z}{z} \]
+
+
+Bessel functions \cite{NIST:DLMF,Olver:2010:NHMF,wiki:Bessel_function,wvs-058}
+
+\newpage
+
+
+\subsection{Derivation of an equality}
+
+
+We consider equations from DLMF (equation numbering is from dlmf site):
+
+\begin{equation*}
+\frac{\partial j_n(x)}{\partial x} = \frac{n}{x}j_n(x) - j_{n+1}(x) \ \ \ \ \ \mbox{(10.51.2)}
+\end{equation*}
+
+\begin{equation*}
+j_{n+1}(x) = \frac{2n+1}{x} j_n(x) - j_{n-1}(x) \ \ \ \ \ \mbox{(10.51.1)}
+\end{equation*}
+
+Plugging (10.51.1) into (10.51.2):
+\begin{equation*}
+\frac{\partial j_n(x)}{\partial x} = \frac{n}{x}j_n(x) - \left( \frac{2n+1}{x} j_n(x) - j_{n-1}(x) \right) = j_{n-1}(x) - \frac{n+1}{x}j_n(x).
+\end{equation*}
+
+We plug this into the right hand side of wvs-067r3 - (4):
+\begin{eqnarray*}
+\frac{1}{2x} + \frac{1}{j_n(x)} \frac{\partial j_n(x)}{\partial x} &=& \frac{1}{2x} + \frac{1}{j_n(x)} \left( j_{n-1}(x) - \frac{n+1}{x}j_n(x) \right) \\
+&=& \frac{1}{2x} - \frac{n+1}{x} + \frac{j_{n-1}(x)}{j_n(x)} \\
+&=& -\frac{2n+1}{2x} + \frac{j_{n-1}(x)}{j_n(x)} \\
+&=& -\frac{1}{2x} - \frac{n}{x} + \frac{j_{n-1}(x)}{j_n(x)}.
+\end{eqnarray*}
+
+
+
+\pagebreak
+
+
+\bibliographystyle{ieee}
+%\bibliography{/Users/yanovsky/Igor/papers/refslib/yanovsky}
+\bibliography{/Users/yanovsky/Igor/papers/refslib/eos_mls}
+
+\end{document}
+
+% $Id:  $@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d13 2
+a14 1
+\input {../../Math/texmacros}
+d203 2
+d217 1
+a217 1
+\label{eqn:p_0}
+d225 4
+a228 4
+\begin{eqnarray*}
+S_1(\theta,r,T) &=& \sum_{j=1}^{\infty} \frac{2j+1}{j(j+1)} \left( a_j(r,T) \frac{dP_j^1(\cos \theta)}{d\theta} + b_j(r,T) \frac{P_j^1(\cos \theta)}{\sin \theta} \right), \\
+S_2(\theta,r,T) &=& \sum_{j=1}^{\infty} \frac{2j+1}{j(j+1)} \left( a_j(r,T) \frac{P_j^1(\cos \theta)}{\sin \theta} + b_j(r,T) \frac{dP_j^1(\cos \theta)}{d\theta} \right),
+\end{eqnarray*}
+a236 1
+\subsubsection{Derivatives of Phase Function}
+a237 19
+From equation (\ref{eqn:p_0}) defining $p_0$, we have \cite{wvs-068}:
+\begin{eqnarray*}
+\frac{\partial p_0(\theta,r,T)}{\partial T} &=& \frac{\partial}{\partial T} \left( \Re(S_1(\theta,r,T))^2 + \Im(S_1(\theta,r,T))^2 + \Re(S_2(\theta,r,T))^2 + \Im(S_2(\theta,r,T))^2 \right) \\
+&=& 2 \bigg( \Re(S_1(\theta,r,T)) \frac{\partial \Re(S_1(\theta,r,T))}{\partial T} + \Im(S_1(\theta,r,T)) \frac{\partial \Im(S_1(\theta,r,T))}{\partial T} \\
+& & \ + \ \Re(S_2(\theta,r,T)) \frac{\partial \Re(S_2(\theta,r,T))}{\partial T}  + \Im(S_2(\theta,r,T))  \frac{\partial \Im(S_2(\theta,r,T))}{\partial T} \bigg).
+\end{eqnarray*}
+Taking the derivative of the phase function $p$ in equation (\ref{eqn:p}) with respect to temperature $T$ and using (\ref{eqn:C}), we have
+\begin{eqnarray*}
+\frac{\partial p(\theta,r,T)}{\partial T} &=& \frac{\partial}{\partial T} \left( \frac{p_0(\theta,r,T)}{C(r,T)} \right) \\
+&=& \frac{1}{C(r,T)^2} \left( \frac{\partial p_0(\theta,r,T)}{\partial T} C(r,T) - p_0(\theta,r,T) \frac{\partial C(r,T)}{\partial T}  \right) \\
+&=& \frac{1}{C(r,T)} \left( \frac{\partial p_0(\theta,r,T)}{\partial T} - \frac{p_0(\theta,r,T)}{C(r,T)} \frac{\partial C(r,T)}{\partial T}  \right) \\
+&=& \frac{1}{C(r,T)} \left( \frac{\partial p_0(\theta,r,T)}{\partial T} - p(\theta,r,T) \frac{\partial C(r,T)}{\partial T} \right) \\
+&=& \frac{1}{C(r,T)} \left( \frac{\partial p_0(\theta,r,T)}{\partial T} - \frac{p(\theta,r,T)}{2} \int_0^{\pi} \frac{ \partial p_0(\theta,r,T)}{\partial T} \sin \theta \, d\theta \right).
+\end{eqnarray*}
+Since $a_j(r,T)$ and $b_j(r,T)$ are not functions of ice water content $\IWC$, the derivative of the phase function with respect to $\IWC$ is $0$:
+\begin{equation}
+\frac{\partial p(\theta,r,T)}{\partial \IWC} = 0.
+\label{eqn:dp_dIWC}
+\end{equation}
+d319 28
+a346 1
+\subsubsection{Derivatives of the Integrated Phase Function}
+d353 4
+a356 2
+& & - \ \frac{\pi}{\beta_{c\_s}^2} \frac{\partial \beta_{c\_s}}{\partial T} \int_0^{\infty} r^2 n(r) \xi_s(r) p(\theta,r) \, dr \\
+&=&  \frac{\pi}{\beta_{c\_s}} \int_0^{\infty} r^2 n(r) \xi_s(r) p(\theta,r) \left( \frac{1}{n(r)} \frac{\partial n(r)}{\partial T}  + \frac{1}{\xi_s(r)} \frac{\partial \xi_s(r)}{\partial T} + \frac{1}{p(\theta,r)} \frac{\partial p(\theta,r)}{\partial T} \right) \, dr \\ 
+d358 90
+d449 11
+a459 1
+Considering equations (\ref{eqn:dp_dIWC}) and (\ref{eqn:dxi_dIWC}) the derivative of the integrated phase function $P$ in (\ref{eqn:Integrated_Phase_Function}) with respect to ice water content is \cite{wvs-068}:\footnote{The derivatives of $P$ in wvs-065 and wvs-067 are derived from a $P(\theta)$ written as a single integral version (unlike what was done here and in wvs-068).}
+d461 3
+a463 3
+\frac{\partial P(\theta)}{\partial \IWC} &=& \frac{\partial}{\partial \IWC} \left( \frac{\pi}{\beta_{c\_s}} \int_0^{\infty} r^2 n(r) \xi_s(r) p(\theta,r) \, dr \right) \\
+&=& \frac{\pi}{\beta_{c\_s}}  \frac{\partial}{\partial \IWC} \left( \int_0^{\infty} r^2 n(r) \xi_s(r) p(\theta,r) \, dr \right) +\frac{\partial}{\partial \IWC} \left( \frac{\pi}{\beta_{c\_s}} \right) \int_0^{\infty} r^2 n(r) \xi_s(r) p(\theta,r) \, dr \\
+&=&  \frac{\pi}{\beta_{c\_s}} \int_0^{\infty} r^2 \frac{\partial n(r)}{\partial \IWC} \xi_s(r) p(\theta,r) \, dr \ - \ \frac{P(\theta)}{\beta_{c\_s}} \frac{\partial \beta_{c\_s}}{\partial \IWC}.
+d465 10
+a474 1
+The derivatives of $n(r)$ with respect to temperature $T$ and ice water content $\IWC$ are given in \cite{wvs-066}.
+d762 1
+a762 1
+We plug this into the right hand side of (\ref{eqn:wvs-067r3_eqn4}):
+@
+

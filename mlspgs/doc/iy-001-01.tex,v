@@ -1,0 +1,164 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.12
+	cfm-single-freq-0-1:1.1.0.10
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.8
+	mus-emls-1-70:1.1.0.6
+	rel-1-0-englocks-work:1.1.0.4
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.2
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	M4-00:1.1
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2010.09.21.17.57.36;	author yanovsky;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\part*{Theory of Radiative Transfer}
+
+\section{Hydrostatic Model}
+
+The EOS MLS forward model assumes hydrostatic balance holds for the entire atmosphere.  The hydrostatic function interrelates heights with pressure and only one of these (the latter) is independent. \\
+$h$ = height, \\
+$g = 0.0098 \, \km/\s^2$, \\
+$m = 29.864 \, \AMU = 4.9590 * 10^{-26} \kg $, \\
+$k = 1.3806503 \cdot 10^{-23} \m^2 \kg \, \s^{-2} \K^{-1} = 1.3806503 \cdot 10^{-29} \km^2 \kg \, \s^{-2} \K^{-1}$ is the Boltzmann constant. \\
+$H_{\mbox{eff}}^{\oplus} = 6372.0 \, \km$ - the effective Earth radius, \\ \\
+$\displaystyle \frac{m}{k \ln 10} = 1.51288$
+
+\begin{equation*}
+m g dh = \ln 10 \, k \, T \, d\zeta
+\end{equation*}
+
+\begin{equation*}
+\zeta = -\log_{10} P
+\end{equation*}
+\begin{equation*}
+\zeta^{\oplus} = -\log_{10} 1000 = -3.00.
+\end{equation*}
+\begin{eqnarray*}
+\log_{b}x = \frac{\log x}{\log b}.
+\end{eqnarray*}
+\begin{eqnarray*}
+P = e^{-\zeta \log 10}
+\end{eqnarray*}
+
+\begin{equation*}
+\eta_q(\zeta) =
+\begin{cases}
+\ \ \ \ 0, \ \ \ \ \ \ \ \ \ \ \ \ \ \ \zeta \leq \zeta_{q-1} \\
+\displaystyle \frac{\zeta-\zeta_{q-1}}{\zeta_{q} - \zeta_{q-1}}, \ \ \ \ \, \zeta_{q-1} < \zeta < \zeta_{q} \\
+\displaystyle  \frac{\zeta_{q+1}-\zeta}{\zeta_{q+1} - \zeta_{q}}, \ \ \ \ \, \zeta_{q} \leq \zeta < \zeta_{q+1} \\
+\ \ \ \ 0, \ \ \ \ \ \ \ \ \ \ \ \ \ \ \zeta_{q+1} \leq \zeta.
+\end{cases}
+\end{equation*}
+Note that $\eta_q(\zeta_q) = 1$.
+
+\begin{equation*}
+\eta_1(\zeta) =
+\begin{cases}
+\ \ \ \ 1, \ \ \ \ \ \ \ \ \ \ \ \ \ \ \zeta \leq \zeta_{1} \\
+\displaystyle  \frac{\zeta_{2}-\zeta}{\zeta_{2} - \zeta_{1}}, \ \ \ \ \, \zeta_{1} < \zeta < \zeta_{2} \\
+\ \ \ \ 0, \ \ \ \ \ \ \ \ \ \ \ \ \ \ \zeta_{2} \leq \zeta.
+\end{cases}
+\end{equation*}
+
+
+\begin{equation*}
+\eta_Q(\zeta) =
+\begin{cases}
+\ \ \ \ 0, \ \ \ \ \ \ \ \ \ \ \ \ \ \ \zeta \leq \zeta_{Q-1} \\
+\displaystyle \frac{\zeta-\zeta_{Q-1}}{\zeta_{Q} - \zeta_{Q-1}}, \ \ \ \ \, \zeta_{Q-1} < \zeta < \zeta_{Q} \\
+\ \ \ \ 1, \ \ \ \ \ \ \ \ \ \ \ \ \ \ \zeta_{Q} \leq \zeta.
+\end{cases}
+\end{equation*}
+
+\begin{equation*}
+T(\zeta) = \sum_{q=1}^Q \eta_q(\zeta) \tq
+\end{equation*}
+
+\begin{equation*}
+g \propto \frac{1}{r^2}
+\end{equation*}
+
+\begin{equation*}
+\int mg(h) \, dh = k \ln 10 \int T (\zeta) d\zeta
+\end{equation*}
+The hydrostatic relation is
+\begin{equation}
+h(\zeta) + H^{\oplus} \ = \ \frac{ g {H^{\oplus}}^2 }{g H^{\oplus} - k \log 10 \sum_{q=1}^Q \tq P_q(\zeta)}
+\label{eqn:hydrostatic_relation}
+\end{equation}
+or
+\begin{equation}
+\frac{ h(\zeta) + H^{\oplus} }{ g {H^{\oplus}}^2 } \ = \ \frac{ 1 }{g H^{\oplus} - k \log 10 \sum_{q=1}^Q \tq P_q(\zeta)}.
+\label{eqn:hydrostatic_relation2}
+\end{equation}
+
+
+\begin{eqnarray*}
+P_q(\zeta) &=& \int_{\zeta^{\oplus}}^\zeta \frac{\eta_q(x)}{m} \, dx, \\
+\frac{d}{d\zeta} P_q(\zeta) &=& \frac{\eta_q(\zeta)}{m}.
+\end{eqnarray*}
+
+\ \\
+Notation: $H = h + H^{\oplus}$.  $H^s$ is the satellite height. \\
+From hydrostatic relation (\ref{eqn:hydrostatic_relation}), we have
+\begin{eqnarray}
+\frac{dh}{d\zeta} &=& \frac{ g {H^{\oplus}}^2 k \log 10 \sum \tq \eta_q(\zeta)}{m \big[ g H^{\oplus} - k \log 10 \sum_{q=1}^Q \tq P_q(\zeta) \big]^2 }.
+\label{eqn:dh_dzeta}
+\end{eqnarray}
+Using relation (\ref{eqn:hydrostatic_relation2}), equation (\ref{eqn:dh_dzeta}) can be rewritten as
+\begin{eqnarray*}
+\frac{dh}{d\zeta} &=& \frac{(h(\zeta)+H^{\oplus})^2 k T \log 10}{g H^{\oplus \, 2} m}.
+\end{eqnarray*}
+Also
+\begin{equation}
+\frac{dh}{d\tq} \ = \ \frac{ g {H^{\oplus}}^2 k \log 10 \, P_q(\zeta) }{\big[ g H^{\oplus} - k \log 10 \sum_{q=1}^Q \tq P_q(\zeta) \big]^2}.
+\label{eqn:dh_dtq}
+\end{equation}
+Note that
+\begin{equation*}
+\frac{dh}{d\tq} = \frac{dH}{d\tq}.
+\end{equation*}
+
+
+\pagebreak
+
+
+% $Id:  $
+@

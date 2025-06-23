@@ -1,0 +1,341 @@
+head	2.7;
+access;
+symbols
+	v5-02-NRT-19:2.7
+	v6-00:2.7
+	v5-02-NRT-18:2.7
+	v5-02:2.5
+	v5-01-NRT-17:2.7
+	v5-01-NRT-16:2.7
+	v5-01-NRT-15:2.7
+	v5-01-NRT-14:2.7
+	neuralnetworks-1-0:2.5.0.12
+	cfm-single-freq-0-1:2.5.0.10
+	v5-01:2.5
+	v5-00:2.5
+	v4-23-TA133:2.5.0.8
+	mus-emls-1-70:2.5.0.6
+	rel-1-0-englocks-work:2.5.0.4
+	VUMLS1-00:2.5
+	VPL1-00:2.5
+	V4-22-NRT-08:2.5
+	VAM1-00:2.5
+	V4-21:2.5.0.2
+	V4-13:2.5
+	V4-12:2.5
+	V4-11:2.5
+	V4-10:2.5
+	V3-43:2.1
+	M4-00:2.4
+	V3-41:2.1
+	V3-40-PlusGM57:2.1.0.2
+	V3-33:2.1
+	V3-31:2.1
+	V3-30-NRT-05:2.1
+	cfm-01-00:2.1
+	V3-30:2.1
+	V3-20:2.1
+	V3-10:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.7
+date	2021.04.02.20.59.40;	author pwagner;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2021.02.05.05.12.00;	author pwagner;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2013.08.31.01.24.53;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2012.05.08.01.15.42;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2011.11.04.23.40.22;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2011.11.03.23.47.07;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2008.05.09.23.27.18;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.7
+log
+@Clarified that atart array is really an array of offsets
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!   subroutine LoadFromHDF5DS_* ( MLSFile, name, value, &
+!     & start, count, stride, block, MissingOK )
+!     ! This routine loads a predefined array with values from a DS
+!     use HDF5, only: H5T => H5T_NATIVE_* ! HDF type
+!     type (MLSFile_T)   :: MLSFile
+!     character (len=*), intent(in) :: NAME ! Name for this dataset
+!     integer, intent(out) :: VALUE(:,:,:)    ! The array itself
+!     integer, dimension(:), optional, intent(in) :: start
+!                                  ! Offsets applied to Starting coordinates 
+!                                    of hyperslab
+!     integer, dimension(:), optional, intent(in) :: count
+!                                  ! Num of blocks to select from dataspace
+!     integer, dimension(:), optional, intent(in) :: stride
+!                                  ! How many elements to move in each direction
+!     integer, dimension(:), optional, intent(in) :: block
+!                                  ! Size of element block
+!     logical, intent(in), optional :: MissingOK
+
+!     character(len=*), parameter :: Sfx = '*' ! Type and rank in subr name
+
+! Note: Despite its name, the start array is actually an array of offsets
+! Therefore, if start[k]=0, the first index at dimension k will be 1, not 0
+!
+! For more on the meaning of start, count, stride, and block, see
+! the wiki page
+!           https://mls.jpl.nasa.gov/team/wiki/index.php/Hyperslab
+
+! $Id: LoadFromHDF5DS.f9h,v 2.6 2021/02/05 05:12:00 pwagner Exp $
+
+    ! Local variables
+    integer :: LOCID                    ! ID of file or group or subgroup
+    integer :: MEMSPACEID               ! ID of dataspace
+    integer :: Rank
+    integer :: SETID                    ! ID of dataset
+    integer(hsize_t), dimension(size(shape(value))) :: SHP ! Shape of value
+    integer :: SPACEID                  ! ID of dataspace
+    integer :: STATUS                   ! Flag from HDF5
+
+    ! Executable code
+    call trace_begin ( 'LoadFromHDF5DS_'//sfx, cond=.false. )
+    rank = size(shp)
+    ! print *, 'rank ', rank
+!     if ( present(start) .and. present(count) .and. present(stride) .and. present(block) ) &
+!       & print *, start, count, stride, block
+!     call trace_begin ( 'LoadFromHDF5DS_'//sfx, cond=.false. )
+!     call Print_Default( 'start ', start , 'not present' )
+!     call Print_Default( 'count ', count , 'not present' )
+!     call Print_Default( 'stride', stride, 'not present' )
+!     call Print_Default( 'block ', block , 'not present' )
+    locID = MLSFile%fileID%f_id
+    if ( MLSFile%fileID%grp_id > 0 ) locID = MLSFile%fileID%grp_id
+    ! This next is inelegant: grp_id should be a linked list
+    if ( MLSFile%fileID%sd_id > 0 ) locID = MLSFile%fileID%sd_id
+    shp = shape ( value )
+    if ( .not. MLSFile%stillOpen ) then
+      call mls_openFile(MLSFile, status)
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to open file ' // trim(MLSFile%name), &
+        & MLSFile=MLSFile )
+      locID = MLSFile%fileID%f_id
+    endif
+    call h5dOpen_f ( locID, name, setID, status )
+    if ( status /= 0 ) then
+      if ( present(missingOK) ) then
+        if ( missingOK ) then
+          call trace_end ( 'LoadFromHDF5DS_'//sfx, cond=.false. )
+          return
+        end if
+      end if
+      call outputNamedValue( 'locID', locID )
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to open dataset ' // trim(name), &
+        & MLSFile=MLSFile )
+    endif
+    call h5dget_space_f ( setID, spaceID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open dataspace for dataset ' // trim(name), &
+      & MLSFile=MLSFile )
+    if ( present(start) ) then
+      call mls_hyperslab ( spaceID, shp, name, memspaceID, &
+        & start, count, stride, block )
+      call h5dread_f ( setID, H5T, value, &
+        & (/ shp, ones(rank:6) /), status, memspaceID, spaceID )
+      if ( status /= 0 ) &
+        & print *, (/ shp, ones(rank:6) /), status, memspaceID, spaceID
+      call finishLoad ( name, status, spaceID, setID, memspaceID, MLSFile=MLSFile )
+    else
+      call check_for_fit ( spaceID, shp, name )
+      call h5dread_f ( setID, H5T, value, &
+        & (/ shp, ones(rank:6) /), status )
+      call finishLoad ( name, status, spaceID, setID, MLSFile=MLSFile )
+    end if
+    call trace_end ( 'LoadFromHDF5DS_'//sfx, cond=.false. )
+!   end subroutine LoadFromHDF5DS_*
+
+! $Log: LoadFromHDF5DS.f9h,v $
+! Revision 2.6  2021/02/05 05:12:00  pwagner
+! Noted probable bug in how we treat hyperslab
+!
+! Revision 2.5  2013/08/31 01:24:53  vsnyder
+! Replace MLSMessageCalls with trace_begin and trace_end
+!
+! Revision 2.4  2012/05/08 01:15:42  vsnyder
+! Option allows numeric DS silently to be absent
+!
+! Revision 2.3  2011/11/04 23:40:22  pwagner
+! Should handle inelegant (i.e. hackish) may of subgrouping ids
+!
+! Revision 2.2  2011/11/03 23:47:07  pwagner
+! Corrected mistaken use sd_id instead of f_id for locID
+!
+! Revision 2.1  2008/05/09 23:27:18  vsnyder
+! Initial commit
+!
+@
+
+
+2.6
+log
+@Noted probable bug in how we treat hyperslab
+@
+text
+@d20 2
+a21 1
+!                                  ! Starting coordinatess of hyperslab
+d32 2
+a33 4
+! Sadly, our implementation of hyperslabs seems to be buggy.
+!
+!  For an example of how to do it right, see
+! /software/toolkit/ifc17/hdf5/fortran/examples//hyperslab.f90
+d35 3
+d39 1
+a39 1
+! $Id: LoadFromHDF5DS.f9h,v 2.5 2013/08/31 01:24:53 vsnyder Exp $
+d108 3
+@
+
+
+2.5
+log
+@Replace MLSMessageCalls with trace_begin and trace_end
+@
+text
+@d31 5
+d37 1
+a37 1
+! $Id: LoadFromHDF5DS.f9h,v 2.4 2012/05/08 01:15:42 vsnyder Exp $
+d49 1
+d51 8
+a58 1
+    call trace_begin ( 'LoadFromHDF5DS_'//sfx, cond=.false. )
+d93 2
+d106 3
+@
+
+
+2.4
+log
+@Option allows numeric DS silently to be absent
+@
+text
+@d32 1
+a32 1
+! $Id: LoadFromHDF5DS.f9h,v 2.3 2011/11/04 23:40:22 pwagner Exp $
+d35 4
+a38 1
+    integer :: STATUS                   ! Flag from HDF5
+d41 1
+a41 4
+    integer :: MEMSPACEID               ! ID of dataspace
+    integer :: SETID                    ! ID of dataset
+    integer :: LOCID                    ! ID of file or group or subgroup
+    integer :: Rank
+d44 2
+a49 2
+    rank = size(shp)
+    call MLSMessageCalls( 'push', constantName='LoadFromHDF5DS_'//sfx )
+d62 1
+a62 1
+          call MLSMessageCalls( 'pop' )
+d87 1
+a87 1
+    call MLSMessageCalls( 'pop' )
+d91 3
+@
+
+
+2.3
+log
+@Should handle inelegant (i.e. hackish) may of subgrouping ids
+@
+text
+@d13 1
+a13 1
+!     & start, count, stride, block )
+d27 1
+d32 1
+a32 1
+! $Id: LoadFromHDF5DS.f9h,v 2.2 2011/11/03 23:47:07 pwagner Exp $
+d60 6
+d91 3
+@
+
+
+2.2
+log
+@Corrected mistaken use sd_id instead of f_id for locID
+@
+text
+@d31 1
+a31 1
+! $Id: LoadFromHDF5DS.f9h,v 2.1 2008/05/09 23:27:18 vsnyder Exp $
+d39 1
+a39 1
+
+d43 4
+d55 8
+a63 4
+    call h5dOpen_f ( MLSFile%fileID%f_id, name, setID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open dataset ' // trim(name), &
+      & MLSFile=MLSFile )
+d84 3
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d31 1
+a31 1
+! $Id: $
+d46 7
+a52 1
+    call h5dOpen_f ( MLSFile%fileID%sd_id, name, setID, status )
+d75 4
+a78 1
+! $Log: $
+@
+

@@ -1,0 +1,687 @@
+head	1.16;
+access;
+symbols
+	v5-02-NRT-19:1.16
+	v6-00:1.16
+	v5-02-NRT-18:1.16
+	v5-02:1.16
+	v5-01-NRT-17:1.16
+	v5-01-NRT-16:1.16
+	v5-01-NRT-15:1.16
+	v5-01-NRT-14:1.16
+	neuralnetworks-1-0:1.16.0.14
+	cfm-single-freq-0-1:1.16.0.12
+	v5-01:1.16
+	v5-00:1.16
+	v4-23-TA133:1.16.0.10
+	mus-emls-1-70:1.16.0.8
+	rel-1-0-englocks-work:1.16.0.6
+	VUMLS1-00:1.16
+	VPL1-00:1.16
+	V4-22-NRT-08:1.16
+	VAM1-00:1.16
+	V4-21:1.16.0.4
+	V4-13:1.16
+	V4-12:1.16
+	V4-11:1.16
+	V4-10:1.16
+	V3-43:1.16
+	M4-00:1.16
+	V3-41:1.16
+	V3-40-PlusGM57:1.16.0.2
+	V2-24-NRT-04:1.16
+	V3-33:1.16
+	V2-24:1.16
+	V3-31:1.16
+	V3-30-NRT-05:1.16
+	cfm-01-00:1.16
+	V3-30:1.16
+	V3-20:1.16
+	V3-10:1.16
+	V2-23-NRT-02:1.16
+	V2-23:1.16
+	V2-22-NRT-01:1.16
+	V2-22:1.16
+	V2-21:1.16
+	V2-20:1.16
+	V2-11:1.16
+	V2-10:1.16
+	V2-00:1.16
+	V1-51:1.14
+	V1-50:1.14
+	V1-45:1.14
+	V1-44:1.14
+	V1-43:1.14
+	V1-42:1.13
+	V1-41:1.13
+	V1-32:1.13
+	V1-40:1.13
+	V1-31:1.13
+	V1-30:1.13
+	V1-13:1.13
+	V1-12:1.13
+	V1-11:1.13
+	V1-10:1.10
+	newfwm-feb03:1.10.0.2
+	V1-04:1.7
+	V1-03:1.7
+	V1-02:1.7
+	V1-00:1.6
+	newfwm-sep01:1.2.0.2
+	V0-7:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.16
+date	2006.06.15.19.31.05;	author pwagner;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2005.03.04.19.13.31;	author pwagner;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2004.03.17.19.06.45;	author pwagner;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2003.03.03.22.59.32;	author pwagner;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2003.02.28.18.54.13;	author pwagner;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2003.02.28.18.46.37;	author pwagner;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2002.11.25.21.21.02;	author pwagner;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2002.09.06.00.09.07;	author pwagner;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2002.08.27.23.03.12;	author pwagner;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2002.04.18.20.55.28;	author pwagner;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2001.11.21.00.25.34;	author pwagner;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2001.11.07.01.14.30;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.11.07.00.31.44;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2001.10.11.18.15.29;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.08.13.18.09.08;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.07.24.20.51.58;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.16
+log
+@Now links szlib; comtaible with toolkit 5.2.14.A
+@
+text
+@# This is the default name of the configure file
+# It may be overridden for multiple platforms, special options, etc.
+ifdef HOSTMLSCFILE
+   MLSCFILE=$(HOSTMLSCFILE)
+else
+   MLSCFILE=.configure
+endif
+
+CONFDIR=../../..
+include ../Makefile.dep
+
+# "$Id: targets,v 1.15 2005/03/04 19:13:31 pwagner Exp $"
+
+# ========================================================================
+# An automatically constructed Makefile
+# This file was built by mlsconfigure
+# by catenating three files:
+# (1) .configure -- a file of mls settings: compiler, platform, etc.
+# (2) MLSCONFG   -- a file of macros specific for the compiler.platform combo
+#                   e.g., NAG.Sun
+#                   these might be compiler switches, 
+# (3) targets    -- a file of targets with instructions how to build them
+#                    (except for .f90.o rules which are still in MLSCONFG)
+
+# Other files referred to by means of "include" statements:
+#   ../Makefile.dep -- dependencies among the primary Fortran modules
+
+# Special areas:
+# PVM
+# If it is desired to link the executable with PVM support,
+# the variables PVM_PATH, PVM_ARCH should be defined
+# e.g. in .configure
+
+# LAPACK
+# If it is desired to link the executable with external LAPACK support,
+# the variable LAPACK should be defined
+# e.g. in the make statement: make LAPACK=/my_path/to_lapack_library
+# If this is done, i.e., LAPACK is defined, then 
+
+# BLAS
+# If it is desired to link the executable with external BLAS support,
+# the variable BLAS should be defined
+# e.g. in the make statement: make BLAS=/my_path/to_BLAS_library
+# If this is done, i.e., BLAS is defined, then blas_objs will
+# be blank
+# Otherwise, i.e. if BLAS is left undefined, then blas_objs will
+# depend on LIB_BLAS:
+# if LIB_BLAS is f95, then blas will be supported by f95 intrinsics
+
+# ========================================================================
+ifdef MLSINSTALLDIR
+   INSTALLDIR:=$(MLSINSTALLDIR)
+else
+ifndef INSTALLDIR
+   INSTALLDIR:=$(CONFDIR)/bin/$(MLSCONFG)
+endif
+endif
+
+# ========================================================================
+UTILDIR=../../../util
+# This will filter out globbed file expansions that fail
+# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
+REECHO=$(UTILDIR)/reecho.sh
+STATIC_LINK := $(shell echo $(LDOPTS) | grep -e "-static")
+
+PROG_NAME=test
+
+ALLOBJS = $(OBJS)
+
+include $(srclib)/targets.h
+
+libl3m_sources = ../../../$(own_dir)/
+
+libl3m_f90 := $(shell ${REECHO} $(libl3m_sources)/*.f90)
+
+libl3m_objs := $(shell ${REECHO} $(owndir)/*.o)
+
+l3_driver = MLSL3M.o
+
+# "yes" is safer--
+# in case modules have been deleted or excluded since the last build
+# Nope--will need to think harder about what to do about excluded modules
+delete_lib_first = no
+
+utctotai_linker_line=-L${INSTALLDIR} -lutctotai
+utctotai_message=Building mlsl2 with toolkitless utc to tai conversion
+
+# ========================================================================
+libl3m.a: $(libl3m_objs)
+ifeq ($(delete_lib_first),yes)
+		rm -f $@@
+endif
+	ar ru $@@ $?
+	ar d $@@ $(owndir)/$(l3_driver)
+
+#test: $(ALLOBJS) $(PVM_OBJS) $(itmdir)/libmlsl3.a  $(libdir)/libmls.a
+$(PROG_NAME): $(ALLOBJS) libl3m.a $(itmdir)/libmlsl3.a $(libdir)/libmls.a \
+     $(CONFDIR)/$(MLSCFILE)
+		@@echo "$(pvm_message)"
+		@@echo "$(blas_message)"
+		@@echo "$(lapack_message)"
+		@@echo "$(hdf5_message)"
+		@@cat fftw_link_message
+		$(FC) $(LDOPTS) -o $(PROG_NAME) $(ALLOBJS) $(PVM_OBJS)  \
+        -L./ -ll3m \
+        -L$(itmdir)/ -lmlsl3 \
+        -L${libdir} -lmls \
+        $(utctotai_linker_line) \
+		-L${PGSTK} -lPGSTK \
+        -L${HDFEOS} -lhdfeos \
+        $(hdfeos5_linker_line) \
+		-L${HDF} -lmfhdf \
+        -ldf \
+        -lz \
+        -ljpeg -lsz \
+		-L${GCTP} -lGctp \
+        $(pvm_linker_line) \
+        $(blas_linker_line) \
+        $(lapack_linker_line) \
+        $(fftw_linker_line) \
+        $(hdf5_linker_line) \
+        $(l_specials) $(LAFTER) \
+		  
+# ========================================================================
+
+clean:
+	rm -f *.o *.mod $(PROG_NAME)
+
+tar:
+	rm -f l3test.tgz
+	tar hcvzf l3test.tgz * --exclude \*.o --exclude \*.mod --exclude $(PROG_NAME)
+
+# ========================================================================
+# $Log: targets,v $
+# Revision 1.15  2005/03/04 19:13:31  pwagner
+# Utilizes targets.h from srclib
+#
+# Revision 1.14  2004/03/17 19:06:45  pwagner
+# Extra static object to fix building static Lahey executables when Red Hat>8
+#
+# Revision 1.13  2003/03/03 22:59:32  pwagner
+# Removed troublesome customblds includes
+#
+# Revision 1.12  2003/02/28 18:54:13  pwagner
+# Forgot to define INSTALLDIR in last commit
+#
+# Revision 1.11  2003/02/28 18:46:37  pwagner
+# Links utctotai library
+#
+# Revision 1.10  2002/11/25 21:21:02  pwagner
+# gcc_version to allow building with Lahey on gcc post 2.96
+#
+# Revision 1.9  2002/09/06 00:09:07  pwagner
+# BLAS can now bring in more than a single
+#
+# Revision 1.8  2002/08/27 23:03:12  pwagner
+# Treats LF95 better
+#
+# Revision 1.7  2002/04/18 20:55:28  pwagner
+# .configure now a prerequisite for executable
+#
+# Revision 1.6  2001/11/21 00:25:34  pwagner
+# Added hdfeos5_linker_line
+#
+# Revision 1.5  2001/11/07 01:14:30  pwagner
+# lapack message refers to this case, not mlsl2
+#
+# Revision 1.4  2001/11/07 00:31:44  pwagner
+# Added lapack linker line and msg
+#
+# Revision 1.3  2001/10/11 18:15:29  pwagner
+# Allows PROG_NAME variable to specify name of executable built
+#
+# Revision 1.2  2001/08/13 18:09:08  pwagner
+# replaced shell echo -> shell {REECHO}
+#
+# Revision 1.1  2001/07/24 20:51:58  pwagner
+# First commit
+#
+@
+
+
+1.15
+log
+@Utilizes targets.h from srclib
+@
+text
+@d12 1
+a12 1
+# "$Id: targets,v 1.14 2004/03/17 19:06:45 pwagner Exp $"
+d115 1
+a115 1
+        -ljpeg \
+d135 3
+@
+
+
+1.14
+log
+@Extra static object to fix building static Lahey executables when Red Hat>8
+@
+text
+@d12 1
+a12 1
+# "$Id: targets,v 1.13 2003/03/03 22:59:32 pwagner Exp $"
+d70 1
+a70 1
+PVM_PATH = ${PVM_ROOT}/lib/${PVM_ARCH}
+a84 36
+ifdef PVM_ROOT
+   pvm_linker_line=-L${PVM_PATH} -lfpvm3 -lgpvm3 -lpvm3
+   pvm_message=Building $(PROG_NAME) with PVM support
+   PVM_OBJS=
+else
+   pvm_linker_line=
+   pvm_message=Building $(PROG_NAME) without PVM support
+   PVM_OBJS=
+endif
+
+ifdef BLAS
+ifdef LIB_BLAS
+    blas_linker_line := $(shell ${REECHO} -dir ${BLAS} -prefixn=-l -lib ${LIB_BLAS})
+    blas_linker_line := -L${BLAS} ${blas_linker_line}
+else
+   blas_linker_line=-L${BLAS} -lblas
+endif
+   blas_message=Building $(PROG_NAME) with externally-supplied BLAS
+else
+   blas_linker_line=
+   blas_message=Building $(PROG_NAME) with internally-supplied BLAS
+endif
+
+ifdef LAPACK
+ifdef LIB_LAPACK
+    lapack_linker_line := $(shell ${REECHO} -dir ${LAPACK} -prefixn=-l -lib ${LIB_LAPACK})
+    lapack_linker_line := -L${LAPACK} ${lapack_linker_line}
+else
+   lapack_linker_line=-L${LAPACK} -llapack
+endif
+   lapack_message=Building $(PROG_NAME) with externally-supplied LAPACK
+else
+   lapack_linker_line=
+   lapack_message=Building $(PROG_NAME) with internally-supplied LAPACK
+endif
+
+a87 37
+ifdef HDF5
+ifeq ($(MLSPLAT),Sun)
+   hdf5_linker_line=-L${HDF5} -lhdf5_fortran -lhdf5 -R${HDF5}
+else
+#   hdf5_linker_line=-L${HDF5} -lhdf5_fortran -lhdf5 -Xlinker -rpath=${HDF5} \
+#    -lssl -lz
+   hdf5_linker_line=-L${HDF5} -lhdf5_fortran -lhdf5 
+   l_specials := $(l_specials) -lz
+endif
+ifdef HDFEOS5
+   hdfeos5_linker_line=-L${HDFEOS5} -lhe5_hdfeos
+ifeq ($(MLSF95),LF95)
+   gcc_version=$(shell ${UTILDIR}/which_fftw.sh -gcc)
+   static_object=$(shell ${UTILDIR}/which_fftw.sh -static)
+ifdef STATIC_LINK
+   l_specials=-lz -L/usr/lib/gcc-lib/i386-redhat-linux/${gcc_version} -lgcc \
+     ${static_object}
+else
+   l_specials=-lz -L/usr/lib/gcc-lib/i386-redhat-linux/${gcc_version} -lgcc
+endif
+endif
+ifeq ($(MLSF95),IFC)
+   gcc_version=$(shell ${UTILDIR}/which_fftw.sh -gcc)
+   l_specials=-lz -L/usr/lib/gcc-lib/i386-redhat-linux/${gcc_version} -lgcc
+endif
+else
+   hdfeos5_linker_line=
+endif
+   hdf5_message=Building test of mlsl3 with hdf5
+else
+   hdf5_linker_line=
+   hdfeos5_linker_line=
+   hdf5_message=Building test of mlsl3 without hdf5
+endif
+
+fftw_linker_line = $(shell ${UTILDIR}/which_fftw.sh ${FFTW_ROOT} ${FFTW_PREC})
+
+d135 3
+@
+
+
+1.13
+log
+@Removed troublesome customblds includes
+@
+text
+@d12 1
+a12 1
+# "$Id: targets,v 1.12 2003/02/28 18:54:13 pwagner Exp $"
+d60 1
+a60 1
+MLSBIN=../../../util
+d63 2
+a64 1
+REECHO=$(MLSBIN)/reecho.sh
+d137 10
+d159 1
+a159 1
+fftw_linker_line = $(shell ${MLSBIN}/which_fftw.sh ${FFTW_ROOT} ${FFTW_PREC})
+d208 3
+@
+
+
+1.12
+log
+@Forgot to define INSTALLDIR in last commit
+@
+text
+@d12 1
+a12 1
+# "$Id: targets,v 1.11 2003/02/28 18:46:37 pwagner Exp $"
+a58 1
+include $(CONFDIR)/customblds/$(MLSF95).$(MLSPLAT)
+d197 3
+@
+
+
+1.11
+log
+@Links utctotai library
+@
+text
+@d12 1
+a12 1
+# "$Id: targets,v 1.10 2002/11/25 21:21:02 pwagner Exp $"
+d51 10
+d198 3
+@
+
+
+1.10
+log
+@gcc_version to allow building with Lahey on gcc post 2.96
+@
+text
+@d12 1
+a12 1
+# "$Id: targets,v 1.9 2002/09/06 00:09:07 pwagner Exp $"
+d111 3
+d158 4
+a161 3
+                      -L./ -ll3m \
+                      -L$(itmdir)/ -lmlsl3 \
+                      -L${libdir} -lmls \
+d188 3
+@
+
+
+1.9
+log
+@BLAS can now bring in more than a single
+@
+text
+@d12 1
+a12 1
+# "$Id: targets,v 1.8 2002/08/27 23:03:12 pwagner Exp $"
+d123 2
+a124 1
+   l_specials=-L/usr/lib/gcc-lib/i386-redhat-linux/2.96 -lgcc
+d184 3
+@
+
+
+1.8
+log
+@Treats LF95 better
+@
+text
+@d12 1
+a12 1
+# "$Id: targets,v 1.7 2002/04/18 20:55:28 pwagner Exp $"
+d87 2
+a88 1
+   blas_linker_line=-L${BLAS} -l${LIB_BLAS}
+d183 3
+@
+
+
+1.7
+log
+@.configure now a prerequisite for executable
+@
+text
+@d12 1
+a12 1
+# "$Id: targets,v 1.6 2001/11/21 00:25:34 pwagner Exp $"
+d121 3
+d182 3
+@
+
+
+1.6
+log
+@Added hdfeos5_linker_line
+@
+text
+@d1 9
+d12 1
+a12 1
+# "$Id: targets,v 1.5 2001/11/07 01:14:30 pwagner Exp $"
+d142 2
+a143 1
+$(PROG_NAME): $(ALLOBJS) libl3m.a $(itmdir)/libmlsl3.a $(libdir)/libmls.a
+d179 3
+@
+
+
+1.5
+log
+@lapack message refers to this case, not mlsl2
+@
+text
+@d3 1
+a3 1
+# "$Id: targets,v 1.4 2001/11/07 00:31:44 pwagner Exp $"
+d145 1
+d169 3
+@
+
+
+1.4
+log
+@Added lapack linker line and msg
+@
+text
+@d3 1
+a3 1
+# "$Id: targets,v 1.3 2001/10/11 18:15:29 pwagner Exp $"
+d95 1
+a95 1
+   lapack_message=Building mlsl2 with externally-supplied LAPACK
+d98 1
+a98 1
+   lapack_message=Building mlsl2 with internally-supplied LAPACK
+d168 3
+@
+
+
+1.3
+log
+@Allows PROG_NAME variable to specify name of executable built
+@
+text
+@d3 1
+a3 1
+# "$Id: targets,v 1.2 2001/08/13 18:09:08 pwagner Exp $"
+d25 6
+d34 6
+a39 1
+# e.g. in the make staement: make -f MakeFC BLAS=/my_path/to_BLAS_library
+d88 13
+d136 1
+d152 1
+d168 3
+@
+
+
+1.2
+log
+@replaced shell echo -> shell {REECHO}
+@
+text
+@d3 1
+a3 1
+# "$Id: targets,v 1.1 2001/07/24 20:51:58 pwagner Exp $"
+d36 2
+d57 1
+a57 1
+   pvm_message=Building mlsl3 test with PVM support
+d61 1
+a61 1
+   pvm_message=Building mlsl3 test without PVM support
+d71 1
+a71 1
+   blas_message=Building mlsl3 test with externally-supplied BLAS
+d74 1
+a74 1
+   blas_message=Building mlsl3 test with internally-supplied BLAS
+d98 2
+d109 1
+a109 1
+test: $(ALLOBJS) libl3m.a $(itmdir)/libmlsl3.a $(libdir)/libmls.a
+d113 2
+a114 1
+		$(FC) $(LDOPTS) -o test $(ALLOBJS) $(PVM_OBJS)  \
+d127 1
+a127 1
+	-L${FFTW_ROOT} -lrfftw -lfftw \
+d134 1
+a134 1
+	rm -f *.o *.mod test
+d138 1
+a138 1
+	tar hcvzf l3test.tgz * --exclude \*.o --exclude \*.mod --exclude test
+d142 3
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d3 1
+a3 1
+# "$Id: targets,v 1.9 2001/07/24 18:31:48 pwagner Exp $"
+d31 5
+d42 1
+a42 1
+libl3m_f90 := $(shell echo $(libl3m_sources)/*.f90)
+d44 1
+a44 1
+libl3m_objs := $(shell echo $(owndir)/*.o)
+d137 3
+@
+

@@ -1,0 +1,216 @@
+head	2.4;
+access;
+symbols
+	v5-02-NRT-19:2.4
+	v6-00:2.4
+	v5-02-NRT-18:2.4
+	v5-02:2.4
+	v5-01-NRT-17:2.4
+	v5-01-NRT-16:2.4
+	v5-01-NRT-15:2.4
+	v5-01-NRT-14:2.4
+	neuralnetworks-1-0:2.4.0.12
+	cfm-single-freq-0-1:2.4.0.10
+	v5-01:2.4
+	v5-00:2.4
+	v4-23-TA133:2.4.0.8
+	mus-emls-1-70:2.4.0.6
+	rel-1-0-englocks-work:2.4.0.4
+	VUMLS1-00:2.4
+	VPL1-00:2.4
+	V4-22-NRT-08:2.4
+	VAM1-00:2.4
+	V4-21:2.4.0.2
+	V4-13:2.4
+	V4-12:2.4
+	V4-11:2.4
+	V4-10:2.4
+	M4-00:2.3;
+locks; strict;
+comment	@# @;
+
+
+2.4
+date	2013.06.12.02.39.21;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2012.10.20.00.00.58;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2012.06.21.00.31.29;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2012.06.06.20.36.02;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.4
+log
+@Use INDEX array to ensure correct subscripts
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Set_Toggles_m
+
+  implicit none
+  private
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: Set_Toggles_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+  public :: SET_TOGGLES
+
+contains
+
+  subroutine Set_Toggles ( String )
+
+    ! Set toggles and toggle levels from String
+    ! a => syn -- dump abstract syntax tree
+    ! c => con -- trace type checker
+    ! f => emit -- forward model
+    ! g => gen -- most of everything after type checking
+    ! l => lex -- lexer
+    ! p => par -- parser
+    ! t => tab -- declaration table activity
+    ! Invalid toggles are ignored
+    ! Any toggle can be followed by a single digit, which sets Levels
+
+    use TOGGLES, only: CON, EMIT, GEN, LEX, PAR, SYN, TAB, TOGGLE, LEVELS
+    character(*), intent(in) :: String
+
+    character(*), parameter :: Good = 'cfglpat'
+    integer, parameter :: Index(len(good)) = &
+      & (/ con, emit, gen, lex, par, syn, tab /)
+
+    integer :: i, j
+
+    i = 0
+    do
+      if ( i >= len_trim(string) ) exit
+      i = i + 1
+      j = scan(good,string(i:i))
+      if ( j /= 0 ) then
+        toggle(index(j)) = .true.
+        levels(index(j)) = 0
+        if ( i+1 > len_trim(string) ) exit
+        if ( string(i+1:i+1) >= '0' .and. string(i+1:i+1) <= '9' ) then
+          i = i + 1
+          levels(index(j)) = ichar(string(i:i)) - ichar('0')
+        end if
+      end if
+    end do
+  end subroutine Set_Toggles
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: Set_Toggles_m.f90,v 2.3 2012/10/20 00:00:58 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Set_Toggles_m
+
+! $Log: Set_Toggles_m.f90,v $
+! Revision 2.3  2012/10/20 00:00:58  pwagner
+! Fixed bug added with last bugfix
+!
+! Revision 2.2  2012/06/21 00:31:29  pwagner
+! Protect against exceeding substring end
+!
+! Revision 2.1  2012/06/06 20:36:02  vsnyder
+! Initial commit
+!
+@
+
+
+2.3
+log
+@Fixed bug added with last bugfix
+@
+text
+@d55 2
+a56 2
+        toggle(j) = .true.
+        levels(j) = 0
+d60 1
+a60 1
+          levels(j) = ichar(string(i:i)) - ichar('0')
+d69 1
+a69 1
+       "$Id: Set_Toggles_m.f90,v 2.2 2012/06/21 00:31:29 pwagner Exp $"
+d79 3
+@
+
+
+2.2
+log
+@Protect against exceeding substring end
+@
+text
+@d14 2
+a15 2
+  implicit NONE
+  public
+d23 2
+d29 1
+a29 1
+    ! Set toggles from String
+d40 1
+a40 1
+    use Toggles, only: Con, Emit, Gen, Lex, Par, Syn, Tab, Toggle, Levels
+d57 1
+a57 1
+        if ( i+1 >= len_trim(string) ) exit
+a63 1
+
+d69 1
+a69 1
+       "$Id: Set_Toggles_m.f90,v 2.1 2012/06/06 20:36:02 vsnyder Exp $"
+d79 3
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d19 1
+a19 1
+       "$RCSfile: toggles_core.f90,v $"
+d54 2
+d68 1
+a68 1
+       "$Id: toggles_core.f90,v 2.6 2009/06/23 18:25:44 pwagner Exp $"
+d77 4
+a80 1
+! $Log: $
+@
+

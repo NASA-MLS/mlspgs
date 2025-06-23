@@ -1,0 +1,42 @@
+head	1.1;
+access;
+symbols
+	cfm-single-freq-0-1:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2021.08.16.17.47.17;	author whdaffer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2021.08.16.17.47.17;	author whdaffer;	state Exp;
+branches;
+next	;
+
+
+desc
+@foo
+@
+
+
+1.1
+log
+@file molecule_string.txt was initially added on branch cfm-single-freq-0-1.
+@
+text
+@@
+
+
+1.1.2.1
+log
+@foo
+@
+text
+@a0 1
+[ EXTINCTIONV2, [ HNO3, HNO3, HNO3_V7, HNO3_V9 ], [ O2, O_18_O ], [ O3, O3, O3_V1_3,O3_V2, O3_ASYM_O_18, O3_SYM_O_18 ], [ SO2, S_32_O2 ] ]
+@
+

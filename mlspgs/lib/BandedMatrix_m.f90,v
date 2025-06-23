@@ -1,0 +1,195 @@
+head	2.2;
+access;
+symbols
+	v5-02-NRT-19:2.2
+	v6-00:2.2
+	v5-02-NRT-18:2.2
+	v5-02:2.2
+	v5-01-NRT-17:2.2
+	v5-01-NRT-16:2.2
+	v5-01-NRT-15:2.2
+	v5-01-NRT-14:2.2
+	neuralnetworks-1-0:2.2.0.14
+	cfm-single-freq-0-1:2.2.0.12
+	v5-01:2.2
+	v5-00:2.2
+	v4-23-TA133:2.2.0.10
+	mus-emls-1-70:2.2.0.8
+	rel-1-0-englocks-work:2.2.0.6
+	VUMLS1-00:2.2
+	VPL1-00:2.2
+	V4-22-NRT-08:2.2
+	VAM1-00:2.2
+	V4-21:2.2.0.4
+	V4-13:2.2
+	V4-12:2.2
+	V4-11:2.2
+	V4-10:2.2
+	V3-43:2.2
+	M4-00:2.2
+	V3-41:2.2
+	V3-40-PlusGM57:2.2.0.2
+	V2-24-NRT-04:2.1
+	V3-33:2.2
+	V2-24:2.1
+	V3-31:2.2
+	V3-30-NRT-05:2.2
+	cfm-01-00:2.2
+	V3-30:2.2
+	V3-20:2.2
+	V3-10:2.2
+	V2-23-NRT-02:2.1
+	V2-23:2.1
+	V2-22-NRT-01:2.1
+	V2-22:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.2
+date	2009.06.23.18.25.42;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2007.06.20.22.25.08;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.2
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@module BandedMatrix_m
+
+  implicit NONE
+
+  private
+
+  integer, parameter :: RK = kind(0.0)
+
+  type BandedMatrix
+    integer, pointer :: FR(:) => NULL()   ! First and
+    integer, pointer :: LR(:) => NULL()   !  last nonzero row per column
+    integer, pointer :: FC(:) => NULL()   ! First and
+    integer, pointer :: LC(:) => NULL()   !  last nonzero column per row
+    real(rk), pointer :: V(:,:) => NULL() ! Values
+  end type BandedMatrix
+
+  public :: BandedMatrix, ClearBandedMatrix, CreateBandedMatrix
+  public :: DestroyBandedMatrix
+
+  !------------------------------- RCS Ident Info ------------------------------
+  character(len=*), parameter, private :: ModuleName = &
+    & "$RCSfile: BandedMatrix_m.f90,v $"
+  private :: not_used_here 
+  !-----------------------------------------------------------------------------
+
+contains
+
+  ! ------------------------------------------  ClearBandedMatrix  -----
+  subroutine ClearBandedMatrix ( Matrix )
+    ! Replace nonzeros with zeros.  Assume more nonzeros per
+    ! column than row
+    type(bandedMatrix), intent(inout) :: Matrix
+    integer :: J
+    do j = 1, size(matrix%fr)
+      matrix%v(matrix%fr(j):matrix%lr(j),j) = 0.0_rk
+    end do
+    matrix%fr = size(matrix%fc)
+    matrix%lr = 0
+    matrix%fc = size(matrix%fr)
+    matrix%lc = 0
+  end subroutine ClearBandedMatrix
+
+  ! -----------------------------------------  CreateBandedMatrix  -----
+  subroutine CreateBandedMatrix ( Matrix, Rows, Columns )
+    ! Create an empty banded matrix representing zeros.
+    ! Destroy existing fields if new ones need to be different sizes.
+    use Allocate_Deallocate, only: Deallocate_Test, Allocate_Test
+    type(bandedMatrix), intent(inout) :: Matrix
+    integer, intent(in) :: Rows, Columns
+
+    if ( associated(matrix%v) ) then
+      if ( size(matrix%v,1) /= rows .or. size(matrix%v,2) /= columns ) then
+        call deallocate_test ( matrix%fr, 'matrix%fr', moduleName )
+        call deallocate_test ( matrix%lr, 'matrix%lr', moduleName )
+        call deallocate_test ( matrix%fc, 'matrix%fc', moduleName )
+        call deallocate_test ( matrix%lc, 'matrix%lc', moduleName )
+        call deallocate_test ( matrix%v , 'matrix%v',  moduleName )
+      end if
+    end if
+    if ( .not. associated(matrix%v) ) then
+      call allocate_test ( matrix%fr, columns, 'matrix%fr', moduleName )
+      call allocate_test ( matrix%lr, columns, 'matrix%lr', moduleName )
+      call allocate_test ( matrix%fc, rows,    'matrix%fc', moduleName )
+      call allocate_test ( matrix%lc, rows,    'matrix%lc', moduleName )
+      call allocate_test ( matrix%v, rows, columns, 'matrix%v', moduleName )
+    end if
+    matrix%fr = rows
+    matrix%lr = 0
+    matrix%fc = columns
+    matrix%lc = 0
+  end subroutine CreateBandedMatrix
+
+  ! ----------------------------------------  DestroyBandedMatrix  -----
+  subroutine DestroyBandedMatrix ( Matrix )
+    ! Deallocate the fields of a banded matrix.
+    use Allocate_Deallocate, only: Deallocate_Test
+    type(bandedMatrix), intent(inout) :: Matrix
+    call deallocate_test ( matrix%fr, 'matrix%fr', moduleName )
+    call deallocate_test ( matrix%lr, 'matrix%lr', moduleName )
+    call deallocate_test ( matrix%fc, 'matrix%fc', moduleName )
+    call deallocate_test ( matrix%lc, 'matrix%lc', moduleName )
+    call deallocate_test ( matrix%v , 'matrix%v',  moduleName )
+  end subroutine DestroyBandedMatrix
+
+  ! ------------------------------------------------  Not_Used_Here  -----
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: read_apriori.f90 is it here $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module BandedMatrix_m
+
+! $Log: BandedMatrix_m.f90,v $
+! Revision 2.1  2007/06/20 22:25:08  vsnyder
+! Initial commit
+!
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d22 1
+a22 1
+    & "$RCSfile: Allocate_Deallocate.f90,v $"
+d86 1
+d88 3
+a90 5
+  !------------------------------- RCS Ident Info ------------------------------
+  character(len=*), parameter :: Idparm = &
+    & "$Id: Allocate_Deallocate.f90,v 2.32 2006/08/05 02:36:57 vsnyder Exp $"
+  character(len=len(idparm)) :: Id = idparm
+  !-----------------------------------------------------------------------------
+d92 1
+d94 1
+d98 4
+a101 1
+! $Log: $
+@
+

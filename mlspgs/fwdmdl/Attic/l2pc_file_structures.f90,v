@@ -1,0 +1,429 @@
+head	2.3;
+access;
+symbols
+	V1-51:2.2
+	V1-50:2.2
+	V1-45:2.2
+	V1-44:2.2
+	V1-43:2.2
+	V1-32:2.2
+	V1-31:2.2
+	V1-30:2.2
+	V1-13:2.2
+	V1-12:2.2
+	V1-11:2.2
+	V1-10:2.2
+	newfwm-feb03:2.2.0.2
+	V1-04:2.0
+	V1-03:2.0
+	V1-02:2.0
+	JointForwardModel:2.0.0.2
+	V1-00:2.0
+	newfwm-sep01:1.5.0.2
+	V0-7:1.5
+	V0-5-Level2:1.4
+	V0-5-SIPS:1.4
+	V0_1:1.1;
+locks; strict;
+comment	@# @;
+
+
+2.3
+date	2005.06.09.02.33.26;	author vsnyder;	state dead;
+branches;
+next	2.2;
+
+2.2
+date	2002.10.08.17.08.05;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2002.10.03.21.56.14;	author vsnyder;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2001.09.17.20.26.27;	author livesey;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2001.06.07.23.39.31;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.01.31.01.08.48;	author zvi;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2000.11.22.23.10.03;	author zvi;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2000.11.22.23.07.28;	author zvi;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2000.05.04.18.12.05;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.3
+log
+@Move stuff to slabs_sw_m
+@
+text
+@! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+module L2PC_FILE_STRUCTURES
+  use L2PC_File_Parameters ! everything
+  use MLSCommon, only: I4, R4, R8
+  implicit NONE
+!  This has the standard structure constructions used for
+!    reading and writing the l2pc_xx.dat file.
+!  Written by W. G. Read on 8/13/90.
+!  Modified by W. G. Read 3/09/90:
+!    Includes new structure for use in reading pseudo key access file
+!  Modified by Z. Shippony, Jul/10/96:
+!    Update to ver 5.0 of l2pc code. Add l2pc_header_tri  structure
+!  Last Modified by Z. Shippony, Oct/10/96:
+!    Update to ver 5.0 of l2pc code.
+!  Last Modified by Z. Shippony, May/5/97:
+!    Update to ver 5.1 of l2pc code.
+! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
+    & "$Id: l2pc_file_structures.f90,v 2.2 2002/10/08 17:08:05 pwagner Exp $"
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), parameter, private :: ModuleName = &
+       "$RCSfile: l2pc_file_structures.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+! Header structures
+  type L2PC_HEADER_ONE
+    Character(len=80) :: LINE1
+    Character(len=80) :: LINE2
+    Character(len=80) :: LINE3
+    Character(len=8) :: AVAIL_KEYS(max_no_avail_keys)
+    Character(len=8) :: SV_COMPONENTS(max_no_sv_components)
+    Logical SV_RTRVL_BY_BAND(max_no_sv_components,max_no_bands)
+    Integer(i4) :: NO_ELMNTS_PER_SV_COMPONENT(max_no_sv_components)
+    Integer(i4) :: SV_COMPONENT_FIRST_ELMNT_INDEX(max_no_sv_components)
+    Integer(i4) :: NO_BANDS
+    Integer(i4) :: NO_CHANNELS_PER_BAND
+    Integer(i4) :: NO_POINTINGS
+    Integer(i4) :: NO_AVAIL_KEYS
+    Integer(i4) :: NO_SV_COMPONENTS
+    Integer(i4) :: NO_COEFF_PER_COMPONENT
+    Integer(i4) :: NO_K_RECORDS_PER_BIN
+    Integer(i4) :: NO_MAG_FIELDS
+    Integer(i4) :: NO_B_THETA_LIN_VAL
+    Real(r8) :: POINTINGS(max_no_pointings)
+    Real(r8) :: B_FIELDS(max_no_mag_fields)
+    Real(r8) :: B_PHI_LIN_VAL
+    Real(r8) :: B_THETA_LIN_VAL(max_no_theta_val)
+  end type L2PC_HEADER_ONE
+!**********  Size of(l2pc_header_one) = 1676 bytes (419 words)
+  type L2PC_HEADER_TWO
+    Integer(i4) :: NO_SV_ELMNTS
+    Real(r8) :: TRI_BASIS_VERT_GRID(max_no_sv_elmnts)
+  end type L2PC_HEADER_TWO
+!**********  Size of(l2pc_header_two) = 2316 bytes (579 words)
+  type L2PC_HEADER_TRI
+    Integer(i4) :: MATDIM
+    Character(len=1) :: SECOND_DER_MATRIX_BANDS(max_table_2d)
+    Character(len=2) :: SECOND_DER_MATRIX_NAMID(max_table_2d)
+  end type L2PC_HEADER_TRI
+!**********  Size of(l2pc_header_tri) = 1588 bytes (397 words)
+! Spectral power (Radiances) structure
+  type I_STAR
+    Integer(i4) :: FIRST_CHANNEL_NUMBER
+    Real(r8) :: RADIANCES(max_no_pointings,max_no_channels_per_band)
+  end type I_STAR
+!**********  Size of(i_star) = 2588 bytes ( 647 words)
+! State vector structure
+  type X_STAR
+    Integer(i4) :: NO_POINTINGS
+    Integer(i4) :: NO_SV_ELMNTS
+    Real(r8) :: POINTINGS(max_no_pointings)
+    Real(r8) :: SV_ELMNTS(max_no_sv_elmnts)
+  end type X_STAR
+!**********  Size of(x_star) = 4024 bytes (1006 words)
+! The derivative of the forward model with respect to a state vector element
+  type K_STAR
+    Character(len=8) :: SV_NAME1
+    Character(len=8) :: SV_NAME2
+    Real(r8) :: LOG_PSV1
+    Real(r8) :: LOG_PSV2
+    Integer(i4) :: FIRST_CHANNEL_NUMBER
+    Real(r4) :: DERIVATIVES(max_no_pointings,max_no_channels_per_band)
+  end type K_STAR
+!**********  Size of(k_star) = 4048 bytes (1012 words)
+! This Structure is used in collating the k_star records
+  type DUMP_K_STAR
+    Character(len=40) :: KEY
+    Character(len=8) :: SV_NAME1
+    Character(len=8) :: SV_NAME2
+    Real(r8) :: LOG_PSV1
+    Real(r8) :: LOG_PSV2
+    Integer(i4) :: FIRST_CHANNEL_NUMBER
+    Real(r4) :: DERIVATIVES(max_no_pointings)
+  end type DUMP_K_STAR
+!**********  Size of(dump_k_star) = 336 bytes (84 words)
+! This Structure goes into a companion file which is used to find keys
+  type L2PC_KEYS
+    Character(len=32) :: L2PC_KEY
+    Integer(i4) :: REC_NO
+  end type L2PC_KEYS
+!**********  Size of(l2pc_keys) = 36 bytes (9 words)
+contains 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
+end module L2PC_FILE_STRUCTURES
+! $Log: l2pc_file_structures.f90,v $
+! Revision 2.2  2002/10/08 17:08:05  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.1  2002/10/03 21:56:14  vsnyder
+! Get R8 from MLSCommon instead of l2pc_file_parameters
+!
+! Revision 2.0  2001/09/17 20:26:27  livesey
+! New forward model
+!
+! Revision 1.5  2001/06/07 23:39:31  pwagner
+! Added Copyright statement
+!
+! Revision 1.4  2001/01/31 01:08:48  zvi
+! New version of forward model
+!
+! Revision 1.1  2000/05/04 18:12:05  vsnyder
+! Initial conversion to Fortran 90
+!
+@
+
+
+2.2
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d22 1
+a22 1
+    & "$Id: l2pc_file_structures.f90,v 2.1 2002/10/03 21:56:14 vsnyder Exp $"
+d112 3
+@
+
+
+2.1
+log
+@Get R8 from MLSCommon instead of l2pc_file_parameters
+@
+text
+@d22 1
+a22 1
+    & "$Id: l2pc_file_parameters.f90,v 2.0 2001/09/17 20:26:27 livesey Exp $"
+d25 2
+a26 1
+       "$RCSfile: l2pc_file_parameters.f90,v $"
+d105 5
+d112 3
+@
+
+
+2.0
+log
+@New forward model
+@
+text
+@d6 1
+a6 1
+  use MLSCommon, only: I4, R4
+d21 5
+a25 5
+  PRIVATE :: Id, ModuleName
+  CHARACTER (LEN=256) :: Id = &
+       "$Id: l2pc_file_structures.f90,v 1.5 2001/06/07 23:39:31 pwagner Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName = &
+       "$RCSfile: l2pc_file_structures.f90,v $"
+d106 3
+@
+
+
+1.5
+log
+@Added Copyright statement
+@
+text
+@d23 1
+a23 1
+       "$Id: l2pc_file_structures.f90,v 1.4 2001/01/31 01:08:48 zvi Exp $"
+d106 3
+@
+
+
+1.4
+log
+@New version of forward model
+@
+text
+@d1 3
+d23 1
+a23 1
+       "$Id: l2pc_file_structures.f90,v 1.1 2000/05/04 18:12:05 vsnyder Exp $"
+d25 1
+a25 1
+       "$RCSfile: l2pc_file_structures.f90 $"
+d106 3
+@
+
+
+1.3
+log
+@Re-add basic stuff
+@
+text
+@@
+
+
+1.2
+log
+@New version
+@
+text
+@a4 1
+
+a7 1
+
+a9 1
+
+a11 1
+
+a13 1
+
+a15 1
+
+a16 1
+
+d21 2
+a22 1
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile: l2pc_file_structures.f90,v $"
+a23 1
+
+d25 1
+a25 2
+
+  type :: L2PC_HEADER_ONE
+d31 1
+a31 1
+    Logical*1 SV_RTRVL_BY_BAND(max_no_sv_components,max_no_bands)
+d43 4
+a46 4
+    Real(r4) :: POINTINGS(max_no_pointings)
+    Real(r4) :: B_FIELDS(max_no_mag_fields)
+    Real(r4) :: B_PHI_LIN_VAL
+    Real(r4) :: B_THETA_LIN_VAL(max_no_theta_val)
+a47 1
+
+d49 1
+a49 2
+
+  type :: L2PC_HEADER_TWO
+d51 1
+a51 1
+    Real(r4) :: TRI_BASIS_VERT_GRID(max_no_sv_elmnts)
+a52 1
+
+d54 1
+a54 2
+
+  type :: L2PC_HEADER_TRI
+a58 1
+
+a59 1
+
+d61 1
+a61 2
+
+  type :: I_STAR
+d63 1
+a63 1
+    Real(r4) :: RADIANCES(max_no_pointings,max_no_channels_per_band)
+a64 1
+
+a65 1
+
+d67 1
+a67 2
+
+  type :: X_STAR
+d70 2
+a71 2
+    Real(r4) :: POINTINGS(max_no_pointings)
+    Real(r4) :: SV_ELMNTS(max_no_sv_elmnts)
+a72 1
+
+a73 1
+
+d75 1
+a75 2
+
+  type :: K_STAR
+d78 2
+a79 2
+    Real(r4) :: LOG_PSV1
+    Real(r4) :: LOG_PSV2
+a82 1
+
+a83 1
+
+d85 1
+a85 2
+
+  type :: DUMP_K_STAR
+d89 2
+a90 2
+    Real(r4) :: LOG_PSV1
+    Real(r4) :: LOG_PSV2
+a93 1
+
+a94 1
+
+d96 1
+a96 2
+
+  type :: L2PC_KEYS
+a99 1
+
+a100 1
+
+a101 1
+
+@
+
+
+1.1
+log
+@Initial conversion to Fortran 90
+@
+text
+@d27 1
+a27 1
+       "$Id: L2PC_FILE_STRUCTURES,v 1.12 2000/02/08 19:54:57 vsnyder Exp $"
+d132 4
+a135 1
+! $Log: L2PC_FILE_STRUCTURES,v $
+@
+

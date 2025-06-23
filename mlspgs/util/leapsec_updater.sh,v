@@ -1,0 +1,350 @@
+head	1.3;
+access;
+symbols
+	v5-02-NRT-19:1.3
+	v6-00:1.3
+	v5-02-NRT-18:1.3
+	v5-02:1.2
+	v5-01-NRT-17:1.3
+	v5-01-NRT-16:1.3
+	v5-01-NRT-15:1.3
+	v5-01-NRT-14:1.3
+	neuralnetworks-1-0:1.3.0.4
+	cfm-single-freq-0-1:1.3.0.2
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.10
+	mus-emls-1-70:1.2.0.8
+	rel-1-0-englocks-work:1.2.0.6
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.2
+	V4-21:1.2.0.4
+	V4-13:1.2
+	V4-12:1.2
+	V4-11:1.2
+	V4-10:1.2
+	V3-43:1.2
+	M4-00:1.2
+	V3-41:1.2
+	V3-40-PlusGM57:1.2.0.2
+	V2-24-NRT-04:1.2
+	V3-33:1.2
+	V2-24:1.2
+	V3-31:1.2
+	V3-30-NRT-05:1.2
+	cfm-01-00:1.2
+	V3-30:1.2
+	V3-20:1.2
+	V3-10:1.2
+	V2-23-NRT-02:1.2
+	V2-23:1.2
+	V2-22-NRT-01:1.2
+	V2-22:1.2
+	V2-21:1.2
+	V2-20:1.2
+	V2-11:1.2
+	V2-10:1.2
+	V2-00:1.2
+	V1-51:1.1
+	V1-50:1.1
+	V1-45:1.1
+	V1-44:1.1
+	V1-43:1.1
+	V1-42:1.1
+	V1-41:1.1
+	V1-32:1.1
+	V1-40:1.1
+	V1-31:1.1
+	V1-30:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.3
+date	2019.11.14.17.39.50;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2005.06.23.22.20.45;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2003.05.08.20.11.24;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@Now ftps from gsfc site instead of usno
+@
+text
+@#!/bin/sh
+# leapsec_updater.sh
+# Plagiarised Raytheon's update_leapsec.sh
+# distributed with the Toolkit
+# but I've removed all the email and user-input stuff
+# Should be useable by a cron job
+# or you can use it directly
+#
+# REQUIRES:
+# PGSHOME must have been defined (by e.g., pgs-env.csh)
+# write access to $PGSHOME/database/common/TD
+ 
+# Copyright 2005, by the California Institute of Technology. ALL
+# RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+# commercial use must be negotiated with the Office of Technology Transfer
+# at the California Institute of Technology.
+
+# This software may be subject to U.S. export control laws. By accepting this
+# software, the user agrees to comply with all applicable U.S. export laws and
+# regulations. User has the responsibility to obtain export licenses, or other
+# export authority as may be required before exporting such information to
+# foreign countries or providing access to foreign persons.
+
+# "$Id: leapsec_updater.sh,v 1.2 2005/06/23 22:20:45 pwagner Exp $"
+
+# Check that PGSHOME is defined
+if [ "$PGSHOME" = "" ]
+then
+  echo "PGSHOME is not yet defined"
+  echo "You probably need to run one of the scripts"
+  echo "pgs-env.csh or pgs-env.ksh"
+  exit 1
+fi
+
+# Check that you have write access permission to the file
+if [ ! -w $PGSHOME/database/common/TD/leapsec.dat ]
+then
+  echo "You lack write access permission to the file leapsec.dat"
+  echo "Likely causes are"
+  echo "(1) It is a directory belonging to someone else"
+  echo "(2) The name or location of the directory has been changed"
+  echo "(3) A prior attempt to update the file badly misfired"
+  exit 1
+fi
+
+# change directory to the leapsec.dat directory:
+
+cd $PGSHOME/database/common/TD
+
+#
+#ftp to USNO  (maia.usno.navy.mil 192.5.41.22 ) and get the current tai-utc.dat in ser7
+
+#echo "Are you a DAAC-location [yes/no]"
+#read user_response
+user_response="No"
+case  "$user_response" in
+    y* | Y* )
+echo "Please enter your DAAC-specific ftp machine"
+read ftp_machine
+
+echo "Please enter your user name"
+read ftp_user
+
+ftp -n <<GG>holder
+#open p0fwi09
+#user cmts2
+open $ftp_machine
+user $ftp_user
+quote site maia.usno.navy.mil
+user anonymous EOSuser
+prompt
+cd ser7
+dir
+get tai-utc.dat
+bye
+GG
+    ;;
+    * )
+echo "Please wait ...."
+ftp -n <<GG>holder
+open cddis.gsfc.nasa.gov
+user anonymous EOSuser
+prompt
+cd /pub/products/iers
+dir
+get tai-utc.dat
+bye
+GG
+    ;;
+    esac
+
+
+#parse the results of ftp for the date, to be used in the new header
+
+grep "tai-utc.dat" holder | awk '{print  " " $6 " " $7 " " $8}'  > func_input
+
+#clean up a bit
+/bin/rm holder
+
+#run update C program PGS_TD_NewLeap:
+#PGS_TD_NewLeap.c assumed compiled and in $PGSBIN (done by the INSTALL script)
+# if the executable PGS_TD_NewLeap has been lost or corrupted, "cd" to the
+# directory $PGSSRC/TD and at the keyboard enter "make utilities"
+
+   PGS_TD_NewLeap < func_input
+
+   state=$?
+
+echo "Status of PGS_TD_NewLeap call was ($state)"
+
+#test return value
+
+  case $state in
+
+       0)
+
+#All is OK  - replace file
+
+   /bin/mv -f leapsec.dat.new $PGSHOME/database/common/TD/leapsec.dat
+
+   mv_state=$?
+
+#report results of the mv
+
+   echo "Status of MOVE command was ($mv_state)"
+ 
+ if [ -f holder ]; then /bin/rm holder ; fi
+ if [ -f tai-utc.dat ]; then /bin/rm tai-utc.dat ; fi
+ if [ -f func_input ]; then /bin/rm func_input ; fi
+
+       if [ $mv_state -eq 0 ] ; then
+
+       exit 0
+ 
+      else
+
+   /bin/rm -f leapsec.dat.new
+ 
+#error branch within if - used if "mv" fails
+ 
+ 
+       exit 22
+
+fi
+#EXITED if test on bin/mv
+ 
+;;
+
+       2)
+
+
+
+;;
+
+       3)
+
+
+;;
+
+       4)
+
+
+;;
+      5)
+
+
+;;
+       6)
+
+
+
+;;
+
+       7)
+
+
+
+;;
+
+       9)
+
+
+;;
+
+       12)
+
+
+;;
+       13)
+
+
+;;
+       14)
+ 
+ 
+;;
+
+       15)
+
+
+;;
+       18)
+
+
+;;
+
+      *)
+ 
+;;
+
+esac
+
+#clean up files
+
+ if [ -f tai-utc.dat ]; then /bin/rm tai-utc.dat ; fi
+ if [ -f func_input ]; then /bin/rm func_input ; fi
+ if [ -f leapsec.dat.new ]; then /bin/rm leapsec.dat.new ; fi
+ if [ -f holder ]; then /bin/rm holder ; fi
+
+exit $state
+# $Log: leapsec_updater.sh,v $
+# Revision 1.2  2005/06/23 22:20:45  pwagner
+# Reworded Copyright statement
+#
+# Revision 1.1  2003/05/08 20:11:24  pwagner
+# First commit
+#
+@
+
+
+1.2
+log
+@Reworded Copyright statement
+@
+text
+@d24 1
+a24 1
+# "$Id: leapsec_updater.sh,v 1.1 2003/05/08 20:11:24 pwagner Exp $"
+d81 1
+a81 1
+open maia.usno.navy.mil
+d84 1
+a84 1
+cd ser7
+d222 3
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d13 12
+a24 1
+# "$Id: tkreset.csh,v 1.1 2003/05/06 20:40:52 pwagner Exp $"
+d221 4
+a224 1
+# $Log: tkreset.csh,v $
+@
+

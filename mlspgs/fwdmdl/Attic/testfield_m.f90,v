@@ -1,0 +1,255 @@
+head	2.4;
+access;
+symbols
+	V4-13:2.3
+	V4-12:2.3
+	V4-11:2.3
+	V4-10:2.3
+	V3-43:2.3
+	M4-00:2.3
+	V3-41:2.3
+	V3-40-PlusGM57:2.3.0.2
+	V2-24-NRT-04:2.2
+	V3-33:2.3
+	V2-24:2.2
+	V3-31:2.3
+	V3-30-NRT-05:2.3
+	cfm-01-00:2.3
+	V3-30:2.3
+	V3-20:2.3
+	V3-10:2.3
+	V2-23-NRT-02:2.2
+	V2-23:2.2
+	V2-22-NRT-01:2.2
+	V2-22:2.2
+	V2-21:2.2
+	V2-20:2.2
+	V2-11:2.2
+	V2-10:2.2
+	V2-00:2.2
+	V1-51:2.1
+	V1-50:2.1
+	V1-45:2.1
+	V1-44:2.1
+	V1-43:2.1
+	V1-32:2.1
+	V1-31:2.1
+	V1-30:2.1
+	newfwm-feb03:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+2.4
+date	2015.01.30.00.21.51;	author vsnyder;	state dead;
+branches;
+next	2.3;
+
+2.3
+date	2009.06.23.18.26.11;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2005.06.22.18.08.20;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2003.05.05.23.00.26;	author livesey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2003.03.19.00.17.53;	author michael;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2003.03.19.00.17.53;	author michael;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.4
+log
+@No longer used
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module testfield_m
+
+implicit none
+private
+
+public :: testfield
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: testfield_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains 
+
+subroutine testfield ( h, ct, stcp, stsp)
+    use MLSCommon, only: Rk => Rp
+    real(rk), intent(inout) ::    h(:)      ! mag field magnitude
+    real(rk), intent(inout) ::    CT(:)     ! Cos(Theta)
+    real(rk), intent(inout) ::    STCP(:)   ! Sin(Theta) Cos(Phi)
+    real(rk), intent(inout) ::    STSP(:)   ! Sin(Theta) Sin(Phi)
+
+    h=0
+    ct=0
+    stcp=0.707
+    stsp=0.707
+end subroutine testfield
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: testfield_m.f90,v 2.3 2009/06/23 18:26:11 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+end module testfield_m
+! $Log: testfield_m.f90,v $
+! Revision 2.3  2009/06/23 18:26:11  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.2  2005/06/22 18:08:20  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.1  2003/05/05 23:00:26  livesey
+! Merged in feb03 newfwm branch
+!
+! Revision 1.1.2.1  2003/03/19 00:17:53  michael
+! Procedure to cobble dummy magnetic field path into code without recompiling
+! all of Full_Foreward_Model
+!
+@
+
+
+2.3
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d21 1
+a21 1
+       "$RCSfile: $"
+d43 1
+a43 1
+       "$Id: read_apriori.f90 is it here $"
+d51 3
+@
+
+
+2.2
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d40 1
+a41 1
+!---------------------------- RCS Ident Info -------------------------------
+d43 2
+a44 3
+       "$Id: $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d46 1
+d48 1
+d51 3
+@
+
+
+2.1
+log
+@Merged in feb03 newfwm branch
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d14 10
+a23 7
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter, private :: IdParm = &
+    & "$Id$"
+  character (len=len(idParm)) :: Id = IdParm
+  character (len=*), parameter, private :: ModuleName= &
+    & "$RCSfile$"
+!-----------------------------------------------------------------------
+d39 9
+d49 4
+a52 1
+! $Log$
+@
+
+
+1.1
+log
+@file testfield_m.f90 was initially added on branch newfwm-feb03.
+@
+text
+@d1 33
+@
+
+
+1.1.2.1
+log
+@Procedure to cobble dummy magnetic field path into code without recompiling
+all of Full_Foreward_Model
+@
+text
+@a0 29
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+module testfield_m
+
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter, private :: IdParm = &
+    & "$Id: FullForwardModel_m.f90,v 2.126.2.19 2003/03/07 23:17:05 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = IdParm
+  character (len=*), parameter, private :: ModuleName= &
+    & "$RCSfile: FullForwardModel_m.f90,v $"
+!-----------------------------------------------------------------------
+
+contains 
+
+subroutine testfield ( h, ct, stcp, stsp)
+    use MLSCommon, only: Rk => Rp
+    real(rk), intent(inout) ::    h(:)      ! mag field magnitude
+    real(rk), intent(inout) ::    CT(:)     ! Cos(Theta)
+    real(rk), intent(inout) ::    STCP(:)   ! Sin(Theta) Cos(Phi)
+    real(rk), intent(inout) ::    STSP(:)   ! Sin(Theta) Sin(Phi)
+
+    h=0
+    ct=0
+    stcp=0.707
+    stsp=0.707
+end subroutine testfield
+end module testfield_m
+! $Log: $
+@
+

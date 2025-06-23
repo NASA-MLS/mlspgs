@@ -1,0 +1,1137 @@
+head	1.6;
+access;
+symbols
+	v5-02-NRT-19:1.6
+	v6-00:1.6
+	v5-02-NRT-18:1.6
+	v5-02:1.6
+	v5-01-NRT-17:1.6
+	v5-01-NRT-16:1.6
+	v5-01-NRT-15:1.6
+	v5-01-NRT-14:1.6
+	neuralnetworks-1-0:1.6.0.14
+	cfm-single-freq-0-1:1.6.0.12
+	v5-01:1.6
+	v5-00:1.6
+	v4-23-TA133:1.6.0.10
+	mus-emls-1-70:1.6.0.8
+	rel-1-0-englocks-work:1.6.0.6
+	VUMLS1-00:1.6
+	VPL1-00:1.6
+	V4-22-NRT-08:1.6
+	VAM1-00:1.6
+	V4-21:1.6.0.4
+	V4-13:1.6
+	V4-12:1.6
+	V4-11:1.6
+	V4-10:1.6
+	V3-43:1.6
+	M4-00:1.6
+	V3-41:1.6
+	V3-40-PlusGM57:1.6.0.2
+	V3-33:1.6
+	V3-31:1.6
+	V3-30-NRT-05:1.6
+	cfm-01-00:1.6
+	V3-30:1.6
+	V3-20:1.6;
+locks; strict;
+comment	@% @;
+
+
+1.6
+date	2009.12.07.21.32.57;	author vsnyder;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2009.10.23.23.59.43;	author vsnyder;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2009.10.21.22.45.49;	author vsnyder;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2009.10.17.00.54.54;	author vsnyder;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2009.10.17.00.53.57;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2009.10.15.22.57.22;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.6
+log
+@Add linear extrapolation case
+@
+text
+@\documentclass[11pt]{article}
+
+\usepackage{alltt}
+\usepackage{color}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9.0in
+
+\newcommand{\docname}{\bf wvs-086r4}
+\newcommand{\docdate}{18 November 2009}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[u]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Van\\
+Subject: \>Cubic spline interpolation with unequally spaced abscissae\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 10pt
+\vspace{-20pt}
+
+\section{The problem}
+
+Consider the piecewise cubic polynomial
+
+\begin{equation}\label{one}
+S_i(x) = a_i (x-x_i)^3 + b_i (x-x_i)^2 + c_i (x-x_i) + d_i\,.
+\end{equation}
+
+Denote $h_i = x_{i+1}-x_i$ and require the polynomial to interpolate the data
+$\{y_i\}$, i.e., $S_i(x_i) = d_i = y_i$, with the following additional
+conditions:
+
+\begin{equation}\begin{split}\label{two}
+S_i(x_{i+1}) = a_i h_i^3 + b_i h_i^2 + c_i h_i + d_i
+ =\,& S_{i+1}(x_{i+1}) = d_{i+1} \\
+S_i^\prime(x_{i+1}) = 3 a_i h_i^2 + 2 b_i h_i + c_i
+ =\,& S_{i+1}^\prime(x_{i+1}) = c_{i+1} \\
+S_i^{\prime\prime}(x_{i+1}) = 6 a_i h_i + 2 b_i
+ =\,& S_{i+1}^{\prime\prime}(x_{i+1}) = 2 b_{i+1} \\
+\end{split}\end{equation}
+
+i.e., $C^0$, $C^1$, and $C^2$ continuity conditions.  From the third relation
+in Equation (\ref{two}) we have
+
+\begin{equation}\label{three}
+a_i = \frac{b_{i+1}-b_i}{3 h_i}
+\end{equation}
+
+Solving the first relation in Equation (\ref{two}) for $c_i$ and substituting
+Equation (\ref{three}) into that result we have
+
+\begin{equation}\label{four}
+c_i = \frac{\rho_i}3 - b_i h_i - a_i h_i^2
+    = \frac{\rho_i}3 - \frac{h_i}3 ( b_{i+1} + 2 b_i )
+    \text{ where } \rho_i = 3 \left( \frac{d_{i+1}-d_i}{h_i} \right)
+\end{equation}
+
+Substituting Equations (\ref{three}) and (\ref{four}) into the second relation
+in Equation (\ref{two}) and rearranging terms we have
+
+\begin{equation}\label{five}
+h_i b_i + 2 ( h_i + h_{i+1} ) b_{i+1} + h_{i+1} b_{i+2}
+ = \rho_{i+1} - \rho_i
+\end{equation}
+
+This gives us $n-2$ equations to solve for $\{b_1,\,b_2,\,\dots,\,b_n\}$.
+
+There are several ways to get two more conditions.
+
+Ultimately, having values for $b_i$, substitute Equations (\ref{three}) and
+(\ref{four}) into Equation (\ref{one}) and collect terms involving $b_i$,
+$b_{i+1}$, $d_i$ and $d_{i+1}$ to give
+
+\begin{equation}\begin{split}
+& S_i(x) = A d_i + B d_{i+1} + C b_i + D b_{i+1}
+         = A y_i + B y_{i+1} + C b_i + D b_{i+1} \text{ where }\\
+&\begin{array}{lll} A = \frac{x_{i+1}-x}{h_i} && B = 1 - A \\
+                    C = (A^3-A) \frac{h_i^2}3 && D = (B^3-B) \frac{h_i^2}3
+ \end{array}\,.
+\end{split}\end{equation}
+
+Notice that the first two terms are just linear interpolation.
+
+\section{Linear extrapolation}
+
+Adding the conditions $S_1^{\prime\prime}(x_1) = 2 b_1 = 0$ and
+$S_n^{\prime\prime}(x_n) = 2 b_n = 0$, using $\sigma_i = 2(h_i+h_{i+1})$,
+and writing the equations in matrix form, gives
+
+\begin{equation}
+\left[ \begin{array}{llllllll}
+\sigma_1 & h_2      & 0        & 0        & \dots  & 0        & 0        & 0           \\
+h_2      & \sigma_2 & h_3      & 0        & \dots  & 0        & 0        & 0           \\
+0        & h_3      & \sigma_3 & h_4      & \dots  & 0        & 0        & 0           \\
+\dots    & \dots    & \dots    & \dots    & \dots  & \dots    & \dots    & \dots       \\
+0        & 0        & 0        & 0        & \dots  & h_{n-3}  & \sigma_{n-3} & h_{n-2} \\
+0        & 0        & 0        & 0        & \dots  & 0     & h_{n-2} & \sigma_{n-2}    \\
+\end{array} \right]
+\left[ \begin{array}{l}
+b_2 \\ b_3 \\ b_4 \\ \dots \\ b_{n-2} \\ b_{n-1} \end{array} \right] =
+\left[ \begin{array}{l}
+\rho_2-\rho_1 \\ \rho_3-\rho_2 \\ \rho_4-\rho_3 \\ \dots \\
+ \rho_{n-2}-\rho_{n-3} \\ \rho_{n-1}-\rho_{n-2}
+\end{array} \right]
+\end{equation}
+
+This is a simple symmetric tridiagonal system that can easily be factored
+using the method described for $A_{11}$ in section \ref{easier} below.
+
+\section{Periodic continuity}
+
+If we know the data are periodic, we can impose the additional conditions
+
+\begin{equation}\begin{split}\label{six}
+S_1^\prime(x_1) = c_1 =& S_n^\prime(x_n) = c_n \\
+S_1^{\prime\prime}(x_1) = 2 b_1 =& S_n^{\prime\prime}(x_n) = 2 b_n \\
+\end{split}\end{equation}
+
+Substituting the second relation in Equation (\ref{two}), Equation (\ref{four}),
+and Equation (\ref{three}) into the first of these gives
+
+\begin{equation}\label{seven}
+c_1 = \frac{\rho_1}3 - \frac{h_1}3 ( 2 b_1 + b_2 ) = c_n =
+ \frac{h_{n-1}}3 ( b_{n-1} + 2 b_n ) - \frac{\rho_{n-1}}3
+\end{equation}
+
+Collecting terms we have
+
+\begin{equation}\label{eight}
+h_1 ( 2 b_1 + b_2 ) + h_{n-1} ( b_{n-1} + 2 b_n )
+ = \rho_1 + \rho_{n-1}
+\end{equation}
+
+Collecting the second row of Equation (\ref{six}), Equation (\ref{eight}),
+and Equation (\ref{five}) into a matrix and writing $\sigma_i = 2(h_i +
+h_{i+1})$, we have
+
+\begin{equation}\label{nine}
+\left[ \begin{array}{lllllllll}
+1     & 0        & 0        & 0     & \dots & 0       & 0       & 0            & -1 \\               
+2 h_1 & h_1      & 0        & 0     & \dots & 0       & 0       & h_{n-1}      & 2 h_{n-1} \\ 
+h_1   & \sigma_1 & h_2      & 0     & \dots & 0       & 0       & 0            & 0 \\                
+0     & h_2      & \sigma_2 & h_3   & \dots & 0       & 0       & 0            & 0 \\
+\dots & \dots    & \dots    & \dots & \dots & \dots   & \dots   & \dots        & \dots \\
+0     & 0        & 0        & 0     & \dots & h_{n-3} & \sigma_{n-3} & h_{n-2} & 0 \\
+0     & 0        & 0        & 0     & \dots & 0       & h_{n-2} & \sigma_{n-2} & h_{n-1} \\
+\end{array} \right]
+%
+\left[ \begin{array}{c}
+b_1 \\
+b_2 \\
+b_3 \\
+b_4 \\
+\dots \\
+b_{n-1}\\
+b_n \\
+\end{array} \right]
+%
+ = \left[ \begin{array}{c}
+0 \\
+\rho_1 - \rho_{n-1} \\
+\rho_2 - \rho_1 \\
+\rho_3 - \rho_2 \\
+\dots \\
+\rho_{n-2} - \rho_{n-3} \\
+\rho_{n-1} - \rho_{n-2} \\
+\end{array} \right]
+\end{equation}
+
+\section{Tedious solution of Equation (\ref{nine})}
+
+The three nonzeros above the diagonal can be eliminated using Gaussian
+elimination.  Alternatively, an explicit LU factorization can be developed,
+which is useful if splines over the same abscissae $\{x_i\, |\, i = 1, \dots, n
+\}$ are to interpolate different data (the matrix depends only upon the
+abscissae).
+
+Assuming $n \geq 4$, start by partitioning the matrix of Equation
+(\ref{nine}) and its $LU$ decomposition as
+
+\begin{equation}
+A =
+\left[ \begin{array}{cc} \hat{A}_1 & \hat{A}_2 \end{array} \right] =
+\left[ \begin{array}{cc} \hat{L}_1 & \hat{L}_2 \end{array} \right]
+\left[ \begin{array}{cc} \hat{U}_{11} & \hat{U}_{12} \\
+                          0           & \hat{U}_{22} \end{array} \right] =
+\left[ \begin{array}{cc} \hat{L}_1 \hat{U}_{11} &
+                         \hat{L}_1 \hat{U}_{12} + \hat{L}_2 \hat{U}_{22}
+                         \end{array} \right]
+\end{equation}
+
+where $\hat{A}_2$ and $\hat{L}_2$ are $n \times 2$ blocks, and
+$\hat{U}_{22}$ is a $2 \times 2$ block.  Since $\hat{A}_1$ is lower
+triangular, $\hat{L}_1 \hat{U}_{11}$ is also lower triangular.  Since
+$\hat{L}_1$ is lower triangular, necessarily $\hat{U}_{11} = I$, and therefore
+$\hat{L}_1 = \hat{A}_1$.
+
+Now repartition as
+
+\begin{equation}
+A =
+\left[ \begin{array}{ccc} A_{11} & A_{12} =0 & A_{13}     \\
+                          A_{21} & A_{22}    & A_{23} = 0 \\
+                          A_{31} & A_{32}    & A_{33} \end{array} \right] =
+\left[ \begin{array}{ccc} L_{11} & 0         & 0      \\
+                          L_{21} & L_{22}    & 0      \\
+                          L_{31} & L_{32}    & L_{33} \end{array} \right]
+\left[ \begin{array}{ccc} U_{11} & U_{12}    & U_{13} \\
+                          0      & U_{22}    & U_{23} \\
+                          0      & 0         & U_{33} \end{array} \right],
+\end{equation}
+
+where the first and last row and column of every matrix is of extent 2, and
+identify
+
+\begin{equation}
+\hat{A}_1 =
+\left[ \begin{array}{cc} A_{11} & 0      \\
+                         A_{21} & A_{22} \\
+                         A_{31} & A_{32} \end{array} \right],\,
+\hat{L}_1 =
+\left[ \begin{array}{cc} L_{11} & 0      \\
+                         L_{21} & L_{22} \\
+                         L_{31} & L_{32} \end{array} \right]
+\text{ and }
+\hat{U}_{11} =
+\left[ \begin{array}{cc} U_{11} & U_{12} \\
+                         0      & U_{22} \end{array} \right],
+\end{equation}
+
+from which, since $\hat{A}_1$ = $\hat{L}_1$ their corresponding blocks are
+equal, and since and $\hat{U}_{11}=I$, $U_{11} = I$, $U_{22} = I$, and
+$U_{12} = 0$.  There is no solution for $n < 4$.  When $n = 4$ the blocks
+with either subscript equal to 2 are not present and all remaining blocks
+are $2 \times 2$ blocks.  When $n > 5$, $A_{31} = 0$. This leaves the
+three additional relations
+
+\begin{equation}\begin{array}{ll}\label{thirteen}
+A_{13} = L_{11} U_{13} & \Rightarrow U_{13} = A_{11}^{-1} A_{13}
+= \left[\begin{array}{cc} 0 & -1 \\
+                         r & 2 (1+r)
+  \end{array} \right]
+\text{ where } r = \frac{h_{n-1}}{h_1}
+ \\
+A_{23} = 0 = A_{21} U_{13} + A_{22} U_{23}
+                       & \Rightarrow U_{23} = -A_{22}^{-1} A_{21} U_{13} \\
+A_{33} = A_{31} U_{13} +  A_{32} U_{23} + L_{33} U_{33}
+ & \Rightarrow L_{33} U_{33} =
+ \left\{ \begin{array}{ll} A_{33} - A_{31} U_{13} & n = 4 \\
+                           A_{33} - A_{32} U_{23} - A_{31} U_{13} & n = 5 \\
+                           A_{33} - A_{32} U_{23} & n > 5\,. \end{array}\right.
+\end{array}\end{equation}
+
+Summarizing,
+
+\begin{equation}
+A = LU =
+\left[ \begin{array}{ccc} A_{11} & 0      & A_{13}     \\
+                          A_{21} & A_{22} & 0          \\
+                          A_{31} & A_{32} & A_{33} \end{array} \right] =
+\left[ \begin{array}{ccc} A_{11} & 0      & 0      \\
+                          A_{21} & A_{22} & 0      \\
+                          A_{31} & A_{32} & L_{33} \end{array} \right]
+\left[ \begin{array}{ccc} I      & 0      & A_{11}^{-1} A_{13} \\
+                          0      & I      & -A_{22}^{-1} A_{21} U_{13} \\
+                          0      & 0      & U_{33} \end{array} \right].
+\end{equation}
+
+$L_{33}$ and $U_{33}$ result from the $LU$ decomposition of a $2 \times 2$
+block:
+
+\begin{equation}\label{fifteen}
+\left[ \begin{array}{cc} a & b \\ c & d \end{array} \right] =
+\left[ \begin{array}{cc} a & 0 \\ c & \frac{ad-bc}a \end{array} \right]
+\left[ \begin{array}{cc} 1 & \frac{b}a \\ 0 & 1 \end{array} \right]
+\end{equation}
+
+Computing $U_{23} = -A_{22}^{-1} A_{21} U_{13}$ is not difficult or
+expensive because $A_{22}$ is lower triangular with at most two nonzero
+diagonals below the main diagonal.
+
+$U_{23}$ is empty in the $n=4$ case.
+
+In the $n>4$ case, let $B = A_{21} U_{13}$.  From the first relation of
+Equation (\ref{thirteen}), the first two rows of $B$ are
+$[\sigma_1 r,\, -h_1 + 2 \sigma_1 (1+r)]$ and $[ h_2 r,\, 2 h_2(1+r)]$, and the
+remaining rows are zero.
+
+Other than $A_{13}$, $A$ is lower triangular with only two diagonals below the
+main diagonal.  The sub-subdiagonal is equal to the main diagonal, except for
+the first and last two elements.  Thus we can represent $A$ (except for
+$A_{13}$) using two arrays {\tt D(1:n)} and {\tt S(2:n)} where
+%
+{\tt D} = [$1, h_1, h_2, \dots, h_{n-1}$], and
+{\tt S} = [$2 h_1, \sigma_1, \sigma_2, \dots, \sigma_{n-2}$].
+
+Let {\tt U(1:n,1:2)} represent $[U_{13}, U_{23}, U_{33}]^T$.  Having computed
+{\tt U(1:2,1:2)} from Equation (\ref{thirteen}) and $B$, we can compute
+{\tt U(3:n-2,:)} using
+
+\begin{alltt}
+  R = D(n) / D(2)
+  U(3,:) = [ S(3) * R, -D(2) + 2 * S(2) * ( 1 + R ) ] / D(3)
+  if ( n > 5 ) then
+    U(4,:) = ( D(3) * [ R, S(2) * ( 1 + R ) ] - S(4) * U(3,:) ) / D(4)
+    do I = 5, n-2
+      U(I,:) = ( - U(I-2,:) * D(I-1) - U(I-1) * S(I) / D(I) ! B(5:n,:) == 0
+    end do
+  end if
+\end{alltt}
+
+We can them form $L_{33} U_{33}$ according to the last relation in Equation
+(\ref{thirteen}) and factor it according to Equation (\ref{fifteen}).  This
+completes the construction of $L$ and $U$.
+
+Having $L$ and $U$ we can write Equation (\ref{nine}) as $A b = L U b= \zeta$
+where $\zeta_1=0$, $\zeta_2 = \rho_1 + \rho_{n-1}$ and otherwise $\zeta_i =
+\rho_{i-1} - \rho_{i-2}$. We can solve for $b$ by first solving $Ly=\zeta$ for
+$y$, and then solving $Ub=y$ for $b$.
+
+Since $L$ (other than $L_{33}$) is equal to the lower triangle of $A$ (other
+than $A_{33}$), it can also be represented by two arrays, which are the same as
+the arrays {\tt D} and {\tt S} above, with {\tt D(n-1:n)} replaced by $a$ and
+$(a d - b c) / a$ from Equation (\ref{fifteen}), and {\tt S(n)} replaced by $c$
+from Equation (\ref{fifteen}).  Denote these arrays by {\tt DL} and {\tt SL}. 
+Let {\tt Y(1:n)} represent $y$ and {\tt Z(1:n)} represent $\zeta$.  Then we can
+solve for $y$ using
+
+\begin{alltt}
+  Y(1) = 0
+  Y(2) = Z(2) / D(2)
+  do I = 3, n
+    Y(I) = ( Z(I) - Y(I-2) * DL(I-1) - Y(I-1) * SL(I) ) / DL(I)
+  end do
+\end{alltt}
+
+Using the array {\tt U} computed above to represent the last two columns of
+$U$, remembering that the diagonal elements of $U$ are 1, letting {\tt B}
+represent $b$, and noticing that $b_1 = b_n$ (from the first row of Equation
+(\ref{nine}), we can solve for $b$ using
+
+\begin{alltt}
+  B(n) = Y(n)                             ! U(n,2) = 1
+  B(n-1) = Y(n-1) - U(n-1,2) * B(n)       ! U(n-1,1) = 1
+  do I = n-2, 2, -1
+    B(I) = Y(I) - U(I,1) * B(I+1) - U(I,2) * B(I+2)
+  end do
+  B(1) = B(n)
+\end{alltt}
+
+Remembering that $S_n = S_1$ because the data are periodic, we have $a_n =
+a_1$, $c_n = c_1$, and can compute $a_i$ and $c_i$ for $i = 1, 2, \dots, n-1$
+from Equations (\ref{three}) and (\ref{four}).
+
+To evaluate the interpolating spline at $\xi$, compute $\hat{\xi} = x_1 +
+\xi\!\!\mod (x_n-x_1)$ and evaluate $S_j(\hat{\xi})$ where $x_j \leq \hat{\xi}
+< x_{j+1}$.
+
+\section{Easier solution of Equation (\ref{nine})}\label{easier}
+
+In Equation (\ref{nine}), use the first equation to eliminate $b_n$ and
+write $\sigma_0 = 2 (h_1+h_{n-1})$, giving
+
+\begin{equation}\label{sixteen}
+\left[ \begin{array}{llllllll}
+\sigma_0 & h_1      & 0        & 0     & \dots & 0       & 0       & h_{n-1}      \\
+h_1      & \sigma_1 & h_2      & 0     & \dots & 0       & 0       & 0            \\             
+0        & h_2      & \sigma_2 & h_3   & \dots & 0       & 0       & 0            \\
+\dots    & \dots    & \dots    & \dots & \dots & \dots   & \dots   & \dots        \\
+0        & 0        & 0        & 0     & \dots & h_{n-3} & \sigma_{n-3} & h_{n-2} \\
+h_{n-1}  & 0        & 0        & 0     & \dots & 0       & h_{n-2} & \sigma_{n-2} \\
+\end{array} \right]
+%
+\left[ \begin{array}{c}
+b_1 \\
+b_2 \\
+b_3 \\
+b_4 \\
+\dots \\
+b_{n-1}\\
+\end{array} \right]
+%
+ = \left[ \begin{array}{c}
+\rho_1 - \rho_{n-1} \\
+\rho_2 - \rho_1 \\
+\rho_3 - \rho_2 \\
+\dots \\
+\rho_{n-2} - \rho_{n-3} \\
+\rho_{n-1} - \rho_{n-2} \\
+\end{array} \right]
+\end{equation}
+
+This is a symmetric system for which we can calculate an $L U$ factorization,
+with all elements of the diagonal of $U$ equal to 1.
+
+Partition $A$ as
+
+\begin{equation}
+\left[\begin{array}{ll} A_{11} & A_{12} \\
+                        A_{21} & A_{22} \end{array}\right]
+ = \left[\begin{array}{ll} L_{11} & 0 \\
+                           L_{21} & L_{22} \end{array}\right]
+   \left[\begin{array}{ll} U_{11} & U_{12} \\
+                           0      & 1 \end{array}\right]
+\end{equation}
+
+in which $A_{11}$, $L_{11}$ and $U_{11}$ are $n-2 \times n-2$ blocks, and
+$A_{22}$ and $L_{22}$ are $1 \times 1$ blocks.  Equating blocks, we have
+
+\begin{equation}\begin{split}\label{eighteen}
+A_{11} =\,& L_{11} U_{11} \\
+A_{12} =\,& L_{11} U_{12} \\
+A_{21} =\,& L_{21} U_{11} \\
+A_{22} =\,& L_{21} U_{12} + L_{22}
+\end{split}\end{equation}
+
+The first of these requires the $L U$ decomposition of an $n-2 \times n-2$
+symmetric tridiagonal matrix.  The $L U$ decomposition of a tridiagonal
+matrix can be represented in two ways, known as the Doolitle and Crout
+factorizations.  In the general nonsymmetric case, write
+
+\begin{equation}
+A_{11} = \left[ \begin{array}{llllll}
+     \sigma_0 & p_0      & 0     & \dots & 0            & 0 \\
+     q_1      & \sigma_1 & p_1   & \dots & 0            & 0 \\
+     \dots    & \dots    & \dots & \dots & \dots        & \dots \\
+     0        & 0        & 0     & \dots & \sigma_{n-4} & p_{n-4} \\
+     0        & 0        & 0     & \dots & q_{n-3}      & \sigma_{n-3}
+    \end{array} \right]
+    \text{ and }
+    \beta_i = \left\{ \begin{array}{ll}
+     \sigma_0 & i = 0 \\
+     \sigma_i - \frac{q_i}{\beta_{i-1}}\, p_{i-1} & i > 0
+    \end{array} \right. \,.
+\end{equation}
+
+Then
+
+\begin{equation} \begin{split}
+A_{11} =\,& \left[ \begin{array}{llllll}
+     1                   & 0     & 0     & \dots & 0       & 0 \\
+     \frac{q_1}{\beta_0} & 1     & 0     & \dots & 0       & 0 \\
+     0     & \frac{q_2}{\beta_1} & 1     & \dots & 0       & 0 \\
+     \dots         & \dots       & \dots & \dots & \dots   & \dots \\
+     0                   & 0     & 0     & \dots & 1       & 0 \\
+     0     & 0     & 0   & \dots & \frac{q_{n-3}}{\beta_{n-4}} & 1
+    \end{array} \right]
+    \,
+    \left[ \begin{array}{llllll}
+     \beta_0 & p_0     & 0       & \dots & 0       & 0 \\
+     0       & \beta_1 & p_1     & \dots & 0       & 0 \\
+     0       & 0       & \beta_2 & \dots & 0       & 0 \\
+     \dots   & \dots   & \dots   & \dots & \dots   & \dots \\
+     0       & 0       & 0       & \dots & \beta_{n-4} & p_{n-4} \\
+     0       & 0       & 0       & \dots & 0       & \beta_{n-3}
+    \end{array} \right] \text{ (Doolittle)} \\
+  \,& \\
+  =\,& \left[ \begin{array}{llllll}
+     \beta_0 & 0       & 0       & \dots               & 0       & 0 \\
+     q_1     & \beta_1 & 0       & \dots               & 0       & 0 \\
+     0       & q_2     & \beta_2 & \dots               & 0       & 0 \\
+     \dots   & \dots   & \dots   & \dots & \dots       & \dots \\
+     0       & 0       & 0       & \dots & \beta_{n-4} & 0 \\
+     0       & 0       & 0       & \dots & q_{n-3}     & \beta_{n-3}
+    \end{array} \right]
+    \,
+    \left[ \begin{array}{llllll}
+     1       & \frac{p_0}{\beta_0} & 0 & \dots & 0       & 0 \\
+     0       & 1 & \frac{p_1}{\beta_1} & \dots & 0       & 0 \\
+     0       & 0       & 1             & \dots & 0       & 0 \\
+     \dots   & \dots   & \dots         & \dots & \dots   & \dots \\
+     0       & 0       & 0     & \dots & 1 & \frac{p_{n-4}}{\beta_{n-4}} \\
+     0       & 0       & 0             & \dots & 0       & 1
+    \end{array} \right] \text{ (Crout)}\,, \\
+\end{split}\end{equation}
+
+where we choose the Crout factorization.  Since $A_{11}$ is tridiagonal,
+$L_{11}$ and $U_{11}$ are bidiagonal.  In our case $A$ is symmetric, i.e.,
+$q_i = p_{i-1} = h_i$. Let {\tt SIGMA(0:n-2)} represent the diagonal
+of $A$, and {\tt H(1:n-2)} represent the subdiagonal. Let {\tt D(1:n-1)}
+represent the diagonal of $L$, with {\tt D(n-1)} representing $L_{22}$,
+and let {\tt U(1:n-2)} represent the superdiagonal of $U_{11}$.  The
+subdiagonal of $L_{11}$ is the same as the subdiagonal {\tt H(1:n-3)} of
+$A_{11}$.  We can calculate $L_{11}$ and $U_{11}$ thus:
+
+\begin{alltt}
+  D(1) = SIGMA(0)
+  do k = 2, n-2
+    U(k-1) = H(k-1) / D(k-1)
+    D(k) = SIGMA(k-1) - H(k-1) * U(k-1)
+  end do
+\end{alltt}
+
+Having $L_{11}$ we can solve the second relation $A_{12} = L_{11} U_{12}$
+in Equation (\ref{eighteen})
+
+\begin{equation}
+ \left[ \begin{array}{l} h_{n-1}\\ 0\\ \dots\\ 0\\ h_{n-2}
+ \end{array} \right] = 
+ \left[ \begin{array}{lllll}
+    \beta_0 & 0       & 0       & \dots   & 0 \\
+    h_1     & \beta_1 & 0       & \dots   & 0 \\
+    0       & h_2     & \beta_2 & \dots   & 0 \\
+    \dots   & \dots   & \dots   & \dots   & 0 \\
+    0       & 0       & \dots   & h_{n-3} & \beta_{n-3}
+        \end{array} \right]
+ \left[ \begin{array}{l} \gamma_1 \\ \gamma_2 \\ \gamma_3 \\ \dots \\ \gamma_{n-2}
+ \end{array} \right]
+\end{equation}
+
+for $\gamma = U_{12}$.  Let {\tt C(1:n-2)} (for Column) represent $\gamma$.
+Then
+
+\begin{alltt}
+  C(1) = H(n-1) / D(1)
+  do k = 2, n-3
+    C(k) = - H(k-1) * C(k-1) / D(k)
+  end do
+  C(n-2) = ( H(n-2) - H(n-3) * C(n-3) ) / D(n-2)
+\end{alltt}
+
+Having $U_{11}$ we can solve the third relation $A_{21} = L_{21} U_{11}$
+in Equation (\ref{eighteen})
+
+
+\begin{equation}
+[ \begin{array}{lllll}
+           h_{n-1} & 0 & \dots & 0 & h_{n-2}
+         \end{array} ] =
+ [ \begin{array}{lllll} r_1 & r_2 & \dots & r_{n-3} & r_{n-2}
+   \end{array} ]
+ \left[ \begin{array}{lllll}
+   1     & u_1   & 0     & \dots & 0 \\
+   0     & 1     & u_2   & \dots & 0 \\
+   \dots & \dots & \dots & \dots & 0 \\
+   0     & 0     & \dots & 1     & u_{n-3} \\
+   0     & 0     & \dots & 0     & 1
+ \end{array} \right]
+\end{equation}
+
+
+for $r = L_{21}$.  Let {\tt R(1:n-2)} (for Row) represent $r$.  Then
+
+\begin{alltt}
+  R(1) = H(n-1)
+  do k = 2, n-3
+    R(k) = - R(k-1) * U(k-1)
+  end do
+  R(n-2) = H(n-2) - R(n-3) * U(n-3)
+\end{alltt}
+
+Finally, from the last relation in Equation(\ref{eighteen}),
+$L_{22} = A_{22} - L_{21} U_{12}$.  Remember that $A_{22}$
+and $L_{22}$ are $1 \times 1$ blocks, so
+
+\begin{alltt}
+  D(n-1) = SIGMA(n-2) - dot_product ( R, C )
+\end{alltt}
+
+We can solve $ A\, b = L\,U\,b =$
+
+\begin{equation}
+ \left[ \begin{array}{llllll}
+ \beta_0 & 0       & 0       & \dots   & 0           & 0 \\
+ h_1     & \beta_1 & 0       & \dots   & 0           & 0 \\
+ 0       & h_2     & \beta_2 & \dots   & 0           & 0 \\
+ \dots   & \dots   & \dots   & \dots   & \dots       & \dots \\
+ 0       & 0       & 0       & \dots   & \beta_{n-3} & 0 \\
+ r_1     & r_2     & 0       & \dots   & r_{n-2}     & L_{22}
+ \end{array} \right]
+ \left[ \begin{array}{llllll}
+ 1     & u_1   & 0     & \dots   & 0     & c_1 \\
+ 0     & 1     & u_2   & \dots   & 0     & c_2 \\
+ 0     & 0     & 1     & \dots   & 0     & c_3 \\
+ \dots & \dots & \dots & \dots   & \dots &\dots \\
+ 0     & 0     & 0     & \dots   & 1     & c_{n-2} \\
+ 0     & 0     & 0     & \dots   & 0     & 1
+ \end{array} \right] \,b =
+ \left[ \begin{array}{l}
+ y_1 \\
+ y_2 \\
+ y_3 \\
+ \dots \\
+ y_{n-2} \\
+ y_{n-1} \end{array} \right] = y
+\end{equation}
+
+for $b$ by first solving $L\,z = y$ for $z$, and then solving $U\,b =
+z$ for $b$.  Let {\tt Z(1:n-1)} represent $z$, {\tt B(1:n-1)} represent
+$b$, and {\tt Y(1:n-1)} represent $y$.  Then
+
+\begin{alltt}
+  Z(1) = Y(1) / D(1)
+  do k = 2, n-2
+    Z(k) = ( Y(k) - H(k-1) * Z(k-1) ) / D(k)
+  end do
+  Z(n-1) = ( Y(n-1) - dot_product(R,Z(1:n-1)) ) / L22
+
+  B(n-1) = Z(n-1)
+  B(n-2) = Z(n-2) - C(n-2) * B(n-1)
+  do k = n-3, 1, -1
+    B(k) = Z(k) - U(k) * B(k+1) - C(k) * B(n-1)
+  end do
+\end{alltt}
+
+Combining all of this into one lump and shifting gears so that {\tt D}
+represents the reciprocal of the diagonal of $L$, we can factor $A$ and solve
+for $z$ in one loop, and solve for $b$ in a second loop:
+
+\begin{alltt}
+  D(1) = 1.0 / SIGMA(0)
+  \textcolor{red}{C(1) = H(n-1) * D(1)}
+  \textcolor{red}{R(1) = H(n-1)}
+  Z(1) = Y(1) * D(1)
+  do k = 2, n-3
+    U(k-1) = H(k-1) * D(k-1)
+    D(k) = 1.0 / ( SIGMA(k-1) - H(k-1) * U(k-1) )
+    \textcolor{red}{C(k) = - H(k-1) * C(k-1) * D(k)}
+    \textcolor{red}{R(k) = - R(k-1) * U(k-1)}
+    Z(k) = ( Y(k) - H(k-1) * Z(k-1) ) * D(k)
+  end do
+  U(n-3) = H(n-3) * D(n-3)
+  D(n-2) = 1.0 / ( SIGMA(n-3) - H(n-3) * U(n-3) )
+  \textcolor{red}{C(n-2) = ( H(n-2) - H(n-3) * C(n-3) ) * D(n-2)}
+  \textcolor{red}{R(n-2) = H(n-2) - R(n-3) * U(n-3)}
+  D(n-1) = 1.0 / ( SIGMA(n-2) \textcolor{blue}{ - dot_product ( R(1:n-2), C )} )
+  Z(n-2) = ( Y(n-2) - H(n-3) * D(n-3) ) * D(n-2)
+
+  B(n-1) = ( Y(n-1) \textcolor{red}{ - dot_product(R,Z)} ) * D(n-1) ! = Z(n-1)
+  B(n-2) = Z(n-2) - \textcolor{blue}{ C(n-2)} * B(n-1)
+  do k = n-3, 1, -1
+    B(k) = Z(k) - U(k) * B(k+1) \textcolor{red}{ - C(k) * B(n-1)}
+  end do
+\end{alltt}
+
+where the parts in \textcolor{red}{red} or \textcolor{blue}{blue} are the
+additions necessary for periodic continuity.  The case of linear extrapolation
+can be simplified by removing the \textcolor{red}{red} parts and replacing
+{\tt C(n-2)} by {\tt U(n-2)} where {\tt U(n-2) = H(n-2) * D(n-2)}.  We also
+start with {\tt D(2)} and {\tt Z(2)}, run the first loop to {\tt n-1} since
+{\tt dot\_product ( R(1:n-2), C )} is {\tt H(n-2) * U(n-2)}, and end by not
+solving for {\tt B(1)}, giving
+
+\begin{alltt}
+  D(2) = 1.0 / SIGMA(1)
+  Z(2) = Y(2) * D(2)
+  do k = 3, n-1
+    U(k-1) = H(k-1) * D(k-1)
+    D(k) = 1.0 / ( SIGMA(k-1) - H(k-1) * U(k-1) )
+    Z(k) = ( Y(k) - H(k-1) * Z(k-1) ) * D(k)
+  end do
+
+  B(n-1) = Y(n-1)* D(n-1) ! = Z(n-1)
+  do k = n-2, 2, -1
+    B(k) = Z(k) - U(k) * B(k+1)
+  end do
+\end{alltt}
+
+The solution for {\tt Z} can be unfused from the first loop if it is necessary
+to factor the matrix and then solve for several sets of $b_i$ from different
+data, but to interpolate from and to the same abscissae.
+
+\label{lastpage}
+\end{document}
+% $Id: wvs-086.tex,v 1.5 2009/10/23 23:59:43 vsnyder Exp $
+
+% $Log: wvs-086.tex,v $
+% Revision 1.5  2009/10/23 23:59:43  vsnyder
+% Add barycentric parameterization, make notation more uniform
+%
+% Revision 1.4  2009/10/21 22:45:49  vsnyder
+% Flesh out LU factorization mathematical exposition
+%
+% Revision 1.3  2009/10/17 00:54:54  vsnyder
+% Forgot to change to r1
+%
+% Revision 1.2  2009/10/17 00:53:57  vsnyder
+% Correct sign error
+%
+% Revision 1.1  2009/10/15 22:57:22  vsnyder
+% Initial commit
+%
+@
+
+
+1.5
+log
+@Add barycentric parameterization, make notation more uniform
+@
+text
+@d12 2
+a13 2
+\newcommand{\docname}{\bf wvs-086r3}
+\newcommand{\docdate}{23 October 2009}
+d40 1
+a40 1
+Subject: \>Periodic cubic spline interpolation with unequally spaced abscissae\\
+d94 44
+a195 14
+Having the solution for Equation (\ref{nine}), substitute Equations
+(\ref{three}) and (\ref{four}) into Equation (\ref{one}) and collect terms
+involving $b_i$, $b_{i+1}$, $d_i$ and $d_{i+1}$ to give
+
+\begin{equation}\begin{split}
+& S_i(x) = A d_i + B d_{i+1} + C b_i + D b_{i+1}
+         = A y_i + B y_{i+1} + C b_i + D b_{i+1} \text{ where }\\
+&\begin{array}{lll} A = \frac{x_{i+1}-x}{h_i} && B = 1 - A \\
+                    C = (A^3-A) \frac{h_i^2}3 && D = (B^3-B) \frac{h_i^2}3
+ \end{array}\,.
+\end{split}\end{equation}
+
+Notice that the first two terms are just linear interpolation.
+
+d385 1
+a385 1
+\section{Easier solution of Equation (\ref{nine})}
+d428 1
+a428 1
+                           L_{12} & L_{22} \end{array}\right]
+d445 1
+a445 1
+matrix can be represented two ways, known as the Doolitle and Crout
+d450 2
+a451 2
+     \sigma_1 & p_1      & 0     & \dots & 0            & 0 \\
+     q_2      & \sigma_2 & p_2   & \dots & 0            & 0 \\
+d453 2
+a454 2
+     0        & 0        & 0     & \dots & \sigma_{n-2} & p_{n-2} \\
+     0        & 0        & 0     & \dots & q_{n-1}      & \sigma_{n-1}
+d458 2
+a459 2
+     \sigma_1 & i = 1 \\
+     \sigma_i - \frac{q_i}{\beta_{i-1}}\, p_{i-1} & i > 1
+d468 2
+a469 2
+     \frac{q_2}{\beta_1} & 1     & 0     & \dots & 0       & 0 \\
+     0     & \frac{q_3}{\beta_2} & 1     & \dots & 0       & 0 \\
+d472 1
+a472 1
+     0     & 0     & 0   & \dots & \frac{q_{n-1}}{\beta_{n-2}} & 1
+d476 3
+a478 3
+     \beta_1 & p_1     & 0       & \dots & 0       & 0 \\
+     0       & \beta_2 & p_2     & \dots & 0       & 0 \\
+     0       & 0       & \beta_3 & \dots & 0       & 0 \\
+d480 2
+a481 2
+     0       & 0       & 0       & \dots & \beta_{n-2} & p_{n-2} \\
+     0       & 0       & 0       & \dots & 0       & \beta_{n-1}
+d485 3
+a487 3
+     \beta_1 & 0       & 0       & \dots               & 0       & 0 \\
+     q_2     & \beta_2 & 0       & \dots               & 0       & 0 \\
+     0       & q_3     & \beta_3 & \dots               & 0       & 0 \\
+d489 2
+a490 2
+     0       & 0       & 0       & \dots & \beta_{n-2} & 0 \\
+     0       & 0       & 0       & \dots & q_{n-1}     & \beta_{n-1}
+d494 2
+a495 2
+     1       & \frac{p_1}{\beta_1} & 0 & \dots & 0       & 0 \\
+     0       & 1 & \frac{p_2}{\beta_2} & \dots & 0       & 0 \\
+d498 1
+a498 1
+     0       & 0       & 0     & \dots & 1 & \frac{p_{n-2}}{\beta_{n-2}} \\
+d505 1
+a505 1
+$q_i = p_{i-1} = h_{i-1}$. Let {\tt SIGMA(0:n-2)} represent the diagonal
+d527 3
+a529 3
+    \beta_1 & 0       & 0       & \dots   & 0 \\
+    h_1     & \beta_2 & 0       & \dots   & 0 \\
+    0       & h_2     & \beta_3 & \dots   & 0 \\
+d531 1
+a531 1
+    0       & 0       & \dots   & h_{n-3} & \beta_{n-2}
+d590 3
+a592 3
+ \beta_1 & 0       & 0       & \dots   & 0           & 0 \\
+ h_1     & \beta_2 & 0       & \dots   & 0           & 0 \\
+ 0       & h_2     & \beta_3 & \dots   & 0           & 0 \\
+d594 1
+a594 1
+ 0       & 0       & 0       & \dots   & \beta_{n-2} & 0 \\
+d652 1
+a652 1
+  D(n-1) = 1.0 / ( SIGMA(n-2) \textcolor{red}{ - dot_product ( R(1:n-2), C )} )
+d663 25
+a687 5
+additions necessary for periodic continuity.  In the case without periodic
+continuity, $r=0$, $c_{1 \dots n-3} = 0$, and $c_{n-2} = u_{n-2} =
+\frac{\rho_{n-2}}{\beta{n-2}}$, so the \textcolor{red}{red} parts can be
+removed, and the \textcolor{blue}{blue} part replaced by {\tt U(n-2)} where
+{\tt U(n-2) = H(n-2) * D(n-2)}.
+d691 1
+a691 1
+% $Id: wvs-086.tex,v 1.4 2009/10/21 22:45:49 vsnyder Exp $
+d694 3
+@
+
+
+1.4
+log
+@Flesh out LU factorization mathematical exposition
+@
+text
+@d2 1
+d4 1
+d6 1
+d12 2
+a13 2
+\newcommand{\docname}{\bf wvs-086r2}
+\newcommand{\docdate}{21 October 2009}
+d51 1
+a51 1
+\begin{equation}
+d152 15
+a166 1
+\section{Tedious solution}
+d355 1
+a355 1
+\section{Easier solution}
+d415 2
+a416 2
+matrix can be represented two ways.  In the general nonsymmetric case,
+write
+d420 5
+a424 5
+     d_1   & a_1   & 0     & \dots & 0       & 0 \\
+     b_2   & d_2   & a_2   & \dots & 0       & 0 \\
+     \dots & \dots & \dots & \dots & \dots   & \dots \\
+     0     & 0     & 0     & \dots & d_{n-1} & a_{n-1} \\
+     0     & 0     & 0     & \dots & b_n     & d_n
+d428 2
+a429 2
+     d_1 & i = 1 \\
+     d_i - \frac{b_i}{\beta_{i-1}}\, a_{i-1} & i > 1
+d436 1
+a436 1
+A_{11} =\,& L_a U_a = \left[ \begin{array}{llllll}
+d438 2
+a439 2
+     \frac{b_2}{\beta_1} & 1     & 0     & \dots & 0       & 0 \\
+     0     & \frac{b_3}{\beta_2} & 1     & \dots & 0       & 0 \\
+d442 1
+a442 1
+     0     & 0     & 0   & \dots & \frac{b_n}{\beta_{n-1}} & 1
+d446 2
+a447 2
+     \beta_1 & a_1     & 0       & \dots & 0       & 0 \\
+     0       & \beta_2 & a_2     & \dots & 0       & 0 \\
+d450 3
+a452 3
+     0       & 0       & 0       & \dots & \beta_{n-1} & a_{n-1} \\
+     0       & 0       & 0       & \dots & 0       & \beta_n
+    \end{array} \right] \\
+d454 1
+a454 1
+  =\,& L_b U_b = \left[ \begin{array}{llllll}
+d456 2
+a457 2
+     b_2     & \beta_2 & 0       & \dots               & 0       & 0 \\
+     0       & b_3     & \beta_3 & \dots               & 0       & 0 \\
+d459 2
+a460 2
+     0       & 0       & 0       & \dots & \beta_{n-1} & 0 \\
+     0       & 0       & 0       & \dots & b_n         & \beta_n
+d464 2
+a465 2
+     1       & \frac{a_1}{\beta_1} & 0 & \dots & 0       & 0 \\
+     0       & 1 & \frac{a_2}{\beta_2} & \dots & 0       & 0 \\
+d468 1
+a468 1
+     0       & 0       & 0     & \dots & 1 & \frac{a_{n-1}}{\beta_{n-1}} \\
+d470 1
+a470 1
+    \end{array} \right] \,, \\
+d473 8
+a480 7
+where we choose $L_b U_b$.  Since $A_{11}$ is tridiagonal, $L_{11}$ and
+$U_{11}$ are bidiagonal.  Let {\tt SIGMA(0:n-2)} represent the diagonal of
+$A$, and {\tt H(1:n-2)} represent the subdiagonal. Let {\tt D(1:n-1)}
+represent the diagonal $d$ of $L$, with {\tt D(n-1)} representing
+$L_{22}$, and let {\tt U(1:n-2)} represent the superdiagonal $u$ of
+$U_{11}$.  The subdiagonal $s$ of $L_{11}$ is the same as the subdiagonal
+{\tt H(1:n-3)} of $A_{11}$.  We can calculate $L_{11}$ and $U_{11}$ thus:
+d496 6
+a501 5
+ \left[ \begin{array}{lllll} d_1   & 0     & 0     & \dots   & 0 \\
+                             h_1   & d_2   & 0     & \dots   & 0 \\
+                             0     & h_2   & d_3   & \dots   & 0 \\
+                             \dots & \dots & \dots & \dots   & 0 \\
+                             0     & 0     & \dots & h_{n-3} & d_{n-2}
+d503 1
+a503 1
+ \left[ \begin{array}{l} c_1 \\ c_2 \\ c_3 \\ \dots \\ c_{n-2}
+d507 2
+a508 1
+for $c = U_{12}$.  Let {\tt C(1:n-2)} represent $c$. Then
+d538 1
+a538 1
+for $r = L_{21}$.  Let {\tt R(1:n-2)} represent $r$.  
+d560 6
+a565 6
+ d_1   & 0     & 0     & \dots   & 0       & 0 \\
+ h_1   & d_2   & 0     & \dots   & 0       & 0 \\
+ 0     & h_2   & d_3   & \dots   & 0       & 0 \\
+ \dots & \dots & \dots & \dots   & \dots   & \dots \\
+ 0     & 0     & 0     & \dots   & d_{n-2} & 0 \\
+ r_1   & r_2   & 0     & \dots   & r_{n-2} & L_{22}
+d574 8
+a581 1
+ \end{array} \right] \,b = \zeta
+d584 3
+a586 3
+for $b$ by first solving $L\,y = \zeta$ for $y$, and then solving $U\,b =
+y$ for $b$.  Let {\tt Y(1:n-1)} represent $y$, {\tt B(1:n-1)} represent
+$b$, and {\tt Z(1:n-1)} represent $\zeta$.  Then
+d589 1
+a589 1
+  Y(1) = Z(1) / D(1)
+d591 1
+a591 1
+    Y(k) = ( Z(k) - H(k-1) * Y(k-1) ) / D(k)
+d593 1
+a593 1
+  Y(n-1) = ( Z(n-1) - dot_product(R,Y(1:n-1)) ) / L22
+d595 2
+a596 2
+  B(n-1) = Y(n-1)
+  B(n-2) = Y(n-2) - C(n-2) * B(n-1)
+d598 1
+a598 1
+    B(k) = Y(k) - U(k) * B(k+1) - C(k) * B(n-1)
+d602 3
+a604 2
+Combining all of this into one lump, we can factor $A$ and solve for $y$
+in one loop, and solve for $b$ in a second loop:
+d607 4
+a610 4
+  D(1) = SIGMA(0)
+  C(1) = H(n-1) / D(1)
+  R(1) = H(n-1)
+  Y(1) = Z(1) / D(1)
+d612 5
+a616 5
+    U(k-1) = H(k-1) / D(k-1)
+    D(k) = SIGMA(k-1) - H(k-1) * U(k-1)
+    C(k) = - H(k-1) * C(k-1) / D(k)
+    R(k) = - R(k-1) * U(k-1)
+    Y(k) = ( Z(k) - H(k-1) * Y(k-1) ) / D(k)
+d618 6
+a623 7
+  U(n-3) = H(n-3) / D(n-3)
+  D(n-2) = SIGMA(n-3) - H(n-3) * U(n-3)
+  C(n-2) = ( H(n-2) - H(n-3) * C(n-3) ) / D(n-2)
+  R(n-2) = H(n-2) - R(n-3) * U(n-3)
+  D(n-1) = SIGMA(n-2) - dot_product ( R(1:n-2), C )
+  Y(n-2) = ( Z(n-2) - H(n-3) * D(n-3) ) / D(n-2)
+  Y(n-1) = ( Z(n-1) - dot_product(R,Y) ) / D(n-1)
+d625 2
+a626 2
+  B(n-1) = Y(n-1)
+  B(n-2) = Y(n-2) - C(n-2) * B(n-1)
+d628 1
+a628 1
+    B(k) = Y(k) - U(k) * B(k+1) - C(k) * B(n-1)
+d632 7
+d641 1
+a641 1
+% $Id: wvs-086.tex,v 1.3 2009/10/17 00:54:54 vsnyder Exp $
+d644 3
+@
+
+
+1.3
+log
+@Forgot to change to r1
+@
+text
+@d9 2
+a10 2
+\newcommand{\docname}{\bf wvs-086r1}
+\newcommand{\docdate}{16 October 2009}
+d397 60
+a456 1
+symmetric tridiagonal matrix.  Since $A_{11}$ is tridiagonal, $L_{11}$ and
+d607 1
+a607 1
+% $Id: wvs-086.tex,v 1.2 2009/10/17 00:53:57 vsnyder Exp $
+d610 3
+@
+
+
+1.2
+log
+@Correct sign error
+@
+text
+@d9 2
+a10 2
+\newcommand{\docname}{\bf wvs-086}
+\newcommand{\docdate}{14 October 2009}
+d548 1
+a548 1
+% $Id: wvs-086.tex,v 1.1 2009/10/15 22:57:22 vsnyder Exp $
+d551 3
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d140 1
+a140 1
+\rho_1 + \rho_{n-1} \\
+d363 1
+a363 1
+\rho_1 + \rho_{n-1} \\
+d548 1
+a548 1
+% $Id: wvs-080.tex,v 1.5 2009/10/05 21:53:03 vsnyder Exp $
+d550 4
+a553 1
+% $Log: wvs-080.tex,v $
+@
+

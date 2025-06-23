@@ -1,0 +1,583 @@
+head	1.18;
+access;
+symbols
+	v5-02-NRT-19:1.18
+	v6-00:1.18
+	v5-02-NRT-18:1.18
+	v5-02:1.18
+	v5-01-NRT-17:1.18
+	v5-01-NRT-16:1.18
+	v5-01-NRT-15:1.18
+	v5-01-NRT-14:1.18
+	neuralnetworks-1-0:1.18.0.12
+	cfm-single-freq-0-1:1.18.0.10
+	v5-01:1.18
+	v5-00:1.18
+	v4-23-TA133:1.18.0.8
+	mus-emls-1-70:1.18.0.6
+	rel-1-0-englocks-work:1.18.0.4
+	VUMLS1-00:1.18
+	VPL1-00:1.18
+	V4-22-NRT-08:1.18
+	VAM1-00:1.18
+	V4-21:1.18.0.2
+	V4-13:1.18
+	V4-12:1.18
+	V4-11:1.18
+	V4-10:1.17
+	V3-43:1.14
+	M4-00:1.17
+	V3-41:1.14
+	V3-40-PlusGM57:1.14.0.2
+	V2-24-NRT-04:1.12
+	V3-33:1.14
+	V2-24:1.12
+	V3-31:1.14
+	V3-30-NRT-05:1.14
+	cfm-01-00:1.14
+	V3-30:1.14
+	V3-20:1.14
+	V3-10:1.13
+	V2-23-NRT-02:1.12
+	V2-23:1.12
+	V2-22-NRT-01:1.12
+	V2-22:1.12
+	V2-21:1.12
+	V2-20:1.12
+	V2-11:1.12
+	V2-10:1.12
+	V2-00:1.12
+	V1-51:1.10
+	V1-50:1.10
+	V1-45:1.7
+	V1-44:1.7
+	V1-43:1.5
+	V1-32:1.4
+	V1-31:1.4
+	V1-30:1.4
+	V1-13:1.3
+	V1-12:1.3
+	V1-11:1.3
+	V1-10:1.3
+	newfwm-feb03:1.3.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.18
+date	2014.06.11.20.08.08;	author pwagner;	state Exp;
+branches;
+next	1.17;
+
+1.17
+date	2013.03.14.17.51.52;	author pwagner;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2012.12.06.17.37.06;	author pwagner;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2011.10.20.20.19.37;	author pwagner;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2010.03.31.18.20.44;	author pwagner;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2008.06.27.16.53.50;	author pwagner;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2006.06.15.00.03.29;	author pwagner;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2006.06.09.20.46.41;	author pwagner;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2004.10.02.00.36.49;	author livesey;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2004.09.29.19.24.50;	author livesey;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2004.09.27.20.12.06;	author livesey;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2004.07.06.22.07.20;	author livesey;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2004.06.24.21.57.59;	author livesey;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2004.02.03.21.43.56;	author livesey;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2003.05.10.00.57.18;	author livesey;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2002.11.26.23.39.17;	author livesey;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2002.07.29.17.39.30;	author livesey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2002.07.19.20.37.48;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.18
+log
+@Band12OFF runtime flag to bypass Core+R4B
+@
+text
+@; This l2cf fragment is designed to read radiances for the 'relevant'
+; bands into the measurement vector
+
+begin Fill
+  measurement: Vector, template=measurementTemplate
+  measurementNoise: Vector, template=measurementTemplate
+  cleanMeasurement: Vector, template=measurementTemplate
+  fwm: Vector, template=measurementTemplate
+
+  corrections: Vector, template=correctionsTemplate
+  correctionNoise: Vector, template=correctionsTemplate
+
+  ;; ------------------------------------------ Read radiances -----
+  ;; Define a macro to read one bands worth of radiances
+  !define(readRadiances,{!dnl
+!ifelse($1,{9}, {!dnl
+; Band 9 affected by the Galactic core
+  Fill, quantity=measurementNoise.band$1, avoidBrightObjects="GalacticCenter", $
+    method=l1b, /isPrecision
+  Fill, quantity=measurement.band$1, method=l1b, precision=measurementNoise.band$1
+}, $1,{25}, {!dnl
+; Band 25 affected by the Galactic core, too
+  Fill, quantity=measurementNoise.band$1, avoidBrightObjects="GalacticCenter", $
+    method=l1b, /isPrecision
+  Fill, quantity=measurement.band$1, method=l1b, precision=measurementNoise.band$1
+},{!dnl
+!divert(-1)
+; All the other bands
+!divert!dnl
+  Fill, quantity=measurementNoise.band$1, method=l1b, /isPrecision
+  Fill, quantity=measurement.band$1, method=l1b, precision=measurementNoise.band$1!nl})
+})
+  ;; Read all the relevant bands
+  !nl!forall( {readRadiances}, !relevantBands)
+
+  ;; ------------------------------------------ Read L1B Baselines -----
+  ;; Now do the same for the baseline information in the L1B files.
+  !ifdef(L1BMAFBaselineSource,{},{!define(L1BMAFBaselineSource,{Baseline})})
+
+  ;; ================ Next section can be ommited by defining flagSkipL1BMAFBaseline
+  !ifdef(flagSkipL1BMAFBaseline,{},{
+
+  !define(readL1BMAFBaseline,{!dnl
+  Fill, quantity=corrections.band$1L1BMAFBaseline, method=l1b, $
+    suffix=' !L1BMAFBaselineSource'
+  Fill, quantity=correctionNoise.band$1L1BMAFBaseline, method=l1b, $
+    suffix=' !L1BMAFBaselineSource precision'!nl})
+  ;; Read this for all the relevant bands
+  !nl!forall( {readL1BMAFBaseline}, !relevantBands)
+
+  ;; ------------------------------------------ Apply L1B Baselines -----
+  ;; Now apply the baseline correction to all the radiances
+  !define(applyL1BMAFBaseline,{!dnl
+  Fill, quantity=measurement.band$1, method=applyBaseline, $
+    baselineQuantity=corrections.band$1L1BMAFBaseline
+  Fill, quantity=measurementNoise.band$1, method=applyBaseline, $
+    baselineQuantity=correctionNoise.band$1L1BMAFBaseline, /quadrature!nl})
+  ;; Apply to all relevant bands
+  !nl!forall( {applyL1BMAFBaseline}, !relevantBands)
+
+  })
+  ;; ====================== End of possibly omitted section
+
+  ;; ------------------------------------------ Dump L1B Masks -----
+  ;; Do we want to dump the radiance masks?
+  !ifdef(flagDumpL1BMasks,{!dnl
+    Dump, details=2, mask=measurement.band1
+  !define(DumpL1BMask,{!dnl
+  Dump, details=3, options="-lb[0,5]", mask=measurement.band$1!nl})
+  ;; Do this for all the relevant bands
+  !nl!forall( {DumpL1BMask}, !relevantBands)
+  })
+  ;; ====================== End of possibly omitted section
+
+  ;; ------------------------------------------ Miscellaneous stuff --
+  ;; Setup the radianceDiagnostics vector
+  minorFrameDiagnostics: Vector, template=minorFrameDiagnosticsTemplate
+  mappedChisqMax: Vector, template=mappedChisqTemplate
+  mappedChisqMean: Vector, template=mappedChisqTemplate
+  otherDiagnostics: Vector, template=otherDiagnosticsTemplate
+
+  ;; Now set the scan model precision, and possibly add noise to the values.
+  Fill, quantity=measurementNoise.scanResidualGHz, method=explicit, $
+    explicitValues = !scanModelPrecision, /spread
+  Fill, quantity=measurementNoise.scanResidualTHz, method=explicit, $
+    explicitValues = !scanModelPrecision, /spread
+  !ifelse(!substr(!cleanNoisy,0,5),noisy,{
+     Fill, quantity=measurement.scanResidualGHz, method=addNoise, $
+       sourceQuantity=cleanMeasurement.scanResidualGHz, $
+       noise=measurementNoise.scanResidualGHz, seed = [ 0, 10000 ]
+     Fill, quantity=measurement.scanResidualTHz, method=addNoise, $
+       sourceQuantity=cleanMeasurement.scanResidualTHz, $
+       noise=measurementNoise.scanResidualTHz, seed = [ 50, 10050 ]})
+
+end Fill
+
+;; Band13OK and Band13OFF will be used to decide which of two
+;; versions of Core+R4a phase to go through
+;; Band15OK and Band15OFF will be used to decide whther the THz module is off
+;; and therefore how hard to work in Core+R5
+;; (Shouldn't we check the other R5 Bands, too?)
+;; Band33OFF will cause us to flag iwc "do not use"
+;; Band4OFF will cause us to Fill affected levels of HNO3 with -999.99
+;; and to set their precisions < 0
+;; Similarly with Band7OFF with its affected levels
+begin Construct
+  Band12OK: Boolean, formula="true"
+  anyGoodValues, quantity=measurement.band12, precision=measurementNoise.band12, Boolean=Band12OK
+  Band12OFF: Boolean, formula="not Band12OK"
+  
+  Band13OK: Boolean, formula="true"
+  anyGoodValues, quantity=measurement.band13, precision=measurementNoise.band13, Boolean=Band13OK
+  Band13OFF: Boolean, formula="not Band13OK"
+  
+  Band15OK: Boolean, formula="true"
+  anyGoodValues, quantity=measurement.band15, precision=measurementNoise.band15, Boolean=Band15OK
+  Band15OFF: Boolean, formula="not Band15OK"
+  
+  Band33OK: Boolean, formula="true"
+  anyGoodValues, quantity=measurement.band33, precision=measurementNoise.band33, Boolean=Band33OK
+  Band33OFF: Boolean, formula="not Band33OK"
+  
+  Band4OK: Boolean, formula="true"
+  anyGoodValues, quantity=measurement.band4, precision=measurementNoise.band4, Boolean=Band4OK
+  Band4OFF: Boolean, formula="not Band4OK"
+
+  Band7OK: Boolean, formula="true"
+  anyGoodValues, quantity=measurement.band7, precision=measurementNoise.band7, Boolean=Band7OK
+  Band7OFF: Boolean, formula="not Band7OK"
+end Construct
+
+
+; $Log: readradiances.l2cf,v $
+; Revision 1.17  2013/03/14 17:51:52  pwagner
+; Added new stuff about maf-based baselines
+;
+; Revision 1.16  2012/12/06 17:37:06  pwagner
+; Added Band4OFF and Band7OFF to use with HNO3 split
+;
+; Revision 1.15  2011/10/20 20:19:37  pwagner
+; Set diagnostic flags for IWC, IWP if Band 33 off
+;
+; Revision 1.14  2010/03/31 18:20:44  pwagner
+; Boolean Band15OFF shows if THz module is off
+;
+; Revision 1.13  2008/06/27 16:53:50  pwagner
+; Discounts Band 25 radiances, too, when polluted by Galactic Core
+;
+; Revision 1.12  2006/06/15 00:03:29  pwagner
+; Band 9 affected by the Galactic core
+;
+; Revision 1.11  2006/06/09 20:46:41  pwagner
+; Defines Boolean flags regarding Band 13 radiances
+;
+; Revision 1.10  2004/10/02 00:36:49  livesey
+; Removed snoops
+;
+; Revision 1.9  2004/09/29 19:24:50  livesey
+; Bug fix in reading L1BMAFBaselines
+;
+; Revision 1.8  2004/09/27 20:12:06  livesey
+; Added the stuff to read and handle L1BMAFBaseline through the new
+; corrections vector.
+;
+; Revision 1.7  2004/07/06 22:07:20  livesey
+; Bug fix, case problem in cleanNoisy.
+;
+; Revision 1.6  2004/06/24 21:57:59  livesey
+; Fix bug to have it add noise on scan residual for noisy and noisy-cld.
+;
+; Revision 1.5  2004/02/03 21:43:56  livesey
+; Updated handling of chisqBinned stuff
+;
+; Revision 1.4  2003/05/10 00:57:18  livesey
+; Renamed radianceChisq to radianceDiagnostics
+;
+; Revision 1.3  2002/11/26 23:39:17  livesey
+; Added construction of radianceChisq vector
+;
+; Revision 1.2  2002/07/29 17:39:30  livesey
+; Switched to new clean/noisy method
+;
+; Revision 1.1  2002/07/19 20:37:48  livesey
+; First version
+;
+@
+
+
+1.17
+log
+@Added new stuff about maf-based baselines
+@
+text
+@d107 4
+d134 3
+@
+
+
+1.16
+log
+@Added Band4OFF and Band7OFF to use with HNO3 split
+@
+text
+@d34 1
+a34 1
+  !forall( {readRadiances}, !relevantBands)
+d49 1
+a49 1
+  !forall( {readL1BMAFBaseline}, !relevantBands)
+d59 1
+a59 1
+  !forall( {applyL1BMAFBaseline}, !relevantBands)
+d64 11
+d130 3
+@
+
+
+1.15
+log
+@Set diagnostic flags for IWC, IWP if Band 33 off
+@
+text
+@d92 3
+d99 1
+d103 1
+d107 8
+d119 3
+@
+
+
+1.14
+log
+@Boolean Band15OFF shows if THz module is off
+@
+text
+@d91 1
+d99 3
+d106 3
+@
+
+
+1.13
+log
+@Discounts Band 25 radiances, too, when polluted by Galactic Core
+@
+text
+@d88 3
+d95 3
+d102 3
+@
+
+
+1.12
+log
+@Band 9 affected by the Galactic core
+@
+text
+@d21 5
+d96 3
+@
+
+
+1.11
+log
+@Defines Boolean flags regarding Band 13 radiances
+@
+text
+@d16 9
+d27 1
+d91 3
+@
+
+
+1.10
+log
+@Removed snoops
+@
+text
+@d71 9
+d81 3
+@
+
+
+1.9
+log
+@Bug fix in reading L1BMAFBaselines
+@
+text
+@a35 2
+  Snoop, comment='Before applying baseline', phaseName='None'
+
+a45 2
+  Snoop, comment='After applying baseline', phaseName='None'
+
+d72 3
+@
+
+
+1.8
+log
+@Added the stuff to read and handle L1BMAFBaseline through the new
+corrections vector.
+@
+text
+@d29 4
+a32 2
+  Fill, quantity=corrections.band$1L1BMAFBaseline, method=l1b, suffix=' !L1BMAFBaselineSource'
+  Fill, quantity=corrections.band$1L1BMAFBaseline, method=l1b, suffix=' !L1BMAFBaselineSource precision'!nl})
+d36 2
+d48 2
+d76 4
+@
+
+
+1.7
+log
+@Bug fix, case problem in cleanNoisy.
+@
+text
+@d10 4
+d21 27
+d70 3
+@
+
+
+1.6
+log
+@Fix bug to have it add noise on scan residual for noisy and noisy-cld.
+@
+text
+@d28 1
+a28 1
+  !ifelse(!substr(!cleannoisy,0,5),noisy,{
+d39 3
+@
+
+
+1.5
+log
+@Updated handling of chisqBinned stuff
+@
+text
+@d28 1
+a28 1
+  !ifelse(!cleannoisy,noisy,{
+d39 3
+@
+
+
+1.4
+log
+@Renamed radianceChisq to radianceDiagnostics
+@
+text
+@d18 4
+a21 1
+  radianceDiagnostics: Vector, template=radianceDiagnosticsTemplate
+d39 3
+@
+
+
+1.3
+log
+@Added construction of radianceChisq vector
+@
+text
+@d17 2
+a18 2
+  ;; Setup the radianceChisq vector
+  radianceChisq: Vector, template=radianceChisqTemplate
+d36 3
+@
+
+
+1.2
+log
+@Switched to new clean/noisy method
+@
+text
+@d17 3
+d36 3
+@
+
+
+1.1
+log
+@First version
+@
+text
+@d10 1
+a10 2
+  ;; The macro relevantBands lists the bands to be read in from the
+  ;; file.
+d14 2
+a15 14
+
+  !define(readCleanRadiances,{!dnl
+  Fill, quantity=measurementNoise.band$1, method=l1b, /isPrecision
+  Fill, quantity=cleanMeasurement.band$1, method=l1b, precision=measurementNoise.band$1!nl})
+
+  !define(addNoiseToRadiances,{!dnl
+  Fill, quantity=measurement.band$1, method=addNoise, $
+  sourceQuantity=cleanMeasurement.band$1, $
+    noise=measurementNoise.band$1, seed=[$1{}00,{10}$1{00}]!nl})
+
+  !ifdef(addNoise,{
+    !forall( {readCleanRadiances}, !relevantBands)
+    !forall( {addNoiseToRadiances}, !relevantBands)}, {
+    !forall( {readRadiances}, !relevantBands)})
+d22 1
+a22 1
+  !ifdef(addNoise,{
+d32 4
+a35 1
+; $Log$
+@
+

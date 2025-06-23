@@ -1,0 +1,107 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.12
+	cfm-single-freq-0-1:1.2.0.10
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.8
+	mus-emls-1-70:1.2.0.6
+	rel-1-0-englocks-work:1.2.0.4
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.2
+	V4-21:1.2.0.2
+	V4-13:1.2
+	V4-12:1.2
+	V4-11:1.2
+	V4-10:1.2
+	M4-00:1.2
+	V3-33:1.2
+	V3-31:1.2
+	V3-30-NRT-05:1.2
+	cfm-01-00:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2010.05.24.18.35.57;	author honghanh;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2010.03.26.15.33.03;	author honghanh;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@v0.5 updated document
+@
+text
+@! Create a VGrid, from a given formula, a starting value, a type
+! (currently only supported logarithmic type)
+type(VGrid_T) function CreateVGrid (coordinate, unit, type, start, &
+              formula, values) result (vGrid)
+   ! Currently only support l_zeta
+   integer, intent(in) :: coordinate
+   ! Must be either phyq_dimensionless or phyq_pressure
+   integer, intent(in) :: unit
+   ! Currently only support l_logarithmic (log-based vgrid)
+   integer, intent(in) :: type
+
+   ! If type is l_logarithmic, then start and formula
+   ! should be provided
+   ! The first value of surfaces
+   real(r8), intent(in), optional :: start
+   ! The format of formula is
+   ! "number_of_surfaces:num_decades_between_surfaces".
+   ! For example, "37:6" or "25:8,12:6".
+   character(len=*), intent(in), optional :: formula
+   ! If type is l_explicit, this must be present
+   real(r8), dimension(:), intent(in), optional :: values
+end function
+@
+
+
+1.1
+log
+@Update for v0.1 document
+Add subroutines creating grids
+Add ExplicitFillVectorQuantity subroutine
+Add FGrid_T data structure
+Modify mockup.f90
+Removing creating quantity template example because it can be found in the mockup
+@
+text
+@d3 2
+a4 7
+type(VGrid_T) function CreateVGrid (coordinate, type, start, &
+              formula, unit) result (vGrid)
+   real(r8), intent(in) :: start
+   ! The format of formula is
+   ! "number_of_surfaces:num_decades_between_surfaces".
+   ! For example, "37:6" or "25:8,12:6".
+   character(len=*), intent(in) :: formula
+d7 2
+d11 11
+a21 2
+   ! Must be either phyq_dimensionless or phyq_pressure
+   integer, intent(in) :: unit
+@
+

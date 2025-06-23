@@ -1,0 +1,945 @@
+head	2.12;
+access;
+symbols
+	v5-02-NRT-19:2.12
+	v6-00:2.12
+	v5-02-NRT-18:2.12
+	v5-02:2.12
+	v5-01-NRT-17:2.12
+	v5-01-NRT-16:2.12
+	v5-01-NRT-15:2.12
+	v5-01-NRT-14:2.12
+	neuralnetworks-1-0:2.12.0.10
+	cfm-single-freq-0-1:2.12.0.8
+	v5-01:2.12
+	v5-00:2.12
+	v4-23-TA133:2.12.0.6
+	mus-emls-1-70:2.12.0.4
+	rel-1-0-englocks-work:2.12.0.2
+	VUMLS1-00:2.12
+	VPL1-00:2.12
+	V4-22-NRT-08:2.12
+	whdrel10_merged_to_here:2.12
+	merge_whdrel10_from_here:2.11.6.1
+	TAG_TRUNK_AFTER_PW_CHANGES:2.11
+	TAG_TRUNK_BEFORE_PW_CHANGES:2.11
+	VAM1-00:2.11
+	whd-rel-1-0:2.11.0.6
+	V4-21:2.11.0.4
+	V4-13:2.11
+	V4-12:2.11
+	V4-11:2.11
+	V4-10:2.11
+	V3-43:2.11
+	M4-00:2.11
+	V3-41:2.11
+	V3-40-PlusGM57:2.11.0.2
+	V2-24-NRT-04:2.11
+	V3-33:2.11
+	V2-24:2.11
+	V3-31:2.11
+	V3-30-NRT-05:2.11
+	cfm-01-00:2.11
+	V3-30:2.11
+	V3-20:2.11
+	V3-10:2.11
+	V2-23-NRT-02:2.11
+	V2-23:2.11
+	V2-22-NRT-01:2.11
+	V2-22:2.11
+	V2-21:2.11
+	V2-20:2.11
+	V2-11:2.11
+	V2-10:2.11
+	V2-00:2.11
+	V1-51:2.10
+	V1-50:2.9
+	V1-45:2.9
+	V1-44:2.9
+	V1-43:2.8
+	V1-42:2.8
+	V1-41:2.8
+	V1-32:2.7
+	V1-40:2.8
+	V1-31:2.7
+	V1-30:2.7
+	V1-13:2.6
+	V1-12:2.6
+	V1-11:2.6
+	V1-10:2.6
+	newfwm-feb03:2.6.0.2
+	V1-04:2.3
+	V1-03:2.3
+	V1-02:2.3
+	V1-00:2.3
+	newfwm-sep01:2.2.0.2
+	V0-7:2.2
+	V0-5-Level2:2.2
+	V0-5-SIPS:2.2;
+locks; strict;
+comment	@# @;
+
+
+2.12
+date	2016.03.15.22.17.59;	author whdaffer;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2005.06.23.18.41.35;	author pwagner;	state Exp;
+branches
+	2.11.6.1;
+next	2.10;
+
+2.10
+date	2005.01.21.19.39.04;	author perun;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2004.08.12.13.51.49;	author perun;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2004.01.09.17.46.22;	author perun;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2003.08.15.14.25.04;	author perun;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2003.01.31.18.13.34;	author perun;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2002.08.27.20.34.43;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2002.08.07.18.54.22;	author jdone;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2002.03.29.20.18.34;	author perun;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2001.02.23.18.56.17;	author perun;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.02.23.18.52.38;	author perun;	state Exp;
+branches;
+next	;
+
+2.11.6.1
+date	2015.10.09.10.21.38;	author whdaffer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.12
+log
+@Merged whd-rel-1-0 back onto main branch. Most changes
+are to comments, but there's some modification to Calibration.f90
+and MLSL1Common to support some new modules: MLSL1Debug and SnoopMLSL1.
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=============================================================================
+MODULE EngTbls   ! Level 1 engineering tables
+!=============================================================================
+
+  USE MLSStrings, ONLY: LinearSearchStringArray
+  USE MLSL1Common, ONLY: R8
+
+  IMPLICIT NONE
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: EngTbls.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+  INTEGER, PARAMETER :: nrius = 32
+
+  CHARACTER (LEN=4), PARAMETER, DIMENSION(nrius) :: Riu_str = (/ &
+       "GM01", "GM02", "GM03", "GM04", "GM05", "GM06", "GM07", "GM08", &
+       "GM09", "GM10", "GM11", "GM12", "GM13", "GM14", "GM15", "SM01", &
+       "SM02", "SM03", "SM04", "SM05", "SM06", "SM07", "SM08", "SM09", &
+       "SM10", "SM11", "SM12", "SM13", "SM14", "TM01", "TM02", "TM03" /)
+
+  CHARACTER (LEN=9), PARAMETER, DIMENSION(9) :: Cal_type_str = (/ &
+       "Vin_Cal1 ", "Vin_Cal2 ", "PRT1_Cal1", "PRT1_Cal2", "PRT2_Cal1", &
+       "PRT2_Cal2", "YSI_Cal1 ", "YSI_Cal2 ", "Temp     " /)
+
+! Indexes for the calibration buffer
+
+  INTEGER, PARAMETER :: vin_cal1 = 1
+  INTEGER, PARAMETER :: vin_cal2 = 2
+  INTEGER, PARAMETER :: prt1_cal1 = 3
+  INTEGER, PARAMETER :: prt1_cal2 = 4
+  INTEGER, PARAMETER :: prt2_cal1 = 5
+  INTEGER, PARAMETER :: prt2_cal2 = 6
+  INTEGER, PARAMETER :: ysi_cal1 = 7
+  INTEGER, PARAMETER :: ysi_cal2 = 8
+  INTEGER, PARAMETER :: temp_cal = 9
+
+! Calibration constants for each RIU
+
+  TYPE Cal_Const_T
+     CHARACTER (LEN=4) :: riu
+     REAL :: volts
+     REAL :: therm_hi
+     REAL :: therm_low
+     REAL :: prt1_hi
+     REAL :: prt1_low
+     REAL :: prt2_hi
+     REAL :: prt2_low
+  END TYPE Cal_Const_T
+
+  TYPE (Cal_Const_T), PARAMETER :: Cal_const(nrius) = (/ &
+       cal_const_t ("GM01", &
+        5.0000, 4525.0, 996.0, 620.267, 480.358, 620.267, 480.358 ), &
+       cal_const_t ("GM02", &
+        4.9978, 4525.0, 996.0, 620.0, 480.0, 620.252, 480.387), &
+       cal_const_t ("GM03", &
+        4.9989, 4525.0, 996.0, 620.315, 480.404, 620.315, 480.404), &
+       cal_const_t ("GM04", &
+        4.9981, 4525.0, 996.0, 620.0, 480.0, 620.29, 480.391), &
+       cal_const_t ("GM05", &
+        4.9964, 4525.0, 996.0, 620.32, 480.438, 620.0, 480.0), &
+       cal_const_t ("GM06", &
+        5.0005, 4525.0, 996.0, 620.0, 480.0, 620.0, 480.0), &
+       cal_const_t ("GM07", &
+        4.9999, 4525.0, 996.0, 620.3, 480.36, 620.0, 480.0), &
+       cal_const_t ("GM08", &
+        4.9961, 4525.0, 996.0, 620.0, 480.0, 620.306, 480.555), &
+       cal_const_t ("GM09", &
+        4.9964, 4525.0, 996.0, 620.0, 480.0, 620.27, 480.361), &
+       cal_const_t ("GM10", &
+        4.9969, 4525.0, 996.0, 620.0, 480.0, 620.302, 480.384), &
+       cal_const_t ("GM11", &
+        4.9990, 4525.0, 996.0, 620.0, 480.0, 620.0, 480.0), &
+       cal_const_t ("GM12", &
+        4.9968, 4525.0, 996.0, 620.0, 480.0, 620.302, 480.393), &
+       cal_const_t ("GM13", &
+        4.9963, 4525.0, 996.0, 620.0, 480.0, 620.308, 480.455), &
+       cal_const_t ("GM14", &
+        4.9988, 4525.0, 996.0, 620.0, 480.0, 620.271, 480.36), &
+       cal_const_t ("GM15", &
+        4.9982, 4525.0, 996.0, 620.0, 480.0, 620.0, 480.0), &
+       cal_const_t ("SM01", &
+        4.9988, 4525.0, 996.0, 620.0, 480.0, 620.322, 480.331), &
+       cal_const_t ("SM02", &
+        4.9979, 4525.0, 996.0, 620.0, 480.0, 620.235, 480.357), &
+       cal_const_t ("SM03", &
+        5.0000, 4525.0, 996.0, 620.0, 480.0, 620.0, 480.0), &
+       cal_const_t ("SM04", &
+        5.0000, 4525.0, 996.0, 620.0, 480.0, 620.0, 480.0), &
+       cal_const_t ("SM05", &
+        4.9982, 4525.0, 996.0, 620.0, 480.0, 620.0, 480.0), &
+       cal_const_t ("SM06", &
+        5.0000, 4525.0, 996.0, 620.0, 480.0, 620.0, 480.0), &
+       cal_const_t ("SM07", &
+        4.9960, 4525.0, 996.0, 620.0, 480.0, 620.0, 480.0), &
+       cal_const_t ("SM08", &
+        4.9970, 4525.0, 996.0, 620.0, 480.0, 620.0, 480.0), &
+       cal_const_t ("SM09", &
+        5.0000, 4525.0, 996.0, 620.0, 480.0, 620.0, 480.0), &
+       cal_const_t ("SM10", &
+        4.9971, 4525.0, 996.0, 620.0, 480.0, 620.0, 480.0), &
+       cal_const_t ("SM11", &
+        4.9969, 4525.0, 996.0, 620.0, 480.0, 620.0, 480.0), &
+       cal_const_t ("SM12", &
+        4.9966, 4525.0, 996.0, 620.0, 480.0, 620.0, 480.0), &
+       cal_const_t ("SM13", &
+        5.0000, 4525.0, 996.0, 620.0, 480.0, 620.0, 480.0), &
+       cal_const_t ("SM14", &
+        5.0000, 4525.0, 996.0, 620.0, 480.0, 620.0, 480.0), &
+       cal_const_t ("TM01", &
+        4.9992, 4525.0, 996.0, 620.0, 480.0, 620.0, 480.0), &
+       cal_const_t ("TM02", &
+        4.9998, 4525.0, 996.0, 620.368, 480.388, 620.368, 480.388), &
+       cal_const_t ("TM03", &
+        4.9960, 4525.0, 996.0, 620.0, 480.0, 620.0, 480.0) /)
+
+! Engineering telemetry table
+
+  INTEGER, PARAMETER :: maxtlm = 516
+  INTEGER :: last_tlm_pt
+
+  TYPE Eng_Tbl_T
+     INTEGER :: cal_indx
+     REAL :: scale
+     INTEGER :: riu_no
+     INTEGER :: counts
+     REAL :: value
+     CHARACTER (LEN=16) :: mnemonic
+     CHARACTER (LEN=7) :: type
+  END TYPE Eng_Tbl_T
+
+  TYPE (Eng_Tbl_T) :: Eng_tbl(maxtlm)
+
+  TYPE Eng_T
+     REAL :: value
+     CHARACTER (LEN=16) :: mnemonic
+  END TYPE Eng_T
+
+  TYPE Eng_MAF_T
+     REAL(r8) :: secTAI
+     INTEGER :: MAFno
+     INTEGER :: MIFsPerMAF
+     INTEGER :: TotalMAF
+     CHARACTER(LEN=1) :: GSM_Side   ! GHz Switching Mirror
+     CHARACTER(LEN=1) :: ASE_Side   ! Antenna Scan Electronics
+     TYPE (Eng_T) :: Eng(maxtlm)
+  END TYPE Eng_MAF_T
+
+  TYPE (Eng_MAF_T) :: EngMAF
+
+  ! Calibration target indexes
+
+  TYPE CalTgtIndx_T
+     INTEGER :: GHzAmb(20)
+     INTEGER :: GHzCntl(20)
+     INTEGER :: THzAmb(14)
+     INTEGER :: THzLimb(2)
+  END TYPE CalTgtIndx_T
+
+  TYPE (CalTgtIndx_T) :: CalTgtIndx
+
+  ! Reflector temperature indexes
+
+  TYPE ReflecIndx_T
+     INTEGER :: Pri(9)
+     INTEGER :: Sec(5)
+     INTEGER :: Ter(3)
+  END TYPE ReflecIndx_T
+
+  TYPE (ReflecIndx_T) :: ReflecIndx
+
+  TYPE Reflec_T
+     REAL :: Pri, Sec, Ter
+  END TYPE Reflec_T
+  TYPE (Reflec_T) :: Reflec
+
+! RIU table
+
+  TYPE Riu_Tbl_T
+     INTEGER :: pkt_no
+     INTEGER :: start_byte
+     INTEGER :: first_pt
+     INTEGER :: last_pt
+     INTEGER :: id_word
+     INTEGER :: Cal_cnts(9)
+  END TYPE Riu_Tbl_T
+
+  ! Initialize table with packet numbers and start bytes within the packet:
+
+  TYPE (Riu_Tbl_T) :: Riu_tbl(nrius) = (/ &
+       Riu_tbl_t (1,  73, 0, 0, 0, 0), &
+       Riu_tbl_t (1,  73, 0, 0, 0, 0), &
+       Riu_tbl_t (3,  21, 0, 0, 0, 0), &
+       Riu_tbl_t (3,  21, 0, 0, 0, 0), &
+       Riu_tbl_t (2,  47, 0, 0, 0, 0), &
+       Riu_tbl_t (5, 141, 0, 0, 0, 0), &
+       Riu_tbl_t (2, 103, 0, 0, 0, 0), &
+       Riu_tbl_t (2, 161, 0, 0, 0, 0), &
+       Riu_tbl_t (2, 205, 0, 0, 0, 0), &
+       Riu_tbl_t (4, 131, 0, 0, 0, 0), &
+       Riu_tbl_t (4, 179, 0, 0, 0, 0), &
+       Riu_tbl_t (3,  79, 0, 0, 0, 0), &
+       Riu_tbl_t (3, 127, 0, 0, 0, 0), &
+       Riu_tbl_t (3, 175, 0, 0, 0, 0), &
+       Riu_tbl_t (2,  17, 0, 0, 0, 0), &
+       Riu_tbl_t (4,  19, 0, 0, 0, 0), &
+       Riu_tbl_t (5,  21, 0, 0, 0, 0), &
+       Riu_tbl_t (4,  65, 0, 0, 0, 0), &
+       Riu_tbl_t (4,  75, 0, 0, 0, 0), &
+       Riu_tbl_t (4,  85, 0, 0, 0, 0), &
+       Riu_tbl_t (5,  67, 0, 0, 0, 0), &
+       Riu_tbl_t (5,  77, 0, 0, 0, 0), &
+       Riu_tbl_t (5,  95, 0, 0, 0, 0), &
+       Riu_tbl_t (5, 113, 0, 0, 0, 0), &
+       Riu_tbl_t (5, 123, 0, 0, 0, 0), &
+       Riu_tbl_t (6,  19, 0, 0, 0, 0), &
+       Riu_tbl_t (6,  37, 0, 0, 0, 0), &
+       Riu_tbl_t (6,  55, 0, 0, 0, 0), &
+       Riu_tbl_t (6,  65, 0, 0, 0, 0), &
+       Riu_tbl_t (1, 129, 0, 0, 0, 0), &
+       Riu_tbl_t (1, 159, 0, 0, 0, 0), &
+       Riu_tbl_t (4, 103, 0, 0, 0, 0) /)
+
+! Survival telemetry table
+
+  TYPE Srvl_Tbl_T
+     REAL :: r0
+     CHARACTER (LEN=7) :: type
+     CHARACTER (LEN=16) :: mnemonic
+  END TYPE Srvl_Tbl_T
+
+  TYPE (Srvl_Tbl_T) :: Srvl_tbl(16)
+
+! Engineering packets buffer to hold data for 1 MAF
+
+  CHARACTER(LEN=256) :: EngPkt(6)
+
+! Converted engineering packet (From the EM):
+
+  CHARACTER(LEN=678) :: ConvEngPkt
+
+CONTAINS
+
+  SUBROUTINE Load_Eng_tbls (eng_unit, ios)
+
+    ! Read the file containing information for converting telemetry counts to
+    ! engineering units. The file is specified in the .PCF file and currently
+    ! it's named engtlm.tbl. An example line is
+
+    ! -- | Order | Mnemonic | Type | RIU | Channel | Scale/R0/Calparm | : Description
+    !       1    GM01_Vin_Cal1     Cal GM01 -1        5 : RIU GM01 Vin Cal 1
+
+    ! Lines which begin with at least 2 dashes ('--') are comment lines. All
+    ! other lines are data.
+
+
+    INTEGER, INTENT (IN) :: eng_unit
+    INTEGER, INTENT (OUT) :: ios
+
+    CHARACTER (LEN=16) :: mnem
+    CHARACTER (LEN=7) :: type
+    CHARACTER (LEN=4) :: riu
+    CHARACTER (LEN=80) :: line
+    CHARACTER (LEN=2) :: dummy
+
+    INTEGER :: i, order
+    INTEGER :: GHzAmbIndx = 0
+    INTEGER :: GHzCntlIndx = 0
+    INTEGER :: THzAmbIndx = 0
+    INTEGER :: THzLimbIndx = 0
+    INTEGER :: PriReflecIndx = 0
+    INTEGER :: SecReflecIndx = 0
+    INTEGER :: TerReflecIndx = 0
+    INTEGER :: riu_chan, riu_no, old_riu
+
+    REAL :: scale = 1.0
+
+    !! Read Survival table. 
+
+    ! These lines occur at the beginning of the engtlm.tbl
+    ! file and their "RIU" designation is 'SRVL'. This routine reads this data,
+    ! but I don't think anything in L1 software uses it.
+
+    i = 0
+    DO
+       read (eng_unit, '(a)', iostat=ios) line
+       IF (ios /= 0) EXIT
+       read (line, *, iostat=ios) dummy, mnem, type, dummy, riu_chan, scale
+
+       IF (ios == 0) THEN
+          IF (INDEX (TRIM(type), "Digital") == 0) THEN  ! NOT Digital
+             i = i + 1
+             srvl_tbl(i)%mnemonic = mnem
+             srvl_tbl(i)%type = type
+             srvl_tbl(i)%r0 = scale
+             IF (i == SIZE(srvl_tbl)) EXIT
+          ENDIF
+       ENDIF
+    ENDDO
+
+    !! Read ENG table. 
+
+    ! <whd>
+    ! This is the data that starts after the SRVL table. Each RIU is delimited
+    ! in the file by a line of dashes ('-'). Here the variable 'i' is really the
+    ! line number of the engtlm.tbl file. In particular, the misleadingly
+    ! misnamed fields 'first_pt' and 'last_pt' are really the line numbers of
+    ! the first and last mention of a particular RIU in this auxiliary file
+    ! </whd>
+
+    old_riu = -1
+    i = 0
+    DO
+       read (eng_unit, '(a)', iostat=ios) line
+       IF (ios /= 0) EXIT
+       read (line, *, iostat=ios) order, mnem, type, riu, riu_chan, scale
+
+       IF (ios == 0) THEN
+          i = i + 1
+          !! Riu_str is a string array of strings like [GST]Mxx where xx runs
+          !! from 01 to 15. `riu_no' is the index into that string array
+          riu_no = LinearSearchStringArray (Riu_str, riu)
+          Eng_tbl(i)%type = type
+          Eng_tbl(i)%mnemonic = mnem
+          Eng_tbl(i)%scale = scale
+          Eng_tbl(i)%riu_no = riu_no
+          IF (Eng_tbl(i)%type == "Cal") THEN
+             !! cal_type_str is a string array of strings like 'temp_cal',
+             !! 'vin_cal[12]', etc. Eng_tbl(i)%cal_indx is the index into that
+             !! array and also the value of the parameter of the same name. This
+             !! is used later to select the units used to convert from counts to 
+             !! engineering units in EngUtils::ConvertEngCounts.
+             Eng_tbl(i)%cal_indx = LinearSearchStringArray (cal_type_str, &
+                  mnem, testSubstring=.TRUE., listInString=.TRUE.)
+          ELSE
+             Eng_tbl(i)%cal_indx = 0
+          END IF
+          IF (riu_no /= old_riu) THEN
+             Riu_tbl(riu_no)%first_pt = i ! line number of first mention of this RIU
+          END IF
+          Riu_tbl(riu_no)%last_pt = i ! line # of last mention of RIU
+          old_riu = riu_no
+          last_tlm_pt = i ! store line number of last non-comment line
+
+          !! Save Cal Target indexes:
+
+          IF (INDEX (mnem, "GHzAmbCalTgt") /= 0) THEN
+             GHzAmbIndx = GHzAmbIndx + 1
+             CalTgtIndx%GHzAmb(GHzAmbIndx) = i
+          ELSE IF (INDEX (mnem, "GHzCntlCalTgt") /= 0) THEN
+             GHzCntlIndx = GHzCntlIndx + 1
+             CalTgtIndx%GHzCntl(GHzCntlIndx) = i
+          ELSE IF (INDEX (mnem, "THzAmbCalTgt") /= 0) THEN
+             THzAmbIndx = THzAmbIndx + 1
+             CalTgtIndx%THzAmb(THzAmbIndx) = i
+          ELSE IF (INDEX (mnem, "THzLimbCalTgt") /= 0) THEN
+             THzLimbIndx = THzLimbIndx + 1
+             CalTgtIndx%THzLimb(THzLimbIndx) = i
+          ENDIF
+
+          !! Save Reflector indexes:
+
+          IF (INDEX (mnem, "Pri_Reflec") /= 0) THEN
+             PriReflecIndx = PriReflecIndx + 1
+             ReflecIndx%Pri(PriReflecIndx) = i
+          ELSE IF (INDEX (mnem, "Sec_Reflec") /= 0) THEN
+             SecReflecIndx = SecReflecIndx + 1
+             ReflecIndx%Sec(SecReflecIndx) = i
+          ELSE IF (INDEX (mnem, "Ter_Reflec") /= 0) THEN
+             TerReflecIndx = TerReflecIndx + 1
+             ReflecIndx%Ter(TerReflecIndx) = i
+          ENDIF
+
+       ENDIF
+
+    ENDDO
+
+    IF (i > 1 .AND. i <= SIZE (eng_tbl)) THEN
+       ios = 0
+    ELSE
+       ios = -1
+    ENDIF
+
+  END Subroutine Load_Eng_tbls
+
+  logical function not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id: EngTbls.f90,v 2.11.6.1 2015/10/09 10:21:38 whdaffer Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+END MODULE EngTbls
+
+! $Log: EngTbls.f90,v $
+! Revision 2.11.6.1  2015/10/09 10:21:38  whdaffer
+! checkin of continuing work on branch whd-rel-1-0
+!
+! Revision 2.11  2005/06/23 18:41:35  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.10  2005/01/21 19:39:04  perun
+! Corrected first byte value for SM11 entry in riu_tbl
+!
+! Revision 2.9  2004/08/12 13:51:49  perun
+! Version 1.44 commit
+!
+! Revision 2.8  2004/01/09 17:46:22  perun
+! Version 1.4 commit
+!
+! Revision 2.7  2003/08/15 14:25:04  perun
+! Version 1.2 commit
+!
+! Revision 2.6  2003/01/31 18:13:34  perun
+! Version 1.1 commit
+!
+! Revision 2.5  2002/08/27 20:34:43  pwagner
+! Back to using MLSStrings, this time from lib
+!
+! Revision 2.4  2002/08/07 18:54:22  jdone
+! Changes due to l1/MLSL1Strings.f90
+!
+! Revision 2.3  2002/03/29 20:18:34  perun
+! Version 1.0 commit
+!
+! Revision 2.2  2001/02/23 18:56:17  perun
+! Version 0.5 commit
+!
+@
+
+
+2.11
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d23 1
+a23 1
+       "$RCSfile: $"
+d259 11
+d291 5
+a295 1
+!! Read Survival table
+d314 9
+a322 1
+!! Read ENG table
+d333 2
+d341 5
+d352 1
+a352 1
+             Riu_tbl(riu_no)%first_pt = i
+d354 1
+a354 1
+          Riu_tbl(riu_no)%last_pt = i
+d356 1
+a356 1
+          last_tlm_pt = i
+d402 1
+a402 1
+       "$Id: $"
+d410 6
+@
+
+
+2.11.6.1
+log
+@checkin of continuing work on branch whd-rel-1-0
+@
+text
+@d23 1
+a23 1
+       "$RCSfile: EngTbls.f90,v $"
+a258 11
+    ! Read the file containing information for converting telemetry counts to
+    ! engineering units. The file is specified in the .PCF file and currently
+    ! it's named engtlm.tbl. An example line is
+
+    ! -- | Order | Mnemonic | Type | RIU | Channel | Scale/R0/Calparm | : Description
+    !       1    GM01_Vin_Cal1     Cal GM01 -1        5 : RIU GM01 Vin Cal 1
+
+    ! Lines which begin with at least 2 dashes ('--') are comment lines. All
+    ! other lines are data.
+
+
+d280 1
+a280 5
+    !! Read Survival table. 
+
+    ! These lines occur at the beginning of the engtlm.tbl
+    ! file and their "RIU" designation is 'SRVL'. This routine reads this data,
+    ! but I don't think anything in L1 software uses it.
+d299 1
+a299 9
+    !! Read ENG table. 
+
+    ! <whd>
+    ! This is the data that starts after the SRVL table. Each RIU is delimited
+    ! in the file by a line of dashes ('-'). Here the variable 'i' is really the
+    ! line number of the engtlm.tbl file. In particular, the misleadingly
+    ! misnamed fields 'first_pt' and 'last_pt' are really the line numbers of
+    ! the first and last mention of a particular RIU in this auxiliary file
+    ! </whd>
+a309 2
+          !! Riu_str is a string array of strings like [GST]Mxx where xx runs
+          !! from 01 to 15. `riu_no' is the index into that string array
+a315 5
+             !! cal_type_str is a string array of strings like 'temp_cal',
+             !! 'vin_cal[12]', etc. Eng_tbl(i)%cal_indx is the index into that
+             !! array and also the value of the parameter of the same name. This
+             !! is used later to select the units used to convert from counts to 
+             !! engineering units in EngUtils::ConvertEngCounts.
+d322 1
+a322 1
+             Riu_tbl(riu_no)%first_pt = i ! line number of first mention of this RIU
+d324 1
+a324 1
+          Riu_tbl(riu_no)%last_pt = i ! line # of last mention of RIU
+d326 1
+a326 1
+          last_tlm_pt = i ! store line number of last non-comment line
+d372 1
+a372 1
+       "$Id: EngTbls.f90,v 2.11 2005/06/23 18:41:35 pwagner Exp $"
+a379 3
+! Revision 2.11  2005/06/23 18:41:35  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+@
+
+
+2.10
+log
+@Corrected first byte value for SM11 entry in riu_tbl
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d21 5
+a25 6
+  PRIVATE :: Id, ModuleName
+  !------------------------------- RCS Ident Info ------------------------------
+  CHARACTER(LEN=130) :: id = &
+       "$Id: EngTbls.f90,v 2.9 2004/08/12 13:51:49 perun Exp $"
+  CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile: EngTbls.f90,v $"
+  !-----------------------------------------------------------------------------
+d369 8
+d380 3
+@
+
+
+2.9
+log
+@Version 1.44 commit
+@
+text
+@d16 1
+a16 1
+       "$Id: EngTbls.f90,v 2.8 2004/01/09 17:46:22 perun Exp $"
+d222 1
+a222 1
+       Riu_tbl_t (6,  15, 0, 0, 0, 0), &
+d365 3
+@
+
+
+2.8
+log
+@Version 1.4 commit
+@
+text
+@d16 1
+a16 1
+       "$Id: EngTbls.f90,v 2.7 2003/08/15 14:25:04 perun Exp $"
+d271 1
+a271 1
+    REAL :: scale
+d365 3
+@
+
+
+2.7
+log
+@Version 1.2 commit
+@
+text
+@d16 1
+a16 1
+       "$Id: EngTbls.f90,v 2.6 2003/01/31 18:13:34 perun Exp $"
+d119 1
+a119 1
+        4.9998, 4525.0, 996.0, 620.368, 480.388, 620.0, 480.0), &
+d163 1
+d265 1
+d332 3
+d365 3
+@
+
+
+2.6
+log
+@Version 1.1 commit
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+d16 1
+a16 1
+       "$Id: EngTbls.f90,v 2.5 2002/08/27 20:34:43 pwagner Exp $"
+d150 2
+a151 1
+     CHARACTER(LEN=1) :: GSM_Side
+d167 15
+d264 3
+d332 13
+d360 3
+@
+
+
+2.5
+log
+@Back to using MLSStrings, this time from lib
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+d9 1
+d16 1
+a16 1
+       "$Id: EngTbls.f90,v 2.4 2002/08/07 18:54:22 jdone Exp $"
+d58 64
+a121 32
+   cal_const_t ("GM01", 5.0000, 4525.0, 996.0, 620.0, 480.0, 620.0, 480.0), &
+   cal_const_t ("GM02", 5.0000, 4525.0, 996.0, 620.0, 480.0, 620.0, 480.0), &
+   cal_const_t ("GM03", 5.0000, 4525.0, 996.0, 620.0, 480.0, 620.0, 480.0), &
+   cal_const_t ("GM04", 5.0000, 4525.0, 996.0, 620.0, 480.0, 620.0, 480.0), &
+   cal_const_t ("GM05", 5.0000, 4525.0, 996.0, 620.0, 480.0, 620.0, 480.0), &
+   cal_const_t ("GM06", 5.0000, 4525.0, 996.0, 620.0, 480.0, 620.0, 480.0), &
+   cal_const_t ("GM07", 5.0000, 4525.0, 996.0, 620.0, 480.0, 620.0, 480.0), &
+   cal_const_t ("GM08", 5.0000, 4525.0, 996.0, 620.0, 480.0, 620.0, 480.0), &
+   cal_const_t ("GM09", 5.0000, 4525.0, 996.0, 620.0, 480.0, 620.0, 480.0), &
+   cal_const_t ("GM10", 5.0000, 4525.0, 996.0, 620.0, 480.0, 620.0, 480.0), &
+   cal_const_t ("GM11", 5.0000, 4525.0, 996.0, 620.0, 480.0, 620.0, 480.0), &
+   cal_const_t ("GM12", 5.0000, 4525.0, 996.0, 620.0, 480.0, 620.0, 480.0), &
+   cal_const_t ("GM13", 5.0000, 4525.0, 996.0, 620.0, 480.0, 620.0, 480.0), &
+   cal_const_t ("GM14", 5.0000, 4525.0, 996.0, 620.0, 480.0, 620.0, 480.0), &
+   cal_const_t ("GM15", 5.0000, 4525.0, 996.0, 620.0, 480.0, 620.0, 480.0), &
+   cal_const_t ("SM01", 5.0000, 4525.0, 996.0, 620.0, 480.0, 620.0, 480.0), &
+   cal_const_t ("SM02", 5.0000, 4525.0, 996.0, 620.0, 480.0, 620.0, 480.0), &
+   cal_const_t ("SM03", 5.0000, 4525.0, 996.0, 620.0, 480.0, 620.0, 480.0), &
+   cal_const_t ("SM04", 5.0000, 4525.0, 996.0, 620.0, 480.0, 620.0, 480.0), &
+   cal_const_t ("SM05", 5.0000, 4525.0, 996.0, 620.0, 480.0, 620.0, 480.0), &
+   cal_const_t ("SM06", 5.0000, 4525.0, 996.0, 620.0, 480.0, 620.0, 480.0), &
+   cal_const_t ("SM07", 5.0000, 4525.0, 996.0, 620.0, 480.0, 620.0, 480.0), &
+   cal_const_t ("SM08", 5.0000, 4525.0, 996.0, 620.0, 480.0, 620.0, 480.0), &
+   cal_const_t ("SM09", 5.0000, 4525.0, 996.0, 620.0, 480.0, 620.0, 480.0), &
+   cal_const_t ("SM10", 5.0000, 4525.0, 996.0, 620.0, 480.0, 620.0, 480.0), &
+   cal_const_t ("SM11", 5.0000, 4525.0, 996.0, 620.0, 480.0, 620.0, 480.0), &
+   cal_const_t ("SM12", 5.0000, 4525.0, 996.0, 620.0, 480.0, 620.0, 480.0), &
+   cal_const_t ("SM13", 5.0000, 4525.0, 996.0, 620.0, 480.0, 620.0, 480.0), &
+   cal_const_t ("SM14", 5.0000, 4525.0, 996.0, 620.0, 480.0, 620.0, 480.0), &
+   cal_const_t ("TM01", 5.0000, 4525.0, 996.0, 620.0, 480.0, 620.0, 480.0), &
+   cal_const_t ("TM02", 5.0000, 4525.0, 996.0, 620.0, 480.0, 620.0, 480.0), &
+   cal_const_t ("TM03", 5.0000, 4525.0, 996.0, 620.0, 480.0, 620.0, 480.0) /)
+d146 1
+d328 3
+@
+
+
+2.4
+log
+@Changes due to l1/MLSL1Strings.f90
+@
+text
+@d8 1
+a8 1
+  USE MLSL1Strings, ONLY: LinearSearchStringArray
+d15 1
+a15 1
+       "$Id: EngTbls.f90,v 2.3 2002/03/29 20:18:34 perun Exp $"
+d294 3
+@
+
+
+2.3
+log
+@Version 1.0 commit
+@
+text
+@d8 1
+a8 1
+  USE MLSStrings, ONLY: LinearSearchStringArray
+d15 1
+a15 1
+       "$Id: EngTbls.f90,v 2.2 2001/02/23 18:56:17 perun Exp $"
+d294 3
+@
+
+
+2.2
+log
+@Version 0.5 commit
+@
+text
+@d15 2
+a16 2
+       "$Id: $"
+  CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile: $"
+d115 2
+d146 2
+a147 2
+       Riu_tbl_t (1,  69, 0, 0, 0, 0), &
+       Riu_tbl_t (1,  69, 0, 0, 0, 0), &
+d151 2
+a152 2
+       Riu_tbl_t (5, 157, 0, 0, 0, 0), &
+       Riu_tbl_t (2, 105, 0, 0, 0, 0), &
+d154 3
+a156 3
+       Riu_tbl_t (2, 199, 0, 0, 0, 0), &
+       Riu_tbl_t (4, 147, 0, 0, 0, 0), &
+       Riu_tbl_t (4, 195, 0, 0, 0, 0), &
+d160 2
+a161 2
+       Riu_tbl_t (2,  21, 0, 0, 0, 0), &
+       Riu_tbl_t (4,  21, 0, 0, 0, 0), &
+d163 7
+a169 6
+       Riu_tbl_t (4,  69, 0, 0, 0, 0), &
+       Riu_tbl_t (4,  83, 0, 0, 0, 0), &
+       Riu_tbl_t (4,  97, 0, 0, 0, 0), &
+       Riu_tbl_t (5,  69, 0, 0, 0, 0), &
+       Riu_tbl_t (5,  83, 0, 0, 0, 0), &
+       Riu_tbl_t (5, 103, 0, 0, 0, 0), &
+d171 5
+a175 6
+       Riu_tbl_t (5, 137, 0, 0, 0, 0), &
+       Riu_tbl_t (6,  19, 0, 0, 0, 0), &
+       Riu_tbl_t (6,  39, 0, 0, 0, 0), &
+       Riu_tbl_t (6,  59, 0, 0, 0, 0), &
+       Riu_tbl_t (6,  73, 0, 0, 0, 0), &
+       Riu_tbl_t (1, 127, 0, 0, 0, 0), &
+d177 1
+a177 1
+       Riu_tbl_t (4, 117, 0, 0, 0, 0) /)
+d260 1
+a260 1
+             Riu_tbl(riu_no)%first_pt = i;
+d293 4
+a296 1
+! $Log: $
+@
+
+
+2.1
+log
+@Version 0.5 commit
+@
+text
+@d15 2
+a16 2
+       "$Id $"
+  CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile $"
+d291 1
+a291 1
+! $Log $
+@
+

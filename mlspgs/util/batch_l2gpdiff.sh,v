@@ -1,0 +1,1107 @@
+head	1.20;
+access;
+symbols
+	v5-02-NRT-19:1.20
+	v6-00:1.20
+	v5-02-NRT-18:1.20
+	v5-02:1.19
+	v5-01-NRT-17:1.20
+	v5-01-NRT-16:1.19
+	v5-01-NRT-15:1.19
+	v5-01-NRT-14:1.19
+	neuralnetworks-1-0:1.19.0.10
+	cfm-single-freq-0-1:1.19.0.8
+	v5-01:1.19
+	v5-00:1.19
+	v4-23-TA133:1.19.0.6
+	mus-emls-1-70:1.19.0.4
+	rel-1-0-englocks-work:1.19.0.2
+	VUMLS1-00:1.18
+	VPL1-00:1.18
+	V4-22-NRT-08:1.18
+	VAM1-00:1.18
+	V4-21:1.18.0.2
+	V4-13:1.18
+	V4-12:1.18
+	V4-11:1.18
+	V4-10:1.18
+	V3-43:1.12
+	M4-00:1.18
+	V3-41:1.12
+	V3-40-PlusGM57:1.12.0.2
+	V2-24-NRT-04:1.9
+	V3-33:1.12
+	V2-24:1.9
+	V3-31:1.12
+	V3-30-NRT-05:1.12
+	cfm-01-00:1.12
+	V3-30:1.12
+	V3-20:1.12
+	V3-10:1.9
+	V2-23-NRT-02:1.9
+	V2-23:1.9
+	V2-22-NRT-01:1.9
+	V2-22:1.9
+	V2-21:1.7
+	V2-20:1.6
+	V2-11:1.6
+	V2-10:1.6
+	V2-00:1.6
+	V1-51:1.2
+	V1-50:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.20
+date	2022.09.16.18.34.55;	author pwagner;	state Exp;
+branches;
+next	1.19;
+
+1.19
+date	2018.03.12.21.45.25;	author pwagner;	state Exp;
+branches;
+next	1.18;
+
+1.18
+date	2012.07.02.23.06.34;	author pwagner;	state Exp;
+branches;
+next	1.17;
+
+1.17
+date	2012.04.20.23.16.19;	author pwagner;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2012.04.20.20.18.30;	author pwagner;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2012.02.13.23.43.59;	author pwagner;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2011.06.16.23.19.09;	author pwagner;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2011.05.26.20.46.31;	author pwagner;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2009.12.10.18.52.58;	author pwagner;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2009.10.27.21.14.00;	author pwagner;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2009.08.18.21.04.52;	author pwagner;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2007.10.09.18.24.05;	author pwagner;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2007.06.01.16.48.58;	author pwagner;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2006.11.22.18.31.13;	author pwagner;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2006.05.24.22.22.47;	author pwagner;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2006.03.23.19.15.37;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2005.06.23.22.20.45;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2005.04.01.00.06.47;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2005.01.03.18.57.55;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.12.29.22.26.03;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.20
+log
+@Restored SO2 to StdProds; correctly skips non-existent products
+@
+text
+@#!/bin/sh
+#batch_l2gpdiff.sh
+
+# --------------- batch_l2gpdiff.sh help
+# Performs a l2gpdiff on files from two separate runs for various species
+# saving the results to one file per species
+# Usage:
+# batch_l2gpdiff.sh [opt1] [opt2] ..  str1 [str2] .. - dir1 dir2
+# where each string is a valid species name; e.g., H2O
+# and dir1, dir2 are the directories holding the l2gp files from the two runs
+#       * Special value expanded into all standard species *
+# If str1 is StdProd it is expanded into the current standard products
+# i.e.,  
+# BrO CH3CN ClO CO GPH H2O HCl HCN HNO3 HO2 HOCl IWC N2O O3 OH RHI Temperature
+# If the -Ef file mechanism is used, and the variable PRODUCTS is defined
+# its value will override the other species
+#
+#     O p t i o n s
+#    -Ef file             set environment according to definitions found in file
+#    -append              Append the results to an existing file
+#                          (Otherwise replace any existing file)
+#    -dryrun              Merely echo the commands that would be executed
+#    -unique              Save results to a uniquely-named new file
+#    -c1 cycle1           Insist on cycle number c"cycle1" in dir1
+#                         (if cycle1 is "none" then file name may lack cycle number)
+#    -c2 cycle2           Insist on cycle number c"cycle2" in dir2
+#                         (if cycle2 is "none" then file name may lack cycle number)
+#    -profiles m n        Keep only profiles in range m n
+#    -l2gpdiff command    Use command instead of l2gpdiff
+#  (and all the normal l2gpdiff options; e.g. -au -rms -ignore are wise choices)
+#
+# Note:
+# (1) Each option is preceded by a dash
+# (2) The options must come before the strings
+# (3) The bare "-", must be present 
+#      (to separate the strings from the directories on the command line)
+# (4) The files being l2gpdiffed must be in different directories 
+# (5) Each comparison will be saved in the current working directory as str.diff
+#
+# Bugs and limitations
+# (1) l2gpdiff is assumed to exist, to be an executable, and (in desc order)
+#     (a) defined by the env variables L2GPDIFF
+#     (b) in your PATH
+#     (c) /software/toolkit/mlstools/l2gpdiff
+# (2) The l2gp file names are assumed to match the pattern
+#      MLS-Aura_L2GP-xxxx_*.he5
+# (3) If multiple matches, we choose the last
+#      in alphabetical order (which may or may not have the highest cycle num:
+#      that's why we have the -c1 and -c2)
+# --------------- End batch_l2gpdiff.sh help
+# Copyright 2005, by the California Institute of Technology. ALL
+# RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+# commercial use must be negotiated with the Office of Technology Transfer
+# at the California Institute of Technology.
+
+# This software may be subject to U.S. export control laws. By accepting this
+# software, the user agrees to comply with all applicable U.S. export laws and
+# regulations. User has the responsibility to obtain export licenses, or other
+# export authority as may be required before exporting such information to
+# foreign countries or providing access to foreign persons.
+
+# "$Id: batch_l2gpdiff.sh,v 1.19 2018/03/12 21:45:25 pwagner Exp $"
+
+#
+#---------------------------- get_unique_name
+#
+# Function returns a unique name based on arg, PID and HOSTNAME
+# e.g.,
+#           temp_file_name=`get_unique_name foo`
+#           echo $temp_file_name
+# might print foo.colossus.21455
+# if no arg, defaults to "temp" (very original name)
+# if two args present, assumes second is punctuation to
+# use in pace of "."
+
+get_unique_name()
+{
+
+   # How many args?
+      if [ $# -gt 1 ]
+      then
+        pt="$2"
+        temp="$1"
+      elif [ $# -gt 0 ]
+      then
+        pt="."
+        temp="$1"
+      else
+        pt="."
+        temp="temp"
+      fi
+   # Is $HOST defined?
+      if [ "$HOST" != "" ]
+      then
+         our_host_name="$HOST"
+      elif [ "$HOSTNAME" != "" ]
+      then
+         our_host_name="$HOSTNAME"
+      else
+         our_host_name="host"
+      fi
+    #  echo $our_host_name
+   # if in form host.moon.planet.star.. extract host
+      our_host_name=`echo $our_host_name | sed 's/\./,/g'`
+      our_host_name=`perl -e '@@parts=split(",","$ARGV[0]"); print $parts[0]' $our_host_name`
+      echo $temp${pt}$our_host_name${pt}$$
+}
+      
+#------------------------------- extant_files ------------
+#
+# Function to return only those files among the args
+# that actually exist
+# Useful when passed something like *.f which may 
+# (1) expand to list of files, returned as extant_files_result, or
+# (2) stay *.f, in which case a blank is returned as extant_files_result 
+#     (unless you have perversely named a file '*.f')
+# usage: extant_files arg1 [arg2] ..
+
+extant_files()
+{
+   extant_files_result=
+   # Trivial case ($# = 0)
+   if [ "$1" != "" ]
+   then
+      for file
+      do
+         if [ -f "$file" ]
+         then
+               extant_files_result="$extant_files_result $file"
+         fi
+      done
+   fi
+}
+
+#------------------------------- Main Program ------------
+
+#****************************************************************
+#                                                               *
+#                  * * * Main Program  * * *                    *
+#                                                               *
+#                                                               *
+#	The entry point where control is given to the script         *
+#****************************************************************
+#
+stdprods='BrO CH3Cl CH3CN ClO CO GPH H2O HCl HCN HNO3 HO2 HOCl IWC N2O O3 OH RHI SO2 Temperature'
+debug=0
+#     ^  -- set this to 1 if worried
+keep=0
+#    ^  -- set this to 1 to keep temp files (else delete)
+me="$0"
+my_name=batch_l2gpdiff.sh
+I=batch_l2gpdiff
+if [ "$L2GPDIFF" = "" ]
+then
+  L2GPDIFF=`which l2gpdiff 2> /dev/null`
+fi
+if [ ! -x "$L2GPDIFF" ]
+then
+  L2GPDIFF=$MLSTOOLS/l2gpdiff
+fi
+# $reecho is reecho with me's path prepended
+reecho="`echo $0 | sed 's/'$I'/reecho/'`"
+# $the_splitter is split_path with me's path prepended
+the_splitter="`echo $0 | sed 's/'$I'/split_path/'`"
+envfile="default-env.txt"
+l2gpdiff_opts=""
+list=""
+PRODUCTS=""
+append="no"
+cycle1=""
+cycle2=""
+profile1=""
+profile2=""
+dryrun="no"
+matchTimes="no"
+unique="no"
+more_opts="yes"
+more_strs="yes"
+while [ "$more_strs" = "yes" ] ; do
+
+    if [ "$debug" = "1" ]
+    then
+      echo "arg $1"
+    fi
+    case "$1" in
+
+    - )
+	    shift
+       more_opts="no"
+       more_strs="no"
+       ;;
+    -append )
+	    append="yes"
+	    shift
+       ;;
+    -c1 )
+	    cycle1="$2"
+	    shift
+	    shift
+       ;;
+    -c2 )
+	    cycle2="$2"
+	    shift
+	    shift
+       ;;
+    -dryrun )
+	    dryrun="yes"
+	    shift
+       ;;
+    -Ef )
+            shift
+            envfile="$1"
+            shift
+            if [ -f "$envfile" ]
+            then
+              . $envfile
+            fi
+       ;;
+    -prof* )
+	    profile1="$2"
+	    shift
+	    profile2="$2"
+	    shift
+	    shift
+       ;;
+    -unique )
+	    unique="yes"
+	    shift
+       ;;
+    -l2gpdiff )
+	    L2GPDIFF="$2"
+	    shift
+	    shift
+       ;;
+    -h | -help )
+       sed -n '/'$my_name' help/,/End '$my_name' help/ p' $me \
+           | sed -n 's/^.//p' | sed '1 d; $ d'
+       exit
+	     ;;
+    -* )
+       if [ "$l2gpdiff_opts" = "" ]
+       then
+	       l2gpdiff_opts="$1"
+       else
+	       l2gpdiff_opts="$l2gpdiff_opts $1"
+       fi
+       opt_takes_args=`echo "-d,-f,-chunks,-fields,-pressures,-s1,-s2" | grep -e "$1"`
+       # if [ "$1" = "-d" -o "$1" = "-f" ]
+       if [ "$debug" = 1 ]
+       then
+         echo opt_takes_args: $opt_takes_args
+       fi
+       if [ "$opt_takes_args" != "" -a "$1" != "-s" ]
+       then
+	       l2gpdiff_opts="$l2gpdiff_opts $2"
+          shift
+       fi
+	    shift
+       ;;
+    * )
+       more_opts="no"
+       sptest=`echo $1 | grep -i st`
+       if [ "$sptest" != "" ]
+       then
+         list="$stdprods"
+       elif [ "$list" != "" ]
+       then
+         list="$list $1"
+       else
+         list="$1"
+       fi
+	    shift
+       ;;
+    esac
+done
+
+if [ "$PRODUCTS" != "" ]
+then
+  list="$PRODUCTS"
+elif [ "$list" = "" ]
+then
+  sed -n '/'$my_name' help/,/End '$my_name' help/ p' $me \
+      | sed -n 's/^.//p' | sed '1 d; $ d'
+  exit
+fi
+dir1="$1"
+dir2="$2"
+if [ "$profile1" != "" -a "$profile2" != "" ]
+then
+  frstdir=~/`get_unique_name frst`
+  scnddir=~/`get_unique_name scnd`
+  mkdir $frstdir
+  mkdir $scnddir
+fi
+if [ "$debug" = 1 ]
+then
+  echo "L2GPDIFF $L2GPDIFF"
+  echo "l2gpdiff_opts $l2gpdiff_opts"
+  echo "list $list"
+  echo "unique $unique"
+  echo "append $append"
+  echo "cycle1 $cycle1"
+  echo "cycle2 $cycle2"
+  echo "profile1 $profile1"
+  echo "profile2 $profile2"
+  echo "dir1 $dir1"
+  echo "dir2 $dir2"
+  echo "frstdir $frstdir"
+  echo "scnddir $scnddir"
+fi
+
+if [ "$dir1" = "$dir2" ]
+then
+  echo "Sorry--dir1 and dir2 must be different"
+elif [ ! -d "$dir1" ]
+then
+  echo "Sorry--dir1 must be a directory"
+elif [ ! -d "$dir2" ]
+then
+  echo "Sorry--dir2 must also be a directory"
+elif [ ! -x "$L2GPDIFF" ]
+then
+  echo "Sorry--L2GPDIFF must exist and be executable"
+fi
+for i in $list
+do
+  # We'll use this bit of trickery to skip any products that weren't created
+  # e.g., "OH" on dates when the THz radiometer is off
+  # of products not created by the nrt process
+  file1="skip"
+  file2="skip"
+  extant_files $dir1/MLS-Aura_L2GP-${i}_*c${cycle1}*.he5
+  if [ "$cycle1" = "none" ]
+  then
+    extant_files $dir1/MLS-Aura_L2GP-${i}_*.he5
+  fi
+  
+  echo dir1/MLS-Aura_L2GP-{i}_ $dir1/MLS-Aura_L2GP-${i}_*.he5
+  echo extant_files_result $extant_files_result
+
+  nfiles=`echo "$extant_files_result" | wc | awk '{print $2}'`
+  if [ "$nfiles" -gt 1 ]
+  then
+    file1=`echo $extant_files_result | sed 's/ /\n/g' | tail -1`
+  elif [ "$nfiles" -lt 1 ]
+  then
+    echo "Sorry--no matching files for species $i in $dir1"
+  else
+    file1="$extant_files_result"
+  fi
+
+  extant_files $dir2/MLS-Aura_L2GP-${i}_*c${cycle2}*.he5
+  if [ "$cycle2" = "none" ]
+  then
+    extant_files $dir2/MLS-Aura_L2GP-${i}_*.he5
+  fi
+  
+  echo dir2/MLS-Aura_L2GP-{i}_ $dir2/MLS-Aura_L2GP-${i}_*.he5
+  echo extant_files_result $extant_files_result
+
+  nfiles=`echo "$extant_files_result" | wc | awk '{print $2}'`
+  if [ "$nfiles" -gt 1 ]
+  then
+    file2=`echo $extant_files_result | sed 's/ /\n/g' | tail -1`
+  elif [ "$nfiles" -lt 1 ]
+  then
+    echo "Sorry--no matching files for species $i in $dir2"
+  else
+    file2="$extant_files_result"
+  fi
+
+  if [ "$debug" = 1 ]
+  then
+    echo "species $i"
+    echo "file1 $file1"
+    echo "file2 $file2"
+  fi
+  a=`echo "$file1 $file2" | grep skip`
+  # Run the diffs tool only if both files are present
+  # i.e., neither is named "skip"
+  if [ "$a" = "" ]
+  then
+    if [ "$profile1" != "" -a "$profile2" != "" ]
+    then
+      fname1=`perl -e '$reverse=reverse("$ARGV[0]"); @@parts=split("/",$reverse); $reverse=$parts[0]; $reverse=reverse($reverse); print $reverse' $file1`
+      fname2=`perl -e '$reverse=reverse("$ARGV[0]"); @@parts=split("/",$reverse); $reverse=$parts[0]; $reverse=reverse($reverse); print $reverse' $file2`
+      newfile1=$frstdir/$fname1
+      newfile2=$scnddir/$fname2
+      if [ "$dryrun" = "yes" ]
+      then
+        echo "l2gpcat -v -o $newfile1 -profiles $profile1 $profile2 $file1"
+        echo "l2gpcat -v -o $newfile2 -profiles $profile1 $profile2 $file2"
+      else
+        l2gpcat -v -o $newfile1 -profiles $profile1 $profile2 $file1
+        l2gpcat -v -o $newfile2 -profiles $profile1 $profile2 $file2
+      fi
+      file1=$newfile1
+      file2=$newfile2
+    fi
+    if [ "$unique" = "yes" ]
+    then
+       outfile=`get_unique_name $i`
+    else
+      outfile="$i.diff"
+    fi
+    if [ "$dryrun" = "yes" ]
+    then
+      echo "l2gpdiff $file1 $file2 to $outfile"
+    elif [ ! -f "$outfile" ]
+    then
+      echo "$file1 $file2 $outfile" > "$outfile"
+    elif [ "$append" = "yes" ]
+    then
+       echo "$file1 $file2 $outfile" >> "$outfile"
+    else
+      rm -f "$outfile"
+      echo "$file1 $file2 $outfile" > "$outfile"
+    fi
+    if [ "$file1" = "" ]
+    then
+      echo "No $i file found in $dir1"
+    elif [ "$file2" = "" ]
+    then
+      echo "No $i file found in $dir2"
+    elif [ "$dryrun" = "yes" ]
+    then
+      echo "$L2GPDIFF $l2gpdiff_opts $file1 $file2"
+    elif [ "$l2gpdiff_opts" = "" ]
+    then
+      $L2GPDIFF $file1 $file2 >> "$outfile"
+    else
+      $L2GPDIFF $l2gpdiff_opts $file1 $file2 >> "$outfile"
+    fi
+  fi
+done
+if [ "$profile1" != "" -a "$profile2" != "" -a "$keep" != 1 ]
+then
+  /bin/rm -fr $frstdir
+  /bin/rm -fr $scnddir
+fi
+exit
+# $Log: batch_l2gpdiff.sh,v $
+# Revision 1.19  2018/03/12 21:45:25  pwagner
+# Respect the env variable L2GPDIFF as the preferred l2gpdiff
+#
+# Revision 1.18  2012/07/02 23:06:34  pwagner
+# The environment variable PRODUCTS now determines what is diffed
+#
+# Revision 1.17  2012/04/20 23:16:19  pwagner
+# Disabled more debugging messages
+#
+# Revision 1.16  2012/04/20 20:18:30  pwagner
+# Turn off extra debugging
+#
+# Revision 1.15  2012/02/13 23:43:59  pwagner
+# Moved where envfile gets sourced to better location
+#
+# Revision 1.14  2011/06/16 23:19:09  pwagner
+# Fixed bug when finding L2GPDIFF
+#
+# Revision 1.13  2011/05/26 20:46:31  pwagner
+# May use file of environment settings
+#
+# Revision 1.12  2009/12/10 18:52:58  pwagner
+# Attempts to find command first in PATH, then inder MLSTOOLS
+#
+# Revision 1.11  2009/10/27 21:14:00  pwagner
+# Corrected bug in options; l2gpdiff now assumed to be in PATH
+#
+# Revision 1.10  2009/08/18 21:04:52  pwagner
+# Added new CH3Cl stdprod
+#
+# Revision 1.9  2007/10/09 18:24:05  pwagner
+# Passes -pressures 'p1,p2,..' to l2gpdiff
+#
+# Revision 1.8  2007/06/01 16:48:58  pwagner
+# Tiny changes, defaults to not keeping temp files
+#
+# Revision 1.7  2006/11/22 18:31:13  pwagner
+# Special cycle number 'none' for file names lacking 'cnn' string
+#
+# Revision 1.6  2006/05/24 22:22:47  pwagner
+# Added -profiles option
+#
+# Revision 1.5  2006/03/23 19:15:37  pwagner
+# Better handling of multiple cycle numbers
+#
+# Revision 1.4  2005/06/23 22:20:45  pwagner
+# Reworded Copyright statement
+#
+# Revision 1.3  2005/04/01 00:06:47  pwagner
+# StdProd species name expands to all stndard products
+#
+# Revision 1.2  2005/01/03 18:57:55  pwagner
+# Fixed suntax errors in if--elif--fi sequence
+#
+# Revision 1.1  2004/12/29 22:26:03  pwagner
+# First commit
+#
+@
+
+
+1.19
+log
+@Respect the env variable L2GPDIFF as the preferred l2gpdiff
+@
+text
+@d62 1
+a62 1
+# "$Id: batch_l2gpdiff.sh,v 1.18 2012/07/02 23:06:34 pwagner Exp $"
+d145 1
+a145 1
+stdprods='BrO CH3Cl CH3CN ClO CO GPH H2O HCl HCN HNO3 HO2 HOCl IWC N2O O3 OH RHI Temperature'
+d311 1
+d327 5
+d337 4
+d357 4
+d378 4
+a381 1
+  if [ "$profile1" != "" -a "$profile2" != "" ]
+d383 23
+a405 4
+    fname1=`perl -e '$reverse=reverse("$ARGV[0]"); @@parts=split("/",$reverse); $reverse=$parts[0]; $reverse=reverse($reverse); print $reverse' $file1`
+    fname2=`perl -e '$reverse=reverse("$ARGV[0]"); @@parts=split("/",$reverse); $reverse=$parts[0]; $reverse=reverse($reverse); print $reverse' $file2`
+    newfile1=$frstdir/$fname1
+    newfile2=$scnddir/$fname2
+d408 23
+a430 2
+      echo "l2gpcat -v -o $newfile1 -profiles $profile1 $profile2 $file1"
+      echo "l2gpcat -v -o $newfile2 -profiles $profile1 $profile2 $file2"
+d432 1
+a432 2
+      l2gpcat -v -o $newfile1 -profiles $profile1 $profile2 $file1
+      l2gpcat -v -o $newfile2 -profiles $profile1 $profile2 $file2
+a433 36
+    file1=$newfile1
+    file2=$newfile2
+  fi
+  if [ "$unique" = "yes" ]
+  then
+     outfile=`get_unique_name $i`
+  else
+    outfile="$i.diff"
+  fi
+  if [ "$dryrun" = "yes" ]
+  then
+    echo "l2gpdiff $file1 $file2 to $outfile"
+  elif [ ! -f "$outfile" ]
+  then
+    echo "$file1 $file2 $outfile" > "$outfile"
+  elif [ "$append" = "yes" ]
+  then
+     echo "$file1 $file2 $outfile" >> "$outfile"
+  else
+    rm -f "$outfile"
+    echo "$file1 $file2 $outfile" > "$outfile"
+  fi
+  if [ "$file1" = "" ]
+  then
+    echo "No $i file found in $dir1"
+  elif [ "$file2" = "" ]
+  then
+    echo "No $i file found in $dir2"
+  elif [ "$dryrun" = "yes" ]
+  then
+    echo "$L2GPDIFF $l2gpdiff_opts $file1 $file2"
+  elif [ "$l2gpdiff_opts" = "" ]
+  then
+    $L2GPDIFF $file1 $file2 >> "$outfile"
+  else
+    $L2GPDIFF $l2gpdiff_opts $file1 $file2 >> "$outfile"
+d443 3
+@
+
+
+1.18
+log
+@The environment variable PRODUCTS now determines what is diffed
+@
+text
+@d30 1
+a30 1
+#  (and all the normal l2gpdiff options; e.g. -rms -ignore are wise choices)
+d41 4
+a44 2
+# (1) l2gpdiff is assumed to exist, to be an executable, and to be in
+#     either your PATH or /software/toolkit/mlstools/l2gpdiff
+d47 1
+a47 1
+# (3) If multiple matches, we try always to pick out the last
+d49 1
+a49 3
+#      which is why we have the -c1 and -c2)
+# (4) Why don't you just make "-rms -ignore" the default options, either
+#      here or in l2gpdiff itself?
+d62 1
+a62 1
+# "$Id: batch_l2gpdiff.sh,v 1.17 2012/04/20 23:16:19 pwagner Exp $"
+d153 4
+a156 1
+L2GPDIFF=`which l2gpdiff 2> /dev/null`
+d423 3
+@
+
+
+1.17
+log
+@Disabled more debugging messages
+@
+text
+@d15 2
+d62 1
+a62 1
+# "$Id: batch_l2gpdiff.sh,v 1.16 2012/04/20 20:18:30 pwagner Exp $"
+d165 1
+d274 4
+a277 1
+if [ "$list" = "" ]
+d420 3
+@
+
+
+1.16
+log
+@Turn off extra debugging
+@
+text
+@d60 1
+a60 1
+# "$Id: batch_l2gpdiff.sh,v 1.15 2012/02/13 23:43:59 pwagner Exp $"
+d175 1
+a175 1
+    if [ "$debug" ]
+d243 4
+a246 1
+       echo opt_takes_args: $opt_takes_args
+d414 3
+@
+
+
+1.15
+log
+@Moved where envfile gets sourced to better location
+@
+text
+@d60 1
+a60 1
+# "$Id: batch_l2gpdiff.sh,v 1.14 2011/06/16 23:19:09 pwagner Exp $"
+d144 1
+a144 1
+debug=1
+d411 3
+@
+
+
+1.14
+log
+@Fixed bug when finding L2GPDIFF
+@
+text
+@d60 1
+a60 1
+# "$Id: batch_l2gpdiff.sh,v 1.13 2011/05/26 20:46:31 pwagner Exp $"
+d208 4
+a273 4
+if [ -f "$envfile" ]
+then
+  . $envfile
+fi
+d411 3
+@
+
+
+1.13
+log
+@May use file of environment settings
+@
+text
+@d60 1
+a60 1
+# "$Id: batch_l2gpdiff.sh,v 1.12 2009/12/10 18:52:58 pwagner Exp $"
+d151 2
+a152 2
+L2GPDIFF=`which l2gpdiff`
+if [ ! -x $L2GPDIFF ]
+d411 3
+@
+
+
+1.12
+log
+@Attempts to find command first in PATH, then inder MLSTOOLS
+@
+text
+@d17 1
+d60 1
+a60 1
+# "$Id: batch_l2gpdiff.sh,v 1.11 2009/10/27 21:14:00 pwagner Exp $"
+d160 1
+d204 5
+d270 4
+d411 3
+@
+
+
+1.11
+log
+@Corrected bug in options; l2gpdiff now assumed to be in PATH
+@
+text
+@d59 1
+a59 1
+# "$Id: batch_l2gpdiff.sh,v 1.10 2009/08/18 21:04:52 pwagner Exp $"
+a149 1
+#L2GPDIFF=~/mlspgs/bin/LF95.Linux/l2gpdiff
+d153 1
+a153 1
+  L2GPDIFF=/software/toolkit/mlstools/l2gpdiff
+d400 3
+@
+
+
+1.10
+log
+@Added new CH3Cl stdprod
+@
+text
+@d39 1
+a39 1
+#     $HOME/mlspgs/bin/LF95.Linux
+d59 1
+a59 1
+# "$Id: batch_l2gpdiff.sh,v 1.9 2007/10/09 18:24:05 pwagner Exp $"
+d143 1
+a143 1
+debug=0
+d150 6
+a155 1
+L2GPDIFF=~/mlspgs/bin/LF95.Linux/l2gpdiff
+d174 4
+a209 4
+#    -match* )
+#	    matchTimes="yes"
+#	    shift
+#       ;;
+d234 1
+a234 1
+       if [ "$opt_takes_args" != "" ]
+d401 3
+@
+
+
+1.9
+log
+@Passes -pressures 'p1,p2,..' to l2gpdiff
+@
+text
+@d59 1
+a59 1
+# "$Id: batch_l2gpdiff.sh,v 1.8 2007/06/01 16:48:58 pwagner Exp $"
+d142 1
+a142 1
+stdprods='BrO CH3CN ClO CO GPH H2O HCl HCN HNO3 HO2 HOCl IWC N2O O3 OH RHI Temperature'
+d396 3
+@
+
+
+1.8
+log
+@Tiny changes, defaults to not keeping temp files
+@
+text
+@d59 1
+a59 1
+# "$Id: batch_l2gpdiff.sh,v 1.7 2006/11/22 18:31:13 pwagner Exp $"
+d226 1
+a226 1
+       opt_takes_args=`echo "-d,-f,-chunks,-fields,-s1,-s2" | grep -e "$1"`
+d396 3
+@
+
+
+1.7
+log
+@Special cycle number 'none' for file names lacking 'cnn' string
+@
+text
+@d59 1
+a59 1
+# "$Id: batch_l2gpdiff.sh,v 1.6 2006/05/24 22:22:47 pwagner Exp $"
+d145 1
+a145 1
+keep=1
+d163 1
+d201 4
+d396 3
+@
+
+
+1.6
+log
+@Added -profiles option
+@
+text
+@d22 1
+d24 1
+d59 1
+a59 1
+# "$Id: batch_l2gpdiff.sh,v 1.5 2006/03/23 19:15:37 pwagner Exp $"
+d295 4
+d310 5
+a314 1
+  extant_files $dir2/MLS-Aura_L2GP-${i}_*c${cycle1}*.he5
+d391 3
+@
+
+
+1.5
+log
+@Better handling of multiple cycle numbers
+@
+text
+@d23 1
+d57 1
+a57 1
+# "$Id: batch_l2gpdiff.sh,v 1.4 2005/06/23 22:20:45 pwagner Exp $"
+d141 1
+a141 1
+debug=1
+d143 2
+d151 2
+d158 2
+d191 7
+d219 4
+a222 1
+       if [ "$1" = "-d" -o "$1" = "-f" ]
+d254 7
+d270 2
+d274 2
+d322 17
+d374 5
+d381 3
+@
+
+
+1.4
+log
+@Reworded Copyright statement
+@
+text
+@d21 2
+d39 4
+a42 1
+# (3) Why don't you just make "-rms -ignore" the default options, either
+d56 1
+a56 1
+# "$Id: batch_l2gpdiff.sh,v 1.3 2005/04/01 00:06:47 pwagner Exp $"
+d151 2
+d170 10
+d244 2
+d264 24
+a287 4
+  extant_files $dir1/MLS-Aura_L2GP-${i}_*.he5
+  file1="$extant_files_result"
+  extant_files $dir2/MLS-Aura_L2GP-${i}_*.he5
+  file2="$extant_files_result"
+d331 3
+@
+
+
+1.3
+log
+@StdProd species name expands to all stndard products
+@
+text
+@d40 4
+a43 2
+# Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+# U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
+d45 7
+a51 1
+# "$Id: batch_l2gpdiff.sh,v 1.2 2005/01/03 18:57:55 pwagner Exp $"
+d292 3
+@
+
+
+1.2
+log
+@Fixed suntax errors in if--elif--fi sequence
+@
+text
+@d11 4
+d19 1
+d37 1
+a37 3
+# (3) It would be convenient to have some helpful short string that
+#      is translated into all the standard species
+# (4) Why don't you just make "-rms -ignore" the default options, either
+d40 2
+a41 2
+# Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
+# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d43 1
+a43 1
+# "$Id: batch_l2gpdiff.sh,v 1.1 2004/12/29 22:26:03 pwagner Exp $"
+d126 1
+a128 2
+PRINT_TOO_MUCH=0
+#              ^  -- set this to 1 if willing to try patience of users
+d138 1
+d155 4
+d189 5
+a193 1
+       if [ "$list" != "" ]
+d253 4
+a256 1
+  if [ ! -f "$outfile" ]
+d272 3
+d284 3
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d17 1
+a17 1
+#  (and all the normal l2gpdiff options)
+d32 4
+d40 1
+a40 1
+# "$Id: batch_l2gpdiff.sh,v 1.4 2004/11/03 19:09:33 pwagner Exp $"
+a219 1
+fi
+d221 1
+a222 1
+then
+d267 3
+@
+

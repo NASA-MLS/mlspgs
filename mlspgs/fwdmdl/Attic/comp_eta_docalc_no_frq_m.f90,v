@@ -1,0 +1,1614 @@
+head	2.26;
+access;
+symbols
+	mus-emls-1-70:2.25.0.4
+	rel-1-0-englocks-work:2.25.0.2
+	VUMLS1-00:2.22
+	VPL1-00:2.19
+	V4-22-NRT-08:2.19
+	VAM1-00:2.19
+	V4-21:2.18.0.2
+	V4-13:2.18
+	V4-12:2.17
+	V4-11:2.17
+	V4-10:2.17
+	V3-43:2.13
+	M4-00:2.16
+	V3-41:2.13
+	V3-40-PlusGM57:2.13.0.2
+	V2-24-NRT-04:2.11
+	V3-33:2.15
+	V2-24:2.11
+	V3-31:2.15
+	V3-30-NRT-05:2.13
+	cfm-01-00:2.13
+	V3-30:2.13
+	V3-20:2.13
+	V3-10:2.13
+	V2-23-NRT-02:2.11
+	V2-23:2.11
+	V2-22-NRT-01:2.11
+	V2-22:2.11
+	V2-21:2.8
+	V2-20:2.8
+	V2-11:2.8
+	V2-10:2.8
+	V2-00:2.8
+	V1-51:2.6
+	V1-50:2.6
+	V1-45:2.6
+	V1-44:2.6
+	V1-43:2.6
+	V1-32:2.6
+	V1-31:2.6
+	V1-30:2.6
+	V1-13:2.5
+	V1-12:2.5
+	V1-11:2.5
+	V1-10:2.5
+	newfwm-feb03:2.5.0.2
+	V1-04:2.2
+	V1-03:2.2
+	V1-02:2.2
+	JointForwardModel:2.3.0.2
+	V1-00:2.2;
+locks; strict;
+comment	@# @;
+
+
+2.26
+date	2018.09.12.23.48.08;	author vsnyder;	state dead;
+branches;
+next	2.25;
+
+2.25
+date	2018.01.30.02.55.43;	author vsnyder;	state Exp;
+branches;
+next	2.24;
+
+2.24
+date	2017.11.29.00.41.33;	author vsnyder;	state Exp;
+branches;
+next	2.23;
+
+2.23
+date	2017.08.09.20.34.37;	author vsnyder;	state Exp;
+branches;
+next	2.22;
+
+2.22
+date	2016.11.23.20.10.05;	author vsnyder;	state Exp;
+branches;
+next	2.21;
+
+2.21
+date	2016.11.17.01.28.34;	author vsnyder;	state Exp;
+branches;
+next	2.20;
+
+2.20
+date	2016.10.24.22.17.47;	author vsnyder;	state Exp;
+branches;
+next	2.19;
+
+2.19
+date	2015.09.22.23.19.55;	author vsnyder;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2014.08.01.01.03.19;	author vsnyder;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2013.05.18.00.34.44;	author vsnyder;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2013.02.28.21.05.48;	author vsnyder;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2010.09.25.01.20.35;	author vsnyder;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2010.09.25.01.09.34;	author vsnyder;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2009.06.23.18.26.10;	author pwagner;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2009.01.16.23.47.47;	author vsnyder;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2007.07.25.20.21.10;	author vsnyder;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2007.06.26.00.37.01;	author vsnyder;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2007.06.06.01.12.17;	author vsnyder;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2005.12.22.20.48.55;	author vsnyder;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2005.06.22.18.08.18;	author pwagner;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2003.05.05.23.00.25;	author livesey;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2002.10.08.17.08.01;	author pwagner;	state Exp;
+branches
+	2.5.2.1;
+next	2.4;
+
+2.4
+date	2002.09.06.18.18.03;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2002.06.04.10.28.01;	author zvi;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2002.01.27.08.37.46;	author zvi;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.11.02.10.47.37;	author zvi;	state Exp;
+branches;
+next	;
+
+2.5.2.1
+date	2003.03.20.01.42.26;	author vsnyder;	state Exp;
+branches;
+next	2.5.2.2;
+
+2.5.2.2
+date	2003.03.22.02.31.20;	author vsnyder;	state Exp;
+branches;
+next	2.5.2.3;
+
+2.5.2.3
+date	2003.03.22.02.38.01;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.26
+log
+@No longer used
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Comp_Eta_Docalc_No_Frq_m
+
+! This is a new module to compute the SPS path
+
+  implicit NONE
+  private
+  public :: Comp_Eta_Docalc_No_Frq, Comp_Eta_fzp
+  public :: Spread_Eta_FZP_from_Eta_ZP
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: comp_eta_docalc_no_frq_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+! ---------------------------------------  Comp_Eta_Docalc_No_Frq  -----
+
+  subroutine Comp_Eta_Docalc_No_Frq ( Grids_x, Path_Zeta, Path_Phi, &
+                                    & Eta_zp, Do_Calc_zp, Sps, Tan_Pt, &
+                                    & Your_NZ_Zp, Your_NNZ_Zp, &
+                                    & Eta_fzp, Do_Calc_fzp )
+
+    use GLNP, only: NG
+    use MLSKinds, only: RP
+    use Get_Eta_Matrix_m, only: Get_Eta_ZP
+    use Load_Sps_Data_m, only: Grids_T
+
+! Input:
+
+    type (grids_t), intent(in) :: Grids_x  ! All the needed coordinates
+
+    real(rp), intent(in) :: Path_Zeta(:) ! zeta values along path for which
+                          ! species vmr is needed.
+    real(rp), intent(in) :: Path_Phi(:) ! phi values along path for which
+                          ! species vmr is needed.
+    integer, intent(in), optional :: SPS ! Only do this species if present
+    integer, intent(in), optional :: Tan_Pt ! Tangent point; path_zeta is sorted
+                          ! before and after tangent point
+
+! Inout:
+
+    logical, intent(inout), optional :: Do_Calc_zp(:,:) ! Do_Calc_zp(p,v)
+                           ! indicates whether there is a contribution for 
+                           ! state vector element V at point P on the path.
+    integer, intent(inout), optional, target :: Your_NZ_ZP(:,:) ! Nonzeros in eta_zp
+    integer, intent(inout), optional, target :: Your_NNZ_ZP(:)  ! Number of nonzeros in eta_zp
+
+! Output:
+
+    ! Marked inout so that we can clear only the nonzeros without making
+    ! the rest of it undefined.
+    real(rp), intent(inout) :: Eta_zp(:,:) ! Eta_z * Eta_phi for each state
+                          ! vector element. This is the same length as values.
+    ! Spread out from Eta_zp and Do_Calc_zp if present.  This copies the same
+    ! value for all frequencies if a species is frequency dependent.
+    real(rp), intent(out), optional :: Eta_fzp(:,:)
+    logical, intent(inout), optional :: Do_Calc_fzp(:,:)
+
+! Notes:
+! units of z_basis must be same as zeta_path (usually -log(P)) and units of
+! phi_basis must be the same as phi_path (either radians or degrees).
+
+! Internal declarations:
+
+    integer :: N_p, N_z, N_v
+    integer :: Sps_1, Sps_n, Sps_i
+    integer :: My_Tan, P_inda, V_Inda, V_Indb, Z_inda, P_indb, Z_indb
+
+    real(rp) :: Eta_p(1:size(path_phi), &  ! size(path_phi) == size(path_zeta)
+      & maxval(Grids_x%l_p(1:ubound(Grids_x%l_p,1))-Grids_x%l_p(0:ubound(Grids_x%l_p,1)-1)))
+    real(rp) :: Eta_z(1:size(path_zeta), &
+      & maxval(Grids_x%l_z(1:ubound(Grids_x%l_z,1))-Grids_x%l_z(0:ubound(Grids_x%l_z,1)-1)))
+    integer :: NZ                          ! Size(Path_Zeta,1)
+    integer :: NZ_P(1:size(Eta_p,1),1:size(Eta_p,2))
+    integer :: NZ_Z(1:size(Eta_z,1),1:size(Eta_z,2))
+    integer :: NNZ_P(1:size(Eta_p,2))
+    integer :: NNZ_Z(1:size(Eta_z,2))
+    integer, target :: MY_NZ_ZP(size(eta_zp,1),size(eta_p,2)*size(eta_z,2))
+    integer, target :: MY_NNZ_ZP(size(eta_p,2)*size(eta_z,2))
+    integer, pointer :: NZ_ZP(:,:) ! Nonzeros in eta_zp
+    integer, pointer :: NNZ_ZP(:)  ! Number of nonzeros in eta_zp
+
+! Begin executable code:
+
+    if ( .not. present(your_nz_zp) ) then
+      eta_zp = 0.0
+      if ( present(do_calc_zp) ) do_calc_zp = .false.
+      nz_zp => my_nz_zp
+      nnz_zp => my_nnz_zp
+    else ! Replace previously calculated nonzeros with zeros.
+      nz_zp => your_nz_zp
+      nnz_zp => your_nnz_zp
+      do n_p = 1, size(nnz_zp)
+        eta_zp(nz_zp(:nnz_zp(n_p),n_p),n_p) = 0.0
+      end do
+      if ( present(do_calc_zp) ) then
+        do n_p = 1, size(nnz_zp)
+          do_calc_zp(nz_zp(:nnz_zp(n_p),n_p),n_p) = .false.
+        end do
+      end if
+    end if
+    nnz_z = 0
+    nnz_p = 0
+    nnz_zp = 0
+
+    my_tan = ( size(path_zeta) - ng ) / 2
+    if ( present(tan_pt) ) my_tan = tan_pt
+    my_tan = min ( my_tan, ubound(path_zeta,1) )
+
+    sps_1 = 1
+    sps_n = ubound(Grids_x%l_z,1)
+    if ( present(sps) ) then
+      sps_1 = sps
+      sps_n = sps
+    end if
+
+    p_indb = Grids_x%l_p(sps_1-1)
+    z_indb = Grids_x%l_z(sps_1-1)
+    v_indb = 0
+
+    do sps_i = sps_1, sps_n
+
+      p_inda = p_indb
+      z_inda = z_indb
+      v_inda = v_indb
+
+      p_indb = Grids_x%l_p(sps_i)
+      z_indb = Grids_x%l_z(sps_i)
+
+      n_z = z_indb - z_inda
+      n_p = p_indb - p_inda
+      ! n_z already has n_p in it if the quantity is not stacked
+      n_v = n_z * merge ( n_p, 1, grids_x%stacked(sps_i) )
+
+      v_indb = v_inda + n_v
+
+      if ( present(do_calc_zp) ) then
+        call get_eta_zp ( Grids_x%zet_basis(z_inda+1:z_indb), path_zeta,       &
+                        & eta_z(:,:n_z), nz_z(:,:n_z), nnz_z(:n_z), my_tan,    &
+                        & Grids_x%phi_basis(p_inda+1:p_indb), path_phi,        &
+                        & eta_p(:,:n_p), nz_p(:,:n_p), nnz_p(:n_p),            &
+                        & eta_zp(:,v_inda+1:v_indb), nz_zp(:,v_inda+1:v_indb), &
+                        & nnz_zp(v_inda+1:v_indb), do_calc_zp(:,v_inda+1:v_indb) )
+      else
+        call get_eta_zp ( Grids_x%zet_basis(z_inda+1:z_indb), path_zeta,       &
+                        & eta_z(:,:n_z), nz_z(:,:n_z), nnz_z(:n_z), my_tan,    &
+                        & Grids_x%phi_basis(p_inda+1:p_indb), path_phi,        &
+                        & eta_p(:,:n_p), nz_p(:,:n_p), nnz_p(:n_p),            &
+                        & eta_zp(:,v_inda+1:v_indb), nz_zp(:,v_inda+1:v_indb), &
+                        & nnz_zp(v_inda+1:v_indb) )
+      end if
+
+    end do
+    if ( present(eta_fzp) .and. present(do_calc_zp) .and. present(do_calc_fzp) ) then
+      nz = size(eta_fzp,1)
+      call spread_eta_fzp_from_eta_zp ( grids_x, &
+                                      & eta_zp(:nz,:), do_calc_zp(:nz,:), &
+                                      & eta_fzp(:nz,:), do_calc_fzp(:nz,:) )
+
+    end if
+
+  end subroutine Comp_Eta_Docalc_No_Frq
+
+! -------------------------------------------------  Comp_Eta_fzp  -----
+  subroutine Comp_Eta_fzp ( Grids_x, Frq, Eta_zp, Do_Calc_zp, Sideband, &
+                          & Eta_fzp, Not_Zero_f, Do_Calc_fzp, LO )
+    use MLSCommon, only: RP, R8
+    use Get_Eta_Matrix_m, only: Get_Eta_Sparse
+    use Load_Sps_Data_m, only: Grids_T
+    type(grids_t), intent(in) :: Grids_x     ! All the needed coordinates
+    real(r8), intent(in) :: Frq  ! Frequency at which to compute the values
+    real(rp), intent(in) :: Eta_zp(:,:)      ! Zeta, Phi interpolating factors
+    logical, intent(in) :: Do_Calc_zp(:,:)   ! Where Eta_zp is nonzero
+    integer, intent(in) :: Sideband          ! -1, 1 or 0.  Zero means
+                                             ! Grids_x%frq_basis is absolute,
+                                             ! not I.F.
+    real(rp), intent(out) :: Eta_fzp(:,:)    ! F, Zeta, Phi interpolating factors
+    logical, intent(out) :: Not_Zero_f(:)    ! Where eta_f is nonzero
+    logical, intent(out) :: Do_Calc_fzp(:,:) ! Where Eta_fzp is nonzero
+    real(r8), intent(in), optional :: LO     ! Local oscillator freq, not
+                                             ! needed if Sideband == 0
+
+    integer :: F_Inda, F_Indb, N_f, Sps_I, SV_f, SV_zp, V_Inda, W_Inda, W_Indb
+    real(rp) :: eta_f(1:maxval(grids_x%l_f(1:)-grids_x%l_f(0:ubound(grids_x%l_f,1)-1)))
+
+    f_inda = 0
+    w_inda = 0
+
+    do sps_i = 1, ubound(grids_x%l_z,1)
+
+      f_indb = grids_x%l_f(sps_i)
+      n_f = f_indb - f_inda
+
+      w_indb = w_inda + (Grids_x%l_z(sps_i) - Grids_x%l_z(sps_i-1)) * &
+                        (Grids_x%l_p(sps_i) - Grids_x%l_p(sps_i-1))
+
+      if ( sideband == -1 ) then
+        call get_eta_sparse ( lo-Grids_x%frq_basis(f_indb:f_inda+1:-1), &
+          & Frq, eta_f(n_f:1:-1), not_zero_f(f_indb:f_inda+1:-1) )
+      else if ( sideband == +1 ) then
+        call get_eta_sparse ( lo+Grids_x%frq_basis(f_inda+1:f_indb), &
+          & Frq, eta_f(1:n_f), not_zero_f(f_inda+1:f_indb) )
+      else ! sideband == 0 means Grids_x%frq_basis is absolute, not in I.F.
+           ! It doesn't mean folded-sideband calculation.
+        call get_eta_sparse ( Grids_x%frq_basis(f_inda+1:f_indb), &
+          & Frq, eta_f(1:n_f), not_zero_f(f_inda+1:f_indb) )
+      end if
+
+      v_inda = grids_x%l_v(sps_i-1)
+      ! Grids_X%Values are really 3-d: Frequencies X Zeta X Phi
+      do sv_zp = w_inda + 1, w_indb
+        do sv_f = 1, n_f
+          v_inda = v_inda + 1
+          if ( not_zero_f(sv_f+f_inda) ) then
+            eta_fzp(:,v_inda) = eta_f(sv_f) * eta_zp(:,sv_zp)
+            do_calc_fzp(:,v_inda) = do_calc_zp(:,sv_zp) .and. Grids_x%deriv_flags(v_inda)
+          else
+            eta_fzp (:, v_inda) = 0.0_r8
+            do_calc_fzp (:, v_inda) = .false.
+          end if
+        end do ! sv_f
+      end do ! sv_zp
+
+      f_inda = f_indb
+      w_inda = w_indb
+
+    end do
+
+  end subroutine Comp_Eta_fzp
+
+! -----------------------------------  Spread_Eta_FZP_from_Eta_ZP  -----
+  subroutine Spread_Eta_FZP_from_Eta_ZP ( Grids_x, Eta_ZP, Do_Calc_ZP, &
+                                        &          Eta_FZP, Do_Calc_FZP, &
+                                        &          NZ_ZP, NNZ_ZP, &
+                                        &          NZ_FZP, NNZ_FZP, Sps )
+
+    ! For species that have no frequency dependence, Eta_ZP = Eta_FZP.
+    ! For those that do have frequency dependence, spread out Eta_ZP for
+    ! all the frequencies.  Do the same for Do_Calc_ZP and DO_Calc_FZP,
+    ! but also include Grids_x%deriv_flags.
+
+    use Load_sps_data_m, only: Grids_T
+    use MLSCommon, only: RP
+
+    type (grids_t), intent(in) :: Grids_x  ! All the needed coordinates
+    real(rp), intent(in) :: Eta_zp(:,:)    ! Path X (Eta_z x Eta_phi)
+            ! First dimension is same as sps_values.
+    logical, intent(in) :: Do_Calc_Zp(:,:) ! logical indicating whether there
+            ! is a contribution for this state vector element
+    real(rp), intent(inout) :: Eta_Fzp(:,:)  ! Path X (Eta_f x Eta_z x Eta_phi)
+            ! First dimension is same as sps_values.
+    logical, intent(inout) :: Do_Calc_Fzp(:,:) ! indicates whether
+            ! there is a contribution for this state vector element. Same
+            ! shape as Eta_Fzp.
+    ! Assume all are present iff NZ_ZP is present
+    integer, intent(in), optional :: NZ_ZP(:,:)     ! Subscripts of zeroes in Eta_ZP
+    integer, intent(in), optional :: NNZ_ZP(:)      ! Number of nonzeroes in Eta_ZP
+    integer, intent(inout), optional :: NZ_FZP(:,:) ! Subscripts of zeroes in Eta_FZP
+    integer, intent(inout), optional :: NNZ_FZP(:)  ! Number of nonzeroes in Eta_FZP
+    integer, intent(in), optional :: Sps            ! Only spread this one
+
+    integer :: F_Inda ! First frequency for one species
+    integer :: F_Indb ! Last frequency for one species
+    integer :: N_F    ! Number of frequencies for one species
+    integer :: Sps_I, Sps_N, Sps_1  ! Species index
+    integer :: Sv_F   ! State vector index for FZP
+    integer :: Sv_ZP  ! State vector index for ZP only
+    integer :: V_Inda ! First value index for FZP
+    integer :: W_Inda ! First ZP index for one species
+    integer :: W_Indb ! Last ZP index for one species
+
+    sps_1 = 1
+    sps_n = ubound(grids_x%l_z,1)
+
+    f_inda = 0
+    w_inda = 0
+
+    if ( present(sps) ) then
+      sps_1 = sps
+      sps_n = sps
+      f_inda = grids_x%l_f(sps_1-1)
+      w_inda = grids_x%l_zp(sps_1-1)
+    end if
+
+    do sps_i = sps_1, sps_n
+
+      f_indb = grids_x%l_f(sps_i)
+      n_f = f_indb - f_inda
+
+      v_inda = grids_x%l_v(sps_i-1) ! One element before the first one
+      w_indb = grids_x%l_zp(sps_i)
+      do sv_zp = w_inda + 1, w_indb
+        do sv_f = 1, n_f
+          v_inda = v_inda + 1
+          if ( present(sps) ) then
+            if ( sps_i /= sps ) cycle
+          end if
+          eta_fzp(:,v_inda) = eta_zp(:,sv_zp) ! Spread eta_zp
+          do_calc_fzp(:,v_inda) = do_calc_zp(:,sv_zp) .and. & ! Spread do_calc_zp
+                                & grids_x%deriv_flags(v_inda)
+          if ( present(nz_zp) ) then
+            nz_fzp(:,v_inda) = nz_zp(:,sv_zp) ! Spread nz_zp
+            nnz_fzp(v_inda) = nnz_zp(sv_zp)
+          end if
+        end do
+      end do
+
+      f_inda = f_indb
+      w_inda = w_indb
+
+    end do
+
+  end subroutine Spread_Eta_FZP_from_Eta_ZP
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: comp_eta_docalc_no_frq_m.f90,v 2.25 2018/01/30 02:55:43 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Comp_Eta_Docalc_No_Frq_m
+
+! $Log: comp_eta_docalc_no_frq_m.f90,v $
+! Revision 2.25  2018/01/30 02:55:43  vsnyder
+! Add spreading for NZ_ZP, NNZ_ZP.  Add SPS argument to
+! Spread_Eta_FZP_from_Eta_ZP.  Use L_ZP component of Grids_X.
+!
+! Revision 2.24  2017/11/29 00:41:33  vsnyder
+! Get RP from MLSKinds instead of MLSCommon
+!
+! Revision 2.23  2017/08/09 20:34:37  vsnyder
+! Set formerly-true values of do_calc_zp false before computing new true ones
+!
+! Revision 2.22  2016/11/23 20:10:05  vsnyder
+! Remove unused use names and variables
+!
+! Revision 2.21  2016/11/17 01:28:34  vsnyder
+! Add Spread_Eta_FZP_from_Eta_ZP.  Use it to spread Eta_zp and Do_Calc_zp
+! to Eta_fzp and Do_Calc_fzp in Comp_Eta_Docalc_No_Frq if the latter two
+! arguments are present.
+!
+! Revision 2.20  2016/10/24 22:17:47  vsnyder
+! Use Get_Eta_ZP
+!
+! Revision 2.19  2015/09/22 23:19:55  vsnyder
+! Consequences of cross-track stuff in load_sps_data
+!
+! Revision 2.18  2014/08/01 01:03:19  vsnyder
+! Clear only nonzeros, change Eta_ZP from out to inout
+!
+! Revision 2.17  2013/05/18 00:34:44  vsnyder
+! Insert NG fine-grid (GL) points between tangent points, thereby
+! regularizing coarse-grid spacing, and reducing significantly the need
+! to use c_inds to extract coarse-grid points from the composite grid.
+!
+! Revision 2.16  2013/02/28 21:05:48  vsnyder
+! Try to cope with short paths
+!
+! Revision 2.15  2010/09/25 01:20:35  vsnyder
+! Correct intent for Do_Calc_zp argument of Comp_Eta_fzp
+!
+! Revision 2.14  2010/09/25 01:09:34  vsnyder
+! Add Comp_Eta_fzp
+!
+! Revision 2.13  2009/06/23 18:26:10  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.12  2009/01/16 23:47:47  vsnyder
+! Cannonball polishing
+!
+! Revision 2.11  2007/07/25 20:21:10  vsnyder
+! Delete declarations for unused variables
+!
+! Revision 2.10  2007/06/26 00:37:01  vsnyder
+! Use column-sparse eta
+!
+! Revision 2.9  2007/06/06 01:12:17  vsnyder
+! Add tangent point optional argument
+!
+! Revision 2.8  2005/12/22 20:48:55  vsnyder
+! Add a 'this-species-only' optional argument
+!
+! Revision 2.7  2005/06/22 18:08:18  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.6  2003/05/05 23:00:25  livesey
+! Merged in feb03 newfwm branch
+!
+! Revision 2.5.2.3  2003/03/22 02:38:01  vsnyder
+! Make do_calc_zp optional, don't compute stuff not needed if it's not present
+!
+! Revision 2.5.2.2  2003/03/22 02:31:20  vsnyder
+! Remove a WHERE that didn't save anything, cosmetic changes
+!
+! Revision 2.5.2.1  2003/03/20 01:42:26  vsnyder
+! Revise Grids_T structure
+!
+! Revision 2.5  2002/10/08 17:08:01  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.4  2002/09/06 18:18:03  vsnyder
+! Cosmetic changes.  Move USEs from module scope to procedure scope.
+! Convert some arrays from pointers to automatics.
+!
+! Revision 2.3  2002/06/04 10:28:01  zvi
+! rename n_sps to: no_mol, more correctly
+!
+! Revision 2.2  2002/01/27 08:37:46  zvi
+! Adding Users selected coefficients for derivatives
+!
+! Revision 2.1  2001/11/02 10:47:37  zvi
+! Implementing frequecy grid
+!
+! Revision 1.0 2001/10/30 14:00:00  zvi
+@
+
+
+2.25
+log
+@Add spreading for NZ_ZP, NNZ_ZP.  Add SPS argument to
+Spread_Eta_FZP_from_Eta_ZP.  Use L_ZP component of Grids_X.
+@
+text
+@d331 1
+a331 1
+       "$Id: comp_eta_docalc_no_frq_m.f90,v 2.24 2017/11/29 00:41:33 vsnyder Exp $"
+d341 4
+@
+
+
+2.24
+log
+@Get RP from MLSKinds instead of MLSCommon
+@
+text
+@d246 3
+a248 1
+                                        &          Eta_FZP, Do_Calc_FZP )
+d263 1
+a263 1
+    real(rp), intent(out) :: Eta_Fzp(:,:)  ! Path X (Eta_f x Eta_z x Eta_phi)
+d265 1
+a265 1
+    logical, intent(out) :: Do_Calc_Fzp(:,:) ! indicates whether
+d268 6
+d278 1
+a278 1
+    integer :: Sps_I  ! Species index
+d285 3
+d291 8
+a298 1
+    do sps_i = 1, ubound(grids_x%l_z,1)
+d304 1
+a304 2
+      w_indb = w_inda + (Grids_x%l_z(sps_i) - Grids_x%l_z(sps_i-1)) * &
+                        (Grids_x%l_p(sps_i) - Grids_x%l_p(sps_i-1))
+d308 3
+d313 5
+a317 1
+                                & Grids_x%deriv_flags(v_inda)
+d331 1
+a331 1
+       "$Id: comp_eta_docalc_no_frq_m.f90,v 2.23 2017/08/09 20:34:37 vsnyder Exp $"
+d341 3
+@
+
+
+2.23
+log
+@Set formerly-true values of do_calc_zp false before computing new true ones
+@
+text
+@d37 1
+a37 1
+    use MLSCommon, only: RP
+a166 1
+
+d307 1
+a307 1
+       "$Id: comp_eta_docalc_no_frq_m.f90,v 2.22 2016/11/23 20:10:05 vsnyder Exp $"
+d317 3
+@
+
+
+2.22
+log
+@Remove unused use names and variables
+@
+text
+@d84 1
+a84 1
+    real(rp) :: Eta_z(1:size(path_zeta), & ! == size(path_zeta)
+d86 1
+a86 1
+    integer :: NZ                          ! Size(Eta_FZP,1)
+d109 5
+d308 1
+a308 1
+       "$Id: comp_eta_docalc_no_frq_m.f90,v 2.21 2016/11/17 01:28:34 vsnyder Exp $"
+d318 3
+@
+
+
+2.21
+log
+@Add Spread_Eta_FZP_from_Eta_ZP.  Use it to spread Eta_zp and Do_Calc_zp
+to Eta_fzp and Do_Calc_fzp in Comp_Eta_Docalc_No_Frq if the latter two
+arguments are present.
+@
+text
+@d36 1
+a36 1
+    use GLNP, only: NG, NGP1
+d38 1
+a38 2
+    use Get_Eta_Matrix_m, only: Get_Eta_Sparse, Multiply_Eta_Column_Sparse, &
+                              & Get_Eta_ZP
+d46 1
+a46 1
+!                           species vmr is needed.
+d48 1
+a48 1
+!                           species vmr is needed.
+d51 1
+a51 1
+!                           before and after tangent point
+d55 3
+a57 3
+    logical, intent(inout), optional :: Do_Calc_zp(:,:) ! Indicates whether there
+!                           is a contribution for this state vector element.
+!                           This is the same length as values.
+d66 1
+a66 1
+!                           vector element. This is the same length as values.
+d86 1
+d163 5
+a167 3
+    if ( present(eta_fzp) .and. present(do_calc_fzp) ) then
+      call spread_eta_fzp_from_eta_zp ( grids_x, eta_zp, do_calc_zp, &
+                                      &          eta_fzp, do_calc_fzp )
+d303 1
+a303 1
+       "$Id: comp_eta_docalc_no_frq_m.f90,v 2.20 2016/10/24 22:17:47 vsnyder Exp $"
+d313 5
+@
+
+
+2.20
+log
+@Use Get_Eta_ZP
+@
+text
+@d19 1
+d33 2
+a34 1
+                                    & Your_NZ_Zp, Your_NNZ_Zp )
+d68 5
+d163 6
+d238 60
+d301 1
+a301 1
+       "$Id: comp_eta_docalc_no_frq_m.f90,v 2.19 2015/09/22 23:19:55 vsnyder Exp $"
+d311 3
+@
+
+
+2.19
+log
+@Consequences of cross-track stuff in load_sps_data
+@
+text
+@d30 3
+a32 3
+  subroutine Comp_Eta_Docalc_No_Frq ( Grids_x, path_zeta, path_phi, &
+                                  &   eta_zp, do_calc_zp, sps, tan_pt, &
+                                  &   nz_zp, nnz_zp )
+d36 2
+a37 1
+    use Get_Eta_Matrix_m, only: Get_Eta_Sparse, Multiply_Eta_Column_Sparse
+d44 1
+a44 1
+    real(rp), intent(in) :: path_zeta(:) ! zeta values along path for which
+d46 1
+a46 1
+    real(rp), intent(in) :: path_phi(:) ! phi values along path for which
+d54 1
+a54 1
+    logical, intent(inout), optional :: do_calc_zp(:,:) ! Indicates whether there
+d57 2
+a58 2
+    integer, intent(inout), optional :: NZ_ZP(:,:) ! Nonzeros in eta_zp
+    integer, intent(inout), optional :: NNZ_ZP(:)  ! Number of nonzeros in eta_zp
+d64 1
+a64 1
+    real(rp), intent(inout) :: eta_zp(:,:) ! Eta_z * Eta_phi for each state
+d84 4
+a87 2
+    integer :: MY_NZ_ZP(size(eta_zp,1),size(eta_p,2)*size(eta_z,2))
+    integer :: MY_NNZ_ZP(size(eta_p,2)*size(eta_z,2))
+d91 1
+a91 1
+    if ( .not. present(nz_zp) ) then
+d94 2
+a95 1
+      my_nnz_zp = 0
+d97 2
+a100 1
+        nnz_zp(n_p) = 0
+d105 1
+d138 7
+a144 22
+      call get_eta_sparse ( Grids_x%zet_basis(z_inda+1:z_indb), path_zeta, &
+      &    eta_z, my_tan, 1, nz_z, nnz_z, .false. )
+      ! Fine grid points between tangent points, if any, aren't used.
+      eta_z(my_tan+1:my_tan+ng,:) = 0.0_rp
+      call get_eta_sparse ( Grids_x%zet_basis(z_inda+1:z_indb), path_zeta, &
+        &    eta_z, my_tan+ngp1, size(path_zeta), nz_z, nnz_z, .true. )
+      call get_eta_sparse ( Grids_x%phi_basis(p_inda+1:p_indb), path_phi,  &
+      &    eta_p, 1, size(path_phi), nz_p, nnz_p, .false. )
+      if ( present(nz_zp) ) then
+        if ( present(do_calc_zp) ) then
+          call multiply_eta_column_sparse ( &
+            & eta_z(:,:n_z), nz_z(:,:n_z), nnz_z(:n_z), &
+            & eta_p(:,:n_p), nz_p(:,:n_p), nnz_p(:n_p), &
+            & eta_zp(:,v_inda+1:v_indb), nz_zp(:,v_inda+1:v_indb), &
+            & nnz_zp(v_inda+1:v_indb), do_calc_zp(:,v_inda+1:v_indb) )
+        else
+          call multiply_eta_column_sparse ( &
+            & eta_z(:,:n_z), nz_z(:,:n_z), nnz_z(:n_z), &
+            & eta_p(:,:n_p), nz_p(:,:n_p), nnz_p(:n_p), &
+            & eta_zp(:,v_inda+1:v_indb), nz_zp(:,v_inda+1:v_indb), &
+            & nnz_zp(v_inda+1:v_indb) )
+        end if
+d146 6
+a151 12
+        if ( present(do_calc_zp) ) then
+          call multiply_eta_column_sparse ( &
+            & eta_z(:,:n_z), nz_z(:,:n_z), nnz_z(:n_z), &
+            & eta_p(:,:n_p), nz_p(:,:n_p), nnz_p(:n_p), &
+            & eta_zp(:,v_inda+1:v_indb), my_nz_zp(:,:n_v), my_nnz_zp(:n_v), &
+            & do_calc_zp(:,v_inda+1:v_indb) )
+        else
+          call multiply_eta_column_sparse ( &
+            & eta_z(:,:n_z), nz_z(:,:n_z), nnz_z(:n_z), &
+            & eta_p(:,:n_p), nz_p(:,:n_p), nnz_p(:n_p), &
+            & eta_zp(:,v_inda+1:v_indb), my_nz_zp(:,:n_v), my_nnz_zp(:n_v) )
+        end if
+d228 1
+a228 1
+       "$Id: comp_eta_docalc_no_frq_m.f90,v 2.18 2014/08/01 01:03:19 vsnyder Exp $"
+d238 3
+@
+
+
+2.18
+log
+@Clear only nonzeros, change Eta_ZP from out to inout
+@
+text
+@d127 2
+a128 1
+      n_v = n_z * n_p
+d243 1
+a243 1
+       "$Id: comp_eta_docalc_no_frq_m.f90,v 2.17 2013/05/18 00:34:44 vsnyder Exp $"
+d253 3
+@
+
+
+2.17
+log
+@Insert NG fine-grid (GL) points between tangent points, thereby
+regularizing coarse-grid spacing, and reducing significantly the need
+to use c_inds to extract coarse-grid points from the composite grid.
+@
+text
+@d61 3
+a63 1
+    real(rp), intent(out) :: eta_zp(:,:) ! Eta_z * Eta_phi for each state
+d92 5
+a97 1
+
+d242 1
+a242 1
+       "$Id: comp_eta_docalc_no_frq_m.f90,v 2.16 2013/02/28 21:05:48 vsnyder Exp $"
+d252 5
+@
+
+
+2.16
+log
+@Try to cope with short paths
+@
+text
+@d34 1
+d95 1
+a95 1
+    my_tan = size(path_zeta) / 2
+d127 2
+d130 1
+a130 1
+      &    eta_z, my_tan+1, size(path_zeta), nz_z, nnz_z, .true. )
+d236 1
+a236 1
+       "$Id: comp_eta_docalc_no_frq_m.f90,v 2.15 2010/09/25 01:20:35 vsnyder Exp $"
+d246 3
+@
+
+
+2.15
+log
+@Correct intent for Do_Calc_zp argument of Comp_Eta_fzp
+@
+text
+@d96 1
+d233 1
+a233 1
+       "$Id: comp_eta_docalc_no_frq_m.f90,v 2.14 2010/09/25 01:09:34 vsnyder Exp $"
+d243 3
+@
+
+
+2.14
+log
+@Add Comp_Eta_fzp
+@
+text
+@d171 1
+a171 1
+    logical, intent(out) :: Do_Calc_zp(:,:)  ! Where Eta_zp is nonzero
+d232 1
+a232 1
+       "$Id: comp_eta_docalc_no_frq_m.f90,v 2.13 2009/06/23 18:26:10 pwagner Exp $"
+d242 3
+@
+
+
+2.13
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d18 1
+a18 1
+  public :: Comp_Eta_Docalc_No_Frq
+d22 1
+a22 1
+       "$RCSfile: $"
+d34 1
+a34 1
+    use MLSCommon, only: RP, IP
+d68 3
+a70 3
+    integer(ip) :: N_p, N_z, N_v
+    integer(ip) :: Sps_1, Sps_n, Sps_i
+    integer(ip) :: My_Tan, P_inda, V_Inda, V_Indb, Z_inda, P_indb, Z_indb
+d162 67
+d232 1
+a232 1
+       "$Id: read_apriori.f90 is it here $"
+d242 3
+@
+
+
+2.12
+log
+@Cannonball polishing
+@
+text
+@d22 1
+a22 1
+       "$RCSfile: comp_eta_docalc_no_frq_m.f90,v $"
+d162 1
+a163 1
+!---------------------------- RCS Ident Info -------------------------------
+d165 2
+a166 3
+       "$Id: comp_eta_docalc_no_frq_m.f90,v 2.11 2007/07/25 20:21:10 vsnyder Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d168 1
+d170 1
+d175 3
+@
+
+
+2.11
+log
+@Delete declarations for unused variables
+@
+text
+@d72 1
+a72 1
+    real(rp) :: Eta_p(1:size(path_zeta), & ! == size(path_zeta)
+d165 1
+a165 1
+       "$Id: comp_eta_docalc_no_frq_m.f90,v 2.10 2007/06/26 00:37:01 vsnyder Exp $"
+d174 3
+@
+
+
+2.10
+log
+@Use column-sparse eta
+@
+text
+@d69 1
+a69 1
+    integer(ip) :: Sps_1, Sps_n, Sps_i, Sv_z, Sv_p
+d165 1
+a165 1
+       "$Id: comp_eta_docalc_no_frq_m.f90,v 2.9 2007/06/06 01:12:17 vsnyder Exp $"
+d174 3
+@
+
+
+2.9
+log
+@Add tangent point optional argument
+@
+text
+@d31 2
+a32 1
+                                  &   eta_zp, do_calc_zp, sps, tan_pt )
+d35 1
+a35 1
+    use Get_Eta_Matrix_m, only: Get_Eta_Sparse
+d49 10
+a58 1
+! output:
+a61 3
+    logical, intent(out), optional :: do_calc_zp(:,:) ! Indicates whether there
+!                           is a contribution for this state vector element.
+!                           This is the same length as values.
+d68 1
+a68 1
+    integer(ip) :: N_p, N_z
+d70 1
+a70 1
+    integer(ip) :: P_inda, Z_inda, V_inda, P_indb, Z_indb
+d72 10
+a81 4
+    real(rp) :: Eta_p(1:size(path_zeta),1:Grids_x%l_p(ubound(Grids_x%l_p,1)))
+    real(rp) :: Eta_z(1:size(path_zeta),1:Grids_x%l_z(ubound(Grids_x%l_z,1)))
+    logical :: Not_zero_p(1:size(path_zeta),1:Grids_x%l_p(ubound(Grids_x%l_p,1)))
+    logical :: Not_zero_z(1:size(path_zeta),1:Grids_x%l_z(ubound(Grids_x%l_z,1)))
+d85 5
+a89 1
+    eta_zp = 0.0
+d91 5
+a95 3
+    p_inda = 0
+    v_inda = 0
+    z_inda = 0
+d104 9
+a112 1
+    do sps_i = sps_1, sps_n ! Number of molecules
+d119 1
+d121 1
+a121 2
+! There are two ways to do this (slow and easy vs quick but difficult)
+! For ease let's do the slow and easy (and certainly more reliable)
+d123 13
+a135 10
+! Compute etas
+
+      if ( present(do_calc_zp) ) then
+        if ( present(tan_pt) ) then
+          call get_eta_sparse ( Grids_x%zet_basis(z_inda+1:z_indb), &
+                           &    path_zeta(tan_pt:1:-1), eta_z(tan_pt:1:-1,:), &
+                           &    not_zero_z(tan_pt:1:-1,:), sorted=.true. )
+          call get_eta_sparse ( Grids_x%zet_basis(z_inda+1:z_indb), &
+                           &    path_zeta(tan_pt+1:), eta_z(tan_pt+1:,:), &
+                           &    not_zero_z(tan_pt+1:,:), sorted=.true. )
+d137 5
+a141 2
+          call get_eta_sparse ( Grids_x%zet_basis(z_inda+1:z_indb), path_zeta, &
+                           &    eta_z, not_zero_z )
+a142 2
+        call get_eta_sparse ( Grids_x%phi_basis(p_inda+1:p_indb), path_phi,  &
+                         &    eta_p, not_zero_p, sorted=.true. )
+d144 6
+a149 7
+        if ( present(tan_pt) ) then
+          call get_eta_sparse ( Grids_x%zet_basis(z_inda+1:z_indb), &
+                           &    path_zeta(tan_pt:1:-1), eta_z(tan_pt:1:-1,:), &
+                           &    sorted=.true. )
+          call get_eta_sparse ( Grids_x%zet_basis(z_inda+1:z_indb), &
+                           &    path_zeta(tan_pt+1:), eta_z(tan_pt+1:,:), &
+                           &    sorted=.true. )
+d151 4
+a154 2
+          call get_eta_sparse ( Grids_x%zet_basis(z_inda+1:z_indb), path_zeta, &
+                           &    eta_z )
+a155 2
+        call get_eta_sparse ( Grids_x%phi_basis(p_inda+1:p_indb), path_phi,  &
+                         &    eta_p, sorted=.true. )
+a157 13
+      do sv_p = 0, n_p - 1
+        do sv_z = 0, n_z - 1
+          v_inda = v_inda + 1
+          if ( present(do_calc_zp) ) &
+          & do_calc_zp(:,v_inda) = not_zero_z(:,sv_z+1) .and. not_zero_p(:,sv_p+1)
+          ! removed "where ( do_calc_zp(:,v_inda) )" because a multiply is cheaper
+          eta_zp(:,v_inda) = eta_z(:,sv_z+1) * eta_p(:,sv_p+1)
+        end do
+      end do
+
+      z_inda = z_indb
+      p_inda = p_indb
+
+d165 1
+a165 1
+       "$Id: comp_eta_docalc_no_frq_m.f90,v 2.8 2005/12/22 20:48:55 vsnyder Exp $"
+d174 3
+@
+
+
+2.8
+log
+@Add a 'this-species-only' optional argument
+@
+text
+@d31 1
+a31 1
+                                  &   eta_zp, do_calc_zp, sps )
+d46 2
+d99 11
+a109 2
+        call get_eta_sparse ( Grids_x%zet_basis(z_inda+1:z_indb), path_zeta, &
+                         &    eta_z, not_zero_z )
+d111 1
+a111 1
+                         &    eta_p, not_zero_p )
+d113 11
+a123 2
+        call get_eta_sparse ( Grids_x%zet_basis(z_inda+1:z_indb), path_zeta, &
+                         &    eta_z )
+d125 1
+a125 1
+                         &    eta_p )
+d148 1
+a148 1
+       "$Id: comp_eta_docalc_no_frq_m.f90,v 2.7 2005/06/22 18:08:18 pwagner Exp $"
+d157 3
+@
+
+
+2.7
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d22 1
+a22 1
+       "$RCSfile: $"
+d31 1
+a31 1
+                                  &   eta_zp, do_calc_zp )
+d45 1
+d60 1
+a60 1
+    integer(ip) :: Sps_i, Sv_z, Sv_p
+d76 8
+a83 1
+    do sps_i = 1 , ubound(Grids_x%l_z,1) ! Number of molecules
+d128 1
+a128 1
+       "$Id: $"
+d137 3
+@
+
+
+2.6
+log
+@Merged in feb03 newfwm branch
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d20 3
+a22 6
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+    & "$Id$"
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName= &
+    & "$RCSfile$"
+d118 5
+d128 4
+a131 1
+! $Log$
+@
+
+
+2.5
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d14 1
+a14 1
+    & "$Id: comp_eta_docalc_no_frq_m.f90,v 2.4 2002/09/06 18:18:03 vsnyder Exp $"
+d17 1
+a17 1
+    & "$RCSfile: comp_eta_docalc_no_frq_m.f90,v $"
+d26 1
+a26 1
+                                  &   do_calc_zp, eta_zp )
+a41 3
+    logical, intent(out) :: do_calc_zp(:,:) ! Indicates whether there is a
+!                           contribution for this state vector element. This
+!                           is the same length as values.
+d44 3
+d53 8
+a60 8
+    integer(ip) :: N_p, N_z, Npz
+    integer(ip) :: Sps_i, Sv_i, Sv_z, Sv_p, Sv_j
+    integer(ip) :: P_inda, Z_inda, V_inda, P_indb, Z_indb, V_indb
+
+    real(rp) :: Eta_p(1:size(path_zeta),1:maxval(Grids_x%no_p))
+    real(rp) :: Eta_z(1:size(path_zeta),1:maxval(Grids_x%no_z))
+    logical :: Not_zero_p(1:size(path_zeta),1:maxval(Grids_x%no_p))
+    logical :: Not_zero_z(1:size(path_zeta),1:maxval(Grids_x%no_z))
+a64 1
+    do_calc_zp = .false.
+d66 3
+a68 3
+    p_inda = 1
+    z_inda = 1
+    v_inda = 1
+d70 1
+a70 1
+    do sps_i = 1 , size(Grids_x%no_z) ! Number of molecules
+d72 2
+a73 3
+      n_z = Grids_x%no_z(sps_i)
+      n_p = Grids_x%no_p(sps_i)
+      npz = n_z * n_p
+d75 2
+a76 3
+      z_indb = z_inda + n_z
+      p_indb = p_inda + n_p
+      v_indb = v_inda + npz
+d79 1
+a79 1
+! For ease lets do the slow and easy (and certainly more reliable)
+d83 20
+a102 13
+      call get_eta_sparse ( Grids_x%zet_basis(z_inda:z_indb-1), path_zeta, &
+                       &    eta_z, not_zero_z )
+      call get_eta_sparse ( Grids_x%phi_basis(p_inda:p_indb-1), path_phi,  &
+                       &    eta_p, not_zero_p )
+
+      do sv_i = 0 , npz - 1
+        sv_j = v_inda + sv_i
+        sv_z = 1 + modulo(sv_i,n_z)
+        sv_p = 1 + sv_i / n_z
+        where ( not_zero_z(:,sv_z) .and. not_zero_p(:,sv_p) )
+          do_calc_zp(:,sv_j) = .true.
+          eta_zp(:,sv_j) = eta_z(:,sv_z) * eta_p(:,sv_p)
+        end where
+a106 1
+      v_inda = v_indb
+d118 13
+a130 1
+! $Log: comp_eta_docalc_no_frq_m.f90,v $
+@
+
+
+2.5.2.1
+log
+@Revise Grids_T structure
+@
+text
+@d14 1
+a14 1
+    & "$Id: comp_eta_docalc_no_frq_m.f90,v 2.5 2002/10/08 17:08:01 pwagner Exp $"
+d55 1
+a55 1
+    integer(ip) :: P_inda, Z_inda, V_inda, P_indb, Z_indb
+d57 4
+a60 4
+    real(rp) :: Eta_p(1:size(path_zeta),1:Grids_x%l_p(ubound(Grids_x%l_p,1)))
+    real(rp) :: Eta_z(1:size(path_zeta),1:Grids_x%l_z(ubound(Grids_x%l_z,1)))
+    logical :: Not_zero_p(1:size(path_zeta),1:Grids_x%l_p(ubound(Grids_x%l_p,1)))
+    logical :: Not_zero_z(1:size(path_zeta),1:Grids_x%l_z(ubound(Grids_x%l_z,1)))
+d67 2
+a68 1
+    p_inda = 0
+a69 1
+    z_inda = 0
+d71 1
+a71 1
+    do sps_i = 1 , ubound(Grids_x%l_z,1) ! Number of molecules
+d73 3
+a75 2
+      p_indb = Grids_x%l_p(sps_i)
+      z_indb = Grids_x%l_z(sps_i)
+d77 3
+a79 3
+      n_z = z_indb - z_inda
+      n_p = p_indb - p_inda
+      npz = n_z * n_p
+d86 1
+a86 1
+      call get_eta_sparse ( Grids_x%zet_basis(z_inda+1:z_indb), path_zeta, &
+d88 1
+a88 1
+      call get_eta_sparse ( Grids_x%phi_basis(p_inda+1:p_indb), path_phi,  &
+d103 1
+a103 1
+      v_inda = v_inda + npz
+a115 3
+! Revision 2.5  2002/10/08 17:08:01  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+@
+
+
+2.5.2.2
+log
+@Remove a WHERE that didn't save anything, cosmetic changes
+@
+text
+@d14 1
+a14 1
+    & "$Id: comp_eta_docalc_no_frq_m.f90,v 2.5.2.1 2003/03/20 01:42:26 vsnyder Exp $"
+d26 1
+a26 1
+                                  &   eta_zp, do_calc_zp )
+d42 3
+a46 3
+    logical, intent(out), optional :: do_calc_zp(:,:) ! Indicates whether there
+!                           is a contribution for this state vector element.
+!                           This is the same length as values.
+d53 2
+a54 2
+    integer(ip) :: N_p, N_z
+    integer(ip) :: Sps_i, Sv_z, Sv_p
+d65 1
+d68 1
+a68 1
+    v_inda = 0
+d78 1
+d90 8
+a97 8
+      do sv_p = 0, n_p - 1
+        do sv_z = 0, n_z - 1
+          v_inda = v_inda + 1
+          if ( present(do_calc_zp) ) &
+          & do_calc_zp(:,v_inda) = not_zero_z(:,sv_z+1) .and. not_zero_p(:,sv_p+1)
+          ! removed "where ( do_calc_zp(:,v_inda) )" because a multiply is cheaper
+          eta_zp(:,v_inda) = eta_z(:,sv_z+1) * eta_p(:,sv_p+1)
+        end do
+d102 1
+a114 3
+! Revision 2.5.2.1  2003/03/20 01:42:26  vsnyder
+! Revise Grids_T structure
+!
+@
+
+
+2.5.2.3
+log
+@Make do_calc_zp optional, don't compute stuff not needed if it's not present
+@
+text
+@d14 1
+a14 1
+    & "$Id: comp_eta_docalc_no_frq_m.f90,v 2.5.2.2 2003/03/22 02:31:20 vsnyder Exp $"
+d79 1
+a79 1
+! For ease let's do the slow and easy (and certainly more reliable)
+d83 4
+a86 11
+      if ( present(do_calc_zp) ) then
+        call get_eta_sparse ( Grids_x%zet_basis(z_inda+1:z_indb), path_zeta, &
+                         &    eta_z, not_zero_z )
+        call get_eta_sparse ( Grids_x%phi_basis(p_inda+1:p_indb), path_phi,  &
+                         &    eta_p, not_zero_p )
+      else
+        call get_eta_sparse ( Grids_x%zet_basis(z_inda+1:z_indb), path_zeta, &
+                         &    eta_z )
+        call get_eta_sparse ( Grids_x%phi_basis(p_inda+1:p_indb), path_phi,  &
+                         &    eta_p )
+      end if
+a111 3
+! Revision 2.5.2.2  2003/03/22 02:31:20  vsnyder
+! Remove a WHERE that didn't save anything, cosmetic changes
+!
+@
+
+
+2.4
+log
+@Cosmetic changes.  Move USEs from module scope to procedure scope.
+Convert some arrays from pointers to automatics.
+@
+text
+@d14 1
+a14 1
+    & "$Id: comp_eta_docalc_no_frq_m.f90,v 2.3 2002/06/04 10:28:01 zvi Exp $"
+d18 1
+d109 4
+d116 4
+@
+
+
+2.3
+log
+@rename n_sps to: no_mol, more correctly
+@
+text
+@d1 6
+a6 10
+!
+! This is a new module to compute the sps path
+!
+MODULE comp_eta_docalc_no_frq_m
+!
+  use MLSCommon, only: RP, IP
+  USE get_eta_matrix_m, ONLY: get_eta_sparse
+  use Load_sps_data_m, only: Grids_T
+!
+  IMPLICIT NONE
+d8 3
+a10 2
+  Private
+  Public :: comp_eta_docalc_no_frq
+d13 18
+a30 10
+  character (LEN=256) :: Id = &
+ "$Id: comp_eta_docalc_no_frq_m.f90,v 2.2 2002/01/27 08:37:46 zvi Exp $"
+  character (LEN=*), parameter :: ModuleName= &
+ "$RCSfile: comp_eta_docalc_no_frq_m.f90,v $"
+!-----------------------------------------------------------------
+ CONTAINS
+!-----------------------------------------------------------------
+!
+  SUBROUTINE comp_eta_docalc_no_frq(Grids_x,path_zeta,path_phi, &
+                                &   do_calc_zp,eta_zp)
+a31 2
+!
+  type (Grids_T), INTENT(in) :: Grids_x  ! All the needed coordinates
+d33 13
+a45 11
+  REAL(rp), INTENT(in) :: path_zeta(:) ! zeta values along path for which
+!                         species vmr is needed.
+  REAL(rp), INTENT(in) :: path_phi(:) ! phi values along path for which
+!                         species vmr is needed.
+! Output:
+!
+  LOGICAL, INTENT(out) :: do_calc_zp(:,:) !logical indicating whether there
+!                         is a contribution for this state vector element
+!                         This is the same length as values.
+  REAL(rp), INTENT(out) :: eta_zp(:,:) ! Eta_z x Eta_phi for each state
+!                          vector element. This is the same length as values.
+a48 6
+!
+! Internal declaritions
+!
+  INTEGER(ip) :: n_p, n_z, npz
+  INTEGER(ip) :: sps_i,no_mol,n_path,sv_i,sv_z,sv_p,sv_j
+  INTEGER(ip) :: p_inda,z_inda,v_inda,p_indb,z_indb,v_indb
+d50 11
+a60 3
+  REAL(rp), ALLOCATABLE :: eta_z(:,:),eta_p(:,:)
+  LOGICAL, ALLOCATABLE :: not_zero_z(:,:), not_zero_p(:,:)
+!
+d62 18
+a79 21
+!
+  no_mol = SIZE(Grids_x%no_z)
+  n_path = SIZE(path_zeta)
+!
+  eta_zp = 0.0
+  do_calc_zp = .false.
+!
+  p_inda = 1
+  z_inda = 1
+  v_inda = 1
+!
+  DO sps_i = 1 , no_mol
+!
+    n_z = Grids_x%no_z(sps_i)
+    n_p = Grids_x%no_p(sps_i)
+    npz = n_z * n_p
+
+    z_indb = z_inda + n_z
+    p_indb = p_inda + n_p
+    v_indb = v_inda + npz
+!
+d82 1
+a82 6
+!
+    ALLOCATE(eta_p(1:n_path,1:n_p))
+    ALLOCATE(eta_z(1:n_path,1:n_z))
+    ALLOCATE(not_zero_p(1:n_path,1:n_p))
+    ALLOCATE(not_zero_z(1:n_path,1:n_z))
+!
+d84 29
+a113 31
+    CALL get_eta_sparse(Grids_x%zet_basis(z_inda:z_indb-1),path_zeta, &
+                     &  eta_z,not_zero_z)
+    CALL get_eta_sparse(Grids_x%phi_basis(p_inda:p_indb-1),path_phi,  &
+                     &  eta_p,not_zero_p)
+!
+    DO sv_i = 0 , npz - 1
+      sv_j = v_inda + sv_i
+      sv_z = 1 + MODULO(sv_i,n_z)
+      sv_p = 1 + sv_i / n_z
+      WHERE(not_zero_z(:,sv_z) .AND. not_zero_p(:,sv_p))
+        do_calc_zp(:,sv_j) = .true.
+        eta_zp(:,sv_j) = eta_z(:,sv_z) * eta_p(:,sv_p)
+      ENDWHERE
+    END DO
+
+    z_inda = z_indb
+    p_inda = p_indb
+    v_inda = v_indb
+
+    DEALLOCATE(eta_z)
+    DEALLOCATE(eta_p)
+    DEALLOCATE(not_zero_z)
+    DEALLOCATE(not_zero_p)
+!
+  END DO
+!
+  END SUBROUTINE comp_eta_docalc_no_frq
+!
+END MODULE comp_eta_docalc_no_frq_m
+!
+! $Log: comp_eta_docalc_no_frq_m.f90,v $
+@
+
+
+2.2
+log
+@Adding Users selected coefficients for derivatives
+@
+text
+@d17 1
+a17 1
+ "$Id: comp_eta_docalc_no_frq_m.f90,v 2.1 2001/11/02 10:47:37 zvi Exp $"
+d48 1
+a48 1
+  INTEGER(ip) :: sps_i,n_sps,n_path,sv_i,sv_z,sv_p,sv_j
+d56 1
+a56 1
+  n_sps = SIZE(Grids_x%no_z)
+d66 1
+a66 1
+  DO sps_i = 1 , n_sps
+d117 3
+@
+
+
+2.1
+log
+@Implementing frequecy grid
+@
+text
+@d17 1
+a17 1
+ "$Id: comp_eta_docalc_no_frq_m.f90,v 1.0 2001/10/30 14:00:00 zvi Exp $"
+d48 1
+a48 1
+  INTEGER(ip) :: i_sps,n_sps,n_path,sv_i,sv_z,sv_p,sv_j
+d66 1
+a66 1
+  DO i_sps = 1 , n_sps
+d68 2
+a69 2
+    n_z = Grids_x%no_z(i_sps)
+    n_p = Grids_x%no_p(i_sps)
+d117 4
+a120 1
+! ! Revision 1.0 2001/10/30 14:00:00  zvi
+@
+

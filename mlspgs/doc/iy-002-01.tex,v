@@ -1,0 +1,671 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.12
+	cfm-single-freq-0-1:1.1.0.10
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.8
+	mus-emls-1-70:1.1.0.6
+	rel-1-0-englocks-work:1.1.0.4
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.2
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	M4-00:1.1
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2010.09.21.17.58.11;	author yanovsky;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@For the experiments below, $Q = 10$,
+\begin{eqnarray*}
+\big[ f_q^{O_3} \big]_{q=1}^Q &=& 
+\left[ \begin{array}{c}
+5.0\cdot10^{-8} \\
+5.0\cdot10^{-8} \\
+1.0\cdot10^{-7} \\
+3.0\cdot10^{-7} \\
+1.0\cdot10^{-6} \\
+5.0\cdot10^{-6} \\
+1.0\cdot10^{-5} \\
+5.0\cdot10^{-6} \\
+1.0\cdot10^{-6} \\
+1.0\cdot10^{-7} 
+\end{array} \right], 
+\ \ \ \ \ f_q^{N_2} = 0.8 \ \mbox{for all $q$}, \ \ \ \ \ \mbox{and} \ \ \ 
+\big[ \tq \big]_{q=1}^Q  = 
+\left[ \begin{array}{c}
+300 \\
+266 \\
+233 \\
+200 \\
+210 \\
+220 \\
+230 \\
+240 \\
+250 \\
+250
+\end{array} \right]. 
+\end{eqnarray*}
+$a = -3.0; \ b =  4.0$ \\
+$m = 4.9590 \cdot 10^{-26}$, \\
+$\displaystyle \zeta = \frac{k-Q}{3}, \ k = 1, \ldots, Q$
+
+
+%\begin{comment}
+
+%----------------------------- nu1 -----------------------------
+\begin{figure}[t]
+\begin{center}
+{\bf Mixing Ratio Jacobian, $\frac{\partial I}{\partial f^k}$,  $\nu = \nu_1$} \\ [0.30cm]
+$\begin{array}{c@@{\hspace{0.05in}}c}
+\mbox{ \bf{Analytical} } & \mbox{ \bf{Numerical} } \\ [0.15cm]
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Jac_Analytical/nu1/dIdfk_surf_nu1_Analytical.eps} &
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Numerical/nu1/dIdfk_surf_nu1_Numerical.eps} \\
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Jac_Analytical/nu1/dIdfk_mesh_nu1_Analytical.eps} &
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Numerical/nu1/dIdfk_mesh_nu1_Numerical.eps} \\
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Jac_Analytical/nu1/dIdfk_levels_L_nu1_Analytical.eps} &
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Numerical/nu1/dIdfk_levels_L_nu1_Numerical.eps} \\
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Jac_Analytical/nu1/dIdfk_coeff_q_nu1_Analytical.eps} &
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Numerical/nu1/dIdfk_coeff_q_nu1_Numerical.eps} \\ [-0.40cm]
+\end{array}$
+\end{center}
+\caption{$\nu_1 = 234709.8550$}
+\label{fig:dIdfk_nu1}
+\end{figure}
+
+
+\begin{figure}[t]
+\begin{center}
+{\bf Antenna Radiance Mixing Ratio Jacobian, $\frac{\partial I}{\partial f^k}$,  $\nu = \nu_1$} \\ [0.30cm]
+$\begin{array}{c@@{\hspace{0.05in}}c}
+\mbox{ \bf{Analytical} } & \mbox{ \bf{Numerical} } \\ [0.15cm]
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Jac_Analytical/nu1/dIAdfk_surf_nu1_Analytical.eps} &
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Numerical/nu1/dIAdfk_surf_nu1_Numerical.eps} \\
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Jac_Analytical/nu1/dIAdfk_mesh_nu1_Analytical.eps} &
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Numerical/nu1/dIAdfk_mesh_nu1_Numerical.eps} \\
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Jac_Analytical/nu1/dIAdfk_levels_L_nu1_Analytical.eps} &
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Numerical/nu1/dIAdfk_levels_L_nu1_Numerical.eps} \\
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Jac_Analytical/nu1/dIAdfk_coeff_q_nu1_Analytical.eps} &
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Numerical/nu1/dIAdfk_coeff_q_nu1_Numerical.eps} \\ [-0.40cm]
+\end{array}$
+\end{center}
+\caption{$\nu_1 = 234709.8550$}
+\label{fig:dIAdfk_nu1}
+\end{figure}
+
+
+\begin{figure}[t]
+\begin{center}
+{\bf Temperature Jacobian, $\frac{\partial I}{\partial T}$,  $\nu = \nu_1$} \\ [0.30cm]
+$\begin{array}{c@@{\hspace{0.05in}}c}
+\mbox{ \bf{Analytical} } & \mbox{ \bf{Numerical} } \\ [0.15cm]
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Jac_Analytical/nu1/dIdT_surf_nu1_Analytical.eps} &
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Numerical/nu1/dIdT_surf_nu1_Numerical.eps} \\
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Jac_Analytical/nu1/dIdT_mesh_nu1_Analytical.eps} &
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Numerical/nu1/dIdT_mesh_nu1_Numerical.eps} \\
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Jac_Analytical/nu1/dIdT_levels_L_nu1_Analytical.eps} &
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Numerical/nu1/dIdT_levels_L_nu1_Numerical.eps} \\
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Jac_Analytical/nu1/dIdT_coeff_q_nu1_Analytical.eps} &
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Numerical/nu1/dIdT_coeff_q_nu1_Numerical.eps} \\ [-0.40cm]
+\end{array}$
+\end{center}
+\caption{$\nu_1 = 234709.8550$}
+\label{fig:dIdT_nu1}
+\end{figure}
+
+
+\begin{figure}[t]
+\begin{center}
+{\bf Antenna Radiance Temperature Jacobian, $\frac{\partial I}{\partial T}$,  $\nu = \nu_1$} \\ [0.30cm]
+$\begin{array}{c@@{\hspace{0.05in}}c}
+\mbox{ \bf{Analytical} } & \mbox{ \bf{Numerical} } \\ [0.15cm]
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Jac_Analytical/nu1/dIAdT_surf_nu1_Analytical.eps} &
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Numerical/nu1/dIAdT_surf_nu1_Numerical.eps} \\
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Jac_Analytical/nu1/dIAdT_mesh_nu1_Analytical.eps} &
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Numerical/nu1/dIAdT_mesh_nu1_Numerical.eps} \\
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Jac_Analytical/nu1/dIAdT_levels_L_nu1_Analytical.eps} &
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Numerical/nu1/dIAdT_levels_L_nu1_Numerical.eps} \\
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Jac_Analytical/nu1/dIAdT_coeff_q_nu1_Analytical.eps} &
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Numerical/nu1/dIAdT_coeff_q_nu1_Numerical.eps} \\ [-0.40cm]
+\end{array}$
+\end{center}
+\caption{$\nu_1 = 234709.8550$}
+\label{fig:dIAdT_nu1}
+\end{figure}
+
+
+\clearpage
+
+
+%----------------------------- nu2 -----------------------------
+\begin{figure}[t]
+\begin{center}
+{\bf Mixing Ratio Jacobian, $\frac{\partial I}{\partial f^k}$,  $\nu = \nu_2$} \\ [0.30cm]
+$\begin{array}{c@@{\hspace{0.05in}}c}
+\mbox{ \bf{Analytical} } & \mbox{ \bf{Numerical} } \\ [0.15cm]
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Jac_Analytical/nu2/dIdfk_surf_nu2_Analytical.eps} &
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Numerical/nu2/dIdfk_surf_nu2_Numerical.eps} \\
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Jac_Analytical/nu2/dIdfk_mesh_nu2_Analytical.eps} &
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Numerical/nu2/dIdfk_mesh_nu2_Numerical.eps} \\
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Jac_Analytical/nu2/dIdfk_levels_L_nu2_Analytical.eps} &
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Numerical/nu2/dIdfk_levels_L_nu2_Numerical.eps} \\
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Jac_Analytical/nu2/dIdfk_coeff_q_nu2_Analytical.eps} &
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Numerical/nu2/dIdfk_coeff_q_nu2_Numerical.eps} \\ [-0.40cm]
+\end{array}$
+\end{center}
+\caption{$\nu_2 = 235309.8550$}
+\label{fig:dIdfk_nu2}
+\end{figure}
+
+
+\begin{figure}[t]
+\begin{center}
+{\bf Antenna Radiance Mixing Ratio Jacobian, $\frac{\partial I}{\partial f^k}$,  $\nu = \nu_2$} \\ [0.30cm]
+$\begin{array}{c@@{\hspace{0.05in}}c}
+\mbox{ \bf{Analytical} } & \mbox{ \bf{Numerical} } \\ [0.15cm]
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Jac_Analytical/nu2/dIAdfk_surf_nu2_Analytical.eps} &
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Numerical/nu2/dIAdfk_surf_nu2_Numerical.eps} \\
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Jac_Analytical/nu2/dIAdfk_mesh_nu2_Analytical.eps} &
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Numerical/nu2/dIAdfk_mesh_nu2_Numerical.eps} \\
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Jac_Analytical/nu2/dIAdfk_levels_L_nu2_Analytical.eps} &
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Numerical/nu2/dIAdfk_levels_L_nu2_Numerical.eps} \\
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Jac_Analytical/nu2/dIAdfk_coeff_q_nu2_Analytical.eps} &
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Numerical/nu2/dIAdfk_coeff_q_nu2_Numerical.eps} \\ [-0.40cm]
+\end{array}$
+\end{center}
+\caption{$\nu_2 = 235309.8550$}
+\label{fig:dIAdfk_nu2}
+\end{figure}
+
+
+\begin{figure}[t]
+\begin{center}
+{\bf Temperature Jacobian, $\frac{\partial I}{\partial T}$,  $\nu = \nu_2$} \\ [0.30cm]
+$\begin{array}{c@@{\hspace{0.05in}}c}
+\mbox{ \bf{Analytical} } & \mbox{ \bf{Numerical} } \\ [0.15cm]
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Jac_Analytical/nu2/dIdT_surf_nu2_Analytical.eps} &
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Numerical/nu2/dIdT_surf_nu2_Numerical.eps} \\
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Jac_Analytical/nu2/dIdT_mesh_nu2_Analytical.eps} &
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Numerical/nu2/dIdT_mesh_nu2_Numerical.eps} \\
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Jac_Analytical/nu2/dIdT_levels_L_nu2_Analytical.eps} &
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Numerical/nu2/dIdT_levels_L_nu2_Numerical.eps} \\
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Jac_Analytical/nu2/dIdT_coeff_q_nu2_Analytical.eps} &
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Numerical/nu2/dIdT_coeff_q_nu2_Numerical.eps} \\ [-0.40cm]
+\end{array}$
+\end{center}
+\caption{$\nu_2 = 235309.8550$}
+\label{fig:dIdT_nu2}
+\end{figure}
+
+
+\begin{figure}[t]
+\begin{center}
+{\bf Antenna Radiance Temperature Jacobian, $\frac{\partial I}{\partial T}$,  $\nu = \nu_2$} \\ [0.30cm]
+$\begin{array}{c@@{\hspace{0.05in}}c}
+\mbox{ \bf{Analytical} } & \mbox{ \bf{Numerical} } \\ [0.15cm]
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Jac_Analytical/nu2/dIAdT_surf_nu2_Analytical.eps} &
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Numerical/nu2/dIAdT_surf_nu2_Numerical.eps} \\
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Jac_Analytical/nu2/dIAdT_mesh_nu2_Analytical.eps} &
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Numerical/nu2/dIAdT_mesh_nu2_Numerical.eps} \\
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Jac_Analytical/nu2/dIAdT_levels_L_nu2_Analytical.eps} &
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Numerical/nu2/dIAdT_levels_L_nu2_Numerical.eps} \\
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Jac_Analytical/nu2/dIAdT_coeff_q_nu2_Analytical.eps} &
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Numerical/nu2/dIAdT_coeff_q_nu2_Numerical.eps} \\ [-0.40cm]
+\end{array}$
+\end{center}
+\caption{$\nu_2 = 235309.8550$}
+\label{fig:dIAdT_nu2}
+\end{figure}
+
+
+\clearpage
+
+
+%----------------------------- nu3 -----------------------------
+\begin{figure}[t]
+\begin{center}
+{\bf Mixing Ratio Jacobian, $\frac{\partial I}{\partial f^k}$,  $\nu = \nu_3$} \\ [0.30cm]
+$\begin{array}{c@@{\hspace{0.05in}}c}
+\mbox{ \bf{Analytical} } & \mbox{ \bf{Numerical} } \\ [0.15cm]
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Jac_Analytical/nu3/dIdfk_surf_nu3_Analytical.eps} &
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Numerical/nu3/dIdfk_surf_nu3_Numerical.eps} \\
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Jac_Analytical/nu3/dIdfk_mesh_nu3_Analytical.eps} &
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Numerical/nu3/dIdfk_mesh_nu3_Numerical.eps} \\
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Jac_Analytical/nu3/dIdfk_levels_L_nu3_Analytical.eps} &
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Numerical/nu3/dIdfk_levels_L_nu3_Numerical.eps} \\
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Jac_Analytical/nu3/dIdfk_coeff_q_nu3_Analytical.eps} &
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Numerical/nu3/dIdfk_coeff_q_nu3_Numerical.eps} \\ [-0.40cm]
+\end{array}$
+\end{center}
+\caption{$\nu_3 = 235509.8550$}
+\label{fig:dIdfk_nu3}
+\end{figure}
+
+
+\begin{figure}[t]
+\begin{center}
+{\bf Antenna Radiance Mixing Ratio Jacobian, $\frac{\partial I}{\partial f^k}$,  $\nu = \nu_3$} \\ [0.30cm]
+$\begin{array}{c@@{\hspace{0.05in}}c}
+\mbox{ \bf{Analytical} } & \mbox{ \bf{Numerical} } \\ [0.15cm]
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Jac_Analytical/nu3/dIAdfk_surf_nu3_Analytical.eps} &
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Numerical/nu3/dIAdfk_surf_nu3_Numerical.eps} \\
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Jac_Analytical/nu3/dIAdfk_mesh_nu3_Analytical.eps} &
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Numerical/nu3/dIAdfk_mesh_nu3_Numerical.eps} \\
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Jac_Analytical/nu3/dIAdfk_levels_L_nu3_Analytical.eps} &
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Numerical/nu3/dIAdfk_levels_L_nu3_Numerical.eps} \\
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Jac_Analytical/nu3/dIAdfk_coeff_q_nu3_Analytical.eps} &
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Numerical/nu3/dIAdfk_coeff_q_nu3_Numerical.eps} \\ [-0.40cm]
+\end{array}$
+\end{center}
+\caption{$\nu_3 = 235509.8550$}
+\label{fig:dIAdfk_nu3}
+\end{figure}
+
+
+\begin{figure}[t]
+\begin{center}
+{\bf Temperature Jacobian, $\frac{\partial I}{\partial T}$,  $\nu = \nu_3$} \\ [0.30cm]
+$\begin{array}{c@@{\hspace{0.05in}}c}
+\mbox{ \bf{Analytical} } & \mbox{ \bf{Numerical} } \\ [0.15cm]
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Jac_Analytical/nu3/dIdT_surf_nu3_Analytical.eps} &
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Numerical/nu3/dIdT_surf_nu3_Numerical.eps} \\
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Jac_Analytical/nu3/dIdT_mesh_nu3_Analytical.eps} &
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Numerical/nu3/dIdT_mesh_nu3_Numerical.eps} \\
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Jac_Analytical/nu3/dIdT_levels_L_nu3_Analytical.eps} &
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Numerical/nu3/dIdT_levels_L_nu3_Numerical.eps} \\
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Jac_Analytical/nu3/dIdT_coeff_q_nu3_Analytical.eps} &
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Numerical/nu3/dIdT_coeff_q_nu3_Numerical.eps} \\ [-0.40cm]
+\end{array}$
+\end{center}
+\caption{$\nu_3 = 235509.8550$}
+\label{fig:dIdT_nu3}
+\end{figure}
+
+
+\begin{figure}[t]
+\begin{center}
+{\bf Antenna Radiance Temperature Jacobian, $\frac{\partial I}{\partial T}$,  $\nu = \nu_3$} \\ [0.30cm]
+$\begin{array}{c@@{\hspace{0.05in}}c}
+\mbox{ \bf{Analytical} } & \mbox{ \bf{Numerical} } \\ [0.15cm]
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Jac_Analytical/nu3/dIAdT_surf_nu3_Analytical.eps} &
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Numerical/nu3/dIAdT_surf_nu3_Numerical.eps} \\
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Jac_Analytical/nu3/dIAdT_mesh_nu3_Analytical.eps} &
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Numerical/nu3/dIAdT_mesh_nu3_Numerical.eps} \\
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Jac_Analytical/nu3/dIAdT_levels_L_nu3_Analytical.eps} &
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Numerical/nu3/dIAdT_levels_L_nu3_Numerical.eps} \\
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Jac_Analytical/nu3/dIAdT_coeff_q_nu3_Analytical.eps} &
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Numerical/nu3/dIAdT_coeff_q_nu3_Numerical.eps} \\ [-0.40cm]
+\end{array}$
+\end{center}
+\caption{$\nu_3 = 235509.8550$}
+\label{fig:dIAdT_nu3}
+\end{figure}
+
+
+\clearpage
+
+
+%----------------------------- nu4 -----------------------------
+\begin{figure}[t]
+\begin{center}
+{\bf Mixing Ratio Jacobian, $\frac{\partial I}{\partial f^k}$,  $\nu = \nu_4$} \\ [0.30cm]
+$\begin{array}{c@@{\hspace{0.05in}}c}
+\mbox{ \bf{Analytical} } & \mbox{ \bf{Numerical} } \\ [0.15cm]
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Jac_Analytical/nu4/dIdfk_surf_nu4_Analytical.eps} &
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Numerical/nu4/dIdfk_surf_nu4_Numerical.eps} \\
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Jac_Analytical/nu4/dIdfk_mesh_nu4_Analytical.eps} &
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Numerical/nu4/dIdfk_mesh_nu4_Numerical.eps} \\
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Jac_Analytical/nu4/dIdfk_levels_L_nu4_Analytical.eps} &
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Numerical/nu4/dIdfk_levels_L_nu4_Numerical.eps} \\
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Jac_Analytical/nu4/dIdfk_coeff_q_nu4_Analytical.eps} &
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Numerical/nu4/dIdfk_coeff_q_nu4_Numerical.eps} \\ [-0.40cm]
+\end{array}$
+\end{center}
+\caption{$\nu_4 = 235659.8550$}
+\label{fig:dIdfk_nu4}
+\end{figure}
+
+
+\begin{figure}[t]
+\begin{center}
+{\bf Antenna Radiance Mixing Ratio Jacobian, $\frac{\partial I}{\partial f^k}$,  $\nu = \nu_4$} \\ [0.30cm]
+$\begin{array}{c@@{\hspace{0.05in}}c}
+\mbox{ \bf{Analytical} } & \mbox{ \bf{Numerical} } \\ [0.15cm]
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Jac_Analytical/nu4/dIAdfk_surf_nu4_Analytical.eps} &
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Numerical/nu4/dIAdfk_surf_nu4_Numerical.eps} \\
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Jac_Analytical/nu4/dIAdfk_mesh_nu4_Analytical.eps} &
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Numerical/nu4/dIAdfk_mesh_nu4_Numerical.eps} \\
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Jac_Analytical/nu4/dIAdfk_levels_L_nu4_Analytical.eps} &
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Numerical/nu4/dIAdfk_levels_L_nu4_Numerical.eps} \\
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Jac_Analytical/nu4/dIAdfk_coeff_q_nu4_Analytical.eps} &
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Numerical/nu4/dIAdfk_coeff_q_nu4_Numerical.eps} \\ [-0.40cm]
+\end{array}$
+\end{center}
+\caption{$\nu_4 = 235659.8550$}
+\label{fig:dIAdfk_nu4}
+\end{figure}
+
+
+\begin{figure}[t]
+\begin{center}
+{\bf Temperature Jacobian, $\frac{\partial I}{\partial T}$,  $\nu = \nu_4$} \\ [0.30cm]
+$\begin{array}{c@@{\hspace{0.05in}}c}
+\mbox{ \bf{Analytical} } & \mbox{ \bf{Numerical} } \\ [0.15cm]
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Jac_Analytical/nu4/dIdT_surf_nu4_Analytical.eps} &
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Numerical/nu4/dIdT_surf_nu4_Numerical.eps} \\
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Jac_Analytical/nu4/dIdT_mesh_nu4_Analytical.eps} &
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Numerical/nu4/dIdT_mesh_nu4_Numerical.eps} \\
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Jac_Analytical/nu4/dIdT_levels_L_nu4_Analytical.eps} &
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Numerical/nu4/dIdT_levels_L_nu4_Numerical.eps} \\
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Jac_Analytical/nu4/dIdT_coeff_q_nu4_Analytical.eps} &
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Numerical/nu4/dIdT_coeff_q_nu4_Numerical.eps} \\ [-0.40cm]
+\end{array}$
+\end{center}
+\caption{$\nu_4 = 235659.8550$}
+\label{fig:dIdT_nu4}
+\end{figure}
+
+
+\begin{figure}[t]
+\begin{center}
+{\bf Antenna Radiance Temperature Jacobian, $\frac{\partial I}{\partial T}$,  $\nu = \nu_4$} \\ [0.30cm]
+$\begin{array}{c@@{\hspace{0.05in}}c}
+\mbox{ \bf{Analytical} } & \mbox{ \bf{Numerical} } \\ [0.15cm]
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Jac_Analytical/nu4/dIAdT_surf_nu4_Analytical.eps} &
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Numerical/nu4/dIAdT_surf_nu4_Numerical.eps} \\
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Jac_Analytical/nu4/dIAdT_mesh_nu4_Analytical.eps} &
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Numerical/nu4/dIAdT_mesh_nu4_Numerical.eps} \\
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Jac_Analytical/nu4/dIAdT_levels_L_nu4_Analytical.eps} &
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Numerical/nu4/dIAdT_levels_L_nu4_Numerical.eps} \\
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Jac_Analytical/nu4/dIAdT_coeff_q_nu4_Analytical.eps} &
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Numerical/nu4/dIAdT_coeff_q_nu4_Numerical.eps} \\ [-0.40cm]
+\end{array}$
+\end{center}
+\caption{$\nu_4 = 235659.8550$}
+\label{fig:dIAdT_nu4}
+\end{figure}
+
+
+\clearpage
+
+
+%----------------------------- nu5 -----------------------------
+\begin{figure}[t]
+\begin{center}
+{\bf Mixing Ratio Jacobian, $\frac{\partial I}{\partial f^k}$,  $\nu = \nu_5$} \\ [0.30cm]
+$\begin{array}{c@@{\hspace{0.05in}}c}
+\mbox{ \bf{Analytical} } & \mbox{ \bf{Numerical} } \\ [0.15cm]
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Jac_Analytical/nu5/dIdfk_surf_nu5_Analytical.eps} &
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Numerical/nu5/dIdfk_surf_nu5_Numerical.eps} \\
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Jac_Analytical/nu5/dIdfk_mesh_nu5_Analytical.eps} &
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Numerical/nu5/dIdfk_mesh_nu5_Numerical.eps} \\
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Jac_Analytical/nu5/dIdfk_levels_L_nu5_Analytical.eps} &
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Numerical/nu5/dIdfk_levels_L_nu5_Numerical.eps} \\
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Jac_Analytical/nu5/dIdfk_coeff_q_nu5_Analytical.eps} &
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Numerical/nu5/dIdfk_coeff_q_nu5_Numerical.eps} \\ [-0.40cm]
+\end{array}$
+\end{center}
+\caption{$\nu_5 = 235709.8550$}
+\label{fig:dIdfk_nu5}
+\end{figure}
+
+
+\begin{figure}[t]
+\begin{center}
+{\bf Antenna Radiance Mixing Ratio Jacobian, $\frac{\partial I}{\partial f^k}$,  $\nu = \nu_5$} \\ [0.30cm]
+$\begin{array}{c@@{\hspace{0.05in}}c}
+\mbox{ \bf{Analytical} } & \mbox{ \bf{Numerical} } \\ [0.15cm]
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Jac_Analytical/nu5/dIAdfk_surf_nu5_Analytical.eps} &
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Numerical/nu5/dIAdfk_surf_nu5_Numerical.eps} \\
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Jac_Analytical/nu5/dIAdfk_mesh_nu5_Analytical.eps} &
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Numerical/nu5/dIAdfk_mesh_nu5_Numerical.eps} \\
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Jac_Analytical/nu5/dIAdfk_levels_L_nu5_Analytical.eps} &
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Numerical/nu5/dIAdfk_levels_L_nu5_Numerical.eps} \\
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Jac_Analytical/nu5/dIAdfk_coeff_q_nu5_Analytical.eps} &
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Numerical/nu5/dIAdfk_coeff_q_nu5_Numerical.eps} \\ [-0.40cm]
+\end{array}$
+\end{center}
+\caption{$\nu_5 = 235709.8550$}
+\label{fig:dIAdfk_nu5}
+\end{figure}
+
+
+
+\begin{figure}[t]
+\begin{center}
+{\bf Temperature Jacobian, $\frac{\partial I}{\partial T}$,  $\nu = \nu_5$} \\ [0.30cm]
+$\begin{array}{c@@{\hspace{0.05in}}c}
+\mbox{ \bf{Analytical} } & \mbox{ \bf{Numerical} } \\ [0.15cm]
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Jac_Analytical/nu5/dIdT_surf_nu5_Analytical.eps} &
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Numerical/nu5/dIdT_surf_nu5_Numerical.eps} \\
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Jac_Analytical/nu5/dIdT_mesh_nu5_Analytical.eps} &
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Numerical/nu5/dIdT_mesh_nu5_Numerical.eps} \\
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Jac_Analytical/nu5/dIdT_levels_L_nu5_Analytical.eps} &
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Numerical/nu5/dIdT_levels_L_nu5_Numerical.eps} \\
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Jac_Analytical/nu5/dIdT_coeff_q_nu5_Analytical.eps} &
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Numerical/nu5/dIdT_coeff_q_nu5_Numerical.eps} \\ [-0.40cm]
+\end{array}$
+\end{center}
+\caption{$\nu_5 = 235709.8550$}
+\label{fig:dIdT_nu5}
+\end{figure}
+
+
+\begin{figure}[t]
+\begin{center}
+{\bf Antenna Radiance Temperature Jacobian, $\frac{\partial I}{\partial T}$,  $\nu = \nu_5$} \\ [0.30cm]
+$\begin{array}{c@@{\hspace{0.05in}}c}
+\mbox{ \bf{Analytical} } & \mbox{ \bf{Numerical} } \\ [0.15cm]
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Jac_Analytical/nu5/dIAdT_surf_nu5_Analytical.eps} &
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Numerical/nu5/dIAdT_surf_nu5_Numerical.eps} \\
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Jac_Analytical/nu5/dIAdT_mesh_nu5_Analytical.eps} &
+    \epsfxsize=0.465\linewidth
+    \epsffile{eps/Numerical/nu5/dIAdT_mesh_nu5_Numerical.eps} \\
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Jac_Analytical/nu5/dIAdT_levels_L_nu5_Analytical.eps} &
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Numerical/nu5/dIAdT_levels_L_nu5_Numerical.eps} \\
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Jac_Analytical/nu5/dIAdT_coeff_q_nu5_Analytical.eps} &
+    \epsfxsize=0.460\linewidth
+    \epsffile{eps/Numerical/nu5/dIAdT_coeff_q_nu5_Numerical.eps} \\ [-0.40cm]
+\end{array}$
+\end{center}
+\caption{$\nu_5 = 235709.8550$}
+\label{fig:dIAdT_nu5}
+\end{figure}
+
+
+
+%\end{comment}
+
+
+% $Id:  $
+@

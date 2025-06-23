@@ -1,0 +1,746 @@
+head	1.15;
+access;
+symbols
+	v5-02-NRT-19:1.15
+	v6-00:1.15
+	v5-02-NRT-18:1.15
+	v5-02:1.15
+	v5-01-NRT-17:1.15
+	v5-01-NRT-16:1.15
+	v5-01-NRT-15:1.15
+	v5-01-NRT-14:1.15
+	neuralnetworks-1-0:1.15.0.10
+	cfm-single-freq-0-1:1.15.0.8
+	TES-MLuo-01:1.15
+	TES-UNKNOWN:1.15
+	v5-01:1.15
+	v5-00:1.15
+	v4-23-TA133:1.15.0.6
+	mus-emls-1-70:1.15.0.4
+	rel-1-0-englocks-work:1.15.0.2
+	VUMLS1-00:1.15
+	VPL1-00:1.15
+	V4-22-NRT-08:1.14
+	VAM1-00:1.14
+	V4-21:1.14.0.2
+	V4-13:1.14
+	V4-12:1.14
+	V4-11:1.14
+	V4-10:1.14
+	M4-00:1.14
+	V3-33:1.7
+	V3-31:1.7
+	V3-30-NRT-05:1.6
+	cfm-01-00:1.6;
+locks; strict;
+comment	@# @;
+
+
+1.15
+date	2016.07.06.22.15.40;	author pwagner;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2011.12.25.03.39.06;	author honghanh;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2011.12.15.18.27.45;	author honghanh;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2011.11.02.03.50.33;	author honghanh;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2011.11.01.22.16.11;	author honghanh;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2011.10.31.19.12.32;	author honghanh;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2011.10.19.19.33.10;	author honghanh;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2011.03.24.15.16.46;	author honghanh;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2010.11.03.20.17.01;	author honghanh;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2010.06.29.16.40.23;	author honghanh;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2010.06.29.15.53.45;	author honghanh;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2010.03.24.17.44.48;	author honghanh;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2010.03.24.16.26.17;	author honghanh;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2010.03.09.22.39.38;	author honghanh;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2010.03.02.23.51.47;	author honghanh;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.15
+log
+@CreateValue4AgileVector now does remapping properly
+@
+text
+@! Copyright 2010, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+module CFM_Vector_m
+   use VectorsModule, only: Vector_T, VectorTemplate_T, VectorValue_T, &
+                            DestroyVectorTemplateInfo, CloneVector, &
+                            CloneVectorQuantity
+   use QuantityTemplates, only: QuantityTemplate_T
+   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
+         MLSMSG_Error, MLSMSG_Warning, MLSMSG_Deallocate
+   use Allocate_Deallocate, only: allocate_Test, deallocate_test
+   use MLSCommon, only: r8
+   use String_table, only: create_string
+
+   implicit none
+
+   public :: CreateVector, DestroyAgileVectorContent, DestroyVectorValueContent
+   public :: CreateValue4AgileVector, CreateAgileVector, AddValue2Vector
+   public :: CloneAgileVector
+
+!---------------------------- RCS Ident Info -------------------------------
+   character(len=*), private, parameter :: ModuleName= &
+       "$RCSfile: cfm_vector.f90,v $"
+   private :: not_used_here
+!---------------------------------------------------------------------------
+
+    private
+
+    contains
+
+    ! This method is obsolete.
+    type(Vector_T) function CreateVector (vectorTemplate, qtyDatabase, name) &
+             result (vector)
+        ! template listing the quantities to be stored in this vector
+        type (VectorTemplate_T), intent (in), target :: vectorTemplate
+        ! quantity template database to retrieve the template for the quantities
+        ! to be stored in this vector
+        type (QuantityTemplate_T), dimension(:), intent(in), target :: qtyDatabase
+        ! name of the vector as string
+        character(len=*), optional :: name
+
+        integer :: quantity
+        integer :: status
+
+        vector%template = vectorTemplate
+        allocate (vector%quantities(vectorTemplate%noQuantities), stat=status)
+        if (status /= 0) call MLSMessage (MLSMSG_Error, moduleName, &
+             MLSMSG_Allocate // "Vector quantities")
+
+        do quantity = 1, vectorTemplate%noQuantities
+            vector%quantities(quantity)%index = quantity
+            vector%quantities(quantity)%template = &
+                qtyDatabase(vectorTemplate%quantities(quantity))
+        end do
+        call CreateValues(vector)
+
+        if (present(name)) then
+            vector%name = create_string(name)
+        else
+            vector%name = 0
+        end if
+    end function
+
+    ! Initializes a vector to which vector values can be dynamically added.
+    type(Vector_T) function CreateAgileVector (name) result (vector)
+        character(len=*), optional :: name
+
+        ! this vector's template has no quantities array
+        vector%template%name = 0
+        vector%template%noQuantities = 0
+        vector%template%totalInstances = 0
+        vector%template%totalElements = 0
+        nullify(vector%template%quantities)
+        nullify(vector%quantities)
+
+        if (present(name)) then
+            vector%name = create_string(name)
+        else
+            vector%name = 0
+        end if
+    end function
+
+    ! Clone a vector content, including its values
+    ! but the values' templates are only cloned as references level.
+    subroutine CloneAgileVector (y, x)
+        type(Vector_T), intent(in) :: x
+        type(Vector_T), intent(out) :: y
+
+        integer :: i
+
+        call CloneVector(y, x)
+        do i = 1, size(y%quantities)
+            call CloneVectorQuantity(y%quantities(i), x%quantities(i))
+        end do
+    end subroutine
+
+    ! Cleans up objects that are allocated inside an agile vector.
+    subroutine DestroyAgileVectorContent (v)
+        type(Vector_T), intent(inout) :: v
+        integer :: i
+
+        do i = 1, size(v%quantities)
+            call DestroyVectorValueContent(v%quantities(i))
+        end do
+        call DestroyVectorTemplateInfo(v%template)
+    end subroutine
+
+    ! Only use this if the vector value does not belong to
+    ! any vector.
+    ! To destroy an entire vector, use the methods dedicated
+    ! to destroy vector for better efficiency.
+    subroutine DestroyVectorValueContent (vv)
+        type(VectorValue_T), intent(inout) :: vv
+
+        call deallocate_test (vv%values, "vv%values", moduleName)
+        call deallocate_test ( vv%mask, "vv%mask", ModuleName )
+    end subroutine
+
+    ! Add a VectorValue_T object to a Vector_T object.
+    ! The vector has to be an agile vector.
+    ! vectorvalue doesn't have to be unique.
+    ! Value will be added to the end of vector.
+    ! Note that memory allocated to vectorvalue will be
+    ! reused by this vector, so don't add the same
+    ! vectorvalue to 2 different vectors.
+    subroutine AddValue2Vector (vector, vectorvalue)
+        type(Vector_T), intent(inout) :: vector
+        type(VectorValue_T), intent(in) :: vectorvalue
+
+        type(VectorValue_T), dimension(:), pointer :: temp
+        integer :: status
+
+        vector%template%noQuantities = vector%template%noquantities + 1
+        temp => vector%quantities
+
+        allocate(vector%quantities(vector%template%noquantities), stat=status)
+        if (status /= 0) call MLSMessage (MLSMSG_Error, moduleName, &
+            MLSMSG_Allocate // "AddValue2Vector")
+        if (associated(temp)) vector%quantities(1:(vector%template%noquantities-1)) = temp
+
+        vector%quantities(vector%template%noquantities) = vectorvalue
+        vector%quantities(vector%template%noquantities)%index = vector%template%noquantities
+
+        vector%template%totalInstances = vector%template%totalinstances + &
+        vectorvalue%template%noinstances
+        vector%template%totalElements = vector%template%totalelements + &
+                                        vectorvalue%template%noinstances * &
+                                        vectorvalue%template%instanceLen
+    end subroutine
+
+    ! Creates a VectorValue_T object to add to an agile vector.
+    ! The value can be empty, which means it only contains a QuantityTemplate_T.
+    ! Or it can be filled with explicit values given by the value array.
+    ! Or it can be filled with the same value given by a spreadvalue number.
+    ! Value can also be accompanied by a mask to distinguish good values 
+    ! and bad values.
+    type(VectorValue_T) function CreateValue4AgileVector (template, value, spreadvalue, &
+    mask) result(vectorvalue)
+        use MLSStrings, only: writeIntsToChars
+        use VectorsModule, only: remapVectorValue, remapVectorMask
+
+        type(QuantityTemplate_T), intent(in) :: template
+        real(r8), dimension(:), intent(in), optional :: value
+        real(r8), intent(in), optional :: spreadvalue
+        character, dimension(:), intent(in), optional :: mask
+
+        integer :: row, col
+        character(len=10) :: int1 = "          ", int2 = "          "
+        integer :: valueSize
+
+        row = template%nochans * template%nosurfs
+        col = template%noinstances
+
+        vectorvalue%template = template
+
+        valueSize = max( 1, vectorvalue%template%noChans * &
+           & vectorvalue%template%noSurfs * &
+           & vectorvalue%template%noInstances * &
+           & vectorvalue%template%noCrossTrack )
+        if (.not. present(value) .and. .not. present(spreadvalue)) then
+            call allocate_test(vectorvalue%value1, valueSize, "vectorvalue%values", modulename)
+            vectorvalue%value1 = 0.0_r8
+            call remapVectorValue ( vectorvalue )
+            return
+        end if
+
+        if (present(value) .and. present(spreadvalue)) &
+        call MLSMessage(MLSMSG_Error, modulename, "Cannot specify both value and spreadvalue.")
+
+        ! Fortran do not have lazy evaluation of conditional clause
+        if (present(value)) then
+            if (row * col /= size(value)) then
+                call writeintstochars(row * col, int1)
+                call writeintstochars(size(value), int2)
+
+                call MLSMessage (MLSMSG_Error, moduleName, &
+                "Incorrect size, expect " // int1 // " elements, got " // int2)
+            end if
+        end if
+
+        ! This simply doesn't work any longer after we moved to remapping
+        if ( .false. ) then
+          call allocate_test(vectorvalue%values, row, col, "vectorvalue%values", modulename)
+          if (present(spreadvalue)) then
+              vectorvalue%values = spreadvalue
+          else
+              vectorvalue%values = reshape(value, shape(vectorvalue%values))
+          end if
+        else
+          call allocate_test ( vectorvalue%value1, &
+            & valueSize, &
+            & trim(vectorvalue%AllocationName), moduleName )
+          if (present(spreadvalue)) then
+              vectorvalue%value1 = spreadvalue
+          else
+              vectorvalue%value1 = value
+          end if
+
+          call remapVectorValue ( vectorvalue )
+        endif
+
+        if (present(mask)) then
+            if (size(vectorvalue%values) /= size(mask)) &
+            call MLSMessage (MLSMSG_Error, modulename, "Size of mask differs from shape of value.")
+            call allocate_test(vectorvalue%mask1, valueSize, "vectorvalue%mask", modulename)
+            vectorvalue%mask1 = mask
+          call remapVectorMask ( vectorvalue )
+        end if
+    end function CreateValue4AgileVector
+
+    ! =====     Private Procedures     =====================================
+    subroutine CreateValues ( Vector)
+        ! Allocate space for the values of a vector.
+        type(Vector_T), intent(inout) :: Vector
+        integer :: QTY
+        real(r8), parameter :: MYHUGE = 1.0e15
+
+        do qty = 1, size(vector%quantities)
+            call allocate_test ( vector%quantities(qty)%values, &
+                & vector%quantities(qty)%template%noChans * &
+                & vector%quantities(qty)%template%noSurfs, &
+                & vector%quantities(qty)%template%noInstances, &
+                & "vector%quantities(qty)%%values", ModuleName )
+            vector%quantities(qty)%values = 0.0_r8
+        end do
+    end subroutine
+
+!--------------------------- end bloc --------------------------------------
+   logical function not_used_here()
+   character (len=*), parameter :: IdParm = &
+       "$Id: cfm_vector.f90,v 1.14 2011/12/25 03:39:06 honghanh Exp $"
+   character (len=len(idParm)) :: Id = idParm
+      not_used_here = (id(1:1) == ModuleName(1:1))
+      print *, Id ! .mod files sometimes change if PRINT is added
+   end function not_used_here
+!---------------------------------------------------------------------------
+
+end module
+
+! $Log: cfm_vector.f90,v $
+! Revision 1.14  2011/12/25 03:39:06  honghanh
+! Fix cloning and memory cleanup method
+! in forwardmodel2 subroutines.
+!
+! Revision 1.13  2011/12/15 18:27:45  honghanh
+! Documentation and code clean up, including removing unused and broken
+! subroutines.
+!
+! Revision 1.12  2011/11/02 03:50:33  honghanh
+! Add code to clean up values array in DestroyVectorValueContent
+!
+! Revision 1.11  2011/11/01 22:16:11  honghanh
+! Add API to destroy individual QuantityTemplate_T and VectorValue_T
+!
+! Revision 1.10  2011/10/31 19:12:32  honghanh
+! Add "intent(in)" to input in CreateValue4AgileVector
+!
+! Revision 1.9  2011/10/19 19:33:10  honghanh
+! Adding DestroyAgileVectorContent to CFM_Vector_m
+!
+! Revision 1.8  2011/03/24 15:16:46  honghanh
+! Add new interfaces for creating vector and vector values without going through quantity template databases
+!
+! Revision 1.7  2010/11/03 20:17:01  honghanh
+! Add name as an optional argument to CreateVector.
+!
+! Revision 1.6  2010/06/29 16:40:23  honghanh
+! Remove all function/subroutine and user type forwarding from
+! all CFM modules except for from cfm.f90
+!
+! Revision 1.5  2010/06/29 15:53:45  honghanh
+! Add copyright comments and support for CVS log in the file
+!
+@
+
+
+1.14
+log
+@Fix cloning and memory cleanup method
+in forwardmodel2 subroutines.
+@
+text
+@d167 1
+d176 1
+d183 4
+d188 3
+a190 2
+            call allocate_test(vectorvalue%values, row, col, "vectorvalue%values", modulename)
+            vectorvalue%values = 0.0_r8
+d208 8
+a215 3
+        call allocate_test(vectorvalue%values, row, col, "vectorvalue%values", modulename)
+        if (present(spreadvalue)) then
+            vectorvalue%values = spreadvalue
+d217 11
+a227 2
+            vectorvalue%values = reshape(value, shape(vectorvalue%values))
+        end if
+d232 3
+a234 2
+            call allocate_test(vectorvalue%mask, row, col, "vectorvalue%mask", modulename)
+            vectorvalue%mask = reshape(mask, shape(vectorvalue%mask))
+d236 1
+a236 1
+    end function
+d258 1
+a258 1
+       "$Id: cfm_vector.f90,v 1.13 2011/12/15 18:27:45 honghanh Exp $"
+d268 4
+@
+
+
+1.13
+log
+@Documentation and code clean up, including removing unused and broken
+subroutines.
+@
+text
+@d13 2
+a14 1
+                            DestroyVectorTemplateInfo
+d26 1
+d90 14
+d151 2
+a152 1
+        vector%template%totalInstances = vector%template%totalinstances + vectorvalue%template%noinstances
+d236 1
+a236 1
+       "$Id: cfm_vector.f90,v 1.12 2011/11/02 03:50:33 honghanh Exp $"
+d246 4
+@
+
+
+1.12
+log
+@Add code to clean up values array in DestroyVectorValueContent
+@
+text
+@d36 1
+d69 1
+d88 1
+d110 7
+a116 2
+    ! vectorvalue doesn't have to be unique
+    ! value will be added to the end of vector
+d141 8
+a148 2
+    type(VectorValue_T) function CreateValue4AgileVector (template, value, spreadvalue, mask) &
+    result(vectorvalue)
+d219 1
+a219 1
+       "$Id: cfm_vector.f90,v 1.11 2011/11/01 22:16:11 honghanh Exp $"
+d229 3
+@
+
+
+1.11
+log
+@Add API to destroy individual QuantityTemplate_T and VectorValue_T
+@
+text
+@d103 1
+d205 1
+a205 1
+       "$Id: cfm_vector.f90,v 1.10 2011/10/31 19:12:32 honghanh Exp $"
+d215 3
+@
+
+
+1.10
+log
+@Add "intent(in)" to input in CreateValue4AgileVector
+@
+text
+@d13 1
+a13 1
+                            DestroyVectorTemplateInfo, DestroyVectorInfo
+d16 2
+a17 2
+         MLSMSG_Error, MLSMSG_Warning
+   use Allocate_Deallocate, only: Allocate_Test
+d23 1
+a23 1
+   public :: CreateVector, DestroyAgileVectorContent
+d88 1
+d90 3
+a92 1
+        call DestroyVectorInfo(v)
+d96 10
+d204 1
+a204 1
+       "$Id: cfm_vector.f90,v 1.9 2011/10/19 19:33:10 honghanh Exp $"
+d214 3
+@
+
+
+1.9
+log
+@Adding DestroyAgileVectorContent to CFM_Vector_m
+@
+text
+@d124 3
+a126 3
+        real(r8), dimension(:), optional :: value
+        real(r8), optional :: spreadvalue
+        character, dimension(:), optional :: mask
+d191 1
+a191 1
+       "$Id: cfm_vector.f90,v 1.8 2011/03/24 15:16:46 honghanh Exp $"
+d201 3
+@
+
+
+1.8
+log
+@Add new interfaces for creating vector and vector values without going through quantity template databases
+@
+text
+@d12 2
+a13 1
+   use VectorsModule, only: Vector_T, VectorTemplate_T, VectorValue_T
+d23 1
+a23 1
+   public :: CreateVector
+d86 7
+d191 1
+a191 1
+       "$Id: cfm_vector.f90,v 1.7 2010/11/03 20:17:01 honghanh Exp $"
+d201 3
+@
+
+
+1.7
+log
+@Add name as an optional argument to CreateVector.
+@
+text
+@d23 1
+d31 1
+a31 1
+   private
+d33 1
+a33 1
+   contains
+d35 1
+a35 1
+   type(Vector_T) function CreateVector (vectorTemplate, qtyDatabase, name) &
+d37 142
+a178 46
+      ! template listing the quantities to be stored in this vector
+      type (VectorTemplate_T), intent (in), target :: vectorTemplate
+      ! quantity template database to retrieve the template for the quantities
+      ! to be stored in this vector
+      type (QuantityTemplate_T), dimension(:), intent(in), target :: qtyDatabase
+      ! name of the vector as string
+      character(len=*), optional :: name
+
+      integer :: quantity
+      integer :: status
+
+      vector%template = vectorTemplate
+      allocate (vector%quantities(vectorTemplate%noQuantities), stat=status)
+      if (status /= 0) call MLSMessage (MLSMSG_Error, moduleName, &
+          MLSMSG_Allocate // "Vector quantities")
+
+      do quantity = 1, vectorTemplate%noQuantities
+         vector%quantities(quantity)%index = quantity
+         vector%quantities(quantity)%template = &
+            qtyDatabase(vectorTemplate%quantities(quantity))
+      end do
+      call CreateValues(vector)
+
+      if (present(name)) then
+         vector%name = create_string(name)
+      else
+         vector%name = 0
+      end if
+   end function
+
+   ! =====     Private Procedures     =====================================
+   subroutine CreateValues ( Vector)
+      ! Allocate space for the values of a vector.
+      type(Vector_T), intent(inout) :: Vector
+      integer :: QTY
+      real(r8), parameter :: MYHUGE = 1.0e15
+
+      do qty = 1, size(vector%quantities)
+         call allocate_test ( vector%quantities(qty)%values, &
+           & vector%quantities(qty)%template%noChans * &
+           & vector%quantities(qty)%template%noSurfs, &
+           & vector%quantities(qty)%template%noInstances, &
+           & "vector%quantities(qty)%%values", ModuleName )
+         vector%quantities(qty)%values = 0.0_r8
+    end do
+  end subroutine
+d183 1
+a183 1
+       "$Id: cfm_vector.f90,v 1.6 2010/06/29 16:40:23 honghanh Exp $"
+d193 3
+@
+
+
+1.6
+log
+@Remove all function/subroutine and user type forwarding from
+all CFM modules except for from cfm.f90
+@
+text
+@d18 1
+d34 1
+a34 1
+   type(Vector_T) function CreateVector (vectorTemplate, qtyDatabase) &
+d36 1
+d38 2
+d41 2
+d58 6
+d86 1
+a86 1
+       "$Id: cfm_vector.f90,v 1.5 2010/06/29 15:53:45 honghanh Exp $"
+d96 4
+@
+
+
+1.5
+log
+@Add copyright comments and support for CVS log in the file
+@
+text
+@d12 1
+a12 3
+   use VectorsModule, only: Vector_T, VectorTemplate_T, VectorValue_T, &
+                            DestroyVectorInfo, GetVectorQtyByTemplateIndex, &
+                            Dump
+d21 1
+a21 3
+   public :: CreateVector, DestroyVectorInfo, GetVectorQtyByTemplateIndex
+   public :: Dump
+   public :: Vector_T, VectorValue_T
+d74 1
+a74 1
+       "$Id: cfm_vector.f90,v 1.1 2010/06/29 8:06:33 honghanh Exp $"
+d84 3
+@
+
+
+1.4
+log
+@Conformed all module names to end with _m, changed file names to all
+lowercase, add comments
+@
+text
+@d1 10
+d27 6
+a33 1
+   character(len=20) :: moduleName="CFM_Vector"
+d75 9
+d86 2
+@
+
+
+1.3
+log
+@Adjustments made to add startTime and endTime as inputs to CFM_MLSSetup.
+Tested successfully
+@
+text
+@d1 1
+a1 1
+module CFM_Vector
+@
+
+
+1.2
+log
+@Example for filling vector
+@
+text
+@d2 3
+a4 1
+   use VectorsModule, only: Vector_T, VectorTemplate_T
+d12 5
+a16 1
+   public :: CreateVector
+@
+
+
+1.1
+log
+@Example of creating vectors
+@
+text
+@d6 2
+d34 1
+d37 18
+@
+

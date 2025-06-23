@@ -1,0 +1,244 @@
+head	2.4;
+access;
+symbols
+	V3-43:2.3
+	V3-41:2.3
+	V3-40-PlusGM57:2.3.0.2
+	V2-24-NRT-04:2.2
+	V3-33:2.3
+	V2-24:2.2
+	V3-31:2.3
+	V3-30-NRT-05:2.3
+	cfm-01-00:2.3
+	V3-30:2.3
+	V3-20:2.3
+	V3-10:2.3
+	V2-23-NRT-02:2.2
+	V2-23:2.2
+	V2-22-NRT-01:2.2
+	V2-22:2.2
+	V2-21:2.2
+	V2-20:2.2
+	V2-11:2.2
+	V2-10:2.2
+	V2-00:2.2
+	V1-51:2.1
+	V1-50:2.1
+	V1-45:2.1
+	V1-44:2.1
+	V1-43:2.1
+	V1-32:2.1
+	V1-31:2.1
+	V0_1:1.1;
+locks; strict;
+comment	@# @;
+
+
+2.4
+date	2011.08.26.00.30.00;	author pwagner;	state dead;
+branches;
+next	2.3;
+
+2.3
+date	2009.06.23.18.26.11;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2005.06.22.18.08.19;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2003.11.08.02.01.01;	author vsnyder;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2000.11.22.23.07.30;	author zvi;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2000.05.04.18.12.06;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.4
+log
+@Moved to lib or combined with MLSNumerics module
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module S_CSPLINE_M
+
+  implicit NONE
+
+  private
+  public S_CSPLINE, CSPLINE
+
+  interface CSPLINE; module procedure S_CSPLINE; end interface
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: s_cspline_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+!
+  subroutine S_CSPLINE (XIN, XOUT, YIN, YOUT, NIN, NOUT, YMIN, YMAX)
+    use S_HUNT_M, only: HUNT
+    use S_PCSPL_M, only: PCSPL
+    integer, parameter :: RK = kind(0.0e0)
+    include 'cspline.f9h'
+  end subroutine S_CSPLINE
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: s_cspline_m.f90,v 2.3 2009/06/23 18:26:11 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module S_CSPLINE_M
+
+! $Log: s_cspline_m.f90,v $
+! Revision 2.3  2009/06/23 18:26:11  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.2  2005/06/22 18:08:19  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.1  2003/11/08 02:01:01  vsnyder
+! Initial commit -- created just for symmetry
+!
+@
+
+
+2.3
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d23 1
+a23 1
+       "$RCSfile: $"
+d39 1
+a39 1
+       "$Id: read_apriori.f90 is it here $"
+d49 3
+@
+
+
+2.2
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d36 1
+a37 1
+!---------------------------- RCS Ident Info -------------------------------
+d39 2
+a40 3
+       "$Id: $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d42 1
+d44 1
+d49 3
+@
+
+
+2.1
+log
+@Initial commit -- created just for symmetry
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d21 4
+a24 5
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+    & "$Id: d_cspline_m.f90,v 2.4 2002/10/14 20:51:53 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName = "$RCSfile: d_cspline_m.f90,v $"
+d36 6
+a41 1
+  logical function NOT_USED_HERE()
+d43 1
+a43 1
+  end function NOT_USED_HERE
+d47 4
+a50 1
+! $Log: $
+@
+
+
+1.2
+log
+@New version
+@
+text
+@d1 3
+d5 1
+a5 2
+  use S_HUNT_M, only: HUNT
+  use S_PCSPL_M, only: PCSPL
+d7 1
+d10 1
+d14 4
+a17 3
+  CHARACTER (LEN=256) :: Id = &
+       "$Id: s_cspline_m.f90,v 1.1 2000/05/04 18:12:06 vsnyder Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile: s_cspline_m.f90,v $"
+a19 2
+  integer, private, parameter :: RK = kind(0.0e0)
+
+d22 4
+a25 1
+  subroutine S_CSPLINE ( XIN, XOUT, YIN, YOUT, NIN, NOUT )
+d28 5
+d35 1
+a35 4
+! $Log: s_cspline_m.f90,v $
+! Revision 1.1  2000/05/04 18:12:06  vsnyder
+! Initial conversion to Fortran 90
+!
+@
+
+
+1.1
+log
+@Initial conversion to Fortran 90
+@
+text
+@d11 1
+a11 1
+       "$Id: S_CSPLINE_M,v 1.12 2000/02/08 19:54:57 vsnyder Exp $"
+d24 4
+a27 1
+! $Log: S_CSPLINE_M,v $
+@
+

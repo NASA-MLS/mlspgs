@@ -1,0 +1,183 @@
+head	2.1;
+access;
+symbols
+	v5-02-NRT-19:2.1
+	v6-00:2.1
+	v5-02-NRT-18:2.1
+	v5-02:2.1
+	v5-01-NRT-17:2.1
+	v5-01-NRT-16:2.1
+	v5-01-NRT-15:2.1
+	v5-01-NRT-14:2.1
+	neuralnetworks-1-0:2.1.0.10
+	cfm-single-freq-0-1:2.1.0.8
+	v5-01:2.1
+	v5-00:2.1
+	v4-23-TA133:2.1.0.6
+	mus-emls-1-70:2.1.0.4
+	rel-1-0-englocks-work:2.1.0.2
+	VUMLS1-00:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.1
+date	2016.11.08.21.15.45;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=============================================================================
+module Insertion_Sort_m
+!=============================================================================
+
+  implicit NONE
+
+  public
+
+  interface Insertion_Sort
+    module procedure Insertion_Sort_P_D, Insertion_Sort_P_S
+    module procedure Insertion_Sort_D, Insertion_Sort_S
+  end interface
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: Geolocation_0.f90,v $"
+  private :: not_used_here
+!---------------------------------------------------------------------------
+
+contains
+
+  subroutine Insertion_Sort_P_D ( R, P )
+  ! Sort R, producing the permutation P that sorted R
+    integer, parameter :: RK = kind(0.0d0)
+    real(rk), intent(inout) :: R(0:)
+    integer, intent(out) :: P(:)    ! Assumed to be the same size as R(1:)
+
+    integer :: I, IP, J
+    real(rk) :: RZ
+
+    r(0) = -0.5 * huge(1.0_rk)      ! Sentinel simplifies algorithm
+    p = [ ( i, i = 1, ubound(r,1) ) ]
+
+    do i = 2, ubound(r,1)
+      rz = r(i)
+      ip = p(i)
+      j = i
+      do while ( rz < r(j-1) )
+        r(j) = r(j-1)
+        p(j) = p(j-1)
+        j = j - 1
+      end do
+      r(j) = rz
+      p(j) = ip
+    end do
+
+  end subroutine Insertion_Sort_P_D
+
+  subroutine Insertion_Sort_P_S ( R, P )
+  ! Sort R, producing the permutation P that sorted R
+    integer, parameter :: RK = kind(0.0e0)
+    real(rk), intent(inout) :: R(0:)
+    integer, intent(out) :: P(:)    ! Assumed to be the same size as R(1:)
+
+    integer :: I, IP, J
+    real(rk) :: RZ
+
+    r(0) = -0.5 * huge(1.0_rk)      ! Sentinel simplifies algorithm
+    p = [ ( i, i = 1, ubound(r,1) ) ]
+
+    do i = 2, ubound(r,1)
+      rz = r(i)
+      ip = p(i)
+      j = i
+      do while ( rz < r(j-1) )
+        r(j) = r(j-1)
+        p(j) = p(j-1)
+        j = j - 1
+      end do
+      r(j) = rz
+      p(j) = ip
+    end do
+
+  end subroutine Insertion_Sort_P_S
+
+  subroutine Insertion_Sort_D ( R )
+  ! Sort R.
+    integer, parameter :: RK = kind(0.0d0)
+    real(rk), intent(inout) :: R(0:)
+
+    integer :: I, J
+    real(rk) :: RZ
+
+    r(0) = -0.5 * huge(1.0_rk)      ! Sentinel simplifies algorithm
+
+    do i = 2, ubound(r,1)
+      rz = r(i)
+      j = i
+      do while ( rz < r(j-1) )
+        r(j) = r(j-1)
+        j = j - 1
+      end do
+      r(j) = rz
+    end do
+
+  end subroutine Insertion_Sort_D
+
+  subroutine Insertion_Sort_S ( R )
+  ! Sort R.
+    integer, parameter :: RK = kind(0.0e0)
+    real(rk), intent(inout) :: R(0:)
+
+    integer :: I, J
+    real(rk) :: RZ
+
+    r(0) = -0.5 * huge(1.0_rk)      ! Sentinel simplifies algorithm
+
+    do i = 2, ubound(r,1)
+      rz = r(i)
+      j = i
+      do while ( rz < r(j-1) )
+        r(j) = r(j-1)
+        j = j - 1
+      end do
+      r(j) = rz
+    end do
+
+  end subroutine Insertion_Sort_S
+
+!=============================================================================
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: Geolocation_0.f90,v 2.16 2016/11/04 22:50:53 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Insertion_Sort_m
+
+! $Log: Geolocation_0.f90,v $
+@

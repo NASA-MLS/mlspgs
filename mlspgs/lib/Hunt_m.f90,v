@@ -1,0 +1,456 @@
+head	2.7;
+access;
+symbols
+	v5-02-NRT-19:2.7
+	v6-00:2.7
+	v5-02-NRT-18:2.7
+	v5-02:2.6
+	v5-01-NRT-17:2.7
+	v5-01-NRT-16:2.7
+	v5-01-NRT-15:2.7
+	v5-01-NRT-14:2.6
+	neuralnetworks-1-0:2.6.0.8
+	cfm-single-freq-0-1:2.6.0.6
+	v5-01:2.6
+	v5-00:2.6
+	v4-23-TA133:2.6.0.4
+	mus-emls-1-70:2.6.0.2
+	rel-1-0-englocks-work:2.5.0.2
+	VUMLS1-00:2.5
+	VPL1-00:2.3
+	V4-22-NRT-08:2.1
+	VAM1-00:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.7
+date	2021.09.10.17.43.54;	author pwagner;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2018.04.19.00.47.33;	author vsnyder;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2017.01.13.23.52.17;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2016.09.09.00.12.26;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2016.08.23.20.25.51;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2016.07.28.01.42.27;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2015.05.27.22.36.35;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.7
+log
+@Gets HowWeHandle_log from new Exception_m
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=============================================================================
+module Hunt_m
+!=============================================================================
+
+  use Diff_1, only: SelfDiff
+  use Dump_0, only: Dump
+  use Exception_m, only: HowWeHandle_log
+  use MLSCommon, only : UndefinedValue
+  use MLSFillValues, only: IsFillValue, ReplaceFillValues
+  use MLSFinds, only: FindFirst, FindLast
+  use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, &
+    & MLSMessage
+  use Optional_m, only: Default
+  use Pure_Hunt_m, only: PureHunt ! because others get it from here
+
+  implicit none
+
+  private
+
+  public :: Hunt, HuntBox, HuntRange, PureHunt
+
+
+  interface Hunt
+    module procedure HuntArray_r4, HuntArray_r8
+    module procedure HuntScalar_r4, HuntScalar_r8
+  end interface
+
+  interface HuntBox
+    module procedure HuntBox_r4, HuntBox_r8
+  end interface
+
+  interface HuntRange
+    module procedure HuntRange_int, HuntRange_r4, HuntRange_r8
+  end interface
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: Hunt_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+! -------------------------------------------------  HuntArray_r4  -----
+
+  ! This routine does the classic hunt the value kind of thing.  This
+  ! does the hunt/bisect implemention a la Numerical Recipes.  List must
+  ! be monotonically increasing or decreasing. There is no such
+  ! requirement for values.
+  
+  ! Things can go wrong for a multitude of reasons. We print a message that
+  ! may be helpful. If you supply the optional parameter "fail", 
+  ! then instead of simply bombing
+  ! we return with fail set to TRUE if something goes wrong. This allows you
+  ! the opprtunity to either supply further information about the circumstances,
+  ! or else try to recover from the situation.
+  ! 
+
+  subroutine HuntArray_r4 ( list, values, indices, start, allowTopValue, &
+    & allowBelowValue, nearest, logSpace, fail )
+    use ieee_arithmetic, only: IEEE_Is_NaN
+    integer, parameter :: RK = kind(0.0e0)
+
+    ! Dummy arguments
+    real(rk), dimension(:), intent(in) :: list ! List to search
+    real(rk), dimension(:), intent(in) :: values ! Values to search for
+    integer, dimension(:), intent(out) :: indices ! list(indices) <= values
+      !                                               <= list(indices+1)
+      !                                      1 <= indices < N unless
+      !                                      allowTopValue or allowBelowValue
+    integer, optional, intent(in) :: start ! Optional start index
+    logical, optional, intent(in) :: allowTopValue ! Can return N
+    logical, optional, intent(in) :: allowBelowValue ! Can return 0
+    logical, optional, intent(in) :: nearest ! Choose nearest value not one below
+    logical, optional, intent(in) :: logSpace ! Choose nearest based on log space
+    logical, optional, intent(out) :: Fail    ! True for failure
+
+    include "HuntArray.f9h"
+  end subroutine HuntArray_r4
+
+! -------------------------------------------------  HuntArray_r8  -----
+
+  subroutine HuntArray_r8 ( list, values, indices, start, allowTopValue, &
+    & allowBelowValue, nearest, logSpace, fail )
+    use ieee_arithmetic, only: IEEE_Is_NaN
+    integer, parameter :: RK = kind(0.0d0)
+
+    ! Dummy arguments
+    real(rk), dimension(:), intent(in) :: list ! List to search
+    real(rk), dimension(:), intent(in) :: values ! Values to search for
+    integer, dimension(:), intent(out) :: indices ! list(indices) <= values
+      !                                               <= list(indices+1)
+    integer, optional, intent(in) :: start ! Optional start index
+    logical, optional, intent(in) :: allowTopValue ! Can return N
+    logical, optional, intent(in) :: allowBelowValue ! Can return 0
+    logical, optional, intent(in) :: nearest ! Choose nearest value not one below
+    logical, optional, intent(in) :: logSpace ! Choose nearest based on log space
+    logical, optional, intent(out) :: Fail    ! True for failure
+
+    include "HuntArray.f9h"
+  end subroutine HuntArray_r8
+
+! ------------------------------------------------  HuntScalar_r4  -----
+
+  ! This routine is a scalar wrapper for the above one
+
+  subroutine HuntScalar_r4 (list, value, index, start, allowTopValue, &
+    & allowBelowValue, nearest, logSpace, fail )
+    integer, parameter :: RK = kind(0.0e0)
+
+    ! Dummy arguments
+    real(rk), dimension(:), intent(in) :: list ! List to search
+    real(rk), intent(in) :: value ! Value to search for
+    integer, intent(out) :: index ! list(index) <= value <= list(index+1)
+    integer, intent(in), optional :: start ! Optional start index
+    logical, optional, intent(in) :: allowTopValue ! Can return N
+    logical, optional, intent(in) :: allowBelowValue ! Can return 0
+    logical, optional, intent(in) :: nearest ! Choose nearest value instead
+    logical, optional, intent(in) :: logSpace ! Choose nearest based on log space
+    logical, optional, intent(out) :: Fail    ! True for failure
+
+    ! Local variables
+
+    integer, dimension(1) :: indices ! To pass to HuntArray
+
+    call Hunt ( list, (/ value /), indices, start, &
+      & allowTopValue, allowBelowValue, nearest, logSpace, fail )
+    index = indices(1)
+  end subroutine HuntScalar_r4
+
+! ------------------------------------------------  HuntScalar_r8  -----
+
+  subroutine HuntScalar_r8 (list, value, index, start, allowTopValue, &
+    & allowBelowValue, nearest, logSpace, fail )
+    integer, parameter :: RK = kind(0.0d0)
+
+    ! Dummy arguments
+    real(rk), dimension(:), intent(in) :: list ! List to search
+    real(rk), intent(in) :: value ! Value to search for
+    integer, intent(out) :: index ! list(index) <= value <= list(index+1)
+    integer, intent(in), optional :: start ! Optional start index
+    logical, optional, intent(in) :: allowTopValue ! Can return N
+    logical, optional, intent(in) :: allowBelowValue ! Can return 0
+    logical, optional, intent(in) :: nearest ! Choose nearest value instead
+    logical, optional, intent(in) :: logSpace ! Choose nearest based on log space
+    logical, optional, intent(out) :: Fail    ! True for failure
+
+    ! Local variables
+
+    integer, dimension(1) :: indices ! To pass to HuntArray
+
+    call Hunt ( list, (/ value /), indices, start, &
+      & allowTopValue, allowBelowValue, nearest, logSpace, fail )
+    index = indices(1)
+  end subroutine HuntScalar_r8
+
+  ! ----------------------------------------------------  HuntBox  -----
+  ! A binary search routine with a hunt procedure, to start from last known
+  ! location (if 0 < JLO < N) or from the begining otherwise.
+  subroutine HuntBox_r4 ( GRIDPOINTS, MGRIDPOINTS, COORDS, INDICES, VERTICES )
+    integer, parameter :: RK = kind(0.0e0)
+    include 'HuntBox.f9h'
+  end subroutine HuntBox_r4
+
+  subroutine HuntBox_r8 ( GRIDPOINTS, MGRIDPOINTS, COORDS, INDICES, VERTICES )
+    integer, parameter :: RK = kind(0.0d0)
+    include 'HuntBox.f9h'
+  end subroutine HuntBox_r8
+
+! ----------------------------------------------------  HuntRange  -----
+! This family of subroutines searchs not for a single index
+! but for a range of values within which all list elements
+! lie, inclusive
+! If none, return (/ 0, 0 /)
+! Special interpretation: inclusive means
+! if vrange(1) == vrange(2), any values of list also == vrange
+! are within that range
+! As with other Hunts, list must be monotonic
+  subroutine HuntRange_int ( list, vrange, irange, options )
+    integer, parameter :: RK = kind(0.0e0)
+    ! Dummy args
+    integer, dimension(:) :: list
+    integer, dimension(2) :: vrange
+    include 'HuntRange.f9h'
+  end subroutine HuntRange_int
+
+  subroutine HuntRange_r4 ( list, vrange, irange, options )
+    integer, parameter :: RK = kind(0.0e0)
+    ! Dummy args
+    real(rk), dimension(:) :: list
+    real(rk), dimension(2) :: vrange
+    include 'HuntRange.f9h'
+  end subroutine HuntRange_r4
+
+  subroutine HuntRange_r8 ( list, vrange, irange, options )
+    integer, parameter :: RK = kind(0.0d0)
+    ! Dummy args
+    real(rk), dimension(:) :: list
+    real(rk), dimension(2) :: vrange
+    include 'HuntRange.f9h'
+  end subroutine HuntRange_r8
+
+  logical function not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id: Hunt_m.f90,v 2.6 2018/04/19 00:47:33 vsnyder Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+
+end module Hunt_m
+!=============================================================================
+
+! $Log: Hunt_m.f90,v $
+! Revision 2.6  2018/04/19 00:47:33  vsnyder
+! Remove USE statements for unused names
+!
+! Revision 2.5  2017/01/13 23:52:17  pwagner
+! Let procedures from Optional_m handle exceptions
+!
+! Revision 2.4  2016/09/09 00:12:26  vsnyder
+! Moved PureHunt into a module of its own
+!
+! Revision 2.3  2016/08/23 20:25:51  pwagner
+! Hunt mail return after failure if optional arg fail present
+!
+! Revision 2.2  2016/07/28 01:42:27  vsnyder
+! Refactoring dump and diff
+!
+! Revision 2.1  2015/05/27 22:36:35  vsnyder
+! Initial commit -- moved stuff here from MLSNumerics to avoid circularity
+!
+@
+
+
+2.6
+log
+@Remove USE statements for unused names
+@
+text
+@d18 1
+d24 1
+a24 1
+  use Optional_m, only: Default, HowWeHandle_log
+d217 1
+a217 1
+       "$Id: Hunt_m.f90,v 2.5 2017/01/13 23:52:17 pwagner Exp $"
+d228 3
+@
+
+
+2.5
+log
+@Let procedures from Optional_m handle exceptions
+@
+text
+@a17 1
+  use HighOutput, only: OutputNamedValue
+d22 1
+a22 1
+    & Crash_burn, MLSMessage
+d216 1
+a216 1
+       "$Id: Hunt_m.f90,v 2.4 2016/09/09 00:12:26 vsnyder Exp $"
+d227 3
+@
+
+
+2.4
+log
+@Moved PureHunt into a module of its own
+@
+text
+@d24 1
+d217 1
+a217 1
+       "$Id: Hunt_m.f90,v 2.3 2016/08/23 20:25:51 pwagner Exp $"
+d228 3
+@
+
+
+2.3
+log
+@Hunt mail return after failure if optional arg fail present
+@
+text
+@d18 1
+d24 1
+a24 1
+  use HighOutput, only: OutputNamedValue
+a31 6
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: Hunt_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+d46 5
+a50 3
+  interface purehunt
+    module procedure purehunt_r4, purehunt_r8
+  end interface
+a212 13
+  ! ---------------------------------------------------  PureHunt  -----
+  ! A binary search routine with a hunt procedure, to start from last known
+  ! location (if 0 < JLO < N) or from the begining otherwise.
+  pure subroutine purehunt_r4 ( ELEMENT, ARRAY, N, JLO, JHI )
+    integer, parameter :: RK = kind(0.0e0)
+    include 'hunt.f9h'
+  end subroutine purehunt_r4
+
+  pure subroutine purehunt_r8 ( ELEMENT, ARRAY, N, JLO, JHI )
+    integer, parameter :: RK = kind(0.0d0)
+    include 'hunt.f9h'
+  end subroutine purehunt_r8
+
+d216 1
+a216 1
+       "$Id: Hunt_m.f90,v 2.2 2016/07/28 01:42:27 vsnyder Exp $"
+d227 3
+@
+
+
+2.2
+log
+@Refactoring dump and diff
+@
+text
+@d22 2
+a23 1
+    & MLSMessage
+d63 8
+d121 1
+a121 1
+    & allowBelowValue, nearest, logSpace )
+d133 1
+d140 1
+a140 1
+      & allowTopValue, allowBelowValue, nearest, logSpace )
+d147 1
+a147 1
+    & allowBelowValue, nearest, logSpace )
+d159 1
+d166 1
+a166 1
+      & allowTopValue, allowBelowValue, nearest, logSpace )
+d232 1
+a232 1
+       "$Id: Hunt_m.f90,v 2.1 2015/05/27 22:36:35 vsnyder Exp $"
+d243 3
+@
+
+
+2.1
+log
+@Initial commit -- moved stuff here from MLSNumerics to avoid circularity
+@
+text
+@d16 2
+a17 1
+  use Dump_0, only: Dump, SelfDiff
+d32 1
+a32 1
+       "$RCSfile: MLSNumerics.f90,v $"
+d221 1
+a221 1
+       "$Id: MLSNumerics.f90,v 2.86 2015/04/29 00:53:01 vsnyder Exp $"
+d231 4
+a234 1
+! $Log: $
+@
+

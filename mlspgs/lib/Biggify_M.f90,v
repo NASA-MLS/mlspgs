@@ -1,0 +1,415 @@
+head	2.8;
+access;
+symbols
+	v5-02-NRT-19:2.8
+	v6-00:2.8
+	v5-02-NRT-18:2.8
+	v5-02:2.8
+	v5-01-NRT-17:2.8
+	v5-01-NRT-16:2.8
+	v5-01-NRT-15:2.8
+	v5-01-NRT-14:2.8
+	neuralnetworks-1-0:2.8.0.12
+	cfm-single-freq-0-1:2.8.0.10
+	v5-01:2.8
+	v5-00:2.8
+	v4-23-TA133:2.8.0.8
+	mus-emls-1-70:2.8.0.6
+	rel-1-0-englocks-work:2.8.0.4
+	VUMLS1-00:2.8
+	VPL1-00:2.8
+	V4-22-NRT-08:2.8
+	VAM1-00:2.8
+	V4-21:2.8.0.2
+	V4-13:2.8
+	V4-12:2.7
+	V4-11:2.7
+	V4-10:2.7
+	V3-43:2.7
+	M4-00:2.7
+	V3-41:2.7
+	V3-40-PlusGM57:2.7.0.2
+	V2-24-NRT-04:2.6
+	V3-33:2.7
+	V2-24:2.6
+	V3-31:2.7
+	V3-30-NRT-05:2.7
+	cfm-01-00:2.7
+	V3-30:2.7
+	V3-20:2.7
+	V3-10:2.7
+	V2-23-NRT-02:2.6
+	V2-23:2.6
+	V2-22-NRT-01:2.6
+	V2-22:2.6
+	V2-21:2.6
+	V2-20:2.6
+	V2-11:2.6
+	V2-10:2.6
+	V2-00:2.6
+	V1-51:2.5
+	V1-50:2.5
+	V1-45:2.5
+	V1-44:2.5
+	V1-43:2.5
+	V1-42:2.5
+	V1-41:2.5
+	V1-32:2.5
+	V1-40:2.5
+	V1-31:2.5
+	V1-30:2.5
+	V1-13:2.5
+	V1-12:2.5
+	V1-11:2.5
+	V1-10:2.5
+	newfwm-feb03:2.5.0.2
+	V1-04:2.3
+	V1-03:2.3
+	V1-02:2.3
+	V1-00:2.3
+	newfwm-sep01:2.2.0.2
+	V0-7:2.2;
+locks; strict;
+comment	@# @;
+
+
+2.8
+date	2014.09.04.23.37.32;	author vsnyder;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2009.06.23.18.25.42;	author pwagner;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2005.06.22.17.25.48;	author pwagner;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2002.10.08.00.09.08;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2002.09.11.17.47.21;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2002.02.02.00.10.16;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2001.07.19.17.44.02;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.06.01.01.14.27;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.8
+log
+@Get kinds from MLSKinds instead of MLSCommon
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Biggify_M
+
+  use Allocate_Deallocate, only: Allocate_Test
+  use MatrixModule_0, only: Densify, M_Absent
+  use MatrixModule_1, only: Matrix_T, RC_Info
+  use MLSKinds, only: R8, RM, RV
+  use VectorsModule, only: Vector_T
+
+  interface Biggify
+    module procedure Biggify_Matrix, Biggify_Vector
+  end interface
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: Biggify_M.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  ! ---------------------------------------------  Biggify_Matrix  -----
+  subroutine Biggify_Matrix ( Matrix, Array, Update )
+
+  ! Convert Matrix from a Matrix_T to Array, a Fortran array.
+  ! The primary purpose of this routine is for debugging, but it
+  ! could also be useful for output.  If UPDATE is present and true,
+  ! don't allocate the array, and don't fill in absent blocks with
+  ! zeroes.  This is useful if you're trying to make a Jacobian, but
+  ! it's being constructed little by little.
+
+    type(matrix_T), intent(in) :: Matrix
+    real(rm), dimension(:,:), pointer :: Array
+    logical, intent(in), optional :: Update
+
+    integer :: I, J           ! Subscripts, loop inductors
+    integer :: II, JJ         ! Subscripts of block(i,j) in Array
+    integer :: M, N           ! Dimensions of Array
+    integer :: MM, NN         ! Dimensions of a block of Matrix
+    logical :: MY_UPD
+
+    my_upd = .false.
+    if ( present(update) ) my_upd = update
+    m = sum(matrix%row%nelts)
+    n = sum(matrix%col%nelts)
+    if ( .not. my_upd ) call allocate_test ( array, m, n, 'Array', moduleName )
+    jj = 1
+    do j = 1, matrix%col%nb
+      nn = matrix%block(1,j)%ncols
+      ii = 1
+      do i = 1, matrix%row%nb
+        mm = matrix%block(i,1)%nrows
+        if ( .not. my_upd .or. matrix%block(i,j)%kind /= m_absent ) &
+          & call densify ( Array(ii:ii+mm-1,jj:jj+nn-1), &
+            & matrix%block(i,j) )
+        ii = ii + mm
+      end do ! i
+      jj = jj + nn
+    end do ! j
+
+  end subroutine Biggify_Matrix
+
+  ! ---------------------------------------------  Biggify_Vector  -----
+  subroutine Biggify_Vector ( RC, Vector, Array )
+
+  ! Convert Vector from a Vector_T to Array, a Fortran array, in the
+  ! order specified by RC.
+  ! The primary purpose of this routine is for debugging, but it
+  ! could also be useful for output.
+
+    type(rc_Info), intent(in) :: RC
+    type(vector_T), intent(in) :: Vector
+    real(rv), dimension(:), pointer :: Array
+
+    integer :: I              ! Subscript in RC%inst, RC%quant
+    integer :: M              ! Subscript in Array of beginning of quantity
+    integer :: N              ! Number of elements in a quantity
+    integer :: NB             ! Number of blocks specified by RC
+
+    call allocate_test ( array, vector%template%totalElements, 'Array', &
+      & moduleName )
+    m = 1
+    nb = rc%nb
+    do i = 1, nb
+      n = rc%nelts(i)
+      array(m:m+n-1) = vector%quantities(rc%quant(i))%values(:,rc%inst(i))
+      m = m + n
+    end do
+  end subroutine Biggify_Vector
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: Biggify_M.f90,v 2.7 2009/06/23 18:25:42 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Biggify_M
+
+! $Log: Biggify_M.f90,v $
+! Revision 2.7  2009/06/23 18:25:42  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.6  2005/06/22 17:25:48  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.5  2002/10/08 00:09:08  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.4  2002/09/11 17:47:21  pwagner
+! Began changes needed to conform with matrix%values type move to rm from r8
+!
+! Revision 2.3  2002/02/02 00:10:16  vsnyder
+! Get rid of 'Extra' component
+!
+! Revision 2.2  2001/07/19 17:44:02  vsnyder
+! Add 'update' option
+!
+! Revision 2.1  2001/06/01 01:14:27  vsnyder
+! For debugging only
+!
+@
+
+
+2.7
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d17 1
+a17 1
+  use MLSCommon, only: R8, RM, RV
+d26 1
+a26 1
+       "$RCSfile: $"
+d104 1
+a104 1
+       "$Id: read_apriori.f90 is it here $"
+d114 3
+@
+
+
+2.6
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d101 1
+a102 1
+!---------------------------- RCS Ident Info -------------------------------
+d104 2
+a105 3
+       "$Id: $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d107 1
+d109 1
+d114 3
+@
+
+
+2.5
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d24 1
+a24 4
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
+       "$Id: Biggify_M.f90,v 2.4 2002/09/11 17:47:21 pwagner Exp $"
+  character (len=len(idParm)), private :: Id = idParm
+d26 1
+a26 1
+       "$RCSfile: Biggify_M.f90,v $"
+d102 5
+d113 3
+@
+
+
+2.4
+log
+@Began changes needed to conform with matrix%values type move to rm from r8
+@
+text
+@d18 1
+a18 1
+       "$Id: Biggify_M.f90,v 2.3 2002/02/02 00:10:16 vsnyder Exp $"
+d22 1
+d96 4
+d103 3
+@
+
+
+2.3
+log
+@Get rid of 'Extra' component
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+d9 1
+a9 1
+  use MLSCommon, only: R8
+d18 1
+a18 1
+       "$Id: Biggify_M.f90,v 2.2 2001/07/19 17:44:02 vsnyder Exp $"
+d37 1
+a37 1
+    real(r8), dimension(:,:), pointer :: Array
+d77 1
+a77 1
+    real(r8), dimension(:), pointer :: Array
+d98 3
+@
+
+
+2.2
+log
+@Add 'update' option
+@
+text
+@d18 1
+a18 1
+       "$Id: Biggify_M.f90,v 2.1 2001/06/01 01:14:27 vsnyder Exp $"
+d82 1
+a82 2
+    integer :: NB             ! Number of blocks specified by RC, minus 1
+    !                           if RC%Extra
+a87 1
+    if ( rc%extra ) nb = nb - 1
+a92 1
+    if ( rc%extra ) array(m) = 1.0 ! So it at least has a value
+d98 3
+@
+
+
+2.1
+log
+@For debugging only
+@
+text
+@d7 1
+a7 1
+  use MatrixModule_0, only: Densify
+d18 1
+a18 1
+       "$Id: VectorsModule.f90,v 2.42 2001/05/11 23:33:29 vsnyder Exp $"
+d21 1
+a21 1
+       "$RCSfile: VectorsModule.f90,v $"
+d27 1
+a27 1
+  subroutine Biggify_Matrix ( Matrix, Array )
+d31 4
+a34 1
+  ! could also be useful for output.
+d38 1
+d44 1
+d46 2
+d50 1
+a50 1
+    call allocate_test ( array, m, n, 'Array', moduleName )
+d57 3
+a59 2
+        call densify ( Array(ii:ii+mm-1,jj:jj+nn-1), &
+          & matrix%block(i,j) )
+d100 4
+a103 1
+! $Log: $
+@
+

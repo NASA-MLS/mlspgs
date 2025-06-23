@@ -1,0 +1,103 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.14
+	cfm-single-freq-0-1:1.2.0.12
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.10
+	mus-emls-1-70:1.2.0.8
+	rel-1-0-englocks-work:1.2.0.6
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.2
+	V4-21:1.2.0.4
+	V4-13:1.2
+	V4-12:1.2
+	V4-11:1.2
+	V4-10:1.2
+	V3-43:1.2
+	M4-00:1.2
+	V3-41:1.2
+	V3-40-PlusGM57:1.2.0.2
+	V2-24-NRT-04:1.2
+	V3-33:1.2
+	V2-24:1.2
+	V3-31:1.2
+	V3-30-NRT-05:1.2
+	cfm-01-00:1.2
+	V3-30:1.2
+	V3-20:1.2
+	V3-10:1.2
+	V2-23-NRT-02:1.2
+	V2-23:1.2
+	V2-22-NRT-01:1.2
+	V2-22:1.2
+	V2-21:1.2
+	V2-20:1.2
+	V2-11:1.2
+	V2-10:1.2
+	V2-00:1.2
+	V1-51:1.2
+	V1-50:1.2
+	V1-45:1.2
+	V1-44:1.2
+	V1-43:1.2
+	V1-32:1.2
+	V1-31:1.2
+	V1-30:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2003.05.09.02.11.20;	author livesey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2003.05.02.18.52.04;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Added optional skipL1BCheck
+@
+text
+@; --------------------------------------------- ChunkDivide ----
+;
+; This l2cf fragment givesas many chunks are necessary each of
+; length 1/8th of an orbit with 5 MAFs of overlap.
+begin ChunkDivide
+  ChunkDivide, method=orbital, maxLength=20 degrees, overlap=5 MAFs, $
+    homeGeodAngle= 0 degrees, homeModule=GHz, !ifdef(flagSkipL1BCheck,{/skipL1BCheck,}) $
+    criticalModules=none, maxGap=2 MAFs
+end ChunkDivide
+@
+
+
+1.1
+log
+@First version
+@
+text
+@d7 2
+a8 1
+    homeGeodAngle= 0 degrees, homeModule=GHz, criticalModules=none, maxGap=2 MAFs
+@
+

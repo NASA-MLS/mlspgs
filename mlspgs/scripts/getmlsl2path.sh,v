@@ -1,0 +1,1737 @@
+head	1.46;
+access;
+symbols
+	v5-02-NRT-19:1.46
+	v6-00:1.46
+	v5-02-NRT-18:1.46
+	v5-02:1.46
+	v5-01-NRT-17:1.46
+	v5-01-NRT-16:1.46
+	v5-01-NRT-15:1.46
+	v5-01-NRT-14:1.46
+	neuralnetworks-1-0:1.46.0.14
+	cfm-single-freq-0-1:1.46.0.12
+	v5-01:1.46
+	v5-00:1.46
+	v4-23-TA133:1.46.0.10
+	mus-emls-1-70:1.46.0.8
+	rel-1-0-englocks-work:1.46.0.6
+	VUMLS1-00:1.46
+	VPL1-00:1.46
+	V4-22-NRT-08:1.46
+	VAM1-00:1.46
+	V4-21:1.46.0.4
+	V4-13:1.46
+	V4-12:1.46
+	V4-11:1.46
+	V4-10:1.46
+	V3-43:1.46
+	M4-00:1.46
+	V3-41:1.46
+	V3-40-PlusGM57:1.46.0.2
+	V2-24-NRT-04:1.46
+	V3-33:1.46
+	V2-24:1.46
+	V3-31:1.46
+	V3-30-NRT-05:1.46
+	cfm-01-00:1.46
+	V3-30:1.46
+	V3-20:1.46
+	V3-10:1.46
+	V2-23-NRT-02:1.46
+	V2-23:1.46
+	V2-22-NRT-01:1.46
+	V2-22:1.46
+	V2-21:1.46
+	V2-20:1.46
+	V2-11:1.45
+	V2-10:1.45
+	V2-00:1.45
+	V1-51:1.42
+	V1-50:1.42
+	V1-45:1.37
+	V1-44:1.36
+	V1-43:1.31
+	V1-42:1.20
+	V1-41:1.20
+	V1-32:1.20
+	V1-40:1.20
+	V1-31:1.20
+	V1-30:1.16
+	V1-13:1.4
+	V1-12:1.4
+	V1-11:1.4
+	V1-10:1.3
+	newfwm-feb03:1.3.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.46
+date	2006.11.01.20.51.40;	author pwagner;	state Exp;
+branches;
+next	1.45;
+
+1.45
+date	2005.01.18.05.23.20;	author livesey;	state Exp;
+branches;
+next	1.44;
+
+1.44
+date	2005.01.17.20.23.59;	author livesey;	state Exp;
+branches;
+next	1.43;
+
+1.43
+date	2005.01.17.20.20.57;	author livesey;	state Exp;
+branches;
+next	1.42;
+
+1.42
+date	2004.11.11.00.32.20;	author livesey;	state Exp;
+branches;
+next	1.41;
+
+1.41
+date	2004.10.09.22.54.17;	author livesey;	state Exp;
+branches;
+next	1.40;
+
+1.40
+date	2004.09.27.16.28.56;	author livesey;	state Exp;
+branches;
+next	1.39;
+
+1.39
+date	2004.09.21.00.37.32;	author livesey;	state Exp;
+branches;
+next	1.38;
+
+1.38
+date	2004.09.16.00.40.38;	author livesey;	state Exp;
+branches;
+next	1.37;
+
+1.37
+date	2004.08.20.05.59.59;	author livesey;	state Exp;
+branches;
+next	1.36;
+
+1.36
+date	2004.08.05.17.29.28;	author livesey;	state Exp;
+branches;
+next	1.35;
+
+1.35
+date	2004.07.30.19.55.35;	author livesey;	state Exp;
+branches;
+next	1.34;
+
+1.34
+date	2004.06.18.00.02.31;	author livesey;	state Exp;
+branches;
+next	1.33;
+
+1.33
+date	2004.06.11.19.56.45;	author livesey;	state Exp;
+branches;
+next	1.32;
+
+1.32
+date	2004.05.27.18.58.11;	author livesey;	state Exp;
+branches;
+next	1.31;
+
+1.31
+date	2004.05.01.00.22.48;	author livesey;	state Exp;
+branches;
+next	1.30;
+
+1.30
+date	2004.04.17.05.58.37;	author livesey;	state Exp;
+branches;
+next	1.29;
+
+1.29
+date	2004.04.17.05.50.03;	author livesey;	state Exp;
+branches;
+next	1.28;
+
+1.28
+date	2004.04.08.17.15.17;	author livesey;	state Exp;
+branches;
+next	1.27;
+
+1.27
+date	2004.04.07.23.51.19;	author jonathan;	state Exp;
+branches;
+next	1.26;
+
+1.26
+date	2004.03.10.22.36.41;	author livesey;	state Exp;
+branches;
+next	1.25;
+
+1.25
+date	2004.02.09.19.23.03;	author livesey;	state Exp;
+branches;
+next	1.24;
+
+1.24
+date	2004.02.09.18.47.05;	author livesey;	state Exp;
+branches;
+next	1.23;
+
+1.23
+date	2004.02.09.18.37.58;	author livesey;	state Exp;
+branches;
+next	1.22;
+
+1.22
+date	2004.01.22.21.15.45;	author livesey;	state Exp;
+branches;
+next	1.21;
+
+1.21
+date	2004.01.22.21.15.18;	author livesey;	state Exp;
+branches;
+next	1.20;
+
+1.20
+date	2003.11.27.01.28.22;	author livesey;	state Exp;
+branches;
+next	1.19;
+
+1.19
+date	2003.11.27.00.31.49;	author livesey;	state Exp;
+branches;
+next	1.18;
+
+1.18
+date	2003.11.14.21.25.45;	author livesey;	state Exp;
+branches;
+next	1.17;
+
+1.17
+date	2003.11.07.01.08.34;	author livesey;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2003.08.28.00.43.31;	author livesey;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2003.05.22.17.41.27;	author livesey;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2003.05.13.04.13.28;	author livesey;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2003.05.10.22.23.44;	author livesey;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2003.05.10.20.39.34;	author livesey;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2003.05.10.20.35.41;	author livesey;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2003.05.09.23.17.10;	author livesey;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2003.05.08.22.57.53;	author livesey;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2003.05.08.01.03.20;	author livesey;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2003.05.07.20.54.53;	author livesey;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2003.05.06.00.54.21;	author livesey;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2003.05.03.22.01.11;	author livesey;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2003.02.19.21.58.01;	author livesey;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2002.12.10.02.19.52;	author livesey;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2002.11.27.18.26.48;	author livesey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2002.11.21.17.30.53;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.46
+log
+@Comments to subtly urge user to switch to newmlsl2path.sh
+@
+text
+@#! /bin/bash
+# Copyright 2005, by the California Institute of Technology. ALL
+# RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+# commercial use must be negotiated with the Office of Technology Transfer
+# at the California Institute of Technology.
+
+# This software may be subject to U.S. export control laws. By accepting this
+# software, the user agrees to comply with all applicable U.S. export laws and
+# regulations. User has the responsibility to obtain export licenses, or other
+# export authority as may be required before exporting such information to
+# foreign countries or providing access to foreign persons.
+
+# $Id: getmlsl2path.sh,v 1.45 2005/01/18 05:23:20 livesey Exp $
+# This shell script prints the name of the desired directory 
+# for a given file type supplied as an arg
+
+# Used when expanding l2cf files
+# see also newmlsl2path.sh and setupcalfiles.l2cf
+
+# This script represents the old way
+# First work out where we are.
+if [ -f ~/machine.id ]
+then
+  MACHINE=$(cat ~/machine.id)
+else
+  MACHINE="desktop"
+fi
+SUMS=0
+
+VERSION=v1.0.1
+SIMULATION=s5
+YEAR=1996
+DOY=''
+FWMVERSION=''
+L1BVERSION=''
+L2PCNAME=''
+MYUSER=$USER
+
+# Now work out what we have been asked for.
+while [ -n "$(echo $1)" ]; do
+    # First the 'global' arguments
+    if [ -z "${1##--user=*}" ]; then
+	MYUSER=${1#--user=}
+    fi
+    if [ -z "${1##--version=*}" ]; then
+	VERSION=${1#--version=}
+    fi
+    if [ -z "${1##--simulation=*}" ]; then
+	SIMULATION=${1#--simulation=}
+    fi
+    if [ -z "${1##--year=*}" ]; then
+	YEAR=${1#--year=}
+    fi
+    if [ -z "${1##--doy=*}" ]; then
+	DOY=${1#--doy=}
+    fi
+    if [ -z "${1##--fwmVersion=*}" ]; then
+	FWMVERSION=${1#--fwmVersion=}
+    fi
+    if [ -z "${1##--l1bVersion=*}" ]; then
+	L1BVERSION=${1#--l1bVersion=}
+    fi
+    if [ -z "${1##--l2pcName=*}" ]; then
+	L2PCNAME=${1#--l2pcName=}
+    fi
+    if [ $1 == "--dao" ] || [ $1 == "--gmao" ]; then
+	case $MACHINE in
+	    soundbarrier | scramjet )
+		echo "/data1/$MYUSER";;
+	    lightspeed )
+		echo "$HOME/$VERSION";;
+	    desktop )
+		if [ $YEAR == "1996" ]; then
+		    echo "/data/gmao/tsyn3d_mis_p/geos4/$YEAR"
+		else
+		    echo "/data/gmao/D4FAPMIS/$YEAR"
+		fi
+	esac
+    fi
+    if [ $1 == "--output" ]; then
+	case $MACHINE in
+	    soundbarrier | scramjet)
+		echo "/data1/$MYUSER";;
+	    lightspeed )
+		echo "$HOME/$VERSION";;
+	    desktop )
+		echo "/testing/workspace/$MYUSER/$VERSION"
+	esac
+    fi
+    if [ $1 == "--l2pc" ]; then
+	case $MACHINE in
+	    soundbarrier )
+		echo "/data1/$MYUSER/$L2PCNAME/";;
+	    scramjet )
+		echo "/state/partition1/livesey";;
+	    lightspeed )
+		echo "/science/l2cal";;
+	    desktop )
+		echo "/data/emls/l2cal/$L2PCNAME";;
+	esac
+    fi
+    if [ $1 == "--truthl2gp" ]; then
+	case $MACHINE in
+	    soundbarrier | scramjet)
+		echo "/data1/$MYUSER";;
+	    lightspeed )
+		echo "$HOME/$VERSION";;
+	    desktop )
+		echo "/testing/emls/l2gp/$SIMULATION--t/$YEAR";;
+	esac
+    fi
+    if [ $1 == "--corel2gp" ]; then
+	case $MACHINE in
+	    soundbarrier | scramjet)
+		echo "/data1/$MYUSER";;
+	    lightspeed )
+		echo "$HOME/$VERSION";;
+	    desktop )
+	    echo "/testing/workspace/$MYUSER/$VERSION";;
+	esac
+    fi
+    if [ $1 == "--l1boa" ]; then
+	case $MACHINE in
+	    soundbarrier | scramjet)
+		echo "/data1/$MYUSER";;
+	    lightspeed )
+		echo "$HOME/$VERSION";;
+	    desktop )
+		echo "/data/emls/l1b/$L1BVERSION/$YEAR/$DOY";;
+	esac
+    fi
+    if [ $1 == "--l1brad" ]; then
+	case $MACHINE in
+	    soundbarrier | scramjet)
+		echo "/data1/$MYUSER";;
+	    lightspeed )
+		echo "$HOME/$VERSION";;
+	    desktop )
+		echo "/data/emls/l1b/$L1BVERSION/$YEAR/$DOY";;
+	esac
+    fi
+    if [ $1 == "--sidsoa" ]; then
+	case $MACHINE in
+	    soundbarrier | scramjet)
+		echo "/data1/$MYUSER";;
+	    lightspeed )
+		echo "$HOME/$VERSION";;
+	    desktop )
+		echo "/testing/emls/l1boa/$SIMULATION--t/$YEAR";;
+	esac
+    fi
+    if [ $1 == "--sidsrad" ]; then
+	case $MACHINE in
+	    soundbarrier | scramjet)
+		echo "/data1/$MYUSER";;
+	    lightspeed )
+		echo "$HOME/$VERSION";;
+	    desktop )
+		echo "/testing/emls/l1brad/$SIMULATION/$FWMVERSION/";;
+	esac
+    fi
+    if [ $1 == "--l1bvsp" ]; then
+	case $MACHINE in
+	    soundbarrier | scramjet)
+		echo "/data1/$MYUSER";;
+	    lightspeed )
+		echo "$HOME/$VERSION";;
+	    desktop )
+		echo "/testing/workspace/perun";;
+	esac
+    fi
+    if [ $1 == "--l2cal" ]; then
+	case $MACHINE in
+	    soundbarrier | scramjet)
+		echo "/data1/$MYUSER";;
+	    lightspeed )
+		echo "$HOME/$VERSION";;
+	    desktop )
+		echo "/data/emls/l2cal";;
+	esac
+    fi
+    if [ $1 == "--leapsec" ]; then
+	echo "$HOME/emls/$VERSION"
+    fi
+    if [ $1 == "--tmp" ]; then
+	case $MACHINE in
+	    soundbarrier | scramjet)
+		echo "/data1/$MYUSER";;
+	    lightspeed )
+		echo "$HOME/$VERSION";;
+	    desktop )
+		echo "/testing/workspace/$MYUSER/$VERSION";;
+	esac
+    fi
+#     if [ $1 == "--sidsrad" ]; then
+# 	case $MACHINE in
+# 	    soundbarrier | scramjet)
+# 		echo "/data1/$MYUSER";;
+# 	    lightspeed )
+# 		echo "$HOME/$VERSION";;
+# 	    desktop )
+# 		echo "/testing/workspace/$MYUSER/$VERSION";;
+# 	esac
+#     fi
+    shift
+done
+
+# $Log: getmlsl2path.sh,v $
+# Revision 1.45  2005/01/18 05:23:20  livesey
+# Another bug fix in sidsrad
+#
+# Revision 1.44  2005/01/17 20:23:59  livesey
+# More fixes to sidsrad
+#
+# Revision 1.43  2005/01/17 20:20:57  livesey
+# Fixed confusion with sidsrad
+#
+# Revision 1.42  2004/11/11 00:32:20  livesey
+# Moved l2pcs on soundbarrier
+#
+# Revision 1.41  2004/10/09 22:54:17  livesey
+# L2PC files moved at SCF
+#
+# Revision 1.40  2004/09/27 16:28:56  livesey
+# Changed l1breal to l1bvsp for Vince's data.
+#
+# Revision 1.39  2004/09/21 00:37:32  livesey
+# Moved the l2pcs and other tidy ups.
+#
+# Revision 1.38  2004/09/16 00:40:38  livesey
+# Better L1B handling
+#
+# Revision 1.37  2004/08/20 05:59:59  livesey
+# Updated l2pc path for soundbarrier
+#
+# Revision 1.36  2004/08/05 17:29:28  livesey
+# Added l1breal
+#
+# Revision 1.35  2004/07/30 19:55:35  livesey
+# Moved the output data location.
+#
+# Revision 1.34  2004/06/18 00:02:31  livesey
+# Moved research1 to data1
+#
+# Revision 1.33  2004/06/11 19:56:45  livesey
+# DAO data moved on SCF, now also recognizes --gmao as well as --dao.
+#
+# Revision 1.32  2004/05/27 18:58:11  livesey
+# Changed some paths to /testing
+#
+# Revision 1.31  2004/05/01 00:22:48  livesey
+# Moved l2pcfiles on lightspeed
+#
+# Revision 1.30  2004/04/17 05:58:37  livesey
+# Bug fix
+#
+# Revision 1.29  2004/04/17 05:50:03  livesey
+# Moved the l2pcs on scramjet
+#
+# Revision 1.28  2004/04/08 17:15:17  livesey
+# Bug fix
+#
+# Revision 1.27  2004/04/07 23:51:19  jonathan
+# No longer requires ~/machine.id
+#
+# Revision 1.26  2004/03/10 22:36:41  livesey
+# Added scramjet
+#
+# Revision 1.25  2004/02/09 19:23:03  livesey
+# Made more lightspeed ready, gets machine name from ~/machine.id file.
+#
+# Revision 1.24  2004/02/09 18:47:05  livesey
+# Typo!
+#
+# Revision 1.23  2004/02/09 18:37:58  livesey
+# Added lightspeed.
+#
+# Revision 1.22  2004/01/22 21:15:45  livesey
+# Bug fix from previous change
+#
+# Revision 1.21  2004/01/22 21:15:18  livesey
+# Added ability to overwrite user.
+#
+# Revision 1.20  2003/11/27 01:28:22  livesey
+# Bug fix
+#
+# Revision 1.19  2003/11/27 00:31:49  livesey
+# Moved stuff for soundbarrier
+#
+# Revision 1.18  2003/11/14 21:25:45  livesey
+# A little more (irrelevant as it turns out) intelligence for the dao
+# data.
+#
+# Revision 1.17  2003/11/07 01:08:34  livesey
+# More changes for soundbarrier
+#
+# Revision 1.16  2003/08/28 00:43:31  livesey
+# Changed work3 to work1
+#
+# Revision 1.15  2003/05/22 17:41:27  livesey
+# Added sids rad option
+#
+# Revision 1.14  2003/05/13 04:13:28  livesey
+# Changed livesey's to $USERS and added --tmp option
+#
+# Revision 1.13  2003/05/10 22:23:44  livesey
+# Tidied up year related issues
+#
+# Revision 1.12  2003/05/10 20:39:34  livesey
+# Bug fix for dao
+#
+# Revision 1.11  2003/05/10 20:35:41  livesey
+# Added DAO path.
+#
+# Revision 1.10  2003/05/09 23:17:10  livesey
+# Bug fix.
+#
+# Revision 1.9  2003/05/08 22:57:53  livesey
+# Tried to make it more generic
+#
+# Revision 1.8  2003/05/08 01:03:20  livesey
+# Changed to s5--t
+#
+# Revision 1.7  2003/05/07 20:54:53  livesey
+# Moved to v1.1.9
+#
+# Revision 1.6  2003/05/06 00:54:21  livesey
+# Moved DAO data for the moment.
+#
+# Revision 1.5  2003/05/03 22:01:11  livesey
+# Added DAO
+#
+# Revision 1.4  2003/02/19 21:58:01  livesey
+# Moved l2pc files on soundbarrier
+#
+# Revision 1.3  2002/12/10 02:19:52  livesey
+# New soundbarrier configuration
+#
+# Revision 1.2  2002/11/27 18:26:48  livesey
+# Got rid of the distinction between sums and the rest of the scf.
+# Probably don't need to worry about the l2pcs as much any more.
+#
+# Revision 1.1  2002/11/21 17:30:53  livesey
+# First version
+#
+@
+
+
+1.45
+log
+@Another bug fix in sidsrad
+@
+text
+@d2 19
+a20 2
+# $Id: getmlsl2path.sh,v 1.44 2005/01/17 20:23:59 livesey Exp $
+# This shell script prints the name of the desired directory for a given file type
+d209 3
+@
+
+
+1.44
+log
+@More fixes to sidsrad
+@
+text
+@d2 1
+a2 1
+# $Id: getmlsl2path.sh,v 1.43 2005/01/17 20:20:57 livesey Exp $
+d142 1
+a142 1
+		echo "/testing/emls/l1rad/$SIMULATION/$FWMVERSION/";;
+d192 3
+@
+
+
+1.43
+log
+@Fixed confusion with sidsrad
+@
+text
+@d2 1
+a2 1
+# $Id: getmlsl2path.sh,v 1.42 2004/11/11 00:32:20 livesey Exp $
+d142 1
+a142 1
+		echo "/testing/emls/l1boa/$SIMULATION--t/$YEAR";;
+d192 3
+@
+
+
+1.42
+log
+@Moved l2pcs on soundbarrier
+@
+text
+@d2 1
+a2 1
+# $Id: getmlsl2path.sh,v 1.41 2004/10/09 22:54:17 livesey Exp $
+d122 1
+a122 1
+		echo "/data/emls/l1b/$L1BVERSION/$YEAR/$DOY/";;
+d178 10
+a187 10
+    if [ $1 == "--sidsrad" ]; then
+	case $MACHINE in
+	    soundbarrier | scramjet)
+		echo "/data1/$MYUSER";;
+	    lightspeed )
+		echo "$HOME/$VERSION";;
+	    desktop )
+		echo "/testing/workspace/$MYUSER/$VERSION";;
+	esac
+    fi
+d192 3
+@
+
+
+1.41
+log
+@L2PC files moved at SCF
+@
+text
+@d2 1
+a2 1
+# $Id: getmlsl2path.sh,v 1.40 2004/09/27 16:28:56 livesey Exp $
+d76 1
+a76 1
+		echo "/data1/$MYUSER/l2pc/";;
+d192 3
+@
+
+
+1.40
+log
+@Changed l1breal to l1bvsp for Vince's data.
+@
+text
+@d2 1
+a2 1
+# $Id: getmlsl2path.sh,v 1.39 2004/09/21 00:37:32 livesey Exp $
+d82 1
+a82 1
+		echo "/testing/workspace/$MYUSER/$L2PCNAME";;
+d192 3
+@
+
+
+1.39
+log
+@Moved the l2pcs and other tidy ups.
+@
+text
+@d2 1
+a2 1
+# $Id: getmlsl2path.sh,v 1.38 2004/09/16 00:40:38 livesey Exp $
+d145 1
+a145 1
+    if [ $1 == "--l1breal" ]; then
+d192 3
+@
+
+
+1.38
+log
+@Better L1B handling
+@
+text
+@d2 1
+a2 1
+# $Id: getmlsl2path.sh,v 1.37 2004/08/20 05:59:59 livesey Exp $
+d19 1
+d46 3
+d82 1
+a82 1
+		echo "/testing/workspace/$MYUSER/l2pc";;
+d112 1
+a112 1
+		echo "/data/emls/l1b/$L1BVERSION/$YEAR/$DOY/";;
+d192 3
+@
+
+
+1.37
+log
+@Updated l2pc path for soundbarrier
+@
+text
+@d2 1
+a2 1
+# $Id: getmlsl2path.sh,v 1.36 2004/08/05 17:29:28 livesey Exp $
+d16 1
+d18 1
+d36 3
+d42 3
+d108 20
+d131 1
+a131 1
+    if [ $1 == "--l1brad" ]; then
+d138 1
+a138 1
+		echo "/testing/emls/l1brad/$SIMULATION/$FWMVERSION";;
+d188 3
+@
+
+
+1.36
+log
+@Added l1breal
+@
+text
+@d2 1
+a2 1
+# $Id: getmlsl2path.sh,v 1.35 2004/07/30 19:55:35 livesey Exp $
+d64 1
+a64 1
+		echo "/data1/$MYUSER";;
+d160 3
+@
+
+
+1.35
+log
+@Moved the output data location.
+@
+text
+@d2 1
+a2 1
+# $Id: getmlsl2path.sh,v 1.34 2004/06/18 00:02:31 livesey Exp $
+d64 1
+a64 1
+		echo "/data1/$MYUSER/";;
+d66 1
+a66 1
+		echo "/state/partition1/livesey/";;
+d68 1
+a68 1
+		echo "/science/l2cal/";;
+d70 1
+a70 1
+		echo "/testing/workspace/$MYUSER/l2pc/";;
+d76 1
+a76 1
+		echo "/data1/$MYUSER/";;
+d86 1
+a86 1
+		echo "/data1/$MYUSER/";;
+d96 1
+a96 1
+		echo "/data1/$MYUSER/";;
+d106 1
+a106 1
+		echo "/data1/$MYUSER/";;
+d113 10
+d126 1
+a126 1
+		echo "/data1/$MYUSER/";;
+d139 1
+a139 1
+		echo "/data1/$MYUSER/";;
+d149 1
+a149 1
+		echo "/data1/$MYUSER/";;
+d160 3
+@
+
+
+1.34
+log
+@Moved research1 to data1
+@
+text
+@d2 1
+a2 1
+# $Id: getmlsl2path.sh,v 1.33 2004/06/11 19:56:45 livesey Exp $
+d58 1
+a58 1
+		echo "/bigdata/$MYUSER/$VERSION"
+d70 1
+a70 1
+		echo "/bigdata/$MYUSER/$VERSION";;
+d90 1
+a90 1
+	    echo "/bigdata/$MYUSER/$VERSION";;
+d133 1
+a133 1
+		echo "/bigdata/$MYUSER/$VERSION";;
+d143 1
+a143 1
+		echo "/bigdata/$MYUSER/$VERSION";;
+d150 3
+@
+
+
+1.33
+log
+@DAO data moved on SCF, now also recognizes --gmao as well as --dao.
+@
+text
+@d2 1
+a2 1
+# $Id: getmlsl2path.sh,v 1.32 2004/05/27 18:58:11 livesey Exp $
+d40 1
+a40 1
+		echo "/research1/$MYUSER";;
+d54 1
+a54 1
+		echo "/research1/$MYUSER";;
+d64 1
+a64 1
+		echo "/research1/$MYUSER/";;
+d76 1
+a76 1
+		echo "/research1/$MYUSER/";;
+d86 1
+a86 1
+		echo "/research1/$MYUSER/";;
+d96 1
+a96 1
+		echo "/research1/$MYUSER/";;
+d106 1
+a106 1
+		echo "/research1/$MYUSER/";;
+d116 1
+a116 1
+		echo "/research1/$MYUSER/";;
+d129 1
+a129 1
+		echo "/research1/$MYUSER/";;
+d139 1
+a139 1
+		echo "/research1/$MYUSER/";;
+d150 3
+@
+
+
+1.32
+log
+@Changed some paths to /testing
+@
+text
+@d2 1
+a2 1
+# $Id: getmlsl2path.sh,v 1.31 2004/05/01 00:22:48 livesey Exp $
+d37 1
+a37 1
+    if [ $1 == "--dao" ]; then
+d45 1
+a45 1
+		    echo "/data/dao/tsyn3d_mis_p/geos4/$YEAR"
+d47 1
+a47 1
+		    echo "/data/dao/D4FAPMIS/$YEAR"
+d150 3
+@
+
+
+1.31
+log
+@Moved l2pcfiles on lightspeed
+@
+text
+@d2 1
+a2 1
+# $Id: getmlsl2path.sh,v 1.30 2004/04/17 05:58:37 livesey Exp $
+d80 1
+a80 1
+		echo "/data/emls/l2gp/$SIMULATION--t/$YEAR";;
+d100 1
+a100 1
+		echo "/data/emls/l1boa/$SIMULATION--t/$YEAR";;
+d110 1
+a110 1
+		echo "/data/emls/l1brad/$SIMULATION/$FWMVERSION";;
+d150 3
+@
+
+
+1.30
+log
+@Bug fix
+@
+text
+@d2 1
+a2 1
+# $Id: getmlsl2path.sh,v 1.29 2004/04/17 05:50:03 livesey Exp $
+d68 1
+a68 1
+		echo "$HOME/$VERSION";;
+d150 3
+@
+
+
+1.29
+log
+@Moved the l2pcs on scramjet
+@
+text
+@d2 1
+a2 1
+# $Id: getmlsl2path.sh,v 1.28 2004/04/08 17:15:17 livesey Exp $
+d65 1
+a65 1
+	    scramket )
+d150 3
+@
+
+
+1.28
+log
+@Bug fix
+@
+text
+@d2 1
+a2 1
+# $Id: getmlsl2path.sh,v 1.27 2004/04/07 23:51:19 jonathan Exp $
+d63 1
+a63 1
+	    soundbarrier | scramjet)
+d65 2
+d150 3
+@
+
+
+1.27
+log
+@No longer requires ~/machine.id
+@
+text
+@d2 1
+a2 1
+# $Id: getmlsl2path.sh,v 1.26 2004/03/10 22:36:41 livesey Exp $
+d5 1
+a5 1
+if [ -f "$MACHINE" ]
+d148 3
+@
+
+
+1.26
+log
+@Added scramjet
+@
+text
+@d2 1
+a2 1
+# $Id: getmlsl2path.sh,v 1.25 2004/02/09 19:23:03 livesey Exp $
+d5 6
+a10 1
+MACHINE=$(cat ~/machine.id)
+d148 3
+@
+
+
+1.25
+log
+@Made more lightspeed ready, gets machine name from ~/machine.id file.
+@
+text
+@d2 1
+a2 1
+# $Id: getmlsl2path.sh,v 1.24 2004/02/09 18:47:05 livesey Exp $
+d34 1
+a34 1
+	    soundbarrier )
+d48 1
+a48 1
+	    soundbarrier )
+d58 1
+a58 1
+	    soundbarrier )
+d68 1
+a68 1
+	    soundbarrier )
+d78 1
+a78 1
+	    soundbarrier )
+d88 1
+a88 1
+	    soundbarrier )
+d98 1
+a98 1
+	    soundbarrier )
+d108 1
+a108 1
+	    soundbarrier )
+d121 1
+a121 1
+	    soundbarrier )
+d131 1
+a131 1
+	    soundbarrier )
+d143 3
+@
+
+
+1.24
+log
+@Typo!
+@
+text
+@d2 1
+a2 1
+# $Id: getmlsl2path.sh,v 1.23 2004/02/09 18:37:58 livesey Exp $
+d5 1
+a5 1
+MACHINE=$(uname -n)
+a6 10
+SOUNDBARRIER=0
+DESKTOP=1
+case "$MACHINE" in
+    headnode | sum* )
+	SUMS=1
+	DESKTOP=0 ;;
+    frontend* | compute* | lightspeed* )
+	SOUNDBARRIER=1
+	DESKTOP=0 ;;
+esac
+d33 12
+a44 9
+	if [ $SOUNDBARRIER == 1 ]; then
+	    echo "/research1/$MYUSER"
+	else
+	    if [ $YEAR == "1996" ]; then
+		echo "/data/dao/tsyn3d_mis_p/geos4/$YEAR"
+	    else
+		echo "/data/dao/D4FAPMIS/$YEAR"
+	    fi
+	fi
+d47 8
+a54 5
+	if [ $SOUNDBARRIER == 1 ]; then
+	    echo "/research1/$MYUSER"
+	else
+	    echo "/bigdata/$MYUSER/$VERSION"
+	fi
+d57 8
+a64 5
+	if [ $SOUNDBARRIER == 1 ]; then
+	    echo "/research1/$MYUSER/"
+	else
+	    echo "/bigdata/$MYUSER/$VERSION"
+	fi
+d67 8
+a74 5
+	if [ $SOUNDBARRIER == 1 ]; then
+	    echo "/research1/$MYUSER"
+	else
+	    echo "/data/emls/l2gp/$SIMULATION--t/$YEAR"
+	fi
+d77 8
+a84 5
+	if [ $SOUNDBARRIER == 1 ]; then
+	    echo "/research1/$MYUSER"
+	else
+	    echo "/bigdata/$MYUSER/$VERSION"
+	fi
+d87 8
+a94 5
+	if [ $SOUNDBARRIER == 1 ]; then
+	    echo "/research1/$MYUSER"
+	else
+	    echo "/data/emls/l1boa/$SIMULATION--t/$YEAR"
+	fi
+d97 8
+a104 5
+	if [ $SOUNDBARRIER == 1 ]; then
+	    echo "/research1/$MYUSER"
+	else
+	    echo "/data/emls/l1brad/$SIMULATION/$FWMVERSION"
+	fi
+d107 8
+a114 5
+	if [ $SOUNDBARRIER == 1 ]; then
+	    echo "/research1/$MYUSER"
+	else
+	    echo "/data/emls/l2cal"
+	fi
+d120 8
+a127 5
+	if [ $SOUNDBARRIER == 1 ]; then
+	    echo "/research1/$MYUSER"
+	else
+	    echo "/bigdata/$MYUSER/$VERSION"
+	fi
+d130 8
+a137 5
+	if [ $SOUNDBARRIER == 1 ]; then
+	    echo "/research1/$MYUSER"
+	else
+	    echo "/bigdata/$MYUSER/$VERSION"
+	fi
+d143 3
+@
+
+
+1.23
+log
+@Added lightspeed.
+@
+text
+@d2 1
+a2 1
+# $Id: getmlsl2path.sh,v 1.22 2004/01/22 21:15:45 livesey Exp $
+d13 1
+a13 1
+    frontend* | compute* | lightpseed* )
+d123 3
+@
+
+
+1.22
+log
+@Bug fix from previous change
+@
+text
+@d2 1
+a2 1
+# $Id: getmlsl2path.sh,v 1.21 2004/01/22 21:15:18 livesey Exp $
+d13 1
+a13 1
+    frontend* | compute* )
+d123 3
+@
+
+
+1.21
+log
+@Added ability to overwrite user.
+@
+text
+@d2 1
+a2 1
+# $Id: getmlsl2path.sh,v 1.20 2003/11/27 01:28:22 livesey Exp $
+d44 1
+a44 1
+	    echo "/research1/$USER"
+d55 1
+a55 1
+	    echo "/research1/$USER"
+d57 1
+a57 1
+	    echo "/bigdata/$USER/$VERSION"
+d62 1
+a62 1
+	    echo "/research1/$USER/"
+d64 1
+a64 1
+	    echo "/bigdata/$USER/$VERSION"
+d69 1
+a69 1
+	    echo "/research1/$USER"
+d76 1
+a76 1
+	    echo "/research1/$USER"
+d78 1
+a78 1
+	    echo "/bigdata/$USER/$VERSION"
+d83 1
+a83 1
+	    echo "/research1/$USER"
+d90 1
+a90 1
+	    echo "/research1/$USER"
+d97 1
+a97 1
+	    echo "/research1/$USER"
+d107 1
+a107 1
+	    echo "/research1/$USER"
+d109 1
+a109 1
+	    echo "/bigdata/$USER/$VERSION"
+d114 1
+a114 1
+	    echo "/research1/$USER"
+d116 1
+a116 1
+	    echo "/bigdata/$USER/$VERSION"
+d123 3
+@
+
+
+1.20
+log
+@Bug fix
+@
+text
+@d2 1
+a2 1
+# $Id: getmlsl2path.sh,v 1.19 2003/11/27 00:31:49 livesey Exp $
+d22 1
+d27 3
+d123 3
+@
+
+
+1.19
+log
+@Moved stuff for soundbarrier
+@
+text
+@d1 2
+a2 2
+<#! /bin/bash
+# $Id: getmlsl2path.sh,v 1.18 2003/11/14 21:25:45 livesey Exp $
+d119 3
+@
+
+
+1.18
+log
+@A little more (irrelevant as it turns out) intelligence for the dao
+data.
+@
+text
+@d1 2
+a2 2
+#! /bin/bash
+# $Id: getmlsl2path.sh,v 1.17 2003/11/07 01:08:34 livesey Exp $
+d51 1
+a51 1
+	    echo "$HOME/$VERSION"
+d72 1
+a72 1
+	    echo "$HOME/$VERSION"
+d119 4
+@
+
+
+1.17
+log
+@More changes for soundbarrier
+@
+text
+@d2 1
+a2 1
+# $Id: getmlsl2path.sh,v 1.16 2003/08/28 00:43:31 livesey Exp $
+d42 5
+a46 1
+	    echo "/data/dao/tsyn3d_mis_p/geos4/$YEAR"
+d119 3
+@
+
+
+1.16
+log
+@Changed work3 to work1
+@
+text
+@d2 1
+a2 1
+# $Id: getmlsl2path.sh,v 1.15 2003/05/22 17:41:27 livesey Exp $
+d13 1
+a13 1
+    mach* | soundbarrier )
+d40 1
+a40 1
+	    echo "/work1/$USER"
+d54 1
+a54 1
+	    echo "/work1/$USER/"
+d61 1
+a61 1
+	    echo "$HOME/$VERSION"
+d75 1
+a75 1
+	    echo "$HOME/$VERSION"
+d82 1
+a82 1
+	    echo "$HOME/$VERSION"
+d89 1
+a89 1
+	    echo "$HOME/$VERSION"
+d99 1
+a99 1
+	    echo "/work1/$USER"
+d106 1
+a106 1
+	    echo "/work1/$USER"
+d115 3
+@
+
+
+1.15
+log
+@Added sids rad option
+@
+text
+@d2 1
+a2 1
+# $Id: getmlsl2path.sh,v 1.14 2003/05/13 04:13:28 livesey Exp $
+d40 1
+a40 1
+	    echo "/work3/$USER"
+d54 1
+a54 1
+	    echo "/work3/$USER/"
+d99 1
+a99 1
+	    echo "/work3/$USER"
+d106 1
+a106 1
+	    echo "/work3/$USER"
+d115 3
+@
+
+
+1.14
+log
+@Changed livesey's to $USERS and added --tmp option
+@
+text
+@d2 1
+a2 1
+# $Id: getmlsl2path.sh,v 1.13 2003/05/10 22:23:44 livesey Exp $
+d104 7
+d115 3
+@
+
+
+1.13
+log
+@Tidied up year related issues
+@
+text
+@d2 1
+a2 1
+# $Id: getmlsl2path.sh,v 1.12 2003/05/10 20:39:34 livesey Exp $
+d40 1
+a40 1
+	    echo "/work3/livesey"
+d49 1
+a49 1
+	    echo "/bigdata/livesey/$VERSION"
+d54 1
+a54 1
+	    echo "/work3/livesey/"
+d56 1
+a56 1
+	    echo "/bigdata/livesey/$VERSION"
+d70 1
+a70 1
+	    echo "/bigdata/livesey/$VERSION"
+d97 7
+d108 3
+@
+
+
+1.12
+log
+@Bug fix for dao
+@
+text
+@d2 1
+a2 1
+# $Id: getmlsl2path.sh,v 1.11 2003/05/10 20:35:41 livesey Exp $
+d42 1
+a42 1
+	    echo "/data/dao/tsyn3d_mis_p/geos4/1996"
+d63 1
+a63 1
+	    echo "/data/emls/l2gp/$SIMULATION--t/1996"
+d101 3
+@
+
+
+1.11
+log
+@Added DAO path.
+@
+text
+@d2 1
+a2 1
+# $Id: getmlsl2path.sh,v 1.10 2003/05/09 23:17:10 livesey Exp $
+d40 1
+a40 1
+	    echo "$HOME/$VERSION"
+a96 7
+    if [ $1 == "--dao" ]; then
+	if [ $SOUNDBARRIER == 1 ]; then
+	    echo "/work3/livesey"
+	else
+	    echo "/data/dao/tsyn3d_mis_p/geos4/1996"
+	fi
+    fi
+d101 3
+@
+
+
+1.10
+log
+@Bug fix.
+@
+text
+@d2 1
+a2 1
+# $Id: getmlsl2path.sh,v 1.9 2003/05/08 22:57:53 livesey Exp $
+d20 2
+d32 6
+d77 1
+a77 1
+	    echo "/data/emls/l1boa/$SIMULATION--t/1996"
+d84 1
+a84 1
+	    echo "/bigdata/livesey/$VERSION"
+d97 7
+d108 3
+@
+
+
+1.9
+log
+@Tried to make it more generic
+@
+text
+@d2 1
+a2 1
+# $Id: getmlsl2path.sh,v 1.8 2003/05/08 01:03:20 livesey Exp $
+d28 1
+a28 1
+	VERSION=${1#--simulation=}
+d93 3
+@
+
+
+1.8
+log
+@Changed to s5--t
+@
+text
+@d2 1
+a2 1
+# $Id: getmlsl2path.sh,v 1.7 2003/05/07 20:54:53 livesey Exp $
+d18 3
+d23 7
+d32 1
+a32 1
+	    echo "$HOME/v1.1.9"
+d39 1
+a39 1
+	    echo "$HOME/v1.1.9"
+d41 1
+a41 1
+	    echo "/bigdata/livesey/v1.1.9"
+d48 1
+a48 1
+	    echo "/bigdata/livesey/v1.1.9"
+d53 1
+a53 1
+	    echo "$HOME/v1.1.9"
+d55 1
+a55 1
+	    echo "/data/emls/l2gp/s6--t/1996"
+d60 1
+a60 1
+	    echo "$HOME/v1.1.9"
+d62 1
+a62 1
+	    echo "/bigdata/livesey/v1.1.9"
+d67 1
+a67 1
+	    echo "$HOME/v1.1.9"
+d69 1
+a69 1
+	    echo "/data/emls/l1boa/s6--t/1996"
+d74 1
+a74 1
+	    echo "$HOME/v1.1.9"
+d76 1
+a76 1
+	    echo "/bigdata/livesey/v1.1.9"
+d81 1
+a81 1
+	    echo "$HOME/v1.1.9"
+d87 1
+a87 1
+	echo "$HOME/emls/v1.1.9"
+d93 3
+@
+
+
+1.7
+log
+@Moved to v1.1.9
+@
+text
+@d2 1
+a2 1
+# $Id: getmlsl2path.sh,v 1.6 2003/05/06 00:54:21 livesey Exp $
+d45 1
+a45 1
+	    echo "/data/emls/l2gp/s5--t/1996"
+d59 1
+a59 1
+	    echo "/data/emls/l1boa/s5--t/1996"
+d83 3
+@
+
+
+1.6
+log
+@Moved DAO data for the moment.
+@
+text
+@d2 1
+a2 1
+# $Id: getmlsl2path.sh,v 1.5 2003/05/03 22:01:11 livesey Exp $
+d22 1
+a22 1
+	    echo "$HOME/v1.0.1"
+d29 1
+a29 1
+	    echo "$HOME/v1.0.1"
+d31 1
+a31 1
+	    echo "/bigdata/livesey/v1.0.1"
+d38 1
+a38 1
+	    echo "/bigdata/livesey/v1.0.1"
+d43 1
+a43 1
+	    echo "$HOME/v1.0.1"
+d50 1
+a50 1
+	    echo "$HOME/v1.0.1"
+d52 1
+a52 1
+	    echo "/bigdata/livesey/v1.0.1"
+d57 1
+a57 1
+	    echo "$HOME/v1.0.1"
+d64 1
+a64 1
+	    echo "$HOME/v1.0.1"
+d66 1
+a66 1
+	    echo "/bigdata/livesey/v1.0.1"
+d71 1
+a71 1
+	    echo "$HOME/v1.0.1"
+d77 1
+a77 1
+	echo "$HOME/emls/v1.0.1"
+d83 3
+@
+
+
+1.5
+log
+@Added DAO
+@
+text
+@d2 1
+a2 1
+# $Id: getmlsl2path.sh,v 1.4 2003/02/19 21:58:01 livesey Exp $
+d24 1
+a24 1
+	    echo "/bigdata/livesey/v1.0.1"
+d83 3
+@
+
+
+1.4
+log
+@Moved l2pc files on soundbarrier
+@
+text
+@d2 1
+a2 1
+# $Id: getmlsl2path.sh,v 1.3 2002/12/10 02:19:52 livesey Exp $
+d20 7
+d83 3
+@
+
+
+1.3
+log
+@New soundbarrier configuration
+@
+text
+@d2 1
+a2 1
+# $Id: getmlsl2path.sh,v 1.2 2002/11/27 18:26:48 livesey Exp $
+d29 1
+a29 1
+	    echo "$HOME/v1.0.1"
+d76 3
+@
+
+
+1.2
+log
+@Got rid of the distinction between sums and the rest of the scf.
+Probably don't need to worry about the l2pcs as much any more.
+@
+text
+@d2 1
+a2 1
+# $Id: getmlsl2path.sh,v 1.1 2002/11/21 17:30:53 livesey Exp $
+d13 1
+a13 1
+    mach* )
+d76 4
+@
+
+
+1.1
+log
+@First version
+@
+text
+@d2 1
+a2 1
+# $Id$
+a27 3
+	if [ $SUMS == 1 ]; then
+	    echo "/scratch/livesey"
+	fi
+d30 1
+a30 2
+	fi
+	if [ $DESKTOP == 1 ]; then
+d75 4
+a78 1
+# $Log$
+@
+

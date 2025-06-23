@@ -1,0 +1,308 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.6
+	cfm-single-freq-0-1:1.2.0.4
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.2
+	mus-emls-1-70:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2018.08.01.22.33.45;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2018.04.27.00.08.38;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Made Radiances diff its own row instead of a column
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+program FilterGold
+  implicit none
+
+! Filter output from gold brick comparison run
+  logical :: AlreadyPrinted
+  logical :: ReadyForIt
+  character(255) :: Block, LastLine, Line, Quantity
+  character(255) :: Hunt = 'MLS-Aura' ! What to look for to identify run
+  character(255) :: WhatMaxAbsDiff    ! Block containing MaxMaxAbsDiff
+  integer :: I, J
+  real :: MaxAbsDiff, MaxAbsVal, MaxMaxAbsDiff = 0
+  real :: RelMaxAbsDiff ! = maxAbsDiff / maxAbsVal
+  real :: RelMaxAbsDiffPrint ! might be log10(relMaxAbsDiff)
+  logical :: DoLog = .false., NeedHead = .true., SawOne = .true., Summary = .false.
+  real :: Ref(2) ! Min, Max
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), parameter :: ModuleName= &
+       "$RCSfile: vansGoldFilter.f90,v $"
+  character (len=*), parameter :: IdParm = &
+       "$Id: vansGoldFilter.f90,v 1.1 2018/04/27 00:08:38 pwagner Exp $"
+!---------------------------------------------------------------------------
+
+  i = 0
+  do
+    i = i + 1
+    call get_command_argument ( i, line )
+    if ( line == '' ) exit
+    if ( line(1:3) == '-a' ) then
+      summary = .false.
+    else if  ( line(1:3) == '-l' ) then
+      doLog = .true.
+    else if ( line(1:3) == '-s' ) then
+      summary = .true.
+    else if ( line(1:1) == '-' ) then
+      call usage
+    else
+      hunt = line
+    end if
+  end do
+  LastLine = ' '
+  ReadyForIt = .false.
+  do
+    read ( *, '(a)', end=9 ) line
+    if ( len_trim(line) < 1 ) cycle
+    AlreadyPrinted = .false.
+    i = index( line, 'Comparing' )
+    if ( i == 0 ) i = min(1,  index ( line, trim(hunt) ))
+    if ( i /= 0 ) then
+      if ( .not. sawOne .and. ReadyForIt ) then
+        call print_line ( 'File is identical to reference' )
+        ReadyForIt = .false.
+      end if
+      if ( maxMaxAbsDiff > 0 ) then
+        if ( doLog ) then
+          maxMaxAbsDiff = log10(maxMaxAbsDiff)
+          write ( *, 3 ) maxMaxAbsDiff, &
+            & ' log10(maximum Rel Max Abs Val), in', adjustl(trim(whatMaxAbsDiff))
+      3 format (f8.4,a37,t47,a)
+        else
+          write ( *, 4 ) maxMaxAbsDiff, &
+            & ' is maximum Rel Max Abs Val, in', adjustl(trim(whatMaxAbsDiff))
+        end if
+      4 format (1p,g12.5,a33,t47,a)
+      end if
+      call print_line ( trim(line(i:)) )
+      needHead = .true.
+      sawOne = .false.
+      maxMaxAbsDiff = 0
+      whatMaxAbsDiff = ''
+    end if
+    ! Do we have special cases?
+    if ( index( line, 'Gold brick summary' ) > 0 ) then
+      call print_line (  trim(line) )
+      call print_line (  ' ' )
+      cycle
+    elseif ( index( line, '----- Log files' ) > 0 ) then
+      call print_line (  trim(line) )
+      call print_line (  ' ' )
+      cycle
+    elseif ( index( line, 'identical to reference' ) > 0 .and. ReadyForIt ) then
+      call print_line (  trim(line) )
+      call print_line (  ' ' )
+      ReadyForIt = .false.
+      cycle
+    elseif ( index( line, 'times longer than the reference' ) > 0 ) then
+      call print_line (  trim(line) )
+      cycle
+    elseif ( index( line, 'crashed' ) > 0 ) then
+      call print_line (  trim(line) )
+      cycle
+    endif
+    ReadyForIt = ReadyForIt .or. index ( line, trim(hunt) ) > 0
+    if ( index ( line, 'Block' ) /= 0 ) then
+      i = index ( line, '[' )
+      j = index ( line, ']' )
+      if ( i /= 0 .and. j /= 0 ) then
+        block = adjustl(line(i+1:j-1))
+        ref = 0
+        maxAbsDiff = 0
+        maxAbsVal = 1
+      end if
+    end if
+    if ( index ( line, 'Reference' ) /= 0 ) then
+      i = index ( line, ':' )
+      if ( i /= 0 ) then
+        line = line(i+1:)
+        i = index ( line, ':' )
+        if ( i /= 0 ) line = line(i+1:)
+        i = index ( line, ':' )
+        if ( i /= 0 ) then
+          line(i:i) = ''
+          read ( line, * ) ref
+          maxAbsVal = maxval(abs(ref))
+        else
+          maxAbsVal = 1
+        end if
+      end if
+    end if
+    i = index ( line, 'differs by at most' )
+    if ( i /= 0 ) then
+      i = index ( line, 'Quantity' )
+      call print_line (  trim(line(i:)) )
+      sawOne = .true.
+    end if
+    if ( index ( line, 'Max. absolute:' ) /= 0 ) then
+      i = index ( line, ':' )
+      if ( i /= 0 ) then
+        if ( needHead ) then
+          if ( .not. summary ) then
+            if ( doLog ) then
+              write ( *, 11 )
+           11 format ( ' Log10(Max Diff /' / &
+                     & ' Max Abs Val )    Max Diff      Max Abs Val   Jacobian Block' )
+            else
+              write ( *, 12 )
+           12 format ( ' Max Diff /' / &
+                     & ' Max Abs Val      Max Diff      Max Abs Val   Jacobian Block' )
+            end if
+          end if
+          needHead = .false.
+          sawOne = .true.
+        end if
+        read ( line(i+1:), * ) maxAbsDiff
+        if ( maxAbsVal == 0 ) maxAbsVal = 1
+        relMaxAbsDiff = maxAbsDiff / maxAbsVal
+        RelMaxAbsDiffPrint = relMaxAbsDiff
+        if ( doLog .and. relMaxAbsDiff > 0 ) relMaxAbsDiffPrint = log10(relMaxAbsDiff) 
+        write ( line, 13 ) relMaxAbsDiffPrint, maxAbsDiff, maxAbsVal, &
+          & trim(block)
+     13 format ( 1pg12.5, 3x, 2g14.5, t47, a )
+        if ( maxAbsDiff == 0 ) line(1:12) = 'identical'
+        if ( .not. summary ) call print_line ( trim(line) )
+        if ( relMaxAbsDiff > maxMaxAbsDiff ) then
+          maxMaxAbsDiff = relMaxAbsDiff
+          whatMaxAbsDiff = block
+        end if
+      end if
+    else
+      i = index ( line, 'Radiances' )
+      if ( i /= 0 ) call print_line (  trim(line(i-1:)) )
+    end if
+
+  end do
+
+9 continue
+
+contains
+
+  subroutine Usage
+    call get_command_argument ( 0, line )
+    print 3, 'Usage: ', trim(line), ' [ options ] [ hunt ] < input > output'
+  3 format ( 3a )
+    print 3, ' Options:'
+    print 3, '  -a => Show all details, default ', merge('summary','details',summary)
+    print 3, '  -s => Show summary'
+    print 3, '  -anything else => show usage'
+    print 3, ' "hunt" is the text to look for to identify a new run, default "', &
+          &  trim(hunt), '"'
+    stop
+  end subroutine Usage
+  
+  subroutine print_line ( line )
+    character(len=*), intent(in)       :: line
+    if ( LastLine /= line ) write ( *, '(a)' ) trim(line)
+    if ( len_trim(line) > 0 ) LastLine = Line
+  end subroutine print_line
+    
+
+end program
+
+! $Log: vansGoldFilter.f90,v $
+! Revision 1.1  2018/04/27 00:08:38  pwagner
+! First commit
+!
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d22 1
+a22 1
+  real :: MaxAbsDiff, MaxAbsVal, MaxMaxAbsDiff = 0, MaxRadDiff
+d24 2
+a25 1
+  logical :: NeedHead = .true., SawOne = .true., Summary = .false.
+d30 1
+a30 1
+       "$RCSfile: path_contrib_m.f90,v $"
+d32 1
+a32 1
+       "$Id: path_contrib_m.f90,v 2.27 2017/08/09 20:37:43 vsnyder Exp $"
+d42 2
+d64 1
+a64 1
+      endif
+d66 10
+a75 2
+        write ( *, '(1p,g12.5,a38,t50,a60)' ) maxMaxAbsDiff, &
+          & ' is maximum Rel Max Val in ', trim(whatMaxAbsDiff)
+a114 12
+    if ( index ( line, 'Radiances' ) /= 0 ) then
+      if ( index ( line, 'identical' ) /= 0 ) then
+        maxRadDiff = 0
+      else
+        i = index ( line, 'at most' )
+        if ( i /= 0 ) then
+          read ( line(i+7:), * ) maxRadDiff
+        else
+          maxRadDiff = -1
+        end if
+      end if
+    end if
+a136 2
+    i = index ( line, 'Radiances different by at most' )
+    if ( summary .and. i /= 0 ) call print_line (  trim(line(i:)) )
+d141 11
+a151 2
+          if ( .not. summary ) write ( *, 1 )
+        1 format ( ' Rel Max Val Max Diff    Max Val     Max Rad     Block' )
+d158 5
+a162 3
+        write ( line, 2 ) relMaxAbsDiff, maxAbsDiff, maxAbsVal, &
+          & maxRadDiff, trim(block)
+      2 format ( 1p4g12.5, 1x, a )
+a163 1
+        if ( maxRadDiff == 0 ) line(37:48) = 'identical'
+d170 3
+d203 4
+a206 1
+! $Log: $
+@
+

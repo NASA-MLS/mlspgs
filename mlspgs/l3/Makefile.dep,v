@@ -1,0 +1,253 @@
+head	1.4;
+access;
+symbols
+	v5-02-NRT-19:1.4
+	v6-00:1.4
+	v5-02-NRT-18:1.4
+	v5-02:1.4
+	v5-01-NRT-17:1.4
+	v5-01-NRT-16:1.4
+	v5-01-NRT-15:1.4
+	v5-01-NRT-14:1.4
+	neuralnetworks-1-0:1.4.0.18
+	cfm-single-freq-0-1:1.4.0.16
+	v5-01:1.4
+	v5-00:1.4
+	v4-23-TA133:1.4.0.14
+	mus-emls-1-70:1.4.0.12
+	rel-1-0-englocks-work:1.4.0.10
+	VUMLS1-00:1.4
+	VPL1-00:1.4
+	V4-22-NRT-08:1.4
+	VAM1-00:1.4
+	V4-21:1.4.0.8
+	V4-13:1.4
+	V4-12:1.4
+	V4-11:1.4
+	V4-10:1.4
+	V3-43:1.4
+	M4-00:1.4
+	V3-41:1.4
+	V3-40-PlusGM57:1.4.0.6
+	V2-24-NRT-04:1.4
+	V3-33:1.4
+	V2-24:1.4
+	V3-31:1.4
+	V3-30-NRT-05:1.4
+	cfm-01-00:1.4
+	V3-30:1.4
+	V3-20:1.4
+	V3-10:1.4
+	V2-23-NRT-02:1.4
+	V2-23:1.4
+	V2-22-NRT-01:1.4
+	V2-22:1.4
+	V2-21:1.4
+	V2-20:1.4
+	V2-11:1.4
+	V2-10:1.4
+	V2-00:1.4
+	V1-51:1.4
+	V1-50:1.4
+	V1-45:1.4
+	V1-44:1.4
+	V1-43:1.4
+	V1-42:1.4
+	V1-41:1.4
+	V1-32:1.4
+	V1-40:1.4
+	V1-31:1.4
+	V1-30:1.4
+	V1-13:1.4
+	V1-12:1.4
+	V1-11:1.4
+	V1-10:1.4
+	newfwm-feb03:1.4.0.4
+	V1-04:1.4
+	V1-03:1.4
+	V1-02:1.4
+	V1-00:1.4
+	newfwm-sep01:1.4.0.2
+	V0-7:1.4
+	V0-5-Level2:1.4
+	V0-5-SIPS:1.4;
+locks; strict;
+comment	@# @;
+
+
+1.4
+date	2001.03.03.00.17.37;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2001.01.02.18.43.27;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2000.11.16.18.31.22;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2000.11.15.18.02.58;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.4
+log
+@Recent code changes
+@
+text
+@#Makefile.dep -- a file to be included by a Makefile
+#to compile a Fortran 9x program or library
+OBJS = \
+DailyMapModule.o    L3DZData.o       MLSPCF3.o        PCFModule.o  \
+L2Interface.o       L3SPData.o       NumRecipes.o     Synoptic.o  \
+L3CF.o  	    MLSL3.o  	     OpenInit.o       global_data.o  \
+L3DMData.o  	    MLSL3Common.o    OutputClose.o    init_tables_module.o  \
+ 
+# using f90makedep.pl to calculate dependencies 
+DailyMapModule.o: DailyMapModule.f90 $(dir1)L2GPData.o $(dir1)MLSCF.o \
+	$(dir1)MLSCommon.o L2Interface.o L3CF.o L3DMData.o L3SPData.o \
+	MLSPCF3.o global_data.o
+global_data.o: global_data.f90 $(dir1)MLSCommon.o $(dir1)SDPToolkit.o
+init_tables_module.o: init_tables_module.f90 $(dir1)intrinsic.o \
+	$(dir1)symbol_table.o $(dir1)symbol_types.o $(dir1)tree.o \
+	$(dir1)tree_types.o
+L2Interface.o: L2Interface.f90 $(dir1)Hdf.o $(dir1)L2GPData.o \
+	$(dir1)MLSCommon.o $(dir1)MLSMessageModule.o $(dir1)MLSStrings.o \
+	$(dir1)SDPToolkit.o MLSL3Common.o MLSPCF3.o OpenInit.o
+L3CF.o: L3CF.f90 $(dir1)MLSCF.o $(dir1)MLSCommon.o $(dir1)MLSMessageModule.o \
+	$(dir1)MLSStrings.o $(dir1)SDPToolkit.o MLSL3Common.o MLSPCF3.o \
+	PCFModule.o
+L3DMData.o: L3DMData.f90 $(dir1)Hdf.o $(dir1)L2GPData.o $(dir1)MLSCommon.o \
+	$(dir1)MLSMessageModule.o $(dir1)MLSStrings.o $(dir1)SDPToolkit.o \
+	MLSL3Common.o MLSPCF3.o OpenInit.o PCFModule.o
+L3DZData.o: L3DZData.f90 $(dir1)Hdf.o $(dir1)L2GPData.o $(dir1)MLSCommon.o \
+	$(dir1)MLSMessageModule.o $(dir1)MLSStrings.o L3CF.o MLSL3Common.o \
+	MLSPCF3.o OpenInit.o PCFModule.o
+L3SPData.o: L3SPData.f90 $(dir1)Hdf.o $(dir1)L2GPData.o $(dir1)MLSCommon.o \
+	$(dir1)MLSMessageModule.o L3CF.o MLSL3Common.o MLSPCF3.o PCFModule.o
+MLSL3.o: MLSL3.f90 $(dir1)L2GPData.o $(dir1)MLSCF.o $(dir1)MLSMessageModule.o \
+	L2Interface.o L3CF.o L3DMData.o L3DZData.o L3SPData.o OpenInit.o \
+	OutputClose.o Synoptic.o
+OpenInit.o: OpenInit.f90 $(dir1)MLSCF.o $(dir1)MLSCommon.o \
+	$(dir1)MLSMessageModule.o $(dir1)SDPToolkit.o $(dir1)dates_module.o \
+	$(dir2)getCF_m.o L3CF.o MLSL3Common.o MLSPCF3.o PCFModule.o
+OutputClose.o: OutputClose.f90 $(dir1)L2GPData.o $(dir1)MLSCF.o \
+	$(dir1)MLSCommon.o $(dir1)MLSMessageModule.o $(dir1)MLSStrings.o \
+	$(dir1)SDPToolkit.o L2Interface.o L3CF.o L3DMData.o L3DZData.o \
+	L3SPData.o MLSL3Common.o MLSPCF3.o OpenInit.o PCFModule.o
+PCFModule.o: PCFModule.f90 $(dir1)Hdf.o $(dir1)MLSCommon.o \
+	$(dir1)MLSMessageModule.o $(dir1)SDPToolkit.o MLSL3Common.o MLSPCF3.o
+Synoptic.o: Synoptic.f90 $(dir1)L2GPData.o $(dir1)MLSCF.o $(dir1)MLSCommon.o \
+	DailyMapModule.o L2Interface.o L3CF.o L3DMData.o L3DZData.o MLSPCF3.o \
+	NumRecipes.o OpenInit.o OutputClose.o global_data.o
+ 
+#End of Makefile.dep
+ 
+@
+
+
+1.3
+log
+@With recent changes
+@
+text
+@d4 4
+a7 3
+L2Interface.o    L3SPData.o  	  OpenInit.o  	   global_data.o  \
+L3CF.o  	 MLSL3.o  	  OutputClose.o    init_tables_module.o  \
+L3DMData.o  	 MLSL3Common.o    PCFModule.o  \
+d10 4
+a13 1
+global_data.o: global_data.f90 $(dir1)MLSCommon.o
+d18 2
+a19 2
+	$(dir1)MLSCommon.o $(dir1)MLSMessageModule.o $(dir1)MLSPCF.o \
+	$(dir1)MLSStrings.o $(dir1)SDPToolkit.o MLSL3Common.o OpenInit.o
+d21 1
+a21 1
+	$(dir1)MLSPCF.o $(dir1)MLSStrings.o $(dir1)SDPToolkit.o MLSL3Common.o \
+d24 5
+a28 2
+	$(dir1)MLSMessageModule.o $(dir1)MLSPCF.o $(dir1)MLSStrings.o \
+	$(dir1)SDPToolkit.o MLSL3Common.o PCFModule.o
+d30 1
+a30 2
+	$(dir1)MLSMessageModule.o $(dir1)MLSPCF.o L3CF.o MLSL3Common.o \
+	PCFModule.o
+d32 2
+a33 1
+	L2Interface.o L3CF.o L3DMData.o L3SPData.o OpenInit.o OutputClose.o
+d35 11
+a45 8
+	$(dir1)MLSMessageModule.o $(dir1)MLSPCF.o $(dir1)SDPToolkit.o \
+	$(dir1)dates_module.o $(dir2)getCF_m.o L3CF.o MLSL3Common.o
+OutputClose.o: OutputClose.f90 $(dir1)L2GPData.o $(dir1)MLSCommon.o \
+	$(dir1)MLSMessageModule.o $(dir1)MLSPCF.o $(dir1)MLSStrings.o \
+	$(dir1)SDPToolkit.o L2Interface.o L3CF.o L3DMData.o L3SPData.o \
+	MLSL3Common.o OpenInit.o PCFModule.o
+PCFModule.o: PCFModule.f90 $(dir1)MLSCommon.o $(dir1)MLSMessageModule.o \
+	$(dir1)SDPToolkit.o MLSL3Common.o
+@
+
+
+1.2
+log
+@L2Interface added
+@
+text
+@d4 3
+a6 3
+L2Interface.o    MLSL3.o  	  PCFModule.o  \
+L3CF.o  	 OpenInit.o  	  global_data.o  \
+L3DMData.o  	 OutputClose.o    init_tables_module.o  \
+d15 1
+a15 1
+	$(dir1)MLSStrings.o $(dir1)SDPToolkit.o L3DMData.o OpenInit.o
+d17 1
+a17 1
+	$(dir1)MLSPCF.o $(dir1)MLSStrings.o $(dir1)SDPToolkit.o L3DMData.o \
+d20 5
+a24 1
+	$(dir1)MLSMessageModule.o $(dir1)MLSPCF.o $(dir1)SDPToolkit.o
+d26 1
+a26 1
+	L2Interface.o L3CF.o L3DMData.o OpenInit.o OutputClose.o
+d29 2
+a30 2
+	$(dir1)dates_module.o $(dir2)getCF_m.o L3CF.o L3DMData.o
+OutputClose.o: OutputClose.f90 $(dir1)MLSCF.o $(dir1)MLSCommon.o \
+d32 2
+a33 1
+	$(dir1)SDPToolkit.o L3CF.o L3DMData.o OpenInit.o PCFModule.o
+d35 1
+a35 1
+	$(dir1)MLSPCF.o
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d4 3
+a6 2
+L3CF.o        MLSL3.o       OutputClose.o    global_data.o  \
+L3DMData.o    OpenInit.o    PCFModule.o      init_tables_module.o  \
+d13 3
+d21 2
+a22 2
+MLSL3.o: MLSL3.f90 $(dir1)MLSCF.o $(dir1)MLSMessageModule.o L3CF.o L3DMData.o \
+	OpenInit.o OutputClose.o
+@
+

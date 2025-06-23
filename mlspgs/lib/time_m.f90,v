@@ -1,0 +1,1651 @@
+head	2.22;
+access;
+symbols
+	v5-02-NRT-19:2.22
+	v6-00:2.22
+	v5-02-NRT-18:2.22
+	v5-02:2.22
+	v5-01-NRT-17:2.22
+	v5-01-NRT-16:2.22
+	v5-01-NRT-15:2.22
+	v5-01-NRT-14:2.22
+	neuralnetworks-1-0:2.22.0.6
+	cfm-single-freq-0-1:2.22.0.4
+	v5-01:2.22
+	v5-00:2.22
+	v4-23-TA133:2.22.0.2
+	mus-emls-1-70:2.20.0.4
+	rel-1-0-englocks-work:2.20.0.2
+	VUMLS1-00:2.20
+	VPL1-00:2.17
+	V4-22-NRT-08:2.17
+	VAM1-00:2.16
+	V4-21:2.15.0.2
+	V4-13:2.14
+	V4-12:2.14
+	V4-11:2.14
+	V4-10:2.14
+	V3-43:2.10
+	M4-00:2.11
+	V3-41:2.10
+	V3-40-PlusGM57:2.10.0.2
+	V2-24-NRT-04:2.8
+	V3-33:2.10
+	V2-24:2.8
+	V3-31:2.10
+	V3-30-NRT-05:2.10
+	cfm-01-00:2.10
+	V3-30:2.10
+	V3-20:2.10
+	V3-10:2.10
+	V2-23-NRT-02:2.8
+	V2-23:2.8
+	V2-22-NRT-01:2.8
+	V2-22:2.8
+	V2-21:2.8
+	V2-20:2.8
+	V2-11:2.8
+	V2-10:2.8
+	V2-00:2.8
+	V1-51:2.6
+	V1-50:2.6
+	V1-45:2.6
+	V1-44:2.6
+	V1-43:2.5
+	V1-42:2.5
+	V1-41:2.5
+	V1-32:2.5
+	V1-40:2.5
+	V1-31:2.5
+	V1-30:2.3
+	V1-13:2.3
+	V1-12:2.3
+	V1-11:2.3
+	V1-10:2.3
+	newfwm-feb03:2.3.0.2
+	V1-04:2.1
+	V1-03:2.1
+	V1-02:2.1
+	V1-00:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.22
+date	2018.12.11.01.16.53;	author pwagner;	state Exp;
+branches;
+next	2.21;
+
+2.21
+date	2018.10.25.22.43.51;	author pwagner;	state Exp;
+branches;
+next	2.20;
+
+2.20
+date	2017.01.11.23.25.02;	author pwagner;	state Exp;
+branches;
+next	2.19;
+
+2.19
+date	2016.11.15.19.26.13;	author pwagner;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2016.11.03.20.54.51;	author pwagner;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2016.02.29.19.48.12;	author pwagner;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2015.07.14.23.12.20;	author pwagner;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2014.12.09.00.26.01;	author vsnyder;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2014.01.09.00.24.29;	author pwagner;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2013.08.28.00.37.14;	author pwagner;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2013.06.12.02.15.56;	author vsnyder;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2012.04.20.01.27.53;	author vsnyder;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2009.06.23.18.25.44;	author pwagner;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2009.01.12.18.45.06;	author pwagner;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2005.09.22.23.36.34;	author pwagner;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2005.06.22.17.25.51;	author pwagner;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2004.08.04.23.19.02;	author pwagner;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2003.12.07.23.12.14;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2003.12.05.00.53.26;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2002.10.08.00.09.15;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2002.08.27.23.05.25;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.11.09.22.45.30;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.22
+log
+@Subdivided now among Time_config, wait_m, and smaller time_m
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=============================================================================
+module Time_M
+!=============================================================================
+
+! Compute or print either CPU time, in arbitrary units, or wall-clock time, in
+! seconds since midnight.  And some other time-related actions.
+
+  use Dates_Module, only: Yyyymmdd_To_Dai
+  use Optional_m, only: Default
+  use Time_Config_m, only: SayTime_Config, SayTime_Config_T, &
+    & Time_Config, Time_Config_T, Time_Now, Time_Now_D, Time_Now_S
+  implicit none
+  private
+
+! === (start of toc) ===
+!     c o n t e n t s
+!     - - - - - - - -
+!   datatypes
+! SayTime_config_t        say time configuration type
+! Time_config_t           time configuration type
+
+!   subroutines and functions
+! Begin                   announce the time of day at Beginning
+! Dump                    dump either of the time of day configurations
+! Finish                  announce the time of day and consumed CPU time at Finish
+! Ms_to_hms               convert millisec to (hour,minute,sec)
+
+! SayTime                  print a stepwise and cumulative timing line
+! ConfigureSayTime         set a start time, units, etc. to be used to say timings times
+! Set_time_config          Explicitly set start time in time_config_t
+!                            formatted as array of integer values returned 
+!                            by intrinsic date_and_time
+!                          (/ year,month,day,t-t_utc,hour,minutes,s,ms /)
+!                          E.g., input (/ -1, i=1,8 /) to make next call
+!                          to time_now return 0
+! Time_now                 Returns time according to time_config: as
+!                          (1) Arbitrary units if cpu time
+!                          (2) s since midnight if wall clock time
+!                          (3) s since 1st call to time_now (so 1st returns 0)
+! === (end of toc) ===
+
+! === (start of api) ===
+! Begin ( char* string )
+! Finish ( char* string )
+! Ms_to_hms ( int ms, int hrs, int mins, int secs )
+! SayTime ( [char* Operation], [real t1], [real t2], [log cumulative] )
+! ConfigureSayTime ( [real t1], [char timingUnits], [log reset], &
+!     [log showTimingUnits], [char* Preamble], [char* Coda] )
+! Set_time_config ( real values(8) )
+! Time_now ( float t, [int invalues(8)] )
+! Note:
+! float means either real or double precision types
+! === (end of api) ===
+  public :: Begin, dump, Finish, ms_to_hms, sayTime, &
+   & configureSayTime, SayTime_Config, set_time_config, time_config, &
+   & time_now, time_now_d, time_now_s
+
+  interface Dump
+    module procedure Dump_SayTime
+    module procedure Dump_TimeConfig
+  end interface
+
+  double precision, private, save :: Start_CPU_time
+  integer         , private, save :: Start_WallClockSeconds = 0
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: time_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  subroutine Begin ( SHOW )
+    ! Announce the time of day of starting; set start time
+    ! for calculating elapsed cpu when calling Finish
+    use HighOutput, only: Output_Date_and_Time
+    character(len=*), intent(in) :: SHOW
+    double precision :: dt2
+    call cpu_time ( start_CPU_time )
+    call time_Now( dt2 )
+    Start_WallClockSeconds = dt2
+    call Output_Date_and_Time ( msg=show )
+  end subroutine Begin
+
+  subroutine Dump_SayTime ( config )
+    ! Dump the SayTime config
+    use HighOutput, only: headLine, outputNamedValue
+    type(sayTime_config_t), intent(in) :: config
+    call headLine ( 'SayTime Configuration' )
+    call outputNamedValue ( 'timing units', config%TimingUnits )
+    call outputNamedValue ( 'start t1    ', config%startT1     )
+    call outputNamedValue ( 'say units   ', config%sayUnits    )
+    call outputNamedValue ( 'preamble    ', config%Preamble    )
+    call outputNamedValue ( 'coda        ', config%Coda        )
+  end subroutine Dump_SayTime
+
+  subroutine Dump_TimeConfig ( config )
+    ! Dump the SayTime config
+    use HighOutput, only: headLine, outputNamedValue
+    type(time_config_t), intent(in) :: config
+    call headLine ( 'Time Configuration' )
+    call outputNamedValue ( 'start (date)            ', config%starttime(1:3)              )
+    call outputNamedValue ( 'start (time)            ', config%starttime(5:7)              )
+    call outputNamedValue ( 'days after 2001-01-01   ', config%startdaysoff                )
+    call outputNamedValue ( 'time divisor            ', config%time_divisor                )
+    call outputNamedValue ( 'wall clock?             ', config%use_wall_clock              )
+    call outputNamedValue ( 'event wait time         ', config%wait_time                   )
+    call outputNamedValue ( 'start wall clock from 0?', config%wallClockIsElapsedFromStart )
+  end subroutine Dump_TimeConfig
+
+  subroutine Finish ( SHOW )
+    ! Announce the time of day and CPU time of Finishing
+    use HighOutput, only: Output_Date_and_Time
+    character(len=*), intent(in) :: SHOW
+    double precision :: Finish_CPU_time
+    double precision :: Finish_WallClockSeconds
+    call cpu_time ( Finish_CPU_time )
+    call time_now ( Finish_WallClockSeconds )
+    call Output_Date_and_Time ( msg=show, &
+      & CPU_seconds = Finish_CPU_time - start_CPU_time, &
+      & WallClock_Seconds = int(Finish_WallClockSeconds-Start_WallClockSeconds) )
+  end subroutine Finish
+  subroutine MS_to_HMS (ms, hrs, mins, secs)
+
+    ! convert millisecs to hours, minutes and seconds
+
+    integer, intent (in) :: ms
+    integer, intent (out) :: hrs, mins, secs
+
+    hrs = ms / 3600000
+    mins = mod (ms, 3600000) / 60000
+    secs = mod (mod (ms, 3600000), 60000) / 1000
+
+  end subroutine MS_to_HMS
+
+  ! ----------------------------------------------  sayTime  -----
+  subroutine sayTime ( Operation, t1, t2, cumulative )
+  use Output_m, only: Blanks, NewLine, Output
+  ! Print stepwise and cumulative time usage for sequence of operations
+  ! Or show time since start of run (if t1 is 0)
+  ! Skip printing total time if cumulative is both present and FALSE
+    character(len=*), optional, intent(in) :: Operation
+    real, optional, intent(in)             :: t1       ! Time at last op
+    real, optional, intent(out)            :: t2       ! Time at current op
+    logical, optional, intent(in)          :: cumulative ! defaults to TRUE
+    ! Internal variables
+    double precision                       :: dt1 
+    double precision                       :: dt2 
+    logical                                :: myCumulative ! local
+    integer                                :: timeDivisor
+    character(len=*), parameter            :: TIMEFORMSMALL = '(F10.2)'
+    character(len=*), parameter            :: TIMEFORMBIG = '(1PE10.2)'
+    character(len=len(timeformbig))        :: timeForm
+    ! Executable
+    myCumulative = Default( cumulative, .true. )
+    select case ( sayTime_config%TimingUnits )
+    case ( 's' )
+      timeDivisor = 1
+    case ( 'm' )
+      timeDivisor = 60
+    case ( 'h' )
+      timeDivisor = 3600
+    end select
+    dt1 = Default( t1, sayTime_config%startT1 )
+    call time_now ( dt2 )
+    if ( present(t2) ) t2 = dt2
+    ! call output( (/ StartT1*1.d0, dt1, dt2 /), advance='yes' )
+    if ( dt2/timeDivisor < 0.5d0 .or. dt2/timeDivisor > 99999.99d0 ) then
+      TIMEFORM = TIMEFORMBIG
+    else
+      TIMEFORM = TIMEFORMSMALL
+    endif
+    if ( len_trim(sayTime_config%Preamble) < 1 ) then
+      call output ( "Timing ", advance='no' )
+    else
+      call output ( trim(sayTime_config%Preamble) // " ", advance='no' )
+    endif
+    if ( present(operation) ) then
+      call output ( "for " // trim(Operation), advance='no'  )
+    endif
+    call output ( (dt2-dt1)/timeDivisor, FORMAT=TIMEFORM, advance='no' )
+    if ( sayTime_config%sayUnits ) &
+      & call output( trim(sayTime_config%timingUnits), advance='no' )
+    if ( .not. present(t1) ) then
+      if ( len_trim(sayTime_config%Coda) > 0 ) &
+        & call output( trim(sayTime_config%Coda), advance='no' )
+      call newLine
+      sayTime_config%startT1 = dt2
+      return
+    endif
+    ! Cumulative
+    if ( myCumulative ) then
+      call blanks ( 3 )
+      call output ( "Total ", advance='no' )
+      call output ( (dt2-sayTime_config%startT1)/timeDivisor, FORMAT=TIMEFORM, advance='no' )
+      if ( sayTime_config%sayUnits ) &
+        & call output( trim(sayTime_config%timingUnits), advance='no' )
+    endif
+    if ( len_trim(sayTime_config%Coda) > 0 ) &
+      & call output( trim(sayTime_config%Coda), advance='no' )
+    call newLine
+  end subroutine sayTime
+
+  ! ----------------------------------------------  configureSayTime  -----
+  subroutine configureSayTime ( t1, units, reset, showTimingUnits, Preamble, Coda )
+  ! set start time or timing units to be used by sayTime
+    real, optional, intent(in)             :: t1
+    character(len=*), optional, intent(in) :: units
+    logical, optional, intent(in)          :: reset
+    logical, optional, intent(in)          :: showTimingUnits
+    character(len=*), optional, intent(in) :: Preamble
+    character(len=*), optional, intent(in) :: Coda
+    ! Local variables
+    logical                                :: myReset
+    ! Executable
+    myReset = Default( reset, .false. )
+    if ( present(t1) ) then
+      sayTime_config%startT1 = t1
+    elseif ( myReset ) then
+      call time_now ( sayTime_config%startT1 )
+    endif
+    if ( present(units) ) sayTime_config%timingUnits = units
+    if ( present(showTimingUnits) ) sayTime_config%sayUnits = showTimingUnits
+    if ( present(Preamble) ) sayTime_config%Preamble = Preamble
+    if ( present(Coda) ) sayTime_config%Coda = Coda
+  end subroutine configureSayTime
+
+  subroutine set_time_config ( VALUES )
+    integer, dimension(8), intent(in) :: VALUES
+    character (len=8) :: date   ! in yyyymmdd format
+    character (len=4) :: yyyy
+    character ( len=2) :: mm, dd
+    time_config%starttime = values
+    write(yyyy, '(i4)') values(1)
+    write(mm, '(i2)') values(2)
+    write(dd, '(i2)') values(3)
+    date = yyyy // mm // dd
+    call yyyymmdd_to_dai(date, time_config%startdaysoff)
+    ! print *, 'values: ', values
+    ! print *, 'yyyy: ', yyyy
+    ! print *, 'mm: ', mm
+    ! print *, 'dd: ', dd
+    ! print *, 'date: ', date
+    ! print *, 'startdaysoff: ', startdaysoff
+  end subroutine set_time_config
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: time_m.f90,v 2.21 2018/10/25 22:43:51 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Time_M
+
+!$Log: time_m.f90,v $
+!Revision 2.21  2018/10/25 22:43:51  pwagner
+!Added Pause command with optional InputFilename arg
+!
+!Revision 2.20  2017/01/11 23:25:02  pwagner
+!May now Dump the two time configs
+!
+!Revision 2.19  2016/11/15 19:26:13  pwagner
+!May write distinctive Coda at end of line when sayTime; can track both CPU and wallClockSeconds
+!
+!Revision 2.18  2016/11/03 20:54:51  pwagner
+!Added sayTime and configureSayTime
+!
+!Revision 2.17  2016/02/29 19:48:12  pwagner
+!Usleep got from machine module instead of being an external
+!
+!Revision 2.16  2015/07/14 23:12:20  pwagner
+!Added family of routines to wait for events
+!
+!Revision 2.15  2014/12/09 00:26:01  vsnyder
+!Add MS_to_HMS
+!
+!Revision 2.14  2014/01/09 00:24:29  pwagner
+!Some procedures formerly in output_m now got from highOutput
+!
+!Revision 2.13  2013/08/28 00:37:14  pwagner
+!Moved more stuff from MLSMessage down to PrintIt module
+!
+!Revision 2.12  2013/06/12 02:15:56  vsnyder
+!Cruft removal
+!
+!Revision 2.11  2012/04/20 01:27:53  vsnyder
+!Add Begin, Finish, some cannonball polishing
+!
+!Revision 2.10  2009/06/23 18:25:44  pwagner
+!Prevent Intel from optimizing ident string away
+!
+!Revision 2.9  2009/01/12 18:45:06  pwagner
+!Improved cofiguration; wait means sleep
+!
+!Revision 2.8  2005/09/22 23:36:34  pwagner
+!time_config and retry_config now hold config settings
+!
+!Revision 2.7  2005/06/22 17:25:51  pwagner
+!Reworded Copyright statement, moved rcs id
+!
+!Revision 2.6  2004/08/04 23:19:02  pwagner
+!Much moved from MLSStrings to MLSStringLists
+!
+!Revision 2.5  2003/12/07 23:12:14  pwagner
+!wall clock is now time elapsed from start; may set start time
+!
+!Revision 2.4  2003/12/05 00:53:26  pwagner
+!Added possible TIME_DIVISOR to scale results from time_now
+!
+!Revision 2.3  2002/10/08 00:09:15  pwagner
+!Added idents to survive zealous Lahey optimizer
+!
+!Revision 2.2  2002/08/27 23:05:25  pwagner
+!Added wait and retry
+!
+!Revision 2.1  2001/11/09 22:45:30  vsnyder
+!Initial commit
+!
+@
+
+
+2.21
+log
+@Added Pause command with optional InputFilename arg
+@
+text
+@d19 1
+a19 3
+  use Dates_module, only: YYYYMMDD_to_DAI
+  use IO_Stuff, only: Pause_Stdin => Pause
+  use Machine, only: USleep
+d21 2
+a22 1
+  use PrintIt_m, only: MLSMSG_Warning, PrintItOut
+a29 1
+! Retry_config_t          retry configuration type
+a38 16
+! Init_retry              Initialize the retry mechanism
+! Pause                   wait for user input, either via stdin or InputFileName
+! Retry                   Engage retry mechanism that monitors iterations,
+!                         exception handling, or synchronizing events
+!     Example:
+!     Assume you want to keep calling home until you get a successful result "0"
+!     making a call each 2 seconds, and giving up after 100 tries
+!     call init_retry(SUCCESSFUL_RESULT=0)
+!     do
+!        call home(result)
+!        shall_i = retry(result, delay=2.0, max_retries=100)
+!        if ( shall_i /= try_again) exit
+!     enddo
+!     if ( shall_i /= RETRY_SUCCESS ) 
+!        call exception_handler ( shall_i )
+!     endif
+a50 2
+! Wait                     Wait for supplied interval to elapse
+! Wait_for_event           Wait for an event to occur
+a55 3
+! Init_retry ( [int successful_result], [int failed_result] )
+! Int retry ( int trial_value, [real delay], [int max_retries], &
+!   [real max_retrying_time] )
+a56 1
+! Pause ( char* mesg , [char* InputFileName )] )
+a61 5
+! Wait ( float t, [int err] )
+! Wait_for_event ( integer function event, int id, [int err] )
+! Wait_for_event ( logical function event, int id )
+! Wait_for_event ( logical function event, int id(:), theId )
+!
+d65 3
+a67 6
+  public :: Begin, dump, Finish, &
+   & init_retry, ms_to_hms, retry, Pause, retry_success, &
+   & sayTime, configureSayTime, set_time_config, &
+   & time_now, time_now_d, time_now_s, &
+   & too_many_retries, try_again, &
+   & wait, wait_for_event
+a73 59
+  interface time_now
+    module procedure time_now_d
+    module procedure time_now_s
+  end interface
+
+  interface wait
+    module procedure wait_d
+    module procedure wait_s
+  end interface
+
+  interface wait_for_event
+    module procedure wait_for_event_int
+    module procedure wait_for_event_log
+    module procedure wait_for_events
+  end interface
+
+  ! This is the retry configuration type
+  public :: retry_config_t
+  type retry_config_t
+    integer :: Try_number
+    integer :: Successful_result
+    integer :: Failed_result
+    real    :: Init_t0
+  end type retry_config_t
+
+  ! There are two time configurations:
+  ! This is the sayTime configuration type used wheen you call sayTime()
+  public :: sayTime_config_t
+  type sayTime_config_t
+    character(len=1)     :: TimingUnits = 's'
+    real                 :: StartT1     = 0.
+    logical              :: SayUnits    = .false.
+    character(len=16)    :: Preamble    = ''  ! Instead of 'Timing for' at start
+    character(len=16)    :: Coda        = ''      ! Print at end of line
+  end type sayTime_config_t
+
+  ! This is the time configuration type used when you call time_now()
+  public :: time_config_t
+  type time_config_t
+    ! Divide by time_divisor before returning time_now or waiting
+    integer, dimension(8) :: Starttime                   = -1  ! Reset on first call to time_now
+    integer               :: Startdaysoff                = 0
+    integer               :: Time_divisor                = 1  
+    logical               :: Use_wall_clock              = .false.
+    integer               :: Wait_time                   = 100 ! How many s to sleep waiting for event
+    logical               :: WallClockIsElapsedFromStart = .true. ! return 0 for 1st call
+  end type time_config_t
+
+  integer, parameter :: Microspers         = 1000000 ! How many micros in a s
+  integer, parameter :: Failed_default     = 999
+  integer, parameter :: Try_again          = 1
+  integer, parameter :: Retry_success      = TRY_AGAIN - 1
+  integer, parameter :: Successful_default = 0
+  integer, parameter :: Too_many_retries   = RETRY_SUCCESS - 1
+  !                                              so first value is 0.0
+  type(retry_config_t), public, save :: retry_config
+  type(time_config_t), public, save :: time_config
+  type(sayTime_config_t), public, save :: sayTime_config
+
+a134 23
+
+  subroutine Init_retry ( successful_result, failed_result )
+    integer, intent(in), optional :: SUCCESSFUL_RESULT
+    integer, intent(in), optional :: FAILED_RESULT
+    ! As long as retry_config%FAILED_RESULT is default, try for success
+    ! If not default, will try for any value != retry_config%FAILED_RESULT
+    ! Therefore, there's no reason to input both args
+    if ( present(successful_result) .and. present(failed_result) ) then
+      call PrintItOut( &
+        & "both args supplied in call to init_retry--only FAILED_RESULT effective", &
+        & MLSMSG_Warning )
+    endif
+    retry_config%failed_result = FAILED_DEFAULT  
+    retry_config%successful_result = SUCCESSFUL_DEFAULT
+    if ( present(successful_result) ) &
+      & retry_config%successful_result = SUCCESSFUL_RESULT
+    if ( present(failed_result) ) &
+      & retry_config%failed_result = failed_result
+    
+    call time_now (retry_config%init_t0)
+    retry_config%try_number = 0
+  end subroutine Init_retry
+
+a147 125
+  subroutine Pause ( mesg, InputFileName, Prompts )
+    use MLSCommon, only: Filenamelen
+
+    ! Wait to read mesg from InputFileName
+    ! or stdin (if InputFileName not present)
+
+    character(len=8), intent (out)                        :: mesg            
+    character(len=*), intent (in), optional               :: InputFileName   
+    character(len=*), intent (in), dimension(:), optional :: Prompts
+    ! Internal variables
+    character(len=Filenamelen), save                      :: FileName
+    integer                                               :: i
+    character(len=80)                                     :: myMesg
+    integer                                               :: OldWaitTime
+    ! Executable
+    OldWaitTime = Time_Config%wait_time
+    Time_Config%wait_time = 5
+    if ( present(InputFileName) ) then
+      print *, '(P a u s e d .. w a i t i n g   f o r: ', trim(InputFileName)
+      FileName = InputFileName
+      call Wait_then_read_mesg ( myMesg )
+    else
+      call Pause_stdin( mesg, Prompts )
+    endif
+    mesg = myMesg
+    Time_Config%wait_time = OldWaitTime
+  contains
+    subroutine Wait_then_read_mesg ( mesg )
+      character(len=*), intent(out) :: mesg
+      integer                       :: unitnum, status
+      call wait_for_event( File_There_Now, 1 )
+      open ( newunit=unitnum, form='formatted', &
+        & file=trim(FileName), status='old', iostat=status )
+      read ( unitnum, '(a80)' ) MyMesg
+      mesg = MyMesg
+      close ( unitnum )
+    end subroutine Wait_then_read_mesg
+
+    function File_There_Now( id ) result ( now )
+      ! Returns
+      ! 0 if filename exists
+      ! 1 otherwise
+      integer, intent(in)          :: id ! Ignored
+      logical                      :: exist
+      integer                      :: now
+      ! Use-ing MLSFiles might create a circular dependence
+      ! now = mls_exists ( trim(FileName) )
+      if ( len_trim(FileName) < 1 ) then
+        print *, 'Was FileName ever defined?'
+        stop
+      endif
+      inquire( file=trim(FileName), exist=exist )
+      now = merge( 0, 1, exist )
+      ! print *, trim(FileName) // ':', exist
+    end function File_There_Now
+  end subroutine Pause
+
+  function Retry ( Trial_value, delay, max_retries, max_retrying_time )
+    integer, intent(in)           :: Trial_value
+    integer, intent(in), optional :: Max_retries
+    real, intent(in), optional    :: Delay
+    real, intent(in), optional    :: Max_retrying_time
+    integer                       :: Retry
+    real                          :: T1
+    ! Return one of three values
+    ! TRY_AGAIN if TRIAL_VALUE not yet successful (or still failure)
+    ! RETRY_SUCCESS if TRIAL_VALUE successful (or no longer failure)
+    ! TOO_MANY_RETRIES if MAX_RETRIES or MAX_RETRYING_TIME exceeded
+    
+    ! Usage:
+    ! Assume you want to keep calling home until you get a successful result "0"
+    ! making a call each 2 seconds, and giving up after 100 tries
+    ! call init_retry(SUCCESSFUL_RESULT=0)
+    ! do
+    !    call home(result)
+    !    shall_i = retry(result, delay=2.0, max_retries=100)
+    !    if ( shall_i /= try_again) exit
+    ! enddo
+    ! if ( shall_i /= RETRY_SUCCESS ) 
+    !    call exception_handler ( shall_i )
+    ! endif
+    
+    ! This may be useful if you can't trust the file system to cooperate
+    ! well with the hdfeos library: if a gdclose is immediately
+    ! followed by a gdopen, the bare gdopen may fail because the file
+    ! hasn't been fully released
+    
+    ! For other uses, this can hide the grubby details of an event loop
+
+    ! Looking for a successful result?
+    if ( retry_config%failed_result == FAILED_DEFAULT ) then
+    ! Have we succeeded yet?
+      if ( TRIAL_VALUE == retry_config%successful_result ) then
+        retry = RETRY_SUCCESS
+        return
+      endif
+    else
+    ! or looking to avoid failure
+    ! have we avoided it?
+      if ( TRIAL_VALUE /= retry_config%failed_result ) then
+        retry = RETRY_SUCCESS
+        return
+      endif
+    endif
+
+    ! Have we tried too many times?
+    if ( present(MAX_RETRIES) ) then
+      if ( retry_config%try_number > MAX_RETRIES ) then
+          retry = TOO_MANY_RETRIES
+          return
+      endif
+    endif
+    ! For too long?
+    if ( present(MAX_RETRYING_TIME) ) then
+      call time_now (t1)
+      if ( t1 - retry_config%init_t0 > MAX_RETRYING_TIME ) then
+          retry = TOO_MANY_RETRIES
+          return
+      endif
+    endif
+    call wait (delay)
+    retry_config%try_number = retry_config%try_number + 1
+    retry = TRY_AGAIN
+  end function Retry
+
+a257 87
+
+  subroutine TIME_NOW_D ( T, INVALUES )
+    integer, parameter :: RK = kind(0.0d0)
+    integer, dimension(8), intent(in), optional :: INVALUES
+    include "time_now.f9h"
+  end subroutine TIME_NOW_D
+
+  subroutine TIME_NOW_S ( T, INVALUES )
+    integer, parameter :: RK = kind(0.0e0)
+    integer, dimension(8), intent(in), optional :: INVALUES
+    include "time_now.f9h"
+  end subroutine TIME_NOW_S
+
+  subroutine WAIT_D ( T, ERR )
+    integer, parameter :: RK = kind(0.0d0)
+    real(rk), intent(in) :: T
+    include "wait.f9h"
+  end subroutine WAIT_D
+
+  subroutine WAIT_S ( T, ERR )
+    integer, parameter :: RK = kind(0.0e0)
+    real(rk), intent(in) :: T
+    include "wait.f9h"
+  end subroutine WAIT_S
+
+  ! ------------ wait_for_event ---------------
+  ! This family waits for an "event" to occur. The occurrence is signaled
+  ! by either
+  ! (a) an integer-valued function returning 0 for sucess; or
+  ! (b) a logical-valued function returning true
+  ! The specific event can be picked out by the argument "id"
+  subroutine wait_for_event_int ( event, id, err )
+    integer, optional, intent(out)     :: err
+    integer, intent(in)                :: id
+    interface
+      integer function event ( id )
+        integer, intent(in) :: id
+      end function event
+    end interface
+    do
+      call Usleep( int(time_config%wait_time*MICROSPERS/time_config%time_divisor) )
+      select case ( event(id) )
+      case ( SUCCESSFUL_DEFAULT )
+        exit
+      case ( FAILED_DEFAULT )
+        if ( present(err) ) err = 1
+        exit
+      ! case default
+        ! nothing--just keep looping
+      end select
+    enddo
+  end subroutine wait_for_event_int
+
+  subroutine wait_for_event_log ( event, id )
+    integer, intent(in)                :: id
+    interface
+      logical function event ( id )
+        integer, intent(in) :: id
+      end function event
+    end interface
+    do
+      call Usleep( int(time_config%wait_time*MICROSPERS/time_config%time_divisor) )
+      if ( event(id) ) exit
+    enddo
+  end subroutine wait_for_event_log
+
+  subroutine wait_for_events ( event, id, theID )
+    ! This lets you wait for any one of a possible number of events
+    integer, dimension(:), intent(in)   :: id
+    integer, intent(out)                :: theID
+    interface
+      logical function event ( id )
+        integer, intent(in) :: id
+      end function event
+    end interface
+    ! Internal variables
+    ! integer                             :: i
+    ! Executable
+    do
+      call Usleep( int(time_config%wait_time*MICROSPERS/time_config%time_divisor) )
+      idLoop: do theID=1, size(id)
+        if ( event(id(theID)) ) exit idLoop
+      enddo idLoop
+      if ( theID <= size(id) ) exit
+    enddo
+  end subroutine wait_for_events
+
+d261 1
+a261 1
+       "$Id: time_m.f90,v 2.20 2017/01/11 23:25:02 pwagner Exp $"
+d271 3
+@
+
+
+2.20
+log
+@May now Dump the two time configs
+@
+text
+@d13 1
+a13 1
+module TIME_M
+d20 1
+d31 13
+a43 12
+! retry_config_t          retry configuration type
+! sayTime_config_t        say time configuration type
+! time_config_t           time configuration type
+
+!   subrouttines and functions
+! begin                   announce the time of day at beginning
+! dump                    dump either of the time of day configurations
+! finish                  announce the time of day and consumed CPU time at finish
+! ms_to_hms               convert millisec to (hour,minute,sec)
+
+! init_retry              Initialize the retry mechanism
+! retry                   Engage retry mechanism that monitors iterations,
+d57 3
+a59 3
+! sayTime                  print a stepwise and cumulative timing line
+! configureSayTime         set a start time, units, etc. to be used to say timings times
+! set_time_config          Explicitly set start time in time_config_t
+d65 1
+a65 1
+! time_now                 Returns time according to time_config: as
+d69 2
+a70 2
+! wait                     Wait for supplied interval to elapse
+! wait_for_event           Wait for an event to occur
+d74 4
+a77 4
+! begin ( char* string )
+! finish ( char* string )
+! init_retry ( [int successful_result], [int failed_result] )
+! int retry ( int trial_value, [real delay], [int max_retries], &
+d79 4
+a82 3
+! ms_to_hms ( int ms, int hrs, int mins, int secs )
+! sayTime ( [char* Operation], [real t1], [real t2], [log cumulative] )
+! configureSayTime ( [real t1], [char timingUnits], [log reset], &
+d84 6
+a89 6
+! set_time_config ( real values(8) )
+! time_now ( float t, [int invalues(8)] )
+! wait ( float t, [int err] )
+! wait_for_event ( integer function event, int id, [int err] )
+! wait_for_event ( logical function event, int id )
+! wait_for_event ( logical function event, int id(:), theId )
+d94 2
+a95 2
+  public :: begin, dump, finish, &
+   & init_retry, ms_to_hms, retry, retry_success, &
+d106 3
+a108 3
+  interface TIME_NOW
+    module procedure TIME_NOW_D
+    module procedure TIME_NOW_S
+d111 3
+a113 3
+  interface WAIT
+    module procedure WAIT_D
+    module procedure WAIT_S
+d116 1
+a116 1
+  interface WAIT_FOR_EVENT
+d125 4
+a128 4
+    integer :: try_number
+    integer :: successful_result
+    integer :: failed_result
+    real    :: init_t0
+d136 2
+a137 2
+    real                 :: startT1     = 0.
+    logical              :: sayUnits    = .false.
+d146 6
+a151 6
+    integer, dimension(8) :: starttime                   = -1  ! Reset on first call to time_now
+    integer               :: startdaysoff                = 0
+    integer               :: time_divisor                = 1  
+    logical               :: use_wall_clock              = .false.
+    integer               :: wait_time                   = 100 ! How many mus to sleep waiting for event
+    logical               :: wallClockIsElapsedFromStart = .true. ! return 0 for 1st call
+d154 6
+a159 6
+  integer, parameter :: MICROSPERS = 1000000 ! How many micros in a s
+  integer, parameter :: SUCCESSFUL_DEFAULT = 0
+  integer, parameter :: FAILED_DEFAULT = 999
+  integer, parameter :: TRY_AGAIN = 1
+  integer, parameter :: RETRY_SUCCESS = TRY_AGAIN - 1
+  integer, parameter :: TOO_MANY_RETRIES = RETRY_SUCCESS - 1
+d176 1
+a176 1
+  subroutine BEGIN ( SHOW )
+d178 2
+a179 2
+    ! for calculating elapsed cpu when calling finish
+    use highOutput, only: Output_Date_and_Time
+d186 1
+a186 1
+  end subroutine BEGIN
+d190 1
+a190 1
+    use highOutput, only: headLine, outputNamedValue
+d202 1
+a202 1
+    use highOutput, only: headLine, outputNamedValue
+d214 3
+a216 3
+  subroutine FINISH ( SHOW )
+    ! Announce the time of day and CPU time of finishing
+    use highOutput, only: Output_Date_and_Time
+d220 1
+a220 1
+    call cpu_time ( finish_CPU_time )
+d223 1
+a223 1
+      & CPU_seconds = finish_CPU_time - start_CPU_time, &
+d225 1
+a225 1
+  end subroutine FINISH
+d227 1
+a227 1
+  subroutine INIT_RETRY ( SUCCESSFUL_RESULT, FAILED_RESULT )
+d247 1
+a247 1
+  end subroutine INIT_RETRY
+d262 63
+a324 6
+  function RETRY ( TRIAL_VALUE, DELAY, MAX_RETRIES, MAX_RETRYING_TIME )
+    integer, intent(in)           :: TRIAL_VALUE
+    integer, intent(in), optional :: MAX_RETRIES
+    real, intent(in), optional    :: DELAY
+    real, intent(in), optional    :: MAX_RETRYING_TIME
+    integer                       :: RETRY
+d385 1
+a385 1
+  end function RETRY
+d587 1
+a587 1
+       "$Id: time_m.f90,v 2.19 2016/11/15 19:26:13 pwagner Exp $"
+d594 1
+a594 1
+end module TIME_M
+d597 3
+@
+
+
+2.19
+log
+@May write distinctive Coda at end of line when sayTime; can track both CPU and wallClockSeconds
+@
+text
+@d16 2
+a17 2
+! Compute either CPU time, in arbitrary units, or wall-clock time, in
+! seconds since midnight.  And some other time-related computations.
+d19 2
+a20 2
+  use DATES_MODULE, only: YYYYMMDD_TO_DAI
+  use machine, only: USleep
+d22 1
+a22 1
+  use PRINTIT_M, only: MLSMSG_WARNING, PRINTITOUT
+d35 3
+a37 2
+! begin                   announce the time of day of starting
+! finish                  announce the time of day and CPU time of finishing
+d91 1
+a91 1
+  public :: begin, finish, &
+d98 5
+a118 12
+  ! This is the time configuration type
+  public :: time_config_t
+  type time_config_t
+    integer, dimension(8) :: starttime = -1  ! Reset on first call to time_now
+    integer          :: startdaysoff = 0
+    ! Divide by this before returning time_now or waiting
+    integer          :: time_divisor = 1  
+    logical          :: use_wall_clock = .false.
+    integer          :: wait_time = 100 ! How many mus to sleep waiting for event
+    logical          :: wallClockIsElapsedFromStart = .true. ! return 0 for 1st call
+  end type time_config_t
+
+d128 2
+a129 1
+  ! This is the sayTime configuration type
+a131 2
+    real                 :: startT1 = 0.
+    logical              :: sayUnits = .false.
+d133 4
+a136 2
+    character(len=16)    :: Preamble = ''  ! Instead of 'Timing for' at start
+    character(len=16)    :: Coda = ''      ! Print at end of line
+d139 12
+a157 2
+  ! logical, parameter :: WALLCLOCKISELAPSEDFROMSTART = .true.
+
+d176 1
+a176 1
+    use HIGHOUTPUT, only: OUTPUT_DATE_AND_TIME
+d182 1
+a182 1
+    call output_date_and_time ( msg=show )
+d185 26
+d213 1
+a213 1
+    use HIGHOUTPUT, only: OUTPUT_DATE_AND_TIME
+d219 1
+a219 1
+    call output_date_and_time ( msg=show, &
+d329 1
+a329 1
+  use output_m, only: blanks, newLine, output
+d527 1
+a527 1
+       "$Id: time_m.f90,v 2.18 2016/11/03 20:54:51 pwagner Exp $"
+d537 3
+@
+
+
+2.18
+log
+@Added sayTime and configureSayTime
+@
+text
+@d29 4
+d34 1
+d37 1
+a37 3
+
+! retry_config_t          retry configuration type
+! time_config_t           time configuration type
+d59 1
+a59 1
+!                         (/ year,month,day,t-t_utc,hour,minutes,s,ms /)
+d76 4
+a79 2
+! sayTime ( [char* Operation], [real t1], [real t2] )
+! configureSayTime ( [real t1], [char timingUnits] )
+d90 2
+a91 2
+  public :: BEGIN, FINISH, &
+   & INIT_RETRY, MS_to_HMS, RETRY, RETRY_SUCCESS, &
+d93 3
+a95 3
+   & TIME_NOW, TIME_NOW_D, TIME_NOW_S, &
+   & TOO_MANY_RETRIES, TRY_AGAIN, &
+   & WAIT, WAIT_FOR_EVENT
+d140 2
+a141 1
+    character(len=16)    :: Preamble = ''
+d157 2
+a158 1
+  double precision, private :: Start_CPU_time
+d169 2
+a170 1
+    ! Announce the time of day of starting
+d173 1
+d175 2
+d185 1
+d187 1
+d189 2
+a190 1
+      & CPU_seconds = finish_CPU_time - start_CPU_time )
+d299 3
+a301 1
+  ! Print stepwise and cumulative time usage
+d309 1
+a309 1
+    logical                                :: myCumulative 
+d345 2
+d359 2
+d365 1
+a365 1
+  subroutine configureSayTime ( t1, units, reset, showTimingUnits, Preamble )
+d372 1
+d384 2
+a385 1
+    if ( present(Preamble) ) sayTime_config%Preamble = units
+d496 1
+a496 1
+       "$Id: time_m.f90,v 2.17 2016/02/29 19:48:12 pwagner Exp $"
+d506 3
+@
+
+
+2.17
+log
+@Usleep got from machine module instead of being an external
+@
+text
+@d21 1
+d51 3
+a53 1
+! set_starttime            Explicitly set start time in time_config_t
+d73 3
+a75 1
+! set_starttime ( real values(8) )
+d86 2
+a87 1
+   & INIT_RETRY, MS_to_HMS, RETRY, RETRY_SUCCESS, SET_STARTTIME, &
+d129 9
+d149 1
+d282 85
+a366 1
+  subroutine SET_STARTTIME ( VALUES )
+d383 1
+a383 1
+  end subroutine SET_STARTTIME
+d474 1
+a474 1
+       "$Id: time_m.f90,v 2.16 2015/07/14 23:12:20 pwagner Exp $"
+d484 3
+@
+
+
+2.16
+log
+@Added family of routines to wait for events
+@
+text
+@d20 1
+d374 1
+a374 1
+       "$Id: time_m.f90,v 2.15 2014/12/09 00:26:01 vsnyder Exp $"
+d384 3
+@
+
+
+2.15
+log
+@Add MS_to_HMS
+@
+text
+@d60 1
+d72 3
+d83 1
+a83 1
+   & WAIT
+d95 6
+d109 1
+a109 2
+    logical          :: wait_means_sleep = .true.
+    integer          :: wait_loop_limits = 100
+d308 62
+d373 1
+a373 1
+       "$Id: time_m.f90,v 2.14 2014/01/09 00:24:29 pwagner Exp $"
+d383 3
+@
+
+
+2.14
+log
+@Some procedures formerly in output_m now got from highOutput
+@
+text
+@d17 1
+a17 1
+! seconds since midnight.
+d76 1
+a76 1
+   & INIT_RETRY, RETRY, RETRY_SUCCESS, SET_STARTTIME, &
+d175 13
+d302 1
+a302 1
+       "$Id: time_m.f90,v 2.13 2013/08/28 00:37:14 pwagner Exp $"
+d312 3
+@
+
+
+2.13
+log
+@Moved more stuff from MLSMessage down to PrintIt module
+@
+text
+@d137 1
+a137 1
+    use Output_m, only: OUTPUT_DATE_AND_TIME
+d145 1
+a145 1
+    use Output_m, only: OUTPUT_DATE_AND_TIME
+d289 1
+a289 1
+       "$Id: time_m.f90,v 2.12 2013/06/12 02:15:56 vsnyder Exp $"
+d299 3
+@
+
+
+2.12
+log
+@Cruft removal
+@
+text
+@d19 2
+a20 2
+  use dates_module, only: yyyymmdd_to_dai
+  use MLSMessageModule, only: MLSMSG_Warning, MLSMessage
+d137 1
+a137 1
+    use Output_m, only: Output_Date_and_Time
+d145 1
+a145 1
+    use Output_m, only: Output_Date_and_Time
+d160 3
+a162 2
+      call MLSMessage( MLSMSG_Warning, ModuleName, &
+       "both args supplied in call to init_retry--only FAILED_RESULT effective")
+d289 1
+a289 1
+       "$Id: time_m.f90,v 2.11 2012/04/20 01:27:53 vsnyder Exp $"
+d299 3
+@
+
+
+2.11
+log
+@Add Begin, Finish, some cannonball polishing
+@
+text
+@d145 1
+a145 1
+    use Output_m, only: Output, Output_Date_and_Time
+d288 1
+a288 1
+       "$Id: time_m.f90,v 2.10 2009/06/23 18:25:44 pwagner Exp $"
+d298 3
+@
+
+
+2.10
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d28 3
+d63 2
+d75 5
+a79 4
+  public :: TIME_NOW, TIME_NOW_D, TIME_NOW_S, &
+   & WAIT, RETRY, INIT_RETRY, &
+   & TRY_AGAIN, RETRY_SUCCESS, TOO_MANY_RETRIES, &
+   & SET_STARTTIME
+d122 1
+d124 2
+a125 1
+  type(retry_config_t), public, save :: retry_config
+d129 1
+a129 1
+       "$RCSfile: $"
+d135 17
+a151 42
+  subroutine TIME_NOW_D ( T, INVALUES )
+    integer, parameter :: RK = kind(0.0d0)
+    integer, dimension(8), intent(in), optional :: INVALUES
+    include "time_now.f9h"
+  end subroutine TIME_NOW_D
+
+  subroutine TIME_NOW_S ( T, INVALUES )
+    integer, parameter :: RK = kind(0.0e0)
+    integer, dimension(8), intent(in), optional :: INVALUES
+    include "time_now.f9h"
+  end subroutine TIME_NOW_S
+
+  subroutine WAIT_D ( T, ERR )
+    integer, parameter :: RK = kind(0.0d0)
+    real(rk), intent(in) :: T
+    include "wait.f9h"
+  end subroutine WAIT_D
+
+  subroutine WAIT_S ( T, ERR )
+    integer, parameter :: RK = kind(0.0e0)
+    real(rk), intent(in) :: T
+    include "wait.f9h"
+  end subroutine WAIT_S
+
+  subroutine SET_STARTTIME ( VALUES )
+    integer, dimension(8), intent(in) :: VALUES
+    character (len=8) :: date   ! in yyyymmdd format
+    character (len=4) :: yyyy
+    character ( len=2) :: mm, dd
+    time_config%starttime = values
+    write(yyyy, '(i4)') values(1)
+    write(mm, '(i2)') values(2)
+    write(dd, '(i2)') values(3)
+    date = yyyy // mm // dd
+    call yyyymmdd_to_dai(date, time_config%startdaysoff)
+    ! print *, 'values: ', values
+    ! print *, 'yyyy: ', yyyy
+    ! print *, 'mm: ', mm
+    ! print *, 'dd: ', dd
+    ! print *, 'date: ', date
+    ! print *, 'startdaysoff: ', startdaysoff
+  end subroutine SET_STARTTIME
+d242 43
+d288 1
+a288 1
+       "$Id: read_apriori.f90 is it here $"
+d298 3
+@
+
+
+2.9
+log
+@Improved cofiguration; wait means sleep
+@
+text
+@d121 1
+a121 1
+       "$RCSfile: time_m.f90,v $"
+d259 1
+a260 1
+!---------------------------- RCS Ident Info -------------------------------
+d262 2
+a263 3
+       "$Id: time_m.f90,v 2.8 2005/09/22 23:36:34 pwagner Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d265 1
+a265 1
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
+d267 1
+d272 3
+@
+
+
+2.8
+log
+@time_config and retry_config now hold config settings
+@
+text
+@d21 1
+a21 1
+  implicit NONE
+d24 46
+d90 2
+a91 1
+    integer          :: time_divisor = 1  ! Divide by this before returning result
+d93 1
+d95 1
+d107 1
+d114 1
+a114 1
+  logical, parameter :: WALLCLOCKISELAPSEDFROMSTART = .true.
+d262 1
+a262 1
+       "$Id: time_m.f90,v 2.7 2005/06/22 17:25:51 pwagner Exp $"
+d266 1
+d272 3
+@
+
+
+2.7
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d19 2
+a20 1
+  use MLSStringLists, only: yyyymmdd_to_dai
+d24 3
+a26 3
+  public :: TIME_NOW, TIME_NOW_D, TIME_NOW_S, USE_WALL_CLOCK, &
+   & WAIT, WAIT_LOOP_LIMITS, RETRY, INIT_RETRY, &
+   & TRY_AGAIN, RETRY_SUCCESS, TOO_MANY_RETRIES, TIME_DIVISOR, &
+d39 21
+a59 9
+  integer, dimension(8), save :: STARTTIME = -1  ! Reset on first call to time_now
+  integer, save          :: STARTDAYSOFF = 0
+  integer, save :: TIME_DIVISOR = 1  ! Divide by this before returning result
+  logical, save :: USE_WALL_CLOCK = .false.
+  integer, save :: WAIT_LOOP_LIMITS = 100
+  integer, save :: TRY_NUMBER
+  integer, save :: RETRY_SUCCESSFUL_RESULT, RETRY_FAILED_RESULT
+  integer, parameter :: RETRY_SUCCESSFUL_DEFAULT = 0
+  integer, parameter :: RETRY_FAILED_DEFAULT = 999
+a62 1
+  real, save    :: INIT_T0
+d65 3
+a67 1
+  ! integer :: daysoff
+d71 1
+a71 1
+       "$RCSfile: $"
+d106 1
+a106 1
+    STARTTIME = VALUES
+d111 1
+a111 1
+    call yyyymmdd_to_dai(date, startdaysoff)
+d123 6
+a128 9
+    ! As long as RETRY_FAILED_RESULT is default, try for success
+    ! If not default, will try for any value != RETRY_FAILED_RESULT
+    RETRY_FAILED_RESULT = RETRY_FAILED_DEFAULT  
+    if ( present(SUCCESSFUL_RESULT) ) then
+      RETRY_SUCCESSFUL_RESULT = SUCCESSFUL_RESULT
+    elseif ( present(FAILED_RESULT) ) then
+      RETRY_FAILED_RESULT = FAILED_RESULT
+    else
+      RETRY_SUCCESSFUL_RESULT = RETRY_SUCCESSFUL_DEFAULT
+d130 6
+d137 2
+a138 2
+    call time_now (INIT_T0)
+    TRY_NUMBER = 0
+d170 2
+d174 1
+a174 1
+    if ( RETRY_FAILED_RESULT == RETRY_FAILED_DEFAULT ) then
+d176 1
+a176 1
+      if ( TRIAL_VALUE == RETRY_SUCCESSFUL_RESULT ) then
+d183 1
+a183 1
+      if ( TRIAL_VALUE /= RETRY_FAILED_RESULT ) then
+d191 1
+a191 1
+      if ( TRY_NUMBER > MAX_RETRIES ) then
+d199 1
+a199 1
+      if ( t1-init_t0 > MAX_RETRYING_TIME ) then
+d205 1
+a205 1
+    TRY_NUMBER = TRY_NUMBER + 1
+d212 1
+a212 1
+       "$Id: $"
+d221 3
+@
+
+
+2.6
+log
+@Much moved from MLSStrings to MLSStringLists
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d55 1
+a55 4
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
+       "$Id: time_m.f90,v 2.5 2003/12/07 23:12:14 pwagner Exp $"
+  character (len=len(idParm)), private :: Id = idParm
+d57 1
+a57 1
+       "$RCSfile: time_m.f90,v $"
+d191 5
+d202 3
+@
+
+
+2.5
+log
+@wall clock is now time elapsed from start; may set start time
+@
+text
+@d11 1
+a11 1
+  use MLSStrings, only: yyyymmdd_to_dai
+d49 1
+a49 1
+       "$Id: time_m.f90,v 2.4 2003/12/05 00:53:26 pwagner Exp $"
+d192 3
+@
+
+
+2.4
+log
+@Added possible TIME_DIVISOR to scale results from time_now
+@
+text
+@d17 2
+a18 1
+   & TRY_AGAIN, RETRY_SUCCESS, TOO_MANY_RETRIES, TIME_DIVISOR
+d30 2
+a31 1
+  integer, dimension(3), save :: STARTTIME = -1  ! Reset on first call to time_now
+d43 3
+d49 1
+a49 1
+       "$Id: time_m.f90,v 2.3 2002/10/08 00:09:15 pwagner Exp $"
+d58 1
+a58 1
+  subroutine TIME_NOW_D ( T )
+d60 1
+d64 1
+a64 1
+  subroutine TIME_NOW_S ( T )
+d66 1
+d82 19
+d192 3
+@
+
+
+2.3
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+d11 1
+d17 1
+a17 1
+   & TRY_AGAIN, RETRY_SUCCESS, TOO_MANY_RETRIES
+d29 2
+d44 1
+a44 1
+       "$Id: time_m.f90,v 2.2 2002/08/27 23:05:25 pwagner Exp $"
+d166 3
+@
+
+
+2.2
+log
+@Added wait and retry
+@
+text
+@d41 1
+a41 1
+       "$Id: time_m.f90,v 2.1 2001/11/09 22:45:30 vsnyder Exp $"
+d45 1
+d156 4
+d163 3
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d14 3
+a16 1
+  public :: TIME_NOW, TIME_NOW_D, TIME_NOW_S, USE_WALL_CLOCK
+d23 5
+d29 9
+d41 1
+a41 1
+       "$Id: MatrixModule_0.f90,v 2.58 2001/11/09 18:12:09 livesey Exp $"
+d44 1
+a44 1
+       "$RCSfile: MatrixModule_0.f90,v $"
+d59 96
+d157 4
+a160 1
+!$Log: $
+@
+

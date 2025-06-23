@@ -1,0 +1,67 @@
+head	1.2;
+access;
+symbols
+	V0_1:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2001.01.31.01.14.50;	author zvi;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2000.06.21.21.56.11;	author zvi;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@No longer needed
+@
+text
+@module D_LINTRP_M
+  use D_HUNT_M, only: HUNT
+  implicit NONE
+  private
+  public D_LINTRP, LINTRP
+  interface LINTRP; module procedure D_LINTRP; end interface
+!---------------------------- RCS Ident Info -------------------------------
+  CHARACTER (LEN=256) :: Id = &
+       "$Id: d_lintrp_m.f90,v 1.1 2000/06/21 21:56:11 zvi Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= &
+       "$RCSfile: d_lintrp_m.f90,v $"
+!---------------------------------------------------------------------------
+  integer, private, parameter :: RK = kind(0.0d0)
+contains
+  subroutine D_LINTRP ( XIN, XOUT, YIN, YOUT, NIN, NOUT )
+    include 'lintrp.f9h'
+  end subroutine D_LINTRP
+end module D_LINTRP_M
+! $Log: d_lintrp_m.f90,v $
+! Revision 1.1  2000/06/21 21:56:11  zvi
+! First version D.P.
+!
+! Revision 1.1  2000/05/04 18:12:04  vsnyder
+! Initial conversion to Fortran 90
+!
+@
+
+
+1.1
+log
+@First version D.P.
+@
+text
+@d9 1
+a9 1
+       "$Id: d_lintrp_m.f90,v 1.1 2000/05/04 18:12:04 vsnyder Exp $"
+d20 3
+@
+

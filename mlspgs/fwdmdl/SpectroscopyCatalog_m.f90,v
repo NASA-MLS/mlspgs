@@ -1,0 +1,5920 @@
+head	2.67;
+access;
+symbols
+	v5-02-NRT-19:2.67
+	v6-00:2.67
+	v5-02-NRT-18:2.67
+	v5-02:2.67
+	v5-01-NRT-17:2.67
+	v5-01-NRT-16:2.67
+	v5-01-NRT-15:2.67
+	v5-01-NRT-14:2.67
+	neuralnetworks-1-0:2.67.0.4
+	cfm-single-freq-0-1:2.67.0.2
+	v5-01:2.67
+	v5-00:2.67
+	v4-23-TA133:2.66.0.2
+	mus-emls-1-70:2.64.0.4
+	rel-1-0-englocks-work:2.64.0.2
+	VUMLS1-00:2.64
+	VPL1-00:2.64
+	V4-22-NRT-08:2.64
+	VAM1-00:2.64
+	V4-21:2.63.0.2
+	V4-13:2.63
+	V4-12:2.62
+	V4-11:2.61
+	V4-10:2.61
+	V3-43:2.48
+	M4-00:2.55
+	V3-41:2.48
+	V3-40-PlusGM57:2.48.0.2
+	V2-24-NRT-04:2.43
+	V3-33:2.49
+	V2-24:2.43
+	V3-31:2.49
+	V3-30-NRT-05:2.49
+	cfm-01-00:2.49
+	V3-30:2.48
+	V3-20:2.48
+	V3-10:2.47
+	V2-23-NRT-02:2.43
+	V2-23:2.43
+	V2-22-NRT-01:2.43
+	V2-22:2.43
+	V2-21:2.43
+	V2-20:2.43
+	V2-11:2.43
+	V2-10:2.43
+	V2-00:2.42
+	V1-51:2.31
+	V1-50:2.31
+	V1-45:2.25
+	V1-44:2.25
+	V1-43:2.22
+	V1-32:2.19
+	V1-31:2.19
+	V1-30:2.19
+	V1-13:2.13
+	V1-12:2.13
+	V1-11:2.13
+	V1-10:2.11
+	newfwm-feb03:2.11.0.2
+	V1-04:2.9
+	V1-03:2.9
+	V1-02:2.9
+	JointForwardModel:2.9.0.2
+	V1-00:2.9
+	newfwm-sep01:1.8.0.2
+	V0-7:1.8
+	V0-5-Level2:1.7
+	V0-5-SIPS:1.3;
+locks; strict;
+comment	@# @;
+
+
+2.67
+date	2019.09.05.17.46.22;	author pwagner;	state Exp;
+branches;
+next	2.66;
+
+2.66
+date	2018.08.06.19.55.19;	author vsnyder;	state Exp;
+branches;
+next	2.65;
+
+2.65
+date	2018.08.04.02.10.00;	author vsnyder;	state Exp;
+branches;
+next	2.64;
+
+2.64
+date	2015.03.28.02.06.01;	author vsnyder;	state Exp;
+branches;
+next	2.63;
+
+2.63
+date	2014.09.05.20.53.50;	author vsnyder;	state Exp;
+branches;
+next	2.62;
+
+2.62
+date	2014.07.18.23.15.26;	author pwagner;	state Exp;
+branches;
+next	2.61;
+
+2.61
+date	2014.04.22.00.37.51;	author vsnyder;	state Exp;
+branches;
+next	2.60;
+
+2.60
+date	2014.04.04.19.36.54;	author vsnyder;	state Exp;
+branches;
+next	2.59;
+
+2.59
+date	2013.11.06.22.15.08;	author pwagner;	state Exp;
+branches;
+next	2.58;
+
+2.58
+date	2013.10.16.01.14.39;	author vsnyder;	state Exp;
+branches;
+next	2.57;
+
+2.57
+date	2013.08.30.03.56.23;	author vsnyder;	state Exp;
+branches;
+next	2.56;
+
+2.56
+date	2013.06.12.02.23.45;	author vsnyder;	state Exp;
+branches;
+next	2.55;
+
+2.55
+date	2012.07.31.00.45.49;	author vsnyder;	state Exp;
+branches;
+next	2.54;
+
+2.54
+date	2012.05.08.01.34.29;	author vsnyder;	state Exp;
+branches;
+next	2.53;
+
+2.53
+date	2011.11.11.00.42.06;	author vsnyder;	state Exp;
+branches;
+next	2.52;
+
+2.52
+date	2011.11.09.00.20.42;	author vsnyder;	state Exp;
+branches;
+next	2.51;
+
+2.51
+date	2011.10.25.22.14.33;	author pwagner;	state Exp;
+branches;
+next	2.50;
+
+2.50
+date	2011.05.09.17.55.12;	author pwagner;	state Exp;
+branches;
+next	2.49;
+
+2.49
+date	2010.04.29.22.51.36;	author honghanh;	state Exp;
+branches;
+next	2.48;
+
+2.48
+date	2009.08.20.19.46.40;	author vsnyder;	state Exp;
+branches;
+next	2.47;
+
+2.47
+date	2009.06.23.18.26.10;	author pwagner;	state Exp;
+branches;
+next	2.46;
+
+2.46
+date	2008.09.03.20.07.28;	author pwagner;	state Exp;
+branches;
+next	2.45;
+
+2.45
+date	2008.05.02.00.45.48;	author vsnyder;	state Exp;
+branches;
+next	2.44;
+
+2.44
+date	2008.04.01.16.59.17;	author pwagner;	state Exp;
+branches;
+next	2.43;
+
+2.43
+date	2006.07.21.00.17.01;	author vsnyder;	state Exp;
+branches;
+next	2.42;
+
+2.42
+date	2006.02.03.01.54.04;	author vsnyder;	state Exp;
+branches;
+next	2.41;
+
+2.41
+date	2005.06.22.18.08.20;	author pwagner;	state Exp;
+branches;
+next	2.40;
+
+2.40
+date	2005.04.19.19.13.41;	author livesey;	state Exp;
+branches;
+next	2.39;
+
+2.39
+date	2005.03.17.01.31.11;	author vsnyder;	state Exp;
+branches;
+next	2.38;
+
+2.38
+date	2005.03.03.23.56.18;	author vsnyder;	state Exp;
+branches;
+next	2.37;
+
+2.37
+date	2005.03.03.02.02.47;	author vsnyder;	state Exp;
+branches;
+next	2.36;
+
+2.36
+date	2005.01.20.02.28.45;	author vsnyder;	state Exp;
+branches;
+next	2.35;
+
+2.35
+date	2005.01.13.01.32.24;	author vsnyder;	state Exp;
+branches;
+next	2.34;
+
+2.34
+date	2005.01.12.03.10.00;	author vsnyder;	state Exp;
+branches;
+next	2.33;
+
+2.33
+date	2005.01.03.18.56.31;	author pwagner;	state Exp;
+branches;
+next	2.32;
+
+2.32
+date	2004.12.31.02.40.44;	author vsnyder;	state Exp;
+branches;
+next	2.31;
+
+2.31
+date	2004.12.13.20.44.22;	author vsnyder;	state Exp;
+branches;
+next	2.30;
+
+2.30
+date	2004.11.16.03.05.18;	author vsnyder;	state Exp;
+branches;
+next	2.29;
+
+2.29
+date	2004.11.04.03.56.35;	author vsnyder;	state Exp;
+branches;
+next	2.28;
+
+2.28
+date	2004.11.04.03.40.42;	author vsnyder;	state Exp;
+branches;
+next	2.27;
+
+2.27
+date	2004.11.01.20.26.35;	author vsnyder;	state Exp;
+branches;
+next	2.26;
+
+2.26
+date	2004.09.16.18.35.02;	author vsnyder;	state Exp;
+branches;
+next	2.25;
+
+2.25
+date	2004.08.07.00.34.57;	author vsnyder;	state Exp;
+branches;
+next	2.24;
+
+2.24
+date	2004.08.03.02.27.05;	author vsnyder;	state Exp;
+branches;
+next	2.23;
+
+2.23
+date	2004.07.08.02.47.44;	author vsnyder;	state Exp;
+branches;
+next	2.22;
+
+2.22
+date	2004.04.02.23.58.33;	author vsnyder;	state Exp;
+branches;
+next	2.21;
+
+2.21
+date	2004.04.02.01.00.01;	author vsnyder;	state Exp;
+branches;
+next	2.20;
+
+2.20
+date	2004.01.09.07.25.20;	author livesey;	state Exp;
+branches;
+next	2.19;
+
+2.19
+date	2003.07.15.18.17.31;	author livesey;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2003.05.21.22.14.53;	author vsnyder;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2003.05.19.19.58.07;	author vsnyder;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2003.05.16.23.50.42;	author livesey;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2003.05.10.22.20.57;	author livesey;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2003.05.05.23.00.25;	author livesey;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2003.02.27.18.09.04;	author bill;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2003.02.27.03.25.06;	author vsnyder;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2002.12.03.01.26.41;	author vsnyder;	state Exp;
+branches
+	2.11.2.1;
+next	2.10;
+
+2.10
+date	2002.10.08.17.08.06;	author pwagner;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2002.01.08.01.02.03;	author livesey;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2001.11.09.23.20.17;	author vsnyder;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2001.10.18.23.53.03;	author livesey;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2001.10.15.18.10.37;	author livesey;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2001.10.09.22.38.41;	author livesey;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2001.09.19.04.38.48;	author livesey;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2001.09.18.01.25.48;	author livesey;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2001.09.18.01.23.34;	author livesey;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.09.18.00.08.25;	author livesey;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2001.09.17.20.26.26;	author livesey;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2001.05.26.00.22.19;	author livesey;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2001.05.03.22.10.15;	author vsnyder;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2001.04.26.02.36.52;	author vsnyder;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2001.04.23.23.16.16;	author vsnyder;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.04.20.17.26.31;	author vsnyder;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2001.04.04.23.56.46;	author zvi;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.04.04.23.21.46;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.04.04.02.09.16;	author vsnyder;	state Exp;
+branches;
+next	;
+
+2.11.2.1
+date	2003.02.22.00.49.58;	author vsnyder;	state Exp;
+branches;
+next	2.11.2.2;
+
+2.11.2.2
+date	2003.02.26.00.01.55;	author vsnyder;	state Exp;
+branches;
+next	2.11.2.3;
+
+2.11.2.3
+date	2003.02.26.02.32.38;	author vsnyder;	state Exp;
+branches;
+next	2.11.2.4;
+
+2.11.2.4
+date	2003.02.27.23.20.00;	author vsnyder;	state Exp;
+branches;
+next	2.11.2.5;
+
+2.11.2.5
+date	2003.03.01.03.16.51;	author vsnyder;	state Exp;
+branches;
+next	2.11.2.6;
+
+2.11.2.6
+date	2003.03.12.21.24.54;	author vsnyder;	state Exp;
+branches;
+next	2.11.2.7;
+
+2.11.2.7
+date	2003.03.13.00.27.30;	author vsnyder;	state Exp;
+branches;
+next	2.11.2.8;
+
+2.11.2.8
+date	2003.04.24.21.56.27;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.67
+log
+@Print more info if Spectroscopy file not found
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module SpectroscopyCatalog_m
+
+! Process the Spectroscopy section.  Read the "old format" spectroscopy catalog
+
+  use Intrinsic, only: L_None, L_HDF
+  use MLSKinds, only: R8
+  use MLSCommon, only: MLSFile_t
+  use MLSFiles, only: HDFVersion_5, &
+    & InitializeMLSFile, MLS_CloseFile, MLS_OpenFile
+  use Molecules, only: First_Molecule, Last_Molecule
+  use Spectroscopy_Types, only: Get_C_Loc, Line_t, Lines, Catalog_t, &
+    & MaxContinuum, AddLineToDatabase
+
+  ! More USEs below in each procedure.
+
+  implicit none
+
+  private
+  ! Public procedures:
+  public :: Spectroscopy, SearchByQN
+  public :: Destroy_Line_Database, Destroy_SpectCat_Database
+  public :: Dump_Lines_Database, Dump_SpectCat_Database, Dump_SpectCat_item
+  public :: Dump
+  public :: ReadIsotopeRatios, Read_Spectroscopy, Write_Spectroscopy
+
+  ! Public types:
+  public :: Line_T, Catalog_T ! From Spectroscopy_Types
+
+  interface DUMP
+    module procedure Dump_Line, Dump_SpectCat_Database, Dump_SpectCat_Database_2d
+    module procedure Dump_SpectCat_Item
+  end interface
+
+  type(catalog_T), public, parameter :: Empty_Cat = catalog_t ( &
+    & 0.0_r8, 1.0, NULL(), 0.0_r8, l_none, NULL(), 0.0_r8, -1 )
+
+  ! Public Variables:
+  ! The spectroscopy database:
+  type(catalog_T), public, save :: Catalog(first_molecule:last_molecule)
+
+  public :: Lines             ! From Spectroscopy_Types
+
+  ! String index of file from which spectroscopy database is read, 0 = L2CF
+  integer, public, save :: SpectroscopyFile = 0
+
+  ! Greatest number of lines in any catalog entry:
+  integer, public, save :: MostLines = 0
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: SpectroscopyCatalog_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains ! =====  Public Procedures  ===================================
+
+  ! -----------------------------------------------  Spectroscopy  -----
+  subroutine Spectroscopy ( Root, Toolkit, pcfID, FileDatabase )
+  ! Process the spectroscopy section.
+
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test, &
+      & Test_Allocate, Test_Deallocate
+    ! We need a lot of names from Init_Spectroscopy_Module.  First, the spec
+    ! ID's:
+    use Evaluate_Variable_m, only: Evaluate_Variable
+    use Init_Spectroscopy_m, only: S_Line, S_Spectra, S_ReadSpectroscopy, &
+      & S_ReadIsotopeRatios, S_WriteSpectroscopy, &
+    ! NOW THE FIELDS:
+      & First_Spectroscopy_Field, Last_Spectroscopy_Field, &
+      & F_Continuum, F_Delta, F_DefaultIsotopeRatio, &
+      & F_EL, F_EMLSSignals, F_EMLSSignalsPol, F_Gamma, F_Lines, F_Mass, &
+      & F_Molecule, F_XPTL1Signals, F_N, F_N1, F_N2, F_NS, F_PS, F_Qlog, F_QN, &
+      & F_Signals, F_SignalsPol, F_STR, F_UMLSSignals, F_V0, F_W
+    use INTRINSIC, only: L_EMLS, L_UMLS, L_XPTL1, &
+      & PHYQ_Dimless => PHYQ_Dimensionless, PHYQ_Frequency, S_Time
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use MLSStringLists, only: SwitchDetail
+    use MoreTree, only: Get_Field_ID, Get_Spec_ID
+    use Parse_Signal_m, only: Parse_Signal
+    use String_Table, only: Get_String
+    use Time_m, only: Time_Now
+    use Toggles, only: Gen, Switches, Toggle
+    use Trace_m, only: Trace_Begin, Trace_End
+    use Tree, only: Decorate, Decoration, Node_ID, NSons, Sub_Rosa, SubTree
+    use Tree_Types, only: N_Named, N_String, N_Variable
+    use MLSSignals_m, only: Instrument
+
+    ! Dummy argument
+    integer, intent(in) :: Root         ! Of the AST for the section
+    logical, intent(in) :: toolkit      ! Do we use the toolkit panoply
+    integer, intent(in) :: pcfID        ! What pcfid if we do
+    type (MLSFile_T), dimension(:), pointer ::     FileDatabase
+
+    ! Local Variables
+    integer(c_intptr_t) :: Addr         ! For tracing
+    integer :: Error                    ! /= 0 => An error occured
+    ! character(len=1023) :: FileName     ! For WriteSpectroscopy
+    character(len=31) :: FileType
+    logical :: Got(first_Spectroscopy_Field:last_Spectroscopy_Field)
+    logical :: GotLines, GotMass        ! Got a "lines" or "mass" field
+    integer :: I, J, K, L               ! Loop inductors, Subscripts
+    integer :: IsotopeRatiosFile = 0
+    integer :: Key                      ! Index of spec_arg
+    integer :: Me = -1                  ! String index for trace
+    type (MLSFile_T), pointer   :: MLSFile
+    integer :: Molecule                 ! Molecule for which the catalog applies
+    integer :: Name                     ! Index of name in string table
+    integer :: NoSignals                ! For the bands part
+    integer :: NumLines                 ! Number of lines in catalog
+    integer :: OffsetLines              ! Number of lines previously in catalog
+    real(r8) :: QN                      ! for call to expr_check for QN field
+    integer :: S                        ! Size in bytes of an object to deallocate
+    integer :: Sideband                 ! A single sideband
+    integer :: SignalsNode              ! Tree node for emls/umls bands
+    integer :: SignalsNodePol           ! Tree node for emls/umls bands for
+                                        ! Zeeman-split lines
+    integer, dimension(:), pointer :: SIGInds ! From Parse_signal
+    character ( len=80 ) :: SIGName     ! The signal
+    integer :: Son                      ! Of root or key
+    integer :: Status                   ! From Allocate or Deallocate
+    type(line_t), allocatable :: TempLines(:)
+    integer :: TheSignal                ! SubRosa for a signal
+    integer :: ThisMany                 ! Conted up to noSignals
+    logical :: Timing                   ! For S_Time
+    real :: T1, T2                      ! For S_Time
+    real(r8) :: Value                   ! From Expr_Check
+
+    ! Error message codes
+    integer, parameter :: ConflictingSignals = 1       ! more than one of
+                                        ! signals, emlsSignals, and umlsSignals,
+                                        ! or more than one of signalsPol and
+                                        ! emlsSignalsPol
+    integer, parameter :: DupSpectra = conflictingSignals + 1 ! Duplicate s_spectra
+    integer, parameter :: Negative = dupSpectra + 1    ! Parameter is negative
+    integer, parameter :: No_Mass = negative + 1       ! Lines field but no mass field
+    integer, parameter :: NotInt = no_mass + 1         ! QN not an integer
+    integer, parameter :: NotListedSignal = NotInt + 1 ! Polarized signal is not
+                                        ! listed as emlsSignal
+    integer, parameter :: QN_wrong_size = NotListedSignal + 1  ! The number of
+                                        ! elements of the QN field is not equal
+                                        ! to twice the low-order decimal digit
+                                        ! of the first element, plus 1.
+    integer, parameter :: TooBig = QN_wrong_size + 1   ! Too many elements
+    integer, parameter :: WrongSize = TooBig + 1       ! Wrong number of elements
+    integer, parameter :: WrongUnits = wrongSize + 1   ! Wrong physical units
+
+    call trace_begin ( me, "Spectroscopy", root, cond=toggle(gen) )
+    
+    error = 0
+    timing = .false.
+
+    ! Determine size of created or expanded lines database.
+    offsetLines = 0
+    if ( allocated(lines) ) offsetLines = size(lines)
+    numLines = offsetLines
+    do i = 2, nsons(root)-1             ! Skip names of section
+      son = subtree(i,root)
+      if ( node_id(son) == n_variable ) then
+        call evaluate_variable ( son )
+      else
+        key = merge( subtree(2,son), son, node_id(son) == n_named )
+        if ( get_spec_id(key) == s_line ) numLines = numLines + 1
+      end if
+    end do
+
+    ! Create or expand the Lines database
+    allocate ( tempLines(numLines), stat=status )
+    addr = 0
+    if ( status == 0 .and. numLines > 0 ) addr = get_c_loc(tempLines)
+    call test_allocate ( status, moduleName, "TempLines", ubounds=numLines, &
+      & elementSize = storage_size(tempLines) / 8, address=addr )
+    if ( allocated(lines) ) then
+      tempLines(:offsetLines) = lines
+      s = size(lines) * storage_size(lines) / 8
+      addr = 0
+      if ( s > 0 ) addr = get_c_loc(lines)
+      deallocate ( lines, stat=status )
+      call test_deallocate ( status, moduleName, "TempLines", s, address=addr )
+    end if
+    call move_alloc ( tempLines, lines )
+
+    numLines = offsetLines
+    do i = 2, nsons(root)-1             ! Skip names of section
+      son = subtree(i,root)
+      if ( node_id(son) == n_named ) then
+        name = sub_rosa(subtree(1,son))
+        key = subtree(2,son)
+      else
+        name = 0
+        key = son
+      end if
+      select case ( get_spec_id(key) )
+      case ( s_line ) ! ...................................  LINE  .....
+        got = .false. ! "Got a field?"
+        numLines = numLines + 1
+        lines(numLines)%line_Name = name
+        signalsNode = 0
+        signalsNodePol = 0
+        do j = 2, nsons(key)
+          son = subtree(j,key)
+          select case ( get_field_id(son) )
+          case ( f_delta )
+            call expr_check ( subtree(2,son), lines(numLines)%delta, phyq_dimless )
+          case ( f_el )
+            call expr_check ( subtree(2,son), lines(numLines)%el, phyq_dimless )
+            if ( lines(numLines)%el < 0.0_r8 ) call announce_error ( son, negative )
+          case ( f_emlsSignals )
+            if ( instrument == l_emls ) signalsNode = son
+          case ( f_emlsSignalsPol )
+            if ( instrument == l_emls ) signalsNodePol = son
+          case ( f_gamma )
+            call expr_check ( subtree(2,son), lines(numLines)%gamma, phyq_dimless )
+          case ( f_n )
+            call expr_check ( subtree(2,son), lines(numLines)%n, phyq_dimless )
+          case ( f_n1 )
+            call expr_check ( subtree(2,son), lines(numLines)%n1, phyq_dimless )
+          case ( f_n2 )
+            call expr_check ( subtree(2,son), lines(numLines)%n2, phyq_dimless )
+          case ( f_ns )
+            call expr_check ( subtree(2,son), lines(numLines)%ns, phyq_dimless )
+          case ( f_ps )
+            call expr_check ( subtree(2,son), lines(numLines)%ps, phyq_dimless )
+          case ( f_qn )
+            l = nsons(son)
+            call allocate_test ( lines(numLines)%qn, l-1, 'qn', ModuleName )
+            ! Collect the elements of the QN field.  The first one is the
+            ! format, from the JPL catalog.  The low-order decimal digit of the
+            ! format is the number of pairs.  So the total number of elements
+            ! must be twice the low-order digit of the format, plus 1.
+            do k = 2, l
+              call expr_check ( subtree(k,son), qn, phyq_dimless )
+              lines(numLines)%qn(k-1) = nint(qn)
+              if ( abs(qn - lines(numLines)%qn(k-1)) > 0.1_r8 ) &
+                & call announce_error ( subtree(k,son), notInt )
+            end do
+            if ( l-1 /= 2*mod(lines(numLines)%qn(1),10)+1 ) &
+              & call announce_error ( son, QN_wrong_size )
+          case ( f_signals )
+            signalsNode = son
+          case ( f_signalsPol )
+            signalsNodePol = son
+          case ( f_str )
+            call expr_check ( subtree(2,son), lines(numLines)%str, phyq_dimless )
+          case ( f_umlsSignals )
+            if ( instrument == l_umls ) signalsNode = son
+          case ( f_v0 )
+            call expr_check ( subtree(2,son), lines(numLines)%v0, phyq_frequency )
+          case ( f_w )
+            call expr_check ( subtree(2,son), lines(numLines)%w, phyq_dimless )
+          case ( f_xptl1Signals )
+            if ( instrument == l_xptl1 ) signalsNode = son
+          case default
+            ! Can't get here if the type checker worked
+          end select
+        end do
+
+        if ( instrument == l_emls .and. &
+           &   ( got(f_signals) .and. got(f_emlsSignals) .or. &
+           &     got(f_signalsPol) .and. got(f_emlsSignalsPol) ) .or. &
+           & instrument == l_umls .and. &
+           &   got(f_signals) .and. got(f_umlsSignals) .or. &
+           & instrument == l_xptl1 .and. &
+           &   got(f_signals) .and. got(f_xptl1Signals) ) &
+             & call announce_error ( key, conflictingSignals )
+
+        lines(numLines)%useYi = abs(lines(numLines)%delta) > 0.0 .or. &
+          &                     abs(lines(numLines)%gamma) > 0.0
+        if ( signalsNode /= 0 ) then
+          ! First work out how many signals we're dealing with
+          noSignals = 0
+          nullify ( sigInds )
+          do j = 2, nsons(signalsNode)    ! Skip name
+            call get_string ( sub_rosa ( subtree (j, signalsNode) ), &
+              & sigName, strip=.true. )
+            call Parse_Signal ( sigName, sigInds, signalsNode, onlyCountEm=thisMany )
+            noSignals = noSignals + thisMany
+          end do
+
+          ! Compile list of all the bands/sidebands named
+          call Allocate_test ( lines(numLines)%signals, noSignals, 'signals', ModuleName )
+          call Allocate_test ( lines(numLines)%sidebands, noSignals, 'sidebands', ModuleName )
+          if ( signalsNodePol /= 0 ) then
+            call allocate_test ( lines(numLines)%polarized, noSignals, 'catalog(molecule)%polarized', moduleName )
+            lines(numLines)%polarized = .false.
+          end if
+          nullify ( sigInds )
+          k = 1
+          do j = 2, nsons(signalsNode)    ! Skip name
+            theSignal = sub_rosa ( subtree (j, signalsNode) )
+            call get_string ( theSignal, sigName, strip=.true. )
+            call Parse_Signal ( sigName, sigInds, signalsNode, sideband=sideband )
+            if ( .not. associated(sigInds) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & 'Invalid signal in spectroscopy' )
+            
+            lines(numLines)%signals ( k:k+size(sigInds)-1 ) = sigInds
+            lines(numLines)%sidebands ( k:k+size(sigInds)-1 ) = sideband
+            if ( signalsNodePol /= 0 ) then
+              do l = 2, nsons(signalsNodePol)
+                if ( sub_rosa ( subtree (l, signalsNodePol) ) == theSignal ) then
+                  lines(numLines)%polarized ( k:k+size(sigInds)-1 ) = .true.
+              exit
+                end if
+              end do
+            end if
+            k = k + size(sigInds)
+          end do
+          call Deallocate_test ( sigInds, 'sigInds', ModuleName )
+        end if
+        if ( signalsNodePol /= 0 ) then
+          if ( signalsNode == 0 ) then
+            call announce_Error ( signalsNodePol, notListedSignal )
+          else
+            k = nsons(signalsNode)
+            do j = 2, nsons(signalsNodePol)
+              theSignal = sub_rosa ( subtree (j, signalsNodePol) )
+              do l = 2, k
+                if ( theSignal == sub_rosa ( subtree (l, signalsNode) ) ) exit
+              end do
+              if ( l > k ) then
+                call announce_Error ( subtree (j, signalsNodePol), notListedSignal )
+            cycle
+              end if
+            end do
+          end if
+        end if
+        call decorate ( key, numLines )
+      case ( s_readSpectroscopy ) ! ..........  ReadSpectroscopy  .....
+        ! Only one field -- f_file -- allowed
+        j = subtree(2,subtree(2,key))
+        fileType = 'HDF5'
+        if ( node_id(j) /= n_string ) then ! must be n_*colon
+          call get_string ( sub_rosa(subtree(2,j)), fileType, strip=.true. )
+          j = subtree(1,j)
+        end if
+        spectroscopyFile = sub_rosa(j)
+        ! call get_string ( spectroscopyFile, fileName, strip=.true. )
+        call get_file_name ( pcfID, &
+          & spectroscopyFile, filedatabase, MLSFile, toolkit, &
+          & 'Spectroscopy File not found in PCF' )
+        call Read_Spectroscopy ( j, MLSFile%Name, fileType )
+      case ( s_readIsotopeRatios ) ! ..........  ReadIsotopeRatios  .....
+        ! Only one field -- f_file -- allowed
+        j = subtree(2,subtree(2,key))
+        fileType = 'HDF5'
+        if ( node_id(j) /= n_string ) then ! must be n_*colon
+          call get_string ( sub_rosa(subtree(2,j)), fileType, strip=.true. )
+          j = subtree(1,j)
+        end if
+        IsotopeRatiosFile = sub_rosa(j)
+        ! call get_string ( IsotopeRatiosFile, fileName, strip=.true. )
+        call get_file_name ( pcfID, &
+          & IsotopeRatiosFile, filedatabase, MLSFile, toolkit, &
+          & 'IsotopeRatios File not found in PCF' )
+        call ReadIsotopeRatios ( j, MLSFile%Name, fileType )
+      case ( s_spectra ) ! .............................  SPECTRA  .....
+        ! Get the molecule
+        do j = 2, nsons(key)
+          son = subtree(j,key)
+          if ( get_field_id(son) == f_molecule ) then
+            molecule = decoration(subtree(2,son))
+            if ( catalog(molecule)%molecule /= l_none ) &
+              & call announce_error ( son, dupSpectra, molecule )
+            catalog(molecule)%molecule = molecule
+        exit
+          end if
+        end do
+        catalog(molecule)%species_Name = name
+        catalog(molecule)%continuum = 0.0
+        gotLines = .false.; gotMass = .false.
+        do j = 2, nsons(key)
+          son = subtree(j,key)
+          select case ( get_field_id(son) )
+          case ( f_lines )
+            gotLines = .true.
+            call allocate_test ( catalog(molecule)%lines, nsons(son)-1, &
+              & "catalog(molecule)%Lines", moduleName )
+            mostLines = max(mostLines, size(catalog(molecule)%lines) )
+            do k = 2, nsons(son)
+              catalog(molecule)%lines(k-1) = decoration(decoration(subtree(k,son)))
+            end do
+          case ( f_continuum )
+            if ( nsons(son) > MaxContinuum + 1 ) &
+              & call announce_error ( son, tooBig, MaxContinuum )
+            do k = 2, nsons(son)
+              call expr_check ( subtree(k,son), catalog(molecule)%continuum(k-1), &
+                & phyq_dimless )
+            end do
+          case ( f_defaultIsotopeRatio )
+            call expr_check ( subtree(2,son), value, phyq_dimless )
+            catalog(molecule)%defaultIsotopeRatio = value
+          case ( f_mass )
+            gotMass = .true.
+            if ( nsons(son) /= 2 ) call announce_error ( son, wrongSize, 1 )
+            call expr_check ( subtree(2,son), catalog(molecule)%mass, &
+              & phyq_dimless )
+        ! case ( f_molecule ) ! Already done above
+          case ( f_qlog )
+            if ( nsons(son) /= 4 ) call announce_error ( son, wrongSize, 3 )
+            do k = 2, 4
+              call expr_check ( subtree(k,son), catalog(molecule)%qlog(k-1), &
+                & phyq_dimless )
+            end do
+          end select
+        end do
+        if ( gotLines .and. .not. gotMass ) call announce_error ( key, no_mass )
+        call decorate ( key, molecule )
+      case ( s_time ) ! ...................................  TIME  .....
+        if ( timing ) then
+          call sayTime
+        else
+          call time_now ( t1 )
+          timing = .true.
+        end if
+      case ( s_writeSpectroscopy ) ! .........  WriteSpectroscopy  .....
+        ! Only one field -- f_file -- allowed
+        j = subtree(2,subtree(2,key))
+        fileType = 'HDF5'
+        if ( node_id(j) /= n_string ) then ! must be n_*colon
+          call get_string ( sub_rosa(subtree(2,j)), fileType, strip=.true. )
+          j = subtree(1,j)
+        end if
+        spectroscopyFile = sub_rosa(j)
+        ! call get_string ( sub_rosa(j), fileName, strip=.true. )
+        call get_file_name ( pcfID, &
+          & spectroscopyFile, filedatabase, MLSFile, toolkit, &
+          & 'Spectroscopy File not found in PCF' )
+        call Write_Spectroscopy ( j, MLSFile%Name, fileType )
+      end select
+    end do ! i
+
+
+    if ( switchDetail(switches,'speC') > -1 ) then
+      call dump_SpectCat_database ( catalog )
+      stop
+    end if
+    if ( switchDetail(switches,'spec') > -1 ) call dump_SpectCat_database ( catalog )
+    call trace_end ( "Spectroscopy", cond=toggle(gen) )
+    if ( timing ) call sayTime
+
+    if ( error > 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+      & 'Error(s) in input for spectroscopy database' )
+  contains
+    ! ...........................................  Announce_Error  .....
+    subroutine Announce_Error ( Where, Code, More, MSG )
+      use Intrinsic, only: Field_Indices, Lit_Indices, Phyq_Indices
+      use Moretree, only: StarterrorMessage
+      use Output_M, only: Output
+      use String_Table, only: Display_String
+      integer, intent(in) :: Where      ! In the tree
+      integer, intent(in) :: Code       ! The error code
+      integer, intent(in), optional :: More  ! In case some error messages need
+      character(len=*), intent(in), optional :: MSG
+
+      error = max(error, 1)
+      if ( where > 0 ) call startErrorMessage ( where )
+      call output ( ' Spectroscopy complained: ' )
+      select case ( code )
+      case ( conflictingSignals )
+        call output ( 'Both a generic signals field and instrument specific signals field' )
+        call output ( ' are specified, and an instrument is specified.', advance='yes' )
+      case ( dupSpectra )
+        call display_string ( lit_indices(more), &
+          & before='Duplicate SPECTRA specification for ', advance='yes' )
+      case ( negative )
+        call display_string ( field_indices(get_field_id(where)), before='The ' )
+        call output ( ' parameter shall not be negative.', advance='yes' )
+      case ( no_mass )
+        call output ( &
+          & 'A "mass" field is required if the "lines" field is present.', &
+          & advance='yes' )
+      case ( notInt )
+        call output ( 'The field is too far from being an integer.',& 
+          & advance='yes' )
+      case ( notListedSignal )
+        call output ( 'The Polarized signal is not listed as an EMLS signal.', &
+          & advance='yes' )
+      case ( QN_wrong_size )
+        call output ( 'The number of elements of the QN field is not twice the', &
+          & advance='yes' )
+        call output ( 'low-order digit of the first element, plus one.', &
+          & advance='yes' )
+      case ( tooBig )
+        call output ( 'The field cannot have more than ' )
+        call output ( more )
+        call output ( ' elements.', advance='yes' )
+      case ( wrongSize )
+        call output ( 'The field is required to have ' )
+        call output ( more )
+        call output ( ' elements.', advance='yes' )
+      case ( wrongUnits )
+        call output ( "The field's units ought to be " )
+        call display_string ( phyq_indices(more), advance='yes' )
+      case default
+        call output ( "An unspecified error " )
+      end select
+      if ( present(msg) ) call output ( msg, advance='yes' )
+    end subroutine Announce_Error
+
+    ! ...............................................  Expr_Check  .....
+    subroutine Expr_Check ( Root, Value, NeededUnits )
+    ! Evaluate the expression at Root giving Value.  Make sure its units
+    ! are NeededUnits
+      use Expr_M, only: Expr
+      integer, intent(in) :: Root
+      real(r8), intent(out) :: Value
+      integer, intent(in) :: NeededUnits
+      integer :: Units(2)               ! From expr
+      double precision :: Values(2)     ! From expr
+      call expr ( root, units, values )
+      if ( units(1) /= neededUnits ) &
+        & call announce_error ( root, wrongUnits, neededUnits )
+      value = values(1)
+    end subroutine Expr_Check
+
+    ! ..................................................  SayTime  .....
+    subroutine SayTime
+      use OUTPUT_M, only: OUTPUT
+      call time_now ( t2 )
+      call output ( "Timing for Spectroscopy = " )
+      call output ( dble(t2 - t1), advance = 'yes' )
+      timing = .false.
+    end subroutine SayTime
+  end subroutine Spectroscopy
+
+  ! --------------------------------------  Destroy_Line_Database  -----
+  subroutine Destroy_Line_Database
+
+    use Allocate_Deallocate, only: Deallocate_test, Test_deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t
+
+    integer(c_intptr_t) :: Addr         ! For tracing
+    integer :: I, S, Status                   ! From deallocate
+    if ( .not. allocated(lines) ) return
+    do i = 1, size(lines)
+      call deallocate_test ( lines(i)%qn, "Lines(i)%QN", moduleName )
+      call deallocate_test ( lines(i)%signals, "Lines(i)%Signals", moduleName )
+      call deallocate_test ( lines(i)%sidebands, "Lines(i)%Sidebands", moduleName )
+      call deallocate_test ( lines(i)%polarized, "Lines(i)%Polarized", moduleName )
+    end do
+    s = size(lines) * storage_size(lines) / 8
+    addr = 0
+    if ( s > 0 ) addr = get_c_loc(lines)
+    deallocate ( lines, stat=status )
+    call test_deallocate ( status, moduleName, "Lines", s, address=addr )
+  end subroutine Destroy_Line_Database
+
+  ! ----------------------------------  Destroy_SpectCat_Database  -----
+  subroutine Destroy_SpectCat_Database
+    use Allocate_Deallocate, only: Deallocate_test
+    integer :: I
+    do i = first_molecule, last_molecule
+      call deallocate_test ( catalog(i)%lines, "catalog(molecule)%Lines", moduleName )
+      call deallocate_test ( catalog(i)%polarized, "catalog(molecule)%polarized", moduleName )
+    end do ! i
+    mostLines = 0
+    catalog%molecule = l_none ! Clobber them all
+  end subroutine Destroy_SpectCat_Database
+
+  ! --------------------------------------------------  Dump_Line  -----
+  subroutine Dump_Line ( Line )
+    use Dump_0, only: Dump
+    use Output_M, only: Blanks, Output
+    use String_Table, only: Display_String
+    type(line_t), intent(in) :: Line
+
+    if ( line%line_name /= 0 ) then
+      call display_string ( line%line_name, before='Name = ' )
+      call output ( ', ' )
+    end if
+    call output ( line%v0,    before='V0 = ' )
+    call output ( line%el,    before=', El = ' )
+    call output ( line%str,   before=', Str = ', advance='yes' )
+    call blanks ( 6 )
+    call output ( line%w,     before='W = ' )
+    call output ( line%ns,    before=', Ns = ' )
+    call output ( line%ps,    before=', Ps = ' )
+    call output ( line%n,     before=', N = ', advance='yes' )
+    call blanks ( 6 )
+    call output ( line%delta, before='Delta = ' )
+    call output ( line%n1,    before=', N1 = ' )
+    call output ( line%gamma, before=', Gamma = ' )
+    call output ( line%n2,    before=', N2 = ', advance='yes' )
+    if ( associated(line%qn) ) call dump ( line%qn, '      QN' )
+    if ( associated(line%signals) ) &
+      & call dump ( line%signals, '      Signals' )
+    if ( associated(line%sidebands) ) &
+      & call dump ( line%sidebands, '      Sidebands' )
+    if ( associated(line%polarized) ) &
+      & call dump ( line%polarized, '      Polarized' )
+
+  end subroutine Dump_Line
+
+  ! ----------------------------------------  Dump_Lines_Database  -----
+  subroutine Dump_Lines_Database ( Start, End, Number )
+    use Output_M, only: Blanks, Output
+    integer, intent(in), optional :: Start, End
+    logical, intent(in), optional :: Number
+    integer :: I                   ! Subscript, loop inductor
+    integer :: MyStart, MyEnd
+    logical :: MyNumber
+
+    if ( .not. allocated(lines) ) then
+      call output ( 'Spectroscopy lines database is not allocated', advance='yes' )
+      return
+    end if
+    myStart = 1
+    if ( present(start) ) myStart = start
+    myEnd = size(lines)
+    if ( present(end) ) myEnd = end
+    myNumber = .true.
+    if ( present(number) ) myNumber = number
+    if ( .not. present(start) .and. .not. present(end) ) then
+      call output ('Spectroscopy lines database: SIZE = ' )
+      call output ( size(lines), advance='yes' )
+    end if
+    do i = myStart, myEnd
+      if ( myNumber ) then
+        call output ( i, 4 )
+        call output ( ': ' )
+      else
+        call blanks ( 6 )
+      end if
+      call dump_line ( lines(i) )
+    end do
+  end subroutine Dump_Lines_Database
+
+  ! -------------------------------------  Dump_SpectCat_Database  -----
+  subroutine Dump_SpectCat_Database ( Catalog, Name, Sideband, Details )
+    use Output_M, only: Newline, Output
+
+    type(catalog_T), intent(in) :: Catalog(:)
+    character(len=*), intent(in), optional :: Name
+    integer, intent(in), optional :: Sideband
+    integer, optional, intent(in) :: Details ! <= 0 => Don't dump lines, default 0
+
+    integer :: I                   ! Subscript, loop inductor
+    character(len=3), parameter :: SB(-1:1) = (/ 'low', '   ', 'upp' /)
+
+    call output ( 'Spectroscopy catalog' )
+    if ( present(name) ) call output ( ' '//trim(name) )
+    if ( present(sideband) ) call output ( ' for ' // sb(sideband) // 'er sideband' )
+    call newLine
+    do i = lbound(catalog,1), ubound(catalog,1)
+      if ( catalog(i)%molecule == l_none ) cycle
+      call output ( i, 4 )
+      call output ( ': ' )
+      call dump_spectCat_item ( catalog(i), details )
+    end do ! i
+  end subroutine Dump_SpectCat_Database
+
+  ! -----------------------------------------  Dump_SpectCat_Item  -----
+  subroutine Dump_SpectCat_Item ( Catalog, Details )
+    use Dump_0, only: Dump
+    use Intrinsic, only: Lit_Indices
+    use Output_M, only: Blanks, Newline, Output
+    use String_Table, only: Display_String, String_Length
+
+    type(catalog_T), intent(in) :: Catalog
+    integer, optional, intent(in) :: Details ! <= 0 => Don't dump lines,
+      !                                      ! == 1 => Dump line names,
+      !                                      !  > 1 => Dump lines, default 0
+
+    integer :: J                   ! Subscript, loop inductor
+    integer :: MyDetails
+    character(len=15) :: Print
+    integer :: W
+
+    myDetails = 0
+    if ( present(details) ) myDetails = details
+    if ( catalog%species_name > 0 ) then
+      call display_string ( catalog%species_name )
+      call output ( ', ' )
+    end if
+    call display_string ( lit_indices(catalog%molecule), before='Species = ' )
+    write ( print, '(f10.3)' ) catalog%mass
+    call output ( ', Mass = ' // trim(adjustl(print)) // ', Qlog = [ ' )
+    do j = 1, 3
+      write ( print, '(f10.4)' ) catalog%qlog(j)
+      call output ( trim(adjustl(print)) )
+      if ( j < 3 ) call output ( ', ' )
+    end do
+    call output ( ' ]', advance='yes' )
+    call blanks ( 6 )
+    call output ( 'Continuum = [ ' )
+    do j = 1, MaxContinuum
+      write ( print, '(g15.3)' ) catalog%continuum(j)
+      call output ( trim(adjustl(print)) )
+      if ( j < MaxContinuum ) call output ( ', ' )
+    end do
+    call output ( ' ]', advance='yes' )
+    call blanks ( 6 )
+    call output ( catalog%defaultIsotopeRatio, before='Default Isotope Ratio = ' )
+    if ( myDetails > 0 ) then
+      call newLine
+      call blanks ( 6 )
+      call output ( 'Lines:' )
+      if ( associated(catalog%lines) ) then
+        if ( size(catalog%lines) > 0 ) then
+          if ( details == 1 ) then
+            w = 12
+            do j = 1, size(catalog%lines)
+              if ( w > 72 ) then
+                call newLine
+                call blanks ( 12 )
+                w = 12
+              end if
+              call blanks ( 1 )
+              call display_string ( lines(catalog%lines(j))%line_name )
+              w = w + string_length ( lines(catalog%lines(j))%line_name )
+            end do
+            call newLine
+          else
+            call newLine
+            do j = 1, size(catalog%lines)
+              call dump_lines_database ( catalog%lines(j), catalog%lines(j), &
+                & .false. )
+            end do
+          end if
+        else
+          call output ( ' none', advance='yes' )
+        end if
+      else
+        call output ( ' none', advance='yes' )
+      end if
+      if ( associated(catalog%polarized) ) &
+        & call dump ( catalog%polarized, '      Polarized:' )
+    else
+      if ( associated(catalog%lines) ) then
+        call output ( size(catalog%lines), before=', ' )
+      else
+        call output ( ', no' )
+      end if
+      call output ( ' lines', advance='yes' )
+    end if ! myDetails > 0
+  end subroutine Dump_SpectCat_Item
+
+  ! ----------------------------------  Dump_SpectCat_Database_2D  -----
+  subroutine Dump_SpectCat_Database_2d ( Catalog, Name, Details )
+    type(catalog_T) :: Catalog(:,:)
+    character(len=*), intent(in), optional :: Name
+    integer, optional, intent(in) :: Details ! <= 0 => Don't dump lines, default 0
+    integer :: Sideband
+    ! Executable code
+    do sideband = lbound(catalog,1), ubound(catalog,1), 2
+      call Dump ( catalog(sideband,:), name, sideband, details )
+    end do
+  end subroutine Dump_SpectCat_Database_2d
+
+  ! ............................................  Get_File_Name  .....
+  subroutine Get_File_Name ( pcfCode, &
+    & spectroscopyFile, fileDataBase, MLSFile, toolkit, MSG, pcfEndCode )
+    use HDF, only: Dfacc_Rdonly
+    use HighOutput, only: OutputnamedValue
+    use Intrinsic, only: L_HDF
+    use MLSCommon, only: MLSFile_T
+    use MLSFiles, only: HDFversion_5, &
+      & AddinitializeMLSFile, Getpcfromref, Split_Path_Name
+    use Output_M, only: Output
+    use Sdptoolkit, only: Pgs_Pc_Getreference
+    use String_Table, only: Get_String
+    ! Dummy args
+    integer, intent(in) :: pcfCode
+    integer, intent(in) :: spectroscopyFile ! parser id
+    type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
+    type (MLSFile_T), pointer   :: MLSFile
+    logical, intent(in) :: toolkit
+    character(len=*), intent(in) :: MSG ! in case of error
+    integer, intent(in), optional :: pcfEndCode
+    ! Internal variables
+    logical, parameter :: DEBUG = .false.
+    character(len=1023) :: FileName     ! For WriteSpectroscopy
+    character(len=255) :: PCFFileName, path, shortName
+    integer :: lun
+    integer :: mypcfEndCode
+    integer :: returnStatus             ! non-zero means trouble
+    integer :: version
+    ! Executable
+    mypcfEndCode = 0
+    lun = 0
+    version = 1
+    call get_string ( spectroscopyFile, shortName, strip=.true. )
+    fileName = shortName
+    if ( TOOLKIT ) then
+      mypcfEndCode = pcfCode
+      if ( present(pcfEndCode) ) mypcfEndCode = pcfEndCode
+      if ( fileName == ' ' ) then
+        returnStatus = Pgs_pc_getReference(pcfCode, version, &
+          & fileName)
+        lun = pcfCode
+      else
+        PCFFileName = fileName
+        call split_path_name ( PCFFileName, path, fileName )
+        lun = GetPCFromRef(fileName, pcfCode, &
+          & mypcfEndCode, &
+          & TOOLKIT, returnStatus, Version, DEBUG, &
+          & exactName=PCFFileName)
+        if ( returnStatus /= 0 ) then
+          call output( MSG, advance='yes' )
+          call OutputNamedValue( 'PCFid', pcfCode )
+          call OutputNamedValue( 'PCFFileName', trim(PCFFileName) )
+          call OutputNamedValue( 'toolkit', toolkit )
+          call OutputNamedValue( 'returnStatus', returnStatus )
+        else
+          fileName = PCFFileName
+        end if
+      end if
+    end if
+    MLSFile => AddInitializeMLSFile( filedatabase, &
+      & content='spectroscopy', &
+      & name=Filename, shortName=shortName, &
+      & type=l_hdf, access=dfacc_rdonly, HDFVersion=HDFVERSION_5 )
+    MLSFile%PCFId = lun
+  end subroutine Get_File_Name
+
+! --------------------------------------------  ReadIsotopeRatios  -----
+  ! Module-wide global variable LINES needs to be associated BEFORE
+  ! calling this subroutine
+  subroutine ReadIsotopeRatios ( Where, FileName, FileType )
+    use Intrinsic, only: Lit_Indices
+    use MLSHDF5, only: LoadfromHDF5ds
+    use MLSMessagemodule, only: MLSMessage, MLSMSG_Error
+    use MLSStrings, only: Capitalize
+    use Molecules, only: Isextinction
+    use String_Table, only: Get_String
+    use HDF5, only: H5f_Acc_Rdonly_F, H5fopen_F, H5fclose_F
+
+    integer, intent(in) :: Where ! in the parse tree
+    character(len=*), intent(in) :: FileName, FileType
+
+    integer :: FileID            ! HDF5
+    integer :: I, IOSTAT
+    integer :: molecule
+    character(len=63) :: MoleculeName
+    real, dimension(1,1,1) :: values
+
+    if (.not. allocated(lines)) &
+       call MLSMessage( MLSMSG_Error, moduleName // '%ReadIsotopeRatios', &
+         & 'lines is still unassociated' )
+
+    if ( capitalize(fileType) /= 'HDF5' ) &
+      & call MLSMessage ( MLSMSG_Error, moduleName, &
+        & 'Can read isotopeRatios only from hdf5 files' )
+    call h5fopen_f ( trim(fileName), H5F_ACC_RDONLY_F, fileID, iostat )
+    if ( iostat /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName,&
+      & 'Unable to open HDF5 isotope ratios file ' // trim(fileName) // '.' )
+    do i=first_molecule, last_molecule
+      molecule = catalog(i)%molecule
+      if ( molecule == l_none .or. isExtinction(molecule) ) cycle
+      call get_string( lit_indices(catalog(i)%molecule), moleculeName )
+      call loadFromHDF5DS ( fileID, &
+        & 'ISOTOPERATIO' // Capitalize(trim(moleculeName)), &
+        & values )
+      Catalog(i)%defaultIsotopeRatio = values(1,1,1)
+    enddo
+    call H5FClose_F ( fileID, iostat )
+    if ( iostat /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName,&
+      & 'Unable to close HDF5 isotope ratios file ' // trim(fileName) // '.' )
+  end subroutine ReadIsotopeRatios
+
+! --------------------------------------------  Read_Spectroscopy  -----
+  ! Module-wise global variable LINES needs to be associated before
+  ! calling this subroutine.
+  ! Should be OK now.
+  subroutine Read_Spectroscopy ( Where, FileName, FileType )
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test, &
+      & Test_Allocate, Test_Deallocate
+    use HDF, only: Dfacc_Rdonly
+    use Intrinsic, only: Lit_Indices !, Phyq_Invalid
+    use Io_Stuff, only: Get_Lun
+    use, Intrinsic :: Iso_C_Binding, only: C_Intptr_T
+    use Machine, only: Io_Error
+    use MLSHDF5, only: GetHDF5attribute, GetHDF5dsdims, &
+      & IsHDF5attributepresent, IsHDF5dspresent, LoadfromHDF5ds, LoadptrfromHDF5ds
+    use MLSMessagemodule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+    use MLSSignals_M, only: Instrument, Maxsiglen
+    use MLSStrings, only: Capitalize
+    use Moretree, only: Getlitindexfromstring, Getstringindexfromstring
+    use Parse_Signal_M, only: Parse_Signal
+    use String_Table, only: Get_String
+    use Tree, only: Null_Tree
+    use HDF5, only: Hsize_T
+
+    integer, intent(in) :: Where ! in the parse tree
+    character(len=*), intent(in) :: FileName, FileType
+
+    integer(c_intptr_t) :: Addr         ! For tracing
+    type(catalog_t) :: CatalogItem
+    character(len=maxSigLen), pointer :: CatNames(:)
+    real(r8), pointer :: Continuum(:,:)
+!   type(decls) :: Decl
+    logical :: Error
+    integer :: FileID            ! HDF5
+    integer :: I, IOSTAT, J, L, Line1, LineN, LUN, L2
+    character(len=16) :: InstrumentName
+    character(len=16) :: InstrumentNameFromFile
+    type(line_t) :: Line
+    integer, pointer :: LineIndices(:)
+    integer, pointer :: LineList(:)
+    character(len=maxSigLen) :: LineName
+    character(len=maxSigLen), pointer :: LineNames(:)
+    type (MLSFile_T)   :: MLSFile
+    type(catalog_t), pointer :: MyCatalog(:)
+    type(line_t), allocatable :: MyLines(:)
+    character(len=63) :: MoleculeName
+    character(len=63), pointer :: MoleculeNames(:)
+    integer :: NCat              ! Number of catalog items
+    integer :: NLines            ! Number of lines for a species
+    integer :: NPol              ! Number of polarized flags for a line
+                                 ! (zero or nSig )
+    integer :: NQN, NSig         ! Numbers of quantum numbers, signals for a line
+    integer, pointer :: PolarizedIndices(:) ! PolarizedIndices(i) is index in
+                                 ! PolarizedList of last Polarized for line I.
+    logical, pointer :: PolarizedList(:) ! Concatenation from all lines
+    real(r8), pointer :: Qlog(:,:)
+    integer, pointer :: QNIndices(:) ! QNIndices(i) is index in
+                                 ! QNList of last QN for line I.
+    integer, pointer :: QNList(:) ! Concatenation from all lines
+    integer :: S                 ! Size in bytes of an object to deallocate
+    integer(hsize_t) :: Shp(1), Shp2(2) ! To get the shapes of datasets HDF
+    integer, pointer :: SidebandList(:) ! Concatenation from all lines
+    integer, dimension(:), pointer :: SigInds ! From Parse_signal
+    logical :: SignalError
+    integer , pointer:: SignalIndices(:) ! signalIndices(i) is index in
+                                 ! SidebandList and SignalList of last signal
+                                 ! for line I.
+    integer, pointer :: SignalList(:) ! Concatenation from all lines
+    character(len=MaxSigLen) :: SignalName
+    character(len=MaxSigLen), pointer :: SignalNames(:)
+    character(len=63) :: SpeciesName
+    character(len=5) :: What
+
+! Should be OK now
+!     if (.not. allocated(lines)) &
+!        call MLSMessage(MLSMSG_Error, moduleName, "lines is NULL")
+
+    error = .false.
+    signalError = .false.
+    if ( capitalize(fileType) == 'HDF5' ) then
+      iostat = InitializeMLSFile ( MLSFile, name=fileName, type=l_hdf, &
+        & access=DFACC_RDONLY, HDFVersion=HDFVERSION_5, content='HDFSpectroscopy' )
+      call mls_OpenFile ( MLSFile, iostat )
+      fileID = MLSFile%FileId%f_id
+      ! call h5fopen_f ( trim(fileName), H5F_ACC_RDONLY_F, fileID, iostat )
+      if ( iostat /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName,&
+        & 'Unable to open HDF5 Spectroscopy file ' // trim(fileName) // '.' )
+      ! Was the InstrumentName written to the file as an attribute?
+      call get_string ( lit_indices(instrument), instrumentName )
+      if ( IsHDF5AttributePresent(MLSFile, 'InstrumentName' ) ) then
+        call GetHDF5Attribute ( MLSFile, 'InstrumentName', InstrumentNameFromFile )
+        if ( instrumentName /= InstrumentNameFromFile ) &
+          & call MLSMessage ( MLSMSG_Error, moduleName, &
+          & 'Unmatched instrument name in HDFSpectroscopy file is ' // &
+          & trim(InstrumentNameFromFile), MLSFile=MLSFile )
+      else
+        call MLSMessage ( MLSMSG_Warning, moduleName, &
+          & 'Unable to verify that instrument name in HDFSpectroscopy file is ' // &
+          & trim(InstrumentName) )
+      endif
+      ! Create or expand the Lines database
+      call getHDF5DSDims ( fileID, 'Delta', Shp )
+      nLines = shp(1)
+      line1 = 0
+      if ( allocated(lines) ) line1 = size(lines)
+      lineN = line1 + nLines
+      allocate ( myLines(lineN), stat=iostat )
+      addr = 0
+      if ( iostat == 0 .and. lineN > 0 ) addr = get_c_loc(myLines)
+      call test_allocate ( iostat, moduleName, 'Lines', ubounds=lineN, &
+        & elementSize = storage_size(myLines) / 8, address=addr )
+      if ( allocated(lines) ) then
+        myLines(:line1) = lines
+        s = size(lines) * storage_size(lines) / 8
+        addr = 0
+         if ( s > 0 ) addr = get_c_loc(lines)
+        deallocate ( lines, stat=iostat )
+        call test_deallocate ( iostat, moduleName, 'Lines', s, address=addr )
+      end if
+      call move_alloc ( myLines, lines )
+      ! Fill in the expanded part
+      nullify ( lineNames, polarizedIndices, polarizedList, &
+        & qnIndices, qnList, signalIndices, signalList, &
+        & sidebandList, sigInds, signalNames )
+      call loadPtrFromHDF5DS ( fileID, 'LineNames', lineNames )
+      call loadPtrFromHDF5DS ( fileID, 'SignalNames', signalNames )
+
+      if ( IsHDF5DSPresent ( fileID, 'PolarizedList' ) ) then
+        call loadPtrFromHDF5DS ( fileID, 'PolarizedList', polarizedList )
+      else
+        call Allocate_test ( polarizedList, 0, 'PolarizedList', ModuleName )
+      end if
+
+      call loadPtrFromHDF5DS ( fileID, 'PolarizedIndices', polarizedIndices, &
+            lowBound=line1 )
+      call loadPtrFromHDF5DS ( fileID, 'QNList', qnList )
+      call loadPtrFromHDF5DS ( fileID, 'QNIndices', qnIndices, lowBound=line1 )
+
+      if ( IsHDF5DSPresent ( fileID, 'SidebandList' ) ) then
+        call loadPtrFromHDF5DS ( fileID, 'SidebandList', SidebandList )
+      else
+        call Allocate_test ( SidebandList, 0, 'SidebandList', ModuleName )
+      end if
+
+      if ( IsHDF5DSPresent ( fileID, 'SignalList' ) ) then
+        call loadPtrFromHDF5DS ( fileID, 'SignalList', SignalList )
+      else
+        call Allocate_test ( SignalList, 0, 'SignalList', ModuleName )
+      end if
+
+      call loadPtrFromHDF5DS ( fileID, 'SignalIndices', signalIndices, &
+        & lowBound=line1 )
+      call loadFromHDF5DS ( fileID, 'Delta', lines(line1+1:lineN)%delta )
+      call loadFromHDF5DS ( fileID, 'EL', lines(line1+1:lineN)%el )
+      call loadFromHDF5DS ( fileID, 'Gamma', lines(line1+1:lineN)%gamma )
+      call loadFromHDF5DS ( fileID, 'N', lines(line1+1:lineN)%n )
+      call loadFromHDF5DS ( fileID, 'N1', lines(line1+1:lineN)%n1 )
+      call loadFromHDF5DS ( fileID, 'N2', lines(line1+1:lineN)%n2 )
+      call loadFromHDF5DS ( fileID, 'NS', lines(line1+1:lineN)%ns )
+      call loadFromHDF5DS ( fileID, 'PS', lines(line1+1:lineN)%ps )
+      call loadFromHDF5DS ( fileID, 'Str', lines(line1+1:lineN)%str )
+      call loadFromHDF5DS ( fileID, 'V0', lines(line1+1:lineN)%v0 )
+      call loadFromHDF5DS ( fileID, 'W', lines(line1+1:lineN)%w )
+      call loadFromHDF5DS ( fileID, 'UseYi', lines(line1+1:lineN)%useYi )
+      do i = line1+1, lineN
+        lines(i)%line_name = 0
+        if ( lineNames(i) /= '' ) &
+          & lines(i)%line_name = getStringIndexFromString(trim(lineNames(i)))
+        ! Don't need to nullify QN, Polarized, Sidebands or Signals fields:
+        ! They spring into existence nullified.
+        call allocate_test ( lines(i)%qn, qnIndices(i)-qnIndices(i-1), &
+          & 'Lines(i)%QN', moduleName )
+        lines(i)%qn = qnList(qnIndices(i-1)+1:qnIndices(i))
+        if ( signalIndices(i) /= signalIndices(i-1) ) then
+          call allocate_test ( lines(i)%signals, signalIndices(i)-signalIndices(i-1), &
+            & 'Lines(i)%Signals', moduleName )
+          do j = 1, size(lines(i)%signals)
+            call parse_signal ( trim(signalNames(signalList(signalIndices(i-1)+j))), &
+              & sigInds, null_tree )
+            if ( .not. associated(sigInds) ) then
+              call announceError ( &
+              & 'The string ' // trim(signalNames(signalList(signalIndices(i-1)+j))) // &
+              & ' is not a signal name.' )
+              signalError = .true.
+            else
+              lines(i)%signals(j) = sigInds(1)
+            end if
+            ! We can wait to deallocate sigInds until after the loop because
+            ! parse_signal does allocate_test, which deallocates it first
+            ! if it's allocated.
+          end do ! j = 1, size(lines(i)%signals)
+          call deallocate_test ( sigInds, 'SigInds', moduleName )
+          call allocate_test ( lines(i)%sidebands, signalIndices(i)-signalIndices(i-1), &
+            & 'Lines(i)%Sidebands', moduleName )
+          lines(i)%sidebands = sidebandList(signalIndices(i-1)+1:signalIndices(i))
+          if ( polarizedIndices(i) /= polarizedIndices(i-1) ) then
+            call allocate_test ( lines(i)%polarized, polarizedIndices(i)-polarizedIndices(i-1), &
+              & 'Lines(i)%Polarized', moduleName )
+            lines(i)%polarized = polarizedList(polarizedIndices(i-1)+1:polarizedIndices(i))
+          end if
+        end if
+      end do
+      if ( signalError ) call announceError ( &
+        & 'Signals in L2CF are inconsistent with '// &
+        & 'signals used to create spectroscopy file' )
+      call deallocate_test ( lineNames, 'LineNames', moduleName )
+      call deallocate_test ( signalNames, 'SignalNames', moduleName )
+      call deallocate_test ( polarizedIndices, 'PolarizedIndices', moduleName )
+      call deallocate_test ( polarizedList, 'PolarizedList', moduleName )
+      call deallocate_test ( qnIndices, 'QNIndices', moduleName )
+      call deallocate_test ( qnList, 'QNList', moduleName )
+      call deallocate_test ( signalIndices, 'SignalIndices', moduleName )
+      call deallocate_test ( signalList, 'SignalList', moduleName )
+      call deallocate_test ( sidebandList, 'SidebandList', moduleName )
+      ! Fill the catalog
+      call getHDF5DSDims ( fileID, 'Continuum', shp2 )
+      if ( shp2(2) /= maxContinuum ) call MLSMessage ( MLSMSG_Error, moduleName, &
+        & 'Second dimension of continuum field of catalog has changed.' )
+      allocate ( myCatalog(shp2(1)), stat=iostat )
+      addr = 0
+      if ( iostat == 0 .and. shp2(1) > 0 ) addr = get_c_loc(myCatalog)
+      call test_allocate ( iostat, moduleName, 'MyCatalog', &
+        & ubounds=int(shp2(1)), elementSize = storage_size(myCatalog) / 8, &
+        & address=addr )
+      nullify ( catNames, continuum, lineIndices, lineList, moleculeNames, qlog )
+      call loadPtrFromHDF5DS ( fileID, 'CatNames', catNames )
+      call loadPtrFromHDF5DS ( fileID, 'Continuum', continuum )
+      call loadPtrFromHDF5DS ( fileID, 'LineList', lineList )
+      call loadPtrFromHDF5DS ( fileID, 'LineIndices', lineIndices, lowBound=0 )
+      call loadPtrFromHDF5DS ( fileID, 'MoleculeNames', moleculeNames  )
+      call loadPtrFromHDF5DS ( fileID, 'Qlog', qlog )
+      call loadFromHDF5DS ( fileID, 'Mass', myCatalog%mass )
+      call loadFromHDF5DS ( fileID, 'IsotopeRatio', myCatalog%defaultIsotopeRatio )
+      call loadFromHDF5DS ( fileID, 'Molecule', myCatalog%molecule )
+      do i = 1, size(myCatalog)
+        myCatalog(i)%species_name = 0
+        if ( catNames(i) /= '' ) myCatalog(i)%species_name = &
+          & GetStringIndexFromString(trim(catNames(i)))
+        myCatalog(i)%continuum = continuum(i,:)
+        myCatalog(i)%qlog = qlog(i,:)
+        if ( myCatalog(i)%molecule <= 0 ) then
+          myCatalog(i)%molecule = l_none
+        else
+          j = getLitIndexFromString(trim(moleculeNames(myCatalog(i)%molecule)))
+          if ( j < first_molecule .or. j > last_molecule ) then
+            call MLSMessage ( MLSMSG_Error, moduleName, 'The string ' // &
+            & trim(moleculeNames(myCatalog(i)%molecule)) // ' is not a molecule name.' )
+          end if
+          myCatalog(i)%molecule = j
+          call allocate_test ( myCatalog(i)%lines, lineIndices(i)-lineIndices(i-1), &
+            & 'MyCatalog(i)%lines', moduleName )
+          myCatalog(i)%lines = lineList(lineIndices(i-1)+1:lineIndices(i)) + line1
+          mostLines = max(mostLines, size(myCatalog(i)%lines))
+          catalog(myCatalog(i)%molecule) = myCatalog(i)
+        end if
+      end do
+      s = size(myCatalog) * storage_size(myCatalog) / 8
+      addr = 0
+      if ( s > 0 ) addr = get_c_loc(myCatalog)
+      deallocate ( myCatalog, stat=iostat )
+      call test_deallocate ( iostat, moduleName, 'MyCatalog', s, address=addr )
+      call deallocate_test ( catNames,      'CatNames', moduleName )
+      call deallocate_test ( continuum,     'Continuum', moduleName )
+      call deallocate_test ( lineList,      'LineList', moduleName )
+      call deallocate_test ( lineIndices,   'LineIndices', moduleName )
+      call deallocate_test ( moleculeNames, 'MoleculeNames', moduleName )
+      call deallocate_test ( qLog,          'QLog', moduleName )
+      ! call H5FClose_F ( fileID, iostat )
+      call mls_CloseFile( MLSFile, iostat )
+      if ( iostat /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName,&
+        & 'Unable to close HDF5 Spectroscopy file ' // trim(fileName) // '.' )
+    else if ( capitalize(fileType) == 'UNFORMATTED' ) then
+      ! Open the file
+      call get_lun ( lun )
+      what = 'open'
+      open ( lun, file=trim(fileName), status='old', form='unformatted', &
+        & access='sequential', iostat=iostat, err=9 )
+      ! Read the catalog
+      what = 'read'
+      read ( lun, iostat=iostat, err=9 ) nCat, nLines
+      do i = 1, nCat
+        catalogItem = empty_cat
+        catalogItem%species_name = 0
+        read ( lun, iostat=iostat, err=9 ) l, speciesName(:l), &
+          & l2, moleculeName(:l2), catalogItem%continuum, catalogItem%mass, &
+          & catalogItem%defaultIsotopeRatio, catalogItem%qlog, nLines
+        catalogItem%molecule = getLitIndexFromString ( moleculeName(:l2) )
+        if ( catalogItem%molecule < first_molecule .or. &
+          &  catalogItem%molecule > last_molecule ) &
+          & call announceError ( moleculeName(:l2)// ' is not a molecule.' )
+        if ( l /= 0 ) then
+          catalogItem%species_name = getStringIndexFromString ( speciesName(:l) )
+! This isn't of any use unless we provide a way to turn off type checking,
+! and do it ourselves where we want to use these labels in, say, "dump."
+!         decl = get_decl(catalogItem%species_name,label)
+!         if ( decl%type == label ) then
+!           call announceError ( 'The catalog item label ' // &
+!             & speciesName(:l) // ' is already used as a label' )
+!         else
+!           call declare ( catalogItem%species_name, 0.0d0, label, phyq_invalid, &
+!             & null_tree )
+!         end if
+        end if
+        if ( nLines > 0 ) then
+          call allocate_test ( catalogItem%lines, nLines, &
+          & 'catalogItem%lines', moduleName )
+          mostLines = max(mostLines, nLines)
+        end if
+        ! Read the lines for the catalog entry
+        do j = 1, nLines
+          nullify ( line%qn, line%signals, line%sidebands, line%polarized )
+          read ( lun, iostat=iostat, err=9 ) l2, lineName(:l2), line%delta, &
+            & line%el, line%gamma, line%n, line%n1, line%n2, &
+            & line%ps, line%ns, line%str, line%v0, line%w, &
+            & line%useYi, npol, nqn, nsig
+          line%line_name = getStringIndexFromString ( lineName(:l2) )
+! This isn't of any use unless we provide a way to turn off type checking,
+! and do it ourselves where we want to use these labels in, say, "dump."
+!         decl = get_decl(line%line_name,label)
+!         if ( decl%type == label ) then
+!           call announceError ( 'The line label ' // &
+!             & speciesName(:l) // ' is already used as a label' )
+!         else
+!           call declare ( line%line_name, 0.0d0, label, phyq_invalid, null_tree )
+!         end if
+          if ( nQN /= 0 ) then
+            call allocate_test ( line%qn, nqn, 'line%qn', moduleName )
+            read ( lun, iostat=iostat, err=9 ) line%qn
+          end if
+          if ( nSig /= 0 ) then
+            call allocate_test ( line%signals, nSig, 'line%signals', moduleName )
+            call allocate_test ( line%sidebands, nSig, 'line%sidebands', moduleName )
+          end if
+          nullify ( sigInds )
+          do l2 = 1, nSig
+            read ( lun, iostat=iostat, err=9 ) l, signalName(:l), line%sidebands(l2)
+            call parse_signal ( signalName(:l), sigInds, null_tree )
+            if ( .not. associated(sigInds) ) then
+              call announceError ( &
+              & 'The string ' // signalName(:l) // ' is not a signal name.' )
+            else
+              line%signals(l2) = sigInds(1)
+            end if
+          end do
+          call deallocate_test ( sigInds, 'SigInds', moduleName )
+          if ( nPol /= 0 ) then ! nPol required to be == 0 or nSig
+            call allocate_test ( line%polarized, nSig, 'line%polarized', moduleName )
+            read ( lun, iostat=iostat, err=9 ) line%polarized
+          end if
+          if ( .not. error ) catalogItem%lines(j) = &
+            & addLineToDatabase ( lines, line )
+        end do ! j = 1, nLines
+        catalog(catalogItem%molecule) = catalogItem
+      end do ! i = 1, size(catalog)
+      what = 'close'
+      close ( lun, iostat=iostat, err=9 )
+    else
+      call announceError ( ' File type ' // trim(fileType) // ' is not supported.' )
+      go to 99
+    end if
+    if ( error ) go to 99
+    return
+
+9   call io_error ( 'Unable to ' // trim(what) // ' output file ', iostat, trim(fileName) )
+99  call MLSMessage ( MLSMSG_Error, moduleName, &
+      & 'Error reading spectroscopy database.' )
+
+  contains
+    subroutine AnnounceError ( What )
+      use MORETREE, only: STARTERRORMESSAGE
+      use OUTPUT_M, only: OUTPUT
+      character(len=*), intent(in) :: What
+      call startErrorMessage ( where )
+      call output ( what, advance='yes' )
+      error = .true.
+    end subroutine AnnounceError
+  end subroutine Read_Spectroscopy 
+
+  ! -------------------------------------------------  SearchByQn  -----
+  integer function SearchByQn ( molecule, QNs )
+  ! If the Catalog database for a molecule has an object in its Lines
+  ! database that has its QN field equal to QNs, return the index of that
+  ! line in the lines database.  Otherwise return zero.
+
+    integer, intent(in) :: MOLECULE
+    integer, intent(in) :: QNs(:)
+
+    integer :: I
+
+    if ( catalog(molecule)%molecule == molecule ) then
+      if ( associated(catalog(molecule)%lines) ) then
+        do i = 1, size(catalog(molecule)%lines)
+          if ( associated(lines(catalog(molecule)%lines(i))%qn) ) then
+            if ( size(lines(catalog(molecule)%lines(i))%qn) == size(qns) ) then
+              if ( all(lines(catalog(molecule)%lines(i))%qn == qns) ) then
+                searchByQn = catalog(molecule)%lines(i)
+                return
+              end if
+            end if
+          end if
+        end do
+      end if
+    end if
+    searchByQn = 0 ! not found
+
+  end function SearchByQn
+
+! -------------------------------------------  Write_Spectroscopy  -----
+  subroutine Write_Spectroscopy ( Where, FileName, FileType )
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+    use Intrinsic, only: Lit_Indices
+    use Io_Stuff, only: Get_Lun
+    use Machine, only: Io_Error
+    use MLSHDF5, only: MakeHDF5attribute, SaveasHDF5ds
+    use MLSMessagemodule, only: MLSMessage, MLSMSG_Error
+    use MLSSignals_M, only: Getsignalname, Instrument, Maxsiglen, Signals
+    use MLSStrings, only: Capitalize
+    use Moretree, only: StarterrorMessage
+    use Output_M, only: Output
+    use String_Table, only: Get_String, String_Length
+    use HDF5, only: H5fcreate_F, H5fclose_F, H5f_Acc_Trunc_F
+
+    integer, intent(in) :: Where ! in the parse tree
+    character(len=*), intent(in) :: FileName, FileType
+
+    character(len=maxSigLen) :: CatNames(first_molecule:last_molecule)
+    real(r8) :: Continuum(first_molecule:last_molecule,maxContinuum)
+    integer :: FileID   ! For HDF
+    integer :: I, IOSTAT, J, L, LUN, L2
+    character(len=16) :: InstrumentName
+    integer :: LineIndices(first_molecule-1:last_molecule)
+    integer, pointer :: LineList(:)
+    character(len=63) :: LineName
+    character(len=maxSigLen) :: LineNames(size(lines))
+    character(len=63) :: MoleculeName
+    character(len=63) :: MoleculeNames(first_molecule:last_molecule)
+    integer :: Molecules(first_molecule:last_molecule)
+    integer :: NLines            ! Number of lines for a species
+    integer :: NPol              ! Number of polarized flags for a line
+                                 ! (zero or nSig )
+    integer :: NQN, NSig         ! Numbers of quantum numbers, signals for a line
+    integer :: PolarizedIndices(0:size(lines)) ! PolarizedIndices(i) is index in
+                                 ! PolarizedList of last Polarized for line I.
+    logical, pointer :: PolarizedList(:) ! Concatenation from all lines
+    real(r8) :: Qlog(first_molecule:last_molecule,3)
+    integer :: QNIndices(0:size(lines)) ! QNIndices(i) is index in
+                                 ! QNList of last QN for line I.
+    integer, pointer :: QNList(:) ! Concatenation from all lines
+    integer, pointer :: SidebandList(:) ! Concatenation from all lines
+    integer :: SignalIndices(0:size(lines)) ! signalIndices(i) is index in
+                                 ! SidebandList and SignalList of last signal
+                                 ! for line I.
+    integer, pointer :: SignalList(:) ! Concatenation from all lines
+    character(len=127) :: SignalName
+    character(len=MaxSigLen) :: SignalNames(size(signals))
+    character(len=63) :: SpeciesName
+    character(len=5) :: What
+
+    if ( .not. allocated(lines) ) then
+      call startErrorMessage ( where )
+      call output ( ' The Lines database doesn''t exist yet.', advance='yes' )
+      go to 99
+    end if
+    if ( .not. associated(signals) ) then
+      call startErrorMessage ( where )
+      call output ( ' The Signals database doesn''t exist yet.', advance='yes' )
+      go to 99
+    end if
+    if ( capitalize(fileType) == 'HDF5' ) then
+
+      ! Data sets for the signals:
+      ! SignalNames: 1-D array of MaxSigLen characters
+
+      ! Data sets for the lines:
+      ! Delta: 1-D array real, from all lines
+      ! EL: 1-D array real, from all lines
+      ! Gamma: 1-D array real, from all lines
+      ! LineNames: 1-D array of MaxSigLen characters
+      ! N: 1-D array real, from all lines
+      ! N1: 1-D array real, from all lines
+      ! N2: 1-D array real, from all lines
+      ! NS: 1-D array real, from all lines
+      ! PolarizedIndices: 1-D array of integer, index in PolarizedList for last
+      !   Polarized in lines(i)
+      ! PolarizedList: 1-D array of logical, concatenated from all lines
+      ! PS: 1-D array real, from all lines
+      ! QNIndices: 1-D array of integer, index in QNList for last QN in lines(i)
+      ! QNList: 1-D array of integer, concatenated from all lines
+      ! SidebandList: 1-D array of integer, concatenated from all lines, indices
+      !   in SignalNames DS
+      ! SignalIndices: 1-D array of integer, index in SidebandList and SignalList
+      !   for last Signal in lines(i)
+      ! SignalList: 1-D array of integer, concatenated from all lines, indices
+      !   in SignalNames dataset
+      ! Str: 1-D array real, from all lines
+      ! V0: 1-D array real, from all lines
+      ! W: 1-D array real, from all lines
+      ! UseYi: 1-D array real, from all lines
+
+      ! Data sets for the molecules:
+      ! CatNames: 1-d array of len=maxSigLen for catalog%species_name
+      ! MoleculeNames: 1-d array of len=63 characters
+      ! Continuum: 2-d array (molecules X MaxContinuum) of real(r8)
+      ! IsotopeRatio: 1-d array of default real
+      ! LineIndices: 1-d array of integer, index in LineList for last Line in
+      !   catalog(i)
+      ! LineList: 1-d array of integer, concatenated from all Catalog
+      ! Mass: 1-d array of real(r8)
+      ! Molecule: 1-d array of integer
+      ! Qlog: 2-d array (molecules x 3) of real(r8)
+
+      ! Create the file
+      call H5FCreate_F ( trim(fileName), H5F_ACC_TRUNC_F, fileID, iostat )
+      if ( iostat /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to create hdf5 Spectroscopy file ' // trim(fileName) )
+      ! Create the SignalNames data set
+      do i = 1, size(signals)
+        call getSignalName ( i, signalNames(i) )
+      end do
+      call saveAsHDF5DS ( fileID, 'SignalNames', signalNames )
+      ! Concatenate the arrays from the lines structures
+      polarizedIndices(0) = 0
+      qnIndices(0) = 0
+      signalIndices(0) = 0
+      do i = 1, size(lines)
+        if ( associated(lines(i)%polarized) ) then
+          polarizedIndices(i) = polarizedIndices(i-1) + size(lines(i)%polarized)
+        else
+          polarizedIndices(i) = polarizedIndices(i-1)
+        end if
+        if ( associated(lines(i)%qn) ) then
+          qnIndices(i) = qnIndices(i-1) + size(lines(i)%qn)
+        else
+          qnIndices(i) = qnIndices(i-1)
+        end if
+        if ( associated(lines(i)%signals) ) then
+          signalIndices(i) = signalIndices(i-1) + size(lines(i)%signals)
+        else
+          signalIndices(i) = signalIndices(i-1)
+        end if
+      end do
+      nullify ( lineList, polarizedList, qnList, sidebandList, signalList )
+      call allocate_test ( polarizedList, polarizedIndices(size(lines)), &
+        & 'PolarizedList', moduleName )
+      call allocate_test ( qnList, qnIndices(size(lines)), &
+        & 'QNList', moduleName )
+      call allocate_test ( sidebandList, signalIndices(size(lines)), &
+        & 'SidebandList', moduleName )
+      call allocate_test ( signalList, signalIndices(size(lines)), &
+        & 'SignalList', moduleName )
+      do i = 1, size(lines)
+        if ( associated(lines(i)%polarized) ) &
+          & polarizedList(polarizedIndices(i-1)+1:polarizedIndices(i)) = lines(i)%polarized
+        if ( associated(lines(i)%qn) ) &
+          & qnList(qnIndices(i-1)+1:qnIndices(i)) = lines(i)%qn
+        if ( associated(lines(i)%signals) ) then
+          sidebandList(signalIndices(i-1)+1:signalIndices(i)) = lines(i)%sidebands
+          signalList(signalIndices(i-1)+1:signalIndices(i)) = lines(i)%signals
+        end if
+      end do
+      if ( size ( polarizedList ) /= 0 ) &
+        & call saveAsHDF5DS ( fileID, 'PolarizedList', polarizedList )
+      call saveAsHDF5DS ( fileID, 'PolarizedIndices', polarizedIndices )
+      call saveAsHDF5DS ( fileID, 'QNList', qnList )
+      call saveAsHDF5DS ( fileID, 'QNIndices', qnIndices )
+      if ( size ( signalList ) /= 0 ) &
+        & call saveAsHDF5DS ( fileID, 'SignalList', signalList )
+      if ( size ( sidebandList ) /= 0 ) &
+        & call saveAsHDF5DS ( fileID, 'SidebandList', sidebandList )
+      call saveAsHDF5DS ( fileID, 'SignalIndices', signalIndices )
+      call saveAsHDF5DS ( fileID, 'Delta', lines%delta )
+      call saveAsHDF5DS ( fileID, 'EL', lines%el )
+      call saveAsHDF5DS ( fileID, 'Gamma', lines%gamma )
+      call saveAsHDF5DS ( fileID, 'N', lines%n )
+      call saveAsHDF5DS ( fileID, 'N1', lines%n1 )
+      call saveAsHDF5DS ( fileID, 'N2', lines%n2 )
+      call saveAsHDF5DS ( fileID, 'NS', lines%ns )
+      call saveAsHDF5DS ( fileID, 'PS', lines%ps )
+      call saveAsHDF5DS ( fileID, 'Str', lines%str )
+      call saveAsHDF5DS ( fileID, 'V0', lines%v0 )
+      call saveAsHDF5DS ( fileID, 'W', lines%w )
+      call saveAsHDF5DS ( fileID, 'UseYi', lines%useYi )
+      call deallocate_test ( polarizedList, 'PolarizedList', moduleName )
+      call deallocate_test ( qnList, 'QNList', moduleName )
+      call deallocate_test ( sidebandList, 'SidebandList', moduleName )
+      call deallocate_test ( signalList, 'SignalList', moduleName )
+      ! Create the LineNames data set
+      do i = 1, size(lines)
+        call get_string ( lines(i)%line_name, lineNames(i) )
+      end do
+      call saveAsHDF5DS ( fileID, 'LineNames', lineNames )
+      ! Create datasets for the catalog
+      lineIndices(first_molecule-1) = 0
+      do i = first_molecule, last_molecule
+        catNames(i) = ''
+        if ( catalog(i)%species_name /= 0 ) &
+          & call get_string ( catalog(i)%species_name, catNames(i) )
+        if ( catalog(i)%molecule /= l_none .and. associated(catalog(i)%lines) ) then
+          lineIndices(i) = lineIndices(i-1) + size(catalog(i)%lines)
+        else
+          lineIndices(i) = lineIndices(i-1)
+        end if
+        call get_string ( lit_indices(i), moleculeNames(i) )
+      end do
+      call saveAsHDF5DS ( fileID, 'CatNames', catNames )
+      call saveAsHDF5DS ( fileID, 'MoleculeNames', moleculeNames )
+      call allocate_test ( lineList, lineIndices(last_molecule), &
+        & 'LineList', moduleName )
+      do i = first_molecule, last_molecule
+        if ( catalog(i)%molecule /= l_none .and. associated(catalog(i)%lines) ) &
+          & lineList(lineIndices(i-1)+1:lineIndices(i)) = catalog(i)%lines
+        continuum(i,:) = catalog(i)%continuum
+        qlog(i,:) = catalog(i)%qlog
+      end do
+      call saveAsHDF5DS ( fileID, 'Continuum', continuum )
+      call saveAsHDF5DS ( fileID, 'LineList', lineList )
+      call saveAsHDF5DS ( fileID, 'LineIndices', lineIndices )
+      call saveAsHDF5DS ( fileID, 'Mass', catalog%mass )
+      call saveAsHDF5DS ( fileID, 'IsotopeRatio', catalog%defaultIsotopeRatio )
+      ! Molecule indexes MoleculeNames, not the lits -- the lits may change.
+      molecules = catalog%molecule
+      where ( molecules == l_none )
+        molecules = -1
+      elsewhere
+        molecules = molecules - first_molecule+1
+      end where
+      call saveAsHDF5DS ( fileID, 'Molecule', molecules )
+      call saveAsHDF5DS ( fileID, 'Qlog', qlog )
+      call deallocate_test ( lineList, 'LineList', moduleName )
+      ! Write the instrument name as a file-level attribute
+      
+      call get_string ( lit_indices(instrument), instrumentName )
+      call MakeHDF5Attribute ( fileID, 'InstrumentName', instrumentName )
+      ! Close the file
+      call H5FClose_F ( fileID, iostat )
+      if ( iostat /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName,&
+        & 'Unable to close hdf5 Spectroscopy file ' // trim(fileName) // '.' )
+    else if ( capitalize(fileType) == 'UNFORMATTED' ) then
+      ! Open the file
+      call get_lun ( lun )
+      what = 'open'
+      open ( lun, file=trim(fileName), status='unknown', form='unformatted', &
+        & access='sequential', iostat=iostat, err=9 )
+      ! Write the catalog
+      what = 'write'
+      write ( lun, iostat=iostat, err=9 ) count(catalog%molecule/=l_none), size(lines)
+      do i = first_molecule, last_molecule
+        if ( catalog(i)%molecule == l_none ) cycle
+        l = 0
+        if ( catalog(i)%species_name /= 0 ) then
+          l = string_length(catalog(i)%species_name)
+          call get_string ( catalog(i)%species_name, speciesName )
+        end if
+        l2 = string_length(lit_indices(catalog(i)%molecule))
+        call get_string ( lit_indices(catalog(i)%molecule), moleculeName )
+        nLines = 0
+        if ( associated(catalog(i)%lines) ) nLines = size(catalog(i)%lines)
+        write ( lun, iostat=iostat, err=9 ) l, speciesName(:l), &
+          & l2, moleculeName(:l2), catalog(i)%continuum, catalog(i)%mass, &
+          & catalog(i)%defaultIsotopeRatio, catalog(i)%qlog, nLines
+        ! Write the lines for the catalog entry
+        do j = 1, nLines
+          l = catalog(i)%lines(j)
+          l2 = string_length(lines(l)%line_name)
+          call get_string ( lines(l)%line_name, lineName )
+          nQN = 0
+          if ( associated(lines(l)%qn) ) nqn = size(lines(l)%qn)
+          nSig = 0
+          if ( associated(lines(l)%signals) ) nSig = size(lines(l)%signals)
+          nPol = 0
+          if (  associated(lines(l)%polarized) ) nPol = nSig
+          write ( lun, iostat=iostat, err=9 ) l2, lineName(:l2), lines(l)%delta, &
+            & lines(l)%el, lines(l)%gamma, lines(l)%n, lines(l)%n1, lines(l)%n2, &
+            & lines(l)%ps, lines(l)%ns, lines(l)%str, lines(l)%v0, lines(l)%w, &
+            & lines(l)%useYi, nPol, nQN, nSig
+          if ( nQN /= 0 ) write ( lun, iostat=iostat, err=9 ) lines(l)%qn
+          do l2 = 1, nSig
+            call getSignalName ( lines(l)%signals(l2), signalName )
+            write ( lun, iostat=iostat, err=9 ) len_trim(signalName), &
+              & trim(signalName), lines(l)%sidebands(l2)
+          end do
+          if ( nPol /= 0 ) write ( lun, iostat=iostat, err=9 ) lines(l)%polarized
+        end do ! j = 1, nLines
+      end do ! i = 1, size(catalog)
+      what = 'close'
+      close ( lun, iostat=iostat, err=9 )
+    else
+      call startErrorMessage ( where )
+      call output ( ' File type  ' // trim(fileType) // ' is not supported.', &
+        & advance='yes' )
+      go to 99
+    end if
+    return
+
+9   call io_error ( 'Unable to ' // trim(what) // ' output file ', iostat, trim(fileName) )
+99  call MLSMessage ( MLSMSG_Error, moduleName, &
+      & 'Error writing spectroscopy database.' )
+  end subroutine Write_Spectroscopy 
+
+! ------------------------------------------------  not_used_here  -----
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: SpectroscopyCatalog_m.f90,v 2.66 2018/08/06 19:55:19 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module SpectroscopyCatalog_m
+
+! $Log: SpectroscopyCatalog_m.f90,v $
+! Revision 2.66  2018/08/06 19:55:19  vsnyder
+! Use Get_C_Loc for Lines, Catalog.  Remove POINTER attribute from argument
+! in Dump_SpectCat_Database_2d because it's not needed.
+!
+! Revision 2.65  2018/08/04 02:10:00  vsnyder
+! Make Lines database allocatable instead of a pointer
+!
+! Revision 2.64  2015/03/28 02:06:01  vsnyder
+! Added stuff to trace allocate/deallocate addresses
+!
+! Revision 2.63  2014/09/05 20:53:50  vsnyder
+! More complete and accurate allocate/deallocate size tracking
+!
+! Revision 2.62  2014/07/18 23:15:26  pwagner
+! Aimed for consistency in names passed to allocate_test
+!
+! Revision 2.61  2014/04/22 00:37:51  vsnyder
+! Add Signals and SignalsPol fields, and sanity checks
+!
+! Revision 2.60  2014/04/04 19:36:54  vsnyder
+! Check that the number of elements of the QN field is twice the low-order
+! decimal digit of the first one (which is the JPL catalog format indicator),
+! plus one.
+!
+! Revision 2.59  2013/11/06 22:15:08  pwagner
+! Read/Write the instrument name as a file-level attribute
+!
+! Revision 2.58  2013/10/16 01:14:39  vsnyder
+! Add Evaluate_Variable
+!
+! Revision 2.57  2013/08/30 03:56:23  vsnyder
+! Revise use of trace_begin and trace_end
+!
+! Revision 2.56  2013/06/12 02:23:45  vsnyder
+! Cruft removal
+!
+! Revision 2.55  2012/07/31 00:45:49  vsnyder
+! Remove USE and declarations for unused stuff
+!
+! Revision 2.54  2012/05/08 01:34:29  vsnyder
+! Cannonball polishing
+!
+! Revision 2.53  2011/11/11 00:42:06  vsnyder
+! Use IsExtinction array from Molecules module
+!
+! Revision 2.52  2011/11/09 00:20:42  vsnyder
+! Move Catalog and Lines types to Spectroscopy_Types module.
+! Make Read_Spectroscopy work even if Lines is not allocated.
+! Use Test_Allocate and Test_Deallocate.
+!
+! Revision 2.50  2011/05/09 17:55:12  pwagner
+! Converted to using switchDetail
+!
+! Revision 2.49  2010/04/29 22:51:36  honghanh
+! Check for if lines is associated in Read_Spectroscopy, and remove
+! checks for lines associated-ness because it must be associated in order
+! for the subroutine to work.
+!
+! Revision 2.48  2009/08/20 19:46:40  vsnyder
+! Cosmetic stuff
+!
+! Revision 2.47  2009/06/23 18:26:10  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.46  2008/09/03 20:07:28  pwagner
+! Fixed bug in writeSpectroscopy
+!
+! Revision 2.45  2008/05/02 00:45:48  vsnyder
+! Remove unused symbols
+!
+! Revision 2.44  2008/04/01 16:59:17  pwagner
+! Can get hdf5 spectroscopy file path/name from PCF
+!
+! Revision 2.43  2006/07/21 00:17:01  vsnyder
+! Plug a memory leak
+!
+! Revision 2.42  2006/02/03 01:54:04  vsnyder
+! Don't crash while trying to write error message
+!
+! Revision 2.41  2005/06/22 18:08:20  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.40  2005/04/19 19:13:41  livesey
+! Changed mls1 to xptl1
+!
+! Revision 2.39  2005/03/17 01:31:11  vsnyder
+! Expose spectroscopy file's string index
+!
+! Revision 2.38  2005/03/03 23:56:18  vsnyder
+! Spiff up catalog dump
+!
+! Revision 2.37  2005/03/03 02:02:47  vsnyder
+! Spiff up dump
+!
+! Revision 2.36  2005/01/20 02:28:45  vsnyder
+! Cannonball polishing
+!
+! Revision 2.35  2005/01/13 01:32:24  vsnyder
+! Add DefaultIsotopeRatio to Catalog_t
+!
+! Revision 2.34  2005/01/12 03:10:00  vsnyder
+! Add error message in Read_Spectroscopy if the file cannot be opened
+!
+! Revision 2.33  2005/01/03 18:56:31  pwagner
+! Moved use hdf5 statements to avoid Lahey internal compiler error
+!
+! Revision 2.32  2004/12/31 02:40:44  vsnyder
+! Read/Write HDF Spectroscopy catalog
+!
+! Revision 2.31  2004/12/13 20:44:22  vsnyder
+! Added Dump_Line and Dump_SpectCat_Item, added UseYi field to Line_T.
+! Improved error checking.
+!
+! Revision 2.30  2004/11/16 03:05:18  vsnyder
+! Not using correct bounds for dump
+!
+! Revision 2.29  2004/11/04 03:56:35  vsnyder
+! Correct a blunder
+!
+! Revision 2.28  2004/11/04 03:40:42  vsnyder
+! Index spectroscopy catalog by molecule instead of searching
+!
+! Revision 2.27  2004/11/01 20:26:35  vsnyder
+! Reorganization of representation for molecules and beta groups; PFA may be broken for now
+!
+! Revision 2.26  2004/09/16 18:35:02  vsnyder
+! Pass 'details' through Dump_SpectCat_Database_2d
+!
+! Revision 2.25  2004/08/07 00:34:57  vsnyder
+! Correct subscript error in Dump_SpectCat_Database_2d
+!
+! Revision 2.24  2004/08/03 02:27:05  vsnyder
+! Add 'Details' argument to dump
+!
+! Revision 2.23  2004/07/08 02:47:44  vsnyder
+! Fix up the dump routines
+!
+! Revision 2.22  2004/04/02 23:58:33  vsnyder
+! Require a MASS field in SPECTRA if a LINE field appears
+!
+! Revision 2.21  2004/04/02 01:00:01  vsnyder
+! Cosmetic change
+!
+! Revision 2.20  2004/01/09 07:25:20  livesey
+! Added the fictitious instrument mls1
+!
+! Revision 2.19  2003/07/15 18:17:31  livesey
+! Added a 2D dump
+!
+! Revision 2.18  2003/05/21 22:14:53  vsnyder
+! Add 'new' fields to the dump routines
+!
+! Revision 2.17  2003/05/19 19:58:07  vsnyder
+! Remove USEs for unreferenced symbols, remove unused local variables
+!
+! Revision 2.16  2003/05/16 23:50:42  livesey
+! Removed spec_tag, added mass.
+!
+! Revision 2.15  2003/05/10 22:20:57  livesey
+! Tried to calm down -g1..
+!
+! Revision 2.14  2003/05/05 23:00:25  livesey
+! Merged in feb03 newfwm branch
+!
+! Revision 2.13  2003/02/27 18:09:04  bill
+! Reverted from wrongly-committed newfwm branch version
+!
+! Revision 2.11.2.8  2003/04/24 21:56:27  vsnyder
+! Determine size and allocate the database, then fill it
+!
+! Revision 2.11.2.7  2003/03/13 00:27:30  vsnyder
+! Add a NAME argument to Dump_SpectCat_Database
+!
+! Revision 2.11.2.6  2003/03/12 21:24:54  vsnyder
+! Add DUMP generic for Dump_SpectCat_Database.
+! Add Catalog argument to Dump_SpectCat_Database.
+!
+! Revision 2.11.2.5  2003/03/01 03:16:51  vsnyder
+! Nullify polarized field, so it doesn't end up in all lines after one gets one
+!
+! Revision 2.11.2.4  2003/02/27 23:20:00  vsnyder
+! Add 'polarized' component to catalog_t type
+!
+! Revision 2.12  2003/02/27 03:25:06  vsnyder
+! Add Polarized field for catalog extracts in Get_Species_Data
+!
+! Revision 2.11.2.3  2003/02/26 02:32:38  vsnyder
+! Remove PUBLIC declaration for recently removed generic DUMP
+!
+! Revision 2.11.2.2  2003/02/26 00:01:55  vsnyder
+! Remove ambiguous 'dump' interface that nobody used anyway
+!
+! Revision 2.11.2.1  2003/02/22 00:49:58  vsnyder
+! Add EMLSSignalsPol field to Line
+!
+! Revision 2.11  2002/12/03 01:26:41  vsnyder
+! Add QN field to lines spec, add SearchByQn function
+!
+! Revision 2.10  2002/10/08 17:08:06  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.9  2002/01/08 01:02:03  livesey
+! Nullify lines by default
+!
+! Revision 2.8  2001/11/09 23:20:17  vsnyder
+! Use Time_Now instead of CPU_TIME
+!
+! Revision 2.7  2001/10/18 23:53:03  livesey
+! Tidied up dump, added new stuff
+!
+! Revision 2.6  2001/10/15 18:10:37  livesey
+! Added continuum
+!
+! Revision 2.5  2001/10/09 22:38:41  livesey
+! Added stuff for ns
+!
+! Revision 2.4  2001/09/19 04:38:48  livesey
+! Lines per band stuff works now
+!
+! Revision 2.3  2001/09/18 01:25:48  livesey
+! Changed emls/umls bands to emls/umls signals
+!
+! Revision 2.2  2001/09/18 01:23:34  livesey
+! Changed bands to signals
+!
+! Revision 2.1  2001/09/18 00:08:25  livesey
+! Added the bands information stuff
+!
+! Revision 2.0  2001/09/17 20:26:26  livesey
+! New forward model
+!
+! Revision 1.8  2001/05/26 00:22:19  livesey
+! Made destroy stuff return if nothing to do.
+!
+! Revision 1.7  2001/05/03 22:10:15  vsnyder
+! Add copyright notice, make databases SAVE
+!
+! Revision 1.6  2001/04/26 02:36:52  vsnyder
+! Moved *_indices declarations from init_tables_module to intrinsic
+!
+! Revision 1.5  2001/04/23 23:16:16  vsnyder
+! Add 'time' command
+!
+! Revision 1.4  2001/04/20 17:26:31  vsnyder
+! Remove arguments from Destroy..., publish ...Lines...
+!
+! Revision 1.3  2001/04/04 23:56:46  zvi
+! Correfting Typo error in SpectCat  names
+!
+! Revision 1.2  2001/04/04 23:21:46  vsnyder
+! Add comments for fields of Lines_T and Catalog_T
+!
+! Revision 1.1  2001/04/04 02:09:16  vsnyder
+! Initial Commit
+!
+@
+
+
+2.66
+log
+@Use Get_C_Loc for Lines, Catalog.  Remove POINTER attribute from argument
+in Dump_SpectCat_Database_2d because it's not needed.
+@
+text
+@d457 4
+a460 4
+      use INTRINSIC, only: FIELD_INDICES, LIT_INDICES, PHYQ_INDICES
+      use MORETREE, only: STARTERRORMESSAGE
+      use OUTPUT_M, only: OUTPUT
+      use STRING_TABLE, only: DISPLAY_STRING
+d515 1
+a515 1
+      use EXPR_M, only: EXPR
+d540 1
+a540 1
+    use ALLOCATE_DEALLOCATE, only: DEALLOCATE_TEST, TEST_DEALLOCATE
+d561 1
+a561 1
+    use ALLOCATE_DEALLOCATE, only: DEALLOCATE_TEST
+d573 3
+a575 3
+    use DUMP_0, only: DUMP
+    use OUTPUT_M, only: BLANKS, OUTPUT
+    use STRING_TABLE, only: DISPLAY_STRING
+d607 1
+a607 1
+    use OUTPUT_M, only: BLANKS, OUTPUT
+d641 1
+a641 1
+    use OUTPUT_M, only: NEWLINE, OUTPUT
+d665 4
+a668 4
+    use DUMP_0, only: DUMP
+    use INTRINSIC, only: LIT_INDICES
+    use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT
+    use STRING_TABLE, only: DISPLAY_STRING, STRING_LENGTH
+d764 9
+a772 8
+    use HDF, only: DFACC_RDONLY
+    use INTRINSIC, only: L_HDF
+    use MLSCOMMON, only: MLSFILE_T
+    use MLSFILES, only: HDFVERSION_5, &
+      & ADDINITIALIZEMLSFILE, GETPCFROMREF, SPLIT_PATH_NAME
+    use OUTPUT_M, only: OUTPUT
+    use SDPTOOLKIT, only: PGS_PC_GETREFERENCE
+    use STRING_TABLE, only: GET_STRING
+d811 4
+d831 7
+a837 7
+    use INTRINSIC, only: LIT_INDICES
+    use MLSHDF5, only: LOADFROMHDF5DS
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
+    use MLSSTRINGS, only: CAPITALIZE
+    use MOLECULES, only: ISEXTINCTION
+    use STRING_TABLE, only: GET_STRING
+    use HDF5, only: H5F_ACC_RDONLY_F, H5FOPEN_F, H5FCLOSE_F
+d877 17
+a893 18
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST, &
+      & TEST_ALLOCATE, TEST_DEALLOCATE
+!   use DECLARATION_TABLE, only: DECLARE, DECLS, GET_DECL, LABEL
+    use HDF, only: DFACC_RDONLY
+    use INTRINSIC, only: LIT_INDICES ! , PHYQ_INVALID
+    use IO_STUFF, only: GET_LUN
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t
+    use MACHINE, only: IO_ERROR
+    use MLSHDF5, only: GETHDF5ATTRIBUTE, GETHDF5DSDIMS, &
+      & ISHDF5ATTRIBUTEPRESENT, ISHDF5DSPRESENT, LOADFROMHDF5DS, LOADPTRFROMHDF5DS
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
+    use MLSSIGNALS_M, only: INSTRUMENT, MAXSIGLEN
+    use MLSSTRINGS, only: CAPITALIZE
+    use MORETREE, only: GETLITINDEXFROMSTRING, GETSTRINGINDEXFROMSTRING
+    use PARSE_SIGNAL_M, only: PARSE_SIGNAL
+    use STRING_TABLE, only: GET_STRING
+    use TREE, only: NULL_TREE
+    use HDF5, only: HSIZE_T
+d1280 12
+a1291 12
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use INTRINSIC, only: LIT_INDICES
+    use IO_STUFF, only: GET_LUN
+    use MACHINE, only: IO_ERROR
+    use MLSHDF5, only: MAKEHDF5ATTRIBUTE, SAVEASHDF5DS
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
+    use MLSSIGNALS_M, only: GETSIGNALNAME, INSTRUMENT, MAXSIGLEN, SIGNALS
+    use MLSSTRINGS, only: CAPITALIZE
+    use MORETREE, only: STARTERRORMESSAGE
+    use OUTPUT_M, only: OUTPUT
+    use STRING_TABLE, only: GET_STRING, STRING_LENGTH
+    use HDF5, only: H5FCREATE_F, H5FCLOSE_F, H5F_ACC_TRUNC_F
+d1574 1
+a1574 1
+       "$Id: SpectroscopyCatalog_m.f90,v 2.65 2018/08/04 02:10:00 vsnyder Exp $"
+d1584 4
+@
+
+
+2.65
+log
+@Make Lines database allocatable instead of a pointer
+@
+text
+@d16 8
+a23 8
+  use INTRINSIC, only: L_NONE, L_HDF
+  use MLSKINDS, only: R8
+  use MLSCOMMON, only: MLSFILE_T
+  use MLSFILES, only: HDFVERSION_5, &
+    & INITIALIZEMLSFILE, MLS_CLOSEFILE, MLS_OPENFILE
+  use MOLECULES, only: FIRST_MOLECULE, LAST_MOLECULE
+  use SPECTROSCOPY_TYPES, only: LINE_T, LINES, CATALOG_T, MAXCONTINUUM , &
+    & ADDLINETODATABASE
+d31 5
+a35 4
+  public :: SPECTROSCOPY, SEARCHBYQN
+  public :: DESTROY_LINE_DATABASE, DESTROY_SPECTCAT_DATABASE
+  public :: DUMP_LINES_DATABASE, DUMP_SPECTCAT_DATABASE, DUMP_SPECTCAT_ITEM, DUMP
+  public :: READISOTOPERATIOS, READ_SPECTROSCOPY, WRITE_SPECTROSCOPY
+d69 1
+a69 1
+  subroutine Spectroscopy ( Root, TOOLKIT, pcfID, fileDatabase )
+d72 2
+a73 2
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST, &
+      & TEST_ALLOCATE, TEST_DEALLOCATE
+d76 3
+a78 3
+    use EVALUATE_VARIABLE_M, only: EVALUATE_VARIABLE
+    use INIT_SPECTROSCOPY_M, only: S_LINE, S_SPECTRA, S_READSPECTROSCOPY, &
+      & S_READISOTOPERATIOS, S_WRITESPECTROSCOPY, &
+d81 4
+a84 4
+      & F_CONTINUUM, F_DELTA, F_DEFAULTISOTOPERATIO, &
+      & F_EL, F_EMLSSIGNALS, F_EMLSSIGNALSPOL, F_GAMMA, F_LINES, F_MASS, &
+      & F_MOLECULE, F_XPTL1SIGNALS, F_N, F_N1, F_N2, F_NS, F_PS, F_QLOG, F_QN, &
+      & F_Signals, F_SignalsPol, F_STR, F_UMLSSIGNALS, F_V0, F_W
+d86 13
+a98 13
+      & PHYQ_DIMLESS => PHYQ_DIMENSIONLESS, PHYQ_FREQUENCY, S_TIME
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use MORETREE, only: GET_FIELD_ID, GET_SPEC_ID
+    use PARSE_SIGNAL_M, only: PARSE_SIGNAL
+    use STRING_TABLE, only: GET_STRING
+    use TIME_M, only: TIME_NOW
+    use TOGGLES, only: GEN, SWITCHES, TOGGLE
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+    use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, SUB_ROSA, SUBTREE
+    use TREE_TYPES, only: N_NAMED, N_STRING, N_VARIABLE
+    use MLSSIGNALS_M, only: INSTRUMENT
+d104 1
+a104 1
+    type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
+d120 1
+a120 1
+    integer :: NOSIGNALS                ! For the bands part
+d125 1
+a125 1
+    integer :: SIDEBAND                 ! A single sideband
+d129 2
+a130 2
+    integer, dimension(:), pointer :: SIGINDS ! From Parse_signal
+    character ( len=80 ) :: SIGNAME     ! The signal
+d135 2
+a136 2
+    integer :: THISMANY                 ! Conted up to noSignals
+    logical :: TIMING                   ! For S_Time
+d138 1
+a138 1
+    real(r8) :: VALUE                   ! From Expr_Check
+d181 1
+a181 1
+    if ( status == 0 .and. numLines > 0 ) addr = transfer(c_loc(tempLines(1)), addr)
+d188 1
+a188 1
+      if ( s > 0 ) addr = transfer(c_loc(lines(1)), addr)
+d541 1
+a541 1
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+d554 1
+a554 1
+    if ( s > 0 ) addr = transfer(c_loc(lines(1)), addr)
+d751 1
+a751 1
+    type(catalog_T), pointer :: Catalog(:,:)
+d878 1
+a878 1
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+d975 1
+a975 1
+      if ( iostat == 0 .and. lineN > 0 ) addr = transfer(c_loc(myLines(1)), addr)
+d982 1
+a982 1
+         if ( s > 0 ) addr = transfer(c_loc(lines(1)), addr)
+d1087 1
+a1087 1
+      if ( iostat == 0 .and. shp2(1) > 0 ) addr = transfer(c_loc(myCatalog(1)), addr)
+d1125 1
+a1125 1
+      if ( s > 0 ) addr = transfer(c_loc(myCatalog(1)), addr)
+d1570 1
+a1570 1
+       "$Id: SpectroscopyCatalog_m.f90,v 2.64 2015/03/28 02:06:01 vsnyder Exp $"
+d1580 3
+@
+
+
+2.64
+log
+@Added stuff to trace allocate/deallocate addresses
+@
+text
+@d132 1
+a132 1
+    type(line_t), pointer, dimension(:) :: TempLines
+d165 1
+a165 1
+    if ( associated(lines) ) offsetLines = size(lines)
+d178 1
+a178 2
+    tempLines => Lines
+    allocate ( lines(numLines), stat=status )
+d180 6
+a185 6
+    if ( status == 0 .and. numLines > 0 ) addr = transfer(c_loc(lines(1)), addr)
+    call test_allocate ( status, moduleName, "Lines", ubounds=numLines, &
+      & elementSize = storage_size(lines) / 8, address=addr )
+    if ( associated(tempLines) ) then
+      lines(:offsetLines) = tempLines
+      s = size(tempLines) * storage_size(tempLines) / 8
+d187 2
+a188 2
+      if ( s > 0 ) addr = transfer(c_loc(tempLines(1)), addr)
+      deallocate ( tempLines, stat=status )
+d191 1
+d544 1
+a544 1
+    if ( .not. associated(lines) ) return
+d613 1
+a613 1
+    if ( .not. associated(lines) ) then
+d842 1
+a842 1
+    if (.not. associated(lines)) &
+d910 1
+a910 1
+    type(line_t), pointer :: MyLines(:)
+d940 1
+a940 1
+!     if (.not. associated(lines)) &
+d970 1
+a970 1
+      if ( associated(lines) ) line1 = size(lines)
+d977 1
+a977 1
+      if ( associated(lines) ) then
+d985 1
+a985 1
+      lines => myLines
+d1324 1
+a1324 1
+    if ( .not. associated(lines) ) then
+d1569 1
+a1569 1
+       "$Id: SpectroscopyCatalog_m.f90,v 2.63 2014/09/05 20:53:50 vsnyder Exp $"
+d1579 3
+@
+
+
+2.63
+log
+@More complete and accurate allocate/deallocate size tracking
+@
+text
+@d86 1
+d106 1
+d180 2
+d183 1
+a183 1
+      & elementSize = storage_size(lines) / 8 )
+d187 2
+d190 1
+a190 1
+      call test_deallocate ( status, moduleName, "TempLines", s )
+d540 1
+d542 1
+d552 2
+d555 1
+a555 1
+    call test_deallocate ( status, moduleName, "Lines", s )
+d877 1
+d893 1
+d973 2
+d976 1
+a976 1
+        & elementSize = storage_size(myLines) / 8 )
+d980 2
+d983 1
+a983 1
+        call test_deallocate ( iostat, moduleName, 'Lines', s )
+d1085 2
+d1088 2
+a1089 1
+        & ubounds=int(shp2(1)), elementSize = storage_size(myCatalog) / 8 )
+d1123 2
+d1126 1
+a1126 1
+      call test_deallocate ( iostat, moduleName, 'MyCatalog', s )
+d1569 1
+a1569 1
+       "$Id: SpectroscopyCatalog_m.f90,v 2.62 2014/07/18 23:15:26 pwagner Exp $"
+d1579 3
+@
+
+
+2.62
+log
+@Aimed for consistency in names passed to allocate_test
+@
+text
+@d121 1
+d178 2
+a179 1
+    call test_allocate ( status, moduleName, "Lines" )
+d182 1
+d184 1
+a184 1
+      call test_deallocate ( status, moduleName, "TempLines" )
+d535 1
+a535 1
+    integer :: I, Status                   ! From deallocate
+d543 1
+d545 1
+a545 1
+    call test_deallocate ( status, moduleName, "Lines" )
+d913 1
+d961 2
+a962 1
+      call test_allocate ( iostat, moduleName, 'Lines' )
+d965 1
+d967 1
+a967 1
+        call test_deallocate ( iostat, moduleName, 'Lines' )
+d1069 2
+a1070 1
+      call test_allocate ( iostat, moduleName, 'MyCatalog' )
+d1103 1
+d1105 1
+a1105 1
+      call test_deallocate ( iostat, moduleName, 'MyCatalog' )
+d1548 1
+a1548 1
+       "$Id: SpectroscopyCatalog_m.f90,v 2.61 2014/04/22 00:37:51 vsnyder Exp $"
+d1558 3
+@
+
+
+2.61
+log
+@Add Signals and SignalsPol fields, and sanity checks
+@
+text
+@d285 1
+a285 1
+            call allocate_test ( lines(numLines)%polarized, noSignals, 'Polarized', moduleName )
+d549 2
+a550 2
+      call deallocate_test ( catalog(i)%lines, "Catalog(i)%lines", moduleName )
+      call deallocate_test ( catalog(i)%polarized, "Catalog(i)%polarized", moduleName )
+d1539 1
+a1539 1
+       "$Id: SpectroscopyCatalog_m.f90,v 2.60 2014/04/04 19:36:54 vsnyder Exp $"
+d1549 3
+@
+
+
+2.60
+log
+@Check that the number of elements of the QN field is twice the low-order
+decimal digit of the first one (which is the JPL catalog format indicator),
+plus one.
+@
+text
+@d79 1
+d83 1
+a83 1
+      & F_STR, F_UMLSSIGNALS, F_V0, F_W
+d108 1
+d137 5
+a141 1
+    integer, parameter :: DupSpectra = 1               ! Duplicate s_spectra
+d196 1
+a214 2
+          case ( f_xptl1Signals )
+            if ( instrument == l_xptl1 ) signalsNode = son
+d240 4
+d252 2
+d258 10
+d460 3
+d1539 1
+a1539 1
+       "$Id: SpectroscopyCatalog_m.f90,v 2.59 2013/11/06 22:15:08 pwagner Exp $"
+d1549 5
+@
+
+
+2.59
+log
+@Read/Write the instrument name as a file-level attribute
+@
+text
+@d141 5
+a145 1
+    integer, parameter :: TooBig = NotListedSignal + 1 ! Too many elements
+d221 7
+a227 2
+            call allocate_test ( lines(numLines)%qn, nsons(son)-1, 'qn', ModuleName )
+            do k = 2, nsons(son)
+d233 2
+d455 5
+d1515 1
+a1515 1
+       "$Id: SpectroscopyCatalog_m.f90,v 2.58 2013/10/16 01:14:39 vsnyder Exp $"
+d1525 3
+@
+
+
+2.58
+log
+@Add Evaluate_Variable
+@
+text
+@d16 1
+a16 1
+  use INTRINSIC, only: L_NONE
+d19 2
+d22 2
+a23 2
+  use Spectroscopy_Types, only: Line_t, Lines, Catalog_t, MaxContinuum , &
+    & AddLineToDatabase
+d31 4
+a34 4
+  public :: Spectroscopy, SearchByQn
+  public :: Destroy_Line_Database, Destroy_SpectCat_Database
+  public :: Dump_Lines_Database, Dump_SpectCat_Database, Dump_SpectCat_Item, Dump
+  public :: ReadIsotopeRatios, Read_Spectroscopy, Write_Spectroscopy
+d72 1
+a72 1
+      & Test_Allocate, Test_DeAllocate
+d75 1
+a75 1
+    use Evaluate_Variable_m, only: Evaluate_Variable
+d94 1
+a94 1
+    use TREE_TYPES, only: N_NAMED, N_STRING, N_Variable
+d465 1
+a465 1
+      use Expr_M, only: Expr
+d479 1
+a479 1
+      use Output_m, only: Output
+d490 1
+a490 1
+    use Allocate_Deallocate, only: Deallocate_Test, Test_Deallocate
+d506 1
+a506 1
+    use Allocate_Deallocate, only: Deallocate_Test
+d518 3
+a520 3
+    use Dump_0, only: Dump
+    use Output_m, only: Blanks, Output
+    use String_Table, only: Display_String
+d552 1
+a552 1
+    use Output_m, only: Blanks, Output
+d586 1
+a586 1
+    use Output_m, only: NewLine, Output
+d610 4
+a613 4
+    use Dump_0, only: Dump
+    use Intrinsic, only: Lit_indices
+    use Output_m, only: Blanks, NewLine, Output
+    use String_Table, only: Display_String, String_Length
+d709 8
+a716 8
+    use hdf, only: dfacc_rdonly
+    use intrinsic, only: l_hdf
+    use MLSCommon, only: MLSFile_T
+    use MLSFiles, only: HDFVERSION_5, &
+      & AddInitializeMLSFile, GetPCFromRef, split_path_name
+    use output_m, only: output
+    use SDPToolkit, only: Pgs_pc_getReference
+    use String_Table, only: Get_String
+d775 1
+a775 1
+    use MOLECULES, only: IsExtinction
+d818 1
+a818 1
+      & Test_Allocate, Test_Deallocate
+d820 2
+a821 1
+!   use INTRINSIC, only: PHYQ_INVALID
+d824 4
+a827 3
+    use MLSHDF5, only: GETHDF5DSDIMS, ISHDF5DSPRESENT, LOADFROMHDF5DS, LOADPTRFROMHDF5DS
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
+    use MLSSIGNALS_M, only: MAXSIGLEN
+d831 1
+d833 1
+a833 1
+    use HDF5, only: H5F_ACC_RDonly_F, H5FOPEN_F, H5FCLOSE_F, HSIZE_T
+d845 2
+d852 1
+d889 5
+a893 1
+      call h5fopen_f ( trim(fileName), H5F_ACC_RDONLY_F, fileID, iostat )
+d896 13
+d1063 2
+a1064 1
+      call H5FClose_F ( fileID, iostat )
+d1165 2
+a1166 2
+      use MoreTree, only: StartErrorMessage
+      use Output_m, only: Output
+d1209 1
+a1209 1
+    use MLSHDF5, only: SAVEASHDF5DS
+d1211 1
+a1211 1
+    use MLSSIGNALS_M, only: GETSIGNALNAME, MAXSIGLEN, SIGNALS
+d1225 1
+d1425 4
+d1499 1
+a1499 1
+       "$Id: SpectroscopyCatalog_m.f90,v 2.57 2013/08/30 03:56:23 vsnyder Exp $"
+d1509 3
+@
+
+
+2.57
+log
+@Revise use of trace_begin and trace_end
+@
+text
+@d73 1
+d92 1
+a92 1
+    use TREE_TYPES, only: N_NAMED, N_STRING
+d154 2
+a155 2
+      if ( node_id(son) == n_named ) then
+        key = subtree(2,son)
+d157 2
+a158 1
+        key = son
+a159 1
+      if ( get_spec_id(key) == s_line ) numLines = numLines + 1
+d1468 1
+a1468 1
+       "$Id: SpectroscopyCatalog_m.f90,v 2.56 2013/06/12 02:23:45 vsnyder Exp $"
+d1478 3
+@
+
+
+2.56
+log
+@Cruft removal
+@
+text
+@d108 1
+d142 1
+a142 1
+    if ( toggle(gen) ) call trace_begin ( "Spectroscopy", root )
+d404 1
+a404 3
+    if ( toggle(gen) ) then
+      call trace_end ( "Spectroscopy" )
+    end if
+d1467 1
+a1467 1
+       "$Id: SpectroscopyCatalog_m.f90,v 2.55 2012/07/31 00:45:49 vsnyder Exp $"
+d1477 3
+@
+
+
+2.55
+log
+@Remove USE and declarations for unused stuff
+@
+text
+@d766 1
+a766 1
+  ! Module-wise global variable LINES need to be associated before
+a779 1
+    logical :: Error
+a789 1
+    error = .false.
+d1468 1
+a1468 1
+       "$Id: SpectroscopyCatalog_m.f90,v 2.54 2012/05/08 01:34:29 vsnyder Exp $"
+d1478 3
+@
+
+
+2.54
+log
+@Cannonball polishing
+@
+text
+@d770 2
+a771 5
+    use MACHINE, only: IO_ERROR
+    use MLSHDF5, only: GETHDF5DSDIMS, ISHDF5DSPRESENT, LOADFROMHDF5DS, LOADPTRFROMHDF5DS
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
+      & MLSMSG_ERROR
+    use MLSSIGNALS_M, only: MAXSIGLEN
+d774 2
+a775 4
+    use MORETREE, only: GETLITINDEXFROMSTRING, GETSTRINGINDEXFROMSTRING
+    use PARSE_SIGNAL_M, only: PARSE_SIGNAL
+    use STRING_TABLE, only: GET_STRING, STRING_LENGTH
+    use HDF5, only: H5F_ACC_RDONLY_F, H5FOPEN_F, H5FCLOSE_F, HSIZE_T
+a779 4
+    type(catalog_t) :: CatalogItem
+    character(len=maxSigLen), pointer :: CatNames(:)
+    real(r8), pointer :: Continuum(:,:)
+!   type(decls) :: Decl
+d782 1
+a782 4
+    integer :: I, IOSTAT, J, L, Line1, LineN, LUN, L2
+    type(line_t) :: Line
+    integer, pointer :: LineIndices(:)
+    integer, pointer :: LineList(:)
+a784 24
+    character(len=63), pointer :: MoleculeNames(:)
+    integer :: NCat              ! Number of catalog items
+    integer :: NLines            ! Number of lines for a species
+    integer :: NPol              ! Number of polarized flags for a line
+                                 ! (zero or nSig )
+    integer :: NQN, NSig         ! Numbers of quantum numbers, signals for a line
+    integer, pointer :: PolarizedIndices(:) ! PolarizedIndices(i) is index in
+                                 ! PolarizedList of last Polarized for line I.
+    logical, pointer :: PolarizedList(:) ! Concatenation from all lines
+    real(r8), pointer :: Qlog(:,:)
+    integer, pointer :: QNIndices(:) ! QNIndices(i) is index in
+                                 ! QNList of last QN for line I.
+    integer, pointer :: QNList(:) ! Concatenation from all lines
+    integer(hsize_t) :: Shp(1), Shp2(2) ! To get the shapes of datasets HDF
+    integer, pointer :: SidebandList(:) ! Concatenation from all lines
+    integer, dimension(:), pointer :: SigInds ! From Parse_signal
+    logical :: SignalError
+    integer , pointer:: SignalIndices(:) ! signalIndices(i) is index in
+                                 ! SidebandList and SignalList of last signal
+                                 ! for line I.
+    integer, pointer :: SignalList(:) ! Concatenation from all lines
+    character(len=MaxSigLen) :: SignalName
+    character(len=MaxSigLen), pointer :: SignalNames(:)
+    character(len=63) :: SpeciesName
+a785 1
+    character(len=5) :: What
+d1470 1
+a1470 1
+       "$Id: SpectroscopyCatalog_m.f90,v 2.53 2011/11/11 00:42:06 vsnyder Exp $"
+d1480 3
+@
+
+
+2.53
+log
+@Use IsExtinction array from Molecules module
+@
+text
+@d1311 1
+d1507 1
+a1507 1
+       "$Id: SpectroscopyCatalog_m.f90,v 2.52 2011/11/09 00:20:42 vsnyder Exp $"
+d1517 3
+@
+
+
+2.52
+log
+@Move Catalog and Lines types to Spectroscopy_Types module.
+Make Read_Spectroscopy work even if Lines is not allocated.
+Use Test_Allocate and Test_Deallocate.
+@
+text
+@d776 1
+a776 1
+    use MOLECULES, only: L_EXTINCTION, L_EXTINCTIONV2
+d837 1
+a837 1
+      if ( any( molecule == (/ l_none, l_extinction, l_extinctionv2 /) ) ) cycle
+d1506 1
+a1506 1
+       "$Id: SpectroscopyCatalog_m.f90,v 2.50 2011/05/09 17:55:12 pwagner Exp $"
+d1516 5
+@
+
+
+2.51
+log
+@added readIsotopeRatios
+@
+text
+@d19 3
+a21 1
+  use MOLECULES, only: FIRST_MOLECULE, LAST_MOLECULE, L_EXTINCTION, L_EXTINCTIONV2
+d34 3
+a41 41
+  ! Private parameters
+  integer, public, parameter :: MaxContinuum = 6
+
+  ! Public types:
+  type, public :: Line_T           ! One line in the spectrum for a species
+    integer :: Line_Name           ! Sub_rosa index
+    real(r8) :: DELTA              ! Delta interference coefficient at 300K 1/mb
+    real(r8) :: EL                 ! Lower state energy cm-1
+    real(r8) :: GAMMA              ! Gamma interference coefficient at 300K 1/mb
+    real(r8) :: N                  ! Temperature power dependence of w
+    real(r8) :: N1                 ! Temperature dependency of delta
+    real(r8) :: N2                 ! Temperature dependency of gamma
+    real(r8) :: NS                 ! Pressure shift dependency on temperature
+    real(r8) :: PS                 ! Pressure shift parameter in MHz/mbar
+    real(r8) :: STR                ! Integrated spectral intensity
+                                   ! Log(nm**2 MHz) at 300 K
+    real(r8) :: V0                 ! Line center frequency MHz
+    real(r8) :: W                  ! Collision broadening parameter
+                                   ! MHz/mbar at 300 K
+    logical :: UseYi               ! Delta /= 0 .or. Gamma /= 0
+    integer, dimension(:), pointer :: QN=>NULL()      ! Optional quantum numbers
+    integer, dimension(:), pointer :: Signals=>NULL() ! List of signal indices for line
+    integer, dimension(:), pointer :: Sidebands=>NULL() ! Sidebands for above bands (-1,0,1)
+    logical, dimension(:), pointer :: Polarized=>NULL() ! Process this signal and
+                                   ! sideband using the polarized model
+  end type Line_T
+
+  type, public :: Catalog_T        ! Catalog entry for a species
+    real(r8) :: Continuum(MaxContinuum)  ! Continuum coefficients
+    real :: DefaultIsotopeRatio = 1.0
+    integer, pointer :: Lines(:)=>NULL() ! Indices in Lines database
+    real(r8) :: Mass               ! Molecular mass in AMU
+    integer :: Molecule = l_none   ! L_...; l_none => no catalog entry
+    logical, pointer :: Polarized(:)=>NULL() ! Used only in catalog extract to
+                                   ! indicate that the lines(:) are to be
+                                   ! processed with the polarized model
+    real(r8) :: Qlog(3)            ! Logarithm of the partition function
+                                   ! at 300, 225, and 150 K
+    integer :: Species_Name        ! Sub_rosa index of s_spectra label
+  end type Catalog_T
+
+d49 2
+a56 3
+  ! The lines database:
+  type(line_T), public, pointer, dimension(:), save :: Lines => NULL()
+
+d68 3
+a72 2
+
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+d74 1
+a74 1
+      & S_READISOTOPERATIOS, S_WRITESPECTROSCOPY
+d76 1
+a76 1
+    use INIT_SPECTROSCOPY_M, only: F_CONTINUUM, F_DELTA, F_DEFAULTISOTOPERATIO, &
+d82 1
+a82 2
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, &
+      & MLSMSG_DEALLOCATE, MLSMSG_ERROR
+d163 1
+a163 2
+    if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate // "Lines")
+d167 1
+a167 2
+      if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_DeAllocate // "TempLines")
+a484 21
+  ! ------------------------------------------  AddLineToDatabase  -----
+  integer function AddLineToDatabase ( Database, Item )
+  ! Add a line to the Lines database, creating the database
+  ! if necessary.
+
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
+      & MLSMSG_Error
+
+    ! Dummy arguments
+    type(line_T), pointer, dimension(:) :: Database
+    type(line_T), intent(in) :: Item
+
+
+    ! Local variables
+    type(line_T), dimension(:), pointer :: tempDatabase
+
+    include "addItemToDatabase.f9h"
+
+    AddLineToDatabase = newSize
+  end function AddLineToDatabase
+
+d488 1
+a488 2
+    use Allocate_Deallocate, only: Deallocate_Test
+    use MLSMessageModule, only: MLSMessage, MLSMSG_DeAllocate, MLSMSG_Error
+d499 1
+a499 2
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+      & MLSMSG_DeAllocate // "Lines" )
+d557 4
+d608 4
+a611 4
+    use DUMP_0, only: DUMP
+    use INTRINSIC, only: LIT_INDICES
+    use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT
+    use STRING_TABLE, only: DISPLAY_STRING, STRING_LENGTH
+d707 8
+a714 8
+    use HDF, only: DFACC_RDonly
+    use INTRINSIC, only: L_HDF
+    use MLSCOMMON, only: MLSFILE_T
+    use MLSFILES, only: HDFVERSION_5, &
+      & ADDINITIALIZEMLSFILE, GETPCFROMREF, SPLIT_PATH_NAME
+    use OUTPUT_M, only: OUTPUT
+    use SDPTOOLKIT, only: PGS_PC_GETREFERENCE
+    use STRING_TABLE, only: GET_STRING
+d776 1
+d850 3
+a852 2
+  ! Module-wise global variable LINES need to be associated before
+  ! calling this subroutine
+d854 2
+a855 1
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+d861 1
+a861 2
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
+      & MLSMSG_ERROR
+d867 1
+a867 1
+    use HDF5, only: H5F_ACC_RDONLY_F, H5FOPEN_F, H5FCLOSE_F, HSIZE_T
+d913 3
+a915 2
+    if (.not. associated(lines)) &
+       call MLSMessage(MLSMSG_Error, moduleName, "lines is NULL")
+d926 2
+a927 1
+      line1 = size(lines)
+d930 6
+a935 6
+      if ( iostat /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+        & MLSMSG_Allocate // 'MyLines' )
+      myLines(:line1) = lines
+      deallocate ( lines, stat=iostat )
+      if ( iostat /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+        & MLSMSG_DeAllocate // 'Lines' )
+d1036 1
+a1036 2
+      if ( iostat /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+        & MLSMSG_Allocate // 'MyCatalog' )
+d1070 1
+a1070 2
+      if ( iostat /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+        & MLSMSG_Deallocate // 'MyCatalog' )
+@
+
+
+2.50
+log
+@Converted to using switchDetail
+@
+text
+@d19 1
+a19 1
+  use MOLECULES, only: FIRST_MOLECULE, LAST_MOLECULE
+d30 1
+a30 1
+  public :: Read_Spectroscopy, Write_Spectroscopy
+d110 1
+a110 1
+      & S_WRITESPECTROSCOPY
+d143 1
+d346 14
+d666 4
+a669 4
+    use Dump_0, only: Dump
+    use Intrinsic, only: Lit_indices
+    use Output_m, only: Blanks, NewLine, Output
+    use String_Table, only: Display_String, String_Length
+d765 8
+a772 8
+    use hdf, only: dfacc_rdonly
+    use intrinsic, only: l_hdf
+    use MLSCommon, only: MLSFile_T
+    use MLSFiles, only: HDFVERSION_5, &
+      & AddInitializeMLSFile, GetPCFromRef, split_path_name
+    use output_m, only: output
+    use SDPToolkit, only: Pgs_pc_getReference
+    use String_Table, only: Get_String
+d823 83
+d923 1
+a923 1
+    use HDF5, only: H5F_ACC_RDonly_F, H5FOPEN_F, H5FCLOSE_F, HSIZE_T
+d1562 1
+a1562 1
+       "$Id: SpectroscopyCatalog_m.f90,v 2.49 2010/04/29 22:51:36 honghanh Exp $"
+d1572 3
+@
+
+
+2.49
+log
+@Check for if lines is associated in Read_Spectroscopy, and remove
+checks for lines associated-ness because it must be associated in order
+for the subroutine to work.
+@
+text
+@d16 4
+a19 3
+  use Intrinsic, only: L_none
+  use MLSCommon, only: R8, MLSFile_T
+  use Molecules, only: First_Molecule, Last_Molecule
+d108 22
+a129 21
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+    use Init_Spectroscopy_M, only: S_Line, S_Spectra, S_ReadSpectroscopy, &
+      & S_WriteSpectroscopy
+    ! Now the Fields:
+    use Init_Spectroscopy_M, only: F_Continuum, F_Delta, F_DefaultIsotopeRatio, &
+      & F_El, F_EMLSSIGNALS, F_EMLSSIGNALSPOL, F_Gamma, F_Lines, F_Mass, &
+      & F_Molecule, F_XPTL1SIGNALS, F_N, F_N1, F_N2, F_Ns, F_Ps, F_Qlog, F_QN, &
+      & F_Str, F_UMLSSIGNALS, F_V0, F_W
+    use Intrinsic, only: L_EMLS, L_UMLS, L_XPTL1, &
+      & Phyq_Dimless => Phyq_Dimensionless, Phyq_Frequency, S_Time
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
+      & MLSMSG_DeAllocate, MLSMSG_Error
+    use MoreTree, only: Get_Field_Id, Get_Spec_Id
+    use Parse_Signal_m, only: PARSE_SIGNAL
+    use String_Table, only: Get_string
+    use Time_M, only: Time_Now
+    use Toggles, only: Gen, Switches, Toggle
+    use Trace_M, only: Trace_begin, Trace_end
+    use Tree, only: Decorate, Decoration, Node_ID, NSons, Sub_Rosa, Subtree
+    use Tree_Types, only: N_Named, N_String
+    use MLSSignals_m, only: Instrument
+d422 1
+a422 1
+    if ( index(switches,'speC') /= 0 ) then
+d426 1
+a426 1
+    if ( index(switches,'spec') /= 0 ) call dump_SpectCat_database ( catalog )
+d437 4
+a440 4
+      use Intrinsic, only: Field_Indices, Lit_Indices, Phyq_Indices
+      use MoreTree, only: StartErrorMessage
+      use Output_m, only: Output
+      use String_Table, only: Display_String
+d812 14
+a825 14
+    use Allocate_Deallocate, only: Allocate_Test, DeAllocate_Test
+!   use Declaration_Table, only: Declare, Decls, Get_Decl, Label
+!   use Intrinsic, only: Phyq_Invalid
+    use IO_Stuff, only: Get_Lun
+    use Machine, only: IO_Error
+    use MLSHDF5, only: GetHDF5DSDims, IsHDF5DSPresent, LoadFromHDF5DS, LoadPtrFromHDF5DS
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
+      & MLSMSG_Error
+    use MLSSignals_m, only: MaxSigLen
+    use MLSStrings, only: Capitalize
+    use MoreTree, only: GetLitIndexFromString, GetStringIndexFromString
+    use Parse_Signal_m, only: Parse_Signal
+    use Tree, only: Null_Tree
+    use HDF5, only: H5F_ACC_RDONLY_F, H5FOpen_F, H5FClose_F, HSize_T
+d1176 12
+a1187 12
+    use Allocate_Deallocate, only: Allocate_Test, DeAllocate_Test
+    use Intrinsic, only: Lit_Indices
+    use IO_Stuff, only: Get_Lun
+    use Machine, only: IO_Error
+    use MLSHDF5, only: SaveAsHDF5DS
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use MLSSignals_m, only: GetSignalName, MaxSigLen, Signals
+    use MLSStrings, only: Capitalize
+    use MoreTree, only: StartErrorMessage
+    use Output_m, only: Output
+    use String_Table, only: Get_String, String_Length
+    use HDF5, only: H5FCREATE_F, H5FClose_F, H5F_ACC_TRUNC_F
+d1464 1
+a1464 1
+       "$Id: SpectroscopyCatalog_m.f90,v 2.48 2009/08/20 19:46:40 vsnyder Exp $"
+d1474 5
+@
+
+
+2.48
+log
+@Cosmetic stuff
+@
+text
+@d37 1
+a37 1
+  integer, parameter :: MaxContinuum = 6
+d176 1
+a176 1
+
+d419 1
+d807 2
+d869 3
+d881 1
+a881 2
+      line1 = 0
+      if ( associated(lines) ) line1 = size(lines)
+d886 3
+a888 4
+      if ( associated(lines) ) then
+        myLines(:line1) = lines
+        deallocate ( lines, stat=iostat )
+        if ( iostat /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+d890 1
+a890 2
+        lines => myLines
+      end if
+d905 1
+a905 1
+        & lowBound=line1 )
+d1462 1
+a1462 1
+       "$Id: SpectroscopyCatalog_m.f90,v 2.47 2009/06/23 18:26:10 pwagner Exp $"
+d1472 3
+@
+
+
+2.47
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d95 1
+a95 1
+       "$RCSfile: $"
+d1009 2
+a1010 2
+          if ( j < first_molecule .or. j > last_molecule ) call MLSMessage ( &
+            & MLSMSG_Error, moduleName, 'The string ' // &
+d1012 1
+d1459 1
+a1459 1
+       "$Id: read_apriori.f90 is it here $"
+d1469 3
+@
+
+
+2.46
+log
+@Fixed bug in writeSpectroscopy
+@
+text
+@d95 1
+a95 1
+       "$RCSfile: SpectroscopyCatalog_m.f90,v $"
+d1455 1
+a1456 1
+!---------------------------- RCS Ident Info -------------------------------
+d1458 2
+a1459 3
+       "$Id: SpectroscopyCatalog_m.f90,v 2.45 2008/05/02 00:45:48 vsnyder Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d1461 1
+a1461 1
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
+d1463 1
+d1468 3
+@
+
+
+2.45
+log
+@Remove unused symbols
+@
+text
+@d410 1
+d1458 1
+a1458 1
+       "$Id: SpectroscopyCatalog_m.f90,v 2.44 2008/04/01 16:59:17 pwagner Exp $"
+d1462 1
+d1468 3
+@
+
+
+2.44
+log
+@Can get hdf5 spectroscopy file path/name from PCF
+@
+text
+@a17 2
+  use MLSFiles, only: HDFVERSION_5, &
+    & AddInitializeMLSFile, GetPCFromRef, split_path_name
+d747 1
+a747 1
+    use intrinsic, only: l_ascii, l_hdf
+d765 1
+a765 1
+    character(len=255) :: fileTypeStr, PCFFileName, path, shortName
+d1457 1
+a1457 1
+       "$Id: SpectroscopyCatalog_m.f90,v 2.43 2006/07/21 00:17:01 vsnyder Exp $"
+d1466 3
+@
+
+
+2.43
+log
+@Plug a memory leak
+@
+text
+@d17 3
+a19 1
+  use MLSCommon, only: R8
+d104 1
+a104 1
+  subroutine Spectroscopy ( Root )
+d133 3
+d139 1
+a139 1
+    character(len=1023) :: FileName     ! For WriteSpectroscopy
+d144 1
+d340 5
+a344 2
+        call get_string ( spectroscopyFile, fileName, strip=.true. )
+        call Read_Spectroscopy ( j, fileName, fileType )
+d412 5
+a416 2
+        call get_string ( sub_rosa(j), fileName, strip=.true. )
+        call Write_Spectroscopy ( j, fileName, fileType )
+d434 1
+a434 1
+    subroutine Announce_Error ( Where, Code, More )
+d442 1
+d445 1
+a445 1
+      call startErrorMessage ( where )
+d475 2
+d478 1
+d745 61
+d1459 1
+a1459 1
+       "$Id: SpectroscopyCatalog_m.f90,v 2.42 2006/02/03 01:54:04 vsnyder Exp $"
+d1468 3
+@
+
+
+2.42
+log
+@Don't crash while trying to write error message
+@
+text
+@d879 3
+a881 1
+            nullify ( sigInds )
+d883 1
+d1382 1
+a1382 1
+       "$Id: SpectroscopyCatalog_m.f90,v 2.41 2005/06/22 18:08:20 pwagner Exp $"
+d1391 3
+@
+
+
+2.41
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d95 1
+a95 1
+       "$RCSfile: $"
+d780 1
+d791 1
+d873 1
+a873 1
+              & 'The string ' // trim(signalNames(lines(i)%signals(j))) // &
+d875 1
+d891 3
+d1379 1
+a1379 1
+       "$Id: $"
+d1388 3
+@
+
+
+2.40
+log
+@Changed mls1 to xptl1
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d93 3
+a95 6
+  !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
+    & "$Id: SpectroscopyCatalog_m.f90,v 2.39 2005/03/17 01:31:11 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter, private :: ModuleName = &
+    & "$RCSfile: SpectroscopyCatalog_m.f90,v $"
+d97 1
+a97 1
+  !---------------------------------------------------------------------------
+d1371 5
+d1382 3
+@
+
+
+2.39
+log
+@Expose spectroscopy file's string index
+@
+text
+@d87 1
+a87 1
+    & "$Id: SpectroscopyCatalog_m.f90,v 2.38 2005/03/03 23:56:18 vsnyder Exp $"
+d108 1
+a108 1
+      & F_Molecule, F_MLS1SIGNALS, F_N, F_N1, F_N2, F_Ns, F_Ps, F_Qlog, F_QN, &
+d110 1
+a110 1
+    use Intrinsic, only: L_EMLS, L_MLS1, L_UMLS, &
+d227 2
+a228 2
+          case ( f_mls1Signals )
+            if ( instrument == l_mls1 ) signalsNode = son
+d731 1
+a731 1
+    use MLSHDF5, only: GetHDF5DSDims, LoadFromHDF5DS, LoadPtrFromHDF5DS
+d811 7
+a817 1
+      call loadPtrFromHDF5DS ( fileID, 'PolarizedList', polarizedList )
+d822 13
+a834 2
+      call loadPtrFromHDF5DS ( fileID, 'SignalList', signalList )
+      call loadPtrFromHDF5DS ( fileID, 'SidebandList', sidebandList )
+d1229 2
+a1230 1
+      call saveAsHDF5DS ( fileID, 'PolarizedList', polarizedList )
+d1234 4
+a1237 2
+      call saveAsHDF5DS ( fileID, 'SignalList', signalList )
+      call saveAsHDF5DS ( fileID, 'SidebandList', sidebandList )
+d1372 3
+@
+
+
+2.38
+log
+@Spiff up catalog dump
+@
+text
+@d76 3
+d87 1
+a87 1
+    & "$Id: SpectroscopyCatalog_m.f90,v 2.37 2005/03/03 02:02:47 vsnyder Exp $"
+d328 2
+a329 1
+        call get_string ( sub_rosa(j), fileName, strip=.true. )
+d1352 3
+@
+
+
+2.37
+log
+@Spiff up dump
+@
+text
+@d84 1
+a84 1
+    & "$Id: SpectroscopyCatalog_m.f90,v 2.36 2005/01/20 02:28:45 vsnyder Exp $"
+d663 1
+a663 2
+    call output ( catalog%defaultIsotopeRatio, before='Default Isotope Ratio = ', &
+      & advance='yes' )
+d665 1
+d698 7
+d1348 3
+@
+
+
+2.36
+log
+@Cannonball polishing
+@
+text
+@d84 1
+a84 1
+    & "$Id: SpectroscopyCatalog_m.f90,v 2.35 2005/01/13 01:32:24 vsnyder Exp $"
+d107 2
+a108 3
+    use Intrinsic, only: Lit_Indices, L_EMLS, L_MLS1, L_UMLS, &
+      & Phyq_Dimless => Phyq_Dimensionless, Phyq_Frequency, &
+      & S_Time
+d608 1
+d612 1
+a612 1
+    if ( present(sideband) ) call output ( sideband, before=' for sideband ' )
+d1341 3
+@
+
+
+2.35
+log
+@Add DefaultIsotopeRatio to Catalog_t
+@
+text
+@d84 1
+a84 1
+    & "$Id: SpectroscopyCatalog_m.f90,v 2.34 2005/01/12 03:10:00 vsnyder Exp $"
+d107 3
+a109 2
+    use Intrinsic, only: Phyq_Dimless => Phyq_Dimensionless, Phyq_Frequency, &
+      & S_Time, L_EMLS, L_UMLS, L_MLS1
+d1341 3
+@
+
+
+2.34
+log
+@Add error message in Read_Spectroscopy if the file cannot be opened
+@
+text
+@d47 1
+a47 1
+    logical :: UseYi               ! Delta /= 0 or Gamma /= 0
+d57 1
+d65 1
+a65 1
+                                   ! At 300, 225, and 150 K
+d70 1
+a70 1
+    & 0.0_r8, NULL(), 0.0_r8, l_none, NULL(), 0.0_r8, -1 )
+d84 1
+a84 1
+    & "$Id: SpectroscopyCatalog_m.f90,v 2.33 2005/01/03 18:56:31 pwagner Exp $"
+d103 4
+a106 4
+    use Init_Spectroscopy_M, only: F_Continuum, F_Delta, F_El, F_EMLSSIGNALS, &
+      & F_EMLSSIGNALSPOL, F_Gamma, F_Lines, F_Mass, F_Molecule, &
+      & F_MLS1SIGNALS, F_N, F_N1, F_N2, F_Ns, F_Ps, F_Qlog, F_QN, F_Str, &
+      & F_UMLSSIGNALS, F_V0, F_W
+d150 1
+d360 3
+d661 3
+d878 1
+d927 1
+a927 1
+          & catalogItem%qlog, nLines
+d1255 1
+d1292 1
+a1292 1
+          & catalog(i)%qlog, nLines
+d1340 3
+@
+
+
+2.33
+log
+@Moved use hdf5 statements to avoid Lahey internal compiler error
+@
+text
+@d83 1
+a83 1
+    & "$Id: SpectroscopyCatalog_m.f90,v 2.32 2004/12/31 02:40:44 vsnyder Exp $"
+d767 2
+d903 1
+a903 1
+        & 'Unable to close hdf5 Spectroscopy file ' // trim(fileName) // '.' )
+d1330 3
+@
+
+
+2.32
+log
+@Read/Write HDF Spectroscopy catalog
+@
+text
+@d83 1
+a83 1
+    & "$Id: SpectroscopyCatalog_m.f90,v 2.31 2004/12/13 20:44:22 vsnyder Exp $"
+a708 1
+    use HDF5, only: H5F_ACC_RDONLY_F, H5FOpen_F, H5FClose_F, HSize_T
+d719 1
+a1040 1
+    use HDF5, only: H5FCREATE_F, H5FClose_F, H5F_ACC_TRUNC_F
+d1051 1
+d1328 3
+@
+
+
+2.31
+log
+@Added Dump_Line and Dump_SpectCat_Item, added UseYi field to Line_T.
+Improved error checking.
+@
+text
+@d21 1
+d40 1
+a41 1
+    real(r8) :: NS                 ! Pressure shift dependency on temperature
+d56 1
+a56 1
+    real(r8) :: Continuum(MaxContinuum)      ! Continuum coefficients
+d83 1
+a83 1
+    & "$Id: SpectroscopyCatalog_m.f90,v 2.30 2004/11/16 03:05:18 vsnyder Exp $"
+d99 2
+a100 1
+    use Init_Spectroscopy_M, only: S_Line, S_Spectra
+d102 4
+a105 3
+    use Init_Spectroscopy_M, only: F_Continuum, F_Delta, F_El, F_Gamma, F_Lines, &
+      & F_Mass, F_Molecule, F_N, F_N1, F_N2, F_Ns, F_Ps, F_Qlog, F_QN, F_Str, F_V0, F_W, &
+      & F_EMLSSIGNALS, F_EMLSSIGNALSPOL, F_MLS1SIGNALS, F_UMLSSIGNALS
+d117 1
+a117 1
+    use Tree_Types, only: N_Named
+d125 2
+d315 10
+d381 10
+d410 1
+a410 1
+      use Lexer_Core, only: Print_Source
+a412 1
+      use Tree, only: Source_Ref
+d418 1
+a418 2
+      call output ( '***** At ' )
+      call print_source ( source_ref ( where ) )
+d537 1
+a537 2
+      call output ( 'Name = ' )
+      call display_string ( line%line_name )
+d540 3
+a542 8
+    call output ( 'V0 = ' )
+    call output ( line%v0 )
+    call output ( ', El = ' )
+    call output ( line%el )
+    call output ( ', Str =' )
+    call output ( line%str )
+    call output ( ', W =' )
+    call output ( line%str, advance='yes' )
+d544 4
+a547 10
+    call output ( 'Ns = ' )
+    call output ( line%ns )
+    call output ( ', Ps = ' )
+    call output ( line%ps )
+    call output ( ', N = ' )
+    call output ( line%n )
+    call output ( ': Delta = ' )
+    call output ( line%delta )
+    call output ( ', N1 = ' )
+    call output ( line%n1, advance='yes' )
+d549 4
+a552 4
+    call output ( 'Gamma = ' )
+    call output ( line%gamma )
+    call output ( ', N2 = ' )
+    call output ( line%n2, advance='yes' )
+d595 1
+a595 4
+    use Dump_0, only: Dump
+    use Intrinsic, only: Lit_indices
+    use Output_m, only: Blanks, NewLine, Output
+    use String_Table, only: Display_String
+d607 1
+a607 2
+    call output ( ': SIZE = ' )
+    call output ( size(catalog), advance='yes' )
+d635 1
+a635 1
+    if ( catalog%species_name /= 0 ) then
+d639 1
+a639 2
+    call output ( 'Species = ' )
+    call display_string ( lit_indices(catalog%molecule) )
+d641 1
+a641 1
+    call output ( ' Mass = ' // trim(adjustl(print)) // ', Qlog = [ ' )
+d704 305
+d1011 3
+a1013 4
+  ! Find an element in the Catalog database that has a molecule.
+  ! Then in its Lines database find an object that has its QN field
+  ! equal to QNs.  If found, return the index of that line in the lines
+  ! database.  Return zero if no such object can be found.
+d1018 1
+a1018 1
+    integer :: I, J
+d1020 8
+a1027 10
+    do i = 1, size(catalog)
+      if ( catalog(i)%molecule == molecule ) then
+        if ( associated(catalog(i)%lines) ) then
+          do j = 1, size(catalog(i)%lines)
+            if ( associated(lines(catalog(i)%lines(j))%qn) ) then
+              if ( size(lines(catalog(i)%lines(j))%qn) == size(qns) ) then
+                if ( all(lines(catalog(i)%lines(j))%qn == qns) ) then
+                  searchByQn = catalog(i)%lines(j)
+                  return
+                end if
+d1030 2
+a1031 2
+          end do
+        end if
+d1033 1
+a1033 1
+    end do
+d1038 282
+d1328 4
+@
+
+
+2.30
+log
+@Not using correct bounds for dump
+@
+text
+@d20 1
+a20 1
+  public :: Dump_Lines_Database, Dump_SpectCat_Database, Dump
+d23 2
+a24 1
+    module procedure Dump_SpectCat_Database, Dump_SpectCat_Database_2d
+d33 9
+a41 9
+    Real(r8) :: DELTA              ! Delta interference coefficient at 300K 1/mb
+    Real(r8) :: EL                 ! Lower state energy cm-1
+    Real(r8) :: GAMMA              ! Gamma interference coefficient at 300K 1/mb
+    Real(r8) :: N                  ! Temperature power dependence of w
+    Real(r8) :: N1                 ! Temperature dependency of delta
+    Real(r8) :: N2                 ! Temperature dependency of gamma
+    Real(r8) :: PS                 ! Pressure shift parameter in MHz/mbar
+    Real(r8) :: NS                 ! Pressure shift on temperature dependency
+    Real(r8) :: STR                ! Integrated spectral intensity
+d43 2
+a44 2
+    Real(r8) :: V0                 ! Line center frequency MHz
+    Real(r8) :: W                  ! Collision broadening parameter
+d46 1
+d82 1
+a82 1
+    & "$Id: SpectroscopyCatalog_m.f90,v 2.29 2004/11/04 03:56:35 vsnyder Exp $"
+d147 2
+a148 1
+    integer, parameter :: No_Mass = dupSpectra + 1     ! Lines field but no mass field
+d210 1
+d249 2
+d384 1
+a384 1
+      use Intrinsic, only: Lit_Indices, Phyq_Indices
+d391 1
+a391 1
+      integer, intent(in), optional :: MOre  ! In case some error messages need
+d401 3
+d506 46
+a553 1
+    use Dump_0, only: Dump
+a554 1
+    use String_Table, only: Display_String
+d578 1
+a578 36
+      if ( lines(i)%line_name /= 0 ) then
+        call output ( 'Name = ' )
+        call display_string ( lines(i)%line_name )
+        call output ( ', ' )
+      end if
+      call output ( 'V0 = ' )
+      call output ( lines(i)%v0 )
+      call output ( ', El = ' )
+      call output ( lines(i)%el )
+      call output ( ', Str =' )
+      call output ( lines(i)%str )
+      call output ( ', W =' )
+      call output ( lines(i)%str, advance='yes' )
+      call blanks ( 6 )
+      call output ( 'Ns = ' )
+      call output ( lines(i)%ns )
+      call output ( ', Ps = ' )
+      call output ( lines(i)%ps )
+      call output ( ', N = ' )
+      call output ( lines(i)%n )
+      call output ( ': Delta = ' )
+      call output ( lines(i)%delta )
+      call output ( ', N1 = ' )
+      call output ( lines(i)%n1, advance='yes' )
+      call blanks ( 6 )
+      call output ( 'Gamma = ' )
+      call output ( lines(i)%gamma )
+      call output ( ', N2 = ' )
+      call output ( lines(i)%n2, advance='yes' )
+      if ( associated(lines(i)%qn) ) call dump ( lines(i)%qn, '      QN' )
+      if ( associated(lines(i)%signals) ) &
+        & call dump ( lines(i)%signals, '      Signals' )
+      if ( associated(lines(i)%sidebands) ) &
+        & call dump ( lines(i)%sidebands, '      Sidebands' )
+      if ( associated(lines(i)%polarized) ) &
+        & call dump ( lines(i)%polarized, '      Polarized' )
+a581 12
+  ! ----------------------------------  Dump_SpectCat_Database_2D  -----
+  subroutine Dump_SpectCat_Database_2d ( Catalog, Name, Details )
+    type(catalog_T), pointer :: Catalog(:,:)
+    character(len=*), intent(in), optional :: Name
+    integer, optional, intent(in) :: Details ! <= 0 => Don't dump lines, default 0
+    integer :: Sideband
+    ! Executable code
+    do sideband = lbound(catalog,1), ubound(catalog,1), 2
+      call Dump ( catalog(sideband,:), name, sideband, details )
+    end do
+  end subroutine Dump_SpectCat_Database_2d
+
+d594 1
+a594 3
+    integer :: I, J                ! Subscript, loop inductor
+    integer :: MyDetails
+    character(len=15) :: Print
+a595 2
+    myDetails = 0
+    if ( present(details) ) myDetails = details
+d605 46
+a650 14
+      if ( catalog(i)%species_name /= 0 ) then
+        call display_string ( catalog(i)%species_name )
+        call output ( ', ' )
+      end if
+      call output ( 'Species = ' )
+      call display_string ( lit_indices(catalog(i)%molecule) )
+      write ( print, '(f10.3)' ) catalog(i)%mass
+      call output ( ' Mass = ' // trim(adjustl(print)) // ', Qlog = [ ' )
+      do j = 1, 3
+        write ( print, '(f10.4)' ) catalog(i)%qlog(j)
+        call output ( trim(adjustl(print)) )
+        if ( j < 3 ) call output ( ', ' )
+      end do
+      call output ( ' ]', advance='yes' )
+d652 17
+a668 12
+      call output ( 'continuum = [ ' )
+      do j = 1, MaxContinuum
+        write ( print, '(g15.3)' ) catalog(i)%continuum(j)
+        call output ( trim(adjustl(print)) )
+        if ( j < MaxContinuum ) call output ( ', ' )
+      end do
+      call output ( ' ]', advance='yes' )
+      if ( myDetails > 0 ) then
+        call blanks ( 6 )
+        call output ( 'Lines:' )
+        if ( associated(catalog(i)%lines) ) then
+          if ( size(catalog(i)%lines) > 0 ) then
+d670 2
+a671 2
+            do j = 1, size(catalog(i)%lines)
+              call dump_lines_database ( catalog(i)%lines(j), catalog(i)%lines(j), &
+a673 2
+          else
+            call output ( ' none', advance='yes' )
+d678 19
+a696 5
+        if ( associated(catalog(i)%polarized) ) &
+          & call dump ( catalog(i)%polarized, '      Polarized:' )
+      end if ! myDetails > 0
+    end do ! i
+  end subroutine Dump_SpectCat_Database
+d698 1
+a698 1
+! ---------------------------------------------------  SearchByQn  -----
+d738 3
+@
+
+
+2.29
+log
+@Correct a blunder
+@
+text
+@d80 1
+a80 1
+    & "$Id: SpectroscopyCatalog_m.f90,v 2.28 2004/11/04 03:40:42 vsnyder Exp $"
+d599 1
+a599 1
+    do i = first_molecule, last_molecule
+d687 3
+@
+
+
+2.28
+log
+@Index spectroscopy catalog by molecule instead of searching
+@
+text
+@d80 1
+a80 1
+    & "$Id: SpectroscopyCatalog_m.f90,v 2.27 2004/11/01 20:26:35 vsnyder Exp $"
+d364 1
+a364 1
+      dump_SpectCat_database ( catalog )
+d687 3
+@
+
+
+2.27
+log
+@Reorganization of representation for molecules and beta groups; PFA may be broken for now
+@
+text
+@d10 1
+d53 1
+a53 1
+    real(r8) :: continuum(MaxContinuum)      ! Continuum coefficients
+d56 1
+a56 1
+    integer :: Molecule            ! L_...
+d61 2
+a62 2
+                                   ! At 300 , 225 , and 150 K
+    integer :: Species_Name        ! Sub_rosa index
+d66 1
+a66 1
+    & 0.0_r8, NULL(), 0.0_r8, l_none, NULL(), 0.0_r8, 0 )
+d70 1
+a70 1
+  type(catalog_T), public, pointer, dimension(:), save :: Catalog => NULL()
+a77 1
+
+d80 1
+a80 1
+    & "$Id: SpectroscopyCatalog_m.f90,v 2.26 2004/09/16 18:35:02 vsnyder Exp $"
+d123 1
+a125 1
+    integer :: NumCatalog               ! Number of species in catalog
+a126 1
+    integer :: OffsetCatalog            ! Number of species previously in catalog
+a137 1
+    type(catalog_t), pointer, dimension(:) :: TempCatalog
+d144 2
+a145 1
+    integer, parameter :: No_Mass = 1   ! Lines field but no mass field
+d158 1
+a158 1
+    ! Determine sizes of created or expanded lines and species databases.
+a161 3
+    offsetCatalog = 0
+    if ( associated(catalog) ) offsetCatalog = size(catalog)
+    numCatalog = offsetCatalog
+a164 1
+        name = sub_rosa(subtree(1,son))
+a166 1
+        name = 0
+d169 1
+a169 7
+      select case ( get_spec_id(key) )
+      case ( s_line ) ! ...................................  LINE  .....
+        numLines = numLines + 1
+      case ( s_spectra ) ! .............................  SPECTRA  .....
+        numCatalog = numCatalog + 1
+      case default ! Don't care about the others
+      end select
+a183 12
+    ! Create or expand the Species Catalog
+    tempCatalog => Catalog
+    allocate ( catalog(numCatalog), stat=status )
+    if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate // "Catalog")
+    if ( associated(tempCatalog) ) then
+      catalog(:offsetCatalog) = tempCatalog
+      deallocate ( tempCatalog, stat=status )
+      if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_DeAllocate // "TempCatalog")
+    end if
+
+a184 1
+    numCatalog = offsetCatalog
+d305 13
+a317 3
+        numCatalog = numCatalog + 1
+        catalog(numCatalog)%species_Name = name
+        catalog(numCatalog)%continuum = 0.0
+d324 3
+a326 3
+            call allocate_test ( catalog(numCatalog)%lines, nsons(son)-1, &
+              & "catalog(numCatalog)%Lines", moduleName )
+            mostLines = max(mostLines, size(catalog(numCatalog)%lines) )
+d328 1
+a328 1
+              catalog(numCatalog)%lines(k-1) = decoration(decoration(subtree(k,son)))
+d334 1
+a334 1
+              call expr_check ( subtree(k,son), catalog(numCatalog)%continuum(k-1), &
+d340 1
+a340 1
+            call expr_check ( subtree(2,son), catalog(numCatalog)%mass, &
+d342 1
+a342 2
+          case ( f_molecule )
+            catalog(numCatalog)%molecule = decoration(subtree(2,son))
+d346 1
+a346 1
+              call expr_check ( subtree(k,son), catalog(numCatalog)%qlog(k-1), &
+d352 1
+a352 1
+        call decorate ( key, numCatalog )
+d363 4
+d378 1
+a378 1
+      use Intrinsic, only: Phyq_Indices
+d392 3
+a465 21
+  ! ----------------------------------------  AddSpeciesToCatalog  -----
+  integer function AddSpeciesToCatalog ( Database, Item )
+  ! Add a line to the Lines database, creating the database
+  ! if necessary.
+
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
+      & MLSMSG_Error
+
+    ! Dummy arguments
+    type(catalog_t), pointer, dimension(:) :: Database
+    type(catalog_t), intent(in) :: Item
+
+
+    ! Local variables
+    type(catalog_t), dimension(:), pointer :: tempDatabase
+
+    include "addItemToDatabase.f9h"
+
+    AddSpeciesToCatalog = newSize
+  end function AddSpeciesToCatalog
+
+d469 1
+d472 1
+a472 1
+    integer :: Status                   ! From deallocate
+d474 6
+d488 4
+a491 5
+    use MLSMessageModule, only: MLSMessage, MLSMSG_DeAllocate, MLSMSG_Error
+    integer :: I, Status
+    if ( .not. associated(catalog) ) return
+    do i = 1, size(catalog)
+      call deallocate_test ( catalog(i)%lines, moduleName, "Catalog(i)%lines" )
+a492 3
+    deallocate ( catalog, stat=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+      MLSMSG_DeAllocate // "Catalog" )
+d494 1
+d563 1
+d599 2
+a600 5
+    do i = 1, size(catalog)
+      if ( catalog(i)%molecule == l_none ) then
+        if ( .not. associated(catalog(i)%lines) ) cycle
+        if ( size(catalog(i)%lines) == 0 ) cycle
+      end if
+d687 3
+@
+
+
+2.26
+log
+@Pass 'details' through Dump_SpectCat_Database_2d
+@
+text
+@d68 6
+a76 3
+  ! The spectroscopy database:
+  type(catalog_T), public, pointer, dimension(:), save :: Catalog => NULL()
+
+d80 1
+a80 1
+    & "$Id: SpectroscopyCatalog_m.f90,v 2.25 2004/08/07 00:34:57 vsnyder Exp $"
+d341 1
+d520 1
+a652 2
+      if ( associated(catalog(i)%polarized) ) &
+        & call dump ( catalog(i)%polarized, '      Polarized:' )
+d669 3
+a671 1
+      end if
+d715 3
+@
+
+
+2.25
+log
+@Correct subscript error in Dump_SpectCat_Database_2d
+@
+text
+@d77 1
+a77 1
+    & "$Id: SpectroscopyCatalog_m.f90,v 2.24 2004/08/03 02:27:05 vsnyder Exp $"
+d592 1
+a592 1
+      call Dump ( catalog(sideband,:), name, sideband )
+d710 3
+@
+
+
+2.24
+log
+@Add 'Details' argument to dump
+@
+text
+@d77 1
+a77 1
+    & "$Id: SpectroscopyCatalog_m.f90,v 2.23 2004/07/08 02:47:44 vsnyder Exp $"
+d586 1
+a586 1
+    type(catalog_T), intent(in) :: Catalog(-1:,:)
+d591 1
+a591 1
+    do sideband = -1, 1, 2
+d710 3
+@
+
+
+2.23
+log
+@Fix up the dump routines
+@
+text
+@d77 1
+a77 1
+    & "$Id: SpectroscopyCatalog_m.f90,v 2.22 2004/04/02 23:58:33 vsnyder Exp $"
+d585 1
+a585 1
+  subroutine Dump_SpectCat_Database_2d ( Catalog, Name )
+d588 1
+d597 1
+a597 1
+  subroutine Dump_SpectCat_Database ( Catalog, Name, Sideband )
+d606 1
+d609 1
+d612 2
+d650 13
+a662 9
+      call blanks ( 6 )
+      call output ( 'Lines:' )
+      if ( associated(catalog(i)%lines) ) then
+        if ( size(catalog(i)%lines) > 0 ) then
+          call newLine
+          do j = 1, size(catalog(i)%lines)
+            call dump_lines_database ( catalog(i)%lines(j), catalog(i)%lines(j), &
+              & .false. )
+          end do
+a665 2
+      else
+        call output ( ' none', advance='yes' )
+d710 3
+@
+
+
+2.22
+log
+@Require a MASS field in SPECTRA if a LINE field appears
+@
+text
+@d77 1
+a77 1
+    & "$Id: SpectroscopyCatalog_m.f90,v 2.21 2004/04/02 01:00:01 vsnyder Exp $"
+d562 1
+a562 1
+      call output ( 'Ps = ' )
+d586 3
+a588 4
+    use Output_m, only: Output
+    type(catalog_T), intent(in) :: Catalog(:,:)
+    character(len=*), intent(in), optional :: NAME
+    integer :: SIDEBAND
+a589 2
+    call output ( 'Spectroscopy catalog' )
+    if ( present(name) ) call output ( ' '//trim(name) )
+d591 1
+a591 3
+      call output ( 'Sideband: ' )
+      call output ( sideband, advance='yes' )
+      call Dump ( catalog(sideband,:) )
+d596 1
+a596 1
+  subroutine Dump_SpectCat_Database ( Catalog, Name )
+d599 1
+a599 1
+    use Output_m, only: Blanks, Output
+d604 1
+d607 1
+d611 1
+d615 4
+d627 2
+a628 3
+      call output ( ' Mass = ' )
+      call output ( catalog(i)%mass )
+      call output ( ', Qlog = [ ' )
+d630 2
+a631 1
+        call output ( catalog(i)%qlog(j) )
+d638 2
+a639 1
+        call output ( catalog(i)%continuum(j) )
+d646 13
+a658 6
+      call output ( 'Lines:', advance='yes' )
+      if ( associated(catalog(i)%lines ) ) then
+        do j = 1, size(catalog(i)%lines)
+          call dump_lines_database ( catalog(i)%lines(j), catalog(i)%lines(j), &
+            & .false. )
+        end do
+d703 3
+@
+
+
+2.21
+log
+@Cosmetic change
+@
+text
+@d77 1
+a77 1
+    & "$Id: SpectroscopyCatalog_m.f90,v 2.20 2004/01/09 07:25:20 livesey Exp $"
+d117 1
+d143 2
+a144 1
+    integer, parameter :: NotInt = 1                   ! QN not an integer
+d330 1
+d335 1
+d349 1
+d363 1
+d400 4
+d693 3
+@
+
+
+2.20
+log
+@Added the fictitious instrument mls1
+@
+text
+@d77 1
+a77 1
+    & "$Id: SpectroscopyCatalog_m.f90,v 2.19 2003/07/15 18:17:31 livesey Exp $"
+d574 1
+a574 1
+  ! -------------------------------------  Dump_SpectCat_Database  -----
+d683 3
+@
+
+
+2.19
+log
+@Added a 2D dump
+@
+text
+@d77 1
+a77 1
+    & "$Id: SpectroscopyCatalog_m.f90,v 2.18 2003/05/21 22:14:53 vsnyder Exp $"
+d97 1
+a97 1
+      & F_EMLSSIGNALS, F_EMLSSIGNALSPOL, F_UMLSSIGNALS
+d99 1
+a99 1
+      & S_Time, L_EMLS, L_UMLS
+d233 2
+d683 3
+@
+
+
+2.18
+log
+@Add 'new' fields to the dump routines
+@
+text
+@d22 1
+a22 1
+    module procedure Dump_SpectCat_Database
+d77 1
+a77 1
+    & "$Id: SpectroscopyCatalog_m.f90,v 2.17 2003/05/19 19:58:07 vsnyder Exp $"
+d573 16
+d681 3
+@
+
+
+2.17
+log
+@Remove USEs for unreferenced symbols, remove unused local variables
+@
+text
+@d77 1
+a77 1
+    & "$Id: SpectroscopyCatalog_m.f90,v 2.16 2003/05/16 23:50:42 livesey Exp $"
+d508 1
+d563 7
+d574 1
+d605 2
+a606 1
+      call output ( '  continuum = [ ' )
+d612 3
+a614 1
+      call blanks ( 6 + int(log10(i+0.0)) )
+d665 3
+@
+
+
+2.16
+log
+@Removed spec_tag, added mass.
+@
+text
+@d77 1
+a77 1
+    & "$Id$"
+d80 1
+a80 1
+    & "$RCSfile$"
+d106 1
+a106 1
+    use Toggles, only: Gen, Levels, Switches, Toggle
+d652 4
+a655 1
+! $Log$
+@
+
+
+2.15
+log
+@Tried to calm down -g1..
+@
+text
+@d54 1
+a61 1
+    integer :: Spec_Tag            ! Spectroscopy tag
+d65 1
+a65 1
+    & 0.0_r8, NULL(), l_none, NULL(), 0.0_r8, 0, 0 )
+d96 1
+a96 1
+      & F_Molecule, F_N, F_N1, F_N2, F_Ns, F_Ps, F_Qlog, F_QN, F_Str, F_V0, F_W, &
+a101 1
+    use Molecules, only: Spec_Tags
+d330 3
+a332 4
+            k = nsons(son)
+            call allocate_test ( catalog(numCatalog)%lines, k-1, "catalog(numCatalog)%Lines", &
+              & moduleName )
+            do k = 2, k
+a335 1
+            k = nsons(son)
+d338 1
+a338 1
+            do k = 2, k
+d342 4
+a347 1
+            catalog(numCatalog)%spec_Tag = spec_Tags(catalog(numCatalog)%molecule)
+d393 1
+a393 1
+        call output ( 'The field is too far from being an integer.', &
+d588 2
+a589 2
+      call output ( ', SpecTag = ' )
+      call output ( catalog(i)%spec_tag )
+d614 2
+a615 2
+  integer function SearchByQn ( Spec_Tag, QNs )
+  ! Find an element in the Catalog database that has Spec_Tag.
+d620 1
+a620 1
+    integer, intent(in) :: Spec_Tag
+d626 1
+a626 1
+      if ( catalog(i)%spec_tag == spec_tag ) then
+d653 3
+@
+
+
+2.14
+log
+@Merged in feb03 newfwm branch
+@
+text
+@d367 1
+a368 2
+      if ( levels(gen) > 0 .or. index(switches,'spec') /= 0 ) &
+        & call dump_SpectCat_database ( catalog )
+d653 3
+@
+
+
+2.13
+log
+@Reverted from wrongly-committed newfwm branch version
+@
+text
+@d8 1
+a8 2
+  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+  use String_Table, only: Display_String, Get_string
+a9 8
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
+    & MLSMSG_Error
+  use MLSSignals_m, only: MaxSigLen, Signals
+  use Output_m, only: Blanks, Output
+  use Time_M, only: Time_Now
+  use Toggles, only: Gen, Levels, Switches, Toggle
+  use Trace_M, only: Trace_begin, Trace_end
+  use Parse_Signal_m, only: PARSE_SIGNAL
+d11 2
+a12 1
+  ! More USEs below in each procedure, if they're only used therein.
+d19 5
+a23 1
+  public :: Dump_Lines_Database, Dump_SpectCat_Database
+d43 1
+d45 4
+a48 3
+    integer, dimension(:), pointer :: signals=>NULL() ! List of signal indices for line
+    integer, dimension(:), pointer :: sidebands=>NULL() ! Sidebands for above bands (-1,0,1)
+                                   ! MHz/mbar at 300 K
+d52 1
+a52 2
+    integer :: Species_Name        ! Sub_rosa index
+    integer :: Spec_Tag            ! Spectroscopy tag
+d55 3
+d60 2
+a61 1
+    real(r8) :: continuum(MaxContinuum) ! Continuum coefficients
+d64 3
+d77 1
+a77 1
+    & "$Id: SpectroscopyCatalog_m.f90,v 2.11 2002/12/03 01:26:41 vsnyder Exp $"
+d80 1
+a80 1
+    & "$RCSfile: SpectroscopyCatalog_m.f90,v $"
+d91 2
+d97 1
+a97 1
+      & F_EMLSSIGNALS, F_UMLSSIGNALS
+d100 2
+d104 5
+d118 1
+a118 5
+    integer :: I, J, K                  ! Loop inductors, Subscripts
+    type(line_t) :: OneLine             ! To be added to the database
+    type(catalog_t) :: OneSpecies       ! To be added to the database
+    real(r8) :: QN                      ! for call to expr_check for QN field
+    integer :: Son                      ! Of root or key
+a120 3
+    integer :: SignalsNode                ! Tree node for emls/umls bands
+    logical :: TIMING                   ! For S_Time
+    real :: T1, T2                      ! For S_Time
+d122 5
+a126 1
+    integer :: THISMANY                 ! Conted up to noSignals
+d128 3
+d133 8
+d143 6
+a148 4
+    integer, parameter :: NotInt = 1             ! QN not an integer
+    integer, parameter :: TooBig = NotInt + 1    ! Too many elements
+    integer, parameter :: WrongSize = TooBig + 1 ! Wrong number of elements
+    integer, parameter :: WrongUnits = wrongSize + 1 ! Wrong physical units
+d155 7
+d173 46
+a218 2
+        oneLine%line_Name = name
+        nullify ( oneLine%qn ) ! because quantum numbers are optional
+d220 1
+d225 1
+a225 1
+            call expr_check ( subtree(2,son), oneLine%delta, phyq_dimless )
+d227 5
+a231 1
+            call expr_check ( subtree(2,son), oneLine%el, phyq_dimless )
+d233 1
+a233 1
+            call expr_check ( subtree(2,son), oneLine%gamma, phyq_dimless )
+d235 1
+a235 1
+            call expr_check ( subtree(2,son), oneLine%n, phyq_dimless )
+d237 1
+a237 1
+            call expr_check ( subtree(2,son), oneLine%n1, phyq_dimless )
+d239 1
+a239 1
+            call expr_check ( subtree(2,son), oneLine%n2, phyq_dimless )
+d241 1
+a241 1
+            call expr_check ( subtree(2,son), oneLine%ns, phyq_dimless )
+d243 1
+a243 1
+            call expr_check ( subtree(2,son), oneLine%ps, phyq_dimless )
+d245 1
+a245 1
+            call allocate_test ( oneLine%qn, nsons(son)-1, 'qn', ModuleName )
+d248 2
+a249 2
+              oneLine%qn(k-1) = nint(qn)
+              if ( abs(qn - oneLine%qn(k-1)) > 0.1_r8 ) &
+d253 3
+a255 1
+            call expr_check ( subtree(2,son), oneLine%str, phyq_dimless )
+d257 1
+a257 1
+            call expr_check ( subtree(2,son), oneLine%v0, phyq_frequency )
+d259 1
+a259 5
+            call expr_check ( subtree(2,son), oneLine%w, phyq_dimless )
+          case ( f_emlsSignals )
+            if ( instrument == l_emls ) signalsNode = son
+          case ( f_umlsSignals )
+            if ( instrument == l_umls ) signalsNode = son
+d276 6
+a281 2
+          call Allocate_test ( oneLine%signals, noSignals, 'signals', ModuleName )
+          call Allocate_test ( oneLine%sidebands, noSignals, 'sidebands', ModuleName )
+d285 2
+a286 2
+            call get_string ( sub_rosa ( subtree (j, signalsNode) ), &
+              & sigName, strip=.true. )
+d291 10
+a300 2
+            oneLine%signals ( k:k+size(sigInds)-1 ) = sigInds
+            oneLine%sidebands ( k:k+size(sigInds)-1 ) = sideband
+a301 1
+            call Deallocate_test ( sigInds, 'sigInds', ModuleName )
+d303 20
+a322 5
+        endif
+        call decorate ( key, addLineToDatabase ( lines, oneLine ) )
+        ! Now nullify signals and sidebands so they don't get clobbered
+        ! by the next call to Allocate_test
+        nullify ( oneLine%signals, oneLine%sidebands )
+d324 3
+a326 4
+        nullify(oneSpecies%lines) ! So that Allocate_Test doesn't deallocate
+        ! the most recently filled one
+        oneSpecies%species_Name = name
+        oneSpecies%continuum = 0.0
+d332 1
+a332 1
+            call allocate_test ( oneSpecies%lines, k-1, "OneSpecies%Lines", &
+d335 1
+a335 1
+              oneSpecies%lines(k-1) = decoration(decoration(subtree(k,son)))
+d342 1
+a342 1
+              call expr_check ( subtree(k,son), oneSpecies%continuum(k-1), &
+d346 2
+a347 2
+            oneSpecies%molecule = decoration(subtree(2,son))
+            oneSpecies%spec_Tag = spec_Tags(oneSpecies%molecule)
+d351 1
+a351 1
+              call expr_check ( subtree(k,son), oneSpecies%qlog(k-1), &
+d356 1
+a356 1
+        call decorate ( key, addSpeciesToCatalog ( Catalog, oneSpecies ) )
+d368 2
+a369 2
+      if ( levels(gen) > 0 .or. index(switches,'C') /= 0 ) &
+        & call dump_SpectCat_database
+d381 2
+d396 3
+d431 1
+d444 3
+d465 3
+d483 3
+d495 2
+d509 2
+a510 1
+    use Dump_0, only: Dump
+d566 1
+a566 2
+  subroutine Dump_SpectCat_Database
+    use Dump_0, only: Dump
+d568 5
+d576 3
+a578 1
+    call output ( 'Spectroscopy catalog: SIZE = ' )
+d653 32
+a684 1
+! $Log: SpectroscopyCatalog_m.f90,v $
+@
+
+
+2.12
+log
+@Add Polarized field for catalog extracts in Get_Species_Data
+@
+text
+@d8 2
+d11 8
+d20 1
+a20 2
+  ! More USEs below in each procedure.
+
+d47 3
+a50 5
+    integer, dimension(:), pointer :: QN=>NULL()      ! Optional quantum numbers
+    integer, dimension(:), pointer :: Signals=>NULL() ! List of signal indices for line
+    integer, dimension(:), pointer :: Sidebands=>NULL() ! Sidebands for above bands (-1,0,1)
+    logical, dimension(:), pointer :: Polarized=>NULL() ! Process this signal and
+                                   ! sideband using the polarized model
+d54 2
+a55 1
+    real(r8) :: continuum(MaxContinuum)      ! Continuum coefficients
+a57 3
+    logical, pointer :: Polarized(:)=>NULL() ! Used only in catalog extract to
+                                   ! indicate that the lines(:) are to be
+                                   ! processed with the polarized model
+d60 1
+a60 2
+    integer :: Species_Name        ! Sub_rosa index
+    integer :: Spec_Tag            ! Spectroscopy tag
+d73 1
+a73 1
+    & "$Id: SpectroscopyCatalog_m.f90,v 2.11.2.3 2003/02/26 02:32:38 vsnyder Exp $"
+a86 2
+
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+d91 1
+a91 1
+      & F_EMLSSIGNALS, F_EMLSSIGNALSPOL, F_UMLSSIGNALS
+a93 1
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+a95 5
+    use Parse_Signal_m, only: PARSE_SIGNAL
+    use String_Table, only: Get_string
+    use Time_M, only: Time_Now
+    use Toggles, only: Gen, Levels, Switches, Toggle
+    use Trace_M, only: Trace_begin, Trace_end
+d105 5
+a109 1
+    integer :: I, J, K, L               ! Loop inductors, Subscripts
+d112 3
+d116 1
+a116 3
+    type(line_t) :: OneLine             ! To be added to the database
+    type(catalog_t) :: OneSpecies       ! To be added to the database
+    real(r8) :: QN                      ! for call to expr_check for QN field
+a117 3
+    integer :: SignalsNode              ! Tree node for emls/umls bands
+    integer :: SignalsNodePol           ! Tree node for emls/umls bands for
+                                        ! Zeeman-split lines
+a119 5
+    integer :: Son                      ! Of root or key
+    integer :: TheSignal                ! SubRosa for a signal
+    integer :: THISMANY                 ! Conted up to noSignals
+    logical :: TIMING                   ! For S_Time
+    real :: T1, T2                      ! For S_Time
+d122 4
+a125 6
+    integer, parameter :: NotInt = 1                   ! QN not an integer
+    integer, parameter :: NotListedSignal = NotInt + 1 ! Polarized signal is not
+                                        ! listed as emlsSignal
+    integer, parameter :: TooBig = NotListedSignal + 1 ! Too many elements
+    integer, parameter :: WrongSize = TooBig + 1       ! Wrong number of elements
+    integer, parameter :: WrongUnits = wrongSize + 1   ! Wrong physical units
+a145 1
+        signalsNodePol = 0
+a152 4
+          case ( f_emlsSignals )
+            if ( instrument == l_emls ) signalsNode = son
+          case ( f_emlsSignalsPol )
+            if ( instrument == l_emls ) signalsNodePol = son
+a174 2
+          case ( f_umlsSignals )
+            if ( instrument == l_umls ) signalsNode = son
+d179 4
+a200 4
+          if ( signalsNodePol /= 0 ) then
+            call allocate_test ( oneLine%polarized, noSignals, 'Polarized', moduleName )
+            oneLine%polarized = .false.
+          end if
+d204 2
+a205 2
+            theSignal = sub_rosa ( subtree (j, signalsNode) )
+            call get_string ( theSignal, sigName, strip=.true. )
+a211 8
+            if ( signalsNodePol /= 0 ) then
+              do l = 2, nsons(signalsNodePol)
+                if ( sub_rosa ( subtree (l, signalsNodePol) ) == theSignal ) then
+                  oneLine%polarized ( k:k+size(sigInds)-1 ) = .true.
+                  exit
+                end if
+              end do
+            end if
+d213 1
+d215 1
+a215 19
+          call Deallocate_test ( sigInds, 'sigInds', ModuleName )
+        end if
+        if ( signalsNodePol /= 0 ) then
+          if ( signalsNode /= 0 ) then
+            call announce_Error ( signalsNodePol, notListedSignal )
+          else
+            k = nsons(signalsNode)
+            do j = 2, nsons(signalsNodePol)
+              theSignal = sub_rosa ( subtree (j, signalsNodePol) )
+              do l = 2, k
+                if ( theSignal == sub_rosa ( subtree (l, signalsNode) ) ) exit
+              end do
+              if ( l > k ) then
+                call announce_Error ( subtree (j, signalsNodePol), notListedSignal )
+                cycle
+              end if
+            end do
+          end if
+        end if
+a278 2
+      use Output_m, only: Output
+      use String_Table, only: Display_String
+a291 3
+      case ( notListedSignal )
+        call output ( 'The Polarized signal is not listed as an EMLS signal.', &
+          & advance='yes' )
+a323 1
+      use Output_m, only: Output
+a335 3
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
+      & MLSMSG_Error
+
+a353 3
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
+      & MLSMSG_Error
+
+a368 3
+
+    use MLSMessageModule, only: MLSMessage, MLSMSG_DeAllocate, MLSMSG_Error
+
+a377 2
+    use Allocate_Deallocate, only: Deallocate_Test
+    use MLSMessageModule, only: MLSMessage, MLSMSG_DeAllocate, MLSMSG_Error
+a390 2
+    use Output_m, only: Blanks, Output
+    use String_Table, only: Display_String
+a448 2
+    use Output_m, only: Blanks, Output
+    use String_Table, only: Display_String
+a527 9
+! Revision 2.11.2.3  2003/02/26 02:32:38  vsnyder
+! Remove PUBLIC declaration for recently removed generic DUMP
+!
+! Revision 2.11.2.2  2003/02/26 00:01:55  vsnyder
+! Remove ambiguous 'dump' interface that nobody used anyway
+!
+! Revision 2.11.2.1  2003/02/22 00:49:58  vsnyder
+! Add EMLSSignalsPol field to Line
+!
+@
+
+
+2.11
+log
+@Add QN field to lines spec, add SearchByQn function
+@
+text
+@a7 2
+  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+  use String_Table, only: Display_String, Get_string
+a8 8
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
+    & MLSMSG_Error
+  use MLSSignals_m, only: MaxSigLen, Signals
+  use Output_m, only: Blanks, Output
+  use Time_M, only: Time_Now
+  use Toggles, only: Gen, Levels, Switches, Toggle
+  use Trace_M, only: Trace_begin, Trace_end
+  use Parse_Signal_m, only: PARSE_SIGNAL
+d10 2
+a11 1
+  ! More USEs below in each procedure, if they're only used therein.
+d38 1
+d40 4
+a43 3
+    integer, dimension(:), pointer :: signals=>NULL() ! List of signal indices for line
+    integer, dimension(:), pointer :: sidebands=>NULL() ! Sidebands for above bands (-1,0,1)
+                                   ! MHz/mbar at 300 K
+d47 1
+a47 2
+    integer :: Species_Name        ! Sub_rosa index
+    integer :: Spec_Tag            ! Spectroscopy tag
+d50 3
+d55 2
+a56 1
+    real(r8) :: continuum(MaxContinuum) ! Continuum coefficients
+d69 1
+a69 1
+    & "$Id: SpectroscopyCatalog_m.f90,v 2.10 2002/10/08 17:08:06 pwagner Exp $"
+d83 2
+d89 1
+a89 1
+      & F_EMLSSIGNALS, F_UMLSSIGNALS
+d92 1
+d95 5
+d109 4
+a112 1
+    integer :: I, J, K                  ! Loop inductors, Subscripts
+d116 6
+d123 2
+a124 3
+    integer :: Key                      ! Index of spec_arg
+    integer :: Name                     ! Index of name in string table
+    integer :: SignalsNode                ! Tree node for emls/umls bands
+a126 5
+    integer :: NOSIGNALS                ! For the bands part
+    integer :: THISMANY                 ! Conted up to noSignals
+    integer :: SIDEBAND                 ! A single sideband
+    integer, dimension(:), pointer :: SIGINDS ! From Parse_signal
+    character ( len=80 ) :: SIGNAME     ! The signal
+d129 6
+a134 4
+    integer, parameter :: NotInt = 1             ! QN not an integer
+    integer, parameter :: TooBig = NotInt + 1    ! Too many elements
+    integer, parameter :: WrongSize = TooBig + 1 ! Wrong number of elements
+    integer, parameter :: WrongUnits = wrongSize + 1 ! Wrong physical units
+d155 1
+d163 4
+d189 2
+a194 4
+          case ( f_emlsSignals )
+            if ( instrument == l_emls ) signalsNode = son
+          case ( f_umlsSignals )
+            if ( instrument == l_umls ) signalsNode = son
+d213 4
+d220 2
+a221 2
+            call get_string ( sub_rosa ( subtree (j, signalsNode) ), &
+              & sigName, strip=.true. )
+d228 8
+a236 1
+            call Deallocate_test ( sigInds, 'sigInds', ModuleName )
+d238 19
+a256 1
+        endif
+d320 2
+d335 3
+d370 1
+d383 3
+d404 3
+d422 3
+d434 2
+d449 2
+d509 2
+d590 12
+@
+
+
+2.11.2.1
+log
+@Add EMLSSignalsPol field to Line
+@
+text
+@d8 2
+d11 8
+d20 1
+a20 2
+  ! More USEs below in each procedure.
+
+d27 1
+a27 5
+  public :: Dump, Dump_Lines_Database, Dump_SpectCat_Database
+
+  interface Dump
+    module procedure Dump_Lines_Database, Dump_SpectCat_Database
+  end interface
+d47 3
+a50 5
+    integer, dimension(:), pointer :: QN=>NULL()      ! Optional quantum numbers
+    integer, dimension(:), pointer :: Signals=>NULL() ! List of signal indices for line
+    integer, dimension(:), pointer :: Sidebands=>NULL() ! Sidebands for above bands (-1,0,1)
+    logical, dimension(:), pointer :: Polarized=>NULL() ! Process this signal and
+                                   ! sideband using the polarized model
+d73 1
+a73 1
+    & "$Id: SpectroscopyCatalog_m.f90,v 2.11 2002/12/03 01:26:41 vsnyder Exp $"
+a86 2
+
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+d91 1
+a91 1
+      & F_EMLSSIGNALS, F_EMLSSIGNALSPOL, F_UMLSSIGNALS
+a93 1
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+a95 5
+    use Parse_Signal_m, only: PARSE_SIGNAL
+    use String_Table, only: Get_string
+    use Time_M, only: Time_Now
+    use Toggles, only: Gen, Levels, Switches, Toggle
+    use Trace_M, only: Trace_begin, Trace_end
+d105 5
+a109 1
+    integer :: I, J, K, L               ! Loop inductors, Subscripts
+d112 3
+d116 1
+a116 3
+    type(line_t) :: OneLine             ! To be added to the database
+    type(catalog_t) :: OneSpecies       ! To be added to the database
+    real(r8) :: QN                      ! for call to expr_check for QN field
+a117 3
+    integer :: SignalsNode              ! Tree node for emls/umls bands
+    integer :: SignalsNodePol           ! Tree node for emls/umls bands for
+                                        ! Zeeman-split lines
+a119 5
+    integer :: Son                      ! Of root or key
+    integer :: TheSignal                ! SubRosa for a signal
+    integer :: THISMANY                 ! Conted up to noSignals
+    logical :: TIMING                   ! For S_Time
+    real :: T1, T2                      ! For S_Time
+d122 4
+a125 6
+    integer, parameter :: NotInt = 1                   ! QN not an integer
+    integer, parameter :: NotListedSignal = NotInt + 1 ! Polarized signal is not
+                                        ! listed as emlsSignal
+    integer, parameter :: TooBig = NotListedSignal + 1 ! Too many elements
+    integer, parameter :: WrongSize = TooBig + 1       ! Wrong number of elements
+    integer, parameter :: WrongUnits = wrongSize + 1   ! Wrong physical units
+a145 1
+        signalsNodePol = 0
+a152 4
+          case ( f_emlsSignals )
+            if ( instrument == l_emls ) signalsNode = son
+          case ( f_emlsSignalsPol )
+            if ( instrument == l_emls ) signalsNodePol = son
+a174 2
+          case ( f_umlsSignals )
+            if ( instrument == l_umls ) signalsNode = son
+d179 4
+a200 4
+          if ( signalsNodePol /= 0 ) then
+            call allocate_test ( oneLine%polarized, noSignals, 'Polarized', moduleName )
+            oneLine%polarized = .false.
+          end if
+d204 2
+a205 2
+            theSignal = sub_rosa ( subtree (j, signalsNode) )
+            call get_string ( theSignal, sigName, strip=.true. )
+a211 8
+            if ( signalsNodePol /= 0 ) then
+              do l = 2, nsons(signalsNodePol)
+                if ( sub_rosa ( subtree (l, signalsNodePol) ) == theSignal ) then
+                  oneLine%polarized ( k:k+size(sigInds)-1 ) = .true.
+                  exit
+                end if
+              end do
+            end if
+d213 1
+d215 1
+a215 19
+          call Deallocate_test ( sigInds, 'sigInds', ModuleName )
+        end if
+        if ( signalsNodePol /= 0 ) then
+          if ( signalsNode /= 0 ) then
+            call announce_Error ( signalsNodePol, notListedSignal )
+          else
+            k = nsons(signalsNode)
+            do j = 2, nsons(signalsNodePol)
+              theSignal = sub_rosa ( subtree (j, signalsNodePol) )
+              do l = 2, k
+                if ( theSignal == sub_rosa ( subtree (l, signalsNode) ) ) exit
+              end do
+              if ( l > k ) then
+                call announce_Error ( subtree (j, signalsNodePol), notListedSignal )
+                cycle
+              end if
+            end do
+          end if
+        end if
+a278 2
+      use Output_m, only: Output
+      use String_Table, only: Display_String
+a291 3
+      case ( notListedSignal )
+        call output ( 'The Polarized signal is not listed as an EMLS signal.', &
+          & advance='yes' )
+a323 1
+      use Output_m, only: Output
+a335 3
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
+      & MLSMSG_Error
+
+a353 3
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
+      & MLSMSG_Error
+
+a368 3
+
+    use MLSMessageModule, only: MLSMessage, MLSMSG_DeAllocate, MLSMSG_Error
+
+a377 2
+    use Allocate_Deallocate, only: Deallocate_Test
+    use MLSMessageModule, only: MLSMessage, MLSMSG_DeAllocate, MLSMSG_Error
+a390 2
+    use Output_m, only: Blanks, Output
+    use String_Table, only: Display_String
+a448 2
+    use Output_m, only: Blanks, Output
+    use String_Table, only: Display_String
+a527 3
+! Revision 2.11  2002/12/03 01:26:41  vsnyder
+! Add QN field to lines spec, add SearchByQn function
+!
+@
+
+
+2.11.2.2
+log
+@Remove ambiguous 'dump' interface that nobody used anyway
+@
+text
+@d20 4
+d70 1
+a70 1
+    & "$Id: SpectroscopyCatalog_m.f90,v 2.11.2.1 2003/02/22 00:49:58 vsnyder Exp $"
+a590 3
+! Revision 2.11.2.1  2003/02/22 00:49:58  vsnyder
+! Add EMLSSignalsPol field to Line
+!
+@
+
+
+2.11.2.3
+log
+@Remove PUBLIC declaration for recently removed generic DUMP
+@
+text
+@d18 1
+a18 1
+  public :: Dump_Lines_Database, Dump_SpectCat_Database
+d66 1
+a66 1
+    & "$Id: SpectroscopyCatalog_m.f90,v 2.11.2.2 2003/02/26 00:01:55 vsnyder Exp $"
+a586 3
+! Revision 2.11.2.2  2003/02/26 00:01:55  vsnyder
+! Remove ambiguous 'dump' interface that nobody used anyway
+!
+@
+
+
+2.11.2.4
+log
+@Add 'polarized' component to catalog_t type
+@
+text
+@d47 2
+a48 1
+    real(r8) :: continuum(MaxContinuum)      ! Continuum coefficients
+a50 3
+    logical, pointer :: Polarized(:)=>NULL() ! Used only in catalog extract to
+                                   ! indicate that the lines(:) are to be
+                                   ! processed with the polarized model
+d53 1
+a53 2
+    integer :: Species_Name        ! Sub_rosa index
+    integer :: Spec_Tag            ! Spectroscopy tag
+d66 1
+a66 1
+    & "$Id: SpectroscopyCatalog_m.f90,v 2.12 2003/02/27 03:25:06 vsnyder Exp $"
+a586 6
+! Revision 2.12  2003/02/27 03:25:06  vsnyder
+! Add Polarized field for catalog extracts in Get_Species_Data
+!
+! Revision 2.11.2.3  2003/02/26 02:32:38  vsnyder
+! Remove PUBLIC declaration for recently removed generic DUMP
+!
+@
+
+
+2.11.2.5
+log
+@Nullify polarized field, so it doesn't end up in all lines after one gets one
+@
+text
+@d69 1
+a69 1
+    & "$Id: SpectroscopyCatalog_m.f90,v 2.11.2.4 2003/02/27 23:20:00 vsnyder Exp $"
+d153 1
+a153 1
+        nullify ( oneLine%qn, oneLine%polarized ) ! optional fields
+d232 1
+a232 1
+              exit
+d241 1
+a241 1
+          if ( signalsNode == 0 ) then
+d252 1
+a252 1
+            cycle
+a589 3
+! Revision 2.11.2.4  2003/02/27 23:20:00  vsnyder
+! Add 'polarized' component to catalog_t type
+!
+@
+
+
+2.11.2.6
+log
+@Add DUMP generic for Dump_SpectCat_Database.
+Add Catalog argument to Dump_SpectCat_Database.
+@
+text
+@d18 1
+a18 5
+  public :: Dump_Lines_Database, Dump_SpectCat_Database, Dump
+
+  interface DUMP
+    module procedure Dump_SpectCat_Database
+  end interface
+d69 1
+a69 1
+    & "$Id: SpectroscopyCatalog_m.f90,v 2.11.2.5 2003/03/01 03:16:51 vsnyder Exp $"
+d308 1
+a308 1
+        & call dump_SpectCat_database ( catalog )
+d506 1
+a506 1
+  subroutine Dump_SpectCat_Database ( Catalog )
+a511 2
+    type(catalog_T), intent(in) :: Catalog(:)
+
+a589 3
+! Revision 2.11.2.5  2003/03/01 03:16:51  vsnyder
+! Nullify polarized field, so it doesn't end up in all lines after one gets one
+!
+@
+
+
+2.11.2.7
+log
+@Add a NAME argument to Dump_SpectCat_Database
+@
+text
+@a7 1
+  use Intrinsic, only: L_none
+a62 3
+  type(catalog_T), public, parameter :: Empty_Cat = catalog_t ( &
+    & 0.0_r8, NULL(), l_none, NULL(), 0.0_r8, 0, 0 )
+
+d73 1
+a73 1
+    & "$Id: SpectroscopyCatalog_m.f90,v 2.11.2.6 2003/03/12 21:24:54 vsnyder Exp $"
+d452 1
+d510 2
+a511 1
+  subroutine Dump_SpectCat_Database ( Catalog, Name )
+a516 1
+    character(len=*), intent(in), optional :: Name
+d520 1
+a520 3
+    call output ( 'Spectroscopy catalog' )
+    if ( present(name) ) call output ( ' '//trim(name) )
+    call output ( ': SIZE = ' )
+a595 4
+! Revision 2.11.2.6  2003/03/12 21:24:54  vsnyder
+! Add DUMP generic for Dump_SpectCat_Database.
+! Add Catalog argument to Dump_SpectCat_Database.
+!
+@
+
+
+2.11.2.8
+log
+@Determine size and allocate the database, then fill it
+@
+text
+@d77 1
+a77 1
+    & "$Id: SpectroscopyCatalog_m.f90,v 2.11.2.7 2003/03/13 00:27:30 vsnyder Exp $"
+d100 1
+a100 2
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
+      & MLSMSG_DeAllocate, MLSMSG_Error
+d121 2
+a122 4
+    integer :: NumCatalog               ! Number of species in catalog
+    integer :: NumLines                 ! Number of lines in catalog
+    integer :: OffsetCatalog            ! Number of species previously in catalog
+    integer :: OffsetLines              ! Number of lines previously in catalog
+a130 3
+    integer :: Status                   ! From Allocate or Deallocate
+    type(line_t), pointer, dimension(:) :: TempLines
+    type(catalog_t), pointer, dimension(:) :: TempCatalog
+a148 7
+    ! Determine sizes of created or expanded lines and species databases.
+    offsetLines = 0
+    if ( associated(lines) ) offsetLines = size(lines)
+    numLines = offsetLines
+    offsetCatalog = 0
+    if ( associated(catalog) ) offsetCatalog = size(catalog)
+    numCatalog = offsetCatalog
+d160 2
+a161 46
+        numLines = numLines + 1
+      case ( s_spectra ) ! .............................  SPECTRA  .....
+        numCatalog = numCatalog + 1
+      case default ! Don't care about the others
+      end select
+    end do
+
+    ! Create or expand the Lines database
+    tempLines => Lines
+    allocate ( lines(numLines), stat=status )
+    if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate // "Lines")
+    if ( associated(tempLines) ) then
+      lines(:offsetLines) = tempLines
+      deallocate ( tempLines, stat=status )
+      if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_DeAllocate // "TempLines")
+    end if
+
+    ! Create or expand the Species Catalog
+    tempCatalog => Catalog
+    allocate ( catalog(numCatalog), stat=status )
+    if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate // "Catalog")
+    if ( associated(tempCatalog) ) then
+      catalog(:offsetCatalog) = tempCatalog
+      deallocate ( tempCatalog, stat=status )
+      if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_DeAllocate // "TempCatalog")
+    end if
+
+    numLines = offsetLines
+    numCatalog = offsetCatalog
+    do i = 2, nsons(root)-1             ! Skip names of section
+      son = subtree(i,root)
+      if ( node_id(son) == n_named ) then
+        name = sub_rosa(subtree(1,son))
+        key = subtree(2,son)
+      else
+        name = 0
+        key = son
+      end if
+      select case ( get_spec_id(key) )
+      case ( s_line ) ! ...................................  LINE  .....
+        numLines = numLines + 1
+        lines(numLines)%line_Name = name
+d168 1
+a168 1
+            call expr_check ( subtree(2,son), lines(numLines)%delta, phyq_dimless )
+d170 1
+a170 1
+            call expr_check ( subtree(2,son), lines(numLines)%el, phyq_dimless )
+d176 1
+a176 1
+            call expr_check ( subtree(2,son), lines(numLines)%gamma, phyq_dimless )
+d178 1
+a178 1
+            call expr_check ( subtree(2,son), lines(numLines)%n, phyq_dimless )
+d180 1
+a180 1
+            call expr_check ( subtree(2,son), lines(numLines)%n1, phyq_dimless )
+d182 1
+a182 1
+            call expr_check ( subtree(2,son), lines(numLines)%n2, phyq_dimless )
+d184 1
+a184 1
+            call expr_check ( subtree(2,son), lines(numLines)%ns, phyq_dimless )
+d186 1
+a186 1
+            call expr_check ( subtree(2,son), lines(numLines)%ps, phyq_dimless )
+d188 1
+a188 1
+            call allocate_test ( lines(numLines)%qn, nsons(son)-1, 'qn', ModuleName )
+d191 2
+a192 2
+              lines(numLines)%qn(k-1) = nint(qn)
+              if ( abs(qn - lines(numLines)%qn(k-1)) > 0.1_r8 ) &
+d196 1
+a196 1
+            call expr_check ( subtree(2,son), lines(numLines)%str, phyq_dimless )
+d200 1
+a200 1
+            call expr_check ( subtree(2,son), lines(numLines)%v0, phyq_frequency )
+d202 1
+a202 1
+            call expr_check ( subtree(2,son), lines(numLines)%w, phyq_dimless )
+d219 2
+a220 2
+          call Allocate_test ( lines(numLines)%signals, noSignals, 'signals', ModuleName )
+          call Allocate_test ( lines(numLines)%sidebands, noSignals, 'sidebands', ModuleName )
+d222 2
+a223 2
+            call allocate_test ( lines(numLines)%polarized, noSignals, 'Polarized', moduleName )
+            lines(numLines)%polarized = .false.
+d234 2
+a235 2
+            lines(numLines)%signals ( k:k+size(sigInds)-1 ) = sigInds
+            lines(numLines)%sidebands ( k:k+size(sigInds)-1 ) = sideband
+d239 1
+a239 1
+                  lines(numLines)%polarized ( k:k+size(sigInds)-1 ) = .true.
+d265 4
+a268 1
+        call decorate ( key, numLines )
+d270 4
+a273 3
+        numCatalog = numCatalog + 1
+        catalog(numCatalog)%species_Name = name
+        catalog(numCatalog)%continuum = 0.0
+d279 1
+a279 1
+            call allocate_test ( catalog(numCatalog)%lines, k-1, "catalog(numCatalog)%Lines", &
+d282 1
+a282 1
+              catalog(numCatalog)%lines(k-1) = decoration(decoration(subtree(k,son)))
+d289 1
+a289 1
+              call expr_check ( subtree(k,son), catalog(numCatalog)%continuum(k-1), &
+d293 2
+a294 2
+            catalog(numCatalog)%molecule = decoration(subtree(2,son))
+            catalog(numCatalog)%spec_Tag = spec_Tags(catalog(numCatalog)%molecule)
+d298 1
+a298 1
+              call expr_check ( subtree(k,son), catalog(numCatalog)%qlog(k-1), &
+d303 1
+a303 1
+        call decorate ( key, numCatalog )
+d315 1
+a315 1
+      if ( levels(gen) > 0 .or. index(switches,'spec') /= 0 ) &
+a600 3
+! Revision 2.11.2.7  2003/03/13 00:27:30  vsnyder
+! Add a NAME argument to Dump_SpectCat_Database
+!
+@
+
+
+2.10
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d25 1
+a25 1
+  public :: Spectroscopy
+d47 1
+d73 1
+a73 1
+    & "$Id: SpectroscopyCatalog_m.f90,v 2.9 2002/01/08 01:02:03 livesey Exp $"
+d90 1
+a90 1
+      & F_Molecule, F_N, F_N1, F_N2, F_Ns, F_Ps, F_Qlog, F_Str, F_V0, F_W, &
+d108 1
+d122 2
+a123 1
+    integer, parameter :: TooBig = 1    ! Too many elements
+d144 1
+d165 8
+d289 3
+d488 33
+d528 3
+@
+
+
+2.9
+log
+@Nullify lines by default
+@
+text
+@d72 1
+a72 1
+    & "$Id: SpectroscopyCatalog_m.f90,v 2.8 2001/11/09 23:20:17 vsnyder Exp $"
+d76 1
+d473 4
+d480 3
+@
+
+
+2.8
+log
+@Use Time_Now instead of CPU_TIME
+@
+text
+@d55 1
+a55 1
+    integer, pointer :: Lines(:)   ! Indices in Lines database
+d72 1
+a72 1
+    & "$Id: SpectroscopyCatalog_m.f90,v 2.7 2001/10/18 23:53:03 livesey Exp $"
+d475 3
+@
+
+
+2.7
+log
+@Tidied up dump, added new stuff
+@
+text
+@d15 1
+d72 1
+a72 1
+    & "$Id: SpectroscopyCatalog_m.f90,v 2.6 2001/10/15 18:10:37 livesey Exp $"
+d246 1
+a246 1
+          call cpu_time ( t1 )
+d308 1
+a308 1
+      call cpu_time ( t2 )
+d475 3
+@
+
+
+2.6
+log
+@Added continuum
+@
+text
+@d71 1
+a71 1
+    & "$Id: SpectroscopyCatalog_m.f90,v 2.5 2001/10/09 22:38:41 livesey Exp $"
+d454 6
+d462 6
+a467 4
+      do j = 1, size(catalog(i)%lines)
+        call dump_lines_database ( catalog(i)%lines(j), catalog(i)%lines(j), &
+          & .false. )
+      end do
+d474 3
+@
+
+
+2.5
+log
+@Added stuff for ns
+@
+text
+@d28 3
+d58 1
+d68 1
+d71 1
+a71 1
+    & "$Id: SpectroscopyCatalog_m.f90,v 2.4 2001/09/19 04:38:48 livesey Exp $"
+d86 1
+a86 1
+    use Init_Spectroscopy_M, only: F_Delta, F_El, F_Gamma, F_Lines, &
+d118 3
+a120 2
+    integer, parameter :: WrongSize = 1                ! Wrong number of elements
+    integer, parameter :: WrongUnits = wrongSize + 1   ! Wrong physical units
+d210 1
+d221 8
+d275 4
+d466 3
+@
+
+
+2.4
+log
+@Lines per band stuff works now
+@
+text
+@d38 1
+d66 1
+a66 1
+    & "$Id: SpectroscopyCatalog_m.f90,v 2.3 2001/09/18 01:25:48 livesey Exp $"
+d82 1
+a82 1
+      & F_Molecule, F_N, F_N1, F_N2, F_Ps, F_Qlog, F_Str, F_V0, F_W, &
+d149 2
+d392 2
+d447 3
+@
+
+
+2.3
+log
+@Changed emls/umls bands to emls/umls signals
+@
+text
+@d65 1
+a65 1
+    & "$Id: SpectroscopyCatalog_m.f90,v 2.2 2001/09/18 01:23:34 livesey Exp $"
+d102 1
+a102 1
+    integer :: BandsNode                ! Tree node for emls/umls bands
+d132 1
+a132 1
+        bandsNode = 0
+d157 1
+a157 1
+            if ( instrument == l_emls ) bandsNode = son
+d159 1
+a159 1
+            if ( instrument == l_umls ) bandsNode = son
+d164 1
+a164 1
+        if ( bandsNode /= 0 ) then
+d168 2
+a169 2
+          do j = 2, nsons(bandsNode)    ! Skip name
+            call get_string ( sub_rosa ( subtree (j, bandsNode) ), &
+d171 1
+a171 1
+            call Parse_Signal ( sigName, sigInds, bandsNode, onlyCountEm=thisMany )
+d176 1
+a176 1
+          call Allocate_test ( oneLine%signals, noSignals, 'bands', ModuleName )
+d180 2
+a181 2
+          do j = 2, nsons(bandsNode)    ! Skip name
+            call get_string ( sub_rosa ( subtree (j, bandsNode) ), &
+d183 4
+a186 1
+            call Parse_Signal ( sigName, sigInds, bandsNode, sideband=sideband )
+d189 1
+d194 3
+d442 3
+@
+
+
+2.2
+log
+@Changed bands to signals
+@
+text
+@d65 1
+a65 1
+    & "$Id: SpectroscopyCatalog_m.f90,v 2.1 2001/09/18 00:08:25 livesey Exp $"
+d82 1
+a82 1
+      & F_EMLSBANDS, F_UMLSBANDS
+d156 1
+a156 1
+          case ( f_emlsBands )
+d158 1
+a158 1
+          case ( f_umlsBands )
+d435 3
+@
+
+
+2.1
+log
+@Added the bands information stuff
+@
+text
+@d42 1
+a42 1
+    integer, dimension(:), pointer :: bands=>NULL() ! List of band indices for line
+d65 1
+a65 1
+    & "$Id: SpectroscopyCatalog_m.f90,v 2.0 2001/09/17 20:26:26 livesey Exp $"
+d176 1
+a176 1
+          call Allocate_test ( oneLine%bands, noSignals, 'bands', ModuleName )
+d184 1
+a184 1
+            oneLine%bands ( k:k+size(sigInds)-1 ) = signals(sigInds)%band
+d435 3
+@
+
+
+2.0
+log
+@New forward model
+@
+text
+@d9 1
+a9 1
+  use String_Table, only: Display_String
+d17 1
+d20 1
+d42 2
+d65 1
+a65 1
+    & "$Id: SpectroscopyCatalog_m.f90,v 1.8 2001/05/26 00:22:19 livesey Exp $"
+d81 2
+a82 1
+      & F_Molecule, F_N, F_N1, F_N2, F_Ps, F_Qlog, F_Str, F_V0, F_W
+d84 1
+a84 1
+      & S_Time
+d89 1
+d102 1
+d105 5
+d132 1
+d156 4
+d164 25
+d435 3
+@
+
+
+1.8
+log
+@Made destroy stuff return if nothing to do.
+@
+text
+@d61 1
+a61 1
+    & "$Id: SpectroscopyCatalog_m.f90,v 1.7 2001/05/03 22:10:15 vsnyder Exp $"
+d393 3
+@
+
+
+1.7
+log
+@Add copyright notice, make databases SAVE
+@
+text
+@d61 1
+a61 1
+    & "$Id: SpectroscopyCatalog_m.f90,v 1.6 2001/04/26 02:36:52 vsnyder Exp $"
+d282 1
+d291 1
+d393 3
+@
+
+
+1.6
+log
+@Moved *_indices declarations from init_tables_module to intrinsic
+@
+text
+@d1 3
+d54 1
+a54 1
+  type(line_T), public, pointer, dimension(:) :: Lines => NULL()
+d57 1
+a57 1
+  type(catalog_T), public, pointer, dimension(:) :: Catalog => NULL()
+d61 1
+a61 1
+    & "$Id: SpectroscopyCatalog_m.f90,v 1.5 2001/04/23 23:16:16 vsnyder Exp $"
+d391 3
+@
+
+
+1.5
+log
+@Add 'time' command
+@
+text
+@d58 1
+a58 1
+    & "$Id: SpectroscopyCatalog_m.f90,v 1.4 2001/04/20 17:26:31 vsnyder Exp $"
+d67 1
+a67 1
+  subroutine Spectroscopy ( Root, Lit_Indices )
+a83 2
+    integer, intent(in), dimension(:) :: Lit_Indices ! because init_tables_module
+    !                                                  is not available.
+d183 1
+a183 1
+        & call dump_SpectCat_database ( lit_indices )
+d351 1
+a351 1
+  subroutine Dump_SpectCat_Database ( Lit_Indices )
+d353 1
+a353 2
+    integer, intent(in), dimension(:) :: Lit_Indices ! because init_tables_module
+    !                                                  is not available.
+d388 3
+@
+
+
+1.4
+log
+@Remove arguments from Destroy..., publish ...Lines...
+@
+text
+@d58 1
+a58 1
+    & "$Id: SpectroscopyCatalog_m.f90,v 1.3 2001/04/04 23:56:46 zvi Exp $"
+d75 2
+a76 1
+    use Intrinsic, only: Phyq_Dimless => Phyq_Dimensionless, Phyq_Frequency
+d95 2
+d105 1
+d117 1
+a117 1
+      case ( s_line )
+d147 1
+a147 1
+      case ( s_spectra )
+d173 7
+d188 1
+d232 8
+d391 3
+@
+
+
+1.3
+log
+@Correfting Typo error in SpectCat  names
+@
+text
+@d20 2
+a21 1
+  public :: Destroy_SpectCat_Database, Dump_SpectCat_Database
+d58 1
+a58 1
+    & "$Id: SpectroscopyCatalog_m.f90,v 1.2 2001/04/04 23:21:46 vsnyder Exp $"
+d258 2
+a259 3
+  ! ----------------------------------------  DestroyLineDatabase  -----
+  subroutine DestroyLineDatabase ( Database )
+    type(line_t), pointer, dimension(:) :: Database
+d261 1
+a261 1
+    deallocate ( database, stat=status )
+d264 1
+a264 1
+  end subroutine DestroyLineDatabase
+d267 1
+a267 2
+  subroutine Destroy_SpectCat_Database ( Catalog )
+    type(catalog_t), pointer, dimension(:) :: Catalog
+d371 3
+@
+
+
+1.2
+log
+@Add comments for fields of Lines_T and Catalog_T
+@
+text
+@d20 1
+a20 1
+  public :: Destroy_SpecCat_Database, Dump_SpecCat_Database
+d57 1
+a57 1
+    & "$Id: SpectroscopyCatalog_m.f90,v 1.1 2001/04/04 02:09:16 vsnyder Exp $"
+d372 3
+@
+
+
+1.1
+log
+@Initial Commit
+@
+text
+@d25 12
+a36 10
+    Real(r8) :: DELTA              !??? Zvi: Fill in the comments...
+    Real(r8) :: EL
+    Real(r8) :: GAMMA
+    Real(r8) :: N
+    Real(r8) :: N1
+    Real(r8) :: N2
+    Real(r8) :: PS
+    Real(r8) :: STR
+    Real(r8) :: V0
+    Real(r8) :: W
+d38 1
+a38 1
+  
+d44 2
+a45 1
+    real(r8) :: Qlog(3)            !??? Zvi: Fill in the comment
+d57 1
+a57 1
+    & "$Id: FilterShapes_m.f90,v 1.7 2001/04/02 20:56:56 vsnyder Exp $"
+d60 1
+a60 1
+    & "$RCSfile: FilterShapes_m.f90,v $"
+d371 4
+a374 1
+! $Log: $
+@
+

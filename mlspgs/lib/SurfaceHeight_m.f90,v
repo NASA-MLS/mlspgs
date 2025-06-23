@@ -1,0 +1,298 @@
+head	2.4;
+access;
+symbols
+	v5-02-NRT-19:2.4
+	v6-00:2.4
+	v5-02-NRT-18:2.4
+	v5-02:2.4
+	v5-01-NRT-17:2.4
+	v5-01-NRT-16:2.4
+	v5-01-NRT-15:2.4
+	v5-01-NRT-14:2.4
+	neuralnetworks-1-0:2.4.0.12
+	cfm-single-freq-0-1:2.4.0.10
+	v5-01:2.4
+	v5-00:2.4
+	v4-23-TA133:2.4.0.8
+	mus-emls-1-70:2.4.0.6
+	rel-1-0-englocks-work:2.4.0.4
+	VUMLS1-00:2.4
+	VPL1-00:2.4
+	V4-22-NRT-08:2.4
+	VAM1-00:2.4
+	V4-21:2.4.0.2
+	V4-13:2.4
+	V4-12:2.4
+	V4-11:2.4
+	V4-10:2.4
+	V3-43:2.3
+	M4-00:2.3
+	V3-41:2.3
+	V3-40-PlusGM57:2.3.0.2
+	V2-24-NRT-04:2.2
+	V3-33:2.3
+	V2-24:2.2
+	V3-31:2.3
+	V3-30-NRT-05:2.3
+	cfm-01-00:2.3
+	V3-30:2.3
+	V3-20:2.3
+	V3-10:2.3
+	V2-23-NRT-02:2.2
+	V2-23:2.2
+	V2-22-NRT-01:2.2
+	V2-22:2.2;
+locks; strict;
+comment	@# @;
+
+
+2.4
+date	2014.04.02.23.03.32;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2009.06.23.18.25.42;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2007.07.31.23.40.40;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2007.01.11.20.30.10;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.4
+log
+@Removed redundant open_ and close_MLSFile
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module SurfaceHeight_m
+
+  ! Read the surface height file.
+  
+  implicit none
+
+  private
+  ! Public procedures:
+  public :: Open_Surface_Height_File
+  public :: Read_Surface_Height_File
+  public :: Close_Surface_Height_File
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: SurfaceHeight_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  ! -----------------------------------  Open_Surface_Height_File  -----
+  subroutine Open_Surface_Height_File ( TheFile )
+
+    use MLSCommon, only: MLSFile_t
+    use MLSFiles, only: MLS_OpenFile
+
+    type(MLSFile_T), intent(inout) :: TheFile ! Created by InitializeMLSFile
+
+    integer :: Recl, I
+
+    inquire ( iolength=recl ) ('x', i=1, 360*6 * 180*6 * 2 ) ! 10' grid X 2 bytes
+    theFile%recordLength = recl
+    call MLS_OpenFile ( theFile )
+
+  end subroutine Open_Surface_Height_File
+
+  ! -----------------------------------  Read_Surface_Height_File  -----
+  type(griddedData_t) function Read_Surface_Height_File ( TheFile, Status ) &
+    & result ( theData )
+
+    ! The surface height file is an unformatted Fortran direct-access file of
+    ! 360*6 lon x180*6 lat two-byte signed two's-complement big-endian
+    ! integers giving meters above mean sea level (whatever that means), with
+    ! the NORTH pole and the prime meridian at the origin.  It originated from
+    ! ftp://www-surf.larc.nasa.gov/pub/surf/digelev_gtopo30.map
+
+    ! The output grid is a 180 lat x 360 lon grid giving kilometers above
+    ! mean sea level with the SOUTH pole at the origin.
+
+    use GriddedData, only: GriddedData_T, &
+      & SetupNewGriddedData, NullifyGriddedData, V_is_altitude
+    use Machine, only: IO_Error
+    use MLSCommon, only: MLSFile_t
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+
+    type(MLSFile_T), intent(in) :: TheFile   ! From Open_Surface_Height_File
+    integer, intent(out), optional :: Status ! /=0 means trouble
+
+    integer :: I, J, Stat
+    integer :: imap(2160,1080)               ! 10' X 10'
+    character(2) :: surfaceHeight(2160,1080) ! 2 bytes X 10' X 10'
+
+    read ( theFile%fileId%f_id, rec=1, iostat=stat ) surfaceHeight
+    if ( stat /= 0 ) then
+      call io_error ( "Unable to read surface height file ", stat, trim(theFile%name) )
+      call MLSMessage ( MLSMSG_Error, moduleName, &
+        & "Unable to read surface height file " // trim(theFile%name) )
+    else
+      ! Convert two-byte big-endian signed two's-complement integers
+      imap = ichar(surfaceHeight(:,:)(1:1))*256 + ichar(surfaceHeight(:,:)(2:2))
+      where ( imap > 32767 ) imap = imap - 65536
+      call nullifyGriddedData ( theData ) ! for Sun's still useless compiler
+      ! Setup the grid
+      call SetupNewGriddedData ( theData, noHeights=1, noLats=180, noLons=360 )
+      theData%dateEnds = 0
+      theData%dateStarts = 0
+      theData%description = 'Surface height above mean sea level'
+      theData%heights = 0
+      theData%heightsUnits = 'km'
+      theData%lsts = 0
+      theData%quantityName = 'Surface height'
+      theData%sourceFileName = theFile%name
+      theData%szas = 0
+      theData%units = 'km'
+      theData%verticalCoordinate = v_is_altitude
+      do i = 1, 180
+        theData%lats(i) = i - 90.5
+      end do
+      do i = 1, 360
+        theData%lons(i) = i - 0.5
+      end do
+      ! Put onto 1 degree X 1 degree grid using MAXVAL (don't average it).
+      do i = 1, 360
+        do j = 1, 180
+          theData%field(1,181-j,i,1,1,1) = &
+            maxval(imap((i-1)*6+1:(i-1)*6+6,(j-1)*6+1:(j-1)*6+6))
+        end do ! i
+      end do ! j
+      where ( theData%field > 32767 ) theData%field = theData%field - 65536
+      theData%field = 0.001 * theData%field ! meters -> km
+    end if
+    if ( present(status) ) status = stat
+
+  end function Read_Surface_Height_File
+
+  ! ----------------------------------  Close_Surface_Height_File  -----
+  subroutine Close_Surface_Height_File ( TheFile )
+
+    use MLSCommon, only: MLSFile_t
+    use MLSFiles, only: MLS_CloseFile
+
+    type(MLSFile_T), intent(inout) :: TheFile ! From Open_Surface_Height_File
+
+    call MLS_CloseFile ( theFile )
+
+  end subroutine Close_Surface_Height_File
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: SurfaceHeight_m.f90,v 2.3 2009/06/23 18:25:42 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module SurfaceHeight_m
+
+! $Log: SurfaceHeight_m.f90,v $
+! Revision 2.3  2009/06/23 18:25:42  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.2  2007/07/31 23:40:40  vsnyder
+! Use constant to avoid undefined variable reference
+!
+! Revision 2.1  2007/01/11 20:30:10  vsnyder
+! Initial commit
+!
+@
+
+
+2.3
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d26 1
+a26 1
+       "$RCSfile: $"
+d36 1
+a36 1
+    use MLSFiles, only: Open_MLSFile
+d43 2
+a44 1
+    call open_MLSFile ( theFile, inp_rec_length=recl )
+d121 1
+a121 1
+    use MLSFiles, only: Close_MLSFile
+d125 1
+a125 1
+    call close_MLSFile ( theFile )
+d132 1
+a132 1
+       "$Id: read_apriori.f90 is it here $"
+d142 3
+@
+
+
+2.2
+log
+@Use constant to avoid undefined variable reference
+@
+text
+@d26 1
+a26 1
+       "$RCSfile: SurfaceHeight_m.f90,v $"
+d128 1
+a129 1
+!---------------------------- RCS Ident Info -------------------------------
+d131 2
+a132 3
+       "$Id: SurfaceHeight_m.f90,v 2.1 2007/01/11 20:30:10 vsnyder Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d134 1
+d136 1
+d141 3
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@a39 1
+    character :: C ! Used to compute record length
+d42 1
+a42 1
+    inquire ( iolength=recl ) (c, i=1, 360*6 * 180*6 * 2 ) ! 10' grid X 2 bytes
+d131 1
+a131 1
+       "$Id: SurfaceHeight_m.f90,v 2.21 2006/04/25 23:25:36 vsnyder Exp $"
+d139 4
+a142 1
+! $Log: $
+@
+

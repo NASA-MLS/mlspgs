@@ -1,0 +1,475 @@
+head	1.5;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.5
+date	2001.01.05.20.04.03;	author nakamura;	state dead;
+branches;
+next	1.4;
+
+1.4
+date	2000.12.07.18.45.50;	author nakamura;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2000.11.15.21.42.47;	author nakamura;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2000.10.25.15.27.37;	author nakamura;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2000.10.17.20.33.57;	author nakamura;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.5
+log
+@Superseded by l3d_v0-05.cf
+@
+text
+@
+; Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
+; U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+;------------------- RCS Ident Info -----------------------
+;  CHARACTER(LEN=130) :: Id = &
+;  "$Id: l3d_cf.v0-05,v 1.4 2000/12/07 18:45:50 nakamura Exp $"
+;----------------------------------------------------------
+
+; This is the Level 3 Configuration file for version 0.5 of the Daily
+; subprogram of the Level 3 software for the EOS Microwave Limb Sounder (MLS).
+;
+; The task of the Level 3 software is to construct daily and monthly synoptic
+; maps from the Level 2 data using Fourier Transform Synoptic Mapping.
+;
+; For more details on the software see:
+;    EOS MLS Level 3 Algorithm Theoretical Basis
+;      JPL D-xxxxx
+;    EOS MLS Level 3 File Description with Data Dictionary
+;      JPL D-xxxxx
+;    EOS MLS Level 3 software users' guide
+;      JPL D-xxxxx
+;    EOS MLS Level 3 Software Design
+;      JPL D-xxxxx
+;
+; In the case of version 0.5 the goal of the Level 3 software is
+; simply to test the interfaces between the SDP software and the toolkit
+; and between the software and the Level 2 software, and to produce daily maps.
+;
+; -----------------------------------------------------------------------------
+;
+; This section of the l3cf gives parameters that are global settings to the
+; software, output file comments, file versions etc.  Note that while this
+; section must occur first in the l3cf, the ordering of the options within the
+; section is not critical.
+;
+BEGIN GlobalSettings
+    ;;
+    ;; This comment string is placed in the `header' for all the
+    ;; output files.
+    ;;
+    VersionComment="L3CF Version 0-05 for version 0.5 of the MLS software"
+    ;;
+    ;; The way the SDP toolkit works, the software cannot control
+    ;; filenames; it is given them through the PCF.  This means that
+    ;; all the software can do is ensure that it is being asked to
+    ;; produce an appropriately named file.
+    ;;
+    ;; So here we state what version information we expect to see embedded in
+    ;; the filenames.  If these strings are blank then no limitation
+    ;; is applied.  Also the user can override this checking by
+    ;; setting the option "IgnoreVersion" to .TRUE. (the default is .FALSE.)
+    ;; (Note that this will generate a warning message.)
+    ;;
+    L2Ver="v0-05"    
+    OutputVersionString="v0-05"
+    ;;
+    ;; Max Size of Level 2 Data Gap Allowed --
+    ;; We can specify this in minutes, MAFs or orbits (the output of the parser
+    ;; will be in the time default of seconds).
+    ;; 
+    MaxGap=3 minutes
+    ;;
+    ;; Number for "largest differences" diagnostics
+    ;;
+    N=10
+    ;;
+END GlobalSettings
+;
+; ----------------------------------------------------------------------------
+;
+; This section of the l3cf gives input parameters for the daily maps.
+;
+; NOTE: in assigning negative numbers, maintain a space between the "=" and the
+;       "-" (the parser will see "=-" as a type of "compound operator.")
+;
+BEGIN DailyMap
+    ;;
+    ;; l3prodNameD -- daily level 3 product name
+    ;; intpMethod -- method of interpolation:
+    ;;               lin = linear
+    ;;               csp = cubic spline
+    ;; timeD -- synoptic time (HH:MM:SS)
+    ;; latGridMap -- starting & maximum values of Latitude Grid for Maps
+    ;; dLat -- increment between points of Latitude Grid
+    ;; longGrid -- starting & max values of Longitude Grid for the output data
+    ;; dLon -- increment between points of Longitude Grid
+    ;; rangFrequency -- starting:max values of Range of frequencies to be used
+    ;; dF -- increment between frequencies in range
+    ;; l3presLvl -- daily product pressure levels (min:max of L2 values to use)
+    ;; rangWavenumber -- range of wavenumbers to be used (min:max of range)
+    ;; mode -- asc = ascending
+    ;;         des = descending
+    ;;         com = combined
+    ;;         all = ascending, descending, and combined
+    ;; label -- mapping to a label of a specification in the Output section
+    ;;
+    mapSpec,l3prodNameD="ClO",timeD="12:00:00",intpMethod=lin, $
+            latGridMap= -82.0:82.0,dLat=2.0, $
+            longGrid= -180.0:180.0,dLon=4.0, $
+            rangFrequency=0.1:1.0,dF=0.25,  $
+            l3presLvl=1.0:100.0,rangWavenumber=1:15, mode=all, label="CLOL3DM"
+    mapSpec,l3prodNameD="GeopotentialHeight",timeD="12:00:00",intpMethod=lin, $
+            latGridMap= -82.0:82.0,dLat=2.0, $
+            longGrid= -180.0:180.0,dLon=4.0, $
+            rangFrequency=0.1:1.0,dF=0.25,  $
+            l3presLvl=0.01:464.0,rangWavenumber=1:15, mode=com, label="ZL3DM"
+    mapSpec,l3prodNameD="H2O",timeD="12:00:00",intpMethod=lin, $
+            latGridMap= -82.0:82.0,dLat=2.0, $
+            longGrid= -180.0:180.0,dLon=4.0, $
+            rangFrequency=0.1:1.0,dF=0.25,  $
+            l3presLvl=0.01:464.0,rangWavenumber=1:15, mode=com, label="H2OL3DM"
+    mapSpec,l3prodNameD="HCl",timeD="12:00:00",intpMethod=lin, $
+            latGridMap= -82.0:82.0,dLat=2.0, $
+            longGrid= -180.0:180.0,dLon=4.0, $
+            rangFrequency=0.1:1.0,dF=0.25,  $
+            l3presLvl=0.1:100.0,rangWavenumber=1:15, mode=com, label="HCLL3DM"
+    mapSpec,l3prodNameD="HCN",timeD="12:00:00",intpMethod=lin, $
+            latGridMap= -82.0:82.0,dLat=2.0, $
+            longGrid= -180.0:180.0,dLon=4.0, $
+            rangFrequency=0.1:1.0,dF=0.25,  $
+            l3presLvl=22.0:215.0,rangWavenumber=1:15, mode=com, label="HCNL3DM"
+    mapSpec,l3prodNameD="HNO3",timeD="12:00:00",intpMethod=lin, $
+            latGridMap= -82.0:82.0,dLat=2.0, $
+            longGrid= -180.0:180.0,dLon=4.0, $
+            rangFrequency=0.1:1.0,dF=0.25,  $
+            l3presLvl=1.0:100.0,rangWavenumber=1:15, mode=com, label="HNO3L3DM"
+    mapSpec,l3prodNameD="N2O",timeD="12:00:00",intpMethod=lin, $
+            latGridMap= -82.0:82.0,dLat=2.0, $
+            longGrid= -180.0:180.0,dLon=4.0, $
+            rangFrequency=0.1:1.0,dF=0.25,  $
+            l3presLvl=1.0:215.0,rangWavenumber=1:15, mode=com, label="N2OL3DM"
+    mapSpec,l3prodNameD="O3",timeD="12:00:00",intpMethod=lin, $
+            latGridMap= -82.0:82.0,dLat=2.0, $
+            longGrid= -180.0:180.0,dLon=4.0, $
+            rangFrequency=0.1:1.0,dF=0.25,  $
+            l3presLvl=0.01:316.0,rangWavenumber=1:15, mode=all, label="O3L3DM"
+    mapSpec,l3prodNameD="OH",timeD="12:00:00",intpMethod=lin, $
+            latGridMap= -82.0:82.0,dLat=2.0, $
+            longGrid= -180.0:180.0,dLon=4.0, $
+            rangFrequency=0.1:1.0,dF=0.25,  $
+            l3presLvl=0.1:10.0,rangWavenumber=1:15, mode=all, label="OHL3DM"
+    mapSpec,l3prodNameD="Temperature",timeD="12:00:00",intpMethod=lin, $
+            latGridMap= -82.0:82.0,dLat=2.0, $
+            longGrid= -180.0:180.0,dLon=4.0, $
+            rangFrequency=0.1:1.0,dF=0.25,  $
+            l3presLvl=0.01:464.0,rangWavenumber=1:15, mode=com, label="TL3DM"
+    ;;
+END DailyMap
+;
+; -----------------------------------------------------------------------------
+;
+; In this last section of the l3cf, we detail how the output data
+; created in the core module are sent to the various output files.
+;
+BEGIN Output
+    ;;
+    ;; Each output Level 3 file is described on a separate line, with
+    ;; a list of the output quantities to go in it, the name of the
+    ;; corresponding MCF file, a file name template, and a flag for whether or
+    ;; not this name template must expand to match an entry in the PCF.
+    ;;
+    ;; First the daily map files
+    ;;
+    CLOL3DM: output, quantities=["ClO", "ClOAscending", "ClODescending"], $
+                     mcf = "ML3DCLO.001.MCF", $
+                     file="mls_$level_clo_$version-$cycle_$day.dat", $
+                     /bypassPCF
+    ZL3DM: output, quantities=["GeopotentialHeight", $
+           "GeopotentialHeightAscending", "GeopotentialHeightDescending"], $
+                      mcf = "ML3DZ.001.MCF", $
+                      file="mls_$level_z_$version-$cycle_$day.dat"
+    H2OL3DM: output, quantities=["H2O", "H2OAscending", "H2ODescending"], $
+                      mcf = "ML3DH2O.001.MCF", $
+                      file="mls_$level_h2o_$version-$cycle_$day.dat"
+    HCLL3DM: output, quantities=["HCl", "HClAscending", "HClDescending"], $
+                      mcf = "ML3DHCL.001.MCF", $
+                      file="mls_$level_hcl_$version-$cycle_$day.dat"
+    HCNL3DM: output, quantities=["HCN", "HCNAscending", "HCNDescending"], $
+                      mcf = "ML3DHCN.001.MCF", $
+                      file="mls_$level_hcn_$version-$cycle_$day.dat"
+    HNO3L3DM: output, quantities=["HNO3", "HNO3Ascending", "HNO3Descending"], $
+                      mcf = "ML3DHNO3.001.MCF", $
+                      file="mls_$level_hno3_$version-$cycle_$day.dat"
+    N2OL3DM: output, quantities=["N2O", "N2OAscending", "N2ODescending"], $
+                      mcf = "ML3DN2O.001.MCF", $
+                      file="mls_$level_n2o_$version-$cycle_$day.dat"
+    O3L3DM: output, quantities=["O3", "O3Ascending", "O3Descending"], $
+                      mcf = "ML3DO3.001.MCF", $
+                      file="mls_$level_o3_$version-$cycle_$day.dat"
+    OHL3DM: output, quantities=["OH", "OHAscending", "OHDescending"], $
+                      mcf = "ML3DOH.001.MCF", $
+                      file="mls_$level_oh_$version-$cycle_$day.dat"
+    TL3DM: output, quantities=["Temperature", "TemperatureAscending", $
+                               "TemperatureDescending"], $
+                      mcf = "ML3DT.001.MCF", $
+                      file="mls_$level_t_$version-$cycle_$day.dat"
+    ;;
+END Output
+;
+; ----------------------------------------------------------------------------
+;
+; $Log: l3d_cf.v0-05,v $
+; Revision 1.4  2000/12/07 18:45:50  nakamura
+; Updated to new parser format for lists; removed path names from files.
+;
+; Revision 1.3  2000/11/15 21:42:47  nakamura
+; Updated MCF names.
+;
+; Revision 1.2  2000/10/25 15:27:37  nakamura
+; Fixed punctuation; update MCF names.
+;
+; Revision 1.1  2000/10/17 20:33:57  nakamura
+; Configuration file for the L3 Daily subprogram.
+;
+@
+
+
+1.4
+log
+@Updated to new parser format for lists; removed path names from files.
+@
+text
+@d7 1
+a7 1
+;  "$Id: l3d_cf.v0-05,v 1.7 2000/12/05 19:44:52 nakamura Exp nakamura $"
+d204 3
+@
+
+
+1.3
+log
+@Updated MCF names.
+@
+text
+@d7 1
+a7 1
+;  "$Id: l3d_cf.v0-05,v 1.2 2000/10/25 15:27:37 nakamura Exp $"
+d165 33
+a197 33
+    CLOL3DM: output, quantities="ClO" "ClOAscending" "ClODescending", $
+     mcf = "/user2/nakamura/L1BOA/META/ML3DCLO.001.MCF", $
+     file="/user2/nakamura/L1BOA/mls_l3dm_clo_$version-$cycle_$day.dat", $
+     /bypassPCF
+    ZL3DM: output, quantities="GeopotentialHeight" $
+             "GeopotentialHeightAscending" "GeopotentialHeightDescending", $
+             mcf = "/user2/nakamura/L1BOA/META/ML3DZ.001.MCF", $
+             file="/user2/nakamura/L1BOA/mls_l3dm_z_$version-$cycle_$day.dat"
+    H2OL3DM: output, quantities="H2O" "H2OAscending" "H2ODescending", $
+             mcf = "/user2/nakamura/L1BOA/META/ML3DH2O.001.MCF", $
+             file="/user2/nakamura/L1BOA/mls_l3dm_h2o_$version-$cycle_$day.dat"
+    HCLL3DM: output, quantities="HCl" "HClAscending" "HClDescending", $
+             mcf = "/user2/nakamura/L1BOA/META/ML3DHCL.001.MCF", $
+             file="/user2/nakamura/L1BOA/mls_l3dm_hcl_$version-$cycle_$day.dat"
+    HCNL3DM: output, quantities="HCN" "HCNAscending" "HCNDescending", $
+             mcf = "/user2/nakamura/L1BOA/META/ML3DHCN.001.MCF", $
+             file="/user2/nakamura/L1BOA/mls_l3dm_hcn_$version-$cycle_$day.dat"
+    HNO3L3DM: output, quantities="HNO3" "HNO3Ascending" "HNO3Descending", $
+             mcf = "/user2/nakamura/L1BOA/META/ML3DHNO3.001.MCF", $
+             file="/user2/nakamura/L1BOA/mls_l3dm_hno3_$version-$cycle_$day.dat"
+    N2OL3DM: output, quantities="N2O" "N2OAscending" "N2ODescending", $
+             mcf = "/user2/nakamura/L1BOA/META/ML3DN2O.001.MCF", $
+             file="/user2/nakamura/L1BOA/mls_l3dm_n2o_$version-$cycle_$day.dat"
+    O3L3DM: output, quantities="O3" "O3Ascending" "O3Descending", $
+            mcf = "/user2/nakamura/L1BOA/META/ML3DO3.001.MCF", $
+            file="/user2/nakamura/L1BOA/mls_l3dm_o3_$version-$cycle_$day.dat"
+    OHL3DM: output, quantities="OH" "OHAscending" "OHDescending", $
+            mcf = "/user2/nakamura/L1BOA/META/ML3DOH.001.MCF", $
+            file="/user2/nakamura/L1BOA/mls_l3dm_oh_$version-$cycle_$day.dat"
+    TL3DM: output, quantities="Temperature" "TemperatureAscending" $
+                              "TemperatureDescending", $
+           mcf = "/user2/nakamura/L1BOA/META/ML3DT.001.MCF", $
+           file="/user2/nakamura/L1BOA/mls_l3dm_t_$version-$cycle_$day.dat"
+d204 3
+@
+
+
+1.2
+log
+@Fixed punctuation; update MCF names.
+@
+text
+@d7 1
+a7 1
+;  "$Id: l3d_cf.v0-05,v 1.4 2000/10/19 16:01:01 nakamura Exp nakamura $"
+d166 2
+a167 2
+     mcf = "/duke/nakamura/L1BOA/META/mls_l3dm_clo.mcf", $
+     file="/duke/nakamura/L1BOA/mls_l3dm_clo_$version-$cycle_$day.dat", $
+d171 2
+a172 2
+             mcf = "/duke/nakamura/L1BOA/META/mls_l3dm_z.mcf", $
+             file="/duke/nakamura/L1BOA/mls_l3dm_z_$version-$cycle_$day.dat"
+d174 2
+a175 2
+             mcf = "/duke/nakamura/L1BOA/META/mls_l3dm_h2o.mcf", $
+             file="/duke/nakamura/L1BOA/mls_l3dm_h2o_$version-$cycle_$day.dat"
+d177 2
+a178 2
+             mcf = "/duke/nakamura/L1BOA/META/mls_l3dm_hcl.mcf", $
+             file="/duke/nakamura/L1BOA/mls_l3dm_hcl_$version-$cycle_$day.dat"
+d180 2
+a181 2
+             mcf = "/duke/nakamura/L1BOA/META/mls_l3dm_hcn.mcf", $
+             file="/duke/nakamura/L1BOA/mls_l3dm_hcn_$version-$cycle_$day.dat"
+d183 2
+a184 2
+             mcf = "/duke/nakamura/L1BOA/META/mls_l3dm_hno3.mcf", $
+             file="/duke/nakamura/L1BOA/mls_l3dm_hno3_$version-$cycle_$day.dat"
+d186 2
+a187 2
+             mcf = "/duke/nakamura/L1BOA/META/mls_l3dm_n2o.mcf", $
+             file="/duke/nakamura/L1BOA/mls_l3dm_n2o_$version-$cycle_$day.dat"
+d189 2
+a190 2
+            mcf = "/duke/nakamura/L1BOA/META/mls_l3dm_o3.mcf", $
+            file="/duke/nakamura/L1BOA/mls_l3dm_o3_$version-$cycle_$day.dat"
+d192 2
+a193 2
+            mcf = "/duke/nakamura/L1BOA/META/mls_l3dm_oh.mcf", $
+            file="/duke/nakamura/L1BOA/mls_l3dm_oh_$version-$cycle_$day.dat"
+d196 2
+a197 2
+           mcf = "/duke/nakamura/L1BOA/META/mls_l3dm_t.mcf", $
+           file="/duke/nakamura/L1BOA/mls_l3dm_t_$version-$cycle_$day.dat"
+d204 3
+@
+
+
+1.1
+log
+@Configuration file for the L3 Daily subprogram.
+@
+text
+@d7 1
+a7 1
+;  "$Id: l3d_cf.v0-05,v 1.3 2000/10/17 20:04:34 nakamura Exp nakamura $"
+d59 2
+a60 1
+    ;; We can specify this in minutes, MAFs or orbits.
+d74 3
+d90 2
+a91 2
+    ;; l3presLvl -- daily product pressure levels
+    ;; rangWavenumber -- range of wavenumbers to be used
+d99 3
+a101 3
+            latGridMap=-82.0:82.0,dLat=2.0, $
+            longGrid=-180.0:180.0,dLon=4.0, $
+            rangFrequency=0.1:1.0,dF=0.25 $
+d104 3
+a106 3
+            latGridMap=-82.0:82.0,dLat=2.0, $
+            longGrid=-180.0:180.0,dLon=4.0, $
+            rangFrequency=0.1:1.0,dF=0.25   $
+d109 3
+a111 3
+            latGridMap=-82.0:82.0,dLat=2.0, $
+            longGrid=-180.0:180.0,dLon=4.0, $
+            rangFrequency=0.1:1.0,dF=0.25   $
+d114 3
+a116 3
+            latGridMap=-82.0:82.0,dLat=2.0, $
+            longGrid=-180.0:180.0,dLon=4.0, $
+            rangFrequency=0.1:1.0,dF=0.25   $
+d119 3
+a121 3
+            latGridMap=-82.0:82.0,dLat=2.0, $
+            longGrid=-180.0:180.0,dLon=4.0, $
+            rangFrequency=0.1:1.0,dF=0.25   $
+d124 3
+a126 3
+            latGridMap=-82.0:82.0,dLat=2.0, $
+            longGrid=-180.0:180.0,dLon=4.0, $
+            rangFrequency=0.1:1.0,dF=0.25   $
+d129 4
+a132 4
+            latGridMap=-82.0:82.0,dLat=2.0, $
+            longGrid=-180.0:180.0,dLon=4.0, $
+            rangFrequency=0.1:1.0,dF=0.25   $
+             l3presLvl=1.0:215.0,rangWavenumber=1:15, mode=com, label="N2OL3DM"
+d134 3
+a136 3
+            latGridMap=-82.0:82.0,dLat=2.0, $
+            longGrid=-180.0:180.0,dLon=4.0, $
+            rangFrequency=0.1:1.0,dF=0.25   $
+d139 3
+a141 3
+            latGridMap=-82.0:82.0,dLat=2.0, $
+            longGrid=-180.0:180.0,dLon=4.0, $
+            rangFrequency=0.1:1.0,dF=0.25   $
+d144 3
+a146 3
+            latGridMap=-82.0:82.0,dLat=2.0, $
+            longGrid=-180.0:180.0,dLon=4.0, $
+            rangFrequency=0.1:1.0,dF=0.25   $
+d166 1
+a166 1
+     mcf = "/duke/nakamura/L1BOA/META/MCF.clo", $
+d171 2
+a172 2
+             mcf = "/duke/nakamura/L1BOA/META/MCF.z", $
+             file="/duke/nakamura/L1BOA/mls_l3dm_gph_$version-$cycle_$day.dat"
+d174 1
+a174 1
+             mcf = "/duke/nakamura/L1BOA/META/MCF.h2o", $
+d177 1
+a177 1
+             mcf = "/duke/nakamura/L1BOA/META/MCF.hcl", $
+d180 1
+a180 1
+             mcf = "/duke/nakamura/L1BOA/META/MCF.hcn", $
+d183 1
+a183 1
+             mcf = "/duke/nakamura/L1BOA/META/MCF.hno3", $
+d186 1
+a186 1
+             mcf = "/duke/nakamura/L1BOA/META/MCF.n2o", $
+d188 2
+a189 2
+    O3L3DM: output, quantities="O3" "O3Ascending" "O3Descending" $
+            mcf = "/duke/nakamura/L1BOA/META/MCF.o3", $
+d192 1
+a192 1
+            mcf = "/duke/nakamura/L1BOA/META/MCF.oh", $
+d196 1
+a196 1
+           mcf = "/duke/nakamura/L1BOA/META/MCF.t", $
+d203 4
+a206 1
+; $Log: $
+@
+

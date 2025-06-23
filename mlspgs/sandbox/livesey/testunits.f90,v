@@ -1,0 +1,112 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.18
+	cfm-single-freq-0-1:1.1.0.16
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.14
+	mus-emls-1-70:1.1.0.12
+	rel-1-0-englocks-work:1.1.0.10
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.8
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.6
+	V2-24-NRT-04:1.1
+	V3-33:1.1
+	V2-24:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1
+	V2-23-NRT-02:1.1
+	V2-23:1.1
+	V2-22-NRT-01:1.1
+	V2-22:1.1
+	V2-21:1.1
+	V2-20:1.1
+	V2-11:1.1
+	V2-10:1.1
+	V2-00:1.1
+	V1-51:1.1
+	V1-50:1.1
+	V1-45:1.1
+	V1-44:1.1
+	V1-43:1.1
+	V1-42:1.1
+	V1-41:1.1
+	V1-32:1.1
+	V1-40:1.1
+	V1-31:1.1
+	V1-13:1.1
+	V1-12:1.1
+	V1-11:1.1
+	V1-10:1.1
+	newfwm-feb03:1.1.0.4
+	V1-04:1.1
+	V1-03:1.1
+	V1-02:1.1
+	V1-00:1.1
+	newfwm-sep01:1.1.0.2
+	V0-7:1.1
+	V0-5-Level2:1.1
+	V0-5-SIPS:1.1
+	V0_1:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	99.12.14.22.56.43;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Regular commit
+@
+text
+@PROGRAM TestUnits
+USE MLSCommon
+USE Units
+
+CHARACTER(LEN=32) :: line
+CHARACTER(LEN=32) :: remainder
+INTEGER :: family
+REAL(r8) :: value
+
+!PRINT*,"Enter a request"
+!READ*,line
+line="10.0km 15.0 Hello there 57.3"
+PRINT*,"I got:"//line//"|"
+
+CALL ReadNumberWithUnitsFromString(line,value,family,remainder)
+PRINT*,"Value: ",value
+PRINT*,"Family: ", family
+PRINT*,"Remainder: ",remainder
+END PROGRAM TestUnits
+@

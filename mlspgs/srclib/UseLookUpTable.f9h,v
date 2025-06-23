@@ -1,0 +1,669 @@
+head	1.7;
+access;
+symbols
+	v5-02-NRT-19:1.7
+	v6-00:1.7
+	v5-02-NRT-18:1.7
+	v5-02:1.7
+	v5-01-NRT-17:1.7
+	v5-01-NRT-16:1.7
+	v5-01-NRT-15:1.7
+	v5-01-NRT-14:1.7
+	neuralnetworks-1-0:1.7.0.10
+	cfm-single-freq-0-1:1.7.0.8
+	v5-01:1.7
+	v5-00:1.7
+	v4-23-TA133:1.7.0.6
+	mus-emls-1-70:1.7.0.4
+	rel-1-0-englocks-work:1.7.0.2
+	VUMLS1-00:1.5
+	VPL1-00:1.5
+	V4-22-NRT-08:1.5
+	VAM1-00:1.5
+	V4-21:1.5.0.4
+	V4-13:1.5
+	V4-12:1.5
+	V4-11:1.5
+	V4-10:1.5
+	V3-43:1.5
+	M4-00:1.5
+	V3-41:1.5
+	V3-40-PlusGM57:1.5.0.2
+	V2-24-NRT-04:1.4
+	V3-33:1.5
+	V2-24:1.4
+	V3-31:1.5
+	V3-30-NRT-05:1.5
+	cfm-01-00:1.5
+	V3-30:1.5
+	V3-20:1.5
+	V3-10:1.5
+	V2-23-NRT-02:1.4
+	V2-23:1.4
+	V2-22-NRT-01:1.4
+	V2-22:1.4;
+locks; strict;
+comment	@# @;
+
+
+1.7
+date	2017.11.02.00.04.30;	author pwagner;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2017.10.27.23.10.34;	author pwagner;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2008.09.16.18.17.36;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2007.08.07.23.58.03;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2007.07.31.22.49.01;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2007.03.14.23.57.16;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2007.03.02.18.17.57;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.7
+log
+@Handle case where x values monotonic but decreasing
+@
+text
+@! Copyright 2007, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id: UseLookUpTable.f9h,v 1.6 2017/10/27 23:10:34 pwagner Exp $
+
+! -------------------------------------------------  UseLookUpTable  -----
+
+  ! This family of routines use a LookUpTable to approximate a costly-to-evaluate
+  ! function based on its values at a set of points
+  ! depending on options, it may instead integrate, differentiate, interpolate
+  ! or bias the search downward or upward
+
+  ! function UseLookUpTable_r4 ( x, table, x1, x2, xtable, &
+  !   & missingValue, options, xS, xE, yBottom, yTop ) &
+  !   & result(value)
+  !   integer, parameter :: RK = R4
+  !   ! Formal arguments
+  real(rk), intent(in)                        :: x
+  real(rk), dimension(:), intent(in)          :: table
+  real(rk), optional, intent(in)              :: x1
+  real(rk), optional, intent(in)              :: x2
+  real(rk), dimension(:), optional, intent(in):: xtable
+  character(len=*), optional, intent(in)      :: options
+  real(rk), optional, intent(in)              :: missingValue
+  real(rk), optional, intent(in)              :: xS  ! restrict search to
+  real(rk), optional, intent(in)              :: xE  ! xS < xi < xE
+  real(rk), optional, intent(in)              :: yBottom, yTop ! Not used if
+  real(rk)                                    :: value    ! x are presorted
+  ! Internal variables
+  logical, parameter :: DeeBug = .false.
+  real(r8) :: eps
+  real(rk)                                    :: xStart, xEnd
+  integer :: i
+  integer, dimension(2) :: indices
+  integer :: lower, upper
+  character(len=8) :: myOptions
+  character(len=8) :: subOptions
+  real(rk), dimension(size(table))            :: myXTable
+  real(rk), dimension(size(table))            :: xTable2, table2
+  real(rk)                                    :: y1, y2
+  integer :: nSize, nSize2
+  ! Executable
+  myOptions = ' '
+  if ( present(options) ) myOptions = options
+  nSize = size(table)
+  value = 0.
+  if ( nSize < 1 ) return
+  value = table(1)
+  if ( nSize < 2 ) return
+  if ( present(xtable) ) then
+    myXTable = xTable
+  elseif ( present(x1) .and. present(x2) ) then
+    do i=1, nSize
+      eps = (nSize - i) / ( nSize - 1._rk )
+      myXtable(i) = eps*x1 + (1-eps)*x2
+    enddo
+    ! Since we're generating an x table, it's sorted by birthright
+    if ( index(myOptions, 'p') < 1 ) myOptions = trim_safe(myOptions) // 'p'
+  else
+    ! What? No x array? Should this be an error?
+    return
+  endif
+  xStart = minval(myXTable)
+  if ( present(xS) ) xStart = xS
+  xEnd = maxval(myXTable)
+  if ( present(xE) ) xEnd = xE
+  if ( present(missingValue) ) then
+    if ( x < xStart .or. x > xEnd ) then
+      value = missingValue
+      return
+    endif
+  endif
+  if ( index(myOptions, 'p') > 0 ) then
+    if ( present(yBottom) .or. present(yTop) ) call MLSMessage &
+      & ( MLSMSG_Error, ModuleName, "Must not have yBottom, yTop in UseLookUpTable")
+    subOptions='p'
+    ! We'll need to ignore any xi that are outside [XStart, xEnd]
+    ! (Note that this and integration are incompatible so far)
+    upper = FindFirst( myXTable > xEnd )
+    lower = FindLast( myXTable < xStart )
+    if ( upper < 1 ) upper = nSize + 1
+    nSize2 = upper - 1 - lower
+    if ( nSize2 < 1 ) return
+    xTable2(1:nSize2) = myXTable(lower+1:upper-1)
+    table2(1:nSize2) = table(lower+1:upper-1)
+  else
+    ! an unsorted x table can't be used for any other option
+    if ( len_trim(myOptions) > 0 ) call MLSMessage &
+      & ( MLSMSG_Error, ModuleName, &
+      & "x table must be sorted in UseLookUpTable with option " // trim(myOptions))
+    ! We'll need to ignore any xi that are outside [XStart, xEnd] [yBottom, yTop]
+    y1 = minval(table)
+    y2 = maxval(table)
+    if ( present(yBottom) ) y1 = yBottom
+    if ( present(yTop) ) y2 = yTop
+    ! (Note that this and integration are incompatible so far)
+    nSize2 = 0
+    do i=1, nSize
+      if ( myXTable(i) < xStart ) then
+        ! myXTable(i) = DEFAULTUNDEFINEDVALUE
+      elseif ( myXTable(i) > xEnd ) then
+        ! myXTable(i) = DEFAULTUNDEFINEDVALUE
+      elseif ( Table(i) < y1 ) then
+        ! myXTable(i) = DEFAULTUNDEFINEDVALUE
+      elseif ( Table(i) > y2 ) then
+        ! myXTable(i) = DEFAULTUNDEFINEDVALUE
+      else
+        nSize2 = nSize2 + 1
+        xTable2(nSize2) = myXTable(i)
+        table2(nSize2) = table(i)
+      endif
+    enddo
+    subOptions=' '
+  endif
+  ! Check that our xTable is in ascending order
+  if ( xTable2(1) < xTable2(nSize2) ) then
+    call doTheDirtyDeed ( nSize2, xTable2(1:nSize2), table2(1:nSize2) )
+  else
+    call doTheDirtyDeed ( nSize2, xTable2(nSize2:1:-1), table2(nSize2:1:-1) )
+  endif
+contains
+  subroutine doTheDirtyDeed( nSize, myXTable, table )
+    ! Args
+    integer, intent(in)                :: nSize
+    real(rk), dimension(:), intent(in) :: myXTable
+    real(rk), dimension(:), intent(in) :: table
+    ! Internal variables
+    real(r8) :: dfdx, d2fdx2, eps, S, T, xp, xq, xr, dxR, dxL, dfdxR, dfdxL
+    real(rk) :: dx
+    integer :: p, q, r
+    ! Now according to options, which operation do we approximate?
+    if ( index(myOptions, 'S') > 0 .or. index(myOptions, 'C') > 0) then
+      ! ------------- i n t e g r a t i o n  ------------
+      ! So far ignoring xStart and xEnd
+      ! uncertain how to interpret them: would we want
+      ! integral from xStart to x or from x to xEnd?
+      ! What we'll do is integrate from (x[1] to x[nSize]
+      ! S i m p s o n ' s   r u l e
+      dx = myXTable(2) - myXTable(1)
+      S = simpsons ( nSize, dx, table )
+      T = psimpsons( x, myXTable(1), myXTable(nSize), dx, table )
+      ! Special case: if x >= x2, set T = S
+      if ( x >= myXTable(nSize) ) T = S
+      if ( index(myOptions, 'C') > 0 ) then
+        value = S - T
+      else
+        value = T
+      endif
+    elseif ( index(myOptions, '0') > 0 .or. index(myOptions, '1') > 0 &
+      & .or. index(myOptions, '2') > 0) then
+      ! ------------- d i f f e r e n t i a t i o n  ------------
+      ! To calculate derivatives, we will assume x values in table
+      ! are evenly spaced
+      ! In the following, xp, xq and xr are the 3 points closest to x
+      ! xp        xq  x      xr
+      ! Then we use the following facts which are
+      ! consistent with central difference approximations
+      ! f'(xq)  = ( f(xr) - f(xp) ) / ( xr - xp )
+      ! f''(xq) = ( f(xr) + f(xp) - 2 f(xq) ) / ( xr - xq )^2
+      call ClosestElement ( x, myXTable, indices, 'l' // subOptions )
+      indices(1) = max( indices(1), 1 )
+      lower = max(indices(1), 1)
+      call ClosestElement ( x, myXTable, indices, 'u' // subOptions )
+      upper = max(indices(1), 1)
+      if ( upper == lower ) then
+        ! We need to move either upper or lower
+        if ( upper < nSize ) then
+          upper = upper + 1
+        elseif ( lower > 1 ) then
+          lower = lower - 1
+        else
+          return
+        endif
+      endif
+      ! Work out which indices are p, q, and r
+      ! Which is closer, lower or upper?
+      if ( myXTable(upper) - x < x - myXTable(lower) ) then
+        p = lower
+        q = upper
+        r = upper + (upper-lower)
+        r = max( r, 1 )
+        r = min( r, nSize )
+      else
+        q = lower
+        r = upper
+        p = lower - (upper-lower)
+        p = max( p, 1 )
+        p = min( p, nSize )
+      endif
+      xp = myXTable(p)
+      xq = myXTable(q)
+      xr = myXTable(r)
+      dfdx = ( table(r) - table(p) ) / ( xr - xp )
+      ! The following formula only works if p != q != r
+      d2fdx2 = ( table(r) + table(p) - 2*table(q) ) / ( (.5*(xr - xp) )**2 )
+      ! Are we uniformly spaced?
+      dxL = xq - xp
+      dxR = xr - xq
+      if ( p == q .or. q == r ) then
+        d2fdx2 = 0.
+        ! print *, 'Zeroed 2nd derivative'
+      elseif ( dxL /= dxR ) then
+        dfdxR = (table(r) - table(q))/dxR
+        dfdxL = (table(q) - table(p))/dxL
+        d2fdx2 = (dfdxR - dfdxL) / (0.5*(dxR+dxL))
+      endif
+      if ( index(myOptions, '2') > 0 ) then
+        value = d2fdx2
+      elseif ( index(myOptions, '1') > 0 ) then
+        ! Approximate derivative corrected by 2nd derivative
+        value = dfdx + (x-xq)*d2fdx2
+      else
+        ! Approximate function corrected by both derivatives
+        value = table(q) + (x-xq)*( dfdx + 0.5*(x-xq)*d2fdx2 )
+      endif
+    elseif ( index(myOptions, 'l') > 0 ) then
+      ! ------------- l o o k d o w n  ------------
+      call ClosestElement ( x, myXTable, indices, 'l' // subOptions )
+      indices(1) = max( indices(1), 1 )
+      indices(1) = min( indices(1), nSize )
+      value = table(indices(1))
+    elseif ( index(myOptions, 'u') > 0 ) then
+      ! ------------- l o o k u p  ------------
+      call ClosestElement ( x, myXTable, indices, 'u' // subOptions )
+      indices(1) = max( indices(1), 1 )
+      indices(1) = min( indices(1), nSize )
+      value = table(indices(1))
+    elseif ( index(myOptions, 'i') > 0 ) then
+      ! ------------- i n t e r p o l a t i o n  ------------
+      call ClosestElement ( x, myXTable, indices, 'l' // subOptions )
+      lower = max(indices(1), 1)
+      call ClosestElement ( x, myXTable, indices, 'u' // subOptions )
+      upper = max(indices(1), 1)
+      if ( DeeBug ) then
+        call outputNamedValue( 'lower', lower )
+        call outputNamedValue( 'upper', upper )
+        call outputNamedValue( 'x[lower]', myXtable(lower) )
+        call outputNamedValue( 'x[upper]', myXtable(upper) )
+        call outputNamedValue( 't[lower]', table(lower) )
+        call outputNamedValue( 't[upper]', table(upper) )
+      endif
+      if ( myXtable(lower) == myXTable(upper) ) then
+        value = table(lower)
+        return
+      endif
+      eps = ( x - myXTable(lower) ) / ( myXTable(upper) - myXTable(lower) )
+      if ( DeeBug ) call outputNamedValue( 'eps', eps )
+      value = eps*table(upper) + (1-eps)*table(lower)
+    else
+      ! ------------- c l o s e s t  ------------
+      call ClosestElement ( x, myXTable, indices, subOptions )
+      indices(1) = max( indices(1), 1 )
+      indices(1) = min( indices(1), nSize )
+      value = table(indices(1))
+    endif
+  end subroutine doTheDirtyDeed
+  ! end subroutine UseLookUpTable_r4
+! $Log: UseLookUpTable.f9h,v $
+! Revision 1.6  2017/10/27 23:10:34  pwagner
+! Improvements esp. when not x are not evenly spaced
+!
+! Revision 1.5  2008/09/16 18:17:36  pwagner
+! Had sometimes used absent optional args
+!
+! Revision 1.4  2007/08/07 23:58:03  pwagner
+! Many changes, new options, improvements
+!
+! Revision 1.3  2007/07/31 22:49:01  pwagner
+! UseLookUpTable can now differentiate, integrate
+!
+! Revision 1.2  2007/03/14 23:57:16  pwagner
+! Improved precision when interpolating
+!
+! Revision 1.1  2007/03/02 18:17:57  pwagner
+! First commit
+!
+@
+
+
+1.6
+log
+@Improvements esp. when not x are not evenly spaced
+@
+text
+@d12 1
+a12 1
+! $Id: UseLookUpTable.f9h,v 1.5 2008/09/16 18:17:36 pwagner Exp $
+d123 6
+a128 1
+  call doTheDirtyDeed ( nSize2, xTable2(1:nSize2), table2(1:nSize2) )
+d267 3
+@
+
+
+1.5
+log
+@Had sometimes used absent optional args
+@
+text
+@d12 1
+a12 1
+! $Id: UseLookUpTable.f9h,v 1.4 2007/08/07 23:58:03 pwagner Exp $
+d21 4
+a24 4
+  ! function UseLookUpTable_r4 ( x, table, x1, x2, xtable, options, &
+  !    & xS, xE, yBottom, yTop ) &
+  !    & result(value)
+  !  integer, parameter :: RK = R4
+d68 1
+a68 1
+    ! What? no x array? Shouldn't his be an error?
+d97 2
+a98 1
+      & ( MLSMSG_Error, ModuleName, "x table must be sorted in UseLookUpTable")
+d131 1
+a131 1
+    real(r8) :: dfdx, d2fdx2, eps, S, T, xp, xq, xr
+d140 1
+d157 1
+a157 1
+      ! In the following xp, xq and xr are the 3 points closest to x
+d159 2
+a160 1
+      ! Then we use the following facts
+d178 1
+d199 3
+d205 4
+d213 1
+d216 1
+d262 3
+@
+
+
+1.4
+log
+@Many changes, new options, improvements
+@
+text
+@d12 1
+a12 1
+! $Id: UseLookUpTable.f9h,v 1.3 2007/07/31 22:49:01 pwagner Exp $
+d38 1
+d76 1
+a76 1
+    if ( x < xS .or. x > xE ) then
+d224 8
+d237 1
+d249 3
+@
+
+
+1.3
+log
+@UseLookUpTable can now differentiate, integrate
+@
+text
+@d12 1
+a12 1
+! $Id: UseLookUpTable.f9h,v 1.2 2007/03/14 23:57:16 pwagner Exp $
+d18 2
+d21 2
+a22 1
+  ! function UseLookUpTable_r4 ( x, table, x1, x2, xtable, options ) &
+d33 4
+a36 1
+  real(rk)                                    :: value
+d38 2
+a39 1
+  real(r8) :: dfdx, d2fdx2, dx, eps, S, T, wi, xp, xq, xr
+d42 1
+a42 1
+  integer :: lower, upper, p, q, r
+d44 1
+d46 3
+a48 1
+  integer :: nSize
+d64 2
+d67 1
+d70 4
+d75 1
+a75 1
+    if ( x < minval(myXtable) .or. x > maxval(myXtable) ) then
+d80 66
+a145 16
+  if ( index(myOptions, 'S') > 0 .or. index(myOptions, 'C') > 0) then
+    ! To calculate integrals we use trapezoidal rule
+    ! S{f(x) dx, x1 < x < xN} = deltax/2 * ( 
+    !          f(x0) + f(xN) + 2 Sigma{f(xi), i=1 .. x(n_1)} )
+    S = 0. ! This will be integrated over all the intervals
+    T = 0. ! Only up to x
+    dx = myXTable(2) - myXTable(1)
+    ! A trick! we start iterations with 2nd point
+    ! (so interval is always  [i-1, i])
+    S = (dx/2)*table(1)
+    T = (dx/2)*table(1)
+    ! Special case: if x <= x1, set T = 0
+    if ( x <= myXTable(1) ) T = 0.
+    do i=2, nSize
+      if ( i == nSize ) then
+        wi = dx/2
+d147 1
+a147 1
+        wi = dx
+d149 24
+a172 15
+      S = S + wi*table(i)
+      if ( x > myXTable(i) ) then
+        ! x is to the right of the interval
+        T = T + wi*table(i)
+      elseif ( x > myXTable(i-1) ) then
+        ! x is inside the interval
+        ! 1st: interpolate to value of f(x)
+        eps = ( x - myXTable(i-1) ) / dx
+        value = eps*table(i) + (1-eps)*table(i-1)
+        ! 2nd: subtract back off 1/2 the contribution
+        ! made in the last iteration
+        T = T - (dx/2)*table(i-1)
+        ! 3rd: add the partial contribution from this interval
+        T = T + ( table(i-1) + table(i) )*( x  - myXTable(i-1) ) / 2
+      ! else
+d174 28
+a201 28
+    enddo
+    ! Special case: if x >= x2, set T = S
+    if ( x >= myXTable(nSize) ) T = S
+    ! print *, S, T
+    if ( index(myOptions, 'C') > 0 ) then
+      value = S - T
+    else
+      value = T
+    endif
+  elseif ( index(myOptions, '1') > 0 .or. index(myOptions, '2') > 0) then
+    ! To calculate derivatives, we will assume x values in table
+    ! are evenly spaced
+    ! In the following xp, xq and xr are the 3 points closest to x
+    ! xp        xq  x      xr
+    ! Then we use the following facts
+    ! f'(xq)  = ( f(xr) - f(xp) ) / ( xr - xp )
+    ! f''(xq) = ( f(xr) + f(xp) - 2 f(xq) ) / ( xr - xq )^2
+    call ClosestElement ( x, myXTable, indices, 'l' )
+    indices(1) = max( indices(1), 1 )
+    lower = max(indices(1), 1)
+    call ClosestElement ( x, myXTable, indices, 'u' )
+    upper = max(indices(1), 1)
+    if ( upper == lower ) then
+      ! We need to move either upper or lower
+      if ( upper < nSize ) then
+        upper = upper + 1
+      elseif ( lower > 1 ) then
+        lower = lower - 1
+d203 22
+d227 2
+a228 29
+    endif
+    ! Which is closer, lower or upper?
+    if ( myXTable(upper) - x < x - myXTable(lower) ) then
+      p = lower
+      q = upper
+      r = upper + (upper-lower)
+      r = max( r, 1 )
+      r = min( r, size(table) )
+    else
+      q = lower
+      r = upper
+      p = lower - (upper-lower)
+      p = max( p, 1 )
+      p = min( p, size(table) )
+    endif
+    ! print *, p, q, r
+    xp = myXTable(p)
+    xq = myXTable(q)
+    xr = myXTable(r)
+    ! print *, xp, xq, xr
+    dfdx = ( table(r) - table(p) ) / ( xr - xp )
+    ! The following formula only works if p != q != r
+    d2fdx2 = ( table(r) + table(p) - 2*table(q) ) / ( (.5*(xr - xp) )**2 )
+    if ( p == q .or. q == r ) then
+      d2fdx2 = 0.
+      print *, 'Zeroed 2nd derivative'
+    endif
+    if ( index(myOptions, '2') > 0 ) then
+      value = d2fdx2
+d230 5
+a234 1
+      value = dfdx + (x-xq)*d2fdx2
+d236 1
+a236 36
+  elseif ( index(myOptions, 'l') > 0 ) then
+    call ClosestElement ( x, myXTable, indices, 'l' )
+    indices(1) = max( indices(1), 1 )
+    indices(1) = min( indices(1), nSize )
+    value = table(indices(1))
+    ! call output( ' x, lower, value ', advance='no' )
+    ! call output( (/ x, myXTable(indices(1)), value /), advance='yes' )
+  elseif ( index(myOptions, 'u') > 0 ) then
+    call ClosestElement ( x, myXTable, indices, 'u' )
+    indices(1) = max( indices(1), 1 )
+    indices(1) = min( indices(1), nSize )
+    value = table(indices(1))
+    ! call output( ' x, upper, value ', advance='no' )
+    ! call output( (/ x, myXTable(indices(1)), value /), advance='yes' )
+  elseif ( index(myOptions, 'i') > 0 ) then
+    call ClosestElement ( x, myXTable, indices, 'l' )
+    lower = max(indices(1), 1)
+    call ClosestElement ( x, myXTable, indices, 'u' )
+    upper = max(indices(1), 1)
+    if ( myXtable(lower) == myXTable(upper) ) then
+      value = table(lower)
+      ! call output( (/ minval(myXtable), maxval(myXtable) /), advance='yes' )
+      ! call output( ' x, lower=upper, value ', advance='no' )
+      ! call output( (/ x, myXTable(lower), value /), advance='yes' )
+      return
+    endif
+    eps = ( x - myXTable(lower) ) / ( myXTable(upper) - myXTable(lower) )
+    value = eps*table(upper) + (1-eps)*table(lower)
+    ! call output( ' x, lower, upper, eps, value ', advance='no' )
+    ! call output( (/ x, myXTable(lower), myXTable(upper), eps, value /), advance='yes' )
+  else
+    call ClosestElement ( x, myXTable, indices )
+    indices(1) = max( indices(1), 1 )
+    indices(1) = min( indices(1), nSize )
+    value = table(indices(1))
+  endif
+d239 3
+@
+
+
+1.2
+log
+@Improved precision when interpolating
+@
+text
+@d12 1
+a12 1
+! $Id: UseLookUpTable.f9h,v 1.1 2007/03/02 18:17:57 pwagner Exp $
+d32 1
+a32 1
+  real(r8) :: eps
+d35 1
+a35 1
+  integer :: lower, upper
+d63 99
+a161 1
+  if ( index(myOptions, 'l') > 0 ) then
+d199 3
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d12 1
+a12 1
+! $Id: UseLookUpTable.f9h,v 1.1 2007/02/26 23:52:37 pwagner Exp $
+d29 1
+d32 1
+a32 1
+  real(rk) :: eps
+d57 6
+d68 2
+d75 2
+d84 3
+d91 2
+d101 3
+@
+

@@ -1,0 +1,1535 @@
+head	1.33;
+access;
+symbols
+	v5-02-NRT-19:1.33
+	v6-00:1.33
+	v5-02-NRT-18:1.33
+	v5-02:1.33
+	v5-01-NRT-17:1.33
+	v5-01-NRT-16:1.33
+	v5-01-NRT-15:1.33
+	v5-01-NRT-14:1.33
+	neuralnetworks-1-0:1.33.0.6
+	cfm-single-freq-0-1:1.33.0.4
+	v5-01:1.33
+	v5-00:1.33
+	v4-23-TA133:1.33.0.2
+	mus-emls-1-70:1.32.0.2
+	rel-1-0-englocks-work:1.29.0.2
+	VUMLS1-00:1.21
+	VPL1-00:1.21
+	V4-22-NRT-08:1.21
+	VAM1-00:1.21
+	V4-21:1.21.0.2
+	V4-13:1.19
+	V4-12:1.19
+	V4-11:1.19
+	V4-10:1.19
+	V3-43:1.18
+	M4-00:1.18
+	V3-41:1.18
+	V3-40-PlusGM57:1.18.0.2
+	V2-24-NRT-04:1.17
+	V3-33:1.18
+	V2-24:1.17
+	V3-31:1.18
+	V3-30-NRT-05:1.18
+	cfm-01-00:1.18
+	V3-30:1.18
+	V3-20:1.18
+	V3-10:1.18
+	V2-23-NRT-02:1.17
+	V2-23:1.17
+	V2-22-NRT-01:1.17
+	V2-22:1.17
+	V2-21:1.14
+	V2-20:1.14
+	V2-11:1.13
+	V2-10:1.13
+	V2-00:1.13
+	V1-51:1.12
+	V1-50:1.12
+	V1-45:1.9
+	V1-44:1.9
+	V1-43:1.9
+	V1-42:1.9
+	V1-41:1.9
+	V1-32:1.9
+	V1-40:1.9
+	V1-31:1.9
+	V1-30:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.33
+date	2018.08.22.22.37.44;	author vsnyder;	state Exp;
+branches;
+next	1.32;
+
+1.32
+date	2018.05.24.03.25.39;	author vsnyder;	state Exp;
+branches;
+next	1.31;
+
+1.31
+date	2018.04.25.20.53.24;	author vsnyder;	state Exp;
+branches;
+next	1.30;
+
+1.30
+date	2018.04.10.22.19.32;	author vsnyder;	state Exp;
+branches;
+next	1.29;
+
+1.29
+date	2018.04.05.01.34.34;	author vsnyder;	state Exp;
+branches;
+next	1.28;
+
+1.28
+date	2017.11.29.01.35.44;	author vsnyder;	state Exp;
+branches;
+next	1.27;
+
+1.27
+date	2017.11.28.21.51.48;	author vsnyder;	state Exp;
+branches;
+next	1.26;
+
+1.26
+date	2017.11.28.01.46.49;	author vsnyder;	state Exp;
+branches;
+next	1.25;
+
+1.25
+date	2017.08.01.02.57.18;	author vsnyder;	state Exp;
+branches;
+next	1.24;
+
+1.24
+date	2017.08.01.02.32.36;	author vsnyder;	state Exp;
+branches;
+next	1.23;
+
+1.23
+date	2017.07.15.00.12.33;	author vsnyder;	state Exp;
+branches;
+next	1.22;
+
+1.22
+date	2017.05.02.01.01.13;	author vsnyder;	state Exp;
+branches;
+next	1.21;
+
+1.21
+date	2014.10.08.21.57.03;	author vsnyder;	state Exp;
+branches;
+next	1.20;
+
+1.20
+date	2014.10.08.20.22.21;	author vsnyder;	state Exp;
+branches;
+next	1.19;
+
+1.19
+date	2013.08.06.23.14.31;	author vsnyder;	state Exp;
+branches;
+next	1.18;
+
+1.18
+date	2009.04.13.20.43.17;	author pwagner;	state Exp;
+branches;
+next	1.17;
+
+1.17
+date	2007.06.26.00.33.43;	author vsnyder;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2007.06.19.00.29.39;	author vsnyder;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2007.06.08.22.46.03;	author vsnyder;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2006.09.11.21.06.55;	author vsnyder;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2005.06.22.19.27.32;	author pwagner;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2004.09.23.23.33.39;	author vsnyder;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2004.09.23.23.01.43;	author vsnyder;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2004.09.17.20.59.34;	author vsnyder;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2003.11.01.01.51.24;	author vsnyder;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2003.10.24.23.51.35;	author vsnyder;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2003.10.07.23.19.45;	author vsnyder;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2003.10.07.02.04.03;	author vsnyder;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2003.10.07.02.01.00;	author vsnyder;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2003.10.07.01.57.17;	author vsnyder;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2003.09.27.02.15.29;	author vsnyder;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2003.09.26.19.07.23;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2003.07.03.18.08.34;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.33
+log
+@Add line numbers to error messages
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+program COMPARE
+
+! Compare two files and report the maximum relative and absolute differences
+! between the numbers in them.
+
+! In each file, look for a line that ends with \ <number>.
+
+! If the lines are different, report an error and stop.
+
+! Read <number> numbers from each of the two files.  Compute their maximum
+! relative and absolute difference. If this is different from zero and the
+! -a option is specified, print the line with the \ and the difference.
+
+! Repeat to the end of the files.
+
+! Print the maximum relative and absolute difference anywhere at the end
+! if it's not zero.
+
+  implicit NONE
+
+!---------------------------- RCS Ident Info ------------------------------
+  character (len=*), parameter :: ModuleName= &
+       "$RCSfile: compare.f90,v $"
+  character (len=*), parameter :: IdParm = &
+       "$Id: compare.f90,v 1.32 2018/05/24 03:25:39 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+!---------------------------------------------------------------------------
+
+  integer, parameter :: RK = kind(0.0d0) ! kind for calculations
+  integer, parameter :: RS = kind(0.0e0) ! kind for * output
+  real(rk), allocatable, dimension(:) :: AD      ! Absolute difference of R1, R2
+  logical :: All = .false.        ! Show nonzero differences for all quantities
+  real(rk) :: AMAX                ! Maximum absolute difference for one R1, R2 pair
+  real(rk) :: AMAXG = 0.0         ! Global maximum of all values of AMAX
+  real(rk) :: AbsAtRmaxG          ! Absolute error at maximum relative error
+  logical :: AnyNaN(3) = .false.  ! R1, R2 or a relative difference has a NaN
+  real(rk) :: AVG(2), AVGSR(2), AVGSA(2)
+  logical :: CONT = .false.       ! Continue even if control lines differ
+  logical :: DoStats = .false.    ! -s option specified
+  logical :: END
+  character(127) :: Errmsg
+  logical :: Error
+  character(127) :: File1, File2
+  integer :: I, I1, I2, J
+  logical :: Same = .false.       ! Print "Identical" if files are the same
+  integer :: LAMAX, LRMAX         ! Locations of absolute, relative max. diffs.
+  logical :: LOUD = .true.        ! Messages about unequal file lengths etc.
+  character(127) :: Line1, line2
+  integer :: Loc1, Loc2           ! Line numbers in files
+  logical, allocatable, dimension(:) :: M    ! abs(r1+r2) > 0.0
+  integer :: N, N1, N2            ! Numbers of values
+  character(len=3) :: NaNString
+  real(rk) :: NaNValue
+  logical :: NoZero = .false.     ! Don't compare where either one is zero, -Z
+  real(rk), allocatable, dimension(:) :: R1, R2  ! Inputs
+  real(rk), allocatable, dimension(:) :: RD      ! Relative difference of R1, R2
+  real(rk) :: RelAtAmaxG
+  real(rk) :: RMAX = -huge(0.0)   ! Maximum relative difference for one R1, R2 pair
+  character(127) :: RMAXB = ''    ! Label of block having largest value of RMAXV
+  real(rk) :: RMAXG = -huge(0.0)  ! Global maximum of all values of RMAX
+  real(rk) :: RMAXL = -huge(0.0)  ! Relative at max abs diff (LAMAX)
+  real(rk) :: RMAXV = -huge(0.0)  ! Difference relative to VMAX
+  real(rk) :: RMAXVG = -huge(0.0) ! Global maximum of all values of RMAXV
+  integer :: Status
+  real(rk) :: STDEV(2), STDEVR(2), STDEVA(2)
+  logical :: Verbose = .false.
+  real(rk) :: VMAX                ! Maximum absolute value in R1 or R2
+  logical :: Zero = .false.       ! If ( all ), show zero differences, too.
+
+  NaNString = "NaN"
+  read ( NaNString, * ) NaNvalue
+  ! read ( (/("NaN", i = 1, 10 ) /), * ) AbsAtRmaxG, RelAtAmaxG, avgsr, avgsa, &
+  !  & stdevr, stdeva
+  AbsAtRmaxG = NaNvalue
+  RelAtAmaxG = NaNvalue
+  avgsr = NaNvalue
+  avgsa = NaNvalue
+  same = .true. ! in case files are identical, even without -i option
+  stdevr = NaNvalue
+  stdeva = NaNvalue
+
+  i = 1
+  do
+    call get_command_argument ( i, line1 )
+    if ( line1(1:1) /= '-' .and. line1 /= '' ) exit
+    if ( line1(1:2) == '- ' ) then
+      i = i + 1
+      exit
+    end if
+    if ( line1(1:1) == '-' ) then
+      do j = 2, len_trim(line1)
+        if ( line1(j:j) == 'a' ) then
+          all = .true.
+        else if ( line1(j:j) == 'c' ) then
+          cont = .true.
+        else if ( line1(j:j) == 'i' ) then
+          same = .true.
+        else if ( line1(j:j) == 'q' ) then
+          loud = .false.
+        else if ( line1(j:j) == 's' ) then
+          doStats = .true.
+        else if ( line1(j:j) == 'v' ) then
+          print *, Id
+        else if ( line1(j:j) == 'V' ) then
+          verbose = .true.
+        else if ( line1(j:j) == 'z' ) then
+          zero = .true.
+        else if ( line1(j:j) == 'Z' ) then
+          noZero = .true.
+        else
+          call usage
+        end if
+      end do
+    else
+      call usage
+    end if
+    i = i + 1
+  end do
+
+  error = .false.
+  call get_command_argument ( i, file1 )
+  open ( 10, file=file1, form='formatted', status='old', iostat=status, &
+    & iomsg=errmsg )
+  if ( status /= 0 ) then
+    print 1, trim(file1), i, status, trim(errmsg)
+1   format ( 'Unable to open input file "', a, '" in argument ', i0 / &
+      & 'Status = ', i0, ', Message = ', a )
+    error = .true.
+  end if
+  call get_command_argument ( i+1, file2 )
+  open ( 11, file=file2, form='formatted', status='old', iostat=status, &
+    & iomsg=errmsg )
+  if ( status /= 0 ) then
+    print 1, trim(file2), i+1, status, trim(errmsg)
+    error = .true.
+  end if
+  if ( error ) stop
+
+  if ( all ) then
+    print '(a)', '   Max Abs     Max Abs            Rel at Max  Max Rel            Abs at Max  Rel to Max'
+    print '(a)', '   Value       Diff          At   Abs Diff    Diff          At   Rel Diff    Abs Value'
+  end if
+
+  loc1 = 0
+  loc2 = 0
+
+  do
+
+    do
+      loc1 = loc1 + 1
+      read ( 10, '(a)', iostat=status ) line1
+      end = status /= 0
+      if ( end ) exit
+      i1 = index(line1,'\')
+      if ( i1 /= 0 ) exit
+    end do
+
+    do
+      loc2 = loc2 + 1
+      read ( 11, '(a)', iostat=status ) line2
+      if ( status /= 0 ) exit
+      i2 = index(line2,'\')
+      if ( i2 /= 0 ) exit
+    end do
+
+    if ( verbose ) print *, 'Read control lines from both files'
+    if ( (end .neqv. status /= 0) ) then
+      if ( loud ) print '(a)', 'Input file lengths unequal'
+      same = .false.
+    end if
+    if ( end .or. status /= 0 ) exit
+
+    if ( line1 /= line2 ) then
+      if ( loud ) then
+        print '(a)', 'Control lines differ:'
+        print '(i5,2a)', loc1, ': ', trim(line1)
+        print '(i5,2a)', loc2, ': ', trim(line2)
+      end if
+      if ( .not. cont ) exit
+    end if
+
+    read ( line1(i1+1:), *, iostat=status, iomsg=errmsg ) n1
+    if ( status /= 0 ) then
+      print '(a,i0,2a)', 'Unable to read number N from ', loc1, ': ', &
+        & trim(line1(i1+1:))
+      print '("Status = ", i0, ", Message = ",a)', status, trim(errmsg)
+      exit
+    end if
+    read ( line2(i2+1:), *, iostat=status, iomsg=errmsg ) n2
+    if ( status /= 0 ) then
+      print '(a,i0,2a)', 'Unable to read number N from ', loc2, ': ', &
+        & trim(line2(i2+1:))
+      print '("Status = ", i0, ", Message = ",a)', status, trim(errmsg)
+      exit
+    end if
+
+    if ( n1 /= n2 ) then
+      print '(2(a,i0),a,2(/i5,2a))', 'Block sizes ', n1, ' and ', n2, ' differ', &
+        & loc1, ': ', trim(line1(i1+1:)), loc2, ': ', trim(line2(i2+1:))
+      exit
+    end if
+
+    n = n1
+    if ( verbose ) print *, 'Allocating space for blocks of ', n
+    allocate ( ad(n), r1(n), r2(n), rd(n), m(n) )
+
+    if ( n == 1 ) then
+      read ( line1(i1+1:), *, iostat=status ) n, r1
+      if ( status /= 0 ) then
+        print '(a,i0,2a)', 'Unable to read numbers N, R1 from ', loc1, &
+          & ': ', trim(line1(i1+1:))
+        print '("Status = ", i0, ", Message = ",a)', status, trim(errmsg)
+        exit
+      end if
+      read ( line2(i2+1:), *, iostat=status ) n, r2
+      if ( status /= 0 ) then
+        print '(a,i0,2a)', 'Unable to read numbers N, R1 from ', loc2, &
+          & ': ', trim(line2(i2+1:))
+        print '("Status = ", i0, ", Message = ",a)', status, trim(errmsg)
+        exit
+      end if
+    else
+      loc1 = loc1 + 1
+      read ( 10, *, iostat=status ) r1
+      if ( status /= 0 ) then
+        print '(a,i0)', 'Unable to read number R1 from first input file at line ', &
+          & loc1
+        print '("Status = ", i0, ", Message = ",a)', status, trim(errmsg)
+        exit
+      end if
+      loc2 = loc2 + 1
+      read ( 11, *, iostat=status ) r2
+      if ( status /= 0 ) then
+        print '(a,i0)', 'Unable to read number R1 from second input file at line ', &
+          & loc2
+        print '("Status = ", i0, ", Message = ",a)', status, trim(errmsg)
+        exit
+      end if
+    end if
+
+    if ( verbose ) print *, 'Read blocks from both files of size', size(r1)
+
+    ! DO NOT apply deMauvre's theorem.  If you write
+    !    any ( r1 > 0.0 .and. r1 < 0.0 ) it won't catch NaN's
+    if ( any( .not. (r1 <= 0.0 .or. r1 >= 0.0) ) ) anyNaN(1) = .true.
+    if ( any( .not. (r2 <= 0.0 .or. r2 >= 0.0) ) ) anyNaN(2) = .true.
+
+    ad = abs(r1 - r2)
+    if ( noZero ) then
+      where ( r1 == 0 .or. r2 == 0 ) ad = 0
+    end if
+    lamax = maxloc(ad,1)
+    amax = ad(lamax)
+    if ( amax > 0.0 .or. all .and. zero .or. doStats ) then
+      vmax = max(maxval(abs(r1)), maxval(abs(r2)))
+      rd = abs(r1 + r2)
+      m = rd > 0.0
+      rd = 2.0 * ad / rd
+      if ( any(m) ) then
+        lrmax = maxloc(rd,1,mask=m)
+        rmax = rd(lrmax)
+      else
+        lrmax = -1
+        rmax = 0.0
+      end if
+      if ( vmax > 0.0 ) then
+        rmaxv = amax / vmax
+      else if ( amax > 0.0 ) then
+        rmaxv = -huge(0.0)
+      else
+        rmaxv = 0.0
+      end if
+      if ( .not. ( rmax <= 0.0 .or. rmax >= 0.0 ) ) anyNaN(3) = .true.
+      if ( all ) then
+        rmaxl = 0
+        if ( abs(r1(lamax)+r2(lamax)) > 0 ) &
+          & rmaxl = 2.0 * abs(r1(lamax)-r2(lamax)) / abs(r1(lamax)+r2(lamax))
+        print '(1p,2(2g12.5,i7),2g12.5,1x,a)', vmax, &
+          & amax, lamax, rmaxl, &
+          & rmax, lrmax, 2.0 * abs(r1(lrmax)-r2(lrmax)), rmaxv, trim(line1)
+      end if
+      if ( doStats ) then
+        call stats ( r1, avg(1), stdev(1) )
+        call stats ( r2, avg(2), stdev(2) )
+        if ( all ) print '(a,1p,2g14.7,a,2g14.7)', 'Averages =', avg, ' Std. Devs. =', stdev
+      end if
+    end if
+    if ( rmax > rmaxg ) then
+      rmaxg = rmax
+      absAtRmaxG = amax
+      if ( doStats ) then
+        avgsr = avg
+        stdevr = stdev
+      end if
+    end if
+    if ( amax > amaxg ) then
+      amaxg = amax
+      relAtAmaxG = rmax
+      if ( doStats ) then
+        avgsa = avg
+        stdeva = stdev
+      end if
+    end if
+    if ( rmaxv > rmaxvg ) then
+      rmaxvg = rmaxv
+      rmaxb = line1
+    end if
+
+    deallocate ( ad, r1, r2, rd, m )
+
+  end do
+
+  if ( rmaxvg > 0.0 .or. zero .or. anyNan(3) ) then
+    print '(a/1p,5g13.5,1x,a)', &
+      & " RelMaxVal    MaxRel       where MaxAbs MaxAbs       where MaxRel block", &
+      & rmaxvg, rmaxg, absAtRmaxG, amaxG, relAtAmaxG, trim(rmaxb)
+    if ( doStats ) &
+      & print '(a/1p,8g13.6)', &
+      & " Avg Rel                   Std Dev Rel               Avg Abs                   Std Dev Abs", &
+      & avgsr, stdevr, avgsa, stdeva
+  else if ( same ) then
+    print *, 'Identical'
+  else ! Print this even -q option, but there's no input at all.
+    print *, 'File lengths unequal, probably one was empty'
+  end if
+
+  if ( anyNaN(1) ) print *, trim(file1), ' has a NaN somewhere'
+  if ( anyNaN(2) ) print *, trim(file2), ' has a NaN somewhere'
+
+contains
+
+  subroutine Stats ( A, Avg, Stdev )
+  ! Compute the average and standard deviation of the nonzero elements of A.
+    real(rk), intent(in) :: A(:)
+    real(rk), intent(out) :: Avg, Stdev
+    integer :: I, N
+    n = 0
+    avg = 0.0
+    stdev = 0.0
+    do i = 1, size(A)
+      if ( a(i) /= 0.0 ) then
+        avg = avg + a(i)
+        n = n + 1
+      end if
+    end do
+    if ( n > 1 ) then
+      avg = avg / n
+      do i = 1, size(A)
+        if ( a(i) /= 0.0 ) stdev = stdev + (a(i)-avg)**2
+      end do
+      stdev = sqrt(stdev/(n-1))
+    else
+      stdev = huge(0.0)
+    end if
+  end subroutine Stats
+
+  subroutine USAGE
+    call get_command_argument ( 0, line1 )
+    print *, 'Usage: ', trim(line1), ' [option] file1 file2'
+    print *, ' Options: -a => Show nonzero difference for all quantities'
+    print *, '          -c => Continue even if control lines differ'
+    print *, '          -i => Print "Identical" if files are identical'
+    print *, '          -q => No messages about unequal file lengths etc.'
+    print *, '          -s => Compute average and standard deviation of nonzero elements'
+    print *, '          -v => Print the version'
+    print *, '          -V => Be verbose'
+    print *, '          -z => Show zero difference summary at the end'
+    print *, '                With -a, show zero individual differences too.'
+    print *, '          -"anything else", or missing file1 or file2'
+    print *, '             => This explanation.'
+    stop
+  end subroutine USAGE
+
+end program
+
+! $Log: compare.f90,v $
+! Revision 1.32  2018/05/24 03:25:39  vsnyder
+! Use the same precision in all output
+!
+! Revision 1.31  2018/04/25 20:53:24  vsnyder
+! Repair header for summary-only case
+!
+! Revision 1.30  2018/04/10 22:19:32  vsnyder
+! Check both input files' availability before stopping if one is not
+! available.  Report the argument number(s) of missing input files.
+!
+! Revision 1.29  2018/04/05 01:34:34  vsnyder
+! Don't claim file sizes are different if files are identical
+!
+! Revision 1.28  2017/11/29 01:35:44  vsnyder
+! Don't print 'Identical' if a file was empty
+!
+! Revision 1.27  2017/11/28 21:51:48  vsnyder
+! Make AT fields wider
+!
+! Revision 1.26  2017/11/28 01:46:49  vsnyder
+! Don't compute Rel at Max Abs Diff = NaN for identical zero results
+!
+! Revision 1.25  2017/08/01 02:57:18  vsnyder
+! Don't compare unequal-size records
+!
+! Revision 1.24  2017/08/01 02:32:36  vsnyder
+! Use rmaxvg to decide whether to print summary
+!
+! Revision 1.23  2017/07/15 00:12:33  vsnyder
+! Add -Z option
+!
+! Revision 1.22  2017/05/02 01:01:13  vsnyder
+! Print maxdiff/maxval if -a
+!
+! Revision 1.21  2014/10/08 21:57:03  vsnyder
+! Add 'RelMaxVal block' to summary header
+!
+! Revision 1.20  2014/10/08 20:22:21  vsnyder
+! Add block label for RelMaxVal
+!
+! Revision 1.19  2013/08/06 23:14:31  vsnyder
+! Remove dependence on machine module
+!
+! Revision 1.18  2009/04/13 20:43:17  pwagner
+! Fixed a bug preventing macros file from using its own macros properly
+!
+! Revision 1.17  2007/06/26 00:33:43  vsnyder
+! Print difference relative to max(maxval(abs(r1)),maxval(abs(r2))).
+! Get rid of eps and outputs scaled by it.
+!
+! Revision 1.16  2007/06/19 00:29:39  vsnyder
+! Print Max Abs Value if -a
+!
+! Revision 1.15  2007/06/08 22:46:03  vsnyder
+! Revise output format
+!
+! Revision 1.14  2006/09/11 21:06:55  vsnyder
+! In "all" format, print rel diff at max abs diff, abs diff at max rel diff
+!
+! Revision 1.13  2005/06/22 19:27:32  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 1.12  2004/09/23 23:33:39  vsnyder
+! More futzing with -i option
+!
+! Revision 1.11  2004/09/23 23:01:43  vsnyder
+! Don't print 'Identical' if file lengths different
+!
+! Revision 1.10  2004/09/17 20:59:34  vsnyder
+! Add -i option
+!
+! Revision 1.9  2003/11/01 01:51:24  vsnyder
+! Use single-precision epsilon for output computation
+!
+! Revision 1.8  2003/10/24 23:51:35  vsnyder
+! Give AbsAtRmaxg and RelAtAmaxg initial NaN value
+!
+! Revision 1.7  2003/10/07 23:19:45  vsnyder
+! Handle one-element dumps
+!
+! Revision 1.6  2003/10/07 02:04:03  vsnyder
+! Show NaN relative differences differently
+!
+! Revision 1.5  2003/10/07 02:01:00  vsnyder
+! Add option to print the version
+!
+! Revision 1.4  2003/10/07 01:57:17  vsnyder
+! Detect NaN in relative difference
+!
+! Revision 1.3  2003/09/27 02:15:29  vsnyder
+! Add computation of average and std dev
+!
+! Revision 1.2  2003/09/26 19:07:23  vsnyder
+! Widen some formats
+!
+! Revision 1.1  2003/07/03 18:08:34  vsnyder
+! Initial commit
+!
+@
+
+
+1.32
+log
+@Use the same precision in all output
+@
+text
+@d36 1
+a36 1
+       "$Id: compare.f90,v 1.31 2018/04/25 20:53:24 vsnyder Exp $"
+d60 1
+d155 3
+d161 1
+d170 1
+d187 2
+a188 2
+        print '(a)', trim(line1)
+        print '(a)', trim(line2)
+d195 2
+a196 1
+      print '("Unable to read number N from ",a)', trim(line1(i1+1:))
+d202 2
+a203 1
+      print '("Unable to read number N from ",a)', trim(line2(i2+1:))
+d209 2
+a210 2
+      print '("Block sizes ", i0, " and ", i1, " differ"/a/a)', n1, n2, &
+        & trim(line1(i1+1:)), trim(line2(i2+1:))
+d221 2
+a222 1
+        print '("Unable to read numbers N, R1 from ",a)', trim(line2(i1+1:))
+d228 2
+a229 1
+        print '("Unable to read numbers N, R2 from ",a)', trim(line2(i1+1:))
+d234 1
+d237 2
+a238 1
+        print '("Unable to read number R1 from input file")'
+d242 1
+d245 2
+a246 1
+        print '("Unable to read number R2 from input file")'
+d388 3
+@
+
+
+1.31
+log
+@Repair header for summary-only case
+@
+text
+@d36 1
+a36 1
+       "$Id: compare.f90,v 1.30 2018/04/10 22:19:32 vsnyder Exp $"
+d311 1
+a311 1
+    print '(a/1p,5g13.6,1x,a)', &
+d374 3
+@
+
+
+1.30
+log
+@Check both input files' availability before stopping if one is not
+available.  Report the argument number(s) of missing input files.
+@
+text
+@d36 1
+a36 1
+       "$Id: compare.f90,v 1.29 2018/04/05 01:34:34 vsnyder Exp $"
+d312 1
+a312 1
+      & " RelMaxVal    MaxRel       where MaxAbs MaxAbs       where MaxRel RelMaxVal block", &
+d374 4
+@
+
+
+1.29
+log
+@Don't claim file sizes are different if files are identical
+@
+text
+@d36 1
+a36 1
+       "$Id: compare.f90,v 1.28 2017/11/29 01:35:44 vsnyder Exp $"
+d53 1
+d130 1
+d135 4
+a138 3
+    print '("Unable to open input file ",a)', trim(file1)
+    print '("Status = ", i0, ", Message = ",a)', status, trim(errmsg)
+    stop
+d141 2
+a142 1
+  open ( 11, file=file2, form='formatted', status='old', iostat=status )
+d144 2
+a145 3
+    print '("Unable to open input file ",a)', trim(file2)
+    print '("Status = ", i0, ", Message = ",a)', status, trim(errmsg)
+    stop
+d147 1
+d374 3
+@
+
+
+1.28
+log
+@Don't print 'Identical' if a file was empty
+@
+text
+@d36 1
+a36 1
+       "$Id: compare.f90,v 1.27 2017/11/28 21:51:48 vsnyder Exp $"
+d87 1
+d370 3
+@
+
+
+1.27
+log
+@Make AT fields wider
+@
+text
+@d36 1
+a36 1
+       "$Id: compare.f90,v 1.26 2017/11/28 01:46:49 vsnyder Exp $"
+d167 2
+a168 2
+    if ( (end .neqv. status /= 0) .and. loud ) then
+      print '(a)', 'Input file lengths unequal'
+d315 2
+d369 3
+@
+
+
+1.26
+log
+@Don't compute Rel at Max Abs Diff = NaN for identical zero results
+@
+text
+@d36 1
+a36 1
+       "$Id: compare.f90,v 1.25 2017/08/01 02:57:18 vsnyder Exp $"
+d145 2
+a146 2
+    print '(a)', '   Max Abs     Max Abs           Rel at Max  Max Rel           Abs at Max  Rel to Max'
+    print '(a)', '   Value       Diff         At   Abs Diff    Diff         At   Rel Diff    Abs Value'
+d270 2
+a271 2
+        print '(1p,2g12.5,i6,g12.5,g12.5,i6,2g12.5,1x,a)', vmax, &
+          & amax, lamax, 2.0 * rmaxl, &
+d367 3
+@
+
+
+1.25
+log
+@Don't compare unequal-size records
+@
+text
+@d36 1
+a36 1
+       "$Id: compare.f90,v 1.24 2017/08/01 02:32:36 vsnyder Exp $"
+d70 1
+d267 3
+d271 1
+a271 1
+          & amax, lamax, 2.0 * abs(r1(lamax)-r2(lamax)) / abs(r1(lamax)+r2(lamax)), &
+d367 3
+@
+
+
+1.24
+log
+@Use rmaxvg to decide whether to print summary
+@
+text
+@d36 1
+a36 1
+       "$Id: compare.f90,v 1.23 2017/07/15 00:12:33 vsnyder Exp $"
+d60 1
+a60 1
+  integer :: N
+d167 1
+a167 1
+      print *, 'Input file lengths unequal'
+d174 3
+a176 3
+        print *, 'Control lines differ:'
+        print *, trim(line1)
+        print *, trim(line2)
+d181 7
+a187 1
+    read ( line2(i2+1:), *, iostat=status, iomsg=errmsg ) n
+d194 7
+d363 3
+@
+
+
+1.23
+log
+@Add -Z option
+@
+text
+@d36 1
+a36 1
+       "$Id: compare.f90,v 1.22 2017/05/02 01:01:13 vsnyder Exp $"
+d238 1
+a238 1
+        lrmax = maxloc(rd,1,mask=abs(r1 + r2)/=0.0)
+d288 1
+a288 1
+  if ( rmaxg > 0.0 .or. zero .or. anyNan(3) ) then
+d350 3
+@
+
+
+1.22
+log
+@Print maxdiff/maxval if -a
+@
+text
+@d36 1
+a36 1
+       "$Id: compare.f90,v 1.21 2014/10/08 21:57:03 vsnyder Exp $"
+d63 1
+d115 2
+d227 3
+d350 3
+@
+
+
+1.21
+log
+@Add 'RelMaxVal block' to summary header
+@
+text
+@d36 1
+a36 1
+       "$Id: compare.f90,v 1.20 2014/10/08 20:22:21 vsnyder Exp $"
+d141 2
+a142 2
+    print *, '  Max Abs     Max Abs           Rel at Max  Max Rel           Abs at Max'
+    print *, '  Value       Diff         At   Abs Diff    Diff         At   Rel Diff'
+d247 1
+a247 1
+        print '(1p,2g12.5,i6,g12.5,g12.5,i6,g12.5,1x,a)', vmax, &
+d249 1
+a249 1
+          & rmax, lrmax, 2.0 * abs(r1(lrmax)-r2(lrmax)), trim(line1)
+d344 3
+@
+
+
+1.20
+log
+@Add block label for RelMaxVal
+@
+text
+@d36 1
+a36 1
+       "$Id: compare.f90,v 1.19 2013/08/06 23:14:31 vsnyder Exp $"
+d284 1
+a284 1
+      & " RelMaxVal    MaxRel       where MaxAbs MaxAbs       where MaxRel", &
+d344 3
+@
+
+
+1.19
+log
+@Remove dependence on machine module
+@
+text
+@d36 1
+a36 1
+       "$Id: compare.f90,v 1.18 2009/04/13 20:43:17 pwagner Exp $"
+d67 1
+d273 4
+a276 1
+    rmaxvg = max(rmaxvg, rmaxv)
+d283 1
+a283 1
+    print '(a/1p,6g13.6)', &
+d285 1
+a285 1
+      & rmaxvg, rmaxg, absAtRmaxG, amaxG, relAtAmaxG
+d344 3
+@
+
+
+1.18
+log
+@Fixed a bug preventing macros file from using its own macros properly
+@
+text
+@a29 2
+  use Machine, only: IO_Error, getarg
+
+d36 1
+a36 1
+       "$Id: compare.f90,v 1.17 2007/06/26 00:33:43 vsnyder Exp $"
+d52 1
+d89 1
+a89 1
+    call getarg ( i, line1 )
+d123 3
+a125 2
+  call getarg ( i, file1 )
+  open ( 10, file=file1, form='formatted', status='old', iostat=status )
+d127 2
+a128 1
+    call io_error ( 'Unable to open input file', status, file1 )
+d131 1
+a131 1
+  call getarg ( i+1, file2 )
+d134 2
+a135 1
+    call io_error ( 'Unable to open input file', status, file2 )
+d177 1
+a177 1
+    read ( line2(i2+1:), *, iostat=status ) n
+d179 2
+a180 1
+      call io_error ( line2, status )
+d190 2
+a191 1
+        call io_error ( line2, status )
+d196 2
+a197 1
+        call io_error ( line2, status )
+d203 2
+a204 1
+        call io_error ( file1, status )
+d209 2
+a210 1
+        call io_error ( file2, status )
+d321 1
+a321 1
+    call getarg ( 0, line1 )
+d332 2
+d340 3
+@
+
+
+1.17
+log
+@Print difference relative to max(maxval(abs(r1)),maxval(abs(r2))).
+Get rid of eps and outputs scaled by it.
+@
+text
+@d30 1
+a30 1
+  use Machine, only: IO_Error
+d38 1
+a38 1
+       "$Id: compare.f90,v 1.16 2007/06/19 00:29:39 vsnyder Exp $"
+d62 2
+d77 10
+a86 2
+  read ( (/("NaN", i = 1, 10 ) /), * ) AbsAtRmaxG, RelAtAmaxG, avgsr, avgsa, &
+    & stdevr, stdeva
+d331 4
+@
+
+
+1.16
+log
+@Print Max Abs Value if -a
+@
+text
+@d38 1
+a38 1
+       "$Id: compare.f90,v 1.15 2007/06/08 22:46:03 vsnyder Exp $"
+d45 5
+a49 5
+  logical :: All = .false.   ! Show nonzero differences for all quantities
+  real(rk) :: AMAX               ! Maximum absolute difference for one R1, R2 pair
+  real(rk) :: AMAXG = 0.0        ! Global maximum of all values of AMAX
+  real(rk) :: AbsAtRmaxG         ! Absolute error at maximum relative error
+  logical :: AnyNaN(3) = .false. ! R1, R2 or a relative difference has a NaN
+d51 2
+a52 2
+  logical :: CONT = .false.  ! Continue even if control lines differ
+  logical :: DoStats = .false. ! -s option specified
+a53 1
+  real(rk), parameter :: EPS = epsilon(1.0_rs)
+d56 3
+a58 3
+  logical :: Same = .false.  ! Print "Identical" if files are the same
+  integer :: LAMAX, LRMAX    ! Locations of absolute, relative max. diffs.
+  logical :: LOUD = .true.   ! Messages about unequal file lengths etc.
+d65 4
+a68 3
+  real(rk) :: RMAX               ! Maximum relative difference for one R1, R2 pair
+  real(rk) :: RMAXE = -huge(0.0) ! RMAX in units of epsilon
+  real(rk) :: RMAXG = -huge(0.0) ! Global maximum of all values of RMAX
+d72 2
+a73 2
+  real(rk) :: VMAX           ! Maximum value in R1 or R2
+  logical :: Zero = .false.  ! If ( all ), show zero differences, too.
+d220 8
+a227 2
+      rmaxe = rmax / eps
+      if ( .not. ( rmaxe <= 0.0 .or. rmaxe >= 0.0 ) ) anyNaN(3) = .true.
+d239 2
+a240 2
+    if ( rmaxe > rmaxg ) then
+      rmaxg = rmaxe
+d249 1
+a249 1
+      relAtAmaxG = rmaxe
+d255 1
+a261 10
+!     print *, 'MaxRel =', real(rmaxg,rs), &
+!       & 'epsilons =', real(rmaxg*eps,rs), &
+!       & 'where MaxAbs =', real(absAtRmaxG,rs)
+!     if ( doStats ) print '(1x,2(a,1p,2g10.3))', 'Avgs =', real(avgsr,rs), &
+!       & ' Std. Devs. =', real(stdevr,rs)
+!     print *, 'MaxAbs =', real(amaxg,rs), &
+!       & 'where MaxRel =', real(relAtAmaxG,rs), 'epsilons =', &
+!       & real(relAtAmaxG*eps,rs)
+!     if ( doStats ) print '(1x,2(a,1p,2g10.3))', 'Avgs =', real(avgsa,rs), &
+!       & ' Std. Devs. =', real(stdeva,rs)
+d263 2
+a264 2
+      & " MaxRel       epsilons     where MaxAbs MaxAbs       where MaxRel epsilons", &
+      & rmaxg*eps, rmaxg, absAtRmaxG, amaxG, relAtAmaxG*eps, relAtAmaxG
+d321 3
+@
+
+
+1.15
+log
+@Revise output format
+@
+text
+@d38 1
+a38 1
+       "$Id: compare.f90,v 1.14 2006/09/11 21:06:55 vsnyder Exp $"
+d72 1
+d128 2
+a129 2
+    print *, '  Max Abs           Rel at Max  Max Rel           Abs at Max'
+    print *, '  Diff         At   Abs Diff    Diff         At   Rel Diff'
+d209 1
+d223 1
+a223 1
+        print '(1p,g12.5,i6,g12.5,g12.5,i6,g12.5,1x,a)', &
+d324 3
+@
+
+
+1.14
+log
+@In "all" format, print rel diff at max abs diff, abs diff at max rel diff
+@
+text
+@d38 1
+a38 1
+       "$Id: compare.f90,v 1.13 2005/06/22 19:27:32 pwagner Exp $"
+d253 17
+a269 10
+    print *, 'MaxRel =', real(rmaxg,rs), &
+      & 'epsilons =', real(rmaxg*eps,rs), &
+      & 'where MaxAbs =', real(absAtRmaxG,rs)
+    if ( doStats ) print '(1x,2(a,1p,2g10.3))', 'Avgs =', real(avgsr,rs), &
+      & ' Std. Devs. =', real(stdevr,rs)
+    print *, 'MaxAbs =', real(amaxg,rs), &
+      & 'where MaxRel =', real(relAtAmaxG,rs), 'epsilons =', &
+      & real(relAtAmaxG*eps,rs)
+    if ( doStats ) print '(1x,2(a,1p,2g10.3))', 'Avgs =', real(avgsa,rs), &
+      & ' Std. Devs. =', real(stdeva,rs)
+d322 3
+@
+
+
+1.13
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d36 1
+a36 1
+       "$RCSfile: MLSL2.f90,v $"
+d38 1
+a38 1
+       "$Id: MLSL2.f90,v 2.138 2005/06/22 18:57:02 pwagner Exp $"
+d127 2
+a128 2
+    print *, '  Max Absolute       Max Relative        Max Relative'
+    print *, '  Difference     At  Difference      At  Epsilons      After'
+d221 3
+a223 4
+        print '(1pg14.7,i6,1pg14.7,i6,1pg15.7,1x,a)', &
+          & amax, lamax, rmax, lrmax, rmaxe, trim(line1)
+!       print *, 'After ', trim(line1), ', Maximum difference =', amax, ' at', lamax
+!       print *, 'Relative =', rmax, ' =', rmaxe, ' epsilons', ' at', lrmax
+d315 3
+@
+
+
+1.12
+log
+@More futzing with -i option
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d34 3
+a36 1
+  !---------------------------- RCS Ident Info -------------------------------
+d38 3
+a40 3
+    & "$Id: compare.f90,v 1.11 2004/09/23 23:01:43 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = IdParm
+  !---------------------------------------------------------------------------
+d316 3
+@
+
+
+1.11
+log
+@Don't print 'Identical' if file lengths different
+@
+text
+@d28 1
+a28 1
+    & "$Id: compare.f90,v 1.10 2004/09/17 20:59:34 vsnyder Exp $"
+d139 4
+a142 1
+    if ( (end .neqv. status /= 0) .and. loud )  print *, 'Input file lengths unequal'
+d254 2
+a255 2
+  else if ( same .and. rmaxg == 0.0 ) then
+    print '(a)', 'Identical'
+d306 3
+@
+
+
+1.10
+log
+@Add -i option
+@
+text
+@d28 1
+a28 1
+    & "$Id: compare.f90,v 1.9 2003/11/01 01:51:24 vsnyder Exp $"
+d251 1
+a251 1
+  else if ( same ) then
+d303 3
+@
+
+
+1.9
+log
+@Use single-precision epsilon for output computation
+@
+text
+@d28 1
+a28 1
+    & "$Id: compare.f90,v 1.8 2003/10/24 23:51:35 vsnyder Exp $"
+d47 1
+d81 2
+d251 2
+d290 1
+d294 1
+d303 3
+@
+
+
+1.8
+log
+@Give AbsAtRmaxg and RelAtAmaxg initial NaN value
+@
+text
+@d28 1
+a28 1
+    & "$Id: compare.f90,v 1.7 2003/10/07 23:19:45 vsnyder Exp $"
+d32 3
+a34 1
+  real, allocatable, dimension(:) :: AD      ! Absolute difference of R1, R2
+d36 3
+a38 3
+  real :: AMAX               ! Maximum absolute difference for one R1, R2 pair
+  real :: AMAXG = 0.0        ! Global maximum of all values of AMAX
+  real :: AbsAtRmaxG         ! Absolute error at maximum relative error
+d40 1
+a40 1
+  real :: AVG(2), AVGSR(2), AVGSA(2)
+d44 1
+d52 6
+a57 6
+  real, allocatable, dimension(:) :: R1, R2  ! Inputs
+  real, allocatable, dimension(:) :: RD      ! Relative difference of R1, R2
+  real :: RelAtAmaxG
+  real :: RMAX               ! Maximum relative difference for one R1, R2 pair
+  real :: RMAXE = -huge(0.0) ! RMAX in units of epsilon
+  real :: RMAXG = -huge(0.0) ! Global maximum of all values of RMAX
+d59 2
+a60 1
+  real :: STDEV(2), STDEVR(2), STDEVA(2)
+d63 3
+a65 1
+  read ( (/"NaN","NaN"/), * ) AbsAtRmaxG, RelAtAmaxG
+d86 2
+d135 1
+d154 1
+d170 4
+a173 1
+      if ( status /= 0 ) exit
+d175 4
+a178 1
+      if ( status /= 0 ) exit
+d181 2
+d202 1
+a202 1
+      rmaxe = rmax / epsilon(rd)
+d238 10
+a247 6
+    print *, 'MaxRel =', rmaxg, &
+      & 'epsilons =', rmaxg*epsilon(rmaxg),'where MaxAbs =', absAtRmaxG
+    if ( doStats ) print '(1x,2(a,1p,2g10.3))', 'Avgs =', avgsr, ' Std. Devs. =', stdevr
+    print *, 'MaxAbs =', amaxg, &
+      & 'where MaxRel =', relAtAmaxG,'epsilons =', relAtAmaxG*epsilon(relAtAmaxG)
+    if ( doStats ) print '(1x,2(a,1p,2g10.3))', 'Avgs =', avgsa, ' Std. Devs. =', stdeva
+d257 2
+a258 2
+    real, intent(in) :: A(:)
+    real, intent(out) :: Avg, Stdev
+d296 3
+@
+
+
+1.7
+log
+@Handle one-element dumps
+@
+text
+@d24 2
+d28 1
+a28 1
+    & "$Id: compare.f90,v 1.6 2003/10/07 02:04:03 vsnyder Exp $"
+d36 1
+d38 1
+a38 1
+  real :: AVG(2)
+d47 1
+d51 1
+d56 1
+a56 1
+  real :: STDEV(2)
+d59 1
+d106 1
+a106 1
+    print *, '  Absolute           Relative            Relative'
+d145 1
+a145 1
+    allocate ( ad(n), r1(n), r2(n), rd(n) )
+d174 10
+a183 3
+      rd = 2.0 * ad / abs(r1 + r2)
+      lrmax = maxloc(rd,1)
+      rmax = rd(lrmax)
+d187 1
+a187 1
+        print '(1pg14.8,i6,1pg14.8,i6,1pg15.8,1x,a)', &
+d195 17
+a211 1
+        print '(a,1p,2g14.8,a,2g14.8)', 'Averages =', avg, ' Std. Devs. =', stdev
+a213 2
+    rmaxg = max(rmaxe,rmaxg)
+    amaxg = max(amax,amaxg)
+d215 1
+a215 1
+    deallocate ( ad, r1, r2, rd )
+d220 6
+a225 3
+    print *, 'Maximum relative difference anywhere =', rmaxg, 'epsilons =', &
+      & rmaxg*epsilon(rmaxg)
+    print *, 'Maximum absolute difference anywhere =', amaxg
+d274 3
+@
+
+
+1.6
+log
+@Show NaN relative differences differently
+@
+text
+@d26 1
+a26 1
+    & "$Id: compare.f90,v 1.5 2003/10/07 02:01:00 vsnyder Exp $"
+d40 1
+a40 1
+  integer :: I, J
+d110 2
+a111 1
+      if ( index(line1,'\') /= 0 ) exit
+d117 2
+a118 2
+      i = index(line2,'\')
+      if ( i /= 0 ) exit
+d133 1
+a133 1
+    read ( line2(i+1:), *, iostat=status ) n
+d141 17
+a157 4
+    read ( 10, *, iostat=status ) r1
+    if ( status /= 0 ) exit
+    read ( 11, *, iostat=status ) r2
+    if ( status /= 0 ) exit
+d244 3
+@
+
+
+1.5
+log
+@Add option to print the version
+@
+text
+@d26 1
+a26 1
+    & "$Id: compare.f90,v 1.4 2003/10/07 01:57:17 vsnyder Exp $"
+d178 1
+a178 1
+  if ( rmaxg > 0.0 .or. zero ) then
+a185 1
+  if ( anyNaN(3) ) print *, 'A relative difference has a NaN'
+d230 3
+@
+
+
+1.4
+log
+@Detect NaN in relative difference
+@
+text
+@d26 1
+a26 1
+    & "$Id: compare.f90,v 1.3 2003/09/27 02:15:29 vsnyder Exp $"
+d72 2
+d221 2
+a222 1
+    print *, '          -s => Compute average and standard deviation of nonzero elements.'
+d231 3
+@
+
+
+1.3
+log
+@Add computation of average and std dev
+@
+text
+@d26 1
+a26 1
+    & "$Id: compare.f90,v 1.2 2003/09/26 19:07:23 vsnyder Exp $"
+d34 1
+a34 1
+  logical :: AnyNaN(2) = .false. ! R1 or R2 has a NaN
+d156 1
+d184 1
+d228 3
+@
+
+
+1.2
+log
+@Widen some formats
+@
+text
+@d26 1
+a26 1
+    & "$Id: compare.f90,v 1.1 2003/07/03 18:08:34 vsnyder Exp $"
+d35 1
+d37 1
+d51 1
+d70 2
+d151 1
+a151 1
+    if ( amax > 0.0 .or. all .and. zero ) then
+d162 5
+d185 26
+d217 1
+d226 3
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d26 1
+a26 1
+    & "$Id: $"
+d94 1
+a94 1
+    print *, '  Difference     At  Difference      At  Epsilons     After'
+d152 1
+a152 1
+        print '(1pg15.8,i5,1pg15.8,i5,1pg15.8,a)', &
+d188 4
+a191 1
+! $Log: $
+@
+

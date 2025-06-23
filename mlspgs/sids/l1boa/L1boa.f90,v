@@ -1,0 +1,1157 @@
+head	1.8;
+access;
+symbols
+	v5-02-NRT-19:1.8
+	v6-00:1.8
+	v5-02-NRT-18:1.8
+	v5-02:1.8
+	v5-01-NRT-17:1.8
+	v5-01-NRT-16:1.8
+	v5-01-NRT-15:1.8
+	v5-01-NRT-14:1.8
+	neuralnetworks-1-0:1.8.0.16
+	cfm-single-freq-0-1:1.8.0.14
+	v5-01:1.8
+	v5-00:1.8
+	v4-23-TA133:1.8.0.12
+	mus-emls-1-70:1.8.0.10
+	rel-1-0-englocks-work:1.8.0.8
+	VUMLS1-00:1.8
+	VPL1-00:1.8
+	V4-22-NRT-08:1.8
+	VAM1-00:1.8
+	V4-21:1.8.0.6
+	V4-13:1.8
+	V4-12:1.8
+	V4-11:1.8
+	V4-10:1.8
+	V3-43:1.8
+	M4-00:1.8
+	V3-41:1.8
+	V3-40-PlusGM57:1.8.0.4
+	V2-24-NRT-04:1.8
+	V3-33:1.8
+	V2-24:1.8
+	V3-31:1.8
+	V3-30-NRT-05:1.8
+	cfm-01-00:1.8
+	V3-30:1.8
+	V3-20:1.8
+	V3-10:1.8
+	V2-23-NRT-02:1.8
+	V2-23:1.8
+	V2-22-NRT-01:1.8
+	V2-22:1.8
+	V2-21:1.8
+	V2-20:1.8
+	V2-11:1.8
+	V2-10:1.8
+	V2-00:1.8
+	V1-51:1.8
+	V1-50:1.8
+	V1-45:1.8
+	V1-44:1.8
+	V1-43:1.8
+	V1-42:1.8
+	V1-41:1.8
+	V1-32:1.8
+	V1-40:1.8
+	V1-31:1.8
+	V1-30:1.8
+	V1-13:1.8
+	V1-12:1.8
+	V1-11:1.8
+	V1-10:1.8
+	newfwm-feb03:1.8.0.2
+	V1-04:1.8
+	V1-03:1.8
+	V1-02:1.8
+	V1-00:1.8
+	newfwm-sep01:1.1.0.2
+	V0-7:1.1
+	V0-5-Level2:1.1
+	V0-5-SIPS:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.8
+date	2001.12.14.01.43.57;	author livesey;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2001.12.12.20.31.20;	author livesey;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2001.12.06.01.02.30;	author pwagner;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2001.11.19.20.36.53;	author livesey;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.10.12.22.11.46;	author livesey;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2001.10.11.23.27.23;	author livesey;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.10.11.23.25.29;	author livesey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2000.11.30.16.26.56;	author nakamura;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.8
+log
+@Working version with ECR based master coordinate
+@
+text
+@! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+module L1boa
+
+  use MLSCommon, only: R8
+  use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_ERROR
+  use OutputL1B, only: OUTPUTL1B_INDEX, L1BOAINDEX_T, L1BOASC_T, L1BOATP_T, LENCOORD, &
+    & OUTPUTL1B_GHZ, OUTPUTL1B_THZ, OUTPUTL1B_SC
+  use Scan, only: SCAN_GUESS, SCAN_START
+  use Sd, only: SD_SC, SD_GHZ, SD_THZ, SD_INDEX
+  use TkL1B, only: TKL1B_MC, TKL1B_TP, TKL1B_SC, MC_AUX
+  implicit none
+  private
+
+  public :: L1BOA_NOFILL, L1BOA_FILL
+
+  !------------------- RCS Ident Info -----------------------
+  character(LEN=130) :: Id = &                                                    
+    "$Id: L1boa.f90,v 1.7 2001/12/12 20:31:20 livesey Exp $"
+  character (LEN=*), parameter :: ModuleName="$RCSfile: L1boa.f90,v $"
+  !----------------------------------------------------------
+
+contains
+
+  !---------------------------------------------- L1BOA_NOFILL -----
+  subroutine L1boa_nofill(altG, altT, ascTAI, dscTAI, L1FileHandle, mifG, &
+    mifT, index, noMAF, numOrb, offsets, orbIncline, &
+    orbitNumber, scRate, scRateT)
+    ! This subroutine creates the SIDS L1BOA MAF records, and writes them to an
+    ! HDF output file.
+
+    ! Arguments
+    type( L1BOAindex_T), intent(IN) :: index
+    integer, intent(IN) :: L1FileHandle, mifG, mifT, noMAF, numOrb
+    integer, intent(IN) :: orbitNumber(:)
+    real, intent(IN) :: scRate(mifG)
+    real, intent(IN) :: scRateT(mifT)
+    real(r8), intent(IN) :: altG, altT, orbIncline
+    real(r8), intent(IN) :: ascTAI(:), dscTAI(:), offsets(:)
+
+    ! Variables
+    type( L1BOAsc_T ) :: sc
+    type( L1BOAtp_T ) :: tp
+    character (LEN=27) :: mafTime
+    character (LEN=480) :: msr
+    integer :: alloc_err, dealloc_err, nV
+    real(r8) :: mafTAI
+    real(r8) :: initRay(3), q(3,size(offsets))
+
+    ! Executable code
+
+    ! Write "index" information
+    call OutputL1B_index(noMAF, L1FileHandle, index)
+
+    mafTime = index%MAFStartTimeUTC
+    mafTAI = index%MAFStartTimeTAI
+    nV = index%noMIFs
+
+    ! Get oa data
+    allocate(sc%scECI(lenCoord,nV), sc%scECR(lenCoord,nV), &
+      sc%scGeocAlt(nV), sc%scGeocLat(nV), sc%scGeodAlt(nV), &
+      sc%scGeodLat(nV), sc%scLon(nV), sc%scGeodAngle(nV), sc%scOrbIncl(nV), &
+      sc%scVelECI(lenCoord,nV), sc%ypr(lenCoord,nV), sc%yprRate(lenCoord,nV), &
+      sc%scVelECR(lenCoord,nV), &
+      tp%encoderAngle(nV), tp%scAngle(nV), tp%scanAngle(nV), &
+      tp%scanRate(nV), STAT=alloc_err)
+    if ( alloc_err /= 0 ) then
+      msr = MLSMSG_Allocate // '  s/c quantities.'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+
+    call TkL1B_sc(nV, offsets(1:nV), mafTime, sc)
+
+    ! Get s/c master coordinate
+    call Mc_aux(mafTime, offsets(1:nV), sc%scECR(1:3,1:nV), q(:,1:nV) )
+
+    call TkL1B_mc(ascTAI, dscTAI, sc%scECR, nV, numOrb, &
+      & orbIncline, orbitNumber, q, mafTAI, offsets(1:nV), sc%scGeodAngle, &
+      & sc%scOrbIncl)
+
+    ! Write s/c information
+    call OutputL1B_sc(noMAF, L1FileHandle, sc)
+
+    ! Calculate initial guess for look vector in ECR
+    call Scan_guess(mafTime, initRay)
+
+    ! Find angle, tan pt for start of GHZ scan
+    allocate(tp%tpECI(lenCoord,mifG), tp%tpECR(lenCoord,mifG), &
+      tp%tpOrbY(mifG), tp%tpGeocAlt(mifG), tp%tpGeocLat(mifG), &
+      tp%tpGeocAltRate(mifG), tp%tpGeodAlt(mifG), &
+      tp%tpGeodLat(mifG), tp%tpGeodAltRate(mifG), tp%tpLon(mifG), &
+      tp%tpGeodAngle(mifG), tp%tpSolarTime(mifG), &
+      tp%tpSolarZenith(mifG), tp%tpLosAngle(mifG), STAT=alloc_err)
+    if ( alloc_err /= 0 ) then
+      msr = MLSMSG_Allocate // '  GHz quantites.'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+
+    call Scan_start( altG, sc%scECR(:,1), mafTime, initRay, tp%scAngle(1) )
+
+    ! Calculate GHZ tan pt record
+    call TkL1B_tp(mafTAI, mafTime, mifG, nV, offsets(1:nV), &
+      sc%scECR(:,1:mifG), scRate, tp%scAngle(1), tp)
+
+    ! Compute GHz master coordinate
+    call TkL1B_mc(ascTAI, dscTAI, tp%tpECR, mifG, numOrb, &
+      & orbIncline, orbitNumber, q, mafTAI, offsets(1:mifG), tp%tpGeodAngle, &
+      & sc%scOrbIncl)
+
+    ! Write GHz information
+    call OutputL1B_GHz(noMAF, L1FileHandle, tp)
+
+    deallocate(tp%tpECI, tp%tpECR, tp%tpOrbY, tp%tpGeocAlt, tp%tpGeocLat, &
+      tp%tpGeocAltRate, tp%tpGeodAlt, tp%tpGeodLat, &
+      tp%tpGeodAltRate, tp%tpLon, tp%tpGeodAngle, tp%tpSolarTime, &
+      tp%tpSolarZenith, tp%tpLosAngle, STAT=dealloc_err)
+    if ( dealloc_err /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
+      'Failed deallocation of GHz quantities.')
+
+    ! Find angle, tan pt for start of THz scan
+    allocate(tp%tpECI(lenCoord,mifT), tp%tpECR(lenCoord,mifT), &
+      tp%tpOrbY(mifT), tp%tpGeocAlt(mifT), tp%tpGeocLat(mifT), &
+      tp%tpGeocAltRate(mifT), tp%tpGeodAlt(mifT), &
+      tp%tpGeodLat(mifT), tp%tpGeodAltRate(mifT), tp%tpLon(mifT), &
+      tp%tpGeodAngle(mifT), tp%tpSolarTime(mifT), &
+      tp%tpSolarZenith(mifT), tp%tpLosAngle(mifT), STAT=alloc_err)
+    if ( alloc_err /= 0 ) then
+      msr = MLSMSG_Allocate // '  THz quantites.'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+
+    call Scan_start(altT, sc%scECR(:,1), mafTime, initRay, tp%scAngle(1))
+
+    ! Calculate THz tan pt record
+    call TkL1B_tp(mafTAI, mafTime, mifT, nV, offsets(1:nV), &
+      sc%scECR(:,1:mifT), scRateT, tp%scAngle(1), tp)
+
+    ! Compute THz master coordinate
+    call TkL1B_mc(ascTAI, dscTAI, tp%tpECR, mifT, numOrb, &
+      & orbIncline, orbitNumber, q, mafTAI, offsets(1:mifT), tp%tpGeodAngle, &
+      & sc%scOrbIncl)
+
+    ! Write THZ information
+    call OutputL1B_THz(noMAF, L1FileHandle, tp)
+
+    deallocate(tp%tpECI, tp%tpECR, tp%tpOrbY, tp%tpGeocAlt, tp%tpGeocLat, &
+      tp%tpGeocAltRate, tp%tpGeodAlt, tp%tpGeodLat, &
+      tp%tpGeodAltRate, tp%tpLon, tp%tpGeodAngle, tp%tpSolarTime, &
+      tp%tpSolarZenith, tp%tpLosAngle, STAT=dealloc_err)
+    if ( dealloc_err /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
+      'Failed deallocation of THz quantites.')
+
+    ! Deallocate the MIF quantities
+    deallocate(sc%scECI, sc%scECR, sc%scGeocAlt, sc%scGeocLat, &
+      sc%scGeodAlt, sc%scGeodLat, sc%scLon, sc%scGeodAngle, sc%scVelECI, &
+      sc%scOrbIncl, sc%scVelECR, &
+      sc%ypr, sc%yprRate, tp%encoderAngle, tp%scAngle, tp%scanAngle, &
+      tp%scanRate, STAT=dealloc_err)
+    if ( dealloc_err /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
+      'Failed deallocation of MIF quantities.')
+
+  end subroutine L1boa_nofill
+
+  !--------------------------------------------- L1BOA_FILL -----
+  subroutine L1boa_fill(altG, altT, ascTAI, dscTAI, L1FileHandle, mifG, &
+    mifT, index, noMAF, numOrb, offsets, orbIncline, &
+    orbitNumber, scRate, scRateT)
+    ! This subroutine creates the SIDS L1BOA MAF records, and writes them to an
+    ! HDF output file.
+
+    ! Arguments
+    type( L1BOAindex_T), intent(IN) :: index
+    integer, intent(IN) :: L1FileHandle, mifG, mifT, noMAF, numOrb
+    integer, intent(IN) :: orbitNumber(:)
+    real, intent(IN) :: scRate(mifG)
+    real, intent(IN) :: scRateT(mifT)
+    real(r8), intent(IN) :: altG, altT, orbIncline
+    real(r8), intent(IN) :: ascTAI(:), dscTAI(:), offsets(:)
+
+    ! Variables
+    type( L1BOAsc_T ) :: sc
+    type( L1BOAtp_T ) :: tp
+    character(LEN=27) :: mafTime
+    character (LEN=480) :: msr
+    integer :: alloc_err, dealloc_err, nV
+    real(r8) :: mafTAI
+    real(r8) :: initRay(3), q(3,size(offsets))
+
+    ! Executable code
+
+    call Sd_index(noMAF, L1FileHandle, index)
+    mafTime = index%MAFStartTimeUTC
+    mafTAI = index%MAFStartTimeTAI
+    nV = index%noMIFs
+
+    ! Get oa data
+    allocate(sc%scECI(lenCoord,nV), sc%scECR(lenCoord,nV), &
+      sc%scGeocAlt(nV), sc%scGeocLat(nV), sc%scGeodAlt(nV), &
+      sc%scGeodLat(nV), sc%scLon(nV), sc%scGeodAngle(nV), &
+      sc%scVelECI(lenCoord,nV), sc%ypr(lenCoord,nV), sc%yprRate(lenCoord,nV), &
+      sc%scVelECR(lenCoord,nV), sc%scOrbIncl(nV),&
+      tp%encoderAngle(nV), tp%scAngle(nV), tp%scanAngle(nV), &
+      tp%scanRate(nV), STAT=alloc_err)
+    if ( alloc_err /= 0 ) then
+      msr = MLSMSG_Allocate // '  s/c quantities.'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+
+    call TkL1B_sc(nV, offsets(1:nV), mafTime, sc)
+
+    ! Get s/c master coordinate
+    call Mc_aux(mafTime, offsets(1:nV), sc%scECR(:,1:nV), q(:,1:nV) )
+
+    call TkL1B_mc(ascTAI, dscTAI, sc%scECR, nV, numOrb, &
+      & orbIncline, orbitNumber, q, mafTAI, offsets(1:nV), sc%scGeodAngle, &
+      & sc%scOrbIncl)
+
+    ! Write s/c information
+    call Sd_sc(noMAF, nV, L1FileHandle, sc)
+
+    ! Calculate initial guess for look vector in ECR
+    call Scan_guess(mafTime, initRay)
+
+    ! Find angle, tan pt for start of GHZ scan
+    allocate(tp%tpECI(lenCoord,mifG), tp%tpECR(lenCoord,mifG), &
+      tp%tpOrbY(mifG), tp%tpGeocAlt(mifG), tp%tpGeocLat(mifG), &
+      tp%tpGeocAltRate(mifG), tp%tpGeodAlt(mifG), &
+      tp%tpGeodLat(mifG), tp%tpGeodAltRate(mifG), tp%tpLon(mifG), &
+      tp%tpGeodAngle(mifG), tp%tpSolarTime(mifG), &
+      tp%tpSolarZenith(mifG), tp%tpLosAngle(mifG), STAT=alloc_err)
+    if ( alloc_err /= 0 ) then
+      msr = MLSMSG_Allocate // '  GHz quantites.'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+
+    call Scan_start( altG, sc%scECR(:,1), mafTime, initRay, tp%scAngle(1) )
+
+    ! Calculate GHZ tan pt record
+    call TkL1B_tp(mafTAI, mafTime, mifG, nV, offsets(1:nV), &
+      sc%scECR(:,1:mifG), scRate, tp%scAngle(1), tp)
+
+    ! Compute GHz master coordinate
+    call TkL1B_mc(ascTAI, dscTAI, tp%tpECR, mifG, numOrb, &
+      & orbIncline, orbitNumber, q, mafTAI, offsets(1:mifG), tp%tpGeodAngle, &
+      & sc%scOrbIncl)
+
+    ! Write GHz information
+
+    call Sd_GHz(mifG, noMAF, nV, L1FileHandle, tp)
+    deallocate(tp%tpECI, tp%tpECR, tp%tpOrbY, tp%tpGeocAlt, tp%tpGeocLat, &
+      tp%tpGeocAltRate, tp%tpGeodAlt, tp%tpGeodLat, &
+      tp%tpGeodAltRate, tp%tpLon, tp%tpGeodAngle, tp%tpSolarTime, &
+      tp%tpSolarZenith, tp%tpLosAngle, STAT=dealloc_err)
+    if ( dealloc_err /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
+      'Failed deallocation of GHz quantities.')
+
+    ! Find angle, tan pt for start of THz scan
+    allocate(tp%tpECI(lenCoord,mifT), tp%tpECR(lenCoord,mifT), &
+      tp%tpOrbY(mifT), tp%tpGeocAlt(mifT), tp%tpGeocLat(mifT), &
+      tp%tpGeocAltRate(mifT), tp%tpGeodAlt(mifT), &
+      tp%tpGeodLat(mifT), tp%tpGeodAltRate(mifT), tp%tpLon(mifT), &
+      tp%tpGeodAngle(mifT), tp%tpSolarTime(mifT), &
+      tp%tpSolarZenith(mifT), tp%tpLosAngle(mifT), STAT=alloc_err)
+    if ( alloc_err /= 0 ) then
+      msr = MLSMSG_Allocate // '  THz quantites.'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+
+    call Scan_start(altT, sc%scECR(:,1), mafTime, initRay, tp%scAngle(1))
+
+    ! Calculate THz tan pt record
+    call TkL1B_tp(mafTAI, mafTime, mifT, nV, offsets(1:nV), &
+      sc%scECR(:,1:mifT), scRateT, tp%scAngle(1), tp)
+
+    ! Compute THz master coordinate
+    call TkL1B_mc(ascTAI, dscTAI, tp%tpECR, mifT, numOrb, &
+      & orbIncline, orbitNumber, q, mafTAI, offsets(1:mifT), tp%tpGeodAngle, &
+      & sc%scOrbIncl)
+
+    ! Write THZ information
+    call Sd_THz(mifT, noMAF, nV, L1FileHandle, tp)
+
+    deallocate(tp%tpECI, tp%tpECR, tp%tpOrbY, tp%tpGeocAlt, tp%tpGeocLat, &
+      tp%tpGeocAltRate, tp%tpGeodAlt, tp%tpGeodLat, &
+      tp%tpGeodAltRate, tp%tpLon, tp%tpGeodAngle, tp%tpSolarTime, &
+      tp%tpSolarZenith, tp%tpLosAngle, STAT=dealloc_err)
+    if ( dealloc_err /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
+      'Failed deallocation of THz quantites.')
+
+    ! Deallocate the MIF quantities
+
+    deallocate(sc%scECI, sc%scECR, sc%scGeocAlt, sc%scGeocLat, &
+      sc%scGeodAlt, sc%scGeodLat, sc%scLon, sc%scGeodAngle,  sc%scVelECI, &
+      sc%scVelECR, sc%scOrbIncl,&
+      sc%ypr, sc%yprRate, tp%encoderAngle, tp%scAngle, tp%scanAngle, &
+      tp%scanRate, STAT=dealloc_err)
+    if ( dealloc_err /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
+      'Failed deallocation of MIF quantities.')
+
+  end subroutine L1boa_fill
+
+end module L1boa
+
+! $Log: L1boa.f90,v $
+! Revision 1.7  2001/12/12 20:31:20  livesey
+! Arguments changed for new version of TkL1B_mc etc.
+!
+! Revision 1.6  2001/12/06 01:02:30  pwagner
+! Now writes orbit incline angle in ECR
+!
+! Revision 1.5  2001/11/19 20:36:53  livesey
+! Changed name of scVel to scVelECI to make it clear.
+!
+! Revision 1.4  2001/10/12 22:11:46  livesey
+! Tidied up
+!
+! Revision 1.3  2001/10/11 23:27:23  livesey
+! Tried to change the chmod stuff
+!
+! Revision 1.2  2001/10/11 23:25:29  livesey
+! Tidied up a bit
+!
+! Revision 1.1  2000/11/30 16:26:56  nakamura
+! Module for writing SIDS L1BOA data without re-setting fill mode/values.
+!
+!
+@
+
+
+1.7
+log
+@Arguments changed for new version of TkL1B_mc etc.
+@
+text
+@d20 1
+a20 1
+    "$Id: L1boa.f90,v 1.6 2001/12/06 01:02:30 pwagner Exp $"
+d49 1
+a49 1
+    real(r8) :: initRay(3), q(3)
+d76 1
+a76 1
+    call Mc_aux(mafTime, sc%scECI(:,1), q)
+d78 1
+a78 1
+    call TkL1B_mc(ascTAI, dscTAI, sc%scECI, nV, numOrb, &
+d107 1
+a107 1
+    call TkL1B_mc(ascTAI, dscTAI, tp%tpECI, mifG, numOrb, &
+d140 1
+a140 1
+    call TkL1B_mc(ascTAI, dscTAI, tp%tpECI, mifT, numOrb, &
+d188 1
+a188 1
+    real(r8) :: initRay(3), q(3)
+d213 3
+a215 2
+    call Mc_aux(mafTime, sc%scECI(:,1), q)
+    call TkL1B_mc(ascTAI, dscTAI, sc%scECI, nV, numOrb, &
+d244 1
+a244 1
+    call TkL1B_mc(ascTAI, dscTAI, tp%tpECI, mifG, numOrb, &
+d277 1
+a277 1
+    call TkL1B_mc(ascTAI, dscTAI, tp%tpECI, mifT, numOrb, &
+d306 3
+@
+
+
+1.6
+log
+@Now writes orbit incline angle in ECR
+@
+text
+@d20 1
+a20 1
+    "$Id: L1boa.f90,v 1.5 2001/11/19 20:36:53 livesey Exp $"
+d76 1
+a76 1
+    call Mc_aux(mafTime, sc%scECI(:,1), sc%scGeocLat(1), q)
+d78 1
+a78 1
+    call TkL1B_mc(ascTAI, dscTAI, sc%scECI, sc%scGeocLat, nV, numOrb, &
+d107 1
+a107 1
+    call TkL1B_mc(ascTAI, dscTAI, tp%tpECI, tp%tpGeocLat, mifG, numOrb, &
+d140 1
+a140 1
+    call TkL1B_mc(ascTAI, dscTAI, tp%tpECI, tp%tpGeocLat, mifT, numOrb, &
+d213 2
+a214 2
+    call Mc_aux(mafTime, sc%scECI(:,1), sc%scGeocLat(1), q)
+    call TkL1B_mc(ascTAI, dscTAI, sc%scECI, sc%scGeocLat, nV, numOrb, &
+d243 1
+a243 1
+    call TkL1B_mc(ascTAI, dscTAI, tp%tpECI, tp%tpGeocLat, mifG, numOrb, &
+d276 1
+a276 1
+    call TkL1B_mc(ascTAI, dscTAI, tp%tpECI, tp%tpGeocLat, mifT, numOrb, &
+d305 3
+@
+
+
+1.5
+log
+@Changed name of scVel to scVelECI to make it clear.
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
+d20 1
+a20 1
+    "$Id: L1boa.f90,v 1.4 2001/10/12 22:11:46 livesey Exp $"
+d63 1
+a63 1
+      sc%scGeodLat(nV), sc%scLon(nV), sc%scGeodAngle(nV), &
+d65 1
+d79 2
+a80 1
+      orbIncline, orbitNumber, q, mafTAI, offsets(1:nV), sc%scGeodAngle)
+d108 2
+a109 1
+      orbIncline, orbitNumber, q, mafTAI, offsets(1:mifG), tp%tpGeodAngle)
+d141 2
+a142 1
+      orbIncline, orbitNumber, q, mafTAI, offsets(1:mifT), tp%tpGeodAngle)
+d156 2
+a157 1
+      sc%scGeodAlt, sc%scGeodLat, sc%scLon, sc%scGeodAngle,  sc%scVelECI, &
+d202 1
+d215 2
+a216 1
+      orbIncline, orbitNumber, q, mafTAI, offsets(1:nV), sc%scGeodAngle)
+d244 2
+a245 1
+      orbIncline, orbitNumber, q, mafTAI, offsets(1:mifG), tp%tpGeodAngle)
+d277 2
+a278 1
+      orbIncline, orbitNumber, q, mafTAI, offsets(1:mifT), tp%tpGeodAngle)
+d294 1
+d305 3
+@
+
+
+1.4
+log
+@Tidied up
+@
+text
+@d20 1
+a20 1
+    "$Id: L1boa.f90,v 1.3 2001/10/11 23:27:23 livesey Exp $"
+d64 1
+a64 1
+      sc%scVel(lenCoord,nV), sc%ypr(lenCoord,nV), sc%yprRate(lenCoord,nV), &
+d152 1
+a152 1
+      sc%scGeodAlt, sc%scGeodLat, sc%scLon, sc%scGeodAngle,  sc%scVel, &
+d196 1
+a196 1
+      sc%scVel(lenCoord,nV), sc%ypr(lenCoord,nV), sc%yprRate(lenCoord,nV), &
+d284 1
+a284 1
+      sc%scGeodAlt, sc%scGeodLat, sc%scLon, sc%scGeodAngle,  sc%scVel, &
+d295 3
+@
+
+
+1.3
+log
+@Tried to change the chmod stuff
+@
+text
+@d20 1
+a20 1
+    "$Id: L1boa.f90,v 1.2 2001/10/11 23:25:29 livesey Exp $"
+a29 2
+
+    ! Brief description of subroutine
+a33 1
+
+a34 1
+
+a36 1
+
+a38 1
+
+a41 4
+    ! Parameters
+
+    ! Functions
+
+a42 1
+
+a44 1
+
+a46 1
+
+a47 1
+
+d51 2
+a53 1
+
+a60 1
+
+a74 1
+
+a80 1
+
+a83 1
+
+a86 1
+
+a100 1
+
+a104 1
+
+a108 1
+
+a118 1
+
+a132 1
+
+a136 1
+
+a140 1
+
+a150 1
+
+a168 1
+
+a170 1
+
+a172 1
+
+a178 1
+
+a180 1
+
+a181 1
+
+a187 1
+
+a207 1
+
+d262 1
+a263 1
+
+d295 3
+@
+
+
+1.2
+log
+@Tidied up a bit
+@
+text
+@a0 1
+
+a3 1
+!===============================================================================
+d20 1
+a20 1
+    "$Id: L1boa.f90,v 1.1 2000/11/30 16:26:56 nakamura Exp $"
+d329 3
+@
+
+
+1.1
+log
+@Module for writing SIDS L1BOA data without re-setting fill mode/values.
+@
+text
+@d6 1
+a6 2
+MODULE L1boa
+!===============================================================================
+d8 9
+a16 8
+   USE MLSCommon
+   USE MLSMessageModule
+   USE OutputL1B
+   USE Scan
+   USE Sd
+   USE TkL1B
+   IMPLICIT NONE
+   PUBLIC
+d18 1
+a18 1
+   PRIVATE :: ID, ModuleName
+d20 5
+a24 5
+!------------------- RCS Ident Info -----------------------
+   CHARACTER(LEN=130) :: Id = &                                                    
+   "$Id: L1boa.f90,v 1.10 2000/02/23 18:42:06 nakamura Exp $"
+   CHARACTER (LEN=*), PARAMETER :: ModuleName="$RCSfile: L1boa.f90,v $"
+!----------------------------------------------------------
+d26 1
+a26 1
+! Contents:
+d28 4
+a31 2
+! Subroutines -- L1boa_nofill
+!                L1boa_fill
+d33 3
+a35 2
+! Remarks:  This module contains the subroutines needed to write the SIDS L1BOA
+!           data to SD arrays without re-setting the fill mode/values.
+d37 1
+a37 1
+CONTAINS
+d39 1
+a39 5
+!----------------------------------------------------------------------------
+   SUBROUTINE L1boa_nofill(altG, altT, ascTAI, dscTAI, L1FileHandle, mifG, &
+                           mifT, index, noMAF, numOrb, offsets, orbIncline, &
+                           orbitNumber, scRate, scRateT)
+!----------------------------------------------------------------------------
+d41 2
+a42 3
+! Brief description of subroutine
+! This subroutine creates the SIDS L1BOA MAF records, and writes them to an
+! HDF output file.
+d44 2
+a45 1
+! Arguments
+d47 2
+a48 1
+      TYPE( L1BOAindex_T), INTENT(IN) :: index
+d50 1
+a50 2
+      INTEGER, INTENT(IN) :: L1FileHandle, mifG, mifT, noMAF, numOrb
+      INTEGER, INTENT(IN) :: orbitNumber(:)
+d52 1
+a52 2
+      REAL, INTENT(IN) :: scRate(mifG)
+      REAL, INTENT(IN) :: scRateT(mifT)
+d54 1
+a54 2
+      REAL(r8), INTENT(IN) :: altG, altT, orbIncline
+      REAL(r8), INTENT(IN) :: ascTAI(:), dscTAI(:), offsets(:)
+d56 2
+a57 3
+! Parameters
+ 
+! Functions
+d59 2
+a60 4
+! Variables
+ 
+      TYPE( L1BOAsc_T ) :: sc
+      TYPE( L1BOAtp_T ) :: tp
+d62 1
+a62 2
+      CHARACTER (LEN=27) :: mafTime
+      CHARACTER (LEN=480) :: msr
+d64 2
+a65 1
+      INTEGER :: alloc_err, dealloc_err, nV
+d67 1
+a67 2
+      REAL(r8) :: mafTAI
+      REAL(r8) :: initRay(3), q(3)
+d69 1
+a69 1
+! Write "index" information
+d71 3
+a73 1
+      CALL OutputL1B_index(noMAF, L1FileHandle, index)
+d75 1
+a75 3
+      mafTime = index%MAFStartTimeUTC
+      mafTAI = index%MAFStartTimeTAI
+      nV = index%noMIFs
+d77 10
+a86 1
+! Get oa data
+d88 1
+a88 10
+      ALLOCATE(sc%scECI(lenCoord,nV), sc%scECR(lenCoord,nV), &
+       sc%scGeocAlt(nV), sc%scGeocLat(nV), sc%scGeodAlt(nV), &
+       sc%scGeodLat(nV), sc%scLon(nV), sc%scGeodAngle(nV), &
+       sc%scVel(lenCoord,nV), sc%ypr(lenCoord,nV), sc%yprRate(lenCoord,nV), &
+       tp%encoderAngle(nV), tp%scAngle(nV), tp%scanAngle(nV), &
+       tp%scanRate(nV), STAT=alloc_err)
+      IF ( alloc_err /= 0 ) THEN
+         msr = MLSMSG_Allocate // '  s/c quantities.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+d90 1
+a90 1
+      CALL TkL1B_sc(nV, offsets(1:nV), mafTime, sc)
+d92 1
+a92 1
+! Get s/c master coordinate
+d94 2
+a95 1
+      CALL Mc_aux(mafTime, sc%scECI(:,1), sc%scGeocLat(1), q)
+d97 1
+a97 2
+      CALL TkL1B_mc(ascTAI, dscTAI, sc%scECI, sc%scGeocLat, nV, numOrb, &
+           orbIncline, orbitNumber, q, mafTAI, offsets(1:nV), sc%scGeodAngle)
+d99 1
+a99 1
+! Write s/c information
+d101 1
+a101 1
+      CALL OutputL1B_sc(noMAF, L1FileHandle, sc)
+d103 1
+a103 1
+! Calculate initial guess for look vector in ECR
+d105 1
+a105 1
+      CALL Scan_guess(mafTime, initRay)
+d107 10
+a116 1
+! Find angle, tan pt for start of GHZ scan
+d118 1
+a118 10
+      ALLOCATE(tp%tpECI(lenCoord,mifG), tp%tpECR(lenCoord,mifG), &
+               tp%tpOrbY(mifG), tp%tpGeocAlt(mifG), tp%tpGeocLat(mifG), &
+               tp%tpGeocAltRate(mifG), tp%tpGeodAlt(mifG), &
+               tp%tpGeodLat(mifG), tp%tpGeodAltRate(mifG), tp%tpLon(mifG), &
+               tp%tpGeodAngle(mifG), tp%tpSolarTime(mifG), &
+               tp%tpSolarZenith(mifG), tp%tpLosAngle(mifG), STAT=alloc_err)
+      IF ( alloc_err /= 0 ) THEN
+          msr = MLSMSG_Allocate // '  GHz quantites.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+d120 1
+a120 1
+      CALL Scan_start( altG, sc%scECR(:,1), mafTime, initRay, tp%scAngle(1) )
+d122 2
+a123 1
+! Calculate GHZ tan pt record
+d125 1
+a125 2
+      CALL TkL1B_tp(mafTAI, mafTime, mifG, nV, offsets(1:nV), &
+                    sc%scECR(:,1:mifG), scRate, tp%scAngle(1), tp)
+d127 2
+a128 1
+! Compute GHz master coordinate
+d130 1
+a130 2
+      CALL TkL1B_mc(ascTAI, dscTAI, tp%tpECI, tp%tpGeocLat, mifG, numOrb, &
+           orbIncline, orbitNumber, q, mafTAI, offsets(1:mifG), tp%tpGeodAngle)
+d132 1
+a132 1
+! Write GHz information
+d134 6
+a139 1
+      CALL OutputL1B_GHz(noMAF, L1FileHandle, tp)
+d141 1
+a141 6
+      DEALLOCATE(tp%tpECI, tp%tpECR, tp%tpOrbY, tp%tpGeocAlt, tp%tpGeocLat, &
+                 tp%tpGeocAltRate, tp%tpGeodAlt, tp%tpGeodLat, &
+                 tp%tpGeodAltRate, tp%tpLon, tp%tpGeodAngle, tp%tpSolarTime, &
+                 tp%tpSolarZenith, tp%tpLosAngle, STAT=dealloc_err)
+      IF ( dealloc_err /= 0 ) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+                                      'Failed deallocation of GHz quantities.')
+d143 10
+a152 1
+! Find angle, tan pt for start of THz scan
+d154 1
+a154 10
+      ALLOCATE(tp%tpECI(lenCoord,mifT), tp%tpECR(lenCoord,mifT), &
+               tp%tpOrbY(mifT), tp%tpGeocAlt(mifT), tp%tpGeocLat(mifT), &
+               tp%tpGeocAltRate(mifT), tp%tpGeodAlt(mifT), &
+               tp%tpGeodLat(mifT), tp%tpGeodAltRate(mifT), tp%tpLon(mifT), &
+               tp%tpGeodAngle(mifT), tp%tpSolarTime(mifT), &
+               tp%tpSolarZenith(mifT), tp%tpLosAngle(mifT), STAT=alloc_err)
+      IF ( alloc_err /= 0 ) THEN
+         msr = MLSMSG_Allocate // '  THz quantites.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+d156 1
+a156 1
+      CALL Scan_start(altT, sc%scECR(:,1), mafTime, initRay, tp%scAngle(1))
+d158 2
+a159 1
+! Calculate THz tan pt record
+d161 1
+a161 2
+      CALL TkL1B_tp(mafTAI, mafTime, mifT, nV, offsets(1:nV), &
+                    sc%scECR(:,1:mifT), scRateT, tp%scAngle(1), tp)
+d163 2
+a164 1
+! Compute THz master coordinate
+d166 1
+a166 2
+      CALL TkL1B_mc(ascTAI, dscTAI, tp%tpECI, tp%tpGeocLat, mifT, numOrb, &
+           orbIncline, orbitNumber, q, mafTAI, offsets(1:mifT), tp%tpGeodAngle)
+d168 1
+a168 3
+! Write THZ information
+                     
+      CALL OutputL1B_THz(noMAF, L1FileHandle, tp)
+d170 6
+a175 6
+      DEALLOCATE(tp%tpECI, tp%tpECR, tp%tpOrbY, tp%tpGeocAlt, tp%tpGeocLat, &
+                 tp%tpGeocAltRate, tp%tpGeodAlt, tp%tpGeodLat, &
+                 tp%tpGeodAltRate, tp%tpLon, tp%tpGeodAngle, tp%tpSolarTime, &
+                 tp%tpSolarZenith, tp%tpLosAngle, STAT=dealloc_err)
+      IF ( dealloc_err /= 0 ) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+                                      'Failed deallocation of THz quantites.')
+d177 1
+a177 1
+! Deallocate the MIF quantities
+d179 6
+a184 6
+      DEALLOCATE(sc%scECI, sc%scECR, sc%scGeocAlt, sc%scGeocLat, &
+       sc%scGeodAlt, sc%scGeodLat, sc%scLon, sc%scGeodAngle,  sc%scVel, &
+       sc%ypr, sc%yprRate, tp%encoderAngle, tp%scAngle, tp%scanAngle, &
+       tp%scanRate, STAT=dealloc_err)
+      IF ( dealloc_err /= 0 ) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+                                      'Failed deallocation of MIF quantities.')
+d186 1
+a186 3
+!-----------------------------
+   END SUBROUTINE L1boa_nofill
+!-----------------------------
+d188 6
+a193 5
+!--------------------------------------------------------------------------
+   SUBROUTINE L1boa_fill(altG, altT, ascTAI, dscTAI, L1FileHandle, mifG, &
+                         mifT, index, noMAF, numOrb, offsets, orbIncline, &
+                         orbitNumber, scRate, scRateT)
+!--------------------------------------------------------------------------
+d195 2
+a196 3
+! Brief description of subroutine
+! This subroutine creates the SIDS L1BOA MAF records, and writes them to an
+! HDF output file.
+d198 2
+a199 1
+! Arguments
+d201 2
+a202 1
+      TYPE( L1BOAindex_T), INTENT(IN) :: index
+d204 2
+a205 2
+      INTEGER, INTENT(IN) :: L1FileHandle, mifG, mifT, noMAF, numOrb
+      INTEGER, INTENT(IN) :: orbitNumber(:)
+d207 3
+a209 2
+      REAL, INTENT(IN) :: scRate(mifG)
+      REAL, INTENT(IN) :: scRateT(mifT)
+d211 2
+a212 2
+      REAL(r8), INTENT(IN) :: altG, altT, orbIncline
+      REAL(r8), INTENT(IN) :: ascTAI(:), dscTAI(:), offsets(:)
+d214 1
+a214 3
+! Parameters
+ 
+! Functions
+d216 2
+a217 1
+! Variables
+d219 1
+a219 2
+      TYPE( L1BOAsc_T ) :: sc
+      TYPE( L1BOAtp_T ) :: tp
+d221 1
+a221 2
+      CHARACTER(LEN=27) :: mafTime
+      CHARACTER (LEN=480) :: msr
+d223 3
+a225 1
+      INTEGER :: alloc_err, dealloc_err, nV
+d227 11
+a237 2
+      REAL(r8) :: mafTAI
+      REAL(r8) :: initRay(3), q(3)
+d239 1
+a239 1
+! Write "index" information
+d241 2
+a242 5
+      CALL Sd_index(noMAF, L1FileHandle, index)
+      
+      mafTime = index%MAFStartTimeUTC
+      mafTAI = index%MAFStartTimeTAI
+      nV = index%noMIFs
+d244 2
+a245 1
+! Get oa data
+d247 2
+a248 10
+      ALLOCATE(sc%scECI(lenCoord,nV), sc%scECR(lenCoord,nV), &
+       sc%scGeocAlt(nV), sc%scGeocLat(nV), sc%scGeodAlt(nV), &
+       sc%scGeodLat(nV), sc%scLon(nV), sc%scGeodAngle(nV), &
+       sc%scVel(lenCoord,nV), sc%ypr(lenCoord,nV), sc%yprRate(lenCoord,nV), &
+       tp%encoderAngle(nV), tp%scAngle(nV), tp%scanAngle(nV), &
+       tp%scanRate(nV), STAT=alloc_err)
+      IF ( alloc_err /= 0 ) THEN
+         msr = MLSMSG_Allocate // '  s/c quantities.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+d250 2
+a251 1
+      CALL TkL1B_sc(nV, offsets(1:nV), mafTime, sc)
+d253 11
+a263 1
+! Get s/c master coordinate
+d265 1
+a265 1
+      CALL Mc_aux(mafTime, sc%scECI(:,1), sc%scGeocLat(1), q)
+d267 3
+a269 2
+      CALL TkL1B_mc(ascTAI, dscTAI, sc%scECI, sc%scGeocLat, nV, numOrb, &
+            orbIncline, orbitNumber, q, mafTAI, offsets(1:nV), sc%scGeodAngle)
+d271 3
+a273 1
+! Write s/c information
+d275 1
+a275 1
+      CALL Sd_sc(noMAF, nV, L1FileHandle, sc)
+d277 7
+a283 1
+! Calculate initial guess for look vector in ECR
+d285 11
+a295 1
+      CALL Scan_guess(mafTime, initRay)
+d297 2
+a298 1
+! Find angle, tan pt for start of GHZ scan
+d300 2
+a301 10
+      ALLOCATE(tp%tpECI(lenCoord,mifG), tp%tpECR(lenCoord,mifG), &
+               tp%tpOrbY(mifG), tp%tpGeocAlt(mifG), tp%tpGeocLat(mifG), &
+               tp%tpGeocAltRate(mifG), tp%tpGeodAlt(mifG), &
+               tp%tpGeodLat(mifG), tp%tpGeodAltRate(mifG), tp%tpLon(mifG), &
+               tp%tpGeodAngle(mifG), tp%tpSolarTime(mifG), &
+               tp%tpSolarZenith(mifG), tp%tpLosAngle(mifG), STAT=alloc_err)
+      IF ( alloc_err /= 0 ) THEN
+          msr = MLSMSG_Allocate // '  GHz quantites.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+d303 3
+a305 1
+      CALL Scan_start( altG, sc%scECR(:,1), mafTime, initRay, tp%scAngle(1) )
+d307 2
+a308 1
+! Calculate GHZ tan pt record
+d310 6
+a315 2
+      CALL TkL1B_tp(mafTAI, mafTime, mifG, nV, offsets(1:nV), &
+                    sc%scECR(:,1:mifG), scRate, tp%scAngle(1), tp)
+d317 1
+a317 1
+! Compute GHz master coordinate
+d319 6
+a324 2
+      CALL TkL1B_mc(ascTAI, dscTAI, tp%tpECI, tp%tpGeocLat, mifG, numOrb, &
+           orbIncline, orbitNumber, q, mafTAI, offsets(1:mifG), tp%tpGeodAngle)
+d326 1
+a326 1
+! Write GHz information
+d328 1
+a328 1
+      CALL Sd_GHz(mifG, noMAF, nV, L1FileHandle, tp)
+d330 5
+a334 62
+      DEALLOCATE(tp%tpECI, tp%tpECR, tp%tpOrbY, tp%tpGeocAlt, tp%tpGeocLat, &
+                 tp%tpGeocAltRate, tp%tpGeodAlt, tp%tpGeodLat, &
+                 tp%tpGeodAltRate, tp%tpLon, tp%tpGeodAngle, tp%tpSolarTime, &
+                 tp%tpSolarZenith, tp%tpLosAngle, STAT=dealloc_err)
+      IF ( dealloc_err /= 0 ) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+                                      'Failed deallocation of GHz quantities.')
+
+! Find angle, tan pt for start of THz scan
+
+      ALLOCATE(tp%tpECI(lenCoord,mifT), tp%tpECR(lenCoord,mifT), &
+               tp%tpOrbY(mifT), tp%tpGeocAlt(mifT), tp%tpGeocLat(mifT), &
+               tp%tpGeocAltRate(mifT), tp%tpGeodAlt(mifT), &
+               tp%tpGeodLat(mifT), tp%tpGeodAltRate(mifT), tp%tpLon(mifT), &
+               tp%tpGeodAngle(mifT), tp%tpSolarTime(mifT), &
+               tp%tpSolarZenith(mifT), tp%tpLosAngle(mifT), STAT=alloc_err)
+      IF ( alloc_err /= 0 ) THEN
+         msr = MLSMSG_Allocate // '  THz quantites.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      CALL Scan_start(altT, sc%scECR(:,1), mafTime, initRay, tp%scAngle(1))
+
+! Calculate THz tan pt record
+
+      CALL TkL1B_tp(mafTAI, mafTime, mifT, nV, offsets(1:nV), &
+                    sc%scECR(:,1:mifT), scRateT, tp%scAngle(1), tp)
+
+! Compute THz master coordinate
+
+      CALL TkL1B_mc(ascTAI, dscTAI, tp%tpECI, tp%tpGeocLat, mifT, numOrb, &
+           orbIncline, orbitNumber, q, mafTAI, offsets(1:mifT), tp%tpGeodAngle)
+
+! Write THZ information
+                     
+      CALL Sd_THz(mifT, noMAF, nV, L1FileHandle, tp)
+
+      DEALLOCATE(tp%tpECI, tp%tpECR, tp%tpOrbY, tp%tpGeocAlt, tp%tpGeocLat, &
+                 tp%tpGeocAltRate, tp%tpGeodAlt, tp%tpGeodLat, &
+                 tp%tpGeodAltRate, tp%tpLon, tp%tpGeodAngle, tp%tpSolarTime, &
+                 tp%tpSolarZenith, tp%tpLosAngle, STAT=dealloc_err)
+      IF ( dealloc_err /= 0 ) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+                                      'Failed deallocation of THz quantites.')
+
+! Deallocate the MIF quantities
+
+      DEALLOCATE(sc%scECI, sc%scECR, sc%scGeocAlt, sc%scGeocLat, &
+       sc%scGeodAlt, sc%scGeodLat, sc%scLon, sc%scGeodAngle,  sc%scVel, &
+       sc%ypr, sc%yprRate, tp%encoderAngle, tp%scAngle, tp%scanAngle, &
+       tp%scanRate, STAT=dealloc_err)
+      IF ( dealloc_err /= 0 ) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+                                      'Failed deallocation of MIF quantities.')
+
+!---------------------------
+   END SUBROUTINE L1boa_fill
+!---------------------------
+
+!===============
+END MODULE L1boa
+!===============
+
+!# $Log: $
+!#
+@
+

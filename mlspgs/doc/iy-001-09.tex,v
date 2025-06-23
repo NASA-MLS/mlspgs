@@ -1,0 +1,145 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.12
+	cfm-single-freq-0-1:1.1.0.10
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.8
+	mus-emls-1-70:1.1.0.6
+	rel-1-0-englocks-work:1.1.0.4
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.2
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	M4-00:1.1
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2010.09.21.17.58.02;	author yanovsky;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\section*{Units}
+
+$p$ - pressure, $\Pa$ \\
+$F$ - force, $\N$ \\
+$A$ - area, $\m^2$ \\
+$\displaystyle k = 1.3806503 \cdot 10^{-23} \; \frac{\m^2 \cdot \kg}{\s^{2} \cdot \K} \bigg[=\frac{\J}{\K}\bigg] =  1.3806503 \cdot 10^{-29} \; \frac{\km^2 \cdot \kg}{\s^{2} \cdot \K}$ - Boltzmann constant \\
+$\displaystyle \vh = 6.62606885 \cdot 10^{-34} \; \J \cdot \s$  - Planck constant \\
+$\displaystyle c = 299 792 458 \; \m / \s$ - speed of light
+
+\begin{equation*}
+1 \AMU = 1.66053886 \cdot 10^{-27} \kg
+\end{equation*}
+\begin{equation*}
+1\J = 1 \N\cdot \m = 1 \frac{\kg \cdot \m^2}{\s^2}
+\end{equation*}
+
+\begin{equation*}
+p = \frac{F}{A}
+\end{equation*}
+\begin{equation*}
+1 \J = 1 \N \cdot \m = 1 \frac{\kg \cdot \m^2}{\s^2}
+\end{equation*}
+\begin{equation*}
+1 \Pa = 1 \frac{\N}{\m^2} = 1 \frac{\J}{\m^3} = 1 \frac{\kg}{\m \cdot \s^2}
+\end{equation*}
+\begin{equation*}
+1 \hPa = 100 \Pa
+\end{equation*}
+
+\begin{equation*}
+\frac{k}{\vh} = 2.083664 \cdot 10^{10} \, \Hz \cdot \K^{-1} = 20836.74 \, \MHz \cdot \K^{-1}
+\end{equation*}
+
+\begin{equation*}
+\displaystyle \frac{k \log 10}{\vh c} = 1.60037859 \cdot 10^{5} \frac{1}{\km \cdot \K} = 1.600386 \frac{1}{\cm \cdot \K}
+\end{equation*}
+
+\begin{equation*}
+\sqrt{\frac{\log 2}{\pi}}\frac{10^{-13}\frac{\m^2 \cdot \cm}{\nm^2 \cdot \km}}{k} = 3.402155052 \cdot 10^{9} \, \frac{\s^{2} \cdot \K}{\m^2 \cdot \kg} \frac{\m^2 \cdot \cm}{\nm^2 \cdot \km} = 3.402155052 \cdot 10^{9} \frac{\K}{\hPa \cdot \nm^2 \cdot \km}
+\end{equation*}
+
+\begin{equation*}
+\frac{\sqrt{2(\log 2)k}}{c} = 1.45931441 \cdot 10^{-20} \sqrt{\frac{\kg}{\K}} = 3.58116514 \cdot 10^{-7} \sqrt{\frac{\AMU}{\K}}
+\end{equation*}
+
+
+$\displaystyle  \beta (\km^{-1}) = \sqrt{\frac{\log 2}{\pi}} \cdot \frac{I(\nm^2 \MHz) \cdot P(\hPa) \cdot LS (unitless)}{k
+\Big( \frac{\m^2 \kg}{\s^2 \K} \Big) \cdot w_d(\MHz) \cdot T(\K)}$
+
+\ \\
+Getting rid of common units and extracting the units and number in front
+of the $\displaystyle \frac{I \cdot P \cdot LS}{ w_d \cdot T}$ gives
+
+\begin{eqnarray*}
+&=& \sqrt{\frac{\log 2}{\pi}} \cdot \frac{\nm^2 \cdot \hPa \cdot \s^2}{(\m^2 \cdot \kg) \cdot 1.38 \cdot 10^{-23}} \\
+&&1 \hPa = \frac{\kg}{\cm \cdot \s^2} \\
+&=& \sqrt{\frac{\log 2}{\pi}} \cdot \frac{\nm^2}{1.38 \cdot 10^{-23} \cdot \m^2 \cdot \cm} \\
+&=& \sqrt{\frac{\log 2}{\pi}} \cdot \frac{\nm^2}{1.38 \cdot 10^{-23} \cdot \m^2 \cdot \cm} \cdot 10^{-18} \frac{\m^2}{\nm^2} \cdot 10^5 \frac{\cm}{\km} \\
+&=& \sqrt{\frac{\log 2}{\pi}} \cdot \frac{10^{-13}}{1.38 \cdot 10^{-23}} \frac{1}{\km} = 3.402 \cdot 10^{9} \frac{1}{\km}.
+\end{eqnarray*}
+
+\ \\
+\ \\
+\ \\
+\ \\
+using this $O_3$ line \\
+\ \\
+aline =
+$\{v0: \ 235709.855d00, \ gse: \ 120.2571, \ ist: \ -3.6755, \ wth: \ 2.263, \ nth: \ 0.655, \ ps: \ 0.0, \ ns: \ 0.0\}$ \\
+\ \\
+having this partition function and mass \\
+mol\_data = \\
+$\{qtp:[300.0,225.0,150.0],qpf:[3563.3512,2235.0190,1200.4721],cont:replicate(0.0,6),mass:47.984744\}$
+\ \\
+T = 240.0 \\
+P = 215.443 \\
+freqs = 235709.8550 235659.8550 235509.8550 235309.8550 234709.8550 \\
+\ \\
+I get for $S_j^k$  (argument to the $10^.$) \\
+\ \\
+-3.53299 \\
+\ \\
+$\beta^k$ are \\
+\ \\
+      1197.41 \\
+      1185.60 \\
+      1055.68 \\
+      787.228 \\
+      284.450 \\
+\ \\
+for the 4 frequencies above.
+
+
+% $Id:  $
+@

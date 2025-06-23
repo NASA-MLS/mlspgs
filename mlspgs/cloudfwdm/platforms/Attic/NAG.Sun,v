@@ -1,0 +1,326 @@
+head	1.7;
+access;
+symbols
+	V2-21:1.6
+	V2-20:1.6
+	V2-11:1.6
+	V2-10:1.6
+	V2-00:1.6
+	V1-51:1.6
+	V1-50:1.6
+	V1-45:1.6
+	V1-44:1.6
+	V1-43:1.6
+	V1-32:1.6
+	V1-31:1.6
+	V1-30:1.6
+	V1-13:1.6
+	V1-12:1.6
+	V1-11:1.6
+	V1-10:1.6
+	newfwm-feb03:1.6.0.2
+	V1-04:1.5
+	V1-03:1.5
+	V1-02:1.5
+	V1-00:1.5
+	newfwm-sep01:1.3.0.2
+	V0-7:1.3;
+locks; strict;
+comment	@# @;
+
+
+1.7
+date	2007.06.07.19.58.58;	author pwagner;	state dead;
+branches;
+next	1.6;
+
+1.6
+date	2002.06.21.00.16.42;	author pwagner;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2002.01.31.00.33.13;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.11.15.00.07.57;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2001.08.15.21.03.28;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.05.31.22.06.28;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.05.30.16.46.50;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.7
+log
+@compiler-specific pieces removed from platforms directory
+@
+text
+@#a file full of macros to be included by a Makefile
+#to compile a Fortran 9x program or library
+
+# "$Id: NAG.Sun,v 1.6 2002/06/21 00:16:42 pwagner Exp $"
+
+SHELL = /bin/sh
+
+# Path to source files:
+S = ..
+# Path to root directory of l2, lib, etc.:
+CONFDIR=../..
+
+# Use the libmls.a directory, libdir, for .mod files
+# dir1 is the path prepended to its .o files in dependency lists
+libdir = $(CONFDIR)/lib/$(MLSCONFG)
+
+dir1 = $(libdir)/
+
+# Use the libfwdmdl.a directory, libfwdmdl, for .mod files
+# dir3 is the path prepended to its .o files in dependency lists
+libfwdmdl = $(CONFDIR)/fwdmdl/$(MLSCONFG)
+
+dir3 = $(libfwdmdl)/
+
+# sources shared by l2, l3 are in $(srclib)
+# these USE init_tables_module, which is different for l2 from the l3 version
+# while l2 and l3 use the same sources in srclib they do
+# require different objects--thus a source library instead of an object
+# library (such as libmls.a)
+# therefore we will tell make to add srclib to directories searched for .f90
+# while dir2, the path prepended to its .o files in dependency lists, is empty
+# so that its object files share the current working directory with those of l2
+srclib = $(CONFDIR)/srclib
+
+dir2 =
+
+# Use the libmlspack.a directory, blaslib, for .mod files
+blaslib = $(CONFDIR)/blas/$(MLSCONFG)
+
+UTILDIR=$(CONFDIR)/util
+
+# reecho.sh can filter out globbed file expansions that fail
+# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
+# However we will be using it just to prefix any unprefixed preset paths
+REECHO=$(UTILDIR)/reecho.sh
+
+# Set paths for finding source files (different from .o and .mod)
+
+vpath %.mod ./
+vpath %.o ./
+vpath %.f90 ../ $(srclib) $(libdir)/../machines/$(MLSCONFG)
+vpath %.f9h ../ $(srclib)
+vpath %.f ../
+vpath %.c ../
+
+FC = f95
+
+DUSTY = $(FOPTS) -dusty
+
+# All the paths to supply .mod and INCLUDE files used in compiling %.f90
+# Precede each path by "-I "
+PATHS_PREFXD := $(shell ${REECHO} -d -prefix=-I $(UNPREFXDPTHS))
+INC_PATHS = $(EXTRA_PATHS) $(PATHS_PREFXD) \
+   -I $(PGSINC) -I $(srclib) -I $S -I $(libdir)\
+   -I $(libfwdmdl) -I $(blaslib)
+
+# Define some suffix rules
+
+.SUFFIXES:
+.SUFFIXES: .o .dbg.o .f90 .f .c
+.f90.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
+
+.f90.dbg.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< -o $*.dbg.o $(FAFTER)
+
+.f.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
+
+.c.o:
+	$(CC) -c ${INC_PATHS} -DNAGf90Fortran $<
+
+#Special load libraries
+l_specials = -lnsl
+
+# $Log: NAG.Sun,v $
+# Revision 1.6  2002/06/21 00:16:42  pwagner
+# Enroute to ending cascading recompiles
+#
+# Revision 1.5  2002/01/31 00:33:13  pwagner
+# Prefixes preset paths just like forwaard model
+#
+# Revision 1.4  2001/11/15 00:07:57  pwagner
+# Now works with new libmlspack.a and .mod files in blas
+#
+# Revision 1.3  2001/08/15 21:03:28  pwagner
+# Default rules for .f and .c; EXTRA_PATHS added to INC_PATHS
+#
+# Revision 1.2  2001/05/31 22:06:28  pwagner
+# Repaired omission of .f from SUFFIXES
+#
+# Revision 1.1  2001/05/30 16:46:50  pwagner
+# First commit
+#
+@
+
+
+1.6
+log
+@Enroute to ending cascading recompiles
+@
+text
+@d4 1
+a4 1
+# "$Id: NAG.Sun,v 1.5 2002/01/31 00:33:13 pwagner Exp $"
+d87 3
+@
+
+
+1.5
+log
+@Prefixes preset paths just like forwaard model
+@
+text
+@d4 1
+a4 1
+# "$Id: NAG.Sun,v 1.4 2001/11/15 00:07:57 pwagner Exp $"
+d10 2
+d15 1
+a15 1
+libdir = ../../lib/$(MLSCONFG)
+d21 1
+a21 1
+libfwdmdl = ../../fwdmdl/$(MLSCONFG)
+d33 1
+a33 1
+srclib = ../../srclib
+d38 1
+a38 1
+blaslib = ../../blas/$(MLSCONFG)
+d40 1
+a40 1
+UTILDIR=../../util
+d49 1
+d87 3
+@
+
+
+1.4
+log
+@Now works with new libmlspack.a and .mod files in blas
+@
+text
+@d4 1
+a4 1
+# "$Id: NAG.Sun,v 1.3 2001/08/15 21:03:28 pwagner Exp $"
+d38 7
+d59 3
+a61 1
+INC_PATHS = $(EXTRA_PATHS) -I $(PGSINC) -I $(srclib) -I $S -I $(libdir)\
+d84 3
+@
+
+
+1.3
+log
+@Default rules for .f and .c; EXTRA_PATHS added to INC_PATHS
+@
+text
+@d4 1
+a4 1
+# "$Id: NAG.Sun,v 1.2 2001/05/31 22:06:28 pwagner Exp $"
+d35 3
+d52 2
+a53 1
+INC_PATHS = $(EXTRA_PATHS) -I $(PGSINC) -I $(srclib) -I $S -I $(libdir) -I $(libfwdmdl)
+d75 3
+@
+
+
+1.2
+log
+@Repaired omission of .f from SUFFIXES
+@
+text
+@d4 1
+a4 1
+# "$Id: NAG.Sun,v 1.1 2001/05/30 16:46:50 pwagner Exp $"
+d41 1
+a44 3
+# Compiler options:
+#FOPTS = -g -C=all
+
+a46 9
+#PGSINC = /software/SRC/TOOLKIT-5.2.6v1.00.NAG/include
+
+# Beginning of path to libraries:
+#L = /nas/software/SRC/TOOLKIT-5.2.6v1.00
+#L = /nas/software/SRC/TOOLKIT-5.2.6v1.00.NAG
+
+# Beginning of path to HDFEOS  libraries:
+#E = /van1/opt/TOOLKIT
+
+d49 1
+a49 1
+INC_PATHS = -I $(PGSINC) -I $(srclib) -I $S -I $(libdir) -I $(libfwdmdl)
+d54 1
+a54 1
+.SUFFIXES: .o .dbg.o .f90 .f
+d64 2
+a65 21
+#SDP =SDPToolkitSubstitute.o
+#GD=GDapi.o
+
+#These are the locations of the libraries
+#
+#  Name                 Default value
+#  PGSTK                 $(PGSLIB)
+# HDFEOS                 $(HDFEOS_LIB)
+#   HDF                  $(HDFLIB)
+#  GCTP                  $(HDEOS_LIB)
+#
+#PGSTK =$(PGSLIB)
+#HDFEOS =$(HDFEOS_LIB)
+#HDF =$(HDFLIB)
+#GCTP =$(HDFEOS_LIB)
+#The following can be uncommented to override the defaults
+
+#PGSTK =$(HOME)/TOOLKIT/NAG
+#HDFEOS =$(HOME)/TOOLKIT
+#HDF =/software/SRC/TOOLKIT-5.2.6v1.00.NAG/hdf/linux/HDF4.1r3/lib
+#GCTP =/software/SRC/TOOLKIT-5.2.6v1.00.NAG/hdfeos/lib/linux
+d71 3
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d4 1
+a4 1
+# "$Id: NAG.Sun,v 1.6 2001/03/12 23:57:45 pwagner Exp $"
+d65 1
+a65 1
+.SUFFIXES: .o .dbg.o .f90
+d101 3
+@
+

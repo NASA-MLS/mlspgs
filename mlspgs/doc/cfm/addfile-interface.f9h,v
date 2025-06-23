@@ -1,0 +1,62 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.12
+	cfm-single-freq-0-1:1.1.0.10
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.8
+	mus-emls-1-70:1.1.0.6
+	rel-1-0-englocks-work:1.1.0.4
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.2
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	M4-00:1.1
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2010.07.12.18.09.12;	author honghanh;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Add AddFileToDatabase interface
+@
+text
+@!Adds a given MLSFile_T object to a given array (database) by allocating
+!a new array, and deallocating the old array if database is associated.
+!Returns the index of the new item
+!Abort the program if there is any error.
+integer function AddFileToDatabase (database, item)
+   !A one-dimensional array of MLSFile_T objects, or a NULL pointer.
+   type (MLSFile_T), dimension(:), pointer :: database
+   
+   !A file to be added.
+   type (MLSFile_T), intent(in) :: item
+end function 
+@

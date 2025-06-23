@@ -1,0 +1,1331 @@
+head	1.12;
+access;
+symbols
+	newfwm-sep01:1.11.0.2
+	V0-7:1.11
+	V0-5-Level2:1.8
+	V0-5-SIPS:1.8
+	V0_1:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.12
+date	2001.09.17.20.26.26;	author livesey;	state dead;
+branches;
+next	1.11;
+
+1.11
+date	2001.07.04.00.34.24;	author zvi;	state Exp;
+branches
+	1.11.2.1;
+next	1.10;
+
+1.10
+date	2001.06.21.13.07.08;	author zvi;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2001.06.07.23.30.34;	author pwagner;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2001.03.31.23.40.55;	author zvi;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2001.03.30.20.28.21;	author zvi;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2001.03.29.08.51.01;	author zvi;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2001.03.26.17.56.14;	author zvi;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.01.31.01.08.48;	author zvi;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2000.11.22.23.10.02;	author zvi;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2000.11.22.23.07.24;	author zvi;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2000.05.04.18.12.04;	author vsnyder;	state Exp;
+branches;
+next	;
+
+1.11.2.1
+date	2001.09.10.10.02.32;	author zvi;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.12
+log
+@New forward model
+@
+text
+@! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+module D_DELTA_DT_M
+  use ELLIPSE_M, only: ELLIPSE
+  use GLNP, only: GW, NG
+  use MLSCommon, only: I4, R8
+  use D_GET_ONE_ETA_M, only: GET_ONE_ETA
+  use PATH_ENTITIES_M, only: PATH_VECTOR, PATH_BETA
+  implicit NONE
+  private
+  public :: D_DELTA_DT
+!---------------------------- RCS Ident Info -------------------------------
+  CHARACTER (LEN=256) :: Id = &
+       "$Id: d_delta_dt_m.f90,v 1.11 2001/07/04 00:34:24 zvi Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile: d_delta_dt_m.f90,v $"
+!---------------------------------------------------------------------------
+contains
+!  This routine computes the derivative of delta w.r.t. to Temperature in
+!  both dimensions (zeta & phi). The Integration is done using the
+!  Gauss-Legendre method.  THIS IS THE SLOW VERSION !
+!
+!  ** NOTE: This routine integrates in ZETA Space !!
+!
+  Subroutine d_delta_dt(mid,brkpt,no_ele,z_path,t_path,h_path,phi_path, &
+ &           beta_path,dHdz_path,dh_dt_path,N_lvls,n_sps,ref_corr,      &
+ &           t_z_basis,no_t,t_phi_basis,no_phi_t,spsfunc_path,iz,ip,    &
+ &           elvar,no_midval_ndx,midval_ndx,no_gl_ndx,gl_ndx,d_delta_dtnp)
+!
+    Integer(i4), intent(in) :: NO_PHI_T,N_LVLS,N_SPS,NO_T,IZ,IP,MID, &
+                           &   BRKPT,NO_ELE,no_midval_ndx,no_gl_ndx
+
+    Integer(i4), intent(in) :: midval_ndx(:,:),gl_ndx(:,:)
+!
+    Type(path_beta), intent(in) :: BETA_PATH(:)      ! (Nsps)
+!
+    Type(path_vector), intent(in) :: SPSFUNC_PATH(:)
+    Type(path_vector), intent(in) :: Z_PATH, T_PATH, H_PATH, PHI_PATH, &
+   &                                 DHDZ_PATH
+
+    real(r8), intent(in) :: T_Z_BASIS(:),T_PHI_BASIS(:),DH_DT_PATH(:)
+    real(r8), intent(in) :: REF_CORR(:)
+
+    Type(ELLIPSE), intent(in out) :: elvar
+
+    real(r8), intent(out) :: D_DELTA_DTNP(:)
+!
+! -----     Local variables     ----------------------------------------
+!
+    Integer(i4) :: j, k, l, n, h_i, mp, Ngp1, sps_i, hend
+
+    Real(r8) :: TP_GL(Ng,20) = 0.0, TP_ZS(20) = 0.0
+    Real(r8) :: BETAxF_GL(Ng,20) = 0.0, BETAxF_ZS(20) = 0.0
+
+    Real(r8) :: H_GL(Ng), T_GL(Ng), Z_GL(Ng)
+    Real(r8) :: DHDT_GL(Ng), GW_DHDZ(Ng), VETAP(Ng)
+
+    Real(r8) :: ETANP_SING, DHDTH, DHDTL, HH, HL, HD, HTAN, HTAN2, &
+   &            HTXDHT,PH, PL, RC, SA, SB, SING1, SING2, SUM1, SUM2, &
+   &            ZH, ZL, TH, TL, ds, tpl, tph, fl, fh, dsdt, q ,r
+!
+! -----     Executable statements     ----------------------------------
+!
+!  Define htan and its square, also the dhdt at the tangent:
+!
+    Ngp1 = Ng + 1
+    htan = elvar%ht + elvar%RoC
+    htan2 = htan * htan
+!
+    htxdht = htan * dh_dt_path(brkpt)
+!
+!  Initialize all the arrays:
+!
+    d_delta_dtnp(1:) = 0.0
+!
+    if(no_midval_ndx > 0) then
+!
+      elvar%ps = -1.0
+      do j = 1, no_midval_ndx
+
+        mp = midval_ndx(j,2)
+        h_i = midval_ndx(j,1)
+        if(mp > brkpt) elvar%ps = 1.0
+!
+        sa = 0.0
+        sb = 0.0
+        dsdt = 0.0
+!
+        zl = z_path%values(mp)
+        tl = t_path%values(mp)
+        hl = h_path%values(mp)
+        pl = phi_path%values(mp)
+        dhdtl = dh_dt_path(mp)
+
+        hd = hl + elvar%RoC
+        q = hd * hd - htan2
+        if (q > 0.0) then
+          sa = Sqrt(q)
+          dsdt = dsdt - (hd*dhdtl-htxdht)/sa
+        endif
+!
+        l = mp + Ngp1
+        zh = z_path%values(l)
+        th = t_path%values(l)
+        hh = h_path%values(l)
+        ph = phi_path%values(l)
+        dhdth = dh_dt_path(l)
+!
+        hd = hh + elvar%RoC
+        q = hd * hd - htan2
+        if (q > 0.0) then
+          sb = Sqrt(q)
+          dsdt = dsdt + (hd*dhdth-htxdht)/sb
+        endif
+
+        ds = abs(sa-sb)
+        if (ds < 0.05) EXIT
+!
+        rc = ref_corr(h_i)
+!
+        Sum1 = 0.0
+        Sum2 = 0.0
+        do sps_i = 1, n_sps
+          tpl = beta_path(sps_i)%t_power(mp)
+          tph = beta_path(sps_i)%t_power(l)
+          fl  = beta_path(sps_i)%values(mp) *  &
+       &               spsfunc_path(sps_i)%values(mp)
+          fh  = beta_path(sps_i)%values(l) *  &
+       &               spsfunc_path(sps_i)%values(l)
+          Sum1 = Sum1 + 0.5 * (fl*tpl/tl + fh*tph/th)
+          Sum2 = Sum2 + 0.5 * (fl + fh)
+        end do
+!
+        q = Sum1 * abs(sb-sa)
+        r = Sum2 * dsdt * elvar%ps
+        d_delta_dtnp(h_i) = (q + r) * rc       ! for (iz,ip)
+!
+      end do
+!
+    endif
+
+    if(no_gl_ndx < 1) Return
+!
+! Now, do the GL deltas:
+! First, do the right hand side of the ray path:
+!
+    k = 0
+    elvar%ps = -1.0
+!
+    do j = 1, no_gl_ndx
+!
+      mp = gl_ndx(j,2)
+      if (mp >= brkpt) EXIT
+!
+      h_i = gl_ndx(j,1)
+      if(h_i >= mid) EXIT
+!
+      zl = z_path%values(mp)
+      tl = t_path%values(mp)
+      hl = h_path%values(mp)
+      pl = phi_path%values(mp)
+      dhdtl = dh_dt_path(mp)
+
+      sa = 0.0
+      hd = hl + elvar%RoC
+      q = hd*hd - htan2
+      if(q > 0.0) sa = Sqrt(q)
+!
+      l = mp + Ngp1
+      zh = z_path%values(l)
+      th = t_path%values(l)
+      hh = h_path%values(l)
+      ph = phi_path%values(l)
+      dhdth = dh_dt_path(l)
+!
+      sb = 0.0
+      hd = hh + elvar%RoC
+      q = hd*hd - htan2
+      if(q > 0.0) sb = Sqrt(q)
+!
+      ds = abs(sa-sb)
+      if (ds < 0.05) EXIT
+!
+      k = j
+      rc = ref_corr(h_i+1)
+!
+      call define_gl_grid_entities
+!
+      n = l
+      call compute_beta_and_temp_power (ph,zh)
+!
+      call thermal_and_singularities (th)
+!
+      call gauss_legendre
+!
+      call add_singularities_back_in
+!
+    end do
+
+    if(k == no_gl_ndx) Return
+!
+    j = k
+    elvar%ps = 1.0
+    do
+      j = j + 1
+      if(j >= no_gl_ndx) EXIT
+      mp = gl_ndx(j,2)
+      if(mp - l == 1) EXIT
+      k = j
+    end do
+!
+! Second, do the left hand side of the ray path:
+!
+    hend = 2 * N_lvls - 1
+    do j = k+1, no_gl_ndx
+!
+      mp = gl_ndx(j,2)
+      l = mp + Ngp1
+      if (l > no_ele) EXIT
+!
+      h_i = gl_ndx(j,1)
+      if(h_i >= hend) Return
+!
+      zl = z_path%values(mp)
+      tl = t_path%values(mp)
+      hl = h_path%values(mp)
+      pl = phi_path%values(mp)
+      dhdtl = dh_dt_path(mp)
+!
+      sa = 0.0
+      hd = hl + elvar%RoC
+      q = hd*hd - htan2
+      if(q > 0.0) sa = Sqrt(q)
+!
+      zh = z_path%values(l)
+      th = t_path%values(l)
+      hh = h_path%values(l)
+      ph = phi_path%values(l)
+      dhdth = dh_dt_path(l)
+!
+      sb = 0.0
+      hd = hh + elvar%RoC
+      q = hd*hd - htan2
+      if(q > 0.0) sb = Sqrt(q)
+
+      ds = abs(sa-sb)
+      if (ds < 0.05) EXIT
+!
+      rc = ref_corr(h_i)
+!
+      call define_gl_grid_entities
+!
+      n = mp
+      call compute_beta_and_temp_power (pl,zl)
+!
+      call thermal_and_singularities (tl)
+!
+      call gauss_legendre
+!
+      call add_singularities_back_in
+!
+      h_i = h_i + 1
+!
+    end do
+!
+    Return
+  ! *****     Internal procedures     **********************************
+  contains
+! --------------------------------     DEFINE_GL_GRID_ENTITIES     -----
+    subroutine DEFINE_GL_GRID_ENTITIES
+!
+! Define the various GL grid entities for this sub-interval:
+!
+      integer :: i
+      real(r8) :: AYM,phi,r,q
+!
+      aym = 0.5_r8 * abs(zh - zl)
+      z_GL(1:Ng) = z_path%values(mp+1:mp+Ng)
+      t_GL(1:Ng) = t_path%values(mp+1:mp+Ng)
+      dhdt_GL(1:Ng) = dh_dt_path(mp+1:mp+Ng)
+      h_GL(1:Ng) = h_path%values(mp+1:mp+Ng) + elvar%RoC
+      Gw_dHdZ(1:Ng) = Gw(1:Ng) * dhdz_path%values(mp+1:mp+Ng) * aym
+!
+      do i = 1, Ng
+        phi = phi_path%values(mp+i)
+        Call get_one_eta(phi,t_phi_basis,no_phi_t,ip,r)
+        Call get_one_eta(z_GL(i),t_z_basis,no_t,iz,q)
+        vetap(i) = r * q
+      end do
+
+    End subroutine DEFINE_GL_GRID_ENTITIES
+! ----------------------------     COMPUTE_BETA_AND_TEMP_POWER     -----
+    Subroutine COMPUTE_BETA_AND_TEMP_POWER ( FS, ZS )
+!
+      real(r8), intent(in) :: FS, ZS
+!
+      real(r8) :: etap, etaz
+      integer :: i, j
+!
+! Compute beta and temp. power on the Gauss-Legendre grid for the current
+! sub-interval:
+!
+      do j = 1, n_sps
+        tp_zs(j) = beta_path(j)%t_power(n)
+        betaxf_zs(j) = beta_path(j)%values(n) * spsfunc_path(j)%values(n)
+        tp_GL(1:Ng,j) = beta_path(j)%t_power(mp+1:mp+Ng)
+        betaxf_GL(1:Ng,j) = beta_path(j)%values(mp+1:mp+Ng) *  &
+                        &   spsfunc_path(j)%values(mp+1:mp+Ng)
+      end do
+!
+      etanp_sing = 0.0
+      Call get_one_eta(zs,t_z_basis,no_t,iz,etaz)
+      if (etaz > 0.0) then
+        Call get_one_eta(fs,t_phi_basis,no_phi_t,ip,etap)
+        etanp_sing = etaz * etap
+      end if
+!
+    end subroutine COMPUTE_BETA_AND_TEMP_POWER
+!
+! -----------------------------------------     GAUSS_LEGENDRE     -----
+!
+    subroutine GAUSS_LEGENDRE
+!
+! Compute the Gauss-Legendre quadrature, subtracting the 'singularities
+! factors':
+!
+      Integer :: I, J
+      Real(r8) :: DS, ETANP, ETAZ, FV1, FV2, HD, HD2, HYD, Q, R
+
+      sum1 = 0.0
+      sum2 = 0.0
+!
+      do i = 1, Ng
+!
+        etanp = vetap(i) / t_GL(i)
+!
+! Compute the "Hydrostatic" contribution to the derivative:
+!
+        hd = h_GL(i)
+        hd2 = hd * hd
+        hyd = dhdt_GL(i) * (2.0*hd2 - 3.0*htan2) + hd*htxdht
+        r = hd2 - htan2
+        q = Sqrt(r)
+        ds = hd / q
+        hyd = (hyd / r + hd * etanp) / q
+!
+        fv1 = -sing1
+        fv2 = -sing2
+        do j = 1, n_sps
+          q = betaxf_GL(i,j)
+          if (etanp > 0.0) fv1 = fv1 + q * etanp * tp_GL(i,j)
+          fv2 = fv2 + q
+        end do
+!
+! The final integrand:
+!
+        sum1 = sum1 + Gw_dHdz(i) * fv1 * ds
+        sum2 = sum2 + Gw_dHdz(i) * fv2 * hyd
+!
+      end do
+    end subroutine GAUSS_LEGENDRE
+!
+! ------------------------------     THERMAL_AND_SINGULARITIES     -----
+!
+    Subroutine THERMAL_AND_SINGULARITIES ( TS )
+!
+! Compute the contribution of the thermal sensitivity of the absorption:
+!
+      real(r8), intent(in) :: TS
+!
+      Real(r8) :: Q
+      integer :: J
+!
+      sing1 = 0.0
+      sing2 = 0.0
+
+      do j = 1, n_sps
+!
+!  Compute the value of the integrand at the starting point of the interval
+!  (This is done in order to eliminate the singularities. We call these
+!  the 'singularities factors')
+!
+        q = betaxf_zs(j)
+        sing1 = sing1 + q * etanp_sing * tp_zs(j) / ts
+        sing2 = sing2 + q
+!
+      end do
+    end subroutine THERMAL_AND_SINGULARITIES
+! ------------------------------     ADD_SINGULARITIES_BACK_IN     -----
+    subroutine ADD_SINGULARITIES_BACK_IN
+!
+! Add the 'singularities factors' back in, multiplied by their
+! respective analytical integral:
+!
+      real(r8) :: DSDT, HD, Q, R
+
+      dsdt = 0.0
+      hd = hh + elvar%RoC
+      if(sb > 0.0) dsdt = (hd*dhdth-htxdht)/sb
+!
+      hd = hl + elvar%RoC
+      if (sa > 0.0) dsdt = dsdt - (hd*dhdtl-htxdht)/sa
+!
+      q = sum1 + sing1 * abs(sb-sa)
+      r = sum2 + sing2 * dsdt * elvar%ps
+!
+      d_delta_dtnp(h_i) = (q + r) * rc       ! for (iz,ip)
+!
+    end subroutine ADD_SINGULARITIES_BACK_IN
+!
+  End Subroutine D_DELTA_DT
+!
+end module D_DELTA_DT_M
+! $Log: d_delta_dt_m.f90,v $
+! Revision 1.11  2001/07/04 00:34:24  zvi
+! Modified & new code(s) for better timing
+!
+! Revision 1.10  2001/06/21 13:07:08  zvi
+! Speed enhancement MAJOR update
+!
+! Revision 1.9  2001/06/07 23:30:34  pwagner
+! Added Copyright statement
+!
+! Revision 1.8  2001/03/31 23:40:55  zvi
+! Eliminate l2pcdim (dimension parameters) move to allocatable ..
+!
+! Revision 1.1  2000/05/04 18:12:04  vsnyder
+! Initial conversion to Fortran 90
+@
+
+
+1.11
+log
+@Modified & new code(s) for better timing
+@
+text
+@d15 1
+a15 1
+       "$Id: d_delta_dt_m.f90,v 1.10 2001/06/21 13:07:08 zvi Exp $"
+d415 3
+@
+
+
+1.11.2.1
+log
+@Cleanup..comp_path_entities_m.f90
+@
+text
+@d15 1
+a15 1
+       "$Id: d_delta_dt_m.f90,v 1.11 2001/07/04 00:34:24 zvi Exp $"
+a414 3
+! Revision 1.11  2001/07/04 00:34:24  zvi
+! Modified & new code(s) for better timing
+!
+@
+
+
+1.10
+log
+@Speed enhancement MAJOR update
+@
+text
+@d15 1
+a15 1
+       "$Id: d_delta_dt_m.f90,v 1.9 2001/06/07 23:30:34 pwagner Exp $"
+d55 1
+a55 1
+    Real(r8) :: H_GL(Ng), PHI_GL(Ng), T_GL(Ng), Z_GL(Ng)
+d147 1
+d184 1
+a195 1
+      k = j
+d274 2
+a275 2
+      integer :: I, J
+      real(r8) :: AYM, r
+d278 5
+a283 1
+      j = mp
+d285 4
+a288 9
+        j = j + 1
+        z_GL(i) = z_path%values(j)
+        t_GL(i) = t_path%values(j)
+        h_GL(i) = h_path%values(j)
+        phi_GL(i) = phi_path%values(j)
+        Gw_dHdZ(i) = Gw(i) * dhdz_path%values(j) * aym
+        dhdt_GL(i) = dh_dt_path(j)
+        Call get_one_eta(phi_GL(i),t_phi_basis,no_phi_t,ip,r)
+        vetap(i) = r
+d290 2
+a291 1
+    end subroutine DEFINE_GL_GRID_ENTITIES
+d293 1
+a293 1
+    subroutine COMPUTE_BETA_AND_TEMP_POWER ( FS, ZS )
+d305 1
+a305 2
+        betaxf_zs(j) = beta_path(j)%values(n) *  &
+                   &   spsfunc_path(j)%values(n)
+a313 1
+        etanp_sing = etaz
+d315 1
+a315 1
+        etanp_sing = etanp_sing * etap
+d328 1
+a328 2
+      Real(r8) :: DS, ETANP, ETAZ, FV1, FV2, HD, HD2, HYD, Q, &
+     &            PHI,R,RZ
+d335 1
+a335 5
+        rz = z_GL(i)
+        phi = phi_GL(i)
+!
+        Call get_one_eta(rz,t_z_basis,no_t,iz,etaz)
+        etanp = (etaz * vetap(i)) / t_GL(i)
+d339 1
+a339 1
+        hd = h_GL(i) + elvar%RoC
+d407 1
+a407 1
+      d_delta_dtnp(h_i) = (q + r) * rc       ! for (in,ip)
+d415 3
+@
+
+
+1.9
+log
+@Added Copyright statement
+@
+text
+@d6 1
+a6 1
+  use GL6P, only: GW, NG
+d15 1
+a15 1
+       "$Id: d_delta_dt_m.f90,v 1.8 2001/03/31 23:40:55 zvi Exp $"
+d25 4
+a28 3
+  Subroutine d_delta_dt(mid,brkpt,no_ele,z_path,t_path,h_path,phi_path,     &
+ &           beta_path,dHdz_path,dh_dt_path,N_lvls,n_sps,ref_corr,t_z_basis,&
+ &           no_t,t_phi_basis,no_phi_t,spsfunc_path,in,ip,elvar,d_delta_dtnp)
+d30 4
+a33 2
+    Integer(i4), intent(in) :: NO_PHI_T,N_LVLS,N_SPS, &
+   &             NO_T,IN,IP,MID,BRKPT,NO_ELE
+d50 1
+a50 1
+    Integer(i4) :: H_I, MP, NGP1, kk
+d60 1
+a60 1
+   &            ZH, ZL, TH, TL
+d66 1
+a69 3
+    elvar%ps = -1.0
+    Ngp1 = Ng + 1
+!
+d76 63
+a138 1
+! First, do the right hand side of the ray path:
+d140 1
+a140 5
+    mp = 1
+    zh = z_path%values(mp)
+    th = t_path%values(mp)
+    hh = h_path%values(mp)
+    ph = phi_path%values(mp)
+d142 1
+a142 3
+    hd = hh + elvar%RoC
+    sb = Sqrt(abs(hd*hd-htan2))
+    dhdth = dh_dt_path(mp)
+d144 2
+a145 1
+    do h_i = 1, mid
+d147 1
+a147 2
+      mp = mp + Ngp1
+      if(mp > brkpt) EXIT
+d149 1
+a149 3
+      hl = hh
+      hh = h_path%values(mp)
+      if (hh < elvar%ht) EXIT
+d151 2
+a152 2
+      zl = zh
+      zh = z_path%values(mp)
+d154 2
+a155 2
+      tl = th
+      th = t_path%values(mp)
+d157 17
+a173 2
+      pl = ph
+      ph = phi_path%values(mp)
+d175 1
+a175 1
+      sa = sb
+d177 2
+a178 1
+      sb = Sqrt(abs(hd*hd-htan2))
+d180 2
+a181 4
+      if (abs(sa-sb) < 0.05) EXIT
+!
+      dhdtl = dhdth
+      dhdth = dh_dt_path(mp)
+d187 1
+a187 1
+      kk = mp
+d194 1
+d196 2
+d199 10
+d213 2
+a214 17
+    elvar%ps = 1.0
+    h_i = mid
+    mp = brkpt + 1
+    hh = h_path%values(mp)
+    do while (hh < elvar%ht)
+      h_i = h_i + 1
+      mp = mp + Ngp1
+      hh = h_path%values(mp)
+    end do
+!
+    zh = z_path%values(mp)
+    th = t_path%values(mp)
+    ph = phi_path%values(mp)
+
+    hd = hh + elvar%RoC
+    sb = Sqrt(abs(hd*hd-htan2))
+    dhdth = dh_dt_path(mp)
+d216 12
+a227 1
+    do while (h_i < 2 * N_lvls - 1)
+d229 4
+a232 2
+      mp = mp + Ngp1
+      if(mp > no_ele) EXIT
+d234 5
+a238 2
+      hl = hh
+      hh = h_path%values(mp)
+d240 1
+a240 1
+      sa = sb
+d242 5
+a246 13
+      sb = Sqrt(abs(hd*hd-htan2))
+!
+      zl = zh
+      zh = z_path%values(mp)
+!
+      tl = th
+      th = t_path%values(mp)
+!
+      pl = ph
+      ph = phi_path%values(mp)
+!
+      dhdtl = dhdth
+      dhdth = dh_dt_path(mp)
+d252 1
+a252 1
+      kk = mp - Ngp1
+d278 1
+a278 1
+      j = mp - Ng
+d280 1
+a288 1
+        j = j + 1
+d296 2
+a297 2
+      real(r8) :: ETAP, ETAZ
+      integer :: I, J, K
+d303 6
+a308 10
+        tp_zs(j) = beta_path(j)%t_power(kk)
+        betaxf_zs(j) = beta_path(j)%values(kk) *  &
+       &               spsfunc_path(j)%values(kk)
+        k = mp - Ngp1
+        do i = 1, Ng
+          k = k + 1
+          tp_GL(i,j) = beta_path(j)%t_power(k)
+          betaxf_GL(i,j) = beta_path(j)%values(k) *  &
+         &                 spsfunc_path(j)%values(k)
+        end do
+d312 1
+a312 1
+      Call get_one_eta(zs,t_z_basis,no_t,in,etaz)
+d340 1
+a340 1
+        Call get_one_eta(rz,t_z_basis,no_t,in,etaz)
+d401 1
+a401 1
+      real(r8) :: DSDT, HD, DS, Q, R
+d405 1
+a405 2
+      ds = hd * hd - htan2
+      if (ds > 0.0) dsdt = (hd*dhdth-htxdht)/Sqrt(ds)
+d408 1
+a408 2
+      ds = hd * hd - htan2
+      if (ds > 0.0) dsdt = dsdt - (hd*dhdtl-htxdht)/Sqrt(ds)
+d421 3
+@
+
+
+1.8
+log
+@Eliminate l2pcdim (dimension parameters) move to allocatable ..
+@
+text
+@d1 3
+d15 1
+a15 1
+       "$Id: d_delta_dt_m.f90,v 1.1 2000/05/04 18:12:04 vsnyder Exp $"
+d352 3
+@
+
+
+1.7
+log
+@General fix-up to get rid of COMMON BLOCK (ELLIPSE)
+@
+text
+@d12 1
+a12 1
+       "$Id: d_delta_dt_m.f90,v 1.6 2001/03/29 08:51:01 zvi Exp $"
+d22 3
+a24 4
+  Subroutine d_delta_dt(mid,brkpt,no_ele,z_path,t_path,h_path,phi_path, &
+ &           beta_path,dHdz_path,dh_dt_path,N_lvls,n_sps,Nlvl,  &
+ &           ref_corr,t_z_basis,no_t,t_phi_basis,no_phi_t,spsfunc_path, &
+ &           in,ip,elvar,d_delta_dtnp)
+d26 1
+a26 1
+    Integer(i4), intent(in) :: NLVL,NO_PHI_T,N_LVLS,N_SPS, &
+d35 1
+a35 1
+    real(r8), intent(in) :: T_Z_BASIS(:), T_PHI_BASIS(:),DH_DT_PATH(:)
+d70 1
+a70 1
+    d_delta_dtnp(1:2*Nlvl) = 0.0
+a348 9
+! Revision 1.6  2001/03/29 08:51:01  zvi
+! Changing the (*) toi (:) everywhere
+!
+! Revision 1.5  2001/03/26 17:56:14  zvi
+! New codes to deal with dh_dt_path issue.. now being computed on the fly
+!
+! Revision 1.4  2001/01/31 01:08:48  zvi
+! New version of forward model
+!
+@
+
+
+1.6
+log
+@Changing the (*) toi (:) everywhere
+@
+text
+@d2 1
+a2 1
+  use ELLIPSE, only: HT, HT2, PS, ROC
+d12 1
+a12 1
+       "$Id: d_delta_dt_m.f90,v 1.5 2001/03/26 17:56:14 zvi Exp $"
+d25 1
+a25 1
+ &           in,ip,d_delta_dtnp)
+d39 2
+d61 2
+a62 2
+    htan = ht + RoC
+    htan2 = ht2
+d64 1
+a64 1
+    ps = -1.0
+d81 1
+a81 1
+    hd = hh + RoC
+d92 1
+a92 1
+      if (hh < ht) EXIT
+d104 1
+a104 1
+      hd = hh + RoC
+d129 1
+a129 1
+    ps = 1.0
+d133 1
+a133 1
+    do while (hh < ht)
+d143 1
+a143 1
+    hd = hh + RoC
+d156 1
+a156 1
+      hd = hh + RoC
+d272 1
+a272 1
+        hd = h_GL(i) + RoC
+d331 1
+a331 1
+      hd = hh + RoC
+d335 1
+a335 1
+      hd = hl + RoC
+d340 1
+a340 1
+      r = sum2 + sing2 * dsdt * ps
+d350 3
+@
+
+
+1.5
+log
+@New codes to deal with dh_dt_path issue.. now being computed on the fly
+@
+text
+@d12 1
+a12 1
+       "$Id: d_delta_dt_m.f90,v 1.4 2001/01/31 01:08:48 zvi Exp $"
+d37 1
+a37 1
+    real(r8), intent(in) :: REF_CORR(*)
+d39 1
+a39 1
+    real(r8), intent(out) :: D_DELTA_DTNP(*)
+d348 3
+@
+
+
+1.4
+log
+@New version of forward model
+@
+text
+@d6 1
+a6 1
+  use PATH_ENTITIES_M, only: PATH_VECTOR, PATH_BETA, PATH_DERIVATIVE
+d12 1
+a12 1
+       "$Id: d_delta_dt_m.f90,v 1.1 2000/05/04 18:12:04 vsnyder Exp $"
+d36 1
+a36 3
+    Type(path_derivative), intent(in) :: DH_DT_PATH
+
+    real(r8), intent(in) :: T_Z_BASIS(:), T_PHI_BASIS(:)
+d65 1
+a65 1
+    htxdht = htan * dble(dh_dt_path%values(brkpt,ip,in))
+d81 1
+a81 1
+    dhdth = dble(dh_dt_path%values(mp,ip,in))
+d108 1
+a108 1
+      dhdth = dble(dh_dt_path%values(mp,ip,in))
+d143 1
+a143 1
+    dhdth = dble(dh_dt_path%values(mp,ip,in))
+d167 1
+a167 1
+      dhdth = dble(dh_dt_path%values(mp,ip,in))
+d206 1
+a206 1
+        dhdt_GL(i) = dble(dh_dt_path%values(j,ip,in))
+d348 3
+@
+
+
+1.3
+log
+@Re-add basic stuff
+@
+text
+@d23 1
+a23 1
+ &           beta_path,dHdz_path,dh_dt_path,N_lvls,n_sps,sps_tbl,Nlvl,  &
+d28 1
+a28 1
+   &             NO_T,IN,IP,MID,BRKPT,NO_ELE,SPS_TBL(*)
+d220 1
+a220 1
+      integer :: I, J, K, SPS_I
+d225 1
+a225 2
+      do sps_i = 1, n_sps
+        j = sps_tbl(sps_i)
+d255 1
+a255 1
+      Integer :: I, J, SPS_I
+d282 1
+a282 2
+        do sps_i = 1, n_sps
+          j = sps_tbl(sps_i)
+d305 1
+a305 1
+      integer :: J, SPS_I
+d310 1
+a310 3
+      do sps_i = 1, n_sps
+!
+        j = sps_tbl(sps_i)
+@
+
+
+1.2
+log
+@New version
+@
+text
+@d2 5
+a6 7
+  use CS_INTRP_M, only: CS_INTRP
+  use ELLIPSE, only: HT, PS, ROC
+  use GL6P, only: GW, H_GL, NG, PHI_GL, T_GL, Z_GL
+  use MDBETA, only: MAX_NO_FREQ
+  use MLSCommon, only: I4, R4, R8
+  use S_GET_ONE_ETA_M, only: GET_ONE_ETA
+  use TWO_D_POLATE_M, only: TWO_D_POLATE
+a9 1
+
+a14 1
+
+a15 1
+
+d22 20
+a41 34
+  Subroutine d_delta_dt ( z_path, t_path, h_path, phi_path, dHdz_path,      &
+ &           dh_dt_path, Kgp, N_lvls, cs, Frq, n_sps, ncoeffs, sps_tbl, Nc, &
+ &           Nlvl, f_basis, ref_corr, t_basis, t_profile,                   &
+ &           no_t, t_phi_basis, no_phi_t, mdb_pres, mdb_temp, mdb_freq,     &
+ &           mnp, mnf, no_freqs_f, no_phi_f, phi_basis_f, mr_f, in, ip,     &
+ &           IndxR, IndxL, path_brkpt, d_delta_dtnp, Ier )
+!
+    integer(i4), intent(in) :: KGP, MNF, MNP, NLVL
+    integer(i4), intent(in) :: NO_PHI_T
+!
+    real(r4), intent(in) :: Z_PATH(*), T_PATH(*), H_PATH(*), PHI_PATH(*)
+    real(r4), intent(in) :: DHDZ_PATH(*), DH_DT_PATH(Kgp,mnp,*)
+    integer(i4), intent(in) :: N_LVLS
+    real(r4), intent(inout) :: CS(Nlvl,no_phi_t,mnf,*)
+    real(r8), intent(in) :: FRQ
+    integer(i4), intent(in) :: N_SPS, NCOEFFS(*), SPS_TBL(*)
+    integer(i4), intent(in) :: NC
+    real(r4), intent(in) :: F_BASIS(Nc,*)
+    real(r4), intent(in) :: REF_CORR(*)
+    real(r4), intent(in) :: T_BASIS(*)
+    real(r4), intent(in) :: T_PROFILE(Nc,*) ! not used
+    integer(i4), intent(in) :: NO_T
+    real(r4), intent(in) :: T_PHI_BASIS(*)
+    real(r4), intent(in) :: MDB_PRES(*)
+    real(r4), intent(in) :: MDB_TEMP(*)
+    real(r8), intent(in) :: MDB_FREQ(mnf,*)
+    integer(i4), intent(in) :: NO_FREQS_F(*) ! not used
+    integer(i4), intent(in) :: NO_PHI_F(*)
+    real(r4), intent(in) :: PHI_BASIS_F(mnp,*)
+    real(r4), intent(in) :: MR_F(Nc,mnp,*)
+    integer(i4), intent(in) :: IN, IP
+    integer(i4), intent(in) :: INDXR, INDXL, PATH_BRKPT(*)
+    real(r4), intent(out) :: D_DELTA_DTNP(*)
+    integer(i4), intent(in) :: IER ! not used
+d45 11
+a55 14
+    real(r4) :: BETA_GL(Ng,20) = 0.0, BETA_ZS(20) = 0.0
+    Real(r4) :: DHDT_GL(Ng), DHDTH, DHDTL
+    real(r8) :: ETANP_SING
+    real(r8) :: GW_DHDZ(Ng)
+    Integer(i4) :: H_I
+    Real(r4) :: HH, HL
+    real(r8) :: HD, HTAN, HTAN2, HTXDHT
+    Integer(i4) :: MP, NGP1
+    Real(r4) :: PH, PL
+    Real(r4) :: RC
+    real(r8) :: SA, SB, SING1, SING2
+    real(r8) :: SUM1, SUM2
+    Real(r4) :: TH, TL, TP_GL(Ng,20) = 0.0, TP_ZS(20) = 0.0, VETAP(Ng)
+    Real(r4) :: ZH, ZL
+d62 1
+a62 1
+    htan2 = htan * htan
+d67 1
+a67 1
+    htxdht = htan * dh_dt_path(path_brkpt(1),ip,in)
+d76 6
+a81 5
+    zh = z_path(mp)
+    th = t_path(mp)
+    hh = h_path(mp)
+    ph = phi_path(mp)
+    hd = dble(hh) + RoC
+d83 1
+a83 1
+    dhdth = dh_dt_path(mp,ip,in)
+d85 1
+a85 1
+    do h_i = 1, IndxR
+d88 1
+d91 2
+a92 2
+      hh = h_path(mp)
+      if (hh < ht) exit
+d95 1
+a95 1
+      zh = z_path(mp)
+d98 1
+a98 1
+      th = t_path(mp)
+d101 1
+a101 1
+      ph = phi_path(mp)
+d104 1
+a104 1
+      hd = dble(hh) + RoC
+d107 1
+a107 1
+      if (abs(sa-sb) < 0.05) exit
+d110 1
+a110 1
+      dhdth = dh_dt_path(mp,ip,in)
+d112 1
+a112 1
+      rc = ref_corr(max(1,N_lvls-h_i))
+d116 2
+a117 1
+      call compute_beta_and_temp_power ( ph, th, zh )
+d119 1
+a119 1
+      call thermal_and_singularities ( ph, th, zh )
+d124 1
+d130 3
+a132 4
+!
+    h_i = IndxL - 1
+    mp = path_brkpt(2)
+    hh = h_path(mp)
+d136 1
+a136 1
+      hh = h_path(mp)
+d139 5
+a143 4
+    zh = z_path(mp)
+    th = t_path(mp)
+    ph = phi_path(mp)
+    hd = dble(hh) + RoC
+d145 1
+a145 1
+    dhdth = dh_dt_path(mp,ip,in)
+d150 1
+d153 1
+a153 1
+      hh = h_path(mp)
+d156 1
+a156 1
+      hd = dble(hh) + RoC
+d160 1
+a160 1
+      zh = z_path(mp)
+d163 1
+a163 1
+      th = t_path(mp)
+d166 1
+a166 1
+      ph = phi_path(mp)
+d169 1
+a169 1
+      dhdth = dh_dt_path(mp,ip,in)
+d171 1
+a171 1
+      rc = ref_corr(max(1,h_i-N_lvls+1))
+d175 2
+a176 1
+      call compute_beta_and_temp_power ( pl, tl, zl )
+d178 1
+a178 1
+      call thermal_and_singularities ( pl, tl, zl )
+d191 2
+a192 2
+! ------------------------------     ADD_SINGULARITIES_BACK_IN     -----
+    subroutine ADD_SINGULARITIES_BACK_IN
+d194 1
+a194 2
+! Add the 'singularities factors' back in, multiplied by their
+! respective analytical integral:
+d196 2
+a197 6
+      real(r8) :: DSDT, HD, DS, Q, R
+
+      dsdt = 0.0
+      hd = dble(hh) + RoC
+      ds = hd * hd - htan2
+      if (ds > 0.0) dsdt = (hd*dble(dhdth)-htxdht)/Sqrt(ds)
+d199 1
+a199 3
+      hd = dble(hl) + RoC
+      ds = hd * hd - htan2
+      if (ds > 0.0) dsdt = dsdt - (hd*dble(dhdtl)-htxdht)/Sqrt(ds)
+d201 15
+a215 2
+      q = sum1 + sing1 * abs(sb-sa)
+      r = sum2 + sing2 * dsdt * ps
+d217 1
+a217 7
+      d_delta_dtnp(h_i) = (q + r) * rc       ! for (in,ip)
+    end subroutine ADD_SINGULARITIES_BACK_IN
+! ----------------------------     COMPUTE_BETA_AND_TEMP_POWER     -----
+    subroutine COMPUTE_BETA_AND_TEMP_POWER ( FS, TS, ZS )
+      real(r4), intent(in) :: FS
+      real(r4), intent(in) :: TS
+      real(r4), intent(in) :: ZS
+d219 2
+a220 2
+      real(r4) :: ETAP, ETAZ
+      integer :: I, J, SPS_I
+d227 4
+a230 2
+        Call cs_intrp(zs,ts,Frq,N_lvls,mdb_pres,mdb_temp,         &
+   &              mdb_freq(1:max_no_freq,j),cs(:,:,:,j),beta_zs(j),tp_zs(j))
+d232 4
+a235 3
+          Call cs_intrp(z_GL(i),t_GL(i),Frq,N_lvls,mdb_pres,      &
+   &           mdb_temp,mdb_freq(1:max_no_freq,j),cs(:,:,:,j),beta_GL(i,j),   &
+   &           tp_GL(i,j))
+d240 1
+a240 1
+      Call get_one_eta(zs,t_basis,no_t,in,etaz)
+d242 1
+a242 1
+        etanp_sing = dble(etaz)
+d244 1
+a244 1
+        etanp_sing = etanp_sing * dble(etap)
+d246 1
+a247 2
+! --------------------------------     DEFINE_GL_GRID_ENTITIES     -----
+    subroutine DEFINE_GL_GRID_ENTITIES
+d249 1
+a249 5
+! Define the various GL grid entities for this sub-interval:
+!
+      real(r8) :: AYM
+      integer :: I, J
+      real(r8) :: XM, YM, Z1, Z2
+a250 19
+      z1 = dble(zl)
+      z2 = dble(zh)
+      xm = 0.5 * (z2 + z1)
+      ym = 0.5 * (z2 - z1)
+      aym = abs(ym)
+!
+      j = mp - Ng
+      do i = 1, Ng
+        z_GL(i) = z_path(j)
+        t_GL(i) = t_path(j)
+        h_GL(i) = h_path(j)
+        phi_GL(i) = phi_path(j)
+        dhdt_GL(i) = dh_dt_path(j,ip,in)
+        Gw_dHdZ(i) = Gw(i) * dhdz_path(j) * aym
+        Call get_one_eta(phi_GL(i),t_phi_basis,no_phi_t,ip,vetap(i))
+        j = j + 1
+      end do
+    end subroutine DEFINE_GL_GRID_ENTITIES
+! -----------------------------------------     GAUSS_LEGENDRE     -----
+d256 3
+a258 9
+      real(r8) :: DS, ETANP
+      real(r4) :: ETAZ, F
+      real(r8) :: FV1, FV2, HD, HD2, HYD
+      integer :: I, J
+      real(r8) :: Q
+      real(r4) :: PHI
+      real(r8) :: R
+      real(r4) :: RZ
+      integer :: SPS_I
+d268 2
+a269 2
+        Call get_one_eta(rz,t_basis,no_t,in,etaz)
+        etanp = dprod(etaz,vetap(i)) / dble(t_GL(i))
+d273 1
+a273 1
+        hd = dble(h_GL(i)) + RoC
+d275 1
+a275 1
+        hyd = dble(dhdt_GL(i)) * (2.0*hd2 - 3.0*htan2) + hd*htxdht
+d285 3
+a287 7
+          Call Two_d_polate(f_basis(1,j),mr_f(1,1,j),Nc,ncoeffs(j),     &
+   &                        phi_basis_f(1,j),no_phi_f(j),rz,phi,f)
+          if (f /= 0.0) then
+            q = dble(f) * beta_GL(i,j)
+            if (etanp > 0.0) fv1 = fv1 + q * etanp * tp_GL(i,j)
+            fv2 = fv2 + q
+          end if
+d297 1
+d299 2
+a300 1
+    subroutine THERMAL_AND_SINGULARITIES ( FS, TS, ZS )
+d304 4
+a307 8
+      real(r4), intent(in) :: FS
+      real(r4), intent(in) :: TS
+      real(r4), intent(in) :: ZS
+!
+      Real(r4) :: F
+      integer :: J
+      real(r8) :: Q
+      integer :: SPS_I
+d311 1
+d320 1
+a320 8
+! First: Two-Dimensional interpolation of the mixing ratio (in: zeta & phi)
+!
+        Call Two_d_polate(f_basis(1,j),mr_f(1,1,j),Nc,ncoeffs(j),      &
+   &                      phi_basis_f(1,j),no_phi_f(j),zs,fs,f)
+!
+! Now compute the 'singularities factors':
+!
+        q = dble(f) * beta_zs(j)
+d326 24
+d351 1
+a352 1
+
+a355 1
+!
+@
+
+
+1.1
+log
+@Initial conversion to Fortran 90
+@
+text
+@d15 1
+a15 1
+       "$Id: D_DELTA_DT_M,v 1.12 2000/02/08 19:54:57 vsnyder Exp $"
+d384 4
+a387 1
+! $Log: D_DELTA_DT_M,v $
+@
+

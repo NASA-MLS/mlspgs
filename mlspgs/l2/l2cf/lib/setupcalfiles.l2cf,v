@@ -1,0 +1,1671 @@
+head	1.54;
+access;
+symbols
+	v5-02-NRT-19:1.54
+	v6-00:1.54
+	v5-02-NRT-18:1.54
+	v5-02:1.49
+	v5-01-NRT-17:1.53
+	v5-01-NRT-16:1.53
+	v5-01-NRT-15:1.53
+	v5-01-NRT-14:1.52
+	neuralnetworks-1-0:1.51.0.4
+	cfm-single-freq-0-1:1.51.0.2
+	v5-01:1.49
+	v5-00:1.49
+	v4-23-TA133:1.49.0.8
+	mus-emls-1-70:1.49.0.6
+	rel-1-0-englocks-work:1.49.0.4
+	VUMLS1-00:1.49
+	VPL1-00:1.49
+	V4-22-NRT-08:1.49
+	VAM1-00:1.49
+	V4-21:1.49.0.2
+	V4-13:1.49
+	V4-12:1.49
+	V4-11:1.49
+	V4-10:1.49
+	V3-43:1.44
+	M4-00:1.47
+	V3-41:1.44
+	V3-40-PlusGM57:1.44.0.2
+	V2-24-NRT-04:1.35
+	V3-33:1.44
+	V2-24:1.35
+	V3-31:1.44
+	V3-30-NRT-05:1.44
+	cfm-01-00:1.44
+	V3-30:1.44
+	V3-20:1.44
+	V3-10:1.41
+	V2-23-NRT-02:1.35
+	V2-23:1.35
+	V2-22-NRT-01:1.35
+	V2-22:1.35
+	V2-21:1.35
+	V2-20:1.35
+	V2-11:1.35
+	V2-10:1.35
+	V2-00:1.35
+	V1-51:1.24
+	V1-50:1.24
+	V1-45:1.11
+	V1-44:1.11
+	V1-43:1.11;
+locks; strict;
+comment	@# @;
+
+
+1.54
+date	2023.12.14.21.22.25;	author pwagner;	state Exp;
+branches;
+next	1.53;
+
+1.53
+date	2021.08.05.22.33.45;	author pwagner;	state Exp;
+branches;
+next	1.52;
+
+1.52
+date	2021.07.22.23.10.56;	author pwagner;	state Exp;
+branches;
+next	1.51;
+
+1.51
+date	2020.03.05.23.52.32;	author pwagner;	state Exp;
+branches;
+next	1.50;
+
+1.50
+date	2019.12.12.00.56.22;	author pwagner;	state Exp;
+branches;
+next	1.49;
+
+1.49
+date	2014.04.03.17.38.37;	author pwagner;	state Exp;
+branches;
+next	1.48;
+
+1.48
+date	2014.03.06.18.39.34;	author pwagner;	state Exp;
+branches;
+next	1.47;
+
+1.47
+date	2012.05.02.16.49.02;	author pwagner;	state Exp;
+branches;
+next	1.46;
+
+1.46
+date	2012.04.05.19.14.56;	author pwagner;	state Exp;
+branches;
+next	1.45;
+
+1.45
+date	2012.03.12.17.01.11;	author pwagner;	state Exp;
+branches;
+next	1.44;
+
+1.44
+date	2010.04.12.17.43.43;	author pwagner;	state Exp;
+branches;
+next	1.43;
+
+1.43
+date	2010.03.31.18.22.15;	author pwagner;	state Exp;
+branches;
+next	1.42;
+
+1.42
+date	2010.02.10.00.47.42;	author pwagner;	state Exp;
+branches;
+next	1.41;
+
+1.41
+date	2009.06.23.17.35.15;	author pwagner;	state Exp;
+branches;
+next	1.40;
+
+1.40
+date	2008.11.06.23.07.05;	author pwagner;	state Exp;
+branches;
+next	1.39;
+
+1.39
+date	2008.08.22.17.22.41;	author pwagner;	state Exp;
+branches;
+next	1.38;
+
+1.38
+date	2008.06.19.19.12.54;	author pwagner;	state Exp;
+branches;
+next	1.37;
+
+1.37
+date	2008.05.13.16.48.56;	author pwagner;	state Exp;
+branches;
+next	1.36;
+
+1.36
+date	2008.03.11.18.24.55;	author pwagner;	state Exp;
+branches;
+next	1.35;
+
+1.35
+date	2006.06.09.20.48.42;	author pwagner;	state Exp;
+branches;
+next	1.34;
+
+1.34
+date	2006.06.05.01.48.23;	author lambert;	state Exp;
+branches;
+next	1.33;
+
+1.33
+date	2006.05.31.02.02.05;	author lambert;	state Exp;
+branches;
+next	1.32;
+
+1.32
+date	2006.05.26.16.51.39;	author lambert;	state Exp;
+branches;
+next	1.31;
+
+1.31
+date	2006.05.23.00.16.08;	author pwagner;	state Exp;
+branches;
+next	1.30;
+
+1.30
+date	2006.05.19.17.02.56;	author lambert;	state Exp;
+branches;
+next	1.29;
+
+1.29
+date	2006.05.17.22.32.25;	author lambert;	state Exp;
+branches;
+next	1.28;
+
+1.28
+date	2006.05.17.00.22.02;	author lambert;	state Exp;
+branches;
+next	1.27;
+
+1.27
+date	2006.05.16.20.14.05;	author lambert;	state Exp;
+branches;
+next	1.26;
+
+1.26
+date	2006.05.10.17.29.55;	author pwagner;	state Exp;
+branches;
+next	1.25;
+
+1.25
+date	2006.05.09.20.20.47;	author lambert;	state Exp;
+branches;
+next	1.24;
+
+1.24
+date	2004.12.10.01.28.24;	author livesey;	state Exp;
+branches;
+next	1.23;
+
+1.23
+date	2004.12.07.18.54.13;	author livesey;	state Exp;
+branches;
+next	1.22;
+
+1.22
+date	2004.11.18.20.19.46;	author livesey;	state Exp;
+branches;
+next	1.21;
+
+1.21
+date	2004.11.18.02.10.05;	author livesey;	state Exp;
+branches;
+next	1.20;
+
+1.20
+date	2004.11.17.23.48.07;	author livesey;	state Exp;
+branches;
+next	1.19;
+
+1.19
+date	2004.11.17.23.18.25;	author livesey;	state Exp;
+branches;
+next	1.18;
+
+1.18
+date	2004.11.13.02.54.37;	author livesey;	state Exp;
+branches;
+next	1.17;
+
+1.17
+date	2004.10.14.00.34.44;	author livesey;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2004.10.06.15.56.32;	author livesey;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2004.09.28.18.02.53;	author livesey;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2004.09.20.18.19.06;	author livesey;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2004.09.16.15.08.59;	author livesey;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2004.09.15.23.40.33;	author livesey;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2004.04.21.18.23.05;	author pwagner;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2004.04.06.00.33.15;	author livesey;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2004.04.01.00.24.57;	author livesey;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2004.03.05.19.48.52;	author livesey;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2004.03.05.19.00.23;	author livesey;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2004.03.05.18.48.44;	author livesey;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2004.02.27.23.01.19;	author livesey;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2004.02.26.19.14.43;	author michael;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2004.02.19.11.54.56;	author livesey;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2004.02.17.12.30.01;	author livesey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.02.12.02.25.03;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.54
+log
+@Added residual correction stuff; default macros
+@
+text
+@!divert(-1)
+;$Id: setupcalfiles.l2cf,v 1.53 2021/08/05 22:33:45 pwagner Exp $
+;; master input paths
+;; Make extensive use of the handy !defunlessdef macro
+;; which protects an already-defined setting from being overridden
+;; but otherwise gives it a default value
+!defunlessdef(calpath,!getdir(calpath))
+!defunlessdef(includecalpath,!getdir(includecalpath))
+!defunlessdef(pfaPath,!getdir(pfaPath))
+!defunlessdef(inpathl1boa,!getdir(inpathl1boa))
+!defunlessdef(inpathl1brad,!getdir(inpathl1brad))
+!defunlessdef(inpathl2pc,!getdir(inpathl2pc))
+!defunlessdef(inpathleapsec,!getdir(inpathleapsec))
+!defunlessdef(inpathcore,!getdir(inpathcore))
+!defunlessdef(inpathdao,!getdir(inpathdao))
+!defunlessdef(inpathgeos5pd,!getdir(inpathgeos5pd))
+!defunlessdef(inpathgeos5dd,!getdir(inpathgeos5dd))
+!defunlessdef(inpathgeos5pn,!getdir(inpathgeos5pn))
+!defunlessdef(inpathgeos5dn,!getdir(inpathgeos5dn))
+!defunlessdef(inpathcoreptan,!getdir(inpathcoreptan))
+!defunlessdef(inpathtruthl2gp,!getdir(inpathtruthl2gp))
+
+!defunlessdef(signalsPath,!getdir(signalsPath))
+!defunlessdef(spectroscopyPath,!getdir(spectroscopyPath))
+!defunlessdef(spectroscopyHDFPath,!getdir(spectroscopyHDFPath))
+!defunlessdef(sidebandPath,!getdir(sidebandPath))
+!defunlessdef(fovdirPath,!getdir(fovdirPath))
+!defunlessdef(systempPath,!getdir(systempPath))
+!defunlessdef(nbwPath,!getdir(nbwPath))
+!defunlessdef(antennaPath,!getdir(antennaPath))
+!defunlessdef(climatologyPath,!getdir(climatologyPath))
+!defunlessdef(filterPath,!getdir(filterPath))
+!defunlessdef(pfaPath,!getdir(pfaPath))
+!defunlessdef(pfgPath,!getdir(pfgPath))
+!defunlessdef(rccPath,!getdir(rccPath))
+
+; These may sometimes escape definition
+!defunlessdef(pfaVersion,!getdir(pfaVersion))
+!ifelse(!pfaVersion, {}, {
+!define(pfaVersion,{ME-03})
+})
+
+; Just in case the above paths were omitted from your overridepaths.sh file
+; Could we define a macro to help wih the following; e.g.
+; defunlessnotblank
+!ifelse(!includecalpath, {}, {
+!define(includecalpath,{!calpath})
+})
+!ifelse(!signalsPath, {}, {
+!define(signalsPath,{!includecalpath})
+})
+!ifelse(!spectroscopyPath, {}, {
+!define(spectroscopyPath,{!includecalpath})
+})
+!ifelse(!spectroscopyHDFPath, {}, {
+!define(spectroscopyHDFPath,{!calpath})
+})
+!ifelse(!sidebandPath, {}, {
+!define(sidebandPath,{!includecalpath/sbf-506})
+})
+!ifelse(!fovdirPath, {}, {
+!define(fovdirPath,{!includecalpath})
+})
+!ifelse(!systempPath, {}, {
+!define(systempPath,{!includecalpath})
+})
+!ifelse(!nbwPath, {}, {
+!define(nbwPath,{!includecalpath})
+})
+!ifelse(!antennaPath, {}, {
+!define(antennaPath,{!calpath})
+})
+!ifelse(!climatologyPath, {}, {
+!define(climatologyPath,{!calpath})
+})
+!ifelse(!filterPath, {}, {
+!define(filterPath,{!calpath})
+})
+!ifelse(!pfaPath, {}, {
+!define(pfaPath,{!calpath/PFA})
+})
+!ifelse(!pfgPath, {}, {
+!define(pfgPath,{!calpath})
+})
+!ifelse(!rccPath, {}, {
+!define(rccPath,{/users/pwagner/docs/mls})
+})
+
+
+!defunlessdef(signalsL2cf, {!signalsPath/MLS-Aura_L2Cal-Signals_v1-5-0_0000d000.l2cf})
+!defunlessdef(spectroscopyL2cf, {!spectroscopyPath/MLS-Aura_L2Cal-Spectroscopy-PFA_v4-0-3_0000d000.l2cf})
+!defunlessdef(spectroscopyFullL2cf, {!spectroscopyPath/MLS-Aura_L2Cal-Spectroscopy-all_v4-0-3_0000d000.l2cf})
+!defunlessdef(spectroscopyRtvlL2cf,{!spectroscopyL2cf})
+!defunlessdef(sidebandL2cf, {!sidebandPath/MLS-Aura_L2Cal-SBFraction_v5-0-6_2020d001.l2cf})
+!defunlessdef(fovdirL2cf, {!fovdirPath/MLS-Aura_L2Cal-FOV-Directions_v5-0-0_15adj_0000d000.l2cf})
+!defunlessdef(systempL2cf, {!systempPath/MLS-Aura_L2Cal-Tsys_v2-0-0_0000d000.l2cf})
+!defunlessdef(nbwL2cf, {!nbwPath/MLS-Aura_L2Cal-NBW_v2-0-0_0000d000.l2cf})
+!defunlessdef(rccASCII, {!rccPath/l2based_extended_residual_corrections.txt})
+
+; The next lot are arguments to forwardModelGlobal, so quoted.
+!ifdef(flagUsingPCF,{
+  !define(antennaFile,AAAP)
+  !define(climatologyFile,Climatologies)
+  !define(dacsFilterFile,DACSFilters)
+  !define(filterFile,-Filters)        ; Include - to avoid getting the DACSFilters file
+  !define(pfgFile,PFG_)               ; Include _ to avoid getting the PFG-rtvl file
+  !define(pfgRtvlFile,PFG)
+;   !define(pfaFiles,
+;   {['R1A', $
+;   'R1B', $
+;   'R2', $
+;   'R3', $
+;   'R4', $
+;   'R5H',$
+;   'R5V',$
+;   'DACS']})
+  !defunlessdef(PFAFiles, {5V,5H,R4,R3,R2,1B,1A,DACS})
+  !define(ElevOffsetHDF,{FOV})
+  !define(IsotopeRatioHDF,{IsotopeRatio})
+  !define(SBFractionHDF,{SBFraction})
+  !define(SystemTemperatureHDF,{SystemTemperature})
+  !define(NoiseBandwidthHDF,{NoiseBandwidth})
+  !define(MiscHDF,{Misc})
+  !define(spectroscopyHDF,{Spectroscopy})
+  !define(spectroscopyFullHDF,{Spectroscopy})
+  !define(spectroscopyRtvlHDF,{Spectroscopy})
+},{
+  !defunlessdef(climatologyVersion,{v1-7-8-WCM-CirT_2005-2014})
+  !defunlessdef(pfgVersion,{v3-0-0_0000d000})
+  !defunlessdef(antennaFile, {!antennaPath/MLS-Aura_L2Cal-AAAP_v2-0-0_0000d000.txt})
+  !defunlessdef(climatologyFile, {!climatologyPath/MLS-Aura_L2Cal-Climatologies_!climatologyVersion.txt})
+  !defunlessdef(filterFile, {!filterPath/MLS-Aura_L2Cal-Filters_v3-0-2_0000d000.txt})
+  !defunlessdef(dacsFilterFile, {!filterPath/MLS-Aura_L2Cal-DACSFilters_v1-5-1_0000d000.txt})
+  !defunlessdef(pfgFile, {!pfgPath/MLS-Aura_L2Cal-PFG_!pfgVersion.txt})
+  !defunlessdef(pfgRtvlFile,{!pfgFile})
+;  !defunlessdef(PFAFiles, 
+;   {['!pfaPath/PFA_R5V_!pfaVersion.h5', $
+;     '!pfaPath/PFA_R5H_!pfaVersion.h5', $
+;     '!pfaPath/PFA_R4_!pfaVersion.h5 ', $
+;     '!pfaPath/PFA_R3_!pfaVersion.h5 ', $
+;     '!pfaPath/PFA_R2_!pfaVersion.h5 ', $
+;     '!pfaPath/PFA_R1B_!pfaVersion.h5',$
+;     '!pfaPath/PFA_R1A_!pfaVersion.h5',$
+;     '!pfaPath/PFA_DACS_!pfaVersion.h5']})
+;   !define(pfaFiles,{!PFAFiles})
+  !defunlessdef(PFAFile5V,{!pfaPath/PFA_R5V_!pfaVersion.h5})
+  !defunlessdef(PFAFile5H,{!pfaPath/PFA_R5H_!pfaVersion.h5})
+  !defunlessdef(PFAFileR4,{!pfaPath/PFA_R4_!pfaVersion.h5})
+  !defunlessdef(PFAFileR3,{!pfaPath/PFA_R3_!pfaVersion.h5})
+  !defunlessdef(PFAFileR2,{!pfaPath/PFA_R2_!pfaVersion.h5})
+  !defunlessdef(PFAFile1B,{!pfaPath/PFA_R1B_!pfaVersion.h5})
+  !defunlessdef(PFAFile1A,{!pfaPath/PFA_R1A_!pfaVersion.h5})
+  !defunlessdef(PFAFileDACS,{!pfaPath/PFA_DACS_!pfaVersion.h5})
+  !defunlessdef(PFAFiles, {!PFAFile5V,!PFAFile5H,!PFAFileR4,!PFAFileR3,!PFAFileR2,!PFAFile1B,!PFAFile1A,!PFAFileDACS})
+  !defunlessdef(ElevOffsetHDF,{!calpath/MLS-Aura_L2Cal-ElevOffsets_v3-0-5_0000d000.h5})
+  !define(IsotopeRatioHDF,{!calpath/MLS-Aura_L2Cal-IsotopeRatios_v3-0-5_0000d000.h5})
+  !defunlessdef(SBFractionHDF,{!calpath/MLS-Aura_L2Cal-SBFractions_v3-0-5_0000d000.h5})
+  !define(SystemTemperatureHDF,{!calpath/MLS-Aura_L2Cal-SystemTemperatures_v3-0-5_0000d000.h5})
+  !define(NoiseBandwidthHDF,{!calpath/MLS-Aura_L2Cal-NoiseBandwidths_v3-0-5_0000d000.h5})
+  !define(MiscHDF,{!calpath/MLS-Aura_L2Cal-Misc_v3-0-5_0000d000.h5})
+  !defunlessdef(spectroscopyHDF,{!spectroscopyHDFPath/MLS-Aura_L2Cal-Spectroscopy-PFA_v3-0-5_0000d000.h5})
+  !defunlessdef(spectroscopyFullHDF,{!spectroscopyHDFPath/MLS-Aura_L2Cal-Spectroscopy-all_v3-0-5_0000d000.h5})
+  !define(spectroscopyRtvlHDF,{!spectroscopyHDF})
+})
+!define(PFAFile, {!TrimLast2Chars(!getNthItem($1,!PFAFiles))})
+;; output paths
+!defunlessdef(outpathl2gp,!getdir(outpathl2gp))
+!defunlessdef(outpathl2aux,!getdir(outpathl2aux))
+!defunlessdef(outpathl2fwm,!getdir(outpathl2fwm))
+!defunlessdef(outpathl1brad,!getdir(outpathl1brad))
+!defunlessdef(outpathtmp,!getdir(outpathtmp))
+
+;;
+;; Default macro settings
+;; (These were once scattered among separate files in mlspgs/l2/l2cf/lib
+;; or in the l2cf template itself)
+;; What about lesserparams.l2cf?
+;; They may be overridden if you use a -Df macrosfile with expandl2cf.sh
+;; or else -Dvariable=value on the m4 command line
+!defunlessdef(scanModelPrecision,{30 m})
+!defunlessdef(flagAutoSplitSources,{1})
+;; This is the list of bands that the readradiances macro is to read
+;; from the level 1 data.
+!defunlessdef(relevantBands,{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,22,23,24,25,27,28,29,30,31,32,33,34})
+
+;; Print debugging info if m4 called ith cmdline option -Ddee=bug
+!ifelse(!dee,{bug},{
+!divert!dnl
+calpath:             !calpath
+includecalpath:      !includecalpath
+inpathgeos5pd:       !inpathgeos5pd
+inpathgeos5dd:       !inpathgeos5dd
+inpathgeos5pn:       !inpathgeos5pn
+inpathgeos5dn:       !inpathgeos5dn
+inpathtruthl2gp:     !inpathtruthl2gp
+
+signalsPath:         !signalsPath      
+spectroscopyPath:    !spectroscopyPath 
+spectroscopyHDFPath: !spectroscopyHDFPath
+sidebandPath:        !sidebandPath
+fovdirPath:          !fovdirPath
+systempPath:         !systempPath
+nbwPath:             !nbwPath
+antennaPath:         !antennaPath
+
+antennaFile:         !antennaFile  
+climatologyFile:     !climatologyFile  
+filterFile:          !filterFile  
+dacsFilterFile:      !dacsFilterFile  
+pfgFile:             !pfgFile  
+pfaFiles:            !pfaFiles 
+PFAFiles(1):    !getNthItem(1,!PFAFiles)
+PFAFiles(2):    !getNthItem(2,!PFAFiles)
+PFAFiles(3):    !getNthItem(3,!PFAFiles)
+PFAFiles(4):    !getNthItem(4,!PFAFiles)
+PFAFiles(5):    !getNthItem(5,!PFAFiles)
+PFAFiles(6):    !getNthItem(6,!PFAFiles)
+PFAFiles(7):    !getNthItem(7,!PFAFiles)
+PFAFiles(8):    !getNthItem(8,!PFAFiles)
+
+SBFractionHDF:       !SBFractionHDF  
+spectroscopyHDF:     !spectroscopyHDF  
+spectroscopyFullHDF: !spectroscopyFullHDF  
+
+outpathl2gp:         !outpathl2gp  
+outpathl2aux:        !outpathl2aux 
+outpathl2fwm:        !outpathl2fwm 
+outpathl1brad:       !outpathl1brad
+outpathtmp:          !outpathtmp   
+!divert(-1)
+})
+;$Log: setupcalfiles.l2cf,v $
+;Revision 1.53  2021/08/05 22:33:45  pwagner
+;Correct file name of ElevOffsetHDF in PCF
+;
+;Revision 1.52  2021/07/22 23:10:56  pwagner
+;Allow user to define macro ElevOffsetHDF
+;
+;Revision 1.51  2020/03/05 23:52:32  pwagner
+;Cleaned quote-marks off macros; updated defaults for v5.00
+;
+;Revision 1.50  2019/12/12 00:56:22  pwagner
+;Makes use of new macros; prints if dee=bug
+;
+;Revision 1.49  2014/04/03 17:38:37  pwagner
+;May now predefine spectroscopyHDF
+;
+;Revision 1.48  2014/03/06 18:39:34  pwagner
+;Change default location for PFA files
+;
+;Revision 1.47  2012/05/02 16:49:02  pwagner
+;Corrected typo
+;
+;Revision 1.46  2012/04/05 19:14:56  pwagner
+;6 new cal files for filling lesser state qties
+;
+;Revision 1.45  2012/03/12 17:01:11  pwagner
+;Use latest Climatology that adds extinctionv2R3
+;
+;Revision 1.44  2010/04/12 17:43:43  pwagner
+;Uses new v1.7.7 Climatology file
+;
+;Revision 1.43  2010/03/31 18:22:15  pwagner
+;New Spectroscopy, PFA, and l2pc versions consistent with ME-03 series
+;
+;Revision 1.42  2010/02/10 00:47:42  pwagner
+;New default Climatology version
+;
+;Revision 1.41  2009/06/23 17:35:15  pwagner
+;Climatology now at version 1.7.4
+;
+;Revision 1.40  2008/11/06 23:07:05  pwagner
+;Brought up-to-date with v3.0.4 of Spectroscopy
+;
+;Revision 1.39  2008/08/22 17:22:41  pwagner
+;SBFraction version now 3-0-2
+;
+;Revision 1.38  2008/06/19 19:12:54  pwagner
+;All paths available from overridepaths.sh file
+;
+;Revision 1.37  2008/05/13 16:48:56  pwagner
+;PFA and Spectroscopy for FS series of v3 development tests
+;
+;Revision 1.36  2008/03/11 18:24:55  pwagner
+;The version used for !PFAversion-003 test
+;
+;Revision 1.35  2006/06/09 20:48:42  pwagner
+;Fixed bug when using PCF, PFAfiles
+;
+;Revision 1.34  2006/06/05 01:48:23  lambert
+;added full spectroscopy file
+;
+;Revision 1.33  2006/05/31 02:02:05  lambert
+;updated spectroscopy file to v2-0-6
+;
+;Revision 1.32  2006/05/26 16:51:39  lambert
+;updated climatology file to v1-7-3
+;
+;Revision 1.31  2006/05/23 00:16:08  pwagner
+;Added DACS PFA file for PCF-using runs
+;
+;Revision 1.30  2006/05/19 17:02:56  lambert
+;updated climatology file to v1-7-2
+;
+;Revision 1.29  2006/05/17 22:32:25  lambert
+;updated climatology file to v1-7-1
+;
+;Revision 1.28  2006/05/17 00:22:02  lambert
+;added PFAData_DACS_v2-0-5.h5 to PFA file list
+;
+!divert!dnl
+@
+
+
+1.53
+log
+@Correct file name of ElevOffsetHDF in PCF
+@
+text
+@d2 1
+a2 1
+;$Id: setupcalfiles.l2cf,v 1.52 2021/07/22 23:10:56 pwagner Exp $
+d35 1
+d85 3
+d98 1
+d172 14
+d233 3
+@
+
+
+1.52
+log
+@Allow user to define macro ElevOffsetHDF
+@
+text
+@d2 1
+a2 1
+;$Id: setupcalfiles.l2cf,v 1.51 2020/03/05 23:52:32 pwagner Exp $
+d113 1
+a113 1
+  !define(ElevOffsetHDF,{ElevOffset})
+d214 3
+@
+
+
+1.51
+log
+@Cleaned quote-marks off macros; updated defaults for v5.00
+@
+text
+@d2 1
+a2 1
+;$Id: setupcalfiles.l2cf,v 1.50 2019/12/12 00:56:22 pwagner Exp $
+d150 1
+a150 1
+  !define(ElevOffsetHDF,{!calpath/MLS-Aura_L2Cal-ElevOffsets_v3-0-5_0000d000.h5})
+d176 1
+d214 3
+@
+
+
+1.50
+log
+@Makes use of new macros; prints if dee=bug
+@
+text
+@d2 1
+a2 1
+;$Id: setupcalfiles.l2cf,v 1.49 2014/04/03 17:38:37 pwagner Exp $
+d58 1
+a58 1
+!define(sidebandPath,{!includecalpath})
+d87 2
+a88 2
+!defunlessdef(spectroscopyL2cf, {!spectroscopyPath/MLS-Aura_L2Cal-Spectroscopy-PFA_v3-0-5_0000d000.l2cf})
+!defunlessdef(spectroscopyFullL2cf, {!spectroscopyPath/MLS-Aura_L2Cal-Spectroscopy-all_v3-0-5_0000d000.l2cf})
+d90 2
+a91 2
+!defunlessdef(sidebandL2cf, {!sidebandPath/MLS-Aura_L2Cal-SBFraction_v3-0-2_0000d000.l2cf})
+!defunlessdef(fovdirL2cf, {!fovdirPath/MLS-Aura_L2Cal-FOV-Directions_v1-5-0_0000d000.l2cf})
+d97 16
+a112 15
+  !define(antennaFile,'AAAP')
+  !define(climatologyFile,'Climatologies')
+  !define(dacsFilterFile,'DACSFilters')
+  !define(filterFile,'-Filters')        ; Include - to avoid getting the DACSFilters file
+  !define(pfgFile,'PFG_')               ; Include _ to avoid getting the PFG-rtvl file
+  !define(pfgRtvlFile,'PFG')
+  !define(pfaFiles,
+  {['R1A', $
+  'R1B', $
+  'R2', $
+  'R3', $
+  'R4', $
+  'R5H',$
+  'R5V',$
+  'DACS']})
+d123 1
+a123 1
+  !defunlessdef(climatologyVersion,{v1-7-8_0000d000})
+d125 5
+a129 5
+  !defunlessdef(antennaFile, {'!antennaPath/MLS-Aura_L2Cal-AAAP_v2-0-0_0000d000.txt'})
+  !defunlessdef(climatologyFile, {'!climatologyPath/MLS-Aura_L2Cal-Climatologies_!climatologyVersion.txt'})
+  !defunlessdef(filterFile, {'!filterPath/MLS-Aura_L2Cal-Filters_v3-0-2_0000d000.txt'})
+  !defunlessdef(dacsFilterFile, {'!filterPath/MLS-Aura_L2Cal-DACSFilters_v1-5-1_0000d000.txt'})
+  !defunlessdef(pfgFile, {'!pfgPath/MLS-Aura_L2Cal-PFG_!pfgVersion.txt'})
+d131 19
+a149 10
+  !defunlessdef(PFAFiles, 
+  {['!pfaPath/PFA_R5V_!pfaVersion.h5', $
+    '!pfaPath/PFA_R5H_!pfaVersion.h5', $
+    '!pfaPath/PFA_R4_!pfaVersion.h5 ', $
+    '!pfaPath/PFA_R3_!pfaVersion.h5 ', $
+    '!pfaPath/PFA_R2_!pfaVersion.h5 ', $
+    '!pfaPath/PFA_R1B_!pfaVersion.h5',$
+    '!pfaPath/PFA_R1A_!pfaVersion.h5',$
+    '!pfaPath/PFA_DACS_!pfaVersion.h5']})
+  !define(pfaFiles,{!PFAFiles})
+d160 1
+d192 9
+d213 3
+@
+
+
+1.49
+log
+@May now predefine spectroscopyHDF
+@
+text
+@d2 1
+a2 1
+;$Id: setupcalfiles.l2cf,v 1.48 2014/03/06 18:39:34 pwagner Exp $
+d4 18
+a21 29
+!ifdef(calpath,{},{!define(calpath,!getdir(calpath))})
+!ifdef(includecalpath,{},{!define(includecalpath,!getdir(includecalpath))})
+!ifdef(pfaPath,{},{!define(pfaPath,!getdir(pfaPath))})
+!ifdef(inpathl1boa,{},{!define(inpathl1boa,!getdir(inpathl1boa))})
+!ifdef(inpathl1brad,{},{!define(inpathl1brad,!getdir(inpathl1brad))})
+!ifdef(inpathl2pc,{},{!define(inpathl2pc,!getdir(inpathl2pc))})
+!ifdef(inpathleapsec,{},{!define(inpathleapsec,!getdir(inpathleapsec))})
+!ifdef(inpathcore,{},{!define(inpathcore,!getdir(inpathcore))})
+!ifdef(inpathdao,{},{!define(inpathdao,!getdir(inpathdao))})
+!ifdef(inpathgeos5pd,{},{!define(inpathgeos5pd,!getdir(inpathgeos5pd))})
+!ifdef(inpathgeos5dd,{},{!define(inpathgeos5dd,!getdir(inpathgeos5dd))})
+!ifdef(inpathgeos5pn,{},{!define(inpathgeos5pn,!getdir(inpathgeos5pn))})
+!ifdef(inpathgeos5dn,{},{!define(inpathgeos5dn,!getdir(inpathgeos5dn))})
+!ifdef(inpathcoreptan,{},{!define(inpathcoreptan,!getdir(inpathcoreptan))})
+!ifdef(inpathtruthl2gp,{},{!define(inpathtruthl2gp,!getdir(inpathtruthl2gp))})
+
+; The first are l2cfs for an include, so unquoted
+!ifdef(signalsPath,{},{!define(signalsPath,!getdir(signalsPath))})
+!ifdef(spectroscopyPath,{},{!define(spectroscopyPath,!getdir(spectroscopyPath))})
+!ifdef(spectroscopyHDFPath,{},{!define(spectroscopyHDFPath,!getdir(spectroscopyHDFPath))})
+!ifdef(sidebandPath,{},{!define(sidebandPath,!getdir(sidebandPath))})
+!ifdef(fovdirPath,{},{!define(fovdirPath,!getdir(fovdirPath))})
+!ifdef(systempPath,{},{!define(systempPath,!getdir(systempPath))})
+!ifdef(nbwPath,{},{!define(nbwPath,!getdir(nbwPath))})
+!ifdef(antennaPath,{},{!define(antennaPath,!getdir(antennaPath))})
+!ifdef(climatologyPath,{},{!define(climatologyPath,!getdir(climatologyPath))})
+!ifdef(filterPath,{},{!define(filterPath,!getdir(filterPath))})
+!ifdef(pfaPath,{},{!define(pfaPath,!getdir(pfaPath))})
+!ifdef(pfgPath,{},{!define(pfgPath,!getdir(pfgPath))})
+d23 15
+a37 2
+; ! This may not always be the same as l2pcVersion
+!ifdef(pfaVersion,{},{!define(pfaVersion,!getdir(pfaVersion))})
+d43 2
+d86 8
+a93 24
+!ifdef(signalsL2cf, {}, {
+!define(signalsL2cf, {!signalsPath/MLS-Aura_L2Cal-Signals_v1-5-0_0000d000.l2cf})
+})
+!ifdef(spectroscopyL2cf, {}, {
+!define(spectroscopyL2cf, {!spectroscopyPath/MLS-Aura_L2Cal-Spectroscopy-PFA_v3-0-5_0000d000.l2cf})
+})
+!ifdef(spectroscopyFullL2cf, {}, {
+!define(spectroscopyFullL2cf, {!spectroscopyPath/MLS-Aura_L2Cal-Spectroscopy-all_v3-0-5_0000d000.l2cf})
+})
+!ifdef(spectroscopyRtvlL2cf, {}, {
+!define(spectroscopyRtvlL2cf,{!spectroscopyL2cf})
+})
+!ifdef(sidebandL2cf, {}, {
+!define(sidebandL2cf, {!sidebandPath/MLS-Aura_L2Cal-SBFraction_v3-0-2_0000d000.l2cf})
+})
+!ifdef(fovdirL2cf, {}, {
+!define(fovdirL2cf, {!fovdirPath/MLS-Aura_L2Cal-FOV-Directions_v1-5-0_0000d000.l2cf})
+})
+!ifdef(systempL2cf, {}, {
+!define(systempL2cf, {!systempPath/MLS-Aura_L2Cal-Tsys_v2-0-0_0000d000.l2cf})
+})
+!ifdef(nbwL2cf, {}, {
+!define(nbwL2cf, {!nbwPath/MLS-Aura_L2Cal-NBW_v2-0-0_0000d000.l2cf})
+})
+d122 9
+a130 20
+  !ifdef(antennaFile, {}, {
+  !define(antennaFile, {'!antennaPath/MLS-Aura_L2Cal-AAAP_v2-0-0_0000d000.txt'})
+  })
+  !ifdef(climatologyFile, {}, {
+  !define(climatologyFile, {'!climatologyPath/MLS-Aura_L2Cal-Climatologies_v1-7-8_0000d000.txt'})
+  })
+  !ifdef(filterFile, {}, {
+  !define(filterFile, {'!filterPath/MLS-Aura_L2Cal-Filters_v3-0-2_0000d000.txt'})
+  })
+  !ifdef(dacsFilterFile, {}, {
+  !define(dacsFilterFile, {'!filterPath/MLS-Aura_L2Cal-DACSFilters_v1-5-1_0000d000.txt'})
+  })
+  !ifdef(pfgFile, {}, {
+  !define(pfgFile, {'!pfgPath/MLS-Aura_L2Cal-PFG_v3-0-0_0000d000.txt'})
+  })
+  !ifdef(pfgRtvlFile, {}, {
+  !define(pfgRtvlFile,{!pfgFile})
+  })
+  !ifdef(pfaFiles, {}, {
+  !define(pfaFiles, 
+d139 1
+a139 1
+  })
+d142 1
+a142 1
+  !define(SBFractionHDF,{!calpath/MLS-Aura_L2Cal-SBFractions_v3-0-5_0000d000.h5})
+d146 2
+a147 6
+  !ifdef(spectroscopyHDF, {}, {
+  !define(spectroscopyHDF,{!spectroscopyHDFPath/MLS-Aura_L2Cal-Spectroscopy-PFA_v3-0-5_0000d000.h5})
+  })
+  !ifdef(spectroscopyHDF, {}, {
+  !define(spectroscopyFullHDF,{!spectroscopyHDFPath/MLS-Aura_L2Cal-Spectroscopy-all_v3-0-5_0000d000.h5})
+  })
+d151 41
+a191 5
+!ifdef(outpathl2gp,{},{!define(outpathl2gp,!getdir(outpathl2gp))})
+!ifdef(outpathl2aux,{},{!define(outpathl2aux,!getdir(outpathl2aux))})
+!ifdef(outpathl2fwm,{},{!define(outpathl2fwm,!getdir(outpathl2fwm))})
+!ifdef(outpathl1brad,{},{!define(outpathl1brad,!getdir(outpathl1brad))})
+!ifdef(outpathtmp,{},{!define(outpathtmp,!getdir(outpathtmp))})
+d193 3
+@
+
+
+1.48
+log
+@Change default location for PFA files
+@
+text
+@d2 1
+a2 1
+;$Id: setupcalfiles.l2cf,v 1.47 2012/05/02 16:49:02 pwagner Exp $
+d169 1
+d171 2
+d174 1
+d184 3
+@
+
+
+1.47
+log
+@Corrected typo
+@
+text
+@d2 1
+a2 1
+;$Id: setupcalfiles.l2cf,v 1.46 2012/04/05 19:14:56 pwagner Exp $
+d75 1
+a75 1
+!define(pfaPath,{!calpath})
+d180 3
+@
+
+
+1.46
+log
+@6 new cal files for filling lesser state qties
+@
+text
+@d2 1
+a2 1
+;$Id: setupcalfiles.l2cf,v 1.45 2012/03/12 17:01:11 pwagner Exp $
+d168 1
+a168 1
+  !define(MiscHDF,{!calpath/MLS-Aura_L2Cal-Miscs_v3-0-5_0000d000.h5})
+d180 3
+@
+
+
+1.45
+log
+@Use latest Climatology that adds extinctionv2R3
+@
+text
+@d2 1
+a2 1
+;$Id: setupcalfiles.l2cf,v 1.44 2010/04/12 17:43:43 pwagner Exp $
+d124 6
+d163 6
+d180 3
+@
+
+
+1.44
+log
+@Uses new v1.7.7 Climatology file
+@
+text
+@d2 1
+a2 1
+;$Id: setupcalfiles.l2cf,v 1.43 2010/03/31 18:22:15 pwagner Exp $
+d132 1
+a132 1
+  !define(climatologyFile, {'!climatologyPath/MLS-Aura_L2Cal-Climatologies_v1-7-7_0000d000.txt'})
+d168 3
+@
+
+
+1.43
+log
+@New Spectroscopy, PFA, and l2pc versions consistent with ME-03 series
+@
+text
+@d2 1
+a2 1
+;$Id: setupcalfiles.l2cf,v 1.42 2010/02/10 00:47:42 pwagner Exp $
+d132 1
+a132 1
+  !define(climatologyFile, {'!climatologyPath/MLS-Aura_L2Cal-Climatologies_v1-7-6_0000d000.txt'})
+d168 3
+@
+
+
+1.42
+log
+@New default Climatology version
+@
+text
+@d2 1
+a2 1
+;$Id: setupcalfiles.l2cf,v 1.41 2009/06/23 17:35:15 pwagner Exp $
+d37 1
+a37 1
+!define(pfaVersion,{FS-04})
+d86 1
+a86 1
+!define(spectroscopyL2cf, {!spectroscopyPath/MLS-Aura_L2Cal-Spectroscopy-PFA_v3-0-4_0000d000.l2cf})
+d89 1
+a89 1
+!define(spectroscopyFullL2cf, {!spectroscopyPath/MLS-Aura_L2Cal-Spectroscopy-all_v3-0-4_0000d000.l2cf})
+d157 2
+a158 2
+  !define(spectroscopyHDF,{!spectroscopyHDFPath/MLS-Aura_L2Cal-Spectroscopy-PFA_v3-0-4_0000d000.h5})
+  !define(spectroscopyFullHDF,{!spectroscopyHDFPath/MLS-Aura_L2Cal-Spectroscopy-all_v3-0-4_0000d000.h5})
+d168 3
+@
+
+
+1.41
+log
+@Climatology now at version 1.7.4
+@
+text
+@d2 1
+a2 1
+;$Id: setupcalfiles.l2cf,v 1.40 2008/11/06 23:07:05 pwagner Exp $
+d132 1
+a132 1
+  !define(climatologyFile, {'!climatologyPath/MLS-Aura_L2Cal-Climatologies_v1-7-4_0000d000.txt'})
+d168 3
+@
+
+
+1.40
+log
+@Brought up-to-date with v3.0.4 of Spectroscopy
+@
+text
+@d2 1
+a2 1
+;$Id: setupcalfiles.l2cf,v 1.39 2008/08/22 17:22:41 pwagner Exp $
+d132 1
+a132 1
+  !define(climatologyFile, {'!climatologyPath/MLS-Aura_L2Cal-Climatologies_v1-7-3_0000d000.txt'})
+d168 3
+@
+
+
+1.39
+log
+@SBFraction version now 3-0-2
+@
+text
+@d2 1
+a2 1
+;$Id: setupcalfiles.l2cf,v 1.38 2008/06/19 19:12:54 pwagner Exp $
+d37 1
+a37 1
+!define(pfaVersion,{FS-03})
+d86 1
+a86 1
+!define(spectroscopyL2cf, {!spectroscopyPath/MLS-Aura_L2Cal-Spectroscopy-PFA_v3-0-0_0000d000.l2cf})
+d89 1
+a89 1
+!define(spectroscopyFullL2cf, {!spectroscopyPath/MLS-Aura_L2Cal-Spectroscopy_v3-0-0_0000d000.l2cf})
+d157 2
+a158 2
+  !define(spectroscopyHDF,{!spectroscopyHDFPath/MLS-Aura_L2Cal-Spectroscopy-PFA_v3-0-0_0000d000.h5})
+  !define(spectroscopyFullHDF,{!spectroscopyHDFPath/MLS-Aura_L2Cal-Spectroscopy_v3-0-0_0000d000.h5})
+d168 3
+@
+
+
+1.38
+log
+@All paths available from overridepaths.sh file
+@
+text
+@d2 1
+a2 1
+;$Id: setupcalfiles.l2cf,v 1.37 2008/05/13 16:48:56 pwagner Exp $
+d95 1
+a95 1
+!define(sidebandL2cf, {!sidebandPath/MLS-Aura_L2Cal-SBFraction_v2-0-0_0000d000.l2cf})
+d168 3
+@
+
+
+1.37
+log
+@PFA and Spectroscopy for FS series of v3 development tests
+@
+text
+@d2 17
+a18 1
+;$Id: setupcalfiles.l2cf,v 1.36 2008/03/11 18:24:55 pwagner Exp $
+d21 21
+a41 1
+!ifdef(includecalpath, {}, {
+d44 1
+a44 1
+!ifdef(signalsPath, {}, {
+d47 1
+a47 1
+!ifdef(spectroscopyPath, {}, {
+d50 4
+a53 1
+!ifdef(sidebandPath, {}, {
+d56 1
+a56 1
+!ifdef(fovdirPath, {}, {
+d59 1
+a59 1
+!ifdef(systempPath, {}, {
+d62 1
+a62 1
+!ifdef(nbwPath, {}, {
+d65 1
+a65 1
+!ifdef(antennaPath, {}, {
+d68 1
+a68 1
+!ifdef(climatologyPath, {}, {
+d71 1
+a71 1
+!ifdef(filterPath, {}, {
+d74 1
+a74 1
+!ifdef(pfaPath, {}, {
+d77 1
+a77 1
+!ifdef(pfgPath, {}, {
+d148 8
+a155 8
+  {['!pfaPath/PFA_R5V_FS-03.h5', $
+    '!pfaPath/PFA_R5H_FS-03.h5', $
+    '!pfaPath/PFA_R4_FS-03.h5 ', $
+    '!pfaPath/PFA_R3_FS-03.h5 ', $
+    '!pfaPath/PFA_R2_FS-03.h5 ', $
+    '!pfaPath/PFA_R1B_FS-03.h5',$
+    '!pfaPath/PFA_R1A_FS-03.h5',$
+    '!pfaPath/PFA_DACS_FS-03.h5']})
+d157 2
+a158 2
+  !define(spectroscopyHDF,{!spectroscopyPath/MLS-Aura_L2Cal-Spectroscopy-PFA_v3-0-0_0000d000.h5})
+  !define(spectroscopyFullHDF,{!spectroscopyPath/MLS-Aura_L2Cal-Spectroscopy_v3-0-0_0000d000.h5})
+d161 6
+d168 3
+d172 1
+a172 1
+;The version used for FS-03-003 test
+@
+
+
+1.36
+log
+@The version used for FS-03-003 test
+@
+text
+@d1 2
+a2 1
+;$Id: setupcalfiles.l2cf,v 1.35 2006/06/09 20:48:42 pwagner Exp $
+d47 1
+a47 1
+!define(spectroscopyL2cf, {!spectroscopyPath/MLS-Aura_L2Cal-Spectroscopy-PFA_v2-0-6_0000d000.l2cf})
+d50 1
+a50 1
+!define(spectroscopyFullL2cf, {!spectroscopyPath/MLS-Aura_L2Cal-Spectroscopy_v2-0-6_0000d000.l2cf})
+d85 3
+d109 12
+a120 9
+  {['/users/vsnyder/mlspgs/tables/PFAData_R5V_v2-0-6-2007-11-29.h5', $
+    '/users/vsnyder/mlspgs/tables/PFAData_R5H_v2-0-6-2007-11-29.h5', $
+    '/users/vsnyder/mlspgs/tables/PFAData_R4_v2-0-6-2007-11-29.h5 ', $
+    '/users/vsnyder/mlspgs/tables/PFAData_R3_v2-0-6-2007-11-29.h5 ', $
+    '/users/vsnyder/mlspgs/tables/PFAData_R2_v2-0-6-2007-11-29.h5 ', $
+    '/users/vsnyder/mlspgs/tables/PFAData_R1B_v2-0-6-2007-11-29.h5',$
+    '/users/vsnyder/mlspgs/tables/PFAData_R1A_v2-0-6-2007-11-29.h5',$
+    '!pfaPath/PFAData_DACS_v2-0-5.h5']})
+  })
+d123 3
+d150 1
+@
+
+
+1.35
+log
+@Fixed bug when using PCF, PFAfiles
+@
+text
+@d1 1
+a1 1
+;$Id: setupcalfiles.l2cf,v 1.34 2006/06/05 01:48:23 lambert Exp $
+d92 1
+a92 1
+  !define(filterFile, {'!filterPath/MLS-Aura_L2Cal-Filters_v1-5-0_0000d000.txt'})
+d98 1
+a98 1
+  !define(pfgFile, {'!pfgPath/MLS-Aura_L2Cal-PFG_v2-0-4_0000d000.txt'})
+d105 8
+a112 8
+  {['!pfaPath/PFAData_R1A_v2-0-5.h5', $
+  '!pfaPath/PFAData_R1B_v2-0-5.h5', $
+  '!pfaPath/PFAData_R2_v2-0-5.h5', $
+  '!pfaPath/PFAData_R3_v2-0-5.h5', $
+  '!pfaPath/PFAData_R4_v2-0-6.h5', $
+  '!pfaPath/PFAData_R5H_v2-0-5.h5',$
+  '!pfaPath/PFAData_R5V_v2-0-5.h5',$
+  '!pfaPath/PFAData_DACS_v2-0-5.h5']})
+d116 3
+@
+
+
+1.34
+log
+@added full spectroscopy file
+@
+text
+@d1 1
+a1 1
+;$Id: setupcalfiles.l2cf,v 1.33 2006/05/31 02:02:05 lambert Exp $
+d75 2
+a76 2
+  !define(pfaFiles, {
+  'R1A', $
+d116 3
+@
+
+
+1.33
+log
+@updated spectroscopy file to v2-0-6
+@
+text
+@d1 1
+a1 1
+;$Id: setupcalfiles.l2cf,v 1.32 2006/05/26 16:51:39 lambert Exp $
+d48 3
+d109 1
+a109 1
+  '!pfaPath/PFAData_R4_v2-0-5.h5', $
+d116 3
+@
+
+
+1.32
+log
+@updated climatology file to v1-7-3
+@
+text
+@d1 1
+a1 1
+;$Id: setupcalfiles.l2cf,v 1.31 2006/05/23 00:16:08 pwagner Exp $
+d46 1
+a46 1
+!define(spectroscopyL2cf, {!spectroscopyPath/MLS-Aura_L2Cal-Spectroscopy-PFA_v2-0-5_0000d000.l2cf})
+d113 3
+@
+
+
+1.31
+log
+@Added DACS PFA file for PCF-using runs
+@
+text
+@d1 1
+a1 1
+;$Id: setupcalfiles.l2cf,v 1.30 2006/05/19 17:02:56 lambert Exp $
+d86 1
+a86 1
+  !define(climatologyFile, {'!climatologyPath/MLS-Aura_L2Cal-Climatologies_v1-7-2_0000d000.txt'})
+d113 3
+@
+
+
+1.30
+log
+@updated climatology file to v1-7-2
+@
+text
+@d1 1
+a1 1
+;$Id: setupcalfiles.l2cf,v 1.29 2006/05/17 22:32:25 lambert Exp $
+d79 2
+a80 1
+  'R5V']})
+d113 3
+@
+
+
+1.29
+log
+@updated climatology file to v1-7-1
+@
+text
+@d1 1
+a1 1
+;$Id: setupcalfiles.l2cf,v 1.28 2006/05/17 00:22:02 lambert Exp $
+d85 1
+a85 1
+  !define(climatologyFile, {'!climatologyPath/MLS-Aura_L2Cal-Climatologies_v1-7-1_0000d000.txt'})
+d112 3
+@
+
+
+1.28
+log
+@added PFAData_DACS_v2-0-5.h5 to PFA file list
+@
+text
+@d1 1
+a1 1
+;$Id: setupcalfiles.l2cf,v 1.27 2006/05/16 20:14:05 lambert Exp $
+d85 1
+a85 1
+  !define(climatologyFile, {'!climatologyPath/MLS-Aura_L2Cal-Climatologies_v1-5-2_0000d000.txt'})
+d111 4
+a114 1
+;$Log$
+@
+
+
+1.27
+log
+@updated entries for Tsys and NBW cal files
+@
+text
+@d1 1
+a1 1
+;$Id: setupcalfiles.l2cf,v 1.26 2006/05/10 17:29:55 pwagner Exp $
+d107 2
+a108 1
+  '!pfaPath/PFAData_R5V_v2-0-5.h5']})
+d111 1
+a111 1
+
+@
+
+
+1.26
+log
+@Corrected bug setting name of nbw path
+@
+text
+@d1 1
+a1 1
+;$Id: setupcalfiles.l2cf,v 1.25 2006/05/09 20:20:47 lambert Exp $
+d58 1
+a58 1
+!define(systempL2cf, {!systempPath/MLS-Aura_L2Cal-Tsys_v1-5-0_0000d000.l2cf})
+d61 1
+a61 1
+!define(nbwL2cf, {!nbwPath/MLS-Aura_L2Cal-NBW_v1-5-0_0000d000.l2cf})
+@
+
+
+1.25
+log
+@defines latest calibration files; allows individual path settings for each file
+@
+text
+@d1 1
+a1 1
+;$Id$
+d22 2
+a23 2
+!ifdef(nbw, {}, {
+!define(nbw,{!includecalpath})
+@
+
+
+1.24
+log
+@Points to new spectroscopy files.  Main change is new OH line width.
+Also some clean ups in the 'rtvl' file for R2 O3 lines.
+@
+text
+@d1 1
+a1 3
+; This l2cf fragment identifies the various calibration files we might
+; be using.  It's a replacement for clarifypaths.l2cf which also served
+; this role, but tried to do other, unnecessary things.
+d4 59
+a62 7
+!define(signalsL2cf,{!calpath/MLS-Aura_L2Cal-Signals_v1-5-0_0000d000.l2cf})
+!define(spectroscopyL2cf,{!calpath/MLS-Aura_L2Cal-Spectroscopy_v1-5-7_0000d000.l2cf})
+!define(spectroscopyRtvlL2cf,{!calpath/MLS-Aura_L2Cal-Spectroscopy-rtvl_v1-5-7_0000d000.l2cf})
+!define(sidebandL2cf,{!calpath/MLS-Aura_L2Cal-SBFraction_v1-5-3_0000d000.l2cf})
+!define(fovdirL2cf,{!calpath/MLS-Aura_L2Cal-FOV-Directions_v1-5-0_0000d000.l2cf})
+!define(systempL2cf,{!calpath/MLS-Aura_L2Cal-Tsys_v1-5-0_0000d000.l2cf})
+!define(nbwL2cf,{!calpath/MLS-Aura_L2Cal-NBW_v1-5-0_0000d000.l2cf})
+d64 1
+a64 1
+; The next lot are arguments to fowardModelGlobal, so quoted.
+d71 9
+a79 1
+  !define(pfgRtvlFile,'PFG-rtvl')
+d81 28
+a108 6
+  !define(antennaFile,'!calpath/MLS-Aura_L2Cal-AAAP_v1-5-0_0000d000.txt')
+  !define(climatologyFile,'!calpath/MLS-Aura_L2Cal-Climatologies_v1-5-2_0000d000.txt')
+  !define(filterFile,'!calpath/MLS-Aura_L2Cal-Filters_v1-5-0_0000d000.txt')
+  !define(dacsFilterFile,'!calpath/MLS-Aura_L2Cal-DACSFilters_v1-5-1_0000d000.txt')
+  !define(pfgFile,'!calpath/MLS-Aura_L2Cal-PFG_v1-5-0_0000d000.txt')
+  !define(pfgRtvlFile,'!calpath/MLS-Aura_L2Cal-PFG-rtvl_v1-5-0_0000d000.txt')
+@
+
+
+1.23
+log
+@Minor change to OH climatology.
+@
+text
+@d7 2
+a8 2
+!define(spectroscopyL2cf,{!calpath/MLS-Aura_L2Cal-Spectroscopy_v1-5-6_0000d000.l2cf})
+!define(spectroscopyRtvlL2cf,{!calpath/MLS-Aura_L2Cal-Spectroscopy-rtvl_v1-5-6_0000d000.l2cf})
+@
+
+
+1.22
+log
+@OK, back to the new DACS filters file.
+@
+text
+@d24 1
+a24 1
+  !define(climatologyFile,'!calpath/MLS-Aura_L2Cal-Climatologies_v1-5-1_0000d000.txt')
+@
+
+
+1.21
+log
+@New v1.5.1 climatology file (different OH)
+@
+text
+@d26 1
+a26 1
+  !define(dacsFilterFile,'!calpath/MLS-Aura_L2Cal-DACSFilters_v1-5-0_0000d000.txt')
+@
+
+
+1.20
+log
+@New sideband fractions (v1-5-3) incorporating trippler replacement values.
+Also reverted to older DACS filters file, L1B is not yet ready to support it.
+@
+text
+@d24 1
+a24 1
+  !define(climatologyFile,'!calpath/MLS-Aura_L2Cal-Climatologies_v1-5-0_0000d000.txt')
+@
+
+
+1.19
+log
+@Pointed to new DACSFilters file which has the LO spurs removed (they're
+taken care of in L1B now).
+@
+text
+@d9 1
+a9 1
+!define(sidebandL2cf,{!calpath/MLS-Aura_L2Cal-SBFraction_v1-5-1_0000d000.l2cf})
+d26 1
+a26 1
+  !define(dacsFilterFile,'!calpath/MLS-Aura_L2Cal-DACSFilters_v1-5-1_0000d000.txt')
+@
+
+
+1.18
+log
+@Pointed to new v1-5-6 spectroscopy file which has new O3 continuum in R4
+and some new O3 lines here and there.
+@
+text
+@d26 1
+a26 1
+  !define(dacsFilterFile,'!calpath/MLS-Aura_L2Cal-DACSFilters_v1-5-0_0000d000.txt')
+@
+
+
+1.17
+log
+@New spectroscopy (v1-5-2 more O3 liens), new sideband fractions (v1-5-1
+for R4).
+@
+text
+@d7 2
+a8 2
+!define(spectroscopyL2cf,{!calpath/MLS-Aura_L2Cal-Spectroscopy_v1-5-5_0000d000.l2cf})
+!define(spectroscopyRtvlL2cf,{!calpath/MLS-Aura_L2Cal-Spectroscopy-rtvl_v1-5-5_0000d000.l2cf})
+@
+
+
+1.16
+log
+@Change to new spectroscopy that includes more ozone lines in R3.
+@
+text
+@d7 3
+a9 3
+!define(spectroscopyL2cf,{!calpath/MLS-Aura_L2Cal-Spectroscopy_v1-5-4_0000d000.l2cf})
+!define(spectroscopyRtvlL2cf,{!calpath/MLS-Aura_L2Cal-Spectroscopy-rtvl_v1-5-4_0000d000.l2cf})
+!define(sidebandL2cf,{!calpath/MLS-Aura_L2Cal-SBFraction_v1-5-0_0000d000.l2cf})
+@
+
+
+1.15
+log
+@Upgraded to the v1-5-3 spectroscopy with another new O3 continuum value
+for O3_R4
+@
+text
+@d7 2
+a8 2
+!define(spectroscopyL2cf,{!calpath/MLS-Aura_L2Cal-Spectroscopy_v1-5-3_0000d000.l2cf})
+!define(spectroscopyRtvlL2cf,{!calpath/MLS-Aura_L2Cal-Spectroscopy-rtvl_v1-5-3_0000d000.l2cf})
+@
+
+
+1.14
+log
+@New spectroscopy file with fixed R4 continuum
+@
+text
+@d7 2
+a8 2
+!define(spectroscopyL2cf,{!calpath/MLS-Aura_L2Cal-Spectroscopy_v1-5-2_0000d000.l2cf})
+!define(spectroscopyRtvlL2cf,{!calpath/MLS-Aura_L2Cal-Spectroscopy-rtvl_v1-5-2_0000d000.l2cf})
+@
+
+
+1.13
+log
+@Updated spectroscopy file to fix problem with lines in THz.
+@
+text
+@d7 2
+a8 2
+!define(spectroscopyL2cf,{!calpath/MLS-Aura_L2Cal-Spectroscopy_v1-5-1_0000d000.l2cf})
+!define(spectroscopyRtvlL2cf,{!calpath/MLS-Aura_L2Cal-Spectroscopy-rtvl_v1-5-1_0000d000.l2cf})
+@
+
+
+1.12
+log
+@Point to v1-5-0 files
+@
+text
+@d7 2
+a8 2
+!define(spectroscopyL2cf,{!calpath/MLS-Aura_L2Cal-Spectroscopy_v1-5-0_0000d000.l2cf})
+!define(spectroscopyRtvlL2cf,{!calpath/MLS-Aura_L2Cal-Spectroscopy-rtvl_v1-5-0_0000d000.l2cf})
+@
+
+
+1.11
+log
+@Quotes file name fragments if using PCF
+@
+text
+@d6 7
+a12 7
+!define(signalsL2cf,{!calpath/MLS-Aura_L2Cal-Signals_v1-4-0_0000d000.l2cf})
+!define(spectroscopyL2cf,{!calpath/MLS-Aura_L2Cal-Spectroscopy_v1-4-0_0000d000.l2cf})
+!define(spectroscopyRtvlL2cf,{!calpath/MLS-Aura_L2Cal-Spectroscopy-rtvl_v1-4-1_0000d000.l2cf})
+!define(sidebandL2cf,{!calpath/MLS-Aura_L2Cal-SBFraction_v1-4-1_0000d000.l2cf})
+!define(fovdirL2cf,{!calpath/MLS-Aura_L2Cal-FOV-Directions_v1-4-0_0000d000.l2cf})
+!define(systempL2cf,{!calpath/MLS-Aura_L2Cal-Tsys_v1-4-0_0000d000.l2cf})
+!define(nbwL2cf,{!calpath/MLS-Aura_L2Cal-NBW_v1-4-0_0000d000.l2cf})
+d23 6
+a28 6
+  !define(antennaFile,'!calpath/MLS-Aura_L2Cal-AAAP_v1-4-1_0000d000.txt')
+  !define(climatologyFile,'!calpath/MLS-Aura_L2Cal-Climatologies_v1-4-2_0000d000.txt')
+  !define(filterFile,'!calpath/MLS-Aura_L2Cal-Filters_v1-4-0_0000d000.txt')
+  !define(dacsFilterFile,'!calpath/MLS-Aura_L2Cal-DACSFilters_v1-4-1_0000d000.txt')
+  !define(pfgFile,'!calpath/MLS-Aura_L2Cal-PFG_v1-4-0_0000d000.txt')
+  !define(pfgRtvlFile,'!calpath/MLS-Aura_L2Cal-PFG-rtvl_v1-4-1_0000d000.txt')
+@
+
+
+1.10
+log
+@New PFG-rtvl file includes R4 (unchanged from regular PFG file).
+@
+text
+@d16 6
+a21 6
+  !define(antennaFile,{AAAP})
+  !define(climatologyFile,{Climatologies})
+  !define(dacsFilterFile,{DACSFilters})
+  !define(filterFile,{-Filters})        ; Include - to avoid getting the DACSFilters file
+  !define(pfgFile,{PFG_})               ; Include _ to avoid getting the PFG-rtvl file
+  !define(pfgRtvlFile,{PFG-rtvl})
+@
+
+
+1.9
+log
+@New spectroscopy-rtvl file that implements better algorithm from Bill.
+@
+text
+@d28 1
+a28 1
+  !define(pfgRtvlFile,'!calpath/MLS-Aura_L2Cal-PFG-rtvl_v1-4-0_0000d000.txt')
+@
+
+
+1.8
+log
+@OK, climatology file fixed
+@
+text
+@d8 1
+a8 1
+!define(spectroscopyRtvlL2cf,{!calpath/MLS-Aura_L2Cal-Spectroscopy-rtvl_v1-4-0_0000d000.l2cf})
+@
+
+
+1.7
+log
+@Reverted to old climatology for the moment.
+@
+text
+@d24 1
+a24 1
+  !define(climatologyFile,'!calpath/MLS-Aura_L2Cal-Climatologies_v1-4-1_0000d000.txt')
+@
+
+
+1.6
+log
+@New climatology file
+@
+text
+@d24 1
+a24 1
+  !define(climatologyFile,'!calpath/MLS-Aura_L2Cal-Climatologies_v1-4-2_0000d000.txt')
+@
+
+
+1.5
+log
+@New antenna files.
+@
+text
+@d24 1
+a24 1
+  !define(climatologyFile,'!calpath/MLS-Aura_L2Cal-Climatologies_v1-4-1_0000d000.txt')
+@
+
+
+1.4
+log
+@MLS-Aura_L2Cal-SBFraction_v1-4-1_0000d000.l2cf includes new loss terms
+@
+text
+@d23 1
+a23 1
+  !define(antennaFile,'!calpath/MLS-Aura_L2Cal-AAAP_v1-4-0_0000d000.txt')
+@
+
+
+1.3
+log
+@New climatology file.
+@
+text
+@d9 1
+a9 1
+!define(sidebandL2cf,{!calpath/MLS-Aura_L2Cal-SBFraction_v1-4-0_0000d000.l2cf})
+@
+
+
+1.2
+log
+@Pointed to new DACSFilters file.
+@
+text
+@d24 1
+a24 1
+  !define(climatologyFile,'!calpath/MLS-Aura_L2Cal-Climatologies_v1-4-0_0000d000.txt')
+@
+
+
+1.1
+log
+@First version
+@
+text
+@d26 1
+a26 1
+  !define(dacsFilterFile,'!calpath/MLS-Aura_L2Cal-DACSFilters_v1-4-0_0000d000.txt')
+@
+

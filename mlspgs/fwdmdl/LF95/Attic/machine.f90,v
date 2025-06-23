@@ -1,0 +1,118 @@
+head	1.4;
+access;
+symbols
+	V0_1:1.3;
+locks; strict;
+comment	@# @;
+
+
+1.4
+date	2001.03.01.19.55.37;	author vsnyder;	state dead;
+branches;
+next	1.3;
+
+1.3
+date	2000.05.04.23.28.32;	author vsnyder;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2000.05.04.23.26.20;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2000.05.04.18.12.13;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.4
+log
+@Changing directory structure
+@
+text
+@module MACHINE
+  implicit none
+
+  character(LEN=2) :: END_LINE = ' ' // char(10)
+  character(LEN=1) :: FILSEP = '/'      ! '/' for Unix, '\' for DOS or NT
+  integer, parameter :: HP = 0          ! Offset for first argument for GETARG
+
+  interface IO_ERROR; module procedure IO_ERROR_; end interface
+  private IO_ERROR_
+
+!---------------------------- RCS Ident Info -------------------------------
+  CHARACTER (LEN=256) :: Id = &
+       "$Id: machine.f90,v 1.3 2000/05/04 23:28:32 vsnyder Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= &
+       "$RCSfile: machine.f90,v $"
+!---------------------------------------------------------------------------
+
+contains
+
+  subroutine IO_ERROR_ ( MESSAGE, IOSTAT, FILE )
+  ! Print MESSAGE and FILE, and then do something reasonable with IOSTAT.
+
+    character(len=*), intent(in) :: MESSAGE
+    integer, intent(in) :: IOSTAT
+    character(len=*), intent(in), optional :: FILE
+
+    integer :: L
+    character(len=127) :: MSG           ! From the Lahey IOSTAT_MSG intrinsic
+
+    write (*,*) message(:len_trim(message))
+    if ( present(file) ) then
+      l = len_trim(file)
+      write (*,*) file(:l)
+    end if
+    call iostat_msg (iostat, msg)       ! Lahey intrinsic
+    write (*,*) msg(:len_trim(msg))     ! Print the error message
+    write (*,*) 'Error status code =', iostat
+    return
+  end subroutine IO_ERROR_
+
+end module MACHINE
+
+! $Log: machine.f90,v $
+! Revision 1.3  2000/05/04 23:28:32  vsnyder
+! Initial Fortran 90 conversion
+!
+@
+
+
+1.3
+log
+@Initial Fortran 90 conversion
+@
+text
+@d13 1
+a13 1
+       "$Id: MACHINE,v 1.12 2000/02/08 19:54:57 vsnyder Exp $"
+d43 4
+a46 1
+! $Log: MACHINE,v $
+@
+
+
+1.2
+log
+@Initial Fortran 90 conversion
+@
+text
+@d1 43
+@
+
+
+1.1
+log
+@Initial conversion to Fortran 90
+@
+text
+@d1 34
+@
+

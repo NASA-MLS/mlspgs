@@ -1,0 +1,605 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.12
+	cfm-single-freq-0-1:1.2.0.10
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.8
+	mus-emls-1-70:1.2.0.6
+	rel-1-0-englocks-work:1.2.0.4
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.2
+	V4-21:1.2.0.2
+	V4-13:1.2
+	V4-12:1.2
+	V4-11:1.2
+	V4-10:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2014.01.14.00.11.42;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2013.10.24.22.41.14;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Revised LR completely
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module LISTS
+! A package to manage lists.  ITEM is the array of list items.  NEXT is
+! the array of pointers-to-next-items.
+! ADDLTL adds a list to a list, eliminating duplicates
+! LINT determines whether two lists intersect, that is, have at least
+!      one common item.
+! LISTS_INIT initializes the lists package.
+! NEW provides a list node.
+! REL releases a list or list node.
+
+  implicit NONE
+  public
+
+  type :: Item_T
+    integer :: Item = 0
+    integer :: Next = 0
+  end type Item_T
+
+  type(item_t), allocatable, save :: List(:)
+
+  integer, parameter, private :: Init_List = 1000
+
+  ! GARBAG  points to the free list.  GARBAG IS A SAVE VARIABLE.
+
+  integer, save, private :: GARBAG
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: lists.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+! ===================================================     ADDLTL     =====
+
+  subroutine ADDLTL ( LPTR1, LPTR2, CHANGE )
+
+  ! Add the items in the list pointed to by LPTR1 to the list pointed to
+  ! by LPTR2.  Both lists are initially in order.  Keep the list pointed
+  ! to by LPTR2 in order.  Set change if any items are added to the list
+  ! pointed to by LPTR2.  If an item is added at the head of the list
+  ! pointed to by LPTR2, LPTR2 will be changed to point to that item.
+
+    use Toggles, only: Gen, Levels
+    use Trace, only: Trace_Begin, Trace_End
+
+    integer, intent(in) :: LPTR1
+    integer, intent(inout) :: LPTR2
+    logical, intent(out) :: CHANGE
+
+    !     *****     Local Variables     **********************************
+
+    ! I       is the pointer to an element of the list rooted at LPTR1.
+    ! J       is the pointer to an element of the list rooted at LPTR2.
+    ! LAST    is the previous list pointer during the search of the list
+    !         rooted at LPTR2.
+    ! NPTR    is the new list item fetched from NEW.
+
+    integer I, J, LAST, NPTR
+
+    ! *****     Procedures     *******************************************
+
+    if ( levels(gen) > 1 ) call trace_begin ( 'ADDLTL' )
+
+    change = .false.
+    i = lptr1
+    j = lptr2
+    last = 0
+
+    ! Scan both lists as for a merge - they are always in order.
+
+    do while ( i  /=  0 )
+      if (j == 0) then
+      ! Add remaining elements of list i to list j.
+        change = .true.
+        do while (i /= 0)
+          call new ( nptr )
+          list(nptr)%item = list(i)%item
+          if ( last  /=  0 ) then
+            list(last)%next = nptr
+          else
+            lptr2 = nptr
+          end if
+          last = nptr
+          i = list(i)%next
+        end do
+        exit
+      end if
+      if ( list(i)%item > list(j)%item ) then
+        last = j
+        j = list(j)%next
+      else if ( list(i)%item == list(j)%item ) then
+        i = list(i)%next
+        last = j
+        j = list(j)%next
+      else
+        change = .true.
+        call new ( nptr )
+        list(nptr)%item = list(i)%item
+        list(nptr)%next = j
+        if ( last  /=  0 ) then
+          list(last)%next = nptr
+        else
+          lptr2 = nptr
+        end if
+        last = nptr
+        i = list(i)%next
+      end if
+    end do
+
+    if ( levels(gen) > 1 ) call trace_end ( 'ADDLTL' )
+
+  end subroutine ADDLTL
+
+! ====================================================     COPYL     =====
+
+  subroutine COPYL ( LPTR1, LPTR2 )
+  ! Create a new list rooted at LPTR2 that is a copy of the list
+  ! rooted at LPTR1.
+
+    use Toggles, only: Gen, Levels
+    use Trace, only: Trace_Begin, Trace_End
+
+    integer, intent(in) :: LPTR1
+    integer, intent(out) :: LPTR2
+
+    ! *****     Local Variables     **************************************
+
+    ! I       is the pointer to the node being copied.
+    ! NPTR    is the pointer to the newly created node.
+
+    integer I, NPTR
+
+    !     *****     Procedures     ***************************************
+
+    if ( levels(gen) > 1 ) call trace_begin ( 'COPYL' )
+
+    if ( lptr1 == 0 ) then
+      lptr2 = 0
+    else
+      ! Copy the first node.
+      call new ( lptr2 )
+      nptr = lptr2
+      list(nptr)%item = list(lptr1)%item
+      i = list(lptr1)%next
+      ! Copy the rest of the list.
+      do while ( i > 0 )
+        call new ( list(nptr)%next )
+        nptr = list(nptr)%next
+        list(nptr)%item = list(i)%item
+        i = list(i)%next
+      end do
+    end if
+
+    if ( levels(gen) > 1 ) call trace_end ( 'COPYL' )
+
+  end subroutine COPYL
+
+! ================================================     Dump_List     =====
+
+  subroutine Dump_List ( IPTR )
+    ! Dump the list starting at IPTR
+    use Output_m, only: Output
+    integer, intent(in) :: IPTR  ! Index of list to dump
+    integer :: PTR               ! Index of list item
+    ptr = iptr
+    call output ( iptr, before='Dumping list starting at ', advance='yes' )
+    do while ( ptr > 0 )
+      call output ( ptr, 5 )
+      call output ( list(ptr)%item, 5, before=': ' )
+      call output ( list(ptr)%next, 5, advance='yes' )
+      ptr = list(ptr)%next
+    end do
+    call output ( iptr, before='End of list starting at ', advance='yes' )
+  end subroutine Dump_List
+
+! ===================================================     LCOMPR     =====
+
+  logical function LCOMPR ( IPTR1, IPTR2 )
+    ! Compare the lists pointed to by IPTR1 and IPTR2.  Return .TRUE. if
+    ! they are equal, and .FALSE. if they are unequal.
+
+    use Toggles, only: Gen, Levels
+    use Trace, only: Trace_Begin, Trace_End
+
+    integer, intent(in) :: IPTR1, IPTR2
+
+    ! *****     Local Variables     **************************************
+
+    ! I1      points to an element of IPTR1.
+    ! I2      points to an element of IPTR2.
+
+    integer I1, I2
+
+    ! *****     Procedures     *******************************************
+
+    if ( levels(gen) > 1 ) call trace_begin ( 'LCOMPR' )
+
+    lcompr = .true.
+    if ( iptr1 == iptr2 ) go to 9
+    lcompr = .false.
+    i1 = iptr1
+    i2 = iptr2
+    do while (i1 /= 0)
+      if ( i2 == 0 ) go to 9
+      if ( list(i1)%item /= list(i2)%item ) go to 9
+      i1 = list(i1)%next
+      i2 = list(i2)%next
+    end do
+    if ( i2 == 0 ) lcompr = .true.
+
+  9 if ( levels(gen) > 1 ) call trace_end ( 'LCOMPR' )
+
+  end function LCOMPR
+
+! =====================================================     LINT     =====
+
+  logical function LINT ( IPTR1, IPTR2 )
+  ! Returns .TRUE. if there is a common item in the lists pointed to by
+  ! IPTR1 and IPTR2, .FALSE. otherwise.
+
+    use Toggles, only: Gen, Levels
+    use Trace, only: Trace_Begin, Trace_End
+
+    integer, intent(in) :: IPTR1, IPTR2
+
+    ! *****     Local Variables     **************************************
+
+    ! I1      points to an element of the list starting at IPTR1.
+    ! I2      points to an element of the list starting at IPTR1.
+
+    integer I1, I2
+
+    ! *****     Procedures     *******************************************
+
+    if ( levels(gen) > 1 ) call trace_begin ( 'LINT' )
+
+    i1 = iptr1
+    i2 = iptr2
+    lint = .false.
+    do
+      if ( i1 == 0 .or. i2 == 0 ) exit
+      lint = list(i1)%item == list(i2)%item
+      if ( lint ) exit
+      if ( list(i1)%item < list(i2)%item ) then
+        i1 = list(i1)%next
+      else
+        i2 = list(i2)%next
+      end if
+    end do
+
+    if ( levels(gen) > 1 ) call trace_end ( 'LINT' )
+
+  end function LINT
+
+! ===============================================     LISTS_INIT     =====
+
+  subroutine LISTS_INIT ( Start )
+
+    use Toggles, only: Gen, Levels
+    use Trace, only: Trace_Begin, Trace_End
+
+    integer, intent(in), optional :: Start ! Where to start chaining GARBAG
+    integer :: I, MyStart, N
+
+    if ( levels(gen) > 1 ) call trace_begin ( 'LISTS_INIT' )
+
+    myStart = 1
+    if ( present(start) ) myStart = start
+    if ( .not. allocated(list) ) allocate ( list(init_list) )
+    n = size(list)
+    do i = myStart, n-1
+      list(i)%next = i + 1
+      list(i)%item = 0
+    end do
+    list(n)%next = 0
+    list(n)%item = 0
+    garbag = myStart
+
+    if ( levels(gen) > 1 ) call trace_end ( 'LISTS_INIT' )
+
+  end subroutine LISTS_INIT
+
+! ======================================================     NEW     =====
+
+  subroutine NEW (IPTR)
+
+  ! Fetch a new list node and return its subscript in IPTR.
+
+    use Output_m, only: Output
+    use Toggles, only: Gen, Levels
+    use Toggles_LR, only: Toggle_LR => Toggle
+    use Trace, only: Trace_Begin, Trace_End
+
+    integer, intent(out) :: IPTR
+
+    integer :: N
+    type(item_t), allocatable :: Temp(:)
+
+    if ( levels(gen) > 1 ) call trace_begin ( 'NEW' )
+
+    if (garbag == 0) then
+      if ( allocated(list) ) then
+        n = size(list)
+        allocate ( temp(2*n) )
+        temp(1:n) = list
+        call move_alloc ( temp, list )
+        call lists_init ( n+1 )
+      else
+        call lists_init
+      end if
+    end if
+    if ( list(garbag)%item /= 0) then
+      iptr = list(garbag)%item
+      list(garbag)%item = list(iptr)%next
+    else
+      iptr = garbag
+      garbag = list(garbag)%next
+    end if
+    list(iptr)%item = 0
+    list(iptr)%next = 0
+    if ( toggle_LR(iachar('4')) /= 0 ) &
+      & call output ( iptr, before=' New list at ', advance='yes' )
+
+    if ( levels(gen) > 1 ) call trace_end ( 'NEW' )
+
+  end subroutine NEW
+
+! ======================================================     REL     =====
+
+  subroutine REL (IPTR)
+
+  ! Release the list or list node at IPTR.
+
+    use Toggles, only: Gen, Levels
+    use Trace, only: Trace_Begin, Trace_End
+
+    integer, intent(in) :: IPTR
+
+    if ( levels(gen) > 1 ) call trace_begin ( 'REL' )
+
+    if ( iptr > 0 ) then
+      list(iptr)%item = list(iptr)%next
+      list(iptr)%next = garbag
+      garbag = iptr
+    end if
+
+    if ( levels(gen) > 1 ) call trace_end ( 'REL' )
+
+  end subroutine REL
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: lists.f90,v 1.1 2013/10/24 22:41:14 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module LISTS
+
+! $Log: lists.f90,v $
+! Revision 1.1  2013/10/24 22:41:14  vsnyder
+! Initial commit
+!
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d24 9
+a32 2
+  integer, parameter :: MAXLST = 5000
+  integer, save :: ITEM(MAXLST), NEXT(MAXLST)
+d40 1
+a40 1
+       "$RCSfile: parser.f90,v $"
+d46 2
+a47 1
+  subroutine ADDLTL (LPTR1, LPTR2, ICHNGE)
+d51 1
+a51 1
+  ! to by LPTR2 in order.  Set ICHNGE if any items are added to the list
+d55 3
+d60 1
+a60 1
+    integer, intent(out) :: ICHNGE
+d74 3
+a76 1
+    ichnge = 0
+d83 1
+a83 1
+    do while (i  /=  0)
+d86 1
+a86 1
+        ichnge = 1
+d88 4
+a91 4
+          call new (nptr)
+          item(nptr) = item(i)
+          if (last  /=  0) then
+            next(last) = nptr
+d96 1
+a96 1
+          i = next(i)
+d100 1
+a100 1
+      if (item(i) > item(j)) then
+d102 3
+a104 3
+        j = next(j)
+      else if (item(i) == item(j)) then
+        i = next(i)
+d106 1
+a106 1
+        j = next(j)
+d108 6
+a113 6
+        ichnge = 1
+        call new (nptr)
+        item(nptr) = item(i)
+        next(nptr) = j
+        if (last  /=  0) then
+          next(last) = nptr
+d118 1
+a118 1
+        i = next(i)
+d121 3
+a123 1
+    return
+d128 1
+a128 1
+  subroutine COPYL (LPTR1, LPTR2)
+d132 3
+d147 3
+a149 1
+    if (lptr1 == 0) then
+d153 1
+a153 1
+      call new (lptr2)
+d155 2
+a156 2
+      item(nptr) = item(lptr1)
+      i = next(lptr1)
+d158 5
+a162 5
+      do while (i > 0)
+        call new (next(nptr))
+        nptr = next(nptr)
+        item(nptr) = item(i)
+        i = next(i)
+d166 1
+a166 1
+    return
+d170 18
+d190 1
+a190 1
+  logical function LCOMPR (IPTR1, IPTR2)
+d194 3
+d208 2
+d211 1
+a211 1
+    if (iptr1 == iptr2) return
+d216 4
+a219 4
+      if (i2 == 0) return
+      if (item(i1) /= item(i2)) return
+      i1 = next(i1)
+      i2 = next(i2)
+d221 1
+a221 1
+    if (i2 .eq. 0) lcompr = .true.
+d223 1
+a223 1
+    return
+d229 1
+a229 1
+  logical function LINT (IPTR1, IPTR2)
+d233 3
+d247 2
+d253 5
+a257 5
+      if (i1 == 0 .or. i2 == 0) return
+      lint = item(i1) == item(i2)
+      if ( lint ) return
+      if (item(i1) < item(i2)) then
+        i1 = next(i1)
+d259 1
+a259 1
+        i2 = next(i2)
+d262 3
+a264 1
+    return
+d269 17
+a285 5
+  subroutine LISTS_INIT
+    integer :: I
+    do i = 1, maxlst-1
+      next(i) = i + 1
+      item(i) = 0
+d287 6
+a292 4
+    next(maxlst) = 0
+    item(maxlst) = 0
+    garbag = 1
+    return
+d301 4
+a304 1
+    use Error_Handler, only: Error
+d308 19
+a326 4
+    if (garbag == 0) call error ('LIST space overflow',2)
+    if (item(garbag) .ne. 0) then
+      iptr = item(garbag)
+      item(garbag) = next(iptr)
+d329 1
+a329 1
+      garbag = next(garbag)
+d331 7
+a337 3
+    item(iptr) = 0
+    next(iptr) = 0
+    return
+d346 3
+d351 2
+d354 2
+a355 2
+      item(iptr) = next(iptr)
+      next(iptr) = garbag
+d359 2
+d366 1
+a366 1
+       "$Id: parser.f90,v 2.29 2013/10/02 01:35:46 vsnyder Exp $"
+d375 4
+a378 1
+! $Log: $
+@
+

@@ -1,0 +1,260 @@
+head	2.3;
+access;
+symbols
+	v5-02-NRT-19:2.3
+	v6-00:2.3
+	v5-02-NRT-18:2.3
+	v5-02:2.3
+	v5-01-NRT-17:2.3
+	v5-01-NRT-16:2.3
+	v5-01-NRT-15:2.3
+	v5-01-NRT-14:2.3
+	neuralnetworks-1-0:2.3.0.14
+	cfm-single-freq-0-1:2.3.0.12
+	v5-01:2.3
+	v5-00:2.3
+	v4-23-TA133:2.3.0.10
+	mus-emls-1-70:2.3.0.8
+	rel-1-0-englocks-work:2.3.0.6
+	VUMLS1-00:2.3
+	VPL1-00:2.3
+	V4-22-NRT-08:2.3
+	VAM1-00:2.3
+	V4-21:2.3.0.4
+	V4-13:2.3
+	V4-12:2.3
+	V4-11:2.3
+	V4-10:2.3
+	V3-43:2.3
+	M4-00:2.3
+	V3-41:2.3
+	V3-40-PlusGM57:2.3.0.2
+	V2-24-NRT-04:2.2
+	V3-33:2.3
+	V2-24:2.2
+	V3-31:2.3
+	V3-30-NRT-05:2.3
+	cfm-01-00:2.3
+	V3-30:2.3
+	V3-20:2.3
+	V3-10:2.3
+	V2-23-NRT-02:2.2
+	V2-23:2.2
+	V2-22-NRT-01:2.2
+	V2-22:2.2
+	V2-21:2.2
+	V2-20:2.2
+	V2-11:2.2
+	V2-10:2.2
+	V2-00:2.2;
+locks; strict;
+comment	@# @;
+
+
+2.3
+date	2009.06.23.18.25.43;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2006.03.23.03.04.33;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2006.03.22.02.07.04;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.3
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=============================================================================
+module HFTI_M ! From Lawson and Hanson, converted to Fortran 90
+!=============================================================================
+
+  implicit NONE
+  private
+
+  public :: HFTI, SHFTIV, SHFTIM, DHFTIV, DHFTIM
+
+  interface HFTI
+    module procedure SHFTIV, SHFTIM, DHFTIV, DHFTIM
+  end interface
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  subroutine SHFTIM ( A, B, TAU, KRANK, RNORM, IP )
+
+    !{ Solve $A X \simeq B$.
+
+    use ERMSG_M, only: ERMOR, ERMSG, ERM1, ERV1
+    use HT_M, only: HTGEN
+    use NRM2_M, only: NRM2
+
+    integer, parameter :: RK = kind(0.0)
+    real(rk), intent(inout) :: A(:,:) ! A on input, input for COV2 on output
+    real(rk), intent(inout) :: B(:,:) ! B on input, X on output
+    real(rk), optional, intent(in) :: TAU       ! Tolerance
+    integer, optional, intent(out) :: KRANK     ! Rank of A
+    real(rk), optional, intent(out) :: RNORM(:) ! sqrt(sum(residuals**2))
+    integer, optional, intent(out) :: IP(:)     ! Column interchanges
+    include 'hftim.f9h'
+
+  end subroutine SHFTIM
+
+  subroutine SHFTIV ( A, B, TAU, KRANK, RNORM, IP )
+
+    !{ Solve $A x \simeq b$.
+
+    use ERMSG_M, only: ERMOR, ERMSG, ERM1, ERV1
+    use HT_M, only: HTGEN
+    use NRM2_M, only: NRM2
+
+    integer, parameter :: RK = kind(0.0)
+    real(rk), intent(inout) :: A(:,:) ! A on input, input for COV2 on output
+    real(rk), intent(inout) :: B(:)   ! B on input, X on output
+    real(rk), optional, intent(in) :: TAU       ! Tolerance
+    integer, optional, intent(out) :: KRANK     ! Rank of A
+    real(rk), optional, intent(out) :: RNORM    ! sqrt(sum(residuals**2))
+    integer, optional, intent(out) :: IP(:)     ! Column interchanges
+    include 'hftiv.f9h'
+
+  end subroutine SHFTIV
+
+  subroutine DHFTIM ( A, B, TAU, KRANK, RNORM, IP )
+
+    !{ Solve $A X \simeq B$.
+
+    use ERMSG_M, only: ERMOR, ERMSG, ERM1, ERV1
+    use HT_M, only: HTGEN
+    use NRM2_M, only: NRM2
+
+    integer, parameter :: RK = kind(0.0d0)
+    real(rk), intent(inout) :: A(:,:) ! A on input, input for COV2 on output
+    real(rk), intent(inout) :: B(:,:) ! B on input, X on output
+    real(rk), optional, intent(in) :: TAU       ! Tolerance
+    integer, optional, intent(out) :: KRANK     ! Rank of A
+    real(rk), optional, intent(out) :: RNORM(:) ! sqrt(sum(residuals**2))
+    integer, optional, intent(out) :: IP(:)     ! Column interchanges
+    include 'hftim.f9h'
+
+  end subroutine DHFTIM
+
+  subroutine DHFTIV ( A, B, TAU, KRANK, RNORM, IP )
+
+    !{ Solve $A x \simeq b$.
+
+    use ERMSG_M, only: ERMOR, ERMSG, ERM1, ERV1
+    use HT_M, only: HTGEN
+    use NRM2_M, only: NRM2
+
+    integer, parameter :: RK = kind(0.0d0)
+    real(rk), intent(inout) :: A(:,:) ! A on input, input for COV2 on output
+    real(rk), intent(inout) :: B(:)   ! B on input, X on output
+    real(rk), optional, intent(in) :: TAU       ! Tolerance
+    integer, optional, intent(out) :: KRANK     ! Rank of A
+    real(rk), optional, intent(out) :: RNORM    ! sqrt(sum(residuals**2))
+    integer, optional, intent(out) :: IP(:)     ! Column interchanges
+    include 'hftiv.f9h'
+
+  end subroutine DHFTIV
+
+!=======================================================================
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: read_apriori.f90 is it here $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module HFTI_M
+
+! $Log: hfti_m.f90,v $
+! Revision 2.2  2006/03/23 03:04:33  vsnyder
+! OOPS, need to get ER[VM]1 from ermsg_m
+!
+! Revision 2.1  2006/03/22 02:07:04  vsnyder
+! Initial commit
+!
+@
+
+
+2.2
+log
+@OOPS, need to get ER[VM]1 from ermsg_m
+@
+text
+@d26 3
+a28 2
+  character (len=*), private, parameter :: ModuleName="$RCSfile: hfti_m.f90,v $"
+  private :: not_used_here
+d110 1
+a111 1
+!---------------------------- RCS Ident Info -------------------------------
+d113 2
+a114 3
+       "$Id: hfti_m.f90,v 2.1 2006/03/22 02:07:04 vsnyder Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d116 1
+d118 1
+d123 3
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d26 1
+a26 1
+  character (len=*), private, parameter :: ModuleName="$RCSfile: hfti_m.f90,v$"
+d36 1
+a36 1
+    use ERMSG_M, only: ERMOR, ERMSG, IERV1
+d55 1
+a55 1
+    use ERMSG_M, only: ERMOR, ERMSG, IERV1
+d74 1
+a74 1
+    use ERMSG_M, only: ERMOR, ERMSG, IERV1
+d93 1
+a93 1
+    use ERMSG_M, only: ERMOR, ERMSG, IERV1
+d112 1
+a112 1
+       "$Id: $"
+d120 4
+a123 1
+! $Log: $
+@
+

@@ -1,0 +1,452 @@
+head	1.14;
+access;
+symbols
+	v5-02-NRT-19:1.14
+	v6-00:1.14
+	v5-02-NRT-18:1.14
+	v5-02:1.14
+	v5-01-NRT-17:1.14
+	v5-01-NRT-16:1.14
+	v5-01-NRT-15:1.14
+	v5-01-NRT-14:1.14
+	neuralnetworks-1-0:1.14.0.12
+	cfm-single-freq-0-1:1.14.0.10
+	v5-01:1.14
+	v5-00:1.14
+	v4-23-TA133:1.14.0.8
+	mus-emls-1-70:1.14.0.6
+	rel-1-0-englocks-work:1.14.0.4
+	VUMLS1-00:1.14
+	VPL1-00:1.14
+	V4-22-NRT-08:1.14
+	VAM1-00:1.14
+	V4-21:1.14.0.2
+	V4-13:1.14
+	V4-12:1.14
+	V4-11:1.14
+	V4-10:1.14
+	V3-43:1.13
+	M4-00:1.13
+	V3-41:1.13
+	V3-40-PlusGM57:1.13.0.2
+	V2-24-NRT-04:1.13
+	V3-33:1.13
+	V2-24:1.13
+	V3-31:1.13
+	V3-30-NRT-05:1.13
+	cfm-01-00:1.13
+	V3-30:1.13
+	V3-20:1.13
+	V3-10:1.13
+	V2-23-NRT-02:1.13
+	V2-23:1.13
+	V2-22-NRT-01:1.13
+	V2-22:1.13
+	V2-21:1.13
+	V2-20:1.13
+	V2-11:1.8
+	V2-10:1.8
+	V2-00:1.8
+	V1-51:1.8
+	V1-50:1.8
+	V1-45:1.4
+	V1-44:1.4
+	V1-43:1.4;
+locks; strict;
+comment	@# @;
+
+
+1.14
+date	2013.05.28.20.36.26;	author pwagner;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2006.10.26.17.28.10;	author dwu;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2006.10.17.00.00.28;	author pwagner;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2006.10.11.23.04.55;	author pwagner;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2006.10.04.16.51.47;	author pwagner;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2006.08.08.22.27.07;	author pwagner;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2004.11.19.21.01.31;	author livesey;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2004.09.21.23.02.59;	author livesey;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2004.09.13.21.43.51;	author livesey;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2004.09.13.21.32.08;	author dwu;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2004.04.28.23.06.23;	author livesey;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2004.04.28.00.31.50;	author livesey;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2004.04.27.23.48.14;	author livesey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.04.27.23.43.35;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.14
+log
+@Brought up-to-date with recent tests in v4.00 series BA-01
+@
+text
+@!divert(-1)
+; $Id: coreflags.l2cf,v 1.13 2006/10/26 17:28:10 dwu Exp $
+
+; ----------- Phase name vs. retrieval name
+; Some phase(s) may not have Retrieve sections
+; and so we'll need to know the last one
+; Actually, this is now the FinalPtan phase--we eliminated Core
+; Should we rename this file accordingly?
+!define(retrophase,{FinalPtan})
+
+!divert!dnl
+; This l2cf fragment does all the quality flagging for the FinalPtan
+; products
+
+begin Fill
+  ;; ------------------------------------ Temperature-FinalPtan
+  !define(flaggingBands,{8})
+  !define(flaggingRadiometers,{R1A,R1B,R3})!dnl
+  !makeQualityForOneProduct(product=Temperature,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -4K)
+  !makeStatusForOneProduct(product=Temperature,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -4K)
+
+  ;; ------------------------------------ GPH-FinalPtan
+  ;;!define(flaggingBands,{8})
+  ;;!define(flaggingRadiometers,{R1A,R1B,R3})!dnl
+  ;;!makeQualityForOneProduct(product=GPH,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -4K)
+  ;;!makeStatusForOneProduct(product=GPH,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -4K)
+
+end Fill
+
+; $Log: coreflags.l2cf,v $
+; Revision 1.13  2006/10/26 17:28:10  dwu
+; change T and GPH cloud flag thresholds to -4K and 30K
+;
+; Revision 1.12  2006/10/17 00:00:28  pwagner
+; The stdProd  Convergence should be taken from FinalPtan
+;
+; Revision 1.11  2006/10/11 23:04:55  pwagner
+; Special retrieval phase name retrophase needed for Convergence Ratio Fill
+;
+; Revision 1.10  2006/10/04 16:51:47  pwagner
+; Compatible w/ status bits from multiple radiometers; needs review
+;
+; Revision 1.9  2006/08/08 22:27:07  pwagner
+; Fills Quality, Status for Temperature, GPH; needs revision before v2.20
+;
+; Revision 1.8  2004/11/19 21:01:31  livesey
+; Changed R1 to R1A
+;
+; Revision 1.7  2004/09/21 23:02:59  livesey
+; Changed chiSqWeights to 1.0 for everything.
+;
+; Revision 1.6  2004/09/13 21:43:51  livesey
+; Bug fix.
+;
+; Revision 1.5  2004/09/13 21:32:08  dwu
+; change cloud flag thresholds and channels corresponding to changes made in the control l2cf
+;
+; Revision 1.4  2004/04/28 23:06:23  livesey
+; Changes to cloud flagging.
+;
+; Revision 1.3  2004/04/28 00:31:50  livesey
+; Bug fix
+;
+; Revision 1.2  2004/04/27 23:48:14  livesey
+; Added low cloud flagging.
+;
+@
+
+
+1.13
+log
+@change T and GPH cloud flag thresholds to -4K and 30K
+@
+text
+@d2 1
+a2 1
+; $Id: coreflags.l2cf,v 1.12 2006/10/17 00:00:28 pwagner Exp $
+d7 2
+d12 2
+a13 2
+; This l2cf fragment does all the quality flagging for the Core
+; products (temperature)
+d16 1
+a16 1
+  ;; ------------------------------------ Temperature-Core
+d22 5
+a26 5
+  ;; ------------------------------------ GPH-Core
+  !define(flaggingBands,{8})
+  !define(flaggingRadiometers,{R1A,R1B,R3})!dnl
+  !makeQualityForOneProduct(product=GPH,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -4K)
+  !makeStatusForOneProduct(product=GPH,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -4K)
+d31 3
+@
+
+
+1.12
+log
+@The stdProd  Convergence should be taken from FinalPtan
+@
+text
+@d2 1
+a2 1
+; $Id: coreflags.l2cf,v 1.11 2006/10/11 23:04:55 pwagner Exp $
+a14 5
+;;;  !define(flaggingBands,{1,22,32})
+;;;  !makeFlagsForOneProduct(product=Temperature,radiometer=R1A,chisqScale=1.0,minRads=1500,cloudMax=5K,cloudMin= -10K)
+;;;  !define(flaggingBands,{34})
+;;;  !makeFlagsForOneProduct(product=Temperature,radiometer=R1B,chisqScale=1.0,minRads=1500,cloudMax=5K,cloudMin= -10K)
+;;;  !define(flaggingBands,{8,33})
+d17 2
+a18 2
+  !makeQualityForOneProduct(product=Temperature,chisqScale=1.0,minRads=1500,cloudMax=10K,cloudMin= -888K)
+  !makeStatusForOneProduct(product=Temperature,chisqScale=1.0,minRads=1500,cloudMax=10K,cloudMin= -888K)
+a20 2
+  ;;;!define(flaggingBands,{1,22,32})
+  ;;;!makeFlagsForOneProduct(product=GPH,radiometer=R2,chisqScale=1.0,minRads=1500,cloudMax=5K,cloudMin= -30K)
+d23 2
+a24 2
+  !makeQualityForOneProduct(product=GPH,chisqScale=1.0,minRads=1500,cloudMax=10K,cloudMin= -888K)
+  !makeStatusForOneProduct(product=GPH,chisqScale=1.0,minRads=1500,cloudMax=10K,cloudMin= -888K)
+d29 3
+@
+
+
+1.11
+log
+@Special retrieval phase name retrophase needed for Convergence Ratio Fill
+@
+text
+@d2 1
+a2 1
+; $Id: coreflags.l2cf,v 1.10 2006/10/04 16:51:47 pwagner Exp $
+d7 1
+a7 1
+!define(retrophase,{InitUTH})
+d36 3
+@
+
+
+1.10
+log
+@Compatible w/ status bits from multiple radiometers; needs review
+@
+text
+@d1 2
+a2 1
+; $Id: coreflags.l2cf,v 1.9 2006/08/08 22:27:07 pwagner Exp $
+d4 6
+d36 3
+@
+
+
+1.9
+log
+@Fills Quality, Status for Temperature, GPH; needs revision before v2.20
+@
+text
+@d1 1
+a1 1
+; $Id: coreflags.l2cf,v 1.8 2004/11/19 21:01:31 livesey Exp $
+d14 3
+a16 1
+  !makeFlagsForOneProduct(product=Temperature,radiometer=R3,chisqScale=1.0,minRads=1500,cloudMax=10K,cloudMin= -888K)
+d22 3
+a24 1
+  !makeFlagsForOneProduct(product=GPH,radiometer=R3,chisqScale=1.0,minRads=1500,cloudMax=10K,cloudMin= -888K)
+d29 3
+@
+
+
+1.8
+log
+@Changed R1 to R1A
+@
+text
+@d1 1
+a1 1
+; $Id: coreflags.l2cf,v 1.7 2004/09/21 23:02:59 livesey Exp $
+d8 7
+a14 2
+  !define(flaggingBands,{1,22,32})
+  !makeFlagsForOneProduct(product=Temperature,radiometer=R1A,chisqScale=1.0,minRads=1500,cloudMax=5K,cloudMin= -10K)
+d17 4
+a20 2
+  !define(flaggingBands,{1,22,32})
+  !makeFlagsForOneProduct(product=GPH,radiometer=R2,chisqScale=1.0,minRads=1500,cloudMax=5K,cloudMin= -30K)
+d25 3
+@
+
+
+1.7
+log
+@Changed chiSqWeights to 1.0 for everything.
+@
+text
+@d1 1
+a1 1
+; $Id: coreflags.l2cf,v 1.6 2004/09/13 21:43:51 livesey Exp $
+d9 1
+a9 1
+  !makeFlagsForOneProduct(product=Temperature,radiometer=R1,chisqScale=1.0,minRads=1500,cloudMax=5K,cloudMin= -10K)
+d18 3
+@
+
+
+1.6
+log
+@Bug fix.
+@
+text
+@d1 1
+a1 1
+; $Id: coreflags.l2cf,v 1.5 2004/09/13 21:32:08 dwu Exp $
+d9 1
+a9 1
+  !makeFlagsForOneProduct(product=Temperature,radiometer=R1,chisqScale=10.0,minRads=1500,cloudMax=5K,cloudMin= -10K)
+d13 1
+a13 1
+  !makeFlagsForOneProduct(product=GPH,radiometer=R2,chisqScale=10.0,minRads=1500,cloudMax=5K,cloudMin= -30K)
+d18 3
+@
+
+
+1.5
+log
+@change cloud flag thresholds and channels corresponding to changes made in the control l2cf
+@
+text
+@d1 1
+a1 1
+; $Id: coreflags.l2cf,v 1.4 2004/04/28 23:06:23 livesey Exp $
+d9 1
+a9 1
+  !makeFlagsForOneProduct(product=Temperature,radiometer=R1A,chisqScale=10.0,minRads=1500,cloudMax=5K,cloudMin= -10K)
+d18 3
+@
+
+
+1.4
+log
+@Changes to cloud flagging.
+@
+text
+@d1 1
+a1 1
+; $Id: coreflags.l2cf,v 1.3 2004/04/28 00:31:50 livesey Exp $
+d9 1
+a9 1
+  !makeFlagsForOneProduct(product=Temperature,radiometer=R2,chisqScale=10.0,minRads=1500,cloudMax=5K,cloudMin= -10K)
+d13 1
+a13 1
+  !makeFlagsForOneProduct(product=GPH,radiometer=R2,chisqScale=10.0,minRads=1500,cloudMax=5K,cloudMin= -10K)
+d18 3
+@
+
+
+1.3
+log
+@Bug fix
+@
+text
+@d1 1
+a1 1
+; $Id: coreflags.l2cf,v 1.2 2004/04/27 23:48:14 livesey Exp $
+d9 1
+a9 1
+  !makeFlagsForOneProduct(product=Temperature,radiometer=R2,chisqScale=10.0,minRads=1500,cloudMax=2K,cloudMin= -10K)
+d13 1
+a13 1
+  !makeFlagsForOneProduct(product=GPH,radiometer=R2,chisqScale=10.0,minRads=1500,cloudMax=2K,cloudMin= -10K)
+d18 3
+@
+
+
+1.2
+log
+@Added low cloud flagging.
+@
+text
+@d1 1
+a1 1
+; $Id: coreflags.l2cf,v 1.1 2004/04/27 23:43:35 livesey Exp $
+d9 1
+a9 1
+  !makeFlagsForOneProduct(product=Temperature,radiometer=R2,chisqScale=10.0,minRads=1500,cloudMax=2K,cloudMin=-10K)
+d13 1
+a13 1
+  !makeFlagsForOneProduct(product=GPH,radiometer=R2,chisqScale=10.0,minRads=1500,cloudMax=2K,cloudMin=-10K)
+d17 4
+a20 1
+; $Log$
+@
+
+
+1.1
+log
+@First version
+@
+text
+@d1 1
+a1 1
+; $Id$
+d9 1
+a9 1
+  !makeFlagsForOneProduct(product=Temperature,radiometer=R2,chisqScale=10.0,minRads=1500,cloudMax=2K)
+d13 1
+a13 1
+  !makeFlagsForOneProduct(product=GPH,radiometer=R2,chisqScale=10.0,minRads=1500,cloudMax=2K)
+d17 1
+a17 1
+
+@
+

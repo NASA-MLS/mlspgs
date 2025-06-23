@@ -1,0 +1,453 @@
+head	2.7;
+access;
+symbols
+	v5-02-NRT-19:2.7
+	v6-00:2.7
+	v5-02-NRT-18:2.7
+	v5-02:2.7
+	v5-01-NRT-17:2.7
+	v5-01-NRT-16:2.7
+	v5-01-NRT-15:2.7
+	v5-01-NRT-14:2.7
+	neuralnetworks-1-0:2.7.0.12
+	cfm-single-freq-0-1:2.7.0.10
+	v5-01:2.7
+	v5-00:2.7
+	v4-23-TA133:2.7.0.8
+	mus-emls-1-70:2.7.0.6
+	rel-1-0-englocks-work:2.7.0.4
+	VUMLS1-00:2.7
+	VPL1-00:2.7
+	V4-22-NRT-08:2.7
+	VAM1-00:2.7
+	V4-21:2.7.0.2
+	V4-13:2.7
+	V4-12:2.7
+	V4-11:2.7
+	V4-10:2.7
+	V3-43:2.5
+	M4-00:2.5
+	V3-41:2.5
+	V3-40-PlusGM57:2.5.0.2
+	V2-24-NRT-04:2.3
+	V3-33:2.5
+	V2-24:2.3
+	V3-31:2.5
+	V3-30-NRT-05:2.5
+	cfm-01-00:2.5
+	V3-30:2.5
+	V3-20:2.5
+	V3-10:2.5
+	V2-23-NRT-02:2.3
+	V2-23:2.3
+	V2-22-NRT-01:2.3
+	V2-22:2.3
+	V2-21:2.3
+	V2-20:2.3;
+locks; strict;
+comment	@# @;
+
+
+2.7
+date	2013.08.30.02.45.36;	author vsnyder;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2013.05.22.20.22.26;	author pwagner;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2009.06.23.18.46.18;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2008.09.19.23.54.31;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2006.08.04.18.08.23;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2006.08.03.20.06.56;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2006.08.02.19.51.43;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.7
+log
+@Revise calls to trace_begin and trace_end
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module DestroyCommand_m
+
+! Destroy vectors and matrices in the databases
+
+  implicit None
+  private
+
+  public :: DESTROYCOMMAND
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: DestroyCommand_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  subroutine DestroyCommand ( Key, Matrices, Vectors, Grids )
+
+    use GRIDDEDDATA, only: GRIDDEDDATA_T, &
+      & DESTROYGRIDDEDDATA, DESTROYGRIDDEDDATADATABASE
+    use INIT_TABLES_MODULE, only: F_ALLGRIDDEDDATA, F_ALLMATRICES, &
+      & F_ALLVECTORS, F_BOOLEAN, F_GRID, F_MATRIX, &
+      & F_VECTOR
+    use MATRIXMODULE_1, only: DESTROYMATRIXDATABASE, DESTROYMATRIX, DUMP, &
+      & MATRIX_DATABASE_T
+    use MLSL2OPTIONS, only: REMOVERUNTIMEBOOLEAN
+    use MLSSTRINGS, only: LOWERCASE
+    use MORETREE, only: GET_BOOLEAN, GET_FIELD_ID
+    use OUTPUT_M, only: OUTPUT
+    use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
+    use TOGGLES, only: TOGGLE, GEN
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+    use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
+    use VECTORSMODULE, only: DESTROYVECTORDATABASE, DESTROYVECTORINFO, DUMP, &
+      & VECTOR_T
+
+    integer, intent(in) :: Key ! Root of parse subtree
+    type (matrix_database_T), dimension(:), pointer :: Matrices
+    type (vector_T), dimension(:), pointer :: Vectors
+    type (griddedData_T), dimension(:), pointer :: Grids
+    ! local variables
+    character(len=80) :: BOOLEANNAME    ! E.g., 'BQTYS'
+    logical :: DEEBUG = .false.
+    integer :: gridID, J, K, MatrixToKill, Son, SourceVectorIndex
+    integer :: gson
+    integer :: Me = -1                  ! String index for trace
+
+    ! Executable
+
+    call trace_begin ( me, 'DestroyCommand', key, cond=toggle(gen) )
+    ! Here we're to try to shrink the vector database by destroying a vector
+    ! or the matrix database by destroying a matrix
+    ! Loop over the instructions
+    booleanName = ' '
+    do j = 2, nsons(key)
+      son = subtree(j,key)  ! The argument
+      gson = son
+      if ( nsons(gson) > 1 ) gson = subtree(2,gson)
+      select case ( get_field_id(son) )
+      case ( f_allGriddedData )
+        if ( get_boolean(son) ) call DestroyGriddedDataDatabase ( grids )
+      case ( f_allMatrices )
+        if ( get_boolean(son) ) call destroyMatrixDatabase ( matrices )
+      case ( f_allVectors )
+        if ( get_boolean(son) ) call destroyVectorDatabase ( vectors )
+      case (f_Boolean)
+        call get_string ( sub_rosa(gson), booleanName, strip=.true. )
+        booleanName = lowerCase( booleanName )
+        call removeRunTimeBoolean( booleanName )
+      case ( f_grid )
+        do k = 2, nsons(son)
+          gridID = decoration(decoration(subtree(k,son)))
+          call DestroyGriddedData ( grids(gridID) )
+        end do
+      case ( f_matrix )
+        do k = 2, nsons(son)
+          matrixToKill = decoration(decoration(subtree(k,son)))
+          if ( DEEBUG ) then
+            ! if ( matrices(matrixToKill)%matrix%name /= 0 ) then
+             ! call output ( '   Matrix Name = ' )
+             ! call display_string ( matrices(matrixToKill)%matrix%name )
+             call dump ( matrices(matrixToKill), -1 )
+            ! end if
+          end if
+          call DestroyMatrix ( matrices(matrixToKill) )
+        end do
+      case ( f_vector )
+        do k = 2, nsons(son)
+          sourceVectorIndex = decoration(decoration(subtree(k,son)))
+          if ( DEEBUG ) then
+            if ( vectors(sourceVectorIndex)%name /= 0 ) then
+              call display_string ( vectors(sourceVectorIndex)%name, &
+                & before='   Vector Name = ' )
+            else
+              call output ( '  ' )
+            end if
+            if ( vectors(sourceVectorIndex)%template%name /= 0 ) then
+              call display_string ( vectors(sourceVectorIndex)%template%name, &
+                & before=' Template_Name = ', advance='yes' )
+            end if
+            call output ( ' -- vector database before removal --', advance='yes' )
+            call dump ( vectors, details=-2 )
+          end if
+
+          call DestroyVectorInfo ( vectors(sourceVectorIndex) )
+     !    vectorindex = rmVectorFromDatabase ( vectors, vectors(sourceVectorIndex) )
+          if ( DEEBUG ) then
+            call output ( ' -- vector database after removal --', advance='yes' )
+            call dump ( vectors, details=-2 )
+          end if
+        end do
+      case default ! Can't get here if type checker worked
+      end select
+    end do
+    call trace_end ( 'DestroyCommand', cond=toggle(gen) )
+
+  end subroutine DestroyCommand
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: DestroyCommand_m.f90,v 2.6 2013/05/22 20:22:26 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+
+end module DestroyCommand_m
+
+! $Log: DestroyCommand_m.f90,v $
+! Revision 2.6  2013/05/22 20:22:26  pwagner
+! May destroy r/t Booleans
+!
+! Revision 2.5  2009/06/23 18:46:18  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.4  2008/09/19 23:54:31  pwagner
+! May now Destroy GriddedData
+!
+! Revision 2.3  2006/08/04 18:08:23  vsnyder
+! Simplify /allMatrices and /allVectors
+!
+! Revision 2.2  2006/08/03 20:06:56  vsnyder
+! Added /allvectors and /allmatrices
+!
+! Revision 2.1  2006/08/02 19:51:43  vsnyder
+! Move from Fill module
+!
+@
+
+
+2.6
+log
+@May destroy r/t Booleans
+@
+text
+@a54 1
+    integer :: gson
+d57 3
+d61 2
+a62 1
+    if ( toggle(gen) ) call trace_begin ( 'DestroyCommand' )
+d127 1
+a127 1
+    if ( toggle(gen) ) call trace_end ( 'DestroyCommand' )
+d134 1
+a134 1
+       "$Id: DestroyCommand_m.f90,v 2.5 2009/06/23 18:46:18 pwagner Exp $"
+d145 3
+@
+
+
+2.5
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d19 1
+a19 1
+  public :: DestroyCommand
+d23 1
+a23 1
+       "$RCSfile: $"
+d31 17
+a47 15
+    use GriddedData, only: griddedData_T, &
+      & DestroyGriddedData, DestroyGriddedDataDatabase
+    use Init_Tables_Module, only: F_AllGriddedData, F_AllMatrices, F_AllVectors, &
+      & F_GRID, F_Matrix, &
+      & F_Vector
+    use MatrixModule_1, only: DestroyMatrixDatabase, DestroyMatrix, Dump, &
+      & Matrix_Database_T
+    use MoreTree, only: Get_Boolean, Get_Field_ID
+    use Output_m, only: Output
+    use String_Table, only: Display_String
+    use Toggles, only: Toggle, Gen
+    use Trace_m, only: Trace_begin, Trace_end
+    use Tree, only: Decoration, NSons, Subtree
+    use VectorsModule, only: DestroyVectorDatabase, DestroyVectorInfo, Dump, &
+      & Vector_T
+d53 3
+a55 1
+
+d58 1
+a58 1
+
+d63 1
+d66 2
+d75 4
+a81 1
+
+a93 1
+
+d131 1
+a131 1
+       "$Id: read_apriori.f90 is it here $"
+d142 3
+@
+
+
+2.4
+log
+@May now Destroy GriddedData
+@
+text
+@d23 1
+a23 1
+       "$RCSfile: DestroyCommand_m.f90,v $"
+d119 1
+a120 1
+!---------------------------- RCS Ident Info -------------------------------
+d122 2
+a123 3
+       "$Id: DestroyCommand_m.f90,v 2.3 2006/08/04 18:08:23 vsnyder Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d125 1
+a125 1
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
+d127 1
+d133 3
+@
+
+
+2.3
+log
+@Simplify /allMatrices and /allVectors
+@
+text
+@d29 1
+a29 1
+  subroutine DestroyCommand ( Key, Matrices, Vectors )
+d31 5
+a35 1
+    use Init_Tables_Module, only: F_AllMatrices, F_AllVectors, F_Matrix, F_Vector
+d50 1
+d53 1
+a53 1
+    integer :: J, K, MatrixToKill, Son, SourceVectorIndex
+d62 2
+d68 6
+d122 1
+a122 1
+       "$Id: DestroyCommand_m.f90,v 2.2 2006/08/03 20:06:56 vsnyder Exp $"
+d126 1
+d133 3
+@
+
+
+2.2
+log
+@Added /allvectors and /allmatrices
+@
+text
+@d32 2
+a33 1
+    use MatrixModule_1, only: DestroyMatrix, Dump, Matrix_Database_T
+d40 2
+a41 1
+    use VectorsModule, only: DestroyVectorInfo, Dump, Vector_T
+d58 1
+a58 5
+        if ( get_boolean(son) ) then
+          do k = 1, size(matrices)
+            call DestroyMatrix ( matrices(k) )
+          end do
+        end if
+d60 1
+a60 5
+        if ( get_boolean(son) ) then
+          do k = 1, size(vectors)
+            call DestroyVectorInfo ( vectors(k) )
+          end do
+        end if
+d109 1
+a109 1
+       "$Id: DestroyCommand_m.f90,v 2.1 2006/08/02 19:51:43 vsnyder Exp $"
+d119 3
+@
+
+
+2.1
+log
+@Move from Fill module
+@
+text
+@d23 1
+a23 1
+       "$RCSfile: OutputAndClose.f90,v $"
+d31 1
+a31 1
+    use Init_Tables_Module, only: F_Matrix, F_Vector
+d33 1
+a33 1
+    use MoreTree, only: Get_Field_ID
+d36 2
+d46 1
+a46 1
+    integer :: FieldIndex, FieldValue, J, K, MatrixToKill, Son, SourceVectorIndex
+d48 1
+a48 2
+    if ( DEEBUG) call output('Destroy vector/matrix instruction', &
+    &  advance='no')
+d50 1
+a50 1
+    ! or the matrix database database by destroying a matrix
+d54 13
+a66 7
+      fieldIndex = get_field_id(son)
+      if ( nsons(son) > 1 ) then
+        fieldValue = decoration(subtree(2,son)) ! The field's value
+      else
+        fieldValue = son
+      end if
+      select case ( fieldIndex )
+d108 1
+d115 1
+a115 1
+       "$Id: OutputAndClose.f90,v 2.124 2006/05/09 16:40:41 pwagner Exp $"
+d124 4
+a127 1
+! $Log: $
+@
+

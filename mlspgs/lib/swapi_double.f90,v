@@ -1,0 +1,381 @@
+head	2.5;
+access;
+symbols
+	v5-02-NRT-19:2.5
+	v6-00:2.5
+	v5-02-NRT-18:2.5
+	v5-02:2.5
+	v5-01-NRT-17:2.5
+	v5-01-NRT-16:2.5
+	v5-01-NRT-15:2.5
+	v5-01-NRT-14:2.5
+	neuralnetworks-1-0:2.5.0.14
+	cfm-single-freq-0-1:2.5.0.12
+	v5-01:2.5
+	v5-00:2.5
+	v4-23-TA133:2.5.0.10
+	mus-emls-1-70:2.5.0.8
+	rel-1-0-englocks-work:2.5.0.6
+	VUMLS1-00:2.5
+	VPL1-00:2.5
+	V4-22-NRT-08:2.5
+	VAM1-00:2.5
+	V4-21:2.5.0.4
+	V4-13:2.5
+	V4-12:2.5
+	V4-11:2.5
+	V4-10:2.5
+	V3-43:2.5
+	M4-00:2.5
+	V3-41:2.5
+	V3-40-PlusGM57:2.5.0.2
+	V2-24-NRT-04:2.4
+	V3-33:2.5
+	V2-24:2.4
+	V3-31:2.5
+	V3-30-NRT-05:2.5
+	cfm-01-00:2.5
+	V3-30:2.5
+	V3-20:2.5
+	V3-10:2.5
+	V2-23-NRT-02:2.4
+	V2-23:2.4
+	V2-22-NRT-01:2.4
+	V2-22:2.4
+	V2-21:2.4
+	V2-20:2.4
+	V2-11:2.4
+	V2-10:2.4
+	V2-00:2.4
+	V1-51:2.3
+	V1-50:2.3
+	V1-45:2.3
+	V1-44:2.3
+	V1-43:2.3
+	V1-42:2.3
+	V1-41:2.3
+	V1-32:2.3
+	V1-40:2.3
+	V1-31:2.3
+	V1-30:2.3
+	V1-13:2.3
+	V1-12:2.3
+	V1-11:2.3
+	V1-10:2.3
+	newfwm-feb03:2.3.0.2
+	V1-04:2.2
+	V1-03:2.2
+	V1-02:2.2
+	V1-00:2.2
+	newfwm-sep01:2.2.0.2
+	V0-7:2.2
+	V0-5-Level2:2.1
+	V0-5-SIPS:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.5
+date	2009.06.23.18.25.44;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2005.06.22.17.25.50;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2002.10.08.00.09.14;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2001.06.07.21.59.41;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2000.09.29.18.04.02;	author vsnyder;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2000.09.05.17.41.08;	author dcuddy;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2000.09.02.01.56.36;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.5
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module SWAPI_DOUBLE
+
+  public
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  integer function SWRDFLD_DOUBLE ( SWATHID, FIELDNAME, &
+    & STARTS, STRIDES, EDGES, BUFFER )
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: FIELDNAME     ! Field name
+    integer, intent(in) :: STARTS(*)    ! Start array
+    integer, intent(in) :: STRIDES(*)   ! Stride array
+    integer, intent(in) :: EDGES(*)     ! Edge array
+    double precision, intent(out) :: BUFFER(:)  ! Buffer for read
+
+    integer, external :: SWRDFLD
+
+    swrdfld_double  = swrdfld(swathid, fieldname, starts, strides, &
+      & edges, buffer )
+  end function SWRDFLD_DOUBLE
+
+  integer function SWRDFLD_DOUBLE_2D ( SWATHID, FIELDNAME, &
+    & STARTS, STRIDES, EDGES, BUFFER )
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: FIELDNAME     ! Field name
+    integer, intent(in) :: STARTS(*)    ! Start array
+    integer, intent(in) :: STRIDES(*)   ! Stride array
+    integer, intent(in) :: EDGES(*)     ! Edge array
+    double precision, intent(out) :: BUFFER(:,:)  ! Buffer for read
+
+    integer, external :: SWRDFLD
+
+    swrdfld_double_2d  = swrdfld(swathid, fieldname, starts, strides, &
+      & edges, buffer )
+  end function SWRDFLD_DOUBLE_2D
+
+  integer function SWRDFLD_DOUBLE_3D ( SWATHID, FIELDNAME, &
+    & STARTS, STRIDES, EDGES, BUFFER )
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: FIELDNAME     ! Field name
+    integer, intent(in) :: STARTS(*)    ! Start array
+    integer, intent(in) :: STRIDES(*)   ! Stride array
+    integer, intent(in) :: EDGES(*)     ! Edge array
+    double precision, intent(out) :: BUFFER(:,:,:)  ! Buffer for read
+
+    integer, external :: SWRDFLD
+
+    swrdfld_double_3d  = swrdfld(swathid, fieldname, starts, strides, &
+      & edges, buffer )
+  end function SWRDFLD_DOUBLE_3D
+
+  integer function SWWRFLD_DOUBLE ( SWATHID, FIELDNAME, &
+    & STARTS, STRIDES, EDGES, BUFFER )
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: FIELDNAME     ! Field name
+    integer, intent(in) :: STARTS(*)    ! Start array
+    integer, intent(in) :: STRIDES(*)   ! Stride array
+    integer, intent(in) :: EDGES(*)     ! Edge array
+    double precision, intent(in) :: BUFFER(:)   ! Buffer for write
+
+    integer, external :: SWWRFLD
+
+    swwrfld_double = swwrfld(swathid, fieldname, starts, strides, &
+      & edges, buffer )
+  end function SWWRFLD_DOUBLE
+
+  integer function SWWRFLD_DOUBLE_2D ( SWATHID, FIELDNAME, &
+    & STARTS, STRIDES, EDGES, BUFFER )
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: FIELDNAME     ! Field name
+    integer, intent(in) :: STARTS(*)    ! Start array
+    integer, intent(in) :: STRIDES(*)   ! Stride array
+    integer, intent(in) :: EDGES(*)     ! Edge array
+    double precision, intent(in) :: BUFFER(:,:)  ! Buffer for write
+
+    integer, external :: SWWRFLD
+
+    swwrfld_double_2d  = swwrfld(swathid, fieldname, starts, strides, &
+      & edges, buffer )
+  end function SWWRFLD_DOUBLE_2D
+
+  integer function SWWRFLD_DOUBLE_3D ( SWATHID, FIELDNAME, &
+    & STARTS, STRIDES, EDGES, BUFFER )
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: FIELDNAME     ! Field name
+    integer, intent(in) :: STARTS(*)    ! Start array
+    integer, intent(in) :: STRIDES(*)   ! Stride array
+    integer, intent(in) :: EDGES(*)     ! Edge array
+    double precision, intent(in) :: BUFFER(:,:,:)  ! Buffer for write
+
+    integer, external :: SWWRFLD
+
+    swwrfld_double_3d  = swwrfld(swathid, fieldname, starts, strides, &
+      & edges, buffer )
+  end function SWWRFLD_DOUBLE_3D
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: read_apriori.f90 is it here $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module SWAPI_DOUBLE
+
+! $Log: swapi_double.f90,v $
+! Revision 2.4  2005/06/22 17:25:50  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.3  2002/10/08 00:09:14  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.2  2001/06/07 21:59:41  pwagner
+! Added Copyright statement
+!
+! Revision 2.1  2000/09/29 18:04:02  vsnyder
+! Remove incorrect use of RESHAPE; make BUFFER argument always assumed shape.
+!
+! Revision 2.0  2000/09/05 17:41:08  dcuddy
+! Change revision to 2.0
+!
+! Revision 1.1  2000/09/02 01:56:36  vsnyder
+! Initial code
+!
+@
+
+
+2.4
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d114 1
+a115 1
+!---------------------------- RCS Ident Info -------------------------------
+d117 2
+a118 3
+       "$Id: $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d120 1
+d122 1
+d127 3
+@
+
+
+2.3
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d16 3
+a18 5
+  !------------------------------- RCS Ident Info ----------------------------
+  character(len=256), private :: Id = &
+    & "$Id: swapi_double.f90,v 2.2 2001/06/07 21:59:41 pwagner Exp $"
+  character(len=*), private, parameter :: ModuleName = &
+    & "$RCSfile: swapi_double.f90,v $"
+d20 1
+a20 1
+  !---------------------------------------------------------------------------
+d115 5
+d126 3
+@
+
+
+2.2
+log
+@Added Copyright statement
+@
+text
+@d10 1
+a10 1
+    & "$Id: swapi_double.f90,v 2.1 2000/09/29 18:04:02 vsnyder Exp $"
+d13 1
+d108 4
+d115 3
+@
+
+
+2.1
+log
+@Remove incorrect use of RESHAPE; make BUFFER argument always assumed shape.
+@
+text
+@d1 3
+d10 1
+a10 1
+    & "$Id: swapi_double.f90,v 2.0 2000/09/05 17:41:08 dcuddy Exp $"
+d110 3
+@
+
+
+2.0
+log
+@Change revision to 2.0
+@
+text
+@d7 1
+a7 1
+    & "$Id: swapi_double.f90,v 1.1 2000/09/02 01:56:36 vsnyder Exp $"
+d21 1
+a21 1
+    double precision, intent(out) :: BUFFER(*)  ! Buffer for read
+d36 1
+a36 1
+    double precision, intent(out) :: BUFFER(1,*)  ! Buffer for read
+d51 1
+a51 1
+    double precision, intent(out) :: BUFFER(1,1,*)  ! Buffer for read
+d66 1
+a66 1
+    double precision, intent(in) :: BUFFER(*)   ! Buffer for write
+d81 1
+a81 1
+    double precision, intent(in) :: BUFFER(1,*)  ! Buffer for write
+d96 1
+a96 1
+    double precision, intent(in) :: BUFFER(1,1,*)  ! Buffer for write
+d107 3
+@
+
+
+1.1
+log
+@Initial code
+@
+text
+@d7 1
+a7 1
+    & "$Id: swapi_double.f90,v 1.1 2000/09/02 01:56:36 vsnyder Exp $"
+d107 3
+@
+
+

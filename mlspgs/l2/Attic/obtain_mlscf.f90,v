@@ -1,0 +1,661 @@
+head	2.15;
+access;
+symbols
+	V1-51:2.14
+	V1-50:2.14
+	V1-45:2.14
+	V1-44:2.14
+	V1-43:2.14
+	V1-32:2.14
+	V1-31:2.14
+	V1-30:2.14
+	V1-13:2.14
+	V1-12:2.14
+	V1-11:2.14
+	V1-10:2.13
+	newfwm-feb03:2.13.0.2
+	V1-04:2.12
+	V1-03:2.12
+	V1-02:2.12
+	JointForwardModel:2.12.0.2
+	V1-00:2.12
+	newfwm-sep01:2.8.0.2
+	V0-7:2.8
+	V0-5-Level2:2.7
+	V0-5-SIPS:2.6;
+locks; strict;
+comment	@# @;
+
+
+2.15
+date	2005.06.01.21.04.47;	author pwagner;	state dead;
+branches;
+next	2.14;
+
+2.14
+date	2003.02.27.18.40.29;	author pwagner;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2002.10.08.17.36.22;	author pwagner;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2002.02.20.00.27.15;	author pwagner;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2002.01.18.23.09.14;	author pwagner;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2002.01.11.00.43.22;	author pwagner;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2002.01.09.00.00.04;	author pwagner;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2001.07.18.23.57.57;	author pwagner;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2001.05.02.23.33.48;	author pwagner;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2001.04.16.23.43.17;	author pwagner;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2001.04.12.22.19.33;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2001.04.05.23.42.10;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2001.02.28.02.02.21;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2001.02.28.01.58.07;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.02.13.23.05.47;	author pwagner;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2000.09.05.18.57.06;	author ahanzel;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2000.09.02.02.05.04;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.15
+log
+@Unneeded after changing to MLSFile types
+@
+text
+@! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+module OBTAIN_MLSCF
+
+! Open and close the MLSCF
+  use LEXER_CORE, only: PRINT_SOURCE
+  use MLSFiles, only: MLS_io_gen_openf, MLS_io_gen_closef
+  USE output_m, only: output
+  use SDPToolkit, only: PGS_S_SUCCESS, PGSd_IO_Gen_RSeqFrm, Pgs_pc_getReference
+  use TREE, only: DUMP_TREE_NODE, SOURCE_REF
+
+  implicit NONE
+
+  private
+  public :: Close_MLSCF, Open_MLSCF
+
+  ! =====  Private declarations  =======================================
+
+  !------------------------------- RCS Ident Info ------------------------------
+  character(len=130) :: id = &
+     "$id: obtain_mlscf.f90,v 1.11 2000/06/19 22:40:51 lungu Exp $"
+  character(len=*), parameter :: ModuleName="$RCSfile: obtain_mlscf.f90,v $"
+  private :: not_used_here 
+  !-----------------------------------------------------------------------------
+
+  integer, private :: ERROR
+
+contains ! =====     Public Procedures     =============================
+
+  ! ------------------------------------------------  CLOSE_MLSCF  -----
+  subroutine CLOSE_MLSCF ( CF_Unit, return_status )
+
+    integer, intent(in) :: CF_Unit
+    integer, intent(out) :: return_status
+
+    error = 0
+!    return_Status = Pgs_io_gen_closeF ( CF_Unit )
+
+    return_Status = Mls_io_gen_closeF ( 'pg', CF_Unit )
+
+    if ( return_Status /= PGS_S_SUCCESS ) then
+		call announce_error(0, 'Error closing L2CF', &
+      & error_number=return_Status)
+    end if
+
+  end subroutine CLOSE_MLSCF
+
+  ! -------------------------------------------------  OPEN_MLSCF  -----
+  subroutine OPEN_MLSCF ( MLSPCF_Start, CF_Unit, L2CF_file, return_status, &
+   & record_length, debugOption )
+
+    integer, intent(in) :: MLSPCF_Start
+    integer, intent(out) :: CF_Unit
+    integer, intent(out) :: return_status
+    character(len=*), intent(out) :: L2CF_file
+    integer, intent(in) :: record_length
+    logical, optional, intent(in) :: debugOption
+
+    integer :: version
+
+    error = 0
+!    return_Status = Pgs_io_gen_openF ( MLSPCF_Start, PGSd_IO_Gen_RSeqFrm, &
+!                                      0, CF_Unit, L2CF_Version)
+
+    version = 1
+    return_Status = Pgs_pc_getReference(MLSPCF_Start, version, L2CF_file)
+    CF_Unit = Mls_io_gen_openF ( 'pg', .true., return_Status, record_length, &
+      & PGSd_IO_Gen_RSeqFrm, &
+      & thePC=MLSPCF_Start, debugOption=debugOption)
+
+    if ( return_Status /= PGS_S_SUCCESS ) then
+		call announce_error(0, "Error opening MLSCF", &
+      & error_number=return_Status)
+    end if
+
+  end subroutine OPEN_MLSCF
+
+  ! ------------------------------------------------  announce_error  -----
+  subroutine announce_error ( lcf_where, full_message, use_toolkit, &
+  & error_number )
+  
+   ! Arguments
+	
+    integer, intent(in)    :: lcf_where
+    character(LEN=*), intent(in)    :: full_message
+    logical, intent(in), optional :: use_toolkit
+    integer, intent(in), optional    :: error_number
+
+    ! Local
+    logical :: just_print_it
+    logical, parameter :: default_output_by_toolkit = .true.
+ 
+      error = 0
+    if ( present(use_toolkit) ) then
+      just_print_it = .not. use_toolkit
+    else if ( default_output_by_toolkit ) then
+      just_print_it = .false.
+    else
+      just_print_it = .true.
+    end if
+ 
+    if ( .not. just_print_it ) then
+      error = max(error,1)
+      if ( lcf_where > 0 ) then
+        call output ( '***** At ' )
+
+        call print_source ( source_ref(lcf_where) )
+
+        call output ( ': ' )
+        call output ( "The " )
+        call dump_tree_node ( lcf_where, 0 )
+
+      else
+        call output ( 'Your choice of lcf or other events' )
+      end if
+
+      call output ( " Caused the following error: ", advance='yes', &
+        & from_where=ModuleName )
+      call output ( trim(full_message), advance='yes', &
+        & from_where=ModuleName )
+      if ( present(error_number) ) then
+        call output ( 'error number ', advance='no' )
+        call output ( error_number, places=9, advance='yes' )
+      end if
+    else
+      call output ( '***Error in module ' )
+      call output ( ModuleName, advance='yes' )
+      call output ( trim(full_message), advance='yes' )
+      if ( present(error_number) ) then
+        call output ( 'Error number ' )
+        call output ( error_number, advance='yes' )
+      end if
+    end if
+
+!===========================
+  end subroutine announce_error
+!===========================
+
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
+end module OBTAIN_MLSCF
+
+! $Log: obtain_mlscf.f90,v $
+! Revision 2.14  2003/02/27 18:40:29  pwagner
+! recl passed to let NAG open l2cf with long lines
+!
+! Revision 2.13  2002/10/08 17:36:22  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.12  2002/02/20 00:27:15  pwagner
+! Now returns l2cf file name
+!
+! Revision 2.11  2002/01/18 23:09:14  pwagner
+! Added debugOption to subroutine args
+!
+! Revision 2.10  2002/01/11 00:43:22  pwagner
+! Removed some unused stuff; simplified error msg
+!
+! Revision 2.9  2002/01/09 00:00:04  pwagner
+! Replaced write or print statements with calls to output
+!
+! Revision 2.8  2001/07/18 23:57:57  pwagner
+! Returns error from close_mlscf
+!
+! Revision 2.7  2001/05/02 23:33:48  pwagner
+! Replace pgs_io_gen.. routines with mls_..
+!
+! Revision 2.6  2001/04/16 23:43:17  pwagner
+! Returns returnStatus
+!
+! Revision 2.5  2001/04/12 22:19:33  vsnyder
+! Improved an error message
+!
+! Revision 2.4  2001/04/05 23:42:10  pwagner
+! Added announce_error, deleted all MLSMessages
+!
+! Revision 2.3  2001/02/28 02:02:21  vsnyder
+! Remove unused reference to MLSPCF2
+!
+! Revision 2.2  2001/02/28 01:58:07  vsnyder
+! Get pcf # and unit # from arguments
+!
+@
+
+
+2.14
+log
+@recl passed to let NAG open l2cf with long lines
+@
+text
+@d147 3
+@
+
+
+2.13
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d51 1
+a51 1
+   & debugOption )
+d57 1
+a59 1
+    integer :: record_length
+d147 3
+@
+
+
+2.12
+log
+@Now returns l2cf file name
+@
+text
+@d24 1
+d140 4
+d147 3
+@
+
+
+2.11
+log
+@Added debugOption to subroutine args
+@
+text
+@d10 1
+a10 1
+  use SDPToolkit, only: PGS_S_SUCCESS, PGSd_IO_Gen_RSeqFrm
+d49 2
+a50 1
+  subroutine OPEN_MLSCF ( MLSPCF_Start, CF_Unit, return_status, debugOption )
+d55 1
+d59 1
+d65 2
+d142 3
+@
+
+
+2.10
+log
+@Removed some unused stuff; simplified error msg
+@
+text
+@d49 1
+a49 1
+  subroutine OPEN_MLSCF ( MLSPCF_Start, CF_Unit, return_status )
+d54 1
+d64 1
+a64 1
+      & thePC=MLSPCF_Start)
+d137 3
+@
+
+
+2.9
+log
+@Replaced write or print statements with calls to output
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+a35 4
+    character (LEN=32) :: MNEMONIC
+    character (LEN=256) :: MSG
+!    integer :: RETURN_STATUS
+
+a54 1
+    integer :: L2CF_VERSION
+a55 2
+    character (LEN=32) :: MNEMONIC
+    character (LEN=256) :: MSG
+a57 1
+    L2CF_Version = 1
+d98 2
+a99 1
+      call output ( '***** At ' )
+d101 1
+a101 5
+      if ( lcf_where > 0 ) then
+          call print_source ( source_ref(lcf_where) )
+      else
+        call output ( '(no lcf node available)' )
+      end if
+d103 2
+a104 3
+      call output ( ': ' )
+      call output ( "The " );
+      if ( lcf_where > 0 ) then
+d106 1
+d108 1
+a108 1
+        call output ( '(no lcf tree available)' )
+d136 3
+@
+
+
+2.8
+log
+@Returns error from close_mlscf
+@
+text
+@d131 3
+a133 2
+      print*, '***Error in module ', ModuleName
+      print*, trim(full_message)
+d135 2
+a136 1
+        print*, 'error number ', error_number
+d147 3
+@
+
+
+2.7
+log
+@Replace pgs_io_gen.. routines with mls_..
+@
+text
+@d31 1
+a31 1
+  subroutine CLOSE_MLSCF ( CF_Unit )
+d34 1
+d38 1
+a38 1
+    integer :: RETURN_STATUS
+d46 2
+a47 1
+		call announce_error(0, 'Error closing L2CF')
+d74 2
+a75 1
+		call announce_error(0, "Error opening MLSCF")
+d145 3
+@
+
+
+2.6
+log
+@Returns returnStatus
+@
+text
+@d8 1
+a8 1
+!  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+d10 1
+a10 2
+  use SDPToolkit, only: Pgs_io_gen_closeF, Pgs_io_gen_openF, PGS_S_SUCCESS, &
+    & PGSd_IO_Gen_RSeqFrm
+d40 3
+a42 1
+    return_Status = Pgs_io_gen_closeF ( CF_Unit )
+a44 3
+!      call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
+!      call MLSMessage ( MLSMSG_Error, ModuleName, &
+!        & 'Error closing L2CF:  '//mnemonic//' '//msg)
+d58 1
+d64 6
+a69 2
+    return_Status = Pgs_io_gen_openF ( MLSPCF_Start, PGSd_IO_Gen_RSeqFrm, &
+                                      0, CF_Unit, L2CF_Version)
+a71 3
+!      call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
+!      call MLSMessage ( MLSMSG_Error, ModuleName, &
+!        & "Error opening MLSCF:  "//mnemonic//"  "//msg)
+d142 3
+@
+
+
+2.5
+log
+@Improved an error message
+@
+text
+@d53 1
+a53 1
+  subroutine OPEN_MLSCF ( MLSPCF_Start, CF_Unit )
+d57 1
+a61 1
+    integer :: RETURN_STATUS
+d94 1
+a94 1
+      just_print_it = use_toolkit
+d142 3
+@
+
+
+2.4
+log
+@Added announce_error, deleted all MLSMessages
+@
+text
+@d83 51
+a133 51
+	integer, intent(in)    :: lcf_where
+	character(LEN=*), intent(in)    :: full_message
+	logical, intent(in), optional :: use_toolkit
+	integer, intent(in), optional    :: error_number
+
+	! Local
+  logical :: just_print_it
+  logical, parameter :: default_output_by_toolkit = .true.
+	
+    error = 0
+	if(present(use_toolkit)) then
+		just_print_it = use_toolkit
+	elseif(default_output_by_toolkit) then
+		just_print_it = .false.
+	else
+		just_print_it = .true.
+	endif
+	
+	if(.not. just_print_it) then
+    error = max(error,1)
+    call output ( '***** At ' )
+
+	if(lcf_where > 0) then
+	    call print_source ( source_ref(lcf_where) )
+		else
+    call output ( '(no lcf node available)' )
+		endif
+
+    call output ( ': ' )
+    call output ( "The " );
+	if(lcf_where > 0) then
+    call dump_tree_node ( lcf_where, 0 )
+		else
+    call output ( '(no lcf tree available)' )
+		endif
+
+		CALL output("Caused the following error:", advance='yes', &
+		& from_where=ModuleName)
+		CALL output(trim(full_message), advance='yes', &
+		& from_where=ModuleName)
+		if(present(error_number)) then
+			CALL output('error number ', advance='no')
+			CALL output(error_number, places=9, advance='yes')
+		endif
+	else
+		print*, '***Error in module ', ModuleName
+		print*, trim(full_message)
+		if(present(error_number)) then
+			print*, 'error number ', error_number
+		endif
+	endif
+d142 3
+@
+
+
+2.3
+log
+@Remove unused reference to MLSPCF2
+@
+text
+@d7 3
+a9 1
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+d12 1
+d27 2
+d40 1
+d44 4
+a47 3
+      call Pgs_smf_getMsg ( return_Status, mnemonic, msg )
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Error closing L2CF:  '//mnemonic//' '//msg)
+d49 1
+d63 1
+d69 4
+a72 4
+
+      call Pgs_smf_getMsg ( return_Status, mnemonic, msg )
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & "Error opening MLSCF:  "//mnemonic//"  "//msg)
+d77 62
+d142 3
+@
+
+
+2.2
+log
+@Get pcf # and unit # from arguments
+@
+text
+@a7 1
+  use MLSPCF2, only: MLSPCF_L2CF_START
+d10 1
+d12 1
+d70 4
+a73 1
+! $Log: $
+@
+
+
+2.1
+log
+@l2 modules can only use MLSPCF2
+@
+text
+@a15 1
+  integer, save :: L2CF_UNIT
+d26 3
+a28 1
+  subroutine CLOSE_MLSCF
+d34 1
+a34 1
+    return_Status = Pgs_io_gen_closeF ( L2CF_Unit )
+d44 4
+a47 1
+  subroutine OPEN_MLSCF
+d55 2
+a56 2
+    return_Status = Pgs_io_gen_openF ( mlspcf_l2cf_start, PGSd_IO_Gen_RSeqFrm, &
+                                      0, L2CF_Unit, L2CF_Version)
+d68 2
+@
+
+
+2.0
+log
+@Changing file revision to 2.0.
+@
+text
+@d8 1
+a8 1
+  use MLSPCF, only: MLSPCF_L2CF_START
+@
+
+
+1.1
+log
+@Initial entry
+@
+text
+@@
+
+

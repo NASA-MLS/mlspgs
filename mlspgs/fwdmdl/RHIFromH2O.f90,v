@@ -1,0 +1,607 @@
+head	2.8;
+access;
+symbols
+	v5-02-NRT-19:2.8
+	v6-00:2.8
+	v5-02-NRT-18:2.8
+	v5-02:2.8
+	v5-01-NRT-17:2.8
+	v5-01-NRT-16:2.8
+	v5-01-NRT-15:2.8
+	v5-01-NRT-14:2.8
+	neuralnetworks-1-0:2.8.0.10
+	cfm-single-freq-0-1:2.8.0.8
+	v5-01:2.8
+	v5-00:2.8
+	v4-23-TA133:2.8.0.6
+	mus-emls-1-70:2.8.0.4
+	rel-1-0-englocks-work:2.8.0.2
+	VUMLS1-00:2.8
+	VPL1-00:2.8
+	V4-22-NRT-08:2.8
+	VAM1-00:2.8
+	V4-21:2.7.0.2
+	V4-13:2.7
+	V4-12:2.7
+	V4-11:2.7
+	V4-10:2.7
+	V3-43:2.5
+	M4-00:2.6
+	V3-41:2.5
+	V3-40-PlusGM57:2.5.0.2
+	V2-24-NRT-04:2.3
+	V3-33:2.5
+	V2-24:2.3
+	V3-31:2.5
+	V3-30-NRT-05:2.5
+	cfm-01-00:2.5
+	V3-30:2.5
+	V3-20:2.5
+	V3-10:2.4
+	V2-23-NRT-02:2.3
+	V2-23:2.3
+	V2-22-NRT-01:2.3
+	V2-22:2.3
+	V2-21:2.3
+	V2-20:2.3
+	V2-11:2.3
+	V2-10:2.3
+	V2-00:2.3
+	V1-51:2.1
+	V1-50:2.1
+	V1-45:2.1
+	V1-44:2.1
+	V1-43:2.1
+	V1-32:2.1
+	V1-31:2.1
+	V1-30:2.1
+	V1-13:2.1
+	V1-12:2.1
+	V1-11:2.1
+	V1-10:2.1
+	newfwm-feb03:2.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+2.8
+date	2015.09.24.23.11.34;	author pwagner;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2013.06.12.02.21.15;	author vsnyder;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2013.03.01.01.06.57;	author pwagner;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2009.08.24.20.08.55;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2009.06.23.18.26.10;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2005.10.17.17.25.48;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2005.06.22.18.08.19;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2003.01.28.21.53.07;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.8
+log
+@Avoid crashing when conversion would overflow otherwise
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=============================================================================
+module RHIFromH2O                     ! H2O <-> RHI Conversions
+  !=============================================================================
+
+  ! This module gathers into one place subroutines converting
+  ! between H2O  concentration and RHI.
+  ! Also their respective precisions
+
+  use MLSCommon, only: defaultUndefinedValue
+  use MLSKinds, only: r8
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
+  implicit none
+  private
+  public :: RHIFROMH2O_FACTOR, RHIPRECFROMH2O, H2OPRECFROMRHI
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: RHIFromH2O.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+  real(r8), parameter :: TooBig = 300.
+contains ! =====     Public Procedures     =============================
+
+  !--------------------------------------------  RHIFromH2O_Factor  -----
+
+  function RHIFromH2O_Factor ( T, zeta, vmr_unit_cnv, invert)
+  ! Factor relating rhi to H2O vmr
+  ! (See Eq. 9 from "UARS Microwave Limb Sounder upper tropospheric
+  !  humidity measurement: Method and validation" Read et. al. 
+  !  J. Geoph. Res. Dec. 2001 (106) D23)
+  ! Arguments
+  real(r8), intent(in) :: T               ! Temperature
+  real(r8), intent(in) :: zeta            ! Surface in log pressure units
+  integer, intent(in)  :: vmr_unit_cnv   ! E.g., 6 for ppmv
+  logical, optional, intent(in) :: invert ! If TRUE, H2O = factor RHI
+                                          ! else, RHI = factor H2O (default)
+  real(r8)             :: RHIFromH2O_Factor
+  real(r8)             :: itsLog
+  ! Local variables
+  integer :: invs
+  
+  ! Executable
+  invs = -1
+  if ( present(invert) ) then
+    if ( invert ) invs = 1
+  endif
+  RHIFromH2O_Factor = defaultUndefinedValue
+  if ( C(T) /= defaultUndefinedValue ) then
+    itsLog = (C(T)+zeta+vmr_unit_cnv) * log(10.) &
+      & + &
+      & 3.56654*log(T/273.16) 
+    if ( abs(itsLog) < TooBig ) then
+      RHIFromH2O_Factor = &
+      & exp(invs*itsLog )
+    else
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & "Cannot recover RHi from H2O" )
+    endif
+  endif
+  
+  end function RHIFromH2O_Factor
+
+  !--------------------------------------------  RHIPrecFromH2O  -----
+  ! Idea:
+  ! Assuming the errors in {H2O] and Temperature are uncorrelated, the errors
+  ! in a function jointly of x and y can be expressed as
+  ! (d f)^2 = (d x (ds f / ds x)^2 + (d y (ds f / ds y)^2
+  
+  ! d[RHi]^2 = ( d [H2O] (ds [RHi]/ ds [H2O]) )^2 + ( [H2O] dT (ds F / ds T) )^2
+  ! where ds y / ds x means the (partial) derivative of y w.r.t. x
+  ! d x means precision or uncertainty in x
+  ! and F(T) is the factor computed in RHIFromH2O_Factor
+  ! namely, [RHi] = F(T) [H2O]; so finally
+  ! d[H2O]^2 = ( d [H2O] F )^2 + ( [H2O] dT (ds F / ds T) )^2
+  subroutine RHIPrecFromH2O ( H2Ovmr, T, zeta, vmr_unit_cnv, &
+    & H2OPrecision, TPrecision, RHIPrecision, NEGATIVETOO )
+  ! Calculate RHI Precision based on that of H2O and Temperature
+  ! Eq. 9 from "UARS Microwave Limb Sounder upper tropospheric
+  !  humidity measurement: Method and validation" Read et. al. 
+  !  J. Geoph. Res. Dec. 2001 (106) D23
+  ! recoded by Mark Filipiak
+  ! Arguments
+  real(r8), intent(in)  :: H2Ovmr          ! vmr of H2O
+  real(r8), intent(in)  :: T               ! Temperature
+  real(r8), intent(in)  :: zeta            ! Surface in log pressure units
+  integer, intent(in)   :: vmr_unit_cnv    ! E.g., 6 for ppmv
+  real(r8), intent(in)  :: H2OPrecision    ! Precision of H2O
+  real(r8), intent(in)  :: TPrecision      ! Precision of Temperature
+  real(r8), intent(out) :: RHIPrecision    ! Precision of RHI
+  logical, intent(in), optional   :: NEGATIVETOO  ! Set RHI Precision negative 
+  ! Local variables                          if either T or H2O Precsisions are
+  integer :: invs
+  real(r8) :: df_db       ! RHi deriv wrt H2O
+  real(r8) :: df_dT       ! RHi deriv wrt T
+  logical :: isNegative
+  real(r8)             :: itsLog
+  
+  ! Executable
+  isNegative = .false.
+  if ( present(negativeToo) ) &
+    & isNegative = negativeToo .and. &
+    & ( H2OPrecision < 0.d0 .or. TPrecision < 0.d0 )
+  invs = -1
+  RHIPrecision = defaultUndefinedValue
+  itsLog = (C(T)+zeta+vmr_unit_cnv) * log(10.) &
+   & + &
+   & 3.56654*log(T/273.16)
+  if ( abs(itsLog) > TooBig ) then
+    call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & "Cannot recover RHi Precision from H2O" )
+    return
+  endif
+  df_db = exp(invs*( &
+   & itsLog  ))
+  df_dT = H2Ovmr * exp(invs*( &
+   & itsLog  )) &
+   & * invs * ( dC_dT(T) * log(10.) + 3.56654 / T )
+  RHIPrecision = sqrt (&
+   & ( H2OPrecision * df_db )**2 &
+   & + ( TPrecision * df_dT )**2 &
+   & )
+  if ( isNegative ) RHIPrecision = -RHIPrecision
+  end subroutine RHIPrecFromH2O
+
+  !--------------------------------------------  H2OPrecFromRhI  -----
+  ! Idea:
+  ! Assuming the errors in {RHi] and Temperature are uncorrelated, the errors
+  ! in a function jointly of x and y can be expressed as
+  ! (d f)^2 = (d x (ds f / ds x)^2 + (d y (ds f / ds y)^2
+  
+  ! d[H2O]^2 = ( d [RHi] (ds [H2O]/ ds [RHi]) )^2 + ( [RHi] dT (ds F^-1 / ds T) )^2
+  ! where ds y / ds x means the (partial) derivative of y w.r.t. x
+  ! d x means precision or uncertainty in x
+  ! and F(T) is the factor computed in RHIFromH2O_Factor
+  ! namely, [RHi] = F(T) [H2O]; so finally
+  ! d[H2O]^2 = ( d [RHi] / F )^2 + ( [H2O] dT (ds F / ds T) / F )^2
+  subroutine H2OPrecFromRhI ( H2Ovmr, T, zeta, vmr_unit_cnv, &
+    & RHIPrecision, TPrecision, H2OPrecision, NEGATIVETOO )
+  ! Calculate H2O Precision based on that of RHi and Temperature
+  ! Eq. 9 from "UARS Microwave Limb Sounder upper tropospheric
+  !  humidity measurement: Method and validation" Read et. al. 
+  !  J. Geoph. Res. Dec. 2001 (106) D23
+  ! recoded by PAW
+  ! Arguments
+  real(r8), intent(in)  :: H2Ovmr          ! vmr of H2O
+  real(r8), intent(in)  :: T               ! Temperature
+  real(r8), intent(in)  :: zeta            ! Surface in log pressure units
+  integer, intent(in)   :: vmr_unit_cnv    ! E.g., 6 for ppmv
+  real(r8), intent(in)  :: TPrecision      ! Precision of Temperature
+  real(r8), intent(in) :: RHIPrecision    ! Precision of RHI
+  real(r8), intent(out)  :: H2OPrecision    ! Precision of H2O
+  logical, intent(in), optional   :: NEGATIVETOO  ! Set RHI Precision negative 
+  ! Local variables                          if either T or H2O Precsisions are
+  integer :: invs
+  real(r8) :: Eff         ! F in the above
+  real(r8) :: df_dT       ! ds F / ds T in the above
+  logical :: isNegative
+  real(r8)             :: itsLog
+  
+  ! Executable
+  isNegative = .false.
+  if ( present(negativeToo) ) &
+    & isNegative = negativeToo .and. &
+    & ( RHIPrecision < 0.d0 .or. TPrecision < 0.d0 )
+  invs = -1
+  H2OPrecision = defaultUndefinedValue
+  itsLog = (C(T)+zeta+vmr_unit_cnv) * log(10.) &
+   & + &
+   & 3.56654*log(T/273.16)
+  if ( abs(itsLog) > TooBig ) then
+    call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & "Cannot recover H2O Precision from RHi" )
+    return
+  endif
+  Eff = exp(invs*( &
+   & itsLog  ))
+  df_dT = exp(invs*( &
+   & itsLog  )) &
+   & * invs * ( dC_dT(T) * log(10.) + 3.56654 / T )
+  H2OPrecision = sqrt (&
+   & ( RHIPrecision / Eff )**2 &
+   & + ( TPrecision * H2Ovmr * df_dT / Eff )**2 &
+   & )
+  if ( isNegative ) H2OPrecision = -H2OPrecision
+  end subroutine H2OPrecFromRhI
+
+! =====     Private Procedures     =============================
+    function C ( T )
+      ! As found in ref.
+      real(r8), intent(in)   :: T
+      real(r8)               :: C
+      ! Local
+      real(r8), parameter    :: a0 = -1.2141649d0
+      real(r8), parameter    :: a1 = 9.09718d0
+      real(r8), parameter    :: a2 = 0.876793d0
+      real, parameter        :: ILLEGALTEMP = DEFAULTUNDEFINEDVALUE
+      !
+      if ( T > 0.d0 ) then
+        C = a0 - a1*(273.16/T -1.0d0) + a2*(1.0d0 - T/273.16)
+      else
+        C = ILLEGALTEMP
+      end if
+    end function C
+
+    function dC_dT ( T )
+      ! As found in ref.
+      real(r8), intent(in)   :: T
+      real(r8)               :: dC_dT
+      ! Local
+      real(r8), parameter    :: a1 = 9.09718d0
+      real(r8), parameter    :: a2 = 0.876793d0
+      real, parameter        :: ILLEGALTEMP = DEFAULTUNDEFINEDVALUE
+      !
+      if ( T > 0.d0 ) then
+        dC_dT = a1*(273.16/T**2) - a2/273.16
+      else
+        dC_dT = ILLEGALTEMP
+      end if
+    end function dC_dT
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: RHIFromH2O.f90,v 2.7 2013/06/12 02:21:15 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module RHIFromH2O
+!=============================================================================
+
+!
+! $Log: RHIFromH2O.f90,v $
+! Revision 2.7  2013/06/12 02:21:15  vsnyder
+! Cruft removal
+!
+! Revision 2.6  2013/03/01 01:06:57  pwagner
+! Get R8 from MLSKinds; DEFAULTUNDEFINEDVALUE from MLSCommon
+!
+! Revision 2.5  2009/08/24 20:08:55  pwagner
+! May Fill H2O precision from RHI precision
+!
+! Revision 2.4  2009/06/23 18:26:10  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.3  2005/10/17 17:25:48  pwagner
+! May set RHIPrecision negative if either T or H2O is
+!
+! Revision 2.2  2005/06/22 18:08:19  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.1  2003/01/28 21:53:07  pwagner
+! RHI H2O conversions moved to fwdmdl from l2/Fill
+!
+@
+
+
+2.7
+log
+@Cruft removal
+@
+text
+@d20 3
+a22 2
+  use MLSCOMMON, only: DEFAULTUNDEFINEDVALUE
+  use MLSKINDS, only: R8
+d32 1
+d49 1
+d58 13
+a70 6
+  RHIFromH2O_Factor = &
+     & exp(invs*( &
+     & (C(T)+zeta+vmr_unit_cnv) * log(10.) &
+     & + &
+     & 3.56654*log(T/273.16) &
+     & ))
+d107 1
+d115 9
+d125 1
+a125 4
+   & (C(T)+zeta+vmr_unit_cnv) * log(10.) &
+   & + &
+   & 3.56654*log(T/273.16) &
+   & ))
+d127 1
+a127 4
+   & (C(T)+zeta+vmr_unit_cnv) * log(10.) &
+   & + &
+   & 3.56654*log(T/273.16) &
+   & )) &
+d169 1
+d177 9
+d187 1
+a187 4
+   & (C(T)+zeta+vmr_unit_cnv) * log(10.) &
+   & + &
+   & 3.56654*log(T/273.16) &
+   & ))
+d189 1
+a189 4
+   & (C(T)+zeta+vmr_unit_cnv) * log(10.) &
+   & + &
+   & 3.56654*log(T/273.16) &
+   & )) &
+d235 1
+a235 1
+       "$Id: RHIFromH2O.f90,v 2.6 2013/03/01 01:06:57 pwagner Exp $"
+d247 3
+@
+
+
+2.6
+log
+@Get R8 from MLSKinds; DEFAULTUNDEFINEDVALUE from MLSCommon
+@
+text
+@a202 1
+      real(r8), parameter    :: a0 = -1.2141649d0
+d217 1
+a217 1
+       "$Id: RHIFromH2O.f90,v 2.5 2009/08/24 20:08:55 pwagner Exp $"
+d229 3
+@
+
+
+2.5
+log
+@May Fill H2O precision from RHI precision
+@
+text
+@d20 2
+a21 1
+  use MLSCommon, only: R8
+d24 1
+a24 1
+  public :: RHIFromH2O_Factor, RHIPrecFromH2O, H2OPrecFromRHi
+a29 1
+  real, parameter ::    UNDEFINED_VALUE = -999.99 ! Same as %template%badvalue
+d189 1
+a189 1
+      real, parameter        :: ILLEGALTEMP = UNDEFINED_VALUE
+d206 1
+a206 1
+      real, parameter        :: ILLEGALTEMP = UNDEFINED_VALUE
+d218 1
+a218 1
+       "$Id: RHIFromH2O.f90,v 2.4 2009/06/23 18:26:10 pwagner Exp $"
+d230 3
+@
+
+
+2.4
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d23 1
+a23 1
+  public :: RHIFromH2O_Factor, RHIPrecFromH2O
+d26 1
+a26 1
+       "$RCSfile: $"
+d65 11
+a75 1
+
+d120 62
+a181 2
+  contains
+    function dC_dT ( T )
+d184 1
+a184 1
+      real(r8)               :: dC_dT
+d192 1
+a192 1
+        dC_dT = a1*(273.16/T**2) - a2/273.16
+d194 1
+a194 1
+        dC_dT = ILLEGALTEMP
+d196 1
+a196 1
+    end function dC_dT
+d198 1
+a198 4
+  end subroutine RHIPrecFromH2O
+
+! =====     Private Procedures     =============================
+    function C ( T )
+d201 1
+a201 1
+      real(r8)               :: C
+d209 1
+a209 1
+        C = a0 - a1*(273.16/T -1.0d0) + a2*(1.0d0 - T/273.16)
+d211 1
+a211 1
+        C = ILLEGALTEMP
+d213 1
+a213 1
+    end function C
+d218 1
+a218 1
+       "$Id: read_apriori.f90 is it here $"
+d230 3
+@
+
+
+2.3
+log
+@May set RHIPrecision negative if either T or H2O is
+@
+text
+@d26 1
+a26 1
+       "$RCSfile: RHIFromH2O.f90,v $"
+d148 1
+a149 1
+!---------------------------- RCS Ident Info -------------------------------
+d151 2
+a152 3
+       "$Id: RHIFromH2O.f90,v 2.2 2005/06/22 18:08:19 pwagner Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d154 1
+d156 1
+d163 3
+@
+
+
+2.2
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d26 1
+a26 1
+       "$RCSfile: $"
+d67 1
+a67 1
+    & H2OPrecision, TPrecision, RHIPrecision)
+d81 2
+a82 1
+  ! Local variables
+d86 1
+d89 4
+d109 1
+a109 1
+  
+d151 1
+a151 1
+       "$Id: $"
+d162 3
+@
+
+
+2.1
+log
+@RHI H2O conversions moved to fwdmdl from l2/Fill
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d24 1
+a24 4
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
+       "$Id: Fill.f90,v 2.179 2003/01/16 21:48:58 vsnyder Exp $"
+  character (len=len(idParm)), private :: Id = idParm
+d26 1
+a26 1
+       "$RCSfile: Fill.f90,v $"
+d143 5
+d155 4
+a158 1
+! $Log: Fill.f90,v $
+@
+

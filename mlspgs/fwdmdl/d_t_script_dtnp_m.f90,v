@@ -1,0 +1,1931 @@
+head	2.14;
+access;
+symbols
+	v5-02-NRT-19:2.14
+	v6-00:2.14
+	v5-02-NRT-18:2.14
+	v5-02:2.14
+	v5-01-NRT-17:2.14
+	v5-01-NRT-16:2.14
+	v5-01-NRT-15:2.14
+	v5-01-NRT-14:2.14
+	neuralnetworks-1-0:2.14.0.8
+	cfm-single-freq-0-1:2.14.0.6
+	v5-01:2.14
+	v5-00:2.14
+	v4-23-TA133:2.14.0.4
+	mus-emls-1-70:2.14.0.2
+	rel-1-0-englocks-work:2.13.0.4
+	VUMLS1-00:2.13
+	VPL1-00:2.13
+	V4-22-NRT-08:2.13
+	VAM1-00:2.13
+	V4-21:2.13.0.2
+	V4-13:2.13
+	V4-12:2.13
+	V4-11:2.13
+	V4-10:2.13
+	V3-43:2.8
+	M4-00:2.13
+	V3-41:2.8
+	V3-40-PlusGM57:2.8.0.2
+	V2-24-NRT-04:2.6
+	V3-33:2.11
+	V2-24:2.6
+	V3-31:2.11
+	V3-30-NRT-05:2.10
+	cfm-01-00:2.10
+	V3-30:2.8
+	V3-20:2.8
+	V3-10:2.8
+	V2-23-NRT-02:2.6
+	V2-23:2.6
+	V2-22-NRT-01:2.6
+	V2-22:2.6
+	V2-21:2.5
+	V2-20:2.5
+	V2-11:2.5
+	V2-10:2.5
+	V2-00:2.5
+	V1-51:2.3
+	V1-50:2.3
+	V1-45:2.3
+	V1-44:2.3
+	V1-43:2.3
+	V1-32:2.3
+	V1-31:2.3
+	V1-30:2.3
+	V1-13:2.3
+	V1-12:2.3
+	V1-11:2.3
+	V1-10:2.3
+	newfwm-feb03:2.3.0.2
+	V1-04:2.0
+	V1-03:2.0
+	V1-02:2.0
+	JointForwardModel:2.0.0.2
+	V1-00:2.0
+	newfwm-sep01:1.8.0.2
+	V0-7:1.8
+	V0-5-Level2:1.7
+	V0-5-SIPS:1.6
+	V0_1:1.1;
+locks; strict;
+comment	@# @;
+
+
+2.14
+date	2018.05.14.23.35.41;	author vsnyder;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2011.03.23.23.52.30;	author vsnyder;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2011.03.23.23.45.32;	author vsnyder;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2010.09.25.01.12.37;	author vsnyder;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2010.06.23.02.38.19;	author vsnyder;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2010.06.23.02.28.39;	author vsnyder;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2009.06.23.18.26.11;	author pwagner;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2008.08.27.19.56.51;	author vsnyder;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2007.06.26.00.38.55;	author vsnyder;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2005.11.01.23.02.21;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2005.06.22.18.08.18;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2002.10.11.21.26.56;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2002.10.10.19.49.04;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2002.10.08.17.08.02;	author pwagner;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2001.09.17.20.26.26;	author livesey;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2001.06.07.23.30.34;	author pwagner;	state Exp;
+branches
+	1.8.2.1;
+next	1.7;
+
+1.7
+date	2001.05.02.23.15.13;	author zvi;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2001.03.31.23.40.55;	author zvi;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2001.03.29.08.51.01;	author zvi;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.01.31.01.08.48;	author zvi;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2000.11.22.23.10.02;	author zvi;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2000.11.22.23.07.25;	author zvi;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2000.05.04.18.12.04;	author vsnyder;	state Exp;
+branches;
+next	;
+
+1.8.2.1
+date	2001.09.10.10.00.18;	author zvi;	state dead;
+branches;
+next	1.8.2.2;
+
+1.8.2.2
+date	2001.09.10.23.57.40;	author zvi;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.14
+log
+@Change to sparse eta representation, move Hessians stuff to Hessians_m
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module D_T_SCRIPT_DTNP_M
+
+  implicit NONE
+  private
+  public :: dT_Script_dT, dT_Script_dT_Sparse, dT_Script
+!   public :: dT_Script_dT_W0, dT_Script_dF_W0
+
+  interface dT_Script
+    module procedure dT_Script_1D, dT_Script_2D
+    module procedure dT_Script_1D_Sparse, dT_Script_2D_Sparse
+  end interface
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: d_t_script_dtnp_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+contains
+!-----------------------------------------------------------------------
+
+  ! -----------------------------------------------  dT_Script_dT  -----
+  subroutine dT_Script_dT ( T_Path, B, Eta_ZXP, NZ_ZXP, NNZ_ZXP, NU, &
+    &                       DT_SCR_DT )
+    ! Build the derivative of the B array w.r.t to T_np
+    ! (The 'n' zeta coeff. and the 'p' phi coefficient)
+
+!{ \parskip 5pt
+!  Given $T$, $\nu$ and the Planck function
+!  $B = \frac{\frac{h \nu}k}{exp\left(\frac{h \nu}{k T}\right)-1}$,
+!  compute $\frac{\text{d} B}{\text{d} T}$.
+!
+!  B satisfies the differential equation
+!  $\frac{\text{d} B}{\text{d} T} =
+!   \frac{B}{T^2} \left( \frac{h\nu}k + B \right)$.
+!
+!  The old way was to compute $\frac{\text{d} B}{\text{d} T} =
+!   \exp \left ( \frac{h \nu}{k T} \right )
+!   \left ( \frac{h \nu}
+!     {k T \left [ \exp \left ( \frac{h \nu}{k T} \right ) - 1 \right ]}
+!     \right ) ^2$.  Dividing numerator and denominator by
+!     $\exp \left ( \frac{h \nu}{k T} \right )$ gives
+!     $\frac{\left ( \frac{h \nu}{k T} \right )^2}
+!           { 2 \left [ \cosh \left ( \frac{h \nu}{k T} \right ) - 1 \right ]}$,
+!   which is substantially more expensive than using the differential equation.
+!   $2 ( \cosh x \, - \, 1) / x^2$ has substantial cancellation for small $x$,
+!   so a specially-developed procedure should be used to evaluate it.
+!
+!  From $\frac{\text{d} B}{\text{d} T}$ compute
+!  $\frac{\text{d} B}{\text{d} T_{np}} =
+!   \frac{\text{d} B}{\text{d} T} \eta_n \eta_p$ where
+!  $\eta_n$ = Eta(n,zeta) and $\eta_p$ = Eta(p,phi).
+!  Then difference $\frac{\text{d} B}{\text{d} T_{np}}$ along
+!  the path to get {\tt dT\_scr\_dT} = $\frac{\text{d} \Delta B}{\text{d} T}$,
+!  where $\Delta B = \frac12 \left( B_{i+1} - B_{i-1} \right)$.
+!  $\Delta B$  is called ``T script'' (not Tau) in many notes and reports.
+
+    use MLSCommon, only: R8, RP
+    use PHYSICS, only: H_O_K => h_over_k
+
+! inputs
+
+    real(rp), intent(in) :: t_path(:)     ! path temperatures K
+    real(rp), intent(in) :: B(:)          ! Planck function
+    real(rp), intent(in) :: eta_zxp(:,:)  ! path eta functions
+    integer, intent(in) :: nz_zxp(:,:)    ! Where eta_zxp is not zero
+    integer, intent(in) :: nnz_zxp(:)     ! Numbers of rows in nz_zxp
+    real(r8), intent(in) :: nu            ! calculation frequency (MHz)
+
+! output
+
+    real(rp), intent(out) :: dT_scr_dT(:,:) ! path dt_script temperature
+!                                           derivative
+
+! internals
+
+    real(rp) :: dBdT(size(B))
+
+    dBdT = B * ( h_o_k * nu + B ) / t_path**2
+    call dT_script ( dBdT, eta_zxp, nz_zxp, nnz_zxp, dT_scr_dT )
+
+  end subroutine dT_Script_dT
+
+  ! ----------------------------------------  dT_Script_dT_Sparse  -----
+  subroutine dT_Script_dT_Sparse ( T_Path, B, Eta_ZXP, I_Start, I_Stop, &
+                                 & NU, dT_Scr_dT, Skip )
+    ! Build the derivative of the B array w.r.t to T_np
+    ! (The 'n' zeta coeff. and the 'p' phi coefficient)
+
+!{ \parskip 5pt
+!  Given $T$, $\nu$ and the Planck function
+!  $B = \frac{\frac{h \nu}k}{exp\left(\frac{h \nu}{k T}\right)-1}$,
+!  compute $\frac{\text{d} B}{\text{d} T}$.
+!
+!  B satisfies the differential equation
+!  $\frac{\text{d} B}{\text{d} T} =
+!   \frac{B}{T^2} \left( \frac{h\nu}k + B \right)$.
+!
+!  The old way was to compute $\frac{\text{d} B}{\text{d} T} =
+!   \exp \left ( \frac{h \nu}{k T} \right )
+!   \left ( \frac{h \nu}
+!     {k T \left [ \exp \left ( \frac{h \nu}{k T} \right ) - 1 \right ]}
+!     \right ) ^2$.  Dividing numerator and denominator by
+!     $\exp \left ( \frac{h \nu}{k T} \right )$ gives
+!     $\frac{\left ( \frac{h \nu}{k T} \right )^2}
+!           { 2 \left [ \cosh \left ( \frac{h \nu}{k T} \right ) - 1 \right ]}$,
+!   which is substantially more expensive than using the differential equation.
+!   $2 ( \cosh x \, - \, 1) / x^2$ has substantial cancellation for small $x$,
+!   so a specially-developed procedure should be used to evaluate it.
+!
+!  From $\frac{\text{d} B}{\text{d} T}$ compute
+!  $\frac{\text{d} B}{\text{d} T_{np}} =
+!   \frac{\text{d} B}{\text{d} T} \eta_n \eta_p$ where
+!  $\eta_n$ = Eta(n,zeta) and $\eta_p$ = Eta(p,phi).
+!  Then difference $\frac{\text{d} B}{\text{d} T_{np}}$ along
+!  the path to get {\tt dT\_scr\_dT} = $\frac{\text{d} \Delta B}{\text{d} T}$,
+!  where $\Delta B = \frac12 \left( B_{i+1} - B_{i-1} \right)$.
+!  $\Delta B$  is called ``T script'' (not Tau) in many notes and reports.
+
+    use MLSCommon, only: R8, RP
+    use Physics, only: H_O_K => h_over_k
+    use Sparse_m, only: Sparse_t
+
+! inputs
+
+    real(rp), intent(in) :: t_path(:)      ! path temperatures K
+    real(rp), intent(in) :: B(:)           ! Planck function
+    class(sparse_t), intent(in) :: Eta_ZXP ! Interpolating coefficients from
+                                           ! state vector to path
+    integer, intent(in) :: I_Start, I_Stop ! Range of dBdx etc to use
+    real(r8), intent(in) :: nu             ! calculation frequency (MHz)
+
+! output
+
+    real(rp), intent(out) :: dT_scr_dT(:,:) ! path dt_script temperature
+                                          ! derivative
+
+! optional
+
+    integer, intent(in), optional :: Skip ! Process every skip'th row, default 1
+                                          ! This allows, e.g., to process only
+                                          ! elements on the coarse path, in
+                                          ! which case Skip should == NGP1
+! internals
+
+    real(rp) :: dBdT(size(B))
+
+    dBdT = B * ( h_o_k * nu + B ) / t_path**2
+    call dT_script ( dBdT, eta_zxp, i_start, i_stop, dT_scr_dT, skip )
+
+  end subroutine dT_Script_dT_Sparse
+
+!   ! --------------------------------------------  dT_Script_dT_W0  -----
+!   subroutine dT_Script_dT_W0 ( T_PATH, B, W0, dW0_dT, &
+!     &                          ETA_ZXP, NZ_ZXP, NNZ_ZXP, &
+!     &                          NU, DT_SCR_DT )
+!     ! Build the derivative of the B array w.r.t to T_np
+!     ! (The 'n' zeta coeff. and the 'p' phi coefficient)
+! 
+! !{ \parskip 5pt
+! !  Given $T$, $\nu$, $\omega_0$, $\frac{\partial \omega_0}{\partial T}$,
+! !  and the Planck function
+! !  $B = \frac{\frac{h \nu}k}{exp\left(\frac{h \nu}{k T}\right)-1}$,
+! !  compute \\
+! !  $\frac{\partial (1-\omega_0) B}{\partial T} =
+! !  -B \frac{\partial \omega_0}{\partial T} +
+! !     (1-\omega_0) \frac{\partial B}{\partial T}$.
+! !
+! !  B satisfies the differential equation
+! !  $\frac{\text{d} B}{\text{d} T} =
+! !   \frac{B}{T^2} \left( \frac{h\nu}k + B \right)$, so\\
+! !  $\frac{\partial (1-\omega_0) B}{\partial T} =
+! !   B \left( \frac{1-\omega_0}{T^2} \left(\frac{h \nu}k + B \right) -
+! !   \frac{\partial \omega_0}{\partial T} \right)$.
+! !
+! !  From $\frac{\partial (1-\omega_0) B}{\partial T}$ compute
+! !  $\frac{\partial (1-\omega_0) B}{\partial T_{np}} =
+! !   \frac{\partial (1-\omega_0) B}{\partial T} \eta_n \eta_p$ where
+! !  $\eta_n$ = Eta(n,zeta) and $\eta_p$ = Eta(p,phi).
+! !  Then difference $\frac{\partial (1-\omega_0) B}{\partial T_{np}}$ along
+! !  the path to get {\tt dT\_scr\_dT} =
+! !  $\frac{\partial \Delta (1-\omega_0) B}{\partial T}$, where
+! !  $\Delta (1-\omega_0) B = \frac12 \left( (1-\omega_{0_{i+1}}) B_{i+1} -
+! !                                          (1-\omega_{0_{i-1}}) B_{i-1} \right)$.
+! !  $\Delta B$  is called ``T script'' (not Tau) in many notes and reports.
+! 
+!     use MLSCommon, only: R8, RP
+!     use PHYSICS, only: H_O_K => h_over_k
+! 
+! ! inputs
+! 
+!     real(rp), intent(in) :: T_path(:)     ! path temperatures K
+!     real(rp), intent(in) :: B(:)          ! Planck function
+!     real(rp), intent(in) :: W0(:)         ! \omega_0
+!     real(rp), intent(in) :: dW0_dT(:)     ! \frac{\partial \omega_0}{\partial T}
+!     real(rp), intent(in) :: eta_zxp(:,:)  ! path eta functions
+!     integer, intent(in) :: nz_zxp(:,:)    ! Where eta_zxp is not zero
+!     integer, intent(in) :: nnz_zxp(:)     ! Numbers of rows in nz_zxp
+!     real(r8), intent(in) :: nu            ! calculation frequency (MHz)
+! 
+! ! output
+! 
+!     real(rp), intent(out) :: dT_scr_dT(:,:) ! path dt_script temperature
+! !                                           derivative
+! 
+! ! internals
+! 
+!     real(rp) :: dBdT(size(B))
+! 
+!     dBdT = B * ( ( 1.0_rp - w0 ) * &
+!          &       ( h_o_k * nu + B ) / t_path**2 - dW0_dT )
+!     call dT_script ( dBdT, eta_zxp, nz_zxp, nnz_zxp, dT_scr_dT )
+! 
+!   end subroutine dT_Script_dT_W0
+! 
+!   ! --------------------------------------------  dT_Script_dF_W0  -----
+!   subroutine dT_Script_dF_W0 ( B, dW0_dX, ETA_ZXP, NZ_ZXP, NNZ_ZXP, &
+!     &                          DT_SCR_DF )
+!     ! Build the derivative of the B array w.r.t to mixing ratio F_np
+!     ! (The 'n' zeta coeff. and the 'p' phi coefficient)
+! 
+! !{ \parskip 5pt
+! !  Given $\frac{\partial \omega_0}{\partial f}$ and the Planck function
+! !  $B = \frac{\frac{h \nu}k}{exp\left(\frac{h \nu}{k T}\right)-1}$,
+! !  compute \\
+! !  $\frac{\partial (1-\omega_0) B}{\partial f} =
+! !  -B \frac{\partial \omega_0}{\partial f}$
+! !  ($B$ does not depend upon $f$).
+! !
+! !  From $\frac{\partial (1-\omega_0) B}{\partial f}$ compute
+! !  $\frac{\partial (1-\omega_0) B}{\partial f_{np}} =
+! !   \frac{\partial (1-\omega_0) B}{\partial f} \eta_n \eta_p$ where
+! !  $\eta_n$ = Eta(n,zeta) and $\eta_p$ = Eta(p,phi).
+! !  Then difference $\frac{\partial (1-\omega_0) B}{\partial f_{np}}$ along
+! !  the path to get {\tt dT\_scr\_df} =
+! !  $\frac{\partial \Delta (1-\omega_0) B}{\partial f}$, where
+! !  $\Delta (1-\omega_0) B = \frac12 \left( (1-\omega_{0_{i+1}}) B_{i+1} -
+! !                                          (1-\omega_{0_{i-1}}) B_{i-1} \right)$.
+! !  $\Delta B$  is called ``T script'' (not Tau) in many notes and reports.
+! 
+!     use MLSCommon, only: RP
+! 
+! ! inputs
+! 
+!     real(rp), intent(in) :: B(:)          ! Planck function
+!     real(rp), intent(in) :: dW0_dX(:)     ! \frac{\partial \omega_0}{\partial X}
+!     real(rp), intent(in) :: eta_zxp(:,:)  ! path eta functions
+!     integer, intent(in) :: nz_zxp(:,:)    ! Where eta_zxp is not zero
+!     integer, intent(in) :: nnz_zxp(:)     ! Numbers of rows in nz_zxp
+! 
+! ! output
+! 
+!     real(rp), intent(out) :: DT_SCR_DF(:,:) ! path dt_script / dT
+! 
+!     call dT_script ( -B * dW0_dX, eta_zxp, nz_zxp, nnz_zxp, dT_scr_df )
+! 
+!   end subroutine dT_Script_dF_W0
+
+  ! -----------------------------------------------  dT_Script_1D  -----
+  subroutine dT_Script_1D ( dBdx, ETA_ZXP, NZ_ZXP, NNZ_ZXP, DT_SCR, W0, dTScat )
+
+!{ From {\tt dBdx} = $\frac{\partial B}{\partial x}$ compute
+!  $\frac{\partial B}{\partial x_{np}} =
+!   \frac{\partial B}{\partial x} \eta_n \eta_p$ where
+!  $\eta_n$ = Eta(n,zeta), $\eta_p$ = Eta(p,phi), and $\eta_n \eta_p$ =
+!  {\tt ETA\_ZXP}.
+!  Then difference $\frac{\partial B}{\partial x_{np}}$ along
+!  the path to get {\tt dT\_scr} =
+!  $\frac{\partial \Delta B}{\partial x_{np}}$, where
+!  $\Delta B = \frac12 \left( B_{i+1} - B_{i-1} \right)$.
+!  $\Delta B$ is called ``T script'' (not Tau) in many notes and reports.
+
+    use MLSCommon, only: RP
+
+! inputs
+
+    real(rp), intent(in) :: dBdx(:)       ! Derivative of Planck function
+    real(rp), intent(in) :: Eta_ZXP(:)    ! Interpolating coefficients from
+                                          ! state vector to path
+    integer, intent(in) :: Nz_ZXP(:)      ! Where eta_zxp is not zero
+    integer, intent(in) :: Nnz_ZXP        ! Numbers of rows in nz_zxp
+    real(rp), intent(in), optional :: W0(:)       ! On the path
+    real(rp), intent(in), optional :: dTScat(:)   ! On the path, w.r.t.
+                                          ! molecules in the grid.
+
+! output
+
+    real(rp), intent(out) :: dt_scr(:)    ! path dt_script / dx
+
+! internals
+
+    integer :: j, n_path, p_i
+
+    real(rp) :: dT_x_eta(1:size(dBdx,1))
+
+    n_path = size(dBdx)
+
+    ! Make sure the elements of dT_x_eta that we use have defined values
+    dT_x_eta(1:2) = 0.0
+    dT_x_eta(n_path-1:n_path) = 0.0
+    ! Fill other nonzero elements of dT_x_eta
+    dT_x_eta(nz_zxp(:nnz_zxp)) = &
+      & 0.5 * dbdx(nz_zxp(:nnz_zxp)) * eta_zxp(nz_zxp(:nnz_zxp))
+
+    if ( present(w0) .and. present(dTScat) ) then
+      dT_x_eta(nz_zxp(:nnz_zxp)) = &
+        & dT_x_eta(nz_zxp(:nnz_zxp)) + &
+        & 0.5 * w0(nz_zxp(:nnz_zxp)) * dTScat(nz_zxp(:nnz_zxp))
+    end if
+
+   dt_scr(1) = dT_x_eta(1) + dT_x_eta(2)
+   dt_scr(n_path) = -dT_x_eta(n_path-1) - dT_x_eta(n_path)
+! This is what would be happening if we didn't pay attention to the nonzeros:
+!     dt_scr(2:n_path-1) = dT_x_eta(3:n_path) - dT_x_eta(1:n_path-2)
+! But we pay attention to the nonzeros to improve performance.
+! If we kept track of the nonzeros in dt_scr, we wouldn't neet the next line.
+    dt_scr(2:n_path-1) = 0.0
+    ! Now fill the nonzeros
+    do j = 1, nnz_zxp
+      p_i = nz_zxp(j)
+      if ( p_i > 2 ) dt_scr(p_i-1) = dT_x_eta(p_i)
+    end do
+    do j = 1, nnz_zxp
+      p_i = nz_zxp(j)
+      if ( p_i >= n_path-1 ) exit
+      dt_scr(p_i+1) = dt_scr(p_i+1) - dT_x_eta(p_i)
+    end do
+
+  end subroutine dT_Script_1D
+
+  ! ----------------------------------------  dT_Script_1D_Sparse  -----
+  subroutine dT_Script_1D_Sparse ( dBdx, Eta_ZXP, Column, I_Start, I_Stop, &
+                                 & dT_SCR, Skip, &
+                                 & W0, dTScat )
+
+!{ From {\tt dBdx} = $\frac{\partial B}{\partial x}$ compute
+!  $\frac{\partial B}{\partial x_{np}} =
+!   \frac{\partial B}{\partial x} \eta_n \eta_p$ where
+!  $\eta_n$ = Eta(n,zeta), $\eta_p$ = Eta(p,phi), and $\eta_n \eta_p$ =
+!  {\tt ETA\_ZXP}.
+!  Then difference $\frac{\partial B}{\partial x_{np}}$ along
+!  the path to get {\tt dT\_scr} =
+!  $\frac{\partial \Delta B}{\partial x_{np}}$, where
+!  $\Delta B = \frac12 \left( B_{i+1} - B_{i-1} \right)$.
+!  $\Delta B$ is called ``T script'' (not Tau) in many notes and reports.
+
+    use MLSCommon, only: RP
+    use Sparse_m, only: Sparse_t
+
+! inputs
+
+    real(rp), intent(in) :: dBdx(:)       ! Derivative of Planck function
+    class(sparse_t), intent(in) :: Eta_ZXP ! Interpolating coefficients from
+                                          ! state vector to path
+    integer, intent(in) :: Column         ! Column of Eta_ZXP to use
+    integer, intent(in) :: I_Start, I_Stop  ! Range of dBdx etc to use
+
+! output
+
+    real(rp), intent(out) :: dt_scr(:)    ! path dt_script / dx
+
+! optional
+
+    integer, intent(in), optional :: Skip ! Process every skip'th row, default 1
+                                          ! This allows, e.g., to process only
+                                          ! elements on the coarse path, in
+                                          ! which case Skip should == NGP1
+    real(rp), intent(in), optional :: W0(:)       ! On the path
+    real(rp), intent(in), optional :: dTScat(:)   ! On the path, w.r.t.
+                                          ! molecules in the grid.
+
+
+! internals
+
+    integer :: j, mySkip, n_path, r, rs
+
+    real(rp) :: dT_x_eta(1:size(dBdx,1))
+
+    mySkip = 1
+    if ( present(skip) ) mySkip = skip
+
+    j = eta_zxp%cols(column) ! Last element in column c
+    if ( j == 0 ) then
+      dt_scr = 0
+      return
+    end if
+
+    n_path = size(dBdx)
+
+    ! Make sure the elements of dT_x_eta that we use have defined values
+    dT_x_eta(1:2) = 0.0
+    dT_x_eta(n_path-1:n_path) = 0.0
+    ! Fill other nonzero elements of dT_x_eta
+    do
+      j = eta_zxp%e(j)%nc ! Element in next row of column c
+      r = eta_zxp%e(j)%r  ! Row subscript of that element
+      if ( mod(r-1,mySkip) == 0 ) then
+        rs = (r-1) / skip + 1
+        if ( rs >= i_start .and. rs <= i_stop ) &
+          & dT_x_eta(rs) = 0.5 * dbdx(rs) * eta_zxp%e(j)%v
+      end if
+      if ( j == eta_zxp%cols(column) ) exit ! Processed last element in column
+    end do
+
+    if ( present(w0) .and. present(dTScat) ) then
+      j = eta_zxp%cols(column) ! Last element in column c
+      do
+        j = eta_zxp%e(j)%nc ! Element in next row of column c
+        r = eta_zxp%e(j)%r  ! Row subscript of that element
+        if ( mod(r-1,mySkip) == 0 ) then
+          rs = (r-1) / skip + 1
+          if ( rs >= i_start .and. rs <= i_stop ) &
+            & dT_x_eta(rs) = dT_x_eta(rs) + 0.5 * w0(rs) * dTScat(rs)
+        end if
+        if ( j == eta_zxp%cols(column) ) exit ! Processed last element in column
+      end do
+    end if
+
+   dt_scr(1) = dT_x_eta(1) + dT_x_eta(2)
+   dt_scr(n_path) = -dT_x_eta(n_path-1) - dT_x_eta(n_path)
+! This is what would be happening if we didn't pay attention to the nonzeros:
+!     dt_scr(2:n_path-1) = dT_x_eta(3:n_path) - dT_x_eta(1:n_path-2)
+! But we pay attention to the nonzeros to improve performance.
+! If we kept track of the nonzeros in dt_scr, we wouldn't neet the next line.
+    dt_scr(2:n_path-1) = 0.0
+    ! Now fill the nonzeros
+    j = eta_zxp%cols(column) ! Last element in column c
+    do
+      j = eta_zxp%e(j)%nc ! Element in next row of column c
+      r = eta_zxp%e(j)%r  ! Row subscript of that element
+      if ( mod(r-1,mySkip) == 0 ) then
+        rs = (r-1) / skip + 1
+        if ( rs > 2 .and. rs >= i_start .and. rs <= i_stop ) &
+          & dt_scr(rs-1) = dT_x_eta(rs)
+      end if
+      if ( j == eta_zxp%cols(column) ) exit ! Processed last element in column
+    end do
+    j = eta_zxp%cols(column) ! Last element in column c
+    do
+      j = eta_zxp%e(j)%nc ! Element in next row of column c
+      r = eta_zxp%e(j)%r  ! Row subscript of that element
+      if ( mod(r-1,mySkip) == 0 ) then
+        rs = (r-1) / skip + 1
+        if ( rs < n_path-1 .and. rs >= i_start .and. rs <= i_stop ) &
+          & dt_scr(rs+1) = dt_scr(rs+1) - dT_x_eta(rs)
+      end if
+      if ( j == eta_zxp%cols(column) ) exit ! Processed last element in column
+    end do
+
+  end subroutine dT_Script_1D_Sparse
+
+  ! -----------------------------------------------  dT_Script_2D  -----
+  subroutine dT_Script_2D ( dBdx, ETA_ZXP, NZ_ZXP, NNZ_ZXP, DT_SCR, W0, dTScat )
+
+!{ From {\tt dBdx} = $\frac{\partial B}{\partial x}$ compute
+!  $\frac{\partial B}{\partial x_{np}} =
+!   \frac{\partial B}{\partial x} \eta_n \eta_p$ where
+!  $\eta_n$ = Eta(n,zeta), $\eta_p$ = Eta(p,phi), and $\eta_n \eta_p$ =
+!  {\tt ETA\_ZXP}.
+!  Then difference $\frac{\partial B}{\partial x_{np}}$ along
+!  the path to get {\tt dT\_scr} =
+!  $\frac{\partial \Delta B}{\partial x_{np}}$, where
+!  $\Delta B = \frac12 \left( B_{i+1} - B_{i-1} \right)$.
+!  $\Delta B$ is called ``T script'' (not Tau) in many notes and reports.
+
+    use MLSCommon, only: RP
+
+! inputs
+
+    real(rp), intent(in) :: dBdx(:)       ! Derivative of Planck function
+    real(rp), intent(in) :: eta_zxp(:,:)  ! path eta functions
+    integer, intent(in) :: nz_zxp(:,:)    ! Where eta_zxp is not zero
+    integer, intent(in) :: nnz_zxp(:)     ! Numbers of rows in nz_zxp
+    real(rp), intent(in), optional :: W0(:)       ! On the path
+    real(rp), intent(in), optional :: dTScat(:,:) ! Path X SV.  On the path,
+                                          ! w.r.t. molecules in the grid.
+
+! output
+
+    real(rp), intent(out) :: dt_scr(:,:)  ! path dt_script / dx
+
+! internals
+
+    integer :: sv_i
+
+    if ( present(w0) .and. present(dTScat) ) then
+      do sv_i = 1, size(eta_zxp,dim=2)
+        call dt_script ( dBdx, eta_zxp(:,sv_i), nz_zxp(:,sv_i), nnz_zxp(sv_i), &
+                       & dt_scr(:,sv_i), w0, dTscat(:,sv_i) )
+      end do
+    else
+      do sv_i = 1, size(eta_zxp,dim=2)
+        call dt_script ( dBdx, eta_zxp(:,sv_i), nz_zxp(:,sv_i), nnz_zxp(sv_i), &
+                       & dt_scr(:,sv_i) )
+      end do
+    end if
+
+  end subroutine dT_Script_2D
+
+  ! ----------------------------------------  dT_Script_2D_Sparse  -----
+  subroutine dT_Script_2D_Sparse ( dBdx, Eta_ZXP, I_Start, I_Stop, &
+                                 & dT_Scr, Skip, W0, dTScat )
+
+!{ From {\tt dBdx} = $\frac{\partial B}{\partial x}$ compute
+!  $\frac{\partial B}{\partial x_{np}} =
+!   \frac{\partial B}{\partial x} \eta_n \eta_p$ where
+!  $\eta_n$ = Eta(n,zeta), $\eta_p$ = Eta(p,phi), and $\eta_n \eta_p$ =
+!  {\tt ETA\_ZXP}.
+!  Then difference $\frac{\partial B}{\partial x_{np}}$ along
+!  the path to get {\tt dT\_scr} =
+!  $\frac{\partial \Delta B}{\partial x_{np}}$, where
+!  $\Delta B = \frac12 \left( B_{i+1} - B_{i-1} \right)$.
+!  $\Delta B$ is called ``T script'' (not Tau) in many notes and reports.
+
+    use MLSCommon, only: RP
+    use Sparse_m, only: Sparse_t
+
+! inputs
+
+    real(rp), intent(in) :: dBdx(:)        ! Derivative of Planck function
+    class(sparse_t), intent(in) :: Eta_ZXP ! Interpolating coefficients from
+                                           ! state vector to path
+    integer, intent(in) :: I_Start, I_Stop ! Range of dBdx etc to use
+
+! output
+
+    real(rp), intent(out) :: dt_scr(:,:)  ! path dt_script / dx
+
+! optional
+
+    integer, intent(in), optional :: Skip
+    real(rp), intent(in), optional :: W0(:)       ! On the path
+    real(rp), intent(in), optional :: dTScat(:,:) ! Path X SV.  On the path,
+                                          ! w.r.t. molecules in the grid.
+
+! internals
+
+    integer :: sv_i
+
+    if ( present(w0) .and. present(dTScat) ) then
+      do sv_i = 1, size(eta_zxp%cols)
+        call dt_script ( dBdx, eta_zxp, sv_i, i_start, i_stop, dt_scr(:,sv_i), &
+                       & skip, w0, dTscat(:,sv_i) )
+      end do
+    else
+      do sv_i = 1, size(eta_zxp%cols)
+        call dt_script ( dBdx, eta_zxp, sv_i, i_start, i_stop, dt_scr(:,sv_i), &
+                       & skip )
+      end do
+    end if
+
+  end subroutine dT_Script_2D_Sparse
+
+  ! ----------------------------------------------  NOT_USED_HERE  -----
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: d_t_script_dtnp_m.f90,v 2.13 2011/03/23 23:52:30 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module D_T_SCRIPT_DTNP_M
+! $Log: d_t_script_dtnp_m.f90,v $
+! Revision 2.13  2011/03/23 23:52:30  vsnyder
+! Add ability to do dTScat update in dT_Script
+!
+! Revision 2.12  2011/03/23 23:45:32  vsnyder
+! This log entry is bogus.  Check in again to get the right one.
+! FOV_Convolve_m.f90
+!
+! Revision 2.11  2010/09/25 01:12:37  vsnyder
+! Add dT_script_dT and dT_script_df, some cannonball polishing
+!
+! Revision 2.10  2010/06/23 02:38:19  vsnyder
+! Improve TeXnicalities
+!
+! Revision 2.9  2010/06/23 02:28:39  vsnyder
+! Correct nomenclature: T_Script should be B
+!
+! Revision 2.8  2009/06/23 18:26:11  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.7  2008/08/27 19:56:51  vsnyder
+! Add PRINT to not_used_here
+!
+! Revision 2.6  2007/06/26 00:38:55  vsnyder
+! Use column-sparse eta
+!
+! Revision 2.5  2005/11/01 23:02:21  vsnyder
+! PFA Derivatives
+!
+! Revision 2.4  2005/06/22 18:08:18  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.3  2002/10/11 21:26:56  vsnyder
+! use COSH1 to avoid errors for small nu
+!
+! Revision 2.2  2002/10/10 19:49:04  vsnyder
+! Move USE statements from module scope to procedure scope.  Remove an
+! unnecessary one.  Get rid of some array temps.  Cosmetic changes.
+!
+! Revision 2.1  2002/10/08 17:08:02  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.0  2001/09/17 20:26:26  livesey
+! New forward model
+!
+! Revision 1.8.2.2  2001/09/10 23:57:40  zvi
+! Import from nasty..
+!
+! Revision 1.1  2000/05/04 18:12:04  vsnyder
+! Initial conversion to Fortran 90
+@
+
+
+2.13
+log
+@Add ability to do dTScat update in dT_Script
+@
+text
+@d16 7
+a22 1
+  public :: DT_SCRIPT_DT, DT_SCRIPT_DT_W0, DT_SCRIPT_DF_W0, DT_SCRIPT
+d32 3
+a34 3
+  ! -----------------------------------------------  DT_SCRIPT_DT  -----
+  subroutine DT_SCRIPT_DT ( T_PATH, B, ETA_ZXP, NZ_ZXP, NNZ_ZXP, &
+    &                       NU, DT_SCR_DT )
+d92 1
+a92 1
+  end subroutine DT_SCRIPT_DT
+d94 3
+a96 4
+  ! --------------------------------------------  DT_SCRIPT_DT_W0  -----
+  subroutine DT_SCRIPT_DT_W0 ( T_PATH, B, W0, dW0_dT, &
+    &                          ETA_ZXP, NZ_ZXP, NNZ_ZXP, &
+    &                          NU, DT_SCR_DT )
+d101 1
+a101 2
+!  Given $T$, $\nu$, $\omega_0$, $\frac{\partial \omega_0}{\partial T}$,
+!  and the Planck function
+d103 1
+a103 4
+!  compute \\
+!  $\frac{\partial (1-\omega_0) B}{\partial T} =
+!  -B \frac{\partial \omega_0}{\partial T} +
+!     (1-\omega_0) \frac{\partial B}{\partial T}$.
+d107 17
+a123 8
+!   \frac{B}{T^2} \left( \frac{h\nu}k + B \right)$, so\\
+!  $\frac{\partial (1-\omega_0) B}{\partial T} =
+!   B \left( \frac{1-\omega_0}{T^2} \left(\frac{h \nu}k + B \right) -
+!   \frac{\partial \omega_0}{\partial T} \right)$.
+!
+!  From $\frac{\partial (1-\omega_0) B}{\partial T}$ compute
+!  $\frac{\partial (1-\omega_0) B}{\partial T_{np}} =
+!   \frac{\partial (1-\omega_0) B}{\partial T} \eta_n \eta_p$ where
+d125 3
+a127 5
+!  Then difference $\frac{\partial (1-\omega_0) B}{\partial T_{np}}$ along
+!  the path to get {\tt dT\_scr\_dT} =
+!  $\frac{\partial \Delta (1-\omega_0) B}{\partial T}$, where
+!  $\Delta (1-\omega_0) B = \frac12 \left( (1-\omega_{0_{i+1}}) B_{i+1} -
+!                                          (1-\omega_{0_{i-1}}) B_{i-1} \right)$.
+d131 2
+a132 1
+    use PHYSICS, only: H_O_K => h_over_k
+d136 6
+a141 8
+    real(rp), intent(in) :: T_path(:)     ! path temperatures K
+    real(rp), intent(in) :: B(:)          ! Planck function
+    real(rp), intent(in) :: W0(:)         ! \omega_0
+    real(rp), intent(in) :: dW0_dT(:)     ! \frac{\partial \omega_0}{\partial T}
+    real(rp), intent(in) :: eta_zxp(:,:)  ! path eta functions
+    integer, intent(in) :: nz_zxp(:,:)    ! Where eta_zxp is not zero
+    integer, intent(in) :: nnz_zxp(:)     ! Numbers of rows in nz_zxp
+    real(r8), intent(in) :: nu            ! calculation frequency (MHz)
+d146 3
+a148 1
+!                                           derivative
+d150 4
+d158 4
+a161 3
+    dBdT = B * ( ( 1.0_rp - w0 ) * &
+         &       ( h_o_k * nu + B ) / t_path**2 - dW0_dT )
+    call dT_script ( dBdT, eta_zxp, nz_zxp, nnz_zxp, dT_scr_dT )
+d163 105
+a267 1
+  end subroutine DT_SCRIPT_DT_W0
+d269 2
+a270 5
+  ! --------------------------------------------  DT_SCRIPT_DF_W0  -----
+  subroutine DT_SCRIPT_DF_W0 ( B, dW0_dX, ETA_ZXP, NZ_ZXP, NNZ_ZXP, &
+    &                          DT_SCR_DF )
+    ! Build the derivative of the B array w.r.t to mixing ratio F_np
+    ! (The 'n' zeta coeff. and the 'p' phi coefficient)
+d272 10
+a281 18
+!{ \parskip 5pt
+!  Given $\frac{\partial \omega_0}{\partial f}$ and the Planck function
+!  $B = \frac{\frac{h \nu}k}{exp\left(\frac{h \nu}{k T}\right)-1}$,
+!  compute \\
+!  $\frac{\partial (1-\omega_0) B}{\partial f} =
+!  -B \frac{\partial \omega_0}{\partial f}$
+!  ($B$ does not depend upon $f$).
+!
+!  From $\frac{\partial (1-\omega_0) B}{\partial f}$ compute
+!  $\frac{\partial (1-\omega_0) B}{\partial f_{np}} =
+!   \frac{\partial (1-\omega_0) B}{\partial f} \eta_n \eta_p$ where
+!  $\eta_n$ = Eta(n,zeta) and $\eta_p$ = Eta(p,phi).
+!  Then difference $\frac{\partial (1-\omega_0) B}{\partial f_{np}}$ along
+!  the path to get {\tt dT\_scr\_df} =
+!  $\frac{\partial \Delta (1-\omega_0) B}{\partial f}$, where
+!  $\Delta (1-\omega_0) B = \frac12 \left( (1-\omega_{0_{i+1}}) B_{i+1} -
+!                                          (1-\omega_{0_{i-1}}) B_{i-1} \right)$.
+!  $\Delta B$  is called ``T script'' (not Tau) in many notes and reports.
+d287 8
+a294 5
+    real(rp), intent(in) :: B(:)          ! Planck function
+    real(rp), intent(in) :: dW0_dX(:)     ! \frac{\partial \omega_0}{\partial X}
+    real(rp), intent(in) :: eta_zxp(:,:)  ! path eta functions
+    integer, intent(in) :: nz_zxp(:,:)    ! Where eta_zxp is not zero
+    integer, intent(in) :: nnz_zxp(:)     ! Numbers of rows in nz_zxp
+d298 9
+a306 2
+    real(rp), intent(out) :: DT_SCR_DF(:,:) ! path dt_script temperature
+!                                           derivative
+d308 6
+a313 1
+    call dT_script ( -B * dW0_dX, eta_zxp, nz_zxp, nnz_zxp, dT_scr_df )
+d315 5
+a319 1
+  end subroutine DT_SCRIPT_DF_W0
+d321 24
+a344 2
+  ! --------------------------------------------------  DT_SCRIPT  -----
+  subroutine DT_SCRIPT ( dBdx, ETA_ZXP, NZ_ZXP, NNZ_ZXP, DT_SCR, W0, dTScat )
+d358 1
+d363 4
+a366 6
+    real(rp), intent(in) :: eta_zxp(:,:)  ! path eta functions
+    integer, intent(in) :: nz_zxp(:,:)    ! Where eta_zxp is not zero
+    integer, intent(in) :: nnz_zxp(:)     ! Numbers of rows in nz_zxp
+    real(rp), intent(in), optional :: W0(:)       ! On the path
+    real(rp), intent(in), optional :: dTScat(:,:) ! Path X SV.  On the path,
+                                          ! w.r.t. molecules in the grid.
+d370 12
+a381 1
+    real(rp), intent(out) :: dt_scr(:,:)  ! path dt_script dx derivative
+d385 3
+a387 1
+    integer :: j, n_path, n_sv, p_i, sv_i
+d389 8
+a396 1
+    real(rp) :: dT_x_eta(1:size(dBdx),1:size(eta_zxp,2))
+a398 1
+    n_sv = size(eta_zxp,dim=2)
+d401 2
+a402 2
+    dT_x_eta(1:2,:) = 0.0
+    dT_x_eta(n_path-1:n_path,:) = 0.0
+d404 9
+a412 4
+    do sv_i = 1, n_sv
+      dT_x_eta(nz_zxp(:nnz_zxp(sv_i),sv_i),sv_i) = &
+        & 0.5 * dbdx(nz_zxp(:nnz_zxp(sv_i),sv_i)) * &
+        & eta_zxp(nz_zxp(:nnz_zxp(sv_i),sv_i),sv_i)
+d416 10
+a425 4
+      do sv_i = 1, n_sv
+        dT_x_eta(nz_zxp(:nnz_zxp(sv_i),sv_i),sv_i) = &
+          & dT_x_eta(nz_zxp(:nnz_zxp(sv_i),sv_i),sv_i) + &
+          & 0.5 * w0 * dTScat(nz_zxp(:nnz_zxp(sv_i),sv_i),sv_i)
+d429 2
+a430 3
+    do sv_i = 1 , n_sv
+      dt_scr(1,sv_i) = dT_x_eta(1,sv_i) + dT_x_eta(2,sv_i)
+      dt_scr(n_path,sv_i) = -dT_x_eta(n_path-1,sv_i) - dT_x_eta(n_path,sv_i)
+d432 1
+a432 2
+!     dt_scr(2:n_path-1,sv_i) = dT_x_eta(3:n_path,sv_i) - &
+!         &                        dT_x_eta(1:n_path-2,sv_i)
+d435 65
+a499 5
+      dt_scr(2:n_path-1,sv_i) = 0.0
+      ! Now fill the nonzeros in column sv_i
+      do j = 1, nnz_zxp(sv_i)
+        p_i = nz_zxp(j,sv_i)
+        if ( p_i > 2 ) dt_scr(p_i-1,sv_i) = dT_x_eta(p_i,sv_i)
+d501 4
+a504 4
+      do j = 1, nnz_zxp(sv_i)
+        p_i = nz_zxp(j,sv_i)
+        if ( p_i >= n_path-1 ) exit
+        dt_scr(p_i+1,sv_i) = dt_scr(p_i+1,sv_i) - dT_x_eta(p_i,sv_i)
+d506 55
+a560 1
+    end do
+d562 1
+a562 1
+  end subroutine DT_SCRIPT
+d568 1
+a568 1
+       "$Id: d_t_script_dtnp_m.f90,v 2.12 2011/03/23 23:45:32 vsnyder Exp $"
+d577 3
+@
+
+
+2.12
+log
+@FOV_Convolve_m.f90
+@
+text
+@d279 1
+a279 1
+       "$Id: d_t_script_dtnp_m.f90,v 2.11 2010/09/25 01:12:37 vsnyder Exp $"
+d288 4
+@
+
+
+2.11
+log
+@Add dT_script_dT and dT_script_df, some cannonball polishing
+@
+text
+@d196 1
+a196 1
+  subroutine DT_SCRIPT ( dBdx, ETA_ZXP, NZ_ZXP, NNZ_ZXP, DT_SCR )
+d217 3
+d244 8
+d279 1
+a279 1
+       "$Id: d_t_script_dtnp_m.f90,v 2.10 2010/06/23 02:38:19 vsnyder Exp $"
+d288 3
+@
+
+
+2.10
+log
+@Improve TeXnicalities
+@
+text
+@d16 1
+a16 1
+  public :: DT_SCRIPT_DT
+a24 2
+! Build the derivative of the B array w.r.t to T_np
+! (The 'n' zeta coeff. and the 'p' phi coefficient)
+d29 2
+d58 2
+a59 1
+!  the path to get {\tt dT\_scr\_dT} = $\frac{\text{d} \Delta B}{\text{d} T}$.
+d62 1
+a62 2
+!   use DCOSH1_M, only: COSH1             ! In case RP is double
+    use MLSCommon, only: R8, RP, IP
+a63 1
+!   use SCOSH1_M, only: COSH1             ! In case RP is single
+d76 1
+a76 1
+    real(rp), intent(out) :: dt_scr_dt(:,:) ! path dt_script temperature
+d78 63
+d143 1
+a143 1
+    integer(ip) :: j, n_path, n_sv, p_i, sv_i
+d145 11
+a155 2
+    real(rp) :: dBdt(1:size(t_path))     ! dB / dT
+    real(rp) :: dT_x_eta(1:size(t_path),1:size(eta_zxp,2))
+d157 18
+a174 1
+! Do this inefficiently for now because it is quick and easy
+d176 53
+a228 1
+    n_path = size(t_path)
+a230 3
+!   dBdt = 0.5_rp / cosh1(h_o_k * nu / t_path) !{ \frac{a^2}{2 ( \cosh a - 1 )}
+    dBdt = 0.5 * B * ( h_o_k * nu + B ) / t_path**2
+
+d237 2
+a238 1
+        & dBdt(nz_zxp(:nnz_zxp(sv_i),sv_i)) * eta_zxp(nz_zxp(:nnz_zxp(sv_i),sv_i),sv_i)
+d242 2
+a243 2
+      dt_scr_dt(1,sv_i) = dT_x_eta(1,sv_i) + dT_x_eta(2,sv_i)
+      dt_scr_dt(n_path,sv_i) = -dT_x_eta(n_path-1,sv_i) - dT_x_eta(n_path,sv_i)
+d245 1
+a245 1
+!     dt_scr_dt(2:n_path-1,sv_i) = dT_x_eta(3:n_path,sv_i) - &
+d248 2
+a249 2
+! If we kept track of the nonzeros in dt_scr_dt, we wouldn't neet the next line.
+      dt_scr_dt(2:n_path-1,sv_i) = 0.0
+d253 1
+a253 1
+        if ( p_i > 2 ) dt_scr_dt(p_i-1,sv_i) = dT_x_eta(p_i,sv_i)
+d258 1
+a258 1
+        dt_scr_dt(p_i+1,sv_i) = dt_scr_dt(p_i+1,sv_i) - dT_x_eta(p_i,sv_i)
+d262 1
+a262 1
+  end subroutine DT_SCRIPT_DT
+d268 1
+a268 1
+       "$Id: d_t_script_dtnp_m.f90,v 2.9 2010/06/23 02:28:39 vsnyder Exp $"
+d277 3
+@
+
+
+2.9
+log
+@Correct nomenclature: T_Script should be B
+@
+text
+@d35 1
+a35 3
+!  compute $\frac{\text{d} B}{\text{d} T}$.  Then difference it along
+!  the path to get {\tt dT\_scr\_dT} = $\frac{\text{d} \Delta B}{\text{d} T}$.
+!  $\Delta B$  is called ``T script'' (not Tau) in many notes and reports.
+d37 3
+a39 3
+! B satisfies the differential equation
+! $\frac{\text{d} B}{\text{d} T} =
+!  \frac{B}{T^2} \left( \frac{h\nu}k + B \right)$.
+d41 1
+a41 1
+! The old way was to compute $\frac{\text{d} B}{\text{d} T} =
+d48 3
+a50 2
+!           { 2 \left [ \cosh \left ( \frac{h \nu}{k T} \right ) - 1 \right ]}$.
+!   $2 ( \cosh x \, - \, 1) / x^2$ has substantial cancellation near $x = 0$,
+d53 7
+a59 4
+! From $\frac{\text{d} B}{\text{d} T}$ compute
+! $\frac{\text{d} B}{\text{d} T_{np}} =
+!  \frac{\text{d} B}{\text{d} T} \eta_n \eta_p$ where
+! $\eta_n$ = Eta(n,zeta) and $\eta_p$ = Eta(p,phi).
+d92 1
+a92 1
+    dBdt = 0.5 * b * ( h_o_k * nu + b ) / t_path**2
+d130 1
+a130 1
+       "$Id: d_t_script_dtnp_m.f90,v 2.8 2009/06/23 18:26:11 pwagner Exp $"
+d139 3
+@
+
+
+2.8
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d20 1
+a20 1
+       "$RCSfile: $"
+d25 1
+a25 1
+! Build the derivative of the t_script array w.r.t to Tnp
+d29 1
+a29 1
+  subroutine DT_SCRIPT_DT ( T_PATH, T_SCRIPT, ETA_ZXP, NZ_ZXP, NNZ_ZXP, &
+d33 5
+a37 4
+!  Given $T$, $\nu$ and
+!  $B = \frac{\frac{h \nu}k}{exp\left(\frac{h \nu}{k T}-1\right)}$,
+!  compute $\frac{\text{d} B}{\text{d} T}$.  $B$ is called ``T script''
+!  in many notes and reports.
+d40 2
+a41 1
+! $\frac{\text{d} B}{\text{d} T} = B \frac{\frac{h\nu}k + B}{T^2}$.
+d67 1
+a67 1
+    real(rp), intent(in) :: t_script(:)   ! B, called "T script" in many notes
+d71 1
+a71 1
+    real(r8) :: nu                        ! calculation frequency (MHz)
+d81 1
+a81 1
+    real(rp) :: dstdt(1:size(t_path))     ! d "script T" / dT
+d89 2
+a90 2
+!   dstdt = 0.5_rp / cosh1(h_o_k * nu / t_path) !{ \frac{a^2}{2 ( \cosh a - 1 )}
+    dstdt = 0.5 * t_script * ( h_o_k * nu + t_script ) / t_path**2
+d98 1
+a98 1
+        & dstdt(nz_zxp(:nnz_zxp(sv_i),sv_i)) * eta_zxp(nz_zxp(:nnz_zxp(sv_i),sv_i),sv_i)
+d128 1
+a128 1
+       "$Id: read_apriori.f90 is it here $"
+d137 3
+@
+
+
+2.7
+log
+@Add PRINT to not_used_here
+@
+text
+@d20 1
+a20 1
+       "$RCSfile: d_t_script_dtnp_m.f90,v $"
+d123 1
+a124 1
+!---------------------------- RCS Ident Info -------------------------------
+d126 2
+a127 3
+       "$Id: d_t_script_dtnp_m.f90,v 2.6 2007/06/26 00:38:55 vsnyder Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d129 1
+a129 1
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
+d131 1
+d135 3
+@
+
+
+2.6
+log
+@Use column-sparse eta
+@
+text
+@d126 1
+a126 1
+       "$Id: d_t_script_dtnp_m.f90,v 2.5 2005/11/01 23:02:21 vsnyder Exp $"
+d130 1
+d135 3
+@
+
+
+2.5
+log
+@PFA Derivatives
+@
+text
+@d29 2
+a30 1
+  subroutine DT_SCRIPT_DT ( T_PATH, T_SCRIPT, ETA_ZXP, NU, DT_SCR_DT )
+d67 2
+a68 1
+!    logical, intent(in) :: not_zero(:,:) ! where eta is not zero
+d77 1
+a77 1
+    integer(ip) :: n_path, n_sv, sv_i
+d80 1
+a80 1
+    real(rp) :: a, b
+d87 2
+a88 2
+!   dstdt = 1.0_rp / cosh1(h_o_k * nu / t_path) !{ \frac{a^2}{2 ( \cosh a - 1 )}
+    dstdt = t_script * ( h_o_k * nu + t_script ) / t_path**2
+d90 8
+a97 1
+! This part Zvi will hate
+d100 18
+a117 5
+      a = -dstdt(1) * eta_zxp(1,sv_i)
+      b = -dstdt(n_path) * eta_zxp(n_path,sv_i)
+      dt_scr_dt(:,sv_i) = 0.5_rp * (  &
+          &     eoshift(dstdt * eta_zxp(:,sv_i), 1, b) -   &
+          &     eoshift(dstdt * eta_zxp(:,sv_i),-1, a) )
+d126 1
+a126 1
+       "$Id: d_t_script_dtnp_m.f90,v 2.4 2005/06/22 18:08:18 pwagner Exp $"
+d134 3
+@
+
+
+2.4
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d20 1
+a20 1
+       "$RCSfile: $"
+d29 1
+a29 1
+  subroutine DT_SCRIPT_DT ( T_PATH, ETA_ZXP, NU, DT_SCR_DT )
+d31 24
+a54 6
+! Let h_o_k = h / k = (Planck's constant) / (Boltzmann's constant)
+! Let hxf = h_o_k * f  (f = Frq.)
+! Let B = stat_temp(T,f) = hxf / (exp(hxf/T) - 1.0)
+! Then: dB/dT = ((B/T)**2)*exp(hxf/T)
+! And : dB/dTnp = dB/dT * Etan * Etap
+! Where: Etan = Eta(n,zeta), Etap = Eta(p,phi)
+d56 1
+a56 1
+    use DCOSH1_M, only: COSH1             ! In case RP is double
+d59 1
+a59 1
+    use SCOSH1_M, only: COSH1             ! In case RP is single
+d64 1
+d71 1
+a71 1
+    real(rp), intent(out) :: dt_scr_dt(:,:) ! path dt_script temparature
+d77 1
+a77 1
+    real(rp) :: dstdt(1:size(t_path))
+d85 2
+a86 12
+!{ Compute $\frac{\text{d} B}{\text{d} T} =
+!   \exp \left ( \frac{h \nu}{k T} \right )
+!   \left ( \frac{h \nu}
+!     {k T \left [ \exp \left ( \frac{h \nu}{k T} \right ) - 1 \right ]}
+!     \right ) ^2$.  Dividing numerator and denominator by
+!     $\exp \left ( \frac{h \nu}{k T} \right )$ gives
+!     $\frac{\left ( \frac{h \nu}{k T} \right )^2}
+!           { 2 \left [ \cosh \left ( \frac{h \nu}{k T} \right ) - 1 \right ]}$.
+!   $2 ( \cosh x \, - \, 1) / x^2$ has substantial cancellation near $x = 0$,
+!   so a specially-developed procedure is used to evaluate it.
+
+    dstdt = 1.0_rp / cosh1(h_o_k * nu / t_path) !{ \frac{a^2}{2 ( \cosh a - 1 )}
+d104 1
+a104 1
+       "$Id: $"
+d112 3
+@
+
+
+2.3
+log
+@use COSH1 to avoid errors for small nu
+@
+text
+@d1 11
+d18 4
+a21 6
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+    &  "$Id: d_t_script_dtnp_m.f90,v 2.2 2002/10/10 19:49:04 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName = &
+    & "$RCSfile: d_t_script_dtnp_m.f90,v $"
+d92 6
+a97 1
+  logical function NOT_USED_HERE()
+d99 1
+a99 1
+  end function NOT_USED_HERE
+d103 3
+@
+
+
+2.2
+log
+@Move USE statements from module scope to procedure scope.  Remove an
+unnecessary one.  Get rid of some array temps.  Cosmetic changes.
+@
+text
+@d9 1
+a9 1
+    &  "$Id: $"
+d12 1
+a12 1
+    & "$RCSfile: $"
+d29 1
+d32 1
+a56 2
+! Avoid some array temps by not using whole-array operations
+
+d60 7
+a66 1
+!     {k T \left [ \exp \left ( \frac{h \nu}{k T} \right ) - 1 \right ]} \right ) ^2$
+d68 1
+a68 5
+    do sv_i = 1, n_path
+      a = h_o_k * nu / t_path(sv_i)        !{ \frac{h \nu}{k T}
+      b = exp(a)                           !{ \exp \left ( \frac{h \nu}{k T} \right )
+      dstdt(sv_i) = b * (a/(b-1.0_rp))**2  !{ \frac{\text{d} B}{\text{d} T}
+    end do
+d89 4
+@
+
+
+2.1
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d2 1
+a2 3
+  use D_STAT_TEMP_M, only: STAT_TEMP
+  use MLSCommon, only: R8, RP, IP
+  use PHYSICS, only: H_O_K => h_over_k
+d6 1
+a6 1
+!
+d8 5
+a12 5
+  CHARACTER (LEN=256) :: Id = &
+   "$Id: d_t_script_dtnp_m.f90,v 2.0 2001/09/17 20:26:26 livesey Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= &
+   "$RCSfile: d_t_script_dtnp_m.f90,v $"
+  private :: not_used_here 
+d15 2
+a16 2
+!----------------------------------------------------------------------
+! This routine builds the derivative of the t_script array w.r.t to Tnp
+d19 3
+a21 2
+  SUBROUTINE dt_script_dt(t_path,eta_zxp,nu,dt_scr_dt)
+!
+d28 4
+a31 1
+!
+d33 6
+a38 6
+!
+  REAL(rp), INTENT(in) :: t_path(:) ! path temperatures K
+  REAL(rp), INTENT(in) :: eta_zxp(:,:) ! path eta functions
+!  LOGICAL, INTENT(in) :: not_zero(:,:) ! where eta is not zero
+  REAL(r8) :: nu ! calculation frequency (MHz)
+!
+d40 2
+a41 2
+!
+  REAL(rp), INTENT(out) :: dt_scr_dt(:,:) ! path dt_script temparature
+a43 2
+!
+  INTEGER(ip) :: n_path, n_sv, sv_i
+d45 23
+a67 13
+  REAL(rp), ALLOCATABLE :: dstdt(:)
+  REAL(rp) :: a, b
+!
+! I will do this inefficiently for now because it is quick and easy
+!
+  n_path = SIZE(t_path)
+  n_sv = SIZE(eta_zxp,DIM=2)
+!
+  ALLOCATE(dstdt(1:n_path))
+!
+  dstdt = EXP(h_o_k * nu / t_path)
+  dstdt = dstdt * (h_o_k * nu / (t_path * (dstdt - 1.0_rp)))**2
+!
+d69 13
+a81 14
+!
+  DO sv_i = 1 , n_sv
+    a = -dstdt(1) * eta_zxp(1,sv_i)
+    b = -dstdt(n_path) * eta_zxp(n_path,sv_i)
+    dt_scr_dt(:,sv_i) = 0.5_rp * (  &
+        &     EOSHIFT(dstdt * eta_zxp(:,sv_i), 1, b) -   &
+        &     EOSHIFT(dstdt * eta_zxp(:,sv_i),-1, a) )
+  ENDDO
+!
+  DEALLOCATE(dstdt)
+!
+  END SUBROUTINE dt_script_dt
+!
+  logical function not_used_here()
+d83 1
+a83 1
+  end function not_used_here
+d85 1
+a85 1
+END module D_T_SCRIPT_DTNP_M
+d87 3
+@
+
+
+2.0
+log
+@New forward model
+@
+text
+@d11 1
+a11 1
+   "$Id: d_t_script_dtnp_m.f90,v 1.8.2.2 2001/09/10 23:57:40 zvi Exp $"
+d14 1
+d72 4
+d78 3
+@
+
+
+1.8
+log
+@Added Copyright statement
+@
+text
+@a0 3
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+d3 1
+a3 1
+  use MLSCommon, only: I4, R8
+a4 2
+  use PATH_ENTITIES_M, only: PATH_VECTOR
+  use D_GET_ONE_ETA_M, only: GET_ONE_ETA
+d7 2
+a8 1
+  public :: D_T_SCRIPT_DTNP
+d11 1
+a11 1
+   "$Id: d_t_script_dtnp_m.f90,v 1.7 2001/05/02 23:15:13 zvi Exp $"
+d19 2
+d29 14
+a42 3
+  Subroutine D_T_SCRIPT_DTNP ( Frq, t_basis, phi_basis, brkpt, no_ele,  &
+ &           z_path, t_path, phi_path, Ng, in, ip, no_t, no_phi,   &
+ &           dt_script_dtnp )
+d44 7
+a50 12
+    real(r8), intent(in) :: FRQ
+    real(r8), intent(in) :: T_BASIS(:), PHI_BASIS(:)
+
+    integer(i4), intent(in) :: IN,IP,NO_T,NO_PHI,Ng,brkpt,no_ele
+
+    Type(path_vector), intent(in) :: T_PATH, Z_PATH, PHI_PATH
+
+    real(r8), intent(out) :: DT_SCRIPT_DTNP(:)
+
+    integer(i4) :: i, j, m, mid, Ngp1
+    real(r8) :: hxf, s, t1, t2, etan, etap
+    real(r8) :: dt_dnp(size(dt_script_dtnp))
+d52 1
+a52 1
+    hxf = h_o_k * Frq
+d54 2
+a55 1
+!  Initialize the array:
+d57 1
+a57 26
+    dt_dnp(:) = 0.0
+    dt_script_dtnp(:) = 0.0
+
+! 'brkpt' is the index of the path break-point (when it change from
+!         incoming ray to outgoing ray)
+! 'no_ele' is the total number of entries in t_path%values(1...no_ele)
+
+    m = 0
+    Ngp1 = Ng + 1
+    j = 1 - Ngp1
+
+    do
+      j = j + Ngp1
+      if (j > brkpt) EXIT
+      m = m + 1
+      Call get_one_eta(z_path%values(j),t_basis,no_t,in,etan)
+      if(etan > 0.0) then
+        Call get_one_eta(phi_path%values(j),phi_basis,no_phi,ip,etap)
+        if(etap > 0.0) then
+          t1 = t_path%values(j)
+          t2 = stat_temp(t1,frq)
+          s = t2 / t1
+          dt_dnp(m) = s * s * exp(hxf/t1) * etan * etap
+        endif
+      endif
+    end do
+d59 7
+a65 42
+    mid = m
+    j = brkpt + 1 - Ngp1
+
+    do
+      j = j + Ngp1
+      if (j > no_ele) EXIT
+      m = m + 1
+      Call get_one_eta(z_path%values(j),t_basis,no_t,in,etan)
+      if(etan > 0.0) then
+        Call get_one_eta(phi_path%values(j),phi_basis,no_phi,ip,etap)
+        if(etap > 0.0) then
+          t1 = t_path%values(j)
+          t2 = stat_temp(t1,frq)
+          s = t2 / t1
+          dt_dnp(m) = s * s * exp(hxf/t1) * etan * etap
+        endif
+      endif
+    end do
+!
+    dt_script_dtnp(1) = 0.5_r8 * (dt_dnp(1) + dt_dnp(2))
+    do i = 2, mid-1
+      dt_script_dtnp(i) = 0.5_r8 * (dt_dnp(i+1) - dt_dnp(i-1))
+    end do
+!
+    dt_script_dtnp(mid  ) = 0.5_r8 * (dt_dnp(mid+1) - dt_dnp(mid-1))
+    dt_script_dtnp(mid+1) = 0.5_r8 * (dt_dnp(mid+2) - dt_dnp(mid))
+!
+! Note that dt_dnp(mid) = dt_dnp(mid+1) because this index
+! is redundant at the tangent vertical (or center phi)
+!
+    do i = mid+2, m-1
+      dt_script_dtnp(i) = 0.5_r8 * (dt_dnp(i+1) - dt_dnp(i-1))
+    end do
+!
+    dt_script_dtnp(m) = -0.5_r8 * (dt_dnp(m-1) + dt_dnp(m))
+!
+    Return
+  End subroutine D_T_SCRIPT_DTNP
+end module D_T_SCRIPT_DTNP_M
+! $Log: d_t_script_dtnp_m.f90,v $
+! Revision 1.7  2001/05/02 23:15:13  zvi
+! Fixing a sign bug..
+d67 1
+a67 2
+! Revision 1.6  2001/03/31 23:40:55  zvi
+! Eliminate l2pcdim (dimension parameters) move to allocatable ..
+d69 1
+a69 2
+! Revision 1.5  2001/03/29 08:51:01  zvi
+! Changing the (*) toi (:) everywhere
+d71 4
+a74 2
+! Revision 1.4  2001/01/31 01:08:48  zvi
+! New version of forward model
+@
+
+
+1.8.2.1
+log
+@*** empty log message ***
+@
+text
+@d15 1
+a15 1
+   "$Id: d_t_script_dtnp_m.f90,v 1.8 2001/06/07 23:30:34 pwagner Exp $"
+a118 3
+! Revision 1.8  2001/06/07 23:30:34  pwagner
+! Added Copyright statement
+!
+@
+
+
+1.8.2.2
+log
+@Import from nasty..
+@
+text
+@d1 3
+d6 1
+a6 1
+  use MLSCommon, only: R8, RP, IP
+d8 2
+d12 1
+a12 2
+  public :: DT_SCRIPT_DT
+!
+d15 1
+a15 1
+   "$Id: d_t_script_dtnp_m.f90,v 1.1 2000/08/30 18:12:04 Z.Shippony Exp $"
+a22 2
+
+  SUBROUTINE dt_script_dt(t_path,eta_zxp,nu,dt_scr_dt)
+d31 16
+a46 1
+! inputs
+d48 1
+a48 4
+  REAL(rp), INTENT(in) :: t_path(:) ! path temperatures K
+  REAL(rp), INTENT(in) :: eta_zxp(:,:) ! path eta functions
+!  LOGICAL, INTENT(in) :: not_zero(:,:) ! where eta is not zero
+  REAL(r8) :: nu ! calculation frequency (MHz)
+d50 1
+a50 1
+! output
+d52 26
+a77 3
+  REAL(rp), INTENT(out) :: dt_scr_dt(:,:) ! path dt_script temparature
+!                                           derivative
+! internals
+d79 2
+a80 1
+  INTEGER(ip) :: n_path, n_sv, sv_i
+d82 39
+a120 4
+  REAL(rp), ALLOCATABLE :: dstdt(:)
+  REAL(rp) :: a, b
+!
+! I will do this inefficiently for now because it is quick and easy
+d122 2
+a123 2
+  n_path = SIZE(t_path)
+  n_sv = SIZE(eta_zxp,DIM=2)
+d125 2
+a126 1
+  ALLOCATE(dstdt(1:n_path))
+d128 2
+a129 2
+  dstdt = EXP(h_o_k * nu / t_path)
+  dstdt = dstdt * (h_o_k * nu / (t_path * (dstdt - 1.0_rp)))**2
+d131 2
+a132 1
+! This part Zvi will hate
+a133 14
+  DO sv_i = 1 , n_sv
+    a = -dstdt(1) * eta_zxp(1,sv_i)
+    b = -dstdt(n_path) * eta_zxp(n_path,sv_i)
+    dt_scr_dt(:,sv_i) = 0.5_rp * (  &
+        &     EOSHIFT(dstdt * eta_zxp(:,sv_i), 1, b) -   &
+        &     EOSHIFT(dstdt * eta_zxp(:,sv_i),-1, a) )
+  ENDDO
+!
+  DEALLOCATE(dstdt)
+!
+  END SUBROUTINE dt_script_dt
+!
+END module D_T_SCRIPT_DTNP_M
+! $Log: d_t_script_dtnp_m.f90,v $
+@
+
+
+1.7
+log
+@Fixing a sign bug..
+@
+text
+@d1 3
+d15 1
+a15 1
+   "$Id: d_t_script_dtnp_m.f90,v 1.6 2001/03/31 23:40:55 zvi Exp $"
+d119 3
+@
+
+
+1.6
+log
+@Eliminate l2pcdim (dimension parameters) move to allocatable ..
+@
+text
+@d12 1
+a12 1
+   "$Id: d_t_script_dtnp_m.f90,v 1.5 2001/03/29 08:51:01 zvi Exp $"
+d110 1
+a110 1
+    dt_script_dtnp(m) = 0.5_r8 * (dt_dnp(m-1) + dt_dnp(m))
+d116 3
+@
+
+
+1.5
+log
+@Changing the (*) toi (:) everywhere
+@
+text
+@a2 1
+  use L2PCdim, only: N2LVL
+d12 1
+a12 1
+   "$Id: d_t_script_dtnp_m.f90,v 1.4 2001/01/31 01:08:48 zvi Exp $"
+d42 2
+a43 2
+    real(r8) :: hxf, s, t1, t2, dt_dnp(N2lvl)
+    real(r8) :: etan, etap
+d49 2
+a50 2
+    dt_dnp(1:N2lvl) = 0.0
+    dt_script_dtnp(1:N2lvl) = 0.0
+d116 3
+@
+
+
+1.4
+log
+@New version of forward model
+@
+text
+@d13 1
+a13 1
+   "$Id: d_t_script_dtnp_m.f90,v 1.1 2000/08/30 18:12:04 Z.Shippony Exp $"
+d34 1
+a34 1
+    real(r8), intent(in) :: T_BASIS(*), PHI_BASIS(*)
+d40 1
+a40 1
+    real(r8), intent(out) :: DT_SCRIPT_DTNP(*)
+d117 3
+@
+
+
+1.3
+log
+@Re-add basic stuff
+@
+text
+@@
+
+
+1.2
+log
+@New version
+@
+text
+@d4 1
+a4 1
+  use MLSCommon, only: I4, R4, R8
+d6 2
+a7 1
+  use S_GET_ONE_ETA_M, only: GET_ONE_ETA
+a10 1
+
+d13 1
+a13 1
+       "$Id: d_t_script_dtnp_m.f90,v 1.1 2000/05/04 18:12:04 vsnyder Exp $"
+d15 1
+a15 1
+       "$RCSfile: d_t_script_dtnp_m.f90,v $"
+a16 1
+
+a17 1
+
+d29 3
+a31 7
+! The begining of the ray has index 1, and the end of the ray has index: 2*n.
+! The uppermost index of the ray on the right is: IndxR, and the
+! lowermost index ot the ray on the left is: IndxL
+!
+  Subroutine D_T_SCRIPT_DTNP ( Frq, t_basis, phi_basis, t_path, z_path,    &
+ &           phi_path, N_lvls, Ng, path_brkpt, IndxR, IndxL, in, ip, no_t, &
+ &           no_phi, dt_script_dtnp )
+d34 11
+a44 18
+    real(r4), intent(in) :: T_BASIS(*)
+    real(r4), intent(in) :: PHI_BASIS(*)
+    real(r4), intent(in) :: T_PATH(*)
+    real(r4), intent(in) :: Z_PATH(*)
+    real(r4), intent(in) :: PHI_PATH(*)
+    integer(i4), intent(in) :: N_lvls
+    integer(i4), intent(in) :: Ng
+    integer(i4), intent(in) :: PATH_BRKPT(*)
+    integer(i4), intent(in) :: INDXR, INDXL
+    integer(i4), intent(in) :: IN
+    integer(i4), intent(in) :: IP
+    integer(i4), intent(in) :: NO_T
+    integer(i4), intent(in) :: NO_PHI
+    real(r4), intent(out) :: DT_SCRIPT_DTNP(*)
+
+    Integer(i4) :: I, J, K, NGP1
+    real(r8) :: DPST, HXF, S, T1, T2, DT_DNP(N2lvl)
+    real(r4) :: ETAN, ETAP
+d52 6
+a57 3
+!
+    i = 0
+    j = -Ng
+d59 3
+a61 2
+    do while (i < IndxR .and. j < path_brkpt(1) )
+      i = i + 1
+d63 3
+a65 1
+      Call get_one_eta(z_path(j),t_basis,no_t,in,etan)
+d67 1
+a67 1
+        Call get_one_eta(phi_path(j),phi_basis,no_phi,ip,etap)
+d69 1
+a69 1
+          t1 = dble(t_path(j))
+d72 1
+a72 1
+          dt_dnp(i) = s * s * exp(hxf/t1) * dble(etan) * dble(etap)
+d77 4
+a80 3
+    k = 2 * N_lvls
+    j = path_brkpt(2) - Ngp1
+    do i = IndxL, k
+d82 3
+a84 1
+      Call get_one_eta(z_path(j),t_basis,no_t,in,etan)
+d86 1
+a86 1
+        Call get_one_eta(phi_path(j),phi_basis,no_phi,ip,etap)
+d88 1
+a88 1
+          t1 = dble(t_path(j))
+d91 1
+a91 1
+          dt_dnp(i) = s * s * exp(hxf/t1) * dble(etan) * dble(etap)
+d97 1
+a97 1
+    do i = 2, IndxR-1
+d101 2
+a102 2
+    dt_script_dtnp(IndxR) = 0.5_r8 * (dt_dnp(IndxL) - dt_dnp(IndxR-1))
+    dt_script_dtnp(IndxL) = 0.5_r8 * (dt_dnp(IndxL+1) - dt_dnp(IndxR))
+d104 1
+a104 1
+! Note that dt_dnp(IndxR) = dt_dnp(IndxL) because this index
+d107 1
+a107 1
+    do i = IndxL+1, k-1
+d111 1
+a111 1
+    dt_script_dtnp(k) = 0.5_r8 * (dt_dnp(k-1) + dt_dnp(k))
+a115 1
+
+a118 1
+!
+@
+
+
+1.1
+log
+@Initial conversion to Fortran 90
+@
+text
+@d13 1
+a13 1
+       "$Id: D_T_SCRIPT_DTNP_M,v 1.12 2000/02/08 19:54:57 vsnyder Exp $"
+d121 4
+a124 1
+! $Log: D_T_SCRIPT_DTNP_M,v $
+@
+

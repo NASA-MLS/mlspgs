@@ -1,0 +1,263 @@
+head	2.3;
+access;
+symbols
+	v5-02-NRT-19:2.3
+	v6-00:2.3
+	v5-02-NRT-18:2.3
+	v5-02:2.3
+	v5-01-NRT-17:2.3
+	v5-01-NRT-16:2.3
+	v5-01-NRT-15:2.3
+	v5-01-NRT-14:2.3
+	neuralnetworks-1-0:2.3.0.10
+	cfm-single-freq-0-1:2.3.0.8
+	v5-01:2.3
+	v5-00:2.3
+	v4-23-TA133:2.3.0.6
+	mus-emls-1-70:2.3.0.4
+	rel-1-0-englocks-work:2.3.0.2
+	VUMLS1-00:2.2
+	VPL1-00:2.2
+	V4-22-NRT-08:2.2;
+locks; strict;
+comment	@# @;
+
+
+2.3
+date	2018.04.05.01.11.50;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2015.12.30.23.16.57;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2015.12.30.22.14.37;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.3
+log
+@Don't use last element of ubounds.  Correct error of using lbounds in
+Subscripts when it's not present.
+@
+text
+@! Copyright 2015, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=============================================================================
+module Array_Stuff
+!=============================================================================
+
+  ! Compute array element order position from subscripts, or vice versa.
+
+  implicit NONE
+  private
+
+  public :: Element_Position, Subscripts
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: Array_Stuff.f90,v $"
+  private :: not_used_here
+!---------------------------------------------------------------------------
+
+contains
+
+  pure integer function Element_Position ( Subscripts, Ubounds, Lbounds )
+    ! Compute position in array element order from subscripts.
+    integer, intent(in), contiguous :: Subscripts(:)
+    integer, intent(in) :: Ubounds(size(subscripts)) ! The last one is not used
+    integer, intent(in), optional :: Lbounds(size(subscripts))
+    integer :: D, I, N
+    n = size(subscripts)
+    if ( present(lbounds) ) then
+      element_position = subscripts(n) - lbounds(n)
+      do i = n - 1, 1, -1
+        d = ubounds(i) - lbounds(i) + 1
+        if ( d <= 0 ) then
+          element_position = 0
+          return
+        end if
+        element_position = element_position * d + subscripts(i) - lbounds(i)
+      end do
+    else ! Assume lbounds = [1, 1, ...]
+      element_position = subscripts(n) - 1
+      do i = n - 1, 1, -1
+        d = ubounds(i)
+        if ( d <= 0 ) then
+          element_position = 0
+          return
+        end if
+        element_position = element_position * d + subscripts(i) - 1
+      end do
+    end if
+    element_position = element_position + 1
+    
+  end function Element_Position
+
+  pure integer function Subscripts ( Element_Position, Ubounds, Lbounds )
+    ! Compute subscripts from position in array element order.
+    integer, intent(in) :: Element_Position
+    integer, intent(in), contiguous :: Ubounds(:) ! The last one is not used
+    integer, intent(in), optional :: Lbounds(size(ubounds))
+    dimension :: Subscripts(size(ubounds))
+    integer :: D, E, I
+    e = element_position - 1
+    if ( present(lbounds) ) then
+      do i = 1, size(ubounds) - 1
+        d = ubounds(i) - lbounds(i) + 1
+        if ( d <= 0 ) then
+          subscripts = lbounds - 1
+          return
+        end if
+        subscripts(i) = mod(e,d) + lbounds(i)
+        e = e / d
+      end do
+      subscripts(i) = e + lbounds(i)
+    else
+      do i = 1, size(ubounds) - 1
+        d = ubounds(i)
+        if ( d <= 0 ) then
+          subscripts = 0
+          return
+        end if
+        subscripts(i) = mod(e,d) + 1
+        e = e / d
+      end do
+      subscripts(i) = e + 1
+    end if
+  end function Subscripts
+
+!=============================================================================
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: Array_Stuff.f90,v 2.2 2015/12/30 23:16:57 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Array_Stuff
+
+! $Log: Array_Stuff.f90,v $
+! Revision 2.2  2015/12/30 23:16:57  vsnyder
+! Make Lbounds optional and last
+!
+! Revision 2.1  2015/12/30 22:14:37  vsnyder
+! Initial commit
+!
+@
+
+
+2.2
+log
+@Make Lbounds optional and last
+@
+text
+@d34 1
+a34 1
+    integer, intent(in) :: Ubounds(size(subscripts))
+d36 2
+a37 3
+    integer :: D
+    integer :: I
+    element_position = 0
+d39 2
+a40 1
+      do i = size(subscripts), 1, -1
+d49 2
+a50 1
+      do i = size(subscripts), 1, -1
+d66 1
+a66 1
+    integer, intent(in), contiguous :: Ubounds(:)
+d72 1
+a72 1
+      do i = 1, size(ubounds)
+d81 1
+d83 1
+a83 1
+      do i = 1, size(ubounds)
+d86 1
+a86 1
+          subscripts = lbounds - 1
+d92 1
+d100 1
+a100 1
+       "$Id: Array_Stuff.f90,v 2.1 2015/12/30 22:14:37 vsnyder Exp $"
+d110 3
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d25 1
+a25 1
+       "$RCSfile: QTM_m.f90,v $"
+d31 1
+a31 1
+  pure integer function Element_Position ( Lbounds, Ubounds, Subscripts )
+d33 3
+a35 3
+    integer, intent(in), contiguous :: Lbounds(:)
+    integer, intent(in) :: Ubounds(size(lbounds))
+    integer, intent(in) :: Subscripts(size(lbounds))
+d39 19
+a57 8
+    do i = size(lbounds), 1, -1
+      d = ubounds(i) - lbounds(i) + 1
+      if ( d <= 0 ) then
+        element_position = 0
+        return
+      end if
+      element_position = element_position * d + subscripts(i) - lbounds(i)
+    end do
+d62 1
+a62 1
+  pure integer function Subscripts ( Lbounds, Ubounds, Element_Position )
+a63 2
+    integer, intent(in), contiguous :: Lbounds(:)
+    integer, intent(in) :: Ubounds(size(lbounds))
+d65 3
+a67 1
+    dimension :: Subscripts(size(lbounds))
+d70 21
+a90 9
+    do i = 1, size(lbounds)
+      d = ubounds(i) - lbounds(i) + 1
+      if ( d <= 0 ) then
+        subscripts = lbounds - 1
+        return
+      end if
+      subscripts(i) = mod(e,d) + lbounds(i)
+      e = e / d
+    end do
+d97 1
+a97 1
+       "$Id: QTM_m.f90,v 2.1 2015/11/13 19:45:12 vsnyder Exp $"
+d106 4
+a109 1
+! $Log: $
+@
+

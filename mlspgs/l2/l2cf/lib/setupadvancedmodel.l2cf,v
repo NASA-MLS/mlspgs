@@ -1,0 +1,431 @@
+head	1.13;
+access;
+symbols
+	v5-02-NRT-19:1.13
+	v6-00:1.13
+	v5-02-NRT-18:1.13
+	v5-02:1.13
+	v5-01-NRT-17:1.13
+	v5-01-NRT-16:1.13
+	v5-01-NRT-15:1.13
+	v5-01-NRT-14:1.13
+	neuralnetworks-1-0:1.13.0.12
+	cfm-single-freq-0-1:1.13.0.10
+	v5-01:1.13
+	v5-00:1.13
+	v4-23-TA133:1.13.0.8
+	mus-emls-1-70:1.13.0.6
+	rel-1-0-englocks-work:1.13.0.4
+	VUMLS1-00:1.13
+	VPL1-00:1.13
+	V4-22-NRT-08:1.13
+	VAM1-00:1.13
+	V4-21:1.13.0.2
+	V4-13:1.13
+	V4-12:1.13
+	V4-11:1.13
+	V4-10:1.13
+	V3-43:1.11
+	M4-00:1.13
+	V3-41:1.11
+	V3-40-PlusGM57:1.11.0.2
+	V2-24-NRT-04:1.11
+	V3-33:1.11
+	V2-24:1.11
+	V3-31:1.11
+	V3-30-NRT-05:1.11
+	cfm-01-00:1.11
+	V3-30:1.11
+	V3-20:1.11
+	V3-10:1.11
+	V2-23-NRT-02:1.11
+	V2-23:1.11
+	V2-22-NRT-01:1.11
+	V2-22:1.11
+	V2-21:1.11
+	V2-20:1.11
+	V2-11:1.11
+	V2-10:1.11
+	V2-00:1.11
+	V1-51:1.10
+	V1-50:1.10
+	V1-45:1.10
+	V1-44:1.10
+	V1-43:1.10
+	V1-32:1.6
+	V1-31:1.6;
+locks; strict;
+comment	@# @;
+
+
+1.13
+date	2013.04.11.16.35.34;	author pwagner;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2012.06.19.20.10.57;	author pwagner;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2006.06.15.00.38.51;	author lambert;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2004.04.13.23.28.03;	author livesey;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2004.04.13.22.40.13;	author livesey;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2004.04.09.06.29.44;	author livesey;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2004.03.27.00.16.49;	author livesey;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2003.11.15.01.58.01;	author livesey;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2003.11.12.04.23.33;	author livesey;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2003.11.01.18.45.52;	author livesey;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2003.10.18.01.18.47;	author livesey;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2003.10.15.20.53.26;	author livesey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2003.10.11.01.38.28;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.13
+log
+@Replaced 4 degree phiWindows with 5 profiles
+@
+text
+@; $Id: setupadvancedmodel.l2cf,v 1.12 2012/06/19 20:10:57 pwagner Exp $
+
+;; This L2CF fragment is for use when we wish to setup an 'advanced'
+;; linear forward model (one that is linearised about a different state
+;; from the one in the l2pc files).
+
+;; This simply takes the current 'state' and produces a full forward
+;; model estimtate of bands 1, 22 and 32.
+
+;; Construct the measurement vector and a full forward model
+begin Construct
+  r1aYTemplate: VectorTemplate, quantities=[band1, band22, band32]
+  r1aSetupModel: ForwardModel, type=full, $
+    signals=['R1A:118.B1F:PT','R1A:118.B22D:PT','R1A:118.B32W:PT'], $
+    phiWindow=5 profiles, $
+    molecules=!moleculesForR1A, $
+    integrationGrid=vGridTangent, $
+    tangentGrid=vGridTangent, $
+    tolerance= -1K,$
+    /do_conv, /do_freq_avg, /polarized ;; We skip the baseline deliberately
+end Construct
+
+;; Setup the vectors
+begin Fill
+  r1aX: Vector, template=stateTemplate
+  r1aY: Vector, template=r1aYTemplate
+  r1aYHR: Vector, template=r1aYTemplate
+  Transfer, source=state, destination=r1aX
+  ;; Zero out the baseline just to be sure (shouldn't matter)
+  Fill, quantity=r1aX.baselineR1A, method=explicit, explicitValues= 0K, /spread
+end Fill
+
+;; Do a sids calculation
+begin Retrieve
+  !ifdef(flagSkipAdvancedSids,{},{
+  sids, fwdModelIn=state, fwdModelOut=r1aY, forwardModel=[r1aSetupModel]})
+end Retrieve
+
+;; Now we construct the advanced linear models to use these
+begin Construct
+  !define(makeAdvancedL2PCModel,{!dnl
+  advancedL2PCFwm$1: ForwardModel, type=linear, signals=!signal($1), $
+    molecules=!moleculeFamilies(!radiometerForBand($1)), $
+    moleculeDerivatives=!moleculeFamilies(!radiometerForBand($1)), $
+    /atmos_der, /temp_der, /do_baseline, $
+    phiWindow=100 profiles, !ifdef(flagDontLockBins,{},{/lockBins, })$
+    binSelectors=[latBin,scalarBin,lrBin, latCost], $
+    xStar=r1aX, yStar=r1aY
+  advancedL2PCPLFwm$1: ForwardModel, type=polarLinear, signals=!signal($1), $
+    molecules=!moleculeFamilies(!radiometerForBand($1)), $
+    moleculeDerivatives=!moleculeFamilies(!radiometerForBand($1)), $
+    /atmos_der, /temp_der, /do_baseline, $
+    phiWindow=100 profiles, $
+    binSelectors=[latBin,polarBin,lrBin, strengthCost,elevationCost,latCost], $
+    xStar=r1aX, yStar=r1aY!nl})
+
+  !makeAdvancedL2PCModel(1)
+  !makeAdvancedL2PCModel(22)
+  !makeAdvancedL2PCModel(32)
+end Construct
+
+; $Log: setupadvancedmodel.l2cf,v $
+; Revision 1.12  2012/06/19 20:10:57  pwagner
+; flagDontLockBins removes /lockBins switch
+;
+; Revision 1.11  2006/06/15 00:38:51  lambert
+; changed bin selectors compatible with l2pc037 and later
+;
+; Revision 1.10  2004/04/13 23:28:03  livesey
+; Bug fix.
+;
+; Revision 1.9  2004/04/13 22:40:13  livesey
+; Stripped out the high resolution stuff
+;
+@
+
+
+1.12
+log
+@flagDontLockBins removes /lockBins switch
+@
+text
+@d1 1
+a1 1
+; $Id: setupadvancedmodel.l2cf,v 1.11 2006/06/15 00:38:51 lambert Exp $
+d15 1
+a15 1
+    phiWindow=4.0 degrees, $
+d63 3
+@
+
+
+1.11
+log
+@changed bin selectors compatible with l2pc037 and later
+@
+text
+@d1 1
+a1 1
+; $Id: setupadvancedmodel.l2cf,v 1.10 2004/04/13 23:28:03 livesey Exp $
+d46 1
+a46 1
+    phiWindow=100 profiles, /lockBins, $
+d63 3
+@
+
+
+1.10
+log
+@Bug fix.
+@
+text
+@d1 1
+a1 1
+; $Id: setupadvancedmodel.l2cf,v 1.9 2004/04/13 22:40:13 livesey Exp $
+d47 1
+a47 1
+    binSelectors=[standardBin, latBin], $
+d54 1
+a54 1
+    binSelectors=[polarBin, strengthBin, elevationBin, latBin], $
+d63 3
+@
+
+
+1.9
+log
+@Stripped out the high resolution stuff
+@
+text
+@d1 1
+a1 1
+; $Id: setupadvancedmodel.l2cf,v 1.8 2004/04/09 06:29:44 livesey Exp $
+d36 1
+a36 1
+  sids, fwdModelIn=state, fwdModelOut=r1aY, forwardModel=[r1aSetupModel]
+d62 4
+a65 1
+; $Log$
+@
+
+
+1.8
+log
+@Name change in hiResBin
+@
+text
+@d1 1
+a1 1
+; $Id: setupadvancedmodel.l2cf,v 1.7 2004/03/27 00:16:49 livesey Exp $
+a20 9
+  r1aSetupModelHR: ForwardModel, type=full, $
+    signals=['R1A:118.B1F:PT','R1A:118.B22D:PT','R1A:118.B32W:PT'], $
+    phiWindow=4.0 degrees, $
+    molecules=!moleculesForR1A, $
+    integrationGrid=vGridTangent, $
+    tangentGrid=vGridTangent, $
+    tolerance= -1K, $
+    specificQuantities = [ temperature_hr, h2o_hr ], $
+    /do_conv, /do_freq_avg, /polarized ;; We skip the baseline deliberately
+a30 4
+  ;; Make sure the _hr species are interpolations of their parents
+  Fill, quantity=r1aX.temperature_hr, method=vector, sourceQuantity=r1aX.temperature, /interpolate
+  Fill, quantity=r1aX.h2o_hr, method=vector, sourceQuantity=r1aX.h2o, /interpolate
+  Fill, quantity=r1aX.o3_hr, method=vector, sourceQuantity=r1aX.o3, /interpolate
+a36 1
+  !ifdef(flagSkipHR,{},{sids, fwdModelIn=state, fwdModelOut=r1aYHR, forwardModel=[r1aSetupModelHR]})})
+a41 9
+  !ifdef(flagSkipHR,{},{!dnl
+  advancedHRL2PCFwm$1: ForwardModel, type=linear, signals=!signal($1), $
+    molecules=!moleculeFamilies(!radiometerForBand($1)), $
+    moleculeDerivatives=!moleculeFamilies(!radiometerForBand($1)), $
+    /atmos_der, /temp_der, /do_baseline, $
+    phiWindow=100 profiles, /lockBins, $
+    specificQuantities=[ temperature_hr, h2o_hr ], $
+    binSelectors=[hiResBin, latBin], $
+    xStar=r1aX, yStar=r1aYHR})
+d62 1
+a62 3
+
+  
+  
+@
+
+
+1.7
+log
+@Added polarlinear model for b22.
+@
+text
+@d1 1
+a1 1
+; $Id: setupadvancedmodel.l2cf,v 1.6 2003/11/15 01:58:01 livesey Exp $
+d63 1
+a63 1
+    binSelectors=[hrBin, latBin], $
+@
+
+
+1.6
+log
+@Added ability to skip the sids calculation (be very careful!)
+@
+text
+@d1 1
+a1 1
+; $Id: setupadvancedmodel.l2cf,v 1.5 2003/11/12 04:23:33 livesey Exp $
+d70 8
+@
+
+
+1.5
+log
+@Some renaming
+@
+text
+@d1 1
+a1 1
+; $Id: setupadvancedmodel.l2cf,v 1.4 2003/11/01 18:45:52 livesey Exp $
+d48 1
+d50 1
+a50 1
+  !ifdef(flagSkipHR,{},{sids, fwdModelIn=state, fwdModelOut=r1aYHR, forwardModel=[r1aSetupModelHR]})
+@
+
+
+1.4
+log
+@Changes to support hi resolution
+@
+text
+@d1 1
+a1 1
+; $Id: setupadvancedmodel.l2cf,v 1.3 2003/10/18 01:18:47 livesey Exp $
+d56 1
+a56 1
+  advancedL2PCFwmHR$1: ForwardModel, type=linear, signals=!signal($1), $
+@
+
+
+1.3
+log
+@New approach which involves making one forward model call rather than
+reading in previous results.  This way we can be sure we're getting the
+right thing.
+@
+text
+@d1 1
+a1 1
+; $Id: setupadvancedmodel.l2cf,v 1.2 2003/10/15 20:53:26 livesey Exp $
+d21 9
+d36 1
+d40 4
+d49 1
+d55 9
+@
+
+
+1.2
+log
+@Bug fix, take off that 1000K
+@
+text
+@d1 1
+a1 1
+; $Id: setupadvancedmodel.l2cf,v 1.1 2003/10/11 01:38:28 livesey Exp $
+d5 6
+a10 1
+;; from the one in the l2pc files) from a previous run of core.
+d12 9
+a20 1
+  r1aYTemplate: VectorTemplate, quantities=[band1, band32]
+d23 1
+d27 25
+a51 3
+  Transfer, source=stateCore, destination=r1aX
+  Fill, quantity=r1aY.band1, method=l2aux, sourceL2AUX=b1CoreInput
+  Fill, quantity=r1aY.band32, method=l2aux, sourceL2AUX=b32CoreInput
+a52 3
+  Fill, quantity=r1aY.band1, method=resetUnusedRadiances
+  Fill, quantity=r1aY.band32, method=resetUnusedRadiances
+end Fill
+@
+
+
+1.1
+log
+@First version
+@
+text
+@d1 1
+a1 1
+; $Id$
+d16 3
+@
+

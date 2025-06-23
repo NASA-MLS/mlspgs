@@ -1,0 +1,114 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.14
+	cfm-single-freq-0-1:1.1.0.12
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.10
+	mus-emls-1-70:1.1.0.8
+	rel-1-0-englocks-work:1.1.0.6
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V2-24-NRT-04:1.1
+	V3-33:1.1
+	V2-24:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1
+	V2-23-NRT-02:1.1
+	V2-23:1.1
+	V2-22-NRT-01:1.1
+	V2-22:1.1
+	V2-21:1.1
+	V2-20:1.1
+	V2-11:1.1
+	V2-10:1.1
+	V2-00:1.1
+	V1-51:1.1
+	V1-50:1.1
+	V1-45:1.1
+	V1-44:1.1
+	V1-43:1.1
+	V1-32:1.1
+	V1-31:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2003.04.23.17.07.02;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Various changes and additions
+@
+text
+@\fillMethod{Vector}
+
+\index{Interpolation}
+\index{Quantities!Copying / filling from}
+
+\begin{cfFragment}
+Fill, quantity=<vector>.<quantity>, method=vector, 
+   sourceQuantity=<vector>.<quantity>, 
+   {, interpolate=<true|false>}
+   {, force=<true|false>}
+   {, dontMask=<true|false>}
+\end{cfFragment}
+\cfField{sourceQuantity}
+\cfField{interpolate}
+\cfField{force}
+\cfField{dontMask}
+
+This fill method in it's simplest form allows the user to fill a vector
+quantity with the values of another, `similar' vector quantity.  How
+`similar' the quantities are required to be depends on the user
+requirements.  By default, the software insists that the quantities
+share the same template.  If, however, the user sets the
+\cf+interpolate+ flag, then the quantities can have different vertical
+coordinates, provided that they share horizontal and frequency
+coordinates, and describe the same physical quantity (molecule / band
+etc.).  If the user sets the \cf+force+ option, the quantities must only
+share the same horizontal and frequency coordinate system.
+
+Currently the software only supports vertical interpolation of
+single channel quantities (even when \cf+force+ is set).  This may be
+changed at some later date if such functionality is required.
+
+\fillMaskComment
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "l2ug"
+%%% End: 
+@

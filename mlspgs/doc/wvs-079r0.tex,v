@@ -1,0 +1,161 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.14
+	cfm-single-freq-0-1:1.1.0.12
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.10
+	mus-emls-1-70:1.1.0.8
+	rel-1-0-englocks-work:1.1.0.6
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2008.06.11.20.14.55;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9.0in
+
+\newcommand{\docname}{\bf wvs-079}
+\newcommand{\docdate}{8 May 2008}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[u]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Van\\
+Subject: \>Logarithm of $2 \times 2$ matrix\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 10pt
+\vspace{-20pt}
+
+According to {\bf Functions of Matrices: Theory and Computation} by
+Nicholas J. Higham, a function of a matrix, in particular the logarithm of a
+matrix, can be computed using its Schur decomposition
+
+\begin{equation}
+f(A) = Q\, f(T)\,\, Q^*
+\end{equation}
+
+where $Q$ is unitary and $T$ is upper triangular.  Applying this to a $2 \times
+2$ matrix $T$, using Equation (11.27) from the above cited reference, we have
+
+\begin{equation}
+\log \left( \begin{array}{cc}
+ t_{11} & t_{12} \\
+ 0      & t_{22}
+ \end{array} \right) =
+ \left\{ \begin{array}{ll}
+  \left( \begin{array}{cc}
+   \log t_{11} & f_{12} \\
+   0           & \log t_{22}
+   \end{array} \right)
+   & t_{11} \neq t_{22} \\
+   & \\
+  \left( \begin{array}{cc}
+   \log t_{11} & \frac{t_{12}}{t_{11}} \\
+   0           & \log t_{11}
+   \end{array} \right)
+   & t_{11} = t_{12}
+  \end{array}
+  \right.
+\end{equation}
+
+where $z = \frac{t_{11}-t_{22}}{t_{11}+t_{22}}$ and
+
+\begin{equation}
+f_{12} = t_{12} \frac{2 \tanh^{-1} z + 2 \pi i [
+ \mathcal{U} ( \log t_{22} - \log t_{11} ) +
+ \mathcal{U} ( \log(1+z) - \log(1-z))]}{t_{11}-t_{12}} \,.
+\end{equation}
+
+$\mathcal{U}(z)$ is the \emph{unwinding number} for $z$, defined by Equation
+(11.2), \emph{viz}.
+
+\begin{equation}
+\mathcal{U}(z) = \frac{z - \log(e^z)}{2 \pi i} =
+\left \lceil \frac{\Im z - \pi}{2 \pi} \right \rceil\,,
+\end{equation}
+
+which is zero when $-\pi < \Im z \leq \pi$, and in particular when $z$ is real.
+
+When $t_{11} \approx t_{22}$, eqv. $z \approx 0$, the series expansion
+
+\begin{equation}
+\frac{\tanh^{-1} z}z = \sum_{k=0}^\infty \frac{z^{2k}}{2k+1}
+\end{equation}
+
+should be used.
+
+\label{lastpage}
+\end{document}
+% $Id: $
+@

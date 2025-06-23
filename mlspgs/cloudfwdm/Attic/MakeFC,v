@@ -1,0 +1,1298 @@
+head	1.34;
+access;
+symbols
+	V4-21:1.33.0.2
+	V4-13:1.33
+	V4-12:1.33
+	V4-11:1.33
+	V4-10:1.33
+	V3-43:1.31
+	M4-00:1.33
+	V3-41:1.31
+	V3-40-PlusGM57:1.31.0.2
+	V2-24-NRT-04:1.29
+	V3-33:1.33
+	V2-24:1.29
+	V3-31:1.33
+	V3-30-NRT-05:1.32
+	cfm-01-00:1.31
+	V3-30:1.31
+	V3-20:1.31
+	V3-10:1.31
+	V2-23-NRT-02:1.29
+	V2-23:1.29
+	V2-22-NRT-01:1.29
+	V2-22:1.29
+	V2-21:1.27
+	V2-20:1.27
+	V2-11:1.27
+	V2-10:1.27
+	V2-00:1.27
+	V1-51:1.26
+	V1-50:1.26
+	V1-45:1.26
+	V1-44:1.26
+	V1-43:1.26
+	V1-32:1.25
+	V1-31:1.25
+	V1-30:1.25
+	V1-13:1.22
+	V1-12:1.22
+	V1-11:1.22
+	V1-10:1.21
+	newfwm-feb03:1.21.0.2
+	V1-04:1.15
+	V1-03:1.15
+	V1-02:1.15
+	V1-00:1.14
+	newfwm-sep01:1.7.0.2
+	V0-7:1.7;
+locks; strict;
+comment	@# @;
+
+
+1.34
+date	2015.08.11.16.30.39;	author pwagner;	state dead;
+branches;
+next	1.33;
+
+1.33
+date	2010.10.12.22.25.03;	author pwagner;	state Exp;
+branches;
+next	1.32;
+
+1.32
+date	2010.08.27.20.56.39;	author pwagner;	state Exp;
+branches;
+next	1.31;
+
+1.31
+date	2008.07.11.23.59.19;	author pwagner;	state Exp;
+branches;
+next	1.30;
+
+1.30
+date	2008.04.22.17.20.01;	author pwagner;	state Exp;
+branches;
+next	1.29;
+
+1.29
+date	2007.05.31.18.31.02;	author pwagner;	state Exp;
+branches;
+next	1.28;
+
+1.28
+date	2007.04.13.20.15.18;	author pwagner;	state Exp;
+branches;
+next	1.27;
+
+1.27
+date	2005.06.23.23.02.30;	author pwagner;	state Exp;
+branches;
+next	1.26;
+
+1.26
+date	2004.03.30.00.21.50;	author pwagner;	state Exp;
+branches;
+next	1.25;
+
+1.25
+date	2003.05.21.20.52.13;	author pwagner;	state Exp;
+branches;
+next	1.24;
+
+1.24
+date	2003.05.20.18.39.21;	author pwagner;	state Exp;
+branches;
+next	1.23;
+
+1.23
+date	2003.04.30.23.04.55;	author pwagner;	state Exp;
+branches;
+next	1.22;
+
+1.22
+date	2003.02.24.21.16.01;	author pwagner;	state Exp;
+branches;
+next	1.21;
+
+1.21
+date	2002.07.18.18.00.01;	author pwagner;	state Exp;
+branches;
+next	1.20;
+
+1.20
+date	2002.07.15.16.52.58;	author pwagner;	state Exp;
+branches;
+next	1.19;
+
+1.19
+date	2002.07.11.22.12.10;	author pwagner;	state Exp;
+branches;
+next	1.18;
+
+1.18
+date	2002.07.02.00.14.00;	author pwagner;	state Exp;
+branches;
+next	1.17;
+
+1.17
+date	2002.06.21.23.24.08;	author pwagner;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2002.06.21.00.15.27;	author pwagner;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2002.05.02.00.16.32;	author pwagner;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2002.01.31.00.34.33;	author pwagner;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2002.01.15.00.40.18;	author pwagner;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2001.11.08.00.40.51;	author pwagner;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2001.10.04.22.25.36;	author pwagner;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2001.09.26.17.24.58;	author pwagner;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2001.09.25.20.27.15;	author pwagner;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2001.09.07.22.23.52;	author pwagner;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2001.08.22.22.46.13;	author pwagner;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2001.08.15.21.01.04;	author pwagner;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2001.08.13.18.09.08;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.08.07.23.38.50;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2001.07.25.23.19.58;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.05.31.20.24.49;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.05.30.16.42.53;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.34
+log
+@Replaced with Makefile
+@
+text
+@#	Makefile
+#
+#  Lost? Type 'cd ../; make help -f MakeFC' from this directory
+#
+# Copyright 2005, by the California Institute of Technology. ALL
+# RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+# commercial use must be negotiated with the Office of Technology Transfer
+# at the California Institute of Technology.
+
+# This software may be subject to U.S. export control laws. By accepting this
+# software, the user agrees to comply with all applicable U.S. export laws and
+# regulations. User has the responsibility to obtain export licenses, or other
+# export authority as may be required before exporting such information to
+# foreign countries or providing access to foreign persons.
+
+# "$Id: MakeFC,v 1.33 2010/10/12 22:25:03 pwagner Exp $"
+
+short_name=cloudfwdm
+
+PROG=libcloud.a
+
+# We store all the common Makefile things in one shared file
+SRCLIB=../srclib
+-include $(SRCLIB)/Makefile.h
+
+# This will set our MLS platform, compiler. etc.
+# w/o complaining if it does nor exist yet
+-include $(CONFDIR)/$(MLSCFILE)
+
+#Where else to look for USEd and INCLUDED files to add to dependency list
+depends_where:=$(libmls_sources) $(srclib) $(libfwdmdl_sources)
+
+#Any sources to explicitly exclude from dependency list?
+OMIT_SRCS := $(OMIT)
+
+PROG_prereqs=$(PLATFORMS)/$(MLSCONFG) $(libfwdmdl_objs)/libfwdmdl.a
+
+OMIT_PREFXD := $(shell ${REECHO} -prefix=-d $(OMIT_SRCS))
+
+#These modules require custom builds, so omit build commands from dependencies
+CUSTOM_BUILDS=
+CUSTOM_PREFXD := $(shell ${REECHO} -prefix=-db $(CUSTOM_BUILDS))
+
+ifdef HDF5INC
+   ADD2PATHS := $(ADD2PATHS) $(HDF5INC)
+else
+   ADD2PATHS := $(ADD2PATHS) $(HDF5)/../fortran/src $(HDF5)/../include
+endif
+
+#----------------------- Build instructions
+
+$(PROG): $(PROG_prereqs)
+	@@cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
+        UNPREFXDPTHS="$(ADD2PATHS)" ; \
+        return_status=`expr $$?` ; \
+        if [ $$return_status != "0" ]; then \
+		     exit 2 ; \
+        elif [ "$(MARK_ALL_AS_UPTODATE)" != "no" ]; then \
+		     $(MAKE) mark_all_as_uptodate \
+           MARK_ALL_AS_UPTODATE= ;\
+         fi
+
+.PHONY: clean configure depends depends--mod ghostbuster mostlyclean \
+  tar targ tarz update libcloud.a
+
+tar:
+
+configure:
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)" \
+          $(RECFG)
+
+$(CONFDIR)/$(MLSCFILE):
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)" \
+          $(RECFG)
+
+$(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/$(MLSCFILE)
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)" -nc \
+          $(RECFG)
+
+depends:
+	$(MLSBIN)/makemakedep.sh -p $(PLATFORMS)/$(MLSCONFG)/Makefile.dep \
+   $(OMIT_PREFXD) $(UP_OR_LOW) \
+   $(CUSTOM_PREFXD) $(depends_where)
+
+ghostbuster:
+	$(MLSBIN)/ghostbuster.sh -lib $(OMIT_PREFXD) \
+          $(PLATFORMS)/$(MLSCONFG) ./ $(srclib)
+
+update:
+	@@cd .. ; \
+   $(MAKE) update SUBDIRS="blas lib fwdmdl cloudfwdm" tests_sub_dirs=
+
+mostlyclean:
+	@@echo "Cleaning directory $(MLSCONFG)" ; \
+	if [ "$(MLSCONFG)" != "" ] ; then  \
+		echo "Deleting $(MLSCONFG) files" ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/* ; \
+	fi ; \
+	if [ -d "$(PLATFORMS)/$(MLSCONFG)" ] ; then  \
+		echo "Deleting $(MLSCONFG) directory" ; \
+		rmdir $(PLATFORMS)/$(MLSCONFG) ; \
+	fi
+	rm -f Make.dep.*
+
+clean:
+	@@echo "Cleaning objects from directory $(MLSCONFG)" ; \
+	if [ "$(MLSCONFG)" != "" ] ; then  \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/*.[ao] ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/*.mod ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/$(PROG) ; \
+	fi
+	rm -f Make.dep.*
+
+tar:
+	rm -f ../$(PROG).tar
+	@@echo "tar-ing $(PROG)"; \
+	$(TAR) hcvf ../$(PROG).tar * --exclude CVS\
+	--exclude Make.dep\* --exclude NAG.\* --exclude LF95.\*
+
+tarz: tar
+	@@echo "... then gzipping it"; \
+	cd ..; rm -f $(PROG).tgz; gzip $(PROG).tar; mv $(PROG).tar.gz $(PROG).tgz
+
+targ:
+	rm -f ../$(PROG).tgz
+	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
+
+# $Log: MakeFC,v $
+# Revision 1.33  2010/10/12 22:25:03  pwagner
+# Uses Makefile.h from srclib
+#
+# Revision 1.32  2010/08/27 20:56:39  pwagner
+# Uses optional HDF*INC Makefile variables
+#
+# Revision 1.31  2008/07/11 23:59:19  pwagner
+# 1st changes to get sunstudio to link mlsl2
+#
+# Revision 1.30  2008/04/22 17:20:01  pwagner
+# CASCADE no longer affects where Makefile.dep goes
+#
+# Revision 1.29  2007/05/31 18:31:02  pwagner
+# Added Absoft to list of tested compilers
+#
+# Revision 1.28  2007/04/13 20:15:18  pwagner
+# Changes in line with Intel v9.1
+#
+# Revision 1.27  2005/06/23 23:02:30  pwagner
+# Reworded Copyright statement
+#
+# Revision 1.26  2004/03/30 00:21:50  pwagner
+# Take care that lib is rebuilt after changes in machines directory
+#
+# Revision 1.25  2003/05/21 20:52:13  pwagner
+# Added PROG to .PHONY list as appropriate
+#
+# Revision 1.24  2003/05/20 18:39:21  pwagner
+# Uses DONTBUILDPREQS to stop some hunting
+#
+# Revision 1.23  2003/04/30 23:04:55  pwagner
+# Now lets you make update in each subdirectory
+#
+# Revision 1.22  2003/02/24 21:16:01  pwagner
+# Fixed bug where changes to .f9h were not triggering recompiles
+#
+# Revision 1.21  2002/07/18 18:00:01  pwagner
+# NOHUNTING default when .mod-mediated dependency
+#
+# Revision 1.20  2002/07/15 16:52:58  pwagner
+# Exits make with status 2 if error in any level
+#
+# Revision 1.19  2002/07/11 22:12:10  pwagner
+# Changes to support hdf5/hdfeos5
+#
+# Revision 1.18  2002/07/02 00:14:00  pwagner
+# Skips marking uptodate after an error
+#
+# Revision 1.17  2002/06/21 23:24:08  pwagner
+# More steps enroute to ending cascades of recompiles
+#
+# Revision 1.16  2002/06/21 00:15:27  pwagner
+# Enroute to ending cascading recompiles
+#
+# Revision 1.15  2002/05/02 00:16:32  pwagner
+# depends now creates Makefile.nodep, too
+#
+# Revision 1.14  2002/01/31 00:34:33  pwagner
+# Tries to get .mod files from he5lib
+#
+# Revision 1.13  2002/01/15 00:40:18  pwagner
+# Now uses user-settable OMIT and internal OMIT_SRCS and OMIT_PREFIXD variables
+#
+# Revision 1.12  2001/11/08 00:40:51  pwagner
+# NOCLEANING avoids massive recompiles on changes to .configure
+#
+# Revision 1.11  2001/10/04 22:25:36  pwagner
+# Limit suffix-based rules to (MLSCONFG); add lib/lit_names.txt to dependency list
+#
+# Revision 1.10  2001/09/26 17:24:58  pwagner
+# Removed errors introduced with last changes; SIMPLIFYMAKE renamed NOHUNTING
+#
+# Revision 1.9  2001/09/25 20:27:15  pwagner
+# New SIMPLIFYMAKE setting; other changes
+#
+# Revision 1.8  2001/09/07 22:23:52  pwagner
+# Triggers build on changes in lib
+#
+# Revision 1.7  2001/08/22 22:46:13  pwagner
+# Made reecho.sh a prerequisite where appropriate
+#
+# Revision 1.6  2001/08/15 21:01:04  pwagner
+# Now excludes OMIT_SRCS from dependencies
+#
+# Revision 1.5  2001/08/13 18:09:08  pwagner
+# replaced shell echo -> shell {REECHO}
+#
+# Revision 1.4  2001/08/07 23:38:50  pwagner
+# Did away with -f77 option to dependency calculation
+#
+# Revision 1.3  2001/07/25 23:19:58  pwagner
+# Removed unnecessary lib...a from target prereqs
+#
+# Revision 1.2  2001/05/31 20:24:49  pwagner
+# ghostbuster called with -lib option
+#
+# Revision 1.1  2001/05/30 16:42:53  pwagner
+# First commit
+#
+#
+
+
+@
+
+
+1.33
+log
+@Uses Makefile.h from srclib
+@
+text
+@d16 1
+a16 1
+# "$Id: MakeFC,v 2.71 2010/08/27 20:56:39 pwagner Exp $"
+d132 3
+@
+
+
+1.32
+log
+@Uses optional HDF*INC Makefile variables
+@
+text
+@d16 1
+a16 1
+# "$Id: MakeFC,v 1.31 2008/07/11 23:59:19 pwagner Exp $"
+d18 1
+a18 2
+# ---------------------- The name of this file (is the right-hand-side below)
+MakeFName = MakeFC
+d20 1
+a20 14
+# where to store .configure
+CONFDIR=..
+
+# where configure and makemakedep.sh are stored
+MLSBIN=../util
+
+# where sources for libmls.a are stored
+libmls_sources=../lib
+
+# where objects and libmls.a are stored
+libmls_objs=$(libmls_sources)/$(MLSCONFG)
+
+# where sources (but not OBJS) shared with l3, etc. are stored
+srclib=../srclib
+d22 3
+a24 19
+# where sources (but not OBJS) shared with l3, etc. are stored
+blaslib=../blas
+
+# where sources for the forward model are stored
+libfwdmdl_sources=../fwdmdl
+
+# where forward model objects and libfwdmdl.a are stored
+libfwdmdl_objs=$(libfwdmdl_sources)/$(MLSCONFG)
+
+# where the platforms directory is
+PLATFORMS = .
+
+# This is the default name of the configure file
+# It may be overridden for multiple platforms, special options, etc.
+ifdef HOSTMLSCFILE
+   MLSCFILE=$(HOSTMLSCFILE)
+else
+   MLSCFILE=.configure
+endif
+a29 55
+# All the implicit pattern-matching involving suffixes
+# will be done in the uniquely-named sub-directories, not here--so
+.SUFFIXES:
+
+# This will filter out globbed file expansions that fail
+# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
+REECHO=$(MLSBIN)/reecho.sh
+
+# This is in case tar doesn't summon GNU tar, you may still use it via
+# something like
+#    make -f MakeFC tar_sips TAR=/usr/local/gnu/bin/tar
+TAR=tar
+
+SHELL = /bin/sh
+
+#--------------- Target definitions
+# $PROG          -- automatic; built when target is not specified
+
+#                           (functional)
+# configure      -- runs mlsconfigure to (re)set compiler, platform, paths
+#                  also (re)creates uniquely-named sub-sub-directories
+#                  with custom Makefiles where *.o, *.mod, etc. built
+# depends        -- runs makemakedep.sh to calculate dependencies
+# mostlyclean    -- deletes uniquely-named sub-sub-directories
+# clean          -- deletes only *.o, *.mod from sub-subs
+# tar            -- creates a directory archive suitable for distribution
+#
+
+#----------------------------------------------------------
+libmls_f90 := $(shell ${REECHO} $(libmls_sources)/*.f $(libmls_sources)/*.f90 \
+  $(libmls_sources)/*.f9h $(srclib)/*.f9h $(libmls_sources)/*.c \
+  $(libmls_sources)/lit_names.txt)
+libfwdmdl_f90 := $(shell ${REECHO} $(libfwdmdl_sources)/*.c \
+  $(libfwdmdl_sources)/*.f $(libfwdmdl_sources)/*.f90 \
+  $(libfwdmdl_sources)/*.f9h)
+blaslib_f := $(shell ${REECHO} $(blaslib)/*.c $(blaslib)/*.f $(blaslib)/*.f90 \
+  $(blaslib)/*.f9h $(srclib)/*.f9h)
+machinelib := $(libmls_sources)/machines/$(MLSCONFG)/
+machine_f := $(shell ${REECHO} $(machinelib)/*.c $(machinelib)/*.f \
+  $(machinelib)/*.f90)
+
+ifndef DONTBUILDPREQS
+ifdef BLAS
+   LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
+   $(machine_f) \
+   $(REECHO) $(libmls_objs)
+else
+   LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
+   $(machine_f) \
+   $(blaslib_f) $(REECHO) $(libmls_objs)
+endif
+
+FM_LIB_prereqs=$(libfwdmdl_f90) $(libmls_objs)/libmls.a $(libfwdmdl_objs)
+endif
+
+a37 2
+PROG=libcloud.a
+
+a39 16
+#CASCADE determines whether to create/use .mod dependencies:
+#if CASCADE, use older .o dependencies, which entail cascades
+#of massive recompilation
+#These are configurations for which I have tested CASCADE-avoidance
+CAN_AVOID="NAG.Linux LF95.Linux NAG.Sun Sun.Sun IFC.Linux Abs.Linux Sunst.Linux"
+#CAN_AVOID=""
+ifndef CASCADE
+  WE_CAN := $(shell echo $(CAN_AVOID) | grep $(MLSF95).$(MLSPLAT))
+ifndef WE_CAN
+  CASCADE := yes
+endif
+endif
+
+ifdef WE_CAN
+NOHUNTING := yes
+endif
+a42 14
+ifeq ($(MLSF95),Abs)
+  UP_OR_LOW := -mod UPPER
+else
+  UP_OR_LOW := -mod lower
+endif
+
+#NOCLEANING determines value of RECFG passed to mlsconfigure script
+#RECFG determines whether changing .configure triggers deleting
+#existing sub-directory, and thus recompiling every source file
+#Set NOCLEANING to "yes" if you want to preserve existing compiled objects
+#even when changing .configure file
+ifdef NOCLEANING
+   RECFG = -nd
+endif
+d58 1
+a58 12
+        elif [ "$(WE_CAN)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" ]; then \
+		     $(MAKE) mark_all_as_uptodate \
+           MARK_ALL_AS_UPTODATE= ;\
+         fi
+
+$(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PROG)
+	@@cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
+        UNPREFXDPTHS="$(ADD2PATHS)" ; \
+        return_status=`expr $$?` ; \
+        if [ $$return_status != "0" ]; then \
+		     exit 2 ; \
+        elif [ "$(WE_CAN)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" ]; then \
+a62 14
+$(libmls_objs)/libmls.a: $(LIB_prereqs)
+	@@if [ "$(NOHUNTING)" != "" ] ; then \
+	   rm -f $(libmls_objs)/libmls.a ; \
+	fi ; \
+	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources) \
+    MARK_ALL_AS_UPTODATE=no DONTBUILDPREQS=TRUE
+
+$(libfwdmdl_objs)/libfwdmdl.a: $(FM_LIB_prereqs)
+	@@if [ "$(NOHUNTING)" != "" ] ; then \
+	   rm -f $(libfwdmdl_objs)/libfwdmdl.a ; \
+	fi ; \
+	$(MAKE) -f $(MakeFName) libfwdmdl.a -C $(libfwdmdl_sources) \
+     MARK_ALL_AS_UPTODATE=no DONTBUILDPREQS=TRUE
+
+d132 3
+@
+
+
+1.31
+log
+@1st changes to get sunstudio to link mlsl2
+@
+text
+@d16 1
+a16 1
+# "$Id: MakeFC,v 1.30 2008/04/22 17:20:01 pwagner Exp $"
+a44 6
+# where sources (but not OBJS) used for hdf5 file versions are stored
+he5lib=../he5lib
+
+# where he5 objects and libhe5.a are stored
+he5lib_objs=$(he5lib)/$(MLSCONFG)
+
+a96 1
+he5lib_f := $(shell ${REECHO} $(he5lib)/*.c $(he5lib)/*.f $(he5lib)/*.f90)
+a112 1
+HE5_LIB_prereqs=$(libmls_objs)/libmls.a $(he5lib_f)
+a122 5
+ifdef HDFVERSIONS
+   PROG_prereqs := $(PROG_prereqs) $(he5lib_objs)/libhe5.a
+   ADD2PATHS := $(ADD2PATHS) $(he5lib)
+endif
+
+d161 6
+d171 1
+a171 1
+        UNPREFXDPTHS="$(ADD2PATHS) $(HDF5)/../fortran/src $(HDF5)/../include" ; \
+d182 1
+a182 1
+        UNPREFXDPTHS="$(ADD2PATHS) $(HDF5)/../fortran/src $(HDF5)/../include" ; \
+a204 7
+$(he5lib_objs)/libhe5.a: $(HE5_LIB_prereqs)
+	@@if [ "$(NOHUNTING)" != "" ] ; then \
+	   rm -f $(he5lib_objs)/libhe5.a ; \
+	fi ; \
+	$(MAKE) -f $(MakeFName) libhe5.a -C $(he5lib) \
+     MARK_ALL_AS_UPTODATE=no DONTBUILDPREQS=TRUE
+
+d274 3
+@
+
+
+1.30
+log
+@CASCADE no longer affects where Makefile.dep goes
+@
+text
+@d16 1
+a16 1
+# "$Id: MakeFC,v 1.29 2007/05/31 18:31:02 pwagner Exp $"
+d144 1
+a144 1
+CAN_AVOID="NAG.Linux LF95.Linux NAG.Sun Sun.Sun IFC.Linux Abs.Linux"
+d288 3
+@
+
+
+1.29
+log
+@Added Absoft to list of tested compilers
+@
+text
+@d16 1
+a16 1
+# "$Id: MakeFC,v 1.28 2007/04/13 20:15:18 pwagner Exp $"
+a239 8
+ifdef CASCADE
+	$(MLSBIN)/makemakedep.sh -nodep -p Makefile.nodep $(OMIT_PREFXD)
+	$(MLSBIN)/makemakedep.sh $(OMIT_PREFXD) $(depends_where) 
+else
+	$(MAKE) depends--mod
+endif
+
+depends--mod:
+d288 3
+@
+
+
+1.28
+log
+@Changes in line with Intel v9.1
+@
+text
+@d16 1
+a16 1
+# "$Id: MakeFC,v 1.27 2005/06/23 23:02:30 pwagner Exp $"
+d144 1
+a144 1
+CAN_AVOID="NAG.Linux LF95.Linux NAG.Sun Sun.Sun IFC.Linux"
+d296 3
+@
+
+
+1.27
+log
+@Reworded Copyright statement
+@
+text
+@d16 1
+a16 1
+# "$Id: MakeFC,v 1.26 2004/03/30 00:21:50 pwagner Exp $"
+d144 1
+a144 1
+CAN_AVOID="NAG.Linux LF95.Linux NAG.Sun Sun.Sun"
+d296 3
+@
+
+
+1.26
+log
+@Take care that lib is rebuilt after changes in machines directory
+@
+text
+@d5 10
+a14 2
+# Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
+# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d16 1
+a16 1
+# "$Id: MakeFC,v 1.25 2003/05/21 20:52:13 pwagner Exp $"
+d296 3
+@
+
+
+1.25
+log
+@Added PROG to .PHONY list as appropriate
+@
+text
+@d5 1
+a5 1
+# Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+d8 1
+a8 1
+# "$Id: MakeFC,v 1.24 2003/05/20 18:39:21 pwagner Exp $"
+d96 3
+d103 1
+a103 1
+   $(libmls_sources)/machines/$(MLSCONFG)/machine.f90 \
+d107 1
+a107 1
+   $(libmls_sources)/machines/$(MLSCONFG)/machine.f90 \
+d288 3
+@
+
+
+1.24
+log
+@Uses DONTBUILDPREQS to stop some hunting
+@
+text
+@d8 1
+a8 1
+# "$Id: MakeFC,v 1.23 2003/04/30 23:04:55 pwagner Exp $"
+d209 1
+a209 1
+  tar targ tarz update
+d285 3
+@
+
+
+1.23
+log
+@Now lets you make update in each subdirectory
+@
+text
+@d8 1
+a8 1
+# "$Id: MakeFC,v 1.22 2003/02/24 21:16:01 pwagner Exp $"
+d97 1
+d101 1
+a101 1
+   $(REECHO)
+d105 5
+a109 1
+   $(blaslib_f) $(REECHO)
+a117 4
+#FM_LIB_prereqs=$(libfwdmdl_f90) $(LIB_prereqs)
+FM_LIB_prereqs=$(libfwdmdl_f90) $(libmls_objs)/libmls.a
+
+#PROG_prereqs=$(PLATFORMS)/$(MLSCONFG) $(FM_LIB_prereqs)
+d187 1
+a187 1
+$(libmls_objs)/libmls.a: $(LIB_prereqs) $(libmls_objs)
+d192 1
+a192 1
+    MARK_ALL_AS_UPTODATE=no
+d194 1
+a194 1
+$(libfwdmdl_objs)/libfwdmdl.a: $(FM_LIB_prereqs) $(libfwdmdl_objs)
+d199 1
+a199 1
+   MARK_ALL_AS_UPTODATE=no
+d201 1
+a201 1
+$(he5lib_objs)/libhe5.a: $(libmls_objs)/libmls.a $(he5lib_f)
+d205 2
+a206 1
+	$(MAKE) -f $(MakeFName) libhe5.a -C $(he5lib) MARK_ALL_AS_UPTODATE=no
+d285 3
+@
+
+
+1.22
+log
+@Fixed bug where changes to .f9h were not triggering recompiles
+@
+text
+@d8 1
+a8 1
+# "$Id: MakeFC,v 1.21 2002/07/18 18:00:01 pwagner Exp $"
+d207 1
+a207 1
+  tar targ tarz
+d243 4
+d283 3
+@
+
+
+1.21
+log
+@NOHUNTING default when .mod-mediated dependency
+@
+text
+@d3 3
+a5 1
+# Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+a6 9
+#
+#special case:
+#the 1st time through, before .configure exists yet,
+#execute $(MLSBIN)/mlsconfigure to create .configure
+
+#i.e., if you call are building this mls
+#by calling make with a different Makefile name,
+#say: make -f MakeFC
+#then rename the Makefiles in /l2 and /lib also MakeFC
+d8 1
+a8 1
+# "$Id: MakeFC,v 1.20 2002/07/15 16:52:58 pwagner Exp $"
+d10 1
+d87 8
+a94 3
+libmls_f90 := $(shell ${REECHO} $(libmls_sources)/*.f $(libmls_sources)/*.f90 $(libmls_sources)/*.c $(libmls_sources)/lit_names.txt)
+libfwdmdl_f90 := $(shell ${REECHO} $(libfwdmdl_sources)/*.c $(libfwdmdl_sources)/*.f $(libfwdmdl_sources)/*.f90)
+blaslib_f := $(shell ${REECHO} $(blaslib)/*.c $(blaslib)/*.f $(blaslib)/*.f90)
+d206 2
+a207 1
+.PHONY: configure depends clean tar mostlyclean tarz targ ghostbuster
+d279 3
+@
+
+
+1.20
+log
+@Exits make with status 2 if error in any level
+@
+text
+@d15 1
+a15 1
+# "$Id: MakeFC,v 1.19 2002/07/11 22:12:10 pwagner Exp $"
+d141 4
+d279 3
+@
+
+
+1.19
+log
+@Changes to support hdf5/hdfeos5
+@
+text
+@d15 1
+a15 1
+# "$Id: MakeFC,v 1.18 2002/07/02 00:14:00 pwagner Exp $"
+d165 3
+a167 2
+        if [ "$(WE_CAN)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" -a \
+        $$return_status = "0" ]; then \
+d176 3
+a178 2
+        if [ "$(WE_CAN)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" -a \
+        $$return_status = "0" ]; then \
+d275 3
+@
+
+
+1.18
+log
+@Skips marking uptodate after an error
+@
+text
+@d15 1
+a15 1
+# "$Id: MakeFC,v 1.17 2002/06/21 23:24:08 pwagner Exp $"
+d163 1
+a163 1
+        UNPREFXDPTHS="$(ADD2PATHS)" ; \
+d173 1
+a173 1
+        UNPREFXDPTHS="$(ADD2PATHS)" ; \
+d273 3
+@
+
+
+1.17
+log
+@More steps enroute to ending cascades of recompiles
+@
+text
+@d15 1
+a15 1
+# "$Id: MakeFC,v 1.16 2002/06/21 00:15:27 pwagner Exp $"
+d162 6
+a167 4
+	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
+        UNPREFXDPTHS="$(ADD2PATHS)"
+	@@if [ "$(WE_CAN)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" ]; then \
+		     cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) mark_all_as_uptodate \
+d172 6
+a177 4
+	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
+        UNPREFXDPTHS="$(ADD2PATHS)"
+	@@if [ "$(WE_CAN)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" ]; then \
+		     cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) mark_all_as_uptodate \
+d273 3
+@
+
+
+1.16
+log
+@Enroute to ending cascading recompiles
+@
+text
+@d15 1
+a15 1
+# "$Id: MakeFC,v 1.15 2002/05/02 00:16:32 pwagner Exp $"
+d133 2
+a134 2
+#CAN_AVOID="NAG.Linux LF95.Linux"
+CAN_AVOID=""
+d269 3
+@
+
+
+1.15
+log
+@depends now creates Makefile.nodep, too
+@
+text
+@d15 1
+a15 1
+# "$Id: MakeFC,v 1.14 2002/01/31 00:34:33 pwagner Exp $"
+d129 21
+d164 4
+d172 4
+d181 2
+a182 1
+	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
+d188 2
+a189 1
+	$(MAKE) -f $(MakeFName) libfwdmdl.a -C $(libfwdmdl_sources)
+d195 1
+a195 1
+	$(MAKE) -f $(MakeFName) libhe5.a -C $(he5lib)
+d217 2
+a218 2
+	$(MLSBIN)/makemakedep.sh -nodep $(OMIT_PREFXD) $(depends_where) ; \
+     mv Makefile.dep Makefile.nodep
+d220 8
+d269 3
+@
+
+
+1.14
+log
+@Tries to get .mod files from he5lib
+@
+text
+@d15 1
+a15 1
+# "$Id: MakeFC,v 1.13 2002/01/15 00:40:18 pwagner Exp $"
+d186 2
+d230 3
+@
+
+
+1.13
+log
+@Now uses user-settable OMIT and internal OMIT_SRCS and OMIT_PREFIXD variables
+@
+text
+@d15 1
+a15 1
+# "$Id: MakeFC,v 1.12 2001/11/08 00:40:51 pwagner Exp $"
+d43 6
+d96 1
+d120 5
+d141 2
+a142 1
+	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG)
+d145 2
+a146 1
+	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG)
+d160 6
+d228 3
+@
+
+
+1.12
+log
+@NOCLEANING avoids massive recompiles on changes to .configure
+@
+text
+@d3 1
+a3 1
+# Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+d15 1
+a15 1
+# "$Id: MakeFC,v 1.11 2001/10/04 22:25:36 pwagner Exp $"
+d105 1
+a105 1
+#OMIT_SRCS := $(OMIT_SRCS)
+d115 2
+d166 1
+a166 1
+	$(MLSBIN)/makemakedep.sh $(OMIT_SRCS) $(depends_where) 
+d169 2
+a170 1
+	$(MLSBIN)/ghostbuster.sh -lib $(PLATFORMS)/$(MLSCONFG) ./ $(srclib)
+d208 3
+@
+
+
+1.11
+log
+@Limit suffix-based rules to (MLSCONFG); add lib/lit_names.txt to dependency list
+@
+text
+@d15 1
+a15 1
+# "$Id: MakeFC,v 1.10 2001/09/26 17:24:58 pwagner Exp $"
+d115 9
+d150 2
+a151 1
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)"
+d155 2
+a156 1
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)"
+d160 2
+a161 1
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)" -nc
+d205 3
+@
+
+
+1.10
+log
+@Removed errors introduced with last changes; SIMPLIFYMAKE renamed NOHUNTING
+@
+text
+@d15 1
+a15 1
+# "$Id: MakeFC,v 1.9 2001/09/25 20:27:15 pwagner Exp $"
+d58 4
+d87 1
+a87 1
+libmls_f90 := $(shell ${REECHO} $(libmls_sources)/*.f $(libmls_sources)/*.f90 $(libmls_sources)/*.c)
+d193 3
+@
+
+
+1.9
+log
+@New SIMPLIFYMAKE setting; other changes
+@
+text
+@d15 1
+a15 1
+# "$Id: MakeFC,v 1.8 2001/09/07 22:23:52 pwagner Exp $"
+d113 2
+a114 1
+$(PROG): $(PLATFORMS)/$(MLSCONFG)/$(PROG)
+d116 1
+a116 1
+$(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PROG_prereqs)
+d120 1
+a120 1
+	@@if [ "$(SIMPLIFYMAKE)" != "" ] ; then \
+d126 1
+a126 1
+	@@if [ "$(SIMPLIFYMAKE)" != "" ] ; then \
+d189 3
+@
+
+
+1.8
+log
+@Triggers build on changes in lib
+@
+text
+@d15 1
+a15 1
+# "$Id: MakeFC,v 1.7 2001/08/22 22:46:13 pwagner Exp $"
+d113 3
+a115 1
+$(PROG): $(PROG_prereqs)
+d118 4
+a121 1
+$(libmls_objs)/libmls.a: $(LIB_prereqs)
+d124 4
+a127 1
+$(libfwdmdl_objs)/libfwdmdl.a: $(FM_LIB_prereqs)
+d188 3
+@
+
+
+1.7
+log
+@Made reecho.sh a prerequisite where appropriate
+@
+text
+@d15 1
+a15 1
+# "$Id: MakeFC,v 1.6 2001/08/15 21:01:04 pwagner Exp $"
+d103 2
+a104 1
+FM_LIB_prereqs=$(libfwdmdl_f90) $(LIB_prereqs)
+d106 2
+a107 1
+PROG_prereqs=$(PLATFORMS)/$(MLSCONFG) $(FM_LIB_prereqs)
+d180 3
+@
+
+
+1.6
+log
+@Now excludes OMIT_SRCS from dependencies
+@
+text
+@d15 1
+a15 1
+# "$Id: MakeFC,v 1.5 2001/08/13 18:09:08 pwagner Exp $"
+d89 2
+a90 1
+   $(libmls_sources)/machines/$(MLSCONFG)/machine.f90
+d94 1
+a94 1
+   $(blaslib_f)
+d178 3
+@
+
+
+1.5
+log
+@replaced shell echo -> shell {REECHO}
+@
+text
+@d15 1
+a15 1
+# "$Id: MakeFC,v 1.4 2001/08/07 23:38:50 pwagner Exp $"
+d99 3
+d136 1
+a136 2
+	$(MLSBIN)/makemakedep.sh \
+	$(depends_where) 
+d177 3
+@
+
+
+1.4
+log
+@Did away with -f77 option to dependency calculation
+@
+text
+@d15 1
+a15 1
+# "$Id: MakeFC,v 1.3 2001/07/25 23:19:58 pwagner Exp $"
+d58 4
+d83 3
+a85 3
+libmls_f90 := $(shell echo $(libmls_sources)/*.f90 $(libmls_sources)/*.c)
+libfwdmdl_f90 := $(shell echo $(libfwdmdl_sources)/*.f90)
+blaslib_f := $(shell echo $(blaslib)/*.f)
+d175 3
+@
+
+
+1.3
+log
+@Removed unnecessary lib...a from target prereqs
+@
+text
+@d15 1
+a15 1
+# "$Id: MakeFC,v 1.2 2001/05/31 20:24:49 pwagner Exp $"
+d129 1
+a129 1
+	$(MLSBIN)/makemakedep.sh -f77 \
+d171 3
+@
+
+
+1.2
+log
+@ghostbuster called with -lib option
+@
+text
+@d15 1
+a15 1
+# "$Id: MakeFC,v 1.1 2001/05/30 16:42:53 pwagner Exp $"
+a82 5
+#Where else to look for USEd and INCLUDED files to add to dependency list
+depends_where:=$(libmls_sources) $(srclib) $(libfwdmdl_sources)
+PROG_prereqs=$(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) \
+	  $(libmls_objs)/libmls.a $(libfwdmdl_objs)/libfwdmdl.a
+
+d92 6
+d109 1
+a109 2
+$(libfwdmdl_objs)/libfwdmdl.a: $(libfwdmdl_f90) $(libmls_objs)/libmls.a \
+               $(CONFDIR)/$(MLSCFILE)
+d171 3
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d15 1
+a15 1
+# "$Id: MakeFC,v 2.29 2001/05/23 22:27:41 pwagner Exp $"
+d112 1
+a112 1
+.PHONY: configure depends clean tar mostlyclean tarz targ mlsl2
+d133 1
+a133 1
+	$(MLSBIN)/ghostbuster.sh $(PLATFORMS)/$(MLSCONFG) ./ $(srclib)
+d171 3
+@
+

@@ -1,0 +1,958 @@
+head	1.20;
+access;
+symbols
+	v5-02-NRT-19:1.20
+	v6-00:1.20
+	v5-02-NRT-18:1.20
+	v5-02:1.20
+	v5-01-NRT-17:1.20
+	v5-01-NRT-16:1.20
+	v5-01-NRT-15:1.20
+	v5-01-NRT-14:1.20
+	neuralnetworks-1-0:1.20.0.14
+	cfm-single-freq-0-1:1.20.0.12
+	v5-01:1.20
+	v5-00:1.20
+	v4-23-TA133:1.20.0.10
+	mus-emls-1-70:1.20.0.8
+	rel-1-0-englocks-work:1.20.0.6
+	VUMLS1-00:1.20
+	VPL1-00:1.20
+	V4-22-NRT-08:1.20
+	VAM1-00:1.20
+	V4-21:1.20.0.4
+	V4-13:1.20
+	V4-12:1.20
+	V4-11:1.20
+	V4-10:1.20
+	V3-43:1.20
+	M4-00:1.20
+	V3-41:1.20
+	V3-40-PlusGM57:1.20.0.2
+	V2-24-NRT-04:1.20
+	V3-33:1.20
+	V2-24:1.20
+	V3-31:1.20
+	V3-30-NRT-05:1.20
+	cfm-01-00:1.20
+	V3-30:1.20
+	V3-20:1.20
+	V3-10:1.20
+	V2-23-NRT-02:1.20
+	V2-23:1.20
+	V2-22-NRT-01:1.20
+	V2-22:1.20
+	V2-21:1.20
+	V2-20:1.20
+	V2-11:1.20
+	V2-10:1.20
+	V2-00:1.20
+	V1-51:1.18
+	V1-50:1.18
+	V1-45:1.18
+	V1-44:1.18
+	V1-43:1.18
+	V1-42:1.15
+	V1-41:1.15
+	V1-32:1.14
+	V1-40:1.15
+	V1-31:1.14
+	V1-30:1.13
+	V1-13:1.11
+	V1-12:1.11
+	V1-11:1.11
+	V1-10:1.11
+	newfwm-feb03:1.11.0.2
+	V1-04:1.10
+	V1-03:1.10
+	V1-02:1.10
+	V1-00:1.8
+	newfwm-sep01:1.2.0.2
+	V0-7:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.20
+date	2006.02.28.17.56.56;	author cvuu;	state Exp;
+branches;
+next	1.19;
+
+1.19
+date	2005.06.23.19.07.39;	author pwagner;	state Exp;
+branches;
+next	1.18;
+
+1.18
+date	2004.05.12.21.49.25;	author pwagner;	state Exp;
+branches;
+next	1.17;
+
+1.17
+date	2004.05.06.17.38.16;	author cvuu;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2004.05.04.15.33.15;	author cvuu;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2004.01.07.21.57.36;	author cvuu;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2003.10.29.00.07.17;	author pwagner;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2003.09.15.18.30.48;	author cvuu;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2003.03.22.02.45.34;	author jdone;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2002.08.22.23.33.32;	author pwagner;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2002.04.30.20.27.36;	author jdone;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2002.04.26.17.41.56;	author jdone;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2002.04.03.21.42.01;	author pwagner;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2002.04.01.22.14.14;	author jdone;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2002.04.01.21.57.58;	author jdone;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2002.02.20.21.25.23;	author ybj;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.12.13.20.50.19;	author nakamura;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2001.11.26.19.26.31;	author nakamura;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.07.19.14.02.38;	author nakamura;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.07.18.15.58.17;	author nakamura;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.20
+log
+@V2.00 commit
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!==========================================
+PROGRAM MLSL3D ! MLS Level 3 Daily software
+!==========================================
+
+  USE Allocate_Deallocate, ONLY: DEALLOCATE_TEST
+!  USE H5LIB, ONLY: h5open_f, h5close_f
+  use MLSHDF5, only: mls_h5open, mls_h5close
+  USE L2GPData, ONLY: L2GPData_T, DestroyL2GPDatabase
+  USE L2Interface, ONLY: ReadL2GPProd, ReadL2GPAttribute
+  USE L3CF, ONLY: L3CFDef_T, L3CFProd_T  
+  USE L3DMData, ONLY: L3DMData_T, DestroyL3DMDatabase
+  USE L3SPData, ONLY: L3SPData_T, DestroyL3SPDatabase
+  USE MLSCF, ONLY: Mlscf_T 
+  USE MLSCommon, ONLY: r8
+  USE MLSFiles, ONLY: HDFVERSION_5, HDFVERSION_4
+  USE MLSL3Common, ONLY: DATE_LEN, maxWindow, GridNameLen, maxMisDays
+  USE MLSMessageModule, ONLY: MLSMSG_Info, MLSMSG_Warning, MLSMessage, & 
+       & MLSMessageExit, MLSMSG_Error
+  USE OpenInit, ONLY: PCFData_T, OpenAndInitialize
+  USE output_m, only: output
+  USE OutputClose, ONLY: OutputFlags_T, OutputProd, OutputAndClose
+  USE PCFHdr, ONLY: GlobalAttributes
+  USE Synoptic, ONLY: DailyCoreProcessing
+
+  IMPLICIT NONE
+  
+!---------------------------- RCS Ident Info ------------------------------
+  character (len=*), parameter :: ModuleName= &
+       "$RCSfile: MLSL3D.f90,v $"
+  character (len=*), parameter :: IdParm = &
+       "$Id: MLSL3D.f90,v 1.19 2005/06/23 19:07:39 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+!---------------------------------------------------------------------------
+  
+  ! Brief description of program
+  ! This is the MLS Level 3 Daily program.
+  
+  ! Parameters
+  
+  ! Functions
+  
+  ! Variables
+  
+  TYPE( Mlscf_T ) :: cf
+  TYPE( L3CFDef_T ) :: cfDef
+  TYPE( OutputFlags_T ) :: flags
+  TYPE( PCFData_T ) :: pcf
+  TYPE( L2GPData_T ), POINTER :: l2gp(:), l3r(:), residA(:), residD(:)
+  TYPE( L3CFProd_T ), POINTER :: cfProd(:)
+  TYPE( L3DMData_T ), POINTER :: l3dm(:), dmA(:), dmD(:)
+  TYPE( L3SPData_T ), POINTER :: l3sp(:)
+  
+  CHARACTER (LEN=480) :: msr
+  !CHARACTER (LEN=DATE_LEN) :: mis_Days(maxMisDays)
+  INTEGER :: mis_Days(maxMisDays)
+  CHARACTER (LEN=1), POINTER :: anText(:) => NULL()
+  
+  REAL(r8), POINTER :: avgPer(:) => NULL()
+  
+  INTEGER :: i=0, l2Days, mis_l2Days, hdfVersion, error
+  
+  INTEGER, PARAMETER :: NORMAL_EXIT_STATUS = 2
+
+  INTEGER :: details = 1
+
+  LOGICAL :: columnsOnly = .false.
+
+! Executable code
+
+  CALL mls_h5open(error)
+
+  CALL MLSMessage (MLSMSG_Info, ModuleName, & 
+       & 'EOS MLS Level 3 data processing started')
+ 
+  if (error /= 0) then
+     call MLSMessage ( MLSMSG_Error, moduleName, "Unable to h5_open_f" )
+  endif
+ 
+  ! Fill structures with input data from the PCF and L3CF.
+
+  CALL OpenAndInitialize(pcf, cf, cfProd, cfDef, anText, avgPer)
+ 
+  ! Determine the necessary version for HDF output
+  
+  if (cfDef%hdfOutputVersionString .EQ. 'hdfeos5' ) then 
+     
+     hdfVersion = HDFVERSION_5
+     
+  else 
+     
+     hdfVersion = HDFVERSION_4
+     
+  endif
+  
+  ! For each product in the DailyMap section of the cf,
+ 
+  DO i = 1, SIZE(cfProd)
+   
+     ! Read all the l2gp data which exist in the input window for that product
+
+     CALL ReadL2GPProd(cfProd(i)%l3prodNameD, cfProd(i)%fileTemplate, &
+          & pcf%l2StartDay, pcf%l2EndDay, l2Days, mis_l2Days, mis_Days, l2gp)
+    
+     ! If no data , go on to the next product
+
+     IF (l2Days < cfDef%minDays ) THEN
+        msr = 'Insufficient data found for ' & 
+             & // TRIM(cfProd(i)%l3prodNameD) // &
+             & '.  Skipping CORE processing and moving on to the next product.'
+        CALL MLSMessage (MLSMSG_Warning, ModuleName, msr)
+        CYCLE
+     ELSE
+        msr = 'Input data successfully read for ' //  &
+             & trim(cfProd(i)%l3prodNameD) // '; CORE processing started ...'
+        CALL MLSMessage (MLSMSG_Info, ModuleName, msr)
+     ENDIF
+     
+     ! CORE processing
+
+     CALL DailyCoreProcessing(cfDef, cfProd(i), pcf, l2Days, l2gp, avgPer, & 
+          & l3sp, l3dm, dmA, dmD, l3r, residA, residD, & 
+          & flags)
+
+     ! Check the output data and place them into the appropriate files. 
+     ! Write the l3dm metadata.  
+     ! Perform any deallocations needed within the product loop.
+
+     msr = 'CORE processing completed for ' // TRIM(cfProd(i)%l3prodNameD) &
+          & // '; starting Output task ...'
+     CALL MLSMessage (MLSMSG_Info, ModuleName, msr)
+     
+     CALL OutputProd(pcf, cfProd(i), anText, l3sp, l3dm, dmA, dmD, l3r, & 
+          & residA, residD, flags, hdfVersion)
+  ENDDO
+
+  ! Deallocate global attribute memory 
+
+  CALL Deallocate_test(GlobalAttributes%OrbNumDays, &
+	& 'GlobalAttributes%OrbNumDays', ModuleName)   
+  CALL Deallocate_test(GlobalAttributes%OrbPeriodDays, &
+	& 'GlobalAttributes%OrbPeriodDays', ModuleName)   
+
+  msr = 'Product loop processing completed; beginning Output/Close task ... '
+  CALL MLSMessage (MLSMSG_Info, ModuleName, msr)
+  
+  ! Perform final Output & Close tasks outside of the product processing loop.
+  
+  CALL OutputAndClose(cf, pcf, cfProd, avgPer, anText)
+  
+  ! Deallocate memory and close
+
+  CALL MLSMessage (MLSMSG_Info, ModuleName, & 
+       & 'EOS MLS Level 3 data processing successfully completed!')
+  
+  call mls_h5close(error)
+  if (error /= 0) then
+     call MLSMessage ( MLSMSG_Error, moduleName, "Unable to h5_close_f" )
+  endif
+ 
+  call MLSMessageExit(NORMAL_EXIT_STATUS)
+  
+!=================
+END PROGRAM MLSL3D
+!=================
+
+! $Log: MLSL3D.f90,v $
+! Revision 1.19  2005/06/23 19:07:39  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 1.18  2004/05/12 21:49:25  pwagner
+! Uses mls_h5open/close
+!
+! Revision 1.17  2004/05/06 17:38:16  cvuu
+! uncomment the use h5lib
+!
+! Revision 1.16  2004/05/04 15:33:15  cvuu
+! v1.4.3: Use int array for Date in Data Field
+!
+! Revision 1.15  2004/01/07 21:57:36  cvuu
+! version 1.4 commit
+!
+! Revision 1.14  2003/10/29 00:07:17  pwagner
+! GlobalAttributes%ProcessLevel assigned appropriate value
+!
+! Revision 1.13  2003/09/15 18:30:48  cvuu
+! Read OrbitNumber and OrbitPeriod from L2GP files
+!
+! Revision 1.12  2003/03/22 02:45:34  jdone
+! added HDFEOS2/HDFEOS5 functionality; HDFEOS2 is default
+!
+! Revision 1.11  2002/08/22 23:33:32  pwagner
+! Made ready for hdf5
+!
+@
+
+
+1.19
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d40 1
+a40 1
+       "$RCSfile: MLSL2.f90,v $"
+d42 1
+a42 1
+       "$Id: MLSL2.f90,v 2.138 2005/06/22 18:57:02 pwagner Exp $"
+d91 1
+a91 1
+  
+d107 1
+a107 1
+  
+d114 1
+a114 1
+     
+d178 3
+@
+
+
+1.18
+log
+@Uses mls_h5open/close
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d38 7
+a44 5
+  !------------------- RCS Ident Info -----------------------
+  CHARACTER(LEN=130) :: Id = &                                                 
+       "$Id: MLSL3D.f90,v 1.17 2004/05/06 17:38:16 cvuu Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName="$RCSfile: MLSL3D.f90,v $"
+  !----------------------------------------------------------
+d178 3
+@
+
+
+1.17
+log
+@uncomment the use h5lib
+@
+text
+@d9 2
+a10 1
+  USE H5LIB, ONLY: h5open_f, h5close_f
+d32 1
+a32 1
+       "$Id: MLSL3D.f90,v 1.16 2004/05/04 15:33:15 cvuu Exp $"
+d71 1
+a71 1
+  CALL h5open_f(error)
+d156 1
+a156 1
+  call h5close_f(error)
+d168 3
+@
+
+
+1.16
+log
+@v1.4.3: Use int array for Date in Data Field
+@
+text
+@d9 1
+a9 1
+  !USE H5LIB, ONLY: h5open_f, h5close_f
+d31 1
+a31 1
+       "$Id: MLSL3D.f90,v 1.15 2004/01/07 21:57:36 cvuu Exp $"
+d167 3
+@
+
+
+1.15
+log
+@version 1.4 commit
+@
+text
+@d9 1
+d31 1
+a31 1
+       "$Id: MLSL3D.f90,v 1.14 2003/10/29 00:07:17 pwagner Exp $"
+d54 2
+a55 1
+  CHARACTER (LEN=DATE_LEN) :: mis_Days(maxMisDays)
+d64 6
+a78 2
+  GlobalAttributes%ProcessLevel = '3-daily'
+
+a131 2
+     CALL DestroyL2GPDatabase(l2gp)
+
+a161 3
+  ! Detailed description of program
+  ! The program is a prototype for the MLS Level 3 Daily software.
+
+d167 3
+@
+
+
+1.14
+log
+@GlobalAttributes%ProcessLevel assigned appropriate value
+@
+text
+@d17 1
+a17 1
+  USE MLSL3Common, ONLY: DATE_LEN, maxWindow
+d19 1
+a19 1
+       & MLSMessageExit
+d21 1
+d30 1
+a30 1
+       "$Id: MLSL3D.f90,v 1.13 2003/09/15 18:30:48 cvuu Exp $"
+d53 1
+a53 1
+  CHARACTER (LEN=DATE_LEN) :: mis_Days(maxWindow)
+d58 1
+a58 1
+  INTEGER :: i, l2Days, mis_l2Days, hdfVersion
+d62 2
+d66 7
+a72 2
+  
+   GlobalAttributes%ProcessLevel = '3-daily'
+d92 2
+a93 2
+    
+     ! Read l2gp attributes
+a94 5
+     CALL ReadL2GPAttribute (pcf%l3StartDay, pcf%l3EndDay, &
+        & cfProd(i)%fileTemplate)
+ 
+     ! Read all the l2gp data which exist in the input window for that product
+     
+d108 1
+a108 1
+             & TRIM(cfProd(i)%l3prodNameD) // '; CORE processing started ...'
+d126 2
+d130 3
+a132 2
+     
+     ! Deallocate memory 
+d134 1
+a134 1
+     CALL Deallocate_test(GlobalAttributes%OrbNumDays, &
+d136 1
+a136 1
+     CALL Deallocate_test(GlobalAttributes%OrbPeriodDays, &
+a138 13
+     ! Deallocate the databases passed between CORE & the I/O shell
+     
+     CALL DestroyL2GPDatabase(l3r)
+     CALL DestroyL2GPDatabase(residA)
+     CALL DestroyL2GPDatabase(residD)
+     CALL DestroyL3DMDatabase(l3dm)
+     CALL DestroyL3DMDatabase(dmA)
+     CALL DestroyL3DMDatabase(dmD)
+     CALL DestroyL3SPDatabase(l3sp)
+     CALL DestroyL2GPDatabase(l2gp)
+
+  ENDDO
+
+d151 6
+a156 1
+  CALL MLSMessageExit(NORMAL_EXIT_STATUS)
+d166 3
+@
+
+
+1.13
+log
+@Read OrbitNumber and OrbitPeriod from L2GP files
+@
+text
+@d1 1
+a1 2
+
+! Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
+d29 1
+a29 1
+       "$Id: MLSL3D.f90,v 1.12 2003/03/22 02:45:34 jdone Exp $"
+d64 1
+d168 3
+@
+
+
+1.12
+log
+@added HDFEOS2/HDFEOS5 functionality; HDFEOS2 is default
+@
+text
+@d8 2
+a9 1
+  
+d11 1
+a11 1
+  USE L2Interface, ONLY: ReadL2GPProd
+d23 1
+d25 1
+a25 1
+  
+d30 1
+a30 1
+       "$Id: MLSL3D.f90,v 1.11 2002/08/22 23:33:32 pwagner Exp $"
+d61 1
+a61 1
+  
+d68 1
+a68 1
+  
+d84 6
+a89 1
+     
+d126 7
+d168 3
+@
+
+
+1.11
+log
+@Made ready for hdf5
+@
+text
+@d8 140
+a147 129
+
+   USE L2GPData, ONLY: L2GPData_T, DestroyL2GPDatabase
+   USE L2Interface
+   USE L3CF
+   USE L3DMData
+   USE L3SPData
+   USE MLSCF
+   USE MLSL3Common
+   USE MLSMessageModule
+   USE OpenInit
+   USE OutputClose
+   USE Synoptic
+
+   IMPLICIT NONE
+
+!------------------- RCS Ident Info -----------------------
+   CHARACTER(LEN=130) :: Id = &                                                    
+   "$Id: MLSL3D.f90,v 1.10 2002/04/30 20:27:36 jdone Exp $"
+   CHARACTER (LEN=*), PARAMETER :: ModuleName="$RCSfile: MLSL3D.f90,v $"
+!----------------------------------------------------------
+
+! Brief description of program
+! This is the MLS Level 3 Daily program.
+
+! Parameters
+
+! Functions
+
+! Variables
+
+   TYPE( Mlscf_T ) :: cf
+   TYPE( L3CFDef_T ) :: cfDef
+   TYPE( OutputFlags_T ) :: flags
+   TYPE( PCFData_T ) :: pcf
+   TYPE( L2GPData_T ), POINTER :: l2gp(:), l3r(:), residA(:), residD(:)
+   TYPE( L3CFProd_T ), POINTER :: cfProd(:)
+   TYPE( L3DMData_T ), POINTER :: l3dm(:), dmA(:), dmD(:)
+   TYPE( L3SPData_T ), POINTER :: l3sp(:)
+
+   CHARACTER (LEN=480) :: msr
+   CHARACTER (LEN=1), POINTER :: anText(:)
+   CHARACTER (LEN=DATE_LEN) :: mis_Days(maxWindow)
+
+   INTEGER :: i, l2Days, error
+   INTEGER :: mis_l2Days
+
+   REAL(r8), POINTER :: avgPer(:)
+   integer, parameter :: NORMAL_EXIT_STATUS = 2
+
+   call h5open_f(error)                              
+   if (error /= 0) then                              
+       call MLSMessage ( MLSMSG_Error, moduleName, & 
+         & "Unable to h5_open_f" )                   
+   endif                                             
+   CALL MLSMessage (MLSMSG_Info, ModuleName, 'EOS MLS Level 3 data processing started')
+
+! Fill structures with input data from the PCF and L3CF.
+
+   CALL OpenAndInitialize(pcf, cf, cfProd, cfDef, anText, avgPer)
+
+! For each product in the DailyMap section of the cf,
+
+   DO i = 1, SIZE(cfProd)
+ 
+! Read all the l2gp data which exist in the input window for that product
+
+      CALL ReadL2GPProd(cfProd(i)%l3prodNameD, cfProd(i)%fileTemplate, &
+                        pcf%l2StartDay, pcf%l2EndDay, l2Days, mis_l2Days, mis_Days, l2gp)
+
+! If no data , go on to the next product
+
+      IF (l2Days < cfDef%minDays ) THEN
+         msr = 'Insufficient data found for ' // TRIM(cfProd(i)%l3prodNameD) // &
+               '.  Skipping CORE processing and moving on to the next product.'
+         CALL MLSMessage (MLSMSG_Warning, ModuleName, msr)
+         CYCLE
+      ELSE
+         msr = 'Input data successfully read for ' //  &
+                TRIM(cfProd(i)%l3prodNameD) // '; CORE processing started ...'
+         CALL MLSMessage (MLSMSG_Info, ModuleName, msr)
+      ENDIF
+
+! CORE processing
+
+      CALL DailyCoreProcessing(cfDef, cfProd(i), pcf, l2Days, l2gp, avgPer, l3sp, &
+                               l3dm, dmA, dmD, l3r, residA, residD, mis_l2Days, mis_Days, flags)
+
+! Check the output data and place them into the appropriate files.  Write the
+! l3dm metadata.  Perform any deallocations needed within the product loop.
+
+      msr = 'CORE processing completed for ' // TRIM(cfProd(i)%l3prodNameD) &
+            // '; starting Output task ...'
+      CALL MLSMessage (MLSMSG_Info, ModuleName, msr)
+
+      CALL OutputProd(pcf, cfProd(i), anText, l3sp, l3dm, dmA, dmD, l3r, residA, residD, flags)
+
+! Deallocate the databases passed between CORE & the I/O shell
+
+      CALL DestroyL2GPDatabase(l3r)
+      CALL DestroyL2GPDatabase(residA)
+      CALL DestroyL2GPDatabase(residD)
+      CALL DestroyL3DMDatabase(l3dm)
+      CALL DestroyL3DMDatabase(dmA)
+      CALL DestroyL3DMDatabase(dmD)
+      CALL DestroyL3SPDatabase(l3sp)
+      CALL DestroyL2GPDatabase(l2gp)
+
+
+   ENDDO
+
+   msr = 'Product loop processing completed; beginning Output/Close task ... '
+   CALL MLSMessage (MLSMSG_Info, ModuleName, msr)
+
+! Perform final Output & Close tasks outside of the product processing loop.
+
+
+   CALL OutputAndClose(cf, pcf, cfProd, avgPer, anText)
+
+   CALL MLSMessage (MLSMSG_Info, ModuleName, 'EOS MLS Level 3 data processing successfully completed!')
+   call h5close_f(error)                            
+   if (error /= 0) then                             
+     call MLSMessage ( MLSMSG_Error, moduleName, &  
+      & "Unable to h5_close_f" )                    
+   endif                                            
+   call MLSMessageExit(NORMAL_EXIT_STATUS)
+
+
+! Detailed description of program
+! The program is a prototype for the MLS Level 3 Daily software.
+d154 3
+@
+
+
+1.10
+log
+@changed .le. to <
+@
+text
+@d25 1
+a25 1
+   "$Id: MLSL3D.f90,v 1.9 2002/04/26 17:41:56 jdone Exp $"
+d51 1
+a51 1
+   INTEGER :: i, l2Days
+d57 5
+d127 5
+d142 1
+a142 2
+! $Log $
+!
+@
+
+
+1.9
+log
+@changed lt to le
+@
+text
+@d25 1
+a25 1
+   "$Id: MLSL3D.f90,v 1.8 2002/04/03 21:42:01 pwagner Exp $"
+d74 1
+a74 1
+      IF (l2Days .le. cfDef%minDays ) THEN
+a96 1
+
+a97 1
+
+@
+
+
+1.8
+log
+@Sets status on normal exit to 2
+@
+text
+@d25 1
+a25 1
+   "$Id: MLSL3D.f90,v 1.7 2002/04/01 22:14:14 jdone Exp $"
+d51 2
+a52 1
+   INTEGER :: i, l2Days, mis_l2Days
+d74 1
+a74 1
+      IF (l2Days < cfDef%minDays ) THEN
+@
+
+
+1.7
+log
+@remove more debug print statements
+@
+text
+@d25 1
+a25 1
+   "$Id: MLSL3D.f90,v 1.5 2002/02/20 21:25:23 ybj Exp $"
+d54 1
+d123 1
+@
+
+
+1.6
+log
+@remove debug print statements
+@
+text
+@d55 1
+a55 2
+   CALL MLSMessage (MLSMSG_Info, ModuleName, 'EOS MLS Level 3 data processing &
+                                             &started')
+d84 1
+a84 1
+ 
+a103 1
+
+a106 1
+
+a107 1
+
+d121 1
+a121 2
+   CALL MLSMessage (MLSMSG_Info, ModuleName, 'EOS MLS Level 3 data processing &
+                                                     &successfully completed!')
+@
+
+
+1.5
+log
+@*** empty log message ***
+@
+text
+@d25 1
+a25 1
+   "$Id: MLSL3D.f90,v 1.4 2001/12/13 20:50:19 nakamura Exp $"
+d96 3
+a98 2
+      CALL OutputProd(pcf, cfProd(i), anText, l3sp, l3dm, dmA, dmD, &
+                      l3r, residA, residD, flags)
+d114 1
+d122 1
+d127 1
+@
+
+
+1.4
+log
+@Removed references to L3DMDiag.
+@
+text
+@d25 1
+a25 1
+   "$Id: MLSL3D.f90,v 1.3 2001/11/26 19:26:31 nakamura Exp $"
+d49 1
+d51 1
+a51 1
+   INTEGER :: i, l2Days
+d69 1
+a69 1
+                        pcf%l2StartDay, pcf%l2EndDay, l2Days, l2gp)
+d87 1
+a87 1
+                               l3dm, dmA, dmD, l3r, residA, residD, flags)
+@
+
+
+1.3
+log
+@Added the L3DMDiag databases.
+@
+text
+@a12 1
+   USE L3DMDiag
+d25 1
+a25 1
+   "$Id: MLSL3D.f90,v 1.2 2001/07/19 14:02:38 nakamura Exp $"
+a44 1
+   TYPE( L3DMDiag_T ), POINTER :: l3dg(:), dgA(:), dgD(:)
+d86 1
+a86 1
+                     l3dm, dmA, dmD, l3r, residA, residD, l3dg, dgA, dgD, flags)
+d95 2
+a96 2
+      CALL OutputProd(pcf, cfProd(i), anText, l3sp, l3dm, dmA, dmD, l3r, residA, &
+                      residD, l3dg, dgA, dgD, flags)
+a98 4
+
+      CALL DestroyL3DMDiagDB(l3dg)
+      CALL DestroyL3DMDiagDB(dgA)
+      CALL DestroyL3DMDiagDB(dgD)
+@
+
+
+1.2
+log
+@Replaced sandbox setup with Synoptic.
+@
+text
+@d13 1
+d26 1
+a26 1
+   "$Id: MLSL3D.f90,v 1.1 2001/07/18 15:58:17 nakamura Exp $"
+d46 1
+d87 2
+a88 2
+      CALL DailyCoreProcessing(cfProd(i), pcf, l2Days, l2gp, avgPer, l3sp, &
+                              l3dm, dmA, dmD, l3r, residA, residD, flags)
+d98 1
+a98 1
+                      residD, flags)
+d101 4
+@
+
+
+1.1
+log
+@MLS Level 3 Daily program.
+@
+text
+@d19 1
+a19 2
+!  USE Synoptic
+   USE DailyCoreModule
+d25 1
+a25 1
+   "$Id: MLSL3.f90,v 1.15 2001/05/09 15:17:31 nakamura Exp nakamura $"
+a66 1
+!     CALL ReadL2GPProd(cfProd(i), pcf%l2StartDay, pcf%l2EndDay, l2Days, l2gp)
+d85 1
+a85 1
+      CALL DailyMapProcessing(cfProd(i), pcf, l2Days, l2gp, avgPer, l3sp, &
+@
+

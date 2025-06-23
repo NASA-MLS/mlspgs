@@ -1,0 +1,367 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.12
+	cfm-single-freq-0-1:1.1.0.10
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.8
+	mus-emls-1-70:1.1.0.6
+	rel-1-0-englocks-work:1.1.0.4
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.2
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2014.01.14.00.14.59;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit of new module for new LR
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Flatten_m
+
+  ! Flatten the abstract syntax tree for a grammar to the data structures
+  ! used to analyze the grammar.
+
+  implicit NONE
+  private
+
+  public :: Flatten
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: parser.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains ! ====     Procedures     =====================================
+
+  subroutine Flatten ( Root, Strings, Error )
+
+    use Declaration_Table, only: Decls, Get_Decl, Nonterminal
+    use Declare_Vocabulary_m, only: EOG, Goal, SOG, Total
+    use Lexer_Core, only: Print_Source
+    use Output_m, only: Output
+    use String_Table, only: Display_String, How_Many_Strings
+    use Tables, only: Actions, First_Nonterminal, First_Production, &
+      & First_Terminal, Last_Nonterminal, NUMPRD, Productions, Prod_Ind, &
+      & Vocab_Names
+    use Toggles, only: Switches
+    use Tree, only: Node_Id, NSons, Source_Ref, Subtree, Sub_Rosa
+    use Tree_Types, only: N_Equal, N_Generates, N_Production, N_Question, N_Rhs
+
+    integer, intent(in) :: Root       ! Of the abstract syntax tree
+    integer, intent(in) :: Strings(:) ! Sorted order of strings
+    logical, intent(inout) :: Error   ! There was more than one goal symbol
+
+    integer :: Act              ! Tree index of action node
+    integer :: Curlhs           ! String index of current LHS
+    integer :: Curprd           ! Last used element of Production array
+    type(decls) :: Decl         ! To get tree index for error message
+    integer :: GSON             ! Son of Son
+    integer :: I, J             ! Loop indices
+    logical :: OK(first_terminal:last_nonterminal) ! "Connected to goal" or "Grounded"
+    integer :: Left(first_terminal:last_nonterminal) ! Last production in which
+                                ! symbol appears as LHS, else zero if none
+    integer, allocatable :: P(:) ! Inverse of Strings permutation
+    integer :: Prdind           ! Index of production being processed
+    logical :: Right(first_terminal:last_nonterminal) ! "Symbol appears in RHS"
+    integer :: Son              ! of Root
+    integer :: Symbol           ! String index of something
+
+    allocate ( actions(numprd) )
+    allocate ( first_production(first_terminal:last_nonterminal) )
+    allocate ( productions(total+1) )
+    allocate ( prod_ind(numprd+1) )
+    allocate ( vocab_names(first_terminal:first_nonterminal-1) )
+
+    ! Invert the Strings permutation so that a string index can be mapped
+    ! to its sorted position.
+    allocate ( p(how_many_strings()) )
+    p = 0
+    p(strings) = [ ( i, i = 1, size(strings) ) ]
+
+    ! Fill the tables
+    actions = 0
+    first_production = 0
+    first_production(p(goal)) = 1
+    productions(1:4) = [ p(goal), p(sog), 0, p(eog) ]
+    productions(total+1) = -1 ! Sentinel, not equal to any nonterminal, to
+                              ! stop scan in, e.g., Connected
+    curprd = 4
+    prod_ind(1:2) = [ 1, 5 ]
+    prdind = 1
+
+    left = 0
+    right = .false.
+
+    do i = lbound(vocab_names,1), ubound(vocab_names,1)
+      vocab_names(i) = -i
+    end do
+
+    ! Flatten out the abstract syntax tree to the Productions array
+    do i = 1, nsons(root)
+      son = subtree(i,root)
+      select case ( node_id(son) )
+      case ( n_equal )
+        symbol = p(sub_rosa(subtree(1,son)))
+        if ( symbol >= first_nonterminal ) then
+        else
+          vocab_names(p(sub_rosa(subtree(1,son)))) = sub_rosa(subtree(2,son))
+        end if
+      case ( n_production )
+        curlhs = sub_rosa(subtree(1,son))
+        left(p(curlhs)) = prdind + 1
+        first_production(p(curlhs)) = prdind + 1
+        do j = 2, nsons(son)
+          gson = subtree(j,son)
+          select case ( node_id(gson) )
+          case ( n_rhs )
+            call flatten_rhs ( gson )
+          case ( n_generates )
+            call flatten_rhs ( subtree(1,gson) )
+            act = subtree(2,gson)
+            if ( node_id(act) == n_question ) then
+              actions(prdind) = -sub_rosa(subtree(1,act))
+            else
+              actions(prdind) = sub_rosa(act)
+            end if
+          end select
+        end do
+      end select
+    end do
+
+    if ( index(switches,'dprod') /= 0 ) call dump_productions
+
+    ! Find a symbol that appears only as LHS and plug it into the root
+    ! production.  If none is found, use the LHS of the first input
+    ! production.
+    call Find_Goal
+
+    ! Determine whether all symbols are connected to the goal.
+    OK(first_terminal:first_nonterminal-1) = .true.
+    OK(first_nonterminal:last_nonterminal) = .false.
+    OK(p(goal)) = .true.        ! '<GOAL>'
+    OK(productions(3)) = .true. ! The goal symbol of the grammar
+
+    call Connected ( productions(3), OK ) ! Start with the goal symbol
+    do i = first_nonterminal, last_nonterminal
+      if ( .not. OK(i) ) then
+        decl = get_decl ( strings(i), nonterminal )
+        call print_source ( source_ref(decl%tree), before='Error: at ' )
+        call output ( left(i), before=', in production ' )
+        call display_string ( strings(i), before=', "' )
+        call output ( '" is not connected to the goal symbol.', advance='yes' )
+        error = .true.
+      end if
+    end do
+
+    ! Determine whether all nonterminals are grounded, i.e., they all
+    ! generate at least one terminal symbol.
+    call Grounded ( OK )
+    do i = first_nonterminal, last_nonterminal
+      if ( .not. OK(i) ) then
+        decl = get_decl ( strings(i), nonterminal )
+        call print_source ( source_ref(decl%tree), before='Error: at ' )
+        call output ( left(i), before=', in production ' )
+        call display_string ( strings(i), before=', "' )
+        call output ( '" is not grounded.', advance='yes' )
+        error = .true.
+      end if
+    end do
+
+contains
+
+    recursive subroutine Connected ( Symbol, IsConnected )
+      integer, intent(in) :: Symbol
+      logical, intent(inout) :: IsConnected(first_terminal:last_nonterminal)
+      integer :: I, J ! Loop index
+      integer :: Next ! Next symbol to work on
+      i = first_production(symbol)
+      if ( i /= 0 ) then ! Symbol appears on LHS
+        do while ( productions(prod_ind(i)) == symbol )
+          do j = prod_ind(i)+1, prod_ind(i+1) - 1 ! Scan the RHS
+            next = productions(j)
+            if ( .not. isConnected(next) ) then
+              isConnected(next) = .true.
+              call connected ( next, isConnected )
+            end if
+          end do
+          i = i + 1
+        end do
+      end if
+    end subroutine Connected
+
+    subroutine Display_Pair ( Before, I, J, After, Advance )
+    ! Display the pair "Before // I:J After"
+      character(*), intent(in) :: Before, After
+      integer, intent(in) :: I, J
+      character(*), intent(in), optional :: Advance
+      call output ( i, before=before )
+      call output ( j, before=':' )
+      call output ( after, advance=advance )
+    end subroutine Display_Pair
+
+    subroutine Dump_Productions
+    ! Dump the productions array
+      use Output_m, only: Blanks, NewLine
+      use String_Table, only: String_Length
+      integer :: I, J
+      call output ( 'The Productions array' )
+      call display_pair ( ' (', 1, size(productions), '):', advance='yes' )
+      do i = 1, size(prod_ind,1)-1
+        call output ( i, 5 )
+        call output ( ': ' )
+        do j = prod_ind(i), prod_ind(i+1) - 1
+          call output ( productions(j), 5 )
+        end do
+        call display_pair ( '    (', prod_ind(i), prod_ind(i+1) - 1, ')', advance='yes' )
+      end do
+      call output ( 'The Prod_Ind array' )
+      call display_pair ( ' (', 1, size(prod_ind), '):', advance='yes' )
+      do i = 1, size(prod_ind,1), 10
+        call output ( i, 5 )
+        call output ( ': ' )
+        do j = i, min(i+9,size(prod_ind,1))
+          call output ( prod_ind(j), 5 )
+        end do
+        call newLine
+      end do
+      call output ( 'The First_Production array' )
+      call display_pair ( ' (', 1, size(first_production), '):', advance='yes' )
+      do i = 1, size(first_production)
+        call display_string ( strings(i) )
+        call output ( ': ' )
+        call blanks ( 5 - mod(string_length(strings(i)),5) )
+        call output ( first_production(i), advance='yes' )
+      end do
+    end subroutine Dump_Productions
+
+    subroutine Find_Goal
+
+    ! Find a symbol that appears only as LHS and use it as the goal symbol.
+      integer :: Goal
+      integer :: I
+
+      goal = 0
+      do i = first_terminal, last_nonterminal
+        if ( left(i) /= 0 .and. .not. right(i) ) then
+          if ( goal /= 0 ) then
+            decl = get_decl ( strings(i), nonterminal )
+            call print_source ( source_ref(decl%tree), before='Error: at ' )
+            call output ( left(i), before=', in production ' )
+            call display_string ( strings(i), before=', "' )
+            call output ( '" is an extra goal symbol.', advance='yes' )
+            error = .true.
+          else
+            goal = i
+          end if
+        end if
+      end do
+      if ( goal == 0 ) goal = productions(prod_ind(2)) ! LHS of first production
+      productions(3) = goal ! Plug it into root production
+
+    end subroutine Find_Goal
+
+    subroutine Flatten_RHS ( Root )
+
+    ! Copy the current LHS, then the symbols in RHS, into Productions array
+      integer, intent(in) :: Root
+      integer :: I        ! Loop index
+      integer :: Symbol   ! String index of son of root
+      curprd = curprd + 1
+      productions(curprd) = p(curlhs)
+      prdind = prdind + 1
+      do i = 1, nsons(root)
+        symbol = sub_rosa(subtree(i,root))
+        right(p(symbol)) = .true.
+        curprd = curprd + 1
+        productions(curprd) = p(symbol)
+      end do
+      prod_ind(prdind+1) = curprd + 1
+
+    end subroutine Flatten_RHS
+
+    subroutine Grounded ( IsGrounded )
+
+    ! Determine whether all nonterminals generate a terminal symbol. If
+    ! any symbol in the RHS of a nonterminal that is the LHS of a
+    ! production is grounded, mark the nonterminal as grounded.  Keep
+    ! doing this until there are no changes.
+
+      logical, intent(out) :: IsGrounded(first_terminal:last_nonterminal)
+      logical :: Change
+      integer :: I, J, Nonterminal
+
+      isGrounded(first_terminal:first_nonterminal-1) = .true.
+      change = .true.
+      do while ( change )
+        change = .false.
+        do i = 1, size(prod_ind)-1
+          nonterminal = productions(prod_ind(i)) ! LHS of production I
+          if ( .not. isGrounded(nonterminal) ) then
+            do j = prod_ind(i)+1, prod_ind(i+1)-1  ! RHS of production I
+              if ( isGrounded(productions(j)) ) then
+                isGrounded(nonterminal) = .true.
+                change = .true.
+              end if
+            end do
+          end if
+        end do
+      end do
+
+    end subroutine Grounded
+
+  end subroutine Flatten
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: parser.f90,v 2.30 2013/12/12 02:01:54 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Flatten_m
+
+! $Log: parser.f90,v $
+@

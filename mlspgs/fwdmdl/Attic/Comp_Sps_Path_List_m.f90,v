@@ -1,0 +1,238 @@
+head	2.2;
+access;
+symbols
+	rel-1-0-englocks-work:2.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+2.2
+date	2018.05.14.23.28.05;	author vsnyder;	state dead;
+branches;
+next	2.1;
+
+2.1
+date	2017.11.16.01.32.54;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.2
+log
+@Change to sparse eta representation
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Comp_Sps_Path_List_m
+
+  use Indexed_Values_m, only: Value_2D_Lists_t, Value_3D_Lists_t
+
+  implicit NONE
+
+  private
+  public :: Comp_Sps_Path_List
+  public :: Comp_Sps_Path_List_Frq, Comp_1_Sps_Path_List_Frq
+  public :: Comp_Sps_Path_List_No_Frq, Comp_1_Sps_Path_List_No_Frq
+
+  interface Comp_Sps_Path_List
+    module procedure Comp_Sps_Path_List_Frq, Comp_1_Sps_Path_List_Frq
+    module procedure Comp_Sps_Path_List_No_Frq, Comp_1_Sps_Path_List_No_Frq
+  end interface
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: Comp_Sps_Path_List_m.f90,v $"
+  private :: not_used_here
+!---------------------------------------------------------------------------
+
+contains
+
+  subroutine Comp_Sps_Path_List_Frq ( Grids_f, Frq, Eta_ZP, Eta_FZP, &
+                                    & Sps_Path, LO, Sideband )
+
+    ! Compute the Sps_Path for species that are frequency dependent.
+    ! This assumes that it has already been computed for species that
+    ! are not frequency dependent.
+
+    use Load_Sps_Data_m, only: Grids_t
+    use MLSKinds, only: RP, R8
+
+    type(grids_t), intent(in) :: Grids_f         ! Quantity values
+    real(r8), intent(in) :: Frq                  ! Frequency at which to compute
+                                                 ! values in Sps_Path.
+    type(value_2d_lists_t), intent(in) :: Eta_ZP(:) ! Interpolate Zeta X H
+                                                 ! to Sps_Path, same size as
+                                                 ! Grids_f%Mol
+    type(value_3d_lists_t), intent(inout) :: Eta_FZP(:) ! Interpolate
+                                                 ! F X Zeta X H to Sps_Path, size
+                                                 ! is number of quantities in
+                                                 ! Grids_f that have more than one
+                                                 ! element in Frq_Basis.
+    real(rp), intent(inout) :: Sps_Path(:,:)     ! Path X Sps -- VMR values.
+    real(r8), intent(in) :: LO                   ! Local oscillator frequency, GHz
+    integer, intent(in) :: Sideband              ! -1, 1, or 0.  Zero means
+                                                 ! quantities' frequency bases
+                                                 ! absolute, not I.F.
+
+    integer :: I
+
+    do i = 1, size(eta_fzp)
+      if ( .not. allocated(eta_fzp(i)%eta) ) cycle ! No frequency dependency for this species
+      call comp_1_sps_path_list_frq ( grids_f, i, Frq, Eta_ZP(i), Eta_FZP(i), &
+                                    & Sps_Path(:,i), LO, Sideband )
+    end do
+
+  end subroutine Comp_Sps_Path_List_Frq
+
+  subroutine Comp_1_Sps_Path_List_Frq ( Grids_f, N, Frq, Eta_ZP, Eta_FZP, &
+                                      & Sps_Path, LO, Sideband )
+
+    ! Compute the Sps_Path for species that are frequency dependent.
+    ! This assumes that it has already been computed for species that
+    ! are not frequency dependent.
+
+    use Get_Eta_List_m, only: Get_Eta_List
+    use Indexed_Values_m, only: Interpolate, Value_1D_List_t
+    use Load_Sps_Data_m, only: Grids_t
+    use MLSKinds, only: RP, R8
+
+    type(grids_t), intent(in) :: grids_f         ! Quantity values
+    integer, intent(in) :: N                     ! Which quantity
+    real(r8), intent(in) :: Frq                  ! Frequency at which to compute
+                                                 ! values in Sps_Path.
+    type(value_2d_lists_t), intent(in) :: Eta_ZP ! Interpolate Zeta X H
+                                                 ! to Sps_Path.
+    type(value_3d_lists_t), intent(inout) :: Eta_FZP ! Interpolate F X Zeta X H
+                                                 ! to Sps_Path.
+    real(rp), intent(inout) :: Sps_Path(:)       ! Path for 1 Sps -- VMR values.
+    real(r8), intent(in) :: LO                   ! Local oscillator frequency, GHz
+    integer, intent(in) :: Sideband              ! -1, 1, or 0.  Zero means
+                                                 ! quantities' frequency bases
+                                                 ! absolute, not I.F.
+
+    type(value_1D_list_t) :: Eta_F(1)
+    integer :: F1, F2
+
+    ! Compute Eta_F for quantity N.  We don't need it for anything else.
+    f1 = grids_f%l_f(n-1)+1
+    f2 = grids_f%l_f(n)
+    select case ( sideband )
+    case ( -1 )
+      call get_eta_list ( lo-grids_f%frq_basis(f2:f1:-1), [ frq ], eta_f, rev=.true. )
+    case ( +1 )
+      call get_eta_list ( lo+grids_f%frq_basis(f1:f2), [ frq ], eta_f )
+    case ( 0 )
+      call get_eta_list ( grids_f%frq_basis(f1:f2), [ frq ], eta_f )
+    end select
+
+    eta_fzp%n = eta_zp%n
+    call get_eta_list ( eta_f(1), eta_zp%eta(:eta_zp%n), &
+                      & eta_fzp%eta(:eta_fzp%n) )
+
+    ! Now that we have Eta_FZP, we can finally interpolate.
+    call interpolate ( grids_f%c(n)%v4(:,:,:,1), eta_fzp, sps_path )
+    if ( grids_f%lin_log(n) ) sps_path = exp(sps_path)
+
+  end subroutine Comp_1_Sps_Path_List_Frq
+
+  subroutine Comp_Sps_Path_List_No_Frq ( Grids_f, Eta_ZP, Eta_FZP, Sps_Path )
+
+    ! Compute the Sps_Path for species that are not frequency dependent.
+    ! Compute the indices between Eta_ZP and Eta_FZP for frequency-dependent
+    ! quantities.
+
+    use Load_Sps_Data_m, only: Grids_t
+    use Indexed_Values_m, only: Interpolate
+    use MLSKinds, only: RP
+
+    type(grids_t), intent(in) :: Grids_f         ! Quantity values
+    type(value_2d_lists_t), intent(inout) :: Eta_ZP(:) ! Interpolate Zeta X H
+                                                 ! to Sps_Path, same size as
+                                                 ! Grids_f%Mol.
+    type(value_3d_lists_t), intent(inout) :: Eta_FZP(:) ! Interpolate F X Zeta X H
+                                                 ! to Sps_Path, size is the
+                                                 ! number of quantities in
+                                                 ! Grids_f that have more than
+                                                 ! one element in Frq_Basis.
+    real(rp), intent(inout) :: Sps_Path(:,:)     ! Path X Sps -- VMR values.
+
+    integer :: I
+
+    do i = 1, size(eta_zp)
+      if ( .not. allocated(eta_fzp(i)%eta) ) & ! Not frequency dependent
+        & call interpolate ( grids_f%c(i)%v4(1,:,:,1), eta_zp(i), sps_path(:,i) )
+      if ( grids_f%lin_log(i) ) sps_path(:,i) = exp(sps_path(:,i))
+    end do
+
+  end subroutine Comp_Sps_Path_List_No_Frq
+
+  subroutine Comp_1_Sps_Path_List_No_Frq ( Grids_f, N, Eta_ZP, Sps_Path )
+
+    ! Compute the Sps_Path for one species that is not frequency dependent.
+
+    use Indexed_Values_m, only: Interpolate => Interpolate_Polymorphic
+    use Load_Sps_Data_m, only: Grids_t
+    use MLSKinds, only: RP
+
+    type(grids_t), intent(in) :: Grids_f         ! Quantity values
+    integer, intent(in) :: N                     ! Which species
+    type(value_2d_lists_t), intent(inout) :: Eta_ZP ! Interpolate Zeta X H
+                                                 ! to Sps_Path, same size as
+                                                 ! Grids_f%Mol
+    real(rp), intent(inout) :: Sps_Path(:)       ! Path for 1 Sps -- VMR values.
+
+    call interpolate ( grids_f%c(n)%v4(1,:,:,1), eta_zp%eta(:eta_zp%n), sps_path )
+    if ( grids_f%lin_log(n) ) sps_path = exp(sps_path)
+
+  end subroutine Comp_1_Sps_Path_List_No_Frq
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: Comp_Sps_Path_List_m.f90,v 2.1 2017/11/16 01:32:54 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Comp_Sps_Path_List_m
+
+! $Log: Comp_Sps_Path_List_m.f90,v $
+! Revision 2.1  2017/11/16 01:32:54  vsnyder
+! Initial commit, might not be needed for long
+!
+! Revision 2.2  2017/03/11 00:53:05  vsnyder
+! Use Grids_f instead of Qty_Stuff, remove Lists_F_t types
+!
+! Revision 2.1  2017/01/17 19:57:18  vsnyder
+! Initial commit
+!
+@
+
+
+2.1
+log
+@Initial commit, might not be needed for long
+@
+text
+@d178 1
+a178 1
+       "$Id: Comp_Sps_Path_List_m.f90,v 2.2 2017/03/11 00:53:05 vsnyder Exp $"
+d188 3
+@
+

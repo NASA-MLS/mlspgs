@@ -1,0 +1,778 @@
+head	2.10;
+access;
+symbols
+	v5-02-NRT-19:2.10
+	v6-00:2.10
+	v5-02-NRT-18:2.10
+	v5-02:2.10
+	v5-01-NRT-17:2.10
+	v5-01-NRT-16:2.10
+	v5-01-NRT-15:2.10
+	v5-01-NRT-14:2.10
+	neuralnetworks-1-0:2.10.0.16
+	cfm-single-freq-0-1:2.10.0.14
+	v5-01:2.10
+	v5-00:2.10
+	v4-23-TA133:2.10.0.12
+	mus-emls-1-70:2.10.0.10
+	rel-1-0-englocks-work:2.10.0.8
+	VUMLS1-00:2.10
+	VPL1-00:2.10
+	V4-22-NRT-08:2.10
+	whdrel10_merged_to_here:2.10
+	merge_whdrel10_from_here:2.10
+	TAG_TRUNK_AFTER_PW_CHANGES:2.10
+	TAG_TRUNK_BEFORE_PW_CHANGES:2.10
+	VAM1-00:2.10
+	whd-rel-1-0:2.10.0.6
+	V4-21:2.10.0.4
+	V4-13:2.10
+	V4-12:2.10
+	V4-11:2.10
+	V4-10:2.10
+	V3-43:2.10
+	M4-00:2.10
+	V3-41:2.10
+	V3-40-PlusGM57:2.10.0.2
+	V2-24-NRT-04:2.10
+	V3-33:2.10
+	V2-24:2.10
+	V3-31:2.10
+	V3-30-NRT-05:2.10
+	cfm-01-00:2.10
+	V3-30:2.10
+	V3-20:2.10
+	V3-10:2.10
+	V2-23-NRT-02:2.10
+	V2-23:2.10
+	V2-22-NRT-01:2.10
+	V2-22:2.10
+	V2-21:2.10
+	V2-20:2.10
+	V2-11:2.10
+	V2-10:2.10
+	V2-00:2.10
+	V1-51:2.9
+	V1-50:2.9
+	V1-45:2.9
+	V1-44:2.9
+	V1-43:2.7
+	V1-42:2.7
+	V1-41:2.7
+	V1-32:2.7
+	V1-40:2.7
+	V1-31:2.7
+	V1-30:2.7
+	V1-13:2.5
+	V1-12:2.5
+	V1-11:2.5
+	V1-10:2.5
+	newfwm-feb03:2.5.0.2
+	V1-04:2.4
+	V1-03:2.4
+	V1-02:2.4
+	V1-00:2.4
+	newfwm-sep01:2.2.0.2
+	V0-7:2.2
+	V0-5-Level2:2.2
+	V0-5-SIPS:2.2
+	V0_1:1.2;
+locks; strict;
+comment	@# @;
+
+
+2.10
+date	2005.06.23.18.41.36;	author pwagner;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2004.08.12.13.51.50;	author perun;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2004.08.03.16.59.08;	author cvuu;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2003.08.15.14.25.04;	author perun;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2003.07.10.18.54.17;	author perun;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2002.11.07.21.57.11;	author jdone;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2001.12.14.01.43.46;	author livesey;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2001.10.12.22.11.05;	author livesey;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2001.02.01.18.28.04;	author perun;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.02.01.18.20.13;	author perun;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2000.09.05.18.55.14;	author ahanzel;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2000.02.15.18.30.29;	author nakamura;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2000.02.10.16.50.39;	author nakamura;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.10
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!===============================================================================
+MODULE Orbit
+!===============================================================================
+
+  USE MLSCommon
+  USE MLSMessageModule
+  USE OutputL1B_DataTypes, ONLY: LENG, LENT
+  USE SDPToolkit
+  IMPLICIT NONE
+  PUBLIC
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+  INTEGER :: numOrb, orbitNumber(max_orbits)
+  REAL :: scanRate(lenG), scanRateT(lenT)
+  REAL(r8) :: altG, altT, orbIncline, ascTAI(max_orbits), dscTAI(max_orbits), &
+       orbPeriod(max_orbits)
+
+! Contents:
+
+! Subroutines -- Orbit_met
+!                Orbit_init
+
+! Remarks:  This module contains subroutines to get orbit "metadata," and also
+!           initializes values outside the MAF loop on L1BOA processing.
+
+CONTAINS
+
+!----------------------------------------------------------------------
+  SUBROUTINE Orbit_met (startTime, times, ascTAI, descTAI, numOrbits, &
+       orbitNumber)
+!----------------------------------------------------------------------
+
+! Brief description of subroutine
+! This subroutine uses the toolkit getEphMet routine to calculate useful
+! information related to the s/c orbit.
+
+! Arguments
+
+    TYPE( TAI93_Range_T ), INTENT(IN) :: times
+
+    CHARACTER (LEN=27), INTENT(IN) :: startTime
+
+    INTEGER, INTENT(OUT) :: numOrbits
+    INTEGER, INTENT(OUT) :: orbitNumber(max_orbits)
+
+    REAL(r8), INTENT(OUT) :: ascTAI(max_orbits), descTAI(max_orbits)
+
+! Parameters
+
+! Functions
+
+    INTEGER :: Pgs_eph_getEphMet, Pgs_td_timeInterval, Pgs_td_utcToTAI
+
+! Variables
+
+    CHARACTER (LEN=27) :: orbitAscendTime(max_orbits)
+    CHARACTER (LEN=27) :: orbitDescendTime(max_orbits)
+    CHARACTER (LEN=32) :: mnemonic
+    CHARACTER (LEN=480) :: msg, msr
+
+    INTEGER :: alloc_err, dealloc_err, i, num_points, returnStatus, msg_stat
+
+    REAL(r8) :: deltaTAI
+    REAL(r8) :: orbitDownLongitude(max_orbits)
+    REAL(r8), ALLOCATABLE :: offsets(:)
+
+! Find time interval covered by file
+
+    returnStatus = Pgs_td_timeInterval (times%startTime, times%endTime, &
+         deltaTAI)
+
+    num_points = AINT(deltaTAI/60.0)
+    ALLOCATE (offsets(num_points), STAT = alloc_err)
+    IF (alloc_err /= 0) THEN
+       msr = MLSMSG_Allocate // '  offsets.'
+       CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+    DO i = 1, num_points
+       offsets(i) = i * 60.0
+    ENDDO
+
+    orbitNumber = -1   ! mark as none yet
+
+! Get orbit metadata
+
+    returnStatus = Pgs_eph_getEphMet (spacecraftId, num_points, startTime, &
+         offsets, numOrbits, orbitNumber, orbitAscendTime, &
+         orbitDescendTime, orbitDownLongitude)
+
+    IF (returnStatus /= PGS_S_SUCCESS) THEN
+       CALL Pgs_smf_getMsg (msg_stat, mnemonic, msg)
+       msr = 'Routine getEphMet, ' // mnemonic // ':  ' // msg
+       print *, 'msr: ', msr
+       IF (returnStatus == PGSEPH_W_CORRUPT_METADATA .OR. &
+             returnStatus == PGSEPH_W_DBLVALUE_METADATA) THEN
+          CALL MLSMessage (MLSMSG_Warning, ModuleName, msr)
+       ELSE
+          numOrbits = 1
+          print *, 'Warning: setting numorbits to 1!'
+          msr = 'Routine getEphMet' // ': ' // ' Numorbits == 1'
+          CALL MLSMessage (MLSMSG_Warning, ModuleName, msr)
+          DO i = 1, SIZE (orbitNumber)
+             orbitNumber(i) = i - 1
+             ascTAI(i) = 0.0
+             descTAI(i) = 0.0
+          ENDDO
+          !CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
+       ENDIF
+    ENDIF
+
+    DEALLOCATE (offsets, STAT=dealloc_err)
+    IF (dealloc_err /= 0) CALL MLSMessage (MLSMSG_Warning, ModuleName, &
+         'Failed deallocation of offsets.')
+
+! Convert values to forms more useful to software
+    ascTAI = 0.0
+    dscTAI = 0.0
+    orbPeriod = 0.0
+    DO i = 1, numOrbits
+       returnStatus = Pgs_td_utcToTAI (orbitAscendTime(i), ascTAI(i))
+       returnStatus = Pgs_td_utcToTAI (orbitDescendTime(i), descTAI(i))
+       IF (i > 1) THEN
+          orbPeriod(i-1) = ascTAI(i) - ascTAI(i-1)
+          orbPeriod(i) = orbPeriod(i-1)  ! Keep last
+       ENDIF
+    ENDDO
+
+!--------------------------
+  END SUBROUTINE Orbit_met
+!--------------------------
+
+!-----------------------------------------------------------------------------
+   SUBROUTINE Orbit_init (times, UTC_start, altG, altT, ascTAI, dscTAI, &
+                         numOrb, orbIncline, orbitNumber, scanRate, scanRateT)
+!-----------------------------------------------------------------------------
+
+! Brief description of subroutine 
+! This subroutine defines input parameters for the SIDS L1BOA code and also
+! sets up values needed by the production code which won't change while looping
+! through the MAFs.
+
+! Arguments
+
+     TYPE (TAI93_Range_T), INTENT(IN) :: times
+
+     CHARACTER (LEN=27), INTENT(IN) :: UTC_start
+
+     INTEGER, INTENT(OUT) :: numOrb
+     INTEGER, INTENT(OUT) :: orbitNumber(max_orbits)
+
+     REAL, INTENT(OUT) :: scanRate(lenG)
+     REAL, INTENT(OUT) :: scanRateT(lenT)
+
+     REAL(r8), INTENT(OUT) :: altG, altT, orbIncline
+     REAL(r8), INTENT(OUT) :: ascTAI(max_orbits), dscTAI(max_orbits)
+
+! Parameters
+
+! Functions
+
+! Variables
+
+! Input data
+
+     altG = 2500.0
+     altT = 15000.0
+
+     scanRate(1) = 0.0
+     scanRate(2:63) = 0.0279213
+     scanRate(64:120) = 0.0976263
+
+     scanRateT(1:54) = 0.030344496
+     scanRateT(55:114) = 0.058600044
+
+     orbIncline = 98.145
+
+! Get orbit metadata for entire day
+
+     CALL Orbit_met (UTC_start, times, ascTAI, dscTAI, numOrb, orbitNumber)
+
+!---------------------------
+   END SUBROUTINE Orbit_init
+!---------------------------
+
+!===============
+  logical function not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id: $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+END MODULE Orbit
+!===============
+
+! $Log: Orbit.f90,v $
+! Revision 2.9  2004/08/12 13:51:50  perun
+! Version 1.44 commit
+!
+! Revision 2.8  2004/08/03 16:59:08  cvuu
+! Fix the problem of getting OrbitNumbers
+!
+! Revision 2.7  2003/08/15 14:25:04  perun
+! Version 1.2 commit
+!
+! Revision 2.5  2002/11/07 21:57:11  jdone
+! Added Level 1 output datatypes.
+!
+! Revision 2.4  2001/12/14 01:43:46  livesey
+! Working version with ECR based master coordinate
+!
+! Revision 2.3  2001/10/12 22:11:05  livesey
+! Tidied things up a bit, added scVelECR, but not filled yet
+!
+! Revision 2.2  2001/02/01 18:28:04  perun
+! Fixed typo
+!
+! Revision 2.1  2001/02/01 18:20:13  perun
+! Added data declarations outside routines
+!
+! Revision 2.0  2000/09/05 18:55:14  ahanzel
+! Changing file revision to 2.0.
+!
+! Revision 1.2  2000/02/15 18:30:29  nakamura
+! Removed superfluous USE MLSL1Common statement; added Contents section; moved _init subroutine here from TkL1B.
+!
+@
+
+
+2.9
+log
+@Version 1.44 commit
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d23 5
+a27 7
+  PRIVATE :: ID, ModuleName
+
+!------------------- RCS Ident Info -----------------------
+  CHARACTER(LEN=130) :: Id = & 
+       "$Id: Orbit.f90,v 2.8 2004/08/03 16:59:08 cvuu Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName="$RCSfile: Orbit.f90,v $"
+!----------------------------------------------------------
+d203 8
+d215 3
+@
+
+
+2.8
+log
+@Fix the problem of getting OrbitNumbers
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+d19 1
+a19 1
+       "$Id: Orbit.f90,v 2.7 2003/08/15 14:25:04 perun Exp $"
+a96 4
+    print *, 'spacecraftId: ', spacecraftId
+    print *, 'num_points: ', num_points
+    print *, 'startTime: ', startTime
+    print *, 'offsets: ', offsets
+a100 3
+    print *,'return status: ', returnStatus
+!    print *, 'orbitNumber: ', orbitNumber
+
+d201 3
+@
+
+
+2.7
+log
+@Version 1.2 commit
+@
+text
+@d19 1
+a19 1
+       "$Id: Orbit.f90,v 2.5 2002/11/07 21:57:11 jdone Exp $"
+d97 4
+d105 3
+d111 3
+a113 1
+       IF (returnStatus == PGSEPH_W_CORRUPT_METADATA) THEN
+d208 3
+@
+
+
+2.6
+log
+@Patch for PGS_Eph_getEphMet toolkit call.
+@
+text
+@a0 1
+
+d8 6
+a13 6
+   USE MLSCommon
+   USE MLSMessageModule
+   USE OutputL1B_DataTypes, only: LENG, LENT
+   USE SDPToolkit
+
+   IMPLICIT NONE
+d15 1
+a15 3
+   PUBLIC
+
+   PRIVATE :: ID, ModuleName
+d18 3
+a20 3
+   CHARACTER(LEN=130) :: Id = &  
+   "$Id: Orbit.f90,v 2.5 2002/11/07 21:57:11 jdone Exp $"
+   CHARACTER (LEN=*), PARAMETER :: ModuleName="$RCSfile: Orbit.f90,v $"
+d23 4
+a26 3
+   INTEGER :: numOrb, orbitNumber(max_orbits)
+   REAL :: scanRate(lenG), scanRateT(lenT)
+   REAL(r8) :: altG, altT, orbIncline, ascTAI(max_orbits), dscTAI(max_orbits)
+d39 2
+a40 2
+   SUBROUTINE Orbit_met (startTime, times, ascTAI, descTAI, numOrbits, &
+                        orbitNumber)
+d49 1
+a49 1
+      TYPE( TAI93_Range_T ), INTENT(IN) :: times
+d51 1
+a51 1
+      CHARACTER (LEN=27), INTENT(IN) :: startTime
+d53 2
+a54 2
+      INTEGER, INTENT(OUT) :: numOrbits
+      INTEGER, INTENT(OUT) :: orbitNumber(max_orbits)
+d56 1
+a56 1
+      REAL(r8), INTENT(OUT) :: ascTAI(max_orbits), descTAI(max_orbits)
+d62 1
+a62 1
+      INTEGER :: Pgs_eph_getEphMet, Pgs_td_timeInterval, Pgs_td_utcToTAI
+d66 10
+a75 10
+      CHARACTER (LEN=27) :: orbitAscendTime(max_orbits)
+      CHARACTER (LEN=27) :: orbitDescendTime(max_orbits)
+      CHARACTER (LEN=32) :: mnemonic
+      CHARACTER (LEN=480) :: msg, msr
+
+      INTEGER :: alloc_err, dealloc_err, i, num_points, returnStatus
+
+      REAL(r8) :: deltaTAI
+      REAL(r8) :: orbitDownLongitude(max_orbits)
+      REAL(r8), ALLOCATABLE :: offsets(:)
+d79 2
+a80 2
+      returnStatus = Pgs_td_timeInterval (times%startTime, times%endTime, &
+                                         deltaTAI)
+d82 10
+a91 1
+      num_points = AINT(deltaTAI/60.0)
+d93 1
+a93 9
+      ALLOCATE(offsets(num_points), STAT = alloc_err)
+      IF (alloc_err /= 0) THEN
+         msr = MLSMSG_Allocate // '  offsets.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      DO i = 1, num_points
+         offsets(i) = i * 60.0
+      ENDDO
+d97 26
+a122 24
+      returnStatus = Pgs_eph_getEphMet (spacecraftId, num_points, startTime, &
+                            offsets, numOrbits, orbitNumber, orbitAscendTime, &
+                            orbitDescendTime, orbitDownLongitude)
+      IF (returnStatus /= PGS_S_SUCCESS) THEN
+        print*,'Time was:',startTime
+         call Pgs_smf_getMsg(returnStatus, mnemonic, msg)
+         msr = 'Routine getEphMet, ' // mnemonic // ':  ' // msg
+         CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
+         numOrbits = 0
+      ENDIF
+
+      IF (numOrbits <= 0) THEN
+         msr = 'Routine getEphMet' // ': ' // ' Numorbits <= 0'
+         CALL MLSMessage (MLSMSG_Warning, ModuleName, msr)
+         DO i = 1, SIZE (orbitNumber)
+            orbitNumber(i) = i - 1
+            ascTAI(i) = 0.0
+            descTAI(i) = 0.0
+         ENDDO
+      ENDIF
+
+      DEALLOCATE (offsets, STAT=dealloc_err)
+      IF (dealloc_err /= 0) CALL MLSMessage (MLSMSG_Warning, ModuleName, &
+                                           'Failed deallocation of offsets.')
+d125 11
+a135 7
+      ascTAI = 0.0
+      dscTAI = 0.0
+      DO i = 1, numOrbits
+         orbitNumber(i) = i-1
+         returnStatus = Pgs_td_utcToTAI (orbitAscendTime(i), ascTAI(i))
+         returnStatus = Pgs_td_utcToTAI (orbitDescendTime(i), descTAI(i))
+      ENDDO
+d138 1
+a138 1
+   END SUBROUTINE Orbit_met
+d153 1
+a153 1
+      TYPE ( TAI93_Range_T ), INTENT(IN) :: times
+d155 1
+a155 1
+      CHARACTER (LEN=27), INTENT(IN) :: UTC_start
+d157 2
+a158 2
+      INTEGER, INTENT(OUT) :: numOrb
+      INTEGER, INTENT(OUT) :: orbitNumber(max_orbits)
+d160 2
+a161 2
+      REAL, INTENT(OUT) :: scanRate(lenG)
+      REAL, INTENT(OUT) :: scanRateT(lenT)
+d163 2
+a164 2
+      REAL(r8), INTENT(OUT) :: altG, altT, orbIncline
+      REAL(r8), INTENT(OUT) :: ascTAI(max_orbits), dscTAI(max_orbits)
+d174 6
+a179 2
+      altG = 2500.0
+      altT = 15000.0
+d181 2
+a182 6
+      scanRate(1) = 0.0
+      scanRate(2:63) = 0.0279213
+      scanRate(64:120) = 0.0976263
+ 
+      scanRateT(1:54) = 0.030344496
+      scanRateT(55:114) = 0.058600044
+d184 1
+a184 1
+      orbIncline = 98.145
+d188 1
+a188 1
+      CALL Orbit_met (UTC_start, times, ascTAI, dscTAI, numOrb, orbitNumber)
+@
+
+
+2.5
+log
+@Added Level 1 output datatypes.
+@
+text
+@d2 1
+a2 1
+! Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
+d13 1
+d15 1
+d21 2
+a22 2
+   CHARACTER(LEN=130) :: Id = &                                                    
+   "$Id: Orbit.f90,v 2.4 2001/12/14 01:43:46 livesey Exp $"
+d41 1
+a41 1
+   SUBROUTINE Orbit_met(startTime, times, ascTAI, descTAI, numOrbits, &
+d81 1
+a81 1
+      returnStatus = Pgs_td_timeInterval(times%startTime, times%endTime, &
+d98 1
+a98 1
+      returnStatus = Pgs_eph_getEphMet(spacecraftId, num_points, startTime, &
+d105 12
+a116 1
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+d119 2
+a120 2
+      DEALLOCATE(offsets, STAT=dealloc_err)
+      IF (dealloc_err /= 0) CALL MLSMessage(MLSMSG_Warning, ModuleName, &
+d128 2
+a129 2
+         returnStatus = Pgs_td_utcToTAI( orbitAscendTime(i), ascTAI(i) )
+         returnStatus = Pgs_td_utcToTAI( orbitDescendTime(i), descTAI(i) )
+d137 1
+a137 1
+   SUBROUTINE Orbit_init(times, UTC_start, altG, altT, ascTAI, dscTAI, &
+d183 1
+a183 1
+      CALL Orbit_met(UTC_start, times, ascTAI, dscTAI, numOrb, orbitNumber)
+d194 3
+@
+
+
+2.4
+log
+@Working version with ECR based master coordinate
+@
+text
+@d11 1
+a11 1
+   USE OutputL1B, only: LENG, LENT
+d20 1
+a20 1
+   "$Id: Orbit.f90,v 2.3 2001/10/12 22:11:05 livesey Exp $"
+d181 3
+@
+
+
+2.3
+log
+@Tidied things up a bit, added scVelECR, but not filled yet
+@
+text
+@d20 1
+a20 1
+   "$Id: Orbit.f90,v 2.2 2001/02/01 18:28:04 perun Exp $"
+d100 1
+d111 2
+a112 1
+
+d181 3
+@
+
+
+2.2
+log
+@Fixed typo
+@
+text
+@d11 1
+a11 1
+   USE OutputL1B
+d20 1
+a20 1
+   "$Id: Orbit.f90,v 2.1 2001/02/01 18:20:13 perun Exp $"
+d179 3
+@
+
+
+2.1
+log
+@Added data declarations outside routines
+@
+text
+@d20 1
+a20 1
+   "$Id: Orbit.f90,v 2.0 2000/09/05 18:55:14 ahanzel Exp $"
+d25 1
+a25 1
+   REAL :: scanRage(lenG), scanRateT(lenT)
+d179 3
+@
+
+
+2.0
+log
+@Changing file revision to 2.0.
+@
+text
+@d20 1
+a20 1
+   "$Id: Orbit.f90,v 1.2 2000/02/15 18:30:29 nakamura Exp $"
+d24 4
+d179 3
+@
+
+
+1.2
+log
+@Removed superfluous USE MLSL1Common statement; added Contents section; moved _init subroutine here from TkL1B.
+@
+text
+@d20 1
+a20 1
+   "$Id: Orbit.f90,v 1.2 2000/02/15 18:30:29 nakamura Exp $"
+d175 3
+@
+
+
+1.1
+log
+@Module for getting orbit metadata.
+@
+text
+@a9 1
+   USE MLSL1Common
+d11 1
+d20 1
+a20 1
+   "$Id: Orbit.f90,v 1.1 2000/02/10 16:50:39 nakamura Exp $"
+d24 7
+a30 1
+! Remarks:  This module contains code to get orbit "metadata."
+d117 53
+d175 2
+a176 2
+! Revision 1.1  2000/02/10 16:50:39  nakamura
+! Module for getting orbit metadata.
+@
+
+

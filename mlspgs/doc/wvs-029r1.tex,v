@@ -1,0 +1,152 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.14
+	cfm-single-freq-0-1:1.1.0.12
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.10
+	mus-emls-1-70:1.1.0.8
+	rel-1-0-englocks-work:1.1.0.6
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2008.06.11.20.14.52;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.25in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9.00in
+
+\newcommand{\docname}{\bf wvs-029r1}
+\newcommand{\docdate}{2 December 2005}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill\\
+Subject: \>Refractive correction for $\phi$\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-20pt}
+
+Write Equation A.6 from Appendix A of [1] as
+
+\begin{equation}\begin{split}
+\Delta\phi_i =\,& \int_{H_i}^{H_{i+1}} \frac{\text{d}H}H \left[
+ \frac{\mathcal{N}_t H_t}{\sqrt{\mathcal{N}^2 H^2 - \mathcal{N}_t^2 H_t^2}}
+ - \frac{H_t}{\sqrt{H^2-H_t^2}} \right ]\\
+ =\,& \int_{H_i}^{H_{i+1}} \text{d}H \frac1{H_t} \frac{H_t}H \left[
+ \frac{\frac{\mathcal{N}_t}{\mathcal{N}} \frac{H_t}H}
+ {\sqrt{1-\frac{\mathcal{N}_t^2}{\mathcal{N}^2} \frac{H_t^2}{H^2}}} -
+ \frac{\frac{H_t}H}{\sqrt{1-\frac{H_t^2}{H^2}}}
+ \right]\,.
+\end{split}\end{equation}
+
+Substitute $a = \frac{H_t}H$,
+$\frac{\text{d}H}{\text{d}a} = -\frac{H_t}{a^2}$, and
+$b = \frac{\mathcal{N}_t}{\mathcal{N}}$, giving
+
+\begin{equation}\begin{split}
+\Delta\phi_i =\,& - \int_{a_i}^{a_{i+1}}
+ \text{d}a \frac1{H_t} a \frac{H_t}{a^2} \left[
+ \frac{ab}{\sqrt{1-a^2b^2}} - \frac{a}{\sqrt{1-a^2}} \right] \\
+ = \,& - \int_{a_i}^{a_{i+1}} \text{d}a \left[
+\frac{b}{\sqrt{1-a^2b^2}} - \frac1{\sqrt{1-a^2}} \right]
+\end{split}\end{equation}
+
+Assuming that $\mathcal{N}$ is roughly constant in the range $(a_i,a_{i+1})$,
+and therefore that $b$ is roughly constant in that range, the integral can be
+evaluated analytically, giving
+
+\begin{equation}\begin{split}
+\Delta\phi_i \approx\,& \left. - \left[ \sin^{-1} ab - \sin^{-1} a \right]
+\right|_{a=a_i}^{a_{i+1}} =
+\left. \sin^{-1} \frac{H_t}H - \sin^{-1} \frac{\mathcal{N}_tH_t}{\mathcal{N}H}
+ \right|_{H=H_i}^{H_{i+1}} \\
+ =\,&
+\left. \chi_{\text{eq}} - \chi_{\text{eq}}^{\text{refr}} \right|_{H=H_i}^{H_{i+1}}\,,
+\end{split}\end{equation}
+
+where $\sin \chi_{\text{eq}} = a = \frac{H_t}H$ and
+$\sin \chi_{\text{eq}}^{\text{refr}} = ab =
+ \frac{\mathcal{N}_t H_t}{\mathcal{N}H}$ have been used (see Appendix A of [1]).
+Allowing $\mathcal{N}$ to take different values at $H_i$ and $H_{i+1}$ improves
+the approximation.
+
+\vskip 8pt
+[1] W.G. Read, Z. Shippony, and W.V. Snyder, {\bf Microwave Limb Sounder (MLS)
+Forward Model Algorithm Theoretical Basis Document}, Jet Propulsion Laboratory
+document JPL D-18130, 19 August 2004.
+
+\label{lastpage}
+\end{document}
+% $Id: $
+@

@@ -1,0 +1,484 @@
+head	1.14;
+access;
+symbols
+	v5-02-NRT-19:1.14
+	v6-00:1.14
+	v5-02-NRT-18:1.14
+	v5-02:1.14
+	v5-01-NRT-17:1.14
+	v5-01-NRT-16:1.14
+	v5-01-NRT-15:1.14
+	v5-01-NRT-14:1.14
+	neuralnetworks-1-0:1.14.0.10
+	cfm-single-freq-0-1:1.14.0.8
+	v5-01:1.14
+	v5-00:1.14
+	v4-23-TA133:1.14.0.6
+	mus-emls-1-70:1.14.0.4
+	rel-1-0-englocks-work:1.14.0.2
+	VUMLS1-00:1.14
+	VPL1-00:1.13
+	V4-22-NRT-08:1.13
+	VAM1-00:1.13
+	V4-21:1.13.0.4
+	V4-13:1.13
+	V4-12:1.13
+	V4-11:1.13
+	V4-10:1.13
+	V3-43:1.13
+	M4-00:1.13
+	V3-41:1.13
+	V3-40-PlusGM57:1.13.0.2
+	V2-24-NRT-04:1.12
+	V3-33:1.13
+	V2-24:1.12
+	V3-31:1.13
+	V3-30-NRT-05:1.13
+	cfm-01-00:1.13
+	V3-30:1.13
+	V3-20:1.13
+	V3-10:1.13
+	V2-23-NRT-02:1.12
+	V2-23:1.12
+	V2-22-NRT-01:1.12
+	V2-22:1.12
+	V2-21:1.12
+	V2-20:1.12
+	V2-11:1.8
+	V2-10:1.8
+	V2-00:1.8
+	V1-51:1.8
+	V1-50:1.8
+	V1-45:1.7
+	V1-44:1.7
+	V1-43:1.6;
+locks; strict;
+comment	@# @;
+
+
+1.14
+date	2017.03.09.01.50.19;	author mjschwar;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2009.05.12.18.51.36;	author pwagner;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2006.11.01.19.13.14;	author pwagner;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2006.10.11.23.04.55;	author pwagner;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2006.10.04.16.51.47;	author pwagner;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2006.08.08.22.27.07;	author pwagner;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2004.09.21.23.02.59;	author livesey;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2004.07.06.21.54.05;	author livesey;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2004.04.28.23.06.57;	author livesey;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2004.04.28.00.32.19;	author livesey;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2004.04.27.23.51.09;	author livesey;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2004.04.27.23.46.37;	author livesey;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2004.04.17.05.47.37;	author livesey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.04.08.22.42.35;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.14
+log
+@*** empty log message ***
+@
+text
+@!divert(-1)
+; $Id: coreplusr5flags.l2cf,v 1.13 2009/05/12 18:51:36 pwagner Exp $
+
+; ----------- Phase name vs. retrieval name
+; Some phase(s) may not have Retrieve sections
+; and so we'll need to know the last one
+!define(retrophase,{!phase})
+; If we can't fix all of the THz problems in level 1
+!ifdef(flagSumR5Rads,{!undefine(flagTooFewRadsByBand)})
+
+!divert!dnl
+; This l2cf fragment does all the quality flagging for the Core+R5
+; products.
+
+begin Fill
+  ;; ------------------------------------ OH-2T5
+  !define(flaggingBands,{15,16,18,19})
+  !define(flaggingRadiometers,{R5}) !dnl!dnl
+  !makeQualityForOneProduct(product=OH,chisqScale=1.0,minRads=2000)
+  !makeStatusForOneProduct(product=OH,chisqScale=1.0,minRads=2000)
+
+  ;; ------------------------------------ O3-2T5
+  !define(flaggingBands,{15,16,18,19})
+  !define(flaggingRadiometers,{R5})!dnl
+  !makeQualityForOneProduct(product=O3,chisqScale=1.0,minRads=2000)
+  !makeStatusForOneProduct(product=O3,chisqScale=1.0,minRads=2000)
+
+  ;; ------------------------------------- Temperature-CorePlusR5
+  !define(flaggingBands,{1})
+  !define(flaggingRadiometers,{R1A,R1B})!dnl
+  !makeQualityForOneProduct(product=Temperature,chisqScale=1.0,minRads=800,cloudMax=5K,cloudMin= -10K)
+  !makeStatusForOneProduct(product=Temperature,chisqScale=1.0,minRads=800,cloudMax=5K,cloudMin= -10K)
+
+  ;; ------------------------------------- GPH-CorePlusR5
+  !define(flaggingBands,{1})
+  !define(flaggingRadiometers,{R1A,R1B})!dnl
+  !makeQualityForOneProduct(product=GPH,chisqScale=1.0,minRads=800,cloudMax=5K,cloudMin= -10K)
+  !makeStatusForOneProduct(product=GPH,chisqScale=1.0,minRads=800,cloudMax=5K,cloudMin= -10K)
+
+end Fill
+
+; $Log: coreplusr5flags.l2cf,v $
+; Revision 1.13  2009/05/12 18:51:36  pwagner
+; Replaced Band 17 with Band 16
+;
+; Revision 1.12  2006/11/01 19:13:14  pwagner
+; Removed R3 as flagging radiometer
+;
+; Revision 1.11  2006/10/11 23:04:55  pwagner
+; Special retrieval phase name retrophase needed for Convergence Ratio Fill
+;
+; Revision 1.10  2006/10/04 16:51:47  pwagner
+; Compatible w/ status bits from multiple radiometers; needs review
+;
+; Revision 1.9  2006/08/08 22:27:07  pwagner
+; Fills Quality, Status for Temperature, GPH; needs revision before v2.20
+;
+; Revision 1.8  2004/09/21 23:02:59  livesey
+; Changed chiSqWeights to 1.0 for everything.
+;
+; Revision 1.7  2004/07/06 21:54:05  livesey
+; Added cloud flags for Temperature and GPH
+;
+; Revision 1.6  2004/04/28 23:06:57  livesey
+; Changes to cloud flags.
+;
+; Revision 1.5  2004/04/28 00:32:19  livesey
+; Bug fix
+;
+; Revision 1.4  2004/04/27 23:51:09  livesey
+; Added low cloud flagging for t/gph
+;
+; Revision 1.3  2004/04/27 23:46:37  livesey
+; Added GPH
+;
+; Revision 1.2  2004/04/17 05:47:37  livesey
+; Backed off the number of radiances missing flags
+;
+; Revision 1.1  2004/04/08 22:42:35  livesey
+; First version
+;
+@
+
+
+1.13
+log
+@Replaced Band 17 with Band 16
+@
+text
+@d2 1
+a2 1
+; $Id: coreplusr5flags.l2cf,v 1.12 2006/11/01 19:13:14 pwagner Exp $
+d8 2
+d43 3
+@
+
+
+1.12
+log
+@Removed R3 as flagging radiometer
+@
+text
+@d2 1
+a2 1
+; $Id: coreplusr5flags.l2cf,v 1.11 2006/10/11 23:04:55 pwagner Exp $
+d15 1
+a15 1
+  !define(flaggingBands,{15,17,18,19})
+d21 1
+a21 1
+  !define(flaggingBands,{15,17,18,19})
+d41 3
+@
+
+
+1.11
+log
+@Special retrieval phase name retrophase needed for Convergence Ratio Fill
+@
+text
+@d2 1
+a2 1
+; $Id: coreplusr5flags.l2cf,v 1.10 2006/10/04 16:51:47 pwagner Exp $
+d28 1
+a28 1
+  !define(flaggingRadiometers,{R1A,R1B,R3})!dnl
+d34 1
+a34 1
+  !define(flaggingRadiometers,{R1A,R1B,R3})!dnl
+d41 3
+@
+
+
+1.10
+log
+@Compatible w/ status bits from multiple radiometers; needs review
+@
+text
+@d1 2
+a2 1
+; $Id: coreplusr5flags.l2cf,v 1.9 2006/08/08 22:27:07 pwagner Exp $
+d4 6
+d41 3
+@
+
+
+1.9
+log
+@Fills Quality, Status for Temperature, GPH; needs revision before v2.20
+@
+text
+@d1 1
+a1 1
+; $Id: coreplusr5flags.l2cf,v 1.8 2004/09/21 23:02:59 livesey Exp $
+d9 3
+a11 1
+  !makeFlagsForOneProduct(product=OH,radiometer=R5,chisqScale=1.0,minRads=2000)
+d15 3
+a17 1
+  !makeFlagsForOneProduct(product=O3,radiometer=R5,chisqScale=1.0,minRads=2000)
+a19 2
+  ;;; !define(flaggingBands,{1,17,22})
+  ;;; !makeFlagsForOneProduct(product=Temperature,radiometer=R2,chisqScale=1.0,minRads=800,cloudMax=5K,cloudMin= -10K)
+d21 3
+a23 1
+  !makeFlagsForOneProduct(product=Temperature,radiometer=R1A,chisqScale=1.0,minRads=800,cloudMax=5K,cloudMin= -10K)
+a25 2
+  ;;; !define(flaggingBands,{1,17,22})
+  ;;; !makeFlagsForOneProduct(product=GPH,radiometer=R2,chisqScale=1.0,minRads=800,cloudMax=5K,cloudMin= -10K)
+d27 3
+a29 1
+  !makeFlagsForOneProduct(product=GPH,radiometer=R1A,chisqScale=1.0,minRads=800,cloudMax=5K,cloudMin= -10K)
+d34 3
+@
+
+
+1.8
+log
+@Changed chiSqWeights to 1.0 for everything.
+@
+text
+@d1 1
+a1 1
+; $Id: coreplusr5flags.l2cf,v 1.7 2004/07/06 21:54:05 livesey Exp $
+d16 4
+a19 2
+  !define(flaggingBands,{1,17,22})
+  !makeFlagsForOneProduct(product=Temperature,radiometer=R2,chisqScale=1.0,minRads=800,cloudMax=5K,cloudMin= -10K)
+d22 4
+a25 2
+  !define(flaggingBands,{1,17,22})
+  !makeFlagsForOneProduct(product=GPH,radiometer=R2,chisqScale=1.0,minRads=800,cloudMax=5K,cloudMin= -10K)
+d30 3
+@
+
+
+1.7
+log
+@Added cloud flags for Temperature and GPH
+@
+text
+@d1 1
+a1 1
+; $Id: coreplusr5flags.l2cf,v 1.6 2004/04/28 23:06:57 livesey Exp $
+d9 1
+a9 1
+  !makeFlagsForOneProduct(product=OH,radiometer=R5,chisqScale=20.0,minRads=2000)
+d13 1
+a13 1
+  !makeFlagsForOneProduct(product=O3,radiometer=R5,chisqScale=20.0,minRads=2000)
+d17 1
+a17 1
+  !makeFlagsForOneProduct(product=Temperature,radiometer=R2,chisqScale=10.0,minRads=800,cloudMax=5K,cloudMin= -10K)
+d21 1
+a21 1
+  !makeFlagsForOneProduct(product=GPH,radiometer=R2,chisqScale=10.0,minRads=800,cloudMax=5K,cloudMin= -10K)
+d26 3
+@
+
+
+1.6
+log
+@Changes to cloud flags.
+@
+text
+@d1 1
+a1 1
+; $Id: coreplusr5flags.l2cf,v 1.5 2004/04/28 00:32:19 livesey Exp $
+d17 1
+a17 1
+  !makeFlagsForOneProduct(product=Temperature,radiometer=R2,chisqScale=10.0,minRads=800)
+d21 1
+a21 1
+  !makeFlagsForOneProduct(product=GPH,radiometer=R2,chisqScale=10.0,minRads=800)
+d26 3
+@
+
+
+1.5
+log
+@Bug fix
+@
+text
+@d1 1
+a1 1
+; $Id: coreplusr5flags.l2cf,v 1.4 2004/04/27 23:51:09 livesey Exp $
+d9 1
+a9 1
+  !makeFlagsForOneProduct(product=OH,radiometer=R5,chisqScale=20.0,minRads=2000,cloudMax=10K)
+d13 1
+a13 1
+  !makeFlagsForOneProduct(product=O3,radiometer=R5,chisqScale=20.0,minRads=2000,cloudMax=10K)
+d17 1
+a17 1
+  !makeFlagsForOneProduct(product=Temperature,radiometer=R2,chisqScale=10.0,minRads=800,cloudMax=10K,cloudMin= -20K)
+d21 1
+a21 1
+  !makeFlagsForOneProduct(product=GPH,radiometer=R2,chisqScale=10.0,minRads=800,cloudMax=10K,cloudMin= -20K)
+d26 3
+@
+
+
+1.4
+log
+@Added low cloud flagging for t/gph
+@
+text
+@d1 1
+a1 1
+; $Id: coreplusr5flags.l2cf,v 1.3 2004/04/27 23:46:37 livesey Exp $
+d17 1
+a17 1
+  !makeFlagsForOneProduct(product=Temperature,radiometer=R2,chisqScale=10.0,minRads=800,cloudMax=10K,cloudMin=-20K)
+d21 1
+a21 1
+  !makeFlagsForOneProduct(product=GPH,radiometer=R2,chisqScale=10.0,minRads=800,cloudMax=10K,cloudMin=-20K)
+d26 3
+@
+
+
+1.3
+log
+@Added GPH
+@
+text
+@d1 1
+a1 1
+; $Id: coreplusr5flags.l2cf,v 1.2 2004/04/17 05:47:37 livesey Exp $
+d17 1
+a17 1
+  !makeFlagsForOneProduct(product=Temperature,radiometer=R2,chisqScale=10.0,minRads=800,cloudMax=10K)
+d21 1
+a21 1
+  !makeFlagsForOneProduct(product=GPH,radiometer=R2,chisqScale=10.0,minRads=800,cloudMax=10K)
+d26 3
+@
+
+
+1.2
+log
+@Backed off the number of radiances missing flags
+@
+text
+@d1 1
+a1 1
+; $Id: coreplusr5flags.l2cf,v 1.1 2004/04/08 22:42:35 livesey Exp $
+a6 2
+  diagR5: Vector, template=diagTmp
+
+d9 1
+a9 1
+  !makeFlagsForOneProduct(product=OH,radiometer=R5,chisqScale=20.0,minRads=2000,cloudMax=10K,radiometerName=R5H)
+d13 1
+a13 1
+  !makeFlagsForOneProduct(product=O3,radiometer=R5,chisqScale=20.0,minRads=2000,cloudMax=10K,radiometerName=R5H)
+d15 7
+a21 3
+  ;; ------------------------------------- Temperature-CorePlusR4
+  !define(flaggingBands,{1,22})
+  !makeFlagsForOneProduct(product=Temperature,radiometer=R5,chisqScale=10.0,minRads=800,cloudMax=10K,radiometerName=R5H)
+d26 3
+@
+
+
+1.1
+log
+@First version
+@
+text
+@d1 1
+a1 1
+; $Id$
+d11 1
+a11 1
+  !makeFlagsForOneProduct(product=OH,radiometer=R5,chisqScale=20.0,minRads=5000,cloudMax=10K,radiometerName=R5H)
+d15 1
+a15 1
+  !makeFlagsForOneProduct(product=O3,radiometer=R5,chisqScale=20.0,minRads=5000,cloudMax=10K,radiometerName=R5H)
+d19 1
+a19 1
+  !makeFlagsForOneProduct(product=Temperature,radiometer=R5,chisqScale=10.0,minRads=1500,cloudMax=10K,radiometerName=R5H)
+d23 4
+a26 1
+; $Log$
+@
+

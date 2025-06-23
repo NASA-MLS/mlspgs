@@ -1,0 +1,208 @@
+head	1.4;
+access;
+symbols
+	v5-02-NRT-19:1.4
+	v6-00:1.4
+	v5-02-NRT-18:1.4
+	v5-02:1.3
+	v5-01-NRT-17:1.4
+	v5-01-NRT-16:1.4
+	v5-01-NRT-15:1.3
+	v5-01-NRT-14:1.3
+	neuralnetworks-1-0:1.3.0.12
+	cfm-single-freq-0-1:1.3.0.10
+	v5-01:1.3
+	v5-00:1.3
+	v4-23-TA133:1.3.0.8
+	mus-emls-1-70:1.3.0.6
+	rel-1-0-englocks-work:1.3.0.4
+	VUMLS1-00:1.3
+	VPL1-00:1.3
+	V4-22-NRT-08:1.3
+	VAM1-00:1.3
+	V4-21:1.3.0.2
+	V4-13:1.3
+	V4-12:1.3
+	V4-11:1.3
+	V4-10:1.3
+	V3-43:1.1
+	M4-00:1.2
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V2-24-NRT-04:1.1
+	V3-33:1.2
+	V2-24:1.1
+	V3-31:1.2
+	V3-30-NRT-05:1.2
+	cfm-01-00:1.2
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1
+	V2-23-NRT-02:1.1
+	V2-23:1.1
+	V2-22-NRT-01:1.1
+	V2-22:1.1
+	V2-21:1.1
+	V2-20:1.1
+	V2-11:1.1
+	V2-10:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.4
+date	2021.12.22.17.02.18;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2013.12.04.00.01.11;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2010.05.22.00.00.46;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2006.06.29.23.16.19;	author lambert;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.4
+log
+@Converted to python3
+@
+text
+@import sys
+# First, a useful housekeeping aid
+def mrClean(a, s):
+  """Remove unwanted chars, replace separator with space"""
+  a = a.replace("'",'')
+  a = a.replace(' ','')
+  a = a.replace(s,' ')  
+  a = a.replace('[','')  
+  a = a.replace(']','')
+  return a.strip()
+
+def diff(l,u):
+   """Return the difference of the lists l, u"""
+   # DeprecationWarning: the sets module is deprecated
+   # If using a really old version of python, i.e. pre-2.6,
+   # uncomment the next 2 lines
+   # from sets import Set
+   #  s = Set(l) - Set(u)
+
+
+   s = set(l) - set(u)
+   #print s
+   # remove unwanted chars from the result Set([<>])
+   # Why not tell us what chars are unwanted?
+   # print("split", file=sys.stderr, end="=")
+   # print(str(s).split('['), file=sys.stderr)
+   # print("[0]", file=sys.stderr, end="=")
+   # print(str(s).split('[')[0].replace('{','').replace('}',''), file=sys.stderr)
+   # print("[1]", file=sys.stderr, end="=")
+   # print(str(s).split('[')[1], file=sys.stderr)
+   # This next generates an "index out of range" error
+   # w = str(s).split('[')[1].split(']')[0].replace("'","").replace(',','').split(' ')
+
+   # Do we replaced it with this
+   w = str(s).split('[')[0].split(']')[0].replace("'","").replace(',','').split(' ')
+   # print("w(old)", file=sys.stderr, end="=")
+   # print(w, file=sys.stderr)
+   # or this
+   w = str(s).split('[')[0].replace('{','').replace('}','').replace("'","").replace(',','').split(' ')
+   # print("w(new)", file=sys.stderr, end="=")
+   # print(w, file=sys.stderr)
+   # ??? Doesn't work ???
+   # w = str(s).split('[')[0]
+   w.sort()
+   # print("sorted", file=sys.stderr, end="=")
+   # print(w, file=sys.stderr)
+   w = str(w).replace("'","").replace('[','').replace(']','')
+   # print("w", file=sys.stderr, end="=")
+   # print(w, file=sys.stderr)
+   return w
+
+def uniq(a):
+   """Return a list of the elements in a, but without duplicates."""
+
+   alist = []
+   
+   w = mrClean(a, ',')
+
+   # loop over each item and add to alist if not already present
+   [alist.append(item) for item in w.split() if not alist.count(item)]
+
+   # make string of comma separated items
+   return ', '.join(alist)
+
+#def uniq(list): never tried this
+#
+#      set1 = set(list)
+#      list = [s for s in set1]
+#      return list
+
+# $Log: resed.sh,v $
+@
+
+
+1.3
+log
+@Substitute built-in set for deprecated sets module
+@
+text
+@d1 1
+d24 20
+a43 1
+   w = str(s).split('[')[1].split(']')[0].replace("'","").replace(',','').split(' ')
+d45 2
+d48 2
+d70 2
+@
+
+
+1.2
+log
+@Added mrClean
+@
+text
+@d13 5
+a17 1
+   from sets import Set
+d20 1
+a20 4
+ #  print "lll"+l+"lll"
+ #  print "uuu"+u+"uuu"
+   
+   s = Set(l) - Set(u)
+@
+
+
+1.1
+log
+@contains python utils called by python shell interface to m4
+@
+text
+@d1 10
+d27 2
+a28 2
+def uniq(s):
+   """Return a list of the elements in s, but without duplicates."""
+d32 1
+a32 6
+   # remove unwanted chars
+   w = s.replace("'",'')
+   w = w.replace(' ','')
+   w = w.replace(',',' ')  
+   w = w.replace('[','')  
+   w = w.replace(']','')
+@
+

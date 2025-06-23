@@ -1,0 +1,3039 @@
+head	2.32;
+access;
+symbols
+	v5-02-NRT-19:2.32
+	v6-00:2.32
+	v5-02-NRT-18:2.32
+	v5-02:2.32
+	v5-01-NRT-17:2.32
+	v5-01-NRT-16:2.32
+	v5-01-NRT-15:2.32
+	v5-01-NRT-14:2.32
+	neuralnetworks-1-0:2.32.0.12
+	cfm-single-freq-0-1:2.32.0.10
+	v5-01:2.32
+	v5-00:2.32
+	v4-23-TA133:2.32.0.8
+	mus-emls-1-70:2.32.0.6
+	rel-1-0-englocks-work:2.32.0.4
+	VUMLS1-00:2.32
+	VPL1-00:2.32
+	V4-22-NRT-08:2.32
+	VAM1-00:2.32
+	V4-21:2.32.0.2
+	V4-13:2.32
+	V4-12:2.31
+	V4-11:2.31
+	V4-10:2.31
+	V3-43:2.25
+	M4-00:2.27
+	V3-41:2.25
+	V3-40-PlusGM57:2.25.0.2
+	V2-24-NRT-04:2.24
+	V3-33:2.25
+	V2-24:2.24
+	V3-31:2.25
+	V3-30-NRT-05:2.25
+	cfm-01-00:2.25
+	V3-30:2.25
+	V3-20:2.25
+	V3-10:2.25
+	V2-23-NRT-02:2.24
+	V2-23:2.24
+	V2-22-NRT-01:2.24
+	V2-22:2.24
+	V2-21:2.22
+	V2-20:2.22
+	V2-11:2.22
+	V2-10:2.22
+	V2-00:2.22
+	V1-51:2.16
+	V1-50:2.16
+	V1-45:2.14
+	V1-44:2.14
+	V1-43:2.12;
+locks; strict;
+comment	@# @;
+
+
+2.32
+date	2014.09.30.02.16.18;	author vsnyder;	state Exp;
+branches;
+next	2.31;
+
+2.31
+date	2013.12.12.02.11.26;	author vsnyder;	state Exp;
+branches;
+next	2.30;
+
+2.30
+date	2013.10.09.02.26.59;	author vsnyder;	state Exp;
+branches;
+next	2.29;
+
+2.29
+date	2013.09.24.23.47.22;	author vsnyder;	state Exp;
+branches;
+next	2.28;
+
+2.28
+date	2013.08.30.02.45.32;	author vsnyder;	state Exp;
+branches;
+next	2.27;
+
+2.27
+date	2011.12.21.01.44.32;	author vsnyder;	state Exp;
+branches;
+next	2.26;
+
+2.26
+date	2011.05.09.18.04.51;	author pwagner;	state Exp;
+branches;
+next	2.25;
+
+2.25
+date	2009.06.23.18.46.18;	author pwagner;	state Exp;
+branches;
+next	2.24;
+
+2.24
+date	2007.06.29.19.32.06;	author vsnyder;	state Exp;
+branches;
+next	2.23;
+
+2.23
+date	2007.01.11.20.48.30;	author vsnyder;	state Exp;
+branches;
+next	2.22;
+
+2.22
+date	2005.08.31.19.40.03;	author livesey;	state Exp;
+branches;
+next	2.21;
+
+2.21
+date	2005.06.30.22.43.40;	author livesey;	state Exp;
+branches;
+next	2.20;
+
+2.20
+date	2005.06.22.18.57.01;	author pwagner;	state Exp;
+branches;
+next	2.19;
+
+2.19
+date	2005.06.21.23.55.53;	author livesey;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2005.05.25.02.15.13;	author vsnyder;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2005.05.24.23.33.35;	author livesey;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2004.10.14.04.54.41;	author livesey;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2004.09.25.00.16.10;	author livesey;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2004.05.28.00.58.35;	author vsnyder;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2004.05.19.19.16.09;	author vsnyder;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2004.04.30.21.49.26;	author livesey;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2004.04.29.01.26.47;	author livesey;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2004.04.28.23.07.56;	author livesey;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2004.01.30.23.28.45;	author livesey;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2004.01.29.03.33.26;	author livesey;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2004.01.24.01.04.52;	author livesey;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2004.01.23.05.38.22;	author livesey;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2004.01.21.00.30.25;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2004.01.20.23.19.41;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2004.01.20.19.33.35;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2004.01.17.03.04.15;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2004.01.17.00.28.32;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.32
+log
+@Some stuff that might be useful if we turn on matrix finalizers
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module ALGEBRA_M
+
+  use MATRIXMODULE_1, only: K_CHOLESKY, K_EMPTY, K_KRONECKER, K_PLAIN, K_SPD
+
+! Process the ALGEBRA section
+
+  implicit NONE
+  private
+  public :: Algebra
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: Algebra_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+  ! Parameters for WHAT argument of EXPR
+  integer, parameter :: W_Nothing = 0               ! An error occurred
+  integer, parameter :: W_Number = w_nothing + 1    ! Result is DVALUE
+  integer, parameter :: W_Vector = w_number + 1     ! Result is a vector
+  integer, parameter :: W_Matrix = w_vector + 1     ! Result is a general matrix
+  integer, parameter :: W_Matrix_C = w_matrix + 1   ! Result is Cholesky factor
+  integer, parameter :: W_Matrix_K = w_matrix_C + 1 ! Result is a Kronecker matrix
+  integer, parameter :: W_Matrix_S = w_matrix_K + 1 ! Result is an SPD matrix
+
+  integer, save :: Whats(k_empty:k_spd)
+  data whats(k_empty) / w_nothing /, whats(k_cholesky) / w_matrix_c /
+  data whats(k_kronecker) / w_matrix_k /, whats(k_plain) / w_matrix /
+  data whats(k_spd) / w_matrix_s /
+
+contains
+
+  ! ----------------------------------------------------  Algebra  -----
+  subroutine Algebra ( ROOT, VectorDatabase, MatrixDatabase, chunk, ForwardModelConfigDatabase )
+    ! The root of the Algebra section's subtree is ROOT.  All of the
+    ! input and output "variables" are found in the symbol table.
+    ! Anything defined here by a statement of the form A = <expr> is
+    ! deleted here if A isn't already found in the symbol table, i.e.,
+    ! not declared before the Algebra section.  If it is in the symbol
+    ! table, it has to be the right kind of thing-o:  We won't assign
+    ! a vector to a matrix, etc.
+
+    use CHUNKS_M, only: MLSCHUNK_T
+    use DECLARATION_TABLE, only: DECLARE, DECLS, EMPTY, EXPRN, EXPRN_M, &
+      & EXPRN_V, GET_DECL, LABEL, NUM_VALUE, REDECLARE
+    use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T
+    use INIT_TABLES_MODULE, only: S_MATRIX, S_QUANTITY, S_VECTOR
+    use MATRIXMODULE_1, only: ADDTOMATRIX, ADDTOMATRIXDATABASE, ASSIGNMATRIX, &
+      & CHOLESKYFACTOR, CLEARLOWER, CREATEEMPTYMATRIX, COPYMATRIX, &
+      & COPYMATRIXVALUE, DESTROYMATRIX, DUMP, DUMP_STRUCT, GETACTUALMATRIXFROMDATABASE, &
+      & GETDIAGONAL, GETFROMMATRIXDATABASE, GETKINDFROMMATRIXDATABASE, &
+      & INVERTCHOLESKY, K_CHOLESKY, K_EMPTY, K_KRONECKER, K_PLAIN, K_SPD, MATRIX_CHOLESKY_T, &
+      & MATRIX_DATABASE_T, MATRIX_KRONECKER_T, MATRIX_SPD_T, MATRIX_T, &
+      & MULTIPLYMATRIXVECTORNOT, MULTIPLYMATRIXVECTORSPD_1, &
+      & MULTIPLYMATRIX_XY, NullifyMatrix, REFLECTMATRIX, SCALEMATRIX, &
+      & TRANSPOSEMATRIX
+    use MATRIXTOOLS, only: COMBINECHANNELSINMATRIX
+    use MLSKINDS, only: R8, RV
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use Next_Tree_Node_m, only: Next_Tree_Node, Next_Tree_Node_State
+    use OUTPUT_M, only: OUTPUT
+    use STRING_TABLE, only: DISPLAY_STRING
+    use TOGGLES, only: GEN, LEVELS, SWITCHES, TOGGLE
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+    use TREE, only: DECORATION, NODE_ID, NSONS, SUB_ROSA, SUBTREE, PRINT_SUBTREE
+    use TREE_TYPES ! EVERYTHING, EXCEPT TREE_INIT; REMAINDER BEGIN WITH N_
+    use VECTORSMODULE, only:  ADDTOVECTOR, ADDVECTORTODATABASE,  COPYVECTOR, &
+      & CLONEVECTOR, DESTROYVECTORINFO, DUMP, SCALEVECTOR, VECTOR_T, POWVECTOR, &
+      & RECIPROCATEVECTOR, MULTIPLYVECTORS
+
+    integer, intent(in) :: ROOT
+    type(vector_T), dimension(:), pointer :: VectorDatabase
+    type(matrix_Database_T), dimension(:), pointer :: MatrixDatabase
+    type(MLSChunk_T), intent(in) :: CHUNK
+    type(ForwardModelConfig_T), pointer, dimension(:) :: FORWARDMODELCONFIGDATABASE
+
+    type(decls) :: DECL            ! Declaration of the LHS name
+    real(r8) :: DVALUE             ! Value of expr if it's a number
+    integer :: Error               ! 0 = no error occurred.
+    integer :: LHS                 ! Index in tree of LHS
+    integer :: Me = -1             ! String index for trace
+    integer :: Me_Loop = -1        ! String index for trace
+    integer :: Q                   ! Index of quantity in a vector
+    integer :: RHS                 ! Index in tree of root of RHS
+    integer :: SON                 ! Son of root
+    integer :: SPEC                ! Index of SPEC of label, e.g. S_Matrix
+    integer :: String              ! String table index
+    integer :: Type                ! Type of result
+    integer :: Value               ! Index of Vector or Matrix result in database
+    integer :: What                ! See its parameters above
+    integer :: WhatsLHS            ! As above but for the LHS (only used for matrices)
+
+    type(matrix_t), pointer :: LHSMatrix
+    type(matrix_Cholesky_t) :: Matrix_C
+    type(matrix_Kronecker_t) :: Matrix_K
+    type(matrix_t), target :: Matrix
+    type(matrix_SPD_t) :: Matrix_S
+
+    type(next_tree_node_state) :: State ! of tree traverser
+
+    type(vector_t) :: Vector
+
+    ! Parameters for Announce_Error
+    integer, parameter :: Ambiguous = 1                ! LHS is ambiguous
+    integer, parameter :: CantInvertVector = ambiguous + 1    ! Can't invert vector
+    integer, parameter :: Incompatible = cantInvertVector + 1 ! incompatible operands
+    integer, parameter :: NotPlain = incompatible + 1  ! Wrong kind of matrix
+    integer, parameter :: NotQuantity = notPlain + 1   ! Right of dot not quantity
+    integer, parameter :: NotSupported = notQuantity + 1 ! Wrong kind of matrix
+    integer, parameter :: NotVector = notSupported + 1 ! Left of dot not vector
+    integer, parameter :: Undefined = notVector + 1    ! undefined operand
+    integer, parameter :: UnknownFunc = undefined + 1  ! unknown function
+    integer, parameter :: UnknownOp = UnknownFunc + 1  ! unknown operator
+    integer, parameter :: WrongNumArgs = UnknownOp + 1 ! wrong number of args
+
+    error = 0
+
+    call trace_begin ( me, 'Algebra', root, cond=toggle(gen) )
+    do
+      son = next_tree_node ( root, state )
+      if ( son == 0 ) exit
+      call trace_begin ( me_loop, 'Algebra loop', son, &
+        & cond=toggle(gen) .and. levels(gen) > 0 )
+      if ( node_id(son) /= n_equal ) then
+        call AlgebraCommands ( son, VectorDatabase, MatrixDatabase, chunk, forwardModelConfigDatabase )
+      else
+        ! Evaluate the RHS
+        rhs = subtree(2,son)
+        call expr ( rhs, what, dValue, vector, matrix, matrix_c, matrix_k, matrix_s )
+
+        ! Possibly do some dumping
+        if ( switchDetail(switches,'spa') > -1 ) then
+          select case ( what )
+          case ( w_matrix )
+            call dump_struct ( matrix, 'Result of expression' )
+          case ( w_matrix_c )
+            call dump_struct ( matrix_c%m, 'Result of expression' )
+          case ( w_matrix_s )
+            call dump_struct ( matrix_s%m, 'Result of expression' )
+          case ( w_matrix_k )
+            call dump_struct ( matrix_k%m, 'Result of expression' )
+          case default
+          end select
+        end if
+
+        if ( what == w_nothing ) &
+    go to 200
+        ! Lookup the LHS.  It could be a label or the LHS of another expr.
+        lhs = subtree(1,son)
+        string = sub_rosa(lhs)
+        decl = get_my_decl(lhs)
+        ! If it's a vector or matrix, put it in the global database.
+        ! Put the database index into the LHS's decl.  If it's a number,
+        ! just put the number in the LHS decl's value field.
+        if ( decl%type == empty ) then ! --------------------- Not defined yet
+          select case ( what )
+          case ( w_number )
+            type = num_value
+            value = 0
+          case ( w_vector )
+            type = exprn_v
+            value = addVectorToDatabase ( vectorDatabase, vector )
+          case ( w_matrix )
+            type = exprn_m
+            value = addToMatrixDatabase ( matrixDatabase, matrix )
+!     The following is probably necessary to make final subroutines for
+!     RC_Info and Matrix_T work, else the finalizers deallocate targets
+!     out from under pointers in the matrix database... but it causes a
+!     crash.  I don't know why.
+!             call nullifyMatrix ( matrix )  ! so as not to clobber out
+            ! from under matrixDatabase(value) when matrix is finalized
+          case ( w_matrix_c)
+            type = exprn_m
+            value = addToMatrixDatabase ( matrixDatabase, matrix_c )
+!     The following is probably necessary to make final subroutines for
+!     RC_Info and Matrix_T work, else the finalizers deallocate targets
+!     out from under pointers in the matrix database... but it causes a
+!     crash.  I don't know why.
+!             call nullifyMatrix ( matrix_c%m )  ! so as not to clobber out
+            ! from under matrixDatabase(value) when matrix_c%m is finalized
+          case ( w_matrix_k)
+            type = exprn_m
+            value = addToMatrixDatabase ( matrixDatabase, matrix_k )
+!     The following is probably necessary to make final subroutines for
+!     RC_Info and Matrix_T work, else the finalizers deallocate targets
+!     out from under pointers in the matrix database... but it causes a
+!     crash.  I don't know why.
+!             call nullifyMatrix ( matrix_k%m )  ! so as not to clobber out
+            ! from under matrixDatabase(value) when matrix_k%m is finalized
+          case ( w_matrix_s )
+            type = exprn_m
+            value = addToMatrixDatabase ( matrixDatabase, matrix_s )
+!     The following is probably necessary to make final subroutines for
+!     RC_Info and Matrix_T work, else the finalizers deallocate targets
+!     out from under pointers in the matrix database... but it causes a
+!     crash.  I don't know why.
+!             call nullifyMatrix ( matrix_s%m )  ! so as not to clobber out
+            ! from under matrixDatabase(value) when matrix_s%m is finalized
+          end select
+          call declare ( string, dValue, type, value, son )
+        else ! ------------------- Update the declaration for an existing name
+          value = decoration ( decl%tree )
+          select case ( what )
+          case ( w_number )
+            if ( decl%type == label ) then
+              spec = get_spec(decl%tree)
+              if ( spec == s_vector ) then ! Broadcast scalar to entire vector
+                do q = 1, size(vectorDatabase(value)%quantities)
+                  vectorDatabase(value)%quantities(q)%values = dValue
+                end do
+              else
+                call announce_error ( son, incompatible )
+                what = w_nothing
+   go to 100
+              end if
+            else if ( decl%type /= exprn .and. decl%type /= num_value ) then
+              call announce_error ( son, incompatible )
+              what = w_nothing
+   go to 100
+            end if
+          case ( w_vector )
+            if ( decl%type == label ) then
+              spec = get_spec(decl%tree)
+              if ( spec /= s_vector ) then
+                call announce_error ( son, incompatible )
+                what = w_nothing
+   go to 100
+              end if
+            else if ( decl%type /= exprn_v ) then
+              call announce_error ( son, incompatible )
+              what = w_nothing
+   go to 100
+            end if
+            call copyVector ( vectorDatabase(value), vector )
+          case ( w_matrix, w_matrix_c, w_matrix_k, w_matrix_s )
+            if ( decl%type == label ) then
+              spec = get_spec(decl%tree)
+              if ( spec /= s_matrix ) then
+                call announce_error ( son, incompatible )
+                what = w_nothing
+   go to 100
+              end if
+            else if ( decl%type /= exprn_m ) then
+              call announce_error ( son, incompatible )
+              what = w_nothing
+   go to 100
+            end if
+            call getActualMatrixFromDatabase ( matrixDatabase(value), &
+              & LHSMatrix )
+            whatsLHS = whats ( GetKindFromMatrixDatabase ( matrixDatabase(value) ) )
+            if ( what == whatsLHS ) then
+              select case ( what )
+              case ( w_matrix )
+                call copyMatrixValue ( LHSmatrix, matrix )     ! deep copy
+              case ( w_matrix_c )
+                call copyMatrixValue ( LHSmatrix, matrix_c%m ) ! deep copy
+              case ( w_matrix_k )
+                call copyMatrixValue ( LHSmatrix, matrix_k%m ) ! deep copy
+              case ( w_matrix_s )
+                call copyMatrixValue ( LHSmatrix, matrix_s%m ) ! deep copy
+              end select
+            else
+              ! OK the LHS and RHS matrices are of different type.
+              ! We'll allow 'promotion' from some to plain but not any other conversion.
+              if ( whatsLHS == w_matrix ) then
+                select case ( what )
+                case ( w_matrix_c )
+                  call copyMatrixValue ( LHSmatrix, matrix_c%m )
+                case ( w_matrix_s )
+                  call copyMatrixValue ( LHSmatrix, matrix_s%m )
+                  call ReflectMatrix ( LHSMatrix )
+                case default
+                  call announce_error ( son, incompatible )
+                end select
+              else
+                call announce_error ( son, incompatible )
+              end if
+            end if
+          case default
+            stop
+          end select
+          call redeclare ( string, dValue, decl%type, decl%units, decl%tree )
+          value = decoration ( decl%tree ) ! in case switches contains 'alg'
+100       call destroyStuff ( what, vector, matrix, matrix_c, matrix_k, matrix_s )
+        end if
+        if ( switchDetail(switches,'alg') > -1 ) then
+          select case ( what )
+          case ( w_number )
+            call display_string ( sub_rosa(lhs) )
+            call output ( ' = ' )
+            call output ( dValue, advance='yes' )
+          case ( w_vector )
+            call dump ( vectorDatabase(value) )
+          case ( w_matrix, w_matrix_c, w_matrix_k, w_matrix_s )
+            call dump ( matrixDatabase(value), details=2 )
+          end select
+        end if
+      end if
+200   call trace_end ( 'Algebra loop', cond=toggle(gen) .and. levels(gen) > 0 )
+    end do
+    call trace_end ( 'Algebra', cond=toggle(gen) )
+
+    if ( error /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+      & 'An error occurred in the Algebra section' )
+
+  contains
+
+    ! ...........................................  AlgebraCommands .....
+    subroutine AlgebraCommands ( root, VectorDatabase, MatrixDatabase, &
+      & chunk, forwardModelConfigDatabase )
+      use MATRIXMODULE_1, only: COLUMNSCALE, CYCLICJACOBI, REFLECTMATRIX, ROWSCALE
+      use REGULARIZATION, only: REGULARIZE
+      use INIT_TABLES_MODULE, only: FIELD_FIRST, FIELD_LAST, F_MATRIX, F_EIGENVECTORS, F_SCALE, &
+        & F_RHSOUT, F_FORWARDMODEL, F_FWDMODELIN, F_FWDMODELOUT, F_FWDMODELEXTRA, &
+        & F_MEASUREMENTS, F_MEASUREMENTSD, F_REGORDERS, F_REGQUANTS, F_REGWEIGHTS, F_REGWEIGHTVEC, &
+        & F_HORIZONTAL, F_RESIDUALSUPPLIED, F_RETRIEVALEXTRA, &
+        & F_RETRIEVALFORWARDMODEL, F_RETRIEVALIN, &
+        & F_SOURCEMATRIX, F_TRUTHEXTRA, F_TRUTHFORWARDMODEL, F_TRUTHIN
+      use INIT_TABLES_MODULE, only: L_TRUE
+      use INIT_TABLES_MODULE, only: S_COLUMNSCALE, S_COMBINECHANNELS, S_CYCLICJACOBI, &
+        & S_DISJOINTEQUATIONS, S_REFLECT, S_ROWSCALE, S_NORMALEQUATIONS, S_REGULARIZATION
+      use MORETREE, only: GET_SPEC_ID, GET_BOOLEAN
+      use MATRIXTOOLS, only: COMBINECHANNELSINMATRIX
+        
+      ! Dummy arguments
+      integer, intent(in) :: ROOT
+      type(vector_T), dimension(:), pointer :: VectorDatabase
+      type(matrix_Database_T), dimension(:), pointer :: MatrixDatabase
+      type(MLSChunk_T), intent(in) :: CHUNK
+      type(ForwardModelConfig_T), pointer, dimension(:) :: FORWARDMODELCONFIGDATABASE
+
+      ! Local variables
+      logical, dimension(field_first:field_last) :: GOT ! Fields
+      logical :: HORIZONTAL             ! Regularization direction
+      logical :: RESIDUALSUPPLIED       ! For NormalEquations command
+      integer :: FIELDID                ! ID for a field (duh!)
+      integer :: FORWARDMODELNODE       ! Tree node
+      integer :: TRUTHFORWARDMODELNODE  ! Tree node
+      integer :: RETRIEVALFORWARDMODELNODE ! Tree node
+      integer :: I                      ! Loop counter
+      integer :: KEY                    ! Tree node
+      integer :: MATRIXIND              ! Index into matrix database
+      integer :: MATRIXKIND             ! Kind of matrix
+      integer :: REGORDERS              ! Regularization orders
+      integer :: REGQUANTS              ! Regularization quantities
+      integer :: REGWEIGHTS             ! Regularization weights
+      integer :: ROWS                   ! Rows of regularization
+      integer :: SON                    ! Tree node
+      integer :: SOURCEMATRIXIND        ! Source matrix index
+      integer :: SOURCEMATRIXKIND       ! Kind of source matrix.
+      integer :: VALUE                  ! Value node
+      type(Matrix_T), pointer :: EIGENVECTORS ! Eigen vector matrix
+      type(Matrix_T), pointer :: MATRIX ! The matrix to work on
+      type(Matrix_SPD_T), pointer :: MATRIX_S ! SPD version of matrix
+      type(Matrix_Cholesky_T), pointer :: MATRIX_C ! SPD version of matrix
+      type(Matrix_T), pointer :: MATRIX2 ! The matrix to work on
+      type(Matrix_SPD_T), pointer :: MATRIX_S2 ! SPD version of matrix
+      type(Matrix_Cholesky_T), pointer :: MATRIX_C2 ! SPD version of matrix
+      type(Vector_T), pointer :: FWDMODELEXTRA ! Input for forward models
+      type(Vector_T), pointer :: FWDMODELIN ! Input for forward models
+      type(Vector_T), pointer :: FWDMODELOUT ! Output of forward models
+      type(Vector_T), pointer :: MEASUREMENTS ! Measurement vector
+      type(Vector_T), pointer :: MEASUREMENTSD ! Measurement noise vector
+      type(Vector_T), pointer :: RETRIEVALEXTRA ! Input for forward models
+      type(Vector_T), pointer :: RETRIEVALIN ! Input for forward models
+      type(Vector_T), pointer :: RHSOUT ! Vector for normal equations
+      type(Vector_T), pointer :: SCALE ! The scaling vector
+      type(Vector_T), pointer :: TRUTHEXTRA ! Input for forward models
+      type(Vector_T), pointer :: TRUTHIN ! Input for forward models
+      type(Vector_T), pointer :: REGWEIGHTVEC ! Regularization vector
+
+      ! Executable code
+      nullify ( matrix, eigenvectors )
+      nullify ( fwdModelExtra, fwdModelIn, fwdModelOut, rhsOut, &
+        & measurements, measurementSD, scale )
+      nullify ( regWeightVec )
+      
+      regOrders = 0
+      regWeights = 0
+      regQuants = 0
+      horizontal = .false.
+      residualSupplied = .false.
+
+      do i = 2, nsons(root)
+        son = subtree ( i, root )
+        key = subtree ( 1, son )
+        if ( node_id(son) == n_set_one ) then
+          value = l_true
+        else
+          value = decoration(subtree(2,son))
+        end if
+        fieldID = decoration(key)
+        got ( fieldID ) = .true.
+        select case ( fieldID )
+        case ( f_eigenVectors )
+          matrixInd = decoration ( value )
+          if ( GetKindFromMatrixDatabase ( matrixDatabase(matrixInd) ) /= k_plain ) &
+            & call Announce_Error ( key, notPlain )
+          call GetFromMatrixDatabase ( matrixDatabase(matrixInd), eigenVectors )
+        case ( f_forwardModel )
+          forwardModelNode = son
+        case ( f_fwdModelExtra )
+          fwdModelExtra => vectorDatabase ( decoration ( value ) )
+        case ( f_fwdModelIn )
+          fwdModelIn => vectorDatabase ( decoration ( value ) )
+        case ( f_fwdModelOut )
+          fwdModelOut => vectorDatabase ( decoration ( value ) )
+        case ( f_horizontal )
+          horizontal = get_boolean ( son )
+        case ( f_measurements )
+          measurements => vectorDatabase ( decoration ( value ) )
+        case ( f_measurementSD )
+          measurementSD => vectorDatabase ( decoration ( value ) )
+        case ( f_regOrders )
+          regOrders = son
+        case ( f_regQuants )
+          regQuants = son
+        case ( f_regWeights )
+          regWeights = son
+        case ( f_regWeightVec )
+          regWeightVec => vectorDatabase ( decoration ( value ) )
+        case ( f_residualSupplied )
+          residualSupplied = get_boolean ( son )
+        case ( f_retrievalExtra )
+          retrievalExtra => vectorDatabase ( decoration ( value ) )
+        case ( f_retrievalForwardModel )
+          retrievalForwardModelNode = son
+        case ( f_retrievalIn )
+          retrievalIn => vectorDatabase ( decoration ( value ) )
+        case ( f_scale )
+          scale => vectorDatabase ( decoration ( value ) )
+        case ( f_matrix )
+          matrixInd = decoration ( value )
+          matrixKind = GetKindFromMatrixDatabase ( matrixDatabase(matrixInd) )
+          select case ( matrixKind )
+          case ( k_plain )
+            call GetFromMatrixDatabase ( matrixDatabase(matrixInd), matrix )
+          case ( k_cholesky )
+            call GetFromMatrixDatabase ( matrixDatabase(matrixInd), matrix_c )
+          case ( k_spd )
+            call GetFromMatrixDatabase ( matrixDatabase(matrixInd), matrix_s )
+          case default
+            call Announce_Error ( key, notSupported )
+          end select
+        case ( f_rhsOut )
+          rhsOut => vectorDatabase ( decoration ( value ) )
+        case ( f_sourceMatrix )
+          sourceMatrixInd = decoration ( value )
+          sourceMatrixKind = GetKindFromMatrixDatabase ( matrixDatabase(sourceMatrixInd) )
+          select case ( sourceMatrixKind )
+          case ( k_plain )
+            call GetFromMatrixDatabase ( matrixDatabase(sourceMatrixInd), matrix2 )
+          case ( k_cholesky )
+            call GetFromMatrixDatabase ( matrixDatabase(sourceMatrixInd), matrix_c2 )
+          case ( k_spd )
+            call GetFromMatrixDatabase ( matrixDatabase(sourceMatrixInd), matrix_s2 )
+          case default
+            call Announce_Error ( key, notSupported )
+          end select
+        case ( f_truthExtra )
+          truthExtra => vectorDatabase ( decoration ( value ) )
+        case ( f_truthForwardModel )
+          truthForwardModelNode = son
+        case ( f_truthIn )
+          truthIn => vectorDatabase ( decoration ( value ) )
+        end select
+      end do
+
+      select case ( get_spec_id ( root ) )
+      case ( s_columnScale )
+        select case ( matrixKind )
+        case ( k_plain )
+          call ColumnScale ( matrix, scale )
+        case ( k_cholesky )
+          call ColumnScale ( matrix_c%m, scale )
+        case ( k_spd )
+          call ColumnScale ( matrix_s%m, scale )
+        case default
+          call Announce_Error ( key, notSupported )
+        end select
+      case ( s_combineChannels )
+        if ( matrixKind /= k_plain ) call Announce_Error ( key, notSupported )
+        if ( sourceMatrixKind /= k_plain ) call Announce_Error ( key, notSupported )
+        call CombineChannelsInMatrix ( matrix, matrix2 )
+      case ( s_cyclicJacobi ) 
+        if ( matrixKind /= k_plain ) call Announce_Error ( key, notSupported )
+        call CyclicJacobi ( matrix, eigenVectors )
+      case ( s_disjointEquations )
+        if ( matrixKind /= k_plain ) call Announce_Error ( key, notSupported )
+        call DisjointEquations ( matrix, truthIn, truthExtra, retrievalIn, retrievalExtra, &
+          & truthForwardModelNode, retrievalForwardModelNode, measurementSD, &
+          & chunk, forwardModelConfigDatabase )
+      case ( s_reflect )
+        if ( matrixKind /= k_plain ) call Announce_Error ( key, notSupported )
+        call ReflectMatrix ( matrix )
+      case ( s_rowScale )
+        select case ( matrixKind )
+        case ( k_plain )
+          call RowScale ( scale, matrix )
+        case ( k_cholesky )
+          call RowScale ( scale, matrix_c%m )
+        case ( k_spd )
+          call RowScale ( scale, matrix_s%m )
+        case default
+          call Announce_Error ( key, notSupported )
+        end select
+      case ( s_normalEquations )
+        if ( matrixKind /= k_spd ) call Announce_Error ( key, notSupported )
+        call NormalEquationsCommand ( matrix_s, rhsOut, forwardModelNode, &
+          & fwdModelIn, fwdModelExtra, fwdModelOut, measurements, measurementSD, &
+          & chunk, forwardModelConfigDatabase, residualSupplied )
+      case ( s_regularization )
+        if ( matrixKind /= k_plain ) call Announce_Error ( key, notSupported )
+        call Regularize ( matrix, regOrders, regQuants, regWeights, regWeightVec, rows, horizontal )
+      end select
+
+    end subroutine AlgebraCommands
+      
+    ! ...........................................  Announce_Error  .....
+    subroutine Announce_Error ( Where, What )
+      use LEXER_CORE, only: PRINT_SOURCE
+      use OUTPUT_M, only: OUTPUT
+      use TREE, only: DUMP_TREE_NODE, WHERE_AT=>WHERE
+      integer :: Where        ! Root of subtree where error occurred
+      integer :: What         ! What message to emit
+
+      error = max(error,1)
+      call output ( '***** At ', from_where = "Algebra module" )
+      call print_source ( where_at(where) )
+      call output ( ', tree ' )
+      call output ( where )
+      call output ( ': ' )
+      select case ( what )
+      case ( ambiguous )
+        call output ( 'Left-hand side is ambiguous.', advance='yes' )
+      case ( cantInvertVector )
+        call output ( 'Cannot invert a vector.', advance='yes' )
+      case ( incompatible )
+        call output ( 'Operands are incompatible.', advance='yes' )
+      case ( notPlain )
+        call output ( 'Matrix is not a plain matrix.', advance='yes' )
+      case ( notQuantity )
+        call output ( 'Right operand is not a quantity of the left operand.', &
+          & advance='yes' )
+      case ( notSupported )
+        call output ( 'Operation not (yet?) supported for this kind(s) of matrix.', advance='yes' )
+      case ( notVector )
+        call output ( 'Left operand of dot is not a vector.', advance='yes' )
+      case ( undefined )
+        call output ( 'Name in expression is undefined.', advance='yes' )
+      case ( unknownFunc )
+        call output ( 'Function "' )
+        call display_string(sub_rosa(where))
+        call output ( ' is not recognized.', advance='yes' )
+      case ( unknownOp )
+        call output ( 'Operator "' )
+        call dump_tree_node ( where, 0 )
+        call output ( '" in expression is unknown.', advance='yes' )
+      case ( wrongNumArgs )
+        call output ( 'Wrong number of arguments.', advance='yes' )
+      case default
+        call output ( 'What is error code ' )
+        call output ( what )
+        call output ( '?', advance='yes' )
+      end select
+    end subroutine Announce_Error
+
+    ! ......................................................  Expr .....
+    recursive subroutine Expr ( Root, What, DValue, Vector, Matrix, Matrix_C, &
+      & Matrix_K, Matrix_S )
+      ! Evaluate an expression by traversing its parse tree.
+      ! All it handles are identifiers, numbers, add, subtract, multiply,
+      ! divide and inverse divide (\).
+      ! It doesn't handle strings, ranges, array constructors or relational
+      ! operators.
+      ! The output vectors or matrices are COPIES.  They must be destroyed
+      ! or put into a database to avoid memory leaks.
+
+      use DECLARATION_TABLE, only: DECLS, EMPTY, FUNCTION, GET_DECL
+      use FUNCTIONS, only: F_CHOLESKY, F_CLEARLOWER, F_INVERT, F_TRANSPOSE, F_GETDIAGONAL, F_SQRT, F_XTX
+      use MATRIXMODULE_1, only: NORMALEQUATIONS
+      use STRING_TABLE, only: FLOAT_VALUE
+      use TREE, only: NODE_ID, NSONS, SUB_ROSA, SUBTREE
+      use TREE_TYPES ! Everything, especially everything beginning with N_
+      use VECTORSMODULE, only: GETVECTORQUANTITYINDEXBYNAME
+
+      integer, intent(in) :: Root  ! Index in tree of root of expression subtree
+      integer, intent(out) :: What  ! What is result (see its parameters above)
+      ! Results, depending on WHAT:
+      real(r8), intent(out) :: DValue                   ! What == w_number
+      type(vector_t), intent(out) :: Vector             ! What == w_vector
+      type(matrix_t), intent(out) :: Matrix             ! What == w_matrix
+      type(matrix_cholesky_t), intent(out) :: Matrix_C  ! What == w_matrix_c
+      type(matrix_kronecker_t), intent(out) :: Matrix_K ! What == w_matrix_k
+      type(matrix_SPD_t), intent(out) :: Matrix_S       ! What == w_matrix_s
+                                                 ! else   What == w_nothing
+
+      type(decls) :: DECL          ! Declaration of a name
+      real(r8) :: DValue2          ! Value of RH operand if Value2 == 0
+      integer :: ME                ! Node ID for root
+      integer :: Son1, Son2        ! Sons of Root
+      integer :: SPEC              ! Index of spec of label, e.g. S_Matrix
+      integer :: String            ! String table index
+      integer :: Trace_me = -1     ! String table index for trace
+      integer :: What2             ! WHAT for second subexpression
+      type(vector_t), save :: EmptyVector
+      type(vector_t) :: Vector2
+      type(matrix_t), save :: EmptyMatrix
+      type(matrix_t) :: Matrix2, Matrix3
+      type(matrix_t), pointer :: MatrixP
+      type(matrix_cholesky_t) :: Matrix_C2
+      type(matrix_cholesky_t), pointer :: Matrix_CP
+      type(matrix_kronecker_t) :: Matrix_K2
+      type(matrix_kronecker_t), pointer :: Matrix_KP
+      type(matrix_SPD_t) :: Matrix_S2
+      type(matrix_SPD_t), pointer :: Matrix_SP
+
+!      call print_subtree ( root, 0, dump_decor=.true. )
+
+      call trace_begin ( Trace_me, 'Algebra.Expr', root, cond=toggle(gen) )
+      dvalue = 0.0_r8
+      me = node_id(root)
+      select case ( me )
+      case ( n_identifier ) ! ------------------------------------ Identifier
+        string = sub_rosa(root)
+        ! Look up the identifier
+        decl = get_my_decl(root)
+        if ( decl%type == label ) then
+          spec = get_spec(decl%tree)
+          ! call print_subtree ( decl%tree, 0, dump_decor=.true. )
+          if ( spec == s_matrix ) then
+            decl%type = exprn_m
+          else if ( spec == s_vector ) then
+            decl%type = exprn_v
+          else
+            decl%type = empty
+          end if
+        end if
+        if ( decl%type == empty ) then
+          call announce_error ( root, undefined )
+          what = w_nothing
+        else
+          value = decoration ( decl%tree )
+          dvalue = decl%value
+          select case ( decl%type )
+          case ( exprn, num_value )
+            what = w_number
+          case ( exprn_v )
+            what = w_vector
+            call copyVector ( vector, vectorDatabase(value), clone=.true. )
+          case ( exprn_m )
+            what = whats(getKindFromMatrixDatabase(matrixDatabase(value)))
+            select case ( what )
+            case ( w_matrix )
+              call getFromMatrixDatabase ( matrixDatabase(value), matrixP )
+              call copyMatrix ( matrix, matrixP )
+            case ( w_matrix_c )
+              call getFromMatrixDatabase ( matrixDatabase(value), matrix_CP )
+              call copyMatrix ( matrix_C%m, matrix_CP%m )
+            case ( w_matrix_k )
+              call getFromMatrixDatabase ( matrixDatabase(value), matrix_KP )
+              call copyMatrix ( matrix_K%m, matrix_KP%m )
+            case ( w_matrix_s )
+              call getFromMatrixDatabase ( matrixDatabase(value), matrix_SP )
+              call copyMatrix ( matrix_S%m, matrix_SP%m )
+            end select
+          end select
+        end if
+      case ( n_number ) ! -------------------------------------------- Number
+        dvalue = float_value(sub_rosa(root))
+        what = w_number
+      case ( n_dot ) ! -------------------------------------------------- Dot
+        son1 = subtree(1,root)
+        call expr ( son1, what, dvalue, vector, matrix, matrix_c, &
+          & matrix_k, matrix_s )
+        if ( what /= w_vector ) then
+          call announce_error ( son1, notVector )
+          what = w_nothing
+          return
+        end if
+        son2 = subtree(2,root)
+        decl = get_my_decl(son2)
+        if ( decl%type /= label ) then
+          call announce_error ( son1, notQuantity )
+          what = w_nothing
+          return
+        end if
+        if ( get_spec(decl%tree) /= s_quantity ) then
+          call announce_error ( son1, notQuantity )
+          what = w_nothing
+          return
+        end if
+        value = getVectorQuantityIndexByName ( vector, sub_rosa(son2) )
+        if ( value < 0 ) then
+          call announce_error ( son1, notQuantity )
+          what = w_nothing
+          return
+        end if
+        what = w_nothing
+        call announce_error ( root, notSupported )
+      case ( n_func_ref ) ! ---------------------------------------- Func_ref
+        son1 = subtree(1,root)
+        string = sub_rosa(son1)
+        ! Look up the function name
+        decl = get_decl(string,function)
+        if ( decl%type /= function ) call announce_error ( son1, unknownFunc )
+        if ( nsons(root) > 1 ) then
+          son2 = subtree(2,root)
+          call expr ( son2, what2, dvalue2, vector2, matrix2, matrix_c2, &
+            & matrix_k2, matrix_s2 )
+        end if
+        select case ( decl%units )
+        case ( f_cholesky )
+          if ( nsons(root) /= 2 ) then
+            call announce_error ( son1, wrongNumArgs )
+          else
+            if ( what2 /= w_matrix_s ) then
+              call announce_error ( son2, incompatible )
+            else
+              ! Create result matrix
+              call CreateEmptyMatrix ( matrix_c%m, 0, &
+                & matrix_s2%m%row%vec, matrix_s2%m%col%vec, &
+                & .not. matrix_s2%m%row%instFirst, .not. matrix_s2%m%col%instFirst )
+              ! Fill it
+              call CholeskyFactor ( matrix_c, matrix_s2 )
+              what = w_matrix_c
+            end if
+          end if
+        case ( f_clearLower )
+          if ( nsons(root) /= 2 ) then
+            call announce_error ( son1, wrongNumArgs )
+          else
+            if ( what2 /= w_matrix ) then
+              call announce_error ( son2, incompatible )
+            else
+              ! Create result matrix
+              call CreateEmptyMatrix ( matrix_c%m, 0, &
+                & matrix2%row%vec, matrix2%col%vec, &
+                & .not. matrix2%row%instFirst, .not. matrix2%col%instFirst )
+              ! Fill it
+              call CopyMatrix ( matrix_c%m, matrix2 )
+              call ClearLower ( matrix_c%m )
+              what = w_matrix_c
+            end if
+          end if
+        case ( f_invert )
+          if ( nsons(root) /= 2 ) then
+            call announce_error ( son1, wrongNumArgs )
+          else
+            if ( what2 /= w_matrix_c ) then
+              call announce_error ( son2, incompatible )
+            else
+              ! Create result matrix
+              call CreateEmptyMatrix ( matrix, 0, &
+                & matrix_c2%m%row%vec, matrix_c2%m%col%vec, &
+                & .not. matrix_c2%m%row%instFirst, .not. matrix_c2%m%col%instFirst )
+              ! Fill it
+              call InvertCholesky ( matrix_c2, matrix )
+              what = w_matrix
+            end if
+          end if
+        case ( f_getDiagonal )
+          if ( nsons(root) /= 2 ) then
+            call announce_error ( son1, wrongNumArgs )
+          else
+            select case ( what2 )
+            case ( w_matrix )
+              call CloneVector ( vector, matrix2%row%vec )
+              call GetDiagonal ( matrix2, vector )
+              what = w_vector
+            case ( w_matrix_s )
+              call CloneVector ( vector, matrix_s2%m%row%vec )
+              call GetDiagonal ( matrix_s2%m, vector )
+              what = w_vector
+            case ( w_matrix_c )
+              call CloneVector ( vector, matrix_c2%m%row%vec )
+              call GetDiagonal ( matrix_c2%m, vector )
+              what = w_vector
+            case default
+              call announce_error ( son2, incompatible )
+              what = w_nothing
+            end select
+          end if
+        case ( f_sqrt )
+          if ( nsons(root) /= 2 ) then
+            call announce_error ( son1, wrongNumArgs )
+          else
+            what = what2
+            select case ( what2 )
+            case ( w_number )
+              dValue = sqrt ( dValue2 )
+            case ( w_vector )
+              call CopyVector ( vector, vector2, clone=.true. )
+              call PowVector ( vector, 0.5_rv )
+            case default
+              call announce_error ( son2, incompatible )
+            end select
+          end if
+        case ( f_transpose )
+          if ( nsons(root) /= 2 ) then
+            call announce_error ( son1, wrongNumArgs )
+          else
+            ! Optimization?  Instead of actually doing the transpose here,
+            ! consider returning a flag that the result needs transposing.
+            ! Then one could use multiply routines that are aware of the
+            ! transpose, at the expense of needing to remember that the
+            ! transpose needs to be done in other situations, e.g in "Add".
+            select case ( what2 )
+            case ( w_matrix )
+              ! Create result matrix as transpose
+              call CreateEmptyMatrix ( matrix, 0, &
+                & matrix2%col%vec, matrix2%row%vec, &
+                & .not. matrix2%col%instFirst, .not. matrix2%row%instFirst )
+              call TransposeMatrix ( matrix, matrix2 )
+              what = w_matrix
+            case ( w_matrix_c )
+              ! Create result matrix as transpose
+              call CreateEmptyMatrix ( matrix, 0, &
+                & matrix_c2%m%col%vec, matrix_c2%m%row%vec, &
+                & .not. matrix_c2%m%col%instFirst, .not. matrix_c2%m%row%instFirst )
+              call TransposeMatrix ( matrix, matrix_c2%m )
+              what = w_matrix
+            case ( w_matrix_s )
+              call CopyMatrix ( matrix_s%m, matrix_s2%m )
+              what = w_matrix_s
+            case default
+              call announce_error ( son2, incompatible )
+            end select
+          end if
+        case ( f_xtx )
+          if ( nsons(root) /= 2 ) then
+            call announce_error ( son1, wrongNumArgs )
+          else
+            select case ( what2 )
+            case ( w_matrix )
+              ! Create result matrix
+              call CreateEmptyMatrix ( matrix_s%m, 0, &
+                & matrix2%col%vec, matrix2%col%vec, &
+                & .not. matrix2%col%instFirst, .not. matrix2%col%instFirst )
+              call NormalEquations ( matrix2, matrix_s )
+              what = w_matrix_s
+            case ( w_matrix_c )
+              ! Create result matrix
+              call CreateEmptyMatrix ( matrix_s%m, 0, &
+                & matrix_c2%m%col%vec, matrix_c2%m%col%vec, &
+                & .not. matrix_c2%m%col%instFirst, .not. matrix_c2%m%col%instFirst )
+              call NormalEquations ( matrix_c2%m, matrix_s )
+              what = w_matrix_s
+            case ( w_matrix_s )
+              ! Create result matrix
+              call CreateEmptyMatrix ( matrix_s%m, 0, &
+                & matrix_s2%m%col%vec, matrix_s2%m%col%vec, &
+                & .not. matrix_s2%m%col%instFirst, .not. matrix_s2%m%col%instFirst )
+              call NormalEquations ( matrix_s2%m, matrix_s )
+              what = w_matrix_s
+            case default
+              call announce_error ( son2, incompatible )
+              what = w_nothing
+            end select
+          end if
+        case default
+          call Announce_Error ( son1, notSupported )
+        end select
+      case default
+        son1 = subtree(1,root)
+        call expr ( son1, what, dvalue, vector, matrix, matrix_c, &
+          & matrix_k, matrix_s )
+        what2 = w_nothing
+        if ( nsons(root) > 1 ) then
+          son2 = subtree(2,root)
+          call expr ( son2, what2, dvalue2, vector2, matrix2, matrix_c2, &
+            & matrix_k2, matrix_s2 )
+        end if
+        select case ( me )
+        case ( n_plus, n_minus ) ! ------------------------------ Plus, Minus
+          if ( nsons(root) > 1 ) then
+            if ( what /= what2 ) then
+              call announce_error ( root, incompatible )
+              what = w_nothing
+              return
+            end if
+            if ( me == n_plus ) then ! --------------------------------- Plus
+              ! value = value + value2
+              select case ( what )
+              case ( w_number )
+                dvalue = dvalue + dvalue2
+              case ( w_vector )
+                call addToVector ( vector, vector2 )
+              case ( w_matrix )
+                call addToMatrix ( matrix, matrix2 )
+              case ( w_matrix_c )
+                call addToMatrix ( matrix_c%m, matrix_c2%m )
+              case ( w_matrix_k )
+                call addToMatrix ( matrix_k%m, matrix_k2%m )
+              case ( w_matrix_s )
+                call addToMatrix ( matrix_s%m, matrix_s2%m )
+              end select
+            else ! ------------------------------------------------- Subtract
+              ! value = value - value2
+              select case ( what )
+              case ( w_number )
+                dvalue = dvalue - dvalue2
+              case ( w_vector )
+                call addToVector ( vector, vector2, scale=-1.0_r8 )
+              case ( w_matrix )
+                call addToMatrix ( matrix, matrix2, scale=-1.0_r8 )
+              case ( w_matrix_c )
+                call addToMatrix ( matrix_c%m, matrix_c2%m, scale=-1.0_r8 )
+              case ( w_matrix_k )
+                call addToMatrix ( matrix_k%m, matrix_k2%m, scale=-1.0_r8 )
+              case ( w_matrix_s )
+                call addToMatrix ( matrix_s%m, matrix_s2%m, scale=-1.0_r8 )
+              end select
+            end if
+          else if ( me == n_minus ) then ! --------------------------- Negate
+            ! value = -value
+            select case ( what )
+            case ( w_number )
+              dvalue = -dvalue
+            case ( w_vector )
+              call scaleVector ( vector, -1.0_r8 )
+            case ( w_matrix )
+              call scaleMatrix ( matrix, -1.0_r8 )
+            case ( w_matrix_c )
+              call scaleMatrix ( matrix_c%m, -1.0_r8 )
+            case ( w_matrix_k )
+              call scaleMatrix ( matrix_k%m, -1.0_r8 )
+            case ( w_matrix_s )
+              call scaleMatrix ( matrix_s%m, -1.0_r8 )
+            end select
+          end if
+        case ( n_mult ) ! value = value * value2 ------------------- Multiply
+          select case ( what )
+          case ( w_number )
+            select case ( what2 )
+            case ( w_number ) ! ........................ Number * Number
+              dvalue = dvalue * dvalue2
+            case ( w_vector ) ! ........................ Number * Vector
+              call scaleVector ( vector2, dValue, vector )
+            case ( w_matrix ) ! ........................ Number * Matrix
+              call copyMatrix ( matrix, matrix2 )
+              call scaleMatrix ( matrix, dValue )
+            case ( w_matrix_c ) ! .................... Number * Matrix_C
+              call copyMatrix ( matrix_c%m, matrix_c2%m )
+              call scaleMatrix ( matrix_c%m, dValue )
+            case ( w_matrix_k ) ! .................... Number * Matrix_K
+              call copyMatrix ( matrix_k%m, matrix_k2%m )
+              call scaleMatrix ( matrix_k%m, dValue )
+            case ( w_matrix_s ) ! .................... Number * Matrix_S
+              call copyMatrix ( matrix_s%m, matrix_s2%m )
+              call scaleMatrix ( matrix_s%m, dValue )
+            end select
+            what = what2
+          case ( w_vector )
+            select case ( what2 )
+            case ( w_number ) ! ........................ Vector * Number
+              call scaleVector ( vector, dValue2 )
+            case ( w_vector ) ! ........................ Vector * Vector
+              call MultiplyVectors ( vector, vector2 )
+            case ( w_matrix ) ! ........................ Vector * Matrix
+              call Announce_Error ( root, notSupported )
+            case ( w_matrix_c ) ! .................... Vector * Matrix_C
+              call Announce_Error ( root, notSupported )
+            case ( w_matrix_k ) ! .................... Vector * Matrix_K
+              call Announce_Error ( root, notSupported )
+            case ( w_matrix_s ) ! .................... Vector * Matrix_S
+              call Announce_Error ( root, notSupported )
+            end select
+          case ( w_matrix )
+            select case ( what2 )
+            case ( w_number ) ! ........................ Matrix * Number
+              call scaleMatrix ( matrix, dValue2 )
+            case ( w_vector ) ! ........................ Matrix * Vector
+              call CloneVector ( vector, matrix%row%vec )
+              call multiplyMatrixVectorNoT ( matrix, vector2, vector )
+              what = w_vector
+            case ( w_matrix ) ! ........................ Matrix * Matrix
+              call multiplyMatrix_XY ( matrix, matrix2, matrix3 )
+              call assignMatrix ( matrix, matrix3 ) ! Destroys Matrix first
+            case ( w_matrix_c ) ! .................... Matrix * Matrix_C
+              call multiplyMatrix_XY ( matrix, matrix_c2%m, matrix3 )
+              call assignMatrix ( matrix, matrix3 ) ! Destroys Matrix first
+            case ( w_matrix_k ) ! .................... Matrix * Matrix_K
+              call Announce_Error ( root, notSupported )
+            case ( w_matrix_s ) ! .................... Matrix * Matrix_S
+              ! Promote matrix 2 to plain
+              call copyMatrix ( matrix2, matrix_s2%m )
+              call ReflectMatrix ( matrix2 )
+              call multiplyMatrix_XY ( matrix, matrix2, matrix3 )
+              call assignMatrix ( matrix, matrix3 ) ! Destroys Matrix first
+              call DestroyMatrix ( matrix2 )
+            end select
+          case ( w_matrix_c )
+            select case ( what2 )
+            case ( w_number ) ! ...................... Matrix_C * Number
+              call scaleMatrix ( matrix_c%m, dValue2 )
+            case ( w_vector ) ! ...................... Matrix_C * Vector
+              call Announce_Error ( root, notSupported )
+            case ( w_matrix ) ! ...................... Matrix_C * Matrix
+              call multiplyMatrix_XY ( matrix_c%m, matrix2, matrix3 )
+              call assignMatrix ( matrix, matrix3 ) ! Destroys matrix first
+              what = w_matrix
+            case ( w_matrix_c ) ! .................. Matrix_C * Matrix_C
+              call Announce_Error ( root, notSupported )
+            case ( w_matrix_k ) ! .................. Matrix_C * Matrix_K
+              call Announce_Error ( root, notSupported )
+            case ( w_matrix_s ) ! .................. Matrix_C * Matrix_S
+              call Announce_Error ( root, notSupported )
+            end select
+          case ( w_matrix_k )
+            select case ( what2 )
+            case ( w_number ) ! ...................... Matrix_K * Number
+              call scaleMatrix ( matrix_k%m, dValue2 )
+            case ( w_vector ) ! ...................... Matrix_K * Vector
+              call Announce_Error ( root, notSupported )
+            case ( w_matrix ) ! ...................... Matrix_K * Matrix
+              call Announce_Error ( root, notSupported )
+            case ( w_matrix_c ) ! .................. Matrix_K * Matrix_C
+              call Announce_Error ( root, notSupported )
+            case ( w_matrix_k ) ! .................. Matrix_K * Matrix_K
+              call Announce_Error ( root, notSupported )
+            case ( w_matrix_s ) ! .................. Matrix_K * Matrix_S
+              call Announce_Error ( root, notSupported )
+            end select
+          case ( w_matrix_s )
+            select case ( what2 )
+            case ( w_number ) ! ...................... Matrix_S * Number
+              call scaleMatrix ( matrix_s%m, dValue2 )
+            case ( w_vector ) ! ...................... Matrix_S * Vector
+              call multiplyMatrixVectorSPD_1 ( matrix_s, vector2, vector )
+            case ( w_matrix ) ! ...................... Matrix_S * Matrix
+              call Announce_Error ( root, notSupported )
+            case ( w_matrix_c ) ! .................. Matrix_S * Matrix_C
+              call Announce_Error ( root, notSupported )
+            case ( w_matrix_k ) ! .................. Matrix_S * Matrix_K
+              call Announce_Error ( root, notSupported )
+            case ( w_matrix_s ) ! .................. Matrix_S * Matrix_S
+              ! Promote matrix to plain
+              call copyMatrix ( matrix, matrix_s%m )
+              call ReflectMatrix ( matrix )
+              ! Promote matrix2 to plain
+              call copyMatrix ( matrix2, matrix_s2%m )
+              call ReflectMatrix ( matrix2 )
+              ! Do the multiplication, store the result
+              call multiplyMatrix_XY ( matrix, matrix2, matrix3 )
+              call assignMatrix ( matrix, matrix3 ) ! Destroys Matrix first
+              ! Tidy up
+              call DestroyMatrix ( matrix2 )
+              what = w_matrix
+            end select
+          end select
+        case ( n_div )  ! value = value / value2 ------------------ Divide By
+          select case ( what )
+          case ( w_number )
+            select case ( what2 )
+            case ( w_number ) ! ........................ Number / Number
+              dvalue = dvalue / dvalue2
+            case ( w_vector ) ! ........................ Number / Vector
+              call CopyVector ( vector, vector2, clone=.true. )
+              call ReciprocateVector ( vector, dValue )
+              what = w_vector
+            case ( w_matrix ) ! ........................ Number / Matrix
+              call Announce_Error ( root, notSupported )
+            case ( w_matrix_c ) ! .................... Number / Matrix_C
+              call Announce_Error ( root, notSupported )
+            case ( w_matrix_k ) ! .................... Number / Matrix_K
+              call Announce_Error ( root, notSupported )
+            case ( w_matrix_s ) ! .................... Number / Matrix_S
+              call Announce_Error ( root, notSupported )
+            end select
+          case ( w_vector )
+            select case ( what2 )
+            case ( w_number ) ! ........................ Vector / Number
+              call scaleVector ( vector, 1.0_r8 / dValue2 )
+            case ( w_vector ) ! ........................ Vector / Vector
+              call announce_error ( son2, cantInvertVector )
+            case ( w_matrix ) ! ........................ Vector / Matrix
+              call Announce_Error ( root, notSupported )
+            case ( w_matrix_c ) ! .................... Vector / Matrix_C
+              call Announce_Error ( root, notSupported )
+            case ( w_matrix_k ) ! .................... Vector / Matrix_K
+              call Announce_Error ( root, notSupported )
+            case ( w_matrix_s ) ! .................... Vector / Matrix_S
+              call Announce_Error ( root, notSupported )
+            end select
+          case ( w_matrix )
+            select case ( what2 )
+            case ( w_number ) ! ........................ Matrix / Number
+              call scaleMatrix ( matrix, 1.0_r8 / dValue2 )
+            case ( w_vector ) ! ........................ Matrix / Vector
+              call announce_error ( son2, cantInvertVector )
+            case ( w_matrix ) ! ........................ Matrix / Matrix
+              call Announce_Error ( root, notSupported )
+            case ( w_matrix_c ) ! .................... Matrix / Matrix_C
+              call Announce_Error ( root, notSupported )
+            case ( w_matrix_k ) ! .................... Matrix / Matrix_K
+              call Announce_Error ( root, notSupported )
+            case ( w_matrix_s ) ! .................... Matrix / Matrix_S
+              call Announce_Error ( root, notSupported )
+            end select
+          case ( w_matrix_c )
+            select case ( what2 )
+            case ( w_number ) ! ...................... Matrix_C / Number
+              call scaleMatrix ( matrix_c%m, 1.0_r8 / dValue2 )
+            case ( w_vector ) ! ...................... Matrix_C / Vector
+              call announce_error ( son2, cantInvertVector )
+            case ( w_matrix ) ! ...................... Matrix_C / Matrix
+              call Announce_Error ( root, notSupported )
+            case ( w_matrix_c ) ! .................. Matrix_C / Matrix_C
+              call Announce_Error ( root, notSupported )
+            case ( w_matrix_k ) ! .................. Matrix_C / Matrix_K
+              call Announce_Error ( root, notSupported )
+            case ( w_matrix_s ) ! .................. Matrix_C / Matrix_S
+              call Announce_Error ( root, notSupported )
+            end select
+          case ( w_matrix_k )
+            select case ( what2 )
+            case ( w_number ) ! ...................... Matrix_K / Number
+              call scaleMatrix ( matrix_k%m, 1.0_r8 / dValue2 )
+            case ( w_vector ) ! ...................... Matrix_K / Vector
+              call announce_error ( son2, cantInvertVector )
+            case ( w_matrix ) ! ...................... Matrix_K / Matrix
+              call Announce_Error ( root, notSupported )
+            case ( w_matrix_c ) ! .................. Matrix_K / Matrix_C
+              call Announce_Error ( root, notSupported )
+            case ( w_matrix_k ) ! .................. Matrix_K / Matrix_K
+              call Announce_Error ( root, notSupported )
+            case ( w_matrix_s ) ! .................. Matrix_K / Matrix_S
+              call Announce_Error ( root, notSupported )
+            end select
+          case ( w_matrix_s )
+            select case ( what2 )
+            case ( w_number ) ! ...................... Matrix_S / Number
+              call scaleMatrix ( matrix_s%m, 1.0_r8 / dValue2 )
+            case ( w_vector ) ! ...................... Matrix_S / Vector
+              call announce_error ( son2, cantInvertVector )
+            case ( w_matrix ) ! ...................... Matrix_S / Matrix
+              call Announce_Error ( root, notSupported )
+            case ( w_matrix_c ) ! .................. Matrix_S / Matrix_C
+              call Announce_Error ( root, notSupported )
+            case ( w_matrix_k ) ! .................. Matrix_S / Matrix_K
+              call Announce_Error ( root, notSupported )
+            case ( w_matrix_s ) ! .................. Matrix_S / Matrix_S
+              call Announce_Error ( root, notSupported )
+            end select
+          end select
+        case ( n_into ) ! value = value \ value2 ---------------- Divide Into
+          select case ( what )
+          case ( w_number )
+            select case ( what2 )
+            case ( w_number ) ! ........................ Number \ Number
+              dvalue = dvalue2 / dvalue
+            case ( w_vector ) ! ........................ Number \ Vector
+              call scaleVector ( vector2, 1.0_r8/dValue, vector )
+            case ( w_matrix ) ! ........................ Number \ Matrix
+              call Announce_Error ( root, notSupported )
+            case ( w_matrix_c ) ! .................... Number \ Matrix_C
+              call Announce_Error ( root, notSupported )
+            case ( w_matrix_k ) ! .................... Number \ Matrix_K
+              call Announce_Error ( root, notSupported )
+            case ( w_matrix_s ) ! .................... Number \ Matrix_S
+              call Announce_Error ( root, notSupported )
+            end select
+          case ( w_vector )
+            call announce_error ( son1, cantInvertVector )
+          case ( w_matrix )
+            select case ( what2 )
+            case ( w_number ) ! ........................ Matrix \ Number
+              call Announce_Error ( root, notSupported )
+            case ( w_vector ) ! ........................ Matrix \ Vector
+              call Announce_Error ( root, notSupported )
+            case ( w_matrix ) ! ........................ Matrix \ Matrix
+              call Announce_Error ( root, notSupported )
+            case ( w_matrix_c ) ! .................... Matrix \ Matrix_C
+              call Announce_Error ( root, notSupported )
+            case ( w_matrix_k ) ! .................... Matrix \ Matrix_K
+              call Announce_Error ( root, notSupported )
+            case ( w_matrix_s ) ! .................... Matrix \ Matrix_S
+              call Announce_Error ( root, notSupported )
+            end select
+          case ( w_matrix_c )
+            select case ( what2 )
+            case ( w_number ) ! ...................... Matrix_C \ Number
+              call Announce_Error ( root, notSupported )
+            case ( w_vector ) ! ...................... Matrix_C \ Vector
+              call Announce_Error ( root, notSupported )
+            case ( w_matrix ) ! ...................... Matrix_C \ Matrix
+              call Announce_Error ( root, notSupported )
+            case ( w_matrix_c ) ! .................. Matrix_C \ Matrix_C
+              call Announce_Error ( root, notSupported )
+            case ( w_matrix_k ) ! .................. Matrix_C \ Matrix_K
+              call Announce_Error ( root, notSupported )
+            case ( w_matrix_s ) ! .................. Matrix_C \ Matrix_S
+              call Announce_Error ( root, notSupported )
+            end select
+          case ( w_matrix_k )
+            select case ( what2 )
+            case ( w_number ) ! ...................... Matrix_K \ Number
+              call Announce_Error ( root, notSupported )
+            case ( w_vector ) ! ...................... Matrix_K \ Vector
+              call Announce_Error ( root, notSupported )
+            case ( w_matrix ) ! ...................... Matrix_K \ Matrix
+              call Announce_Error ( root, notSupported )
+            case ( w_matrix_c ) ! .................. Matrix_K \ Matrix_C
+              call Announce_Error ( root, notSupported )
+            case ( w_matrix_k ) ! .................. Matrix_K \ Matrix_K
+              call Announce_Error ( root, notSupported )
+            case ( w_matrix_s ) ! .................. Matrix_K \ Matrix_S
+              call Announce_Error ( root, notSupported )
+            end select
+          case ( w_matrix_s )
+            select case ( what2 )
+            case ( w_number ) ! ...................... Matrix_S \ Number
+              call Announce_Error ( root, notSupported )
+            case ( w_vector ) ! ...................... Matrix_S \ Vector
+              call Announce_Error ( root, notSupported )
+            case ( w_matrix ) ! ...................... Matrix_S \ Matrix
+              call Announce_Error ( root, notSupported )
+            case ( w_matrix_c ) ! .................. Matrix_S \ Matrix_C
+              call Announce_Error ( root, notSupported )
+            case ( w_matrix_k ) ! .................. Matrix_S \ Matrix_K
+              call Announce_Error ( root, notSupported )
+            case ( w_matrix_s ) ! .................. Matrix_S \ Matrix_S
+              call Announce_Error ( root, notSupported )
+            end select
+          end select
+        case default
+          call announce_error ( root, unknownOp )
+        end select
+        call destroyStuff ( what2, vector2, matrix2, matrix_c2, matrix_k2, &
+          & matrix_s2 )
+      end select
+      call trace_end ( 'Algebra.Expr', cond=toggle(gen) )
+    end subroutine Expr
+
+    ! .............................................  DestroyStuff  .....
+    subroutine DestroyStuff ( what, vector, matrix, matrix_c, matrix_k, matrix_s )
+    ! Destroy whatever argument WHAT says to destroy
+      integer, intent(in) :: WHAT
+      type(vector_t), intent(inout) :: Vector
+      type(matrix_t), intent(inout) :: Matrix
+      type(matrix_cholesky_t), intent(out) :: Matrix_C
+      type(matrix_kronecker_t), intent(out) :: Matrix_K
+      type(matrix_SPD_t), intent(out) :: Matrix_S
+      select case ( what )
+      case ( w_vector )
+        call destroyVectorInfo ( vector )
+      case ( w_matrix )
+        call destroyMatrix ( matrix )
+      case ( w_matrix_c )
+        call destroyMatrix ( matrix_c%m )
+      case ( w_matrix_k )
+        call destroyMatrix ( matrix_k%m )
+      case ( w_matrix_s )
+        call destroyMatrix ( matrix_s%m )
+      end select
+    end subroutine DestroyStuff
+
+    ! ..............................................  Get_My_Decl  .....
+    type(decls) function Get_My_Decl ( Root )
+      integer, intent(in) :: Root      ! Tree index of declaration to get
+      type(decls) :: DECL              ! Declaration
+      integer :: I
+      integer :: String                ! String index for Root
+      integer, parameter :: Try(5) = (/ exprn, exprn_m, exprn_v, label, &
+        &                               num_value /) ! Decl types to try
+      get_my_decl%type = empty
+      string = sub_rosa(root)
+      do i = 1, size(try)
+        decl = get_decl(string,try(i))
+        if ( decl%type /= empty ) then
+          if ( get_my_decl%type /= empty ) call announce_error ( root, ambiguous )
+          get_my_decl = decl
+        end if
+      end do
+    end function Get_My_Decl
+
+    ! .................................................  Get_Spec  .....
+    integer function Get_Spec ( DEF )
+    ! "Root" is the index of a spec_args node for which we have the label.
+    ! Get the index of the specification, e.g. S_Matrix or S_Vector.
+      use Declaration_Table, only: SPEC
+      integer, intent(in) :: DEF        ! Tree node of definition of declaration
+      type(decls) :: DECL               ! Declaration 
+      get_spec = 0
+      if ( nsons ( def ) == 0 ) return
+      get_spec = decoration ( subtree ( 1,def ) )
+      if ( nsons ( get_spec ) == 0 ) return
+      get_spec = decoration ( subtree ( 1, get_spec ) )
+    end function Get_Spec
+
+    ! ...........................................  DisjointEquations .....
+    subroutine DisjointEquations ( matrix, truthIn, truthExtra, retrievalIn, retrievalExtra, &
+      & truthForwardModelNode, retrievalForwardModelNode, measurementSD, &
+      & chunk, configDatabase )
+      !{This subroutine computes the \emph{disjoint equation} matrix. 
+      ! $K_r^T K_t$ where $K_r$ is a jacobian taken from a forward
+      ! model configured for a retrieval, and $K_t$ is one using a
+      ! different state vector (such as higher resolution) supposed to
+      ! reflect something closer to the truth
+
+      ! Imports
+      use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+      use FORWARDMODELINTERMEDIATE, only: FORWARDMODELSTATUS_T
+      use FORWARDMODELWRAPPERS, only: FORWARDMODEL
+      use MATRIXMODULE_1, only: MULTIPLYMATRIX_XTY, CLEARMATRIX, DUMP_STRUCT, ROWSCALE
+      use SCANMODELMODULE, only: DESTROYFORWARDMODELINTERMEDIATE
+      use VECTORSMODULE, only: COPYVECTOR, SUBTRACTFROMVECTOR, CLONEVECTOR, MULTIPLY
+      ! Dummy arguments
+      ! RetrievalIn and TruthIn are intent(inout) but not actually changed
+      ! because there is no way to ask the ForwardModel wrapper to make
+      ! transformations.
+      type (Matrix_T), intent(inout) :: MATRIX ! Normal equation matrix
+      type (Vector_T), intent(inout), target :: TRUTHIN ! Truth forward model state vector
+      type (Vector_T), pointer :: TRUTHEXTRA ! Truth extra forward model vector
+      type (Vector_T), intent(inout), target :: RETRIEVALIN ! Retrieval forward model state vector
+      type (Vector_T), pointer :: RETRIEVALEXTRA ! Retrieval extra forward model vector
+      integer, intent(in) :: TRUTHFORWARDMODELNODE ! List of forward models.
+      integer, intent(in) :: RETRIEVALFORWARDMODELNODE ! List of forward models.
+      type (Vector_T), pointer :: MEASUREMENTSD ! Measurement noise (row scale)
+      type (MLSChunk_T), intent(in) :: CHUNK ! The chunk we're processing
+      type (ForwardModelConfig_T), intent(inout), dimension(:) :: CONFIGDATABASE
+
+      ! Local variables
+      integer :: NOMAFS                 ! Number of major frames
+      integer :: MAF                    ! Major frame number
+      type (ForwardModelStatus_T) :: FMSTAT ! Mainly maf counter
+      type (Matrix_T) :: Kt             ! Truth Jacobian matrix
+      type (Matrix_T) :: Kr             ! Retrieval Jacobian matrix
+      integer, dimension(:), pointer :: TRUTHCONFIGS ! Indices of forward model configs
+      integer, dimension(:), pointer :: RETRIEVALCONFIGS ! Indices of forward model configs
+      integer :: CONFIG                 ! Index into configs
+      integer :: J                      ! Loop counter
+      integer :: NOTRUTHCONFIGS         ! Number of forward models
+      integer :: NORETRIEVALCONFIGS     ! Number of forward models
+      type (Vector_T) :: WEIGHT         ! 1/measurementSD
+      type (Vector_T) :: FWDMODELOUT    ! Scratch forward model output vector
+
+      ! Executable code
+      if ( .not. associated ( retrievalExtra ) ) retrievalExtra => retrievalIn
+      if ( .not. associated ( truthExtra ) ) truthExtra => truthIn
+      noMAFs = chunk%lastMAFIndex - chunk%firstMAFIndex + 1
+
+      ! Get the forward model configs
+      nullify ( truthConfigs, retrievalConfigs )
+
+      noRetrievalConfigs = nsons ( retrievalForwardModelNode ) - 1
+      call Allocate_Test ( retrievalConfigs, noRetrievalConfigs, 'retrievalConfigs', ModuleName )
+      do config = 2, noRetrievalConfigs+1
+        retrievalConfigs(config-1) = decoration(decoration(subtree(config,retrievalForwardModelNode)))
+      end do
+
+      noTruthConfigs = nsons ( truthForwardModelNode ) - 1
+      call Allocate_Test ( truthConfigs, noTruthConfigs, 'truthConfigs', ModuleName )
+      do config = 2, noTruthConfigs+1
+        truthConfigs(config-1) = decoration(decoration(subtree(config,truthForwardModelNode)))
+      end do
+
+      ! Sort out the jacobian matrices
+      call CreateEmptyMatrix ( Kr, 0, measurementSD, retrievalIn, text='Kr' )
+      call CreateEmptyMatrix ( Kt, 0, measurementSD, truthIn, text='Kt' )
+      call Allocate_test ( fmStat%rows, Kr%row%nb, 'fmStat%rows',&
+        & ModuleName )
+
+      ! Sort out the weight vector
+      call cloneVector ( weight, measurementSD, vectorNameText='weight' )
+      do j = 1, measurementSD%template%noQuantities
+        where ( measurementSD%quantities(j)%values <= 0.0 )
+          weight%quantities(j)%values = 1.0
+        elsewhere
+          weight%quantities(j)%values = 1.0 / &
+            & measurementSD%quantities(j)%values
+        end where
+      end do
+
+      ! Setup a scratch vector or two
+      call cloneVector ( fwdModelOut, measurementSD, vectorNameText='forwardModelOut' )
+
+      ! Loop over MAFs
+      do maf = 1, noMAFs
+        fmStat%maf = maf
+        ! Invoke both sets of forward models
+        do config = 1, noRetrievalConfigs
+          call ForwardModel ( configDatabase(retrievalConfigs(config)), &
+            & retrievalIn, retrievalExtra, fwdModelOut, fmStat, Kr )
+        end do
+        do config = 1, noTruthConfigs
+          call ForwardModel ( configDatabase(truthConfigs(config)), &
+            & truthIn, truthExtra, fwdModelOut, fmStat, Kt )
+        end do
+        ! Do any row scaling for the jacobians
+        call rowScale ( weight, Kr )
+        call rowScale ( weight, Kt )
+        ! Now add these terms to the disjoint equations
+        call MultiplyMatrix_XTY ( Kr, Kt, matrix, update=.true., useMask=.true. )
+        ! Now clear the jacobian matrix
+        call ClearMatrix ( Kr )
+        call ClearMatrix ( Kt )
+      end do
+
+      ! Tidy up
+      call deallocate_test ( fmStat%rows, 'FmStat%rows', moduleName )
+      call deallocate_test ( retrievalConfigs, 'retrievalConfigs', ModuleName )
+      call deallocate_test ( truthConfigs, 'truthConfigs', ModuleName )
+      call DestroyForwardModelIntermediate ! in case scan model got used
+      call DestroyVectorInfo ( weight )
+      call DestroyMatrix ( Kr )
+      call DestroyMatrix ( Kt )
+
+    end subroutine DisjointEquations
+
+    ! ...........................................  NormalEquationsCommand .....
+    subroutine NormalEquationsCommand ( matrix, rhsOut, forwardModelNode, &
+      & fwdModelIn, fwdModelExtra, fwdModelOut, &
+      & measurements, measurementSD, chunk, configDatabase, residualSupplied )
+      ! Imports
+      use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+      use FORWARDMODELINTERMEDIATE, only: FORWARDMODELSTATUS_T
+      use FORWARDMODELWRAPPERS, only: FORWARDMODEL
+      use MATRIXMODULE_1, only: NORMALEQUATIONS, CLEARMATRIX, DUMP_STRUCT, ROWSCALE
+      use SCANMODELMODULE, only: DESTROYFORWARDMODELINTERMEDIATE
+      use VECTORSMODULE, only: COPYVECTOR, SUBTRACTFROMVECTOR, CLONEVECTOR, MULTIPLY
+      ! Dummy arguments
+      type (Matrix_SPD_T), intent(inout) :: MATRIX ! Normal equation matrix
+      type (Vector_T), intent(inout) :: RHSOUT ! Right hand side in state space
+      integer, intent(in) :: FORWARDMODELNODE ! List of forward models.
+      type (Vector_T), intent(inout), target :: FWDMODELIN ! Forward model state vector
+        ! Although intent(inout), FWDMODELIN is not actually changed here bacause
+        ! there is no way to ask ForwardModel wrappers to make transformations.
+      type (Vector_T), pointer :: FWDMODELEXTRA ! Extra forward model vector
+      type (Vector_T), intent(inout) :: FWDMODELOUT ! Forward model results
+      type (Vector_T), intent(in) :: MEASUREMENTS ! Measurement vector
+      type (Vector_T), pointer :: MEASUREMENTSD ! Measurement noise (row scale)
+      type (MLSChunk_T), intent(in) :: CHUNK ! The chunk we're processing
+      type (ForwardModelConfig_T), intent(inout), dimension(:) :: CONFIGDATABASE
+      logical, intent(in) :: RESIDUALSUPPLIED
+
+      ! Local variables
+      integer :: NOMAFS                 ! Number of major frames
+      integer :: MAF                    ! Major frame number
+      type (ForwardModelStatus_T) :: FMSTAT ! Mainly maf counter
+      type (Matrix_T) :: jacobian       ! Jacobian matrix
+      integer, dimension(:), pointer :: CONFIGS ! Indices of forward model configs
+      integer :: CONFIG                 ! Index into configs
+      integer :: NOCONFIGS              ! Number of forward models
+      integer :: ROWBLOCK               ! Loop counter
+      integer :: J                      ! Loop counter
+      type (Vector_T) :: DELTA          ! y-f
+      type (Vector_T) :: WEIGHT         ! 1/measurementSD
+
+      ! Executable code
+      if ( .not. associated ( fwdModelExtra ) ) fwdModelExtra => fwdModelIn
+      noMAFs = chunk%lastMAFIndex - chunk%firstMAFIndex + 1
+
+      ! Get the forward model configs
+      nullify ( configs )
+      noConfigs = nsons ( forwardModelNode ) - 1
+      call Allocate_Test ( configs, noConfigs, 'configs', ModuleName )
+      do config = 2, noConfigs+1
+        configs(config-1) = decoration(decoration(subtree(config,forwardModelNode)))
+      end do
+
+      ! Sort out the jacobian matrix
+      call CreateEmptyMatrix ( jacobian, 0, fwdModelOut, fwdModelIn, text='jacobian' )
+      call Allocate_test ( fmStat%rows, jacobian%row%nb, 'fmStat%rows', ModuleName )
+
+      ! Sort out the weight vector
+      if ( associated ( measurementSD) ) then
+        call cloneVector ( weight, measurementSD, vectorNameText='weight' )
+        do j = 1, measurementSD%template%noQuantities
+          where ( measurementSD%quantities(j)%values <= 0.0 )
+            weight%quantities(j)%values = 1.0
+          elsewhere
+            weight%quantities(j)%values = 1.0 / &
+              & measurementSD%quantities(j)%values
+          end where
+        end do
+      end if
+
+      ! Loop over MAFs
+      do maf = 1, noMAFs
+        fmStat%maf = maf
+        do config = 1, noConfigs
+          call ForwardModel ( configDatabase(configs(config)), &
+            & fwdModelIn, fwdModelExtra, fwdModelOut, fmStat, jacobian )
+        end do
+        ! Compute difference
+        call cloneVector ( delta, fwdModelOut )
+        do rowBlock = 1, size(fmStat%rows)
+          if ( fmStat%rows(rowBlock) ) then
+            ! Form residual (or take from measurements)
+            if ( residualSupplied ) then
+              call copyVector ( delta, measurements, &
+                & quant=jacobian%row%quant(rowBlock), &
+                & inst=jacobian%row%inst(rowBlock) )
+            else
+              call copyVector ( delta, fwdModelOut, & ! delta = f
+                & quant=jacobian%row%quant(rowBlock), &
+                & inst=jacobian%row%inst(rowBlock) )
+              call subtractFromVector ( delta, measurements, &
+                & quant=jacobian%row%quant(rowBlock), &
+                & inst=jacobian%row%inst(rowBlock) ) ! f - y
+            endif
+            ! Do any row scaling
+            if ( associated ( measurementSD ) ) then
+              call multiply ( delta, weight, &
+                & quant=jacobian%row%quant(rowBlock), &
+                & inst=jacobian%row%inst(rowBlock) )
+            end if
+          end if
+        end do
+        call scaleVector ( delta, -1.0_r8 ) ! y - f
+        ! Do any row scaling for the jacobian
+        if ( associated ( measurementSD ) ) call rowScale ( weight, jacobian )
+        ! Now add these terms to the normal equations
+        call NormalEquations ( jacobian, matrix, rhs_in=delta, rhs_out=rhsOut, &
+          & update=.true., useMask=.true. )
+        ! Now clear the jacobian matrix
+        call ClearMatrix ( jacobian )
+      enddo
+
+      ! Tidy up
+      call deallocate_test ( fmStat%rows, 'FmStat%rows', moduleName )
+      call deallocate_test ( configs, 'configs', ModuleName )
+      call DestroyForwardModelIntermediate ! in case scan model got used
+      call destroyVectorInfo ( delta )
+      call destroyVectorInfo ( weight )
+      call destroyMatrix ( jacobian )
+      
+    end subroutine NormalEquationsCommand
+
+  end subroutine Algebra
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: Algebra_m.f90,v 2.31 2013/12/12 02:11:26 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module ALGEBRA_M
+
+! $Log: Algebra_m.f90,v $
+! Revision 2.31  2013/12/12 02:11:26  vsnyder
+! Use iterator to handle variables, and IF and SELECT constructs
+!
+! Revision 2.30  2013/10/09 02:26:59  vsnyder
+! Add Evaluate_Variable
+!
+! Revision 2.29  2013/09/24 23:47:22  vsnyder
+! Use Where instead of Source_Ref for messages
+!
+! Revision 2.28  2013/08/30 02:45:32  vsnyder
+! Revise calls to trace_begin and trace_end
+!
+! Revision 2.27  2011/12/21 01:44:32  vsnyder
+! Change some intents, and explain why
+!
+! Revision 2.26  2011/05/09 18:04:51  pwagner
+! Converted to using switchDetail
+!
+! Revision 2.25  2009/06/23 18:46:18  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.24  2007/06/29 19:32:06  vsnyder
+! Make ForwardModelIntermediate_t private to ScanModelModule
+!
+! Revision 2.23  2007/01/11 20:48:30  vsnyder
+! Add SurfaceHeight to gridded data, vector quantities, allow dump in ReadApriori
+!
+! Revision 2.22  2005/08/31 19:40:03  livesey
+! Added vector multiply capability
+!
+! Revision 2.21  2005/06/30 22:43:40  livesey
+! Added residualSupplied option to normal equations
+!
+! Revision 2.20  2005/06/22 18:57:01  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.19  2005/06/21 23:55:53  livesey
+! Added some more promotions.
+!
+! Revision 2.18  2005/05/25 02:15:13  vsnyder
+! Add 'Broadcast scalar to vector' capability
+!
+! Revision 2.17  2005/05/24 23:33:35  livesey
+! Removed some superfluous dumps.
+!
+! Revision 2.16  2004/10/14 04:54:41  livesey
+! Added clearLower function
+!
+! Revision 2.15  2004/09/25 00:16:10  livesey
+! Added combineChannels
+!
+! Revision 2.14  2004/05/28 00:58:35  vsnyder
+! Catch use of unsupported function
+!
+! Revision 2.13  2004/05/19 19:16:09  vsnyder
+! Move MLSChunk_t to Chunks_m
+!
+! Revision 2.12  2004/04/30 21:49:26  livesey
+! Added DisjointEquations command
+!
+! Revision 2.11  2004/04/29 01:26:47  livesey
+! More refinements
+!
+! Revision 2.10  2004/04/28 23:07:56  livesey
+! Many additions.
+!
+! Revision 2.9  2004/01/30 23:28:45  livesey
+! More additions and fixes.
+!
+! Revision 2.8  2004/01/29 03:33:26  livesey
+! Hooked up reflect and cyclicJacobi commands.
+!
+! Revision 2.7  2004/01/24 01:04:52  livesey
+! More bug fixes and population
+!
+! Revision 2.6  2004/01/23 05:38:22  livesey
+! Various bug fixes
+!
+! Revision 2.5  2004/01/21 00:30:25  vsnyder
+! Move some stuff to more logical places, fix get_my_decl, cosmetics
+!
+! Revision 2.4  2004/01/20 23:19:41  vsnyder
+! Better error handling, plug some memory leaks
+!
+! Revision 2.3  2004/01/20 19:33:35  vsnyder
+! Correct bug in identifier handling; delete unused variable declaration
+!
+! Revision 2.2  2004/01/17 03:04:15  vsnyder
+! Provide for functions in expressions
+!
+! Revision 2.1  2004/01/17 00:28:32  vsnyder
+! Initial commit
+!
+@
+
+
+2.31
+log
+@Use iterator to handle variables, and IF and SELECT constructs
+@
+text
+@d60 2
+a61 2
+      & CHOLESKYFACTOR, CREATEEMPTYMATRIX, COPYMATRIX, &
+      & COPYMATRIXVALUE, DESTROYMATRIX, DUMP, GETACTUALMATRIXFROMDATABASE, &
+d66 2
+a67 1
+      & MULTIPLYMATRIX_XY, REFLECTMATRIX, SCALEMATRIX, DUMP_STRUCT, TRANSPOSEMATRIX, CLEARLOWER
+d178 6
+d187 6
+d196 6
+d205 6
+d1549 1
+a1549 1
+       "$Id: Algebra_m.f90,v 2.30 2013/10/09 02:26:59 vsnyder Exp $"
+d1559 3
+@
+
+
+2.30
+log
+@Add Evaluate_Variable
+@
+text
+@a56 1
+    use Evaluate_Variable_m, only: Evaluate_Variable
+d71 1
+d74 1
+a74 1
+    use TOGGLES, only: GEN, SWITCHES, TOGGLE
+a90 1
+    integer :: I_SONS              ! Son indices of sons of root
+d110 2
+d130 5
+a134 3
+    do i_sons = 2, nsons(root) - 1 ! skip names at begin and end
+      son = subtree(i_sons,root)
+      call trace_begin ( me_loop, 'Algebra loop', son, cond=toggle(gen) )
+a136 2
+      else if ( node_id(son) == n_variable ) then
+        call evaluate_variable ( son )
+d286 2
+a287 2
+200   call trace_end ( 'Algebra loop', cond=toggle(gen) )
+    end do ! i_sons
+d1524 1
+a1524 1
+       "$Id: Algebra_m.f90,v 2.29 2013/09/24 23:47:22 vsnyder Exp $"
+d1534 3
+@
+
+
+2.29
+log
+@Use Where instead of Source_Ref for messages
+@
+text
+@d57 1
+d134 2
+d1523 1
+a1523 1
+       "$Id: Algebra_m.f90,v 2.28 2013/08/30 02:45:32 vsnyder Exp $"
+d1533 3
+@
+
+
+2.28
+log
+@Revise calls to trace_begin and trace_end
+@
+text
+@d506 1
+a506 1
+      use TREE, only: DUMP_TREE_NODE, SOURCE_REF
+d512 1
+a512 1
+      call print_source ( source_ref(where) )
+d1520 1
+a1520 1
+       "$Id: Algebra_m.f90,v 2.27 2011/12/21 01:44:32 vsnyder Exp $"
+d1530 3
+@
+
+
+2.27
+log
+@Change some intents, and explain why
+@
+text
+@d92 2
+d127 1
+a127 1
+    if ( toggle(gen) ) call trace_begin ( 'Algebra', root )
+d130 1
+a130 1
+      if ( toggle(gen) ) call trace_begin ( 'Algebra loop', son )
+d282 1
+a282 1
+200   if ( toggle(gen) ) call trace_end ( 'Algebra loop' )
+d284 1
+a284 1
+    if ( toggle(gen) ) call trace_end ( 'Algebra' )
+d587 1
+d603 1
+a603 1
+      if ( toggle(gen) ) call trace_begin ( 'Algebra.Expr', root )
+d1216 1
+a1216 1
+      if ( toggle(gen) ) call trace_end ( 'Algebra.Expr' )
+d1520 1
+a1520 1
+       "$Id: Algebra_m.f90,v 2.26 2011/05/09 18:04:51 pwagner Exp $"
+d1530 3
+@
+
+
+2.26
+log
+@Converted to using switchDetail
+@
+text
+@d1290 3
+d1294 1
+a1294 1
+      type (Vector_T), intent(in), target :: TRUTHIN ! Truth forward model state vector
+d1296 1
+a1296 1
+      type (Vector_T), intent(in), target :: RETRIEVALIN ! Retrieval forward model state vector
+d1407 3
+a1409 1
+      type (Vector_T), intent(in), target :: FWDMODELIN ! Forward model state vector
+d1517 1
+a1517 1
+       "$Id: Algebra_m.f90,v 2.25 2009/06/23 18:46:18 pwagner Exp $"
+d1527 3
+@
+
+
+2.25
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d14 1
+a14 1
+  use MatrixModule_1, only: K_Cholesky, K_Empty, K_Kronecker, K_Plain, K_SPD
+d24 1
+a24 1
+       "$RCSfile: $"
+d54 1
+a54 1
+    use Chunks_m, only: MLSChunk_T
+d57 18
+a74 17
+    use ForwardModelConfig, only: FORWARDMODELCONFIG_T
+    use Init_Tables_Module, only: S_Matrix, S_Quantity, S_Vector
+    use MatrixModule_1, only: AddToMatrix, AddToMatrixDatabase, AssignMatrix, &
+      & CholeskyFactor, CreateEmptyMatrix, CopyMatrix, &
+      & CopyMatrixValue, DestroyMatrix, Dump, GetActualMatrixFromDatabase, &
+      & GetDiagonal, GetFromMatrixDatabase, GetKindFromMatrixDatabase, &
+      & InvertCholesky, K_Cholesky, K_Empty, K_Kronecker, K_Plain, K_SPD, Matrix_Cholesky_T, &
+      & Matrix_Database_T, Matrix_Kronecker_T, Matrix_SPD_T, Matrix_T, &
+      & MultiplyMatrixVectorNoT, multiplyMatrixVectorSPD_1, &
+      & MultiplyMatrix_XY, ReflectMatrix, ScaleMatrix, Dump_Struct, TransposeMatrix, ClearLower
+    use MatrixTools, only: COMBINECHANNELSINMATRIX
+    use MLSCommon, only: R8, RV
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use Output_M, only: Output
+    use String_Table, only: Display_String
+    use Toggles, only: Gen, Switches, Toggle
+    use Trace_m, only: Trace_Begin, Trace_End
+d76 4
+a79 4
+    use TREE_TYPES ! Everything, except tree_init; remainder begin with N_
+    use VectorsModule, only:  AddToVector, AddVectorToDatabase,  CopyVector, &
+      & CloneVector, DestroyVectorInfo, Dump, ScaleVector, Vector_T, PowVector, &
+      & ReciprocateVector, MultiplyVectors
+d137 1
+a137 1
+        if ( index(switches,'spa') /= 0 ) then
+d267 1
+a267 1
+        if ( index(switches,'alg') /= 0 ) then
+d292 3
+a294 3
+      use MatrixModule_1, only: COLUMNSCALE, CYCLICJACOBI, REFLECTMATRIX, ROWSCALE
+      use Regularization, only: REGULARIZE
+      use Init_Tables_Module, only: FIELD_FIRST, FIELD_LAST, F_MATRIX, F_EIGENVECTORS, F_SCALE, &
+d300 2
+a301 2
+      use Init_Tables_Module, only: L_TRUE
+      use Init_Tables_Module, only: S_COLUMNSCALE, S_COMBINECHANNELS, S_CYCLICJACOBI, &
+d303 2
+a304 2
+      use MoreTree, only: GET_SPEC_ID, GET_BOOLEAN
+      use MatrixTools, only: COMBINECHANNELSINMATRIX
+d562 1
+a562 1
+      use MatrixModule_1, only: NORMALEQUATIONS
+d566 1
+a566 1
+      use VectorsModule, only: GetVectorQuantityIndexByName
+d1283 6
+a1288 6
+      use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+      use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T
+      use ForwardModelWrappers, only: FORWARDMODEL
+      use MatrixModule_1, only: MULTIPLYMATRIX_XTY, CLEARMATRIX, DUMP_STRUCT, ROWSCALE
+      use ScanModelModule, only: DestroyForwardModelIntermediate
+      use VectorsModule, only: COPYVECTOR, SUBTRACTFROMVECTOR, CLONEVECTOR, MULTIPLY
+d1394 6
+a1399 6
+      use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+      use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T
+      use ForwardModelWrappers, only: FORWARDMODEL
+      use MatrixModule_1, only: NORMALEQUATIONS, CLEARMATRIX, DUMP_STRUCT, ROWSCALE
+      use ScanModelModule, only: DestroyForwardModelIntermediate
+      use VectorsModule, only: COPYVECTOR, SUBTRACTFROMVECTOR, CLONEVECTOR, MULTIPLY
+d1512 1
+a1512 1
+       "$Id: read_apriori.f90 is it here $"
+d1522 3
+@
+
+
+2.24
+log
+@Make ForwardModelIntermediate_t private to ScanModelModule
+@
+text
+@d24 1
+a24 1
+       "$RCSfile: Algebra_m.f90,v $"
+d1508 1
+a1509 1
+!---------------------------- RCS Ident Info -------------------------------
+d1511 2
+a1512 3
+       "$Id: Algebra_m.f90,v 2.23 2007/01/11 20:48:30 vsnyder Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d1514 1
+d1516 1
+d1521 3
+@
+
+
+2.23
+log
+@Add SurfaceHeight to gridded data, vector quantities, allow dump in ReadApriori
+@
+text
+@d1283 1
+d1286 1
+a1286 1
+      use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T, FORWARDMODELINTERMEDIATE_T
+a1303 1
+      type (ForwardModelIntermediate_T) :: IFM ! Forward model workspace
+d1361 1
+a1361 1
+            & retrievalIn, retrievalExtra, fwdModelOut, ifm, fmStat, Kr )
+d1365 1
+a1365 1
+            & truthIn, truthExtra, fwdModelOut, ifm, fmStat, Kt )
+d1375 1
+a1375 1
+      enddo
+d1381 1
+d1394 1
+d1397 1
+a1397 1
+      use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T, FORWARDMODELINTERMEDIATE_T
+a1415 1
+      type (ForwardModelIntermediate_T) :: IFM ! Forward model workspace
+d1459 1
+a1459 1
+            & fwdModelIn, fwdModelExtra, fwdModelOut, ifm, fmStat, jacobian )
+d1499 1
+d1511 1
+a1511 1
+       "$Id: Algebra_m.f90,v 2.22 2005/08/31 19:40:03 livesey Exp $"
+d1520 3
+@
+
+
+2.22
+log
+@Added vector multiply capability
+@
+text
+@d58 1
+a58 1
+    use Init_Tables_Module, only: S_Matrix, S_Vector
+d113 5
+a117 3
+    integer, parameter :: NotPlain = incompatible + 1 ! Wrong kind of matrix
+    integer, parameter :: NotSupported = notPlain + 1 ! Wrong kind of matrix
+    integer, parameter :: Undefined = notSupported + 1 ! undefined operand
+d522 3
+d527 2
+d565 1
+d651 30
+a680 1
+      case ( n_func_ref )
+d1509 1
+a1509 1
+       "$Id: Algebra_m.f90,v 2.21 2005/06/30 22:43:40 livesey Exp $"
+d1518 3
+@
+
+
+2.21
+log
+@Added residualSupplied option to normal equations
+@
+text
+@d78 1
+a78 1
+      & ReciprocateVector
+d901 1
+a901 1
+              call Announce_Error ( root, notSupported )
+d1472 1
+a1472 1
+       "$Id: Algebra_m.f90,v 2.20 2005/06/22 18:57:01 pwagner Exp $"
+d1481 3
+@
+
+
+2.20
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d24 1
+a24 1
+       "$RCSfile: $"
+d294 2
+a295 1
+        & F_HORIZONTAL, F_RETRIEVALEXTRA, F_RETRIEVALFORWARDMODEL, F_RETRIEVALIN, &
+d313 1
+d360 1
+d400 2
+d489 1
+a489 1
+          & chunk, forwardModelConfigDatabase )
+d1353 1
+a1353 1
+      & measurements, measurementSD, chunk, configDatabase )
+d1371 1
+d1427 13
+a1439 6
+            call copyVector ( delta, fwdModelOut, & ! delta = f
+              & quant=jacobian%row%quant(rowBlock), &
+              & inst=jacobian%row%inst(rowBlock) )
+            call subtractFromVector ( delta, measurements, &
+              & quant=jacobian%row%quant(rowBlock), &
+              & inst=jacobian%row%inst(rowBlock) ) ! f - y
+d1472 1
+a1472 1
+       "$Id: $"
+d1481 3
+@
+
+
+2.19
+log
+@Added some more promotions.
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d22 1
+a22 4
+!--------------------------------- RCS Ident Info --------------------------
+  character (len=*), parameter :: IdParm = &
+    & "$Id: Algebra_m.f90,v 2.18 2005/05/25 02:15:13 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+d24 2
+a25 2
+       "$RCSfile: Algebra_m.f90,v $"
+  private :: not_used_here
+d1457 5
+d1468 3
+@
+
+
+2.18
+log
+@Add 'Broadcast scalar to vector' capability
+@
+text
+@d16 1
+a16 1
+    & "$Id: Algebra_m.f90,v 2.17 2005/05/24 23:33:35 livesey Exp $"
+d352 1
+d970 12
+a981 1
+              call Announce_Error ( root, notSupported )
+d1458 3
+@
+
+
+2.17
+log
+@Removed some superfluous dumps.
+@
+text
+@d16 1
+a16 1
+    & "$Id: Algebra_m.f90,v 2.16 2004/10/14 04:54:41 livesey Exp $"
+d86 1
+d93 1
+a93 1
+    integer :: What                ! See its parameters below
+d173 1
+a173 1
+          call declare ( string, dvalue, type, value, son )
+d178 12
+a189 1
+            if ( decl%type /= exprn .and. decl%type /= num_value ) then
+d255 1
+a255 1
+          call redeclare ( string, dvalue, decl%type, decl%units, decl%tree )
+d1446 3
+@
+
+
+2.16
+log
+@Added clearLower function
+@
+text
+@d16 1
+a16 1
+    & "$Id: Algebra_m.f90,v 2.15 2004/09/25 00:16:10 livesey Exp $"
+a1300 1
+        call dump_struct ( matrix, 'Disjoint equations' )
+a1411 1
+        call dump_struct ( matrix%m, 'Normal equations', upper=.true. )
+d1434 3
+@
+
+
+2.15
+log
+@Added combineChannels
+@
+text
+@d16 1
+a16 1
+    & "$Id: Algebra_m.f90,v 2.14 2004/05/28 00:58:35 vsnyder Exp $"
+d61 1
+a61 1
+      & MultiplyMatrix_XY, ReflectMatrix, ScaleMatrix, Dump_Struct, TransposeMatrix
+d530 1
+a530 1
+      use FUNCTIONS, only: F_CHOLESKY, F_INVERT, F_TRANSPOSE, F_GETDIAGONAL, F_SQRT, F_XTX
+d648 17
+d1436 3
+@
+
+
+2.14
+log
+@Catch use of unsupported function
+@
+text
+@d16 1
+a16 1
+    & "$Id: Algebra_m.f90,v 2.13 2004/05/19 19:16:09 vsnyder Exp $"
+d62 1
+d79 1
+a79 1
+    type(ForwardModelConfig_T), intent(inout), dimension(:) :: FORWARDMODELCONFIGDATABASE
+d278 1
+a278 1
+        & F_TRUTHEXTRA, F_TRUTHFORWARDMODEL, F_TRUTHIN
+d280 2
+a281 2
+      use Init_Tables_Module, only: S_COLUMNSCALE, S_CYCLICJACOBI, S_DISJOINTEQUATIONS, S_REFLECT, &
+        & S_ROWSCALE, S_NORMALEQUATIONS, S_REGULARIZATION
+d283 1
+d290 1
+a290 1
+      type(ForwardModelConfig_T), intent(inout), dimension(:) :: FORWARDMODELCONFIGDATABASE
+d308 2
+d315 3
+d402 13
+d436 4
+d1419 3
+@
+
+
+2.13
+log
+@Move MLSChunk_t to Chunks_m
+@
+text
+@d16 1
+a16 1
+    & "$Id: Algebra_m.f90,v 2.12 2004/04/30 21:49:26 livesey Exp $"
+d739 2
+d1395 3
+@
+
+
+2.12
+log
+@Added DisjointEquations command
+@
+text
+@d16 1
+a16 1
+    & "$Id: Algebra_m.f90,v 2.11 2004/04/29 01:26:47 livesey Exp $"
+d49 1
+d62 1
+a62 1
+    use MLSCommon, only: R8, RV, MLSChunk_T
+d1393 3
+@
+
+
+2.11
+log
+@More refinements
+@
+text
+@d16 1
+a16 1
+    & "$Id: Algebra_m.f90,v 2.10 2004/04/28 23:07:56 livesey Exp $"
+d275 2
+a276 1
+        & F_HORIZONTAL
+d278 1
+a278 1
+      use Init_Tables_Module, only: S_COLUMNSCALE, S_CYCLICJACOBI, S_REFLECT, &
+d294 2
+d315 2
+d319 2
+d371 6
+d394 6
+d418 5
+d440 2
+a441 2
+          & fwdModelIn, fwdModelExtra, fwdModelOut, chunk, measurements, measurementSD, &
+          & forwardModelConfigDatabase )
+d1156 117
+d1275 2
+a1276 2
+      & fwdModelIn, fwdModelExtra, fwdModelOut, chunk, &
+      & measurements, measurementSD, configDatabase )
+a1289 1
+      type (MLSChunk_T), intent(in) :: CHUNK ! The chunk we're processing
+d1292 1
+d1374 1
+d1377 3
+d1392 3
+@
+
+
+2.10
+log
+@Many additions.
+@
+text
+@d16 1
+a16 1
+    & "$Id: Algebra_m.f90,v 2.9 2004/01/30 23:28:45 livesey Exp $"
+d57 1
+a57 1
+      & K_Cholesky, K_Empty, K_Kronecker, K_Plain, K_SPD, Matrix_Cholesky_T, &
+d271 1
+d274 2
+a275 1
+        & F_MEASUREMENTS, F_MEASUREMENTSD
+d278 2
+a279 2
+        & S_ROWSCALE, S_NORMALEQUATIONS
+      use MoreTree, only: GET_SPEC_ID
+d290 1
+d295 6
+a302 2
+      integer :: MATRIXIND              ! Index into matrix database
+      integer :: MATRIXKIND             ! Kind of matrix
+d314 1
+d320 5
+d350 2
+d356 8
+d418 3
+d481 2
+a482 1
+      use FUNCTIONS, only: F_CHOLESKY, F_TRANSPOSE, F_GETDIAGONAL, F_SQRT
+d599 16
+d683 31
+d832 2
+a833 1
+              call Announce_Error ( root, notSupported )
+d837 6
+a842 1
+              call Announce_Error ( root, notSupported )
+d1247 3
+@
+
+
+2.9
+log
+@More additions and fixes.
+@
+text
+@d16 1
+a16 1
+    & "$Id: Algebra_m.f90,v 2.8 2004/01/29 03:33:26 livesey Exp $"
+d40 1
+a40 1
+  subroutine Algebra ( ROOT, VectorDatabase, MatrixDatabase )
+d51 1
+d54 1
+a54 1
+      & CreateEmptyMatrix, CopyMatrix, &
+d61 1
+a61 1
+    use MLSCommon, only: R8, RV
+d76 2
+d105 3
+a107 2
+    integer, parameter :: NotPlain = incompatible + 1 ! undefined operand
+    integer, parameter :: Undefined = notPlain + 1 ! undefined operand
+d119 1
+a119 1
+        call AlgebraCommands ( son, VectorDatabase, MatrixDatabase )
+d223 1
+a223 1
+              ! We'll allow 'promotion' to plain but not any other conversion.
+a230 3
+                case ( w_matrix_k )
+                  call copyMatrixValue ( LHSmatrix, matrix_k%m )
+                  call ReflectMatrix ( LHSMatrix )
+d268 2
+a269 1
+    subroutine AlgebraCommands ( root, VectorDatabase, MatrixDatabase )
+d271 3
+a273 1
+      use Init_Tables_Module, only: FIELD_FIRST, FIELD_LAST, F_MATRIX, F_EIGENVECTORS, F_SCALE
+d275 2
+a276 1
+      use Init_Tables_Module, only: S_COLUMNSCALE, S_CYCLICJACOBI, S_REFLECT, S_ROWSCALE
+d283 2
+d289 1
+d295 2
+d298 9
+a306 2
+      type(Matrix_T), pointer :: EIGENVECTORS ! Eigen vector matrix
+      type(Vector_T), pointer :: SCALEVECTOR ! The scaling vector
+d309 4
+d329 14
+d345 13
+a357 5
+          if ( GetKindFromMatrixDatabase ( matrixDatabase(matrixInd) ) /= k_plain ) &
+            & call Announce_Error ( key, notPlain )
+          call GetFromMatrixDatabase ( matrixDatabase(matrixInd), matrix )
+        case ( f_scale )
+          scaleVector => vectorDatabase ( decoration ( value ) )
+d363 10
+a372 1
+        call ColumnScale ( matrix, scaleVector )
+d374 1
+d377 1
+d380 15
+a394 1
+        call RowScale ( scaleVector, matrix )
+d422 2
+d563 7
+d576 2
+a577 3
+            if ( what2 /= w_matrix ) then
+              call announce_error ( son2, incompatible )
+            else
+d581 12
+a592 1
+            end if
+d613 7
+a619 3
+            if ( what2 /= w_matrix ) then
+              call announce_error ( son2, incompatible )
+            else
+d626 13
+a638 6
+              ! Optimization?  Instead of actually doing the transpose here,
+              ! consider returning a flag that the result needs transposing.
+              ! Then one could use multiply routines that are aware of the
+              ! transpose, at the expense of needing to remember that the
+              ! transpose needs to be done in other situations, e.g in "Add".
+            end if
+d736 1
+d738 1
+d740 1
+d742 1
+d744 1
+d758 1
+d760 1
+d762 1
+d769 1
+d771 3
+d775 1
+d777 1
+d779 1
+d786 1
+d788 1
+d790 1
+d792 1
+d794 1
+d803 1
+d805 1
+d807 1
+d809 1
+d823 1
+d825 1
+d827 1
+d829 1
+d838 1
+d840 1
+d842 1
+d844 1
+d853 1
+d855 1
+d857 1
+d859 1
+d868 1
+d870 1
+d872 1
+d874 1
+d883 1
+d885 1
+d887 1
+d889 1
+d898 1
+d900 1
+d902 1
+d904 1
+d916 1
+d918 1
+d920 1
+d922 1
+d929 1
+d931 1
+d933 1
+d935 1
+d937 1
+d939 1
+d944 1
+d946 1
+d948 1
+d950 1
+d952 1
+d954 1
+d959 1
+d961 1
+d963 1
+d965 1
+d967 1
+d969 1
+d974 1
+d976 1
+d978 1
+d980 1
+d982 1
+d984 1
+d1052 106
+d1167 3
+@
+
+
+2.8
+log
+@Hooked up reflect and cyclicJacobi commands.
+@
+text
+@d6 2
+d16 1
+a16 1
+    & "$Id: Algebra_m.f90,v 2.7 2004/01/24 01:04:52 livesey Exp $"
+d23 14
+d55 1
+a55 1
+      & GetFromMatrixDatabase, GetKindFromMatrixDatabase, &
+d59 2
+a60 2
+      & MultiplyMatrix_XY, ScaleMatrix, Dump_Struct, TransposeMatrix
+    use MLSCommon, only: R8
+d69 2
+a70 1
+      & CloneVector, DestroyVectorInfo, Dump, ScaleVector, Vector_T
+d88 1
+d102 2
+a103 1
+    integer, parameter :: Undefined = incompatible + 1 ! undefined operand
+a107 9
+    ! Parameters for WHAT argument of EXPR
+    integer, parameter :: W_Nothing = 0               ! An error occurred
+    integer, parameter :: W_Number = w_nothing + 1    ! Result is DVALUE
+    integer, parameter :: W_Vector = w_number + 1     ! Result is a vector
+    integer, parameter :: W_Matrix = w_vector + 1     ! Result is a general matrix
+    integer, parameter :: W_Matrix_C = w_matrix + 1   ! Result is Cholesky factor
+    integer, parameter :: W_Matrix_K = w_matrix_C + 1 ! Result is a Kronecker matrix
+    integer, parameter :: W_Matrix_S = w_matrix_K + 1 ! Result is an SPD matrix
+
+d120 16
+d205 32
+a236 11
+            select case ( what )
+            case ( w_matrix )
+              call copyMatrixValue ( LHSmatrix, matrix )     ! deep copy
+            case ( w_matrix_c )
+              call copyMatrixValue ( LHSmatrix, matrix_c%m ) ! deep copy
+            case ( w_matrix_k )
+              call copyMatrixValue ( LHSmatrix, matrix_k%m ) ! deep copy
+            case ( w_matrix_s )
+              call copyMatrixValue ( LHSmatrix, matrix_s%m ) ! deep copy
+            end select
+            if ( index(switches,'spa') /= 0 ) call dump_struct ( matrix, 'Result of expression' )
+d268 4
+a271 1
+      use Tree, only: DECORATION, NSONS, SUBTREE
+a272 5
+      use MatrixModule_1, only: CYCLICJACOBI, REFLECTMATRIX, MATRIX_T
+      use VectorsModule, only: VECTOR_T
+      use Init_Tables_Module, only: FIELD_FIRST, FIELD_LAST, F_MATRIX, F_EIGENVECTORS
+      use Init_Tables_Module, only: L_TRUE
+      use Init_Tables_Module, only: S_CYCLICJACOBI, S_REFLECT
+d289 1
+d303 5
+d310 2
+d313 2
+a314 3
+        case ( f_eigenVectors )
+          matrixInd = decoration ( value )
+          call GetFromMatrixDatabase ( matrixDatabase(matrixInd), eigenVectors )
+d319 4
+a323 1
+        call Dump_Struct ( matrix, 'Input matrix' )
+d325 2
+a326 7
+        call Dump_Struct ( matrix, 'Reflected matrix' )
+      case ( s_cyclicJacobi ) 
+        call Dump_Struct ( matrix, 'Input matrix' )
+        call Dump_Struct ( eigenVectors, 'Input eigen vectors' )
+        call CyclicJacobi ( matrix, eigenVectors, tol=1e-6 )
+        call Dump_Struct ( matrix, 'Output matrix (eigen values)' )
+        call Dump_Struct ( eigenVectors, 'Output eigen vectors' )
+d352 2
+d385 1
+a385 1
+      use FUNCTIONS, only: F_CHOLESKY, F_TRANSPOSE
+a419 5
+      integer, save :: Whats(k_empty:k_spd)
+      data whats(k_empty) / w_nothing /, whats(k_cholesky) / w_matrix_c /
+      data whats(k_kronecker) / w_matrix_k /, whats(k_plain) / w_matrix /
+      data whats(k_spd) / w_matrix_s /
+
+d495 27
+d697 3
+a699 1
+              call announce_error ( son2, cantInvertVector )
+d887 3
+@
+
+
+2.7
+log
+@More bug fixes and population
+@
+text
+@d14 1
+a14 1
+    & "$Id: Algebra_m.f90,v 2.6 2004/01/23 05:38:22 livesey Exp $"
+d105 1
+a105 1
+        ! Error message not needed -- caught in Check_Tree.
+d219 62
+d811 3
+@
+
+
+2.6
+log
+@Various bug fixes
+@
+text
+@d14 1
+a14 1
+    & "$Id: Algebra_m.f90,v 2.5 2004/01/21 00:30:25 vsnyder Exp $"
+d37 2
+a38 1
+      & CopyMatrix, DestroyMatrix, Dump, GetActualMatrixFromDatabase, &
+d43 1
+a43 1
+      & MultiplyMatrix_XY, ScaleMatrix
+d142 1
+d163 1
+a163 1
+            call copyVector ( vectorDatabase(decl%units), vector, clone=.true. )
+d177 1
+a177 1
+            call getActualMatrixFromDatabase ( matrixDatabase(decl%units), &
+d181 1
+a181 1
+              call copyMatrix ( LHSmatrix, matrix )     ! deep copy
+d183 1
+a183 1
+              call copyMatrix ( LHSmatrix, matrix_c%m ) ! deep copy
+d185 1
+a185 1
+              call copyMatrix ( LHSmatrix, matrix_k%m ) ! deep copy
+d187 1
+a187 1
+              call copyMatrix ( LHSmatrix, matrix_s%m ) ! deep copy
+d189 3
+d194 1
+a194 1
+          value = decl%units ! in case switches contains 'alg'
+d311 1
+a311 1
+      call print_subtree ( root, 0, dump_decor=.true. )
+d323 1
+a323 1
+          call print_subtree ( decl%tree, 0, dump_decor=.true. )
+d393 6
+d496 1
+d514 1
+d749 3
+@
+
+
+2.5
+log
+@Move some stuff to more logical places, fix get_my_decl, cosmetics
+@
+text
+@d14 1
+a14 1
+    & "$Id: Algebra_m.f90,v 2.4 2004/01/20 23:19:41 vsnyder Exp $"
+d49 1
+a49 1
+    use TREE, only: NODE_ID, NSONS, SUB_ROSA, SUBTREE
+d52 1
+a52 1
+      & DestroyVectorInfo, Dump, ScaleVector, Vector_T
+d150 1
+a150 1
+              spec = get_spec(lhs)
+d164 1
+a164 1
+              spec = get_spec(lhs)
+d306 2
+d317 2
+a318 1
+          spec = get_spec(root)
+d331 1
+a331 1
+          value = decl%units
+d338 1
+a338 1
+            call copyVector ( vector, vectorDatabase(decl%units), clone=.true. )
+d500 1
+d708 1
+a708 1
+          get_my_decl%type = decl%type
+a710 1
+      get_my_decl = decl
+d714 1
+a714 1
+    integer function Get_Spec ( Root )
+d718 1
+a718 1
+      integer, intent(in) :: Root
+d720 5
+a724 6
+      decl = get_decl(sub_rosa(root),spec)
+      if ( decl%type == spec ) then
+        get_spec = decl%units
+      else
+        get_spec = empty
+      end if
+d736 3
+@
+
+
+2.4
+log
+@Better error handling, plug some memory leaks
+@
+text
+@d12 1
+a12 1
+!--------------------------------- RCS Ident Info -------------------------------
+d14 1
+a14 1
+    & "$Id: Algebra_m.f90,v 2.3 2004/01/20 19:33:35 vsnyder Exp $"
+d23 1
+a96 5
+    integer, save :: Whats(k_empty:k_spd)
+    data whats(k_empty) / w_nothing /, whats(k_cholesky) / w_matrix_c /
+    data whats(k_kronecker) / w_matrix_k /, whats(k_plain) / w_matrix /
+    data whats(k_spd) / w_matrix_s /
+
+d139 1
+a139 1
+          call declare ( string, dvalue, exprn, value, son )
+d274 7
+a280 7
+      real(r8), intent(out) :: DValue
+      integer :: SPEC              ! Index of spec of label, e.g. S_Matrix
+      type(vector_t), intent(out) :: Vector
+      type(matrix_t), intent(out) :: Matrix
+      type(matrix_cholesky_t), intent(out) :: Matrix_C
+      type(matrix_kronecker_t), intent(out) :: Matrix_K
+      type(matrix_SPD_t), intent(out) :: Matrix_S
+d286 1
+d301 6
+a306 1
+      if ( toggle(gen) ) call trace_begin ( 'Algebra Expr', root )
+d373 1
+a373 1
+            if ( what2 /= w_matrix ) then
+d385 5
+d664 1
+a664 1
+      if ( toggle(gen) ) call trace_end ( 'Algebra Expr' )
+d693 6
+a698 2
+      type(decls) :: DECL1,DECL2       ! Declarations
+      integer :: String
+d700 8
+a707 7
+      decl1 = get_decl(string,label)
+      decl2 = get_decl(string,exprn)
+      if ( decl1%type /= empty .and. decl2%type /= empty ) then
+        call announce_error ( root, ambiguous )
+      end if
+      if ( decl1%type == empty ) decl1 = decl2
+      get_my_decl = decl1
+d713 1
+a713 1
+    ! Get the name of the specification, e.g. Matrix or Vector.
+d734 3
+@
+
+
+2.3
+log
+@Correct bug in identifier handling; delete unused variable declaration
+@
+text
+@d14 1
+a14 1
+    & "$Id: Algebra_m.f90,v 2.2 2004/01/17 03:04:15 vsnyder Exp $"
+d108 1
+a108 1
+        ! emit an error message?
+d113 2
+a115 2
+        if ( what == w_nothing ) &
+    cycle
+d150 1
+a150 1
+    cycle
+d158 1
+a158 1
+    cycle
+d163 1
+a163 1
+    cycle
+d172 1
+a172 1
+    cycle
+d177 1
+a177 1
+    cycle
+d183 1
+a183 1
+              call copyMatrix ( LHSmatrix, matrix ) ! deep copy
+d192 1
+a192 3
+          call destroyStuff ( what, vector, matrix, matrix_c, matrix_k, matrix_s )
+          if ( what /= w_nothing ) &
+            & call redeclare ( string, dvalue, decl%type, decl%units, decl%tree )
+d194 1
+d209 1
+a209 1
+      if ( toggle(gen) ) call trace_end ( 'Algebra loop' )
+d722 3
+@
+
+
+2.2
+log
+@Provide for functions in expressions
+@
+text
+@d14 1
+a14 1
+    & "$Id: declaration_table.f90,v 2.6 2004/01/16 23:51:23 vsnyder Exp $"
+a288 1
+      integer :: I                 ! Index for sons of function operator
+d349 1
+a349 1
+              call copyMatrix ( matrix_C%m, matrix_SP%m )
+d723 3
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d13 3
+a15 2
+  character (len=256), private :: Id = &
+       "$Id: expr_m.f90,v 2.5 2002/10/08 00:09:09 pwagner Exp $"
+d17 1
+a17 1
+       "$RCSfile: expr_m.f90,v $"
+d49 1
+a49 1
+    use TREE_TYPES ! Everything, especially everything beginning with N_
+d83 3
+a85 1
+    integer, parameter :: UnknownOp = undefined + 1    ! unknown operator
+d223 1
+a223 1
+      use TREE, only: SOURCE_REF
+d230 2
+d242 4
+d247 5
+a251 1
+        call output ( 'Operator in expression is unknown.', advance='yes' )
+d270 2
+a271 1
+      use DECLARATION_TABLE, only: DECLS, EMPTY
+d289 1
+d357 31
+d394 1
+a394 1
+        son2 = subtree(2,root)
+d723 4
+a726 1
+! $Log: $
+@
+

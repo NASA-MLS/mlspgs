@@ -1,0 +1,316 @@
+head	1.5;
+access;
+symbols
+	v5-02-NRT-19:1.5
+	v6-00:1.5
+	v5-02-NRT-18:1.5
+	v5-02:1.5
+	v5-01-NRT-17:1.5
+	v5-01-NRT-16:1.5
+	v5-01-NRT-15:1.5
+	v5-01-NRT-14:1.5
+	neuralnetworks-1-0:1.5.0.14
+	cfm-single-freq-0-1:1.5.0.12
+	v5-01:1.5
+	v5-00:1.5
+	v4-23-TA133:1.5.0.10
+	mus-emls-1-70:1.5.0.8
+	rel-1-0-englocks-work:1.5.0.6
+	VUMLS1-00:1.5
+	VPL1-00:1.5
+	V4-22-NRT-08:1.5
+	VAM1-00:1.5
+	V4-21:1.5.0.4
+	V4-13:1.5
+	V4-12:1.5
+	V4-11:1.5
+	V4-10:1.5
+	V3-43:1.5
+	M4-00:1.5
+	V3-41:1.5
+	V3-40-PlusGM57:1.5.0.2
+	V2-24-NRT-04:1.5
+	V3-33:1.5
+	V2-24:1.5
+	V3-31:1.5
+	V3-30-NRT-05:1.5
+	cfm-01-00:1.5
+	V3-30:1.5
+	V3-20:1.5
+	V3-10:1.5
+	V2-23-NRT-02:1.5
+	V2-23:1.5
+	V2-22-NRT-01:1.5
+	V2-22:1.5
+	V2-21:1.5
+	V2-20:1.5
+	V2-11:1.5
+	V2-10:1.5
+	V2-00:1.5
+	V1-51:1.3
+	V1-50:1.3
+	V1-45:1.3
+	V1-44:1.3
+	V1-43:1.3
+	V1-42:1.3
+	V1-41:1.3
+	V1-32:1.2
+	V1-40:1.3
+	V1-31:1.2
+	V1-30:1.2
+	V1-13:1.2
+	V1-12:1.2
+	V1-11:1.2
+	V1-10:1.2
+	newfwm-feb03:1.2.0.4
+	V1-04:1.2
+	V1-03:1.2
+	V1-02:1.2
+	V1-00:1.2
+	newfwm-sep01:1.2.0.2
+	V0-7:1.2
+	V0-5-Level2:1.1
+	V0-5-SIPS:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.5
+date	2006.02.28.17.56.56;	author cvuu;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2005.06.23.19.07.39;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2004.01.07.21.43.18;	author cvuu;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.07.18.15.58.52;	author nakamura;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.02.13.19.47.31;	author nakamura;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.5
+log
+@V2.00 commit
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+! NOTE: This module is automatically created by the makemlspcfmodule
+!       perl script.  Do *NOT* attempt to modify this by hand.
+!
+MODULE MLSPCF3
+   INTEGER, PARAMETER :: mlspcf_l3_param_OutputVersion = 3000
+   INTEGER, PARAMETER :: mlspcf_l3_param_Cycle = 3001
+   INTEGER, PARAMETER :: mlspcf_l3_param_L2DayRange = 3002
+   INTEGER, PARAMETER :: mlspcf_l3_param_RangDays = 3003
+   !
+   INTEGER, PARAMETER :: mlspcf_pcf_start = 900
+   INTEGER, PARAMETER :: mlspcf_pcf_end = 900
+   !
+   INTEGER, PARAMETER :: mlspcf_l3cf_start = 901
+   INTEGER, PARAMETER :: mlspcf_l3cf_end = 901
+   !
+   INTEGER, PARAMETER :: mlspcf_l2gp_start = 22000
+   INTEGER, PARAMETER :: mlspcf_l2gp_end = 22403
+   !INTEGER, PARAMETER :: mlspcf_l2gp_end = 22380
+   !INTEGER, PARAMETER :: mlspcf_l2gp_end = 22309
+   !
+   INTEGER, PARAMETER :: mlspcf_l2dg_start = 23000
+   INTEGER, PARAMETER :: mlspcf_l2dg_end = 23030
+   !
+   INTEGER, PARAMETER :: mlspcf_l3dm_start = 30000
+   INTEGER, PARAMETER :: mlspcf_l3dm_end = 30129
+   !
+   INTEGER, PARAMETER :: mlspcf_l3sp_start = 31000
+   INTEGER, PARAMETER :: mlspcf_l3sp_end = 31012
+   !
+   INTEGER, PARAMETER :: mlspcf_l3dz_start = 31100
+   INTEGER, PARAMETER :: mlspcf_l3dz_end = 31161
+   !
+   INTEGER, PARAMETER :: mlspcf_l3mms_start = 31200
+   INTEGER, PARAMETER :: mlspcf_l3mms_end = 31200
+   !
+   INTEGER, PARAMETER :: mlspcf_l3mmd_start = 31201
+   INTEGER, PARAMETER :: mlspcf_l3mmd_end = 31201
+   !
+   INTEGER, PARAMETER :: mlspcf_l3mzs_start = 31300
+   INTEGER, PARAMETER :: mlspcf_l3mzs_end = 31300
+   !
+   INTEGER, PARAMETER :: mlspcf_l3mzd_start = 31301
+   INTEGER, PARAMETER :: mlspcf_l3mzd_end = 31301
+   !
+   INTEGER, PARAMETER :: mlspcf_mcf_l3log_start = 4000
+   INTEGER, PARAMETER :: mlspcf_mcf_l3log_end = 4000
+   !
+   INTEGER, PARAMETER :: mlspcf_mcf_l3dm_start = 4001
+   INTEGER, PARAMETER :: mlspcf_mcf_l3dm_end = 4013
+   !INTEGER, PARAMETER :: mlspcf_mcf_l3dm_end = 4010
+   !
+   INTEGER, PARAMETER :: mlspcf_mcf_l3dzs_start = 4014
+   INTEGER, PARAMETER :: mlspcf_mcf_l3dzs_end = 4014
+   !
+   INTEGER, PARAMETER :: mlspcf_mcf_l3dzd_start = 4015
+   INTEGER, PARAMETER :: mlspcf_mcf_l3dzd_end = 4015
+   !
+   INTEGER, PARAMETER :: mlspcf_mcf_l3mms_start = 4016
+   INTEGER, PARAMETER :: mlspcf_mcf_l3mms_end = 4016
+   !
+   INTEGER, PARAMETER :: mlspcf_mcf_l3mmd_start = 4017
+   INTEGER, PARAMETER :: mlspcf_mcf_l3mmd_end = 4017
+   !
+   INTEGER, PARAMETER :: mlspcf_mcf_l3mzs_start = 4018
+   INTEGER, PARAMETER :: mlspcf_mcf_l3mzs_end = 4018
+   !
+   INTEGER, PARAMETER :: mlspcf_mcf_l3mzd_start = 4019
+   INTEGER, PARAMETER :: mlspcf_mcf_l3mzd_end = 4019
+   !
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: MLSPCF3.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+contains
+  logical function not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id: MLSPCF3.f90,v 1.4 2005/06/23 19:07:39 pwagner Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+END MODULE MLSPCF3
+@
+
+
+1.4
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d27 2
+a28 1
+   INTEGER, PARAMETER :: mlspcf_l2gp_end = 22380
+d82 1
+a82 1
+       "$RCSfile: $"
+d89 1
+a89 1
+       "$Id: $"
+@
+
+
+1.3
+log
+@version 1.4 commit
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d79 14
+@
+
+
+1.2
+log
+@Revised for Monthly program.
+@
+text
+@d19 2
+a20 1
+   INTEGER, PARAMETER :: mlspcf_l2gp_end = 22309
+d26 1
+a26 1
+   INTEGER, PARAMETER :: mlspcf_l3dm_end = 30099
+d29 1
+a29 1
+   INTEGER, PARAMETER :: mlspcf_l3sp_end = 31009
+d50 2
+a51 1
+   INTEGER, PARAMETER :: mlspcf_mcf_l3dm_end = 4010
+d53 2
+a54 2
+   INTEGER, PARAMETER :: mlspcf_mcf_l3dzs_start = 4011
+   INTEGER, PARAMETER :: mlspcf_mcf_l3dzs_end = 4011
+d56 2
+a57 2
+   INTEGER, PARAMETER :: mlspcf_mcf_l3dzd_start = 4012
+   INTEGER, PARAMETER :: mlspcf_mcf_l3dzd_end = 4012
+d59 2
+a60 2
+   INTEGER, PARAMETER :: mlspcf_mcf_l3mms_start = 4013
+   INTEGER, PARAMETER :: mlspcf_mcf_l3mms_end = 4013
+d62 2
+a63 2
+   INTEGER, PARAMETER :: mlspcf_mcf_l3mmd_start = 4014
+   INTEGER, PARAMETER :: mlspcf_mcf_l3mmd_end = 4014
+d65 2
+a66 2
+   INTEGER, PARAMETER :: mlspcf_mcf_l3mzs_start = 4015
+   INTEGER, PARAMETER :: mlspcf_mcf_l3mzs_end = 4015
+d68 2
+a69 2
+   INTEGER, PARAMETER :: mlspcf_mcf_l3mzd_start = 4016
+   INTEGER, PARAMETER :: mlspcf_mcf_l3mzd_end = 4016
+@
+
+
+1.1
+log
+@Module containing PCF numbers for L3.
+@
+text
+@d19 4
+a22 1
+   INTEGER, PARAMETER :: mlspcf_l2gp_end = 22299
+d31 7
+a37 1
+   INTEGER, PARAMETER :: mlspcf_l3dz_end = 31119
+d39 2
+a40 2
+   INTEGER, PARAMETER :: mlspcf_l3mm_start = 31200
+   INTEGER, PARAMETER :: mlspcf_l3mm_end = 31200
+d42 2
+a43 2
+   INTEGER, PARAMETER :: mlspcf_l3mz_start = 31300
+   INTEGER, PARAMETER :: mlspcf_l3mz_end = 31301
+d51 11
+a61 2
+   INTEGER, PARAMETER :: mlspcf_mcf_l3dz_start = 4011
+   INTEGER, PARAMETER :: mlspcf_mcf_l3dz_end = 4012
+d63 2
+a64 2
+   INTEGER, PARAMETER :: mlspcf_mcf_l3mm_start = 4013
+   INTEGER, PARAMETER :: mlspcf_mcf_l3mm_end = 4013
+d66 2
+a67 2
+   INTEGER, PARAMETER :: mlspcf_mcf_l3mz_start = 4014
+   INTEGER, PARAMETER :: mlspcf_mcf_l3mz_end = 4015
+@
+

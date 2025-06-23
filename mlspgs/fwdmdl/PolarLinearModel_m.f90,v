@@ -1,0 +1,576 @@
+head	2.14;
+access;
+symbols
+	v5-02-NRT-19:2.14
+	v6-00:2.14
+	v5-02-NRT-18:2.14
+	v5-02:2.14
+	v5-01-NRT-17:2.14
+	v5-01-NRT-16:2.14
+	v5-01-NRT-15:2.14
+	v5-01-NRT-14:2.14
+	neuralnetworks-1-0:2.14.0.14
+	cfm-single-freq-0-1:2.14.0.12
+	v5-01:2.14
+	v5-00:2.14
+	v4-23-TA133:2.14.0.10
+	mus-emls-1-70:2.14.0.8
+	rel-1-0-englocks-work:2.14.0.6
+	VUMLS1-00:2.14
+	VPL1-00:2.14
+	V4-22-NRT-08:2.14
+	VAM1-00:2.14
+	V4-21:2.14.0.4
+	V4-13:2.14
+	V4-12:2.14
+	V4-11:2.14
+	V4-10:2.14
+	V3-43:2.14
+	M4-00:2.14
+	V3-41:2.14
+	V3-40-PlusGM57:2.14.0.2
+	V2-24-NRT-04:2.12
+	V3-33:2.14
+	V2-24:2.12
+	V3-31:2.14
+	V3-30-NRT-05:2.14
+	cfm-01-00:2.14
+	V3-30:2.14
+	V3-20:2.14
+	V3-10:2.14
+	V2-23-NRT-02:2.12
+	V2-23:2.12
+	V2-22-NRT-01:2.12
+	V2-22:2.12
+	V2-21:2.9
+	V2-20:2.9
+	V2-11:2.9
+	V2-10:2.9
+	V2-00:2.9
+	V1-51:2.8
+	V1-50:2.8
+	V1-45:2.8
+	V1-44:2.8
+	V1-43:2.8
+	V1-32:2.7
+	V1-31:2.7
+	V1-30:2.2;
+locks; strict;
+comment	@# @;
+
+
+2.14
+date	2009.06.23.18.26.10;	author pwagner;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2009.05.13.20.03.01;	author vsnyder;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2007.06.29.19.32.42;	author vsnyder;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2007.04.03.17.40.03;	author vsnyder;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2007.01.20.01.05.41;	author vsnyder;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2005.06.22.18.08.19;	author pwagner;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2004.03.27.00.17.52;	author livesey;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2003.10.09.20.30.40;	author livesey;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2003.10.09.20.27.54;	author livesey;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2003.10.09.20.15.39;	author livesey;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2003.09.15.17.43.17;	author livesey;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2003.09.11.23.11.41;	author livesey;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2003.08.14.20.24.43;	author livesey;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2003.08.13.00.47.57;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.14
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module PolarLinearModel_m
+
+  ! This is a special instance of the linearized forward model which is
+  ! designed to handle polarized case.  It actually calls the
+  ! regular linearized forward model three times as part of its computation
+
+  implicit none
+  private
+  public :: PolarLinearModel
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+
+contains ! =====     Public Procedures     =============================
+
+  subroutine PolarLinearModel ( fmConf, FwdModelIn, FwdModelExtra,&
+    & FwdModelOut, fmStat, Jacobian, vectors )
+
+    ! Import stuff
+    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use VectorsModule, only: VECTOR_T, VECTORVALUE_T, ADDTOVECTOR, &
+      & CLEARVECTOR, DESTROYVECTORINFO, GETVECTORQUANTITYBYTYPE, CLONEVECTOR
+    use ForwardModelConfig, only: FORWARDMODELCONFIG_T
+    use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T
+    use Intrinsic, only: L_RADIANCE, L_FIELDAZIMUTH, L_OPTICALDEPTH
+    use L2PC_m, only: DEFAULTSELECTOR_FIELDAZIMUTH
+    use LinearizedForwardModel_m, only: LINEARIZEDFORWARDMODEL
+    use MatrixModule_1, only: MATRIX_T, ADDTOMATRIX, CLEARMATRIX, &
+      & CREATEEMPTYMATRIX, DESTROYMATRIX
+    use MLSCommon, only: R8
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use Constants, only: DEG2RAD
+    use ForwardModelVectorTools, only: GETQUANTITYFORFORWARDMODEL
+    use ManipulateVectorQuantities, only: FINDONECLOSESTINSTANCE
+
+    ! Dummy arguments
+    type(forwardModelConfig_T), intent(inout) :: FMCONF
+    type(vector_T), intent(in) ::  FWDMODELIN
+    type(vector_T), intent(in) ::  FWDMODELEXTRA
+    type(vector_T), intent(inout) :: FWDMODELOUT  ! Radiances, etc.
+    type(forwardModelStatus_t), intent(inout) :: FMSTAT ! Reverse comm. stuff
+    type(matrix_T), intent(inout), optional :: JACOBIAN
+    type(vector_T), dimension(:), target, optional :: VECTORS
+
+    ! Local parameters
+    ! Local variables
+    type(forwardModelConfig_T) :: THISCONFIG
+    type(Vector_T), target :: RADIANCECONTRIBUTION
+    type(Matrix_T), target :: JACOBIANCONTRIBUTION
+    type(VectorValue_T), pointer :: PHI
+    type(VectorValue_T), pointer :: RADIANCE
+
+    integer :: PASS                     ! Which 'pass' of the linear model are we on
+    integer :: MAF                      ! Which MAF are we computing for
+    integer :: INSTANCE                 ! Instance of field azimuth
+    real(r8) :: SIN2PHI, COS2PHI        ! What they say!
+    real(r8) :: SCALING                 ! How much to multiply this contribution by
+    real(r8), dimension(:,:), pointer :: SAVEPHIVALUES
+    ! A store for the original values of phi
+
+    ! Setup our temporary stuff
+    if ( present(jacobian) ) then
+      call CreateEmptyMatrix ( jacobianContribution, 0, &
+        & jacobian%row%vec, jacobian%col%vec, &
+        & .not. jacobian%row%instFirst, .not. jacobian%col%instFirst, &
+        & 'jacobianContribution' )
+    end if
+    call CloneVector ( radianceContribution, fwdModelOut )
+
+    maf = fmStat%maf
+
+    ! This forward model configuration is somewhat crafty.   We create our
+    ! own configuration we pass to the linear model 3 times to form
+    ! our composite radiances.  To do this we patch in the default bin
+    ! selector for the field azimuth and then hack around at it's value.
+
+    thisConfig = fmConf
+    nullify ( thisConfig%binSelectors )
+    call Allocate_test ( thisConfig%binSelectors, size(fmConf%binSelectors)+1, &
+      & 'thisConfig%binSelectors', ModuleName )
+    
+    thisConfig%binSelectors(1) = DefaultSelector_FieldAzimuth
+    thisConfig%binSelectors(2:) = fmConf%binSelectors
+
+    ! Get stuff from various vectors
+    radiance => GetVectorQuantityByType (fwdModelOut, quantityType=l_radiance, &
+      & signal=fmConf%signals(1)%index, sideband=fmConf%signals(1)%sideband, noError=.true. )
+    ! Now, it's possible we're really being asked to deal with optical depth, not
+    ! radiance.
+    if ( .not. associated ( radiance ) ) then
+      radiance => GetVectorQuantityByType (fwdModelOut, quantityType=l_opticalDepth, &
+        & signal=fmConf%signals(1)%index, sideband=fmConf%signals(1)%sideband, noError=.true. )
+    end if
+
+    ! Now, some possible error messages
+    if ( .not. associated ( radiance ) ) call MLSMessage ( &
+      & MLSMSG_Error, ModuleName, &
+      & 'Unable to find a radiance or optical depth quantity for this signal' )
+    if ( radiance%template%quantityType == l_opticalDepth ) then
+      if ( present(jacobian)  ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Not appropriate to ask for derivatives for optical depth' )
+      if ( fmConf%xStar /= 0 ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Not appropriate to supply x/yStar for optical depth' )
+      if  ( fmConf%signals(1)%sideband /= 0 ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Not appropriate to request optical depth from unfolded signal' )
+    end if
+
+    phi => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+      & quantityType=l_fieldAzimuth, config=fmConf )
+    instance = FindOneClosestInstance ( phi, radiance, maf )
+
+    ! Create terms for scalings
+    sin2phi = sin ( 2*phi%values(1,instance) * deg2rad )
+    cos2phi = cos ( 2*phi%values(1,instance) * deg2rad )
+
+    ! Store the values of phi away for the moment
+    nullify ( savePhiValues )
+    call Allocate_Test ( savePhiValues, phi%template%instanceLen, &
+      & phi%template%noInstances, 'savePhiValues', ModuleName )
+    savePhiValues = phi%values
+
+    ! Now loop over the three calls we're going to make
+    do pass = 1, 3
+      ! Get the appropriate values of phi and scalings
+      select case ( pass )
+      case ( 1 ) ! phi=0 case
+        scaling = ( 1.0_r8 - sin2phi + cos2phi ) / 2.0_r8
+        phi%values = 0.0_r8
+      case ( 2 ) ! phi=pi/4 case
+        scaling = sin2phi
+        phi%values = 45.0_r8
+      case ( 3 ) ! phi=pi/2 case
+        scaling = ( 1.0_r8 - sin2phi - cos2phi ) / 2.0_r8
+        phi%values = 90.0_r8
+      end select
+
+      ! Do this one's contribution
+      call ClearVector ( radianceContribution )
+      if ( present ( jacobian ) ) then
+        call ClearMatrix ( jacobianContribution )
+        call LinearizedForwardModel ( thisConfig, fwdModelIn, fwdModelExtra, &
+          & radianceContribution, fmStat, jacobianContribution, vectors )
+      else
+        call LinearizedForwardModel ( thisConfig, fwdModelIn, fwdModelExtra, &
+          & radianceContribution, fmStat, vectors=vectors )
+      end if
+      call AddToVector ( fwdModelOut, radianceContribution, scaling )
+      if ( present ( jacobian ) ) &
+        & call AddToMatrix ( jacobian, jacobianContribution, scaling )
+    end do
+
+    ! Put the original phi back
+    phi%values = savePhiValues
+
+    ! Tidy up
+    call Deallocate_test ( savePhiValues, 'savePhiValues', ModuleName )
+    if ( present(jacobian) )call DestroyMatrix ( jacobianContribution )
+    call DestroyVectorInfo ( radianceContribution )
+    call Deallocate_test ( thisConfig%binSelectors, 'thisConfig%binSelectors', ModuleName )
+
+  end subroutine PolarLinearModel
+
+  ! ----------------------------------------------------------------------------
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: read_apriori.f90 is it here $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module PolarLinearModel_m
+@
+
+
+2.13
+log
+@Get constants from Constants, kinds from MLSKinds
+@
+text
+@d24 1
+a24 1
+       "$RCSfile: PolarLinearModel_m.f90,v $"
+d183 1
+a184 1
+!---------------------------- RCS Ident Info -------------------------------
+d186 2
+a187 3
+       "$Id: PolarLinearModel_m.f90,v 2.12 2007/06/29 19:32:42 vsnyder Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d189 1
+d191 1
+@
+
+
+2.12
+log
+@Make ForwardModelIntermediate_t private to ScanModelModule
+@
+text
+@d47 1
+a47 1
+    use Units, only: DEG2RAD
+d186 1
+a186 1
+       "$Id: PolarLinearModel_m.f90,v 2.11 2007/04/03 17:40:03 vsnyder Exp $"
+@
+
+
+2.11
+log
+@Replace pointer attribute on VectorDatabase with target attribute
+@
+text
+@d32 1
+a32 1
+    & FwdModelOut, Ifm, fmStat, Jacobian, vectors )
+d39 1
+a39 2
+    use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T, &
+      & FORWARDMODELINTERMEDIATE_T
+a55 1
+    type(forwardModelIntermediate_T), intent(inout) :: IFM ! Workspace
+d160 1
+a160 1
+          & radianceContribution, ifm, fmStat, jacobianContribution, vectors )
+d163 1
+a163 1
+          & radianceContribution, ifm, fmStat, vectors=vectors )
+d186 1
+a186 1
+       "$Id: PolarLinearModel_m.f90,v 2.10 2007/01/20 01:05:41 vsnyder Exp $"
+@
+
+
+2.10
+log
+@Decrufting
+@
+text
+@d60 1
+a60 1
+    type(vector_T), dimension(:), pointer, optional :: VECTORS
+d188 1
+a188 1
+       "$Id: PolarLinearModel_m.f90,v 2.9 2005/06/22 18:08:19 pwagner Exp $"
+@
+
+
+2.9
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d24 1
+a24 1
+       "$RCSfile: $"
+d41 2
+a42 3
+    use Intrinsic, only: L_LINEAR, L_FULL, L_RADIANCE, L_FIELDAZIMUTH, L_OPTICALDEPTH
+    use FullForwardModel_m, only: FULLFORWARDMODEL
+    use L2PC_m, only: BINSELECTORS, DEFAULTSELECTOR_FIELDAZIMUTH
+d44 1
+a44 1
+    use MatrixModule_1, only: MATRIX_T, COPYMATRIX, ADDTOMATRIX, CLEARMATRIX, &
+a46 1
+    use MLSSignals_M, only: SIGNAL_T
+a68 1
+    type(VectorValue_T), pointer :: FIELDAZIMUTH
+d188 1
+a188 1
+       "$Id: $"
+@
+
+
+2.8
+log
+@Obscure bug fix and some tidying up.
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d22 3
+a24 6
+  !------------------------------- RCS Ident Info ------------------------------
+  character(len=*), parameter :: IdParm = & 
+    "$Id: PolarLinearModel_m.f90,v 2.7 2003/10/09 20:30:40 livesey Exp $"
+  character(len=len(idParm)) :: Id = idParm
+  character(len=*), parameter :: ModuleName = &
+    & "$RCSfile: PolarLinearModel_m.f90,v $"
+d26 1
+a26 1
+  !-----------------------------------------------------------------------------
+d189 5
+@
+
+
+2.7
+log
+@Fixed bugs in the last bug fix!
+@
+text
+@d16 1
+a16 1
+    "$Id: PolarLinearModel_m.f90,v 2.6 2003/10/09 20:27:54 livesey Exp $"
+d44 1
+d108 16
+@
+
+
+2.6
+log
+@Bug fix associated with asking for optical depth not radiance.
+@
+text
+@d16 1
+a16 1
+    "$Id: PolarLinearModel_m.f90,v 2.5 2003/10/09 20:15:39 livesey Exp $"
+d36 1
+a36 1
+    use Intrinsic, only: L_LINEAR, L_FULL, L_RADIANCE, L_FIELDAZIMUTH
+d106 1
+a106 1
+        & signal=signal%index, sideband=signal%sideband, noError=.true. )
+@
+
+
+2.5
+log
+@Removed the noError=.true. for getting radiance.
+@
+text
+@d16 1
+a16 1
+    "$Id: PolarLinearModel_m.f90,v 2.4 2003/09/15 17:43:17 livesey Exp $"
+d101 8
+a108 1
+      & signal=fmConf%signals(1)%index, sideband=fmConf%signals(1)%sideband )
+@
+
+
+2.4
+log
+@Various bug fixes, got it working for the first time.
+@
+text
+@d16 1
+a16 1
+    "$Id: PolarLinearModel_m.f90,v 2.3 2003/09/11 23:11:41 livesey Exp $"
+d101 1
+a101 1
+      & signal=fmConf%signals(1)%index, sideband=fmConf%signals(1)%sideband, noError=.true. )
+@
+
+
+2.3
+log
+@Now includes the vectors argument to push down into the linear model.
+@
+text
+@d16 1
+a16 1
+    "$Id: PolarLinearModel_m.f90,v 2.2 2003/08/14 20:24:43 livesey Exp $"
+d31 2
+a32 2
+    use VectorsModule, only: VECTOR_T, VECTORVALUE_T, COPYVECTOR, ADDTOVECTOR, &
+      & CLEARVECTOR, DESTROYVECTORINFO, GETVECTORQUANTITYBYTYPE
+d82 1
+a82 1
+    call CopyVector ( radianceContribution, fwdModelOut )
+d111 1
+@
+
+
+2.2
+log
+@Cosmetic change
+@
+text
+@d16 1
+a16 1
+    "$Id: PolarLinearModel_m.f90,v 2.1 2003/08/13 00:47:57 livesey Exp $"
+d27 1
+a27 1
+    & FwdModelOut, Ifm, fmStat, Jacobian )
+d56 1
+d135 1
+a135 1
+          & radianceContribution, ifm, fmStat, jacobianContribution )
+d138 1
+a138 1
+          & radianceContribution, ifm, fmStat )
+@
+
+
+2.1
+log
+@First version
+@
+text
+@d16 1
+a16 1
+    "$Id: HybridForwardModel.f90,v 2.1 2003/07/15 22:10:15 livesey Exp $"
+d19 1
+a19 1
+    & "$RCSfile: HybridForwardModel.f90,v $"
+a57 2
+    real(r8), parameter :: PHIVALUES(3) = (/ 0.0, 45.0, 90.0 /)
+
+@
+

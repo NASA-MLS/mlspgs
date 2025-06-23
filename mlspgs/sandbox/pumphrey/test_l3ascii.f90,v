@@ -1,0 +1,233 @@
+head	1.4;
+access;
+symbols
+	v5-02-NRT-19:1.4
+	v6-00:1.4
+	v5-02-NRT-18:1.4
+	v5-02:1.4
+	v5-01-NRT-17:1.4
+	v5-01-NRT-16:1.4
+	v5-01-NRT-15:1.4
+	v5-01-NRT-14:1.4
+	neuralnetworks-1-0:1.4.0.18
+	cfm-single-freq-0-1:1.4.0.16
+	v5-01:1.4
+	v5-00:1.4
+	v4-23-TA133:1.4.0.14
+	mus-emls-1-70:1.4.0.12
+	rel-1-0-englocks-work:1.4.0.10
+	VUMLS1-00:1.4
+	VPL1-00:1.4
+	V4-22-NRT-08:1.4
+	VAM1-00:1.4
+	V4-21:1.4.0.8
+	V4-13:1.4
+	V4-12:1.4
+	V4-11:1.4
+	V4-10:1.4
+	V3-43:1.4
+	M4-00:1.4
+	V3-41:1.4
+	V3-40-PlusGM57:1.4.0.6
+	V2-24-NRT-04:1.4
+	V3-33:1.4
+	V2-24:1.4
+	V3-31:1.4
+	V3-30-NRT-05:1.4
+	cfm-01-00:1.4
+	V3-30:1.4
+	V3-20:1.4
+	V3-10:1.4
+	V2-23-NRT-02:1.4
+	V2-23:1.4
+	V2-22-NRT-01:1.4
+	V2-22:1.4
+	V2-21:1.4
+	V2-20:1.4
+	V2-11:1.4
+	V2-10:1.4
+	V2-00:1.4
+	V1-51:1.4
+	V1-50:1.4
+	V1-45:1.4
+	V1-44:1.4
+	V1-43:1.4
+	V1-42:1.4
+	V1-41:1.4
+	V1-32:1.4
+	V1-40:1.4
+	V1-31:1.4
+	V1-13:1.4
+	V1-12:1.4
+	V1-11:1.4
+	V1-10:1.4
+	newfwm-feb03:1.4.0.4
+	V1-04:1.4
+	V1-03:1.4
+	V1-02:1.4
+	V1-00:1.4
+	newfwm-sep01:1.4.0.2
+	V0-7:1.4
+	V0-5-Level2:1.4
+	V0-5-SIPS:1.4
+	V0_1:1.4;
+locks; strict;
+comment	@# @;
+
+
+1.4
+date	2000.01.28.14.34.15;	author pumphrey;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	99.12.16.17.59.23;	author pumphrey;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	99.12.06.16.21.40;	author pumphrey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	99.12.06.14.27.17;	author pumphrey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.4
+log
+@Update sandbox to reflect various tinkerings
+@
+text
+@program test_l3ascii
+
+  use gridded_data_module
+  use MLSCommon
+  character(len=80)::filename
+  integer::unit,counter
+  type(GriddedData_T)::field
+  logical :: doleak
+  !real(kind=r8)::outval!,pressure,lat
+  ! variables for plotting section
+  !integer::ic,nperdec,nlevs,nlats,firstlat,lastlat,i,j
+
+  print*,"Enter l3ascii file name "
+  read "(a)" ,filename
+
+  !open(file="deleteme",unit=1,status="replace",action="write")
+
+  call l3ascii_open(filename,unit)
+  field%reusing=0
+  print*,"Using unit",unit  
+  print*,"Reading file"
+  call l3ascii_read_field(unit,field)
+  print*,"Quantity: ",field%quantityName
+  print*,"Description: ",field%description
+  print*,"Units: ",field%units
+  print*,"No of Heights: ",field%noHeights
+  print*,"Vert coord type: ",field%verticalCoordinate
+  print*,"Heights: ",field%heights
+  print*,"No of Lats",field%noLats
+  print*,"Lats: ",field%lats
+  print*,"No of Lons",field%noLons
+  print*,"Lons: ",field%lons
+  print*,"No of Lsts",field%noLsts
+  print*,"Lsts: ",field%lsts
+  print*,"No of Szas",field%noSzas
+  print*,"Szas: ",field%szas
+  print*,"No. of dates",field%noDates
+  print*,"start Dates:",field%dateStarts/(24*60*60)
+  print*,"end Dates:",field%dateEnds/(24*60*60)
+  close(unit=unit)
+  
+  ! test intrpolate routine
+!  lat=30.0
+!  pressure=1.0
+!  inttest:do 
+!      call l3ascii_interp_field(field,outval,lat=lat,pressure=pressure)
+!      print*,"Lat=",lat,"pr=",pressure," value=",outval
+!      if (lat > 99.0) then 
+!         exit inttest
+!      endif
+!      print*,"Enter another lat and pressure"
+!      read*,lat,pressure
+!  enddo inttest
+
+
+  doleak=.true.
+  if (doleak) then 
+     print*," Applying leakage test. Type Ctrl-C to stop"
+     print*," While this is running, run top and check the size"
+     print*," of this program's process. If the process keeps getting bigger"
+     print*," then there is a memory leak in this program "
+     print*," (or maybe your Fortran 90 compiler.......)"
+     counter=0
+     leak:do counter=1,80000
+         call l3ascii_open(filename,unit)
+         call l3ascii_read_field(unit,field)
+!         call l3ascii_read_field(unit,field)
+   !call l3ascii_interp_field(field,outval,lat=30.0_r8,pressure=45.0_r8)
+         close(unit=unit)
+         if (modulo(counter,100) == 0) then
+            print*,"Done ",counter," open/read/close cycles"
+         endif
+     end do leak
+  end if
+ 
+
+  print*,"Shape of Field:",shape(field%field)
+  print*,"Shape of lats :",shape(field%lats)
+
+
+  
+
+end program test_l3ascii
+@
+
+
+1.3
+log
+@changes due to intro of MLSCommon.f90 (Not finished yet)
+@
+text
+@d9 1
+a9 1
+  real(kind=r8)::outval!,pressure,lat
+d11 1
+a11 1
+  integer::ic,nperdec,nlevs,nlats,firstlat,lastlat,i,j
+d64 1
+a64 1
+     leak:do counter=1,800
+d68 1
+a68 1
+   call l3ascii_interp_field(field,outval,lat=30.0_r8,pressure=45.0_r8)
+@
+
+
+1.2
+log
+@Fixed an uninitialised variable
+@
+text
+@d4 1
+a4 1
+  use kinds_module
+@
+
+
+1.1
+log
+@Added a bunch of files to the sandbox: mostly files for testing
+the l3ascii stuff.
+@
+text
+@d19 1
+@
+

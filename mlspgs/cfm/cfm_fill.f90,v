@@ -1,0 +1,1347 @@
+head	1.18;
+access;
+symbols
+	v5-02-NRT-19:1.18
+	v6-00:1.18
+	v5-02-NRT-18:1.18
+	v5-02:1.18
+	v5-01-NRT-17:1.18
+	v5-01-NRT-16:1.18
+	v5-01-NRT-15:1.18
+	v5-01-NRT-14:1.18
+	neuralnetworks-1-0:1.18.0.10
+	cfm-single-freq-0-1:1.18.0.8
+	TES-MLuo-01:1.18
+	TES-UNKNOWN:1.18
+	v5-01:1.18
+	v5-00:1.18
+	v4-23-TA133:1.18.0.6
+	mus-emls-1-70:1.18.0.4
+	rel-1-0-englocks-work:1.18.0.2
+	VUMLS1-00:1.18
+	VPL1-00:1.18
+	V4-22-NRT-08:1.18
+	VAM1-00:1.18
+	V4-21:1.16.0.2
+	V4-13:1.16
+	V4-12:1.16
+	V4-11:1.16
+	V4-10:1.16
+	M4-00:1.14
+	V3-33:1.11
+	V3-31:1.11
+	V3-30-NRT-05:1.11
+	cfm-01-00:1.10;
+locks; strict;
+comment	@# @;
+
+
+1.18
+date	2015.08.27.23.33.42;	author pwagner;	state Exp;
+branches;
+next	1.17;
+
+1.17
+date	2015.08.05.20.21.29;	author pwagner;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2013.07.26.16.48.15;	author pwagner;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2013.07.10.17.51.24;	author pwagner;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2012.10.15.17.11.41;	author pwagner;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2011.12.15.18.27.44;	author honghanh;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2011.11.03.14.39.57;	author honghanh;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2010.07.08.21.39.16;	author honghanh;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2010.06.29.19.51.37;	author honghanh;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2010.06.29.15.53.45;	author honghanh;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2010.06.29.15.29.34;	author honghanh;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2010.06.29.00.20.14;	author honghanh;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2010.05.23.04.09.18;	author honghanh;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2010.05.23.02.50.52;	author honghanh;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2010.03.26.15.35.18;	author honghanh;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2010.03.24.17.54.18;	author honghanh;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2010.03.24.17.44.48;	author honghanh;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2010.03.09.22.39.38;	author honghanh;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.18
+log
+@PhiWindow now a tuple, no longer a scalar
+@
+text
+@! Copyright 2010, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+module CFM_Fill_m
+
+    use INIT_TABLES_MODULE, only: L_LOSVEL, &
+        L_L1BMIF_TAI, L_L1BMAFBASELINE, L_NONE, &
+        L_ECRTOFOV, L_PTAN, L_ORBITINCLINATION, &
+        L_RADIANCE, L_SCGEOCALT, &
+        L_TNGTGEODALT, L_TNGTGEOCALT, L_SCVELECR, &
+        L_TNGTECI, L_SCVELECI, L_SCECI
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
+    use MLSFILES, only: GETMLSFILEBYTYPE, HDFVERSION_5
+    use VECTORSMODULE, only: VECTORVALUE_T, M_LINALG, M_FILL, MASKVECTORQTY, DUMP
+    use L1BDATA, only: GETL1BFILE, ASSEMBLEL1BQTYNAME, L1BDATA_T, &
+              DEALLOCATEL1BDATA, READL1BDATA
+    use MLSCOMMON, only: MLSFILE_T, DEFAULTUNDEFINEDVALUE
+    use MLSKINDS, only: R8
+    use MLSSIGNALS_M, only: GETSIGNALNAME, GETMODULENAME
+    use BITSTUFF, only: NEGATIVEIFBITPATTERNSET
+    use CHUNKS_M, only: MLSCHUNK_T
+    use MLSSTRINGS, only: WRITEINTSTOCHARS
+    use FILLUTILS_1, only: FILLERROR, FROML1B, &
+                           PHITANWITHREFRACTION
+    use STRING_TABLE, only: CREATE_STRING
+
+    implicit none
+
+    public :: EXPLICITFILLVECTORQUANTITY, FILLVECTORQUANTITYFROML1B
+    public :: SPREADFILLVECTORQUANTITY, FILLPTANQUANTITY
+    public :: FILLVECTORQTYFROMPROFILE, FILLPHITANQUANTITY
+    public :: APPLYBASELINE
+
+    private
+
+!---------------------------- RCS Ident Info -------------------------------
+    character(len=*), private, parameter :: ModuleName= &
+        "$RCSfile: cfm_fill.f90,v $"
+!---------------------------------------------------------------------------
+
+    interface FillVectorQuantityFromL1B
+        module procedure FillVectorQuantityFromL1B_maf
+        module procedure FillVectorQuantityFromL1B_chunk
+    end interface
+
+    contains
+
+    ! Fill the quantity with given values.
+    subroutine ExplicitFillVectorQuantity (quantity, values)
+        ! The quantity to be filled. Only values are filled,
+        ! other fields of VectorValue_T object won't be overwritten.
+        type(VectorValue_T), intent(inout) :: quantity
+        ! the amount of values provided must be equal to
+        ! quantity%template%instanceLen * quantity%template%noInstances
+        real(r8), dimension(:), intent(in) :: values
+
+        integer :: noValues, numChans
+        integer :: i,j,k
+        integer :: surf, chan
+        character(len=10) :: int1 = "          ", int2 = "          "
+
+        noValues = size(values)
+
+        if (noValues /= quantity%template%instanceLen * &
+            quantity%template%noInstances) then
+            call writeIntsToChars( &
+            quantity%template%instanceLen * quantity%template%noInstances, int1)
+            call writeIntsToChars(noValues, int2)
+            call MLSMessage (MLSMSG_Error, moduleName, &
+            "Incorrect amount of data, expect " // trim(int1) // ", has " // trim(int2))
+        end if
+
+        ! need checking on the value and their units?
+        numChans = quantity%template%instanceLen / quantity%template%noSurfs
+        if (numChans /= quantity%template%noChans) then
+            call MLSMessage (MLSMSG_Error, moduleName, &
+            "Inconsistent template instance length")
+        end if
+
+        ! loop thru the quantity
+        k = 0
+        do i = 1, quantity%template%noInstances
+            j = 0
+            do surf = 1, quantity%template%noSurfs
+                do chan = 1, numChans
+                    j = j + 1
+                    k = k + 1
+                    quantity%values(j,i) = values (mod (k-1, noValues) + 1)
+                end do
+            end do
+        end do
+    end subroutine
+
+    ! Fill all values in the quantity with the same number
+    subroutine SpreadFillVectorQuantity (quantity, value)
+        type(VectorValue_T), intent(inout) :: quantity
+        real(r8), intent(in) :: value
+
+        integer :: numChans
+        integer :: k, i, j
+        integer :: surf, chan
+
+        ! need checking on the value and their units?
+        numChans = quantity%template%instanceLen / quantity%template%noSurfs
+        if (numChans /= quantity%template%noChans) then
+            call MLSMessage (MLSMSG_Error, moduleName, &
+            "Inconsistent template instance length")
+        end if
+
+        ! loop thru the quantity
+        k = 0
+        do i = 1, quantity%template%noInstances
+            j = 0
+            do surf = 1, quantity%template%noSurfs
+                do chan = 1, numChans
+                    j = j + 1
+                    k = k + 1
+                    quantity%values(j,i) = value
+                end do
+            end do
+        end do
+    end subroutine
+
+    ! Fill the quantity with data from L1B files with maf range
+    ! specified by firstL1Maf and lastL1Maf
+    subroutine FillVectorQuantityFromL1B_maf (quantity, firstL1Maf, lastL1Maf, &
+    filedatabase, isPrecision, suffix, precisionQuantity, BOMask)
+        ! The quantity to be filled
+        type(VectorValue_T), intent(inout) :: quantity
+        ! The maf range of the data to be read from L1B files
+        integer, intent(in) :: firstL1Maf, lastL1Maf
+        ! the filedatabase containing L1B files
+        type(MLSFile_T), dimension(:), pointer :: filedatabase
+        ! is this a precision quantity
+        logical, intent(in) :: isPrecision
+        character(len=*), intent(in), optional :: suffix
+        type(VectorValue_T), intent(in), optional :: precisionQuantity
+        ! If isPrecision is .true. and BOMask is not 0, then
+        ! bright object status is read from L1BOA file
+        integer, intent(in), optional :: BOMask
+
+        type (MLSChunk_T) :: Chunk
+
+        chunk%firstMafIndex = firstL1Maf
+        chunk%lastMafIndex = lastL1Maf
+
+        call FillVectorQuantityFromL1B_chunk (quantity, chunk, filedatabase, &
+        isPrecision, suffix, precisionQuantity, BOMask)
+    end subroutine
+
+    ! Fill the quantity with data from L1B files
+    subroutine FillVectorQuantityFromL1B_chunk (quantity, chunk, filedatabase, &
+    isPrecision, suffix, precisionQuantity, BOMask)
+        ! The quantity to be filled
+        type(VectorValue_T), intent(inout) :: quantity
+        ! fake chunk object carrying needed information
+        type(MLSChunk_T), intent(in) :: chunk
+        ! the filedatabase containing L1B files
+        type(MLSFile_T), dimension(:), pointer :: filedatabase
+        ! is this a precision quantity
+        logical, intent(in) :: isPrecision
+        character(len=*), intent(in), optional :: suffix
+        type(VectorValue_T), intent(in), optional :: precisionQuantity
+        ! If isPrecision is .true. and BOMask is not 0, then
+        ! bright object status is read from L1BOA file
+        integer, intent(in), optional :: BOMask
+        integer :: geoLocation
+        integer :: i
+
+        fillError = 0
+        geoLocation = l_none
+        i = 0
+        if (present (suffix)) then
+            i = create_string(suffix)
+        end if
+
+        call FromL1B(0, quantity, chunk, filedatabase, &
+                     isPrecision, i, geoLocation, precisionQuantity, BOMask)
+        if (fillError /= 0) then
+            call MLSMessage (MLSMSG_Error, moduleName, "Can't Fill from L1B")
+        end if
+    end subroutine
+
+    ! Don't use
+    subroutine FillPhiTanWithRefraction (quantity, h2o, orbIncl, ptan, &
+                                         refGPH, temperature)
+        type(VectorValue_T), intent(inout) :: quantity
+        type(VectorValue_T), intent(in) :: h2o
+        type(VectorValue_T), intent(in) :: orbincl
+        type(VectorValue_T), intent(in) :: ptan
+        type(VectorValue_T), intent(in) :: refGPH
+        type(VectorValue_T), intent(in) :: temperature
+
+        call PhiTanWithRefraction( 0, quantity, h2o, orbIncl, &
+                                  ptan, refGPH, temperature, .false. )
+    end subroutine
+
+    ! Don't know how to describe this
+    subroutine FillVectorQtyFromProfile (quantity, dontMask, heights, &
+                                         values, value_unit, ptan, logSpace)
+        use VectorsModule, only: ValidateVectorQuantity
+        use VGridsDatabase, only: GETUNITFORVERTICALCOORDINATE
+        use Init_Tables_Module, only: l_pressure, phyq_dimensionless, phyq_zeta
+        use MLSNumerics, only: InterpolateValues, Hunt
+        use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+
+        type(VectorValue_T), intent(inout), target :: quantity
+        logical, intent(in) :: dontMask
+        real(r8), dimension(:), intent(in) :: heights
+        real(r8), dimension(:), intent(in) :: values
+        integer :: value_unit
+        type(VectorValue_T), intent(in), optional :: ptan
+        logical, intent(in), optional :: logSpace
+
+        integer :: heightUnit, noUnique
+        logical :: fail
+        integer :: i, j, s, c, noPoints
+        logical :: mylogSpace
+        logical, dimension(:), pointer :: duplicated
+        logical :: LOCALOUTHEIGHTS ! Set if out heights is our own variable
+        real (r8), dimension(:), pointer :: OUTHEIGHTS ! Heights for output
+        integer, dimension(:), pointer :: ININDS ! Indices
+        real (r8), dimension(:), pointer :: OUTVALUES ! Single profile for output
+        real(r8), dimension(size(heights)) :: myheights
+        real(r8), dimension(size(values)) :: myvalues
+
+        if (.not. ValidateVectorQuantity(quantity, coherent=.true.) &
+            .and. .not. present(ptan)) &
+            call MLSMessage(MLSMSG_Error, ModuleName, &
+            'The quantity is not amenable to a profile fill unless you supply ptan')
+
+        heightUnit = GetUnitForVerticalCoordinate(quantity%template%verticalCoordinate)
+        if (present(ptan)) heightUnit = phyq_zeta
+
+        myLogSpace = quantity%template%logBasis
+        if (present(logSpace)) myLogSpace = logSpace
+
+        if (value_unit /= phyq_dimensionless &
+            .and. value_unit /= quantity%template%unit) &
+            call MLSMessage(MLSMSG_Error, moduleName, "Bad unit for profile fill")
+
+        if (size(heights) /= size(values)) &
+            call MLSMessage(MLSMSG_Error, moduleName, &
+            "Mismatch length between heights and values array")
+
+        noPoints = size(heights)
+        nullify(duplicated, outheights, outvalues, ininds)
+        call Allocate_test ( duplicated, noPoints, 'duplicated', ModuleName )
+        call Allocate_test (outValues, quantity%template%noSurfs, 'outValues', ModuleName)
+
+        if (heightUnit == phyq_zeta) then
+            myheights = -log10(heights)
+        else
+            myheights = heights
+        end if
+
+        if (myLogSpace .and. any(values <= 0.0)) &
+            call MLSMessage(MLSMSG_Error, moduleName, &
+            'Non-positive input data in log profile fill')
+
+        if (myLogSpace) then
+            myValues = log(values)
+        else
+            myValues = values
+        end if
+
+        ! Get the appropriate height coordinate for output, for pressure take log.
+        if ( present(ptan) ) then
+            localOutHeights = .false.
+            outHeights => ptan%values(:,1)
+        elseif ( quantity%template%verticalCoordinate == l_pressure ) then
+            localOutHeights = .true.
+            call Allocate_test (outHeights, quantity%template%noSurfs, &
+                                'outHeights', ModuleName )
+            outHeights = -log10 ( quantity%template%surfs(:,1) )
+        else
+            localOutHeights = .false.
+            outHeights => quantity%template%surfs(:,1)
+        end if
+
+        ! Now, if the quantity is coherent, let's assume the user wanted the
+        ! 'nearest' values
+        if ( quantity%template%coherent .or. present(ptan) ) then
+            nullify ( inInds )
+            call allocate_test ( inInds, noPoints, 'inInds', ModuleName )
+            call hunt ( outHeights, myHeights, inInds, &
+            & nearest=.true., allowTopValue=.true., fail=fail )
+            if ( fail ) then
+                call MLSMessage ( MLSMSG_Error, moduleName, 'Problem in Hunt' )
+            end if
+            duplicated = .false.
+            do i = 1, noPoints - 1
+                do j = i + 1, noPoints
+                    if ( inInds(i) == inInds(j) ) then
+                        duplicated ( j ) = .true.
+                    end if
+                end do
+            end do
+            noUnique = count ( .not. duplicated )
+            inInds(1:noUnique) = pack ( inInds, .not. duplicated )
+            myHeights(1:noUnique) = outHeights ( inInds(1:noUnique) )
+            myValues(1:noUnique) = pack ( myValues, .not. duplicated )
+            call deallocate_test ( inInds, 'inInds', ModuleName )
+        end if
+
+        ! Now do the interpolation for the first instance
+        call InterpolateValues ( myHeights(1:noUnique), myValues(1:noUnique), outHeights, &
+        & outValues, 'Linear', extrapolate='Constant' )
+
+        if (myLogSpace) outvalues = exp(outvalues)
+
+        do i = 1, quantity%template%noInstances
+            j = 1
+            do s = 1, quantity%template%noSurfs
+                do c = 1, quantity%template%noChans
+                    if (associated(quantity%mask) .and. .not. dontMask) then
+                        if (iand(ichar(quantity%mask(j,i)), m_fill) == 0) &
+                        quantity%values(j,i) = outValues(s)
+                    else
+                        quantity%values(j,i) = outValues(s)
+                    end if
+                    j = j+1
+                end do
+            end do
+        end do
+
+        ! Finish off
+        if ( localOutHeights ) call Deallocate_test ( outHeights, &
+            & 'outHeights', ModuleName )
+        call Deallocate_test ( duplicated, 'duplicated', ModuleName )
+        call Deallocate_test ( outValues, 'outValues', ModuleName )
+
+    end subroutine
+
+    ! Fill phitan quantity with phi values from the quantity's template
+    subroutine FillPhitanQuantity (quantity)
+        ! phitan quantity
+        type(VectorValue_T), intent(inout) :: quantity
+
+        quantity%values = quantity%template%phi
+    end subroutine
+
+    ! Compute and fill ptan quantity from other quantities
+    subroutine FillPtanQuantity (ptan, temperature, refGPH, h2o, orbitInclination, &
+                                 phitan, geocentricAltitude)
+        use ScanModelModule, only: Get2DHydrostaticTangentPressure
+        use Init_tables_module, only: phyq_angle
+
+        type(VectorValue_T), intent(inout) :: ptan
+        ! Input quantities
+        type(VectorValue_T), intent(in) :: temperature, refGPH
+        type(VectorValue_T), intent(in) :: h2o, orbitInclination, phitan
+        type(VectorValue_T), intent(in) :: geocentricAltitude
+
+        call Get2DHydrostaticTangentPressure(ptan, temperature, refGPH, &
+        & h2o, orbitInclination, phitan, geocentricAltitude, 4, &
+        & (/ 0.0_r8, 0.0_r8 /), phyq_angle)
+    end subroutine
+
+    ! Applies baseline quantity to a radiance quantity or applies noise
+    ! to a precision quantity of a radiance quantity.
+    subroutine ApplyBaseline (quantity, baselineQuantity, quadrature, dontmask)
+        use FillUtils_1, only: Orig_ApplyBaseline => ApplyBaseline
+
+        ! Radiance quantity to modify
+        type(VectorValue_T), intent(inout) :: quantity
+        ! L1B MAF baseline to use
+        type(VectorValue_T), intent(in) :: baselineQuantity
+        logical, intent(in) :: quadrature
+        logical, intent(in) :: dontmask
+
+        call Orig_ApplyBaseline ( 0, quantity, baselineQuantity, quadrature, &
+          & dontmask, .false. )
+    end subroutine
+
+!--------------------------- end bloc --------------------------------------
+    logical function not_used_here()
+        character (len=*), parameter :: IdParm = &
+        "$Id: cfm_fill.f90,v 1.17 2015/08/05 20:21:29 pwagner Exp $"
+        character (len=len(idParm)) :: Id = idParm
+        not_used_here = (id(1:1) == ModuleName(1:1))
+        print *, Id ! .mod files sometimes change if PRINT is added
+    end function not_used_here
+!---------------------------------------------------------------------------
+
+end module
+
+! $Log: cfm_fill.f90,v $
+! Revision 1.17  2015/08/05 20:21:29  pwagner
+! Modified to compile properly with v4
+!
+! Revision 1.16  2013/07/26 16:48:15  pwagner
+! Consistent with removal of SCVEL
+!
+! Revision 1.15  2013/07/10 17:51:24  pwagner
+! Changed to be consistent with FromL1B api
+!
+! Revision 1.14  2012/10/15 17:11:41  pwagner
+! Adapted to new api in FillUtils
+!
+! Revision 1.13  2011/12/15 18:27:44  honghanh
+! Documentation and code clean up, including removing unused and broken
+! subroutines.
+!
+! Revision 1.12  2011/11/03 14:39:57  honghanh
+! Add fill subroutine that use maf instead of chunk
+!
+! Revision 1.11  2010/07/08 21:39:16  honghanh
+! Add ApplyBaseline to cfm_fill_m
+!
+! Revision 1.9  2010/06/29 15:53:45  honghanh
+! Add copyright comments and support for CVS log in the file
+!
+@
+
+
+1.17
+log
+@Modified to compile properly with v4
+@
+text
+@d363 2
+a364 1
+        h2o, orbitInclination, phitan, geocentricAltitude, 4, 0.0_r8, phyq_angle)
+d386 1
+a386 1
+        "$Id: cfm_fill.f90,v 1.16 2013/07/26 16:48:15 pwagner Exp $"
+d396 3
+@
+
+
+1.16
+log
+@Consistent with removal of SCVEL
+@
+text
+@d214 1
+a214 1
+        type(VectorValue_T), intent(inout) :: quantity
+d385 1
+a385 1
+        "$Id: cfm_fill.f90,v 1.15 2013/07/10 17:51:24 pwagner Exp $"
+d395 3
+@
+
+
+1.15
+log
+@Changed to be consistent with FromL1B api
+@
+text
+@d16 1
+a16 1
+        L_RADIANCE, L_SCGEOCALT, L_SCVEL, &
+d385 1
+a385 1
+        "$Id: cfm_fill.f90,v 1.14 2012/10/15 17:11:41 pwagner Exp $"
+d395 3
+@
+
+
+1.14
+log
+@Adapted to new api in FillUtils
+@
+text
+@d14 1
+a14 1
+        L_L1BMIF_TAI, L_L1BMAFBASELINE, &
+d174 1
+d178 1
+d185 1
+a185 1
+                     isPrecision, i, precisionQuantity, BOMask)
+d385 1
+a385 1
+        "$Id: cfm_fill.f90,v 1.13 2011/12/15 18:27:44 honghanh Exp $"
+d395 3
+@
+
+
+1.13
+log
+@Documentation and code clean up, including removing unused and broken
+subroutines.
+@
+text
+@d13 1
+a13 1
+    use Init_Tables_Module, only: L_LOSVEL, &
+d19 14
+a32 13
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use MLSFiles, only: GetMLSFileByType, HDFVERSION_5
+    use VectorsModule, only: VectorValue_T, M_LINALG, M_fill, MaskVectorQty, Dump
+    use L1BData, only: GetL1BFile, ASSEMBLEL1BQTYNAME, L1BData_T, &
+              DeallocateL1BData, ReadL1BData
+    use MLSCommon, only: MLSFile_T, DEFAULTUNDEFINEDVALUE, r8
+    use MLSSignals_m, only: GetSignalName, GetModuleName
+    use BitStuff, only: NegativeIfBitPatternSet
+    use Chunks_m, only: MLSChunk_T
+    use MLSStrings, only: writeIntsToChars
+    use FillUtils_1, only: fillerror, FromL1B, &
+                           PhiTanWithRefraction
+    use string_table, only: create_string
+d36 4
+a39 4
+    public :: ExplicitFillVectorQuantity, FillVectorQuantityFromL1B
+    public :: SpreadFillVectorQuantity, FillPtanQuantity
+    public :: FillVectorQtyFromProfile, FillPhitanQuantity
+    public :: ApplyBaseline
+d199 2
+a200 2
+        call PhiTanWithRefraction(0, quantity, h2o, orbIncl, &
+                                  ptan, refGPH, temperature)
+d376 2
+a377 1
+        call Orig_ApplyBaseline (0, quantity, baselineQuantity, quadrature, dontmask)
+d383 1
+a383 1
+        "$Id: cfm_fill.f90,v 1.12 2011/11/03 14:39:57 honghanh Exp $"
+d393 4
+@
+
+
+1.12
+log
+@Add fill subroutine that use maf instead of chunk
+@
+text
+@d130 2
+a131 1
+    ! Fill the quantity with data from L1B files
+d363 2
+d381 1
+a381 1
+        "$Id: cfm_fill.f90,v 1.11 2010/07/08 21:39:16 honghanh Exp $"
+d391 3
+@
+
+
+1.11
+log
+@Add ApplyBaseline to cfm_fill_m
+@
+text
+@d13 26
+a38 26
+   use Init_Tables_Module, only: L_LOSVEL, &
+       L_L1BMIF_TAI, L_L1BMAFBASELINE, &
+       L_ECRTOFOV, L_PTAN, L_ORBITINCLINATION, &
+       L_RADIANCE, L_SCGEOCALT, L_SCVEL, &
+       L_TNGTGEODALT, L_TNGTGEOCALT, L_SCVELECR, &
+       L_TNGTECI, L_SCVELECI, L_SCECI
+   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+   use MLSFiles, only: GetMLSFileByType, HDFVERSION_5
+   use VectorsModule, only: VectorValue_T, M_LINALG, M_fill, MaskVectorQty, Dump
+   use L1BData, only: GetL1BFile, ASSEMBLEL1BQTYNAME, L1BData_T, &
+             DeallocateL1BData, ReadL1BData
+   use MLSCommon, only: MLSFile_T, DEFAULTUNDEFINEDVALUE, r8
+   use MLSSignals_m, only: GetSignalName, GetModuleName
+   use BitStuff, only: NegativeIfBitPatternSet
+   use Chunks_m, only: MLSChunk_T
+   use MLSStrings, only: writeIntsToChars
+   use FillUtils_1, only: fillerror, FromL1B, &
+                          PhiTanWithRefraction
+   use string_table, only: create_string
+
+   implicit none
+
+   public :: ExplicitFillVectorQuantity, FillVectorQuantityFromL1B
+   public :: SpreadFillVectorQuantity, FillPtanQuantity
+   public :: FillVectorQtyFromProfile, FillPhitanQuantity
+   public :: ApplyBaseline
+d40 1
+a40 1
+   private
+d43 2
+a44 3
+   character(len=*), private, parameter :: ModuleName= &
+       "$RCSfile: cfm_fill.f90,v $"
+   private :: not_used_here
+d47 38
+a84 1
+   contains
+d86 10
+a95 41
+   ! Fill the quantity with given values.
+   subroutine ExplicitFillVectorQuantity (quantity, values)
+      ! The quantity to be filled. Only values are filled,
+      ! other fields of VectorValue_T object won't be overwritten.
+      type(VectorValue_T), intent(inout) :: quantity
+      ! the amount of values provided must be equal to
+      ! quantity%template%instanceLen * quantity%template%noInstances
+      real(r8), dimension(:), intent(in) :: values
+
+      integer :: noValues, numChans
+      integer :: i,j,k
+      integer :: surf, chan
+      character(len=10) :: int1 = "          ", int2 = "          "
+
+      noValues = size(values)
+
+      if (noValues /= quantity%template%instanceLen * &
+                quantity%template%noInstances) then
+         call writeIntsToChars( &
+            quantity%template%instanceLen * quantity%template%noInstances, int1)
+         call writeIntsToChars(noValues, int2)
+         call MLSMessage (MLSMSG_Error, moduleName, &
+           "Incorrect amount of data, expect " // trim(int1) // ", has " // trim(int2))
+      end if
+
+      ! need checking on the value and their units?
+      numChans = quantity%template%instanceLen / quantity%template%noSurfs
+      if (numChans /= quantity%template%noChans) then
+         call MLSMessage (MLSMSG_Error, moduleName, &
+           "Inconsistent template instance length")
+      end if
+
+      ! loop thru the quantity
+      k = 0
+      do i = 1, quantity%template%noInstances
+         j = 0
+         do surf = 1, quantity%template%noSurfs
+            do chan = 1, numChans
+               j = j + 1
+               k = k + 1
+               quantity%values(j,i) = values (mod (k-1, noValues) + 1)
+d97 29
+a125 29
+         end do
+      end do
+   end subroutine
+
+   ! Fill all values in the quantity with the same number
+   subroutine SpreadFillVectorQuantity (quantity, value)
+      type(VectorValue_T), intent(inout) :: quantity
+      real(r8), intent(in) :: value
+
+      integer :: numChans
+      integer :: k, i, j
+      integer :: surf, chan
+
+      ! need checking on the value and their units?
+      numChans = quantity%template%instanceLen / quantity%template%noSurfs
+      if (numChans /= quantity%template%noChans) then
+         call MLSMessage (MLSMSG_Error, moduleName, &
+           "Inconsistent template instance length")
+      end if
+
+      ! loop thru the quantity
+      k = 0
+      do i = 1, quantity%template%noInstances
+         j = 0
+         do surf = 1, quantity%template%noSurfs
+            do chan = 1, numChans
+               j = j + 1
+               k = k + 1
+               quantity%values(j,i) = value
+d127 57
+a183 141
+         end do
+      end do
+   end subroutine
+
+   ! Fill the quantity with data from L1B files
+   subroutine FillVectorQuantityFromL1B (quantity, chunk, filedatabase, &
+      isPrecision, suffix, precisionQuantity, BOMask)
+      ! The quantity to be filled
+      type(VectorValue_T), intent(inout) :: quantity
+      ! fake chunk object carrying needed information
+      type(MLSChunk_T), intent(in) :: chunk
+      ! the filedatabase containing L1B files
+      type(MLSFile_T), dimension(:), pointer :: filedatabase
+      ! is this a precision quantity
+      logical, intent(in) :: isPrecision
+      character(len=*), intent(in), optional :: suffix
+      type(VectorValue_T), intent(in), optional :: precisionQuantity
+      ! If isPrecision is .true. and BOMask is not 0, then
+      ! bright object status is read from L1BOA file
+      integer, intent(in), optional :: BOMask
+      integer :: i
+
+      fillError = 0
+      i = 0
+      if (present (suffix)) then
+         i = create_string(suffix)
+      end if
+
+      call FromL1B(0, quantity, chunk, filedatabase, &
+                   isPrecision, i, precisionQuantity, BOMask)
+      if (fillError /= 0) then
+         call MLSMessage (MLSMSG_Error, moduleName, "Can't Fill from L1B")
+      end if
+   end subroutine
+
+   ! Don't use
+   subroutine FillPhiTanWithRefraction (quantity, h2o, orbIncl, ptan, &
+                                        refGPH, temperature)
+      type(VectorValue_T), intent(inout) :: quantity
+      type(VectorValue_T), intent(in) :: h2o
+      type(VectorValue_T), intent(in) :: orbincl
+      type(VectorValue_T), intent(in) :: ptan
+      type(VectorValue_T), intent(in) :: refGPH
+      type(VectorValue_T), intent(in) :: temperature
+
+      call PhiTanWithRefraction(0, quantity, h2o, orbIncl, &
+                                         ptan, refGPH, temperature)
+   end subroutine
+
+   ! Don't know how to describe this
+   subroutine FillVectorQtyFromProfile (quantity, dontMask, heights, &
+                                        values, value_unit, ptan, logSpace)
+      use VectorsModule, only: ValidateVectorQuantity
+      use VGridsDatabase, only: GETUNITFORVERTICALCOORDINATE
+      use Init_Tables_Module, only: l_pressure, phyq_dimensionless, phyq_zeta
+      use MLSNumerics, only: InterpolateValues, Hunt
+      use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+
+      type(VectorValue_T), intent(inout) :: quantity
+      logical, intent(in) :: dontMask
+      real(r8), dimension(:), intent(in) :: heights
+      real(r8), dimension(:), intent(in) :: values
+      integer :: value_unit
+      type(VectorValue_T), intent(in), optional :: ptan
+      logical, intent(in), optional :: logSpace
+
+      integer :: heightUnit, noUnique
+      logical :: fail
+      integer :: i, j, s, c, noPoints
+      logical :: mylogSpace
+      logical, dimension(:), pointer :: duplicated
+      logical :: LOCALOUTHEIGHTS ! Set if out heights is our own variable
+      real (r8), dimension(:), pointer :: OUTHEIGHTS ! Heights for output
+      integer, dimension(:), pointer :: ININDS ! Indices
+      real (r8), dimension(:), pointer :: OUTVALUES ! Single profile for output
+      real(r8), dimension(size(heights)) :: myheights
+      real(r8), dimension(size(values)) :: myvalues
+
+      if (.not. ValidateVectorQuantity(quantity, coherent=.true.) &
+          .and. .not. present(ptan)) &
+          call MLSMessage(MLSMSG_Error, ModuleName, &
+          'The quantity is not amenable to a profile fill unless you supply ptan')
+
+      heightUnit = GetUnitForVerticalCoordinate(quantity%template%verticalCoordinate)
+      if (present(ptan)) heightUnit = phyq_zeta
+
+      myLogSpace = quantity%template%logBasis
+      if (present(logSpace)) myLogSpace = logSpace
+
+      if (value_unit /= phyq_dimensionless &
+          .and. value_unit /= quantity%template%unit) &
+          call MLSMessage(MLSMSG_Error, moduleName, "Bad unit for profile fill")
+
+      if (size(heights) /= size(values)) &
+         call MLSMessage(MLSMSG_Error, moduleName, &
+         "Mismatch length between heights and values array")
+
+      noPoints = size(heights)
+      nullify(duplicated, outheights, outvalues, ininds)
+      call Allocate_test ( duplicated, noPoints, 'duplicated', ModuleName )
+      call Allocate_test (outValues, quantity%template%noSurfs, 'outValues', ModuleName)
+
+      if (heightUnit == phyq_zeta) then
+         myheights = -log10(heights)
+      else
+         myheights = heights
+      end if
+
+      if (myLogSpace .and. any(values <= 0.0)) &
+         call MLSMessage(MLSMSG_Error, moduleName, &
+         'Non-positive input data in log profile fill')
+
+      if (myLogSpace) then
+         myValues = log(values)
+      else
+         myValues = values
+      end if
+
+      ! Get the appropriate height coordinate for output, for pressure take log.
+      if ( present(ptan) ) then
+        localOutHeights = .false.
+        outHeights => ptan%values(:,1)
+      elseif ( quantity%template%verticalCoordinate == l_pressure ) then
+        localOutHeights = .true.
+        call Allocate_test (outHeights, quantity%template%noSurfs, &
+                            'outHeights', ModuleName )
+        outHeights = -log10 ( quantity%template%surfs(:,1) )
+      else
+        localOutHeights = .false.
+        outHeights => quantity%template%surfs(:,1)
+      end if
+
+      ! Now, if the quantity is coherent, let's assume the user wanted the
+      ! 'nearest' values
+      if ( quantity%template%coherent .or. present(ptan) ) then
+        nullify ( inInds )
+        call allocate_test ( inInds, noPoints, 'inInds', ModuleName )
+        call hunt ( outHeights, myHeights, inInds, &
+          & nearest=.true., allowTopValue=.true., fail=fail )
+        if ( fail ) then
+          call MLSMessage ( MLSMSG_Error, moduleName, 'Problem in Hunt' )
+d185 108
+a292 5
+        duplicated = .false.
+        do i = 1, noPoints - 1
+          do j = i + 1, noPoints
+            if ( inInds(i) == inInds(j) ) then
+              duplicated ( j ) = .true.
+d294 14
+a307 8
+          end do
+        end do
+        noUnique = count ( .not. duplicated )
+        inInds(1:noUnique) = pack ( inInds, .not. duplicated )
+        myHeights(1:noUnique) = outHeights ( inInds(1:noUnique) )
+        myValues(1:noUnique) = pack ( myValues, .not. duplicated )
+        call deallocate_test ( inInds, 'inInds', ModuleName )
+      end if
+d309 2
+a310 2
+      ! Now do the interpolation for the first instance
+      call InterpolateValues ( myHeights(1:noUnique), myValues(1:noUnique), outHeights, &
+d313 1
+a313 1
+      if (myLogSpace) outvalues = exp(outvalues)
+d315 12
+a326 11
+      do i = 1, quantity%template%noInstances
+         j = 1
+         do s = 1, quantity%template%noSurfs
+            do c = 1, quantity%template%noChans
+               if (associated(quantity%mask) .and. .not. dontMask) then
+                  if (iand(ichar(quantity%mask(j,i)), m_fill) == 0) &
+                     quantity%values(j,i) = outValues(s)
+               else
+                  quantity%values(j,i) = outValues(s)
+               end if
+               j = j+1
+d328 1
+a328 2
+         end do
+      end do
+d330 41
+a370 41
+      ! Finish off
+      if ( localOutHeights ) call Deallocate_test ( outHeights, &
+         & 'outHeights', ModuleName )
+      call Deallocate_test ( duplicated, 'duplicated', ModuleName )
+      call Deallocate_test ( outValues, 'outValues', ModuleName )
+
+   end subroutine
+
+   ! Fill phitan quantity with phi values from the quantity's template
+   subroutine FillPhitanQuantity (quantity)
+      ! phitan quantity
+      type(VectorValue_T), intent(inout) :: quantity
+
+      quantity%values = quantity%template%phi
+   end subroutine
+
+   ! Compute and fill ptan quantity from other quantities
+   subroutine FillPtanQuantity (ptan, temperature, refGPH, h2o, orbitInclination, &
+                                phitan, geocentricAltitude)
+      use ScanModelModule, only: Get2DHydrostaticTangentPressure
+      use Init_tables_module, only: phyq_angle
+
+      type(VectorValue_T), intent(inout) :: ptan
+      ! Input quantities
+      type(VectorValue_T), intent(in) :: temperature, refGPH
+      type(VectorValue_T), intent(in) :: h2o, orbitInclination, phitan
+      type(VectorValue_T), intent(in) :: geocentricAltitude
+
+      call Get2DHydrostaticTangentPressure(ptan, temperature, refGPH, &
+      h2o, orbitInclination, phitan, geocentricAltitude, 4, 0.0_r8, phyq_angle)
+   end subroutine
+
+   subroutine ApplyBaseline (quantity, baselineQuantity, quadrature, dontmask)
+      use FillUtils_1, only: Orig_ApplyBaseline => ApplyBaseline
+
+      ! Radiance quantity to modify
+      type(VectorValue_T), intent(inout) :: quantity
+      ! L1B MAF baseline to use
+      type(VectorValue_T), intent(in) :: baselineQuantity
+      logical, intent(in) :: quadrature
+      logical, intent(in) :: dontmask
+d372 2
+a373 2
+      call Orig_ApplyBaseline (0, quantity, baselineQuantity, quadrature, dontmask)
+   end subroutine
+d376 7
+a382 7
+   logical function not_used_here()
+   character (len=*), parameter :: IdParm = &
+       "$Id: cfm_fill.f90,v 1.9 2010/06/29 15:53:45 honghanh Exp $"
+   character (len=len(idParm)) :: Id = idParm
+      not_used_here = (id(1:1) == ModuleName(1:1))
+      print *, Id ! .mod files sometimes change if PRINT is added
+   end function not_used_here
+d388 3
+@
+
+
+1.10
+log
+@Add comments
+@
+text
+@d31 1
+d38 1
+d137 1
+a137 2
+      ! for now, don't use the optional arguments
+      integer, intent(in), optional :: suffix
+d142 1
+d145 1
+d147 1
+a147 5
+         call FromL1B(0, quantity, chunk, filedatabase, &
+            isPrecision, suffix, precisionQuantity, BOMask)
+      else
+         call FromL1B(0, quantity, chunk, filedatabase, &
+            isPrecision, 0, precisionQuantity, BOMask)
+d149 3
+d332 13
+@
+
+
+1.9
+log
+@Add copyright comments and support for CVS log in the file
+@
+text
+@d306 1
+d308 1
+d314 1
+d320 5
+a324 3
+      type(VectorValue_T), intent(inout) :: ptan, temperature, refGPH
+      type(VectorValue_T), intent(inout) :: h2o, orbitInclination, phitan
+      type(VectorValue_T), intent(inout) :: geocentricAltitude
+d333 1
+a333 1
+       "$Id: cfm_fill.f90,v 1.5 2010/05/23 02:50:52 honghanh Exp $"
+d343 3
+@
+
+
+1.8
+log
+@Develop FillPtanQuantity to compute ptan, instead of using
+Get2DHydrostaticTangentPressure
+@
+text
+@d1 10
+d336 2
+@
+
+
+1.7
+log
+@Move Phitan to state vector instead of stateExtraVector
+@
+text
+@d25 1
+a25 1
+   public :: SpreadFillVectorQuantity
+d302 13
+@
+
+
+1.6
+log
+@Update due to subroutine name change in FillUtils_1
+@
+text
+@d11 1
+a11 1
+   use VectorsModule, only: VectorValue_T, M_LINALG, M_fill, MaskVectorQty
+d26 1
+a26 1
+   public :: FillVectorQtyFromProfile
+d128 2
+d133 7
+a139 2
+      call FromL1B(0, quantity, chunk, filedatabase, &
+         isPrecision, suffix, precisionQuantity, BOMask)
+d296 6
+@
+
+
+1.5
+log
+@Add more FillFromL1B, SpreadFill, and FillFromProfile subroutines
+@
+text
+@d19 2
+a20 3
+   use FillUtils_1, only: fillerror, &
+      Orig_FillVectorQuantityFromL1B => FillVectorQuantityFromL1B, &
+      Orig_FillPhiTanWithRefraction => FillPhiTanWithRefraction
+d131 1
+a131 1
+      call Orig_FillVectorQuantityFromL1B(0, quantity, chunk, filedatabase, &
+d148 1
+a148 1
+      call Orig_FillPhiTanWithRefraction(0, quantity, h2o, orbIncl, &
+d292 1
+a292 1
+       "$Id: cfm_fill.f90,v 1.1 2010/05/22 19:49:33 honghanh Exp $"
+@
+
+
+1.4
+log
+@Add more comments to everything
+@
+text
+@d11 1
+a11 1
+   use VectorsModule, only: VectorValue_T, M_LINALG, MaskVectorQty
+d19 3
+d25 3
+a27 1
+   public :: ExplicitFillVectorQuantity
+d30 6
+a35 1
+   character(len=20) :: moduleName="CFM_Fill"
+a38 109
+   ! This is an incomplete subroutine
+   subroutine FillVectorQuantityFromL1B (quantity, chunk, filedatabase)
+      type(VectorValue_T), intent(inout) :: quantity
+      type(MLSChunk_T), intent(in) :: chunk
+      type(MLSFile_T), dimension(:), pointer :: filedatabase
+
+      type(MLSFile_T), pointer :: l1bFile
+      integer :: hdf_version
+      character(len=132) :: namestring
+      type(L1BData_T) :: data, BO_stat
+      integer :: flag, noMafs, myBOMask, channel, maxMifs
+      integer :: row, column
+
+      myBOMask = 0
+      l1bfile => GetMLSFileByType (filedatabase, content='l1boa')
+      hdf_version = l1bfile%hdfVersion
+
+      select case (quantity%template%quantityType)
+      case (l_ECRtoFOV)
+         call GetModuleName (quantity%template%instrumentModule, nameString)
+         nameString = AssembleL1BQtyName('ECRtoFOV', hdf_version, &
+              .true., trim(nameString))
+      case (l_l1bMAFBaseline)
+         call GetSignalName (quantity%template%signal, nameString, &
+            sideband=quantity%template%sideband, noChannels=.true.)
+         nameString = AssembleL1BQtyName(nameString, hdf_version, .false.)
+      case (l_l1bMIF_TAI)
+         if (hdf_version == HDFVERSION_5) then
+            call GetModuleName (quantity%template%instrumentModule, nameString)
+            nameString = AssembleL1BQtyName('MIF_TAI', hdf_version, .false., &
+                 trim(nameString))
+         else
+            nameString = 'MIF_TAI'
+         end if
+      case (l_losVel)
+         call GetModuleName(quantity%template%instrumentModule, nameString)
+         nameString = AssembleL1BQtyName('LosVel', hdf_version, .true., &
+              trim(nameString))
+      case (l_orbitInclination)
+         nameString = AssembleL1BQtyName('OrbIncl', hdf_version, .false., &
+              'sc')
+      case (l_ptan)
+         call GetModuleName (quantity%template%instrumentModule, nameString)
+         nameString = AssembleL1BQtyName('ptan', hdf_version, .false., &
+             trim(nameString))
+      case (l_radiance)
+         call GetSignalName(quantity%template%signal, nameString, &
+             sideband=quantity%template%sideband, noChannels=.true.)
+         nameString = AssembleL1BQtyName(nameString, hdf_version, .false.)
+         l1bfile => GetL1BFile(filedatabase, nameString)
+      case (l_scECI)
+         nameString = AssembleL1BQtyName('ECI', hdf_version, .false., 'sc')
+      case (l_scGeocAlt)
+         nameString = AssembleL1BQtyName('GeocAlt', hdf_version, .false., &
+            'sc')
+      case (l_scVel)
+         nameString = AssembleL1BQtyName('Vel', hdf_version, .false., 'sc')
+      case (l_scVelECI)
+         nameString = AssembleL1BQtyName('VelECI', hdf_version, .false., 'sc')
+      case (l_scVelECR)
+         nameString = AssembleL1BQtyName('VelECR', hdf_version, .false., 'sc')
+      case (l_tngtECI)
+         call GetModuleName(quantity%template%instrumentModule, nameString)
+         nameString = AssembleL1BQtyName('ECI', hdf_version, .true., &
+            trim(nameString))
+      case (l_tngtGeocAlt)
+         call GetModuleName(quantity%template%instrumentModule, nameString)
+         nameString = AssembleL1BQtyName('GeocAlt', hdf_version, .true., &
+             trim(nameString))
+      case (l_tngtGeodAlt)
+         call GetModuleName(quantity%template%instrumentModule, nameString)
+         nameString = AssembleL1BQtyName('GeodAlt', hdf_version, .true., &
+            trim(nameString))
+      case default
+         print *, "Unknown quantity type"
+         call MLSMessage(MLSMSG_Error, ModuleName, 'Unknown quantity type')
+      end select
+
+      if ( associated(L1BFile) .or. ( quantity%template%quantityType /= l_radiance .and. &
+        & quantity%template%quantityType /= l_L1BMAFBaseline ) ) then
+        L1BFile => GetL1bFile(filedatabase, namestring)
+        call ReadL1BData ( L1BFile, nameString, data, noMAFs, flag, &
+          & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
+          & NeverFail= .false., &
+          & dontPad=.false. )
+        ! If it didn't exist in the not-a-radiance case, then we'll fail here.
+        if (flag /= 0) then
+           call MLSMessage(MLSMSG_Error, ModuleName, 'Error in reading L1B data')
+        end if
+
+       ! do channel = 1, quantity%template%noChans
+       !   data%dpField(channel,:,:) = &
+       !     & NegativeIfBitPatternSet( data%dpField(channel,:,:), &
+       !     & BO_stat%intField(1, 1:maxMIFs, 1:noMAFs), myBOMask )
+       ! enddo
+       quantity%values = RESHAPE(data%dpField, &
+          & (/ quantity%template%instanceLen, quantity%template%noInstances /) )
+      else
+       ! This is the case where it's a radiance we're after and it's missing
+       quantity%values = DEFAULTUNDEFINEDVALUE ! -1.0
+       do column=1, size(quantity%values(1,:))
+          do row=1, size(quantity%values(:,1))
+            call MaskVectorQty ( quantity, row, column, M_LinAlg )
+          end do
+       end do
+      end if
+
+   end subroutine
+
+d84 216
+@
+
+
+1.3
+log
+@An example of L2CF used in CFM
+@
+text
+@a138 2
+   ! Note that the amount of values provided must be equal to
+   ! quantity%template%instanceLen * quantity%template%noInstances
+d140 2
+d143 2
+@
+
+
+1.2
+log
+@Conformed all module names to end with _m, changed file names to all
+lowercase, add comments
+@
+text
+@d148 1
+a148 1
+      character :: int1 = "          ", int2 = "          "
+d158 1
+a158 1
+           "Incorrect amount of data, expect " // int1 // ", has " // int2)
+@
+
+
+1.1
+log
+@Example for filling vector
+@
+text
+@d1 2
+a2 2
+module CFM_Fill
+ 
+d18 2
+a19 1
+  
+d28 2
+d60 1
+a60 1
+         else 
+d138 3
+d148 1
+d154 3
+a156 5
+         ! need to find out how to convert integer to char to write
+         ! better error message here
+         print *, "not the right amount of data, expect ", &
+                  quantity%template%instanceLen * quantity%template%noInstances, &
+                  ", has ", noValues
+d158 1
+a158 1
+           "Incorrect amount of data")
+a161 1
+
+@
+

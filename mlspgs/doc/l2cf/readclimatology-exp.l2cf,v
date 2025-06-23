@@ -1,0 +1,73 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.8
+	cfm-single-freq-0-1:1.1.0.6
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.4
+	mus-emls-1-70:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2018.06.15.23.09.25;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@First commit
+@
+text
+@begin ReadApriori
+
+  ;; List the species for which we currently have climatologies  
+  
+  ;; This macro reads one entry from grid format file into the gridded
+  ;; quantity grid<x>
+  
+  ;; Now invoke that macro for all species defined above.
+  gridTEMPERATURE: gridded,field='TEMPERATURE', origin=climatology, $
+       file='Climatologies'
+gridH2O: gridded,field='H2O', origin=climatology, $
+       file='Climatologies'
+gridO3: gridded,field='O3', origin=climatology, $
+       file='Climatologies'
+gridN2O: gridded,field='N2O', origin=climatology, $
+       file='Climatologies'
+gridHNO3: gridded,field='HNO3', origin=climatology, $
+       file='Climatologies'
+gridHCL: gridded,field='HCL', origin=climatology, $
+       file='Climatologies'
+gridCLO: gridded,field='CLO', origin=climatology, $
+       file='Climatologies'
+gridCO: gridded,field='CO', origin=climatology, $
+       file='Climatologies'
+gridHCN: gridded,field='HCN', origin=climatology, $
+       file='Climatologies'
+gridCH3CL: gridded,field='CH3CL', origin=climatology, $
+       file='Climatologies'
+gridCH3CN: gridded,field='CH3CN', origin=climatology, $
+       file='Climatologies'
+gridOH: gridded,field='OH', origin=climatology, $
+       file='Climatologies'
+
+  ;; Put up a macro to indicate we have the climatology
+  
+end ReadApriori
+@

@@ -1,0 +1,312 @@
+head	1.3;
+access;
+symbols
+	v5-02-NRT-19:1.3
+	v6-00:1.3
+	v5-02-NRT-18:1.3
+	v5-02:1.3
+	v5-01-NRT-17:1.3
+	v5-01-NRT-16:1.3
+	v5-01-NRT-15:1.3
+	v5-01-NRT-14:1.3
+	neuralnetworks-1-0:1.3.0.4
+	cfm-single-freq-0-1:1.3.0.2
+	v5-01:1.3
+	v5-00:1.3
+	v4-23-TA133:1.1.0.8
+	mus-emls-1-70:1.1.0.6
+	rel-1-0-englocks-work:1.1.0.4
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.2
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	M4-00:1.1
+	V3-33:1.1
+	V3-31:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.3
+date	2019.06.18.20.22.27;	author vsnyder;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2019.06.14.18.50.05;	author yanovsky;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2010.10.22.03.52.29;	author yanovsky;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@Changed bibliography style to ieeetr
+@
+text
+@\documentclass[fleqn,10pt]{article}
+\usepackage[dvips]{graphics,color}
+\usepackage{amscd, amsfonts, amsmath, amssymb}
+\usepackage{amsthm}
+\usepackage{eucal}
+\usepackage{pifont}
+
+\usepackage{epsfig}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{verbatim}
+
+\setlength{\topmargin}{-1.5cm}
+\setlength{\headheight}{0.5cm}
+\setlength{\headsep}{0.7cm}
+\setlength{\topskip}{0.5cm}
+\setlength{\textheight}{23.0cm}
+\setlength{\footskip}{0.5cm}
+\setlength{\oddsidemargin}{0.5cm}
+\setlength{\evensidemargin}{0.5cm}
+\setlength{\textwidth}{14.5cm}
+
+
+
+
+\setcounter{tocdepth}{5}
+
+
+
+%\numberwithin{equation}{section}
+
+%\pagestyle{headings}
+%\markboth{Igor}{Yanovsky}
+
+
+
+\def\pdf{p}
+\def\vx{{\bf x}}
+\def\vy{{\bf y}}
+\def\vg{{\bf g}}
+\def\g{g}
+\def\vh{{\bf h}}
+\def\vf{{\bf f}}
+\def\vF{{\bf F}}
+\def\vu{{\bf u}}
+\def\vv{{\bf v}}
+\def\vn{{\bf n}}
+\def\vmu{\boldsymbol \mu}
+\def\vnabla{{\bf \nabla}}
+\def\vid{{\bf id}}
+\def\va{{\bf a}}
+\def\vr{{\bf r}}
+\def\vb{{\bf b}}
+
+\def\ff{\mbox f}
+
+\def\D{\mathcal{D}}
+\def\E{\mathcal{E}}
+
+\def\trace{\mbox{trace}}
+\def\divergence{\mbox{div}}
+
+\def\I{\mathcal{I}}
+\def\R{\mathcal{R}}
+\def\S{\mathcal{S}}
+\def\T{\mathcal{T}}
+
+
+\def\m{\mbox{m}}
+\def\km{\mbox{km}}
+\def\nm{\mbox{nm}}
+\def\cm{\mbox{cm}}
+\def\s{\mbox{s}}
+\def\kg{\mbox{kg}}
+\def\K{\mbox{K}}
+\def\N{\mbox{N}}
+\def\J{\mbox{J}}
+\def\Pa{\mbox{Pa}}
+\def\hPa{\mbox{hPa}}
+\def\Hz{\mbox{Hz}}
+\def\MHz{\mbox{MHz}}
+\def\AMU{\mbox{AMU}}
+
+\def\NH{\mbox{NH}}
+\def\NP{\mbox{NP}}
+
+\def\insta{\mathfrak{M}}
+\def\instb{\mathfrak{T}}
+
+
+\begin{document}
+
+\title{Optimal Methods for Retrieval and Fusion of Atmospheric Data}
+\author{Igor Yanovsky \\
+iy-006}
+
+\date{October 21, 2010}
+
+\maketitle
+
+\section{Introduction}
+
+Nonlinear model of radiative transfer, which describes physical phenomenon of energy transfer in the form of electromagnetic radiation, is used for constructing forward models for obtaining radiances by instruments onboard spacecraft. Forward models uniquely describe the relationship between observed quantities and atmospheric composition for each instrument, and retrievals of atmospheric quantities has been performed separately for each instrument. It is scientifically important to establish a robust mathematical framework for obtaining scientific data based on observations from multiple instruments. We developed a prototype for simultaneous retrieval of atmospheric quantities, which uses the relationship between the state vectors and multiple measurements. The approach is based on Bayesian formulation, and an associated energy function is minimized using nonlinear estimation methods.
+
+\section{Method}
+
+Let $\insta$ and $\instb$ denote two instruments with records to be retrieved and merged.
+
+With notations introduced in \cite{rod00} and \cite{iy005}, the Newton iteration can be used for finding the zero of the gradient of the cost function $E$ given by
+\begin{eqnarray}
+E(\vx) &=& (\vy_{\insta}-\vF_{\insta}(\vx))^T S_{\insta}^{-1} (\vy_{\insta}-\vF_{\insta}(\vx)) \ + \ (\vy_{\instb}-\vF_{\instb}(\vx))^T S_{\instb}^{-1} (\vy_{\instb}-\vF_{\instb}(\vx))  \nonumber \\
+&& \ + \ (\vx-\vx_a)^T S_a^{-1} (\vx - \vx_a).
+\label{eqn:E_retr_fus}
+\end{eqnarray}
+For the general vector equation $\nabla_{\vx} E(\vx) = {\bf 0}$, the {\it Newton} iteration can be written as:
+\begin{equation*}
+\vx^{(k+1)} = \vx^{(k)} - \big( \nabla_{\vx}^2 E(\vx^{(k)}) \big)^{-1} \nabla_{\vx} E(\vx^{(k)}).
+\end{equation*}
+The derivative of the cost function in (\ref{eqn:E_retr_fus}) is
+\begin{eqnarray*}
+\nabla_{\vx} E(\vx) \ = \ -[\nabla_{\vx} \vF_{\insta}(\vx)]^T S_{\insta}^{-1} (\vy_{\insta}-\vF_{\insta}(\vx)) - [\nabla_{\vx} \vF_{\instb}(\vx)]^T S_{\instb}^{-1} (\vy_{\instb}-\vF_{\instb}(\vx)) + S_a^{-1} (\vx - \vx_a).
+\end{eqnarray*}
+Denote $K_{\insta}(\vx) = \nabla_{\vx} \vF_{\insta}(\vx)$, and $K_{\instb}(\vx) = \nabla_{\vx} \vF_{\instb}(\vx)$.  Then,
+\begin{eqnarray*}
+\nabla_{\vx} E(\vx) &=& -K_{\insta}^T(\vx) S_{\insta}^{-1} (\vy_{\insta}-\vF_\insta(\vx)) - K_{\instb}^T(\vx) S_{\instb}^{-1} (\vy_{\instb}-\vF_\instb(\vx)) + S_a^{-1} (\vx - \vx_a).
+\end{eqnarray*}
+The Hessian of the cost function is
+\begin{eqnarray*}
+\nabla_{\vx}^2 E(\vx) \ = \ S_a^{-1} + K_{\insta}^T(\vx) S_{\insta}^{-1} K_{\insta}(\vx) - \nabla_{\vx} K_{\insta}^T(\vx) S_{\insta}^{-1} (\vy_{\insta}-\vF_{\insta}(\vx)) \\
++ \ K_{\instb}^T(\vx) S_{\instb}^{-1} K_{\instb}(\vx) - \nabla_{\vx} K_{\instb}^T(\vx) S_{\instb}^{-1} (\vy_{\instb}-\vF_{\instb}(\vx)).
+\end{eqnarray*}
+The {\it Gauss-Newton} iteration sets $\nabla_{\vx} K_{\insta}^T S_{\insta}^{-1} (\vy_{\insta}-\vF_{\insta}(\vx)) = \nabla_{\vx} K_{\instb}^T S_{\instb}^{-1} (\vy_{\instb}-\vF_{\instb}(\vx)) = {\bf 0}$:
+\begin{eqnarray*}
+\vx^{(k+1)} \ = \ \vx^{(k)} &+& \Big[ S_a^{-1} + K_{\insta}^T S_{\insta}^{-1} K_{\insta} + K_{\instb}^T S_{\instb}^{-1} K_{\instb} \Big]^{-1}  \\
+&\times& \Big( K_{\insta}^T S_{\insta}^{-1} (\vy_{\insta}-\vF_\insta(\vx^{(k)})) + K_{\instb}^T S_{\instb}^{-1} (\vy_{\instb}-\vF_\instb(\vx^{(k)})) - S_a^{-1} (\vx^{(k)} - \vx_a)  \Big),
+\end{eqnarray*}
+where $K = K(\vx^{(k)})$. \\
+The {\it Levenberg-Marquardt} iteration is
+\begin{eqnarray*}
+\vx^{(k+1)} \ = \ \vx^{(k)} &+& \Big[ (1 + \mu) S_a^{-1} + K_{\insta}^T S_{\insta}^{-1} K_{\insta} + K_{\instb}^T S_{\instb}^{-1} K_{\instb} \Big]^{-1}  \\
+&\times& \Big( K_{\insta}^T S_{\insta}^{-1} (\vy_{\insta}-\vF_\insta(\vx^{(k)})) + K_{\instb}^T S_{\instb}^{-1} (\vy_{\instb}-\vF_\instb(\vx^{(k)})) - S_a^{-1} (\vx^{(k)} - \vx_a)  \Big),
+\end{eqnarray*}
+where $K = K(\vx^{(k)})$.
+
+\begin{figure*}[t]
+\begin{center}
+{\bf Retrieval of Ozone ($O_3$) from Multiple Noisy Observations} \\ [0.30cm]
+$\begin{array}{c@@{\hspace{0.05in}}c}
+\epsfxsize=0.45\linewidth \epsffile{O3_n0.001_sa2e-05_s1_4_s2_4.eps} &
+\epsfxsize=0.45\linewidth \epsffile{measurements_O3_n_0.001_sa2e-05_s1_4_s2_4.eps} \\ [0.1cm]
+\mbox{(a) $O_3$ State Vector} & \mbox{(b) Measurement vector} \\ [0.15cm]
+\epsfxsize=0.45\linewidth \epsffile{Energy_O3_n0.001_sa2e-05_s1_4_s2_4.eps} &
+\epsfxsize=0.45\linewidth \epsffile{errors_O3_n0.001_sa2e-05_s1_4_s2_4.eps} \\ [0.1cm]
+\mbox{(c) Energy} & \mbox{(d) Errors}
+\end{array}$
+\end{center}
+\caption{Retrieval and Fusion of data obtained with two instruments.  The measurement vectors contain {\it some noise} in this experiment.  (a) Shown are $O_3$ profiles: true (in red), {\it a priori} (in green) and retrieved (in blue).  (b) Measurement vectors: true (in red), instrument 1 (in cyan), and instrument 2 (in blue).  (c) Energy $E$ and norm of energy gradient $|\nabla E|$ per iteration.  (d) Errors in corresponding reconstructed measurements and errors in a state vector are shown per iteration.}
+\label{fig:O3_some_noise}
+\end{figure*}
+
+
+
+\begin{figure*}[t]
+\begin{center}
+{\bf Retrieval of Ozone ($O_3$) from Multiple Very Noisy Observations} \\ [0.30cm]
+$\begin{array}{c@@{\hspace{0.05in}}c}
+\epsfxsize=0.45\linewidth \epsffile{O3_n0.05_sa1.7e-06_s1_4_s2_4.eps} &
+\epsfxsize=0.45\linewidth \epsffile{measurements_O3_n_0.05_sa1.7e-06_s1_4_s2_4.eps} \\ [0.1cm]
+\mbox{(a) $O_3$ State Vector} & \mbox{(b) Measurement vector} \\ [0.15cm]
+\epsfxsize=0.45\linewidth \epsffile{Energy_O3_n0.05_sa1.7e-06_s1_4_s2_4.eps} &
+\epsfxsize=0.45\linewidth \epsffile{errors_O3_n0.05_sa1.7e-06_s1_4_s2_4.eps} \\ [0.1cm]
+\mbox{(c) Energy} & \mbox{(d) Errors}
+\end{array}$
+\end{center}
+\caption{Retrieval and Fusion of data obtained with two instruments.  The measurement vectors contain {\it more noise} in this experiment.  (a) Shown are $O_3$ profiles: true (in red), {\it a priori} (in green) and retrieved (in blue).  (b) Measurement vectors: true (in red), instrument 1 (in cyan), and instrument 2 (in blue).  (c) Energy $E$ and norm of energy gradient $|\nabla E|$ per iteration.  (d) Errors in corresponding reconstructed measurements and errors in a state vector are shown per iteration.}
+\label{fig:O3_more_noise}
+\end{figure*}
+
+
+\begin{figure*}[t]
+\begin{center}
+{\bf Retrieval of Temperature from Multiple Very Noisy Observations} \\ [0.30cm]
+$\begin{array}{c@@{\hspace{0.05in}}c}
+\epsfxsize=0.45\linewidth \epsffile{T_n0.05_sa70_s1_4_s2_4.eps} &
+\epsfxsize=0.45\linewidth \epsffile{measurements_T_n_0.05_sa70_s1_4_s2_4.eps} \\ [0.1cm]
+\mbox{(a) $O_3$ State Vector} & \mbox{(b) Measurement vector} \\ [0.15cm]
+\epsfxsize=0.45\linewidth \epsffile{Energy_T_n0.05_sa70_s1_4_s2_4.eps} &
+\epsfxsize=0.45\linewidth \epsffile{errors_T_n0.05_sa70_s1_4_s2_4.eps} \\ [0.1cm]
+\mbox{(c) Energy} & \mbox{(d) Errors}
+\end{array}$
+\end{center}
+\caption{Retrieval and Fusion of data obtained with two instruments.  The measurement vectors contain {\it more noise} in this experiment.  (a) Shown are temperature profiles: true (in red), {\it a priori} (in green) and retrieved (in blue).  (b) Measurement vectors: true (in red), instrument 1 (in cyan), and instrument 2 (in blue).  (c) Energy $E$ and norm of energy gradient $|\nabla E|$ per iteration.  (d) Errors in corresponding reconstructed measurements and errors in a state vector are shown per iteration.}
+\label{fig:T_more_noise}
+\end{figure*}
+
+
+\bibliographystyle{ieeetr}
+\bibliography{iy-006}
+
+
+\end{document}
+
+% $Id: iy-006.tex,v 1.2 2019/06/14 18:50:05 yanovsky Exp $
+
+% $Log: $
+@
+
+
+1.2
+log
+@Updated links to graphics files
+@
+text
+@d197 2
+a198 2
+\bibliographystyle{ieee}
+\bibliography{/Users/yanovsky/Igor/papers/refslib/yanovsky}
+d203 3
+a205 1
+% $Id:  $@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d149 2
+a150 2
+\epsfxsize=0.45\linewidth \epsffile{eps/O3_some_noise/O3_n0.001_sa2e-05_s1_4_s2_4.eps} &
+\epsfxsize=0.45\linewidth \epsffile{eps/O3_some_noise/measurements_O3_n_0.001_sa2e-05_s1_4_s2_4.eps} \\ [0.1cm]
+d152 2
+a153 2
+\epsfxsize=0.45\linewidth \epsffile{eps/O3_some_noise/Energy_O3_n0.001_sa2e-05_s1_4_s2_4.eps} &
+\epsfxsize=0.45\linewidth \epsffile{eps/O3_some_noise/errors_O3_n0.001_sa2e-05_s1_4_s2_4.eps} \\ [0.1cm]
+d167 2
+a168 2
+\epsfxsize=0.45\linewidth \epsffile{eps/O3_lots_of_noise/O3_n0.05_sa1.7e-06_s1_4_s2_4.eps} &
+\epsfxsize=0.45\linewidth \epsffile{eps/O3_lots_of_noise/measurements_O3_n_0.05_sa1.7e-06_s1_4_s2_4.eps} \\ [0.1cm]
+d170 2
+a171 2
+\epsfxsize=0.45\linewidth \epsffile{eps/O3_lots_of_noise/Energy_O3_n0.05_sa1.7e-06_s1_4_s2_4.eps} &
+\epsfxsize=0.45\linewidth \epsffile{eps/O3_lots_of_noise/errors_O3_n0.05_sa1.7e-06_s1_4_s2_4.eps} \\ [0.1cm]
+d184 2
+a185 2
+\epsfxsize=0.45\linewidth \epsffile{eps/Temperature_lots_of_noise/T_n0.05_sa70_s1_4_s2_4.eps} &
+\epsfxsize=0.45\linewidth \epsffile{eps/Temperature_lots_of_noise/measurements_T_n_0.05_sa70_s1_4_s2_4.eps} \\ [0.1cm]
+d187 2
+a188 2
+\epsfxsize=0.45\linewidth \epsffile{eps/Temperature_lots_of_noise/Energy_T_n0.05_sa70_s1_4_s2_4.eps} &
+\epsfxsize=0.45\linewidth \epsffile{eps/Temperature_lots_of_noise/errors_T_n0.05_sa70_s1_4_s2_4.eps} \\ [0.1cm]
+@
+

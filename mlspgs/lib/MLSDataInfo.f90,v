@@ -1,0 +1,624 @@
+head	2.12;
+access;
+symbols
+	v5-02-NRT-19:2.12
+	v6-00:2.12
+	v5-02-NRT-18:2.12
+	v5-02:2.12
+	v5-01-NRT-17:2.12
+	v5-01-NRT-16:2.12
+	v5-01-NRT-15:2.12
+	v5-01-NRT-14:2.12
+	neuralnetworks-1-0:2.12.0.12
+	cfm-single-freq-0-1:2.12.0.10
+	v5-01:2.12
+	v5-00:2.12
+	v4-23-TA133:2.12.0.8
+	mus-emls-1-70:2.12.0.6
+	rel-1-0-englocks-work:2.12.0.4
+	VUMLS1-00:2.12
+	VPL1-00:2.12
+	V4-22-NRT-08:2.12
+	VAM1-00:2.12
+	V4-21:2.12.0.2
+	V4-13:2.12
+	V4-12:2.12
+	V4-11:2.12
+	V4-10:2.12
+	V3-43:2.10
+	M4-00:2.10
+	V3-41:2.10
+	V3-40-PlusGM57:2.10.0.2
+	V2-24-NRT-04:2.7
+	V3-33:2.10
+	V2-24:2.7
+	V3-31:2.10
+	V3-30-NRT-05:2.10
+	cfm-01-00:2.10
+	V3-30:2.10
+	V3-20:2.10
+	V3-10:2.9
+	V2-23-NRT-02:2.7
+	V2-23:2.7
+	V2-22-NRT-01:2.7
+	V2-22:2.7
+	V2-21:2.7
+	V2-20:2.6
+	V2-11:2.6
+	V2-10:2.6
+	V2-00:2.5
+	V1-51:2.3
+	V1-50:2.3
+	V1-45:2.3
+	V1-44:2.3
+	V1-43:2.3
+	V1-42:2.3
+	V1-41:2.3
+	V1-32:2.3
+	V1-40:2.3
+	V1-31:2.3
+	V1-30:2.3
+	V1-13:2.3
+	V1-12:2.3
+	V1-11:2.3
+	V1-10:2.3
+	newfwm-feb03:2.3.0.2;
+locks; strict;
+comment	@# @;
+
+
+2.12
+date	2014.03.07.19.15.51;	author pwagner;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2013.06.12.02.11.10;	author vsnyder;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2010.02.04.23.08.00;	author vsnyder;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2009.07.30.00.17.58;	author pwagner;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2009.06.23.18.25.42;	author pwagner;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2007.01.12.00.29.28;	author pwagner;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2006.06.29.20.36.55;	author pwagner;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2005.06.22.17.25.49;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2005.04.29.21.53.29;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2002.10.08.00.09.11;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2002.08.25.19.21.09;	author mjf;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2002.08.24.00.40.08;	author jdone;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.12
+log
+@Name_Len changed to nameLen; got from MLSCommon
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+  module MLSDataInfo
+
+  use MLSCOMMON, only: NAMELEN
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
+  use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
+       
+  implicit none
+
+!     c o n t e n t s
+!     - - - - - - - -
+!     (data types and parameters)
+! MLSDataInfo_T     Information from a HDF5 data file
+!
+!                 (subroutines and functions)
+!
+! Query_MLSData   Lists all dataset entries in a file.
+!
+  private
+
+  public :: MLSDataInfo_T, Query_MLSData
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: MLSDataInfo.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+  type MLSDataInfo_T
+    character(len=namelen), dimension(:), pointer :: name => null() ! Name of field in file
+    integer :: number_of_entries
+  end type MLSDataInfo_T
+
+ contains ! ======================== MODULE PROCEDURES =======================
+
+! -------------------------------------------------  Query_MLSData ----
+  recursive subroutine Query_MLSData(loc_id, loc_name, dataset_info)
+!
+    use HDF5, only: hid_t, H5G_DATASET_F, H5G_LINK_F, &
+    ! & H5G_UNKNOWN_F, H5G_GROUP_F, H5G_TYPE_F, &
+      & h5gn_members_f,h5gget_obj_info_idx_f
+! This subroutine lists entries in the HDF5 file.
+!
+! define external variables
+!
+    type(MLSDataInfo_T), intent(inout) :: dataset_info 
+    integer (hid_t), intent(in) :: loc_id
+    character(len=*), intent(in) :: loc_name
+!
+! define internal variables.
+!
+    logical, parameter :: OBJINFOBROKEN = .true. ! starting with hdf5 1.8
+    integer :: i, nmembers, h5error, count, type_id
+    character(len=namelen) :: name_buffer, path_name, new_loc_name
+    integer :: nsubmembers
+    logical, parameter :: verbose = .false.
+    ! call outputNamedValue( 'loc_id', loc_id )
+    ! call outputNamedValue( 'loc_name', loc_name )
+
+    call h5gn_members_f(loc_id,loc_name,nmembers,h5error)
+    if ( verbose ) call outputNamedValue( 'loc_id', loc_id )
+    if ( verbose ) call outputNamedValue( 'loc_name', loc_name )
+    if ( verbose ) call outputNamedValue( 'nmembers', nmembers )
+    if (h5error /= 0) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Group member access of ' // loc_name // ' failed.')
+
+    if (h5error.eq.0) then 
+
+    do i=0, nmembers-1
+
+    call h5gget_obj_info_idx_f(loc_id,loc_name,i,name_buffer,type_id,h5error)
+    if (h5error /= 0) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Retrieval of object information from ' // loc_name // ' failed.')
+
+    if (h5error.eq.0) then 
+
+          path_name = loc_name
+          if (trim(path_name) /= "/") then                                         
+            new_loc_name = trim(path_name) // "/" // trim(name_buffer) 
+          else                                                                     
+            new_loc_name = trim(path_name) // trim(name_buffer)        
+          endif                                                                    
+          ! call outputNamedValue( 'new loc_name', new_loc_name )
+
+        ! call outputNamedValue( 'H5G_DATASET_F', H5G_DATASET_F )
+        ! call outputNamedValue( 'H5G_LINK_F', H5G_LINK_F )
+        ! call outputNamedValue( 'H5G_UNKNOWN_F', H5G_UNKNOWN_F )
+        ! call outputNamedValue( 'H5G_GROUP_F', H5G_GROUP_F )
+        ! call outputNamedValue( 'H5G_TYPE_F', H5G_TYPE_F )
+        ! call outputNamedValue( 'type_id', type_id )
+         ! if (type_id .EQ. 2) then  ! H5G_DATASET_F
+        if ( OBJINFOBROKEN ) then
+          ! h5gget_obj_info_idx_f doesn't return a reliable type_id
+          ! so we'll call h5gn_members until we get an error
+           call h5gn_members_f( loc_id, trim(new_loc_name), nsubmembers, h5error )
+           if ( h5error == 0 .and. nsubmembers > 0 ) then
+             path_name = new_loc_name
+             call Query_MLSData( loc_id, trim(path_name), dataset_info)
+           else
+             count = dataset_info%number_of_entries + 1
+             dataset_info%name(count) = new_loc_name
+
+             dataset_info%number_of_entries = count
+           endif
+        elseif (type_id .EQ. H5G_DATASET_F) then  ! H5G_DATASET_F
+
+          count = dataset_info%number_of_entries + 1
+          dataset_info%name(count) = new_loc_name
+
+          dataset_info%number_of_entries = count
+
+        elseif (type_id .EQ. H5G_LINK_F) then  ! H5G_LINK_F
+
+          count = dataset_info%number_of_entries + 1
+
+          dataset_info%name(count) = new_loc_name
+
+          dataset_info%number_of_entries = count
+
+        else 
+
+          path_name = new_loc_name
+ 
+           call Query_MLSData(loc_id,trim(path_name),dataset_info)
+
+        endif ! type_id     
+
+    endif ! h5error
+
+      end do ! nmembers
+
+    endif ! h5error
+
+  end subroutine Query_MLSData
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: MLSDataInfo.f90,v 2.11 2013/06/12 02:11:10 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module MLSDataInfo
+
+! $Log: MLSDataInfo.f90,v $
+! Revision 2.11  2013/06/12 02:11:10  vsnyder
+! Cruft removal
+!
+! Revision 2.10  2010/02/04 23:08:00  vsnyder
+! Remove USE or declaration for unused names
+!
+! Revision 2.9  2009/07/30 00:17:58  pwagner
+! Worked around apparent bug in hdf5 1.8
+!
+! Revision 2.8  2009/06/23 18:25:42  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.7  2007/01/12 00:29:28  pwagner
+! Renamed routine outputNamedValue
+!
+! Revision 2.6  2006/06/29 20:36:55  pwagner
+! Fixed bug besetting symbolic links
+!
+! Revision 2.5  2005/06/22 17:25:49  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.4  2005/04/29 21:53:29  pwagner
+! Nullified name component of data type at declaration
+!
+! Revision 2.3  2002/10/08 00:09:11  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.2  2002/08/25 19:21:09  mjf
+! Added a couple of continuation characters.
+!
+! Revision 2.1  2002/08/24 00:40:08  jdone
+! Creating & adding to repository
+!
+@
+
+
+2.11
+log
+@Cruft removal
+@
+text
+@d14 3
+a16 2
+  use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
+  ! use output_m, only: OUTPUTNAMEDVALUE
+a23 1
+! NAME_LEN          Max length of an sds array name
+d31 1
+a31 1
+  public :: MLSDataInfo_T, Query_MLSData, NAME_LEN
+a38 3
+  ! Parameters
+  integer, parameter :: name_len = 64  ! Max len of SDS array name
+
+d40 1
+a40 1
+    character(len=name_len), dimension(:), pointer :: name => null() ! Name of field in file
+a48 1
+    ! use output_m, only: outputNamedValue
+d64 1
+a64 1
+    character(len=name_len) :: name_buffer, path_name, new_loc_name
+d66 1
+d71 3
+a73 2
+    ! call outputNamedValue( 'loc_id', loc_id )
+    ! call outputNamedValue( 'loc_name', loc_name )
+d149 1
+a149 1
+       "$Id: MLSDataInfo.f90,v 2.10 2010/02/04 23:08:00 vsnyder Exp $"
+d159 3
+@
+
+
+2.10
+log
+@Remove USE or declaration for unused names
+@
+text
+@a68 1
+    logical :: dataset_found
+a108 1
+             dataset_found = .FALSE.
+a111 1
+             dataset_found = .TRUE.
+a118 1
+          dataset_found = .TRUE.
+a125 1
+          dataset_found = .TRUE.
+a133 2
+           dataset_found = .FALSE.
+ 
+d151 1
+a151 1
+       "$Id: MLSDataInfo.f90,v 2.9 2009/07/30 00:17:58 pwagner Exp $"
+d161 3
+@
+
+
+2.9
+log
+@Worked around apparent bug in hdf5 1.8
+@
+text
+@d54 1
+a54 1
+      & H5G_UNKNOWN_F, H5G_GROUP_F, H5G_TYPE_F, &
+d158 1
+a158 1
+       "$Id: MLSDataInfo.f90,v 2.8 2009/06/23 18:25:42 pwagner Exp $"
+d168 3
+@
+
+
+2.8
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d15 1
+d35 1
+a35 1
+       "$RCSfile: $"
+d54 1
+d66 1
+d68 1
+a68 1
+    character(len=name_len) :: name_buffer, path_name
+d70 1
+d91 6
+d98 6
+d105 16
+a120 1
+        if (type_id .EQ. H5G_DATASET_F) then  ! H5G_DATASET_F
+d124 1
+a124 5
+          if (trim(path_name) /= "/") then                                         
+            dataset_info%name(count) = trim(path_name) // "/" // trim(name_buffer) 
+          else                                                                     
+            dataset_info%name(count) = trim(path_name) // trim(name_buffer)        
+          endif                                                                    
+d133 1
+a133 5
+          if (trim(path_name) /= "/") then 
+            dataset_info%name(count) = trim(path_name) // "/" // trim(name_buffer)
+          else 
+            dataset_info%name(count) = trim(path_name) // trim(name_buffer)
+          endif
+d141 1
+a141 5
+           if (trim(path_name) /= "/") then 
+            path_name = trim(path_name) // "/" // trim(name_buffer)
+           else 
+            path_name = trim(path_name) // trim(name_buffer)
+           endif
+d158 1
+a158 1
+       "$Id: read_apriori.f90 is it here $"
+d168 3
+@
+
+
+2.7
+log
+@Renamed routine outputNamedValue
+@
+text
+@d34 1
+a34 1
+       "$RCSfile: MLSDataInfo.f90,v $"
+d136 1
+a137 1
+!---------------------------- RCS Ident Info -------------------------------
+d139 2
+a140 3
+       "$Id: MLSDataInfo.f90,v 2.6 2006/06/29 20:36:55 pwagner Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d142 1
+d144 1
+d149 3
+@
+
+
+2.6
+log
+@Fixed bug besetting symbolic links
+@
+text
+@d51 1
+a51 1
+    ! use output_m, only: output_name_v_pair
+d67 2
+a68 2
+    ! call output_name_v_pair( 'loc_id', loc_id )
+    ! call output_name_v_pair( 'loc_name', loc_name )
+d71 2
+a72 2
+    ! call output_name_v_pair( 'loc_id', loc_id )
+    ! call output_name_v_pair( 'loc_name', loc_name )
+d139 1
+a139 1
+       "$Id: MLSDataInfo.f90,v 2.5 2005/06/22 17:25:49 pwagner Exp $"
+d148 3
+@
+
+
+2.5
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d34 1
+a34 1
+       "$RCSfile: $"
+d51 3
+a53 1
+    use HDF5, only: hid_t, h5gn_members_f,h5gget_obj_info_idx_f
+d67 2
+d71 2
+d88 2
+a89 1
+         if (type_id .EQ. 2) then  ! H5G_DATASET_F
+d93 5
+d99 12
+a110 5
+       if (trim(path_name) /= "/") then 
+         dataset_info%name(count) = trim(path_name) // "/" // trim(name_buffer)
+       else 
+         dataset_info%name(count) = trim(path_name) // trim(name_buffer)
+       endif
+d114 1
+a114 1
+         else 
+d126 1
+a126 1
+         endif ! H5G_DATASET_F     
+d128 1
+a128 1
+       endif ! h5error
+d139 1
+a139 1
+       "$Id: $"
+d148 3
+@
+
+
+2.4
+log
+@Nullified name component of data type at declaration
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
+d32 1
+a32 4
+  !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
+    "$Id: MLSDataInfo.f90,v 2.3 2002/10/08 00:09:11 pwagner Exp $"
+  character (len=len(idParm)), private :: Id = idParm
+d34 1
+a34 1
+    "$RCSfile: MLSDataInfo.f90,v $"
+d36 1
+a36 1
+  !---------------------------------------------------------------------------
+d118 5
+d129 3
+@
+
+
+2.3
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d1 2
+a2 2
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+a5 1
+  use HDF5, only: hid_t, h5gn_members_f,h5gget_obj_info_idx_f
+d26 1
+a26 1
+    "$Id: MLSDataInfo.f90,v 2.2 2002/08/25 19:21:09 mjf Exp $"
+d37 1
+a37 1
+    character(len=name_len), dimension(:), pointer :: name ! Name of field in file
+d46 1
+d111 1
+d119 3
+@
+
+
+2.2
+log
+@Added a couple of continuation characters.
+@
+text
+@d27 1
+a27 1
+    "$Id: MLSDataInfo.f90,v 2.1 2002/08/24 00:40:08 jdone Exp $"
+d31 1
+d111 4
+d118 3
+@
+
+
+2.1
+log
+@Creating & adding to repository
+@
+text
+@d27 1
+a27 1
+    "$Id: MLSDataInfo.f90, Exp $"
+d61 1
+a61 1
+    if (h5error /= 0) call MLSMessage ( MLSMSG_Error, ModuleName, 
+d69 1
+a69 1
+    if (h5error /= 0) call MLSMessage ( MLSMSG_Error, ModuleName, 
+d113 3
+@
+

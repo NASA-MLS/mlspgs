@@ -1,0 +1,941 @@
+head	1.4;
+access;
+symbols
+	v5-02-NRT-19:1.4
+	v6-00:1.4
+	v5-02-NRT-18:1.4
+	v5-02:1.4
+	v5-01-NRT-17:1.4
+	v5-01-NRT-16:1.4
+	v5-01-NRT-15:1.4
+	v5-01-NRT-14:1.4
+	neuralnetworks-1-0:1.4.0.12
+	cfm-single-freq-0-1:1.4.0.10
+	v5-01:1.4
+	v5-00:1.4
+	v4-23-TA133:1.4.0.8
+	mus-emls-1-70:1.4.0.6
+	rel-1-0-englocks-work:1.4.0.4
+	VUMLS1-00:1.4
+	VPL1-00:1.4
+	V4-22-NRT-08:1.4
+	VAM1-00:1.4
+	V4-21:1.4.0.2
+	V4-13:1.4
+	V4-12:1.4
+	V4-11:1.4
+	V4-10:1.4
+	M4-00:1.4
+	V3-33:1.4
+	V3-31:1.4
+	V3-30-NRT-05:1.4
+	cfm-01-00:1.4;
+locks; strict;
+comment	@% @;
+
+
+1.4
+date	2010.06.29.23.56.57;	author livesey;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2010.06.24.19.20.15;	author livesey;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2010.05.24.18.35.57;	author honghanh;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2010.03.30.16.19.26;	author honghanh;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.4
+log
+@Getting ready for delivery
+@
+text
+@\section{Lists and tables}%
+\label{app:Lists}
+\subsection{Types}
+\noindent\begin{minipage}{\linewidth}
+\begin{multicols}{2}
+\noindent\snippet{l\_cloud}\\
+\snippet{l\_cloudExtinction}\\
+\snippet{l\_cloudIce}\\
+\snippet{l\_cloudInducedRadiance}\\
+\snippet{l\_cloudTemperature}\\
+\snippet{l\_cloudWater}\\
+\snippet{l\_cloudy\_110RH\_below\_top}\\
+\snippet{l\_cloudy\_110RH\_in\_cloud}\\
+\snippet{l\_elevOffset}\\
+\snippet{l\_fieldAzimuth}\\
+\snippet{l\_fieldElevation}\\
+\snippet{l\_fieldStrength}\\
+\snippet{l\_geocAltitude}\\
+\snippet{l\_geodAltitude}\\
+\snippet{l\_geodAngle}\\
+\snippet{l\_gph}\\
+\snippet{l\_gph\_precision}\\
+\snippet{l\_H2OFromRHI}\\
+\snippet{l\_H2OPrecisionFromRHI}\\
+\snippet{l\_IceDensity}\\
+\snippet{l\_iwc}\\
+\snippet{l\_IWCfromExtinction}\\
+\snippet{l\_iwc\_high\_height}\\
+\snippet{l\_iwc\_low\_height}\\
+\snippet{l\_iwp}\\
+\snippet{l\_ptan}\\
+\snippet{l\_radiance}\\
+\snippet{l\_refGPH}\\
+\snippet{l\_rhi}\\
+\snippet{l\_RHIFromH2O}\\
+\snippet{l\_RHIPrecisionFromH2O}\\
+\snippet{l\_systemTemperature}\\
+\snippet{l\_temperature}\\
+\snippet{l\_temperature\_precision}\\
+\snippet{l\_tngtgeocalt}\\
+\snippet{l\_tngtgeodalt}\\
+\snippet{l\_vmr}\\
+\end{multicols}
+\end{minipage}
+
+\subsection{Units}
+\begin{tabular}{ll}
+\toprule
+\textbf{Quantity} & \textbf{Units} \\
+\midrule
+\snippet{phyq\_invalid} & Default value for uninitialized variables\\
+\snippet{phyq\_dimensionless} & Value for unitless quantities\\
+\snippet{phyq\_length} & Meters\\
+\snippet{phyq\_time} & Seconds\\
+\snippet{phyq\_pressure} & Millibars\\
+\snippet{phyq\_temperature} & Kelvins\\
+\snippet{phyq\_vmr} & Number of `parts per one'\\
+\snippet{phyq\_angle} & Degrees\\
+\snippet{phyq\_mafs} & Number of mafs\\
+\snippet{phyq\_mifs} & Number of mifs\\
+\snippet{phyq\_frequency} & MHz\\
+\snippet{phyq\_zeta} & $\log_{10}\left(\text{Pressure\,/\,hPa}\right)$ \\
+\snippet{phyq\_velocity} & meters\,/\,second\\
+\snippet{phyq\_extinction} & 1\,/\,meters\\
+\snippet{phyq\_icedensity} & g\,/\,meters$^3$\\
+\snippet{phyq\_colmabundance} & $\log_{10}\left(\text{g\,/meters}\right)^3$\\
+\snippet{phyq\_pctrhi} & Relative humidity wrt. ice (\%)\\
+\snippet{phyq\_gauss} & Gauss \\
+\snippet{phyq\_profiles} & Number of profiles\\
+\bottomrule
+\end{tabular}
+
+\subsection{Molecules}
+
+\begin{multicols}{3}
+\noindent\snippet{L\_BR\_79\_O}\\
+\snippet{L\_BR\_79\_O\_V1}\\
+\snippet{L\_BR\_81\_O}\\
+\snippet{L\_BR\_81\_O\_V1}\\
+\snippet{L\_BRO}\\
+\snippet{L\_C\_13\_H2CHCN}\\
+\snippet{L\_C\_13\_H3CN}\\
+\snippet{L\_C\_13\_O}\\
+\snippet{L\_CH2C\_13\_HCN}\\
+\snippet{L\_CH2CDCN}\\
+\snippet{L\_CH2CHC\_13\_N}\\
+\snippet{L\_CH2CHCN}\\
+\snippet{L\_CH2OHCOCH2OH}\\
+\snippet{L\_CH3C\_13\_N}\\
+\snippet{L\_CH3CH2CH3}\\
+\snippet{L\_CH3CH2CN}\\
+\snippet{L\_CH3CH2OH}\\
+\snippet{L\_CH3CL}\\
+\snippet{L\_CH3CL\_35}\\
+\snippet{L\_CH3CL\_37}\\
+\snippet{L\_CH3CN}\\
+\snippet{L\_CH3CN\_15}\\
+\snippet{L\_CH3COCH3}\\
+\snippet{L\_CH3D}\\
+\snippet{L\_CH3O}\\
+\snippet{L\_CH3OH}\\
+\snippet{L\_CH3OOH}\\
+\snippet{L\_CH4}\\
+\snippet{L\_CL\_35\_NO2}\\
+\snippet{L\_CL\_35\_O}\\
+\snippet{L\_CL\_35\_ONO2}\\
+\snippet{L\_CL\_35\_OOCL\_35}\\
+\snippet{L\_CL\_35\_OOCL\_37}\\
+\snippet{L\_CL\_35\_O\_V1}\\
+\snippet{L\_CL\_37\_NO2}\\
+\snippet{L\_CL\_37\_O}\\
+\snippet{L\_CL\_37\_ONO2}\\
+\snippet{L\_CL\_37\_O\_V1}\\
+\snippet{L\_CLNO2}\\
+\snippet{L\_CLO}\\
+\snippet{L\_CLONO2}\\
+\snippet{L\_CLOOCL}\\
+\snippet{L\_CLOUD\_A}\\
+\snippet{L\_CLOUD\_S}\\
+\snippet{L\_CO}\\
+\snippet{L\_CO\_17}\\
+\snippet{L\_CO\_18}\\
+\snippet{L\_CO2}\\
+\snippet{L\_COF2}\\
+\snippet{L\_D2O}\\
+\snippet{L\_DCL\_35}\\
+\snippet{L\_DCL\_37}\\
+\snippet{L\_DF}\\
+\snippet{L\_DNO3}\\
+\snippet{L\_EXTINCTION}\\
+\snippet{L\_EXTINCTIONV2}\\
+\snippet{L\_H2C\_13\_O}\\
+\snippet{L\_H2CO}\\
+\snippet{L\_H2CO\_18}\\
+\snippet{L\_H2O}\\
+\snippet{L\_H2O\_17}\\
+\snippet{L\_H2O\_17\_V2}\\
+\snippet{L\_H2O\_18}\\
+\snippet{L\_H2O\_18\_V2}\\
+\snippet{L\_H2O2}\\
+\snippet{L\_H2O\_V2}\\
+\snippet{L\_H2S}\\
+\snippet{L\_H2S\_32}\\
+\snippet{L\_H2S\_32\_O4}\\
+\snippet{L\_H2SO4}\\
+\snippet{L\_HBR}\\
+\snippet{L\_HBR\_79}\\
+\snippet{L\_HBR\_81}\\
+\snippet{L\_HC\_13\_N}\\
+\snippet{L\_HCL}\\
+\snippet{L\_HCL\_35}\\
+\snippet{L\_HCL\_35\_O}\\
+\snippet{L\_HCL\_37}\\
+\snippet{L\_HCL\_37\_O}\\
+\snippet{L\_HCLO}\\
+\snippet{L\_HCN}\\
+\snippet{L\_HCN\_15}\\
+\snippet{L\_HCN\_V2}\\
+\snippet{L\_HCOCH2OH}\\
+\snippet{L\_HCOOH}\\
+\snippet{L\_HDO}\\
+\snippet{L\_HDO\_17}\\
+\snippet{L\_HDO\_18}\\
+\snippet{L\_HDO\_V2}\\
+\snippet{L\_HF}\\
+\snippet{L\_HN\_15\_O3}\\
+\snippet{L\_HNO3}\\
+\snippet{L\_HNO3\_V5}\\
+\snippet{L\_HNO3\_V6}\\
+\snippet{L\_HNO3\_V7}\\
+\snippet{L\_HNO3\_V8}\\
+\snippet{L\_HNO3\_V9}\\
+\snippet{L\_HO\_18\_NO2}\\
+\snippet{L\_HO2}\\
+\snippet{L\_HOBR}\\
+\snippet{L\_HOBR\_79}\\
+\snippet{L\_HOBR\_81}\\
+\snippet{L\_HOCL}\\
+\snippet{L\_HOCL\_35}\\
+\snippet{L\_HOCL\_37}\\
+\snippet{L\_HONO}\\
+\snippet{L\_HONO\_18\_O}\\
+\snippet{L\_HONOO\_18}\\
+\snippet{L\_HOONO}\\
+\snippet{L\_HOONO2}\\
+\snippet{L\_N\_15\_H3}\\
+\snippet{L\_N\_15\_NO}\\
+\snippet{L\_N2}\\
+\snippet{L\_N2O}\\
+\snippet{L\_N2O\_17}\\
+\snippet{L\_N2O\_18}\\
+\snippet{L\_N2O\_2V2}\\
+\snippet{L\_N2O\_V1}\\
+\snippet{L\_N2O\_V2}\\
+\snippet{L\_NF3}\\
+\snippet{L\_NH2CH2CH2OH}\\
+\snippet{L\_NH3}\\
+\snippet{L\_NH3\_V2}\\
+\snippet{L\_NN\_15\_O}\\
+\snippet{L\_NO}\\
+\snippet{L\_NO2}\\
+\snippet{L\_NO\_PLUS}\\
+\snippet{L\_O}\\
+\snippet{L\_O\_17}\\
+\snippet{L\_O\_17\_O}\\
+\snippet{L\_O\_18}\\
+\snippet{L\_O\_18\_H}\\
+\snippet{L\_O\_18\_O}\\
+\snippet{L\_O\_18\_O\_V1}\\
+\snippet{L\_O2}\\
+\snippet{L\_O2\_V1}\\
+\snippet{L\_O3}\\
+\snippet{L\_O3\_2V2}\\
+\snippet{L\_O3\_ASYM\_O\_17}\\
+\snippet{L\_O3\_ASYM\_O\_18}\\
+\snippet{L\_O3\_ASYM\_O\_18\_V2}\\
+\snippet{L\_O3\_R}\\
+\snippet{L\_O3\_SYM\_O\_17}\\
+\snippet{L\_O3\_SYM\_O\_18}\\
+\snippet{L\_O3\_SYM\_O\_18\_V2}\\
+\snippet{L\_O3\_V1\_3}\\
+\snippet{L\_O3\_V1\_3\_V2}\\
+\snippet{L\_O3\_V2}\\
+\snippet{L\_OBR\_79\_O}\\
+\snippet{L\_OBR\_81\_O}\\
+\snippet{L\_OBRO}\\
+\snippet{L\_OC\_13\_S\_32}\\
+\snippet{L\_OCL\_35\_O}\\
+\snippet{L\_OCL\_37\_O}\\
+\snippet{L\_OCLO}\\
+\snippet{L\_OCO\_18}\\
+\snippet{L\_OCS}\\
+\snippet{L\_OCS\_32}\\
+\snippet{L\_OCS\_34}\\
+\snippet{L\_OD}\\
+\snippet{L\_OH}\\
+\snippet{L\_OH\_V1\_2}\\
+\snippet{L\_S\_32\_O\_18\_O}\\
+\snippet{L\_S\_32\_O2}\\
+\snippet{L\_S\_32\_O2\_V2}\\
+\snippet{L\_S\_33\_O2}\\
+\snippet{L\_S\_34\_O2}\\
+\snippet{L\_SNGLT\_DLTA\_O\_18\_O}\\
+\snippet{L\_SNGLT\_DLTA\_O2}\\
+\snippet{L\_SO2}
+\end{multicols}
+
+\subsection{Bands}
+
+\begin{multicols}{3}
+\noindent\snippet{R1A:118.B1LF:PT}\\
+\snippet{R2:190.B2LF:H2O}\\
+\snippet{R2:190.B3LF:N2O}\\
+\snippet{R2:190.B4LF:HNO3}\\
+\snippet{R2:190.B5LF:ClO}\\
+\snippet{R2:190.B6LF:O3}\\
+\snippet{R3:240.B7LF:O3}\\
+\snippet{R3:240.B8LF:PT}\\
+\snippet{R3:240.B9LF:CO}\\
+\snippet{R4:640.B10LF:ClO}\\
+\snippet{R4:640.B11LF:BrO}\\
+\snippet{R4:640.B12LF:N2O}\\
+\snippet{R4:640.B13LF:HCl}\\
+\snippet{R4:640.B14LF:O3}\\
+\snippet{R5H:2T5.B15LF:OH}\\
+\snippet{R5H:2T5.B16LF:OH}\\
+\snippet{R5H:2T5.B17LF:PT}\\
+\snippet{R5V:2T5.B18LF:OH}\\
+\snippet{R5V:2T5.B19LF:OH}\\
+\snippet{R5V:2T5.B20LF:PT}\\
+\snippet{R1B:118.B21LF:PT}\\
+\snippet{R1A:118.B22LD:PT}\\
+\snippet{R2:190.B23LD:H2O}\\
+\snippet{R3:240.B24LD:O3}\\
+\snippet{R3:240.B25LD:CO}\\
+\snippet{R1B:118.B26LD:PT}\\
+\snippet{R2:190.B27LM:HCN}\\
+\snippet{R4:640.B28LM:HO2}\\
+\snippet{R4:640.B29LM:HOCl}\\
+\snippet{R4:640.B30LM:HO2}\\
+\snippet{R4:640.B31LM:BrO}\\
+\snippet{R1A:118.B32LW:PT}\\
+\snippet{R3:240.B33LW:O3}\\
+\snippet{R1B:118.B34LW:PT}\\
+\snippet{R2:190.B2UF:H2O}\\
+\snippet{R2:190.B3UF:N2O}\\
+\snippet{R2:190.B4UF:HNO3}\\
+\snippet{R2:190.B5UF:ClO}\\
+\snippet{R2:190.B6UF:O3}\\
+\snippet{R3:240.B7UF:O3}\\
+\snippet{R3:240.B8UF:PT}\\
+\snippet{R3:240.B9UF:CO}\\
+\snippet{R4:640.B10UF:ClO}\\
+\snippet{R4:640.B11UF:BrO}\\
+\snippet{R4:640.B12UF:N2O}\\
+\snippet{R4:640.B13UF:HCl}\\
+\snippet{R4:640.B14UF:O3}\\
+\snippet{R5H:2T5.B15UF:OH}\\
+\snippet{R5H:2T5.B16UF:OH}\\
+\snippet{R5H:2T5.B17UF:PT}\\
+\snippet{R5V:2T5.B18UF:OH}\\
+\snippet{R5V:2T5.B19UF:OH}\\
+\snippet{R5V:2T5.B20UF:PT}\\
+\snippet{R2:190.B23UD:H2O}\\
+\snippet{R3:240.B24UD:O3}\\
+\snippet{R3:240.B25UD:CO}\\
+\snippet{R2:190.B27UM:HCN}\\
+\snippet{R4:640.B28UM:HO2}\\
+\snippet{R4:640.B29UM:HOCl}\\
+\snippet{R4:640.B30UM:HO2}\\
+\snippet{R4:640.B31UM:BrO}\\
+\snippet{R3:240.B33UW:O3}
+\end{multicols}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "cfm"
+%%% End: 
+@
+
+
+1.3
+log
+@Various changes to get ready for v1.0
+@
+text
+@d1 1
+a1 1
+\section{Lists and tables}
+a2 1
+
+d4 39
+a42 41
+
+\begin{multicols}{3}
+\begin{itemize}
+\item l\_cloud
+\item l\_cloudExtinction
+\item l\_cloudIce
+\item l\_cloudInducedRadiance
+\item l\_cloudTemperature
+\item l\_cloudWater
+\item l\_cloudy\_110RH\_below\_top
+\item l\_cloudy\_110RH\_in\_cloud
+\item l\_elevOffset
+\item l\_fieldAzimuth
+\item l\_fieldElevation
+\item l\_fieldStrength
+\item l\_geocAltitude
+\item l\_geodAltitude
+\item l\_geodAngle
+\item l\_gph
+\item l\_gph\_precision
+\item l\_H2OFromRHI
+\item l\_H2OPrecisionFromRHI
+\item l\_IceDensity
+\item l\_iwc
+\item l\_IWCfromExtinction
+\item l\_iwc\_high\_height
+\item l\_iwc\_low\_height
+\item l\_iwp
+\item l\_ptan
+\item l\_radiance
+\item l\_refGPH
+\item l\_rhi
+\item l\_RHIFromH2O
+\item l\_RHIPrecisionFromH2O
+\item l\_systemTemperature
+\item l\_temperature
+\item l\_temperature\_precision
+\item l\_tngtgeocalt
+\item l\_tngtgeodalt
+\item l\_vmr
+\end{itemize}
+d44 1
+d47 25
+a71 24
+
+\begin{multicols}{2}
+\begin{itemize}
+\item phyq\_invalid (default value for uninitialized variablse)
+\item phyq\_dimensionless (value for unit-less quantities)
+\item phyq\_length (meters)
+\item phyq\_time (seconds)
+\item phyq\_pressure (millibars)
+\item phyq\_temperature (Kelvins)
+\item phyq\_vmr (number of parts per one)
+\item phyq\_angle (degrees)
+\item phyq\_mafs (number of mafs)
+\item phyq\_mifs (number of mifs)
+\item phyq\_frequency (MHz)
+\item phyq\_zeta (log10(pressure/hPa))
+\item phyq\_velocity (meters/second)
+\item phyq\_extinction (1/meters)
+\item phyq\_icedensity (g/meters\^3)
+\item phyq\_colmabundance (log10 g/meters\^3)
+\item phyq\_pctrhi (\%RHI)
+\item phyq\_gauss
+\item phyq\_profiles (number of profiles)
+\end{itemize}
+\end{multicols}
+d76 170
+a245 172
+\begin{itemize}
+\item L\_BR\_79\_O
+\item L\_BR\_79\_O\_V1
+\item L\_BR\_81\_O
+\item L\_BR\_81\_O\_V1
+\item L\_BRO
+\item L\_C\_13\_H2CHCN
+\item L\_C\_13\_H3CN
+\item L\_C\_13\_O
+\item L\_CH2C\_13\_HCN
+\item L\_CH2CDCN
+\item L\_CH2CHC\_13\_N
+\item L\_CH2CHCN
+\item L\_CH2OHCOCH2OH
+\item L\_CH3C\_13\_N
+\item L\_CH3CH2CH3
+\item L\_CH3CH2CN
+\item L\_CH3CH2OH
+\item L\_CH3CL
+\item L\_CH3CL\_35
+\item L\_CH3CL\_37
+\item L\_CH3CN
+\item L\_CH3CN\_15
+\item L\_CH3COCH3
+\item L\_CH3D
+\item L\_CH3O
+\item L\_CH3OH
+\item L\_CH3OOH
+\item L\_CH4
+\item L\_CL\_35\_NO2
+\item L\_CL\_35\_O
+\item L\_CL\_35\_ONO2
+\item L\_CL\_35\_OOCL\_35
+\item L\_CL\_35\_OOCL\_37
+\item L\_CL\_35\_O\_V1
+\item L\_CL\_37\_NO2
+\item L\_CL\_37\_O
+\item L\_CL\_37\_ONO2
+\item L\_CL\_37\_O\_V1
+\item L\_CLNO2
+\item L\_CLO
+\item L\_CLONO2
+\item L\_CLOOCL
+\item L\_CLOUD\_A
+\item L\_CLOUD\_S
+\item L\_CO
+\item L\_CO\_17
+\item L\_CO\_18
+\item L\_CO2
+\item L\_COF2
+\item L\_D2O
+\item L\_DCL\_35
+\item L\_DCL\_37
+\item L\_DF
+\item L\_DNO3
+\item L\_EXTINCTION
+\item L\_EXTINCTIONV2
+\item L\_H2C\_13\_O
+\item L\_H2CO
+\item L\_H2CO\_18
+\item L\_H2O
+\item L\_H2O\_17
+\item L\_H2O\_17\_V2
+\item L\_H2O\_18
+\item L\_H2O\_18\_V2
+\item L\_H2O2
+\item L\_H2O\_V2
+\item L\_H2S
+\item L\_H2S\_32
+\item L\_H2S\_32\_O4
+\item L\_H2SO4
+\item L\_HBR
+\item L\_HBR\_79
+\item L\_HBR\_81
+\item L\_HC\_13\_N
+\item L\_HCL
+\item L\_HCL\_35
+\item L\_HCL\_35\_O
+\item L\_HCL\_37
+\item L\_HCL\_37\_O
+\item L\_HCLO
+\item L\_HCN
+\item L\_HCN\_15
+\item L\_HCN\_V2
+\item L\_HCOCH2OH
+\item L\_HCOOH
+\item L\_HDO
+\item L\_HDO\_17
+\item L\_HDO\_18
+\item L\_HDO\_V2
+\item L\_HF
+\item L\_HN\_15\_O3
+\item L\_HNO3
+\item L\_HNO3\_V5
+\item L\_HNO3\_V6
+\item L\_HNO3\_V7
+\item L\_HNO3\_V8
+\item L\_HNO3\_V9
+\item L\_HO\_18\_NO2
+\item L\_HO2
+\item L\_HOBR
+\item L\_HOBR\_79
+\item L\_HOBR\_81
+\item L\_HOCL
+\item L\_HOCL\_35
+\item L\_HOCL\_37
+\item L\_HONO
+\item L\_HONO\_18\_O
+\item L\_HONOO\_18
+\item L\_HOONO
+\item L\_HOONO2
+\item L\_N\_15\_H3
+\item L\_N\_15\_NO
+\item L\_N2
+\item L\_N2O
+\item L\_N2O\_17
+\item L\_N2O\_18
+\item L\_N2O\_2V2
+\item L\_N2O\_V1
+\item L\_N2O\_V2
+\item L\_NF3
+\item L\_NH2CH2CH2OH
+\item L\_NH3
+\item L\_NH3\_V2
+\item L\_NN\_15\_O
+\item L\_NO
+\item L\_NO2
+\item L\_NO\_PLUS
+\item L\_O
+\item L\_O\_17
+\item L\_O\_17\_O
+\item L\_O\_18
+\item L\_O\_18\_H
+\item L\_O\_18\_O
+\item L\_O\_18\_O\_V1
+\item L\_O2
+\item L\_O2\_V1
+\item L\_O3
+\item L\_O3\_2V2
+\item L\_O3\_ASYM\_O\_17
+\item L\_O3\_ASYM\_O\_18
+\item L\_O3\_ASYM\_O\_18\_V2
+\item L\_O3\_R
+\item L\_O3\_SYM\_O\_17
+\item L\_O3\_SYM\_O\_18
+\item L\_O3\_SYM\_O\_18\_V2
+\item L\_O3\_V1\_3
+\item L\_O3\_V1\_3\_V2
+\item L\_O3\_V2
+\item L\_OBR\_79\_O
+\item L\_OBR\_81\_O
+\item L\_OBRO
+\item L\_OC\_13\_S\_32
+\item L\_OCL\_35\_O
+\item L\_OCL\_37\_O
+\item L\_OCLO
+\item L\_OCO\_18
+\item L\_OCS
+\item L\_OCS\_32
+\item L\_OCS\_34
+\item L\_OD
+\item L\_OH
+\item L\_OH\_V1\_2
+\item L\_S\_32\_O\_18\_O
+\item L\_S\_32\_O2
+\item L\_S\_32\_O2\_V2
+\item L\_S\_33\_O2
+\item L\_S\_34\_O2
+\item L\_SNGLT\_DLTA\_O\_18\_O
+\item L\_SNGLT\_DLTA\_O2
+\item L\_SO2
+\end{itemize}
+d251 62
+a312 64
+\begin{itemize}
+\item R1A:118.B1LF:PT
+\item R2:190.B2LF:H2O
+\item R2:190.B3LF:N2O
+\item R2:190.B4LF:HNO3
+\item R2:190.B5LF:ClO
+\item R2:190.B6LF:O3
+\item R3:240.B7LF:O3
+\item R3:240.B8LF:PT
+\item R3:240.B9LF:CO
+\item R4:640.B10LF:ClO
+\item R4:640.B11LF:BrO
+\item R4:640.B12LF:N2O
+\item R4:640.B13LF:HCl
+\item R4:640.B14LF:O3
+\item R5H:2T5.B15LF:OH
+\item R5H:2T5.B16LF:OH
+\item R5H:2T5.B17LF:PT
+\item R5V:2T5.B18LF:OH
+\item R5V:2T5.B19LF:OH
+\item R5V:2T5.B20LF:PT
+\item R1B:118.B21LF:PT
+\item R1A:118.B22LD:PT
+\item R2:190.B23LD:H2O
+\item R3:240.B24LD:O3
+\item R3:240.B25LD:CO
+\item R1B:118.B26LD:PT
+\item R2:190.B27LM:HCN
+\item R4:640.B28LM:HO2
+\item R4:640.B29LM:HOCl
+\item R4:640.B30LM:HO2
+\item R4:640.B31LM:BrO
+\item R1A:118.B32LW:PT
+\item R3:240.B33LW:O3
+\item R1B:118.B34LW:PT
+\item R2:190.B2UF:H2O
+\item R2:190.B3UF:N2O
+\item R2:190.B4UF:HNO3
+\item R2:190.B5UF:ClO
+\item R2:190.B6UF:O3
+\item R3:240.B7UF:O3
+\item R3:240.B8UF:PT
+\item R3:240.B9UF:CO
+\item R4:640.B10UF:ClO
+\item R4:640.B11UF:BrO
+\item R4:640.B12UF:N2O
+\item R4:640.B13UF:HCl
+\item R4:640.B14UF:O3
+\item R5H:2T5.B15UF:OH
+\item R5H:2T5.B16UF:OH
+\item R5H:2T5.B17UF:PT
+\item R5V:2T5.B18UF:OH
+\item R5V:2T5.B19UF:OH
+\item R5V:2T5.B20UF:PT
+\item R2:190.B23UD:H2O
+\item R3:240.B24UD:O3
+\item R3:240.B25UD:CO
+\item R2:190.B27UM:HCN
+\item R4:640.B28UM:HO2
+\item R4:640.B29UM:HOCl
+\item R4:640.B30UM:HO2
+\item R4:640.B31UM:BrO
+\item R3:240.B33UW:O3
+\end{itemize}
+@
+
+
+1.2
+log
+@v0.5 updated document
+@
+text
+@d1 2
+a2 2
+\section{Appendix}
+\label{sec:Appendix}
+d319 5
+@
+
+
+1.1
+log
+@Add an appendix for molecules, types, and units
+@
+text
+@d8 37
+a44 37
+\item cloud
+\item cloudExtinction
+\item cloudIce
+\item cloudInducedRadiance
+\item cloudTemperature
+\item cloudWater
+\item cloudy\_110RH\_below\_top
+\item cloudy\_110RH\_in\_cloud
+\item elevOffset
+\item fieldAzimuth
+\item fieldElevation
+\item fieldStrength
+\item geocAltitude
+\item geodAltitude
+\item geodAngle
+\item gph
+\item gph\_precision
+\item H2OFromRHI
+\item H2OPrecisionFromRHI
+\item IceDensity
+\item iwc
+\item IWCfromExtinction
+\item iwc\_high\_height
+\item iwc\_low\_height
+\item iwp
+\item ptan
+\item radiance
+\item refGPH
+\item rhi
+\item RHIFromH2O
+\item RHIPrecisionFromH2O
+\item systemTemperature
+\item temperature
+\item temperature\_precision
+\item tngtgeocalt
+\item tngtgeodalt
+\item vmr
+d78 239
+a316 170
+\item BR\_79\_O
+\item BR\_79\_O\_V1
+\item BR\_81\_O
+\item BR\_81\_O\_V1
+\item BRO
+\item C\_13\_H2CHCN
+\item C\_13\_H3CN
+\item C\_13\_O
+\item CH2C\_13\_HCN
+\item CH2CDCN
+\item CH2CHC\_13\_N
+\item CH2CHCN
+\item CH2OHCOCH2OH
+\item CH3C\_13\_N
+\item CH3CH2CH3
+\item CH3CH2CN
+\item CH3CH2OH
+\item CH3CL
+\item CH3CL\_35
+\item CH3CL\_37
+\item CH3CN
+\item CH3CN\_15
+\item CH3COCH3
+\item CH3D
+\item CH3O
+\item CH3OH
+\item CH3OOH
+\item CH4
+\item CL\_35\_NO2
+\item CL\_35\_O
+\item CL\_35\_ONO2
+\item CL\_35\_OOCL\_35
+\item CL\_35\_OOCL\_37
+\item CL\_35\_O\_V1
+\item CL\_37\_NO2
+\item CL\_37\_O
+\item CL\_37\_ONO2
+\item CL\_37\_O\_V1
+\item CLNO2
+\item CLO
+\item CLONO2
+\item CLOOCL
+\item CLOUD\_A
+\item CLOUD\_S
+\item CO
+\item CO\_17
+\item CO\_18
+\item CO2
+\item COF2
+\item D2O
+\item DCL\_35
+\item DCL\_37
+\item DF
+\item DNO3
+\item EXTINCTION
+\item EXTINCTIONV2
+\item H2C\_13\_O
+\item H2CO
+\item H2CO\_18
+\item H2O
+\item H2O\_17
+\item H2O\_17\_V2
+\item H2O\_18
+\item H2O\_18\_V2
+\item H2O2
+\item H2O\_V2
+\item H2S
+\item H2S\_32
+\item H2S\_32\_O4
+\item H2SO4
+\item HBR
+\item HBR\_79
+\item HBR\_81
+\item HC\_13\_N
+\item HCL
+\item HCL\_35
+\item HCL\_35\_O
+\item HCL\_37
+\item HCL\_37\_O
+\item HCLO
+\item HCN
+\item HCN\_15
+\item HCN\_V2
+\item HCOCH2OH
+\item HCOOH
+\item HDO
+\item HDO\_17
+\item HDO\_18
+\item HDO\_V2
+\item HF
+\item HN\_15\_O3
+\item HNO3
+\item HNO3\_V5
+\item HNO3\_V6
+\item HNO3\_V7
+\item HNO3\_V8
+\item HNO3\_V9
+\item HO\_18\_NO2
+\item HO2
+\item HOBR
+\item HOBR\_79
+\item HOBR\_81
+\item HOCL
+\item HOCL\_35
+\item HOCL\_37
+\item HONO
+\item HONO\_18\_O
+\item HONOO\_18
+\item HOONO
+\item HOONO2
+\item N\_15\_H3
+\item N\_15\_NO
+\item N2
+\item N2O
+\item N2O\_17
+\item N2O\_18
+\item N2O\_2V2
+\item N2O\_V1
+\item N2O\_V2
+\item NF3
+\item NH2CH2CH2OH
+\item NH3
+\item NH3\_V2
+\item NN\_15\_O
+\item NO
+\item NO2
+\item NO\_PLUS
+\item O
+\item O\_17
+\item O\_17\_O
+\item O\_18
+\item O\_18\_H
+\item O\_18\_O
+\item O\_18\_O\_V1
+\item O2
+\item O2\_V1
+\item O3
+\item O3\_2V2
+\item O3\_ASYM\_O\_17
+\item O3\_ASYM\_O\_18
+\item O3\_ASYM\_O\_18\_V2
+\item O3\_R
+\item O3\_SYM\_O\_17
+\item O3\_SYM\_O\_18
+\item O3\_SYM\_O\_18\_V2
+\item O3\_V1\_3
+\item O3\_V1\_3\_V2
+\item O3\_V2
+\item OBR\_79\_O
+\item OBR\_81\_O
+\item OBRO
+\item OC\_13\_S\_32
+\item OCL\_35\_O
+\item OCL\_37\_O
+\item OCLO
+\item OCO\_18
+\item OCS
+\item OCS\_32
+\item OCS\_34
+\item OD
+\item OH
+\item OH\_V1\_2
+\item S\_32\_O\_18\_O
+\item S\_32\_O2
+\item S\_32\_O2\_V2
+\item S\_33\_O2
+\item S\_34\_O2
+\item SNGLT\_DLTA\_O\_18\_O
+\item SNGLT\_DLTA\_O2
+\item SO2
+@
+

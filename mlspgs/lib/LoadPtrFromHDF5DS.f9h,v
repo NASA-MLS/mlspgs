@@ -1,0 +1,163 @@
+head	2.3;
+access;
+symbols
+	v5-02-NRT-19:2.3
+	v6-00:2.3
+	v5-02-NRT-18:2.3
+	v5-02:2.3
+	v5-01-NRT-17:2.3
+	v5-01-NRT-16:2.3
+	v5-01-NRT-15:2.3
+	v5-01-NRT-14:2.3
+	neuralnetworks-1-0:2.3.0.12
+	cfm-single-freq-0-1:2.3.0.10
+	v5-01:2.3
+	v5-00:2.3
+	v4-23-TA133:2.3.0.8
+	mus-emls-1-70:2.3.0.6
+	rel-1-0-englocks-work:2.3.0.4
+	VUMLS1-00:2.3
+	VPL1-00:2.3
+	V4-22-NRT-08:2.3
+	VAM1-00:2.3
+	V4-21:2.3.0.2
+	V4-13:2.3
+	V4-12:2.3
+	V4-11:2.2
+	V4-10:2.2
+	V3-43:2.1
+	M4-00:2.1
+	V3-41:2.1
+	V3-40-PlusGM57:2.1.0.2
+	V3-33:2.1
+	V3-31:2.1
+	V3-30-NRT-05:2.1
+	cfm-01-00:2.1
+	V3-30:2.1
+	V3-20:2.1
+	V3-10:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.3
+date	2014.07.18.21.58.31;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2013.08.31.01.24.53;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2008.05.22.01.05.48;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.3
+log
+@Pass item name to allocate_test
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! subroutine LoadPtrFromHDF5DS_* ( locID, name, value )
+    ! This routine allocates a pointer array and loads it with values from a DS
+!   use Allocate_Deallocate, only: Allocate_Test
+!   use HDF5, only: H5T => H5T_NATIVE_* ! HDF type
+!   integer, intent(in) :: LOCID          ! Where to place it (group/file)
+!   character (len=*), intent(in) :: NAME ! Name for this dataset
+!   integer, pointer :: VALUE(:,:)        ! The array itself
+
+!   character(len=*), parameter :: Sfx = '*' ! Type and rank, for messages
+
+    ! Local variables
+    integer :: Rank ! = size(shape(value)))
+    integer :: SETID                    ! ID of dataset
+    integer(hsize_t) :: SHP(size(shape(value))) ! Shape of value
+    integer :: SPACEID                  ! ID of dataspace
+    integer :: STATUS                   ! Flag from HDF5
+
+! $Id: LoadPtrFromHDF5DS.f9h,v 2.2 2013/08/31 01:24:53 vsnyder Exp $
+
+    ! Executable code
+    rank = size(shape(value))
+    call trace_begin ( 'LoadPtrFromHDF5DS_' // sfx, cond=.false. )
+    call h5dOpen_f ( locID, name, setID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open dataset ' // trim(name) )
+    call h5dget_space_f ( setID, spaceID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open dataspace for dataset ' // trim(name) )
+    call get_ds_shape ( spaceID, shp, name )
+    call allocate_test ( value, int(shp), name, moduleName )
+    call h5dread_f ( setID, H5T, value, (/ shp, ones(rank:6) /), status )
+    call finishLoad ( name, status, spaceID, setID )
+    call trace_end ( 'LoadPtrFromHDF5DS_' // sfx, cond=.false. )
+! end subroutine LoadPtrFromHDF5DS_*
+
+! $Log: LoadPtrFromHDF5DS.f9h,v $
+! Revision 2.2  2013/08/31 01:24:53  vsnyder
+! Replace MLSMessageCalls with trace_begin and trace_end
+!
+! Revision 2.1  2008/05/22 01:05:48  vsnyder
+! Initial commit
+!
+@
+
+
+2.2
+log
+@Replace MLSMessageCalls with trace_begin and trace_end
+@
+text
+@d29 1
+a29 1
+! $Id: LoadPtrFromHDF5DS.f9h,v 2.1 2008/05/22 01:05:48 vsnyder Exp $
+d41 1
+a41 1
+    call allocate_test ( value, int(shp), 'Value', moduleName )
+d48 3
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d24 1
+a24 1
+    integer :: STATUS                   ! Flag from HDF5
+d27 1
+a27 1
+    integer :: SETID                    ! ID of dataset
+d29 1
+a29 1
+! $Id: LoadFromHDF5DS.f9h,v 2.1 2008/05/09 23:27:18 vsnyder Exp $
+d33 1
+a33 1
+    call MLSMessageCalls( 'push', constantName='LoadPtrFromHDF5DS_' // sfx )
+d44 1
+a44 1
+    call MLSMessageCalls( 'pop' )
+d47 4
+a50 1
+! $Log: $
+@
+

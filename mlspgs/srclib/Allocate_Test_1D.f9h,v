@@ -1,0 +1,324 @@
+head	1.9;
+access;
+symbols
+	v5-02-NRT-19:1.9
+	v6-00:1.9
+	v5-02-NRT-18:1.9
+	v5-02:1.9
+	v5-01-NRT-17:1.9
+	v5-01-NRT-16:1.9
+	v5-01-NRT-15:1.9
+	v5-01-NRT-14:1.9
+	neuralnetworks-1-0:1.9.0.6
+	cfm-single-freq-0-1:1.9.0.4
+	v5-01:1.9
+	v5-00:1.9
+	v4-23-TA133:1.9.0.2
+	mus-emls-1-70:1.8.0.2
+	rel-1-0-englocks-work:1.7.0.2
+	VUMLS1-00:1.7
+	VPL1-00:1.7
+	V4-22-NRT-08:1.7
+	VAM1-00:1.7
+	V4-21:1.5.0.2
+	V4-13:1.5
+	V4-12:1.4
+	V4-11:1.4
+	V4-10:1.4
+	V3-43:1.3
+	M4-00:1.3
+	V3-41:1.3
+	V3-40-PlusGM57:1.3.0.2
+	V2-24-NRT-04:1.3
+	V3-33:1.3
+	V2-24:1.3
+	V3-31:1.3
+	V3-30-NRT-05:1.3
+	cfm-01-00:1.3
+	V3-30:1.3
+	V3-20:1.3
+	V3-10:1.3
+	V2-23-NRT-02:1.3
+	V2-23:1.3
+	V2-22-NRT-01:1.3
+	V2-22:1.3
+	V2-21:1.3
+	V2-20:1.3
+	V2-11:1.3
+	V2-10:1.3
+	V2-00:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.9
+date	2018.10.12.20.08.15;	author pwagner;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2018.04.19.00.43.00;	author vsnyder;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2015.06.04.01.54.52;	author vsnyder;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2015.03.28.00.53.02;	author vsnyder;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2014.09.04.23.50.14;	author vsnyder;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2013.06.12.02.16.51;	author vsnyder;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2006.07.31.20.02.03;	author vsnyder;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2005.09.14.01.19.18;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.07.20.01.29.46;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.9
+log
+@Even if didnt need to reallocate, respect fill option
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!------------------------------- RCS Ident Info ------------------------------
+! $RCSfile: Allocate_Test_1D.f9h,v $
+!-----------------------------------------------------------------------------
+
+! Probably only useful within Allocate_Deallocate.f90
+
+    integer(c_intptr_t) :: Addr
+    logical :: DoAlloc
+    integer :: MyLow, Status
+    character(127) :: ERMSG
+    status = 0 ! In case we don't need to allocate
+    myLow = 1
+    if ( present(lowBound) ) myLow = lowBound
+    doAlloc = .not. associated(to_allocate)
+    if ( .not. doAlloc ) doAlloc = size(to_allocate,1) /= dim1 - myLow + 1
+    if ( doAlloc ) then
+      call deallocate_Test ( To_Allocate, ItsName, ModuleName )
+      allocate ( To_Allocate(myLow:dim1), STAT=status, ERRMSG=ermsg )
+      addr = 0
+      if ( status == 0 ) then
+        if ( size(to_allocate) > 0 ) addr = transfer ( c_loc(to_allocate(myLow)), addr )
+      end if
+      call test_allocate ( status, moduleName, ItsName, &
+        & (/myLow/), (/dim1/), bytes(to_allocate), ermsg, addr )
+      if ( mod(trackallocates,2) > 0 ) &
+        & call trackAllocate ( to_allocate, itsName, moduleName )
+    else
+      to_allocate(myLow:) => to_allocate
+    end if
+    if ( status == 0 ) then
+      if ( present(fill) ) then
+        to_allocate = fill
+      else if ( clearOnAllocate ) then
+        to_allocate = default
+      end if
+    end if
+
+! $Log: Allocate_Test_1D.f9h,v $
+! Revision 1.8  2018/04/19 00:43:00  vsnyder
+! Turn on address computation for tracking
+!
+! Revision 1.7  2015/06/04 01:54:52  vsnyder
+! Don't reallocate if bounds are the same
+!
+! Revision 1.6  2015/03/28 00:53:02  vsnyder
+! Stuff to trace allocate/deallocate addresses -- mostly commented out
+! because NAG build 1017 doesn't yet allow arrays as arguments to C_LOC.
+!
+! Revision 1.5  2014/09/04 23:50:14  vsnyder
+! Add output of error message from allocation failure
+!
+! Revision 1.4  2013/06/12 02:16:51  vsnyder
+! Add and use BYTES and BYTE_SIZE
+!
+! Revision 1.3  2006/07/31 20:02:03  vsnyder
+! Tracking for leak checker
+!
+! Revision 1.2  2005/09/14 01:19:18  vsnyder
+! Can't inquire bounds if allocate failed
+!
+! Revision 1.1  2005/07/20 01:29:46  vsnyder
+! Initial commit
+!
+@
+
+
+1.8
+log
+@Turn on address computation for tracking
+@
+text
+@d22 1
+a31 5
+        if ( present(fill) ) then
+          to_allocate = fill
+        else if ( clearOnAllocate ) then
+          to_allocate = default
+        end if
+d41 7
+d50 3
+@
+
+
+1.7
+log
+@Don't reallocate if bounds are the same
+@
+text
+@d28 1
+a28 1
+      allocate ( To_Allocate(myLow:dim1), stat=status, ERRMSG=ERMSG )
+d36 1
+a36 1
+!         if ( size(to_allocate) > 0 ) addr = transfer ( c_loc(to_allocate(myLow)), addr )
+d39 1
+a39 1
+        & (/myLow/), (/dim1/), bytes(to_allocate), ERMSG, addr )
+d47 3
+@
+
+
+1.6
+log
+@Stuff to trace allocate/deallocate addresses -- mostly commented out
+because NAG build 1017 doesn't yet allow arrays as arguments to C_LOC.
+@
+text
+@d19 2
+a20 1
+    integer :: MyLow, STATUS
+a21 1
+    call deallocate_Test ( To_Allocate, ItsName, ModuleName )
+d24 13
+a36 7
+    allocate ( To_Allocate(myLow:dim1), stat=status, ERRMSG=ERMSG )
+    addr = 0
+    if ( status == 0 ) then
+      if ( present(fill) ) then
+        to_allocate = fill
+      else if ( clearOnAllocate ) then
+        to_allocate = default
+d38 6
+a43 1
+!       if ( size(to_allocate) > 0 ) addr = transfer ( c_loc(to_allocate(myLow)), addr )
+a44 4
+    call test_allocate ( status, moduleName, ItsName, &
+      & (/myLow/), (/dim1/), bytes(to_allocate), ERMSG, addr )
+    if ( mod(trackallocates,2) > 0 ) &
+      & call trackAllocate ( to_allocate, itsName, moduleName )
+d47 4
+@
+
+
+1.5
+log
+@Add output of error message from allocation failure
+@
+text
+@d18 1
+d25 1
+a25 2
+    call test_allocate ( status, moduleName, ItsName, &
+      & (/myLow/), (/dim1/), bytes(to_allocate), ERMSG )
+d32 1
+d34 4
+a37 1
+    if ( trackallocates > 0 ) call trackAllocate ( to_allocate, itsName, moduleName )
+d40 3
+@
+
+
+1.4
+log
+@Add and use BYTES and BYTE_SIZE
+@
+text
+@d19 1
+d23 1
+a23 1
+    allocate ( To_Allocate(myLow:dim1), stat=status )
+d25 1
+a25 1
+      & (/myLow/), (/dim1/), bytes(to_allocate) )
+d36 3
+@
+
+
+1.3
+log
+@Tracking for leak checker
+@
+text
+@d24 1
+a24 1
+      & (/myLow/), (/dim1/), eSize )
+d35 3
+@
+
+
+1.2
+log
+@Can't inquire bounds if allocate failed
+@
+text
+@d32 1
+d35 3
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d13 1
+a13 1
+! $RCSfile: Allocate_Deallocate.f90,v $
+d24 1
+a24 1
+      & lBound(to_allocate), uBound(to_allocate), eSize )
+d33 4
+a36 1
+! $Log: $
+@
+

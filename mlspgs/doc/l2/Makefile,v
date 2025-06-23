@@ -1,0 +1,169 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.10
+	cfm-single-freq-0-1:1.1.0.8
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.6
+	mus-emls-1-70:1.1.0.4
+	rel-1-0-englocks-work:1.1.0.2
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2015.08.10.23.26.17;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@After switching away from MakeFC
+@
+text
+@# "$Id: MakeFC,v 1.2 2009/09/22 17:46:29 pwagner Exp $"
+#	Makefile
+#
+# Copyright 2009, by the California Institute of Technology. ALL
+# RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+# commercial use must be negotiated with the Office of Technology Transfer
+# at the California Institute of Technology.
+
+# This software may be subject to U.S. export control laws. By accepting this
+# software, the user agrees to comply with all applicable U.S. export laws and
+# regulations. User has the responsibility to obtain export licenses, or other
+# export authority as may be required before exporting such information to
+# foreign countries or providing access to foreign persons.
+
+# ---------------------- The name of this file (is the right-hand-side below)
+MakeFName = Makefile
+# If the right-hand-side is not Makefile
+# then to make mls with this file you must instead  of bare "make" use
+#     make -f $(MakeFName)
+
+# The name of this file must be used in each of $(SUBDIRS)
+# i.e., if you are calling make with a different Makefile name,
+#        say: make -f MakeFC
+# then (re)name the Makefiles in /l2 /lib etc. also MakeFC
+
+# where to store .configure; 
+#CONFDIR=..
+CONFDIR=${HOME}/mlspgs
+
+UTILDIR=$(CONFDIR)/util
+
+# reecho.sh can filter out globbed file expansions that fail
+# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
+# However we will be using it just to prefix any unprefixed preset paths
+REECHO=$(UTILDIR)/reecho.sh
+
+SUBDIRS := $(shell ${REECHO} -d cfm l2)
+
+# Errors in the .tex sources require us to omit the following
+OMIT_SRCS := wvs-010.tex wvs-074.tex wvs-051-neural_body.tex
+OMIT_PREFXD := $(shell ${REECHO} -prefix=-d $(OMIT_SRCS))
+OMIT_SRCS_REV := 'wvs-004\*.tex' 'wvs-051\*.tex' 'wvs-063\*.tex'
+OMIT_PREFXD_REV := $(shell ${REECHO} -prefix=-d -escape -nlast $(OMIT_SRCS_REV))
+
+# Set paths for finding source files
+
+DVIDIR = ./dvi/
+LOGDIR = ./log/
+PDFDIR = ./pdf/
+
+vpath %.tex ./
+vpath %.dvi $(DVIDIR)
+vpath %.l2cf $(CONFDIR)/l2/l2cf/lib
+vpath %.log $(LOGDIR)
+vpath %.pdf $(PDFDIR)
+
+# Define some suffix rules
+
+.SUFFIXES:
+.SUFFIXES: .tex .dvi .pdf
+.tex.dvi:
+	echo "\end" | latex $<
+	echo "\end" | latex $<
+	mv $@@ $(DVIDIR)
+	mv $*.log $(LOGDIR)
+
+.dvi.pdf:
+	dvipdf $<
+	mv $@@ $(PDFDIR)
+
+doc:
+
+-include Makefile.dep
+
+all: doc
+
+doc: ${NEAROBJS} ${OBJS}
+	date > doc; echo $(OBJS) >> doc
+
+# ========================================================================
+
+clean:
+	rm -fr *.dvi *.pdf $(DVIDIR) $(PDFDIR)
+
+depends:
+	$(UTILDIR)/makemakedep.sh -s tex -o dvi -p Makefile.dep.1 \
+     $(OMIT_PREFXD) $(OMIT_PREFXD_REV)
+	sed 's/OBJS =/NEAROBJS =/' Makefile.dep.1 > Makefile.dep.2
+	$(UTILDIR)/makemakedep.sh -s tex -o pdf -p Makefile.dep.1 \
+     $(OMIT_PREFXD) $(OMIT_PREFXD_REV)
+	cat Makefile.dep.1 Makefile.dep.2 > Makefile.dep
+	if [ ! -d $(DVIDIR) ] ; then \
+	  		mkdir $(DVIDIR) ;\
+			fi ; \
+	if [ ! -d $(PDFDIR) ] ; then \
+	  		mkdir $(PDFDIR) ;\
+			fi ; \
+	if [ ! -d $(LOGDIR) ] ; then \
+	  		mkdir $(LOGDIR) ;\
+			fi
+	 for dir in $(SUBDIRS); do \
+	  $(MAKE) -C $$dir depends; \
+	done
+
+cfm:
+	$(MAKE) -f $(MakeFName) -C $@@
+
+l2:
+	$(MAKE) -f $(MakeFName) -C $@@
+
+tar:
+	rm -f doc.tgz
+	tar hcvzf docs.tgz * --exclude \*.dvi --exclude \*.pdf --exclude doc
+
+update:
+	$(MAKE) depends
+
+.PHONY: all clean depends tar update l2 \
+
+# ========================================================================
+# $Log: MakeFC,v $
+# Revision 1.2  2009/09/22 17:46:29  pwagner
+# Can now ignore sources marked by revision number
+#
+# Revision 1.1  2009/09/18 19:47:31  pwagner
+# First commit
+#
+@

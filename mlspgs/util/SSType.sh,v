@@ -1,0 +1,362 @@
+head	1.5;
+access;
+symbols
+	v5-02-NRT-19:1.5
+	v6-00:1.5
+	v5-02-NRT-18:1.5
+	v5-02:1.5
+	v5-01-NRT-17:1.5
+	v5-01-NRT-16:1.5
+	v5-01-NRT-15:1.5
+	v5-01-NRT-14:1.5
+	neuralnetworks-1-0:1.5.0.10
+	cfm-single-freq-0-1:1.5.0.8
+	v5-01:1.5
+	v5-00:1.5
+	v4-23-TA133:1.5.0.6
+	mus-emls-1-70:1.5.0.4
+	rel-1-0-englocks-work:1.5.0.2
+	VUMLS1-00:1.4
+	VPL1-00:1.4
+	V4-22-NRT-08:1.4
+	VAM1-00:1.4
+	V4-21:1.4.0.2
+	V4-13:1.3
+	V4-12:1.3
+	V4-11:1.3
+	V4-10:1.3
+	M4-00:1.3
+	V3-33:1.3
+	V3-31:1.3
+	V3-30-NRT-05:1.3
+	cfm-01-00:1.3;
+locks; strict;
+comment	@# @;
+
+
+1.5
+date	2018.01.26.01.01.49;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2015.01.22.01.11.58;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2010.03.11.21.56.47;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2010.03.06.01.15.50;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2010.03.06.00.59.57;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.5
+log
+@Added hasAVX-I; improved comments and error handling
+@
+text
+@#!/bin/sh
+# SSType.sh
+# usage: SSType.sh [option_1] [option_2] ..
+
+# Copyright 2010, by the California Institute of Technology. ALL
+# RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+# commercial use must be negotiated with the Office of Technology Transfer
+# at the California Institute of Technology.
+
+# This software may be subject to U.S. export control laws. By accepting this
+# software, the user agrees to comply with all applicable U.S. export laws and
+# regulations. User has the responsibility to obtain export licenses, or other
+# export authority as may be required before exporting such information to
+# foreign countries or providing access to foreign persons.
+# "$Id: SSType.sh,v 1.4 2015/01/22 01:11:58 pwagner Exp $"
+
+# --------------- SSType.sh help
+# returns the type if Intel SSE (streaming microarchitecture instruction set)
+# or Advanced Vector Extensions (AVX, also known as Sandy Bridge New Extensions)
+# supported by the host where the command is executed
+# E.g., on riverrun would return
+# SSSE3
+#Usage:
+#SSType.sh [options]
+#
+#    O p t i o n s
+# -a            show all SSE enabled on your host; e.g., "SSE2 SSE3 SSSE3"; 
+#                 by default shows only the highest
+# -d dir        use dir to search for tool hasSSE2, etc.
+# -p "p1 p2 .." check on programs p1, p2, .. instead of default hasSSE2, ..
+# -v            turn on verbose mode
+# -h[elp]       print brief help message; exit
+#Notes:
+#(1) Proper operation assumes that the following programs
+#    are in one of: your path, where MLSTOOLS is defined, or set using -d option
+#    hasSSE2  hasSSE3  hasSSSE3 .. hasAVX2 (but see -p option)
+#(2) The pattern followed by the program names is the program to check on
+#    SSxxx is named "hasSSxxx" (but see below)
+#(3) We are assuming that these programs were built for the same bitness
+#    as the host where the commands are executed; e.g. 64-bit OS
+#(4) To add a new SSE or AV, build /users/pwagner/docs/fortran/helloworld.f90
+#    enabling the appropriate option to be tested, 
+#    and rename the a.out "hasSSxxx" or "hasAVxxx"
+# --------------- End SSType.sh help
+
+NORMAL_STATUS=0
+# The checking programs has*
+# were compiled using -x * with ifort 17.0.0 20160721
+# Note: the following are arranged in order of ascending powers
+# i.e., chips that support hasAVX2 must also support hasAVX-I, hasAVX, ..
+# program    compiler option
+# -------        -------
+# hasSSE2       -xSSe2
+# hasSSE3       -xSSe3
+# hasSSSE3      -xSSSe3
+# hasSSE4.1     -xSSe4.1
+# hasSSE4.2     -xSSe4.2
+# hasAVX        -xAVX
+# hasAVX-I      -xCORE-AVX-I
+# hasAVX2       -xCORE-AVX2
+# Use the following line to add extra programs
+PROGS="hasSSE2  hasSSE3  hasSSE4.1  hasSSE4.2  hasSSSE3  hasAVX  hasAVX-I hasAVX2"
+me="$0"
+my_name=SSType.sh
+all="no"
+verbose="no"
+dir="$MLSTOOLS"
+more_opts="yes"
+while [ "$more_opts" = "yes" ] ; do
+
+    case "$1" in
+    -h | -help )
+       sed -n '/'$my_name' help/,/End '$my_name' help/ p' $me \
+           | sed -n 's/^.//p' | sed '1 d; $ d'
+       exit
+	;;
+    -a )
+       all="yes"
+       shift
+	;;
+    -v )
+       verbose="yes"
+       shift
+	;;
+    -d )
+       dir="$2"
+       shift
+       shift
+	;;
+    -p )
+       PROGS="$2"
+       shift
+       shift
+	;;
+    * )
+       more_opts="no"
+       ;;
+    esac
+done
+
+if [ "$verbose" = "yes" ]
+then
+  echo "Will search for progs in mls tools directory $dir"
+  echo "programs to check $PROGS"
+fi
+#Is MLSTOOLS defined and is it a permissible directory?
+if [ -d "$dir" ]
+then
+  cd $dir
+fi
+response=""
+
+for PROG in $PROGS
+do
+  if [ ! -e "$PROG" ]
+  then
+    echo "$PROG is not executable; did you define MLSTOOLS? use -d option?"
+  else
+    ./$PROG > /dev/null 2>&1
+    return_status=`expr $?`
+    SSstring=`echo $PROG | sed 's/has//'`
+    if [ "$return_status" = "$NORMAL_STATUS" ]
+    then
+      if [ "$all" = "yes" ]
+      then
+        response="$response $SSstring"
+      else
+        response="$SSstring"
+      fi
+    fi
+    if [ "$verbose" = "yes" ]
+    then
+      echo "$PROG returns $return_status"
+    fi
+  fi
+done
+echo $response
+# $Log: SSType.sh,v $
+# Revision 1.4  2015/01/22 01:11:58  pwagner
+# Expanded default PROGS; added new commandline opts
+#
+# Revision 1.3  2010/03/11 21:56:47  pwagner
+# May specify tools directory with -d option
+#
+# Revision 1.2  2010/03/06 01:15:50  pwagner
+# Was not hiding stderr properly
+#
+# Revision 1.1  2010/03/06 00:59:57  pwagner
+# First commit
+#
+@
+
+
+1.4
+log
+@Expanded default PROGS; added new commandline opts
+@
+text
+@d15 1
+a15 1
+# "$Id: SSType.sh,v 1.3 2010/03/11 21:56:47 pwagner Exp $"
+d19 1
+d36 1
+a36 1
+#    hasSSE2  hasSSE3  hasSSSE3
+d38 1
+a38 1
+#    SSxxx is named "hasSSxxx"
+d41 3
+a43 2
+#(4) To add a new SSE, build /users/pwagner/docs/fortran/helloworld.f90
+#    enabling the SSE option to be tested, and rename the a.out "hasSSxxx"
+a45 1
+
+d48 3
+a50 1
+# were compiled using -x * with ifort 15.0.0 20140723
+d53 10
+a62 9
+# hasSSE2       -x -xSSe2
+# hasSSE3       -x -xSSe3
+# hasSSE4.1     -x -xSSe4.1
+# hasSSE4.2     -x -xSSe4.2
+# hasSSSE3      -x -xSSSe3
+# hasAVX        -x -xAVX
+# hasAVX2       -x -xAVX2
+# Use the following line to add extra options to MLSPROG
+PROGS="hasSSE2  hasSSE3  hasSSE4.1  hasSSE4.2  hasSSSE3  hasAVX  hasAVX2"
+d103 1
+a103 1
+  echo "tools directory $dir"
+d115 1
+a115 4
+  $PROG > /dev/null 2>&1
+  return_status=`expr $?`
+  SSstring=`echo $PROG | sed 's/has//'`
+  if [ "$return_status" = "$NORMAL_STATUS" ]
+d117 15
+a131 1
+    if [ "$all" = "yes" ]
+d133 1
+a133 3
+      response="$response $SSstring"
+    else
+      response="$SSstring"
+a135 4
+  if [ "$verbose" = "yes" ]
+  then
+    echo "$PROG returns $return_status"
+  fi
+d139 3
+@
+
+
+1.3
+log
+@May specify tools directory with -d option
+@
+text
+@d15 1
+a15 1
+# "$Id: SSType.sh,v 1.2 2010/03/06 01:15:50 pwagner Exp $"
+d26 5
+a30 3
+# -a            show all SSE; e.g., "SSE2 SSE3 SSSE3"; 
+#                 by default shows only highest
+# -M dir        use dir to search for tool hasSSE2, etc.
+d34 1
+a34 1
+#    are in one of: your path, where MLSTOOLS is defined, or dir using -d option
+d36 3
+a38 1
+#(2) We are assuming that these programs were built for the same bitness
+d40 2
+d47 1
+a47 1
+# were compiled using -x * with ifort v11.1.56
+d55 2
+d58 1
+a58 1
+PROGS="hasSSE2  hasSSE3  hasSSSE3"
+d62 1
+d77 4
+d86 5
+d97 5
+d123 4
+d130 3
+@
+
+
+1.2
+log
+@Was not hiding stderr properly
+@
+text
+@d15 1
+a15 1
+# "$Id: SSType.sh,v 1.1 2010/03/06 00:59:57 pwagner Exp $"
+d28 1
+d31 2
+a32 2
+#(1) Proper operation assumes that either the following programs
+#    are in your path or that MLSTOOLS is defined and that can be found there
+d54 1
+d68 5
+d80 1
+a80 1
+if [ -d "$MLSTOOLS" ]
+d82 1
+a82 1
+  cd $MLSTOOLS
+d103 3
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d15 1
+a15 1
+# "$Id: reecho.sh,v 1.9 2009/09/22 17:44:15 pwagner Exp $"
+d81 1
+a81 1
+  $PROG > /dev/null
+d95 4
+a98 1
+# $Log: mlsl1prog.sh,v $
+@
+

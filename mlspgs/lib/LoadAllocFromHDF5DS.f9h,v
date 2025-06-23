@@ -1,0 +1,93 @@
+head	2.1;
+access;
+symbols
+	v5-02-NRT-19:2.1
+	v6-00:2.1
+	v5-02-NRT-18:2.1
+	v5-02:2.1
+	v5-01-NRT-17:2.1
+	v5-01-NRT-16:2.1
+	v5-01-NRT-15:2.1
+	v5-01-NRT-14:2.1
+	neuralnetworks-1-0:2.1.0.8
+	cfm-single-freq-0-1:2.1.0.6
+	v5-01:2.1
+	v5-00:2.1
+	v4-23-TA133:2.1.0.4
+	mus-emls-1-70:2.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+2.1
+date	2018.05.15.03.16.10;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! subroutine LoadAllocFromHDF5DS_* ( locID, name, value )
+    ! This routine allocates a pointer array and loads it with values from a DS
+!   use Allocate_Deallocate, only: Allocate_Test
+!   use HDF5, only: H5T => H5T_NATIVE_* ! HDF type
+!   integer, intent(in) :: LOCID          ! Where to place it (group/file)
+!   character (len=*), intent(in) :: NAME ! Name for this dataset
+!   integer, pointer :: VALUE(:,:)        ! The array itself
+
+!   character(len=*), parameter :: Sfx = '*' ! Type and rank, for messages
+
+    ! Local variables
+    integer :: Rank ! = size(shape(value)))
+    integer :: SETID                    ! ID of dataset
+    integer(hsize_t) :: SHP(size(shape(value))) ! Shape of value
+    integer :: SPACEID                  ! ID of dataspace
+    integer :: STATUS                   ! Flag from HDF5
+
+! $Id: LoadAllocFromHDF5DS.f9h,v 2.3 2014/07/18 21:58:31 pwagner Exp $
+
+    ! Executable code
+    rank = size(shape(value))
+    call trace_begin ( 'LoadAllocFromHDF5DS_' // sfx, cond=.false. )
+    call h5dOpen_f ( locID, name, setID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open dataset ' // trim(name) )
+    call h5dget_space_f ( setID, spaceID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open dataspace for dataset ' // trim(name) )
+    call get_ds_shape ( spaceID, shp, name )
+    call allocate_test ( value, int(shp), name, moduleName )
+    call h5dread_f ( setID, H5T, value, (/ shp, ones(rank:6) /), status )
+    call finishLoad ( name, status, spaceID, setID )
+    call trace_end ( 'LoadAllocFromHDF5DS_' // sfx, cond=.false. )
+! end subroutine LoadAllocFromHDF5DS_*
+
+! $Log: LoadAllocFromHDF5DS.f9h,v $
+! Revision 2.3  2014/07/18 21:58:31  pwagner
+! Pass item name to allocate_test
+!
+! Revision 2.2  2013/08/31 01:24:53  vsnyder
+! Replace MLSMessageCalls with trace_begin and trace_end
+!
+! Revision 2.1  2008/05/22 01:05:48  vsnyder
+! Initial commit
+!
+@

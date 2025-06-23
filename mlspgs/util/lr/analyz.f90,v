@@ -1,0 +1,262 @@
+head	1.4;
+access;
+symbols
+	v5-02-NRT-19:1.4
+	v6-00:1.4
+	v5-02-NRT-18:1.4
+	v5-02:1.4
+	v5-01-NRT-17:1.4
+	v5-01-NRT-16:1.4
+	v5-01-NRT-15:1.4
+	v5-01-NRT-14:1.4
+	neuralnetworks-1-0:1.4.0.4
+	cfm-single-freq-0-1:1.4.0.2
+	v5-01:1.4
+	v5-00:1.4
+	v4-23-TA133:1.3.0.8
+	mus-emls-1-70:1.3.0.6
+	rel-1-0-englocks-work:1.3.0.4
+	VUMLS1-00:1.3
+	VPL1-00:1.3
+	V4-22-NRT-08:1.3
+	VAM1-00:1.3
+	V4-21:1.3.0.2
+	V4-13:1.3
+	V4-12:1.3
+	V4-11:1.3
+	V4-10:1.3;
+locks; strict;
+comment	@# @;
+
+
+1.4
+date	2019.07.31.20.12.31;	author vsnyder;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2014.01.14.00.11.42;	author vsnyder;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2013.12.12.01.53.00;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2013.10.24.22.41.13;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.4
+log
+@Keep track of boundaries of closures
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Analysis
+
+  implicit NONE
+  private
+  public :: ANALYZ
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: analyz.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  subroutine ANALYZ
+
+    use Basis_m, only: ADDBAS, DEQUE, NEWBAS
+    use Complete, only: Closures_Index, Closures, Complt
+    use FIRST_SETS, only: FIND_FIRST      ! Find FIRST sets
+    use LISTS, only: LIST, NEW
+    use New_Context_Set, only: NEWCS
+    use NULLABLE_M, only: FIND_NULLABLE   ! Find nullable nonterminals
+    use Sort_Configurations, only: SORTCG
+    use Tables, only: HEADCS, HEADEN, NTERMS, NVOC, PRDIND => Prod_Ind, &
+      & PRODCN => Productions
+    use Toggles, only: GEN, Toggle
+    use Trace, only: Trace_Begin, Trace_End
+    use Transitions_And_Reductions, only: TRNRED
+
+    implicit NONE
+
+    ! Analyze the grammar.  First initialize the BASIS array by putting
+    ! a state corresponding to the first production with the dot before
+    ! the first symbol into the BASIS array.  Then analyze each state
+    ! fetched from a queue by completing the state (calculating its
+    ! closure) and then constructing new states as necessary.
+
+    ! *****     External References     ********************************
+
+    ! ADDBAS  adds a new configuration to the basis.
+    ! COMPLT  completes the basis by adding the closure.
+    ! DEQUE   deques a basis for processing.
+    ! NEWBAS  gets ready for construction of a new basis.
+    ! NEWCS   constructs a new context set.
+    ! SORTCG  Sorts a configuration.
+    ! TRNRED  calculates transitions and reductions for the basis, and
+    !         new states as necessary.
+
+    ! *****     Local Variables     ************************************
+
+    ! I       is a loop induction variable and subscript, and pointer to the
+    !         basis currently being processed.
+    ! J1, J2  are the bounds for the part of Closures to use
+    ! N       is the pointer to the context set for production 1.
+    ! NPTR    is the pointer to the initial context list for production 1.
+
+    integer I, J1, J2, N, NPTR
+
+    ! *****     Procedures     *****************************************
+
+    if ( toggle(gen) ) call trace_begin ( 'Analysis' )
+    call find_nullable
+    call find_first
+
+    allocate ( headcs(1:nterms), source = 0 )
+    allocate ( headen(1:nvoc), source = 0 )
+
+    call newbas ( i )
+    call new ( nptr ) ! Initial context list for production 1.
+    list(nptr)%item = prodcn(prdind(1) + 1) ! <SOG>
+    call newcs ( nptr, n )
+
+    !           iptr   ndot
+    !               npr   nset
+    call addbas ( i, 1, 1, n )         ! <GOAL> ::= . <SOG> start <EOG>
+
+    do while ( i > 0 )
+       call complt ( i )
+       j1 = closures_index(i-1) + 1
+       j2 = closures_index(i)
+       call sortcg ( closures(j1:j2) )
+       call trnred ( i, closures(j1:j2) )
+       call deque ( i )
+    end do
+    if ( toggle(gen) ) call trace_end ( 'Analysis' )
+
+  end subroutine ANALYZ
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: analyz.f90,v 1.3 2014/01/14 00:11:42 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Analysis
+
+! $Log: analyz.f90,v $
+! Revision 1.3  2014/01/14 00:11:42  vsnyder
+! Revised LR completely
+!
+! Revision 1.2  2013/12/12 01:53:00  vsnyder
+! Remove unused cruft
+!
+! Revision 1.1  2013/10/24 22:41:13  vsnyder
+! Initial commit
+!
+@
+
+
+1.3
+log
+@Revised LR completely
+@
+text
+@d29 1
+a29 1
+    use Complete, only: COMPLT
+d64 1
+a64 2
+    ! JMAX    is the position in SCRTCH of the end of the basis being
+    !         processed.
+d68 1
+a68 1
+    integer I, JMAX, N, NPTR
+d89 5
+a93 3
+       call complt ( i, jmax )
+       call sortcg ( jmax )
+       call trnred ( i, jmax )
+d103 1
+a103 1
+       "$Id: analyz.f90,v 1.2 2013/12/12 01:53:00 vsnyder Exp $"
+d113 3
+@
+
+
+1.2
+log
+@Remove unused cruft
+@
+text
+@d28 1
+d31 1
+a31 1
+    use LISTS, only: ITEM, NEW
+d35 4
+a38 3
+    use S3, only: HEADCS, HEADEN, PRDIND, PRODCN
+    use S5, only: ADDBAS, DEQUE, NEWBAS
+    use TABCOM, only: NTERMS, NVOC
+d73 1
+d77 2
+a78 2
+    headcs(1:nterms) = 0
+    headen(1:nvoc) = 0
+d82 1
+a82 1
+    item(nptr) = prodcn(prdind(1) + 1) ! <SOG>
+d84 3
+d95 1
+d102 1
+a102 1
+       "$Id: analyz.f90,v 1.1 2013/10/24 22:41:13 vsnyder Exp $"
+d112 3
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d20 1
+a20 1
+       "$RCSfile: parser.f90,v $"
+d35 1
+a35 1
+    use S5, only: ADDBAS, DEQUE, MAXBAS, NEWBAS
+d95 1
+a95 1
+       "$Id: parser.f90,v 2.29 2013/10/02 01:35:46 vsnyder Exp $"
+d104 4
+a107 1
+! $Log: $
+@
+

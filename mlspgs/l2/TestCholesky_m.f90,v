@@ -1,0 +1,386 @@
+head	2.10;
+access;
+symbols
+	v5-02-NRT-19:2.10
+	v6-00:2.10
+	v5-02-NRT-18:2.10
+	v5-02:2.10
+	v5-01-NRT-17:2.10
+	v5-01-NRT-16:2.10
+	v5-01-NRT-15:2.10
+	v5-01-NRT-14:2.10
+	neuralnetworks-1-0:2.10.0.12
+	cfm-single-freq-0-1:2.10.0.10
+	v5-01:2.10
+	v5-00:2.10
+	v4-23-TA133:2.10.0.8
+	mus-emls-1-70:2.10.0.6
+	rel-1-0-englocks-work:2.10.0.4
+	VUMLS1-00:2.10
+	VPL1-00:2.10
+	V4-22-NRT-08:2.10
+	VAM1-00:2.10
+	V4-21:2.10.0.2
+	V4-13:2.10
+	V4-12:2.8
+	V4-11:2.8
+	V4-10:2.8
+	V3-43:2.8
+	M4-00:2.8
+	V3-41:2.8
+	V3-40-PlusGM57:2.8.0.2
+	V2-24-NRT-04:2.7
+	V3-33:2.8
+	V2-24:2.7
+	V3-31:2.8
+	V3-30-NRT-05:2.8
+	cfm-01-00:2.8
+	V3-30:2.8
+	V3-20:2.8
+	V3-10:2.8
+	V2-23-NRT-02:2.7
+	V2-23:2.7
+	V2-22-NRT-01:2.7
+	V2-22:2.7
+	V2-21:2.7
+	V2-20:2.7
+	V2-11:2.7
+	V2-10:2.7
+	V2-00:2.7
+	V1-51:2.6
+	V1-50:2.6
+	V1-45:2.6
+	V1-44:2.6
+	V1-43:2.6
+	V1-32:2.6
+	V1-31:2.6
+	V1-30:2.6
+	V1-13:2.6
+	V1-12:2.6
+	V1-11:2.6
+	V1-10:2.6
+	newfwm-feb03:2.6.0.2
+	V1-04:2.2
+	V1-03:2.2
+	V1-02:2.2
+	JointForwardModel:2.2.0.4
+	V1-00:2.2
+	newfwm-sep01:2.2.0.2
+	V0-7:2.2;
+locks; strict;
+comment	@# @;
+
+
+2.10
+date	2014.09.05.01.24.31;	author vsnyder;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2014.09.05.00.49.07;	author vsnyder;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2009.06.23.18.46.19;	author pwagner;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2005.06.22.18.57.02;	author pwagner;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2002.10.08.17.36.23;	author pwagner;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2002.10.01.22.25.16;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2002.10.01.20.19.13;	author bwknosp;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2002.09.13.18.10.11;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2001.06.07.21.58.28;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.06.01.00.56.22;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.10
+log
+@Get kinds from MLSKinds instead of from MLSCommon
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module TestCholesky_M
+
+  use Biggify_M, only: Biggify
+  use MatrixModule_0, only: DenseCholesky, Densify
+  use MatrixModule_1, only: GetMatrixElement, Matrix_T, Matrix_Cholesky_T, &
+    & Matrix_SPD_T
+  use MLSKinds, only: R8, RM
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: TestCholesky_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  subroutine TestCholesky ( NormalEquations, SparseCholesky )
+
+    type(matrix_SPD_T), intent(in) :: NormalEquations
+    type(matrix_Cholesky_T), intent(in), optional :: SparseCholesky
+
+    double precision, external :: DDOT
+    real(rm), pointer, save :: BigCholesky(:,:), BigNeq(:,:)
+    real(r8) :: U
+
+    integer :: I, J           ! Subscripts, loop inductors
+    integer :: IERR           ! Error signal from DCHOL
+    integer :: II, JJ         ! Subscripts of block(i,j) in bigCholesky
+    integer :: M, N           ! Dimensions of bigCholesky
+    integer :: MM, NN         ! Dimensions of a block of NormalEquations
+
+    if ( .not. present(sparseCholesky) ) then
+      m = sum(normalEquations%m%row%nelts)
+      n = sum(normalEquations%m%col%nelts)
+      allocate ( bigCholesky(m,n) )
+      call biggify ( normalEquations%m, bigNeq )
+      u = 0.0
+      call denseCholesky ( bigCholesky, bigNeq, ierr )
+      if ( ierr /= 0 ) then
+        print *, 'DCHOL reports error at ', ierr
+        stop
+      end if
+      return
+    end if
+    do j = 1, n
+      do i = 1, j
+        if ( abs(getMatrixElement(sparseCholesky%m,i,j)-bigCholesky(i,j)) > 0.0_rm ) then
+          if ( abs( (getMatrixElement(sparseCholesky%m,i,j)-bigCholesky(i,j)) / &
+                    (getMatrixElement(sparseCholesky%m,i,j)+bigCholesky(i,j)) ) > 1.0e-6_rm ) then
+            print *, 'Sparse and Dense differ at (', i, ',', j, ')'
+            ierr = ierr + 1
+          end if
+        end if
+      end do
+    end do
+    if ( ierr /= 0 ) then
+      print *, 'Sparse and Dense differ at ', ierr, ' places'
+      stop
+    end if
+    deallocate ( bigCholesky, bigNeq, stat=ierr )
+  end subroutine TestCholesky 
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: TestCholesky_m.f90,v 2.9 2014/09/05 00:49:07 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module TestCholesky_M
+
+! $Log: TestCholesky_m.f90,v $
+! Revision 2.9  2014/09/05 00:49:07  vsnyder
+! EmpiricalGeometry.f90 -- Wrong comment
+!
+! Revision 2.8  2009/06/23 18:46:19  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.7  2005/06/22 18:57:02  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.6  2002/10/08 17:36:23  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.5  2002/10/01 22:25:16  pwagner
+! Fixed RCS Ident Block
+!
+! Revision 2.4  2002/10/01 20:19:13  bwknosp
+! Added Id, RCS, and Log info
+!
+@
+
+
+2.9
+log
+@EmpiricalGeometry.f90
+@
+text
+@d77 1
+a77 1
+       "$Id: TestCholesky_m.f90,v 2.8 2009/06/23 18:46:19 pwagner Exp $"
+d87 3
+@
+
+
+2.8
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d18 1
+a18 1
+  use MLSCommon, only: R8, RM
+d22 1
+a22 1
+       "$RCSfile: $"
+d77 1
+a77 1
+       "$Id: read_apriori.f90 is it here $"
+d87 3
+@
+
+
+2.7
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d74 1
+a75 1
+!---------------------------- RCS Ident Info -------------------------------
+d77 2
+a78 3
+       "$Id: $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d80 1
+d82 1
+d87 3
+@
+
+
+2.6
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d20 3
+a22 6
+  !---------------------------- RCS Ident Info -------------------------------
+  character(len=*), private, parameter :: IdParm = &
+    & "$Id: TestCholesky_m.f90,v 2.5 2002/10/01 22:25:16 pwagner Exp $"
+  character(len=len(idparm)), private :: Id = idParm
+  character(len=*), private, parameter :: ModuleName = &
+       & "$RCSfile: TestCholesky_m.f90,v $"
+d24 1
+a24 1
+  !---------------------------------------------------------------------------
+d75 5
+d86 3
+@
+
+
+2.5
+log
+@Fixed RCS Ident Block
+@
+text
+@d14 1
+a14 1
+    & "$Id: SDPToolkit.f90,v 2.11 2002/10/01 22:03:55 pwagner Exp $"
+d17 2
+a18 1
+       & "$RCSfile: SDPToolkit.f90,v $"
+d69 4
+d76 3
+@
+
+
+2.4
+log
+@Added Id, RCS, and Log info
+@
+text
+@a3 6
+!------------------- RCS Ident Info -----------------------
+   CHARACTER(LEN=130) :: Id = &
+   "$Id: TestCholesky_m.f90,v 2.9 2002/10/01 20:08:48 bwknosp Exp $"
+    & "$RCSfile: TestCholesky_m.f90,v $"
+!----------------------------------------------------------
+
+d12 8
+d70 4
+a73 1
+! $Log: TestCholesky_m.f90,v $@
+
+
+2.3
+log
+@May change matrix precision rm from r8
+@
+text
+@d4 6
+d67 2
+@
+
+
+2.2
+log
+@Added Copyright statement
+@
+text
+@d10 1
+a10 1
+  use MLSCommon, only: R8
+d20 1
+a20 1
+    real(r8), pointer, save :: BigCholesky(:,:), BigNeq(:,:)
+d44 1
+a44 1
+        if ( abs(getMatrixElement(sparseCholesky%m,i,j)-bigCholesky(i,j)) > 0.0_r8 ) then
+d46 1
+a46 1
+                    (getMatrixElement(sparseCholesky%m,i,j)+bigCholesky(i,j)) ) > 1.0e-6_r8 ) then
+@
+
+
+2.1
+log
+@Initial commit -- for debugging use only
+@
+text
+@d1 3
+@
+

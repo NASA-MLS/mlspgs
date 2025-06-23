@@ -1,0 +1,137 @@
+head	2.2;
+access;
+symbols
+	v5-02-NRT-19:2.2
+	v6-00:2.2
+	v5-02-NRT-18:2.2
+	v5-02:2.2
+	v5-01-NRT-17:2.2
+	v5-01-NRT-16:2.2
+	v5-01-NRT-15:2.2
+	v5-01-NRT-14:2.2
+	neuralnetworks-1-0:2.2.0.8
+	cfm-single-freq-0-1:2.2.0.6
+	v5-01:2.2
+	v5-00:2.2
+	v4-23-TA133:2.2.0.4
+	mus-emls-1-70:2.2.0.2
+	rel-1-0-englocks-work:2.1.0.2
+	VUMLS1-00:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.2
+date	2018.05.17.01.30.42;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2016.09.09.00.12.07;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.2
+log
+@Start hunt with a secant estimate instead of 1:n
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=============================================================================
+module Pure_Hunt_m
+!=============================================================================
+
+  ! A binary search routine with a hunt procedure, to start from last known
+  ! location (if 0 < JLO < N) or from the begining otherwise.
+
+  ! It's here instead of in Hunt_m so as not to suck in all the modules
+  ! used therein.
+
+  implicit none
+
+  private
+
+  public :: PureHunt
+
+  interface purehunt
+    module procedure purehunt_r4, purehunt_r8
+  end interface
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: Pure_Hunt_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  ! ---------------------------------------------------  PureHunt  -----
+  ! A binary search routine with a hunt procedure, to start from last known
+  ! location (if 0 < JLO < N) or from the begining otherwise.  Upon return,
+  ! Array(JLO) <= Element <= Array(JLO+INC) where 0 <= INC <= 1 if
+  ! Array(N) >= Array(1) and -1 <= INC <= 0 otherwise.  INC = 0 if N = 1,
+  ! JLO = N and Array(N) >= Array(1), or JLO = 1 and Array(N) < Array(1).
+  pure subroutine purehunt_r4 ( ELEMENT, ARRAY, N, JLO, JHI )
+    integer, parameter :: RK = kind(0.0e0)
+    include 'hunt.f9h'
+  end subroutine purehunt_r4
+
+  pure subroutine purehunt_r8 ( ELEMENT, ARRAY, N, JLO, JHI )
+    integer, parameter :: RK = kind(0.0d0)
+    include 'hunt.f9h'
+  end subroutine purehunt_r8
+
+  logical function not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id: Pure_Hunt_m.f90,v 2.1 2016/09/09 00:12:07 vsnyder Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+
+end module Pure_Hunt_m
+!=============================================================================
+
+! $Log: Pure_Hunt_m.f90,v $
+! Revision 2.1  2016/09/09 00:12:07  vsnyder
+! Initial commit
+!
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d34 1
+a34 1
+       "$RCSfile: Hunt_m.f90,v $"
+d42 4
+a45 1
+  ! location (if 0 < JLO < N) or from the begining otherwise.
+d59 1
+a59 1
+       "$Id: Hunt_m.f90,v 2.3 2016/08/23 20:25:51 pwagner Exp $"
+d69 4
+a72 1
+! $Log: Hunt_m.f90,v $
+@
+

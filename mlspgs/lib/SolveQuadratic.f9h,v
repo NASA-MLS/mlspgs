@@ -1,0 +1,111 @@
+head	2.1;
+access;
+symbols
+	v5-02-NRT-19:2.1
+	v6-00:2.1
+	v5-02-NRT-18:2.1
+	v5-02:2.1
+	v5-01-NRT-17:2.1
+	v5-01-NRT-16:2.1
+	v5-01-NRT-15:2.1
+	v5-01-NRT-14:2.1
+	neuralnetworks-1-0:2.1.0.12
+	cfm-single-freq-0-1:2.1.0.10
+	v5-01:2.1
+	v5-00:2.1
+	v4-23-TA133:2.1.0.8
+	mus-emls-1-70:2.1.0.6
+	rel-1-0-englocks-work:2.1.0.4
+	VUMLS1-00:2.1
+	VPL1-00:2.1
+	V4-22-NRT-08:2.1
+	VAM1-00:2.1
+	V4-21:2.1.0.2
+	V4-13:2.1
+	V4-12:2.1
+	V4-11:2.1
+	V4-10:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.1
+date	2013.08.13.00.57.50;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $RCSfile: $
+
+! $Id: $
+
+! subroutine SolveQuadratic( a, b, c, r1, r2, imPart )
+    ! Solve
+
+    ! a x^2 + b x + c = 0
+
+    ! for x = r1 + i imPart, and x = r2 - i imPart
+    ! where i^2 = -1
+
+    ! Of course because a, b, and c are all purely real
+    ! if imPart /= 0, r1 = r2
+
+    ! We bother with this to avoid truncation that would result
+    ! from taking a difference between like-signed quantities
+    ! b and + or - sqrt(disc)
+
+    ! Special cases (which you may prefer to intercept yourself)
+    ! If a = 0, we return the same root in both r1 and r2
+    ! If a = b = 0, we divide c by zero
+!   real(rk), intent(in)  :: A, B, C
+!   real(rk), intent(out) :: R1, R2, ImPart
+    ! Local variables
+    real(rk) :: disc ! b^2 - 4 a c
+    ! Executable
+
+    imPart = 0.
+    if ( a == 0.0_rk ) then
+      ! strictly, in this degenerate case, the root is unique, not repeated
+      r1 = -c/b
+      r2 = r1
+      return
+    end if
+    disc = b*b - 4*a*c
+    if ( disc < 0.0_rk ) then
+      imPart = sqrt(-disc) / (2*a)
+      r1 = -b / (2*a)
+      r2 = r1
+    else
+      disc = sqrt(disc)
+      if ( b < 0.0_rk ) then
+        r1 = ( -b + disc ) / (2*a)
+      else
+        r1 = ( -b - disc ) / (2*a)
+      end if
+      r2 = c / (a*r1)
+    end if
+
+! end subroutine SolveQuadratic
+
+! $Log: $
+@

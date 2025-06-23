@@ -1,0 +1,150 @@
+head	2.3;
+access;
+symbols
+	v5-02-NRT-19:2.3
+	v6-00:2.3
+	v5-02-NRT-18:2.3
+	v5-02:2.3
+	v5-01-NRT-17:2.3
+	v5-01-NRT-16:2.3
+	v5-01-NRT-15:2.3
+	v5-01-NRT-14:2.3
+	neuralnetworks-1-0:2.3.0.12
+	cfm-single-freq-0-1:2.3.0.10
+	v5-01:2.3
+	v5-00:2.3
+	v4-23-TA133:2.3.0.8
+	mus-emls-1-70:2.3.0.6
+	rel-1-0-englocks-work:2.3.0.4
+	VUMLS1-00:2.3
+	VPL1-00:2.3
+	V4-22-NRT-08:2.3
+	VAM1-00:2.3
+	V4-21:2.3.0.2
+	V4-13:2.3
+	V4-12:2.3
+	V4-11:2.3
+	V4-10:2.3;
+locks; strict;
+comment	@# @;
+
+
+2.3
+date	2013.10.11.00.43.17;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2013.10.10.22.40.21;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2013.10.10.22.39.32;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.3
+log
+@Cannonball polishing
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! Declarations of arithmetic and logical operations on the type Value_T
+
+! These are provided as an include file rather than simply providing public
+! identifiers in Declaration_Table, where Value_T is defined and these
+! interfaces are also provided, so that an optimizing compiler might inline
+! them, and then perhaps optimize away redundant assignment of type and
+! units components.
+
+! $RCSfile: Value_T_Interfaces.f9h,v $
+
+  interface operator(==)
+    module procedure Value_Equal   ! Two value_t objects are equal
+  end interface
+
+  interface operator(/=)
+    module procedure Value_Unequal ! Two value_t objects are unequal
+  end interface
+
+  interface operator(+)
+    module procedure Value_Add     ! Sum of two value_t objects
+    module procedure Value_Same    ! Identity operation for one value_t object
+  end interface
+
+  interface operator(-)
+    module procedure Value_Diff    ! Difference of two value_t objects
+    module procedure Value_Neg     ! Negation operation for one value_t object
+  end interface
+
+  interface operator(*)
+    module procedure Value_Prod    ! Product of two value_t objects
+  end interface
+
+  interface operator(/)
+    module procedure Value_Div     ! Ratio of two value_t objects
+  end interface
+
+! $Log: Value_T_Interfaces.f9h,v $
+! Revision 2.2  2013/10/10 22:40:21  vsnyder
+! Spell RCSfile correctly
+!
+! Revision 2.1  2013/10/10 22:39:32  vsnyder
+! Initial commit
+!
+@
+
+
+2.2
+log
+@Spell RCSfile correctly
+@
+text
+@d20 1
+a20 1
+! $RCSfile: $
+d23 1
+a23 1
+    module procedure Value_Equal ! Two value_t objects are equal
+d37 1
+a37 1
+    module procedure Value_Neg     ! Negate operation for one value_t object
+d41 1
+a41 1
+    module procedure Value_Prod    ! Product of value_t objects are equal
+d45 1
+a45 1
+    module procedure Value_Div     ! Ratio of value_t objects are equal
+d49 3
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d20 1
+a20 1
+! $RCSFile: $
+d48 4
+a51 1
+! $Log: $
+@
+

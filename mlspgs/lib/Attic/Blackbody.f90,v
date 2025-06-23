@@ -1,0 +1,129 @@
+head	1.1;
+access;
+symbols
+	newfwm-feb03:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2003.04.16.19.57.30;	author vsnyder;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2003.04.16.19.57.30;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@file Blackbody.f90 was initially added on branch newfwm-feb03.
+@
+text
+@@
+
+
+1.1.2.1
+log
+@Moved from ../fwdmdl
+@
+text
+@a0 89
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+module Blackbody
+
+! ------------------------------------------------------
+! USE PLANCK FUNCTION TO COMPUTE BRIGHTNESS TEMPERATURE
+! ------------------------------------------------------
+
+  implicit NONE
+  private
+  public :: Planck
+
+  interface Planck; module procedure Planck_0, Planck_1; end interface
+
+ !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm =                          &
+    "$Id: Blackbody.f90,v 1.1.2.4 2003/04/16 19:39:05 vsnyder Exp $"
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName=                       &
+    "$RCSfile: Blackbody.f90,v $"
+  private :: not_used_here 
+ !---------------------------------------------------------------------------
+      
+contains
+
+  subroutine Planck_0 ( Temp, Freq, TB )
+
+    use CRREXP_m, only: RREXP    ! ( exp(x)-1 ) / x, for Planck fn.
+    use MLSCommon, only: r8
+    use Physics, only: H_OVER_K
+
+    real(r8), intent(in) :: TEMP, FREQ   ! Kelvin, MHz
+    real(r8), intent(out) :: TB
+
+    !{Planck black body function:
+    ! $\frac{\frac{h \nu}k}{\exp\left(\frac{h \nu}{k T}\right)-1}$.
+    ! We need to be careful how this is calculated because $\exp x -1$ has
+    ! cancellation for small $x$.  $\frac{h \nu}{k T}$ is $\approx 0.04$ for
+    ! $\nu \approx 240$ GHz and $T \approx 250$ K.
+
+    tb = temp / rrexp(h_over_k * freq / temp)
+
+  end subroutine Planck_0
+
+  subroutine Planck_1 ( Temp, Freq, TB )
+
+    use CRREXP_m, only: RREXP    ! ( exp(x)-1 ) / x, for Planck fn.
+    use MLSCommon, only: r8
+    use Physics, only: H_OVER_K
+
+    real(r8), intent(in) :: TEMP(:), FREQ   ! Kelvin, MHz
+    real(r8), intent(out) :: TB(:) ! Same size as TEMP!
+
+    !{Planck black body function:
+    ! $\frac{\frac{h \nu}k}{\exp\left(\frac{h \nu}{k T}\right)-1}$.
+    ! We need to be careful how this is calculated because $\exp x -1$ has
+    ! cancellation for small $x$.  $\frac{h \nu}{k T}$ is $\approx 0.04$ for
+    ! $\nu \approx 240$ GHz and $T \approx 250$ K.
+
+    tb = temp / rrexp(h_over_k * freq / temp)
+
+  end subroutine Planck_1
+
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
+end module Blackbody
+
+! $Log: Blackbody.f90,v $
+! Revision 1.1.2.4  2003/04/16 19:39:05  vsnyder
+! Use RREXP to avoid cancellation
+!
+! Revision 1.1.2.3  2003/04/16 17:25:42  vsnyder
+! Correct scaling of h/k
+!
+! Revision 1.1.2.2  2003/04/15 23:56:40  vsnyder
+! Move use down to procedure scope, get H_OVER_K from Physics module
+!
+! Revision 1.1.2.1  2003/03/28 18:38:40  jonathan
+! moved from cloudfwm
+!
+! Revision 1.3  2002/10/08 17:08:07  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 1.2  2001/09/21 15:51:37  jonathan
+! modified F95 version
+!
+@
+

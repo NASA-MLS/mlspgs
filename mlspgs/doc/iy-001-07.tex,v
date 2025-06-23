@@ -1,0 +1,221 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.12
+	cfm-single-freq-0-1:1.1.0.10
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.8
+	mus-emls-1-70:1.1.0.6
+	rel-1-0-englocks-work:1.1.0.4
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.2
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	M4-00:1.1
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2010.09.21.17.57.55;	author yanovsky;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\section{Frequency Averaging}
+
+\subsection{Channel Radiances Calculations}
+
+Radiance, as a function of frequency $\nu$, is given as
+\begin{eqnarray*}
+I(\nu) &=& \int \frac{dB}{d\zeta} \big(\nu,T(\zeta)\big) \, \mathcal{T}\big(\nu,\zeta\big) \, d\zeta \\
+&=& \int dB\big(\nu,T(\zeta)\big) \, \mathcal{T}\big(\nu,\zeta\big),
+\end{eqnarray*}
+or, in discrete form, as
+\begin{eqnarray*}
+I(\nu) &=& \sum_{i=1}^{N_p} \frac{\triangle B_i}{\triangle \zeta}(\nu) \, \mathcal{T}_i(\nu) \, \triangle \zeta \\
+&=& \sum_{i=1}^{N_p} \triangle B_i(\nu) \, \mathcal{T}_i(\nu).
+\end{eqnarray*}
+where $N_p$ is line-of-sight path. \\ \\
+Given a filter function $\phi_c$ for channel $c$, with $\int \phi_{c}(\nu) \, d\nu = 1$, the frequency averaged radiance $I_c$ is obtained from
+\begin{eqnarray*}
+I_c &=& \int \phi_{c}(\nu) I(\nu) \, d\nu \\
+&=& \int \phi_{c}(\nu) \int dB\big(\nu,T(\zeta)\big) \, \mathcal{T}\big(\nu,\zeta\big) \, d\nu,
+\end{eqnarray*}
+or, from a discrete version, where $\sum_{n=1}^{N_f} \phi_{c}(\nu_n) = 1$,
+\begin{eqnarray}
+I_c &=& \sum_{n=1}^{N_f} \phi_{c}(\nu_n) \triangle \nu_n I(\nu_n) 
+\nonumber \\
+&=& \sum_{n=1}^{N_f} \phi_{c}(\nu_n) \triangle \nu_n \sum_{i=1}^{N_p} \triangle B_{i}(\nu_n) \mathcal{T}_{i}(\nu_n),
+\label{eqn:Ic_discrete_1}
+\end{eqnarray}
+where $N_f$ is the number of frequencies in the channel. \\ \\
+We let $\{S\}$ denote a set of strong LBL molecules, and $\{W\}$ denote a set of weak PFA molecules.  Denoting $\mathcal{T}_i^S(\nu) = \prod_{k\in\{S\}} \mathcal{T}_i^k(\nu)$, and $\mathcal{T}_i^W(\nu) = \prod_{k\in\{W\}} \mathcal{T}_i^k(\nu)$, the transmission function $\mathcal{T}$ can be written as
+\begin{eqnarray*}
+\mathcal{T}_i(\nu_n) &=& \exp \Big( -\sum_{j=2}^i \triangle \delta_{j \rightarrow j-1}(\nu_n) \Big) \\
+&=& \exp \Big( -\sum_{j=2}^i \sum_k \triangle \delta_{j \rightarrow j-1}^k(\nu_n) \Big) \\
+&=& \exp \Big( -\sum_{j=2}^i \sum_{k\in\{S\}} \triangle \delta_{j \rightarrow j-1}^k(\nu_n) \Big) \exp \Big( -\sum_{j=2}^i \sum_{k\in\{W\}} \triangle \delta_{j \rightarrow j-1}^k(\nu_n) \Big) \\
+&=& \mathcal{T}_i^S(\nu_n) \mathcal{T}_i^W(\nu_n).
+\end{eqnarray*}
+Thus, equation (\ref{eqn:Ic_discrete_1}) can be written as
+\begin{eqnarray}
+I_c &=& \sum_{n=1}^{N_f} \phi_{c}(\nu_n) \triangle \nu_n \sum_{i=1}^{N_p} \triangle B_{i}(\nu_n) \mathcal{T}^S_{i}(\nu_n) \mathcal{T}^W_{i}(\nu_n).
+\label{eqn:Ic_discrete_2}
+\end{eqnarray}
+Since for PFA molecules cross section changes slowly as a function of frequency, it can be approximated by the averaged cross section. For $k \in \{W\}$ species, for channel $c$, the averaged cross section is given by
+\begin{eqnarray*}
+\beta_c^k(P(\zeta),T(\zeta)) = \frac{ \displaystyle \int \phi_{c}(\nu) \, \beta^k(P(\zeta),T(\zeta),\nu) \, d\nu }{ \displaystyle \int \phi_{c}(\nu) \, d\nu },
+\end{eqnarray*}
+or by a discrete approximation
+\begin{eqnarray*}
+\beta_{c \ i}^k = \frac{ \sum_{n=1}^{N_f} \phi_{c}(\nu_n) \, \beta_i^k(\nu_n) }{ \sum_{n=1}^{N_f} \phi_{c}(\nu_n) },
+\end{eqnarray*}
+The incremental opacity integral for $k \in \{W\}$ species, for channel $c$, is given by
+\begin{eqnarray*}
+\triangle \delta_{c \ i \rightarrow i-1}^k = \int_{\zeta_i}^{\zeta_{i-1}} F^{k}(\zeta) \, \beta_{c \ i}^k \, \frac{ds}{dh} \, \frac{dh}{d\zeta} \, d\zeta,
+\end{eqnarray*}
+and the channel's transmission function for $k \in \{W\}$ is
+\begin{eqnarray*}
+\mathcal{T}_{c \ i}^k &=& \exp \Big( -\sum_{j=2}^i \triangle \delta_{c \ j \rightarrow j-1}^k \Big).
+\end{eqnarray*}
+The total channel's transmission function for all PFA molecules is
+\begin{eqnarray*}
+\mathcal{T}_{i}^W(\nu) &\approx& \mathcal{T}_{c \ i}^W := \prod_{k\in\{W\}} \mathcal{T}_{c \ i}^k.
+\end{eqnarray*}
+Since the differential source function $\triangle B_{i}(\nu_n)$ changes slowly with frequency within one channel, it can be approximated by
+\begin{eqnarray*}
+\triangle B_{c}(T(\zeta)) = \frac{ \displaystyle \int \phi_{c}(\nu) \, \triangle B(T(\zeta),\nu) \, d\nu }{ \displaystyle \int \phi_{c}(\nu) \, d\nu },
+\end{eqnarray*}
+or by a discrete approximation
+\begin{eqnarray*}
+\triangle B_{c \ i} = \frac{ \sum_{n=1}^{N_f} \phi_{c}(\nu_n) \, \triangle B_{i}(\nu_n) }{ \sum_{n=1}^{N_f} \phi_{c}(\nu_n) }.
+\end{eqnarray*}
+Hence, the channel radiance in (\ref{eqn:Ic_discrete_2}) can be approximated by
+\begin{eqnarray}
+I_c &\approx& \sum_{n=1}^{N_f} \phi_{c}(\nu_n) \triangle \nu_n \sum_{i=1}^{N_p} \triangle B_{c \; i} \mathcal{T}^S_{i}(\nu_n) \mathcal{T}_{c \; i}^W 
+\label{eqn:Ic_discrete_3}
+\\
+&=& \sum_{i=1}^{N_p} \triangle B_{c \; i}  \mathcal{T}_{c \; i}^W  \sum_{n=1}^{N_f} \phi_{c}(\nu_n) \triangle \nu_n \mathcal{T}^S_{i}(\nu_n). \nonumber
+\end{eqnarray}
+
+
+\subsection{Channel Radiance First Derivative}
+
+
+The first derivative of the channel radiance in (\ref{eqn:Ic_discrete_3}) with respect to $x$ is
+\begin{eqnarray}
+\frac{\partial I_c}{\partial x} &\approx& \sum_{n=1}^{N_f} \phi_{c}(\nu_n) \triangle \nu_n \sum_{i=1}^{N_p} \bigg[ \frac{\partial \triangle B_{c \; i}}{\partial x} \mathcal{T}^S_{i}(\nu_n) \mathcal{T}_{c \; i}^W + \triangle B_{c \; i} \frac{\partial\mathcal{T}^S_{i} (\nu_n)}{\partial x} \mathcal{T}_{c \; i}^W + \triangle B_{c \; i} \mathcal{T}^S_{i}(\nu_n) \frac{\partial \mathcal{T}_{c \; i}^W}{\partial x} \bigg]  \nonumber \\
+&=& \sum_{n=1}^{N_f} \phi_{c}(\nu_n) \triangle \nu_n \sum_{i=1}^{N_p} \bigg[ \frac{\partial \triangle B_{c \; i}}{\partial x} - \triangle B_{c \; i} \sum_{j=2}^{i} \bigg( \frac{\partial \delta_{j \rightarrow j-1}^S (\nu_n)}{\partial x} + \frac{\partial \delta_{c \; j \rightarrow j-1}^W}{\partial x} \bigg) \bigg]  \mathcal{T}^S_{i}(\nu_n) \mathcal{T}_{c \; i}^W,  \nonumber
+\end{eqnarray}
+where $\displaystyle \frac{\partial \delta_{j \rightarrow j-1}^\mathcal{X}}{\partial x} = \sum_{k \in \{\mathcal{X}\} } \frac{\partial \delta_{j \rightarrow j-1}^k}{\partial x}$, where $\mathcal{X}$ is a set of species. \\
+Equivalently,
+\begin{eqnarray}
+\frac{\partial I_c}{\partial x} &\approx& \sum_{n=1}^{N_f} \phi_{c}(\nu_n) \triangle \nu_n \sum_{i=1}^{N_p} \bigg[ \frac{\partial \triangle B_{c \; i}}{\partial x} - \triangle B_{c \; i} \mathcal{W}_i \bigg]  \mathcal{T}^*_{i},  \nonumber
+\end{eqnarray}
+where 
+\begin{eqnarray*}
+\mathcal{W}_1 &=& 0, \\
+\mathcal{W}_i &=& \sum_{j=2}^{i} \bigg( \frac{\partial \delta_{j \rightarrow j-1}^S (\nu_n)}{\partial x} + \frac{\partial \delta_{c \; j \rightarrow j-1}^W}{\partial x} \bigg) \\
+&=& \mathcal{W}_{i-1} + \bigg( \frac{\partial \delta_{i \rightarrow i-1}^S (\nu_n)}{\partial x} + \frac{\partial \delta_{c \; i \rightarrow i-1}^W}{\partial x} \bigg), \\
+\mathcal{T}^*_{i} &=& \mathcal{T}^S_{i}(\nu_n) \mathcal{T}_{c \; i}^W.
+\end{eqnarray*}
+
+
+\subsection{Channel Radiance Second Derivative}
+
+
+The second derivative of the channel radiance in (\ref{eqn:Ic_discrete_3}) with respect to $x$ and $y$ is
+\begin{eqnarray*}
+\frac{\partial^2 I_c}{\partial x \partial y} &\approx& \frac{\partial}{\partial y} \bigg( \frac{\partial I_c}{\partial x} \bigg)  \nonumber \\
+= && \sum_{n=1}^{N_f} \phi_{c}(\nu_n) \triangle \nu_n \sum_{i=1}^{N_p} \frac{\partial}{\partial y} \Bigg( \bigg[ \frac{\partial \triangle B_{c \; i}}{\partial x} - \triangle B_{c \; i} \sum_{j=2}^{i} \Big( \frac{\partial \triangle \delta_{j \rightarrow j-1}^S (\nu_n)}{\partial x} + \frac{\partial \triangle \delta_{c \; j \rightarrow j-1}^W}{\partial x} \Big) \bigg]  \mathcal{T}^S_{i}(\nu_n) \mathcal{T}_{c \; i}^W \Bigg)  \nonumber \\
+= && \sum_{n=1}^{N_f} \phi_{c}(\nu_n) \triangle \nu_n \sum_{i=1}^{N_p} \Bigg(  \bigg[ \frac{\partial^2 \triangle B_{c \; i}}{\partial x \partial y} - \frac{\partial \triangle B_{c \; i}}{\partial y} \sum_{j=2}^{i} \Big( \frac{\partial \triangle \delta_{j \rightarrow j-1}^S (\nu_n)}{\partial x} + \frac{\partial \triangle \delta_{c \; j \rightarrow j-1}^W}{\partial x} \Big) \\
+&& \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ - \triangle B_{c \; i}  \sum_{j=2}^{i} \Big( \frac{\partial^2 \triangle \delta_{j \rightarrow j-1}^S(\nu_n)}{\partial x \partial y} + \frac{\partial^2 \triangle \delta_{c \; j \rightarrow j-1}^W}{\partial x \partial y} \Big) \bigg] \mathcal{T}^S_{i}(\nu_n) \mathcal{T}_{c \; i}^W \\
+&& - \bigg[ \frac{\partial \triangle B_{c \; i}}{\partial x} - \triangle B_{c \; i}  \sum_{j=2}^{i} \Big( \frac{\partial \triangle \delta_{j \rightarrow j-1}^S (\nu_n)}{\partial x} + \frac{\partial \triangle \delta_{c \; j \rightarrow j-1}^W}{\partial x} \Big) \bigg]  \, \sum_{j=2}^{i} \Big( \frac{\partial \triangle \delta_{j \rightarrow j-1}^S (\nu_n)}{\partial y} + \frac{\partial \triangle \delta_{c \; j \rightarrow j-1}^W}{\partial y} \Big) \mathcal{T}^S_{i}(\nu_n) \mathcal{T}_{c \; i}^W \Bigg) \\
+= && \sum_{n=1}^{N_f} \phi_{c}(\nu_n) \triangle \nu_n 
+\sum_{i=1}^{N_p} \Bigg[ \frac{\partial^2 \triangle B_{c \; i}}{\partial x \partial y} 
+- \frac{\partial \triangle B_{c \; i}}{\partial y} \sum_{j=2}^{i} \Big( \frac{\partial \triangle \delta_{j \rightarrow j-1}^S (\nu_n)}{\partial x} + \frac{\partial \triangle \delta_{c \; j \rightarrow j-1}^W}{\partial x} \Big) \\
+&& - \; \frac{\partial \triangle B_{c \; i}}{\partial x} \sum_{j=2}^{i} \Big( \frac{\partial \triangle \delta_{j \rightarrow j-1}^S (\nu_n)}{\partial y} + \frac{\partial \triangle \delta_{c \; j \rightarrow j-1}^W}{\partial y} \Big) \\
+&& + \; \triangle B_{c \; i} \bigg( \sum_{j=2}^{i} \Big( \frac{\partial \triangle \delta_{j \rightarrow j-1}^S (\nu_n)}{\partial x} + \frac{\partial \triangle \delta_{c \; j \rightarrow j-1}^W}{\partial x} \Big) \sum_{j=2}^{i} \Big( \frac{\partial \triangle \delta_{j \rightarrow j-1}^S (\nu_n)}{\partial y} + \frac{\partial \triangle \delta_{c \; j \rightarrow j-1}^W}{\partial y} \Big) \\
+&& \ \ \ \ \ \ \ \ \ \ \ \ \ \ - \; \sum_{j=2}^{i}  \Big( \frac{\partial^2 \triangle \delta_{j \rightarrow j-1}^S(\nu_n)}{\partial x \partial y} + \frac{\partial^2 \triangle \delta_{c \; j \rightarrow j-1}^W}{\partial x \partial y} \Big) \bigg)  \Bigg] \, \mathcal{T}^S_{i}(\nu_n) \mathcal{T}_{c \; i}^W,
+\end{eqnarray*}
+or
+\begin{eqnarray*}
+\frac{\partial^2 I_c}{\partial x \partial y} &=& \sum_{n=1}^{N_f} \phi_{c}(\nu_n) \triangle \nu_n 
+\sum_{i=1}^{N_p} \Bigg[ \frac{\partial^2 \triangle B_{c \; i}}{\partial x \partial y} - \frac{\partial \triangle B_{c \; i}}{\partial y} \mathcal{W}_i^x - \frac{\partial \triangle B_{c \; i}}{\partial x} \mathcal{W}_i^y + \triangle B_{c \; i} \Big(  \mathcal{W}_i^{x} \, \mathcal{W}_i^{y} - \partial \mathcal{W}^{x,y}_i \Big)  \Bigg] \, \mathcal{T}_i^*,
+\end{eqnarray*}
+where
+\begin{eqnarray*}
+\mathcal{W}_1^x &=& 0, \ \ \ \partial \mathcal{W}^{x,y}_1 \ = \ 0, \\
+\mathcal{W}_i^x &=& \sum_{j=2}^{i} \Big( \frac{\partial \triangle \delta_{j \rightarrow j-1}^S (\nu_n)}{\partial x} + \frac{\partial \triangle \delta_{c \; j \rightarrow j-1}^W}{\partial x} \Big) \\
+&=& \mathcal{W}_{i-1}^x + \Big( \frac{\partial \triangle \delta_{i \rightarrow i-1}^S (\nu_n)}{\partial x} + \frac{\partial \triangle \delta_{c \; i \rightarrow i-1}^W}{\partial x} \Big), \\
+\partial \mathcal{W}^{x,y}_i &=& \sum_{j=2}^{i}  \Big( \frac{\partial^2 \triangle \delta_{j \rightarrow j-1}^S(\nu_n)}{\partial x \partial y} + \frac{\partial^2 \triangle \delta_{c \; j \rightarrow j-1}^W}{\partial x \partial y} \Big) \\
+&=& \partial \mathcal{W}^{x,y}_{i-1} + \Big( \frac{\partial^2 \triangle \delta_{i \rightarrow i-1}^S(\nu_n)}{\partial x \partial y} + \frac{\partial^2 \triangle \delta_{c \; i \rightarrow i-1}^W}{\partial x \partial y} \Big), \\
+\mathcal{T}_i^* &=& \mathcal{T}^S_{i}(\nu_n) \mathcal{T}_{c \; i}^W.
+\end{eqnarray*}
+
+
+
+\subsection{Channel Mixing Ratio First Derivative}
+
+Similar to derivations of mixing ratio first derivatives in section \ref{sec:Mixing_Ratio_Derivatives}, {\it channel} mixing ratio first derivatives are defined as follows. \\
+\ \\
+For $k$ and $\tilde{k}$ state vector components (mixing ratio species), $x = f_q^k$ and $y = f_{\tilde{q}}^{\tilde{k}}$ above.  Here, $q$ and $\tilde{q}$ are breakpoints where $f^k$ and $f^{\tilde{k}}$ are known.  Note that since $\displaystyle \frac{\partial \triangle B_{c \;i}}{\partial f_q^k} = 0$ for all $k$ and $q$, we have
+\begin{eqnarray}
+\frac{\partial I_c}{\partial f_q^k} &\approx& - \sum_{n=1}^{N_f} \phi_{c}(\nu_n) \triangle \nu_n \sum_{i=1}^{N_p} \triangle B_{c \; i} \mathcal{W}_{i,q}^k  \mathcal{T}^*_{i},  \nonumber
+\end{eqnarray}
+where 
+\begin{eqnarray*}
+\mathcal{W}_{1,q}^k &=& 0, \\
+\mathcal{W}_{i,q}^k &=& \sum_{j=2}^{i} \bigg( \frac{\partial \delta_{j \rightarrow j-1}^S (\nu_n)}{\partial f_q^k} + \frac{\partial \delta_{c \; j \rightarrow j-1}^W}{\partial f_q^k} \bigg) \\
+&=& \mathcal{W}_{i-1,q}^k + \bigg( \frac{\partial \delta_{i \rightarrow i-1}^S (\nu_n)}{\partial f_q^k} + \frac{\partial \delta_{c \; i \rightarrow i-1}^W}{\partial f_q^k} \bigg), \\
+\mathcal{T}^*_{i} &=& \mathcal{T}^S_{i}(\nu_n) \mathcal{T}_{c \; i}^W.
+\end{eqnarray*}
+
+
+\subsection{Channel Mixing Ratio Second Derivative}
+
+Similar to derivations of mixing ratio first derivatives in section \ref{sec:Mixing_Ratio_Second_Derivatives}, {\it channel} mixing ratio second derivatives are defined as follows. \\
+\ \\
+Since $\displaystyle \frac{\partial \triangle B_{c \; i}}{\partial f_q^k} = 0$, \ $\displaystyle \frac{\partial^2 \triangle B_{c \; i}}{\partial f_q^{k} \partial f_{\tilde{q}}^{\tilde{k}}} = 0$, and $\partial \mathcal{W}_{i, q,\tilde{q}}^{k,{\tilde{k}}} = 0$, we have
+\begin{eqnarray*}
+\frac{\partial^2 I_c}{\partial f_q^{k} \partial f_{\tilde{q}}^{\tilde{k}}} &\approx& \sum_{n=1}^{N_f} \phi_{c}(\nu_n) \triangle \nu_n \sum_{i=1}^{2N} \triangle B_{c \; i} \mathcal{W}_{i, q}^{k} \, \mathcal{W}_{i, \tilde{q}}^{\tilde{k}} \, \mathcal{T}_i^*,
+\end{eqnarray*}
+where
+\begin{eqnarray*}
+\mathcal{W}_{1, q}^k &=& 0, \\
+\mathcal{W}_{i, q}^k &=& \mathcal{W}_{i-1, q}^k + \bigg( \frac{\partial \delta_{i \rightarrow i-1}^S (\nu_n)}{\partial f_q^k} + \frac{\partial \delta_{c \; i \rightarrow i-1}^W}{\partial f_q^k} \bigg), \\
+\mathcal{T}^*_{i} &=& \mathcal{T}^S_{i}(\nu_n) \mathcal{T}_{c \; i}^W.
+\end{eqnarray*}
+
+
+\pagebreak
+
+
+% $Id:  $
+@

@@ -1,0 +1,825 @@
+head	1.8;
+access;
+symbols
+	v5-02-NRT-19:1.8
+	v6-00:1.8
+	v5-02-NRT-18:1.8
+	v5-02:1.8
+	v5-01-NRT-17:1.8
+	v5-01-NRT-16:1.8
+	v5-01-NRT-15:1.8
+	v5-01-NRT-14:1.8
+	neuralnetworks-1-0:1.8.0.4
+	cfm-single-freq-0-1:1.8.0.2
+	v5-01:1.8
+	v5-00:1.8
+	v4-23-TA133:1.7.0.4
+	mus-emls-1-70:1.7.0.2
+	rel-1-0-englocks-work:1.6.0.2
+	VUMLS1-00:1.6
+	VPL1-00:1.6
+	V4-22-NRT-08:1.5
+	VAM1-00:1.5
+	V4-21:1.5.0.2
+	V4-13:1.5
+	V4-12:1.5
+	V4-11:1.5
+	V4-10:1.5;
+locks; strict;
+comment	@# @;
+
+
+1.8
+date	2019.06.11.23.48.43;	author vsnyder;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2018.05.30.20.45.55;	author vsnyder;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2016.07.28.01.46.38;	author vsnyder;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2014.01.14.00.52.30;	author vsnyder;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2014.01.14.00.11.42;	author vsnyder;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2013.12.12.01.53.41;	author vsnyder;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2013.12.04.03.05.18;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2013.11.26.23.25.36;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.8
+log
+@Repair some more comments
+@
+text
+@; Copyright 2005, by the California Institute of Technology. ALL
+; RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+; commercial use must be negotiated with the Office of Technology Transfer
+; at the California Institute of Technology.
+
+; This software may be subject to U.S. export control laws. By accepting this
+; software, the user agrees to comply with all applicable U.S. export laws and
+; regulations. User has the responsibility to obtain export licenses, or other
+; export authority as may be required before exporting such information to
+; foreign countries or providing access to foreign persons.
+
+; $RCSfile: l2cf.grm,v $
+
+; Grammar for MLS Configuration files.
+
+; Define the terminal symbols using names from the Symbol_Types module.
+; The syntax is "grammar term '=' symbol name".  "grammar term" can be
+; either a name, or a string enclosed in quotes or apostrophes.
+
+'('        = t_left_parenthesis
+')'        = t_right_parenthesis
+'['        = t_left_bracket
+']'        = t_right_bracket
+'+'        = t_plus
+'-'        = t_minus
+'*'        = t_star
+'/'        = t_slash
+':='       = t_assign
+'\'        = t_backslash
+'!'        = t_bang
+'?'        = t_cond
+dot        = t_dot
+':'        = t_colon
+':<'       = t_colon_less
+'<:'       = t_less_colon
+'<:<'      = t_less_colon_less
+'='        = t_equal
+'=='       = t_equal_equal
+'/='       = t_not_equal
+'<'        = t_less
+'<='       = t_less_eq
+'>'        = t_greater
+'>='       = t_greater_eq
+','        = t_comma
+'^'        = t_hat
+begin      = t_begin
+cycle      = t_cycle
+do         = t_do
+end        = t_end
+exit       = t_exit
+and        = t_and
+or         = t_or
+not        = t_not
+case       = t_case
+default    = t_default
+else       = t_else
+if         = t_if
+select     = t_select
+then       = t_then
+while      = t_while
+EOG        = t_end_of_input ; LR generates EOG; the parser assumes it is defined
+EOS        = t_end_of_stmt
+name       = t_identifier
+number     = t_number
+string     = t_string
+'#include' = t_include
+
+; Now the productions.  The syntax for one production is
+; LHS ( -> RHS ( => ACT '?' ? ) ? EOS )+
+; where LHS is a nonterminal symbol.
+;       RHS is a sequence of terminal and nonterminal symbols,
+;       ACT is the name of a tree node from the Tree_Types module or a
+;           number.  If a number, the low-order digit specifies the action:
+;             1 => build a tree node given by the high-order digits,
+;             2 => build a tree node given by the high-order digits iff
+;                  the RHS generated more than one tree node,
+;             9 => open an include file,
+;             else do nothing.
+;             The "number" method is not recommended because it requires one
+;             to calculate the numeric values of tree node named constants.
+;       EOS means "end of statement", which is end of line or the
+;           beginning of a comment, unless the production is continued by
+;           a "$".
+;       '?' means "do the action iff the RHS generated more than one tree node"
+;           (this is the same as the low-order digit above being 2).
+;       ? means "can appear zero or one times."
+;       + means "can appear more than one time."
+
+; A comment beginning with semicolon continues to the end of the line.
+; If it appears and "$" does not appear before it, it is an end of statement.
+
+cf -> cfs
+
+cfs -> one_cf EOS
+    -> cfs include
+    -> cfs one_cf EOS
+
+one_cf -> ; blank lines are OK
+       -> construct_label select case '(' expr ')' 'EOS+' cases_outer end select => n_select
+       -> construct_label do do_header EOS cfs end do => n_do
+       -> construct_label do while '(' expr ')' EOS cfs end do => n_while
+       -> if_block_outer more_if_outer end if => n_if
+       -> if_label if_block_outer more_if_outer end if => n_if
+       -> if_stmt_outer => n_if
+       -> if_consequent_outer
+       -> begin name EOS specs end name => n_cf
+
+; cases_outer is right recursive to require case default at the end
+; if you make it left recursive it won't be LR
+
+cases_outer -> case_test_outer
+            -> case default EOS cfs => n_default
+            -> case_test_outer cases_outer
+
+case_test_outer -> case '(' expr ')' EOS cfs => n_test
+
+'EOS+' -> EOS
+       -> 'EOS+' EOS
+
+construct_label ->
+                -> if_label
+
+if_label -> name ':' => n_named
+
+do_header -> name ':=' expr_array => n_do_head
+          -> name ':=' expr ',' expr => n_do_head
+          -> name ':=' expr ',' expr ',' expr => n_do_head
+
+expr_array -> expr => n_array
+           -> '[' exprs ']' => n_array
+
+if_block_outer -> if '(' expr ')' then EOS cfs => n_test
+
+more_if_outer ->
+              -> else if_block_outer more_if_outer
+              -> else EOS cfs => n_else
+
+if_stmt_outer -> if '(' expr ')' if_consequent_outer => n_test
+
+if_consequent_outer -> cycle_stmt
+                    -> exit_stmt
+                    -> variable_def
+
+cycle_stmt -> cycle => n_cycle
+           -> cycle name => n_cycle
+
+exit_stmt -> exit => n_exit
+          -> exit name => n_exit
+
+variable_def -> name ':=' value => n_variable
+             -> name ':='  => n_variable
+
+specs ->
+      -> specs spec
+
+spec -> one_spec EOS
+     -> include
+
+one_spec -> ; Blank lines are OK
+         -> construct_label select case '(' expr ')' 'EOS+' cases end select => n_select
+         -> construct_label do while '(' expr ')' EOS specs end do => n_while
+         -> construct_label do do_header EOS specs end do => n_do
+         -> if_label if_block more_if end if => n_if
+         -> if_block more_if end if => n_if
+         -> if_stmt => n_if
+         -> if_consequent
+
+; We need to consume the EOS here so it won't be the first
+; token we see after closing the include file.
+
+include -> '#include' string EOS => 9                         ; include file
+
+; cases is right recursive to require case default at the end
+; if you make it left recursive it won't be LR
+
+cases -> case_test
+      -> case default EOS specs => n_default
+      -> case_test cases
+
+; "expr" is a scalar
+
+case_test -> case '(' expr ')' EOS specs => n_test
+
+if_block -> if '(' expr ')' then EOS specs => n_test
+
+more_if ->
+        -> else if_block more_if
+        -> else EOS specs => n_else
+
+if_stmt -> if '(' expr ')' if_consequent => n_test
+
+if_consequent -> cycle_stmt
+              -> exit_stmt
+              -> variable_def
+              -> name ':' spec_rest => n_named
+              -> spec_rest
+              -> name '=' value => n_equal
+
+spec_rest -> name fields => n_spec_args
+
+fields ->
+       -> ',' field fields
+
+field -> name '=' value => n_asg
+      -> '/' name => n_set_one
+
+; "value" can be a scalar, an array enclosed in brackets, or an array of
+; arrays, but not any deeper nesting of arrays.
+
+value -> expr
+      -> '[' value2_list ']'
+
+value2_list -> value2
+            -> value2_list ',' value2
+
+value2 -> expr
+       -> '[' exprs ']' => n_array
+
+exprs -> expr
+      -> exprs ',' expr
+
+expr -> cond
+     -> test '?' expr '!' expr => n_cond
+
+cond -> limit
+     -> limit ':'   limit => n_colon
+     -> limit ':<'  limit => n_less
+     -> limit '<:'  limit => n_less_colon
+     -> limit '<:<' limit => n_less
+
+limit -> lterm
+      -> limit or lterm => n_or
+
+lterm -> lnot
+      -> lterm and lnot => n_and
+
+lnot -> test
+     -> not test => n_not
+
+test -> lfactor
+     -> lfactor '<'  lfactor => n_less
+     -> lfactor '<=' lfactor => n_less_eq
+     -> lfactor '>'  lfactor => n_greater
+     -> lfactor '>='lfactor => n_greater_eq
+     -> lfactor '==' lfactor => n_equal_equal
+     -> lfactor '/=' lfactor => n_not_equal
+
+lfactor -> term
+        -> '+' term => n_plus
+        -> '-' term => n_minus
+        -> lfactor '+' term => n_plus
+        -> lfactor '-' term => n_minus
+
+term -> factor
+     -> term '*' factor => n_mult
+     -> term '/' factor => n_div
+     -> term '\' factor => n_into
+
+factor -> primary
+       -> primary '^' factor => n_pow
+
+primary -> name dots => n_dot?
+        -> number
+        -> number name => n_unit
+        -> string
+        -> '(' expr ')'
+        -> '(' expr ')' name => n_unit
+        -> name '[' expr ']' => n_subscript
+        -> func_ref
+        -> func_ref name => n_unit
+
+func_ref -> name '(' value2_list ')' => n_func_ref
+
+dots ->
+     -> dot name dots
+
+; $Log: l2cf.grm,v $
+; Revision 1.7  2018/05/30 20:45:55  vsnyder
+; Repair some comments
+;
+; Revision 1.6  2016/07/28 01:46:38  vsnyder
+; Refactor diff and dump
+;
+; Revision 1.5  2014/01/14 00:52:30  vsnyder
+; Replace n_dots with n_dot
+;
+; Revision 1.4  2014/01/14 00:11:42  vsnyder
+; Revised LR completely
+;
+; Revision 1.3  2013/12/12 01:53:41  vsnyder
+; Repair SELECT CASE so CASE DEFAULT is not necessary.  Add variable
+; definition outside of sections.
+;
+; Revision 1.2  2013/12/04 03:05:18  vsnyder
+; Revise EOS, correct IF
+;
+; Revision 1.1  2013/11/26 23:25:36  vsnyder
+; Initial commit
+;
+
+@
+
+
+1.7
+log
+@Repair some comments
+@
+text
+@d72 1
+a72 1
+;       ACT is the name of a tree node from the Tree_Types module of a
+d79 2
+d84 2
+a85 1
+;       '?' means "do the action iff the RHS generated more than one tree node."
+d278 3
+@
+
+
+1.6
+log
+@Refactor diff and dump
+@
+text
+@d82 3
+a84 3
+;       '?' means "do the action iff the RHS generated more than one tree node.
+;       ? means "can appear zero or one times.
+;       + means "can appear more than one time.
+d275 3
+@
+
+
+1.5
+log
+@Replace n_dots with n_dot
+@
+text
+@d47 2
+d50 1
+d60 2
+a61 1
+EOG        = t_end_of_input ; EOG is generated; the parser assumes it is defined
+d70 1
+a70 1
+; where LHS is a nonterminal symbol,
+d73 6
+a78 1
+;           number,
+d81 3
+a83 4
+;           a "$"
+;       '?' means "do the action only if the RHS generated more than one
+;           tree node,
+;       ? means "can appear zero or one times, and
+d91 16
+a106 9
+cfs -> one_cf
+    -> include
+    -> cfs one_cf
+
+one_cf -> EOS
+       -> select case '(' expr ')' 'EOS+' cases_outer end select EOS => n_select
+       -> if_stmt_outer more_if_outer end if EOS => n_if
+       -> name ':=' value EOS => n_variable
+       -> begin name EOS specs end name EOS => n_cf
+d109 1
+a110 1
+            -> case default EOS cfs => n_default
+d114 16
+a129 1
+if_stmt_outer -> if '(' expr ')' then EOS cfs => n_test
+d132 8
+a139 2
+     -> else if_stmt_outer more_if_outer
+     -> else EOS cfs => n_else
+d141 8
+a148 2
+'EOS+' -> EOS
+       -> 'EOS+' EOS
+d156 8
+a163 9
+; "value" is either a scalar or an array enclosed in brackets
+
+one_spec ->
+         -> select case '(' expr ')' 'EOS+' cases end select EOS => n_select
+         -> if_stmt more_if end if => n_if
+         -> name ':=' value => n_variable
+         -> name ':' spec_rest => n_named
+         -> spec_rest
+         -> name '=' value => n_equal
+d170 3
+d174 1
+a175 1
+      -> case default EOS specs => n_default
+d181 1
+a181 1
+if_stmt -> if '(' expr ')' then EOS specs => n_test
+d184 1
+a184 1
+        -> else if_stmt more_if
+d187 9
+d204 1
+a204 1
+; "value" can be an array enclosed in brackets, or an array of
+d275 3
+@
+
+
+1.4
+log
+@Revised LR completely
+@
+text
+@d206 1
+a206 1
+primary -> name dots => n_dots?
+d222 3
+@
+
+
+1.3
+log
+@Repair SELECT CASE so CASE DEFAULT is not necessary.  Add variable
+definition outside of sections.
+@
+text
+@d1 232
+a232 229
+&C Copyright 2005, by the California Institute of Technology. ALL
+&C RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+&C commercial use must be negotiated with the Office of Technology Transfer
+&C at the California Institute of Technology.
+
+&C This software may be subject to U.S. export control laws. By accepting this
+&C software, the user agrees to comply with all applicable U.S. export laws and
+&C regulations. User has the responsibility to obtain export licenses, or other
+&C export authority as may be required before exporting such information to
+&C foreign countries or providing access to foreign persons.
+
+&C $RCSfile: l2cf.grm,v $
+
+&C introduces a comment.
+&C Format of vocabulary definition is '&V vocab_symbol vocab_value'
+&C where 'vocab_value' is a number that must match the value defined by
+&C T_... for the corresponding vocab_symbol.
+
+&C Format of productions is
+&C   'lhs rhs &S action &A' if another rhs present,
+&C   'lhs rhs &S action &P' if no other rhs present, but more prods
+&C   'lhs rhs &S action &G' if no more productions,
+&C   USE &G, not &P &G FOR THE LAST PRODUCTION!
+&C   'rhs' is a sequence of terminal and nonterminal symbols separated
+&C   by blanks.  If a symbol contains blanks it can be enclosed in
+&C   angle brackets (< and >).
+&C   The 'action' is a number that specifies the tree node and
+&C   building rule packed into one decimal number.
+&C   The low order  digit specifies the action:
+&C     0 - build no tree node, in which case the high-order digits
+&C         are ignored,
+&C     1 - build a tree node,
+&C     2 - build a tree node iff it would have more than 1 son.
+&C     9 - do some non-parsing action, e.g., open an include file
+&C   The high order digits of the number are the tree node id, and
+&C   must match the tree node identities provided by N_... in the
+&C   compiler.  If the action is zero, '&S action' may be omitted.
+
+&V (                   1       &C  t_left_parenthesis
+&V )                   2       &C  t_right_parenthesis
+&V [                   3       &C  t_left_bracket
+&V ]                   4       &C  t_right_bracket
+&V +                   5       &C  t_plus
+&V -                   6       &C  t_minus
+&V *                   7       &C  t_star
+&V /                   8       &C  t_slash
+&V :=                  9       &C  t_assign
+&V \                   10      &C  t_backslash
+&V !                   11      &C  t_bang
+&V ?                   12      &C  t_cond
+&V dot                 13      &C  t_dot
+&V :                   14      &C  t_colon
+&V :&<                 15      &C  t_colon_less
+&V &<:                 16      &C  t_less_colon
+&V &<:&<               17      &C  t_less_colon_less
+&V =                   18      &C  t_equal
+&V ==                  19      &C  t_equal_equal
+&V /=                  20      &C  t_not_equal
+&V &<                  21      &C  t_less
+&V &<=                 22      &C  t_less_eq
+&V &>                  23      &C  t_greater
+&V &>=                 24      &C  t_greater_eq
+&V ,                   25      &C  t_comma
+&V ^                   26      &C  t_hat
+&V begin               27      &C  t_begin
+&V end                 28      &C  t_end
+&V and                 29      &C  t_and
+&V or                  30      &C  t_or
+&V not                 31      &C  t_not
+&V case                32      &C  t_case
+&V default             33      &C  t_default
+&V else                34      &C  t_else
+&V if                  35      &C  t_if
+&V select              36      &C  t_select
+&V then                37      &C  t_then
+&V EOG                 38      &C  t_end_of_input
+&V EOS                 39      &C  t_end_of_stmt
+&V name                40      &C  t_identifier
+&V number              41      &C  t_number
+&V string              42      &C  t_string
+&V #include            43      &C  t_include
+
+cf cfs &P
+
+cfs one_cf &A
+    cfs one_cf &P
+
+one_cf EOS &A
+       select case ( expr ) EOS+ cases_outer end select EOS &S 441 &A &C n_select
+       if_stmt_outer more_if_outer end if EOS &S 281 &A   &C n_if
+       name := value EOS &S 521 &A                        &C n_variable
+       begin name EOS specs end name EOS &S 101 &A        &C n_cf
+       include EOS &P                                     &C include file
+
+cases_outer case_test_outer &A
+            case_test_outer cases_outer &A
+            case default EOS cfs &S 151 &P                &C n_default
+
+case_test_outer case ( expr ) EOS cfs &S 491 &P           &C n_test
+
+if_stmt_outer if ( expr ) then EOS cfs &S 491 &P          &C n_test
+
+more_if_outer &A
+     else if_stmt_outer more_if_outer &A
+     else EOS cfs &S 191 &P                               &C n_else
+
+EOS+ EOS &A
+     EOS+ EOS &P
+
+specs &A
+      specs spec &P
+
+spec one_spec EOS &P
+
+&C "value" is either a scalar or an array enclosed in brackets
+
+one_spec &A
+         select case ( expr ) EOS+ cases end select EOS &S 441 &A &C n_select
+         if_stmt more_if end if &S 281 &A                  &C n_if
+         name := value &S 521 &A                           &C n_variable
+         name : spec_rest &S 371 &A                        &C n_named
+         spec_rest &A
+         name = value &S 201 &A                            &C n_equal
+         include &P                                        &C include file
+
+&C We need to consume the EOS here so it won't be the first
+&C token we see after closing the include file.
+
+include #include string &S 9 &P                            &C include file
+
+cases case_test &A
+      case_test cases &A
+      case default EOS specs &S 151 &P                     &C n_default
+
+&C "expr" is a scalar
+
+case_test case ( expr ) EOS specs &S 491 &P                &C n_test
+
+if_stmt if ( expr ) then EOS specs &S 491 &P               &C n_test
+
+more_if &A
+     else if_stmt more_if &A
+     else EOS specs &S 191 &P                              &C n_else
+
+spec_rest name fields &S 461 &P                            &C n_spec_args
+
+fields &A
+       , field fields &P
+
+field name = value &S 81 &A                                &C n_asg
+      / name &S 451 &P                                     &C n_set_one
+
+&C "value" can be an array enclosed in brackets, or an array of
+&C arrays, but not any deeper nesting of arrays.
+
+value expr &A
+      [ value2_list ] &P
+
+value2_list value2 &A
+            value2_list , value2 &P
+
+value2 expr &A
+       [ exprs ] &S 71 &P                                  &C n_array
+
+exprs expr &A
+      exprs , expr &P
+
+expr cond &A
+     test ? expr ! expr &S 141 &P                          &C n_cond
+
+cond limit &A
+     limit :     limit &S 121 &A                           &C n_colon
+     limit :&<   limit &S 131 &A                           &C n_colon_less
+     limit &<:   limit &S 311 &A                           &C n_less_colon
+     limit &<:&< limit &S 321 &P                           &C n_less_colon_less
+
+limit lterm &A
+      limit or lterm &S 401 &P                             &C n_or
+
+lterm lnot &A
+      lterm and lnot &S 51 &P                              &C n_and
+
+lnot  test &A
+      not test &S 381 &P                                   &C n_not
+
+test lfactor &A
+     lfactor &<  lfactor &S 301 &A                         &C n_less
+     lfactor &<= lfactor &S 331 &A                         &C n_less_eq
+     lfactor &>  lfactor &S 261 &A                         &C n_greater
+     lfactor &>= lfactor &S 271 &A                         &C n_greater_eq
+     lfactor == lfactor &S 211 &A                          &C n_equal_equal
+     lfactor /= lfactor &S 391 &P                          &C n_not_equal
+
+lfactor term &A
+        + term &S 411 &A                                   &C n_plus
+        - term &S 341 &A                                   &C n_minus
+        lfactor + term &S 411 &A                           &C n_plus
+        lfactor - term &S 341 &P                           &C n_minus
+
+term factor &A
+     term * factor &S 351 &A                               &C n_mult
+     term / factor &S 161 &A                               &C n_div
+     term \ factor &S 291 &P                               &C n_into
+
+factor primary &A
+       primary ^ factor &S 421 &P                          &C n_pow
+
+primary name dots &S 172 &A                                &C n_dots?
+        number &A
+        number name &S 511 &A                              &C n_unit
+        string &A
+        ( expr ) &A
+        ( expr ) name &S 511 &A                            &C n_unit
+        name [ expr ] &S 481 &A                            &C n_subscript
+        func_ref &A
+        func_ref name &S 511 &P                            &C n_unit
+
+func_ref name ( value2_list ) &S 251 &P                    &C n_func_ref
+
+dots &A
+     dot name dots &G
+
+&C $Log: l2cf.grm,v $
+&C Revision 1.2  2013/12/04 03:05:18  vsnyder
+&C Revise EOS, correct IF
+&C
+&C Revision 1.1  2013/11/26 23:25:36  vsnyder
+&C Initial commit
+&C
+@
+
+
+1.2
+log
+@Revise EOS, correct IF
+@
+text
+@d88 9
+a96 1
+cases_outer case_test_outer cases_outer &A
+d99 1
+a99 1
+case_test_outer = case ( expr ) EOS cfs &S 491 &P         &C n_test
+a106 6
+one_cf EOS &A
+       select case ( expr ) EOS+ cases_outer end select EOS &S 441 &A &C n_select
+       if_stmt_outer more_if_outer end if EOS &S 281 &A   &C n_if
+       begin name EOS specs end name EOS &S 101 &A       &C n_cf
+       include EOS &P                                     &C include file
+
+d118 1
+a118 1
+         select case ( expr ) EOS+ cases end select &S 441 &A &C n_select
+d131 2
+a132 1
+cases case_test cases &A
+d224 3
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d12 1
+a12 1
+&C $RCSfile: $
+d83 1
+a83 2
+cf cfs &A
+   EOS+ cfs &P
+d88 16
+a103 2
+one_cf begin name EOS+ specs end name EOS+ &S 101 &A       &C n_cf
+       include EOS* &P                                     &C include file
+d108 4
+a111 2
+EOS* &A
+     EOS+ &P
+d113 10
+a122 5
+specs &A
+      specs spec &A
+      select case EOS+ cases end select EOS+ &S 441 &A     &C n_select
+      if_stmt more_if end if &S 281 &A                     &C n_if
+      include EOS* &P                                      &C include file
+d127 1
+a127 1
+include #include string EOS &S 9 &P                        &C include file
+d130 1
+a130 1
+      case default EOS+ specs &S 151 &P                    &C n_default
+d134 1
+a134 3
+case_test case ( expr ) EOS+ specs &S 491 &P               &C n_test
+
+if_stmt if ( expr ) then EOS+ specs &S 491 &P              &C n_test
+d136 1
+a136 4
+more_if else if ( expr ) then EOS+ specs more_if &S 481 &A &C n_test
+     else EOS+ specs &S 191 &P                             &C n_else
+
+&C "value" is either a scalar or an array enclosed in brackets
+d138 3
+a140 4
+spec name = value EOS+ &S 201 &A                           &C n_equal
+     name := value EOS+ &S 521 &A                          &C n_variable
+     name : spec_rest EOS+ &S 371 &A                       &C n_named
+     spec_rest EOS+ &P
+d220 4
+a223 1
+&C $Log: $
+@
+

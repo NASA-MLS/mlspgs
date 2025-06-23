@@ -1,0 +1,4220 @@
+head	2.39;
+access;
+symbols
+	v5-02-NRT-19:2.39
+	v6-00:2.39
+	v5-02-NRT-18:2.39
+	v5-02:2.38
+	v5-01-NRT-17:2.39
+	v5-01-NRT-16:2.39
+	v5-01-NRT-15:2.39
+	v5-01-NRT-14:2.39
+	neuralnetworks-1-0:2.39.0.4
+	cfm-single-freq-0-1:2.39.0.2
+	v5-01:2.38
+	v5-00:2.38
+	v4-23-TA133:2.38.0.6
+	mus-emls-1-70:2.38.0.4
+	rel-1-0-englocks-work:2.38.0.2
+	VUMLS1-00:2.37
+	VPL1-00:2.36
+	V4-22-NRT-08:2.36
+	VAM1-00:2.34
+	V4-21:2.34.0.2
+	V4-13:2.34
+	V4-12:2.32
+	V4-11:2.32
+	V4-10:2.32
+	V3-43:2.18
+	M4-00:2.27
+	V3-41:2.18
+	V3-40-PlusGM57:2.18.0.2
+	V2-24-NRT-04:2.16
+	V3-33:2.20
+	V2-24:2.16
+	V3-31:2.20
+	V3-30-NRT-05:2.20
+	cfm-01-00:2.20
+	V3-30:2.18
+	V3-20:2.18
+	V3-10:2.17
+	V2-23-NRT-02:2.16
+	V2-23:2.16
+	V2-22-NRT-01:2.16
+	V2-22:2.16
+	V2-21:2.16
+	V2-20:2.16
+	V2-11:2.16
+	V2-10:2.16
+	V2-00:2.16
+	V1-51:2.12
+	V1-50:2.12
+	V1-45:2.12
+	V1-44:2.12
+	V1-43:2.11
+	V1-32:2.11
+	V1-31:2.11
+	V1-30:2.11
+	V1-13:2.4
+	V1-12:2.4
+	V1-11:2.3;
+locks; strict;
+comment	@# @;
+
+
+2.39
+date	2019.10.16.20.55.04;	author pwagner;	state Exp;
+branches;
+next	2.38;
+
+2.38
+date	2017.07.10.18.50.00;	author pwagner;	state Exp;
+branches;
+next	2.37;
+
+2.37
+date	2017.02.22.01.23.36;	author pwagner;	state Exp;
+branches;
+next	2.36;
+
+2.36
+date	2016.05.19.23.17.56;	author pwagner;	state Exp;
+branches;
+next	2.35;
+
+2.35
+date	2016.05.04.17.52.00;	author pwagner;	state Exp;
+branches;
+next	2.34;
+
+2.34
+date	2014.09.05.01.23.40;	author vsnyder;	state Exp;
+branches;
+next	2.33;
+
+2.33
+date	2014.09.05.00.49.07;	author vsnyder;	state Exp;
+branches;
+next	2.32;
+
+2.32
+date	2014.03.01.03.10.56;	author vsnyder;	state Exp;
+branches;
+next	2.31;
+
+2.31
+date	2014.02.28.01.15.27;	author vsnyder;	state Exp;
+branches;
+next	2.30;
+
+2.30
+date	2014.01.09.00.30.24;	author pwagner;	state Exp;
+branches;
+next	2.29;
+
+2.29
+date	2013.09.24.23.47.22;	author vsnyder;	state Exp;
+branches;
+next	2.28;
+
+2.28
+date	2013.08.12.23.49.41;	author pwagner;	state Exp;
+branches;
+next	2.27;
+
+2.27
+date	2013.01.18.01.45.57;	author pwagner;	state Exp;
+branches;
+next	2.26;
+
+2.26
+date	2012.10.22.18.14.11;	author pwagner;	state Exp;
+branches;
+next	2.25;
+
+2.25
+date	2012.05.03.19.50.11;	author vsnyder;	state Exp;
+branches;
+next	2.24;
+
+2.24
+date	2012.05.01.22.22.26;	author vsnyder;	state Exp;
+branches;
+next	2.23;
+
+2.23
+date	2012.03.28.00.54.41;	author vsnyder;	state Exp;
+branches;
+next	2.22;
+
+2.22
+date	2011.05.09.18.26.45;	author pwagner;	state Exp;
+branches;
+next	2.21;
+
+2.21
+date	2011.03.15.22.54.18;	author pwagner;	state Exp;
+branches;
+next	2.20;
+
+2.20
+date	2010.04.28.16.24.43;	author pwagner;	state Exp;
+branches;
+next	2.19;
+
+2.19
+date	2010.04.22.23.38.11;	author pwagner;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2010.02.04.23.12.44;	author vsnyder;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2009.06.23.18.46.18;	author pwagner;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2006.04.04.15.59.48;	author pwagner;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2006.04.03.23.54.33;	author livesey;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2006.04.03.23.51.42;	author livesey;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2005.06.22.18.57.02;	author pwagner;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2004.05.28.00.57.50;	author vsnyder;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2003.08.06.17.24.16;	author livesey;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2003.05.14.22.02.08;	author dwu;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2003.05.12.18.55.01;	author dwu;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2003.04.14.22.21.26;	author dwu;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2003.04.10.18.30.57;	author dwu;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2003.04.08.23.12.18;	author dwu;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2003.04.04.22.01.46;	author livesey;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2003.03.19.01.58.36;	author livesey;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2003.03.07.03.17.12;	author livesey;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2003.03.06.00.47.04;	author livesey;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2003.03.06.00.46.49;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.39
+log
+@Subset command may take a MissingValue field
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module SubsetModule
+
+  ! This module deals with all the user requests to 'subset' quantities
+  ! through the mask field.  In the first instance, it was abstracted
+  ! out of the retrieval module.
+
+  implicit none
+  private
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: SubsetModule.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+  
+  public :: RESTRICTRANGE, SETUPSUBSET, SETUPFLAGCLOUD
+  public :: APPLYMASKTOQUANTITY, UPDATEMASK
+
+  ! Local parameters
+  character(len=32), private, parameter :: WRONGUNITS = &
+    &                           'The wrong units were supplied'
+    
+contains ! ========= Public Procedures ============================
+
+  ! ---------------------------------------------- ApplyMaskToQuantity -----
+  ! Turn height node, or surfs node, and other tree nodes and flags
+  ! into range of surfaces, instances, etc.
+  ! Then possibly create and set qty mask over the *complement* of the range
+  ! I.e., the range will be left unmasked so its values can be
+  ! used, Filled, or whatever.
+
+  ! We intend to make this the standard routine Subset and Fill commands
+  ! call to restrict heights, channels, and horizontal instances
+  ! instead of having each command process the l2cf fields
+  ! separately
+  subroutine ApplyMaskToQuantity ( qty, rad, ptan, opticaldepth, a, &
+    & opticaldepthcutoff, maxvalue, minvalue, missingvalue, &
+    & heightrange, whererange, &
+    & ignore, reverse, additional, expandMask, reset, &
+    & maskbit, heightnode, surfnode, instancesnode, channelsnode, got )
+
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+    use Dump_0, only: Dump
+    use Expr_M, only: Expr, Getindexflagsfromlist
+    use FillUtils_1, only: ByManipulation, M_All
+    use Highoutput, only: OutputNamedValue
+    use Init_Tables_Module, only: F_Height, &
+      & F_MinValue, F_MaxValue, F_MissingValue, &
+      & F_Ptanquantity, F_Quantity, F_Surface
+    use Init_Tables_Module, only: L_None, L_Pressure, &
+      & L_Zeta
+    use Intrinsic, only: Phyq_Dimensionless, Phyq_Length, &
+      & Phyq_Mifs, Phyq_Pressure
+    use MLSKinds, only: R8, Rv
+    use MLSStringLists, only: SwitchDetail
+    use MLSFinds, only: FindFirst, FindLast
+    use MLSStrings, only: TrueList
+    use Output_M, only: Output
+    use Toggles, only: Switches
+    use Tree, only: Nsons, Subtree, Node_Id
+    use Tree_Types, only: N_Colon_Less, N_Less_Colon, &
+      & N_Less_Colon_Less
+    use VectorsModule, only: VectorValue_T, &
+      & ClearMask, CloneVectorQuantity, CreateMask, Dump, &
+      & ReverseMask, SetMask
+    ! Args
+    type (VectorValue_T), pointer :: QTY
+    type (VectorValue_T), pointer :: RAD
+    type (VectorValue_T), pointer :: PTAN
+    type (VectorValue_T), pointer :: OPTICALDEPTH
+    type (VectorValue_T), pointer :: A
+    real(r8), intent(in)          :: OPTICALDEPTHCUTOFF
+    real(r8), intent(in)          :: MAXVALUE
+    real(r8), intent(in)          :: MINVALUE
+    real(r8), intent(in)          :: MISSINGVALUE
+    character(len=*), intent(in)  :: HEIGHTRANGE
+    integer, intent(in)           :: WHERERANGE
+    logical, intent(in)           :: IGNORE
+    logical, intent(in)           :: REVERSE
+    logical, intent(in)           :: ADDITIONAL
+    logical, intent(in)           :: ExpandMask
+    logical, intent(in)           :: RESET
+    integer, intent(in)           :: MASKBIT             ! Bits corresponding to Mask
+    integer, intent(in)           :: HEIGHTNODE          ! Tree node
+    integer, intent(in)           :: SURFNODE            ! Tree node
+    integer, intent(in)           :: INSTANCESNODE       ! Tree node
+    integer, intent(in)           :: CHANNELSNODE        ! Tree node
+    logical, dimension(:), intent(in) :: Got
+
+    ! Local variables
+    type (VectorValue_T), pointer :: B
+    logical, dimension(:), pointer :: CHANNELS ! Are we dealing with these channels
+    integer :: CHANNEL
+    integer :: COORDINATE
+    logical :: DEEBUG
+    logical :: DOTHISCHANNEL          ! Flag
+    logical :: DOOKHEIGHTS            ! Flag
+    logical :: DOTHISHEIGHT           ! Flag
+    logical, dimension(:), pointer :: doThisInstance => null()
+    integer :: FIRSTOK
+    integer :: HEIGHT
+    integer :: HEIGHTUNIT             ! Unit for heights command
+    integer :: I
+    integer :: IND
+    integer :: INSTANCE
+    integer :: INSTANCEOR1            ! For coherent quantities
+    integer :: j
+    integer :: LASTOK
+    integer :: NODE
+    character(len=128) :: NUMBERSLIST ! for a dump
+    integer :: ODCUTOFFHEIGHT
+    character(len=1), dimension(:), pointer :: ORIGINALMASK
+    integer :: RANGEID
+    integer, dimension(1) :: S1
+    integer, dimension(1) :: S2
+    integer               :: SS1
+    integer               :: SS2
+    integer :: SCANDIRECTION
+    integer :: SON
+    logical :: SPREADFLAG
+    integer :: STATUS
+    real(r8), dimension(:), pointer :: THESEHEIGHTS ! Subset of heights
+    integer :: UNITS(2)               ! Units returned by expr
+    real(r8) :: VALUE(2)              ! Value returned by expr
+    logical :: VERBOSE
+    type (VectorValue_T) :: WHEREAISOK ! where(a) /= 0
+    ! Executable
+    nullify ( channels, doThisInstance )
+    verbose = ( switchDetail(switches,'subset') > -1 )
+    DEEBUG = ( switchDetail(switches,'subset') > 0 )
+    ! Do we have anything to do here?
+    if ( all( (/ heightNode, surfNode, InstancesNode, channelsNode /) < 1) .and. &
+      & .not. associated(opticalDepth) .and. .not. associated(a) .and. &
+      & .not. any( (/reset, ignore/) ) ) then
+      if ( verbose ) &
+        & call output( 'No change needed to quantity mask', advance='yes' )
+      return
+    endif
+    ! Process the instances field.
+    call Allocate_test ( doThisInstance, qty%template%noInstances, &
+      & 'doThisInstance', ModuleName )
+    if ( DEEBUG ) then
+      call outputNamedValue( 'MaskBit', MaskBit )
+      call outputNamedValue( 'InstancesNode', InstancesNode )
+      call outputNamedValue( 'HeightNode', HeightNode )
+      call outputNamedValue( 'ChannelsNode', ChannelsNode )
+      call outputNamedValue( 'SurfNode', SurfNode )
+      call outputNamedValue( 'reset', reset )
+      call outputNamedValue( 'ignore', ignore )
+    end if
+    doThisInstance = ( InstancesNode == 0 ) ! Unless specified, treat all instances alike
+    if ( InstancesNode > 0 ) then
+      call GetIndexFlagsFromList ( InstancesNode, doThisInstance, status )
+      if ( status /= 0 ) call announceError ( 0, &
+        & 'There was a problem with the instances field' )
+      if ( DEEBUG ) then
+        call trueList ( doThisInstance, numbersList )
+        call outputNamedValue( 'Instances', trim(numbersList) )
+        call dump( doThisInstance, name='Instances' )
+      end if
+    end if
+
+    ! Process the channels field.
+    if ( qty%template%frequencyCoordinate /= l_none .or. &
+         associated(rad) ) then
+      !??? Someday think about the low bound for channels using ???
+      !??? lbound(spectrometerTypes(signals(...%template%signal)%spectrometerType)%Frequencies,1) ???
+      if ( associated(rad) ) then
+        call Allocate_test ( channels, rad%template%noChans, 'channels', &
+        & ModuleName )
+      else
+        call Allocate_test ( channels, qty%template%noChans, 'channels', &
+          & ModuleName )
+      end if
+      if ( channelsNode > 0 ) then     ! This subset is only for some channels
+        call GetIndexFlagsFromList ( channelsNode, channels, status, &
+          !??? lbound(channels,1) is always 1
+          & lower=lbound(channels,1) )
+        if ( status /= 0 ) call announceError ( channelsNode, &
+          & 'There was a problem with the channels field' )
+        if ( DEEBUG ) then
+          call trueList ( channels, numbersList )
+          call outputNamedValue( 'Channels', trim(numbersList) )
+          call dump( channels, name='Channels' )
+        end if
+      else
+        channels = .true.             ! Apply this to all channels
+      end if
+    end if
+
+    ! Preprocess the height stuff.  
+    heightUnit = phyq_dimensionless
+    if ( heightNode > 0 ) then
+      do j = 2, nsons(heightNode)
+        call expr ( subtree(j,heightNode), units, value )
+        ! Make sure the range has non-dimensionless units -- the type
+        ! checker only verifies that they're consistent.  We need to
+        ! check each range separately, because the units determine the
+        ! scaling of the values.
+        if ( all(units == phyq_dimensionless) ) call announceError ( &
+          & subtree(j,heightNode), 'No height units', f_height )
+        ! Check consistency of units -- all the same, or dimensionless. The
+        ! type checker verifies the consistency of units of ranges, but not
+        ! of array elements.
+        do i = 1, 2
+          if ( heightUnit == phyq_dimensionless ) then
+            heightUnit = units(i)
+          else if ( units(i) /= phyq_dimensionless .and. &
+            &       units(i) /= heightUnit ) then
+            call announceError ( heightNode, 'Inconsistent height units', f_height )
+          end if
+        end do
+      end do
+      ! Check for correct units
+      if ( heightUnit == phyq_pressure ) then
+        if ( qty%template%minorFrame .and. .not. associated(ptan) ) &
+          & call announceError ( heightNode, 'Needed ptan', f_height, f_ptanQuantity )
+      else if ( heightUnit /= phyq_length ) then
+        call announceError ( heightNode, 'minor frame height units must be MIFs', f_height )
+      end if
+    end if
+
+    ! Create the mask if it doesn't exist
+    if ( .not. associated( qty%mask ) ) call CreateMask ( qty )
+
+    ! Make a space to save the original values if doing an additional mask
+    if ( additional ) then
+      nullify ( originalMask )
+      call Allocate_test ( originalMask, qty%template%instanceLen, &
+        & 'originalMask', ModuleName )
+    end if
+
+    if ( associated(a) ) then
+      nullify( b )
+      call CloneVectorQuantity( whereAIsOK, qty )
+      spreadFlag = qty%template%NoInstances /= a%template%NoInstances
+      ! Evaluate where(a)
+      call ByManipulation ( whereAIsOK, a, b, &
+        & whereRange, key=0, ignoreTemplate=.true., &
+        & spreadflag=spreadFlag, dimList=' ', &
+        & c=0._rv )
+      if ( verbose ) then
+        call dump( whereAIsOK, details=1 )
+      endif
+    endif
+    ! Now we loop over the instances
+    do instance = 1, qty%template%noInstances
+      ! Have we been asked to expand the original mask?
+      if ( expandMask ) then
+        where (ichar(qty%mask ( :, instance )) /= 0 )
+          qty%mask ( :, instance ) = char(M_All)
+        end where
+        cycle
+      endif
+      ! Possibly save original mask
+      if ( additional ) originalMask = qty%mask ( :, instance )
+      if ( .not. doThisInstance(instance) ) then
+        ! Because this instance is outside the instances=.. field 
+        ! we will mask this instance (because subset picks out
+        ! a portion of a quantity not to mask)
+        !??? Make sure mask bit numbers begin at 1, even when
+        !??? channel numbers don't.
+        call SetMask ( qty%mask(:,instance), &
+          & what=maskBit )
+        ! If this is supposed to be an 'additional' mask, merge in the
+        ! original value
+        if ( additional ) &
+          & qty%mask(:,instance) = char ( ior ( &
+          & ichar ( qty%mask(:,instance) ), ichar ( originalMask ) ) )
+        cycle ! instance
+      end if
+
+      if ( associated(a) ) then
+        call SetMask ( qty%mask(:,instance), &
+          & what=maskBit )
+        ! Find first, last heights at which whereAIsOK is 1
+        firstOK = FindFirst( whereAIsOK%values(:, instance), 1._rv )
+        lastOK  = FindLast ( whereAIsOK%values(:, instance), 1._rv )
+        if ( verbose ) then
+          call outputnamedValue( 'firstOK', firstOK )
+          call outputnamedValue( 'firstOK', firstOK )
+          call outputnamedValue( 'heightRange', heightRange )
+        endif
+        ! Now our interpretation:
+        ! If heightRange is missing, we will unmask only heights
+        ! which are OK
+        ! If 'above', we will unmask all heights above the lowest OK
+        ! If 'below', we will unmask all heights below the highest OK
+        ! These height ranges are set by ss1 and ss2
+        select case (heightRange)
+        case ('above')
+          ss1 = firstOK
+          ss2 = qty%template%noSurfs
+          doOkHeights = .false.
+        case ('below')
+          ss1 = 1
+          ss2 = lastOK
+          doOkHeights = .false.
+        case default
+          ss1 = 1
+          ss2 = qty%template%noSurfs
+          doOkHeights = .true.
+        end select
+        if ( verbose ) then
+          call outputnamedValue( 'ss1', ss1 )
+          call outputnamedValue( 'ss2', ss2 )
+        endif
+        ! If ss1 or ss2 is 0, bail; otherwise unset mask bits
+        if ( ss1 > 0 .and. ss2 > 0 ) then
+          do channel = 1, qty%template%noChans
+            doThisChannel = .true.
+            if ( associated(channels) ) doThisChannel = channels(channel)
+            if ( doThisChannel ) then
+              do height = ss1, ss2
+                !??? Make sure mask bit numbers begin at 1, even when
+                !??? channel numbers don't.
+                if ( doOkHeights ) then
+                  if ( whereAIsOK%values( &
+                    & channel+qty%template%noChans*(height-1), instance&
+                    & ) /= 1._rv ) cycle
+                endif
+                call ClearMask ( qty%mask(:,instance), &
+                  & (/ channel+qty%template%noChans*(height-1) /), &
+                  & what=maskBit )
+              end do                  ! Height loop
+            end if                    ! Do this channel
+          end do                      ! Channel loop
+        endif
+        ! If this is supposed to be an 'additional' mask, merge in the
+        ! original value
+        if ( additional ) &
+          & qty%mask(:,instance) = char ( ior ( &
+          & ichar ( qty%mask(:,instance) ), ichar ( originalMask ) ) )
+        cycle ! instance
+      end if
+
+      if ( associated(rad) ) then
+        do height = 1, qty%template%noSurfs
+          ! Unmask qty where any specified channel in rad is unmasked
+          qty%mask(height,instance) = char(255)
+          do channel = 1, rad%template%noChans
+            if ( ignore .neqv. channels(channel) ) &
+              & qty%mask(height,instance) = char( &
+                & iand( ichar(qty%mask(height,instance)), &
+                      & ichar(rad%mask(channel+rad%template%noChans*(height-1),instance)) ) )
+          end do
+        end do
+        ! If this is supposed to be an 'additional' mask, merge in the
+        ! original value
+        if ( additional ) &
+          & qty%mask(:,instance) = char ( ior ( &
+          & ichar ( qty%mask(:,instance) ), ichar ( originalMask ) ) )
+        cycle ! instance
+      end if
+
+      instanceOr1 = instance
+
+      if ( qty%template%coherent ) then
+        theseHeights => qty%template%surfs(:,1)
+        coordinate = qty%template%verticalCoordinate
+        instanceOr1 = 1
+      else if ( qty%template%minorFrame .and. heightUnit == phyq_pressure ) then
+        if ( ptan%template%instrumentModule /= qty%template%instrumentModule ) &
+          & call AnnounceError ( 0, 'ptan is for wrong module', f_ptanQuantity, &
+          & f_quantity )
+        theseHeights => ptan%values(:,instance)
+        coordinate = l_zeta
+      else
+        theseHeights => qty%template%surfs(:,instance)
+        coordinate = qty%template%verticalCoordinate
+      end if
+
+      ! Now, make sure for the channels we're considering that the
+      ! default is to ignore all, unless we've not got a heights or ignore
+      ! in which case we default to use all
+      ! if ( any ( (/ got(f_height), got(f_surface), ignore /) ) ) then
+      if ( ignore .or. heightNode > 0 .or. surfNode > 0 ) then
+        do channel = 1, qty%template%noChans
+          doThisChannel = .true.
+          if ( associated(channels) ) doThisChannel = channels(channel)
+          if ( doThisChannel ) then
+            do height = 1, qty%template%noSurfs
+              !??? Make sure mask bit numbers begin at 1, even when
+              !??? channel numbers don't.
+              call SetMask ( qty%mask(:,instance), &
+                & (/ channel+qty%template%noChans*(height-1) /), &
+                & what=maskBit )
+            end do                    ! Height loop
+          end if                      ! Do this channel
+        end do                        ! Channel loop
+      else
+        ! If not got heights and/or ignore, default must be 
+        if ( reset ) then
+          do channel = 1, qty%template%noChans
+            doThisChannel = .true.
+            if ( associated(channels) ) doThisChannel = channels(channel)
+            if ( doThisChannel ) then
+              do height = 1, qty%template%noSurfs
+                !??? Make sure mask bit numbers begin at 1, even when
+                !??? channel numbers don't.
+                call ClearMask ( qty%mask(:,instance), &
+                  & (/ channel+qty%template%noChans*(height-1) /), &
+                  & what=maskBit )
+              end do                  ! Height loop
+            end if                    ! Do this channel
+          end do                      ! Channel loop
+        end if                        ! Reset specified
+      end if                          ! Got heights or ignore
+
+      ! Now go and `unmask' the ones we want to consider.  For coherent
+      ! quantities we can simply loop over the indices of each height range.
+      ! For incoherent ones we have to go through and mark each point
+      ! appropriately.
+      if ( heightNode > 0 .or. surfNode > 0 ) then
+        if ( heightNode > 0 ) then
+          node = heightNode
+        else
+          node = surfNode
+        end if
+        do j = 2, nsons(node)
+          son = subtree ( j, node )
+          rangeId = node_id ( son )
+          if ( heightNode > 0 ) then
+            ! Get values for this range
+            call expr ( son, units, value )
+            if ( DEEBUG ) call outputNamedValue( 'value', value(1) )
+            ! Now maybe do something nasty to value to get in right units.
+            if ( coordinate == l_zeta .and. heightUnit == phyq_pressure ) then
+              value = -log10(value)
+            else
+              if ( coordinate /= qty%template%verticalCoordinate ) &
+                & call AnnounceError ( son, 'vert. coord. wrong for template', f_height )
+            end if
+            if ( DEEBUG ) call outputNamedValue( '-log10(value)', value(1) )
+
+            ! Do special things for coherent quantities
+            if ( qty%template%coherent ) then
+              if ( coordinate == l_pressure ) then
+                s1 = minloc ( abs ( -log10(theseHeights) + log10(value(1)) ) )
+                s2 = minloc ( abs ( -log10(theseHeights) + log10(value(2)) ) )
+              else
+                s1 = minloc ( abs ( theseHeights - value(1) ) )
+                s2 = minloc ( abs ( theseHeights - value(2) ) )
+              end if
+              ! Did we try heightRange mechanism?
+              select case ( heightRange )
+              case ( 'above' )
+                if ( theseHeights(s1(1)) < value(1) ) s1 = s1 + 1
+              case ( 'below' )
+                if ( theseHeights(s2(1)) > value(2) ) s2 = s2 - 1
+              end select
+            end if
+          else
+            ! Subset by surface (i.e. MIF) instead, much easier
+            call expr ( son, units, value )
+            if ( .not. all ( units == phyq_dimensionless .or. units == phyq_mifs ) ) &
+              & call AnnounceError ( son, 'surface must be MIFs', f_surface )
+            s1(1) = max ( min ( value(1), real(qty%template%noSurfs, r8) ), 1._r8 )
+            s2(1) = max ( min ( value(2), real(qty%template%noSurfs, r8) ), 1._r8 )
+          end if
+          ! Now consider the open range issue
+          select case ( rangeId )
+          case ( n_colon_less )
+            s1 = min ( s1 + 1, qty%template%noSurfs )
+          case ( n_less_colon )
+            s2 = max ( s2 - 1, 1 )
+          case ( n_less_colon_less )
+            s1 = min ( s1 + 1, qty%template%noSurfs )
+            s2 = max ( s2 - 1, 1 )
+          end select
+          ! Did we try heightRange mechanism?
+          select case ( heightRange )
+          case ( 'above' )
+            s2 = qty%template%noSurfs
+          case ( 'below' )
+            s2 = s1
+            s1 = 1
+          end select
+          if ( DEEBUG ) then
+            call outputNamedValue( 's1', s1(1) )
+            call outputNamedValue( 's2', s2(1) )
+          endif
+          
+          scanDirection = 0
+          do channel = 1, qty%template%noChans
+            doThisChannel = .true.
+            if ( associated(channels) ) doThisChannel = channels(channel)
+            if ( doThisChannel ) then
+
+              ! Think about optical depth.  We want the cutoff to apply once
+              ! and definitively, not have channels come in and out of use as
+              ! a function of tangent height.  To do this we need to work out
+              ! where we 'first' go optically thick. To do this we need to
+              ! work out whether we're scanning up or down.
+              if ( associated ( opticalDepth ) ) then
+                ! Don't bother deducing direction if we alredy know
+                if ( scanDirection == 0 ) then
+                  ind = qty%template%noChans + channel
+                  do height = 2, qty%template%noSurfs
+                    scanDirection = scanDirection + merge ( 1, -1, &
+                      & opticalDepth%template%surfs(height,instanceOr1) > &
+                      & opticalDepth%template%surfs(height-1,instanceOr1) )
+                  end do
+                  ! Now convert it to +/-1.
+                  if ( scanDirection == 0 ) scanDirection = 1 ! Default upscan
+                  scanDirection = scanDirection / abs(scanDirection) 
+                end if
+                ! Now find `first' optically thick radiance look down from top
+                if ( scanDirection == 1 ) then ! Scanning up
+                  ind = qty%template%noChans*(qty%template%noSurfs-1) + channel
+                  do odCutoffHeight = qty%template%noSurfs, 1, - 1 
+                    if ( opticalDepth%values ( ind, instance ) > &
+                      & opticalDepthCutoff ) exit
+                    ind = ind - qty%template%noChans
+                  end do
+                else ! else scanning down
+                  ind = channel ! qty%template%noChans + channel
+                  do odCutoffHeight = 1, qty%template%noSurfs
+                    if ( opticalDepth%values ( ind, instance ) > &
+                      & opticalDepthCutoff ) exit
+                    ind = ind + qty%template%noChans
+                  end do
+                end if
+              end if
+
+              if ( qty%template%coherent .or. surfNode > 0 ) then
+                ! For coherent quantities and/or specified surfaces simply do a loop over a range.
+                do height = s1(1), s2(1)
+                  !??? Make sure mask bit numbers begin at 1, even when
+                  !??? channel numbers don't.
+                  ind = channel + qty%template%noChans*(height-1)
+                  doThisHeight = .true.
+                  if ( got(f_minValue) ) doThisHeight = doThisHeight .and. &
+                    & qty%values( ind, instance ) > minValue
+                  if ( got(f_maxValue) ) doThisHeight = doThisHeight .and. &
+                    & qty%values( ind, instance ) < maxValue
+                  if ( got(f_missingValue) ) doThisHeight = doThisHeight .and. &
+                    & qty%values( ind, instance ) == missingValue
+                  if ( doThisHeight ) then
+                    if ( associated( opticalDepth ) ) then
+                      if ( scanDirection * ( height - odCutoffHeight ) > 0 ) &
+                        & call ClearMask ( qty%mask(:,instance), (/ind/), what=maskBit )
+                    else
+                      call ClearMask ( qty%mask(:,instance), (/ind/), what=maskBit )
+                    end if
+                  end if
+                end do                ! Height loop
+              else
+                ! For Incoherent quantities check each height individually
+                ! We might as well consider open and non open ranges, but
+                ! it's really rather unnecessary, as the chance of a ptan
+                ! being exactly equal to the range given is remote, and the
+                ! difference probably doesn't matter anyway.
+                do height = 1, qty%template%noSurfs
+                  ind = channel + qty%template%noChans*(height-1)
+                  doThisHeight = .true.
+                  if (any(rangeID==(/ n_less_colon,n_less_colon_less /))) then
+                    doThisHeight = doThisHeight .and. theseHeights(height) > value(1)
+                  else
+                    doThisHeight = doThisHeight .and. theseHeights(height) >= value(1)
+                  end if
+                  if (any(rangeID==(/ n_colon_less,n_less_colon_less /))) then
+                    doThisHeight = doThisHeight .and. theseHeights(height) < value(2)
+                  else
+                    doThisHeight = doThisHeight .and. theseHeights(height) <= value(2)
+                  end if
+                  if ( associated ( opticalDepth ) ) then
+                    doThisHeight = doThisHeight .and. &
+                      & scanDirection * ( height - odCutoffHeight ) > 0
+                  end if
+                  if ( got(f_minValue) ) doThisHeight = doThisHeight .and. &
+                    & qty%values( ind, instance ) > minValue
+                  if ( got(f_maxValue) ) doThisHeight = doThisHeight .and. &
+                    & qty%values( ind, instance ) < maxValue
+                  if ( got(f_missingValue) ) doThisHeight = doThisHeight .and. &
+                    & qty%values( ind, instance ) == missingValue
+                  if ( doThisHeight ) call ClearMask ( qty%mask(:,instance), &
+                    & (/ ind /), what=maskBit )
+                end do                ! Height loop
+              end if                  ! Coherent
+            end if                    ! Do this channel
+          end do                      ! Channel loop
+        end do                        ! Height entries in l2cf
+      end if                          ! Got a height entry
+
+      ! If the reverse flag is set, reverse the mask
+      if ( reverse ) &
+        & call ReverseMask( qty%mask(:,instance), what=maskBit )
+
+      ! If this is supposed to be an 'additional' mask, merge in the
+      ! original value
+      if ( additional ) &
+        & qty%mask(:,instance) = char ( ior ( &
+        & ichar ( qty%mask(:,instance) ), ichar ( originalMask ) ) )
+    end do                            ! Instance loop
+
+    ! Tidy up
+    call Deallocate_test ( channels, 'channels', ModuleName )
+    call Deallocate_test ( dothisInstance, 'dothisInstance', ModuleName )
+    if ( additional ) call Deallocate_test ( originalMask, &
+      & 'originalMask', ModuleName )
+          
+  end subroutine ApplyMaskToQuantity
+
+  ! -------------------------------------------------- RestrictRange ---
+  ! This looks like it might be a nice operation. 
+  ! However it comes without documentation, so who knows
+  ! what it does or whether it works properly?
+
+  ! So be warned--
+  ! d o c u m e n t   y o u r   c o d e
+  subroutine RestrictRange ( key, vectors )
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+    use Expr_M, only: Expr
+    use VectorsModule, only: M_Linalg, Vector_T, Vectorvalue_T, &
+      & CreateMask, GetVectorQtyByTemplateIndex, GetVectorQuantityByType, &
+      & SetMask
+    use Init_Tables_Module, only: F_Quantity, F_Ptanquantity, F_Basisfraction, &
+      & F_Minchannels, F_Signals, F_Measurements, F_Mask
+    use Init_Tables_Module, only: L_Zeta, L_Radiance
+    use ManipulateVectorQuantities, only: FindOneClosestInstance
+    use MLSKinds, only: R8
+    use MLSNumerics, only: Hunt
+    use MLSSignals_M, only: Signal_T
+    use MoreTree, only: Get_Field_Id
+    use Parse_Signal_M, only: Expand_Signal_List
+    use Tree, only: Nsons, Subtree, Decoration
+
+    ! Dummy arguments
+    integer, intent(in) :: KEY          ! Tree node
+    type (Vector_T), dimension(:), intent(inout), target :: VECTORS
+
+    ! Local variables
+
+    integer :: CHANNEL                  ! Loop counter / channel index
+    integer :: FIELD                    ! ID for field in l2cf line
+    integer :: GSON                     ! Tree node
+    integer :: INDEX                    ! Loop counter
+    integer :: INDEX0                   ! Array index
+    integer :: INDEX1                   ! Array index
+    integer :: INSTANCE                 ! Instance index
+    integer :: J                        ! Loop counter
+    integer :: MAF                      ! Major frame index
+    integer :: MASK                     ! Bits to mask
+    integer :: MEASQTY                  ! Loop counter
+    integer :: MINCHANNELS              ! Value of argument of same name
+    integer :: NOGOODMIFS               ! How many MIFs meet our criteria for one chan
+    integer :: NOINSTANCES              ! Number of instances
+    integer :: NOMAFS                   ! Number of major frames
+    integer :: NOMEASUREMENTS           ! Number of relevant measurements
+    integer :: NOMIFS                   ! Number of minor frames
+    integer :: NOVALIDCHANNELS          ! How many channels meet our criteria
+    integer :: QUANTITYINDEX            ! Index in database, not vector
+    integer :: SON                      ! Tree node
+    integer :: SURF                     ! Loop counter
+    integer :: VECTORINDEX              ! Vector index for quantity
+
+    integer, dimension(2) :: EXPRUNIT   ! Units for expression
+    integer, dimension(:), pointer :: MAFSFORINSTANCE ! Which maf relevant for each inst.
+    integer, dimension(:), pointer :: MEASQTYINDS ! Indices
+    integer, dimension(:), pointer :: MIFPOINTINGS ! Which basis for each mif?
+
+    logical :: ERRORFLAG                ! Set if problem
+    logical :: FOUNDONE                 ! Flag for instance identification
+
+    character(len=1), dimension(:), pointer :: MIFMASKS ! Part of rad%mask
+
+    real(r8) :: BASISFRACTION           ! Value of argument of same name
+    real(r8), dimension(2) :: EXPRVALUE ! Vaue for expression
+    real(r8), dimension(:), pointer :: SURFS ! Surfaces for quantity
+
+    type (Signal_T), dimension(:), pointer :: SIGNALS
+    type (VectorValue_T), pointer :: PTAN ! The ptan quantity
+    type (VectorValue_T), pointer :: QTY ! The quantity to subset
+    type (VectorValue_T), pointer :: RAD ! A radiance quantity
+    type (Vector_T), pointer :: MEASUREMENTS ! Measurement vector
+
+    ! Executable code
+    nullify ( signals )
+    ! Setup defaults
+    basisFraction = 0.5
+    minChannels = 1
+    mask = m_linAlg
+    ! Loop over arguments to this l2cf command
+    do j = 2, nsons ( key )
+      son = subtree ( j, key )
+      field = get_field_id ( son )
+      if ( nsons ( son )  > 1 ) gson = subtree ( 2, son )
+      select case ( field )
+      case ( f_quantity )
+        vectorIndex = decoration(decoration(subtree(1,gson)))
+        quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+        qty => GetVectorQtyByTemplateIndex ( vectors(vectorIndex), quantityIndex )
+      case ( f_ptanQuantity )
+        vectorIndex = decoration(decoration(subtree(1,gson)))
+        quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+        ptan => GetVectorQtyByTemplateIndex ( vectors(vectorIndex), quantityIndex )
+      case ( f_minChannels )
+        call expr ( gson, exprUnit, exprValue )
+        minChannels = nint ( exprValue(1) )
+      case ( f_basisFraction )
+        call expr ( gson, exprUnit, exprValue )
+        basisFraction = exprValue(1)
+      case ( f_measurements )
+        vectorIndex = decoration(decoration(gson))
+        measurements => vectors ( vectorIndex )
+      case ( f_signals )
+        call Expand_Signal_List ( son, signals, errorFlag )
+        if ( errorFlag ) call AnnounceError ( key, 'Bad signal spec.' )
+      case ( f_mask )
+        mask = GetMaskBit ( son )
+      end select
+    end do
+    ! The parser has ensured that we 'got' all the fields we required,
+    ! and we supplied defaults for the rest, so we're ready to go now.
+    ! Some quick error checking
+    if ( qty%template%verticalCoordinate /= l_zeta ) &
+      & call AnnounceError ( key, 'Quantity is not on log pressure surfaces' )
+    if ( .not. associated ( qty%mask ) ) call CreateMask ( qty )
+
+    ! Identify all the measurement quantities we'll be using
+    noMeasurements = size(signals)
+    nullify ( measQtyInds )
+    call Allocate_test ( measQtyInds, noMeasurements, 'measQtyInds', ModuleName )
+    do measQty = 1, noMeasurements
+      rad => GetVectorQuantityByType ( measurements, quantityType=l_radiance, &
+        & signal=signals(measQty)%index, sideband=signals(measQty)%sideband )
+      if ( rad%template%instrumentModule /= ptan%template%instrumentModule ) &
+        & call AnnounceError ( key, 'Ptan/radiance not from the same module' )
+      measQtyInds(measQty) = rad%index
+    end do
+
+    ! Now identify the relevant MAFs for each profile of our quantity
+    ! This kind of involves running FindOneClosestInstance backwards
+    noInstances = qty%template%noInstances
+    noMAFS = ptan%template%noInstances
+    nullify ( mafsForInstance )
+    call Allocate_test ( mafsForInstance, noInstances, 'mafsForInstance', ModuleName )
+    mafsForInstance = 0
+    do maf = 1, noMAFs
+      instance = FindOneClosestInstance ( qty, ptan, maf )
+      mafsForInstance ( instance ) = maf
+    enddo
+    ! Deal with any we missed (probably at the ends)
+    foundOne = .false.
+    do instance = 1, noInstances
+      if ( mafsForInstance ( instance ) /= 0 ) then
+        foundOne = .true.
+      else
+        if ( foundOne ) then
+          ! OK, make this gap contain the previous value,
+          ! we know instance>1 here.
+          mafsForInstance ( instance ) = mafsForInstance ( instance - 1 )
+        else
+          ! OK, still not seen on, make this use the first maf
+          mafsForInstance ( instance ) = 1
+        end if
+      end if
+    end do
+
+    ! Setup some more arrrays
+    nullify ( mifPointings )
+    call Allocate_test ( mifPointings, ptan%template%noSurfs, &
+      & 'mifPointings', ModuleName )
+
+    ! Now we get down to the main work, we'll go through this instance by instance
+    do instance = 1, noInstances
+      maf = MAFsForInstance ( instance )
+      if ( qty%template%coherent ) then
+        surfs => qty%template%surfs ( :, 1 )
+      else
+        surfs => qty%template%surfs ( :, instance )
+      end if
+      ! Work out where each MIF points
+      call Hunt ( surfs, ptan%values(:,maf), mifPointings, allowTopValue=.true. )
+      ! Go through each surface/channel in the quantity and work out whether
+      ! We're going to use it.
+      surfLoop: do surf = 1, qty%template%noSurfs
+        index0 = ( surf-1 ) * qty%template%noChans + 1
+        index1 = index0 + qty%template%noChans - 1
+        ! If were retrieving data for any 'channel' at this surface
+        ! think about changing our minds, otherwise don't bother.
+        if ( any ( iand ( ichar(qty%mask(index0:index1,instance)), &
+          & m_linAlg ) == 0 ) ) then
+          ! How many MIFs total above this surface?
+          noMIFs = count ( mifPointings == surf )
+          ! Now, how many channels have enough good channels (i.e. enough channels
+          ! with more valid MIFs in this basis range than goodMIFs*basisFraction)
+          noValidChannels = 0
+          do measQty = 1, noMeasurements
+            rad => measurements%quantities ( measQtyInds ( measQty ) )
+            if ( associated ( rad%mask ) ) then
+              channelLoop: do channel = 1, rad%template%noChans
+                if ( .not. signals(measQty)%channels(channel) ) cycle channelLoop
+                ! Point to the relevant masks for this radiance channel only
+                mifMasks => rad%mask ( channel : rad%template%instanceLen : &
+                  & rad%template%noChans, instance )
+                noGoodMIFs = count ( mifPointings == surf .and. &
+                  & iand( ichar(mifMasks), m_linAlg ) == 0 )
+                if ( (1.0*noGoodMIFs)/noMIFs > basisFraction ) &
+                  & noValidChannels = noValidChannels + 1
+              end do channelLoop
+            else
+              noValidChannels = noValidChannels + 1
+            end if
+          end do ! Signal loop
+          if ( noValidChannels < minChannels ) then
+            ! We don't have enough information to retrieve this value,
+            ! So mark it as not to be retrieved (or whatever bits have been supplied)
+            do index = index0, index1
+              call SetMask ( qty%mask(:,instance), (/ index /), what=mask )
+            end do
+          else
+            ! We can retrieve this surface.  Not only that, I want this code
+            ! to only consider the 'bottom' limit case, above that I don't
+            ! want it to bother, so I'm going to escape from the surface loop here
+            exit surfLoop
+          end if                        ! Is this surface ok?
+        end if                          ! Was planning to retrieve here
+      end do surfLoop                   ! Surface loop
+    end do                              ! Instance loop
+
+    call Deallocate_test ( mifPointings, 'mifPointings', ModuleName )
+    call Deallocate_test ( MAFsForInstance, 'MAFsForInstance', ModuleName )
+    call Deallocate_test ( measQtyInds, 'measQtyInds', ModuleName )
+  end subroutine RestrictRange
+
+  ! -------------------------------------------------- SetupSubset ---
+  ! (Documented in wiki)
+  ! Called in response to Subset command. Process all its fields and
+  ! set quantity mask.
+  ! Mask setting business moved from here to workhorse subroutine.
+  subroutine SetupSubset ( key, vectors )
+
+    use Expr_M, only: Expr
+    use Init_Tables_Module, only: Field_First, Field_Last
+    use Init_Tables_Module, only: F_A, F_Additional, F_Channels, F_ExpandMask, &
+      & F_Height, F_HeightRange, &
+      & F_Ignore, F_Instances, &
+      & F_Mask, F_MaxValue, F_MinValue, F_MissingValue, F_OpticalDepth, &
+      & F_OpticalDepthCutoff, F_PTanQuantity, F_Quantity, F_RadianceQuantity, &
+      & F_Reset, F_ResetAll, F_Reverse, F_SourceQuantity, F_Surface, F_Where
+    use Init_Tables_Module, only: L_OpticalDepth, &
+      & L_Radiance
+    use Intrinsic, only: Phyq_Dimensionless, Phyq_Invalid
+    use MLSKinds, only: R8
+    use MLSStringlists, only: SwitchDetail
+    use MoreTree, only: Get_Field_Id, Get_Boolean
+    use Output_M, only: Output
+    use String_Table, only: Display_String, Get_String
+    use Toggles, only: Switches
+    use Tree, only: Nsons, Sub_Rosa, Subtree, Decoration
+    use VectorsModule, only: M_Linalg, Vector_T, VectorValue_T, &
+      & CreateMask, DestroyVectorQuantityMask, DumpMask, &
+      & GetVectorQtyByTemplateIndex
+
+    integer, intent(in) :: KEY        ! Tree node
+    type (Vector_T), dimension(:) :: VECTORS
+
+    ! Local variables
+    integer :: CHANNELSNODE           ! Tree node for channels values
+    integer :: FIELD                  ! Field type from tree
+    integer :: GSON                   ! Tree node
+    integer :: HEIGHTNODE             ! Tree node for height values
+    character(len=8) :: HEIGHTRANGE   ! 'above', 'below', or ' '
+    integer :: J                      ! Subscripts, loop inductors
+    integer :: INSTANCESNODE          ! Tree node for instance values
+    integer :: MAINVECTORINDEX        ! Vector index of quantity to subset
+    integer :: MANIPULATION
+    integer :: MASKBIT                ! Bits corresponding to Mask
+    integer :: MAXUNIT                ! Units for maxValue
+    integer :: MINUNIT                ! Units for minValue
+    integer :: QUANTITYINDEX          ! Index
+    integer :: SON                    ! Tree node
+    integer :: SURFNODE               ! Tree node
+    integer :: TESTUNIT               ! Either vector%globalUnit or qty tmplt unit
+    integer :: UNITS(2)               ! Units returned by expr
+    integer :: VECTORINDEX            ! Index
+    integer :: WHERERANGE             ! E.g., 'a > 100'
+
+    real(r8) :: VALUE(2)              ! Value returned by expr
+    real(r8) :: OPTICALDEPTHCUTOFF    ! Maximum value of optical depth to allow
+    real(r8) :: MAXVALUE              ! Cutoff ranges
+    real(r8) :: MINVALUE              ! Cutoff ranges
+    real(r8) :: MISSINGVALUE              ! Cutoff ranges
+    type (VectorValue_T), pointer :: A  ! The a of the 'where' field if needed
+    type (VectorValue_T), pointer :: OPTICALDEPTH ! The opticalDepth quantity if needed
+    type (VectorValue_T), pointer :: PTAN ! The ptan quantity if needed
+    type (VectorValue_T), pointer :: QTY  ! The quantity to mask
+    type (VectorValue_T), pointer :: RAD  ! The quantity to mask
+    type (VectorValue_T), pointer :: SOURCE  ! The sourceQty of mask if needed
+    logical :: Got(field_first:field_last)   ! "Got this field already"
+    logical :: IGNORE                 ! Flag
+    logical :: RESET                  ! Flag
+    logical :: RESETAll               ! Flag
+    logical :: ADDITIONAL             ! Flag
+    logical :: ExpandMask             ! Flag
+    logical :: REVERSE                ! Flag
+
+    ! Executable code
+    nullify ( a, qty, ptan, opticalDepth, rad, source )
+    got = .false.
+    instancesNode = 0
+    heightNode = 0
+    heightRange = ' '
+    surfNode = 0
+    channelsNode = 0
+    maxValue = -999.99
+    minValue = -999.99
+    missingValue = -999.99
+    opticalDepthCutoff = -999.99
+    ignore = .false.
+    reset = .false.
+    resetAll = .false.
+    additional = .false.
+    ExpandMask = .false.
+    reverse = .false.
+    maskBit = m_linalg
+    minUnit = 0
+    maxUnit = 0
+    whereRange = 0
+    do j = 2, nsons(key) ! fields of the "subset" specification
+      son = subtree(j, key)
+      field = get_field_id(son)   ! tree_checker prevents duplicates
+      if (nsons(son) > 1 ) gson = subtree(2,son) ! Gson is value
+      select case ( field )
+      case ( f_a )
+        vectorIndex = decoration(decoration(subtree(1,gson)))
+        quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+        a => GetVectorQtyByTemplateIndex(vectors(vectorIndeX), quantityIndex)
+      case ( f_quantity )
+        mainVectorIndex = decoration(decoration(subtree(1,gson)))
+        quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+        qty => GetVectorQtyByTemplateIndex(vectors(mainVectorIndex), quantityIndex)
+      case ( f_ptanquantity )
+        vectorIndex = decoration(decoration(subtree(1,gson)))
+        quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+        ptan => GetVectorQtyByTemplateIndex(vectors(vectorIndeX), quantityIndex)
+      case ( f_radiancequantity )
+        vectorIndex = decoration(decoration(subtree(1,gson)))
+        quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+        rad => GetVectorQtyByTemplateIndex(vectors(vectorIndeX), quantityIndex)
+      case ( f_sourcequantity )
+        vectorIndex = decoration(decoration(subtree(1,gson)))
+        quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+        source => GetVectorQtyByTemplateIndex(vectors(vectorIndeX), quantityIndex)
+      case ( f_channels )
+        channelsNode = son
+      case ( f_height )
+        heightNode = son
+      case ( f_heightRange )
+        manipulation = sub_rosa ( gson )
+        heightRange = ' '
+        ! If heightRange field was present, it should have been one of
+        ! 'a[bove]' meaning fill heights above supplied value
+        ! 'b[elow]' meaning fill heights below supplied value
+        call get_string ( manipulation, heightRange, strip=.true. )
+        select case ( heightRange(1:1) )
+        case ( 'a' )
+          heightRange = 'above'
+        case ( 'b' )
+          heightRange = 'below'
+        case ( ' ' )
+          heightRange = ' '
+        case default
+          call AnnounceError ( key, &
+            & 'invalid heightRange: ' // trim(heightRange) )
+        end select
+      case ( f_instances )
+        instancesNode = son
+      case ( f_mask )
+        if ( .not. got(f_mask) ) maskBit = 0 ! clear default first time
+        maskBit = GetMaskBit ( son )
+      case ( f_opticalDepth )
+        vectorIndex = decoration(decoration(subtree(1,gson)))
+        quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+        opticalDepth => GetVectorQtyByTemplateIndex(vectors(vectorIndeX), quantityIndex)
+      case ( f_opticalDepthCutoff )
+        call expr ( subtree (2, son), units, value )
+        if ( units(1) /= phyq_dimensionless ) &
+          & call announceError ( subtree (2, son), WrongUnits, &
+          & f_opticalDepthCutoff )
+        opticalDepthCutoff = value(1)
+      case ( f_maxValue )
+        call expr ( subtree (2, son), units, value )
+        maxUnit = units(1)
+        maxValue = value(1)
+      case ( f_minValue )
+        call expr ( subtree (2, son), units, value )
+        minUnit = units(1)
+        minValue = value(1)
+      case ( f_missingValue )
+        call expr ( subtree (2, son), units, value )
+        missingValue = value(1)
+      case ( f_ignore )
+        ignore = Get_Boolean ( son )
+      case ( f_reset )
+        reset = Get_Boolean ( son )
+      case ( f_resetAll )
+        resetAll = Get_Boolean ( son )
+      case ( f_surface )
+        surfNode = son
+      case ( f_additional )
+        additional = Get_Boolean ( son )
+      case ( f_ExpandMask )
+        ExpandMask = Get_Boolean ( son )
+      case ( f_reverse )
+        reverse = Get_Boolean ( son )
+      case ( f_where )
+        whereRange = sub_rosa ( gson )
+      case default
+        ! Shouldn't get here if the type checker worked
+      end select
+      got(field) = .true.
+    end do ! j = 2, nsons(key)
+
+    ! SourceQuantity:
+    ! Just copy the mask, if any, from the source
+    if ( got(f_sourceQuantity) ) then
+      if ( .not. associated( qty%mask ) ) call CreateMask ( qty )
+      if ( .not. associated( source%mask ) ) then
+        call destroyVectorQuantityMask ( qty )
+        return
+      endif
+      qty%mask = source%mask
+      return
+    endif
+    if ( got(f_radianceQuantity) ) then
+      if ( rad%template%quantityType /= l_radiance ) &
+        & call AnnounceError ( key, &
+        & 'RadianceQuantity field is not a radiance quantity' )
+      if ( any(got((/ f_height, f_mask, f_maxvalue, &
+        & f_minvalue, f_opticaldepth, f_opticaldepthcutoff, f_ptanquantity, &
+        & f_reset, f_reverse, f_surface /)))) call AnnounceError ( key, &
+          & 'Subset from radiance allows only ' // &
+          & 'additional, channel, ignore, and instances fields' )
+      if ( .not. qty%template%minorFrame ) call AnnounceError ( key, &
+        & 'Can only mask minor frame quantities from radiance' )
+      if ( qty%template%noChans > 1 ) call AnnounceError ( key, &
+        & 'Can only mask channel-independent quantities from radiance' )
+      if ( ignore .and. .not. got(f_channels) ) call AnnounceError ( key, &
+        & 'Specifying "ignore" without "channels" turns everything off!' )
+    else
+      ! Do some error checking for the optical depth issues
+      if ( any(got((/ f_opticalDepth, f_opticalDepthCutoff /))) ) then
+        if ( .not. all(got((/ f_opticalDepth, f_opticalDepthCutoff /))) ) &
+          & call AnnounceError ( key, &
+          & 'Must supply both opticalDepth and opticalDepthCutoff' )
+        if ( qty%template%quantityType /= l_radiance .or. &
+          &  opticalDepth%template%quantityType /= l_opticalDepth ) &
+          & call AnnounceError ( key, 'Supplied quantity is not optical depth' )
+        if ( qty%template%signal /= opticalDepth%template%signal .or. &
+          &  qty%template%sideband /= opticalDepth%template%sideband ) &
+          & call AnnounceError ( key, &
+          & 'Optical depth does not match subsetted quantity' )
+      end if
+      ! Check for exactly one of height, ignore, instances, reset, surface
+      if ( count ( got ( &
+        & (/ f_height, f_ignore, f_instances, &
+        & f_reset, f_resetAll, f_surface, f_where /) &
+        & ) ) /= 1 ) &
+          & call announceError ( key, &
+            & 'Subset must be exactly one of height, ignore, instances, ' // &
+            & 'surface, where or reset' )
+    end if
+
+    if ( vectors(mainVectorIndex)%globalUnit /= phyq_invalid ) then
+      testUnit = vectors(mainVectorIndex)%globalUnit
+    else
+      testUnit = qty%template%unit
+    end if
+    if ( got ( f_minValue ) .and. ( minUnit /= testUnit ) ) &
+      & call AnnounceError ( key, WrongUnits, f_minValue )
+    if ( got ( f_maxValue ) .and. ( maxUnit /= testUnit ) ) &
+      & call AnnounceError ( key, WrongUnits, f_maxValue )
+
+    if ( resetAll ) then
+      ! Simply Deallocatee the quantity's Mask
+      call DestroyVectorQuantityMask ( qty, 'SetUpSubset' )
+    else
+      ! Pass all the field nodes to the workhorse subroutine
+      ! Let it set the mask
+      call ApplyMaskToQuantity( qty, rad, ptan, opticalDepth, a, &
+        & opticalDepthCutoff, maxvalue, minValue, missingValue, &
+        & heightRange, whereRange, &
+        & ignore, reverse, additional, expandMask, reset, &
+        & maskBit, heightNode, surfNode, instancesNode, channelsNode, got )
+    endif
+
+    if ( switchDetail(switches,'msk') > -1 ) then
+      call output ( 'Dumping mask' )
+      if ( qty%template%name /= 0 ) then
+        call output ( ' for quantity ' )
+        call display_string ( qty%template%name )
+      end if
+      call output ( '', advance='yes' )
+      call DumpMask ( qty )
+    end if
+  end subroutine SetupSubset
+
+  ! -------------------------------------------------- FlagCloud ---
+  ! (Documented in wiki)
+  ! Process flagCloud command. Set quantity mask if cloud contaminated.
+  ! m_cloud is the default if no maskbit is given
+
+  subroutine SetupFlagCloud ( key, vectors )
+    
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+    use Expr_M, only: Expr, Getindexflagsfromlist
+    use Init_Tables_Module, only: Field_First, Field_Last
+    use Init_Tables_Module, only: F_Quantity, F_Ptanquantity, &
+      & F_Height, F_Cloudheight, F_Channels, F_Cloudchannels, F_Cloudradiance, &
+      & F_Cloudradiancecutoff, F_Mask
+    use Init_Tables_Module, only: L_Radiance, L_Cloudinducedradiance
+    use Intrinsic, only: Phyq_Dimensionless, Phyq_Pressure
+    use MLSKinds, only: R8
+    use Moretree, only: Get_Field_Id
+    use VectorsModule, only: CreateMask, &
+      & GetVectorQtyByTemplateIndex, SetMask, VectorValue_T, Vector_T, &
+      & M_Cloud
+    use Tree, only: Nsons, Subtree, Decoration
+
+    integer, intent(in) :: KEY        ! Tree node
+    type (Vector_T), dimension(:) :: VECTORS
+
+    ! Local variables
+    integer :: CHANNEL                ! Loop index
+    integer :: CHANNELSNODE           ! Tree node for channels values
+    integer :: FIELD                  ! Field type from tree
+    integer :: GSON                   ! Tree node
+    integer :: HEIGHT                 ! Loop counter
+    integer :: HEIGHT1                 ! Loop counter
+    integer :: CLOUDHEIGHTNODE             ! Tree node for cloudheight values
+    integer :: HEIGHTNODE             ! Tree node for height values
+    integer :: CLOUDHEIGHTUNIT             ! Unit for cloudheights command
+    integer :: HEIGHTUNIT             ! Unit for heights command
+    integer :: IND,IND1,J, I          ! Aarray indices
+    integer :: INSTANCE               ! Loop counter
+    integer :: MaskBit                ! Bits corresponding to Mask
+    integer :: QUANTITYINDEX          ! Index
+    integer :: SON                    ! Tree node
+    integer :: STATUS                 ! Flag
+    integer :: UNITS(2)               ! Units returned by expr
+    integer :: VECTORINDEX            ! Index
+    integer :: USETHISCHANNEL         ! cloud radiance channel
+
+    real(r8), dimension(:), pointer :: THESEHEIGHTS ! Subset of heights
+    real(r8) :: VALUE(2)              ! Value returned by expr
+    real(r8) :: HeightVALUE(2)              ! Value returned by height expr
+    real(r8) :: CHeightVALUE(2)              ! Value returned by cloudHeight expr
+    real(r8) :: cloudRadianceCutOff              ! threshold for flagging cloud
+    type (VectorValue_T), pointer :: QTY ! The quantity to mask
+    type (VectorValue_T), pointer :: PTAN ! The ptan quantity if needed
+    type (VectorValue_T), pointer :: cloudRadiance ! cloud radiances
+
+    logical :: Got(field_first:field_last)   ! "Got this field already"
+    logical, dimension(:), pointer :: CHANNELS ! Are we dealing with these channels
+    logical :: DOTHISCLOUDHEIGHT           ! Flag
+    logical :: DOTHISHEIGHT           ! Flag
+    logical :: DOTHISCHANNEL          ! Flag
+    logical :: ISCLOUD                ! Flag
+
+    ! Executable code
+    nullify ( channels, qty, ptan, cloudRadiance )
+    got = .false.
+    maskBit = m_cloud
+
+    do j = 2, nsons(key) ! fields of the "Flagcloud" specification
+      son = subtree(j, key)
+      field = get_field_id(son)   ! tree_checker prevents duplicates
+      if (nsons(son) > 1 ) gson = subtree(2,son) ! Gson is value
+      select case ( field )
+      case ( f_quantity )
+        vectorIndex = decoration(decoration(subtree(1,gson)))
+        quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+        qty => GetVectorQtyByTemplateIndex(vectors(vectorIndeX), quantityIndex)
+      case ( f_ptanquantity )
+        vectorIndex = decoration(decoration(subtree(1,gson)))
+        quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+        ptan => GetVectorQtyByTemplateIndex(vectors(vectorIndeX), quantityIndex)
+      case ( f_height )
+        heightNode = son
+      case ( f_cloudHeight )
+        cloudHeightNode = son
+      case ( f_channels )
+        channelsNode = son
+      case ( f_cloudChannels )
+        if ( nsons(son) /= 2 ) call AnnounceError ( key, &
+          & 'Too many cloudChannels' )
+        call expr ( subtree(2,son), units, value )
+        useThisChannel = nint ( value(1) )
+      case ( f_cloudRadiance )
+        vectorIndex = decoration(decoration(subtree(1,gson)))
+        quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+        cloudRadiance => GetVectorQtyByTemplateIndex(vectors(vectorIndeX), quantityIndex)
+      case ( f_cloudRadianceCutoff )
+        call expr ( subtree (2, son), units, Value )
+        cloudRadianceCutoff = value(1)
+      case ( f_mask )
+        maskBit = GetMaskBit ( son )
+      case default
+        ! Shouldn't get here if the type checker worked
+      end select
+      got(field) = .true.
+    end do ! j = 2, nsons(key)
+
+    ! Quantity must be radiance
+    if ( (.not. any(qty%template%quantityType==(/ l_radiance,l_cloudinducedradiance /))) &
+      & .or. (cloudRadiance%template%quantityType /= l_cloudInducedRadiance &
+      & .and. cloudRadiance%template%quantityType /= l_radiance)) &
+      & call AnnounceError ( key, 'You supplied the wrong quantities to flagCloud' )
+
+    if( got(f_channels)) then
+      call Allocate_test ( Channels, qty%template%noChans, &
+        & 'channels', ModuleName )
+      call GetIndexFlagsFromList ( channelsNode, channels, status, &
+        & lower=lbound(channels,1) )
+    end if
+
+    ! Preprocess the height stuff.
+    heightUnit = phyq_dimensionless
+    if ( got(f_height) ) then
+      if (nsons(heightNode) .gt. 2) call AnnounceError ( key, &
+        & 'Only one height range allowed', f_height )
+
+      call expr ( subtree(2,heightNode), units, value )
+      ! Make sure the range has non-dimensionless units -- the type
+      ! checker only verifies that they're consistent.  We need to
+      ! check each range separately, because the units determine the
+      ! scaling of the values.
+      if ( all(units == phyq_dimensionless) ) call announceError ( &
+        & subtree(2,heightNode), WrongUnits, f_height )
+      ! Check consistency of units -- all the same, or dimensionless. The
+      ! type checker verifies the consistency of units of ranges, but not
+      ! of array elements.
+      do i = 1, 2
+        if ( heightUnit == phyq_dimensionless ) then
+          heightUnit = units(i)
+        else if ( units(i) /= phyq_dimensionless .and. &
+          &       units(i) /= heightUnit ) then
+          call announceError ( heightNode, WrongUnits, f_height )
+        end if
+      end do
+
+      ! convert pressure unit
+      Heightvalue = value
+      if ( heightUnit == phyq_pressure ) Heightvalue = -log10(value)
+
+    end if
+    ! Preprocess the height stuff.
+    cloudheightUnit = phyq_dimensionless
+    if ( got(f_cloudheight) ) then
+      if (nsons(cloudheightNode) .gt. 2) call AnnounceError ( key, &
+        & 'Can only supply one height range' ) 
+
+      call expr ( subtree(2,cloudheightNode), units, value )
+      if ( all(units == phyq_dimensionless) ) call announceError ( &
+        & subtree(2,cloudheightNode), WrongUnits, f_cloudheight )
+      do i = 1, 2
+        if ( cloudheightUnit == phyq_dimensionless ) then
+          cloudheightUnit = units(i)
+        else if ( units(i) /= phyq_dimensionless .and. &
+          &       units(i) /= cloudheightUnit ) then
+          call announceError ( key, 'Problem with units', f_cloudheight )
+        end if
+      end do
+
+      ! convert pressure unit
+      CHeightvalue = value
+      if ( cloudheightUnit == phyq_pressure ) CHeightvalue = -log10(value)          
+    end if
+
+    ! ----- finish checking ------
+
+    ! Create the mask if it doesn't exist
+    if ( .not. associated( qty%mask ) ) call CreateMask ( qty )
+
+    ! Now loop over the instances
+    do instance = 1, qty%template%noInstances
+      theseHeights => ptan%values(:,instance)
+
+      isCloud = .false.
+
+      ! use the given height range to find cloud flag
+      if( got(f_cloudheight) ) then 
+        do height1 = 1,cloudRadiance%template%noSurfs
+          doThisCloudHeight = .true.
+          doThisCloudHeight = doThisCloudHeight .and. &
+            & theseHeights(height1) > Cheightvalue(1)
+          doThisCloudHeight = doThisCloudHeight .and. &
+            & theseHeights(height1) < Cheightvalue(2)
+          ind1 = useThisChannel + cloudRadiance%template%noChans*(height1-1)
+          if (cloudRadianceCutoff > 0._r8) then
+             if ( doThisCloudHeight .and. &
+               & cloudRadiance%values ( ind1, instance ) > cloudRadianceCutoff) &
+               & isCloud = .true.
+          else
+             if ( doThisCloudHeight .and. &
+               & cloudRadiance%values ( ind1, instance ) < cloudRadianceCutoff) &
+               & isCloud = .true.
+          endif
+        enddo
+      endif
+      do height = 1, qty%template%noSurfs
+        doThisHeight = .true.
+        doThisHeight = doThisHeight .and. &
+          & theseHeights(height) > heightvalue(1)
+        doThisHeight = doThisHeight .and. &
+          & theseHeights(height) < heightvalue(2)
+
+        ! determine cloud flag
+        ! if cloud flag is not from a height range then do comparison at each minor frame
+        if ( .not. got(f_cloudheight) ) then 
+          ! use the same mif radiance to find cloud flag
+          isCloud = .false.
+          ind1 = useThisChannel + cloudRadiance%template%noChans*(height-1)
+          if (cloudRadianceCutoff > 0._r8) then
+            if ( cloudRadiance%values ( ind1, instance ) > cloudRadianceCutoff) &
+            & isCloud = .true.
+          else
+            if ( cloudRadiance%values ( ind1, instance ) < cloudRadianceCutoff) &
+            & isCloud = .true.
+          endif
+        endif
+
+        ! assign cloud flag
+        do channel = 1, qty%template%noChans
+          doThisChannel = .true.
+          if ( associated(channels) ) doThisChannel = channels(channel)
+          if ( doThisChannel ) then
+            ind = channel + qty%template%noChans*(height-1)
+            if ( doThisHeight .and. isCloud )  &
+              &     call SetMask ( qty%mask(:,instance), (/ ind /), &
+              &     what=maskBit )
+          end if                        ! do this channel
+        end do                          ! Channel loop
+      end do                            ! height loop
+    end do                              ! Instance loop
+
+    ! Tidy up
+    if ( associated(channels) ) &
+      & call Deallocate_test ( channels, 'channels', ModuleName )
+
+  end subroutine SetupFlagCloud
+
+  ! ---------------------------------------------- UpdateMask -----
+  ! This is probably a nice operation
+  ! Unfortunately, it lacks any documentation, so who knows
+  ! what it does or whether it works properly?
+  
+  ! So be warned--
+  ! d o c u m e n t   y o u r   c o d e
+  subroutine UpdateMask ( key, vectors )
+
+    use Init_Tables_Module, only: Field_First, Field_Last
+    use Init_Tables_Module, only: F_Quantity, F_SourceQuantity, &
+      & F_Operation, F_SourceMask, F_Mask
+    use Init_Tables_Module, only: L_Invert, L_Copy, L_AndMasks, L_OrMasks
+    use Moretree, only: Get_Field_Id
+    use Tree, only: Nsons, Subtree, Decoration
+    use VectorsModule, only: GetVectorQtyByTemplateIndex, VectorValue_T, &
+      & Vector_T, CreateMask
+
+    integer, intent(in) :: KEY          ! Tree node
+    type (Vector_T), dimension(:) :: VECTORS
+
+    ! Local variables
+    logical :: GOT(field_first:field_last)   ! "Got this field already"
+    integer :: SON                      ! Tree node
+    integer :: GSON                     ! Another tree node
+    integer :: MASKBIT                  ! Which bits
+    integer :: SOURCEMASKBIT            ! Which bits from source
+    integer :: J                        ! Loop counter
+    integer :: FIELD                    ! A field id
+    integer :: VECTORINDEX              ! In database
+    integer :: QUANTITYINDEX            ! In database not vector
+    integer :: OPERATION                ! What operation to perform
+    type (VectorValue_T), pointer :: QUANTITY
+    type (VectorValue_T), pointer :: SOURCEQUANTITY
+
+    ! Executable code
+    ! First work out what we've been asked to do
+
+    ! Executable code
+    nullify ( sourceQuantity )
+    got = .false.
+    do j = 2, nsons(key) ! fields of the "subset" specification
+      son = subtree(j, key)
+      field = get_field_id(son)   ! tree_checker prevents duplicates
+      if (nsons(son) > 1 ) gson = subtree(2,son) ! Gson is value
+      select case ( field )
+      case ( f_quantity )
+        vectorIndex = decoration(decoration(subtree(1,gson)))
+        quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+        quantity => GetVectorQtyByTemplateIndex(vectors(vectorIndex), quantityIndex)
+      case ( f_sourceQuantity )
+        vectorIndex = decoration(decoration(subtree(1,gson)))
+        quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+        sourceQuantity => GetVectorQtyByTemplateIndex(vectors(vectorIndeX), quantityIndex)
+      case ( f_mask )
+        if ( .not. got(f_mask) ) maskBit = 0 ! clear default first time
+        maskBit = GetMaskBit ( son, single=.true. )
+      case ( f_sourceMask )
+        if ( .not. got(f_sourceMask) ) sourceMaskBit = 0 ! clear default first time
+        sourceMaskBit = GetMaskBit ( son, single=.true. )
+      case ( f_operation )
+        operation = decoration(gson)
+      case default
+        ! Shouldn't get here if the type checker worked
+      end select
+      got(field) = .true.
+    end do ! j = 2, nsons(key)
+
+    ! Special checking for invert case
+    if ( operation == l_invert ) then
+      if ( associated(sourceQuantity) ) call AnnounceError ( key, &
+        & 'sourceQuantity not appropriate for invert updateMask' )
+      if ( got(f_sourceMask) ) call AnnounceError ( key, &
+        & 'sourceMask not appropriate for invert updateMask' )
+    end if
+
+    ! If we've got a source quantity then check it out.
+    if ( associated ( sourceQuantity ) ) then
+      if ( sourceQuantity%template%name /= quantity%template%name ) &
+        & call AnnounceError ( key, 'sourceQuantity and quantity not compatible' )
+      if ( .not. got(f_sourceMask) ) sourceMaskBit = maskBit
+    else
+      if ( operation /= l_invert ) then
+        if ( .not. got(f_sourceMask) ) call AnnounceError ( key, &
+          & 'sourceMask required for this operation' )
+        if ( sourceMaskBit == maskBit ) call AnnounceError ( key, &
+          & 'mask and sourceMask are the same information' )
+      end if
+      sourceQuantity => quantity
+    end if
+
+    ! If the result quantity has no mask then create one.
+    if ( .not. associated ( quantity%mask ) ) call CreateMask ( quantity )
+    ! Create one in the source too if it doesn't have one, potentially time wasting
+    ! later on, but unlikely
+    if ( .not. associated ( sourceQuantity%mask ) ) call CreateMask ( sourceQuantity )
+
+    ! Now work out what to do.
+    select case ( operation )
+    case ( l_invert )
+      quantity%mask = char ( &
+        & ior ( iand ( ichar(quantity%mask), not(maskBit) ), & ! Other bits
+        &       iand ( not ( iand ( ichar(quantity%mask), maskBit ) ), maskBit ) ) )
+    case ( l_copy )
+      quantity%mask = char ( &
+        & ior ( iand ( ichar(quantity%mask), not(maskBit) ), & ! Other bits
+        &       merge ( maskBit, 0, &
+        &              iand ( ichar(sourceQuantity%mask), sourceMaskBit ) /= 0 ) ) )
+    case ( l_andMasks )
+      ! Note, because we 'invert' the logic in storing the mask
+      ! this operation may look wrong at first glance
+      quantity%mask = char ( &
+        & ior ( iand ( ichar(quantity%mask), not(maskBit) ), & ! Other bits
+        &       merge ( 0, maskBit, &
+        &               iand ( ichar(sourceQuantity%mask), sourceMaskBit ) == 0 .and. &
+        &               iand ( ichar(quantity%mask), maskBit ) == 0  ) ) )
+    case ( l_orMasks )
+      ! Note, because we 'invert' the logic in storing the mask
+      ! this operation may look wrong at first glance
+      quantity%mask = char ( &
+        & ior ( iand ( ichar(quantity%mask), not(maskBit) ), & ! Other bits
+        &       merge ( 0, maskBit, &
+        &               iand ( ichar(sourceQuantity%mask), sourceMaskBit ) == 0 .or. &
+        &               iand ( ichar(quantity%mask), maskBit ) == 0  ) ) )
+    end select
+
+  end subroutine UpdateMask
+ 
+  ! ===================================== Private procedures ============
+
+  ! --------------------------------------- AnnounceError -----------
+
+  subroutine AnnounceError ( NODE, STRING, FIELDINDEX, ANOTHERFIELDINDEX )
+    
+    use Intrinsic, only: Field_Indices
+    use Lexer_Core, only: Print_Source
+    use Tree, only: Where
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use Output_M, only: Output
+    use String_Table, only: Display_String
+    
+    integer, intent(in) :: NODE
+    character(len=*), intent(in) :: STRING
+    integer, intent(in), optional :: FIELDINDEX, ANOTHERFIELDINDEX ! f_...
+    
+    call output ( '***** At ' )
+    call print_source ( where(node) )
+    call output ( ', SubsetModule complained: ', advance='yes' )
+    call output ( trim(string), advance='yes' )
+    if ( present ( fieldIndex ) ) then
+      call output ( 'Offending field(s): ' )
+      call display_string ( field_indices(fieldIndex) )
+      if ( present ( anotherFieldIndex ) ) then
+        call output ( ', ' )
+        call output ( field_indices(anotherFieldIndex) )
+      end if
+      call output ( '', advance='yes' )
+    end if
+    call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Problem in SubsetModule, see above' )
+  end subroutine AnnounceError
+
+  ! -------------------------------------- GetMaskBit -------------
+
+  function GetMaskBit ( node, single ) result ( maskBit )
+    use Tree, only: Nsons, Decoration, Subtree
+    use Init_Tables_Module, only: L_Cloud, L_Fill, L_Full_Derivatives, &
+      & L_Ignore, L_Linalg, L_Spare, L_Tikhonov
+    use VectorsModule, only: M_Cloud, M_Fill, M_Fullderivatives, M_Linalg, &
+      & M_Ignore, M_Spare, M_Tikhonov
+
+    ! This routine parses the mask field in an l2cf command
+    ! Dummy arguments
+    integer, intent(in) :: NODE         ! Tree node
+    logical, optional, intent(in) :: SINGLE ! Raise error if more than one
+    integer :: MASKBIT                  ! Result
+    integer :: MASK                     ! Tree decoration
+    integer :: I
+    if ( present ( single ) ) then
+      if ( single .and. nsons(node) > 2 ) &
+        & call AnnounceError ( node, 'Only one mask expected' )
+    end if
+    maskBit = 0
+    do i = 2, nsons(node)
+      mask = decoration(subtree(i,node))
+      select case ( mask )
+      case ( l_Cloud )
+        maskBit = ior(maskBit, m_Cloud)
+      case ( l_fill )
+        maskBit = ior(maskBit, m_fill)
+      case ( l_full_derivatives )
+        maskBit = ior(maskBit, m_fullDerivatives)
+      case ( l_ignore )
+        maskBit = ior(maskBit, m_Ignore)
+      case ( l_linAlg )
+        maskBit = ior(maskBit, m_linAlg)
+      case ( l_Spare )
+        maskBit = ior(maskBit, m_Spare)
+      case ( l_Tikhonov )
+        maskBit = ior(maskBit, m_Tikhonov)
+      end select
+    end do
+  end function GetMaskBit
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: SubsetModule.f90,v 2.38 2017/07/10 18:50:00 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module SubsetModule
+ 
+! $Log: SubsetModule.f90,v $
+! Revision 2.38  2017/07/10 18:50:00  pwagner
+! Transfer may /expandMask to all masking bits; may /skipValues to transfer only mask; Fill may replaceMissingValue=
+!
+! Revision 2.37  2017/02/22 01:23:36  pwagner
+! New /resetAll switch clears all Masking bits
+!
+! Revision 2.36  2016/05/19 23:17:56  pwagner
+! Corrected what looked like an error in indexing
+!
+! Revision 2.35  2016/05/04 17:52:00  pwagner
+! Tried harder to make the hightRange mechanism work as advertised
+!
+! Revision 2.34  2014/09/05 01:23:40  vsnyder
+! Remove declaration of unused parameter and USE name
+!
+! Revision 2.33  2014/09/05 00:49:07  vsnyder
+! EmpiricalGeometry.f90 -- Wrong comment
+!
+! Revision 2.32  2014/03/01 03:10:56  vsnyder
+! Move units checking to init_tables_module
+!
+! Revision 2.31  2014/02/28 01:15:27  vsnyder
+! Remove TYPE argument from calls to EXPR because the value wasn't used
+!
+! Revision 2.30  2014/01/09 00:30:24  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
+! Revision 2.29  2013/09/24 23:47:22  vsnyder
+! Use Where instead of Source_Ref for messages
+!
+! Revision 2.28  2013/08/12 23:49:41  pwagner
+! FindSomethings moved to MLSFinds module
+!
+! Revision 2.27  2013/01/18 01:45:57  pwagner
+! ApplyMaskToQuantity can set mask based on values of 'a' satisfying condition 'where'
+!
+! Revision 2.26  2012/10/22 18:14:11  pwagner
+! Many Subset operations now available in Fill
+!
+! Revision 2.25  2012/05/03 19:50:11  vsnyder
+! More error checking for mask from radiance
+!
+! Revision 2.24  2012/05/01 22:22:26  vsnyder
+! Mask minor-frame quantity by reference to radiance quantity.  Move some
+! dump generation to TrueList in MLSStrings.
+!
+! Revision 2.23  2012/03/28 00:54:41  vsnyder
+! Better error message for wrong units
+!
+! Revision 2.22  2011/05/09 18:26:45  pwagner
+! Converted to using switchDetail
+!
+! Revision 2.21  2011/03/15 22:54:18  pwagner
+! /reverse flag reverses which elements are masked by Subset command
+!
+! Revision 2.20  2010/04/28 16:24:43  pwagner
+! May specify instances range in Subset
+!
+! Revision 2.19  2010/04/22 23:38:11  pwagner
+! Added new Ignore masking bit
+!
+! Revision 2.18  2010/02/04 23:12:44  vsnyder
+! Remove USE or declaration for unreferenced names
+!
+! Revision 2.17  2009/06/23 18:46:18  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.16  2006/04/04 15:59:48  pwagner
+! NAG caught us mixing variable types in min, max
+!
+! Revision 2.15  2006/04/03 23:54:33  livesey
+! Added range guards
+!
+! Revision 2.14  2006/04/03 23:51:42  livesey
+! Added f_surface capability to subset
+!
+! Revision 2.13  2005/06/22 18:57:02  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.12  2004/05/28 00:57:50  vsnyder
+! Move GetIndexFlagsFromList from MoreTree to Expr_m
+!
+! Revision 2.11  2003/08/06 17:24:16  livesey
+! Essentially cosmetic change
+!
+! Revision 2.10  2003/05/14 22:02:08  dwu
+! fix a bug in flagcloud
+!
+! Revision 2.9  2003/05/12 18:55:01  dwu
+! allow cloud flag for cloudinducedradiance
+!
+! Revision 2.8  2003/04/14 22:21:26  dwu
+! make cloudradiancecutoff sign dependent: it is 'greater than' if positive; 'less than' if negative
+!
+! Revision 2.7  2003/04/10 18:30:57  dwu
+! make m_cloud as default in FlagCloud
+!
+! Revision 2.6  2003/04/08 23:12:18  dwu
+! add m_cloud in setupFlagCloud
+!
+! Revision 2.5  2003/04/04 22:01:46  livesey
+! Added UpdateMask
+!
+! Revision 2.4  2003/03/19 01:58:36  livesey
+! Added nullify on signals
+!
+! Revision 2.3  2003/03/07 03:17:12  livesey
+! Added RestrictRange
+!
+! Revision 2.2  2003/03/06 00:47:04  livesey
+! Added logging information
+!
+@
+
+
+2.38
+log
+@Transfer may /expandMask to all masking bits; may /skipValues to transfer only mask; Fill may replaceMissingValue=
+@
+text
+@d48 2
+a49 1
+    & opticaldepthcutoff, maxvalue, minvalue, heightrange, whererange, &
+d51 1
+a51 1
+    & maskbit, heightnode, surfnode, instancesnode, channelsnode )
+d58 3
+a60 1
+    use Init_Tables_Module, only: F_Height, F_Ptanquantity, F_Quantity, F_Surface
+d86 1
+d99 1
+d544 1
+a544 1
+                  if ( minValue /= -999.99 ) doThisHeight = doThisHeight .and. &
+d546 1
+a546 1
+                  if ( maxValue /= -999.99 ) doThisHeight = doThisHeight .and. &
+d548 2
+d582 1
+a582 1
+                  if ( minValue /= -999.99 ) doThisHeight = doThisHeight .and. &
+d584 1
+a584 1
+                  if ( maxValue /= -999.99 ) doThisHeight = doThisHeight .and. &
+d586 2
+d850 2
+a851 1
+      & F_Ignore, F_Instances, F_Mask, F_MaxValue, F_MinValue, F_OpticalDepth, &
+d894 3
+a896 1
+    real(r8) :: MAXVALUE, MINVALUE    ! Cutoff ranges
+d921 1
+d1003 3
+d1095 2
+a1096 1
+        & opticalDepthCutoff, maxvalue, minValue, heightRange, whereRange, &
+d1098 1
+a1098 1
+        & maskBit, heightNode, surfNode, instancesNode, channelsNode )
+d1564 1
+a1564 1
+       "$Id: SubsetModule.f90,v 2.37 2017/02/22 01:23:36 pwagner Exp $"
+d1574 3
+@
+
+
+2.37
+log
+@New /resetAll switch clears all Masking bits
+@
+text
+@d47 4
+a50 4
+  subroutine ApplyMaskToQuantity ( QTY, RAD, PTAN, OPTICALDEPTH, A, &
+    & OPTICALDEPTHCUTOFF, MAXVALUE, MINVALUE, HEIGHTRANGE, WHERERANGE, &
+    & IGNORE, REVERSE, ADDITIONAL, RESET, &
+    & MASKBIT, HEIGHTNODE, SURFNODE, INSTANCESNODE, CHANNELSNODE )
+d55 1
+a55 1
+    use FillUtils_1, only: ByManipulation
+d88 1
+d254 7
+d839 1
+a839 1
+    use Init_Tables_Module, only: F_A, F_Additional, F_Channels, &
+d894 1
+a894 1
+    logical :: RESETAll                  ! Flag
+d896 1
+d914 1
+d1000 2
+d1080 1
+a1080 1
+        & ignore, reverse, additional, reset, &
+d1547 1
+a1547 1
+       "$Id: SubsetModule.f90,v 2.36 2016/05/19 23:17:56 pwagner Exp $"
+d1557 3
+@
+
+
+2.36
+log
+@Corrected what looked like an error in indexing
+@
+text
+@d52 22
+a73 22
+    use allocate_deallocate, only: allocate_test, deallocate_test
+    use dump_0, only: dump
+    use expr_m, only: expr, getindexflagsfromlist
+    use fillUtils_1, only: byManipulation
+    use highoutput, only: outputNamedValue
+    use init_tables_module, only: f_height, f_ptanquantity, f_quantity, f_surface
+    use init_tables_module, only: l_none, l_pressure, &
+      & l_zeta
+    use intrinsic, only: phyq_dimensionless, phyq_length, &
+      & phyq_mifs, phyq_pressure
+    use MLSKinds, only: r8, rv
+    use MLSStringLists, only: switchDetail
+    use MLSFinds, only: findFirst, findLast
+    use MLSStrings, only: trueList
+    use output_m, only: output
+    use toggles, only: switches
+    use tree, only: nsons, subtree, node_id
+    use tree_types, only: n_colon_less, n_less_colon, &
+      & n_less_colon_less
+    use vectorsModule, only: vectorValue_t, &
+      & clearMask, cloneVectorQuantity, createMask, dump, &
+      & reverseMask, setMask
+d607 8
+a614 8
+    use allocate_deallocate, only: allocate_test, deallocate_test
+    use expr_m, only: expr
+    use vectorsModule, only: m_linalg, vector_t, vectorvalue_t, &
+      & createMask, getVectorQtyByTemplateIndex, getVectorQuantityByType, &
+      & setMask
+    use init_tables_module, only: f_quantity, f_ptanquantity, f_basisfraction, &
+      & f_minchannels, f_signals, f_measurements, f_mask
+    use init_tables_module, only: l_zeta, l_radiance
+d616 6
+a621 6
+    use MLSKinds, only: r8
+    use MLSNumerics, only: hunt
+    use MLSSignals_m, only: signal_t
+    use moreTree, only: get_field_id
+    use parse_signal_m, only: expand_signal_list
+    use tree, only: nsons, subtree, decoration
+d829 21
+a849 20
+    use expr_m, only: expr
+    use init_tables_module, only: field_first, field_last
+    use init_tables_module, only: f_a, f_additional, f_channels, &
+      & f_height, f_heightRange, &
+      & f_ignore, f_instances, f_mask, f_maxValue, f_minValue, f_opticalDepth, &
+      & f_opticalDepthCutoff, f_PTanQuantity, f_quantity, f_radianceQuantity, &
+      & f_reset, f_reverse, f_sourceQuantity, f_surface, f_where
+    use init_tables_module, only: l_opticalDepth, &
+      & l_radiance
+    use intrinsic, only: phyq_dimensionless, phyq_invalid
+    use MLSKinds, only: r8
+    use MLSStringlists, only: switchDetail
+    use moreTree, only: get_field_id, get_boolean
+    use output_m, only: output
+    use string_table, only: display_string, get_string
+    use toggles, only: switches
+    use tree, only: nsons, sub_rosa, subtree, decoration
+    use vectorsModule, only: m_linalg, vector_t, vectorValue_t, &
+      & createMask, destroyVectorQuantityMask, dumpMask, &
+      & getVectorQtyByTemplateIndex
+d886 1
+d903 1
+d984 2
+d1042 2
+a1043 1
+        & (/ f_height, f_ignore, f_instances, f_reset, f_surface, f_where /) &
+d1060 11
+a1070 6
+    ! Pass all the field nodes to the workhorse subroutine
+    ! Let it set the mask
+    call ApplyMaskToQuantity( qty, rad, ptan, opticalDepth, a, &
+      & opticalDepthCutoff, maxvalue, minValue, heightRange, whereRange, &
+      & ignore, reverse, additional, reset, &
+      & maskBit, heightNode, surfNode, instancesNode, channelsNode )
+d1090 14
+a1103 14
+    use allocate_deallocate, only: allocate_test, deallocate_test
+    use expr_m, only: expr, getindexflagsfromlist
+    use init_tables_module, only: field_first, field_last
+    use init_tables_module, only: f_quantity, f_ptanquantity, &
+      & f_height, f_cloudheight, f_channels, f_cloudchannels, f_cloudradiance, &
+      & f_cloudradiancecutoff, f_mask
+    use init_tables_module, only: l_radiance, l_cloudinducedradiance
+    use intrinsic, only: phyq_dimensionless, phyq_pressure
+    use MLSKinds, only: r8
+    use moretree, only: get_field_id
+    use vectorsModule, only: createMask, &
+      & getVectorQtyByTemplateIndex, setMask, vectorValue_t, vector_t, &
+      & m_cloud
+    use tree, only: nsons, subtree, decoration
+d1337 8
+a1344 8
+    use init_tables_module, only: field_first, field_last
+    use init_tables_module, only: f_quantity, f_sourceQuantity, &
+      & f_operation, f_sourceMask, f_mask
+    use init_tables_module, only: l_invert, l_copy, l_andMasks, l_orMasks
+    use moretree, only: get_field_id
+    use tree, only: nsons, subtree, decoration
+    use vectorsModule, only: getVectorQtyByTemplateIndex, vectorValue_t, &
+      & vector_t, createMask
+d1462 3
+a1464 3
+    use intrinsic, only: field_indices
+    use lexer_core, only: print_source
+    use tree, only: where
+d1466 1
+a1466 1
+    use output_m, only: output
+d1493 5
+a1497 5
+    use Tree, only: nsons, decoration, subtree
+    use Init_Tables_Module, only: l_cloud, l_fill, l_full_derivatives, &
+      & l_ignore, l_linalg, l_spare, l_tikhonov
+    use VectorsModule, only: m_cloud, m_fill, m_fullderivatives, m_linalg, &
+      & m_ignore, m_spare, m_tikhonov
+d1535 1
+a1535 1
+       "$Id: SubsetModule.f90,v 2.35 2016/05/04 17:52:00 pwagner Exp $"
+d1545 3
+@
+
+
+2.35
+log
+@Tried harder to make the hightRange mechanism work as advertised
+@
+text
+@d515 1
+a515 1
+                  ind = qty%template%noChans + channel
+d525 1
+a525 1
+                ! For coherent quantities and/or spefified surfaces simply do a loop over a range.
+d1524 1
+a1524 1
+       "$Id: SubsetModule.f90,v 2.34 2014/09/05 01:23:40 vsnyder Exp $"
+d1534 3
+@
+
+
+2.34
+log
+@Remove declaration of unused parameter and USE name
+@
+text
+@d52 22
+a73 22
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use DUMP_0, only: DUMP
+    use EXPR_M, only: EXPR, GETINDEXFLAGSFROMLIST
+    use FILLUTILS_1, only: BYMANIPULATION
+    use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
+    use INIT_TABLES_MODULE, only: F_HEIGHT, F_PTANQUANTITY, F_QUANTITY, F_SURFACE
+    use INIT_TABLES_MODULE, only: L_NONE, L_PRESSURE, &
+      & L_ZETA
+    use INTRINSIC, only: PHYQ_DIMENSIONLESS, PHYQ_LENGTH, &
+      & PHYQ_MIFS, PHYQ_PRESSURE
+    use MLSKINDS, only: R8, RV
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use MLSFINDS, only: FINDFIRST, FINDLAST
+    use MLSSTRINGS, only: TRUELIST
+    use OUTPUT_M, only: OUTPUT
+    use TOGGLES, only: SWITCHES
+    use TREE, only: NSONS, SUBTREE, NODE_ID
+    use TREE_TYPES, only: N_COLON_LESS, N_LESS_COLON, &
+      & N_LESS_COLON_LESS
+    use VECTORSMODULE, only: VECTORVALUE_T, &
+      & CLEARMASK, CLONEVECTORQUANTITY, CREATEMASK, DUMP, &
+      & REVERSEMASK, SETMASK
+d443 7
+d607 15
+a621 15
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use MLSKINDS, only: R8
+    use EXPR_M, only: EXPR
+    use VECTORSMODULE, only: M_LINALG, VECTOR_T, VECTORVALUE_T, &
+      & CREATEMASK, GETVECTORQTYBYTEMPLATEINDEX, GETVECTORQUANTITYBYTYPE, &
+      & SETMASK
+    use INIT_TABLES_MODULE, only: F_QUANTITY, F_PTANQUANTITY, F_BASISFRACTION, &
+      & F_MINCHANNELS, F_SIGNALS, F_MEASUREMENTS, F_MASK
+    use INIT_TABLES_MODULE, only: L_ZETA, L_RADIANCE
+    use TREE, only: NSONS, SUBTREE, DECORATION
+    use MORETREE, only: GET_FIELD_ID
+    use MLSSIGNALS_M, only: SIGNAL_T
+    use PARSE_SIGNAL_M, only: EXPAND_SIGNAL_LIST
+    use MANIPULATEVECTORQUANTITIES, only: FINDONECLOSESTINSTANCE
+    use MLSNUMERICS, only: HUNT
+d829 20
+a848 20
+    use EXPR_M, only: EXPR
+    use INIT_TABLES_MODULE, only: FIELD_FIRST, FIELD_LAST
+    use INIT_TABLES_MODULE, only: F_A, F_ADDITIONAL, F_CHANNELS, &
+      & F_HEIGHT, F_HEIGHTRANGE, &
+      & F_IGNORE, F_INSTANCES, F_MASK, F_MAXVALUE, F_MINVALUE, F_OPTICALDEPTH, &
+      & F_OPTICALDEPTHCUTOFF, F_PTANQUANTITY, F_QUANTITY, F_RADIANCEQUANTITY, &
+      & F_RESET, F_REVERSE, F_SOURCEQUANTITY, F_SURFACE, F_WHERE
+    use INIT_TABLES_MODULE, only: L_OPTICALDEPTH, &
+      & L_RADIANCE
+    use INTRINSIC, only: PHYQ_DIMENSIONLESS, PHYQ_INVALID
+    use MLSKINDS, only: R8
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use MORETREE, only: GET_FIELD_ID, GET_BOOLEAN
+    use OUTPUT_M, only: OUTPUT
+    use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
+    use TOGGLES, only: SWITCHES
+    use TREE, only: NSONS, SUB_ROSA, SUBTREE, DECORATION
+    use VECTORSMODULE, only: M_LINALG, VECTOR_T, VECTORVALUE_T, &
+      & CREATEMASK, DESTROYVECTORQUANTITYMASK, DUMPMASK, &
+      & GETVECTORQTYBYTEMPLATEINDEX
+d1079 14
+a1092 14
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use EXPR_M, only: EXPR, GETINDEXFLAGSFROMLIST
+    use MLSKINDS, only: R8
+    use INIT_TABLES_MODULE, only: FIELD_FIRST, FIELD_LAST
+    use INIT_TABLES_MODULE, only: F_QUANTITY, F_PTANQUANTITY, &
+      & F_HEIGHT, F_CLOUDHEIGHT, F_CHANNELS, F_CLOUDCHANNELS, F_CLOUDRADIANCE, &
+      & F_CLOUDRADIANCECUTOFF, F_MASK
+    use INIT_TABLES_MODULE, only: L_RADIANCE, L_CLOUDINDUCEDRADIANCE
+    use INTRINSIC, only: PHYQ_DIMENSIONLESS, PHYQ_PRESSURE
+    use MORETREE, only: GET_FIELD_ID
+    use VECTORSMODULE, only: CREATEMASK, &
+      & GETVECTORQTYBYTEMPLATEINDEX, SETMASK, VECTORVALUE_T, VECTOR_T, &
+      & M_CLOUD
+    use TREE, only: NSONS, SUBTREE, DECORATION
+d1326 8
+a1333 8
+    use INIT_TABLES_MODULE, only: FIELD_FIRST, FIELD_LAST
+    use INIT_TABLES_MODULE, only: F_QUANTITY, F_SOURCEQUANTITY, &
+      & F_OPERATION, F_SOURCEMASK, F_MASK
+    use INIT_TABLES_MODULE, only: L_INVERT, L_COPY, L_ANDMASKS, L_ORMASKS
+    use VECTORSMODULE, only: GETVECTORQTYBYTEMPLATEINDEX, VECTORVALUE_T, &
+      & VECTOR_T, CREATEMASK
+    use TREE, only: NSONS, SUBTREE, DECORATION
+    use MORETREE, only: GET_FIELD_ID
+d1451 5
+a1455 5
+    use INTRINSIC, only: FIELD_INDICES
+    use LEXER_CORE, only: PRINT_SOURCE
+    use TREE, only: Where
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
+    use OUTPUT_M, only: OUTPUT
+d1482 5
+a1486 5
+    use Tree, only: NSONS, DECORATION, SUBTREE
+    use Init_Tables_Module, only: L_CLOUD, L_FILL, L_FULL_DERIVATIVES, &
+      & L_IGNORE, L_LINALG, L_SPARE, L_TIKHONOV
+    use VectorsModule, only: M_CLOUD, M_FILL, M_FULLDERIVATIVES, M_LINALG, &
+      & M_IGNORE, M_SPARE, M_TIKHONOV
+d1524 1
+a1524 1
+       "$Id: SubsetModule.f90,v 2.33 2014/09/05 00:49:07 vsnyder Exp $"
+d1534 3
+@
+
+
+2.33
+log
+@EmpiricalGeometry.f90
+@
+text
+@d1517 1
+a1517 1
+       "$Id: SubsetModule.f90,v 2.32 2014/03/01 03:10:56 vsnyder Exp $"
+d1527 3
+@
+
+
+2.32
+log
+@Move units checking to init_tables_module
+@
+text
+@a33 2
+  logical, parameter :: DEEBUG = .false.
+
+d596 1
+a596 1
+  
+a600 1
+    use INTRINSIC, only: PHYQ_DIMENSIONLESS
+d1517 1
+a1517 1
+       "$Id: SubsetModule.f90,v 2.31 2014/02/28 01:15:27 vsnyder Exp $"
+d1527 3
+@
+
+
+2.31
+log
+@Remove TYPE argument from calls to EXPR because the value wasn't used
+@
+text
+@a689 2
+        if ( exprUnit(1) /= PHYQ_Dimensionless ) call AnnounceError ( gson, &
+          WrongUnits, f_minChannels )
+a692 2
+        if ( exprUnit(1) /= PHYQ_Dimensionless ) call AnnounceError ( gson, &
+          WrongUnits, f_basisFraction )
+d1083 1
+a1083 2
+    use INTRINSIC, only: PHYQ_PRESSURE, PHYQ_TEMPERATURE, &
+      & PHYQ_DIMENSIONLESS
+a1164 2
+        if ( units(1) /= PHYQ_temperature ) &
+          & call announceError ( subtree (2, son), WrongUnits, f_cloudRadianceCutoff )
+d1520 1
+a1520 1
+       "$Id: SubsetModule.f90,v 2.30 2014/01/09 00:30:24 pwagner Exp $"
+d1530 3
+@
+
+
+2.30
+log
+@Some procedures formerly in output_m now got from highOutput
+@
+text
+@a129 1
+    integer :: TYPE                   ! Type of value returned by expr
+d202 1
+a202 1
+        call expr ( subtree(j,heightNode), units, value, type )
+d425 1
+a425 1
+            call expr ( son, units, value, type )
+d448 1
+a448 1
+            call expr ( son, units, value, type )
+a868 1
+    integer :: TYPE                   ! Type of value returned by expr
+d964 1
+a964 1
+        call expr ( subtree (2, son), units, value, type )
+d970 1
+a970 1
+        call expr ( subtree (2, son), units, value, type )
+d974 1
+a974 1
+        call expr ( subtree (2, son), units, value, type )
+a1114 1
+    integer :: TYPE                   ! Type of value returned by expr
+d1200 1
+a1200 1
+      call expr ( subtree(2,heightNode), units, value, type )
+d1230 1
+a1230 1
+      call expr ( subtree(2,cloudheightNode), units, value, type )
+d1527 1
+a1527 1
+       "$Id: SubsetModule.f90,v 2.29 2013/09/24 23:47:22 vsnyder Exp $"
+d1537 3
+@
+
+
+2.29
+log
+@Use Where instead of Source_Ref for messages
+@
+text
+@d58 1
+d68 1
+a68 1
+    use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
+d1530 1
+a1530 1
+       "$Id: SubsetModule.f90,v 2.28 2013/08/12 23:49:41 pwagner Exp $"
+d1540 3
+@
+
+
+2.28
+log
+@FindSomethings moved to MLSFinds module
+@
+text
+@d1458 1
+a1458 1
+    use TREE, only: SOURCE_REF
+d1468 1
+a1468 1
+    call print_source ( source_ref(node) )
+d1529 1
+a1529 1
+       "$Id: SubsetModule.f90,v 2.27 2013/01/18 01:45:57 pwagner Exp $"
+d1539 3
+@
+
+
+2.27
+log
+@ApplyMaskToQuantity can set mask based on values of 'a' satisfying condition 'where'
+@
+text
+@d65 1
+a65 1
+    use MLSSETS, only: FINDFIRST, FINDLAST
+a610 1
+    use INIT_TABLES_MODULE, only: FIELD_FIRST, FIELD_LAST
+a654 1
+    logical :: Got(field_first:field_last)   ! "Got this field already"
+a673 1
+    got = .false.
+a871 1
+    logical :: VERBOSE
+a906 1
+    verbose = ( switchDetail(switches,'subset') > -1 )
+d1087 1
+a1087 1
+    use INIT_TABLES_MODULE, only: L_RADIANCE, L_CLOUDINDUCEDRADIANCE, L_ZETA
+a1101 1
+    integer :: COORDINATE             ! Vertical coordinate type
+a1256 1
+      coordinate = l_zeta
+d1529 1
+a1529 1
+       "$Id: SubsetModule.f90,v 2.26 2012/10/22 18:14:11 pwagner Exp $"
+d1539 3
+@
+
+
+2.26
+log
+@Many Subset operations now available in Fill
+@
+text
+@d49 2
+a50 2
+  subroutine ApplyMaskToQuantity ( QTY, RAD, PTAN, OPTICALDEPTH, &
+    & OPTICALDEPTHCUTOFF, MAXVALUE, MINVALUE, HEIGHTRANGE, &
+d57 1
+d63 1
+a63 1
+    use MLSKINDS, only: R8
+d65 1
+d73 1
+a73 1
+      & CLEARMASK, CREATEMASK, &
+d80 1
+d85 1
+d90 1
+a90 1
+    integer, intent(in)           :: MASKBIT                ! Bits corresponding to Mask
+d97 1
+d103 1
+d106 1
+d114 1
+d122 2
+d126 1
+d133 1
+d140 1
+a140 1
+      & .not. associated( opticalDepth) .and. &
+d240 13
+d273 64
+d834 1
+a834 1
+    use INIT_TABLES_MODULE, only: F_ADDITIONAL, F_CHANNELS, &
+d838 1
+a838 1
+      & F_RESET, F_REVERSE, F_SOURCEQUANTITY, F_SURFACE
+d876 1
+d881 1
+d894 1
+a894 1
+    nullify ( qty, ptan, opticalDepth, rad, source )
+d912 1
+d918 4
+d993 2
+d1014 2
+a1015 1
+        & call AnnounceError ( key, 'RadianceQuantity field is not a radiance quantity' )
+d1019 2
+a1020 1
+          & 'Subset from radiance allows only additional, channel, ignore, and instances fields' )
+d1038 2
+a1039 1
+          & call AnnounceError ( key, 'Optical depth does not match subsetted quantity' )
+d1043 2
+a1044 1
+        & (/ f_height, f_ignore, f_instances, f_reset, f_surface /) ) ) /= 1 ) &
+d1046 2
+a1047 1
+            & 'Subset must be exactly one of height, ignore, instances, surface or reset' )
+d1062 3
+a1064 2
+    call ApplyMaskToQuantity( qty, rad, ptan, opticalDepth, opticalDepthCutoff, &
+      & maxvalue, minValue, heightRange, ignore, reverse, additional, reset, &
+d1536 1
+a1536 1
+       "$Id: SubsetModule.f90,v 2.25 2012/05/03 19:50:11 vsnyder Exp $"
+d1546 3
+@
+
+
+2.25
+log
+@More error checking for mask from radiance
+@
+text
+@a20 2
+  public :: RestrictRange, SetupSubset, SetupFlagCloud, UpdateMask
+
+d27 3
+d31 4
+a34 1
+  character(len=32), private, parameter :: WRONGUNITS = 'The wrong units were supplied'
+d38 16
+a53 2
+  ! -------------------------------------------------- RestrictRange ---
+  subroutine RestrictRange ( key, vectors )
+d55 7
+a61 1
+    use INTRINSIC, only: PHYQ_DIMENSIONLESS
+d63 28
+a90 17
+    use EXPR_M, only: EXPR
+    use VECTORSMODULE, only: VECTOR_T, VECTORVALUE_T, GETVECTORQTYBYTEMPLATEINDEX, &
+      & M_LINALG, GETVECTORQUANTITYBYTYPE, SETMASK, CREATEMASK
+    use INIT_TABLES_MODULE, only: F_QUANTITY, F_PTANQUANTITY, F_BASISFRACTION, &
+      & F_MINCHANNELS, F_SIGNALS, F_MEASUREMENTS, F_MASK
+    use INIT_TABLES_MODULE, only: FIELD_FIRST, FIELD_LAST
+    use INIT_TABLES_MODULE, only: L_ZETA, L_RADIANCE
+    use TREE, only: NSONS, SUBTREE, DECORATION
+    use MORETREE, only: GET_FIELD_ID
+    use MLSSIGNALS_M, only: SIGNAL_T
+    use PARSE_SIGNAL_M, only: EXPAND_SIGNAL_LIST
+    use MANIPULATEVECTORQUANTITIES, only: FINDONECLOSESTINSTANCE
+    use MLSNUMERICS, only: HUNT
+
+    ! Dummy arguments
+    integer, intent(in) :: KEY          ! Tree node
+    type (Vector_T), dimension(:), intent(inout), target :: VECTORS
+d93 64
+d158 27
+a184 22
+    integer :: CHANNEL                  ! Loop counter / channel index
+    integer :: FIELD                    ! ID for field in l2cf line
+    integer :: GSON                     ! Tree node
+    integer :: INDEX                    ! Loop counter
+    integer :: INDEX0                   ! Array index
+    integer :: INDEX1                   ! Array index
+    integer :: INSTANCE                 ! Instance index
+    integer :: J                        ! Loop counter
+    integer :: MAF                      ! Major frame index
+    integer :: MASK                     ! Bits to mask
+    integer :: MEASQTY                  ! Loop counter
+    integer :: MINCHANNELS              ! Value of argument of same name
+    integer :: NOGOODMIFS               ! How many MIFs meet our criteria for one chan
+    integer :: NOINSTANCES              ! Number of instances
+    integer :: NOMAFS                   ! Number of major frames
+    integer :: NOMEASUREMENTS           ! Number of relevant measurements
+    integer :: NOMIFS                   ! Number of minor frames
+    integer :: NOVALIDCHANNELS          ! How many channels meet our criteria
+    integer :: QUANTITYINDEX            ! Index in database, not vector
+    integer :: SON                      ! Tree node
+    integer :: SURF                     ! Loop counter
+    integer :: VECTORINDEX              ! Vector index for quantity
+d186 31
+a216 4
+    integer, dimension(2) :: EXPRUNIT   ! Units for expression
+    integer, dimension(:), pointer :: MAFSFORINSTANCE ! Which maf relevant for each inst.
+    integer, dimension(:), pointer :: MEASQTYINDS ! Indices
+    integer, dimension(:), pointer :: MIFPOINTINGS ! Which basis for each mif?
+d218 2
+a219 3
+    logical :: ERRORFLAG                ! Set if problem
+    logical :: FOUNDONE                 ! Flag for instance identification
+    logical :: Got(field_first:field_last)   ! "Got this field already"
+d221 6
+a226 1
+    character(len=1), dimension(:), pointer :: MIFMASKS ! Part of rad%mask
+d228 19
+a246 3
+    real(r8) :: BASISFRACTION           ! Value of argument of same name
+    real(r8), dimension(2) :: EXPRVALUE ! Vaue for expression
+    real(r8), dimension(:), pointer :: SURFS ! Surfaces for quantity
+d248 18
+a265 5
+    type (Signal_T), dimension(:), pointer :: SIGNALS
+    type (VectorValue_T), pointer :: PTAN ! The ptan quantity
+    type (VectorValue_T), pointer :: QTY ! The quantity to subset
+    type (VectorValue_T), pointer :: RAD ! A radiance quantity
+    type (Vector_T), pointer :: MEASUREMENTS ! Measurement vector
+d267 1
+a267 47
+    ! Executable code
+    nullify ( signals )
+    ! Setup defaults
+    basisFraction = 0.5
+    minChannels = 1
+    mask = m_linAlg
+    got = .false.
+    ! Loop over arguments to this l2cf command
+    do j = 2, nsons ( key )
+      son = subtree ( j, key )
+      field = get_field_id ( son )
+      if ( nsons ( son )  > 1 ) gson = subtree ( 2, son )
+      select case ( field )
+      case ( f_quantity )
+        vectorIndex = decoration(decoration(subtree(1,gson)))
+        quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+        qty => GetVectorQtyByTemplateIndex ( vectors(vectorIndex), quantityIndex )
+      case ( f_ptanQuantity )
+        vectorIndex = decoration(decoration(subtree(1,gson)))
+        quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+        ptan => GetVectorQtyByTemplateIndex ( vectors(vectorIndex), quantityIndex )
+      case ( f_minChannels )
+        call expr ( gson, exprUnit, exprValue )
+        if ( exprUnit(1) /= PHYQ_Dimensionless ) call AnnounceError ( gson, &
+          WrongUnits, f_minChannels )
+        minChannels = nint ( exprValue(1) )
+      case ( f_basisFraction )
+        call expr ( gson, exprUnit, exprValue )
+        if ( exprUnit(1) /= PHYQ_Dimensionless ) call AnnounceError ( gson, &
+          WrongUnits, f_basisFraction )
+        basisFraction = exprValue(1)
+      case ( f_measurements )
+        vectorIndex = decoration(decoration(gson))
+        measurements => vectors ( vectorIndex )
+      case ( f_signals )
+        call Expand_Signal_List ( son, signals, errorFlag )
+        if ( errorFlag ) call AnnounceError ( key, 'Bad signal spec.' )
+      case ( f_mask )
+        mask = GetMaskBit ( son )
+      end select
+    end do
+    ! The parser has ensured that we 'got' all the fields we required,
+    ! and we supplied defaults for the rest, so we're ready to go now.
+    ! Some quick error checking
+    if ( qty%template%verticalCoordinate /= l_zeta ) &
+      & call AnnounceError ( key, 'Quantity is not on log pressure surfaces' )
+    if ( .not. associated ( qty%mask ) ) call CreateMask ( qty )
+d269 14
+a282 11
+    ! Identify all the measurement quantities we'll be using
+    noMeasurements = size(signals)
+    nullify ( measQtyInds )
+    call Allocate_test ( measQtyInds, noMeasurements, 'measQtyInds', ModuleName )
+    do measQty = 1, noMeasurements
+      rad => GetVectorQuantityByType ( measurements, quantityType=l_radiance, &
+        & signal=signals(measQty)%index, sideband=signals(measQty)%sideband )
+      if ( rad%template%instrumentModule /= ptan%template%instrumentModule ) &
+        & call AnnounceError ( key, 'Ptan/radiance not from the same module' )
+      measQtyInds(measQty) = rad%index
+    end do
+d284 18
+a301 16
+    ! Now identify the relevant MAFs for each profile of our quantity
+    ! This kind of involves running FindOneClosestInstance backwards
+    noInstances = qty%template%noInstances
+    noMAFS = ptan%template%noInstances
+    nullify ( mafsForInstance )
+    call Allocate_test ( mafsForInstance, noInstances, 'mafsForInstance', ModuleName )
+    mafsForInstance = 0
+    do maf = 1, noMAFs
+      instance = FindOneClosestInstance ( qty, ptan, maf )
+      mafsForInstance ( instance ) = maf
+    enddo
+    ! Deal with any we missed (probably at the ends)
+    foundOne = .false.
+    do instance = 1, noInstances
+      if ( mafsForInstance ( instance ) /= 0 ) then
+        foundOne = .true.
+d303 25
+a327 4
+        if ( foundOne ) then
+          ! OK, make this gap contain the previous value,
+          ! we know instance>1 here.
+          mafsForInstance ( instance ) = mafsForInstance ( instance - 1 )
+d329 1
+a329 2
+          ! OK, still not seen on, make this use the first maf
+          mafsForInstance ( instance ) = 1
+d331 15
+a345 2
+      end if
+    end do
+d347 9
+a355 44
+    ! Setup some more arrrays
+    nullify ( mifPointings )
+    call Allocate_test ( mifPointings, ptan%template%noSurfs, &
+      & 'mifPointings', ModuleName )
+
+    ! Now we get down to the main work, we'll go through this instance by instance
+    do instance = 1, noInstances
+      maf = MAFsForInstance ( instance )
+      if ( qty%template%coherent ) then
+        surfs => qty%template%surfs ( :, 1 )
+      else
+        surfs => qty%template%surfs ( :, instance )
+      end if
+      ! Work out where each MIF points
+      call Hunt ( surfs, ptan%values(:,maf), mifPointings, allowTopValue=.true. )
+      ! Go through each surface/channel in the quantity and work out whether
+      ! We're going to use it.
+      surfLoop: do surf = 1, qty%template%noSurfs
+        index0 = ( surf-1 ) * qty%template%noChans + 1
+        index1 = index0 + qty%template%noChans - 1
+        ! If were retrieving data for any 'channel' at this surface
+        ! think about changing our minds, otherwise don't bother.
+        if ( any ( iand ( ichar(qty%mask(index0:index1,instance)), &
+          & m_linAlg ) == 0 ) ) then
+          ! How many MIFs total above this surface?
+          noMIFs = count ( mifPointings == surf )
+          ! Now, how many channels have enough good channels (i.e. enough channels
+          ! with more valid MIFs in this basis range than goodMIFs*basisFraction)
+          noValidChannels = 0
+          do measQty = 1, noMeasurements
+            rad => measurements%quantities ( measQtyInds ( measQty ) )
+            if ( associated ( rad%mask ) ) then
+              channelLoop: do channel = 1, rad%template%noChans
+                if ( .not. signals(measQty)%channels(channel) ) cycle channelLoop
+                ! Point to the relevant masks for this radiance channel only
+                mifMasks => rad%mask ( channel : rad%template%instanceLen : &
+                  & rad%template%noChans, instance )
+                noGoodMIFs = count ( mifPointings == surf .and. &
+                  & iand( ichar(mifMasks), m_linAlg ) == 0 )
+                if ( (1.0*noGoodMIFs)/noMIFs > basisFraction ) &
+                  & noValidChannels = noValidChannels + 1
+              end do channelLoop
+            else
+              noValidChannels = noValidChannels + 1
+a356 7
+          end do ! Signal loop
+          if ( noValidChannels < minChannels ) then
+            ! We don't have enough information to retrieve this value,
+            ! So mark it as not to be retrieved (or whatever bits have been supplied)
+            do index = index0, index1
+              call SetMask ( qty%mask(:,instance), (/ index /), what=mask )
+            end do
+d358 206
+a563 8
+            ! We can retrieve this surface.  Not only that, I want this code
+            ! to only consider the 'bottom' limit case, above that I don't
+            ! want it to bother, so I'm going to escape from the surface loop here
+            exit surfLoop
+          end if                        ! Is this surface ok?
+        end if                          ! Was planning to retrieve here
+      end do surfLoop                   ! Surface loop
+    end do                              ! Instance loop
+d565 3
+a567 4
+    call Deallocate_test ( mifPointings, 'mifPointings', ModuleName )
+    call Deallocate_test ( MAFsForInstance, 'MAFsForInstance', ModuleName )
+    call Deallocate_test ( measQtyInds, 'measQtyInds', ModuleName )
+  end subroutine RestrictRange
+d569 1
+a569 2
+  ! -------------------------------------------------- SetupSubset ---
+  subroutine SetupSubset ( key, vectors )
+d571 3
+a573 27
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use DUMP_0, only: DUMP
+    use EXPR_M, only: EXPR, GETINDEXFLAGSFROMLIST
+    use MLSKINDS, only: R8
+    use INTRINSIC, only: PHYQ_DIMENSIONLESS, PHYQ_INVALID, PHYQ_LENGTH, &
+      & PHYQ_MIFS, PHYQ_PRESSURE
+    use INIT_TABLES_MODULE, only: FIELD_FIRST, FIELD_LAST
+    use INIT_TABLES_MODULE, only: F_ADDITIONAL, F_CHANNELS, F_HEIGHT, &
+      & F_IGNORE, F_INSTANCES, F_MASK, F_MAXVALUE, F_MINVALUE, F_OPTICALDEPTH, &
+      & F_OPTICALDEPTHCUTOFF, F_PTANQUANTITY, F_QUANTITY, F_RADIANCEQUANTITY, &
+      & F_RESET, F_REVERSE, F_SURFACE
+    use INIT_TABLES_MODULE, only: L_OPTICALDEPTH, L_NONE, L_PRESSURE, &
+      & L_RADIANCE, L_ZETA
+    use TREE_TYPES, only: N_COLON_LESS, N_LESS_COLON, &
+      & N_LESS_COLON_LESS
+    use VECTORSMODULE, only: M_LINALG, VECTOR_T, VECTORVALUE_T, &
+      & CLEARMASK, CREATEMASK, DUMPMASK, &
+      & GETVECTORQTYBYTEMPLATEINDEX, REVERSEMASK, SETMASK
+    use TREE, only: NSONS, SUBTREE, DECORATION, NODE_ID
+    use MLSSTRINGLISTS, only: CATLISTS, EXPANDSTRINGRANGE, SWITCHDETAIL
+    use MLSStrings, only: TrueList
+    use MORETREE, only: GET_FIELD_ID, GET_BOOLEAN
+    use STRING_TABLE, only: DISPLAY_STRING
+    use TOGGLES, only: SWITCHES
+    use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
+    integer, intent(in) :: KEY        ! Tree node
+    type (Vector_T), dimension(:) :: VECTORS
+d575 5
+a579 53
+    ! Local variables
+    integer :: CHANNEL                ! Loop index
+    integer :: CHANNELSNODE           ! Tree node for channels values
+    integer :: COORDINATE             ! Vertical coordinate type
+    logical, dimension(:), pointer :: doThisInstance => null()
+    integer :: FIELD                  ! Field type from tree
+    integer :: GSON                   ! Tree node
+    integer :: HEIGHT                 ! Loop counter
+    integer :: HEIGHTNODE             ! Tree node for height values
+    integer :: HEIGHTUNIT             ! Unit for heights command
+    integer :: I, J                   ! Subscripts, loop inductors
+    integer :: IND                    ! An array index
+    integer :: INSTANCE               ! Loop counter
+    integer :: INSTANCEOR1            ! For coherent quantities
+    integer :: INSTANCESNODE          ! Tree node for instance values
+    integer :: MAINVECTORINDEX        ! Vector index of quantity to subset
+    integer :: MaskBit                ! Bits corresponding to Mask
+    integer :: MAXUNIT                ! Units for maxValue
+    integer :: MINUNIT                ! Units for minValue
+    integer :: NODE                   ! Either heightNode or surfaceNode
+    character(len=128) :: NumbersList ! for a dump
+    integer :: ODCUTOFFHEIGHT         ! `First' index optically thick
+    integer :: QUANTITYINDEX          ! Index
+    integer :: RANGEID                ! nodeID of a range
+    integer :: S1(1), S2(1)           ! Results of minloc intrinsic
+    integer :: SCANDIRECTION          ! +/-1 for up or down
+    integer :: SON                    ! Tree node
+    integer :: STATUS                 ! Flag
+    character(len=16) :: str
+    integer :: SURFNODE               ! Tree node
+    integer :: TESTUNIT               ! Either vector%globalUnit or qty tmplt unit
+    integer :: TYPE                   ! Type of value returned by expr
+    integer :: UNITS(2)               ! Units returned by expr
+    integer :: VECTORINDEX            ! Index
+    logical :: VERBOSE
+
+    real(r8), dimension(:), pointer :: THESEHEIGHTS ! Subset of heights
+    real(r8) :: VALUE(2)              ! Value returned by expr
+    real(r8) :: OPTICALDEPTHCUTOFF    ! Maximum value of optical depth to allow
+    real(r8) :: MAXVALUE, MINVALUE    ! Cutoff ranges
+    type (VectorValue_T), pointer :: QTY  ! The quantity to mask
+    type (VectorValue_T), pointer :: PTAN ! The ptan quantity if needed
+    type (VectorValue_T), pointer :: RAD  ! The radiance quantity if needed
+    type (VectorValue_T), pointer :: OPTICALDEPTH ! The opticalDepth quantity if needed
+    logical :: Got(field_first:field_last)   ! "Got this field already"
+    logical, dimension(:), pointer :: CHANNELS ! Are we dealing with these channels
+    logical :: IGNORE                 ! Flag
+    logical :: RESET                  ! Flag
+    logical :: ADDITIONAL             ! Flag
+    logical :: DOTHISCHANNEL          ! Flag
+    logical :: DOTHISHEIGHT           ! Flag
+    logical :: REVERSE                ! Flag
+    character(len=1), dimension(:), pointer :: ORIGINALMASK
+d582 5
+a586 1
+    nullify ( channels, doThisInstance, qty, ptan, opticalDepth )
+d588 5
+a592 12
+    ignore = .false.
+    reset = .false.
+    additional = .false.
+    reverse = .false.
+    maskBit = m_linalg
+    minUnit = 0
+    maxUnit = 0
+    verbose = ( switchDetail(switches,'subset') > -1 )
+    do j = 2, nsons(key) ! fields of the "subset" specification
+      son = subtree(j, key)
+      field = get_field_id(son)   ! tree_checker prevents duplicates
+      if (nsons(son) > 1 ) gson = subtree(2,son) ! Gson is value
+a594 4
+        mainVectorIndex = decoration(decoration(subtree(1,gson)))
+        quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+        qty => GetVectorQtyByTemplateIndex(vectors(mainVectorIndex), quantityIndex)
+      case ( f_ptanquantity )
+d597 2
+a598 2
+        ptan => GetVectorQtyByTemplateIndex(vectors(vectorIndeX), quantityIndex)
+      case ( f_radiancequantity )
+d601 17
+a617 7
+        rad => GetVectorQtyByTemplateIndex(vectors(vectorIndeX), quantityIndex)
+      case ( f_channels )
+        channelsNode = son
+      case ( f_height )
+        heightNode = son
+      case ( f_instances )
+        instancesNode = son
+d619 1
+a619 32
+        if ( .not. got(f_mask) ) maskBit = 0 ! clear default first time
+        maskBit = GetMaskBit ( son )
+      case ( f_opticalDepth )
+        vectorIndex = decoration(decoration(subtree(1,gson)))
+        quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+        opticalDepth => GetVectorQtyByTemplateIndex(vectors(vectorIndeX), quantityIndex)
+      case ( f_opticalDepthCutoff )
+        call expr ( subtree (2, son), units, value, type )
+        if ( units(1) /= phyq_dimensionless ) &
+          & call announceError ( subtree (2, son), WrongUnits, &
+          & f_opticalDepthCutoff )
+        opticalDepthCutoff = value(1)
+      case ( f_maxValue )
+        call expr ( subtree (2, son), units, value, type )
+        maxUnit = units(1)
+        maxValue = value(1)
+      case ( f_minValue )
+        call expr ( subtree (2, son), units, value, type )
+        minUnit = units(1)
+        minValue = value(1)
+      case ( f_ignore )
+        ignore = Get_Boolean ( son )
+      case ( f_reset )
+        reset = Get_Boolean ( son )
+      case ( f_surface )
+        surfNode = son
+      case ( f_additional )
+        additional = Get_Boolean ( son )
+      case ( f_reverse )
+        reverse = Get_Boolean ( son )
+      case default
+        ! Shouldn't get here if the type checker worked
+d621 7
+a627 2
+      got(field) = .true.
+    end do ! j = 2, nsons(key)
+d629 11
+a639 32
+    if ( got(f_radianceQuantity) ) then
+      if ( rad%template%quantityType /= l_radiance ) &
+        & call AnnounceError ( key, 'RadianceQuantity field is not a radiance quantity' )
+      if ( any(got((/ f_height, f_mask, f_maxvalue, &
+        & f_minvalue, f_opticaldepth, f_opticaldepthcutoff, f_ptanquantity, &
+        & f_reset, f_reverse, f_surface /)))) call AnnounceError ( key, &
+          & 'Subset from radiance allows only additional, channel, ignore, and instances fields' )
+      if ( .not. qty%template%minorFrame ) call AnnounceError ( key, &
+        & 'Can only mask minor frame quantities from radiance' )
+      if ( qty%template%noChans > 1 ) call AnnounceError ( key, &
+        & 'Can only mask channel-independent quantities from radiance' )
+      if ( ignore .and. .not. got(f_channels) ) call AnnounceError ( key, &
+        & 'Specifying "ignore" without "channels" turns everything off!' )
+    else
+      ! Do some error checking for the optical depth issues
+      if ( any(got((/ f_opticalDepth, f_opticalDepthCutoff /))) ) then
+        if ( .not. all(got((/ f_opticalDepth, f_opticalDepthCutoff /))) ) &
+          & call AnnounceError ( key, &
+          & 'Must supply both opticalDepth and opicalDepthCutoff' )
+        if ( qty%template%quantityType /= l_radiance .or. &
+          &  opticalDepth%template%quantityType /= l_opticalDepth ) &
+          & call AnnounceError ( key, 'Supplied quantity is not optical depth' )
+        if ( qty%template%signal /= opticalDepth%template%signal .or. &
+          &  qty%template%sideband /= opticalDepth%template%sideband ) &
+          & call AnnounceError ( key, 'Optical depth does not match subsetted quantity' )
+      end if
+      ! Check for exactly one of height, ignore, instances, reset, surface
+      if ( count ( got ( &
+        & (/ f_height, f_ignore, f_instances, f_reset, f_surface /) ) ) /= 1 ) &
+          & call announceError ( key, &
+            & 'Subset must be exactly one of height, ignore, instances, surface or reset' )
+    end if
+d641 16
+a656 33
+    if ( vectors(mainVectorIndex)%globalUnit /= phyq_invalid ) then
+      testUnit = vectors(mainVectorIndex)%globalUnit
+    else
+      testUnit = qty%template%unit
+    end if
+    if ( got ( f_minValue ) .and. ( minUnit /= testUnit ) ) &
+      & call AnnounceError ( key, WrongUnits, f_minValue )
+    if ( got ( f_maxValue ) .and. ( maxUnit /= testUnit ) ) &
+      & call AnnounceError ( key, WrongUnits, f_maxValue )
+
+    ! Process the instances field.
+    call Allocate_test ( doThisInstance, qty%template%noInstances, &
+      & 'doThisInstance', ModuleName )
+    doThisInstance = .not. got(f_instances)
+    if ( got(f_instances) ) then
+      call GetIndexFlagsFromList ( InstancesNode, doThisInstance, status )
+      if ( status /= 0 ) call announceError ( key, &
+        & 'There was a problem with the instances field' )
+      if ( verbose ) then
+        call trueList ( doThisInstance, numbersList )
+        call outputNamedValue( 'Instances', trim(numbersList) )
+        call dump( doThisInstance, name='Instances' )
+      end if
+    end if
+
+    ! Process the channels field.
+    if ( qty%template%frequencyCoordinate /= l_none .or. &
+         got(f_radianceQuantity) ) then
+      !??? Someday think about the low bound for channels using ???
+      !??? lbound(spectrometerTypes(signals(...%template%signal)%spectrometerType)%Frequencies,1) ???
+      if ( got(f_radianceQuantity) ) then
+        call Allocate_test ( channels, rad%template%noChans, 'channels', &
+        & ModuleName )
+d658 7
+a664 13
+        call Allocate_test ( channels, qty%template%noChans, 'channels', &
+          & ModuleName )
+      end if
+      if ( got(f_channels) ) then     ! This subset is only for some channels
+        call GetIndexFlagsFromList ( channelsNode, channels, status, &
+          !??? lbound(channels,1) is always 1
+          & lower=lbound(channels,1) )
+        if ( status /= 0 ) call announceError ( channelsNode, &
+          & 'There was a problem with the channels field' )
+        if ( verbose ) then
+          call trueList ( channels, numbersList )
+          call outputNamedValue( 'Channels', trim(numbersList) )
+          call dump( channels, name='Channels' )
+a665 2
+      else
+        channels = .true.             ! Apply this to all channels
+d667 1
+a667 1
+    end if
+d669 4
+a672 82
+    ! Preprocess the height stuff.  
+    heightUnit = phyq_dimensionless
+    if ( got(f_height) ) then
+      do j = 2, nsons(heightNode)
+        call expr ( subtree(j,heightNode), units, value, type )
+        ! Make sure the range has non-dimensionless units -- the type
+        ! checker only verifies that they're consistent.  We need to
+        ! check each range separately, because the units determine the
+        ! scaling of the values.
+        if ( all(units == phyq_dimensionless) ) call announceError ( &
+          & subtree(j,heightNode), WrongUnits, f_height )
+        ! Check consistency of units -- all the same, or dimensionless. The
+        ! type checker verifies the consistency of units of ranges, but not
+        ! of array elements.
+        do i = 1, 2
+          if ( heightUnit == phyq_dimensionless ) then
+            heightUnit = units(i)
+          else if ( units(i) /= phyq_dimensionless .and. &
+            &       units(i) /= heightUnit ) then
+            call announceError ( heightNode, WrongUnits, f_height )
+          end if
+        end do
+      end do
+      ! Check for correct units
+      if ( heightUnit == phyq_pressure ) then
+        if ( qty%template%minorFrame .and. .not. got(f_ptanQuantity) ) &
+          & call announceError ( heightNode, WrongUnits, f_height, f_ptanQuantity )
+      else if ( heightUnit /= phyq_length ) then
+        call announceError ( heightNode, WrongUnits, f_height )
+      end if
+    end if
+
+    ! Create the mask if it doesn't exist
+    if ( .not. associated( qty%mask ) ) call CreateMask ( qty )
+
+    ! Make a space to save the original values if doing an additional mask
+    if ( additional ) then
+      nullify ( originalMask )
+      call Allocate_test ( originalMask, qty%template%instanceLen, &
+        & 'originalMask', ModuleName )
+    end if
+
+    ! Now we loop over the instances
+    do instance = 1, qty%template%noInstances
+      ! Possibly save original mask
+      if ( additional ) originalMask = qty%mask ( :, instance )
+      if ( .not. doThisInstance(instance) ) then
+        ! Because this instance is outside the instances=.. field 
+        ! we will mask this instance (because subset picks out
+        ! a portion of a quantity not to mask)
+        !??? Make sure mask bit numbers begin at 1, even when
+        !??? channel numbers don't.
+        call SetMask ( qty%mask(:,instance), &
+          & what=maskBit )
+        ! If this is supposed to be an 'additional' mask, merge in the
+        ! original value
+        if ( additional ) &
+          & qty%mask(:,instance) = char ( ior ( &
+          & ichar ( qty%mask(:,instance) ), ichar ( originalMask ) ) )
+        cycle ! instance
+      end if
+
+      if ( got(f_radianceQuantity) ) then
+        do height = 1, qty%template%noSurfs
+          ! Unmask qty where any specified channel in rad is unmasked
+          qty%mask(height,instance) = char(255)
+          do channel = 1, rad%template%noChans
+            if ( ignore .neqv. channels(channel) ) &
+              & qty%mask(height,instance) = char( &
+                & iand( ichar(qty%mask(height,instance)), &
+                      & ichar(rad%mask(channel+rad%template%noChans*(height-1),instance)) ) )
+          end do
+        end do
+        ! If this is supposed to be an 'additional' mask, merge in the
+        ! original value
+        if ( additional ) &
+          & qty%mask(:,instance) = char ( ior ( &
+          & ichar ( qty%mask(:,instance) ), ichar ( originalMask ) ) )
+        cycle ! instance
+      end if
+
+      instanceOr1 = instance
+d674 3
+d678 1
+a678 9
+        theseHeights => qty%template%surfs(:,1)
+        coordinate = qty%template%verticalCoordinate
+        instanceOr1 = 1
+      else if ( qty%template%minorFrame .and. heightUnit == phyq_pressure ) then
+        if ( ptan%template%instrumentModule /= qty%template%instrumentModule ) &
+          & call AnnounceError ( key, WrongUnits, f_ptanQuantity, &
+          & f_quantity )
+        theseHeights => ptan%values(:,instance)
+        coordinate = l_zeta
+d680 1
+a680 2
+        theseHeights => qty%template%surfs(:,instance)
+        coordinate = qty%template%verticalCoordinate
+d682 53
+d736 6
+a741 35
+      ! Now, make sure for the channels we're considering that the
+      ! default is to ignore all, unless we've not got a heights or ignore
+      ! in which case we default to use all
+      if ( any ( (/ got(f_height), got(f_surface), ignore /) ) ) then
+        do channel = 1, qty%template%noChans
+          doThisChannel = .true.
+          if ( associated(channels) ) doThisChannel = channels(channel)
+          if ( doThisChannel ) then
+            do height = 1, qty%template%noSurfs
+              !??? Make sure mask bit numbers begin at 1, even when
+              !??? channel numbers don't.
+              call SetMask ( qty%mask(:,instance), &
+                & (/ channel+qty%template%noChans*(height-1) /), &
+                & what=maskBit )
+            end do                    ! Height loop
+          end if                      ! Do this channel
+        end do                        ! Channel loop
+      else
+        ! If not got heights and/or ignore, default must be 
+        if ( reset ) then
+          do channel = 1, qty%template%noChans
+            doThisChannel = .true.
+            if ( associated(channels) ) doThisChannel = channels(channel)
+            if ( doThisChannel ) then
+              do height = 1, qty%template%noSurfs
+                !??? Make sure mask bit numbers begin at 1, even when
+                !??? channel numbers don't.
+                call ClearMask ( qty%mask(:,instance), &
+                  & (/ channel+qty%template%noChans*(height-1) /), &
+                  & what=maskBit )
+              end do                  ! Height loop
+            end if                    ! Do this channel
+          end do                      ! Channel loop
+        end if                        ! Reset specified
+      end if                          ! Got heights or ignore
+d743 22
+a764 23
+      ! Now go and `unmask' the ones we want to consider.  For coherent
+      ! quantities we can simply loop over the indices of each height range.
+      ! For incoherent ones we have to go through and mark each point
+      ! appropriately.
+      if ( got(f_height) .or. got(f_surface) ) then
+        if ( got ( f_height ) ) then
+          node = heightNode
+        else
+          node = surfNode
+        end if
+        do j = 2, nsons(node)
+          son = subtree ( j, node )
+          rangeId = node_id ( son )
+          if ( got ( f_height ) ) then
+            ! Get values for this range
+            call expr ( son, units, value, type )
+            ! Now maybe do something nasty to value to get in right units.
+            if ( coordinate == l_zeta .and. heightUnit == phyq_pressure ) then
+              value = -log10(value)
+            else
+              if ( coordinate /= qty%template%verticalCoordinate ) &
+                & call AnnounceError ( son, WrongUnits, f_height )
+            end if
+d766 21
+a786 34
+            ! Do special things for coherent quantities
+            if ( qty%template%coherent ) then
+              if ( coordinate == l_pressure ) then
+                s1 = minloc ( abs ( -log10(theseHeights) + log10(value(1)) ) )
+                s2 = minloc ( abs ( -log10(theseHeights) + log10(value(2)) ) )
+              else
+                s1 = minloc ( abs ( theseHeights - value(1) ) )
+                s2 = minloc ( abs ( theseHeights - value(2) ) )
+              end if
+            end if
+          else
+            ! Subset by surface (i.e. MIF) instead, much easier
+            call expr ( son, units, value, type )
+            if ( .not. all ( units == phyq_dimensionless .or. units == phyq_mifs ) ) &
+              & call AnnounceError ( son, WrongUnits, f_surface )
+            s1(1) = max ( min ( value(1), real(qty%template%noSurfs, r8) ), 1._r8 )
+            s2(1) = max ( min ( value(2), real(qty%template%noSurfs, r8) ), 1._r8 )
+          end if
+          ! Now consider the open range issue
+          select case ( rangeId )
+          case ( n_colon_less )
+            s1 = min ( s1 + 1, qty%template%noSurfs )
+          case ( n_less_colon )
+            s2 = max ( s2 - 1, 1 )
+          case ( n_less_colon_less )
+            s1 = min ( s1 + 1, qty%template%noSurfs )
+            s2 = max ( s2 - 1, 1 )
+          end select
+          
+          scanDirection = 0
+          do channel = 1, qty%template%noChans
+            doThisChannel = .true.
+            if ( associated(channels) ) doThisChannel = channels(channel)
+            if ( doThisChannel ) then
+d788 13
+a800 35
+              ! Think about optical depth.  We want the cutoff to apply once
+              ! and definitively, not have channels come in and out of use as
+              ! a function of tangent height.  To do this we need to work out
+              ! where we 'first' go optically thick. To do this we need to
+              ! work out whether we're scanning up or down.
+              if ( associated ( opticalDepth ) ) then
+                ! Don't bother deducing direction if we alredy know
+                if ( scanDirection == 0 ) then
+                  ind = qty%template%noChans + channel
+                  do height = 2, qty%template%noSurfs
+                    scanDirection = scanDirection + merge ( 1, -1, &
+                      & opticalDepth%template%surfs(height,instanceOr1) > &
+                      & opticalDepth%template%surfs(height-1,instanceOr1) )
+                  end do
+                  ! Now convert it to +/-1.
+                  if ( scanDirection == 0 ) scanDirection = 1 ! Default upscan
+                  scanDirection = scanDirection / abs(scanDirection) 
+                end if
+                ! Now find `first' optically thick radiance look down from top
+                if ( scanDirection == 1 ) then ! Scanning up
+                  ind = qty%template%noChans*(qty%template%noSurfs-1) + channel
+                  do odCutoffHeight = qty%template%noSurfs, 1, - 1 
+                    if ( opticalDepth%values ( ind, instance ) > &
+                      & opticalDepthCutoff ) exit
+                    ind = ind - qty%template%noChans
+                  end do
+                else ! else scanning down
+                  ind = qty%template%noChans + channel
+                  do odCutoffHeight = 1, qty%template%noSurfs
+                    if ( opticalDepth%values ( ind, instance ) > &
+                      & opticalDepthCutoff ) exit
+                    ind = ind + qty%template%noChans
+                  end do
+                end if
+              end if
+d802 100
+a901 55
+              if ( qty%template%coherent .or. got ( f_surface ) ) then
+                ! For coherent quantities and/or spefified surfaces simply do a loop over a range.
+                do height = s1(1), s2(1)
+                  !??? Make sure mask bit numbers begin at 1, even when
+                  !??? channel numbers don't.
+                  ind = channel + qty%template%noChans*(height-1)
+                  doThisHeight = .true.
+                  if ( got ( f_minValue ) ) doThisHeight = doThisHeight .and. &
+                    & qty%values( ind, instance ) > minValue
+                  if ( got ( f_maxValue ) ) doThisHeight = doThisHeight .and. &
+                    & qty%values( ind, instance ) < maxValue
+                  if ( doThisHeight ) then
+                    if ( associated( opticalDepth ) ) then
+                      if ( scanDirection * ( height - odCutoffHeight ) > 0 ) &
+                        & call ClearMask ( qty%mask(:,instance), (/ind/), what=maskBit )
+                    else
+                      call ClearMask ( qty%mask(:,instance), (/ind/), what=maskBit )
+                    end if
+                  end if
+                end do                ! Height loop
+              else
+                ! For Incoherent quantities check each height individually
+                ! We might as well consider open and non open ranges, but
+                ! it's really rather unnecessary, as the chance of a ptan
+                ! being exactly equal to the range given is remote, and the
+                ! difference probably doesn't matter anyway.
+                do height = 1, qty%template%noSurfs
+                  ind = channel + qty%template%noChans*(height-1)
+                  doThisHeight = .true.
+                  if (any(rangeID==(/ n_less_colon,n_less_colon_less /))) then
+                    doThisHeight = doThisHeight .and. theseHeights(height) > value(1)
+                  else
+                    doThisHeight = doThisHeight .and. theseHeights(height) >= value(1)
+                  end if
+                  if (any(rangeID==(/ n_colon_less,n_less_colon_less /))) then
+                    doThisHeight = doThisHeight .and. theseHeights(height) < value(2)
+                  else
+                    doThisHeight = doThisHeight .and. theseHeights(height) <= value(2)
+                  end if
+                  if ( associated ( opticalDepth ) ) then
+                    doThisHeight = doThisHeight .and. &
+                      & scanDirection * ( height - odCutoffHeight ) > 0
+                  end if
+                  if ( got ( f_minValue ) ) doThisHeight = doThisHeight .and. &
+                    & qty%values( ind, instance ) > minValue
+                  if ( got ( f_maxValue ) ) doThisHeight = doThisHeight .and. &
+                    & qty%values( ind, instance ) < maxValue
+                  if ( doThisHeight ) call ClearMask ( qty%mask(:,instance), &
+                    & (/ ind /), what=maskBit )
+                end do                ! Height loop
+              end if                  ! Coherent
+            end if                    ! Do this channel
+          end do                      ! Channel loop
+        end do                        ! Height entries in l2cf
+      end if                          ! Got a height entry
+d903 43
+a945 3
+      ! If the reverse flag is set, reverse the mask
+      if ( reverse ) &
+        & call ReverseMask( qty%mask(:,instance), what=maskBit )
+d947 9
+a955 6
+      ! If this is supposed to be an 'additional' mask, merge in the
+      ! original value
+      if ( additional ) &
+        & qty%mask(:,instance) = char ( ior ( &
+        & ichar ( qty%mask(:,instance) ), ichar ( originalMask ) ) )
+    end do                            ! Instance loop
+d957 5
+a961 5
+    ! Tidy up
+    call Deallocate_test ( channels, 'channels', ModuleName )
+    call Deallocate_test ( dothisInstance, 'dothisInstance', ModuleName )
+    if ( additional ) call Deallocate_test ( originalMask, &
+      & 'originalMask', ModuleName )
+d975 2
+d1226 6
+d1432 1
+a1432 1
+       "$Id: SubsetModule.f90,v 2.24 2012/05/01 22:22:26 vsnyder Exp $"
+d1442 3
+@
+
+
+2.24
+log
+@Mask minor-frame quantity by reference to radiance quantity.  Move some
+dump generation to TrueList in MLSStrings.
+@
+text
+@d425 2
+d1263 1
+a1263 1
+       "$Id: SubsetModule.f90,v 2.23 2012/03/28 00:54:41 vsnyder Exp $"
+d1273 4
+@
+
+
+2.23
+log
+@Better error message for wrong units
+@
+text
+@d269 5
+a273 5
+      & F_IGNORE, F_INSTANCES, &
+      & F_MASK, F_MAXVALUE, F_MINVALUE, F_OPTICALDEPTH, F_OPTICALDEPTHCUTOFF, &
+      & F_PTANQUANTITY,  F_QUANTITY, F_RESET, F_REVERSE, F_SURFACE
+    use INIT_TABLES_MODULE, only: L_OPTICALDEPTH, L_NONE, &
+      & L_PRESSURE, L_RADIANCE, L_ZETA
+d281 1
+d309 1
+a323 1
+    character(len=128) :: whichInstances
+d329 1
+a329 1
+    type (VectorValue_T), pointer :: QTY ! The quantity to mask
+d331 1
+d367 4
+d414 29
+a442 14
+    ! Do some error checking for the optical depth issues
+    if ( any(got((/ f_opticalDepth, f_opticalDepthCutoff /))) ) then
+      if ( .not. all(got((/ f_opticalDepth, f_opticalDepthCutoff /))) ) &
+        & call AnnounceError ( key, &
+        & 'Must supply both opticalDepth and opicalDepthCutoff' )
+      if ( qty%template%quantityType /= l_radiance .or. &
+        &  opticalDepth%template%quantityType /= l_opticalDepth ) &
+        & call AnnounceError ( key, 'Supplied quantity is not optical depth' )
+      if ( qty%template%signal /= opticalDepth%template%signal .or. &
+        &  qty%template%sideband /= opticalDepth%template%sideband ) &
+        & call AnnounceError ( key, 'Optical depth does not match subsetted quantity' )
+    end if
+    if ( all ( got ( (/ f_height, f_surface /) ) ) ) then
+      call AnnounceError ( key, 'Height and Surface are mutually exclusive in Subset' )
+d458 1
+a458 2
+    doThisInstance = .true.
+    whichInstances = ' '
+d460 3
+a462 30
+      do j = 2, nsons(InstancesNode)
+        son = subtree ( j, InstancesNode )
+        rangeId = node_id ( son )
+        ! 
+        call expr ( son, units, value, type )
+        if ( any ( units /= phyq_dimensionless ) ) &
+          & call AnnounceError ( InstancesNode, &
+          & 'No units allowed in instances field during subset' )
+        s1 = max ( min ( value(1), &
+          & real(qty%template%noInstances, r8) ), 1._r8 )
+        s2 = max ( min ( value(2), &
+          & real(qty%template%noInstances, r8) ), 1._r8 )
+        ! Now consider the open range issue
+        select case ( rangeId )
+        case ( n_colon_less )
+          s1 = min ( s1 + 1, qty%template%noInstances )
+        case ( n_less_colon )
+          s2 = max ( s2 - 1, 1 )
+        case ( n_less_colon_less )
+          s1 = min ( s1 + 1, qty%template%noInstances )
+          s2 = max ( s2 - 1, 1 )
+        end select
+        if ( s1(1) == s2(1) ) then
+          write( str, '(i5)' ) s1(1)
+        else
+          write( str, '(i5, a1, i5)' ) s1(1), '-', s2(1)
+        endif
+        whichInstances = catLists( whichInstances, str )
+      enddo
+      call ExpandStringRange( trim(whichInstances), doThisInstance )
+d464 6
+a469 4
+        call outputNamedValue( 'whichInstances', trim(whichInstances) )
+        call dump( doThisInstance )
+      endif
+    endif
+d471 11
+a481 3
+    if ( qty%template%frequencyCoordinate /= l_none ) then
+      call Allocate_test ( channels, qty%template%noChans, &
+        & 'channels', ModuleName )
+d484 1
+d486 1
+a486 1
+        if ( status /= 0 ) call announceError ( key, &
+d488 5
+a497 5
+    ! Check that got one of ignore, height, reset, instances
+    if ( count ( got ( &
+      & (/ f_height, f_ignore, f_instances, f_reset, f_surface /) ) ) /= 1 ) &
+      & call announceError ( key, 'Subset must be one of ignore, height, surface or reset' )
+
+d557 21
+a577 2
+        cycle
+      endif
+d580 1
+d1261 1
+a1261 1
+       "$Id: SubsetModule.f90,v 2.22 2011/05/09 18:26:45 pwagner Exp $"
+d1271 3
+@
+
+
+2.22
+log
+@Converted to using switchDetail
+@
+text
+@d126 1
+a126 1
+        if ( exprUnit(1) /= PHYQ_Dimensionless ) call AnnounceError ( key, &
+d131 1
+a131 1
+        if ( exprUnit(1) /= PHYQ_Dimensionless ) call AnnounceError ( key, &
+d265 2
+a266 1
+    use INTRINSIC, only: PHYQ_LENGTH, PHYQ_PRESSURE, PHYQ_INVALID, PHYQ_DIMENSIONLESS
+d381 1
+a381 1
+          & call announceError ( key, WrongUnits, &
+d504 1
+a504 1
+          & key, WrongUnits, f_height )
+d513 1
+a513 1
+            call announceError ( key, WrongUnits, f_height )
+d520 1
+a520 1
+          & call announceError ( key, WrongUnits, f_height, f_ptanQuantity )
+d522 1
+a522 1
+        call announceError ( key, WrongUnits, f_height )
+d629 1
+a629 1
+                & call AnnounceError ( key, WrongUnits, f_height )
+d645 2
+a646 2
+            if ( any ( units /= phyq_dimensionless ) ) &
+              & call AnnounceError ( key, WrongUnits, f_surface )
+d886 1
+a886 1
+          & call announceError ( key, WrongUnits, f_cloudRadianceCutoff )
+d921 1
+a921 1
+        & key, WrongUnits, f_height )
+d930 1
+a930 1
+          call announceError ( key, WrongUnits, f_height )
+d947 1
+a947 1
+        & key, WrongUnits, f_cloudheight )
+d1161 1
+a1161 1
+  
+d1169 1
+d1181 1
+a1181 1
+      call output ( field_indices(fieldIndex) )
+d1237 1
+a1237 1
+       "$Id: SubsetModule.f90,v 2.21 2011/03/15 22:54:18 pwagner Exp $"
+d1247 3
+@
+
+
+2.21
+log
+@/reverse flag reverses which elements are masked by Subset command
+@
+text
+@d36 5
+a40 5
+    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use Intrinsic, only: PHYQ_DIMENSIONLESS
+    use MLSCommon, only: R8
+    use Expr_M, only: EXPR
+    use VectorsModule, only: VECTOR_T, VECTORVALUE_T, GETVECTORQTYBYTEMPLATEINDEX, &
+d42 1
+a42 1
+    use Init_Tables_Module, only: F_QUANTITY, F_PTANQUANTITY, F_BASISFRACTION, &
+d44 8
+a51 8
+    use Init_Tables_Module, only: FIELD_FIRST, FIELD_LAST
+    use Init_Tables_Module, only: L_ZETA, L_RADIANCE
+    use Tree, only: NSONS, SUBTREE, DECORATION
+    use MoreTree, only: GET_FIELD_ID
+    use MLSSignals_M, only: Signal_T
+    use Parse_Signal_M, only: EXPAND_SIGNAL_LIST
+    use ManipulateVectorQuantities, only: FINDONECLOSESTINSTANCE
+    use MLSNumerics, only: HUNT
+d261 7
+a267 7
+    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use dump_0, only: DUMP
+    use Expr_m, only: EXPR, GETINDEXFLAGSFROMLIST
+    use MLSCommon, only: R8
+    use Intrinsic, only: PHYQ_LENGTH, PHYQ_PRESSURE, PHYQ_INVALID, PHYQ_DIMENSIONLESS
+    use Init_Tables_Module, only: FIELD_FIRST, FIELD_LAST
+    use Init_Tables_Module, only: F_ADDITIONAL, F_CHANNELS, F_HEIGHT, &
+d271 1
+a271 1
+    use Init_Tables_Module, only: L_OPTICALDEPTH, L_NONE, &
+d273 1
+a273 1
+    use Tree_Types, only: N_COLON_LESS, N_LESS_COLON, &
+d275 1
+a275 1
+    use VectorsModule, only: M_LINALG, VECTOR_T, VECTORVALUE_T, &
+d278 6
+a283 6
+    use Tree, only: NSONS, SUBTREE, DECORATION, NODE_ID
+    use MLSStringLists, only: CATLISTS, EXPANDSTRINGRANGE, SWITCHDETAIL
+    use MoreTree, only: GET_FIELD_ID, GET_BOOLEAN
+    use String_Table, only: DISPLAY_STRING
+    use Toggles, only: SWITCHES
+    use Output_M, only: OUTPUT, OUTPUTNAMEDVALUE
+d775 1
+a775 1
+    if ( index(switches,'msk') /= 0 ) then
+d791 1
+a791 1
+    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+d793 3
+a795 3
+    use MLSCommon, only: R8
+    use Init_Tables_Module, only: FIELD_FIRST, FIELD_LAST
+    use Init_Tables_Module, only: F_QUANTITY, F_PTANQUANTITY, &
+d798 2
+a799 2
+    use Init_Tables_Module, only: L_RADIANCE, L_CLOUDINDUCEDRADIANCE, L_ZETA
+    use Intrinsic, only: PHYQ_PRESSURE, PHYQ_TEMPERATURE, &
+d801 5
+a805 5
+    use MoreTree, only: GET_FIELD_ID
+    use VectorsModule, only: CreateMask, &
+      & GetVectorQtyByTemplateIndex, SetMask, VectorValue_T, Vector_T, &
+      & m_cloud
+    use Tree, only: NSONS, SUBTREE, DECORATION
+d1038 2
+a1039 2
+    use Init_Tables_Module, only: FIELD_FIRST, FIELD_LAST
+    use Init_Tables_Module, only: F_QUANTITY, F_SOURCEQUANTITY, &
+d1041 2
+a1042 2
+    use Init_Tables_Module, only: L_INVERT, L_COPY, L_ANDMASKS, L_ORMASKS
+    use VectorsModule, only: GETVECTORQTYBYTEMPLATEINDEX, VECTORVALUE_T, &
+d1044 2
+a1045 2
+    use Tree, only: NSONS, SUBTREE, DECORATION
+    use MoreTree, only: GET_FIELD_ID
+d1163 5
+a1167 5
+    use Intrinsic, only: FIELD_INDICES
+    use Lexer_Core, only: PRINT_SOURCE
+    use Tree, only: SOURCE_REF
+    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
+    use Output_M, only: OUTPUT
+d1235 1
+a1235 1
+       "$Id: SubsetModule.f90,v 2.20 2010/04/28 16:24:43 pwagner Exp $"
+d1245 3
+@
+
+
+2.20
+log
+@May specify instances range in Subset
+@
+text
+@d270 1
+a270 1
+      & F_PTANQUANTITY,  F_QUANTITY, F_RESET, F_SURFACE
+d275 3
+a277 2
+    use VectorsModule, only: GETVECTORQTYBYTEMPLATEINDEX, SETMASK, VECTORVALUE_T, &
+      & VECTOR_T, CLEARMASK, CREATEMASK, M_LINALG, DUMPMASK
+d337 1
+d346 1
+d399 2
+d758 4
+d1235 1
+a1235 1
+       "$Id: SubsetModule.f90,v 2.19 2010/04/22 23:38:11 pwagner Exp $"
+d1245 3
+@
+
+
+2.19
+log
+@Added new Ignore masking bit
+@
+text
+@d262 1
+d267 6
+a272 4
+    use Init_Tables_Module, only: F_QUANTITY, F_PTANQUANTITY, F_CHANNELS, F_HEIGHT, &
+      & F_MASK, F_OPTICALDEPTH, F_OPTICALDEPTHCUTOFF, F_MAXVALUE, F_MINVALUE, &
+      & F_IGNORE, F_RESET, F_SURFACE, F_ADDITIONAL
+    use Init_Tables_Module, only: L_RADIANCE, L_OPTICALDEPTH, L_NONE, L_ZETA, L_PRESSURE
+d278 1
+d282 1
+a282 1
+    use Output_M, only: OUTPUT
+d290 1
+d300 2
+d303 2
+a304 1
+    integer :: MAINVECTORINDEX        ! Vector index of quantity to subset
+d313 1
+d319 2
+a320 2
+    integer :: MINUNIT                ! Units for minValue
+    integer :: MAXUNIT                ! Units for maxValue
+d339 1
+a339 1
+    nullify ( channels, qty, ptan, opticalDepth )
+d347 1
+d365 2
+d428 41
+d483 3
+a485 2
+    ! Check that got one of ignore, height, reset
+    if ( count ( got ( (/ f_ignore, f_height, f_reset, f_surface /) ) ) /= 1 ) &
+a531 1
+
+d534 15
+d616 1
+a616 1
+            ! Get values for this ragne
+d762 1
+d1226 1
+a1226 1
+       "$Id: SubsetModule.f90,v 2.18 2010/02/04 23:12:44 vsnyder Exp $"
+d1236 3
+@
+
+
+2.18
+log
+@Remove USE or declaration for unreferenced names
+@
+text
+@d1116 4
+a1119 4
+    use Init_Tables_Module, only: L_FILL, L_FULL_DERIVATIVES, &
+      & L_TIKHONOV, L_LINALG, L_SPARE, L_CLOUD
+    use VectorsModule, only: M_FILL, M_FULLDERIVATIVES, M_LINALG, &
+      & M_TIKHONOV, M_SPARE, M_CLOUD
+d1142 2
+d1157 1
+a1157 1
+       "$Id: SubsetModule.f90,v 2.17 2009/06/23 18:46:18 pwagner Exp $"
+d1167 3
+@
+
+
+2.17
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d25 1
+a25 1
+       "$RCSfile: $"
+d46 1
+a46 1
+    use Tree, only: NSONS, SUBTREE, DECORATION, SUB_ROSA
+a47 2
+    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_ALLOCATE, &
+      & MLSMSG_DEALLOCATE
+a49 1
+    use String_Table, only: GET_STRING
+a77 1
+    integer :: SIDEBAND                 ! Returned by parse_signal
+a78 1
+    integer :: STATUS                   ! Flag from allocate etc.
+a82 1
+    integer, dimension(:), pointer :: MAFFORINSTANCE ! Maps instances to mafs
+a85 1
+    integer, dimension(:), pointer :: SIGNALINDS ! Returned by parse_signal
+a90 1
+    character (len=132) :: SIGNALSTRING ! One signal
+a263 1
+    use Declaration_table, only: NUM_VALUE
+d271 1
+a271 1
+      & N_LESS_COLON_LESS, N_NAMED
+a297 1
+    integer :: NROWS                  ! Loop limit dumping mask
+a300 2
+    integer :: RANGE_LOW, RANGE_HI    ! Bounds of a range
+    integer :: ROW                    ! Row index dumping mask
+a312 1
+    real(r8) :: HeightMin, HeightMax
+a720 1
+    use Declaration_table, only: NUM_VALUE
+d724 1
+a724 1
+    use VectorsModule, only: ClearMask, CreateMask, &
+d726 1
+a726 1
+      & M_LINALG, m_cloud
+a747 1
+    integer :: RANGEID                ! nodeID of a range
+d964 3
+a966 3
+    use VectorsModule, only: GETVECTORQTYBYTEMPLATEINDEX, SETMASK, VECTORVALUE_T, &
+      & VECTOR_T, CLEARMASK, CREATEMASK, M_LINALG, DUMPMASK
+    use Tree, only: NSONS, SUBTREE, DECORATION, NODE_ID
+a967 2
+    use Toggles, only: SWITCHES
+    use Output_M, only: OUTPUT
+d1085 1
+a1085 1
+    use Intrinsic, only: FIELD_INDICES, SPEC_INDICES
+a1086 1
+    use String_Table, only: DISPLAY_STRING
+d1155 1
+a1155 1
+       "$Id: read_apriori.f90 is it here $"
+d1165 3
+@
+
+
+2.16
+log
+@NAG caught us mixing variable types in min, max
+@
+text
+@d25 1
+a25 1
+       "$RCSfile: SubsetModule.f90,v $"
+d1170 1
+a1171 1
+!---------------------------- RCS Ident Info -------------------------------
+d1173 2
+a1174 3
+       "$Id: SubsetModule.f90,v 2.15 2006/04/03 23:54:33 livesey Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d1176 1
+d1178 1
+d1183 3
+@
+
+
+2.15
+log
+@Added range guards
+@
+text
+@d586 2
+a587 2
+            s1(1) = max ( min ( value(1), qty%template%noSurfs ), 1 )
+            s2(1) = max ( min ( value(2), qty%template%noSurfs ), 1 )
+d1173 1
+a1173 1
+       "$Id: SubsetModule.f90,v 2.14 2006/04/03 23:51:42 livesey Exp $"
+d1182 3
+@
+
+
+2.14
+log
+@Added f_surface capability to subset
+@
+text
+@d586 2
+a587 2
+            s1(1) = value(1)
+            s2(1) = value(2)
+d1173 1
+a1173 1
+       "$Id: SubsetModule.f90,v 2.13 2005/06/22 18:57:02 pwagner Exp $"
+d1182 3
+@
+
+
+2.13
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d25 1
+a25 1
+       "$RCSfile: $"
+d277 1
+a277 1
+      & F_IGNORE, F_RESET, F_ADDITIONAL
+d306 1
+d317 1
+d393 2
+d414 4
+a417 1
+    endif
+d444 2
+a445 2
+    if ( count ( got ( (/ f_ignore, f_height, f_reset /) ) ) /= 1 ) &
+      & call announceError ( key, 'Subset must be one o ignore, height or reset' )
+d514 1
+a514 1
+      if ( got(f_height) .or. ignore ) then
+d551 8
+a558 4
+      if ( got(f_height) ) then
+        do j = 2, nsons(heightNode)
+          ! Get values for this ragne
+          son = subtree ( j, heightNode )
+d560 6
+a565 14
+          call expr ( son, units, value, type )
+          ! Now maybe do something nasty to value to get in right units.
+          if ( coordinate == l_zeta .and. heightUnit == phyq_pressure ) then
+            value = -log10(value)
+          else
+            if ( coordinate /= qty%template%verticalCoordinate ) &
+              & call AnnounceError ( key, WrongUnits, f_height )
+          end if
+
+          ! Do special things for coherent quantities
+          if ( qty%template%coherent ) then
+            if ( coordinate == l_pressure ) then
+              s1 = minloc ( abs ( -log10(theseHeights) + log10(value(1)) ) )
+              s2 = minloc ( abs ( -log10(theseHeights) + log10(value(2)) ) )
+d567 2
+a568 2
+              s1 = minloc ( abs ( theseHeights - value(1) ) )
+              s2 = minloc ( abs ( theseHeights - value(2) ) )
+d571 17
+a587 10
+            ! Now consider the open range issue
+            select case ( rangeId )
+            case ( n_colon_less )
+              s1 = min ( s1 + 1, qty%template%noSurfs )
+            case ( n_less_colon )
+              s2 = max ( s2 - 1, 1 )
+            case ( n_less_colon_less )
+              s1 = min ( s1 + 1, qty%template%noSurfs )
+              s2 = max ( s2 - 1, 1 )
+            end select
+d589 11
+a599 1
+
+d642 2
+a643 2
+              if ( qty%template%coherent ) then
+                ! For coherent quantities simply do a loop over a range.
+d1173 1
+a1173 1
+       "$Id: $"
+d1182 3
+@
+
+
+2.12
+log
+@Move GetIndexFlagsFromList from MoreTree to Expr_m
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d23 1
+a23 4
+  !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
+    "$Id: SubsetModule.f90,v 2.11 2003/08/06 17:24:16 livesey Exp $"
+  character (len=len(idParm)), private :: Id = idParm
+d25 1
+a25 1
+    "$RCSfile: SubsetModule.f90,v $"
+d27 1
+a27 1
+  !---------------------------------------------------------------------------
+d1151 5
+d1162 3
+@
+
+
+2.11
+log
+@Essentially cosmetic change
+@
+text
+@d17 1
+a17 1
+    "$Id: SubsetModule.f90,v 2.10 2003/05/14 22:02:08 dwu Exp $"
+d265 1
+a265 1
+    use Expr_m, only: EXPR
+d279 1
+a279 1
+    use MoreTree, only: GET_FIELD_ID, GET_BOOLEAN, GETINDEXFLAGSFROMLIST
+d702 1
+a702 1
+    use EXPR_M, only: EXPR
+d712 1
+a712 1
+    use MoreTree, only: GET_FIELD_ID, GETINDEXFLAGSFROMLIST
+d1152 3
+@
+
+
+2.10
+log
+@fix a bug in flagcloud
+@
+text
+@d17 1
+a17 1
+    "$Id: SubsetModule.f90,v 2.9 2003/05/12 18:55:01 dwu Exp $"
+d555 1
+a555 1
+            if ( qty%template%verticalCoordinate == l_pressure ) then
+d1152 3
+@
+
+
+2.9
+log
+@allow cloud flag for cloudinducedradiance
+@
+text
+@d17 1
+a17 1
+    "$Id: SubsetModule.f90,v 2.8 2003/04/14 22:21:26 dwu Exp $"
+d823 1
+a823 1
+      if (nsons(cloudheightNode) .gt. 2) call AnnounceError ( key, &
+d1152 3
+@
+
+
+2.8
+log
+@make cloudradiancecutoff sign dependent: it is 'greater than' if positive; 'less than' if negative
+@
+text
+@d17 1
+a17 1
+    "$Id: SubsetModule.f90,v 2.7 2003/04/10 18:30:57 dwu Exp $"
+d808 1
+a808 1
+    if ( qty%template%quantityType /= l_radiance &
+d1152 3
+@
+
+
+2.7
+log
+@make m_cloud as default in FlagCloud
+@
+text
+@d17 1
+a17 1
+    "$Id: SubsetModule.f90,v 2.6 2003/04/08 23:12:18 dwu Exp $"
+d894 9
+a902 3
+          if ( doThisCloudHeight .and. &
+            & cloudRadiance%values ( ind1, instance ) > cloudRadianceCutoff) &
+            & isCloud = .true.
+d918 5
+a922 1
+          if ( cloudRadiance%values ( ind1, instance ) > cloudRadianceCutoff) &
+d924 1
+d1152 3
+@
+
+
+2.6
+log
+@add m_cloud in setupFlagCloud
+@
+text
+@d17 1
+a17 1
+    "$Id: SubsetModule.f90,v 2.5 2003/04/04 22:01:46 livesey Exp $"
+d697 1
+a697 1
+  ! if flagged, m_cloud is set and an additional mask is also set if it's given
+d764 1
+a799 1
+        if ( .not. got(f_mask) ) maskBit = 0 ! clear default first time
+a923 4
+              &     what=m_cloud )
+            ! if additional maskbit is given, it is set as well
+            if ( doThisHeight .and. isCloud .and. got(f_mask))  &
+              &     call SetMask ( qty%mask(:,instance), (/ ind /), &
+d1141 3
+@
+
+
+2.5
+log
+@Added UpdateMask
+@
+text
+@d17 1
+a17 1
+    "$Id: SubsetModule.f90,v 2.4 2003/03/19 01:58:36 livesey Exp $"
+d697 2
+d715 1
+a715 1
+      & M_LINALG
+a763 1
+    maskBit = m_linalg   ! default mask bit
+d924 4
+d1145 3
+@
+
+
+2.4
+log
+@Added nullify on signals
+@
+text
+@d13 1
+a13 1
+  public :: RestrictRange, SetupSubset, SetupFlagCloud
+d17 1
+a17 1
+    "$Id: SubsetModule.f90,v 2.3 2003/03/07 03:17:12 livesey Exp $"
+d705 1
+a705 1
+      & F_CLOUDRADIANCECUTOFF
+d797 3
+d934 124
+d1079 1
+a1079 1
+    call output ( trim(string) )
+d1095 1
+a1095 1
+  function GetMaskBit ( node ) result ( maskBit )
+d1098 1
+a1098 1
+      & L_TIKHONOV, L_LINALG
+d1100 1
+a1100 1
+      & M_TIKHONOV
+d1105 1
+d1109 4
+d1117 2
+d1125 2
+d1140 3
+@
+
+
+2.3
+log
+@Added RestrictRange
+@
+text
+@d17 1
+a17 1
+    "$Id: SubsetModule.f90,v 2.2 2003/03/06 00:47:04 livesey Exp $"
+d107 1
+d1004 3
+@
+
+
+2.2
+log
+@Added logging information
+@
+text
+@d13 1
+a13 1
+  public :: SetupSubset, SetupFlagCloud
+d17 1
+a17 1
+    "$Id: SubsetModule.f90,v 2.1 2003/03/06 00:46:49 livesey Exp $"
+d24 3
+d29 231
+d272 1
+a272 2
+    use Init_Tables_Module, only: L_FILL, L_FULL_DERIVATIVES, L_LINALG, L_TIKHONOV, &
+      & L_RADIANCE, L_OPTICALDEPTH, L_NONE, L_ZETA, L_PRESSURE
+d276 1
+a276 2
+      & VECTOR_T, CLEARMASK, CREATEMASK, M_LINALG, DUMPMASK, M_FULLDERIVATIVES, &
+      & M_TIKHONOV, M_FILL
+a284 3
+    ! Local parameters
+    character(len=32), parameter :: WRONGUNITS = 'The wrong units were supplied'
+
+a297 1
+    integer :: MASK                   ! Which thing are we talking about?
+d362 1
+a362 13
+        do i = 2, nsons(son)
+          mask = decoration(subtree(i,son))
+          select case ( mask )
+          case ( l_fill )
+            maskBit = ior(maskBit, m_fill)
+          case ( l_full_derivatives )
+            maskBit = ior(maskBit, m_fullDerivatives)
+          case ( l_linAlg )
+            maskBit = ior(maskBit, m_linAlg)
+          case ( l_Tikhonov )
+            maskBit = ior(maskBit, m_Tikhonov)
+          end select
+        end do
+a717 3
+    ! Local parameters
+    character(len=32), parameter :: WRONGUNITS = 'The wrong units were supplied'
+
+d933 2
+d965 31
+d1002 4
+a1005 1
+! $Log$
+@
+
+
+2.1
+log
+@First version
+@
+text
+@d17 1
+a17 1
+    "$Id: RetrievalModule.f90,v 2.236 2003/02/25 21:12:48 dwu Exp $"
+d20 1
+a20 1
+    "$RCSfile: RetrievalModule.f90,v $"
+d756 1
+@
+

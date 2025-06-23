@@ -1,0 +1,472 @@
+head	1.8;
+access;
+symbols
+	v5-02-NRT-19:1.8
+	v6-00:1.8
+	v5-02-NRT-18:1.8
+	v5-02:1.8
+	v5-01-NRT-17:1.8
+	v5-01-NRT-16:1.8
+	v5-01-NRT-15:1.8
+	v5-01-NRT-14:1.8
+	neuralnetworks-1-0:1.8.0.12
+	cfm-single-freq-0-1:1.8.0.10
+	v5-01:1.8
+	v5-00:1.8
+	v4-23-TA133:1.8.0.8
+	mus-emls-1-70:1.8.0.6
+	rel-1-0-englocks-work:1.8.0.4
+	VUMLS1-00:1.8
+	VPL1-00:1.8
+	V4-22-NRT-08:1.8
+	VAM1-00:1.8
+	V4-21:1.8.0.2
+	V4-13:1.8
+	V4-12:1.8
+	V4-11:1.8
+	V4-10:1.7
+	V3-43:1.5
+	M4-00:1.7
+	V3-41:1.5
+	V3-40-PlusGM57:1.5.0.2
+	V2-24-NRT-04:1.4
+	V3-33:1.5
+	V2-24:1.4
+	V3-31:1.5
+	V3-30-NRT-05:1.5
+	cfm-01-00:1.5
+	V3-30:1.5
+	V3-20:1.5
+	V3-10:1.5
+	V2-23-NRT-02:1.4
+	V2-23:1.4
+	V2-22-NRT-01:1.4
+	V2-22:1.4
+	V2-21:1.4
+	V2-20:1.4
+	V2-11:1.2
+	V2-10:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.8
+date	2014.06.03.22.36.13;	author pwagner;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2013.04.11.16.35.34;	author pwagner;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2012.06.19.20.10.57;	author pwagner;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2009.01.28.01.19.45;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2006.08.05.01.57.54;	author lambert;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2006.08.03.00.54.52;	author lambert;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2006.06.27.00.23.12;	author lambert;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2006.06.20.17.52.42;	author bill;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.8
+log
+@Reverted phiWindowSetup to 4 degrees; phiWindowAdvancedSetup may override this
+@
+text
+@;$Id: setupadvancedhiresmodel-r1.l2cf,v 1.7 2013/04/11 16:35:34 pwagner Exp $
+;; setupadvancedhiresmodel-r1
+;; This L2CF fragment is for use when we wish to setup an 'advanced'
+;; linear forward model (one that is linearised about a different state
+;; from the one in the l2pc files).
+;;
+;; We have two phi windows:
+;;    phiWindowSetup      used during the a sids to find y*
+;;    phiWindowAdvanced   used by the advanced linears fwdmdls themselves
+!ifdef(phiWindowAdvancedSetup,
+{!define(phiWindowSetup,{!phiWindowAdvancedSetup})},
+{!define(phiWindowSetup,{4 degrees})})
+begin Construct
+  r1LSetupModel_HR: ForwardModel, type=full, $
+    signals=['R1A:118.B1F:PT.C1:11', 'R1A:118.B32W:PT.C3:4', $
+             'R1B:118.B34W:PT.C3:4'], $ 
+    phiWindow=!phiWindowSetup, $
+    molecules=[[ H2O, H2O, H2O_R1A, H2O_V2 ],$
+    [ N2, N2 ], [ O2, O2, O2_V1, O_17_O, O_18_O ], $
+    [ O3, O3, O3_R1A, O3_V1_3, O3_V2, O3_2V2]], $ 
+    specificQuantities=[temperature_HR, h2o_HR], $    
+    integrationGrid=vGridTangent, $
+    tangentGrid=vGridTangent, $
+    tolerance= 0.2K,$
+    /do_conv, /do_freq_avg ;; We skip the baseline deliberately
+
+  r1RSetupModel_HR: ForwardModel, type=full, $
+    signals=['R1A:118.B1F:PT.C15:25', 'R1A:118.B32W:PT.C1:2', $
+             'R1B:118.B34W:PT.C1:2'], $ 
+    phiWindow=!phiWindowSetup, $
+    molecules=[[ H2O, H2O, H2O_R1A, H2O_V2 ],$
+    [ N2, N2 ], [ O2, O2, O2_V1, O_17_O, O_18_O ], $
+    [ O3, O3, O3_R1A, O3_V1_3, O3_V2, O3_2V2]], $ 
+    specificQuantities=[temperature_HR, h2o_HR], $    
+    integrationGrid=vGridTangent, $
+    tangentGrid=vGridTangent, $
+    tolerance= 0.2K,$
+    /do_conv, /do_freq_avg ;; We skip the baseline deliberately
+
+  r1PSetupModel_HR: ForwardModel, type=full, $
+    signals=['R1A:118.B1F:PT.C12:14', 'R1A:118.B22D:PT'], $ 
+    phiWindow=!phiWindowSetup, $
+    molecules=[[ H2O, H2O, H2O_R1A, H2O_V2 ],$
+    [ N2, N2 ], [ O2, O2, O2_V1, O_17_O, O_18_O ], $
+    [ O3, O3, O3_R1A, O3_V1_3, O3_V2, O3_2V2]], $ 
+    specificQuantities=[temperature_HR, h2o_HR], $    
+    integrationGrid=vGridTangent, $
+    tangentGrid=vGridTangent, $
+    tolerance= 0.2K,$
+    /do_conv, /do_freq_avg, /polarized ;; We skip the baseline deliberately
+
+end Construct
+
+begin Construct
+  r1YTemplate_HR: VectorTemplate, quantities=[band1, band22, band32, band34]
+end Construct
+
+;; Setup the vectors
+begin Fill
+  r1X_HR: Vector, template=stateTemplate
+  r1Y_HR: Vector, template=r1YTemplate_HR
+end Fill
+
+;; Now we construct the advanced linear models to use these
+begin Construct
+
+  advancedL2PCFwmR1AB1: ForwardModel, type=linear, $
+    signals= ['R1A:118.B1F:PT'], $
+    molecules=[ H2O, HNO3, N2, O2, O3], $
+    specificQuantities=[temperature_HR, h2o_HR], $
+    /temp_der, $
+    phiWindow=!phiWindowAdvanced, !ifdef(flagDontLockBins,{},{/lockBins, })$
+    binSelectors=[latBin,scalarbin, hrBin, latCost], $
+    xStar=r1X_HR, yStar=r1Y_HR
+
+ advancedL2PCFwmR1AB22: ForwardModel, type=linear, $
+    signals=['R1A:118.B22D:PT'], $
+    molecules=[ H2O, HNO3, N2, O2, O3], $
+    specificQuantities=[temperature_HR, h2o_HR], $
+    /temp_der, $
+    phiWindow=!phiWindowAdvanced, !ifdef(flagDontLockBins,{},{/lockBins, })$
+    binSelectors=[latBin,polarBin,hrBin, strengthCost,elevationCost,latCost], $
+    xStar=r1X_HR, yStar=r1Y_HR
+
+  advancedL2PCFwmR1AB32: ForwardModel, type=linear, $
+    signals= ['R1A:118.B32W:PT'], $
+    molecules=[ H2O, HNO3, N2, O2, O3], $
+    specificQuantities=[temperature_HR, h2o_HR], $
+    /temp_der, $
+    phiWindow=!phiWindowAdvanced, !ifdef(flagDontLockBins,{},{/lockBins, })$
+    binSelectors=[latBin,scalarbin, hrBin, latCost], $
+    xStar=r1X_HR, yStar=r1Y_HR
+
+ advancedL2PCFwmR1BB34: ForwardModel, type=linear, $
+    signals= ['R1B:118.B34W:PT'], $
+    molecules=[ H2O, HNO3, N2, O2, O3], $
+   specificQuantities=[temperature_HR, h2o_HR], $
+   /temp_der, $
+    phiWindow=!phiWindowAdvanced, !ifdef(flagDontLockBins,{},{/lockBins, })$
+    binSelectors=[latBin, scalarbin, hrBin, latCost], $
+    xStar=r1X_HR, yStar=r1Y_HR
+
+  ;; These are o3_HR versions of the above advanced fwms
+  ;; to use in Core+R3
+  CPR3AdvL2PCFwmR1AB1: ForwardModel, type=linear, $
+    signals= ['R1A:118.B1F:PT'], $
+    molecules=[ H2O, HNO3, N2, O2, O3], $
+    specificQuantities=[temperature_HR, h2o_HR, O3_HR], $
+    /temp_der, $
+    phiWindow=!phiWindowAdvanced, !ifdef(flagDontLockBins,{},{/lockBins, })$
+    binSelectors=[latBin,scalarbin, hrBin, o3hrBin, latCost], $
+    xStar=r1X_HR, yStar=r1Y_HR
+
+ CPR3AdvL2PCFwmR1AB22: ForwardModel, type=linear, $
+    signals=['R1A:118.B22D:PT'], $
+    molecules=[ H2O, HNO3, N2, O2, O3], $
+    specificQuantities=[temperature_HR, h2o_HR, O3_HR], $
+    /temp_der, $
+    phiWindow=!phiWindowAdvanced, !ifdef(flagDontLockBins,{},{/lockBins, })$
+    binSelectors=[latBin,polarBin,hrBin, o3hrBin, strengthCost,elevationCost,latCost], $
+    xStar=r1X_HR, yStar=r1Y_HR
+
+  CPR3AdvL2PCFwmR1AB32: ForwardModel, type=linear, $
+    signals= ['R1A:118.B32W:PT'], $
+    molecules=[ H2O, HNO3, N2, O2, O3], $
+    specificQuantities=[temperature_HR, h2o_HR, O3_HR], $
+    /temp_der, $
+    phiWindow=!phiWindowAdvanced, !ifdef(flagDontLockBins,{},{/lockBins, })$
+    binSelectors=[latBin,scalarbin, hrBin, o3hrBin, latCost], $
+    xStar=r1X_HR, yStar=r1Y_HR
+
+ CPR3AdvL2PCFwmR1BB34: ForwardModel, type=linear, $
+    signals= ['R1B:118.B34W:PT'], $
+    molecules=[ H2O, HNO3, N2, O2, O3], $
+   specificQuantities=[temperature_HR, h2o_HR, O3_HR], $
+   /temp_der, $
+    phiWindow=!phiWindowAdvanced, !ifdef(flagDontLockBins,{},{/lockBins, })$
+    binSelectors=[latBin, scalarbin, hrBin, o3hrBin, latCost], $
+    xStar=r1X_HR, yStar=r1Y_HR
+
+end Construct
+
+;$Log: setupadvancedhiresmodel-r1.l2cf,v $
+;Revision 1.7  2013/04/11 16:35:34  pwagner
+;Replaced 4 degree phiWindows with 5 profiles
+;
+;Revision 1.6  2012/06/19 20:10:57  pwagner
+;flagDontLockBins removes /lockBins switch
+;
+;Revision 1.5  2009/01/28 01:19:45  pwagner
+;Added hires ozone fwms
+;
+;Revision 1.4  2006/08/05 01:57:54  lambert
+;removed atmos_der
+;
+;Revision 1.3  2006/08/03 00:54:52  lambert
+;used once before calladvancedhiresmodel
+;
+@
+
+
+1.7
+log
+@Replaced 4 degree phiWindows with 5 profiles
+@
+text
+@d1 1
+a1 1
+;$Id: setupadvancedhiresmodel-r1.l2cf,v 1.6 2012/06/19 20:10:57 pwagner Exp $
+d6 7
+a12 2
+!ifdef(flagStrict1D,{!define(phiWindowSetup,{0 profiles})},
+{!define(phiWindowSetup,{5 profiles})})
+d53 1
+a53 2
+!ifdef(flagStrict1D,{!define(phiWindowAdvanced,{0 profiles})},
+{!define(phiWindowSetup,{100 profiles})})
+d144 3
+@
+
+
+1.6
+log
+@flagDontLockBins removes /lockBins switch
+@
+text
+@d1 1
+a1 1
+;$Id: setupadvancedhiresmodel-r1.l2cf,v 1.5 2009/01/28 01:19:45 pwagner Exp $
+d7 1
+a7 1
+{!define(phiWindowSetup,{4 degrees})})
+d140 3
+@
+
+
+1.5
+log
+@Added hires ozone fwms
+@
+text
+@d1 1
+a1 1
+;$Id: setupadvancedhiresmodel-r1.l2cf,v 1.4 2006/08/05 01:57:54 lambert Exp $
+d6 2
+a7 1
+
+d12 1
+a12 1
+    phiWindow=4.0 degrees, $
+d25 1
+a25 1
+    phiWindow=4.0 degrees, $
+d37 1
+a37 1
+    phiWindow=4.0 degrees, $
+d48 2
+a49 1
+
+d68 1
+a68 1
+    phiWindow=100 profiles, /lockBins, $
+d77 1
+a77 1
+    phiWindow=100 profiles, /lockBins, $
+d86 1
+a86 1
+    phiWindow=100 profiles, /lockBins, $
+d95 1
+a95 1
+    phiWindow=100 profiles, /lockBins, $
+d106 1
+a106 1
+    phiWindow=100 profiles, /lockBins, $
+d115 1
+a115 1
+    phiWindow=100 profiles, /lockBins, $
+d124 1
+a124 1
+    phiWindow=100 profiles, /lockBins, $
+d133 1
+a133 1
+    phiWindow=100 profiles, /lockBins, $
+d140 3
+@
+
+
+1.4
+log
+@removed atmos_der
+@
+text
+@d1 1
+a1 1
+;$Id: setupadvancedhiresmodel-r1.l2cf,v 1.3 2006/08/03 00:54:52 lambert Exp $
+d97 38
+d138 3
+@
+
+
+1.3
+log
+@used once before calladvancedhiresmodel
+@
+text
+@d1 1
+a1 1
+;$Id$
+d13 1
+a13 1
+    [ HNO3, HNO3, HNO3_V9 ], [ N2, N2 ], [ O2, O2, O2_V1, O_17_O, O_18_O ], $
+d26 1
+a26 1
+    [ HNO3, HNO3, HNO3_V9 ], [ N2, N2 ], [ O2, O2, O2_V1, O_17_O, O_18_O ], $
+d38 1
+a38 1
+    [ HNO3, HNO3, HNO3_V9 ], [ N2, N2 ], [ O2, O2, O2_V1, O_17_O, O_18_O ], $
+a63 1
+    moleculeDerivatives=[ H2O, HNO3, N2, O2, O3], $
+d65 1
+a65 1
+    /atmos_der, /temp_der, $
+a72 1
+    moleculeDerivatives=[ H2O, HNO3, N2, O2, O3], $
+d74 1
+a74 1
+    /atmos_der, /temp_der, $
+a81 1
+    moleculeDerivatives=[ H2O, HNO3, N2, O2, O3], $
+d83 1
+a83 1
+    /atmos_der, /temp_der, $
+d91 2
+a92 3
+    moleculeDerivatives=[ H2O, HNO3, N2, O2, O3], $
+    specificQuantities=[temperature_HR, h2o_HR], $
+    /atmos_der, /temp_der, $
+d99 4
+a102 1
+;$Log$
+@
+
+
+1.2
+log
+@removed HiRes from names
+@
+text
+@d2 1
+a2 3
+;; setupadvancedhiresmodel
+;; updates version of setupadvancedmodel for R1A, R1B
+
+a6 4
+;; This simply takes the current 'state' and produces a full forward
+;; model estimtate of bands 1, 22, 32, 34
+
+
+a55 1
+  Transfer, source=state, destination=r1X_HR
+a57 7
+;; Do a sids calculation
+begin Retrieve
+  !ifdef(flagSkipAdvancedSids,{},{
+  sids, fwdModelIn=state, fwdModelOut=[r1Y_HR], $
+        forwardModel=[r1LSetupModel_HR,r1RSetupModel_HR,r1PSetupModel_HR]})
+end Retrieve
+
+a102 1
+
+@
+
+
+1.1
+log
+@hi resolution advanced forward models for R1A and B
+@
+text
+@d1 1
+d3 1
+a3 1
+;; HiRes version of setupadvancedmodel
+d51 1
+d75 1
+a75 1
+  advancedHiResL2PCFwmR1AB1: ForwardModel, type=linear, $
+d85 2
+a86 2
+  advancedHiResL2PCFwmR1AB32: ForwardModel, type=linear, $
+    signals= ['R1A:118.B32W:PT'], $
+d92 1
+a92 1
+    binSelectors=[latBin,scalarbin, hrBin, latCost], $
+d95 2
+a96 2
+  advancedHiResL2PCFwmR1BB34: ForwardModel, type=linear, $
+    signals= ['R1B:118.B34W:PT'], $
+d102 1
+a102 1
+    binSelectors=[latBin, scalarbin, hrBin, latCost], $
+d105 2
+a106 2
+  advancedHiResL2PCFwmR1AB22: ForwardModel, type=linear, $
+    signals=['R1A:118.B22D:PT'], $
+d112 1
+a112 1
+    binSelectors=[latBin,polarBin,hrBin, strengthCost,elevationCost,latCost], $
+d118 1
+@
+

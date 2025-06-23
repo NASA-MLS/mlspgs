@@ -1,0 +1,219 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.14
+	cfm-single-freq-0-1:1.1.0.12
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.10
+	mus-emls-1-70:1.1.0.8
+	rel-1-0-englocks-work:1.1.0.6
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V2-24-NRT-04:1.1
+	V3-33:1.1
+	V2-24:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1
+	V2-23-NRT-02:1.1
+	V2-23:1.1
+	V2-22-NRT-01:1.1
+	V2-22:1.1
+	V2-21:1.1
+	V2-20:1.1
+	V2-11:1.1
+	V2-10:1.1
+	V2-00:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2006.03.22.02.04.28;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $RCSfile: $
+! $Id: $
+
+!     REAL(rk) FUNCTION *NRM2 ( X ) result ( NRM2 )
+!>> 2006-03-20 NRM2  Snyder  Converted to Fortran 90
+!>> 1998-05-11 NRM2  Krogh   Minor changes for conversion to C.
+!>> 1996-08-29 NRM2  Krogh   Coded an entirely different algorithm
+!>> ....
+!>> 1985-08-02 NRM2  Lawson  Initial code.
+!
+!     EUCLIDEAN NORM OF THE N-VECTOR STORED IN X()
+!     IF    size(x) <= 0 RETURN WITH RESULT = 0.
+!
+!           C.L.LAWSON, 1978 JAN 08
+!
+! New algorithm avoids underflow as well as overflow, and avoids divides.
+! F. Krogh, August 29, 1996.
+!
+! ************************* Variable Definitions ***********************
+!
+! Let b be the base for floating point, b**E be the smallest integer
+! power of b that overflows, b**e be the smallest integer power of b
+! that does not underflow, and d be the number of base b digits in a
+! a floating point number.  The descriptions below use b, e, E, and d.
+!
+! ABIG = b ** ((E+5) / 4)).    This is used as a factor to get the
+!   final answer when combining SUMX from big XA, with SUM.
+! ASMALL = b ** ((e+d-E+5) / 4)).    This is used as a factor to get the
+!   final answer when combining SUMX from small XA, with SUM.
+! DBIG = b ** (2*((E+5)/4)).  This is used as a factor to get the
+!   final answer when only SUMX formed from big XA's is needed.
+! DSMALL = b ** (2*((e+d-E+5)/4)).  This is used as a factor to get the
+!   final answer when only SUMX formed from big XA's is needed.
+! FBIG = b ** (-2*((E+5)/4)).  This is used as a multiplier when
+!   accumulating SUMX for big XA.
+! FSMALL = b ** (-2*((e+d-E+5)/4)).  This is used as a multiplier when
+!   accumulating SUMX for small XA.
+! I      Temporary index.
+! ID     Number of base I1MACH(10) digits in Floating point number.
+! IEMN   The minimum floating point exponent.
+! IEMX   The maximum floating point exponent.
+! INCX   Input, the increment (>0) between elements of X.
+! N      Input, the number of elements in X.
+! N     N * INCX = last index processed.
+! SUM    Place where sum of XA**2 is accumlated.
+! SUMX   Place where scaled sum of XA**2 is accumlated.  In first loop
+!   this is for XA**2 that would likely underflow, and in second loop
+!   this is for XA**2 that would likely overflow.
+! TBIG = b ** ((E - d - 1) / 2).  If XA > TBIG, number is "big".  Note
+!   that for such XA's, (FBIG * XA) ** 2 should not underflow and the
+!   accumlation overflows only if the final result would.
+! TSMALL = b ** ((e+1) / 2).  If XA <= TSMALL, number is "small".  Note
+!   that for such XA's, (FSMALL * XA)**2 should not underflow and the
+!   accumlation should not overlflow.
+! X      Input, we are getting the L2 norm of X.
+! XA     Contains base of floating point numbers when getting saved
+!   parameters.  Later contains abs(X(I)).
+!     ------------------------------------------------------------------
+!--S replaces "?": ?NRM2
+!     ------------------------------------------------------------------
+
+      integer ::        I, N
+      real(rk) ::       SUMX, XA
+
+      integer, parameter :: IEMX = maxexponent(1.0_rk)
+      integer, parameter :: IEMN = minexponent(1.0_rk)
+      integer, parameter :: ID = digits(1.0_rk)
+      real(rk), parameter :: XR = radix(1.0_rk)
+      real(rk), parameter :: ABIG = XR ** ((IEMX+5)/4)
+      real(rk), parameter :: DBIG = ABIG ** 2
+      real(rk), parameter :: FBIG = 1.0_rk / DBIG
+      real(rk), parameter :: TBIG = XR ** ((IEMX - ID - 1) / 2)
+      real(rk), parameter :: ASMALL = XR ** ((IEMN + ID - IEMX + 5) / 4)
+      real(rk), parameter :: DSMALL = ASMALL ** 2
+      real(rk), parameter :: FSMALL = 1.0_rk / DSMALL
+      real(rk), parameter :: TSMALL = XR ** ((IEMN + 1) / 2)
+
+! Values of these parameters for D.P. IEEE arithmetic are:
+!   ABIG= .2315841784746324E+78     DBIG= .5363123171977043E+155
+!   FBIG= .1864585182800050E-154    TBIG= .9989595361011182E+146
+! ASMALL= .4887898181599363E-149  DSMALL= .2389154863368240E-298
+! FSMALL= .4185580496821357E+299  TSMALL= .2983336292480080E-153
+! Values of these parameters for S.P. IEEE arithmetic are:
+!   ABIG= .8589935E+10      DBIG= .7378698E+20
+!   FBIG= .1355253E-19      TBIG= .2251800E+16
+! ASMALL= .1387779E-16    DSMALL= .1925930E-33
+! FSMALL= .5192297E+34    TSMALL= .2168404E-18
+!
+!     ------------------------------------------------------------------
+
+      NRM2 = 0.0_rk
+      N = size(X)
+      if (N > 0) then
+         SUMX = 0.0_rk
+!                      Loop when no big number yet encountered.
+         do I = 1, N
+            XA = abs(X(I))
+            if ( XA < TSMALL ) then
+               SUMX = SUMX + (FSMALL * XA) ** 2
+            else
+               if (XA > TBIG) go to 200
+               NRM2 = NRM2 + XA**2
+            end if
+         end do
+         if ( NRM2 /= 0.0_rk ) then
+            if ( SUMX >= 1.0_rk ) then
+               if ( NRM2 < 1.0_rk ) then
+                  NRM2 = ASMALL * sqrt(FSMALL*NRM2 + DSMALL*SUMX)
+                  return
+               end if
+            end if
+            NRM2 = sqrt(NRM2)
+         else
+            NRM2 = DSMALL * sqrt(SUMX)
+         end if
+         return
+!
+  200    SUMX = 0.0_rk
+!                      Loop when we have at least one big number.
+         do  I = I, N
+            XA = abs(X(I))
+            if ( XA > TSMALL ) then
+               if (XA > TBIG) then
+                  SUMX = SUMX + (FBIG * XA) ** 2
+               else
+                  NRM2 = NRM2 + XA**2
+               end if
+            end if
+         end do
+         if ( (SUMX <= 1.0E10_rk) .and. (NRM2 >= 1.0E-10_rk) ) then
+            NRM2 = ABIG * sqrt(FBIG*NRM2 + DBIG*SUMX)
+         else
+            NRM2 = DBIG * sqrt(SUMX)
+         end if
+      end if
+      return
+!     end function *NRM2
+
+! $Log: $
+@

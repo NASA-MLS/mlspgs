@@ -1,0 +1,352 @@
+head	2.4;
+access;
+symbols
+	v5-02-NRT-19:2.4
+	v6-00:2.4
+	v5-02-NRT-18:2.4
+	v5-02:2.4
+	v5-01-NRT-17:2.4
+	v5-01-NRT-16:2.4
+	v5-01-NRT-15:2.4
+	v5-01-NRT-14:2.4
+	neuralnetworks-1-0:2.4.0.12
+	cfm-single-freq-0-1:2.4.0.10
+	v5-01:2.4
+	v5-00:2.4
+	v4-23-TA133:2.4.0.8
+	mus-emls-1-70:2.4.0.6
+	rel-1-0-englocks-work:2.4.0.4
+	VUMLS1-00:2.4
+	VPL1-00:2.4
+	V4-22-NRT-08:2.4
+	VAM1-00:2.4
+	V4-21:2.4.0.2
+	V4-13:2.4
+	V4-12:2.4
+	V4-11:2.4
+	V4-10:2.4
+	V3-43:2.3
+	M4-00:2.4
+	V3-41:2.3
+	V3-40-PlusGM57:2.3.0.2
+	V2-24-NRT-04:2.2
+	V3-33:2.3
+	V2-24:2.2
+	V3-31:2.3
+	V3-30-NRT-05:2.3
+	cfm-01-00:2.3
+	V3-30:2.3
+	V3-20:2.3
+	V3-10:2.3
+	V2-23-NRT-02:2.2
+	V2-23:2.2
+	V2-22-NRT-01:2.2
+	V2-22:2.2;
+locks; strict;
+comment	@# @;
+
+
+2.4
+date	2011.05.09.17.26.50;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2009.06.23.18.26.10;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2007.06.08.22.05.57;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2007.02.01.02.44.29;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.4
+log
+@Converted to using switchDetail
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Add_Points_m
+
+  implicit NONE
+
+  private
+
+  public :: Add_Points
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: Add_Points_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  subroutine Add_Points ( more_h, more_phi, more_zeta, min_z, &
+    &                     z_glgrid, nz_if, z_coarse,          &
+    &                     h_path, phi_path, Vert_Inds, &
+    &                     npc, npf, tan_pt_c, tan_pt_f )
+
+    ! Add points to z_coarse, h_path and phi_path.
+
+    use GLNP, only: GX, NGNEW, NGP1
+    use MLSKINDS, only: RP
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use OUTPUT_M, only: OUTPUT
+    use TOGGLES, only: SWITCHES
+
+    real(rp), intent(in) :: More_H(:)       ! Heights to add
+    real(rp), intent(in) :: More_Phi(:)     ! Phis to add
+    real(rp), intent(in) :: More_Zeta(:)    ! Zetas to add
+    integer, intent(in) :: Min_Z            ! Index of new minimum zeta in
+                                            ! More_Zeta if there is one, else <= 0.
+    real(rp), intent(in) :: Z_GLgrid(:)     ! Reference grid
+    integer, intent(in) :: NZ_IF            ! Size(Z_GLGrid)
+    real(rp), intent(inout) :: Z_Coarse(:)  ! Zeta on the coarse grid
+    real(rp), intent(inout) :: H_Path(:)    ! Height on the fine grid
+    real(rp), intent(inout) :: Phi_Path(:)  ! Phi on the fine grid
+    integer, intent(inout) :: Vert_Inds(:)  ! Indices of fine grid in H_Glgrid etc.
+    integer, intent(inout) :: NPC, NPF      ! Number of points in coarse, fine grids
+    integer, intent(inout) :: Tan_Pt_C, Tan_Pt_F ! Tangent in coarse, fine grids
+
+    real(rp), parameter :: Eta(ngnew) = 0.5*(1.0+gx) ! Gauss points on 0..1
+    real(rp), parameter :: Phi_Tol = 0.25 * gx(1)**2 ! First GL point
+
+    integer :: I, J, K
+    integer :: New   ! Point in the fine path
+    integer :: New_C ! Coarse point in the fine path
+    logical :: print_more_points
+    integer :: S     ! Direction of change in vert_inds at insertion point, +/-1
+
+    print_more_points = switchDetail(switches, 'ZMOR' ) > -1
+
+    do i = size(more_h), 1, -1 ! min zeta will be last if it's here at all
+      if ( npc >= size(z_coarse) ) exit ! No room for any more
+      new = minloc(abs(more_phi(i)-phi_path),1)
+      if ( more_phi(i) > phi_path(new) ) new = new + 1
+      ! Here phi_path(new) <= more_phi(i) <= phi_path(new+1)
+      ! Find the nearest previous coarse grid point.
+      new_c = new - mod(new-1,ngp1) + 1
+      if ( new_c > tan_pt_f ) new_c = new_c + 1 ! don't add points between the
+                                                ! tangent points
+      if ( min(abs(more_phi(i)-phi_path(new)), &
+        &      abs(more_phi(i)-phi_path(new+1))) <= &
+        &  phi_tol * (phi_path(new_c+ngp1)-phi_path(new_c)) ) then
+        ! New point is very close to an existing point
+        if ( abs(more_phi(i)-phi_path(new)) > abs(more_phi(i)-phi_path(new+1)) ) &
+          & new = new + 1
+        ! "New" is now the index of the point
+        if ( i == min_z .and. (new == new_c .or. new == new_c + ngp1) ) then
+          ! "New" is at a coarse grid point
+          new_c = new
+          if ( i == min_z ) then
+            ! "New" is for a new minimum zeta.
+            ! All we need to do is change the zeta.
+            j = new / ngp1 + 1
+            z_coarse(j) = more_zeta(i)
+            if ( print_more_points ) then
+              call output ( j, before='Changed z_coarse(' )
+              call output ( z_coarse(j), before=') to new minimum zeta ', advance='yes' )
+            end if
+          end if
+          new_c = 0 ! Indicate nothing more to do
+        end if
+      end if
+      if ( new_c > 0 .and. new_c < npf ) then
+        ! New point is not near an existing point: add one to the coarse path
+        npc = npc + 1
+        npf = npf + ngp1
+        j = new_c / ngp1 + 1 ! Point in coarse path
+        z_coarse(j+1:npc) = z_coarse(j:npc-1)               ! Make room
+        h_path(new_c+ngp1:npf) = h_path(new_c:npf-ngp1)
+        phi_path(new_c+ngp1:npf) = phi_path(new_c:npf-ngp1)
+        vert_inds(new_c+ngp1:npf) = vert_inds(new_c:npf-ngp1)
+        z_coarse(j) = more_zeta(i)     ! Insert the new coarse point
+        h_path(new_c) = more_h(i)
+        phi_path(new_c) = more_phi(i)
+        h_path(new_c+1:new_c+ngnew) = h_path(new_c) + & ! and fine point
+          & eta * (h_path(new_c+ngp1)-h_path(new_c))
+        phi_path(new_c+1:new_c+ngnew) = phi_path(new_c) + &
+          & eta * (phi_path(new_c+ngp1)-phi_path(new_c))
+        h_path(new_c+ngp1+1:new_c+ngp1+ngnew) = h_path(new_c+ngp1) + &
+          & eta * (h_path(new_c+2*ngp1)-h_path(new_c+ngp1))
+        phi_path(new_c+ngp1+1:new_c+ngp1+ngnew) = phi_path(new_c+ngp1) + &
+          & eta * (phi_path(new_c+2*ngp1)-phi_path(new_c+ngp1))
+!         if ( print_more_points ) then
+          call output ( 'Added new ' )
+          if ( i == min_z ) call output ( 'minimum ' )
+          call output ( j, before='z_coarse(' )
+          call output ( z_coarse(j), before=') = ' )
+          call output ( new_c, before=', new_c = ' )
+          call output ( more_phi(i), before=' at Phi = ' )
+          call output ( more_h(i), before=', H = ', advance='yes' )
+!         end if
+        j = minval(abs(more_zeta(i)-z_glgrid(:nz_if)))
+        ! For now, assume more_zeta(i) == z_glgrid(j)
+        vert_inds(new_c) = j
+        if ( new_c > 1 ) then
+          s = sign(1,vert_inds(new_c-1) - vert_inds(new_c))
+          vert_inds(new_c-ngnew:new_c-1) = (/(vert_inds(new_c-ngp1)-s*k,k=1,ngnew)/)
+        end if
+        if ( new_c < npf-ngp1 ) then
+          s = sign(1,vert_inds(new_c) - vert_inds(new_c+1))
+          vert_inds(new_c+1:new_c+ngnew) = (/(vert_inds(new_c)-s*k,k=1,ngnew)/)
+        end if
+        if ( new_c < tan_pt_f ) then
+          tan_pt_c = tan_pt_c + 1
+          tan_pt_f = tan_pt_f + ngp1
+        end if
+      end if
+    end do ! i
+
+  end subroutine Add_Points
+
+!------------------------------------------------------------------
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: Add_Points_m.f90,v 2.3 2009/06/23 18:26:10 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Add_Points_m
+
+! $Log: Add_Points_m.f90,v $
+! Revision 2.3  2009/06/23 18:26:10  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.2  2007/06/08 22:05:57  vsnyder
+! More work on min zeta
+!
+! Revision 2.1  2007/02/01 02:44:29  vsnyder
+! Initial commit
+!
+@
+
+
+2.3
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d22 1
+a22 1
+       "$RCSfile: $"
+d35 5
+a39 4
+    use GLnp, only: GX, NGNEW, NGP1
+    use MLSKinds, only: RP
+    use Output_m, only: Output
+    use Toggles, only: Switches
+d64 1
+a64 1
+    print_more_points = index(switches, 'ZMOR' ) /= 1
+d152 1
+a152 1
+       "$Id: read_apriori.f90 is it here $"
+d162 3
+@
+
+
+2.2
+log
+@More work on min zeta
+@
+text
+@d22 1
+a22 1
+       "$RCSfile: Add_Points_m.f90,v $"
+d148 1
+a149 1
+!---------------------------- RCS Ident Info -------------------------------
+d151 2
+a152 3
+       "$Id: Add_Points_m.f90,v 2.1 2007/02/01 02:44:29 vsnyder Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d154 1
+a154 1
+
+d156 1
+d161 3
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d22 1
+a22 1
+       "$RCSfile: refraction_m.f90,v $"
+d29 2
+a30 1
+    &                     z_coarse, h_path, phi_path, &
+d45 2
+a46 1
+
+d50 1
+d57 3
+a59 2
+    integer :: I, J
+    integer :: New, New_C
+d61 1
+d97 1
+a97 1
+      if ( new_c > 0 ) then
+d101 1
+a101 1
+        j = new_c / ngp1 + 1
+d105 2
+a106 7
+        z_coarse(j) = more_zeta(i)     ! Insert the new coarse points
+        if ( print_more_points ) then
+          call output ( 'Added new ' )
+          if ( i == min_z ) call output ( 'minimum ' )
+          call output ( j, before='z_coarse(' )
+          call output ( z_coarse(j), before=') = ', advance='yes' )
+        end if
+d109 1
+a109 1
+        h_path(new_c+1:new_c+ngnew) = h_path(new_c) + & ! and fine points
+d113 16
+d130 6
+a135 4
+          h_path(new_c-ngnew:new_c-1) = h_path(new_c-ngp1) + &
+            & eta * (h_path(new_c)-h_path(new_c-ngp1))
+          phi_path(new_c-ngnew:new_c-1) = phi_path(new_c-ngp1) + &
+            & eta * (phi_path(new_c)-phi_path(new_c-ngp1))
+d151 1
+a151 1
+       "$Id: refraction_m.f90,v 2.26 2006/12/13 02:32:03 vsnyder Exp $"
+d160 4
+a163 1
+! $Log: refraction_m.f90,v $
+@
+

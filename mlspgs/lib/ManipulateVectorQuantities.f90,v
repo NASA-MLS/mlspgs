@@ -1,0 +1,2946 @@
+head	2.54;
+access;
+symbols
+	v5-02-NRT-19:2.54
+	v6-00:2.54
+	v5-02-NRT-18:2.54
+	v5-02:2.54
+	v5-01-NRT-17:2.54
+	v5-01-NRT-16:2.54
+	v5-01-NRT-15:2.54
+	v5-01-NRT-14:2.54
+	neuralnetworks-1-0:2.54.0.10
+	cfm-single-freq-0-1:2.54.0.8
+	v5-01:2.54
+	v5-00:2.54
+	v4-23-TA133:2.54.0.6
+	mus-emls-1-70:2.54.0.4
+	rel-1-0-englocks-work:2.54.0.2
+	VUMLS1-00:2.53
+	VPL1-00:2.53
+	V4-22-NRT-08:2.52
+	VAM1-00:2.51
+	V4-21:2.47.0.2
+	V4-13:2.45
+	V4-12:2.45
+	V4-11:2.45
+	V4-10:2.45
+	V3-43:2.35
+	M4-00:2.42
+	V3-41:2.35
+	V3-40-PlusGM57:2.35.0.2
+	V2-24-NRT-04:2.32
+	V3-33:2.35
+	V2-24:2.32
+	V3-31:2.35
+	V3-30-NRT-05:2.35
+	cfm-01-00:2.35
+	V3-30:2.35
+	V3-20:2.35
+	V3-10:2.34
+	V2-23-NRT-02:2.32
+	V2-23:2.32
+	V2-22-NRT-01:2.32
+	V2-22:2.32
+	V2-21:2.31
+	V2-20:2.31
+	V2-11:2.31
+	V2-10:2.31
+	V2-00:2.31
+	V1-51:2.29
+	V1-50:2.29
+	V1-45:2.26
+	V1-44:2.26
+	V1-43:2.26
+	V1-42:2.24
+	V1-41:2.24
+	V1-32:2.24
+	V1-40:2.24
+	V1-31:2.24
+	V1-30:2.24
+	V1-13:2.22
+	V1-12:2.22
+	V1-11:2.22
+	V1-10:2.22
+	newfwm-feb03:2.22.0.2
+	V1-04:2.12
+	V1-03:2.12
+	V1-02:2.12
+	V1-00:2.12
+	newfwm-sep01:2.7.0.2
+	V0-7:2.7
+	V0-5-Level2:2.5
+	V0-5-SIPS:2.5;
+locks; strict;
+comment	@# @;
+
+
+2.54
+date	2017.11.03.19.58.24;	author pwagner;	state Exp;
+branches;
+next	2.53;
+
+2.53
+date	2016.06.03.02.33.06;	author vsnyder;	state Exp;
+branches;
+next	2.52;
+
+2.52
+date	2015.10.28.00.36.39;	author vsnyder;	state Exp;
+branches;
+next	2.51;
+
+2.51
+date	2015.09.22.23.12.19;	author vsnyder;	state Exp;
+branches;
+next	2.50;
+
+2.50
+date	2015.08.25.17.16.07;	author vsnyder;	state Exp;
+branches;
+next	2.49;
+
+2.49
+date	2015.07.29.00.27.28;	author vsnyder;	state Exp;
+branches;
+next	2.48;
+
+2.48
+date	2015.06.19.00.11.01;	author pwagner;	state Exp;
+branches;
+next	2.47;
+
+2.47
+date	2015.02.05.21.43.08;	author vsnyder;	state Exp;
+branches;
+next	2.46;
+
+2.46
+date	2014.10.30.01.42.46;	author vsnyder;	state Exp;
+branches;
+next	2.45;
+
+2.45
+date	2014.04.24.23.51.59;	author pwagner;	state Exp;
+branches;
+next	2.44;
+
+2.44
+date	2014.01.09.00.24.29;	author pwagner;	state Exp;
+branches;
+next	2.43;
+
+2.43
+date	2013.08.31.01.24.53;	author vsnyder;	state Exp;
+branches;
+next	2.42;
+
+2.42
+date	2013.03.01.01.06.06;	author pwagner;	state Exp;
+branches;
+next	2.41;
+
+2.41
+date	2012.07.19.03.33.18;	author vsnyder;	state Exp;
+branches;
+next	2.40;
+
+2.40
+date	2012.02.13.23.24.35;	author pwagner;	state Exp;
+branches;
+next	2.39;
+
+2.39
+date	2012.02.10.23.52.35;	author vsnyder;	state Exp;
+branches;
+next	2.38;
+
+2.38
+date	2012.02.02.01.09.11;	author pwagner;	state Exp;
+branches;
+next	2.37;
+
+2.37
+date	2011.08.29.21.29.41;	author pwagner;	state Exp;
+branches;
+next	2.36;
+
+2.36
+date	2011.06.16.20.16.54;	author vsnyder;	state Exp;
+branches;
+next	2.35;
+
+2.35
+date	2010.02.04.23.08.00;	author vsnyder;	state Exp;
+branches;
+next	2.34;
+
+2.34
+date	2009.06.23.18.25.42;	author pwagner;	state Exp;
+branches;
+next	2.33;
+
+2.33
+date	2008.06.06.22.52.21;	author pwagner;	state Exp;
+branches;
+next	2.32;
+
+2.32
+date	2007.08.13.17.37.42;	author pwagner;	state Exp;
+branches;
+next	2.31;
+
+2.31
+date	2006.03.03.23.05.50;	author pwagner;	state Exp;
+branches;
+next	2.30;
+
+2.30
+date	2005.06.22.17.25.49;	author pwagner;	state Exp;
+branches;
+next	2.29;
+
+2.29
+date	2004.12.13.20.28.44;	author vsnyder;	state Exp;
+branches;
+next	2.28;
+
+2.28
+date	2004.09.25.00.15.48;	author livesey;	state Exp;
+branches;
+next	2.27;
+
+2.27
+date	2004.09.24.17.55.41;	author livesey;	state Exp;
+branches;
+next	2.26;
+
+2.26
+date	2004.01.24.01.01.48;	author livesey;	state Exp;
+branches;
+next	2.25;
+
+2.25
+date	2004.01.23.05.37.01;	author livesey;	state Exp;
+branches;
+next	2.24;
+
+2.24
+date	2003.08.28.00.44.43;	author livesey;	state Exp;
+branches;
+next	2.23;
+
+2.23
+date	2003.07.07.20.21.34;	author livesey;	state Exp;
+branches;
+next	2.22;
+
+2.22
+date	2003.01.26.04.42.20;	author livesey;	state Exp;
+branches;
+next	2.21;
+
+2.21
+date	2002.11.22.01.07.13;	author vsnyder;	state Exp;
+branches;
+next	2.20;
+
+2.20
+date	2002.10.08.00.09.11;	author pwagner;	state Exp;
+branches;
+next	2.19;
+
+2.19
+date	2002.09.19.00.30.36;	author pwagner;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2002.09.10.20.47.44;	author livesey;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2002.08.23.01.24.18;	author livesey;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2002.07.25.08.43.19;	author mjf;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2002.07.17.06.01.27;	author livesey;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2002.06.12.16.53.32;	author livesey;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2002.06.12.16.50.39;	author livesey;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2002.02.06.01.32.58;	author livesey;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2001.11.08.01.05.06;	author livesey;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2001.09.14.18.02.52;	author livesey;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2001.09.11.01.27.27;	author livesey;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2001.09.09.21.17.30;	author livesey;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2001.05.11.00.03.41;	author livesey;	state Exp;
+branches
+	2.7.2.1;
+next	2.6;
+
+2.6
+date	2001.05.10.23.29.27;	author livesey;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2001.03.08.02.21.08;	author livesey;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2001.03.02.01.31.36;	author livesey;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2001.02.27.17.18.20;	author livesey;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2001.02.27.01.25.25;	author livesey;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.02.22.00.44.40;	author livesey;	state Exp;
+branches;
+next	;
+
+2.7.2.1
+date	2001.09.08.23.46.40;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.54
+log
+@Most array gymnastics moved from MLSFillValues to HyperSlabs module
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module ManipulateVectorQuantities ! Various routines for manipulating vectors
+
+  ! This modules contains routines needed for manipulating vectors.
+
+   use HighOutput, only: OutputnamedValue
+   use MLSMessagemodule, only: MLSMSG_Error, MLSMessage
+   use MLSKinds, only: R8, Rv
+   use MLSNumerics, only: Hunt
+   use Molecules, only: L_Rhi
+   use Trace_M, only: Trace_Begin, Trace_End
+   use Vectorsmodule, only: VectorValue_T, Vector_T, Dump
+   use Intrinsic, only: L_Calsidebandfraction, L_Channel, L_Columnabundance, &
+     & L_Isotoperatio, L_Limbsidebandfraction, L_None, L_Phitan, L_Radiance, &
+     & L_Tscat, L_Vmr, Phyq_ProFiles
+
+  implicit none
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: ManipulateVectorQuantities.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+  private
+
+  public :: AnyGoodDataInQty, DoHGridsMatch, DoQuantitiesMatch, &
+    & DoVGridsMatch, DoVGridsMatch_VEC, &
+    & DoFGridsMatch, DoQtysDescribeSameThing, DoVectorsMatch, &
+    & FillWithCombinedChannels, FindClosestInstances, FindOneClosestInstance, &
+    & FindInstanceWindow
+
+  interface DoVGridsMatch
+    module procedure DoVGridsMatch_Vec
+  end interface
+
+  logical, parameter               :: DEEBUG = .false.
+
+contains
+
+  ! --------------------------------------- AnyGoodDataInQty --------------
+  logical function AnyGoodDataInQty ( a, &
+    & precision, quality, status, quality_min, op )
+    ! Returns true if any of the mask != char(0)
+    ! Returns true if any of the precision values >= 0 (if present)
+    ! Returns true if any of the quality values >= quality_min (if present)
+    ! Returns true if any of the status values are not odd (if present)
+    !
+    ! By default the result returned is the "and" of all the results
+    ! for each of its args
+    ! If instead you want the "or", set op = "or"
+    
+    ! If mask is not associated, should we return TRUE or FALSE?
+    ! The answer should be TRUE
+    ! But if values aren't associated for precision, quality, or status,
+    ! the behavior depends on context and may be the opposite 
+    ! of what you would expect
+    ! If you supply only precision, and that precision array is not associated
+    ! we return TRUE
+    ! 
+    ! Should we warn of misuse if user supplies quality w/o quality_min?
+    use MLSStrings, only: LowerCase
+
+    type ( VectorValue_T ), pointer   , optional :: a         ! qty values
+    type ( VectorValue_T ), pointer   , optional :: precision ! Precision
+    type ( VectorValue_T ), pointer   , optional :: quality   ! Quality
+    type ( VectorValue_T ), pointer   , optional :: status    ! Status
+    real(rv),               intent(in), optional :: quality_min
+    character(len=*),       intent(in), optional :: op
+    ! Local variables
+    character(len=4) :: myOp
+
+    ! Executable code
+    myOp = "and"
+    if ( present(op) ) myOp = lowerCase(op)
+    AnyGoodDataInQty = .true.
+    if ( myOp /= "and" ) AnyGoodDataInQty = .false.
+
+    if ( present(a) ) then
+      if ( associated(a) ) then
+        AnyGoodDataInQty = .true. ! Return TRUE if mask not associated
+        if ( associated ( a%mask ) ) &
+        & call joinResults( any(a%mask == char(0) ) )
+      endif
+    endif
+    if ( present(precision) ) then
+      if ( associated(precision) ) then
+        if ( associated ( precision%values ) ) &
+        & call joinResults( any(precision%values >= 0._rv) )
+      endif
+    endif
+    if ( present(quality) .and. present(quality_min) ) then
+      if ( associated(quality) ) then
+        if ( associated ( quality%values ) ) &
+        & call joinResults( any(quality%values >= quality_min) )
+      endif
+    endif
+    if ( present(status) ) then
+      if ( associated(status) ) then
+        if ( associated ( status%values ) ) &
+        & call joinResults( any(mod(int(status%values), 2) /= 0) )
+      endif
+    endif
+    
+    contains
+    subroutine joinResults (arg)
+      logical, intent(in) :: arg
+      if ( myOp == "and" ) then
+        AnyGoodDataInQty = ( AnyGoodDataInQty .and. arg )
+      else
+        AnyGoodDataInQty = ( AnyGoodDataInQty .or. arg )
+      endif
+    end subroutine joinResults
+    
+  end function AnyGoodDataInQty
+
+  ! ------------------------------ FindClosestInstances -----------------
+  subroutine FindClosestInstances ( referenceQuantity, soughtQuantity,&
+    referenceIndices )
+    ! This subroutine is similar to FindOneClosestInstance (and calls it in
+    ! fact), and finds an array of closest instances
+
+    ! Dummy arguments
+    type (VectorValue_T), intent(in) :: referenceQuantity ! e.g. temperature
+    type (VectorValue_T), intent(in) :: soughtQuantity ! e.g. ptan, radiance
+    integer, dimension(soughtQuantity%template%noInstances), &
+      & intent(out) :: referenceIndices
+
+    ! Local variables
+    integer :: instance
+
+    ! Executable code
+    do instance = 1, soughtQuantity%template%noInstances
+      referenceIndices(instance) = FindOneClosestInstance ( &
+        & referenceQuantity, soughtQuantity, instance )
+    end do
+  end subroutine FindClosestInstances
+
+  ! ---------------------------------------- FindOneClosestInstance -----
+  integer function FindOneClosestInstance ( referenceQuantity, &
+    soughtQuantity, instance )
+    use hGridsDatabase, only: FindClosestMatch
+    use Intrinsic, only: L_Time
+    ! This returns the instance index into a stacked quantity for the
+    ! instance 'closest' to the given instance in an unstacked one
+    type (VectorValue_T), intent(in) :: ReferenceQuantity ! e.g. temperature
+    type (VectorValue_T), intent(in), target :: SoughtQuantity ! e.g. ptan, radiance
+    integer, intent(in) :: Instance
+
+    ! Local variables
+    integer :: horizontalCoordinate
+    real (r8), dimension(:,:), pointer :: Seek ! The thing to look for
+
+    ! Executable:
+    horizontalCoordinate = referenceQuantity%template%horizontalCoordinate
+    ! We'll skip the error checking we could do at this point, for speed.
+
+    ! First we'll do a hunt to get ourselves in the right area.  Might as
+    ! well start looking where we think that will be.
+
+    if ( soughtQuantity%template%quantityType == l_phiTan ) then
+      seek => soughtQuantity%values
+    else if ( horizontalCoordinate == l_time ) then
+      seek => soughtQuantity%template%time
+    else
+      seek => soughtQuantity%template%phi
+    end if
+    ! Call FindClosestMatch to do the work
+    if ( horizontalCoordinate == l_time ) then
+      FindOneClosestInstance = FindClosestMatch ( &
+        & referenceQuantity%template%time(1,:), &
+        & seek, instance )
+    else if ( allocated(referenceQuantity%template%phi) ) then
+      FindOneClosestInstance = FindClosestMatch ( &
+        & referenceQuantity%template%phi(1,:), &
+        & seek, instance )
+    else
+      call Dump ( referenceQuantity%template )
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'In FindOneClosestInstance, reference phi is not allocated and ' // &
+        & 'horizontal coordinate is not time' )
+    end if
+  end function FindOneClosestInstance
+
+  ! --------------------------------------- FindInstanceWindow ---------
+  subroutine FindInstanceWindow ( Quantity, PhiTan, MAF, PhiWindow, &
+    & WindowUnits, WindowStart, WindowFinish )
+    ! This returns the start and end of a window into a quantity such as
+    ! temperature for a given instance of a minor frame quantity
+    type (VectorValue_T), intent(in) :: Quantity ! Quantity e.g. temperature
+    type (VectorValue_T), intent(in) :: PhiTan ! Phitan information
+    integer, intent(in) :: MAF            ! Major frame sought
+    real (r8), intent(in) :: PhiWindow(2) ! Window size before and after PhiTan
+    integer, intent(in) :: WindowUnits    ! PHYQ_Angle or PHYQ_Profiles
+    integer, intent(out) :: WindowStart   ! Output window start
+    integer, intent(out) :: WindowFinish  ! Output window finish
+
+    ! Internal variables
+    integer :: CLOSESTINSTANCE
+    integer :: Me = -1                  ! String index for trace cacheing
+    real(r8) :: PHIMIN, PHIMAX          ! Limiting values of phi for this MAF
+
+    ! Executable code
+    call trace_begin ( me, 'FindInstanceWindow', cond=.false. )
+    ! WindowUnits was checked to be either PHYQ_Profiles or PHYQ_Angle.
+    ! If WindowUnits had been given as 0 or 0:0, the closest instance will be
+    ! chosen.
+    if ( windowUnits == PHYQ_Profiles ) then
+      ! Set the window start : window finish so that there are phiWindow(1) 
+      ! profiles before the closest instance, and phiWindow(2) after the
+      ! closest instance.
+      closestInstance = FindOneClosestInstance ( quantity, phiTan, maf )
+      windowStart = min ( quantity%template%noInstances, &
+        & max ( 1, closestInstance - nint ( phiWindow(1) ) ) )
+      windowFinish = min ( quantity%template%noInstances, &
+        & closestInstance + nint ( phiWindow(2) ) )
+    else ! windowUnits == PHYQ_Angle
+      phiMin = minval ( phiTan%values(:,maf) ) - phiWindow(1)
+      phiMax = maxval ( phiTan%values(:,maf) ) + phiWindow(2)
+      call Hunt ( quantity%template%phi(1,:), phiMin, windowStart, &
+        & allowTopValue=.true. )
+      call Hunt ( quantity%template%phi(1,:), phiMax, windowFinish, &
+        & allowTopValue=.true. )
+      windowStart = min ( quantity%template%noInstances, &
+        & max ( 1, windowStart - 1 ) )
+      windowFinish = min ( quantity%template%noInstances, &
+        & max ( 1, windowFinish + 1 ) )
+    end if
+    call trace_end ( cond=.false. )
+  end subroutine FindInstanceWindow
+
+  ! -------------------------------------- FillWithCombinedChannels ----------
+  subroutine FillWithCombinedChannels ( quantity, sourceQuantity, message, mapping )
+    use Matrixmodule_0, only: MatrixElement_T, M_Full, Createblock, Sparsify
+    use MLSSignals_M, only: Signal_T, Getsignal
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+    ! This routine takes a (typically radiance) quantity on one set of channels
+    ! and combines the channels together appropriately to make them representative
+    ! of the data in another (presumably at a finer resolution.
+    type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
+    type (VectorValue_T), intent(in) :: SOURCEQUANTITY ! Quantitiy on finer(?) channel grid
+    character (len=*), intent(out) :: MESSAGE ! Possible error message
+    type (MatrixElement_T), intent(inout), optional :: MAPPING ! A matrix_0 mapping
+    ! Local variables
+    type (Signal_T) :: signal, sourceSignal
+    integer :: COUT, CIN              ! Channel counters
+    integer :: IOUT, IIN              ! Indices
+    integer :: SURF                   ! Loop counter
+    real(r8) :: CENTER, HALFWIDTH     ! Channel locations
+    integer, dimension(:), pointer :: NOINSIDE ! Number of channels that were caught
+
+    ! Do some sanity checking
+    message = ''
+    if ( .not. DoVGridsMatch ( quantity, sourceQuantity ) ) then
+      message = 'Quantities must have matching vGrids'
+      return
+    end if
+    if ( .not. DoHGridsMatch ( quantity, sourceQuantity ) ) then
+      message = 'Quantities must have matching hGrids'
+      return
+    end if
+
+    if ( quantity%template%signal == 0 .or. &
+      &  quantity%template%frequencyCoordinate /= l_channel ) then
+      message = 'Quantity must have channels'
+      return
+    end if
+    if ( sourceQuantity%template%signal == 0 .or. &
+      &  sourceQuantity%template%frequencyCoordinate /= l_channel ) then
+      message = 'source quantity must have channels'
+      return
+    end if
+
+    signal = GetSignal ( quantity%template%signal )
+    sourceSignal = GetSignal ( sourceQuantity%template%signal )
+
+    if ( signal%radiometer /= sourceSignal%radiometer ) then
+      message = 'quantities must be from same radiometer'
+      return
+    end if
+
+    nullify ( noInside )
+    call Allocate_test ( noInside, quantity%template%noChans, 'noInside', ModuleName )
+
+    ! Possibly setup a mapping matrix
+    if ( present ( mapping ) ) then
+      call CreateBlock ( mapping, &
+        & quantity%template%instanceLen, sourceQuantity%template%instanceLen, &
+        & kind=m_full, nChan=quantity%template%noChans )
+    end if
+
+    ! Do a quick first pass to get the numbers in each output channel
+    do cOut = 1, quantity%template%noChans
+      ! Work out where this output channel is
+      center = signal%centerFrequency + signal%direction * signal%frequencies ( cOut )
+      halfWidth = signal%widths ( cOut ) / 2.0
+      ! Now map this back into sourceSignal%frequencies
+      center = ( center - sourceSignal%centerFrequency ) * sourceSignal%direction
+      noInside(cOut) = count ( &
+        & ( sourceSignal%frequencies >= ( center - halfWidth ) ) .and. &
+        & ( sourceSignal%frequencies < ( center + halfWidth ) ) )
+    end do
+    if ( any ( noInside == 0 ) ) then
+      message = 'Some channels have no source'
+      return
+    end if
+
+    ! Loop over the channels in the result
+    do cOut = 1, quantity%template%noChans
+      ! Work out where this output channel is
+      center = signal%centerFrequency + signal%direction * signal%frequencies ( cOut )
+      halfWidth = signal%widths ( cOut ) / 2.0
+      ! Now map this back into sourceSignal%frequencies
+      center = ( center - sourceSignal%centerFrequency ) * sourceSignal%direction
+      ! Use nested loops to make the code easier to read, rather than complicated indexing
+      do cIn = 1, sourceQuantity%template%noChans
+        if ( ( sourceSignal%frequencies(cIn) >= ( center - halfWidth ) ) .and. &
+          &  (  sourceSignal%frequencies(cIn) < ( center + halfWidth ) ) ) then
+          do surf = 0, quantity%template%noSurfs - 1 ! 0..n-1 makes indexing easier
+            iOut = cOut + surf * quantity%template%noChans
+            iIn = cIn + surf * sourceQuantity%template%noChans
+            quantity%values ( iOut, : ) = quantity%values ( iOut, : ) + &
+              & sourceQuantity%values ( iIn, : ) / noInside(cOut)
+            ! Possibly fill mapping matrix
+            if ( present ( mapping ) ) then
+              mapping%values ( iOut, iIn ) = 1.0 / noInside(cOut)
+            end if
+          end do
+        end if
+      end do
+    end do
+    call Sparsify ( mapping )
+
+    call Deallocate_test ( noInside, 'noInside', ModuleName )
+  end subroutine FillWithCombinedChannels
+
+  ! --------------------------------------- DoHGridsMatch --------------
+  logical function DoHGridsMatch ( a, b, spacingOnly )
+    ! Returns true if quantities have same hGrid information
+    type (VectorValue_T), intent(in) :: A ! First quantity
+    type (VectorValue_T), intent(in) :: B ! Second quantity
+    logical, optional, intent(in) :: SPACINGONLY
+
+    ! Local parameters
+    logical :: MYSPACINGONLY
+    real (r8), parameter :: PHITOL = 0.01 ! Tolerance in angle
+    real (r8) :: MINA, MINB, MAXA, MAXB ! Information on a and b
+
+    ! Executable code
+    DoHGridsMatch = .false.
+
+    if ( associated(a%template%the_hGrid) .and. &
+       & associated(b%template%the_hGrid) ) then ! How could this fail?
+      if ( a%template%the_hGrid%type /= b%template%the_hGrid%type ) return
+    end if
+
+    mySpacingOnly = .false.
+    if ( present ( spacingOnly ) ) mySpacingOnly = spacingOnly
+
+    if ( a%template%stacked .neqv. b%template%stacked ) return
+    if ( mySpacingOnly .and. .not. a%template%stacked ) return
+
+    if ( .not. mySpacingOnly ) then
+      if ( a%template%noInstances /= b%template%noInstances ) return
+      if ( .not. ( allocated(a%template%phi) .eqv. &
+                 & allocated(b%template%phi) ) ) return
+      if ( allocated(a%template%phi) ) then
+        if ( any(abs(a%template%phi - &
+          &          b%template%phi) > PhiTol) ) return
+      end if
+      DoHGridsMatch = .true.
+    else
+      ! Here we default to true
+      doHGridsMatch = .true.
+      if ( a%template%noInstances == 1 ) return
+      if ( b%template%noInstances == 1 ) return
+      mina = minval ( &
+        & a%template%phi(1,2:a%template%noInstances) - &
+        & a%template%phi(1,1:a%template%noInstances-1) )
+      minb = minval ( &
+        & b%template%phi(1,2:b%template%noInstances) - &
+        & b%template%phi(1,1:b%template%noInstances-1) )
+      maxa = maxval ( &
+        & a%template%phi(1,2:a%template%noInstances) - &
+        & a%template%phi(1,1:a%template%noInstances-1) )
+      maxb = minval ( &
+        & b%template%phi(1,2:b%template%noInstances) - &
+        & b%template%phi(1,1:b%template%noInstances-1) )
+      doHGridsMatch = all ( (/ &
+        & maxa-mina, maxb-minb, abs(maxa-maxb), abs(mina-minb) /) < phiTol )
+    end if
+
+  end function DoHGridsMatch
+
+  ! ------------------------------------- DoQuantitiesMatch --
+  logical function DoQuantitiesMatch ( a, b, options )
+    ! Returns true if quantities share all important template information.
+    type (VectorValue_T), intent(in) :: A ! First quantity
+    type (VectorValue_T), intent(in) :: B ! Second quantity
+    character(len=*), optional, intent(in)      :: options ! e.g. 's'[trict]
+    ! logical, optional, intent(in)      :: Strict ! Must every attribute match?
+    !                                   Or just the ones we actually write out
+    logical :: myStrict
+    integer, parameter :: NSCREENEDTYPES = 8
+    integer, dimension(NSCREENEDTYPES) :: SCREENEDTYPES
+    ! Executable code
+    screenedtypes = (/ &
+      & l_vmr, l_columnabundance, l_rhi, l_isotoperatio, l_radiance, l_calsidebandfraction, l_limbsidebandfraction, l_Tscat &
+      & /)
+    myStrict = .false.
+    if ( present(options) ) myStrict = index(options, 's') > 0
+    DoQuantitiesMatch = .false.
+    if ( .not. DoQtysDescribeSameThing  ( a, b, options ) ) return
+    ! Must we screen further?
+    if ( .not. myStrict &
+      & .and. &
+      &.not. any( a%template%quantityType == screenedtypes ) &
+      & ) then
+      DoQuantitiesMatch = .true.
+      return
+    endif
+    if ( .not. DoHGridsMatch ( a, b ) ) return
+    if ( .not. DoVGridsMatch ( a, b ) ) return
+    if ( .not. DoFGridsMatch ( a, b ) ) return
+    DoQuantitiesMatch = .true.
+  end function DoQuantitiesMatch
+
+  ! -------------------------------------- DoVectorsMatch --------------
+  logical function DoVectorsMatch ( a, b, verbose )
+    ! Returns true if vectors are essentially the same in nature, even
+    ! if names of quantities differ.
+    type(Vector_T), intent(in) :: A ! First vector
+    type(Vector_T), intent(in) :: B ! Second vector
+    logical, optional, intent(in) :: verbose ! Say why not if they don't
+
+    ! Local variables
+    logical :: myVerbose
+    integer :: Q                        ! Loop counter
+
+    ! Exectuable code
+    myVerbose = .false.
+    if ( present(verbose) ) myVerbose = verbose
+    DoVectorsMatch = .false.
+    if ( a%template%noQuantities /= b%template%noQuantities ) then
+      if ( myVerbose ) call outputnamedValue( 'noQuantities', &
+        & (/ a%template%noQuantities, b%template%noQuantities /) )
+      return
+    endif
+    do q = 1, a%template%noQuantities
+      if ( .not. DoQuantitiesMatch ( &
+        & a%quantities(q), b%quantities(q) ) ) then
+        if ( myVerbose ) then
+          call outputnamedValue( 'q', q )
+          call outputnamedValue( 'doQuantitiesDesc', &
+            & DoQtysDescribeSameThing  ( a%quantities(q), b%quantities(q), &
+            & options='-d' ) )
+          call outputnamedValue( 'doHGridsMatch', &
+            & DoHGridsMatch ( a%quantities(q), b%quantities(q) ) )
+          call outputnamedValue( 'doVGridsMatch', &
+            & DoVGridsMatch ( a%quantities(q), b%quantities(q) ) )
+          call outputnamedValue( 'doFGridsMatch', &
+            & DoFGridsMatch ( a%quantities(q), b%quantities(q) ) )
+          call dump( a%quantities(q) )
+          call dump( b%quantities(q) )
+        return
+        endif
+      endif
+    end do
+    DoVectorsMatch = .true.
+  end function DoVectorsMatch
+
+  ! ------------------------------------------  DoVGridsMatch_Vec  -----
+  logical function DoVGridsMatch_Vec ( A, B, RelativeError, Precision )
+    ! Returns true if quantities have same vGrid information
+    use HyperSlabs, only: EssentiallyEqual
+    use Dump_0, only: Dump
+    type (vectorValue_T), intent(in) :: A ! First quantity
+    type (vectorValue_T), intent(in) :: B ! Second quantity
+    real(rv), optional, intent(in)   :: RelativeError ! May differ by this rel amount
+    real(rv), optional, intent(in)   :: Precision ! May differ by this abs amount
+    real, parameter                  :: defaultRelativeError = 1.e-9
+    logical                          :: TestForSurfs
+    ! logical, parameter               :: DEEBUG = .true.
+    ! Executable code
+    ! Can we do this?
+    ! doVGridsMatch_Vec = a%template%VGridIndex /= 0 .and. &
+    !                   & a%template%VGridIndex == b%template%VGridIndex
+    ! if ( doVGridsMatch_Vec ) return
+    doVGridsMatch_Vec = .false.
+    if ( DEEBUG ) then
+      call outputNamedValue ( 'noSurfs', (/ a%template%noSurfs, b%template%noSurfs /) )
+      call outputNamedValue ( 'verticalCoordinate', (/ a%template%verticalCoordinate, b%template%verticalCoordinate /) )
+      call outputNamedValue ( 'coherent', (/ a%template%coherent, b%template%coherent /) )
+      call outputNamedValue ( 'regular', (/ a%template%regular, b%template%regular /) )
+      call outputNamedValue ( 'noInstances', (/ a%template%noInstances, b%template%noInstances /) )
+      call dump ( a%template%surfs, 'a%template%surfs' )
+      call dump ( b%template%surfs, 'b%template%surfs' )
+    endif
+    if ( a%template%noSurfs /= b%template%noSurfs ) return
+    if ( a%template%verticalCoordinate /= &
+      &  b%template%verticalCoordinate ) return
+    if ( a%template%coherent .neqv. b%template%coherent ) return
+    if ( a%template%regular .neqv. b%template%regular ) return
+    if ( ( .not. a%template%coherent) .and. &
+      &  ( a%template%noInstances /= b%template%noInstances ) ) return
+    ! Do we allow the corresponding surfaces any leeway? Relative or absolute?
+    if ( present(RelativeError) ) then
+      TestForSurfs = all ( abs(a%template%surfs - b%template%surfs) <= &
+        & RelativeError*max(&
+        & maxval( abs(a%template%surfs) ), maxval( abs(b%template%surfs ) ) &
+        & ) &
+        & )
+    elseif ( present(Precision) ) then
+      TestForSurfs = all ( abs(a%template%surfs - b%template%surfs) <= Precision )
+    elseif ( defaultRelativeError > 0. ) then
+      TestForSurfs = all ( abs(a%template%surfs - b%template%surfs) <= &
+        & defaultRelativeError*max(&
+        & maxval( abs(a%template%surfs) ), maxval( abs(b%template%surfs ) ) &
+        & ) &
+        & )
+    else
+      TestForSurfs = all (  essentiallyEqual ( a%template%surfs, &
+                                      b%template%surfs ) )
+    endif
+    if ( .not. TestForSurfs ) return
+    if (.not. a%template%regular ) then
+      if ( any(a%template%surfIndex /= b%template%surfIndex) .or. &
+        &  any(a%template%chanIndex /= b%template%chanIndex) ) return
+    end if
+
+    doVGridsMatch_Vec = .true.
+  end function DoVGridsMatch_Vec
+
+  ! --------------------------------------- DoFGridsMatch --------------
+  logical function DoFGridsMatch ( a, b, sizeOnly )
+    ! Returns true if the quantities have the same fGrid information
+    type ( VectorValue_T ), intent(in) :: A ! First quantity
+    type ( VectorValue_T ), intent(in) :: B ! Second quantity
+    logical, intent(in), optional :: SIZEONLY
+
+    ! Local parameters
+    real (r8), parameter :: FTOL = 1.0e-3 ! 1 kHz
+    logical :: MYSIZEONLY
+
+    ! Executable code
+    DoFGridsMatch = .false.
+    mySizeOnly = .false.
+    if ( present ( sizeOnly ) ) mySizeOnly = sizeOnly
+    if ( a%template%noChans /= b%template%noChans ) return
+    if ( .not. mySizeOnly ) then
+      if ( a%template%frequencyCoordinate /= b%template%frequencyCoordinate ) return
+      select case ( a%template%frequencyCoordinate )
+      case ( l_none )
+      case ( l_channel )
+        if ( a%template%signal /= b%template%signal ) return
+        if ( a%template%sideband /= b%template%sideband ) return
+      case default
+        if ( associated ( a%template%frequencies ) .neqv. &
+          &  associated ( b%template%frequencies ) ) return
+        if ( associated ( a%template%frequencies ) ) then
+          if ( any ( shape(a%template%frequencies) /= &
+            & shape(b%template%frequencies) ) ) return
+          if ( any ( abs ( a%template%frequencies - &
+            & b%template%frequencies ) > fTol ) ) return
+        end if
+      end select
+    end if
+    DoFGridsMatch = .true.
+  end function DoFGridsMatch
+
+  ! ---------------------------------- DoQtysDescribeSameThing ----
+  logical function DoQtysDescribeSameThing ( a, b, options )
+    ! Returns true if the quantities describe the same geophysical
+    ! parameter, albeit at a different resolution perhaps
+    
+    ! Note:
+    ! We have made this a lot more lenient than it was originally
+    ! Unless you set options to include 's'[trict], it only checks 
+    ! [type, logbasis, verticalcoord, signal, molecule)
+    ! and then only if quantitype is one of eight types:
+    ! [vmr, columnbundance, rhi, isotoperatio, radiance, 
+    ! calsidebandfraction, limbsidebandfraction, or Tscat]
+    ! Any other quantityTypes will be assumed to match if they
+    ! are the same type, no further checks being required
+    type ( VectorValue_T ), intent(in) :: A ! First quantity
+    type ( VectorValue_T ), intent(in) :: B ! Second quantity
+    character(len=*), optional, intent(in)      :: options ! e.g. 's'[trict]
+    ! logical, optional, intent(in)      :: Strict ! Must every attribute match?
+    !                                   Or just the ones we actually write out
+    ! Local variables
+    logical :: myStrict, debug
+    ! logical, parameter :: DEEBUG = .true.
+    integer, parameter :: NSCREENEDTYPES = 8
+    integer, dimension(NSCREENEDTYPES) :: SCREENEDTYPES
+    ! Executable
+    screenedtypes = (/ &
+      & l_vmr, l_columnabundance, l_rhi, l_isotoperatio, l_radiance, l_calsidebandfraction, l_limbsidebandfraction, l_Tscat &
+      & /)
+    myStrict = .false.
+    if ( present(options) ) myStrict = index(options, 's') > 0
+    debug = DEEBUG
+    if ( present(options) ) debug = index(options, 'd') > 0
+
+    DoQtysDescribeSameThing = .false.
+    if ( debug ) then
+      call outputNamedValue( 'myStrict', myStrict )
+      call outputNamedValue( 'quantityType', (/ a%template%quantityType, b%template%quantityType /) )
+      call outputNamedValue( 'logBasis', (/ a%template%logBasis, b%template%logBasis /) )
+      call outputNamedValue( 'verticalCoordinate', (/ a%template%verticalCoordinate, b%template%verticalCoordinate /) )
+      call outputNamedValue( 'unit', (/ a%template%unit, b%template%unit /) )
+      call outputNamedValue( 'signal', (/ a%template%signal, b%template%signal /) )
+      call outputNamedValue( 'molecule', (/ a%template%molecule, b%template%molecule /) )
+      call outputNamedValue( 'sideband', (/ a%template%sideband, b%template%sideband /) )
+      call outputNamedValue( 'instrumentModule', (/ a%template%instrumentModule, b%template%instrumentModule /) )
+      call outputNamedValue( 'radiometer', (/ a%template%radiometer, b%template%radiometer /) )
+    endif
+    if ( a%template%quantityType /= b%template%quantityType ) return
+    ! Must we screen further?
+    if ( .not. myStrict &
+      & .and. &
+      &.not. any( a%template%quantityType == screenedtypes ) &
+      & ) then
+      DoQtysDescribeSameThing = .true.
+      return
+    endif
+    if ( a%template%logBasis .neqv. b%template%logBasis ) return
+    if ( a%template%verticalCoordinate /= b%template%verticalCoordinate ) return
+    if ( a%template%signal /= b%template%signal ) return
+    if ( a%template%molecule /= b%template%molecule ) return
+    if ( myStrict ) then
+      ! Because we chose not to write these as attributes
+      ! E.g., in WriteVectorAsHDF5L2PC, or we neglected to
+      ! read them in ReadOneVectorFromHDF5 we dare not automatically check
+      if ( a%template%unit /= b%template%unit ) return
+      if ( a%template%sideband /= b%template%sideband ) return
+      if ( a%template%instrumentModule /= b%template%instrumentModule ) return
+      if ( a%template%radiometer /= b%template%radiometer ) return
+    endif
+    DoQtysDescribeSameThing = .true.
+
+  end function DoQtysDescribeSameThing
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: ManipulateVectorQuantities.f90,v 2.53 2016/06/03 02:33:06 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module ManipulateVectorQuantities
+  
+! $Log: ManipulateVectorQuantities.f90,v $
+! Revision 2.53  2016/06/03 02:33:06  vsnyder
+! If both templates have pointers to their hGrids, verify that the hGrids
+! have the same type.
+!
+! Revision 2.52  2015/10/28 00:36:39  vsnyder
+! Confine WindowStart:WindowFinish with 1:noInstances
+!
+! Revision 2.51  2015/09/22 23:12:19  vsnyder
+! Remove unused PHYQ_Angle USE reference
+!
+! Revision 2.50  2015/08/25 17:16:07  vsnyder
+! In FindOneClosestInstance, determine whether to use the value or
+! geolocation depending upon whether the type is PhiTan; eliminate the
+! UseValue dummy argument.  In FindInstanceWindow, allow PhiWindow to be
+! a tuple, with the first element giving the number of profiles/MAFs before
+! the tangent point, and the second giving the number after.
+!
+! Revision 2.49  2015/07/29 00:27:28  vsnyder
+! Convert Phi from pointer to allocated
+!
+! Revision 2.48  2015/06/19 00:11:01  pwagner
+! Intercept and print if about to use unassociated phi in FindOneClosestInstance
+!
+! Revision 2.47  2015/02/05 21:43:08  vsnyder
+! Don't use Phi for unstacked quantities
+!
+! Revision 2.46  2014/10/30 01:42:46  vsnyder
+! Publish DoQuantitiesMatch
+!
+! Revision 2.45  2014/04/24 23:51:59  pwagner
+! Depending on horizontalCoordinate of reference quantity, may FindOneClosestInstance in time, not phi
+!
+! Revision 2.44  2014/01/09 00:24:29  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
+! Revision 2.43  2013/08/31 01:24:53  vsnyder
+! Replace MLSMessageCalls with trace_begin and trace_end
+!
+! Revision 2.42  2013/03/01 01:06:06  pwagner
+! Get R8 from MLSKinds
+!
+! Revision 2.41  2012/07/19 03:33:18  vsnyder
+! Pass nChan=quantity%template%noChans to CreateBlock
+!
+! Revision 2.40  2012/02/13 23:24:35  pwagner
+! DoQuantitiesMatch takes options string; DoQtysDescribeSameThing more lenient
+!
+! Revision 2.39  2012/02/10 23:52:35  vsnyder
+! Cannonball polishing
+!
+! Revision 2.38  2012/02/02 01:09:11  pwagner
+! DoQuantitiesMatch now works properly when tested
+!
+! Revision 2.37  2011/08/29 21:29:41  pwagner
+! Granted some leeway in matching vgrids
+!
+! Revision 2.36  2011/06/16 20:16:54  vsnyder
+! Cannonball polishing
+!
+! Revision 2.35  2010/02/04 23:08:00  vsnyder
+! Remove USE or declaration for unused names
+!
+! Revision 2.34  2009/06/23 18:25:42  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.33  2008/06/06 22:52:21  pwagner
+! EssentiallyEqual moved to MLSFillValues
+!
+! Revision 2.32  2007/08/13 17:37:42  pwagner
+! Push some procedures onto new MLSCallStack
+!
+! Revision 2.31  2006/03/03 23:05:50  pwagner
+! Changed interface to AnyGoodDataInQty
+!
+! Revision 2.30  2005/06/22 17:25:49  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.29  2004/12/13 20:28:44  vsnyder
+! Changed DoVGridsMatch to a generic, with a DoVGridsMatch_Vec specific.
+!
+! Revision 2.28  2004/09/25 00:15:48  livesey
+! Bug fixes etc. in FillWithCombinedChannels
+!
+! Revision 2.27  2004/09/24 17:55:41  livesey
+! Gained ManipulateVectorQuantities from fill
+!
+! Revision 2.26  2004/01/24 01:01:48  livesey
+! Improvements to DoFGridsMatch
+!
+! Revision 2.25  2004/01/23 05:37:01  livesey
+! Added DoVectors/QuantitiesMatch
+!
+! Revision 2.24  2003/08/28 00:44:43  livesey
+! Added sizeOnly option to DoFGridsMatch
+!
+! Revision 2.23  2003/07/07 20:21:34  livesey
+! Now uses the FindClosestMatch function
+!
+! Revision 2.22  2003/01/26 04:42:20  livesey
+! Added handling of profiles/angle units for phiWindow
+!
+! Revision 2.21  2002/11/22 01:07:13  vsnyder
+! Delete USE'd but unreferenced symbols
+!
+! Revision 2.20  2002/10/08 00:09:11  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.19  2002/09/19 00:30:36  pwagner
+! Added AnyGoodDataInQty; set DoQtysDescribeSameThing at its start
+!
+! Revision 2.18  2002/09/10 20:47:44  livesey
+! Added DoQtysDescribeSameThing
+!
+! Revision 2.17  2002/08/23 01:24:18  livesey
+! Added DoFGridsMatch
+!
+! Revision 2.16  2002/07/25 08:43:19  mjf
+! Initialised DoHGridsMatch to .false. at start of function.
+!
+! Revision 2.15  2002/07/17 06:01:27  livesey
+! Fixed bugs in DoH/VGrids match
+!
+! Revision 2.14  2002/06/12 16:53:32  livesey
+! Tidied up some public/private stuff
+!
+! Revision 2.13  2002/06/12 16:50:39  livesey
+! Added findInstanceWindow
+!
+! Revision 2.12  2002/02/06 01:32:58  livesey
+! Rewrote FindOneClosestInstance and FindClosestInstances to reflect the
+! way in which they are mostly called, and to fix a bug.
+!
+! Revision 2.11  2001/11/08 01:05:06  livesey
+! Fixed a minor sort of bug in FindOneClosestQuantity
+!
+! Revision 2.10  2001/09/14 18:02:52  livesey
+! Bug fix in FindOneClosestInstance and FindClosestInstances.
+! Will probably come back to these and rewrite them some time.
+!
+! Revision 2.9  2001/09/11 01:27:27  livesey
+! Bug fixes
+!
+! Revision 2.8  2001/09/09 21:17:30  livesey
+! Imported FindOneClosestInstance from branch
+!
+! Revision 2.7.2.1  2001/09/08 23:46:40  livesey
+! Added FindOneClosestInstance
+!
+! Revision 2.7  2001/05/11 00:03:41  livesey
+! Fixed but with DoVGridsMatch
+!
+! Revision 2.6  2001/05/10 23:29:27  livesey
+! Added DoHGridsMatch and DoVGridsMatch
+!
+! Revision 2.5  2001/03/08 02:21:08  livesey
+! Fixed bug, wasn't setting minloc!
+!
+! Revision 2.4  2001/03/02 01:31:36  livesey
+! Regular commit
+!
+! Revision 2.3  2001/02/27 17:18:20  livesey
+! Moved ValidateVectorQuantity into vectors module
+!
+@
+
+
+2.53
+log
+@If both templates have pointers to their hGrids, verify that the hGrids
+have the same type.
+@
+text
+@d16 10
+a25 10
+  use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
+  use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMESSAGE
+  use MLSKINDS, only: R8, RV
+  use MLSNUMERICS, only: HUNT
+  use MOLECULES, only: L_RHI
+  use TRACE_M, only: TRACE_BEGIN, TRACE_END
+  use VECTORSMODULE, only: VECTORVALUE_T, VECTOR_T, DUMP
+  use INTRINSIC, only: L_CALSIDEBANDFRACTION, L_CHANNEL, L_COLUMNABUNDANCE, &
+    & L_ISOTOPERATIO, L_LIMBSIDEBANDFRACTION, L_NONE, L_PHITAN, L_RADIANCE, &
+    & L_TSCAT, L_VMR, PHYQ_PROFILES
+d72 1
+a72 1
+    use MLSStrings, only: lowerCase
+d244 3
+a246 3
+    use MATRIXMODULE_0, only: MATRIXELEMENT_T, M_FULL, CREATEBLOCK, SPARSIFY
+    use MLSSIGNALS_M, only: SIGNAL_T, GETSIGNAL
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+d485 2
+a486 2
+    use MLSFILLVALUES, only: ESSENTIALLYEQUAL
+    use DUMP_0, only: DUMP
+d656 1
+a656 1
+       "$Id: ManipulateVectorQuantities.f90,v 2.52 2015/10/28 00:36:39 vsnyder Exp $"
+d666 4
+@
+
+
+2.52
+log
+@Confine WindowStart:WindowFinish with 1:noInstances
+@
+text
+@d362 5
+d656 1
+a656 1
+       "$Id: ManipulateVectorQuantities.f90,v 2.51 2015/09/22 23:12:19 vsnyder Exp $"
+d666 3
+@
+
+
+2.51
+log
+@Remove unused PHYQ_Angle USE reference
+@
+text
+@d219 1
+a219 1
+      ! Set the window start : window end so that there are phiWindow(1) 
+d223 2
+a224 1
+      windowStart = max ( 1, closestInstance - nint ( phiWindow(1) ) )
+d234 4
+a237 2
+      windowStart = max ( 1, windowStart - 1 )
+      windowFinish = min ( quantity%template%noInstances, windowFinish + 1 )
+d651 1
+a651 1
+       "$Id: ManipulateVectorQuantities.f90,v 2.50 2015/08/25 17:16:07 vsnyder Exp $"
+d661 3
+@
+
+
+2.50
+log
+@In FindOneClosestInstance, determine whether to use the value or
+geolocation depending upon whether the type is PhiTan; eliminate the
+UseValue dummy argument.  In FindInstanceWindow, allow PhiWindow to be
+a tuple, with the first element giving the number of profiles/MAFs before
+the tangent point, and the second giving the number after.
+@
+text
+@d24 2
+a25 3
+    & L_ISOTOPERATIO, L_PHITAN, L_NONE, &
+    & L_VMR, L_RADIANCE, L_LIMBSIDEBANDFRACTION, L_TSCAT, &
+    & PHYQ_ANGLE, PHYQ_PROFILES
+d648 1
+a648 1
+       "$Id: ManipulateVectorQuantities.f90,v 2.49 2015/07/29 00:27:28 vsnyder Exp $"
+d658 7
+@
+
+
+2.49
+log
+@Convert Phi from pointer to allocated
+@
+text
+@d152 3
+a154 3
+    soughtQuantity, instance, useValue )
+    use hGridsDatabase, only: findClosestMatch
+    use Intrinsic, only: l_time
+d157 3
+a159 4
+    type (VectorValue_T), intent(in) :: referenceQuantity ! e.g. temperature
+    type (VectorValue_T), intent(in), target :: soughtQuantity ! e.g. ptan, radiance
+    integer, intent(in) :: instance
+    logical, intent(in), optional :: USEVALUE ! For phiTan as sought quantity
+d163 1
+a163 2
+    logical :: myUseValue
+    real (r8), dimension(:,:), pointer :: SEEK ! The thing to look for
+a170 2
+    myUseValue = .false.
+    if ( present(useValue) ) myUseValue = useValue
+d172 2
+a173 7
+    if ( myUseValue ) then
+      if ( soughtQuantity%template%quantityType == l_phiTan ) then
+        seek => soughtQuantity%values
+      else
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Cannot use useValue option for non phiTan quantities' )
+      end if
+d190 3
+a192 3
+      call MLSMessage ( &
+        & MLSMSG_Error, ModuleName, &
+        & 'phi is not allocated and horizontal coordinate is not time' )
+d197 2
+a198 2
+  subroutine FindInstanceWindow ( quantity, phiTan, maf, phiWindow, &
+    & windowUnits, windowStart, windowFinish )
+d201 7
+a207 7
+    type (VectorValue_T), intent(in) :: QUANTITY ! Quantity e.g. temperature
+    type (VectorValue_T), intent(in) :: PHITAN ! Phitan information
+    integer, intent(in) :: MAF          ! Major frame sought
+    real (r8), intent(in) :: PHIWINDOW  ! Window size input
+    integer, intent(in) :: WINDOWUNITS
+    integer, intent(out) :: WINDOWSTART ! Output window start
+    integer, intent(out) :: WINDOWFINISH ! Output window finish
+d216 9
+a224 11
+    if ( phiWindow == 0.0_r8 ) then
+      ! Just return closest instances
+      closestInstance = FindOneClosestInstance ( quantity, phiTan, maf, &
+        & useValue=.true. )
+      windowStart = closestInstance
+      windowFinish = closestInstance
+    else if ( windowUnits == PHYQ_Profiles ) then
+      ! Return n profiles either side of the closest instance
+      closestInstance = FindOneClosestInstance ( quantity, phiTan, maf, &
+        & useValue=.true. )
+      windowStart = max ( 1, closestInstance - nint ( (phiWindow-1)/2 ) )
+d226 4
+a229 4
+        & closestInstance + nint ( (phiWindow-1)/2 ) )
+    else if ( windowUnits == PHYQ_Angle ) then
+      phiMin = minval ( phiTan%values(:,maf) ) - phiWindow/2.0
+      phiMax = maxval ( phiTan%values(:,maf) ) + phiWindow/2.0
+a235 3
+    else
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Invalid units for window specification' )
+d649 1
+a649 1
+       "$Id: ManipulateVectorQuantities.f90,v 2.48 2015/06/19 00:11:01 pwagner Exp $"
+d659 3
+@
+
+
+2.48
+log
+@Intercept and print if about to use unassociated phi in FindOneClosestInstance
+@
+text
+@d158 1
+a158 1
+    type (VectorValue_T), intent(in) :: soughtQuantity ! e.g. ptan, radiance
+d183 1
+a183 1
+    elseif ( horizontalCoordinate == l_time ) then
+d193 1
+a193 5
+    elseif ( .not. associated(referenceQuantity%template%phi) ) then
+      call Dump ( referenceQuantity%template )
+      call MLSMessage ( &
+        & MLSMSG_Error, ModuleName, 'phi not associated' )
+    else
+d197 6
+a202 1
+    endif
+d382 3
+a384 3
+      if ( .not. ( associated(a%template%phi) .eqv. &
+                 & associated(b%template%phi) ) ) return
+      if ( associated(a%template%phi) ) then
+d663 1
+a663 1
+       "$Id: ManipulateVectorQuantities.f90,v 2.47 2015/02/05 21:43:08 vsnyder Exp $"
+d673 3
+@
+
+
+2.47
+log
+@Don't use Phi for unstacked quantities
+@
+text
+@d193 4
+d662 1
+a662 1
+       "$Id: ManipulateVectorQuantities.f90,v 2.46 2014/10/30 01:42:46 vsnyder Exp $"
+d672 3
+@
+
+
+2.46
+log
+@Publish DoQuantitiesMatch
+@
+text
+@d377 6
+a382 2
+      if ( any(abs(a%template%phi - &
+        &          b%template%phi) > PhiTol) ) return
+d658 1
+a658 1
+       "$Id: ManipulateVectorQuantities.f90,v 2.45 2014/04/24 23:51:59 pwagner Exp $"
+d668 3
+@
+
+
+2.45
+log
+@Depending on horizontalCoordinate of reference quantity, may FindOneClosestInstance in time, not phi
+@
+text
+@d38 5
+a42 4
+  public :: ANYGOODDATAINQTY, DOHGRIDSMATCH, DOVGRIDSMATCH, DOVGRIDSMATCH_VEC, &
+    & DOFGRIDSMATCH, DOQTYSDESCRIBESAMETHING, DOVECTORSMATCH, &
+    & FILLWITHCOMBINEDCHANNELS, FINDCLOSESTINSTANCES, FINDONECLOSESTINSTANCE, &
+    & FINDINSTANCEWINDOW
+d654 1
+a654 1
+       "$Id: ManipulateVectorQuantities.f90,v 2.44 2014/01/09 00:24:29 pwagner Exp $"
+d664 3
+@
+
+
+2.44
+log
+@Some procedures formerly in output_m now got from highOutput
+@
+text
+@d152 2
+a153 1
+    use HGRIDSDATABASE, only: FINDCLOSESTMATCH
+d162 2
+a163 1
+    logical :: MYUSEVALUE
+d167 1
+d182 2
+d188 9
+a196 2
+    FindOneClosestInstance = FindClosestMatch ( referenceQuantity%template%phi(1,:), &
+      & seek, instance )
+d653 1
+a653 1
+       "$Id: ManipulateVectorQuantities.f90,v 2.43 2013/08/31 01:24:53 vsnyder Exp $"
+d663 3
+@
+
+
+2.43
+log
+@Replace MLSMessageCalls with trace_begin and trace_end
+@
+text
+@d16 1
+a20 1
+  use OUTPUT_M, only: OUTPUTNAMEDVALUE
+d641 1
+a641 1
+       "$Id: ManipulateVectorQuantities.f90,v 2.42 2013/03/01 01:06:06 pwagner Exp $"
+d651 3
+@
+
+
+2.42
+log
+@Get R8 from MLSKinds
+@
+text
+@d16 1
+a16 2
+  use MLSMESSAGEMODULE, only: MLSMSG_ERROR, &
+    & MLSMESSAGE, MLSMESSAGECALLS
+d21 1
+d199 1
+d202 2
+a203 1
+    real(r8) :: PHIMIN, PHIMAX           ! Limiting values of phi for this MAF
+d206 1
+a206 1
+    call MLSMessageCalls( 'push', constantName='FindInstanceWindow' )
+d233 1
+a233 1
+    call MLSMessageCalls( 'pop' )
+d641 1
+a641 1
+       "$Id: ManipulateVectorQuantities.f90,v 2.41 2012/07/19 03:33:18 vsnyder Exp $"
+d651 3
+@
+
+
+2.41
+log
+@Pass nChan=quantity%template%noChans to CreateBlock
+@
+text
+@d16 1
+a16 1
+  use MLSMessageModule, only: MLSMSG_Error, &
+d18 2
+a19 2
+  use MLSCommon, only: R8, RV
+  use MLSNumerics, only: HUNT
+d21 5
+a25 4
+  use output_m, only: OUTPUTNAMEDVALUE
+  use VectorsModule, only: VECTORVALUE_T, VECTOR_T, DUMP
+  use Intrinsic, only: L_PHITAN, L_CHANNEL, L_NONE, &
+    & L_VMR, L_COLUMNABUNDANCE, L_ISOTOPERATIO, L_RADIANCE, L_CALSIDEBANDFRACTION, L_LIMBSIDEBANDFRACTION, L_TSCAT, &
+d38 4
+a41 4
+  public :: AnyGoodDataInQty, FindClosestInstances, FindOneClosestInstance, &
+    & FindInstanceWindow, DoHGridsMatch, DoVGridsMatch, DoVGridsMatch_Vec, &
+    & DoFGridsMatch, DoQtysDescribeSameThing, &
+    & DoVectorsMatch, FillWithCombinedChannels
+d152 1
+a152 1
+    use HGridsDatabase, only: FINDCLOSESTMATCH
+d205 1
+a205 1
+    if ( phiWindow == 0.0 ) then
+d236 3
+a238 3
+    use MatrixModule_0, only: MatrixElement_T, M_Full, CreateBlock, Sparsify
+    use MLSSignals_m, only: SIGNAL_T, GETSIGNAL
+    use Allocate_Deallocate, only: Allocate_test, Deallocate_test
+d468 2
+a469 2
+    use MLSFillValues, only: ESSENTIALLYEQUAL
+    use dump_0, only: DUMP
+d639 1
+a639 1
+       "$Id: ManipulateVectorQuantities.f90,v 2.40 2012/02/13 23:24:35 pwagner Exp $"
+d649 3
+@
+
+
+2.40
+log
+@DoQuantitiesMatch takes options string; DoQtysDescribeSameThing more lenient
+@
+text
+@d290 1
+a290 1
+        & kind=m_full )
+d638 1
+a638 1
+       "$Id: ManipulateVectorQuantities.f90,v 2.39 2012/02/10 23:52:35 vsnyder Exp $"
+d648 3
+@
+
+
+2.39
+log
+@Cannonball polishing
+@
+text
+@d20 1
+d22 4
+a25 2
+  use VectorsModule, only: VECTORVALUE_T, VECTOR_T
+  use Intrinsic, only: L_PHITAN, L_CHANNEL, L_NONE, PHYQ_ANGLE, PHYQ_PROFILES
+d388 1
+a388 1
+  logical function DoQuantitiesMatch ( a, b )
+d392 6
+d399 5
+d405 9
+a413 1
+    if ( .not. DoQtysDescribeSameThing  ( a, b ) ) return
+d444 13
+a456 8
+        if ( myVerbose ) call outputnamedValue( 'doQuantitiesDesc', &
+          & DoQtysDescribeSameThing  ( a%quantities(q), b%quantities(q) ) )
+        if ( myVerbose ) call outputnamedValue( 'doHGridsMatch', &
+          & DoHGridsMatch ( a%quantities(q), b%quantities(q) ) )
+        if ( myVerbose ) call outputnamedValue( 'doVGridsMatch', &
+          & DoVGridsMatch ( a%quantities(q), b%quantities(q) ) )
+        if ( myVerbose ) call outputnamedValue( 'doFGridsMatch', &
+          & DoFGridsMatch ( a%quantities(q), b%quantities(q) ) )
+d458 1
+d526 1
+a526 1
+  ! --------------------------------------- DoVGridsMatch --------------
+d533 1
+a533 1
+    ! Local paramterts
+d564 1
+a564 1
+  logical function DoQtysDescribeSameThing ( a, b, strict )
+d567 10
+d579 2
+a580 1
+    logical, optional, intent(in)      :: Strict ! Must every attribute match?
+d583 1
+a583 1
+    logical :: myStrict
+d585 2
+d588 3
+d592 3
+a594 1
+    if ( present(strict) ) myStrict = strict
+d597 1
+a597 1
+    if ( DEEBUG ) then
+d610 8
+d638 1
+a638 1
+       "$Id: ManipulateVectorQuantities.f90,v 2.38 2012/02/02 01:09:11 pwagner Exp $"
+d648 3
+@
+
+
+2.38
+log
+@DoQuantitiesMatch now works properly when tested
+@
+text
+@d449 4
+d584 1
+a584 1
+       "$Id: ManipulateVectorQuantities.f90,v 2.37 2011/08/29 21:29:41 pwagner Exp $"
+d594 3
+@
+
+
+2.37
+log
+@Granted some leeway in matching vgrids
+@
+text
+@d17 1
+a17 1
+    & MLSMessage, MLSMessageCalls
+d20 1
+d36 1
+a36 1
+    & DoFGridsMatch, DoQuantitiesMatch, DoQtysDescribeSameThing, &
+d43 2
+d384 1
+a384 1
+  ! ------------------------------------- DoQuantitiesEssentiallyMatch --
+d399 1
+a399 1
+  logical function DoVectorsMatch ( a, b )
+d404 1
+d407 1
+d411 2
+d414 5
+a418 1
+    if ( a%template%noQuantities /= b%template%noQuantities ) return
+d421 11
+a431 1
+        & a%quantities(q), b%quantities(q) ) ) return
+d440 1
+d447 1
+d450 9
+d468 1
+a468 1
+      TestForSurfs = all ( abs(a%template%surfs - b%template%surfs) < &
+d474 1
+a474 1
+      TestForSurfs = all ( abs(a%template%surfs - b%template%surfs) < Precision )
+d476 1
+a476 1
+      TestForSurfs = all ( abs(a%template%surfs - b%template%surfs) < &
+d532 1
+a532 1
+  logical function DoQtysDescribeSameThing ( a, b )
+d537 8
+d547 12
+a561 1
+    if ( a%template%unit /= b%template%unit ) return
+a562 3
+    if ( a%template%sideband /= b%template%sideband ) return
+    if ( a%template%instrumentModule /= b%template%instrumentModule ) return
+    if ( a%template%radiometer /= b%template%radiometer ) return
+d564 9
+d580 1
+a580 1
+       "$Id: ManipulateVectorQuantities.f90,v 2.36 2011/06/16 20:16:54 vsnyder Exp $"
+d590 3
+@
+
+
+2.36
+log
+@Cannonball polishing
+@
+text
+@d416 1
+a416 1
+  logical function DoVGridsMatch_Vec ( A, B )
+d421 4
+a424 1
+
+d434 20
+a453 2
+    if ( any ( .not. essentiallyEqual ( a%template%surfs, &
+                                        b%template%surfs ) ) ) return
+d523 1
+a523 1
+       "$Id: ManipulateVectorQuantities.f90,v 2.35 2010/02/04 23:08:00 vsnyder Exp $"
+d533 3
+@
+
+
+2.35
+log
+@Remove USE or declaration for unused names
+@
+text
+@d183 1
+a183 1
+    ! This returns the start end end of a window into a quantity such as
+d502 1
+a502 1
+       "$Id: ManipulateVectorQuantities.f90,v 2.34 2009/06/23 18:25:42 pwagner Exp $"
+d512 3
+@
+
+
+2.34
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d18 1
+a18 1
+  use MLSCommon, only: R8, RV, MLSFile_T
+d27 1
+a27 1
+       "$RCSfile: $"
+d502 1
+a502 1
+       "$Id: read_apriori.f90 is it here $"
+d512 3
+@
+
+
+2.33
+log
+@EssentiallyEqual moved to MLSFillValues
+@
+text
+@d27 1
+a27 1
+       "$RCSfile: ManipulateVectorQuantities.f90,v $"
+d499 1
+a500 1
+!---------------------------- RCS Ident Info -------------------------------
+d502 2
+a503 3
+       "$Id: ManipulateVectorQuantities.f90,v 2.32 2007/08/13 17:37:42 pwagner Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d505 1
+d507 1
+d512 3
+@
+
+
+2.32
+log
+@Push some procedures onto new MLSCallStack
+@
+text
+@d418 1
+a418 1
+    use MLSNumerics, only: EssentiallyEqual
+d502 1
+a502 1
+       "$Id: ManipulateVectorQuantities.f90,v 2.31 2006/03/03 23:05:50 pwagner Exp $"
+d511 3
+@
+
+
+2.31
+log
+@Changed interface to AnyGoodDataInQty
+@
+text
+@d16 3
+a18 2
+  use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
+  use MLSCommon, only: R8, RV
+d157 1
+a157 1
+    ! Executable code
+d192 1
+a192 2
+
+    ! Local variables
+d197 1
+d224 1
+d502 1
+a502 1
+       "$Id: ManipulateVectorQuantities.f90,v 2.30 2005/06/22 17:25:49 pwagner Exp $"
+d511 3
+@
+
+
+2.30
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d26 1
+a26 1
+       "$RCSfile: $"
+d44 2
+a45 1
+  logical function AnyGoodDataInQty ( a, a_precision )
+d48 26
+a73 2
+    type ( VectorValue_T ), intent(in) :: a           ! Precision of qty
+    type ( VectorValue_T ), intent(in), optional :: a_precision ! Precision of qty
+d76 29
+a104 5
+    AnyGoodDataInQty = .false.
+    if ( present(a_precision) ) then
+      if ( .not. associated ( a_precision%values ) ) return
+      AnyGoodDataInQty = any(a_precision%values >= 0._rv)
+      return
+d106 11
+a116 3
+    AnyGoodDataInQty = .true.
+    if ( .not. associated ( a%mask ) ) return
+    AnyGoodDataInQty = any(a%mask == char(0) )
+d500 1
+a500 1
+       "$Id: $"
+d509 3
+@
+
+
+2.29
+log
+@Changed DoVGridsMatch to a generic, with a DoVGridsMatch_Vec specific.
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d24 3
+a26 5
+  !---------------------------- RCS Ident Info -------------------------------
+  character (LEN=256), private :: Id = &
+    & "$Id: ManipulateVectorQuantities.f90,v 2.28 2004/09/25 00:15:48 livesey Exp $"
+  character (LEN=*), parameter, private :: ModuleName= &
+    & "$RCSfile: ManipulateVectorQuantities.f90,v $"
+d28 1
+a28 1
+  !---------------------------------------------------------------------------
+d441 5
+d452 3
+@
+
+
+2.28
+log
+@Bug fixes etc. in FillWithCombinedChannels
+@
+text
+@d18 1
+a18 1
+    & "$Id: ManipulateVectorQuantities.f90,v 2.27 2004/09/24 17:55:41 livesey Exp $"
+d27 7
+a33 2
+    & FindInstanceWindow, DoHGridsMatch, DoVGridsMatch, DoFGridsMatch, &
+    & DoQuantitiesMatch, DoQtysDescribeSameThing, DoVectorsMatch, FillWithCombinedChannels
+d350 2
+a351 2
+  ! --------------------------------------- DoVGridsMatch --------------
+  logical function DoVGridsMatch ( a, b )
+d353 3
+a355 5
+    type (VectorValue_T), intent(in) :: A ! First quantity
+    type (VectorValue_T), intent(in) :: B ! Second quantity
+
+    ! Local parameters
+    real (r8), parameter :: ZTOL = 0.01 ! Tolerance in whatever coordinate
+d358 1
+a358 1
+    DoVGridsMatch = .false.
+d366 2
+a367 2
+    if ( any(abs(a%template%surfs - &
+      &          b%template%surfs) > zTol) ) return
+d373 2
+a374 2
+    DoVGridsMatch = .true.
+  end function DoVGridsMatch
+d441 3
+@
+
+
+2.27
+log
+@Gained ManipulateVectorQuantities from fill
+@
+text
+@d18 1
+a18 1
+    & "$Id: ManipulateVectorQuantities.f90,v 2.26 2004/01/24 01:01:48 livesey Exp $"
+d158 2
+a159 2
+  subroutine FillWithCombinedChannels ( key, quantity, sourceQuantity, message, mapping )
+    use MatrixModule_0, only: MatrixElement_T, M_Full, CreateBlock
+a164 1
+    integer, intent(in) :: KEY        ! Tree node
+d167 1
+a167 1
+    character (len=80), intent(out) :: MESSAGE ! Possible error message
+d221 1
+a221 1
+      halfWidth = signal%frequencies ( cOut )
+d237 1
+a237 1
+      halfWidth = signal%frequencies ( cOut )
+d257 1
+d438 3
+@
+
+
+2.26
+log
+@Improvements to DoFGridsMatch
+@
+text
+@d18 1
+a18 1
+    & "$Id: ManipulateVectorQuantities.f90,v 2.25 2004/01/23 05:37:01 livesey Exp $"
+d28 1
+a28 1
+    & DoQuantitiesMatch, DoQtysDescribeSameThing, DoVectorsMatch
+d157 105
+d438 3
+@
+
+
+2.25
+log
+@Added DoVectors/QuantitiesMatch
+@
+text
+@d18 1
+a18 1
+    & "$Id: ManipulateVectorQuantities.f90,v 2.24 2003/08/28 00:44:43 livesey Exp $"
+a232 1
+
+d292 8
+a299 6
+        if ( .not. associated ( a%template%frequencies ) .or. &
+          & .not. associated ( b%template%frequencies ) ) return
+        if ( any ( shape(a%template%frequencies) /= &
+          & shape(b%template%frequencies) ) ) return
+        if ( any ( abs ( a%template%frequencies - &
+          & b%template%frequencies ) > fTol ) ) return
+d333 3
+@
+
+
+2.24
+log
+@Added sizeOnly option to DoFGridsMatch
+@
+text
+@d8 4
+a11 4
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+  use MLSCommon, only: r8, rv
+  use MLSNumerics, only: Hunt
+  use VectorsModule, only: VectorValue_T
+d18 1
+a18 1
+    & "$Id: ManipulateVectorQuantities.f90,v 2.23 2003/07/07 20:21:34 livesey Exp $"
+d28 1
+a28 1
+    & DoQtysDescribeSameThing
+d206 35
+d332 3
+@
+
+
+2.23
+log
+@Now uses the FindClosestMatch function
+@
+text
+@d18 1
+a18 1
+    & "$Id: ManipulateVectorQuantities.f90,v 2.22 2003/01/26 04:42:20 livesey Exp $"
+d235 1
+a235 1
+  logical function DoFGridsMatch ( a, b )
+d239 1
+d243 1
+d247 2
+a248 1
+    if ( a%template%frequencyCoordinate /= b%template%frequencyCoordinate ) return
+d250 16
+a265 13
+    select case ( a%template%frequencyCoordinate )
+    case ( l_none )
+    case ( l_channel )
+      if ( a%template%signal /= b%template%signal ) return
+      if ( a%template%sideband /= b%template%sideband ) return
+    case default
+      if ( .not. associated ( a%template%frequencies ) .or. &
+        & .not. associated ( b%template%frequencies ) ) return
+      if ( any ( shape(a%template%frequencies) /= &
+        & shape(b%template%frequencies) ) ) return
+      if ( any ( abs ( a%template%frequencies - &
+        & b%template%frequencies ) > fTol ) ) return
+    end select
+d297 3
+@
+
+
+2.22
+log
+@Added handling of profiles/angle units for phiWindow
+@
+text
+@d18 1
+a18 1
+    & "$Id: ManipulateVectorQuantities.f90,v 2.21 2002/11/22 01:07:13 vsnyder Exp $"
+d76 1
+a84 6
+    integer :: FIRSTGUESS               ! The result of hunt
+    integer :: LOWGUESS                 ! A profile below firstGuess
+    integer :: HIGHGUESS                ! A profile above firstGuess
+    integer :: BESTGUESS                ! The result
+    real (r8) :: COST                   ! A cost function
+    real (r8) :: BESTCOST               ! The best cost function
+d106 3
+a108 19
+
+    call Hunt ( referenceQuantity%template%phi(1,:), seek(1,instance), firstGuess, &
+      & start=max(min(instance,referenceQuantity%template%noInstances),1), &
+      & allowTopValue=.true., nearest=.true. )
+
+    ! Now check the ones either side
+    lowGuess = max ( firstGuess-1, 1 )
+    highGuess = min ( firstGuess+1, referenceQuantity%template%noInstances )
+    bestCost = 0.0
+    do firstGuess = lowGuess, highGuess
+      cost = sum ( abs ( &
+        & referenceQuantity%template%phi(1,firstGuess) - &
+        & seek(:,instance) ) )
+      if ( ( firstGuess == lowGuess ) .or. ( cost < bestCost ) ) then
+        bestGuess = firstGuess
+        bestCost = cost
+      end if
+    end do
+    FindOneClosestInstance = bestGuess
+d291 3
+@
+
+
+2.21
+log
+@Delete USE'd but unreferenced symbols
+@
+text
+@d12 1
+a12 1
+  use Intrinsic, only: L_PHITAN, L_CHANNEL, L_NONE
+d18 1
+a18 1
+    & "$Id: ManipulateVectorQuantities.f90,v 2.20 2002/10/08 00:09:11 pwagner Exp $"
+d134 1
+a134 1
+    & windowStart, windowFinish )
+d141 1
+d156 8
+a163 1
+    else
+d172 3
+d312 3
+@
+
+
+2.20
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d8 1
+a8 1
+  use MLSMessageModule, only: MLSMessage,MLSMSG_Error,MLSMSG_Allocate,MLSMSG_Deallocate
+d12 1
+a12 4
+  use Dump_0, only: Dump
+  use Output_m, only: Output
+  use Intrinsic, only: L_PHITAN, L_CHANNEL, L_FREQUENCY, L_INTERMEDIATEFREQUENCY, &
+    & L_NONE
+d18 1
+a18 1
+    & "$Id: ManipulateVectorQuantities.f90,v 2.19 2002/09/19 00:30:36 pwagner Exp $"
+d301 3
+@
+
+
+2.19
+log
+@Added AnyGoodDataInQty; set DoQtysDescribeSameThing at its start
+@
+text
+@d21 1
+a21 1
+    & "$Id: ManipulateVectorQuantities.f90,v 2.18 2002/09/10 20:47:44 livesey Exp $"
+d24 1
+d297 4
+d304 3
+@
+
+
+2.18
+log
+@Added DoQtysDescribeSameThing
+@
+text
+@d9 1
+a9 1
+  use MLSCommon, only: r8
+d21 1
+a21 1
+    & "$Id: ManipulateVectorQuantities.f90,v 2.17 2002/08/23 01:24:18 livesey Exp $"
+d28 1
+a28 1
+  public :: FindClosestInstances, FindOneClosestInstance, &
+d34 19
+d282 1
+a282 1
+    DoQtysDescribeSameThing = .true.
+d299 3
+@
+
+
+2.17
+log
+@Added DoFGridsMatch
+@
+text
+@d21 1
+a21 1
+    & "$Id: ManipulateVectorQuantities.f90,v 2.16 2002/07/25 08:43:19 mjf Exp $"
+d29 2
+a30 1
+    & FindInstanceWindow, DoHGridsMatch, DoVGridsMatch, DoFGridsMatch
+d256 21
+d280 3
+@
+
+
+2.16
+log
+@Initialised DoHGridsMatch to .false. at start of function.
+@
+text
+@d14 2
+a15 1
+  use Intrinsic, only: L_PHITAN
+d21 1
+a21 1
+    & "$Id: ManipulateVectorQuantities.f90,v 2.15 2002/07/17 06:01:27 livesey Exp $"
+d29 1
+a29 1
+    & FindInstanceWindow, DoHGridsMatch, DoVGridsMatch
+d200 1
+a200 1
+    ! Returns true if quantities have same hGrid information
+d226 29
+d258 3
+@
+
+
+2.15
+log
+@Fixed bugs in DoH/VGrids match
+@
+text
+@d20 1
+a20 1
+    & "$Id: ManipulateVectorQuantities.f90,v 2.14 2002/06/12 16:53:32 livesey Exp $"
+d161 2
+d228 3
+@
+
+
+2.14
+log
+@Tidied up some public/private stuff
+@
+text
+@d20 1
+a20 1
+    & "$Id: ManipulateVectorQuantities.f90,v 2.13 2002/06/12 16:50:39 livesey Exp $"
+d149 1
+a149 1
+  logical function DoHGridsMatch ( a, b )
+d153 1
+d156 1
+d158 1
+d161 2
+a162 2
+    DoHGridsMatch = .false.
+    if ( a%template%noInstances /= b%template%noInstances ) return
+d164 28
+a191 2
+    if ( any(abs(a%template%phi - &
+      &          b%template%phi) > PhiTol) ) return
+a192 1
+    DoHGridsMatch = .true.
+d226 3
+@
+
+
+2.13
+log
+@Added findInstanceWindow
+@
+text
+@d20 1
+a20 1
+    & "$Id: ManipulateVectorQuantities.f90,v 2.12 2002/02/06 01:32:58 livesey Exp $"
+d25 5
+d198 3
+@
+
+
+2.12
+log
+@Rewrote FindOneClosestInstance and FindClosestInstances to reflect the
+way in which they are mostly called, and to fix a bug.
+@
+text
+@d14 1
+d20 1
+a20 1
+    & "$Id: ManipulateVectorQuantities.f90,v 2.11 2001/11/08 01:05:06 livesey Exp $"
+d51 1
+a51 1
+    soughtQuantity, instance )
+d57 1
+d66 2
+d74 15
+a88 2
+    call Hunt ( referenceQuantity%template%phi(1,:), &
+      & soughtQuantity%template%phi(1,instance), firstGuess, &
+d99 1
+a99 1
+        & soughtQuantity%template%phi(:,instance) ) )
+d108 35
+d193 4
+@
+
+
+2.11
+log
+@Fixed a minor sort of bug in FindOneClosestQuantity
+@
+text
+@d12 2
+d19 1
+a19 1
+    & "$Id: ManipulateVectorQuantities.f90,v 2.10 2001/09/14 18:02:52 livesey Exp $"
+a25 1
+
+d27 4
+a30 13
+  subroutine FindClosestInstances(referenceQuantity,soughtQuantity,&
+    referenceIndices, soughtInstance)
+    ! This subroutine finds the instance (i.e. profile) in a stacked
+    ! quantity that is closest to an instance of another quantity which is
+    ! typically unstacked or incoherent (e.g. a minor frame quantity such as
+    ! ptan).
+
+    ! Close is defined in terms of the geodetic orbit angle.  The algorithm
+    ! implemented makes several (obvious) assumptions.  Please consult the code
+    ! below.
+
+    ! Eventually (v1.0) this routine should become unnecessary, as a full 2D
+    ! interpolation will be performed.
+d36 1
+a36 2
+      & intent(out) :: referenceIndices ! Result (rather inefficient in one instance case)
+    integer, optional, intent(in) :: soughtInstance ! One instance to find
+d39 1
+a39 7
+    real (r8), dimension(-1:1) :: costs
+    integer :: soughtInstanceIndex ! Loop counter
+    integer :: instanceOffset ! Loop counter
+    integer :: referenceIndex ! Index into reference quantity
+    integer :: first, last    ! Loop limits
+
+    integer, dimension(1) :: minlocResult
+d42 3
+a44 45
+
+    ! First check the obvious
+    if (.not. referenceQuantity%template%stacked) &
+      call MLSMessage(MLSMSG_Error,ModuleName,&
+      'Reference quantity must be stacked')
+
+    if ( present ( soughtInstance ) ) then
+      first = soughtInstance
+      last = soughtInstance
+    else
+      first = 1
+      last = soughtQuantity%template%noInstances
+    end if
+
+    ! First we're going to look for the instance within the reference
+    ! quantity that starts below the current one.
+
+    ! I'm going to clear all of referenceIndices here, I seem to have problems
+    ! with the Lahey uninitialised variable checker, even if I'm not using the
+    ! values.  Or maybe I've done something wrong.
+    referenceIndices = 0                
+    call Hunt(referenceQuantity%template%phi(1,:), &
+      & soughtQuantity%template%phi(1,first:last), referenceIndices, &
+      & allowTopValue=.true.)
+
+    ! Now we refine these by looking at the instances found above and the
+    ! ones above and below, and choosing the one that is closest over the
+    ! entire vertical range.
+
+    do soughtInstanceIndex = first, last
+      do instanceOffset= -1,1 ! Look below, at and above
+        ! Look into reference quantity, make sure we don't fall off end
+        referenceIndex=referenceIndices(soughtInstanceIndex)+instanceOffset
+        referenceIndex=min(max(referenceIndex,1),&
+          referenceQuantity%template%noInstances)
+
+        ! Assess cost for these
+        costs(instanceOffset)=sum(abs(&
+          referenceQuantity%template%phi(1,referenceIndex)-&
+          soughtQuantity%template%phi(:,soughtInstanceIndex)))
+      end do
+      minLocResult=minloc(costs)
+      ! Choose best
+      referenceIndices(soughtInstanceIndex)=referenceIndices(soughtInstanceIndex)+&
+        minlocResult(1)-2 ! Correct for the -1:1 indexing
+a45 5
+
+    ! Now, again don't fall off the ends.
+    referenceIndices(first:last)=min(max(referenceIndices(first:last),1),&
+      referenceQuantity%template%noInstances)
+
+d51 2
+a52 1
+    ! This call FindClosestInstances, but for a single instance only
+d58 6
+a63 1
+    integer, dimension(soughtQuantity%template%noInstances) :: tempResult
+d66 1
+a66 3
+    call FindClosestInstances ( referenceQuantity, soughtQuantity, &
+      & tempResult, soughtInstance=instance)
+    FindOneClosestInstance = tempResult(instance)
+d68 21
+d141 3
+@
+
+
+2.10
+log
+@Bug fix in FindOneClosestInstance and FindClosestInstances.
+Will probably come back to these and rewrite them some time.
+@
+text
+@d17 1
+a17 1
+    & "$Id: ManipulateVectorQuantities.f90,v 2.9 2001/09/11 01:27:27 livesey Exp $"
+d74 4
+d178 4
+@
+
+
+2.9
+log
+@Bug fixes
+@
+text
+@d17 1
+a17 1
+    & "$Id: ManipulateVectorQuantities.f90,v 2.8 2001/09/09 21:17:30 livesey Exp $"
+d101 1
+a101 1
+    referenceIndices=min(max(referenceIndices,1),&
+d120 1
+a120 1
+    FindOneClosestInstance = tempResult(1)
+d174 3
+@
+
+
+2.8
+log
+@Imported FindOneClosestInstance from branch
+@
+text
+@d17 1
+a17 1
+    & "$Id: ManipulateVectorQuantities.f90,v 2.7.2.1 2001/09/08 23:46:40 livesey Exp $"
+d21 2
+a22 2
+  
+  contains
+d25 68
+a92 72
+    ! ------------------------------ FindClosestInstances -----------------
+    subroutine FindClosestInstances(referenceQuantity,soughtQuantity,&
+         referenceIndices, soughtInstance)
+      ! This subroutine finds the instance (i.e. profile) in a stacked
+      ! quantity that is closest to an instance of another quantity which is
+      ! typically unstacked or incoherent (e.g. a minor frame quantity such as
+      ! ptan).
+      
+      ! Close is defined in terms of the geodetic orbit angle.  The algorithm
+      ! implemented makes several (obvious) assumptions.  Please consult the code
+      ! below.
+      
+      ! Eventually (v1.0) this routine should become unnecessary, as a full 2D
+      ! interpolation will be performed.
+
+      ! Dummy arguments
+      type (VectorValue_T), intent(in) :: referenceQuantity ! e.g. temperature
+      type (VectorValue_T), intent(in) :: soughtQuantity ! e.g. ptan, radiance
+      integer, dimension(:), intent(out) :: referenceIndices ! Result
+      integer, optional, intent(in) :: soughtInstance ! One instance to find
+      
+      ! Local variables
+      real (r8), dimension(-1:1) :: costs
+      integer :: soughtInstanceIndex ! Loop counter
+      integer :: instanceOffset ! Loop counter
+      integer :: referenceIndex ! Index into reference quantity
+      integer :: first, last    ! Loop limits
+
+      integer, dimension(1) :: minlocResult
+
+      ! Executable code
+
+      ! First check the obvious
+      if (.not. referenceQuantity%template%stacked) &
+           call MLSMessage(MLSMSG_Error,ModuleName,&
+           'Reference quantity must be stacked')
+
+      if ( present ( soughtInstance ) ) then
+        first = soughtInstance
+        last = soughtInstance
+      else
+        first = 1
+        last = soughtQuantity%template%noInstances
+      end if
+      
+      ! First we're going to look for the instance within the reference
+      ! quantity that starts below the current one.
+
+      call Hunt(referenceQuantity%template%phi(1,:), &
+        & soughtQuantity%template%phi(1,first:last), referenceIndices, &
+        & allowTopValue=.true.)
+
+      ! Now we refine these by looking at the instances found above and the
+      ! ones above and below, and choosing the one that is closest over the
+      ! entire vertical range.
+
+      do soughtInstanceIndex = first, last
+         do instanceOffset= -1,1 ! Look below, at and above
+            ! Look into reference quantity, make sure we don't fall off end
+            referenceIndex=referenceIndices(soughtInstanceIndex)+instanceOffset
+            referenceIndex=min(max(referenceIndex,1),&
+                 referenceQuantity%template%noInstances)
+
+            ! Assess cost for these
+            costs(instanceOffset)=sum(abs(&
+                 referenceQuantity%template%phi(1,referenceIndex)-&
+                 soughtQuantity%template%phi(:,soughtInstanceIndex)))
+         end do
+         minLocResult=minloc(costs)
+         ! Choose best
+         referenceIndices(soughtInstanceIndex)=referenceIndices(soughtInstanceIndex)+&
+              minlocResult(1)-2 ! Correct for the -1:1 indexing
+d94 73
+d168 2
+a169 70
+      ! Now, again don't fall off the ends.
+      referenceIndices=min(max(referenceIndices,1),&
+           referenceQuantity%template%noInstances)
+
+    end subroutine FindClosestInstances
+
+    ! ---------------------------------------- FindOneClosestInstance -----
+    integer function FindOneClosestInstance ( referenceQuantity, &
+      soughtQuantity, instance )
+      ! This call FindClosestInstances, but for a single instance only
+      type (VectorValue_T), intent(in) :: referenceQuantity ! e.g. temperature
+      type (VectorValue_T), intent(in) :: soughtQuantity ! e.g. ptan, radiance
+      integer, intent(in) :: instance
+
+      ! Local variables
+      integer, dimension(1) :: tempResult
+      
+      ! Executable code
+      call FindClosestInstances ( referenceQuantity, soughtQuantity, &
+        & tempResult, soughtInstance=instance)
+      FindOneClosestInstance = tempResult(1)
+
+    end function FindOneClosestInstance
+
+     ! --------------------------------------- DoHGridsMatch --------------
+    logical function DoHGridsMatch ( a, b )
+      ! Returns true if quantities have same hGrid information
+      type (VectorValue_T), intent(in) :: A ! First quantity
+      type (VectorValue_T), intent(in) :: B ! Second quantity
+
+      ! Local parameters
+      real (r8), parameter :: PHITOL = 0.01 ! Tolerance in angle
+
+      ! Executable code
+      DoHGridsMatch = .false.
+      if ( a%template%noInstances /= b%template%noInstances ) return
+
+      if ( any(abs(a%template%phi - &
+        &          b%template%phi) > PhiTol) ) return
+
+      DoHGridsMatch = .true.
+    end function DoHGridsMatch
+
+    ! --------------------------------------- DoVGridsMatch --------------
+    logical function DoVGridsMatch ( a, b )
+      ! Returns true if quantities have same hGrid information
+      type (VectorValue_T), intent(in) :: A ! First quantity
+      type (VectorValue_T), intent(in) :: B ! Second quantity
+
+      ! Local parameters
+      real (r8), parameter :: ZTOL = 0.01 ! Tolerance in whatever coordinate
+
+      ! Executable code
+      DoVGridsMatch = .false.
+      if ( a%template%noSurfs /= b%template%noSurfs ) return
+      if ( a%template%verticalCoordinate /= &
+        &  b%template%verticalCoordinate ) return
+      if ( a%template%coherent .neqv. b%template%coherent ) return
+      if ( a%template%regular .neqv. b%template%regular ) return
+      if ( ( .not. a%template%coherent) .and. &
+        &  ( a%template%noInstances /= b%template%noInstances ) ) return
+      if ( any(abs(a%template%surfs - &
+        &          b%template%surfs) > zTol) ) return
+      if (.not. a%template%regular ) then
+        if ( any(a%template%surfIndex /= b%template%surfIndex) .or. &
+          &  any(a%template%chanIndex /= b%template%chanIndex) ) return
+      end if
+
+      DoVGridsMatch = .true.
+    end function DoVGridsMatch
+d171 1
+a171 1
+  end module ManipulateVectorQuantities
+d174 3
+@
+
+
+2.7
+log
+@Fixed but with DoVGridsMatch
+@
+text
+@d17 1
+a17 1
+    & "$Id: ManipulateVectorQuantities.f90,v 2.6 2001/05/10 23:29:27 livesey Exp $"
+d27 1
+a27 1
+         referenceIndices)
+d41 4
+a44 4
+      type (VectorValue_T), intent(IN) :: referenceQuantity ! e.g. temperature
+      type (VectorValue_T), intent(IN) :: soughtQuantity ! e.g. ptan, radiance
+      integer, dimension(soughtQuantity%template%noInstances), &
+           intent(OUT) :: referenceIndices ! Result
+d48 1
+a48 1
+      integer :: soughtInstance ! Loop counter
+d51 1
+d61 8
+d74 1
+a74 1
+        & soughtQuantity%template%phi(1,:), referenceIndices, &
+d81 1
+a81 1
+      do soughtInstance=1,soughtQuantity%template%noInstances
+d84 1
+a84 1
+            referenceIndex=referenceIndices(soughtInstance)+instanceOffset
+d91 1
+a91 1
+                 soughtQuantity%template%phi(:,soughtInstance)))
+d95 1
+a95 1
+         referenceIndices(soughtInstance)=referenceIndices(soughtInstance)+&
+d105 18
+d173 6
+@
+
+
+2.7.2.1
+log
+@Added FindOneClosestInstance
+@
+text
+@d17 1
+a17 1
+    & "$Id: ManipulateVectorQuantities.f90,v 2.7 2001/05/11 00:03:41 livesey Exp $"
+d27 1
+a27 1
+         referenceIndices, soughtInstance)
+d41 4
+a44 4
+      type (VectorValue_T), intent(in) :: referenceQuantity ! e.g. temperature
+      type (VectorValue_T), intent(in) :: soughtQuantity ! e.g. ptan, radiance
+      integer, dimension(:), intent(out) :: referenceIndices ! Result
+      integer, optional, intent(in) :: soughtInstance ! One instance to find
+d48 1
+a48 1
+      integer :: soughtInstanceIndex ! Loop counter
+a50 1
+      integer :: first, last    ! Loop limits
+a59 8
+
+      if ( present ( soughtInstance ) ) then
+        first = soughtInstance
+        last = soughtInstance
+      else
+        first = 1
+        last = soughtQuantity%template%noInstances
+      end if
+d65 1
+a65 1
+        & soughtQuantity%template%phi(1,first:last), referenceIndices, &
+d72 1
+a72 1
+      do soughtInstanceIndex = first, last
+d75 1
+a75 1
+            referenceIndex=referenceIndices(soughtInstanceIndex)+instanceOffset
+d82 1
+a82 1
+                 soughtQuantity%template%phi(:,soughtInstanceIndex)))
+d86 1
+a86 1
+         referenceIndices(soughtInstanceIndex)=referenceIndices(soughtInstanceIndex)+&
+a95 18
+    ! ---------------------------------------- FindOneClosestInstance -----
+    integer function FindOneClosestInstance ( referenceQuantity, &
+      soughtQuantity, instance )
+      ! This call FindClosestInstances, but for a single instance only
+      type (VectorValue_T), intent(in) :: referenceQuantity ! e.g. temperature
+      type (VectorValue_T), intent(in) :: soughtQuantity ! e.g. ptan, radiance
+      integer, intent(in) :: instance
+
+      ! Local variables
+      integer, dimension(1) :: tempResult
+      
+      ! Executable code
+      call FindClosestInstances ( referenceQuantity, soughtQuantity, &
+        & tempResult, soughtInstance=instance)
+      FindOneClosestInstance = tempResult(1)
+
+    end function FindOneClosestInstance
+
+a145 3
+! Revision 2.7  2001/05/11 00:03:41  livesey
+! Fixed but with DoVGridsMatch
+!
+@
+
+
+2.6
+log
+@Added DoHGridsMatch and DoVGridsMatch
+@
+text
+@d17 1
+a17 1
+    & "$Id: ManipulateVectorQuantities.f90,v 2.5 2001/03/08 02:21:08 livesey Exp $"
+d135 4
+a138 3
+      if ( (.not. a%template%regular ) .and. &
+        &  ( any(a%template%surfIndex /= b%template%surfIndex) .or. &
+        &    any(a%template%chanIndex /= b%template%chanIndex) ) ) return
+d146 3
+@
+
+
+2.5
+log
+@Fixed bug, wasn't setting minloc!
+@
+text
+@d4 1
+a4 17
+!=============================================================================
+MODULE ManipulateVectorQuantities ! Interpolate in coordinate spaces
+!=============================================================================
+
+  ! This module is used to interpolate one quantity to the coordinate system of
+  ! another, optionally producing derivative matrices.  This is done in
+  ! phases, typically by frequency (if applicable), then vertically and finally
+  ! horizontally. Each stage can output a derivative matrix_1 for the result
+  ! with respect to the input values.
+
+  ! I may add an interpolation to ptan here too at a later stage as that will
+  ! be useful.
+
+  USE MLSMessageModule, ONLY: MLSMessage,MLSMSG_Error,MLSMSG_Allocate,MLSMSG_Deallocate
+  USE MLSCommon, ONLY: r8
+  USE MLSNumerics, ONLY: Hunt
+  USE VectorsModule, ONLY: VectorValue_T
+d6 8
+a13 1
+  IMPLICIT NONE
+d16 3
+a18 3
+  CHARACTER (LEN=256), PRIVATE :: Id = &
+    & "$Id: ManipulateVectorQuantities.f90,v 2.4 2001/03/02 01:31:36 livesey Exp $"
+  CHARACTER (LEN=*), PARAMETER, PRIVATE :: ModuleName= &
+d22 1
+a22 6
+  CONTAINS
+
+    ! This subroutine finds the instance (i.e. profile) in a stacked
+    ! quantity that is closest to an instance of another quantity which is
+    ! typically unstacked or incoherent (e.g. a minor frame quantity such as
+    ! ptan).
+a23 3
+    ! Close is defined in terms of the geodetic orbit angle.  The algorithm
+    ! implemented makes several (obvious) assumptions.  Please consult the code
+    ! below.
+d25 2
+a26 4
+    ! Eventually (v1.0) this routine should become unnecessary, as a full 2D
+    ! interpolation will be performed.
+
+    SUBROUTINE FindClosestInstances(referenceQuantity,soughtQuantity,&
+d28 11
+d41 4
+a44 4
+      TYPE (VectorValue_T), INTENT(IN) :: referenceQuantity ! e.g. temperature
+      TYPE (VectorValue_T), INTENT(IN) :: soughtQuantity ! e.g. ptan, radiance
+      INTEGER, DIMENSION(soughtQuantity%template%noInstances), &
+           INTENT(OUT) :: referenceIndices ! Result
+d47 4
+a50 4
+      REAL (r8), DIMENSION(-1:1) :: costs
+      INTEGER :: soughtInstance ! Loop counter
+      INTEGER :: instanceOffset ! Loop counter
+      INTEGER :: referenceIndex ! Index into reference quantity
+d52 1
+a52 1
+      INTEGER, DIMENSION(1) :: minlocResult
+d57 2
+a58 2
+      IF (.NOT. referenceQuantity%template%stacked) &
+           CALL MLSMessage(MLSMSG_Error,ModuleName,&
+d64 1
+a64 1
+      CALL Hunt(referenceQuantity%template%phi(1,:), &
+d66 1
+a66 1
+        & allowTopValue=.TRUE.)
+d72 2
+a73 2
+      DO soughtInstance=1,soughtQuantity%template%noInstances
+         DO instanceOffset= -1,1 ! Look below, at and above
+d76 1
+a76 1
+            referenceIndex=MIN(MAX(referenceIndex,1),&
+d80 1
+a80 1
+            costs(instanceOffset)=SUM(ABS(&
+d83 2
+a84 2
+         END DO
+         minLocResult=MINLOC(costs)
+d88 1
+a88 1
+      END DO
+d91 1
+a91 1
+      referenceIndices=MIN(MAX(referenceIndices,1),&
+d94 49
+a142 3
+    END SUBROUTINE FindClosestInstances
+    
+  END MODULE ManipulateVectorQuantities
+d145 3
+@
+
+
+2.4
+log
+@Regular commit
+@
+text
+@d26 1
+a26 1
+    & "$Id: ManipulateVectorQuantities.f90,v 2.3 2001/02/27 17:18:20 livesey Exp $"
+d72 3
+a74 3
+      CALL Hunt(referenceQuantity%template%phi(1,:),&
+           soughtQuantity%template%phi(1,:), referenceIndices&
+           ,allowTopValue=.TRUE.)
+d92 1
+d107 3
+@
+
+
+2.3
+log
+@Moved ValidateVectorQuantity into vectors module
+@
+text
+@d26 1
+a26 1
+    & "$Id: ManipulateVectorQuantities.f90,v 2.2 2001/02/27 01:25:25 livesey Exp $"
+d30 1
+a30 1
+
+d105 4
+a108 1
+! $Log$
+@
+
+
+2.2
+log
+@Added ValidateVectorQuantity
+@
+text
+@d26 1
+a26 1
+    & "$Id: ManipulateVectorQuantities.f90,v 2.1 2001/02/22 00:44:40 livesey Exp $"
+a101 56
+
+    ! ---------------------------------------- ValidateVectorQuantity -------
+
+    ! This function performes a series of tests on a quantity to make sure it
+    ! matches our requirements
+
+    FUNCTION ValidateVectorQuantity(quantity, coherent, stacked, regular,&
+      & verticalCoordinate, quantityType)
+
+      ! Dummy arguments
+      TYPE (VectorValue_T), INTENT(IN) :: quantity ! Test quantity
+      LOGICAL, OPTIONAL, INTENT(IN) :: coherent ! .TRUE.,.FALSE. or not present
+      LOGICAL, OPTIONAL, INTENT(IN) :: stacked  ! .TRUE.,.FALSE. or not present
+      LOGICAL, OPTIONAL, INTENT(IN) :: regular ! .TRUE.,.FALSE. or not present
+
+      INTEGER, OPTIONAL, DIMENSION(:), INTENT(IN) :: verticalCoordinate
+      INTEGER, OPTIONAL, DIMENSION(:), INTENT(IN) :: quantityType
+
+      ! Result
+      LOGICAL :: ValidateVectorQuantity
+
+      ! Executable code
+
+      if (present(coherent)) then
+        if (quantity%template%coherent .neqv. coherent) then
+          ValidateVectorQuantity=.FALSE.
+          return
+        endif
+      end if
+
+      if (present(stacked)) then
+        if (quantity%template%stacked .neqv. stacked) then
+          ValidateVectorQuantity=.FALSE.
+          return
+        end if
+      end if
+
+      if (present(regular)) then
+        if (quantity%template%regular .neqv. regular) then
+          ValidateVectorQuantity=.FALSE.
+          return
+        end if
+      end if
+
+      if (present(verticalCoordinate)) then
+        ValidateVectorQuantity=any(quantity%template%verticalCoordinate == verticalCoordinate)
+        if (.not. ValidateVectorQuantity) return
+      end if
+
+      if (present(quantityType)) then
+        ValidateVectorQuantity=any(quantity%template%quantityType == quantityType)
+        if (.not. ValidateVectorQuantity) return
+      end if
+
+    end function ValidateVectorQuantity
+
+d105 1
+a105 1
+
+@
+
+
+2.1
+log
+@First version
+@
+text
+@d26 1
+a26 1
+    & "$Id: MatrixModule_0.f90,v 2.10 2001/01/26 19:00:01 vsnyder Exp $"
+d28 1
+a28 1
+    & "$RCSfile: MatrixModule_0.f90,v $"
+d103 56
+d160 1
+@
+

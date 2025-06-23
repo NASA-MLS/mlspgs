@@ -1,0 +1,346 @@
+head	1.5;
+access;
+symbols
+	v5-02-NRT-19:1.5
+	v6-00:1.5
+	v5-02-NRT-18:1.5
+	v5-02:1.5
+	v5-01-NRT-17:1.5
+	v5-01-NRT-16:1.5
+	v5-01-NRT-15:1.5
+	v5-01-NRT-14:1.5
+	neuralnetworks-1-0:1.5.0.14
+	cfm-single-freq-0-1:1.5.0.12
+	v5-01:1.5
+	v5-00:1.5
+	v4-23-TA133:1.5.0.10
+	mus-emls-1-70:1.5.0.8
+	rel-1-0-englocks-work:1.5.0.6
+	VUMLS1-00:1.5
+	VPL1-00:1.5
+	V4-22-NRT-08:1.5
+	VAM1-00:1.5
+	V4-21:1.5.0.4
+	V4-13:1.5
+	V4-12:1.5
+	V4-11:1.5
+	V4-10:1.5
+	V3-43:1.5
+	M4-00:1.5
+	V3-41:1.5
+	V3-40-PlusGM57:1.5.0.2
+	V3-33:1.5
+	V3-31:1.5
+	V3-30-NRT-05:1.5
+	cfm-01-00:1.5
+	V3-30:1.5
+	V3-20:1.5
+	V3-10:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.5
+date	2009.10.05.21.53.03;	author vsnyder;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2009.09.10.23.17.37;	author vsnyder;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2009.09.10.23.09.20;	author vsnyder;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2009.08.25.20.25.05;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2008.06.11.20.14.55;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.5
+log
+@Replace I_s by T_{b_s}, include missing factor of 1/2
+@
+text
+@\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9.0in
+
+\newcommand{\docname}{\bf wvs-080r3}
+\newcommand{\docdate}{5 October 2009}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[u]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Van\\
+Subject: \>TScat and derivatives\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 10pt
+\vspace{-20pt}
+
+We calculate $T_\text{scat}$ by propagating a ray from space through a sample
+atmosphere to a specified point $s$.  The points on that ray are called $r$ in
+the sequel.
+
+At $s$ we have the phase function
+
+\begin{equation*}
+P_s(\theta) = \frac{\lambda^2}{2 \pi \beta_{c\_s}}
+  \int_0^\infty n(r)\, p_0(\theta,r)\, \text{d} r\,,
+\end{equation*}
+
+$\frac{\partial P_s(\theta)}{\partial x_s}$, radiance $T_{b_s}$ resulting from
+radiative transfer along the ray to $s$, $\frac{\partial T_{b_s}}{\partial x_s}$,
+and $\frac{\partial T_{b_s}}{\partial x_r}$, where $\theta$ is the angle between
+the incident ray and the scattered ray that originates at $s$,  $x$ is
+temperature, IWC, or a mixing ratio.
+
+$T_\text{scat}$ at $s$ is defined as
+
+\begin{equation*}
+T_{\text{scat}_s} =
+ \frac12 \int_{-\pi}^\pi P_s(\theta) T_{b_s}(\theta) \sin\theta
+  \, \text{d}\theta\,.
+\end{equation*}
+
+From this
+
+\begin{equation*}
+\frac{\partial T_{\text{scat}_s}}{\partial x_s} =
+ \frac12 \int_{-\pi}^\pi
+  \left( \frac{\partial P_s(\theta)}{\partial x_s} T_{b_s}(\theta) +
+         P_s(\theta) \frac{\partial T_{b_s}(\theta)}{\partial x_s} \right)
+  \sin\theta \, \text{d} \theta
+\end{equation*}
+
+and
+
+\begin{equation*}
+\frac{\partial T_{\text{scat}_s}}{\partial x_r} =
+ \frac12 \int_{-\pi}^\pi 
+  \left( \frac{\partial P_s(\theta)}{\partial x_r} T_{b_s}(\theta) +
+          P_s(\theta) \frac{\partial T_{b_s}(\theta)}{\partial x_r} \right)
+  \sin\theta \, \text{d} \theta =
+ \frac12 \int_{-\pi}^\pi P_s(\theta) \frac{\partial T_{b_s}(\theta)}{\partial x_r}
+  \sin\theta \, \text{d} \theta
+\end{equation*}
+
+since $P_s(\theta)$ does not depend upon $x_r$.
+
+\label{lastpage}
+\end{document}
+% $Id: wvs-080.tex,v 1.4 2009/09/10 23:17:37 vsnyder Exp $
+
+% $Log: wvs-080.tex,v $
+% Revision 1.4  2009/09/10 23:17:37  vsnyder
+% Typos corrections
+%
+% Revision 1.3  2009/09/10 23:09:20  vsnyder
+% Normalization is included in P, not something separate -- see wvs-070
+%
+@
+
+
+1.4
+log
+@Typos corrections
+@
+text
+@d8 2
+a9 2
+\newcommand{\docname}{\bf wvs-080r2}
+\newcommand{\docdate}{10 September 2009}
+d54 3
+a56 3
+$\frac{\partial P_s(\theta)}{\partial x_s}$, radiance $I_s$ resulting from
+radiative transfer along the ray to $s$, $\frac{\partial I_s}{\partial x_s}$,
+and $\frac{\partial I_s}{\partial x_r}$, where $\theta$ is the angle between
+d64 1
+a64 1
+ \int_{-\pi}^\pi P_s(\theta) I_s(\theta) \sin\theta
+d72 3
+a74 3
+ \int_{-\pi}^\pi
+  \left( \frac{\partial P_s(\theta)}{\partial x_s} I_s(\theta) +
+         P_s(\theta) \frac{\partial I_s(\theta)}{\partial x_s} \right)
+d82 3
+a84 3
+ \int_{-\pi}^\pi 
+  \left( \frac{\partial P_s(\theta)}{\partial x_r} I_s(\theta) +
+          P_s(\theta) \frac{\partial I_s(\theta)}{\partial x_r} \right)
+d86 1
+a86 1
+ \int_{-\pi}^\pi P_s(\theta) \frac{\partial I_s(\theta)}{\partial x_r}
+d94 1
+a94 1
+% $Id: wvs-080.tex,v 1.3 2009/09/10 23:09:20 vsnyder Exp $
+d97 3
+@
+
+
+1.3
+log
+@Normalization is included in P, not something separate -- see wvs-070
+@
+text
+@d51 1
+a51 1
+  \int_0^\infty n(r) p_0(\theta,r) \text{d} \theta\,,
+d54 5
+a58 5
+where $\theta$ is the angle between the incident ray and the scattered ray that
+originates at $s$, $\frac{\partial P_s(\theta)}{\partial x_s}$, radiance
+$I_s$ resulting from radiative transfer along the ray to $s$,
+$\frac{\partial I_s}{\partial x_s}$, and $\frac{\partial I_s}{\partial x_r}$,
+where $x$ is temperature, IWC, or a mixing ratio.
+d94 1
+a94 1
+% $Id: wvs-080.tex,v 1.2 2009/08/25 20:25:05 vsnyder Exp $
+d96 4
+a99 1
+% $Log: $
+@
+
+
+1.2
+log
+@Include sin theta and normalization integral
+@
+text
+@d8 2
+a9 2
+\newcommand{\docname}{\bf wvs-080r1}
+\newcommand{\docdate}{25 August 2009}
+d47 1
+a47 5
+At $s$ we have the phase function $P_s(\theta)$, $\frac{\partial
+P_s(\theta)}{\partial x_s}$, radiance $I_s$ resulting from radiative transfer along
+the ray to $s$, $\frac{\partial I_s}{\partial x_s}$,
+and $\frac{\partial I_s}{\partial x_r}$, where $x$ is temperature, IWC, or a
+mixing ratio.  The phase function is normalized
+d50 2
+a51 3
+\overline{P_s}(\theta) =
+ \frac{P_s(\theta)}
+      {\int_{-\pi}^\pi P_s(\theta) \sin\theta \, \text{d}\theta}
+d55 4
+a58 14
+originates at $s$.
+
+Derivatives of $\overline{P_s}(\theta)$ with respect to auxiliary parameters $x$
+are
+
+\begin{equation*}
+\frac{\partial\overline{P_s}(\theta)}{\partial x} =
+  \frac1{\int_{-\pi}^\pi P_s(\theta) \sin\theta \, \text{d}\theta}
+  \left(\frac{\partial P_s(\theta)}{\partial x}
+  - \overline{P_s}(\theta)
+      \int_{-\pi}^\pi \frac{\partial P_s(\theta)}{\partial x}
+     \sin\theta \, \text{d}\theta
+  \right)
+\end{equation*}
+d64 1
+a64 1
+ \int_{-\pi}^\pi \overline{P_s}(\theta) I_s(\theta) \sin\theta
+d73 2
+a74 2
+  \left( \frac{\partial \overline{P_s}(\theta)}{\partial x_s} I_s(\theta) +
+         \overline{P_s}(\theta) \frac{\partial I_s(\theta)}{\partial x_s} \right)
+d83 2
+a84 2
+  \left( \frac{\partial \overline{P_s}(\theta)}{\partial x_r} I_s(\theta) +
+          \overline{P_s}(\theta) \frac{\partial I_s(\theta)}{\partial x_r} \right)
+d86 1
+a86 1
+ \int_{-\pi}^\pi \overline{P_s}(\theta) \frac{\partial I_s(\theta)}{\partial x_r}
+d90 1
+a90 1
+since $\overline{P_s}(\theta)$ does not depend upon $x_r$.
+d94 3
+a96 1
+% $Id: wvs-080.tex,v 1.1 2008/06/11 20:14:55 vsnyder Exp $
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d8 2
+a9 2
+\newcommand{\docname}{\bf wvs-080}
+\newcommand{\docdate}{3 June 2008}
+d47 5
+a51 5
+At $s$ we have the phase function $P(\theta)$, $\frac{\partial
+P(\theta)}{\partial x_s}$, radiance $I$ resulting from radiative transfer along
+the ray to $s$, $\frac{\partial I}{\partial x_s}$,
+and $\frac{\partial I}{\partial x_r}$, where $x$ is temperature, IWC, or a
+mixing ratio. $T_\text{scat}$ is defined as
+d54 3
+a56 1
+T_\text{scat} = \int_{-\pi}^\pi P(\theta) I(\theta) \, \text{d}\theta
+d62 21
+d86 1
+a86 1
+\frac{\partial T_\text{scat}}{\partial x_s} =
+d88 3
+a90 3
+  \left[ \frac{\partial P(\theta)}{\partial x_s} I +
+         P(\theta) \frac{\partial I}{\partial x_s} \right]
+  \, \text{d} \theta
+d96 1
+a96 1
+\frac{\partial T_\text{scat}}{\partial x_r} =
+d98 5
+a102 4
+  \left [ \frac{\partial P(\theta)}{\partial x_r} I +
+          P(\theta) \frac{\partial I}{\partial x_r} \right]
+  \, \text{d} \theta =
+ \int_{-\pi}^\pi P(\theta) \frac{\partial I}{\partial x_r} \, \text{d} \theta\,.
+d105 2
+d109 1
+a109 1
+% $Id: wvs-080r0.tex,v 1.1 2008/06/11 20:14:55 vsnyder Exp $
+@
+

@@ -1,0 +1,172 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.14
+	cfm-single-freq-0-1:1.1.0.12
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.10
+	mus-emls-1-70:1.1.0.8
+	rel-1-0-englocks-work:1.1.0.6
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2008.06.11.20.14.51;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.25in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9.00in
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+%\settowidth{\hW}{\bf wvs-016}
+\settowidth{\hW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    2 September 2003\hfill\parbox[t]{\hW}{{\bf wvs-016}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Mike, Bill, Nathaniel\\
+Subject: \>Alternative formulation for polarized radiance derivatives\\
+From: \>Fred Krogh, by way of Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 3pt
+\vspace{-20pt}
+
+For polarized radiative transfer, we want to compute
+
+\begin{equation}\label{begin}
+ {\bf I} = \sum_{i=1}^n \Delta B_i {\bf \tau}_i,
+ \text{ where }
+ {\bf \tau}_i = {\bf P}_i {\bf P}_i^\dagger,~
+ {\bf P}_i =  \prod_{k=1}^{i-1} {\bf E}_k \text{ and }
+ {\bf E}_i =  \exp \left( - \int_{s_i}^{s_{i-1}} {\bf G} (s^\prime)
+               \text{d} s^\prime \right )
+\end{equation}
+
+and its derivative
+
+\begin{equation}\label{deriv}
+  \frac{\partial \bf I}{\partial x} = \sum_{i=1}^n
+   \left [ \frac{\partial {\bf \tau}_i}{\partial x} \Delta B_i +
+           {\bf \tau}_i \frac{\partial \Delta B_i}{\partial x} \mathbf{1}
+   \right ],\text{ where from equation (\ref{begin}) }
+  \frac{\partial {\bf \tau}_i}{\partial x} =
+   \frac{\partial {\bf P}_i {\bf P}_i^\dagger}{\partial x} \text{ .}
+\end{equation}
+
+Applying Laplace's differentiation rule to $\mathbf{P}_i = \prod_{k=1}^{i-1}
+{\bf E}_k$, we had written
+
+{\begin{equation}\label{mess}
+ \begin{split}
+  \frac{\partial \bf \tau}{\partial x}
+  = & \sum_{k=1}^{i-1} \left [ {\bf E}_1 \dots {\bf E}_{k-1}
+       \frac{\partial {\bf E}_k}{\partial x} {\bf E}_{k+1} \dots
+       {\bf E}_{i-1} {\bf P}_i^\dagger +
+       {\bf P}_i {\bf E}_{i-1}^\dagger \dots {\bf E}_{k+1}
+       \frac{\partial {\bf E}_k^\dagger}{\partial x}
+       {\bf E}_{k-1}^\dagger \dots {\bf E}_1^\dagger \right ]
+\\
+  = & \sum_{k=1}^{i-1} \left [ {\bf P}_k
+       \frac{\partial {\bf E}_k}{\partial x} {\bf P}_{k+1}^{-1} {\bf \tau}_i
+     + {\bf \tau}_i^\dagger {\bf P}_{k+1}^{-\dagger}
+       \frac{\partial {\bf E}_k^\dagger}{\partial x} {\bf P}_k^\dagger \right ]
+       \text{ .}
+ \end{split}
+\end{equation}
+
+If we instead write $\mathbf{P}_i = \mathbf{P}_{i-1} \mathbf{E}_{i-1}$, with
+$\mathbf{P}_1 = \mathbf{1}$ (we use $\mathbf{1}$ for the identity matrix
+because $\mathbf{I}$ is the radiance), we have
+
+\begin{equation}\label{dP}
+ \frac{\partial\mathbf{P}_i}{\partial x} =
+  \frac{\partial\mathbf{P}_{i-1}}{\partial x} \mathbf{E}_{i-1} +
+   \mathbf{P}_{i-1} \frac{\partial\mathbf{E}_{i-1}}{\partial x}
+\end{equation}
+
+(keep in mind that $\mathbf{P}_1 = \mathbf{1}$ so
+$\frac{\partial\mathbf{P}_1}{\partial x} = \mathbf{0}$).  Using equation
+(\ref{dP}) gives
+
+\begin{equation}\label{final}
+ \frac{\partial\mathbf{\tau}_i}{\partial x} =
+  \frac{\partial\mathbf{P}_i\mathbf{P}_i^\dagger}{\partial x} =
+  \frac{\partial\mathbf{P}_i}{\partial x} \mathbf{P}_i^\dagger +
+  \mathbf{P}_i \frac{\partial\mathbf{P}_i^\dagger}{\partial x} =
+  \frac{\partial\mathbf{P}_i}{\partial x} \mathbf{P}_i^\dagger +
+  \mathbf{P}_i \left(\frac{\partial\mathbf{P}_i}{\partial x}\right)^\dagger =
+  \frac{\partial\mathbf{P}_i}{\partial x} \mathbf{P}_i^\dagger +
+  \left(\frac{\partial\mathbf{P}_i}{\partial x} \mathbf{P}_i^\dagger\right)^\dagger
+  \text{ .}
+\end{equation}
+
+This is a much simpler expression than equation (\ref{mess}), and doesn't
+involve calculation of $\mathbf{P}_{k+1}^{-1}$.  There is also some speculation
+that equation (\ref{mess}) is unstable; using equations (\ref{dP}) and
+(\ref{final}) avoids this question altogether.
+
+\label{lastpage}
+\end{document}
+% $Id: $
+@

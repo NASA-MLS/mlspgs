@@ -1,0 +1,5606 @@
+head	2.20;
+access;
+symbols
+	newfwm-sep01:2.14.0.2
+	V0-7:2.14
+	V0-5-Level2:2.13
+	V0-5-SIPS:2.6
+	V0_1:1.8;
+locks; strict;
+comment	@# @;
+
+
+2.20
+date	2002.01.07.23.26.00;	author pwagner;	state dead;
+branches;
+next	2.19;
+
+2.19
+date	2001.11.09.23.17.22;	author vsnyder;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2001.11.09.00.03.55;	author livesey;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2001.09.28.23.59.20;	author pwagner;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2001.09.28.17.50.30;	author pwagner;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2001.09.11.05.18.16;	author livesey;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2001.05.30.23.55.46;	author livesey;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2001.05.03.21.47.30;	author vsnyder;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2001.04.26.02.44.17;	author vsnyder;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2001.04.24.23.12.12;	author vsnyder;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2001.04.24.19.08.58;	author livesey;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2001.04.24.00.39.33;	author vsnyder;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2001.04.23.23.57.12;	author vsnyder;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2001.04.23.23.42.00;	author vsnyder;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2001.03.08.23.36.19;	author vsnyder;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2001.03.02.19.32.06;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2001.02.13.00.09.02;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2001.02.12.20.29.34;	author livesey;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2000.09.11.20.00.20;	author ahanzel;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2000.09.05.18.57.04;	author ahanzel;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2000.06.30.00.06.44;	author lungu;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.20
+log
+@Replaced by ChunkDivide_m
+@
+text
+@! Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+module ScanDivide
+
+  use EXPR_M, only: EXPR   
+  use INIT_TABLES_MODULE, only:  FIRST_PARM, L_BOTH, L_EITHER, &
+    L_NONE, L_THZ, LAST_PARM, L_TRUE
+  use INIT_TABLES_MODULE, only: P_CRITICAL_BANDS, P_CRITICAL_SCANNING_MODULES, &
+    P_HOME_GEOD_ANGLE, P_HOME_MODULE, P_IDEAL_LENGTH, P_IGNOREL1B, P_MAX_GAP, &
+    P_NOCHUNKS, P_OVERLAP, P_SCAN_LOWER_LIMIT, P_SCAN_UPPER_LIMIT, S_TIME
+  use INIT_TABLES_MODULE, only: PHYQ_ANGLE, PHYQ_INVALID, PHYQ_LENGTH, &
+    PHYQ_MAFS, PHYQ_TIME
+  use intrinsic, only: PARM_INDICES
+  use L1BData, only: DEALLOCATEL1BDATA, L1BDATA_T, NAME_LEN, READL1BDATA
+  use Lexer_Core, only: PRINT_SOURCE
+  use MLSCommon, only: L1BINFO_T, MLSCHUNK_T, TAI93_Range_T, RP
+  use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
+  use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
+    & MLSMSG_ERROR, MLSMSG_WARNING, MLSMSG_L1BREAD
+  use MLSNumerics, only: HUNT
+  use MoreTree, only: GET_SPEC_ID
+  use OUTPUT_M, only: BLANKS, OUTPUT
+  use SDPToolkit, only: MAX_ORBITS
+  use STRING_TABLE, only: DISPLAY_STRING
+  use Time_M, only: Time_Now
+  use TOGGLES, only: GEN, TOGGLE
+  use TRACE_M, only: TRACE_BEGIN, TRACE_END
+  use TREE, only: DECORATION, NODE_ID, NSONS, SOURCE_REF, SUBTREE
+  use Tree_Types, only: N_EQUAL, N_NAMED
+
+  implicit none
+  private
+
+  public :: DestroyChunkDatabase, ScanAndDivide
+
+  !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
+    "$Id: ScanDivide.f90,v 2.19 2001/11/09 23:17:22 vsnyder Exp $"
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName= &
+    "$RCSfile: ScanDivide.f90,v $"
+  !---------------------------------------------------------------------------
+
+  type ScanDivideConfig_T
+    logical   :: ignoreL1B              ! Ignore l1 file completely
+    integer   :: noChunks               ! Force this many chunks (0=ignore)
+    real(rp)  :: idealLength            ! Ideal length of chunk
+    integer   :: idealLength_family     ! Time, MAFs, angle
+    real(rp)  :: homeGeodAngle          ! Try to have a chunk start here
+    integer   :: homeModule             ! Which key for chunk division
+    real(rp)  :: overlap                ! Length for overlaps
+    integer   :: overlap_family         ! Time, MAFs, angle
+    logical   :: scanLLSet              ! True if scan lower limit should be used
+    logical   :: scanULSet              ! True if scan upper limit should be used
+    real(rp), dimension(2) :: scanLowerLimit ! Range for bottom of scan
+    real(rp), dimension(2) :: scanUpperLimit ! Range for top of scan
+    integer   :: criticalModules        ! Which modules must be scanning
+    real(rp)  :: maxGap                 ! Length of time/MAFs/orbits allowed for gap
+    integer   :: maxGap_family          ! Time, MAFs, angle
+  end type ScanDivideConfig_T
+
+  logical :: Timing
+  real :: T1
+
+contains ! =====     Public Procedures     =============================
+
+  !------------------------------------------  DestroyChunkDatabase  -----
+  subroutine DestroyChunkDatabase ( chunks )
+    type( MLSChunk_T ), dimension(:), pointer  :: CHUNKS
+    integer :: STATUS ! From deallocate
+
+    deallocate ( chunks, stat=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      & MLSMSG_DeAllocate // "Chunks" )
+  end subroutine DestroyChunkDatabase
+
+  !-------------------------------------------------  ScanAndDivide  -----
+  subroutine ScanAndDivide ( root, processingRange, l1bInfo, chunks )
+    ! This subroutine is called by the main L2 program to divide the input L1B
+    ! dataset into chunks.
+
+    ! Arguments
+    integer, intent(in) :: ROOT    ! Root of the L2CF tree for ChunkDivide
+    type( L1BInfo_T ), intent(in) :: L1BINFO
+    type( TAI93_Range_T ), intent(in) :: PROCESSINGRANGE
+    type( MLSChunk_T ), dimension(:), pointer  :: CHUNKS
+
+    ! Parameters
+    character (len=*), parameter :: MLSMSG_DeallocateL1b = &
+      'Deallocation failed:  l1b pointers.'
+    character (len=*), parameter :: MLSMSG_SUB = &
+      'Error return from subroutine '
+
+    ! Local Variables
+    type( L1BData_T ) :: data
+
+    character (len=480) :: MSR
+    character (len=name_len) :: QUANTITY
+
+    real(rp) :: DIFF                    ! Difference
+    real(rp) :: MAXV                    ! Result of MINVAL
+    real(rp) :: MINV                    ! Result of MAXVAL
+    real(rp), pointer, dimension(:) :: PHI ! Array of geodAngles
+    real(rp), pointer, dimension(:) :: TIME ! Array of times
+
+    integer :: ERROR                    ! Error flag
+    integer :: FIRSTMAF                 ! First MAF to consider
+    integer :: FLAG                     ! For L1B reads etc.
+    integer :: I                        ! Loop counter
+    integer :: J                        ! Loop counter
+    integer :: LASTMAF                  ! Last MAF to consider
+    integer :: LOOP                     ! Major frame index
+    integer :: NOMAFS                   ! Total no major frames
+    integer :: NUMBAD                   ! Number bad
+    integer :: NUMCHUNKS                ! Number of chunks so far
+    integer :: NUMFILE                  ! Last MAF in file
+    integer :: NUMOA                    ! Frame counter
+    integer :: NUMSCAN                  ! Frame index of some kind
+
+    logical :: FOUNDEND                 ! Flag
+    logical :: FOUNDSTART               ! Flag
+
+    integer, pointer, dimension(:) :: BADMAF
+    integer, pointer, dimension(:) :: COUNTERMAF
+    integer, pointer, dimension(:) :: FIRSTOA
+    integer, pointer, dimension(:) :: FIRSTSCAN
+    integer, pointer, dimension(:) :: LASTOA
+    integer, pointer, dimension(:) :: LASTSCAN
+
+    type (ScanDivideConfig_T) :: config
+
+    ! Executable code
+
+    if ( toggle(gen) ) call trace_begin ("ScanDivide", root )
+
+    timing = section_times
+    if ( timing ) call time_now ( t1 )
+
+    ! Get MLSCF values for configuration of this bit
+    call ScanDivide_mlscf ( root, config )
+
+    ! Check that input times are reasonable
+    if (processingRange%startTime > processingRange%endTime) &
+      call MLSMessage(MLSMSG_Error, ModuleName, &
+      & 'Input start time greater than end time.')
+
+    ! Now if the ignoreL1B flag is set we need to just make things up!
+    if (config%ignoreL1B) then
+      allocate ( chunks(config%noChunks), STAT=error )
+      if ( error /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_Allocate//'chunks')
+
+      if ( config%overlap >= config%idealLength ) call MLSMessage(MLSMSG_Error, &
+        & ModuleName, "Chunks are all overlap!")
+
+      chunks%noMAFsLowerOverlap = config%overlap
+      chunks%noMAFsUpperOverlap = config%overlap
+      do i = 1, size(chunks)
+        chunks(i)%firstMAFIndex = (i-1)*config%idealLength+1
+        chunks(i)%lastMAFIndex = i*config%idealLength
+        chunks(i)%accumulatedMAFs = (i-1) * &
+          & (config%idealLength - 2*config%overlap ) + 1
+      enddo
+      if ( toggle(gen) ) call trace_end ( "ScanDivide" )
+      return
+    endif
+
+    ! Read the L1 data for MAF times
+    quantity = 'MAFStartTimeTAI'
+    call ReadL1BData (l1bInfo%L1BOAId, quantity, data, noMAFs, flag)
+    if (flag /= 0) then
+      msr = MLSMSG_L1BRead // quantity
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    end if
+
+    ! Allocate arrays which will hold re-used L1BOA quantities for the entire file
+    allocate ( time(noMAFs), counterMAF(noMAFs), phi(noMAFs), STAT=error )
+    if (error /= 0) then
+      msr = MLSMSG_Allocate // ' time, phi, counterMAF.'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    end if
+
+    time = data%dpField(1,1,:)
+    counterMAF = data%counterMAF
+
+    call DeallocateL1BData(data)
+    if (flag /= 0) call MLSMessage(MLSMSG_Error, ModuleName, &
+      MLSMSG_DeallocateL1b)
+
+    ! Check that input times fall within file
+    if ( (processingRange%startTime >= time(noMAFs)) .or. &
+      (processingRange%endTime <= time(1)) ) &
+      call MLSMessage(MLSMSG_Error, ModuleName, &
+      'Input times out of range of L1 input file.')
+
+    ! Read phi for correct module
+    if (config%homeModule == l_thz) then
+      quantity = 'THz.tpGeodAngle'
+    else
+      quantity = 'GHz.tpGeodAngle'
+    end if
+    call ReadL1BData (l1bInfo%L1BOAId, quantity, data, noMAFs, flag)
+    if (flag /= 0) then
+      msr = MLSMSG_L1BRead // quantity
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    end if
+
+    phi = data%dpField(1,1,:)
+
+    call DeallocateL1BData(data)
+    if (flag /= 0) call MLSMessage(MLSMSG_Error, ModuleName, &
+      MLSMSG_DeallocateL1b)
+
+    ! Find firstMAF for data set
+    if ( processingRange%startTime < time(1) ) then
+      firstMAF = 0
+    else
+      foundStart = .false.
+      do i = 2, noMAFs
+        if (foundStart) exit
+        if ( time(i) >= processingRange%startTime ) then
+          firstMAF = i-1
+          foundStart = .true.
+        end if
+      end do
+    end if
+
+    ! Find lastMAF for data set
+    numFile = noMAFs-1
+    if ( processingRange%endTime >= time(noMAFs) ) then
+      lastMAF = numFile
+    else
+      foundEnd = .false.
+      do i = 1, numFile
+        if (foundEnd) exit
+        if ( time(noMAFs-i) < processingRange%endTime ) then
+          lastMAF = noMAFs-i-2
+          foundEnd = .true.
+        end if
+      end do
+    end if
+
+    ! Calculate a first guess for chunk boundaries
+    call ScanDivide_firstGuess(l1bInfo%L1BOAId, firstMAF, &
+      & config%homeGeodAngle, lastMAF, &
+      numFile, config%IdealLength, nint(config%overlap), phi, chunks, flag)
+    if (flag /= 0) call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      & MLSMSG_SUB // 'ScanDivide_firstGuess')
+    ! If necessary, check for completely missing telemetry
+    if (config%maxGap == -1.0) return
+
+    allocate ( badMAF(noMAFs), STAT=error )
+    if (error /= 0) then
+      msr = MLSMSG_Allocate // ' holder for bad MAF numbers.' 
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    end if
+
+    badMAF = 0
+    numBad = 0
+    numChunks = size(chunks)
+    do i = chunks(1)%firstMAFIndex+2, chunks(numChunks)%lastMAFIndex
+      select case ( config%maxGap_family )
+      case ( phyq_mafs )
+        diff = counterMAF(i) - counterMAF(i-1)
+      case ( phyq_time )
+        diff = time(i) - time(i-1)
+      case default
+        diff = phi(i) - phi(i-1)
+      end select
+      if (diff > config%maxGap) then
+        badMAF(i) = 1
+        numBad = numBad + 1
+      end if
+    end do
+
+    if (numBad > 0) then
+      call ScanDivide_wall ( chunks, badMAF, flag )
+      if (flag /= 0) then
+        msr = MLSMSG_SUB // 'ScanDivide_wall'
+        call MLSMessage(MLSMSG_Warning, ModuleName, msr)
+      end if
+    end if
+
+    ! Scan scGeodAngle for value flagging bad toolkit returns
+    quantity = 'scGeodAngle'
+    call ReadL1BData ( l1bInfo%L1BOAId, quantity, data, noMAFs, flag )
+    if (flag /= 0) then
+      msr = MLSMSG_L1BRead // quantity
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    end if
+
+    ! Check new set of chunks for unusable oa data
+    allocate ( firstOa(noMAFs), lastOa(noMAFs), STAT=error )
+    if (error /= 0) then
+      msr = MLSMSG_Allocate // ' first and last bad Oa MAF holders.'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    end if
+
+    firstOa = -1
+    lastOa = -1
+    numOa = 0
+    numBad = 1
+    numChunks = size(chunks)
+    do i = chunks(1)%firstMAFIndex, chunks(numChunks)%lastMAFIndex
+
+      if ( data%dpField(1,1,i+1) <= -999.9 ) then
+
+        if ( firstOa(numBad) == -1 ) firstOa(numBad) = i
+        lastOa(numBad) = i
+        numOa = numBad
+
+      else if ( i > 0 ) then
+        if ( data%dpField(1,1,i) <= -999.9 ) then
+          numBad = numBad + 1
+        end if
+      end if
+
+    end do
+
+    call DeallocateL1BData(data)
+    if (flag /= 0) call MLSMessage(MLSMSG_Error, ModuleName, &
+      MLSMSG_DeallocateL1b)
+
+    ! If gaps are found, check whether they (along with any previous adjacent
+    ! ones) exceed MaxGap; re-organize chunks, accordingly
+    if ( numOa > 0 ) then
+      call ScanDivide_checkReorganizeRange(counterMAF, firstOa(1:numOa), &
+        lastOa(1:numOa), config%maxGap, phi, time, config%maxGap_family, chunks)
+    end if
+
+    ! If necessary, check for valid scans
+    if ( config%criticalModules /= l_none ) then
+      badMAF = 0
+      numBad = 0
+      numChunks = size(chunks)
+
+      ! Unless THz alone specified as critical module, read GHz first
+      if ( config%criticalModules /= l_thz ) then
+        quantity = 'GHz.tpGeodAlt'
+        call ReadL1BData (l1bInfo%L1BOAId, quantity, data, noMAFs, flag)
+        if (flag /= 0) then
+          msr = MLSMSG_L1BRead // quantity
+          call MLSMessage(MLSMSG_Error, ModuleName, msr)
+        end if
+        ! Check GHz for bad scans
+        do i = chunks(1)%firstMAFIndex+1, chunks(numChunks)%lastMAFIndex+1
+          minv = minval(data%dpField(1,:,i))
+          maxv = maxval(data%dpField(1,:,i))
+          if ( (minv < config%scanLowerLimit(1)) .or. &
+            (minv > config%scanLowerLimit(2)) .or. &
+            (maxv < config%scanUpperLimit(1)) .or. &
+            (maxv > config%scanUpperLimit(2)) ) then
+            badMAF(i) = 1
+            numBad = numBad + 1
+          end if
+        end do
+
+        call DeallocateL1BData(data)
+        if (flag /= 0) call MLSMessage(MLSMSG_Error, ModuleName, &
+          MLSMSG_DeallocateL1b)
+      end if
+
+      ! If necessary, read THz data
+      if ( (config%criticalModules == l_thz) .or. (config%criticalModules == l_both) .or. &
+        ((config%criticalModules == l_either) .and. (numBad > 0)) ) then
+        quantity = 'THz.tpGeodAlt'
+        call ReadL1BData (l1bInfo%L1BOAId, quantity, data, noMAFs, flag)
+        if (flag /= 0) then
+          msr = MLSMSG_L1BRead // quantity
+          call MLSMessage(MLSMSG_Error, ModuleName, msr)
+        end if
+
+        ! If EITHER is critical, check only bad GHz scans; if THz okay,
+        ! unmark MAF as bad.
+        if ( config%criticalModules == l_either ) then
+          do i = chunks(1)%firstMAFIndex+1,chunks(numChunks)%lastMAFIndex+1
+            if (badMAF(i) == 1) then
+              minv = minval(data%dpField(1,:,i))
+              maxv = maxval(data%dpField(1,:,i))
+              if ( (minv >= config%scanLowerLimit(1)) .and. &
+                &  (minv <= config%scanLowerLimit(2)) .and. &
+                &  (maxv >= config%scanUpperLimit(1)) .and. &
+                &  (maxv <= config%scanUpperLimit(2)) ) then
+                badMAF(i) = 0
+                numBad = numBad - 1
+              end if
+            end if
+          end do
+          ! If THz is critical, check entire data set for bad THz scans
+        else
+          do i = chunks(1)%firstMAFIndex+1,chunks(numChunks)%lastMAFIndex+1
+            minv = minval(data%dpField(1,:,i))
+            maxv = maxval(data%dpField(1,:,i))
+            if ( (minv < config%scanLowerLimit(1)) .and. &
+              &  (minv > config%scanLowerLimit(2)) .and. &
+              &  (maxv < config%scanUpperLimit(1)) .and. &
+              &  (maxv > config%scanUpperLimit(2)) ) then
+              badMAF(i) = 1
+              numBad = numBad + 1
+            end if
+          end do
+        end if
+        call DeallocateL1BData ( data )
+        if (flag /= 0) call MLSMessage(MLSMSG_Warning, ModuleName, &
+          MLSMSG_DeallocateL1b)
+      end if
+
+      ! If bad scans found, add "bad" markings for any MAFs previously discarded
+      if (numBad > 0) then
+        do i = 1, numOa
+          do j = firstOa(i), lastOa(i)
+            badMAF(j+1) = 1
+          end do
+        end do
+
+        ! Set first & last badMAF for all gaps found thus far
+        allocate ( firstScan(numBad+numOa), lastScan(numBad+numOa), &
+          STAT=error )
+        if (error /= 0) then
+          msr = MLSMSG_Allocate // ' first and last bad scan MAF holders.'
+          call MLSMessage(MLSMSG_Error, ModuleName, msr)
+        end if
+
+        firstScan = -1
+        lastScan = -1
+        loop = 0
+        numScan = 1
+        do i = chunks(1)%firstMAFIndex+1, chunks(numChunks)%lastMAFIndex+1
+          if ( badMAF(i) == 1) then
+            if (firstScan(numScan) == -1) firstScan(numScan) = i-1
+            lastScan(numScan) = i-1
+            loop = numScan
+          else if ( (i > 1) .and. (lastScan(numScan) == i-2) ) then
+            numScan = numScan + 1
+          end if
+        end do
+
+        ! Check whether these (including MAF "walls" previously found) exceed MaxGap;
+        ! re-organize chunks, if necessary
+        call ScanDivide_checkReorganizeRange(counterMAF, &
+          firstScan(1:loop), lastScan(1:loop), &
+          config%maxGap, phi, time, config%maxGap_family, chunks)
+        deallocate ( firstScan, lastScan, STAT=error )
+        if (error /= 0) then
+          msr = MLSMSG_Deallocate // ' first & lastScan local variables.'
+          call MLSMessage(MLSMSG_Warning, ModuleName, msr)
+        end if
+      end if
+    end if
+
+    ! If necessary, check for critical bands in the L1bRad file
+    numChunks = size(chunks)
+
+    ! Deallocations
+    deallocate ( badMAF, counterMAF, firstOa, lastOa, phi, time, STAT=error )
+    if (error /= 0) then
+      msr = MLSMSG_Deallocate // ' local variables.'
+      call MLSMessage(MLSMSG_Warning, ModuleName, msr)
+    end if
+    if ( timing ) call sayTime
+    if ( toggle(gen) ) call trace_end ( "ScanDivide" )
+
+  end subroutine ScanAndDivide
+
+  ! =====     Private Procedures     =====================================
+
+  !-----------------------------------------  ScanDivide_firstGuess  -----
+  subroutine ScanDivide_firstGuess ( L1boaFileHandle, firstMAF, home, &
+    lastMAF, numFile, orbLen, overlap, &
+    phi, chunks, flag)
+    ! This subroutine creates a set of data structures defining a "first guess" for
+    ! MAF chunk boundaries.
+
+    ! Arguments
+    integer, intent(in) :: FIRSTMAF, LASTMAF, NUMFILE, OVERLAP
+    integer, intent(in) :: L1BOAFILEHANDLE
+
+    real(rp), intent(in) :: HOME, ORBLEN
+    real(rp), intent(in) :: PHI(:)
+
+    integer, intent(out) :: FLAG
+
+    type( MLSChunk_T ), dimension(:), pointer  :: CHUNKS
+
+    ! Local variables
+    character (LEN=480) :: MSR
+
+    integer :: ABOVE, ALLOC_ERR, BDRYMAX, BELOW, DEALLOC_ERR, I
+    integer :: NUMBDRY, NUMCHUNKS
+    integer, allocatable :: BDRYMAF(:), INDICES(:)
+
+    real(rp) :: MAX, MIN, NEWHOME, PHILEN
+    real(rp), allocatable :: ABOVEHOME(:), BELOWHOME(:), BDRYPHI(:)
+
+    ! Executable code
+
+    flag = 0        ! Assume no errors occur -- but make sure FLAG is defined!
+
+    ! Find max & min phi for data set
+    max = maxval( phi(firstMAF+1:lastMAF+1) )
+    min = minval( phi(firstMAF+1:lastMAF+1) )
+
+    ! Convert from "fraction of orbit" to "degrees of phi"
+    phiLen = orbLen
+
+    ! Find phi boundaries above & below HomeGeodAngle
+    bdryMax = anint(max_orbits * 360.0 / orbLen)
+
+    allocate (  aboveHome(bdryMax), belowHome(bdryMax), STAT=alloc_err )
+    if ( alloc_err /= 0 ) then
+      msr = MLSMSG_Allocate // ' arrays for phi bdries above & below Home.'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    end if
+
+    ! If min above home, reset HomeGeodAngle to closest ideal bdry below min
+    if (min >= home) then
+      below = 0
+      do i = 1, bdryMax
+        newHome = home + i*phiLen
+        if (newHome > min) exit
+      end do
+      newHome = home + (i-1)*phiLen
+      ! Calculate boundaries above home phi
+      do i = 1, bdryMax
+        aboveHome(i) = newHome + i*phiLen
+        if (aboveHome(i) >= max) exit
+      end do
+      above = i-1
+    else
+      ! If min below home, check whether max also is
+      if (max <= home) then
+        ! If max is also below, reset HomeGeodAngle to closest ideal bdry above max
+        above = 0
+        do i = 1, bdryMax
+          newHome = home - i*phiLen
+          if (newHome <= max) exit
+        end do
+        newHome = home - (i-1)*phiLen
+      else
+        ! If max is above, calculate boundaries >= HomeGeodAngle
+        do i = 1, bdryMax
+          aboveHome(i) = home + (i-1)*phiLen
+          if (aboveHome(i) >= max) exit
+        end do
+        above = i-1
+        newHome = home
+      end if
+      ! Calculate boundaries below home phi
+      do i = 1, bdryMax
+        belowHome(i) = newHome - i*phiLen
+        if (belowHome(i) <= min) exit
+      end do
+      below = i-1
+    end if
+
+    ! Put phi boundaries into a single array in ascending order, from min to max
+    numBdry = above + below + 2
+    allocate (  bdryPhi(numBdry), bdryMAF(numBdry), indices(numBdry), &
+      STAT=alloc_err )
+    if ( alloc_err/= 0 ) then
+      msr = MLSMSG_Allocate // ' bdry arrays.'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    end if
+    bdryPhi(1) = min
+    do i = 1, below
+      bdryPhi(i+1) = belowHome(below-(i-1))
+    end do
+    do i = 1, above
+      bdryPhi(below+1+i) = aboveHome(i)
+    end do
+    bdryPhi(above+below+2) = max
+    deallocate ( aboveHome, belowHome, STAT=dealloc_err)
+    if (dealloc_err /= 0) then
+      msr = MLSMSG_Deallocate // ' arrays for phi bdries above & below Home.'
+      call MLSMessage(MLSMSG_Warning, ModuleName, msr)
+      flag = -1
+    end if
+
+    ! Find MAFs containing the phi boundaries
+    call Hunt(phi, bdryPhi, indices, allowTopValue=.true.)
+
+    ! Convert MAF bdry indices to begin at 0 (like file), rather than 1 (like phi)
+    bdryMAF = indices - 1
+    deallocate ( bdryPhi, indices, STAT=dealloc_err)
+    if (dealloc_err /= 0) then
+      msr = MLSMSG_Deallocate // ' phi, index bdries.'
+      call MLSMessage(MLSMSG_Warning, ModuleName, msr)
+      flag = -1
+    end if
+
+    ! Fill data structure for each chunk
+    numChunks = numBdry-1
+    allocate (  chunks(numChunks), STAT=alloc_err )
+    if ( alloc_err/= 0 ) call MLSMessage  (MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate // ' number of chunks.' )
+
+    ! Calculate firstMAFIndex, subtracting overlap from MAF boundaries
+    chunks%firstMAFIndex = bdryMAF(1:numChunks) - overlap
+    if (chunks(1)%firstMAFIndex < 0 ) chunks(1)%firstMAFIndex = 0
+
+    ! Calculate lastMAFIndex, adding overlap to MAF boundaries
+    chunks(1:numChunks-1)%lastMAFIndex = bdryMAF(2:numBdry-1) - 1 + overlap
+    chunks(numChunks)%lastMAFIndex = bdryMAF(numBdry) + overlap
+    if (chunks(numChunks)%lastMAFIndex > numFile ) &
+      chunks(numChunks)%lastMAFIndex = numFile
+
+    ! Set lower overlap to MLSCF input; consider first MAF separately
+    chunks(2:numChunks)%noMAFsLowerOverlap = overlap
+
+    chunks(1)%noMAFsLowerOverlap = bdryMAF(1) - chunks(1)%firstMAFIndex
+    ! Think there is a problem here, get 1 when would expect 0, NJL. !????
+    ! Set upper overlap to MLSCF input; consider last MAF separately
+    chunks(1:numChunks-1)%noMAFsUpperOverlap = overlap
+    chunks(numChunks)%noMAFsUpperOverlap = chunks(numChunks)%lastMAFIndex - &
+      &bdryMAF(numBdry)
+
+    ! Calculate accumulatedMAFs
+    chunks(1)%accumulatedMAFs = 0
+    do i = 2, numChunks
+      chunks(i)%accumulatedMAFs = chunks(i-1)%accumulatedMAFs + &
+        &chunks(i-1)%lastMAFIndex - chunks(i-1)%firstMAFIndex + 1 - &
+        &chunks(i-1)%noMAFsLowerOverlap - chunks(i-1)%noMAFsUpperOverlap
+    end do
+    deallocate ( bdryMAF, STAT=dealloc_err)
+    if (dealloc_err /= 0) then
+      msr = MLSMSG_Deallocate // ' MAF bdries.'
+      call MLSMessage(MLSMSG_Warning, ModuleName, msr)
+      flag = -1
+    end if
+
+  end subroutine ScanDivide_firstGuess
+
+  !-----------------------------------------------  ScanDivide_wall  -----
+  subroutine ScanDivide_wall(chunks, bad, flag)
+    ! This subroutine reorganizes chunks around "walls."
+
+    ! Arguments
+    integer, intent(in) :: BAD(:)
+    integer, intent(out) :: FLAG
+    type( MLSChunk_T ), dimension(:), pointer  :: CHUNKS
+
+    ! Local variables
+    character (len=480) :: MSR
+    integer :: ERROR, I, J, MOVE, NUMBAD, NUMCHUNKS, SCALAR, WALLIND
+    integer, allocatable :: BADMAF(:)
+    type( MLSChunk_T ), dimension(:), pointer  :: WALLEDCHUNKS
+
+    ! Exectuable code
+
+    ! If input is a single MAF #, change its format to that of an array,
+    ! indexed such that badMAF(input) = 1
+    numBad = size(bad)
+    if (numBad == 1) then
+      scalar = bad(1)
+      allocate (  badMAF(scalar), STAT=error )
+      if (error /= 0) then
+        msr = MLSMSG_Allocate // ' badMAF array.'
+        call MLSMessage(MLSMSG_Error, ModuleName, msr)
+      end if
+      badMAF = 0
+      badMAF(scalar) = 1
+    else
+      allocate (  badMAF(numBad), STAT=error )
+      if (error /= 0) then
+        msr = MLSMSG_Allocate // ' badMAF array.'
+        call MLSMessage(MLSMSG_Error, ModuleName, msr)
+      end if
+      badMAF = bad
+    end if
+
+    ! Initialize walledChunks array
+    numChunks = size(chunks)
+    allocate ( walledChunks(numChunks+numBad), STAT=error )
+    if (error /= 0) then
+      msr = MLSMSG_Allocate // ' walled chunk arrays.'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    end if
+    walledChunks(1) = chunks(1)
+
+    ! If wall in first chunk splits off a portion containing only lower overlap,
+    ! jettison overlap portion
+    if (chunks(1)%noMAFsLowerOverlap > 0) then
+      do i = 1, chunks(1)%noMAFsLowerOverlap
+        if ( badMAF(chunks(1)%firstMAFIndex+&
+          chunks(1)%noMAFsLowerOverlap-i+2) == 1) then
+          walledChunks(1)%firstMAFIndex = chunks(1)%firstMAFIndex+&
+            chunks(1)%noMAFsLowerOverlap-(i-1)
+          walledChunks(1)%noMAFsLowerOverlap = i-1
+          exit
+        end if
+      end do
+    end if
+
+    ! If wall in non-overlapped portion, split chunk into 2, with no overlaps at
+    ! new bdry.
+    move = 0
+    wallInd = 1
+    do i = chunks(1)%firstMAFIndex+chunks(1)%noMAFsLowerOverlap+1, &
+      chunks(2)%firstMAFIndex-1
+      if (badMAF(i+1) == 1) then
+        walledChunks(wallInd)%lastMAFIndex = i-1
+        walledChunks(wallInd)%noMAFsUpperOverlap = 0
+        walledChunks(wallInd+1)%firstMAFIndex = i
+        walledChunks(wallInd+1)%noMAFsLowerOverlap = 0
+        walledChunks(wallInd+1)%accumulatedMAFs = i
+        walledChunks(wallInd+1)%lastMAFIndex = chunks(1)%lastMAFIndex
+        walledChunks(wallInd+1)%noMAFsUpperOverlap = &
+          chunks(1)%noMAFsUpperOverlap
+        wallInd = wallInd + 1
+      end if
+    end do
+
+    ! If in upper overlap, re-set bdries without overlaps
+    do i = chunks(2)%firstMAFIndex, chunks(1)%lastMAFIndex+1
+      if (badMAF(i+1) == 1) then
+        walledChunks(wallInd)%lastMAFIndex = i-1
+        walledChunks(wallInd)%noMAFsUpperOverlap = 0
+        walledChunks(wallInd+1)%firstMAFIndex = i
+        walledChunks(wallInd+1)%noMAFsLowerOverlap = 0
+        walledChunks(wallInd+1)%accumulatedMAFs = i
+        walledChunks(wallInd+1)%lastMAFIndex = chunks(2)%lastMAFIndex
+        walledChunks(wallInd+1)%noMAFsUpperOverlap = &
+          chunks(2)%noMAFsUpperOverlap
+        wallInd = wallInd + 1
+        move = 1
+      end if
+    end do
+
+    ! Re-organize rest of chunks, except for last
+    do i = 2, numChunks-1
+      if (move == 1) then
+        move = 0
+      else
+        wallInd = wallInd + 1
+        walledChunks(wallInd) = chunks(i)
+      end if
+
+      do j = chunks(i-1)%lastMAFIndex+2, chunks(i+1)%firstMAFIndex-1
+        if (badMAF(j+1) == 1) then
+          walledChunks(wallInd)%lastMAFIndex = j-1
+          walledChunks(wallInd)%noMAFsUpperOverlap = 0
+          walledChunks(wallInd+1)%accumulatedMAFs = j
+          walledChunks(wallInd+1)%firstMAFIndex = j
+          walledChunks(wallInd+1)%noMAFsLowerOverlap = 0
+          walledChunks(wallInd+1)%lastMAFIndex = chunks(i)%lastMAFIndex
+          walledChunks(wallInd+1)%noMAFsUpperOverlap = &
+            chunks(i)%noMAFsUpperOverlap
+          wallInd = wallInd + 1
+        end if
+      end do
+      do j = chunks(i+1)%firstMAFIndex, chunks(i)%lastMAFIndex+1
+        if (badMAF(j+1) == 1) then
+          walledChunks(wallInd)%lastMAFIndex = j-1
+          walledChunks(wallInd)%noMAFsUpperOverlap = 0
+          walledChunks(wallInd+1)%accumulatedMAFs = j
+          walledChunks(wallInd+1)%firstMAFIndex = j
+          walledChunks(wallInd+1)%noMAFsLowerOverlap = 0
+          walledChunks(wallInd+1)%lastMAFIndex = chunks(i+1)%lastMAFIndex
+          walledChunks(wallInd+1)%noMAFsUpperOverlap = &
+            chunks(i+1)%noMAFsUpperOverlap
+          wallInd = wallInd + 1
+          move = 1
+        end if
+      end do
+    end do
+
+    ! Re-organize non-overlapped portion of last chunk
+    if (move == 0) then
+      wallInd = wallInd + 1
+      walledChunks(wallInd) = chunks(numChunks)
+    end if
+    do i = chunks(numChunks-1)%lastMAFIndex+2, &
+      chunks(numChunks)%lastMAFIndex-chunks(numChunks)%noMAFsUpperOverlap
+      if (badMAF(i+1) == 1) then
+        walledChunks(wallInd)%lastMAFIndex = i-1
+        walledChunks(wallInd)%noMAFsUpperOverlap = 0
+        walledChunks(wallInd+1)%accumulatedMAFs = i
+        walledChunks(wallInd+1)%firstMAFIndex = i
+        walledChunks(wallInd+1)%noMAFsLowerOverlap = 0
+        walledChunks(wallInd+1)%lastMAFIndex = &
+          chunks(numChunks)%lastMAFIndex
+        walledChunks(wallInd+1)%noMAFsUpperOverlap = &
+          chunks(numChunks)%noMAFsUpperOverlap
+        wallInd = wallInd +1
+      end if
+    end do
+
+    ! Re-organize upper overlap portion (if it exists); truncate any resulting
+    ! chunk that is purely overlap
+    do i = chunks(numChunks)%lastMAFIndex-&
+      chunks(numChunks)%noMAFsUpperOverlap+1,chunks(numChunks)%lastMAFIndex
+      if (badMAF(i+1) == 1) then
+        walledChunks(wallInd)%lastMAFIndex = i-1
+        walledChunks(wallInd)%noMAFsUpperOverlap = &
+          walledChunks(wallInd)%lastMAFIndex-chunks(numChunks)%lastMAFIndex+&
+          chunks(numChunks)%noMAFsUpperOverlap
+        if (walledChunks(wallInd)%noMAFsUpperOverlap < 0) then
+          walledChunks(wallInd)%noMAFsUpperOverlap = 0
+        end if
+        exit
+      end if
+    end do
+
+    ! Deallocations
+    deallocate ( badMAF, STAT=error )
+    if (error /= 0) then
+      msr = MLSMSG_Deallocate // ' badMAF array.'
+      call MLSMessage(MLSMSG_Warning, ModuleName, msr)
+      flag = -1
+    end if
+    deallocate ( chunks, STAT=error )
+    if (error /= 0) then
+      msr = MLSMSG_Deallocate // ' chunks array.'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    end if
+
+    ! Reset input chunks array
+    allocate ( chunks(wallInd), STAT=error )
+    if (error /= 0) then
+      msr = MLSMSG_Allocate // ' new output chunks array.'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    end if
+    chunks = walledChunks(1:wallInd)
+    deallocate ( walledChunks, STAT=error )
+    if (error /= 0) then
+      msr = MLSMSG_Deallocate // ' walledChunks array.'
+      call MLSMessage(MLSMSG_Warning, ModuleName, msr)
+      flag = -1
+    end if
+
+  end subroutine ScanDivide_wall
+
+  !----------------------------------------------  ScanDivide_range  -----
+  subroutine ScanDivide_range ( chunks, firstBadMAFIndex, lastBadMAFIndex, &
+    flag )
+    ! This subroutine reorganizes chunks around periods of bad data.
+    integer, intent(in) :: firstBadMAFIndex, lastBadMAFIndex
+    integer, intent(out) :: flag
+    type( MLSChunk_T ), dimension(:), pointer  :: chunks
+
+    ! Local variables
+
+    character (len=480) :: MSR
+    integer :: CHUNKIND, ERROR, I, J, NEWIND, NUMCHUNKS
+    type( MLSChunk_T ), dimension(:), pointer  :: NEWCHUNKS
+
+    ! Executable code
+
+    ! Initialize expanded newChunks array
+    numChunks = size(chunks)
+
+    allocate ( newChunks(numChunks+1), STAT=error )
+    if (error /= 0) then
+      msr = MLSMSG_Allocate // ' newChunks array.'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    end if
+
+    ! Find the chunk where the gap begins
+    newInd = 1
+    chunkInd = 1
+    do i = 1, numChunks
+      if ( (firstBadMAFIndex <= chunks(chunkInd)%lastMAFIndex) .and. &
+        (firstBadMAFIndex >= chunks(chunkInd)%firstMAFIndex) ) then
+
+        ! If it begins above the lower overlap,
+        if (firstBadMAFIndex > chunks(chunkInd)%firstMAFIndex+&
+          chunks(chunkInd)%NoMAFsLowerOverlap ) then
+
+          ! It breaks off a chunk below the gap; set info for this new chunk
+          newChunks(newInd)%accumulatedMAFs = &
+            chunks(chunkInd)%accumulatedMAFs
+          newChunks(newInd)%firstMAFIndex = chunks(chunkInd)%firstMAFIndex
+          newChunks(newInd)%noMAFsLowerOverlap = &
+            chunks(chunkInd)%noMAFsLowerOverlap
+          newChunks(newInd)%lastMAFIndex = firstBadMAFIndex - 1
+          if ( firstBadMAFIndex > chunks(numChunks)%lastMAFIndex-&
+            chunks(numChunks)%noMAFsUpperOverlap+1) then
+            newChunks(newInd)%noMAFsUpperOverlap = &
+              newChunks(newInd)%lastMAFIndex-&
+              chunks(numChunks)%lastMAFIndex+&
+              chunks(numChunks)%noMAFsUpperOverlap
+          else
+            newChunks(newInd)%noMAFsUpperOverlap = 0
+          end if
+          newInd = newInd + 1
+        end if
+
+        ! If the gap ends in the upper overlap of the last chunk, exit
+        if ( lastBadMAFIndex >= chunks(numChunks)%lastMAFIndex-&
+          chunks(numChunks)%noMAFsUpperOverlap ) exit
+
+        ! Otherwise, find the chunk where the gap ends
+        do j = 1, numChunks
+          chunkInd = chunkInd + (j-1)
+          if ( lastBadMAFIndex <= chunks(chunkInd)%lastMAFIndex ) then
+
+            ! Set start info for a new chunk beginning after the gap
+            if (newInd == 1) then
+              newChunks(newInd)%accumulatedMAFs = 0
+            else
+              newChunks(newInd)%accumulatedMAFs = &
+                newChunks(newInd-1)%lastMAFIndex + 1
+            end if
+            newChunks(newInd)%firstMAFIndex = lastBadMAFIndex + 1
+            newChunks(newInd)%noMAFsLowerOverlap = &
+              chunks(chunkInd)%firstMAFIndex + &
+              chunks(chunkInd)%noMAFsLowerOverlap - &
+              newChunks(newInd)%firstMAFIndex
+            if ( newChunks(newInd)%noMAFsLowerOverlap < 0 ) &
+              newChunks(newInd)%noMAFsLowerOverlap = 0
+
+            ! If gap ends below the upper overlap, set end info to the current old chunk
+            if (lastBadMAFIndex < chunks(chunkInd)%lastMAFIndex-&
+              chunks(chunkInd)%noMAFsUpperOverlap ) then
+
+              newChunks(newInd)%lastMAFIndex = &
+                chunks(chunkInd)%lastMAFIndex
+              newChunks(newInd)%noMAFsUpperOverlap = &
+                chunks(chunkInd)%NoMAFsUpperOverlap
+              chunkInd = chunkInd + 1
+            else
+              ! If not, set end info to next old chunk
+              newChunks(newInd)%lastMAFIndex = &
+                chunks(chunkInd+1)%lastMAFIndex
+              newChunks(newInd)%noMAFsUpperOverlap = &
+                chunks(chunkInd+1)%NoMAFsUpperOverlap
+              chunkInd = chunkInd + 2
+            end if
+            newInd = newInd + 1
+            exit
+          end if
+        end do
+      else
+       
+        ! This chunk has no gaps in it; retain old chunk info
+        newChunks(newInd) = chunks(chunkInd)
+        newInd = newInd + 1
+        chunkInd = chunkInd + 1
+      end if
+      if (chunkInd > numChunks) exit
+    end do
+
+    ! Reset input chunks array
+    deallocate ( chunks, STAT=error )
+    if (error /= 0) then
+      msr = MLSMSG_Deallocate // ' chunks array.'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    end if
+    allocate ( chunks(newInd-1), STAT=error )
+    if (error /= 0) then
+      msr = MLSMSG_Allocate // ' new output chunks array.'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    end if
+    chunks = newChunks(1:newInd-1)
+    deallocate ( newChunks, STAT=error )
+    if (error /= 0) then
+      msr = MLSMSG_Deallocate // ' newChunks array.'
+      call MLSMessage(MLSMSG_Warning, ModuleName, msr)
+      flag = -1
+    end if
+  end subroutine ScanDivide_range
+
+  !-------------------------------  ScanDivide_checkReorganizeRange  -----
+  subroutine ScanDivide_checkReorganizeRange ( counterMAF, firstBad, &
+    lastBad, maxGap, phi, &
+    time, units, chunks )
+    ! This subroutine checks data gaps against a maximum and calls the "range
+    ! re-organization routine, if MaxGap is exceeded.
+    integer, intent(in) :: units
+    integer, intent(in) :: counterMAF(:), firstBad(:), lastBad(:)
+    real(rp), intent(in) :: maxGap
+    real(rp), intent(in) :: phi(:), time(:)
+    type( MLSChunk_T ), dimension(:), pointer  :: chunks
+
+    ! Local variables
+
+    real(rp) :: DIFF
+    integer :: FINISH, FLAG, I, NUMCHUNKS, NUMGAPS, START
+
+    ! Executable code
+
+    ! Add completely missing telemetry to bad MAFs, and check against MaxGap
+    numGaps = size(firstBad)
+    numChunks = size(chunks)
+    do i = 1, numGaps
+      if ( firstBad(i) == chunks(1)%firstMAFIndex) then
+        start = chunks(1)%firstMAFIndex + 1
+      else
+        start = firstBad(i)
+      end if
+      if ( lastBad(i) == chunks(numChunks)%lastMAFIndex ) then
+        finish = chunks(numChunks)%lastMAFIndex + 1
+      else
+        finish = lastBad(i) + 2
+      end if
+      select case ( units )
+      case ( phyq_mafs )
+        diff = counterMAF(finish) - counterMAF(start)
+      case ( phyq_time )
+        diff = time(finish) - time(start)
+      case default
+        diff = phi(finish) - phi(start)
+      end select
+      ! If diff exceeds MaxGap, re-organize chunks
+      if (diff > maxGap) &
+        call ScanDivide_range(chunks, firstBad(i), lastBad(i), flag)
+    end do
+  end subroutine ScanDivide_checkReorganizeRange
+
+  !----------------------------------------------  ScanDivide_mlscf  -----
+  subroutine ScanDivide_mlscf ( root, config )
+    ! This subroutine identifies, separates, and checks values from the section
+    ! of the MLSCF (ChunkDivide) passed to Scan/Divide.
+    integer, intent(in) :: ROOT    ! Root of the ChunkDivide section of the
+    ! MLSCF abstract syntax tree
+    type (ScanDivideConfig_T), intent(out) :: CONFIG ! Result of operation
+
+    ! For announce_error:
+    integer, parameter :: BadUnitsForIgnore = 1
+    integer, parameter :: NotLength = BadUnitsForIgnore + 1
+    integer, parameter :: NotSpecified = notLength + 1
+    integer, parameter :: NotAngle = NotSpecified + 1
+
+    ! Local variables
+
+    integer :: Error     ! Error level
+    logical :: GOT(first_parm:last_parm) = .false.
+    integer :: I         ! Loop inductor
+    integer :: KEY       ! A P_... parameter from Init_Tables_Module
+    integer :: SON       ! A son of the ChunkDivide section node
+    integer :: UNITS(2)  ! Units of expression
+    real(rp) :: VALUE(2)   ! Value of expression
+
+    ! Executable code
+
+    ! Initialize variables to 'unfound' values
+    config%ignoreL1B = .false.
+    config%noChunks = 0
+    config%idealLength_family = PHYQ_Invalid
+    config%homeGeodAngle = 0.0
+    config%homeModule = L_None
+    config%overlap = 0.0
+    config%overlap_family = PHYQ_Invalid
+    config%scanLLSet = .false.
+    config%scanULSet = .false.
+    config%criticalModules = l_none
+    config%maxGap_family = PHYQ_Invalid
+    error = 0
+
+    ! Loop through MLSCF section, identifying keywords and setting variables
+    do i = 2, nsons(root)-1 ! Skip the section identifiers
+      son = subtree(i,root)
+      if ( node_id(son) == n_equal ) then
+        key = decoration(subtree(1,son)) ! P_... index from Init_Tables_Module
+        got(key) = .true.
+        call expr ( subtree(2,son), units, value )
+
+        select case ( key )
+        case ( p_ignoreL1B )
+          config%ignoreL1B = value(1) == l_true
+        case ( p_noChunks )
+          config%noChunks = nint(value(1))
+        case ( p_ideal_length )
+          config%idealLength = value(1)
+          config%idealLength_family = units(1)
+        case ( p_home_geod_angle )
+          config%homeGeodAngle = value(1)
+          if ( units(1) /= PHYQ_Angle ) call announce_error ( son, notAngle, key )
+        case ( p_home_module )
+          config%homeModule = value(1)
+        case ( p_overlap )
+          config%overlap = value(1)
+          config%overlap_family = units(1)
+        case ( p_scan_lower_limit )
+          if ( units(1) /= phyq_Length) &
+            & call announce_error ( son, notLength, key )
+          config%scanLLSet = .true.
+          config%scanLowerLimit = value
+        case ( p_scan_upper_limit )
+          if ( units(1) /= phyq_Length) &
+            & call announce_error ( son, notLength, key )
+          config%scanULSet = .true.
+          config%scanUpperLimit = value
+        case ( p_critical_scanning_modules )
+          config%criticalModules = value(1)
+        case ( p_max_gap )
+          config%maxGap = value(1)
+          config%maxGap_family = units(1)
+        case ( p_critical_bands )
+          !bands = value(1)
+        case default
+          ! Put this in while we're transitioning over to the new chunk divide
+        end select
+      else
+        if ( node_id(son) == n_named ) son = subtree(2,son) ! ignore label
+        select case ( get_spec_id(son) )
+        case ( s_time )
+          if ( timing ) then
+            call sayTime
+          else
+            call time_now ( t1 )
+            timing = .true.
+          end if
+        case default
+        end select
+      end if
+    end do
+
+    ! Check for missing values that would cause error exits
+    do i = first_parm, last_parm
+      select case ( i )
+      case ( p_ideal_length, p_overlap )
+        if ( .not. got(i) ) call announce_error ( root, notSpecified, i )
+      case ( p_home_module, p_critical_scanning_modules )    
+        if ( .not. got(i) .and. .not. config%ignoreL1B) &
+          & call announce_error ( root, notSpecified, i )
+      case ( p_noChunks) 
+        if ( .not. got(i) .and. config%ignoreL1B) &
+          & call announce_error ( root, notSpecified, i )
+      end select
+    end do
+
+    if (config%ignoreL1B) then
+      if (config%idealLength_family /= phyq_MAFs ) &
+        & call announce_error ( root, badUnitsForIgnore, p_ideal_length )
+      if (config%overlap_family /= phyq_MAFs ) &
+        & call announce_error ( root, badUnitsForIgnore, p_overlap )
+    endif
+
+    ! Check for values that depend on the presence of other quantities
+    if ( config%criticalModules /= l_none ) then
+      if ( .not. got(p_scan_lower_limit) ) &
+        & call announce_error ( root, notSpecified, p_scan_lower_limit )
+      if ( .not. got(p_scan_upper_limit) ) &
+        & call announce_error ( root, notSpecified, p_scan_upper_limit )
+    end if
+
+    if ( error > 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Errors in specification prevent processing.' )
+
+  contains
+
+    subroutine Announce_Error ( where, Code, Param )
+      integer, intent(in) :: where, Code, Param
+
+      error = max(error,1)
+      call print_source ( source_ref(where) )
+      call output ( ' ScanDivide complained: ' )
+      select case ( code )
+      case ( BadUnitsForIgnore )
+        call output ( ' In the IgnoreL1B case ' )
+        call display_string ( parm_indices(param) )
+        call output (' must have units of MAFs' )
+      case ( notLength )
+        call output ( ' The value of ' )
+        call display_string ( parm_indices(param) )
+        call output ( ' does not have units of Length.', advance='yes' )
+      case ( notAngle )
+        call output ( ' The value of ' )
+        call display_string ( parm_indices(param) )
+        call output ( ' does not have units of Angle.', advance='yes' )
+      case ( notSpecified )
+        call output ( ' The parameter ' )
+        call display_string ( parm_indices(param) )
+        call output ( ' is required but not specified.', advance='yes' )
+      end select
+    end subroutine Announce_Error
+
+  end subroutine ScanDivide_mlscf
+
+  ! ....................................................  SayTime  .....
+  subroutine SayTime
+    real :: T2
+    call time_now ( t2 )
+    if ( total_times ) then
+      call output ( "Total time = " )
+      call output ( dble(t2), advance = 'no' )
+      call blanks ( 4, advance = 'no' )
+    endif
+    call output ( 'Timing for ScanDivide = ' )
+    call output ( dble(t2-t1), advance='yes' )
+    timing = .false.
+  end subroutine SayTime
+
+end module ScanDivide
+
+! $Log: ScanDivide.f90,v $
+! Revision 2.19  2001/11/09 23:17:22  vsnyder
+! Use Time_Now instead of CPU_TIME
+!
+! Revision 2.18  2001/11/09 00:03:55  livesey
+! Let it work with new l2cfs.  Will be replacing this with ChunkDivide_m later.
+!
+! Revision 2.17  2001/09/28 23:59:20  pwagner
+! Fixed various timing problems
+!
+! Revision 2.16  2001/09/28 17:50:30  pwagner
+! MLSL2Timings module keeps timing info
+!
+! Revision 2.15  2001/09/11 05:18:16  livesey
+! Tidied it up a bit prior to a walk through and revisit
+!
+! Revision 2.14  2001/05/30 23:55:46  livesey
+! Changed for new L1BData
+!
+! Revision 2.13  2001/05/03 21:47:30  vsnyder
+! Get R8 from MLSCommon instead of MLSNumerics
+!
+! Revision 2.12  2001/04/26 02:44:17  vsnyder
+! Moved *_indices declarations from init_tables_module to intrinsic
+!
+! Revision 2.11  2001/04/24 23:12:12  vsnyder
+! Add timing
+!
+! Revision 2.10  2001/04/24 19:08:58  livesey
+! Interim version, needs changes later on.
+!
+! Revision 2.6  2001/03/08 23:36:19  vsnyder
+! Make sure FLAG is defined in ScanDivide_firstGuess
+!
+! Revision 2.5  2001/03/02 19:32:06  pwagner
+! Gets MLSMSG_L1BRead from MLSMessageModule, not MLSStrings
+!
+! Revision 2.4  2001/02/13 00:09:02  vsnyder
+! Simplify and improve MLSCF error messages
+!
+! Revision 2.3  2001/02/12 20:29:34  livesey
+! Flagged a possible error region
+!
+! Revision 2.2  2000/09/11 20:00:20  ahanzel
+! Removed old log entries in file.
+!
+! Revision 2.1  2000/09/08 22:55:56  vsnyder
+! Revised to use the tree output by the parser
+!
+@
+
+
+2.19
+log
+@Use Time_Now instead of CPU_TIME
+@
+text
+@d39 1
+a39 1
+    "$Id: ScanDivide.f90,v 2.18 2001/11/09 00:03:55 livesey Exp $"
+d1189 3
+@
+
+
+2.18
+log
+@Let it work with new l2cfs.  Will be replacing this with ChunkDivide_m later.
+@
+text
+@d26 1
+d39 1
+a39 1
+    "$Id: ScanDivide.f90,v 2.17 2001/09/28 23:59:20 pwagner Exp $"
+d138 1
+a138 1
+    if ( timing ) call cpu_time ( t1 )
+d1102 1
+a1102 1
+            call cpu_time ( t1 )
+d1175 1
+a1175 1
+    call cpu_time ( t2 )
+d1189 3
+@
+
+
+2.17
+log
+@Fixed various timing problems
+@
+text
+@d38 1
+a38 1
+    "$Id: ScanDivide.f90,v 2.16 2001/09/28 17:50:30 pwagner Exp $"
+d1091 2
+d1188 3
+@
+
+
+2.16
+log
+@MLSL2Timings module keeps timing info
+@
+text
+@a5 1
+  use Dumper, only : DUMP
+d7 1
+a7 1
+  use INIT_TABLES_MODULE, only:  FIRST_PARM, L_BOTH, L_EITHER, L_GHZ, &
+d26 1
+a26 1
+  use TOGGLES, only: GEN, SWITCHES, TOGGLE
+d38 1
+a38 1
+    "$Id: ScanDivide.f90,v 2.15 2001/09/11 05:18:16 livesey Exp $"
+d137 1
+d1186 3
+@
+
+
+2.15
+log
+@Tidied it up a bit prior to a walk through and revisit
+@
+text
+@d19 1
+d24 1
+a24 1
+  use Output_M, only: OUTPUT
+d27 1
+a27 1
+  use TOGGLES, only: GEN, TOGGLE
+d39 1
+a39 1
+    "$Id: ScanDivide.f90,v 2.14 2001/05/30 23:55:46 livesey Exp $"
+d137 2
+d1173 5
+d1186 3
+@
+
+
+2.14
+log
+@Changed for new L1BData
+@
+text
+@a3 1
+!=======================================================================
+a4 1
+  !=======================================================================
+d15 6
+a20 6
+  use Intrinsic, only: PARM_INDICES
+  use L1BData, only: deallocateL1BDATA, L1BDATA_T, NAME_LEN, READL1BDATA
+  use Lexer_Core, only: Print_Source
+  use MLSCommon, only: L1BINFO_T, MLSCHUNK_T, R8, TAI93_Range_T
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
+    & MLSMSG_Error, MLSMSG_Warning, MLSMSG_L1BRead
+d22 2
+a23 3
+  !  use MLSStrings, only: MLSMSG_L1BRead
+  use MoreTree, only: Get_Spec_ID
+  use Output_M, only: Output
+d25 1
+a25 1
+  use STRING_TABLE, only: Display_String
+d28 2
+a29 2
+  use TREE, only: DECORATION, Node_ID, NSONS, Source_Ref, SUBTREE
+  use Tree_Types, only: N_Equal, N_Named
+a31 1
+
+d36 1
+a36 1
+!---------------------------- RCS Ident Info -------------------------------
+d38 1
+a38 1
+       "$Id: ScanDivide.f90,v 2.13 2001/05/03 21:47:30 vsnyder Exp $"
+d41 2
+a42 17
+       "$RCSfile: ScanDivide.f90,v $"
+!---------------------------------------------------------------------------
+
+  ! Contents:
+
+  ! Subroutines -- DestroyChunkDatabase             Public
+  !                ScanDivide_firstGuess            Private
+  !                ScanDivide_wall                  Private
+  !                ScanDivide_range                 Private
+  !                ScanDivide_checkReorganizeRange  Private
+  !                ScanDivide_mlscf                 Private
+  !                ScanAndDivide                    Public
+
+  ! Remarks:  This prototype module contains subroutines for the Scan/Divide task
+  !           of the L2 software.
+
+  ! Some private types
+d47 1
+a47 1
+    real(r8)  :: idealLength            ! Ideal length of chunk
+d49 1
+a49 1
+    real(r8)  :: homeGeodAngle          ! Try to have a chunk start here
+d51 1
+a51 1
+    real(r8)  :: overlap                ! Length for overlaps
+d55 2
+a56 2
+    real(r8), dimension(2) :: scanLowerLimit ! Range for bottom of scan
+    real(r8), dimension(2) :: scanUpperLimit ! Range for top of scan
+d58 1
+a58 1
+    real(r8)  :: maxGap                 ! Length of time/MAFs/orbits allowed for gap
+a59 1
+    ! Think later about bands etc.
+d100 5
+a104 5
+    real(r8) :: DIFF                    ! Difference
+    real(r8) :: MAXV                    ! Result of MINVAL
+    real(r8) :: MINV                    ! Result of MAXVAL
+    real(r8), pointer, dimension(:) :: PHI ! Array of geodAngles
+    real(r8), pointer, dimension(:) :: TIME ! Array of times
+a192 1
+
+a226 1
+
+d347 3
+a349 3
+               (minv > config%scanLowerLimit(2)) .or. &
+               (maxv < config%scanUpperLimit(1)) .or. &
+               (maxv > config%scanUpperLimit(2)) ) then
+a360 1
+
+d404 1
+d447 1
+a449 2
+    !if ( bands /= 0 ) then
+    !end if
+a467 3
+    !-----------------------------------------------------------------------
+
+    ! Brief description of subroutine
+a471 1
+
+d475 2
+a476 2
+    real(r8), intent(in) :: HOME, ORBLEN
+    real(r8), intent(in) :: PHI(:)
+d482 1
+a482 6
+    ! Parameters
+
+    ! Functions
+
+    ! Variables
+
+d489 4
+a492 2
+    real(r8) :: MAX, MIN, NEWHOME, PHILEN
+    real(r8), allocatable :: ABOVEHOME(:), BELOWHOME(:), BDRYPHI(:)
+a496 1
+
+a500 1
+
+a503 1
+
+a512 1
+
+a513 1
+
+a514 1
+
+a518 1
+
+a519 1
+
+a520 1
+
+a524 1
+
+a525 1
+
+a526 1
+
+a527 1
+
+a528 1
+
+a529 1
+
+a530 1
+
+a534 1
+
+a535 1
+
+a536 1
+
+a537 1
+
+a541 1
+
+a542 1
+
+a543 1
+
+a544 1
+
+a545 1
+
+a549 1
+
+a550 1
+
+a553 1
+
+a554 1
+
+a560 1
+
+a561 1
+
+a564 1
+
+a567 1
+
+a568 1
+
+a576 1
+
+a579 1
+
+a580 1
+
+a588 1
+
+a594 1
+
+a598 1
+
+a600 1
+
+a604 1
+
+d608 1
+a608 2
+    ! Think there is a problem here, get 1 when would expect 0, NJL.
+
+a609 1
+
+a610 1
+
+a614 1
+
+a615 1
+
+a620 1
+
+a627 1
+    !--------------------------------------
+a628 1
+  !--------------------------------------
+a631 3
+    !-----------------------------------------------------------------------
+
+    ! Brief description of subroutine
+a634 1
+
+a635 1
+
+a636 1
+
+d639 1
+a639 6
+    ! Parameters
+
+    ! Functions
+
+    ! Variables
+
+a640 1
+
+d643 1
+d645 1
+a645 1
+    type( MLSChunk_T ), dimension(:), pointer  :: WALLEDCHUNKS
+a648 1
+
+a649 1
+
+a650 1
+
+a651 1
+
+a656 1
+
+a658 1
+
+a659 1
+
+a664 1
+
+a665 1
+
+a668 1
+
+a669 1
+
+a674 1
+
+a678 1
+
+a679 1
+
+a680 1
+
+a687 1
+
+a688 1
+
+a692 1
+
+a694 1
+
+a696 1
+
+a707 1
+
+a710 1
+
+a711 1
+
+a723 1
+
+a726 1
+
+a727 1
+
+a735 1
+
+a746 1
+
+a747 1
+
+a748 1
+
+a760 1
+
+a761 1
+
+a764 1
+
+a768 1
+
+a770 1
+
+a782 1
+
+a786 1
+
+a788 1
+
+a789 1
+
+a793 1
+
+a796 1
+
+a797 1
+
+a798 1
+
+a801 1
+
+a807 1
+
+a814 1
+
+a819 1
+
+a820 1
+
+a827 1
+    !--------------------------------
+a828 1
+  !--------------------------------
+a832 3
+    !------------------------------------------------------------------------------
+
+    ! Brief description of subroutine
+a833 3
+
+    ! Arguments
+
+a834 1
+
+a835 1
+
+d838 1
+a838 5
+    ! Parameters
+
+    ! Functions
+
+    ! Variables
+a840 1
+
+d842 1
+d844 1
+a844 1
+    type( MLSChunk_T ), dimension(:), pointer  :: NEWCHUNKS
+a846 1
+
+a855 1
+
+a858 1
+
+a862 1
+
+a866 1
+
+a872 1
+
+a881 1
+
+a882 1
+
+a885 1
+
+a889 1
+
+a890 1
+
+a891 1
+
+a894 1
+
+a900 1
+
+a901 1
+
+a909 1
+
+a917 1
+
+a918 1
+
+a919 1
+
+a924 1
+
+a925 1
+
+a927 1
+
+a928 1
+
+a929 1
+
+d931 1
+a931 1
+
+a932 1
+
+a935 1
+
+a936 1
+
+a937 1
+
+a940 1
+
+a945 1
+
+a950 1
+
+a951 1
+
+a957 2
+
+    !---------------------------------
+a958 1
+  !---------------------------------
+d960 1
+a960 1
+!-------------------------------  ScanDivide_checkReorganizeRange  -----
+a963 3
+    !-----------------------------------------------------------------------
+
+    ! Brief description of subroutine
+a965 3
+
+    ! Arguments
+
+a966 1
+
+d968 2
+a969 4
+
+    real(r8), intent(in) :: maxGap
+    real(r8), intent(in) :: phi(:), time(:)
+
+d972 1
+a972 1
+    ! Parameters
+d974 2
+a975 1
+    ! Functions
+d977 1
+a977 5
+    ! Variables
+
+    real(r8) :: DIFF
+
+    integer :: FINISH, FLAG, I, NUMCHUNKS, NUMGAPS, START
+d980 2
+a981 4
+
+    numGaps = SIZE(firstBad)
+    numChunks = SIZE(chunks)
+
+a982 1
+
+a987 1
+
+a992 1
+
+a1000 1
+
+a1001 1
+
+d1004 26
+d1031 71
+d1104 11
+a1114 94
+  end subroutine ScanDivide_checkReorganizeRange
+!------------------------------------------------
+
+!----------------------------------------------  ScanDivide_mlscf  -----
+subroutine ScanDivide_mlscf ( root, config )
+  !-----------------------------------------------------------------------
+
+  ! Brief description of subroutine
+  ! This subroutine identifies, separates, and checks values from the section
+  ! of the MLSCF (ChunkDivide) passed to Scan/Divide.
+
+  ! Arguments
+
+  integer, intent(in) :: ROOT    ! Root of the ChunkDivide section of the
+  ! MLSCF abstract syntax tree
+  type (ScanDivideConfig_T), intent(out) :: CONFIG ! Result of operation
+
+  ! Parameters
+
+  ! For announce_error:
+  integer, parameter :: BadUnitsForIgnore = 1
+  integer, parameter :: NotLength = BadUnitsForIgnore + 1
+  integer, parameter :: NotSpecified = notLength + 1
+  integer, parameter :: NotAngle = NotSpecified + 1
+
+  ! Functions
+
+  ! Variables
+  integer :: Error     ! Error level
+  logical :: GOT(first_parm:last_parm) = .false.
+  integer :: I         ! Loop inductor
+  integer :: KEY       ! A P_... parameter from Init_Tables_Module
+  integer :: SON       ! A son of the ChunkDivide section node
+  integer :: UNITS(2)  ! Units of expression
+  real(r8) :: VALUE(2)   ! Value of expression
+
+  ! Initialize variables to 'unfound' values
+
+  config%ignoreL1B = .false.
+  config%noChunks = 0
+  config%idealLength_family = PHYQ_Invalid
+  config%homeGeodAngle = 0.0
+  config%homeModule = L_None
+  config%overlap = 0.0
+  config%overlap_family = PHYQ_Invalid
+  config%scanLLSet = .false.
+  config%scanULSet = .false.
+  config%criticalModules = l_none
+  config%maxGap_family = PHYQ_Invalid
+
+  error = 0
+
+  ! Loop through MLSCF section, identifying keywords and setting variables
+
+  do i = 2, nsons(root)-1 ! Skip the section identifiers
+    son = subtree(i,root)
+    if ( node_id(son) == n_equal ) then
+      key = decoration(subtree(1,son)) ! P_... index from Init_Tables_Module
+      got(key) = .true.
+      call expr ( subtree(2,son), units, value )
+
+      select case ( key )
+      case ( p_ignoreL1B )
+        config%ignoreL1B = value(1) == l_true
+      case ( p_noChunks )
+        config%noChunks = nint(value(1))
+      case ( p_ideal_length )
+        config%idealLength = value(1)
+        config%idealLength_family = units(1)
+      case ( p_home_geod_angle )
+        config%homeGeodAngle = value(1)
+        if ( units(1) /= PHYQ_Angle ) call announce_error ( son, notAngle, key )
+      case ( p_home_module )
+        config%homeModule = value(1)
+      case ( p_overlap )
+        config%overlap = value(1)
+        config%overlap_family = units(1)
+      case ( p_scan_lower_limit )
+        if ( units(1) /= phyq_Length) &
+          & call announce_error ( son, notLength, key )
+        config%scanLLSet = .true.
+        config%scanLowerLimit = value
+      case ( p_scan_upper_limit )
+        if ( units(1) /= phyq_Length) &
+          & call announce_error ( son, notLength, key )
+        config%scanULSet = .true.
+        config%scanUpperLimit = value
+      case ( p_critical_scanning_modules )
+        config%criticalModules = value(1)
+      case ( p_max_gap )
+        config%maxGap = value(1)
+        config%maxGap_family = units(1)
+      case ( p_critical_bands )
+        !bands = value(1)
+d1116 1
+a1116 13
+    else
+      if ( node_id(son) == n_named ) son = subtree(2,son) ! ignore label
+      select case ( get_spec_id(son) )
+      case ( s_time )
+        if ( timing ) then
+          call sayTime
+        else
+          call cpu_time ( t1 )
+          timing = .true.
+        end if
+      case default
+      end select
+    end if
+d1118 6
+a1123 1
+  end do
+d1125 38
+a1162 1
+  ! Check for missing values that would cause error exits
+d1164 1
+a1164 62
+  do i = first_parm, last_parm
+    select case ( i )
+    case ( p_ideal_length, p_overlap )
+      if ( .not. got(i) ) call announce_error ( root, notSpecified, i )
+    case ( p_home_module, p_critical_scanning_modules )    
+      if ( .not. got(i) .and. .not. config%ignoreL1B) &
+        & call announce_error ( root, notSpecified, i )
+    case ( p_noChunks) 
+      if ( .not. got(i) .and. config%ignoreL1B) &
+        & call announce_error ( root, notSpecified, i )
+    end select
+  end do
+
+  if (config%ignoreL1B) then
+    if (config%idealLength_family /= phyq_MAFs ) &
+      & call announce_error ( root, badUnitsForIgnore, p_ideal_length )
+    if (config%overlap_family /= phyq_MAFs ) &
+      & call announce_error ( root, badUnitsForIgnore, p_overlap )
+  endif    
+
+  ! Check for values that depend on the presence of other quantities
+
+  if ( config%criticalModules /= l_none ) then
+    if ( .not. got(p_scan_lower_limit) ) &
+      & call announce_error ( root, notSpecified, p_scan_lower_limit )
+    if ( .not. got(p_scan_upper_limit) ) &
+      & call announce_error ( root, notSpecified, p_scan_upper_limit )
+  end if
+
+  if ( error > 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+    & 'Errors in specification prevent processing.' )
+
+contains
+
+  subroutine Announce_Error ( where, Code, Param )
+    integer, intent(in) :: where, Code, Param
+
+    error = max(error,1)
+    call print_source ( source_ref(where) )
+    call output ( ' ScanDivide complained: ' )
+    select case ( code )
+    case ( BadUnitsForIgnore )
+      call output ( ' In the IgnoreL1B case ' )
+      call display_string ( parm_indices(param) )
+      call output (' must have units of MAFs' )
+    case ( notLength )
+      call output ( ' The value of ' )
+      call display_string ( parm_indices(param) )
+      call output ( ' does not have units of Length.', advance='yes' )
+    case ( notAngle )
+      call output ( ' The value of ' )
+      call display_string ( parm_indices(param) )
+      call output ( ' does not have units of Angle.', advance='yes' )
+    case ( notSpecified )
+      call output ( ' The parameter ' )
+      call display_string ( parm_indices(param) )
+      call output ( ' is required but not specified.', advance='yes' )
+    end select
+  end subroutine Announce_Error
+!--------------------------------
+end subroutine ScanDivide_mlscf
+!--------------------------------
+a1174 1
+!====================
+a1175 1
+!====================
+d1177 34
+a1210 31
+!# $Log: ScanDivide.f90,v $
+!# Revision 2.13  2001/05/03 21:47:30  vsnyder
+!# Get R8 from MLSCommon instead of MLSNumerics
+!#
+!# Revision 2.12  2001/04/26 02:44:17  vsnyder
+!# Moved *_indices declarations from init_tables_module to intrinsic
+!#
+!# Revision 2.11  2001/04/24 23:12:12  vsnyder
+!# Add timing
+!#
+!# Revision 2.10  2001/04/24 19:08:58  livesey
+!# Interim version, needs changes later on.
+!#
+!# Revision 2.6  2001/03/08 23:36:19  vsnyder
+!# Make sure FLAG is defined in ScanDivide_firstGuess
+!#
+!# Revision 2.5  2001/03/02 19:32:06  pwagner
+!# Gets MLSMSG_L1BRead from MLSMessageModule, not MLSStrings
+!#
+!# Revision 2.4  2001/02/13 00:09:02  vsnyder
+!# Simplify and improve MLSCF error messages
+!#
+!# Revision 2.3  2001/02/12 20:29:34  livesey
+!# Flagged a possible error region
+!#
+!# Revision 2.2  2000/09/11 20:00:20  ahanzel
+!# Removed old log entries in file.
+!#
+!# Revision 2.1  2000/09/08 22:55:56  vsnyder
+!# Revised to use the tree output by the parser
+!#
+@
+
+
+2.13
+log
+@Get R8 from MLSCommon instead of MLSNumerics
+@
+text
+@d42 1
+a42 1
+       "$Id: ScanDivide.f90,v 2.12 2001/04/26 02:44:17 vsnyder Exp $"
+d203 1
+a203 1
+    call DeallocateL1BData(data, flag)
+d228 1
+a228 1
+    call DeallocateL1BData(data, flag)
+d339 1
+a339 1
+    call DeallocateL1BData(data, flag)
+d377 1
+a377 1
+        call DeallocateL1BData(data, flag)
+d423 1
+a423 1
+        call DeallocateL1BData ( data, flag )
+d1404 3
+@
+
+
+2.12
+log
+@Moved *_indices declarations from init_tables_module to intrinsic
+@
+text
+@d20 1
+a20 1
+  use MLSCommon, only: L1BINFO_T, MLSCHUNK_T, TAI93_Range_T
+d23 1
+a23 1
+  use MLSNumerics, only: HUNT, R8
+d42 1
+a42 1
+       "$Id: ScanDivide.f90,v 2.11 2001/04/24 23:12:12 vsnyder Exp $"
+d1404 3
+@
+
+
+2.11
+log
+@Add timing
+@
+text
+@d15 3
+a17 2
+  use INIT_TABLES_MODULE, only: PARM_INDICES, PHYQ_ANGLE, &
+    PHYQ_INVALID, PHYQ_LENGTH, PHYQ_MAFS, PHYQ_TIME
+d33 1
+d42 1
+a42 1
+       "$Id: $"
+d45 1
+a45 1
+       "$RCSfile: $"
+d1404 3
+@
+
+
+2.10
+log
+@Interim version, needs changes later on.
+@
+text
+@d14 1
+a14 1
+    P_NOCHUNKS, P_OVERLAP, P_SCAN_LOWER_LIMIT, P_SCAN_UPPER_LIMIT
+d24 1
+d30 2
+a31 1
+  use TREE, only: DECORATION, NSONS, Source_Ref, SUBTREE
+d33 1
+d38 7
+a44 5
+  !------------------- RCS Ident Info ------------------------------------
+  character(len=130) :: Id = &
+    "$Id: ScanDivide.f90,v 2.6 2001/03/08 23:36:19 vsnyder Exp $"
+  character(len=*), parameter :: ModuleName= "$RCSfile: ScanDivide.f90,v $"
+  !------------------------------------------------------------------------
+d80 3
+d478 1
+d1225 97
+a1321 114
+integer, intent(in) :: ROOT    ! Root of the ChunkDivide section of the
+! MLSCF abstract syntax tree
+type (ScanDivideConfig_T), intent(out) :: CONFIG ! Result of operation
+
+! Parameters
+
+! For announce_error:
+integer, parameter :: BadUnitsForIgnore = 1
+integer, parameter :: NotLength = BadUnitsForIgnore + 1
+integer, parameter :: NotSpecified = notLength + 1
+integer, parameter :: NotAngle = NotSpecified + 1
+
+! Functions
+
+! Variables
+integer :: Error     ! Error level
+logical :: GOT(first_parm:last_parm) = .false.
+integer :: I         ! Loop inductor
+integer :: KEY       ! A P_... parameter from Init_Tables_Module
+integer :: SON       ! A son of the ChunkDivide section node
+integer :: UNITS(2)  ! Units of expression
+real(r8) :: VALUE(2)   ! Value of expression
+
+! Initialize variables to 'unfound' values
+
+config%ignoreL1B = .false.
+config%noChunks = 0
+config%idealLength_family = PHYQ_Invalid
+config%homeGeodAngle = 0.0
+config%homeModule = L_None
+config%overlap = 0.0
+config%overlap_family = PHYQ_Invalid
+config%scanLLSet = .false.
+config%scanULSet = .false.
+config%criticalModules = l_none
+config%maxGap_family = PHYQ_Invalid
+
+error = 0
+
+! Loop through MLSCF section, identifying keywords and setting variables
+
+do i = 2, nsons(root)-1 ! Skip the section identifiers
+  son = subtree(i,root)
+  key = decoration(subtree(1,son)) ! P_... index from Init_Tables_Module
+  got(key) = .true.
+  call expr ( subtree(2,son), units, value )
+
+  select case ( key )
+  case ( p_ignoreL1B )
+    config%ignoreL1B = value(1) == l_true
+  case ( p_noChunks )
+    config%noChunks = nint(value(1))
+  case ( p_ideal_length )
+    config%idealLength = value(1)
+    config%idealLength_family = units(1)
+  case ( p_home_geod_angle )
+    config%homeGeodAngle = value(1)
+    if ( units(1) /= PHYQ_Angle ) call announce_error ( son, notAngle, key )
+  case ( p_home_module )
+    config%homeModule = value(1)
+  case ( p_overlap )
+    config%overlap = value(1)
+    config%overlap_family = units(1)
+  case ( p_scan_lower_limit )
+    if ( units(1) /= phyq_Length) &
+      & call announce_error ( son, notLength, key )
+    config%scanLLSet = .true.
+    config%scanLowerLimit = value
+  case ( p_scan_upper_limit )
+    if ( units(1) /= phyq_Length) &
+      & call announce_error ( son, notLength, key )
+    config%scanULSet = .true.
+    config%scanUpperLimit = value
+  case ( p_critical_scanning_modules )
+    config%criticalModules = value(1)
+  case ( p_max_gap )
+    config%maxGap = value(1)
+    config%maxGap_family = units(1)
+  case ( p_critical_bands )
+    !bands = value(1)
+  end select
+
+end do
+
+! Check for missing values that would cause error exits
+
+do i = first_parm, last_parm
+  select case ( i )
+  case ( p_ideal_length, p_overlap )
+    if ( .not. got(i) ) call announce_error ( root, notSpecified, i )
+  case ( p_home_module, p_critical_scanning_modules )    
+    if ( .not. got(i) .and. .not. config%ignoreL1B) &
+      & call announce_error ( root, notSpecified, i )
+  case ( p_noChunks) 
+    if ( .not. got(i) .and. config%ignoreL1B) &
+      & call announce_error ( root, notSpecified, i )
+  end select
+end do
+
+if (config%ignoreL1B) then
+  if (config%idealLength_family /= phyq_MAFs ) &
+    & call announce_error ( root, badUnitsForIgnore, p_ideal_length )
+  if (config%overlap_family /= phyq_MAFs ) &
+    & call announce_error ( root, badUnitsForIgnore, p_overlap )
+endif    
+
+! Check for values that depend on the presence of other quantities
+
+if ( config%criticalModules /= l_none ) then
+  if ( .not. got(p_scan_lower_limit) ) &
+    & call announce_error ( root, notSpecified, p_scan_lower_limit )
+  if ( .not. got(p_scan_upper_limit) ) &
+    & call announce_error ( root, notSpecified, p_scan_upper_limit )
+end if
+d1323 33
+a1355 2
+if ( error > 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+  & 'Errors in specification prevent processing.' )
+d1359 2
+a1360 2
+subroutine Announce_Error ( where, Code, Param )
+  integer, intent(in) :: where, Code, Param
+d1362 22
+a1383 22
+  error = max(error,1)
+  call print_source ( source_ref(where) )
+  call output ( ' ScanDivide complained: ' )
+  select case ( code )
+  case ( BadUnitsForIgnore )
+    call output ( ' In the IgnoreL1B case ' )
+    call display_string ( parm_indices(param) )
+    call output (' must have units of MAFs' )
+  case ( notLength )
+    call output ( ' The value of ' )
+    call display_string ( parm_indices(param) )
+    call output ( ' does not have units of Length.', advance='yes' )
+  case ( notAngle )
+    call output ( ' The value of ' )
+    call display_string ( parm_indices(param) )
+    call output ( ' does not have units of Angle.', advance='yes' )
+  case ( notSpecified )
+    call output ( ' The parameter ' )
+    call display_string ( parm_indices(param) )
+    call output ( ' is required but not specified.', advance='yes' )
+  end select
+end subroutine Announce_Error
+d1388 9
+d1402 3
+@
+
+
+2.9
+log
+@REALLY finish adding 'time' command
+@
+text
+@d6 1
+a6 1
+!=======================================================================
+d8 1
+d10 7
+a16 5
+  use INIT_TABLES_MODULE, only:   FIRST_PARM, L_BOTH, L_EITHER, L_GHZ, &
+    L_NONE, L_THZ, LAST_PARM, P_CRITICAL_BANDS, P_CRITICAL_SCANNING_MODULES, &
+    P_HOME_GEOD_ANGLE, P_HOME_MODULE, P_IDEAL_LENGTH, P_MAX_GAP, P_OVERLAP, &
+    P_SCAN_LOWER_LIMIT, P_SCAN_UPPER_LIMIT, PARM_INDICES, &
+    PHYQ_INVALID, PHYQ_LENGTH, PHYQ_MAFS, PHYQ_TIME, S_TIME
+d23 1
+a23 2
+!  use MLSStrings, only: MLSMSG_L1BRead
+  use MoreTree, only: Get_Spec_ID
+d27 3
+a29 2
+  use TREE, only: DECORATION, Node_ID, NSONS, Source_Ref, SUBTREE
+  use Tree_Types, only: N_Equal, N_Named
+d35 3
+a37 6
+  private :: ID, ModuleName
+
+!------------------- RCS Ident Info ------------------------------------
+  character(len=*), parameter :: IdParm = &
+    & "$Id: ScanDivide.f90,v 2.8 2001/04/23 23:57:12 vsnyder Exp $"
+  character(len=len(idParm)) :: Id = idParm
+d39 1
+a39 3
+!------------------------------------------------------------------------
+
+! Contents:
+d41 1
+a41 7
+! Subroutines -- DestroyChunkDatabase             Public
+!                ScanDivide_firstGuess            Private
+!                ScanDivide_wall                  Private
+!                ScanDivide_range                 Private
+!                ScanDivide_checkReorganizeRange  Private
+!                ScanDivide_mlscf                 Private
+!                ScanAndDivide                    Public
+d43 31
+a73 5
+! Remarks:  This prototype module contains subroutines for the Scan/Divide task
+!           of the L2 software.
+
+  logical :: TIMING                   ! For S_Time
+  real :: T1, T2                      ! For S_Time
+d77 1
+a77 1
+!------------------------------------------  DestroyChunkDatabase  -----
+d87 1
+a87 1
+!-------------------------------------------------  ScanAndDivide  -----
+d89 2
+a90 7
+!-----------------------------------------------------------------------
+
+! Brief description of subroutine 
+! This subroutine is called by the main L2 program to divide the input L1B
+! dataset into chunks.
+
+! Arguments
+d92 1
+a93 1
+
+a94 1
+
+a95 1
+
+d98 1
+a98 2
+! Parameters
+
+d100 1
+a100 1
+                                      'Deallocation failed:  l1b pointers.'
+d102 1
+a102 5
+                                      'Error return from subroutine '
+
+! Functions
+
+! Variables
+d104 2
+a105 1
+   type( L1BData_T ) :: DATA
+a106 2
+    integer :: MODHOME
+    integer :: MODCRITICAL
+a108 2
+    integer :: UNITSGAP
+    integer :: BANDS
+d110 31
+a140 9
+    real(r8) :: DIFF, HOME, LLB, LUB, MAX, MAXGAP, MIN, ORBLEN
+    real(r8) :: ULB, UUB
+    real(r8), allocatable :: PHI(:), TIME(:)
+
+    integer :: ERROR, FIRSTMAF, FLAG, FOUNDEND, FOUNDSTART, I, J
+    integer :: LASTMAF, LOOP, NOMAFS, NUMBAD, NUMCHUNKS, NUMFILE, NUMOA
+    integer :: NUMSCAN, OVERLAP
+    integer, allocatable :: BADMAF(:), COUNTERMAF(:), FIRSTOA(:)
+    integer, allocatable :: FIRSTSCAN(:), LASTOA(:), LASTSCAN(:)
+d142 1
+a142 1
+    timing = .false.
+d144 1
+a144 1
+! Check that input times are reasonable
+d146 4
+d151 2
+a152 2
+       call MLSMessage(MLSMSG_Error, ModuleName, 'Input start time &
+                                                 &greater than end time.')
+d154 20
+a173 1
+! Read the L1 data for MAF times
+d175 1
+d179 2
+a180 2
+       msr = MLSMSG_L1BRead // quantity
+       call MLSMessage(MLSMSG_Error, ModuleName, msr)
+d183 1
+a183 2
+! Allocate arrays which will hold re-used L1BOA quantities for the entire file
+
+d195 1
+a195 3
+                                   MLSMSG_DeallocateL1b)
+
+! Check that input times fall within file
+d197 3
+a199 2
+    if ( (processingRange%startTime >= time(noMAFs)) .OR. &
+         (processingRange%endTime <= time(1)) ) &
+d201 1
+a201 6
+                      'Input times out of range of L1 input file.')
+   
+! Get MLSCF values
+
+    call ScanDivide_mlscf ( root, bands, home, llb, lub, &
+          maxGap, modCritical, modHome, orbLen, overlap, ulb, uub, unitsGap )
+a202 1
+! Read phi for correct module
+d204 2
+a205 1
+    if (modHome == l_thz) then
+a209 1
+
+d220 1
+a220 3
+                                   MLSMSG_DeallocateL1b)
+
+! Find firstMAF for data set
+d222 1
+d226 1
+a226 1
+      foundStart = 0
+d228 1
+a228 1
+        if (foundStart == 1) exit
+d231 1
+a231 1
+          foundStart = 1
+d236 1
+a236 2
+! Find lastMAF for data set
+
+d242 1
+a242 1
+      foundEnd = 0
+d244 1
+a244 1
+        if (foundEnd == 1) exit
+d247 1
+a247 1
+          foundEnd = 1
+d252 4
+a255 4
+! Calculate a first guess for chunk boundaries
+
+    call ScanDivide_firstGuess(l1bInfo%L1BOAId, firstMAF, home, lastMAF, &
+                               numFile, orbLen, overlap, phi, chunks, flag)
+d258 2
+a259 4
+
+! If necessary, check for completely missing telemetry
+
+    if (maxGap == -1.0) return
+d269 1
+a269 1
+    numChunks = SIZE(chunks)
+d271 1
+a271 2
+
+      select case ( unitsGap )
+d279 1
+a279 2
+
+      if (diff > maxGap) then
+a282 1
+
+a285 1
+
+a290 1
+
+a291 2
+   
+! Scan scGeodAngle for value flagging bad toolkit returns
+d293 1
+d301 1
+a301 2
+! Check new set of chunks for unusable oa data
+
+d312 1
+a312 1
+    numChunks = SIZE(chunks)
+d331 1
+a331 4
+                                   MLSMSG_DeallocateL1b)
+
+! If gaps are found, check whether they (along with any previous adjacent
+! ones) exceed MaxGap; re-organize chunks, accordingly
+d333 2
+d337 1
+a337 1
+                       lastOa(1:numOa), maxGap, phi, time, unitsGap, chunks)
+d340 2
+a341 4
+! If necessary, check for valid scans
+
+    if ( modCritical /= l_none ) then
+
+d344 1
+a344 5
+      numChunks = SIZE(chunks)
+   
+! Unless THz alone specified as critical module, read GHz first
+
+      if ( modCritical /= l_thz ) then
+d346 2
+d354 1
+a354 3
+
+! Check GHz for bad scans
+
+d356 6
+a361 7
+
+          min = MINVAL(data%dpField(1,:,i))
+          max = MAXVAL(data%dpField(1,:,i))
+
+          if ( (min < llb) .OR. (min > lub) .OR. &
+               (max < ulb) .OR. (max > uub) ) then
+
+a363 1
+
+a364 1
+
+d369 1
+a369 2
+                                       MLSMSG_DeallocateL1b)
+
+d372 1
+a372 4
+! If necessary, read THz data
+
+      if ( (modCritical == l_thz) .OR. (modCritical == l_both) .OR. &
+           ((modCritical == l_either) .AND. (numBad > 0)) ) then
+d374 2
+d383 3
+a385 5
+! If EITHER is critical, check only bad GHz scans; if THz okay,
+! unmark MAF as bad.
+
+        if ( modCritical == l_either ) then
+
+a386 1
+
+d388 6
+a393 7
+
+              min = MINVAL(data%dpField(1,:,i))
+              max = MAXVAL(data%dpField(1,:,i))
+
+              if ( (min >= llb) .AND. (min <= lub) .AND. &
+                   (max >= ulb) .AND. (max <= uub) ) then
+
+a395 1
+
+a396 1
+
+a397 1
+
+d399 1
+a399 3
+
+! If THz is critical, check entire data set for bad THz scans
+
+a400 1
+
+d402 6
+a407 6
+
+            min = MINVAL(data%dpField(1,:,i))
+            max = MAXVAL(data%dpField(1,:,i))
+            if ( (min < llb) .OR. (min > lub) .OR. &
+                 (max < ulb) .OR. (max > uub) ) then
+
+a409 1
+
+a410 1
+
+a411 1
+
+a412 1
+
+d415 1
+a415 2
+                                       MLSMSG_DeallocateL1b)
+
+d417 1
+a417 3
+
+! If bad scans found, add "bad" markings for any MAFs previously discarded
+
+a418 1
+
+d425 1
+a425 2
+! Set first & last badMAF for all gaps found thus far
+
+d427 1
+a427 1
+                 STAT=error )
+a436 1
+
+a437 1
+
+a438 1
+
+d442 1
+a442 3
+
+          else if ( (i > 1) .AND. (lastScan(numScan) == i-2) ) then
+
+a443 1
+
+a444 1
+
+d447 2
+a448 3
+! Check whether these (including MAF "walls" previously found) exceed MaxGap;
+! re-organize chunks, if necessary
+
+d450 2
+a451 3
+                              firstScan(1:loop), lastScan(1:loop), &
+                              maxGap, phi, time, unitsGap, chunks)
+
+a456 1
+
+a457 1
+
+d459 1
+a459 2
+
+! If necessary, check for critical bands in the L1bRad file
+d461 2
+a462 4
+    if ( bands /= 0 ) then
+    end if
+
+! Deallocations
+d464 1
+d470 1
+d472 1
+a472 1
+    if ( timing ) call sayTime
+d474 3
+a476 5
+!------------------------------
+  end subroutine ScanAndDivide
+!------------------------------
+! =====     Private Procedures     =====================================
+!-----------------------------------------  ScanDivide_firstGuess  -----
+d478 7
+a484 7
+                                     lastMAF, numFile, orbLen, overlap, &
+                                     phi, chunks, flag)
+!-----------------------------------------------------------------------
+
+! Brief description of subroutine
+! This subroutine creates a set of data structures defining a "first guess" for
+! MAF chunk boundaries.
+d486 1
+a486 1
+! Arguments
+d498 1
+a498 1
+! Parameters
+d500 1
+a500 1
+! Functions
+d502 1
+a502 1
+! Variables
+d515 1
+a515 1
+! Find max & min phi for data set
+d517 2
+a518 2
+    max = MAXVAL( phi(firstMAF+1:lastMAF+1) )
+    min = MINVAL( phi(firstMAF+1:lastMAF+1) )
+d520 1
+a520 1
+! Convert from "fraction of orbit" to "degrees of phi"
+d524 1
+a524 1
+! Find phi boundaries above & below HomeGeodAngle
+d526 1
+a526 1
+    bdryMax = ANINT(max_orbits * 360.0 / orbLen)
+d530 2
+a531 2
+       msr = MLSMSG_Allocate // ' arrays for phi bdries above & below Home.'
+       call MLSMessage(MLSMSG_Error, ModuleName, msr)
+d534 1
+a534 1
+! If min above home, reset HomeGeodAngle to closest ideal bdry below min
+d538 1
+a538 1
+       below = 0
+d540 4
+a543 4
+       do i = 1, bdryMax
+          newHome = home + i*phiLen
+          if (newHome > min) exit
+       end do
+d545 1
+a545 1
+       newHome = home + (i-1)*phiLen
+d547 1
+a547 1
+! Calculate boundaries above home phi
+d549 4
+a552 4
+       do i = 1, bdryMax
+          aboveHome(i) = newHome + i*phiLen
+          if (aboveHome(i) >= max) exit
+       end do
+d554 1
+a554 1
+       above = i-1
+a556 2
+      
+! If min below home, check whether max also is
+d558 3
+a560 1
+        if (max <= home) then
+d562 1
+a562 1
+! If max is also below, reset HomeGeodAngle to closest ideal bdry above max
+d564 1
+a564 1
+          above = 0
+d566 4
+a569 4
+          do i = 1, bdryMax
+             newHome = home - i*phiLen
+             if (newHome <= max) exit
+          end do
+d571 1
+a571 1
+          newHome = home - (i-1)*phiLen
+d573 1
+a573 1
+       else
+d575 1
+a575 1
+! If max is above, calculate boundaries >= HomeGeodAngle
+d577 4
+a580 4
+          do i = 1, bdryMax
+             aboveHome(i) = home + (i-1)*phiLen
+             if (aboveHome(i) >= max) exit
+          end do
+d582 1
+a582 1
+          above = i-1
+d584 1
+a584 1
+          newHome = home
+d586 1
+a586 1
+       end if
+d588 1
+a588 1
+! Calculate boundaries below home phi
+d590 4
+a593 4
+       do i = 1, bdryMax
+          belowHome(i) = newHome - i*phiLen
+          if (belowHome(i) <= min) exit
+       end do
+d595 1
+a595 1
+       below = i-1
+d599 1
+a599 1
+! Put phi boundaries into a single array in ascending order, from min to max
+d604 1
+a604 1
+              STAT=alloc_err )
+d606 2
+a607 2
+       msr = MLSMSG_Allocate // ' bdry arrays.'
+       call MLSMessage(MLSMSG_Error, ModuleName, msr)
+d624 3
+a626 3
+       msr = MLSMSG_Deallocate // ' arrays for phi bdries above & below Home.'
+       call MLSMessage(MLSMSG_Warning, ModuleName, msr)
+       flag = -1
+d629 1
+a629 1
+! Find MAFs containing the phi boundaries
+d631 1
+a631 1
+    call Hunt(phi, bdryPhi, indices, allowTopValue=.TRUE.)
+d633 1
+a633 1
+! Convert MAF bdry indices to begin at 0 (like file), rather than 1 (like phi)
+d639 3
+a641 3
+       msr = MLSMSG_Deallocate // ' phi, index bdries.'
+       call MLSMessage(MLSMSG_Warning, ModuleName, msr)
+       flag = -1
+d644 1
+a644 1
+! Fill data structure for each chunk
+d651 1
+a651 1
+! Calculate firstMAFIndex, subtracting overlap from MAF boundaries
+d656 1
+a656 1
+! Calculate lastMAFIndex, adding overlap to MAF boundaries
+d662 1
+a662 1
+        chunks(numChunks)%lastMAFIndex = numFile
+d664 1
+a664 1
+! Set lower overlap to MLSCF input; consider first MAF separately
+d671 1
+a671 1
+! Set upper overlap to MLSCF input; consider last MAF separately
+d676 1
+a676 1
+                                          &bdryMAF(numBdry)
+d678 1
+a678 1
+! Calculate accumulatedMAFs
+d683 1
+a683 1
+       chunks(i)%accumulatedMAFs = chunks(i-1)%accumulatedMAFs + &
+d690 3
+a692 3
+       msr = MLSMSG_Deallocate // ' MAF bdries.'
+       call MLSMessage(MLSMSG_Warning, ModuleName, msr)
+       flag = -1
+d695 1
+a695 1
+!--------------------------------------
+d697 1
+a697 1
+!--------------------------------------
+d699 1
+a699 1
+!-----------------------------------------------  ScanDivide_wall  -----
+d701 1
+a701 1
+!-----------------------------------------------------------------------
+d703 2
+a704 2
+! Brief description of subroutine
+! This subroutine reorganizes chunks around "walls."
+d706 1
+a706 1
+! Arguments
+d714 1
+a714 1
+! Parameters
+d716 1
+a716 1
+! Functions
+d718 1
+a718 1
+! Variables
+d727 2
+a728 2
+! If input is a single MAF #, change its format to that of an array,
+! indexed such that badMAF(input) = 1
+d730 1
+a730 1
+    numBad = SIZE(bad)
+d734 1
+a734 1
+       scalar = bad(1)
+d736 5
+a740 5
+       allocate (  badMAF(scalar), STAT=error )
+       if (error /= 0) then
+          msr = MLSMSG_Allocate // ' badMAF array.'
+          call MLSMessage(MLSMSG_Error, ModuleName, msr)
+       end if
+d742 2
+a743 2
+       badMAF = 0
+       badMAF(scalar) = 1
+d747 5
+a751 5
+       allocate (  badMAF(numBad), STAT=error )
+       if (error /= 0) then
+          msr = MLSMSG_Allocate // ' badMAF array.'
+          call MLSMessage(MLSMSG_Error, ModuleName, msr)
+       end if
+d753 1
+a753 1
+       badMAF = bad
+d757 1
+a757 1
+! Initialize walledChunks array
+d759 1
+a759 1
+    numChunks = SIZE(chunks)
+d763 2
+a764 2
+       msr = MLSMSG_Allocate // ' walled chunk arrays.'
+       call MLSMessage(MLSMSG_Error, ModuleName, msr)
+d769 2
+a770 2
+! If wall in first chunk splits off a portion containing only lower overlap,
+! jettison overlap portion
+d774 1
+a774 1
+       do i = 1, chunks(1)%noMAFsLowerOverlap
+d776 7
+a782 7
+          if ( badMAF(chunks(1)%firstMAFIndex+&
+                      chunks(1)%noMAFsLowerOverlap-i+2) == 1) then
+             walledChunks(1)%firstMAFIndex = chunks(1)%firstMAFIndex+&
+                                           chunks(1)%noMAFsLowerOverlap-(i-1)
+             walledChunks(1)%noMAFsLowerOverlap = i-1
+             exit
+          end if
+d784 1
+a784 1
+       end do
+d788 2
+a789 2
+! If wall in non-overlapped portion, split chunk into 2, with no overlaps at
+! new bdry.
+d795 1
+a795 1
+           chunks(2)%firstMAFIndex-1
+d797 11
+a807 11
+       if (badMAF(i+1) == 1) then
+          walledChunks(wallInd)%lastMAFIndex = i-1
+          walledChunks(wallInd)%noMAFsUpperOverlap = 0
+          walledChunks(wallInd+1)%firstMAFIndex = i
+          walledChunks(wallInd+1)%noMAFsLowerOverlap = 0
+          walledChunks(wallInd+1)%accumulatedMAFs = i
+          walledChunks(wallInd+1)%lastMAFIndex = chunks(1)%lastMAFIndex
+          walledChunks(wallInd+1)%noMAFsUpperOverlap = &
+                        chunks(1)%noMAFsUpperOverlap
+          wallInd = wallInd + 1
+       end if
+d811 1
+a811 1
+! If in upper overlap, re-set bdries without overlaps
+d815 12
+a826 12
+       if (badMAF(i+1) == 1) then
+          walledChunks(wallInd)%lastMAFIndex = i-1
+          walledChunks(wallInd)%noMAFsUpperOverlap = 0
+          walledChunks(wallInd+1)%firstMAFIndex = i
+          walledChunks(wallInd+1)%noMAFsLowerOverlap = 0
+          walledChunks(wallInd+1)%accumulatedMAFs = i
+          walledChunks(wallInd+1)%lastMAFIndex = chunks(2)%lastMAFIndex
+          walledChunks(wallInd+1)%noMAFsUpperOverlap = &
+                        chunks(2)%noMAFsUpperOverlap
+          wallInd = wallInd + 1
+          move = 1
+       end if
+d830 1
+a830 1
+! Re-organize rest of chunks, except for last
+d834 6
+a839 6
+       if (move == 1) then
+          move = 0
+       else
+          wallInd = wallInd + 1
+          walledChunks(wallInd) = chunks(i)
+       end if
+d841 1
+a841 1
+       do j = chunks(i-1)%lastMAFIndex+2, chunks(i+1)%firstMAFIndex-1
+d843 11
+a853 11
+          if (badMAF(j+1) == 1) then
+             walledChunks(wallInd)%lastMAFIndex = j-1
+             walledChunks(wallInd)%noMAFsUpperOverlap = 0
+             walledChunks(wallInd+1)%accumulatedMAFs = j
+             walledChunks(wallInd+1)%firstMAFIndex = j
+             walledChunks(wallInd+1)%noMAFsLowerOverlap = 0
+             walledChunks(wallInd+1)%lastMAFIndex = chunks(i)%lastMAFIndex
+             walledChunks(wallInd+1)%noMAFsUpperOverlap = &
+                           chunks(i)%noMAFsUpperOverlap
+             wallInd = wallInd + 1
+          end if
+d855 1
+a855 1
+       end do
+d857 1
+a857 1
+       do j = chunks(i+1)%firstMAFIndex, chunks(i)%lastMAFIndex+1
+d859 12
+a870 12
+          if (badMAF(j+1) == 1) then
+             walledChunks(wallInd)%lastMAFIndex = j-1
+             walledChunks(wallInd)%noMAFsUpperOverlap = 0
+             walledChunks(wallInd+1)%accumulatedMAFs = j
+             walledChunks(wallInd+1)%firstMAFIndex = j
+             walledChunks(wallInd+1)%noMAFsLowerOverlap = 0
+             walledChunks(wallInd+1)%lastMAFIndex = chunks(i+1)%lastMAFIndex
+             walledChunks(wallInd+1)%noMAFsUpperOverlap = &
+                         chunks(i+1)%noMAFsUpperOverlap
+             wallInd = wallInd + 1
+             move = 1
+          end if
+d872 1
+a872 1
+       end do
+d876 1
+a876 1
+! Re-organize non-overlapped portion of last chunk
+d879 2
+a880 2
+       wallInd = wallInd + 1
+       walledChunks(wallInd) = chunks(numChunks)
+d884 1
+a884 1
+        chunks(numChunks)%lastMAFIndex-chunks(numChunks)%noMAFsUpperOverlap
+d886 12
+a897 12
+       if (badMAF(i+1) == 1) then
+          walledChunks(wallInd)%lastMAFIndex = i-1
+          walledChunks(wallInd)%noMAFsUpperOverlap = 0
+          walledChunks(wallInd+1)%accumulatedMAFs = i
+          walledChunks(wallInd+1)%firstMAFIndex = i
+          walledChunks(wallInd+1)%noMAFsLowerOverlap = 0
+          walledChunks(wallInd+1)%lastMAFIndex = &
+                chunks(numChunks)%lastMAFIndex
+          walledChunks(wallInd+1)%noMAFsUpperOverlap = &
+                chunks(numChunks)%noMAFsUpperOverlap
+          wallInd = wallInd +1
+       end if
+d901 3
+a903 3
+! Re-organize upper overlap portion (if it exists); truncate any resulting
+! chunk that is purely overlap
+ 
+d905 1
+a905 1
+        chunks(numChunks)%noMAFsUpperOverlap+1,chunks(numChunks)%lastMAFIndex
+d907 1
+a907 1
+       if (badMAF(i+1) == 1) then
+d909 2
+a910 2
+         walledChunks(wallInd)%lastMAFIndex = i-1
+         walledChunks(wallInd)%noMAFsUpperOverlap = &
+d914 3
+a916 3
+         if (walledChunks(wallInd)%noMAFsUpperOverlap < 0) then
+            walledChunks(wallInd)%noMAFsUpperOverlap = 0
+         end if
+d918 1
+a918 1
+         exit
+d920 1
+a920 1
+       end if
+d924 1
+a924 1
+! Deallocations
+d928 3
+a930 3
+       msr = MLSMSG_Deallocate // ' badMAF array.'
+       call MLSMessage(MLSMSG_Warning, ModuleName, msr)
+       flag = -1
+d935 2
+a936 2
+       msr = MLSMSG_Deallocate // ' chunks array.'
+       call MLSMessage(MLSMSG_Error, ModuleName, msr)
+d939 1
+a939 1
+! Reset input chunks array
+d943 2
+a944 2
+       msr = MLSMSG_Allocate // ' new output chunks array.'
+       call MLSMessage(MLSMSG_Error, ModuleName, msr)
+d951 3
+a953 3
+       msr = MLSMSG_Deallocate // ' walledChunks array.'
+       call MLSMessage(MLSMSG_Warning, ModuleName, msr)
+       flag = -1
+d956 1
+a956 1
+!--------------------------------
+d958 1
+a958 1
+!--------------------------------
+d960 1
+a960 1
+!----------------------------------------------  ScanDivide_range  -----
+d962 2
+a963 2
+                                flag )
+!------------------------------------------------------------------------------
+d965 2
+a966 2
+! Brief description of subroutine
+! This subroutine reorganizes chunks around periods of bad data.
+d968 1
+a968 1
+! Arguments
+d976 1
+a976 1
+! Parameters
+d978 1
+a978 1
+! Functions
+d980 1
+a980 1
+! Variables
+d988 1
+a988 1
+! Initialize expanded newChunks array
+d990 1
+a990 1
+    numChunks = SIZE(chunks)
+d994 2
+a995 2
+       msr = MLSMSG_Allocate // ' newChunks array.'
+       call MLSMessage(MLSMSG_Error, ModuleName, msr)
+d998 1
+a998 1
+! Find the chunk where the gap begins
+d1004 2
+a1005 2
+      if ( (firstBadMAFIndex <= chunks(chunkInd)%lastMAFIndex) .AND. &
+           (firstBadMAFIndex >= chunks(chunkInd)%firstMAFIndex) ) then
+d1007 1
+a1007 1
+! If it begins above the lower overlap,
+d1010 1
+a1010 1
+                               chunks(chunkInd)%NoMAFsLowerOverlap ) then
+d1012 1
+a1012 1
+! It breaks off a chunk below the gap; set info for this new chunk
+d1015 1
+a1015 1
+                            chunks(chunkInd)%accumulatedMAFs
+d1018 1
+a1018 1
+                            chunks(chunkInd)%noMAFsLowerOverlap
+d1022 1
+a1022 1
+                              chunks(numChunks)%noMAFsUpperOverlap+1) then
+d1024 3
+a1026 3
+                              newChunks(newInd)%lastMAFIndex-&
+                              chunks(numChunks)%lastMAFIndex+&
+                              chunks(numChunks)%noMAFsUpperOverlap
+d1033 1
+a1033 1
+       end if
+d1035 1
+a1035 1
+! If the gap ends in the upper overlap of the last chunk, exit
+d1037 2
+a1038 2
+       if ( lastBadMAFIndex >= chunks(numChunks)%lastMAFIndex-&
+                               chunks(numChunks)%noMAFsUpperOverlap ) exit
+d1040 1
+a1040 1
+! Otherwise, find the chunk where the gap ends
+d1042 1
+a1042 1
+       do j = 1, numChunks
+d1044 1
+a1044 1
+         chunkInd = chunkInd + (j-1)
+d1046 1
+a1046 1
+         if ( lastBadMAFIndex <= chunks(chunkInd)%lastMAFIndex ) then
+d1048 1
+a1048 1
+! Set start info for a new chunk beginning after the gap
+d1050 1
+a1050 1
+           if (newInd == 1) then
+d1052 1
+a1052 1
+           else
+d1054 2
+a1055 2
+                                newChunks(newInd-1)%lastMAFIndex + 1
+           end if
+d1057 1
+a1057 1
+           newChunks(newInd)%firstMAFIndex = lastBadMAFIndex + 1
+d1059 6
+a1064 6
+           newChunks(newInd)%noMAFsLowerOverlap = &
+                             chunks(chunkInd)%firstMAFIndex + &
+                             chunks(chunkInd)%noMAFsLowerOverlap - &
+                             newChunks(newInd)%firstMAFIndex
+           if ( newChunks(newInd)%noMAFsLowerOverlap < 0 ) &
+                newChunks(newInd)%noMAFsLowerOverlap = 0
+d1066 1
+a1066 1
+! If gap ends below the upper overlap, set end info to the current old chunk
+d1068 2
+a1069 2
+           if (lastBadMAFIndex < chunks(chunkInd)%lastMAFIndex-&
+                              chunks(chunkInd)%noMAFsUpperOverlap ) then
+d1072 1
+a1072 1
+                                chunks(chunkInd)%lastMAFIndex
+d1074 1
+a1074 1
+                                chunks(chunkInd)%NoMAFsUpperOverlap
+d1077 1
+a1077 1
+           else
+d1079 1
+a1079 1
+! If not, set end info to next old chunk
+d1081 5
+a1085 5
+             newChunks(newInd)%lastMAFIndex = &
+                               chunks(chunkInd+1)%lastMAFIndex
+             newChunks(newInd)%noMAFsUpperOverlap = &
+                               chunks(chunkInd+1)%NoMAFsUpperOverlap
+             chunkInd = chunkInd + 2
+d1087 1
+a1087 1
+           end if
+d1089 2
+a1090 2
+           newInd = newInd + 1
+           exit
+d1092 1
+a1092 1
+         end if
+d1094 1
+a1094 1
+       end do
+d1096 1
+a1096 1
+     else
+d1098 1
+a1098 1
+! This chunk has no gaps in it; retain old chunk info
+d1100 3
+a1102 3
+       newChunks(newInd) = chunks(chunkInd)
+       newInd = newInd + 1
+       chunkInd = chunkInd + 1
+d1104 1
+a1104 1
+     end if
+d1106 1
+a1106 1
+     if (chunkInd > numChunks) exit
+d1108 1
+a1108 1
+   end do
+d1110 1
+a1110 1
+! Reset input chunks array
+d1112 5
+a1116 5
+   deallocate ( chunks, STAT=error )
+   if (error /= 0) then
+     msr = MLSMSG_Deallocate // ' chunks array.'
+     call MLSMessage(MLSMSG_Error, ModuleName, msr)
+   end if
+d1118 5
+a1122 5
+   allocate ( chunks(newInd-1), STAT=error )
+   if (error /= 0) then
+     msr = MLSMSG_Allocate // ' new output chunks array.'
+     call MLSMessage(MLSMSG_Error, ModuleName, msr)
+   end if
+d1124 1
+a1124 1
+   chunks = newChunks(1:newInd-1)
+d1126 6
+a1131 6
+   deallocate ( newChunks, STAT=error )
+   if (error /= 0) then
+     msr = MLSMSG_Deallocate // ' newChunks array.'
+     call MLSMessage(MLSMSG_Warning, ModuleName, msr)
+     flag = -1
+   end if
+d1133 1
+a1133 1
+!---------------------------------
+d1135 1
+a1135 1
+!---------------------------------
+d1139 7
+a1145 7
+                                               lastBad, maxGap, phi, &
+                                               time, units, chunks )
+!-----------------------------------------------------------------------
+
+! Brief description of subroutine
+! This subroutine checks data gaps against a maximum and calls the "range
+! re-organization routine, if MaxGap is exceeded.
+d1147 1
+a1147 1
+! Arguments
+a1156 2
+   
+! Parameters
+d1158 3
+a1160 1
+! Functions
+d1162 1
+a1162 1
+! Variables
+d1166 1
+a1166 1
+    integer :: END, FLAG, I, NUMCHUNKS, NUMGAPS, START
+d1168 1
+a1168 1
+! Add completely missing telemetry to bad MAFs, and check against MaxGap
+d1182 1
+a1182 1
+        end = chunks(numChunks)%lastMAFIndex + 1
+d1184 1
+a1184 1
+        end = lastBad(i) + 2
+d1189 1
+a1189 1
+        diff = counterMAF(end) - counterMAF(start)
+d1191 1
+a1191 1
+        diff = time(end) - time(start)
+d1193 1
+a1193 1
+        diff = phi(end) - phi(start)
+d1196 1
+a1196 1
+! If diff exceeds MaxGap, re-organize chunks
+a1202 1
+!------------------------------------------------
+d1207 2
+a1208 18
+  subroutine ScanDivide_mlscf ( root, bands, home, llb, lub, maxGap, &
+                   modCritical, modHome, orbLen, overlap, ulb, uub, unitsGap )
+!-----------------------------------------------------------------------
+
+! Brief description of subroutine
+! This subroutine identifies, separates, and checks values from the section
+! of the MLSCF (ChunkDivide) passed to Scan/Divide.
+
+! Arguments
+
+    integer, intent(in) :: ROOT    ! Root of the ChunkDivide section of the
+                                   ! MLSCF abstract syntax tree
+    integer, intent(out) :: modHome     ! Home module
+    integer, intent(out) :: modCritical ! Critical scanning module
+    integer, intent(out) :: bands       ! String index
+    integer, intent(out) :: unitsGap    ! PHYQ_... from Init_Tables_Module
+
+    integer, intent(out) :: overlap
+d1210 9
+a1218 1
+    real(r8), intent(out) :: home, llb, lub, maxGap, orbLen, ulb, uub
+d1222 5
+a1226 3
+    ! For announce_error:
+    integer, parameter :: NotLength = 1
+    integer, parameter :: NotSpecified = notLength + 1
+d1231 7
+d1239 1
+a1239 7
+    integer :: Error     ! Error level
+    logical :: GOT(first_parm:last_parm) = .false.
+    integer :: I         ! Loop inductor
+    integer :: KEY       ! A P_... parameter from Init_Tables_Module
+    integer :: SON       ! A son of the ChunkDivide section node
+    integer :: UNITS(2)  ! Units of expression
+    double precision :: VALUE(2)   ! Value of expression
+d1241 11
+a1251 1
+! Initialize variables to 'unfound' values
+d1253 1
+a1253 9
+    error = 0
+    bands = 0               ! String index, = 0 means no decl specified
+    modHome = l_ghz
+    llb = 999.9
+    lub = 999.9
+    ulb = -999.9
+    uub = -999.9
+    maxGap = -1.0
+    unitsGap = phyq_invalid
+d1257 40
+a1296 50
+    do i = 2, nsons(root)-1 ! Skip the section identifiers
+      son = subtree(i,root)
+      if ( node_id(son) == n_equal ) then
+        key = decoration(subtree(1,son)) ! P_... index from Init_Tables_Module
+        got(key) = .true.
+        call expr ( subtree(2,son), units, value )
+
+        select case ( key )
+        case ( p_ideal_length ) ! .................  P_IDEAL_LENGTH  .....
+          orbLen = value(1)
+        case ( p_overlap ) ! ...........................  P_OVERLAP  .....
+          overlap = value(1)
+        case ( p_home_geod_angle ) ! ...........  P_HOME_GEOD_ANGLE  .....
+          home = value(1)
+        case ( p_home_module ) ! ...................  P_HOME_MODULE  .....
+          modHome = value(1)
+        case ( p_scan_lower_limit ) ! .........  P_SCAN_LOWER_LIMIT  .....
+          if ( units(1) /= phyq_Length) &
+            & call announce_error ( son, notLength, key )
+          llb = value(1)
+          lub = value(2)
+        case ( p_scan_upper_limit ) ! .........  P_SCAN_UPPER_LIMIT  .....
+          if ( units(1) /= phyq_Length) &
+            & call announce_error ( son, notLength, key )
+          ulb = value(1)
+          uub = value(2)
+        case ( p_critical_scanning_modules ) ! P_CRITICAL_SCANNING_MODULES
+          modCritical = value(1)
+        case ( p_critical_bands ) ! .............  P_CRITICAL_BANDS  .....
+          bands = value(1)
+        case ( p_max_gap ) ! ...........................  P_MAX_GAP  .....
+          maxGap = value(1)
+          unitsGap = units(1)
+        case default
+          ! Can't get here if the type checker worked
+        end select
+      else
+        if ( node_id(son) == n_named ) son = subtree(2,son)
+        select case ( get_spec_id(son) )
+        case ( s_time ) ! .................................  S_TIME  .....
+          if ( timing ) then
+            call sayTime
+          else
+            call cpu_time ( t1 )
+            timing = .true.
+          end if
+        case default
+          ! Can't get here if the type checker worked
+        end select
+      end if
+d1298 1
+a1298 1
+    end do
+d1302 19
+a1320 7
+    do i = first_parm, last_parm
+      select case ( i )
+      case ( p_ideal_length, p_overlap, p_home_module, &
+             p_critical_scanning_modules )
+        if ( .not. got(i) ) call announce_error ( root, notSpecified, i )
+      end select
+    end do
+d1324 37
+a1360 28
+    if ( modCritical /= l_none ) then
+      if ( .not. got(p_scan_lower_limit) ) &
+        & call announce_error ( root, notSpecified, p_scan_lower_limit )
+      if ( .not. got(p_scan_upper_limit) ) &
+        & call announce_error ( root, notSpecified, p_scan_upper_limit )
+    end if
+
+    if ( error > 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Errors in specification prevent processing.' )
+
+  contains
+    subroutine Announce_Error ( Where, Code, Param )
+      integer, intent(in) :: Where, Code, Param
+
+      error = max(error,1)
+      call print_source ( source_ref(where) )
+      call output ( ' ScanDivide complained: ' )
+      select case ( code )
+      case ( notLength )
+        call output ( ' The value of ' )
+        call display_string ( parm_indices(param) )
+        call output ( ' does not have units of Length.', advance='yes' )
+      case ( notSpecified )
+        call output ( ' The parameter ' )
+        call display_string ( parm_indices(param) )
+        call output ( ' is required but not specified.', advance='yes' )
+      end select
+    end subroutine Announce_Error
+d1362 1
+a1362 1
+  end subroutine ScanDivide_mlscf
+a1364 8
+  ! ----------------------------------------------------  SayTime  -----
+  subroutine SayTime
+    call cpu_time ( t2 )
+    call output ( "Timing for ScanDivide = " )
+    call output ( dble(t2 - t1), advance = 'yes' )
+    timing = .false.
+  end subroutine SayTime
+
+a1369 6
+!# Revision 2.8  2001/04/23 23:57:12  vsnyder
+!# Finish adding 'time' command
+!#
+!# Revision 2.7  2001/04/23 23:42:00  vsnyder
+!# Add 'time' command
+!#
+d1387 1
+a1387 1
+!# 
+@
+
+
+2.8
+log
+@Finish adding 'time' command
+@
+text
+@d21 1
+d36 1
+a36 1
+    & "$Id: ScanDivide.f90,v 2.7 2001/04/23 23:42:00 vsnyder Exp $"
+d1278 48
+a1325 40
+      if ( node_id(son) == n_named ) son = subtree(2,son)
+      key = decoration(subtree(1,son)) ! P_... index from Init_Tables_Module
+      got(key) = .true.
+      if ( node_id(root) == n_equal ) &
+        & call expr ( subtree(2,son), units, value )
+
+      select case ( key )
+      case ( p_ideal_length ) ! .................  P_IDEAL_LENGTH  .....
+        orbLen = value(1)
+      case ( p_overlap ) ! ...........................  P_OVERLAP  .....
+        overlap = value(1)
+      case ( p_home_geod_angle ) ! ...........  P_HOME_GEOD_ANGLE  .....
+        home = value(1)
+      case ( p_home_module ) ! ...................  P_HOME_MODULE  .....
+        modHome = value(1)
+      case ( p_scan_lower_limit ) ! .........  P_SCAN_LOWER_LIMIT  .....
+        if ( units(1) /= phyq_Length) &
+          & call announce_error ( son, notLength, key )
+        llb = value(1)
+        lub = value(2)
+      case ( p_scan_upper_limit ) ! .........  P_SCAN_UPPER_LIMIT  .....
+        if ( units(1) /= phyq_Length) &
+          & call announce_error ( son, notLength, key )
+        ulb = value(1)
+        uub = value(2)
+      case ( p_critical_scanning_modules ) ! P_CRITICAL_SCANNING_MODULES
+        modCritical = value(1)
+      case ( p_critical_bands ) ! .............  P_CRITICAL_BANDS  .....
+        bands = value(1)
+      case ( p_max_gap ) ! ...........................  P_MAX_GAP  .....
+        maxGap = value(1)
+        unitsGap = units(1)
+      case ( s_time ) ! .................................  S_TIME  .....
+        if ( timing ) then
+          call sayTime
+        else
+          call cpu_time ( t1 )
+          timing = .true.
+        end if
+      end select
+d1386 3
+@
+
+
+2.7
+log
+@Add 'time' command
+@
+text
+@d24 2
+a25 1
+  use TREE, only: DECORATION, NSONS, Source_Ref, SUBTREE
+d35 1
+a35 1
+    & "$Id: ScanDivide.f90,v 2.6 2001/03/08 23:36:19 vsnyder Exp $"
+d1277 1
+d1280 2
+a1281 1
+      call expr ( subtree(2,son), units, value )
+d1377 3
+@
+
+
+2.6
+log
+@Make sure FLAG is defined in ScanDivide_firstGuess
+@
+text
+@a0 1
+
+d13 1
+a13 1
+    PHYQ_INVALID, PHYQ_LENGTH, PHYQ_MAFS, PHYQ_TIME
+d33 3
+a35 2
+  character(len=130) :: Id = &
+  "$Id: ScanDivide.f90,v 2.5 2001/03/02 19:32:06 pwagner Exp $"
+d52 3
+d96 1
+a96 1
+    type( L1BData_T ) :: DATA
+d115 2
+d483 2
+d1281 1
+a1281 1
+      case ( p_ideal_length )
+d1283 1
+a1283 1
+      case ( p_overlap )
+d1285 1
+a1285 1
+      case ( p_home_geod_angle )
+d1287 1
+a1287 1
+      case ( p_home_module )
+d1289 1
+a1289 1
+      case ( p_scan_lower_limit )
+d1294 1
+a1294 1
+      case ( p_scan_upper_limit )
+d1299 1
+a1299 1
+      case ( p_critical_scanning_modules )
+d1301 1
+a1301 1
+      case ( p_critical_bands )
+d1303 1
+a1303 1
+      case ( p_max_gap )
+d1306 7
+d1361 8
+d1374 3
+d1391 1
+a1391 1
+!#
+@
+
+
+2.5
+log
+@Gets MLSMSG_L1BRead from MLSMessageModule, not MLSStrings
+@
+text
+@d35 1
+a35 1
+  "$Id: ScanDivide.f90,v 2.4 2001/02/13 00:09:02 vsnyder Exp $"
+d519 2
+d1352 3
+@
+
+
+2.4
+log
+@Simplify and improve MLSCF error messages
+@
+text
+@d19 1
+a19 1
+    & MLSMSG_Error, MLSMSG_Warning
+d21 1
+a21 1
+  use MLSStrings, only: MLSMSG_L1BRead
+d35 1
+a35 1
+  "$Id: ScanDivide.f90,v 2.3 2001/02/12 20:29:34 livesey Exp $"
+d1350 3
+@
+
+
+2.3
+log
+@Flagged a possible error region
+@
+text
+@d16 1
+d22 1
+d24 2
+a25 2
+  use STRING_TABLE, only: GET_STRING, STRING_LENGTH
+  use TREE, only: DECORATION, NSONS, SUBTREE
+d35 1
+a35 1
+  "$Id: ScanDivide.f90,v 2.2 2000/09/11 20:00:20 ahanzel Exp $"
+d1235 4
+a1238 2
+    character (len=*), parameter :: MLSMSG_CF = &
+                                    ' not specified in the configuration file.'
+d1243 1
+a1246 1
+    character (len=480) :: MSR
+d1253 2
+a1259 1
+    bands = 0               ! String index, = 0 means no decl specified
+d1281 2
+a1282 4
+        if ( units(1) /= phyq_Length) then
+          call MLSMessage( MLSMSG_Error, ModuleName, &
+            &              'ScanLowerLimit not specified as a length.')
+        end if
+d1286 2
+a1287 4
+        if ( units(1) /= phyq_Length) then
+          call MLSMessage( MLSMSG_Error, ModuleName, &
+            &              'ScanUpperLimit not specified as a length.')
+        end if
+d1307 1
+a1307 5
+        if ( .not. got(i) ) then
+          call get_string ( parm_indices(i), msr )
+          msr(string_length(parm_indices(i))+1:) = MLSMSG_CF
+          call MLSMessage(MLSMSG_Error, ModuleName, msr)
+        end if
+d1313 28
+a1340 10
+    if ( .not. got(p_scan_lower_limit) .AND. (modCritical /= l_none) ) then
+      msr = 'ScanLowerLimit' // MLSMSG_CF
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    end if
+
+    if ( .not. got(p_scan_upper_limit) .AND. (modCritical /= l_none) ) then
+      msr = 'ScanUpperLimit' // MLSMSG_CF
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    end if
+
+d1350 3
+@
+
+
+2.2
+log
+@Removed old log entries in file.
+@
+text
+@d33 1
+a33 1
+  "$Id: ScanDivide.f90,v 2.1 2000/09/08 22:55:56 vsnyder Exp $"
+d671 1
+d1335 3
+@
+
+
+2.0
+log
+@Changing file revision to 2.0.
+@
+text
+@d5 31
+a35 21
+!===============================================================================
+MODULE ScanDivide
+!===============================================================================
+
+   USE L1BData
+   USE MLSCommon
+   USE MLSMessageModule
+   USE MLSNumerics
+   USE MLSStrings
+   USE Units
+   USE MLSCF
+   IMPLICIT NONE
+   PUBLIC
+
+   PRIVATE :: ID, ModuleName
+
+!------------------- RCS Ident Info -----------------------
+   CHARACTER(LEN=130) :: Id = &
+   "$Id: ScanDivide.f90,v 2.0 2000/09/05 18:57:04 ahanzel Exp $"
+   CHARACTER(LEN=*), PARAMETER :: ModuleName= "$RCSfile: ScanDivide.f90,v $"
+!----------------------------------------------------------
+d39 7
+a45 6
+! Subroutines -- ScanDivide_firstGuess
+!                ScanDivide_wall
+!                ScanDivide_range
+!                ScanDivide_checkReorganizeRange
+!                ScanDivide_mlscf
+!                ScanAndDivide
+d48 1
+a48 1
+!           of the L2 software
+d50 1
+a50 1
+CONTAINS
+d52 13
+a64 4
+!------------------------------------------------------------------------------
+   SUBROUTINE ScanDivide_firstGuess(L1boaFileHandle, firstMAF, home, lastMAF, &
+                                   numFile, orbLen, overlap, phi, chunks, flag)
+!------------------------------------------------------------------------------
+d66 3
+a68 3
+! Brief description of subroutine
+! This subroutine creates a set of data structures defining a "first guess" for
+! MAF chunk boundaries.
+d72 1
+a72 2
+      INTEGER, INTENT(IN) :: firstMAF, lastMAF, numFile, overlap
+      INTEGER, INTENT(IN) :: L1boaFileHandle
+d74 1
+a74 2
+      REAL(r8), INTENT(IN) :: home, orbLen
+      REAL(r8), INTENT(IN) :: phi(:)
+d76 1
+a76 1
+      INTEGER, INTENT(OUT) :: flag
+d78 1
+a78 1
+      TYPE( MLSChunk_T ), DIMENSION(:), POINTER  :: chunks
+d82 5
+a88 2
+      INTEGER :: Pgs_td_utcToTAI
+
+d91 1
+a91 2
+      CHARACTER (LEN=MaxKeyLen) :: key
+      CHARACTER (LEN=480) :: msr
+d93 16
+a108 3
+      INTEGER :: above, alloc_err, bdryMax, below, dealloc_err, i
+      INTEGER :: numBdry, numChunks
+      INTEGER, ALLOCATABLE :: bdryMAF(:), indices(:)
+d110 1
+a110 2
+      REAL(r8) :: max, min, newHome, phiLen
+      REAL(r8), ALLOCATABLE :: aboveHome(:), belowHome(:), bdryPhi(:)
+d112 3
+a114 1
+! Find max & min phi for data set
+d116 1
+a116 2
+      max = MAXVAL( phi(firstMAF+1:lastMAF+1) )
+      min = MINVAL( phi(firstMAF+1:lastMAF+1) )
+d118 6
+a123 1
+! Convert from "fraction of orbit" to "degrees of phi"
+d125 1
+a125 1
+      phiLen = orbLen * 360.0
+d127 12
+a138 1
+! Find phi boundaries above & below HomeGeodAngle
+d140 1
+a140 1
+      bdryMax = ANINT(max_orbits/orbLen)
+d142 6
+a147 5
+      ALLOCATE( aboveHome(bdryMax), belowHome(bdryMax), STAT=alloc_err )
+      IF ( alloc_err /= 0 ) THEN
+         msr = MLSMSG_Allocate // ' arrays for phi bdries above & below Home.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+d149 2
+a150 1
+! If min above home, reset HomeGeodAngle to closest ideal bdry below min
+d152 1
+a152 1
+      IF (min >= home) THEN
+d154 17
+a170 1
+         below = 0
+d172 1
+a172 4
+         DO i = 1, bdryMax
+            newHome = home + i*phiLen
+            IF (newHome > min) EXIT
+         ENDDO
+d174 12
+a185 1
+         newHome = home + (i-1)*phiLen
+d187 1
+a187 1
+! Calculate boundaries above home phi
+d189 1
+a189 6
+         DO i = 1, bdryMax
+            aboveHome(i) = newHome + i*phiLen
+            IF (aboveHome(i) >= max) EXIT
+         ENDDO
+ 
+         above = i-1
+d191 12
+a202 3
+      ELSE
+      
+! If min below home, check whether max also is
+d204 1
+a204 1
+         IF (max <= home) THEN
+d206 4
+a209 1
+! If max is also below, reset HomeGeodAngle to closest ideal bdry above max
+d211 1
+a211 6
+            above = 0
+ 
+            DO i = 1, bdryMax
+               newHome = home - i*phiLen
+               IF (newHome <= max) EXIT
+            ENDDO
+d213 1
+a213 1
+            newHome = home - (i-1)*phiLen
+d215 34
+a248 1
+         ELSE
+d250 3
+a252 1
+! If max is above, calculate boundaries >= HomeGeodAngle
+d254 6
+a259 4
+            DO i = 1, bdryMax
+               aboveHome(i) = home + (i-1)*phiLen
+               IF (aboveHome(i) >= max) EXIT
+            ENDDO
+d261 1
+a261 1
+            above = i-1
+d263 30
+a292 1
+            newHome = home
+d294 2
+a295 1
+         ENDIF
+d297 4
+a300 1
+! Calculate boundaries below home phi
+d302 1
+a302 4
+         DO i = 1, bdryMax
+            belowHome(i) = newHome - i*phiLen
+            IF (belowHome(i) <= min) EXIT
+         ENDDO
+d304 1
+a304 1
+         below = i-1
+d306 5
+a310 1
+      ENDIF
+d312 1
+a312 1
+! Put phi boundaries into a single array in ascending order, from min to max
+d314 6
+a319 1
+      numBdry = above + below + 2
+d321 1
+a321 29
+      ALLOCATE( bdryPhi(numBdry), bdryMAF(numBdry), indices(numBdry), &
+                STAT=alloc_err )
+      IF ( alloc_err/= 0 ) THEN
+         msr = MLSMSG_Allocate // ' bdry arrays.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      bdryPhi(1) = min
+
+      IF (below > 0) THEN
+         DO i = 1, below
+            bdryPhi(i+1) = belowHome(below-(i-1))
+         ENDDO
+      ENDIF
+
+      IF (above > 0) THEN
+         DO i = 1, above
+            bdryPhi(below+1+i) = aboveHome(i)
+         ENDDO
+      ENDIF
+
+      bdryPhi(above+below+2) = max
+
+      DEALLOCATE(aboveHome, belowHome, STAT=dealloc_err)
+      IF (dealloc_err /= 0) THEN
+         msr = MLSMSG_Deallocate // ' arrays for phi bdries above & below Home.'
+         CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
+         flag = -1
+      ENDIF
+d323 1
+a323 1
+! Find MAFs containing the phi boundaries
+d325 2
+a326 1
+      CALL Hunt(phi, bdryPhi, indices, allowTopValue=.TRUE.)
+d328 2
+a329 1
+! Convert MAF bdry indices to begin at 0 (like file), rather than 1 (like phi)
+d331 2
+a332 1
+      bdryMAF = indices - 1
+d334 1
+a334 6
+      DEALLOCATE(bdryPhi, indices, STAT=dealloc_err)
+      IF (dealloc_err /= 0) THEN
+         msr = MLSMSG_Deallocate // ' phi, index bdries.'
+         CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
+         flag = -1
+      ENDIF
+d336 1
+a336 1
+! Fill data structure for each chunk
+d338 3
+a340 6
+      numChunks = numBdry-1
+      ALLOCATE( chunks(numChunks), STAT=alloc_err )
+      IF ( alloc_err/= 0 ) THEN
+         msr = MLSMSG_Allocate // ' number of chunks.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+d342 1
+a342 1
+! Calculate firstMAFIndex, subtracting overlap from MAF boundaries
+d344 1
+a344 2
+      chunks%firstMAFIndex = bdryMAF(1:numChunks) - overlap
+      IF (chunks(1)%firstMAFIndex < 0 ) chunks(1)%firstMAFIndex = 0
+d346 2
+a347 1
+! Calculate lastMAFIndex, adding overlap to MAF boundaries
+d349 6
+a354 2
+      chunks(1:numChunks-1)%lastMAFIndex = bdryMAF(2:numBdry-1) - 1 + overlap
+      chunks(numChunks)%lastMAFIndex = bdryMAF(numBdry) + overlap
+d356 2
+a357 2
+      IF (chunks(numChunks)%lastMAFIndex > numFile ) &
+          chunks(numChunks)%lastMAFIndex = numFile
+d359 1
+a359 1
+! Set lower overlap to MLSCF input; consider first MAF separately
+d361 1
+a361 1
+      chunks(2:numChunks)%noMAFsLowerOverlap = overlap
+d363 1
+a363 1
+      chunks(1)%noMAFsLowerOverlap = bdryMAF(1) - chunks(1)%firstMAFIndex
+d365 2
+a366 1
+! Set upper overlap to MLSCF input; consider last MAF separately
+d368 2
+a369 1
+      chunks(1:numChunks-1)%noMAFsUpperOverlap = overlap
+d371 2
+a372 2
+      chunks(numChunks)%noMAFsUpperOverlap = chunks(numChunks)%lastMAFIndex - &
+                                            &bdryMAF(numBdry)
+d374 1
+a374 1
+! Calculate accumulatedMAFs
+d376 1
+a376 1
+      chunks(1)%accumulatedMAFs = 0
+d378 1
+a378 12
+      DO i = 2, numChunks
+         chunks(i)%accumulatedMAFs = chunks(i-1)%accumulatedMAFs + &
+          &chunks(i-1)%lastMAFIndex - chunks(i-1)%firstMAFIndex + 1 - &
+          &chunks(i-1)%noMAFsLowerOverlap - chunks(i-1)%noMAFsUpperOverlap
+      ENDDO
+
+      DEALLOCATE(bdryMAF, STAT=dealloc_err)
+      IF (dealloc_err /= 0) THEN
+         msr = MLSMSG_Deallocate // ' MAF bdries.'
+         CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
+         flag = -1
+      ENDIF
+d380 1
+a380 3
+!--------------------------------------
+   END SUBROUTINE ScanDivide_firstGuess
+!--------------------------------------
+d382 1
+a382 3
+!-----------------------------------------------
+   SUBROUTINE ScanDivide_wall(chunks, bad, flag)
+!-----------------------------------------------
+d384 1
+a384 2
+! Brief description of subroutine
+! This subroutine reorganizes chunks around "walls."
+d386 4
+a389 1
+! Arguments
+d391 2
+a392 1
+      INTEGER, INTENT(IN) :: bad(:)
+d394 1
+a394 1
+      INTEGER, INTENT(OUT) :: flag
+d396 1
+a396 1
+      TYPE( MLSChunk_T ), DIMENSION(:), POINTER  :: chunks
+d398 1
+a398 1
+! Parameters
+d400 3
+a402 1
+! Functions
+d404 1
+a404 1
+! Variables
+d406 1
+a406 4
+      CHARACTER (LEN=480) :: msr
+   
+      INTEGER :: error, i, j, move, numBad, numChunks, scalar, wallInd
+      INTEGER, ALLOCATABLE :: badMAF(:)
+d408 1
+a408 1
+      TYPE( MLSChunk_T ), DIMENSION(:), POINTER  :: walledChunks
+d410 5
+a414 2
+! If input is a single MAF #, change its format to that of an array,
+! indexed such that badMAF(input) = 1
+d416 1
+a416 1
+      numBad = SIZE(bad)
+d418 6
+a423 1
+      IF (numBad == 1) THEN
+d425 4
+a428 1
+         scalar = bad(1)
+d430 1
+a430 5
+         ALLOCATE( badMAF(scalar), STAT=error )
+         IF (error /= 0) THEN
+            msr = MLSMSG_Allocate // ' badMAF array.'
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+d432 1
+a432 2
+         badMAF = 0
+         badMAF(scalar) = 1
+d434 3
+a436 1
+      ELSE
+d438 1
+a438 5
+         ALLOCATE( badMAF(numBad), STAT=error )
+         IF (error /= 0) THEN
+            msr = MLSMSG_Allocate // ' badMAF array.'
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+d440 1
+a440 1
+         badMAF = bad
+d442 1
+a442 1
+      ENDIF
+d444 1
+a444 1
+! Initialize walledChunks array
+d446 2
+a447 1
+      numChunks = SIZE(chunks)
+d449 9
+a457 5
+      ALLOCATE(walledChunks(numChunks+numBad), STAT=error)
+      IF (error /= 0) THEN
+         msr = MLSMSG_Allocate // ' walled chunk arrays.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+d459 1
+a459 1
+      walledChunks(1) = chunks(1)
+d461 1
+a461 2
+! If wall in first chunk splits off a portion containing only lower overlap,
+! jettison overlap portion
+d463 4
+a466 1
+      IF (chunks(1)%noMAFsLowerOverlap > 0) THEN
+d468 1
+a468 1
+         DO i = 1, chunks(1)%noMAFsLowerOverlap
+d470 5
+a474 7
+            IF ( badMAF(chunks(1)%firstMAFIndex+&
+                        chunks(1)%noMAFsLowerOverlap-i+2) == 1) THEN
+               walledChunks(1)%firstMAFIndex = chunks(1)%firstMAFIndex+&
+                                             chunks(1)%noMAFsLowerOverlap-(i-1)
+               walledChunks(1)%noMAFsLowerOverlap = i-1
+               EXIT
+            ENDIF
+d476 9
+a484 1
+         ENDDO
+d486 3
+a488 1
+      ENDIF
+d490 1
+a490 2
+! If wall in non-overlapped portion, split chunk into 2, with no overlaps at
+! new bdry.
+d492 2
+a493 2
+      move = 0
+      wallInd = 1
+d495 2
+a496 2
+      DO i = chunks(1)%firstMAFIndex+chunks(1)%noMAFsLowerOverlap+1, &
+             chunks(2)%firstMAFIndex-1
+d498 1
+a498 11
+         IF (badMAF(i+1) == 1) THEN
+            walledChunks(wallInd)%lastMAFIndex = i-1
+            walledChunks(wallInd)%noMAFsUpperOverlap = 0
+            walledChunks(wallInd+1)%firstMAFIndex = i
+            walledChunks(wallInd+1)%noMAFsLowerOverlap = 0
+            walledChunks(wallInd+1)%accumulatedMAFs = i
+            walledChunks(wallInd+1)%lastMAFIndex = chunks(1)%lastMAFIndex
+            walledChunks(wallInd+1)%noMAFsUpperOverlap = &
+                          chunks(1)%noMAFsUpperOverlap
+            wallInd = wallInd + 1
+         ENDIF
+d500 1
+a500 1
+      ENDDO
+d502 1
+a502 1
+! If in upper overlap, re-set bdries without overlaps
+d504 1
+a504 1
+      DO i = chunks(2)%firstMAFIndex, chunks(1)%lastMAFIndex+1
+d506 1
+a506 12
+         IF (badMAF(i+1) == 1) THEN
+            walledChunks(wallInd)%lastMAFIndex = i-1
+            walledChunks(wallInd)%noMAFsUpperOverlap = 0
+            walledChunks(wallInd+1)%firstMAFIndex = i
+            walledChunks(wallInd+1)%noMAFsLowerOverlap = 0
+            walledChunks(wallInd+1)%accumulatedMAFs = i
+            walledChunks(wallInd+1)%lastMAFIndex = chunks(2)%lastMAFIndex
+            walledChunks(wallInd+1)%noMAFsUpperOverlap = &
+                          chunks(2)%noMAFsUpperOverlap
+            wallInd = wallInd + 1
+            move = 1
+         ENDIF
+d508 1
+a508 1
+      ENDDO
+d510 3
+a512 1
+! Re-organize rest of chunks, except for last
+d514 2
+a515 1
+      DO i = 2, numChunks-1
+d517 1
+a517 37
+         IF (move == 1) THEN
+            move = 0
+         ELSE
+            wallInd = wallInd + 1
+            walledChunks(wallInd) = chunks(i)
+         ENDIF
+
+         DO j = chunks(i-1)%lastMAFIndex+2, chunks(i+1)%firstMAFIndex-1
+
+            IF (badMAF(j+1) == 1) THEN
+               walledChunks(wallInd)%lastMAFIndex = j-1
+               walledChunks(wallInd)%noMAFsUpperOverlap = 0
+               walledChunks(wallInd+1)%accumulatedMAFs = j
+               walledChunks(wallInd+1)%firstMAFIndex = j
+               walledChunks(wallInd+1)%noMAFsLowerOverlap = 0
+               walledChunks(wallInd+1)%lastMAFIndex = chunks(i)%lastMAFIndex
+               walledChunks(wallInd+1)%noMAFsUpperOverlap = &
+                             chunks(i)%noMAFsUpperOverlap
+               wallInd = wallInd + 1
+            ENDIF
+
+         ENDDO
+
+         DO j = chunks(i+1)%firstMAFIndex, chunks(i)%lastMAFIndex+1
+
+            IF (badMAF(j+1) == 1) THEN
+               walledChunks(wallInd)%lastMAFIndex = j-1
+               walledChunks(wallInd)%noMAFsUpperOverlap = 0
+               walledChunks(wallInd+1)%accumulatedMAFs = j
+               walledChunks(wallInd+1)%firstMAFIndex = j
+               walledChunks(wallInd+1)%noMAFsLowerOverlap = 0
+               walledChunks(wallInd+1)%lastMAFIndex = chunks(i+1)%lastMAFIndex
+               walledChunks(wallInd+1)%noMAFsUpperOverlap = &
+                           chunks(i+1)%noMAFsUpperOverlap
+               wallInd = wallInd + 1
+               move = 1
+            ENDIF
+d519 2
+a520 1
+         ENDDO
+d522 1
+a522 1
+      ENDDO
+d524 1
+a524 1
+! Re-organize non-overlapped portion of last chunk
+d526 1
+a526 4
+      IF (move == 0) THEN
+         wallInd = wallInd + 1
+         walledChunks(wallInd) = chunks(numChunks)
+      ENDIF
+d528 1
+a528 2
+      DO i = chunks(numChunks-1)%lastMAFIndex+2, &
+          chunks(numChunks)%lastMAFIndex-chunks(numChunks)%noMAFsUpperOverlap
+d530 5
+a534 12
+         IF (badMAF(i+1) == 1) THEN
+            walledChunks(wallInd)%lastMAFIndex = i-1
+            walledChunks(wallInd)%noMAFsUpperOverlap = 0
+            walledChunks(wallInd+1)%accumulatedMAFs = i
+            walledChunks(wallInd+1)%firstMAFIndex = i
+            walledChunks(wallInd+1)%noMAFsLowerOverlap = 0
+            walledChunks(wallInd+1)%lastMAFIndex = &
+                  chunks(numChunks)%lastMAFIndex
+            walledChunks(wallInd+1)%noMAFsUpperOverlap = &
+                  chunks(numChunks)%noMAFsUpperOverlap
+            wallInd = wallInd +1
+         ENDIF
+d536 1
+a536 1
+      ENDDO
+d538 1
+a538 5
+! Re-organize upper overlap portion (if it exists); truncate any resulting
+! chunk that is purely overlap
+ 
+      DO i = chunks(numChunks)%lastMAFIndex-&
+          chunks(numChunks)%noMAFsUpperOverlap+1,chunks(numChunks)%lastMAFIndex
+d540 1
+a540 1
+         IF (badMAF(i+1) == 1) THEN
+d542 4
+a545 4
+           walledChunks(wallInd)%lastMAFIndex = i-1
+           walledChunks(wallInd)%noMAFsUpperOverlap = &
+            walledChunks(wallInd)%lastMAFIndex-chunks(numChunks)%lastMAFIndex+&
+            chunks(numChunks)%noMAFsUpperOverlap
+d547 1
+a547 3
+           IF (walledChunks(wallInd)%noMAFsUpperOverlap < 0) THEN
+              walledChunks(wallInd)%noMAFsUpperOverlap = 0
+           ENDIF
+d549 1
+a549 1
+           EXIT
+d551 4
+a554 1
+         ENDIF
+d556 1
+a556 1
+      ENDDO
+d558 3
+a560 1
+! Deallocations
+d562 1
+a562 12
+      DEALLOCATE(badMAF, STAT=error)
+      IF (error /= 0) THEN
+         msr = MLSMSG_Deallocate // ' badMAF array.'
+         CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
+         flag = -1
+      ENDIF
+
+      DEALLOCATE(chunks, STAT=error)
+      IF (error /= 0) THEN
+         msr = MLSMSG_Deallocate // ' chunks array.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+d564 1
+a564 1
+! Reset input chunks array
+d566 1
+a566 14
+      ALLOCATE(chunks(wallInd), STAT=error)
+      IF (error /= 0) THEN
+         msr = MLSMSG_Allocate // ' new output chunks array.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      chunks = walledChunks(1:wallInd)
+
+      DEALLOCATE(walledChunks, STAT=error)
+      IF (error /= 0) THEN
+         msr = MLSMSG_Deallocate // ' walledChunks array.'
+         CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
+         flag = -1
+      ENDIF
+d568 4
+a571 3
+!--------------------------------
+   END SUBROUTINE ScanDivide_wall
+!--------------------------------
+d573 1
+a573 3
+!------------------------------------------------------------------------------
+   SUBROUTINE ScanDivide_range(chunks, firstBadMAFIndex, lastBadMAFIndex, flag)
+!------------------------------------------------------------------------------
+d575 1
+a575 2
+! Brief description of subroutine
+! This subroutine reorganizes chunks around periods of bad data.
+d577 1
+a577 1
+! Arguments
+d579 4
+a582 1
+      INTEGER, INTENT(IN) :: firstBadMAFIndex, lastBadMAFIndex
+d584 1
+a584 1
+      INTEGER, INTENT(OUT) :: flag
+d586 1
+a586 1
+      TYPE( MLSChunk_T ), DIMENSION(:), POINTER  :: chunks
+d588 1
+a588 1
+! Parameters
+d590 1
+a590 1
+! Functions
+d592 4
+a595 1
+! Variables
+d597 1
+a597 3
+      CHARACTER (LEN=480) :: msr
+   
+      INTEGER :: chunkInd, error, i, j, newInd, numChunks
+d599 1
+a599 1
+      TYPE( MLSChunk_T ), DIMENSION(:), POINTER  :: newChunks
+d601 1
+a601 1
+! Initialize expanded newChunks array
+d603 1
+a603 1
+      numChunks = SIZE(chunks)
+d605 25
+a629 5
+      ALLOCATE(newChunks(numChunks+1), STAT=error)
+      IF (error /= 0) THEN
+         msr = MLSMSG_Allocate // ' newChunks array.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+d631 1
+a631 1
+! Find the chunk where the gap begins
+d633 1
+a633 2
+      newInd = 1
+      chunkInd = 1
+d635 1
+a635 1
+      DO i = 1, numChunks
+d637 1
+a637 2
+         IF ( (firstBadMAFIndex <= chunks(chunkInd)%lastMAFIndex) .AND. &
+              (firstBadMAFIndex >= chunks(chunkInd)%firstMAFIndex) ) THEN
+d639 6
+a644 1
+! If it begins above the lower overlap,
+d646 1
+a646 2
+            IF (firstBadMAFIndex > chunks(chunkInd)%firstMAFIndex+&
+                                   chunks(chunkInd)%NoMAFsLowerOverlap ) THEN
+d648 4
+a651 1
+! It breaks off a chunk below the gap; set info for this new chunk
+d653 1
+a653 16
+               newChunks(newInd)%accumulatedMAFs = &
+                                 chunks(chunkInd)%accumulatedMAFs
+               newChunks(newInd)%firstMAFIndex = chunks(chunkInd)%firstMAFIndex
+               newChunks(newInd)%noMAFsLowerOverlap = &
+                                 chunks(chunkInd)%noMAFsLowerOverlap
+               newChunks(newInd)%lastMAFIndex = firstBadMAFIndex - 1
+
+               IF ( firstBadMAFIndex > chunks(numChunks)%lastMAFIndex-&
+                                   chunks(numChunks)%noMAFsUpperOverlap+1) THEN
+                  newChunks(newInd)%noMAFsUpperOverlap = &
+                                    newChunks(newInd)%lastMAFIndex-&
+                                    chunks(numChunks)%lastMAFIndex+&
+                                    chunks(numChunks)%noMAFsUpperOverlap
+               ELSE
+                  newChunks(newInd)%noMAFsUpperOverlap = 0
+               ENDIF
+d655 2
+a656 1
+               newInd = newInd + 1
+d658 1
+a658 1
+            ENDIF
+d660 2
+a661 1
+! If the gap ends in the upper overlap of the last chunk, exit
+d663 2
+a664 2
+            IF ( lastBadMAFIndex >= chunks(numChunks)%lastMAFIndex-&
+                                    chunks(numChunks)%noMAFsUpperOverlap ) EXIT
+d666 1
+a666 1
+! Otherwise, find the chunk where the gap ends
+d668 1
+a668 1
+            DO j = 1, numChunks
+d670 1
+a670 1
+               chunkInd = chunkInd + (j-1)
+d672 1
+a672 1
+               IF ( lastBadMAFIndex <= chunks(chunkInd)%lastMAFIndex ) THEN
+d674 1
+a674 1
+! Set start info for a new chunk beginning after the gap
+d676 2
+a677 15
+                  IF (newInd == 1) THEN
+                     newChunks(newInd)%accumulatedMAFs = 0
+                  ELSE
+                     newChunks(newInd)%accumulatedMAFs = &
+                                       newChunks(newInd-1)%lastMAFIndex + 1
+                  ENDIF
+
+                  newChunks(newInd)%firstMAFIndex = lastBadMAFIndex + 1
+
+                  newChunks(newInd)%noMAFsLowerOverlap = &
+                                    chunks(chunkInd)%firstMAFIndex + &
+                                    chunks(chunkInd)%noMAFsLowerOverlap - &
+                                    newChunks(newInd)%firstMAFIndex
+                  IF ( newChunks(newInd)%noMAFsLowerOverlap < 0 ) &
+                       newChunks(newInd)%noMAFsLowerOverlap = 0
+d679 1
+a679 1
+! If gap ends below the upper overlap, set end info to the current old chunk
+d681 1
+a681 2
+                  IF (lastBadMAFIndex < chunks(chunkInd)%lastMAFIndex-&
+                                     chunks(chunkInd)%noMAFsUpperOverlap ) THEN
+d683 12
+a694 5
+                     newChunks(newInd)%lastMAFIndex = &
+                                       chunks(chunkInd)%lastMAFIndex
+                     newChunks(newInd)%noMAFsUpperOverlap = &
+                                       chunks(chunkInd)%NoMAFsUpperOverlap
+                     chunkInd = chunkInd + 1
+d696 3
+a698 1
+                  ELSE
+d700 3
+a702 1
+! If not, set end info to next old chunk
+d704 2
+a705 5
+                     newChunks(newInd)%lastMAFIndex = &
+                                       chunks(chunkInd+1)%lastMAFIndex
+                     newChunks(newInd)%noMAFsUpperOverlap = &
+                                       chunks(chunkInd+1)%NoMAFsUpperOverlap
+                     chunkInd = chunkInd + 2
+d707 1
+a707 1
+                  ENDIF
+d709 1
+a709 2
+                  newInd = newInd + 1
+                  EXIT
+d711 1
+a711 1
+               ENDIF
+d713 1
+a713 1
+            ENDDO
+d715 1
+a715 1
+         ELSE
+d717 1
+a717 1
+! This chunk has no gaps in it; retain old chunk info
+d719 1
+a719 3
+            newChunks(newInd) = chunks(chunkInd)
+            newInd = newInd + 1
+            chunkInd = chunkInd + 1
+d721 1
+a721 1
+         ENDIF
+d723 2
+a724 1
+         IF (chunkInd > numChunks) EXIT
+d726 1
+a726 1
+      ENDDO
+d728 2
+a729 1
+! Reset input chunks array
+d731 1
+a731 20
+      DEALLOCATE(chunks, STAT=error)
+      IF (error /= 0) THEN
+         msr = MLSMSG_Deallocate // ' chunks array.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      ALLOCATE(chunks(newInd-1), STAT=error)
+      IF (error /= 0) THEN
+         msr = MLSMSG_Allocate // ' new output chunks array.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      chunks = newChunks(1:newInd-1)
+
+      DEALLOCATE(newChunks, STAT=error)
+      IF (error /= 0) THEN
+         msr = MLSMSG_Deallocate // ' newChunks array.'
+         CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
+         flag = -1
+      ENDIF
+d733 1
+a733 3
+!---------------------------------
+   END SUBROUTINE ScanDivide_range
+!---------------------------------
+d735 1
+a735 4
+!-----------------------------------------------------------------------------
+   SUBROUTINE ScanDivide_checkReorganizeRange(counterMAF, firstBad, lastBad, &
+                                         maxGap, phi, time, units, chunks)
+!-----------------------------------------------------------------------------
+d737 5
+a741 3
+! Brief description of subroutine
+! This subroutine checks data gaps against a maximum and calls the "range
+! re-organization routine, if MaxGap is exceeded.
+d743 2
+a744 1
+! Arguments
+d746 1
+a746 1
+      CHARACTER (LEN=UnitsLen), INTENT(IN) :: units
+d748 5
+a752 1
+      INTEGER, INTENT(IN) :: counterMAF(:), firstBad(:), lastBad(:)
+d754 1
+a754 2
+      REAL(r8), INTENT(IN) :: maxGap
+      REAL(r8), INTENT(IN) :: phi(:), time(:)
+d756 1
+a756 3
+      TYPE( MLSChunk_T ), DIMENSION(:), POINTER  :: chunks
+   
+! Parameters
+d758 1
+a758 1
+! Functions
+d760 1
+a760 1
+! Variables
+d762 5
+a766 1
+      REAL(r8) :: diff, diffTime
+d768 1
+a768 1
+      INTEGER :: end, flag, i, numChunks, numGaps, start
+d770 2
+a771 1
+! Add completely missing telemetry to bad MAFs, and check against MaxGap
+d773 1
+a773 4
+      numGaps = SIZE(firstBad)
+      numChunks = SIZE(chunks)
+      
+      DO i = 1, numGaps
+d775 1
+a775 5
+         IF ( firstBad(i) ==  chunks(1)%firstMAFIndex) THEN
+            start = chunks(1)%firstMAFIndex + 1
+         ELSE
+            start = firstBad(i)
+         ENDIF
+d777 7
+a783 8
+         IF ( lastBad(i) == chunks(numChunks)%lastMAFIndex ) THEN
+            end = chunks(numChunks)%lastMAFIndex + 1
+         ELSE
+            end = lastBad(i) + 2
+         ENDIF
+         
+         diff = phi(end) - phi(start)
+         diffTime = time(end) - time(start)
+d785 1
+a785 1
+         IF (units == 'MAFS') THEN
+d787 1
+a787 1
+            diff = counterMAF(end) - counterMAF(start)
+d789 2
+a790 1
+         ELSE IF (units == 'ORBITS') THEN
+d792 2
+a793 1
+            diff = diff / 360.0
+d795 2
+a796 1
+         ELSE IF (units == 'MINUTES') THEN
+d798 11
+a808 1
+            diff = diffTime / 60.0
+d810 1
+a810 1
+         ELSE IF (units == 'SECONDS') THEN
+d812 1
+a812 1
+            diff = diffTime
+d814 1
+a814 1
+         ENDIF
+d816 12
+a827 1
+! If diff exceeds MaxGap, re-organize chunks
+d829 1
+a829 2
+         IF (diff > maxGap) CALL ScanDivide_range(chunks, firstBad(i), &
+                                                  lastBad(i), flag)
+d831 1
+a831 1
+      ENDDO
+d833 1
+a833 3
+!------------------------------------------------
+   END SUBROUTINE ScanDivide_checkReorganizeRange
+!------------------------------------------------
+d835 37
+a871 4
+!----------------------------------------------------------------------------
+   SUBROUTINE ScanDivide_mlscf(chunkDivide, bands, home, llb, lub, maxGap, &
+                   modCritical, modHome, orbLen, overlap, ulb, uub, unitsGap)
+!----------------------------------------------------------------------------
+d873 1
+a873 3
+! Brief description of subroutine
+! This subroutine identifies, separates, and checks values from the section of
+! the MLSCF passed to Scan/Divide.
+d875 1
+a875 1
+! Arguments
+d877 1
+a877 6
+      CHARACTER (LEN=3), INTENT(OUT) :: modHome
+      CHARACTER (LEN=6), INTENT(OUT) :: modCritical
+      CHARACTER (LEN=MaxCharValueLen), INTENT(OUT) :: bands
+      CHARACTER (LEN=UnitsLen), INTENT(OUT) :: unitsGap
+      
+      TYPE( MLSCFEntry_T ), DIMENSION(:), INTENT(IN) :: chunkDivide
+d879 20
+a898 1
+      INTEGER, INTENT(OUT) :: overlap
+d900 1
+a900 1
+      REAL(r8), INTENT(OUT) :: home, llb, lub, maxGap, orbLen, ulb, uub
+d902 5
+a906 1
+! Parameters
+d908 1
+a908 2
+      CHARACTER (LEN=*), PARAMETER :: MLSMSG_CF = ' not specified in the &
+                                                  &configuration file.'
+d910 4
+a913 1
+! Functions
+d915 3
+a917 1
+! Variables
+d919 1
+a919 5
+      CHARACTER (LEN=480) :: msr
+      CHARACTER (LEN=UnitsLen) :: unitsLim
+      CHARACTER (LEN=MaxKeyLen) :: key
+   
+      INTEGER ::  family, i, NoChunkDivideEntries
+d921 1
+a921 1
+      REAL(r8) :: scale
+d923 1
+a923 1
+! Initialize variables to 'unfound' values
+d925 1
+a925 12
+      orbLen = -1.0
+      overlap = -1
+      home = -362.0
+      modHome = 'A'
+      llb = 999.9
+      lub = 999.9
+      ulb = -999.9
+      uub = -999.9
+      modCritical = 'A'
+      bands = 'A'
+      maxGap = -1.0
+      unitsGap = 'A'
+d927 12
+a938 1
+! Loop through MLSCF section, identifying keywords and setting variables
+d940 1
+a940 1
+      NoChunkDivideEntries = SIZE(chunkDivide)
+d942 14
+a955 79
+      DO i = 1, NoChunkDivideEntries
+
+         key = Capitalize(chunkDivide(i)%Cells(1)%Keyword)
+         IF (key == 'IDEALLENGTH') THEN
+            orbLen = chunkDivide(i)%Cells(1)%RealValue
+         ELSE IF (key == 'OVERLAP') THEN
+            overlap = chunkDivide(i)%Cells(1)%IntValue
+         ELSE IF (key == 'HOMEGEODANGLE') THEN
+            home = chunkDivide(i)%Cells(1)%RealValue
+         ELSE IF (key == 'HOMEMODULE') THEN
+            modHome = Capitalize(chunkDivide(i)%Cells(1)%CharValue)
+         ELSE IF (key == 'SCANLOWERLIMIT') THEN
+            unitsLim = chunkDivide(i)%Cells(1)%Units
+            call ParseUnitName(unitsLim, family, scale)
+            IF (family /= PHYQ_Length) THEN
+               CALL MLSMessage(MLSMSG_Error, ModuleName, 'ScanLowerLimit not &
+                                                      &specified as a length.')
+            ENDIF
+            llb = chunkDivide(i)%Cells(1)%RangeLowerBound*scale
+            lub = chunkDivide(i)%Cells(1)%RangeUpperBound*scale
+         ELSE IF (key == 'SCANUPPERLIMIT') THEN
+            unitsLim = chunkDivide(i)%Cells(1)%Units
+            call ParseUnitName(unitsLim, family, scale)
+            IF (family /= PHYQ_Length) THEN
+               CALL MLSMessage(MLSMSG_Error, ModuleName, 'ScanUpperLimit not &
+                                                      &specified as a length.')
+            ENDIF
+            ulb = chunkDivide(i)%Cells(1)%RangeLowerBound*scale
+            uub = chunkDivide(i)%Cells(1)%RangeUpperBound*scale
+         ELSE IF (key == 'CRITICALSCANNINGMODULES') THEN
+            modCritical = Capitalize(chunkDivide(i)%Cells(1)%CharValue)
+         ELSE IF (key == 'CRITICALBANDS') THEN
+            bands = Capitalize(chunkDivide(i)%Cells(1)%CharValue)
+         ELSE IF (key == 'MAXGAP') THEN
+            maxGap = chunkDivide(i)%Cells(1)%RealValue
+            unitsGap = Capitalize(chunkDivide(i)%Cells(1)%Units)
+         ENDIF
+
+      ENDDO
+
+! Check for missing values that would cause error exits
+
+      IF (orbLen == -1.0) THEN
+         msr = 'IdealLength' // MLSMSG_CF
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      IF (overlap == -1) THEN
+         msr = 'Overlap' // MLSMSG_CF
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      IF (home == -362.0) THEN
+         msr = 'HomeGeodAngle' // MLSMSG_CF
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      IF (modCritical == 'A') THEN
+         msr = 'CriticalScanningModules' // MLSMSG_CF
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+! Check for values that depend on the presence of other quantities
+
+      IF ( (llb == 999.9) .AND. (modCritical /= 'NONE') )THEN
+         msr = 'ScanLowerLimit' // MLSMSG_CF
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      IF ( (ulb == -999.9) .AND. (modCritical /= 'NONE') )THEN
+         msr = 'ScanUpperLimit' // MLSMSG_CF
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+! Check for optional values that have defaults
+
+      IF (modHome == 'A') modHome = 'GHZ'
+
+      IF (bands == 'A') bands = 'NONE'
+d958 1
+a958 1
+   END SUBROUTINE ScanDivide_mlscf
+d961 4
+a964 3
+!-------------------------------------------------------------------------
+   SUBROUTINE ScanAndDivide(processingRange, l1bInfo, mlscfInfo, chunks)
+!-------------------------------------------------------------------------
+d966 2
+a967 3
+! Brief description of subroutine 
+! This subroutine is called by the main L2 program to divide the input L1B
+! dataset into chunks.
+d971 1
+a971 1
+      TYPE( MLSCF_T), INTENT(IN) :: mlscfInfo
+d973 1
+a973 1
+      TYPE( L1BInfo_T ), INTENT(IN) :: l1bInfo
+d975 1
+a975 3
+      TYPE( TAI93_Range_T ), INTENT(IN) :: processingRange
+
+      TYPE( MLSChunk_T ), DIMENSION(:), POINTER  :: chunks
+a978 5
+      CHARACTER (LEN=*), PARAMETER :: MLSMSG_DeallocateL1b = 'Deallocation &
+                                                       &failed:  l1b pointers.'
+      CHARACTER (LEN=*), PARAMETER :: MLSMSG_SUB = 'Error return from &
+                                                   &subroutine '
+
+d983 1
+a983 1
+      TYPE (MLSCFSection_T) :: chunkDivide
+d985 1
+a985 1
+      TYPE( L1BData_T ) :: data
+d987 1
+a987 16
+      CHARACTER (LEN=3) :: modHome
+      CHARACTER (LEN=6) :: modCritical
+      CHARACTER (LEN=480) :: msr
+      CHARACTER (LEN=NAME_LEN) :: quantity
+      CHARACTER (LEN=UnitsLen) :: unitsGap
+      CHARACTER (LEN=MaxCharValueLen) :: bands
+   
+      REAL(r8) :: diff, diffTime, home, llb, lub, max, maxGap, min, orbLen
+      REAL(r8) :: ulb, uub
+      REAL(r8), ALLOCATABLE :: phi(:), time(:)
+
+      INTEGER :: diffMAF, error, firstMAF, flag, foundEnd, foundStart, i, j
+      INTEGER :: lastMAF, loop, noMAFs, numBad, numChunks, numFile, numOa
+      INTEGER :: numScan, overlap
+      INTEGER, ALLOCATABLE :: badMAF(:), counterMAF(:), firstOa(:)
+      INTEGER, ALLOCATABLE :: firstScan(:), lastOa(:), lastScan(:)
+d989 1
+a989 6
+! Get the right part of the mlscf information
+      chunkDivide=GetMLSCFSection(mlscfInfo,"ChunkDivide")
+! Check that input times are reasonable
+      IF (processingRange%startTime > processingRange%endTime) &
+         CALL MLSMessage(MLSMSG_Error, ModuleName, 'Input start time &
+                                                   &greater than end time.')
+d991 1
+a991 1
+! Read the L1 data for MAF times
+d993 5
+a997 7
+      quantity = 'MAFStartTimeTAI'
+      CALL ReadL1BData (l1bInfo%L1BOAId, quantity, data, noMAFs, flag)
+      IF (flag /= 0) THEN
+         msr = MLSMSG_L1BRead // quantity
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+! Allocate arrays which will hold re-used L1BOA quantities for the entire file
+d999 1
+a999 12
+      ALLOCATE(time(noMAFs), counterMAF(noMAFs), phi(noMAFs), STAT=error)
+      IF (error /= 0) THEN
+         msr = MLSMSG_Allocate // ' time, phi, counterMAF.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      time = data%dpField(1,1,:)
+      counterMAF = data%counterMAF
+
+      CALL DeallocateL1BData(data, flag)
+      IF (flag /= 0) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+                                     MLSMSG_DeallocateL1b)
+d1001 3
+a1003 1
+! Check that input times fall within file
+d1005 2
+a1006 6
+      IF ( (processingRange%startTime >= time(noMAFs)) .OR. &
+           (processingRange%endTime <= time(1)) ) &
+         CALL MLSMessage(MLSMSG_Error, ModuleName, 'Input times out of range &
+                                                          &of L1 input file.')
+   
+! Get MLSCF values
+d1008 1
+a1008 3
+      CALL ScanDivide_mlscf(chunkDivide%Entries, bands, home, llb, lub, &
+            maxGap, modCritical, modHome, orbLen, overlap, ulb, uub, unitsGap)
+! Read phi for correct module
+d1010 2
+a1011 16
+      IF (modHome == 'THZ') THEN
+         quantity = 'THz.tpGeodAngle'
+      ELSE
+         quantity = 'GHz.tpGeodAngle'
+      ENDIF
+
+      CALL ReadL1BData (l1bInfo%L1BOAId, quantity, data, noMAFs, flag)
+      IF (flag /= 0) THEN
+         msr = MLSMSG_L1BRead // quantity
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+      phi = data%dpField(1,1,:)
+
+      CALL DeallocateL1BData(data, flag)
+      IF (flag /= 0) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+                                     MLSMSG_DeallocateL1b)
+d1013 1
+a1013 1
+! Find firstMAF for data set
+d1015 16
+a1030 12
+      IF ( processingRange%startTime < time(1) ) THEN
+         firstMAF = 0
+      ELSE
+         foundStart = 0
+         DO i = 2, noMAFs
+            IF (foundStart == 1) EXIT
+            IF ( time(i) >= processingRange%startTime ) THEN
+               firstMAF = i-1
+               foundStart = 1
+            ENDIF
+         ENDDO
+      ENDIF
+d1032 1
+a1032 1
+! Find lastMAF for data set
+d1034 1
+a1034 1
+      numFile = noMAFs-1
+d1036 1
+a1036 12
+      IF ( processingRange%endTime >= time(noMAFs) ) THEN
+         lastMAF = numFile
+      ELSE
+         foundEnd = 0
+         DO i = 1, numFile
+            IF (foundEnd == 1) EXIT
+            IF ( time(noMAFs-i) < processingRange%endTime ) THEN
+               lastMAF = noMAFs-i-2
+               foundEnd = 1
+            ENDIF
+         ENDDO
+      ENDIF
+d1038 2
+a1039 1
+! Calculate a first guess for chunk boundaries
+d1041 1
+a1041 6
+      CALL ScanDivide_firstGuess(l1bInfo%L1BOAId, firstMAF, home, lastMAF, &
+                                 numFile, orbLen, overlap, phi, chunks, flag)
+      IF (flag /= 0) THEN
+         msr = MLSMSG_SUB // 'ScanDivide_firstGuess'
+         CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
+      ENDIF
+d1043 1
+a1043 1
+! If necessary, check for completely missing telemetry
+d1045 1
+a1045 1
+      IF (maxGap == -1.0) RETURN
+d1047 1
+a1047 5
+      ALLOCATE(badMAF(numFile), STAT=error)
+      IF (error /= 0) THEN
+         msr = MLSMSG_Allocate // ' holder for bad MAF numbers.' 
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+d1049 1
+a1049 4
+      badMAF = 0
+      numBad = 0
+      numChunks = SIZE(chunks)
+      DO i = chunks(1)%firstMAFIndex+2, chunks(numChunks)%lastMAFIndex
+d1051 15
+a1065 3
+         diff = phi(i) - phi(i-1)
+         diffTime = time(i) - time(i-1)
+         IF (unitsGap == 'MAFS') THEN
+d1067 1
+a1067 1
+            diff = counterMAF(i) - counterMAF(i-1)
+d1069 2
+a1070 1
+         ELSE IF (unitsGap == 'ORBITS') THEN
+d1072 5
+a1076 1
+            diff = diff / 360.0
+d1078 1
+a1078 1
+         ELSE IF (unitsGap == 'MINUTES') THEN
+d1080 1
+a1080 1
+            diff = diffTime / 60.0
+d1082 5
+a1086 1
+         ELSE IF (unitsGap == 'SECONDS') THEN
+d1088 1
+a1088 1
+            diff = diffTime
+d1090 2
+a1091 1
+         ENDIF
+d1093 1
+a1093 4
+         IF (diff > maxGap) THEN
+            badMAF(i) = 1
+            numBad = numBad + 1
+         ENDIF
+d1095 1
+a1095 1
+      ENDDO
+d1097 1
+a1097 1
+      IF (numBad > 0) THEN
+d1099 1
+a1099 5
+         CALL ScanDivide_wall(chunks, badMAF, flag)
+         IF (flag /= 0) THEN
+            msr = MLSMSG_SUB // 'ScanDivide_wall'
+            CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
+         ENDIF
+d1101 3
+a1103 3
+      ENDIF
+   
+! Scan scGeodAngle for value flagging bad toolkit returns
+d1105 1
+a1105 7
+      quantity = 'scGeodAngle'
+      CALL ReadL1BData (l1bInfo%L1BOAId, quantity, data, noMAFs, flag)
+      IF (flag /= 0) THEN
+         msr = MLSMSG_L1BRead // quantity
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+! Check new set of chunks for unusable oa data
+d1107 1
+a1107 12
+      ALLOCATE(firstOa(noMAFs), lastOa(noMAFs), STAT=error)
+      IF (error /= 0) THEN
+         msr = MLSMSG_Allocate // ' first and last bad Oa MAF holders.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      firstOa = -1
+      lastOa = -1
+      numBad = 1
+      numChunks = SIZE(chunks)
+      DO i = chunks(1)%firstMAFIndex, chunks(numChunks)%lastMAFIndex
+         IF ( data%dpField(1,1,i+1) <= -999.9 ) THEN
+d1109 1
+a1109 1
+            IF ( firstOa(numBad) == -1 ) firstOa(numBad) = i
+d1111 1
+a1111 1
+            lastOa(numBad) = i
+d1113 20
+a1132 10
+         ELSE IF ( i > 0) THEN
+            IF (data%dpField(1,1,i) <= -999.9 ) THEN
+               numBad = numBad + 1
+            END IF
+         ENDIF
+
+      ENDDO
+      CALL DeallocateL1BData(data, flag)
+      IF (flag /= 0) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+                                     MLSMSG_DeallocateL1b)
+d1134 3
+a1136 2
+! If gaps are found, check whether they (along with any previous adjacent
+! ones) exceed MaxGap; re-organize chunks, accordingly
+d1138 5
+a1142 1
+      IF (firstOa(1) /= -1) THEN
+d1144 3
+a1146 8
+         IF (numBad == 1) THEN
+            numOa = 1
+         ELSE
+            numOa = numBad - 1
+         ENDIF
+           
+         CALL ScanDivide_checkReorganizeRange(counterMAF, firstOa(1:numOa), &
+                          lastOa(1:numOa), maxGap, phi, time, unitsGap, chunks)
+d1148 1
+a1148 1
+      ENDIF
+d1150 1
+a1150 2
+! If necessary, check for valid scans
+      IF (modCritical /= 'NONE') THEN
+d1152 1
+a1152 5
+         badMAF = 0
+         numBad = 0
+         numChunks = SIZE(chunks)
+   
+! Unless THz alone specified as critical module, read GHz first
+d1154 2
+a1155 1
+         IF (modCritical /= 'THZ') THEN
+d1157 3
+a1159 6
+            quantity = 'GHz.tpGeodAlt'
+            CALL ReadL1BData (l1bInfo%L1BOAId, quantity, data, noMAFs, flag)
+            IF (flag /= 0) THEN
+               msr = MLSMSG_L1BRead // quantity
+               CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+            ENDIF
+d1161 1
+a1161 1
+! Check GHz for bad scans
+d1163 1
+a1163 1
+            DO i = chunks(1)%firstMAFIndex+1, chunks(numChunks)%lastMAFIndex+1
+d1165 1
+a1165 2
+               min = MINVAL(data%dpField(1,:,i))
+               max = MAXVAL(data%dpField(1,:,i))
+d1167 1
+a1167 2
+               IF ( (min < llb) .OR. (min > lub) .OR. &
+                    (max < ulb) .OR. (max > uub) ) THEN
+d1169 1
+a1169 2
+                  badMAF(i) = 1
+                  numBad = numBad + 1
+d1171 2
+a1172 1
+               ENDIF
+d1174 1
+a1174 1
+            ENDDO
+d1176 20
+a1195 3
+            CALL DeallocateL1BData(data, flag)
+            IF (flag /= 0) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+                                           MLSMSG_DeallocateL1b)
+d1197 1
+a1197 1
+         ENDIF
+d1199 2
+a1200 1
+! If necessary, read THz data
+d1202 1
+a1202 2
+         IF ( (modCritical == 'THZ') .OR. (modCritical == 'BOTH') .OR. &
+              ((modCritical == 'EITHER') .AND. (numBad > 0)) ) THEN
+d1204 3
+a1206 8
+            quantity = 'THz.tpGeodAlt'
+            CALL ReadL1BData (l1bInfo%L1BOAId, quantity, data, noMAFs, flag)
+            IF (flag /= 0) THEN
+               msr = MLSMSG_L1BRead // quantity
+               CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+            ENDIF
+! If EITHER is critical, check only bad GHz scans; if THz okay,
+! unmark MAF as bad.
+d1208 4
+a1211 1
+            IF (modCritical == 'EITHER') THEN
+d1213 3
+a1215 1
+               DO i = chunks(1)%firstMAFIndex+1,chunks(numChunks)%lastMAFIndex+1
+d1217 1
+a1217 1
+                  IF (badMAF(i) == 1) THEN
+d1219 6
+a1224 2
+                     min = MINVAL(data%dpField(1,:,i))
+                     max = MAXVAL(data%dpField(1,:,i))
+d1226 1
+a1226 2
+                     IF ( (min >= llb) .AND. (min <= lub) .AND. &
+                          (max >= ulb) .AND. (max <= uub) ) THEN
+d1228 1
+a1228 2
+                        badMAF(i) = 0
+                        numBad = numBad - 1
+d1230 1
+a1230 1
+                     ENDIF
+d1232 3
+a1234 1
+                  ENDIF
+d1236 1
+a1236 1
+               ENDDO
+d1238 7
+a1244 1
+! If THz is critical, check entire data set for bad THz scans
+d1246 1
+a1246 1
+            ELSE
+d1248 8
+a1255 1
+               DO i = chunks(1)%firstMAFIndex+1,chunks(numChunks)%lastMAFIndex+1
+d1257 1
+a1257 4
+                  min = MINVAL(data%dpField(1,:,i))
+                  max = MAXVAL(data%dpField(1,:,i))
+                  IF ( (min < llb) .OR. (min > lub) .OR. &
+                       (max < ulb) .OR. (max > uub) ) THEN
+d1259 37
+a1295 2
+                     badMAF(i) = 1
+                     numBad = numBad + 1
+d1297 1
+a1297 1
+                  ENDIF
+d1299 1
+a1299 1
+               ENDDO
+d1301 11
+a1311 1
+            ENDIF
+d1313 1
+a1313 3
+            CALL DeallocateL1BData(data, flag)
+            IF (flag /= 0) CALL MLSMessage(MLSMSG_Warning, ModuleName, &
+                                           MLSMSG_DeallocateL1b)
+d1315 9
+a1323 1
+         ENDIF
+d1325 3
+a1327 75
+! If bad scans found, add "bad" markings for any MAFs previously discarded
+
+         IF (numBad > 0) THEN
+
+            DO i = 1, numOa
+               DO j = firstOa(i), lastOa(i)
+                  badMAF(j+1) = 1
+               ENDDO
+            ENDDO
+
+! Set first & last badMAF for all gaps found thus far
+
+            ALLOCATE(firstScan(numBad+numOa), lastScan(numBad+numOa), &
+                     STAT=error)
+            IF (error /= 0) THEN
+               msr = MLSMSG_Allocate // ' first and last bad scan MAF holders.'
+               CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+            ENDIF
+
+            firstScan = -1
+            lastScan = -1
+            numScan = 1
+
+            DO i = chunks(1)%firstMAFIndex+1, chunks(numChunks)%lastMAFIndex+1
+
+               IF ( badMAF(i) == 1) THEN
+
+                  IF (firstScan(numScan) == -1) firstScan(numScan) = i-1
+                  lastScan(numScan) = i-1
+
+               ELSE IF ( (i > 1) .AND. (lastScan(numScan) == i-2) ) THEN
+
+                  numScan = numScan + 1
+
+               ENDIF
+
+            ENDDO
+
+! Check whether these (including MAF "walls" previously found) exceed MaxGap;
+! re-organize chunks, if necessary
+
+            IF (numScan == 1) THEN
+               loop = 1
+            ELSE
+               loop = numScan - 1
+            ENDIF
+            CALL ScanDivide_checkReorganizeRange(counterMAF, &
+                                  firstScan(1:loop), lastScan(1:loop), &
+                                  maxGap, phi, time, unitsGap, chunks)
+
+            DEALLOCATE(firstScan, lastScan, STAT=error)
+            IF (error /= 0) THEN
+               msr = MLSMSG_Deallocate // ' first & lastScan local variables.'
+               CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
+            ENDIF
+
+         ENDIF
+
+      ENDIF
+
+! If necessary, check for critical bands in the L1bRad file
+      numChunks = size(chunks)
+      IF (bands == 'NONE') RETURN
+
+! Deallocations
+
+      DEALLOCATE(badMAF, counterMAF, firstOa, lastOa, phi, time, STAT=error)
+      IF (error /= 0) THEN
+         msr = MLSMSG_Deallocate // ' local variables.'
+         CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
+      ENDIF
+
+!------------------------------
+   END SUBROUTINE ScanAndDivide
+!------------------------------
+d1330 1
+a1330 1
+END MODULE ScanDivide
+d1334 2
+a1335 2
+!# Revision 2.0  2000/09/05 18:57:04  ahanzel
+!# Changing file revision to 2.0.
+d1337 2
+a1338 4
+!# Revision 1.8  2000/06/30 00:06:44  lungu
+!# Imbricated IF (data%dpField(1,1,i) <= -999.9 )
+!# so that no "out of bounds" error occurs
+!# when i=0.
+a1339 1
+
+@
+
+
+1.8
+log
+@Imbricated IF (data%dpField(1,1,i) <= -999.9 )
+so that no "out of bounds" error occurs
+when i=0.
+@
+text
+@d23 1
+a23 1
+   "$Id: ScanDivide.f90,v 1.8 2000/06/30 00:06:44 lungu Exp $"
+d1370 3
+d1378 1
+a1378 21
+!# Revision 1.7  2000/05/18 00:19:11  lungu
+!# *** empty log message ***
+!#
+!# Revision 1.6  2000/02/11 16:31:36  nakamura
+!# Removed superfluous USE MLSL2Common statement.
+!#
+!# Revision 1.5  2000/02/08 20:09:17  nakamura
+!# Replaced DataProcessingRange_T with TAI93_Range_T.
+!#
+!# Revision 1.4  2000/01/17 16:44:20  nakamura
+!# Updated copyright year to Y2K.
+!#
+!# Revision 1.3  2000/01/11 23:40:09  livesey
+!# This version compiles and links for the first time!
+!#
+!# Revision 1.2  2000/01/10 19:33:14  nakamura
+!# Removed unused local variables eT & sT.
+!#
+!# Revision 1.1  2000/01/06 21:20:22  nakamura
+!# Everything but the checks on the radiance file.
+!#
+@
+
+

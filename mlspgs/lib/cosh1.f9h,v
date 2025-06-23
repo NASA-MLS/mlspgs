@@ -1,0 +1,170 @@
+head	2.3;
+access;
+symbols
+	v5-02-NRT-19:2.3
+	v6-00:2.3
+	v5-02-NRT-18:2.3
+	v5-02:2.3
+	v5-01-NRT-17:2.3
+	v5-01-NRT-16:2.3
+	v5-01-NRT-15:2.3
+	v5-01-NRT-14:2.3
+	neuralnetworks-1-0:2.3.0.14
+	cfm-single-freq-0-1:2.3.0.12
+	v5-01:2.3
+	v5-00:2.3
+	v4-23-TA133:2.3.0.10
+	mus-emls-1-70:2.3.0.8
+	rel-1-0-englocks-work:2.3.0.6
+	VUMLS1-00:2.3
+	VPL1-00:2.3
+	V4-22-NRT-08:2.3
+	VAM1-00:2.3
+	V4-21:2.3.0.4
+	V4-13:2.3
+	V4-12:2.3
+	V4-11:2.3
+	V4-10:2.3
+	V3-43:2.3
+	M4-00:2.3
+	V3-41:2.3
+	V3-40-PlusGM57:2.3.0.2
+	V2-24-NRT-04:2.3
+	V3-33:2.3
+	V2-24:2.3
+	V3-31:2.3
+	V3-30-NRT-05:2.3
+	cfm-01-00:2.3
+	V3-30:2.3
+	V3-20:2.3
+	V3-10:2.3
+	V2-23-NRT-02:2.3
+	V2-23:2.3
+	V2-22-NRT-01:2.3
+	V2-22:2.3
+	V2-21:2.3
+	V2-20:2.3
+	V2-11:2.3
+	V2-10:2.3
+	V2-00:2.3
+	V1-51:2.2
+	V1-50:2.2
+	V1-45:2.2
+	V1-44:2.2
+	V1-43:2.2
+	V1-42:2.2
+	V1-41:2.2
+	V1-32:2.2
+	V1-40:2.2
+	V1-31:2.2
+	V1-30:2.2
+	V1-13:2.2
+	V1-12:2.2
+	V1-11:2.2
+	V1-10:2.2
+	newfwm-feb03:2.2.0.2;
+locks; strict;
+comment	@# @;
+
+
+2.3
+date	2005.06.22.17.44.10;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2002.10.11.20.36.26;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2002.10.11.19.44.00;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.3
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! elemental function *cosh1 ( X ) result ( COSH1 )
+
+! Compute 2 * (cosh(x)-1) / x**2
+
+! For large X, just use the intrinsic.  For small X, use five terms of the
+! Taylor series.  For _really_ small X, use L'Hospital's rule.
+
+!{ $( \cosh(x) - 1 ) / x^2 = \sum_{i=1}^{\infty) \frac{x^{2 n - 2}}{2 n!}$
+
+! $Id: cosh1.f9h,v 2.2 2002/10/11 20:36:26 vsnyder Exp $
+! $RCSfile: cosh1.f9h,v $
+
+    real(rk), intent(in) :: X                              
+    real(rk) :: COSH1                                      
+
+    real(rk) :: XSQ     ! X**2                             
+
+    xsq = x ** 2                                           
+
+    if ( abs(x) > 0.2_rk ) then          ! Just do it
+      cosh1 = 2.0_rk * (cosh(x) - 1.0_rk) / xsq
+    else if ( abs(x) > 3.0e-4_rk ) then  ! Five terms of Taylor's series
+      cosh1 = ( 1.0_rk + xsq * ( 1.0_rk / 12.0_rk ) * &             
+        &     ( 1.0_rk + xsq * ( 1.0_rk / 30.0_rk ) * &             
+        &     ( 1.0_rk + xsq * ( 1.0_rk / 56.0_rk ) * &             
+        &     ( 1.0_rk + xsq * ( 1.0_rk / 90.0_rk ) ) ) ) )         
+    else                                 ! L'Hospital's rule
+      cosh1 = cosh(x)
+    end if
+
+! end function *cosh1
+
+! $Log: !
+@
+
+
+2.2
+log
+@Make it elemental
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d21 1
+a21 1
+! $Id: cosh1.f9h,v 2.1 2002/10/11 19:44:00 vsnyder Exp $
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d4 1
+a4 1
+! function *cosh1 ( X ) result ( COSH1 )
+d13 2
+a14 2
+! $Id: $
+! $RCSfile: $
+@
+

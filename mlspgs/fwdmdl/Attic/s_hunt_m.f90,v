@@ -1,0 +1,73 @@
+head	1.2;
+access;
+symbols
+	V0_1:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2000.11.22.23.07.30;	author zvi;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2000.05.04.18.12.06;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@New version
+@
+text
+@module S_HUNT_M
+  use MLSCommon, only: I4, R4
+  implicit NONE
+  private
+  public :: S_HUNT, HUNT
+  interface HUNT; module procedure S_HUNT; end interface
+
+!---------------------------- RCS Ident Info -------------------------------
+  CHARACTER (LEN=256) :: Id = &
+       "$Id: s_hunt_m.f90,v 1.1 2000/05/04 18:12:06 vsnyder Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile: s_hunt_m.f90,v $"
+!---------------------------------------------------------------------------
+
+  integer, private, parameter :: RK = r4
+
+contains
+
+! A binary search routine with a hunt procedure, to start from last known
+! location (if 0 < JLO < N) or from the begining otherwise.
+
+  subroutine S_HUNT ( ELEMENT, ARRAY, N, JLO, JHI )
+    include 'hunt.f9h'
+  end subroutine S_HUNT
+end module S_HUNT_M
+
+! $Log: s_hunt_m.f90,v $
+! Revision 1.1  2000/05/04 18:12:06  vsnyder
+! Initial conversion to Fortran 90
+!
+@
+
+
+1.1
+log
+@Initial conversion to Fortran 90
+@
+text
+@d10 1
+a10 1
+       "$Id: S_HUNT_M,v 1.12 2000/02/08 19:54:57 vsnyder Exp $"
+d26 4
+a29 1
+! $Log: S_HUNT_M,v $
+@
+

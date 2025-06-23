@@ -1,0 +1,252 @@
+head	2.7;
+access;
+symbols
+	newfwm-sep01:2.6.0.2
+	V0-7:2.6
+	V0-5-Level2:2.6
+	V0-5-SIPS:2.6
+	V0_1:1.5;
+locks; strict;
+comment	@# @;
+
+
+2.7
+date	2002.04.02.23.03.41;	author pwagner;	state dead;
+branches;
+next	2.6;
+
+2.6
+date	2001.01.18.15.53.39;	author nakamura;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2001.01.16.17.55.12;	author nakamura;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2000.12.29.21.20.36;	author nakamura;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2000.11.16.21.37.57;	author nakamura;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2000.11.15.21.23.54;	author nakamura;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2000.10.24.19.05.05;	author nakamura;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2000.09.05.17.41.06;	author dcuddy;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2000.07.11.20.27.46;	author lungu;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	99.12.18.03.00.46;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.7
+log
+@Supersed by MLSPCFn in each level n
+@
+text
+@! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! NOTE: This module is automatically created by the makemlspcfdatamodule
+!       perl script.  Do *NOT* attempt to modify this by hand.
+!
+MODULE MLSPCF
+   INTEGER, PARAMETER :: mlspcf_l1b_oa_start = 20000                 
+   INTEGER, PARAMETER :: mlspcf_l1b_oa_end = 20039
+   !
+   INTEGER, PARAMETER :: mlspcf_l1b_rad_start = 20040
+   INTEGER, PARAMETER :: mlspcf_l1b_rad_end = 20079
+   !
+   INTEGER, PARAMETER :: mlspcf_l1b_log_start = 20080
+   INTEGER, PARAMETER :: mlspcf_l1b_log_end = 20080
+   !
+   INTEGER, PARAMETER :: mlspcf_l1b_eng_start = 20081
+   INTEGER, PARAMETER :: mlspcf_l1b_eng_end = 20081
+   !
+   INTEGER, PARAMETER :: mlspcf_l2gp_start = 21000
+   INTEGER, PARAMETER :: mlspcf_l2gp_end = 21050
+   !
+   INTEGER, PARAMETER :: mlspcf_MCF_start = 40260 
+   INTEGER, PARAMETER :: mlspcf_MCF_end = 40276
+   !
+   INTEGER, PARAMETER :: mlspcf_l2aux_start = 21440
+   INTEGER, PARAMETER :: mlspcf_l2aux_end = 21440
+   !
+   INTEGER, PARAMETER :: mlspcf_l2fwm_start = 21480
+   INTEGER, PARAMETER :: mlspcf_l2fwm_end = 21480
+   !
+   INTEGER, PARAMETER :: mlspcf_l2ncep_start = 21500
+   INTEGER, PARAMETER :: mlspcf_l2ncep_end = 21500
+
+   INTEGER, PARAMETER :: mlspcf_l2dao_start = 21600
+   INTEGER, PARAMETER :: mlspcf_l2dao_end = 21600
+
+   INTEGER, PARAMETER :: mlspcf_l2clim_start = 21700
+   INTEGER, PARAMETER :: mlspcf_l2clim_end = 21700
+
+   INTEGER, PARAMETER :: mlspcf_l2cf_start = 21482
+   INTEGER, PARAMETER :: mlspcf_l2cf_end = 21482
+   !
+   INTEGER, PARAMETER :: mlspcf_nomen_start = 23000
+   INTEGER, PARAMETER :: mlspcf_nomen_end = 23000
+   !
+   INTEGER, PARAMETER :: mlspcf_pcf_start = 900
+   INTEGER, PARAMETER :: mlspcf_pcf_end = 900
+   !
+   INTEGER, PARAMETER :: mlspcf_l3_param_InputVersion = 3000
+   INTEGER, PARAMETER :: mlspcf_l3_param_OutputVersion = 3001
+   INTEGER, PARAMETER :: mlspcf_l3_param_Cycle = 3002
+   INTEGER, PARAMETER :: mlspcf_l3_param_L2DayRange = 3003
+   INTEGER, PARAMETER :: mlspcf_l3_param_RangDays = 3004
+   !
+   INTEGER, PARAMETER :: mlspcf_l3cf_start = 30000
+   INTEGER, PARAMETER :: mlspcf_l3cf_end = 30002
+   !
+   INTEGER, PARAMETER :: mlspcf_l3dm_start = 30100
+   INTEGER, PARAMETER :: mlspcf_l3dm_end = 30199 
+   !
+   INTEGER, PARAMETER :: mlspcf_l3sp_start = 31000
+   INTEGER, PARAMETER :: mlspcf_l3sp_end = 31009
+   !
+   INTEGER, PARAMETER :: mlspcf_mcf_l3log_start = 50001
+   INTEGER, PARAMETER :: mlspcf_mcf_l3log_end = 50001
+   !
+   INTEGER, PARAMETER :: mlspcf_mcf_l3dm_start = 50100
+   INTEGER, PARAMETER :: mlspcf_mcf_l3dm_end = 50199
+END MODULE MLSPCF
+
+!$Log $
+@
+
+
+2.6
+log
+@Removed L3 parameter MinDays.
+@
+text
+@@
+
+
+2.5
+log
+@Added an entry for the PCF itself.
+@
+text
+@d53 1
+a53 2
+   INTEGER, PARAMETER :: mlspcf_l3_param_MinDays = 3004
+   INTEGER, PARAMETER :: mlspcf_l3_param_RangDays = 3005
+@
+
+
+2.4
+log
+@Added L3SP parameters.
+@
+text
+@d46 3
+@
+
+
+2.3
+log
+@Removed trailing blanks from l2gp_start.
+@
+text
+@d59 3
+@
+
+
+2.2
+log
+@Revised some l3 names.
+@
+text
+@d19 1
+a19 1
+   INTEGER, PARAMETER :: mlspcf_l2gp_start = 21000                 
+@
+
+
+2.1
+log
+@Added parameters for L3.
+@
+text
+@d46 6
+a51 7
+   INTEGER, PARAMETER :: mlspcf_l3cf_InputVersion = 3000
+   INTEGER, PARAMETER :: mlspcf_l3cf_OutputVersion = 3001
+   INTEGER, PARAMETER :: mlspcf_l3cf_Cycle = 3002
+   INTEGER, PARAMETER :: mlspcf_l3cf_L2DayRange = 3003
+   INTEGER, PARAMETER :: mlspcf_l3cf_MinDays = 3004
+   INTEGER, PARAMETER :: mlspcf_l3cf_RangDays = 3005
+   INTEGER, PARAMETER :: mlspcf_l3cf_Month = 3006
+d54 1
+a54 1
+   INTEGER, PARAMETER :: mlspcf_l3cf_end = 30002 
+d62 2
+a63 2
+   INTEGER, PARAMETER :: mlspcf_l3dm_mcf_start = 50100
+   INTEGER, PARAMETER :: mlspcf_l3dm_mcf_end = 50199
+@
+
+
+2.0
+log
+@Change revision to 2.0
+@
+text
+@d45 20
+@
+
+
+1.5
+log
+@Changed mlspcf_l2aux_start = mlspcf_l2aux_end =21440.
+@
+text
+@@
+
+
+1.1
+log
+@First version
+@
+text
+@d20 4
+a23 1
+   INTEGER, PARAMETER :: mlspcf_l2gp_end = 21439
+d26 1
+a26 1
+   INTEGER, PARAMETER :: mlspcf_l2aux_end = 21479
+d31 14
+d46 2
+@
+
+

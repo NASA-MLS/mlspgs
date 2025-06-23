@@ -1,0 +1,1446 @@
+head	1.3;
+access;
+symbols
+	v5-02-NRT-19:1.3
+	v6-00:1.3
+	v5-02-NRT-18:1.3
+	v5-01-NRT-17:1.3
+	v5-01-NRT-16:1.3
+	v5-01-NRT-15:1.3
+	v5-01-NRT-14:1.3
+	neuralnetworks-1-0:1.3.0.4
+	cfm-single-freq-0-1:1.3.0.2;
+locks; strict;
+comment	@% @;
+
+
+1.3
+date	2020.07.14.00.01.36;	author vsnyder;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2020.07.14.00.00.19;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2020.07.09.23.20.48;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@correct CVS Log line
+@
+text
+@\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9in
+
+\newcommand{\docname}{wvs-162r1}
+\newcommand{\docdate}{13 July 2020}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+\fi
+\ifnum\pdfoutput>0
+  \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+  \hypersetup{%
+    hypertexnames=false,%
+    colorlinks=true,%
+    linktocpage=true,%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{pdftex}
+\else
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\renewcommand{\d}{\text{d}} % for derivatives
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Paul, Bill, William, Nathaniel\\
+Subject: \>Forward Model Configuration\\
+From: \>Van Snyder\\
+References: \> \h{wvs-017}, \h{wvs-027}, \h{wvs-049}, \h{wvs-065}, \\
+  \> \h{wvs-067}, \h{wvs-070}, \h{wvs-107}
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-20pt}
+
+\section*{Summary}
+
+The actions of the forward models are controlled by several factors.
+
+\begin{itemize}
+
+\item Fields of the {\tt ForwardModelGlobal} specification in the {\tt
+  GlobalSettings} section of the {\tt l2cf} specify file names:
+
+  \begin{itemize}
+  
+  \item {\tt AntennaPatterns}
+  
+  \item {\tt DACSFilterShapes}
+  
+  \item {\tt FilterShapes}
+  
+  \item {\tt l2pc}
+  
+  \item {\tt MieTables}
+  
+  \item {\tt PFAFiles}
+  
+  \item {\tt PointingGrid}
+  
+  \item {\tt Polygon}
+
+  \end{itemize}
+
+\item The {\tt Spectroscopy} section of the {\tt l2cf}
+
+\item The {\tt ForwardModel} specification in the {\tt Construct} section
+  of the {\tt l2cf}
+
+\item Quantities in the vectors specified in the {\tt State} and {\tt
+  FwdModelExtra} fields in the {\tt Retrieve} or {\tt SIDS} specification
+  in the {\tt Retrieve} section of the {\tt l2cf}
+
+  \begin{itemize}
+
+  \item {\tt IsotopeRatio} for a particular molecule.
+
+  \end{itemize}
+
+\item The Jacobian specified in the {\tt Retrieve} or {\tt SIDS}
+  specification in the {\tt Retrieve} section of the {\tt l2cf}
+
+\end{itemize}
+
+\section*{ForwardModelGlobal specification}
+
+\subsection*{Syntax}
+
+The {\tt ForwardModelGlobal} specification provides the names of files. It
+has eight fields, each of which must have a character string value. They
+are all optional. There are no default values.
+
+There is no provision for more than one antenna patterns file, filter
+shapes file, DACS filter shape file, or pointing grids file. If several
+Mie tables files or several PFA files are needed, their names are specified
+as an array in the corresponding field of one {\tt ForwardModelGlobal}
+specification. If several {\tt l2pc} files are needed, their names are
+specified in separate {\tt ForwardModelGlobal} specifications (or maybe
+the subroutine that handles the {\tt l2pc} field accepts an array of
+names; Paul might know).
+
+\subsection*{AntennaPatterns file}
+
+The antenna patterns file is read by the {\tt Read_Antenna_Patterns_File}
+subroutine in the module {\tt Antenna\-Pat\-terns_m}.
+
+The antenna patterns file contains Fourier coefficients to use when
+convolving the forward model results with the angular response of the
+antenna.
+
+Each section of the file begins with a signal specification that must
+match a signal specified in the {\tt Signals} section of the {\tt l2cf}. A
+signal specification might specify several signals, so the number of
+signals specified by each signal section is recorded.
+
+The first line after the signal specifies the number of coefficients $n$,
+and {\tt lambda}, which is used in the module {\tt FOV_Convolve_m} to
+compute the angular step between coefficients, \emph{viz.}
+
+\begin{equation*}
+\text{\tt ang_step} = \frac1{2^{11} \lambda}
+\end{equation*}
+
+The units of {\tt lambda} are inverse radians. The value in at least one
+file is 5.0 where the number of coefficients is 2048, and 5.72803 where
+the number of coefficients is 335.
+
+The code computes $\ell = \lceil\log_2 n\rceil$, and computes {\tt
+power2}~= $2^{\ell}$. Then there is a line with the comment {\tt Bill
+debug} that sets {\tt power2}~= $2^{11}$. The value {\tt 2*power2} is then
+used to allocate arrays in the {\tt antennaPatterns} structure 
+(coefficients have both real and imaginary parts). Antenna patterns are
+ultimately used in the {\tt FOV_Convolve_m} module, where there are arrays
+having $2\times2^{11}$ elements. This will need to be changed for a
+different instrument.
+
+Following the second line in each section are $n$ pairs of coefficients,
+first the real part, then the imaginary part, stored into an array
+component named {\tt aaap}. Values between $n+1$ and {\tt 2*power2} are
+set to zero. Array components named {\tt d1aap} and {\tt d2aap} are
+allocated and filled with zeroes. These are used to compute derivatives of
+{\tt aaap} in the module {\tt FOV_Convolve_m}.
+
+\subsection*{DACSFilterShapes file}
+
+The DACS filter shapes file is read by the {\tt
+Read_DACS_Filter_Shapes_File} subroutine in the {\tt FilterShapes_m}
+module.
+
+Blank lines are allowed.
+
+The section for each filter consists of
+
+\begin{enumerate}
+
+\item Zero or more blank lines or comment lines beginning with ``!''
+
+\item A signal specification that must match a signal specified in the
+  {\tt Signals} section of the {\tt l2cf}.
+
+\item Fortran {\tt NAMELIST} input that specifies the characteristics of
+  the filter. It begins with {\tt \&filter} (the namelist name) and ends
+  with ``/''. Blanks, including blank lines, are permitted before {\tt
+  \&filter}.  The namelist input can specify the values of five variables,
+  in any order, by giving the variable name (case insensitive), followed
+  by ``='', followed by the value. Blanks are permitted around ``=''.
+  Name/value pairs are separated by blanks, commas, or ends of lines.
+
+  \begin{itemize}
+  
+  \item {\tt lhs =} the left-hand side of the filter range, in MHz
+  
+  \item {\tt rhs =} the right-hand side of the filter range, in MHz
+  
+  \item {\tt logFilt =} the base-2 logarithm of the size of the pre-filter
+    shape array
+  
+  \item {\tt logNorm =} the base-2 logarithm of the size of the
+    normalization array
+
+  \item {\tt logApod =} the base-2 logarithm of the LO apodization array,
+    which must be the same as either {\tt logFilt} or {\tt logNorm}
+
+  \end{itemize}
+
+  {\tt logFilt}, {\tt logNorm}, and {\tt logApod} are integer variables.
+  {\tt lhs} and {\tt rhs} are real variables.
+
+  The values of {\tt lhs} and {\tt rhs} are used to construct the filter's
+  frequency grid. If {\tt lhs} $>$ {\tt rhs}, the array will have
+  decreasing frequencies in consecutive elements.
+
+  The default value for {\tt logNorm} is 7. There are no default values
+  for any of the other variables. There is no check whether values have
+  been specified. Be careful to specify all of them.
+
+  Blank lines, and comments beginning with ``!'' and extending to the end
+  of the line, are permitted within namelist input.
+
+\item The filter shape array. Its size is 2**{\tt logFilt}+1.
+
+\item The LO apodization array. Its size is 2**{\tt logApod}+1.
+
+\item The channel normalization array. Its size is 2**{\tt logNorm}+1.
+
+\end{enumerate}
+
+The three arrays after the {\tt \&filter} namelist input are all read
+using list-directed (also called free-format) input. Any number of values
+can appear on each line. Blank lines are permitted. Values are separated
+by blanks, commas, or ends of lines. If consecutive commas appear (which
+can be separated by blanks or ends of lines), values are not input for the
+intervening array elements. Comments are not permitted. If ``/'' appears
+it terminates input even if insufficient values to fill the array are
+supplied. Default values are not specified for the arrays, so un-filled
+elements become undefined.
+
+\subsection*{FilterShapes file}
+
+The filter shapes file, for filters that are not DACS filters, is read by
+the {\tt Read_Filter_Shapes_File} subroutine in the {\tt FilterShapes_m}
+module.
+
+Blank lines are allowed.
+
+The section for each filter consists of
+
+\begin{enumerate}
+
+\item Zero or more blank lines or comment lines beginning with ``!''
+
+\item A signal specification that must match a signal specified in the
+  {\tt Signals} section of the {\tt l2cf}.
+
+\item Fortran {\tt NAMELIST} input that specifies the characteristics of
+  the filter. It begins with {\tt \&filter} (the namelist name) and ends
+  with ``/''. Blanks, including blank lines, are permitted before {\tt
+  \&filter}. The namelist input can specify the values of three
+  variables, in any order, by giving the variable name (case insensitive),
+  followed by ``='', followed by the value. Blanks are permitted around
+  ``=''. Name/value pairs are separated by blanks, commas, or ends of
+  lines.
+
+  \begin{itemize}
+  
+  \item {\tt lhs =}  the left-hand side of the filter range, in MHz
+  
+  \item {\tt rhs =} the right-hand side of the filter range, in MHz
+  
+  \item {\tt number_in_filter =} the number of elements in the filter
+    shape array
+
+  \end{itemize}
+
+{\tt number_in_filter} is an integer variable. {\tt lhs} and {\tt rhs} are
+real variables.
+
+The values of {\tt lhs} and {\tt rhs} are used to construct the filter's
+frequency grid. If {\tt lhs} $>$ {\tt rhs}, the array will have decreasing
+frequencies in consecutive elements.
+
+There is no default value for  any variable. There is no check whether
+values have been specified. Be careful to specify all of them.
+
+Blank lines, and comments beginning with ``!'' and extending to the end of
+the line, are permitted within namelist input.
+
+\item The filter shape array, containing {\tt number_in_filter} elements.
+
+  The array is read using list-directed (also called free-format) input.
+  Any number of values can appear on each line. Blank lines are permitted.
+  Values are separated by blanks, commas, or ends of lines. If consecutive
+  commas appear (which can be separated by blanks or ends of lines),
+  values are not input for the intervening array elements. Comments are
+  not permitted. If ``/'' appears it terminates input even if insufficient
+  values to fill the array are supplied. Default values are not specified
+  for the arrays, so un-filled elements become undefined.
+
+  Filter shape data units are normalized response per MHz. That is
+  $\int f(\nu)\, \text{d}\nu = 1$, for $\nu$ in MHz.
+
+\end{enumerate}
+
+\subsection*{l2pc file}
+
+I do not know anything about {\tt l2pc} files. Nathaniel will need to
+write this section.
+
+\subsection*{MieTables file}
+
+See \h{wvs-065}, \h{wvs-067}, and \h{wvs-070}.
+
+Mie\footnote{Gustav Mie developed equations for electromagnetic scattering
+from homogeneous spheres.} tables are used to calculate the TScat tables
+used for the TScat approximation to model cloud scattering.
+
+If the file name ends in ``.hdf'' (case insensitive), the Mie tables file
+is an HDF file. Otherwise, it is a Fortran unformatted files. The file is
+created by the {\tt mlspgs/Mie/Mie_Tables} program.
+
+The first record on the Fortran unformatted file contains eight scalars:
+
+\begin{enumerate}
+
+\item {\tt n_f} Number of frequencies.
+
+\item {\tt n_IWC} Number of ice water content values.
+
+\item {\tt n_T} Number of temeratures.
+
+\item {\tt n_theta} Number of scattering angles.
+
+\item {\tt r_min} Minimum radius of scattering particles ($\mu$m).
+
+\item {\tt r_max} Maximum radius of scattering particles ($\mu$m).
+
+\item {\tt n_cut} Maximum order for Bessel functions.
+
+\item {\tt derivs} A logical variable indicating whether derivatives are
+  present.
+
+\end{enumerate}
+
+{\tt n_f}. {\tt n_IWC}, {\tt n_T}, and {\tt n_theta} are used to allocate
+arrays. The other scalars are not used by {\tt mlsl2}.
+
+Independent variables in the Fortran unformatted file, in the following
+order:
+
+\begin{enumerate}
+
+\item {\tt IWC_s(n_IWC)} Ice water content.
+
+\item {\tt T_s(n_T)} Temperatures.
+
+\item {\tt Theta_s(n_theta)} Scattering angles.
+
+\item {\tt F_s(n_f)} frequencies in GHz.
+
+\end{enumerate}
+
+Dependent variables in the Fortran unformatted file, in the following
+order:
+
+\begin{enumerate}\setcounter{enumi}{4}
+
+\item {\tt Beta_c_e(n_t,n_iwc,n_f)} extinction coefficient
+  $\beta_{c\_e} = \pi \int_0^\infty n(r)\, r^2\, \xi_e(r) \, \text{d} r$.
+
+\item {\tt Beta_c_s(n_t,n_iwc,n_f)} scattering coefficient
+  $\beta_{c\_s} = \pi \int_0^\infty n(r)\, r^2\, \xi_s(r) \, \text{d} r$.
+
+\item {\tt p(n_t,n_iwc,n_theta,n_f)} integrated phase functions\\
+   $P(\theta;T,\text{\tt IWC},f) =
+   \frac{\lambda^2}{2 \pi \beta_{c\_s}} \int_0^\infty n(r)\,
+   p_0(\theta,r;T,\text{\tt IWC},f)
+   \, \text{d} r$n.
+
+\item {\tt dBeta_dIWC_e((n_t,n_iwc,n_f)} $\frac{\partial
+  \beta_{c\_e}}{\partial \text{\tt IWC}}$.
+
+\item {\tt dBeta_dIWC_s((n_t,n_iwc,n_f)} $\frac{\partial
+  \beta_{c\_s}}{\partial \text{\tt IWC}}$.
+
+\item {\tt dBeta_dT_c_e((n_t,n_iwc,n_f)} $\frac{\partial
+  \beta_{c\_e}}{\partial T}$.
+
+\item {\tt dBeta_dT_c_s((n_t,n_iwc,n_f)} $\frac{\partial
+  \beta_{c\_s}}{\partial T}$.
+
+\item {\tt dP_dIWC((n_t,n_iwc,n_theta,n_f)} $\frac{\partial P}{\partial
+  \text{\tt IWC}}$.
+
+\item {\tt dP_dT((n_t,n_iwc,n_theta,n_f)} $\frac{\partial P}{\partial T}$.
+
+\end{enumerate}
+
+In the Fortran unformatted file, each of the dependent value data sets, in
+addition to the value, includes the error estimate from the quadrature,
+the number of function values for the quadrature, and the maximum order of
+the Patterson formula.
+
+The HDF file has the above data sets. The error estimate, number of
+function values, and maximum order, are not read by {\tt mlsl2}.
+
+In addition, the HDF file includes data sets
+
+\begin{itemize}
+
+\item {\tt Beta_c_a(n_t,n_iwc,n_f)} absorption coefficient $\beta_{c\_a} =
+  \beta_{c\_e} - \beta_{c\_e}$
+  
+
+\item {\tt dBeta_dIWC_c_a(n_t,n_iwc,n_f)} $\frac{\partial
+  \beta_{c\_a}}{\partial\text{\tt IWC}}$
+
+\item {\tt dBeta_dT_c_a(n_t,n_iwc,n_f)} $\frac{\partial
+\beta_{c\_a}}{\partial T}$
+
+\end{itemize}
+
+\subsection*{PFAFiles}
+
+PFA files contain data for the PFA approximation for weak lines, or weak
+tails of lines outside a channel -- see \h{wvs-017}.
+
+PFA files are HDF5 files that are constructed by {\tt mlsl2}, as described
+in \h{wvs-049}.
+
+Each file contains a data set named {\tt Molecules} that lists all the
+molecules for which data are available, and a data set named {\tt Signals}
+that lists all the signals for which data are available.
+
+For every combination of molecules and signals for which data are
+available, there is a group named {\tt molecule\%signal}, where {\tt
+molecule} is a molecule from the {\tt Molecules} data set, and {\tt
+signal} is a signal from the {\tt Signals} data set.
+
+Within each such group are the following attributes:
+
+\begin{description}
+
+\item[{\tt filterFile}] The name of the filter file used to create the
+  data set.
+
+\item[{\tt spectroscopyFile}] The name of the spectroscopy file used to
+  create the data set.
+
+\item[{\tt signal}] The signal for which the data set was prepared.
+
+\item[{\tt sideband}] The sideband for which the data set was prepared.
+
+\item[{\tt vel-rel}] The line-of-site velocity used when the data set was
+  prepared.
+
+\item[{\tt whichLines}] List of lines used to prepare the data set.
+
+\item[{\tt nTemps}] The number of temperatures used to prepare the data
+  set.
+
+\item[{\tt tStart}] Starting temperature.
+
+\item[{\tt tStep}] Step between temperatures.
+
+\item[{\tt nPress}] The number of pressures $(\zeta)$ used to prepare the
+  data set.
+
+\item[{\tt vStart}] Starting pressure $(\zeta)$.
+
+\item[{\tt vStep}] Step between pressures $(\zeta)$.
+
+\end{description}
+
+There are four data sets, all dimensioned {\tt nTemps} $\times$ {\tt
+nPress}:
+
+\begin{description}
+
+\item[{\tt absorption}] $\ln \beta$.
+
+\item[{\tt dAbsDwc}] $\frac{\partial \ln \beta}{\partial w}$ where $w$ is
+  line width.
+
+\item[{\tt dAbsDnc}] $\frac{\partial \ln \beta}{\partial n}$ where $n$ is
+  line width temperature dependence.
+
+\item[{\tt dAbsDnu}] $\frac{\partial \ln \beta}{\partial \nu}$ where $\nu$ is
+  line center frequency.
+
+\end{description}
+
+\subsection*{PointingGrid file}
+
+The pointing grid file specifies the frequencies to be used to integrate
+the radiative-transfer equation, for each specified tangent pressure.
+
+The file consists of an arbitrary number of sets of data.
+
+Each data set in the file consists of:
+
+\begin{itemize}
+
+\item An arbitrary number of signals, one per line. The end of the list of
+  signals is detected by the first non-blank character on the line being a
+  number.
+
+\item Line center frequency in MHz, apparently doppler shifted.
+
+\item Tangent pressure $(\zeta)$, and the number of frequencies to use for
+  the specified pressure.
+
+\item Frequencies, relative to the line center frequency, at which to
+  integrate the radiative-transfer equation for the specified tangent
+  height.
+
+  Frequencies are read using list-directed (also called free-format) input.
+  Any number of values can appear on each line. Blank lines are permitted.
+  Values are separated by blanks, commas, or ends of lines. If consecutive
+  commas appear (which can be separated by blanks or ends of lines),
+  values are not input for the intervening array elements. Comments are
+  not permitted. If ``/'' appears it terminates input even if insufficient
+  values to fill the array are supplied. Default values are not specified
+  for the array, so un-filled elements become undefined.
+
+\end{itemize}
+
+\subsection*{Polygon file}
+
+The polygon file specifies the polygon in which to inscribe a QTM.
+
+A polygon file consists of a (lon,lat) pair that specifies a point defined
+to be inside the polygon.  This is necessary because the concept ``inside
+a polygon'' is ambiguous on the surface of a sphere.
+
+This is followed by however many (lon,lat) pairs as necessary to specify
+the boundary.
+
+The units of latitudes and longitudes are degrees.
+
+This is agnostic concerning whether latitudes are geocentric or geodetic,
+so long as they are consistent with latitudes and longitudes used for
+finding facets in the QTM and interpolating within them.
+
+Everything on a line after \# or ! is ignored. The "inside" point needs to
+be on a line of its own. Thereafter, for points on the boundary, as many
+(lon,lat) pairs (not enclosed in parentheses) as desired may be placed on
+a line, but a (lon,lat) pair cannot be split between lines. Values on each
+line are separated by blanks or commas. Consecutive commas result in an
+undefined value, so don't do that.
+
+\section*{Spectroscopy Section}
+
+Spectroscopy data are provided in the spectroscopy section in two ways.
+
+\subsection*{{\tt l2cf} statements}
+
+Spectral characteristics for each molecule are specified by any number of
+{\tt line} statements, each specifying the characteristics of one spectral
+line, followed by a {\tt spectra} statement that specifies the molecule
+and the spectral lines for the molecule.
+
+The fields of the {\tt line} statement are
+
+\begin{longtable}{llcc}
+Field          & Type  & Array & Required \\
+\hline
+delta          & numeric &   & * \\
+el             & numeric &   & * \\
+emlsSignals    & string  & * &   \\
+emlsSignalsPol & string  & * &   \\
+gamma          & numeric &   & * \\
+n1             & numeric &   & * \\
+n2             & numeric &   & * \\
+ns             & numeric &   & * \\
+n              & numeric &   & * \\
+ps             & numeric &   & * \\
+qn             & numeric & * &   \\
+signals        & string  & * &   \\
+signalsPol     & string  & * &   \\
+str            & numeric & * & * \\
+umlsSignals    & string  & * &   \\
+v0             & numeric &   & * \\
+w              & numeric &   & * \\
+\end{longtable}
+
+The fields of the {\tt spectra} statement are
+
+\begin{longtable}{llcc}
+Field               & Type                     & Array & Required \\
+\hline
+continuum           & numeric                    &   &   \\
+defaultIsotopeRatio & numeric                    &   &   \\
+lines               & {\tt line} statement label & * &   \\
+mass                & numeric                    &   &   \\
+molecule            & molecule                   &   & * \\
+qlog                & numeric                    & * &   \\
+\end{longtable}
+
+The {\tt line} and {\tt spectra} statements are prepared from a \LaTeX\
+file by one of Bill's programs.
+
+\subsection*{HDF5 file}
+
+A spectroscopy HDF5 file is produced by {\tt mlsl2} using a {\tt
+writeSpectroscopy} statement. The only field of the statement is a {\tt
+file} field, which specifies the file name.
+
+A spectroscopy HDF5 file is read by {\tt mlsl2} using a {\tt
+readSpectroscopy} statement. The only field of the statement is a {\tt
+file} field, which specifies the file name.
+
+The spectroscopy section can contain both methods of specifying spectral
+characteristics.  It can contain any number of {\tt readSpectroscopy}
+statements, and any number of {\tt writeSpectroscopy} statements. It is
+possible to add spectroscopy information to a spectroscopy HDF5 file by
+reading the file using a {\tt readSpectroscopy} statement, and {\tt line}
+and {\tt spectra} statemments to define additional spectroscopy, and a
+{\tt writeSpectroscopy} statement. Spectral characteristics can only be
+added; the characteristics for a molecule cannot be replaced by this
+method.
+
+\section*{{\tt ForwardModel} specification}
+
+The fields of the {\tt ForwardModel} statement are used to configure
+forward models.
+
+\newcommand{\N}{$^\dagger$}
+\begin{longtable}{llllcl}
+Field                     & Type           & Units     & Default & Array & Model$^*$  \\
+\hline
+\endhead
+\hline
+\N Statement label \\
+\multicolumn{6}{l}{%
+$^*$Models: Baseline, Cloud, Full, Linear, Hybrid, Polar linear, switching Mirror, Scan, TScat}
+\endfoot
+\hline
+\N Statement label \\
+\multicolumn{6}{l}{%
+$^*$Models: Baseline, Cloud, Full, Linear, Hybrid, Polar linear, switching Mirror, Scan, TScat}
+\endlastfoot
+allLinesForRadiometer     &  boolean       &               & false   &       & F      \\
+allLinesInCatalog         &  boolean       &               & false   &       & F      \\
+atmos_der                 &  boolean       &               & false   &       & F      \\
+atmos_second_der          &  boolean       &               & false   &       & F      \\
+binSelectors              &  binSelector\N &               &         &   *   & L P    \\
+cloud_der                 &  cloud_der     &               & none    &       & C      \\
+default_spectroscopy      &  boolean       &               & false   &       & C      \\
+differentialScan          &  boolean       &               & false   &       & S      \\
+do_baseline               &  boolean       &               & false   &       & B      \\
+do_conv                   &  boolean       &               & false   &       & F      \\
+do_freq_avg               &  boolean       &               & false   &       & F      \\
+do_1d                     &  boolean       &               & false   &       & S      \\
+forceSidebandFraction     &  boolean       &               & false   &       & F L    \\
+frqTol                    &  numeric       & frequency     & 600 MHz &       & T      \\
+i_saturation              &  i_saturation  &               & clear   &       & C      \\
+ignoreHessian             &  boolean       &               & false   &       & L T    \\
+incl_cld                  &  boolean       &               & false   &       & F      \\
+integrationGrid           &  vGrid\N       &               &         &       & F      \\
+linearSideband            &  numeric       & dimensionless & 0       &       & H      \\
+lineCenter                &  molecule      &               &         &       & F      \\
+lineWidth                 &  molecule      &               &         &       & F      \\
+lineWidth_TDep            &  molecule      &               &         &       & F      \\
+lockBins                  &  boolean       &               & false   &       & L      \\
+lsbLBLMolecules           &  molecule      &               &         &   *   & F      \\
+lsbPFAMolecules           &  molecule      &               &         &   *   & F      \\
+MIFTangent                &  MIFTangent    &               & ptan    &       & F      \\
+module                    &  module\N      &               &         &       & F      \\
+moleculeDerivatives       &  molecule      &               &         &   *   & F      \\
+moleculeSecondDerivatives &  molecule      &               &         &   *   & F      \\
+molecules                 &  molecule      &               &         &   *   & F      \\
+nabterms                  &  numeric       & dimensionless & 50      &       & C      \\
+nazimuthangles            &  numeric       & dimensionless & 8       &       & C      \\
+ncloudspecies             &  numeric       & dimensionless & 2       &       & C      \\
+nmodelsurfs               &  numeric       & dimensionless & 640     &       & C      \\
+no_dup_mol                &  boolean       &               & false   &       & config \\
+noMagneticField           &  boolean       &               & false   &       & none   \\
+nscatteringangles         &  numeric       & dimensionless & 16      &       & C T    \\
+ncloudspecies             &  numeric       & dimensionless & 2       &       & C      \\
+nsizebins                 &  numeric       & dimensionless & 40      &       & T      \\
+pathNorm                  &  boolean       &               & false   &       & F      \\
+phiWindow                 &  see below     & see below     & [2,2]   &       & F      \\
+polarized                 &  boolean       &               & false   &       & F      \\
+referenceMIF              &  numeric       & dimensionless & 1       &       & none   \\
+refract                   &  boolean       &               & true    &       & F      \\
+scanAverage               &  boolean       &               & false   &       & F      \\
+signals                   &  string        &               &         &       & all    \\
+skipOverlaps              &  boolean       &               & false   &       & SIDS   \\
+switchingMirror           &  boolean       &               & false   &       & M      \\
+specificQuantities        &  quantity\N    &               &         &       & F      \\
+spect_der                 &  boolean       &               & false   &       & F      \\
+tangentGrid               &  vGrid\N       &               &         &       & F      \\
+temp_der                  &  boolean       &               & false   &       & F      \\
+tolerance                 &  numeric       & temperature   & -1.0 K  &       & F      \\
+transformMIFextinction    &  boolean       &               & false   &       & F H L P \\
+transformMIFRHI           &  boolean       &               & false   &       & none   \\
+trapezoid                 &  trapezoid     &               & wrong   &       & F      \\
+TScatMIF                  &  numeric       & dimensionless & 1       &       & T      \\
+TScatMoleculeDerivatives  &  molecule      &               &         &   *   & T      \\
+TScatMolecules            &  molecule      &               &         &   *   & T      \\
+type                      &  fwmType       &               &         &       & all    \\
+usbLBLMolecules           &  molecule      &               &         &   *   & F      \\
+usbPFAMolecules           &  molecule      &               &         &   *   & F      \\
+useTScat                  &  boolean       &               & false   &       & F      \\
+xStar                     &  vector\N      &               &         &       & L      \\
+yStar                     &  vector\N      &               &         &       & L      \\
+\end{longtable}
+
+The {\tt type} field is the only required field.
+
+The value of the {\tt lsbLBLMolecules}, {\tt lsbPFAMolecules}, {\tt
+usbLBLMolecules}, or {\tt usbPFAMolecules} field can be an array,
+including an empty array.
+
+If the type of the field is not a statement label, numeric, boolean, or
+string, the list of literals allowed for the type is specified in {\tt
+init_tables_module} by a sequence starting with {\tt begin} followed by
+{\tt t+t_} and the type name, and ending with {\tt n+n_dt_def}.
+
+\begin{description}
+
+\item[\tt allLinesForRadiometer] if the value is true, it specifies that
+  all lines for the radiometer, for each molecule, are to be used, not
+  only lines within the frequency range of the channel.
+
+\item[\tt allLinesInCatalog] if the value is true, it specifies that all
+  lines in the catalog, for each molecule, are to be used, not only lines
+  within the frequency range of the channel.
+
+\item[\tt atmos_der] if the value is true, it specifies that derivatives
+  are to be calculated with respect to quantities other than temperature
+  and cloud ice water content.
+
+\item[\tt atmos_second_der] if the value is true, it specifies that second
+  derivatives are to be calculated with respect to quantities other than
+  temperature and cloud ice water content.
+
+\item[\tt binSelectors]
+
+\item[\tt cloud_der] if the value is true, it specifies that derivatives
+  are to be calculated with respect to cloud ice water content. This is
+  used with the full cloud forward model.
+
+\item[\tt default_spectroscopy]
+
+\item[\tt differentialScan]
+
+\item[\tt do_baseline]
+
+\item[\tt do_conv] if the value is true, it specifies that antenna
+  convolution is to be done.
+
+\item[\tt do_freq_avg] if the value is true, it specifies that frequency
+  averaging is to be done. The full forward model is run for all the
+  frequencies in the pointing frequency grid file, for each tangent
+  pressure. If the value of this field is false, the full forward model is
+  run only at channel center frequencies.
+
+\item[\tt do_1d] does something for the scan model. If its value is true
+  for the {\tt linear} or {\tt polarLinear} model, an ``irrelevant
+  parameter'' error is announced.
+
+\item[\tt forceSidebandFraction] if the value is true, it specifies to use
+  the {\tt limbSidebandFraction} quantity for antenna convolution. The
+  quantity can be taken from either the {\tt state} or {\tt
+  fwdModelEx\-tra} vector.
+
+\item[\tt frqTol] specifies the maximum distance from the desired
+  frequency when searching Mie tables during generation and use of TScat
+  tables.
+
+\item[\tt i_saturation]
+
+\item[\tt ignoreHessian] if the value is true, it specifies to the linear
+  and TScat models not to fill Hessian components from L2PC bins. If
+  false, the linear model uses a second-order method.
+
+\item[\tt incl_cld] if the value is true, it specifies that the full
+  forward model is to invoke the cloud or TScat models.
+
+\item[\tt integrationGrid] provides $\zeta$ values in addition to those in
+  the temperature, mixing ratio, extinction, and tangentGrid quantities.
+
+\item[\tt linearSideband]
+
+\item[\tt lineCenter] specifies molecules for which derivatives with
+  respect to the line center frequency are to be calculated. The line
+  center frequency is not in the state vector, so one cannot solve for the
+  line center frequency, which might be useful to estimate the
+  line-of-sight component of wind velocity. This is for offline studies.
+
+\item[\tt lineWidth] specifies molecules for which derivatives with
+  respect to the line width are to be calculated. The line width is not in
+  the state vector, so one cannot solve for the line width. This is for
+  offline studies.
+
+\item[\tt lineWidth_TDep] specifies molecules for which derivatives with
+  respect to the line width temperature dependence exponent are to be
+  calculated. The line width temperature dependence exponent is not in the
+  state vector, so one cannot solve for the line width temperature
+  dependence exponent. This is for offline studies.
+
+\item[\tt lockBins]
+
+\item[\tt lsbLBLMolecules] specifies the molecules for which the lower
+  sideband model is a line-by-line model.
+
+\item[\tt lsbPFAMolecules] specifies the molecules for which the lower
+  sideband model is a PFA model.
+
+\item[\tt MIFTangent] is not yet used. I think I added this in
+  anticipation of needing it for QTM.
+
+\item[\tt module] used to specify the instrument module when finding
+  forward model vector quantities.
+
+\item[\tt moleculeDerivatives] molecules for which derivatives with
+  respect to mixing ratio are to be calculated.
+
+\item[\tt moleculeSecondDerivatives] molecules for which second
+  derivatives with respect to mixing ratio are to be calculated.
+
+\item[\tt molecules] molecules for which radiance are to be calculated. 
+  An element of the {\tt molecules} field array can be an array; if so,
+  the first molecule specifies the ``beta group'' name, and other
+  molecules in the array specify the molecules in the group. The molecule
+  group name must be the same as a molecule in the group.
+
+\item[\tt nabterms]
+
+\item[\tt nazimuthangles]
+
+\item[\tt ncloudspecies]
+
+\item[\tt nmodelsurfs]
+
+\item[\tt no_dup_mol] if the value is true, it indicates that duplicate
+  molecule specifications are an error. This affects configuration
+  processing, but is not used by any model.
+
+\item[\tt noMagneticField] appears not to be used.
+
+\item[\tt nscatteringangles] specifies the number of scattering angles for
+  the full cloud forward model, and the number of scattering angles to use
+  when creating TScat tables.
+
+\item[\tt ncloudspecies]
+
+\item[\tt nsizebins]
+
+\item[\tt pathNorm] $\int \frac{\d s}{\d h} \frac{\d h}{\d \zeta}\, \d
+  \zeta$ ought to be $\delta\zeta$. If {\tt pathNorm} is true, multiply
+  {\tt dhdz_path(i)} by\\
+  {\tt del_s(i) / ( sum(dsdz_gw_path(i) * del_zeta(i))} to cause an
+  approximation to that expected normalization.
+
+\item[\tt phiWindow] specifies the number of profiles before and after the
+  tangent point, or the angular extent before and after the tangent
+  point.  The phi window is the part of the {\tt hGrid} used in {\tt
+  Fill_Grids_1} in {\tt load_species_data_m}. It can be either a number or
+  a range of numbers. If it is a number, it specifies both before and
+  after extents. If it is a range, the first specifies the extent before
+  the tangent point and the second specifies the extent after. The units
+  can be either angles or profiles. If it is a range, the second number
+  can be dimensionless, in which case its dimensions are taken from the
+  first number.
+
+\item[\tt polarized] If the value is true, it specifies that the full
+  forward model or the linearized model is the polarized model. The
+  polarized model cannot use the PFA method.
+
+\item[\tt referenceMIF] appears not to be used.
+
+\item[\tt refract] if the value is true, it specifies to apply the phi
+  refractive correction defined by Equation (A.6) in Appendix A of the 19
+  August 2005 MLS Full Forward Model ATBD. This is different from the
+  refractive correction given by Equation (10.12) on page 45 of the 19
+  August 2005 MLS Full Forward Model ATBD. The true default can be
+  overridden by the {\tt -Snorf} command-line switch.
+
+\item[\tt scanAverage] if the value is true, it specifies to use scan
+  averaging during antenna convolution.
+
+\item[\tt signals] specifies the signals the model is to use.
+
+\item[\tt skipOverlaps] if the value is true, it specifies that the SIDS
+  module is not to calculate for MAFS in the overlap region. It is not
+  used by any model.
+
+\item[\tt switchingMirror]
+
+\item[\tt specificQuantities] used when finding quantities if the quantity
+  type and/or molecule is not sufficiently specific to select one quantity.
+  Usually used for extinction.
+
+\item[\tt spect_der] if the value is true, it specifies that derivatives
+  with respect to spectral properties -- line center frequency, line width,
+  and exponent of line width temperature dependence -- are to be calculated.
+
+\item[\tt tangentGrid]  provides $\zeta$ values in addition to those in
+  the temperature, mixing ratio, extinction, and integrationGrid
+  quantities. If some of these are below the surface, it affects the value
+  of the surface tangent index.
+
+\item[\tt temp_der] if the value is true, it specifies that derivatives
+  with respect to temperature are to be calculated.
+
+\item[\tt tolerance] is used to decide where Gauss-Legendre quadrature is
+  necessary or trapezoidal quadrature is sufficient, when integrating
+  incremental optical depth. $\delta = \int_0^s \alpha(s) \, \d s$.  A
+  first-order difference is used to estimate $\frac{\d \mathcal{T}}{\d s}
+  \sim \exp \delta \frac{\d \delta}{\d s}$. Where $\frac{\d
+  \mathcal{T}}{\d s} <$ {\tt tolerance}, Gauss-Legendre quadrature is not
+  needed. $\frac{\d \mathcal{T}}{\d s}$ is always positive, so setting
+  {\tt tolerance} negative causes Gauss-Legendre quadrature to be used on
+  all panels.
+
+\item[\tt transformMIFextinction] if the value is true, it specifies to
+  transform MIF extinction quantities to ``molecules'' before running the
+  forward model, and transform the ``molecules'' and associated columns of
+  the Jacobian to MIF extinction after return. see \h{wvs-107}.
+
+\item[\tt transformMIFRHI] appears not to be used.
+
+\item[\tt trapezoid] specifies which trapezoidal quadrature to use on
+  panels that do not need Gauss-Legendre quadrature. Trapezoidal
+  quadrature is usually written as $\frac12 ( f(a) + f(b) ) ( b - a )$.
+  This is used if the value is {\tt correct}. If the value is {\tt wrong},
+  $b-a$ is approximated as $\frac{\d s(a)}{\d h} \frac{\d h(a)}{\d \zeta}
+  ( \zeta(b) - \zeta(a) )$. The latter might be more consistent with
+  Gauss-Legendre quadrature because therein, the weight at the
+  $i^\text{th}$ internal point is multiplied by $\frac{\d s(i)}{\d h} 
+  \frac{\d h(i)}{\d \zeta}$ and the interval length is $\zeta(b) -
+  \zeta(a)$.
+
+\item[\tt TScatMIF] specifies the MIF index to use for line-of-sight
+  velocity and $\phi$ reference when generating TScat tables.
+
+\item[\tt TScatMoleculeDerivatives] specifies the molecules for which
+  derivatives of TScat with respect to mixing ratio are to be calculated
+  when generating TScat tables.
+
+\item[\tt TScatMolecules] specifies the molecules for which TScat tables
+  are to be generated.
+
+\item[\tt type] type of model. Value is {\tt baseline}, {\tt linear}, {\tt
+  full}, {\tt cloudFull}, {\tt hybrid}, {\tt scan}, {\tt scan2d}, {\tt
+  switch\-ing\-Mirror}, or {\tt polarLinear}.
+
+\item[\tt usbLBLMolecules] specifies the molecules for which the upper
+  sideband model is a line-by-line model.
+
+\item[\tt usbPFAMolecules] specifies the molecules for which the upper
+  sideband model is a PFA model.
+  
+\item[\tt useTScat] if the value is true, it specifies that the full
+  forward model is to use TScat tables to approximate cloud scattering.
+
+\item[\tt xStar]
+
+\item[\tt yStar]
+
+\end{description}
+
+\section*{Vector quantities}
+
+The following quantities are sought from the vectors specified by the {\tt
+State} or {\tt FwdModelEx\-tra} fields of the {\tt Retrieve} or {\tt SIDS}
+specification in the {\tt Retrieve} section of the {\tt l2cf}:
+
+\begin{longtable}{lll}
+Quantity & Model & Required \\
+\hline
+baseline             & baseline           & yes       \\
+boundaryPressure     & cloud              & depends   \\
+cloudIce             & cloud              & optional  \\
+earthRefl            & full               & yes       \\
+ECRtoFOV             & full               & depends   \\
+elevOffset           & full               & yes       \\
+fieldAzimuth         & polarLinear        & yes       \\
+GPH                  & cloud              & yes       \\
+heightOffset         & scan               & yes       \\
+isotopeRatio         & full               & optional  \\
+limbSidebandFraction & full               & depends   \\
+l1bMIF_TAI           & full               & yes       \\
+losVel               & full               & yes       \\
+lowestRetrievedPressure & all             & depends   \\
+magneticField        & full polarLinear   & polarized \\
+MIFExtinctionExtrapolation & all          & depends   \\
+MIFExtinctionForm    & all                & depends   \\
+MIFRadC              & full               & for QTM   \\
+MIFDeadTime          & full               & yes       \\
+opticalDepth         & linear             & yes       \\
+orbIncline           & full scan2d        & depends   \\
+phitan               & full scan          & yes       \\
+ptan                 & baseline full scan & yes       \\
+radiance             & full linear TScat  & yes       \\
+refGPH               & full scan          & yes       \\
+scanResidual         & scan               & yes       \\
+scatteringAngle      & TScat gen          & yes       \\
+scECR                & full               & depends   \\
+scGeocAlt            & full               & yes       \\
+scVelECR             & full               & depends   \\
+spaceRadiance        & full               & yes       \\
+surfaceHeight        & full               & yes       \\
+temperature          & linear scan scan2d & yes       \\
+tngtGeocAlt          & full scan          & for QTM   \\
+TScat                & TScat gen or use   & yes       \\
+vmr all              & full               & as needed \\
+vmr h2o              & full scan          & yes       \\
+vmr IWC              & TScat gen          & yes       \\
+\end{longtable}
+
+\begin{description}
+
+\item [\tt baseline] at least one of a band-based quantity, a
+  radiometer-based quantity, or an unspecified quantity must be present.
+  If several are present, there is a complicated algorithm in {\tt
+  BaselineForwardModel_m} to choose one, or announce an error if there are
+  conflicts.
+
+\item [\tt boundaryPressure] is used by the full cloud model if the value
+  of the {\tt i_saturation} field of the {\tt ForwardModel} statement is
+  {\tt clear}.
+
+\item [\tt cloudIce] if present in the full forward model, it is loaded
+  into the {\tt grids_IWC} structure; otherwise, components in that
+  structure are allocated with zero size.
+
+\item [\tt ECRtoFOV] is used by the full forward model
+
+  \begin{itemize}
+  
+  \item to compute the line-of-sight vector when the horizontal basis is
+  QTM.
+  
+  \item to rotate the magnetic field if the value of the {\tt polarized}
+  field of the {\tt ForwardModel} statement is true.
+  
+  \end{itemize}
+
+\item [\tt isotopeRatio] is used by the full forward model if it is
+  present for any molecule; otherwise, the default isotope ratio from the
+  spectroscopy catalog is used.
+
+\item [\tt limbSidebandFraction] is required in the full forward model if
+  the value of the {\tt forceSideband\-Frac\-tion} field of the {\tt
+  ForwardModel} statement is true, or if the sideband for the first signal
+  is zero.
+
+\item [\tt lowestRetrievedPressure] is used  if the value of the {\tt
+  transformMIFExtinction} field  of the {\tt For\-ward\-Model} statement
+  is true.
+
+\item [\tt magneticField] is required in the full forward model if the
+  value of the {\tt polarized} field of the {\tt ForwardModel} statement is
+  true.
+
+\item [\tt MIFExtinctionExtrapolation] is used to get the MIF
+  extrapolation exponent if the value of the {\tt transformMIFExtinction}
+  field  of the {\tt ForwardModel} statement is true.
+
+\item [\tt MIFExtinctionForm] is used to get the MIF extrapolation form if
+  the value of the {\tt transform\-MIF\-Ex\-tinction} field  of the {\tt
+  ForwardModel} statement is true.
+
+\item [\tt orbIncline] is used by the full forward model if the value of
+  the {\tt  generateTScat} field of the {\tt ForwardModel} statement is
+  true, or if the horizontal basis is QTM. The latter use is probably
+  obsolete.
+
+\item [\tt scECR] is used by the full forward model to compute the
+  line-of-sight vector when the horizontal basis is QTM.
+
+\item [\tt scVelECR] is used in {\tt Viewing_Azimuth_Vec} in
+  {ForwardModelGeometry} to compute the angle between the normal to the
+  plane defined by the spacecraft position and velocity vectors, and the
+  normal to the plane defined by {\tt ptan} and the instrument position,
+  when the horizontal basis is QTM. {\tt Viewing_Azimuth_Vec} is not
+  referenced in the full forward model. It was developed in anticipation
+  of needing it to compute $\chi$ angles.
+
+\item [\tt tngtGeocAlt] is used in {\tt Viewing_Azimuth_Vec} in
+  {ForwardModelGeometry} to compute the angle between the normal to the
+  plane defined by the spacecraft position and velocity vectors, and the
+  normal to the plane defined by {\tt ptan} and the instrument position,
+  when the horizontal basis is QTM. {\tt Viewing_Azimuth_Vec} is not
+  referenced in the full forward model. It was developed in anticipation
+  of needing it to compute $\chi$ angles.
+
+\end{description}
+
+I did not reverse engineer how quantities of types {\tt fieldAzimuth},
+{\tt fieldElevation}, {\tt fieldStrength}, {\tt temperature}, {\tt TScat},
+and {\tt vmr} are used in {\tt L2PCBins_m}.
+
+\section*{Jacobian}
+
+The Jacobian is required if any derivatives are requested in the {\tt
+ForwardModel} statement. The retriever creates a Jacobian if one is not
+specified on the {\tt Retrieve} statement. A {\tt SIDS} run doesn't
+inherently know a Jacobian is necessary, so it won't create one. If you
+want derivatives, for example to create {\tt l2pc} files, a Jacobian must
+be specified.
+
+\section*{Command-line options}
+
+Several command-line options affect the full forward model. Command-line
+options are case sensitive.
+
+%\newcommand{\lbrack}{[}
+%\newcommand{\rbrack}{]}
+\begin{description}
+
+\item[\tt -f\lbrack n\rbrack] causes tracing within the full forward
+  model. Larger values of n cause more detailed tracing.
+
+\end{description}
+
+The following switches are preceded on the command line by {\tt -S}. Then
+can be individually specified, each with {\tt -S}, or several can be
+specified in one command-line option beginning with {\tt -S}. All {\tt -S} switches can optionally be
+followed by a number $n$. If $n$ does not appear, it is assumed to be
+zero. If a switch is not set, the {\tt SwitchDetail} function from the
+{\tt MLSStringLists} module returns $-1$.
+
+\begin{description}
+
+\item[\tt 0sl] prints a warning message if there are no lines or continuum
+  for at least one species.
+
+\item[\tt ant] dumps the antenna patterns database after reading it in the
+  {\tt globalSettings} section.
+
+\item[\tt Azimuth] prints the viewing azimuth for UARS.
+
+\item[\tt binsel] prints information about bin selection when selecting
+  {\tt l2pc} bins.
+
+\item[\tt clean] adds the ``-c'' option to several dumps. The effect is
+  that array dumps are preceded by $\backslash n$ where $n$ is the array
+  size, and lines of the dump do not contain subscripts. This is useful to
+  read dumps in {\tt idl} using my {\tt read1d} program.
+
+\item[\tt dacsfil] dumps the DACS filter database after reading it in the
+  {\tt globalSettings} section.
+
+\item[\tt deltaupol] causes the {\tt deltau_pol} array to be dumped. {\tt
+  deltau_pol} is the exponential of the $2\times2$ polarized incremental
+  optical depth matrix.
+
+\item[\tt dmess] causes messages about requesting derivatives for
+  quantities that are not in the state vector to be warnings instead of
+  errors.
+
+\item[\tt dpri\lbrack n\rbrack\ -SDpri -SDPRI] cause {\tt Rad_Tran_Pol} to
+  dump internal arrays {\tt more_inds}, {\tt gl_inds}, {\tt
+  gl_delta_polarized}, {\tt incoptdepth_pol_gl}, {\tt incoptdepth_pol},
+  and {\tt ref_cor}. If $n = 0$, the dumps occur only if {\tt cs_expmat}
+  (exponential of a $2 \times 2$ matrix) detects an overflow. If $n = 1$
+  the dump occurs every time {\tt Rad_Tran_Pol} is invoked. If $n > 1$ the
+  dump occurs on the first invocation, and {\tt mlsl2} stops. {\tt Dpri}
+  is the same as {\tt dpri1}. {\tt DPRI} is the same as {\tt dpri2}. If
+  {\tt cs_expmat} detects an overflow, any $n\geq0$ causes the dumps, and
+  if $n > 1$ {\tt mlsl2} stops.
+
+\item[\tt drfc\lbrack n\rbrack] dumps diagnostic information about the
+  failure of the iteration to solve\\
+   $h ( 1 + n_1 \exp ( \epsilon (h - h_1))) = \sqrt{q^2 +
+  \mathcal{N}_t^2 H_t^2}$\\
+  for $h$, where $q$ is one of the abscissae of the Gauss-Legendre
+  quadrature for the integral in Equation (10.12) on page 45 of the 19
+  August 2005 MLS Full Forward Model ATBD, $\epsilon =
+  \frac{\log(n_2/n_1)}{h_2-h_1}$, $h_1$ and $n_1$ are the values of $h$
+  and $\mathcal{N}$ at $\zeta_i$, and $h_2$ and
+  $n_2$ are the values of $h$ and $\mathcal{N}$ at $\zeta_{i-1}$.
+
+\item[\tt dsct] causes generated {\tt TScat} values to be dumped.
+
+\item[\tt dtcst]  causes much printing related to derivatives during {\tt
+  TScat} table generation.
+
+\item[\tt filt] dumps the filter database after reading it in the {\tt
+  globalSettings} section.
+
+\item[\tt ffrq] causes frequencies selected from the point frequency grid
+  to be dumped.
+
+\item[\tt fmconf] causes the forward model configuration to be dumped.
+
+\item[\tt fwmd\lbrack n\rbrack\ -SDpri -SDPRI] dumps the forward model
+  configuration after adding some things derived from it, and the
+  spectroscopy catalog extract. The detail level for dumping the
+  spectroscopy catalog extract is the low-order digit of $n$. If $n>9$
+  {\tt mlsl2} stops. Once set, the switch retains its value, even if it is
+  set by the {\tt switches} field of the {\tt retrieve} statement.
+
+\item[\tt -gMag] dumps the magnetic field quantity that is created by a
+  {\tt fill} statement.
+
+\item[\tt Grids] causes the internal structures {\tt grids_f} (mixing
+  ratios), {\tt grids_tmp} (temperature) {\tt grids_v} (line center
+  frequency), {\tt grids_w} (line width), and {\tt grids_m} (line width
+  temperature dependence exponent) to be dumped if the horizontal basis is
+  not QTM.
+
+\item[\tt hnan] causes dumping during Hessian convolution.
+
+\item[\tt hndp\lbrack n\rbrack] causes dumping during computation of the
+  refractive correction described in Equation (10.12) of the 19 August 2004
+  MLS ATBD. If $n\wedge 1 = 1$, dump the arrays if there is trouble.
+  If $n\wedge 2 = 1$, dump the arrays and stop. If $n\wedge 4 = 1$, dump
+  the iterates.
+
+\item[\tt hphi] causes {\tt h} and {\tt phi} inputs to {\tt
+  Height_Metrics} to be dumped.
+
+\item[\tt igsc\lbrack n\rbrack] changes the error message to a warning if
+  the scattering point does not appear to be in the path during {\tt
+  TScat} table generation, if $n>0$.
+
+\item[\tt incp] causes the species list from the forward model
+  configuration, the index of the tangent point in the coarse grid, the
+  index of the tangent point in the fine grid, $\beta$ on the coarse path,
+  mixing ratios on the coarse path, $\alpha$ on the coarse path, the
+  incremental optical depth, $\delta s$, indices of GL points on the fine
+  path, and indices of panels on the coarse path needing GL, to be dumped.
+  For polarized runs it also causes the $2\times2$ polarized incremental
+  optical depth matrix to be dumped. It also causes output during {\tt
+  TScat} table generation.
+
+\item[\tt incr] causes {\tt tau} $\left(\exp \int_0^s \alpha \,\d
+  s\right)$, {\tt inc_rad_path} ($I(s)$), {\tt t_script} ($\mathcal{T} =
+  \Delta B$), frequency, and {\tt radV} ($I(s_{\mathcal{M}})$) to be
+  dumped. It also causes output during {\tt TScat} table generation.
+
+\item[\tt lblb\lbrack n\rbrack] causes printing during $\beta$ generation.
+  for nonpolarized radiative transfer. Once set, the switch retains its
+  value, even if it is set by the {\tt switches} field of the {\tt
+  retrieve} statement. {\tt n} has three digits $n_2n_1n_0$. If $n_0>0$
+  dump $\beta$. If $n_0>1$ dump temperature and $\text{tanh} \frac{h\nu}{2
+  k T}$. If $n_1>0$ dump $\zeta$ instead of $P$. If $n_2>0$ stop after
+  dumping. 
+
+\item[\tt mag\lbrack n\rbrack] causes the MIF, MAF, rotation matrix ({\tt
+  ECRtoFOV}), heights on the fine grid, the magnitude of the magnetic
+  field $H$, the $\cos\theta$, $\sin\theta \cos\phi$, and $\sin\theta
+  \sin\phi$ components of the magnetic field, to be dumped. If $n$ is odd
+  the magnetic field on the path is also dumped as a matrix.
+
+\item[\tt MagGrid\lbrack n\rbrack] dumps the {\tt grids_mag} structure
+  after the magnetic field is generated. The detail level for the dump is
+  given by {\tt n}.
+
+\item[\tt metd\lbrack n\rbrack] dumps quantities during {\tt
+  Height_Metrics} calculation. Increasing {\tt n} increases the number of
+  quantities dumped. If $n>1$ {\tt mlsl2} stops after finishing {\tt
+  More_Metrics}.
+
+\item[\tt mhpx] causes output relating to failure of the $h$ -- $\phi$
+  iteration in {\tt Height_Metrics}.
+
+\item[\tt nfmpt] (case insensitive) turns off the pointing loop.
+
+\item[\tt path\lbrack n\rbrack] causes path quantities to be printed in a
+  readable format. If $n=0$ only $\phi$ and $\zeta$ are printed. If $n>1$
+  the volume mixing ratios and $\beta$ are printed. If $n>0$, $\alpha$,
+  incremental optical depth, $\tau = \exp \int_0^s \alpha \,\d s$, $I(s)$,
+  and temperature are printed.
+
+\item[\tt pfab] prints PFA data during PFA generation.  Once set, the
+  switch retains its value, even if it is set by the {\tt switches} field
+  of the {\tt retrieve} statement.
+
+\item[\tt pfag] prints progress information during PFA generation.
+
+\item[\tt pfaw] prints the PFA group name when one is created in a PFA HDF
+  file.
+
+\item[\tt plane\lbrack n\rbrack] causes printing while calculating the
+  viewing plane for UARS.
+
+\item[\tt point] dumps the pointing grid database after reading it in the
+  {\tt globalSettings} section.
+
+\item[\tt POLB polb] dumps polarized $\beta$. {\tt POLB} stops after
+  dumping. Once set, the switch retains its value, even if it is set by
+  the {\tt switches} field of the {\tt retrieve} statement.
+
+\item[\tt polr\lbrack n\rbrack] causes the $2\times2$ complex radiance
+  matrix to be printed. If $n>0$, the pointing index is also printed. If
+  $n>1$ the frequency index is also printed.
+
+\item[\tt psct] causes much printing during {\tt TScat} table generation.
+
+\item[\tt ptg] prints the pointing ($\chi$) angles before antenna
+  convolution.
+
+\item[\tt rad\lbrack n\rbrack] causes tangent pressures and radiance to be
+  printed when the full forward model completes. If $n>0$ it also causes
+  frequencies and radiances to be printed for each pointing. Causes
+  radiances to be printed when the linearized forward model completes.
+
+\item[\tt RAD] causes radiances to be printed when the linearized forward
+  model completes, and then {\tt mlsl2} stops.
+
+\item[\tt rcfx\lbrack n\rbrack] prints information if the refractive
+  correction computation failed. If $n>0$ and the refractive correction
+  computation failed, {\tt mlsl2} stops.
+
+\item[\tt seez] causes many things to be printed. See {\tt
+  dump_print_code.f9h}. This started as Zvi's debug printing, and then
+  grew.
+
+\item[\tt spec speC] dumps the spectroscopy catalog at the end of the {\tt
+  Spectroscopy} section. {\tt speC} stops after dumping the catalog.
+
+\item[\tt tauL] causes line-by-line $\tau = \exp \int_0^s \alpha \,\d s$
+  to be printed during a PFA run. This is called $\tau^s_{in}$ in
+  \h{wvs-027}.
+
+\item[\tt tauP] causes PFA $\tau = \exp \int_0^s \alpha \,\d s$ to be
+  printed during a PFA run. This is called $\tau^w_{in}$ in \h{wvs-027}.
+
+\item[\tt -TScat] causes much printing during {\tt TScat} table
+  generation.
+
+\item[\tt zdet] prints details relating to finding a minimum $\zeta$ that
+  is not at the tangent point.
+
+\item[\tt ZMOR] causes printing related to finding a minimum $\zeta$ that
+  is not at the tangent point.
+
+\item[\tt zmor] causes a search for a minimum $\zeta$ that is not at the
+  tangent point. This code has never been exercised; it might not work.
+
+\end{description}
+
+\label{lastpage}
+\vspace*{-0.1in} % Somehow, this causes lastpage to be defined
+\end{document}
+
+% $Id: wvs-162.tex,v 1.2 2020/07/14 00:00:19 vsnyder Exp $
+
+% $Log: $
+@
+
+
+1.2
+log
+@Add descriptions of command-line switches
+@
+text
+@d1365 1
+a1365 1
+% $Id: wvs-162.tex,v 1.1 2020/07/09 23:20:48 vsnyder Exp $
+d1367 1
+a1367 1
+% %Log: $
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d13 2
+a14 2
+\newcommand{\docname}{wvs-162}
+\newcommand{\docdate}{9 July 2020}
+d71 2
+a72 1
+%Reference: \> foo \\
+d99 1
+a99 1
+  \item {\tt PFAfiles}
+d1128 233
+d1365 1
+a1365 1
+% $Id: wvs-161.tex,v 1.2 2020/06/12 22:28:55 vsnyder Exp $
+@
+

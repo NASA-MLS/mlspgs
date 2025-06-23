@@ -1,0 +1,239 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.14
+	cfm-single-freq-0-1:1.1.0.12
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.10
+	mus-emls-1-70:1.1.0.8
+	rel-1-0-englocks-work:1.1.0.6
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2008.06.11.20.14.55;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9.0in
+
+\newcommand{\docname}{\bf wvs-077}
+\newcommand{\docdate}{15 April 2008}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[u]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill\\
+Subject: \>Antenna convolution as a Stieltjes integral\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 10pt
+\vspace{-20pt}
+
+In the antenna convolution
+%
+\begin{equation}\label{one}
+\overline{I}(\chi_0) = \frac{\int_{-\frac\pi2}^\frac\pi2 I(\chi) G(\chi_0-\chi) \, d\chi}
+                            {\int_{-\frac\pi2}^\frac\pi2 G(\chi_0-\chi) \, d\chi}
+                       \,,
+\end{equation}
+%
+where $I$ and $\chi$ are functions of $T$, the integrals can be expressed in
+terms of Stieltjes integrals.  Lumping $I(\chi) G(\chi_0-\chi)$ into a single
+function $f(\chi;T)$ we have for just the numerator
+%
+\begin{equation}\label{two}
+\overline{f}(T) = \int_{a}^{b} f(\chi(u;T);T) \, d \chi(u;T) =
+ \int_{\chi^{-1}(a;T)}^{\chi^{-1}(b;T)} f(\chi(u;T);T)
+  \, \frac{\partial \chi(u;T)}{\partial u} \, d u\,,
+\end{equation}
+%
+the latter being equivalent to the Stieltjes integral in the middle if $\chi$
+is continuous and monotone.  Calculating the derivative with respect to $T$
+gives
+%
+\begin{equation}\begin{split}\label{three}
+\frac{\partial \overline{f}(T)}{\partial T}
+=\,&
+\int_{\chi^{-1}(a;T)}^{\chi^{-1}(b;T)}
+ \left[\left(
+  \frac{\partial f(\chi(u;T);T)}{\partial \chi(u;T)}
+  \frac{\partial \chi(u;T)}{\partial T} +
+  \frac{\partial f(\chi(u;T);T)}{\partial T} \right)
+  \frac{\partial \chi(u;T)}{\partial u} \right. \\
+%\,&\\
+  &\left. \phantom{\int_{\chi^{-1}(a;T)}^{\chi^{-1}(b;T)} \left[\right.}
+  + f(\chi(u;T);T) \frac{\partial^2 \chi(u;T)}{\partial u \, \partial T}
+ \right] \, d u\\
+%\,&\\
+\,&+
+ \frac{\partial \chi^{-1}(b;T)}{\partial T} f(\chi(\chi^{-1}(b,T);T))
+  \left.\frac{\partial \chi(u;T)}{\partial u}\right|_{u=\chi^{-1}(b;T)} \\
+%\,&\\
+\,&-
+ \frac{\partial \chi^{-1}(a;T)}{\partial T} f(\chi(\chi^{-1}(a,T);T))
+  \left.\frac{\partial \chi(u;T)}{\partial u}\right|_{u=\chi^{-1}(a;T)} \\
+%\,&\\
+=\,&
+\int_{\chi^{-1}(a;T)}^{\chi^{-1}(b;T)}
+ \left[\left(
+  \frac{\partial f(\chi(u;T);T)}{\partial \chi(u;T)}
+  \frac{\partial \chi(u;T)}{\partial T} +
+  \frac{\partial f(\chi(u;T);T)}{\partial T} \right)
+  \frac{\partial \chi(u;T)}{\partial u} \right. \\
+%\,&\\
+  &\left. \phantom{\int_{\chi^{-1}(a;T)}^{\chi^{-1}(b;T)} \left[\right.}
+  + f(\chi(u;T);T) \frac{\partial^2 \chi(u;T)}{\partial u \, \partial T}
+ \right] \, d u\\
+%\,&\\
+\,&+
+ \frac{\partial \chi^{-1}(b;T)}{\partial T} f(b;T))
+  \left.\frac{\partial \chi(u;T)}{\partial u}\right|_{u=\chi^{-1}(b;T)} -
+ \frac{\partial \chi^{-1}(a;T)}{\partial T} f(a;T))
+  \left.\frac{\partial \chi(u;T)}{\partial u}\right|_{u=\chi^{-1}(a;T)} \,. \\
+\end{split}\end{equation}
+%
+In the case of antenna convolution, we have $u = \mathcal{N}_t H_t / H_s$,
+$\chi = \chi(u) = \sin^{-1} u$, $\frac{\partial \chi}{\partial u} =
+\left(1-u^2\right)^{-1/2}$, $\chi^{-1}(u) = u$, $a = -\frac\pi2$, $b =
+\frac\pi2$, $\chi^{-1}(a) = -1$, and $\chi^{-1}(b) = 1$.  Substituting into
+Equation (\ref{two}) gives
+%
+\begin{equation}
+\overline{f}(T) = \int_{a}^{b} f(\chi(u;T);T) \, d \chi(u;T) =
+ \int_{\chi^{-1}(a;T)}^{\chi^{-1}(b;T)} f(\chi(u;T);T)
+  \, \frac{d u}{\sqrt{1-u^2}}\,.
+\end{equation}
+%
+If the limits $a$ and $b$ really are $-\pi/2$ and $\pi/2$, respectively, we have
+%
+\begin{equation}
+\overline{f}(T) = \int_{-\pi/2}^{\pi/2} f(\chi(u;T);T) \, d \chi(u;T) =
+ \int_{-1}^{1} f(\chi(u;T);T) \, \frac{d u}{\sqrt{1-u^2}}\,,
+\end{equation}
+%
+giving an integrable singularity in the integrand at the limits.
+
+Substituting into Equation (\ref{three}) gives
+%
+\begin{equation}\begin{split}\label{six}
+\frac{\partial \overline{f}(T)}{\partial T}
+=\,&
+\int_{\chi^{-1}(a;T)}^{\chi^{-1}(b;T)}
+ \left[\left(
+  \frac{\partial f(\chi(u;T);T)}{\partial \chi(u;T)}
+  \frac1{\sqrt{1-u^2}} \frac{\partial u}{\partial T} +
+  \frac{\partial f(\chi(u;T);T)}{\partial T} \right)
+  \frac1{\sqrt{1-u^2}} \right. \\
+  &\phantom{\int_{\chi^{-1}(a;T)}^{\chi^{-1}(b;T)}\left[\right.} \left.
+  + f(\chi(u;T);T) \frac1{(1-u^2)^{3/2}} \frac{\partial u}{\partial T}
+ \right] \, d u\\
+%\,&\\
+\,&+
+ \frac{\partial u}{\partial T} f(b;T))
+  \left.\frac1{\sqrt{1-u^2}}\right|_{u=\chi^{-1}(b;T)} -
+ \frac{\partial u}{\partial T} f(a;T))
+  \left.\frac1{\sqrt{1-u^2}}\right|_{u=\chi^{-1}(a;T)} \\
+%\,&\\
+\,&=
+\int_{\chi^{-1}(a;T)}^{\chi^{-1}(b;T)}
+ \left[\left(
+  \frac{\partial f(\chi(u;T);T)}{\partial \chi(u;T)} +
+  \frac{f(\chi(u;T);T)}{\sqrt{1-u^2}} \right)
+  \frac1{\sqrt{1-u^2}} \frac{\partial u}{\partial T} +
+  \frac{\partial f(\chi(u;T);T)}{\partial T} \right]
+  \frac{d u}{\sqrt{1-u^2}}\\
+%\,&\\
+\,&+
+ \frac{\partial u}{\partial T} f(b;T))
+  \left.\frac1{\sqrt{1-u^2}}\right|_{u=\chi^{-1}(b;T)} -
+ \frac{\partial u}{\partial T} f(a;T))
+  \left.\frac1{\sqrt{1-u^2}}\right|_{u=\chi^{-1}(a;T)} \,. \\
+\end{split}\end{equation}
+%
+The situation here is worse than in Equation (\ref{two}) if $a=-\pi/2$ or
+$b=\pi/2$, because the integrand is not integrable over the entire range, and
+infinities occur in the last two integrated terms, which arise from derivatives
+of the limits.
+
+Similar treatment applies to the denominator of Equation (\ref{one}).
+
+I don't think the antenna convolution code in the forward model includes the
+last two terms in Equation (\ref{six}).
+
+Similar considerations apply to the derivative with respect to H$_2$O mixing
+ratio because $\mathcal{N}_t$ depends on it, but derivatives with respect to
+other parameters do not include the last two integrated terms since the bounds
+do not depend on any parameters other then $T$ and the H$_2$O mixing ratio.
+
+\label{lastpage}
+\end{document}
+% $Id: wvs-077r0.tex,v 1.1 2008/06/11 20:14:55 vsnyder Exp $
+@

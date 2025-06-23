@@ -1,0 +1,384 @@
+head	2.7;
+access;
+symbols
+	v5-02-NRT-19:2.7
+	v6-00:2.7
+	v5-02-NRT-18:2.7
+	v5-02:2.7
+	v5-01-NRT-17:2.7
+	v5-01-NRT-16:2.7
+	v5-01-NRT-15:2.7
+	v5-01-NRT-14:2.7
+	neuralnetworks-1-0:2.7.0.16
+	cfm-single-freq-0-1:2.7.0.14
+	v5-01:2.7
+	v5-00:2.7
+	v4-23-TA133:2.7.0.12
+	mus-emls-1-70:2.7.0.10
+	rel-1-0-englocks-work:2.7.0.8
+	VUMLS1-00:2.7
+	VPL1-00:2.7
+	V4-22-NRT-08:2.7
+	whdrel10_merged_to_here:2.7
+	merge_whdrel10_from_here:2.7
+	TAG_TRUNK_AFTER_PW_CHANGES:2.7
+	TAG_TRUNK_BEFORE_PW_CHANGES:2.7
+	VAM1-00:2.7
+	whd-rel-1-0:2.7.0.6
+	V4-21:2.7.0.4
+	V4-13:2.7
+	V4-12:2.7
+	V4-11:2.7
+	V4-10:2.7
+	V3-43:2.7
+	M4-00:2.7
+	V3-41:2.7
+	V3-40-PlusGM57:2.7.0.2
+	V2-24-NRT-04:2.7
+	V3-33:2.7
+	V2-24:2.7
+	V3-31:2.7
+	V3-30-NRT-05:2.7
+	cfm-01-00:2.7
+	V3-30:2.7
+	V3-20:2.7
+	V3-10:2.7
+	V2-23-NRT-02:2.7
+	V2-23:2.7
+	V2-22-NRT-01:2.7
+	V2-22:2.7
+	V2-21:2.7
+	V2-20:2.7
+	V2-11:2.7
+	V2-10:2.7
+	V2-00:2.7
+	V1-51:2.7
+	V1-50:2.7
+	V1-45:2.7
+	V1-44:2.7
+	V1-43:2.7
+	V1-42:2.7
+	V1-41:2.7
+	V1-32:2.7
+	V1-40:2.7
+	V1-31:2.7
+	V1-30:2.7
+	V1-13:2.6
+	V1-12:2.6
+	V1-11:2.6
+	V1-10:2.6
+	newfwm-feb03:2.6.0.4
+	V1-04:2.6
+	V1-03:2.6
+	V1-02:2.6
+	V1-00:2.6
+	newfwm-sep01:2.6.0.2
+	V0-7:2.6
+	V0-5-Level2:2.6
+	V0-5-SIPS:2.6;
+locks; strict;
+comment	@# @;
+
+
+2.7
+date	2003.08.15.14.25.04;	author perun;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2001.03.06.18.17.57;	author pwagner;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2001.03.03.00.17.37;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2001.02.23.20.58.35;	author perun;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2001.02.23.18.33.53;	author perun;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2001.02.23.18.26.11;	author perun;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2000.11.15.00.11.27;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.7
+log
+@Version 1.2 commit
+@
+text
+@#Makefile.dep -- a file to be included by a Makefile
+#to compile a Fortran 9x program or library
+OBJS = \
+Calibration.o   Close_Files.o   DACsUtils.o   EngTbls.o   EngUtils.o   ermsg_m.o   InitPCFs.o   init_tables_module.o   Interpolation.o   L0_sci_tbls.o   L0Utils.o   L1BOutUtils.o   MathUtils.o   MLSL1Common.o   MLSL1Config.o   MLSL1.o   MLSL1Rad.o   MLSL1Utils.o   MLSPCF1.o   MLSStrings.o   OpenInit.o   Orbit.o   OutputL1B.o   Radiances.o   Scan.o   SciUtils.o   SortQualify.o   TkL1B.o   WriteMetaL1.o  \
+\
+\
+ 
+# using f90makedep.pl to calculate dependencies 
+Calibration.o: Calibration.f90 EngTbls.o Interpolation.o L0_sci_tbls.o \
+	MLSL1Common.o MLSL1Config.o MLSL1Rad.o
+Close_Files.o: Close_Files.f90 $(dir1)Hdf.o $(dir1)MLSMessageModule.o \
+	$(dir1)PCFHdr.o $(dir1)SDPToolkit.o MLSL1Common.o OpenInit.o \
+	WriteMetaL1.o
+DACsUtils.o: DACsUtils.f90 MLSL1Common.o MLSL1Utils.o MathUtils.o
+EngTbls.o: EngTbls.f90 $(dir1)MLSStrings.o
+EngUtils.o: EngUtils.f90 $(dir1)MLSCommon.o EngTbls.o L0Utils.o MLSL1Common.o \
+	MLSL1Config.o MLSL1Utils.o
+init_tables_module.o: init_tables_module.f90 $(dir1)Init_MLSSignals_m.o \
+	$(dir1)intrinsic.o $(dir1)tree_types.o make_tree.f9h
+InitPCFs.o: InitPCFs.f90 $(dir1)MLSMessageModule.o $(dir1)SDPToolkit.o \
+	MLSPCF1.o
+Interpolation.o: Interpolation.f90 MLSL1Common.o
+L0_sci_tbls.o: L0_sci_tbls.f90 MLSL1Common.o
+L0Utils.o: L0Utils.f90 $(dir1)MLSCommon.o $(dir1)MLSMessageModule.o \
+	$(dir1)SDPToolkit.o MLSL1Common.o MLSL1Config.o MLSL1Utils.o \
+	OpenInit.o
+L1BOutUtils.o: L1BOutUtils.f90 MLSL1Common.o MLSL1Rad.o Orbit.o OutputL1B.o \
+	SortQualify.o TkL1B.o
+MathUtils.o: MathUtils.f90 ermsg_m.o
+MLSL1.o: MLSL1.f90 $(dir1)MLSMessageModule.o Calibration.o Close_Files.o \
+	L1BOutUtils.o OpenInit.o Radiances.o SortQualify.o
+MLSL1Common.o: MLSL1Common.f90 $(dir1)MLSCommon.o
+MLSL1Config.o: MLSL1Config.f90 $(dir1)MLSCommon.o $(dir1)MLSMessageModule.o \
+	$(dir1)MoreTree.o $(dir1)SDPToolkit.o $(dir1)declaration_table.o \
+	$(dir1)expr_m.o $(dir1)intrinsic.o $(dir1)lexer_core.o \
+	$(dir1)output_m.o $(dir1)parser.o $(dir1)string_table.o \
+	$(dir1)tree_types.o $(dir1)units.o $(dir2)tree.o \
+	$(dir2)tree_checker.o MLSL1Common.o MLSPCF1.o init_tables_module.o
+MLSL1Rad.o: MLSL1Rad.f90 $(dir1)MLSMessageModule.o \
+	$(dir1)MLSSignalNomenclature.o MLSL1Common.o MLSL1Config.o
+MLSStrings.o: MLSStrings.f90 $(dir1)MLSMessageModule.o
+OpenInit.o: OpenInit.f90 $(dir1)Hdf.o $(dir1)MLSCommon.o \
+	$(dir1)MLSMessageModule.o $(dir1)MLSSignalNomenclature.o \
+	$(dir1)PCFHdr.o $(dir1)SDPToolkit.o Calibration.o DACsUtils.o \
+	EngTbls.o InitPCFs.o L0_sci_tbls.o MLSL1Common.o MLSL1Config.o \
+	MLSL1Rad.o MLSPCF1.o Orbit.o OutputL1B.o
+Orbit.o: Orbit.f90 $(dir1)MLSCommon.o $(dir1)MLSMessageModule.o \
+	$(dir1)SDPToolkit.o OutputL1B.o
+OutputL1B.o: OutputL1B.f90 $(dir1)Hdf.o $(dir1)MLSCommon.o \
+	$(dir1)MLSMessageModule.o MLSL1Common.o MLSL1Config.o MLSL1Rad.o
+Radiances.o: Radiances.f90 $(dir1)MLSCommon.o Calibration.o EngTbls.o \
+	MLSL1Common.o MLSL1Config.o MLSL1Rad.o MLSL1Utils.o
+Scan.o: Scan.f90 $(dir1)MLSCommon.o $(dir1)MLSMessageModule.o \
+	$(dir1)SDPToolkit.o
+SciUtils.o: SciUtils.f90 $(dir1)MLSCommon.o DACsUtils.o EngTbls.o L0Utils.o \
+	L0_sci_tbls.o MLSL1Common.o MLSL1Config.o MLSL1Utils.o ermsg_m.o
+SortQualify.o: SortQualify.f90 $(dir1)MLSCommon.o Calibration.o EngTbls.o \
+	EngUtils.o L0_sci_tbls.o MLSL1Common.o MLSL1Config.o MLSL1Rad.o \
+	SciUtils.o
+TkL1B.o: TkL1B.f90 $(dir1)MLSCommon.o $(dir1)MLSMessageModule.o \
+	$(dir1)SDPToolkit.o $(dir1)dump_0.o $(dir1)output_m.o $(dir1)units.o \
+	MLSL1Common.o OutputL1B.o Scan.o
+WriteMetaL1.o: WriteMetaL1.f90 $(dir1)Hdf.o $(dir1)MLSCommon.o \
+	$(dir1)MLSMessageModule.o $(dir1)SDPToolkit.o InitPCFs.o MLSPCF1.o \
+	Orbit.o
+ 
+#End of Makefile.dep
+ 
+@
+
+
+2.6
+log
+@clean more amitious--rms * from MLSCONFGl[13]/MakeFC
+@
+text
+@d4 3
+a6 7
+Calibration.o      L0_sci_tbls.o    MLSPCF1.o      SortQualify.o  \
+Close_Files.o      L1BOutUtils.o    OpenInit.o     TkL1B.o  \
+EngTbls.o  	   MLSL1.o  	    Orbit.o  	   WriteMetaL1.o  \
+EngUtils.o  	   MLSL1Common.o    OutputL1B.o    init_tables_module.o  \
+InitPCFs.o  	   MLSL1Config.o    Radiances.o  \
+Interpolation.o    MLSL1Rad.o       Scan.o  \
+L0Utils.o  	   MLSL1Utils.o     SciUtils.o  \
+d10 1
+a10 1
+	MLSL1Common.o
+d12 3
+a14 1
+	MLSL1Common.o WriteMetaL1.o
+d16 6
+a21 6
+EngUtils.o: EngUtils.f90 $(dir1)MLSCommon.o EngTbls.o L0Utils.o MLSL1Utils.o \
+	OpenInit.o
+InitPCFs.o: InitPCFs.f90 $(dir1)MLSMessageModule.o $(dir1)SDPToolkit.o
+init_tables_module.o: init_tables_module.f90 $(dir1)intrinsic.o \
+	$(dir1)symbol_table.o $(dir1)symbol_types.o $(dir1)tree_types.o \
+	make_tree.f9h
+d23 1
+a23 1
+L0_sci_tbls.o: L0_sci_tbls.f90 $(dir1)MLSCommon.o MLSL1Common.o
+d29 3
+d34 5
+a38 5
+	$(dir1)SDPToolkit.o $(dir1)declaration_table.o $(dir1)lexer_core.o \
+	$(dir1)output_m.o $(dir1)parser.o $(dir1)string_table.o $(dir1)tree.o \
+	$(dir1)units.o $(dir2)tree_checker.o MLSPCF1.o init_tables_module.o
+MLSL1.o: MLSL1.f90 $(dir1)MLSMessageModule.o Calibration.o Close_Files.o \
+	L1BOutUtils.o OpenInit.o Radiances.o SortQualify.o
+d40 2
+a41 3
+	$(dir1)MLSSignalNomenclature.o $(dir1)MLSStrings.o MLSL1Common.o \
+	MLSL1Config.o
+MLSL1Utils.o: MLSL1Utils.f90
+d44 3
+a46 2
+	$(dir1)SDPToolkit.o Calibration.o EngTbls.o InitPCFs.o L0_sci_tbls.o \
+	MLSL1Common.o MLSL1Config.o MLSL1Rad.o MLSPCF1.o Orbit.o OutputL1B.o
+d55 2
+a56 1
+SciUtils.o: SciUtils.f90 L0Utils.o L0_sci_tbls.o MLSL1Common.o MLSL1Utils.o
+d58 2
+a59 1
+	EngUtils.o L0_sci_tbls.o MLSL1Common.o MLSL1Config.o SciUtils.o
+d61 5
+a65 4
+	$(dir1)SDPToolkit.o MLSL1Common.o OutputL1B.o Scan.o
+WriteMetaL1.o: WriteMetaL1.f90 $(dir1)HDF-EOS.o $(dir1)Hdf.o $(dir1)MLSCF.o \
+	$(dir1)MLSCommon.o $(dir1)MLSMessageModule.o $(dir1)MLSStrings.o \
+	$(dir1)SDPToolkit.o InitPCFs.o MLSPCF1.o
+@
+
+
+2.5
+log
+@Recent code changes
+@
+text
+@d22 2
+a23 2
+	$(dir1)symbol_table.o $(dir1)symbol_types.o $(dir1)tree.o \
+	$(dir1)tree_types.o
+d56 1
+a56 1
+	EngUtils.o L0_sci_tbls.o MLSL1Common.o SciUtils.o
+@
+
+
+2.4
+log
+@*** empty log message ***
+@
+text
+@d20 1
+a23 1
+InitPCFs.o: InitPCFs.f90 $(dir1)MLSMessageModule.o $(dir1)SDPToolkit.o
+a30 2
+MLSL1.o: MLSL1.f90 $(dir1)MLSMessageModule.o Calibration.o Close_Files.o \
+	L1BOutUtils.o OpenInit.o Radiances.o SortQualify.o
+d36 2
+@
+
+
+2.3
+log
+@*** empty log message ***
+@
+text
+@d4 7
+a10 8
+Calibration.o  		L0_sci_tbls.o    OpenInit.o  	  WriteMetaL1.o  \
+Close_Files.o  		L1BOutUtils.o    Orbit.o  	  calib.o  \
+EngTbls.o  		MLSL1.o  	 OutputL1B.o  	  close_files.o  \
+EngUtils.o  		MLSL1Common.o    Radiances.o  	  open_init.o  \
+InitPCFs.o  		MLSL1Config.o    Scan.o  	  outrad.o  \
+Init_tables_module.o  	MLSL1Rad.o  	 SciUtils.o  	  sort_qualify.o  \
+Interpolation.o  	MLSL1Utils.o  	 SortQualify.o  \
+L0Utils.o  		MLSPCF1.o  	 TkL1B.o  \
+a12 2
+calib.o: calib.f90 $(dir1)MLSCommon.o $(dir1)MLSMessageModule.o MLSL1Common.o \
+	MLSL1Rad.o
+a16 2
+close_files.o: close_files.f90 $(dir1)Hdf.o $(dir1)MLSCommon.o \
+	$(dir1)MLSMessageModule.o $(dir1)SDPToolkit.o MLSL1Common.o
+d20 1
+a20 1
+Init_tables_module.o: Init_tables_module.f90 $(dir1)intrinsic.o \
+d31 2
+a32 2
+MLSL1.o: MLSL1.f90 $(dir1)MLSMessageModule.o Calibration.o L1BOutUtils.o \
+	OpenInit.o Radiances.o SortQualify.o close_files.o
+d37 1
+a37 1
+	$(dir1)units.o $(dir2)tree_checker.o Init_tables_module.o MLSPCF1.o
+a41 4
+open_init.o: open_init.f90 $(dir1)Hdf.o $(dir1)MLSCommon.o \
+	$(dir1)MLSMessageModule.o $(dir1)MLSPCF.o \
+	$(dir1)MLSSignalNomenclature.o $(dir1)SDPToolkit.o MLSL1Common.o \
+	MLSL1Rad.o OutputL1B.o
+a54 2
+sort_qualify.o: sort_qualify.f90 $(dir1)MLSCommon.o $(dir1)MLSMessageModule.o \
+	MLSL1Common.o OpenInit.o
+@
+
+
+2.2
+log
+@Version 0.5 commit
+@
+text
+@d4 8
+a11 4
+MLSL1.o  	 OutputL1B.o  	close_files.o  		sort_qualify.o  \
+MLSL1Common.o    Scan.o  	init_tables_module.o  \
+MLSL1Rad.o  	 TkL1B.o  	open_init.o  \
+Orbit.o  	 calib.o  	outrad.o  \
+d16 4
+d22 4
+a25 1
+init_tables_module.o: init_tables_module.f90 $(dir1)intrinsic.o \
+d28 10
+a37 3
+MLSL1.o: MLSL1.f90 $(dir1)MLSMessageModule.o $(dir1)SDPToolkit.o \
+	MLSL1Common.o MLSL1Rad.o Orbit.o OutputL1B.o TkL1B.o calib.o \
+	close_files.o open_init.o sort_qualify.o
+d39 4
+d44 3
+a46 1
+	$(dir1)MLSSignalNomenclature.o $(dir1)MLSStrings.o MLSL1Common.o
+d51 4
+d58 3
+a60 1
+	$(dir1)MLSMessageModule.o MLSL1Common.o MLSL1Rad.o
+d63 1
+d65 3
+a67 1
+	MLSL1Common.o open_init.o
+d70 3
+@
+
+
+2.1
+log
+@First commit
+@
+text
+@d4 4
+a7 3
+MLSL1.o  	 Orbit.o  	TkL1B.o  	 init_tables_module.o  \
+MLSL1Common.o    OutputL1B.o  	calib.o  	 open_init.o  \
+MLSL1Rad.o  	 Scan.o  	close_files.o    sort_qualify.o  \
+a16 1
+MLSL1Common.o: MLSL1Common.f90 $(dir1)MLSCommon.o
+d20 1
+@
+

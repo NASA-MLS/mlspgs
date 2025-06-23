@@ -1,0 +1,172 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.14
+	cfm-single-freq-0-1:1.1.0.12
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.10
+	mus-emls-1-70:1.1.0.8
+	rel-1-0-englocks-work:1.1.0.6
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2008.06.11.20.14.53;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9.2in
+
+\newcommand{\docname}{\bf wvs-043r1}
+\newcommand{\docdate}{26 September 2006}
+
+\usepackage{longtable}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill\\
+Subject: \>Inverting the $\phi$ refractive correction\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-20pt}
+
+The relation between $\phi$ and $H$ is
+
+\begin{equation}\label{one}
+\frac{\text{d} \phi}{\text{d} H} = \frac1H
+ \frac{\mathcal{N}_0 H_0}{\sqrt{\mathcal{N}^2 H^2 - \mathcal{N}_0^2 H_0^2}}
+\end{equation}
+
+where $\mathcal{N}$ is a given (tabulated) function of $H$ and the zero
+subscript applies at the tangent point.  From this, given $H$ at the same
+(tabulated) points as $\mathcal{N}$,
+
+\begin{equation}
+\phi_{i+1} = \phi_i + \int_{H_i}^{H_{i+1}} \text{d}H \, \frac1H
+\frac{\mathcal{N}_0 H_0}{\sqrt{\mathcal{N}^2 H^2 - \mathcal{N}_0^2 H_0^2}} \,.
+\end{equation}
+
+As $\mathcal{N} \rightarrow 1$, using $H = H_0 \sec \phi$, this goes to
+$\phi_{i+1} = \phi_i + \int_{\phi_i}^{\phi_{i+1}} \text{d} \phi$. If we are
+instead given $\phi$ and want $H$ we replace $H = H_0 \sec \phi$ and write
+
+\begin{equation}
+\frac{\text{d} H}{\text{d}\phi} = \frac{H_0}{N_0}
+ \frac{\sqrt{\mathcal{N}^2 - \mathcal{N}_0^2 \cos^2 \phi}}
+      {\cos^2 \phi}
+\end{equation}
+
+where $\mathcal{N}$ is now considered to be a given function of $\phi$.  From
+this, given $\mathcal{N}$ and $\phi$ we have
+
+\begin{equation}
+H_{i+1} = H_i + \int_{\phi_i}^{\phi_{i+1}} \text{d} \phi \, \frac{H_0}{N_0}
+ \frac{\sqrt{\mathcal{N}^2 - \mathcal{N}_0^2 \cos^2 \phi}}
+      {\cos^2 \phi} \,.
+\end{equation}
+
+Again, using $H = H_0 \sec \phi$, as $\mathcal{N} \rightarrow 1$, this goes to
+$H_{i+1} = H_i + \int_{H_i}^{H_{i+1}} \text{d} H$.
+
+Instead of Equation (\ref{one}), we compute the correction to the geometric
+$\phi$ due to refraction,
+
+\begin{equation}
+\frac{\text{d} \Delta \phi}{\text{d} H} = \frac1H \left[
+ \frac{\mathcal{N}_0 H_0}{\sqrt{\mathcal{N}^2 H^2 - \mathcal{N}_0^2 H_0^2}} -
+ \frac{H_0}{\sqrt{H^2 - H_0^2}} \right]\,,
+\end{equation}
+
+from which
+
+\begin{equation}
+\Delta \phi_{i+1} = \int_{H_i}^{H_{i+1}} \text{d}H \, \frac1H \left[
+ \frac{\mathcal{N}_0 H_0}{\sqrt{\mathcal{N}^2 H^2 - \mathcal{N}_0^2 H_0^2}} -
+ \frac{H_0}{\sqrt{H^2 - H_0^2}} \right] \,,
+\end{equation}
+
+which goes to zero as $\mathcal{N} \rightarrow 1$. Similarly, we want to compute
+
+\begin{equation}
+\Delta H_{i+1} = \int_{\phi_i}^{\phi_{i+1}} \text{d} \phi\, H_0 \left[
+ \frac{\sqrt{\mathcal{N}^2 - \mathcal{N}_0^2 \cos^2 \phi}}
+      {\mathcal{N}_0 \cos^2 \phi} -
+ \frac{\sin \phi}{\cos^2 \phi} \right]
+  \,,
+\end{equation}
+
+which also goes to zero as $\mathcal{N} \rightarrow 1$.
+
+\label{lastpage}
+\end{document}
+% $Id: $
+@

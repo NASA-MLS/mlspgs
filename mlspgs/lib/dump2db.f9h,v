@@ -1,0 +1,372 @@
+head	2.8;
+access;
+symbols
+	v5-02-NRT-19:2.8
+	v6-00:2.8
+	v5-02-NRT-18:2.8
+	v5-02:2.8
+	v5-01-NRT-17:2.8
+	v5-01-NRT-16:2.8
+	v5-01-NRT-15:2.8
+	v5-01-NRT-14:2.8
+	neuralnetworks-1-0:2.8.0.10
+	cfm-single-freq-0-1:2.8.0.8
+	v5-01:2.8
+	v5-00:2.8
+	v4-23-TA133:2.8.0.6
+	mus-emls-1-70:2.8.0.4
+	rel-1-0-englocks-work:2.8.0.2
+	VUMLS1-00:2.7
+	VPL1-00:2.7
+	V4-22-NRT-08:2.6
+	VAM1-00:2.6
+	V4-21:2.6.0.2
+	V4-13:2.6
+	V4-12:2.6
+	V4-11:2.6
+	V4-10:2.6
+	M4-00:2.6
+	V3-33:2.5;
+locks; strict;
+comment	@# @;
+
+
+2.8
+date	2017.07.31.23.18.55;	author pwagner;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2016.07.28.01.42.27;	author vsnyder;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2012.06.22.20.25.18;	author pwagner;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2011.12.15.01.44.14;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2011.11.11.00.30.22;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2011.07.26.20.45.21;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2011.07.15.23.19.34;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2011.07.12.00.09.03;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.8
+log
+@Try to avoid printing unwanted blank lines
+@
+text
+@! Copyright 2011, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id: dump2db.f9h,v 2.7 2016/07/28 01:42:27 vsnyder Exp $
+
+! subroutine DUMP_2D_COMPLEX ( ARRAY, NAME, &
+!   & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
+!   double precision, intent(in) :: ARRAY(:,:)
+!   character(len=*), intent(in), optional :: NAME
+!   double precision, intent(in), optional :: FILLVALUE
+!   integer, intent(in), optional :: WIDTH
+!   character(len=*), intent(in), optional :: FORMAT
+!   integer, intent(in), optional :: LBOUND ! to print for first dimension
+!   character(len=*), intent(in), optional :: options
+!   integer :: I, J, K
+!   integer :: NumZeroRows
+!   double precision :: myFillValue
+!   character(len=64) :: MyFormat
+!   integer :: nUnique
+!   integer, dimension(MAXNUMELEMENTS) :: counts
+!   double precision, dimension(MAXNUMELEMENTS) :: elements
+    numZeroRows = 0
+    if ( any(shape(array) == 0) ) then
+      call empty ( name )
+    else if ( size(array) == 1 ) then
+      if ( present(theShape) ) then
+        call name_and_size ( name, dopts(clean)%v, 1, theShape )
+      else
+        call name_and_size ( name, dopts(clean)%v, 1, '(1,1)' )
+      end if
+      call output ( base, before='(', after=') ' , advance='no' )
+      call output ( array(1,1), format=myFormat, advance='yes' )
+    else if ( size(array, 1) == 1 ) then
+      if ( dopts(wholeArray)%v ) then
+        if ( present(theShape) ) then
+          call dump ( array(1,:), name, &
+            & fillValue=fillValue, format=format, options=options, theShape=theShape )
+        else
+          call dump ( array(1,:), name, &
+            & fillValue=fillValue, format=format, options=options, theShape='(1,:)' )
+        endif
+      else
+        call dump ( array(1,:), name, &
+          & fillValue=fillValue, format=format, options=options )
+      end if
+    else if ( size(array,2) == 1 ) then
+      if ( dopts(wholeArray)%v ) then
+        if ( present(theShape) ) then
+          call dump ( array(:,1), name, &
+            & fillValue=fillValue, format=format, options=options, lbound=lbound, &
+            & theShape=theShape )
+        else
+          call dump ( array(:,1), name, &
+            & fillValue=fillValue, format=format, options=options, lbound=lbound, &
+            & theShape='(:,1)' )
+        endif
+      else
+        call dump ( array(:,1), name, &
+          & fillValue=fillValue, format=format, options=options, lbound=lbound )
+      end if
+    else 
+      call name_and_size ( name, dopts(clean)%v, size(array), theShape )
+      if ( present(name) .and. .not. dopts(laconic)%v ) &
+        & call newLine ( dont_make_blank_line=.true. )
+      do i = 1, size(array,1)
+        do j = 1, size(array,2), myWidth
+          DumpTheseZeros = dopts(clean)%v .or. &
+            & any(array(i,j:min(j+2*MyWidth-1, size(array,2))) /= myFillValue) &
+            & .or. &
+            & ( j+MyWidth >= size(array,2) .and. &
+            & any(array(min(i+1, size(array,1)),1:min(1+MyWidth-1, size(array,2))) &
+            & /= myFillValue) &
+            & )
+          if ( .not. dopts(clean)%v ) then
+            if ( DumpTheseZeros ) then
+              call say_fill ( (/ i-1+base, size(array,1), j-1, size(array,2) /), &
+                & numZeroRows, myFillValue, inc=3, format=myFormat )
+            else
+              numZeroRows = numZeroRows + 1
+            end if
+          end if
+          if ( DumpTheseZeros ) then
+            do k = j, min(j+myWidth-1, size(array,2))
+              call output ( array(i,k), format=myFormat , advance='no' )
+            end do
+            call newLine
+            numZeroRows = 0
+          end if
+        end do
+      end do
+      call say_fill ( (/ i-1, size(array,1), j-myWidth, size(array,2) /), &
+        & numZeroRows, myFillValue, format=myFormat )
+    end if
+    call theDumpEnds
+!   end subroutine DUMP_2D_INTEGER
+! $Log: dump2db.f9h,v $
+! Revision 2.7  2016/07/28 01:42:27  vsnyder
+! Refactoring dump and diff
+!
+! Revision 2.6  2012/06/22 20:25:18  pwagner
+! Specify advance arg because we may now set default to 'yes'
+!
+! Revision 2.5  2011/12/15 01:44:14  pwagner
+! Tries to retain theShape if present
+!
+! Revision 2.4  2011/11/11 00:30:22  vsnyder
+! Simplify notice of rank reduction
+!
+! Revision 2.3  2011/07/26 20:45:21  pwagner
+! Clearer, less redundant
+!
+! Revision 2.2  2011/07/15 23:19:34  pwagner
+! prints notice one of array sizes is 1
+!
+! Revision 2.1  2011/07/12 00:09:03  pwagner
+! First commit
+!
+@
+
+
+2.7
+log
+@Refactoring dump and diff
+@
+text
+@d12 1
+a12 1
+! $Id: dump2db.f9h,v 2.6 2012/06/22 20:25:18 pwagner Exp $
+d71 2
+a72 1
+      if ( present(name) .and. .not. dopts(laconic)%v ) call newLine
+d105 3
+@
+
+
+2.6
+log
+@Specify advance arg because we may now set default to 'yes'
+@
+text
+@d12 1
+a12 1
+! $Id: dump2db.f9h,v 2.5 2011/12/15 01:44:14 pwagner Exp $
+d35 1
+a35 1
+        call name_and_size ( name, myClean, 1, theShape )
+d37 1
+a37 1
+        call name_and_size ( name, myClean, 1, '(1,1)' )
+d42 1
+a42 1
+      if ( myWholeArray ) then
+d55 1
+a55 1
+      if ( myWholeArray ) then
+d70 2
+a71 2
+      call name_and_size ( name, myClean, size(array), theShape )
+      if ( present(name) .and. .not. mylaconic ) call newLine
+d74 1
+a74 1
+          DumpTheseZeros = myClean .or. &
+d81 1
+a81 1
+          if (.not. myClean) then
+d104 3
+@
+
+
+2.5
+log
+@Tries to retain theShape if present
+@
+text
+@d12 1
+a12 1
+! $Id: dump2db.f9h,v 2.4 2011/11/11 00:30:22 vsnyder Exp $
+d39 1
+a39 1
+      call output ( base, before='(', after=') ' )
+d91 1
+a91 1
+              call output ( array(i,k), format=myFormat )
+d104 3
+@
+
+
+2.4
+log
+@Simplify notice of rank reduction
+@
+text
+@d12 1
+a12 1
+! $Id: dump2db.f9h,v 2.3 2011/07/26 20:45:21 pwagner Exp $
+d34 7
+a40 2
+      call dump ( array(1,:), name, &
+        & fillValue=fillValue, format=format, options=options )
+d43 7
+a49 2
+        call dump ( array(1,:), name, &
+          & fillValue=fillValue, format=format, options=options, theShape='(1,:)' )
+d56 9
+a64 3
+        call dump ( array(:,1), name, &
+          & fillValue=fillValue, format=format, options=options, lbound=lbound, &
+          & theShape='(:,1)' )
+d70 1
+a70 1
+      call name_and_size ( name, myClean, size(array) )
+d104 3
+@
+
+
+2.3
+log
+@Clearer, less redundant
+@
+text
+@d12 1
+a12 1
+! $Id: dump2db.f9h,v 2.2 2011/07/15 23:19:34 pwagner Exp $
+d21 1
+a21 1
+!   integer, intent(in), optional :: LBOUND
+d33 1
+a33 2
+    else if ( size(array, 1) == 1 ) then
+      if ( myWholeArray ) call output( '1st size is 1: reducing rank to 1', advance='yes' )
+d36 8
+d45 8
+a52 3
+      if ( myWholeArray ) call output( '2nd size is 1: reducing rank to 1', advance='yes' )
+      call dump ( array(:,1), name, &
+        & fillValue=fillValue, format=format, options=options )
+d67 1
+a67 1
+              call say_fill ( (/ i, size(array,1), j-1, size(array,2) /), &
+d88 3
+@
+
+
+2.2
+log
+@prints notice one of array sizes is 1
+@
+text
+@d12 1
+a12 1
+! $Id: dump2db.f9h,v 2.1 2011/07/12 00:09:03 pwagner Exp $
+d34 1
+a34 1
+      call output( '1st size is 1: reducing rank to 1', advance='yes' )
+d38 1
+a38 1
+      call output( '2nd size is 1: reducing rank to 1', advance='yes' )
+d76 3
+@
+
+
+2.1
+log
+@First commit
+@
+text
+@d1 1
+a1 1
+! Copyright 2005, by the California Institute of Technology. ALL
+d12 1
+a12 1
+! $Id: dump2db.f9h,v 2.7 2011/04/20 22:25:07 pwagner Exp $
+a32 3
+    else if ( product(shape(array)) == 1 ) then
+      call name_and_size ( name, myClean, 1 )
+      call output ( array(1,1), format=myFormat, advance='yes' )
+d34 1
+d38 1
+d76 3
+@
+

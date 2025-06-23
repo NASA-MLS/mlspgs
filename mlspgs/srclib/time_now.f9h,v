@@ -1,0 +1,332 @@
+head	1.7;
+access;
+symbols
+	v5-02-NRT-19:1.7
+	v6-00:1.7
+	v5-02-NRT-18:1.7
+	v5-02:1.7
+	v5-01-NRT-17:1.7
+	v5-01-NRT-16:1.7
+	v5-01-NRT-15:1.7
+	v5-01-NRT-14:1.7
+	neuralnetworks-1-0:1.7.0.14
+	cfm-single-freq-0-1:1.7.0.12
+	v5-01:1.7
+	v5-00:1.7
+	v4-23-TA133:1.7.0.10
+	mus-emls-1-70:1.7.0.8
+	rel-1-0-englocks-work:1.7.0.6
+	VUMLS1-00:1.7
+	VPL1-00:1.7
+	V4-22-NRT-08:1.7
+	VAM1-00:1.7
+	V4-21:1.7.0.4
+	V4-13:1.7
+	V4-12:1.7
+	V4-11:1.7
+	V4-10:1.7
+	V3-43:1.7
+	M4-00:1.7
+	V3-41:1.7
+	V3-40-PlusGM57:1.7.0.2
+	V2-24-NRT-04:1.6
+	V3-33:1.7
+	V2-24:1.6
+	V3-31:1.7
+	V3-30-NRT-05:1.7
+	cfm-01-00:1.7
+	V3-30:1.7
+	V3-20:1.7
+	V3-10:1.7
+	V2-23-NRT-02:1.6
+	V2-23:1.6
+	V2-22-NRT-01:1.6
+	V2-22:1.6
+	V2-21:1.6
+	V2-20:1.6
+	V2-11:1.6
+	V2-10:1.6
+	V2-00:1.6
+	V1-51:1.4
+	V1-50:1.4
+	V1-45:1.4
+	V1-44:1.4
+	V1-43:1.4
+	V1-42:1.4
+	V1-41:1.4
+	V1-32:1.4
+	V1-40:1.4
+	V1-31:1.4
+	V1-30:1.1
+	V1-13:1.1
+	V1-12:1.1
+	V1-11:1.1
+	V1-10:1.1
+	newfwm-feb03:1.1.0.2
+	V1-04:1.1
+	V1-03:1.1
+	V1-02:1.1
+	V1-00:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.7
+date	2009.01.12.18.44.55;	author pwagner;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2005.09.22.23.37.05;	author pwagner;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2005.06.22.20.03.56;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2003.12.11.23.04.01;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2003.12.07.23.13.10;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2003.12.05.00.55.07;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.11.10.00.32.56;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.7
+log
+@Improved cofiguration; wait means sleep
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! Include file for TIME_M.
+
+! $Id: time_now.f9h,v 1.6 2005/09/22 23:37:05 pwagner Exp $
+
+  real(rk), intent(out) :: T    ! Time, arbitrary units for CPU time,
+                                ! seconds since midnight for wall-clock time.
+
+  integer :: VALUES(8)          ! For DATE_AND_TIME
+  character (len=8) :: date
+  character (len=4) :: yyyy
+  character (len=2) :: mm, dd
+  integer :: daysoff
+
+  if ( time_config%use_wall_clock ) then
+    call date_and_time ( date=date, values=values )
+    if ( present(inValues) ) then
+      values = inValues
+      write(yyyy, '(i4)') values(1)
+      write(mm, '(i2)') values(2)
+      write(dd, '(i2)') values(3)
+      date = yyyy // mm // dd
+    endif
+    if ( any(time_config%startTime == -1) ) then
+      time_config%startTime = values
+      ! call yyyymmdd_to_dai(date, startdaysoff)
+      call yyyymmdd_to_dai(values(1), values(2), values(3), time_config%startdaysoff)
+      if ( time_config%wallClockIsElapsedFromStart ) then
+        t = 0.
+      else
+        t = values(8)/1000.0_rk + (values(7) + 60*(values(6) + 60*values(5)))
+      endif
+    else
+      if ( any(time_config%startTime(1:3) /= values(1:3)) ) then
+        ! call yyyymmdd_to_dai(date, daysoff)
+        call yyyymmdd_to_dai(values(1), values(2), values(3), daysoff)
+        daysoff = daysoff - time_config%startdaysoff
+      else
+        daysoff = 0
+      endif
+      if ( time_config%wallClockIsElapsedFromStart ) then
+        t = (values(8)-time_config%startTime(8))/1000.0_rk + &
+        & (values(7) - time_config%startTime(7) &
+        & + 60*(values(6) - time_config%startTime(6) + &
+        & 60*(values(5) - time_config%startTime(5) + 24*daysoff)))
+      else
+        t = values(8)/1000.0_rk + (values(7) + 60*(values(6) + &
+        & 60*(values(5) + 24*daysoff)))
+      endif
+    endif
+  else
+    call cpu_time ( t )
+  end if
+  t = t / time_config%time_divisor
+
+!$Log: time_now.f9h,v $
+!Revision 1.6  2005/09/22 23:37:05  pwagner
+!time_config and retry_config now hold config settings
+!
+!Revision 1.5  2005/06/22 20:03:56  pwagner
+!Reworded Copyright statement, moved rcs id
+!
+!Revision 1.4  2003/12/11 23:04:01  pwagner
+!Passes values from date_and_time, not date to yyyymmdd_to_dai
+!
+!Revision 1.3  2003/12/07 23:13:10  pwagner
+!wall clock is now time elapsed from start
+!
+!Revision 1.2  2003/12/05 00:55:07  pwagner
+!Tries to avoid cyling back to 0 when crossing midnight if using wall clock
+!
+!Revision 1.1  2001/11/10 00:32:56  vsnyder
+!Moved from lib
+!
+!Revision 2.1  2001/11/09 22:45:30  vsnyder
+!Initial commit
+!
+@
+
+
+1.6
+log
+@time_config and retry_config now hold config settings
+@
+text
+@d14 1
+a14 1
+! $Id: time_now.f9h,v 1.5 2005/06/22 20:03:56 pwagner Exp $
+d38 1
+a38 1
+      if ( WALLCLOCKISELAPSEDFROMSTART ) then
+d51 1
+a51 1
+      if ( WALLCLOCKISELAPSEDFROMSTART ) then
+d67 3
+@
+
+
+1.5
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d14 1
+a14 1
+! $Id: HuntArray.f9h,v 1.6 2005/01/19 01:08:22 pwagner Exp $
+d25 1
+a25 1
+  if ( use_wall_clock ) then
+d34 2
+a35 2
+    if ( any(startTime == -1) ) then
+      startTime = values
+d37 1
+a37 1
+      call yyyymmdd_to_dai(values(1), values(2), values(3), startdaysoff)
+d44 1
+a44 1
+      if ( any(startTime(1:3) /= values(1:3)) ) then
+d47 1
+a47 1
+        daysoff = daysoff - startdaysoff
+d52 4
+a55 3
+        t = (values(8)-startTime(8))/1000.0_rk + (values(7) - startTime(7) &
+        & + 60*(values(6) - startTime(6) + &
+        & 60*(values(5) - startTime(5) + 24*daysoff)))
+d64 1
+a64 1
+  t = t / TIME_DIVISOR
+d67 3
+@
+
+
+1.4
+log
+@Passes values from date_and_time, not date to yyyymmdd_to_dai
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d14 1
+a14 4
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: ModuleName= &
+       "$RCSfile: time_now.f9h,v $"
+!---------------------------------------------------------------------------
+d66 3
+@
+
+
+1.3
+log
+@wall clock is now time elapsed from start
+@
+text
+@d31 2
+a32 1
+      call yyyymmdd_to_dai(date, startdaysoff)
+d40 2
+a41 1
+        call yyyymmdd_to_dai(date, daysoff)
+d61 3
+@
+
+
+1.2
+log
+@Tries to avoid cyling back to 0 when crossing midnight if using wall clock
+@
+text
+@d16 2
+d22 7
+d30 20
+a49 5
+      startTime = values(1:3)
+      t = values(8)/1000.0_rk + (values(7) + 60*(values(6) + 60*values(5)))
+    elseif ( any(startTime /= values(1:3)) ) then
+      call yyyymmdd_to_dai(date, daysoff)
+      t = values(8)/1000.0_rk + (values(7) + 60*(values(6) + &
+d51 1
+d59 3
+@
+
+
+1.1
+log
+@Moved from lib
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+d15 2
+d19 9
+a27 2
+    call date_and_time ( values=values )
+    t = values(8)/1000.0_rk + (values(7) + 60*(values(6) + 60*values(5)))
+d31 1
+d34 3
+@
+

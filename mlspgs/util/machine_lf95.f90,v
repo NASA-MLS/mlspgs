@@ -1,0 +1,167 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.14
+	cfm-single-freq-0-1:1.2.0.12
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.10
+	mus-emls-1-70:1.2.0.8
+	rel-1-0-englocks-work:1.2.0.6
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.2
+	V4-21:1.2.0.4
+	V4-13:1.2
+	V4-12:1.2
+	V4-11:1.2
+	V4-10:1.2
+	V3-43:1.2
+	M4-00:1.2
+	V3-41:1.2
+	V3-40-PlusGM57:1.2.0.2
+	V2-24-NRT-04:1.2
+	V3-33:1.2
+	V2-24:1.2
+	V3-31:1.2
+	V3-30-NRT-05:1.2
+	cfm-01-00:1.2
+	V3-30:1.2
+	V3-20:1.2
+	V3-10:1.2
+	V2-23-NRT-02:1.2
+	V2-23:1.2
+	V2-22-NRT-01:1.2
+	V2-22:1.2
+	V2-21:1.2
+	V2-20:1.2
+	V2-11:1.2
+	V2-10:1.2
+	V2-00:1.2
+	V1-51:1.1
+	V1-50:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2005.06.22.19.27.33;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.09.22.19.21.39;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module MACHINE
+  implicit none
+
+  character(LEN=2) :: END_LINE = ' ' // char(10)
+  character(LEN=1) :: FILSEP = '/'      ! '/' for Unix, '\' for DOS or NT
+  integer, parameter :: HP = 0          ! Offset for first argument for GETARG
+
+  external :: GETARG
+
+  interface IO_ERROR; module procedure IO_ERROR_; end interface
+  private IO_ERROR_
+
+!---------------------------- RCS Ident Info ------------------------------
+  character (len=*), parameter :: ModuleName= &
+       "$RCSfile: MLSL2.f90,v $"
+  character (len=*), parameter :: IdParm = &
+       "$Id: MLSL2.f90,v 2.138 2005/06/22 18:57:02 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+!---------------------------------------------------------------------------
+
+contains
+
+  subroutine IO_ERROR_ ( MESSAGE, IOSTAT, FILE )
+  ! Print MESSAGE and FILE, and then do something reasonable with IOSTAT.
+
+    character(len=*), intent(in) :: MESSAGE
+    integer, intent(in) :: IOSTAT
+    character(len=*), intent(in), optional :: FILE
+
+    integer :: L
+    character(len=127) :: MSG           ! From the Lahey IOSTAT_MSG intrinsic
+
+    write (*,*) message(:len_trim(message))
+    if ( present(file) ) then
+      l = len_trim(file)
+      write (*,*) file(:l)
+    end if
+    call iostat_msg (iostat, msg)       ! Lahey intrinsic
+    write (*,*) msg(:len_trim(msg))     ! Print the error message
+    write (*,*) 'Error status code =', iostat
+    return
+  end subroutine IO_ERROR_
+
+end module MACHINE
+
+! $Log: machine_lf95.f90,v $
+! Revision 1.1  2004/09/22 19:21:39  vsnyder
+! Add EXTERNAL GETARG
+!
+! Revision 1.1  2001/01/13 00:29:44  pwagner
+! moved to lib/machines/MLSCONFG/machine.f90
+!
+! Revision 1.1  2000/10/19 17:41:17  pwagner
+! first commit
+!
+! Revision 2.1  2000/10/09 22:16:14  vsnyder
+! Moved machine.f90 from l2 to lib
+!
+! Revision 2.0  2000/09/05 18:57:42  ahanzel
+! Changing file revision to 2.0.
+@
+
+
+1.1
+log
+@Add EXTERNAL GETARG
+@
+text
+@d1 11
+d24 6
+a29 5
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=256), private :: Id = &
+       "$Id: machine.f90,v 1.1 2001/01/13 00:29:44 pwagner Exp $"
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: machine.f90,v $"
+d57 4
+a60 1
+! $Log: machine.f90,v $
+@
+

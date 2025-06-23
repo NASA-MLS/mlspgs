@@ -1,0 +1,80 @@
+head	1.2;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2013.06.12.00.13.32;	author vsnyder;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2013.06.07.02.35.49;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Not needed -- use bytes or byte_size instead
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!------------------------------- RCS Ident Info ------------------------------
+! $RCSfile: Allocate_Test_2D_ca.f9h,v $
+!-----------------------------------------------------------------------------
+
+! Probably only useful within Allocate_Deallocate.f90
+
+    integer :: MyLow(2), STATUS
+    call deallocate_Test ( To_Allocate, ItsName, ModuleName )
+    myLow = 1
+    if ( present(low) ) myLow = low
+    allocate ( To_Allocate(myLow(1):dim(1),myLow(2):dim(2)), stat=status )
+    call test_allocate ( status, moduleName, ItsName, myLow, dim, &
+      & eSize * len(to_allocate) )
+    if ( status == 0 ) then
+      if ( present(fill) ) then
+        to_allocate = fill
+      else if ( clearOnAllocate ) then
+        to_allocate = default
+      end if
+    end if
+    if ( trackallocates > 0 ) call trackAllocate ( to_allocate, itsName, moduleName )
+
+! $Log: Allocate_Test_2D_ca.f9h,v $
+! Revision 1.1  2013/06/07 02:35:49  vsnyder
+! Initial commit
+!
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d13 1
+a13 1
+! $RCSfile: Allocate_Test_2D_a.f9h,v $
+d34 4
+a37 1
+! $Log: $
+@
+

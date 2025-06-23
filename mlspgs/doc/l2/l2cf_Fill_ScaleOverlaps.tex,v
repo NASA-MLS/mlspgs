@@ -1,0 +1,140 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.14
+	cfm-single-freq-0-1:1.2.0.12
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.10
+	mus-emls-1-70:1.2.0.8
+	rel-1-0-englocks-work:1.2.0.6
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.2
+	V4-21:1.2.0.4
+	V4-13:1.2
+	V4-12:1.2
+	V4-11:1.2
+	V4-10:1.2
+	V3-43:1.2
+	M4-00:1.2
+	V3-41:1.2
+	V3-40-PlusGM57:1.2.0.2
+	V2-24-NRT-04:1.2
+	V3-33:1.2
+	V2-24:1.2
+	V3-31:1.2
+	V3-30-NRT-05:1.2
+	cfm-01-00:1.2
+	V3-30:1.2
+	V3-20:1.2
+	V3-10:1.2
+	V2-23-NRT-02:1.2
+	V2-23:1.2
+	V2-22-NRT-01:1.2
+	V2-22:1.2
+	V2-21:1.2
+	V2-20:1.2
+	V2-11:1.2
+	V2-10:1.2
+	V2-00:1.2
+	V1-51:1.2
+	V1-50:1.2
+	V1-45:1.2
+	V1-44:1.2
+	V1-43:1.2
+	V1-32:1.2
+	V1-31:1.2;
+locks; strict;
+comment	@% @;
+
+
+1.2
+date	2003.04.04.00.11.58;	author livesey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2003.03.27.06.26.07;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@More minor changes
+@
+text
+@\fillMethod{ScaleOverlaps}
+
+\index{Overlaps!Scaling}
+
+\begin{cfFragment}
+Fill, quantity=<vector>.<quantity>, method=scaleOverlaps,
+   multiplier= [ <numeric value> , ... ]
+   {, dontMask=<true|false> }
+\end{cfFragment}
+\cfField{multiplier}
+\cfField{dontMask}
+
+This fill method is somewhat unusual in that it modifies a quantities
+values rather than overwriting them.  It is probably best described by
+example:
+
+\begin{cfFragment}
+Fill, quantity=aprioriPrecision.temperature, method=scaleOverlaps, 
+   multiplier=[0.1, 0.4, 0.8]
+\end{cfFragment}
+
+
+This will `tighten up' the \emph{a priori} precision at the edges of the
+chunk, assuming that there are overlaps.  So if the \emph{a priori}
+precision at 100\,hPa was 10\,K by default, this instruction would
+change it to 1\,K, 4\,K, 8\,K, 10\,K, 10\,K, \ldots\ 10\,K, 8\,K, 4\,K,
+1\,K.
+
+Note that it will only do this in the overlap regions of the quantity.
+In cases where there are no overlaps at one or other end (\eg the start
+and end of the day for some configurations), no scaling will occur at
+those ends.  If more multipliers are given than there are overlapped
+profiles, then it ignores the later multipliers.  For example, if there
+were only two profiles of lower overlap and one of upper in the above
+example, the result would be 1\,K, 4\,K, 10\,K, \ldots\ 10\,K, 1\,K.
+
+\fillMaskComment
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "l2ug"
+%%% End: 
+@
+
+
+1.1
+log
+@Slow progress
+@
+text
+@d8 1
+a8 1
+   [, dontMask=<true|false>]
+d37 1
+a37 3
+This command does obey the fill mask, so it can be applied to restricted
+height ranges by issuing a \cf+Subset+ command first.  The dontMask flag
+on the Fill command instructs it ignore the mask.
+@
+

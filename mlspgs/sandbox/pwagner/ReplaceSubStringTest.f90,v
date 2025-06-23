@@ -1,0 +1,198 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.14
+	cfm-single-freq-0-1:1.1.0.12
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.10
+	mus-emls-1-70:1.1.0.8
+	rel-1-0-englocks-work:1.1.0.6
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V2-24-NRT-04:1.1
+	V3-33:1.1
+	V2-24:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1
+	V2-23-NRT-02:1.1
+	V2-23:1.1
+	V2-22-NRT-01:1.1
+	V2-22:1.1
+	V2-21:1.1
+	V2-20:1.1
+	V2-11:1.1
+	V2-10:1.1
+	V2-00:1.1
+	V1-51:1.1
+	V1-50:1.1
+	V1-45:1.1
+	V1-44:1.1
+	V1-43:1.1
+	V1-42:1.1
+	V1-41:1.1
+	V1-32:1.1
+	V1-40:1.1
+	V1-31:1.1
+	V1-13:1.1
+	V1-12:1.1
+	V1-11:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2003.02.15.00.43.04;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@First commit
+@
+text
+@!=================================
+PROGRAM ReplaceSubStringTest ! tests MLSStrings module
+!=================================
+
+   USE MLSStrings , ONLY: GetStringElement, NumStringElements, Reverse, &
+	& ReverseList, StringElementNum, SortList, SortArray, Capitalize, &
+   & ReplaceSubString
+
+   IMPLICIT NONE
+
+!------------------- RCS Ident Info -----------------------
+   CHARACTER(LEN=130) :: Id = &                                                    
+   "$Id: rl2_sub.f90,v 1.3 2001/01/30 17:24:25 nakamura Exp nakamura $"
+   CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile: rl2_sub.f90,v $"
+!----------------------------------------------------------
+
+! Brief description of program
+! This program tests the ReplaceSubString subroutine.
+
+! To use this, copy it into
+! mlspgs/tests/lib
+! then enter "make depends" followed by "make"
+
+
+! Then run it, entering comma-separated lists of words; a blank line terminates
+
+! Variables
+
+   INTEGER, PARAMETER                :: MAXLISTLENGTH=80
+   INTEGER, PARAMETER                :: MAXWORDLENGTH=16
+	CHARACTER (LEN=MAXLISTLENGTH)     :: thesub1List, thesub2List, theString
+	CHARACTER (LEN=MAXLISTLENGTH)     :: anotherString
+	CHARACTER (LEN=MAXWORDLENGTH)     :: sub1, sub2
+   INTEGER                           :: listLength, NumWords, wordNum
+	LOGICAL, PARAMETER                :: kountEmpty = .TRUE.
+	LOGICAL, PARAMETER                :: CaseSensitive = .false.
+
+   ! 1st--just a simple test of no_trim option
+   theString = 'Thearg1 the arg1  the  arg1the  arg1   thearg1    the    arg1'
+   print *, 'theString ', trim(theString)
+   call ReplaceSubString(theString, anotherString, ' arg1', ' arg2', &
+     & which='all', no_trim=.true.)
+   print *, '(after replacing ( arg1) with ( arg2)', trim(anotherString)
+   call ReplaceSubString(theString, anotherString, 'arg1 ', 'arg2 ', &
+     & which='all', no_trim=.true.)
+   print *, '(after replacing (arg1 ) with (arg2 )', trim(anotherString)
+   call ReplaceSubString(theString, anotherString, ' arg1 ', ' arg2 ', &
+     & which='all', no_trim=.true.)
+   print *, '(after replacing ( arg1 ) with ( arg2 )', trim(anotherString)
+   call ReplaceSubString(theString, anotherString, 'arg1  ', 'arg2  ', &
+     & which='all', no_trim=.true.)
+   print *, '(after replacing (arg1  ) with (arg2  )', trim(anotherString)
+   call ReplaceSubString(theString, anotherString, '  arg1', '  arg2', &
+     & which='all', no_trim=.true.)
+   print *, '(after replacing (  arg1) with (  arg2)', trim(anotherString)
+   call ReplaceSubString(theString, anotherString, '   arg1', '   arg2', &
+     & which='all', no_trim=.true.)
+   print *, '(after replacing (   arg1) with (   arg2)', trim(anotherString)
+   call ReplaceSubString(theString, anotherString, '   arg1 ', '   arg2 ', &
+     & which='all', no_trim=.true.)
+   print *, '(after replacing (   arg1 ) with (   arg2 )', trim(anotherString)
+	DO
+
+      ! Prompt for input
+
+ 	   print *, 'Enter comma-separated list of sub1 (originals)'
+		read(*, '(A80)') thesub1List
+      print *, 'You entered ', trim(thesub1List)
+		IF(thesub1List == ' ' .or. Capitalize(thesub1List(1:4)) == 'STOP') THEN
+   		print *, 'GAME OVER'
+			STOP
+		ENDIF
+ 	   print *, 'Enter comma-separated list of sub2 (replacements)'
+		read(*, '(A80)') thesub2List
+      print *, 'You entered ', trim(thesub2List)
+	
+      !	Process theList
+		NumWords = NumStringElements(thesub1List, kountEmpty)
+		listLength = LEN_TRIM(thesub1List)
+   	print *, '----- sub1 list (originals) ----'
+   	print *, 'Number of chars read = ', listLength
+   	print *, 'Number of words read = ', NumWords
+		IF(NumWords <= 0) CYCLE
+		NumWords = NumStringElements(thesub1List, kountEmpty)
+
+		listLength = LEN_TRIM(thesub2List)
+   	print *, '----- sub2 list (replacements) ----'
+   	print *, 'Number of chars read = ', listLength
+   	print *, 'Number of words read = ', NumWords
+		IF(NumWords <= 0) CYCLE
+	
+      do
+ 	     print *, 'Enter string to be processed'
+		  read(*, '(A80)') theString
+        print *, 'You entered ', trim(theString)
+		  IF(theString == ' ') THEN
+   	     CYCLE
+        elseif(Capitalize(theString) == 'STOP') then
+           stop
+		  ENDIF
+
+		  DO wordNum=1, NumWords
+		     CALL GetStringElement(thesub1List, sub1, wordNum, kountEmpty)
+		     CALL GetStringElement(thesub2List, sub2, wordNum, kountEmpty)
+           print *, 'sub1: ', trim(sub1), ' sub2: ', trim(sub2)
+           call ReplaceSubString(theString, theString, sub1, sub2)
+           ! theString = anotherString
+		  ENDDO
+		  print *, '(after processing) theString = ', theString
+		ENDDO
+	ENDDO
+!==================
+END PROGRAM ReplaceSubStringTest
+!==================
+
+!# $Log: rl2_sub.f90,v $
+@

@@ -1,0 +1,415 @@
+head	2.7;
+access;
+symbols
+	v5-02-NRT-19:2.7
+	v6-00:2.7
+	v5-02-NRT-18:2.7
+	v5-02:2.6
+	v5-01-NRT-17:2.6
+	v5-01-NRT-16:2.6
+	v5-01-NRT-15:2.6
+	v5-01-NRT-14:2.6
+	neuralnetworks-1-0:2.6.0.10
+	cfm-single-freq-0-1:2.6.0.8
+	v5-01:2.6
+	v5-00:2.6
+	v4-23-TA133:2.6.0.6
+	mus-emls-1-70:2.6.0.4
+	rel-1-0-englocks-work:2.6.0.2
+	VUMLS1-00:2.6
+	VPL1-00:2.6
+	V4-22-NRT-08:2.6
+	whdrel10_merged_to_here:2.6
+	merge_whdrel10_from_here:2.5.6.1
+	TAG_TRUNK_AFTER_PW_CHANGES:2.5
+	TAG_TRUNK_BEFORE_PW_CHANGES:2.5
+	VAM1-00:2.5
+	whd-rel-1-0:2.5.0.6
+	V4-21:2.5.0.4
+	V4-13:2.5
+	V4-12:2.5
+	V4-11:2.5
+	V4-10:2.5
+	V3-43:2.5
+	M4-00:2.5
+	V3-41:2.5
+	V3-40-PlusGM57:2.5.0.2
+	V2-24-NRT-04:2.5
+	V3-33:2.5
+	V2-24:2.5
+	V3-31:2.5
+	V3-30-NRT-05:2.5
+	cfm-01-00:2.5
+	V3-30:2.5
+	V3-20:2.5
+	V3-10:2.5
+	V2-23-NRT-02:2.5
+	V2-23:2.5
+	V2-22-NRT-01:2.5
+	V2-22:2.5
+	V2-21:2.5
+	V2-20:2.5
+	V2-11:2.5
+	V2-10:2.5
+	V2-00:2.5
+	V1-51:2.4
+	V1-50:2.4
+	V1-45:2.2
+	V1-44:2.2
+	V1-43:2.2
+	V1-42:2.2
+	V1-41:2.2
+	V1-32:2.1
+	V1-40:2.2
+	V1-31:2.1
+	V1-30:2.1
+	V1-13:2.1
+	V1-12:2.1
+	V1-11:2.1
+	V1-10:2.1
+	newfwm-feb03:2.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+2.7
+date	2023.06.06.22.34.58;	author pwagner;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2016.03.15.22.17.59;	author whdaffer;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2005.06.23.18.41.36;	author pwagner;	state Exp;
+branches
+	2.5.6.1;
+next	2.4;
+
+2.4
+date	2004.12.01.17.10.30;	author perun;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2004.11.10.15.35.40;	author perun;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2004.01.09.17.46.22;	author perun;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2003.01.31.18.13.34;	author perun;	state Exp;
+branches;
+next	;
+
+2.5.6.1
+date	2015.10.09.10.21.38;	author whdaffer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.7
+log
+@Note if unusually many attenuation walls
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!============================================================================
+PROGRAM MLSL1G       ! MLS Level 1 software for the GHz module
+!============================================================================
+
+  USE MLSL1RunConfig, ONLY: MLSL1Executable ! name of current executable
+  USE OpenInit, ONLY: OpenAndInitialize
+  USE SortQualify, ONLY: SortAndQualify
+  USE Calibration, ONLY: Calibrate
+  USE Radiances, ONLY: CalcLimbRads
+  USE L1BOutUtils, ONLY: OutputL1Bdata
+  USE SpectralBaseline, ONLY: UpdateBaselines
+  USE DACsUtils, ONLY: FinalizeDACSdata
+  USE GHzBaseline, ONLY: LatBinRads, OutputBaselinedRads
+  USE Close_Files, ONLY: CloseFiles
+  USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Info, MLSMessageExit
+  USE MLSL1Debug, ONLY: closeMLSL1DebugFiles
+  USE MLSL1Config, ONLY: L1Config
+  use MLSStrings, only: WriteIntsToChars
+
+  IMPLICIT NONE
+
+!---------------------------- RCS Ident Info ------------------------------
+  character (len=*), parameter :: ModuleName= &
+       "$RCSfile: MLSL1G.f90,v $"
+  character (len=*), parameter :: IdParm = &
+       "$Id: MLSL1G.f90,v 2.6 2016/03/15 22:17:59 whdaffer Exp $"
+  character (len=len(idParm)) :: Id = idParm
+!---------------------------------------------------------------------------
+
+  LOGICAL :: more_data, do_calib
+  INTEGER, PARAMETER :: NORMAL_EXIT_STATUS = 2
+  CHARACTER (len=255) :: ComVecsFile
+  character (len=16) :: nWallsChars
+
+
+
+  MLSL1Executable='mlsl1g'
+  CALL MLSMessage (MLSMSG_Info, ModuleName, &
+       & "============= Start EOS MLS Level 1 GHz processing ================ ")
+  PRINT *,"============= Start EOS MLS Level 1 GHz processing ================ "
+
+  CALL OpenAndInitialize
+
+  DO
+
+     CALL SortAndQualify (more_data, do_calib)
+
+     IF (do_calib) THEN
+
+        CALL Calibrate
+
+        CALL CalcLimbRads
+
+        CALL OutputL1Bdata
+
+        CALL LatBinRads
+
+     ENDIF
+
+     IF (.NOT. more_data) EXIT
+
+  ENDDO
+  ! Print informative message if we encountered unusually many walls
+  if ( L1Config%Output%NumAttenuationWalls >= &
+    & L1Config%Output%MaxAttenuationWalls ) then
+    call WriteIntsToChars ( L1Config%Output%NumAttenuationWalls, nWallsChars )
+    CALL MLSMessage (MLSMSG_Info, ModuleName, &
+       & "Unusual number of walls on this date: " // trim(nWallsChars) )
+    PRINT *,"Unusual number of walls on this date: " // trim(nWallsChars)
+  endif
+
+  CALL FinalizeDACSdata
+
+  CALL UpdateBaselines
+
+  CALL OutputBaselinedRads
+
+  CALL CloseFiles
+
+  CALL closeMLSL1DebugFiles
+
+  CALL MLSMessage (MLSMSG_Info, ModuleName, &
+       & "EOS MLS Level 1 GHz data processing successfully completed!")
+
+  !<whd:debugging>
+  close(12)
+  !</whd:debugging>
+
+  CALL MLSMessageExit (NORMAL_EXIT_STATUS)
+
+!=============================================================================
+END PROGRAM MLSL1G
+!=============================================================================
+
+! $Log: MLSL1G.f90,v $
+! Revision 2.6  2016/03/15 22:17:59  whdaffer
+! Merged whd-rel-1-0 back onto main branch. Most changes
+! are to comments, but there's some modification to Calibration.f90
+! and MLSL1Common to support some new modules: MLSL1Debug and SnoopMLSL1.
+!
+! Revision 2.5.6.1  2015/10/09 10:21:38  whdaffer
+! checkin of continuing work on branch whd-rel-1-0
+!
+! Revision 2.5  2005/06/23 18:41:36  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.4  2004/12/01 17:10:30  perun
+! Add call to FinalizeDACSdata
+!
+! Revision 2.3  2004/11/10 15:35:40  perun
+! Add call to UpdateBaselines
+!
+! Revision 2.2  2004/01/09 17:46:22  perun
+! Version 1.4 commit
+!
+! Revision 2.1  2003/01/31 18:13:34  perun
+! Version 1.1 commit
+!
+@
+
+
+2.6
+log
+@Merged whd-rel-1-0 back onto main branch. Most changes
+are to comments, but there's some modification to Calibration.f90
+and MLSL1Common to support some new modules: MLSL1Debug and SnoopMLSL1.
+@
+text
+@d28 2
+d37 1
+a37 1
+       "$Id: MLSL1G.f90,v 2.5.6.1 2015/10/09 10:21:38 whdaffer Exp $"
+d44 1
+d74 8
+d107 5
+@
+
+
+2.5
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d16 1
+d27 1
+d33 1
+a33 1
+       "$RCSfile: MLSL2.f90,v $"
+d35 1
+a35 1
+       "$Id: MLSL2.f90,v 2.138 2005/06/22 18:57:02 pwagner Exp $"
+d41 1
+d43 3
+d47 2
+a48 1
+       & "Start EOS MLS Level 1 GHz processing.")
+d80 2
+d85 4
+d96 6
+@
+
+
+2.5.6.1
+log
+@checkin of continuing work on branch whd-rel-1-0
+@
+text
+@a15 1
+  USE MLSL1RunConfig, ONLY: MLSL1Executable ! name of current executable
+a25 1
+  USE MLSL1Debug, ONLY: closeMLSL1DebugFiles
+d31 1
+a31 1
+       "$RCSfile: MLSL1G.f90,v $"
+d33 1
+a33 1
+       "$Id: MLSL1G.f90,v 2.5 2005/06/23 18:41:36 pwagner Exp $"
+a38 1
+  CHARACTER (len=255) :: ComVecsFile
+a39 3
+
+
+  MLSL1Executable='mlsl1g'
+d41 1
+a41 2
+       & "============= Start EOS MLS Level 1 GHz processing ================ ")
+  PRINT *,"============= Start EOS MLS Level 1 GHz processing ================ "
+a72 2
+  CALL closeMLSL1DebugFiles
+
+a75 4
+  !<whd:debugging>
+  close(12)
+  !</whd:debugging>
+
+a82 3
+! Revision 2.5  2005/06/23 18:41:36  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+@
+
+
+2.4
+log
+@Add call to FinalizeDACSdata
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d29 7
+a35 5
+  !------------------------------- RCS Ident Info ------------------------------
+  CHARACTER(LEN=130) :: id = &
+       "$Id: MLSL1G.f90,v 2.3 2004/11/10 15:35:40 perun Exp $"
+  CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile: MLSL1G.f90,v $"
+  !-----------------------------------------------------------------------------
+d83 3
+@
+
+
+2.3
+log
+@Add call to UpdateBaselines
+@
+text
+@d14 1
+d23 1
+a23 1
+       "$Id: MLSL1G.f90,v 2.2 2004/01/09 17:46:22 perun Exp $"
+d55 2
+d73 3
+@
+
+
+2.2
+log
+@Version 1.4 commit
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+d8 6
+a13 5
+  USE OpenInit, ONLY : OpenAndInitialize
+  USE SortQualify, ONLY : SortAndQualify
+  USE Calibration, ONLY : Calibrate
+  USE Radiances, ONLY : CalcLimbRads
+  USE L1BOutUtils, ONLY : OutputL1Bdata
+d15 1
+a15 1
+  USE Close_Files, ONLY : CloseFiles
+d22 1
+a22 1
+       "$Id: MLSL1G.f90,v 2.1 2003/01/31 18:13:34 perun Exp $"
+d54 2
+d70 3
+@
+
+
+2.1
+log
+@Version 1.1 commit
+@
+text
+@d13 1
+d21 2
+a22 2
+       "$Id: $"
+  CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile: $"
+d45 2
+d53 2
+d66 4
+a69 1
+! $Log: $
+@
+

@@ -1,0 +1,73 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.12
+	cfm-single-freq-0-1:1.1.0.10
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.8
+	mus-emls-1-70:1.1.0.6
+	rel-1-0-englocks-work:1.1.0.4
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2015.01.30.19.49.39;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@First commit
+@
+text
+@!divert(-1)
+; $Id: ozoneonlyflags.l2cf,v 1.17 2009/07/28 20:03:21 pwagner Exp $
+
+; ----------- Phase name vs. retrieval name
+; Some phase(s) may not have Retrieve sections
+; and so we'll need to know the last one
+!define(retrophase,{!phase})
+
+!ifdef(flagHiResO3inCPR3,{!define(O3StdProd,O3_HR)},{!define(O3StdProd,O3)})
+
+!divert!dnl
+; This l2cf fragment does all the quality flagging for the OzoneOnly phase
+; products.
+
+begin Fill
+  ;; ------------------------------------ O3-240 (Ozone only)
+  !define(flaggingBands,{7,24})
+  !define(flaggingRadiometers,{R3})!dnl
+  !makeQualityForOneProduct(product=!O3StdProd,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -20K)
+  !makeStatusForOneProduct(product=!O3StdProd,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -20K)
+
+  ;; ------------------------------------- CO-240 (Ozone only)
+  !define(flaggingBands,{9,25})
+  !define(flaggingRadiometers,{R3})!dnl
+  !makeQualityForOneProduct(product=CO,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -20K)
+  !makeStatusForOneProduct(product=CO,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -20K)
+
+end Fill
+
+; $Log: ozoneonlyflags.l2cf,v $
+@

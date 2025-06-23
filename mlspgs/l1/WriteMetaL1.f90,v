@@ -1,0 +1,1903 @@
+head	2.22;
+access;
+symbols
+	v5-02-NRT-19:2.22
+	v6-00:2.22
+	v5-02-NRT-18:2.22
+	v5-02:2.22
+	v5-01-NRT-17:2.22
+	v5-01-NRT-16:2.22
+	v5-01-NRT-15:2.22
+	v5-01-NRT-14:2.22
+	neuralnetworks-1-0:2.22.0.10
+	cfm-single-freq-0-1:2.22.0.8
+	v5-01:2.22
+	v5-00:2.22
+	v4-23-TA133:2.22.0.6
+	mus-emls-1-70:2.22.0.4
+	rel-1-0-englocks-work:2.22.0.2
+	VUMLS1-00:2.22
+	VPL1-00:2.22
+	V4-22-NRT-08:2.22
+	whdrel10_merged_to_here:2.22
+	merge_whdrel10_from_here:2.21.4.1
+	TAG_TRUNK_AFTER_PW_CHANGES:2.21
+	TAG_TRUNK_BEFORE_PW_CHANGES:2.21
+	VAM1-00:2.21
+	whd-rel-1-0:2.21.0.4
+	V4-21:2.21.0.2
+	V4-13:2.21
+	V4-12:2.21
+	V4-11:2.21
+	V4-10:2.21
+	V3-43:2.19
+	M4-00:2.19
+	V3-41:2.19
+	V3-40-PlusGM57:2.19.0.2
+	V2-24-NRT-04:2.19
+	V3-33:2.19
+	V2-24:2.19
+	V3-31:2.19
+	V3-30-NRT-05:2.19
+	cfm-01-00:2.19
+	V3-30:2.19
+	V3-20:2.19
+	V3-10:2.19
+	V2-23-NRT-02:2.19
+	V2-23:2.19
+	V2-22-NRT-01:2.19
+	V2-22:2.19
+	V2-21:2.18
+	V2-20:2.18
+	V2-11:2.18
+	V2-10:2.18
+	V2-00:2.18
+	V1-51:2.16
+	V1-50:2.15
+	V1-45:2.14
+	V1-44:2.14
+	V1-43:2.14
+	V1-42:2.13
+	V1-41:2.13
+	V1-32:2.12
+	V1-40:2.13
+	V1-31:2.12
+	V1-30:2.12
+	V1-13:2.8
+	V1-12:2.8
+	V1-11:2.8
+	V1-10:2.7
+	newfwm-feb03:2.7.0.2
+	V1-04:2.4
+	V1-03:2.4
+	V1-02:2.4
+	V1-00:2.4
+	newfwm-sep01:2.3.0.2
+	V0-7:2.3
+	V0-5-Level2:2.3
+	V0-5-SIPS:2.3;
+locks; strict;
+comment	@# @;
+
+
+2.22
+date	2016.03.15.22.17.59;	author whdaffer;	state Exp;
+branches;
+next	2.21;
+
+2.21
+date	2014.04.15.23.02.17;	author pwagner;	state Exp;
+branches
+	2.21.4.1;
+next	2.20;
+
+2.20
+date	2014.04.11.16.51.46;	author pwagner;	state Exp;
+branches;
+next	2.19;
+
+2.19
+date	2007.06.21.21.06.20;	author perun;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2006.04.05.18.09.52;	author perun;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2005.06.23.18.41.36;	author pwagner;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2005.01.27.00.35.06;	author pwagner;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2004.12.16.15.09.13;	author cvuu;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2004.01.30.00.30.42;	author pwagner;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2004.01.09.17.46.23;	author perun;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2003.08.12.16.57.25;	author cvuu;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2003.07.08.00.17.11;	author pwagner;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2003.06.03.20.44.42;	author pwagner;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2003.05.30.23.48.34;	author pwagner;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2003.03.15.00.15.10;	author pwagner;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2003.01.31.18.13.34;	author perun;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2002.11.19.21.46.38;	author perun;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2002.11.07.21.32.35;	author jdone;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2002.01.09.23.53.09;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2001.03.22.20.15.48;	author perun;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2001.03.06.21.03.48;	author perun;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.02.23.18.44.57;	author perun;	state Exp;
+branches;
+next	;
+
+2.21.4.1
+date	2015.10.09.10.21.38;	author whdaffer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.22
+log
+@Merged whd-rel-1-0 back onto main branch. Most changes
+are to comments, but there's some modification to Calibration.f90
+and MLSL1Common to support some new modules: MLSL1Debug and SnoopMLSL1.
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! -------------------------------------------------------
+MODULE WriteMetaL1 ! Populate metadata and write it out
+! -------------------------------------------------------
+
+  USE Hdf, ONLY: DFACC_RDWR
+  USE Intrinsic, ONLY: L_HDF
+  USE MLSCommon, ONLY: R8, L2METADATA_T, NameLen
+  USE MLSMessageModule, ONLY: MLSMSG_Error, MLSMSG_Info, MLSMSG_Warning, &
+    & MLSMessage
+  USE PCFHdr, ONLY: GlobalAttributes, WriteInputPointer, h5_writeglobalattr
+  USE SDPToolkit, only: PGSD_PC_FILE_PATH_MAX, PGSD_MET_GROUP_NAME_L, &
+    & PGSD_MET_NUM_OF_GROUPS, PGS_S_SUCCESS, PGSMET_W_METADATA_NOT_SET, &
+    & PGS_PC_GETREFERENCE
+  USE MLSPCF1
+  USE Orbit, ONLY: orbitNumber, numOrb
+
+  IMPLICIT NONE
+
+  PRIVATE
+
+  PUBLIC :: WriteMetadata
+  integer, parameter :: NUMDOIs    = 6
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: WriteMetaL1.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+CONTAINS
+
+  SUBROUTINE populate_metadata_l1 (HDF_FILE, MCF_FILE)
+
+    USE InitPCFs, ONLY: L1PCF
+    USE MLSFiles, ONLY: mls_sfstart, mls_sfend
+    USE MLSL1Common, ONLY: HDFversion
+
+    !Arguments
+
+    INTEGER :: HDF_FILE, MCF_FILE
+
+    !Local Variables
+ 
+    INTEGER :: returnStatus
+    INTEGER :: sdid
+
+    character(len=NameLen), dimension(NumDOIs) :: doiArray
+    REAL(r8) :: dval
+    INTEGER, PARAMETER :: INVENTORY=2, ARCHIVE=1
+    CHARACTER (LEN=PGSd_PC_FILE_PATH_MAX) :: physical_filename
+    CHARACTER (LEN=PGSd_PC_FILE_PATH_MAX) :: sval
+    CHARACTER (LEN=PGSd_PC_FILE_PATH_MAX) :: attrname, errmsg
+    INTEGER :: version, ival, indx, i
+    CHARACTER (LEN=*), PARAMETER :: METAWR_ERR = &
+         'Error writing metadata attribute '
+    type ( L2METADATA_T ) :: L2METADATA
+    integer, parameter :: OADOIIndx   = 1
+    integer, parameter :: radDDOIIndx = OADOIIndx + 1
+    integer, parameter :: radGDOIIndx = radDDOIIndx + 1
+    integer, parameter :: radTDOIIndx = radGDOIIndx + 1
+    integer, parameter :: engDOIIndx  = radTDOIIndx + 1
+
+    ! the group have to be defined as 49 characters long. The C interface is 50.
+    ! The cfortran.h mallocs an extra 1 byte for the null character '\0/1, 
+    ! therefore making the actual length of a 
+    ! string pass of 50.
+
+    CHARACTER (LEN = PGSd_MET_GROUP_NAME_L) :: groups(PGSd_MET_NUM_OF_GROUPS)
+
+    ! Externals
+
+    INTEGER, EXTERNAL :: pgs_met_init, pgs_met_setattr_d, &
+         pgs_met_setAttr_s, pgs_met_getsetattr_d, PGS_MET_SETATTR_I, &
+         pgs_met_write, pgs_met_remove
+
+    !Executable code
+    doiArray(1) = '10.5067/AURA/MLS/DATA1001'
+    doiArray(2) = '10.5067/AURA/MLS/DATA1002'
+    doiArray(3) = '10.5067/AURA/MLS/DATA1003'
+    doiArray(4) = '10.5067/AURA/MLS/DATA1004'
+    doiArray(5) = '10.5067/AURA/MLS/DATA1005'
+    doiArray(6) = '10.5067/AURA/MLS/DATA1006'
+    ! This hackery-quackery allows us to use the PCF to
+    ! input elements of a string array without using up
+    ! a bunch of PCFids
+    ! So we accept that the strings are file names
+    ! and use Pgs_pc_getReference with the version mechanism
+    do i=1, NumDOIs
+      version = i
+      returnStatus = Pgs_pc_getReference( mlspcf_l1_param_doinames, &
+        & version, sval )
+      if ( returnStatus /= PGS_S_SUCCESS ) exit
+      doiArray(NumDOIs-i+1) = sval
+    enddo
+
+    version = 1
+
+    returnStatus = PGS_PC_GetReference (HDF_FILE, version , physical_filename)
+
+    returnStatus = pgs_met_init (MCF_FILE, groups)
+
+    IF (returnStatus /= PGS_S_SUCCESS) THEN 
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            "Initialization error.  See LogStatus for details.") 
+    ELSE
+      CALL MLSMessage (MLSMSG_Info, ModuleName, &
+            "Beginning metadata write to " // trim(physical_filename)) 
+    ENDIF
+
+    ! Set PGE values 
+
+    ! ECSDataGranule
+
+    attrName = 'ReprocessingPlanned'
+
+    returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
+         'further update anticipated using enhanced PGE')
+    IF (returnStatus /= PGS_S_SUCCESS) THEN
+       errmsg = METAWR_ERR // attrName
+       CALL MLSMessage (MLSMSG_Error, ModuleName, TRIM(errmsg))
+    ENDIF
+
+    attrName = 'LocalGranuleID'
+    sval = physical_filename
+    indx = INDEX (sval, "/", .TRUE.) + 1  ! Begin after last "/"
+
+    returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, sval(indx:))
+    IF (returnStatus /= PGS_S_SUCCESS) THEN
+       errmsg = METAWR_ERR // attrName
+       CALL MLSMessage (MLSMSG_Error, ModuleName, TRIM(errmsg))
+    ENDIF
+
+    attrName = 'DayNightFlag'
+
+    returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, 'Both')
+    IF (returnStatus /= PGS_S_SUCCESS) THEN
+       errmsg = METAWR_ERR // attrName
+       CALL MLSMessage (MLSMSG_Error, ModuleName, TRIM(errmsg))
+    ENDIF
+
+    attrName = 'LocalVersionID'
+    READ (L1PCF%Cycle, '(I3)') ival
+    WRITE (sval, '("c", i2.2)') ival
+    returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, sval)
+    IF (returnStatus /= PGS_S_SUCCESS) THEN
+       errmsg = METAWR_ERR // attrName
+       CALL MLSMessage (MLSMSG_Error, ModuleName, TRIM(errmsg))
+    ENDIF
+
+    ! MeasuredParameterContainer
+
+    IF (hdf_file == mlspcf_l1b_radf_start) THEN
+       sval = "Filter bank radiances"
+       l2metaData%doiIdentifier = doiArray(radGDOIIndx)
+    ELSE IF (hdf_file == mlspcf_l1b_radd_start) THEN
+       sval = "DACS radiances"
+       l2metaData%doiIdentifier = doiArray(radDDOIIndx)
+    ELSE IF (hdf_file == mlspcf_l1b_radt_start) THEN
+       sval = "THz radiances"
+       l2metaData%doiIdentifier = doiArray(radTDOIIndx)
+    ELSE IF (hdf_file == mlspcf_l1b_oa_start) THEN
+       sval = "Orbit/attitude and tangent point"
+       l2metaData%doiIdentifier = doiArray(OADOIIndx)
+    ELSE IF (hdf_file == mlspcf_l1b_eng_start) THEN
+       sval = "MLS Instrument Engineering"
+       l2metaData%doiIdentifier = doiArray(engDOIIndx)
+    ENDIF
+    attrName = 'ParameterName' // '.1'
+    returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, sval)
+    IF (returnStatus /= PGS_S_SUCCESS) THEN
+       errmsg = METAWR_ERR // attrName
+       CALL MLSMessage(MLSMSG_Error, ModuleName, TRIM(errmsg))
+    ENDIF
+
+    ! QAStats Group
+    
+    attrName = 'QAPercentInterpolatedData' // '.1'
+    returnStatus = pgs_met_setAttr_i (groups(INVENTORY), attrName, 0)
+    IF (returnStatus /= PGS_S_SUCCESS) THEN
+       errmsg = METAWR_ERR // attrName
+       CALL MLSMessage (MLSMSG_Error, ModuleName, TRIM(errmsg))
+    ENDIF
+
+    attrName = 'QAPercentMissingData' // '.1'
+    returnStatus = pgs_met_setAttr_i (groups(INVENTORY), attrName, 0)
+    IF (returnStatus /= PGS_S_SUCCESS) THEN
+       errmsg = METAWR_ERR // attrName
+       CALL MLSMessage (MLSMSG_Error, ModuleName, TRIM(errmsg))
+    ENDIF
+
+    attrName = 'QAPercentOutofBoundsData' // '.1'
+    returnStatus = pgs_met_setAttr_i (groups(INVENTORY), attrName, 0)
+    IF (returnStatus /= PGS_S_SUCCESS) THEN
+       errmsg = METAWR_ERR // attrName
+       CALL MLSMessage (MLSMSG_Error, ModuleName, TRIM(errmsg))
+    ENDIF
+
+    ! Orbit Calculated Spatial Domain Container
+
+    ! This changes confirm to James Johnson suggestion on 6/12/03
+
+    !attrName = 'OrbitNumber' // '.1'
+    !returnStatus = pgs_met_setAttr_i (groups(INVENTORY), attrName, -1)
+    !IF (returnStatus /= PGS_S_SUCCESS) THEN
+    !   errmsg = METAWR_ERR // attrName
+    !   CALL MLSMessage (MLSMSG_Error, ModuleName, TRIM(errmsg))
+    !ENDIF
+
+    attrName = 'StartOrbitNumber' // '.1'
+    returnStatus = pgs_met_setAttr_i (groups(INVENTORY), attrName, &
+         orbitNumber(1))
+    IF (returnStatus /= PGS_S_SUCCESS) THEN
+       errmsg = METAWR_ERR // attrName
+       CALL MLSMessage (MLSMSG_Error, ModuleName, TRIM(errmsg))
+    ENDIF
+
+    attrName = 'StopOrbitNumber' // '.1'
+    returnStatus = pgs_met_setAttr_i (groups(INVENTORY), attrName, &
+         orbitNumber(numOrb))
+    IF (returnStatus /= PGS_S_SUCCESS) THEN
+       errmsg = METAWR_ERR // attrName
+       CALL MLSMessage (MLSMSG_Error, ModuleName, TRIM(errmsg))
+    ENDIF
+
+    attrName = 'EquatorCrossingLongitude' // '.1'
+    dval = 0.0
+    returnStatus = pgs_met_setAttr_d (groups(INVENTORY), attrName, dval)
+    IF (returnStatus /= PGS_S_SUCCESS) THEN
+       errmsg = METAWR_ERR // attrName
+       CALL MLSMessage (MLSMSG_Error, ModuleName, TRIM(errmsg))
+    ENDIF
+
+    attrName = 'EquatorCrossingTime' // '.1'
+    returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
+         '00:00:00')
+    IF (returnStatus /= PGS_S_SUCCESS) THEN
+       errmsg = METAWR_ERR // attrName
+       CALL MLSMessage (MLSMSG_Error, ModuleName, TRIM(errmsg))
+    ENDIF
+
+    indx = INDEX (L1PCF%startUTC, "T")
+    attrName = 'EquatorCrossingDate' // '.1'
+    returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
+         L1PCF%startUTC(1:indx-1))
+    IF (returnStatus /= PGS_S_SUCCESS) THEN
+       errmsg = METAWR_ERR // attrName
+       CALL MLSMessage (MLSMSG_Error, ModuleName, TRIM(errmsg))
+    ENDIF
+
+    ! InputPointer
+    
+    attrName = 'InputPointer'
+    ! returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
+    !     'See the PCF annotation to this file.')
+    returnStatus = WriteInputPointer(groups(INVENTORY), attrName, &
+      & fileType=l_hdf)
+    IF (returnStatus /= PGS_S_SUCCESS) THEN
+       errmsg = METAWR_ERR // attrName
+       CALL MLSMessage (MLSMSG_Error, ModuleName, TRIM(errmsg))
+    ENDIF
+
+    IF (MCF_FILE /= mlspcf_mcf_l1boa_start) THEN
+       ! Locality Value
+
+       attrName = 'LocalityValue'
+       returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
+            'Limb')
+       IF (returnStatus /= PGS_S_SUCCESS) THEN
+          errmsg = METAWR_ERR // attrName
+          CALL MLSMessage (MLSMSG_Error, ModuleName, TRIM(errmsg))
+       ENDIF
+
+       ! VerticalSpatialDomain Product-Specific Attribute
+       
+       attrName = 'VerticalSpatialDomainType' // '.1'
+       returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
+            'Atmosphere Layer')
+       IF (returnStatus /= PGS_S_SUCCESS) THEN
+          errmsg = METAWR_ERR // attrName
+          CALL MLSMessage (MLSMSG_Error, ModuleName, TRIM(errmsg))
+       ENDIF
+
+       !This changes confirm to James Johnson suggestion on 6/12/03
+       attrName = 'VerticalSpatialDomainValue' // '.1'
+       returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
+            'Brightness Temperature')
+       IF (returnStatus /= PGS_S_SUCCESS) THEN
+          errmsg = METAWR_ERR // attrName
+          CALL MLSMessage (MLSMSG_Error, ModuleName, TRIM(errmsg))
+       ENDIF
+
+       ! HorizontalSpatialDomainContainer
+
+       attrName = 'ZoneIdentifier'
+       returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
+            'Other Grid System')
+       IF (returnStatus /= PGS_S_SUCCESS) THEN
+          errmsg = METAWR_ERR // attrName
+          CALL MLSMessage (MLSMSG_Error, ModuleName, TRIM(errmsg))
+       ENDIF
+
+       attrName = 'WestBoundingCoordinate'
+       dval = -180.0
+       returnStatus = pgs_met_setAttr_d (groups(INVENTORY), attrName, dval)
+       IF (returnStatus /= PGS_S_SUCCESS) THEN
+          errmsg = METAWR_ERR // attrName
+          CALL MLSMessage (MLSMSG_Error, ModuleName, TRIM(errmsg))
+       ENDIF
+
+       attrName = 'NorthBoundingCoordinate'
+       dval = 90.0
+
+       returnStatus = pgs_met_setAttr_d (groups(INVENTORY), attrName, dval)
+       IF (returnStatus /= PGS_S_SUCCESS) THEN
+          errmsg = METAWR_ERR // attrName
+          CALL MLSMessage (MLSMSG_Error, ModuleName, TRIM(errmsg))
+       ENDIF
+
+       attrName = 'EastBoundingCoordinate'
+       dval = 180.0
+
+       returnStatus = pgs_met_setAttr_d (groups(INVENTORY), attrName, dval)
+       IF (returnStatus /= PGS_S_SUCCESS) THEN
+          errmsg = METAWR_ERR // attrName
+          CALL MLSMessage (MLSMSG_Error, ModuleName, TRIM(errmsg))
+       ENDIF
+
+       attrName = 'SouthBoundingCoordinate'
+       dval = -90.0
+       returnStatus = pgs_met_setAttr_d (groups(INVENTORY), attrName, dval)
+       IF (returnStatus /= PGS_S_SUCCESS) THEN
+          errmsg = METAWR_ERR // attrName
+          CALL MLSMessage (MLSMSG_Error, ModuleName, TRIM(errmsg))
+       ENDIF
+    ENDIF
+
+    indx = INDEX (L1PCF%startUTC, "T")
+
+    ! RangeDateTime Group
+
+    attrName = 'RangeBeginningDate'
+
+    returnStatus = pgs_met_setAttr_s (groups(INVENTORY), &
+         attrName, L1PCF%startUTC(1:indx-1))
+    IF (returnStatus /= PGS_S_SUCCESS) THEN 
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            "Error setting RangeBeginningDate")
+    ENDIF
+
+    returnStatus = pgs_met_setAttr_s (groups(INVENTORY), &
+         "RangeBeginningTime", L1PCF%startUTC(indx+1:))
+
+    IF (returnStatus /= PGS_S_SUCCESS) THEN 
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            "Error setting RangeBeginningTime")
+    ENDIF
+
+    returnStatus = pgs_met_setAttr_s (groups(INVENTORY), "RangeEndingDate", &
+         L1PCF%endUTC(1:indx-1))
+
+    IF (returnStatus /= PGS_S_SUCCESS) THEN 
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            "Error setting RangeEndingDate")
+    ENDIF
+
+    returnStatus = pgs_met_setAttr_s (groups(INVENTORY), "RangeEndingTime", &
+         L1PCF%endUTC(indx+1:))
+
+    IF (returnStatus /= PGS_S_SUCCESS) THEN 
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            "Error setting RangeEndingTime")
+    ENDIF
+
+    ! PGEVersion
+    
+    attrName = 'PGEVersion'
+    sval = L1PCF%OutputVersion
+    returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, sval)
+
+    IF (returnStatus /= PGS_S_SUCCESS) THEN
+       errmsg = METAWR_ERR // attrName
+       CALL MLSMessage (MLSMSG_Error, ModuleName, TRIM(errmsg))
+    ENDIF
+
+    ! Production Location
+
+    attrName = 'ProductionLocation'
+    sval = 'MLS_SIPS' ! GlobalAttributes%productionLoc
+    GlobalAttributes%productionLoc = sval
+    returnStatus = pgs_met_setAttr_s ( groups(INVENTORY), attrName, sval )
+    if ( returnStatus /= PGS_S_SUCCESS ) then
+       errmsg = METAWR_ERR // attrName
+       CALL MLSMessage(MLSMSG_Warning, ModuleName, TRIM(errmsg))
+    end if
+
+    attrName = 'DataProducer'
+    sval = 'MLS_SIPS'
+    returnStatus = pgs_met_setAttr_s ( groups(INVENTORY), attrName, sval )
+    if ( returnStatus /= PGS_S_SUCCESS ) then
+       errmsg = METAWR_ERR // attrName
+       CALL MLSMessage(MLSMSG_Warning, ModuleName, TRIM(errmsg))
+    end if
+
+    ! DOI
+    ! This should be in the MCF
+    attrName = 'identifier_product_DOI'
+    sval = l2metaData%doiIdentifier
+    GlobalAttributes%DOI = sval
+    returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, sval)
+    if ( returnStatus /= PGS_S_SUCCESS ) then
+       errmsg = METAWR_ERR // attrName
+       CALL MLSMessage(MLSMSG_Warning, ModuleName, TRIM(errmsg))
+    end if
+
+    sdid = mls_sfstart (physical_fileName, DFACC_RDWR, hdfVersion, .TRUE.)
+
+    returnStatus = pgs_met_write (groups(INVENTORY), "coremetadata.0", sdid)
+
+    IF (returnStatus /= PGS_S_SUCCESS .AND. &
+         returnStatus /= PGSMET_W_METADATA_NOT_SET) THEN 
+       IF (returnStatus == PGSMET_W_METADATA_NOT_SET) THEN 
+          CALL MLSMessage (MLSMSG_WARNING, ModuleName, &
+               "Some of the mandatory parameters were not set" )
+       ELSE 
+          CALL Pgs_smf_getMsg (returnStatus, attrname, errmsg)
+          CALL MLSMessage (MLSMSG_WARNING, ModuleName, &
+               "Metadata write failed "//attrname//TRIM(errmsg)//" for file "& 
+               //physical_fileName ) 
+       ENDIF
+    ENDIF
+
+    returnStatus = mls_sfend (sdid, hdfVersion, .TRUE.)
+    IF (returnStatus /= 0) THEN 
+       CALL MLSMessage (MLSMSG_ERROR, ModuleName, &
+            "Calling mls_sfend failed for file "//physical_fileName ) 
+    ENDIF          
+
+    returnStatus = pgs_met_remove()
+    if ( returnStatus /= PGS_S_SUCCESS ) sdid = sdid + 1 ! For no reason
+
+    ! Write global attributes
+
+    sdid = mls_sfstart (physical_fileName, DFACC_RDWR, hdfVersion, .FALSE.)
+    call h5_writeglobalattr( sdid, skip_if_already_there=.false., doi=.true. )
+    returnStatus = mls_sfend (sdid, hdfVersion, .FALSE.)
+    IF (returnStatus /= 0) THEN 
+       CALL MLSMessage (MLSMSG_ERROR, ModuleName, &
+            "Calling mls_sfend failed for file "//physical_fileName ) 
+    ENDIF          
+
+  END SUBROUTINE populate_metadata_l1
+
+  SUBROUTINE WriteMetaData (IsTHz)
+
+    USE MLSL1Config, ONLY: L1Config
+
+    LOGICAL, OPTIONAL :: IsTHz
+
+    IF (PRESENT (IsTHz)) THEN
+
+       CALL populate_metadata_l1 (mlspcf_l1b_radt_start, &
+            mlspcf_mcf_l1bradt_start)
+
+       RETURN
+
+    ENDIF
+
+    CALL populate_metadata_l1 (mlspcf_l1b_radf_start, mlspcf_mcf_l1bradf_start)
+
+    IF (L1Config%Calib%CalibDACS) &
+         CALL populate_metadata_l1 (mlspcf_l1b_radd_start, &
+         mlspcf_mcf_l1bradd_start)
+
+    CALL populate_metadata_l1 (mlspcf_l1b_oa_start, mlspcf_mcf_l1boa_start)
+
+  END SUBROUTINE WriteMetadata
+
+  logical function not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id: WriteMetaL1.f90,v 2.21.4.1 2015/10/09 10:21:38 whdaffer Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+END MODULE WriteMetaL1 
+
+! $Log: WriteMetaL1.f90,v $
+! Revision 2.21.4.1  2015/10/09 10:21:38  whdaffer
+! checkin of continuing work on branch whd-rel-1-0
+!
+! Revision 2.21  2014/04/15 23:02:17  pwagner
+! Corrected DOIs based on ESDIS info
+!
+! Revision 2.20  2014/04/11 16:51:46  pwagner
+! Added ProductionLocation, DataProducer, DOI metadata
+!
+! Revision 2.19  2007/06/21 21:06:20  perun
+! Only output to RADD file if DACS calibration is enabled
+!
+! Revision 2.18  2006/04/05 18:09:52  perun
+! Remove unused variables
+!
+! Revision 2.17  2005/06/23 18:41:36  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.16  2005/01/27 00:35:06  pwagner
+! ReprocessingActual field dropped from product metadata
+!
+! Revision 2.15  2004/12/16 15:09:13  cvuu
+! v1.5: Change value of ReprocessingActual to unknown, remove QAFlags Group and use the ones in MCF v1.5
+!
+! Revision 2.14  2004/01/30 00:30:42  pwagner
+! Stops useless warnings about pgs_met_remove return value
+!
+! Revision 2.13  2004/01/09 17:46:23  perun
+! Version 1.4 commit
+!
+! Revision 2.12  2003/08/12 16:57:25  cvuu
+! brought closer to James Johnson want to
+!
+! Revision 2.11  2003/07/08 00:17:11  pwagner
+! fileType now a lit_name instead of a char string
+!
+! Revision 2.10  2003/06/03 20:44:42  pwagner
+! Writes global attributes
+!
+! Revision 2.9  2003/05/30 23:48:34  pwagner
+! Uses WriteInputPointer from lib/PCFHdr
+!
+! Revision 2.8  2003/03/15 00:15:10  pwagner
+! Wont quit if pgs_met_remove returns non-zero value
+!
+! Revision 2.7  2003/01/31 18:13:34  perun
+! Version 1.1 commit
+!
+! Revision 2.6  2002/11/19 21:46:38  perun
+! Use HDFversion instead of HDFVersionString
+!
+! Revision 2.5  2002/11/07 21:32:35  jdone
+! Added HDF4/HDF5 capabilities.
+!
+! Revision 2.4  2002/01/09 23:53:09  pwagner
+! Now gets r8 explicitly from MLSCommon
+!
+! Revision 2.3  2001/03/22 20:15:48  perun
+! Corrected valids
+!
+! Revision 2.2  2001/03/06 21:03:48  perun
+! Fixed typo in 'ReprocessingPlanned' attribute
+!
+! Revision 2.1  2001/02/23 18:44:57  perun
+! Fixed sval length
+!
+@
+
+
+2.21
+log
+@Corrected DOIs based on ESDIS info
+@
+text
+@d63 1
+a63 1
+    CHARACTER (LEN=132) :: attrname, errmsg
+d131 1
+a131 1
+       CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
+d141 1
+a141 1
+       CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
+d149 1
+a149 1
+       CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
+d158 1
+a158 1
+       CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
+d183 1
+a183 1
+       CALL MLSMessage(MLSMSG_Error, ModuleName, errmsg)
+d192 1
+a192 1
+       CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
+d199 1
+a199 1
+       CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
+d206 1
+a206 1
+       CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
+d217 1
+a217 1
+    !   CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
+d225 1
+a225 1
+       CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
+d233 1
+a233 1
+       CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
+d241 1
+a241 1
+       CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
+d249 1
+a249 1
+       CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
+d258 1
+a258 1
+       CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
+d270 1
+a270 1
+       CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
+d281 1
+a281 1
+          CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
+d291 1
+a291 1
+          CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
+d300 1
+a300 1
+          CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
+d310 1
+a310 1
+          CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
+d318 1
+a318 1
+          CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
+d327 1
+a327 1
+          CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
+d336 1
+a336 1
+          CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
+d344 1
+a344 1
+          CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
+d393 1
+a393 1
+       CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
+d404 1
+a404 1
+       CALL MLSMessage(MLSMSG_Warning, ModuleName, errmsg)
+d412 1
+a412 1
+       CALL MLSMessage(MLSMSG_Warning, ModuleName, errmsg)
+d423 1
+a423 1
+       CALL MLSMessage(MLSMSG_Warning, ModuleName, errmsg)
+d438 1
+a438 1
+               "Metadata write failed "//attrname//errmsg//" for file "& 
+d492 1
+a492 1
+       "$Id: WriteMetaL1.f90,v 2.20 2014/04/11 16:51:46 pwagner Exp $"
+d500 6
+@
+
+
+2.21.4.1
+log
+@checkin of continuing work on branch whd-rel-1-0
+@
+text
+@d63 1
+a63 1
+    CHARACTER (LEN=PGSd_PC_FILE_PATH_MAX) :: attrname, errmsg
+d131 1
+a131 1
+       CALL MLSMessage (MLSMSG_Error, ModuleName, TRIM(errmsg))
+d141 1
+a141 1
+       CALL MLSMessage (MLSMSG_Error, ModuleName, TRIM(errmsg))
+d149 1
+a149 1
+       CALL MLSMessage (MLSMSG_Error, ModuleName, TRIM(errmsg))
+d158 1
+a158 1
+       CALL MLSMessage (MLSMSG_Error, ModuleName, TRIM(errmsg))
+d183 1
+a183 1
+       CALL MLSMessage(MLSMSG_Error, ModuleName, TRIM(errmsg))
+d192 1
+a192 1
+       CALL MLSMessage (MLSMSG_Error, ModuleName, TRIM(errmsg))
+d199 1
+a199 1
+       CALL MLSMessage (MLSMSG_Error, ModuleName, TRIM(errmsg))
+d206 1
+a206 1
+       CALL MLSMessage (MLSMSG_Error, ModuleName, TRIM(errmsg))
+d217 1
+a217 1
+    !   CALL MLSMessage (MLSMSG_Error, ModuleName, TRIM(errmsg))
+d225 1
+a225 1
+       CALL MLSMessage (MLSMSG_Error, ModuleName, TRIM(errmsg))
+d233 1
+a233 1
+       CALL MLSMessage (MLSMSG_Error, ModuleName, TRIM(errmsg))
+d241 1
+a241 1
+       CALL MLSMessage (MLSMSG_Error, ModuleName, TRIM(errmsg))
+d249 1
+a249 1
+       CALL MLSMessage (MLSMSG_Error, ModuleName, TRIM(errmsg))
+d258 1
+a258 1
+       CALL MLSMessage (MLSMSG_Error, ModuleName, TRIM(errmsg))
+d270 1
+a270 1
+       CALL MLSMessage (MLSMSG_Error, ModuleName, TRIM(errmsg))
+d281 1
+a281 1
+          CALL MLSMessage (MLSMSG_Error, ModuleName, TRIM(errmsg))
+d291 1
+a291 1
+          CALL MLSMessage (MLSMSG_Error, ModuleName, TRIM(errmsg))
+d300 1
+a300 1
+          CALL MLSMessage (MLSMSG_Error, ModuleName, TRIM(errmsg))
+d310 1
+a310 1
+          CALL MLSMessage (MLSMSG_Error, ModuleName, TRIM(errmsg))
+d318 1
+a318 1
+          CALL MLSMessage (MLSMSG_Error, ModuleName, TRIM(errmsg))
+d327 1
+a327 1
+          CALL MLSMessage (MLSMSG_Error, ModuleName, TRIM(errmsg))
+d336 1
+a336 1
+          CALL MLSMessage (MLSMSG_Error, ModuleName, TRIM(errmsg))
+d344 1
+a344 1
+          CALL MLSMessage (MLSMSG_Error, ModuleName, TRIM(errmsg))
+d393 1
+a393 1
+       CALL MLSMessage (MLSMSG_Error, ModuleName, TRIM(errmsg))
+d404 1
+a404 1
+       CALL MLSMessage(MLSMSG_Warning, ModuleName, TRIM(errmsg))
+d412 1
+a412 1
+       CALL MLSMessage(MLSMSG_Warning, ModuleName, TRIM(errmsg))
+d423 1
+a423 1
+       CALL MLSMessage(MLSMSG_Warning, ModuleName, TRIM(errmsg))
+d438 1
+a438 1
+               "Metadata write failed "//attrname//TRIM(errmsg)//" for file "& 
+d492 1
+a492 1
+       "$Id: WriteMetaL1.f90,v 2.21 2014/04/15 23:02:17 pwagner Exp $"
+a499 3
+! Revision 2.21  2014/04/15 23:02:17  pwagner
+! Corrected DOIs based on ESDIS info
+!
+@
+
+
+2.20
+log
+@Added ProductionLocation, DataProducer, DOI metadata
+@
+text
+@d68 5
+d88 6
+a93 6
+    doiArray(1) = '10.5067/AURA/MLS/BOGUSDATA101'
+    doiArray(2) = '10.5067/AURA/MLS/BOGUSDATA102'
+    doiArray(3) = '10.5067/AURA/MLS/BOGUSDATA103'
+    doiArray(4) = '10.5067/AURA/MLS/BOGUSDATA104'
+    doiArray(5) = '10.5067/AURA/MLS/BOGUSDATA105'
+    doiArray(6) = '10.5067/AURA/MLS/BOGUSDATA106'
+d165 1
+a165 1
+       l2metaData%doiIdentifier = doiArray(2)
+d168 1
+a168 1
+       l2metaData%doiIdentifier = doiArray(1)
+d171 1
+a171 1
+       l2metaData%doiIdentifier = doiArray(3)
+d174 1
+a174 1
+       l2metaData%doiIdentifier = doiArray(4)
+d177 1
+a177 1
+       l2metaData%doiIdentifier = doiArray(6)
+d492 1
+a492 1
+       "$Id: WriteMetaL1.f90,v 2.19 2007/06/21 21:06:20 perun Exp $"
+d500 3
+@
+
+
+2.19
+log
+@Only output to RADD file if DACS calibration is enabled
+@
+text
+@d18 4
+a21 3
+  USE MLSCommon, ONLY: R8
+  USE MLSMessageModule, ONLY: MLSMSG_Error, MLSMSG_Warning, MLSMessage
+  USE PCFHdr, ONLY: WriteInputPointer, h5_writeglobalattr
+d33 1
+d58 2
+a59 1
+    REAL(r8) dval
+d64 1
+a64 1
+    INTEGER :: version, ival, indx
+d67 1
+d83 18
+d111 3
+d160 1
+d163 1
+d166 1
+d169 1
+d172 1
+d391 30
+d445 1
+a445 8
+    ! Don't check for this--it's left unset by toolkit
+    ! IF (returnStatus /= PGS_S_SUCCESS .and. WARNIFCANTPGSMETREMOVE) THEN 
+      ! CALL MLSMessage (MLSMSG_ERROR, ModuleName, &
+      !      "Calling pgs_met_remove() failed." )
+    !  write(errmsg, *) returnStatus
+    !  CALL MLSMessage (MLSMSG_Warning, ModuleName, &
+    !        "Calling pgs_met_remove() failed with value " // trim(errmsg) )
+    !ENDIF          
+d450 1
+a450 1
+    call h5_writeglobalattr(sdid, skip_if_already_there=.false.)
+d452 4
+d487 1
+a487 1
+       "$Id: WriteMetaL1.f90,v 2.18 2006/04/05 18:09:52 perun Exp $"
+d495 3
+@
+
+
+2.18
+log
+@Remove unused variables
+@
+text
+@d404 2
+d419 3
+a421 1
+    CALL populate_metadata_l1 (mlspcf_l1b_radd_start, mlspcf_mcf_l1bradd_start)
+d430 1
+a430 1
+       "$Id: WriteMetaL1.f90,v 2.17 2005/06/23 18:41:36 pwagner Exp $"
+d438 3
+@
+
+
+2.17
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d23 1
+a23 2
+    & PGS_PC_GETREFERENCE, &
+    & WARNIFCANTPGSMETREMOVE
+d35 1
+a35 1
+       "$RCSfile: $"
+a44 1
+    USE MLSL1Config, ONLY: L1Config
+d61 1
+a61 1
+    INTEGER :: version, ival, indx, error
+d426 1
+a426 1
+       "$Id: $"
+d434 3
+@
+
+
+2.16
+log
+@ReprocessingActual field dropped from product metadata
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d34 5
+a38 5
+  !------------------------------- RCS Ident Info ------------------------------
+  CHARACTER(LEN=130) :: id = &
+       "$Id: WriteMetaL1.f90,v 2.15 2004/12/16 15:09:13 cvuu Exp $"
+  CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile: WriteMetaL1.f90,v $"
+  !-----------------------------------------------------------------------------
+d425 8
+d436 3
+@
+
+
+2.15
+log
+@v1.5: Change value of ReprocessingActual to unknown, remove QAFlags Group and use the ones in MCF v1.5
+@
+text
+@d28 1
+a28 1
+       "$Id: WriteMetaL1.f90,v 2.14 2004/01/30 00:30:42 pwagner Exp $"
+a97 8
+    attrName = 'ReprocessingActual'
+    returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
+         'unknown')
+    IF (returnStatus /= PGS_S_SUCCESS) THEN
+       errmsg = METAWR_ERR // attrName
+       CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
+    ENDIF
+
+d420 3
+@
+
+
+2.14
+log
+@Stops useless warnings about pgs_met_remove return value
+@
+text
+@d28 1
+a28 1
+       "$Id: WriteMetaL1.f90,v 2.13 2004/01/09 17:46:23 perun Exp $"
+d100 1
+a100 1
+         'processed once')
+a152 34
+    ! QAFlags Group
+
+    attrName = 'AutomaticQualityFlag' // '.1'
+    returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
+         'Passed')
+    IF (returnStatus /= PGS_S_SUCCESS) THEN
+       errmsg = METAWR_ERR // attrName
+       CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
+    ENDIF
+
+    attrName = 'AutomaticQualityFlagExplanation' // '.1'
+    returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
+         'pending algorithm update')
+    IF (returnStatus /= PGS_S_SUCCESS) THEN
+       errmsg = METAWR_ERR // attrName
+       CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
+    ENDIF
+
+    attrName = 'OperationalQualityFlag' // '.1'
+    returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
+         'Not Investigated')
+    IF (returnStatus /= PGS_S_SUCCESS) THEN
+       errmsg = METAWR_ERR // attrName
+       CALL MLSMessage(MLSMSG_Error, ModuleName, errmsg)
+    ENDIF
+
+    attrName = 'OperationalQualityFlagExplanation' // '.1'
+    returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
+         'Not Investigated')
+    IF (returnStatus /= PGS_S_SUCCESS) THEN
+       errmsg = METAWR_ERR // attrName
+       CALL MLSMessage(MLSMSG_Error, ModuleName, errmsg)
+    ENDIF
+
+d428 3
+@
+
+
+2.13
+log
+@Version 1.4 commit
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+d28 1
+a28 1
+       "$Id: WriteMetaL1.f90,v 2.12 2003/08/12 16:57:25 cvuu Exp $"
+d420 3
+a422 2
+    returnStatus = pgs_met_remove() 
+    IF (returnStatus /= PGS_S_SUCCESS .and. WARNIFCANTPGSMETREMOVE) THEN 
+d425 4
+a428 4
+      write(errmsg, *) returnStatus
+      CALL MLSMessage (MLSMSG_Warning, ModuleName, &
+            "Calling pgs_met_remove() failed with value " // trim(errmsg) )
+    ENDIF          
+d462 3
+@
+
+
+2.12
+log
+@brought closer to James Johnson want to
+@
+text
+@d28 1
+a28 1
+       "$Id: WriteMetaL1.f90,v 2.11 2003/07/08 00:17:11 pwagner Exp $"
+d37 1
+a37 1
+    USE MLSFiles, ONLY: mls_sfstart, mls_sfend, HDFVERSION_5
+d39 1
+d55 1
+a55 1
+    INTEGER :: hdfVersion, version, ival, indx, error
+a73 2
+    hdfVersion = L1Config%Output%HDFversion
+
+d430 4
+a433 5
+    if ( hdfVersion == HDFVERSION_5 ) then
+      sdid = mls_sfstart (physical_fileName, DFACC_RDWR, hdfVersion, .FALSE.)
+      call h5_writeglobalattr(sdid, skip_if_already_there=.false.)
+      returnStatus = mls_sfend (sdid, hdfVersion, .FALSE.)
+    endif
+d461 3
+@
+
+
+2.11
+log
+@fileType now a lit_name instead of a char string
+@
+text
+@d28 1
+a28 1
+       "$Id: WriteMetaL1.f90,v 2.10 2003/06/03 20:44:42 pwagner Exp $"
+d127 1
+a127 1
+    WRITE (sval, '("C", i2.2)') ival
+d213 8
+a220 6
+    attrName = 'OrbitNumber' // '.1'
+    returnStatus = pgs_met_setAttr_i (groups(INVENTORY), attrName, -1)
+    IF (returnStatus /= PGS_S_SUCCESS) THEN
+       errmsg = METAWR_ERR // attrName
+       CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
+    ENDIF
+d296 1
+d463 3
+@
+
+
+2.10
+log
+@Writes global attributes
+@
+text
+@d9 1
+d28 1
+a28 1
+       "$Id: WriteMetaL1.f90,v 2.9 2003/05/30 23:48:34 pwagner Exp $"
+d267 1
+a267 1
+      & fileType='hdf')
+d460 3
+@
+
+
+2.9
+log
+@Uses WriteInputPointer from lib/PCFHdr
+@
+text
+@d11 1
+a11 1
+  USE PCFHdr, ONLY: WriteInputPointer
+d27 1
+a27 1
+       "$Id: WriteMetaL1.f90,v 2.8 2003/03/15 00:15:10 pwagner Exp $"
+d36 1
+a36 1
+    USE MLSFiles, ONLY: mls_sfstart, mls_sfend
+d426 7
+d459 3
+@
+
+
+2.8
+log
+@Wont quit if pgs_met_remove returns non-zero value
+@
+text
+@d11 1
+d27 1
+a27 1
+       "$Id: WriteMetaL1.f90,v 2.7 2003/01/31 18:13:34 perun Exp $"
+d263 4
+a266 2
+    returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
+         'See the PCF annotation to this file.')
+d452 3
+@
+
+
+2.7
+log
+@Version 1.1 commit
+@
+text
+@d11 4
+a14 1
+  USE SDPToolkit
+d26 1
+a26 1
+       "$Id: WriteMetaL1.f90,v 2.6 2002/11/19 21:46:38 perun Exp $"
+d415 6
+a420 3
+    IF (returnStatus /= PGS_S_SUCCESS) THEN 
+       CALL MLSMessage (MLSMSG_ERROR, ModuleName, &
+            "Calling pgs_met_remove() failed." )
+d449 3
+@
+
+
+2.6
+log
+@Use HDFversion instead of HDFVersionString
+@
+text
+@d17 3
+a19 1
+  PUBLIC
+a20 1
+  PRIVATE :: Id, ModuleName
+d23 1
+a23 1
+       "$Id: WriteMetaL1.f90,v 2.5 2002/11/07 21:32:35 jdone Exp $"
+d135 2
+d388 2
+a389 1
+    sdid = mls_sfstart (physical_fileName, DFACC_RDWR, hdfVersion)
+d405 1
+a405 1
+    returnStatus = mls_sfend (sdid, hdfVersion)
+d419 12
+a430 1
+  SUBROUTINE WriteMetaData
+d443 3
+@
+
+
+2.5
+log
+@Added HDF4/HDF5 capabilities.
+@
+text
+@a13 1
+  USE MLSFiles, only: HDFVERSION_5, HDFVERSION_4 
+d22 1
+a22 1
+       "$Id: WriteMetaL1.f90,v 2.4 2002/01/09 23:53:09 pwagner Exp $"
+a25 1
+
+d31 1
+a31 2
+    USE MLSFiles, only: mls_sfstart, mls_sfend
+    USE MLSStrings, ONLY: lowercase
+d67 1
+a67 8
+    select case (lowercase(trim(L1Config%Output%HDFVersionString))) 
+       case ('hdf4')
+          hdfVersion = HDFVERSION_4
+       case ('hdf5')
+          hdfVersion = HDFVERSION_5
+       case default
+          hdfVersion = HDFVERSION_4
+    end select 
+d401 1
+a401 1
+    returnStatus = mls_sfend(sdid,hdfVersion)
+d403 2
+a404 2
+          CALL MLSMessage (MLSMSG_ERROR, ModuleName, &
+               "Calling mls_sfend failed for file "//physical_fileName ) 
+d407 1
+a407 1
+   returnStatus = pgs_met_remove() 
+d409 2
+a410 2
+          CALL MLSMessage (MLSMSG_ERROR, ModuleName, &
+               "Calling pgs_met_remove() failed." )
+d428 3
+@
+
+
+2.4
+log
+@Now gets r8 explicitly from MLSCommon
+@
+text
+@d8 1
+a8 1
+  USE Hdf, ONLY: DFACC_RDWR, sfstart, sfend
+d14 1
+d23 1
+a23 1
+       "$Id: WriteMetaL1.f90,v 2.3 2001/03/22 20:15:48 perun Exp $"
+d33 3
+a42 1
+    INTEGER :: hdfReturn
+d51 1
+a51 1
+    INTEGER :: version, ival, indx
+d70 9
+d80 1
+d95 1
+d114 1
+d122 1
+d322 1
+d331 1
+d352 1
+d362 1
+d370 1
+d378 1
+d389 1
+d395 1
+a395 7
+    sdid = sfstart (physical_fileName, DFACC_RDWR) 
+
+    IF (sdid == -1) THEN
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            "Failed to open the hdf file "//physical_fileName ) 
+    ENDIF
+
+d406 2
+a407 1
+               "Metadata write failed "//attrname//errmsg) 
+d411 5
+a415 1
+    hdfReturn = sfend(sdid)
+d417 5
+a421 1
+    returnStatus = pgs_met_remove() 
+d438 3
+@
+
+
+2.3
+log
+@Corrected valids
+@
+text
+@d1 3
+d8 2
+a12 1
+  USE Hdf, ONLY: DFACC_RDWR, sfstart, sfend
+d22 1
+a22 1
+       "$Id: WriteMetaL1.f90,v 2.2 2001/03/06 21:03:48 perun Exp $"
+d412 3
+@
+
+
+2.2
+log
+@Fixed typo in 'ReprocessingPlanned' attribute
+@
+text
+@a0 1
+
+d4 17
+a20 19
+USE MLSCommon
+USE MLSStrings 
+USE MLSMessageModule
+USE SDPToolkit
+USE MLSPCF1
+USE MLSCF 
+USE Hdf 
+USE HDFEOS 
+
+IMPLICIT NONE
+
+PUBLIC
+
+PRIVATE :: Id, ModuleName
+!------------------------------- RCS Ident Info ------------------------------
+CHARACTER(LEN=130) :: id = &
+     "$Id: WriteMetaL1.f90,v 2.1 2001/02/23 18:44:57 perun Exp $"
+CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile: WriteMetaL1.f90,v $"
+!-----------------------------------------------------------------------------
+d25 371
+a395 2
+SUBROUTINE populate_metadata_l1(HDF_FILE, MCF_FILE)
+USE InitPCFs, ONLY: L1PCF
+d397 1
+a397 1
+!Arguments
+d399 1
+a399 1
+INTEGER :: HDF_FILE, MCF_FILE
+d401 1
+a401 356
+!Local Variables 
+INTEGER :: pgs_met_init
+INTEGER :: pgs_met_setattr_d
+INTEGER :: pgs_met_setAttr_s
+INTEGER :: pgs_met_getsetattr_d
+INTEGER :: PGS_MET_SETATTR_I
+INTEGER :: pgs_met_write
+INTEGER :: pgs_met_remove
+INTEGER :: hdfReturn
+INTEGER :: returnStatus
+INTEGER :: sdid
+INTEGER :: sfstart
+INTEGER :: sfend
+
+REAL(r8) dval
+INTEGER, PARAMETER :: INVENTORY=2,ARCHIVE=1
+CHARACTER (LEN=PGSd_PC_FILE_PATH_MAX) :: physical_filename
+CHARACTER (LEN=PGSd_PC_FILE_PATH_MAX) :: sval
+CHARACTER (LEN=132) :: attrname, errmsg
+INTEGER :: version
+CHARACTER (LEN=*), PARAMETER :: METAWR_ERR = 'Error writing metadata attribute '
+
+! the group have to be defined as 49 characters long. The C interface is 50.
+! The cfortran.h mallocs an extra 1 byte for the null character '\0/1, 
+! therefore making the actual length of a 
+! string pass of 50.
+
+CHARACTER (LEN = PGSd_MET_GROUP_NAME_L) :: groups(PGSd_MET_NUM_OF_GROUPS)
+
+!Executable code
+
+version = 1
+returnStatus = PGS_PC_GetReference(HDF_FILE, version , physical_filename)
+
+returnStatus = pgs_met_init(MCF_FILE, groups)
+if (returnStatus == PGSMET_E_LOAD_ERR)print *, 'PGSMET_E_LOAD_ERR'
+if (returnStatus == PGSMET_E_GRP_ERR)print *, 'PGSMET_E_GRP_ERR'
+if (returnStatus == PGSMET_E_GRP_NAME_ERR)print *, 'PGSMET_E_GRP_NAME_ERR'
+if (returnStatus == PGSMET_E_NO_INVENT_DATA)print *,'PGSMET_E_NO_INVENT_DATA'
+if (returnStatus == PGSMET_E_DUPLICATE_ERR)print *,'PGSMET_E_DUPLICATE_ERR'
+if (returnStatus == PGSMET_E_NUMOFMCF_ERR)print *, 'PGSMET_E_NUMOFMCF_ERR'
+if (returnStatus == PGSMET_E_PCF_VALUE_ERR)print *,'PGSMET_E_PCF_VALUE_ERR'
+
+IF (returnStatus /= PGS_S_SUCCESS) THEN 
+     CALL MLSMessage (MLSMSG_Error, ModuleName, "Initialization error.") 
+ENDIF
+
+! Set PGE values 
+
+! ECSDataGranule
+
+attrName = 'ReprocessingPlanned'
+returnStatus = pgs_met_setAttr_s(groups(INVENTORY), attrName, &
+               'not known at this time')
+IF (returnStatus /= PGS_S_SUCCESS) THEN
+   errmsg = METAWR_ERR // attrName
+   CALL MLSMessage(MLSMSG_Error, ModuleName, errmsg)
+ENDIF
+
+attrName = 'ReprocessingActual'
+returnStatus = pgs_met_setAttr_s(groups(INVENTORY), attrName, &
+                        'first processing')
+IF (returnStatus /= PGS_S_SUCCESS) THEN
+errmsg = METAWR_ERR // attrName
+CALL MLSMessage(MLSMSG_Error, ModuleName, errmsg)
+ENDIF
+
+attrName = 'LocalGranuleID'
+sval = physical_filename
+returnStatus = pgs_met_setAttr_s(groups(INVENTORY), attrName, sval)
+IF (returnStatus /= PGS_S_SUCCESS) THEN
+   errmsg = METAWR_ERR // attrName
+   CALL MLSMessage(MLSMSG_Error, ModuleName, errmsg)
+ENDIF
+
+attrName = 'DayNightFlag'
+returnStatus = pgs_met_setAttr_s(groups(INVENTORY), attrName, 'DayAndNight')
+IF (returnStatus /= PGS_S_SUCCESS) THEN
+  errmsg = METAWR_ERR // attrName
+  CALL MLSMessage(MLSMSG_Error, ModuleName, errmsg)
+ENDIF
+
+attrName = 'LocalVersionID'
+returnStatus = pgs_met_setAttr_s(groups(INVENTORY), attrName, '0.5')
+   IF (returnStatus /= PGS_S_SUCCESS) THEN
+   errmsg = METAWR_ERR // attrName
+CALL MLSMessage(MLSMSG_Error, ModuleName, errmsg)
+ENDIF
+
+! MeasuredParameterContainer
+
+
+attrName = 'ParameterName' // '.1'
+returnStatus = pgs_met_setAttr_s(groups(INVENTORY), attrName, &
+                           'Calibrated Radiances')
+IF (returnStatus /= PGS_S_SUCCESS) THEN
+   errmsg = METAWR_ERR // attrName
+   CALL MLSMessage(MLSMSG_Error, ModuleName, errmsg)
+ENDIF
+
+! QAFlags Group
+
+attrName = 'AutomaticQualityFlag' // '.1'
+returnStatus = pgs_met_setAttr_s(groups(INVENTORY), attrName, &
+                           'Passed')
+IF (returnStatus /= PGS_S_SUCCESS) THEN
+   errmsg = METAWR_ERR // attrName
+   CALL MLSMessage(MLSMSG_Error, ModuleName, errmsg)
+ENDIF
+
+attrName = 'AutomaticQualityFlagExplanation' // '.1'
+returnStatus = pgs_met_setAttr_s(groups(INVENTORY), attrName, &
+                           'TBD')
+IF (returnStatus /= PGS_S_SUCCESS) THEN
+   errmsg = METAWR_ERR // attrName
+   CALL MLSMessage(MLSMSG_Error, ModuleName, errmsg)
+ENDIF
+
+attrName = 'OperationalQualityFlag' // '.1'
+returnStatus = pgs_met_setAttr_s(groups(INVENTORY), attrName, &
+                           'Not Investigated')
+IF (returnStatus /= PGS_S_SUCCESS) THEN
+   errmsg = METAWR_ERR // attrName
+   CALL MLSMessage(MLSMSG_Error, ModuleName, errmsg)
+ENDIF
+
+attrName = 'OperationalQualityFlagExplanation' // '.1'
+returnStatus = pgs_met_setAttr_s(groups(INVENTORY), attrName, &
+                                  'TBD')
+IF (returnStatus /= PGS_S_SUCCESS) THEN
+   errmsg = METAWR_ERR // attrName
+   CALL MLSMessage(MLSMSG_Error, ModuleName, errmsg)
+ENDIF
+
+! QAStats Group
+
+attrName = 'QAPercentInterpolatedData' // '.1'
+returnStatus = pgs_met_setAttr_i(groups(INVENTORY), attrName, 0)
+IF (returnStatus /= PGS_S_SUCCESS) THEN
+   errmsg = METAWR_ERR // attrName
+   CALL MLSMessage(MLSMSG_Error, ModuleName, errmsg)
+ENDIF
+
+attrName = 'QAPercentMissingData' // '.1'
+returnStatus = pgs_met_setAttr_i(groups(INVENTORY), attrName, 0)
+IF (returnStatus /= PGS_S_SUCCESS) THEN
+   errmsg = METAWR_ERR // attrName
+   CALL MLSMessage(MLSMSG_Error, ModuleName, errmsg)
+ENDIF
+
+attrName = 'QAPercentOutofBoundsData' // '.1'
+returnStatus = pgs_met_setAttr_i(groups(INVENTORY), attrName, 0)
+IF (returnStatus /= PGS_S_SUCCESS) THEN
+   errmsg = METAWR_ERR // attrName
+   CALL MLSMessage(MLSMSG_Error, ModuleName, errmsg)
+ENDIF
+
+
+! Orbit Calculated Spatial Domain Container
+
+attrName = 'OrbitNumber' // '.1'
+returnStatus = pgs_met_setAttr_i(groups(INVENTORY), attrName, -1)
+IF (returnStatus /= PGS_S_SUCCESS) THEN
+   errmsg = METAWR_ERR // attrName
+   CALL MLSMessage(MLSMSG_Error, ModuleName, errmsg)
+ENDIF
+
+attrName = 'StartOrbitNumber' // '.1'
+returnStatus = pgs_met_setAttr_i(groups(INVENTORY), attrName, -1)
+IF (returnStatus /= PGS_S_SUCCESS) THEN
+   errmsg = METAWR_ERR // attrName
+   CALL MLSMessage(MLSMSG_Error, ModuleName, errmsg)
+ENDIF
+
+attrName = 'StopOrbitNumber' // '.1'
+returnStatus = pgs_met_setAttr_i(groups(INVENTORY), attrName, -1)
+IF (returnStatus /= PGS_S_SUCCESS) THEN
+   errmsg = METAWR_ERR // attrName
+   CALL MLSMessage(MLSMSG_Error, ModuleName, errmsg)
+ENDIF
+
+attrName = 'EquatorCrossingLongitude' // '.1'
+dval = 0.0
+returnStatus = pgs_met_setAttr_d(groups(INVENTORY), attrName, dval)
+IF (returnStatus /= PGS_S_SUCCESS) THEN
+   errmsg = METAWR_ERR // attrName
+   CALL MLSMessage(MLSMSG_Error, ModuleName, errmsg)
+ENDIF
+
+attrName = 'EquatorCrossingTime' // '.1'
+returnStatus = pgs_met_setAttr_s(groups(INVENTORY), attrName, &
+     '00:00:00')
+IF (returnStatus /= PGS_S_SUCCESS) THEN
+   errmsg = METAWR_ERR // attrName
+   CALL MLSMessage(MLSMSG_Error, ModuleName, errmsg)
+ENDIF
+
+attrName = 'EquatorCrossingDate' // '.1'
+returnStatus = pgs_met_setAttr_s(groups(INVENTORY), attrName, &
+     '1969-04-04')
+IF (returnStatus /= PGS_S_SUCCESS) THEN
+   errmsg = METAWR_ERR // attrName
+   CALL MLSMessage(MLSMSG_Error, ModuleName, errmsg)
+ENDIF
+
+
+! InputPointer
+
+attrName = 'InputPointer'
+returnStatus = pgs_met_setAttr_s(groups(INVENTORY), attrName, &
+                       'See the PCF annotation to this file.')
+IF (returnStatus /= PGS_S_SUCCESS) THEN
+   errmsg = METAWR_ERR // attrName
+   CALL MLSMessage(MLSMSG_Error, ModuleName, errmsg)
+ENDIF
+
+IF (MCF_FILE /= mlspcf_mcf_l1boa_start) THEN
+! Locality Value
+
+   attrName = 'LocalityValue'
+   returnStatus = pgs_met_setAttr_s(groups(INVENTORY), attrName, &
+        'Limb')
+   IF (returnStatus /= PGS_S_SUCCESS) THEN
+      errmsg = METAWR_ERR // attrName
+      CALL MLSMessage(MLSMSG_Error, ModuleName, errmsg)
+   ENDIF
+
+   ! VerticalSpatialDomain Product-Specific Attribute
+
+   attrName = 'VerticalSpatialDomainType' // '.1'
+   returnStatus = pgs_met_setAttr_s(groups(INVENTORY), attrName, &
+        'Height')
+   IF (returnStatus /= PGS_S_SUCCESS) THEN
+      errmsg = METAWR_ERR // attrName
+      CALL MLSMessage(MLSMSG_Error, ModuleName, errmsg)
+   ENDIF
+
+   attrName = 'VerticalSpatialDomainValue' // '.1'
+   returnStatus = pgs_met_setAttr_s(groups(INVENTORY), attrName, &
+        'Brigthness Temperature')
+   IF (returnStatus /= PGS_S_SUCCESS) THEN
+      errmsg = METAWR_ERR // attrName
+      CALL MLSMessage(MLSMSG_Error, ModuleName, errmsg)
+   ENDIF
+
+   ! HorizontalSpatialDomainContainer
+
+   attrName = 'ZoneIdentifier'
+   returnStatus = pgs_met_setAttr_s(groups(INVENTORY), attrName, &
+        'Global')
+   IF (returnStatus /= PGS_S_SUCCESS) THEN
+      errmsg = METAWR_ERR // attrName
+      CALL MLSMessage(MLSMSG_Error, ModuleName, errmsg)
+   ENDIF
+
+   attrName = 'WestBoundingCoordinate'
+   dval = -180.0
+   returnStatus = pgs_met_setAttr_d(groups(INVENTORY), attrName, dval)
+   IF (returnStatus /= PGS_S_SUCCESS) THEN
+      errmsg = METAWR_ERR // attrName
+      CALL MLSMessage(MLSMSG_Error, ModuleName, errmsg)
+   ENDIF
+
+   attrName = 'NorthBoundingCoordinate'
+   dval = 90.0
+   returnStatus = pgs_met_setAttr_d(groups(INVENTORY), attrName, dval)
+   IF (returnStatus /= PGS_S_SUCCESS) THEN
+      errmsg = METAWR_ERR // attrName
+      CALL MLSMessage(MLSMSG_Error, ModuleName, errmsg)
+   ENDIF
+
+   attrName = 'EastBoundingCoordinate'
+   dval = 180.0
+   returnStatus = pgs_met_setAttr_d(groups(INVENTORY), attrName, dval)
+   IF (returnStatus /= PGS_S_SUCCESS) THEN
+      errmsg = METAWR_ERR // attrName
+      CALL MLSMessage(MLSMSG_Error, ModuleName, errmsg)
+   ENDIF
+
+   attrName = 'SouthBoundingCoordinate'
+   dval = -90.0
+   returnStatus = pgs_met_setAttr_d(groups(INVENTORY), attrName, dval)
+   IF (returnStatus /= PGS_S_SUCCESS) THEN
+      errmsg = METAWR_ERR // attrName
+      CALL MLSMessage(MLSMSG_Error, ModuleName, errmsg)
+   ENDIF
+ENDIF
+
+! RangeDateTime Group
+attrName = 'RangeBeginningDate'
+returnStatus = pgs_met_setAttr_s(groups(INVENTORY), &
+                         attrName, L1PCF%startUTC(1:10))
+IF (returnStatus /= PGS_S_SUCCESS) THEN 
+   CALL MLSMessage (MLSMSG_Error, ModuleName, "Error setting RangeBeginningDate")
+ENDIF
+
+returnStatus = pgs_met_setAttr_s(groups(INVENTORY), &
+                         "RangeBeginningTime", L1PCF%startUTC(12:26))
+IF (returnStatus /= PGS_S_SUCCESS) THEN 
+   CALL MLSMessage (MLSMSG_Error, ModuleName, "Error setting RangeBeginningTime")
+ENDIF
+
+returnStatus = pgs_met_setAttr_s(groups(INVENTORY), "RangeEndingDate", &
+                          L1PCF%endUTC(1:10))
+IF (returnStatus /= PGS_S_SUCCESS) THEN 
+   CALL MLSMessage (MLSMSG_Error, ModuleName, "Error setting RangeEndingDate")
+ENDIF
+
+returnStatus = pgs_met_setAttr_s(groups(INVENTORY), "RangeEndingTime", &
+                          L1PCF%endUTC(12:26))
+IF (returnStatus /= PGS_S_SUCCESS) THEN 
+  CALL MLSMessage (MLSMSG_Error, ModuleName, "Error setting RangeEndingTime")
+ENDIF
+
+
+! PGEVersion
+
+attrName = 'PGEVersion'
+returnStatus = pgs_met_setAttr_s(groups(INVENTORY), attrName, '0.5')
+IF (returnStatus /= PGS_S_SUCCESS) THEN
+   errmsg = METAWR_ERR // attrName
+   CALL MLSMessage(MLSMSG_Error, ModuleName, errmsg)
+ENDIF
+
+
+
+sdid = sfstart(physical_fileName, DFACC_RDWR) 
+
+IF (sdid == -1) THEN
+  CALL MLSMessage (MLSMSG_Error, ModuleName, "Failed to open the hdf file "//physical_fileName ) 
+ENDIF
+
+returnStatus = pgs_met_write(groups(INVENTORY),&
+                            "coremetadata.0", sdid)
+
+IF (returnStatus /= PGS_S_SUCCESS .AND. &
+    returnStatus /= PGSMET_W_METADATA_NOT_SET) THEN 
+   IF (returnStatus == PGSMET_W_METADATA_NOT_SET) THEN 
+     CALL MLSMessage (MLSMSG_WARNING, ModuleName, "Some of the mandatory parameters were not set" )
+   ELSE 
+     CALL Pgs_smf_getMsg(returnStatus, attrname, errmsg)
+     CALL MLSMessage (MLSMSG_WARNING, ModuleName,"Metadata write failed "//attrname//errmsg) 
+   ENDIF
+ENDIF
+
+hdfReturn = sfend(sdid)
+
+returnStatus=pgs_met_remove() 
+
+END SUBROUTINE populate_metadata_l1
+
+SUBROUTINE WriteMetaData
+
+  CALL populate_metadata_l1(mlspcf_l1b_radf_start, mlspcf_mcf_l1bradf_start)
+  CALL populate_metadata_l1(mlspcf_l1b_radd_start, mlspcf_mcf_l1bradd_start)
+  CALL populate_metadata_l1(mlspcf_l1b_oa_start, mlspcf_mcf_l1boa_start)
+d403 1
+a403 1
+END SUBROUTINE WriteMetadata
+d408 3
+@
+
+
+2.1
+log
+@Fixed sval length
+@
+text
+@d21 2
+a22 2
+     "$Id$"
+CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
+d88 1
+a88 1
+               'not kwon at this time')
+d396 4
+a399 1
+! $Log$
+@
+

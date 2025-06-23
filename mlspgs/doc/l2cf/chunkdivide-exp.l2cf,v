@@ -1,0 +1,57 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.8
+	cfm-single-freq-0-1:1.1.0.6
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.4
+	mus-emls-1-70:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2018.06.15.23.09.24;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@First commit
+@
+text
+@; --------------------------------------------- ChunkDivide ----
+;
+; This l2cf fragment gives as many chunks are necessary each of
+; length 15 degrees of orbit with lower and overlaps set
+; by macro defienitions
+begin ChunkDivide
+  ChunkDivide, method = orbital, maxLength = 15 degrees, $
+    lowerOverlap= 5 MAFs, upperOverlap= 6 MAFs, $
+    homeGeodAngle = 0 degrees, homeModule = GHz,  $
+    criticalModules = GHz, maxGap = 2 MAFs, $
+    scanLowerLimit = [ -20km : 10km ], scanUpperLimit = [ 40km : 200km ], $
+    excludePostOverlaps = false, excludePriorOverlaps = false, $
+    maxOrbY = 50 km
+end ChunkDivide
+
+begin Construct
+  hGridStandard: hGrid, type=regular, spacing=1.5 degrees, origin=0 degrees, $
+    module=GHz, /forbidOverspill, /insetOverlaps
+end Construct
+
+@

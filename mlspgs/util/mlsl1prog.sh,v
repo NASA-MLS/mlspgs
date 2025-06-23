@@ -1,0 +1,639 @@
+head	1.14;
+access;
+symbols
+	v5-02-NRT-19:1.14
+	v6-00:1.14
+	v5-02-NRT-18:1.14
+	v5-02:1.14
+	v5-01-NRT-17:1.14
+	v5-01-NRT-16:1.14
+	v5-01-NRT-15:1.14
+	v5-01-NRT-14:1.14
+	neuralnetworks-1-0:1.14.0.4
+	cfm-single-freq-0-1:1.14.0.2
+	v5-01:1.14
+	v5-00:1.14
+	v4-23-TA133:1.13.0.6
+	mus-emls-1-70:1.13.0.4
+	rel-1-0-englocks-work:1.13.0.2
+	VUMLS1-00:1.13
+	VPL1-00:1.12
+	V4-22-NRT-08:1.12
+	VAM1-00:1.12
+	V4-21:1.12.0.2
+	V4-13:1.11
+	V4-12:1.11
+	V4-11:1.11
+	V4-10:1.11
+	V3-43:1.10
+	M4-00:1.11
+	V3-41:1.10
+	V3-40-PlusGM57:1.10.0.2
+	V2-24-NRT-04:1.9
+	V3-33:1.10
+	V2-24:1.9
+	V3-31:1.10
+	V3-30-NRT-05:1.10
+	cfm-01-00:1.10
+	V3-30:1.10
+	V3-20:1.10
+	V3-10:1.10
+	V2-23-NRT-02:1.9
+	V2-23:1.9
+	V2-22-NRT-01:1.9
+	V2-22:1.9
+	V2-21:1.9
+	V2-20:1.9
+	V2-11:1.9
+	V2-10:1.9
+	V2-00:1.9
+	V1-51:1.1
+	V1-50:1.1
+	V1-45:1.1
+	V1-44:1.1
+	V1-43:1.1
+	V1-42:1.1
+	V1-41:1.1
+	V1-32:1.1
+	V1-40:1.1
+	V1-31:1.1
+	V1-30:1.1
+	V1-13:1.1
+	V1-12:1.1
+	V1-11:1.1
+	V1-10:1.1
+	newfwm-feb03:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.14
+date	2019.06.21.17.12.47;	author pwagner;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2016.09.07.00.33.30;	author pwagner;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2015.01.16.17.16.17;	author pwagner;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2012.02.15.18.12.06;	author pwagner;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2009.02.13.17.37.05;	author pwagner;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2006.04.03.23.11.07;	author pwagner;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2006.04.03.22.14.41;	author pwagner;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2006.03.27.19.21.15;	author pwagner;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2006.03.23.19.21.18;	author pwagner;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2005.12.22.19.07.09;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2005.06.23.22.20.45;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2005.04.19.21.02.38;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2005.04.18.16.27.18;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2003.02.03.23.57.06;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.14
+log
+@Source the env file if available
+@
+text
+@#!/bin/sh
+# mlsxxyyzz.sh
+# usage: mlsxxyyzz.sh [option_1] [option_2] ..
+
+# Copyright 2005, by the California Institute of Technology. ALL
+# RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+# commercial use must be negotiated with the Office of Technology Transfer
+# at the California Institute of Technology.
+
+# This software may be subject to U.S. export control laws. By accepting this
+# software, the user agrees to comply with all applicable U.S. export laws and
+# regulations. User has the responsibility to obtain export licenses, or other
+# export authority as may be required before exporting such information to
+# foreign countries or providing access to foreign persons.
+
+# run separate programs specified as the variables
+# MLSPROG_0, MLSPROG_1, MLSPROG_2, MLSPROG_3
+# assuming that they're in directory MLSBIN
+# Then return an exit status of ( for each program):
+# 1 if program's exit status is different from
+# the variable specified as NORMAL_STATUS; otherwise
+# 0
+# Now if MLSPROG_0 fails, let's bail out immediately--
+# no sense trying with any of the others
+# Then assemble the sequence of status for three of the programs as follows:
+# MLSPROG_1  MLSPROG_2  MLSPROG_3
+#  (0 or 1)   (0 or 1)   (0 or 1)
+# in a binary string of length three; e.g. '001' means
+# MLSPROG_1 and _2 had normal status, but _3 did not
+# Finally return a final exit status based on this binary string:
+Successful_codes="000 001"
+# Possible and sensible values for the above would be "000" or "000 001"
+# with the following effects
+# "000"     ==> returns error-free status only if all three programs do
+# "000 001" ==> returns error-free status even if 3rd program fails
+# We're assuming MLSPROG_2 only runs if MLSPROG_1 succeeds
+# Similarly, MLSPROG_3 only runs if MLSPROG_2 succeeds
+# Used by mlspgs/MakeFC to install script versions of each mls program
+# MLSPROG. The script version returns a status of 0 only if 
+# the MLSPROG goes past some "finish" line in the code
+# causing it to exit with status=NORMAL_STATUS
+# Typing 
+#    make install
+# sed's this file to replace xxyyzz, hhoommee, etc. as appropriate
+
+# Now if the tool h5repack in the same directory as the three level 1 programs
+# and if the current working directory houses the l1b files created by
+# the level 1 programs, then as a final step repack the l1b files
+
+NORMAL_STATUS=2
+# Use the following line to add extra options to MLSPROG
+EXTRA_OPTIONS=mlseexxttrraa
+
+GZIPLEVEL="1"
+#          ^^^---- compression level ("" means none)
+
+MLSPROG_0=mlsxxyyzz_0
+MLSPROG_1=mlsxxyyzz_1
+MLSPROG_2=mlsxxyyzz_2
+MLSPROG_3=mlsxxyyzz_3
+# This directory may be a relative path or an absolute one
+MLSBIN=mlsbbiinn
+# If relative, it must be relative to the following absolute path
+MLSHOME=mlshhoommee
+
+# Did we create an env file to be sourced by this job?
+JOBENV=job.env
+if [ -f "$JOBENV" ]
+then
+  . ./$JOBENV
+fi
+
+if [ "$PGE_BINARY_DIR" = "" ]
+then
+  is_absolute=`echo "$MLSBIN" | grep '^\/'`
+  if [ "$is_absolute" = "" ]
+  then
+    PGE_BINARY_DIR=$MLSBIN
+  else
+    PGE_BINARY_DIR=$MLSHOME/$MLSBIN
+  fi
+fi
+
+ulimit -s unlimited
+ulimit -a
+
+# We print the file license.txt to stdout
+echo $PGE_BINARY_DIR/$MLSPROG_0 $EXTRA_OPTIONS "$@@"
+if [ -f $PGE_BINARY_DIR/license.txt ]
+then
+  cat $PGE_BINARY_DIR/license.txt
+fi
+$PGE_BINARY_DIR/$MLSPROG_0 $EXTRA_OPTIONS "$@@"
+
+return_status_0=`expr $?`
+
+if [ $return_status_0 != $NORMAL_STATUS ]
+then
+   exit 1
+else
+   return_status_0=0
+fi
+
+echo $PGE_BINARY_DIR/$MLSPROG_1 $EXTRA_OPTIONS "$@@"
+$PGE_BINARY_DIR/$MLSPROG_1 $EXTRA_OPTIONS "$@@"
+return_status_1=`expr $?`
+H5REPACK=$PGE_BINARY_DIR/h5repack
+
+if [ $return_status_1 != $NORMAL_STATUS ]
+then
+   exit 1
+else
+   return_status_1=0
+fi
+
+echo $PGE_BINARY_DIR/$MLSPROG_2 $EXTRA_OPTIONS "$@@"
+$PGE_BINARY_DIR/$MLSPROG_2 $EXTRA_OPTIONS "$@@"
+
+return_status_2=`expr $?`
+
+if [ $return_status_2 != $NORMAL_STATUS ]
+then
+   exit 1
+else
+   return_status_2=0
+fi
+
+echo $PGE_BINARY_DIR/$MLSPROG_3 $EXTRA_OPTIONS "$@@"
+$PGE_BINARY_DIR/$MLSPROG_3 $EXTRA_OPTIONS "$@@"
+
+return_status_3=`expr $?`
+
+if [ $return_status_3 = $NORMAL_STATUS ]
+then
+   return_status_3=0
+else
+   return_status_3=1
+fi
+
+binary_string="${return_status_1}${return_status_2}${return_status_3}"
+
+return_status=1
+for code in $Successful_codes
+do
+  if [ $binary_string = $code ]
+  then
+    return_status=$NORMAL_STATUS
+  fi
+done
+
+# Last chance to find h5repack
+if [ ! -x "$H5REPACK" ]
+then
+  H5REPACK=$HDFTOOLS/h5repack
+fi
+
+# repack level 1 files to speed things up
+if [ -x "$H5REPACK" ]
+then
+  files=`echo *L1*.h5`
+  for file in $files
+  do
+    if [ -w "$file" ]
+    then
+      packed="$file".p
+      if [ "$GZIPLEVEL" != "" ] 
+      then
+        filter="-f GZIP=$GZIPLEVEL"
+      else
+        filter=""
+      fi
+      echo "Packing $file into $packed"
+      echo $H5REPACK -i "$file" -o "$packed" $filter
+      $H5REPACK -i "$file" -o "$packed" $filter
+      # Here we could insert some check involving l1bdiff if we were dubious
+      mv "$packed" "$file"
+    fi
+  done
+fi
+
+# Exit with status according to whether we succeeded or failed
+if [ $return_status != $NORMAL_STATUS ]
+then
+   exit 1
+else
+   exit 0
+fi
+
+# $Log: mlsl1prog.sh,v $
+# Revision 1.13  2016/09/07 00:33:30  pwagner
+# Should work better when running goldbrick with prebuilt binaries
+#
+# Revision 1.12  2015/01/16 17:16:17  pwagner
+# stack size limit lifted
+#
+# Revision 1.11  2012/02/15 18:12:06  pwagner
+# Offer last chance to find h5repack in HDFTOOLS directory
+#
+# Revision 1.10  2009/02/13 17:37:05  pwagner
+# Running mlspgs automatically prints license text
+#
+# Revision 1.9  2006/04/03 23:11:07  pwagner
+# Repack only files with write access
+#
+# Revision 1.8  2006/04/03 22:14:41  pwagner
+# Fixed serious syntax errors, oyther bugs
+#
+# Revision 1.7  2006/03/27 19:21:15  pwagner
+# Added new pge mlsl0sn to store switch settings
+#
+# Revision 1.6  2006/03/23 19:21:18  pwagner
+# Add gzip compression when repacking hdf5 files
+#
+# Revision 1.5  2005/12/22 19:07:09  pwagner
+# Restored idea of h5repacking l1b files
+#
+# Revision 1.4  2005/06/23 22:20:45  pwagner
+# Reworded Copyright statement
+#
+# Revision 1.3  2005/04/19 21:02:38  pwagner
+# Previous committal an oversight--undoing it
+#
+# Revision 1.2  2005/04/18 16:27:18  pwagner
+# Mistakenly deallocated timings before possibly needing to use it--fixed
+#
+# Revision 1.1  2003/02/03 23:57:06  pwagner
+# First commit
+#
+@
+
+
+1.13
+log
+@Should work better when running goldbrick with prebuilt binaries
+@
+text
+@d42 3
+a44 1
+# MakeFC sed's this file to replace xxyyzz, hhoommee, etc. as appropriate
+d66 7
+d190 3
+@
+
+
+1.12
+log
+@stack size limit lifted
+@
+text
+@d64 11
+a77 5
+# Does MLSBIN start with "/" or not?
+# (in other words is it absolute or relative?)
+
+is_absolute=`echo "$MLSBIN" | grep '^\/'`
+
+d79 2
+a80 1
+if [ "$is_absolute" = "" ]
+d82 1
+a82 13
+   echo $MLSHOME/$MLSBIN/$MLSPROG_0 $EXTRA_OPTIONS "$@@"
+   if [ -f $MLSHOME/$MLSBIN/license.txt ]
+   then
+     cat $MLSHOME/$MLSBIN/license.txt
+   fi
+   $MLSHOME/$MLSBIN/$MLSPROG_0 $EXTRA_OPTIONS "$@@"
+else
+   echo $MLSBIN/$MLSPROG_0 $EXTRA_OPTIONS "$@@"
+   if [ -f $MLSBIN/license.txt ]
+   then
+     cat $MLSBIN/license.txt
+   fi
+   $MLSBIN/$MLSPROG_0 $EXTRA_OPTIONS "$@@"
+d84 1
+d95 4
+a98 12
+if [ "$is_absolute" = "" ]
+then
+   echo $MLSHOME/$MLSBIN/$MLSPROG_1 $EXTRA_OPTIONS "$@@"
+   $MLSHOME/$MLSBIN/$MLSPROG_1 $EXTRA_OPTIONS "$@@"
+   return_status_1=`expr $?`
+   H5REPACK=$MLSHOME/$MLSBIN/h5repack
+else
+   echo $MLSBIN/$MLSPROG_1 $EXTRA_OPTIONS "$@@"
+   $MLSBIN/$MLSPROG_1 $EXTRA_OPTIONS "$@@"
+   return_status_1=`expr $?`
+   H5REPACK=$MLSBIN/h5repack
+fi
+d107 2
+a108 8
+if [ "$is_absolute" = "" ]
+then
+   echo $MLSHOME/$MLSBIN/$MLSPROG_2 $EXTRA_OPTIONS "$@@"
+   $MLSHOME/$MLSBIN/$MLSPROG_2 $EXTRA_OPTIONS "$@@"
+else
+   echo $MLSBIN/$MLSPROG_2 $EXTRA_OPTIONS "$@@"
+   $MLSBIN/$MLSPROG_2 $EXTRA_OPTIONS "$@@"
+fi
+d119 2
+a120 8
+if [ "$is_absolute" = "" ]
+then
+   echo $MLSHOME/$MLSBIN/$MLSPROG_3 $EXTRA_OPTIONS "$@@"
+   $MLSHOME/$MLSBIN/$MLSPROG_3 $EXTRA_OPTIONS "$@@"
+else
+   echo $MLSBIN/$MLSPROG_3 $EXTRA_OPTIONS "$@@"
+   $MLSBIN/$MLSPROG_3 $EXTRA_OPTIONS "$@@"
+fi
+d181 3
+@
+
+
+1.11
+log
+@Offer last chance to find h5repack in HDFTOOLS directory
+@
+text
+@d64 3
+d205 3
+@
+
+
+1.10
+log
+@Running mlspgs automatically prints license text
+@
+text
+@d163 6
+d202 3
+@
+
+
+1.9
+log
+@Repack only files with write access
+@
+text
+@d69 1
+d73 4
+d80 4
+d196 3
+@
+
+
+1.8
+log
+@Fixed serious syntax errors, oyther bugs
+@
+text
+@d160 1
+a160 1
+    if [ -r "$file" ]
+d187 3
+@
+
+
+1.7
+log
+@Added new pge mlsl0sn to store switch settings
+@
+text
+@d91 1
+d96 1
+a99 2
+return_status_1=`expr $?`
+
+d156 1
+d163 2
+a164 1
+      if [ "$GZIPLEVEL" != "" ] then
+d175 1
+a175 1
+then
+d187 3
+@
+
+
+1.6
+log
+@Add gzip compression when repacking hdf5 files
+@
+text
+@d17 1
+a17 1
+# MLSPROG_1, MLSPROG_2, MLSPROG_3
+d23 3
+a25 1
+# Then assemble the sequence of status for the three programs as follows:
+d37 1
+a37 1
+# SImilarly, MLSPROG_3 only runs if MLSPROG_2 succeeds
+d55 1
+d71 18
+d185 3
+@
+
+
+1.5
+log
+@Restored idea of h5repacking l1b files
+@
+text
+@d50 3
+d141 5
+d147 2
+a148 1
+      echo $H5REPACK -i "$file" -o "$packed"
+d164 3
+@
+
+
+1.4
+log
+@Reworded Copyright statement
+@
+text
+@d42 4
+d67 1
+d71 1
+d130 16
+d155 3
+@
+
+
+1.3
+log
+@Previous committal an oversight--undoing it
+@
+text
+@d5 10
+a14 2
+# Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+# U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
+d133 3
+@
+
+
+1.2
+log
+@Mistakenly deallocated timings before possibly needing to use it--fixed
+@
+text
+@a33 4
+# Now if the tool h5repack in the same directory as the three level 1 programs
+# and if the current working directory houses the l1b files created by
+# the level 1 programs, then as a final step repack the l1b files
+
+a54 1
+   H5REPACK=$MLSHOME/$MLSBIN/h5repack
+a57 1
+   H5REPACK=$MLSBIN/h5repack
+a115 15
+# repack level 1 files to speed things up
+if [ -x "$H5REPACK" ]
+  files=`echo *L1*.h5`
+  for file in $files
+  do
+    if [ -r "$file" ]
+    then
+      packed="$file".p
+      echo "Packing $file into $packed"
+      echo $H5REPACK -i "$file" -o "$packed"
+      mv "$packed" "$file"
+    fi
+then
+fi
+
+d125 3
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d5 2
+a6 2
+# Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d34 4
+d59 1
+d63 1
+d122 16
+d145 4
+a148 1
+# $Log: mlsprog.sh,v $
+@
+

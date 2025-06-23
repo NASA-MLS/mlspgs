@@ -1,0 +1,604 @@
+head	1.4;
+access;
+symbols
+	v5-02-NRT-19:1.4
+	v6-00:1.4
+	v5-02-NRT-18:1.4
+	v5-02:1.4
+	v5-01-NRT-17:1.4
+	v5-01-NRT-16:1.4
+	v5-01-NRT-15:1.4
+	v5-01-NRT-14:1.4
+	neuralnetworks-1-0:1.4.0.4
+	cfm-single-freq-0-1:1.4.0.2
+	v5-01:1.4
+	v5-00:1.4
+	v4-23-TA133:1.2.0.6
+	mus-emls-1-70:1.2.0.4
+	rel-1-0-englocks-work:1.2.0.2
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.4
+date	2019.05.31.17.17.38;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2019.05.23.00.33.21;	author vsnyder;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2016.02.05.00.29.40;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2008.06.11.20.14.55;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.4
+log
+@A workaround for building beamerclass
+@
+text
+@\makeatletter\let\ifGm@@compatii\relax\makeatother
+\documentclass[landscape]{beamer}
+\usepackage[nofancy,notoday]{rcsinfo}
+%\usepackage{pstcol,pst-plot,pst-char,pst-node}
+\usepackage{color}
+\usepackage{amsmath}
+%\usepackage{moreverb}
+%\usepackage{multicol}
+\usepackage{graphicx}
+\usepackage{floatflt}
+%
+\renewcommand{\b}{\mathbf}
+\newcommand{\T}{^{T}}
+\newcommand{\cs}[1]{$_{\text{#1}}$}
+\newcommand{\inv}{^{\mathrm -1}}
+\newcommand{\cp}[1]{$^{\text{#1}}$}
+\newcommand{\degsym}{\ensuremath{^\circ}}
+\newcommand{\newframe}[2][]{\begin{frame}\frametitle{\hfill #2 \hfil}}
+
+%
+% -----------------------------------------------------------------------------
+%
+\title{Accurate and efficient computation of Mie parameters}
+\subtitle{wvs-071}
+\author{Van Snyder}
+\date{22 February 2008}
+\titlegraphic{\includegraphics[width=1.0in]{eos_mls_logo_onpink}}
+
+\begin{document}
+\sloppy
+%
+% -----------------------------------------------------------------------------
+%
+\begin{frame}
+ \titlepage
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe[Quantities]{Quantities to be computed}
+The quantities to be computed are
+%
+\begin{equation}\begin{split}\label{def}
+\beta_{c\_e} =\,&\, 2 \pi \int_0^\infty r^2\, n(r)\, \xi_e(r)\, \text{d} r \\
+\beta_{c\_s} =\,&\, 2 \pi \int_0^\infty r^2\, n(r)\, \xi_s(r)\, \text{d} r \\
+P(\theta) = \,&\,  \frac\pi{\beta_{c\_s}} \int_0^\infty
+ r^2\, n(r)\, \xi_s(r)
+  \frac{p_0(\theta,r)}
+       {\frac12 \int_0^\pi p_0(\theta^\prime,r) \sin\theta^\prime\,
+        \text{d} \theta^\prime} \,\text{d} r
+\end{split}\end{equation}
+%
+and their derivatives with respect to temperature and ice water content (IWC).
+The quantity $n(r)$ is the McFarquhar and Heymsfield 1997 (MH97) particle-size
+distribution function
+%
+\begin{equation}
+n(r) = N_1\, r \exp(-2 \alpha r) +
+      \frac{N_2}r\, \exp\left(-\frac{\gamma^2}2 \right) \text{ where }
+\gamma = \frac{\log(2r) - \mu}{\sigma}\,.
+\end{equation}
+%
+$N_1$ and $\alpha$ depend upon IWC, and $N_2$, $\mu$ and $\sigma$ depend upon
+temperature and IWC, but not on $\theta$ or $r$.
+%
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe[Efficiencies]{Mie efficiencies}
+The Mie efficiencies $\xi_e$ and $\xi_s$ are given by
+%
+\begin{equation}\begin{split}
+\xi_e(r) =\,& \frac2{\chi^2} \sum_{n=1}^\infty ( 2 n + 1 ) ( \Re a_n + \Re b_n ) \\
+\xi_s(r) =\,& \frac2{\chi^2} \sum_{n=1}^\infty ( 2 n + 1 ) ( |a_n|^2 + |b_n|^2 ) \\
+\end{split}\end{equation}
+%
+where $a_n$ and $b_n$ are given by
+%
+\begin{equation}\begin{split}\label{anbn}
+a_n = \,& \frac{\hat a_n \Re W_n - \Re W_{n-1}}
+               {\hat a_n W_n - W_{n-1}} \text{ where }
+ \hat a_n = \frac{A_n}m + \frac{n}\chi\, \text{, and}\\
+b_n = \,& \frac{\hat b_n \Re W_n - \Re W_{n-1}}
+               {\hat b_n W_n - W_{n-1}} \text{ where }
+ \hat b_n = m A_n + \frac{n}\chi\,,
+                \\
+\end{split}\end{equation}
+%
+wherein $\chi = \frac{2 \pi r}\lambda$, $m$ is the complex index of refraction,
+which depends upon temperature, $r$ is the particle radius, and $\lambda$ is
+the wavelength of radiation.
+%
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe[Hankel]{The Bessel and Hankel functions}
+%
+\small
+The quantities $W_n$ and $A_n$ that appear in the definitions of $a_n$ and
+$b_n$ in Equation (\ref{anbn}) are defined by Ulaby, Moore and Fung using the
+recurrences
+%
+\begin{equation}\begin{split}
+W_n =\,& \left( \frac{2n-1}\chi\right) W_{n-1} - W_{n-2} \\
+W_0 =\,& \sin\chi + i \cos\chi\,,\, W_1 = \cos\chi - i \sin\chi\,, \text{ and}\\
+A_n =\,& -\frac{n}{m\chi} + \left( \frac{n}{m\chi} - A_{n-1} \right)^{-1}
+\,,\, A_0 = \cot m\chi\,. \\
+\end{split}\end{equation}
+%
+The solutions of these recurrences, along with their initial conditions, are
+\begin{equation}\label{An}
+W_n = \chi h^{(2)}_n(\chi) = \chi \left( j_n(\chi) - i y_n(\chi) \right)
+ \text{ and }
+A_n = -\frac{n}{m\chi} + \frac{j_{n-1}(m\chi)}{j_n(m\chi)}
+\end{equation}
+%
+where $h^{(2)}_n$ is the spherical Hankel function of the second kind, and
+$j_n$ and $y_n$ are spherical Bessel functions of the first and second kind,
+respectively.  The spherical Hankel and Bessel functions are related to
+cylindrical Hankel and Bessel functions of half-integer order.
+%
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe{The Bessel and Hankel functions (cont.)}
+
+\small
+The recurrence for $W_n$ is a second-order recurrence.  As for second-order
+differential equations, it has two fundamental solutions, any linear
+combination of which is also a solution.  Even if one starts with the first
+fundamental solution, using finite arithmetic causes some of the second one to
+be added in, so the result becomes dominated by the solution that increases in
+the direction of recurrence.  For $n>\chi$, $j_n(\chi)$ decreases and
+$y_n(\chi)$ increases as $n$ increases.  Thus recurrence for $W_n$ in the
+forward direction will eventually compute $y_n(\chi) - i\, y_n(\chi)$, while
+recurrence in the backward direction will eventually compute $j_n(\chi) - i\,
+j_n(\chi)$.  That is, the recurrence is unstable in both directions for
+$n>\chi$; fortunately the real and imaginary parts can be computed separately
+by recurrence in opposite directions.
+
+The recurrence for $A_n$ can be derived from two recurrences of the same form
+as the one for $W_n$.  Therefore, recurrence in the forward direction computes
+$-\frac{n}{m\chi} + \frac{y_{n-1}(m\chi)}{y_n(m\chi)}$.  Backward recurrences
+can be evaluated by a Miller algorithm, i.e., by recurring forward until
+overflow, followed by backward recurrence from arbitrary values, say zero and
+one, to the given boundary conditions, followed by normalization.
+
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe[Phase]{The integrated phase function}
+%
+The quantity $p_0(\theta,r)$ that appears in Equation (\ref{def}) is defined by
+%
+\begin{equation}\begin{split}
+p_0(\theta,r) =\,&
+\left| \sum_{n=1}^\infty \frac{2n+1}{n(n+1)}
+ \left(a_n \frac{\text{d} P_n^1}{\text{d}\theta} +
+       b_n \frac{P_n^1}{\sin\theta}\right) \right|^2 + \\
+\,&
+\left| \sum_{n=1}^\infty \frac{2n+1}{n(n+1)}
+ \left(a_n \frac{P_n^1}{\sin\theta} +
+       b_n \frac{\text{d} P_n^1}{\text{d}\theta}\right) \right|^2 \\
+\end{split}\end{equation}
+%
+where $P^1_n$ is the associated Legendre function of the first kind and order 1
+of $\cos\theta$. By multiplying out the squares, $p_0(\theta,r)$ can be written
+as a sum of products of functions of $\theta$ and $r$.  Integrating
+term-by-term on $\theta$ shows that
+%
+\begin{equation}\label{C}
+\frac12\, \int_0^\pi p_0(\theta^\prime,r) \sin\theta^\prime\,
+ \text{d} \theta^\prime\ =
+ \frac{\chi^2}2\, \xi_s(r)\,,
+\end{equation}
+%
+so the definition of $P(\theta)$ in Equation (\ref{def}) simplifies to
+%
+\begin{equation}
+P(\theta) = \frac{\lambda^2}{2 \pi \beta_{c\_s}}
+ \int_0^\infty n(r) \, p_0(\theta,r) \, \text{d} r\,.
+\end{equation}
+%
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe[Legendre]{The associated Legendre function}
+%
+The function  $P_n^1$ satisfies the recurrence
+%
+\begin{equation}\begin{split}\label{Legendre}
+P_n^1(\cos\theta) =\,&
+  \left(\frac{2n-1}{n-1}\right) \cos\theta\, P_{n-1}^1(\cos\theta) -
+  \left(\frac{n}{n-1}\right) P_{n-2}^1(\cos\theta)\,,\\
+P_0^1(\cos\theta) =\,& 0\,,\, P_1^1(\cos\theta) = \sin\theta\,,
+\end{split}\end{equation}
+%
+which is stable in the forward direction.  Its derivative is related
+to the function by the relation
+\begin{equation}
+\sin\theta \frac{\text{d} P_n^1(\cos\theta)}{\text{d}\theta} =
+ n \cos\theta\, P_n^1(\cos\theta) - (n+1) P_{n-1}^1(\cos\theta)
+\end{equation}
+%
+which is computationally more stable than differentiating Equation
+(\ref{Legendre}).
+%
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe[Quadrature]{Quadratures}
+%
+The integrals in Equation (\ref{def}) and their derivatives with respect to
+temperature and IWC are evaluated by an automatic adaptive quadrature package
+from the Math77 library, known as {\tt DINT}.
+
+This package uses quadrature formulae published in Mathematics of Computation
+in 1968 by T.~N.~L.~Patterson, who recently retired from the Queens University
+of Belfast.  The first formula in the family is the three-point Gauss formula. 
+The second is the seven-point Kronrod formula, which is the optimal extension
+of the three-point Gauss formula.  Each additional formula after Kronrod's is
+an optimal extension of the previous one.  These additional extensions, and the
+methods to calculate them, are Patterson's contribution.
+
+The $k^{\text{th}}$ formula has $n = 2^k-1$ points, and algebraic order
+$\frac{3n+1}2$, that is, it integrates polynomials up to degree $\frac{3n+1}2$
+exactly, assuming infinite-precision arithmetic.  The package {\tt DINT} uses
+formulae with up to 255 points.
+%
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe{Quadratures (cont.)}
+
+The term ``automatic adaptive'' means that the quadrature package DINT
+automatically selects the stepsize and formula to use.
+
+It starts by applying a 15-point formula.  It gets error estimates by comparing
+three and seven, then seven and fifteen point formulae.  If the error estimate
+is too big (or it's working on the initial interval) it forms forward and
+backward differences across the interval.  The differences ought to decrease if
+there is no untoward behavior.  If the differences indicate a problem, DINT
+applies a transformation to remove a singularity (if the problem is at an end
+of the interval) or subdivide (and maybe apply a transformation) at the point
+of the problem otherwise.
+
+If the error estimate is large but the differences don't indicate any obvious
+behavior, either a higher-order formula is used, or the interval size is
+reduced.  This continues until the entire interval is covered.
+
+For multidimensional problems, one-dimensional rules are composed.
+%
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe{Quadratures (cont.)}
+
+Before discovering the simplification of the integral in Equation (\ref{C}),
+the integrals defining $P(\theta)$ and its derivatives were evaluated as double
+integrals (which no package other than {\tt DINT} is able to tackle in the form
+given in Equation (\ref{def})).  Up to six million inner integrand values were
+required for 12-digit answers.  After the simplification, the most expensive
+integrals require roughly 4000 integrand values.
+%
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe[Results]{Plots of $P(\theta)$}
+%
+The figures below show polar plots of $P(\theta)$ at ten temperatures between
+$-100^\circ$C and $-15^\circ$C, ten values of IWC on a logarithmic scale from
+$10^{-5}$ to 1 gm/m$^3$, and ten frequencies within each band.
+
+{\parskip 0pt\hfill\includegraphics[scale=0.4,angle=90]{wvs-071-plot}\hfill}
+
+%
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe[Derivatives]{Derivatives}
+%
+It is straight-forward to compute derivatives of $\beta_{c\_e}$,
+$\beta_{c\_s}$, and $P(\theta)$, defined by Equation (\ref{def}), in terms of
+derivatives of $n(r)$, $\xi_e(r)$, $\xi_s(r)$, $m$ and $p_0(\theta,r)$.  The
+derivatives of $n(r)$ and $m$ are tedious but straight-forward to compute.  The
+derivatives of $\xi_e(r)$, $\xi_s(r)$, and $p_0(\theta,r)$ are straight-forward
+to compute from derivatives of $A_n$, $a_n$ and $b_n$.  The derivatives of
+$n(r)$, $m$, $\xi_e(r)$, $\xi_s(r)$, and $p_0(\theta,r)$ are written in detail
+in my memo {\tt wvs-066}.  $A_n$, $a_n$ and $b_n$ do not depend upon IWC, and
+their only dependence upon temperature comes via the dependence of $m$ upon
+temperature, but their derivatives with respect to $m$ are nontrivial. 
+Starting from the definitions of $A_n$ in Equation (\ref{An}), and of $a_n$ and
+$b_n$ in Equation (\ref{anbn}), after much tedious algebra, and a
+simplification achieved by using the Wronskian relation (a.k.a.\ Casorati
+Determinant)
+%
+\begin{equation}
+j_n(\chi) y_{n-1}(\chi) - j_{n-1}(\chi) y_n(\chi) = \frac1{\chi^2}\,
+\end{equation}
+%
+we have \dots
+%
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe{Derivatives (cont.)}
+%
+\begin{equation}\begin{split}
+\frac{\partial A_n}{\partial m} =\,&
+  \frac1{m^2} \left( \frac{n}\chi + 2 n \hat b_n - \chi \hat b_n^2 \right)
+   - \chi = \frac{n(n+1)}{m^2\chi} - \chi(A_n^2+1) \\
+\frac{\partial a_n}{\partial m} = \,&
+ \frac{i}{\chi^2}\,
+ \frac1{\left(\hat a_n h^{(2)}_n(\chi) - h^{(2)}_{n-1}(\chi)\right)^2}
+       \, \frac{\partial \hat a_n}{\partial m}\, \text{, where}\\
+\frac{\partial \hat a_n}{\partial m} =\,&
+  \frac1m \frac{\partial A_n}{\partial m} - \frac1{m^2} A_n\, \text{, and}\\
+\frac{\partial b_n}{\partial m} = \,&
+ \frac{i}{\chi^2}\,
+ \frac1{\left(\hat b_n h^{(2)}_n(\chi) - h^{(2)}_{n-1}(\chi)\right)^2}
+       \, \frac{\partial \hat b_n}{\partial m}\,, \text{ where} \\
+\frac{\partial \hat b_n}{\partial m} =\,&
+  m \frac{\partial A_n}{\partial m} + A_n\,.
+\end{split}\end{equation}
+%
+An obvious application of the chain rule gives derivatives with respect to
+temperature.
+\end{frame}
+%
+% ----------------------------------------------------------------------------
+%
+\end{document}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: t
+%%% End: 
+
+% $Log: wvs-071.tex,v $
+% Revision 1.3  2019/05/23 00:33:21  vsnyder
+% Convert to beamer class
+%
+% Revision 1.2  2016/02/05 00:29:40  vsnyder
+% A few trivial corrections
+%
+% Revision 1.1  2008/06/11 20:14:55  vsnyder
+% Initial commit
+%
+% Revision 1.1  2008/06/11 20:14:55  vsnyder
+% Initial commit
+%
+% Revision 1.7  2001/06/16 00:57:56  vsnyder
+% More stuff about least-squares, some clean-up
+%
+% $Id: wvs-071.tex,v 1.3 2019/05/23 00:33:21 vsnyder Exp $
+@
+
+
+1.3
+log
+@Convert to beamer class
+@
+text
+@d1 1
+d351 3
+d366 1
+a366 1
+% $Id: wvs-071.tex,v 1.2 2016/02/05 00:29:40 vsnyder Exp $
+@
+
+
+1.2
+log
+@A few trivial corrections
+@
+text
+@d1 1
+a1 4
+\documentclass[landscape]{slides}
+\usepackage[final]{epsfig}
+\usepackage[mathbf]{euler}
+%\usepackage{optima}
+a3 1
+\usepackage{pstricks}
+a7 3
+\usepackage[dvips,% pdftoolbar=false, pdfmenubar=false, 
+  pdfwindowui=false, pdffitwindow=true, pdfborder={0 0 0}]{hyperref}
+\usepackage[screen]{njlslides}
+d17 2
+a18 13
+%
+\renewcommand{\footerfont}{\tiny}
+\renewcommand{\slidetitlefont}{\Large\bfseries}
+%
+\newenvironment{smallitemize}{\par\begin{small}\begin{itemize}\vspace{2mm}}%
+   {\end{itemize}\end{small}}
+%
+\newpsobject{showgrid}{psgrid}{subgriddiv=1,griddots=10,gridlabels=6pt}
+%
+\newlength{\halfwidth}
+\setlength{\halfwidth}{4.5in}
+%
+\hypersetup{pdfborder={0 0 0}}
+d25 2
+a26 3
+\talkdate{22 February 2008}
+\email{van.snyder@@jpl.nasa.gov}
+\logo{\begin{center}\epsfig{file=eos_mls_logo_onpink.eps,width=1.0in}\end{center}}
+a29 1
+\maketitle
+d33 7
+a39 1
+\slidetitle[Quantities]{Quantities to be computed}
+d65 1
+a65 1
+\clearpage
+d69 1
+a69 1
+\slidetitle[Efficiencies]{Mie efficiencies}
+d93 1
+a93 1
+\clearpage
+d97 1
+a97 1
+\slidetitle[Hankel]{The Bessel and Hankel functions}
+d99 1
+d123 1
+a123 1
+\clearpage
+d127 1
+a127 1
+\slidetitle{The Bessel and Hankel functions (cont.)}
+d129 1
+d150 1
+a150 1
+\clearpage
+d154 1
+a154 1
+\slidetitle[Phase]{The integrated phase function}
+d187 1
+a187 1
+\clearpage
+d191 1
+a191 1
+\slidetitle[Legendre]{The associated Legendre function}
+d212 1
+a212 1
+\clearpage
+d216 1
+a216 1
+\slidetitle[Quadrature]{Quadratures}
+d235 1
+a235 1
+\clearpage
+d239 1
+a239 1
+\slidetitle{Quadratures (cont.)}
+d259 1
+a259 1
+\clearpage
+d263 1
+a263 1
+\slidetitle{Quadratures (cont.)}
+d272 1
+a272 1
+\clearpage
+d276 1
+a276 1
+\slidetitle[Results]{Plots of $P(\theta)$}
+d282 1
+a282 1
+{\parskip 0pt\hfill\includegraphics[scale=0.65,angle=90]{./wvs-071-plot.eps}\hfill}
+d285 1
+a285 1
+\clearpage
+d289 1
+a289 1
+\slidetitle[Derivatives]{Derivatives}
+d312 1
+a312 1
+\clearpage
+d316 1
+a316 1
+\slidetitle{Derivatives (cont.)}
+d338 1
+a338 1
+\clearpage
+d350 3
+d362 1
+a362 1
+% $Id: wvs-071.tex,v 1.1 2008/06/11 20:14:55 vsnyder Exp $
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d4 1
+a4 1
+\usepackage{optima}
+d6 2
+a7 1
+\usepackage{pstcol,pst-plot,pst-char,pst-node}
+d10 2
+a11 2
+\usepackage{moreverb}
+\usepackage{multicol}
+d76 2
+a77 2
+$N_1$, $N_2$, $\alpha$, $\mu$ and $\sigma$ depend upon temperature and IWC,
+but not on $\theta$ or $r$.
+d361 4
+a364 1
+% $Log: wvs-071r0.tex,v $
+d371 1
+a371 1
+% $Id: wvs-071r0.tex,v 1.1 2008/06/11 20:14:55 vsnyder Exp $
+@
+

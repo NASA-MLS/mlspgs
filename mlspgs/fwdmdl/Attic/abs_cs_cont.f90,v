@@ -1,0 +1,82 @@
+head	2.2;
+access;
+symbols
+	V1-04:2.1
+	V1-03:2.1
+	V1-02:2.1
+	JointForwardModel:2.1.0.2
+	V1-00:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.2
+date	2002.09.24.00.50.26;	author vsnyder;	state dead;
+branches;
+next	2.1;
+
+2.1
+date	2001.10.16.22.24.05;	author zvi;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.2
+log
+@Moved into create_beta as internal procedures.
+@
+text
+@module ABS_CS_CONT_M
+  implicit NONE
+  private
+  public :: ABS_CS_CONT
+!---------------------------- RCS Ident Info -------------------------------
+  CHARACTER (LEN=256) :: Id = &
+       "$Id: abs_cs_cont.f90,v 2.1 2001/10/16 22:24:05 zvi Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= &
+       "$RCSfile: abs_cs_cont.f90,v $"
+!---------------------------------------------------------------------------
+  integer, private, parameter :: RK = kind(0.0d0)
+contains
+
+! This function computes the general continuum contribution function
+
+  real(rk) Function ABS_CS_CONT (cont, temperature, pressure, frequency )
+
+    real(rk), intent(in) :: CONT(:)     ! continuum parameters
+    real(rk), intent(in) :: TEMPERATURE ! in Kelvin
+    real(rk), intent(in) :: PRESSURE    ! in mbar
+    real(rk), intent(in) :: FREQUENCY   ! in MegaHertz
+!
+    real(rk) :: THETA, FSQR
+!
+    theta = 300.0_rk / temperature
+    fsqr = frequency * frequency
+    abs_cs_cont = cont(1) * pressure * pressure * fsqr * (theta**cont(2))
+!
+  End function abs_cs_cont
+end module ABS_CS_CONT_M
+! $Log: abs_cs_cont.f90,v $
+! Revision 2.1  2001/10/16 22:24:05  zvi
+! General contiuum function
+!
+! Revision 1.1  2000/05/04 18:12:04  vsnyder
+! Initial conversion to Fortran 90
+@
+
+
+2.1
+log
+@General contiuum function
+@
+text
+@d7 1
+a7 1
+       "$Id: abs_cs_cont.f90,v 2.1 2001/10/16 14:45:02 zvi Exp $"
+d32 3
+@
+

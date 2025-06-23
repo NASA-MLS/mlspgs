@@ -1,0 +1,221 @@
+head	2.1;
+access;
+symbols
+	v5-02-NRT-19:2.1
+	v6-00:2.1
+	v5-02-NRT-18:2.1
+	v5-02:2.1
+	v5-01-NRT-17:2.1
+	v5-01-NRT-16:2.1
+	v5-01-NRT-15:2.1
+	v5-01-NRT-14:2.1
+	neuralnetworks-1-0:2.1.0.12
+	cfm-single-freq-0-1:2.1.0.10
+	v5-01:2.1
+	v5-00:2.1
+	v4-23-TA133:2.1.0.8
+	mus-emls-1-70:2.1.0.6
+	rel-1-0-englocks-work:2.1.0.4
+	VUMLS1-00:2.1
+	VPL1-00:2.1
+	V4-22-NRT-08:2.1
+	VAM1-00:2.1
+	V4-21:2.1.0.2
+	V4-13:2.1
+	V4-12:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.1
+date	2014.07.04.00.10.08;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Get_IEEE_NaN_m
+
+  use, intrinsic :: IEEE_Arithmetic, only: IEEE_Signaling_NaN, IEEE_Value, &
+    IEEE_Support_DataType
+  implicit NONE
+  private
+
+  public :: Fill_IEEE_NaN, Get_IEEE_NaN
+
+  ! Fill up to 26 arguments, all the same rank, with NaN
+  ! It might seem to be nice to use an elemental subroutine, but
+  ! that would require all the arguments to be conforming, i.e., all
+  ! either scalars, or arrays of the same shape.
+  interface Fill_IEEE_NaN
+    module procedure Fill_IEEE_NaN_D_0D, Fill_IEEE_NaN_S_0D
+    ! The next eight are needed because Intel ifort 14.0.0.080
+    ! refused to compile the elemental ones.
+    module procedure Fill_IEEE_NaN_D_1D, Fill_IEEE_NaN_S_1D
+    module procedure Fill_IEEE_NaN_D_2D, Fill_IEEE_NaN_S_2D
+    module procedure Fill_IEEE_NaN_D_3D, Fill_IEEE_NaN_S_3D
+    module procedure Fill_IEEE_NaN_D_4D, Fill_IEEE_NaN_S_4D
+  end interface
+
+  interface Get_IEEE_NaN
+    module procedure Get_IEEE_NaN_D, Get_IEEE_NaN_S
+  end interface
+
+  !------------------------------- RCS Ident Info ------------------------------
+  character(len=*), parameter, private :: ModuleName = &
+    & "$RCSfile: Allocate_Deallocate.f90,v $"
+  private :: not_used_here 
+  !-----------------------------------------------------------------------------
+
+contains
+
+! Intel ifort 14.0.0.080 refused to compile these, claiming that
+! IEEE_Support_DataType is not pure.
+!   elemental subroutine Fill_IEEE_NaN_D ( X )
+!     double precision, intent(out) :: X
+!     X = merge ( IEEE_Value(x,IEEE_Signaling_NaN), 0.0d0, &
+!               & IEEE_Support_DataType(x) )
+!   end subroutine Fill_IEEE_NaN_D
+! 
+!   elemental subroutine Fill_IEEE_NaN_S ( X )
+!     real, intent(out) :: X
+!     X = merge ( IEEE_Value(x,IEEE_Signaling_NaN), 0.0e0, &
+!               & IEEE_Support_DataType(x) )
+!   end subroutine Fill_IEEE_NaN_S
+
+  subroutine Fill_IEEE_NaN_D_0D ( A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z )
+    integer, parameter :: RK = kind(0.0d0)
+    real(rk), intent(out) :: &
+      & A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z
+    optional :: &
+      & B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z
+    include 'Fill_NaN.f9h'
+  end subroutine Fill_IEEE_NaN_D_0D
+
+  subroutine Fill_IEEE_NaN_D_1D ( A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z )
+    integer, parameter :: RK = kind(0.0d0)
+    real(rk), dimension(:), intent(out) :: &
+      & A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z
+    optional :: &
+      & B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z
+    include 'Fill_NaN.f9h'
+  end subroutine Fill_IEEE_NaN_D_1D
+
+  subroutine Fill_IEEE_NaN_D_2D ( A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z )
+    integer, parameter :: RK = kind(0.0d0)
+    real(rk), dimension(:,:), intent(out) :: &
+      & A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z
+    optional :: &
+      & B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z
+    include 'Fill_NaN.f9h'
+  end subroutine Fill_IEEE_NaN_D_2D
+
+  subroutine Fill_IEEE_NaN_D_3D ( A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z )
+    integer, parameter :: RK = kind(0.0d0)
+    real(rk), dimension(:,:,:), intent(out) :: &
+      & A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z
+    optional :: &
+      & B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z
+    include 'Fill_NaN.f9h'
+  end subroutine Fill_IEEE_NaN_D_3D
+
+  subroutine Fill_IEEE_NaN_D_4D ( A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z )
+    integer, parameter :: RK = kind(0.0d0)
+    real(rk), dimension(:,:,:,:), intent(out) :: &
+      & A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z
+    optional :: &
+      & B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z
+    include 'Fill_NaN.f9h'
+  end subroutine Fill_IEEE_NaN_D_4D
+
+  subroutine Fill_IEEE_NaN_S_0D ( A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z )
+    integer, parameter :: RK = kind(0.0e0)
+    real(rk), intent(out) :: &
+      & A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z
+    optional :: &
+      & B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z
+    include 'Fill_NaN.f9h'
+  end subroutine Fill_IEEE_NaN_S_0D
+
+  subroutine Fill_IEEE_NaN_S_1D ( A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z )
+    integer, parameter :: RK = kind(0.0e0)
+    real(rk), dimension(:), intent(out) :: &
+      & A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z
+    optional :: &
+      & B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z
+    include 'Fill_NaN.f9h'
+  end subroutine Fill_IEEE_NaN_S_1D
+
+  subroutine Fill_IEEE_NaN_S_2D ( A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z )
+    integer, parameter :: RK = kind(0.0e0)
+    real(rk), dimension(:,:), intent(out) :: &
+      & A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z
+    optional :: &
+      & B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z
+    include 'Fill_NaN.f9h'
+  end subroutine Fill_IEEE_NaN_S_2D
+
+  subroutine Fill_IEEE_NaN_S_3D ( A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z )
+    integer, parameter :: RK = kind(0.0e0)
+    real(rk), dimension(:,:,:), intent(out) :: &
+      & A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z
+    optional :: &
+      & B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z
+    include 'Fill_NaN.f9h'
+  end subroutine Fill_IEEE_NaN_S_3D
+
+  subroutine Fill_IEEE_NaN_S_4D ( A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z )
+    integer, parameter :: RK = kind(0.0e0)
+    real(rk), dimension(:,:,:,:), intent(out) :: &
+      & A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z
+    optional :: &
+      & B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z
+    include 'Fill_NaN.f9h'
+  end subroutine Fill_IEEE_NaN_S_4D
+
+  double precision function Get_IEEE_NaN_D ( X )
+    double precision, intent(in) :: X
+    Get_IEEE_NaN_D = merge ( IEEE_Value(x,IEEE_Signaling_NaN), 0.0d0, &
+                           & IEEE_Support_DataType(x) )
+  end function Get_IEEE_NaN_D
+
+  real function Get_IEEE_NaN_S ( X )
+    real, intent(in) :: X
+    Get_IEEE_NaN_S = merge ( IEEE_Value(x,IEEE_Signaling_NaN), 0.0e0, &
+                           & IEEE_Support_DataType(x) )
+  end function Get_IEEE_NaN_S
+
+  ! ------------------------------------------------  Not_Used_Here  -----
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: Allocate_Deallocate.f90,v 2.46 2014/06/30 23:24:17 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Get_IEEE_NaN_m
+
+! $Log: Allocate_Deallocate.f90,v $
+@

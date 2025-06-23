@@ -1,0 +1,72 @@
+head	1.2;
+access;
+symbols
+	V0_1:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2000.11.22.23.07.31;	author zvi;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2000.05.04.18.12.06;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@New version
+@
+text
+@module SCSPLINE_DER_M
+  use S_HUNT_M, only: HUNT
+  use S_PCSPL_M, only: PCSPL
+  implicit NONE
+  private
+  public :: SCSPLINE_DER, CSPLINE_DER
+  interface CSPLINE_DER; module procedure SCSPLINE_DER; end interface
+
+!---------------------------- RCS Ident Info -------------------------------
+  CHARACTER (LEN=256) :: Id = &
+       "$Id: scspline_der_m.f90,v 1.1 2000/05/04 18:12:06 vsnyder Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= &
+       "$RCSfile: scspline_der_m.f90,v $"
+!---------------------------------------------------------------------------
+
+  integer, parameter :: RK = kind(0.0e0)
+!
+contains
+
+  subroutine SCSPLINE_DER ( XIN, XOUT, YIN, YOUT, DYOUT, NIN, NOUT )
+    include 'cspline_der.f9h'
+  end subroutine SCSPLINE_DER
+end module SCSPLINE_DER_M
+
+! $Log: scspline_der_m.f90,v $
+! Revision 1.1  2000/05/04 18:12:06  vsnyder
+! Initial conversion to Fortran 90
+!
+@
+
+
+1.1
+log
+@Initial conversion to Fortran 90
+@
+text
+@d11 1
+a11 1
+       "$Id: SCSPLINE_DER_M,v 1.12 2000/02/08 19:54:57 vsnyder Exp $"
+d25 4
+a28 1
+! $Log: SCSPLINE_DER_M,v $
+@
+

@@ -1,0 +1,89 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.10
+	cfm-single-freq-0-1:1.1.0.8
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.6
+	mus-emls-1-70:1.1.0.4
+	rel-1-0-englocks-work:1.1.0.2
+	VUMLS1-00:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2017.02.09.23.34.44;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@First commit
+@
+text
+@!divert(-1)
+; $Id: outputstate.l2cf,v 1.52 2013/10/18 22:49:38 pwagner Exp $
+;; Except for special sids or l2pc runs, quantities are stored
+;; using DirectWrite commands in Join sections during the loop of chunks
+;; The remaining Output section task would then be to catenate the
+;; split DGG/DGM files and Copy any standard products to individual
+;; files.
+!divert!dnl
+;; Skip all output if requested to do so
+!ifdef(flagSuppressRegularOutput,{
+!clearDivert(!joinedDGGDivert,!joinedDGMDivert)
+},{
+!ifdef(flagAvoidDirectWrite,{
+;; Do any standard outputs?
+!include(outputstdprods-uars.l2cf)
+},{
+;; otherwise it was done with direct write; so must Copy
+!include(copystdprods-uars.l2cf)
+})
+
+begin Output
+;; Now output the L2CF (but only if asked)
+!ifdef(flagWriteL2CFToDGM,{
+Output, type=l2cf, $
+  file='!DGMFileName'})
+
+;; Now output the L2CF template file (but only if asked)
+!ifdef(flagWriteL2CFTemplateToDGM,{
+Copy, inputFile='l2cf.template', inputtype=ascii, type=l2aux, $
+  file='!DGMFileName'})
+
+;; Now output the master ident file (but only if asked)
+!ifdef(flagWriteIdentToDGM,{
+Copy, inputFile='master.ident', inputtype=ascii, type=l2aux, $
+  file='!DGMFileName'})
+
+;; These days pretty well everything is written with directWrite
+;; statements, except maybe matrices
+
+;; Now output any averaging kernel.
+!ifdef(matrixFilenameWord,{},{!define(matrixFilenameWord,{Full})})
+!ifdef(flagGotMatrices,{
+Output,  quantities=[ !undivert(!matrixDivert) ], type=l2pc, $
+  file='!outpathl2mtx/MLS-UARS_L2MTX-!matrixFilenameWord_!l2version_!day.h5'
+  })
+})
+end Output
+!divert(-1)
+; $Log: outputstate.l2cf,v $
+!divert!dnl
+@

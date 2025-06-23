@@ -1,0 +1,165 @@
+head	1.2;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2014.01.14.00.09.32;	author vsnyder;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2013.10.24.22.41.14;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Revised LR doesn't need it
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Immediate_Transitions
+
+  implicit NONE
+  private
+  public :: IMTRCS
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: imtrcs.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  subroutine IMTRCS (IBASIS, IPTR)
+
+    use FIRST_SETS, only: FIRST_PT        ! heads of first sets
+    use LISTS, only: ADDLTL, COPYL, ITEM, NEXT
+    use New_Context_Set, only: NEWCS
+    use NULLABLE_M, only: NULLABLE        ! nullable nonterminals
+    use SCRCOM, only: SCRTCH
+    use S3, only: PRDIND, PRODCN
+    implicit NONE
+
+  ! Construct the immediate transition context set for the
+  ! configuration at SCRTCH(IBASIS).  Return the pointer to it in
+  ! IPTR.
+
+  ! The immediate transition context set is the set consisting of the
+  ! THEADS of the substring of symbols in the production following the
+  ! symbol after the dot, unioned with the context set of the
+  ! production if that string is null or potentially null.
+
+    integer IBASIS, IPTR
+
+  ! *****     External References     ********************************
+
+  ! ADDLTL  adds a list to a list (Set Union operation).
+  ! COPYL   copies a list.
+  ! NEWCS   prepares a new context set.
+
+  ! *****     Local Variables     ************************************
+
+  ! I       is a loop induction variable and subscript.
+  ! ICH     receives the value of ICHNGE from ADDLTL.
+  ! IEND    is the upper limit for I.
+  ! IP      is the pointer to the list being constructed.
+  ! ISTART  is the lower limit for I.
+
+    integer I, ICH, IEND, IP, ISTART
+
+  ! *****     Procedures     *****************************************
+
+    i = scrtch(ibasis)
+
+  ! If there is no substring just return the context set for the
+  ! production.
+
+    if (scrtch(ibasis+1) >= prdind(i+1)-prdind(i)-1) then
+      iptr = scrtch(ibasis+2)
+      item(iptr) = item(iptr) + 1
+      return
+    end if
+
+  ! The set consists of the THEAD set of the symbol unioned with the
+  ! THEAD set of the following substring if the symbol is nullable.
+  ! If the rest of the RHS is nullable, the set includes the context
+  ! set of the production.
+
+    istart = scrtch(ibasis+1) + prdind(i) + 1
+    iend = prdind(i+1) - 1
+    call copyl (first_pt(prodcn(istart)), ip)
+    if ( nullable(prodcn(istart)) ) then
+      do i = istart+1, iend
+        call addltl (first_pt(prodcn(i)), ip, ich)
+        if ( .not. nullable(prodcn(i)) ) go to 10
+      end do
+
+      ! Add the context set of the production.
+
+      call addltl (next(scrtch(ibasis+2)), ip, ich)
+    end if
+
+  ! Create a new reference to the context set with IP elements.
+
+  10 continue
+    call newcs (IP, IPTR)
+
+    return
+
+  end subroutine IMTRCS
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: imtrcs.f90,v 1.1 2013/10/24 22:41:14 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Immediate_Transitions
+
+! $Log: imtrcs.f90,v $
+! Revision 1.1  2013/10/24 22:41:14  vsnyder
+! Initial commit
+!
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d20 1
+a20 1
+       "$RCSfile: parser.f90,v $"
+d107 1
+a107 1
+       "$Id: parser.f90,v 2.29 2013/10/02 01:35:46 vsnyder Exp $"
+d116 4
+a119 1
+! $Log: $
+@
+

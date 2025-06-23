@@ -1,0 +1,472 @@
+head	2.7;
+access;
+symbols
+	v5-02-NRT-19:2.7
+	v6-00:2.7
+	v5-02-NRT-18:2.7
+	v5-02:2.7
+	v5-01-NRT-17:2.7
+	v5-01-NRT-16:2.7
+	v5-01-NRT-15:2.7
+	v5-01-NRT-14:2.7
+	neuralnetworks-1-0:2.7.0.10
+	cfm-single-freq-0-1:2.7.0.8
+	v5-01:2.7
+	v5-00:2.7
+	v4-23-TA133:2.7.0.6
+	mus-emls-1-70:2.7.0.4
+	rel-1-0-englocks-work:2.7.0.2
+	VUMLS1-00:2.7
+	VPL1-00:2.7
+	V4-22-NRT-08:2.7
+	whdrel10_merged_to_here:2.7
+	merge_whdrel10_from_here:2.6.6.1
+	TAG_TRUNK_AFTER_PW_CHANGES:2.6
+	TAG_TRUNK_BEFORE_PW_CHANGES:2.6
+	VAM1-00:2.6
+	whd-rel-1-0:2.6.0.6
+	V4-21:2.6.0.4
+	V4-13:2.6
+	V4-12:2.6
+	V4-11:2.6
+	V4-10:2.6
+	V3-43:2.6
+	M4-00:2.6
+	V3-41:2.6
+	V3-40-PlusGM57:2.6.0.2
+	V2-24-NRT-04:2.6
+	V3-33:2.6
+	V2-24:2.6
+	V3-31:2.6
+	V3-30-NRT-05:2.6
+	cfm-01-00:2.6
+	V3-30:2.6
+	V3-20:2.6
+	V3-10:2.6
+	V2-23-NRT-02:2.6
+	V2-23:2.6
+	V2-22-NRT-01:2.6
+	V2-22:2.6
+	V2-21:2.6
+	V2-20:2.6
+	V2-11:2.6
+	V2-10:2.6
+	V2-00:2.6
+	V1-51:2.5
+	V1-50:2.5
+	V1-45:2.5
+	V1-44:2.5
+	V1-43:2.5
+	V1-42:2.4
+	V1-41:2.4
+	V1-32:2.4
+	V1-40:2.4
+	V1-31:2.4
+	V1-30:2.4
+	V1-13:2.3
+	V1-12:2.3
+	V1-11:2.3
+	V1-10:2.3
+	newfwm-feb03:2.3.0.2
+	V1-04:2.2
+	V1-03:2.2
+	V1-02:2.2
+	V1-00:2.2
+	newfwm-sep01:2.1.0.2
+	V0-7:2.1
+	V0-5-Level2:2.1
+	V0-5-SIPS:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.7
+date	2016.03.15.22.17.59;	author whdaffer;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2005.06.23.18.41.35;	author pwagner;	state Exp;
+branches
+	2.6.6.1;
+next	2.5;
+
+2.5
+date	2004.05.14.15.59.11;	author perun;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2003.08.15.14.25.04;	author perun;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2003.01.31.18.13.34;	author perun;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2002.03.29.20.18.34;	author perun;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.02.23.20.46.27;	author perun;	state Exp;
+branches;
+next	;
+
+2.6.6.1
+date	2015.10.09.10.21.38;	author whdaffer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.7
+log
+@Merged whd-rel-1-0 back onto main branch. Most changes
+are to comments, but there's some modification to Calibration.f90
+and MLSL1Common to support some new modules: MLSL1Debug and SnoopMLSL1.
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=============================================================================
+MODULE Interpolation   ! Interpolation routines
+!=============================================================================
+
+  USE MLSL1Common, ONLY: r8
+
+  IMPLICIT NONE
+
+  PRIVATE
+
+  PUBLIC :: QuadInterpW
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: Interpolation.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+  ! This module contains interpolation routines for the MLSL1 program
+
+CONTAINS
+
+  SUBROUTINE QuadInterpW (tVec, &    ! in, time vector
+       &                  apoVec, &  ! in, weight vector
+       &                  qualVec, & ! in, quality vector
+       &                  time, &    ! in, of interpolation
+       &                  nVec, &    ! in, number of vectors
+       &                  comVec, &  ! out
+       &                  errmul, &  ! out
+       &                  status)    ! out
+
+    !! Perform weighted quadratic interpolation
+
+    IMPLICIT NONE
+
+    INTEGER,  INTENT(in)  :: nVec          ! dimension of other arrays
+    REAL(r8), INTENT(in)  :: tVec(nVec)    ! time, as MIF index
+    REAL(r8), INTENT(in)  :: apoVec(nVec)  ! weight
+    INTEGER,  INTENT(in)  :: qualVec(nVec) ! quality
+    REAL(r8), INTENT(in)  :: time          ! The number of the MIF
+    REAL(r8), INTENT(out) :: comVec(nVec) 
+    REAL(r8), INTENT(out) :: errmul
+    INTEGER,  INTENT(out) :: status
+
+    !! ==================== LOCALS =========================
+
+    REAL(r8) :: sx1, sx2, sx3, sx4
+    REAL(r8) :: apoVec_x(nVec), tVec_x(nVec)
+    REAL(r8) :: x1(nVec), x2(nVec), x3(nVec), x4(nVec)
+
+    status = 0   ! OK so far
+
+    !! Check for minimum data size:
+
+    IF (nVec <= 2) THEN
+       status = 1    ! Not enough points
+       RETURN
+    ENDIF
+
+    !! Check for minimum valid quality mask
+
+    IF (SUM (qualVec) <= 3) THEN
+       status = 2   ! Not enough valid data
+       RETURN
+    ENDIF
+
+    tVec_x = tVec - time
+    apoVec_x = apoVec * qualVec
+
+    x1 = tVec_x * apoVec_x
+    x2 = tVec_x * x1
+    x3 = tVec_x * x2
+    x4 = tVec_x * x3
+
+    sx1 = SUM (x1)
+    sx2 = SUM (x2)
+    sx3 = SUM (x3)
+    sx4 = SUM (x4)
+
+    ! See equation D.4 in the Level 1 Algorithm Theoretical Basis document
+    comVec = apoVec_x * (sx2 * sx4  -  sx3 * sx3) - &
+         & sx1 * (x1 * sx4  -  x2 * sx3) + &
+         & sx2 * (x1 * sx3  -  x2 * sx2)
+
+    comVec = comVec / SUM (comVec)
+    errmul = SUM (comVec * comVec)
+
+  END SUBROUTINE QuadInterpW
+
+!=============================================================================
+  logical function not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id: Interpolation.f90,v 2.6.6.1 2015/10/09 10:21:38 whdaffer Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+END MODULE Interpolation
+!=============================================================================
+
+! $Log: Interpolation.f90,v $
+! Revision 2.6.6.1  2015/10/09 10:21:38  whdaffer
+! checkin of continuing work on branch whd-rel-1-0
+!
+! Revision 2.6  2005/06/23 18:41:35  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.5  2004/05/14 15:59:11  perun
+! Version 1.43 commit
+!
+! Revision 2.4  2003/08/15 14:25:04  perun
+! Version 1.2 commit
+!
+! Revision 2.3  2003/01/31 18:13:34  perun
+! Version 1.1 commit
+!
+! Revision 2.2  2002/03/29 20:18:34  perun
+! Version 1.0 commit
+!
+! Revision 2.1  2001/02/23 20:46:27  perun
+! Version 0.5 commit
+!
+@
+
+
+2.6
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d26 1
+a26 1
+       "$RCSfile: $"
+d34 8
+a41 2
+  SUBROUTINE QuadInterpW (tVec, apoVec, qualVec, time, nVec, comVec, errmul, &
+       status)
+d47 8
+a54 8
+    INTEGER :: nVec
+    REAL(r8) :: tVec(nVec)
+    REAL(r8) :: apoVec(nVec)
+    INTEGER :: qualVec(nVec)
+    REAL(r8) :: time
+    REAL(r8) :: comVec(nVec)
+    REAL(r8) :: errmul
+    INTEGER :: status
+d91 4
+a94 2
+    comVec = apoVec_x * (sx2 * sx4 - sx3 * sx3) - sx1 * (x1 * sx4 - x2 * sx3) &
+         + sx2 * (x1 * sx3 - x2 * sx2)
+d105 1
+a105 1
+       "$Id: $"
+d114 6
+@
+
+
+2.6.6.1
+log
+@checkin of continuing work on branch whd-rel-1-0
+@
+text
+@d26 1
+a26 1
+       "$RCSfile: Interpolation.f90,v $"
+d34 2
+a35 8
+  SUBROUTINE QuadInterpW (tVec, &    ! in, time vector
+       &                  apoVec, &  ! in, weight vector
+       &                  qualVec, & ! in, quality vector
+       &                  time, &    ! in, of interpolation
+       &                  nVec, &    ! in, number of vectors
+       &                  comVec, &  ! out
+       &                  errmul, &  ! out
+       &                  status)    ! out
+d41 8
+a48 8
+    INTEGER,  INTENT(in)  :: nVec          ! dimension of other arrays
+    REAL(r8), INTENT(in)  :: tVec(nVec)    ! time, as MIF index
+    REAL(r8), INTENT(in)  :: apoVec(nVec)  ! weight
+    INTEGER,  INTENT(in)  :: qualVec(nVec) ! quality
+    REAL(r8), INTENT(in)  :: time          ! The number of the MIF
+    REAL(r8), INTENT(out) :: comVec(nVec) 
+    REAL(r8), INTENT(out) :: errmul
+    INTEGER,  INTENT(out) :: status
+d85 2
+a86 4
+    ! See equation D.4 in the Level 1 Algorithm Theoretical Basis document
+    comVec = apoVec_x * (sx2 * sx4  -  sx3 * sx3) - &
+         & sx1 * (x1 * sx4  -  x2 * sx3) + &
+         & sx2 * (x1 * sx3  -  x2 * sx2)
+d97 1
+a97 1
+       "$Id: Interpolation.f90,v 2.6 2005/06/23 18:41:35 pwagner Exp $"
+a105 3
+! Revision 2.6  2005/06/23 18:41:35  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+@
+
+
+2.5
+log
+@Version 1.43 commit
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d24 5
+a28 5
+  !---------------------------- RCS Ident Info -------------------------------
+  CHARACTER (LEN=256) :: Id = &
+       "$Id: Interpolation.f90,v 2.4 2003/08/15 14:25:04 perun Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile: Interpolation.f90,v $"
+  !---------------------------------------------------------------------------
+d94 8
+d106 3
+@
+
+
+2.4
+log
+@Version 1.2 commit
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+d18 1
+a18 1
+       "$Id: Interpolation.f90,v 2.3 2003/01/31 18:13:34 perun Exp $"
+a64 5
+    WHERE (apoVec == 1)
+       apoVec_x = 1
+    ELSEWHERE
+       apoVec_x = 0
+    ENDWHERE
+d90 3
+@
+
+
+2.3
+log
+@Version 1.1 commit
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
+d18 1
+a18 1
+       "$Id: Interpolation.f90,v 2.2 2002/03/29 20:18:34 perun Exp $"
+a43 2
+    INTEGER :: astat
+    INTEGER, SAVE :: nsize = 0
+d45 2
+a46 2
+    REAL(r8), ALLOCATABLE, DIMENSION(:), SAVE :: apoVec_x, tVec_x
+    REAL(r8), ALLOCATABLE, DIMENSION(:), SAVE :: x1, x2, x3, x4
+a63 18
+    !! Allocate local arrays:
+    
+    IF (nsize /= nVec) THEN
+       DEALLOCATE (tVec_x, STAT=astat)
+       ALLOCATE (tVec_x(nVec))
+       DEALLOCATE (apoVec_x, STAT=astat)
+       ALLOCATE (apoVec_x(nVec))
+       DEALLOCATE (x1, STAT=astat)
+       ALLOCATE (x1(nVec))
+       DEALLOCATE (x2, STAT=astat)
+       ALLOCATE (x2(nVec))
+       DEALLOCATE (x3, STAT=astat)
+       ALLOCATE (x3(nVec))
+       DEALLOCATE (x4, STAT=astat)
+       ALLOCATE (x4(nVec))
+       nsize = nVec
+    ENDIF
+
+d95 3
+@
+
+
+2.2
+log
+@Version 1.0 commit
+@
+text
+@d12 4
+a15 1
+  PRIVATE :: Id, ModuleName
+d18 1
+a18 1
+       "$Id: Interpolation.f90,v 2.1 2001/02/23 20:46:27 perun Exp $"
+d47 1
+a47 1
+    REAL(r8), ALLOCATABLE, DIMENSION(:),SAVE :: apoVec_x, tVec_x
+a107 4
+!!$    print '(A/, 20(i4))', 'tVec: ', INT(tVec)
+!!$    print  '(A/, 20(i4))', 'apoVec: ',  INT(apoVec)
+!!$    print  '(A/, 20(i4))', 'qualVec: ', INT(qualVec)
+!!$stop "interp"
+d115 3
+@
+
+
+2.1
+log
+@Version 0.5 commit
+@
+text
+@d8 1
+a8 1
+  USE MLSL1Common
+d15 2
+a16 2
+       "$Id:$"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile: $"
+d115 4
+a118 1
+! $Log: $
+@
+

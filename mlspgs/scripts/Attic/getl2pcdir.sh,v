@@ -1,0 +1,50 @@
+head	1.2;
+access;
+symbols
+	V1-13:1.1
+	V1-12:1.1
+	V1-11:1.1
+	V1-10:1.1
+	newfwm-feb03:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2003.05.06.20.48.53;	author livesey;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2002.06.26.16.16.41;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@First version
+@
+text
+@#! /bin/sh
+# This shell script prints the name of the l2pc directory, which is either
+# /scratch/livesey or if /scratch is not available, is /bigdata/livesey/auraintercomparison
+if [ -d /scratch/livesey ]; then
+    echo /scratch/livesey
+else
+    echo /bigdata/livesey/v1.0.1
+fi
+@
+
+
+1.1
+log
+@First version
+@
+text
+@@
+

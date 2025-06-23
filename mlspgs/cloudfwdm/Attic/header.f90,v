@@ -1,0 +1,89 @@
+head	1.3;
+access;
+symbols
+	newfwm-sep01:1.2.0.2
+	V0-7:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.3
+date	2001.09.20.23.40.41;	author jonathan;	state dead;
+branches;
+next	1.2;
+
+1.2
+date	2001.07.25.23.44.00;	author jonathan;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.07.25.17.59.34;	author jonathan;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@*** empty log message ***
+@
+text
+@      SUBROUTINE HEADER (H)
+
+!=====================================================================
+!     J.JIANG, MARCH 8, 2000
+!=====================================================================
+
+      INTEGER :: H
+!---------------------------------------------------------------------
+
+      IF(H .EQ. 1) THEN
+         PRINT*,' '
+         PRINT*,'============================================'
+         PRINT*,'  >>>>>> START CLOUD FORWARD MODEL <<<<<<<  '
+         PRINT*,'============================================'
+         PRINT*,' '
+         PRINT*,'INPUT MODEL ATMOSPHERE'
+      ELSE IF (H .EQ. 2) THEN
+         PRINT*,' '
+         PRINT*,'COMPUTE CLEAR-SKY EMISSIONS'
+      ELSE IF (H .EQ. 3) THEN
+         PRINT*,' '
+         PRINT*,'COMPUTE CLOUD SCATTERING'
+      ELSE IF (H .EQ. 4) THEN
+         PRINT*,' '
+         PRINT*,'START RADIATIVE TRANSFER CALCULATION...'
+      ELSE
+         PRINT*,' '
+         PRINT*,'COMPLETE !'
+      ENDIF
+
+      RETURN
+      END
+
+! $Log: header.f,v      
+@
+
+
+1.2
+log
+@new f90 version of cloudfwm, jonathan
+@
+text
+@@
+
+
+1.1
+log
+@new .f90 version, jonathan
+@
+text
+@d7 1
+a7 1
+      INTEGER H
+@
+

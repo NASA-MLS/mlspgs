@@ -1,0 +1,182 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.6
+	cfm-single-freq-0-1:1.1.0.4
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2019.02.15.17.22.13;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@First commit
+@
+text
+@#!/bin/sh
+# --------------- l2auxdump_batch.sh help
+# l2auxdump_batch.sh
+# l2auxdumps the files in all the subdirectories of each arg
+# to check if the maxval of the named dataset is less than 1
+# If it is < 1, it outputs the namee of that file
+# l2auxdump_batch.sh dir1 .. [dirn]
+
+#     O p t i o n s
+#    -dryrun          Merely echo the commands that would be executed
+#    -ds dataset      dataset to be replaced
+#                      (defaults to 
+#                       "R1A:118.B22D:PT.S0.DACS-4 noRadsPerMIF FinalPtan")
+#    -f command       Use command instead of l2auxdump as DUMPER
+#    -v               operate verbosely
+
+# Bugs and limitations
+# (1) You have read permission to dir1
+# (2) DUMPER and REECHO exist and are executables
+# (3) di1 tc. are the year directories within an l2aux version
+#     ---- (typical usage) ----
+# First: cd to the relevant l2aux version superdirectory
+#    cd  /data/mustard/emls/l2aux/vMUS01.50
+# Second: launch tis command
+#   ~/mlspgs/util/l2auxdump_batch.sh -v \
+#   -ds "R1A:118.B22D:PT.S0.DACS-4 noRadsPerMIF FinalPtan" \
+#   2004 2005 2006 2007 2008 2009 2010 2011 2012 2013 2014 2015 2016 2017 2018
+# --------------- End l2auxdump_batch.sh help
+
+# Copyright 2019, by the California Institute of Technology. ALL
+# RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+# commercial use must be negotiated with the Office of Technology Transfer
+# at the California Institute of Technology.
+
+# This software may be subject to U.S. export control laws. By accepting this
+# software, the user agrees to comply with all applicable U.S. export laws and
+# regulations. User has the responsibility to obtain export licenses, or other
+# export authority as may be required before exporting such information to
+# foreign countries or providing access to foreign persons.
+
+# "$Id: reecho.sh,v 1.11 2013/07/02 20:19:46 pwagner Exp $"
+#------------------------------- Main Program ------------
+
+#****************************************************************
+#                                                               *
+#                  * * * Main Program  * * *                    *
+#                                                               *
+#                                                               *
+#	The entry point where control is given to the script    *
+#****************************************************************
+#
+debug=1
+#     ^  -- set this to 1 if worried
+
+# Some annoying warnings come from H5EDIT unless 
+# we set the following environment variable
+HDF5_DISABLE_VERSION_CHECK=2
+export HDF5_DISABLE_VERSION_CHECK
+
+me="$0"
+my_name=l2auxdump_batch.sh
+I=l2auxdump_batch
+dryrun="no"
+verbose="no"
+DUMPER=l2auxdump
+REECHO=/software/toolkit/mlstools64/reecho.sh
+more_opts="yes"
+ds="R1A:118.B22D:PT.S0.DACS-4 noRadsPerMIF FinalPtan"
+while [ "$more_opts" = "yes" ] ; do
+
+    case "$1" in
+
+    -dryrun )
+	    dryrun="yes"
+	    shift
+       ;;
+    -f )
+	    DUMPER="$2"
+	    shift
+	    shift
+       ;;
+    -ds )
+	    ds="$2"
+	    shift
+	    shift
+       ;;
+    -v )
+	    verbose="yes"
+	    shift
+       ;;
+    -h | -help )
+       sed -n '/'$my_name' help/,/End '$my_name' help/ p' $me \
+           | sed -n 's/^.//p' | sed '1 d; $ d'
+       exit
+	     ;;
+    * )
+       more_opts="no"
+       ;;
+    esac
+done
+
+# We need REECHO and DUMPER; are they there?
+if [ ! -x "$REECHO" ]
+then
+  echo "Sorry: $REECHO is not a valid command"
+  exit 1
+elif [ ! -x "$DUMPER" ]
+then
+  echo "Sorry: $DUMPER is not a valid command"
+  exit 1
+fi
+
+# We must start with pwd in a useable directory
+# E.g., /testing/workspace/pwagner/mustard/emls/l2aux/vMUS01.60
+old_dir=`pwd`
+for i
+do
+  cd $i
+  days=`/bin/ls `
+  #days=001
+  for day in $days
+  do
+    cd $day
+    # ls
+    thefile=`$REECHO -last -escape '\*DGM\*.h5'`
+    if [ "$dryrun" = "yes" ]
+    then
+      echo $DUMPER -max -d "$ds" $thefile
+      v=`$DUMPER -max -d "$ds" $thefile`
+      tv=`echo $v | sed 's/\..*$//'`
+      echo "number $tv"
+    else
+      v=`$DUMPER -max -d "$ds" $thefile`
+      tv=`echo $v | sed 's/\..*$//'`
+      if [ "$tv" -lt 1 ]
+      then
+        echo $thefile
+      fi
+    fi
+    # ls
+    cd ..
+  done
+  cd $old_dir
+done
+exit
+# $Log: reecho.sh,v $
+@

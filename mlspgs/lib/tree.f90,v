@@ -1,0 +1,2412 @@
+head	2.33;
+access;
+symbols
+	v5-02-NRT-19:2.33
+	v6-00:2.33
+	v5-02-NRT-18:2.33
+	v5-02:2.33
+	v5-01-NRT-17:2.33
+	v5-01-NRT-16:2.33
+	v5-01-NRT-15:2.33
+	v5-01-NRT-14:2.33
+	neuralnetworks-1-0:2.33.0.6
+	cfm-single-freq-0-1:2.33.0.4
+	v5-01:2.33
+	v5-00:2.33
+	v4-23-TA133:2.33.0.2
+	mus-emls-1-70:2.32.0.4
+	rel-1-0-englocks-work:2.32.0.2
+	VUMLS1-00:2.32
+	VPL1-00:2.32
+	V4-22-NRT-08:2.32
+	VAM1-00:2.32
+	V4-21:2.31.0.2
+	V4-13:2.31
+	V4-12:2.31
+	V4-11:2.31
+	V4-10:2.29
+	V3-43:2.13
+	M4-00:2.16
+	V3-41:2.13
+	V3-40-PlusGM57:2.13.0.2
+	V2-24-NRT-04:2.10
+	V3-33:2.14
+	V2-24:2.10
+	V3-31:2.14
+	V3-30-NRT-05:2.14
+	cfm-01-00:2.14
+	V3-30:2.13
+	V3-20:2.13
+	V3-10:2.12
+	V2-23-NRT-02:2.10
+	V2-23:2.10
+	V2-22-NRT-01:2.10
+	V2-22:2.10
+	V2-21:2.10
+	V2-20:2.10
+	V2-11:2.10
+	V2-10:2.10
+	V2-00:2.9
+	V1-51:2.7
+	V1-50:2.7
+	V1-45:2.7
+	V1-44:2.7
+	V1-43:2.6
+	V1-42:2.6
+	V1-41:2.6
+	V1-32:2.6
+	V1-40:2.6
+	V1-31:2.6
+	V1-30:2.6
+	V1-13:2.5
+	V1-12:2.5
+	V1-11:2.5
+	V1-10:2.5
+	newfwm-feb03:2.5.0.2
+	V1-04:2.4
+	V1-03:2.4
+	V1-02:2.4
+	V1-00:2.4
+	newfwm-sep01:2.4.0.2
+	V0-7:2.4
+	V0-5-Level2:2.4
+	V0-5-SIPS:2.4;
+locks; strict;
+comment	@# @;
+
+
+2.33
+date	2018.08.03.20.25.29;	author vsnyder;	state Exp;
+branches;
+next	2.32;
+
+2.32
+date	2015.09.17.22.47.29;	author pwagner;	state Exp;
+branches;
+next	2.31;
+
+2.31
+date	2014.05.30.02.43.38;	author vsnyder;	state Exp;
+branches;
+next	2.30;
+
+2.30
+date	2014.05.20.22.16.57;	author vsnyder;	state Exp;
+branches;
+next	2.29;
+
+2.29
+date	2014.02.21.19.21.31;	author vsnyder;	state Exp;
+branches;
+next	2.28;
+
+2.28
+date	2014.01.11.01.41.02;	author vsnyder;	state Exp;
+branches;
+next	2.27;
+
+2.27
+date	2014.01.08.21.07.58;	author vsnyder;	state Exp;
+branches;
+next	2.26;
+
+2.26
+date	2013.12.12.02.01.17;	author vsnyder;	state Exp;
+branches;
+next	2.25;
+
+2.25
+date	2013.11.26.22.46.52;	author vsnyder;	state Exp;
+branches;
+next	2.24;
+
+2.24
+date	2013.10.09.01.09.42;	author vsnyder;	state Exp;
+branches;
+next	2.23;
+
+2.23
+date	2013.10.02.01.31.06;	author vsnyder;	state Exp;
+branches;
+next	2.22;
+
+2.22
+date	2013.09.30.23.59.06;	author vsnyder;	state Exp;
+branches;
+next	2.21;
+
+2.21
+date	2013.09.30.23.03.04;	author vsnyder;	state Exp;
+branches;
+next	2.20;
+
+2.20
+date	2013.09.24.23.09.15;	author vsnyder;	state Exp;
+branches;
+next	2.19;
+
+2.19
+date	2013.09.19.23.25.57;	author vsnyder;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2013.09.12.03.12.46;	author vsnyder;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2013.08.28.00.36.21;	author pwagner;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2012.03.15.22.46.37;	author vsnyder;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2011.04.18.19.26.11;	author vsnyder;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2010.04.28.00.13.47;	author pwagner;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2009.09.29.23.22.44;	author vsnyder;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2009.06.23.18.25.44;	author pwagner;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2008.09.04.00.45.51;	author vsnyder;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2006.07.28.02.00.17;	author vsnyder;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2006.02.23.00.56.43;	author vsnyder;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2005.06.22.17.25.51;	author pwagner;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2004.05.28.23.14.35;	author vsnyder;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2003.05.12.20.54.16;	author vsnyder;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2002.10.08.00.09.15;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2001.04.05.00.55.27;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2001.02.23.00.33.11;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2001.02.07.18.40.22;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2000.10.11.18.33.25;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.33
+log
+@Repair two comments
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module TREE
+
+  use error_handler, only: compiler, error_intro
+  use machine, only: io_error
+  use printIt_m, only: printItOut, MLSMSG_Error
+  use output_m, only: newline, output
+  use string_table, only: display_string, get_string, lookup_and_insert
+  use symbol_table, only: set_symbol, symbol
+  use symbol_types, only: treeNode
+  use toggles, only: con, toggle
+  use tree_types, only: first_tree_node, last_tree_node, n_null, tree_init, &
+    & tree_map
+  implicit NONE
+  private
+
+  public :: ADD_SONS_FROM_STACK, ALLOCATE_TREE, BUILD_TREE, COPY_TO_STACK
+  public :: DEALLOCATE_TREE, DECORATE, DECORATION, DECORATION_TX_TX, DELETE_TREE
+  public :: DELETE_TREE_STACK, DUMP_STACK, DUMP_TOP_STACK, DUMP_TOP_STACK_NAME
+  public :: DUMP_TREE_NODE, DUMP_TREE_NODE_NAME, GET_TREE_NODE_NAME, INIT_TREE
+  public :: INSERT_NODE, NODE_ID, NODE_IN_TREE, NODE_KIND, NSONS, POP, PRINT_SUBTREE
+  public :: PUSH_PSEUDO_TERMINAL, REPLACE_SONS, SOURCE_REF, STACK_FILE
+  public :: STACK_SOURCE_REF,STACK_SUB_ROSA, STACK_SUBTREE, STACK_SUBTREE_TX
+  public :: SUB_ROSA, SUBTREE, THE_FILE, TREE_NODE_NAME,TREE_TEXT, TX, WHERE
+
+  ! Tree node kinds:
+  integer, public, parameter :: PSEUDO = 0   ! Tree node is pseudo terminal
+  integer, public, parameter :: INTERNAL = 1 ! Tree node has sons
+  integer, public, parameter :: MORE = 2     ! Used to link tree after
+                                             !  transformations
+  integer, public, parameter :: EMPTY = 3    ! Empty node
+
+  ! How many nodes in the tree stack?
+  integer, public, save :: N_TREE_STACK
+  ! Index of the "null tree node"
+  integer, public, parameter :: NULL_TREE = 0
+
+  interface Add_Sons_From_Stack
+    module procedure Add_Sons_From_Stack_I, Add_Sons_From_Stack_TX
+  end interface
+
+  interface Copy_To_Stack
+    module procedure Copy_To_Stack_I, Copy_To_Stack_TX
+  end interface
+
+  interface Decorate
+    module procedure Decorate_I, Decorate_TX, Decorate_TX_TX
+  end interface
+
+  interface Decoration
+    module procedure Decoration_I, Decoration_TX
+  end interface
+
+  interface Delete_Tree
+    module procedure Delete_Tree_I, Delete_Tree_TX
+  end interface
+
+  interface Dump_Tree_Node
+    module procedure Dump_Tree_Node_I, Dump_Tree_Node_TX
+  end interface
+
+  interface Dump_Tree_Node_Name
+    module procedure Dump_Tree_Node_Name_I, Dump_Tree_Node_Name_TX
+  end interface
+
+  interface Get_Tree_Node_Name
+    module procedure Get_Tree_Node_Name_I, Get_Tree_Node_Name_TX
+  end interface
+
+  interface Insert_Node
+    module procedure Insert_Node_I, Insert_Node_TX
+  end interface
+
+  interface Node_ID
+    module procedure Node_ID_I, Node_ID_TX
+  end interface
+
+  interface Node_Kind
+    module procedure Node_Kind_I, Node_Kind_TX
+  end interface
+
+  interface Nsons
+    module procedure Nsons_I, Nsons_TX
+  end interface
+
+  interface Print_Subtree
+    module procedure Print_Subtree_I, Print_Subtree_TX
+  end interface
+
+  interface Push_Pseudo_Terminal
+    module procedure Push_Pseudo_Terminal_Integer, Push_Pseudo_Terminal_Where
+  end interface
+
+  interface Replace_Sons
+    module procedure Replace_Sons_I, Replace_Sons_TX
+  end interface
+
+  interface Source_Ref
+    module procedure Source_Ref_I, Source_Ref_TX
+  end interface
+
+  interface Sub_Rosa
+    module procedure Sub_Rosa_I, Sub_Rosa_TX
+  end interface
+
+  interface Subtree
+    module procedure Subtree_I, Subtree_TX
+  end interface
+
+  interface The_File
+    module procedure The_File_I, The_File_TX
+  end interface
+
+  interface Tree_Node_Name
+    module procedure Tree_Node_Name_I, Tree_Node_Name_TX
+  end interface
+
+  interface Where
+    module procedure Where_I, Where_TX
+  end interface
+
+  type :: TX              ! For tree node index, to give strong typing
+    integer :: I = 0      ! The real tree node index
+  end type TX
+
+  type :: TREE_NODE
+    integer :: NODE       ! What kind of tree node
+    integer :: DECOR      ! Decoration, an integer or tree node index
+    integer :: FILE = 0   ! String index of file
+    integer :: NSONS      ! How many sons
+    integer :: SOURCE = 0 ! 256*line + column
+    integer :: KIND       ! PSEUDO, INTERNAL, MORE or OTHER
+    integer :: LINK       ! Sub_rosa if PSEUDO, Left_son if INTERNAL, next
+                          !  if MORE, not used if EMPTY
+  end type TREE_NODE
+
+  type(TREE_NODE), save, allocatable :: THE_TREE(:)
+  integer, save :: TREE_POINT ! Position in tree of last node added.
+  integer, save :: TREE_SP    ! Next available space in the orchard stack.
+
+  ! Parameters for tree error codes.  See TREE_ERROR
+  integer, parameter :: IS_PSEUDO = 1
+  integer, parameter :: NO_MORE_SONS = IS_PSEUDO + 1
+  integer, parameter :: NOT_PSEUDO = NO_MORE_SONS + 1
+  integer, parameter :: NO_TREE_SPACE = NOT_PSEUDO + 1
+  integer, parameter :: UNDERFLOW = NO_TREE_SPACE + 1
+
+  integer, save, private :: TREE_TEXTS(FIRST_TREE_NODE:LAST_TREE_NODE)
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: tree.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  subroutine ADD_SONS_FROM_STACK_I ( T, N )
+  ! Add the top N tree nodes on the stack as new sons of T, after the last
+  ! son already present.  Pop the N nodes from the stack.
+    integer, intent(in) :: T            ! The tree node to get the new sons
+    integer, intent(in) :: N            ! How many sons to get
+    integer :: I                        ! Loop inductor
+    logical :: IN_PLACE                 ! "new nodes can be stored adjacent
+                                        !  to old ones"
+    integer :: NS                       ! NSONS(T)
+    integer :: S                        ! Temp
+    if ( tree_point >= tree_sp ) then
+      call tree_error ( no_tree_space, null_tree )
+!     call double_tree
+    end if
+    ns = nsons(t)
+    s = subtree(ns,t)
+    if ( s == tree_point ) then
+      call pop_to_tree ( n )
+      call set_nsons ( t, ns+n )
+    else
+    ! determine whether the next "n" cells are "empty".  We assume
+    ! we're not going to run off the end of the tree -- Replace_Sons
+    ! should decrease tree_point if it would make empties at the end of
+    ! the tree space.
+      in_place = .true.
+      i = 1
+      do
+        if ( i > n ) then
+      exit
+        end if
+        s = s + 1
+        i = i + 1
+        if ( the_tree(s)%kind /= empty ) then
+          in_place = .false.
+      exit
+        end if
+      end do
+      s = subtree(ns,t)
+      if ( in_place ) then
+      ! there are "n" "empty" cells adjacent to the tree -- use them
+        do i = 1, n
+          s = s + 1
+          the_tree(s) = the_tree(tree_sp+i-1)
+        end do
+        n_tree_stack = n_tree_stack - n
+        tree_sp = tree_sp + n
+        call set_nsons ( t, ns+n )
+      else
+      ! move the last son to the end of the tree space
+        tree_point = tree_point + 1
+        the_tree(tree_point) = the_tree(s)
+        ! change the last son to a "more" node
+        the_tree(s)%kind = more
+        the_tree(s)%link  = tree_point
+        the_tree(s)%nsons  = n+1
+        ! pop the additional sons from the stack
+        call pop_to_tree ( n )
+      end if ! in_place
+    end if
+  end subroutine ADD_SONS_FROM_STACK_I
+
+  subroutine ADD_SONS_FROM_STACK_TX ( T, N )
+  ! Add the top N tree nodes on the stack as new sons of T, after the last
+  ! son already present.  Pop the N nodes from the stack.
+    type(tx), intent(in) :: T           ! The tree node to get the new sons
+    integer, intent(in) :: N            ! How many sons to get
+    call add_sons_from_stack ( t%i, n )
+  end subroutine ADD_SONS_FROM_STACK_TX
+
+  subroutine ALLOCATE_TREE ( N_TREE, STATUS )
+  ! Allocate a TREE array with N_TREE elements
+    integer, intent(in) :: N_TREE
+    integer, intent(out), optional :: STATUS ! from ALLOCATE
+    integer :: STAT
+    if ( allocated(the_tree) ) deallocate ( the_tree )
+    allocate ( the_tree(0:n_tree), stat=stat )
+    if ( stat /= 0 ) then
+      if ( present(status) ) then
+        status = stat
+        return
+      end if
+      call io_error ( 'TREE%ALLOCATE_TREE-E- Unable to allocate tree', &
+        stat, ' ' )
+      call PrintItOut ( 'TREE%ALLOCATE_TREE-E- Unable to allocate tree', &
+        & 1, exitStatus=1 )
+    end if
+    call init_tree
+  end subroutine ALLOCATE_TREE
+
+  subroutine BUILD_TREE ( NEW_NODE, NSONS, DECORATION, Trace )
+  ! Pop NSONS nodes from the orchard stack to the tree.  Build a new tree
+  ! node of type NEW_NODE over them.  Leave the new node on the stack at
+  ! TREE_SP+1.
+    integer, intent(in) :: NEW_NODE
+    integer, intent(in) :: NSONS
+    integer, intent(in), optional :: DECORATION
+    integer, intent(in), optional :: Trace
+    integer :: FILE, LEFT_SON, MY_DECOR, SOURCE_REF
+    my_decor = null_tree
+    if ( present(decoration) ) my_decor = decoration
+    if ( tree_sp + nsons > ubound(the_tree,1) ) then
+      call tree_error ( underflow, null_tree )
+    end if
+    if ( nsons == 0 ) then; file = 0; source_ref = 0
+    else
+      file = the_tree(tree_sp+nsons)%file
+      source_ref = the_tree(tree_sp+nsons)%source
+    end if
+    left_son = tree_point + 1
+    call pop_to_tree ( nsons )
+    ! Push new node onto the stack
+    if ( tree_sp <= tree_point ) then
+      call tree_error ( no_tree_space, null_tree )
+!     call double_tree
+    end if
+                                   ! node      decor   file, nsons  source
+    the_tree(tree_sp) = tree_node( new_node, my_decor, file, nsons, source_ref, &
+                                 !    kind   left_son
+                                   internal, left_son )
+    if ( present(trace) ) then
+      if ( trace > 0 ) then
+        call output ( 'Build ' )
+        call print_subtree ( tree_sp, 0, .true. )
+      end if
+    end if
+    tree_sp = tree_sp - 1     ! Stack push
+    n_tree_stack = n_tree_stack + 1 - nsons
+  end subroutine BUILD_TREE
+
+  subroutine COPY_TO_STACK_I ( T, K, M )
+  ! Copy sons k..m of t to the top of the stack
+    integer, intent(in) :: T            ! Parent of nodes to be copied
+    integer, intent(in) :: K            ! First son to be copied
+    integer, intent(in) :: M            ! Last son to be copied
+    integer :: I                        ! Loop inductor
+    integer :: S                        ! SUBTREE(I,T)
+    do i = k, m
+      s = subtree( i, t )
+      the_tree(tree_sp) = the_tree(s)
+      tree_sp = tree_sp - 1             ! Push stack
+      n_tree_stack = n_tree_stack + 1
+    end do
+  end  subroutine COPY_TO_STACK_I
+
+  subroutine COPY_TO_STACK_TX ( T, K, M )
+  ! Copy sons k..m of t to the top of the stack
+    type(tx), intent(in) :: T           ! Parent of nodes to be copied
+    integer, intent(in) :: K            ! First son to be copied
+    integer, intent(in) :: M            ! Last son to be copied
+    call copy_to_stack ( t%i, k, m )
+  end subroutine COPY_TO_STACK_TX
+
+  subroutine DEALLOCATE_TREE
+    deallocate( the_tree )
+  end subroutine DEALLOCATE_TREE
+
+  subroutine DECORATE_I ( WHERE, DECORATION )
+  ! Decorate tree node at WHERE with DECORATION
+    integer, intent(in) :: WHERE
+    integer, intent(in) :: DECORATION
+    the_tree(where) % decor = decoration
+    if ( toggle(con) ) then
+    ! in Fortran 2000:
+    ! write ( prunit, '("Decorate ", i0, ": ")', advance="no" ) where
+      call output ( "Decorate " )
+      call output ( where )
+      call output ( ': ' )
+      call dump_tree_node ( where, 0 )
+    ! write ( prunit, '(" (", i0, ")")' ) decoration ! in Fortran 2000
+      call output ( ' (' )
+      call output ( decoration )
+      call output ( ')', advance='yes' )
+    end if
+  end subroutine DECORATE_I
+
+  subroutine DECORATE_TX ( WHERE, DECORATION )
+  ! Decorate tree node at WHERE with DECORATION
+    type(tx), intent(in) :: WHERE
+    integer, intent(in) :: DECORATION
+    call decorate ( where%i, decoration )
+  end subroutine DECORATE_TX
+
+  subroutine DECORATE_TX_TX ( WHERE, DECORATION )
+  ! Decorate tree node at WHERE with DECORATION
+    type(tx), intent(in) :: WHERE
+    type(tx), intent(in) :: DECORATION
+    call decorate ( where%i, decoration%i )
+  end subroutine DECORATE_TX_TX
+
+  pure integer function DECORATION_I ( WHERE ) result ( Decoration )
+  ! Return the decoration of the tree node at WHERE
+    integer, intent(in) :: WHERE
+    decoration = the_tree(where) % decor
+  end function DECORATION_I
+
+  pure integer function DECORATION_TX ( WHERE ) result ( Decoration )
+  ! Return the decoration of the tree node at WHERE
+    type(tx), intent(in) :: WHERE
+    decoration = the_tree(where%i) % decor
+  end function DECORATION_TX
+
+  pure type(tx) function DECORATION_TX_TX ( WHERE ) result ( Decoration )
+  ! Return the decoration of the tree node at WHERE
+    type(tx), intent(in) :: WHERE
+    decoration%i = the_tree(where%i) % decor
+  end function DECORATION_TX_TX
+
+  subroutine DELETE_TREE_I ( WHERE )
+  ! Discard everything at WHERE and above in the tree
+    integer, intent(in) :: WHERE
+    tree_point = where - 1
+  end subroutine DELETE_TREE_I
+
+  subroutine DELETE_TREE_TX ( WHERE )
+  ! Discard everything at WHERE and above in the tree
+    type(tx), intent(in) :: WHERE
+    tree_point = where%i - 1
+  end subroutine DELETE_TREE_TX
+
+  subroutine DELETE_TREE_STACK
+  ! Discard everything in the tree stack
+    tree_sp = ubound(the_tree,1)
+    n_tree_stack = 0
+  end subroutine DELETE_TREE_STACK
+
+  subroutine DUMP_STACK ( Subtrees )
+    ! Dump the tree stack.  If Subtrees is present and true, dump trees
+    ! rooted in the stack.
+    logical, intent(in), optional :: Subtrees
+    integer :: Depth, I
+    logical :: My_Trees
+    my_trees = .false.
+    if ( present(subtrees) ) my_trees = subtrees
+    do i = tree_sp+1, ubound(the_tree,1)
+      if ( my_trees ) then
+        depth = 0
+        call print_subtree ( i, depth )
+      else
+        call output ( i, 5 )
+        call output ( ':' )
+        call dump_tree_node ( i, 0, advance='yes' )
+      end if
+    end do
+  end subroutine DUMP_STACK
+
+  subroutine DUMP_TOP_STACK ( INDENT, ADVANCE )
+    ! Indent INDENT spaces, then dump the top node of the tree stack
+    integer, intent(in) :: INDENT
+    character(len=*), intent(in), optional :: ADVANCE
+    call dump_tree_node ( tree_sp+1, indent, advance )
+  end subroutine DUMP_TOP_STACK
+
+  subroutine DUMP_TOP_STACK_NAME ( ADVANCE, BEFORE )
+    ! Dump the name of the top node of the tree stack
+    character(len=*), intent(in), optional :: ADVANCE
+    character(len=*), intent(in), optional :: BEFORE
+    call display_string ( tree_texts(the_tree(tree_sp+1) % node), &
+                        & advance=advance, before=before )
+  end subroutine DUMP_TOP_STACK_NAME
+
+  subroutine DUMP_TREE_NODE_I ( WHERE, INDENT, ADVANCE, TYPE_NAME )
+  ! Indent INDENT spaces, then dump the tree node at WHERE
+    integer, intent(in) :: WHERE
+    integer, intent(in) :: INDENT
+    character(len=*), intent(in), optional :: ADVANCE
+    optional :: Type_Name
+    interface
+      integer function Type_Name ( Decor )
+      ! Return the string index to print for the decoration
+        integer, intent(in) :: Decor ! Tree(where)%Decor
+      end function Type_Name
+    end interface
+    integer :: I
+    do i = 1, indent; call output ( '.' ); end do
+    select case ( the_tree(where) % kind )
+    case ( empty )
+      call output ( 'empty' )
+    case ( more )
+      call output ( the_tree(where) % nsons, before='more, nsons = ' )
+      call output ( the_tree(where) % link, before=', next = ' )
+    case ( pseudo, internal )
+      call dump_tree_node_name ( where )
+      if ( the_tree(where) % kind == pseudo ) then
+        call display_string ( sub_rosa(where), before=' ' )
+      else
+        call output ( the_tree(where) % nsons, before=', ' )
+        call output ( ' sons' )
+      end if
+      if ( the_tree(where)%decor /= null_tree ) then
+        call output ( the_tree(where) % decor, before=' decor=' )
+        i = 0
+        if ( present(type_name) .and. the_tree(where)%kind == internal ) &
+          & i = type_name(the_tree(where)%decor)
+        if ( i /= 0 ) call display_string ( i, before=' type=' )
+      end if
+    end select
+    if ( the_tree(where)%source /= 0 ) then
+      call output ( the_tree(where)%source/256, before=' line ' )
+      call output ( mod(the_tree(where)%source,256), before=' column ' )
+    end if
+    if ( the_tree(where)%file /= 0 ) &
+      & call display_string ( the_tree(where)%file, before=' in ' )
+    call output ( '', advance=advance )
+  end subroutine DUMP_TREE_NODE_I
+
+  subroutine DUMP_TREE_NODE_TX ( WHERE, INDENT, ADVANCE, TYPE_NAME )
+  ! Indent INDENT spaces, then dump the tree node at WHERE
+    type(tx), intent(in) :: WHERE
+    integer, intent(in) :: INDENT
+    character(len=*), intent(in), optional :: ADVANCE
+    optional :: TYPE_NAME
+    interface
+      integer function Type_Name ( Decor )
+      ! Return the string index to print for the decoration
+        integer, intent(in) :: Decor ! Tree(where)%Decor
+      end function Type_Name
+    end interface
+    call dump_tree_node ( where%i, indent, advance, type_name=type_name )
+  end subroutine DUMP_TREE_NODE_TX
+
+  subroutine DUMP_TREE_NODE_NAME_I ( WHERE, ADVANCE, BEFORE )
+  ! Dump the name of the tree node at WHERE
+    integer, intent(in) :: WHERE
+    character(len=*), intent(in), optional :: ADVANCE
+    character(len=*), intent(in), optional :: BEFORE
+    call display_string ( tree_texts(the_tree(where) % node), advance=advance, &
+                        & before=before )
+  end subroutine DUMP_TREE_NODE_NAME_I
+
+  subroutine DUMP_TREE_NODE_NAME_TX ( WHERE, ADVANCE, BEFORE )
+  ! Dump the name of the tree node at WHERE
+    type(tx), intent(in) :: WHERE
+    character(len=*), intent(in), optional :: ADVANCE
+    character(len=*), intent(in), optional :: BEFORE
+    call display_string ( tree_texts(the_tree(where%i) % node), advance=advance, &
+                        & before=before )
+  end subroutine DUMP_TREE_NODE_NAME_TX
+
+  subroutine GET_TREE_NODE_NAME_I ( WHERE, STRING )
+  ! Get the name of the tree node at WHERE
+    integer, intent(in) :: WHERE
+    character(len=*), intent(out), optional :: STRING
+    call get_string ( tree_texts(the_tree(where) % node), string )
+  end subroutine GET_TREE_NODE_NAME_I
+
+  subroutine GET_TREE_NODE_NAME_TX ( WHERE, STRING )
+  ! Get the name of the tree node at WHERE
+    type(tx), intent(in) :: WHERE
+    character(len=*), intent(out), optional :: STRING
+    call get_string ( tree_texts(the_tree(where%i) % node), string )
+  end subroutine GET_TREE_NODE_NAME_TX
+
+  subroutine INIT_TREE
+    logical :: FOUND     ! Did lookup_and_insert find it?
+    integer :: I         ! Loop inductor
+    integer :: WHERE     ! Where did lookup_and_insert find it?
+    do i = first_tree_node, last_tree_node
+      call tree_init (i)
+      call lookup_and_insert ( where, found, .false. )
+      ! It's OK if it found one -- maybe it's a terminal text, too.
+      if ( .not. found ) call set_symbol ( where, treeNode )
+      tree_texts(i) = where
+    end do
+    tree_point = null_tree
+    call delete_tree_stack
+                                      ! node  decor   file nsons source kind
+    the_tree(tree_point) = tree_node( n_null, null_tree, 0,   0, 0, internal, &
+                                      ! left_son
+                                      null_tree )
+  end subroutine INIT_TREE
+
+  subroutine INSERT_NODE_I ( NEW_NODE, T, K, M )
+  ! Insert a node having ID = newNode as the k'th son of t.  Make the sons
+  ! k..m of t sons of newNode.  Reduce the number of sons of t to
+  ! n-k+m-1.  Don't use this procedure during parsing:  It checks nTree,
+  ! not treesp!
+    integer, intent(in) :: NEW_NODE     ! ID of the node to be inserted
+    integer, intent(in) :: T            ! The parent of the inserted node
+    integer, intent(in) :: K            ! Which son of T NEW_NODE is to be
+    integer, intent(in) :: M            ! Sons k..m of T become sons of
+                                        !  NEW_NODE
+    integer :: N                        ! NSONS(T)
+    n = nsons(t)
+    if ( k <= 0 .or. k >= m .or. m >= n ) then
+      call tree_error ( no_more_sons, t )
+    end if
+    call copy_to_stack ( t, k, m )
+    n = m - k + 1
+    call build_tree ( new_node, n )
+    call replace_sons ( t, m, k, tree_sp + 1 )
+    call pop ( 1 )
+  end subroutine INSERT_NODE_I
+
+  subroutine INSERT_NODE_TX ( NEW_NODE, T, K, M )
+  ! Insert a node having ID = newNode as the k'th son of t.  Make the sons
+  ! k..m of t sons of newNode.  Reduce the number of sons of t to
+  ! n-k+m-1.  Don't use this procedure during parsing:  It checks nTree,
+  ! not treesp!
+    integer, intent(in) :: NEW_NODE     ! ID of the node to be inserted
+    type(tx), intent(in) :: T           ! The parent of the inserted node
+    integer, intent(in) :: K            ! Which son of T NEW_NODE is to be
+    integer, intent(in) :: M            ! Sons k..m of T become sons of
+                                        !  NEW_NODE
+    call insert_node ( new_node, t%i, k, m )
+  end subroutine INSERT_NODE_TX
+
+  pure integer function NODE_ID_I ( WHERE ) result ( Node_ID )
+  ! Return the node id of the tree node at WHERE
+    integer, intent(in) :: WHERE
+    node_id = the_tree(where) % node
+  end function NODE_ID_I
+
+  pure integer function NODE_ID_TX ( WHERE ) result ( Node_ID )
+  ! Return the node id of the tree node at WHERE
+    type(tx), intent(in) :: WHERE
+    node_id = the_tree(where%i) % node
+  end function NODE_ID_TX
+
+  function Node_in_tree ( Tree ) result ( inside )
+  ! Return TRUE if the node num is a valid index into the tree array
+    integer, intent(in) :: Tree ! Tree node index tested
+    logical :: inside
+    inside = ( Tree >= lbound(the_tree, 1) .and. Tree <= ubound(the_tree, 1) )
+  end function Node_in_tree
+
+  pure integer function NODE_KIND_I ( WHERE ) result ( Node_Kind )
+  ! Return the kind of the tree node at WHERE
+    integer, intent(in) :: WHERE
+    node_kind = the_tree(where) % kind
+  end function NODE_KIND_I
+
+  pure integer function NODE_KIND_TX ( WHERE ) result ( Node_Kind )
+  ! Return the kind ofthe tree node at WHERE
+    type(tx), intent(in) :: WHERE
+    node_kind = the_tree(where%i) % kind
+  end function NODE_KIND_TX
+
+  pure integer function NSONS_I ( WHERE ) result ( Nsons )
+  ! Return the node id of the tree node at WHERE
+    integer, intent(in) :: WHERE
+    nsons = the_tree(where) % nsons
+  end function NSONS_I
+
+  pure integer function NSONS_TX ( WHERE ) result ( Nsons )
+  ! Return the node id of the tree node at WHERE
+    type(tx), intent(in) :: WHERE
+    nsons = the_tree(where%i) % nsons
+  end function NSONS_TX
+
+  subroutine POP ( N )
+  ! Delete the top N nodes from the orchard stack
+    integer, intent(in) :: N
+    tree_sp = tree_sp + n
+    n_tree_stack = n_tree_stack - n
+  end subroutine POP
+
+  recursive subroutine PRINT_SUBTREE_I ( SUBROOT, DEPTH, DUMP_DECOR, TYPE_NAME )
+  ! Print the subtree rooted at SUBROOT, starting with DEPTH leading
+  ! dots.  Display the decoration of each tree node if DUMP_DECOR is
+  ! present and .true.
+    integer, intent(in) :: SUBROOT
+    integer, intent(in) :: DEPTH
+    logical, intent(in), optional :: DUMP_DECOR
+    optional :: Type_Name
+    interface
+      integer function Type_Name ( Decor )
+      ! Return the string index to print for the decoration
+        integer, intent(in) :: Decor ! Tree(where)%Decor
+      end function Type_Name
+    end interface
+    integer :: I, MyRoot
+    myRoot = subroot
+    if ( myRoot < 0 ) myRoot = tree_sp + 1
+    call output ( myRoot, 5 )
+    call output ( ':' )
+    call dump_tree_node ( myRoot, depth, type_name=type_name )
+    if ( present(dump_decor) ) then
+      if ( dump_decor ) then
+      ! In Fortran 2000:
+      ! write ( prunit, '(" (", i0, ") ', advance="no") decoration(myRoot)
+        call output ( ' (' )
+        call output ( decoration(myRoot) )
+        call output ( ') ')
+      end if
+    end if
+    call newLine
+    if ( the_tree(myRoot)%kind == internal ) then
+      do i = 1, nsons(myRoot)
+        call print_subtree ( subtree(i,myRoot), depth+1, dump_decor, &
+          & type_name=type_name )
+      end do
+    end if
+  end subroutine PRINT_SUBTREE_I
+
+  recursive subroutine PRINT_SUBTREE_TX ( SUBROOT, DEPTH, DUMP_DECOR, TYPE_NAME )
+  ! Print the subtree rooted at SUBROOT, starting with DEPTH leading
+  ! dots.  Display the decoration of each tree node if DUMP_DECOR is
+  ! present and .true.
+    type(tx), intent(in) :: SUBROOT
+    integer, intent(in) :: DEPTH
+    logical, intent(in), optional :: DUMP_DECOR
+    interface
+      integer function Type_Name ( Decor )
+      ! Return the string index to print for the decoration
+        integer, intent(in) :: Decor ! Tree(where)%Decor
+      end function Type_Name
+    end interface
+    call print_subtree ( subroot%i, depth, dump_decor, type_name )
+  end subroutine PRINT_SUBTREE_TX
+
+  subroutine PUSH_PSEUDO_TERMINAL_INTEGER ( SUB_ROSA, SOURCE, DECOR, FILE, &
+    & CLASS )
+  ! Push the pseudo-terminal with string index SUB_ROSA, source SOURCE
+  ! and decoration DECOR onto the tree stack.  If DECOR is absent, use
+  ! null_tree.
+    integer, intent(in) :: SUB_ROSA
+    integer, intent(in) :: SOURCE
+    integer, intent(in), optional :: DECOR
+    integer, intent(in), optional :: FILE
+    integer, intent(in), optional :: CLASS ! of string
+    integer :: MY_CLASS, MY_DECOR, MY_FILE
+    my_decor = null_tree
+    if ( present(decor) ) my_decor = decor
+    my_file = 0
+    if ( present(file) ) my_file = file
+    my_class = symbol(sub_rosa)
+    if ( present(class) ) my_class = class
+
+    if ( tree_sp <= tree_point ) then
+      call tree_error ( no_tree_space, null_tree )
+!     call double_tree
+    end if
+                                 ! node                   decor
+    the_tree(tree_sp) = tree_node( tree_map(my_class), my_decor, &
+                             ! file nsons  source  kind    sub_rosa
+                               my_file, 0, source, pseudo, sub_rosa )
+    tree_sp = tree_sp - 1     ! push tree stack
+    n_tree_stack = n_tree_stack + 1
+  end subroutine PUSH_PSEUDO_TERMINAL_INTEGER
+
+  subroutine PUSH_PSEUDO_TERMINAL_WHERE (SUB_ROSA, WHERE, DECOR, &
+    & CLASS )
+  ! Push the pseudo-terminal with string index SUB_ROSA, source SOURCE
+  ! and decoration DECOR onto the tree stack.  If DECOR is absent, use
+  ! null_tree.
+    use Lexer_Core, only: Where_t
+    integer, intent(in) :: SUB_ROSA
+    type(where_t), intent(in) :: WHERE
+    integer, intent(in), optional :: DECOR
+    integer, intent(in), optional :: CLASS ! of string
+    call push_pseudo_terminal ( sub_rosa, where%source, decor, where%file, class )
+  end subroutine PUSH_PSEUDO_TERMINAL_WHERE
+
+  subroutine REPLACE_SONS_I ( T, K, M, U )
+  ! Replace sons k .. m of t with the tree node at u.  This will leave an
+  ! empty space if k < m.
+    integer, intent(in) :: T            ! The tree node whose sons are to
+                                        ! be replaced
+    integer, intent(in) :: K            ! The first son of T to be replaced
+    integer, intent(in) :: M            ! The last son of T to be replaced
+    integer, intent(in) :: U            ! The new tree node
+    integer :: I, J                     ! Tree nodes to copy to and from
+    integer :: MK, MM                   ! my K, my M
+    integer :: N, NN                    ! NSONS(T), new value for NSONS(T)
+    i = subtree(k,t)
+    the_tree(i) = the_tree(u)
+    mk = k
+    mm = m
+    if ( mm < mk ) then
+      mm = mk
+    else if ( mk < m ) then
+      n = nsons(t)
+      nn = n - ( mm-mk )
+      do while ( mm < n )
+        mk = mk + 1
+        mm = mm + 1
+        i = subtree( mk, t )
+        j = subtree( mm, t )
+        the_tree(i) = the_tree(j)
+      end do
+      mk = mk + 1
+      i = subtree( mk, t )
+      do while ( mk <= n )
+      ! we can't just use "i = subtree(k,t)" because that
+      !wouldn't convert the "more" nodes to "empty" nodes. *)
+        if ( the_tree(i)%kind == more ) then
+          the_tree(i)%kind = empty
+          i = the_tree(i)%link
+        end if
+        the_tree(i)%kind = empty
+        i = i + 1
+        mk = mk + 1
+      end do
+      call set_nsons( t, nn )
+      ! decrease treept if we make empties at the end of the tree
+      do while ( the_tree(tree_sp)%kind == empty )
+        tree_sp = tree_sp - 1
+      end do
+    end if
+  end subroutine REPLACE_SONS_I
+
+  subroutine REPLACE_SONS_TX ( T, K, M, U )
+  ! Replace sons k .. m of t with the tree node at u.  This will leave an
+  ! empty space if k < m.
+    type(tx), intent(in) :: T           ! The tree node whose sons are to
+                                        ! be replaced
+    integer, intent(in) :: K            ! The first son of T to be replaced
+    integer, intent(in) :: M            ! The last son of T to be replaced
+    type(tx), intent(in) :: U           ! The new tree node
+    call replace_sons ( t%i, k, m, u%i )
+  end subroutine REPLACE_SONS_TX
+
+  pure integer function SOURCE_REF_I ( WHERE ) result ( Source_Ref )
+  ! Return the SOURCE field of the tree node at WHERE
+    integer, intent(in) :: WHERE
+    source_ref = the_tree(where) % source
+  end function SOURCE_REF_I
+
+  pure integer function SOURCE_REF_TX ( WHERE ) result ( Source_Ref )
+  ! Return the SOURCE field of the tree node at WHERE
+    type(tx), intent(in) :: WHERE
+    source_ref = the_tree(where%i) % source
+  end function SOURCE_REF_TX
+
+  pure integer function STACK_FILE ( ) result ( The_File )
+  ! Return the SOURCE field of the top stack frame
+    the_file = the_tree(tree_sp+1) % file
+  end function STACK_FILE
+
+  pure integer function STACK_SOURCE_REF ( ) result ( Source_Ref )
+  ! Return the SOURCE field of the top stack frame
+    source_ref = the_tree(tree_sp+1) % source
+  end function STACK_SOURCE_REF
+
+  integer function STACK_SUBTREE ( WHICH )
+  ! Return the root of the WHICH'th subtree of the node atop the stack
+    integer, intent(in) :: WHICH
+    stack_subtree = subtree(which, tree_sp+1)
+  end function STACK_SUBTREE
+
+  type(tx) function STACK_SUBTREE_TX ( WHICH )
+  ! Return the root of the WHICH'th subtree of the node atop the stack
+    integer, intent(in) :: WHICH
+    stack_subtree_tx%i = subtree(which, tree_sp+1)
+  end function STACK_SUBTREE_TX
+
+  integer function STACK_SUB_ROSA ( )
+  ! Return the sub_rosa index of the top stack frame
+    stack_sub_rosa = the_tree(tree_sp+1) % link
+  end function STACK_SUB_ROSA
+
+  integer function SUB_ROSA_I ( WHERE ) result ( Sub_Rosa )
+  ! Return the sub_rosa string index from the tree node at WHERE
+    integer, intent(in) :: WHERE
+    if ( the_tree(where) % kind /= pseudo ) then
+      call tree_error ( not_pseudo, where )
+    end if
+    sub_rosa = the_tree(where) % link
+  end function SUB_ROSA_I
+
+  integer function SUB_ROSA_TX ( WHERE )
+  ! Return the sub_rosa string index from the tree node at WHERE
+    type(tx), intent(in) :: WHERE
+    sub_rosa_tx = sub_rosa ( where % i )  
+  end function SUB_ROSA_TX
+
+  integer function SUBTREE_I ( WHICH, WHERE ) result ( Subtree )
+  ! Return the root of the WHICH'th subtree of the tree node at WHERE
+  ! The zero'th subtree of WHERE is WHERE
+    integer, intent(in) :: WHICH
+    integer, intent(in) :: WHERE
+    if ( the_tree(where) % kind == pseudo ) then
+      call tree_error ( is_pseudo, where )
+    end if
+    if ( which == 0 ) then
+      subtree = where
+      return
+    end if
+    if ( which < 0 .or. which > the_tree(where) % nsons ) then
+      call tree_error ( no_more_sons, where, which, the_tree(where) % nsons )
+    end if
+    subtree = the_tree(where) % link + which - 1
+  end function SUBTREE_I
+
+  type(tx) function SUBTREE_TX ( WHICH, WHERE )
+  ! Return the root of the WHICH'th subtree of the tree node at WHERE
+  ! The zero'th subtree of WHERE is WHERE
+    integer, intent(in) :: WHICH
+    type(tx), intent(in) :: WHERE
+    subtree_tx%i = Subtree ( which, where%i )
+  end function SUBTREE_TX
+
+  pure integer function THE_FILE_I ( WHERE ) result ( The_File )
+  ! Return the FILE field of the tree node at WHERE
+    integer, intent(in) :: WHERE
+    the_file = the_tree(where) % file
+  end function THE_FILE_I
+
+  pure integer function THE_FILE_TX ( WHERE ) result ( The_File )
+  ! Return the FILE field of the tree node at WHERE
+    type(tx), intent(in) :: WHERE
+    the_file = the_tree(where%i) % file
+  end function THE_FILE_TX
+
+  pure integer function TREE_NODE_NAME_I ( WHERE )
+  ! Get the string index of the name of the tree node at WHERE
+    integer, intent(in) :: WHERE
+    tree_node_name_i = tree_texts(the_tree(where) % node)
+  end function TREE_NODE_NAME_I
+
+  pure integer function TREE_NODE_NAME_TX ( WHERE )
+  ! Get the string index of the name of the tree node at WHERE
+    type(tx), intent(in) :: WHERE
+    tree_node_name_tx = tree_texts(the_tree(where%i) % node)
+  end function TREE_NODE_NAME_TX
+
+  pure integer function TREE_TEXT ( TREE_NODE )
+  ! Return the string index of the text of the tree node id TREE_NODE
+    integer, intent(in) :: TREE_NODE
+    tree_text = tree_texts ( tree_node )
+  end function TREE_TEXT
+
+  function Where_I ( Tree ) result ( Where )
+  ! Return the Where_T structure of the text of the tree node at WHERE
+    use Lexer_Core, only: Where_T
+    integer, intent(in) :: Tree ! Tree node index
+    type(where_t) :: Where
+    where%source = the_tree(tree)%source
+    where%file = the_tree(tree)%file
+  end function Where_I
+
+  function Where_TX ( Tree ) result ( Where )
+  ! Return the Where_T structure of the text of the tree node at WHERE
+    use Lexer_Core, only: Where_T
+    type(tx), intent(in) :: Tree ! Tree node index
+    type(where_t) :: Where
+    where%source = the_tree(tree%i)%source
+    where%file = the_tree(tree%i)%file
+  end function Where_TX
+
+! =====     Private procedures     =======================================
+
+  subroutine DOUBLE_TREE ( STATUS )
+  ! Double the tree space
+    integer, intent(out), optional :: STATUS
+    type(tree_node), allocatable :: Old_Tree(:)
+    integer :: New_SP         ! New tree stack pointer
+    integer :: STAT           ! From ALLOCATE
+
+    allocate ( old_tree(size(the_tree)), stat=stat )
+    if ( stat /= 0 ) then
+      if ( present(status) ) then
+        status = stat
+        return
+      end if
+      call io_error ( 'TREE%DOUBLE_TREE-E- Unable to allocate tree', &
+        stat, ' ' )
+      call StopWithErrorMsg ( 'TREE%DOUBLE_TREE-E- Unable to allocate old tree' )
+    end if
+    old_tree = the_tree
+    deallocate ( the_tree )
+    allocate ( the_tree(2*size(old_tree)), stat=stat )
+    if ( stat /= 0 ) then
+      if ( present(status) ) then
+        status = stat
+        return
+      end if
+      call io_error ( 'TREE%DOUBLE_TREE-E- Unable to allocate tree', &
+        stat, ' ' )
+      call StopWithErrorMsg ( 'TREE%DOUBLE_TREE-E- Unable to allocate new tree' )
+    end if
+    new_sp = size(the_tree) - ( size(old_tree) - tree_sp )
+    the_tree(:tree_point) = old_tree(:tree_point)
+    the_tree(new_sp:) = old_tree(tree_sp:)
+    deallocate( old_tree )
+    tree_sp = new_sp
+  end subroutine DOUBLE_TREE
+
+  subroutine POP_TO_TREE ( NSONS )
+  ! Pop the top nSons nodes from the tree stack into the end of the tree
+  ! space.
+    integer, intent(in) :: NSONS        ! How many sons to copy
+    integer :: I, N_COPY, N_EXCH
+    type(tree_node) :: TEMP_NODE
+    ! Copy tree stack to tree.  Reverse the order.  Exchange the part that
+    ! overlaps, if any.
+    if ( tree_point + nsons <= tree_sp ) then; n_copy = nsons
+    else; n_copy = tree_sp - tree_point; end if
+    n_exch = n_copy + ( nsons - n_copy ) / 2
+    do i = 1, n_copy ! We don't use an array section because it would
+                     ! create an array temp
+      the_tree(tree_point+i) = the_tree(tree_sp + nsons - i + 1)
+    end do
+    do i = n_copy+1, n_exch
+      temp_node = the_tree(tree_point + i)
+      the_tree(tree_point+i) = the_tree(tree_sp + nsons - i + 1)
+      the_tree(tree_sp + nsons - i + 1) = temp_node
+    end do
+    tree_sp = tree_sp + nsons ! Stack pop
+    tree_point = tree_point + nsons
+  end subroutine POP_TO_TREE
+
+  subroutine SET_NSONS ( T, NSONS )
+  ! Set the number of sons.  This isn't straight-forward in the case that
+  ! the last son is a "more" node.
+    integer, intent(in) :: T            ! The tree node to change
+    integer, intent(in) :: NSONS        ! The new number of sons
+    integer :: N, NS, S, TT
+    ns = nsons
+    tt = t
+    do
+      n = the_tree(tt)%nsons
+      if ( ns < n ) then
+        the_tree(tt)%nsons = ns
+    exit
+      end if
+      s = the_tree(tt)%link + n - 1
+      if ( the_tree(s)%kind /= more ) then
+        ! we better have increased nsons by storing adjacent to old ones!
+        the_tree(t)%nsons = n
+    exit
+      end if
+      tt = s
+      ns = ns - ( n-1 )
+    end do
+  end subroutine SET_NSONS
+
+  subroutine TREE_ERROR ( WHY, WHERE, Which, How_Many )
+  ! Print a message WHY there's an error at WHERE in the tree.
+    integer, intent(in) :: WHY
+    integer, intent(in) :: WHERE
+    integer, intent(in), optional :: Which
+    integer, intent(in), optional :: How_Many
+    if ( where == null_tree ) then
+      call error_intro ( compiler, 0 )
+    else
+      call error_intro ( compiler, source_ref(where) )
+    end if
+    if ( why == is_pseudo .or. why == no_more_sons .or. why == not_pseudo ) &
+      & call output ( where, before="Tree node at ")
+    select case ( why )
+    case ( is_pseudo );     call output ( " is pseudo-terminal.", &
+                                          advance="yes" )
+    case ( no_more_sons);
+      call output ( " has too few sons" )
+      if ( present(which) ) call output ( which, before=".  Asking for subtree " )
+      if ( present(how_Many) ) call output ( how_Many, before=" out of " )
+      call output ( '.', advance="yes" )
+    case ( not_pseudo );    call output ( " is not pseudo-terminal.", &
+                                          advance="yes" )
+    case ( no_tree_space )
+      call output ( "No Tree space remains.", advance="yes" )
+      call output ( "Unfortunately, 'tree' doesn't know how to increase its space", &
+        & advance="yes" )
+    case ( underflow );     call output ( "Tree stack underflow.", &
+                                               advance="yes" )
+    end select
+    call StopWithErrorMsg ( 'Possibly an error in the source code' )
+  end subroutine TREE_ERROR
+
+  ! ------------------ Private ---------------------
+  ! ------------ StopWithErrorMsg ------------
+  subroutine StopWithErrorMsg ( Message )
+    ! Print Message, dump calling stack (if any) and stop
+    character (len=*), intent(in) :: Message ! Line of text
+    ! Executable
+    call PrintItOut( message, MLSMSG_ERROR, exitStatus = 1  )
+  end subroutine StopWithErrorMsg
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: tree.f90,v 2.32 2015/09/17 22:47:29 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module TREE
+
+! $Log: tree.f90,v $
+! Revision 2.32  2015/09/17 22:47:29  pwagner
+! Added Node_in_tree
+!
+! Revision 2.31  2014/05/30 02:43:38  vsnyder
+! Improve no_more_sons error message
+!
+! Revision 2.30  2014/05/20 22:16:57  vsnyder
+! More functions to access the stack
+!
+! Revision 2.29  2014/02/21 19:21:31  vsnyder
+! Use First_Tree_Node instead of N_Eof as the first tree node
+!
+! Revision 2.28  2014/01/11 01:41:02  vsnyder
+! Decruftification
+!
+! Revision 2.27  2014/01/08 21:07:58  vsnyder
+! Get_Tree_Node_Name_TX ought to get the name, not display it
+!
+! Revision 2.26  2013/12/12 02:01:17  vsnyder
+! Add 'type_name' dummy procedure to Dump_Tree_Node
+!
+! Revision 2.25  2013/11/26 22:46:52  vsnyder
+! Add Dump_Stack, class of string in Push_Pseudo_Terminal, Stack_Sub_Rosa
+!
+! Revision 2.24  2013/10/09 01:09:42  vsnyder
+! Add some routines, spiff up dumps
+!
+! Revision 2.23  2013/10/02 01:31:06  vsnyder
+! Add Dump_Top_Stack, Dump_Top_Stack_Name
+!
+! Revision 2.22  2013/09/30 23:59:06  vsnyder
+! Default initializer for tx%i, add decoration_tx_tx
+!
+! Revision 2.21  2013/09/30 23:03:04  vsnyder
+! Add TX type for tree index and generics to use it
+!
+! Revision 2.20  2013/09/24 23:09:15  vsnyder
+! Replace Source with Where_t, add Where function
+!
+! Revision 2.19  2013/09/19 23:25:57  vsnyder
+! Add some tracing
+!
+! Revision 2.18  2013/09/12 03:12:46  vsnyder
+! Add Advance and Before to Dump_Tree_Node_Name
+!
+! Revision 2.17  2013/08/28 00:36:21  pwagner
+! Moved more stuff from MLSMessage down to PrintIt module
+!
+! Revision 2.16  2012/03/15 22:46:37  vsnyder
+! Make nsons pure, some cannonball polishing
+!
+! Revision 2.15  2011/04/18 19:26:11  vsnyder
+! Add Dump_Tree_Node_Name
+!
+! Revision 2.14  2010/04/28 00:13:47  pwagner
+! Replaced bare stop with StopWithErrorMsg
+!
+! Revision 2.13  2009/09/29 23:22:44  vsnyder
+! Arguments reversed in call to error_intro
+!
+! Revision 2.12  2009/06/23 18:25:44  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.11  2008/09/04 00:45:51  vsnyder
+! Add PRINT to not_used_here
+!
+! Revision 2.10  2006/07/28 02:00:17  vsnyder
+! Pure cannonball polishing
+!
+! Revision 2.9  2006/02/23 00:56:43  vsnyder
+! Add source line and column to tree node dump
+!
+! Revision 2.8  2005/06/22 17:25:51  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.7  2004/05/28 23:14:35  vsnyder
+! Allow print_subtree to start at the top of the stack with a negative 'root'
+!
+! Revision 2.6  2003/05/12 20:54:16  vsnyder
+! Correct a subtle bug in SUBTREE that probably doesn't affect us
+!
+! Revision 2.5  2002/10/08 00:09:15  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.4  2001/04/05 00:55:27  vsnyder
+! Try to write 'increase tree size automatically' code -- failed -- try again later
+!
+! Revision 2.3  2001/02/23 00:33:11  vsnyder
+! Move source_ref to the beginning of the subtree (from the end)
+!
+! Revision 2.2  2001/02/07 18:40:22  vsnyder
+! Add a "decor" argument to "build_tree".
+!
+! Revision 2.1  2000/10/11 18:33:25  vsnyder
+! Move from lib/cf_parser to lib; insert copyright notice
+!
+! Revision 2.0  2000/09/05 17:41:51  dcuddy
+! Change revision to 2.0
+!
+! Revision 1.1  2000/07/06 01:43:12  vsnyder
+! Initial check-in
+!
+@
+
+
+2.32
+log
+@Added Node_in_tree
+@
+text
+@d861 1
+a861 1
+  ! Return the SOURCE field of the tree node at WHERE
+d867 1
+a867 1
+  ! Return the SOURCE field of the tree node at WHERE
+d1040 1
+a1040 1
+       "$Id: tree.f90,v 2.31 2014/05/30 02:43:38 vsnyder Exp $"
+d1050 3
+@
+
+
+2.31
+log
+@Improve no_more_sons error message
+@
+text
+@d14 10
+a23 10
+  use ERROR_HANDLER, only: COMPILER, ERROR_INTRO
+  use MACHINE, only: IO_ERROR
+  use PRINTIT_M, only: PRINTITOUT, MLSMSG_ERROR
+  use OUTPUT_M, only: NEWLINE, OUTPUT
+  use STRING_TABLE, only: DISPLAY_STRING, GET_STRING, LOOKUP_AND_INSERT
+  use SYMBOL_TABLE, only: SET_SYMBOL, SYMBOL
+  use SYMBOL_TYPES, only: TREENODE
+  use TOGGLES, only: CON, TOGGLE
+  use TREE_TYPES, only: FIRST_TREE_NODE, LAST_TREE_NODE, N_NULL, TREE_INIT, &
+    & TREE_MAP
+d31 1
+a31 1
+  public :: INSERT_NODE, NODE_ID, NODE_KIND, NSONS, POP, PRINT_SUBTREE
+d586 7
+d1040 1
+a1040 1
+       "$Id: tree.f90,v 2.30 2014/05/20 22:16:57 vsnyder Exp $"
+d1050 3
+@
+
+
+2.30
+log
+@More functions to access the stack
+@
+text
+@d840 1
+a840 1
+      call tree_error ( no_more_sons, where )
+d988 1
+a988 1
+  subroutine TREE_ERROR ( WHY, WHERE )
+d992 2
+d1000 1
+a1000 5
+    then
+      ! write ( prunit, '(a,i0)', advance="no" ) where ! in Fortran 2000
+      call output ( "Tree node at ")
+      call output ( where )
+    end if
+d1004 5
+a1008 2
+    case ( no_more_sons);   call output ( " has too few sons.", &
+                                          advance="yes" )
+d1033 1
+a1033 1
+       "$Id: tree.f90,v 2.29 2014/02/21 19:21:31 vsnyder Exp $"
+d1043 3
+@
+
+
+2.29
+log
+@Use First_Tree_Node instead of N_Eof as the first tree node
+@
+text
+@d32 3
+a34 3
+  public :: PUSH_PSEUDO_TERMINAL, REPLACE_SONS, SOURCE_REF, STACK_SUB_ROSA
+  public :: STACK_SUBTREE, STACK_SUBTREE_TX, SUB_ROSA, SUBTREE, THE_FILE
+  public :: TREE_NODE_NAME,TREE_TEXT, TX, WHERE
+d785 10
+d807 1
+a807 1
+  integer function STACK_SUB_ROSA ()
+d1032 1
+a1032 1
+       "$Id: tree.f90,v 2.28 2014/01/11 01:41:02 vsnyder Exp $"
+d1042 3
+@
+
+
+2.28
+log
+@Decruftification
+@
+text
+@d22 2
+a23 1
+  use TREE_TYPES, only: LAST_TREE_NODE, N_EOF, N_NULL, TREE_INIT, TREE_MAP
+d158 1
+a158 1
+  integer, save, private :: TREE_TEXTS(N_EOF:LAST_TREE_NODE)
+d242 1
+a242 1
+    if ( allocated(the_tree) ) then; deallocate ( the_tree ); end if
+d524 1
+a524 1
+    do i = n_eof, last_tree_node
+d528 1
+a528 1
+      if ( .not. found ) then; call set_symbol(where, treeNode); end if
+d1022 1
+a1022 1
+       "$Id: tree.f90,v 2.27 2014/01/08 21:07:58 vsnyder Exp $"
+d1032 3
+@
+
+
+2.27
+log
+@Get_Tree_Node_Name_TX ought to get the name, not display it
+@
+text
+@d20 2
+a21 2
+  use SYMBOL_TYPES, only: TREENODE, T_NULL
+  use TOGGLES, only: CON, Switches, TOGGLE
+d1021 1
+a1021 1
+       "$Id: tree.f90,v 2.26 2013/12/12 02:01:17 vsnyder Exp $"
+d1031 3
+@
+
+
+2.26
+log
+@Add 'type_name' dummy procedure to Dump_Tree_Node
+@
+text
+@d516 1
+a516 1
+    call display_string ( tree_texts(the_tree(where%i) % node), string )
+d1021 1
+a1021 1
+       "$Id: tree.f90,v 2.25 2013/11/26 22:46:52 vsnyder Exp $"
+d1031 3
+@
+
+
+2.25
+log
+@Add Dump_Stack, class of string in Push_Pseudo_Terminal, Stack_Sub_Rosa
+@
+text
+@d20 1
+a20 1
+  use SYMBOL_TYPES, only: T_NULL
+d477 1
+d527 1
+a527 1
+      if ( .not. found ) then; call set_symbol(where, where); end if
+d1021 1
+a1021 1
+       "$Id: tree.f90,v 2.24 2013/10/09 01:09:42 vsnyder Exp $"
+d1031 3
+@
+
+
+2.24
+log
+@Add some routines, spiff up dumps
+@
+text
+@d28 1
+a28 1
+  public :: DELETE_TREE_STACK, DUMP_TOP_STACK, DUMP_TOP_STACK_NAME
+d31 3
+a33 3
+  public :: PUSH_PSEUDO_TERMINAL, REPLACE_SONS, SOURCE_REF, STACK_SUBTREE
+  public :: STACK_SUBTREE_TX, SUB_ROSA, SUBTREE, THE_FILE, TREE_NODE_NAME
+  public :: TREE_TEXT, TX, WHERE
+a126 4
+  interface Tree_Text
+    module procedure Tree_Text_I, Tree_Text_TX
+  end interface
+
+d392 20
+d416 1
+a416 1
+    call dump_tree_node ( tree_sp, indent, advance )
+d423 1
+a423 1
+    call display_string ( tree_texts(the_tree(tree_sp) % node), &
+d526 1
+a526 1
+      if ( .not. found ) then; call set_symbol(where, t_null); end if
+d669 2
+a670 1
+  subroutine PUSH_PSEUDO_TERMINAL_INTEGER ( SUB_ROSA, SOURCE, DECOR, FILE )
+d678 2
+a679 1
+    integer :: MY_DECOR, MY_FILE
+d684 3
+d691 2
+a692 2
+                                 ! node                        decor
+    the_tree(tree_sp) = tree_node( tree_map(symbol(sub_rosa)), my_decor, &
+d699 2
+a700 1
+  subroutine PUSH_PSEUDO_TERMINAL_WHERE (SUB_ROSA, WHERE, DECOR )
+d708 2
+a709 1
+    call push_pseudo_terminal ( sub_rosa, where%source, decor, where%file )
+d795 5
+d865 2
+a866 2
+  pure integer function TREE_TEXT_I ( TREE_NODE ) result ( Tree_Text )
+  ! Return the string index of the text of the tree_node at TREE_NODE
+d869 1
+a869 7
+  end function TREE_TEXT_I
+
+  pure integer function TREE_TEXT_TX ( TREE_NODE ) result ( Tree_Text )
+  ! Return the string index of the text of the tree_node at TREE_NODE
+    type(tx), intent(in) :: TREE_NODE
+    tree_text = tree_texts ( tree_node%i )
+  end function TREE_TEXT_TX
+d1020 1
+a1020 1
+       "$Id: tree.f90,v 2.23 2013/10/02 01:31:06 vsnyder Exp $"
+d1030 3
+@
+
+
+2.23
+log
+@Add Dump_Top_Stack, Dump_Top_Stack_Name
+@
+text
+@d18 1
+a18 1
+  use STRING_TABLE, only: DISPLAY_STRING, LOOKUP_AND_INSERT
+d29 2
+a30 2
+  public :: DUMP_TREE_NODE, DUMP_TREE_NODE_NAME, INIT_TREE, INSERT_NODE
+  public :: NODE_ID, NODE_KIND, NSONS, POP, PRINT_SUBTREE
+d32 2
+a33 1
+  public :: STACK_SUBTREE_TX, SUB_ROSA, SUBTREE, THE_FILE, TREE_TEXT, TX, WHERE
+d75 4
+d123 4
+d135 2
+a136 2
+  type :: TX             ! For tree node index, to give strong typing
+    integer :: I = 0     ! The real tree node index
+d140 8
+a147 8
+    integer :: NODE      ! What kind of tree node
+    integer :: DECOR     ! Decoration, an integer or tree node index
+    integer :: FILE = 0  ! String index of file
+    integer :: NSONS     ! How many sons
+    integer :: SOURCE    ! 256*line + column
+    integer :: KIND      ! PSEUDO, INTERNAL, MORE or OTHER
+    integer :: LINK      ! Sub_rosa if PSEUDO, Left_son if INTERNAL, next
+                         !  if MORE, not used if EMPTY
+d328 1
+a328 1
+  ! Decorate tree WHERE with DECORATION
+d347 1
+a347 1
+  ! Decorate tree WHERE with DECORATION
+d354 1
+a354 1
+  ! Decorate tree WHERE with DECORATION
+d361 1
+a361 1
+  ! Return the decoration of the tree WHERE
+d367 1
+a367 1
+  ! Return the decoration of the tree WHERE
+d373 1
+a373 1
+  ! Return the decoration of the tree WHERE
+d411 2
+a412 2
+  subroutine DUMP_TREE_NODE_I ( WHERE, INDENT, ADVANCE )
+  ! Indent INDENT spaces, then dump the tree at WHERE
+d416 7
+d429 2
+a430 4
+      call output ( 'more, nsons = ' )
+      call output ( the_tree(where) % nsons )
+      call output ( ', next = ' )
+      call output ( the_tree(where) % link )
+d432 1
+d434 1
+a434 3
+        call dump_tree_node_name ( where )
+        call output ( ' ' )
+        call display_string ( sub_rosa(where) )
+d436 2
+a437 1
+        call dump_tree_node_name ( where )
+d440 5
+a444 2
+        call output ( ' decor=' )
+        call output ( the_tree(where) % decor )
+d456 2
+a457 2
+  subroutine DUMP_TREE_NODE_TX ( WHERE, INDENT, ADVANCE )
+  ! Indent INDENT spaces, then dump the tree WHERE
+d461 7
+a467 1
+    call dump_tree_node ( where%i, indent, advance )
+d471 1
+d480 1
+d488 14
+d569 1
+a569 1
+  ! Return the kind of tree(where).
+d575 1
+a575 1
+  ! Return the kind of tree(where).
+d599 1
+a599 1
+  recursive subroutine PRINT_SUBTREE_I ( SUBROOT, DEPTH, DUMP_DECOR )
+d606 7
+d618 1
+a618 1
+    call dump_tree_node ( myRoot, depth )
+d631 2
+a632 1
+        call print_subtree ( subtree(i,myRoot), depth+1, dump_decor )
+d637 1
+a637 1
+  recursive subroutine PRINT_SUBTREE_TX ( SUBROOT, DEPTH, DUMP_DECOR )
+d644 7
+a650 1
+    call print_subtree ( subroot%i, depth, dump_decor )
+d773 1
+a773 1
+  ! Return the sub_rosa string pointer from the tree node at WHERE
+d782 1
+a782 1
+  ! Return the sub_rosa string pointer from the tree node at WHERE
+d825 12
+d838 1
+a838 1
+  ! Return the string index of the text of the tree node
+d844 1
+a844 1
+  ! Return the string index of the text of the tree node
+d850 1
+a850 1
+  ! Return the Where_T structure at Tree
+d859 1
+a859 1
+  ! Return the Where_T structure at Tree
+d998 1
+a998 1
+       "$Id: tree.f90,v 2.22 2013/09/30 23:59:06 vsnyder Exp $"
+d1008 3
+@
+
+
+2.22
+log
+@Default initializer for tx%i, add decoration_tx_tx
+@
+text
+@d28 2
+a29 2
+  public :: DELETE_TREE_STACK, DUMP_TREE_NODE, DUMP_TREE_NODE_NAME
+  public :: INIT_TREE, INSERT_NODE
+d387 15
+d403 1
+a403 1
+  ! Indent INDENT spaces, then dump the tree WHERE
+d933 1
+a933 1
+       "$Id: tree.f90,v 2.21 2013/09/30 23:03:04 vsnyder Exp $"
+d943 3
+@
+
+
+2.21
+log
+@Add TX type for tree index and generics to use it
+@
+text
+@d27 1
+a27 1
+  public :: DEALLOCATE_TREE, DECORATE, DECORATION, DELETE_TREE
+d127 1
+a127 1
+    integer :: I         ! The real tree node index
+d357 7
+a363 1
+  pure type(tx) function DECORATION_TX ( WHERE ) result ( Decoration )
+d367 1
+a367 1
+  end function DECORATION_TX
+d737 1
+a737 1
+  integer function SUBTREE_TX ( WHICH, WHERE )
+d742 1
+a742 1
+    subtree_tx = Subtree ( which, where%i )
+d918 1
+a918 1
+       "$Id: tree.f90,v 2.20 2013/09/24 23:09:15 vsnyder Exp $"
+d928 3
+@
+
+
+2.20
+log
+@Replace Source with Where_t, add Where function
+@
+text
+@d32 1
+a32 1
+  public :: SUB_ROSA, SUBTREE, THE_FILE, TREE_TEXT, WHERE
+d46 48
+d98 32
+d162 1
+a162 1
+  subroutine ADD_SONS_FROM_STACK ( T, N )
+d221 9
+a229 1
+  end subroutine ADD_SONS_FROM_STACK
+d291 1
+a291 1
+  subroutine COPY_TO_STACK ( T, K, M )
+d304 9
+a312 1
+  end  subroutine COPY_TO_STACK
+d318 1
+a318 1
+  subroutine DECORATE ( WHERE, DECORATION )
+d335 1
+a335 1
+  end subroutine DECORATE
+d337 15
+a351 1
+  integer function DECORATION ( WHERE )
+d355 1
+a355 1
+  end function DECORATION
+d357 7
+a363 1
+  subroutine DELETE_TREE ( WHERE )
+d367 7
+a373 1
+  end subroutine DELETE_TREE
+d381 1
+a381 1
+  subroutine DUMP_TREE_NODE ( WHERE, INDENT, ADVANCE )
+d416 1
+a416 1
+  end subroutine DUMP_TREE_NODE
+d418 9
+a426 1
+  subroutine DUMP_TREE_NODE_NAME ( WHERE, ADVANCE, BEFORE )
+d432 9
+a440 1
+  end subroutine DUMP_TREE_NODE_NAME
+d461 1
+a461 1
+  subroutine INSERT_NODE ( NEW_NODE, T, K, M )
+d468 1
+a468 1
+    integer, intent(in) :: K            ! Which sone of T NEW_NODE is to be
+d481 1
+a481 1
+  end subroutine INSERT_NODE
+d483 14
+a496 1
+  integer function NODE_ID ( WHERE )
+d500 1
+a500 1
+  end function NODE_ID
+d502 7
+a508 1
+  integer function NODE_KIND ( WHERE )
+d512 7
+a518 1
+  end function NODE_KIND
+d520 1
+a520 1
+  pure integer function NSONS ( WHERE )
+d524 7
+a530 1
+  end function NSONS
+d539 1
+a539 1
+  recursive subroutine PRINT_SUBTREE ( SUBROOT, DEPTH, DUMP_DECOR )
+d567 11
+a577 1
+  end subroutine PRINT_SUBTREE
+d615 1
+a615 1
+  subroutine REPLACE_SONS ( T, K, M, U )
+d661 12
+a672 1
+  end subroutine REPLACE_SONS
+d674 1
+a674 1
+  integer function SOURCE_REF ( WHERE )
+d678 7
+a684 1
+  end function SOURCE_REF
+d692 7
+a698 1
+  integer function SUB_ROSA ( WHERE )
+d705 1
+a705 1
+  end function SUB_ROSA
+d707 7
+a713 1
+  integer function SUBTREE ( WHICH, WHERE )
+d729 1
+a729 1
+  end function SUBTREE
+d731 9
+a739 1
+  integer function THE_FILE ( WHERE )
+d743 7
+a749 1
+  end function THE_FILE
+d751 1
+a751 1
+  integer function TREE_TEXT ( TREE_NODE )
+d754 2
+a755 2
+    tree_text = tree_texts(tree_node)
+  end function TREE_TEXT
+d757 8
+a764 1
+  function Where ( Tree )
+d770 10
+a779 1
+  end function Where
+d912 1
+a912 1
+       "$Id: tree.f90,v 2.19 2013/09/19 23:25:57 vsnyder Exp $"
+d922 3
+@
+
+
+2.19
+log
+@Add some tracing
+@
+text
+@d32 1
+a32 1
+  public :: SUB_ROSA, SUBTREE, TREE_TEXT
+d46 4
+d53 1
+d171 1
+a171 1
+    integer :: LEFT_SON, MY_DECOR, SOURCE_REF
+d177 5
+a181 2
+    if ( nsons == 0 ) then; source_ref = 0
+    else; source_ref = the_tree(tree_sp+nsons)%source; end if
+d189 2
+a190 2
+                                   ! node      decor   nsons  source
+    the_tree(tree_sp) = tree_node( new_node, my_decor, nsons, source_ref, &
+d291 2
+d317 2
+a318 2
+                                      ! node  decor  nsons  source kind
+    the_tree(tree_point) = tree_node( n_null, null_tree, 0, 0, internal, &
+d400 1
+a400 1
+  subroutine PUSH_PSEUDO_TERMINAL ( SUB_ROSA, SOURCE, DECOR )
+d407 2
+a408 1
+    integer :: MY_DECOR
+d411 2
+d417 1
+a417 1
+                                   ! node                       decor
+d419 2
+a420 2
+                             ! nsons  source  kind    sub_rosa
+                                   0, source, pseudo, sub_rosa )
+d423 12
+a434 1
+  end subroutine PUSH_PSEUDO_TERMINAL
+d523 6
+d534 9
+d674 1
+a674 1
+       "$Id: tree.f90,v 2.18 2013/09/12 03:12:46 vsnyder Exp $"
+d684 3
+@
+
+
+2.18
+log
+@Add Advance and Before to Dump_Tree_Node_Name
+@
+text
+@d21 1
+a21 1
+  use TOGGLES, only: CON, TOGGLE
+d158 1
+a158 1
+  subroutine BUILD_TREE ( NEW_NODE, NSONS, DECORATION )
+d165 1
+d185 6
+d635 1
+a635 1
+       "$Id: tree.f90,v 2.17 2013/08/28 00:36:21 pwagner Exp $"
+d645 3
+@
+
+
+2.17
+log
+@Moved more stuff from MLSMessage down to PrintIt module
+@
+text
+@d279 1
+a279 1
+  subroutine DUMP_TREE_NODE_NAME ( WHERE )
+d281 4
+a284 1
+    call display_string ( tree_texts(the_tree(where) % node) )
+d628 1
+a628 1
+       "$Id: tree.f90,v 2.16 2012/03/15 22:46:37 vsnyder Exp $"
+d638 3
+@
+
+
+2.16
+log
+@Make nsons pure, some cannonball polishing
+@
+text
+@d16 2
+a17 2
+  use MLSMessageModule, only: STOPWITHERRORMSG
+  use OUTPUT_M, only: NewLine, OUTPUT
+d152 2
+a153 1
+      call StopWithErrorMsg ( 'TREE%ALLOCATE_TREE-E- Unable to allocate tree' )
+d613 9
+d625 1
+a625 1
+       "$Id: tree.f90,v 2.15 2011/04/18 19:26:11 vsnyder Exp $"
+d635 3
+@
+
+
+2.15
+log
+@Add Dump_Tree_Node_Name
+@
+text
+@a184 1
+    return
+a199 1
+    return
+a203 1
+    return
+a275 1
+    return
+a299 1
+    return
+a321 1
+    return
+a327 1
+    return
+a333 1
+    return
+d336 1
+a336 1
+  integer function NSONS ( WHERE )
+a339 1
+    return
+a346 1
+    return
+a376 1
+    return
+a398 1
+    return
+a446 1
+    return
+a452 1
+    return
+a458 1
+    return
+a467 1
+    return
+a485 1
+    return
+a552 1
+    return
+a577 1
+    return
+d615 1
+a615 1
+       "$Id: tree.f90,v 2.14 2010/04/28 00:13:47 pwagner Exp $"
+d625 3
+@
+
+
+2.14
+log
+@Replaced bare stop with StopWithErrorMsg
+@
+text
+@d28 2
+a29 1
+  public :: DELETE_TREE_STACK, DUMP_TREE_NODE, INIT_TREE, INSERT_NODE
+d263 1
+a263 1
+        call display_string ( tree_texts(the_tree(where) % node) )
+d267 1
+a267 1
+        call display_string ( tree_texts(the_tree(where) % node) )
+d282 5
+d634 1
+a634 1
+       "$Id: tree.f90,v 2.13 2009/09/29 23:22:44 vsnyder Exp $"
+d644 3
+@
+
+
+2.13
+log
+@Arguments reversed in call to error_intro
+@
+text
+@d16 1
+d151 1
+a151 1
+      stop
+d521 1
+a521 1
+      stop
+d533 1
+a533 1
+      stop
+d622 1
+a622 1
+    stop
+d628 1
+a628 1
+       "$Id: tree.f90,v 2.12 2009/06/23 18:25:44 pwagner Exp $"
+d638 3
+@
+
+
+2.12
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d69 1
+a69 1
+       "$RCSfile: $"
+d597 1
+a597 1
+      call error_intro ( 0, compiler )
+d599 1
+a599 1
+      call error_intro ( source_ref(where), compiler )
+d627 1
+a627 1
+       "$Id: read_apriori.f90 is it here $"
+d637 3
+@
+
+
+2.11
+log
+@Add PRINT to not_used_here
+@
+text
+@d69 1
+a69 1
+       "$RCSfile: tree.f90,v $"
+d624 1
+a625 1
+!---------------------------- RCS Ident Info -------------------------------
+d627 2
+a628 3
+       "$Id: tree.f90,v 2.10 2006/07/28 02:00:17 vsnyder Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d630 1
+a630 1
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
+d632 1
+d637 3
+@
+
+
+2.10
+log
+@Pure cannonball polishing
+@
+text
+@d627 1
+a627 1
+       "$Id: tree.f90,v 2.9 2006/02/23 00:56:43 vsnyder Exp $"
+d631 1
+d637 3
+@
+
+
+2.9
+log
+@Add source line and column to tree node dump
+@
+text
+@d16 1
+a16 1
+  use OUTPUT_M, only: OUTPUT
+d276 1
+a276 1
+    call output ( '', advance )
+d374 1
+a374 1
+    call output ( '', advance='yes' )
+d627 1
+a627 1
+       "$Id: tree.f90,v 2.8 2005/06/22 17:25:51 pwagner Exp $"
+d636 3
+@
+
+
+2.8
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d69 1
+a69 1
+       "$RCSfile: $"
+d253 1
+a253 1
+      call output ( 'empty', advance )
+d258 1
+a258 1
+      call output ( the_tree(where) % link, advance=advance )
+a270 1
+      call output ( '', advance )
+d272 5
+d627 1
+a627 1
+       "$Id: $"
+d636 3
+@
+
+
+2.7
+log
+@Allow print_subtree to start at the top of the stack with a negative 'root'
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d67 1
+a67 3
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=256), private :: Id = &
+       "$Id: tree.f90,v 2.6 2003/05/12 20:54:16 vsnyder Exp $"
+d69 1
+a69 1
+       "$RCSfile: tree.f90,v $"
+d621 5
+d632 3
+@
+
+
+2.6
+log
+@Correct a subtle bug in SUBTREE that probably doesn't affect us
+@
+text
+@d61 1
+a61 1
+       "$Id: tree.f90,v 2.5 2002/10/08 00:09:15 pwagner Exp $"
+d349 4
+a352 2
+    integer :: I
+    call output ( subroot, 5 )
+d354 1
+a354 1
+    call dump_tree_node ( subroot, depth )
+d358 1
+a358 1
+      ! write ( prunit, '(" (", i0, ") ', advance="no") decoration(subroot)
+d360 1
+a360 1
+        call output ( decoration(subroot) )
+d365 3
+a367 3
+    if ( the_tree(subroot)%kind == internal ) then
+      do i = 1, nsons(subroot)
+        call print_subtree ( subtree(i,subroot), depth+1, dump_decor )
+d621 3
+@
+
+
+2.5
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d61 1
+a61 1
+       "$Id: tree.f90,v 2.4 2001/04/05 00:55:27 vsnyder Exp $"
+d476 1
+a476 1
+      subtree = which
+d619 3
+@
+
+
+2.4
+log
+@Try to write 'increase tree size automatically' code -- failed -- try again later
+@
+text
+@d61 1
+a61 1
+       "$Id: tree.f90,v 2.3 2001/02/23 00:33:11 vsnyder Exp $"
+d64 1
+d612 4
+d619 3
+@
+
+
+2.3
+log
+@Move source_ref to the beginning of the subtree (from the end)
+@
+text
+@d61 1
+a61 1
+       "$Id: tree.f90,v 2.2 2001/02/07 18:40:22 vsnyder Exp $"
+d80 1
+d168 1
+d382 1
+d492 36
+d601 4
+a604 2
+    case ( no_tree_space ); call output ( "No Tree space remains.", &
+                                          advance="yes" )
+d614 3
+@
+
+
+2.2
+log
+@Add a "decor" argument to "build_tree".
+@
+text
+@d61 1
+a61 1
+       "$Id: tree.f90,v 2.1 2000/10/11 18:33:25 vsnyder Exp $"
+d161 1
+a161 1
+    else; source_ref = the_tree(tree_sp+1)%source; end if
+d573 3
+@
+
+
+2.1
+log
+@Move from lib/cf_parser to lib; insert copyright notice
+@
+text
+@d61 1
+a61 1
+       "$Id: tree.f90,v 2.0 2000/09/05 17:41:51 dcuddy Exp $"
+d147 1
+a147 1
+  subroutine BUILD_TREE ( NEW_NODE, NSONS )
+d153 4
+a156 1
+    integer :: LEFT_SON, SOURCE_REF
+d168 2
+a169 2
+                                   ! node      decor      nsons  source
+    the_tree(tree_sp) = tree_node( new_node, null_tree, nsons, source_ref, &
+d573 3
+@
+

@@ -1,0 +1,183 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.12
+	cfm-single-freq-0-1:1.2.0.10
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.8
+	mus-emls-1-70:1.2.0.6
+	rel-1-0-englocks-work:1.2.0.4
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.2
+	V4-21:1.2.0.2
+	V4-13:1.2
+	V4-12:1.2
+	V4-11:1.2
+	V4-10:1.2
+	M4-00:1.2
+	V3-33:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2011.04.20.22.25.39;	author honghanh;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2011.04.18.21.24.01;	author honghanh;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Complete documentation
+@
+text
+@\relax 
+\ifx\hyper@@anchor\@@undefined
+\global \let \oldcontentsline\contentsline
+\gdef \contentsline#1#2#3#4{\oldcontentsline{#1}{#2}{#3}}
+\global \let \oldnewlabel\newlabel
+\gdef \newlabel#1#2{\newlabelxx{#1}#2}
+\gdef \newlabelxx#1#2#3#4#5#6{\oldnewlabel{#1}{{#2}{#3}}}
+\AtEndDocument{\let \contentsline\oldcontentsline
+\let \newlabel\oldnewlabel}
+\else
+\global \let \hyper@@last\relax 
+\fi
+
+\citation{WatersEtal06}
+\citation{NguyenEtal10}
+\citation{NguyenEtal10}
+\@@writefile{toc}{\contentsline {section}{\numberline {1}Introduction and background}{1}{section.1}}
+\newlabel{sec:Introduction}{{1}{1}{Introduction and background\relax }{section.1}{}}
+\@@writefile{toc}{\contentsline {section}{\numberline {2}Review of overall MLSCFM structure}{2}{section.2}}
+\newlabel{sec:Review}{{2}{2}{Review of overall MLSCFM structure\relax }{section.2}{}}
+\@@writefile{toc}{\contentsline {subsection}{\numberline {2.1}MLS radiance measurements and related parameters}{2}{subsection.2.1}}
+\@@writefile{toc}{\contentsline {subsubsection}{\numberline {2.1.1}Major frames and minor frames}{2}{subsubsection.2.1.1}}
+\@@writefile{toc}{\contentsline {subsubsection}{\numberline {2.1.2}Bands and channels}{2}{subsubsection.2.1.2}}
+\@@writefile{toc}{\contentsline {subsubsection}{\numberline {2.1.3}MLS L1 files}{2}{subsubsection.2.1.3}}
+\@@writefile{toc}{\contentsline {subsubsection}{\numberline {2.1.4}A note on \texttt  {GeodAngle}}{3}{subsubsection.2.1.4}}
+\@@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Constructing the MLS state vector}{3}{subsection.2.2}}
+\@@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Quantities and Vectors in MLSCFM}{3}{subsection.2.3}}
+\newlabel{sec:QuantityTemplates}{{2.3}{3}{Quantities and Vectors in MLSCFM\relax }{subsection.2.3}{}}
+\citation{LiveseyEtal06}
+\@@writefile{toc}{\contentsline {subsection}{\numberline {2.4}Matrices in MLSCFM}{4}{subsection.2.4}}
+\newlabel{sec:Matrices}{{2.4}{4}{Matrices in MLSCFM\relax }{subsection.2.4}{}}
+\@@writefile{toc}{\contentsline {subsection}{\numberline {2.5}Defining coordinate systems}{4}{subsection.2.5}}
+\@@writefile{toc}{\contentsline {subsubsection}{\numberline {2.5.1}Vertical coordinates -- \texttt  {vGrid}}{4}{subsubsection.2.5.1}}
+\citation{ReadEtal06}
+\citation{SchwartzEtal06}
+\@@writefile{toc}{\contentsline {subsubsection}{\numberline {2.5.2}Horizontal coordinates -- \texttt  {hGrid}}{5}{subsubsection.2.5.2}}
+\@@writefile{toc}{\contentsline {subsubsection}{\numberline {2.5.3}Frequency coordinates -- \texttt  {fGrid}}{5}{subsubsection.2.5.3}}
+\@@writefile{toc}{\contentsline {subsection}{\numberline {2.6}Sources of information for MLS state vector components}{5}{subsection.2.6}}
+\@@writefile{toc}{\contentsline {subsection}{\numberline {2.7}Defining forward models}{5}{subsection.2.7}}
+\@@writefile{toc}{\contentsline {subsubsection}{\numberline {2.7.1}The `full' forward model}{6}{subsubsection.2.7.1}}
+\@@writefile{toc}{\contentsline {subsubsection}{\numberline {2.7.2}The `linearized' forward model}{6}{subsubsection.2.7.2}}
+\@@writefile{toc}{\contentsline {subsubsection}{\numberline {2.7.3}The `baseline' forward model}{6}{subsubsection.2.7.3}}
+\@@writefile{toc}{\contentsline {subsubsection}{\numberline {2.7.4}The `scan' forward model}{6}{subsubsection.2.7.4}}
+\citation{ReadEtal06}
+\@@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces State vector quantities needed for different forward model types. Cells with `?' indicate that the quantity may be required for some configurations.}}{7}{table.1}}
+\newlabel{tab:StateVectorNeeds}{{1}{7}{Invoking forward models\relax }{table.1}{}}
+\@@writefile{toc}{\contentsline {subsection}{\numberline {2.8}Invoking forward models}{7}{subsection.2.8}}
+\@@writefile{toc}{\contentsline {subsection}{\numberline {2.9}A note on the `mockup'}{7}{subsection.2.9}}
+\citation{NguyenEtal10}
+\@@writefile{toc}{\contentsline {section}{\numberline {3}Reference}{8}{section.3}}
+\newlabel{sec:Reference}{{3}{8}{Reference\relax }{section.3}{}}
+\@@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Data types}{8}{subsection.3.1}}
+\newlabel{sec:DataTypes}{{3.1}{8}{Data types\relax }{subsection.3.1}{}}
+\@@writefile{toc}{\contentsline {subsubsection}{\numberline {3.1.1}\texttt  {Vector}}{8}{subsubsection.3.1.1}}
+\@@writefile{toc}{\contentsline {subsubsection}{\numberline {3.1.2}\texttt  {Quantity}}{8}{subsubsection.3.1.2}}
+\@@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Procedures and Functions}{8}{subsection.3.2}}
+\newlabel{sec:Procedures}{{3.2}{8}{Procedures and Functions\relax }{subsection.3.2}{}}
+\@@writefile{toc}{\contentsline {subsubsection}{\numberline {3.2.1}\texttt  {AddQuantity2Vector}}{8}{subsubsection.3.2.1}}
+\@@writefile{lol}{\contentsline {lstlisting}{addquantity2vector\textendash interface.pro}{8}{lstlisting.-1}}
+\@@writefile{toc}{\contentsline {subsubsection}{\numberline {3.2.2}\texttt  {Core2Qty}}{8}{subsubsection.3.2.2}}
+\@@writefile{lol}{\contentsline {lstlisting}{core2qty\textendash interface.pro}{8}{lstlisting.-2}}
+\@@writefile{toc}{\contentsline {subsubsection}{\numberline {3.2.3}\texttt  {CreateQuantity}}{9}{subsubsection.3.2.3}}
+\@@writefile{lol}{\contentsline {lstlisting}{createquantity\textendash interface.pro}{9}{lstlisting.-3}}
+\@@writefile{toc}{\contentsline {subsubsection}{\numberline {3.2.4}\texttt  {CreateVector}}{10}{subsubsection.3.2.4}}
+\@@writefile{lol}{\contentsline {lstlisting}{createvector\textendash interface.pro}{10}{lstlisting.-4}}
+\@@writefile{toc}{\contentsline {subsubsection}{\numberline {3.2.5}\texttt  {ForwardModel}}{10}{subsubsection.3.2.5}}
+\@@writefile{lol}{\contentsline {lstlisting}{forwardmodel\textendash interface.pro}{10}{lstlisting.-5}}
+\@@writefile{toc}{\contentsline {subsubsection}{\numberline {3.2.6}\texttt  {ICFM\_Cleanup}}{10}{subsubsection.3.2.6}}
+\@@writefile{lol}{\contentsline {lstlisting}{icfm\textendash cleanup\textendash interface.pro}{10}{lstlisting.-6}}
+\@@writefile{toc}{\contentsline {subsubsection}{\numberline {3.2.7}\texttt  {ICFM\_SendQuantity}}{10}{subsubsection.3.2.7}}
+\@@writefile{lol}{\contentsline {lstlisting}{icfm\textendash sendquantity\textendash interface.pro}{10}{lstlisting.-7}}
+\@@writefile{toc}{\contentsline {subsubsection}{\numberline {3.2.8}\texttt  {ICFM\_SendVector}}{11}{subsubsection.3.2.8}}
+\@@writefile{lol}{\contentsline {lstlisting}{icfm\textendash sendvector\textendash interface.pro}{11}{lstlisting.-8}}
+\@@writefile{toc}{\contentsline {subsubsection}{\numberline {3.2.9}\texttt  {ICFM\_Setup}}{11}{subsubsection.3.2.9}}
+\@@writefile{lol}{\contentsline {lstlisting}{icfm\textendash setup\textendash interface.pro}{11}{lstlisting.-9}}
+\@@writefile{toc}{\contentsline {section}{\numberline {A}Examples}{11}{section.A}}
+\newlabel{app:Example}{{A}{11}{Examples\relax }{section.A}{}}
+\@@writefile{toc}{\contentsline {subsection}{\numberline {A.1}Starting the server}{11}{subsection.A.1}}
+\@@writefile{toc}{\contentsline {subsection}{\numberline {A.2}Invoking a forward model}{11}{subsection.A.2}}
+\@@writefile{lol}{\contentsline {lstlisting}{mockup.pro}{11}{lstlisting.-10}}
+\@@writefile{toc}{\contentsline {section}{\numberline {B}Lists and tables}{14}{section.B}}
+\newlabel{app:Lists}{{B}{14}{Lists and tables\relax }{section.B}{}}
+\@@writefile{toc}{\contentsline {subsection}{\numberline {B.1}Types}{14}{subsection.B.1}}
+\@@writefile{toc}{\contentsline {subsection}{\numberline {B.2}Units}{15}{subsection.B.2}}
+\@@writefile{toc}{\contentsline {subsection}{\numberline {B.3}Molecules}{15}{subsection.B.3}}
+\@@writefile{toc}{\contentsline {subsection}{\numberline {B.4}Bands}{16}{subsection.B.4}}
+\bibstyle{plainnat}
+\bibdata{icfmbib}
+\bibcite{LiveseyEtal06}{{1}{2006}{{Livesey et~al.}}{{Livesey, Snyder, Read, and Wagner}}}
+\bibcite{NguyenEtal10}{{2}{2010}{{Nguyen et~al.}}{{Nguyen, Wagner, and Livesey}}}
+\bibcite{ReadEtal06}{{3}{2006}{{Read et~al.}}{{Read, Shippony, Schwartz, Livesey, and Snyder}}}
+\bibcite{SchwartzEtal06}{{4}{2006}{{Schwartz et~al.}}{{Schwartz, Read, and Snyder}}}
+\bibcite{WatersEtal06}{{5}{2006}{{Waters et~al.}}{{Waters, Froidevaux, Harwood, Jarnot, Pickett, Read, Siegel, Cofield, Filipiak, Flower, Holden, Lau, Livesey, Manney, Pumphrey, Santee, Wu, Cuddy, Lay, Loo, Perun., Schwartz, Stek, Thurstans, Chandra, Chavez, Chen, Boyles, Chudasama, Dodge, Fuller, Girard, Jiang, Jiang, Knosp, LaBelle, Lam, Lee, Miller, Oswald, Patel, Pukala, Quintero, Scaff, Snyder, Tope, Wagner, and Walch}}}
+@
+
+
+1.1
+log
+@Initial import for ICFM documentation
+@
+text
+@d19 2
+a20 2
+\@@writefile{toc}{\contentsline {section}{\numberline {2}Review of overall MLSCFM structure}{1}{section.2}}
+\newlabel{sec:Review}{{2}{1}{Review of overall MLSCFM structure\relax }{section.2}{}}
+a33 1
+\@@writefile{toc}{\contentsline {subsubsection}{\numberline {2.5.2}Horizontal coordinates -- \texttt  {hGrid}}{4}{subsubsection.2.5.2}}
+d36 1
+d40 1
+a40 2
+\@@writefile{toc}{\contentsline {subsubsection}{\numberline {2.7.1}The `full' forward model}{5}{subsubsection.2.7.1}}
+\citation{ReadEtal06}
+d44 1
+a48 2
+\@@writefile{toc}{\contentsline {section}{\numberline {3}Reference}{7}{section.3}}
+\newlabel{sec:Reference}{{3}{7}{Reference\relax }{section.3}{}}
+d50 2
+d64 2
+a65 2
+\@@writefile{toc}{\contentsline {subsubsection}{\numberline {3.2.4}\texttt  {CreateVector}}{9}{subsubsection.3.2.4}}
+\@@writefile{lol}{\contentsline {lstlisting}{createvector\textendash interface.pro}{9}{lstlisting.-4}}
+d72 15
+a86 3
+\@@writefile{toc}{\contentsline {subsubsection}{\numberline {3.2.8}\texttt  {ICFM\_SendVector}}{10}{subsubsection.3.2.8}}
+\@@writefile{lol}{\contentsline {lstlisting}{icfm\textendash sendvector\textendash interface.pro}{10}{lstlisting.-8}}
+\@@writefile{toc}{\contentsline {subsubsection}{\numberline {3.2.9}\texttt  {ICFM\_Setup}}{10}{subsubsection.3.2.9}}
+a93 1
+\@@writefile{lol}{\contentsline {lstlisting}{icfm\textendash setup\textendash interface.pro}{11}{lstlisting.-9}}
+@
+

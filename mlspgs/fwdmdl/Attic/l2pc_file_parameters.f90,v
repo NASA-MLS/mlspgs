@@ -1,0 +1,376 @@
+head	2.3;
+access;
+symbols
+	V1-51:2.2
+	V1-50:2.2
+	V1-45:2.2
+	V1-44:2.2
+	V1-43:2.2
+	V1-32:2.2
+	V1-31:2.2
+	V1-30:2.2
+	V1-13:2.2
+	V1-12:2.2
+	V1-11:2.2
+	V1-10:2.2
+	newfwm-feb03:2.2.0.2
+	V1-04:2.0
+	V1-03:2.0
+	V1-02:2.0
+	JointForwardModel:2.0.0.2
+	V1-00:2.0
+	newfwm-sep01:1.7.0.2
+	V0-7:1.7
+	V0-5-Level2:1.6
+	V0-5-SIPS:1.6
+	V0_1:1.1;
+locks; strict;
+comment	@# @;
+
+
+2.3
+date	2005.06.09.02.33.26;	author vsnyder;	state dead;
+branches;
+next	2.2;
+
+2.2
+date	2002.10.08.17.08.05;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2002.10.03.22.11.35;	author vsnyder;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2001.09.17.20.26.27;	author livesey;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2001.06.07.23.39.31;	author pwagner;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2001.03.31.23.40.55;	author zvi;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2001.03.20.11.03.16;	author zvi;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.01.31.01.08.48;	author zvi;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2000.11.22.23.10.03;	author zvi;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2000.11.22.23.07.28;	author zvi;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2000.05.04.18.12.05;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.3
+log
+@Move stuff to slabs_sw_m
+@
+text
+@! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+module L2PC_FILE_PARAMETERS
+  use MLSCommon, only: I4
+  implicit NONE
+  public
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
+    & "$Id: l2pc_file_parameters.f90,v 2.2 2002/10/08 17:08:05 pwagner Exp $"
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), parameter, private :: ModuleName = &
+       "$RCSfile: l2pc_file_parameters.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+! * * * * * * * * * * *  L2PC_FILE_PARAMETERS V51 * * * * * * * * * * * * *
+!
+!  This include file has the parameters values for
+!    reading and writing the l2pc_xx.dat file.
+!
+!  Written by W. G. Read  on 8/13/90.
+!
+!  Modified to Version 5.0 of l2pc code, by Z. Shippony, Jul/10/96
+!  Adding the second derivative table dimension Parameters and the
+!  third header's key
+!
+!  Updated by Z. Shippony on May/5/97.  (For version 5.1)
+!      setting    max_no_sv_derivatives to: 350
+!    (Increasing  max_no_elmnts_per_sv_component from 22 to: 43)
+!     Increasing  max_no_elmnts_per_sv_component from 22 to: 34
+!    (Increasing  max_no_pointings from: 43  to: 85)
+!     Increasing  max_no_pointings from: 43  to: 67
+!
+!  Updated by Z. Shippony on Oct/16/97
+!     resetting   max_no_sv_derivatives to: 400  ON SGI ONLY !!
+!
+! Declarations for Parameters.
+!
+! If these parameters are changed be sure to modify the record length
+! in the l2pc file OPEN statement to match the new length. Keep
+! max_char_len_l2pc_key divisable by 4
+  integer(i4), parameter :: MAX_CHAR_LEN_L2PC_KEY = 4*10
+  integer(i4), parameter :: MAX_CHAR_LEN_AVAIL_KEYS = 8
+  integer(i4), parameter :: MAX_CHAR_LEN_SV_COMPONENTS = 8
+  integer(i4), parameter :: MAX_NO_AVAIL_KEYS = 48
+  integer(i4), parameter :: MAX_NO_BANDS = 6
+  integer(i4), parameter :: MAX_NO_CHANNELS_PER_BAND = 15
+  integer(i4), parameter :: MAX_NO_POINTINGS = 130
+  integer(i4), parameter :: MAX_NO_ELMNTS_PER_SV_COMPONENT = 50
+  integer(i4), parameter :: MAX_NO_KEY_ADDR = 5000
+  integer(i4), parameter :: MAX_NO_THETA_VAL = 6
+  integer(i4), parameter :: MAX_NO_MAG_FIELDS = 4
+  integer(i4), parameter :: MAX_NO_SV_COMPONENTS = 32
+  integer(i4), parameter :: MAX_NO_SV_ELMNTS =                          &
+     &                       MAX_NO_ELMNTS_PER_SV_COMPONENT * 20
+  integer(i4), parameter :: MAX_NO_SV_DERIVATIVES = 400
+  integer(i4), parameter :: MAX_CHAR_LEN_L2PC_KEY_DES =                 &
+ &                            max_char_len_l2pc_key - max_char_len_avail_keys
+  integer(i4), parameter :: MAX_NO_CHANNELS =                           &
+ &                            max_no_bands * max_no_channels_per_band
+  integer(i4), parameter :: MAX_REC_LEN_KEY_FILE =                      &
+ &                            1 + max_char_len_l2pc_key_des/4
+  character(len=40), parameter :: L2PC_HEADER_KEY1 =                    &
+ &                                 'First header record.    '
+  character(len=40), parameter :: L2PC_HEADER_KEY2 =                    &
+ &                                 'Second header record.   '
+  character(len=40), parameter :: L2PC_HEADER_KEY3 =                    &
+ &                                 'Third header record.    '
+  integer(i4), parameter :: J2D=max_no_sv_components,                   &
+ &                          MAX_TABLE_2D=(j2d*(j2d+1))/2
+!
+contains 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
+end module L2PC_FILE_PARAMETERS
+! $Log: l2pc_file_parameters.f90,v $
+! Revision 2.2  2002/10/08 17:08:05  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.1  2002/10/03 22:11:35  vsnyder
+! Remove Deg2Rad and Rad2Deg parameters -- they're properly in Units
+!
+! Revision 2.0  2001/09/17 20:26:27  livesey
+! New forward model
+!
+! Revision 1.7  2001/06/07 23:39:31  pwagner
+! Added Copyright statement
+!
+! Revision 1.6  2001/03/31 23:40:55  zvi
+! Eliminate l2pcdim (dimension parameters) move to allocatable ..
+!
+! Revision 1.5  2001/03/20 11:03:16  zvi
+! Fixing code for "real" data run, increase dim. etc.
+!
+! Revision 1.4  2001/01/31 01:08:48  zvi
+! New version of forward model
+!
+! Revision 1.1  2000/05/04 18:12:05  vsnyder
+! Initial conversion to Fortran 90
+!
+@
+
+
+2.2
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d10 1
+a10 1
+    & "$Id: l2pc_file_parameters.f90,v 2.1 2002/10/03 22:11:35 vsnyder Exp $"
+d79 3
+@
+
+
+2.1
+log
+@Remove Deg2Rad and Rad2Deg parameters -- they're properly in Units
+@
+text
+@d10 1
+a10 1
+    & "$Id: l2pc_file_parameters.f90,v 2.0 2001/09/17 20:26:27 livesey Exp $"
+d14 1
+d72 5
+d79 3
+@
+
+
+2.0
+log
+@New forward model
+@
+text
+@d5 1
+a5 1
+  use MLSCommon, only: I4, R4, R8
+d9 4
+a12 4
+  private ID, ModuleName
+  CHARACTER (LEN=256) :: Id = &
+       "$Id: l2pc_file_parameters.f90,v 1.7 2001/06/07 23:39:31 pwagner Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= &
+a69 4
+  ! Conversion factor degrees to radians.
+  real(r8), parameter :: DEG2RAD = 1.745329252E-2 ! [Radians / Degree]
+  ! Conversion factor radians to degrees.
+  real(r8), parameter :: RAD2DEG = 57.29577951308 ! [Degrees / Radian]
+d73 3
+@
+
+
+1.7
+log
+@Added Copyright statement
+@
+text
+@d11 1
+a11 1
+       "$Id: l2pc_file_parameters.f90,v 1.6 2001/03/31 23:40:55 zvi Exp $"
+d77 3
+@
+
+
+1.6
+log
+@Eliminate l2pcdim (dimension parameters) move to allocatable ..
+@
+text
+@d1 3
+d11 1
+a11 1
+       "$Id: l2pc_file_parameters.f90,v 1.5 2001/03/20 11:03:16 zvi Exp $"
+d77 3
+@
+
+
+1.5
+log
+@Fixing code for "real" data run, increase dim. etc.
+@
+text
+@a2 1
+  use L2PCDIM, only: NSPS
+d8 1
+a8 1
+       "$Id: l2pc_file_parameters.f90,v 1.4 2001/01/31 01:08:48 zvi Exp $"
+d51 1
+a51 1
+     &                       MAX_NO_ELMNTS_PER_SV_COMPONENT * NSPS
+d74 3
+@
+
+
+1.4
+log
+@New version of forward model
+@
+text
+@d9 1
+a9 1
+       "$Id: l2pc_file_parameters.f90,v 1.1 2000/05/04 18:12:05 vsnyder Exp $"
+d11 1
+a11 1
+       "$RCSfile: l2pc_file_parameters.f90 $"
+d45 2
+a46 5
+! integer(i4), parameter :: MAX_NO_POINTINGS = 85
+  integer(i4), parameter :: MAX_NO_POINTINGS = 67
+! integer(i4), parameter :: MAX_NO_ELMNTS_PER_SV_COMPONENT = 43
+  integer(i4), parameter :: MAX_NO_ELMNTS_PER_SV_COMPONENT = 34
+! integer(i4), parameter :: MAX_NO_KEY_ADDR = 100000
+a52 2
+! integer(i4), parameter :: MAX_NO_SV_DERIVATIVES = 350
+! integer(i4), parameter :: MAX_NO_SV_DERIVATIVES = 385
+d75 3
+@
+
+
+1.3
+log
+@Re-add basic stuff
+@
+text
+@@
+
+
+1.2
+log
+@New version
+@
+text
+@d2 1
+a2 1
+  use MLSCommon, only: I4, R4
+a5 1
+
+d10 2
+a11 1
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile: l2pc_file_parameters.f90,v $"
+a12 1
+
+a38 1
+
+a53 1
+
+a55 1
+
+a58 1
+
+a70 1
+
+a72 1
+
+d74 1
+a74 2
+  real(r4), parameter :: DEG2RAD = 1.745329252E-2 ! [Radians / Degree]
+
+d76 1
+a76 1
+  real(r4), parameter :: RAD2DEG = 57.29577951308 ! [Degrees / Radian]
+a78 1
+
+@
+
+
+1.1
+log
+@Initial conversion to Fortran 90
+@
+text
+@d10 1
+a10 1
+       "$Id: L2PC_FILE_PARAMETERS,v 1.12 2000/02/08 19:54:57 vsnyder Exp $"
+d88 4
+a91 1
+! $Log: L2PC_FILE_PARAMETERS,v $
+@
+

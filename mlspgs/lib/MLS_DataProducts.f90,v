@@ -1,0 +1,347 @@
+head	2.6;
+access;
+symbols
+	v5-02-NRT-19:2.6
+	v6-00:2.6
+	v5-02-NRT-18:2.6
+	v5-02:2.6
+	v5-01-NRT-17:2.6
+	v5-01-NRT-16:2.6
+	v5-01-NRT-15:2.6
+	v5-01-NRT-14:2.6
+	neuralnetworks-1-0:2.6.0.10
+	cfm-single-freq-0-1:2.6.0.8
+	v5-01:2.6
+	v5-00:2.6
+	v4-23-TA133:2.6.0.6
+	mus-emls-1-70:2.6.0.4
+	rel-1-0-englocks-work:2.6.0.2
+	VUMLS1-00:2.6
+	VPL1-00:2.6
+	V4-22-NRT-08:2.6
+	VAM1-00:2.6
+	V4-21:2.5.0.2
+	V4-13:2.4
+	V4-12:2.3
+	V4-11:2.3
+	V4-10:2.3
+	V3-43:2.3
+	M4-00:2.3
+	V3-41:2.3
+	V3-40-PlusGM57:2.3.0.2
+	V2-24-NRT-04:2.2
+	V3-33:2.3
+	V2-24:2.2
+	V3-31:2.3
+	V3-30-NRT-05:2.3
+	cfm-01-00:2.3
+	V3-30:2.3
+	V3-20:2.3
+	V3-10:2.3
+	V2-23-NRT-02:2.2
+	V2-23:2.2
+	V2-22-NRT-01:2.2
+	V2-22:2.2
+	V2-21:2.2
+	V2-20:2.2
+	V2-11:2.2
+	V2-10:2.2
+	V2-00:2.2
+	V1-51:2.1
+	V1-50:2.1
+	V1-45:2.1
+	V1-44:2.1
+	V1-43:2.1
+	V1-42:2.1
+	V1-41:2.1
+	V1-32:2.1
+	V1-40:2.1
+	V1-31:2.1
+	V1-30:2.1
+	V1-13:2.1
+	V1-12:2.1
+	V1-11:2.1
+	V1-10:2.1
+	newfwm-feb03:2.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+2.6
+date	2015.03.28.01.19.22;	author vsnyder;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2015.01.21.19.15.21;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2014.09.05.00.13.06;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2009.06.23.18.25.42;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2005.06.22.17.25.49;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2002.11.25.05.38.28;	author jdone;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.6
+log
+@Added stuff to trace allocate/deallocate addresses -- some commented out
+because NAG build 1017 doesn't yet allow arrays as arguments to C_LOC.
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module MLS_DataProducts
+  use MLSKinds, only: r8
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_deallocate
+  implicit none
+  public :: Deallocate_DataProducts, DataProducts_T
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: MLS_DataProducts.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+  type DataProducts_T
+     character(len=80) :: name, data_type
+     character(len=20), dimension(:), pointer :: Dimensions => NULL()
+     real(r8), dimension(:), pointer :: FrequencyCoordinates  => NULL()
+     real(r8), dimension(:), pointer :: VerticalCoordinates   => NULL()
+     real(r8), dimension(:), pointer :: HorizontalCoordinates => NULL()
+  end type DataProducts_T
+
+contains
+
+ subroutine Deallocate_DataProducts( DataProducts )
+    use Allocate_Deallocate, only: Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+    type( DataProducts_T ), intent(inout) :: DataProducts
+    integer(c_intptr_t) :: Addr         ! For tracing
+    integer :: s, status
+
+    if (associated(DataProducts%FrequencyCoordinates)) then 
+        s = size(DataProducts%FrequencyCoordinates) * &
+          & storage_size(DataProducts%FrequencyCoordinates) / 8
+        addr = 0
+        if ( s > 0 ) addr = transfer(c_loc(DataProducts%FrequencyCoordinates(1)), addr)
+        deallocate(DataProducts%FrequencyCoordinates, stat=status)
+        call test_deallocate ( status, ModuleName, &
+          & 'DataProducts%FrequencyCoordinates', s, address=addr )
+    end if
+
+    if (associated(DataProducts%VerticalCoordinates)) then 
+        s = size(DataProducts%VerticalCoordinates) * &
+          & storage_size(DataProducts%VerticalCoordinates) / 8
+        addr = 0
+        if ( s > 0 ) addr = transfer(c_loc(DataProducts%VerticalCoordinates(1)), addr)
+        deallocate(DataProducts%VerticalCoordinates, stat=status)
+        call test_deallocate ( status, ModuleName, &
+          & 'DataProducts%VerticalCoordinates', s, address=addr )
+    end if
+
+    if (associated(DataProducts%HorizontalCoordinates)) then 
+        s = size(DataProducts%HorizontalCoordinates) * &
+          & storage_size(DataProducts%HorizontalCoordinates) / 8
+        addr = 0
+        if ( s > 0 ) addr = transfer(c_loc(DataProducts%HorizontalCoordinates(1)), addr)
+        deallocate(DataProducts%HorizontalCoordinates, stat=status)
+        call test_deallocate ( status, ModuleName, &
+          & 'DataProducts%HorizontalCoordinates', s, address=addr )
+    end if
+
+    if (associated(DataProducts%Dimensions)) then 
+        s = size(DataProducts%Dimensions) * &
+          & storage_size(DataProducts%Dimensions) / 8
+        addr = 0
+!         if ( s > 0 ) addr = transfer(c_loc(DataProducts%Dimensions(1)), addr)
+        deallocate(DataProducts%Dimensions, stat=status)
+        call test_deallocate ( status, ModuleName, &
+          & 'DataProducts%Dimensions', s, address=addr)
+    endif
+
+ end subroutine Deallocate_DataProducts
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: MLS_DataProducts.f90,v 2.5 2015/01/21 19:15:21 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+end module MLS_DataProducts
+@
+
+
+2.5
+log
+@Corrected error in deallocating components of DataProducts
+@
+text
+@d35 1
+d37 1
+d43 2
+d47 2
+a48 2
+          & 'DataProducts%FrequencyCoordinates', s )
+    endif
+d53 2
+d57 2
+a58 2
+          & 'DataProducts%VerticalCoordinates', s )
+    endif
+d63 2
+d67 2
+a68 2
+          & 'DataProducts%HorizontalCoordinates', s )
+    endif
+d73 2
+d77 1
+a77 1
+          & 'DataProducts%Dimensions', s )
+d85 1
+a85 1
+       "$Id: MLS_DataProducts.f90,v 2.4 2014/09/05 00:13:06 vsnyder Exp $"
+@
+
+
+2.4
+log
+@More complete and accurate allocate/deallocate size tracking.  Get kinds
+from MLSKinds instead of MLSCommon.
+@
+text
+@d49 1
+a49 1
+        deallocate(DataProducts%FrequencyCoordinates, stat=status)
+d57 1
+a57 1
+        deallocate(DataProducts%FrequencyCoordinates, stat=status)
+d65 1
+a65 1
+        deallocate(DataProducts%FrequencyCoordinates, stat=status)
+d75 1
+a75 1
+       "$Id: MLS_DataProducts.f90,v 2.3 2009/06/23 18:25:42 pwagner Exp $"
+@
+
+
+2.3
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d13 1
+a13 1
+  use MLSCommon, only: r8
+d19 1
+a19 1
+       "$RCSfile: $"
+d34 1
+d36 1
+a36 2
+    character(len=480) :: msr
+    integer :: status
+d39 2
+d42 2
+a43 5
+     if ( status /= 0 ) then
+      msr = MLSMSG_deallocate // ' DataProducts%FrequencyCoordinates in ' // &
+           DataProducts%name
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+     endif
+d47 5
+a51 6
+        deallocate(DataProducts%VerticalCoordinates, stat=status)
+     if ( status /= 0 ) then
+      msr = MLSMSG_deallocate // ' DataProducts%VerticalCoordinates in ' // &
+           DataProducts%name
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+     endif
+d55 5
+a59 6
+        deallocate(DataProducts%HorizontalCoordinates, stat=status)
+     if ( status /= 0 ) then
+      msr = MLSMSG_deallocate // ' DataProducts%HorizontalCoordinates in ' // &
+           DataProducts%name
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+     endif
+d63 5
+a67 6
+        deallocate(DataProducts%Dimensions, stat=status)
+     if ( status /= 0 ) then
+      msr = MLSMSG_deallocate // ' DataProducts%Dimensions in ' // &
+           DataProducts%name
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+     endif
+d75 1
+a75 1
+       "$Id: read_apriori.f90 is it here $"
+@
+
+
+2.2
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d76 1
+a77 1
+!---------------------------- RCS Ident Info -------------------------------
+d79 2
+a80 3
+       "$Id: $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d82 1
+d84 1
+@
+
+
+2.1
+log
+@Adding data structure for use in lib/MLSAuxData.f90
+@
+text
+@d1 11
+d17 1
+a17 4
+  !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
+    "$Id: MLS_DataProducts.f90,v 2.16 2002/11/11 19:20:25 jdone Exp $"
+  character (len=len(idParm)), private :: Id = idParm
+d19 3
+a21 1
+    "$RCSfile: MLS_DataProducts.f90,v $"
+d75 9
+@
+

@@ -1,0 +1,366 @@
+head	1.5;
+access;
+symbols
+	v5-02-NRT-19:1.5
+	v6-00:1.5
+	v5-02-NRT-18:1.5
+	v5-02:1.5
+	v5-01-NRT-17:1.5
+	v5-01-NRT-16:1.5
+	v5-01-NRT-15:1.5
+	v5-01-NRT-14:1.5
+	neuralnetworks-1-0:1.5.0.10
+	cfm-single-freq-0-1:1.5.0.8
+	v5-01:1.5
+	v5-00:1.5
+	v4-23-TA133:1.5.0.6
+	mus-emls-1-70:1.5.0.4
+	rel-1-0-englocks-work:1.5.0.2
+	VUMLS1-00:1.5
+	VPL1-00:1.5
+	V4-22-NRT-08:1.5
+	VAM1-00:1.4
+	V4-21:1.3.0.2
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.5
+date	2016.02.11.19.48.16;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2015.04.16.22.33.32;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2015.01.06.18.08.53;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2014.11.25.01.06.28;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2014.06.12.22.54.49;	author quyen;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.5
+log
+@Added dateformat variable to allow using yyyy-mm-dd
+@
+text
+@#!/bin/sh
+# Generate the key=value file from the attributes of the hdf data file.
+#    Some parameters will be hardcoded because they are not the hdf data file.
+#    This version is specified for UARS level 1B
+#
+
+# Copyright 2014, by the California Institute of Technology. ALL
+# RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+# commercial use must be negotiated with the Office of Technology Transfer
+# at the California Institute of Technology.
+
+# This software may be subject to U.S. export control laws. By accepting this
+# software, the user agrees to comply with all applicable U.S. export laws and
+# regulations. User has the responsibility to obtain export licenses, or other
+# export authority as may be required before exporting such information to
+# foreign countries or providing access to foreign persons.
+
+# "$Id: gen_uars_l1b_odl_txt.sh,v 1.4 2015/04/16 22:33:32 pwagner Exp $"
+
+#------------------------------- zero_pad ------------
+#
+# Function to pad a number with a zero if its
+# length is less than 2
+# usage: zero_pad n
+
+zero_pad()
+{
+   # Count chars in n (-n  means skip newline)
+   if [ `echo -n "$1" | wc -m` -lt 2 ]
+   then
+     echo "0$1"
+   else
+     echo $1
+   fi
+}
+
+#------------------------------- Main Program ------------
+
+#****************************************************************
+#                                                               *
+#                  * * * Main Program  * * *                    *
+#                                                               *
+#                                                               *
+#	The entry point where control is given to the script         *
+#****************************************************************
+
+# ------------------ ccsds ascii date formats ------------------
+# There aree 2 possible date formats we may impose on the metadata
+# (a) yyyy-mm-dd
+# (b) yyyy-Doy
+#
+# Let the next line assign either 'a' or 'b' as the format you prefer
+dateformat='b'
+# ----------------------------------------------------------------
+
+# Assume the 1st argument is the hdf filename
+filein=$1
+
+# Generate all the known attributes from L1b
+echo "LocalGranuleID=$filein"
+l2auxdump -a PGEVersion  $filein | perl -pe 's/Dump of (.*)\n/$1=/'
+if [ "$dateformat" = "b" ]
+then
+  # The file-level attributes were already formatted like 'b'
+  l2auxdump -a StartUTC    $filein | perl -ne 'print if $. == 2' | perl -pe 's/(.*)T(.*)\n/RangeBeginningDate=$1\nRangeBeginningTime=$2.00000\nEquatorCrossingLongitude=0.0\nEquatorCrossingDate=$1\nEquatorCrossingTime=$2\n/' 
+  l2auxdump -a EndUTC      $filein | perl -ne 'print if $. == 2' | perl -pe 's/(.*)T(.*)\n/RangeEndingDate=$1\nRangeEndingTime=$2.00000\n/' 
+else
+  GranuleYear=`l2auxdump -a GranuleYear $filein | awk '{print $3}'`
+  GranuleMonth=`l2auxdump -a GranuleMonth $filein | awk '{print $3}'`
+  GranuleDay=`l2auxdump -a GranuleDay $filein | awk '{print $3}'`
+  # In case they are single digits, we pad them with zeros
+  GranuleMonth=`zero_pad $GranuleMonth`
+  GranuleDay=`zero_pad $GranuleDay`
+  StartUTC=`l2auxdump -a StartUTC    $filein`
+  EndUTC=`l2auxdump -a EndUTC    $filein`
+  StartTime=`echo $StartUTC | awk '{print $4}' | awk -FT '{print $2}'`
+  EndTime=`echo $EndUTC | awk '{print $4}' | awk -FT '{print $2}'`
+  echo "RangeBeginningDate=$GranuleYear-$GranuleMonth-$GranuleDay"
+  echo "RangeBeginningTime=$StartTime"
+  echo "EquatorCrossingLongitude=0.0"
+  echo "EquatorCrossingDate=0.0"
+  echo "EquatorCrossingTime=$StartTime"
+  echo "RangeEndingDate=$GranuleYear-$GranuleMonth-$GranuleDay"
+  echo "RangeEndingTime=$EndTime"
+fi
+I=gen_uars_l1b_odl_txt
+split_path="`echo $0 | sed 's/'$I'/split_path/'`"
+
+# Guess from the filename 
+# Must split path/filename
+filename=`$split_path -f $filein`
+filepath=`$split_path -p $filein`
+
+LocalVersionID=`echo $filename | perl -nle 'print $1 if /-([a-z0-9]+)_/' `
+#echo $filename | perl -nle 'print $1 if /-([a-z0-9]+)_/' 
+
+# L1BOA or L1BRAD?
+L1BOA=`echo $filename | grep L1BOA`
+if [ "$L1BOA" != "" ]
+then
+  Identifier_Product_DOI=10.5067/AURA/MLS/DATA1001
+  AAII=MUSUL1BOA_V1.html
+else
+  Identifier_Product_DOI=10.5067/AURA/MLS/DATA1002
+  AAII=MUSUL1BRAD_V1.html
+fi
+PGEVersion=`echo $filename | awk -F_ '{print $3}' | awk -F"-" '{print $1"-"$2}'`
+ProductionDateTime=`date +"%C%y-%m%d %T"`
+
+# Give default values to the "stuttered" attributes
+TTIITTLLEE=$filename
+MMIIIIDD=$filename
+AABBSSTTRRAACCTT=$filename
+PPUURRPPOOSSEE=$filename
+FFIILLEEIIDD=$filename
+DDSS=$filename
+MMUUSSTTAARRDD=$filename
+DDQQDD=$filename
+EEXXTTEENNTT=$filename
+
+# May reset the stuttered values (or any others for that matter)
+if [ -f "$filepath/attributes.txt" ]
+then
+  . "$filepath/attributes.txt"
+fi
+
+if [ -f "$filepath/abstract.txt" ]
+then
+  AABBSSTTRRAACCTT=`cat $filepath/abstract.txt`
+  AABBSSTTRRAACCTT=`echo $AABBSSTTRRAACCTT`
+fi
+
+cat << EOF
+StartOrbitNumber=-9999
+StopOrbitNumber=-9999
+LocalVersionID=$LocalVersionID
+PGEVersion=$PGEVersion
+ProductionDateTime=$ProductionDateTime
+EOF
+
+# Hardcode for L1b for missing additional information
+cat  << EOF
+DayNightFlag=Both
+QAPercentMissingData=0
+QAPercentOutofBoundsData=0
+QAPercentInterpolatedData=0
+ParameterName=Orbit/attitude and tangent point
+ReprocessingPlanned=further update anticipated using enhanced PGE
+InputPointer=Found at /PCF
+VerticalSpatialDomainType=Atmosphere Layer
+VerticalSpatialDomainValue=Brightness Temperature
+ZoneIdentifier=Other Grid System
+WestBoundingCoordinate=-180.0
+NorthBoundingCoordinate=90.0
+EastBoundingCoordinate=180.0
+SouthBoundingCoordinate=-90.0
+LocalityValue=Limb
+DataProducer=MLS_SIPS
+Identifier_Product_DOI=$Identifier_Product_DOI
+title=$TTIITTLLEE
+MI_Identifier=$MMIIIIDD
+edition=v01-00
+abstract=$AABBSSTTRRAACCTT
+purpose=$PPUURRPPOOSSEE
+MI_AcquisitionInformation=http://disc.sci.gsfc.nasa.gov/datacollection/$AAII
+MI_CoverageDescription=+-180 degrees longitude, +-80 degrees latitude, day and night
+MD_Keywords=atmospheric chemistry, climate
+MI_Operation=Raytheon Corp.
+CI_ResponsibleParty=GES-DAAC; another DAAC?
+MD_GridSpatialRepresentation=grid
+fileIdentifier=$FFIILLEEIIDD
+DS_Series=$DDSS
+LE_Lineage=Algorithm Theoretical Basis Document : $MMUUSSTTAARRDD
+DQ_Element=MUSTARD Data Quality Document $DDQQDD
+MD_BrowseGraphic=none
+EX_Extent=$EEXXTTEENNTT
+EOF
+
+
+
+# $Log: gen_uars_l1b_odl_txt.sh,v $
+# Revision 1.4  2015/04/16 22:33:32  pwagner
+# Reduce number of warnings logged (but why are there any?)
+#
+# Revision 1.3  2015/01/06 18:08:53  pwagner
+# Revised default attribute values; added abstract.txt and attributes.txt mechanisms
+#
+# Revision 1.2  2014/11/25 01:06:28  pwagner
+# Correctly set missing or erroneous metadata values
+#
+# Revision 1.1  2014/06/12 22:54:49  quyen
+# tool to extract attributes from UARS L1B file
+#
+@
+
+
+1.4
+log
+@Reduce number of warnings logged (but why are there any?)
+@
+text
+@d18 37
+a54 1
+# "$Id: gen_uars_l1b_odl_txt.sh,v 1.3 2015/01/06 18:08:53 pwagner Exp $"
+d62 24
+a85 3
+l2auxdump -a StartUTC    $filein | perl -ne 'print if $. == 2' | perl -pe 's/(.*)T(.*)\n/RangeBeginningDate=$1\nRangeBeginningTime=$2.00000\nEquatorCrossingLongitude=0.0\nEquatorCrossingDate=$1\nEquatorCrossingTime=$2\n/' 
+l2auxdump -a EndUTC      $filein | perl -ne 'print if $. == 2' | perl -pe 's/(.*)T(.*)\n/RangeEndingDate=$1\nRangeEndingTime=$2.00000\n/' 
+
+d182 3
+@
+
+
+1.3
+log
+@Revised default attribute values; added abstract.txt and attributes.txt mechanisms
+@
+text
+@d18 1
+a18 1
+# "$Id: gen_uars_l1b_odl_txt.sh,v 1.2 2014/11/25 01:06:28 pwagner Exp $"
+d38 1
+a38 1
+echo $filename | perl -nle 'print $1 if /-([a-z0-9]+)_/' 
+a89 6
+AutomaticQualityFlag=Passed
+AutomaticQualityFlagExplanation=Validated
+OperationalQualityFlag=Not Investigated
+OperationalQualityFlagExplanation=Not Investigated
+ScienceQualityFlag=Inferred Passed
+ScienceQualityFlagExplanation=Validated, see http://disc.gsfc.nasa.gov/UARS/MLS/ for quality document
+d125 3
+@
+
+
+1.2
+log
+@Correctly set missing or erroneous metadata values
+@
+text
+@d18 1
+a18 1
+# "$Id: gen_uars_l1b_odl_txt.sh,v 1.1 2014/06/12 22:54:49 quyen Exp $"
+d23 1
+a23 1
+# Generate the known attributes from L1b
+d35 1
+a38 2
+# Hardcode because LocalVersionID can not guess from the filename
+#LocalVersionID=c02
+d45 1
+d48 1
+d52 24
+d95 1
+a95 1
+ScienceQualityFlagExplanation=Validated, see http://disc.gsfc.nasa.gov/Aura/MLS/ for quality document
+d109 17
+a125 17
+title=TBD
+MI_Identifier=TBD
+edition=TBD
+abstract=TBD
+purpose=TBD
+MI_AcquisitionInformation=TBD
+MI_CoverageDescription=TBD
+MD_Keywords=TBD
+MI_Operation=TBD
+CI_ResponsibleParty=TBD
+MD_GridSpatialRepresentation=TBD
+fileIdentifier=TBD
+DS_Series=TBD
+LE_Lineage=TBD
+DQ_Element=TBD
+MD_BrowseGraphic=TBD
+EX_Extent=TBD
+d131 3
+@
+
+
+1.1
+log
+@tool to extract attributes from UARS L1B file
+@
+text
+@d18 1
+a18 1
+# "$Id: $"
+d29 3
+d33 5
+a37 1
+#LocalVersionID=`echo $filein | perl -nle 'print $1 if /-([a-z0-9]+)_/' `
+d39 11
+a49 1
+LocalVersionID=c02
+d55 1
+d82 2
+d105 4
+a108 1
+# $Log:  $
+@
+

@@ -1,0 +1,116 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.14
+	cfm-single-freq-0-1:1.1.0.12
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.10
+	mus-emls-1-70:1.1.0.8
+	rel-1-0-englocks-work:1.1.0.6
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V2-24-NRT-04:1.1
+	V3-33:1.1
+	V2-24:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1
+	V2-23-NRT-02:1.1
+	V2-23:1.1
+	V2-22-NRT-01:1.1
+	V2-22:1.1
+	V2-21:1.1
+	V2-20:1.1
+	V2-11:1.1
+	V2-10:1.1
+	V2-00:1.1
+	V1-51:1.1
+	V1-50:1.1
+	V1-45:1.1
+	V1-44:1.1
+	V1-43:1.1
+	V1-32:1.1
+	V1-31:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2003.04.23.17.07.02;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Various changes and additions
+@
+text
+@\cfCommand{Merge}{MergeGrids}
+\index{Gridded data!merging}
+\index{Gridded data!climatology}
+\index{Gridded data!operational}
+\index{Gridded data!missing points in}
+
+\begin{cfFragment}
+<newGrid>: Merge, climatology=<grid>, operational=<grid>, 
+   height=<pressure>, scale=<length>
+\end{cfFragment}
+\cfField{climatology}
+\cfField{operational}
+\cfField{height}
+\cfField{scale}
+
+The \cf+Merge+ command is used to combine gridded data from a climatology
+dataset with that from operational datasets (\eg NCEP or GMAO/DAO).
+Typically the climatology dataset is something like a series of zonal
+means for `typical' months, while the operational data are on some much
+finer temporal and horizontal grid.  However, there are no strict
+requirements, other than that both datasets must be on the use the same
+latitude coordinate (latitude vs.\ equivalent latitude) and use pressure
+as their vertical coordinate.
+
+The resulting grid takes its horizontal coordinates from the operational
+grid, and its vertical coordinates from the climatology dataset.  The
+result is majority operational data below the pressure given in the
+\cf+height+ field, and mostly climatology above.  The `smoothing' of
+this transition is controlled by the \cf+scale+ length.  For points
+where the operational data are marked bad, the climatological data are
+returned (with no attempt made to `smooth' transitions).
+
+If the operational data are completely missing, the result is simply a
+copy of the climatology dataset.  The climatology data may not contain
+any missing data points.
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "l2ug"
+%%% End: 
+@

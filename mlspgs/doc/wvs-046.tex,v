@@ -1,0 +1,178 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.14
+	cfm-single-freq-0-1:1.1.0.12
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.10
+	mus-emls-1-70:1.1.0.8
+	rel-1-0-englocks-work:1.1.0.6
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2008.06.11.20.14.53;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9.25in
+
+\newcommand{\docname}{\bf wvs-046}
+\newcommand{\docdate}{13 October 2006}
+
+\newcommand{\diff}[2]{\frac{\text{d}#1}{\text{d}#2}}
+
+\usepackage{longtable}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace*{-35pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill\\
+Subject: \>Interesting result concerning $\zeta_{\text{min}}$\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-20pt}
+
+We have tabulated $H$ on the composite $\zeta$ basis and the temperature $\phi$
+basis in the {\tt h\_ref} array in {\tt metrics}.  We also have
+$\diff{H}{\zeta}$ on the same grid in the {\tt dhidzij} array.
+
+Assume that $\phi_t=0$ corresponds to a column of {\tt h\_ref}, choose $\phi_1$
+an adjacent $\phi$ from the temperature basis that corresponds to an adjacent
+column of {\tt h\_ref}, and choose a row of {\tt h\_ref} that corresponds to
+$H_t$.  Call the tangent row and column indices of {\tt h\_ref} $i$ and $j$, so
+{\tt h\_ref(i,j)}=$H_t$, assume the adjacent column is $j+1$, and refer to {\tt
+h\_ref(i,j+1)} as $H_1$.
+
+A ray parallel to the tangent ray that intersects the radius $\phi_1$ at $H$
+will intersect the radius $\phi=0$ at $H \cos \phi_1$.
+
+Geometrically along the tangent ray, we have $H(\phi) = H_t \sec \phi$ and
+$\diff{H}{\phi} = H_t \sec \phi \tan\phi$ where $0 \leq \phi \leq
+\phi_1$, and $\left.\diff{H}{\phi} \right|_{\phi=\phi_1} = H_t \sec \phi_1
+\tan\phi_1$.  Along the ray parallel to the tangent ray, we have $H(\phi) = H_t
+\cos \phi_1 \sec \phi$, $\diff{H}{\phi} = H_t \cos \phi_1 \sec \phi \tan
+\phi$ and $\left.\diff{H}{\phi} \right|_{\phi=\phi_1} = H_t \cos \phi_1 \sec
+\phi_1 \tan\phi_1 = H_t \tan \phi_1$.
+
+We could either find $\phi$ for the minimum $\zeta$ along a constant-$H_t$
+surface, or find $\phi$ for the minimum $H$ along a constant-$\zeta$ surface
+that includes $\zeta(H_t,\phi_t)$.  I think these problems are equivalent.
+
+Another possibility is to assume that our ``constant-$\zeta$'' rows of {\tt
+h\_ref} actually represent a single $\zeta$ value only at the $\phi$ values
+that represent the columns, and that for intermediate values of $\phi$, $\zeta$
+might not be a constant.
+
+We have $\diff{H}{\zeta}$ from {\tt dhidzij}, and $\diff{H}{\phi}$ from
+geometry.  From these two we can calculate $\diff{\zeta}{\phi} =
+\diff{H}{\phi}\,\diff{\zeta}{H}$.  From geometry we have
+$\left.\diff{\zeta}{\phi}\right|_{\phi=0}=0$.  Let
+$\left.\diff{\zeta}{\phi}\right|_{\phi=\phi_1} = 
+\left.\diff{H}{\phi} \diff{\zeta}{H}\right|_{\phi=\phi_1} =
+\left.H_t \tan\phi_1 \diff{\zeta}{H}\right|_{\phi=\phi_1} = w$.
+From the two derivatives and $\zeta(\phi=0)=\zeta(\phi=\phi_1)=\zeta_0$, we can
+use Hermite interpolation to construct a polynomial $\zeta(x) \approx P(x) = a
+x^3 + b x^2 + c x + d$, where $x = \frac{\phi}{\phi_1}$. When we substitute the
+given values in $P(x)$ and $P^\prime(x)$, we find $a=w$, $b=-w$, $c=0$ and
+$d=\zeta_0$.  Substituting these coefficients, setting $P^\prime(x)=0$, and
+solving for $x$, we find, interestingly, $x_1=0$ and $x_2=\frac23$.  That is,
+the extremum for $P(x)$ always occurs at $\phi=0$ or $\phi=\frac23 \phi_1$.  If
+$w>0$ the interior extremum is a maximum; if $w<0$ it is a minimum.  If $w=0$
+then $\zeta=\zeta_0$ throughout the interval, at least to the extent $P(x)$ can
+model $\zeta$, and there is no unique extremum within the interval.
+
+If we want to solve for the minimum $H$ along the constant-$\zeta$ surface, we
+can use the geometric derivatives $\left.\diff{H}{\phi}\right|_{\phi=0}=0$ and
+$\left.\diff{H}{\phi}\right|_{\phi=\phi_1}=H_t \tan \phi_1 = w$, from which we
+conclude that $a=2(H_t-H_1)+w$, $b=-(3(H_t-H_1+w)$, $c=0$, $d=H_t$, and the
+extrema for $H$ occur for $\phi=0$ and $\phi=\frac23
+\frac{3(H_t-H_1)+w}{2(H_t-H_1)+w} \phi_1$.  This reduces to the previous result
+$\left(\phi=\frac23 \phi_1\right)$ when $H_t=H_1$.  We know this is a minimum
+because $H_t \tan(\phi) > 0$ for $\phi>0$.  $\phi=\phi_1$ when $H_1=H_t$ and
+$w=0$.  For $w=6400 \tan(1^\circ)$, $\phi<0$ for $H_1 > \approx H_t+37$.
+
+Even though $\diff{P(x)}{x}$ appears to be quadratic, a square root does not
+appear in the solutions because $c=0$, which occurs because
+$\left.\diff{\zeta}{\phi}\right|_{\phi=0}=0$ and
+$\left.\diff{H}{\phi}\right|_{\phi=0}=0$.
+
+Either way, this leads to a simpler algorithm than outlined in wvs-045.  The
+reason that solving for minimum $\zeta$ using Hermite interpolation in the
+present version of {\tt metrics} isn't working is that I'm working along the
+line of sight instead of surfaces of constant $H$ or $\zeta$. As you expected,
+$\zeta$ is monotone increasing away from the tangent point along the line of
+sight.
+
+\label{lastpage}
+\end{document}
+% $Id: wvs-046r0.tex,v 1.1 2008/06/11 20:14:53 vsnyder Exp $
+@

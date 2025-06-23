@@ -1,0 +1,121 @@
+head	1.5;
+access;
+symbols
+	V1-04:1.2
+	V1-03:1.2
+	V1-02:1.2
+	JointForwardModel:1.2.0.4
+	V1-00:1.2
+	newfwm-sep01:1.2.0.2
+	V0-7:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.5
+date	2003.01.31.19.43.58;	author jonathan;	state dead;
+branches;
+next	1.4;
+
+1.4
+date	2002.10.02.17.02.22;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2002.10.02.15.54.30;	author bwknosp;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.07.25.23.44.05;	author jonathan;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.07.24.22.32.08;	author jonathan;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.5
+log
+@move to fwdmdl
+@
+text
+@	real :: pi
+	parameter (pi=3.1415926)
+	real(r8) :: re		! earth radius
+	parameter (re=6370000.)
+	integer :: nu0		! max dimension for u
+	parameter (nu0=128)
+
+
+! $Log: constants.f9h,v $
+! Revision 1.4  2002/10/02 17:02:22  pwagner
+! Removed RCS Ident Block
+!
+! Revision 1.3  2002/10/02 15:54:30  bwknosp
+! Added Id, RCS, and Log info
+!
+@
+
+
+1.4
+log
+@Removed RCS Ident Block
+@
+text
+@d10 3
+@
+
+
+1.3
+log
+@Added Id, RCS, and Log info
+@
+text
+@a0 8
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm =                          &
+    "$Id: constants.f9h,v 1.2 2001/09/21 15:51:37 jonathan Exp $"
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName=                       &
+    "$RCSfile: constants.f9h,v $"
+ !---------------------------------------------------------------------------
+
+d9 4
+a12 1
+! $Log: constants.f9h,v $@
+
+
+1.2
+log
+@new f90 version of cloudfwm, jonathan
+@
+text
+@d1 8
+d15 3
+@
+
+
+1.1
+log
+@new file, jonathan
+@
+text
+@d1 1
+a1 1
+	real pi
+d3 1
+a3 1
+	real re		! earth radius
+d5 1
+a5 1
+	integer nu0		! max dimension for u
+@
+

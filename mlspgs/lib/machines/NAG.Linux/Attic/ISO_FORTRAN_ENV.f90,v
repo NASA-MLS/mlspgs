@@ -1,0 +1,183 @@
+head	1.4;
+access;
+symbols
+	V4-12:1.3
+	V4-11:1.3
+	V4-10:1.3
+	V3-43:1.3
+	M4-00:1.3
+	V3-41:1.3
+	V3-40-PlusGM57:1.3.0.2
+	V2-24-NRT-04:1.2
+	V3-33:1.3
+	V2-24:1.2
+	V3-31:1.3
+	V3-30-NRT-05:1.3
+	cfm-01-00:1.3
+	V3-30:1.3
+	V3-20:1.3
+	V3-10:1.3
+	V2-23-NRT-02:1.2
+	V2-23:1.2
+	V2-22-NRT-01:1.2
+	V2-22:1.2
+	V2-21:1.2
+	V2-20:1.2
+	V2-11:1.2
+	V2-10:1.2
+	V2-00:1.2
+	V1-51:1.1
+	V1-50:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.4
+date	2014.08.06.19.28.18;	author pwagner;	state dead;
+branches;
+next	1.3;
+
+1.3
+date	2009.06.23.19.58.52;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2005.06.22.20.26.22;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.10.06.00.21.56;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.4
+log
+@No longer neded with latest NAG compilers
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module ISO_FORTRAN_ENV
+
+  ! Nonintrinsic version for NAG Fortran v5 for Linux.
+  ! It may well work for other versions.
+
+  implicit NONE
+  public
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: ISO_FORTRAN_ENV.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+  integer, parameter :: Character_Storage_Size = 8
+  integer, parameter :: Error_Unit = 0
+  integer, parameter :: File_Storage_Size = 8
+  integer, parameter :: Input_Unit = 5
+  integer, parameter :: IOSTAT_END = -1
+  integer, parameter :: IOSTAT_EOR = -2
+  integer, parameter :: Numeric_Storage_Size = 32
+  integer, parameter :: Output_Unit = 6
+
+contains
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: ISO_FORTRAN_ENV.f90,v 1.3 2009/06/23 19:58:52 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module ISO_FORTRAN_ENV
+
+! $Log: ISO_FORTRAN_ENV.f90,v $
+! Revision 1.3  2009/06/23 19:58:52  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 1.2  2005/06/22 20:26:22  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 1.1  2004/10/06 00:21:56  vsnyder
+! Initial commit
+!
+@
+
+
+1.3
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d22 1
+a22 1
+       "$RCSfile: $"
+d40 1
+a40 1
+       "$Id: read_apriori.f90 is it here $"
+d50 3
+@
+
+
+1.2
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d37 1
+a38 1
+!---------------------------- RCS Ident Info -------------------------------
+d40 2
+a41 3
+       "$Id: $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d43 1
+d45 1
+d50 3
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d20 1
+a20 4
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter, private :: IdParm = &
+       "$Id: Molecules.f90,v 2.22 2004/09/16 00:02:24 livesey Exp $"
+  character (len=len(idParm)), private :: Id = idParm
+d22 1
+a22 1
+       "$RCSfile: Molecules.f90,v $"
+d38 5
+d48 4
+a51 1
+! $Log: $
+@
+

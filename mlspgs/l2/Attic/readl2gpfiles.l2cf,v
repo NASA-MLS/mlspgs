@@ -1,0 +1,213 @@
+head	2.5;
+access;
+symbols
+	V1-04:2.4
+	V1-03:2.4
+	V1-02:2.4
+	V1-00:2.4
+	newfwm-sep01:2.1.0.2
+	V0-7:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.5
+date	2002.05.22.00.50.16;	author livesey;	state dead;
+branches;
+next	2.4;
+
+2.4
+date	2002.01.08.23.41.42;	author livesey;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2001.10.20.17.28.10;	author livesey;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2001.10.09.01.08.10;	author livesey;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.07.24.10.50.08;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.5
+log
+@L2CFs no longer belong in l2
+@
+text
+@; This section of an l2cf is for reading the data from
+; Bob Harwoods model run
+
+BEGIN ReadApriori
+
+;     l2gpTempInput: l2gp, $
+;      file='/nas/data/emls/l2gp/truth/1996/MLS-Aura_L2GP_Temperature_s1-0-t_!day.dat'
+    l2gpTempInput: l2gp, $
+      file='/user6/pumphrey/sidsdat/MLS-Aura_L2GP_temp_s4b-t_!day.dat'
+    l2gpGPHInput: l2gp, $
+      file='/nas/data/emls/l2gp/truth/1996/MLS-Aura_L2GP_GPH_s1-0-t_!day.dat'
+
+    l2gpBrOInput: l2gp, $
+      file='/nas/data/emls/l2gp/truth/1996/MLS-Aura_L2GP_BrO_s4-t_!day.dat'
+    l2gpCOInput: l2gp, $
+      file='/nas/data/emls/l2gp/truth/1996/MLS-Aura_L2GP_CO_s4a-t_!day.dat'
+    l2gpClOInput: l2gp, $
+      file='/nas/data/emls/l2gp/truth/1996/MLS-Aura_L2GP_ClO_s4-t_!day.dat'
+    l2gpH2OInput: l2gp, $
+      file='/nas/data/emls/l2gp/truth/1996/MLS-Aura_L2GP_H2O_s1-0-t_!day.dat'
+    l2gpHCNInput: l2gp, $
+      file='/nas/data/emls/l2gp/truth/1996/MLS-Aura_L2GP_HCN_s4-t_!day.dat'
+    l2gpHClInput: l2gp, $
+      file='/nas/data/emls/l2gp/truth/1996/MLS-Aura_L2GP_HCl_s4a-t_!day.dat'
+    l2gpHNO3Input: l2gp, $
+      file='/nas/data/emls/l2gp/truth/1996/MLS-Aura_L2GP_HNO3_s4a-t_!day.dat'
+    l2gpHO2Input: l2gp, $
+      file='/nas/data/emls/l2gp/truth/1996/MLS-Aura_L2GP_HO2_s4-t_!day.dat'
+    l2gpHOClInput: l2gp, $
+      file='/nas/data/emls/l2gp/truth/1996/MLS-Aura_L2GP_HOCl_s4-t_!day.dat'
+    l2gpN2OInput: l2gp, $
+      file='/nas/data/emls/l2gp/truth/1996/MLS-Aura_L2GP_N2O_s4-t_!day.dat'
+    l2gpO3Input: l2gp, $
+      file='/nas/data/emls/l2gp/truth/1996/MLS-Aura_L2GP_O3_s4-t_!day.dat'
+    l2gpOHInput: l2gp, $
+      file='/nas/data/emls/l2gp/truth/1996/MLS-Aura_L2GP_OH_s4-t_!day.dat'
+
+END ReadApriori
+
+@
+
+
+2.4
+log
+@Removed superfluous {}s
+@
+text
+@@
+
+
+2.3
+log
+@First version
+@
+text
+@d7 1
+a7 1
+;      file='/nas/data/emls/l2gp/truth/1996/MLS-Aura_L2GP_Temperature_s1-0-t_{}!day{}.dat'
+d9 1
+a9 1
+      file='/user6/pumphrey/sidsdat/MLS-Aura_L2GP_temp_s4b-t_{}!day{}.dat'
+d11 1
+a11 1
+      file='/nas/data/emls/l2gp/truth/1996/MLS-Aura_L2GP_GPH_s1-0-t_{}!day{}.dat'
+d14 1
+a14 1
+      file='/nas/data/emls/l2gp/truth/1996/MLS-Aura_L2GP_BrO_s4-t_{}!day{}.dat'
+d16 1
+a16 1
+      file='/nas/data/emls/l2gp/truth/1996/MLS-Aura_L2GP_CO_s4a-t_{}!day{}.dat'
+d18 1
+a18 1
+      file='/nas/data/emls/l2gp/truth/1996/MLS-Aura_L2GP_ClO_s4-t_{}!day{}.dat'
+d20 1
+a20 1
+      file='/nas/data/emls/l2gp/truth/1996/MLS-Aura_L2GP_H2O_s1-0-t_{}!day{}.dat'
+d22 1
+a22 1
+      file='/nas/data/emls/l2gp/truth/1996/MLS-Aura_L2GP_HCN_s4-t_{}!day{}.dat'
+d24 1
+a24 1
+      file='/nas/data/emls/l2gp/truth/1996/MLS-Aura_L2GP_HCl_s4a-t_{}!day{}.dat'
+d26 1
+a26 1
+      file='/nas/data/emls/l2gp/truth/1996/MLS-Aura_L2GP_HNO3_s4a-t_{}!day{}.dat'
+d28 1
+a28 1
+      file='/nas/data/emls/l2gp/truth/1996/MLS-Aura_L2GP_HO2_s4-t_{}!day{}.dat'
+d30 1
+a30 1
+      file='/nas/data/emls/l2gp/truth/1996/MLS-Aura_L2GP_HOCl_s4-t_{}!day{}.dat'
+d32 1
+a32 1
+      file='/nas/data/emls/l2gp/truth/1996/MLS-Aura_L2GP_N2O_s4-t_{}!day{}.dat'
+d34 1
+a34 1
+      file='/nas/data/emls/l2gp/truth/1996/MLS-Aura_L2GP_O3_s4-t_{}!day{}.dat'
+d36 1
+a36 1
+      file='/nas/data/emls/l2gp/truth/1996/MLS-Aura_L2GP_OH_s4-t_{}!day{}.dat'
+@
+
+
+2.2
+log
+@Regular commit
+@
+text
+@d6 2
+d9 1
+a9 1
+      file='/nas/data/emls/l2gp/truth/1996/MLS-Aura_L2GP_Temperature_s1-0-t_{}!day{}.dat'
+@
+
+
+2.1
+log
+@First version
+@
+text
+@d7 1
+a7 1
+      file='/nas/data/emls/l2gp/truth/1996/MLS-Aura_L2GP_Temperature_s1-0-t_{}_day{}.dat'
+d9 1
+a9 1
+      file='/nas/data/emls/l2gp/truth/1996/MLS-Aura_L2GP_GPH_s1-0-t_{}_day{}.dat'
+d12 1
+a12 1
+      file='/nas/data/emls/l2gp/truth/1996/MLS-Aura_L2GP_BrO_s4-t_{}_day{}.dat'
+d14 1
+a14 1
+      file='/nas/data/emls/l2gp/truth/1996/MLS-Aura_L2GP_CO_s4a-t_{}_day{}.dat'
+d16 1
+a16 1
+      file='/nas/data/emls/l2gp/truth/1996/MLS-Aura_L2GP_ClO_s4-t_{}_day{}.dat'
+d18 1
+a18 1
+      file='/nas/data/emls/l2gp/truth/1996/MLS-Aura_L2GP_H2O_s1-0-t_{}_day{}.dat'
+d20 1
+a20 1
+      file='/nas/data/emls/l2gp/truth/1996/MLS-Aura_L2GP_HCN_s4-t_{}_day{}.dat'
+d22 1
+a22 1
+      file='/nas/data/emls/l2gp/truth/1996/MLS-Aura_L2GP_HCl_s4a-t_{}_day{}.dat'
+d24 1
+a24 1
+      file='/nas/data/emls/l2gp/truth/1996/MLS-Aura_L2GP_HNO3_s4a-t_{}_day{}.dat'
+d26 1
+a26 1
+      file='/nas/data/emls/l2gp/truth/1996/MLS-Aura_L2GP_HO2_s4-t_{}_day{}.dat'
+d28 1
+a28 1
+      file='/nas/data/emls/l2gp/truth/1996/MLS-Aura_L2GP_HOCl_s4-t_{}_day{}.dat'
+d30 1
+a30 1
+      file='/nas/data/emls/l2gp/truth/1996/MLS-Aura_L2GP_N2O_s4-t_{}_day{}.dat'
+d32 1
+a32 1
+      file='/nas/data/emls/l2gp/truth/1996/MLS-Aura_L2GP_O3_s4-t_{}_day{}.dat'
+d34 1
+a34 1
+      file='/nas/data/emls/l2gp/truth/1996/MLS-Aura_L2GP_OH_s4-t_{}_day{}.dat'
+@
+
+

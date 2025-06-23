@@ -1,0 +1,347 @@
+head	1.3;
+access;
+symbols
+	v5-02-NRT-19:1.3
+	v6-00:1.3
+	v5-02-NRT-18:1.3
+	v5-02:1.3
+	v5-01-NRT-17:1.3
+	v5-01-NRT-16:1.3
+	v5-01-NRT-15:1.3
+	v5-01-NRT-14:1.3
+	neuralnetworks-1-0:1.3.0.8
+	cfm-single-freq-0-1:1.3.0.6
+	v5-01:1.3
+	v5-00:1.3
+	v4-23-TA133:1.3.0.4
+	mus-emls-1-70:1.3.0.2
+	rel-1-0-englocks-work:1.2.0.2;
+locks; strict;
+comment	@% @;
+
+
+1.3
+date	2018.05.10.00.29.15;	author vsnyder;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2017.11.28.01.33.32;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2017.11.28.01.29.12;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@Corrected some stuff relating to spherical harmonics
+@
+text
+@\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9in
+
+\newcommand{\docname}{wvs-148r2}
+\newcommand{\docdate}{27 November 2017}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Nathaniel, Bill\\
+Subject: \>Alternative to state-vector representation\\
+From: \>Van Snyder\\
+% Reference: \> \\
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-20pt}
+
+Both Fred Krogh and Eugene Ustinov have suggested that if the state vector
+were represented by an expansion in smooth functions, the cost of
+retrieval might be reduced, and the size of representation would almost
+certainly be reduced.
+
+An example of a basis for this representation is to use spherical
+harmonics in horizontal directions, and Chebyshev polynomials in $\zeta =
+-\log_{10}\,P$.  If there is a substantial ``kink'' in the vertical
+direction at the tropopause and stratopause that is not well represented
+by Chebyshev polynomials, cubic splines in $\zeta$ could be used, with
+solution for the locations of the knots below and above the tropopause and
+stratopause.  Solving for coefficients in the latter case is more
+complicated, but there is the potential for fewer vertical expansion
+coefficients.
+
+Assuming Chebyshev polynomials in $\zeta$ for vertical representation, the
+form of representation of a geophysical product on the path of integration
+would be
+
+\begin{equation}\begin{split}
+f^k(s) = \,& \sum_{ij\ell}
+              \left( \eta^{ck}_{ij\ell} Y^{ic}_j ( \theta(s), \phi(s) ) +
+                     \eta^{sk}_{ij\ell} Y^{is}_j ( \theta(s), \phi(s) )
+              \right) C_\ell(\zeta(s)) \text{ and} \\
+ \,& \\
+T(s) = \,& \sum_{ij\ell}
+              \left( \eta^{cT}_{ij\ell} Y^{ic}_j ( \theta(s), \phi(s) ) +
+                     \eta^{sT}_{ij\ell} Y^{is}_j ( \theta(s), \phi(s) )
+              \right) C_\ell(\zeta(s)) \\
+\end{split}\end{equation}
+
+wherein the superscipts $c$ and $s$ indicate the real (cosine) and
+imaginary (sine) parts of the spherical harmonic, $k$ is a species index,
+$T$ is temperature, $\theta$ is geocentric colatitude, and $\phi$ is
+longitude.  The argument $s$ is path length, and the superscript $s$ is
+not path length.  Unlike the representation currently used, the expansion
+coefficients do not depend upon the path position.
+
+At the expense of some additional complication in the computation of basis
+functions, Lam\'e functions (ellipsoidal harmonics) could be used.  To
+represent the gravitational potential, this has resulted in a 16-fold
+reduction in the number of coefficients.  For MLS, it would almost
+certainly result in fewer expansion coefficients than the use of spherical
+harmonics.
+
+Spherical or ellipsoidal harmonics are useful only for entire-Earth
+representations.  A local representation might use a product of three
+Chebychev polynomials in the SMLS case -- one for each horizontal
+direction, and one for the vertical direction, or two Chebychev
+polynomials in the EMLS case -- one for the horizontal direction (along
+the orbit track) and one for the vertical direction.
+
+\begin{equation}\begin{array}{ll}
+f^k(s) = \sum_{ij\ell} \eta^k_{ij\ell}\, C_i(\phi(s))\, C_j(\theta(s))\,
+C_\ell(\zeta(s)) & \phi \text{ is longitude, } \theta \text{ is latitude,
+}\zeta\\
+\text{or} \\[5pt]
+f^k(s) = \sum_{i\ell} \eta^k_{i\ell}\, C_i(\phi(s))\,
+C_\ell(\zeta(s)) & \phi \text{ is orbit angle, } \zeta\\
+\end{array}\end{equation}
+
+where $C_i$ etc.\ are Chebyshev polynomials.  Chebyshev polynomials are
+attractive because an error estimate can be calculated from the first
+neglected term (or the last used one).
+
+For any smooth representation, one would solve for the coefficients of the
+expansions instead of the values of the geophysical products.  Since the
+basis is smooth, the radiative transfer equation and its variational
+equations could be integrated by an adaptive ODE solver or two-dimensional
+quadrature (because the solution of the radiative-transfer equation is an
+integral of the exponential function of an integral), instead of being
+integrated on a fixed grid dictated by the intersections of the line of
+sight with surfaces of constant $\zeta$, resulting in fewer integrand
+evaluations.  Costs would also be reduced because there would be fewer
+coefficients of a smooth representation than interpolating coefficients
+for an explicit state-vector representation.  Assuming the same expansion
+orders and the same integration steps for all products, the basis
+functions would only need to be evaluated once for all products at each
+point along the path of integration.
+
+Lines of sight could be chosen to correspond to MIFs, with the set of MIFs
+selected for the most information using EOF.
+
+Derivatives of radiance with respect to expansion coefficients would be
+computed using the chain rule:
+
+\begin{equation} \begin{split}
+\frac{\partial I(s)}{\partial \eta^{ck}_{ij\ell}} = \,&
+\frac{\partial I(s)}{\partial f^k(s)}
+ \frac{\partial f^k(s)}{\partial \eta^{ck}_{ij\ell}} =
+\frac{\partial I(s)}{\partial f^k(s)}\,
+ Y^{ic}_j ( \theta(s), \phi(s))\, C_\ell(\zeta(s)) \,\,\, \text{ and}\\
+\frac{\partial I(s)}{\partial \eta^{sk}_{ij\ell}} = \,&
+\frac{\partial I(s)}{\partial f^k(s)}
+ \frac{\partial f^k(s)}{\partial \eta^{sk}_{ij\ell}} =
+\frac{\partial I(s)}{\partial f^k(s)}\,
+ Y^{ic}_j ( \theta(s), \phi(s))\, C_\ell(\zeta(s))\\
+\text{or} \,& \\
+\frac{\partial I(s)}{\partial \eta^k_{ij\ell}} = \,&
+\frac{\partial I(s)}{\partial f^k(s)}
+ \frac{\partial f^k(s)}{\partial \eta^k_{ij\ell}} =
+\frac{\partial I(s)}{\partial f^k(s)}\,
+ C_i(\phi(s))\, C_j(\theta(s))\, C_\ell(\zeta(s)) \\
+\text{or} \,& \\
+\frac{\partial I(s)}{\partial \eta^k_{i\ell}} = \,&
+\frac{\partial I(s)}{\partial f^k(s)}
+ \frac{\partial f^k(s)}{\partial \eta^k_{i\ell}} =
+\frac{\partial I(s)}{\partial f^k(s)}\,
+ C_i(\phi(s))\, C_\ell(\zeta(s)) \\
+\end{split}\end{equation}
+
+and similarly for temperature coefficients.  The $Y^{ic}_j ( \theta(s),
+\phi(s))\, C_\ell(\zeta(s))$ or $C_i(\phi(s))\, C_j(\theta(s))\,
+C_\ell(\zeta(s))$ or $C_i(\phi(s))\, C_\ell(\zeta(s))$ factor is the same
+for every species and temperature.
+
+Once the expansion coefficients are in hand, values of the geophysical
+products could be computed on any specified grid by evaluating the basis
+functions for specified values of $(\phi, \theta, \zeta)$ or $(\phi,
+\zeta)$.
+
+Because the integration path and the geometry of the final representation
+are independent, the ``metrics'' problem in the present forward model
+would be eliminated.
+
+In the present forward model, the effect of refraction is approximated by
+``stretching'' the path by increasing the difference of the $\phi$
+co\"ordinate away from the tangent point.  Using a smooth representation,
+the effect of refraction could be accomodated by representing the
+geometric path using a smooth function instead of a straight line.
+
+\label{lastpage}
+\vspace*{-0.1in} % Somehow, this causes lastpage to be defined
+\end{document}
+
+% $Id: wvs-148.tex,v 1.2 2017/11/28 01:33:32 vsnyder Exp $
+
+% $Log: wvs-148.tex,v $
+% Revision 1.2  2017/11/28 01:33:32  vsnyder
+% Repair blunder in Equation 3
+%
+% Revision 1.1  2017/11/28 01:29:12  vsnyder
+% Initial commit
+%
+@
+
+
+1.2
+log
+@Repair blunder in Equation 3
+@
+text
+@d15 1
+a15 1
+\newcommand{\docname}{wvs-148r1}
+d137 1
+a137 1
+\begin{equation}
+d139 6
+a144 2
+C_\ell(\zeta(s))
+\end{equation}
+d171 2
+a172 2
+\begin{equation}
+\frac{\partial I(s)}{\partial \eta^{ck}_{ij\ell}} =
+d176 8
+a183 7
+ Y^{ic}_j ( \theta(s), \phi(s))\, C_\ell(\zeta(s))
+\end{equation}
+
+or
+
+\begin{equation}
+\frac{\partial I(s)}{\partial \eta^k_{ij\ell}} =
+d187 8
+a194 2
+ C_i(\phi(s))\, C_j(\theta(s))\, C_\ell(\zeta(s))
+\end{equation}
+d196 1
+a196 1
+and similarly for other coefficients.  The $Y^{ic}_j ( \theta(s),
+d198 2
+a199 1
+C_\ell(\zeta(s))$ factor is the same for every species and temperature.
+d202 7
+a208 3
+products could be computed on any specified grid.  Because the integration
+path and the geometry of the final representation are independent, the
+``metrics'' problem in the present forward model would be eliminated.
+d220 1
+a220 1
+% $Id: wvs-148.tex,v 1.1 2017/11/28 01:29:12 vsnyder Exp $
+d223 3
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d15 1
+a15 1
+\newcommand{\docname}{wvs-148}
+d178 1
+a178 1
+\frac{\partial I(s)}{\partial \eta^{ck}_{ij\ell}} =
+d204 1
+a204 1
+% $Id: wvs-135.tex,v 1.4 2016/06/03 22:10:47 vsnyder Exp $
+d206 4
+a209 1
+% $Log: wvs-135.tex,v $
+@
+

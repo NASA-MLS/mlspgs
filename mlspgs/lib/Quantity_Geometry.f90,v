@@ -1,0 +1,501 @@
+head	2.5;
+access;
+symbols
+	v5-02-NRT-19:2.5
+	v6-00:2.5
+	v5-02-NRT-18:2.5
+	v5-02:2.5
+	v5-01-NRT-17:2.5
+	v5-01-NRT-16:2.5
+	v5-01-NRT-15:2.5
+	v5-01-NRT-14:2.5
+	neuralnetworks-1-0:2.5.0.10
+	cfm-single-freq-0-1:2.5.0.8
+	v5-01:2.5
+	v5-00:2.5
+	v4-23-TA133:2.5.0.6
+	mus-emls-1-70:2.5.0.4
+	rel-1-0-englocks-work:2.5.0.2
+	VUMLS1-00:2.5
+	VPL1-00:2.5
+	V4-22-NRT-08:2.5
+	VAM1-00:2.4;
+locks; strict;
+comment	@# @;
+
+
+2.5
+date	2016.01.23.02.48.47;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2015.09.22.23.13.19;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2015.04.30.02.55.35;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2015.04.29.01.21.21;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2015.04.25.02.04.57;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.5
+log
+@Replace To_Cart with GeodToECRm
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Quantity_Geometry
+
+  ! This module contains functions to compute Cartesian coordinates from
+  ! geolocations in quantity templates.
+
+  ! The computations depend upon whether the coordinates are geodetic
+  ! or geocentric.
+
+  implicit NONE
+  private
+
+  public :: XYZ, XYZ_ECR_1, XYZ_ECR_All
+
+  interface XYZ
+    module procedure XYZ_ECR_1, XYZ_ECR_All
+  end interface
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: Quantity_Geometry.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  function XYZ_ECR_1 ( Qty, Surf, Inst, Height, Cross ) result ( XYZ )
+    ! Get Cartesian ECR coordinates, in meters, for one surface and instance.
+
+    use Constants, only: Rad2Deg
+    use Geometry, only: GeocToGeodLat, GeodToECRm, GeodToGeocLat, To_XYZ
+    use Intrinsic, only: L_Geocentric, L_GeocAltitude, L_Geodetic, &
+      & L_GeodAltitude, L_Zeta
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use QuantityTemplates, only: QuantityTemplate_t, RT
+
+    type(quantityTemplate_t), intent(in) :: Qty
+    integer, intent(in) :: Surf, Inst
+    real(rt), intent(in), optional :: Height ! Geodetic meters, used iff zeta
+    integer, intent(in), optional :: Cross
+    real(rt) :: XYZ(3)
+
+    integer :: C
+    integer :: InstOr1
+    real(rt) :: Lat
+    integer :: SurfOr1
+
+    c = 1
+    if ( present(cross) ) c = cross
+
+    instOr1 = merge ( 1, inst, qty%coherent )
+    surfOr1 = merge ( 1, surf, qty%stacked )
+
+    select case ( qty%verticalCoordinate )
+    case ( l_geocAltitude )
+      if ( qty%latitudeCoordinate == l_geodetic ) then
+        lat = geodToGeocLat(qty%geodLat3(surfOr1,inst,c))*rad2deg
+      else
+        lat = qty%geodLat3(surfOr1,inst,c)
+      end if
+      ! Get a unit vector in the right direction
+      xyz = to_xyz ( lat, qty%lon3(surfOr1,inst,c) )
+      ! Extend it to the correct altitude
+      xyz = xyz * qty%surfs(surf,instOr1)
+    case ( l_geodAltitude )
+      if ( qty%latitudeCoordinate == l_geocentric ) then
+        lat = geocToGeodLat(qty%geodLat3(surfOr1,inst,c))
+      else
+        lat = qty%geodLat3(surfOr1,inst,c)
+      end if
+      xyz = geodToECRm ( [ lat, qty%lon3(surfOr1,inst,c), &
+                       &   qty%surfs(surf,instOr1) ] )
+    case ( l_zeta )
+      if ( .not. present(height) ) &
+        & call MLSMessage ( MLSMSG_Error, moduleName, &
+          & 'Vertical coordinate is zeta but height is not provided' )
+      if ( qty%latitudeCoordinate == l_geocentric ) then
+        lat = geocToGeodLat(qty%geodLat3(surfOr1,inst,c))
+      else
+        lat = qty%geodLat3(surfOr1,inst,c)
+      end if
+      xyz = geodToECRm ( [ lat, qty%lon3(surfOr1,inst,c), height ] )
+    case default
+      call MLSMessage ( MLSMSG_Error, moduleName, &
+        & 'Vertical coordinate other than geocentric, geodetic, or zeta not supported' )
+    end select
+
+  end function XYZ_ECR_1
+
+  function XYZ_ECR_All ( Qty, Heights, Cross  ) result ( XYZ)
+    ! Get Cartesian ECR coordinates, in meters, for all surfaces and instances.
+
+    use Allocate_Deallocate, only: Allocate_Test
+    use Constants, only: Rad2Deg
+    use Geometry, only: GeocToGeodLat, GeodToGeocLat, GeodToECRm, To_XYZ
+    use Intrinsic, only: L_Geocentric, L_GeocAltitude, L_Geodetic, &
+      & L_GeodAltitude, L_Zeta
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use QuantityTemplates, only: QuantityTemplate_t, RT
+
+    type(quantityTemplate_t), intent(in) :: Qty
+    real(rt), allocatable :: XYZ(:,:,:) ! 3 x noSurfs x noInstances
+    real(rt), intent(in), optional :: Heights(:,:) ! Geodetic meters, used iff zeta
+    integer, intent(in), optional :: Cross
+
+    integer :: C
+    integer :: Inst, InstOr1
+    real(rt) :: Lat
+    integer :: Surf, SurfOr1
+
+    c = 1
+    if ( present(cross) ) c = cross
+
+    call allocate_test ( xyz, 3, qty%noSurfs, qty%noInstances, moduleName, 'XYZ' )
+
+    select case ( qty%verticalCoordinate )
+    case ( l_geocAltitude )
+      do inst = 1, qty%noInstances
+        instOr1 = merge ( 1, inst, qty%coherent )
+        do surf = 1, qty%noSurfs
+          surfOr1 = merge ( 1, surf, qty%stacked )
+          if ( qty%latitudeCoordinate == l_geodetic ) then
+            lat = geodToGeocLat(qty%geodLat3(surfOr1,inst,c))*rad2deg
+          else
+            lat = qty%geodLat3(surfOr1,inst,c)
+          end if
+          ! Get a unit vector in the right direction
+          xyz(:,surf,inst) = to_xyz ( lat, qty%lon3(surfOr1,inst,c) )
+          ! Extend it to the correct altitude
+          xyz(:,surf,inst) = xyz(:,surf,inst) * qty%surfs(surf,instOr1)
+        end do
+      end do
+    case ( l_geodAltitude )
+      do inst = 1, qty%noInstances
+        instOr1 = merge ( 1, inst, qty%coherent )
+        do surf = 1, qty%noSurfs
+          surfOr1 = merge ( 1, surf, qty%stacked )
+          if ( qty%latitudeCoordinate == l_geocentric ) then
+            lat = geocToGeodLat(qty%geodLat3(surfOr1,inst,c))
+          else
+            lat = qty%geodLat3(surfOr1,inst,c)
+          end if
+          xyz(:,surf,inst) = geodToECRm ( [ lat, qty%lon3(surfOr1,inst,c), &
+                                        &   qty%surfs(surf,instOr1) ] )
+        end do
+      end do
+    case ( l_zeta )
+      if ( .not. present(heights) ) &
+        & call MLSMessage ( MLSMSG_Error, moduleName, &
+          & 'Vertical coordinate is zeta but heights are not provided' )
+      do inst = 1, qty%noInstances
+        instOr1 = merge ( 1, inst, qty%coherent )
+        do surf = 1, qty%noSurfs
+          surfOr1 = merge ( 1, surf, qty%stacked )
+          if ( qty%latitudeCoordinate == l_geocentric ) then
+            lat = geocToGeodLat(qty%geodLat3(surfOr1,inst,c))
+          else
+            lat = qty%geodLat3(surfOr1,inst,c)
+          end if
+          xyz(:,surf,inst) = geodToECRm ( [ lat, qty%lon3(surfOr1,inst,c), &
+                                        &   heights(surf,instOr1) ] )
+        end do
+      end do
+    case default
+      call MLSMessage ( MLSMSG_Error, moduleName, &
+        & 'Vertical coordinate other than geocentric, geodetic, or zeta not supported' )
+    end select
+
+  end function XYZ_ECR_All
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: Quantity_Geometry.f90,v 2.4 2015/09/22 23:13:19 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Quantity_Geometry
+
+! $Log: Quantity_Geometry.f90,v $
+! Revision 2.4  2015/09/22 23:13:19  vsnyder
+! Add a cross-track coordinate index
+!
+! Revision 2.3  2015/04/30 02:55:35  vsnyder
+! Allow geocentric altitude/latitude to coexist with geodetic latitude/altitude
+!
+! Revision 2.2  2015/04/29 01:21:21  vsnyder
+! Add ability to compute XYZ if vertical is zeta
+!
+! Revision 2.1  2015/04/25 02:04:57  vsnyder
+! Initial commit
+!
+@
+
+
+2.4
+log
+@Add a cross-track coordinate index
+@
+text
+@d41 1
+a41 1
+    use Geometry, only: GeocToGeodLat, GeodToGeocLat, To_Cart, To_XYZ
+d81 2
+a82 3
+      call to_cart ( [ lat, qty%lon3(surfOr1,inst,c), &
+                   &   qty%surfs(surf,instOr1)/1000.0 ], xyz, km=.true. )
+      xyz = xyz * 1000.0_rt ! Convert km to m
+d92 1
+a92 2
+      call to_cart ( [ lat, qty%lon3(surfOr1,inst,c), &
+                   &   height/1000.0 ], xyz, km=.true. )
+d105 1
+a105 1
+    use Geometry, only: GeocToGeodLat, GeodToGeocLat, To_Cart, To_XYZ
+d153 2
+a154 4
+          call to_cart ( [ lat, qty%lon3(surfOr1,inst,c), &
+                       &   qty%surfs(surf,instOr1)/1000.0 ], &
+                       & xyz(:,surf,inst), km=.true. )
+          xyz(:,surf,inst) = xyz(:,surf,inst) * 1000.0_rt ! Convert km to m
+d170 2
+a171 4
+          call to_cart ( [ lat, qty%lon3(surfOr1,inst,c), &
+                       &   heights(surf,instOr1)/1000.0 ], &
+                       & xyz(:,surf,inst), km=.true. )
+          xyz(:,surf,inst) = xyz(:,surf,inst) * 1000.0_rt ! Convert km to m
+d184 1
+a184 1
+       "$Id: Quantity_Geometry.f90,v 2.3 2015/04/30 02:55:35 vsnyder Exp $"
+d194 3
+@
+
+
+2.3
+log
+@Allow geocentric altitude/latitude to coexist with geodetic latitude/altitude
+@
+text
+@d37 1
+a37 1
+  function XYZ_ECR_1 ( Qty, Surf, Inst, Height ) result ( XYZ )
+d50 1
+d53 1
+d58 3
+d67 1
+a67 1
+        lat = geodToGeocLat(qty%geodLat(surfOr1,inst))*rad2deg
+d69 1
+a69 1
+        lat = qty%geodLat(surfOr1,inst)
+d72 1
+a72 1
+      xyz = to_xyz ( lat, qty%lon(surfOr1,inst) )
+d77 1
+a77 1
+        lat = geocToGeodLat(qty%geodLat(surfOr1,inst))
+d79 1
+a79 1
+        lat = qty%geodLat(surfOr1,inst)
+d81 1
+a81 1
+      call to_cart ( [ lat, qty%lon(surfOr1,inst), &
+d89 1
+a89 1
+        lat = geocToGeodLat(qty%geodLat(surfOr1,inst))
+d91 1
+a91 1
+        lat = qty%geodLat(surfOr1,inst)
+d93 1
+a93 1
+      call to_cart ( [ lat, qty%lon(surfOr1,inst), &
+d102 1
+a102 1
+  function XYZ_ECR_All ( Qty, Heights  ) result ( XYZ)
+d105 1
+a105 1
+    use Allocate_Deallocate, only: Test_Allocate
+d116 1
+d118 1
+a121 1
+    integer :: Stat
+d123 2
+a124 2
+    instOr1 = size(qty%surfs,2)    ! merge ( 1, qty%noInstances, qty%coherent )
+    surfOr1 = size(qty%geodLat,1)  ! merge ( 1, qty%noSurfs, qty%stacked )
+d126 1
+a126 2
+    allocate ( xyz(3,qty%noSurfs, qty%noInstances), stat=stat )
+    call test_allocate ( stat, moduleName, 'XYZ' )
+d135 1
+a135 1
+            lat = geodToGeocLat(qty%geodLat(surfOr1,inst))*rad2deg
+d137 1
+a137 1
+            lat = qty%geodLat(surfOr1,inst)
+d140 1
+a140 1
+          xyz(:,surf,inst) = to_xyz ( lat, qty%lon(surfOr1,inst) )
+d151 1
+a151 1
+            lat = geocToGeodLat(qty%geodLat(surfOr1,inst))
+d153 1
+a153 1
+            lat = qty%geodLat(surfOr1,inst)
+d155 1
+a155 1
+          call to_cart ( [ lat, qty%lon(surfOr1,inst), &
+d170 1
+a170 1
+            lat = geocToGeodLat(qty%geodLat(surfOr1,inst))
+d172 1
+a172 1
+            lat = qty%geodLat(surfOr1,inst)
+d174 1
+a174 1
+          call to_cart ( [ lat, qty%lon(surfOr1,inst), &
+d190 1
+a190 1
+       "$Id: Quantity_Geometry.f90,v 2.2 2015/04/29 01:21:21 vsnyder Exp $"
+d200 3
+@
+
+
+2.2
+log
+@Add ability to compute XYZ if vertical is zeta
+@
+text
+@d40 2
+a41 1
+    use Geometry, only: To_Cart, To_XYZ
+d53 1
+d61 5
+a65 3
+      if ( qty%latitudeCoordinate == l_geodetic ) &
+        call MLSMessage ( MLSMSG_Error, moduleName, &
+          & 'Geocentric altitude with geodetic latitude not supported')
+d67 1
+a67 1
+      xyz = to_xyz ( qty%geodLat(surfOr1,inst), qty%lon(surfOr1,inst) )
+d71 6
+a76 4
+      if ( qty%latitudeCoordinate == l_geocentric ) &
+        & call MLSMessage ( MLSMSG_Error, moduleName, &
+          & 'Geodetic altitude with geocentric latitude not supported')
+      call to_cart ( [ qty%geodLat(surfOr1,inst), qty%lon(surfOr1,inst), &
+d83 6
+a88 1
+      call to_cart ( [ qty%geodLat(surfOr1,inst), qty%lon(surfOr1,inst), &
+d101 2
+a102 1
+    use Geometry, only: To_Cart, To_XYZ
+d113 1
+a124 3
+      if ( qty%latitudeCoordinate == l_geodetic ) &
+        call MLSMessage ( MLSMSG_Error, moduleName, &
+          & 'Geocentric altitude with geodetic latitude not supported')
+d129 5
+d135 1
+a135 1
+          xyz(:,surf,inst) = to_xyz ( qty%geodLat(surfOr1,inst), qty%lon(surfOr1,inst) )
+a140 3
+      if ( qty%latitudeCoordinate == l_geocentric ) &
+        call MLSMessage ( MLSMSG_Error, moduleName, &
+          & 'Geodetic altitude with geocentric latitude not supported')
+d145 6
+a150 2
+          call to_cart ( [ qty%geodLat(surfOr1,inst), &
+                       &   qty%lon(surfOr1,inst), &
+d164 6
+a169 2
+          call to_cart ( [ qty%geodLat(surfOr1,inst), &
+                       &   qty%lon(surfOr1,inst), &
+d185 1
+a185 1
+       "$Id: Quantity_Geometry.f90,v 2.1 2015/04/25 02:04:57 vsnyder Exp $"
+d195 3
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d31 1
+a31 1
+       "$RCSfile: Geometry.f90,v $"
+d37 1
+a37 1
+  function XYZ_ECR_1 ( Qty, Surf, Inst ) result ( XYZ )
+d41 2
+a42 1
+    use Intrinsic, only: L_Geocentric, L_GeocAltitude, L_Geodetic, L_GeodAltitude
+d48 1
+d68 1
+a68 1
+        call MLSMessage ( MLSMSG_Error, moduleName, &
+d71 1
+a71 1
+                    &   qty%surfs(surf,instOr1) ], xyz, km=.true. )
+d73 6
+d81 1
+a81 1
+        & 'Vertical coordinate other than geocentric or geodetic not supported' )
+d86 1
+a86 1
+  function XYZ_ECR_All ( Qty ) result ( XYZ )
+d91 2
+a92 1
+    use Intrinsic, only: L_Geocentric, L_GeocAltitude, L_Geodetic, L_GeodAltitude
+d98 1
+d135 16
+a150 1
+                       &   qty%surfs(surf,instOr1) ], &
+d157 1
+a157 1
+        & 'Vertical coordinate other than geocentric or geodetic not supported' )
+d165 1
+a165 1
+       "$Id: Geometry.f90,v 2.23 2015/03/28 02:58:05 vsnyder Exp $"
+d174 4
+a177 1
+! $Log: $
+@
+

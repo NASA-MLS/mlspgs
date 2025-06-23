@@ -1,0 +1,85 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.12
+	cfm-single-freq-0-1:1.2.0.10
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.8
+	mus-emls-1-70:1.2.0.6
+	rel-1-0-englocks-work:1.2.0.4
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.2
+	V4-21:1.2.0.2
+	V4-13:1.2
+	V4-12:1.2
+	V4-11:1.2
+	V4-10:1.2
+	V3-43:1.1
+	M4-00:1.2
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.2
+	V3-31:1.2
+	V3-30-NRT-05:1.2
+	cfm-01-00:1.2
+	V3-30:1.1
+	V3-20:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2010.03.26.17.56.20;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2009.12.21.23.28.26;	author honghanh;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Description of 'error' more consistent between mls_open and _close
+@
+text
+@!Closes an open file.
+subroutine MLS_CloseFile(file, error)
+   !The file to be closed.
+   type(MLSFile_T) :: file
+   
+   !This is an optional argument; if present it will be set to:
+   ! PGS_S_SUCCESS (0) when the file is closed successfully.
+   ! a non-zero otherwise.
+   integer, optional, intent(out) :: error
+end subroutine
+@
+
+
+1.1
+log
+@Replace description with code snippet in the procedure reference portion
+@
+text
+@d6 3
+a8 2
+   !This variable is set to 0 when the file is closed successfully.
+   !It is set to a non-zero otherwise.
+@
+

@@ -1,0 +1,1322 @@
+head	2.21;
+access;
+symbols
+	v5-02-NRT-19:2.21
+	v6-00:2.21
+	v5-02-NRT-18:2.21
+	v5-02:2.21
+	v5-01-NRT-17:2.21
+	v5-01-NRT-16:2.21
+	v5-01-NRT-15:2.21
+	v5-01-NRT-14:2.21
+	neuralnetworks-1-0:2.21.0.10
+	cfm-single-freq-0-1:2.21.0.8
+	v5-01:2.21
+	v5-00:2.21
+	v4-23-TA133:2.21.0.6
+	mus-emls-1-70:2.21.0.4
+	rel-1-0-englocks-work:2.21.0.2
+	VUMLS1-00:2.21
+	VPL1-00:2.20
+	V4-22-NRT-08:2.20
+	VAM1-00:2.20
+	V4-21:2.20.0.2
+	V4-13:2.20
+	V4-12:2.20
+	V4-11:2.20
+	V4-10:2.20
+	V3-43:2.15
+	M4-00:2.18
+	V3-41:2.15
+	V3-40-PlusGM57:2.15.0.2
+	V2-24-NRT-04:2.14
+	V3-33:2.15
+	V2-24:2.14
+	V3-31:2.15
+	V3-30-NRT-05:2.15
+	cfm-01-00:2.15
+	V3-30:2.15
+	V3-20:2.15
+	V3-10:2.15
+	V2-23-NRT-02:2.14
+	V2-23:2.14
+	V2-22-NRT-01:2.14
+	V2-22:2.14
+	V2-21:2.14
+	V2-20:2.14
+	V2-11:2.14
+	V2-10:2.14
+	V2-00:2.14
+	V1-51:2.11
+	V1-50:2.11
+	V1-45:2.9
+	V1-44:2.9
+	V1-43:2.9
+	V1-32:2.6
+	V1-31:2.6
+	V1-30:2.6
+	V1-13:2.5
+	V1-12:2.5
+	V1-11:2.5
+	V1-10:2.5
+	newfwm-feb03:2.5.0.2
+	V1-04:2.1
+	V1-03:2.1
+	V1-02:2.1
+	JointForwardModel:2.2.0.2
+	V1-00:2.0
+	newfwm-sep01:1.6.0.2
+	V0-7:1.6
+	V0-5-Level2:1.5
+	V0-5-SIPS:1.5;
+locks; strict;
+comment	@# @;
+
+
+2.21
+date	2016.09.10.01.09.12;	author vsnyder;	state Exp;
+branches;
+next	2.20;
+
+2.20
+date	2013.06.12.02.24.58;	author vsnyder;	state Exp;
+branches;
+next	2.19;
+
+2.19
+date	2013.05.22.00.09.12;	author vsnyder;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2011.08.26.17.53.53;	author pwagner;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2011.08.26.01.21.16;	author pwagner;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2011.08.26.00.31.09;	author pwagner;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2009.06.23.18.26.11;	author pwagner;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2006.04.25.23.25.37;	author vsnyder;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2005.10.24.20.24.55;	author vsnyder;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2005.06.22.18.08.19;	author pwagner;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2004.12.28.00.26.26;	author vsnyder;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2004.10.06.21.25.45;	author vsnyder;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2004.02.14.00.23.48;	author vsnyder;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2004.02.12.02.20.22;	author vsnyder;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2004.02.03.02.49.23;	author vsnyder;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2003.07.15.23.07.05;	author vsnyder;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2002.10.08.17.08.03;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2002.09.07.02.20.27;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2002.09.07.02.18.37;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2002.05.08.08.53.46;	author zvi;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2002.04.18.10.46.26;	author zvi;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2001.09.17.20.26.26;	author livesey;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2001.06.07.23.30.34;	author pwagner;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2001.03.29.08.51.01;	author zvi;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.03.24.01.17.36;	author livesey;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2001.02.19.22.20.40;	author zvi;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.02.19.22.14.21;	author zvi;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.01.31.22.40.12;	author zvi;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.21
+log
+@Get PureHunt directly from Pure_Hunt_m.  Somehow when compiling with NAG
+build 1052, it couldn't find it (at link time) if gotten from MLSNumerics.
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Freq_Avg_m
+
+  implicit NONE
+  private
+  public :: Freq_Avg, Freq_Avg_Avg, Freq_Avg_DACS, Freq_Avg_Setup
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: freq_avg_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  ! ---------------------------------------------------  Freq_Avg  -----
+  subroutine Freq_Avg ( F_grid, F_grid_fltr, Fltr_func, Rad, Avg )
+
+    use MLSKinds, only: R8, RP
+
+    real(r8), intent(in) :: F_grid(:), F_grid_fltr(:), Fltr_func(:)
+    real(rp), intent(in) :: Rad(:)
+
+    real(rp), intent(out)   :: Avg
+
+    integer :: Khi, Klo
+    real(r8) :: dF
+
+    call freq_avg_setup ( f_grid, f_grid_fltr, klo, khi, dF )
+    call freq_avg_avg ( f_grid, f_grid_fltr, fltr_func, rad, klo, khi, dF, avg )
+
+  end subroutine Freq_Avg
+
+  ! -----------------------------------------------  Freq_Avg_Avg  -----
+  subroutine Freq_Avg_Avg ( F_grid, F_grid_fltr, Fltr_func, Rad, Klo, Khi, dF, &
+                          & Avg )
+
+    ! use D_CSPLINE_M, only: CSPLINE
+    use MLSNumerics, only: InterpolateValues, Simps => SimpsonsSub
+    use MLSKinds, only: R8, RP
+
+    real(r8), intent(in) :: F_grid(:), F_grid_fltr(:), Fltr_func(:)
+    real(rp), intent(in) :: Rad(:)
+    integer, intent(in) :: KLo, KHi
+    real(r8), intent(in) :: dF
+
+    real(rp), intent(out)   :: Avg
+
+    integer :: Nfp
+    real(r8) :: Rmax, Rmin, Tmpary(size(f_grid_fltr))
+
+    nfp = size(f_grid_fltr)
+
+    rmin = minval(Rad(klo:khi))
+    rmax = maxval(Rad(klo:khi))
+
+    ! InterpolateValues args are:
+    ! oldX, oldY, newX, newY, method
+    call InterpolateValues ( F_grid, Rad, F_grid_fltr, tmpary, method='C', &
+      & YMIN=Rmin, YMAX=Rmax )
+
+    ! Since the filter function and its derivatives are zero at the ends
+    ! of the interval, or at least outside of it, use the Euler-Maclaurin
+    ! summation formula.  Why doesn't this work?
+
+!     avg = dF * dot_product(tmpary, fltr_func(:nfp) )
+
+    tmpary = tmpary * Fltr_func(1:nfp)
+    call Simps ( tmpary, dF, nfp, Avg )
+
+  end subroutine Freq_Avg_Avg
+
+  ! ----------------------------------------------  Freq_Avg_DACS  -----
+  subroutine Freq_Avg_DACS ( F_grid, DACSFilter, Rad, Avg )
+
+    ! use D_CSPLINE_M, only: CSPLINE
+    use DFFT_M, only: DTCST
+    use FilterShapes_m, only: DACSFilterShape_T
+    use MLSKinds, only: I4, R8, RP
+    use MLSNumerics, only: InterpolateValues
+    use Pure_Hunt_m, only: PureHunt
+    use SineTables_m, only: CreateSineTable, N_Sine => Logsize_SineTable_R8, &
+      & Sines => SineTable_R8
+
+    real(r8), intent(in) :: F_grid(:) ! Frequency grid
+    type(DACSFilterShape_T), intent(in) :: DACSFilter
+    real(rp), intent(in) :: Rad(:)    ! Radiances on F_Grid
+
+    real(rp), intent(out)   :: Avg(:) ! Radiances for all channels
+
+    integer :: L_Apod, L_Filter, L_Norm ! Logarithms base 2 of transform lengths
+    integer :: L_Sines                  ! Log_2 of sine table length
+
+    integer(i4) :: I, Khi, Klo, N, Nfilter, Nnorm
+    real(r8) :: Fmax, Fmin, Rmax, Rmin, Tmpary(size(DACSFilter%filter%filterGrid))
+
+    nFilter = size(DACSFilter%filter%filterGrid)
+    nNorm = size(DACSFilter%ch_norm)
+    i = nFilter / 2
+
+    l_apod = DACSFilter%logApod
+    l_filter = DACSFilter%logFilter
+    l_norm = DACSFilter%logNorm
+    l_sines = max(l_filter, l_norm)
+
+    ! Allocate sine table.  CreateSineTable stores l_sines + 1 into n_sine.
+    if ( l_sines + 1 > n_sine ) call createSineTable ( l_sines - 1 )
+
+    if ( DACSFilter%filter%filterGrid(i+1) > DACSFilter%filter%filterGrid(i) ) then
+      Fmin = DACSFilter%filter%filterGrid(001)
+      Fmax = DACSFilter%filter%filterGrid(nFilter)
+    else
+      Fmin = DACSFilter%filter%filterGrid(nFilter)
+      Fmax = DACSFilter%filter%filterGrid(001)
+    end if
+
+    n = size(f_grid)
+    klo = -1
+    call purehunt ( Fmin, F_grid, n, klo, i )
+    call purehunt ( Fmax, F_grid, n, i, khi )
+
+    rmin = minval(Rad(klo:khi))
+    rmax = maxval(Rad(klo:khi))
+
+    ! Interpolate from (x=F_grid, y=Rad) to (x=DACSFilter%filter%filterGrid, y=tmpary)
+    ! call Cspline ( F_grid, DACSFilter%filter%filterGrid, Rad, tmpary, n, &
+    !   & nFilter, Rmin, Rmax )
+    call InterpolateValues ( F_grid, Rad, DACSFilter%filter%filterGrid, tmpary, method='C', &
+      & YMIN=Rmin, YMAX=Rmax )
+
+    if ( l_apod == l_filter ) then
+      call dtcst ( tmpary, 'C', 'A', (/ l_filter /), 1, n_sine, sines )
+      tmpary = tmpary * DACSFilter%lo_apod
+      call dtcst ( tmpary, 'C', 'S', (/ l_filter /), 1, n_sine, sines )
+      tmpary = tmpary * DACSFilter%filter%filterShape
+      call dtcst ( tmpary, 'C', 'A', (/ l_filter /), 1, n_sine, sines )
+      call dtcst ( tmpary(:nNorm), 'C', 'S', (/ l_norm /), 1, n_sine, sines )
+    else
+      tmpary = tmpary * DACSFilter%filter%filterShape
+      call dtcst ( tmpary, 'C', 'A', (/ l_filter /), 1, n_sine, sines )
+      tmpary(:nNorm) = tmpary(:nNorm) * DACSFilter%lo_apod
+      call dtcst ( tmpary(:nNorm), 'C', 'S', (/ l_norm /), 1, n_sine, sines )
+    end if
+    ! The factor of real(nFilter-1)/(nNorm-1) accounts for different normalization
+    ! for forward and inverse transforms of different lengths.
+    avg = real(nFilter-1)/(nNorm-1) * tmpary(:nNorm) / DACSFilter%ch_norm
+
+  end subroutine Freq_Avg_DACS
+
+  ! ---------------------------------------------  Freq_Avg_Setup  -----
+  subroutine Freq_Avg_Setup ( F_grid, F_grid_fltr, Klo, Khi, dF )
+
+    ! Determine which frequencies from F_Grid to use to span F_Grid_Fltr
+
+    use Pure_Hunt_m, only: PureHunt
+    use MLSKinds, only: R8
+
+    real(r8), intent(in) :: F_grid(:), F_grid_fltr(:)
+
+    integer, intent(out)   :: Klo, Khi
+    real(r8), intent(out) :: dF
+
+    integer :: I, N, Nfp
+    real(r8) :: Fmax, Fmin
+
+    n = size(f_grid)
+    nfp = size(f_grid_fltr)
+    i = nfp / 2
+    dF = F_grid_fltr(i+1) - F_grid_fltr(i)
+    if ( dF > 0.0_r8 ) then
+      Fmin = F_grid_fltr(001)
+      Fmax = F_grid_fltr(nfp)
+    else
+      dF = -dF
+      Fmin = F_grid_fltr(nfp)
+      Fmax = F_grid_fltr(001)
+    end if
+
+    klo = -1
+    call purehunt ( Fmin, F_grid, n, klo, i )
+    call purehunt ( Fmax, F_grid, n, i, khi )
+
+  end subroutine Freq_Avg_Setup
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: freq_avg_m.f90,v 2.20 2013/06/12 02:24:58 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Freq_Avg_m
+
+! $Log: freq_avg_m.f90,v $
+! Revision 2.20  2013/06/12 02:24:58  vsnyder
+! Cruft removal
+!
+! Revision 2.19  2013/05/22 00:09:12  vsnyder
+! Remove unreferenced use names
+!
+! Revision 2.18  2011/08/26 17:53:53  pwagner
+! purehunt recovers optimized functionality of fwdmdls own hunt
+!
+! Revision 2.17  2011/08/26 01:21:16  pwagner
+! Fixed obvious bugs in call to Hunt
+!
+! Revision 2.16  2011/08/26 00:31:09  pwagner
+! CSpline and Hunt now USE MLSNumerics
+!
+! Revision 2.15  2009/06/23 18:26:11  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.14  2006/04/25 23:25:37  vsnyder
+! Revise DACS filter shape data structure
+!
+! Revision 2.13  2005/10/24 20:24:55  vsnyder
+! Insert Euler-Maclaurin idea as a comment.  Why doesn't it work?
+!
+! Revision 2.12  2005/06/22 18:08:19  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.11  2004/12/28 00:26:26  vsnyder
+! Remove unreferenced use names
+!
+! Revision 2.10  2004/10/06 21:25:45  vsnyder
+! Split Freq_Avg into 'setup' and 'do it' steps
+!
+! Revision 2.9  2004/02/14 00:23:48  vsnyder
+! New DACS convolution algorithm
+!
+! Revision 2.8  2004/02/12 02:20:22  vsnyder
+! Use SineTables_m for sine tables for FFTs
+!
+! Revision 2.7  2004/02/03 02:49:23  vsnyder
+! Work on DACs frequency convolution
+!
+! Revision 2.6  2003/07/15 23:07:05  vsnyder
+! Simplify Freq_Avg, implement Freq_Avg_DACS
+!
+! Revision 2.5  2002/10/08 17:08:03  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.4  2002/09/07 02:20:27  vsnyder
+! Fix a type
+!
+! Revision 2.3  2002/09/07 02:18:37  vsnyder
+! Move USEs from module scope to procedure scope, cosmetic changes
+!
+! Revision 2.2  2002/05/08 08:53:46  zvi
+! Modify to accomodate cspline.f9h
+!
+! Revision 2.1  2002/04/18 10:46:26  zvi
+! Better spline use
+!
+! Revision 2.0  2001/09/17 20:26:26  livesey
+! New forward model
+!
+! Revision 1.6  2001/06/07 23:30:34  pwagner
+! Added Copyright statement
+!
+! Revision 1.5  2001/03/29 08:51:01  zvi
+! Changing the (*) to (:) everywhere
+!
+! Revision 1.4  2001/03/24 01:17:36  livesey
+! Bug fix.
+!
+! Revision 1.3  2001/02/19 22:20:40  zvi
+! Latest modification: Conv/NoConv
+!
+! Revision 1.2  2001/02/19 22:14:21  zvi
+!
+! Initial conversion to Fortran 90
+! 2000/11/20 21:56:09  zvi
+! First version D.P.
+@
+
+
+2.20
+log
+@Cruft removal
+@
+text
+@d29 1
+a29 1
+    use MLSKINDS, only: R8, RP
+d49 2
+a50 2
+    use MLSNUMERICS, only: INTERPOLATEVALUES, SIMPS => SIMPSONSSUB
+    use MLSKINDS, only: R8, RP
+d88 6
+a93 5
+    use FilterShapes_m, only: DACSFILTERSHAPE_T
+    use MLSKINDS, only: I4, R8, RP
+    use MLSNumerics, only: INTERPOLATEVALUES, PUREHUNT
+    use SineTables_m, only: CREATESINETABLE, N_SINE => LOGSIZE_SINETABLE_R8, &
+      & SINES => SINETABLE_R8
+d165 2
+a166 2
+    use MLSNumerics, only: PUREHUNT
+    use MLSKINDS, only: R8
+d198 1
+a198 1
+       "$Id: freq_avg_m.f90,v 2.19 2013/05/22 00:09:12 vsnyder Exp $"
+d208 3
+@
+
+
+2.19
+log
+@Remove unreferenced use names
+@
+text
+@d59 1
+a59 1
+    integer :: N, Nfp
+a61 1
+    n = size(f_grid)
+a66 1
+    ! call Cspline ( F_grid, F_grid_fltr, Rad, tmpary, n, nfp, Rmin, Rmax )
+d197 1
+a197 1
+       "$Id: freq_avg_m.f90,v 2.18 2011/08/26 17:53:53 pwagner Exp $"
+d207 3
+@
+
+
+2.18
+log
+@purehunt recovers optimized functionality of fwdmdls own hunt
+@
+text
+@a88 1
+    ! use D_HUNT_M, only: HUNT
+d92 1
+a92 1
+    use MLSNumerics, only: HUNT, INTERPOLATEVALUES, PUREHUNT
+d166 1
+a166 1
+    use MLSNumerics, only: HUNT, PUREHUNT
+d199 1
+a199 1
+       "$Id: freq_avg_m.f90,v 2.17 2011/08/26 01:21:16 pwagner Exp $"
+d209 3
+@
+
+
+2.17
+log
+@Fixed obvious bugs in call to Hunt
+@
+text
+@d49 2
+a50 2
+    use MLSNumerics, only: INTERPOLATEVALUES, SIMPS => SIMPSONSSUB
+    use MLSCommon, only: R8, RP
+d93 1
+a93 1
+    use MLSNumerics, only: HUNT, INTERPOLATEVALUES
+d131 2
+a132 6
+    ! call Hunt ( Fmin, F_grid, n, klo, i )
+    ! call Hunt ( Fmax, F_grid, n, i, khi )
+    call Hunt ( F_grid, Fmin, klo )
+    i = min(klo+1, n)
+    call Hunt ( F_grid, Fmax, i )
+    khi = min(i+1, n)
+d167 1
+a167 1
+    use MLSNumerics, only: HUNT
+d192 2
+a193 6
+    ! call Hunt ( Fmin, F_grid, n, klo, i )
+    ! call Hunt ( Fmax, F_grid, n, i, khi )
+    call Hunt ( F_grid, Fmin, klo )
+    i = min(klo+1, n)
+    call Hunt ( F_grid, Fmax, i )
+    khi = min(i+1, n)
+d200 1
+a200 1
+       "$Id: freq_avg_m.f90,v 2.16 2011/08/26 00:31:09 pwagner Exp $"
+d210 3
+@
+
+
+2.16
+log
+@CSpline and Hunt now USE MLSNumerics
+@
+text
+@d133 1
+a133 1
+    call Hunt ( F_grid, Fmin, n, klo )
+d135 1
+a135 1
+    call Hunt ( F_grid, Fmax, n, i )
+d198 1
+a198 1
+    call Hunt ( F_grid, Fmin, n, klo )
+d200 1
+a200 1
+    call Hunt ( F_grid, Fmax, n, i )
+d208 1
+a208 1
+       "$Id: freq_avg_m.f90,v 2.15 2009/06/23 18:26:11 pwagner Exp $"
+d218 3
+@
+
+
+2.15
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d20 1
+a20 1
+       "$RCSfile: $"
+d29 1
+a29 1
+    use MLSCommon, only: R8, RP
+d48 2
+a49 2
+    use D_CSPLINE_M, only: CSPLINE
+    use DSIMPSON_MODULE, only: SIMPS
+d68 5
+a72 1
+    call Cspline ( F_grid, F_grid_fltr, Rad, tmpary, n, nfp, Rmin, Rmax )
+d88 2
+a89 2
+    use D_CSPLINE_M, only: CSPLINE
+    use D_HUNT_M, only: HUNT
+d91 5
+a95 4
+    use FilterShapes_m, only: DACSFilterShape_T
+    use MLSCommon, only: I4, R8, RP
+    use SineTables_m, only: CreateSineTable, n_sine => LogSize_SineTable_R8, &
+      & sines => SineTable_R8
+d131 6
+a136 2
+    call Hunt ( Fmin, F_grid, n, klo, i )
+    call Hunt ( Fmax, F_grid, n, i, khi )
+d142 4
+a145 2
+    call Cspline ( F_grid, DACSFilter%filter%filterGrid, Rad, tmpary, n, &
+      & nFilter, Rmin, Rmax )
+d171 2
+a172 2
+    use D_HUNT_M, only: HUNT
+    use MLSCommon, only: R8
+d196 6
+a201 2
+    call Hunt ( Fmin, F_grid, n, klo, i )
+    call Hunt ( Fmax, F_grid, n, i, khi )
+d208 1
+a208 1
+       "$Id: read_apriori.f90 is it here $"
+d218 3
+@
+
+
+2.14
+log
+@Revise DACS filter shape data structure
+@
+text
+@d20 1
+a20 1
+       "$RCSfile: freq_avg_m.f90,v $"
+d190 1
+a191 1
+!---------------------------- RCS Ident Info -------------------------------
+d193 2
+a194 3
+       "$Id: freq_avg_m.f90,v 2.13 2005/10/24 20:24:55 vsnyder Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d196 1
+d198 1
+d203 3
+@
+
+
+2.13
+log
+@Insert Euler-Maclaurin idea as a comment.  Why doesn't it work?
+@
+text
+@d102 1
+a102 1
+    real(r8) :: Fmax, Fmin, Rmax, Rmin, Tmpary(size(DACSFilter%filterGrid))
+d104 1
+a104 1
+    nFilter = size(DACSFilter%filterGrid)
+d116 3
+a118 3
+    if ( DACSFilter%filterGrid(i+1) > DACSFilter%filterGrid(i) ) then
+      Fmin = DACSFilter%filterGrid(001)
+      Fmax = DACSFilter%filterGrid(nFilter)
+d120 2
+a121 2
+      Fmin = DACSFilter%filterGrid(nFilter)
+      Fmax = DACSFilter%filterGrid(001)
+d132 3
+a134 2
+    ! Interpolate from (x=F_grid, y=Rad) to (x=DACSFilter%filterGrid, y=tmpary)
+    call Cspline ( F_grid, DACSFilter%filterGrid, Rad, tmpary, n, nFilter, Rmin, Rmax )
+d140 1
+a140 1
+      tmpary = tmpary * DACSFilter%filterShape
+d144 1
+a144 1
+      tmpary = tmpary * DACSFilter%filterShape
+d193 1
+a193 1
+       "$Id: freq_avg_m.f90,v 2.12 2005/06/22 18:08:19 pwagner Exp $"
+d202 3
+@
+
+
+2.12
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d20 1
+a20 1
+       "$RCSfile: $"
+d70 6
+d192 1
+a192 1
+       "$Id: $"
+d201 3
+@
+
+
+2.11
+log
+@Remove unreferenced use names
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d18 3
+a20 6
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+    &  "$Id: freq_avg_m.f90,v 2.10 2004/10/06 21:25:45 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName= &
+    &  "$RCSfile: freq_avg_m.f90,v $"
+d184 5
+d195 3
+@
+
+
+2.10
+log
+@Split Freq_Avg into 'setup' and 'do it' steps
+@
+text
+@d12 1
+a12 1
+    &  "$Id: freq_avg_m.f90,v 2.9 2004/02/14 00:23:48 vsnyder Exp $"
+a23 2
+    use D_CSPLINE_M, only: CSPLINE
+    use DSIMPSON_MODULE, only: SIMPS
+d185 3
+@
+
+
+2.9
+log
+@New DACS convolution algorithm
+@
+text
+@d8 1
+a8 1
+  public :: Freq_Avg, Freq_Avg_DACS
+d12 1
+a12 1
+    &  "$Id: freq_avg_m.f90,v 2.8 2004/02/12 02:20:22 vsnyder Exp $"
+d26 22
+a47 2
+    use D_HUNT_M, only: HUNT
+    use MLSCommon, only: I4, R8, RP
+d51 2
+d56 2
+a57 2
+    integer(i4) :: I, Khi, Klo, N, Nfp
+    real(r8) :: dF, Fmax, Fmin, Rmax, Rmin, Tmpary(size(f_grid_fltr))
+a60 14
+    i = nfp / 2
+    dF = F_grid_fltr(i+1) - F_grid_fltr(i)
+    if ( dF > 0.0_r8 ) then
+      Fmin = F_grid_fltr(001)
+      Fmax = F_grid_fltr(nfp)
+    else
+      dF = -dF
+      Fmin = F_grid_fltr(nfp)
+      Fmax = F_grid_fltr(001)
+    end if
+
+    klo = -1
+    call Hunt ( Fmin, F_grid, n, klo, i )
+    call Hunt ( Fmax, F_grid, n, i, khi )
+d70 1
+a70 3
+    return
+
+  end subroutine Freq_Avg
+d145 35
+d187 3
+@
+
+
+2.8
+log
+@Use SineTables_m for sine tables for FFTs
+@
+text
+@d12 1
+a12 1
+    &  "$Id: freq_avg_m.f90,v 2.7 2004/02/03 02:49:23 vsnyder Exp $"
+d67 1
+a67 2
+  subroutine Freq_Avg_DACS ( F_grid, F_grid_fltr, Fltr_func, LO_Apod, CH_Norm, &
+    & Rad, Avg )
+d72 1
+d77 3
+a79 3
+    real(r8), intent(in) :: F_grid(:), F_grid_fltr(:), Fltr_func(:)
+    real(r8), intent(in) :: LO_Apod(:), CH_Norm(:)
+    real(rp), intent(in) :: Rad(:)
+d83 2
+a84 10
+    ! Saved stuff for DTCST
+    integer, save :: L_Long, L_Short  ! Log_2 of lengths
+
+    integer(i4) :: I, Khi, Klo, N, Nfp, Nshort, NSines
+    real(r8) :: Fmax, Fmin, Rmax, Rmin, Tmpary(size(f_grid_fltr))
+
+    n = size(f_grid)
+    nfp = size(f_grid_fltr)
+    nShort = size(lo_apod)
+    i = nfp / 2
+d86 2
+a87 7
+    ! Allocate sine table
+    nSines = max(nfp,nshort) / 2 - 1
+    if ( nSines > 2 ** n_sine - 1 ) then
+      call check_size ( nfp, l_long, 'F_Grid_Fltr' )
+      call check_size ( nShort, l_short, 'LO_Apod' )
+      call createSineTable ( l_long - 1 )
+    end if
+d89 15
+a103 3
+    if ( F_grid_fltr(i+1) > F_grid_fltr(i) ) then
+      Fmin = F_grid_fltr(001)
+      Fmax = F_grid_fltr(nfp)
+d105 2
+a106 2
+      Fmin = F_grid_fltr(nfp)
+      Fmax = F_grid_fltr(001)
+d109 1
+d117 2
+a118 2
+    ! Interpolate from (x=F_grid, y=Rad) to (x=F_grid_fltr, y=tmpary)
+    call Cspline ( F_grid, F_grid_fltr, Rad, tmpary, n, nfp, Rmin, Rmax )
+d120 14
+a133 5
+    tmpary = tmpary * Fltr_func(1:nfp)
+    call dtcst ( tmpary, 'C', 'A', (/ l_long /), 1, n_sine, sines )
+    tmpary(:nShort) = tmpary(:nShort) * lo_apod
+    call dtcst ( tmpary(:nShort), 'C', 'S', (/ l_short /), 1, n_sine, sines )
+    ! The factor of real(nfp-1)/(nshort-1) accounts for different normalization
+d135 1
+a135 18
+    avg = real(nfp-1)/(nshort-1) * tmpary(:nShort) / ch_norm
+
+  contains
+
+    subroutine Check_Size ( ArrSize, LogSize, Name )
+      ! Make sure ArrSize is 2**k+1 for some k.  Return that k in LogSize
+      use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+      integer, intent(in) :: ArrSize     ! Must be 2**k+1 for some k
+      integer, intent(out) :: LogSize    ! Base-2 logarithm ( ArrSize ) = K.
+      character(len=*), intent(in) :: Name
+      logSize = 0
+      do
+        logSize = logSize + 1
+        if ( 2**logSize + 1 == arrSize ) exit
+        if ( 2**logSize > arrSize ) call MLSMessage ( MLSMSG_Error, moduleName, &
+          & 'Size(' // name // ') /= 2**k + 1' )
+      end do
+    end subroutine Check_Size
+d146 3
+@
+
+
+2.7
+log
+@Work on DACs frequency convolution
+@
+text
+@d12 1
+a12 1
+    &  "$Id: freq_avg_m.f90,v 2.6 2003/07/15 23:07:05 vsnyder Exp $"
+a69 1
+    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+d74 2
+a84 5
+    integer, save :: N_Sine = 0       ! Sine table flag/size
+    real(r8), save, pointer :: Sines(:) => NULL() ! Sine table.  We can use the
+                                      ! same sine table for both transforms,
+                                      ! because the small one is a prefix of
+                                      ! the large one.
+d96 1
+a96 7
+    if ( associated(sines) ) then
+      if ( size(sines) /= nSines ) &
+        & call deallocate_test ( sines, 'Sines', moduleName )
+    end if
+    if ( .not. associated(sines) ) then
+      call allocate_test ( sines, nSines, 'Sines', moduleName )
+      n_sine = 0
+d99 1
+d154 3
+@
+
+
+2.6
+log
+@Simplify Freq_Avg, implement Freq_Avg_DACS
+@
+text
+@d12 1
+a12 1
+    &  "$Id: freq_avg_m.f90,v 2.5 2002/10/08 17:08:03 pwagner Exp $"
+a74 1
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+d83 6
+a88 3
+    integer, save :: L_Long, L_Short                 ! Log_2 of lengths
+    integer, save :: MS_Long = 0, MS_Short = 0       ! Sine table lengths
+    real(r8), save, pointer :: S_Long(:), S_Short(:) ! Sine tables
+d90 1
+a90 1
+    integer(i4) :: I, Khi, Klo, N, Nfp, Nshort
+d98 11
+a108 32
+    ! Allocate sine tables
+    if ( ms_long == 0 ) then
+      nullify ( s_long )
+    else if ( ms_long /= size(s_long) ) then
+      call deallocate_test ( s_long, 'S_Long', moduleName )
+      ms_long = 0
+    end if
+    if ( ms_long == 0 ) then
+      call allocate_test ( s_long, nfp, 'S_Long', moduleName )
+      l_long = 0
+      do
+        l_long = l_long + 1
+        if ( 2**l_long + 1 == nfp ) exit
+        if ( 2**l_long > nfp ) call MLSMessage ( MLSMSG_Error, moduleName, &
+          & 'Size(F_Grid_Fltr) /= 2**k + 1' )
+      end do
+    end if
+    if ( ms_short == 0 ) then
+      nullify ( s_short )
+    else if ( ms_short /= size(lo_apod) ) then
+      call deallocate_test ( s_short, 'S_short', moduleName )
+      ms_short = 0
+    end if
+    if ( ms_short == 0 ) then
+      call allocate_test ( s_short, nShort, 'S_short', moduleName )
+      l_short = 0
+      do
+        l_short = l_short + 1
+        if ( 2**l_short + 1 == nShort ) exit
+        if ( 2**l_short > nShort ) call MLSMessage ( MLSMSG_Error, moduleName, &
+          & 'Size(LO_Apod) /= 2**k + 1' )
+      end do
+d126 1
+d130 1
+a130 1
+    call dtcst ( tmpary, 'C', 'A', (/ l_long /), 1, ms_long, s_long )
+d132 21
+a152 4
+    call dtcst ( tmpary(:nShort), 'C', 'S', (/ l_short /), 1, ms_short, s_short )
+    avg = tmpary(:nShort) / ch_norm
+
+    return
+d163 3
+@
+
+
+2.5
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d8 1
+a8 1
+  public :: Freq_Avg
+d12 1
+a12 1
+    &  "$Id: freq_avg_m.f90,v 2.4 2002/09/07 02:20:27 vsnyder Exp $"
+d21 2
+a22 1
+  subroutine Freq_Avg ( F_grid, F_grid_fltr, Fltr_func, Rad, N, Nfp, Avg )
+a31 2
+    integer(i4), intent(in) :: N, Nfp
+
+d34 2
+a35 2
+    integer(i4) :: Klo, Khi, I
+    real(r8) :: Rxf(nfp), Tmpary(nfp), Fmin, Fmax, Rmin, Rmax, dF
+d37 2
+d59 2
+a60 2
+    rxf(1:nfp) = tmpary(1:nfp) * Fltr_func(1:nfp)
+    call Simps ( rxf, dF, nfp, Avg )
+d66 91
+d164 3
+d186 1
+a186 1
+! Changing the (*) toi (:) everywhere
+@
+
+
+2.4
+log
+@Fix a type
+@
+text
+@d12 1
+a12 1
+    &  "$Id: freq_avg_m.f90,v 2.3 2002/09/07 02:18:37 vsnyder Exp $"
+d16 1
+d65 4
+d72 3
+@
+
+
+2.3
+log
+@Move USEs from module scope to procedure scope, cosmetic changes
+@
+text
+@d12 1
+a12 1
+    &  "$Id: freq_avg_m.f90,v 2.2 2002/05/08 08:53:46 zvi Exp $"
+d30 1
+a30 1
+    integer(i4), intent(in) :: M, Nfp
+d67 3
+@
+
+
+2.2
+log
+@Modify to accomodate cspline.f9h
+@
+text
+@d4 2
+a5 5
+module FREQ_AVG_M
+  use D_CSPLINE_M, only: CSPLINE
+  use DSIMPSON_MODULE, only: SIMPS
+  use D_HUNT_M, only: HUNT
+  use MLSCommon, only: I4, R8
+d9 1
+d11 5
+a15 4
+  CHARACTER (LEN=256) :: Id = &
+       "$Id: freq_avg_m.f90,v 2.1 2002/04/18 10:46:26 zvi Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= &
+       "$RCSfile: freq_avg_m.f90,v $"
+d17 1
+a18 5
+!
+  Subroutine Freq_Avg(F_grid,F_grid_fltr,Fltr_func,Rad,n,nfp,Avg)
+!
+    Real(r8), intent(in) :: Fltr_func(:)
+    Real(r8), intent(in) :: F_grid(:), Rad(:), F_grid_fltr(:)
+d20 17
+a36 7
+    Integer(i4), intent(IN) :: n, nfp
+!
+    Real(r8), intent(OUT)   :: Avg
+!
+    Integer(i4) :: klo,khi,i
+    Real(r8) :: rxf(nfp), tmpary(nfp), Fmin, Fmax, Rmin, Rmax, dF
+!
+d39 1
+a39 1
+    if(dF > 0.0_r8) then
+d46 1
+a46 1
+    endif
+d49 7
+a55 7
+    Call Hunt(Fmin,F_grid,n,klo,i)
+    Call Hunt(Fmax,F_grid,n,i,khi)
+!
+    Rmin = MINVAL(Rad(klo:khi))
+    Rmax = MAXVAL(Rad(klo:khi))
+!
+    Call Cspline(F_grid, F_grid_fltr, Rad, tmpary, n, nfp, Rmin, Rmax)
+d58 1
+a58 1
+    Call Simps (rxf, dF, nfp, Avg)
+d60 1
+a60 1
+    RETURN
+d62 3
+a64 1
+  End Subroutine Freq_Avg
+a65 1
+end module FREQ_AVG_M
+d67 3
+@
+
+
+2.1
+log
+@Better spline use
+@
+text
+@d14 1
+a14 1
+       "$Id: freq_avg_m.f90,v 2.0 2001/09/17 20:26:26 livesey Exp $"
+a30 2
+
+    Real(r8), PARAMETER :: p = 0.02_r8
+d43 1
+d47 2
+a48 2
+    Rmin = (1.0_r8 - p) * MINVAL(Rad(klo:khi))
+    Rmax = (1.0_r8 + p) * MAXVAL(Rad(klo:khi))
+d61 3
+@
+
+
+2.0
+log
+@New forward model
+@
+text
+@d7 1
+d14 1
+a14 1
+       "$Id: freq_avg_m.f90,v 1.6 2001/06/07 23:30:34 pwagner Exp $"
+d25 1
+a25 1
+    Integer(i4), intent(in) :: n, nfp
+d27 1
+a27 1
+    Real(r8), intent(out)    :: Avg
+d29 18
+a46 1
+    Real(r8) :: rxf(nfp), tmpary(nfp), df
+d48 5
+a52 2
+    df = abs(F_grid_fltr(2) - F_grid_fltr(1))
+    Call Cspline(F_grid, F_grid_fltr, Rad, tmpary, n, nfp)
+d54 1
+a54 1
+    Call Simps (rxf, df, nfp, Avg)
+d62 3
+@
+
+
+1.6
+log
+@Added Copyright statement
+@
+text
+@d13 1
+a13 1
+       "$Id: freq_avg_m.f90,v 1.5 2001/03/29 08:51:01 zvi Exp $"
+d41 3
+@
+
+
+1.5
+log
+@Changing the (*) toi (:) everywhere
+@
+text
+@d1 3
+d13 1
+a13 1
+       "$Id: freq_avg_m.f90,v 1.4 2001/03/24 01:17:36 livesey Exp $"
+d41 3
+@
+
+
+1.4
+log
+@Bug fix.
+@
+text
+@d10 1
+a10 1
+       "$Id: freq_avg_m.f90,v 1.3 2001/02/19 22:20:40 zvi Exp $"
+d19 1
+a19 1
+    Real(r8), intent(in) :: F_grid(*), Rad(*), F_grid_fltr(*)
+d38 3
+@
+
+
+1.3
+log
+@Latest modification: Conv/NoConv
+@
+text
+@d10 1
+a10 1
+       "$Id: freq_avg_m.f90,v 1.2 2001/02/19 22:14:21 zvi Exp $"
+d27 1
+a27 1
+    df = F_grid_fltr(2) - F_grid_fltr(1)
+d38 3
+@
+
+
+1.2
+log
+@
+Ctest modification Conv/NoConvVS: ----------------------------------------------------------------------
+@
+text
+@d10 1
+a10 1
+       "$Id: freq_avg_m.f90,v 1.1 2000/11/20 21:56:09 zvi Exp $"
+d38 2
+@
+
+
+1.1
+log
+@Add new version
+@
+text
+@d16 1
+a16 1
+  Subroutine Freq_Avg(F_grid,F_grid_fltr,Fltr_func,Rad,N,Nfp,Avg,Ier)
+d18 2
+a19 2
+    Real(r8), intent(in) :: FLTR_FUNC(:)
+    Real(r8), intent(in) :: F_GRID(*), RAD(*), F_GRID_FLTR(*)
+d21 1
+a21 1
+    Integer(i4), intent(in) :: N, NFP
+a22 1
+    Integer(i4), intent(out) :: IER
+d25 1
+a25 1
+    Integer(i4), Parameter :: M = 161       ! For 161 maxfiltpts
+d27 3
+a29 14
+    Real(r8) :: RXF(m), TMPARY(m), DF
+!
+    ier = 2000
+    if ( nfp > m ) then
+      Print *, '** Error in subroutine Freq_Avg routine !'
+      Print *, '   Number of filter points too large:', nfp
+      Print *, '   Maximum allowed:', m
+      Return
+    endif
+
+    ier = 0
+    df = f_grid_fltr(2) - f_grid_fltr(1)
+    Call Cspline (f_grid, f_grid_fltr, rad, tmpary, n, nfp)
+    rxf = tmpary * fltr_func
+d32 1
+a32 1
+    Return
+@
+

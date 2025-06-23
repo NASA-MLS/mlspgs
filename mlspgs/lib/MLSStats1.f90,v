@@ -1,0 +1,4832 @@
+head	2.29;
+access;
+symbols
+	v5-02-NRT-19:2.29
+	v6-00:2.29
+	v5-02-NRT-18:2.29
+	v5-02:2.28
+	v5-01-NRT-17:2.29
+	v5-01-NRT-16:2.29
+	v5-01-NRT-15:2.28
+	v5-01-NRT-14:2.28
+	neuralnetworks-1-0:2.28.0.6
+	cfm-single-freq-0-1:2.28.0.4
+	v5-01:2.28
+	v5-00:2.28
+	v4-23-TA133:2.28.0.2
+	mus-emls-1-70:2.27.0.4
+	rel-1-0-englocks-work:2.27.0.2
+	VUMLS1-00:2.26
+	VPL1-00:2.25
+	V4-22-NRT-08:2.25
+	VAM1-00:2.25
+	V4-21:2.25.0.2
+	V4-13:2.25
+	V4-12:2.25
+	V4-11:2.25
+	V4-10:2.25
+	V3-43:2.22
+	M4-00:2.23
+	V3-41:2.22
+	V3-40-PlusGM57:2.22.0.2
+	V2-24-NRT-04:2.16
+	V3-33:2.22
+	V2-24:2.16
+	V3-31:2.22
+	V3-30-NRT-05:2.22
+	cfm-01-00:2.22
+	V3-30:2.22
+	V3-20:2.22
+	V3-10:2.22
+	V2-23-NRT-02:2.16
+	V2-23:2.16
+	V2-22-NRT-01:2.16
+	V2-22:2.16
+	V2-21:2.12
+	V2-20:2.11
+	V2-11:2.9
+	V2-10:2.9
+	V2-00:2.8
+	V1-51:2.3
+	V1-50:2.3;
+locks; strict;
+comment	@# @;
+
+
+2.29
+date	2022.02.03.18.50.45;	author pwagner;	state Exp;
+branches;
+next	2.28;
+
+2.28
+date	2019.04.04.23.50.20;	author pwagner;	state Exp;
+branches;
+next	2.27;
+
+2.27
+date	2017.12.01.01.22.08;	author pwagner;	state Exp;
+branches;
+next	2.26;
+
+2.26
+date	2016.09.09.20.37.32;	author pwagner;	state Exp;
+branches;
+next	2.25;
+
+2.25
+date	2014.01.09.00.24.29;	author pwagner;	state Exp;
+branches;
+next	2.24;
+
+2.24
+date	2013.08.12.23.47.25;	author pwagner;	state Exp;
+branches;
+next	2.23;
+
+2.23
+date	2011.07.26.20.43.51;	author pwagner;	state Exp;
+branches;
+next	2.22;
+
+2.22
+date	2009.06.23.18.25.42;	author pwagner;	state Exp;
+branches;
+next	2.21;
+
+2.21
+date	2008.11.24.19.31.49;	author pwagner;	state Exp;
+branches;
+next	2.20;
+
+2.20
+date	2008.05.23.01.15.29;	author pwagner;	state Exp;
+branches;
+next	2.19;
+
+2.19
+date	2007.11.01.23.28.42;	author pwagner;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2007.10.24.23.56.58;	author pwagner;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2007.10.24.00.19.35;	author pwagner;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2007.10.12.23.36.16;	author pwagner;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2007.09.13.21.07.44;	author pwagner;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2007.07.17.00.25.07;	author pwagner;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2007.03.07.21.03.45;	author pwagner;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2007.02.06.17.54.13;	author pwagner;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2006.08.21.23.38.41;	author pwagner;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2006.08.12.00.08.21;	author pwagner;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2006.07.11.00.22.16;	author pwagner;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2006.03.08.01.13.38;	author pwagner;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2006.02.01.23.44.37;	author pwagner;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2005.12.16.00.04.29;	author pwagner;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2005.06.22.17.25.50;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2005.03.24.21.16.40;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2004.09.28.23.15.35;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2004.09.15.18.03.46;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2004.09.13.20.40.38;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.29
+log
+@Fixed spelling error; capitalized some function names
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=============================================================================
+module MLSStats1                 ! Calculate statistics of rank n arrays
+!=============================================================================
+  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+  use HighOutput, only: OutputNamedValue
+  use MLSCommon, only: Interval_T
+  use MLSKinds, only: R4, R8
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+  use MLSFinds, only: FindAll, FindFirst, FindLast
+  use MLSStringLists, only: Catlists
+  use MLSStrings, only: Lowercase
+  use Output_M, only: Blanks, Newline, Output
+  use Sort_M, only: Sort, Sortp
+
+  implicit none
+! === (start of toc) ===
+!     c o n t e n t s
+!     - - - - - - - -
+
+!     (data types and parameters)
+! Stat_t                          Basic user-defined data type containing
+!                                  all standard statistics
+! FillValueRelation               Whether to use '=' (default) or '<', '>'
+
+!     (subroutines and functions)
+! AllStats                        Computes some or all standard statistics
+! ConfidInterval                  Computes the confidence interval
+! Dump                            Prints a STAT_T with all standard statistics
+! SetUp                           Initialize and set up arrays for the Stat_T datatype
+! MLSMin                          Finds min of an array
+!                                   (excluding FillValues or negative precisions)
+! MLSMax, MLSMean, MLSMedian,
+!    MLSStddev, MLSRms            Similar to MLSMin for other statistics
+! Hownear                         Finds how near 2 arrays are in %
+! Howfar                          Inverse of hownear--given a % finds stats of 
+!                                   diffs of nearest %
+!                                 If mode='median' finds stats of array1
+!                                   differences from its median value
+! Pdf                             Finds the pdf for a sample x given a Stat_T
+!                                   or with x1, x2 its integral over [x1, x2]
+! Ratios                          Statistics of ratio between 2 arrays;
+!                                    can be used to track changes to a reference
+!                                    goldbrick standard
+! Reset                           Resets or Destroys a Stat_T
+! Statfunction                    Given a set of values it returns a STAT_T
+! Statistics                      Similar to STATFUNCTION, but may accumulate
+!                                   statistics in STAT_T over multiple calls
+! === (end of toc) ===
+
+! === (start of api) ===
+!     (user-defined types)
+! Stat_T 
+!             (
+!             int   count, 
+!             int   fillcount, 
+!             r8    max   ,
+!             r8    mean  ,
+!             r8    median,
+!             r8    min   ,
+!             r8    stddev,
+!             r8    rms   ,
+!             int   indexing(3),
+!             int   nbins, 
+!             r8    bounds(2)  ,
+!             *int  bincount(:)
+!             ) 
+
+!     (subroutines and functions)
+! allstats( values, &
+!      & [int nbins], [*bounds(2)], [log addedData], [fillValue], [precision], &
+!      & [int count], [int fillcount], &
+!      & [min], [max], [mean], [stddev], [rms], [median], [int indexing(3)], &
+!      & [int bincount], [log doDump] )
+!      values may go up to rank 4, typed either r4 or r8
+! confidInterval( values, pct(:), intervals(:), &
+!      & [char* mode], [type(values) estimate] )
+! dump( stat_t statistic, [char which] )
+! type(values) mls$fun( values, [fillvalue] )
+! howfar( array1, array2, pct(:), stat_t gaps, char* mode, &
+!      & [array1AtN(3,:)],  [array2AtN(3,:)] )
+! hownear( array1, array2, pct, [type(array1) gaps(:)], [type(array1) gapratios(:)] )
+! r8 pdf( r8 x, stat_t statistic )
+! r8 pdf( r8 x1, r8 x2, stat_t statistic )
+! ratios( array1, array2, type(array1) exvalues, type(array1) exratios, &
+!      & type(array1) minratio, type(array1) maxratio, type(array1) meanratio, &
+!      & type(array1) stddevratio, type(array1) rmsratio, &
+!      & type(array1) medianratio, &
+!      & [fillValue], [char op] )
+! reset( stat_t statistic )
+! SetUp( stat_t statistic, [int NBins], [r8 Bounds(2)], [log verbose] )
+! stat_t statFunction( r8 values(:), [r8 fillValue], [r8 precision(:) )
+! statistics( r8 values(:), stat_t statistic, [r8 fillValue], [r8 precision(:) )
+!
+! Notes:
+! (1) Unless specified explicitly, 'values', 'precision', 'pct',,
+! 'array1', 'array2', etc. may be any numerically typed array with
+! 0 < rank < 4 except complex
+! (2) 'fillvalue', 'min', 'max', 'mean', 'stddev', 'rms', and 'median'
+! are scalars with the same numerical type as 'values'
+! (3) The $fun in mls$fun can be any of the names in (2) beginning with 'min'
+! === (end of api) ===
+  private
+  
+  public :: Stat_t             ! the data type
+  public :: Allstats, ConfidInterval, Dump, Howfar, Hownear, Ratios, Statistics
+  public :: MLScount
+  public :: MLSMin, MLSMax, MLSMean, MLSMedian, MLSStddev, MLSRms
+  public :: Pdf
+  public :: Reset, SetUp
+  public :: Statfunction
+  
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: MLSStats1.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+  ! The functions and subroutines are based on
+  ! (1) The MATH77 library subroutine; and
+  ! (2) optionally filtering out fill values from array entries
+  ! (3) Optionally, instead of filtering fill values, an array of precisions,
+  ! with the same shape and numeric type as the original values,
+  ! can be supplied. In this case, values for which the corresponding
+  ! precisions < 0 will be filtered out.
+  ! If both fillValue and precision are supplied, 
+  ! the precision array will be ignored.
+  
+  ! Interfaces have been supplied so that most procedures accept
+  ! arrays of rank 1, 2, or 3 and either single or double precision
+  
+  ! Note that multidimensional arrays are reshaped into longer
+  ! 1-d arrays, rather than returning reduced rank results
+  
+  ! In addition to min, max, mean, stddev functions of MATH77
+  ! median and rms functions have been created.
+  ! Missing so far is a mode function, chi^2, 
+  ! confidence level, etc.
+  
+  ! If called via a subroutine,
+  ! an optional returned array is bincount. If supplied, nbin and bounds must
+  ! also be supplied and satisfy the conditions: 
+  ! nbins > 2, X2 > X1, size(bincount) >= nbins
+  ! where bounds = (X1, X2)
+  ! bincount will be suitable for plotting a histogram of the data. 
+  ! Let h = (X2-X1) / (nbins-2)
+  ! Then the bins are the intervals between the points in the following set:
+  ! {-Inf  X1  X1+h  X1+2h  ..  X2-2h  X2-h  X2  Inf}
+  
+  ! Also, if called via a subroutine, successive calls may "merge" data
+  ! allowing the calculation of statistics for a larger cumulative data set
+  ! Except, in this case, medians are not found correctly
+  ! (hard to fix this bug; perhaps why median not part of original MATH77)
+
+  ! This is the main datatype, a statistic type that both holds
+  ! and can progressively accumulate info
+  
+  ! However, accumulating data is inconsistent with obtaining correct
+  ! values for the median and for the indexes of the max, mean, and medians
+  ! stored in the indexing array
+  
+  ! (Would making fillValue a component makes sense?)
+
+  type Stat_T
+    integer  :: count = 0     ! If > 0, merging data from prior call(s)
+    integer  :: fillcount = 0 ! Number of times fillValues ignored
+    real(r8) :: max
+    real(r8) :: mean
+    real(r8) :: median        ! incorrect if merging data
+    real(r8) :: min
+    real(r8) :: stddev
+    real(r8) :: rms
+    integer, dimension(3) :: indexing = 0  !index of  (/ max, median, min /)
+    ! The next 3 deal with histogramming data
+    integer  :: nbins = 0  !NCELLS; put > 2 if histogramming
+    real(r8), dimension(2) :: bounds = 1.d0 ! X1, X2; put X2 > X1
+    integer, dimension(:), pointer :: bincount => null() ! IHIST
+  end type Stat_T
+  
+  type(Stat_T), save :: MLSStat
+  
+  ! consider whether one of {"=" (default), "<", ">"}
+  ! when calculating %ages (and possibly rms, etc.)
+  character(len=1), public, save :: fillValueRelation = '='
+  logical, public, save          :: showIndexing = .false. ! show where max, min
+  logical, public, save          :: statsOnOneLine = .false.
+
+  interface allstats
+    module procedure allstats_d1r4, allstats_d2r4, allstats_d3r4, allstats_d4r4
+    module procedure allstats_d1r8, allstats_d2r8, allstats_d3r8, allstats_d4r8
+  end interface
+  
+  interface dump
+    module procedure dump_all
+    module procedure dump_selected
+  end interface
+  
+  interface dump_if_selected
+    module procedure dump_if_selected_int_array
+    module procedure dump_if_selected_int_scalar
+    module procedure dump_if_selected_r8_array
+    module procedure dump_if_selected_r8_scalar
+  end interface
+  
+  interface filterValues
+    module procedure filterValues_r4
+    module procedure filterValues_r8
+  end interface
+  
+  interface ConfidInterval
+    module procedure ConfidInterval_int, ConfidInterval_r4, ConfidInterval_r8
+  end interface
+
+  interface howfar
+    module procedure howfar_d1int, howfar_d2int, howfar_d3int
+    module procedure howfar_d1r4, howfar_d2r4, howfar_d3r4, howfar_d4r4
+    module procedure howfar_d1r8, howfar_d2r8, howfar_d3r8, howfar_d4r8
+  end interface
+  
+  interface hownear
+    module procedure hownear_d1int, hownear_d2int, hownear_d3int
+    module procedure hownear_d1r4, hownear_d2r4, hownear_d3r4, hownear_d4r4
+    module procedure hownear_d1r8, hownear_d2r8, hownear_d3r8, hownear_d4r8
+  end interface
+  
+  interface MLSMin
+    module procedure MLSMin_d1int, MLSMin_d2int, MLSMin_d3int
+    module procedure MLSMin_d1r4, MLSMin_d2r4, MLSMin_d3r4
+    module procedure MLSMin_d1r8, MLSMin_d2r8, MLSMin_d3r8
+  end interface
+  
+  interface MLSMax
+    module procedure MLSMax_d1int, MLSMax_d2int, MLSMax_d3int
+    module procedure MLSMax_d1r4, MLSMax_d2r4, MLSMax_d3r4
+    module procedure MLSMax_d1r8, MLSMax_d2r8, MLSMax_d3r8
+  end interface
+  
+  interface MLSMean
+    module procedure MLSMean_d1int, MLSMean_d2int, MLSMean_d3int
+    module procedure MLSMean_d1r4, MLSMean_d2r4, MLSMean_d3r4
+    module procedure MLSMean_d1r8, MLSMean_d2r8, MLSMean_d3r8
+  end interface
+  
+  interface MLSMedian
+    module procedure MLSMedian_d1int, MLSMedian_d2int, MLSMedian_d3int
+    module procedure MLSMedian_d1r4, MLSMedian_d2r4, MLSMedian_d3r4
+    module procedure MLSMedian_d1r8, MLSMedian_d2r8, MLSMedian_d3r8
+  end interface
+  
+  interface MLSStddev
+    module procedure MLSStddev_d1int, MLSStddev_d2int, MLSStddev_d3int
+    module procedure MLSStddev_d1r4, MLSStddev_d2r4, MLSStddev_d3r4, MLSStddev_d4r4
+    module procedure MLSStddev_d1r8, MLSStddev_d2r8, MLSStddev_d3r8, MLSStddev_d4r8
+  end interface
+  
+  interface MLSRms
+    module procedure MLSRms_d1int, MLSRms_d2int, MLSRms_d3int
+    module procedure MLSRms_d1r4, MLSRms_d2r4, MLSRms_d3r4
+    module procedure MLSRms_d1r8, MLSRms_d2r8, MLSRms_d3r8
+  end interface
+  
+  interface mlscount
+    module procedure mlscount_d1int
+    module procedure mlscount_d1r4
+    module procedure mlscount_d1r8
+  end interface
+  
+  interface pdf
+    module procedure pdf_1, pdf_2
+  end interface
+  
+  interface ratios
+    module procedure ratios_d1int, ratios_d2int, ratios_d3int
+    module procedure ratios_d1r4, ratios_d2r4, ratios_d3r4, ratios_d4r4
+    module procedure ratios_d1r8, ratios_d2r8, ratios_d3r8, ratios_d4r8
+  end interface
+  
+  interface shrinkarray
+    module procedure shrinkarray_int, shrinkarray_r4, shrinkarray_r8
+  end interface
+  
+  interface stat1
+    module procedure STAT1_r4, STAT1_r8
+  end interface
+  
+  real, parameter :: FAC = 64.0E0
+  logical, parameter :: DEEBUG = .false.
+  ! Function names
+  ! Stored using sequence of integers
+  integer, parameter              :: FN_COUNT     = 1
+  integer, parameter              :: FN_MIN       = FN_COUNT + 1
+  integer, parameter              :: FN_MAX       = FN_MIN + 1
+  integer, parameter              :: FN_MEAN      = FN_MAX + 1
+  integer, parameter              :: FN_STDDEV    = FN_MEAN + 1
+  integer, parameter              :: FN_RMS       = FN_STDDEV + 1
+  integer, parameter              :: FN_MEDIAN    = FN_RMS + 1
+  integer, parameter              :: FN_FILLCOUNT = FN_MEDIAN + 1
+  integer, parameter              :: FN_COUNT_TOT = FN_FILLCOUNT + 1
+
+contains
+      ! ------------------- allstats_d1r4 -----------------------
+      subroutine allstats_d1r4( values, &
+        & nbins, bounds, addedData, fillValue, precision, &
+        & count, fillcount, min, max, mean, stddev, rms, median, &
+        & bincount, indexing, doDump )
+        integer, parameter :: rk = r4
+        include 'allstats_d1.f9h'
+      end subroutine allstats_d1r4
+
+      ! ------------------- allstats_d1r8 -----------------------
+      subroutine allstats_d1r8( values, &
+        & nbins, bounds, addedData, fillValue, precision, &
+        & count, fillcount, min, max, mean, stddev, rms, median, &
+        & bincount, indexing, doDump )
+        integer, parameter :: rk = r8
+        include 'allstats_d1.f9h'
+      end subroutine allstats_d1r8
+
+      ! ------------------- allstats_d2r4 -----------------------
+      subroutine allstats_d2r4( values, &
+        & nbins, bounds, addedData, fillValue, precision, &
+        & count, fillcount, min, max, mean, stddev, rms, median, &
+        & bincount, indexing, doDump )
+        ! Args
+        real(r4), dimension(:,:), intent(in)           :: values
+        integer, optional, intent(in)                  :: nbins
+        real(r4), dimension(2), optional, intent(in)   :: bounds
+        logical, optional, intent(in)                  :: addeddata
+        real(r4), optional, intent(in)                 :: fillValue
+        real(r4), dimension(:,:), optional, intent(in) :: precision
+        integer, optional, intent(inout)               :: count
+        integer, optional, intent(inout)               :: fillcount
+        real(r4), optional, intent(out)                :: min
+        real(r4), optional, intent(out)                :: max
+        real(r4), optional, intent(out)                :: mean
+        real(r4), optional, intent(out)                :: stddev
+        real(r4), optional, intent(out)                :: rms
+        real(r4), optional, intent(out)                :: median
+        integer, dimension(:), optional, intent(out)   :: bincount
+        integer, dimension(3), optional, intent(out)   :: indexing
+        logical , optional, intent(in)                 :: doDump
+        ! Internal variables
+        integer, dimension(2)                          :: shp
+        ! Executable
+        shp = shape(values)
+        if ( .not. present(precision) ) then
+          call allstats_d1r4(reshape(values, (/shp(1)*shp(2)/)), &
+            & nbins, bounds, addedData, fillValue, &
+            & count=count, fillcount=fillcount, min=min, max=max, mean=mean, &
+            & stddev=stddev, rms=rms, median=median, bincount=bincount, &
+            & indexing=indexing, doDump=doDump)
+        else
+          call allstats_d1r4(reshape(values, (/shp(1)*shp(2)/)), &
+            & nbins, bounds, addedData, fillValue, &
+            & reshape(precision, (/shp(1)*shp(2)/)),&
+            & count=count, fillcount=fillcount, min=min, max=max, mean=mean, &
+            & stddev=stddev, rms=rms, median=median, bincount=bincount, &
+            & indexing=indexing, doDump=doDump)
+        endif
+      end subroutine allstats_d2r4
+
+      ! ------------------- allstats_d2r8 -----------------------
+      subroutine allstats_d2r8( values, &
+        & nbins, bounds, addedData, fillValue, precision, &
+        & count, fillcount, min, max, mean, stddev, rms, median, &
+        & bincount, indexing, doDump )
+        ! Args
+        real(r8), dimension(:,:), intent(in)           :: values
+        integer, optional, intent(in)                  :: nbins
+        real(r8), dimension(2), optional, intent(in)   :: bounds
+        logical, optional, intent(in)                  :: addeddata
+        real(r8), optional, intent(in)                 :: fillValue
+        real(r8), dimension(:,:), optional, intent(in) :: precision
+        integer, optional, intent(inout)               :: count
+        integer, optional, intent(inout)               :: fillcount
+        real(r8), optional, intent(out)                :: min
+        real(r8), optional, intent(out)                :: max
+        real(r8), optional, intent(out)                :: mean
+        real(r8), optional, intent(out)                :: stddev
+        real(r8), optional, intent(out)                :: rms
+        real(r8), optional, intent(out)                :: median
+        integer, dimension(:), optional, intent(out)   :: bincount
+        integer, dimension(3), optional, intent(out)   :: indexing
+        logical , optional, intent(in)                 :: doDump
+        ! Internal variables
+        integer, dimension(2)                          :: shp
+        ! Executable
+        shp =shape(values)
+        if ( .not. present(precision) ) then
+          call allstats_d1r8(reshape(values, (/shp(1)*shp(2)/)), &
+            & nbins, bounds, addedData, fillValue, &
+            & count=count, fillcount=fillcount, min=min, max=max, mean=mean, &
+            & stddev=stddev, rms=rms, median=median, bincount=bincount, &
+            & indexing=indexing, doDump=doDump)
+        else
+          call allstats_d1r8(reshape(values, (/shp(1)*shp(2)/)), &
+            & nbins, bounds, addedData, fillValue, &
+            & reshape(precision, (/shp(1)*shp(2)/)),&
+            & count=count, fillcount=fillcount, min=min, max=max, mean=mean, &
+            & stddev=stddev, rms=rms, median=median, bincount=bincount, &
+            & indexing=indexing, doDump=doDump)
+        endif
+      end subroutine allstats_d2r8
+
+      ! ------------------- allstats_d3r4 -----------------------
+      subroutine allstats_d3r4( values, &
+        & nbins, bounds, addedData, fillValue, precision, &
+        & count, fillcount, min, max, mean, stddev, rms, median, &
+        & bincount, indexing, doDump )
+        ! Args
+        real(r4), dimension(:,:,:), intent(in)         :: values
+        integer, optional, intent(in)                  :: nbins
+        real(r4), dimension(2), optional, intent(in)   :: bounds
+        logical, optional, intent(in)                  :: addeddata
+        real(r4), optional, intent(in)                 :: fillValue
+        real(r4), dimension(:,:,:), optional, intent(in)   :: precision
+        integer, optional, intent(inout)               :: count
+        integer, optional, intent(inout)               :: fillcount
+        real(r4), optional, intent(out)                :: min
+        real(r4), optional, intent(out)                :: max
+        real(r4), optional, intent(out)                :: mean
+        real(r4), optional, intent(out)                :: stddev
+        real(r4), optional, intent(out)                :: rms
+        real(r4), optional, intent(out)                :: median
+        integer, dimension(:), optional, intent(out)   :: bincount
+        integer, dimension(3), optional, intent(out)   :: indexing
+        logical , optional, intent(in)                 :: doDump
+        ! Internal variables
+        integer, dimension(3)                          :: shp
+        ! Executable
+        shp =shape(values)
+        if ( .not. present(precision) ) then
+          call allstats_d1r4(reshape(values, (/shp(1)*shp(2)*shp(3)/)), &
+            & nbins, bounds, addedData, fillValue, &
+            & count=count, fillcount=fillcount, min=min, max=max, mean=mean, &
+            & stddev=stddev, rms=rms, median=median, bincount=bincount, &
+            & indexing=indexing, doDump=doDump)
+        else
+          call allstats_d1r4(reshape(values, (/shp(1)*shp(2)*shp(3)/)), &
+            & nbins, bounds, addedData, fillValue, &
+            & reshape(precision, (/shp(1)*shp(2)/)),&
+            & count=count, fillcount=fillcount, min=min, max=max, mean=mean, &
+            & stddev=stddev, rms=rms, median=median, bincount=bincount, &
+            & indexing=indexing, doDump=doDump)
+        endif
+      end subroutine allstats_d3r4
+
+      ! ------------------- allstats_d3r8 -----------------------
+      subroutine allstats_d3r8( values, &
+        & nbins, bounds, addedData, fillValue, precision, &
+        & count, fillcount, min, max, mean, stddev, rms, median, &
+        & bincount, indexing, doDump )
+        ! Args
+        real(r8), dimension(:,:,:), intent(in)         :: values
+        integer, optional, intent(in)                  :: nbins
+        real(r8), dimension(2), optional, intent(in)   :: bounds
+        logical, optional, intent(in)                  :: addeddata
+        real(r8), optional, intent(in)                 :: fillValue
+        real(r8), dimension(:,:,:), optional, intent(in)   :: precision
+        integer, optional, intent(inout)               :: count
+        integer, optional, intent(inout)               :: fillcount
+        real(r8), optional, intent(out)                :: min
+        real(r8), optional, intent(out)                :: max
+        real(r8), optional, intent(out)                :: mean
+        real(r8), optional, intent(out)                :: stddev
+        real(r8), optional, intent(out)                :: rms
+        real(r8), optional, intent(out)                :: median
+        integer, dimension(:), optional, intent(out)   :: bincount
+        integer, dimension(3), optional, intent(out)   :: indexing
+        logical , optional, intent(in)                 :: doDump
+        ! Internal variables
+        integer, dimension(3)                          :: shp
+        ! Executable
+        shp =shape(values)
+        if ( .not. present(precision) ) then
+          call allstats_d1r8(reshape(values, (/shp(1)*shp(2)*shp(3)/)), &
+            & nbins, bounds, addedData, fillValue, &
+            & count=count, fillcount=fillcount, min=min, max=max, mean=mean, &
+            & stddev=stddev, rms=rms, median=median, bincount=bincount, &
+            & indexing=indexing, doDump=doDump)
+        else
+          call allstats_d1r8(reshape(values, (/shp(1)*shp(2)*shp(3)/)), &
+            & nbins, bounds, addedData, fillValue, &
+            & reshape(precision, (/shp(1)*shp(2)/)),&
+            & count=count, fillcount=fillcount, min=min, max=max, mean=mean, &
+            & stddev=stddev, rms=rms, median=median, bincount=bincount, &
+            & indexing=indexing, doDump=doDump)
+        endif
+      end subroutine allstats_d3r8
+
+      ! ------------------- allstats_d4r4 -----------------------
+      subroutine allstats_d4r4( values, &
+        & nbins, bounds, addedData, fillValue, precision, &
+        & count, fillcount, min, max, mean, stddev, rms, median, &
+        & bincount, indexing, doDump )
+        ! Args
+        real(r4), dimension(:,:,:,:), intent(in)       :: values
+        integer, optional, intent(in)                  :: nbins
+        real(r4), dimension(2), optional, intent(in)   :: bounds
+        logical, optional, intent(in)                  :: addeddata
+        real(r4), optional, intent(in)                 :: fillValue
+        real(r4), dimension(:,:,:,:), optional, intent(in)   :: precision
+        integer, optional, intent(inout)               :: count
+        integer, optional, intent(inout)               :: fillcount
+        real(r4), optional, intent(out)                :: min
+        real(r4), optional, intent(out)                :: max
+        real(r4), optional, intent(out)                :: mean
+        real(r4), optional, intent(out)                :: stddev
+        real(r4), optional, intent(out)                :: rms
+        real(r4), optional, intent(out)                :: median
+        integer, dimension(:), optional, intent(out)   :: bincount
+        integer, dimension(3), optional, intent(out)   :: indexing
+        logical , optional, intent(in)                 :: doDump
+        ! Internal variables
+        integer, dimension(4)                          :: shp
+        ! Executable
+        shp =shape(values)
+        if ( .not. present(precision) ) then
+          call allstats_d1r4(reshape(values, (/shp(1)*shp(2)*shp(3)*shp(4)/)), &
+            & nbins, bounds, addedData, fillValue, &
+            & count=count, fillcount=fillcount, min=min, max=max, mean=mean, &
+            & stddev=stddev, rms=rms, median=median, bincount=bincount, &
+            & indexing=indexing, doDump=doDump)
+        else
+          call allstats_d1r4(reshape(values, (/shp(1)*shp(2)*shp(3)*shp(4)/)), &
+            & nbins, bounds, addedData, fillValue, &
+            & reshape(precision, (/shp(1)*shp(2)/)),&
+            & count=count, fillcount=fillcount, min=min, max=max, mean=mean, &
+            & stddev=stddev, rms=rms, median=median, bincount=bincount, &
+            & indexing=indexing, doDump=doDump)
+        endif
+      end subroutine allstats_d4r4
+
+      ! ------------------- allstats_d4r8 -----------------------
+      subroutine allstats_d4r8( values, &
+        & nbins, bounds, addedData, fillValue, precision, &
+        & count, fillcount, min, max, mean, stddev, rms, median, &
+        & bincount, indexing, doDump )
+        ! Args
+        real(r8), dimension(:,:,:,:), intent(in)       :: values
+        integer, optional, intent(in)                  :: nbins
+        real(r8), dimension(2), optional, intent(in)   :: bounds
+        logical, optional, intent(in)                  :: addeddata
+        real(r8), optional, intent(in)                 :: fillValue
+        real(r8), dimension(:,:,:,:), optional, intent(in)   :: precision
+        integer, optional, intent(inout)               :: count
+        integer, optional, intent(inout)               :: fillcount
+        real(r8), optional, intent(out)                :: min
+        real(r8), optional, intent(out)                :: max
+        real(r8), optional, intent(out)                :: mean
+        real(r8), optional, intent(out)                :: stddev
+        real(r8), optional, intent(out)                :: rms
+        real(r8), optional, intent(out)                :: median
+        integer, dimension(:), optional, intent(out)   :: bincount
+        integer, dimension(3), optional, intent(out)   :: indexing
+        logical , optional, intent(in)                 :: doDump
+        ! Internal variables
+        integer, dimension(4)                          :: shp
+        ! Executable
+        shp =shape(values)
+        if ( .not. present(precision) ) then
+          call allstats_d1r8(reshape(values, (/shp(1)*shp(2)*shp(3)*shp(4)/)), &
+            & nbins, bounds, addedData, fillValue, &
+            & count=count, fillcount=fillcount, min=min, max=max, mean=mean, &
+            & stddev=stddev, rms=rms, median=median, bincount=bincount, &
+            & indexing=indexing, doDump=doDump)
+        else
+          call allstats_d1r8(reshape(values, (/shp(1)*shp(2)*shp(3)*shp(4)/)), &
+            & nbins, bounds, addedData, fillValue, &
+            & reshape(precision, (/shp(1)*shp(2)/)),&
+            & count=count, fillcount=fillcount, min=min, max=max, mean=mean, &
+            & stddev=stddev, rms=rms, median=median, bincount=bincount, &
+            & indexing=indexing, doDump=doDump)
+        endif
+      end subroutine allstats_d4r8
+
+      ! ------------------- mlscount -----------------------
+      ! This family of functions returns the count of values that are
+      ! (depending on method)
+      ! 'non-fill'   /= fillValue (default)
+      ! 'fill'        = fillValue
+      ! 'total'       independent of FillValue (same as size(values))
+      ! By intention and by design 'total' = 'non-fill' + 'fill'
+      ! If fillValue is absent, then 'non-fill' and 'total' will return
+      ! identical values while 'fill' will return 0
+      function mlscount_d1int(values, fillValue, method) result(iValue)
+        integer, parameter                             :: KINDVALUE = r4
+        character(len=*), optional, intent(in)         :: method
+        ! Args
+        integer, dimension(:), intent(in)      :: values
+        integer                                :: iValue
+        integer, optional                      :: FillValue
+        if ( present(fillValue) ) then
+          iValue = mlscount( real(values, KINDVALUE), &
+            & fillValue=real(fillValue, KINDVALUE), &
+            & method=method )
+        else
+          iValue = mlscount( real(values, KINDVALUE), &
+            & method=method )
+        endif
+      end function mlscount_d1int
+
+      function mlscount_d1r4(values, fillValue, method) result(iValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_COUNT ! unused
+        character(len=*), optional, intent(in)         :: method
+        character(len=8)                               :: myMethod
+        ! Args
+        real(KINDVALUE), dimension(:), intent(in)      :: values
+        integer                                :: iValue
+        include 'stats0.f9h'
+        myMethod = 'non-fill'
+        if ( present(method) ) myMethod = method
+        select case( lowercase(myMethod(1:1)) )
+        case ('n')
+          iValue = count
+        case ('f')
+          iValue = fillcount
+        case ('t')
+          iValue = count + fillcount
+        case default
+          iValue = count
+        end select
+      end function mlscount_d1r4
+
+      function mlscount_d1r8(values, fillValue, method) result(iValue)
+        integer, parameter                             :: KINDVALUE = r8
+        integer, parameter                             :: FN = FN_COUNT ! unused
+        character(len=*), optional, intent(in)         :: method
+        character(len=8)                               :: myMethod
+        ! Args
+        real(KINDVALUE), dimension(:), intent(in)      :: values
+        integer                                :: iValue
+        include 'stats0.f9h'
+        myMethod = 'non-fill'
+        if ( present(method) ) myMethod = method
+        select case( lowercase(myMethod(1:1)) )
+        case ('n')
+          iValue = count
+        case ('f')
+          iValue = fillcount
+        case ('t')
+          iValue = count + fillcount
+        case default
+          iValue = count
+        end select
+      end function mlscount_d1r8
+
+      ! ------------------- MLSMin_d1int -----------------------
+      function MLSMin_d1int(values, fillValue) result(iValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_MIN
+        ! Args
+        integer, dimension(:), intent(in)      :: values
+        integer                                :: iValue
+        integer, optional                      :: FillValue
+        if ( present(fillValue) ) then
+          iValue = MLSMin( real(values, KINDVALUE), real(fillValue, KINDVALUE) )
+        else
+          iValue = MLSMin( real(values, KINDVALUE) )
+        endif
+      end function MLSMin_d1int
+
+      ! ------------------- MLSMin_d2int -----------------------
+      function MLSMin_d2int(values, fillValue) result(iValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_MIN
+        ! Args
+        integer, dimension(:,:), intent(in)      :: values
+        integer                                :: iValue
+        integer, optional                      :: FillValue
+        if ( present(fillValue) ) then
+          iValue = MLSMin( real(values, KINDVALUE), real(fillValue, KINDVALUE) )
+        else
+          iValue = MLSMin( real(values, KINDVALUE) )
+        endif
+      end function MLSMin_d2int
+
+      ! ------------------- MLSMin_d3int -----------------------
+      function MLSMin_d3int(values, fillValue) result(iValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_MIN
+        ! Args
+        integer, dimension(:,:,:), intent(in)      :: values
+        integer                                :: iValue
+        integer, optional                      :: FillValue
+        if ( present(fillValue) ) then
+          iValue = MLSMin( real(values, KINDVALUE), real(fillValue, KINDVALUE) )
+        else
+          iValue = MLSMin( real(values, KINDVALUE) )
+        endif
+      end function MLSMin_d3int
+
+      ! ------------------- MLSMax_d1int -----------------------
+      function MLSMax_d1int(values, fillValue) result(iValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_max
+        ! Args
+        integer, dimension(:), intent(in)      :: values
+        integer                                :: iValue
+        integer, optional                      :: FillValue
+        if ( present(fillValue) ) then
+          iValue = MLSMax( real(values, KINDVALUE), real(fillValue, KINDVALUE) )
+        else
+          iValue = MLSMax( real(values, KINDVALUE) )
+        endif
+      end function MLSMax_d1int
+
+      ! ------------------- MLSMax_d2int -----------------------
+      function MLSMax_d2int(values, fillValue) result(iValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_max
+        ! Args
+        integer, dimension(:,:), intent(in)      :: values
+        integer                                :: iValue
+        integer, optional                      :: FillValue
+        if ( present(fillValue) ) then
+          iValue = MLSMax( real(values, KINDVALUE), real(fillValue, KINDVALUE) )
+        else
+          iValue = MLSMax( real(values, KINDVALUE) )
+        endif
+      end function MLSMax_d2int
+
+      ! ------------------- MLSMax_d3int -----------------------
+      function MLSMax_d3int(values, fillValue) result(iValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_max
+        ! Args
+        integer, dimension(:,:,:), intent(in)      :: values
+        integer                                :: iValue
+        integer, optional                      :: FillValue
+        if ( present(fillValue) ) then
+          iValue = MLSMax( real(values, KINDVALUE), real(fillValue, KINDVALUE) )
+        else
+          iValue = MLSMax( real(values, KINDVALUE) )
+        endif
+      end function MLSMax_d3int
+
+      ! ------------------- MLSMean_d1int -----------------------
+      function MLSMean_d1int(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_mean
+        ! Args
+        integer, dimension(:), intent(in)      :: values
+        real(KINDVALUE)                        :: rValue
+        integer, optional                      :: FillValue
+        if ( present(fillValue) ) then
+          rValue = MLSMean( real(values, KINDVALUE), real(fillValue, KINDVALUE) )
+        else
+          rValue = MLSMean( real(values, KINDVALUE) )
+        endif
+      end function MLSMean_d1int
+
+      ! ------------------- MLSMean_d2int -----------------------
+      function MLSMean_d2int(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_mean
+        ! Args
+        integer, dimension(:,:), intent(in)      :: values
+        real(KINDVALUE)                        :: rValue
+        integer, optional                      :: FillValue
+        if ( present(fillValue) ) then
+          rValue = MLSMean( real(values, KINDVALUE), real(fillValue, KINDVALUE) )
+        else
+          rValue = MLSMean( real(values, KINDVALUE) )
+        endif
+      end function MLSMean_d2int
+
+      ! ------------------- MLSMean_d3int -----------------------
+      function MLSMean_d3int(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_mean
+        ! Args
+        integer, dimension(:,:,:), intent(in)      :: values
+        real(KINDVALUE)                        :: rValue
+        integer, optional                      :: FillValue
+        if ( present(fillValue) ) then
+          rValue = MLSMean( real(values, KINDVALUE), real(fillValue, KINDVALUE) )
+        else
+          rValue = MLSMean( real(values, KINDVALUE) )
+        endif
+      end function MLSMean_d3int
+
+      ! ------------------- MLSStddev_d1int -----------------------
+      function MLSStddev_d1int(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_stddev
+        ! Args
+        integer, dimension(:), intent(in)      :: values
+        real(KINDVALUE)                        :: rValue
+        integer, optional                      :: FillValue
+        if ( present(fillValue) ) then
+          rValue = MLSStddev( real(values, KINDVALUE), real(fillValue, KINDVALUE) )
+        else
+          rValue = MLSStddev( real(values, KINDVALUE) )
+        endif
+      end function MLSStddev_d1int
+
+      ! ------------------- MLSStddev_d2int -----------------------
+      function MLSStddev_d2int(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_stddev
+        ! Args
+        integer, dimension(:,:), intent(in)      :: values
+        real(KINDVALUE)                        :: rValue
+        integer, optional                      :: FillValue
+        if ( present(fillValue) ) then
+          rValue = MLSStddev( real(values, KINDVALUE), real(fillValue, KINDVALUE) )
+        else
+          rValue = MLSStddev( real(values, KINDVALUE) )
+        endif
+      end function MLSStddev_d2int
+
+      ! ------------------- MLSStddev_d3int -----------------------
+      function MLSStddev_d3int(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_stddev
+        ! Args
+        integer, dimension(:,:,:), intent(in)      :: values
+        real(KINDVALUE)                        :: rValue
+        integer, optional                      :: FillValue
+        if ( present(fillValue) ) then
+          rValue = MLSStddev( real(values, KINDVALUE), real(fillValue, KINDVALUE) )
+        else
+          rValue = MLSStddev( real(values, KINDVALUE) )
+        endif
+      end function MLSStddev_d3int
+
+      ! ------------------- MLSMedian_d1int -----------------------
+      function MLSMedian_d1int(values, fillValue) result(iValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_median
+        ! Args
+        integer, dimension(:), intent(in)      :: values
+        integer                                :: iValue
+        integer, optional                      :: FillValue
+        if ( present(fillValue) ) then
+          iValue = MLSMedian( real(values, KINDVALUE), real(fillValue, KINDVALUE) )
+        else
+          iValue = MLSMedian( real(values, KINDVALUE) )
+        endif
+      end function MLSMedian_d1int
+
+      ! ------------------- MLSMedian_d2int -----------------------
+      function MLSMedian_d2int(values, fillValue) result(iValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_median
+        ! Args
+        integer, dimension(:,:), intent(in)      :: values
+        integer                                :: iValue
+        integer, optional                      :: FillValue
+        if ( present(fillValue) ) then
+          iValue = MLSMedian( real(values, KINDVALUE), real(fillValue, KINDVALUE) )
+        else
+          iValue = MLSMedian( real(values, KINDVALUE) )
+        endif
+      end function MLSMedian_d2int
+
+      ! ------------------- MLSMedian_d3int -----------------------
+      function MLSMedian_d3int(values, fillValue) result(iValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_median
+        ! Args
+        integer, dimension(:,:,:), intent(in)      :: values
+        integer                                :: iValue
+        integer, optional                      :: FillValue
+        if ( present(fillValue) ) then
+          iValue = MLSMedian( real(values, KINDVALUE), real(fillValue, KINDVALUE) )
+        else
+          iValue = MLSMedian( real(values, KINDVALUE) )
+        endif
+      end function MLSMedian_d3int
+
+      ! ------------------- MLSRms_d1int -----------------------
+      function MLSRms_d1int(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_rms
+        ! Args
+        integer, dimension(:), intent(in)      :: values
+        real(KINDVALUE)                        :: rValue
+        integer, optional                      :: FillValue
+        if ( present(fillValue) ) then
+          rValue = MLSRms( real(values, KINDVALUE), real(fillValue, KINDVALUE) )
+        else
+          rValue = MLSRms( real(values, KINDVALUE) )
+        endif
+      end function MLSRms_d1int
+
+      ! ------------------- MLSRms_d2int -----------------------
+      function MLSRms_d2int(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_rms
+        ! Args
+        integer, dimension(:,:), intent(in)      :: values
+        real(KINDVALUE)                        :: rValue
+        integer, optional                      :: FillValue
+        if ( present(fillValue) ) then
+          rValue = MLSRms( real(values, KINDVALUE), real(fillValue, KINDVALUE) )
+        else
+          rValue = MLSRms( real(values, KINDVALUE) )
+        endif
+      end function MLSRms_d2int
+
+      ! ------------------- MLSRms_d3int -----------------------
+      function MLSRms_d3int(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_rms
+        ! Args
+        integer, dimension(:,:,:), intent(in)      :: values
+        real(KINDVALUE)                        :: rValue
+        integer, optional                      :: FillValue
+        if ( present(fillValue) ) then
+          rValue = MLSRms( real(values, KINDVALUE), real(fillValue, KINDVALUE) )
+        else
+          rValue = MLSRms( real(values, KINDVALUE) )
+        endif
+      end function MLSRms_d3int
+
+      ! ------------------- MLSMin_d1r4 -----------------------
+      function MLSMin_d1r4(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_MIN
+        ! Args
+        real(KINDVALUE), dimension(:), intent(in)      :: values
+        include 'stats0.f9h'
+      end function MLSMin_d1r4
+
+      ! ------------------- MLSMin_d1r8 -----------------------
+      function MLSMin_d1r8(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r8
+        integer, parameter                             :: FN = FN_MIN
+        ! Args
+        real(KINDVALUE), dimension(:), intent(in)      :: values
+        include 'stats0.f9h'
+      end function MLSMin_d1r8
+
+      ! ------------------- MLSMin_d2r4 -----------------------
+      function MLSMin_d2r4(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_MIN
+        ! Args
+        real(KINDVALUE), dimension(:,:), intent(in)    :: values
+        include 'stats0.f9h'
+      end function MLSMin_d2r4
+
+      ! ------------------- MLSMin_d2r8 -----------------------
+      function MLSMin_d2r8(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r8
+        integer, parameter                             :: FN = FN_MIN
+        ! Args
+        real(KINDVALUE), dimension(:,:), intent(in)    :: values
+        include 'stats0.f9h'
+      end function MLSMin_d2r8
+
+      ! ------------------- MLSMin_d3r4 -----------------------
+      function MLSMin_d3r4(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_MIN
+        ! Args
+        real(KINDVALUE), dimension(:,:,:), intent(in)  :: values
+        include 'stats0.f9h'
+      end function MLSMin_d3r4
+
+      ! ------------------- MLSMin_d3r8 -----------------------
+      function MLSMin_d3r8(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r8
+        integer, parameter                             :: FN = FN_MIN
+        ! Args
+        real(KINDVALUE), dimension(:,:,:), intent(in)  :: values
+        include 'stats0.f9h'
+      end function MLSMin_d3r8
+
+      ! ------------------- MLSMax_d1r4 -----------------------
+      function MLSMax_d1r4(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_max
+        ! Args
+        real(KINDVALUE), dimension(:), intent(in)      :: values
+        include 'stats0.f9h'
+      end function MLSMax_d1r4
+
+      ! ------------------- MLSMax_d1r8 -----------------------
+      function MLSMax_d1r8(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r8
+        integer, parameter                             :: FN = FN_max
+        ! Args
+        real(KINDVALUE), dimension(:), intent(in)      :: values
+        include 'stats0.f9h'
+      end function MLSMax_d1r8
+
+      ! ------------------- MLSMax_d2r4 -----------------------
+      function MLSMax_d2r4(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_max
+        ! Args
+        real(KINDVALUE), dimension(:,:), intent(in)    :: values
+        include 'stats0.f9h'
+      end function MLSMax_d2r4
+
+      ! ------------------- MLSMax_d2r8 -----------------------
+      function MLSMax_d2r8(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r8
+        integer, parameter                             :: FN = FN_max
+        ! Args
+        real(KINDVALUE), dimension(:,:), intent(in)    :: values
+        include 'stats0.f9h'
+      end function MLSMax_d2r8
+
+      ! ------------------- MLSMax_d3r4 -----------------------
+      function MLSMax_d3r4(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_max
+        ! Args
+        real(KINDVALUE), dimension(:,:,:), intent(in)  :: values
+        include 'stats0.f9h'
+      end function MLSMax_d3r4
+
+      ! ------------------- MLSMax_d3r8 -----------------------
+      function MLSMax_d3r8(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r8
+        integer, parameter                             :: FN = FN_max
+        ! Args
+        real(KINDVALUE), dimension(:,:,:), intent(in)  :: values
+        include 'stats0.f9h'
+      end function MLSMax_d3r8
+
+      ! ------------------- MLSMean_d1r4 -----------------------
+      function MLSMean_d1r4(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_mean
+        ! Args
+        real(KINDVALUE), dimension(:), intent(in)      :: values
+        include 'stats0.f9h'
+      end function MLSMean_d1r4
+
+      ! ------------------- MLSMean_d1r8 -----------------------
+      function MLSMean_d1r8(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r8
+        integer, parameter                             :: FN = FN_mean
+        ! Args
+        real(KINDVALUE), dimension(:), intent(in)      :: values
+        include 'stats0.f9h'
+      end function MLSMean_d1r8
+
+      ! ------------------- MLSMean_d2r4 -----------------------
+      function MLSMean_d2r4(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_mean
+        ! Args
+        real(KINDVALUE), dimension(:,:), intent(in)    :: values
+        include 'stats0.f9h'
+      end function MLSMean_d2r4
+
+      ! ------------------- MLSMean_d2r8 -----------------------
+      function MLSMean_d2r8(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r8
+        integer, parameter                             :: FN = FN_mean
+        ! Args
+        real(KINDVALUE), dimension(:,:), intent(in)    :: values
+        include 'stats0.f9h'
+      end function MLSMean_d2r8
+
+      ! ------------------- MLSMean_d3r4 -----------------------
+      function MLSMean_d3r4(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_mean
+        ! Args
+        real(KINDVALUE), dimension(:,:,:), intent(in)  :: values
+        include 'stats0.f9h'
+      end function MLSMean_d3r4
+
+      ! ------------------- MLSMean_d3r8 -----------------------
+      function MLSMean_d3r8(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r8
+        integer, parameter                             :: FN = FN_mean
+        ! Args
+        real(KINDVALUE), dimension(:,:,:), intent(in)  :: values
+        include 'stats0.f9h'
+      end function MLSMean_d3r8
+
+      ! ------------------- MLSMedian_d1r4 -----------------------
+      function MLSMedian_d1r4(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_median
+        ! Args
+        real(KINDVALUE), dimension(:), intent(in)      :: values
+        include 'stats0.f9h'
+      end function MLSMedian_d1r4
+
+      ! ------------------- MLSMedian_d1r8 -----------------------
+      function MLSMedian_d1r8(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r8
+        integer, parameter                             :: FN = FN_median
+        ! Args
+        real(KINDVALUE), dimension(:), intent(in)      :: values
+        include 'stats0.f9h'
+      end function MLSMedian_d1r8
+
+      ! ------------------- MLSMedian_d2r4 -----------------------
+      function MLSMedian_d2r4(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_median
+        ! Args
+        real(KINDVALUE), dimension(:,:), intent(in)    :: values
+        include 'stats0.f9h'
+      end function MLSMedian_d2r4
+
+      ! ------------------- MLSMedian_d2r8 -----------------------
+      function MLSMedian_d2r8(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r8
+        integer, parameter                             :: FN = FN_median
+        ! Args
+        real(KINDVALUE), dimension(:,:), intent(in)    :: values
+        include 'stats0.f9h'
+      end function MLSMedian_d2r8
+
+      ! ------------------- MLSMedian_d3r4 -----------------------
+      function MLSMedian_d3r4(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_median
+        ! Args
+        real(KINDVALUE), dimension(:,:,:), intent(in)  :: values
+        include 'stats0.f9h'
+      end function MLSMedian_d3r4
+
+      ! ------------------- MLSMedian_d3r8 -----------------------
+      function MLSMedian_d3r8(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r8
+        integer, parameter                             :: FN = FN_median
+        ! Args
+        real(KINDVALUE), dimension(:,:,:), intent(in)  :: values
+        include 'stats0.f9h'
+      end function MLSMedian_d3r8
+
+      ! ------------------- MLSStddev_d1r4 -----------------------
+      function MLSStddev_d1r4(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_stddev
+        ! Args
+        real(KINDVALUE), dimension(:), intent(in)      :: values
+        include 'stats0.f9h'
+      end function MLSStddev_d1r4
+
+      ! ------------------- MLSStddev_d1r8 -----------------------
+      function MLSStddev_d1r8(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r8
+        integer, parameter                             :: FN = FN_stddev
+        ! Args
+        real(KINDVALUE), dimension(:), intent(in)      :: values
+        include 'stats0.f9h'
+      end function MLSStddev_d1r8
+
+      ! ------------------- MLSStddev_d2r4 -----------------------
+      function MLSStddev_d2r4(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_stddev
+        ! Args
+        real(KINDVALUE), dimension(:,:), intent(in)    :: values
+        include 'stats0.f9h'
+      end function MLSStddev_d2r4
+
+      ! ------------------- MLSStddev_d2r8 -----------------------
+      function MLSStddev_d2r8(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r8
+        integer, parameter                             :: FN = FN_stddev
+        ! Args
+        real(KINDVALUE), dimension(:,:), intent(in)    :: values
+        include 'stats0.f9h'
+      end function MLSStddev_d2r8
+
+      ! ------------------- MLSStddev_d3r4 -----------------------
+      function MLSStddev_d3r4(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_stddev
+        ! Args
+        real(KINDVALUE), dimension(:,:,:), intent(in)  :: values
+        include 'stats0.f9h'
+      end function MLSStddev_d3r4
+
+      ! ------------------- MLSStddev_d3r8 -----------------------
+      function MLSStddev_d3r8(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r8
+        integer, parameter                             :: FN = FN_stddev
+        ! Args
+        real(KINDVALUE), dimension(:,:,:), intent(in)  :: values
+        include 'stats0.f9h'
+      end function MLSStddev_d3r8
+
+      ! ------------------- MLSStddev_d4r4 -----------------------
+      function MLSStddev_d4r4(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_stddev
+        ! Args
+        real(KINDVALUE), dimension(:,:,:,:), intent(in)  :: values
+        include 'stats0.f9h'
+      end function MLSStddev_d4r4
+
+      ! ------------------- MLSStddev_d4r8 -----------------------
+      function MLSStddev_d4r8(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r8
+        integer, parameter                             :: FN = FN_stddev
+        ! Args
+        real(KINDVALUE), dimension(:,:,:,:), intent(in)  :: values
+        include 'stats0.f9h'
+      end function MLSStddev_d4r8
+
+      ! ------------------- MLSRms_d1r4 -----------------------
+      function MLSRms_d1r4(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_rms
+        ! Args
+        real(KINDVALUE), dimension(:), intent(in)      :: values
+        include 'stats0.f9h'
+      end function MLSRms_d1r4
+
+      ! ------------------- MLSRms_d1r8 -----------------------
+      function MLSRms_d1r8(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r8
+        integer, parameter                             :: FN = FN_rms
+        ! Args
+        real(KINDVALUE), dimension(:), intent(in)      :: values
+        include 'stats0.f9h'
+      end function MLSRms_d1r8
+
+      ! ------------------- MLSRms_d2r4 -----------------------
+      function MLSRms_d2r4(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_rms
+        ! Args
+        real(KINDVALUE), dimension(:,:), intent(in)    :: values
+        include 'stats0.f9h'
+      end function MLSRms_d2r4
+
+      ! ------------------- MLSRms_d2r8 -----------------------
+      function MLSRms_d2r8(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r8
+        integer, parameter                             :: FN = FN_rms
+        ! Args
+        real(KINDVALUE), dimension(:,:), intent(in)    :: values
+        include 'stats0.f9h'
+      end function MLSRms_d2r8
+
+      ! ------------------- MLSRms_d3r4 -----------------------
+      function MLSRms_d3r4(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r4
+        integer, parameter                             :: FN = FN_rms
+        ! Args
+        real(KINDVALUE), dimension(:,:,:), intent(in)  :: values
+        include 'stats0.f9h'
+      end function MLSRms_d3r4
+
+      ! ------------------- MLSRms_d3r8 -----------------------
+      function MLSRms_d3r8(values, fillValue) result(rValue)
+        integer, parameter                             :: KINDVALUE = r8
+        integer, parameter                             :: FN = FN_rms
+        ! Args
+        real(KINDVALUE), dimension(:,:,:), intent(in)  :: values
+        include 'stats0.f9h'
+      end function MLSRms_d3r8
+      
+      ! ------------------- ConfidInterval -----------------------
+      ! This family of routines, given a confidence measured as a percentage,
+      ! returns the lower and upper bounds of a conffidence interval
+      ! within which the data match an estimate
+      ! By default the estimate will be the mean, but you may specify
+      ! another estimate
+      subroutine ConfidInterval_int( values, &
+        & pct, intervals, mode, estimate )
+        integer, parameter                             :: KINDVALUE = r4
+        integer, dimension(:), intent(in)                   :: values
+        real(KINDVALUE), dimension(:), intent(in)           :: pct
+        type(interval_t), dimension(:), intent(out)         :: intervals
+        character(len=*), intent(in), optional              :: mode
+        integer, intent(in), optional                       :: estimate
+        ! Internal variables
+        ! Executable
+        if ( present(estimate) ) then
+          call ConfidInterval_r4( real(values, kind=kindvalue), pct, intervals, &
+            & mode, real(estimate, kind=kindvalue) )
+        else
+          call ConfidInterval_r4( real(values, kind=kindvalue), pct, intervals, &
+            & mode )
+        endif
+      end subroutine ConfidInterval_int
+
+      subroutine ConfidInterval_r4( values, &
+        & pct, intervals, mode, estimate )
+        integer, parameter                             :: KINDVALUE = r4
+        real(KINDVALUE), dimension(:), intent(in)           :: values
+        real(KINDVALUE), dimension(:), intent(in)           :: pct
+        type(interval_t), dimension(:), intent(out)         :: intervals
+        character(len=*), intent(in), optional              :: mode
+        real(KINDVALUE), intent(in), optional               :: estimate
+        ! Internal variables
+        character(len=8)                                    :: myMode
+        real(KINDVALUE), dimension(1)                       :: array2
+        type(Stat_T), dimension(size(pct))                  :: gaps
+        ! Executable
+        myMode = 'mean'
+        if ( present(mode) ) myMode = mode
+        if ( lowercase(myMode(1:4)) == 'esti' .and. .not. present(estimate) ) &
+          & call MLSMessage ( MLSMSG_Error, moduleName,  &
+          & "This mode of ConfidInterval requires an explicit estimate " )
+        if ( present(estimate) ) then
+          myMode = 'esti'
+          array2(1) = estimate
+        endif
+        call howfar_d1r4( values, array2, pct, gaps, mode )
+        intervals%Bottom = gaps%min
+        intervals%Top    = gaps%max
+      end subroutine ConfidInterval_r4
+
+      subroutine ConfidInterval_r8( values, &
+        & pct, intervals, mode, estimate )
+        integer, parameter                             :: KINDVALUE = r8
+        real(KINDVALUE), dimension(:), intent(in)           :: values
+        real(KINDVALUE), dimension(:), intent(in)           :: pct
+        type(interval_t), dimension(:), intent(out)         :: intervals
+        character(len=*), intent(in), optional              :: mode
+        real(KINDVALUE), intent(in), optional               :: estimate
+        ! Internal variables
+        character(len=8)                                    :: myMode
+        real(KINDVALUE), dimension(1)                       :: array2
+        type(Stat_T), dimension(size(pct))                  :: gaps
+        ! Executable
+        myMode = 'mean'
+        if ( present(mode) ) myMode = mode
+        if ( lowercase(myMode(1:4)) == 'esti' .and. .not. present(estimate) ) &
+          & call MLSMessage ( MLSMSG_Error, moduleName,  &
+          & "This mode of ConfidInterval requires an explicit estimate " )
+        if ( present(estimate) ) then
+          myMode = 'esti'
+          array2(1) = estimate
+        endif
+        call howfar_d1r8( values, array2, pct, gaps, mode )
+        intervals%Bottom = gaps%min
+        intervals%Top    = gaps%max
+      end subroutine ConfidInterval_r8
+
+      ! ------------------- howfar -----------------------
+      ! This family of routines, keeping a given percentage of points
+      ! in two arrays "near" each other in value,
+      ! Returns the statistics of the remaining differences
+      ! where nearness is defined as within a gap according to mode; either
+      !  mode      gap
+      !  'abs'  absolute value
+      !  'med'  absolute value of difference of array1 from its median
+      !           (ignoring array2)
+      !  'rel'  relative value
+      
+      ! i.e., if absolute gap
+      ! | array1(i) - array2(i) | < gap
+      ! if relative gap
+      ! | array1(i) - array2(i) | < gap * max( abs(array1(i)), abs(array2(i)) )
+      
+      ! ----------- Update ----------------------
+      ! There are 5 possible values for mode
+      !  value          meaning
+      !  -----          -------
+      !   abs           how far apart |array1 - array2|
+      !   rel           how far apart |array1 - array2| / max(|array1|,|array2|)
+      !   esti          set estimate = array2(1)
+      !   mean          set estimate = mean(array1)
+      !   medi          set estimate = median(array1)
+      !
+      ! Where an estimate is set, we find 2 values alpha, beta such that
+      ! alpha < pct of array1 < beta
+      !  gaps%min = alpha
+      !  gaps%max = beta
+      
+      ! An inverse, in a sense, of the hownear procedures
+      ! In another sense, this a different view of the histogram's
+      ! bincount of our usual Stat_T type
+      ! because if pct=90% => min, max of 90% of our date
+      ! because if pct=10% => min, max of 10% of our date
+      
+      ! Some of the updated usage is for convenience in
+      ! calculating confidence intervals (see ConfidInterval)
+      
+      ! Note that the statistic returned is inout--otherwise
+      ! we would clobber nbins, bounds, bincount, etc.
+      subroutine howfar_d1int( array1, array2, pct, gaps, mode, array1AtN, array2AtN )
+        integer, parameter                             :: KINDVALUE = r4
+        integer, dimension(:), intent(in)                   :: array1, array2
+        real(KINDVALUE), dimension(:), intent(in)           :: pct
+        type(Stat_T), dimension(:), intent(inout)           :: gaps
+        character(len=*), intent(in)              :: mode ! 'rel' or 'abs'          
+        integer, dimension(:,:), optional, intent(out)      :: array1AtN
+        integer, dimension(:,:), optional, intent(out)      :: array2AtN
+        real(KINDVALUE), dimension(3,size(pct))             :: rArray1AtN, rArray2AtN
+        call howfar_d1r4( real(array1, KINDVALUE), real(array2, KINDVALUE), &
+          & pct, gaps, mode, rArray1AtN, rArray2AtN )
+        if ( present(array1AtN) ) array1AtN = rArray1AtN
+        if ( present(array2AtN) ) array2AtN = rArray2AtN
+      end subroutine howfar_d1int
+
+      subroutine howfar_d2int( array1, array2, pct, gaps, mode, array1AtN, array2AtN )
+        integer, parameter                             :: KINDVALUE = r4
+        integer, dimension(:,:), intent(in)                 :: array1, array2
+        real(KINDVALUE), dimension(:), intent(in)           :: pct
+        type(Stat_T), dimension(:), intent(inout)           :: gaps
+        character(len=*), intent(in)              :: mode ! 'rel' or 'abs'          
+        integer, dimension(:,:), optional, intent(out)      :: array1AtN
+        integer, dimension(:,:), optional, intent(out)      :: array2AtN
+        real(KINDVALUE), dimension(3,size(pct))             :: rArray1AtN, rArray2AtN
+        call howfar_d2r4( real(array1, KINDVALUE), real(array2, KINDVALUE), &
+          & pct, gaps, mode, rArray1AtN, rArray2AtN )
+        if ( present(array1AtN) ) array1AtN = rArray1AtN
+        if ( present(array2AtN) ) array2AtN = rArray2AtN
+      end subroutine howfar_d2int
+
+      subroutine howfar_d3int( array1, array2, pct, gaps, mode, array1AtN, array2AtN )
+        integer, parameter                             :: KINDVALUE = r4
+        integer, dimension(:,:,:), intent(in)               :: array1, array2
+        real(KINDVALUE), dimension(:), intent(in)           :: pct
+        type(Stat_T), dimension(:), intent(inout)           :: gaps
+        character(len=*), intent(in)              :: mode ! 'rel' or 'abs'          
+        integer, dimension(:,:), optional, intent(out)      :: array1AtN
+        integer, dimension(:,:), optional, intent(out)      :: array2AtN
+        real(KINDVALUE), dimension(3,size(pct))             :: rArray1AtN, rArray2AtN
+        call howfar_d3r4( real(array1, KINDVALUE), real(array2, KINDVALUE), &
+          & pct, gaps, mode, rArray1AtN, rArray2AtN )
+        if ( present(array1AtN) ) array1AtN = rArray1AtN
+        if ( present(array2AtN) ) array2AtN = rArray2AtN
+      end subroutine howfar_d3int
+
+      subroutine howfar_d1r4( array1, array2, pct, gaps, mode, array1AtN, array2AtN )
+        integer, parameter                             :: KINDVALUE = r4
+        include 'howfar.f9h'
+      end subroutine howfar_d1r4
+
+      subroutine howfar_d2r4( array1, array2, pct, gaps, mode, array1AtN, array2AtN )
+        integer, parameter                             :: KINDVALUE = r4
+        real(KINDVALUE), dimension(:,:), intent(in)         :: array1, array2
+        real(KINDVALUE), dimension(:), intent(in)           :: pct
+        type(Stat_T), dimension(:), intent(inout)           :: gaps
+        character(len=*), intent(in)              :: mode ! 'rel' or 'abs'          
+        real(KINDVALUE), dimension(:, :), &
+        & optional, intent(out)                 :: array1AtN, array2AtN
+        integer, dimension(2)                          :: shp
+        ! Executable
+        shp = shape(array1)
+        call howfar( reshape(array1, (/shp(1)*shp(2)/)), &
+          & reshape(array2, (/shp(1)*shp(2)/)), &
+          & pct, gaps, mode, array1AtN, array2AtN )
+      end subroutine howfar_d2r4
+
+      subroutine howfar_d3r4( array1, array2, pct, gaps, mode, array1AtN, array2AtN )
+        integer, parameter                             :: KINDVALUE = r4
+        real(KINDVALUE), dimension(:,:,:), intent(in)       :: array1, array2
+        real(KINDVALUE), dimension(:), intent(in)           :: pct
+        type(Stat_T), dimension(:), intent(inout)           :: gaps
+        character(len=*), intent(in)              :: mode ! 'rel' or 'abs'          
+        real(KINDVALUE), dimension(:, :), &
+          & optional, intent(out)                 :: array1AtN, array2AtN
+        integer, dimension(3)                          :: shp
+        ! Executable
+        shp = shape(array1)
+        call howfar( reshape(array1, (/shp(1)*shp(2)*shp(3)/)), &
+          & reshape(array2, (/shp(1)*shp(2)*shp(3)/)), &
+          & pct, gaps, mode, array1AtN, array2AtN )
+      end subroutine howfar_d3r4
+
+      subroutine howfar_d4r4( array1, array2, pct, gaps, mode, array1AtN, array2AtN )
+        integer, parameter                             :: KINDVALUE = r4
+        real(KINDVALUE), dimension(:,:,:,:), intent(in)       :: array1, array2
+        real(KINDVALUE), dimension(:), intent(in)           :: pct
+        type(Stat_T), dimension(:), intent(inout)           :: gaps
+        character(len=*), intent(in)              :: mode ! 'rel' or 'abs'          
+        real(KINDVALUE), dimension(:, :), &
+          & optional, intent(out)                 :: array1AtN, array2AtN
+        ! Executable
+        call howfar( reshape(array1, (/product(shape(array1))/)), &
+          & reshape(array2, (/product(shape(array1))/)), &
+          & pct, gaps, mode, array1AtN, array2AtN )
+      end subroutine howfar_d4r4
+
+      subroutine howfar_d1r8( array1, array2, pct, gaps, mode, array1AtN, array2AtN )
+        integer, parameter                             :: KINDVALUE = r8
+        include 'howfar.f9h'
+      end subroutine howfar_d1r8
+
+      subroutine howfar_d2r8( array1, array2, pct, gaps, mode, array1AtN, array2AtN )
+        integer, parameter                             :: KINDVALUE = r8
+        real(KINDVALUE), dimension(:,:), intent(in)         :: array1, array2
+        real(KINDVALUE), dimension(:), intent(in)           :: pct
+        type(Stat_T), dimension(:), intent(inout)           :: gaps
+        character(len=*), intent(in)              :: mode ! 'rel' or 'abs'          
+        real(KINDVALUE), dimension(:, :), &
+          & optional, intent(out)                 :: array1AtN, array2AtN
+        integer, dimension(2)                          :: shp
+        ! Executable
+        shp = shape(array1)
+        call howfar( reshape(array1, (/shp(1)*shp(2)/)), &
+          & reshape(array2, (/shp(1)*shp(2)/)), &
+          & pct, gaps, mode, array1AtN, array2AtN )
+      end subroutine howfar_d2r8
+
+      subroutine howfar_d3r8( array1, array2, pct, gaps, mode, array1AtN, array2AtN )
+        integer, parameter                             :: KINDVALUE = r8
+        real(KINDVALUE), dimension(:,:,:), intent(in)       :: array1, array2
+        real(KINDVALUE), dimension(:), intent(in)           :: pct
+        type(Stat_T), dimension(:), intent(inout)           :: gaps
+        character(len=*), intent(in)              :: mode ! 'rel' or 'abs'          
+        real(KINDVALUE), dimension(:, :), &
+          & optional, intent(out)                 :: array1AtN, array2AtN
+        integer, dimension(3)                          :: shp
+        ! Executable
+        shp = shape(array1)
+        call howfar( reshape(array1, (/shp(1)*shp(2)*shp(3)/)), &
+          & reshape(array2, (/shp(1)*shp(2)*shp(3)/)), &
+          & pct, gaps, mode, array1AtN, array2AtN )
+      end subroutine howfar_d3r8
+
+      subroutine howfar_d4r8( array1, array2, pct, gaps, mode, array1AtN, array2AtN )
+        integer, parameter                             :: KINDVALUE = r8
+        real(KINDVALUE), dimension(:,:,:,:), intent(in)       :: array1, array2
+        real(KINDVALUE), dimension(:), intent(in)           :: pct
+        type(Stat_T), dimension(:), intent(inout)           :: gaps
+        character(len=*), intent(in)              :: mode ! 'rel' or 'abs'          
+        real(KINDVALUE), dimension(:, :), &
+          & optional, intent(out)                 :: array1AtN, array2AtN
+        ! Executable
+        call howfar( reshape(array1, (/product(shape(array1))/)), &
+          & reshape(array2, (/product(shape(array2))/)), &
+          & pct, gaps, mode, array1AtN, array2AtN )
+      end subroutine howfar_d4r8
+
+      ! ------------------- hownear -----------------------
+      ! This family of routines finds the percentages of points
+      ! in two arrays "near" each other in value
+      ! where nearness is defined as within a gap either
+      !  mode      gap
+      !  'abs'  absolute value
+      !  'rel'  relative value
+      ! i.e., if absolute gap
+      ! | array1(i) - array2(i) | < gap
+      ! if relative gap
+      ! | array1(i) - array2(i) | < gap * max( abs(array1(i)), abs(array2(i)) )
+      subroutine hownear_d1int( array1, array2, pct, gaps, gapratios )
+        integer, parameter                             :: KINDVALUE = r4
+        integer, dimension(:), intent(in)                   :: array1, array2
+        real(KINDVALUE), dimension(:), intent(out)          :: pct
+        real(KINDVALUE), dimension(:), optional, intent(in) :: gaps
+        real(KINDVALUE), dimension(:), optional, intent(in) :: gapratios
+        call hownear_d1r4( real(array1, KINDVALUE), real(array2, KINDVALUE), &
+          & pct, gaps, gapratios )
+      end subroutine hownear_d1int
+
+      subroutine hownear_d2int( array1, array2, pct, gaps, gapratios )
+        integer, parameter                             :: KINDVALUE = r4
+        integer, dimension(:,:), intent(in)                 :: array1, array2
+        real(KINDVALUE), dimension(:), intent(out)          :: pct
+        real(KINDVALUE), dimension(:), optional, intent(in) :: gaps
+        real(KINDVALUE), dimension(:), optional, intent(in) :: gapratios
+        call hownear_d2r4( real(array1, KINDVALUE), real(array2, KINDVALUE), &
+          & pct, gaps, gapratios )
+      end subroutine hownear_d2int
+
+      subroutine hownear_d3int( array1, array2, pct, gaps, gapratios )
+        integer, parameter                             :: KINDVALUE = r4
+        integer, dimension(:,:,:), intent(in)               :: array1, array2
+        real(KINDVALUE), dimension(:), intent(out)          :: pct
+        real(KINDVALUE), dimension(:), optional, intent(in) :: gaps
+        real(KINDVALUE), dimension(:), optional, intent(in) :: gapratios
+        call hownear_d3r4( real(array1, KINDVALUE), real(array2, KINDVALUE), &
+          & pct, gaps, gapratios )
+      end subroutine hownear_d3int
+
+      subroutine hownear_d1r4( array1, array2, pct, gaps, gapratios )
+        integer, parameter                             :: KINDVALUE = r4
+        include 'hownear.f9h'
+      end subroutine hownear_d1r4
+
+      subroutine hownear_d2r4( array1, array2, pct, gaps, gapratios )
+        integer, parameter                             :: KINDVALUE = r4
+        real(KINDVALUE), dimension(:,:), intent(in)         :: array1, array2
+        real(KINDVALUE), dimension(:), intent(out)          :: pct
+        real(KINDVALUE), dimension(:), optional, intent(in) :: gaps
+        real(KINDVALUE), dimension(:), optional, intent(in) :: gapratios
+        integer, dimension(2)                          :: shp
+        ! Executable
+        shp = shape(array1)
+        call hownear( reshape(array1, (/shp(1)*shp(2)/)), &
+          & reshape(array2, (/shp(1)*shp(2)/)), &
+          & pct, gaps, gapratios )
+      end subroutine hownear_d2r4
+
+      subroutine hownear_d3r4( array1, array2, pct, gaps, gapratios )
+        integer, parameter                             :: KINDVALUE = r4
+        real(KINDVALUE), dimension(:,:,:), intent(in)       :: array1, array2
+        real(KINDVALUE), dimension(:), intent(out)          :: pct
+        real(KINDVALUE), dimension(:), optional, intent(in) :: gaps
+        real(KINDVALUE), dimension(:), optional, intent(in) :: gapratios
+        integer, dimension(3)                          :: shp
+        ! Executable
+        shp = shape(array1)
+        call hownear( reshape(array1, (/shp(1)*shp(2)*shp(3)/)), &
+          & reshape(array2, (/shp(1)*shp(2)*shp(3)/)), &
+          & pct, gaps, gapratios )
+      end subroutine hownear_d3r4
+
+      subroutine hownear_d4r4( array1, array2, pct, gaps, gapratios )
+        integer, parameter                             :: KINDVALUE = r4
+        real(KINDVALUE), dimension(:,:,:,:), intent(in)       :: array1, array2
+        real(KINDVALUE), dimension(:), intent(out)          :: pct
+        real(KINDVALUE), dimension(:), optional, intent(in) :: gaps
+        real(KINDVALUE), dimension(:), optional, intent(in) :: gapratios
+        ! Executable
+        call hownear( reshape(array1, (/product(shape(array1))/)), &
+          & reshape(array2, (/product(shape(array2))/)), &
+          & pct, gaps, gapratios )
+      end subroutine hownear_d4r4
+
+      subroutine hownear_d1r8( array1, array2, pct, gaps, gapratios )
+        integer, parameter                             :: KINDVALUE = r8
+        include 'hownear.f9h'
+      end subroutine hownear_d1r8
+
+      subroutine hownear_d2r8( array1, array2, pct, gaps, gapratios )
+        integer, parameter                             :: KINDVALUE = r8
+        real(KINDVALUE), dimension(:,:), intent(in)         :: array1, array2
+        real(KINDVALUE), dimension(:), intent(out)          :: pct
+        real(KINDVALUE), dimension(:), optional, intent(in) :: gaps
+        real(KINDVALUE), dimension(:), optional, intent(in) :: gapratios
+        integer, dimension(2)                          :: shp
+        ! Executable
+        shp = shape(array1)
+        call hownear( reshape(array1, (/shp(1)*shp(2)/)), &
+          & reshape(array2, (/shp(1)*shp(2)/)), &
+          & pct, gaps, gapratios )
+      end subroutine hownear_d2r8
+
+      subroutine hownear_d3r8( array1, array2, pct, gaps, gapratios )
+        integer, parameter                             :: KINDVALUE = r8
+        real(KINDVALUE), dimension(:,:,:), intent(in)       :: array1, array2
+        real(KINDVALUE), dimension(:), intent(out)          :: pct
+        real(KINDVALUE), dimension(:), optional, intent(in) :: gaps
+        real(KINDVALUE), dimension(:), optional, intent(in) :: gapratios
+        integer, dimension(3)                          :: shp
+        ! Executable
+        shp = shape(array1)
+        call hownear( reshape(array1, (/shp(1)*shp(2)*shp(3)/)), &
+          & reshape(array2, (/shp(1)*shp(2)*shp(3)/)), &
+          & pct, gaps, gapratios )
+      end subroutine hownear_d3r8
+
+      subroutine hownear_d4r8( array1, array2, pct, gaps, gapratios )
+        integer, parameter                             :: KINDVALUE = r8
+        real(KINDVALUE), dimension(:,:,:,:), intent(in)       :: array1, array2
+        real(KINDVALUE), dimension(:), intent(out)          :: pct
+        real(KINDVALUE), dimension(:), optional, intent(in) :: gaps
+        real(KINDVALUE), dimension(:), optional, intent(in) :: gapratios
+        ! Executable
+        call hownear( reshape(array1, (/product(shape(array1))/)), &
+          & reshape(array2, (/product(shape(array2))/)), &
+          & pct, gaps, gapratios )
+      end subroutine hownear_d4r8
+
+      ! ------------------- pdf -----------------------
+      ! This family of functions finds the probability density function
+      ! for distribution of values saved in the data type statistic
+      ! There are two modes of operation:
+      ! 1-arg
+      ! -----
+      ! returns pdf(x, statistic) = f(x)
+
+      ! 2-arg
+      ! -----
+      ! returns pdf(x1, x2, statistic) = Integral( f(x) dx, [x1, x2] )
+      ! (which is actually cdf(x2) - cdf(x1))s
+
+      ! Method:
+      ! Let the bincount of the cell containing x be bincount(x)
+      ! the width of that cell be h
+      ! and the total counts over all bins be count
+      ! Then
+      ! pdf(x) = bincount(x) / (h count)
+
+      ! Notes:
+      ! (1) You must have first called the statistics subroutine
+      ! to create the statistics data type
+      ! (2) Statistics%nbins must be > 0
+      function pdf_1(x, statistic) result(pdf)
+        ! Given a value x and a statistic data type 
+        ! (for which see statistics subroutine below)
+        ! returns the probablility density function
+        !
+        ! Args
+        real(r8), intent(in)     :: x
+        type(Stat_T), intent(in) :: statistic
+        real(r8)                 :: pdf
+        ! Internal variables
+        integer                         :: i
+        real(r8)                        :: eta
+        real(r8)                        :: h
+        real(r8), dimension(:), pointer :: xbins
+        ! Executable
+        if ( statistic%nbins < 3 .or. .not. associated(statistic%bincount) ) then
+          call MLSMessage ( MLSMSG_Error, moduleName,  &
+            & "You must have binned the data before calling pdf" )
+        endif
+        nullify (xbins)
+        call allocate_test(xbins, statistic%nbins-1, 'xbins', moduleName)
+        xbins(1) = statistic%bounds(1)
+        h = ( statistic%bounds(2) - statistic%bounds(1) ) / (statistic%nbins-2)
+        do i=2, statistic%nbins-1
+          eta = (i-1._r8) / (statistic%nbins-2)
+          xbins(i) = (1._r8 - eta)*statistic%bounds(1) + eta*statistic%bounds(2)
+        enddo
+        i = FindFirst( x < xbins )
+        i = max(i, 1)
+        pdf = statistic%bincount(i) / (h*statistic%count)
+        call deallocate_test(xbins, 'xbins', moduleName)
+      end function pdf_1
+      
+      function pdf_2(x1, x2, statistic) result(pdf)
+        ! Given values x1, x2,  and a statistic data type 
+        ! (for which see statistics subroutine below)
+        ! returns an integrated probablility density function
+        !
+        ! We want 
+        !   Sum ( pdf(x) h, [x1 < x < x2] )
+        !
+        ! Args
+        real(r8), intent(in)     :: x1
+        real(r8), intent(in)     :: x2
+        type(Stat_T), intent(in) :: statistic
+        real(r8)                 :: pdf
+        ! Internal variables
+        integer                         :: i
+        integer                         :: i1
+        integer                         :: i2
+        real(r8)                        :: eta
+        real(r8)                        :: h
+        real(r8)                        :: hi
+        real(r8)                        :: pdfi
+        real(r8), dimension(:), pointer :: xbins
+        real(r8)                        :: xL
+        real(r8)                        :: xR
+        ! Executable
+        if ( statistic%nbins < 3 .or. .not. associated(statistic%bincount) ) then
+          call MLSMessage ( MLSMSG_Error, moduleName,  &
+            & "You must have binned the data before calling pdf" )
+        endif
+        nullify (xbins)
+        call allocate_test(xbins, statistic%nbins-1, 'xbins', moduleName)
+        xbins(1) = statistic%bounds(1)
+        h = ( statistic%bounds(2) - statistic%bounds(1) ) / (statistic%nbins-2)
+        do i=2, statistic%nbins-1
+          eta = (i-1._r8) / (statistic%nbins-2)
+          xbins(i) = (1._r8 - eta)*statistic%bounds(1) + eta*statistic%bounds(2)
+        enddo
+        i1 = FindFirst( x1 < xbins )
+        i2 = FindLast( x1 < xbins )
+        i1 = max(i1, 1)
+        i2 = max(i2, i1)
+        pdf = 0.
+        xR = min(x1, x2) - 1000*max(abs(x1), abs(x2)) ! This means -Infinity
+        do i=i1, i2
+          xL = xR
+          if ( i < statistic%nbins ) then
+            xL = xbins(i)
+          else
+            xR = max(x1, x2) + 1000*max(abs(x1), abs(x2)) ! This means +Infinity
+          endif
+          ! There are 4 possible cases to consider:
+          ! (1) xL < x1 < xR < x2
+          ! (2) x1 < xL < x2 < xR
+          ! (3) x1 < xL < xR < x2
+          ! (4) xL < x1 < x2 < xR
+          hi = xR - xL
+          pdfi = statistic%bincount(i) / (hi*statistic%count)
+          if ( xL < x1 .and. xR < x2 ) then
+            pdf = pdf + (xR-x1)*pdfi
+          elseif ( x1 < xL .and. x2 < xR ) then
+            pdf = pdf + (x2-xL)*pdfi
+          elseif ( x1 < xL .and. xR < x2 ) then
+            pdf = pdf + (xR-xL)*pdfi
+          elseif ( xL < x1 .and. x2 < xR ) then
+            pdf = pdf + (x2-x1)*pdfi
+          else
+            call MLSMessage ( MLSMSG_Error, moduleName,  &
+            & "Unanticipated relation among xL, xR, x1, x2" )
+          endif
+        enddo
+        call deallocate_test(xbins, 'xbins', moduleName)
+      end function pdf_2
+      
+      ! ------------------- RATIOS -----------------------
+      ! This family of routines finds both the absolute and relative RATIOS
+      ! of one array w.r.t. another 'weighting' array (ignoring signs in both)
+      
+      ! The result, thinking in classic goldbrick style, would be
+
+      ! **max absolute is exvalues(1) (corresponding ratio is exratios(1))**
+      ! **max ratio is exratios(2) (corresponding absolute is exvalues(2))**
+
+      ! E.g. let
+      ! array1 = (/ 1,  -0.5, 2, +100 /)
+      ! array2 = (/ 10, 0.5, 10, 1000 /)
+      ! Then
+      ! max value is 100 (corresponding ratio is 0.100) which is the 4th element
+      ! max ratio is 1.0 (corresponding value is 0.5)   which is the 2nd element
+      ! Thus we return
+      ! exvalues = (/ 100,   0.5 /)
+      ! exratios = (/ 0.100, 1.0 /)
+      
+      ! This may be useful in checking for non-negligible differences
+      ! between two arrays representing results from two different analyses
+      ! or noting the magnitude of changes to the goldbrick
+      !
+      ! If array2 is all 0, ratios, which would be undefined, are
+      ! all set to -1.0
+      
+      ! optionally, first operates on array1 and array2, replacing them with
+      ! op     replace array1 with               replace array2 with
+      ! ---    -------------------               -------------------
+      ! '-'      array1 - array2             max( abs(array1), abs(array2) )
+      ! '+'      array1 + array2             max( abs(array1), abs(array2) )
+      ! '*' min( abs(array1), abs(array2) )  max( abs(array1), abs(array2) )
+      
+      ! '-' is precisely what we would want for the goldbrick if 
+      ! array1 is the reference standard
+      ! array2 is the new result
+      !
+      ! Couldn't we have thought of a better name than "RATIOS"?
+      subroutine ratios_d1int( array1, array2, exvalues, exratios, &
+        & minratio, maxratio, meanratio, stddevratio, rmsratio, medianratio, &
+        & fillValue, op )
+        integer, parameter                             :: KINDVALUE = r4
+        ! Args
+        integer, dimension(:), intent(in)      :: array1, array2
+        integer, dimension(2), intent(out)     :: exvalues
+        integer, dimension(2), intent(out)     :: exratios
+        integer, optional, intent(out)         :: minratio
+        integer, optional, intent(out)         :: maxratio
+        integer, optional, intent(out)         :: meanratio
+        integer, optional, intent(out)         :: stddevratio
+        integer, optional, intent(out)         :: rmsratio
+        integer, optional, intent(out)         :: medianratio
+        integer, optional                      :: FillValue
+        character, optional, intent(in)        :: op
+        ! Internal variables
+        real(r4), dimension(2) :: rvalues
+        real(r4), dimension(2) :: rratios
+        real(KINDVALUE)        :: rmin, rmax, rmean, rstddev, rrms, rmedian
+        call ratios_d1r4( real(array1, KINDVALUE), real(array2, KINDVALUE), &
+          & rvalues, rratios, &
+          & rmin, rmax, rmean, rstddev, rrms, rmedian, &
+          & real(fillValue, KINDVALUE) )
+        exvalues = rvalues
+        exratios = rratios
+        if ( present(minratio   ) ) minratio    = rmin
+        if ( present(maxratio   ) ) maxratio    = rmax
+        if ( present(meanratio  ) ) meanratio   = rmean
+        if ( present(stddevratio) ) stddevratio = rstddev
+        if ( present(rmsratio   ) ) rmsratio    = rrms
+        if ( present(medianratio) ) medianratio = rmedian
+      end subroutine ratios_d1int
+
+      subroutine ratios_d2int( array1, array2, exvalues, exratios, &
+        & minratio, maxratio, meanratio, stddevratio, rmsratio, medianratio, &
+        & fillValue, op )
+        integer, parameter                             :: KINDVALUE = r4
+        ! Args
+        integer, dimension(:,:), intent(in)    :: array1, array2
+        integer, dimension(2), intent(out)     :: exvalues
+        integer, dimension(2), intent(out)     :: exratios
+        integer, optional, intent(out)         :: minratio
+        integer, optional, intent(out)         :: maxratio
+        integer, optional, intent(out)         :: meanratio
+        integer, optional, intent(out)         :: stddevratio
+        integer, optional, intent(out)         :: rmsratio
+        integer, optional, intent(out)         :: medianratio
+        integer, optional                      :: FillValue
+        character, optional, intent(in)        :: op
+        ! Internal variables
+        real(r4), dimension(2) :: rvalues
+        real(r4), dimension(2) :: rratios
+        real(KINDVALUE)        :: rmin, rmax, rmean, rstddev, rrms, rmedian
+        call ratios_d2r4( real(array1, KINDVALUE), real(array2, KINDVALUE), &
+          & rvalues, rratios, &
+          & rmin, rmax, rmean, rstddev, rrms, rmedian, &
+          & real(fillValue, KINDVALUE) )
+        exvalues = rvalues
+        exratios = rratios
+        if ( present(minratio   ) ) minratio    = rmin
+        if ( present(maxratio   ) ) maxratio    = rmax
+        if ( present(meanratio  ) ) meanratio   = rmean
+        if ( present(stddevratio) ) stddevratio = rstddev
+        if ( present(rmsratio   ) ) rmsratio    = rrms
+        if ( present(medianratio) ) medianratio = rmedian
+      end subroutine ratios_d2int
+
+      subroutine ratios_d3int( array1, array2, exvalues, exratios, &
+        & minratio, maxratio, meanratio, stddevratio, rmsratio, medianratio, &
+        & fillValue, op )
+        integer, parameter                             :: KINDVALUE = r4
+        ! Args
+        integer, dimension(:,:,:), intent(in)  :: array1, array2
+        integer, dimension(2), intent(out)     :: exvalues
+        integer, dimension(2), intent(out)     :: exratios
+        integer, optional, intent(out)         :: minratio
+        integer, optional, intent(out)         :: maxratio
+        integer, optional, intent(out)         :: meanratio
+        integer, optional, intent(out)         :: stddevratio
+        integer, optional, intent(out)         :: rmsratio
+        integer, optional, intent(out)         :: medianratio
+        integer, optional                      :: FillValue
+        character, optional, intent(in)        :: op
+        ! Internal variables
+        real(r4), dimension(2) :: rvalues
+        real(r4), dimension(2) :: rratios
+        real(KINDVALUE)        :: rmin, rmax, rmean, rstddev, rrms, rmedian
+        call ratios_d3r4( real(array1, KINDVALUE), real(array2, KINDVALUE), &
+          & rvalues, rratios, &
+          & rmin, rmax, rmean, rstddev, rrms, rmedian, &
+          & real(fillValue, KINDVALUE) )
+        exvalues = rvalues
+        exratios = rratios
+        if ( present(minratio   ) ) minratio    = rmin
+        if ( present(maxratio   ) ) maxratio    = rmax
+        if ( present(meanratio  ) ) meanratio   = rmean
+        if ( present(stddevratio) ) stddevratio = rstddev
+        if ( present(rmsratio   ) ) rmsratio    = rrms
+        if ( present(medianratio) ) medianratio = rmedian
+      end subroutine ratios_d3int
+
+      subroutine ratios_d1r4( array1, array2, exvalues, exratios, &
+        & minratio, maxratio, meanratio, stddevratio, rmsratio, medianratio, &
+        & fillValue, op )
+        integer, parameter                             :: KINDVALUE = r4
+        ! Args
+        include 'ratios.f9h'
+      end subroutine ratios_d1r4
+
+      subroutine ratios_d1r8( array1, array2, exvalues, exratios, &
+        & minratio, maxratio, meanratio, stddevratio, rmsratio, medianratio, &
+        & fillValue, op )
+        integer, parameter                             :: KINDVALUE = r8
+        ! Args
+        include 'ratios.f9h'
+      end subroutine ratios_d1r8
+
+      subroutine ratios_d2r4( array1, array2, exvalues, exratios, &
+        & minratio, maxratio, meanratio, stddevratio, rmsratio, medianratio, &
+        & fillValue, op )
+        integer, parameter                             :: KINDVALUE = r4
+        ! Args
+        real(KINDVALUE), dimension(:,:), intent(in)    :: array1, array2
+        real(KINDVALUE), dimension(2), intent(out)     :: exvalues
+        real(KINDVALUE), dimension(2), intent(out)     :: exratios
+        real(KINDVALUE), optional, intent(out)         :: minratio
+        real(KINDVALUE), optional, intent(out)         :: maxratio
+        real(KINDVALUE), optional, intent(out)         :: meanratio
+        real(KINDVALUE), optional, intent(out)         :: stddevratio
+        real(KINDVALUE), optional, intent(out)         :: rmsratio
+        real(KINDVALUE), optional, intent(out)         :: medianratio
+        real(KINDVALUE), optional                      :: FillValue
+        character, optional, intent(in)        :: op
+        ! Internal variables
+        integer, dimension(2)                          :: shp
+        ! Executable
+        shp = shape(array1)
+        call ratios( reshape(array1, (/shp(1)*shp(2)/)), &
+          & reshape(array2, (/shp(1)*shp(2)/)), &
+          & exvalues, exratios, &
+          & minratio, maxratio, meanratio, stddevratio, rmsratio, medianratio, &
+          & fillValue, op )
+      end subroutine ratios_d2r4
+
+      subroutine ratios_d2r8( array1, array2, exvalues, exratios, &
+        & minratio, maxratio, meanratio, stddevratio, rmsratio, medianratio, &
+        & fillValue, op )
+        integer, parameter                             :: KINDVALUE = r8
+        ! Args
+        real(KINDVALUE), dimension(:,:), intent(in)    :: array1, array2
+        real(KINDVALUE), dimension(2), intent(out)     :: exvalues
+        real(KINDVALUE), dimension(2), intent(out)     :: exratios
+        real(KINDVALUE), optional, intent(out)         :: minratio
+        real(KINDVALUE), optional, intent(out)         :: maxratio
+        real(KINDVALUE), optional, intent(out)         :: meanratio
+        real(KINDVALUE), optional, intent(out)         :: stddevratio
+        real(KINDVALUE), optional, intent(out)         :: rmsratio
+        real(KINDVALUE), optional, intent(out)         :: medianratio
+        real(KINDVALUE), optional                      :: FillValue
+        character, optional, intent(in)        :: op
+        ! Internal variables
+        integer, dimension(2)                          :: shp
+        ! Executable
+        shp = shape(array1)
+        call ratios( reshape(array1, (/shp(1)*shp(2)/)), &
+          & reshape(array2, (/shp(1)*shp(2)/)), &
+          & exvalues, exratios, &
+          & minratio, maxratio, meanratio, stddevratio, rmsratio, medianratio, &
+          & fillValue, op )
+      end subroutine ratios_d2r8
+
+      subroutine ratios_d3r4( array1, array2, exvalues, exratios, &
+        & minratio, maxratio, meanratio, stddevratio, rmsratio, medianratio, &
+        & fillValue, op )
+        integer, parameter                             :: KINDVALUE = r4
+        ! Args
+        real(KINDVALUE), dimension(:,:,:), intent(in)  :: array1, array2
+        real(KINDVALUE), dimension(2), intent(out)     :: exvalues
+        real(KINDVALUE), dimension(2), intent(out)     :: exratios
+        real(KINDVALUE), optional, intent(out)         :: minratio
+        real(KINDVALUE), optional, intent(out)         :: maxratio
+        real(KINDVALUE), optional, intent(out)         :: meanratio
+        real(KINDVALUE), optional, intent(out)         :: stddevratio
+        real(KINDVALUE), optional, intent(out)         :: rmsratio
+        real(KINDVALUE), optional, intent(out)         :: medianratio
+        real(KINDVALUE), optional                      :: FillValue
+        character, optional, intent(in)        :: op
+        ! Internal variables
+        integer, dimension(3)                          :: shp
+        ! Executable
+        shp = shape(array1)
+        call ratios( reshape(array1, (/shp(1)*shp(2)*shp(3)/)), &
+          & reshape(array2, (/shp(1)*shp(2)*shp(3)/)), &
+          & exvalues, exratios, &
+          & minratio, maxratio, meanratio, stddevratio, rmsratio, medianratio, &
+          & fillValue, op )
+      end subroutine ratios_d3r4
+
+      subroutine ratios_d4r4( array1, array2, exvalues, exratios, &
+        & minratio, maxratio, meanratio, stddevratio, rmsratio, medianratio, &
+        & fillValue, op )
+        integer, parameter                             :: KINDVALUE = r4
+        ! Args
+        real(KINDVALUE), dimension(:,:,:,:), intent(in)  :: array1, array2
+        real(KINDVALUE), dimension(2), intent(out)     :: exvalues
+        real(KINDVALUE), dimension(2), intent(out)     :: exratios
+        real(KINDVALUE), optional, intent(out)         :: minratio
+        real(KINDVALUE), optional, intent(out)         :: maxratio
+        real(KINDVALUE), optional, intent(out)         :: meanratio
+        real(KINDVALUE), optional, intent(out)         :: stddevratio
+        real(KINDVALUE), optional, intent(out)         :: rmsratio
+        real(KINDVALUE), optional, intent(out)         :: medianratio
+        real(KINDVALUE), optional                      :: FillValue
+        character, optional, intent(in)        :: op
+        ! Executable
+        call ratios( reshape(array1, (/product(shape(array1))/)), &
+          & reshape(array2, (/product(shape(array2))/)), &
+          & exvalues, exratios, &
+          & minratio, maxratio, meanratio, stddevratio, rmsratio, medianratio, &
+          & fillValue, op )
+      end subroutine ratios_d4r4
+
+      subroutine ratios_d3r8( array1, array2, exvalues, exratios, &
+        & minratio, maxratio, meanratio, stddevratio, rmsratio, medianratio, &
+        & fillValue, op )
+        integer, parameter                             :: KINDVALUE = r8
+        ! Args
+        real(KINDVALUE), dimension(:,:,:), intent(in)  :: array1, array2
+        real(KINDVALUE), dimension(2), intent(out)     :: exvalues
+        real(KINDVALUE), dimension(2), intent(out)     :: exratios
+        real(KINDVALUE), optional, intent(out)         :: minratio
+        real(KINDVALUE), optional, intent(out)         :: maxratio
+        real(KINDVALUE), optional, intent(out)         :: meanratio
+        real(KINDVALUE), optional, intent(out)         :: stddevratio
+        real(KINDVALUE), optional, intent(out)         :: rmsratio
+        real(KINDVALUE), optional, intent(out)         :: medianratio
+        real(KINDVALUE), optional                      :: FillValue
+        character, optional, intent(in)        :: op
+        ! Internal variables
+        integer, dimension(3)                          :: shp
+        ! Executable
+        shp = shape(array1)
+        call ratios( reshape(array1, (/shp(1)*shp(2)*shp(3)/)), &
+          & reshape(array2, (/shp(1)*shp(2)*shp(3)/)), &
+          & exvalues, exratios, &
+          & minratio, maxratio, meanratio, stddevratio, rmsratio, medianratio, &
+          & fillValue, op )
+      end subroutine ratios_d3r8
+      
+      subroutine ratios_d4r8( array1, array2, exvalues, exratios, &
+        & minratio, maxratio, meanratio, stddevratio, rmsratio, medianratio, &
+        & fillValue, op )
+        integer, parameter                             :: KINDVALUE = r8
+        ! Args
+        real(KINDVALUE), dimension(:,:,:,:), intent(in)  :: array1, array2
+        real(KINDVALUE), dimension(2), intent(out)     :: exvalues
+        real(KINDVALUE), dimension(2), intent(out)     :: exratios
+        real(KINDVALUE), optional, intent(out)         :: minratio
+        real(KINDVALUE), optional, intent(out)         :: maxratio
+        real(KINDVALUE), optional, intent(out)         :: meanratio
+        real(KINDVALUE), optional, intent(out)         :: stddevratio
+        real(KINDVALUE), optional, intent(out)         :: rmsratio
+        real(KINDVALUE), optional, intent(out)         :: medianratio
+        real(KINDVALUE), optional                      :: FillValue
+        character, optional, intent(in)        :: op
+        ! Executable
+        call ratios( reshape(array1, (/product(shape(array1))/)), &
+          & reshape(array2, (/product(shape(array2))/)), &
+          & exvalues, exratios, &
+          & minratio, maxratio, meanratio, stddevratio, rmsratio, medianratio, &
+          & fillValue, op )
+      end subroutine ratios_d4r8
+      
+      ! ------------------ SetUp -------------------------
+      ! Sets up a stat_t by setting counters to zero 
+      ! and optionally allocating a pointer
+      subroutine SetUp( statistic, NBins, Bounds, verbose )
+        ! Arg
+        type(stat_t)                                 :: statistic
+        integer, optional, intent(in)                :: NBins
+        real(r8), dimension(2), optional, intent(in) :: Bounds
+        logical, optional, intent(in)                :: verbose
+        ! Internal variables
+        integer                                      :: bin
+        real(r8)                                     :: dx
+        logical                                      :: myVerbose
+        ! Executable
+        myVerbose = .false.
+        if ( present(verbose) ) myVerbose = verbose
+        if ( myVerbose ) &
+          & call Output ( 'Setting up a Stat_T data type', advance='yes' )
+        statistic%count = 0
+        statistic%fillcount = 0
+        statistic%nbins = 0
+        if ( associated(statistic%bincount) ) &
+          & call deallocate_test( statistic%bincount, 'xbins', moduleName )
+        if ( present(NBins) .and. present(Bounds) ) then
+          if ( NBins < 1 ) return
+          call allocate_test( statistic%bincount, NBins, 'xbins', moduleName )
+          if ( .not. myVerbose ) return
+          dx = (Bounds(2) - Bounds(1)) / max( 1, (NBins - 1) )
+          call OutputNamedValue ( 'Containing bins', NBins )
+          do bin=1, NBins
+            call OutputNamedValue ( 'bin', (/ (bin-1)*dx, bin*dx /) )
+          enddo
+        endif
+      end subroutine SetUp
+
+      ! ------------------ reset -------------------------
+      ! resets a stat_t by setting counters to zero and deallocating a pointer
+      subroutine reset( statistic )
+        ! Arg
+        type(stat_t) :: statistic
+        ! Executable
+        statistic%count = 0
+        statistic%fillcount = 0
+        statistic%nbins = 0
+        if ( associated(statistic%bincount) ) &
+          & call deallocate_test( statistic%bincount, 'xbins', moduleName )
+      end subroutine reset
+
+      ! ------------------- statFunction -----------------------
+      function statFunction(values, fillValue, precision) result(statistic)
+        ! Given a 1-d set of dbl prec values, returns a Stat_t typed result
+        ! Does not bother with bincount array
+        ! Thus does not permit histogramming;
+        ! for that see statistics subroutine below
+        ! Args
+        real(r8), dimension(:), intent(in)             :: values
+        real(r8), optional, intent(in)                 :: fillValue
+        real(r8), dimension(:), optional,  intent(in)  :: precision
+        type(stat_T)                                   :: statistic
+        call allstats(values, fillValue=fillValue, precision=precision, &
+          & min=statistic%min, max=statistic%max, mean=statistic%mean, &
+          & stddev=statistic%stddev, rms=statistic%rms)
+      end function statFunction
+      
+      ! ------------------- statistics -----------------------
+      subroutine statistics(values, statistic, fillValue, precision)
+        ! Given a 1-d set of dbl prec values, calculates a Stat_t typed result
+        ! Note that the caller has responsibility for 
+        ! (1) setting nbins and bounds
+        ! (2) Resetting count (or else all calls get merged together)
+        ! (3) allocating bincount array (and deallocating later)
+        ! Args
+        real(r8), dimension(:), intent(in)            :: values
+        real(r8), optional, intent(in)                :: fillValue
+        type(stat_T), intent(inout)                   :: statistic
+        real(r8), dimension(:), optional, intent(in)  :: precision
+        ! Internal variables
+        logical                                       :: addedData
+        integer                                       :: nbins
+        real(r8), dimension(2)                        :: bounds
+        ! Executable
+        ! default values
+        addedData = statistic%count > 0
+        nbins = 1
+        if ( statistic%nbins > 0 ) nbins = statistic%nbins
+        bounds = 1.d0
+        if ( any(statistic%bounds /= 1.0d0) ) bounds = statistic%bounds
+        MLSStat%count = statistic%count
+        if ( associated(statistic%bincount) ) then
+          call allstats(values, &
+            & nbins, bounds, addeddata, fillValue, precision, &
+            & statistic%count, statistic%fillcount, &
+            & statistic%min, statistic%max, statistic%mean, &
+            & statistic%stddev, statistic%rms, statistic%median, &
+            & statistic%bincount, statistic%indexing)
+        else
+          call allstats( values, &
+            & nbins, bounds, addeddata, fillValue, precision, &
+            & count=statistic%count, min=statistic%min, max=statistic%max, &
+            & mean=statistic%mean, &
+            & stddev=statistic%stddev, rms=statistic%rms, &
+            & median=statistic%median, indexing=statistic%indexing )
+        endif
+      end subroutine statistics
+      
+      ! ------------------- dump_all -----------------------
+      subroutine dump_all( statistic, oneLine )
+        ! Dumps all details of statistic
+        type(stat_T), intent(in)         :: statistic
+        logical, optional, intent(in)    :: oneLine
+        ! 
+        logical :: myOneLine
+        !
+        myOneLine = statsOnOneLine
+        if ( present(oneLine) ) myOneLine = oneLine
+        call output('count:  ')
+        call output(statistic%count)
+        call blanks(4)
+        call output('max:    ')
+        call output(statistic%max)
+        call blanks(4)
+        call output('min:    ')
+        call output(statistic%min)
+        call blanks(4)
+        call output('median:    ')
+        call output(statistic%median)
+        if ( .not. myOneLine ) then
+          call newline
+        else
+          call blanks(4)
+        endif
+        call output('mean:   ')
+        call output(statistic%mean)
+        call blanks(4)
+        call output('stddev: ')
+        call output(statistic%stddev)
+        call blanks(4)
+        call output('rms:    ')
+        call output(statistic%rms)
+        if ( myOneLine ) return
+        call newline
+        if ( any(statistic%indexing /= 0) .and. showIndexing ) then
+          call output('(locations)  ')
+          call output('max:    ')
+          call output(statistic%indexing(1))
+          call blanks(4)
+          call output('min:    ')
+          call output(statistic%indexing(2))
+          call blanks(4)
+          call output('median:    ')
+          call output(statistic%indexing(3))
+          call newline
+        endif
+        if ( statistic%nbins > 2 ) then
+          call output('x1,x2: ')
+          call output(statistic%bounds)
+          call newline
+          call output('bincounts: ')
+          call newline
+          call output(statistic%bincount)
+          call newline
+        endif
+        if ( statistic%fillcount > 0 ) then
+          call output('bad or filtered counts: ')
+          call output(statistic%fillcount)
+          call blanks(4)
+          call output('( ')
+          call output( (100.*statistic%fillcount) / &
+            & (statistic%fillcount + statistic%count) )
+          call output(' % )')
+          call newline
+        endif
+      end subroutine dump_all
+      
+      ! ------------------- dump_selected -----------------------
+      subroutine dump_selected( statistic, which, oneLine )
+        ! Dumps selected details of statistic
+        type(stat_T), intent(in)         :: statistic
+        character(len=*), intent(in)     :: which ! E.g., 'max,min'; '*' means all
+        logical, optional, intent(in)    :: oneLine
+        ! 
+        logical :: myOneLine
+        !
+        myOneLine = statsOnOneLine
+        if ( present(oneLine) ) myOneLine = oneLine
+        call dump_if_selected( statistic%count, which, 'count', 'no' )
+        call dump_if_selected( statistic%max, which, 'max', 'no' )
+        call dump_if_selected( statistic%min, which, 'min', 'no' )
+        call dump_if_selected( statistic%mean, which, 'mean', 'no' )
+        call dump_if_selected( statistic%median, which, 'median', 'no' )
+        if ( .not. myOneLine ) then
+          call newline
+        else
+          call blanks(4)
+        endif
+        call dump_if_selected( statistic%stddev, which, 'stddev', 'no' )
+        call dump_if_selected( statistic%rms, which, 'rms', 'no' )
+        if ( myOneLine ) return
+        if ( showIndexing ) then
+          call newline
+          call dump_if_selected( statistic%indexing, which, 'indexing' )
+        endif
+        if ( statistic%nbins < 3 .or. index(which, 'bin') < 1 ) return
+        call output('x1,x2: ')
+        call output(statistic%bounds)
+        call newline
+        call output('bincounts: ')
+        call newline
+        call output(statistic%bincount)
+        call newline
+      end subroutine dump_selected
+      
+      ! ------------------- Private Procedures -----------------------
+      ! ------------------- dump_if_selected -----------------------
+      subroutine dump_if_selected_r8_array( what, fields, name )
+        ! Dumps selected details of statistic
+        real(r8), dimension(:), intent(in) :: what
+        character(len=*), intent(in)       :: fields ! E.g., 'max,min'; '*' means all
+        character(len=*), intent(in)       :: name
+        ! 
+        if ( .not. showMe( name, fields ) ) return
+        call output(trim(name) // ': ')
+        call newline
+        call output(what)
+        call newline
+      end subroutine dump_if_selected_r8_array
+
+      subroutine dump_if_selected_r8_scalar( what, fields, name, advance )
+        ! Dumps selected details of statistic
+        real(r8), intent(in)               :: what
+        character(len=*), intent(in)       :: fields ! E.g., 'max,min'; '*' means all
+        character(len=*), intent(in)       :: advance
+        character(len=*), intent(in)       :: name
+        ! 
+        if ( .not. showMe( name, fields ) ) return
+        call output(trim(name) // ': ')
+        if ( advance == 'yes' ) call newline
+        call output(what)
+        if ( advance == 'yes' ) then
+          call newline
+        else
+          call blanks(3)
+        endif
+      end subroutine dump_if_selected_r8_scalar
+
+      subroutine dump_if_selected_int_array( what, fields, name )
+        ! Dumps selected details of statistic
+        integer, dimension(:), intent(in)  :: what
+        character(len=*), intent(in)       :: fields ! E.g., 'max,min'; '*' means all
+        character(len=*), intent(in)       :: name
+        ! 
+        if ( .not. showMe( name, fields ) ) return
+        call output(trim(name) // ': ')
+        call newline
+        call output(what)
+        call newline
+      end subroutine dump_if_selected_int_array
+
+      subroutine dump_if_selected_int_scalar( what, fields, name, advance )
+        ! Dumps selected details of statistic
+        integer, intent(in)                :: what
+        character(len=*), intent(in)       :: fields ! E.g., 'max,min'; '*' means all
+        character(len=*), intent(in)       :: advance
+        character(len=*), intent(in)       :: name
+        ! 
+        if ( .not. showMe( name, fields ) ) return
+        call output(trim(name) // ': ')
+        if ( advance == 'yes' ) call newline
+        call output(what)
+        if ( advance == 'yes' ) then
+          call newline
+        else
+          call blanks(3)
+        endif
+      end subroutine dump_if_selected_int_scalar
+
+      logical function showMe( field, fields )                      
+        ! Determine whether this field should be dumped or not               
+        character(len=*), intent(in) :: field
+        character(len=*), intent(in) :: fields
+        !                                                                    
+        if ( fields == '*' ) then                                     
+          showMe = .true.                                                 
+        else                                                                 
+          showMe = ( index(LowerCase(fields), LowerCase(trim(field))) > 0 )  
+        endif                                                                
+      end function showMe                                                    
+
+      ! ------------------- filterValues_r4 -----------------------
+      subroutine filterValues_r4(values, XTAB, NX, fillValue, precision)
+      ! Return an array filtered of any fillValues
+      ! or where corresponding precision array < 0
+      ! If neither fillValue, precision supplied, return all values
+      ! If only fillValues in array, return length 1 array containing fillValue
+      ! If all precisions < 0, return length 1 array containing -999.99
+      ! In all cases, allocate Array of appropriate size
+      ! Args
+      real(r4), dimension(:), intent(in)             :: values
+      real(r4), dimension(:), pointer                :: xtab
+      integer, intent(out)                           :: NX
+      real(r4), optional, intent(in)                 :: fillValue
+      real(r4), dimension(:), optional, intent(in)   :: precision
+      ! Internal variables
+      integer, dimension(size(values))               :: which
+      integer                                        :: i
+      ! Executable
+      nullify(xtab)
+      if ( present(fillValue) ) then
+        ! call findAll(values /= fillvalue, which, how_many=NX)
+        select case ( fillvaluerelation )
+        case ( '=' )
+          ! call findAll(.not. isFillValue(values, fillvalue), which, how_many=NX)
+          call findAll(values /= fillvalue, which, how_many=NX)
+        case ( '<' )
+          call findAll(values >= fillValue, which, how_many=NX)
+        case ( '>' )
+          call findAll(values <= fillValue, which, how_many=NX)
+        case default
+          ! call findAll(.not. isFillValue(values, fillvalue), which, how_many=NX)
+          call findAll(values /= fillvalue, which, how_many=NX)
+        end select
+        if ( NX < 1 ) then
+          call allocate_test(XTAB, 1, 'XTAB', moduleName)
+          XTAB = fillValue
+        else
+          call allocate_test(XTAB, NX, 'XTAB', moduleName)
+          do i=1, NX
+            XTAB(i) = values(which(i))
+          enddo
+        endif
+      elseif ( present(precision) ) then
+        call findAll(precision >= 0._r4, which, how_many=NX)
+        if ( NX < 1 ) then
+          call allocate_test(XTAB, 1, 'XTAB', moduleName)
+          XTAB = -999.99_r4
+        else
+          call allocate_test(XTAB, NX, 'XTAB', moduleName)
+          do i=1, NX
+            XTAB(i) = values(which(i))
+          enddo
+        endif
+      else
+        NX = size(values)
+        call allocate_test(XTAB, NX, 'XTAB', moduleName)
+        XTAB = values
+      endif
+      end subroutine filterValues_r4
+
+      ! ------------------- filterValues_r8 -----------------------
+      subroutine filterValues_r8(values, XTAB, NX, fillValue, precision)
+      ! Return an array filtered of any fillValues
+      ! or where corresponding precision array < 0
+      ! If fillValue is absent, return all values
+      ! If neither fillValue, precision supplied, return all values
+      ! If only fillValues in array, return length 1 array containing fillValue
+      ! If all precisions < 0, return length 1 array containing -999.99
+      ! In all cases, allocate Array of appropriate size
+      ! Args
+      real(r8), dimension(:), intent(in)             :: values
+      real(r8), dimension(:), pointer                :: xtab
+      integer, intent(out)                           :: NX
+      real(r8), optional, intent(in)                 :: fillValue
+      real(r8), dimension(:), optional, intent(in)   :: precision
+      ! Internal variables
+      integer, dimension(size(values))               :: which
+      integer                                        :: i
+      ! Executable
+      nullify(xtab)
+      if ( present(fillValue) ) then
+        ! call findAll(values /= fillvalue, which, how_many=NX)
+        select case ( fillvaluerelation )
+        case ( '=' )
+          ! call findAll(.not. isFillValue(values, fillvalue), which, how_many=NX)
+          call findAll(values /= fillvalue, which, how_many=NX)
+        case ( '<' )
+          call findAll(values >= fillValue, which, how_many=NX)
+        case ( '>' )
+          call findAll(values <= fillValue, which, how_many=NX)
+        case default
+          ! call findAll(.not. isFillValue(values, fillvalue), which, how_many=NX)
+          call findAll(values /= fillvalue, which, how_many=NX)
+        end select
+        if ( NX < 1 ) then
+          call allocate_test(XTAB, 1, 'XTAB', moduleName)
+          XTAB = fillValue
+        else
+          call allocate_test(XTAB, NX, 'XTAB', moduleName)
+          do i=1, NX
+            XTAB(i) = values(which(i))
+          enddo
+        endif
+      elseif ( present(precision) ) then
+        call findAll(precision >= 0._r8, which, how_many=NX)
+        if ( NX < 1 ) then
+          call allocate_test(XTAB, 1, 'XTAB', moduleName)
+          XTAB = -999.99_r8
+        else
+          call allocate_test(XTAB, NX, 'XTAB', moduleName)
+          do i=1, NX
+            XTAB(i) = values(which(i))
+          enddo
+        endif
+      else
+        NX = size(values)
+        call allocate_test(XTAB, NX, 'XTAB', moduleName)
+        XTAB = values
+      endif
+      end subroutine filterValues_r8
+
+      ! ------------------- STAT1_r4 -----------------------
+      subroutine STAT1_r4(XTAB, NX, STATS, IHIST, NCELLS, X1, X2)
+      real(r4) ::             COUNT, DELTA, PREV
+      real(r4) ::             SCALE, RSCALE, SCLNEW, STATS(5), SUMSCL
+      real(r4) ::             TEMP, TEST, X, X1, X2, XMAX, XMEAN, XMIN
+      real(r4), intent(in) :: XTAB(:)
+      include 'stats1.f9h'
+      end subroutine STAT1_r4
+
+      ! ------------------- STAT1_r8 -----------------------
+      subroutine STAT1_r8(XTAB, NX, STATS, IHIST, NCELLS, X1, X2)
+      real(r8) ::             COUNT, DELTA, PREV
+      real(r8) ::             SCALE, RSCALE, SCLNEW, STATS(5), SUMSCL
+      real(r8) ::             TEMP, TEST, X, X1, X2, XMAX, XMEAN, XMIN
+      real(r8), intent(in) :: XTAB(:)
+      include 'stats1.f9h'
+      end subroutine STAT1_r8
+      
+      ! This family shrinks an array, deleting indices from set delete
+      function shrinkarray_int( array, delete, shrunken ) result(newsize)
+        integer, dimension(:), intent(in)    :: array
+        ! Local variables
+        integer, dimension(:), intent(out)   :: shrunken
+        ! Executable
+        include 'shrinkArray.f9h'
+      end function shrinkarray_int
+      
+      function shrinkarray_r4( array, delete, shrunken ) result(newsize)
+        real(r4), dimension(:), intent(in)    :: array
+        ! Local variables
+        real(r4), dimension(:), intent(out)   :: shrunken
+        ! Executable
+        include 'shrinkArray.f9h'
+      end function shrinkarray_r4
+      
+      function shrinkarray_r8( array, delete, shrunken ) result(newsize)
+        real(r8), dimension(:), intent(in)    :: array
+        ! Local variables
+        real(r8), dimension(:), intent(out)   :: shrunken
+        ! Executable
+        include 'shrinkArray.f9h'
+      end function shrinkarray_r8
+
+      function shcount ( condition ) result ( howmany )
+        ! args
+        logical, dimension(:), intent(in)  :: condition
+        integer                            :: howmany
+        howmany = count(condition)
+        
+      end function shcount
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: MLSStats1.f90,v 2.28 2019/04/04 23:50:20 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+!=============================================================================
+end module MLSStats1
+!=============================================================================
+
+!
+! $Log: MLSStats1.f90,v $
+! Revision 2.28  2019/04/04 23:50:20  pwagner
+! Added ConfidInterval and SetUp routines
+!
+! Revision 2.27  2017/12/01 01:22:08  pwagner
+! CamelCase use statements; improved comments
+!
+! Revision 2.26  2016/09/09 20:37:32  pwagner
+! Improved explanation of ratios, including args and usage
+!
+! Revision 2.25  2014/01/09 00:24:29  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
+! Revision 2.24  2013/08/12 23:47:25  pwagner
+! FindSomethings moved to MLSFinds module
+!
+! Revision 2.23  2011/07/26 20:43:51  pwagner
+! Added some 4d interfaces
+!
+! Revision 2.22  2009/06/23 18:25:42  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.21  2008/11/24 19:31:49  pwagner
+! Less wasteful of memory; should not segment dault so often
+!
+! Revision 2.20  2008/05/23 01:15:29  pwagner
+! New public variables to control dumps; e.g. statsOnOneLine
+!
+! Revision 2.19  2007/11/01 23:28:42  pwagner
+! Added mlscount function
+!
+! Revision 2.18  2007/10/24 23:56:58  pwagner
+! Changed name of component to 'indexing'
+!
+! Revision 2.17  2007/10/24 00:19:35  pwagner
+! Added mindexes component to MLSStat to hold index of max, min, median
+!
+! Revision 2.16  2007/10/12 23:36:16  pwagner
+! Added howfar procedures for comparing two arrays
+!
+! Revision 2.15  2007/09/13 21:07:44  pwagner
+! Added hownear
+!
+! Revision 2.14  2007/07/17 00:25:07  pwagner
+! Added ratios, reset
+!
+! Revision 2.13  2007/03/07 21:03:45  pwagner
+! Avoiding isFillValue in filterValues (did not fix bug in isFillValue yet)
+!
+! Revision 2.12  2007/02/06 17:54:13  pwagner
+! Correctly tracks fillcount; dumps as fillcount and as %
+!
+! Revision 2.11  2006/08/21 23:38:41  pwagner
+! Added pdf function; speedier median algorithm
+!
+! Revision 2.10  2006/08/12 00:08:21  pwagner
+! Corrected bug in filling median
+!
+! Revision 2.9  2006/07/11 00:22:16  pwagner
+! Most mls.. functions can take integer arrays
+!
+! Revision 2.8  2006/03/08 01:13:38  pwagner
+! Added median as statistical component
+!
+! Revision 2.7  2006/02/01 23:44:37  pwagner
+! Added doDump option to allStats
+!
+! Revision 2.6  2005/12/16 00:04:29  pwagner
+! Changes to reflect new MLSFillValues module
+!
+! Revision 2.5  2005/06/22 17:25:50  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.4  2005/03/24 21:16:40  pwagner
+! Avoid assigning to undefined values
+!
+! Revision 2.3  2004/09/28 23:15:35  pwagner
+! Uses isFillValue to allow slight tolerance
+!
+! Revision 2.2  2004/09/15 18:03:46  pwagner
+! Added optional precision array
+!
+! Revision 2.1  2004/09/13 20:40:38  pwagner
+! First commit
+!
+@
+
+
+2.28
+log
+@Added ConfidInterval and SetUp routines
+@
+text
+@d44 1
+a44 1
+!    MLSstddev, MLSrms            Similar to MLSMIN for other statistics
+d49 1
+a49 1
+!                                   fifferences from its median value
+d118 1
+a118 1
+  public :: MLSmin, MLSmax, MLSmean, MLSmedian, MLSstddev, MLSrms
+d236 4
+a239 4
+  interface mlsmin
+    module procedure mlsmin_d1int, mlsmin_d2int, mlsmin_d3int
+    module procedure mlsmin_d1r4, mlsmin_d2r4, mlsmin_d3r4
+    module procedure mlsmin_d1r8, mlsmin_d2r8, mlsmin_d3r8
+d242 4
+a245 4
+  interface mlsmax
+    module procedure mlsmax_d1int, mlsmax_d2int, mlsmax_d3int
+    module procedure mlsmax_d1r4, mlsmax_d2r4, mlsmax_d3r4
+    module procedure mlsmax_d1r8, mlsmax_d2r8, mlsmax_d3r8
+d248 4
+a251 4
+  interface mlsmean
+    module procedure mlsmean_d1int, mlsmean_d2int, mlsmean_d3int
+    module procedure mlsmean_d1r4, mlsmean_d2r4, mlsmean_d3r4
+    module procedure mlsmean_d1r8, mlsmean_d2r8, mlsmean_d3r8
+d254 4
+a257 4
+  interface mlsmedian
+    module procedure mlsmedian_d1int, mlsmedian_d2int, mlsmedian_d3int
+    module procedure mlsmedian_d1r4, mlsmedian_d2r4, mlsmedian_d3r4
+    module procedure mlsmedian_d1r8, mlsmedian_d2r8, mlsmedian_d3r8
+d260 4
+a263 4
+  interface mlsstddev
+    module procedure mlsstddev_d1int, mlsstddev_d2int, mlsstddev_d3int
+    module procedure mlsstddev_d1r4, mlsstddev_d2r4, mlsstddev_d3r4, mlsstddev_d4r4
+    module procedure mlsstddev_d1r8, mlsstddev_d2r8, mlsstddev_d3r8, mlsstddev_d4r8
+d266 4
+a269 4
+  interface mlsrms
+    module procedure mlsrms_d1int, mlsrms_d2int, mlsrms_d3int
+    module procedure mlsrms_d1r4, mlsrms_d2r4, mlsrms_d3r4
+    module procedure mlsrms_d1r8, mlsrms_d2r8, mlsrms_d3r8
+d659 2
+a660 2
+      ! ------------------- mlsmin_d1int -----------------------
+      function mlsmin_d1int(values, fillValue) result(iValue)
+d668 1
+a668 1
+          iValue = mlsmin( real(values, KINDVALUE), real(fillValue, KINDVALUE) )
+d670 1
+a670 1
+          iValue = mlsmin( real(values, KINDVALUE) )
+d672 1
+a672 1
+      end function mlsmin_d1int
+d674 2
+a675 2
+      ! ------------------- mlsmin_d2int -----------------------
+      function mlsmin_d2int(values, fillValue) result(iValue)
+d683 1
+a683 1
+          iValue = mlsmin( real(values, KINDVALUE), real(fillValue, KINDVALUE) )
+d685 1
+a685 1
+          iValue = mlsmin( real(values, KINDVALUE) )
+d687 1
+a687 1
+      end function mlsmin_d2int
+d689 2
+a690 2
+      ! ------------------- mlsmin_d3int -----------------------
+      function mlsmin_d3int(values, fillValue) result(iValue)
+d698 1
+a698 1
+          iValue = mlsmin( real(values, KINDVALUE), real(fillValue, KINDVALUE) )
+d700 1
+a700 1
+          iValue = mlsmin( real(values, KINDVALUE) )
+d702 1
+a702 1
+      end function mlsmin_d3int
+d704 2
+a705 2
+      ! ------------------- mlsmax_d1int -----------------------
+      function mlsmax_d1int(values, fillValue) result(iValue)
+d713 1
+a713 1
+          iValue = mlsmax( real(values, KINDVALUE), real(fillValue, KINDVALUE) )
+d715 1
+a715 1
+          iValue = mlsmax( real(values, KINDVALUE) )
+d717 1
+a717 1
+      end function mlsmax_d1int
+d719 2
+a720 2
+      ! ------------------- mlsmax_d2int -----------------------
+      function mlsmax_d2int(values, fillValue) result(iValue)
+d728 1
+a728 1
+          iValue = mlsmax( real(values, KINDVALUE), real(fillValue, KINDVALUE) )
+d730 1
+a730 1
+          iValue = mlsmax( real(values, KINDVALUE) )
+d732 1
+a732 1
+      end function mlsmax_d2int
+d734 2
+a735 2
+      ! ------------------- mlsmax_d3int -----------------------
+      function mlsmax_d3int(values, fillValue) result(iValue)
+d743 1
+a743 1
+          iValue = mlsmax( real(values, KINDVALUE), real(fillValue, KINDVALUE) )
+d745 1
+a745 1
+          iValue = mlsmax( real(values, KINDVALUE) )
+d747 1
+a747 1
+      end function mlsmax_d3int
+d749 2
+a750 2
+      ! ------------------- mlsmean_d1int -----------------------
+      function mlsmean_d1int(values, fillValue) result(rValue)
+d758 1
+a758 1
+          rValue = mlsmean( real(values, KINDVALUE), real(fillValue, KINDVALUE) )
+d760 1
+a760 1
+          rValue = mlsmean( real(values, KINDVALUE) )
+d762 1
+a762 1
+      end function mlsmean_d1int
+d764 2
+a765 2
+      ! ------------------- mlsmean_d2int -----------------------
+      function mlsmean_d2int(values, fillValue) result(rValue)
+d773 1
+a773 1
+          rValue = mlsmean( real(values, KINDVALUE), real(fillValue, KINDVALUE) )
+d775 1
+a775 1
+          rValue = mlsmean( real(values, KINDVALUE) )
+d777 1
+a777 1
+      end function mlsmean_d2int
+d779 2
+a780 2
+      ! ------------------- mlsmean_d3int -----------------------
+      function mlsmean_d3int(values, fillValue) result(rValue)
+d788 1
+a788 1
+          rValue = mlsmean( real(values, KINDVALUE), real(fillValue, KINDVALUE) )
+d790 1
+a790 1
+          rValue = mlsmean( real(values, KINDVALUE) )
+d792 1
+a792 1
+      end function mlsmean_d3int
+d794 2
+a795 2
+      ! ------------------- mlsstddev_d1int -----------------------
+      function mlsstddev_d1int(values, fillValue) result(rValue)
+d803 1
+a803 1
+          rValue = mlsstddev( real(values, KINDVALUE), real(fillValue, KINDVALUE) )
+d805 1
+a805 1
+          rValue = mlsstddev( real(values, KINDVALUE) )
+d807 1
+a807 1
+      end function mlsstddev_d1int
+d809 2
+a810 2
+      ! ------------------- mlsstddev_d2int -----------------------
+      function mlsstddev_d2int(values, fillValue) result(rValue)
+d818 1
+a818 1
+          rValue = mlsstddev( real(values, KINDVALUE), real(fillValue, KINDVALUE) )
+d820 1
+a820 1
+          rValue = mlsstddev( real(values, KINDVALUE) )
+d822 1
+a822 1
+      end function mlsstddev_d2int
+d824 2
+a825 2
+      ! ------------------- mlsstddev_d3int -----------------------
+      function mlsstddev_d3int(values, fillValue) result(rValue)
+d833 1
+a833 1
+          rValue = mlsstddev( real(values, KINDVALUE), real(fillValue, KINDVALUE) )
+d835 1
+a835 1
+          rValue = mlsstddev( real(values, KINDVALUE) )
+d837 1
+a837 1
+      end function mlsstddev_d3int
+d839 2
+a840 2
+      ! ------------------- mlsmedian_d1int -----------------------
+      function mlsmedian_d1int(values, fillValue) result(iValue)
+d848 1
+a848 1
+          iValue = mlsmedian( real(values, KINDVALUE), real(fillValue, KINDVALUE) )
+d850 1
+a850 1
+          iValue = mlsmedian( real(values, KINDVALUE) )
+d852 1
+a852 1
+      end function mlsmedian_d1int
+d854 2
+a855 2
+      ! ------------------- mlsmedian_d2int -----------------------
+      function mlsmedian_d2int(values, fillValue) result(iValue)
+d863 1
+a863 1
+          iValue = mlsmedian( real(values, KINDVALUE), real(fillValue, KINDVALUE) )
+d865 1
+a865 1
+          iValue = mlsmedian( real(values, KINDVALUE) )
+d867 1
+a867 1
+      end function mlsmedian_d2int
+d869 2
+a870 2
+      ! ------------------- mlsmedian_d3int -----------------------
+      function mlsmedian_d3int(values, fillValue) result(iValue)
+d878 1
+a878 1
+          iValue = mlsmedian( real(values, KINDVALUE), real(fillValue, KINDVALUE) )
+d880 1
+a880 1
+          iValue = mlsmedian( real(values, KINDVALUE) )
+d882 1
+a882 1
+      end function mlsmedian_d3int
+d884 2
+a885 2
+      ! ------------------- mlsrms_d1int -----------------------
+      function mlsrms_d1int(values, fillValue) result(rValue)
+d893 1
+a893 1
+          rValue = mlsrms( real(values, KINDVALUE), real(fillValue, KINDVALUE) )
+d895 1
+a895 1
+          rValue = mlsrms( real(values, KINDVALUE) )
+d897 1
+a897 1
+      end function mlsrms_d1int
+d899 2
+a900 2
+      ! ------------------- mlsrms_d2int -----------------------
+      function mlsrms_d2int(values, fillValue) result(rValue)
+d908 1
+a908 1
+          rValue = mlsrms( real(values, KINDVALUE), real(fillValue, KINDVALUE) )
+d910 1
+a910 1
+          rValue = mlsrms( real(values, KINDVALUE) )
+d912 1
+a912 1
+      end function mlsrms_d2int
+d914 2
+a915 2
+      ! ------------------- mlsrms_d3int -----------------------
+      function mlsrms_d3int(values, fillValue) result(rValue)
+d923 1
+a923 1
+          rValue = mlsrms( real(values, KINDVALUE), real(fillValue, KINDVALUE) )
+d925 1
+a925 1
+          rValue = mlsrms( real(values, KINDVALUE) )
+d927 1
+a927 1
+      end function mlsrms_d3int
+d929 2
+a930 2
+      ! ------------------- mlsmin_d1r4 -----------------------
+      function mlsmin_d1r4(values, fillValue) result(rValue)
+d936 1
+a936 1
+      end function mlsmin_d1r4
+d938 2
+a939 2
+      ! ------------------- mlsmin_d1r8 -----------------------
+      function mlsmin_d1r8(values, fillValue) result(rValue)
+d945 1
+a945 1
+      end function mlsmin_d1r8
+d947 2
+a948 2
+      ! ------------------- mlsmin_d2r4 -----------------------
+      function mlsmin_d2r4(values, fillValue) result(rValue)
+d954 1
+a954 1
+      end function mlsmin_d2r4
+d956 2
+a957 2
+      ! ------------------- mlsmin_d2r8 -----------------------
+      function mlsmin_d2r8(values, fillValue) result(rValue)
+d963 1
+a963 1
+      end function mlsmin_d2r8
+d965 2
+a966 2
+      ! ------------------- mlsmin_d3r4 -----------------------
+      function mlsmin_d3r4(values, fillValue) result(rValue)
+d972 1
+a972 1
+      end function mlsmin_d3r4
+d974 2
+a975 2
+      ! ------------------- mlsmin_d3r8 -----------------------
+      function mlsmin_d3r8(values, fillValue) result(rValue)
+d981 1
+a981 1
+      end function mlsmin_d3r8
+d983 2
+a984 2
+      ! ------------------- mlsmax_d1r4 -----------------------
+      function mlsmax_d1r4(values, fillValue) result(rValue)
+d990 1
+a990 1
+      end function mlsmax_d1r4
+d992 2
+a993 2
+      ! ------------------- mlsmax_d1r8 -----------------------
+      function mlsmax_d1r8(values, fillValue) result(rValue)
+d999 1
+a999 1
+      end function mlsmax_d1r8
+d1001 2
+a1002 2
+      ! ------------------- mlsmax_d2r4 -----------------------
+      function mlsmax_d2r4(values, fillValue) result(rValue)
+d1008 1
+a1008 1
+      end function mlsmax_d2r4
+d1010 2
+a1011 2
+      ! ------------------- mlsmax_d2r8 -----------------------
+      function mlsmax_d2r8(values, fillValue) result(rValue)
+d1017 1
+a1017 1
+      end function mlsmax_d2r8
+d1019 2
+a1020 2
+      ! ------------------- mlsmax_d3r4 -----------------------
+      function mlsmax_d3r4(values, fillValue) result(rValue)
+d1026 1
+a1026 1
+      end function mlsmax_d3r4
+d1028 2
+a1029 2
+      ! ------------------- mlsmax_d3r8 -----------------------
+      function mlsmax_d3r8(values, fillValue) result(rValue)
+d1035 1
+a1035 1
+      end function mlsmax_d3r8
+d1037 2
+a1038 2
+      ! ------------------- mlsmean_d1r4 -----------------------
+      function mlsmean_d1r4(values, fillValue) result(rValue)
+d1044 1
+a1044 1
+      end function mlsmean_d1r4
+d1046 2
+a1047 2
+      ! ------------------- mlsmean_d1r8 -----------------------
+      function mlsmean_d1r8(values, fillValue) result(rValue)
+d1053 1
+a1053 1
+      end function mlsmean_d1r8
+d1055 2
+a1056 2
+      ! ------------------- mlsmean_d2r4 -----------------------
+      function mlsmean_d2r4(values, fillValue) result(rValue)
+d1062 1
+a1062 1
+      end function mlsmean_d2r4
+d1064 2
+a1065 2
+      ! ------------------- mlsmean_d2r8 -----------------------
+      function mlsmean_d2r8(values, fillValue) result(rValue)
+d1071 1
+a1071 1
+      end function mlsmean_d2r8
+d1073 2
+a1074 2
+      ! ------------------- mlsmean_d3r4 -----------------------
+      function mlsmean_d3r4(values, fillValue) result(rValue)
+d1080 1
+a1080 1
+      end function mlsmean_d3r4
+d1082 2
+a1083 2
+      ! ------------------- mlsmean_d3r8 -----------------------
+      function mlsmean_d3r8(values, fillValue) result(rValue)
+d1089 1
+a1089 1
+      end function mlsmean_d3r8
+d1091 2
+a1092 2
+      ! ------------------- mlsmedian_d1r4 -----------------------
+      function mlsmedian_d1r4(values, fillValue) result(rValue)
+d1098 1
+a1098 1
+      end function mlsmedian_d1r4
+d1100 2
+a1101 2
+      ! ------------------- mlsmedian_d1r8 -----------------------
+      function mlsmedian_d1r8(values, fillValue) result(rValue)
+d1107 1
+a1107 1
+      end function mlsmedian_d1r8
+d1109 2
+a1110 2
+      ! ------------------- mlsmedian_d2r4 -----------------------
+      function mlsmedian_d2r4(values, fillValue) result(rValue)
+d1116 1
+a1116 1
+      end function mlsmedian_d2r4
+d1118 2
+a1119 2
+      ! ------------------- mlsmedian_d2r8 -----------------------
+      function mlsmedian_d2r8(values, fillValue) result(rValue)
+d1125 1
+a1125 1
+      end function mlsmedian_d2r8
+d1127 2
+a1128 2
+      ! ------------------- mlsmedian_d3r4 -----------------------
+      function mlsmedian_d3r4(values, fillValue) result(rValue)
+d1134 1
+a1134 1
+      end function mlsmedian_d3r4
+d1136 2
+a1137 2
+      ! ------------------- mlsmedian_d3r8 -----------------------
+      function mlsmedian_d3r8(values, fillValue) result(rValue)
+d1143 1
+a1143 1
+      end function mlsmedian_d3r8
+d1145 2
+a1146 2
+      ! ------------------- mlsstddev_d1r4 -----------------------
+      function mlsstddev_d1r4(values, fillValue) result(rValue)
+d1152 1
+a1152 1
+      end function mlsstddev_d1r4
+d1154 2
+a1155 2
+      ! ------------------- mlsstddev_d1r8 -----------------------
+      function mlsstddev_d1r8(values, fillValue) result(rValue)
+d1161 1
+a1161 1
+      end function mlsstddev_d1r8
+d1163 2
+a1164 2
+      ! ------------------- mlsstddev_d2r4 -----------------------
+      function mlsstddev_d2r4(values, fillValue) result(rValue)
+d1170 1
+a1170 1
+      end function mlsstddev_d2r4
+d1172 2
+a1173 2
+      ! ------------------- mlsstddev_d2r8 -----------------------
+      function mlsstddev_d2r8(values, fillValue) result(rValue)
+d1179 1
+a1179 1
+      end function mlsstddev_d2r8
+d1181 2
+a1182 2
+      ! ------------------- mlsstddev_d3r4 -----------------------
+      function mlsstddev_d3r4(values, fillValue) result(rValue)
+d1188 1
+a1188 1
+      end function mlsstddev_d3r4
+d1190 2
+a1191 2
+      ! ------------------- mlsstddev_d3r8 -----------------------
+      function mlsstddev_d3r8(values, fillValue) result(rValue)
+d1197 1
+a1197 1
+      end function mlsstddev_d3r8
+d1199 2
+a1200 2
+      ! ------------------- mlsstddev_d4r4 -----------------------
+      function mlsstddev_d4r4(values, fillValue) result(rValue)
+d1206 1
+a1206 1
+      end function mlsstddev_d4r4
+d1208 2
+a1209 2
+      ! ------------------- mlsstddev_d4r8 -----------------------
+      function mlsstddev_d4r8(values, fillValue) result(rValue)
+d1215 1
+a1215 1
+      end function mlsstddev_d4r8
+d1217 2
+a1218 2
+      ! ------------------- mlsrms_d1r4 -----------------------
+      function mlsrms_d1r4(values, fillValue) result(rValue)
+d1224 1
+a1224 1
+      end function mlsrms_d1r4
+d1226 2
+a1227 2
+      ! ------------------- mlsrms_d1r8 -----------------------
+      function mlsrms_d1r8(values, fillValue) result(rValue)
+d1233 1
+a1233 1
+      end function mlsrms_d1r8
+d1235 2
+a1236 2
+      ! ------------------- mlsrms_d2r4 -----------------------
+      function mlsrms_d2r4(values, fillValue) result(rValue)
+d1242 1
+a1242 1
+      end function mlsrms_d2r4
+d1244 2
+a1245 2
+      ! ------------------- mlsrms_d2r8 -----------------------
+      function mlsrms_d2r8(values, fillValue) result(rValue)
+d1251 1
+a1251 1
+      end function mlsrms_d2r8
+d1253 2
+a1254 2
+      ! ------------------- mlsrms_d3r4 -----------------------
+      function mlsrms_d3r4(values, fillValue) result(rValue)
+d1260 1
+a1260 1
+      end function mlsrms_d3r4
+d1262 2
+a1263 2
+      ! ------------------- mlsrms_d3r8 -----------------------
+      function mlsrms_d3r8(values, fillValue) result(rValue)
+d1269 1
+a1269 1
+      end function mlsrms_d3r8
+d2575 1
+a2575 1
+       "$Id: MLSStats1.f90,v 2.27 2017/12/01 01:22:08 pwagner Exp $"
+d2588 3
+@
+
+
+2.27
+log
+@CamelCase use statements; improved comments
+@
+text
+@d17 1
+d32 1
+a32 1
+! STAT_T                          Basic user-defined data type containing
+d34 1
+a34 1
+! FILLVALUERELATION               Whether to use '=' (default) or '<', '>'
+d37 5
+a41 3
+! ALLSTATS                        Computes some or all standard statistics
+! DUMP                            Prints a STAT_T with all standard statistics
+! MLSMIN                          Finds min of an array
+d43 4
+a46 4
+! MLSMAX, MLSMEAN, MLSMEDIAN,
+!    MLSSTDDEV, MLSRMS            Similar to MLSMIN for other statistics
+! HOWNEAR                         Finds how near 2 arrays are in %
+! HOWFAR                          Inverse of hownear--given a % finds stats of 
+d48 3
+a50 1
+! PDF                             Finds the pdf for a sample x given a STAT_T
+d52 1
+a52 1
+! RATIOS                          Statistics of ratio between 2 arrays;
+d55 3
+a57 3
+! RESET                           Resets a STAT_T
+! STATFUNCTION                    Given a set of values it returns a STAT_T
+! STATISTICS                      Similar to STATFUNCTION, but may accumulate
+d63 1
+a63 1
+! STAT_T 
+d86 2
+d90 2
+a91 1
+! howfar( array1, array2, pct(:), stat_t gaps, char * mode )
+d101 1
+d106 2
+a107 2
+! (1) Unless specified explicitly, 'values', 'precision',
+! 'array1', and 'array2' may be any numerically typed array with
+d116 3
+a118 3
+  public :: Allstats, Dump, Howfar, Hownear, Ratios, Statistics  ! subroutines
+  public :: MLScount ! another function
+  public :: MLSmin, MLSmax, MLSmean, MLSmedian, MLSstddev, MLSrms ! functions
+d120 1
+a120 1
+  public :: Reset
+d220 4
+d1271 79
+d1357 2
+d1360 1
+d1366 15
+d1382 7
+d2112 35
+d2575 1
+a2575 1
+       "$Id: MLSStats1.f90,v 2.26 2016/09/09 20:37:32 pwagner Exp $"
+d2588 3
+@
+
+
+2.26
+log
+@Improved explanation of ratios, including args and usage
+@
+text
+@d15 1
+a15 1
+  use Allocate_Deallocate, only: allocate_test, deallocate_test
+d17 1
+a17 1
+  use MLSKinds, only: r4, r8
+d20 4
+a23 4
+  use MLSStringLists, only: catlists
+  use MLSStrings, only: lowercase
+  use Output_m, only: blanks, newline, output
+  use Sort_m, only: sort, sortp
+d31 2
+a32 1
+! STAT_T                          Basic user-defined data type
+d37 1
+a37 1
+! DUMP                            Prints a STAT_T
+d106 7
+a112 7
+  public :: STAT_T             ! The data type
+  public :: ALLSTATS, DUMP, HOWFAR, HOWNEAR, RATIOS, STATISTICS  ! subroutines
+  public :: MLSCOUNT ! Another function
+  public :: MLSMIN, MLSMAX, MLSMEAN, MLSMEDIAN, MLSSTDDEV, MLSRMS ! functions
+  public :: PDF
+  public :: RESET
+  public :: STATFUNCTION
+d166 2
+a167 2
+    integer :: count = 0      ! If > 0, merging data from prior call(s)
+    integer :: fillcount = 0  ! Number of times fillValues ignored
+d176 1
+a176 1
+    integer :: nbins = 0  !NCELLS; put > 2 if histogramming
+d189 1
+a189 1
+  interface ALLSTATS
+d1262 4
+a1265 3
+      ! where nearness is defined as within a gap either
+      ! of absolute value
+      ! or of relative value
+d1426 3
+a1428 2
+      ! of absolute value
+      ! or of relative value
+d2423 1
+a2423 1
+       "$Id: MLSStats1.f90,v 2.25 2014/01/09 00:24:29 pwagner Exp $"
+d2436 3
+@
+
+
+2.25
+log
+@Some procedures formerly in output_m now got from highOutput
+@
+text
+@d15 9
+a23 9
+  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+  use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
+  use MLSKINDS, only: R4, R8
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
+  use MLSFINDS, only: FINDALL, FINDFIRST, FINDLAST
+  use MLSSTRINGLISTS, only: CATLISTS
+  use MLSSTRINGS, only: LOWERCASE
+  use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT
+  use SORT_M, only: SORT, SORTP
+d48 1
+a48 1
+!                                    array "gold" standard (Why is this here?)
+d205 5
+a221 11
+  interface ratios
+    module procedure ratios_d1int, ratios_d2int, ratios_d3int
+    module procedure ratios_d1r4, ratios_d2r4, ratios_d3r4, ratios_d4r4
+    module procedure ratios_d1r8, ratios_d2r8, ratios_d3r8, ratios_d4r8
+  end interface
+  
+  interface filterValues
+    module procedure filterValues_r4
+    module procedure filterValues_r8
+  end interface
+  
+d268 6
+d1683 6
+d1701 1
+a1701 1
+      ! or noting the magnitude of changes to a "gold" standard
+d1712 4
+d2420 1
+a2420 1
+       "$Id: MLSStats1.f90,v 2.24 2013/08/12 23:47:25 pwagner Exp $"
+d2433 3
+@
+
+
+2.24
+log
+@FindSomethings moved to MLSFinds module
+@
+text
+@d16 1
+d22 1
+a22 1
+  use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT, OUTPUTNAMEDVALUE
+d2410 1
+a2410 1
+       "$Id: MLSStats1.f90,v 2.23 2011/07/26 20:43:51 pwagner Exp $"
+d2423 3
+@
+
+
+2.23
+log
+@Added some 4d interfaces
+@
+text
+@d18 1
+a18 1
+  use MLSSETS, only: FINDALL, FINDFIRST, FINDLAST
+d2409 1
+a2409 1
+       "$Id: MLSStats1.f90,v 2.22 2009/06/23 18:25:42 pwagner Exp $"
+d2422 3
+@
+
+
+2.22
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d13 1
+a13 1
+module MLSStats1                 ! Calculate Min, Max, Mean, rms, std deviation
+d15 6
+a20 6
+  use Allocate_Deallocate, only: allocate_Test, Deallocate_Test
+  use MLSCommon, only: r4, r8
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+  use MLSSets, only: findAll, findFirst, findLast
+  use MLSStringLists, only: catLists
+  use MLSStrings, only: lowerCase
+d22 1
+a22 1
+  use SORT_M, only: sort, sortp
+d78 1
+a78 1
+!      
+d114 1
+a114 1
+       "$RCSfile: $"
+a186 3
+  ! Which of two medianmethods to utilize
+  integer, private, save         :: medianMethod = 2 ! 1 is too slow
+
+d188 2
+a189 2
+    module procedure allstats_d1r4, allstats_d2r4, allstats_d3r4
+    module procedure allstats_d1r8, allstats_d2r8, allstats_d3r8
+d206 2
+a207 2
+    module procedure howfar_d1r4, howfar_d2r4, howfar_d3r4
+    module procedure howfar_d1r8, howfar_d2r8, howfar_d3r8
+d212 2
+a213 2
+    module procedure hownear_d1r4, hownear_d2r4, hownear_d3r4
+    module procedure hownear_d1r8, hownear_d2r8, hownear_d3r8
+d218 2
+a219 2
+    module procedure ratios_d1r4, ratios_d2r4, ratios_d3r4
+    module procedure ratios_d1r8, ratios_d2r8, ratios_d3r8
+d253 2
+a254 2
+    module procedure mlsstddev_d1r4, mlsstddev_d2r4, mlsstddev_d3r4
+    module procedure mlsstddev_d1r8, mlsstddev_d2r8, mlsstddev_d3r8
+d285 2
+a286 1
+  integer, parameter              :: FN_MIN       = 1
+d292 1
+a292 2
+  integer, parameter              :: FN_COUNT     = FN_MEDIAN + 1
+  integer, parameter              :: FN_FILLCOUNT = FN_COUNT + 1
+d486 86
+d1184 18
+d1354 14
+d1405 14
+d1492 12
+d1537 12
+d1906 24
+d1957 24
+d2409 1
+a2409 1
+       "$Id: read_apriori.f90 is it here $"
+d2422 3
+@
+
+
+2.21
+log
+@Less wasteful of memory; should not segment dault so often
+@
+text
+@d114 1
+a114 1
+       "$RCSfile: MLSStats1.f90,v $"
+d2205 1
+a2206 1
+!---------------------------- RCS Ident Info -------------------------------
+d2208 2
+a2209 3
+       "$Id: MLSStats1.f90,v 2.20 2008/05/23 01:15:29 pwagner Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d2211 1
+a2211 1
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
+d2213 1
+d2221 3
+@
+
+
+2.20
+log
+@New public variables to control dumps; e.g. statsOnOneLine
+@
+text
+@d1171 1
+a1171 1
+      subroutine howfar_d1int( array1, array2, pct, gaps, mode )
+d1177 3
+d1181 3
+a1183 1
+          & pct, gaps, mode )
+d1186 1
+a1186 1
+      subroutine howfar_d2int( array1, array2, pct, gaps, mode )
+d1192 3
+d1196 3
+a1198 1
+          & pct, gaps, mode )
+d1201 1
+a1201 1
+      subroutine howfar_d3int( array1, array2, pct, gaps, mode )
+d1207 3
+d1211 3
+a1213 1
+          & pct, gaps, mode )
+d1216 1
+a1216 1
+      subroutine howfar_d1r4( array1, array2, pct, gaps, mode )
+d1221 1
+a1221 1
+      subroutine howfar_d2r4( array1, array2, pct, gaps, mode )
+d1227 2
+d1234 1
+a1234 1
+          & pct, gaps, mode )
+d1237 1
+a1237 1
+      subroutine howfar_d3r4( array1, array2, pct, gaps, mode )
+d1243 2
+d1250 1
+a1250 1
+          & pct, gaps, mode )
+d1253 1
+a1253 1
+      subroutine howfar_d1r8( array1, array2, pct, gaps, mode )
+d1258 1
+a1258 1
+      subroutine howfar_d2r8( array1, array2, pct, gaps, mode )
+d1264 2
+d1271 1
+a1271 1
+          & pct, gaps, mode )
+d1274 1
+a1274 1
+      subroutine howfar_d3r8( array1, array2, pct, gaps, mode )
+d1280 2
+d1287 1
+a1287 1
+          & pct, gaps, mode )
+d2208 1
+a2208 1
+       "$Id: MLSStats1.f90,v 2.19 2007/11/01 23:28:42 pwagner Exp $"
+d2212 1
+d2221 3
+@
+
+
+2.19
+log
+@Added mlscount function
+@
+text
+@d184 2
+d1828 1
+a1828 1
+      subroutine dump_all(statistic)
+d1831 1
+d1833 4
+d1848 5
+a1852 1
+        call newline
+d1861 1
+d1863 1
+a1863 1
+        if ( any(statistic%indexing /= 0) ) then
+d1897 1
+a1897 1
+      subroutine dump_selected( statistic, which )
+d1901 1
+d1903 4
+d1912 5
+a1916 1
+        call newline
+d1919 5
+a1923 2
+        call newline
+        call dump_if_selected( statistic%indexing, which, 'indexing' )
+d2185 1
+a2185 1
+       "$Id: MLSStats1.f90,v 2.18 2007/10/24 23:56:58 pwagner Exp $"
+d2197 3
+@
+
+
+2.18
+log
+@Changed name of component to 'indexing'
+@
+text
+@d106 1
+d264 6
+d286 9
+a294 6
+  integer, parameter              :: FN_MIN = 1
+  integer, parameter              :: FN_MAX = FN_MIN + 1
+  integer, parameter              :: FN_MEAN = FN_MAX + 1
+  integer, parameter              :: FN_STDDEV = FN_MEAN + 1
+  integer, parameter              :: FN_RMS = FN_STDDEV + 1
+  integer, parameter              :: FN_MEDIAN = FN_RMS + 1
+d487 72
+d2161 1
+a2161 1
+       "$Id: MLSStats1.f90,v 2.17 2007/10/24 00:19:35 pwagner Exp $"
+d2173 3
+@
+
+
+2.17
+log
+@Added mindexes component to MLSStat to hold index of max, min, median
+@
+text
+@d22 1
+a22 1
+  use SORT_M, only: sort
+d66 1
+a66 1
+!             int   mindexes(3),
+d76 1
+a76 1
+!      & [min], [max], [mean], [stddev], [rms], [median], [int mindexes(3)], &
+d158 1
+a158 1
+  ! stored in the mindexes array
+d171 1
+a171 1
+    integer, dimension(3) :: mindexes = 0  !index of  (/ max, median, min /)
+d291 1
+a291 1
+        & bincount, mindexes, doDump )
+d300 1
+a300 1
+        & bincount, mindexes, doDump )
+d309 1
+a309 1
+        & bincount, mindexes, doDump )
+d326 1
+a326 1
+        integer, dimension(3), optional, intent(out)   :: mindexes
+d337 1
+a337 1
+            & mindexes=mindexes, doDump=doDump)
+d344 1
+a344 1
+            & mindexes=mindexes, doDump=doDump)
+d352 1
+a352 1
+        & bincount, mindexes, doDump )
+d369 1
+a369 1
+        integer, dimension(3), optional, intent(out)   :: mindexes
+d380 1
+a380 1
+            & mindexes=mindexes, doDump=doDump)
+d387 1
+a387 1
+            & mindexes=mindexes, doDump=doDump)
+d395 1
+a395 1
+        & bincount, mindexes, doDump )
+d412 1
+a412 1
+        integer, dimension(3), optional, intent(out)   :: mindexes
+d423 1
+a423 1
+            & mindexes=mindexes, doDump=doDump)
+d430 1
+a430 1
+            & mindexes=mindexes, doDump=doDump)
+d438 1
+a438 1
+        & bincount, mindexes, doDump )
+d455 1
+a455 1
+        integer, dimension(3), optional, intent(out)   :: mindexes
+d466 1
+a466 1
+            & mindexes=mindexes, doDump=doDump)
+d473 1
+a473 1
+            & mindexes=mindexes, doDump=doDump)
+d1732 1
+a1732 1
+            & statistic%bincount, statistic%mindexes)
+d1739 1
+a1739 1
+            & median=statistic%median, mindexes=statistic%mindexes )
+d1769 1
+a1769 1
+        if ( any(statistic%mindexes /= 0) ) then
+d1772 1
+a1772 1
+          call output(statistic%mindexes(1))
+d1775 1
+a1775 1
+          call output(statistic%mindexes(2))
+d1778 1
+a1778 1
+          call output(statistic%mindexes(3))
+d1817 1
+a1817 1
+        call dump_if_selected( statistic%rms, which, 'mindexs', 'yes' )
+d2079 1
+a2079 1
+       "$Id: MLSStats1.f90,v 2.16 2007/10/12 23:36:16 pwagner Exp $"
+d2091 3
+@
+
+
+2.16
+log
+@Added howfar procedures for comparing two arrays
+@
+text
+@d66 1
+d76 3
+a78 2
+!      & [min], [max], [mean], [stddev], [rms], [median], [int bincount], &
+!      & [log doDump] )
+d155 5
+d171 1
+d290 2
+a291 2
+        & count, fillcount, min, max, mean, stddev, rms, median, bincount, &
+        & doDump )
+d299 2
+a300 2
+        & count, fillcount, min, max, mean, stddev, rms, median, bincount, &
+        & doDump )
+d308 2
+a309 2
+        & count, fillcount, min, max, mean, stddev, rms, median, bincount, &
+        & doDump )
+d326 1
+d337 1
+a337 1
+            & doDump=doDump)
+d344 1
+a344 1
+            & doDump=doDump)
+d351 2
+a352 2
+        & count, fillcount, min, max, mean, stddev, rms, median, bincount, &
+        & doDump )
+d369 1
+d380 1
+a380 1
+            & doDump=doDump)
+d387 1
+a387 1
+            & doDump=doDump)
+d394 2
+a395 2
+        & count, fillcount, min, max, mean, stddev, rms, median, bincount, &
+        & doDump )
+d412 1
+d423 1
+a423 1
+            & doDump=doDump)
+d430 1
+a430 1
+            & doDump=doDump)
+d437 2
+a438 2
+        & count, fillcount, min, max, mean, stddev, rms, median, bincount, &
+        & doDump )
+d455 1
+d466 1
+a466 1
+            & doDump=doDump)
+d473 1
+a473 1
+            & doDump=doDump)
+d1732 1
+a1732 1
+            & statistic%bincount)
+d1734 1
+a1734 1
+          call allstats(values, &
+d1738 2
+a1739 1
+            & stddev=statistic%stddev, rms=statistic%rms, median=statistic%median )
+d1769 12
+d1817 1
+d2079 1
+a2079 1
+       "$Id: MLSStats1.f90,v 2.15 2007/09/13 21:07:44 pwagner Exp $"
+d2091 3
+@
+
+
+2.15
+log
+@Added hownear
+@
+text
+@a16 1
+  use MLSFillValues, only: isFillValue
+d41 2
+d79 1
+d103 1
+a103 1
+  public :: ALLSTATS, DUMP, HOWNEAR, RATIOS, STATISTICS  ! subroutines
+d196 6
+d1059 112
+d2053 1
+a2053 1
+       "$Id: MLSStats1.f90,v 2.14 2007/07/17 00:25:07 pwagner Exp $"
+d2065 3
+@
+
+
+2.14
+log
+@Added ratios, reset
+@
+text
+@d41 1
+d78 1
+d101 1
+a101 1
+  public :: ALLSTATS, DUMP, RATIOS, STATISTICS  ! subroutines
+d103 1
+a103 1
+  public :: pdf
+d194 6
+d1051 106
+d1933 1
+a1933 1
+       "$Id: MLSStats1.f90,v 2.13 2007/03/07 21:03:45 pwagner Exp $"
+d1945 3
+@
+
+
+2.13
+log
+@Avoiding isFillValue in filterValues (did not fix bug in isFillValue yet)
+@
+text
+@d26 70
+d99 1
+a99 1
+  public :: ALLSTATS, DUMP, STATISTICS  ! subroutines
+d102 1
+d114 1
+a114 1
+  ! Optionally, instead of filtering fill values, an array of precisions,
+d147 2
+a148 1
+  ! This is the main datatype, a stat.
+d192 6
+d306 1
+a306 1
+        shp =shape(values)
+d1173 267
+d1819 1
+a1819 1
+       "$Id: MLSStats1.f90,v 2.12 2007/02/06 17:54:13 pwagner Exp $"
+d1831 3
+@
+
+
+2.12
+log
+@Correctly tracks fillcount; dumps as fillcount and as %
+@
+text
+@d22 1
+a22 1
+  use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT
+d1322 2
+a1323 1
+          call findAll(.not. isFillValue(values, fillvalue), which, how_many=NX)
+d1329 2
+a1330 1
+          call findAll(.not. isFillValue(values, fillvalue), which, how_many=NX)
+d1383 2
+a1384 1
+          call findAll(.not. isFillValue(values, fillvalue), which, how_many=NX)
+d1390 2
+a1391 1
+          call findAll(.not. isFillValue(values, fillvalue), which, how_many=NX)
+d1463 8
+d1474 1
+a1474 1
+       "$Id: MLSStats1.f90,v 2.11 2006/08/21 23:38:41 pwagner Exp $"
+d1486 3
+@
+
+
+2.11
+log
+@Added pdf function; speedier median algorithm
+@
+text
+@d188 2
+a189 1
+        & count, min, max, mean, stddev, rms, median, bincount, doDump )
+d197 2
+a198 1
+        & count, min, max, mean, stddev, rms, median, bincount, doDump )
+d206 2
+a207 1
+        & count, min, max, mean, stddev, rms, median, bincount, doDump )
+d216 1
+d232 1
+a232 1
+            & count=count, min=min, max=max, mean=mean, &
+d239 1
+a239 1
+            & count=count, min=min, max=max, mean=mean, &
+d248 2
+a249 1
+        & count, min, max, mean, stddev, rms, median, bincount, doDump )
+d258 1
+d274 1
+a274 1
+            & count=count, min=min, max=max, mean=mean, &
+d281 1
+a281 1
+            & count=count, min=min, max=max, mean=mean, &
+d290 2
+a291 1
+        & count, min, max, mean, stddev, rms, median, bincount, doDump )
+d300 1
+d316 1
+a316 1
+            & count=count, min=min, max=max, mean=mean, &
+d323 1
+a323 1
+            & count=count, min=min, max=max, mean=mean, &
+d332 2
+a333 1
+        & count, min, max, mean, stddev, rms, median, bincount, doDump )
+d342 1
+d358 1
+a358 1
+            & count=count, min=min, max=max, mean=mean, &
+d365 1
+a365 1
+            & count=count, min=min, max=max, mean=mean, &
+d1138 2
+a1139 1
+            & statistic%count, statistic%min, statistic%max, statistic%mean, &
+d1177 19
+a1195 8
+        if ( statistic%nbins < 3 ) return
+        call output('x1,x2: ')
+        call output(statistic%bounds)
+        call newline
+        call output('bincounts: ')
+        call newline
+        call output(statistic%bincount)
+        call newline
+d1462 1
+a1462 1
+       "$Id: MLSStats1.f90,v 2.10 2006/08/12 00:08:21 pwagner Exp $"
+d1474 3
+@
+
+
+2.10
+log
+@Corrected bug in filling median
+@
+text
+@d18 2
+a19 1
+  use MLSSets, only: findAll
+d23 1
+d31 1
+d100 3
+d161 4
+d955 130
+d1440 1
+a1440 1
+       "$Id: MLSStats1.f90,v 2.9 2006/07/11 00:22:16 pwagner Exp $"
+d1452 3
+@
+
+
+2.9
+log
+@Most mls.. functions can take integer arrays
+@
+text
+@d996 1
+a996 1
+            & stddev=statistic%stddev, rms=statistic%rms, median=statistic%rms )
+d1300 1
+a1300 1
+       "$Id: MLSStats1.f90,v 2.8 2006/03/08 01:13:38 pwagner Exp $"
+d1312 3
+@
+
+
+2.8
+log
+@Added median as statistical component
+@
+text
+@d93 4
+d120 1
+d126 1
+d132 1
+d138 1
+d144 1
+d150 1
+d351 270
+d1158 10
+a1167 1
+        call findAll(.not. isFillValue(values, fillvalue), which, how_many=NX)
+d1217 10
+a1226 1
+        call findAll(.not. isFillValue(values, fillvalue), which, how_many=NX)
+d1300 1
+a1300 1
+       "$Id: MLSStats1.f90,v 2.7 2006/02/01 23:44:37 pwagner Exp $"
+d1312 3
+@
+
+
+2.7
+log
+@Added doDump option to allStats
+@
+text
+@d28 2
+a29 1
+  public :: MLSMIN, MLSMAX, MLSMEAN, MLSSTDDEV, MLSRMS, STATFUNCTION ! functions
+d49 7
+a55 3
+  ! In addition to the usual min, max, mean, stddev functions
+  ! an rms function has been created.
+  ! Missing so far is a median function, mode function, chi^2, 
+d70 2
+a74 1
+  ! (How about a separate count of times fillValue had to be ignored?)
+a78 1
+    real(r8) :: min
+d81 2
+d130 5
+d145 4
+d162 1
+d168 1
+a168 1
+        & count, min, max, mean, stddev, rms, bincount, doDump )
+d176 1
+a176 1
+        & count, min, max, mean, stddev, rms, bincount, doDump )
+d184 1
+a184 1
+        & count, min, max, mean, stddev, rms, bincount, doDump )
+d198 1
+d209 2
+a210 1
+            & stddev=stddev, rms=rms, bincount=bincount, doDump=doDump)
+d216 2
+a217 1
+            & stddev=stddev, rms=rms, bincount=bincount, doDump=doDump)
+d224 1
+a224 1
+        & count, min, max, mean, stddev, rms, bincount, doDump )
+d238 1
+d249 2
+a250 1
+            & stddev=stddev, rms=rms, bincount=bincount, doDump=doDump)
+d256 2
+a257 1
+            & stddev=stddev, rms=rms, bincount=bincount, doDump=doDump)
+d264 1
+a264 1
+        & count, min, max, mean, stddev, rms, bincount, doDump )
+d278 1
+d289 2
+a290 1
+            & stddev=stddev, rms=rms, bincount=bincount, doDump=doDump)
+d296 2
+a297 1
+            & stddev=stddev, rms=rms, bincount=bincount, doDump=doDump)
+d304 1
+a304 1
+        & count, min, max, mean, stddev, rms, bincount, doDump )
+d318 1
+d329 2
+a330 1
+            & stddev=stddev, rms=rms, bincount=bincount, doDump=doDump)
+d336 2
+a337 1
+            & stddev=stddev, rms=rms, bincount=bincount, doDump=doDump)
+d503 54
+d709 2
+a710 1
+            & statistic%stddev, statistic%rms, statistic%bincount)
+d716 1
+a716 1
+            & stddev=statistic%stddev, rms=statistic%rms)
+d733 3
+d765 2
+a767 1
+        call dump_if_selected( statistic%mean, which, 'mean', 'no' )
+d973 25
+d1002 1
+a1002 1
+       "$Id: MLSStats1.f90,v 2.6 2005/12/16 00:04:29 pwagner Exp $"
+d1014 3
+@
+
+
+2.6
+log
+@Changes to reflect new MLSFillValues module
+@
+text
+@d19 2
+d71 2
+a72 1
+    integer :: count = 0    ! If > 0, merging data from prior call(s)
+d91 17
+d133 4
+d149 1
+a149 1
+      subroutine allstats_d1r4(values, &
+d151 3
+a153 83
+        & count, min, max, mean, stddev, rms, bincount)
+        ! Args
+        real(r4), dimension(:), intent(in)             :: values
+        integer, optional, intent(in)                  :: nbins
+        real(r4), dimension(2), optional, intent(in)   :: bounds
+        logical, optional, intent(in)                  :: addeddata
+        real(r4), optional, intent(in)                 :: fillValue
+        real(r4), dimension(:), optional, intent(in)   :: precision
+        integer, optional, intent(inout)               :: count
+        real(r4), optional, intent(out)                :: min
+        real(r4), optional, intent(out)                :: max
+        real(r4), optional, intent(out)                :: mean
+        real(r4), optional, intent(out)                :: stddev
+        real(r4), optional, intent(out)                :: rms
+        integer, dimension(:), optional, intent(out)   :: bincount
+        ! Internal variables
+        real(r4), dimension(5)                         :: stats
+        logical                                        :: myAddedData
+        integer                                        :: ncells
+        integer                                        :: n
+        integer                                        :: nx
+        real(r4)                                       :: x1, x2
+        real(r4), dimension(:), pointer                :: xtab => null()
+        real(r4)                                       :: absMu, sigma
+        ! Executable
+        ncells = 1
+        if ( present(nbins) .and. present(bincount) ) ncells = nbins
+        x1 = 1.
+        x2 = 1.
+        if ( present(bounds) ) then
+          x1 = bounds(1)
+          x2 = bounds(2)
+        endif
+        myAddedData = .false.
+        if ( present(addedData) ) myAddedData = addedData
+        if ( myAddedData ) then
+          stats(1) = MLSStat%count
+          stats(2) = MLSStat%min
+          stats(3) = MLSStat%max
+          stats(4) = MLSStat%mean
+          stats(5) = MLSStat%stddev
+          if ( DEEBUG ) then
+          call output('Merging with existing stats count min max mean stddev ', advance='yes')
+          call output(stats, advance='yes')
+          endif
+        else
+          stats(1) = 0  ! Reset count to start again
+          if ( DEEBUG ) call output('Resetting count to 0', advance='yes')
+        endif
+        if ( present(fillValue) ) then
+          call filterValues_r4(values, XTAB, NX, fillValue=fillValue)
+          call STAT1_r4(XTAB, NX, STATS, bincount, NCELLS, X1, X2)
+          call Deallocate_test ( XTAB, 'XTAB', ModuleName )
+        elseif ( present(precision) ) then
+          call filterValues_r4(values, XTAB, NX, precision=precision)
+          call STAT1_r4(XTAB, NX, STATS, bincount, NCELLS, X1, X2)
+          call Deallocate_test ( XTAB, 'XTAB', ModuleName )
+        else
+          call STAT1_r4(values, size(values), STATS, bincount, NCELLS, X1, X2)
+        endif
+        MLSStat%count  = stats(1)
+        MLSStat%min    = stats(2)
+        MLSStat%max    = stats(3)
+        MLSStat%mean   = stats(4)
+        MLSStat%stddev = stats(5)
+        if ( present(count ) ) count  = stats(1)
+        if ( present(min   ) ) min    = stats(2)
+        if ( present(max   ) ) max    = stats(3)
+        if ( present(mean  ) ) mean   = stats(4)
+        if ( present(stddev) ) stddev = stats(5)
+        if ( present(rms   ) ) then
+          n = stats(1)
+          absMu = ABS(stats(4))
+          sigma = stats(5)
+          if ( n == 0 .or. (absMu == 0. .and. sigma == 0.) ) then
+            rms = 0.
+          elseif ( sigma < absMu ) then
+            rms = absMu*sqrt( ((n-1.)/n)*(sigma/absMu)**2 + 1. )
+          else
+            rms = sigma*sqrt( ((n-1.)/n) + (absMu/sigma)**2 )
+          endif
+        endif
+        
+d157 1
+a157 1
+      subroutine allstats_d1r8(values, &
+d159 3
+a161 75
+        & count, min, max, mean, stddev, rms, bincount)
+        ! Args
+        real(r8), dimension(:), intent(in)             :: values
+        integer, optional, intent(in)                  :: nbins
+        real(r8), dimension(2), optional, intent(in)   :: bounds
+        logical, optional, intent(in)                  :: addeddata
+        real(r8), optional, intent(in)                 :: fillValue
+        real(r8), dimension(:), optional, intent(in)   :: precision
+        integer, optional, intent(inout)               :: count
+        real(r8), optional, intent(out)                :: min
+        real(r8), optional, intent(out)                :: max
+        real(r8), optional, intent(out)                :: mean
+        real(r8), optional, intent(out)                :: stddev
+        real(r8), optional, intent(out)                :: rms
+        integer, dimension(:), optional, intent(out)   :: bincount
+        ! Internal variables
+        real(r8), dimension(5)                         :: stats
+        logical                                        :: myAddedData
+        integer                                        :: ncells
+        integer                                        :: n
+        integer                                        :: nx
+        real(r8)                                       :: x1, x2
+        real(r8), dimension(:), pointer                :: xtab => null()
+        real(r8)                                       :: absMu, sigma
+        ! Executable
+        ncells = 1
+        if ( present(nbins) .and. present(bincount) ) ncells = nbins
+        x1 = 1.
+        x2 = 1.
+        if ( present(bounds) ) then
+          x1 = bounds(1)
+          x2 = bounds(2)
+        endif
+        stats(1) = MLSStat%count
+        stats(2) = MLSStat%min
+        stats(3) = MLSStat%max
+        stats(4) = MLSStat%mean
+        stats(5) = MLSStat%stddev
+        myAddedData = .false.
+        if ( present(addedData) ) myAddedData = addedData
+        if ( .not. myAddedData ) stats(1) = 0  ! Reset count to start again
+        if ( present(fillValue) ) then
+          call filterValues_r8(values, XTAB, NX, fillValue=fillValue)
+          call STAT1_r8(XTAB, NX, STATS, bincount, NCELLS, X1, X2)
+          call Deallocate_test ( XTAB, 'XTAB', ModuleName )
+        elseif ( present(precision) ) then
+          call filterValues_r8(values, XTAB, NX, precision=precision)
+          call STAT1_r8(XTAB, NX, STATS, bincount, NCELLS, X1, X2)
+          call Deallocate_test ( XTAB, 'XTAB', ModuleName )
+        else
+          call STAT1_r8(values, size(values), STATS, bincount, NCELLS, X1, X2)
+        endif
+        MLSStat%count  = stats(1)
+        MLSStat%min    = stats(2)
+        MLSStat%max    = stats(3)
+        MLSStat%mean   = stats(4)
+        MLSStat%stddev = stats(5)
+        if ( present(count ) ) count  = stats(1)
+        if ( present(min   ) ) min    = stats(2)
+        if ( present(max   ) ) max    = stats(3)
+        if ( present(mean  ) ) mean   = stats(4)
+        if ( present(stddev) ) stddev = stats(5)
+        if ( present(rms   ) ) then
+          n = stats(1)
+          absMu = ABS(stats(4))
+          sigma = stats(5)
+          if ( n == 0 .or. (absMu == 0. .and. sigma == 0.) ) then
+            rms = 0.
+          elseif ( sigma < absMu ) then
+            rms = absMu*sqrt( ((n-1.)/n)*(sigma/absMu)**2 + 1. )
+          else
+            rms = sigma*sqrt( ((n-1.)/n) + (absMu/sigma)**2 )
+          endif
+        endif
+        
+d165 1
+a165 1
+      subroutine allstats_d2r4(values, &
+d167 1
+a167 1
+        & count, min, max, mean, stddev, rms, bincount)
+d182 1
+d191 1
+a191 1
+            & stddev=stddev, rms=rms, bincount=bincount)
+d197 1
+a197 1
+            & stddev=stddev, rms=rms, bincount=bincount)
+d202 1
+a202 1
+      subroutine allstats_d2r8(values, &
+d204 1
+a204 1
+        & count, min, max, mean, stddev, rms, bincount)
+d219 1
+d228 1
+a228 1
+            & stddev=stddev, rms=rms, bincount=bincount)
+d234 1
+a234 1
+            & stddev=stddev, rms=rms, bincount=bincount)
+d239 1
+a239 1
+      subroutine allstats_d3r4(values, &
+d241 1
+a241 1
+        & count, min, max, mean, stddev, rms, bincount)
+d256 1
+d265 1
+a265 1
+            & stddev=stddev, rms=rms, bincount=bincount)
+d271 1
+a271 1
+            & stddev=stddev, rms=rms, bincount=bincount)
+d276 1
+a276 1
+      subroutine allstats_d3r8(values, &
+d278 1
+a278 1
+        & count, min, max, mean, stddev, rms, bincount)
+d293 1
+d302 1
+a302 1
+            & stddev=stddev, rms=rms, bincount=bincount)
+d308 1
+a308 1
+            & stddev=stddev, rms=rms, bincount=bincount)
+d636 2
+a637 2
+      ! ------------------- dump -----------------------
+      subroutine dump(statistic)
+d640 1
+d667 25
+a691 1
+      end subroutine dump
+d694 75
+d889 1
+a889 1
+       "$Id: MLSStats1.f90,v 2.5 2005/06/22 17:25:50 pwagner Exp $"
+d901 3
+@
+
+
+2.5
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d17 1
+a17 1
+  use MLSNumerics, only: isFillValue
+d30 1
+a30 1
+       "$RCSfile: $"
+d913 1
+a913 1
+       "$Id: $"
+d925 3
+@
+
+
+2.4
+log
+@Avoid assigning to undefined values
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
+d28 3
+a30 6
+  !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
+       & "$Id: MLSStats1.f90,v 2.3 2004/09/28 23:15:35 pwagner Exp $"
+  character (len=len(idParm)), private :: Id = idParm
+  character(len=*), parameter, private :: ModuleName = &
+       & "$RCSfile: MLSStats1.f90,v $"
+d32 1
+a32 1
+  !---------------------------------------------------------------------------
+d911 5
+d925 3
+@
+
+
+2.3
+log
+@Uses isFillValue to allow slight tolerance
+@
+text
+@d1 2
+a2 2
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d22 1
+a22 1
+       & "$Id: MLSStats1.f90,v 2.2 2004/09/15 18:03:46 pwagner Exp $"
+d109 1
+a109 1
+
+a154 5
+        stats(1) = MLSStat%count
+        stats(2) = MLSStat%min
+        stats(3) = MLSStat%max
+        stats(4) = MLSStat%mean
+        stats(5) = MLSStat%stddev
+d157 14
+a170 1
+        if ( .not. myAddedData ) stats(1) = 0  ! Reset count to start again
+d915 3
+@
+
+
+2.2
+log
+@Added optional precision array
+@
+text
+@d9 1
+d22 1
+a22 1
+       & "$Id: MLSStats1.f90,v 2.1 2004/09/13 20:40:38 pwagner Exp $"
+d800 2
+a801 1
+        call findAll(values /= fillvalue, which, how_many=NX)
+d850 2
+a851 1
+        call findAll(values /= fillvalue, which, how_many=NX)
+d907 3
+@
+
+
+2.1
+log
+@First commit
+@
+text
+@d15 3
+a17 3
+  public :: STAT_T, &
+    & ALLSTATS, DUMP, MLSMIN, MLSMAX, MLSMEAN, MLSSTDDEV, MLSRMS, &
+    & STATFUNCTION, STATISTICS
+d21 1
+a21 1
+       & "$Id: L2GPData.f90,v 2.110 2004/08/04 23:19:01 pwagner Exp $"
+d24 1
+a24 1
+       & "$RCSfile: L2GPData.f90,v $"
+d31 7
+d39 1
+a39 1
+  ! arrays of rank 1, 2, or 3 and either sngl or dbl precision
+d41 1
+a41 1
+  ! an rms function has been created
+d44 14
+d63 1
+a63 1
+    integer :: count = 0    ! If > 0, merging data from prior run(s)
+d119 2
+a120 1
+      subroutine allstats_d1r4(values, nbins, bounds, addedData, fillValue, &
+d128 1
+d163 5
+a167 1
+          call filterValues_r4(values, XTAB, NX, fillValue)
+d199 2
+a200 1
+      subroutine allstats_d1r8(values, nbins, bounds, addedData, fillValue, &
+d208 1
+d243 5
+a247 1
+          call filterValues_r8(values, XTAB, NX, fillValue)
+d279 2
+a280 1
+      subroutine allstats_d2r4(values, nbins, bounds, addedData, fillValue, &
+d288 1
+d300 12
+a311 3
+        call allstats_d1r4(reshape(values, (/shp(1)*shp(2)/)), &
+          & nbins, bounds, addedData, fillValue, &
+          & count, min, max, mean, stddev, rms, bincount)
+d315 2
+a316 1
+      subroutine allstats_d2r8(values, nbins, bounds, addedData, fillValue, &
+d324 1
+d336 12
+a347 3
+        call allstats_d1r8(reshape(values, (/shp(1)*shp(2)/)), &
+          & nbins, bounds, addedData, fillValue, &
+          & count, min, max, mean, stddev, rms, bincount)
+d351 2
+a352 1
+      subroutine allstats_d3r4(values, nbins, bounds, addedData, fillValue, &
+d360 1
+d372 12
+a383 3
+        call allstats_d1r4(reshape(values, (/shp(1)*shp(2)*shp(3)/)), &
+          & nbins, bounds, addedData, fillValue, &
+          & count, min, max, mean, stddev, rms, bincount)
+d387 2
+a388 1
+      subroutine allstats_d3r8(values, nbins, bounds, addedData, fillValue, &
+d396 1
+d408 12
+a419 3
+        call allstats_d1r8(reshape(values, (/shp(1)*shp(2)*shp(3)/)), &
+          & nbins, bounds, addedData, fillValue, &
+          & count, min, max, mean, stddev, rms, bincount)
+d693 1
+a693 1
+      function statFunction(values, fillValue) result(statistic)
+d699 5
+a703 4
+        real(r8), dimension(:), intent(in)  :: values
+        real(r8), optional, intent(in)      :: fillValue
+        type(stat_T)                        :: statistic
+        call allstats(values, fillValue=fillValue, &
+d709 1
+a709 1
+      subroutine statistics(values, statistic, fillValue)
+d716 4
+a719 3
+        real(r8), dimension(:), intent(in)  :: values
+        real(r8), optional, intent(in)      :: fillValue
+        type(stat_T), intent(inout)         :: statistic
+d721 3
+a723 3
+        logical                             :: addedData
+        integer                             :: nbins
+        real(r8), dimension(2)              :: bounds
+d733 2
+a734 1
+          call allstats(values, nbins, bounds, addeddata, fillValue, &
+d738 2
+a739 1
+          call allstats(values, nbins, bounds, addeddata, fillValue, &
+d780 1
+a780 1
+      subroutine filterValues_r4(values, XTAB, NX, fillValue)
+d782 2
+a783 1
+      ! If fillValue is absent, return all values
+d785 1
+d792 1
+d809 11
+d828 1
+a828 1
+      subroutine filterValues_r8(values, XTAB, NX, fillValue)
+d830 1
+d832 1
+d834 1
+d841 1
+d858 11
+d903 4
+a906 1
+! $Log: L2GPData.f90,v $
+@
+

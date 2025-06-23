@@ -1,0 +1,664 @@
+head	2.10;
+access;
+symbols
+	v5-02-NRT-19:2.10
+	v6-00:2.10
+	v5-02-NRT-18:2.10
+	v5-02:2.10
+	v5-01-NRT-17:2.10
+	v5-01-NRT-16:2.10
+	v5-01-NRT-15:2.10
+	v5-01-NRT-14:2.10
+	neuralnetworks-1-0:2.10.0.12
+	cfm-single-freq-0-1:2.10.0.10
+	v5-01:2.10
+	v5-00:2.10
+	v4-23-TA133:2.10.0.8
+	mus-emls-1-70:2.10.0.6
+	rel-1-0-englocks-work:2.10.0.4
+	VUMLS1-00:2.10
+	VPL1-00:2.10
+	V4-22-NRT-08:2.10
+	VAM1-00:2.10
+	V4-21:2.10.0.2
+	V4-13:2.10
+	V4-12:2.10
+	V4-11:2.10
+	V4-10:2.10
+	V3-43:2.8
+	M4-00:2.10
+	V3-41:2.8
+	V3-40-PlusGM57:2.8.0.2
+	V2-24-NRT-04:2.7
+	V3-33:2.9
+	V2-24:2.7
+	V3-31:2.9
+	V3-30-NRT-05:2.8
+	cfm-01-00:2.8
+	V3-30:2.8
+	V3-20:2.8
+	V3-10:2.8
+	V2-23-NRT-02:2.7
+	V2-23:2.7
+	V2-22-NRT-01:2.7
+	V2-22:2.7
+	V2-21:2.7
+	V2-20:2.7
+	V2-11:2.7
+	V2-10:2.7
+	V2-00:2.7
+	V1-51:2.5
+	V1-50:2.5
+	V1-45:2.4
+	V1-44:2.4
+	V1-43:2.4
+	V1-42:2.4
+	V1-41:2.4
+	V1-32:2.4
+	V1-40:2.4
+	V1-31:2.4
+	V1-30:2.4
+	V1-13:2.2
+	V1-12:2.2
+	V1-11:2.2
+	V1-10:2.2
+	newfwm-feb03:2.2.0.2
+	V1-04:2.1
+	V1-03:2.1
+	V1-02:2.1
+	V1-00:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.10
+date	2011.12.17.00.30.04;	author vsnyder;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2010.11.30.00.34.52;	author pwagner;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2009.06.23.18.25.43;	author pwagner;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2005.06.22.17.25.50;	author pwagner;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2005.01.12.03.01.59;	author vsnyder;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2004.10.01.23.09.18;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2003.06.20.01.34.30;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2003.06.20.00.18.23;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2002.10.08.00.09.14;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2002.01.30.19.36.34;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.10
+log
+@Add ?sortp to sort generic interface
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+!     .  NASA contract NAS7-918 is acknowledged.
+module Sort_M
+  use MLSCommon, only: nan_signal, is_what_ieee
+!     Sort the M:N-vector A into ascending order.
+!
+!     To sort an array A' into descending order, let A = -A'
+!     To sort an array A' into ascending order according to the
+!     absolute value of the elements let A = ABS(A').
+!     To sort an array A' into decending order according to the
+!     absolute value of the elements let A = -ABS(A').
+!
+!     To keep track of the original elements, use SORTP.
+
+!>> 2002-01-30 SORT   Snyder Convert to Fortran 90
+!>> 1995-11-17 SSORT  Krogh  Converted SFTRAN to Fortran 77
+!>> 1994-10-19 SSORT  Krogh  Changes to use M77CON
+!>> 1988-11-22 SSORT  Snyder Initial code.
+
+  implicit none
+
+  private
+
+  public :: SORT, SORTP, SORTQ
+
+  interface SORT
+    module procedure ASORT, DSORT, ISORT, SSORT
+    ! Using a permutation vector:
+    module procedure ASORTP, DSORTP, ISORTP, SSORTP
+  end interface
+
+  interface SORTP ! Using a permutation vector
+    module procedure ASORTP, DSORTP, ISORTP, SSORTP
+  end interface
+
+  interface SORTQ ! Using a pre-specified permutation vector
+    module procedure ASORTQ, DSORTQ, ISORTQ, SSORTQ
+  end interface
+  
+  logical, parameter :: DEEBUG = .false.
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: sort.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  subroutine ASORT (A, M, N)
+    character(len=*), intent(inout) :: A(*)
+    character(len=len(a)) :: PARTN, TEMP
+    include "sort.f9h"
+  end subroutine ASORT
+
+  subroutine DSORT (A, M, N)
+    double precision, intent(inout) :: A(*)
+    double precision :: PARTN, TEMP
+    include "sort.f9h"
+  end subroutine DSORT
+
+  subroutine ISORT (A, M, N)
+    integer, intent(inout) :: A(*)
+    integer :: PARTN, TEMP
+    include "sort.f9h"
+  end subroutine ISORT
+
+  subroutine SSORT (A, M, N)
+    real, intent(inout) :: A(*)
+    real :: PARTN, TEMP
+    include "sort.f9h"
+  end subroutine SSORT
+
+  subroutine ASORTP (A, M, N, P)
+    character(len=*), intent(in) :: A(*)
+    integer, intent(in) :: M, N
+    integer, intent(out) :: P(*)
+    integer :: I
+    do i = m, n
+      p(i) = i
+    end do
+    call SORTQ ( A, M, N, P )
+  end subroutine ASORTP
+
+  subroutine DSORTP (A, M, N, P)
+    double precision, intent(in) :: A(*)
+    integer, intent(in) :: M, N
+    integer, intent(out) :: P(*)
+    integer :: I
+    do i = m, n
+      p(i) = i
+    end do
+    call SORTQ ( A, M, N, P )
+  end subroutine DSORTP
+
+  subroutine ISORTP (A, M, N, P)
+    integer, intent(in) :: A(*)
+    integer, intent(in) :: M, N
+    integer, intent(out) :: P(*)
+    integer :: I
+    do i = m, n
+      p(i) = i
+    end do
+    call SORTQ ( A, M, N, P )
+  end subroutine ISORTP
+
+  subroutine SSORTP (A, M, N, P)
+    real, intent(in) :: A(*)
+    integer, intent(in) :: M, N
+    integer, intent(out) :: P(*)
+    integer :: I
+    do i = m, n
+      p(i) = i
+    end do
+    call SORTQ ( A, M, N, P )
+  end subroutine SSORTP
+
+  subroutine ASORTQ (A, M, N, P)
+    character(len=*), intent(in) :: A(*)
+    character(len=len(a)) :: PARTN
+    include "sortq.f9h"
+  end subroutine ASORTQ
+
+  subroutine DSORTQ (A, M, N, P)
+    double precision, intent(in) :: A(*)
+    double precision :: PARTN
+    include "sortq.f9h"
+  end subroutine DSORTQ
+
+  subroutine ISORTQ (A, M, N, P)
+    integer, intent(in) :: A(*)
+    integer :: PARTN
+    include "sortq.f9h"
+  end subroutine ISORTQ
+
+  subroutine SSORTQ (A, M, N, P)
+    real, intent(in) :: A(*)
+    real :: PARTN
+    include "sortq.f9h"
+  end subroutine SSORTQ
+
+      subroutine GSORTP (COMPAR, N, P)
+!     .  Copyright (C) 1989, California Institute of Technology.
+!     .  All rights reserved.  U. S. Government sponsorship under
+!     .  NASA contract NAS7-918 is acknowledged.
+!>> 1998-01-20  GSORTP  Snyder  Allow not initializing P.
+!>> 1996-05-01  GSORTP  Krogh   Changes to use .C. and C%%.
+!>> 1995-11-17  GSORTP  Krogh   Converted SFTRAN to Fortran 77.
+!>> 1991-04-02  GSORTP  Snyder  Repair no permutation vector if m-n < 10
+!>> 1988-11-22  GSORTP  Snyder  Initial code.
+!
+!     Sort an N-vector of objects of unknown type and organization.
+!     P is set so that the P(J)'th element of the original sequence is
+!     the J'th element of the sorted sequence.  The order is defined by
+!     the integer function COMPAR.  An invocation COMPAR(I,J) should
+!     return -1 if the I'th element of the data is to preceed the J'th
+!     element in the sorted sequence, +1 if the J'th element is to
+!     preceed the I'th element in the sorted sequence, and 0 if the I'th
+!     and J'th elements are the same.
+!
+!     This subprogram is unaware of the data, and cannot manipulate it.
+!     It is the caller's responsibility to make the data known to the
+!     COMPAR function.
+!
+      integer COMPAR, N, P(*)
+      external COMPAR
+!
+!     *****     Local Variables     ************************************
+!
+! BL      Left bound of the sub-array to be sorted at the next step.
+! BR      Right bound of the sub array to be sorted at the next step.
+! CL      Current left bound of the unsorted sub-array.
+! CR      Current right bound of the unsorted sub-array.
+! MYN     My N.
+! PARTN   is the partition element.
+! PTEMP   holds elements of P during exchanges.
+! STACKL  keeps track of the left bounds of sub-arrays waiting to be
+!         sorted.
+! STACKR  keeps track of the right bounds of sub-arrays waiting to be
+!         sorted.
+! STKTOP  keeps track of the top of the stacks.
+!
+      integer BL,BR,CL,CR,MYN,PARTN,PTEMP
+      integer STACKL(32),STACKR(32),STKTOP
+!
+!     *****     Executable Statements     ******************************
+!
+      do 20 cl = 1, n
+         p(cl)=cl
+   20 continue
+      myn = abs(n)
+      if (myn.ge.10) then
+         stktop=1
+         stackl(1)=1
+         stackr(1)=myn
+!           Start until loop
+   40    continue
+            bl=stackl(stktop)
+            br=stackr(stktop)
+            stktop=stktop-1
+!           Choose a partitioning element.  Use the median of the first,
+!           middle and last elements.  Sort them so the extreme elements
+!           can serve as sentinels during partitioning.
+            cl=(bl+br)/2
+            partn=p(cl)
+!%%         if ((*compar)( P[bl], partn ) > 0 ){
+            if (compar(p(bl),partn).gt.0) then
+               p(cl)=p(bl)
+               p(bl)=partn
+               partn=p(cl)
+!%%         }
+            end if
+!%%         if ((*compar)( P[bl], P[br] ) > 0 ){
+            if (compar(p(bl),p(br)).gt.0) then
+               ptemp=p(bl)
+               p(bl)=p(br)
+               p(br)=ptemp
+!%%         }
+            end if
+!%%         if ((*compar)( partn, P[br] ) > 0 ){
+            if (compar(partn,p(br)).gt.0) then
+               p(cl)=p(br)
+               p(br)=partn
+               partn=p(cl)
+!%%         }
+            end if
+            p(cl)=p(br-1)
+            p(br-1)=partn
+!           Partition the sub-array around PARTN.  Exclude the above
+!           considered elements from partitioning because they're al-
+!           ready in the correct subfiles.  Stop scanning on equality to
+!           prevent files containing equal values from causing a loop.
+            cl=bl
+            cr=br-1
+!              Start forever block
+   60       continue
+   80          cl=cl+1
+!%%               if ((*compar)( P[cl], partn ) < 0) goto L_80;
+                  if (compar(p(cl),partn) .lt. 0) go to 80
+  100          cr=cr-1
+!%%               if ((*compar)( P[cr], partn ) > 0) goto L_100;
+                  if (compar(p(cr),partn) .gt. 0) go to 100
+               if (cl.gt.cr) go to 120
+               ptemp=p(cl)
+               p(cl)=p(cr)
+               p(cr)=ptemp
+               go to 60
+!              End forever block
+  120       continue
+!           Put sub-arrays on the stack if they're big enough.  Put the
+!           larger under the smaller, so the smaller will be done next.
+!           This makes the upper bound of the stack depth log2 (myn).
+!           (The "Hibbard" modification of quicksort).
+            if (cl-bl .gt. br-cr) then
+               if (cl-bl.gt.10) then
+                  stktop=stktop+1
+                  stackl(stktop)=bl
+                  stackr(stktop)=cr
+               end if
+               if (br-cr.gt.10) then
+                  stktop=stktop+1
+                  stackl(stktop)=cl
+                  stackr(stktop)=br
+               end if
+            else
+               if (br-cr.gt.10) then
+                  stktop=stktop+1
+                  stackl(stktop)=cl
+                  stackr(stktop)=br
+               end if
+               if (cl-bl.gt.10) then
+                  stktop=stktop+1
+                  stackl(stktop)=bl
+                  stackr(stktop)=cr
+               end if
+            end if
+!           End until loop
+         if (stktop .ne. 0) go to 40
+      end if
+!     Clean up small subfiles by using insertion sort on everything.
+      do 160 cr = 2, myn
+         ptemp=p(cr)
+         cl=cr
+  140    continue
+!%%      if ((*compar)( P[cl - 1], ptemp ) > 0) {
+         if (compar(p(cl-1),ptemp).gt.0) then
+            p(cl)=p(cl-1)
+            cl=cl-1
+            if (cl .gt. 1) go to 140
+!%%      }
+         end if
+         p(cl)=ptemp
+  160 continue
+      return
+      end subroutine GSORTP
+
+!---------------------------------------------------------------------------
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: sort.f90,v 2.9 2010/11/30 00:34:52 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Sort_M
+
+! $Log: sort.f90,v $
+! Revision 2.9  2010/11/30 00:34:52  pwagner
+! NaNs now sort to the end
+!
+! Revision 2.8  2009/06/23 18:25:43  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.7  2005/06/22 17:25:50  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.6  2005/01/12 03:01:59  vsnyder
+! Added character sorts
+!
+! Revision 2.5  2004/10/01 23:09:18  vsnyder
+! Add GSORTP
+!
+! Revision 2.4  2003/06/20 01:34:30  vsnyder
+! Change intent for A and P
+!
+! Revision 2.3  2003/06/20 00:18:23  vsnyder
+! Add SORTP and SORTQ
+!
+! Revision 2.2  2002/10/08 00:09:14  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.1  2002/01/30 19:36:34  vsnyder
+! Initial commit
+!
+@
+
+
+2.9
+log
+@NaNs now sort to the end
+@
+text
+@d37 2
+d310 1
+a310 1
+       "$Id: sort.f90,v 2.8 2009/06/23 18:25:43 pwagner Exp $"
+d320 3
+@
+
+
+2.8
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d13 1
+a13 1
+
+d29 6
+d46 2
+d51 1
+a51 1
+       "$RCSfile: $"
+d308 1
+a308 1
+       "$Id: read_apriori.f90 is it here $"
+d318 3
+@
+
+
+2.7
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d297 1
+a298 1
+!---------------------------- RCS Ident Info -------------------------------
+d300 2
+a301 3
+       "$Id: $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d303 1
+d305 1
+d310 3
+@
+
+
+2.6
+log
+@Added character sorts
+@
+text
+@d1 10
+a10 2
+!     .  Copyright (C) 1989, California Institute of Technology.
+!     .  All rights reserved.  U. S. Government sponsorship under
+d41 1
+a41 4
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
+       "$Id: sort.f90,v 2.5 2004/10/01 23:09:18 vsnyder Exp $"
+  character (len=len(idParm)), private :: Id = idParm
+d43 1
+a43 1
+       "$RCSfile: sort.f90,v $"
+d298 5
+d309 3
+@
+
+
+2.5
+log
+@Add GSORTP
+@
+text
+@d22 1
+a22 1
+    module procedure DSORT, ISORT, SSORT
+d26 1
+a26 1
+    module procedure DSORTP, ISORTP, SSORTP
+d30 1
+a30 1
+    module procedure DSORTQ, ISORTQ, SSORTQ
+d35 1
+a35 1
+       "$Id: sort.f90,v 2.4 2003/06/20 01:34:30 vsnyder Exp $"
+d44 6
+d68 11
+d112 6
+d299 3
+@
+
+
+2.4
+log
+@Change intent for A and P
+@
+text
+@d35 1
+a35 1
+       "$Id: sort.f90,v 2.3 2003/06/20 00:18:23 vsnyder Exp $"
+d113 155
+d276 3
+@
+
+
+2.3
+log
+@Add SORTP and SORTQ
+@
+text
+@d35 1
+a35 1
+       "$Id: sort.f90,v 2.2 2002/10/08 00:09:14 pwagner Exp $"
+d63 1
+a63 1
+    double precision, intent(inout) :: A(*)
+d74 1
+a74 1
+    integer, intent(inout) :: A(*)
+d85 1
+a85 1
+    real, intent(inout) :: A(*)
+d96 1
+a96 1
+    double precision, intent(inout) :: A(*)
+d102 1
+a102 1
+    integer, intent(inout) :: A(*)
+d108 1
+a108 1
+    real, intent(inout) :: A(*)
+d121 3
+@
+
+
+2.2
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d25 8
+d35 1
+a35 1
+       "$Id: sort.f90,v 2.1 2002/01/30 19:36:34 vsnyder Exp $"
+d46 1
+a46 1
+    double precision :: PARTN,TEMP
+d52 1
+a52 1
+    integer :: PARTN,TEMP
+d58 1
+a58 1
+    real :: PARTN,TEMP
+d61 53
+d121 3
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d27 1
+a27 1
+       "$Id: RetrievalModule.f90,v 2.128 2002/01/18 00:31:23 livesey Exp $"
+d30 2
+a31 1
+       "$RCSfile: RetrievalModule.f90,v $"
+d53 4
+d59 4
+a62 1
+! $Log: $
+@
+

@@ -1,0 +1,912 @@
+head	1.30;
+access;
+symbols
+	v5-02-NRT-19:1.30
+	v6-00:1.30
+	v5-02-NRT-18:1.30
+	v5-02:1.30
+	v5-01-NRT-17:1.30
+	v5-01-NRT-16:1.30
+	v5-01-NRT-15:1.30
+	v5-01-NRT-14:1.30
+	neuralnetworks-1-0:1.30.0.10
+	cfm-single-freq-0-1:1.30.0.8
+	v5-01:1.30
+	v5-00:1.30
+	v4-23-TA133:1.30.0.6
+	mus-emls-1-70:1.30.0.4
+	rel-1-0-englocks-work:1.30.0.2
+	VUMLS1-00:1.30
+	VPL1-00:1.30
+	V4-22-NRT-08:1.30
+	VAM1-00:1.30
+	V4-21:1.27.0.2
+	V4-13:1.27
+	V4-12:1.27
+	V4-11:1.27
+	V4-10:1.27
+	V3-43:1.25
+	M4-00:1.27
+	V3-41:1.25
+	V3-40-PlusGM57:1.25.0.2
+	V2-24-NRT-04:1.25
+	V3-33:1.26
+	V2-24:1.25
+	V3-31:1.26
+	V3-30-NRT-05:1.26
+	cfm-01-00:1.25
+	V3-30:1.25
+	V3-20:1.25
+	V3-10:1.25
+	V2-23-NRT-02:1.25
+	V2-23:1.25
+	V2-22-NRT-01:1.25
+	V2-22:1.25
+	V2-21:1.25
+	V2-20:1.25
+	V2-11:1.25
+	V2-10:1.25
+	V2-00:1.25
+	V1-51:1.25
+	V1-50:1.25
+	V1-45:1.25
+	V1-44:1.25
+	V1-43:1.25
+	V1-32:1.25
+	V1-31:1.25
+	V1-30:1.22
+	V1-13:1.17
+	V1-12:1.17
+	V1-11:1.17
+	V1-10:1.16
+	newfwm-feb03:1.16.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.30
+date	2015.04.30.17.30.19;	author pwagner;	state Exp;
+branches;
+next	1.29;
+
+1.29
+date	2015.04.29.18.21.00;	author pwagner;	state Exp;
+branches;
+next	1.28;
+
+1.28
+date	2015.03.27.18.01.55;	author pwagner;	state Exp;
+branches;
+next	1.27;
+
+1.27
+date	2013.04.11.16.35.34;	author pwagner;	state Exp;
+branches;
+next	1.26;
+
+1.26
+date	2010.08.26.20.34.43;	author pwagner;	state Exp;
+branches;
+next	1.25;
+
+1.25
+date	2003.11.01.18.45.52;	author livesey;	state Exp;
+branches;
+next	1.24;
+
+1.24
+date	2003.10.23.23.37.46;	author livesey;	state Exp;
+branches;
+next	1.23;
+
+1.23
+date	2003.10.15.13.37.54;	author mjf;	state Exp;
+branches;
+next	1.22;
+
+1.22
+date	2003.08.14.20.26.43;	author livesey;	state Exp;
+branches;
+next	1.21;
+
+1.21
+date	2003.06.04.17.13.38;	author livesey;	state Exp;
+branches;
+next	1.20;
+
+1.20
+date	2003.05.09.23.53.57;	author livesey;	state Exp;
+branches;
+next	1.19;
+
+1.19
+date	2003.05.07.20.54.12;	author livesey;	state Exp;
+branches;
+next	1.18;
+
+1.18
+date	2003.03.25.21.18.52;	author livesey;	state Exp;
+branches;
+next	1.17;
+
+1.17
+date	2003.02.18.23.59.50;	author livesey;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2003.01.14.23.49.29;	author livesey;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2002.12.16.16.02.55;	author mjf;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2002.11.22.12.45.38;	author mjf;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2002.11.20.19.53.06;	author mjf;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2002.11.06.02.02.42;	author livesey;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2002.10.23.19.56.37;	author livesey;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2002.10.08.13.55.38;	author mjf;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2002.10.02.23.06.00;	author pwagner;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2002.08.04.16.15.53;	author mjf;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2002.07.17.19.29.45;	author livesey;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2002.07.10.00.51.26;	author livesey;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2002.06.26.20.21.21;	author livesey;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2002.06.26.01.27.09;	author livesey;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2002.06.15.00.12.27;	author livesey;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2002.06.04.23.23.24;	author livesey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2002.05.17.20.24.09;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.30
+log
+@Sense of flagMagneticFieldOnHeightGrid was reversed; fixed
+@
+text
+@!divert(-1)
+;; $Id: filltruth.l2cf,v 1.29 2015/04/29 18:21:00 pwagner Exp $
+
+;; This l2cf fragment is for constructing and filling the 'truth'
+;; state vector.
+
+!divert!dnl
+!define(flagGotTruth,1)
+begin Fill
+
+  ;; --------------------------------------------- Setup vector
+
+  ;; First define the vector in question
+  truth: Vector, template=stateTemplate
+
+  ;; Get the contents from apriori
+  Transfer, source=apriori, destination=truth
+
+  ;; Now, the rest of the l2cf fragment is replacing parts of this
+  ;; with truth data.
+
+  ;; --------------------------------------------- L2GPs
+  
+  ;; This macro fills one truth quantity with l2gp data
+  !define(fillWithL2GP,{Fill, quantity=truth.$1, method=l2gp, $
+    sourceL2GP={l2gpTruth}$1{Input},/interpolate!nl})
+
+  ;; Now execute this macro for all the species for which we have l2gp
+  ;; data
+  !forall(fillWithL2GP,!l2gpInputSpecies)
+
+  ;; We'll also do the same for refgph, which is a special case
+  Fill, quantity=truth.refGPH, method=l2gp, sourceL2GP=l2gpTruthGPHInput, /interpolate
+
+  ;; --------------------------------------------- RHi
+
+  ;; Get RHI from H2O
+  Fill, quantity=truth.rhi, h2oQuantity=truth.h2o, $
+    temperatureQuantity=truth.temperature, method=RHIFromH2O, /dontMask
+
+  ;; --------------------------------------------- hiRes Fills
+
+  !define(trimHR, {!substr($1,0,!eval(!len($1)-3))})
+  !define(fillWithL2GPHR,{Fill, quantity=truth.$1, method=l2gp, $
+    sourceL2GP={l2gpTruth}!trimHR($1){Input},/interpolate!nl})
+  !fillWithL2GPHR(O3_HR)
+  !fillWithL2GPHR(Temperature_HR)
+  !forall(fillWithL2GPHR,!allHiResMolecules)
+  ;; Get RHI_HR from RHI_HR.  Probably more accurate ways to do it.
+  ;; However, RHI is not an important input to e.g. sids.
+  ;; !interpolateToHiRes(truth.RHI_HR)
+
+  ;; --------------------------------------------- tpPressure
+  !ifdef(tpPressure,{
+    Fill, quantity=truth.tpPressure, method=explicit, $
+      explicitValues=!tpPressure, /spread
+  }{
+    Fill, quantity=truth.tpPressure, method=wmoTropopause, $
+      temperatureQuantity=truth.temperature, refGPHQuantity=truth.refGPH, $
+      internalVgrid=vGridWMO
+  })
+
+  ;; --------------------------------------------- Ptan
+
+  ;; Compute non refracted phitans for truth
+  Fill, quantity=truth.phiTanGHz, method=refract, $
+    ptanQuantity=truth.ptanGHz, $
+    h2oQuantity=truth.h2o, $
+    temperatureQuantity=truth.temperature, $
+    refract=false
+  Fill, quantity=truth.phiTanTHz, method=refract, $
+    ptanQuantity=truth.ptanTHz, $
+    h2oQuantity=truth.h2o, $
+    temperatureQuantity=truth.temperature, $
+    refract=false
+
+  ;; Get full gph profile
+  Fill, quantity=truth.gph, method=hydrostatic, $
+    temperatureQuantity=truth.temperature, $
+    refGPHquantity=truth.refGPH
+  !ifdef(flagSkipHydrostatic,{},{
+
+  ;; Now deduce a corresponding ptan for this using hydrostatic
+  ;; balance.
+  Fill, quantity=truth.ptanGHz, method=hydrostatic, $
+    h2oQuantity=truth.h2o, $
+    temperatureQuantity=truth.temperature, $
+    refGPHQuantity=truth.refGPH, $
+    geocAltitudeQuantity=truth.tngtGeocAltGHz, $
+    orbitInclination=truth.orbitInclination, $
+    phiTan=truth.phiTanGHz, $
+    maxIterations=20, $
+    !ifdef(flagStrict1D,{phiWindow=0 profiles},{phiWindow=13 profiles})
+
+  Fill, quantity=truth.ptanTHz, method=hydrostatic, $
+    h2oQuantity=truth.h2o, $
+    temperatureQuantity=truth.temperature, $
+    refGPHQuantity=truth.refGPH, $
+    geocAltitudeQuantity=truth.tngtGeocAltTHz, $
+    orbitInclination=truth.orbitInclination, $
+    phiTan=truth.phiTanTHz, $
+    maxIterations=20, $
+    !ifdef(flagStrict1D,{phiWindow=0 profiles},{phiWindow=13 profiles})
+
+  ;; Fill the magnetic field.
+!ifdef(flagMagneticFieldOnHeightGrid,{!dnl
+  Fill, quantity=truth.magneticField, method=magneticModel, $
+    scVelECR=truth.scVelECR, geocAltitudeQuantity=truth.tngtGeocAltGHz
+  Fill, quantity=truth.fieldAzimuth, method=rotateField, $
+    fieldECR=truth.magneticField, ecrToFOV=truth.ecrToFOV
+  Fill, quantity=truth.fieldElevation, method=rotateField, $
+    fieldECR=truth.magneticField, ecrToFOV=truth.ecrToFOV
+  Fill, quantity=truth.fieldStrength, method=rotateField, $
+    fieldECR=truth.magneticField, ecrToFOV=truth.ecrToFOV
+  },{
+  Fill, quantity=truth.magneticField, method=magneticModel, $
+    GPHquantity=truth.gph
+  Fill, quantity=truth.fieldAzimuth, method=rotateField, $
+    fieldECR=truth.magneticField, ecrToFOV=truth.ecrToFOV
+  Fill, quantity=truth.fieldElevation, method=rotateField, $
+    fieldECR=truth.magneticField, ecrToFOV=truth.ecrToFOV
+  Fill, quantity=truth.fieldStrength, method=rotateField, $
+    fieldECR=truth.magneticField, ecrToFOV=truth.ecrToFOV
+    })
+
+  })
+
+end Fill
+!divert(-1)
+; $Log: filltruth.l2cf,v $
+; Revision 1.29  2015/04/29 18:21:00  pwagner
+; Restored partial backward compatibility
+;
+; Revision 1.28  2015/03/27 18:01:55  pwagner
+; Preparing for new magneticField
+;
+; Revision 1.27  2013/04/11 16:35:34  pwagner
+; Replaced 4 degree phiWindows with 5 profiles
+;
+; Revision 1.26  2010/08/26 20:34:43  pwagner
+; Now fills hi-res ozone by interpolation
+;
+!divert!dnl
+@
+
+
+1.29
+log
+@Restored partial backward compatibility
+@
+text
+@d2 1
+a2 1
+;; $Id: filltruth.l2cf,v 1.28 2015/03/27 18:01:55 pwagner Exp $
+d108 1
+a108 1
+    GPHquantity=truth.gph
+d117 1
+a117 1
+    scVelECR=truth.scVelECR, geocAltitudeQuantity=truth.tngtGeocAltGHz
+d131 3
+@
+
+
+1.28
+log
+@Preparing for new magneticField
+@
+text
+@d2 1
+a2 1
+;; $Id: filltruth.l2cf,v 1.27 2013/04/11 16:35:34 pwagner Exp $
+d108 1
+a108 1
+    scVelECR=truth.scVelECR, geocAltitudeQuantity=truth.tngtGeocAltGHz
+d131 3
+@
+
+
+1.27
+log
+@Replaced 4 degree phiWindows with 5 profiles
+@
+text
+@d2 1
+a2 1
+;; $Id: filltruth.l2cf,v 1.26 2010/08/26 20:34:43 pwagner Exp $
+d106 1
+d108 1
+a108 1
+    GPHquantity=truth.gph
+d115 11
+a125 1
+  
+d131 3
+@
+
+
+1.26
+log
+@Now fills hi-res ozone by interpolation
+@
+text
+@d2 1
+a2 1
+;; $Id: filltruth.l2cf,v 1.25 2003/11/01 18:45:52 livesey Exp $
+d93 1
+a93 1
+    !ifdef(flagStrict1D,{phiWindow=0 profiles},{phiWindow=4 degrees})
+d103 1
+a103 1
+    !ifdef(flagStrict1D,{phiWindow=0 profiles},{phiWindow=4 degrees})
+d119 4
+a122 1
+; $Log: retrievalmacros.l2cf,v $
+@
+
+
+1.25
+log
+@Changes to support hi resolution
+@
+text
+@d1 2
+a2 1
+;; $Id: filltruth.l2cf,v 1.24 2003/10/23 23:37:46 livesey Exp $
+d7 1
+a7 1
+;; First define the vector in question
+d13 1
+d46 1
+d118 3
+a120 2
+
+
+@
+
+
+1.24
+log
+@Added a fill for the true magnetic field, rather than a trasnfer from
+apriori which has 0 GPH problems.
+@
+text
+@d1 1
+a1 1
+;; $Id: filltruth.l2cf,v 1.23 2003/10/15 13:37:54 mjf Exp $
+d41 8
+a48 8
+;   !define(fillWithL2GPHR,{Fill, quantity=truth.$1, method=l2gp, $
+;     sourceL2GP={l2gpTruth}!trimHR($1){Input},/interpolate!nl})
+;   !fillWithL2GPHR(Temperature_HR)
+;   !forall(fillWithL2GPHR,!allHiResMolecules)
+;     ;; Get RHI_HR from RHI_HR.  Probably more accurate ways to do it.
+;     ;; However, RHI is not an important input to e.g. sids.
+;     !interpolateToHiRes(truth.RHI_HR)
+
+@
+
+
+1.23
+log
+@truth.tpPressure can be set explicitly.
+@
+text
+@d1 1
+a1 1
+;; $Id: filltruth.l2cf,v 1.22 2003/08/14 20:26:43 livesey Exp $
+a73 1
+  !ifdef(flagSkipHydrostatic,{},{
+d78 2
+a79 3
+;   Fill, quantity=truth.gph_HR, method=hydrostatic, $
+;     temperatureQuantity=truth.temperature_HR, $
+;     refGPHquantity=truth.refGPH
+d102 10
+@
+
+
+1.22
+log
+@Removed tropH2O
+@
+text
+@d1 1
+a1 1
+;; $Id: filltruth.l2cf,v 1.21 2003/06/04 17:13:38 livesey Exp $
+d51 8
+a58 3
+  Fill, quantity=truth.tpPressure, method=wmoTropopause, $
+    temperatureQuantity=truth.temperature, refGPHQuantity=truth.refGPH, $
+    internalVgrid=vGridWMO
+@
+
+
+1.21
+log
+@Added flagGotTruth
+@
+text
+@d1 1
+a1 1
+;; $Id: filltruth.l2cf,v 1.20 2003/05/09 23:53:57 livesey Exp $
+a48 7
+  ;; --------------------------------------------- trop H2O
+
+  ;; Put H2O in trop h2o
+  Fill, quantity=truth.tropH2O, sourceQuantity=truth.h2o, $
+    method=vector, /interpolate
+  Fill, quantity=truth.tropH2O_HR, sourceQuantity=truth.h2o_HR, $
+    method=vector, /interpolate
+@
+
+
+1.20
+log
+@Now fills tropopause pressure
+@
+text
+@d1 1
+a1 1
+;; $Id: filltruth.l2cf,v 1.19 2003/05/07 20:54:12 livesey Exp $
+d7 1
+@
+
+
+1.19
+log
+@Various changes, and (hopefully) improvements
+@
+text
+@d1 1
+a1 1
+;; $Id: filltruth.l2cf,v 1.18 2003/03/25 21:18:52 livesey Exp $
+d55 5
+@
+
+
+1.18
+log
+@New approach to high resolution
+@
+text
+@d1 1
+a1 1
+;; $Id: filltruth.l2cf,v 1.17 2003/02/18 23:59:50 livesey Exp $
+d40 7
+a46 9
+  !define(fillWithL2GPHR,{Fill, quantity=truth.$1, method=l2gp, $
+    sourceL2GP={l2gpTruth}!trimHR($1){Input},/interpolate!nl})
+  !ifdef(skipHiRes,{},{
+    !fillWithL2GPHR(Temperature_HR)
+    !forall(fillWithL2GPHR,!allHiResMolecules)
+    ;; Get RHI_HR from RHI_HR.  Probably more accurate ways to do it.
+    ;; However, RHI is not an important input to e.g. sids.
+    !interpolateToHiRes(truth.RHI_HR)
+  })
+d61 2
+a62 2
+    h2oQuantity=truth.h2o!res, $
+    temperatureQuantity=truth.temperature!res, $
+d66 2
+a67 2
+    h2oQuantity=truth.h2o!res, $
+    temperatureQuantity=truth.temperature!res, $
+d70 1
+a70 1
+  !ifdef(skipHydrostatic,{},{
+d75 3
+a77 5
+  !ifdef(skipHiRes,{},{
+  Fill, quantity=truth.gph_HR, method=hydrostatic, $
+    temperatureQuantity=truth.temperature_HR, $
+    refGPHquantity=truth.refGPH
+  })
+d81 2
+a82 2
+    h2oQuantity=truth.h2o!res, $
+    temperatureQuantity=truth.temperature!res, $
+d88 1
+a88 1
+    !ifdef(strict1D,{phiWindow=0 profiles},{phiWindow=4 degrees})
+d91 2
+a92 2
+    h2oQuantity=truth.h2o!res, $
+    temperatureQuantity=truth.temperature!res, $
+d98 1
+a98 1
+    !ifdef(strict1D,{phiWindow=0 profiles},{phiWindow=4 degrees})
+a100 4
+
+  ;; Do the magnetic field
+  Fill, quantity=truth.magneticField, method=magneticModel, $
+    GPHquantity=truth.gph
+@
+
+
+1.17
+log
+@Added strict1D
+@
+text
+@d1 1
+a1 1
+;; $Id: filltruth.l2cf,v 1.16 2003/01/14 23:49:29 livesey Exp $
+d40 2
+d43 5
+a47 5
+    !fillHiRes(truth.temperature_HR)
+    !forall(fillHiRes,!makelist(truth.,{},!allHiResMolecules))
+    ;; Get RHI_HR from RHI_HR.  Not sure if this should really be from
+    ;; H2O_HR and temperature_HR
+    !fillHiRes(truth.RHI_HR)
+@
+
+
+1.16
+log
+@Dealt with magnetic field
+@
+text
+@d1 1
+a1 1
+;; $Id: filltruth.l2cf,v 1.15 2002/12/16 16:02:55 mjf Exp $
+d89 2
+a90 1
+    maxIterations=20
+d99 3
+a101 1
+    maxIterations=20
+@
+
+
+1.15
+log
+@HiRes tropH2O.
+@
+text
+@d1 1
+a1 1
+;; $Id: filltruth.l2cf,v 1.14 2002/11/22 12:45:38 mjf Exp $
+d100 4
+@
+
+
+1.14
+log
+@Interpolate standard quantities to hiRes.  Calculate ptans and phitans
+using correct resolution temperature and H2O.
+@
+text
+@d1 1
+a1 1
+;; $Id: filltruth.l2cf,v 1.13 2002/11/20 19:53:06 mjf Exp $
+d52 2
+@
+
+
+1.13
+log
+@Removed big !ifdef(precisionEstimates block to template, effectively.
+@
+text
+@d1 1
+a1 1
+;; $Id: filltruth.l2cf,v 1.12 2002/11/06 02:02:42 livesey Exp $
+a31 4
+  ;; Put H2O in trop h2o
+  Fill, quantity=truth.tropH2O, sourceQuantity=truth.h2o, $
+    method=vector, /interpolate
+
+d38 16
+d59 2
+a60 2
+    h2oQuantity=truth.h2o, $
+    temperatureQuantity=truth.temperature, $
+d64 2
+a65 2
+    h2oQuantity=truth.h2o, $
+    temperatureQuantity=truth.temperature, $
+d73 5
+d81 2
+a82 2
+    h2oQuantity=truth.h2o, $
+    temperatureQuantity=truth.temperature, $
+d90 2
+a91 2
+    h2oQuantity=truth.h2o, $
+    temperatureQuantity=truth.temperature, $
+@
+
+
+1.12
+log
+@Renamed internal labels
+@
+text
+@d1 1
+a1 1
+;; $Id: filltruth.l2cf,v 1.11 2002/10/23 19:56:37 livesey Exp $
+a15 2
+  ; for PEs, a priori is truth
+  !ifdef(precisionEstimates,{},{
+a79 1
+  })
+@
+
+
+1.11
+log
+@Added tropH2O stuff
+@
+text
+@d1 1
+a1 1
+;; $Id: filltruth.l2cf,v 1.10 2002/10/08 13:55:38 mjf Exp $
+d25 1
+a25 1
+    sourceL2GP={l2gp}$1{Input},/interpolate!nl})
+d32 1
+a32 1
+  Fill, quantity=truth.refGPH, method=l2gp, sourceL2GP=l2gpGPHInput, /interpolate
+@
+
+
+1.10
+log
+@Comment added.
+@
+text
+@d1 1
+a1 1
+;; $Id: filltruth.l2cf,v 1.9 2002/10/02 23:06:00 pwagner Exp $
+d33 4
+@
+
+
+1.9
+log
+@RHI now separate fill methods
+@
+text
+@d1 1
+a1 1
+;; $Id: filltruth.l2cf,v 1.8 2002/08/04 16:15:53 mjf Exp $
+d16 1
+@
+
+
+1.8
+log
+@Truth is a priori for the precision estimates.
+@
+text
+@d1 1
+a1 1
+;; $Id: filltruth.l2cf,v 1.7 2002/07/17 19:29:45 livesey Exp $
+d37 1
+a37 1
+    temperatureQuantity=truth.temperature, method=special, /dontMask
+@
+
+
+1.7
+log
+@Fill GPH
+@
+text
+@d1 1
+a1 1
+;; $Id: filltruth.l2cf,v 1.6 2002/07/10 00:51:26 livesey Exp $
+d16 1
+d77 1
+@
+
+
+1.6
+log
+@Added skipHydrostatic stuff
+@
+text
+@d1 1
+a1 1
+;; $Id: filltruth.l2cf,v 1.5 2002/06/26 20:21:21 livesey Exp $
+d52 5
+a58 3
+
+
+  !ifdef(skipHydrostatic,{},{
+@
+
+
+1.5
+log
+@More iterations on pressure guesser
+@
+text
+@d1 1
+a1 1
+;; $Id: filltruth.l2cf,v 1.4 2002/06/26 01:27:09 livesey Exp $
+d55 2
+d74 1
+a74 1
+
+@
+
+
+1.4
+log
+@New 2D pressure guesser
+@
+text
+@d1 1
+a1 1
+;; $Id: filltruth.l2cf,v 1.3 2002/06/15 00:12:27 livesey Exp $
+d62 1
+a62 1
+    maxIterations=10
+d71 1
+a71 1
+    maxIterations=10
+@
+
+
+1.3
+log
+@Uncomment out phiTan fill for truth
+@
+text
+@d1 1
+a1 1
+;; $Id: filltruth.l2cf,v 1.2 2002/06/04 23:23:24 livesey Exp $
+d40 12
+d60 2
+d69 2
+a72 11
+  ;; Compute refracted phitans for truth
+  Fill, quantity=truth.phiTanGHz, method=refract, $
+    ptanQuantity=truth.ptanGHz, $
+    h2oQuantity=truth.h2o, $
+    temperatureQuantity=truth.temperature, $
+    refract=false
+  Fill, quantity=truth.phiTanTHz, method=refract, $
+    ptanQuantity=truth.ptanTHz, $
+    h2oQuantity=truth.h2o, $
+    temperatureQuantity=truth.temperature, $
+    refract=false
+@
+
+
+1.2
+log
+@Added phiTan fills
+@
+text
+@d1 1
+a1 1
+;; $Id: filltruth.l2cf,v 1.1 2002/05/17 20:24:09 livesey Exp $
+d57 11
+a67 11
+  ;; Compute refracted phitans for apriori
+;   Fill, quantity=truth.phiTanGHz, method=refract, $
+;     ptanQuantity=truth.ptanGHz, $
+;     h2oQuantity=truth.h2o, $
+;     temperatureQuantity=truth.temperature, $
+;     refract=false
+;   Fill, quantity=truth.phiTanTHz, method=refract, $
+;     ptanQuantity=truth.ptanTHz, $
+;     h2oQuantity=truth.h2o, $
+;     temperatureQuantity=truth.temperature, $
+;     refract=false
+@
+
+
+1.1
+log
+@First consolidated version
+@
+text
+@d1 1
+a1 1
+;; $Id$
+d57 12
+d70 1
+@
+

@@ -1,0 +1,334 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.10
+	cfm-single-freq-0-1:1.2.0.8
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.6
+	mus-emls-1-70:1.2.0.4
+	rel-1-0-englocks-work:1.2.0.2
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.2
+	V4-21:1.1.0.2
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2015.04.16.22.36.11;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2014.06.12.22.19.36;	author quyen;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Log governing files; also name, value pairs
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and 
+! regulations. User has the responsibility to obtain export licenses, or other 
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=================================
+program genmet ! generate .met and .xml files from hdf files
+!=================================
+
+
+   use DUMP_0, only: DUMP
+
+   use HDF, only: DFACC_READ, DFACC_CREATE, DFACC_RDWR
+
+   use HDF5, only: h5fopen_f, h5fclose_f, h5fis_hdf5_f, &
+     & HID_T, H5F_ACC_RDONLY_F, H5F_ACC_RDWR_F
+
+   use MLSFILES, only: FILENOTFOUND, &
+     & MLS_EXISTS, MLS_SFSTART, MLS_SFEND, &
+     & HDFVERSION_5, MLS_HDF_VERSION, WILDCARDHDFVERSION, &
+     & INITIALIZEMLSFILE
+
+   use MLSHDF5, only: mls_h5open, mls_h5close, &
+     & DumpHDF5Attributes ,GETALLHDF5ATTRNAMES, GetAllHDF5DSNames, &
+     & GETHDF5ATTRIBUTE, ISHDF5ATTRIBUTEPRESENT,GETHDF5ATTRIBUTEPTR
+
+   use MLSMessageModule, ONLY: MLSMessage, MLSMessageExit,  &
+     & MLSMSG_Info, MLSMSG_Error, MLSMSG_Warning
+
+   use SDPToolkit, only: PGS_PC_GETREFERENCE, PGSD_PC_FILE_PATH_MAX 
+
+   implicit none
+
+!-------------------------- RCS Ident Info ---------------------------
+  character (len=*), parameter :: ModuleName= &
+       "$RCSfile: genmet.f90,v $QDN"
+  character (len=*), parameter :: IdParm = &
+       "$Id: genmet.f90,v 1.1 2014/06/12 22:19:36 quyen Exp $"
+  character (len=len(idParm)) :: Id = idParm
+!---------------------------------------------------------------------
+
+  include 'PGS_SMF.f'
+  include 'PGS_MET_13.f'
+  include 'PGS_MET.f'
+
+
+  integer(HID_T) :: hdf5_id      ! File identifier
+  integer(HID_T) :: attr         ! attribute
+  integer        :: error        ! Error flags
+  logical        :: is_hdf5       
+
+  character(len=*), parameter :: attribute = "coremetadata.0"
+  integer               :: status
+
+  integer, parameter :: NORMAL_EXIT_STATUS = 2
+
+  integer, parameter :: INVENTORY=2
+
+  integer, parameter :: hdfVersion = HDFVERSION_5
+
+  ! pgs_met routines
+  integer            :: pgs_met_init, pgs_met_setAttr_s, &
+                        pgs_met_setAttr_i, pgs_met_setAttr_d, &
+                        pgs_met_write
+
+  ! Local variables
+  integer             :: HDF_FILE = 40000
+  integer             :: ODL_FILE = 40001
+  integer             :: MCF_FILE = 40002
+
+  double precision    :: fvalue
+  integer             :: ivalue
+
+  integer             :: EOF, Reason, iloc
+
+  character(len=1024) :: Filename
+  character(len=1024) :: name_str, value_str
+  character(len=4096) :: chValue 
+  character(len=3072) :: mysdList
+
+  integer             :: sdfid1
+
+  integer             :: version
+  integer             :: indx, sdid
+
+  character(LEN=132)                   :: attrname, errmsg
+  character(len=PGSd_PC_FILE_PATH_MAX) :: physical_filename, ODL_filename
+  character(len=PGSd_MET_GROUP_NAME_L) :: groups(PGSd_MET_NUM_OF_GROUPS)
+
+!---------------------------------------------------------------------
+  call mls_h5open(status)
+  print *,'Beginning the program '
+
+  call MLSMessage(MLSMSG_Info, ModuleName, "Generating metadata files.")
+
+  version = 1
+  status = PGS_PC_GetReference (HDF_FILE, version, physical_filename)
+
+  ! Check that input file is hdf5
+  call h5fis_hdf5_f (physical_filename, is_hdf5, error)
+  if ( .not. is_hdf5) then
+     print *,'Sorry - not recognized as hdf5 file: ', trim(physical_filename)
+     stop
+  end if
+
+  indx = INDEX(physical_filename,"/",.TRUE.)+1  ! Begin after the last /
+
+  !print*,'HDF FILE=',HDF_FILE,' filename = ',trim(physical_filename(indx:))
+  !print*,'  at the location= ',trim(physical_filename(:indx-1)),""
+  !print *,' '
+
+  version = 1
+  status = PGS_PC_GetReference (MCF_FILE, version, Filename)
+  call MLSMessage(MLSMSG_Info, ModuleName, "MCF FILE." // trim(Filename))
+
+  Filename = trim(physical_filename(indx:))
+  call MLSMessage(MLSMSG_Info, ModuleName, "HDF FILE." // trim(Filename))
+
+  !print*,'HDF_FILE = ',HDF_FILE,' input file = ',trim(physical_filename)
+  !print*,'MCF_FILE = ',MCF_FILE,' for the met file prototype'
+
+  status = pgs_met_init(MCF_FILE, groups)
+  if (status /= PGS_S_SUCCESS) then
+     call MLSMessage(MLSMSG_Error, ModuleName, &
+          "Initialization error. See LogStatus for details.")
+  endif
+
+  version=1
+  status = PGS_PC_GetReference (ODL_FILE, version, ODL_filename)
+
+  call MLSMessage(MLSMSG_Info, ModuleName, "ODL FILE." // trim(ODL_filename))
+  !print *,'ODL_FILE = ',ODL_FILE,' odl_txt = ',trim(ODL_filename)
+  !print *,' '
+
+  ! Read in the met odl file content
+  !print *,'Read in the met odl file =',trim(ODL_filename)
+  open (unit=10, file=trim(ODL_filename))
+  EOF = 0   ! initialize to false
+  do while (EOF == 0 ) 
+     read (10,fmt='(A)',iostat=EOF) chValue
+
+     ! check if end of file or comment line
+     if (EOF == 0  .and. chValue(1:1) .ne. '!' ) then
+        indx = INDEX(chValue,"=",.TRUE.) 
+        name_str = chValue(:indx-1)
+        value_str = trim(adjustl(chValue(indx+1:))) 
+
+        Reason = 0
+        read(value_str,'(I20)',iostat=Reason) ivalue
+        if ( Reason == 0 ) then   ! value is integer number
+            errmsg = 'integer'
+            status = pgs_met_setAttr_i(groups(INVENTORY), &
+                      & trim(name_str), ivalue)
+            if ( status /= PGS_S_SUCCESS ) then
+               status = pgs_met_setAttr_i(groups(INVENTORY), &
+                      & trim(name_str)//'.1', ivalue)
+
+            endif
+        else 
+            Reason=0
+            read(value_str,'(E20.6)',iostat=Reason) fvalue
+            iloc = INDEX(value_str,'-')
+            if ( Reason /= 0 .or. &
+                 & (iloc .gt. 1 .and. iloc .lt. len(value_str))) then 
+            errmsg = 'string'
+               status = pgs_met_setAttr_s(groups(INVENTORY), &
+                      & trim(name_str), trim(value_str))
+               if ( status /= PGS_S_SUCCESS ) then
+                  status = pgs_met_setAttr_s(groups(INVENTORY), &
+                      & trim(name_str)//'.1', trim(value_str))
+               endif
+            else   ! value is float number
+            errmsg = 'float'
+               status = pgs_met_setAttr_d(groups(INVENTORY), &
+                      & trim(name_str), fvalue)
+               if (status /= PGS_S_SUCCESS ) then
+                  status = pgs_met_setAttr_d(groups(INVENTORY), &
+                      & trim(name_str)//'.1', fvalue)
+               endif
+            endif
+        endif
+
+        !print*,' Set ',trim(name_str),' = ',trim(value_str)
+
+        call MLSMessage( MLSMSG_Info, ModuleName, trim(name_str) // &
+          & ' = ' // trim(value_str) // ' (' // trim(errmsg) // ')' )
+        ! Check to see if pgs_setAttr writing is success
+        if ( status /= PGS_S_SUCCESS ) then
+           call MLSMessage(MLSMSG_Warning, ModuleName, &
+                'Error writing metadata attributes'//trim(chValue(:indx-1)))
+        endif
+     endif
+  enddo
+  close (unit=10)
+
+
+  ! Write attribute LocalGranuleID
+  status = pgs_met_setAttr_s(groups(INVENTORY), &
+              'LocalGranuleID',trim(Filename))
+  if ( status /= PGS_S_SUCCESS ) then
+     call MLSMessage(MLSMSG_Warning, ModuleName, &
+          'Error writing metadata attributes LocalGranuleID')
+  endif
+
+  ! Start to write the met file
+  sdid = mls_sfstart(trim(physical_filename), DFACC_RDWR, &
+                     hdfVersion=hdfVersion, addingMetaData=.true.)
+
+  status = pgs_met_write(groups(INVENTORY), "coremetadata.0", sdid)
+
+
+  if ( status /= PGS_S_SUCCESS .AND. &
+       status /= PGSMET_W_METADATA_NOT_SET) then
+       if ( status == PGSMET_W_METADATA_NOT_SET ) then
+          print*,'Warning: Some f the mandatory parameters were not'
+          call MLSMessage(MLSMSG_Error, ModuleName, &
+                 "Some of the mandatory parameters were not set")
+       else
+          print*,'Warning: Metadata write failed '
+          call pgs_smf_getMsg( status, attrname, errmsg)
+          call MLSMessage(MLSMSG_WARNING, ModuleName, &
+                          "Metadata write failed "//attrname//errmsg// &
+                          " for file "//physical_fileName)
+       endif
+  else if ( status == PGS_S_SUCCESS) then
+       print*,' '
+       print*,'pgs_met_write is success.'
+       print*,' '
+  end if
+
+  status = mls_sfend(sdid, hdfVersion, .TRUE.)
+  if ( status /= 0 ) then
+     call MLSMessage( MLSMSG_ERROR, ModuleName, &
+                      "Calling mls_sfend failed for file "//physical_fileName)
+  endif
+
+  call MLSMessage(MLSMSG_Info, ModuleName, "Ending the process.")
+
+  call mls_h5close(status)
+
+  call MLSMessageExit(NORMAL_EXIT_STATUS)
+  
+  stop
+
+!=================================
+end program genmet
+!=================================
+
+! $Log: genmet.f90,v $
+! Revision 1.1  2014/06/12 22:19:36  quyen
+! tool to generate .met and .xml files
+!
+@
+
+
+1.1
+log
+@tool to generate .met and .xml files
+@
+text
+@d42 1
+a42 1
+       "$RCSfile$QDN"
+d44 1
+a44 1
+       "$Id$"
+d118 4
+d123 1
+d137 1
+d157 1
+d171 1
+d179 1
+d191 2
+d255 4
+a258 1
+! $Log$
+@
+

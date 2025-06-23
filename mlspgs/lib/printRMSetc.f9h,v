@@ -1,0 +1,305 @@
+head	2.6;
+access;
+symbols
+	v5-02-NRT-19:2.6
+	v6-00:2.6
+	v5-02-NRT-18:2.6
+	v5-02:2.6
+	v5-01-NRT-17:2.6
+	v5-01-NRT-16:2.6
+	v5-01-NRT-15:2.6
+	v5-01-NRT-14:2.6
+	neuralnetworks-1-0:2.6.0.10
+	cfm-single-freq-0-1:2.6.0.8
+	v5-01:2.6
+	v5-00:2.6
+	v4-23-TA133:2.6.0.6
+	mus-emls-1-70:2.6.0.4
+	rel-1-0-englocks-work:2.6.0.2
+	VUMLS1-00:2.5
+	VPL1-00:2.5
+	V4-22-NRT-08:2.5
+	VAM1-00:2.4
+	V4-21:2.4.0.2
+	V4-13:2.4
+	V4-12:2.4
+	V4-11:2.4
+	V4-10:2.4
+	V3-43:2.3
+	M4-00:2.4
+	V3-41:2.3
+	V3-40-PlusGM57:2.3.0.2
+	V2-24-NRT-04:2.1
+	V3-33:2.3
+	V2-24:2.1
+	V3-31:2.3
+	V3-30-NRT-05:2.3
+	cfm-01-00:2.3
+	V3-30:2.3
+	V3-20:2.3
+	V3-10:2.1
+	V2-23-NRT-02:2.1
+	V2-23:2.1
+	V2-22-NRT-01:2.1
+	V2-22:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.6
+date	2017.07.19.22.44.16;	author pwagner;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2016.03.23.00.23.10;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2012.01.09.22.28.08;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2009.10.19.17.29.48;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2009.10.13.00.06.38;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2007.07.16.23.30.27;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.6
+log
+@Use PrintName procedure
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! How to handle dumping stats in every module procedure of dump_0
+! where it makes sense to dump stats
+! 
+! $Id: printRMSetc.f9h,v 2.5 2016/03/23 00:23:10 pwagner Exp $
+! $RCSfile: printRMSetc.f9h,v $
+!   subroutine printRMSetc ( Name, min, max, rms, mean )
+!     character(len=*), intent(in), optional :: Name
+!     real, intent(in) :: min
+!     real, intent(in) :: max
+!     real, intent(in) :: rms
+!     real, intent(in), optional :: mean
+
+    ! call outputNamedValue( 'nameOnEachLine from printRMSetc', trim(nameOnEachLine) )
+    if ( thisIsADiff ) then
+      call PrintName ( Name, nameHasBeenPrinted )
+      if ( DIFFRMSMEANSRMS ) then
+        call output ( ' min : max, rms: ', advance='no' )
+        if ( present(mean) ) call output ( ' mean: ', advance='no' )
+        call output(min, format=rmsFormat, advance='no')
+        call output(' : ', advance='no')
+        call output(max, format=rmsFormat, advance='no')
+        call output(', ', advance='no')
+        call output(rms, format=rmsFormat, advance='no')
+        if ( present(mean) ) then
+          call output ( ': ', advance='no' )
+          call output ( mean, format=rmsFormat, advance='no')
+        end if
+        call finishLine
+      else
+        call blanks(3)
+      endif
+    elseif ( STATSONONELINE ) then
+      call PrintName ( Name, nameHasBeenPrinted )
+      call output ( ' min : max, rms: ', advance='no' )
+      if ( present(mean) ) call output ( ' mean: ', advance='no' )
+      call output(min, format=rmsFormat, advance='no')
+      call output(' : ', advance='no')
+      call output(max, format=rmsFormat, advance='no')
+      call output(', ', advance='no')
+      call output(rms, format=rmsFormat, advance='no')
+      if ( present(mean) ) then
+        call output ( ': ', advance='no' )
+        call output ( mean, format=rmsFormat, advance='no')
+      end if
+      call finishLine
+    else
+      call PrintName ( Name, nameHasBeenPrinted )
+      call output ( ' min      max        rms', advance='no' )
+      if ( present(mean) ) call output ( '       mean ', advance='no' )
+      call finishLine
+      call output(min, format=rmsFormat, advance='no')
+      call output(max, format=rmsFormat, advance='no')
+      call output(rms, format=rmsFormat, advance='no')
+      if ( present(mean) ) call output ( mean, advance='no' )
+      call finishLine
+    end if
+    nameHasBeenPrinted = .true.
+! $Log: printRMSetc.f9h,v $
+! Revision 2.5  2016/03/23 00:23:10  pwagner
+! Diff now able to print name on each line
+!
+! Revision 2.4  2012/01/09 22:28:08  pwagner
+! Override default formats so min, max line up
+!
+! Revision 2.3  2009/10/19 17:29:48  pwagner
+! Trying to prevent double-printing of name
+!
+! Revision 2.2  2009/10/13 00:06:38  pwagner
+! Eliminate redundant printing of name
+!
+! Revision 2.1  2007/07/16 23:30:27  pwagner
+! First commit
+!
+@
+
+
+2.5
+log
+@Diff now able to print name on each line
+@
+text
+@d15 1
+a15 1
+! $Id: printRMSetc.f9h,v 2.4 2012/01/09 22:28:08 pwagner Exp $
+d17 1
+a17 1
+!   subroutine printRMSetc ( Name, min, max, rms, mean  )
+d24 1
+d26 1
+a26 2
+      if ( present(name) .and. PRINTNAMEIFDIFF .and. .not. nameHasBeenPrinted ) &
+        & call output ( trim(name), advance='no' )
+d44 1
+a44 1
+      if ( present(name) .and. .not. nameHasBeenPrinted ) call output ( trim(name), advance='no' )
+d58 1
+a58 1
+      if ( present(name) .and. .not. nameHasBeenPrinted ) call output ( trim(name), advance='no' )
+d70 3
+@
+
+
+2.4
+log
+@Override default formats so min, max line up
+@
+text
+@d15 1
+a15 1
+! $Id: printRMSetc.f9h,v 2.3 2009/10/19 17:29:48 pwagner Exp $
+d39 1
+a39 1
+        call newline
+d56 1
+a56 1
+      call newline
+d61 1
+a61 1
+      call newline
+d66 1
+a66 1
+      call newline
+d70 3
+@
+
+
+2.3
+log
+@Trying to prevent double-printing of name
+@
+text
+@d15 1
+a15 1
+! $Id: printRMSetc.f9h,v 2.2 2009/10/13 00:06:38 pwagner Exp $
+d30 1
+a30 1
+        call output(min, advance='no')
+d32 1
+a32 1
+        call output(max, advance='no')
+d34 1
+a34 1
+        call output(rms, advance='no')
+d37 1
+a37 1
+          call output ( mean, advance='no' )
+d47 1
+a47 1
+      call output(min, advance='no')
+d49 1
+a49 1
+      call output(max, advance='no')
+d51 1
+a51 1
+      call output(rms, advance='no')
+d54 1
+a54 1
+        call output ( mean, advance='no' )
+d62 3
+a64 3
+      call output(min, advance='no')
+      call output(max, advance='no')
+      call output(rms, advance='no')
+d70 3
+@
+
+
+2.2
+log
+@Eliminate redundant printing of name
+@
+text
+@d15 1
+a15 1
+! $Id: printRMSetc.f9h,v 2.1 2007/07/16 23:30:27 pwagner Exp $
+d25 1
+a25 1
+      if ( present(name) .and. PRINTNAMEIFDIFF ) &
+d44 1
+a44 1
+      if ( present(name) ) call output ( trim(name), advance='no' )
+d58 1
+a58 1
+      if ( present(name) ) call output ( trim(name), advance='no' )
+d68 1
+d70 3
+@
+
+
+2.1
+log
+@First commit
+@
+text
+@d15 2
+a16 2
+! $Id: dumpstats.f9h,v 2.12 2007/04/03 02:48:47 vsnyder Exp $
+! $RCSfile: dumpstats.f9h,v $
+d25 2
+a26 1
+      if ( present(name) ) call output ( trim(name), advance='no' )
+d68 4
+a71 1
+! $Log: dumpstats.f9h,v $
+@
+

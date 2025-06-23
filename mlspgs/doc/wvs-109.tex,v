@@ -1,0 +1,259 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.12
+	cfm-single-freq-0-1:1.1.0.10
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.8
+	mus-emls-1-70:1.1.0.6
+	rel-1-0-englocks-work:1.1.0.4
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.2
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	M4-00:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2012.07.27.04.05.08;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9.0in
+
+\newcommand{\docname}{\bf wvs-109}
+\newcommand{\docdate}{26 July 2012}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\ifx\dvidir\undefined
+  \newcommand\hr[1]{\href{#1.dvi}{dvi} \href{#1.pdf}{pdf}}
+\else
+  \newcommand\hr[1]{\href{\dvidir/#1.dvi}{dvi} \href{\pdfdir/#1.pdf}{pdf}}
+\fi
+\newcommand\h[1]{#1 \hr{#1}}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[u]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Van, Nathaniel, Bill, Alyn, Paul\\
+Subject: \>Might be doing Tikhonov wrong\\
+From: \>Van Snyder\\
+Reference: \>\h{wvs-050}\\
+\end{tabbing}
+
+\parindent 0pt \parskip 5pt
+\vspace{-20pt}
+
+We might be doing the Tikhonov regularization wrong, or in any case
+suboptimally.
+
+Our Newton iteration consists of solving a least squares problem for the
+Newton move $\delta \mathbf{x} = \mathbf{x}_{n+1}-\mathbf{x}_n$:
+
+\begin{equation}\label{one}
+\left[ \begin{array}{c}
+ \mathbf{G}_\epsilon^{-1} \mathbf{J} \\
+ \mathbf{G}_a^{-1} \\
+ \mathbf{W R} \\
+ \lambda \mathbf{I} \end{array} \right]
+\delta \mathbf{x} \simeq
+\left[ \begin{array}{c}
+ - \mathbf{G}_\epsilon^{-1} \mathbf{F}(\mathbf{x}_n) \\
+ \mathbf{G}_a^{-1} ( \mathbf{x}_a - \mathbf{x}_n ) \\
+ - \mathbf{W R}\, \mathbf{x}_n \\
+ 0 \end{array} \right]
+\end{equation}
+
+where $\mathbf{G}_\epsilon$ is the Cholesky factor of the measurement
+covariance, $\mathbf{J}$ is the Jacobian of the forward model,
+$\mathbf{F}(\mathbf{x}_n)$ is the forward model evaluated at the current
+state $\mathbf{x}_n$, $\mathbf{G}_a$ is the Cholesky factor of the apriori
+covariance, $\mathbf{x}_a$ is the apriori state, $\mathbf{W}$ provides the
+weights for Tikhonov regularization (the {\tt hRegWeights} and {\tt
+vRegWeights} quantities in the {\tt l2cf}, which were obtained
+empirically), $\mathbf{R}$ is the Tikhonov regularization operator, in our
+case a second difference operator,
+
+\begin{equation}\label{two}
+\mathbf{R} =
+\left[ \begin{array}{cccccc}
+1 & -2 & 1 & 0 & 0 & \dots \\
+0 & 1 & -2 & 1 & 0 & \dots \\
+0 & 0 & 1 & -2 & 1 & \dots \\
+\dots & \dots & \dots & \dots & \dots & \dots \\
+\dots & 0 & 0 & 1 & -2 & 1 \\
+\end{array} \right]
+\end{equation}
+
+and $\lambda$ is the Levenberg-Marquardt stabilization parameter, which is
+computed automatically.  There are two problems with this.
+
+The third row of Equation (\ref{one}), when put back into the form of a
+constraint on the new state, \emph{viz.} $\mathbf{W R}\, \mathbf{x}_{n+1}
+\simeq 0$, says, in English, ``The second difference of the current state
+ought to be zero, in the least-squares sense, with different intensity of
+belief at different places.''
+
+This should probably be ``The second difference of the new state ought to
+be like the second difference of the apriori, in the least-squares sense,
+with different intensity of belief at different places,'' i.e., $\mathbf{W
+R}\, \mathbf{x}_{n+1} \simeq \mathbf{W R}\, \mathbf{x}_a$, or when put
+into the form of a least-squares condition on the Newton move (the third
+row in Equation (\ref{one})), $\mathbf{W R}\, \delta \mathbf{x} \simeq
+\mathbf{W R}\, ( \mathbf{x}_a - \mathbf{x}_n )$.
+
+The second problem is that we use the second difference as a proxy for the
+second derivative.  A second difference is a proxy for a second derivative
+if the step size is constant.  For us, the horizontal step size (the
+solution profile spacing specified in the {\tt hGrid}) is constant, but
+the vertical step size (the pressure levels specified by {\tt vGrid}) is
+not constant.  We ought, therefore, to be using a second divided
+difference.  Using $p$ to denote either $\phi$ or $\zeta$, and $i$ to
+denote either a horizontal or vertical index, the three nonzeros in a row
+of the Tikhonov regularization operator ought to be
+
+\begin{equation}
+\begin{array}{ccc}
+\frac1{(p_{i+1}-p_i)(p_{i+1}-p_{i-1})} & 
+-\frac1{(p_{i+1}-p_i)(p_i-p_{i-1})} &
+\frac1{(p_{i+1}-p_{i-1})(p_i-p_{i-1})}
+\end{array}
+\end{equation}
+
+In the case of constant spacing, this reduces to our current value, with
+appropriate scaling which is absorbed into $\mathbf{W}$.
+
+There is a possibility approximately to accomodate a change from a second
+difference to a second divided difference automatically, or at least in a
+simple systematic but perhaps manual way.  We could, for example, multiply
+the appropriate row of the current $\mathbf{W}$ by $\frac12
+(p_{i+1}-p_{i-1})^2$, which reduces to the current state where the step
+size is fixed, and not too much different from the current state where the
+step size does not change dramatically.
+
+It is not likely possible automatically to accomodate a change from
+desiring the second derivative to be zero to desiring the second
+derivative to be like the second derivative of apriori. This would require
+a new series of experiments to compute a new $\mathbf{W}$, which was a lot
+of work for Alyn in the first place.
+
+One advantage, especially of accomodating varying vertical step size, is
+that we might reduce undesirable ``glitches'' in the vertical pattern of
+solutions in the areas where vertical step size changes.
+
+Ideally, we ought to reduce the weight for Tikhonov regularization at
+altitudes where we know that dramatic changes occur as a function of
+altitude, for example at the tropopause.  Accomodating the second
+derivative of the current state to the second derivative of the apriori
+has somewhat this effect, to the extent that the dramatic changes in the
+current state occur where the dramatic changes occur in the apriori.  We
+almost certainly already approximate this, using an assumption that the
+actual position is not terribly different from some assumed average
+position.  An iterative technique, involving solutions for temperature
+(essentially solving for the vertical position of the tropopause and
+stratopause on each profile), might be used to provide additional scaling
+for $\mathbf{W}$ (or simply set rows to zero) for those species for which
+dramatic variation in the vertical direction is known to occur where there
+is dramatic variation of temperature in the vertical direction.
+
+It is possible that accomodating the second derivative of the current
+state to the second derivative of the apriori, perhaps weighted by the
+apriori standard deviation (i.e., a weaker constraint where we have less
+confidence in our knowledge of apriori), would eliminate the need for
+$\mathbf{W}$, up to a scalar factor, which might be determined as
+described by Mark Lucas in \emph{Strong robust generalized
+cross-validation for choosing the regularization parameter}, which
+appeared in {\bf Inverse Problems 24} (2008), or the simpler method
+described by Tilman Steck in \emph{Methods for determining regularization
+for atmospheric retrieval problems}, which appeared in {\bf Applied Optics
+41}, 9 (20 March 2002).
+
+\label{lastpage}
+\end{document}
+
+% $Id: wvs-106.tex,v 1.2 2011/07/28 20:12:37 vsnyder Exp $
+@

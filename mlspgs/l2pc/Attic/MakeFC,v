@@ -1,0 +1,192 @@
+head	1.3;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.3
+date	2001.01.31.01.14.50;	author zvi;	state dead;
+branches;
+next	1.2;
+
+1.2
+date	2001.01.10.23.45.34;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2000.11.22.22.51.32;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@No longer needed
+@
+text
+@#	Makefile
+#
+# Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+#
+#special case:
+#the 1st time through, before .configure exists yet,
+#execute $(MLSBIN)/configure to create .configure
+
+#i.e., if you call are building this mls
+#by calling make with a different Makefile name,
+#say: make -f MakeFC
+#then rename the Makefiles in /l2 and /lib also MakeFC
+
+# "$Id: MakeFC,v 1.2 2001/01/10 23:45:34 pwagner Exp $"
+
+MakeFName = MakeFC
+
+# where to store .configure
+CONFDIR=..
+
+# where configure and makemakedep.sh are stored
+MLSBIN=../util
+
+# where sources for libmls.a are stored
+libmls_sources=../lib
+
+# where objects and libmls.a are stored
+libmls_objs=$(libmls_sources)/$(MLSCONFG)
+
+# where sources (but not OBJS) shared with l3, etc. are stored
+srclib=../srclib
+
+# where the platforms directory is
+PLATFORMS = .
+
+# This will set our MLS platform, compiler. etc.
+# w/o complaining if it does nor exist yet
+-include $(CONFDIR)/.configure
+
+SHELL = /bin/sh
+
+#--------------- Target definitions
+# $PROG          -- automatic; built when target is not specified
+
+#                           (functional)
+# configure      -- runs mlsconfigure to (re)set compiler, platform, paths
+#                  also (re)creates uniquely-named sub-sub-directories
+#                  with custom Makefiles where *.o, *.mod, etc. built
+# depends        -- runs makemakedep.sh to calculate dependencies
+# clean          -- deletes uniquely-named sub-sub-directories
+# clean_objs     -- deletes only *.o, *.mod from sub-subs
+# tar            -- creates a directory archive suitable for distribution
+#
+
+#----------------------------------------------------------
+libmls_f90 := $(wildcard $(libmls_sources)/*.f90)
+
+PROG=l2pc_file
+
+#----------------------- Build instructions
+
+$(PROG): $(CONFDIR)/.configure $(PLATFORMS)/$(MLSCONFG) $(libmls_objs)/libmls.a
+	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG)
+
+$(libmls_objs)/libmls.a: $(libmls_f90)
+	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
+
+.PHONY: configure depends clean tar clean_objs
+
+tar: clean
+
+configure:
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)"
+
+$(CONFDIR)/.configure:
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)"
+
+$(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/.configure
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -nc
+
+depends:
+	$(MLSBIN)/makemakedep.sh -d MLSCommon.f90 -d machine.f90 -d driver0.f90 \
+        -d units.f90 -d mdb_sw.f90 $(libmls_sources) $(srclib)
+
+clean:
+	@@echo "Cleaning directory $(MLSCONFG)" ; \
+	if [ "$(MLSCONFG)" != "" ] ; then  \
+		echo "Deleting $(MLSCONFG) files" ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/*.[ao] ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/*.mod ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/$(PROG) ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/Makefile ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/*.f90 ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/core ; \
+	fi ; \
+	if [ -d "$(PLATFORMS)/$(MLSCONFG)" ] ; then  \
+		echo "Deleting $(MLSCONFG) directory" ; \
+		rmdir $(PLATFORMS)/$(MLSCONFG) ; \
+	fi
+
+clean_objs:
+	@@echo "Cleaning objects from directory $(MLSCONFG)" ; \
+	if [ "$(MLSCONFG)" != "" ] ; then  \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/*.[ao] ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/*.mod ; \
+	fi
+
+tar:
+	rm -f ../$(PROG).tgz
+	tar hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude l2pc_file
+
+# $Log: MakeFC,v $
+# Revision 1.2  2001/01/10 23:45:34  pwagner
+# General housekeeping
+#
+# Revision 1.1  2000/11/22 22:51:32  pwagner
+# First commit
+#
+#
+
+
+@
+
+
+1.2
+log
+@General housekeeping
+@
+text
+@d15 1
+a15 1
+# "$Id: MakeFC,v 1.1 2000/11/22 22:51:32 pwagner Exp $"
+d117 3
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d2 3
+a4 2
+#	targets: configure and depends and clean
+#	true targets: $(MLSCONFG)/Makefile and $(MLSCONFG)/l2pc_file
+d15 1
+a15 1
+# "$Id: MakeFC,v 2.6 2000/11/18 00:11:06 pwagner Exp $"
+d43 14
+d61 2
+d69 1
+a69 1
+.PHONY: configure depends clean tar
+d117 3
+@
+

@@ -1,0 +1,581 @@
+head	1.17;
+access;
+symbols
+	v5-02-NRT-19:1.17
+	v6-00:1.17
+	v5-02-NRT-18:1.17
+	v5-02:1.17
+	v5-01-NRT-17:1.17
+	v5-01-NRT-16:1.17
+	v5-01-NRT-15:1.17
+	v5-01-NRT-14:1.17
+	neuralnetworks-1-0:1.17.0.12
+	cfm-single-freq-0-1:1.17.0.10
+	v5-01:1.17
+	v5-00:1.17
+	v4-23-TA133:1.17.0.8
+	mus-emls-1-70:1.17.0.6
+	rel-1-0-englocks-work:1.17.0.4
+	VUMLS1-00:1.17
+	VPL1-00:1.17
+	V4-22-NRT-08:1.17
+	VAM1-00:1.17
+	V4-21:1.17.0.2
+	V4-13:1.17
+	V4-12:1.17
+	V4-11:1.17
+	V4-10:1.17
+	V3-43:1.12
+	M4-00:1.16
+	V3-41:1.12
+	V3-40-PlusGM57:1.12.0.2
+	V2-24-NRT-04:1.10
+	V3-33:1.12
+	V2-24:1.10
+	V3-31:1.12
+	V3-30-NRT-05:1.12
+	cfm-01-00:1.12
+	V3-30:1.12
+	V3-20:1.12
+	V3-10:1.12
+	V2-23-NRT-02:1.10
+	V2-23:1.10
+	V2-22-NRT-01:1.10
+	V2-22:1.10
+	V2-21:1.10
+	V2-20:1.10
+	V2-11:1.10
+	V2-10:1.10
+	V2-00:1.10
+	V1-51:1.8
+	V1-50:1.8
+	V1-45:1.6
+	V1-44:1.6
+	V1-43:1.6
+	V1-42:1.3
+	V1-41:1.3
+	V1-32:1.3
+	V1-40:1.3
+	V1-31:1.3
+	V1-30:1.3;
+locks; strict;
+comment	@# @;
+
+
+1.17
+date	2014.04.29.17.29.26;	author pwagner;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2012.01.03.19.42.31;	author vsnyder;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2011.11.11.19.06.32;	author vsnyder;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2011.08.25.22.40.35;	author vsnyder;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2011.07.29.01.46.25;	author vsnyder;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2008.10.08.18.26.22;	author bill;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2008.10.06.16.22.54;	author pwagner;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2006.03.29.18.42.26;	author bill;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2006.02.04.00.24.45;	author vsnyder;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2004.10.12.22.11.58;	author bill;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2004.09.15.22.45.33;	author bill;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2004.02.12.01.55.42;	author livesey;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2004.02.12.01.45.58;	author livesey;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2004.02.12.00.09.25;	author bill;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2003.05.15.22.49.05;	author bill;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2003.05.14.23.01.51;	author livesey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2003.05.14.16.50.51;	author bill;	state Exp;
+branches;
+next	;
+
+
+desc
+@various names we use for molecules
+@
+
+
+1.17
+log
+@Consistent with Spectroscopy v4-0-3
+@
+text
+@$Id: sps_cross_ref_table.txt,v 1.16 2012/01/03 19:42:31 vsnyder Exp $
+This table has the various names that we reference molecules by and their
+group designations
+mlspgs_name, l2cf_species, l2gp_species, group flag
+format = '(a24,1x,a24,1x,a24,1x,i3)'
+----*----1----*----2----*----3----*----4----*----5----*----6----*----7----*----8
+                     BrO                      BRO                      BrO   4
+              $^{79}$BrO                  BR_79_O                  Br-79-O   0
+   $^{79}$BrO$(\nu_{1})$               BR_79_O_V1               Br-79-O-v1   0
+              $^{81}$BrO                  BR_81_O                  Br-81-O   0
+   $^{81}$BrO$(\nu_{1})$               BR_81_O_V1               Br-81-O-v1   0
+            CH$_{2}$CHCN                  CH2CHCN                  CH2CHCN  -4
+     CH$_{2}$CH$^{13}$CN              CH2CHC_13_N              CH2CHC-13-N   0
+       CH$_{2}^{13}$CHCN              CH2C_13_HCN              CH2C-13-HCN   0
+     $^{13}$CH$_{2}$CHCN              C_13_H2CHCN              C-13-H2CHCN   0
+            CH$_{2}$CDCN                  CH2CDCN                  CH2CDCN   0
+CH$_{3}$CH$_{2}$CH$_{3}$                CH3CH2CH3                CH3CH2CH3   0
+      CH$_{3}$CH$_{2}$CN                 CH3CH2CN                 CH3CH2CN   0
+      CH$_{3}$CH$_{2}$OH                 CH3CH2OH                 CH3CH2OH   0
+              CH$_{3}$CN                    CH3CN                    CH3CN  -4
+   CH$_{3}$CN$(\nu_{8})$                 CH3CN_V8                 CH3CN-v8   0
+         CH$_{3}^{13}$CN                CH3C_13_N                CH3C-13-N   0
+       $^{13}$CH$_{3}$CN                C_13_H3CN                C-13-H3CN   0 
+       CH$_{3}$C$^{15}$N                 CH3CN_15                 CH3CN-15   0
+      CH$_{3}$COCH$_{3}$                 CH3COCH3                 CH3COCH3   0
+              CH$_{3}$Cl                    CH3CL                    CH3Cl   2
+         CH$_{3}^{35}$Cl                 CH3CL_35                 CH3Cl-35   0
+         CH$_{3}^{37}$Cl                 CH3CL_37                 CH3Cl-37   0
+                CH$_{4}$                      CH4                      CH4  -1
+               CH$_{3}$D                     CH3D                     CH3D   0
+               CH$_{3}$O                     CH3O                     CH3O   0
+              CH$_{3}$OH                    CH3OH                    CH3OH   0
+             CH$_{3}$OOH                   CH3OOH                   CH3OOH   0
+  CH$_{2}$OHCOCH$_{2}$OH             CH2OHCOCH2OH             CH2OHCOCH2OH   0
+                      CO                       CO                       CO  -3
+               $^{13}$CO                   C_13_O                   C-13-O   0
+               C$^{17}$O                    CO_17                    CO-17   0
+               C$^{18}$O                    CO_18                    CO-18   0
+                CO$_{2}$                      CO2                      CO2  -1
+              OC$^{18}$O                   OCO_18                   OCO-18   0
+                     ClO                      CLO                      ClO   4
+              $^{35}$ClO                  CL_35_O                  Cl-35-O   0
+   $^{35}$ClO$(\nu_{1})$               CL_35_O_V1               Cl-35-O-v1   0
+              $^{37}$ClO                  CL_37_O                  Cl-37-O   0
+   $^{37}$ClO$(\nu_{1})$               CL_37_O_V1               Cl-37-O-v1   0
+               COF$_{2}$                     COF2                     COF2   0
+              ClNO$_{2}$                    CLNO2                    ClNO2   2
+       $^{35}$ClNO$_{2}$                CL_35_NO2                Cl-35-NO2   0
+       $^{37}$ClNO$_{2}$                CL_37_NO2                Cl-37-NO2   0
+                  ClOOCl                   CLOOCL                   ClOOCl   2
+    $^{35}$ClOO$^{35}$Cl            CL_35_OOCL_35            Cl-35-OOCl-35   0
+    $^{35}$ClOO$^{37}$Cl            CL_35_OOCL_37            Cl-35-OOCl-37   0
+             ClONO$_{2}$                   CLONO2                   ClONO2   2
+      $^{35}$ClONO$_{2}$               CL_35_ONO2               Cl-35-ONO2   0
+      $^{37}$ClONO$_{2}$               CL_37_ONO2               Cl-37-ONO2   0
+                CLOUD\_A                  CLOUD_A                  CLOUD_A   0
+                CLOUD\_S                  CLOUD_S                  CLOUD_S   0
+                CLOUDICE                 CLOUDICE                 CLOUDICE   0
+              EXTINCTION               EXTINCTION               EXTINCTION   0
+            EXTINCTIONV2             EXTINCTIONV2             EXTINCTIONV2   0
+                     HBr                      HBR                      HBr   2
+              H$^{79}$Br                   HBR_79                   HBr-79   0
+              H$^{81}$Br                   HBR_81                   HBr-81   0
+                     HCl                      HCL                      HCl   4
+              H$^{35}$Cl                   HCL_35                   HCl-35   0
+              H$^{37}$Cl                   HCL_37                   HCl-37   0
+              D$^{35}$Cl                   DCL_35                   DCl-35   0
+              D$^{37}$Cl                   DCL_37                   DCl-37   0
+                   HClCO                     HCLO                     HClO   2
+            H$^{35}$ClCO                 HCL_35_O                 HCl-35-O   0
+            H$^{37}$ClCO                 HCL_37_O                 HCl-37-O   0
+                     HCN                      HCN                      HCN  -3
+          HCN$(\nu_{2})$                   HCN_V2                   HCN-v2   0
+              H$^{13}$CN                  HC_13_N                  HC-13-N   0
+              HC$^{15}$N                   HCN_15                   HCN-15   0
+           HCOCH$_{2}$OH                 HCOCH2OH                 HCOCH2OH   0
+                   HCOOH                    HCOOH                    HCOOH   0
+                      HF                       HF                       HF  -1
+                      DF                       DF                       DF   0
+               H$_{2}$CO                     H2CO                     H2CO  -2
+          H$_{2}^{13}$CO                 H2C_13_O                 H2C-13-O   0
+        H$_{2}$C$^{18}$O                  H2CO_18                  H2CO-18   0
+                H$_{2}$O                      H2O                      H2O -11
+              H$_{2}$O-r                    H2O_R                    H2O-r   0
+     H$_{2}$O$(\nu_{2})$                   H2O_V2                   H2O-v2   0
+           H$_{2}^{17}$O                   H2O_17                   H2O-17   0
+H$_{2}^{17}$O$(\nu_{2})$                H2O_17_V2                H2O-17-v2   0
+           H$_{2}^{18}$O                   H2O_18                   H2O-18   0
+H$_{2}^{18}$O$(\nu_{2})$                H2O_18_V2                H2O-18-v2   0
+                D$_{2}$O                      D2O                      D2O   0
+                     HDO                      HDO                      HDO   0
+          HDO$(\nu_{2})$                   HDO_V2                   HDO-v2   0
+              HD$^{17}$O                   HDO_17                   HDO-17   0
+              HD$^{18}$O                   HDO_18                   HDO-18   0
+          H$_{2}$O$_{2}$                     H2O2                     H2O2   0
+                H$_{2}$S                      H2S                      H2S   1
+           H$_{2}^{32}$S                   H2S_32                   H2S-32   0
+         H$_{2}$SO$_{4}$                    H2SO4                    H2SO4   1
+    H$_{2}^{32}$SO$_{4}$                H2S_32_O4                H2S-32-O4   0
+               HNO$_{3}$                     HNO3                     HNO3 -10
+      HNO$_{3}(\nu_{5})$                  HNO3_V5                  HNO3-v5   0
+      HNO$_{3}(\nu_{6})$                  HNO3_V6                  HNO3-v6   0
+      HNO$_{3}(\nu_{7})$                  HNO3_V7                  HNO3-v7   0
+      HNO$_{3}(\nu_{8})$                  HNO3_V8                  HNO3-v8   0
+      HNO$_{3}(\nu_{9})$                  HNO3_V9                  HNO3-v9   0
+        H$^{15}$NO$_{3}$                 HN_15_O3                 HN-15-O3   0
+       H$^{18}$ONO$_{2}$                HO_18_NO2                HO-18-NO2   0
+            HON$^{18}$OO                HONO_18_O                HONO-18-O   0
+            HONO$^{18}$O                 HONOO_18                 HONOO-18   0
+               DNO$_{3}$                     DNO3                     DNO3   0
+                    HOBr                     HOBR                     HOBr   2
+             HO$^{79}$Br                  HOBR_79                  HOBr-79   0
+             HO$^{81}$Br                  HOBR_81                  HOBr-81   0
+                    HOCl                     HOCL                     HOCl   2
+             HO$^{35}$Cl                  HOCL_35                  HOCl-35   0
+             HO$^{37}$Cl                  HOCL_37                  HOCl-37   0
+                    HONO                     HONO                     HONO   0
+                HO$_{2}$                      HO2                      HO2   0
+                   HOONO                    HOONO                    HOONO   0
+             HOONO$_{2}$                   HOONO2                   HOONO2   0
+                NF$_{3}$                      NF3                      NF3   0
+    NH$_2$CH$_2$CH$_2$OH              NH2CH2CH2OH              NH2CH2CH2OH   0
+                NH$_{3}$                      NH3                      NH3  -2
+       NH$_{3}(\nu_{2})$                   NH3_V2                   NH3-v2   0
+         $^{15}$NH$_{3}$                  N_15_H3                  N-15-H3   0
+                 N$_{2}$                       N2                       N2   0
+                N$_{2}$O                      N2O                      N2O  -7
+     N$_{2}$O$(\nu_{1})$                   N2O_V1                   N2O-v1   0
+     N$_{2}$O$(\nu_{2})$                   N2O_V2                   N2O-v2   0
+    N$_{2}$O$(2\nu_{2})$                  N2O_2V2                  N2O-2v2   0
+              $^{15}$NNO                  N_15_NO                  N-15-NO   0
+              N$^{15}$NO                  NN_15_O                  NN-15-O   0
+           N$_{2}^{17}$O                   N2O_17                   N2O-17   0
+           N$_{2}^{18}$O                   N2O_18                   N2O-18   0
+                      NO                       NO                       NO   0
+                     NO+                  NO_PLUS                  NO-plus   0
+                NO$_{2}$                      NO2                      NO2   0
+                       O                        O                        O  -2
+                $^{17}$O                     O_17                     O-17   0
+                $^{18}$O                     O_18                     O-18   0
+                    OBrO                     OBRO                     OBrO   2
+             O$^{79}$BrO                 OBR_79_O                 OBr-79-O   0
+             O$^{81}$BrO                 OBR_81_O                 OBr-81-O   0
+                    OClO                     OCLO                     OClO   2
+             O$^{35}$ClO                 OCL_35_O                 OCl-35-O   0
+             O$^{37}$ClO                 OCL_37_O                 OCl-37-O   0
+                     OCS                      OCS                      OCS   3
+              OC$^{32}$S                   OCS_32                   OCS-32   0
+              OC$^{34}$S                   OCS_34                   OCS-34   0
+       O$^{13}$C$^{32}$S               OC_13_S_32               OC-13-S-34   0
+                      OH                       OH                       OH  -4
+         OH$(\nu_{1,2})$                  OH_V1_2                  OH-v1-2   0
+               $^{17}$OH                   O_17_H                   O-17-H   0
+               $^{18}$OH                   O_18_H                   O-18-H   0
+                      OD                       OD                       OD   0
+                 O$_{2}$                       O2                       O2  -4
+        O$_{2}(\nu_{1})$                    O2_V1                    O2-v1   0
+               O$^{17}$O                   O_17_O                   O-17-O   0
+               O$^{18}$O                   O_18_O                   O-18-O   0
+    O$^{18}$O$(\nu_{1})$                O_18_O_V1                O-18-O-v1   0
+ $^{1}\Delta_{g}$O$_{2}$            SNGLT_DLTA_O2            snglt-dlta-O2  -1
+ $^{1}\Delta_{g}^{18}$OO        SNGLT_DLTA_O_18_O        snglt-dlta-O-18-O   0
+                 O$_{3}$                       O3                       O3 -11
+               O$_{3}$-r                     O3_R                     O3-r   0
+      O$_{3}(\nu_{1,3})$                  O3_V1_3                  O3-v1-3   0
+        O$_{3}(\nu_{2})$                    O3_V2                    O3-v2   0
+       O$_{3}(2\nu_{2})$                   O3_2V2                   O3-2v2   0
+O$_{3}(\nu_{1,3}+\nu_2)$               O3_V1_3_V2               O3-v1-3-v2   0
+           O$_{2}^{17}$O             O3_ASYM_O_17             O3-asym-O-17   0
+              O$^{17}$OO              O3_SYM_O_17              O3-sym-O-17   0
+           O$_{2}^{18}$O             O3_ASYM_O_18             O3-asym-O-18   0
+O$_{2}^{18}$O$(\nu_{2})$          O3_ASYM_O_18_V2          O3-asym-O-18-v2   0
+              O$^{18}$OO              O3_SYM_O_18              O3-sym-O-18   0
+   O$^{18}$OO$(\nu_{2})$           O3_SYM_O_18_V2           O3-sym-O-18-v2   0
+                     RHI                      RHI                      RHI   0
+                SO$_{2}$                      SO2                      SO2   5
+         $^{32}$SO$_{2}$                  S_32_O2                  S-32-O2   0
+$^{32}$SO$_{2}(\nu_{2})$               S_32_O2_V2               S-32-O2-v2   0
+         $^{33}$SO$_{2}$                  S_33_O2                  S-33-O2   0
+         $^{34}$SO$_{2}$                  S_34_O2                  S-34-O2   0
+       $^{32}$S$^{18}$OO              S_32_O_18_O              S-32-O-18-O   0
+@
+
+
+1.16
+log
+@Remove MIFExtinction
+@
+text
+@d1 1
+a1 1
+$Id: sps_cross_ref_table.txt,v 1.15 2011/11/11 19:06:32 vsnyder Exp $
+d20 2
+a21 1
+              CH$_{3}$CN                    CH3CN                    CH3CN  -3
+d151 1
+a151 1
+                      OH                       OH                       OH  -3
+d153 1
+@
+
+
+1.15
+log
+@Add MIFExtinction
+@
+text
+@d1 1
+a1 1
+$Id: sps_cross_ref_table.txt,v 1.14 2011/08/25 22:40:35 vsnyder Exp $
+a119 1
+           MIFEXTINCTION            MIFEXTINCTION            MIFEXTINCTION   0
+@
+
+
+1.14
+log
+@Add RHi to the molecule list
+@
+text
+@d1 1
+a1 1
+$Id: sps_cross_ref_table.txt,v 1.13 2011/07/29 01:46:25 vsnyder Exp $
+d55 2
+a56 2
+                 CLOUD_A                  CLOUD_A                  CLOUD_A   0
+                 CLOUD_S                  CLOUD_S                  CLOUD_S   0
+d120 1
+@
+
+
+1.13
+log
+@Make CloudIce a molecule
+@
+text
+@d1 1
+a1 1
+$Id: sps_cross_ref_table.txt,v 1.12 2008/10/08 18:26:22 bill Exp $
+d173 1
+@
+
+
+1.12
+log
+@add new co width and o3 interference
+@
+text
+@d1 1
+a1 1
+$Id: sps_cross_ref_table.txt,v 1.11 2008/10/06 16:22:54 pwagner Exp $
+d55 3
+a57 2
+                CLOUD\_A                  CLOUD_A                  CLOUD-A   0
+                CLOUD\_S                  CLOUD_S                  CLOUD-S   0
+@
+
+
+1.11
+log
+@Added EXTINCTIONV2
+@
+text
+@d1 1
+a1 1
+$Id: sps_cross_ref_table.txt,v 1.10 2006/03/29 18:42:26 bill Exp $
+d119 1
+@
+
+
+1.10
+log
+@v2 spectroscopy
+@
+text
+@d1 1
+a1 1
+$Id: sps_cross_ref_table.txt,v 1.9 2006/02/04 00:24:45 vsnyder Exp $
+d58 1
+@
+
+
+1.9
+log
+@To correspond to V2 spectroscopy
+@
+text
+@d1 1
+a1 1
+$Id: sps_cross_ref_table.txt,v 1.8 2004/10/12 22:11:58 bill Exp $
+d132 1
+a132 1
+                     NO+                  NO_PLUS                  NO-PLUS   0
+@
+
+
+1.8
+log
+@separated odeltat from O2 group
+@
+text
+@d1 1
+a1 1
+$Id: sps_cross_ref_table.txt,v 1.7 2004/09/15 22:45:33 bill Exp $
+d12 12
+a23 1
+              CH$_{3}$CN                    CH3CN                    CH3CN   0
+d28 3
+d32 2
+d38 1
+a38 1
+                CO$_{2}$                      CO2                      CO2   1
+d46 3
+d66 3
+d73 1
+d97 1
+a97 1
+               HNO$_{3}$                     HNO3                     HNO3  -6
+d104 4
+d114 1
+d116 1
+d118 4
+d132 1
+d137 3
+d147 2
+a148 1
+                      OH                       OH                       OH  -2
+d170 1
+a170 1
+                SO$_{2}$                      SO2                      SO2   4
+d174 2
+a175 1
+         $^{34}$SO$_{2}$                  S_34_O2                  S-34-O2   0@
+
+
+1.7
+log
+@added cloud extinctions
+@
+text
+@d1 1
+a1 1
+$Id: sps_cross_ref_table.txt,v 1.6 2004/02/12 01:55:42 livesey Exp $
+d113 1
+a113 1
+                 O$_{2}$                       O2                       O2  -6
+a114 1
+ $^{1}\Delta_{g}$O$_{2}$            SNGLT_DLTA_O2            snglt-dlta-O2   0
+d118 1
+@
+
+
+1.6
+log
+@Added id field again
+@
+text
+@d1 1
+a1 1
+$Id$
+d36 2
+d120 2
+a121 1
+                 O$_{3}$                       O3                       O3 -10
+@
+
+
+1.5
+log
+@Added two new molecules
+@
+text
+@d1 1
+@
+
+
+1.4
+log
+@spectroscopy upgrade
+@
+text
+@d12 1
+d16 1
+d132 1
+a132 1
+         $^{34}$SO$_{2}$                  S_34_O2                  S-34-O2   0
+@
+
+
+1.3
+log
+@added air continuum
+@
+text
+@a0 1
+$Id: sps_cross_ref_table.txt,v 1.2 2003/05/14 23:01:51 livesey Exp $
+a5 1
+               AIR\_CONT                 AIR_CONT                 air-cont   0
+@
+
+
+1.2
+log
+@Added Id string
+@
+text
+@d1 1
+a1 1
+$Id$
+d7 1
+@
+
+
+1.1
+log
+@various names we use for molecules
+@
+text
+@d1 1
+@
+

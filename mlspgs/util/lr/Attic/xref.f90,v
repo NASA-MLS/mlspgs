@@ -1,0 +1,169 @@
+head	1.2;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2014.01.14.00.09.33;	author vsnyder;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2013.10.24.22.41.14;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Revised LR doesn't need it
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Cross_Reference
+
+  implicit NONE
+  private
+  public :: XREF
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: xref.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  subroutine XREF
+
+    use IO, only: OUTPUT
+    use LISTS, only: ITEM, NEW, NEXT, REL
+    use S1, only: MOVSTR
+    use S3, only: PRDIND, PRODCN, VOCAB
+    use TABCOM, only: NUMPRD, NVOC
+    implicit NONE
+
+    !     Print a cross reference of the grammar symbols.
+
+    !     *****     External References     ********************************
+
+    ! MOVSTR  moves a string from the symbol table.
+
+    !     *****     Local Variables     ************************************
+
+    ! I       is a loop induction variable and subscript.
+    ! J       is a loop induction and temporary variable, and a subscript.
+    ! K       is a loop induction variable.
+    ! L       keeps track of the current position in the output line.
+    ! LSTART  keeps track of the starting position in the output line.
+    ! LINE    is used for text assembly.
+    ! LINK    points to a list node.
+
+    integer I, J, K, L, LSTART, LINK
+    character(len=120) :: LINE
+
+    ! LSTHED  is an array of pointers to heads of reference lists, indexed
+    !         by the symbol number.
+
+    integer LSTHED(NVOC)
+
+    !     *****     Procedures     *****************************************
+
+    !     Sort the grammar according to vocabulary symbol identities using
+    !     a bucket sort.
+
+    lsthed = 0
+    do i = numprd, 1, -1
+      call new ( link )
+      item(link) = -i
+      j = prdind(i)
+      next(link) = lsthed(prodcn(j))
+      lsthed(prodcn(j)) = link
+      do k = j+1, prdind(i+1)-1
+        call new ( link )
+        item(link) = i
+        next(link) = lsthed(prodcn(k))
+        lsthed(prodcn(k)) = link
+      end do
+    end do
+
+    !     Print the cross reference lists.
+
+    line = '1'
+    line(32:86) = 'A   V O C A B U L A R Y   C R O S S   R E F E R E N C E'
+    call output ( line(1:86) )
+    call output ( line(1:1) )
+
+    do i = 1, nvoc
+      l = 2
+      call movstr ( vocab(i), line, l, 120 )
+      l = l + 4
+      l = l - mod(l, 5)
+      lstart = min(l, 20)
+      link = lsthed(i)
+      do while ( link /= 0 )
+        if(l .gt. 115)then
+          call output (line(1:l-1))
+          l = lstart
+        end if
+        write ( line(l:l+4), '(i5)' ) item(link)
+        l = l + 5
+        link = next(link)
+      end do
+      call output ( line(1:l-1) )
+      call rel ( lsthed(i) )
+    end do
+
+  end subroutine XREF
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: xref.f90,v 1.1 2013/10/24 22:41:14 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Cross_Reference
+
+! $Log: xref.f90,v $
+! Revision 1.1  2013/10/24 22:41:14  vsnyder
+! Initial commit
+!
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d20 1
+a20 1
+       "$RCSfile: parser.f90,v $"
+d111 1
+a111 1
+       "$Id: parser.f90,v 2.29 2013/10/02 01:35:46 vsnyder Exp $"
+d120 4
+a123 1
+! $Log: $
+@
+

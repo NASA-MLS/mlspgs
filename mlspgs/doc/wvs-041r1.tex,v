@@ -1,0 +1,182 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.14
+	cfm-single-freq-0-1:1.1.0.12
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.10
+	mus-emls-1-70:1.1.0.8
+	rel-1-0-englocks-work:1.1.0.6
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2008.06.11.20.14.52;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9.2in
+
+\newcommand{\docname}{\bf wvs-041r1}
+\newcommand{\docdate}{21 July 2006}
+
+\usepackage{longtable}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill\\
+Subject: \>Maximum $\zeta$\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-20pt}
+
+We are given $\phi_i$, $\zeta(\phi_i)$ and
+$\left.\frac{\text{d}\zeta}{\text{d}\phi}\right|_{\phi=\phi_i}$ for $i = 1,
+\dots, n$.  We wish to find $\phi_m$ such that $\zeta(\phi_m)$ is maximum in
+$\phi_1 < \phi_m < \phi_n$, and add $\zeta(\phi_m)$ and $\phi_m$ to
+$\{\zeta_i\}$ and $\{\phi_i\}$ if $\inf\{|\phi_m-\phi_i|\} >$ tol.
+
+From the given quantities, form Hermite interpolating polynomials in each
+region $[\phi_i,\phi_{i+1}]$.  Writing $x =
+\frac{\phi-\phi_i}{\phi_{i+1}-\phi_i}$ in each region, and therefore $0 \leq x
+\leq 1$ in each region, we can write a polynomial
+
+\vspace{-15pt}\begin{equation}\label{zeta}
+\zeta=c_0 + c_1 x + c_2 x^2 + c_3 x^3
+\end{equation}
+
+and $\frac{\text{d}\zeta}{\text{d}x} = c_1 + 2 c_2 x + 3 c_3 x^2$.  Denoting
+the given $\zeta$ and $\frac{\text{d}\zeta}{\text{d}x}$ at $x=0$ and $x=1$ by
+$\zeta_0$, $\zeta^\prime_0$, $\zeta_1$ and $\zeta^\prime_1$ for each region
+$[\phi_i,\phi_{i+1}]$, we have
+
+\vspace{-15pt}\begin{equation}
+\left[ \begin{array}{llll}
+ 1 & 0 & 0 & 0 \\
+ 0 & 1 & 0 & 0 \\
+ 1 & 1 & 1 & 1 \\
+ 0 & 1 & 2 & 3 \\
+\end{array}\right]
+\left[ \begin{array}{l}
+ c_0 \\
+ c_1 \\
+ c_2 \\
+ c_3 \\
+\end{array}\right] =
+\left[ \begin{array}{l}
+\zeta_0 \\
+\zeta^\prime_0 \\
+\zeta_1 \\
+\zeta^\prime_1
+\end{array}\right]
+\end{equation}
+
+from which
+
+\vspace{-15pt}\begin{equation}\begin{split}
+c_0 =\,& \zeta_0 \\
+c_1 =\,& \zeta^\prime_0 \\
+c_2 =\,& -3 \zeta_0 + 3 \zeta_1 -2 \zeta^\prime_0 - \zeta^\prime_1 \\
+c_3 =\,& 2 \zeta_0 - 2 \zeta_1 + \zeta^\prime_0 + \zeta^\prime_1 \,. \\
+\end{split}\end{equation}
+
+We want $\frac{\text{d}\zeta}{\text{d}\phi} =
+\frac{\text{d}\zeta}{\text{d}x}= 0$, or equivalently
+
+\vspace{-15pt}\begin{equation}\label{x_m}
+x_{m_i} = x|_{\zeta^\prime=0} = \frac{-c_2 \pm \sqrt{c_2^2 - 3 c_1 c_3}}{3 c_3} \,,
+\end{equation}
+
+in each region $[\phi_i,\phi_{i+1}]$ unless $c_3 = 0$, in which case the
+extremum is at $x_{m_i} = -\frac{c_1}{2 c_2}$, and it is a maximum if $c_2 <
+0$.  If $c_3 = 0$ and $c_2 > 0$ the extremum in that region is at either $x=0$
+or $x=1$, which isn't interesting since we already have $\phi_i$, $\phi_{i+1}$,
+$\zeta(\phi_i)$ and $\zeta(\phi_{i+1})$.
+
+Assuming $c_3 \neq 0$, and seeking a maximum, we want
+
+\vspace{-15pt}\begin{equation}
+\left.\frac{\text{d}^2\zeta}{\text{d}x^2}\right|_{x=x_{m_i}} = 2(c_2 + 3 c_3
+x_{m_i}) = \pm 2 \sqrt{c_2^2 - 3 c_1 c_3} < 0\,, \end{equation}
+
+so we choose the negative sign in Equation (\ref{x_m}).  If $x_{m_i} < 0$ or
+$x_{m_i} > 1$, the maximum in the region is at $x=0$ or $x=1$, which is again
+uninteresting.
+
+If $\sup\{\zeta({x_{m_i}})\} > \sup\{\zeta(x_i)\}$, add $\phi(x_{m_i}) = \phi_i +
+x_{m_i}(\phi_{i+1}-\phi_i)$ and $\zeta(x_{m_i})$ to $\{\phi_i\}$ and
+$\{\zeta_i\}$.
+
+\label{lastpage}
+\end{document}
+% $Id: $
+@

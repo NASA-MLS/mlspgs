@@ -1,0 +1,2708 @@
+head	1.3;
+access;
+symbols
+	v5-02-NRT-19:1.3
+	v6-00:1.3
+	v5-02-NRT-18:1.3
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.4
+	cfm-single-freq-0-1:1.2.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.3
+date	2022.12.22.22.53.57;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2020.03.19.22.31.05;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2020.03.06.00.24.19;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@Comment out 2 deug statements
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!===============================================================================
+module MLSFiles               ! Utility file routines
+  !=============================================================================
+  use Dump_0, only: Dump
+  use HDF, only: Dfacc_Create, Dfacc_Rdonly, Dfacc_Read, Dfacc_Rdwr, &
+    & Sfstart, Sfend
+  use HDFeos, only: Gdclose, Gdopen, Swclose, Swopen, Swinqswath
+  use HDFeos5, only: HE5_Swclose, HE5_Swopen, HE5_Swinqswath, &
+    & HE5_Gdopen, HE5_Gdclose, &
+    & HE5f_Acc_Trunc, HE5f_Acc_Rdonly, HE5f_Acc_Rdwr
+  use HighOutput, only: OutputNamedValue, OutputTable
+  use Intrinsic, only: L_Ascii, L_HDFeos, L_HDF, L_NetCDF4, L_Open, &
+    & L_Swath, L_Tkgen, L_Zonalavg, Lit_Indices
+  use Io_Stuff, only: Get_Lun
+  use Machine, only: Io_Error
+  use MLSCommon, only: BareFNLen, FileNameLen, FileIds_T, MLSFile_T, Range_T, &
+    & FileStringTable, InRange, Split_Path_Name
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Crash, MLSMSG_Error, &
+    & MLSMSG_Warning, Dump_MLSFile
+  use MLSFinds, only: Findfirst
+  use MLSStrings, only: Capitalize, Lowercase
+  use MLSStringLists, only: ExtractSubstring, &
+    & ReplaceSubstring, SortArray
+  use NetCDF, only: NF90_NoWrite, NF90_NetCDF4, NF90_Write, &
+    & NF90_Create, NF90_Open, NF90_Close
+  use Output_M, only: Blanks, Output
+  use SDPtoolkit, only: &
+    & PGS_Pc_Getreference, PGS_S_Success, &
+    & PGSd_Io_Gen_Rseqfrm, PGSd_Io_Gen_Rsequnf, &
+    & PGSd_Io_Gen_Rdirfrm, PGSd_Io_Gen_Rdirunf, &
+    & PGSd_Io_Gen_Wseqfrm, PGSd_Io_Gen_Wsequnf, &
+    & PGSd_Io_Gen_Wdirfrm, PGSd_Io_Gen_Wdirunf, &
+    & PGSd_Io_Gen_Useqfrm, PGSd_Io_Gen_Usequnf, &
+    & PGSd_Io_Gen_Udirfrm, PGSd_Io_Gen_Udirunf, &
+    & PGSd_Io_Gen_Aseqfrm, PGSd_Io_Gen_Asequnf, &
+    & PGS_Io_Gen_Closef, PGS_Io_Gen_Openf, PGSd_Pc_File_Path_Max, &
+    & UseSDPtoolkit
+  ! In The Long Run, We'll Try Putting Interfaces To These In SDPToolkit.f90
+  ! Until Then, Just Declare Them As External
+  ! & PGS_MET_SFstart, PGS_MET_SFend, &
+  use String_Table, only: Display_String, Get_String
+  use HDF5, only: Size_T
+  implicit none
+
+  private 
+
+  public :: AddFiletoDatabase, &
+    & AddinitializeMLSFile, ArethesameFile, &
+    & Deallocate_FileDatabase, Dump, FileStringTable, &
+    & GetMLSFilebyname, GetMLSFilebytype, Getpcfromref, &
+    & InitializeMLSFile, &
+    & Maskname, &
+    & MLS_CloseFile, MLS_Exists, MLS_HDF_Version, MLS_Inqswath, &
+    & MLS_OpenFile, MLS_Sfstart, MLS_Sfend, &
+    & Readnchars, Release_MLSFile, Reserve_MLSFile, &
+    & RmFilefromDatabase, Split_Path_Name, &
+    & Transfer_MLSFile, UnMaskname, Unsplitname
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: MLSFiles.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+! === (start of toc) ===
+!     c o n t e n t s
+!     - - - - - - - -
+
+!     (parameters)
+! HDFVERSION_4       integer corresponding to hdf4
+! HDFVERSION_5       integer corresponding to hdf5
+! WILDCARDHDFVERSION integer corresponding to automatically recognize hdf4/hdf5
+! NAMENOTFOUND       GetPCFromRef unable to find named file
+! INVALIDPCRANGE     GetPCFromRef given invalid pc range
+! CANTALLOCATENAMEARRAY
+!                    GetPCFromRef unable to allocate memory needed
+! UNKNOWNFILEACCESSTYPE
+!                    invalid file access type
+! UNKNOWNTOOLBOXMODE invalid toolbox mode
+! NOFREEUNITS        ran out of free units
+! MUSTSUPPLYFILENAMEORPC
+!                    missing required argument
+! NOPCIFNOTOOLKIT    must be given filename if toolkitless
+! NOSUCHHDFVERSION   invalid hdf version
+! MUSTSUPPLYFILENAME Required filename arg missing
+! ERRORINH5FFUNCTION Internal hdf5 library function error
+! WRONGHDFVERSION    Supplied hdf version differs from actual file version
+
+!     (subroutines and functions)
+! AddFileToDataBase  Enters an MLSFile {FileName, id, ..} into the database
+! AddInitializeMLSFile  AddFileToDataBase, initializes, and returns pointer to it
+! AreTheSameFile     Returns TRUE if the two args are the same file
+! Deallocate_filedatabase
+!                    Deallocates file database, closing any still-open files
+! Dump               Dumps file info: type, access, name, etc.
+! GetMLSFileByName   Returns pointer to MLSFile matching fileName
+! GetMLSFileByType   Returns pointer to MLSFile matching fileType
+! GetPCFromRef       Turns a FileName into the corresponding PC
+! InitializeMLSFile  Initializes an MLSFile
+! Maskname           Add stuff to file_name so parser can't recognize it
+! MLS_Exists         Returns 0 if the filename exists
+! MLS_CloseFile      Closes a file opened by MLS_openFile
+! MLS_Hdf_version    Returns one of 'hdf4', 'hdf5', or '????'
+! MLS_Inqswath       A wrapper for doing swinqswath for versions 4 and 5
+! MLS_OpenFile       Opens an MLSFile_T file
+! MLS_Sfend          Closes a file opened by MLS_sfstart
+! MLS_Sfstart        Opens an hdf file for writing metadata
+! Release_MLSFile    undoes what reserve_MLSFile does
+! Reserve_MLSFile    initializes an MLS file 
+!                      (to be operated on by single-argument functions)
+! RmFileFromDataBase Removes a FileName, id, etc. from the database
+! Split_path_name    splits the input path/name into path and name
+! Transfer_MLSFile   Changes the path of an MLSFile
+! Unmaskname         Recover file name from masked form
+! Unsplitname        Split File name -> catenated: '..DGG13..' -> 'DGG'
+! === (end of toc) ===
+
+! (The following 2 are currently private, but could be made public if needed)
+! hdf2hdf5_fileaccess
+!                    Translates version 4 hdf access codes to version 5
+! he2he5_fileaccess
+!                    Translates version 4 hdfeos access codes to version 5
+
+! === (start of api) ===
+! GetPCFromRef (char* FileName, PCBottom, PCTop,
+!     log caseSensitive, ErrType, [int versionNum], [log debugOption],
+!     [char* path], [char* ExactName])
+! split_path_name (char* full_file_name, char* path, char* name, [char slash])
+! int mls_exists ( char* FileName )
+! int mls_inqswath (char* FileName, char* swathList, int strBufSize,
+!     [int hdfVersion])
+! int mls_sfstart (char* FileName, int FileAccess, [int hdfVersion])
+! int mls_sfend (int sdid, [int hdfVersion])
+! int mls_hdf_version (char* FileName, [int preferred_version], [int AccessType])
+! mls_openFile (char* filename, char* access, hid_t file_id)
+! mls_closeFile (hid_t file_id)
+! === (end of api) ===
+
+! Note that of the above functions and procedures, the following operate on the
+! MLSFile user-defined type--a high level type insulating the user from
+! some of the grittier details
+!    AddFileToDataBase
+!    AddInitializeMLSFile
+!    AreTheSameFile
+!    Deallocate_filedatabase
+!    Dump
+!    GetMLSFileByName
+!    GetMLSFileByType
+!    InitializeMLSFile
+!    Mls_closeFile
+!    Mls_openFile
+!    RmFileFromDataBase
+! int AddFileToDataBase (MLSFile *dataBase(:), MLSFile(item) )
+! MLSFile *AddInitializeMLSFile (MLSFile *dataBase(:), [int type],
+!   [int access], [char* content], [char* name], [char* shortName], 
+!   [int HDFVersion], [int recordLength], 
+!   [Range PCFIdRange], [int PCFBottom], [int PCFTop])
+! log AreTheSameFile (MLSFile File1, MLSFile File2 )
+! Deallocate_filedatabase(MLSFile *dataBase(:))
+! Dump ( MLSFile *dataBase(:), [char* Name], [int details], [log table] )
+! Dump ( MLSFile MLSFile, [int details] )
+! MLSFile *GetMLSFileByName (MLSFile *dataBase(:), char* name, [log ignore_paths])
+! MLSFile *GetMLSFileByType (MLSFile *dataBase(:), [int type], [char* content],
+!    [int PCFId], [Range PCFIdRange])
+! int InitializeMLSFile (MLSFile item, [int type],
+!   [int access], [char* content], [char* name], [char* shortName], 
+!   [int HDFVersion], [int recordLength], 
+!   [Range PCFIdRange], [int PCFBottom], [int PCFTop])
+! mls_CloseFile( MLSFile MLSFile, [int error] )
+! mls_OpenFile( MLSFile MLSFile, [int error] )
+
+! A long-term plan is for almost all calls from outside this module to
+! be made to one of the above procedures and removing the public attribute
+! of the other procedures
+
+   ! ---------------- Module Parameters ------------------
+   ! 4 corresponds to hdf4, 5 to hdf5 in L2GP, L2AUX, etc.
+   ! *** HDFVersions must be consecutive, ***
+   !     as they're used for subscripts!
+   integer, parameter, public :: HDFVERSION_4 = 4
+   integer, parameter, public :: HDFVERSION_5 = 5
+   ! Assume hdf files w/o explicit hdfVersion field are DEFAULT_HDFVERSION
+   ! (Does anyone still use it? Should we deprecate it?)
+   integer, parameter         :: DEFAULT_HDFVERSION = HDFVERSION_4
+   
+  ! Given this WILDCARDHDFVERSION, try to automatically recognize hdfversion
+  ! then perform appropriate version of open/close; i.e., forgiving
+  integer, parameter, public :: WILDCARDHDFVERSION = HDFVERSION_4+HDFVERSION_5
+
+  ! This isn't NameLen because it may have a path prefixed
+  integer, parameter :: MAXFILENAMELENGTH=PGSd_PC_FILE_PATH_MAX
+
+  ! This error code may be returned from almost any routine or function
+
+  integer, parameter, public :: FILENOTFOUND=-1
+
+  ! These are error codes that may be returned by GetPCFromRef
+
+  integer, parameter, public :: NAMENOTFOUND=FILENOTFOUND-1
+  integer, parameter, public :: INVALIDPCRANGE=NAMENOTFOUND-1
+  integer, parameter, public :: CANTALLOCATENAMEARRAY=INVALIDPCRANGE-1
+
+  ! These are error codes that may be returned by mls_io_gen_openF
+
+  integer, parameter, public :: UNKNOWNFILEACCESSTYPE=-999
+  integer, parameter, public :: UNKNOWNTOOLBOXMODE=UNKNOWNFILEACCESSTYPE+1
+  integer, parameter, public :: NOFREEUNITS=UNKNOWNTOOLBOXMODE+1
+  integer, parameter, public :: MUSTSUPPLYFILENAMEORPC=NOFREEUNITS+1
+  integer, parameter, public :: NOPCIFNOTOOLKIT=MUSTSUPPLYFILENAMEORPC+1
+  integer, parameter, public :: NOSUCHHDFVERSION=NOPCIFNOTOOLKIT+1
+  integer, parameter, public :: FILEALREADYOPEN=NOSUCHHDFVERSION+1
+
+  ! These are error codes that may be returned by mls_io_gen_openF
+  ! or by mls_hdf_version if you call it directly
+
+  integer, parameter, public :: MUSTSUPPLYFILENAME=FILEALREADYOPEN+1
+  integer, parameter, public :: ERRORINH5FFUNCTION=MUSTSUPPLYFILENAME+1
+  integer, parameter, public :: WRONGHDFVERSION=ERRORINH5FFUNCTION+1
+  
+  ! Whether to use PGS_MET commands in mls_sf(start)(end)
+  ! (The alternative is to use hdf5 calls directly)
+  ! logical, parameter :: PGS_MET4MLS_SF = .true.
+  ! Whether to pass hdf5_acc types to PGS_MET 
+  ! (The alternative is to pass h5f_acc directly)
+  ! Contradicting what the documents say,
+  ! currently (TK 5.2.7.4) the toolkit routine
+  ! PGS_MET_HDFSDStart.c assumes the File Access is of
+  ! one of the following types:
+  ! (1) hdf4_acc: DFACC_RDWR, DFACC_RDONLY, or DFACC_CREATE
+  !      (equiv. to HDF4_ACC_RDWR, etc.)
+  ! (2) hdf5_acc: HDF5_ACC_RDWR, HDF5_ACC_RDONLY, or HDF5_ACC_CREATE
+  !          * * *    w a r n i n g   * * *
+  ! According to mls/hirdls telecom of 03-12-2002 this will change
+  ! in a future release of the toolkit
+  ! That means some programmer (paw?) will have to revisit
+  ! this and see what the toolkit code actually does,
+  ! not just what the docs say
+  logical, parameter :: HDF5_ACC_TYPES_TO_MET = .true.
+  integer, parameter :: HDF5_ACC_DEFAULT = HE5F_ACC_RDWR ! HDF5_ACC_RDWR
+
+  ! ------------- Warning--trickery ahead -----------
+  ! Character(s) added to file name so parser won't recognize it
+  ! (Parser sometimes changes its case if it thinks it has seen the name before)
+  character (len=*), parameter :: MASKINGTAPE = ')('
+
+  interface Dump
+    module procedure Dump_MLSFile
+    module procedure Dump_FileDatabase
+  end interface
+
+  interface mls_closeFile
+    module procedure mls_closeFileID
+    module procedure mls_closeFileType
+  end interface
+
+  interface mls_openFile
+    module procedure mls_openFileName
+    module procedure mls_openFileType
+  end interface
+
+  ! The following parameters may some day be used
+  ! but, not so far
+  !   Don't remember what we intended. Were they to be keys and values
+  !   for clever hashes? To be used in functions beginning with
+  !      Mls_io_gen_..
+  !   How exactly would they make our life simpler?
+  ! character (len=*), parameter :: accesses = 'rdonly,write,rdwrite,create,nonhdf'
+  ! integer, dimension(5), parameter :: accessTypes = &
+  !   & (/ DFACC_RDONLY, DFACC_RDWR, DFACC_RDWR, DFACC_CREATE, PGSd_IO_Gen_RSeqFrm/)
+  ! character (len=*), parameter :: hdfmodes = 'hg,sw,gd,za'
+  ! character (len=*), parameter :: modes = 'op,hg,sw,gd,za,bin,pg'
+  ! character (len=*), parameter :: types = 'ascii,hdf,swath,grid,zonalavg,binary,tkgen'
+
+  type(MLSFile_T), save :: MLSFile_save
+  logical, parameter :: DeeBug = .false.
+
+contains
+
+  !-------------------------------------------  AddFileToDatabase  -----
+  integer function AddFileToDatabase ( DATABASE, ITEM )
+
+  ! This routine adds an MLSFile to a database of such MLSFiles, 
+  ! creating the database if necessary.
+
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+
+    ! Dummy arguments
+    type (MLSFile_T), dimension(:), pointer :: DATABASE
+    type (MLSFile_T), intent(in) ::            ITEM
+
+    ! Local variables
+    type (MLSFile_T), dimension(:), pointer :: tempDatabase
+
+    include "addItemToDatabase.f9h"
+
+    AddFileToDatabase = newSize
+  end function AddFileToDatabase
+
+  !----------------------------------------  AddInitializeMLSFile  -----
+  function AddInitializeMLSFile ( DATABASE, type, access, content, name, &
+    & shortName, HDFVersion, recordLength, PCFIdRange, PCBottom, PCTop ) &
+    & result(item)
+
+  ! This routine initializes an MLSFile, and adds it to database
+  ! returning a pointer to the new entry
+
+    ! Dummy arguments
+    type (MLSFile_T), dimension(:), pointer :: DATABASE
+    type (MLSFile_T), pointer               :: ITEM
+    integer, optional, intent(in)          :: type
+    ! character(len=*), optional, intent(in) :: access
+    integer, optional, intent(in)          :: access
+    character(len=*), optional, intent(in) :: content
+    character(len=*), optional, intent(in) :: name
+    character(len=*), optional, intent(in) :: shortName
+    integer, optional, intent(in)          :: HDFVersion
+    integer, optional, intent(in)          :: recordLength
+    type(Range_T), optional, intent(in)    :: PCFIdRange
+    integer, optional, intent(in)          :: PCBottom ! (Instead of range_T)
+    integer, optional, intent(in)          :: PCTop    ! (Instead of range_T)
+    ! Internal variables
+    integer :: newSize
+    type (MLSFile_T)                       :: NEWITEM
+    ! Executable
+    newSize = InitializeMLSFile ( NEWITEM, type, access, content, name, &
+    & shortName, HDFVersion, recordLength, PCFIdRange, PCBottom, PCTop )
+    newSize = AddFileToDatabase ( DATABASE, NEWITEM )
+    item => Database(newSize)
+  end function AddInitializeMLSFile
+
+  !----------------------------------------------  AreTheSameFile  -----
+  function AreTheSameFile ( File1, File2 ) &
+    & result(SooDesu)
+
+  ! This routine checks whether the two inputs name the same file
+
+    ! Dummy arguments
+    type (MLSFile_T), intent(in) :: File1
+    type (MLSFile_T), intent(in) :: File2
+    logical                      :: SooDesu
+    ! Internal variables
+    SooDesu = ( File1%name == File2%name )
+  end function AreTheSameFile
+
+  !-------------------------------------------  InitializeMLSFile  -----
+  integer function InitializeMLSFile ( ITEM, type, access, content, name, &
+    & shortName, HDFVersion, recordLength, PCFIdRange, PCBottom, PCTop )
+
+  ! This routine initializes an MLSFile, optionally supplying type, content, etc.
+
+    ! Dummy arguments
+    type (MLSFile_T)                       :: ITEM
+    integer, optional, intent(in)          :: type
+    integer, optional, intent(in)          :: access
+    character(len=*), optional, intent(in) :: content
+    character(len=*), optional, intent(in) :: name
+    character(len=*), optional, intent(in) :: shortName
+    integer, optional, intent(in)          :: HDFVersion
+    integer, optional, intent(in)          :: recordLength
+    type(Range_T), optional, intent(in)    :: PCFIdRange
+    integer, optional, intent(in)          :: PCBottom ! (Instead of range_T)
+    integer, optional, intent(in)          :: PCTop    ! (Instead of range_T)
+
+    InitializeMLSFile = 0 ! Will we ever return non-zero values?
+    item%type         = 0
+    item%access       = 0
+    item%recordLength = 0
+    item%PCFID        = 0
+    item%fileID%f_id  = 0
+    item%fileID%grp_id= 0
+    item%fileID%sd_id = 0
+    item%stillOpen    = .false.
+
+    ! item%accessStr   = ""
+    item%content     = ""
+    item%name        = ""
+    item%shortName   = ""
+    item%HDFVersion  = 0
+    item%recordLength= 0
+    item%PCFIDRange%Bottom = 0
+    item%PCFIDRange%Top = 0
+    
+    if ( present(type         ) ) item%type       = type      
+    if ( present(access       ) ) item%access     = access    
+    if ( present(content      ) ) item%content    = content   
+    if ( present(name         ) ) item%name       = name      
+    if ( present(shortName    ) ) item%shortName  = shortName      
+    if ( present(HDFVersion   ) ) item%HDFVersion = HDFVersion
+    if ( present(recordLength ) ) item%recordLength= recordLength
+    if ( present(PCFIDRange   ) ) item%PCFIDRange = PCFIDRange
+    if ( present(PCBottom     ) ) item%PCFIDRange%Bottom   = PCBottom
+    if ( present(PCTop        ) ) item%PCFIDRange%Top      = PCTop   
+    ! Make certain not to store simply a truncated name as short name
+    if ( present(name) .and. present(shortName) ) then
+      if ( name == shortName ) item%shortName = ""
+    endif
+    if ( item%type > 0 .and. FILESTRINGTABLE ) &
+      & call get_string(lit_indices(item%type), item%typeStr, strip=.true.)
+  end function InitializeMLSFile
+
+  ! -----------------------------------------------  GetPCFromRef  -----
+
+  ! This function takes a FileName as an arg and a range of PC numbers
+  ! [PCBottom, PCTop] which are integers
+  ! It returns thePC corresponding to the FileName
+
+  ! FileName may be a fragment such as l2gp_temp of a longer name
+  ! such as mls_l2_temp_v0.5_01-01-2004.dat
+
+  ! If no matching file found, it sets ErrType=NAMENOTFOUND
+  ! otherwise ErrType=0
+
+  ! This is useful because all the Toolbox routines refer to files
+  ! by their PC numbers, not their names
+
+  ! Optionally you may require the match to be case-sensitive
+  !   (by default it is not: l2_temp will match MLS_L2_TEMP_...)
+
+  ! If you pass in a path, it will require that the paths also match
+
+  ! Optionally you may pass in a version number and a debug flag
+
+  ! optionally returns the exact name of the matching file
+  
+  ! You might see the term PCFId used for thePC elsewhere
+  ! Someday we should enforce uniform nomenclature here
+
+  function GetPCFromRef(FileName, PCBottom, PCTop, &
+    & caseSensitive, ErrType, versionNum, debugOption, path, ExactName) &
+    & result (thePC)
+
+    ! Dummy arguments
+    character (len=*), intent(in)            :: FileName
+    integer,  intent(in)                     :: PCBottom, PCTop
+    integer                                  :: thePC, notThePC
+    integer,  intent(out)                    :: ErrType
+    logical,  intent(in)                     :: caseSensitive
+    integer,  optional                       :: versionNum
+    logical,  optional, intent(in)           :: debugOption
+    character (len=*),  optional, intent(in) :: path
+    character (len=*), optional, intent(out) :: ExactName
+
+    ! Local variables
+    logical ::                           debug
+    integer, dimension(:), allocatable &
+     &                                :: intArray
+    character (LEN=MAXFILENAMELENGTH) :: MatchName, TryName, NameOnly
+    character (LEN=MAXFILENAMELENGTH), dimension(:), allocatable &
+     &                                :: nameArray
+    integer                           :: numberPCs
+    character(len=8)                  :: options
+    character (LEN=MAXFILENAMELENGTH) :: PhysicalName, MatchPath
+    character (len=*), parameter      :: UNASSIGNEDFILENAME = '*'
+    character (LEN=BareFNLen), dimension(:), allocatable &
+     &                                :: unsortedArray
+    integer                           :: version, returnStatus
+
+   ! Executable
+   if(.not. UseSDPToolkit) then
+      ErrType = NOPCIFNOTOOLKIT
+      thePC = 0
+      return
+   endif
+
+    if(present(debugOption)) then
+      debug = debugOption
+   else
+      debug = .false.
+   endif
+   
+    if(debug) then
+      call output('get pc from ref', advance='yes')
+      call output('FileName: ' // trim(FileName), advance='yes')
+      call output('lower PCF limit: ' )
+      call output(PCBottom, advance='yes')
+      call output('upper PCF limit: ' )
+      call output(PCTop, advance='yes')
+      call output('case sensitive?: ' )
+      call output(caseSensitive, advance='yes')
+      call output('version number: ' )
+      call output(versionNum, advance='yes')
+    endif
+
+    thePC = 0
+    if(PCTop < PCBottom) then
+      ErrType = INVALIDPCRANGE
+      return
+    endif
+
+    if(caseSensitive) then
+      MatchName = FileName
+    else
+      MatchName = Capitalize(FileName)
+    endif
+
+    if(debug) then
+      call output('getting ref from pc:', advance='no')
+    endif
+
+    numberPCs = PCTop - PCBottom + 1
+    Allocate(nameArray(numberPCs), unsortedArray(numberPCs), &
+      & intArray(numberPCs), STAT=ErrType)
+    if ( ErrType /= 0 ) then
+      ErrType = CANTALLOCATENAMEARRAY
+      return
+    endif
+
+    ErrType = NAMENOTFOUND
+    nameArray = UNASSIGNEDFILENAME
+    do thePC = PCBottom, PCTop
+
+      if(present(versionNum)) then
+        version = versionNum
+      else
+        version = 1
+      endif
+
+      returnStatus = Pgs_pc_getReference(thePC, version, &
+        & PhysicalName)
+
+      if ( returnStatus == PGS_S_SUCCESS ) then
+
+        if(.not. caseSensitive) then
+          TryName = Capitalize(PhysicalName)
+        else
+          TryName = PhysicalName
+        endif
+        
+        call split_path_name(TryName, MatchPath, NameOnly)
+        nameArray(thePC-PCBottom+1) = NameOnly
+      endif
+
+    enddo
+    ! Sort the file names from short to long
+    ! to prevent unwanted matches between "O3" and "HNO3"
+    options="-sR" ! options string is case-sensitive; 'r' now means 'reverse'
+    if ( caseSensitive ) options=trim(options) // 'c'
+    unsortedArray = nameArray
+    call SortArray( unsortedArray, intArray, &
+     & sortedArray=nameArray, options=options )
+    if ( DeeBug ) then
+      call outputNamedvalue ( 'numberPCs', numberPCs )
+      call Dump( intArray,  'array of ints' )
+      call Dump( nameArray, 'sorted array of names' )
+    endif
+    do notThePC = 1, numberPCs
+      thePC = intArray(notThePC) + PCBottom - 1         
+      NameOnly = nameArray(notThePC)            
+      if ( index(NameOnly, trim(MatchName)) /= 0 ) then  
+        ErrType = 0                                     
+        exit                                            
+      endif                                             
+    enddo
+
+    if(present(versionNum)) then  
+      version = versionNum        
+    else                          
+      version = 1                 
+    endif                         
+    returnStatus = Pgs_pc_getReference(thePC, version, &
+        & PhysicalName)
+    if ( returnStatus == PGS_S_SUCCESS ) then             
+
+      if(.not. caseSensitive) then                        
+        TryName = Capitalize(PhysicalName)                
+      else                                                
+        TryName = PhysicalName                            
+      endif                                               
+                                                          
+      call split_path_name(TryName, MatchPath, NameOnly)
+    else
+      ErrType = NAMENOTFOUND
+    endif  
+    if(present(path) .and. ErrType == 0) then
+        if ( index(MatchPath, trim(path)) == 0 )then
+          ErrType = NAMENOTFOUND
+        endif
+    endif
+
+    if(present(ExactName) .and. ErrType == 0) then
+      ExactName = PhysicalName
+    endif
+
+    Deallocate(nameArray, unsortedArray, intArray)
+  end function GetPCFromRef
+
+! ---------------------------------------------- GetMLSFileByName ------
+
+! This function returns the MLSFile matching a given name
+
+  function GetMLSFileByName(database, name, ignore_paths) result(item)
+  type(MLSFile_T), dimension(:), pointer :: database
+  character(len=*), intent(in)           :: name
+  type(MLSFile_T), pointer               :: item
+  logical, optional, intent(in)          :: ignore_paths
+  !
+  integer :: i
+  integer :: indx
+  logical :: myignore_paths
+  character(len=len(name)) :: barename
+  !
+  nullify(item)
+  if ( .not. associated(database) ) return
+  if ( size(database) < 1 ) return
+  myignore_paths = .false.
+  if ( present(ignore_paths) ) myignore_paths = ignore_paths
+  if ( .not. myignore_paths ) then
+    indx = findFirst(database%name == name)
+  else
+    ! streqOptions = '-ps' ! Enabling partial match, and returning the shortest
+    ! doTheyMatch = streq(database%name, name, streqOptions)
+    indx = findFirst( strip_path(database%name), strip_path(name) )
+    if ( indx < 1 .and. DeeBug ) then
+      barename = strip_path(name)
+      call output( 'barename: ' // trim(barename), advance='yes' )
+      do i=1, size(database)
+        barename = strip_path(database(i)%name)
+        call output( 'barename(db(i): ' // trim(barename), advance='yes' )
+      enddo
+    endif
+  endif
+  if ( indx > 0 ) item => database(indx)
+  end function GetMLSFileByName
+
+! ---------------------------------------------- GetMLSFileByType ------
+
+! This function returns the MLSFile matching a given type, content, etc.
+! It always returns the first match if more than one found
+! If no optional args supplied, it therefore returns the first database entry
+
+  function GetMLSFileByType(database, type, content, PCFid, PCFIDRange) &
+    & result(item)
+  type(MLSFile_T), dimension(:), pointer   :: database
+  ! character(len=*), optional, intent(in)   :: type
+  integer, optional, intent(in)   :: type
+  character(len=*), optional, intent(in)   :: content
+  integer, optional, intent(in)            :: PCFID
+  type(Range_T), optional, intent(in) :: PCFIDRange
+  type(MLSFile_T), pointer                 :: item
+  !
+  logical, dimension(size(database)) :: doTheyMatch
+  integer :: indx
+  !
+  nullify(item)
+  if ( .not. associated(database) ) return
+  if ( size(database) < 1 ) return
+  doTheyMatch = .true.
+  if ( present(type) ) doTheyMatch = doTheyMatch .and. &
+    & (database%type == type)
+  if ( present(content) ) doTheyMatch = doTheyMatch .and. &
+    & (database%content == content)
+  if ( present(PCFID) ) doTheyMatch = doTheyMatch .and. &
+    & (database%PCFID == PCFID)
+  if ( present(PCFIDRange) ) doTheyMatch = doTheyMatch .and. &
+    & inRange(database%PCFID, PCFIDRange)
+  !
+  indx = findFirst(doTheyMatch)
+  if ( indx > 0 .and. indx < size(database)+1 ) item => database(indx)
+  
+  end function GetMLSFileByType
+
+! ---------------------------------------------- maskName ------
+
+! This function returns the name plus a masking portion
+! We do this to fool the parser into thinking it's not seen
+! this name before. Otherwise the parser may not preserve its case.
+
+  function maskName(inName) result(outName)
+  character(len=*), intent(in)     :: inName        ! Name to be masked
+  character(len=min(MAXFILENAMELENGTH, len(inName)+2)) :: outName       ! masked name
+  ! Executable
+  if ( len_trim(inName)  < 1 ) then
+    outName = ''
+  else
+    outName = trim(inName) // MASKINGTAPE
+  endif
+  end function maskName
+
+  !------------------------------------------  RmFileFromDatabase  -----
+  integer function RmFileFromDatabase ( DATABASE, ITEM )
+
+  ! This routine removes a vector from a database of such vectors, 
+  ! deallocating the database if necessary.
+  ! Alas, doesn't work--we need to know how to undecorate character tree
+  ! first before we will be able to make it work; sorry (P. Wagner)
+
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    ! Dummy arguments
+    type (MLSFile_T), dimension(:), pointer :: DATABASE
+    type (MLSFile_T), intent(in) ::            ITEM
+
+    ! Local variables
+    type (MLSFile_T), dimension(:), pointer :: tempDatabase
+    logical, parameter                      :: okToDeallocEmptyDB = .FALSE.
+    include "rmItemFromDatabase.f9h"
+    call MLSMessage ( MLSMSG_Error, &
+        & ModuleName, "Cannot yet (ever?) rm File from database" ) 
+
+    RmFileFromDatabase = newSize
+  end function RmFileFromDatabase
+
+  ! ------------------------------------  Deallocate_filedatabase  -----
+
+  ! This routine deallocates the file database, closing any files
+  ! that may still be open
+
+  subroutine Deallocate_filedatabase(database)
+
+    use Allocate_Deallocate, only: Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+    ! Arguments
+    type (MLSFile_T), dimension(:), pointer :: DATABASE
+    ! Local variables
+    integer(c_intptr_t) :: Addr         ! For tracing
+    integer :: error, i, s
+    ! Executable
+    if ( .not. associated(database) ) return
+    do i=1, size(database)
+      if ( database(i)%StillOpen ) call MLS_CloseFile(database(i))
+    end do
+    s = size(database) * storage_size(database) / 8
+    if ( s > 0 ) addr = transfer(c_loc(database(1)), addr)
+    Deallocate ( database, stat=error )
+    call test_deallocate ( error, ModuleName, 'database', s, address=addr )
+
+  end subroutine Deallocate_filedatabase
+
+  ! ------------------------------------------  Dump_FileDataBase  -----
+
+  subroutine Dump_FileDataBase ( database, Name, details, table )
+    ! Dummy arguments
+    type (MLSFile_T), intent(in) ::           database(:)
+    character(len=*), intent(in), optional :: Name
+    integer, intent(in), optional          :: details ! How verbose
+    logical, intent(in), optional          :: table   ! As a table
+
+    ! Local variables
+    character(len=256), dimension(:,:), pointer :: array
+    integer :: i
+    integer :: myDetails
+    logical :: myTable
+    integer :: n
+    ! Executable
+    myDetails = 0
+    if ( present(details) ) myDetails = details
+    myTable = .false.
+    if ( present(Table) ) myTable = Table
+    n = size(database)
+    call output ( '============ MLS File Data Base ============', advance='yes' )
+    if ( present(name) ) then
+      call output ( 'MLS File Database name: ', advance='no' )
+      call output ( name, advance='yes' )
+    endif
+    if ( n < 1 ) then
+      call output ( '**** MLS File Database empty ****', advance='yes' )
+      return
+    elseif ( myTable ) then
+      nullify( array )
+      allocate( array(n+1, 2 ) )
+      array(1,1) = 'name'
+      array(1,2) = 'path'
+      do i = 1, size(database)
+        call split_path_name( database(i)%name, array(i+1, 2), array(i+1, 1) )
+      end do
+      call outputTable( array, border='-', headliner='-' )
+      deallocate( array )
+    else
+      call output ( 'size: ')
+      call output ( size(database), advance='yes')                                
+    endif
+    if ( myDetails < -1 .or. (myTable .and. myDetails < 1) ) return
+    do i = 1, size(database)
+      call dump(database(i), details)
+    end do
+      
+  end subroutine Dump_FileDataBase
+
+  ! --------------------------------------------  release_MLSFile  -----
+
+  ! This routine releases an MLSFile
+  subroutine release_MLSFile
+
+    ! Internal variables
+    integer :: status
+    ! Executable
+    status = InitializeMLSFile( MLSFile_save )
+  end subroutine release_MLSFile
+
+  ! --------------------------------------------  reserve_MLSFile  -----
+
+  ! This routine initializes an MLSFile
+  ! so that it can be used by single-parameter functions
+  ! like readnchars
+  subroutine reserve_MLSFile ( full_file_name, type, access, content, &
+    & shortName, hdfVersion, recordLength, PCFIdRange, PCBottom, PCTop )
+
+    ! Arguments
+    character(len=*), intent(in)           :: full_file_name
+    integer, optional, intent(in)          :: type
+    integer, optional, intent(in)          :: access
+    character(len=*), optional, intent(in) :: content
+    character(len=*), optional, intent(in) :: shortName
+    integer, optional, intent(in)          :: HDFVersion
+    integer, optional, intent(in)          :: recordLength
+    type(Range_T), optional, intent(in)    :: PCFIdRange
+    integer, optional, intent(in)          :: PCBottom ! (Instead of range_T)
+    integer, optional, intent(in)          :: PCTop    ! (Instead of range_T)
+    ! Internal variables
+    integer :: status
+    ! Executable
+    status = InitializeMLSFile( MLSFile_save, type, access, content, full_file_name, &
+      & shortName, HDFVersion, recordLength, PCFIdRange, PCBottom, PCTop )
+  end subroutine reserve_MLSFile
+
+  ! --------------------------------------- 1-parameter family of functions --
+  ! These functions can be called to operate on MLSFile_save
+  function readnchars ( n )  result( status )
+    ! Tries to read n chars
+    ! Our success or failure determines the resulting status
+    ! We don't actually care what the chars are, merely whether we can read them
+    ! Args
+    integer, intent(in) :: n
+    integer :: status
+    ! Internal variables
+    character(len=n) :: chars
+    ! Executable
+    if ( MLSFile_save%type /= l_ascii ) &
+      & call MLSMessage ( MLSMSG_Warning, moduleName,  &
+         & 'Trying to readnchars from a non-ascii file' )
+    call get_lun( MLSFile_save%FileID%f_id )
+    open( UNIT=MLSFile_save%FileID%f_id, access='direct', recl=n, &
+      & file=trim(MLSFile_save%name), status='old', iostat=status )
+    if ( status /= 0 ) return
+    read( UNIT=MLSFile_save%FileID%f_id, REC=1, IOSTAT=status ) chars
+    close( UNIT=MLSFile_save%FileID%f_id )
+  end function readnchars
+  
+  ! ------------------------------------------  he2he5_fileaccess  -----
+
+  ! This function converts hdfeos2 file access types to
+  ! corresponding hdfeos5 numbers
+
+  function he2he5_fileaccess(FileAccesshdf4) result (FileAccesshdf5)
+
+    ! Arguments
+
+    integer, intent(in)       :: FileAccesshdf4
+    integer                   :: FileAccesshdf5
+    
+!    integer, parameter        :: H5F_ACC_RDONLY = 0
+!    integer, parameter        :: H5F_ACC_RDWR   = 1
+!    integer, parameter        :: H5F_ACC_TRUNC  = 2
+
+    ! begin
+    select case (FileAccesshdf4)
+
+    case(DFACC_CREATE)
+      FileAccesshdf5 = HE5F_ACC_TRUNC   ! H5F_ACC_TRUNC
+
+    case(DFACC_READ)                      ! also , DFACC_RDONLY
+      FileAccesshdf5 = HE5F_ACC_RDONLY   ! H5F_ACC_RDONLY
+
+    case default
+      FileAccesshdf5 = HE5F_ACC_RDWR   ! H5F_ACC_RDWR
+
+    end select
+
+  end function he2he5_fileaccess
+
+  ! ----------------------------------------  hdf2hdf5_fileaccess  -----
+
+  ! This function converts hdf4 file access types to
+  ! corresponding hdf5 numbers
+
+  function hdf2hdf5_fileaccess(FileAccesshdf4) result (FileAccesshdf5)
+
+    use HDF5, only: &
+      & H5f_Acc_Rdonly_F, H5f_Acc_Rdwr_F, H5f_Acc_Excl_F
+    ! Arguments
+
+    integer, intent(in)       :: FileAccesshdf4
+    integer(kind(H5F_ACC_EXCL_F)) :: FileAccesshdf5
+    
+    ! begin
+    select case (FileAccesshdf4)
+
+    case(DFACC_CREATE)
+      FileAccesshdf5 = H5F_ACC_EXCL_F  ! H5F_ACC_TRUNC_F
+
+    case(DFACC_READ)    ! also , DFACC_RDONLY
+      FileAccesshdf5 = H5F_ACC_RDONLY_F
+
+    case default
+      FileAccesshdf5 = H5F_ACC_RDWR_F
+
+    end select
+
+  end function hdf2hdf5_fileaccess
+
+  ! -----------------------------------------------  mls_inqswath  -----
+
+  ! This function acts as a wrapper to allow 
+  ! either hdf5 or hdf4 routines to be called
+
+  function mls_inqswath(FileName, swathList, strBufSize, hdfVersion)
+
+    ! Arguments
+
+    character (len=*), intent(in)  :: Filename
+    character (len=*), intent(out) :: Swathlist
+    integer, intent(out)           :: Strbufsize
+    integer                        :: MLS_Inqswath
+    integer, optional, intent(in)  :: HDFVersion
+
+    ! Local
+    integer :: myhdfVersion
+    integer(kind=size_t) :: HSTRBUFSIZE
+    ! logical, parameter :: DEEBUG = .true.
+    logical, parameter :: IGNOREHSTRBUFSIZE = .true.
+
+    ! Executable code
+    ! These next unnecessary assignments aid in running a debug
+    ! version compiled with NAG
+    strbufsize = 0
+    SWATHLIST = ' '
+    if ( mls_exists(trim(FileName)) /= 0 ) then
+      mls_inqswath = FILENOTFOUND
+      strbufsize = FILENOTFOUND
+      return
+    endif
+    if (present(hdfVersion)) then
+      myhdfVersion = hdfVersion
+    else
+      myhdfVersion = DEFAULT_HDFVERSION
+    endif
+
+    ! begin
+    if(myhdfVersion == WILDCARDHDFVERSION) then
+      myhdfVersion = mls_hdf_version(trim(FileName))
+    endif
+    if(myhdfVersion == HDFVERSION_5) then
+      mls_inqswath = he5_swinqswath(trim(FileName), swathList, hstrBufSize)
+      if ( DEEBUG ) then
+        print *, 'hstrBufSize: ', hstrBufSize
+        print *, 'swathList: ', trim(swathList)
+      endif
+      strbufsize = hstrbufsize
+      if ( IGNOREHSTRBUFSIZE ) strbufsize = len_trim(swathList)
+    elseif(myhdfVersion == HDFVERSION_4) then
+      mls_inqswath = swinqswath(FileName, swathList, strBufSize)
+    else                          
+      mls_inqswath = NOSUCHHDFVERSION  
+    endif
+    if ( strBufSize > len(swathList) ) then
+    call outputNamedValue( 'strBufSize, len(swathList)', &
+      & (/ strBufSize, len(swathList) /) )
+    call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'HDF trod on my memory' )
+    endif
+    swathList = swathList ( 1:strBufSize )
+
+  end function mls_inqswath
+
+  ! ------------------------------------------------  mls_sfstart  -----
+
+  ! This function acts as a wrapper to allow hdf5 or hdf4 routines to be called
+  ! with hdf4-style FileAccess (e.g., DFACC_RDONLY)
+  
+  ! the logical addingMetadata optionally treats hdf5 files as hdf4-like
+  ! in the sd_id returned, as required when adding metadata,
+  ! by calling special toolkit function
+  
+  function mls_sfstart(FileName, FileAccess, hdfVersion, addingmetadata)
+    use HDF5, only: H5fopen_F, H5fcreate_F
+    use HDF5, only: &
+      & H5f_Acc_Rdonly_F, H5f_Acc_Rdwr_F, H5f_Acc_Trunc_F
+    ! Arguments
+
+    character (len=*), intent(in) :: Filename
+    integer, intent(in)           :: FileAccess ! (one of the hdf4 types)
+    integer, optional, intent(in) :: hdfVersion
+    logical, optional, intent(in) :: addingmetadata
+    ! Local variables
+    integer                       :: mls_sfstart
+    integer                       :: myhdfVersion
+    integer                       :: myAccess
+    logical                       :: myaddingmetadata
+    integer                       :: returnStatus
+    ! parameters    
+    logical, parameter :: DEBUG = .false.
+    ! external
+    integer, external :: PGS_MET_SFstart
+
+    ! begin
+   returnStatus = 0
+   myaddingmetadata = .false.
+   if ( present (addingmetadata) ) myaddingmetadata = addingmetadata
+   if ( DEBUG ) then
+     call output ('Entering mls_sfstart with args ', advance='no')
+     call output ('File name: ', advance='no')
+     call output (trim(Filename), advance='no')
+     call blanks (2)
+     call output ('FileAccess: ', advance='no')
+     call output (FileAccess, advance='no')
+     if ( present(hdfVersion) ) then
+       call blanks (2)
+       call output ('hdfVersion: ', advance='no')
+       call output (hdfVersion, advance='no')
+     endif
+     call blanks (2)
+     call output ('adding meta data?: ', advance='no')
+     call output (myaddingmetadata, advance='yes')
+   endif
+   if ( present(hdfVersion) ) then
+     myhdfVersion = hdfVersion
+   else
+     myhdfVersion = DEFAULT_HDFVERSION
+   endif
+   if(myhdfVersion == WILDCARDHDFVERSION) then
+     myhdfVersion = mls_hdf_version(trim(FileName))
+   endif
+   if ( myhdfVersion == HDFVERSION_4) then
+     mls_sfstart = sfstart (FileName, FileAccess)
+     return
+   elseif ( myhdfVersion /= HDFVERSION_5) then
+     mls_sfstart = WRONGHDFVERSION
+     return
+   endif
+!   if ( PGS_MET4MLS_SF ) then
+   if ( myaddingmetadata ) then
+     if ( .not. HDF5_ACC_TYPES_TO_MET ) then
+       myAccess = he2he5_fileaccess(FileAccess)
+     elseif ( FileAccess == DFACC_RDWR ) then
+       myAccess = HE5F_ACC_RDWR  ! HDF5_ACC_RDWR
+     elseif ( FileAccess == DFACC_CREATE ) then
+       myAccess = HE5F_ACC_TRUNC ! HDF5_ACC_CREATE
+     elseif ( FileAccess == DFACC_RDONLY ) then
+       myAccess = HE5F_ACC_RDONLY ! HDF5_ACC_RDONLY
+     else
+       myAccess = HDF5_ACC_DEFAULT
+     endif
+     returnStatus = PGS_MET_SFstart(trim(FileName), myAccess, mls_sfstart)
+   else
+     select case (FileAccess)
+     case (DFACC_CREATE)
+       call h5fcreate_f(trim(filename), H5F_ACC_TRUNC_F, mls_sfstart, &
+         & returnStatus)
+       if ( returnStatus /= 0 ) &
+         & call output('Failing to create file; ' // &
+         & 'perhaps you lack write permission', advance='yes')
+     case (DFACC_RDWR)
+       call h5fopen_f(trim(filename), H5F_ACC_RDWR_F, mls_sfstart, returnStatus)
+     case (DFACC_RDONLY)
+       call h5fopen_f(trim(filename), H5F_ACC_RDONLY_F, mls_sfstart, &
+         & returnStatus)
+     case default
+       call h5fopen_f(trim(filename), H5F_ACC_RDONLY_F, mls_sfstart, &
+         & returnStatus)
+     end select
+   endif
+   if ( returnStatus /= 0 .and. myAddingMetaData) then
+     call output ('Try again--PGS_MET_SFstart still unhappy; returns ')
+     call output (returnStatus, advance='yes')                             
+     mls_sfstart = -1                                                      
+   elseif ( returnStatus /= 0) then                                            
+     call output ('Try again--h5fopen_f/h5fcreate_f still unhappy; returns ')    
+     call output (returnStatus, advance='yes')                             
+     mls_sfstart = -1                                                      
+   endif                                                                  
+   if ( DEBUG ) then
+     call output ('Returning from mls_sfstart an sdid: ', advance='no')
+     call output (mls_sfstart, advance='yes')
+   endif
+
+  end function mls_sfstart
+
+  ! --------------------------------------------------  mls_sfend  -----
+
+  ! This function acts as a wrapper to allow hdf5 or hdf4 routines to be called
+  ! Right now, it works for hdf4 files in general, but only for adding
+  ! metadata to hdf5 files
+  
+  ! Therefore, when the grand unified hdf4/hdf5 interfaces are
+  ! implemented this will probably need to take an added arg:
+  ! the logical addingMetadata
+
+  function mls_sfend(sdid, hdfVersion, addingMetadata)
+
+    use HDF5, only: H5FClose_F
+    ! Arguments
+
+    integer, intent(in)           :: Sdid  
+    integer                       :: Mls_sfend            
+    integer, optional, intent(in) :: HdfVersion
+    logical, optional, intent(in) :: Addingmetadata
+    ! Local variables
+    logical                       :: Myaddingmetadata
+    integer                       :: MyhdfVersion
+    integer, external :: PGS_MET_SFend
+    logical, parameter :: DEBUG = .false.
+
+    ! begin
+   myaddingmetadata = .false.
+   if ( present (addingmetadata) ) myaddingmetadata = addingmetadata
+   if ( DEBUG ) then
+     call output ('Entering mls_sfend with args ', advance='no')
+     call output ('sdid: ', advance='no')
+     call output (sdid, advance='no')
+     call blanks (2)
+     call output ('adding meta data?: ', advance='no')
+     call output (myaddingmetadata, advance='yes')
+   endif
+   if ( present(hdfVersion) ) then
+     myhdfVersion = hdfVersion
+   else
+     myhdfVersion = DEFAULT_HDFVERSION
+   endif
+   if(myhdfVersion == WILDCARDHDFVERSION) then
+     ! myhdfVersion = mls_hdf_version(trim(FileName))
+     call MLSMessage ( MLSMSG_Error, moduleName,  &
+     & "You cannot mls_sfend a file with wildcardhdfversion w/o a file name" ) 
+   endif
+   if ( myhdfVersion == HDFVERSION_4) then
+     mls_sfend = sfend (sdid)
+     return
+   elseif ( myhdfVersion /= HDFVERSION_5) then
+     mls_sfend = WRONGHDFVERSION
+     return
+   endif
+!    mls_sfend = h5fclose_c(sdid)
+!   if ( PGS_MET4MLS_SF ) then
+   if ( myaddingmetadata ) then
+     mls_sfend = PGS_MET_SFend(sdid)
+   else
+     call h5fclose_f(sdid, mls_sfend)
+   endif
+!    mls_sfend = 0
+   if ( DEBUG ) then
+     call output ('Returning from mls_sfend a status: ', advance='no')
+     call output (mls_sfend, advance='yes')
+   endif
+
+  end function mls_sfend
+
+  ! --------------------------------------------  mls_hdf_version  -----
+
+  ! This function returns the hdf version of the file:
+  ! hdf version         returned value   integer
+  !    hdf4                 hdf4           4
+  !    hdf5                 hdf5           5
+  !  unknown                ????      ERRORINH5FFUNCTION
+
+  function mls_hdf_version(FileName, preferred_version, AccessType) &
+   & result (hdf_version)
+
+   use HDF5, only: H5FIs_HDF5_F
+   ! Arguments
+
+    character (len=*), intent(in)  :: FILENAME                                  
+   ! character (len=4)             :: hdf_version                               
+    integer, optional, intent(in)  :: PREFERRED_VERSION                     
+    integer, optional, intent(in)  :: ACCESSTYPE   ! one of the hdf4 types  
+    integer                        :: HDF_VERSION                           
+
+    integer :: returnStatus                                                     
+    integer :: myPreferred_Version                                              
+    integer :: myAccessType                                                     
+    logical :: is_hdf5                                                          
+
+    ! begin
+
+    if (FileName == '') then
+      HDF_VERSION = MUSTSUPPLYFILENAME
+      return
+    endif
+    
+    if ( present(preferred_version) ) then
+      myPreferred_Version = preferred_version
+    else
+      myPreferred_Version = WILDCARDHDFVERSION
+    endif
+    if ( present(accesstype) ) then
+      myAccessType = accesstype
+    else
+      myAccessType = DFACC_READ
+    endif
+
+   ! If the file is being newly created, no way to find its hdf version yet
+    if ( myAccessType == DFACC_CREATE ) then
+      hdf_version = myPreferred_Version
+      return
+    endif
+
+    ! Does the file really, really exist?
+    if ( mls_exists(trim(FileName)) /= 0 ) then
+      hdf_version = FILENOTFOUND
+      return
+    endif
+    returnStatus = 0
+    is_hdf5 = (DEFAULT_HDFVERSION == HDFVERSION_5) ! was ... == 5
+    call h5fis_hdf5_f(trim(FileName), is_hdf5, returnStatus)
+    if ( returnStatus /= 0 ) then
+!      hdf_version = '????'
+      hdf_version = ERRORINH5FFUNCTION
+    elseif ( is_hdf5 ) then
+!      hdf_version = 'hdf5'
+      hdf_version = HDFVERSION_5       ! 5
+    else
+!      hdf_version = 'hdf4'
+      hdf_version = HDFVERSION_4       ! 4
+    endif
+
+   ! hdf_version ==  myPreferred_Version ?
+   if ( myPreferred_Version /= WILDCARDHDFVERSION &
+     & .and. &
+     & hdf_version /= myPreferred_Version ) then
+       print *, 'file name: ', trim(FileName)
+       print *, 'myPreferred_Version: ', myPreferred_Version
+       print *, 'is_hdf5: ', is_hdf5
+       print *, 'returnStatus: ', returnStatus
+       print *, 'hdf_version: ', hdf_version
+       hdf_version = WRONGHDFVERSION
+       call MLSMessage (MLSMSG_Crash, ModuleName, & 
+        & "Who cares?")
+   endif
+  end function mls_hdf_version
+!-----------------------------------------------
+
+  subroutine mls_openFileName(filename, access, file_id, hdfVersion)
+! Opens vanilla hdf 4 or 5 filename for various types of access:
+! 'create', 'update', or 'readonly'
+! Returns file_id
+! By default, hdfVersion is WILDCARDHDFVERSION meaning it autodetects
+! which version to open the filename under
+    use HDF5, only: H5fopen_F, H5fcreate_F, H5fis_HDF5_F
+    use HDF5, only: &
+      & H5f_Acc_Rdonly_F, H5f_Acc_Rdwr_F, H5f_Acc_Excl_F
+!
+! External Variables
+!
+    character(len=*), intent(in) :: filename, access
+    integer, intent(in), optional :: hdfVersion
+    integer, intent(out) :: file_id
+!
+! Internal Variables
+!
+    integer :: error
+    logical :: is_hdf5
+    integer :: actual_hdfVersion
+
+   ! Executable
+   actual_hdfVersion = WILDCARDHDFVERSION
+   if ( present(hdfVersion) ) actual_hdfVersion = hdfVersion
+   if ( actual_hdfVersion == WILDCARDHDFVERSION ) then
+     actual_hdfVersion = mls_hdf_version(filename)
+   endif
+   error = 0
+   select case (actual_hdfVersion)
+    case (HDFVERSION_4) 
+     if (lowercase(trim(access)) == 'create') then
+       file_id = mls_sfstart(trim(filename),DFACC_CREATE,actual_hdfVersion)
+     elseif (lowercase(trim(access)) == 'update') then
+       file_id = mls_sfstart(trim(filename),DFACC_RDWR,actual_hdfVersion)
+     elseif (lowercase(trim(access)) == 'readonly') then
+       file_id = mls_sfstart(trim(filename),DFACC_RDONLY,actual_hdfVersion)
+     endif
+     if (file_id .eq. -1) error = file_id 
+    case (HDFVERSION_5)
+      if (trim(access) == 'create') then 
+          call h5fcreate_f(trim(filename), H5F_ACC_EXCL_F, file_id, error)
+      elseif (trim(access) == 'update') then
+          is_hdf5 = (DEFAULT_HDFVERSION == HDFVERSION_5) 
+          call h5fis_hdf5_f(trim(filename), is_hdf5, error)
+       if (is_hdf5) then 
+          call h5fopen_f(trim(filename), H5F_ACC_RDWR_F, file_id, error)
+       endif
+      elseif (trim(access) == 'readonly') then 
+          is_hdf5 = (DEFAULT_HDFVERSION == HDFVERSION_5) 
+          call h5fis_hdf5_f(trim(filename), is_hdf5, error)
+       if (is_hdf5) then 
+          call h5fopen_f(trim(filename), H5F_ACC_RDONLY_F, file_id, error)
+       endif
+      else           ! same as 'update'
+          is_hdf5 = (DEFAULT_HDFVERSION == HDFVERSION_5) 
+          call h5fis_hdf5_f(trim(filename), is_hdf5, error)
+       if (is_hdf5) then 
+          call h5fopen_f(trim(filename), H5F_ACC_RDWR_F, file_id, error)
+       endif
+      endif
+    case default
+      error = 1
+    end select 
+
+   if (error /= 0) then 
+      call MLSMessage (MLSMSG_Error, ModuleName, & 
+        & "Error: cannot "//lowercase(trim(access))//" file: "//trim(filename))
+   endif
+ 
+  end subroutine mls_openFileName
+
+  subroutine mls_openFileType(MLSFile, error)
+  ! Opens any kind of file for any kind of access
+    type(MLSFIle_T) :: MLSFile
+    integer, optional, intent(out) :: error
+    !
+    logical, parameter :: CASESENSITIVE = .true.
+    ! logical, parameter :: DeeBug = .true.
+    ! integer :: FileAccessType
+    integer :: ioerror
+    logical :: neededPCF
+    integer :: PCBottom
+    integer :: PCTop
+    integer :: record_length
+    ! character(len=8) :: toolbox_mode
+    !
+    if ( present(error) ) error = FILEALREADYOPEN
+    if ( MLSFile%StillOpen ) return
+    if ( DeeBug )  print *, 'Opening ' // trim(MLSFile%name)
+    if ( DeeBug )  print *, 'type ', MLSFile%type
+    PCBottom = MLSFile%PCFidRange%Bottom
+    PCTop = MLSFile%PCFidRange%Top
+    record_length = MLSFile%recordLength
+    ! call dump(MLSFile, details=1)
+    ! Fill in file name if blank and we're using the toolkit panoply
+    if ( MLSFile%name == ' ' ) then
+      if ( .not. UseSDPToolkit ) &
+        & call MLSMessage (MLSMSG_Error, ModuleName, & 
+        & "blank filename  and yet no toolkit", MLSFile=MLSFile)
+      if ( MLSFile%PCFidRange%Top < 1 ) &
+        & call MLSMessage (MLSMSG_Error, ModuleName, & 
+        & "blank filename  and yet no PCF id range", MLSFile=MLSFile)
+      call GetMLSFileNameFromPCF(MLSFile, ioerror)
+    endif
+    ! Do we need to find the hdfVersion?
+   if ( &
+     & any(MLSFile%type == (/l_hdf, l_swath, l_hdfeos, l_zonalavg /) ) .and. &
+     & (MLSFile%HDFVersion == 0 .or. MLSFile%HDFVersion == WILDCARDHDFVERSION) &
+     & .and. (MLSFile%name /= ' ') ) then
+     if ( DeeBug )  print *, 'MLSFile%type ' , MLSFile%type
+     if ( DeeBug )  print *, 'WILDCARDHDFVERSION ' , WILDCARDHDFVERSION
+     MLSFile%HDFVersion = mls_hdf_version(trim(MLSFile%name))
+     if ( DeeBug )  print *, 'MLSFile%HDFVersion ' , MLSFile%HDFVersion
+    endif
+    neededPCF = .true.
+
+    ! If the file has already been created by this run, we don't want to
+    ! clobber it or fail on open because it already exists
+    ! Therefore, if lastoperation != "", reset access to 'rdwr'
+    if ( MLSFile%access == DFACC_CREATE .and. MLSFile%lastOperation /= "" ) &
+      & MLSFile%access = DFACC_RDWR
+    ! if ( toolbox_mode == 'pg' .and. MLSFile%recordLength /= 0 ) then
+    if ( MLSFile%type == l_tkgen .and. MLSFile%recordLength /= 0 ) then
+      if( PCTop > PCBottom ) then
+        if ( DeeBug )  print *, '1'
+        MLSFile%FileId%f_id = Mls_io_gen_openF ( l_tkgen, CASESENSITIVE, &
+        & ioerror, record_length, &
+        & PGSd_IO_Gen_RSeqFrm, &
+        & PCBottom=PCBottom, PCTop=PCTop, &
+        & inp_rec_length=MLSFile%recordLength)
+      else
+        if ( DeeBug )  print *, '2'
+        ! print *, 'pg', CASESENSITIVE, &
+        ! & ioerror, record_length, &
+        ! & PGSd_IO_Gen_RSeqFrm, &
+        ! & PCTop, MLSFile%recordLength
+        MLSFile%FileId%f_id = Mls_io_gen_openF ( l_tkgen, CASESENSITIVE, &
+        & ioerror, record_length, &
+        & PGSd_IO_Gen_RSeqFrm, &
+        & thePC=PCTop, inp_rec_length=MLSFile%recordLength)
+        if ( DeeBug )  print *, "After iogenopen, ioerror: ", ioerror
+      endif
+    elseif ( MLSFile%recordLength /= 0 ) then
+      if ( DeeBug )  print *, '3'
+      MLSFile%FileId%f_id = mls_io_gen_openF(MLSFile%type, CASESENSITIVE, &
+      & ioerror, record_length, MLSFile%access, &
+      & MLSFile%Name, inp_rec_length=MLSFile%recordLength)
+      neededPCF = .false.
+    elseif ( .not. UseSDPToolkit ) then
+      if ( DeeBug )  print *, '4'
+      MLSFile%FileId%f_id = mls_io_gen_openF(MLSFile%type, CASESENSITIVE, &
+      & ioerror, record_length, MLSFile%access, &
+      & MLSFile%Name, hdfVersion=MLSFile%hdfVersion)
+      neededPCF = .false.
+    elseif( PCTop > PCBottom ) then
+      if ( DeeBug )  print *, '5'
+      if ( DeeBug )  print *, 'Trying to open ', trim(MLSFile%Name)
+      ! print *, 'Toolbox mode ', trim(toolbox_mode)
+      if ( DeeBug )  print *, 'hdf version ', MLSFile%hdfVersion
+      MLSFile%FileId%f_id = mls_io_gen_openF(MLSFile%type, CASESENSITIVE, &
+      & ioerror, record_length, MLSFile%access, &
+      & MLSFile%Name, MLSFile%PCFidRange%Bottom, MLSFile%PCFidRange%Top, &
+      & hdfVersion=MLSFile%hdfVersion)
+      neededPCF = .true.
+      if ( DeeBug )  print *, 'Did it'
+    elseif( PCTop > 0 ) then
+      if ( DeeBug )  print *, '6'
+      MLSFile%FileId%f_id = mls_io_gen_openF(MLSFile%type, CASESENSITIVE, &
+      & ioerror, record_length, MLSFile%access, &
+      & MLSFile%Name, thePC=PCTop, &
+      & hdfVersion=MLSFile%hdfVersion)
+      neededPCF = .true.
+    else
+      if ( DeeBug )  print *, '7'
+      MLSFile%FileId%f_id = mls_io_gen_openF(MLSFile%type, CASESENSITIVE, &
+      & ioerror, record_length, MLSFile%access, &
+      & MLSFile%Name, hdfVersion=MLSFile%hdfVersion)
+      neededPCF = .false.
+    endif
+      if ( DeeBug )  print *, 'ioerror: ', ioerror
+    if ( ioerror == 0 ) then
+      MLSFile%StillOpen=.true.
+      ! The next matches 'hg' and 'pg'
+      if ( DeeBug )  print *, 'About to call GetMLSFilePCFidFromName'
+      if ( neededPCF ) call GetMLSFilePCFidFromName(MLSFile, ioerror)
+      if ( DeeBug )  print *, 'Done with that call'
+    endif
+    MLSFile%errorCode = ioerror
+    MLSFile%lastOperation = 'open'
+    if ( present(error) ) error = ioerror
+  end subroutine mls_openFileType
+
+!-----------------------------------------------
+  subroutine mls_closeFileID(file_id, filename, hdfVersion)
+! Closes vanilla hdf 4 or 5 filename
+! By default, hdfVersion is WILDCARDHDFVERSION meaning it autodetects
+! which version to close the filename under
+! so unless you supply hdfVersion, you'd better supply filename
+    use HDF5, only: H5FClose_F
+!
+! External Variables
+!
+    integer, intent(in) :: file_id
+    character(len=*), intent(in), optional :: filename
+    integer, intent(in), optional :: hdfVersion
+!
+! Internal Variables
+!
+    integer :: error
+    integer :: actual_hdfVersion
+
+    ! Executable
+    actual_hdfVersion = WILDCARDHDFVERSION
+    if ( present(hdfVersion) ) actual_hdfVersion = hdfVersion
+    if ( actual_hdfVersion == WILDCARDHDFVERSION ) then
+      if( present(filename) ) then
+        actual_hdfVersion = mls_hdf_version(filename)
+      else
+        call MLSMessage (MLSMSG_Error, ModuleName, & 
+         & "You must supply a filename to close a file with wildcardhdfversion")
+      endif
+    endif
+    select case (actual_hdfVersion)
+    case (HDFVERSION_4) 
+       error = sfend(file_id)
+    case (HDFVERSION_5) 
+       call h5fclose_f(file_id, error)
+    case default
+       error = sfend(file_id)       
+    end select 
+
+    if (error /= 0) then 
+       call MLSMessage (MLSMSG_Error, ModuleName, "Error closing file.")
+    endif
+
+  end subroutine mls_closeFileID
+
+  subroutine MLS_CloseFileType( MLSFile, error )
+  ! Closes any kind of file
+    type(MLSFIle_T) :: MLSFile
+    integer, optional, intent(out) :: error
+    !
+    integer :: ioerror
+    !
+    if ( MLSFile%hdfVersion < 1 ) then
+      ioerror = mls_io_gen_closeF(MLSFile%type, MLSFile%FileID%f_id)
+    else
+      ! print *, 'Trying to close ', trim(MLSFile%Name)
+      ! print *, 'Toolbox mode ', trim(toolbox_mode)
+      ! print *, 'hdf version ', MLSFile%hdfVersion
+      ioerror = mls_io_gen_closeF(MLSFile%type, MLSFile%FileID%f_id, &
+       MLSFile%Name, MLSFile%hdfVersion)
+    endif
+    MLSFile%StillOpen=.false.
+    MLSFile%errorCode = ioerror
+    MLSFile%lastOperation = 'close'
+    MLSFile%FileID = FileIds_T( 0, 0, 0 )
+    if ( present(error) ) error = ioerror
+  end subroutine mls_CloseFileType
+
+!----------------------------------------------------  mls_exists  -----
+  integer function mls_exists(filename)
+  ! returns 0 if file exists, FILENOTFOUND if not
+  ! Argument
+  character (len=*) :: filename
+  ! Internal variables
+  logical :: exist
+  inquire(file=filename, exist=exist)
+  mls_exists = merge(0, FILENOTFOUND, exist)
+  end function mls_exists
+
+  !--------------------------------------------  transfer_MLSFile  -----
+  integer function transfer_MLSFile ( ITEM, path, name )
+
+  ! This routine transfers an MLSFile, e.g. resetting its path
+  ! --- Don't be fooled, it does not physically relocate the file ---
+  !     To do something like that see
+  !     Execute or Shell_Command in the machine module
+
+    ! Dummy arguments
+    type (MLSFile_T)                       :: ITEM
+    character(len=*), optional, intent(in) :: path
+    character(len=*), optional, intent(in) :: Name
+    ! Internal variables
+    character(len=MAXFILENAMELENGTH) :: oldpath
+    character(len=MAXFILENAMELENGTH) :: oldname
+
+    transfer_MLSFile = 0
+    if ( present(Name    ) ) item%Name  = Name
+    if ( present(path) ) then
+      call split_path_name(item%name, oldpath, oldname)
+      ! Remember: split_path_name returns a path with a terminating '/'
+      ! (unless blank)
+      item%name = trim(path) // oldname
+    endif   
+  end function transfer_MLSFile
+
+! ---------------------------------------------- unMaskName ------
+
+! This function returns the name minus its masking portion
+! We do this to fool the parser into thinking it's not seen
+! this name before. Otherwise the parser may not preserve its case.
+
+  function unMaskName(inName) result(outName)
+  character(len=*), intent(in)     :: inName        ! Name to be unmasked
+  character(len=len(inName)) :: outName             ! unmasked name
+  ! Executable
+  if ( len_trim(inName)  < 1 ) then
+    outName = ''
+  elseif (index(inName, MASKINGTAPE) < 1) then
+    outName = inName
+  else
+    call ReplaceSubString(trim(inName), outName, MASKINGTAPE, '')
+  endif
+  end function unMaskName
+
+! ---------------------------------------------- unSplitName ------
+
+! This function returns the name minus its splitting number
+! Which transforms strings like
+! /long/path/MLS-Aura_L2GP-DGG16_v01-31_c01.he5
+! into
+! /long/path/MLS-Aura_L2GP-DGG_v01-31_c01.he5
+! It assumes the split name takes one of the following forms
+! (dgg)   ...L2GP-DGGnn_...
+! (l2aux) ...L2AUX-DGMnn_...
+
+  function unSplitName(inName) result(outName)
+  character(len=*), intent(in)     :: inName        ! Name to be unsplit
+  character(len=len(inName)) :: outName             ! unsplit name
+  ! Local variables
+  ! character(len=len(inName)) :: tempName
+  character(len=*), parameter :: dgg_type = 'L2GP-DGG'
+  character(len=*), parameter :: l2aux_type = 'L2AUX-DGM'
+  character(len=*), parameter :: underscore = '_'
+  character(len=16)           :: sub1
+  character(len=16)           :: sub2
+  character(len=8)            :: nn
+  ! Executable
+  outName = ''
+  if ( len_trim(inName)  < 1 ) return
+  ! tempName = lowerCase(inName)
+  if (index(inName, dgg_type) > 0) then
+    sub1 = dgg_type
+  elseif (index(inName, l2aux_type) > 0) then
+    sub1 = l2aux_type
+  elseif (index(inName, lowerCase(dgg_type)) > 0) then
+    sub1 = lowerCase(dgg_type)
+  elseif (index(inName, lowerCase(l2aux_type)) > 0) then
+    sub1 = lowerCase(l2aux_type)
+  else
+    return
+  endif
+  call ExtractSubString (inName, nn, trim(sub1), underscore)
+  if ( len_trim(nn) < 1 ) return
+  sub2 = trim(sub1) // trim(nn)
+  call ReplaceSubString(trim(inName), outName, trim(sub2), trim(sub1))
+  end function unSplitName
+
+!-----------------------------------------------
+!       Private routines
+!------------------------
+  subroutine GetMLSFileNameFromPCF(MLSFile, ioerror)
+    type(MLSFile_T) :: MLSFile
+    integer, intent(out) :: ioerror
+    integer :: pcfid
+    integer :: version
+    ioerror = 1
+    if ( MLSFile%PCFidRange%top < 1 ) return
+    if ( MLSFile%PCFidRange%top < MLSFile%PCFidRange%Bottom ) return
+    do pcfid = MLSFile%PCFidRange%Bottom, MLSFile%PCFidRange%top
+      version = 1
+      ioerror = Pgs_pc_getReference(pcfid, version, MLSFile%name)
+      if ( ioerror == 0 ) return
+    enddo
+  end  subroutine GetMLSFileNameFromPCF
+  subroutine GetMLSFilePCFidFromName(MLSFile, ioerror)
+    type(MLSFile_T) :: MLSFile
+    integer, intent(out) :: ioerror
+    integer :: pcfid
+    integer :: version
+    character(len=FileNameLen) :: name
+    ioerror = 1
+    if ( MLSFile%PCFidRange%top < 1 ) return
+    if ( MLSFile%PCFidRange%top < MLSFile%PCFidRange%Bottom ) return
+    ! print *, 'MLSFile%PCFidRange%Bottom: ', MLSFile%PCFidRange%Bottom
+    ! print *, 'MLSFile%PCFidRange%top: ', MLSFile%PCFidRange%top
+    do pcfid = MLSFile%PCFidRange%Bottom, MLSFile%PCFidRange%top
+      version = 1
+      ioerror = Pgs_pc_getReference(pcfid, version, name)
+      if ( ioerror == 0 ) then
+        MLSFile%PCFID = pcfid
+        if ( trim(name) == trim(MLSFile%name) ) return
+      endif
+    enddo
+    ! print *, 'Failed to find a PCFid for: ', trim(MLSFile%name)
+  end  subroutine GetMLSFilePCFidFromName
+  elemental function strip_path(fullName) result(name)
+    character(len=*), intent(in) :: fullName
+    character(len=max(1, len(fullName))) :: name
+    character(len=max(1, len(fullName))) :: path
+    !
+    name = ' '
+    if ( len_trim(fullName) < 1 ) return
+    call split_path_name(fullName, path, name)
+  end function strip_path
+
+  ! ------------------------------------------  mls_io_gen_closeF  -----
+
+  ! This function closes a generic file using either the toolbox
+  ! or else a Fortran CLOSE statement
+  ! according to toolbox_mode:
+  ! 'cl' for l3ascii files opened with simple fortran 'open'
+  ! 'gd' for grid files opened with gdopen
+  ! 'hg' for hdf4/5 files opened with sfstart/h5fopen_f; e.g. l1brad
+  ! 'pg' for generic files opened with pgs_io_gen_openF
+  ! 'sw' for swath files opened with swopen
+
+  ! It returns a non-zero error status only if unsuccessful
+
+  ! It must be given a FileHandle as an arg
+  ! (A later version may allow choice between file handle and file name)
+  ! (This version only uses a file name in autodetecting its hdf version)
+  function mls_io_gen_closeF( mode, theFileHandle, &
+    & FileName, hdfVersion, debugOption ) &
+    &  result (ErrType)
+
+    use HDF5, only: H5FClose_F
+    ! Dummy arguments
+    integer                                   :: ErrType
+    integer, intent(in)                       :: Mode
+    integer, intent(in)                       :: TheFileHandle
+    character (len=*), optional, intent(in)   :: FileName
+    integer, optional, intent(in)             :: HdfVersion
+    logical, optional, intent(in)             :: DebugOption
+
+    ! Local
+    logical ::                            debug
+    integer :: myhdfVersion
+
+    logical, parameter :: PRINT_EVERY_CLOSE=.false.
+    ! character (LEN=2) :: the_eff_mode
+    integer :: the_eff_mode
+
+    ! begin
+
+    if(present(debugOption)) then
+      debug = debugOption
+   else
+      debug = .false.
+   endif
+   the_eff_mode = mode
+   if(UseSDPToolkit) then
+   ! Using Toolkit
+    ! the_eff_mode = LowerCase(toolbox_mode(1:2))
+   ! Not Using Toolkit
+   else
+      ! the_eff_mode = LowerCase(toolbox_mode(1:2))
+      ! if(the_eff_mode == 'pg') the_eff_mode = 'cl'
+      if(the_eff_mode == l_tkgen) the_eff_mode = l_ascii ! l_close
+   endif
+
+  if ( debug ) then
+    call output('Call to mls_io_gen_closeF', &
+    & advance='yes')
+    call output('the_eff_mode: ', advance='no')
+    call blanks(2)
+    call output(the_eff_mode, advance='yes')
+    call output('theFileHandle: ', advance='no')
+    call blanks(2)
+    call output(theFileHandle, advance='yes')
+    if ( present (hdfVersion) ) then
+      call output('hdfVersion: ', advance='no')
+      call blanks(2)
+      call output(hdfVersion, advance='yes')
+    endif
+    if ( present (fileName) ) then
+      call output('fileName: ', advance='no')
+      call blanks(2)
+      call output(trim(fileName), advance='yes')
+    endif
+  endif
+  ErrType = 0
+  myhdfVersion = WILDCARDHDFVERSION
+  if ( present(hdfVersion) ) myhdfVersion = hdfVersion
+   ! hdfVersion unimportant for 'pg' or 'cl' operations
+   ! if (the_eff_mode == 'pg' .or. the_eff_mode == 'cl' ) then
+   ! if (the_eff_mode == l_tkgen .or. the_eff_mode == l_close ) then
+   if (the_eff_mode == l_tkgen .or. the_eff_mode == l_ascii ) then
+     ErrType = 0
+   elseif ( myhdfVersion /= WILDCARDHDFVERSION ) then
+     ErrType = 0
+   elseif ( present(FileName) ) then
+     myhdfVersion = mls_hdf_version(trim(FileName), hdfVersion, DFACC_READ)
+     if ( debug ) then
+       call output('mls_hdf_versionF', &
+       & advance='yes')
+       call output('myhdfVersion: ', advance='no')
+       call blanks(2)
+       call output(myhdfVersion, advance='yes')
+     endif
+     if ( myhdfVersion < 0 ) then
+        ErrType = myhdfVersion
+        return
+     endif
+   elseif ( present(hdfVersion) ) then
+     myhdfVersion = hdfVersion
+   else
+     myhdfVersion = DEFAULT_HDFVERSION
+   endif
+    select case (the_eff_mode)
+
+    ! case('pg')
+    case(l_tkgen)
+      ErrType = PGS_IO_Gen_CLoseF(theFileHandle)
+
+    ! case('sw')
+    case(l_swath)
+      if(myhdfVersion == HDFVERSION_5) then
+        ErrType = he5_swclose(theFileHandle)
+        if ( debug ) then
+          call output('he5_swclose', &
+          & advance='yes')
+          call output('ErrType: ', advance='no')
+          call blanks(2)
+          call output(ErrType, advance='yes')
+        endif
+      elseif(myhdfVersion == HDFVERSION_4) then
+        ErrType = swclose(theFileHandle)
+      else
+        ErrType = NOSUCHHDFVERSION
+      endif
+
+    ! case('gd')
+    case(l_hdfeos)
+      if(myhdfVersion == HDFVERSION_5) then
+        ErrType = he5_gdclose(theFileHandle)
+      elseif(myhdfVersion == HDFVERSION_4) then
+        ErrType = gdclose(theFileHandle)
+      else
+        ErrType = NOSUCHHDFVERSION
+      endif
+
+    ! case('hg')
+    case(l_hdf)
+      if(myhdfVersion == HDFVERSION_5) then
+        call h5fclose_f(theFileHandle, ErrType)
+      elseif(myhdfVersion == HDFVERSION_4) then
+        ErrType = sfend(theFileHandle)
+      else
+        ErrType = NOSUCHHDFVERSION
+      endif
+
+    ! case('cl')
+    case(l_ascii) ! (l_ascii, l_close)
+      close(unit=theFileHandle, iostat=ErrType)
+
+      if(ErrType /= 0 .or. PRINT_EVERY_CLOSE) then
+        call output( 'Fortran closing unit ', advance='no')
+        call output(  theFileHandle, advance='yes')
+      endif
+
+      if(ErrType /= 0) then
+        call output( 'iostat ', advance='no')
+        call output(  ErrType, advance='yes')
+        call io_error('io error in MLSFiles: mls_io_gen_closeF' // &
+          & ' Fortran close', ErrType, 'unknown')
+      endif
+
+    ! case('netcdf4')
+    case(l_netcdf4)
+      ErrType = nf90_close( theFileHandle )
+
+    case default
+      ErrType = UNKNOWNTOOLBOXMODE
+
+    end select
+
+  end function mls_io_gen_closeF
+
+  ! -------------------------------------------  mls_io_gen_openF  -----
+
+  ! This function opens a generic file using either the toolbox
+  ! or else a Fortran OPEN statement
+  ! according to toolbox_mode:
+  ! 'gd' for grid files opened with gdopen
+  ! 'hg' for hdf4/5 files opened with sfstart/h5fopen_f; e.g. l1brad
+  ! 'pg' for generic files opened with pgs_io_gen_openF
+  ! 'op' for l3ascii files opened with simple fortran 'open'
+  ! 'sw' for swath files opened with swopen
+  
+  ! The mode is an integer arg so its choices are l_xx
+
+  ! It returns theFileHandle corresponding to the FileName or the PC
+
+  ! If given a FileName as an arg and a range of PC numbers
+  ! [PCBottom, PCTop] which are integers
+  ! it will attempt to find a corresponding PC
+
+  ! If given a PC it will attempt to find the corresponding FileName
+
+  ! toolbox_mode                  meaning
+  ! PGS_IO_GEN_OpenF              use PGS_IO_Gen_OpenF or fail
+  !      swopen                   use swopen or fail
+  !      gdopen                   use gdopen or fail
+  !       open                    use Fortran or fail
+
+  ! If the FileName is not found, it sets ErrType=NAMENOTFOUND
+  ! otherwise ErrType=0
+
+  ! This is useful because all the Toolbox routines refer to files
+  ! by their PC numbers, not their names
+
+  function mls_io_gen_openF(mode, caseSensitive, ErrType, &
+    & record_length, FileAccessType, &
+    & FileName, PCBottom, PCTop, versionNum, unknown, thePC, &
+    & hdfVersion, debugOption, inp_rec_length) &
+    &  result (theFileHandle)
+
+    use IO_Stuff, only: Get_Lun
+
+    ! Dummy arguments
+    integer                                 :: TheFileHandle
+    integer, intent(in)                     :: Mode
+    logical,  intent(in)                    :: CaseSensitive
+    integer,  intent(out)                   :: ErrType
+    integer,  intent(in)                    :: Record_length
+    integer, intent(in)                     :: FileAccessType ! One of hdf4 dfacc*
+    character (len=*), optional, intent(in) :: FileName  
+    integer,  optional, intent(in)          :: PCBottom, PCTop
+    integer,  optional                      :: VersionNum
+    logical, optional, intent(in)           :: Unknown
+    integer, optional, intent(in)           :: ThePC     
+    integer, optional, intent(in)           :: HdfVersion
+    logical, optional, intent(in)           :: DebugOption
+    integer, optional, intent(in)           :: Inp_rec_length
+
+    ! Local
+    integer :: myhdfVersion
+
+    logical, parameter :: DEFAULT_PRINT_EVERY_OPEN=.false.
+    integer, parameter :: FH_ON_ERROR=-99
+    integer, parameter :: KEYWORDLEN=12 ! Max length of keywords in OPEN(...)
+    character (LEN=MAXFILENAMELENGTH) :: myName
+    integer :: myPC
+    integer                       :: version, returnStatus, your_version
+    character (LEN=KEYWORDLEN) :: access, action, form, position, status
+    ! character (LEN=2) :: the_eff_mode
+    integer :: the_eff_mode
+    integer                       :: unit
+    logical ::                            debug
+    logical ::                            PRINT_EVERY_OPEN
+
+    ! begin
+
+    if(present(debugOption)) then
+      debug = debugOption
+   else
+      debug = .false.
+   endif
+   ! debug = .true.
+
+   PRINT_EVERY_OPEN = DEFAULT_PRINT_EVERY_OPEN .or. debug
+   returnStatus = 0           ! In case using Toolkit but supplied FileName
+   myPC = 0
+    ! In case of premature return
+    theFileHandle = FH_ON_ERROR
+
+    if(present(versionNum)) then
+      version = versionNum
+    else
+      version = 1
+    endif
+
+   the_eff_mode = mode
+   if(UseSDPToolkit) then
+    ! the_eff_mode = LowerCase(toolbox_mode(1:2))
+    your_version = version
+   ! Using Toolkit
+    if(present(thePC)) then
+      myPC = thePC
+      returnStatus = Pgs_pc_getReference(thePC, your_version, &
+        & myName)
+      if ( debug ) then
+          call output('Call to Pgs_pc_getReference', &
+          & advance='yes')
+          call output('returnStatus: ', advance='no')
+          call blanks(2)
+          call output(returnStatus, advance='yes')
+          call output('thePC: ', advance='no')
+          call blanks(2)
+          call output(thePC, advance='yes')
+          call output('your_version: ', advance='no')
+          call blanks(2)
+          call output(your_version, advance='yes')
+      endif
+    elseif(present(FileName)) then
+      myName = FileName
+      ! if(LowerCase(toolbox_mode(1:2)) == 'pg') then
+      if(mode == l_tkgen) then
+        myPC = GetPCFromRef(trim(FileName), PCBottom, PCTop, &
+          & caseSensitive, returnStatus, your_version, &
+          & debugOption=debugOption)
+      endif
+
+    else
+      ErrType = MUSTSUPPLYFILENAMEORPC
+      if ( debug ) & 
+       & call output('Must supply file name or pc to mls_io_gen_openF', &
+       & advance='yes')
+      return
+    endif
+
+   ! Not Using Toolkit
+   ! Must supply FileName, use generic Fortran open
+   elseif(.not. present(FileName)) then
+      ErrType = NOPCIFNOTOOLKIT
+      if ( debug ) & 
+       & call output('No toolkit: must supply file name to mls_io_gen_openF', &
+       & advance='yes')
+      return
+      
+   else
+      myName = FileName
+      ! the_eff_mode = LowerCase(toolbox_mode(1:2))
+      ! if(the_eff_mode == 'pg') the_eff_mode = 'op'
+      if(the_eff_mode == l_tkgen) the_eff_mode = l_open
+   endif
+
+   ! hdfVersion unimportant for 'pg' or 'op' operations
+   ! if (the_eff_mode == 'pg' .or. the_eff_mode == 'op' ) then
+   myhdfVersion = WRONGHDFVERSION
+   if ( present(hdfVersion) ) myHdfVersion = hdfVersion
+   if ( any( the_eff_mode == (/l_tkgen, l_open, l_ascii, l_netcdf4/) ) ) then
+     myhdfVersion = WILDCARDHDFVERSION
+   elseif ( .not. any( myhdfVersion == (/HDFVERSION_4, HDFVERSION_5/) ) ) then
+     if ( debug ) then
+       call output( 'myName: ', advance='no' )
+       call output( trim(myName), advance='yes' )
+       call output( 'FileAccessType: ', advance='no' )
+       call output( FileAccessType, advance='yes' )
+       call outputnamedValue( 'the_eff_mode', the_eff_mode )
+       call outputnamedValue( 'l_tkgen', l_tkgen )
+       call outputnamedValue( 'l_open', l_open )
+       call outputnamedValue( 'l_ascii', l_ascii )
+       call outputnamedValue( 'l_netcdf4', l_netcdf4 )
+       if ( present(hdfVersion) ) then
+       call output( 'hdfVersion: ', advance='no' )
+       call output( hdfVersion, advance='yes' )
+       endif
+     endif
+     myhdfVersion = mls_hdf_version(trim(myName), hdfVersion, FileAccessType)             
+   endif
+
+   if ( debug ) then
+       call output('Arguments and options in call to mls_io_gen_openF', &
+       & advance='yes')
+       call output('Mode: ', advance='no')
+       call blanks(2)
+       if ( FILESTRINGTABLE ) then
+       call display_string ( lit_indices(the_eff_mode), strip=.true.)                                  
+       call blanks(2)
+       endif
+       call output(the_eff_mode, advance='yes')
+       call output('l_hdf: ', advance='no')
+       call blanks(2)
+       call output(l_hdf, advance='yes')
+       call output('l_ascii: ', advance='no')
+       call blanks(2)
+       call output(l_ascii, advance='yes')
+       call output('l_netcdf4: ', advance='no')
+       call blanks(2)
+       call output(l_netcdf4, advance='yes')
+       call output('l_open: ', advance='no')
+       call blanks(2)
+       call output(l_open, advance='yes')
+       call output('File Name: ', advance='no')
+       call blanks(2)
+       call output(trim(myName), advance='yes')
+       call output('PCF-supplied number: ', advance='no')
+       call blanks(2)
+       call output(myPC, advance='yes')
+       call output('Case sensitive? ', advance='no')
+       call blanks(2)
+       call output(caseSensitive, advance='yes')
+       call output('File access type ', advance='no')
+       call blanks(2)
+       call output(FileAccessType, advance='yes')
+       call output('Return status ', advance='no')
+       call blanks(2)
+       call output(returnStatus, advance='yes')
+       call output('hdf version ', advance='no')
+       call blanks(2)
+       call output(myhdfVersion, advance='yes')
+   endif
+
+   if ( myhdfVersion < 0 .and. any( the_eff_mode == &
+   & (/ l_swath, l_hdf, l_hdfeos /) ) ) then
+     ErrType = myhdfVersion
+     return
+   endif
+    your_version = version
+    if ( debug ) call outputnamedValue( 'the_eff_mode', the_eff_mode )
+    select case (the_eff_mode)
+
+    ! case('pg')
+    case(l_tkgen)
+      if(returnStatus == 0) then
+         ErrType = PGS_IO_Gen_OpenF(myPC, FileAccessType, record_length, &
+          & theFileHandle, your_version)
+      else
+        ErrType = returnStatus
+       endif
+
+    ! case('sw')
+    case(l_swath)
+      if(returnStatus /= 0) then
+        ErrType = returnStatus
+        return
+      elseif(myhdfVersion == HDFVERSION_5) then
+        theFileHandle = he5_swopen(trim(myName), &
+          & he2he5_fileaccess(FileAccessType))
+      elseif(myhdfVersion == HDFVERSION_4) then
+        theFileHandle = swopen(trim(myName), FileAccessType)
+      else
+        ErrType = NOSUCHHDFVERSION
+        return
+      endif
+      if(theFileHandle <= 0) then                                          
+        ErrType = min(theFileHandle, -1)                                   
+      else                                                                 
+        ErrType = 0                                                        
+      endif                                                                
+      if ( debug ) then                                                    
+          call output('Args and results from he5_swopen', &                
+          & advance='yes')                                                 
+          call output('File Name: ', advance='no')                         
+          call blanks(2)                                                   
+          call output(trim(myName), advance='yes')                         
+          call output('File Access: ', advance='no')                       
+          call blanks(2)                                                   
+          call output(he2he5_fileaccess(FileAccessType), advance='yes')  
+          call output('theFileHandle: ', advance='no')                     
+          call blanks(2)                                                   
+          call output(theFileHandle, advance='yes')                        
+      endif                                                                
+
+    ! case('gd')
+    case(l_hdfeos)
+      if(returnStatus /= 0) then
+        ErrType = returnStatus
+        return
+      elseif(myhdfVersion == HDFVERSION_5) then
+        theFileHandle = he5_gdopen(trim(myName), &
+          & he2he5_fileaccess(FileAccessType))
+      elseif(myhdfVersion == HDFVERSION_4) then
+        theFileHandle = gdopen(trim(myName), FileAccessType)
+      else
+        ErrType = NOSUCHHDFVERSION
+        return
+      endif
+      if(theFileHandle <= 0) then         
+        ErrType = min(theFileHandle, -1)  
+      else                                
+        ErrType = 0                       
+      endif                               
+
+    ! case('hg')
+    case(l_hdf)
+      theFileHandle = -1   ! This is the error value expected by hdf4/5
+      if(returnStatus /= 0) then
+        ErrType = returnStatus
+        return
+      elseif(myhdfVersion == HDFVERSION_5) then
+        ! print *, 'We are using the right mls_sfstart'
+        ! print *, 'FileAccessType ', FileAccessType
+        theFileHandle = mls_sfstart(trim(myName), FileAccessType, &
+          & HDFVERSION_5)
+      elseif(myhdfVersion == HDFVERSION_4) then
+        theFileHandle = sfstart(trim(myName), FileAccessType)
+      else
+        ErrType = NOSUCHHDFVERSION
+        return
+      endif
+      if(theFileHandle <= 0) then         
+        ErrType = min(theFileHandle, -1)  
+      else                                
+        ErrType = 0                       
+      endif                               
+
+    ! case('op')
+    case(l_ascii, l_open)
+      theFileHandle = FH_ON_ERROR
+      if ( debug ) then
+        call outputNamedValue( 'FileAccessType', FileAccessType )
+        call outputNamedValue( 'DFACC_RDWR', DFACC_RDWR )
+      endif
+      select case (FileAccessType)
+      case(PGSd_IO_Gen_RSeqFrm, DFACC_RDONLY)
+        status = 'old'
+        access = 'sequential'
+        form = 'formatted'
+        action = 'read'
+        position = 'rewind'
+      case(PGSd_IO_Gen_RSeqUnf)
+        status = 'old'
+        access = 'sequential'
+        form = 'unformatted'
+        action = 'read'
+        position = 'rewind'
+      case(PGSd_IO_Gen_RDirFrm)
+        status = 'old'
+        access = 'direct'
+        form = 'formatted'
+        action = 'read'
+        position = 'rewind'
+      case(PGSd_IO_Gen_RDirUnf)
+        status = 'old'
+        access = 'direct'
+        form = 'unformatted'
+        action = 'read'
+        position = 'rewind'
+      case(PGSd_IO_Gen_WSeqFrm, DFACC_CREATE)
+        status = 'new'
+        access = 'sequential'
+        form = 'formatted'
+        action = 'write'
+        position = 'rewind'
+      case(PGSd_IO_Gen_WSeqUnf)
+        status = 'new'
+        access = 'sequential'
+        form = 'unformatted'
+        action = 'write'
+        position = 'rewind'
+      case(PGSd_IO_Gen_WDirFrm)
+        status = 'new'
+        access = 'direct'
+        form = 'formatted'
+        action = 'write'
+        position = 'rewind'
+      case(PGSd_IO_Gen_WDirUnf)
+        status = 'new'
+        access = 'direct'
+        form = 'unformatted'
+        action = 'write'
+        position = 'rewind'
+      case(PGSd_IO_Gen_USeqFrm, DFACC_RDWR)
+        status = 'old'
+        access = 'sequential'
+        form = 'formatted'
+        action = 'readwrite'
+        position = 'rewind'
+      case(PGSd_IO_Gen_USeqUnf)
+        status = 'old'
+        access = 'sequential'
+        form = 'unformatted'
+        action = 'readwrite'
+        position = 'rewind'
+      case(PGSd_IO_Gen_UDirFrm)
+        status = 'old'
+        access = 'direct'
+        form = 'formatted'
+        action = 'readwrite'
+        position = 'rewind'
+      case(PGSd_IO_Gen_UDirUnf)
+        status = 'old'
+        access = 'direct'
+        form = 'unformatted'
+        action = 'readwrite'
+        position = 'rewind'
+      case(PGSd_IO_Gen_ASeqFrm)
+        status = 'old'
+        access = 'sequential'
+        form = 'formatted'
+        action = 'readwrite'
+        position = 'append'
+      case(PGSd_IO_Gen_ASeqUnf)
+        status = 'old'
+        access = 'sequential'
+        form = 'unformatted'
+        action = 'readwrite'
+        position = 'append'
+      case default
+        ! ErrType = UNKNOWNFILEACCESSTYPE
+        ! if ( debug ) &
+        !  & call output('Unknown file access type', advance='yes')
+        ! return
+        status = 'unknown'
+        access = 'sequential'
+        form = 'formatted'
+        action = 'readwrite'
+        position = 'rewind'
+      end select
+
+      call get_lun ( unit, msg=.false. )
+      if( unit < 0 ) then
+        ErrType = NOFREEUNITS
+        if ( debug ) &
+         & call output('No free io units available', advance='yes')
+        return
+      endif
+
+      if (present(unknown)) then
+        if (unknown) status = 'unknown'
+      end if
+
+      if ( debug ) then
+        call output( 'access ' // access, advance='yes')
+        call output( 'action ' // action, advance='yes')
+        call output( 'form ' // form, advance='yes')
+        call output( 'position ' // position, advance='yes')
+        call output( 'status ' // status, advance='yes')
+      endif
+      if ( present(inp_rec_length) ) then
+        open(unit=unit, recl=inp_rec_length, form=form, &
+          & status=status, file=trim(myName), iostat=ErrType)
+      elseif(access /= 'direct') then
+        open(unit=unit, access=access, action=action, form=form, &
+          & position=position, status=status, file=trim(myName), iostat=ErrType)
+      else
+        open(unit=unit, access=access, action=action, form=form, &
+          & status=status, file=trim(myName), iostat=ErrType)
+      endif
+
+      if(ErrType /= 0 .or. PRINT_EVERY_OPEN) then
+        call output( 'Fortran opening unit ', advance='no')
+        call output(  unit, advance='yes')
+        call output( 'access ' // access, advance='yes')
+        call output( 'action ' // action, advance='yes')
+        call output( 'form ' // form, advance='yes')
+        call output( 'position ' // position, advance='yes')
+        call output( 'status ' // status, advance='yes')
+        call output( 'file ' // trim(myName), advance='yes')
+      endif
+
+      if(ErrType /= 0) then
+        call output( 'iostat ', advance='no')
+        call output(  ErrType, advance='yes')
+        call io_error('io error in MLSFiles: mls_io_gen_openF' // &
+          & ' Fortran open', ErrType, trim(myName))
+      else
+        theFileHandle = unit
+      endif
+
+    ! case('netcdf4')
+    case(l_netcdf4)
+!       call output( 'NetCDF4 opening file ' // trim(myName), advance='yes')
+      theFileHandle = -1   ! This is the error value expected by hdf4/5
+      if ( any( FileAccessType == (/ DFACC_RDONLY, Dfacc_Read /) ) ) then
+        ErrType = nf90_open( myName, NF90_NoWrite, theFileHandle )
+      elseif ( FileAccessType == Dfacc_Rdwr ) then
+        ErrType = nf90_open( myName, NF90_Write, theFileHandle )
+      elseif ( FileAccessType == Dfacc_Create ) then
+        ErrType = nf90_create( myName, NF90_NETCDF4, theFileHandle )
+      else
+        ErrType = UNKNOWNFILEACCESSTYPE
+      endif
+!       call output( (/ErrType, theFileHandle/), advance='yes')
+
+    case default
+      ErrType = UNKNOWNTOOLBOXMODE
+
+    end select
+
+    if(ErrType /= 0) then
+      theFileHandle = FH_ON_ERROR
+    endif
+    
+    if( debug ) then
+       call output('Error Type (0 means none): ', advance='no')
+       call blanks(2)
+       call output(ErrType, advance='yes')
+       call output('record_length: ', advance='no')
+       call blanks(2)
+       call output(record_length, advance='yes')
+       call output('theFileHandle: ', advance='no')
+       call blanks(2)
+       call output(theFileHandle, advance='yes')
+    endif
+
+  end function mls_io_gen_openF
+
+!====================
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: MLSFiles.f90,v 1.2 2020/03/19 22:31:05 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module MLSFiles
+!====================
+
+!
+! $Log: MLSFiles.f90,v $
+! Revision 1.2  2020/03/19 22:31:05  pwagner
+! More changes needed by netcdf4 files
+!
+! Revision 1.1  2020/03/06 00:24:19  pwagner
+! First commit
+!
+! Revision 2.114  2019/10/22 18:51:18  pwagner
+! Fixed bug confusing r and R options in call to SortArray
+!
+! Revision 2.113  2019/01/30 23:56:39  pwagner
+! Corrected various comments
+!
+! Revision 2.112  2018/04/19 02:09:49  vsnyder
+! Remove USE statements for unused names
+!
+! Revision 2.111  2018/04/16 18:25:18  pwagner
+! Actually obey NEVERFAIL in ReadL1BData_MLSFile
+!
+! Revision 2.110  2018/02/08 23:16:41  pwagner
+! Moved Dump, accessType, and Split_path_name to other modules
+!
+! Revision 2.109  2017/12/12 21:25:32  pwagner
+! Raise char length limit of nameArray in GetPCFromRef
+!
+! Revision 2.108  2017/11/15 00:09:31  pwagner
+! Improve appearance Dumping each MLSFile
+!
+! Revision 2.107  2017/01/19 23:35:01  pwagner
+! Improve appeearance when dumping an MLSFile
+!
+! Revision 2.106  2017/01/13 01:27:27  pwagner
+! Dump_MLSFile now uses OutputTable
+!
+! Revision 2.105  2016/09/21 00:38:41  pwagner
+! May Dump filedatabase as a table
+!
+! Revision 2.104  2016/08/09 18:13:34  pwagner
+! MLS_CloseFile now sets FileIDs to 0
+!
+! Revision 2.103  2015/03/28 01:13:24  vsnyder
+! Added stuff to trace allocate/deallocate addresses
+!
+! Revision 2.102  2014/09/05 00:01:11  vsnyder
+! More complete and accurate allocate/deallocate size tracking
+!
+! Revision 2.100  2014/04/02 23:02:10  pwagner
+! Removed redundant open_ and close_MLSFile
+!
+! Revision 2.99  2014/01/09 00:24:29  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
+! Revision 2.98  2013/09/24 23:27:14  vsnyder
+! Use Get_Where or Print_Source to start error messages
+!
+! Revision 2.97  2013/08/12 23:47:25  pwagner
+! FindSomethings moved to MLSFinds module
+!
+! Revision 2.96  2013/07/24 19:01:03  pwagner
+! Fixed bug opening non-hdf file
+!
+! Revision 2.95  2013/05/31 00:27:44  vsnyder
+! Add cautionary comment about HDFVersions
+!
+! Revision 2.94  2012/08/27 23:01:29  pwagner
+! Consistent with new api for SortArray
+!
+! Revision 2.93  2012/08/14 00:20:13  pwagner
+! Removed unused stuff
+!
+! Revision 2.92  2012/05/24 20:32:11  vsnyder
+! Simplify mls_exists
+!
+! Revision 2.91  2012/03/14 16:55:11  pwagner
+! Fixed most recent goldbrick-busting bug
+!
+! Revision 2.90  2012/01/05 01:14:54  pwagner
+! Capitalized USEd stuff
+!
+! Revision 2.89  2011/07/12 22:35:44  honghanh
+! Change l_grid to l_hdfeos
+!
+! Revision 2.88  2009/09/29 23:32:40  pwagner
+! Changes needed by 64-bit build
+!
+! Revision 2.87  2009/06/23 18:25:42  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.86  2008/12/02 23:10:51  pwagner
+! mls_io_gen_[openF,closeF] functions now private; use MLSFile_T interfaces instead
+!
+! Revision 2.85  2008/05/24 00:54:46  vsnyder
+! Remove unused declarations
+!
+! Revision 2.84  2008/05/02 00:41:09  vsnyder
+! Delete unused symbol
+!
+! Revision 2.83  2008/05/02 00:03:33  pwagner
+! Removed redundant procedures
+!
+! Revision 2.82  2008/04/18 16:32:30  pwagner
+! read_textFile can return value array; optional arg maxLineLen added
+!
+! Revision 2.81  2008/03/11 00:09:54  pwagner
+! Uses read_textFile from io_stuff
+!
+! Revision 2.80  2008/02/22 21:27:15  pwagner
+! Added textFile_to_Chars
+!
+! Revision 2.79  2008/01/14 23:47:16  pwagner
+! GetMLSFileByName sometimes failed to match; fixed
+!
+! Revision 2.78  2007/06/21 00:49:51  vsnyder
+! Remove tabs, which are not part of the Fortran standard
+!
+! Revision 2.77  2007/04/06 16:23:17  pwagner
+! Added 1st 1-parameter function, readnchars
+!
+! Revision 2.76  2007/02/06 17:55:14  pwagner
+! Added transfer_MLSFile to change path of an MLSFile
+!
+! Revision 2.75  2007/01/11 20:41:20  vsnyder
+! Remove get_free_lun, use Get_Lun, handle record length for sequential files
+!
+! Revision 2.74  2006/09/21 18:45:52  pwagner
+! Fix bug causing PCFid-equipped inquiries to complain about missing filenames
+!
+! Revision 2.73  2006/04/11 23:15:34  pwagner
+! Disclose whether MLSFile still open as part of default dump
+!
+! Revision 2.72  2006/02/21 19:07:58  pwagner
+! Removed references to unused stuff
+!
+! Revision 2.71  2005/12/21 18:44:08  pwagner
+! Added AreTheSameFile; not clever yet, should consider paths, etc
+!
+! Revision 2.70  2005/10/18 23:03:32  pwagner
+! Interface to GetMLSFileByName allows ignoring path
+!
+! Revision 2.69  2005/08/09 00:00:10  pwagner
+! Mistake to call sortarray from GetPCFFromRef with same nameArray in both positions--fixed
+!
+! Revision 2.68  2005/06/29 17:56:24  pwagner
+! FILESTRINGTABLE utilized to prevent tools from segment faulting
+!
+! Revision 2.67  2005/06/22 17:25:49  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.66  2005/06/16 18:41:41  pwagner
+! Stopped some unnecessary printing
+!
+! Revision 2.65  2005/06/14 20:32:09  pwagner
+! Many changes to accommodate the new fields in MLSFile_T
+!
+! Revision 2.64  2005/06/03 23:58:04  pwagner
+! Extra check on indx in GetMLSFileByType; added AddInitializeMLSFile
+!
+! Revision 2.63  2005/05/31 17:50:20  pwagner
+! Began switch from passing file handles to passing MLSFiles
+!
+! Revision 2.62  2005/01/07 00:36:51  vsnyder
+! Remove unused declarations
+!
+! Revision 2.61  2004/10/13 00:50:32  vsnyder
+! Remove USE for Reverse, which isn't used
+!
+! Revision 2.60  2004/10/09 02:46:09  vsnyder
+! Simplify split_file_name.  It doesn't work anyway if len(full_file_name) >
+! MAXFILENAMELENGTH.
+!
+! Revision 2.59  2004/08/04 23:19:01  pwagner
+! Much moved from MLSStrings to MLSStringLists
+!
+! Revision 2.58  2004/02/05 23:29:16  pwagner
+! Extra debugging when appropriate
+!
+! Revision 2.57  2004/01/27 21:34:57  pwagner
+! Fixed bugs in unSplitName
+!
+! Revision 2.56  2004/01/23 01:13:11  pwagner
+! Added unSplitName
+!
+! Revision 2.55  2004/01/22 00:44:02  pwagner
+! Added (un)maskName
+!
+! Revision 2.54  2004/01/21 18:54:54  livesey
+! Typo!
+!
+! Revision 2.53  2004/01/21 18:48:59  livesey
+! Bug fix in mls_inqswath
+!
+! Revision 2.52  2003/06/23 21:06:55  pwagner
+! Moved use HDF5 down among module procedures to speed up Lahey compilation
+!
+! Revision 2.51  2003/06/20 19:32:32  pwagner
+! mls_exists now public
+!
+! Revision 2.50  2003/04/02 23:53:18  pwagner
+! Added mls_exists; Checks for FILENOTFOUND
+!
+! Revision 2.49  2003/02/28 00:46:32  pwagner
+! Improved apis for mls_open(close)file to exploit WILDCARDHDFVERSION
+!
+! Revision 2.48  2003/02/26 17:34:39  pwagner
+! mls_inqswath, mls_sfstart, and mls_sfend act sensibly when passed WILDCARDHDFVERSION
+!
+! Revision 2.47  2002/12/10 00:43:44  pwagner
+! At last can h5fcreate an extant file with H5F_ACC_TRUNC_F
+!
+! Revision 2.46  2002/12/09 17:55:03  pwagner
+! Reuses mls_sfstart in mls_io_gen_openf and open_mls routines
+!
+! Revision 2.45  2002/12/06 23:38:57  pwagner
+! mls_sfstart improved with addingMetaData optional arg
+!
+! Revision 2.44  2002/12/05 19:44:24  pwagner
+! Moved MLSFile_T from MLSFiles to MLSCommon
+!
+! Revision 2.43  2002/12/04 01:16:25  pwagner
+! Open_ Close_ Dump_ Deallocate_ on new MLSFile_T added
+!
+! Revision 2.42  2002/12/02 23:37:27  pwagner
+! First halting steps toward reorg of how mls treats files--will be done via MLSFile_T
+!
+! Revision 2.41  2002/11/07 21:22:40  jdone
+! HDF4/HDF5 capabilities integrated
+!
+! Revision 2.40  2002/10/29 01:02:26  pwagner
+! Reverted DEFAULT_HDFVERSION to 4; added api
+!
+! Revision 2.39  2002/10/08 23:46:03  pwagner
+! Separate he2he5_fileaccess and hdf2hdf5_fileaccess functions
+!
+! Revision 2.38  2002/10/08 00:09:11  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.37  2002/09/27 23:38:38  pwagner
+! Added hg type to mls_gen_close
+!
+! Revision 2.36  2002/09/26 23:59:39  pwagner
+! added 'hg' toolbox_mode to mls_io_gen_openF
+!
+! Revision 2.35  2002/08/08 22:40:42  jdone
+! New routines to Open/Close HDF5 Files
+!
+! Revision 2.34  2002/07/23 00:06:55  pwagner
+! debug set to false in sfstart and sfend
+!
+! Revision 2.33  2002/07/11 22:21:01  pwagner
+! These hdf5-savvy versions transferred from he5lib
+!
+! Revision 1.13  2002/06/12 17:59:37  livesey
+! Brought get_free_lun in from lib version
+!
+! Revision 1.12  2002/05/28 23:11:23  pwagner
+! Changed to comply with hdf5.1.4.3/hdfeos5.1.2
+!
+! Revision 1.11  2002/03/14 23:31:57  pwagner
+! HDFVERSION_4 and 5 now public
+!
+! Revision 1.10  2002/03/13 18:32:05  pwagner
+! No longer dumps core after writing metadata to hdf5 files
+!
+! Revision 1.9  2002/02/19 23:39:29  pwagner
+! Eliminated unwanted match between o3 and hno3
+!
+! Revision 1.8  2002/01/31 00:36:41  pwagner
+! Repaired comment statements
+!
+! Revision 1.7  2002/01/29 23:46:30  pwagner
+! Added WILDCARDHDFVERSION as public param
+!
+! Revision 1.6  2002/01/29 00:48:43  pwagner
+! Now should handle both hdfVersions; not tested yet
+!
+! Revision 1.5  2002/01/26 00:14:47  pwagner
+! Accepts hdfVersion optional arg; restored hdf5 module use
+!
+! Revision 1.4  2002/01/23 22:41:21  pwagner
+! Handles optional hdfVersion parameter
+!
+! Revision 1.3  2002/01/23 00:54:10  pwagner
+! Added mls_hdf_version function
+!
+! Revision 1.2  2002/01/18 23:55:49  pwagner
+! Various strategems to try writing metadata; all fail
+!
+! Revision 1.1  2002/01/18 00:51:22  pwagner
+! First commit
+!
+@
+
+
+1.2
+log
+@More changes needed by netcdf4 files
+@
+text
+@d2287 1
+a2287 1
+      call output( 'NetCDF4 opening file ' // trim(myName), advance='yes')
+d2298 1
+a2298 1
+      call output( (/ErrType, theFileHandle/), advance='yes')
+d2327 1
+a2327 1
+       "$Id: MLSFiles.f90,v 1.1 2020/03/06 00:24:19 pwagner Exp $"
+d2339 3
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d1901 1
+d1974 1
+a1974 1
+   if ( any( the_eff_mode == (/l_tkgen, l_open, l_ascii/) ) ) then
+d1986 1
+d2011 3
+d2287 1
+d2298 1
+d2327 1
+a2327 1
+       "$Id: MLSFiles.f90,v 2.114 2019/10/22 18:51:18 pwagner Exp $"
+d2339 3
+@
+

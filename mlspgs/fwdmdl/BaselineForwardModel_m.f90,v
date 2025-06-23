@@ -1,0 +1,1817 @@
+head	2.35;
+access;
+symbols
+	v5-02-NRT-19:2.35
+	v6-00:2.35
+	v5-02-NRT-18:2.35
+	v5-02:2.35
+	v5-01-NRT-17:2.35
+	v5-01-NRT-16:2.35
+	v5-01-NRT-15:2.35
+	v5-01-NRT-14:2.35
+	neuralnetworks-1-0:2.35.0.10
+	cfm-single-freq-0-1:2.35.0.8
+	v5-01:2.35
+	v5-00:2.35
+	v4-23-TA133:2.35.0.6
+	mus-emls-1-70:2.35.0.4
+	rel-1-0-englocks-work:2.35.0.2
+	VUMLS1-00:2.34
+	VPL1-00:2.34
+	V4-22-NRT-08:2.34
+	VAM1-00:2.34
+	V4-21:2.33.0.2
+	V4-13:2.33
+	V4-12:2.32
+	V4-11:2.31
+	V4-10:2.31
+	V3-43:2.31
+	M4-00:2.31
+	V3-41:2.31
+	V3-40-PlusGM57:2.31.0.2
+	V2-24-NRT-04:2.29
+	V3-33:2.31
+	V2-24:2.29
+	V3-31:2.31
+	V3-30-NRT-05:2.31
+	cfm-01-00:2.31
+	V3-30:2.31
+	V3-20:2.31
+	V3-10:2.31
+	V2-23-NRT-02:2.29
+	V2-23:2.29
+	V2-22-NRT-01:2.29
+	V2-22:2.29
+	V2-21:2.27
+	V2-20:2.27
+	V2-11:2.27
+	V2-10:2.27
+	V2-00:2.27
+	V1-51:2.23
+	V1-50:2.23
+	V1-45:2.20
+	V1-44:2.20
+	V1-43:2.18
+	V1-32:2.18
+	V1-31:2.18
+	V1-30:2.17
+	V1-13:2.16
+	V1-12:2.16
+	V1-11:2.16
+	V1-10:2.15
+	newfwm-feb03:2.15.0.2
+	V1-04:2.7
+	V1-03:2.7
+	V1-02:2.7
+	JointForwardModel:2.9.0.2
+	V1-00:2.7;
+locks; strict;
+comment	@# @;
+
+
+2.35
+date	2017.09.13.19.27.22;	author vsnyder;	state Exp;
+branches;
+next	2.34;
+
+2.34
+date	2015.08.25.17.20.20;	author vsnyder;	state Exp;
+branches;
+next	2.33;
+
+2.33
+date	2014.08.06.23.24.20;	author vsnyder;	state Exp;
+branches;
+next	2.32;
+
+2.32
+date	2014.07.23.23.14.24;	author pwagner;	state Exp;
+branches;
+next	2.31;
+
+2.31
+date	2009.06.23.18.26.10;	author pwagner;	state Exp;
+branches;
+next	2.30;
+
+2.30
+date	2009.04.20.18.46.55;	author pwagner;	state Exp;
+branches;
+next	2.29;
+
+2.29
+date	2007.07.25.20.10.44;	author vsnyder;	state Exp;
+branches;
+next	2.28;
+
+2.28
+date	2007.06.29.19.32.42;	author vsnyder;	state Exp;
+branches;
+next	2.27;
+
+2.27
+date	2006.01.27.17.23.29;	author livesey;	state Exp;
+branches;
+next	2.26;
+
+2.26
+date	2006.01.27.17.19.27;	author livesey;	state Exp;
+branches;
+next	2.25;
+
+2.25
+date	2006.01.20.23.52.20;	author livesey;	state Exp;
+branches;
+next	2.24;
+
+2.24
+date	2005.06.22.18.08.18;	author pwagner;	state Exp;
+branches;
+next	2.23;
+
+2.23
+date	2004.10.16.17.30.23;	author livesey;	state Exp;
+branches;
+next	2.22;
+
+2.22
+date	2004.10.16.17.28.42;	author livesey;	state Exp;
+branches;
+next	2.21;
+
+2.21
+date	2004.09.13.17.39.49;	author livesey;	state Exp;
+branches;
+next	2.20;
+
+2.20
+date	2004.08.16.23.42.25;	author livesey;	state Exp;
+branches;
+next	2.19;
+
+2.19
+date	2004.07.07.19.42.11;	author vsnyder;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2003.10.09.22.16.13;	author livesey;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2003.08.15.22.42.24;	author livesey;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2003.02.20.20.31.33;	author livesey;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2002.11.18.19.27.23;	author pwagner;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2002.11.13.17.07.06;	author livesey;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2002.11.07.15.07.25;	author livesey;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2002.10.08.17.08.01;	author pwagner;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2002.09.13.22.02.30;	author vsnyder;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2002.09.11.17.43.39;	author pwagner;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2002.06.04.23.45.55;	author livesey;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2002.05.03.23.29.04;	author livesey;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2002.01.17.02.16.38;	author livesey;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2001.10.03.17.46.37;	author livesey;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2001.10.02.22.22.53;	author livesey;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2001.10.02.20.37.19;	author livesey;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2001.10.02.20.20.46;	author livesey;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2001.10.02.20.03.58;	author livesey;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.10.02.16.52.00;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.35
+log
+@Change pointers to allocatable to avoid memory leaks
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+ 
+module BaselineForwardModel_m
+
+  ! This module contains a special forward model for baseline related effects.
+
+  implicit none
+  private
+  public :: BaselineForwardModel
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: BaselineForwardModel_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains ! ======================================== BaselineForwardModel ======
+
+  subroutine BaselineForwardModel ( FwdModelConf, FwdModelIn, FwdModelExtra, &
+    & FwdModelOut, fmStat, jacobian )
+
+    use Allocate_Deallocate, only: allocate_test, deallocate_test
+    use ForwardModelConfig, only: forwardModelConfig_t
+    use ForwardModelIntermediate, only: forwardModelStatus_t
+    use Intrinsic, only: l_baseline, l_channel, l_intermediateFrequency, l_none, &
+     &  l_ptan, l_radiance
+    use ManipulateVectorQuantities, only: findoneclosestinstance
+    use MatrixModule_0, only: sparsify, matrixelement_t, m_absent, m_banded, densify, &
+      & checkforsimplebandedlayout
+    use MatrixModule_1, only: matrix_t, findblock, createblock
+    use MLSCommon, only: rp, rm
+    use MLSMessageModule, only: mlsmessage, mlsmsg_error
+    use MLSSignals_m, only: signal_t
+    use VectorsModule, only: vector_t, vectorValue_t, getVectorQuantityByType, &
+      & validatevectorquantity
+    use ForwardModelVectorTools, only: getQuantityForForwardmodel
+    use MLSNumerics, only: hunt
+
+    ! Dummy arguments
+    type(forwardModelConfig_T), intent(inout) :: fwdModelConf
+    type(vector_T), intent(in) ::  FwdModelIn, FwdModelExtra
+    type(vector_T), intent(inout) :: FwdModelOut  ! Radiances, etc.
+    type(forwardModelStatus_t), intent(inout) :: FmStat ! Reverse comm. stuff
+    type(matrix_T), intent(inout), optional :: Jacobian
+
+    ! Local parameters
+    character(len=*), parameter :: INVALIDQUANTITY = "Invalid vector quantity for "
+
+    ! Local variables
+
+    logical :: BSLINFIRST               ! Set if baseline in FwdModelIn
+    logical :: BANDBSLINFIRST           ! Set if band based baseline in FwdModelIn
+    logical :: BLANKBSLINFIRST          ! Set if blank baseline in FwdModelIn
+    logical :: RADBSLINFIRST            ! Set if radiometer based baseline in FwdModelIn
+    logical :: BANDBSLWASSPECIFIC       ! Set if band based baseline in FwdModelIn
+    logical :: BLANKBSLWASSPECIFIC      ! Set if blank baseline in FwdModelIn
+    logical :: RADBSLWASSPECIFIC        ! Set if radiometer based baseline in FwdModelIn
+    logical :: PTANINFIRST              ! Set if ptan in FwdModelIn
+    logical :: MINORFRAMEBASIS          ! Set if baseline has a minor frame basis
+    logical, dimension(3) :: SPECIFICMATCHES ! Composite of band,rad,blank BslWasSpecific
+
+    integer :: SIGINDEX                 ! Index into fwdModelConf%signals
+    integer :: MAF                      ! Major frame index
+    integer :: INSTANCE                 ! Instance index
+    integer :: NOMIFS                   ! Number of minor frames
+    integer :: NOCHANS                  ! Number of channels in radiance
+    integer :: NOBSLCHANS               ! Number of channels in baseline
+    integer :: ROW                      ! Element of jacobian
+    integer :: ROWBLOCK                 ! Location in jacobian
+    integer :: COLBLOCK                 ! Location in jacobian
+    integer :: MIF                      ! Loop counter
+    integer :: CHAN                     ! Loop counter
+    integer :: INSTLOW                  ! Array limit
+    integer :: INSTHI                   ! Array limit
+    integer :: MM1                      ! MIF-1
+
+    real(rp) :: RAD                     ! One radiance
+    real(rp) :: GRADIENT                ! A gradient
+
+    integer, dimension(:), allocatable :: CHAN0 ! Index into bsl freqs.
+    integer, dimension(:), allocatable :: CHAN1 ! Index into bsl freqs.
+    integer, dimension(:), allocatable :: INST0 ! Instance index into baseline
+    integer, dimension(:), allocatable :: INST1 ! Instance index into baseline
+    integer, dimension(:), allocatable :: SURF0 ! Surface index into baseline
+    integer, dimension(:), allocatable :: SURF1 ! Surface index into baseline
+    integer, dimension(:), allocatable :: SURF0m ! surf0 - 1
+    integer, dimension(:), allocatable :: SURF1m ! surf1 - 1
+
+    real (rp), dimension(:), allocatable :: CHANWT0 ! Weight for lower point
+    real (rp), dimension(:), allocatable :: CHANWT1 ! Weight for upper point
+    real (rp), dimension(:), allocatable :: INSTWT0 ! Weight for lower point
+    real (rp), dimension(:), allocatable :: INSTWT1 ! Weight for upper point
+    real (rp), dimension(:), allocatable :: SURFWT0 ! Weight for lower point
+    real (rp), dimension(:), allocatable :: SURFWT1 ! Weight for upper point
+    real (rp), dimension(:), allocatable :: SURFWT0PRIME ! d[SurfWt0]/d[ptan]
+    real (rp), dimension(:), allocatable :: SURFWT1PRIME ! d[SurfWt1]/d[ptan]
+    real (rm), dimension(:,:,:), allocatable, target :: KBIT ! Part of derivatives
+    real (rm), dimension(:,:), pointer :: KBIT2 ! Part of derivatives
+
+    type (VectorValue_T), pointer :: RADIANCE ! The radiance quantity
+    type (VectorValue_T), pointer :: BANDCANDIDATE ! A possible baseline quantity
+    type (VectorValue_T), pointer :: BLANKCANDIDATE ! A possible baseline quantity
+    type (VectorValue_T), pointer :: RADCANDIDATE ! A possible baseline quantity
+    type (VectorValue_T), pointer :: BASELINE ! The baseline quantity
+    type (VectorValue_T), pointer :: PTAN ! The tangent pressure quantity
+
+    type (MatrixElement_T), pointer :: JBLOCK     ! A block from the jacobian
+
+    type (Signal_T), pointer :: SIGNAL ! The current signal being handled
+
+    ! Executable code -------------------------------------------------------
+    
+    if ( (.not. fwdModelConf%do_Baseline) .and. fwdModelConf%fwmType /= l_baseline ) return
+
+    maf = fmStat%maf
+    do sigIndex = 1, size(fwdModelConf%signals)
+      signal => fwdModelConf%signals(sigIndex)
+
+      ! Look for the radiance quantity for this signal
+      radiance => GetVectorQuantityByType ( fwdModelOut, quantityType=l_radiance, &
+        & signal=signal%index, sideband=signal%sideband )
+      
+      ! Set some dimensions
+      noChans = radiance%template%noChans
+      noMIFs = radiance%template%noSurfs
+
+      ! Now work out which baseline quantity we want
+      nullify ( baseline )
+      ! Look for a band based baseline
+      bandCandidate => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+        & quantityType=l_baseline, signal=signal%index, sideband=signal%sideband,&
+        & noError=.true., config=fwdModelConf, &
+        & foundInFirst=bandBslInFirst, wasSpecific=bandBslWasSpecific )
+      ! Look for a radiometer based baseline
+      radCandidate => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+        & quantityType=l_baseline, radiometer=signal%radiometer, &
+        & noError=.true., config=fwdModelConf, &
+        & foundInFirst=radBslInFirst, wasSpecific=radBslWasSpecific )
+      ! Look for any baseline
+      blankCandidate => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+        & quantityType=l_baseline, &
+        & noError=.true., config=fwdModelConf, &
+        & foundInFirst=blankBslInFirst, wasSpecific=blankBslWasSpecific )
+      ! Avoid redundancy
+      if ( associated ( blankCandidate, bandCandidate ) .or. &
+        & associated ( blankCandidate, radCandidate ) ) then
+        nullify ( blankCandidate )
+        blankBslWasSpecific = .false.
+        blankBslInFirst = .false.
+      end if
+      ! Now the complicated bit of working out which to pick
+      ! First go by those listed in the 'specific quantities' field
+      specificMatches = (/ bandBslWasSpecific, radBslWasSpecific, blankBslWasSpecific /)
+
+      if ( any ( specificMatches ) ) then
+        if ( count ( specificMatches ) > 1 ) then
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'Ambiguous listing of multiple baselines in specificQuantities' )
+        end if
+        if ( bandBslWasSpecific ) then
+          baseline => bandCandidate
+          bslInFirst = bandBslInFirst
+        else if ( radBslWasSpecific ) then 
+          baseline => radCandidate
+          bslInFirst = radBslInFirst
+        else if ( blankBslWasSpecific ) then
+          baseline => blankCandidate
+          bslInFirst = blankBslInFirst        
+        end if
+      ! Now go for the one found in first if either were
+      else if ( bandBslInFirst .or. radBslInFirst ) then
+        if ( bandBslInFirst .and. radBslInFirst ) then
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'Ambiguous listing of two baselines in first state vector' )
+        else if ( bandBslInFirst ) then
+          baseline => bandCandidate
+          bslInFirst = bandBslInFirst
+        else
+          baseline => radCandidate
+          bslInFirst = radBslInFirst
+        end if
+      ! Otherwise go for whatever there is
+      else
+        if ( associated ( bandCandidate ) .and. associated ( radCandidate ) ) then
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'Ambiguous listing of two baselines in second state vector' )
+        else if ( associated ( bandCandidate ) ) then
+          baseline => bandCandidate
+          bslInFirst = bandBslInFirst
+        else if ( associated ( radCandidate ) ) then
+          baseline => radCandidate
+          bslInFirst = radBslInFirst
+        else
+          call MLSMessage ( MLSMSG_Error, ModuleName, 'No matching baseline found' )
+        end if
+      end if
+
+      noBslChans = baseline%template%noChans
+
+      ! Get ptans, we'll need these for interpolation
+      ptan => GetQuantityForForwardModel ( FwdModelIn, FwdModelExtra, &
+        & quantityType = l_ptan, &
+        & instrumentModule = radiance%template%instrumentModule,&
+        & config=fwdModelConf, foundInFirst=ptanInFirst )
+
+      if (present(jacobian) .and. (bslInFirst .or. ptanInFirst) ) then
+        rowBlock = FindBlock ( jacobian%row, radiance%index, maf )
+        fmStat%rows(rowBlock) = .true.
+      end if
+
+      ! Now check the validity of the quantities we've been given
+      minorFrameBasis = baseline%template%minorFrame
+      if ( .not. ValidateVectorQuantity(baseline, regular=.true., &
+        & frequencyCoordinate=(/ l_channel, l_none, l_intermediateFrequency/) ) ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & InvalidQuantity//'baseline' )
+      if ( .not. ValidateVectorQuantity(ptan, minorFrame=.true., &
+        & frequencyCoordinate=(/l_none/)) ) call MLSMessage ( MLSMSG_Error, &
+        & ModuleName, InvalidQuantity//'ptan' )
+
+      ! Now we identify the elements of baseline that will affect each radiance
+      ! and compute weights
+
+      ! Horizontal coordinate --------------------
+      call Allocate_test ( inst0, noMIFs, 'inst0', ModuleName )
+      call Allocate_test ( inst1, noMIFs, 'inst1', ModuleName )
+      call Allocate_test ( instWt0, noMIFs, 'instWt0', ModuleName )
+      call Allocate_test ( instWt1, noMIFs, 'instWt1', ModuleName )
+      
+      if ( .not. minorFrameBasis ) then
+        ! Unless phiWindow is exactly 0.0 then do 2D calculation
+        if ( sum(fwdModelConf%phiWindow) /= 0.0 ) then
+          call Hunt ( baseline%template%phi(1,:), ptan%template%phi(:,maf), inst0 )
+          inst1 = min ( inst0+1, baseline%template%noInstances )
+          where ( inst1 /= inst0 )
+            instWt1 = ( ptan%template%phi(:,maf) - baseline%template%phi(1,inst0) ) / &
+              & ( baseline%template%phi(1,inst1) - baseline%template%phi(1,inst0) ) 
+          elsewhere
+            instWt1 = 0.0
+          end where
+          instWt0 = 1 - instWt1
+          instWt1 = max(min(instWt1,1.0_rp),0.0_rp)
+          instWt0 = max(min(instWt0,1.0_rp),0.0_rp)
+        else
+          ! 1D, choose closest instance
+          inst0(1) = FindOneClosestInstance ( baseline, ptan, maf )
+          ! Apply to all MIFs
+          inst0 = inst0(1)
+          inst1 = inst0
+          instWt0 = 1.0
+          instWt1 = 0.0
+        end if
+      else
+        ! A minor frame baseline
+        inst0 = maf
+        inst1 = maf                     ! Don't use maf+1 to avoid array bounds problems
+        instWt0 = 1.0_rp
+        instWt1 = 0.0_rp
+      end if
+
+      ! Vertical coordinate ---------------------
+      call Allocate_test ( surf0, noMIFs, 'surf0', ModuleName )
+      call Allocate_test ( surf1, noMIFs, 'surf1', ModuleName )
+      call Allocate_test ( surf0m, noMIFs, 'surf0m', ModuleName )
+      call Allocate_test ( surf1m, noMIFs, 'surf1m', ModuleName )
+      call Allocate_test ( surfWt0, noMIFs, 'surfWt0', ModuleName )
+      call Allocate_test ( surfWt1, noMIFs, 'surfWt1', ModuleName )
+      
+      if ( .not. minorFrameBasis ) then 
+        call Hunt ( baseline%template%surfs(:,1), ptan%values(:,maf), surf0 )
+        surf1 = min ( surf0+1, baseline%template%noSurfs )
+        where ( surf1 /= surf0 )
+          surfWt1 = ( ptan%values(:,maf) - baseline%template%surfs(surf0,1) ) / &
+            & ( baseline%template%surfs(surf1,1) - baseline%template%surfs(surf0,1) ) 
+        elsewhere
+          surfWt1 = 0.0
+        end where
+        surfWt0 = 1 - surfWt1
+        surfWt1 = max(min(surfWt1,1.0_rp),0.0_rp)
+        surfWt0 = max(min(surfWt0,1.0_rp),0.0_rp)
+        surf0m = surf0 - 1
+        surf1m = surf1 - 1
+      else
+        ! A minor frame basis baseline
+        do mif = 1, noMIFs
+          surf0(mif) = mif
+          surf1(mif) = mif              ! Don't use mif+1 to avoid array bounds problems.
+          surf0m(mif) = mif - 1
+          surf1m(mif) = mif - 1
+        end do
+        surfWt0 = 1.0_rp
+        surfWt1 = 0.0_rp
+      end if
+
+      ! Frequency coordinate -------------------
+      call Allocate_test ( chan0, noChans, 'chan0', ModuleName )
+      call Allocate_test ( chan1, noChans, 'chan1', ModuleName )
+      call Allocate_test ( chanWt0, noChans, 'chanWt0', ModuleName )
+      call Allocate_test ( chanWt1, noChans, 'chanWt1', ModuleName )
+      
+      if ( associated ( baseline%template%frequencies ) .and. &
+        & baseline%template%frequencyCoordinate /= l_channel ) then
+        call Hunt ( baseline%template%frequencies, &
+          & signal%direction*signal%frequencies+signal%centerFrequency, chan0 )
+      else
+        chan0 = 1
+      end if
+      chan1 = min ( chan0+1, noBslChans )
+      if ( baseline%template%frequencyCoordinate == l_channel ) then
+        chanWt0 = 1.0
+        chanWt1 = 0.0
+      elseif ( associated ( baseline%template%frequencies ) ) then
+        where ( chan1 /= chan0 )
+          chanWt1 = ( signal%frequencies*signal%direction+signal%centerFrequency - &
+            & baseline%template%frequencies(chan0) ) / &
+            & ( baseline%template%frequencies(chan1) - &
+            &   baseline%template%frequencies(chan0) ) 
+        elsewhere
+          chanWt1 = 0.0
+        end where
+      else
+        chanWt1 = 0.0
+      end if
+      chanWt0 = 1.0 - chanWt1
+      chanWt1 = max(min(chanWt1,1.0_rp),0.0_rp)
+      chanWt0 = max(min(chanWt0,1.0_rp),0.0_rp)
+
+      ! -------------------------------------------------------------------
+      ! Do this in a loop to avoid large array temps
+      do mif = 1, noMIFs
+        do chan = 1, noChans
+          if ( associated ( signal%channels ) ) then
+            if ( .not. signal%channels ( chan - lbound(signal%channels,1) + 1 ) ) cycle
+          end if
+          rad = radiance%values ( chan + noChans*(mif-1), maf )
+          rad = rad + chanWt0(chan) * surfWt0(mif) * instWt0(mif) * &
+            & baseline%values(chan0(chan)+noBslChans*surf0m(mif),inst0(mif))
+          rad = rad + chanWt0(chan) * surfWt0(mif) * instWt1(mif) * &
+            & baseline%values(chan0(chan)+noBslChans*surf0m(mif),inst1(mif))
+          rad = rad + chanWt0(chan) * surfWt1(mif) * instWt0(mif) * &
+            & baseline%values(chan0(chan)+noBslChans*surf1m(mif),inst0(mif))
+          rad = rad + chanWt0(chan) * surfWt1(mif) * instWt1(mif) * &
+            & baseline%values(chan0(chan)+noBslChans*surf1m(mif),inst1(mif))
+          rad = rad + chanWt1(chan) * surfWt0(mif) * instWt0(mif) * &
+            & baseline%values(chan1(chan)+noBslChans*surf0m(mif),inst0(mif))
+          rad = rad + chanWt1(chan) * surfWt0(mif) * instWt1(mif) * &
+            & baseline%values(chan1(chan)+noBslChans*surf0m(mif),inst1(mif))
+          rad = rad + chanWt1(chan) * surfWt1(mif) * instWt0(mif) * &
+            & baseline%values(chan1(chan)+noBslChans*surf1m(mif),inst0(mif))
+          rad = rad + chanWt1(chan) * surfWt1(mif) * instWt1(mif) * &
+            & baseline%values(chan1(chan)+noBslChans*surf1m(mif),inst1(mif))
+          radiance%values ( chan + noChans*(mif-1), maf ) = rad
+        end do
+      end do
+
+      ! --------------------------------------------------------------------
+      ! Now compute d[Radiance]/d[Baseline]
+      if (present(jacobian) .and. bslInFirst ) then
+        instLow = minval(inst0)
+        instHi = maxval(inst1)
+        call Allocate_test ( kBit, &
+          & radiance%template%instanceLen, &
+          & baseline%template%instanceLen, &
+          & instHi, 'kBit', ModuleName, &
+          & 1, 1, instLow )
+        ! Now densify any existing blocks
+        do instance = lbound(kBit,3), ubound(kBit,3)
+          colBlock = FindBlock ( jacobian%col, baseline%index, instance )
+          kBit2 => kBit(:,:,instance)
+          call Densify ( kBit2, jacobian%block(rowBlock,colBlock) )
+        end do
+
+        do mif = 1, noMIFs
+          mm1 = mif - 1
+          do chan = 1, noChans
+            if ( associated ( signal%channels ) ) then
+              if ( .not. signal%channels ( chan - lbound(signal%channels,1) + 1 ) ) cycle
+            end if
+            row = chan+noChans*mm1
+            kBit( row, :, : ) = 0.0
+            kBit( row, chan0(chan)+noBslChans*surf0m(mif), inst0(mif) ) = &
+              & kBit( row, chan0(chan)+noBslChans*surf0m(mif), inst0(mif) ) + &
+              & chanWt0(chan) * surfWt0(mif) * instWt0(mif)
+            kBit( row, chan0(chan)+noBslChans*surf0m(mif), inst1(mif) ) = &
+              & kBit( row, chan0(chan)+noBslChans*surf0m(mif), inst1(mif) ) + &
+              & chanWt0(chan) * surfWt0(mif) * instWt1(mif)
+            kBit( row, chan0(chan)+noBslChans*surf1m(mif), inst0(mif) ) = &
+              & kBit( row, chan0(chan)+noBslChans*surf1m(mif), inst0(mif) ) + &
+              & chanWt0(chan) * surfWt1(mif) * instWt0(mif)
+            kBit( row, chan0(chan)+noBslChans*surf1m(mif), inst1(mif) ) = &
+              & kBit( row, chan0(chan)+noBslChans*surf1m(mif), inst1(mif) ) + &
+              & chanWt0(chan) * surfWt1(mif) * instWt1(mif)
+            kBit( row, chan1(chan)+noBslChans*surf0m(mif), inst0(mif) ) = &
+              & kBit( row, chan1(chan)+noBslChans*surf0m(mif), inst0(mif) ) + &
+              & chanWt1(chan) * surfWt0(mif) * instWt0(mif)
+            kBit( row, chan1(chan)+noBslChans*surf0m(mif), inst1(mif) ) = &
+              & kBit( row, chan1(chan)+noBslChans*surf0m(mif), inst1(mif) ) + &
+              & chanWt1(chan) * surfWt0(mif) * instWt1(mif)
+            kBit( row, chan1(chan)+noBslChans*surf1m(mif), inst0(mif) ) = &
+              & kBit( row, chan1(chan)+noBslChans*surf1m(mif), inst0(mif) ) + &
+              & chanWt1(chan) * surfWt1(mif) * instWt0(mif)
+            kBit( row, chan1(chan)+noBslChans*surf1m(mif), inst1(mif) ) = &
+              & kBit( row, chan1(chan)+noBslChans*surf1m(mif), inst1(mif) ) + &
+              & chanWt1(chan) * surfWt1(mif) * instWt1(mif)
+          end do
+        end do
+
+        ! Now sparsify and store the blocks
+        do instance = lbound(kBit,3), ubound(kBit,3)
+          colBlock = FindBlock ( jacobian%col, baseline%index, instance )
+          kBit2 => kBit(:,:,instance)
+          call Sparsify ( kBit2, jacobian%block(rowBlock,colBlock) )
+        end do
+
+        call deallocate_test ( kBit, 'kBit', moduleName )
+      end if
+
+      ! ---------------------------------------------------------------
+      ! Now add some more terms to d[Radiance]/d[ptan] if appropriate
+      if (present(jacobian) .and. ptanInFirst .and. .not. minorFrameBasis) then
+        ! Compute the derivative of surfWt[0/1] wrt. ptan
+        call Allocate_test ( surfWt0Prime, noMIFs, 'surfWt0Prime', ModuleName )
+        call Allocate_test ( surfWt1Prime, noMIFs, 'surfWt1Prime', ModuleName )
+      
+        where ( surf1 /= surf0 .and. &
+          & (ptan%values(:,maf) > baseline%template%surfs(1,1)) .and. &
+          & (ptan%values(:,maf) < baseline%template%surfs(baseline%template%noSurfs,1)) )
+          surfWt1Prime = 1.0 / &
+            & ( baseline%template%surfs(surf1,1) - baseline%template%surfs(surf0,1) ) 
+          surfWt0Prime = -1.0 / &
+            & ( baseline%template%surfs(surf1,1) - baseline%template%surfs(surf0,1) ) 
+        elsewhere
+          surfWt1Prime = 0.0
+          surfWt0Prime = 0.0
+        end where
+
+        if ( any (surfWt0Prime /= 0.0 .or. surfWt1Prime /= 0.0 ) ) then
+          colBlock = FindBlock ( jacobian%col, ptan%index, maf )
+          jBlock => jacobian%block( rowBlock, colBlock )
+          
+          ! Create the block as banded if not already done so
+          select case (jBlock%kind)
+          case (m_absent)
+            call CreateBlock ( Jacobian, rowBlock, colBlock, m_banded, &
+              & noMIFs*noChans, bandHeight=noChans, init=0.0_rm )
+          case (m_banded)
+            call CheckForSimpleBandedLayout ( jBlock, noChans, &
+              & 'd[Radiance]/d[ptan] in baseline model' )
+          case default
+            call MLSMessage ( MLSMSG_Error, ModuleName,&
+              & 'Wrong matrix type for ptan derivative')
+          end select
+
+          ! Now fill in this jacobian block
+          do mif = 1, noMIFs
+            mm1 = mif - 1
+            do chan = 1, noChans
+              if ( associated ( signal%channels ) ) then
+                if ( .not. signal%channels ( chan - lbound(signal%channels,1) + 1 ) ) cycle
+              end if
+              gradient = 0.0
+              gradient = gradient + chanWt0(chan) * surfWt0Prime(mif) * instWt0(mif) * &
+                & baseline%values(chan0(chan)+noBslChans*surf0m(mif),inst0(mif))
+              gradient = gradient + chanWt0(chan) * surfWt0Prime(mif) * instWt1(mif) * &
+                & baseline%values(chan0(chan)+noBslChans*surf0m(mif),inst1(mif))
+              gradient = gradient + chanWt0(chan) * surfWt1Prime(mif) * instWt0(mif) * &
+                & baseline%values(chan0(chan)+noBslChans*surf1m(mif),inst0(mif))
+              gradient = gradient + chanWt0(chan) * surfWt1Prime(mif) * instWt1(mif) * &
+                & baseline%values(chan0(chan)+noBslChans*surf1m(mif),inst1(mif))
+              gradient = gradient + chanWt1(chan) * surfWt0Prime(mif) * instWt0(mif) * &
+                & baseline%values(chan1(chan)+noBslChans*surf0m(mif),inst0(mif))
+              gradient = gradient + chanWt1(chan) * surfWt0Prime(mif) * instWt1(mif) * &
+                & baseline%values(chan1(chan)+noBslChans*surf0m(mif),inst1(mif))
+              gradient = gradient + chanWt1(chan) * surfWt1Prime(mif) * instWt0(mif) * &
+                & baseline%values(chan1(chan)+noBslChans*surf1m(mif),inst0(mif))
+              gradient = gradient + chanWt1(chan) * surfWt1Prime(mif) * instWt1(mif) * &
+                & baseline%values(chan1(chan)+noBslChans*surf1m(mif),inst1(mif))
+              jBlock%values ( chan + noChans*mm1, 1 ) = &
+                & jBlock%values ( chan + noChans*mm1, 1 ) + gradient
+            end do
+          end do
+        end if                          ! Any nonzero weights
+        call Deallocate_test ( surfWt0Prime, 'surfWt0Prime', ModuleName )
+        call Deallocate_test ( surfWt1Prime, 'surfWt1Prime', ModuleName )
+      end if                             ! Do ptan derivatives
+
+      call Deallocate_test ( inst0, 'inst0', ModuleName )
+      call Deallocate_test ( inst1, 'inst1', ModuleName )
+      call Deallocate_test ( instWt0, 'instWt0', ModuleName )
+      call Deallocate_test ( instWt1, 'instWt1', ModuleName )
+      call Deallocate_test ( surf0, 'surf0', ModuleName )
+      call Deallocate_test ( surf0m, 'surf0m', ModuleName )
+      call Deallocate_test ( surf1, 'surf1', ModuleName )
+      call Deallocate_test ( surf1m, 'surf1m', ModuleName )
+      call Deallocate_test ( surfWt0, 'surfWt0', ModuleName )
+      call Deallocate_test ( surfWt1, 'surfWt1', ModuleName )
+      call Deallocate_test ( chan0, 'chan0', ModuleName )
+      call Deallocate_test ( chan1, 'chan1', ModuleName )
+      call Deallocate_test ( chanWt0, 'chanWt0', ModuleName )
+      call Deallocate_test ( chanWt1, 'chanWt1', ModuleName )
+    end do                              ! Signal loop
+
+  end subroutine BaselineForwardModel
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: BaselineForwardModel_m.f90,v 2.34 2015/08/25 17:20:20 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module BaselineForwardModel_m
+  
+! $Log: BaselineForwardModel_m.f90,v $
+! Revision 2.34  2015/08/25 17:20:20  vsnyder
+! PhiWindow is a tuple with the first element specifying the angles or number
+! of profiles/MAFs before the tangent point, and the second specifying the
+! number after.  The sum being zero indicates a 1-D problem.
+!
+! Revision 2.33  2014/08/06 23:24:20  vsnyder
+! Remove USE for MLSMSG_Allocate, which was not used.  Remove declaration
+! of unused local variable.
+!
+! Revision 2.32  2014/07/23 23:14:24  pwagner
+! Use allocate_test for kBit
+!
+! Revision 2.31  2009/06/23 18:26:10  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.30  2009/04/20 18:46:55  pwagner
+! Needed changes to allow radiance adjustments by means of a baseline fwdmdl
+!
+! Revision 2.29  2007/07/25 20:10:44  vsnyder
+! Delete USE for unreferenced entities
+!
+! Revision 2.28  2007/06/29 19:32:42  vsnyder
+! Make ForwardModelIntermediate_t private to ScanModelModule
+!
+! Revision 2.27  2006/01/27 17:23:29  livesey
+! Embarrassing slip up.
+!
+! Revision 2.26  2006/01/27 17:19:27  livesey
+! Minor bug fix to further avoid double triggers in the blank cases.
+!
+! Revision 2.25  2006/01/20 23:52:20  livesey
+! Added ability to use a baseline for another band/radiometer if listed in
+! specificQuantities
+!
+! Revision 2.24  2005/06/22 18:08:18  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.23  2004/10/16 17:30:23  livesey
+! Bug fix
+!
+! Revision 2.22  2004/10/16 17:28:42  livesey
+! Better handling of band dependent baselines
+!
+! Revision 2.21  2004/09/13 17:39:49  livesey
+! Changed to use GetQuantityForForwardModel
+!
+! Revision 2.20  2004/08/16 23:42:25  livesey
+! Added option for minor frame baseline
+!
+! Revision 2.19  2004/07/07 19:42:11  vsnyder
+! Use new Init argument of CreateBlock
+!
+! Revision 2.18  2003/10/09 22:16:13  livesey
+! Added call to CheckForSimpleBandedLayout.
+!
+! Revision 2.17  2003/08/15 22:42:24  livesey
+! Bug fix in frequency interpolation, other minor changes
+!
+! Revision 2.16  2003/02/20 20:31:33  livesey
+! Bug fix, now does 1D correctly when phiWindow=0
+!
+! Revision 2.15  2002/11/18 19:27:23  pwagner
+! KBIT and KBIT2 now rm instead of rp
+!
+! Revision 2.14  2002/11/13 17:07:06  livesey
+! Bug fix, was stomping on pre-existing d[Radiance]/d[Basline] blocks in
+! K.
+!
+! Revision 2.13  2002/11/07 15:07:25  livesey
+! Bug fix, was doing all channels even if only asked for a few
+!
+! Revision 2.12  2002/10/08 17:08:01  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.11  2002/09/13 22:02:30  vsnyder
+! Move USEs from module scope to procedure scope
+!
+! Revision 2.10  2002/09/11 17:43:39  pwagner
+! Began changes needed to conform with matrix%values type move to rm from r8
+!
+! Revision 2.9  2002/06/04 23:45:55  livesey
+! Added optional 1D nature for it.
+!
+! Revision 2.8  2002/05/03 23:29:04  livesey
+! Added direction stuff
+!
+! Revision 2.7  2002/01/17 02:16:38  livesey
+! Bug, rowBlock wasn't set in some cases
+!
+! Revision 2.6  2001/10/03 17:46:37  livesey
+! Added correction to ptan derivatives
+!
+! Revision 2.5  2001/10/02 22:22:53  livesey
+! Working version
+!
+! Revision 2.4  2001/10/02 20:37:19  livesey
+! Pays attention to do_baseline
+!
+! Revision 2.3  2001/10/02 20:20:46  livesey
+! First linkable version
+!
+! Revision 2.2  2001/10/02 20:03:58  livesey
+! First compilable version
+!
+! Revision 2.1  2001/10/02 16:52:00  livesey
+! Very early version!
+!
+@
+
+
+2.34
+log
+@PhiWindow is a tuple with the first element specifying the angles or number
+of profiles/MAFs before the tangent point, and the second specifying the
+number after.  The sum being zero indicates a 1-D problem.
+@
+text
+@d89 18
+a106 18
+    integer, dimension(:), pointer :: CHAN0 ! Index into bsl freqs.
+    integer, dimension(:), pointer :: CHAN1 ! Index into bsl freqs.
+    integer, dimension(:), pointer :: INST0 ! Instance index into baseline
+    integer, dimension(:), pointer :: INST1 ! Instance index into baseline
+    integer, dimension(:), pointer :: SURF0 ! Surface index into baseline
+    integer, dimension(:), pointer :: SURF1 ! Surface index into baseline
+    integer, dimension(:), pointer :: SURF0m ! surf0 - 1
+    integer, dimension(:), pointer :: SURF1m ! surf1 - 1
+
+    real (rp), dimension(:), pointer :: CHANWT0 ! Weight for lower point
+    real (rp), dimension(:), pointer :: CHANWT1 ! Weight for upper point
+    real (rp), dimension(:), pointer :: INSTWT0 ! Weight for lower point
+    real (rp), dimension(:), pointer :: INSTWT1 ! Weight for upper point
+    real (rp), dimension(:), pointer :: SURFWT0 ! Weight for lower point
+    real (rp), dimension(:), pointer :: SURFWT1 ! Weight for upper point
+    real (rp), dimension(:), pointer :: SURFWT0PRIME ! d[SurfWt0]/d[ptan]
+    real (rp), dimension(:), pointer :: SURFWT1PRIME ! d[SurfWt1]/d[ptan]
+    real (rm), dimension(:,:,:), pointer :: KBIT ! Part of derivatives
+a122 4
+    nullify ( chan0, chan1, inst0, inst1, surf0, surf1 )
+    nullify ( chanWt0, chanWt1, instWt0, instWt1, surfWt0, surfWt1 )
+    nullify ( surf0m, surf1m, surfWt0Prime, surfWt1Prime )
+    nullify ( kBit )
+d501 1
+d503 1
+d517 1
+a517 1
+       "$Id: BaselineForwardModel_m.f90,v 2.33 2014/08/06 23:24:20 vsnyder Exp $"
+d527 5
+@
+
+
+2.33
+log
+@Remove USE for MLSMSG_Allocate, which was not used.  Remove declaration
+of unused local variable.
+@
+text
+@d245 1
+a245 1
+        if ( fwdModelConf%phiWindow /= 0.0 ) then
+d519 1
+a519 1
+       "$Id: BaselineForwardModel_m.f90,v 2.32 2014/07/23 23:14:24 pwagner Exp $"
+d529 4
+@
+
+
+2.32
+log
+@Use allocate_test for kBit
+@
+text
+@d41 1
+a41 2
+    use MLSMessageModule, only: mlsmessage, mlsmsg_error, &
+      & mlsmsg_allocate
+a84 1
+    integer :: STATUS                   ! From allocates etc.
+a373 3
+        ! allocate ( kBit(radiance%template%instanceLen, &
+        !  & baseline%template%instanceLen, &
+        !  & instLow:instHi), stat=status ) ! Notice the explicit low bound
+a378 2
+        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & MLSMSG_Allocate//'kBit' )
+d519 1
+a519 1
+       "$Id: BaselineForwardModel_m.f90,v 2.31 2009/06/23 18:26:10 pwagner Exp $"
+d529 3
+@
+
+
+2.31
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d22 1
+a22 1
+       "$RCSfile: $"
+d31 17
+a47 17
+    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use ForwardModelConfig, only: FORWARDMODELCONFIG_T
+    use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T
+    use Intrinsic, only: L_BASELINE, L_CHANNEL, L_INTERMEDIATEFREQUENCY, L_NONE, &
+     &  L_PTAN, L_RADIANCE
+    use ManipulateVectorQuantities, only: FINDONECLOSESTINSTANCE
+    use MatrixModule_0, only: SPARSIFY, MATRIXELEMENT_T, M_ABSENT, M_BANDED, DENSIFY, &
+      & CHECKFORSIMPLEBANDEDLAYOUT
+    use MatrixModule_1, only: MATRIX_T, FINDBLOCK, CREATEBLOCK
+    use MLSCommon, only: RP, RM
+    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, &
+      & MLSMSG_ALLOCATE
+    use MLSSignals_m, only: SIGNAL_T
+    use VectorsModule, only: VECTOR_T, VECTORVALUE_T, GETVECTORQUANTITYBYTYPE, &
+      & VALIDATEVECTORQUANTITY
+    use ForwardModelVectorTools, only: GETQUANTITYFORFORWARDMODEL
+    use MLSNumerics, only: HUNT
+d376 5
+a380 1
+        allocate ( kBit(radiance%template%instanceLen, &
+d382 2
+a383 1
+          & instLow:instHi), stat=status ) ! Notice the explicit low bound
+d526 1
+a526 1
+       "$Id: read_apriori.f90 is it here $"
+d536 3
+@
+
+
+2.30
+log
+@Needed changes to allow radiance adjustments by means of a baseline fwdmdl
+@
+text
+@d22 1
+a22 1
+       "$RCSfile: BaselineForwardModel_m.f90,v $"
+d518 1
+a519 1
+!---------------------------- RCS Ident Info -------------------------------
+d521 2
+a522 3
+       "$Id: BaselineForwardModel_m.f90,v 2.29 2007/07/25 20:10:44 vsnyder Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d524 1
+d526 1
+d531 3
+@
+
+
+2.29
+log
+@Delete USE for unreferenced entities
+@
+text
+@d34 2
+a35 1
+    use Intrinsic, only: L_BASELINE, L_PTAN, L_NONE, L_RADIANCE, L_INTERMEDIATEFREQUENCY
+d229 1
+a229 1
+        & frequencyCoordinate=(/ l_none, l_intermediateFrequency/) ) ) &
+d316 2
+a317 1
+      if ( associated ( baseline%template%frequencies ) ) then
+d324 4
+a327 1
+      if ( associated ( baseline%template%frequencies ) ) then
+d521 1
+a521 1
+       "$Id: BaselineForwardModel_m.f90,v 2.28 2007/06/29 19:32:42 vsnyder Exp $"
+d530 3
+@
+
+
+2.28
+log
+@Make ForwardModelIntermediate_t private to ScanModelModule
+@
+text
+@a31 1
+    use Dump_0, only: DUMP
+d41 2
+a42 2
+      & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE
+    use MLSSignals_m, only: SIGNALS, SIGNAL_T
+d516 1
+a516 1
+       "$Id: BaselineForwardModel_m.f90,v 2.27 2006/01/27 17:23:29 livesey Exp $"
+d525 3
+@
+
+
+2.27
+log
+@Embarrassing slip up.
+@
+text
+@d29 1
+a29 1
+    & FwdModelOut, oldIFM, fmStat, jacobian )
+d34 1
+a34 1
+    use ForwardModelIntermediate, only: FORWARDMODELINTERMEDIATE_T, FORWARDMODELSTATUS_T
+a52 1
+    type(forwardModelIntermediate_T), intent(inout) :: oldIfm ! Workspace
+d517 1
+a517 1
+       "$Id: BaselineForwardModel_m.f90,v 2.26 2006/01/27 17:19:27 livesey Exp $"
+d526 3
+@
+
+
+2.26
+log
+@Minor bug fix to further avoid double triggers in the blank cases.
+@
+text
+@d162 1
+a162 1
+        & associated ( blankCandidate, bandCandidate ) ) then
+d518 1
+a518 1
+       "$Id: BaselineForwardModel_m.f90,v 2.25 2006/01/20 23:52:20 livesey Exp $"
+d527 3
+@
+
+
+2.25
+log
+@Added ability to use a baseline for another band/radiometer if listed in
+specificQuantities
+@
+text
+@d162 5
+a166 1
+        & associated ( blankCandidate, bandCandidate ) ) nullify ( blankCandidate )
+d518 1
+a518 1
+       "$Id: BaselineForwardModel_m.f90,v 2.24 2005/06/22 18:08:18 pwagner Exp $"
+d527 4
+@
+
+
+2.24
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d22 1
+a22 1
+       "$RCSfile: $"
+d64 1
+d67 1
+d71 1
+d114 1
+d144 1
+d155 8
+d165 4
+a168 2
+      if ( bandBslWasSpecific .or. radBslWasSpecific ) then
+        if ( bandBslWasSpecific .and. radBslWasSpecific ) then
+d170 3
+a172 2
+            & 'Ambiguous listing of two baselines in specificQuantities' )
+        else if ( bandBslWasSpecific ) then
+d175 1
+a175 1
+        else
+d178 3
+d514 1
+a514 1
+       "$Id: $"
+d523 3
+@
+
+
+2.23
+log
+@Bug fix
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d20 3
+a22 6
+  !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter, private :: IdParm = &
+    & "$Id: BaselineForwardModel_m.f90,v 2.22 2004/10/16 17:28:42 livesey Exp $"
+  character (len=len(idParm)) :: Id = IdParm
+  character (len=*), parameter, private :: ModuleName= &
+    & "$RCSfile: BaselineForwardModel_m.f90,v $"
+d24 1
+a24 1
+  !---------------------------------------------------------------------------
+d493 5
+d504 3
+@
+
+
+2.22
+log
+@Better handling of band dependent baselines
+@
+text
+@d14 1
+a14 1
+    & "$Id: BaselineForwardModel_m.f90,v 2.21 2004/09/13 17:39:49 livesey Exp $"
+d144 1
+a144 1
+        & foundInFirst=bslInFirst, wasSpecific=radBslWasSpecific )
+d494 3
+@
+
+
+2.21
+log
+@Changed to use GetQuantityForForwardModel
+@
+text
+@d14 1
+a14 1
+    & "$Id: BaselineForwardModel_m.f90,v 2.20 2004/08/16 23:42:25 livesey Exp $"
+d58 4
+d105 2
+d135 2
+a136 2
+      ! First look for one for this band
+      baseline => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+d138 4
+a141 5
+        & noError=.true., config=fwdModelConf, foundInFirst=bslInFirst )
+      ! If we can't find one, look for one for this radiometer instead,
+      ! if that fails, raise an error
+      if ( .not. associated(baseline) ) &
+        & baseline => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+d143 42
+a184 1
+        & config=fwdModelConf, foundInFirst=bslInFirst )
+d494 3
+@
+
+
+2.20
+log
+@Added option for minor frame baseline
+@
+text
+@d14 1
+a14 1
+    & "$Id: BaselineForwardModel_m.f90,v 2.19 2004/07/07 19:42:11 vsnyder Exp $"
+d41 1
+d130 1
+a130 1
+      baseline => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+d132 1
+a132 1
+        & noError=.true., foundInFirst=bslInFirst )
+d136 3
+a138 2
+        & baseline => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+        & quantityType=l_baseline, radiometer=signal%radiometer, foundInFirst=bslInFirst )
+d143 1
+a143 1
+      ptan => GetVectorQuantityByType ( FwdModelIn, FwdModelExtra, &
+d146 1
+a146 1
+        & foundInFirst=ptanInFirst )
+d448 3
+@
+
+
+2.19
+log
+@Use new Init argument of CreateBlock
+@
+text
+@d14 1
+a14 1
+    & "$Id: BaselineForwardModel_m.f90,v 2.18 2003/10/09 22:16:13 livesey Exp $"
+d58 1
+d152 2
+a153 2
+      if ( .not. ValidateVectorQuantity(baseline, stacked=.true., coherent=.true., &
+        & regular=.true., &
+d170 21
+a190 8
+      ! Unless phiWindow is exactly 0.0 then do 2D calculation
+      if ( fwdModelConf%phiWindow /= 0.0 ) then
+        call Hunt ( baseline%template%phi(1,:), ptan%template%phi(:,maf), inst0 )
+        inst1 = min ( inst0+1, baseline%template%noInstances )
+        where ( inst1 /= inst0 )
+          instWt1 = ( ptan%template%phi(:,maf) - baseline%template%phi(1,inst0) ) / &
+            & ( baseline%template%phi(1,inst1) - baseline%template%phi(1,inst0) ) 
+        elsewhere
+d192 1
+a192 4
+        end where
+        instWt0 = 1 - instWt1
+        instWt1 = max(min(instWt1,1.0_rp),0.0_rp)
+        instWt0 = max(min(instWt0,1.0_rp),0.0_rp)
+d194 5
+a198 7
+        ! 1D, choose closest instance
+        inst0(1) = FindOneClosestInstance ( baseline, ptan, maf )
+        ! Apply to all MIFs
+        inst0 = inst0(1)
+        inst1 = inst0
+        instWt0 = 1.0
+        instWt1 = 0.0
+d209 25
+a233 13
+      call Hunt ( baseline%template%surfs(:,1), ptan%values(:,maf), surf0 )
+      surf1 = min ( surf0+1, baseline%template%noSurfs )
+      where ( surf1 /= surf0 )
+        surfWt1 = ( ptan%values(:,maf) - baseline%template%surfs(surf0,1) ) / &
+          & ( baseline%template%surfs(surf1,1) - baseline%template%surfs(surf0,1) ) 
+      elsewhere
+        surfWt1 = 0.0
+      end where
+      surfWt0 = 1 - surfWt1
+      surfWt1 = max(min(surfWt1,1.0_rp),0.0_rp)
+      surfWt0 = max(min(surfWt0,1.0_rp),0.0_rp)
+      surf0m = surf0 - 1
+      surf1m = surf1 - 1
+d356 1
+a356 1
+      if (present(jacobian) .and. ptanInFirst) then
+d446 3
+@
+
+
+2.18
+log
+@Added call to CheckForSimpleBandedLayout.
+@
+text
+@d14 1
+a14 1
+    & "$Id: BaselineForwardModel_m.f90,v 2.17 2003/08/15 22:42:24 livesey Exp $"
+d360 1
+a360 2
+              & noMIFs*noChans, bandHeight=noChans )
+            jBlock%values = 0.0_rm
+d425 3
+@
+
+
+2.17
+log
+@Bug fix in frequency interpolation, other minor changes
+@
+text
+@d14 1
+a14 1
+    & "$Id: BaselineForwardModel_m.f90,v 2.16 2003/02/20 20:31:33 livesey Exp $"
+d32 2
+a33 1
+    use MatrixModule_0, only: SPARSIFY, MATRIXELEMENT_T, M_ABSENT, M_BANDED, DENSIFY
+d363 2
+d426 3
+@
+
+
+2.16
+log
+@Bug fix, now does 1D correctly when phiWindow=0
+@
+text
+@d14 1
+a14 1
+    & "$Id: BaselineForwardModel_m.f90,v 2.15 2002/11/18 19:27:23 pwagner Exp $"
+d107 1
+a107 1
+    if (.not. fwdModelConf%do_Baseline ) return
+a129 1
+
+d228 1
+a228 1
+          chanWt1 = ( signal%frequencies+signal%direction*signal%centerFrequency - &
+d238 1
+a238 1
+      chanWt0 = 1 - chanWt1
+d423 3
+@
+
+
+2.15
+log
+@KBIT and KBIT2 now rm instead of rp
+@
+text
+@d14 1
+a14 1
+    & "$Id: BaselineForwardModel_m.f90,v 2.14 2002/11/13 17:07:06 livesey Exp $"
+d169 2
+a170 2
+      ! Unless phiWindow is exactly 1 then do 2D calculation
+      if ( fwdModelConf%phiWindow /= 1 ) then
+d424 3
+@
+
+
+2.14
+log
+@Bug fix, was stomping on pre-existing d[Radiance]/d[Basline] blocks in
+K.
+@
+text
+@d14 1
+a14 1
+    & "$Id: BaselineForwardModel_m.f90,v 2.13 2002/11/07 15:07:25 livesey Exp $"
+d94 2
+a95 2
+    real (rp), dimension(:,:,:), pointer :: KBIT ! Part of derivatives
+    real (rp), dimension(:,:), pointer :: KBIT2 ! Part of derivatives
+d424 4
+@
+
+
+2.13
+log
+@Bug fix, was doing all channels even if only asked for a few
+@
+text
+@d14 1
+a14 1
+    & "$Id: BaselineForwardModel_m.f90,v 2.12 2002/10/08 17:08:01 pwagner Exp $"
+d32 1
+a32 1
+    use MatrixModule_0, only: SPARSIFY, MATRIXELEMENT_T, M_ABSENT, M_BANDED
+d94 1
+a95 1
+    real (rp), dimension(:,:,:), pointer :: KBIT ! Part of derivatives
+d281 6
+a286 1
+        kBit = 0.0_rp
+d295 1
+d424 3
+@
+
+
+2.12
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d14 1
+a14 1
+    & "$Id: BaselineForwardModel_m.f90,v 2.11 2002/09/13 22:02:30 vsnyder Exp $"
+d247 3
+d286 3
+d366 3
+d418 3
+@
+
+
+2.11
+log
+@Move USEs from module scope to procedure scope
+@
+text
+@d14 1
+a14 1
+    & "$Id: BaselineForwardModel_m.f90,v 2.10 2002/09/11 17:43:39 pwagner Exp $"
+d18 1
+d402 4
+d409 3
+@
+
+
+2.10
+log
+@Began changes needed to conform with matrix%values type move to rm from r8
+@
+text
+@a5 16
+  use ForwardModelConfig, only: FORWARDMODELCONFIG_T
+  use ForwardModelIntermediate, only: FORWARDMODELINTERMEDIATE_T, FORWARDMODELSTATUS_T
+  use MLSCommon, only: RP, RM
+  use MLSSignals_m, only: SIGNALS, SIGNAL_T
+  use VectorsModule, only: VECTOR_T, VECTORVALUE_T, GETVECTORQUANTITYBYTYPE, &
+    & VALIDATEVECTORQUANTITY
+  use ManipulateVectorQuantities, only: FINDONECLOSESTINSTANCE
+  use MatrixModule_1, only: MATRIX_T, FINDBLOCK, CREATEBLOCK
+  use MatrixModule_0, only: SPARSIFY, MATRIXELEMENT_T, M_ABSENT, M_BANDED
+  use Intrinsic, only: L_BASELINE, L_PTAN, L_NONE, L_RADIANCE, L_INTERMEDIATEFREQUENCY
+  use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, &
+    & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE
+  use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+  use MLSNumerics, only: HUNT
+  use Dump_0, only: DUMP
+
+d14 1
+a14 1
+    & "$Id: BaselineForwardModel_m.f90,v 2.9 2002/06/04 23:45:55 livesey Exp $"
+d25 16
+d147 1
+a147 1
+      endif
+d237 1
+a237 1
+      endif
+d274 1
+a274 2
+          & instLow:instHi), stat=status )
+        kBit = 0.0_rp
+d277 1
+d317 1
+a317 3
+        deallocate ( kBit, STAT=status )
+        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & MLSMSG_Deallocate//'kBit' )
+d404 3
+@
+
+
+2.9
+log
+@Added optional 1D nature for it.
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+d8 1
+a8 1
+  use MLSCommon, only: RP
+d30 1
+a30 1
+    & "$Id: BaselineForwardModel_m.f90,v 2.8 2002/05/03 23:29:04 livesey Exp $"
+d350 1
+a350 1
+            jBlock%values = 0.0_rp
+d406 3
+@
+
+
+2.8
+log
+@Added direction stuff
+@
+text
+@d12 1
+d30 1
+a30 1
+    & "$Id: BaselineForwardModel_m.f90,v 2.7 2002/01/17 02:16:38 livesey Exp $"
+d168 20
+a187 6
+      call Hunt ( baseline%template%phi(1,:), ptan%template%phi(:,maf), inst0 )
+      inst1 = min ( inst0+1, baseline%template%noInstances )
+      where ( inst1 /= inst0 )
+        instWt1 = ( ptan%template%phi(:,maf) - baseline%template%phi(1,inst0) ) / &
+          & ( baseline%template%phi(1,inst1) - baseline%template%phi(1,inst0) ) 
+      elsewhere
+d189 1
+a189 4
+      end where
+      instWt0 = 1 - instWt1
+      instWt1 = max(min(instWt1,1.0_rp),0.0_rp)
+      instWt0 = max(min(instWt0,1.0_rp),0.0_rp)
+d406 3
+@
+
+
+2.7
+log
+@Bug, rowBlock wasn't set in some cases
+@
+text
+@d29 1
+a29 1
+    & "$Id: BaselineForwardModel_m.f90,v 2.6 2001/10/03 17:46:37 livesey Exp $"
+d209 1
+a209 1
+          & signal%frequencies+signal%centerFrequency, chan0 )
+d216 1
+a216 1
+          chanWt1 = ( signal%frequencies+signal%centerFrequency - &
+d394 3
+@
+
+
+2.6
+log
+@Added correction to ptan derivatives
+@
+text
+@d29 1
+a29 1
+    & "$Id: BaselineForwardModel_m.f90,v 2.5 2001/10/02 22:22:53 livesey Exp $"
+a135 4
+      if (present(jacobian) .and. bslInFirst) then
+        rowBlock = FindBlock ( jacobian%row, radiance%index, maf )
+        fmStat%rows(rowBlock) = .true.
+      endif
+d143 5
+d394 3
+@
+
+
+2.5
+log
+@Working version
+@
+text
+@d12 2
+a13 2
+  use MatrixModule_1, only: MATRIX_T, FINDBLOCK
+  use MatrixModule_0, only: SPARSIFY
+d29 1
+a29 1
+    & "$Id: BaselineForwardModel_m.f90,v 2.4 2001/10/02 20:37:19 livesey Exp $"
+d54 1
+a54 1
+    logical :: DODERIVATIVES            ! Set if derivatives required
+d73 1
+d81 2
+d90 2
+d99 2
+d108 1
+d136 1
+a136 2
+      doDerivatives = present(jacobian) .and. bslInFirst
+      if (doDerivatives) then
+d144 2
+a145 1
+        & instrumentModule = radiance%template%instrumentModule )
+d181 2
+d197 2
+a198 2
+      surf0 = surf0 - 1                 ! This is to save calculations later ****
+      surf1 = surf1 - 1                 ! This is to save calculations later ****
+d229 1
+a233 2
+          ! Do all eight corners of the cube
+          ! Note that SURF0/1 *ALREADY* contiains a minus 1!!
+d235 15
+a249 15
+            & baseline%values(chan0(chan)+noBslChans*surf0(mif),inst0(mif))
+          rad = rad + chanWt0(chan) * surfWt0(mif) * instWt1(mif) * &         
+            & baseline%values(chan0(chan)+noBslChans*surf0(mif),inst1(mif))
+          rad = rad + chanWt0(chan) * surfWt1(mif) * instWt0(mif) * &         
+            & baseline%values(chan0(chan)+noBslChans*surf1(mif),inst0(mif))
+          rad = rad + chanWt0(chan) * surfWt1(mif) * instWt1(mif) * &         
+            & baseline%values(chan0(chan)+noBslChans*surf1(mif),inst1(mif))
+          rad = rad + chanWt1(chan) * surfWt0(mif) * instWt0(mif) * &         
+            & baseline%values(chan1(chan)+noBslChans*surf0(mif),inst0(mif))
+          rad = rad + chanWt1(chan) * surfWt0(mif) * instWt1(mif) * &         
+            & baseline%values(chan1(chan)+noBslChans*surf0(mif),inst1(mif))
+          rad = rad + chanWt1(chan) * surfWt1(mif) * instWt0(mif) * &         
+            & baseline%values(chan1(chan)+noBslChans*surf1(mif),inst0(mif))
+          rad = rad + chanWt1(chan) * surfWt1(mif) * instWt1(mif) * &         
+            & baseline%values(chan1(chan)+noBslChans*surf1(mif),inst1(mif))
+d254 3
+a256 2
+      ! If we need a jacobian create one
+      if ( doDerivatives ) then
+d270 2
+a271 2
+            kBit( row, chan0(chan)+noBslChans*surf0(mif), inst0(mif) ) = &
+              & kBit( row, chan0(chan)+noBslChans*surf0(mif), inst0(mif) ) + &
+d273 2
+a274 2
+            kBit( row, chan0(chan)+noBslChans*surf0(mif), inst1(mif) ) = &
+              & kBit( row, chan0(chan)+noBslChans*surf0(mif), inst1(mif) ) + &
+d276 2
+a277 2
+            kBit( row, chan0(chan)+noBslChans*surf1(mif), inst0(mif) ) = &
+              & kBit( row, chan0(chan)+noBslChans*surf1(mif), inst0(mif) ) + &
+d279 2
+a280 2
+            kBit( row, chan0(chan)+noBslChans*surf1(mif), inst1(mif) ) = &
+              & kBit( row, chan0(chan)+noBslChans*surf1(mif), inst1(mif) ) + &
+d282 2
+a283 2
+            kBit( row, chan1(chan)+noBslChans*surf0(mif), inst0(mif) ) = &
+              & kBit( row, chan1(chan)+noBslChans*surf0(mif), inst0(mif) ) + &
+d285 2
+a286 2
+            kBit( row, chan1(chan)+noBslChans*surf0(mif), inst1(mif) ) = &
+              & kBit( row, chan1(chan)+noBslChans*surf0(mif), inst1(mif) ) + &
+d288 2
+a289 2
+            kBit( row, chan1(chan)+noBslChans*surf1(mif), inst0(mif) ) = &
+              & kBit( row, chan1(chan)+noBslChans*surf1(mif), inst0(mif) ) + &
+d291 2
+a292 2
+            kBit( row, chan1(chan)+noBslChans*surf1(mif), inst1(mif) ) = &
+              & kBit( row, chan1(chan)+noBslChans*surf1(mif), inst1(mif) ) + &
+d309 65
+d393 3
+@
+
+
+2.4
+log
+@Pays attention to do_baseline
+@
+text
+@d19 1
+d29 1
+a29 1
+    & "$Id: BaselineForwardModel_m.f90,v 2.3 2001/10/02 20:20:46 livesey Exp $"
+d49 1
+a49 1
+    character, parameter :: INVALIDQUANTITY = "Invalid vector quantity for "
+d62 1
+a98 1
+
+d125 1
+a125 1
+        & quantityType=l_baseline, radiometer=signal%radiometer )
+d131 1
+d226 1
+a226 1
+            & baseline%values(chan0(mif)+noBslChans*surf0(mif),inst0(mif))
+d228 1
+a228 1
+            & baseline%values(chan0(mif)+noBslChans*surf0(mif),inst1(mif))
+d230 1
+a230 1
+            & baseline%values(chan0(mif)+noBslChans*surf1(mif),inst0(mif))
+d232 1
+a232 1
+            & baseline%values(chan0(mif)+noBslChans*surf1(mif),inst1(mif))
+d234 1
+a234 1
+            & baseline%values(chan1(mif)+noBslChans*surf0(mif),inst0(mif))
+d236 1
+a236 1
+            & baseline%values(chan1(mif)+noBslChans*surf0(mif),inst1(mif))
+d238 1
+a238 1
+            & baseline%values(chan1(mif)+noBslChans*surf1(mif),inst0(mif))
+d240 1
+a240 1
+            & baseline%values(chan1(mif)+noBslChans*surf1(mif),inst1(mif))
+d252 1
+d259 3
+a261 1
+            kBit( chan+noChans*mm1, chan0(mif)+noBslChans*surf0(mif), inst0(mif) ) = &
+d263 2
+a264 1
+            kBit( chan+noChans*mm1, chan0(mif)+noBslChans*surf0(mif), inst1(mif) ) = &
+d266 2
+a267 1
+            kBit( chan+noChans*mm1, chan0(mif)+noBslChans*surf1(mif), inst0(mif) ) = &
+d269 2
+a270 1
+            kBit( chan+noChans*mm1, chan0(mif)+noBslChans*surf1(mif), inst1(mif) ) = &
+d272 2
+a273 1
+            kBit( chan+noChans*mm1, chan1(mif)+noBslChans*surf0(mif), inst0(mif) ) = &
+d275 2
+a276 1
+            kBit( chan+noChans*mm1, chan1(mif)+noBslChans*surf0(mif), inst1(mif) ) = &
+d278 2
+a279 1
+            kBit( chan+noChans*mm1, chan1(mif)+noBslChans*surf1(mif), inst0(mif) ) = &
+d281 2
+a282 1
+            kBit( chan+noChans*mm1, chan1(mif)+noBslChans*surf1(mif), inst1(mif) ) = &
+a289 1
+          ! Don't have it deallocate kBit
+d318 3
+@
+
+
+2.3
+log
+@First linkable version
+@
+text
+@d28 1
+a28 1
+    & "$Id: BaselineForwardModel_m.f90,v 2.2 2001/10/02 20:03:58 livesey Exp $"
+d96 1
+a96 1
+    ! if (.not. fwdModelConf%doBaseline ) return
+d307 3
+@
+
+
+2.2
+log
+@First compilable version
+@
+text
+@d13 1
+d18 1
+d28 1
+a28 1
+    & "$Id: BaselineForwardModel_m.f90,v 2.1 2001/10/02 16:52:00 livesey Exp $"
+d85 1
+d156 1
+a156 1
+      call Hunt ( baseline%template%phi, ptan%template%phi(:,maf), inst0 )
+d174 1
+a174 1
+      call Hunt ( baseline%template%surfs, ptan%values(:,maf), surf0 )
+d279 2
+a280 1
+          call Sparsify ( kBit(:,:,instance), jacobian%block(rowBlock,colBlock) )
+d307 3
+@
+
+
+2.1
+log
+@Very early version!
+@
+text
+@d10 7
+a16 2
+  use VectorsModule, only: VECTOR_T, VECTORVALUE_T, GETVECTORQUANTITYBYTYPE
+  use MatrixModule_1, only: MATRIX_T
+d26 1
+a26 1
+    & "$Id: FullForwardModel_m.f90,v 2.3 2001/09/19 04:38:48 livesey Exp $"
+d29 1
+a29 1
+    & "$RCSfile: FullForwardModel_m.f90,v $"
+d36 1
+d45 253
+d302 4
+a305 1
+! $Log$
+@
+

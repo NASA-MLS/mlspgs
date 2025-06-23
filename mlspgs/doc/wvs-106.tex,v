@@ -1,0 +1,254 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.12
+	cfm-single-freq-0-1:1.2.0.10
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.8
+	mus-emls-1-70:1.2.0.6
+	rel-1-0-englocks-work:1.2.0.4
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.2
+	V4-21:1.2.0.2
+	V4-13:1.2
+	V4-12:1.2
+	V4-11:1.2
+	V4-10:1.2
+	M4-00:1.2
+	V3-33:1.2;
+locks; strict;
+comment	@% @;
+
+
+1.2
+date	2011.07.28.20.12.37;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2011.07.28.20.11.25;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Correct CVS comment
+@
+text
+@\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9.0in
+
+\newcommand{\docname}{\bf wvs-106}
+\newcommand{\docdate}{25 July 2011}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\ifx\dvidir\undefined
+  \newcommand\hr[1]{\href{#1.dvi}{dvi} \href{#1.pdf}{pdf}}
+\else
+  \newcommand\hr[1]{\href{\dvidir/#1.dvi}{dvi} \href{\pdfdir/#1.pdf}{pdf}}
+\fi
+\newcommand\h[1]{#1 \hr{#1}}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[u]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\newcommand{\T}{\mathcal{T}}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Van, Igor, Nathaniel, Bill, Paul\\
+Subject: \>Alternative formulation for derivatives\\
+From: \>Van Snyder\\
+Reference: \>\h{wvs-100}, \h{wvs-102}\\
+\end{tabbing}
+
+\parindent 0pt \parskip 5pt
+\vspace{-20pt}
+
+Start with the clear-sky non-scattering radiative-transfer equation
+
+\renewcommand{\d}{\text{d}}
+\begin{equation}
+\frac{\d I(s)}{\d s} + \alpha(s) I(s) = \alpha(s) B(s) \,.
+\end{equation}
+
+Take the derivative w.r.t. $f^k_{lm}$ to get
+
+\begin{equation}
+\frac{\partial}{\partial f^k_{lm}} \frac{\d I(s)}{\d s} +
+ \frac{\partial}{\partial f^k_{lm}} \alpha(s) I(s) =
+  \frac{\partial}{\partial f^k_{lm}} \alpha(s) B(s) \,.
+\end{equation}
+
+Exchange the order of differentiation, observe $\frac{\partial
+B(s)}{\partial f^k_{lm}} = 0$, and collect terms involving $\frac{\partial
+I(s)}{\partial f^k_{lm}}$ on the left to get
+
+\begin{equation}\label{three}
+\frac{\d}{\d s} \frac{\partial I(s)}{\partial f^k_{lm}} +
+ \alpha(s) \frac{\partial I(s)}{\partial f^k_{lm}} =
+  \frac{\partial \alpha(s)}{\partial f^k_{lm}} ( B(s) - I(s) )
+\end{equation}
+
+Assuming $\frac{\partial I(s_0)}{\partial f^k_{lm}} = 0$, the solution
+for $\frac{\partial I(s_r)}{\partial f^k_{lm}}$ can be written
+
+\begin{equation}\label{four}
+\frac{\partial I(s_r)}{\partial f^k_{lm}} =
+ \int_{s_0}^{s_r} \mathcal{T}(s,s_r)
+  \frac{\partial \alpha(s)}{\partial f^k_{lm}}
+   ( B(s) - I(s) ) \,\d s
+\text{ where }
+ \mathcal{T}(s_1,s_2) = \exp \left( -\int_{s_1}^{s_2} \alpha(\sigma)
+ \d \sigma \right) \,.
+\end{equation}
+
+Differentiate Equation (\ref{three}) w.r.t.
+$f^{\kappa}_{\lambda\mu}$ and re-arrange similarly to get
+
+
+\begin{equation}
+\frac{\d}{\d s} \frac{\partial^2 I(s)}
+                     {\partial f^k_{lm} \partial f^{\kappa}_{\lambda\mu}} +
+ \alpha(s) \frac{\partial^2 I(s)}
+                {\partial f^k_{lm} \partial f^{\kappa}_{\lambda\mu}} =
+  \frac{\partial^2 \alpha(s)}
+       {\partial f^k_{lm} \partial f^{\kappa}_{\lambda\mu}} (B(s)-I(s)) -
+   \frac{\partial \alpha(s)}{\partial f^k_{lm}}
+    \frac{\partial I(s)}{\partial f^{\kappa}_{\lambda\mu}}
+   -
+   \frac{\partial \alpha(s)}{\partial f^{\kappa}_{\lambda\mu}}
+    \frac{\partial I(s)}{\partial f^k_{lm}}
+   \,.
+\end{equation}
+
+Assuming $\frac{\partial^2 I(s_0)}{\partial f^k_{lm} \partial
+f^{\kappa}_{\lambda\mu}} = 0$, the solution for $\frac{\partial^2
+I(s_r)}{\partial f^k_{lm} \partial f^{\kappa}_{\lambda\mu}}$ can be
+written
+
+\begin{equation}\label{six}
+\frac{\partial^2 I(s_r)}
+     {\partial f^k_{lm} \partial f^{\kappa}_{\lambda\mu}} =
+ \int_{s_0}^{s_r} \mathcal{T}(s,s_r) \left[
+  \frac{\partial^2 \alpha(s)}
+       {\partial f^k_{lm} \partial f^{\kappa}_{\lambda\mu}}
+   ( B(s) - I(s) ) -
+   \frac{\partial \alpha(s)}{\partial f^k_{lm}}
+    \frac{\partial I(s)}{\partial f^{\kappa}_{\lambda\mu}}
+   -
+   \frac{\partial \alpha(s)}{\partial f^{\kappa}_{\lambda\mu}}
+    \frac{\partial I(s)}{\partial f^k_{lm}}
+   \right] \d s
+  \,.
+\end{equation}
+
+See \h{wvs-102} for definitions of $\frac{\partial \alpha(s)}{\partial
+f^k(s)}$ and $\frac{\partial^2 \alpha(s)}{\partial f^k(s) \partial
+f^\kappa(s)}$.
+
+Notice that there are no explicit inner integrals in this formulation. 
+We need $\mathcal{T}(s,s_r)$ and $I(s)$ to compute $\frac{\partial
+I(s_r)}{\partial f^k_{lm}}$, which are integrals, but we get them while
+computing $I(s_r)$.  We need $\frac{\partial I(s)}{\partial f^k_{lm}}$ to
+compute $\frac{\partial^2 I(s_r)}{\partial f^k_{lm} \partial
+f^{\kappa}_{\lambda\mu}}$, but we get this while computing $\frac{\partial
+I(s_r)}{\partial f^k_{lm}}$.  We could either save $\frac{\partial
+\alpha(s)}{\partial f(s)}$ while computing $\frac{\partial
+I(s_r)}{\partial f^k_{lm}}$, or compute it anew while computing
+$\frac{\partial^2 I(s_r)}{\partial f^k_{lm} \partial
+f^{\kappa}_{\lambda\mu}}$.
+
+\label{lastpage}
+\end{document}
+
+% $Id: wvs-106.tex,v 1.1 2011/07/28 20:11:25 vsnyder Exp $
+
+% $Log:$
+
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d183 3
+a185 1
+% $Id: wvs-101.tex,v 1.1 2010/12/21 01:25:16 vsnyder Exp $
+a186 1
+% $Log:
+@
+

@@ -1,0 +1,337 @@
+head	2.3;
+access;
+symbols
+	v5-02-NRT-19:2.3
+	v6-00:2.3
+	v5-02-NRT-18:2.3
+	v5-02:2.3
+	v5-01-NRT-17:2.3
+	v5-01-NRT-16:2.3
+	v5-01-NRT-15:2.3
+	v5-01-NRT-14:2.3
+	neuralnetworks-1-0:2.3.0.12
+	cfm-single-freq-0-1:2.3.0.10
+	v5-01:2.3
+	v5-00:2.3
+	v4-23-TA133:2.3.0.8
+	mus-emls-1-70:2.3.0.6
+	rel-1-0-englocks-work:2.3.0.4
+	VUMLS1-00:2.3
+	VPL1-00:2.3
+	V4-22-NRT-08:2.3
+	VAM1-00:2.3
+	V4-21:2.3.0.2
+	V4-13:2.3;
+locks; strict;
+comment	@# @;
+
+
+2.3
+date	2014.09.04.23.30.41;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2014.08.15.23.28.49;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2014.08.05.00.19.02;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.3
+log
+@New interface, use /proc/[pid]/status
+@
+text
+@! Copyright 2014, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=============================================================================
+module Memory_m
+!=============================================================================
+
+! Calculate the memory usage. Return stack, data, or total
+
+  implicit none
+  private
+
+! === (start of toc) ===
+!     c o n t e n t s
+!     - - - - - - - -
+
+! Memory_Used            return stack, data, and total (which includes exe)
+
+!     Example:
+!     Assume you want to track how your memory usage rises and falls over time
+!     The linux system records this info in up-to-date state in the file
+!        /proc/process_id/maps
+! === (end of toc) ===
+
+! === (start of api) ===
+! Memory_Used ( [real *total], [real *stack], [real *data] )
+
+! === (end of api) ===
+  public :: Memory_Used
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: memory_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  subroutine Memory_Used ( Total, Stack, Data )
+    ! Calculate memory usages in kB from /proc/GetPID()/status
+    use GetResourceUsage_m, only: GetPID
+    ! Args
+    integer, intent(out), optional :: Total ! VmSize: ... kB in /proc/pid/status
+                                            ! (everything, including exe)
+    integer, intent(out), optional :: Stack ! VmStk: ... kB in /proc/pid/status
+    integer, intent(out), optional :: Data  ! VmData: ... kB in /proc/pid/status
+    ! Internal variables
+    character(len=256)          :: Line
+    integer                     :: L1, L2 ! Ends of numbers
+    integer                     :: Unit ! to read /proc/pid/maps
+
+    ! Executable
+
+    ! Create the file name for /proc/[pid]/status
+    write ( line, '(a,i0,a)' ) '/proc/', GetPID(), '/status'
+    open ( newUnit = unit, file=trim(line) ) ! let it crash if it fails,
+                                             ! which it almost certainly won't
+    do
+      read ( unit, '(a)', end=9 ) line
+      ! Lines have "Name:     amount kB"
+      l1 = index(line,':')                   ! First delimiter
+      l2 = index(line, 'kB')                 ! Second delimiter
+      select case ( line(:l1) )
+      case ( 'VmSize:' )
+        if ( present(total) ) read ( line(l1+1:l2-1), * ) total
+      case ( 'VmData:' )
+        if ( present(data) ) read ( line(l1+1:l2-1), * ) data
+      case ( 'VmStk:' )
+        if ( present(stack) ) read ( line(l1+1:l2-1), * ) stack
+      end select
+    end do
+  9 continue
+    close ( unit )
+
+  end subroutine Memory_Used
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: memory_m.f90,v 2.2 2014/08/15 23:28:49 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Memory_m
+
+!$Log: memory_m.f90,v $
+!Revision 2.2  2014/08/15 23:28:49  pwagner
+!Fixed some of the more obvious errors
+!
+!Revision 2.1  2014/08/05 00:19:02  pwagner
+!First commit
+!
+@
+
+
+2.2
+log
+@Fixed some of the more obvious errors
+@
+text
+@d13 1
+a13 1
+module memory_m
+d16 1
+a16 1
+! Calculate the memory usage. Return stack, heap, or total
+a17 4
+  use IO_stuff, only: get_nLines, read_textFile
+  use MLSFinds, only: FindFirst
+  use MLSStringLists, only: GetStringElement
+  use MLSStrings, only: readNumFromBaseN
+d25 1
+a25 1
+! memory_used            return stack, heap, and sum
+d29 1
+a29 2
+!     If you know your process_id, the linux system records this info
+!     in up-gto-date state in the file
+d34 2
+a35 4
+! memory_used ( char* process_id, [real stack], [real heap], [real total] )
+!
+! Note:
+! If process_id is not a valid process id, we will return 0
+d37 1
+a37 2
+  public :: memory_used
+  logical, parameter   :: countEmpty = .true.
+d47 3
+a49 2
+  subroutine memory_used ( process_id, stack, heap, total, error )
+    ! Calculate memory used the running process_id
+d51 4
+a54 5
+    character(len=*), intent(in)                 :: process_id
+    real, intent(out), optional                  :: stack
+    real, intent(out), optional                  :: heap
+    real, intent(out), optional                  :: total
+    integer, intent(out), optional               :: error
+d56 4
+a59 5
+    character(len=256)                           :: filename
+    character(len=256)                           :: line
+    character(len=256), dimension(:), pointer    :: lines
+    real                                         :: mstart, mfinish
+    integer                                      :: n, kHeap, kStack, status
+d61 23
+a83 77
+    if ( present(stack) ) stack = 0.
+    if ( present(heap) ) heap = 0.
+    if ( present(total) ) total = 0.
+    if ( present(error) ) error = 0
+    filename = '/proc/' // trim(process_id) // '/maps'
+    print *, 'filename: ', trim(filename)
+    call get_nLines ( filename, n )
+    ! print *, 'n: ', n
+    if ( n < 1 ) then
+      if ( present(error) ) error = n
+      stop ! return
+    endif
+    allocate( lines(n), stat=status )
+    call read_textfile ( FileName, lines )
+    kHeap  = FindFirst( lines, '[heap]', 'p' )
+    kStack = FindFirst( lines, '[stack]', 'p' )
+    ! print *, 'kHeap: ', kHeap
+    ! print *, 'kStack: ', kStack
+    if ( kHeap > 0 ) then
+      call getMemBounds ( lines(kHeap), mStart, mFinish )
+      print *, 'heap'
+      print *, 'mstart:  ', mstart
+      print *, 'mfinish: ', mfinish
+      print *,  mfinish -   mstart
+      if ( present(heap) ) heap = heap + mFinish - mStart
+      if ( present(total) ) total = total + mFinish - mStart
+    endif
+    if ( kStack > 0 ) then
+      call getMemBounds ( lines(kStack), mStart, mFinish )
+      print *, 'stack'
+      print *, 'mstart:  ', mstart
+      print *, 'mfinish: ', mfinish
+      print *,  mfinish -   mstart
+      if ( present(stack) ) stack = stack + mFinish - mStart
+      if ( present(total) ) total = total + mFinish - mStart
+    endif
+    if ( kHeap > 1 ) then
+      kHeap = kHeap - 1
+      call getMemBounds ( lines(kHeap), mStart, mFinish )
+      print *, 'small heap'
+      print *, 'mstart:  ', mstart
+      print *, 'mfinish: ', mfinish
+      print *,  mfinish -   mstart
+      if ( present(heap) ) heap = heap + mFinish - mStart
+      if ( present(total) ) total = total + mFinish - mStart
+    endif
+    deallocate( lines, stat=status )
+  end subroutine memory_used
+
+  ! --------------- Private Procedures --------------------------
+  ! Read memory start, finish values from line
+  subroutine getMemBounds ( inLine, nStart, nFinish )
+    ! Args
+    character(len=*), intent(in)    :: inLine
+    real, intent(out)               :: nstart, nfinish 
+    ! Internal variables
+    integer                         :: i, k
+    character(len=len(inLine))      :: line
+    character(len=16)               :: start, finish
+    logical, dimension(16)          :: theSame
+    ! Executable
+    call GetStringElement ( inLine, start, 1, countEmpty, inseparator = '-' )
+    call GetStringElement ( inLine, line, 2, countEmpty, inseparator = '-' )
+    print *, 'start: ', trim(start)
+    print *, 'line: ', trim(line)
+    call GetStringElement ( line, finish, 1, countEmpty, inseparator = ' ' )
+    print *, 'finish: ', trim(finish)
+    ! Check if the 1st few characters are the same
+    theSame = .true.
+    do i=1, min( len_trim(start), len_trim(finish) )
+      theSame(i) = start(i:i) == finish(i:i)
+    enddo
+    k = FindFirst( .not. theSame )
+    print *, 'k: ', k
+    call readNumFromBaseN ( start(k:), nstart, 16, options='c' )
+    call readNumFromBaseN ( finish(k:), nfinish, 16, options='c' )
+  end subroutine getMemBounds
+d88 1
+a88 1
+       "$Id: memory_m.f90,v 2.1 2014/08/05 00:19:02 pwagner Exp $"
+d95 1
+a95 1
+end module memory_m
+d98 3
+@
+
+
+2.1
+log
+@First commit
+@
+text
+@d49 1
+a49 1
+       "$RCSfile: time_m.f90,v $"
+d55 1
+a55 1
+  subroutine memory_used ( process_id, stack, heap, total )
+d62 1
+d73 1
+d75 1
+d77 5
+a81 2
+    print *, 'n: ', n
+    if ( n < 1 ) return
+d86 2
+a87 2
+    print *, 'kHeap: ', kHeap
+    print *, 'kStack: ', kStack
+d126 1
+d128 2
+a129 1
+    character(len=10)               :: start, finish   
+d137 9
+a145 2
+    call readNumFromBaseN ( start, nstart, 16, options='c' )
+    call readNumFromBaseN ( finish, nfinish, 16, options='c' )
+d151 1
+a151 1
+       "$Id: time_m.f90,v 2.14 2014/01/09 00:24:29 pwagner Exp $"
+d160 4
+a163 1
+!$Log: time_m.f90,v $
+@
+

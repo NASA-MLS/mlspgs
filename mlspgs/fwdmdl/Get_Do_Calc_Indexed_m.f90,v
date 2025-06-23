@@ -1,0 +1,382 @@
+head	2.6;
+access;
+symbols
+	v5-02-NRT-19:2.6
+	v6-00:2.6
+	v5-02-NRT-18:2.6
+	v5-02:2.4
+	v5-01-NRT-17:2.4
+	v5-01-NRT-16:2.4
+	v5-01-NRT-15:2.4
+	v5-01-NRT-14:2.4
+	neuralnetworks-1-0:2.4.0.6
+	cfm-single-freq-0-1:2.4.0.4
+	v5-01:2.4
+	v5-00:2.4
+	v4-23-TA133:2.4.0.2
+	mus-emls-1-70:2.3.0.2
+	rel-1-0-englocks-work:2.2.0.2;
+locks; strict;
+comment	@# @;
+
+
+2.6
+date	2023.07.06.18.40.20;	author pwagner;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2023.06.23.20.44.03;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2018.11.19.21.52.36;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2018.04.17.22.10.18;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2017.08.25.22.49.25;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2017.08.09.19.57.55;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.6
+log
+@Replace original, wrong index calculations with ad-hoc and possibly correct calculation
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Get_Do_Calc_Indexed_m
+
+  implicit NONE
+  private
+  public :: Get_Do_Calc_Indexed
+  public :: Get_Do_Calc_Indexed_Coarse, Get_Do_Calc_Indexed_GL
+
+  interface Get_Do_Calc_Indexed
+    module procedure Get_Do_Calc_Indexed_Coarse, Get_Do_Calc_Indexed_GL
+  end interface
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: Get_Do_Calc_Indexed_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+contains
+!---------------------------------------------------------------------------
+
+  ! ---------------------------------  Get_Do_Calc_Indexed_Coarse  -----
+  subroutine Get_Do_Calc_Indexed_Coarse  ( N, Tan_Pt_C, Do_Calc_All, &
+    & N_Inds, Inds, debug )
+
+  ! Store L in Inds if Do_Calc_All is set for either boundary of layer L.
+  ! Before the tangent, layer L is from boundary L-1 to L.
+  ! After the tangent point, layer L is from boundary L to L+1.
+  
+    use GLNP, ONLY: Ng, NGP1
+
+    integer, intent(in) :: N              ! sizes on coarse grid
+    integer, intent(in) :: Tan_Pt_C       ! Index of tangent point in coarse grid
+
+    logical, contiguous, intent(in) :: Do_Calc_all(:) ! On the entire path
+    integer,             intent(out) :: N_Inds        ! How many Inds produced
+    integer, contiguous, intent(out) :: Inds(:,:)     ! Nx2, Inds(:,1) is the
+                                          ! layer index and the index of the
+                                          ! boundary nearest the tangent point;
+                                          ! Inds(:,2) is the other boundary index.
+
+    logical, optional, intent(in) :: Debug
+    integer :: M, P_I, P1, P2
+    logical :: DebugHere
+    integer :: d1min, d1max, d2min, d2max
+    integer, dimension(2) :: ind ! Locally computed indices
+    logical, parameter :: OriginalAndWrong = .false.
+
+    DebugHere = .false.
+    if ( present(Debug) ) DebugHere = Debug
+    d1max = 0
+    d2max = 0
+    d1min = 1000
+    d2min = 1000
+    n_inds = 0
+    p1 = 2
+    p2 = tan_pt_c
+    do m = -1, 1, 2
+      do p_i = p1, p2
+        d1min = min(d1min, ngp1*p_i-ng)
+        d1max = max(d1max, ngp1*p_i-ng)
+        d2min = min(d2min, ngp1*(p_i+m) - ng)
+        d2max = max(d2max, ngp1*(p_i+m) - ng)
+        ! Interpolating coefficient at either coarse boundary is nonzero
+        ! As it was originally coded and demonstrably wrong
+        ! because the resulting inds were allowed to fall below 1
+        if ( OriginalAndWrong ) then
+          if ( do_calc_all(ngp1*p_i-ng) .or. &
+               do_calc_all(ngp1*(p_i+m) - ng) ) then
+            n_inds = n_inds + 1
+            inds(n_inds,1:2) = [p_i,p_i+m*ngp1]
+!           if ( DebugHere ) then
+!             print *, 'ngp1*p_i-ng, ngp1*(p_i+m) - ng ', ngp1*p_i-ng, ngp1*(p_i+m) - ng
+!             print *, 'do_[1], do_[2] ', &
+!               & do_calc_all(ngp1*p_i-ng), &
+!               & do_calc_all(ngp1*(p_i+m) - ng)
+!             print *, 'm, p_i, p_i+m*ngp1, n_inds ', m, p_i, p_i+m*ngp1, n_inds
+          endif
+        else
+          ! We're going to assume that these following indices are correct
+          ! for the left and right boundaries on the coarse grid when m=1
+          ! and for the right and left boundaries when m=-1
+          ! Note that even when m=-1 these indices never fall below 1
+          ind(1) = ngp1*p_i - ng ! when p=2 this becomes 1
+          ind(2) = ngp1*(p_i+m) - ng ! ind1 + m*ngp1
+          if ( do_calc_all(ind(1)) .or. do_calc_all(ind(2)) )  then
+            n_inds = n_inds + 1
+            inds(n_inds,1:2) = ind(:)
+          endif
+        end if
+      end do ! p_i
+      p1 = tan_pt_c + 1
+      p2 = n - 1
+    end do ! m
+    
+    
+    if ( DebugHere ) then
+      p1 = 2
+      p2 = tan_pt_c
+      do m = -1, 1, 2
+        print *, 'n_inds ', n_inds
+        print *, 'ng, ngp1, tan_pt_c, n ', ng, ngp1, tan_pt_c, n
+        print *, 'd1min, d1max, d2min, d2max ', d1min, d1max, d2min, d2max
+        do p_i = p1, p2, max((p2-p1),1)
+          print *, 'ngp1*p_i-ng, ngp1*(p_i+m) - ng ', ngp1*p_i-ng, ngp1*(p_i+m) - ng
+          print *, 'do_[1], do_[2] ', &
+            & do_calc_all(ngp1*p_i-ng), &
+            & do_calc_all(ngp1*(p_i+m) - ng)
+          print *, 'm, p_i, p_i+m*ngp1, n_inds ', m, p_i, p_i+m*ngp1, n_inds
+        enddo
+        p1 = tan_pt_c + 1
+        p2 = n - 1
+      enddo
+      print *, 'min, max L[1]: ', minval(inds(1:n_inds,1)), maxval(inds(1:n_inds,1))
+      print *, 'min, max L[2]: ', minval(inds(1:n_inds,2)), maxval(inds(1:n_inds,2))
+    endif
+
+  end subroutine Get_Do_Calc_Indexed_Coarse
+
+  ! -------------------------------------  Get_Do_Calc_Indexed_GL  -----
+  subroutine Get_Do_Calc_Indexed_GL ( N, Tan_Pt_C, Do_Calc_All, F_Inds, Do_GL, &
+    & Do_Calc, N_Inds, Inds )
+
+  ! Set Do_Calc if Do_Calc_All(1::ngp1), or Do_GL and any of the corresponding
+  ! Do_Calc_All(f_inds) flags are set.
+  ! Get_Do_Calc_Indexed determines that Get_d_Delta_df needs to integrate a
+  ! panel if Do_Calc_All(1::ngp1) is true, which means the interpolating
+  ! coefficient is nonzero, or if Do_GL is true and Do_Calc_All(f_inds) is
+  ! true, which means that GL was needed, even if some interpolating
+  ! coefficient is zero.
+
+    use GLNP, ONLY: Ng, NGP1
+
+    integer, intent(in) :: N              ! sizes on coarse grid
+    integer, intent(in) :: Tan_Pt_C       ! Index of tangent point in coarse grid
+
+    logical, contiguous, intent(in) :: Do_Calc_all(:) ! On the entire path
+    integer, contiguous, intent(in) :: F_Inds(:)      ! Indices in Do_Calc_All for fine grid
+                                                      ! GL points on panels needing GL.
+    logical, contiguous, intent(in) :: Do_GL(:)       ! Where on coarse grid to do GL
+    logical, contiguous, intent(out) :: Do_Calc(:)    ! Where on coarse grid to do calc.
+    integer,             intent(out) :: N_Inds        ! count(do_calc)
+    integer, contiguous, intent(out) :: Inds(:,:)     ! Nx2, Inds(:,1) is the
+                                          ! layer index and the index of the
+                                          ! boundary nearest the tangent point;
+                                          ! Inds(:,2) is the other boundary index.
+
+
+    integer :: I, K, M, P_I, P1, P2
+
+    i = 1 - Ng
+    n_inds = 0
+    p1 = 2
+    p2 = tan_pt_c
+    do m = -1, 1, 2
+      do p_i = p1, p2
+        ! Interpolating coefficient at either coarse boundary is nonzero
+        do_calc(p_i) = do_calc_all(ngp1*p_i-ng) .or. &
+                       do_calc_all(ngp1*(p_i+m) - ng)
+        if ( do_gl(p_i) ) then
+          i = i + Ng
+          k = f_inds(i)
+          do_calc(p_i) = do_calc(p_i) .or. &
+            & do_calc_all(k) .or. do_calc_all(k+1) .or. do_calc_all(k+2)
+        end if
+        if ( do_calc(p_i) ) then
+          n_inds = n_inds + 1
+          inds(n_inds,1:2) = [p_i,p_i+m*ngp1]
+        end if
+      end do ! p_i
+      p1 = tan_pt_c + 1
+      p2 = n - 1
+    end do ! m
+
+  end subroutine Get_Do_Calc_Indexed_GL
+
+!----------------------------------------------------------------------
+  logical function not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id: Get_Do_Calc_Indexed_m.f90,v 2.5 2023/06/23 20:44:03 pwagner Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+
+end module Get_Do_Calc_Indexed_m
+
+! $Log: Get_Do_Calc_Indexed_m.f90,v $
+! Revision 2.5  2023/06/23 20:44:03  pwagner
+! In middle of debugging pol fwdmdl
+!
+! Revision 2.4  2018/11/19 21:52:36  vsnyder
+! Correct confusion between coarse and fine path indexing
+!
+! Revision 2.3  2018/04/17 22:10:18  vsnyder
+! Remove unused declarations
+!
+! Revision 2.2  2017/08/25 22:49:25  pwagner
+! Removed :: that NAG hated
+!
+! Revision 2.1  2017/08/09 19:57:55  vsnyder
+! Initial commit
+!
+@
+
+
+2.5
+log
+@In middle of debugging pol fwdmdl
+@
+text
+@d54 3
+d60 4
+d69 4
+d74 7
+a80 4
+        if ( do_calc_all(ngp1*p_i-ng) .or. &
+             do_calc_all(ngp1*(p_i+m) - ng) ) then
+          n_inds = n_inds + 1
+          inds(n_inds,1:2) = [p_i,p_i+m*ngp1]
+d87 12
+a98 1
+!           endif
+d110 4
+a113 2
+      if ( DebugHere ) print *, 'p1, p2 ', p1, p2
+        do p_i = p1, p2
+d123 2
+d190 1
+a190 1
+       "$Id: Get_Do_Calc_Indexed_m.f90,v 2.4 2018/11/19 21:52:36 vsnyder Exp $"
+d200 3
+@
+
+
+2.4
+log
+@Correct confusion between coarse and fine path indexing
+@
+text
+@d33 1
+a33 1
+    & N_Inds, Inds )
+d51 1
+d53 1
+d55 2
+d67 7
+d79 18
+d161 1
+a161 1
+       "$Id: Get_Do_Calc_Indexed_m.f90,v 2.3 2018/04/17 22:10:18 vsnyder Exp $"
+d171 3
+@
+
+
+2.3
+log
+@Remove unused declarations
+@
+text
+@d62 1
+a62 1
+          inds(n_inds,1:2) = [p_i,p_i+m]
+d119 1
+a119 1
+          inds(n_inds,1:2) = [p_i,p_i+m]
+d132 1
+a132 1
+       "$Id: Get_Do_Calc_Indexed_m.f90,v 2.2 2017/08/25 22:49:25 pwagner Exp $"
+d142 3
+@
+
+
+2.2
+log
+@Removed :: that NAG hated
+@
+text
+@d51 1
+a51 1
+    integer :: I, K, M, P_I, P1, P2
+a52 1
+    i = 1 - Ng
+d132 1
+a132 1
+       "$Id: Get_Do_Calc_Indexed_m.f90,v 2.1 2017/08/09 19:57:55 vsnyder Exp $"
+d142 3
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d20 1
+a20 1
+    module procedure :: Get_Do_Calc_Indexed_Coarse, Get_Do_Calc_Indexed_GL
+d25 1
+a25 1
+       "$RCSfile: rad_tran_m.F90,v $"
+d133 1
+a133 1
+       "$Id: rad_tran_m.F90,v 2.34 2017/03/31 00:46:30 vsnyder Exp $"
+d142 4
+a145 1
+! $Log: rad_tran_m.F90,v $
+@
+

@@ -1,0 +1,322 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.10
+	cfm-single-freq-0-1:1.2.0.8
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.6
+	mus-emls-1-70:1.2.0.4
+	rel-1-0-englocks-work:1.2.0.2;
+locks; strict;
+comment	@% @;
+
+
+1.2
+date	2017.08.31.23.37.30;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2017.08.31.01.07.44;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Added an equation, some cannonball polishing
+@
+text
+@\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9in
+
+\newcommand{\docname}{wvs-141r1}
+\newcommand{\docdate}{31 August 2017}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Van\\
+Subject: \>Intersection of a line with a circle defined by two points and
+ its radius\\
+From: \>Van Snyder\\
+Reference: \>\h{wvs-048}, \h{wvs-131} \h{wvs-134}\\
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-20pt}
+
+Given: Two distinct points $\mathbf{p}_a = (x_a,y_a)$ and
+$\mathbf{p}_b = (x_b,y_b)$, and a radius $r$.
+
+Compute: the center $\mathbf{p}_0 = (x,y)$ of a circle passing through
+$\mathbf{p}_a$ and $\mathbf{p}_b$ with radius $r$.
+
+Because both $\mathbf{p}_a$ and $\mathbf{p}_b$ are on the circumference
+of the circle:
+
+\begin{equation}\begin{split}\label{one}
+(x_a-x)^2+(y_a-y)^2 = \,& r^2 \\
+%\,& \\
+(x_b-x)^2+(y_b-y)^2 = \,& r^2 \\
+\end{split}\end{equation}
+
+Subtracting these equations, or observing that the triangle
+$\mathbf{p}\mathbf{p}_a\mathbf{p}_b$ is an equilateral triangle, and
+therefore $(\mathbf{p}_b - \mathbf{p}_a)\cdot (\mathbf{p}_b - \mathbf{p})
+= (\mathbf{p}_a - \mathbf{p}_b)\cdot (\mathbf{p}_a - \mathbf{p})$, gives
+
+\begin{equation}\label{two}
+(x_a-x_b)\,x + (y_a-y_b)\,y = w \text{ where }
+w = \frac12(x_a^2 - x_b^2 +y_a^2 - y_b^2)\,.
+\end{equation}
+
+Solving Equation (\ref{two}) for $x$ and $y$ in terms of each other gives
+
+\begin{equation}\begin{split}\label{three}
+x = \,& \frac{w - (y_a-y_b)\,y}{x_a-x_b} \\
+%\,& \\
+y = \,& \frac{w - (x_a-x_b)\,x}{y_a-y_b}
+\end{split}\end{equation}
+
+If $|x_a-x_b| > |y_a-y_b|$ substitute $x$ from Equation (\ref{three}) into
+the first equation in Equation (\ref{one}), giving
+
+\begin{equation}\begin{split}\label{four}
+&(t_x y +z_x)^2 + ( y - y_a )^2 = r^2 \text{ where }
+ t_x = \frac{y_a-y_b}{x_a-x_b} \text{ and } z_x = x_a - \frac{w}{x_a-x_b}
+ \text{, or } \\
+&A_x y^2 + B_x y + C_x = 0 \text{ where } A_x = t_x^2+1,\,\,
+B_x = 2(t_x z_x - y_a) \text{ and } C_x = y_a^2 + z_x^2 - r^2 \\
+\end{split}\end{equation}
+
+and solve for $y$, else substitute $y$ from Equation (\ref{three}) into
+the first equation in Equation (\ref{one}), giving
+
+\begin{equation}\begin{split}\label{five}
+&(t_y x +z_y)^2 + ( x - x_a )^2 = r^2 \text{ where }
+ t_y = \frac{x_a-x_b}{y_a-y_b} \text{ and } z_y = y_a - \frac{w}{y_a-y_b}
+ \text{, or } \\
+&A_y x^2 + B_y x + C_y = 0 \text{ where } A_y = t_y^2+1,\,\,
+B_y = 2(t_y z_y - x_a) \text{ and } C_y = x_a^2 + z_y^2 - r^2
+ \,, \\
+\end{split}\end{equation}
+
+and solve for $x$, then solve for the other using Equation (\ref{three}).
+
+If the center of the circle is known to be near the origin, choose the
+solution of Equation (\ref{four}) or (\ref{five}) to minimize $x^2+y^2$.
+
+Given a line expressed as the set of points
+
+\begin{equation}\label{six}
+\mathbf{p} = \mathbf{C} + s\, \mathbf{U}\,,
+\end{equation}
+
+where $\mathbf{C}$ is a point on the line and $\mathbf{U}$ is a vector
+along the line, let $\mathbf{V} = \mathbf{C} - \mathbf{p}_0$, then as
+explained in \h{wvs-131}, the values of $s$ where the line intersects the
+circle are solutions of
+
+\begin{equation}
+\mathbf{U} \cdot \mathbf{U} \, s^2 + 2 \, \mathbf{V} \cdot \mathbf{U} \, s
++ \mathbf{V} \cdot \mathbf{V} = r^2\,.
+\end{equation}
+
+For metrics calculations in the full forward model, choose $\mathbf{p}_a$
+and $\mathbf{p}_b$ as the points computed from values of $H_a = R_{eq} +
+h_a$ and $H_b = R_{eq} + h_b$, where $h_a$ and $h_b$ are {\tt h_ref(i,j)}
+and {\tt h_ref(i,j+1)} corresponding to $\phi_j$ and $\phi_{j+1}$, and
+$\zeta_i$ ({\tt h_ref} represents heights above $R_{eq}$), $r = R_{eq} +
+\frac12(h_a + h_b)$, and $R_{eq}$ is the radius of the \emph{equivalent
+circular earth}, a circle in the orbit plane that is tangent to the
+Earth's surface at $\phi_\text{tan}$ and has the same radius of curvature
+as the Earth's surface has in the orbit plane at that point, as shown in
+Figure 5.2 on page 23 in the MLS ATBD.  Compute
+
+\begin{equation}\begin{split}
+x_a = \,& H_a \cos\phi_a + x_{eq} \\
+y_a = \,& H_a \sin\phi_a + y_{eq} \\
+x_b = \,& H_b \cos\phi_b + x_{eq} \\
+y_b = \,& H_b \sin\phi_b + y_{eq} \,\\
+\end{split}\end{equation}
+
+where $\mathbf{p}_{eq} = (x_{eq}, y_{eq})$ is the center of the equivalent
+circular Earth in the orbit plane coordinate system, as given by Equations
+(5.22) in the MLS ATBD.  For a value of $s$ such that
+$|\mathbf{p}-\mathbf{p}_a| \leq |\mathbf{p}_a-\mathbf{p}_b|$ and
+$|\mathbf{p}-\mathbf{p}_b| \leq |\mathbf{p}_a-\mathbf{p}_b|$, if there is
+such a value, use $\mathbf{p}$ as an intersection of the line of sight
+with a constant $\zeta$ surface, compute values of $\phi$ and $h$ for
+$\mathbf{p}$, and repeat the calculation for $\zeta_{i+1}$.   There should
+not be two values because $\phi_j$ and $\phi_{j+1}$ are close together. 
+The forward model assumes there is only one $\phi$ for each $\zeta$ on
+each side of the tangent, i.e., only one such value of $s$.  If there are
+two values, a reasonable choice is to use the midpoint of the line between
+the points $\mathbf{p}$ represented by Equation (\ref{six}) -- but this
+might result in values of $\phi$ that are out of order if there is only
+one intersection with the next-higher or next-lower surface in the same
+$\phi$ range.  If there is no such value of $s$, define a circle using the
+next (or previous) pair of columns of {\tt h_ref} and $\zeta_i$.  When
+there are no further columns of {\tt h_ref}, compute intersections for
+$\zeta_i$ with the circle of radius $R_{eq}+h_{\phi_1,\zeta_i}$ or
+$R_{eq}+h_{\phi_n,\zeta_i}$ and center at $\mathbf{p}_{eq}$.
+
+Using a circle outside the range of $[\phi_1, \phi_n]$ introduces an
+error of about 0.8 km at a distance of 1000 km from the tangent point, as
+shown in Figure 5.3 on page 25 of the MLS ATBD.  This can be reduced by
+calculating the intersection of the line of sight with a curve at a
+constant height above the orbit-plane projected ellipse, using one of the
+methods described in \h{wvs-134}.
+
+Solving for the intersection of the line of sight with a straight line
+from {\tt h_ref(i,j)} to {\tt h_ref(i,j+1)} introduces an error of $R(1 -
+\cos\, \frac12\, \delta\phi)$, where With $\delta\phi =
+\phi_{j+1}-\phi_j$.  With $\delta\phi = 1.5^\circ$ and $R$ in [6371 km,
+6471 km] this is approximately 0.55 km.  If this error is sufficiently
+small, a much simpler solution is possible.
+
+\begin{centering}
+\includegraphics[scale=0.95]{wvs-141-1}\\
+\end{centering}
+
+Vertical lines in the two diagrams on the left of the figure, and diagonal
+lines in the right diagram, are lines of constant $\phi$.  Curved lines in
+the two diagrams on the left are the heights on surfaces of constant
+$\zeta$.
+
+In \h{wvs-048}, and in the current version of {\tt Metrics}, the heights
+on surfaces of constant $\zeta$ are straight lines and the line of sight
+is a secant, and intersections are found by a Newton iteration.  The ``Two
+solutions for some $\zeta$s'' figure illustrates how $\phi$ could be out
+of order, if solution 1 is chosen for the first $\zeta$, solution 2 for
+the second, and solution 3 for the third (using the above-described
+method), or the Newton iteration converges to those solutions (in the
+current version of {\tt Metrics}).
+
+\label{lastpage}
+\vspace*{-0.1in} % Somehow, this causes lastpage to be defined
+\end{document}
+
+% $Id: wvs-141.tex,v 1.1 2017/08/31 01:07:44 vsnyder Exp $
+
+% $Log: wvs-141.tex,v $
+% Revision 1.1  2017/08/31 01:07:44  vsnyder
+% Initial commit
+%
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d15 2
+a16 2
+\newcommand{\docname}{wvs-141}
+\newcommand{\docdate}{30 August 2017}
+d102 4
+a105 1
+Subtracting these equations gives
+d109 1
+a109 1
+w = \frac12(x_a^2 - x_b^2 +y_a^2 - y_b^2)
+d221 13
+a233 8
+In \h{wvs-048}, and in the current version of {\tt Metrics}, the surfaces
+of constant $\zeta$ are straight lines and the line of sight is a secant,
+and intersections are found by a Newton iteration.  The ``Two solutions
+for some $\zeta$s'' figure illustrates how $\phi$ could be out of order,
+if solution 1 is chosen for the first $\zeta$, solution 2 for the second,
+and solution 3 for the third (using the above-described method), or the
+Newton iteration converges to those solutions (in the current version of
+{\tt Metrics}).
+d239 1
+a239 1
+% $Id: wvs-138.tex,v 1.2 2017/06/07 22:14:21 vsnyder Exp $
+d241 4
+a244 1
+% $Log: wvs-138.tex,v $
+@
+

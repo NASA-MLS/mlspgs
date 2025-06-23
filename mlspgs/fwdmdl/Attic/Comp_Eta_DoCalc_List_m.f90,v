@@ -1,0 +1,228 @@
+head	2.2;
+access;
+symbols
+	rel-1-0-englocks-work:2.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+2.2
+date	2018.05.14.23.28.05;	author vsnyder;	state dead;
+branches;
+next	2.1;
+
+2.1
+date	2017.09.19.17.51.44;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.2
+log
+@Change to sparse eta representation
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Comp_Eta_DoCalc_List_m
+
+  implicit NONE
+
+  private
+
+  public :: Comp_Eta_Docalc_List
+  public :: Comp_All_Eta_2d_List,  Comp_One_Eta_2d_List
+  public :: Comp_All_Eta_QTM_List, Comp_One_Eta_QTM_List
+
+  interface Comp_Eta_Docalc_List
+    module procedure Comp_All_Eta_2d_List,  Comp_One_Eta_2d_List
+    module procedure Comp_All_Eta_QTM_List, Comp_One_Eta_QTM_List
+  end interface
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: Comp_Eta_DoCalc_List_m.f90,v $"
+  private :: not_used_here
+!---------------------------------------------------------------------------
+
+contains
+
+  subroutine Comp_All_Eta_2d_List ( Grids_f, Z_Path, Eta_Z, Phi_Path, Eta_Phi, &
+    & Eta_zP )
+
+    use Indexed_Values_m, only: Value_1D_Lists_t, Value_2d_Lists_t
+    use Load_Sps_Data_m, only: Grids_t
+    use MLSKinds, only: RP
+
+    type(grids_t), intent(in) :: Grids_f      ! Quantity values
+    real(rp), intent(in) :: Z_Path(:)         ! Zetas on the path
+    type(value_1D_lists_t), intent(inout) :: Eta_Z(:) ! from VMR's zeta to path.
+                                              ! InOut so as not to reallocate
+                                              ! Eta_Z%Eta
+    real(rp), intent(in) :: Phi_Path(:)       ! Phis on the path
+    type(value_1D_lists_t), intent(inout) :: Eta_Phi(:) ! InOut so as not to
+                                              ! reallocate Eta_Phi%Eta
+    class(value_2d_Lists_t), intent(inout) :: Eta_zP(:) ! InOut so as not to
+                                              ! reallocate Eta_zP%Eta
+
+    integer :: I
+
+    do i = 1, size(grids_f%mol)
+      call comp_one_eta_2d_list ( grids_f, i, z_path, eta_z(i), phi_path, &
+                           & eta_phi(i), eta_zP(i) )
+    end do
+
+  end subroutine Comp_All_Eta_2d_List
+
+  subroutine Comp_All_Eta_QTM_List ( Grids_f, Z_Path, Eta_Z,  Eta_Path, Eta_zQ )
+
+    use Indexed_Values_m, only: Value_1D_Lists_t, Value_QTM_1D_List_t, &
+      & Value_QTM_2d_Lists_t
+    use Load_Sps_Data_m, only: Grids_t
+    use MLSKinds, only: RP
+
+    type(grids_t), intent(in) :: Grids_f      ! Quantity values
+    real(rp), intent(in) :: Z_Path(:)         ! Zetas on the path
+    type(value_1D_lists_t), intent(inout) :: Eta_Z(:) ! from VMR's zeta to path.
+                                              ! InOut so as not to reallocate
+                                              ! Eta_Z%Eta
+    type(value_QTM_1D_list_t), intent(in) :: Eta_Path(:) ! from Phi to path for
+                                              ! all species, because there's
+                                              ! only one QTM.
+    class(value_QTM_2d_Lists_t), intent(inout) :: Eta_zQ(:) ! InOut so as not to
+                                              ! reallocate Eta_zQ%Eta
+
+    integer :: I
+
+    do i = 1, size(grids_f%mol)
+      call comp_one_Eta_QTM_list ( grids_f, i, z_path, eta_z(i), &
+                            & eta_path, eta_zQ(i)%eta )
+    end do
+
+  end subroutine Comp_All_Eta_QTM_List
+
+  subroutine Comp_One_Eta_2d_List ( Grids_f, N, Z_Path, Eta_Z, Phi_Path, Eta_Phi, &
+    & Eta_zP )
+
+    use Get_Eta_List_m, only: Get_Eta_List
+    use Indexed_Values_m, only: Value_1D_Lists_t, Value_2d_Lists_t
+    use Load_Sps_Data_m, only: Grids_t
+    use MLSKinds, only: RP
+
+    type(grids_t), intent(in) :: Grids_f      ! Quantity values
+    integer, intent(in) :: N                  ! Which quantity
+    real(rp), intent(in) :: Z_Path(:)         ! Zetas on the path
+    type(value_1D_lists_t), intent(inout) :: Eta_Z ! from VMR's Zeta to path.
+                                              ! InOut so as not to reallocate
+                                              ! Eta_Z%Eta
+    real(rp), intent(in) :: Phi_Path(:)       ! Phis on the path, Radians
+    type(value_1D_lists_t), intent(inout) :: Eta_Phi ! from VMR's Phi to path.
+                                              ! InOut so as not to reallocate
+                                              ! Eta_Phi%Eta
+    class(value_2d_Lists_t), intent(inout) :: Eta_zP ! InOut so as not to
+                                              ! reallocate Eta_zP%Eta
+
+    integer :: I1, I2                         ! Boundaries from Grids_f%l_*
+
+    eta_z%n = size(z_path,1)
+    i1 = grids_f%l_z(n-1)+1
+    i2 = grids_f%l_z(n)
+    ! Get the Zeta interpolator list
+    call get_eta_list ( grids_f%zet_basis(i1:i2), z_path, eta_z, sorted=.false. )
+    eta_phi%n = size(phi_path,1)
+    i1 = grids_f%l_p(n-1)+1
+    i2 = grids_f%l_p(n)
+    ! Get the Phi interpolator list
+    call get_eta_list ( grids_f%phi_basis(i1:i2), phi_path, eta_phi, &
+      & sorted=.false. )
+    eta_zP%n = eta_z%n
+    ! Compute the Zeta X Phi interpolator list from the other two
+    call get_eta_list ( eta_z%eta(1:eta_z%n), eta_phi%eta(1:eta_phi%n), &
+      & eta_zP%eta(1:eta_zP%n) )
+  end subroutine Comp_One_Eta_2d_List
+
+  subroutine Comp_One_Eta_QTM_List ( Grids_f, N, Z_Path, Eta_Z, Eta_Path, Eta_zQ )
+
+    use Get_Eta_List_m, only: Get_Eta_List
+    use Indexed_Values_m, only: Value_1D_Lists_t, Value_1D_Lists_t, &
+      & Value_QTM_1D_List_t, Value_QTM_2d_list_t
+    use Load_Sps_Data_m, only: Grids_t
+    use MLSKinds, only: RP
+
+    type(grids_t), intent(in) :: Grids_f      ! Quantity values
+    integer, intent(in) :: N                  ! Which quantity
+    real(rp), intent(in) :: Z_Path(:)         ! Zetas on the path
+    type(value_1D_lists_t), intent(inout) :: Eta_Z ! from VMR's zeta to path.
+                                              ! InOut so as not to reallocate
+                                              ! Eta_Z%Eta
+    type(value_QTM_1D_list_t), intent(in) :: Eta_Path(:) ! from Phi to path.
+    class(value_QTM_2d_list_t), intent(inout) :: Eta_zQ(:)
+
+    integer :: I1, I2                         ! Boundaries from Grids_f%l_*
+
+    eta_z%n = size(z_path,1)
+    i1 = grids_f%l_z(n-1)+1
+    i2 = grids_f%l_z(n)
+    ! Get the Zeta interpolator list
+    call get_eta_list ( grids_f%zet_basis(i1:i2), z_path, eta_z, sorted=.false. )
+    eta_zQ%n = eta_z%n
+    call get_eta_list ( eta_z%eta(1:eta_z%n), eta_path, eta_zQ )
+
+  end subroutine Comp_One_Eta_QTM_List
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: Comp_Eta_DoCalc_List_m.f90,v 2.1 2017/09/19 17:51:44 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Comp_Eta_DoCalc_List_m
+
+! $Log: Comp_Eta_DoCalc_List_m.f90,v $
+! Revision 2.1  2017/09/19 17:51:44  vsnyder
+! Renamed from Comp_Eta_DoCalc_Sparse_m
+!
+! Revision 2.3  2017/03/11 00:51:18  vsnyder
+! Use Grids_F instead of Beta_Group
+!
+! Revision 2.2  2017/01/14 01:57:09  vsnyder
+! Eliminate polymorphic interpolators.  Add arguments to return 1D Etas.
+! Assume Z_Path and Phi_Path are not sorted.  Use template%Phi as radians
+! because Phi_Path is radians.
+!
+! Revision 2.1  2016/12/15 02:44:32  vsnyder
+! Initial commit
+!
+@
+
+
+2.1
+log
+@Renamed from Comp_Eta_DoCalc_Sparse_m
+@
+text
+@d161 1
+a161 1
+       "$Id: Comp_Eta_DoCalc_List_m.f90,v 2.3 2017/03/11 00:51:18 vsnyder Exp $"
+d170 4
+a173 1
+! $Log: Comp_Eta_DoCalc_Sparse_m.f90,v $
+@
+

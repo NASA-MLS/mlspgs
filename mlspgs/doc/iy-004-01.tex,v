@@ -1,0 +1,364 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.12
+	cfm-single-freq-0-1:1.1.0.10
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.8
+	mus-emls-1-70:1.1.0.6
+	rel-1-0-englocks-work:1.1.0.4
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.2
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	M4-00:1.1
+	V3-33:1.1
+	V3-31:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2010.11.22.18.44.45;	author yanovsky;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\section{Unconstrained Minimization}
+
+Vector $\var \in \mathbb{R}^n$:
+\begin{eqnarray*}
+\var = \left[ \begin{array}{c}
+\svar_1 \\
+\svar_2 \\
+\vdots \\
+\svar_n
+\end{array} \right]
+\end{eqnarray*}
+Gradient of $g: \mathbb{R}^n \rightarrow \mathbb{R}$:
+\begin{eqnarray*}
+\nabla g = \left[ \begin{array}{c}
+\frac{\partial g}{\partial \svar_1} \\
+\frac{\partial g}{\partial \svar_2} \\
+\vdots \\
+\frac{\partial g}{\partial \svar_n}
+\end{array} \right]
+\end{eqnarray*}
+Hessian of $g$:
+\begin{eqnarray*}
+\nabla^2 g = 
+\left[ \begin{array}{cccccc}
+\frac{\partial^2 g}{\partial \svar_1 \partial \svar_1} & \frac{\partial^2 g}{\partial \svar_1 \partial \svar_2} & \cdots & \frac{\partial^2 g}{\partial \svar_1 \partial \svar_n} \\
+\frac{\partial^2 g}{\partial \svar_2 \partial \svar_1} & \frac{\partial^2 g}{\partial \svar_2 \partial \svar_2} & \cdots & \frac{\partial^2 g}{\partial \svar_2 \partial \svar_n} \\
+\vdots & \vdots & \ddots & \vdots \\
+\frac{\partial^2 g}{\partial \svar_n \partial \svar_1} & \frac{\partial^2 g}{\partial \svar_n \partial \svar_2} & \cdots & \frac{\partial^2 g}{\partial \svar_n \partial \svar_n}
+\end{array} \right].
+\end{eqnarray*}
+
+
+\subsection{Gradient Descent}
+
+\begin{algorithm}[H]
+  \caption{Gradient Descent}
+  \label{alg:GD}
+  \begin{algorithmic}[1]
+    \STATE Set initial guess $\var$, tolerance $\epsilon > 0$, and maximum number of iterations $K$.
+    \STATE Evaluate $\nabla g(\var)$.
+    \STATE If $||\nabla g(\var)|| \leq \epsilon$, return $\var$.
+    \STATE Set $\vv:=-\nabla g(\var)$.
+    \STATE For $t$ sufficiently small: \\
+    $\var := \var + t\vv$.
+    \STATE If $k < K$, let $k:=k+1$ and go to step 2.
+  \end{algorithmic}
+\end{algorithm}
+
+
+
+\subsection{Newton's Method}
+
+\subsubsection{Newton's Method for Convex Functions}
+
+If $\nabla^2 g(\var)$ is positive definite everywhere, $g(\var)$ can be minimized by solving 
+\begin{equation*}
+\nabla g(\var) = 0
+\end{equation*}
+using Newton's method.
+
+\begin{algorithm}[H]
+  \caption{Newton's Method for Convex Functions}
+  \label{alg:LS_Newton_c}
+  \begin{algorithmic}[1]
+    \STATE Set initial guess $\var$, tolerance $\epsilon > 0$, and maximum number of iterations $K$.
+    \STATE Evaluate $\nabla g(\var)$ and $\nabla^2 g(\var)$.
+    \STATE If $||\nabla g(\var)|| \leq \epsilon$, return $\var$.
+    \STATE Solve $\nabla^2 g(\var) \vv = -\nabla g(\var)$ for $\vv$.
+    \STATE $\var := \var + \vv$.
+    \STATE If $k < K$, let $k:=k+1$ and go to step 2.
+  \end{algorithmic}
+\end{algorithm}
+
+$\vv = -[\nabla^2 g(\var)]^{-1} \nabla g(\var)$ is called the Newton step at $\var$.
+
+
+\subsubsection{Newton's Method for with Backtracking Line Search}
+
+Choose $t$ so that $g(\var+t\vv) < g(\var)$.
+
+\begin{algorithm}[H]
+  \caption{Newton's Method for with Backtracking Line Search}
+  \label{alg:LS_Newton_b}
+  \begin{algorithmic}[1]
+    \STATE Set initial guess $\var$, tolerance $\epsilon > 0$, parameter $\alpha \in (0,1/2)$, and maximum number of iterations $K$.
+    \STATE Evaluate $\nabla g(\var)$ and $\nabla^2 g(\var)$.
+    \STATE If $||\nabla g(\var)|| \leq \epsilon$, return $\var$.
+    \STATE Solve $\nabla^2 g(\var) \vv = -\nabla g(\var)$ for $\vv$.
+    \STATE t:=1 \\
+    While $g(\var+t\vv) > g(\var) + \alpha t \nabla g(\var)^T \vv$, $t:=t/2$.
+    \STATE $\var := \var + t\vv$.
+    \STATE If $k < K$, let $k:=k+1$ and go to step 2.
+  \end{algorithmic}
+\end{algorithm}
+
+
+\subsubsection{Newton's Method for Nonconvex Functions}
+
+If $\nabla^2 g(\var)$ is not positive definite, Newton step might not be a descent direction.
+
+\begin{algorithm}[H]
+  \caption{Newton's Method for Nonconvex Functions}
+  \label{alg:LS_Newton_nc}
+  \begin{algorithmic}[1]
+    \STATE Set initial guess $\var$, tolerance $\epsilon > 0$, parameter $\alpha \in (0,1/2)$, and maximum number of iterations $K$.
+    \STATE Evaluate $\nabla g(\var)$ and $\nabla^2 g(\var)$.
+    \STATE If $||\nabla g(\var)|| \leq \epsilon$, return $\var$.
+    \STATE If $\nabla^2 g(\var)$ is positive definite, solve $\nabla^2 g(\var) \vv = -\nabla g(\var)$ for $\vv$, \\
+    else $\vv:=-\nabla g(\var)$.
+    \STATE t:=1 \\
+    While $g(\var+t\vv) > g(\var) + \alpha t \nabla g(\var)^T \vv$, $t:=t/2$.
+    \STATE $\var := \var + t\vv$.
+    \STATE If $k < K$, let $k:=k+1$ and go to step 2.
+  \end{algorithmic}
+\end{algorithm}
+
+
+\section{Nonlinear Least Squares}
+
+\begin{equation*}
+\mbox{minimize} \ \ \ \sum_{i=1}^m r_i(\var)^2 \ = \ ||\vr(\var)||^2  
+\end{equation*}
+Here, $r_i$ is a {\it nonlinear} function of $\var \in \mathbb{R}^n$.  Vector function $\vr(\var) \in \mathbb{R}^m$ is given as
+\begin{equation}
+\vr(\var) = 
+\left[ \begin{array}{c}
+r_1(\var) \\
+r_2(\var) \\
+\vdots \\
+r_m(\var)
+\end{array} \right],
+\end{equation}
+and the gradient of a vector function $\vr$ is $\nabla \vr \in \mathbb{R}^{n \times m}$ and is given by
+\begin{equation}
+\nabla \vr =
+\left[ \begin{array}{cccc}
+\nabla r_1 & \nabla r_2 & \cdots & \nabla r_m
+\end{array} \right].
+\end{equation}
+The gradient $\nabla \vr$ is the transpose of the Jacobian matrix $D\vr$, $\nabla \vr = D\vr^T$.\footnote{Note that definitions of the gradient of a vector field, and even Jacobian, differ in different texts. In \cite{masoakos03}, both the gradient and the Jacobian matrix take the form of the gradient, as defined here.  In \cite{rod00}, both the gradient and the Jacobian matrix take the form of the Jacobian matrix, as defined here.}  \\
+The problem reduces to linear least squares if $\vr(\var) = A\var - b$.
+
+
+\subsection{Newton's Method for Nonlinear Least Squares}
+
+
+Apply Algorithm \ref{alg:LS_Newton_nc} to
+\begin{eqnarray*}
+g(\var) = \sum_{i=1}^m r_i(\var)^2.
+\end{eqnarray*}
+The first and second derivatives of $g$ are
+\begin{eqnarray*}
+\frac{\partial g}{\partial \svar_k}(\var) &=& 2 \sum_{i=1}^m r_i(\var) \frac{\partial r_i}{\partial \svar_k}(\var), \\
+\frac{\partial^2 g}{\partial \svar_j \partial \svar_k}(\var) &=& 2 \sum_{i=1}^m \bigg( r_i(\var) \frac{\partial^2 r_i}{\partial \svar_j \partial \svar_k}(\var) + \frac{\partial r_i}{\partial \svar_j}(\var) \frac{\partial r_i}{\partial \svar_k}(\var) \bigg).
+\end{eqnarray*}
+
+Hence, the gradient and Hessian of $g$ are
+\begin{eqnarray*}
+\nabla g(\var) &=& 2 \sum_{i=1}^m r_i(\var) \nabla r_i(\var), \\
+\nabla^2 g(\var) &=& 2 \sum_{i=1}^m \big( r_i(\var) \nabla^2 r_i(\var) + \nabla r_i(\var) \nabla r_i(\var)^T \big).
+\end{eqnarray*}
+\ \\
+Note that an expression for $\nabla g(\var)$ above could be written as
+\begin{eqnarray*}
+\nabla g(\var) &=& 2 \nabla \vr(\var) \vr(\var).
+\end{eqnarray*}
+The Hessian of $g$ has a more complicated expression, since it involves a generalization of Hessian for a vector function $\vr$.  Here, $\nabla^2 r_i$ is a Hessian of $r_i$, $1 \leq i \leq m$.  Hessian of $g$ can be expressed as
+\begin{eqnarray*}
+\nabla^2 g(\var) &=& 2 \Big( \nabla \vr(\var) \nabla \vr(\var)^T + \sum_{i=1}^m r_i(\var) \nabla^2 r_i(\var) \Big).
+\end{eqnarray*}
+Hessian of $\vr$ can be thought of as a three-dimensional structure. \\
+\ \\
+Thus, in a positive-definite case, Newton's iteration for nonlinear least squares, from Algorithm \ref{alg:LS_Newton_nc}, can be written as
+\begin{equation}
+\var^{(k+1)} = \var^{(k)} - t \big( \nabla^2 g(\var^{(k)}) \big)^{-1} \nabla g(\var^{(k)}),
+\label{eqn:Newton_iteration}
+\end{equation}
+or
+\begin{equation}
+\var^{(k+1)} = \var^{(k)} - t \Big[ \nabla \vr(\var^{(k)}) \nabla \vr(\var^{(k)})^T + \sum_{i=1}^m r_i(\var^{(k)}) \nabla^2 r_i(\var^{(k)}) \Big]^{-1} \nabla \vr(\var^{(k)}) \vr(\var^{(k)}).
+\end{equation}
+
+
+\subsection{Gauss-Newton Method for Nonlinear Least Squares}
+
+
+Computation of the Hessian matrix $\nabla^2 g(\var)$ is often expensive and, for example, in cases where $g$ is not twice differentiable, is impossible.  In such cases, the matrix $(\nabla^2 g(\var))^{-1}$ is approximated.  The Gauss-Newton method, which applies only to problems of minimizing the sum of squares of real-valued functions, provides an approximation. \\
+Minimize
+\begin{eqnarray*}
+g(\var) = \sum_{i=1}^m r_i(\var)^2.
+\end{eqnarray*}
+At iteration $k$, linearize $r_i(\var)$ around current guess $\var^{(k)}$:
+\begin{eqnarray*}
+r_i(\var) \approx r_i(\var^{(k)}) + \nabla r_i(\var^{(k)})^T (\var - \var^{(k)}). 
+\end{eqnarray*}
+New guess $\var^{(k+1)}$ is the minimizer of
+\begin{eqnarray*}
+\sum_{i=1}^m \Big( r_i(\var^{(k)}) + \nabla r_i(\var^{(k)})^T (\var - \var^{(k)}) \Big)^2.
+\end{eqnarray*}
+To find $\var^{(k+1)}$ from $\var^{(k)}$, solve a linear least-squares problem:
+\begin{eqnarray*}
+\min ||A^{(k)}\var - \vb^{(k)}||^2,
+\end{eqnarray*}
+with
+\begin{eqnarray*}
+A^{(k)} = \left[ \begin{array}{c}
+\nabla r_1(\var^{(k)})^T \\
+\vdots \\
+\nabla r_m(\var^{(k)})^T
+\end{array} \right], \ \ \ \ \ \ \ \ \ \ \ \
+\vb^{(k)} = \left[ \begin{array}{c}  \nabla r_1(\var^{(k)})^T \var^{(k)} - r_1(\var^{(k)}) \\
+\vdots \\
+\nabla r_m(\var^{(k)})^T \var^{(k)} - r_m(\var^{(k)}) \end{array} \right].
+\end{eqnarray*}
+Note that $A^T = \nabla \vr$.
+
+
+\begin{algorithm}[H]
+  \caption{Gauss-Newton Method}
+  \label{alg:LS_GS}
+  \begin{algorithmic}[1]
+    \STATE Set initial guess $\var$, tolerance $\epsilon > 0$, and maximum number of iterations $K$.
+    \STATE Evaluate $r_{i}(\var)$ and $\nabla r_{i}(\var)$, for $i = 1, \ldots, m$, and calculate
+    \begin{equation*}
+    \vr = \left[ \begin{array}{c}
+    r_1(\var) \\
+    \vdots \\
+    r_m(\var)
+    \end{array} \right], \ \ \ \ \ \ \ \ \ \ \ \ A = \left[ \begin{array}{c}
+    \nabla r_1(\var)^T \\
+    \vdots \\
+    \nabla r_m(\var)^T
+    \end{array} \right], \ \ \ \ \ \ \ \ \ \ \ \  \vb = A\var - \vr.
+    \end{equation*}
+    \STATE If $||2A^T \vr|| \leq \epsilon$, return $\var$.
+    \STATE Calculate $\var = (A^T A)^{-1} A^T \vb$.
+    \STATE If $k < K$, let $k:=k+1$ and go to step 2.
+  \end{algorithmic}
+\end{algorithm}
+In step 3, note that $2A^T \vr = 2 \nabla \vr(\var) \vr(\var) = \nabla g(\var)$.  Here, $\nabla \vr = [\nabla r_1 \ \nabla r_2 \ \cdots \ \nabla r_m] \in \mathbb{R}^{n \times m}$.
+
+\ \\
+Note that Gauss-Newton iteration in step 4 can be written as: \\
+ $\var \ := \ (A^T A)^{-1} A^T \vb \ = \ (A^T A)^{-1} A^T (A\var - \vr) \ = \ \var - (A^T A)^{-1} A^T \vr$.
+
+\begin{algorithm}[H]
+  \caption{Gauss-Newton Method with Backtracking}
+  \label{alg:LS_GS_b}
+  \begin{algorithmic}[1]
+    \STATE Set initial guess $\var$, tolerance $\epsilon > 0$, parameter $\alpha \in (0,1/2)$ and maximum number of iterations $K$.
+    \STATE Evaluate $r_{i}(\var)$ and $\nabla r_{i}(\var)$, for $i = 1, \ldots, m$, and calculate
+    \begin{equation*}
+    \vr = \left[ \begin{array}{c}
+    r_1(\var) \\
+    \vdots \\
+    r_m(\var)
+    \end{array} \right], \ \ \ \ \ \ \ \ \ \ \ \ A = \left[ \begin{array}{c}
+    \nabla r_1(\var)^T \\
+    \vdots \\
+    \nabla r_m(\var)^T
+    \end{array} \right].
+    \end{equation*}
+    \STATE If $||2A^T \vr|| \leq \epsilon$, return $\var$.
+    \STATE Calculate $\vv = -(A^T A)^{-1} A^T \vr$.
+    \STATE $t:=1$ \\
+    While $\sum_{i=1}^m r_i(\var+t\vv)^2 > ||\vr||^2 + \alpha(2\vr^T A \vv)t$, \ $t:=t/2$.
+    \STATE $\var := \var + t\vv$.
+    \STATE If $k < K$, let $k:=k+1$ and go to step 2.
+  \end{algorithmic}
+\end{algorithm}
+
+Hence, Gauss-Newton iteration, from Algorithm \ref{alg:LS_GS_b}, can be written as
+\begin{equation}
+\var := \var - t(A^T A)^{-1} A^T \vr,
+\end{equation}
+or
+\begin{equation}
+\var^{(k+1)} = \var^{(k)} - t \big[ \nabla \vr(\var^{(k)}) \nabla \vr(\var^{(k)})^T \big]^{-1} \nabla \vr(\var^{(k)}) \vr(\var^{(k)}).
+\end{equation}
+\ \\
+Gauss-Newton method, therefore, can be thought of as a modified Newton's method, where $\nabla^2 g(\var)$ in Equation (\ref{eqn:Newton_iteration}) is approximated by $H = \nabla \vr(\var^{(k)}) \nabla \vr(\var^{(k)})^T$.
+
+
+\subsection{Levenberg-Marquardt Method for Nonlinear Least Squares}
+
+Both Newton's and Gauss-Newton's methods will find the minimum of a quadratic cost function in one step, and will get close for a nearly quadratic cost function.  However, if the solution is far from the current iteration point, the iteration may increase, rather than decrease the residual.
+\begin{algorithm}[H]
+  \caption{Levenberg-Marquardt Method}
+  \label{alg:LS_GS}
+  \begin{algorithmic}[1]
+    \STATE Set initial guess $\var$, tolerance $\epsilon > 0$, $\gamma_0 > 0$, and maximum number of iterations $K$.
+    \STATE Evaluate $r_{i}(\var)$ and $\nabla r_{i}(\var)$, for $i = 1, \ldots, m$, and calculate
+    \begin{equation*}
+    \vr = \left[ \begin{array}{c}
+    r_1(\var) \\
+    \vdots \\
+    r_m(\var)
+    \end{array} \right], \ \ \ \ \ \ \ \ \ \ \ \ A = \left[ \begin{array}{c}
+    \nabla r_1(\var)^T \\
+    \vdots \\
+    \nabla r_m(\var)^T
+    \end{array} \right], \ \ \ \ \ \ \ \ \ \ \ \  \vb = A\var - \vr.
+    \end{equation*}
+    \STATE If $||2A^T \vr|| \leq \epsilon$, return $\var$.
+    \STATE Set $\gamma = \gamma_0$.
+    \STATE Calculate $\var = (A^T A + \gamma I)^{-1} A^T \vb$. \\
+    \STATE If $||\nabla g(\vx)|| = ||2A^T \vr||$ increased, set $\gamma:=2\gamma$, go to step 5.
+    \STATE If $k < K$, let $k:=k+1$ and go to step 2.
+  \end{algorithmic}
+\end{algorithm}
+
+This document uses the notations from and is partially based on \cite{vanEE103}.
+
+
+@

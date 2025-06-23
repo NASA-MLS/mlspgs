@@ -1,0 +1,211 @@
+head	2.7;
+access;
+symbols
+	v5-02-NRT-19:2.7
+	v6-00:2.7
+	v5-02-NRT-18:2.7
+	v5-02:2.7
+	v5-01-NRT-17:2.7
+	v5-01-NRT-16:2.7
+	v5-01-NRT-15:2.7
+	v5-01-NRT-14:2.7
+	neuralnetworks-1-0:2.7.0.10
+	cfm-single-freq-0-1:2.7.0.8
+	v5-01:2.7
+	v5-00:2.7
+	v4-23-TA133:2.7.0.6
+	mus-emls-1-70:2.7.0.4
+	rel-1-0-englocks-work:2.7.0.2
+	VUMLS1-00:2.5;
+locks; strict;
+comment	@# @;
+
+
+2.7
+date	2017.11.28.23.12.16;	author vsnyder;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2017.08.28.20.27.47;	author livesey;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2017.02.04.02.02.53;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2017.01.14.01.47.56;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2017.01.11.23.42.18;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2016.12.15.18.45.09;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2016.11.23.20.12.04;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.7
+log
+@Add Offset argument in Dump_Value_1D_List
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! subroutine Dump_Value_1D_List* ( Value, Name, Format )
+
+!     type(value_1D_list_t(rk)), intent(in) :: Value(:)
+!     type(value_1D_list_t), intent(in) :: Value(:)
+!     character(len=*), intent(in), optional :: Name
+
+    integer :: Col, I, J
+    character(len=64) :: MyFormat
+    myFormat = sdFormatDefault
+    if ( present(format) ) myFormat = format
+
+    if ( present(name) ) call output ( name, advance='yes' )
+
+    do i = 1, size(value)
+      if ( value(i)%n == 0 ) cycle
+!       if ( all(value(i)%v%n == 0) ) cycle
+      call output ( i, places=4, after='# ' )
+      do j = 1, value(i)%n
+        col = value(i)%v(j)%j
+        if ( present(offset) ) col = col + offset
+        call output ( col, places=4, after=': ' )
+        call output ( value(i)%v(j)%v, format=myFormat )
+      end do
+      call newLine
+    end do
+
+! $Log: Dump_Value_1D_List.f9h,v $
+! Revision 2.6  2017/08/28 20:27:47  livesey
+! Changed the n,nf,np,nz elements to j,jf,...
+!
+! Revision 2.5  2017/02/04 02:02:53  vsnyder
+! Print an element with all zero values so one can spot bugs that shouldn't
+! have kept them.
+!
+! Revision 2.4  2017/01/14 01:47:56  vsnyder
+! Add Format argument
+!
+! Revision 2.3  2017/01/11 23:42:18  vsnyder
+! Don't print empty elements
+!
+! Revision 2.2  2016/12/15 18:45:09  vsnyder
+! Move argument declarations from includes to Indexed_Values
+!
+! Revision 2.1  2016/11/23 20:12:04  vsnyder
+! Initial commit
+!
+@
+
+
+2.6
+log
+@Changed the n,nf,np,nz elements to j,jf,...
+@
+text
+@d18 1
+a18 1
+    integer :: I, J
+d30 3
+a32 1
+        call output ( value(i)%v(j)%j, places=4, after=': ' )
+d39 3
+@
+
+
+2.5
+log
+@Print an element with all zero values so one can spot bugs that shouldn't
+have kept them.
+@
+text
+@d30 1
+a30 1
+        call output ( value(i)%v(j)%n, places=4, after=': ' )
+d37 4
+@
+
+
+2.4
+log
+@Add Format argument
+@
+text
+@d27 1
+a27 1
+      if ( all(value(i)%v%n == 0) ) cycle
+d37 3
+@
+
+
+2.3
+log
+@Don't print empty elements
+@
+text
+@d12 1
+a12 1
+! subroutine Dump_Value_1D_List* ( Value, Name )
+d19 3
+d31 1
+a31 1
+        call output ( value(i)%v(j)%v, format='(1pg14.6)' )
+d37 3
+@
+
+
+2.2
+log
+@Move argument declarations from includes to Indexed_Values
+@
+text
+@d23 2
+d28 1
+a28 1
+        call output ( value(i)%v(j)%v )
+d34 3
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d15 2
+a16 2
+    type(value_1D_list_t), intent(in) :: Value(:)
+    character(len=*), intent(in), optional :: Name
+d31 4
+a34 1
+! $Log: $
+@
+

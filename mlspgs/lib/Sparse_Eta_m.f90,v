@@ -1,0 +1,1128 @@
+head	2.14;
+access;
+symbols
+	v5-02-NRT-19:2.14
+	v6-00:2.14
+	v5-02-NRT-18:2.14
+	v5-02:2.13
+	v5-01-NRT-17:2.14
+	v5-01-NRT-16:2.14
+	v5-01-NRT-15:2.14
+	v5-01-NRT-14:2.14
+	neuralnetworks-1-0:2.14.0.4
+	cfm-single-freq-0-1:2.14.0.2
+	v5-01:2.13
+	v5-00:2.13
+	v4-23-TA133:2.12.0.2
+	mus-emls-1-70:2.6.0.2
+	rel-1-0-englocks-work:2.3.0.2;
+locks; strict;
+comment	@# @;
+
+
+2.14
+date	2020.05.07.21.27.15;	author vsnyder;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2019.05.07.20.06.53;	author vsnyder;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2018.12.04.02.42.11;	author vsnyder;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2018.10.26.02.52.59;	author vsnyder;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2018.10.23.20.44.38;	author vsnyder;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2018.10.11.00.32.26;	author vsnyder;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2018.09.05.21.01.30;	author vsnyder;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2018.08.20.23.40.03;	author vsnyder;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2018.05.24.03.21.43;	author vsnyder;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2018.05.17.02.16.48;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2018.04.11.19.30.29;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2018.03.07.00.21.19;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2017.11.29.00.33.39;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2017.11.01.18.52.11;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.14
+log
+@Add Basis1, BasisN to control range of applicability
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Sparse_Eta_m
+
+! Compute interpolation coefficients in a Sparse_Eta_t matrix
+
+  use MLSKinds, only: RP
+  use Sparse_m, only: Sparse_t
+
+  implicit NONE
+
+  private
+  public :: Sparse_Eta_t
+
+  type, extends(sparse_t) :: Sparse_Eta_t
+    ! No new components
+  contains
+    procedure, pass(eta) :: Eta_0D => Sparse_Eta_0D
+    procedure, pass(eta) :: Eta_1D => Sparse_Eta_1D
+    procedure, pass(p) :: Eta_nD => Sparse_Eta_nD
+    procedure, pass(eta) :: Eta_QTM => Sparse_Eta_QTM
+    generic :: Eta => Eta_0D, Eta_1D, Eta_nD, Eta_QTM
+  end type Sparse_Eta_t
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: Sparse_Eta_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  subroutine Sparse_Eta_0D ( Basis, Grid, Eta, What, Create, Resize )
+
+    ! Compute Eta for linear interpolation from 1D Basis to a single point.
+    use Allocate_Deallocate, only: Test_Allocate
+    use Pure_Hunt_m, only: PureHunt
+
+    real(rp), intent(in) :: Basis(:)
+    real(rp), intent(in) :: Grid
+    class(sparse_eta_t), intent(inout) :: Eta ! Might not be created here
+    integer, intent(in), optional :: What     ! String index for dumps
+    logical, intent(in), optional :: Create   ! Force Eta to be created, default
+                                              ! false.  Eta is created anyway if
+                                              ! rows or cols are not allocated
+                                              ! or the wrong sizes.
+    logical, intent(in), optional :: Resize   ! Re-size Eta%E to Eta%NE --
+                                              ! default false
+
+    real(rp) :: Del_Basis
+    integer :: JLO, JHI
+    character(127) :: Msg
+    logical :: MyCreate
+    integer :: N_Basis
+    integer :: Stat
+    real(rp) :: V   ! Value of coefficient
+
+    n_basis = size(basis)
+ 
+    myCreate = .false.
+    if ( present(create) ) myCreate = create
+
+    if ( allocated(eta%rows) .and. allocated(eta%cols) ) then
+      if ( size(eta%rows) < 1 .or. size(eta%cols) /= n_basis ) &
+        & myCreate = .true.
+    else
+      myCreate = .true.
+    end if
+
+    if ( myCreate ) then
+      call eta%create ( 1, n_basis, 2, what=what )
+    else if ( .not. allocated(eta%e) ) then
+      allocate ( eta%e(2), stat=stat, errmsg=msg )
+      call test_allocate ( stat, moduleName, "Sparse%E", ermsg=msg )
+    end if
+
+    eta%nRows = 1
+
+    if ( grid <= basis(1) ) then
+      ! Coefficient below Basis(1) is 1.0
+      call eta%add_element ( 1.0_rp, 1, 1 )
+    else if ( grid >= basis(n_basis) ) then
+      ! Coefficient above Basis(n_basis) is 1.0
+      call eta%add_element ( 1.0_rp, 1, n_basis )
+    else
+      call purehunt ( grid, basis, n_basis, jlo, jhi )
+      ! Assume Basis is increasing.  Basis(JLO) <= Grid <= Basis(JHI) here.
+      jhi = jlo + 1 ! In case PureHunt returned JHI == JLO
+      ! "Hat" function between Basis(JLO) and Basis(JHI)
+      del_basis = 1.0_rp / ( basis(jhi) - basis(jlo) )
+      v = ( basis(jhi)-grid ) * del_basis
+      if ( v /= 0 ) call eta%add_element ( v, 1, jlo )
+      v = (grid-basis(jlo)) * del_basis
+      if ( v /= 0 ) call eta%add_element ( v, 1, jhi )
+    end if
+
+    if ( present(resize) ) then
+      if ( resize ) call eta%resize
+    end if
+
+  end subroutine Sparse_Eta_0D
+
+  subroutine Sparse_Eta_1D ( Basis, Grid, Eta, What, Row1, Rown, Create, &
+                           & Empty, Sorted, Resize, Basis1, BasisN )
+
+    ! Compute Eta for linear interpolation from 1D Basis to 1D Grid.
+    use Allocate_Deallocate, only: Test_Allocate
+
+    real(rp), intent(in) :: Basis(:)
+    real(rp), intent(in) :: Grid(:)
+    class(sparse_eta_t), intent(inout) :: Eta ! Might not be created here
+    integer, intent(in), optional :: What     ! String index for dumps
+    integer, intent(in), optional :: Row1, RowN ! Part of Grid to use,
+                                              ! default all
+    logical, intent(in), optional :: Create   ! Force Eta to be created, default
+                                              ! false.  Eta is created anyway if
+                                              ! rows or cols are not allocated
+                                              ! or the wrong sizes.
+    logical, intent(in), optional :: Empty    ! Make Eta empty before starting,
+                                              ! default false.  If absent or
+                                              ! false, add new ones.  Not quite
+                                              ! as traumatic as Create=.true.
+    logical, intent(in), optional :: Sorted   ! "Grid is sorted" -- default true
+    logical, intent(in), optional :: Resize   ! Re-size Eta%E to Eta%NE --
+                                              ! default false
+    integer, intent(in), optional :: Basis1, BasisN ! Part of Basis to use,
+                                              ! default all
+
+    logical, parameter :: CheckSorted = .false. ! Check whether Grid is sorted
+
+    real(rp) :: Del_Basis
+    integer :: I, J
+    character(127) :: Msg
+    integer :: MyBasis1, MyBasisN
+    logical :: MyCreate
+    integer :: MyRow1, MyRowN
+    logical :: MySorted
+    integer :: N_Basis, N_Grid
+    integer :: PR   ! Previous row, to avoid creating duplicates
+    integer :: Stat
+    real(rp) :: V   ! Value of coefficient
+
+    mySorted = .true.
+    if ( present(sorted) ) mySorted = sorted
+
+    n_basis = size(basis)
+    n_grid = size(grid)
+ 
+    myCreate = .false.
+    if ( present(create) ) myCreate = create
+
+    if ( present(empty) ) then
+      if ( empty ) call eta%empty
+    end if
+
+    if ( allocated(eta%rows) .and. allocated(eta%cols) ) then
+      if ( size(eta%rows) < n_grid .or. size(eta%cols) /= n_basis ) &
+        & myCreate = .true.
+    else
+      myCreate = .true.
+    end if
+
+    if ( myCreate ) then
+      call eta%create ( n_grid, n_basis, 2*n_grid, what=what )
+    else if ( .not. allocated(eta%e) ) then
+      allocate ( eta%e(2*n_grid), stat=stat, errmsg=msg )
+      call test_allocate ( stat, moduleName, "Sparse%E", ermsg=msg )
+      eta%ne = 0
+    end if
+
+    eta%nRows = n_grid
+    if ( present(row1) ) eta%nRows = row1
+    if ( present(rowN) ) eta%nRows = rowN
+
+    myRow1 = 1
+    myRowN = n_grid
+    if ( present(row1) ) myRow1 = min(row1,n_grid)
+    if ( present(rowN) ) myRowN = min(rowN,n_grid)
+
+    myBasis1 = 1
+    myBasisN = n_basis
+    if ( present(basis1) ) myBasis1 = basis1
+    if ( present(basisN) ) myBasisN = basisN
+
+    pr = 0 ! Make sure first row is not believed to be a duplicate
+
+    if ( mySorted ) then
+      if ( grid(myRow1) > grid(myRowN) ) then ! Grid is in the opposite order
+        i = myRow1
+        myRow1 = myRowN
+        myRowN = i
+      end if
+
+      if ( checkSorted ) then
+        block
+          use Dump_0, only: Dump
+          use MLSMessageModule, only: MLSMessage, MLSMSG_Crash
+          use Output_m, only: Output
+          j = sign(1,myRowN-myRow1)
+          do i = myRow1, myRowN-j, j
+            if ( grid(i) > grid(i+j) ) then
+              call dump ( grid(min(myRow1,myRowN):max(myRow1,myRowN)), 'Grid', &
+                & lBound=min(myRow1,myRowN) )
+              call output ( i, before='Grid(' )
+              call output ( grid(i), before=' ) = ' )
+              call output ( i+j, before=' < Grid(' )
+              call output ( grid(i+j), before=' ) = ', advance='yes' )
+              call MLSMessage ( MLSMSG_Crash, moduleName, &
+                & "You lied!  Grid is claimed to be sorted, but it isn't" )
+            end if
+          end do
+        end block
+      end if
+
+      if ( myRow1 <= myRowN ) then ! Process grid in increasing order
+        ! Coefficients below Basis(myBasis1) are all 1.0
+        do i = myRow1, myRowN
+          if ( grid(i) > basis(myBasis1) ) exit
+          call eta%add_element ( 1.0_rp, i, 1 )
+          pr = i
+        end do
+        ! Coefficients between Basis(1) and Basis(n_basis) are "hat" functions
+        do j = myBasis1+1, myBasisN
+          del_basis = 1.0_rp / ( basis(j) - basis(j-1) )
+          do while ( i <= myRowN )
+            if ( grid(i) > basis(j) ) exit
+            if ( basis(j-1) < grid(i) .and. i /= pr ) then
+              v = ( basis(j)-grid(i) ) * del_basis
+              if ( v /= 0 ) call eta%add_element ( v, i, j-1 )
+              v = (grid(i)-basis(j-1)) * del_basis
+              if ( v /= 0 ) call eta%add_element ( v, i, j )
+            end if
+            pr = i
+            i = i + 1
+          end do
+        end do
+        ! Coefficients above Basis(myBasisN) are all 1.0
+        do i = myRowN, i, -1
+          ! I think ">" ought to be ">=" to avoid duplicates, but it somehow
+          ! sometimes neglects to do one, so we check for duplicates.
+          if ( basis(myBasisN) > grid(i) ) exit
+          if ( i /= pr ) call eta%add_element ( 1.0_rp, i, n_basis )
+        end do
+      else ! Process grid in decreasing order
+        ! Coefficients below Basis(1) are all 1.0
+        do i = myRow1, myRowN, -1
+          if ( grid(i) > basis(myBasis1) ) exit
+          call eta%add_element ( 1.0_rp, i, 1 )
+          pr = i
+        end do
+        ! Coefficients between Basis(1) and Basis(n_basis) are "hat" functions
+        do j = myBasis1+1, myBasisN
+          del_basis = 1.0_rp / ( basis(j) - basis(j-1) )
+          do while ( i >= myRowN )
+            if ( grid(i) > basis(j) ) exit
+            if ( basis(j-1) < grid(i) .and. i /= pr ) then
+              v = ( basis(j)-grid(i) ) * del_basis
+              if ( v /= 0 ) call eta%add_element ( v, i, j-1 )
+              v = (grid(i)-basis(j-1)) * del_basis
+              if ( v /= 0 ) call eta%add_element ( v, i, j )
+            end if
+            pr = i
+            i = i - 1
+          end do
+        end do
+        ! Coefficients above Basis(n_basis) are all 1.0
+        do i = myRowN, i
+          ! I think ">" ought to be ">=" to avoid duplicates, but it somehow
+          ! sometimes neglects to do one, so we check for duplicates.
+          if ( basis(myBasisN) > grid(i) ) exit
+          if ( i /= pr ) call eta%add_element ( 1.0_rp, i, n_basis )
+          pr = i
+        end do
+      end if
+    else ! Grid needs to be sorted
+      block
+        use Sort_m, only: SortP
+        integer :: P(n_grid)
+        integer :: Pi ! p(i)
+        call sortp ( grid, 1, n_grid, p ) ! grid(p(:)) are now sorted
+        ! Coefficients below Basis(1) are all 1.0
+        do i = myRow1, myRowN
+          pi = p(i)
+          if ( grid(pi) > basis(myBasis1) ) exit
+          call eta%add_element ( 1.0_rp, pi, 1 )
+          pr = i
+        end do
+        ! Coefficients between basis(1) and Basis(n_basis) are "hat" functions
+        do j = myBasis1+1, myBasisN
+          del_basis = 1.0_rp / ( basis(j) - basis(j-1) )
+          do while ( i <= myRowN )
+            pi = p(i)
+            if ( grid(pi) > basis(j) ) exit
+            if ( basis(j-1) < grid(pi) .and. i /= pr ) then
+              v = ( basis(j)-grid(pi) ) * del_basis
+              if ( v /= 0 ) call eta%add_element ( v, pi, j-1 )
+              v = (grid(pi)-basis(j-1)) * del_basis
+              if ( v /= 0 ) call eta%add_element ( v, pi, j )
+            end if
+            pr = i
+            i = i + 1
+          end do
+        end do
+        ! Coefficients above Basis(n_basis) are all 1.0
+        do i = myRowN, i, -1
+          pi = p(i)
+          ! I think ">" ought to be ">=" to avoid duplicates, but it somehow
+          ! sometimes neglects to do one, so we check for duplicates.
+          if ( basis(myBasisN) > grid(pi) ) exit
+          if ( i /= pr ) call eta%add_element ( 1.0_rp, pi, n_basis )
+          pr = i
+        end do
+      end block
+    end if
+
+    if ( present(resize) ) then
+      if ( resize ) call eta%resize
+    end if
+
+  end subroutine Sparse_Eta_1D
+
+  subroutine Sparse_Eta_QTM ( Basis, Lon, GeodLat, Eta, What, Row1, Rown, &
+                            & Create, Empty, Resize )
+
+    ! Compute interpolation coefficients from a QTM Basis to a 2D Grid
+    ! represented by longitude and latitude.  The latitude can be geodetic or
+    ! geocentric, which will get the wrong answer if Basis and Grid differ.
+
+    use Allocate_Deallocate, only: Test_Allocate
+    use Generate_QTM_m, only: QTM_Tree_t
+    use Geolocation_0, only: H_Geod
+    use QTM_m, only: Stack_t
+    use QuantityTemplates, only: RT
+    use Triangle_Interpolate_m, only: Triangle_Interpolate
+
+    type (QTM_Tree_t), intent(in) :: Basis
+    real (rt), intent(in) :: Lon(:)     ! Degrees
+    real (rt), intent(in) :: GeodLat(:) ! Degrees, same size as Lon
+    class(sparse_eta_t), intent(inout) :: Eta ! Might not be created here
+    integer, intent(in), optional :: What     ! String index for dumps
+    integer, intent(in), optional :: Row1, RowN ! Part of Grid to use,
+                                              ! default all
+    logical, intent(in), optional :: Create   ! Force Eta to be created, default
+                                              ! false.  Eta is created anyway if
+                                              ! rows or cols are not allocated
+                                              ! or the wrong sizes.
+    logical, intent(in), optional :: Empty    ! Make Eta empty before starting,
+                                              ! default false.  If absent or
+                                              ! false, add new ones.  Not quite
+                                              ! as traumatic as Create=.true.
+    logical, intent(in), optional :: Resize   ! Re-size Eta%E to Eta%NE --
+                                              ! default false
+
+    integer :: Facet       ! Facet index in Basis
+    type (h_geod) :: Geod  ! One Lon and GeodLat
+    integer :: I           ! Index in Lon and GeodLat
+    integer :: J           ! Indices of vertices within Facet
+    character(127) :: Msg
+    logical :: MyCreate
+    integer :: MyRow1, MyRowN
+    integer :: N_Basis, N_Grid
+    type(stack_t) :: Stack ! To make QTM searches faster
+    integer :: Stat
+    real(rp) :: W(3)       ! Barycentric interpolation weights
+
+    n_basis = basis%n_in   ! Vertices within or adjacent to the polygon
+    n_grid = size(lon)
+
+    myCreate = .false.
+    if ( present(create) ) myCreate = create
+
+    if ( present(empty) ) then
+      if ( empty ) call eta%empty
+    end if
+
+    if ( allocated(eta%rows) .and. allocated(eta%cols) ) then
+      if ( size(eta%rows) < n_grid .or. size(eta%cols) /= n_basis ) &
+        & myCreate = .true.
+    else
+      myCreate = .true.
+    end if
+
+    if ( myCreate ) then
+      call eta%create ( n_grid, n_basis, 2*n_grid, what=what )
+    else if ( .not. allocated(eta%e) ) then
+      allocate ( eta%e(2*n_grid), stat=stat, errmsg=msg )
+      call test_allocate ( stat, moduleName, "Sparse%E", ermsg=msg )
+    end if
+
+    do i = 1, n_grid
+      geod%lon%d = lon(i)   ! h_geod components have different kind, so the
+      geod%lat = geodLat(i) !   h_geod() constructor cannot be used.
+      facet = basis%find_facet ( geod, stack )
+      if ( facet /= 0 ) then ! No interpolation coefficient outside the QTM
+        call triangle_interpolate ( basis%Q(facet)%geo%lon%d, &
+                                  & basis%Q(facet)%geo%lat, &
+                                  & lon(i), geodLat(i), w )
+        do j = 1, 3
+          call eta%add_element ( w(j), i, basis%Q(facet)%ser(j) )
+        end do
+      end if
+    end do
+
+  end subroutine Sparse_Eta_QTM
+
+  subroutine Sparse_Eta_nD ( L, R, P, What, Resize, One_Row_OK, Flags )
+
+    ! Compute P as the product of L and R, e.g. Freq and Zeta x Phi, for
+    ! linear interpolation from an nD Basis (e.g. Freq x Zeta x Phi, to 1D
+    ! Grid, e.g. line-of-sight).
+
+    use MLSMessageModule, only: MLSMessage, MLSMsg_Error
+    use MoreMessage, only: MLSMessage
+
+    class(sparse_eta_t), intent(in) :: L    ! Assume it's been created
+    class(sparse_eta_t), intent(in) :: R    ! Assume it's been created
+    class(sparse_eta_t), intent(out) :: P   ! Created here
+    integer, intent(in), optional :: What   ! String index
+    logical, intent(in), optional :: Resize ! Re-size Eta%E to Eta%NE
+    logical, intent(in), optional :: One_Row_OK ! OK if L has only one row,
+                                            ! e.g., for Frequency.  Apply that
+                                            ! row of L to every row of R.
+    logical, intent(in), optional :: Flags(:)   ! Don't produce elements of P
+                                            ! in columns for which Flags is false
+
+    integer :: Col     ! Column index to put into P%E(j)%C
+    integer :: I       ! Row index
+    integer :: J, K    ! Column indices
+    integer :: FL, FR  ! Index of final column in row of left, right factors
+    integer :: M       ! Column dimension of L
+    logical :: OK      ! One_Row_OK, default false
+    integer :: LR, LRI ! L row index, increment
+    real(rp) :: V      ! L(i,j) * R(i,k)
+
+    ok = .false.
+    if ( present(one_row_ok) ) ok = one_row_ok
+    lri = 1            ! Increment row for L
+    if ( ok .and. ( l%nRows == 1 .or. size(l%rows) == 1 ) ) then
+      lri = 0          ! Don't increment row for L
+    else if ( l%nRows /= 0 .and. r%nRows /= 0 ) then
+      if ( l%nRows /= r%nRows ) &
+      & call MLSMessage ( MLSMsg_Error, moduleName, &
+        & "L(%d) and R(%d) in Sparse_Eta_nD have different numbers of useful rows", &
+        & [ l%nRows, r%nRows ] )
+      p%nRows = l%nRows
+    else if ( size(l%rows) /= size(r%rows) ) then
+      call MLSMessage ( MLSMsg_Error, moduleName, &
+        & "L(%d) and R(%d) in Sparse_Eta_nD have different row dimension extents", &
+        & [ size(l%rows), size(r%rows) ] )
+    end if
+
+    call p%create ( size(r%rows), size(l%cols)*size(r%cols), 4*size(r%rows), &
+                  & ubnd=[ l%ubnd, r%ubnd ], &
+                  & lbnd=[ l%lbnd, r%lbnd ], what=what )
+
+    m = size(l%cols)
+
+    ! Compute the column elements of P in each row as the outer product of
+    ! all elements of L in that row (or its only row) with all elements of R
+    ! in that row.
+    lr = 1
+    do i = 1, r%nRows
+      fr = r%rows(i)
+      if ( l%rows(lr) /= 0 .and. fr /= 0 ) then ! Don't include empty row
+        k = r%e(fr)%nr ! First element of R in row I
+        if ( k /= 0 ) then
+          do
+            fl = l%rows(lr)
+            j = l%e(fl)%nr       ! First element of L in row LR
+            if ( j /= 0 ) then
+              do
+                col = m*(r%e(k)%c-1) + l%e(j)%c
+                v = 0
+                if ( present(flags) ) then
+                  if ( flags(col) ) v = l%e(j)%v * r%e(k)%v
+                else
+                  v = l%e(j)%v * r%e(k)%v
+                end if
+                if ( v /= 0.0 ) call p%add_element ( v, i, col )
+                j = l%e(j)%nr             ! Next element of L in row LR
+                if ( j == l%e(fl)%nr ) exit ! Back to the first element?
+              end do
+            end if
+            k = r%e(k)%nr               ! Next element of R in row I
+            if ( k == r%e(fr)%nr ) exit ! Back to the first element?
+          end do
+        end if
+      end if
+      lr = lr + lri
+    end do ! rows
+    p%nRows = r%nRows
+
+    if ( present(resize) ) then
+      if ( resize ) call p%resize
+    end if
+
+  end subroutine Sparse_Eta_nD
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: Sparse_Eta_m.f90,v 2.13 2019/05/07 20:06:53 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Sparse_Eta_m
+
+! $Log: Sparse_Eta_m.f90,v $
+! Revision 2.13  2019/05/07 20:06:53  vsnyder
+! Set NE=0 if Eta%E is allocated here when .not. myCreate
+!
+! Revision 2.12  2018/12/04 02:42:11  vsnyder
+! Add Sparse_Eta_QTM
+!
+! Revision 2.11  2018/10/26 02:52:59  vsnyder
+! Add Empty optional argument to Sparse_Eta_1D
+!
+! Revision 2.10  2018/10/23 20:44:38  vsnyder
+! Make sure PR is defined everywhere in Sparse_Eta_1D
+!
+! Revision 2.9  2018/10/11 00:32:26  vsnyder
+! Give PR a value in the loop wherein the grid and basis are within ranges.
+! Otherwise, I might be compared to an unitialized value, and skip a row.
+!
+! Revision 2.8  2018/09/05 21:01:30  vsnyder
+! Correct off-by-one error that only occurs if basis is in descending order
+! and the grid does not extend beyond the bases.
+!
+! Revision 2.7  2018/08/20 23:40:03  vsnyder
+! Correct error in the case that the grid needs to be sorted
+!
+! Revision 2.6  2018/05/24 03:21:43  vsnyder
+! Add flags to allow saying 'don\'t bother with this column'
+!
+! Revision 2.5  2018/05/17 02:16:48  vsnyder
+! Add Sparse_Eta_0D
+!
+! Revision 2.4  2018/04/11 19:30:29  vsnyder
+! Call p%resize without argument. Repair some comments
+!
+! Revision 2.3  2018/03/07 00:21:19  vsnyder
+! Don't make names of procedures that are type-bound public.  Add Eta generic
+! for Sparse_Eta_1D and Sparse_Eta_nD.  Allow the left factor in Sparse_Eta_nD
+! to have only one row.
+!
+! Revision 2.2  2017/11/29 00:33:39  vsnyder
+! Add Sparse_Eta_t as extension of Sparse_t.  Make Eta_1D and Eta_nD type-
+! bound to Sparse_Eta_t.  Better criteria to create.  Ad hoc hand waving
+! to avoid creating duplicates.  Correct bugs in Eta_nD.
+!
+! Revision 2.1  2017/11/01 18:52:11  vsnyder
+! Initial commit
+!
+@
+
+
+2.13
+log
+@Set NE=0 if Eta%E is allocated here when .not. myCreate
+@
+text
+@d113 1
+a113 1
+                           & Empty, Sorted, Resize )
+d135 2
+d143 1
+d189 5
+d225 1
+a225 1
+        ! Coefficients below Basis(1) are all 1.0
+d227 1
+a227 1
+          if ( grid(i) > basis(1) ) exit
+d232 1
+a232 1
+        do j = 2, n_basis
+d246 1
+a246 1
+        ! Coefficients above Basis(n_basis) are all 1.0
+d250 1
+a250 1
+          if ( basis(n_basis) > grid(i) ) exit
+d256 1
+a256 1
+          if ( grid(i) > basis(1) ) exit
+d261 1
+a261 1
+        do j = 2, n_basis
+d279 1
+a279 1
+          if ( basis(n_basis) > grid(i) ) exit
+d293 1
+a293 1
+          if ( grid(pi) > basis(1) ) exit
+d298 1
+a298 1
+        do j = 2, n_basis
+d318 1
+a318 1
+          if ( basis(n_basis) > grid(pi) ) exit
+d511 1
+a511 1
+       "$Id: Sparse_Eta_m.f90,v 2.12 2018/12/04 02:42:11 vsnyder Exp $"
+d521 3
+@
+
+
+2.12
+log
+@Add Sparse_Eta_QTM
+@
+text
+@d174 1
+d503 1
+a503 1
+       "$Id: Sparse_Eta_m.f90,v 2.11 2018/10/26 02:52:59 vsnyder Exp $"
+d513 3
+@
+
+
+2.11
+log
+@Add Empty optional argument to Sparse_Eta_1D
+@
+text
+@d30 2
+a31 1
+    generic :: Eta => Eta_0D, Eta_1D, Eta_nD
+d322 84
+d502 1
+a502 1
+       "$Id: Sparse_Eta_m.f90,v 2.10 2018/10/23 20:44:38 vsnyder Exp $"
+d512 3
+@
+
+
+2.10
+log
+@Make sure PR is defined everywhere in Sparse_Eta_1D
+@
+text
+@d112 1
+a112 1
+                           & Sorted, Resize )
+d127 4
+d157 4
+d417 1
+a417 1
+       "$Id: Sparse_Eta_m.f90,v 2.9 2018/10/11 00:32:26 vsnyder Exp $"
+d427 3
+@
+
+
+2.9
+log
+@Give PR a value in the loop wherein the grid and basis are within ranges.
+Otherwise, I might be compared to an unitialized value, and skip a row.
+@
+text
+@d176 2
+a205 1
+      pr = 0
+d409 1
+a409 1
+       "$Id: Sparse_Eta_m.f90,v 2.8 2018/09/05 21:01:30 vsnyder Exp $"
+d419 4
+@
+
+
+2.8
+log
+@Correct off-by-one error that only occurs if basis is in descending order
+and the grid does not extend beyond the bases.
+@
+text
+@d290 1
+d408 1
+a408 1
+       "$Id: Sparse_Eta_m.f90,v 2.7 2018/08/20 23:40:03 vsnyder Exp $"
+d418 4
+@
+
+
+2.7
+log
+@Correct error in the case that the grid needs to be sorted
+@
+text
+@d244 1
+a244 1
+          do while ( i > myRowN )
+d407 1
+a407 1
+       "$Id: Sparse_Eta_m.f90,v 2.6 2018/05/24 03:21:43 vsnyder Exp $"
+d417 3
+@
+
+
+2.6
+log
+@Add flags to allow saying 'don\'t bother with this column'
+@
+text
+@d269 1
+d273 3
+a275 2
+          if ( grid(p(i)) > basis(1) ) exit
+          call eta%add_element ( 1.0_rp, p(i), 1 )
+d282 7
+a288 6
+            if ( grid(p(i)) > basis(j) ) exit
+            if ( basis(j-1) < grid(p(i)) .and. i /= pr ) then
+              v = ( basis(j)-grid(i) ) * del_basis
+              if ( v /= 0 ) call eta%add_element ( v, i, j-1 )
+              v = (grid(i)-basis(j-1)) * del_basis
+              if ( v /= 0 ) call eta%add_element ( v, i, j )
+d295 1
+d298 2
+a299 2
+          if ( basis(n_basis) > grid(p(i)) ) exit
+          if ( i /= pr ) call eta%add_element ( 1.0_rp, p(i), n_basis )
+d407 1
+a407 1
+       "$Id: Sparse_Eta_m.f90,v 2.5 2018/05/17 02:16:48 vsnyder Exp $"
+d417 3
+@
+
+
+2.5
+log
+@Add Sparse_Eta_0D
+@
+text
+@d307 1
+a307 1
+  subroutine Sparse_Eta_nD ( L, R, P, What, Resize, One_Row_OK )
+d324 2
+d327 1
+d373 8
+a380 3
+                v = l%e(j)%v * r%e(k)%v
+                if ( v /= 0.0 ) &
+                  & call p%add_element ( v, i, m*(r%e(k)%c-1) + l%e(j)%c )
+d403 1
+a403 1
+       "$Id: Sparse_Eta_m.f90,v 2.4 2018/04/11 19:30:29 vsnyder Exp $"
+d413 3
+@
+
+
+2.4
+log
+@Call p%resize without argument. Repair some comments
+@
+text
+@d27 1
+d30 1
+a30 1
+    generic :: Eta => Eta_1D, Eta_nD
+d41 70
+d161 1
+a161 1
+      call eta%create ( n_grid, n_basis, 2*size(grid), what=what )
+d204 1
+d395 1
+a395 1
+       "$Id: Sparse_Eta_m.f90,v 2.3 2018/03/07 00:21:19 vsnyder Exp $"
+d405 3
+@
+
+
+2.3
+log
+@Don't make names of procedures that are type-bound public.  Add Eta generic
+for Sparse_Eta_1D and Sparse_Eta_nD.  Allow the left factor in Sparse_Eta_nD
+to have only one row.
+@
+text
+@d295 1
+a295 1
+            j = l%e(fl)%nr       ! First element of L in row I
+d301 1
+a301 1
+                j = l%e(j)%nr             ! Next element of L in row I
+d315 1
+a315 1
+      if ( resize ) call p%resize ( p%ne )
+d323 1
+a323 1
+       "$Id: Sparse_Eta_m.f90,v 2.2 2017/11/29 00:33:39 vsnyder Exp $"
+d333 5
+@
+
+
+2.2
+log
+@Add Sparse_Eta_t as extension of Sparse_t.  Make Eta_1D and Eta_nD type-
+bound to Sparse_Eta_t.  Better criteria to create.  Ad hoc hand waving
+to avoid creating duplicates.  Correct bugs in Eta_nD.
+@
+text
+@d22 1
+a22 1
+  public :: Sparse_Eta_1D, Sparse_Eta_nD, Sparse_Eta_t
+d29 1
+d61 1
+d235 1
+a235 1
+  subroutine Sparse_Eta_nD ( L, R, P, What, Resize )
+d242 1
+d249 3
+d255 1
+a255 1
+    integer :: LL, LR  ! Index of last column in row of left, right factors
+d257 2
+d261 6
+a266 1
+    if ( l%nRows /= 0 .and. r%nRows /= 0 ) then
+d269 2
+a270 1
+        & "L and R in Sparse_Eta_nD have different numbers of useful rows" )
+d274 2
+a275 1
+        & "L and R in Sparse_Eta_nD have different row dimension extents" )
+d278 1
+a278 1
+    call p%create ( size(l%rows), size(l%cols)*size(r%cols), 4*size(l%rows), &
+d284 25
+a308 22
+    ! Compute the column elements of P in each row as the products of
+    ! all elements of L with all elements of R in that row.
+    do i = 1, size(l%rows)
+      lr = r%rows(i)
+      if ( l%rows(i) == 0 .or. lr == 0 ) cycle ! Don't include empty row
+      k = r%e(lr)%nr ! First element of R in row I
+      if ( k /= 0 ) then
+        do
+          ll = l%rows(i)
+          j = l%e(ll)%nr       ! First element of L in row I
+          if ( j /= 0 ) then
+            do
+              v = l%e(j)%v * r%e(k)%v
+              if ( v /= 0.0 ) &
+                & call p%add_element ( v, i, m*(r%e(k)%c-1) + l%e(j)%c )
+              j = l%e(j)%nr             ! Next element of L in row I
+              if ( j == l%e(ll)%nr ) exit ! Back to the first element?
+            end do
+          end if
+          k = r%e(k)%nr               ! Next element of R in row I
+          if ( k == r%e(lr)%nr ) exit ! Back to the first element?
+        end do
+d310 1
+d312 1
+d323 1
+a323 1
+       "$Id: Sparse_Eta_m.f90,v 2.1 2017/11/01 18:52:11 vsnyder Exp $"
+d333 5
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d14 1
+a14 1
+! Get interpolation coefficients in a Sparse_t matrix
+d17 1
+d22 8
+a29 1
+  public :: Sparse_Eta_1D, Sparse_Eta_nD
+d33 1
+a33 1
+       "$RCSfile: metrics_m.f90,v $"
+d43 1
+a43 2
+
+    use Sparse_m, only: Sparse_t, Create_Sparse, Add_Element, Resize_Sparse
+d47 11
+a57 6
+    type(sparse_t), intent(inout) :: Eta    ! Might not be created here
+    integer, intent(in), optional :: What   ! String index
+    integer, intent(in), optional :: Row1, RowN ! Part of Grid to use, default all
+    logical, intent(in), optional :: Create ! Create Eta, default true
+    logical, intent(in), optional :: Sorted ! "Grid is sorted" -- default true
+    logical, intent(in), optional :: Resize ! Re-size Eta%E to Eta%NE
+d61 2
+a62 1
+    integer :: I, J, K
+d67 3
+a69 1
+    real(rp) :: V(2) ! Values of coefficient
+d77 1
+a77 1
+    myCreate = .true.
+d80 17
+a96 2
+    if ( myCreate ) call create_sparse ( eta, size(grid), size(basis), &
+                                       & 2*size(grid), what=what )
+d135 2
+a136 1
+          call add_element ( eta, 1.0_rp, i, 1 )
+d141 1
+a141 1
+          do while ( i <= n_grid )
+d143 5
+a147 6
+            if ( basis(j-1) < grid(i) ) then
+              v = [ (basis(j)-grid(i)) * del_basis, &
+                &   (grid(i)-basis(j-1)) * del_basis ]
+              do k = 1, 2
+                if ( v(k) /= 0.0 ) call add_element ( eta, v(k), i, j+k-2 )
+              end do
+d149 1
+d155 4
+a158 2
+          if ( basis(n_basis) >= grid(i) ) exit
+          call add_element ( eta, 1.0_rp, i, n_basis )
+d164 2
+a165 1
+          call add_element ( eta, 1.0_rp, i, 1 )
+d172 5
+a176 6
+            if ( basis(j-1) < grid(i) ) then
+              v = [ (basis(j)-grid(i)) * del_basis, &
+                &   (grid(i)-basis(j-1)) * del_basis ]
+              do k = 1, 2
+                if ( v(k) /= 0.0 ) call add_element ( eta, v(k), i, j+k-2 )
+              end do
+d178 1
+d184 5
+a188 2
+          if ( basis(n_basis) >= grid(i) ) exit
+          call add_element ( eta, 1.0_rp, i, n_basis )
+d197 1
+a197 1
+        do i = 1, n_grid
+d199 2
+a200 1
+          call add_element ( eta, 1.0_rp, p(i), 1 )
+d205 1
+a205 1
+          do while ( i <= n_grid )
+d207 5
+a211 8
+            if ( basis(j-1) < grid(p(i)) ) then
+              v = [ (basis(j)-grid(p(i))) * del_basis, &
+                &   (grid(p(i))-basis(j-1)) * del_basis ]
+              do k = 1, 2
+                if ( v(k) /= 0.0 ) then
+              if ( v(k) /= 0.0 ) call add_element ( eta, v(k), p(i), j+k-2 )
+                end if
+              end do
+d217 6
+a222 3
+        do i = n_grid, i, -1
+          if ( basis(n_basis) >= grid(p(i)) ) exit
+        call add_element ( eta, 1.0_rp, p(i), n_basis )
+d228 1
+a228 1
+      if ( resize ) call resize_sparse ( eta )
+a239 1
+    use Sparse_m, only: Sparse_t, Create_Sparse, Add_Element, Resize_Sparse
+d241 3
+a243 3
+    type(sparse_t), intent(inout) :: L      ! Assume it's been created
+    type(sparse_t), intent(inout) :: R      ! Assume it's been created
+    type(sparse_t), intent(out) :: P        ! Created here
+d247 5
+a251 4
+    integer :: I     ! Row index
+    integer :: J, K  ! Column indices
+    integer :: M     ! Column dimension of L
+    real(rp) :: V    ! L(i,j) * R(i,k)
+d253 2
+a254 1
+    if ( size(l%rows) /= size(r%rows) ) &
+d256 4
+d261 1
+d263 3
+a265 4
+    call create_sparse ( p, size(l%rows), size(l%cols)*size(r%cols), &
+                       & 4*size(l%rows), &
+                       & ubnd=[ l%ubnd, r%ubnd ], &
+                       & lbnd=[ l%lbnd, r%lbnd ], what=what )
+d272 4
+a275 4
+      if ( l%rows(i) == 0 .or. r%rows(i) == 0 ) cycle ! Don't include empty row
+      k = r%e(r%rows(i))%nr ! First element of R in row I
+      do
+        j = l%e(l%rows(i))%nr       ! First element of L in row I
+d277 15
+a291 9
+          v = l%e(j)%v * r%e(k)%v
+          if ( v /= 0.0 ) &
+            & call add_element ( p, v, i, m*(r%e(k)%c-1) + l%e(j)%c )
+          j = l%e(j)%nr             ! Next element of L in row I
+          if ( j == l%e(l%rows(i))%nr ) exit ! Back to the first element?
+        end do
+        k = r%e(k)%nr               ! Next element of R in row I
+        if ( k == r%e(r%rows(i))%nr ) exit ! Back to the first element?
+      end do
+d295 1
+a295 1
+      if ( resize ) call resize_sparse ( p )
+d303 1
+a303 1
+       "$Id: metrics_m.f90,v 2.82 2017/08/28 20:28:08 livesey Exp $"
+d312 4
+a315 1
+! $Log: metrics_m.f90,v $
+@
+

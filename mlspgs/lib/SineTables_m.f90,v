@@ -1,0 +1,369 @@
+head	2.6;
+access;
+symbols
+	v5-02-NRT-19:2.6
+	v6-00:2.6
+	v5-02-NRT-18:2.6
+	v5-02:2.6
+	v5-01-NRT-17:2.6
+	v5-01-NRT-16:2.6
+	v5-01-NRT-15:2.6
+	v5-01-NRT-14:2.6
+	neuralnetworks-1-0:2.6.0.12
+	cfm-single-freq-0-1:2.6.0.10
+	v5-01:2.6
+	v5-00:2.6
+	v4-23-TA133:2.6.0.8
+	mus-emls-1-70:2.6.0.6
+	rel-1-0-englocks-work:2.6.0.4
+	VUMLS1-00:2.6
+	VPL1-00:2.6
+	V4-22-NRT-08:2.6
+	VAM1-00:2.6
+	V4-21:2.6.0.2
+	V4-13:2.6
+	V4-12:2.5
+	V4-11:2.5
+	V4-10:2.5
+	V3-43:2.4
+	M4-00:2.4
+	V3-41:2.4
+	V3-40-PlusGM57:2.4.0.2
+	V2-24-NRT-04:2.3
+	V3-33:2.4
+	V2-24:2.3
+	V3-31:2.4
+	V3-30-NRT-05:2.4
+	cfm-01-00:2.4
+	V3-30:2.4
+	V3-20:2.4
+	V3-10:2.4
+	V2-23-NRT-02:2.3
+	V2-23:2.3
+	V2-22-NRT-01:2.3
+	V2-22:2.3
+	V2-21:2.2
+	V2-20:2.2
+	V2-11:2.2
+	V2-10:2.2
+	V2-00:2.2
+	V1-51:2.1
+	V1-50:2.1
+	V1-45:2.1
+	V1-44:2.1
+	V1-43:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.6
+date	2014.09.05.00.18.06;	author vsnyder;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2013.06.12.02.17.27;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2009.06.23.18.25.42;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2007.04.14.00.38.25;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2005.06.22.17.25.50;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2004.02.12.02.19.39;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.6
+log
+@Get kinds from MLSKinds instead of MLSCommon.  Keep track of size in
+bytes instead of Memory_Units.
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module SineTables_m
+
+  ! The ?FFT_M modules assume that only one sine table exists.  They keep
+  ! track of the maximum it's been, and assume that any sine table they
+  ! get is at least that size, unless they're told to reinitialize it.
+  ! To avoid reinitializing sine tables that are smaller than the biggest
+  ! one they've seen (which we can't know, because the variables they use
+  ! for that purpose are private), the sine table and its size are here.
+
+  ! It is intended that one will call CreateSineTable, and then use
+  ! SineTable_R* as the S argument, and LogSize_SineTable_R* as the MS
+  ! argument, in calls to the procedures in the ?FFT_M modules.
+
+  use MLSKinds, only: R8
+
+  implicit NONE
+  private
+  public CreateSineTable, DestroySineTable, LogSize_SineTable_R8, SineTable_R8
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: SineTables_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+  interface CreateSineTable
+    module procedure CreateSineTable_r8
+  end interface CreateSineTable
+
+  interface DestroySineTable
+    module procedure DestroySineTable_r8
+  end interface DestroySineTable
+
+  integer, save :: LogSize_SineTable_r8 = -1
+
+  real(r8), allocatable, save :: SineTable_R8(:)
+
+contains
+
+!============================================  CreateSineTable_r8  =====
+
+  subroutine CreateSineTable_r8 ( LogSize )
+    ! Initialize SineTable_r8 to be of size 2**LogSize - 1, unless it's
+    ! already allocated and at least that big.
+
+    use Allocate_Deallocate, only: Byte_Size, Bytes, &
+      & Test_Allocate, Test_Deallocate
+    use DFFT_M, only: InitSineTable
+
+    integer, intent(in) :: LogSize
+
+    integer :: N, Stat
+
+    if ( allocated(sineTable_r8) .and. logSize + 2 > logSize_SineTable_r8 ) then
+      n = byte_size(sineTable_r8)
+      deallocate ( sineTable_r8, stat=stat )
+      call test_deallocate ( stat, moduleName, 'SineTable_r8', n )
+    end if
+
+    if ( .not. allocated(sineTable_r8) ) then
+      n = 2**logSize - 1
+      allocate ( sineTable_r8(n), stat=stat )
+      call test_allocate ( stat, moduleName, 'SineTable_r8', (/1/), (/n/), &
+        & bytes(sineTable_r8) )
+      call initSineTable ( sineTable_r8, logSize )
+      logSize_SineTable_r8 = logSize + 2
+    end if
+
+  end subroutine CreateSineTable_r8
+
+!==========================================   DestroySineTable_r8  =====
+
+  subroutine DestroySineTable_r8
+
+    use Allocate_Deallocate, only: Byte_Size, Test_Deallocate
+
+    integer :: N, Stat
+
+    if ( allocated(sineTable_r8) ) then
+      n = byte_size(sineTable_r8)
+      deallocate ( sineTable_r8, stat=stat )
+      call test_deallocate ( stat, moduleName, 'SineTable_r8', n )
+    end if
+    logSize_SineTable_r8 = -1
+
+  end subroutine DestroySineTable_r8
+
+!=================================================  not_used_here  =====
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: SineTables_m.f90,v 2.5 2013/06/12 02:17:27 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module SineTables_m
+
+! $Log: SineTables_m.f90,v $
+! Revision 2.5  2013/06/12 02:17:27  vsnyder
+! UBYTES and BYTE_SIZE from Allocate_Deallocate
+!
+! Revision 2.4  2009/06/23 18:25:42  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.3  2007/04/14 00:38:25  vsnyder
+! Change SineTable from pointer to allocatable, improves FFT performance
+!
+! Revision 2.2  2005/06/22 17:25:50  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.1  2004/02/12 02:19:39  vsnyder
+! Initial commit
+!
+@
+
+
+2.5
+log
+@UBYTES and BYTE_SIZE from Allocate_Deallocate
+@
+text
+@d25 1
+a25 1
+  use MLSCommon, only: R8
+d57 1
+a57 1
+    use Allocate_Deallocate, only: Byte_Size, Bytes, MEMORY_UNITS, &
+d66 1
+a66 1
+      n = byte_size(sineTable_r8) / MEMORY_UNITS
+d86 1
+a86 1
+    use Allocate_Deallocate, only: Byte_Size, MEMORY_UNITS, Test_Deallocate
+d91 1
+a91 1
+      n = byte_size(sineTable_r8) / MEMORY_UNITS
+d104 1
+a104 1
+       "$Id: SineTables_m.f90,v 2.4 2009/06/23 18:25:42 pwagner Exp $"
+d114 3
+@
+
+
+2.4
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d33 1
+a33 1
+       "$RCSfile: $"
+d57 2
+a58 1
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate, E_DP
+d66 1
+a66 1
+      n = size(sineTable_r8) * E_DP
+d74 2
+a75 1
+      call test_allocate ( stat, moduleName, 'SineTable_r8', (/1/), (/n/), e_dp )
+d86 1
+a86 1
+    use Allocate_Deallocate, only: Test_Deallocate, E_DP
+d91 1
+a91 1
+      n = size(sineTable_r8) * E_DP
+d104 1
+a104 1
+       "$Id: read_apriori.f90 is it here $"
+d114 3
+@
+
+
+2.3
+log
+@Change SineTable from pointer to allocatable, improves FFT performance
+@
+text
+@d33 1
+a33 1
+       "$RCSfile: SineTables_m.f90,v $"
+d99 1
+a100 1
+!---------------------------- RCS Ident Info -------------------------------
+d102 2
+a103 3
+       "$Id: SineTables_m.f90,v 2.2 2005/06/22 17:25:50 pwagner Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d105 1
+d107 1
+d112 3
+@
+
+
+2.2
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d33 1
+a33 1
+       "$RCSfile: $"
+d47 1
+a47 1
+  real(r8), pointer, save :: SineTable_R8(:) => NULL()
+d57 1
+a57 1
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+d62 1
+a62 2
+    if ( logSize + 2 > logSize_SineTable_r8 ) &
+      & call deallocate_test ( sineTable_r8, 'SineTable_r8', moduleName )
+d64 10
+a73 2
+    if ( .not. associated(sineTable_r8) ) then
+      call allocate_test ( sineTable_r8, 2**logSize - 1, 'SineTable_r8', moduleName )
+d84 3
+a86 1
+    use Allocate_Deallocate, only: Deallocate_Test
+d88 5
+a92 1
+    call deallocate_test ( sineTable_r8, 'SineTable_r8', moduleName )
+d102 1
+a102 1
+       "$Id: $"
+d111 3
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d31 5
+a35 8
+  !---------------------------- RCS Ident Info -------------------------------
+  character(len=*), private, parameter :: IdParm = &
+    & "$Id: dfft_m.f90,v 2.8 2004/01/29 19:54:35 vsnyder Exp $"
+  character(len=len(idparm)), private :: Id = idParm
+  character(len=*), private, parameter :: ModuleName = &
+    & "$RCSfile: dfft_m.f90,v $"
+  private :: not_used_here
+  !---------------------------------------------------------------------------
+d87 5
+d97 4
+a100 1
+! $Log: $
+@
+

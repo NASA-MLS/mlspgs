@@ -1,0 +1,136 @@
+head	2.4;
+access;
+symbols
+	V1-04:2.3
+	V1-03:2.3
+	V1-02:2.3
+	V1-00:2.3;
+locks; strict;
+comment	@# @;
+
+
+2.4
+date	2002.05.22.00.50.16;	author livesey;	state dead;
+branches;
+next	2.3;
+
+2.3
+date	2001.11.03.01.35.50;	author livesey;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2001.10.31.22.00.45;	author livesey;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.10.27.00.15.42;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.4
+log
+@L2CFs no longer belong in l2
+@
+text
+@;; $Id: outputstate.l2cf,v 2.3 2001/11/03 01:35:50 livesey Exp $
+
+;; This l2cf fragment outputs the species joined by joinstate.l2cf
+
+
+;; Only do the output if the output version has been defined
+begin Output
+!ifdef(outputVersion,{
+
+  !define(stdprod, {Output, quantities=joined_$1, type=l2gp, $
+    file='!outpath/MLS-Aura_L2GP_$2_!outputVersion_!day.dat'})
+
+  !stdprod(temp,Temperature)
+  !stdprod(gph,GPH)
+  !stdprod(bro,BrO)
+  !stdprod(ch3cn,CH3CN)
+  !stdprod(clo,ClO)
+  !stdprod(co,CO)
+  !stdprod(h2o,H2O)
+  !stdprod(hcl,HCl)
+  !stdprod(hcn,HCN)
+  !stdprod(hno3,HNO3)
+  !stdprod(ho2,HO2)
+  !stdprod(hocl,HOCl)
+  !stdprod(n2o,N2O)
+  !stdprod(o3,O3)
+  !stdprod(oh,OH)
+  !stdprod(so2,SO2)
+
+  Output, type=l2gp, quantities=[ $
+    joined_BaselineR1A, joined_BaselineR1B, $
+    joined_BaselineR2, joined_BaselineR3, joined_BaselineR4, $
+    joined_BaselineR5H, joined_BaselineR5V ], $
+    file='!outpath/MLS-Aura_L2GP_DGG_!outputVersion_!day.dat'
+  
+  Output, type=l2aux, quantities=[ $
+    joined_ptanGHz, joined_ptanTHz, $
+    joined_ptanGHz_precision, joined_ptanTHz_precision, $
+    joined_losVelGHz, joined_losVelTHz, $
+    joined_losVelGHz_precision, joined_losVelTHz_precision ], $
+    file='!outpath/MLS-Aura_L2GP_DGM_!outputVersion_!day.dat'
+})
+end Output
+@
+
+
+2.3
+log
+@Minor changes
+@
+text
+@d1 1
+a1 1
+;; $Id: outputstate.l2cf,v 2.2 2001/10/31 22:00:45 livesey Exp $
+@
+
+
+2.2
+log
+@Now only saves if has a version defined.
+@
+text
+@d1 1
+a1 1
+;; $Id: outputstate.l2cf,v 2.1 2001/10/27 00:15:42 livesey Exp $
+d8 1
+a8 1
+!ifdef(ver,{
+d11 1
+a11 1
+    file='!outpath/MLS-Aura_L2GP_$2_!ver_!day.dat'})
+d34 1
+a34 1
+    file='!outpath/MLS-Aura_L2GP_DGG_!ver_!day.dat'
+d41 1
+a41 1
+    file='!outpath/MLS-Aura_L2GP_DGM_!ver_!day.dat'
+@
+
+
+2.1
+log
+@First version
+@
+text
+@d1 1
+a1 1
+;; $Id$
+d5 2
+d8 1
+d42 1
+a42 1
+  
+@
+

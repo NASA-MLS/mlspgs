@@ -1,0 +1,181 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.14
+	cfm-single-freq-0-1:1.2.0.12
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.10
+	mus-emls-1-70:1.2.0.8
+	rel-1-0-englocks-work:1.2.0.6
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.2
+	V4-21:1.2.0.4
+	V4-13:1.2
+	V4-12:1.2
+	V4-11:1.2
+	V4-10:1.2
+	V3-43:1.2
+	M4-00:1.2
+	V3-41:1.2
+	V3-40-PlusGM57:1.2.0.2
+	V3-33:1.2
+	V3-31:1.2
+	V3-30-NRT-05:1.2
+	cfm-01-00:1.2
+	V3-30:1.2
+	V3-20:1.2
+	V3-10:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.2
+date	2009.07.29.03.10.01;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2009.06.22.23.05.45;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Spell Michelle correctly
+@
+text
+@\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9.0in
+
+\newcommand{\docname}{\bf wvs-082}
+\newcommand{\docdate}{15 January 2009}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[u]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Nathaniel, Bill, Alyn, Michelle\\
+Subject: \>Current status of scattering additions to forward model\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 10pt
+\vspace{-20pt}
+
+I've been adding support for scattering to the forward model.  The problem is
+in three stages.
+
+\begin{enumerate}
+
+\item Calculate Mie coefficients offline.  This is completed.  The program
+is in {\tt mlspgs/Mie}.
+
+\item\label{two} Use Mie coefficients to calculate $T_{\text{scat}}$,
+again to be done offline.  This is partly completed.
+
+\item Use $T_{\text{scat}}$ online, similarly to the way L2PC are used. 
+This has not been started.
+
+\end{enumerate}
+
+Item \ref{two} above requires several steps.
+
+\begin{enumerate}
+
+\item Allow the radiative transfer calculations to be carried out on only
+part of a path.  This appears to be completed, but needs more testing.
+
+\item Compute a path at a specified phase angle from the horizon, in the
+plane of an orbit with a specified inclination, that intersects a
+specified scattering point in the orbital plane.  See {\tt
+mlspgs/doc/wvs-074}.  Phase angles that result in paths that do not
+reflect from the Earth's surface are specified by pressure surfaces. 
+This appears to be working.  Phase angles that result in paths that
+reflect from the Earth's surface are specified explicitly.  This works
+for some angles, but for steeply reflecting rays, {\tt metrics} insists
+on putting the path on the other side of the earth from the scattering
+point.  The difficulty has been in trying to manipulate {\tt metrics} by
+remote control, through several layers of procedure references.  I have
+an IDL prototype in $\sim${\tt vsnyder/idl/scat\_gen.pro} that calculates
+paths correctly, but the method it uses doesn't fit into the full forward
+model.
+
+\item Convolve the radiances arriving at the scattering point from the
+several angles with the Mie phase function to product $T_{\text{scat}}$. 
+This has not been begun, but is a straight-forward problem.
+
+\end{enumerate}
+
+I have not checked in any of the code developed for item \ref{two}, but I
+have periodically checked that it does not produce results that disagree
+with any of my reference runs.  At present, the forward model and metrics
+codes in my directory are littered with PRINT statements.
+
+\label{lastpage}
+\end{document}
+
+% $Id: wvs-082.tex,v 1.1 2009/06/22 23:05:45 vsnyder Exp $
+
+% $Log: wvs-082.tex,v $
+% Revision 1.1  2009/06/22 23:05:45  vsnyder
+% Initial commit
+%
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d35 1
+a35 1
+To: \>Nathaniel, Bill, Alyn, Miahelle\\
+d95 1
+a95 1
+% $Id: wvs-082.tex,v 1.2 2008/08/22 00:55:09 vsnyder Exp $
+d97 4
+a100 1
+% $Log: $
+@
+

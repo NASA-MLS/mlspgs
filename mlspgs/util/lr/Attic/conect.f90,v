@@ -1,0 +1,154 @@
+head	1.2;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2014.01.14.00.09.32;	author vsnyder;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2013.10.24.22.41.14;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Revised LR doesn't need it
+@
+text
+@module Connect
+
+  implicit NONE
+  private
+  public :: CONECT
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: conect.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  subroutine CONECT
+
+    use Error_Handler, only: Error
+    use SCRCOM, only: SCRSIZ
+    use S1, only: MOVSTR
+    use S3, only: FRSPRD, PRDIND, PRODCN, VOCAB
+    use TABCOM, only: NTERMS, NVOC
+
+    implicit NONE
+
+  ! Determine whether all nonterminal symbols are connected to the
+  ! goal symbol.
+
+  ! *****     External References     ********************************
+
+  ! ERROR   prints error messages.
+  ! MOVSTR  moves a string from string store to LINE.
+
+  ! *****     Local Variables     ************************************
+
+  ! CNECTD  is an array used to indicate whether a symbol is connected to
+  !         the goal symbol.
+  ! I       is a loop induction variable and subscript.
+  ! ISTKPT  is the stack pointer.
+  ! ISYM    is the index of a symbol.
+  ! J       is a loop inductor.
+  ! JSYM    is the index of a symbol.
+  ! LINE    is used to assemble messages.
+  ! STACK   is used to traverse the graph induced by the productions.
+
+    integer CNECTD(SCRSIZ),I,ISTKPT,ISYM,J,JSYM,STACK(SCRSIZ)
+    character(len=120) :: LINE
+
+  !     *****     Procedures     *****************************************
+
+    if (nvoc > scrsiz) &
+   &  call error ('Vocabulary too large to determine connectivity',2)
+    cnectd(1:nvoc) = 0
+    istkpt = scrsiz
+    stack(istkpt) = prodcn(1)
+    cnectd(prodcn(1)) = 1
+    do ! until (istkpt > scrsiz)
+       isym = stack(istkpt)
+       istkpt = istkpt + 1
+       if (isym > nterms) then
+         i = frsprd(isym)
+         if (i /= 0) then
+           do while (prodcn(prdind(i)) == isym)
+             do j = prdind(i)+1, prdind(i+1)-1
+               jsym = prodcn(j)
+               if (cnectd(jsym) == 0) then
+                 cnectd(jsym) = 1
+                 istkpt = istkpt - 1
+                 if (istkpt <= nvoc) &
+   &   call error ('Stack overflow during test for connectivity',2)
+                 stack(istkpt) = jsym
+               end if
+             end do
+             i = i + 1
+           end do
+         end if
+       end if
+       if (istkpt > scrsiz) exit
+    end do
+
+  ! Print a message if any nonterminal is not connected.              !
+
+    do i = 1, nvoc
+      if (cnectd(i) == 0) then
+        j = 1
+        call movstr (vocab(i), line, j, len(line))
+        line(j:j+28) = ' Not connected to goal symbol'
+        call error (line(1:j+28), 1)
+      end if
+    end do
+
+  end subroutine CONECT
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: conect.f90,v 1.1 2013/10/24 22:41:14 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Connect
+
+! $Log: conect.f90,v $
+! Revision 1.1  2013/10/24 22:41:14  vsnyder
+! Initial commit
+!
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d9 1
+a9 1
+       "$RCSfile: parser.f90,v $"
+d96 1
+a96 1
+       "$Id: parser.f90,v 2.29 2013/10/02 01:35:46 vsnyder Exp $"
+d105 4
+a108 1
+! $Log: $
+@
+

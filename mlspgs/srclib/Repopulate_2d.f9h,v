@@ -1,0 +1,98 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.12
+	cfm-single-freq-0-1:1.1.0.10
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.8
+	mus-emls-1-70:1.1.0.6
+	rel-1-0-englocks-work:1.1.0.4
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.2
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	M4-00:1.1
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2010.08.13.21.59.34;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@First commit
+@
+text
+@! Copyright 2008, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id: Repopulate_1d.f9h,v 1.1 2010/02/17 22:28:40 pwagner Exp $
+
+    ! Dummy args
+    real(rk), dimension(:,:), intent(inout) :: array ! The full array
+    integer, dimension(:), intent(in)     :: i
+    integer, dimension(:), intent(in)     :: j
+    integer, intent(in)                   :: n
+    real(rk), dimension(:), intent(in)    :: values
+    character(len=*), intent(in), optional:: options
+    ! Local variables
+    integer :: elm
+    character(len=4) :: myOptions
+    ! Executable
+    myOptions = ' ' ! Defaults to replacing elements in full array
+    if ( present(options) ) myOptions = options
+    if ( n < 1 .or. any(shape(array) < 1) ) return
+    do elm = 1, n
+      select case(myOptions)
+      case(' ') ! replace
+        array( i(elm), j(elm) ) = values(elm)
+      case('+') ! add
+        array( i(elm), j(elm) ) = array( i(elm), j(elm) ) + values(elm)
+      case('-') ! subtract
+        array( i(elm), j(elm) ) = array( i(elm), j(elm) ) - values(elm)
+      case('>') ! max
+        array( i(elm), j(elm) ) = max( array( i(elm), j(elm) ), values(elm) )
+      case('<') ! min
+        array( i(elm), j(elm) ) = min( array( i(elm), j(elm) ), values(elm) )
+      case default
+        call MLSMessage ( MLSMSG_Error, &
+        & ModuleName // "/Repopulate_2d", &
+        & "Unexpected option: " &
+        & // myOptions )
+      end select
+    enddo
+! $Log: Repopulate_1d.f9h,v $
+@

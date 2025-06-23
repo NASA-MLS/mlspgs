@@ -1,0 +1,69 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.12
+	cfm-single-freq-0-1:1.1.0.10
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.8
+	mus-emls-1-70:1.1.0.6
+	rel-1-0-englocks-work:1.1.0.4
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2015.02.13.18.08.53;	author whdaffer;	state Exp;
+branches;
+next	;
+
+
+desc
+@README for script directory and L2GP python reader
+@
+
+
+1.1
+log
+@Initial revision (README for scripts directory and L2GP python reader)
+@
+text
+@* readl2gp.py - A module of one function, readl2gp, which mimics the
+                behavior of the IDL routine readl2gpfile.pro.
+
+		Requirements: Python version > 2.4 but less than
+                3.0. PyTables (which itself requires Numpy)
+
+
+		Inputs: filename[, swathname, variableName, PrecisionName]
+		filename: required. Fully qualified name of L2GP file.
+
+		swathName: optional: default=the first swath in the
+                file. For all files named for individual species, this
+                will be the data for that species, i.e. the 'standard
+                product'. As of version 4x, (and for some files in
+                3x), there are multiple swaths. To access these
+                swaths, you must specify the name
+
+		variableName: optional: default=L2gpValue for the
+                indicated (or defaulted) swathName
+
+		precisionName: optional: default=L2gpPrecision for the
+                indicated (or defaulted) swathName
+
+		
+
+@

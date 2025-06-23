@@ -1,0 +1,232 @@
+head	2.3;
+access;
+symbols
+	v5-02-NRT-19:2.3
+	v6-00:2.3
+	v5-02-NRT-18:2.3
+	v5-02:2.3
+	v5-01-NRT-17:2.3
+	v5-01-NRT-16:2.3
+	v5-01-NRT-15:2.3
+	v5-01-NRT-14:2.3
+	neuralnetworks-1-0:2.3.0.10
+	cfm-single-freq-0-1:2.3.0.8
+	v5-01:2.3
+	v5-00:2.3
+	v4-23-TA133:2.3.0.6
+	mus-emls-1-70:2.3.0.4
+	rel-1-0-englocks-work:2.3.0.2
+	VUMLS1-00:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.3
+date	2017.09.20.00.06.15;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2017.08.28.20.27.47;	author livesey;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2016.12.02.01.55.26;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.3
+log
+@Sort the grid, not the basis, if necessary
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! subroutine Eta_List_1D_p_* ( Basis, Grid, Eta, N, Sorted )
+
+  ! Compute Eta for linear interpolation from Basis to Grid.
+  ! The subscript to store the result of interpolation is in Eta%p.
+
+! real(rk), intent(in) :: Basis(:)
+! real(rk), intent(in) :: Grid(:)
+! type(value_1D_p_t(rk)), intent(out) :: Eta(:) ! 2*size(grid)
+! integer, intent(out) :: N
+! logical, intent(in), optional :: Sorted ! "Grid is sorted" -- default true
+
+  real(rk) :: Del_Basis
+  integer :: I, J, K
+  logical :: MySorted
+  integer :: N_Basis, N_Grid
+  real(rk) :: V(2) ! Value of coefficient
+
+  mySorted = .true.
+  if ( present(sorted) ) mySorted = sorted
+
+  n = 0
+  n_basis = size(basis)
+  n_grid = size(grid)
+
+  if ( mySorted ) then
+    ! Coefficients below Basis(1) are all 1.0
+    do i = 1, n_grid
+      if ( grid(i) > basis(1) ) exit
+      n = n + 1
+!       eta(n) = value_1D_p_t(rk)(v=1.0_rk, n=1, p=i)
+      eta(n) = value_1D_p_t(v=1.0_rk, j=1, p=i)
+    end do
+    ! Coefficients between Basis(1) and Basis(n_basis) are "hat" functions
+    do j = 2, n_basis
+      del_basis = 1.0_rk / ( basis(j) - basis(j-1) )
+      do while ( i <= n_grid )
+        if ( grid(i) > basis(j) ) exit
+        if ( basis(j-1) < grid(i) ) then
+          v = [ (basis(j)-grid(i)) * del_basis, &
+            &   (grid(i)-basis(j-1)) * del_basis ]
+          do k = 1, 2
+            if ( v(k) /= 0.0 ) then
+              n = n + 1
+!               eta(n) = value_1D_p_t(rk)(v=v(k), n=j+k-2, p=i )
+              eta(n) = value_1D_p_t(v=v(k), j=j+k-2, p=i )
+            end if
+          end do
+        end if
+        i = i + 1
+      end do
+    end do
+    ! Coefficients above Basis(n_basis) are all 1.0
+    do i = n_grid, i, -1
+      if ( basis(n_basis) >= grid(i) ) exit
+      n = n + 1
+!       eta(n) = value_1D_p_t(rk)(v=1.0_rk, n=n_basis, p=i)
+      eta(n) = value_1D_p_t(v=1.0_rk, j=n_basis, p=i)
+    end do
+  else
+    block
+      use Sort_m, only: SortP
+      integer :: P(n_grid)
+      call sortp ( grid, 1, n_grid, p ) ! grid(p(:)) are now sorted
+      ! Coefficients below Basis(1) are all 1.0
+      do i = 1, n_grid
+        if ( grid(p(i)) > basis(1) ) exit
+        n = n + 1
+!         eta(n) = value_1D_p_t(rk)(v=1.0_rk, n=p(1), p=i)
+        eta(n) = value_1D_p_t(v=1.0_rk, j=p(1), p=i)
+      end do
+      ! Coefficients between basis(1) and Basis(n_basis) are "hat" functions
+      do j = 2, n_basis
+        del_basis = 1.0_rk / ( basis(j) - basis(j-1) )
+        do while ( i <= n_grid )
+          if ( grid(p(i)) > basis(j) ) exit
+          if ( basis(j-1) < grid(p(i)) ) then
+            v = [ (basis(j)-grid(p(i))) * del_basis, &
+              &   (grid(p(i))-basis(j-1)) * del_basis ]
+            do k = 1, 2
+              if ( v(k) /= 0.0 ) then
+                n = n + 1
+!                 eta(n) = value_1D_p_t(rk)(v=v(k), n=p(j+k-2), p=i )
+                eta(n) = value_1D_p_t(v=v(k), j=p(j+k-2), p=i )
+              end if
+            end do
+          end if
+          i = i + 1
+        end do
+      end do
+      ! Coefficients above Basis(n_basis) are all 1.0
+      do i = n_grid, i, -1
+        if ( basis(n_basis) >= grid(p(i)) ) exit
+        n = n + 1
+!         eta(n) = value_1D_p_t(rk)(v=1.0_rk, n=p(n_basis), p=i)
+        eta(n) = value_1D_p_t(v=1.0_rk, j=p(n_basis), p=i)
+      end do
+    end block
+  end if
+
+! $Log: Eta_List_1D_p.f9h,v $
+! Revision 2.2  2017/08/28 20:27:47  livesey
+! Changed the n,nf,np,nz elements to j,jf,...
+!
+! Revision 2.1  2016/12/02 01:55:26  vsnyder
+! Initial commit
+!
+@
+
+
+2.2
+log
+@Changed the n,nf,np,nz elements to j,jf,...
+@
+text
+@d21 1
+a21 1
+! logical, intent(in), optional :: Sorted ! "Basis is sorted" -- default true
+d73 1
+a73 1
+      integer :: P(size(basis))
+d75 1
+a75 1
+      ! Coefficients below Basis(p(1)) are all 1.0
+d77 1
+a77 1
+        if ( grid(i) > basis(1) ) exit
+d82 1
+a82 1
+      ! Coefficients between Basis(1) and Basis(n_basis) are "hat" functions
+d84 1
+a84 1
+        del_basis = 1.0_rk / ( basis(p(j)) - basis(p(j-1)) )
+d86 4
+a89 4
+          if ( grid(i) > basis(j) ) exit
+          if ( basis(j-1) < grid(i) ) then
+            v = [ (basis(p(j))-grid(i)) * del_basis, &
+              &   (grid(i)-basis(p(j-1))) * del_basis ]
+d103 1
+a103 1
+        if ( basis(n_basis) >= grid(i) ) exit
+d112 3
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d42 1
+a42 1
+      eta(n) = value_1D_p_t(v=1.0_rk, n=1, p=i)
+d56 1
+a56 1
+              eta(n) = value_1D_p_t(v=v(k), n=j+k-2, p=i )
+d68 1
+a68 1
+      eta(n) = value_1D_p_t(v=1.0_rk, n=n_basis, p=i)
+d80 1
+a80 1
+        eta(n) = value_1D_p_t(v=1.0_rk, n=p(1), p=i)
+d94 1
+a94 1
+                eta(n) = value_1D_p_t(v=v(k), n=p(j+k-2), p=i )
+d106 1
+a106 1
+        eta(n) = value_1D_p_t(v=1.0_rk, n=p(n_basis), p=i)
+d111 4
+a114 1
+! $Log: Eta_List_1D.f9h,v $
+@
+

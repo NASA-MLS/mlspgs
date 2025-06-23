@@ -1,0 +1,2204 @@
+head	1.31;
+access;
+symbols
+	v5-02-NRT-19:1.31
+	v6-00:1.31
+	v5-02-NRT-18:1.31
+	v5-02:1.31
+	v5-01-NRT-17:1.31
+	v5-01-NRT-16:1.31
+	v5-01-NRT-15:1.31
+	v5-01-NRT-14:1.31
+	neuralnetworks-1-0:1.31.0.10
+	cfm-single-freq-0-1:1.31.0.8
+	v5-01:1.31
+	v5-00:1.31
+	v4-23-TA133:1.31.0.6
+	mus-emls-1-70:1.31.0.4
+	rel-1-0-englocks-work:1.31.0.2
+	VUMLS1-00:1.30
+	VPL1-00:1.30
+	V4-22-NRT-08:1.30
+	VAM1-00:1.29
+	V4-21:1.29.0.4
+	V4-13:1.29
+	V4-12:1.29
+	V4-11:1.29
+	V4-10:1.29
+	V3-43:1.29
+	M4-00:1.29
+	V3-41:1.29
+	V3-40-PlusGM57:1.29.0.2
+	V2-24-NRT-04:1.28
+	V3-33:1.29
+	V2-24:1.28
+	V3-31:1.29
+	V3-30-NRT-05:1.29
+	cfm-01-00:1.29
+	V3-30:1.29
+	V3-20:1.29
+	V3-10:1.28
+	V2-23-NRT-02:1.28
+	V2-23:1.28
+	V2-22-NRT-01:1.28
+	V2-22:1.28
+	V2-21:1.28
+	V2-20:1.28
+	V2-11:1.28
+	V2-10:1.28
+	V2-00:1.28
+	V1-51:1.26
+	V1-50:1.26
+	V1-45:1.24
+	V1-44:1.24
+	V1-43:1.24
+	V1-42:1.23
+	V1-41:1.23
+	V1-32:1.23
+	V1-40:1.23
+	V1-31:1.23
+	V1-30:1.23
+	V1-13:1.22
+	V1-12:1.22
+	V1-11:1.22
+	V1-10:1.22
+	newfwm-feb03:1.22.0.2
+	V1-04:1.17
+	V1-03:1.17
+	V1-02:1.17
+	V1-00:1.15
+	newfwm-sep01:1.14.0.2
+	V0-7:1.14
+	V0-5-Level2:1.9
+	V0-5-SIPS:1.8;
+locks; strict;
+comment	@# @;
+
+
+1.31
+date	2017.10.20.20.09.15;	author pwagner;	state Exp;
+branches;
+next	1.30;
+
+1.30
+date	2015.11.18.22.02.24;	author pwagner;	state Exp;
+branches;
+next	1.29;
+
+1.29
+date	2010.01.05.01.53.04;	author pwagner;	state Exp;
+branches;
+next	1.28;
+
+1.28
+date	2006.02.23.20.25.16;	author pwagner;	state Exp;
+branches;
+next	1.27;
+
+1.27
+date	2005.06.23.22.20.45;	author pwagner;	state Exp;
+branches;
+next	1.26;
+
+1.26
+date	2004.11.03.19.09.33;	author pwagner;	state Exp;
+branches;
+next	1.25;
+
+1.25
+date	2004.10.27.22.34.08;	author pwagner;	state Exp;
+branches;
+next	1.24;
+
+1.24
+date	2004.03.18.17.56.49;	author pwagner;	state Exp;
+branches;
+next	1.23;
+
+1.23
+date	2003.06.21.00.34.17;	author pwagner;	state Exp;
+branches;
+next	1.22;
+
+1.22
+date	2003.01.31.23.54.56;	author pwagner;	state Exp;
+branches;
+next	1.21;
+
+1.21
+date	2002.07.22.22.08.44;	author pwagner;	state Exp;
+branches;
+next	1.20;
+
+1.20
+date	2002.06.21.00.10.13;	author pwagner;	state Exp;
+branches;
+next	1.19;
+
+1.19
+date	2002.06.04.17.03.07;	author pwagner;	state Exp;
+branches;
+next	1.18;
+
+1.18
+date	2002.05.22.00.37.26;	author pwagner;	state Exp;
+branches;
+next	1.17;
+
+1.17
+date	2002.05.02.16.10.38;	author pwagner;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2002.04.09.19.38.00;	author pwagner;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2001.11.06.00.19.26;	author pwagner;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2001.08.14.16.05.08;	author pwagner;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2001.08.10.23.48.27;	author pwagner;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2001.08.10.17.42.33;	author pwagner;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2001.08.09.23.35.11;	author pwagner;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2001.05.30.17.37.51;	author pwagner;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2001.05.01.17.04.32;	author pwagner;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2001.03.23.00.41.23;	author pwagner;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2001.02.26.00.25.40;	author pwagner;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2000.11.21.00.47.34;	author pwagner;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2000.11.14.21.50.14;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2000.11.02.23.22.38;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2000.10.27.23.22.37;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2000.10.18.20.31.58;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2000.10.16.18.31.49;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@first commit
+@
+
+
+1.31
+log
+@Added -extra cmdline opt to add an extra extension to filenames
+@
+text
+@#!/bin/sh
+#makemakedep.sh
+
+# --------------- makemakedep.sh help
+#Creates file Makefile.dep of dependencies to be included by Makefile
+#to compile a Fortran 9x program or library among files.
+#First a list of OBJS is assembled: this is the list of
+#objects that need to be built. By default this list is based on
+#all files in the current directory matching the pattern %.f90,
+#and/or, depending on options set on the command-line,
+#files matching patterns %.f and %.c. In other words, source files.
+#Second, dependencies are calculated for each of the OBJS,
+#searching for prerequisites in, by default, the current directory,
+#and, depending on command line args, extra search directories
+#
+#A separate possible use: assembling lists of dependencies
+#to "compile" source files with suffixes matching one pattern 
+#to create "objects" files with suffixes matching another
+#Under this use, the orthodox patterns "%.f90", etc. will be ignored
+#Usage:
+#makemakedep.sh [opt1] [opt2] ..  [dir1 dir2 ..]
+#
+#    O p t i o n s
+# -[n]f90       [don't] include files with .f90 extensions
+#                (default is to include them)
+# -[n]f77       [don't] include files with .f extensions, too
+#                (default is to include them)
+# -[n]c         [don't] include files with .c extensions, too
+#                (default is to include them)
+# -d file_name  exclude file_name from both targets and prereqs
+# -db file_name  
+#               no build commands below target file_name if .mod style
+# -do file_name  
+#               exclude file_name from OBJS=.. list, but allow in dependencies
+# -p file_name  
+#               name dependency file file_name instead of Makefile.dep
+# -perl program  
+#               use program instead of perl to run f90makedep.pl
+# -s pattern    match source file suffixes against "%.pattern"
+# -o pattern    match object file suffixes against "%.pattern"
+# -S file       calculate dependencies just for file
+# -i regexp     regexp used to catch include dependencies; e.g.
+#                '\!include\(([^)]+)' catches "include('file.txt')"
+#                '\\input\{([^)]+)}'  catches "\input{cfm-reference.tex}"
+# -extra ext    add ".ext" to files caught by regexp
+# -mod case     .mod-style of dependencies where case is one of {lower, UPPER}
+#               with build commands below each target
+# -h[elp]       print brief help message; exit
+# -nodep        skip tracing dependencies; stop after list of objects
+# dir1          search directory named by dir1 as well as cwd for files
+#
+#
+#Note:
+#The option(s) marked with "-", if present,
+#must precede the extra search directories on the command line
+#Result:
+#creates Makefile.dep in current working directory
+#Makefile.dep may then be inserted in a generic Makefile which
+#thereby is able to keep current with a "moving target" in case
+#the source files are changed in a way that alters their dependencies
+#E.g. examine the following mock session
+#  mlspgs/l2%ls
+#source1.f90  source2.f90  source3.f90
+#  mlspgs/l2%makemakedep.sh
+#  mlspgs/l2%ls
+#Makefile.dep  source1.f90  source2.f90  source3.f90
+#  mlspgs/l2%cat Makefile.dep
+##Makefile.dep -- a file to be included by a Makefile
+##to compile a Fortran 9x program or library
+#OBJS = \
+#source1.o               source2.o          source3.o  \
+#
+#source1.o: source1.f90 source2.o source3.o
+#source2.o: source2.f90 source3.o
+#source3.o: source3.f90
+# 
+##End of Makefile.dep
+#
+# .mod style differs from the above in the following way: instead of
+#      source1.o: ...
+# we will have
+# source1.mod source1.o: source1.f90 source2.mod source3.mod
+#     $(UTILDIR)/newAifBdiff.sh -a source1.mod \
+#        $(FC) -c $(FOPTS) $(INC_PATHS) $(S)/source1.f90
+# source2.mod source2.o: source2.f90 source3.mod
+#     $(UTILDIR)/newAifBdiff.sh -a source2.mod \
+#        $(FC) -c $(FOPTS) $(INC_PATHS) $(S)/source2.f90
+# source3.mod source3.o: source3.f90
+#     $(UTILDIR)/newAifBdiff.sh -a source3.mod \
+#        $(FC) -c $(FOPTS) $(INC_PATHS) $(S)/source3.f90
+# 
+# --------------- End makemakedep.sh help
+# Bugs and limitations
+#(1) Tested only with NAG, Lahey, Intel, Sun, g95, and Absoft f95 compilers
+#(2) Still too specialized--works well only with NAG-like compilers
+# Copyright 2005, by the California Institute of Technology. ALL
+# RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+# commercial use must be negotiated with the Office of Technology Transfer
+# at the California Institute of Technology.
+
+# This software may be subject to U.S. export control laws. By accepting this
+# software, the user agrees to comply with all applicable U.S. export laws and
+# regulations. User has the responsibility to obtain export licenses, or other
+# export authority as may be required before exporting such information to
+# foreign countries or providing access to foreign persons.
+
+# "$Id: makemakedep.sh,v 1.30 2015/11/18 22:02:24 pwagner Exp $"
+
+#
+#----------------------- Exclude -----------------------
+
+# Function to temporarily hide a file to excclude it from calculations
+#
+
+Exclude()
+{
+  if [ -f "$1" ]
+   then
+     if [ "$f90suffix" != "$dsuffix" ]
+     then
+        mv "$1" "$dsuffix"
+     else
+        echo "$1 wrongly added to dependency lists"
+                        wrong_list="$wrong_list $1"
+     fi
+   fi
+}
+
+#---------------------------- get_unique_name
+#
+# Function returns a unique name based on arg, PID and HOSTNAME
+# e.g.,
+#           temp_file_name=`get_unique_name foo`
+#           echo $temp_file_name
+# might print foo.colossus.21455
+# if no arg, defaults to "temp" (very original name)
+# if two args present, assumes second is punctuation to
+# use in pace of "."
+
+get_unique_name()
+{
+
+   # How many args?
+      if [ $# -gt 1 ]
+      then
+        pt="$2"
+        temp="$1"
+      elif [ $# -gt 0 ]
+      then
+        pt="."
+        temp="$1"
+      else
+        pt="."
+        temp="temp"
+      fi
+   # Is $HOST defined?
+      if [ "$HOST" != "" ]
+      then
+         our_host_name="$HOST"
+      elif [ "$HOSTNAME" != "" ]
+      then
+         our_host_name="$HOSTNAME"
+      else
+         our_host_name="host"
+      fi
+    #  echo $our_host_name
+   # if in form host.moon.planet.star.. extract host
+      our_host_name=`echo $our_host_name | sed 's/\./,/g'`
+      our_host_name=`perl -e '@@parts=split(",","$ARGV[0]"); print $parts[0]' $our_host_name`
+      echo $temp${pt}$our_host_name${pt}$$
+}
+      
+#------------------------------- extant_files ------------
+#
+# Function to return only those files among the args
+# that actually exist
+# Useful when passed something like *.f which may 
+# (1) expand to list of files, returned as extant_files_result, or
+# (2) stay *.f, in which case a blank is returned as extant_files_result 
+#     (unless you have perversely named a file '*.f')
+# usage: extant_files arg1 [arg2] ..
+
+extant_files()
+{
+   extant_files_result=
+   # Trivial case ($# = 0)
+   if [ "$1" != "" ]
+   then
+      for file
+      do
+         if [ -f "$file" ]
+         then
+               extant_files_result="$extant_files_result $file"
+         fi
+      done
+   fi
+}
+
+#------------------------------- Main Program ------------
+
+#****************************************************************
+#                                                               *
+#                  * * * Main Program  * * *                    *
+#                                                               *
+#                                                               *
+#  The entry point where control is given to the script         *
+#****************************************************************
+#this version uses either of the two depmakers
+#to trace dependencies based on USEs and INCLUDEs (or none at all):
+#(1)  f90makedep.pl (a perl script)
+#(0)  none (skips tracing dependencies)
+#
+#which of (1) or (0) to use is set by the following line
+DEPMAKER=1
+#        ^  -- set this to 0 for none, 1 for f90makedep.pl
+#
+#makemakedep.sh may act courteously in the following sense:
+#if makemakedep.sh finds there is already a file named Makefile.dep
+#it will attempt to rename the older file rather than deleting it
+#
+ACT_COURTEOUS=0
+#             ^  -- set this to 1 to rename older Makefile.dep, 0 deletes it
+#
+TRY_CLEANUP=1
+#           ^  -- set this to 1 to try cleaning up from a prior faulty run
+#
+PRINT_TOO_MUCH=0
+#              ^  -- set this to 1 if willing to try patience of users
+#
+#           How to rename or hide excluded files so they !~= %.f90
+#dsuffix=".xui"
+#          ^^^----- this is the suffix stuck onto any excluded files
+#                   or else the name of a temp directory hiding them
+dsuffix=".`get_unique_name m`"
+#
+EXCLUDE_TEMPFILES=1
+#                 ^  -- set this to 1 to exclude files matching ~*
+#
+# Do we have write permission in the current working directory
+if [ -w "`pwd`" ]
+then
+  f90suffix=".f90"
+  if [ -d "$dsuffix" ] ; then
+    if [ $TRY_CLEANUP = "1" ] ; then
+      extant_files "$dsuffix"/*
+      if [ "$extant_files_result" != "" ]
+      then
+        mv "$dsuffix"/* .
+      fi
+      rmdir "$dsuffix"
+    else
+      echo "Sorry--$dsuffix already exists"
+      echo "Aborting new Makefile.dep"
+      exit
+    fi
+  fi
+  mkdir "$dsuffix"
+else
+  f90suffix="$dsuffix"
+fi
+
+# The initial settings are
+# include *.f90   yes
+# include *.f     yes
+# include *.c     yes
+include_f90="yes"
+include_f77="yes"
+include_c="yes"
+orthodox="yes"
+s_pattern="f90"
+o_pattern="o"
+regexp=""
+extra_ext=""
+source_file=""
+dep_file="Makefile.dep"
+me="$0"
+my_name=makemakedep.sh
+I=makemakedep
+PERL=perl
+# $reecho is reecho with me's path prepended
+reecho="`echo $0 | sed 's/'$I'/reecho/'`"
+
+wrong_list=""
+dont_build_list=""
+excl_from_objs_list=""
+more_opts="yes"
+while [ "$more_opts" = "yes" ] ; do
+
+    case "$1" in
+
+    -f77 )
+       include_f77="yes"
+       shift
+       ;;
+    -nf77 )
+       include_f77="no"
+       shift
+       ;;
+    -f90 )
+       include_f90="yes"
+       shift
+       ;;
+    -nf90 )
+       include_f90="no"
+       shift
+       ;;
+    -c )
+       include_c="yes"
+       shift
+       ;;
+    -nc )
+       include_c="no"
+       shift
+       ;;
+#                  Rename or hide excluded files so they !~= %.f90
+    -d )
+      var=`Exclude $2`
+       shift
+      shift
+       ;;
+    -dddd )
+      if [ -f "$2" ]
+       then
+         if [ "$f90suffix" != "$dsuffix" ]
+          then
+#            mv "$2" "`echo $2 | sed 's/'$f90suffix'/'$dsuffix'/'`"
+            mv "$2" "$dsuffix"
+         else
+            echo "$2 wrongly added to dependency lists"
+                            wrong_list="$wrong_list $2"
+         fi
+       fi
+       shift
+      shift
+       ;;
+    -db )
+       dont_build_list="$1 $2 $dont_build_list"
+       shift
+      shift
+       ;;
+    -do )
+       excl_from_objs_list="-excl $2 $excl_from_objs_list"
+       shift
+      shift
+       ;;
+    -p )
+       dep_file="$2"
+       shift
+      shift
+       ;;
+    -perl )
+       PERL="$2"
+       shift
+      shift
+       ;;
+    -i )
+      regexp="$2"
+       shift
+      shift
+       ;;
+    -extra )
+      extra_ext="$2"
+       shift
+      shift
+       ;;
+    -S )
+      source_file="$2"
+       shift
+      shift
+       ;;
+    -s )
+      s_pattern="$2"
+       shift
+      shift
+       orthodox="no"
+       include_f90="no"
+       include_f77="no"
+       include_c="no"
+       ;;
+    -nodep )
+      DEPMAKER=0
+       shift
+       ;;
+    -o )
+      o_pattern="$2"
+       shift
+      shift
+       orthodox="no"
+       ;;
+    -h | -help )
+       sed -n '/'$my_name' help/,/End '$my_name' help/ p' $me \
+           | sed -n 's/^.//p' | sed '1 d; $ d'
+       exit
+  ;;
+
+    * )
+       more_opts="no"
+       ;;
+    esac
+done
+
+if [ "$EXCLUDE_TEMPFILES" = 1 ]
+then
+  var=`Exclude ~*`
+fi
+
+if [ $PRINT_TOO_MUCH = "1" ]                            
+then                                                    
+   echo " Summary of options to $me "  
+   echo " dependency file name: $dep_file "  
+   echo " include_f90: $include_f90 "  
+   echo " include_f77: $include_f77 "  
+   echo " include_c: $include_c "  
+   echo " orthodox: $orthodox "  
+   echo " wrong list: $wrong_list "  
+   echo " dont_build_list list: $dont_build_list "  
+   echo " excl_from_objs_list list: $excl_from_objs_list "  
+   echo " regexp: $regexp "  
+   echo " extra_ext: $extra_ext "  
+   echo " source_file: $source_file "  
+   echo " s_pattern: $s_pattern "  
+   echo " o_pattern: $o_pattern "  
+   echo " ACT_COURTEOUS: $ACT_COURTEOUS "  
+   echo " TRY_CLEANUP: $TRY_CLEANUP "  
+   echo " EXCLUDE_TEMPFILES: $EXCLUDE_TEMPFILES "  
+   echo " DEPMAKER: $DEPMAKER "  
+   echo " dsuffix: $dsuffix "  
+fi                                                      
+
+#   Rename or remove older Makefile.dep if one already exists
+if [ -f "$dep_file" ]
+then
+  if [ $ACT_COURTEOUS = "1" ]
+  then
+    if [ $PRINT_TOO_MUCH = "1" ]
+    then
+      echo "Renaming older $dep_file Make.dep.n"
+    fi
+    name=Make.dep.`ls -1 Make*.dep* | wc -l`
+    cname=`echo $name | sed 's/ //'g`
+    mv $dep_file $cname
+  else
+    chmod u+w "$dep_file"
+    rm -f "$dep_file"
+  fi
+fi
+
+#                Create Makefile.dep; write 1st line
+echo "#Makefile.dep -- a file to be included by a Makefile" > $dep_file
+if [ "$orthodox" = "yes" ]
+then
+   echo "#to compile a Fortran 9x program or library" >> $dep_file
+else
+   echo "#to hold automatically calculated dependencies" >> $dep_file
+fi
+#
+#Warn of files wrongly added to dependency lists
+if [ "$wrong_list" != "" ]
+then
+  echo "#Delete the following files from the dependency lists:" >> $dep_file
+  echo "#$wrong_list" >> $dep_file
+fi
+#The following may be useful in rare circumstances to include special macros
+#but violates assertion that Makefile.dep includes only dependency info
+#Therefore uniformity and simplicity suggest against relying on it
+#e.g., the mlspgs software does not require such a file "Makefile.mac"
+#
+if [ -f Makefile.mac ]
+then
+  if [ $PRINT_TOO_MUCH = "1" ]
+  then
+    echo "Including special macro definitions from Makefile.mac"
+  fi
+  echo "include ../Makefile.mac"  >> $dep_file
+fi
+
+#  Now write the OBJS list
+#  (excluding any named either by -do or by -d options)
+echo "OBJS = \\"  >> $dep_file
+
+if [ "$source_file" != "" ]
+then
+  if [ "$include_f90" = "yes" ] ; then
+     (echo $source_file | sed 's/\.f90/.o  /g; s/$/\\/') >> $dep_file
+  fi
+  if [ "$orthodox" != "yes" ] ; then
+     (echo $source_file | sed 's/\.'$s_pattern'/.'$o_pattern'  /g; s/$/\\/') >> $dep_file
+  fi
+else
+  if [ "$include_f90" = "yes" ] ; then
+     # extant_files *.f90
+     extant_files_result="`$reecho $excl_from_objs_list *.f90`"
+     (echo $extant_files_result | sed 's/\.f90/.o  /g; s/$/\\/') >> $dep_file
+  fi
+
+  if [ "$include_f77" = "yes" ] ; then
+     # extant_files *.f
+     extant_files_result="`$reecho $excl_from_objs_list *.f`"
+     (echo $extant_files_result | sed 's/\.f/.o  /g; s/$/\\/') >> $dep_file
+  fi
+
+  if [ "$include_c" = "yes" ] ; then
+     # extant_files *.c
+     extant_files_result="`$reecho $excl_from_objs_list *.c`"
+     (echo $extant_files_result | sed 's/\.c/.o  /g; s/$/\\/') >> $dep_file
+  fi
+
+  if [ "$orthodox" != "yes" ] ; then
+     # extant_files *.$s_pattern
+     extant_files_result="`$reecho $excl_from_objs_list *.$s_pattern`"
+     (echo $extant_files_result | sed 's/\.'$s_pattern'/.'$o_pattern'  /g; s/$/\\/') >> $dep_file
+  fi
+fi
+
+echo " "  >> $dep_file
+#
+if [ $DEPMAKER = "0" ]
+then
+  echo "#(Not tracing dependencies)" >> $dep_file
+  echo "#End of simplified Makefile.dep" >> $dep_file
+else
+  #
+  # use f90makedep.pl to calculate dependencies
+  if [ $PRINT_TOO_MUCH = "1" ]
+  then
+    echo " using f90makedep.pl to calculate dependencies "
+  fi
+  echo "# using f90makedep.pl to calculate dependencies "  >> $dep_file
+  #
+  # Prefix f90makedep.pl with the path to util
+   # this assumes f90makedep.pl is in same dir as this script
+  the_DEPMAKER="`echo $0 | sed 's/makemakedep.sh/f90makedep.pl/'`"
+  if [ $PRINT_TOO_MUCH = "1" ]
+  then
+    echo " Your perl is $PERL "
+  fi
+
+#  tack on the dont_build_list if non-empty
+  if [ "$dont_build_list" != "" ] ; then
+    the_DEPMAKER="$the_DEPMAKER $dont_build_list"
+  fi
+
+#  tack on the source_file if non-empty
+  if [ "$source_file" != "" ] ; then
+    the_DEPMAKER="$the_DEPMAKER -S $source_file"
+  fi
+
+#  tack on the regexp if non-empty
+  if [ "$regexp" != "" ] ; then
+    the_DEPMAKER="$the_DEPMAKER -i $regexp"
+  fi
+
+#  tack on the extra_ext if non-empty
+  if [ "$extra_ext" != "" ] ; then
+    the_DEPMAKER="$the_DEPMAKER -extra $extra_ext"
+  fi
+
+  if [ "$orthodox" = "yes" ]
+  then
+    if [ $PRINT_TOO_MUCH = "1" ]
+    then
+        $PERL $the_DEPMAKER "$@@"
+    fi
+    $PERL $the_DEPMAKER "$@@" >> $dep_file
+  else
+    echo $PERL $the_DEPMAKER -s "$s_pattern" -o "$o_pattern"
+    if [ $PRINT_TOO_MUCH = "1" ]
+    then
+      $PERL $the_DEPMAKER -s "$s_pattern" -o "$o_pattern"
+    fi
+    $PERL $the_DEPMAKER -s "$s_pattern" -o "$o_pattern" >> $dep_file
+  fi
+fi
+echo " "  >> $dep_file
+echo "#End of Makefile.dep" >> $dep_file
+echo " "  >> $dep_file
+
+#         clean up
+# renamed or hidden files
+if [ -w "$dsuffix" ]
+then
+  moved_files_list="$dsuffix"/*
+  moved_files=`echo $moved_files_list`
+  a=`echo $moved_files | sed -n '/\*/p'`
+#  the above will expand the wild card * if dsuffix is non-empty
+  if [ "$a" = "" ]
+  then
+    mv "$dsuffix"/* .
+  fi
+  rmdir "$dsuffix"
+fi
+exit
+# $Log: makemakedep.sh,v $
+# Revision 1.30  2015/11/18 22:02:24  pwagner
+# Repaired possible problem with dsuffix; cosmetic changes
+#
+# Revision 1.29  2010/01/05 01:53:04  pwagner
+# More usefule with LaTeX files
+#
+# Revision 1.28  2006/02/23 20:25:16  pwagner
+# Should exclude temp files whose names start with tilde
+#
+# Revision 1.27  2005/06/23 22:20:45  pwagner
+# Reworded Copyright statement
+#
+# Revision 1.26  2004/11/03 19:09:33  pwagner
+# perl scripts now get launched via perl rather than as stand-alone executables
+#
+# Revision 1.25  2004/10/27 22:34:08  pwagner
+# Set AUTO_REPLY=1 to automate pointing to wherever perl relocates
+#
+# Revision 1.24  2004/03/18 17:56:49  pwagner
+# Removed any mention of outmoded makedepf90
+#
+# Revision 1.23  2003/06/21 00:34:17  pwagner
+# Added fail-safe measures and MAY_EDIT_PERL flag
+#
+# Revision 1.22  2003/01/31 23:54:56  pwagner
+# Now may exclude certain files from OBJS list; e.g. drivers
+#
+# Revision 1.21  2002/07/22 22:08:44  pwagner
+# Uses get_unique_name for temp file names
+#
+# Revision 1.20  2002/06/21 00:10:13  pwagner
+# First commit
+#
+# Revision 1.19  2002/06/04 17:03:07  pwagner
+# fixed bare word assignment value =
+#
+# Revision 1.18  2002/05/22 00:37:26  pwagner
+# Work with new (1)-mod variant dependency files
+#
+# Revision 1.17  2002/05/02 16:10:38  pwagner
+# -nodep option disables tracing dependencies
+#
+# Revision 1.16  2002/04/09 19:38:00  pwagner
+# Changes allow it to compute m4 dependencies to make l2cf
+#
+# Revision 1.15  2001/11/06 00:19:26  pwagner
+# Turned off ACT_COURTEOUS
+#
+# Revision 1.14  2001/08/14 16:05:08  pwagner
+# Added options; defaults to include_ = yes
+#
+# Revision 1.13  2001/08/10 23:48:27  pwagner
+# Cosmetic changes only
+#
+# Revision 1.12  2001/08/10 17:42:33  pwagner
+# Added -h(elp) option; general housekeeping
+#
+# Revision 1.11  2001/08/09 23:35:11  pwagner
+# Omits bogus *.o lines from Makefile.dep
+#
+# Revision 1.10  2001/05/30 17:37:51  pwagner
+# Added include_f77
+#
+# Revision 1.9  2001/05/01 17:04:32  pwagner
+# Also edits perl path of f90GhostFiles.pl
+#
+# Revision 1.8  2001/03/23 00:41:23  pwagner
+# Prints less
+#
+# Revision 1.7  2001/02/26 00:25:40  pwagner
+# More informative message before fixing perl path; cleanup after abort
+#
+# Revision 1.6  2000/11/21 00:47:34  pwagner
+# Warns user if script's perl not which's; allows change
+#
+# Revision 1.5  2000/11/14 21:50:14  pwagner
+# Can exclude specified files from dependencies
+#
+# Revision 1.4  2000/11/02 23:22:38  pwagner
+# Dependencies may cross directories
+#
+# Revision 1.3  2000/10/27 23:22:37  pwagner
+# works with f90makedep.pl
+#
+# Revision 1.2  2000/10/18 20:31:58  pwagner
+# Fix to overcome apparent bug in makedepf90
+#
+# Revision 1.1  2000/10/16 18:31:49  pwagner
+# first commit
+#
+
+@
+
+
+1.30
+log
+@Repaired possible problem with dsuffix; cosmetic changes
+@
+text
+@d45 1
+d107 1
+a107 1
+# "$Id: makemakedep.sh,v 1.29 2010/01/05 01:53:04 pwagner Exp $"
+d273 1
+d361 5
+d419 1
+d553 5
+d594 3
+@
+
+
+1.29
+log
+@More usefule with LaTeX files
+@
+text
+@d106 1
+a106 1
+# "$Id: makemakedep.sh,v 1.28 2006/02/23 20:25:16 pwagner Exp $"
+d116 1
+a116 1
+	if [ -f "$1" ]
+d118 5
+a122 5
+	   if [ "$f90suffix" != "$dsuffix" ]
+      then
+	      mv "$1" "$dsuffix"
+	   else
+	      echo "$1 wrongly added to dependency lists"
+d124 1
+a124 1
+	   fi
+d205 1
+a205 1
+#	The entry point where control is given to the script         *
+d241 7
+a247 13
+	f90suffix=".f90"
+	if [ -d "$dsuffix" ] ; then
+		if [ $TRY_CLEANUP = "1" ] ; then
+         extant_files "$dsuffix"/*
+         if [ "$extant_files_result" != "" ]
+         then
+			   mv "$dsuffix"/* .
+         fi
+			rmdir "$dsuffix"
+		else
+			echo "Sorry--$dsuffix already exists"
+			echo "Aborting new Makefile.dep"
+                exit
+d249 5
+d255 2
+a256 1
+    mkdir "$dsuffix"
+d258 1
+a258 1
+	f90suffix="$dsuffix"
+d315 1
+a315 1
+	    var=`Exclude $2`
+d317 1
+a317 1
+	    shift
+d320 1
+a320 1
+	    if [ -f "$2" ]
+d322 1
+a322 1
+	       if [ "$f90suffix" != "$dsuffix" ]
+d325 3
+a327 3
+	          mv "$2" "$dsuffix"
+	       else
+	          echo "$2 wrongly added to dependency lists"
+d329 1
+a329 1
+	       fi
+d332 1
+a332 1
+	    shift
+d337 1
+a337 1
+	    shift
+d342 1
+a342 1
+	    shift
+d347 1
+a347 1
+	    shift
+d352 1
+a352 1
+	    shift
+d355 1
+a355 1
+	    regexp="$2"
+d357 1
+a357 1
+	    shift
+d360 1
+a360 1
+	    source_file="$2"
+d362 1
+a362 1
+	    shift
+d365 1
+a365 1
+	    s_pattern="$2"
+d367 1
+a367 1
+	    shift
+d374 1
+a374 1
+	    DEPMAKER=0
+d378 1
+a378 1
+	    o_pattern="$2"
+d380 1
+a380 1
+	    shift
+d387 1
+a387 1
+	;;
+d425 13
+a437 13
+	if [ $ACT_COURTEOUS = "1" ]
+	then
+		if [ $PRINT_TOO_MUCH = "1" ]
+		then
+			echo "Renaming older $dep_file Make.dep.n"
+		fi
+		name=Make.dep.`ls -1 Make*.dep* | wc -l`
+		cname=`echo $name | sed 's/ //'g`
+		mv $dep_file $cname
+    else
+      chmod u+w "$dep_file"
+      rm -f "$dep_file"
+	fi
+d452 2
+a453 2
+	echo "#Delete the following files from the dependency lists:" >> $dep_file
+        echo "#$wrong_list" >> $dep_file
+d462 5
+a466 5
+	if [ $PRINT_TOO_MUCH = "1" ]
+	then
+		echo "Including special macro definitions from Makefile.mac"
+	fi
+	echo "include ../Makefile.mac"  >> $dep_file
+d514 9
+a522 9
+	#
+	# use f90makedep.pl to calculate dependencies
+	if [ $PRINT_TOO_MUCH = "1" ]
+	then
+		echo " using f90makedep.pl to calculate dependencies "
+	fi
+	echo "# using f90makedep.pl to calculate dependencies "  >> $dep_file
+	#
+	# Prefix f90makedep.pl with the path to util
+d524 5
+a528 5
+	the_DEPMAKER="`echo $0 | sed 's/makemakedep.sh/f90makedep.pl/'`"
+	if [ $PRINT_TOO_MUCH = "1" ]
+	then
+		echo " Your perl is $PERL "
+	fi
+a529 1
+#	f90makedep.pl >> Makefile.dep
+d531 3
+a533 3
+   if [ "$dont_build_list" != "" ] ; then
+     the_DEPMAKER="$the_DEPMAKER $dont_build_list"
+   fi
+d536 3
+a538 3
+   if [ "$source_file" != "" ] ; then
+     the_DEPMAKER="$the_DEPMAKER -S $source_file"
+   fi
+d541 3
+a543 3
+   if [ "$regexp" != "" ] ; then
+     the_DEPMAKER="$the_DEPMAKER -i $regexp"
+   fi
+d545 15
+a559 15
+   if [ "$orthodox" = "yes" ]
+   then
+	   if [ $PRINT_TOO_MUCH = "1" ]
+	   then
+         $PERL $the_DEPMAKER "$@@"
+      fi
+      $PERL $the_DEPMAKER "$@@" >> $dep_file
+   else
+      echo $PERL $the_DEPMAKER -s "$s_pattern" -o "$o_pattern"
+	   if [ $PRINT_TOO_MUCH = "1" ]
+	   then
+         $PERL $the_DEPMAKER -s "$s_pattern" -o "$o_pattern"
+      fi
+      $PERL $the_DEPMAKER -s "$s_pattern" -o "$o_pattern" >> $dep_file
+   fi
+d569 9
+a577 8
+	moved_files_list="$dsuffix"/*
+	moved_files=`echo $moved_files_list`
+#	the above will expand the wild card * if dsuffix is non-empty
+	if [ "$moved_files" != "$dsuffix/*" ]
+	then
+        	mv "$dsuffix"/* .
+	fi
+   rmdir "$dsuffix"
+d581 3
+@
+
+
+1.28
+log
+@Should exclude temp files whose names start with tilde
+@
+text
+@d41 4
+d106 1
+a106 1
+# "$Id: makemakedep.sh,v 1.27 2005/06/23 22:20:45 pwagner Exp $"
+d271 2
+d354 10
+d411 2
+d473 32
+a504 22
+if [ "$include_f90" = "yes" ] ; then
+   # extant_files *.f90
+   extant_files_result="`$reecho $excl_from_objs_list *.f90`"
+   (echo $extant_files_result | sed 's/\.f90/.o  /g; s/$/\\/') >> $dep_file
+fi
+
+if [ "$include_f77" = "yes" ] ; then
+   # extant_files *.f
+   extant_files_result="`$reecho $excl_from_objs_list *.f`"
+   (echo $extant_files_result | sed 's/\.f/.o  /g; s/$/\\/') >> $dep_file
+fi
+
+if [ "$include_c" = "yes" ] ; then
+   # extant_files *.c
+   extant_files_result="`$reecho $excl_from_objs_list *.c`"
+   (echo $extant_files_result | sed 's/\.c/.o  /g; s/$/\\/') >> $dep_file
+fi
+
+if [ "$orthodox" != "yes" ] ; then
+   # extant_files *.$s_pattern
+   extant_files_result="`$reecho $excl_from_objs_list *.$s_pattern`"
+   (echo $extant_files_result | sed 's/\.'$s_pattern'/.'$o_pattern'  /g; s/$/\\/') >> $dep_file
+d535 11
+d581 3
+@
+
+
+1.27
+log
+@Reworded Copyright statement
+@
+text
+@d102 1
+a102 1
+# "$Id: makemakedep.sh,v 1.26 2004/11/03 19:09:33 pwagner Exp $"
+d105 1
+a105 1
+#----------------------- UserPrompt -----------------------
+d107 1
+a107 1
+# Function to prompt for user response
+d110 1
+a110 1
+UserPrompt()
+d112 10
+a121 9
+    if [ "$AUTO_REPLY" = 1 ] ; then
+      user_response='y'
+    elif [ "$BRAND" = "linux" ] ; then
+	/bin/echo -n "$* " > /dev/tty
+    read user_response
+    else
+	echo "$* \\c" > /dev/tty
+    read user_response
+    fi
+d230 4
+d309 5
+d379 5
+d399 1
+d542 3
+@
+
+
+1.26
+log
+@perl scripts now get launched via perl rather than as stand-alone executables
+@
+text
+@d91 10
+a100 2
+# Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
+# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d102 1
+a102 1
+# "$Id: makemakedep.sh,v 1.25 2004/10/27 22:34:08 pwagner Exp $"
+d526 3
+@
+
+
+1.25
+log
+@Set AUTO_REPLY=1 to automate pointing to wherever perl relocates
+@
+text
+@d37 2
+d94 1
+a94 1
+# "$Id: makemakedep.sh,v 1.24 2004/03/18 17:56:49 pwagner Exp $"
+a202 6
+#if you use f90makedep.pl, you may have a problem if the path where you keep
+#your copy of perl is different from the one in its 1st line
+#compare 'which perl' with 'sed -n "1 p" f90makedep.pl
+#The script will attempt to anticipate this problem and ask you if it
+#should fix f90makedep.pl
+#
+a215 9
+EDIT_GB_PERL_PATH=1
+#                 ^  -- set this to 1 to change path to perl in ghostbuster.sh
+#
+MAY_EDIT_PERL=1
+#             ^  -- set this to 1 to permit correcting perl path
+#
+AUTO_REPLY=1
+#          ^  -- set this to 1 to automate user responses to 'y'
+#                (in this case automate correcting perl path)
+d258 1
+d325 5
+a376 1
+   echo " EDIT_GB_PERL_PATH: $EDIT_GB_PERL_PATH "  
+d475 1
+a475 2
+		echo " Your perl is `which perl` "
+		echo " f90makedep.pl is looking for it at `sed -n '1 p' $the_DEPMAKER`"
+a477 65
+# Check whether script is looking for perl in right place
+# && give user a chance to redirect it if it is not
+	script_perl=`sed -n '1 p' $the_DEPMAKER`
+	your_perl='#!'`which perl` 
+   if [ "$script_perl" != "$your_perl" -a "$MAY_EDIT_PERL" = 1 ]
+        then
+		#Warn user that perl script may need to be changed
+
+		echo " *** Warning: f90makedep.pl may need to be changed"
+		echo " ***          to point to where your perl actually is"
+		echo " ***          "
+		echo " ***  (unless you know of a compelling reason to do otherwise"
+		echo " ***  you probably want to answer 'yes' to the following)"
+		echo " ***          "
+ 		UserPrompt "Change f90makedep.pl to look in [$your_perl](yes) or no?"
+   		if [ "$user_response" != "" ] ; then
+			case  "$user_response" in
+	    		n* | N* )
+				echo "Continuing to use $script_perl"
+              		  	change_perl=
+	   		 ;;
+	    		y* | Y* )
+				echo "Changing to use $your_perl"
+                		change_perl="$your_perl"
+	    		;;
+	   		 * )
+				echo "Changing to use $user_response"
+                		change_perl="$user_response"
+	    		;;
+			esac
+			else
+				echo "Changing to use $your_perl"
+                		change_perl="$your_perl"
+			fi
+   		if [ "$change_perl" != "" ] ; then
+            temp_name=`get_unique_name pl`
+            sed -n "1 s%$script_perl%$change_perl%p;2,$ p" $the_DEPMAKER > $temp_name
+            return_status=`expr $?`
+            if [ $return_status = 0 ]
+            then
+				  chmod u+w "$the_DEPMAKER"
+         	  mv $temp_name "$the_DEPMAKER"
+				  chmod a+x "$the_DEPMAKER"
+				  echo "*** You have fixed f90makedep.pl to look for $your_perl"
+            fi
+   		   if [ "$EDIT_GB_PERL_PATH" = "1" -a "$MAY_EDIT_PERL" = 1 ] ; then
+	            #
+	            # Prefix f90GhostFiles.pl with the path to util
+               # this assumes f90GhostFiles.pl is in same dir as this script
+	            the_GHOSTFINDER="`echo $0 | sed 's/makemakedep.sh/f90GhostFiles.pl/'`"
+            	script_perl=`sed -n '1 p' $the_GHOSTFINDER`
+               if [ "$script_perl" != "$your_perl" ] ; then
+                  sed -n "1 s%$script_perl%$change_perl%p;2,$ p" $the_GHOSTFINDER > $temp_name
+                  return_status=`expr $?`
+                  if [ $return_status = 0 ]
+                  then
+		      		  chmod u+w "$the_GHOSTFINDER"
+         	        mv $temp_name "$the_GHOSTFINDER"
+		      		  chmod a+x "$the_GHOSTFINDER"
+				        echo "*** You have also fixed f90GhostFiles.pl to look for $your_perl"
+                  fi
+               fi
+            fi
+         fi
+       fi
+d487 1
+a487 1
+         $the_DEPMAKER "$@@"
+d489 1
+a489 1
+      $the_DEPMAKER "$@@" >> $dep_file
+d491 1
+a491 1
+      echo $the_DEPMAKER -s "$s_pattern" -o "$o_pattern"
+d494 1
+a494 1
+         $the_DEPMAKER -s "$s_pattern" -o "$o_pattern"
+d496 1
+a496 1
+      $the_DEPMAKER -s "$s_pattern" -o "$o_pattern" >> $dep_file
+d518 3
+@
+
+
+1.24
+log
+@Removed any mention of outmoded makedepf90
+@
+text
+@d87 1
+a87 1
+#(1) Tested only with NAG, Lahey, Intel, Sun, and Absoft f95 compilers
+d92 1
+a92 1
+# "$Id: makemakedep.sh,v 1.23 2003/06/21 00:34:17 pwagner Exp $"
+d102 3
+a104 1
+    if [ "$BRAND" = "linux" ] ; then
+d106 1
+d109 1
+a110 1
+    read user_response
+d224 1
+d226 3
+d592 3
+@
+
+
+1.23
+log
+@Added fail-safe measures and MAY_EDIT_PERL flag
+@
+text
+@d87 3
+a89 4
+#(1) No one will ever use the DEPMAKER=1; so why not drop it?
+#(2) Not tested with Sun's own f95 compiler
+#(3) Still too specialized--works well only with NAG-like compilers
+# Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+d92 1
+a92 1
+# "$Id: makemakedep.sh,v 1.22 2003/01/31 23:54:56 pwagner Exp $"
+d191 6
+a196 22
+#(1)  makedepf90 (a compiled program)
+#(2)  f90makedep.pl (a perl script)
+#(3)  none (skips tracing dependencies)
+#
+#which of (1) or (2) to use is set by the following line
+DEPMAKER=2
+#        ^  -- set this to 1 for makedepf90, 2 for f90makedep.pl
+# (option (3) is selected by 
+#
+#unless you have obtained and compiled makedepf90, you will almost
+#certainly need to set DEPMAKER to 2 in the above line
+#If you prefer to use makedepf90 (perhaps because you lack perl)
+#it is available from
+#        http://www.helsinki.fi/~eedelman/makedepf90.html
+#as a compiled binary for Linux and as sources for other platforms
+#After compiling makedepf90, you will need to place it in your PATH,
+#perhaps by moving a copy to $(HOME)/bin if it exists,
+#or else replace the line
+# 	makedepf90 | sed ...
+# below with
+# 	/dir1/dir2/../dirn/makedepf90 | sed ...
+#where /dir1.. is directory where you created makedepf90 (use 'pwd')
+d378 1
+a461 15
+elif [ $DEPMAKER = "1" ]
+then
+	#
+	# use makedepf90 to calculate dependencies
+	# this assumes makedepf90 both exists && is in PATH
+	if [ $PRINT_TOO_MUCH = "1" ]
+	then
+		echo " using makedepf90 to calculate dependencies "
+	fi
+	echo "# using makedepf90 to calculate dependencies "  >> $dep_file
+	#
+	#makedepf90 *.f90 | sed 's/^makedepf90/#makedepf90/' >> $dep_file
+	#
+	#Pipe through sed to overcome an apparent bug in makedepf90
+	makedepf90 *.f90 | sed 's/\.f90\.o/\.o/g' >> $dep_file
+d472 1
+a472 1
+        # this assumes f90makedep.pl is in same dir as this script
+d585 3
+@
+
+
+1.22
+log
+@Now may exclude certain files from OBJS list; e.g. drivers
+@
+text
+@d93 1
+a93 1
+# "$Id: makemakedep.sh,v 1.21 2002/07/22 22:08:44 pwagner Exp $"
+d237 1
+a237 1
+
+d515 1
+a515 1
+   if [ "$script_perl" != "$your_perl" ]
+d548 9
+a556 5
+				chmod u+w "$the_DEPMAKER"
+         	mv $temp_name "$the_DEPMAKER"
+				chmod a+x "$the_DEPMAKER"
+				echo "*** You have fixed f90makedep.pl to look for $your_perl"
+   		   if [ "$EDIT_GB_PERL_PATH" = "1" ] ; then
+d564 8
+a571 4
+		      		chmod u+w "$the_GHOSTFINDER"
+         	      mv $temp_name "$the_GHOSTFINDER"
+		      		chmod a+x "$the_GHOSTFINDER"
+				      echo "*** You have also fixed f90GhostFiles.pl to look for $your_perl"
+d616 3
+@
+
+
+1.21
+log
+@Uses get_unique_name for temp file names
+@
+text
+@d33 2
+d93 1
+a93 1
+# "$Id: makemakedep.sh,v 1.20 2002/06/21 00:10:13 pwagner Exp $"
+d280 3
+d286 1
+d337 5
+d387 2
+d443 3
+a445 1
+#
+d449 2
+a450 1
+   extant_files *.f90
+d455 2
+a456 1
+   extant_files *.f
+d461 2
+a462 1
+   extant_files *.c
+d467 2
+a468 1
+   extant_files *.$s_pattern
+d608 3
+@
+
+
+1.20
+log
+@First commit
+@
+text
+@d91 1
+a91 1
+# "$Id: makemakedep.sh,v 1.19 2002/06/04 17:03:07 pwagner Exp $"
+d109 44
+d216 1
+a216 1
+#The script will attempt ot anticipate this problem and ask you if it
+d238 2
+a239 2
+dsuffix=".xui"
+#         ^^^----- this is the suffix stuck onto any excluded files
+d241 1
+d527 2
+a528 1
+            sed -n "1 s%$script_perl%$change_perl%p;2,$ p" $the_DEPMAKER > temp.pl
+d530 1
+a530 1
+         	mv temp.pl "$the_DEPMAKER"
+d540 1
+a540 1
+                  sed -n "1 s%$script_perl%$change_perl%p;2,$ p" $the_GHOSTFINDER > temp.pl
+d542 1
+a542 1
+         	      mv temp.pl "$the_GHOSTFINDER"
+d589 3
+@
+
+
+1.19
+log
+@fixed bare word assignment value =
+@
+text
+@d91 1
+a91 1
+# "$Id: makemakedep.sh,v 1.18 2002/05/22 00:37:26 pwagner Exp $"
+a219 17
+#   Rename older Makefile.dep if one already exists
+if [ -f Makefile.dep ]
+then
+	if [ $ACT_COURTEOUS = "1" ]
+	then
+		if [ $PRINT_TOO_MUCH = "1" ]
+		then
+			echo "Renaming older Makefile.dep Make.dep.n"
+		fi
+		name=Make.dep.`ls -1 Make*.dep* | wc -l`
+		cname=`echo $name | sed 's/ //'g`
+		mv Makefile.dep $cname
+        else
+                chmod u+w Makefile.dep
+                rm -f Makefile.dep
+	fi
+fi
+d339 18
+d543 3
+@
+
+
+1.18
+log
+@Work with new (1)-mod variant dependency files
+@
+text
+@d91 1
+a91 1
+# "$Id: makemakedep.sh,v 1.17 2002/05/02 16:10:38 pwagner Exp $"
+d304 1
+a304 1
+       dep_file=Makefile.dep
+d342 1
+d542 3
+@
+
+
+1.17
+log
+@-nodep option disables tracing dependencies
+@
+text
+@d30 5
+a34 1
+# -d file_name  exclude file_name
+d37 2
+d69 13
+d84 4
+d91 1
+a91 1
+# "$Id: makemakedep.sh,v 1.16 2002/04/09 19:38:00 pwagner Exp $"
+d247 1
+d252 1
+d298 10
+d356 1
+a356 1
+echo "#Makefile.dep -- a file to be included by a Makefile" > Makefile.dep
+d359 1
+a359 1
+   echo "#to compile a Fortran 9x program or library" >> Makefile.dep
+d361 1
+a361 1
+   echo "#to hold automatically calculated dependencies" >> Makefile.dep
+d367 2
+a368 2
+	echo "#Delete the following files from the dependency lists:" >> Makefile.dep
+        echo "#$wrong_list" >> Makefile.dep
+d381 1
+a381 1
+	echo "include ../Makefile.mac"  >> Makefile.dep
+d384 1
+a384 1
+echo "OBJS = \\"  >> Makefile.dep
+d388 1
+a388 1
+   (echo $extant_files_result | sed 's/\.f90/.o  /g; s/$/\\/') >> Makefile.dep
+d393 1
+a393 1
+   (echo $extant_files_result | sed 's/\.f/.o  /g; s/$/\\/') >> Makefile.dep
+d398 1
+a398 1
+   (echo $extant_files_result | sed 's/\.c/.o  /g; s/$/\\/') >> Makefile.dep
+d403 1
+a403 1
+   (echo $extant_files_result | sed 's/\.'$s_pattern'/.'$o_pattern'  /g; s/$/\\/') >> Makefile.dep
+d406 1
+a406 1
+echo " "  >> Makefile.dep
+d410 2
+a411 2
+  echo "#(Not tracing dependencies)" >> Makefile.dep
+  echo "#End of simplified Makefile.dep" >> Makefile.dep
+d421 1
+a421 1
+	echo "# using makedepf90 to calculate dependencies "  >> Makefile.dep
+d423 1
+a423 1
+	#makedepf90 *.f90 | sed 's/^makedepf90/#makedepf90/' >> Makefile.dep
+d426 1
+a426 1
+	makedepf90 *.f90 | sed 's/\.f90\.o/\.o/g' >> Makefile.dep
+d434 1
+a434 1
+	echo "# using f90makedep.pl to calculate dependencies "  >> Makefile.dep
+d502 4
+d512 1
+a512 1
+      $the_DEPMAKER "$@@" >> Makefile.dep
+d519 1
+a519 1
+      $the_DEPMAKER -s "$s_pattern" -o "$o_pattern" >> Makefile.dep
+d522 3
+a524 3
+echo " "  >> Makefile.dep
+echo "#End of Makefile.dep" >> Makefile.dep
+echo " "  >> Makefile.dep
+d541 3
+@
+
+
+1.16
+log
+@Changes allow it to compute m4 dependencies to make l2cf
+@
+text
+@d34 1
+d68 1
+a68 1
+# "$Id: makemakedep.sh,v 1.15 2001/11/06 00:19:26 pwagner Exp $"
+d122 1
+a122 1
+#to trace dependencies based on USEs and INCLUDEs:
+d125 1
+d130 1
+d282 4
+d373 5
+a377 1
+if [ $DEPMAKER = "1" ]
+d502 3
+@
+
+
+1.15
+log
+@Turned off ACT_COURTEOUS
+@
+text
+@d16 4
+d31 2
+d64 1
+a64 1
+# Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+d67 1
+a67 1
+# "$Id: makemakedep.sh,v 1.14 2001/08/14 16:05:08 pwagner Exp $"
+d213 2
+a214 2
+# include *.f     no
+# include *.c     no
+d218 3
+d270 15
+d297 16
+d315 6
+a320 1
+echo "#to compile a Fortran 9x program or library" >> Makefile.dep
+d359 5
+d456 15
+a470 1
+	$the_DEPMAKER "$@@" >> Makefile.dep
+d491 3
+@
+
+
+1.14
+log
+@Added options; defaults to include_ = yes
+@
+text
+@d61 1
+a61 1
+# "$Id: makemakedep.sh,v 1.13 2001/08/10 23:48:27 pwagner Exp $"
+d147 1
+a147 1
+ACT_COURTEOUS=1
+d154 1
+a154 1
+#              ^  -- set this to 1 if willing to try patience
+d427 3
+@
+
+
+1.13
+log
+@Cosmetic changes only
+@
+text
+@d20 5
+a24 1
+# -nf90         don't include files with .f90 extensions
+a25 4
+# -f77          include files with .f extensions, too
+#                (default is not to include them)
+# -c            include files with .c extensions, too
+#                (default is not to include them)
+d32 1
+a32 1
+#The option(s) marked with "-", -f77, if present,
+d61 1
+a61 1
+# "$Id: makemakedep.sh,v 1.12 2001/08/10 17:42:33 pwagner Exp $"
+d210 2
+a211 2
+include_f77="no"
+include_c="no"
+d225 8
+d241 4
+d427 3
+@
+
+
+1.12
+log
+@Added -h(elp) option; general housekeeping
+@
+text
+@d27 1
+d61 1
+a61 1
+# "$Id: makemakedep.sh,v 1.11 2001/08/09 23:35:11 pwagner Exp $"
+d87 1
+a87 1
+# usage: mega_buck n color
+d251 1
+a251 1
+           | sed -n 's/^.//p' | sed '$ d'
+d411 1
+a411 1
+        rmdir "$dsuffix"
+d415 3
+@
+
+
+1.11
+log
+@Omits bogus *.o lines from Makefile.dep
+@
+text
+@d2 3
+a4 1
+    #makemakedep.sh
+d6 12
+a17 1
+#to compile a Fortran 9x program or library among files =~ the pattern %.f90
+d19 9
+a27 11
+#All files and Makefile.dep are in the current working directory
+#except in case of (2) (see below) any args are passed through to
+#f90makedep.pl where they will be interpreted as additional directories
+#in which to search for additional prerequisite modules that may be among
+#the lists of dependencies (please see f90makedep.pl for details)
+#except for any args preceded by the "-d" flag (all of which should
+#come first, before any of the directory args)
+#Arguments preceded by the "-d" flag, each of which must appear
+#separately and with its own flag, are Fortran 9x files in the
+#current working directory to be excluded from the list of dependencies
+#(often because they are special-purpose, "test" programs, or some such)
+a28 2
+#Usage:
+#makemakedep.sh [-f77] [-d file1.f90 -d file2.f90] [dir1 dir2 ..]
+d31 2
+a32 1
+#The option, -f77, if present must be the first option on the command line
+d56 1
+a56 6
+#Options
+# -f77   include files with .f extensions as well as .f90
+#         (otherwise only .f90 files considered)
+# -d file_name  exclude file_name
+# dir1   search directory named by dir1 as well as cwd for files
+#
+d60 1
+a60 1
+# "$Id: makemakedep.sh,v 1.10 2001/05/30 17:37:51 pwagner Exp $"
+d205 3
+a207 3
+# include *.f90
+# exclude *.f
+# exclude *.c
+d211 2
+d248 6
+a285 11
+# Note:
+# The following didn't work if there were no files matching the specified
+# extensions in the directory;
+# instead the echo would just produce a bogus "*.f90" string
+#if [ "$include_f77" = "yes" ] ; then
+#   (echo *.f90 | sed 's/\.f90/.o  /g; s/$/\\/') >> Makefile.dep
+#   (echo *.f | sed 's/\.f/.o  /g; s/$/\\/') >> Makefile.dep
+#else
+#   (ls -C *.f90 | sed 's/\.f90/.o  /g; s/$/\\/') >> Makefile.dep
+#fi
+
+d288 1
+a288 4
+   if [ "$extant_files_result" != "" ]
+   then
+      (echo $extant_files_result | sed 's/\.f90/.o  /g; s/$/\\/') >> Makefile.dep
+   fi
+d293 1
+a293 4
+   if [ "$extant_files_result" != "" ]
+   then
+      (echo $extant_files_result | sed 's/\.f/.o  /g; s/$/\\/') >> Makefile.dep
+   fi
+d298 1
+a298 4
+   if [ "$extant_files_result" != "" ]
+   then
+      (echo $extant_files_result | sed 's/\.c/.o  /g; s/$/\\/') >> Makefile.dep
+   fi
+d414 3
+@
+
+
+1.10
+log
+@Added include_f77
+@
+text
+@d19 1
+a19 1
+#makemakedep.sh [-f77] [-d file1.f90 -d file2.f90] [arg1 arg2 ..]
+d50 1
+a50 1
+# arg1   search directory named by arg1 as well as cwd for files
+d52 8
+d73 35
+a152 2
+# Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+a153 4
+# "$Id: makemakedep.sh,v 1.9 2001/05/01 17:04:32 pwagner Exp $"
+
+#
+#----------------------- Implementation -----------------------
+d165 5
+a169 1
+			mv "$dsuffix"/* .
+d199 11
+a209 1
+#
+d211 1
+a211 6
+if [ "$1" = "-f77" ] ; then
+   include_f77="yes"
+   shift
+else
+   include_f77="no"
+fi
+d213 12
+d226 20
+a245 15
+wrong_list=""
+while [ "$1" = "-d" ] ; do
+	if [ -f "$2" ]
+        then
+		if [ "$f90suffix" != "$dsuffix" ]
+        	then
+#        		mv "$2" "`echo $2 | sed 's/'$f90suffix'/'$dsuffix'/'`"
+			mv "$2" "$dsuffix"
+		else
+			echo "$2 wrongly added to dependency lists"
+                        wrong_list="$wrong_list $2"
+	        fi
+        fi
+        shift
+	shift
+a246 2
+done
+#
+d274 1
+a274 1
+# The following won't work if there are no files matching the specified
+d276 16
+a291 1
+# instead the echo will just produce a bogus "*.f90" string
+d293 13
+a305 4
+   (echo *.f90 | sed 's/\.f90/.o  /g; s/$/\\/') >> Makefile.dep
+   (echo *.f | sed 's/\.f/.o  /g; s/$/\\/') >> Makefile.dep
+else
+   (ls -C *.f90 | sed 's/\.f90/.o  /g; s/$/\\/') >> Makefile.dep
+d307 1
+d421 3
+@
+
+
+1.9
+log
+@Also edits perl path of f90GhostFiles.pl
+@
+text
+@d19 1
+a19 1
+#makemakedep.sh [-d file1.f90 -d file2.f90] [arg1 arg2 ..]
+d21 2
+d46 5
+d113 1
+a113 1
+# "$Id: makemakedep.sh,v 1.8 2001/03/23 00:41:23 pwagner Exp $"
+d159 8
+d211 11
+a221 1
+(ls -C *.f90 | sed 's/.f90/.o  /g; s/$/\\/') >> Makefile.dep
+d335 3
+@
+
+
+1.8
+log
+@Prints less
+@
+text
+@d100 3
+d106 1
+a106 1
+# "$Id: makemakedep.sh,v 1.7 2001/02/26 00:25:40 pwagner Exp $"
+d263 2
+a264 2
+				echo "Continuing to use $script_perl"
+              		  	change_perl=
+d271 15
+a285 1
+				echo "*** You have fixed f90makedep.f90 to look for $your_perl"
+d310 3
+@
+
+
+1.7
+log
+@More informative message before fixing perl path; cleanup after abort
+@
+text
+@d97 3
+d103 1
+a103 1
+# "$Id: makemakedep.sh,v 1.6 2000/11/21 00:47:34 pwagner Exp $"
+d136 4
+a139 1
+		echo "Renaming older Makefile.dep Make.dep.n"
+d185 4
+a188 1
+	echo "Including special macro definitions from Makefile.mac"
+d201 4
+a204 1
+	echo " using makedepf90 to calculate dependencies "
+d214 4
+a217 1
+	echo " using f90makedep.pl to calculate dependencies "
+d223 5
+a227 2
+	echo " Your perl is `which perl` "
+	echo " f90makedep.pl is looking for it at `sed -n '1 p' $the_DEPMAKER`"
+d293 3
+@
+
+
+1.6
+log
+@Warns user if script's perl not which's; allows change
+@
+text
+@d84 2
+d94 3
+d100 1
+a100 1
+# "$Id: makemakedep.sh,v 1.5 2000/11/14 21:50:14 pwagner Exp $"
+d113 7
+a119 4
+	if [ -d "$dsuffix" ]
+	then
+		echo "Sorry--$dsuffix already exists"
+		echo "Aborting new Makefile.dep"
+d121 3
+a123 2
+        fi
+        mkdir "$dsuffix"
+d172 1
+a172 1
+#The following may be useful in rare circumstances
+d174 2
+a175 2
+#so for purity we should avoid relying on it
+#e.g., the mlspgs software does not include any file "Makefile.mac"
+d215 1
+a215 1
+        if [ "$script_perl" != "$your_perl" ]
+d221 4
+d241 1
+a241 1
+		else
+d244 1
+a244 1
+		fi
+d246 6
+a251 7
+                	sed -n "1 s%$script_perl%$change_perl%p;2,$ p" $the_DEPMAKER > temp.pl
+			chmod u+w "$the_DEPMAKER"
+			chmod u+w "$the_DEPMAKER"
+                        mv temp.pl "$the_DEPMAKER"
+			chmod a+x "$the_DEPMAKER"
+			echo "*** You have changed f90makedep.f90"
+                fi
+d275 3
+@
+
+
+1.5
+log
+@Can exclude specified files from dependencies
+@
+text
+@d44 14
+d95 1
+a95 1
+# "$Id: makemakedep.sh,v 1.4 2000/11/02 23:22:38 pwagner Exp $"
+d201 40
+d261 1
+a261 1
+
+d263 3
+@
+
+
+1.4
+log
+@Dependencies may cross directories
+@
+text
+@d4 6
+a9 4
+#to compile a Fortran 9x program or library
+#In case of (2) (see below) any args are passed through to
+#f90makedep.pl where they will be interpreted as directories
+#in which to search for additional modules that may be among
+d11 6
+d19 1
+a19 1
+#makemakedep.sh [arg1 arg2 ..]
+d33 2
+a34 2
+#Makefile.dep -- a file to be included by a Makefile
+#to compile a Fortran 9x program or library
+d42 1
+a42 1
+#End of Makefile.dep
+d67 1
+a67 1
+#if you use f90makedep.pl, you may have a problem if the path
+d75 8
+a82 2
+# P.A. Wagner (October 31 2000)
+# (see mlsconfigure.sh for copyright statement)
+d84 1
+a84 2
+ACT_COURTEOUS=1
+#             ^  -- set this to 1 to rename older Makefile.dep, 0 deletes
+d86 20
+a105 1
+# "$Id: makemakedep.sh,v 1.3 2000/10/27 23:22:37 pwagner Exp $"
+d119 21
+d143 6
+d168 1
+d183 1
+a183 1
+        # which is assumed to be the same as the path to this script
+d194 14
+d209 3
+@
+
+
+1.3
+log
+@works with f90makedep.pl
+@
+text
+@d5 31
+d57 1
+a57 1
+#where /dir1.. is directory where you created makedpf90 (use 'pwd')
+d63 3
+d67 7
+a73 1
+# "$Id: makemakedep.sh,v 1.2 2000/10/18 20:31:58 pwagner Exp $"
+d76 10
+a85 4
+	echo "Renaming older Makefile.dep Make.dep.n"
+	name=Make.dep.`ls -1 Make*.dep* | wc -l`
+	cname=`echo $name | sed 's/ //'g`
+	mv Makefile.dep $cname
+d89 6
+d97 1
+a97 1
+	echo "Including macro definitions in Makefile.mac"
+d100 1
+d128 1
+a128 1
+	$the_DEPMAKER >> Makefile.dep
+d135 3
+@
+
+
+1.2
+log
+@Fix to overcome apparent bug in makedepf90
+@
+text
+@d5 4
+a8 1
+#uses makedepf90 to trace dependencies based on USEs and INCLUDEs
+d10 3
+d14 20
+a33 1
+# "$Id: makemakedep.sh,v 1.1 2000/10/16 18:31:49 pwagner Exp $"
+a50 1
+#makedepf90 *.f90 | sed 's/^makedepf90/#makedepf90/' >> Makefile.dep
+d52 25
+a76 2
+#This to overcome an apparent bug in makedepf90
+makedepf90 *.f90 | sed 's/\.f90\.o/\.o/g' >> Makefile.dep
+d82 3
+@
+
+
+1.1
+log
+@first commit
+@
+text
+@d8 1
+a8 1
+# "$Id: makemakedep.sh,v 1. 2000/10/16 00:41:59 pwagner Exp $"
+d26 4
+a29 1
+makedepf90 *.f90 | sed 's/^makedepf90/#makedepf90/' >> Makefile.dep
+d34 4
+a37 1
+# $Log:  $
+@
+

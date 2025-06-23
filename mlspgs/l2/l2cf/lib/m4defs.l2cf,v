@@ -1,0 +1,825 @@
+head	1.23;
+access;
+symbols
+	v5-02-NRT-19:1.23
+	v6-00:1.23
+	v5-02-NRT-18:1.23
+	v5-02:1.22
+	v5-01-NRT-17:1.23
+	v5-01-NRT-16:1.23
+	v5-01-NRT-15:1.23
+	v5-01-NRT-14:1.23
+	neuralnetworks-1-0:1.23.0.4
+	cfm-single-freq-0-1:1.23.0.2
+	v5-01:1.22
+	v5-00:1.22
+	v4-23-TA133:1.22.0.6
+	mus-emls-1-70:1.22.0.4
+	rel-1-0-englocks-work:1.22.0.2
+	VUMLS1-00:1.22
+	VPL1-00:1.21
+	V4-22-NRT-08:1.21
+	VAM1-00:1.21
+	V4-21:1.21.0.2
+	V4-13:1.21
+	V4-12:1.21
+	V4-11:1.21
+	V4-10:1.21
+	V3-43:1.17
+	M4-00:1.19
+	V3-41:1.17
+	V3-40-PlusGM57:1.17.0.2
+	V2-24-NRT-04:1.15
+	V3-33:1.19
+	V2-24:1.15
+	V3-31:1.19
+	V3-30-NRT-05:1.19
+	cfm-01-00:1.19
+	V3-30:1.17
+	V3-20:1.17
+	V3-10:1.17
+	V2-23-NRT-02:1.15
+	V2-23:1.15
+	V2-22-NRT-01:1.15
+	V2-22:1.15
+	V2-21:1.15
+	V2-20:1.15
+	V2-11:1.15
+	V2-10:1.15
+	V2-00:1.14
+	V1-51:1.14
+	V1-50:1.14
+	V1-45:1.14
+	V1-44:1.14
+	V1-43:1.14
+	V1-32:1.14
+	V1-31:1.14
+	V1-30:1.12
+	V1-13:1.5
+	V1-12:1.5
+	V1-11:1.5
+	V1-10:1.5
+	newfwm-feb03:1.5.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.23
+date	2019.12.12.00.55.00;	author pwagner;	state Exp;
+branches;
+next	1.22;
+
+1.22
+date	2017.03.09.01.50.19;	author mjschwar;	state Exp;
+branches;
+next	1.21;
+
+1.21
+date	2014.02.11.23.26.32;	author pwagner;	state Exp;
+branches;
+next	1.20;
+
+1.20
+date	2013.12.03.23.55.24;	author pwagner;	state Exp;
+branches;
+next	1.19;
+
+1.19
+date	2010.05.25.22.41.45;	author pwagner;	state Exp;
+branches;
+next	1.18;
+
+1.18
+date	2010.05.19.17.54.30;	author pwagner;	state Exp;
+branches;
+next	1.17;
+
+1.17
+date	2009.06.23.17.30.53;	author pwagner;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2009.05.14.14.44.11;	author honghanh;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2006.07.29.00.26.09;	author pwagner;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2003.11.14.00.11.31;	author livesey;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2003.10.09.21.56.40;	author vsnyder;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2003.09.11.23.12.33;	author livesey;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2003.07.08.00.17.30;	author livesey;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2003.06.04.17.13.55;	author livesey;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2003.05.10.23.13.23;	author livesey;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2003.05.10.22.21.55;	author livesey;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2003.05.07.20.54.13;	author livesey;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2003.03.22.01.18.16;	author livesey;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2002.10.25.01.10.15;	author livesey;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2002.10.23.23.33.49;	author livesey;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2002.08.23.23.34.19;	author livesey;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2002.07.05.21.36.40;	author livesey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2002.05.17.20.24.09;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.23
+log
+@New and useful macros added
+@
+text
+@; ----------------------------------------------------------------
+; ----------------------------------------------------------------
+; ----------------------------------------------------------------
+; NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE
+; NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE
+;
+; This Level 2 Configuration File (l2cf) has been automatically
+; generated using the GNU m4 macro preprocessor.  While it is
+; perfectly allowable to edit this file directly, it will probably
+; be more efficient to edit the `source' files that went into m4.
+;
+; NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE
+; NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE
+; ----------------------------------------------------------------
+; ----------------------------------------------------------------
+; ----------------------------------------------------------------
+; ----------------------------------------------------------------
+
+divert(-1)
+
+;$Id: m4defs.l2cf,v 1.22 2017/03/09 01:50:19 mjschwar Exp $
+; --------------------------- Changing m4 syntax etc.
+
+; These are the m4 definitions for l2cf's
+; Change the quotes to braces
+changequote({,})
+; Insist all m4 stuff is prefixed with !
+changesyntax({@@!})
+; Change the comment to a semicolon
+!changecom(;)
+; Make _ not a possible part of m4 names
+!changesyntax({O_})
+
+; --------------------------- Low level macros for loops etc.
+
+; Define a very simple for loop prototcol
+; Increment $1 from $2 to $3, doing $4
+!define({forloop},
+  {!pushdef({$1}, {$2})!forloopint({$1}, {$2}, {$3}, {$4})!popdef({$1})})
+!define(forloopint,{!ifelse(!eval(!$1<={$3}),1,{$4{}!ifelse(!$1, {$3}, ,
+    {!define({$1}, !incr(!$1))!forloopint({$1}, {$2}, {$3}, {$4})})},{})})
+
+; This macro calls the macro that is its first argument many times,
+; once for each successive argument, with that argument being an
+; argument to the macro
+!define({forall},{!$1($2)!ifelse($#,2,{},{!forall}($1,!shift(!shift($@@))))})
+
+; ---------------------------- Macros for defining other macros conditionally
+; This macro defines a macro unless it's already been defined
+; It's used like this
+;    !defunlessdef(pfgFile,{!pfgPath/MLS-Aura_L2Cal-PFG_v3-0-0_0000d000.txt})
+!define({defunlessdef},{!dnl
+!ifdef($1, {}, {!dnl
+!define($1,{$2})!dnl
+})})
+
+; This macro defines a macro unless it's already defined and non-blank
+; It's used like this
+;    !defunlessnotblank(includecalpath,{!calpath})
+!define({defunlessdnotblank},{!dnl
+!ifelse($1, {},{!dnl
+!define($1,{$2})!dnl
+})})
+
+; ------------------------------- Macros for list manipulation
+; This macro makes a list separated by commas.  The items in the list
+; are arguments 3 onwards, prefixed with argument 1, and postfixed
+; with argument 2.
+!define({makelist},{$1$3$2!ifelse($#,3,{},{, !makelist}($1,$2,!shift(!shift(!shift($@@)))))})
+
+; This macro adds an item to a list
+; e.g., !addItem({d},!l1) where l1 = {a,b,c} would print d, a, b, c
+; Notes and limitations:
+; (1) it does not check for uniqueness, i.e. the resulting list
+; may end up with repeated items;
+; see removeDupItems below
+; (2) the same macro can add multiple items to a list
+; e.g., !addItem({e},{d},!l1) where l1 = {a,b,c} would print e, d, a, b, c
+!define(addItem, {!makelist({},{},$1,!shift($@@))})
+
+; Because m4 wants to interpret each ',' as separating args in calling
+; esyscmd, we need lower macros for temporarily replacing ',' with a different
+; and hopefully innocuous character, "%".
+; Note: if for some reason "%" is unsuitable, simply replace pctChar below
+!define(pctChar,%)
+;!define(sublist2pct,{%$1})
+!define(sublist2pct,{!pctChar $1})
+; Replace each ',' with '%'
+!define(list2pct,{!tidyList(!forall({sublist2pct}, $@@ )) })
+!define(pyScriptArgs0,{-!pctChar !list2pct($@@)})
+!define(pyScriptArgs1,{-!pctChar !list2pct($1) !list2pct(!shift($@@))})
+!define(pyScriptArgs11,{-1 -!pctChar $1 !list2pct(!shift($@@))})
+!define(pyScriptArgs21,{-2 -!pctChar $1 !list2pct(!shift($@@))})
+!define(pyScriptArgs31,{!dnl
+!ifelse($#,{1},
+{-3 -!pctChar $1 !list2pct(!keys) !list2pct(!values)},
+{-3 -!pctChar $1 $2 $3}
+)
+})
+
+; Notes on the following macros 
+; that use scripts in !home/mlspgs/scripts
+; (1) you must have an mlspgs distribution under your home directory 
+; and it must be up-to-date
+; (2) case will not matter; e.g., removing "A" from "a,b,c" would print b, c
+ 
+; This macro removes an item from a list
+; e.g., !removeItem({b},!l1) where l1 = {a,b,c} would print a, c
+; If the item to be removed isn't in the list, 
+; its removal leaves the list unchanged
+; Notes and limitations:
+; (1) As designed, it removes only a single item, 
+;     it can't remove multiple items at a single go; but you may invoke
+;     the macro list2pct to do this, e.g. where l1 = {a,b,c}
+;     !removeItem(!list2pct({a},{b}),!l1) would print c
+!define(removeItem, 
+{!esyscmd(!home/mlspgs/scripts/pydiff.py !pyScriptArgs1($@@))}
+)
+; This macro removes duplicate items from a list
+; e.g., !removeDupItems(!l1) where l1 = {a,b,c,a} would print a, b, c
+!define(removeDupItems, 
+{!esyscmd(!home/mlspgs/scripts/pyuniq.py !pyScriptArgs0($@@))}
+)
+
+; This macro gets the nth item from a list
+; e.g., if a is "p,q,r"
+;          n is "2"
+; !getNthItem(!n,!a) prints q
+!define(getNthItem, 
+{!esyscmd(!home/mlspgs/scripts/pylists.py !pyScriptArgs11($@@))}
+)
+
+; This macro gets the item number which something occupies in a list
+; e.g., if a is "p,q,r"
+;          c is "q"
+; !getNumberOfItem(!c,!a) prints  2
+!define(getNumberOfItem, 
+{!esyscmd(!home/mlspgs/scripts/pylists.py !pyScriptArgs21($@@))}
+)
+
+; This macro gets values[key] where {keys,values} is an associative array
+; e.g., if keys is "p,q,r" and values is "pawn,queen,rook"
+;        after defing  key to "q"
+; !getItemByKey(!key) prints queen
+; It can be called either with a single arg or with 3
+; i.e., with a single arg, the macros keys and values 
+; are subsitituted for args 2 and 3
+; An example with 3 args is
+; !getItemByKey(q,!list2pct(p,q,r),!list2pct(jack,queen,king)) prints queen
+!define(getItemByKey, 
+{!esyscmd(!home/mlspgs/scripts/pylists.py !pyScriptArgs31($@@))}
+)
+
+; We may never need a low macro to convert back from "%" to lists, but
+; just in case
+!define(pct2list, {!removeItem({},$@@)})
+; ------------------------------- Macros for string manipulation
+
+; This macro trims the last character (often a newline) off its
+; argument
+!define(TrimLastChar, {!substr($1,0,!eval(!len($1)-1))})
+
+; Sometimes, as with getNthItem, we must trim 2 newlines off the end
+!define(TrimLast2Chars, {!substr($1,0,!eval(!len($1)-2))})
+
+; This macro is similar but trims the first and last character off,
+; typically quotes.
+!define(TrimFirstLastChar, {!substr($1,1,!eval(!len($1)-2))})
+
+; This macro trims the first character (often a newline) off its
+; argument
+!define(TrimFirstChar, {!substr($1,1,!eval(!len($1)-1))})
+
+; This macro surrounds its
+; argument with singlequotes (')
+!define(Surround, {'$1'})
+
+; This is just a newline. It is mainly used in macros that are destined
+; to be called by forall macros.
+!define(nl,{
+})
+
+; This macro downcases its arguments
+!define(Downcase,{!translit($1,{A-Z},{a-z})})
+
+; This macro trims the last 3 characters from the string (_HR probably)
+!define(TrimLast3,{!substr($1,0,!eval(!len($1)-3))})
+
+; The first char of its argument
+!define(FirstChar,{!substr(}$1{,0,1)})
+
+; This strips quotes but only if it finds them
+!define(Unquote,{!ifelse(!FirstChar($1),{'},{!TrimFirstLastChar($1)},{$1})})
+
+; ----------------------------------------- Date etc. manipulation tools
+
+; Define a macro that just returns the first four digits of CCSDSb date.
+!define(year,{!substr(}$1{,0,4)})
+
+; This one returns the last three digits of a CCSDSb date.
+!define(doy,{!substr(}$1{,5,3)})
+
+; This macro calls a python script to add dates etc.
+; (please don't use these--use dateconverter instead)
+!define(ccsdsbadd,{!TrimLastChar(!esyscmd(!home/mlspgs/scripts/ccsdsbadd.py $1 $2))})
+!define(ccsdsbtodao,{!TrimLastChar(!esyscmd(!home/mlspgs/scripts/ccsdsbtodao.py $1))})
+
+; ---------------------------------------- Parameter=value macros
+
+; This set of macros allows us to write other macros which take
+; arguments of the form 'parameter=value'.  The first two are low level
+; macros.  The main one is ProcessParVal.  One invokes this as the first
+; thing in a macro that uses this facility, with a prefix (which may be
+; empty) followed by $@@.  The ProcessParVal will then define a set of
+; macros of the form (prefix)parameter with the appropriate values.
+; Note that the 'parameter' names are all converted to lowercase
+; (excluding the prefix which is left alone).
+
+; This low level macro extracts a (lower case) parameter name
+!define(GetParameter,{!Downcase(!substr($1,0,!index($1,{=})))})
+; This macro extracts a parameter value
+!define(GetValue,{!substr($1,!incr(!index($1,{=})))})
+; This is the high level macro described above
+!define(ProcessParVal,{!ifelse($2,{},{},{!dnl
+!define($1!GetParameter($2),!GetValue($2))!dnl
+!ProcessParVal($1,!shift(!shift($@@)))})})
+
+; ---------------------------------------- Parameter=value macros
+
+; This set of macros allows us to write other macros which take
+; arguments of the form 'parameter=value'.  The first two are low level
+; macros.  The main one is ProcessParValCS.  One invokes this as the first
+; thing in a macro that uses this facility, with a prefix (which may be
+; empty) followed by $@@.  The ProcessParValCS will then define a set of
+; macros of the form (prefix)parameter with the appropriate values.
+; Note that the 'parameter' names are case-sensitive.
+
+; This low level macro extracts a (lower case) parameter name
+!define(GetParameterCS,{!substr($1,0,!index($1,{=}))})
+; This is the high level macro described above
+!define(ProcessParValCS,{!ifelse($2,{},{},{!dnl
+!define($1!GetParameterCS($2),!GetValue($2))!dnl
+!ProcessParValCS($1,!shift(!shift($@@)))})})
+
+; ------------------------------------------------ Other low level
+;                                                  macros
+
+;; This one is fairly obvious
+!define(home,!TrimLastChar(!esyscmd({echo $HOME})))
+;; This can be used to `comment out' whole sections of code
+!define(comment,{!ifelse({$1})})
+;; This prints out an appropriate error message of our devising
+!define(M4Error,{!errprint({M4-Error:},$*,!nl)!m4exit(1)})
+;; This one takes a name and removes any white space, $ signs and new
+;; lines from it
+;; !define(tidyOneWord,{!patsubst({$1},{[$ ($)]*}),})
+!define(tidyOneWord,{!translit({$1},{ $
+})})
+!define(tidyList,{!tidyOneWord({$1})!ifelse($#,1,{},{,!tidyList}(!shift($@@)))})
+
+;; These surround each arg with quotes
+!define(quoteArg,{"$1"})
+!define(quoteList,{!quoteArg({$1})!ifelse($#,1,{},{,!quoteList}(!shift($@@)))})
+
+;; These remove left and right brackets
+!define(snipLBracket,{!translit({$1},{[})})
+!define(snipRBracket,{!translit({$1},{]})})
+!define(snipBrackets,{!snipLBracket(!snipRBracket({$1}))})
+!define(snipBracketsList,{!snipBrackets({$1})!ifelse($#,1,{},{,!snipBracketsList}(!shift($@@)))})
+;; This one clears diversions (taken from the m4 manual)
+!define(clearDivert,
+{!pushdef({num},!divnum)!divert(-1)!undivert($@@)!divert(!num)!popdef(num)})
+
+;; Just count how many args we're given
+;; (for things like flaggingBands)
+!define(nargs, {$#})
+;$Log: m4defs.l2cf,v $
+;Revision 1.22  2017/03/09 01:50:19  mjschwar
+;*** empty log message ***
+;
+;Revision 1.21  2014/02/11 23:26:32  pwagner
+;Fixed various bugs in flattening lists
+;
+;Revision 1.20  2013/12/03 23:55:24  pwagner
+;These changes make removeItem work more reliably with list2pct
+;
+;Revision 1.19  2010/05/25 22:41:45  pwagner
+;Added more list macros
+;
+;Revision 1.18  2010/05/19 17:54:30  pwagner
+;Now able to add, remove Items from list
+;
+;Revision 1.17  2009/06/23 17:30:53  pwagner
+;Should be added to ident file
+;
+!divert!dnl
+@
+
+
+1.22
+log
+@*** empty log message ***
+@
+text
+@d21 1
+a21 1
+;$Id: m4defs.l2cf,v 1.21 2014/02/11 23:26:32 pwagner Exp $
+d48 17
+d83 1
+a83 1
+; and hopefully innocuous character, "%". Therefore
+d142 2
+a143 2
+; e.g., if keys is "p,q,r" and values is "jack,queen,king"
+;          key is "q"
+d163 3
+d174 4
+d189 6
+d278 3
+@
+
+
+1.21
+log
+@Fixed various bugs in flattening lists
+@
+text
+@d21 1
+a21 1
+;$Id: m4defs.l2cf,v 1.20 2013/12/03 23:55:24 pwagner Exp $
+d231 4
+d248 3
+@
+
+
+1.20
+log
+@These changes make removeItem work more reliably with list2pct
+@
+text
+@d21 1
+a21 1
+;$Id: m4defs.l2cf,v 1.19 2010/05/25 22:41:45 pwagner Exp $
+d73 1
+a73 1
+!define(pyScriptArgs0,{-!pctChar !list2pct(!shift($@@))})
+d234 2
+a235 1
+!define(snipBrackets,{!snipLBracket(snipRBracket({$1}))})
+d244 3
+@
+
+
+1.19
+log
+@Added more list macros
+@
+text
+@d21 1
+a21 1
+;$Id: m4defs.l2cf,v 1.18 2010/05/19 17:54:30 pwagner Exp $
+d70 1
+a70 1
+!define(sublist2pct,{!pctChar$1})
+d72 1
+a72 1
+!define(list2pct,{!forall({sublist2pct}, $@@ ) })
+d231 4
+d243 3
+@
+
+
+1.18
+log
+@Now able to add, remove Items from list
+@
+text
+@d21 1
+a21 1
+;$Id: m4defs.l2cf,v 1.17 2009/06/23 17:30:53 pwagner Exp $
+d68 1
+a68 1
+!define(pctChar,{%})
+d75 8
+d108 29
+d239 3
+@
+
+
+1.17
+log
+@Should be added to ident file
+@
+text
+@d21 1
+a21 1
+;$Id: m4defs.l2cf,v 1.16 2008/11/06 23:07:05 honghanh Exp $
+d48 2
+a49 1
+; This macro makes a list separated by commas.  The items in the last
+d51 1
+a51 1
+; with arguemtn 2.
+d54 49
+d105 1
+a105 1
+; This macro trims the last character (often a newline) off it's
+d113 1
+a113 1
+; This macro trims the first character (often a newline) off it's
+d137 1
+d201 4
+a204 1
+;$Log: setupcalfiles.l2cf,v $
+@
+
+
+1.16
+log
+@Add ProcessParValCS (or ProcessParVal case-sensitive) in m4defs.l2cf to support product-dependent pTop / pBottom implemented in retrievalmacros.l2cf
+@
+text
+@d19 1
+d21 1
+d150 2
+@
+
+
+1.15
+log
+@Added nargs to say how many args
+@
+text
+@d108 17
+@
+
+
+1.14
+log
+@Added clearDivert command
+@
+text
+@d127 4
+@
+
+
+1.13
+log
+@Add TrimFirstChar macro
+@
+text
+@d124 3
+@
+
+
+1.12
+log
+@Bug fix in TrimFirstLastChar
+@
+text
+@d61 4
+@
+
+
+1.11
+log
+@New tidyList macro
+@
+text
+@d59 1
+a59 1
+!define(TrimFirstLastChar, {!substr($1,1,!eval(!len($1)-3))})
+@
+
+
+1.10
+log
+@Added new line after M4Error
+@
+text
+@d107 1
+d109 10
+a119 2
+!define(comment,{!ifelse($1)})
+!define(M4Error,{!errprint({M4-Error:},$*,!nl)!m4exit(1)})
+@
+
+
+1.9
+log
+@Fixed names of ccsds scripts
+@
+text
+@d110 1
+a110 1
+!define(M4Error,{!errprint({M4-Error:},$*)!m4exit(1)})
+@
+
+
+1.8
+log
+@More date manipulation stuff
+@
+text
+@d81 2
+a82 2
+!define(ccsdsbadd,{!TrimLastChar(!esyscmd(!home/mlspgs/scripts/ccsdsbadd $1 $2))})
+!define(ccsdsbtodao,{!TrimLastChar(!esyscmd(!home/mlspgs/scripts/ccsdsbtodao $1))})
+@
+
+
+1.7
+log
+@Various changes, and (hopefully) improvements
+@
+text
+@d80 4
+@
+
+
+1.6
+log
+@Added trimHR
+@
+text
+@d2 3
+d11 5
+d17 5
+a21 1
+;
+d31 3
+d40 18
+a57 17
+; ------------------------------------------------------------------
+; This next bit commented out as never really made use of it
+; Redefine include to do fancy stuff for error checking.
+; !undefine({include})
+; !define(include,{
+; {;}@@0 $1
+; !builtin(include,$1)
+; {;}@@!builtin(__line__) !builtin(__file__)}
+; )
+; ------------------------------------------------------------------
+; Define a year function that just returns the first four digits of day.
+!define(year,{!substr(}$1{,0,4)})
+!define(doy,{!substr(}$1{,5,3)})
+; A macro that removes the last character from another.  This is
+; mainly to deal with the output of esyscmd
+!define(TrimNL, {!substr($1,0,!eval(!len($1)-1))})
+; This one is similar and deletes the first and last characters
+d59 4
+a62 4
+!define(TrimQ, {!substr($1,1,!eval(!len($1)-3))})
+; I'm really not sure why the last argument there is -3 not -2, but -2
+; is the one that works!
+; This is just a newline designed to simplify foralls
+a64 20
+; The users home directory, should we need it.
+!define(home,!TrimNL(!esyscmd({echo $HOME})))
+; Define a macro that calls the macro being its first argument, with
+; each sucessive argument
+!define({forall},{!$1($2)!ifelse($#,2,{},{!forall}($1,!shift(!shift($@@))))})
+!define({makelist},{$1$3$2!ifelse($#,3,{},{, !makelist}($1,$2,!shift(!shift(!shift($@@)))))})
+; This macro takes a prefix as $1 (which can be blank), and a set of
+; arguments $2,$3.. of the form parameter=value, and defines the macros
+; (prefix)parameter=value for each such argument.
+; One would typically call it within another macro, in the form of a
+; prefix name, followed by $@@.
+!define(getpar,{!translit(!substr($1,0,!index($1,{=})),{A-Z},{a-z})})
+; Note this lowercases all the parameters, though not the prefix
+!define(getval,{!substr($1,!incr(!index($1,{=})))})
+!define(processparval,{!dnl
+  !ifelse($2,{},{},{!dnl
+    !define($1!getpar($2),!getval($2))!dnl
+    !processparval($1,!shift(!shift($@@)))})})
+; A quick macro to trim _HR of strings
+!define(trimHR,{!substr($1,0,!eval(!len($1)-3))})
+d66 41
+@
+
+
+1.5
+log
+@Made the processparval stuff downcase the parameter names.
+@
+text
+@d67 2
+@
+
+
+1.4
+log
+@Added the processparval stuff
+@
+text
+@d60 2
+a61 1
+!define(getpar,{!substr($1,0,!index($1,{=}))})
+@
+
+
+1.3
+log
+@Added TrimQ
+@
+text
+@d55 11
+@
+
+
+1.2
+log
+@Modified forloop to deal with case where loop shouldn't be done
+@
+text
+@d41 6
+a46 2
+; This is the reverse in many senses, it's just a newline.
+; Used to simplify forall
+@
+
+
+1.1
+log
+@First consolidated version
+@
+text
+@d20 1
+d23 2
+a24 2
+!define(forloopint,{$4{}!ifelse(!$1, {$3}, ,
+    {!define({$1}, !incr(!$1))!forloopint({$1}, {$2}, {$3}, {$4})})})
+@
+

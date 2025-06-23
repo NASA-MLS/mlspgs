@@ -1,0 +1,125 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.18
+	cfm-single-freq-0-1:1.2.0.16
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.14
+	mus-emls-1-70:1.2.0.12
+	rel-1-0-englocks-work:1.2.0.10
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.2
+	V4-21:1.2.0.8
+	V4-13:1.2
+	V4-12:1.2
+	V4-11:1.2
+	V4-10:1.2
+	V3-43:1.2
+	M4-00:1.2
+	V3-41:1.2
+	V3-40-PlusGM57:1.2.0.6
+	V2-24-NRT-04:1.2
+	V3-33:1.2
+	V2-24:1.2
+	V3-31:1.2
+	V3-30-NRT-05:1.2
+	cfm-01-00:1.2
+	V3-30:1.2
+	V3-20:1.2
+	V3-10:1.2
+	V2-23-NRT-02:1.2
+	V2-23:1.2
+	V2-22-NRT-01:1.2
+	V2-22:1.2
+	V2-21:1.2
+	V2-20:1.2
+	V2-11:1.2
+	V2-10:1.2
+	V2-00:1.2
+	V1-51:1.2
+	V1-50:1.2
+	V1-45:1.2
+	V1-44:1.2
+	V1-43:1.2
+	V1-42:1.2
+	V1-41:1.2
+	V1-32:1.2
+	V1-40:1.2
+	V1-31:1.2
+	V1-30:1.2
+	V1-13:1.2
+	V1-12:1.2
+	V1-11:1.2
+	V1-10:1.2
+	newfwm-feb03:1.2.0.4
+	V1-04:1.2
+	V1-03:1.2
+	V1-02:1.2
+	V1-00:1.2
+	newfwm-sep01:1.2.0.2
+	V0-7:1.2
+	V0-5-Level2:1.2
+	V0-5-SIPS:1.2
+	V0_1:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2000.03.11.00.41.59;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2000.03.11.00.35.36;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Inserted CVS id and log
+@
+text
+@#!/bin/csh
+
+# This shell script takes the names of Fortran 77 files and creates
+# Fortran 90 modules corresponding to them, by using the end_stmts program
+# to change plain END statements to END SUBROUTINE or END FUNCTION statements.
+
+# "$Id: modulize,v 1.0 2000/03/10 16:40:02 snyder Exp $"
+foreach f ($*)
+      set b=`basename $f .f`
+      echo "      MODULE" $b"_m"         >$b"_m".f
+      echo "      CONTAINS"             >>$b"_m".f
+      end_stmts <$f                     >>$b"_m".f
+      echo "      END MODULE" $b"_m"    >>$b"_m".f
+end
+# $Log: modulize,v $
+@
+
+
+1.1
+log
+@VSnyder 000310 Original code
+@
+text
+@d7 1
+d15 1
+@
+

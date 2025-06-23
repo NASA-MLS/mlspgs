@@ -1,0 +1,75 @@
+head	1.2;
+access;
+symbols
+	V0_1:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2000.11.22.23.07.24;	author zvi;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2000.05.04.18.12.04;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@New version
+@
+text
+@module D_BRKLINE_M
+  implicit NONE
+  private
+  public :: BRKLINE   ! generic
+  public :: D_BRKLINE ! specific
+
+  interface BRKLINE; module procedure D_BRKLINE; end interface
+
+  integer, private, parameter :: RK = kind(0.0d0)
+
+!---------------------------- RCS Ident Info -------------------------------
+  CHARACTER (LEN=256) :: Id = &
+       "$Id: d_brkline_m.f90,v 1.1 2000/05/04 18:12:04 vsnyder Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= &
+       "$RCSfile: d_brkline_m.f90,v $"
+!---------------------------------------------------------------------------
+
+contains
+
+  subroutine D_BRKLINE ( LINE, V, NV, IO )
+    include 'brkline.f9h'
+  end subroutine D_BRKLINE
+end module D_BRKLINE_M
+
+! $Log: d_brkline_m.f90,v $
+! Revision 1.1  2000/05/04 18:12:04  vsnyder
+! Initial conversion to Fortran 90
+!
+@
+
+
+1.1
+log
+@Initial conversion to Fortran 90
+@
+text
+@d13 1
+a13 1
+       "$Id: S_BRKLINE_M,v 1.12 2000/02/08 19:54:57 vsnyder Exp $"
+d15 1
+a15 1
+       "$RCSfile: s_brkline_m.f90,v $"
+d25 4
+a28 1
+! $Log: D_BRKLINE_M,v $
+@
+

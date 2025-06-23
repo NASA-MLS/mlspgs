@@ -1,0 +1,81 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.14
+	cfm-single-freq-0-1:1.1.0.12
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.10
+	mus-emls-1-70:1.1.0.8
+	rel-1-0-englocks-work:1.1.0.6
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1;
+locks; strict;
+comment	@c @;
+
+
+1.1
+date	2008.04.19.01.19.08;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@      SUBROUTINE DINTF (ANSWER, WORK, IOPT)
+C     .  Copyright (C) 1989, California Institute of Technology.
+C     .  U. S. Government sponsorship under
+C     .  NASA contract NAS7-918 is acknowledged.
+C>> 1996-04-26 DINTF  Krogh  Added ANSWER=0, for getting prototypes.
+C>> 1994-10-20 DINTF  Krogh  Changes to use M77CON
+C>> 1990-01-23 DINTF  CLL Added type stmts. Avoids msgs from compilers.
+C>> 1988-06-07 DINTF  Snyder  Replaced " by '.
+C>> 1987-08-14 DINTF  Snyder  Initial code.
+c--D replaces "?": ?INTF, ?INT
+C
+C     Dummy DINTF subprogram that prints
+C     'You have neglected either to write the DINTF subprogram'
+C     'or to select reverse communication before invoking DINT.'
+C     and then STOPs.
+C
+      double precision ANSWER, WORK(*)
+      integer IOPT(*)
+      ANSWER = 0.D0
+      PRINT *,'You have neglected either to write the DINTF subprogram'
+      PRINT *,'or to select reverse communication before invoking DINT*'
+      STOP
+      END
+@

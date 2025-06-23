@@ -1,0 +1,2606 @@
+head	2.31;
+access;
+symbols
+	v5-02-NRT-19:2.31
+	v6-00:2.31
+	v5-02-NRT-18:2.31
+	v5-02:2.31
+	v5-01-NRT-17:2.31
+	v5-01-NRT-16:2.31
+	v5-01-NRT-15:2.31
+	v5-01-NRT-14:2.31
+	neuralnetworks-1-0:2.31.0.8
+	cfm-single-freq-0-1:2.31.0.6
+	v5-01:2.31
+	v5-00:2.31
+	v4-23-TA133:2.31.0.4
+	mus-emls-1-70:2.31.0.2
+	rel-1-0-englocks-work:2.30.0.2
+	VUMLS1-00:2.29
+	VPL1-00:2.29
+	V4-22-NRT-08:2.29
+	VAM1-00:2.29
+	V4-21:2.28.0.2
+	V4-13:2.28
+	V4-12:2.27
+	V4-11:2.27
+	V4-10:2.27
+	V3-43:2.25
+	M4-00:2.26
+	V3-41:2.25
+	V3-40-PlusGM57:2.25.0.2
+	V2-24-NRT-04:2.24
+	V3-33:2.25
+	V2-24:2.24
+	V3-31:2.25
+	V3-30-NRT-05:2.25
+	cfm-01-00:2.25
+	V3-30:2.25
+	V3-20:2.25
+	V3-10:2.25
+	V2-23-NRT-02:2.24
+	V2-23:2.24
+	V2-22-NRT-01:2.24
+	V2-22:2.24
+	V2-21:2.21
+	V2-20:2.21
+	V2-11:2.21
+	V2-10:2.21
+	V2-00:2.21
+	V1-51:2.19
+	V1-50:2.19
+	V1-45:2.17
+	V1-44:2.17
+	V1-43:2.15
+	V1-32:2.10
+	V1-31:2.10
+	V1-30:2.10
+	V1-13:2.5
+	V1-12:2.5
+	V1-11:2.5
+	V1-10:2.5
+	newfwm-feb03:2.5.0.2
+	V1-04:2.0
+	V1-03:2.0
+	V1-02:2.0
+	JointForwardModel:2.3.0.2
+	V1-00:2.0
+	newfwm-sep01:1.15.0.2
+	V0-7:1.15
+	V0-5-Level2:1.12
+	V0-5-SIPS:1.7;
+locks; strict;
+comment	@# @;
+
+
+2.31
+date	2018.04.11.22.25.23;	author vsnyder;	state Exp;
+branches;
+next	2.30;
+
+2.30
+date	2017.06.02.18.29.58;	author pwagner;	state Exp;
+branches;
+next	2.29;
+
+2.29
+date	2015.03.28.01.58.31;	author vsnyder;	state Exp;
+branches;
+next	2.28;
+
+2.28
+date	2014.09.05.20.47.36;	author vsnyder;	state Exp;
+branches;
+next	2.27;
+
+2.27
+date	2013.08.30.03.56.23;	author vsnyder;	state Exp;
+branches;
+next	2.26;
+
+2.26
+date	2011.05.09.17.44.59;	author pwagner;	state Exp;
+branches;
+next	2.25;
+
+2.25
+date	2009.06.23.18.26.10;	author pwagner;	state Exp;
+branches;
+next	2.24;
+
+2.24
+date	2007.10.11.20.05.03;	author vsnyder;	state Exp;
+branches;
+next	2.23;
+
+2.23
+date	2007.10.03.23.58.26;	author vsnyder;	state Exp;
+branches;
+next	2.22;
+
+2.22
+date	2007.09.12.00.52.45;	author vsnyder;	state Exp;
+branches;
+next	2.21;
+
+2.21
+date	2006.04.25.23.25.36;	author vsnyder;	state Exp;
+branches;
+next	2.20;
+
+2.20
+date	2005.06.22.18.08.18;	author pwagner;	state Exp;
+branches;
+next	2.19;
+
+2.19
+date	2004.12.13.20.32.27;	author vsnyder;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2004.09.01.00.28.11;	author vsnyder;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2004.05.26.23.54.14;	author vsnyder;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2004.05.22.02.27.50;	author vsnyder;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2004.03.30.00.45.31;	author vsnyder;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2004.02.14.00.23.48;	author vsnyder;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2004.02.09.20.20.32;	author vsnyder;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2004.02.06.00.45.27;	author vsnyder;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2004.01.21.22.01.37;	author vsnyder;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2003.08.15.00.20.50;	author michael;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2003.07.16.01.06.50;	author vsnyder;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2003.05.19.19.58.07;	author vsnyder;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2003.05.10.22.20.57;	author livesey;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2003.05.05.23.00.24;	author livesey;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2002.10.08.17.08.03;	author pwagner;	state Exp;
+branches
+	2.5.2.1;
+next	2.4;
+
+2.4
+date	2002.09.13.22.06.22;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2002.05.14.20.02.12;	author livesey;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2002.05.10.00.33.18;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2002.05.10.00.21.39;	author vsnyder;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2001.09.17.20.26.25;	author livesey;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2001.05.17.01.00.22;	author livesey;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2001.05.16.23.04.29;	author livesey;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2001.05.16.01.25.02;	author livesey;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2001.05.04.00.49.06;	author livesey;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2001.05.03.22.05.22;	author vsnyder;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2001.04.26.02.36.52;	author vsnyder;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2001.04.21.01.21.11;	author vsnyder;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2001.04.20.17.19.05;	author vsnyder;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2001.04.02.20.56.56;	author vsnyder;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2001.03.30.02.10.12;	author vsnyder;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2001.03.30.01.12.29;	author vsnyder;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.03.30.00.02.06;	author livesey;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2001.03.29.23.53.06;	author vsnyder;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.03.29.21.57.31;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.03.29.21.42.41;	author vsnyder;	state Exp;
+branches;
+next	;
+
+2.5.2.1
+date	2003.04.21.20.07.08;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.31
+log
+@Remove USE for unused names
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module FilterShapes_m
+
+  ! Read the filter shapes file.
+
+  use MLSKinds, only: R8
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+  use MLSSignals_m, only: GetNameOfSignal, MaxSigLen, Signals, Signal_T
+  
+  implicit none
+
+  ! More USEs below in each procedure, if they're only used therein.
+
+  private
+  ! Public procedures:
+  public :: Open_Filter_Shapes_File
+  public :: Read_DACS_Filter_Shapes_File, Read_Filter_Shapes_File
+  public :: Close_Filter_Shapes_File
+  public :: Destroy_DACS_Filter_Database, Destroy_Filter_Shapes_Database
+  public :: Dump_DACS_Filter_Database, Dump_Filter_Shapes_Database
+
+  public :: Dump
+  interface Dump
+    module procedure Dump_DACS_Filter
+  end interface Dump
+
+  ! There is a separate FilterShape_T object for each COMPLETE signal
+  ! specification, including the channel number.  It isn't necessary
+  ! for all of the filter shapes to have the same size.
+  type, public :: FilterShape_T
+    integer :: File          ! Index of file name in string table
+    real(r8), dimension(:), pointer :: FilterGrid => NULL()      ! Abscissae
+    real(r8), dimension(:), pointer :: FilterShape => NULL()     ! Ordinates
+    type (Signal_T) :: Signal
+  end type FilterShape_T
+
+  ! The filter shape database:
+  type(filterShape_T), dimension(:), pointer, public, save :: &
+    & FilterShapes => NULL()
+
+  type, public :: DACSFilterShape_T
+  ! DACS-specific filter shape stuff
+    integer :: LogApod, LogFilter, LogNorm
+    real(r8), dimension(:), pointer :: LO_Apod => NULL()  ! Apodization, ditto
+    real(r8), dimension(:), pointer :: CH_Norm => NULL()  ! Normalization, 2**logNorm+1
+  ! Ordinary filter shape stuff
+    type(filterShape_T) :: Filter
+  end type DACSFilterShape_T
+
+  type(DACSFilterShape_T), dimension(:), pointer, public, save :: &
+    & DACSFilterShapes => NULL()
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: FilterShapes_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  ! ------------------------------------  Open_Filter_Shapes_File  -----
+  subroutine Open_Filter_Shapes_File ( Filename, Lun, FileIndex )
+
+    use IO_Stuff, only: Get_Lun
+    use Machine, only: IO_Error
+    use String_Table, only: Create_String
+
+    character(len=*), intent(in) :: Filename ! Name of the filter shape file
+    integer, intent(out) :: Lun              ! Logical unit number to read it
+    integer, intent(out) :: FileIndex        ! In the string table
+
+    integer :: Status
+
+    call get_lun ( lun, msg=.false. )
+    if ( lun < 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+      & "No logical unit numbers available" )
+    open ( unit=lun, file=filename, status='old', form='formatted', &
+      & access='sequential', iostat=status )
+    if ( status /= 0 ) then
+      call io_error ( "Unable to open filter shapes file ", status, filename )
+      call MLSMessage ( MLSMSG_Error, moduleName, &
+        & "Unable to open filter shapes file " // Filename )
+    end if
+    fileIndex = create_string ( trim(fileName), caseless=.false. )
+  end subroutine Open_Filter_Shapes_File
+
+  ! ------------------------------------  Read_Filter_Shapes_File  -----
+  subroutine Read_Filter_Shapes_File ( Lun, FileIndex, Where )
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test, &
+      & Test_Allocate, Test_Deallocate
+    use HighOutput, only: OutputnamedValue
+    use, Intrinsic :: Iso_C_Binding, only: C_Intptr_T, C_Loc
+    use Machine, only: Io_Error
+    use MLSStringlists, only: Switchdetail
+    use Parse_Signal_M, only: Parse_Signal
+    use Toggles, only: Gen, Switches, Toggle
+    use Trace_M, only: Trace_Begin, Trace_End
+
+    integer, intent(in) :: Lun          ! Logical unit number to read it
+    integer, intent(in) :: FileIndex    ! In the string table
+    integer, intent(in) :: Where        ! In the L2CF tree, for tracing
+
+    integer(c_intptr_t) :: Addr         ! For tracing
+    real(r8) :: DX                      ! To compute FilterGrid
+    real(r8) :: LHS, RHS                ! For computing grid
+    integer :: I, N                     ! Loop inductor, subscript
+    character(80) :: Line               ! From the file
+    integer :: Me = -1                  ! String index for trace
+    integer :: Number_in_shape          ! How many points in each filter?
+    integer :: NumFilterShapes          ! How many filter shapes in file?
+    integer :: Offset                   ! From start of FilterShapes -- to extend it
+    integer :: S                        ! Size in bytes of object to deallocate
+    integer :: Sideband                 ! From parse signal
+                                        ! shape array -- all the same
+                                        ! for each signal.
+    character(len=MaxSigLen) :: SigName ! Signal Name
+    integer :: Status                   ! From read or allocate
+    logical, pointer, dimension(:) :: Channels ! Result of parse signal
+    integer, pointer, dimension(:) :: Signal_Indices   ! From Parse_Signal, q.v.
+    type(filterShape_T), dimension(:), pointer :: TempFilterShapes
+
+    namelist /Filter/ lhs, rhs, number_in_shape
+
+    call trace_begin ( me, "Read_Filter_Shapes_File", where, cond=toggle(gen) )
+
+    ! Determine the size of the created or expanded FilterShapes array
+    offset = 0
+    if ( associated(filterShapes) ) offset = size(filterShapes)
+    numFilterShapes = offset
+    do ! Loop over filter shapes
+      call read_a_line ( lun, line, status ) ! Read the signal
+      if ( status < 0 ) exit
+      if ( status > 0 ) call myError( '1st read_a_line' ) ! go to 99
+      ! Read the lhs, rhs and number_in_shape
+      read ( lun, filter, iostat=status )
+      if ( status /= 0 ) call myError( '1st read filter' ) ! go to 99
+      ! Skip the shape, using LHS for a temp
+      read ( lun, *, iostat=status ) (lhs, i = 1, number_in_shape)
+      if ( status /= 0 ) call myError( '1st read lhs, rhs, ..' ) ! go to 99
+      numFilterShapes = numFilterShapes + 1
+    end do
+    rewind ( lun )
+
+    ! Create or expand the FilterShapes array
+    tempFilterShapes => filterShapes
+    allocate ( filterShapes(numFilterShapes), stat=status )
+    addr = 0
+    if ( status == 0 .and. numFilterShapes > 0 ) &
+      & addr = transfer(c_loc(filterShapes(1)), addr)
+    call test_allocate ( status, moduleName, "FilterShapes", &
+      & uBounds = numFilterShapes, elementSize = storage_size(filterShapes) / 8, &
+      & address=addr )
+    if ( associated(tempFilterShapes) ) then
+      filterShapes(:offset) = tempFilterShapes
+      s = size(tempFilterShapes) * storage_size(tempFilterShapes) / 8
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(tempFilterShapes(1)), addr)
+      deallocate ( tempFilterShapes, stat=status )
+      call test_deallocate ( status, moduleName, "TempFilterShapes", s, address=addr )
+    end if
+
+    ! Read and store the filter shapes
+    n = offset
+    do ! Loop over filter shapes
+      call read_a_line ( lun, line, status ) ! Read the signal
+      if ( status < 0 ) exit
+      if ( status > 0 ) call myError( '2nd read_a_line' ) ! go to 99
+      n = n + 1
+      filterShapes(n)%file = fileIndex
+      sigName = line
+      nullify ( channels, signal_indices ) 
+      call parse_signal ( sigName, signal_indices, sideband=sideband, &
+        channels=channels )
+
+      if ( .not. associated(signal_indices) ) &
+        call MLSMessage ( MLSMSG_Error, moduleName, &
+          & trim(sigName) // " is not a valid signal." )
+      ! Just take the first one.
+      filterShapes(n)%signal = signals(signal_indices(1))
+      filterShapes(n)%signal%sideband = sideband
+      filterShapes(n)%signal%channels => channels
+      call deallocate_test ( signal_indices, "Signal_Indices", moduleName )
+
+      ! Read the lhs, rhs and number_in_shape
+      read ( lun, filter, iostat=status )
+      if ( status /= 0 ) call myError( '2nd read filter' ) ! go to 99
+
+      call allocate_test ( filterShapes(n)%filterGrid,&
+        & number_in_shape, 'filterShapes(n)%filterGrid', ModuleName )
+      call allocate_test ( filterShapes(n)%filterShape,&
+        & number_in_shape, 'filterShapes(n)%filterShape', ModuleName )
+
+      ! Read the shape array and calculate the associated abscissae
+      dx = ( rhs - lhs ) / max( (number_in_shape - 1), 1 )
+      do i = 1, number_in_shape
+        filterShapes(n)%filterGrid(i) = lhs + (i-1) * dx
+      end do ! i
+      read ( lun, *, iostat=status ) filterShapes(n)%filterShape
+      if ( status /= 0 ) call myError( 'reading filtershape' ) ! go to 99
+
+    end do ! Loop over filter shapes
+
+    if ( switchDetail(switches,'filt') > -1 ) call dump_filter_shapes_database
+    call trace_end ( "Read_Filter_Shapes_File", cond=toggle(gen) )
+
+    return
+ 98 call MLSMessage ( MLSMSG_Error, moduleName, "Unexpected end-of-file" )
+ 99 call io_error ( "While reading the filter shape file", status )
+    call MLSMessage ( MLSMSG_Error, moduleName, "Input error" )
+
+  contains
+    subroutine myError ( mesg )
+      character(len=*), intent(in)         :: mesg
+      call outputNamedValue( 'numFilterShapes', numFilterShapes )
+      call io_error ( mesg, status )
+      call MLSMessage ( MLSMSG_Error, moduleName, "Input error" )
+    end subroutine myError
+  end subroutine Read_Filter_Shapes_File
+
+  ! -------------------------------  Read_DACS_Filter_Shapes_File  -----
+  subroutine Read_DACS_Filter_Shapes_File ( Lun, FileIndex, Where )
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test, &
+      & Test_Allocate, Test_Deallocate
+    use, Intrinsic :: Iso_C_Binding, only: C_Intptr_T, C_Loc
+    use Machine, only: Io_Error
+    use MLSStringlists, only: Switchdetail
+    use Parse_Signal_M, only: Parse_Signal
+    use Toggles, only: Gen, Switches, Toggle
+    use Trace_M, only: Trace_Begin, Trace_End
+
+    integer, intent(in) :: Lun          ! Logical unit number to read it
+    integer, intent(in) :: FileIndex    ! In the string table
+    integer, intent(in) :: Where        ! In the L2CF tree, for tracing
+
+    integer(c_intptr_t) :: Addr         ! For tracing
+    real(r8) :: DX                      ! To compute FilterGrid
+    real(r8) :: LHS, RHS                ! For computing grid
+    integer :: I, N                     ! Loop inductor, subscript
+    integer :: LogApod                  ! Number_apod == 2 ** LogApod + 1
+    integer :: LogFilt                  ! Number_shape == 2 ** LogSize + 1
+    integer :: LogNorm                  ! Number_norm == 2 ** LogNorm + 1
+                                        ! Default 7
+    character(80) :: Line               ! From the file
+    integer :: Number_apod              ! How many LO apodizations?
+    integer :: Number_norm              ! How many channel normalizations?
+    integer :: Number_shape             ! How many points in each filter?
+    integer :: NumFilterShapes          ! How many filter shapes in file?
+    integer :: Offset                   ! From start of FilterShapes -- to extend it
+    integer :: S                        ! Size in bytes of object to deallocate
+    integer :: Sideband                 ! From parse signal
+                                        ! shape array -- all the same
+                                        ! for each signal.
+    character(len=MaxSigLen) :: SigName ! Signal Name
+    integer :: Status                   ! From read or allocate
+    logical, pointer, dimension(:) :: Channels ! Result of parse signal
+    integer, pointer, dimension(:) :: Signal_Indices   ! From Parse_Signal, q.v.
+    type(DACSfilterShape_T), dimension(:), pointer :: TempFilterShapes
+
+    namelist /Filter/ lhs, rhs, logApod, logFilt, logNorm
+
+    if ( toggle(gen) ) call trace_begin ( "Read_DACS_Filter_Shapes_File", where )
+
+    ! Determine the size of the created or expanded DACSfilterShapes array
+    offset = 0
+    if ( associated(DACSfilterShapes) ) offset = size(DACSfilterShapes)
+    numFilterShapes = offset
+    do ! Loop over filter shapes
+      call read_a_line ( lun, line, status ) ! Read the signal
+      if ( status < 0 ) exit
+      if ( status > 0 ) go to 99
+      ! Read the lhs, rhs and number_shape
+      logApod = -1
+      logFilt = -1
+      logNorm = 7
+      read ( lun, filter, iostat=status )
+      if ( status /= 0 ) go to 99
+      if ( logFilt < 0 ) &
+        & call MLSMessage ( MLSMSG_Error, moduleName, "LogFilt < 0" )
+      if ( logFilt /= logApod .and. logNorm /= logApod ) &
+        & call MLSMessage ( MLSMSG_Error, moduleName, &
+        & "Require LogApod == LogFilt or LogApod == LogNorm" )
+      ! Skip the shape, using LHS for a temp
+      number_shape = 2 ** logFilt + 1
+      read ( lun, *, iostat=status ) (lhs, i = 1, number_shape)
+      if ( status /= 0 ) go to 99
+      ! Skip the LO apodization
+      number_apod = 2 ** logApod + 1
+      read ( lun, *, iostat=status ) (lhs, i = 1, number_apod)
+      if ( status /= 0 ) go to 99
+      ! Skip the channel normalization
+      number_norm = 2 ** logNorm + 1
+      read ( lun, *, iostat=status ) (lhs, i = 1, number_norm)
+      if ( status /= 0 ) go to 99
+      numFilterShapes = numFilterShapes + 1
+    end do
+    rewind ( lun )
+
+    ! Create or expand the DACSfilterShapes array
+    tempFilterShapes => DACSfilterShapes
+    allocate ( DACSfilterShapes(numFilterShapes), stat=status )
+    addr = 0
+    if ( status == 0 .and. numFilterShapes > 0 ) &
+      & addr = transfer(c_loc(DACSfilterShapes(1)), addr)
+    call test_allocate ( status, moduleName, "DACSfilterShapes", &
+      & uBounds = numFilterShapes, elementSize = storage_size(DACSfilterShapes) / 8, &
+      & address=addr )
+    if ( associated(tempFilterShapes) ) then
+      DACSfilterShapes(:offset) = tempFilterShapes
+      s = size(tempFilterShapes) * storage_size(tempFilterShapes) / 8
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(tempFilterShapes(1)), addr)
+      deallocate ( tempFilterShapes, stat=status )
+      call test_deallocate ( status, moduleName, "TempFilterShapes", s, address=addr )
+    end if
+
+    ! Read and store the filter shapes.  Don't need error checks since
+    ! if we get here we've been able to read the file once successfully
+    n = offset
+    do ! Loop over filter shapes
+      call read_a_line ( lun, line, status ) ! Read the signal
+      if ( status < 0 ) exit
+      n = n + 1
+      DACSfilterShapes(n)%filter%file = fileIndex
+      sigName = line
+      nullify ( channels, signal_indices ) 
+      call parse_signal ( sigName, signal_indices, sideband=sideband, &
+        channels=channels )
+
+      if ( .not. associated(signal_indices) ) &
+        call MLSMessage ( MLSMSG_Error, moduleName, &
+          & trim(sigName) // " is not a valid signal." )
+      ! Just take the first one.
+      DACSfilterShapes(n)%filter%signal = signals(signal_indices(1))
+      DACSfilterShapes(n)%filter%signal%sideband = sideband
+      DACSfilterShapes(n)%filter%signal%channels => channels
+      call deallocate_test ( signal_indices, "Signal_Indices", moduleName )
+
+      ! Read the lhs, rhs and number_shape
+      logNorm = 7
+      read ( lun, filter )
+      DACSfilterShapes(n)%logApod = logApod
+      DACSfilterShapes(n)%logFilter = logFilt
+      DACSfilterShapes(n)%logNorm = logNorm
+      number_shape = 2 ** logFilt + 1
+
+      call allocate_test ( DACSfilterShapes(n)%filter%filterGrid,&
+        & number_shape, 'DACSfilterShapes(n)%filter%filterGrid', ModuleName )
+      call allocate_test ( DACSfilterShapes(n)%filter%filterShape,&
+        & number_shape, 'DACSfilterShapes(n)%filter%filterShape', ModuleName )
+
+      ! Read the shape array and calculate the associated abscissae
+      dx = ( rhs - lhs ) / (number_shape - 1)
+      do i = 1, number_shape
+        DACSfilterShapes(n)%filter%filterGrid(i) = lhs + (i-1) * dx
+      end do ! i
+      read ( lun, * ) DACSfilterShapes(n)%filter%filterShape
+
+      ! Read the LO_Apod and CH_Norm arrays
+      number_apod = 2 ** logApod + 1
+      call allocate_test ( DACSfilterShapes(n)%lo_apod,&
+        & number_apod, 'DACSfilterShapes(n)%lo_apod', ModuleName )
+      read ( lun, *, iostat=status ) DACSfilterShapes(n)%lo_apod
+      if ( status /= 0 ) go to 99
+
+      number_norm = 2 ** logNorm + 1
+      call allocate_test ( DACSfilterShapes(n)%ch_norm,&
+        & number_norm, 'DACSfilterShapes(n)%ch_norm', ModuleName )
+      read ( lun, *, iostat=status ) DACSfilterShapes(n)%ch_norm
+      if ( status /= 0 ) go to 99
+
+    end do ! Loop over filter shapes
+
+    if ( switchDetail(switches,'dacsfil') > -1 ) call dump_DACS_filter_database
+    if ( toggle(gen) ) then
+      call trace_end ( "Read_DACS_Filter_Shapes_File" )
+    end if
+
+    return
+ 98 call MLSMessage ( MLSMSG_Error, moduleName, "Unexpected end-of-file" )
+ 99 call io_error ( "While reading the DACS filter shape file", status )
+    call MLSMessage ( MLSMSG_Error, moduleName, "Input error" )
+
+  end subroutine Read_DACS_Filter_Shapes_File
+
+  ! -----------------------------------  Close_Filter_Shapes_File  -----
+  subroutine Close_Filter_Shapes_File ( Lun )
+    integer, intent(in) :: lun
+    close ( lun )
+  end subroutine Close_Filter_Shapes_File
+
+  ! -----------------------------------  AddFilterShapeToDatabase  -----
+  integer function AddFilterShapeToDatabase ( database, item )
+
+    ! Add a quantity template to a database, or create the database if it
+    ! doesn't yet exist
+
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+
+    ! Dummy arguments
+    type (FilterShape_T), dimension(:), pointer :: database
+    type (FilterShape_T), intent(in) :: item
+
+    ! Local variables
+    type (FilterShape_T), dimension(:), pointer :: tempDatabase
+
+    include "addItemToDatabase.f9h"
+
+    AddFilterShapeToDatabase = newSize
+  end function AddFilterShapeToDatabase
+
+  ! -------------------------------  AddDACSFilterShapeToDatabase  -----
+  integer function AddDACSFilterShapeToDatabase ( database, item )
+
+    ! Add a quantity template to a database, or create the database if it
+    ! doesn't yet exist
+
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+
+    ! Dummy arguments
+    type (DACSFilterShape_T), dimension(:), pointer :: database
+    type (DACSFilterShape_T), intent(in) :: item
+
+    ! Local variables
+    type (DACSFilterShape_T), dimension(:), pointer :: tempDatabase
+
+    include "addItemToDatabase.f9h"
+
+    AddDACSFilterShapeToDatabase = newSize
+  end function AddDACSFilterShapeToDatabase
+
+  ! -----------------------------  Destroy_Filter_Shapes_Database  -----
+  subroutine Destroy_Filter_Shapes_Database
+    use Allocate_Deallocate, only: Deallocate_Test, Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+    integer(c_intptr_t) :: Addr         ! For tracing
+    integer :: I, S, Status
+    if ( .not. associated(filterShapes) ) return
+    do i = 1, size(filterShapes)
+      call deallocate_test ( filterShapes(i)%filterGrid, &
+        & "FilterShapes(?)%filterGrid", moduleName )
+      call deallocate_test ( filterShapes(i)%filterShape, &
+        & "FilterShapes(?)%filterShape", moduleName )
+      call deallocate_test ( filterShapes(i)%signal%channels, &
+        & "FilterShapes(?)%signal%channels", moduleName )
+    end do ! i
+    s = size(filterShapes) * storage_size(filterShapes) / 8
+    addr = 0
+    if ( s > 0 ) addr = transfer(c_loc(filterShapes(1)), addr)
+    deallocate ( filterShapes, stat=status )
+    call test_deallocate ( status, moduleName, "FilterShapes", s, address=addr )
+  end subroutine Destroy_Filter_Shapes_Database
+
+  ! ------------------------  Destroy_DACS_Filter_Database  -----
+  subroutine Destroy_DACS_Filter_Database
+    use Allocate_Deallocate, only: Deallocate_Test, Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+    integer(c_intptr_t) :: Addr         ! For tracing
+    integer :: I, S, Status
+    if ( .not. associated(DACSfilterShapes) ) return
+    do i = 1, size(DACSfilterShapes)
+      call deallocate_test ( DACSfilterShapes(i)%filter%filterGrid, &
+        & "DACSFilterShapes(?)%filter%filterGrid", moduleName )
+      call deallocate_test ( DACSfilterShapes(i)%filter%filterShape, &
+        & "DACSFilterShapes(?)%filter%filterShape", moduleName )
+      call deallocate_test ( DACSfilterShapes(i)%filter%signal%channels, &
+        & "DACSFilterShapes(?)%signal%filter%channels", moduleName )
+      call deallocate_test ( DACSfilterShapes(i)%lo_apod, &
+        & "DACSFilterShapes(?)%lo_apod", moduleName )
+      call deallocate_test ( DACSfilterShapes(i)%ch_norm, &
+        & "DACSFilterShapes(?)%ch_norm", moduleName )
+    end do ! i
+    s = size(DACSfilterShapes) * storage_size(DACSfilterShapes) / 8
+    addr = 0
+    if ( s > 0 ) addr = transfer(c_loc(DACSfilterShapes(1)), addr)
+    deallocate ( DACSfilterShapes, stat=status )
+    call test_deallocate ( status, moduleName, "DACSFilterShapes", s, address=addr )
+  end subroutine Destroy_DACS_Filter_Database
+
+  ! --------------------------------  Dump_Filter_Shapes_Database  -----
+  subroutine Dump_Filter_Shapes_Database ( where )
+    use Dump_0, only: Dump
+    use MoreTree, only: StartErrorMessage
+    use Output_m, only: Output
+    use String_Table, only: Display_String
+
+    integer, intent(in), optional :: Where   ! Tree node index
+
+    integer :: I                   ! Subscripts, loop inductors
+    character(len=MaxSigLen) :: sigName
+    if ( associated(filterShapes) ) then
+      call output ( 'Filter Shapes: SIZE = ' )
+      call output ( size(filterShapes), advance='yes' )
+      do i = 1, size(filterShapes)
+        call output ( i, 4 )
+        call output ( ':    Signal = ' )
+        call GetNameOfSignal ( filterShapes(i)%signal, sigName )
+        call output ( trim(sigName) )
+        call display_string ( filterShapes(i)%file, before=' from file ', &
+          & advance='yes' )
+        call dump ( filterShapes(i)%filterShape, name='FilterShape' )
+        call dump ( filterShapes(i)%filterGrid, name='FilterGrid', &
+          & width=4, format='(1x,1pg18.11)' )
+      end do ! i
+    else
+      if ( present(where) ) call startErrorMessage ( where )
+      call output ( 'No filter shapes database to dump.', advance='yes' )
+    end if
+  end subroutine Dump_Filter_Shapes_Database
+
+  ! -------------------------------------------  Dump_DACS_Filter  -----
+  subroutine Dump_DACS_Filter ( DACSFilter )
+    use Dump_0, only: Dump
+    use Output_m, only: Output
+    use String_Table, only: Display_String
+
+    type (DACSFilterShape_T), intent(in) :: DACSFilter
+    character(len=MaxSigLen) :: sigName
+
+    call output ( 'Signal = ' )
+    call GetNameOfSignal ( DACSfilter%filter%signal, sigName )
+    call output ( trim(sigName) )
+    call display_string ( DACSfilter%filter%file, before=' from file ', &
+      & advance='yes' )
+    call dump ( DACSfilter%filter%filterShape, name='FilterShape' )
+    call dump ( DACSfilter%filter%filterGrid, name='FilterGrid', width=5, format='(f14.5)' )
+    call dump ( DACSfilter%lo_apod, name='LO_Apod', width=7, format='(f10.6)' )
+    call dump ( DACSfilter%ch_norm, name='CH_Norm' )
+  end subroutine Dump_DACS_Filter
+
+  ! ----------------------------------  Dump_DACS_Filter_Database  -----
+  subroutine Dump_DACS_Filter_Database ( where )
+    use MoreTree, only: StartErrorMessage
+    use Output_m, only: Output
+
+    integer, intent(in), optional :: Where   ! Tree node index
+
+    integer :: I                   ! Subscripts, loop inductors
+    if ( associated(DACSfilterShapes) ) then
+      call output ( 'DACS Filter Shapes: SIZE = ' )
+      call output ( size(DACSfilterShapes), advance='yes' )
+      do i = 1, size(DACSfilterShapes)
+        call output ( i, 4 )
+        call output ( ':    ' )
+        call dump_DACS_filter ( DACSfilterShapes(i) )
+      end do ! i
+    else
+      if ( present(where) ) call startErrorMessage ( where )
+      call output ( 'No DACS filter shapes database to dump.', advance='yes' )
+    end if
+  end subroutine Dump_DACS_Filter_Database
+
+  ! ------------------------------------------------  Read_A_Line  -----
+  subroutine Read_A_Line ( Lun, Line, Status )
+  ! Read a line, skipping blank lines and lines that begin with !
+    use Machine, only: IO_Error
+    integer, intent(in) :: Lun
+    character(len=*), intent(out) :: Line
+    integer, intent(out) :: Status
+
+    do
+      read ( lun, '(a)', iostat=status ) line
+      if ( status < 0 ) return
+      if ( status > 0 ) go to 99
+      if ( line == '' ) cycle           ! Skip blank lines
+      line = adjustl(line)
+      if ( line(1:1) /= '!' ) return
+      ! Skip comments
+    end do
+ 99 call io_error ( "While reading the filter shape file", status )
+    call MLSMessage ( MLSMSG_Error, moduleName, "Input error" )
+  end subroutine Read_A_Line
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: FilterShapes_m.f90,v 2.30 2017/06/02 18:29:58 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module FilterShapes_m
+
+! $Log: FilterShapes_m.f90,v $
+! Revision 2.30  2017/06/02 18:29:58  pwagner
+! Repaired bug that crashed when number_in_shape was 1
+!
+! Revision 2.29  2015/03/28 01:58:31  vsnyder
+! Added stuff to trace allocate/deallocate addresses
+!
+! Revision 2.28  2014/09/05 20:47:36  vsnyder
+! More complete and accurate allocate/deallocate size tracking
+!
+! Revision 2.27  2013/08/30 03:56:23  vsnyder
+! Revise use of trace_begin and trace_end
+!
+! Revision 2.26  2011/05/09 17:44:59  pwagner
+! Converted to using switchDetail
+!
+! Revision 2.25  2009/06/23 18:26:10  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.24  2007/10/11 20:05:03  vsnyder
+! Use correct loop bounds when destroying DACSfilterShapes
+!
+! Revision 2.23  2007/10/03 23:58:26  vsnyder
+! Add 'where' for tracing
+!
+! Revision 2.22  2007/09/12 00:52:45  vsnyder
+! Remove redundant dimension spec in DACSFilterShape_T components
+!
+! Revision 2.21  2006/04/25 23:25:36  vsnyder
+! Revise DACS filter shape data structure
+!
+! Revision 2.20  2005/06/22 18:08:18  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.19  2004/12/13 20:32:27  vsnyder
+! Put the filter shape file names in the string table.  Put the string indices
+! in the FilterShape_T and DACSFilterShape_T structures.  This is ultimately
+! used to put the filter shape file name into the PFA table.
+!
+! Revision 2.18  2004/09/01 00:28:11  vsnyder
+! Delete some unused variables, better error handling
+!
+! Revision 2.17  2004/05/26 23:54:14  vsnyder
+! Don't dump the database if it's not allocated
+!
+! Revision 2.16  2004/05/22 02:27:50  vsnyder
+! Use Get_Lun from io_stuff instead of repeating it here
+!
+! Revision 2.15  2004/03/30 00:45:31  vsnyder
+! Remove USE for unreferenced symbol
+!
+! Revision 2.14  2004/02/14 00:23:48  vsnyder
+! New DACS convolution algorithm
+!
+! Revision 2.13  2004/02/09 20:20:32  vsnyder
+! Make an error message more precise and informative
+!
+! Revision 2.12  2004/02/06 00:45:27  vsnyder
+! Allow more general relation between sizes of filter shape and
+! apodization arrays.
+!
+! Revision 2.11  2004/01/21 22:01:37  vsnyder
+! Trim signal name before printing, cosmetics
+!
+! Revision 2.10  2003/08/15 00:20:50  michael
+! changed debugging switch for dump_DACS_filter_database
+!
+! Revision 2.9  2003/07/16 01:06:50  vsnyder
+! Add DACS filter shapes
+!
+! Revision 2.8  2003/05/19 19:58:07  vsnyder
+! Remove USEs for unreferenced symbols, remove unused local variables
+!
+! Revision 2.7  2003/05/10 22:20:57  livesey
+! Tried to calm down -g1..
+!
+! Revision 2.6  2003/05/05 23:00:24  livesey
+! Merged in feb03 newfwm branch
+!
+! Revision 2.5.2.1  2003/04/21 20:07:08  vsnyder
+! Count filter shapes, then allocate the right size
+!
+! Revision 2.5  2002/10/08 17:08:03  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.4  2002/09/13 22:06:22  vsnyder
+! Move a few USEs from module scope to procedure scope
+!
+! Revision 2.3  2002/05/14 20:02:12  livesey
+! Bug fix in handling of channels field in signal part of filter shape.
+!
+! Revision 2.2  2002/05/10 00:33:18  vsnyder
+! Repair a botched comment
+!
+! Revision 2.1  2002/05/10 00:21:39  vsnyder
+! Revise to cope with new filter shape file.  filterShapes%filterGrid
+! and filterShapes%filterShape are now one-dimensional.
+! filterShapes%signal%channel has exactly one .true. element that
+! indicates the channel to which the shape applies.
+!
+! Revision 2.0  2001/09/17 20:26:25  livesey
+! New forward model
+!
+! Revision 1.15  2001/05/17 01:00:22  livesey
+! Odd bug, was allowing me to call AddFilterShapeToDatabase as a
+! subroutine when it was in fact a function.
+!
+! Revision 1.14  2001/05/16 23:04:29  livesey
+! Bug fix.
+!
+! Revision 1.13  2001/05/16 01:25:02  livesey
+! New version.  Stores thing differently.
+!
+! Revision 1.12  2001/05/04 00:49:06  livesey
+! Let destroy quit if nothing to destroy
+!
+! Revision 1.11  2001/05/03 22:05:22  vsnyder
+! Add a nullify, make database SAVE,
+!
+! Revision 1.10  2001/04/26 02:36:52  vsnyder
+! Moved *_indices declarations from init_tables_module to intrinsic
+!
+! Revision 1.9  2001/04/21 01:21:11  vsnyder
+! Fix a memory leak
+!
+! Revision 1.8  2001/04/20 17:19:05  vsnyder
+! Deallocate FilterGrid component in Destroy...
+!
+! Revision 1.7  2001/04/02 20:56:56  vsnyder
+! Add FilterGrid field and compute it
+!
+! Revision 1.6  2001/03/30 02:10:12  vsnyder
+! Improve 'dump' routine
+!
+! Revision 1.5  2001/03/30 01:12:29  vsnyder
+! Correct some comments, move "use Output" to "dump_filter_shapes_database"
+!
+! Revision 1.4  2001/03/30 00:02:06  livesey
+! Nullified another pointer
+!
+! Revision 1.3  2001/03/29 23:53:06  vsnyder
+! This one seems to work (not just compile)
+!
+! Revision 1.2  2001/03/29 21:57:31  vsnyder
+! NAG actually compiles this one
+!
+! Revision 1.1  2001/03/29 21:42:41  vsnyder
+! Changed name to FilterShapes_m
+!
+! Revision 1.3  2001/03/29 21:27:05  vsnyder
+! This one may actually work...
+!
+! Revision 1.2  2001/03/29 19:49:18  vsnyder
+! At least it compiles...
+!
+@
+
+
+2.30
+log
+@Repaired bug that crashed when number_in_shape was 1
+@
+text
+@a407 1
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+a427 1
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+d586 1
+a586 1
+       "$Id: FilterShapes_m.f90,v 2.29 2015/03/28 01:58:31 vsnyder Exp $"
+d596 3
+@
+
+
+2.29
+log
+@Added stuff to trace allocate/deallocate addresses
+@
+text
+@d74 1
+a74 1
+    use IO_stuff, only: Get_Lun
+d99 1
+a99 1
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST, &
+d101 7
+a107 6
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+    use MACHINE, only: IO_ERROR
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use PARSE_SIGNAL_M, only: PARSE_SIGNAL
+    use TOGGLES, only: GEN, SWITCHES, TOGGLE
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+d143 1
+a143 1
+      if ( status > 0 ) go to 99
+d146 1
+a146 1
+      if ( status /= 0 ) go to 99
+d149 1
+a149 1
+      if ( status /= 0 ) go to 99
+d177 1
+a177 1
+      if ( status > 0 ) go to 99
+d196 1
+a196 1
+      if ( status /= 0 ) go to 99
+d204 1
+a204 1
+      dx = ( rhs - lhs ) / (number_in_shape - 1)
+d209 1
+a209 1
+      if ( status /= 0 ) go to 99
+d221 7
+d232 1
+a232 1
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST, &
+d234 6
+a239 6
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+    use MACHINE, only: IO_ERROR
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use PARSE_SIGNAL_M, only: PARSE_SIGNAL
+    use TOGGLES, only: GEN, SWITCHES, TOGGLE
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+d588 1
+a588 1
+       "$Id: FilterShapes_m.f90,v 2.28 2014/09/05 20:47:36 vsnyder Exp $"
+d598 3
+@
+
+
+2.28
+log
+@More complete and accurate allocate/deallocate size tracking
+@
+text
+@d101 1
+d112 1
+d156 3
+d160 2
+a161 1
+      & uBounds = numFilterShapes, elementSize = storage_size(filterShapes) / 8 )
+d165 2
+d168 1
+a168 1
+      call test_deallocate ( status, moduleName, "TempFilterShapes", s )
+d226 1
+d237 1
+d303 3
+d307 2
+a308 1
+      & uBounds = numFilterShapes, elementSize = storage_size(DACSfilterShapes) / 8 )
+d312 2
+d315 1
+a315 1
+      call test_deallocate ( status, moduleName, "TempFilterShapes", s )
+d400 1
+d421 1
+d438 2
+d451 2
+d454 1
+a454 1
+    call test_deallocate ( status, moduleName, "FilterShapes", s )
+d460 2
+d477 2
+d480 1
+a480 1
+    call test_deallocate ( status, moduleName, "DACSFilterShapes", s )
+d580 1
+a580 1
+       "$Id: FilterShapes_m.f90,v 2.27 2013/08/30 03:56:23 vsnyder Exp $"
+d590 3
+@
+
+
+2.27
+log
+@Revise use of trace_begin and trace_end
+@
+text
+@d17 1
+a17 2
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
+    & MLSMSG_Error
+d99 2
+a100 1
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+d119 1
+d154 2
+a155 2
+    if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate // "FilterShapes")
+d158 1
+d160 1
+a160 2
+      if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_DeAllocate // "TempFilterShapes")
+d216 2
+a217 1
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+d241 1
+d293 2
+a294 2
+    if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate // "DACSfilterShapes")
+d297 1
+d299 1
+a299 2
+      if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_DeAllocate // "TempFilterShapes")
+d382 3
+a384 1
+    
+d402 3
+a404 1
+    
+d419 2
+a420 2
+    use Allocate_Deallocate, only: Deallocate_Test
+    integer :: I, Status
+d430 1
+d432 1
+a432 2
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+      MLSMSG_DeAllocate // "FilterShapes" )
+d437 2
+a438 2
+    use Allocate_Deallocate, only: Deallocate_Test
+    integer :: I, Status
+d452 1
+d454 1
+a454 2
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+      MLSMSG_DeAllocate // "DACSFilterShapes" )
+d554 1
+a554 1
+       "$Id: FilterShapes_m.f90,v 2.26 2011/05/09 17:44:59 pwagner Exp $"
+d564 3
+@
+
+
+2.26
+log
+@Converted to using switchDetail
+@
+text
+@d115 1
+d130 1
+a130 1
+    if ( toggle(gen) ) call trace_begin ( "Read_Filter_Shapes_File", where )
+d204 1
+a204 3
+    if ( toggle(gen) ) then
+      call trace_end ( "Read_Filter_Shapes_File" )
+    end if
+d547 1
+a547 1
+       "$Id: FilterShapes_m.f90,v 2.25 2009/06/23 18:26:10 pwagner Exp $"
+d557 3
+@
+
+
+2.25
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d16 1
+a16 1
+  use MLSCommon, only: R8
+d66 1
+a66 1
+       "$RCSfile: $"
+d100 6
+a105 5
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+    use Machine, only: IO_Error
+    use Parse_Signal_m, only: Parse_Signal
+    use Toggles, only: Gen, Switches, Toggle
+    use Trace_M, only: Trace_begin, Trace_end
+d202 1
+a202 1
+    if ( index(switches,'filt') /= 0 ) call dump_filter_shapes_database
+d216 6
+a221 5
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+    use Machine, only: IO_Error
+    use Parse_Signal_m, only: Parse_Signal
+    use Toggles, only: Gen, Switches, Toggle
+    use Trace_M, only: Trace_begin, Trace_end
+d357 1
+a357 1
+    if ( index(switches,'dacsfil') /= 0 ) call dump_DACS_filter_database
+d548 1
+a548 1
+       "$Id: read_apriori.f90 is it here $"
+d558 3
+@
+
+
+2.24
+log
+@Use correct loop bounds when destroying DACSfilterShapes
+@
+text
+@d66 1
+a66 1
+       "$RCSfile: FilterShapes_m.f90,v $"
+d543 1
+a544 1
+!---------------------------- RCS Ident Info -------------------------------
+d546 2
+a547 3
+       "$Id: FilterShapes_m.f90,v 2.23 2007/10/03 23:58:26 vsnyder Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d549 1
+d551 1
+d556 3
+@
+
+
+2.23
+log
+@Add 'where' for tracing
+@
+text
+@d432 1
+a432 1
+    do i = 1, size(filterShapes)
+d546 1
+a546 1
+       "$Id: FilterShapes_m.f90,v 2.22 2007/09/12 00:52:45 vsnyder Exp $"
+d555 3
+@
+
+
+2.22
+log
+@Remove redundant dimension spec in DACSFilterShape_T components
+@
+text
+@d99 1
+a99 1
+  subroutine Read_Filter_Shapes_File ( Lun, FileIndex )
+d108 1
+d128 1
+a128 1
+    if ( toggle(gen) ) call trace_begin ( "Read_Filter_Shapes_File" )
+d214 1
+a214 1
+  subroutine Read_DACS_Filter_Shapes_File ( Lun, FileIndex )
+d223 1
+d249 1
+a249 1
+    if ( toggle(gen) ) call trace_begin ( "Read_DACS_Filter_Shapes_File" )
+d546 1
+a546 1
+       "$Id: FilterShapes_m.f90,v 2.21 2006/04/25 23:25:36 vsnyder Exp $"
+d555 3
+@
+
+
+2.21
+log
+@Revise DACS filter shape data structure
+@
+text
+@d55 2
+a56 2
+    real(r8), dimension(:), pointer :: LO_Apod(:) => NULL()  ! Apodization, ditto
+    real(r8), dimension(:), pointer :: CH_Norm(:) => NULL()  ! Normalization, 2**logNorm+1
+d544 1
+a544 1
+       "$Id: FilterShapes_m.f90,v 2.20 2005/06/22 18:08:18 pwagner Exp $"
+d553 3
+@
+
+
+2.20
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d53 1
+a53 1
+    integer :: File          ! Index of file name in string table
+a54 2
+    real(r8), dimension(:), pointer :: FilterGrid => NULL()  ! Abscissae, 2**logFilter+1
+    real(r8), dimension(:), pointer :: FilterShape => NULL() ! Ordinates, ditto
+d57 2
+a58 1
+    type (Signal_T) :: Signal
+d66 1
+a66 1
+       "$RCSfile: $"
+d303 1
+a303 1
+      DACSfilterShapes(n)%file = fileIndex
+d313 3
+a315 3
+      DACSfilterShapes(n)%signal = signals(signal_indices(1))
+      DACSfilterShapes(n)%signal%sideband = sideband
+      DACSfilterShapes(n)%signal%channels => channels
+d326 4
+a329 4
+      call allocate_test ( DACSfilterShapes(n)%filterGrid,&
+        & number_shape, 'DACSfilterShapes(n)%filterGrid', ModuleName )
+      call allocate_test ( DACSfilterShapes(n)%filterShape,&
+        & number_shape, 'DACSfilterShapes(n)%filterShape', ModuleName )
+d334 1
+a334 1
+        DACSfilterShapes(n)%filterGrid(i) = lhs + (i-1) * dx
+d336 1
+a336 1
+      read ( lun, * ) DACSfilterShapes(n)%filterShape
+d431 6
+a436 6
+      call deallocate_test ( DACSfilterShapes(i)%filterGrid, &
+        & "DACSFilterShapes(?)%filterGrid", moduleName )
+      call deallocate_test ( DACSfilterShapes(i)%filterShape, &
+        & "DACSFilterShapes(?)%filterShape", moduleName )
+      call deallocate_test ( DACSfilterShapes(i)%signal%channels, &
+        & "DACSFilterShapes(?)%signal%channels", moduleName )
+d452 1
+d465 3
+a467 1
+        call output ( sigName, advance='yes' )
+d479 1
+a479 1
+  subroutine Dump_DACS_Filter ( Filter )
+d482 3
+a484 1
+    type (DACSFilterShape_T), intent(in) :: Filter
+d488 8
+a495 6
+    call GetNameOfSignal ( filter%signal, sigName )
+    call output ( trim(sigName), advance='yes' )
+    call dump ( filter%filterShape, name='FilterShape' )
+    call dump ( filter%filterGrid, name='FilterGrid', width=5, format='(f14.5)' )
+    call dump ( filter%lo_apod, name='LO_Apod', width=7, format='(f10.6)' )
+    call dump ( filter%ch_norm, name='CH_Norm' )
+d544 1
+a544 1
+       "$Id: $"
+d553 3
+@
+
+
+2.19
+log
+@Put the filter shape file names in the string table.  Put the string indices
+in the FilterShape_T and DACSFilterShape_T structures.  This is ultimately
+used to put the filter shape file name into the PFA table.
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d65 3
+a67 6
+  !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
+    & "$Id: FilterShapes_m.f90,v 2.18 2004/09/01 00:28:11 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter, private :: ModuleName = &
+    & "$RCSfile: FilterShapes_m.f90,v $"
+d69 1
+a69 1
+  !---------------------------------------------------------------------------
+d536 5
+d547 5
+@
+
+
+2.18
+log
+@Delete some unused variables, better error handling
+@
+text
+@d34 1
+d45 1
+d59 1
+a59 1
+    & "$Id: FilterShapes_m.f90,v 2.17 2004/05/26 23:54:14 vsnyder Exp $"
+d69 1
+a69 1
+  subroutine Open_Filter_Shapes_File ( Filename, Lun )
+d73 1
+d77 1
+d91 1
+d95 1
+a95 1
+  subroutine Read_Filter_Shapes_File ( Lun )
+d103 1
+d162 1
+d209 1
+a209 1
+  subroutine Read_DACS_Filter_Shapes_File ( Lun )
+d217 1
+d299 1
+d537 3
+@
+
+
+2.17
+log
+@Don't dump the database if it's not allocated
+@
+text
+@d57 1
+a57 1
+    & "$Id: FilterShapes_m.f90,v 2.16 2004/05/22 02:27:50 vsnyder Exp $"
+d70 1
+a74 1
+    logical :: Exist, Opened
+d82 5
+a86 2
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+      & "Unable to open filter shapes file " // Filename )
+d528 3
+@
+
+
+2.16
+log
+@Use Get_Lun from io_stuff instead of repeating it here
+@
+text
+@d20 1
+a20 1
+  public :: Read_Filter_Shapes_File, Read_DACS_Filter_Shapes_File
+d22 2
+a23 2
+  public :: Destroy_Filter_Shapes_Database, Destroy_DACS_Filter_Database
+  public :: Dump_Filter_Shapes_Database, Dump_DACS_Filter_Database
+d57 1
+a57 1
+    & "$Id: FilterShapes_m.f90,v 2.15 2004/03/30 00:45:31 vsnyder Exp $"
+d432 1
+a432 1
+  subroutine Dump_Filter_Shapes_Database
+d434 1
+d437 2
+d441 16
+a456 11
+    call output ( 'Filter Shapes: SIZE = ' )
+    call output ( size(filterShapes), advance='yes' )
+    do i = 1, size(filterShapes)
+      call output ( i, 4 )
+      call output ( ':    Signal = ' )
+      call GetNameOfSignal ( filterShapes(i)%signal, sigName )
+      call output ( sigName, advance='yes' )
+      call dump ( filterShapes(i)%filterShape, name='FilterShape' )
+      call dump ( filterShapes(i)%filterGrid, name='FilterGrid', &
+        & width=4, format='(1x,1pg18.11)' )
+    end do ! i
+d476 2
+a477 1
+  subroutine Dump_DACS_Filter_Database
+d480 2
+d483 12
+a494 7
+    call output ( 'DACS Filter Shapes: SIZE = ' )
+    call output ( size(DACSfilterShapes), advance='yes' )
+    do i = 1, size(DACSfilterShapes)
+      call output ( i, 4 )
+      call output ( ':    ' )
+      call dump_DACS_filter ( DACSfilterShapes(i) )
+    end do ! i
+d525 3
+@
+
+
+2.15
+log
+@Remove USE for unreferenced symbol
+@
+text
+@d57 1
+a57 1
+    & "$Id: FilterShapes_m.f90,v 2.14 2004/02/14 00:23:48 vsnyder Exp $"
+d69 2
+d77 2
+a78 5
+    do lun = 20, 99
+      inquire ( unit=lun, exist=exist, opened=opened )
+      if ( exist .and. .not. opened ) exit
+    end do
+    if ( opened .or. .not. exist ) call MLSMessage ( MLSMSG_Error, moduleName, &
+d509 3
+@
+
+
+2.14
+log
+@New DACS convolution algorithm
+@
+text
+@d57 1
+a57 1
+    & "$Id: FilterShapes_m.f90,v 2.13 2004/02/09 20:20:32 vsnyder Exp $"
+a469 1
+    use Dump_0, only: Dump
+d510 3
+@
+
+
+2.13
+log
+@Make an error message more precise and informative
+@
+text
+@d44 5
+a48 4
+    real(r8), dimension(:), pointer :: FilterGrid => NULL()      ! Abscissae
+    real(r8), dimension(:), pointer :: FilterShape => NULL()     ! Ordinates
+    real(r8), dimension(:), pointer :: LO_Apod(:) => NULL()      ! Apodization
+    real(r8), dimension(:), pointer :: CH_Norm(:) => NULL()      ! Normalization
+d57 1
+a57 1
+    & "$Id: FilterShapes_m.f90,v 2.12 2004/02/06 00:45:27 vsnyder Exp $"
+d212 3
+a214 1
+    integer :: LogChan                  ! Number_in_chan == 2 ** LogChan + 1
+a215 1
+    integer :: LogSize                  ! Number_in_shape == 2 ** LogSize + 1
+d217 3
+a219 2
+    integer :: Number_in_chan           ! How many channels?
+    integer :: Number_in_shape          ! How many points in each filter?
+d231 1
+a231 1
+    namelist /Filter/ lhs, rhs, logSize, logChan
+d243 4
+a246 3
+      ! Read the lhs, rhs and number_in_shape
+      logChan = 7
+      logSize = -1
+d249 5
+a253 2
+      if ( logSize < 0 ) &
+        & call MLSMessage ( MLSMSG_Error, moduleName, "LogSize < 0" )
+d255 2
+a256 2
+      number_in_shape = 2 ** logSize + 1
+      read ( lun, *, iostat=status ) (lhs, i = 1, number_in_shape)
+a257 1
+      number_in_chan = 2 ** logChan + 1
+d259 2
+a260 1
+      read ( lun, *, iostat=status ) (lhs, i = 1, number_in_chan)
+d263 2
+a264 1
+      read ( lun, *, iostat=status ) (lhs, i = 1, number_in_chan)
+d282 2
+a283 1
+    ! Read and store the filter shapes
+a287 1
+      if ( status > 0 ) go to 99
+d303 7
+a309 5
+      ! Read the lhs, rhs and number_in_shape
+      logChan = 7
+      read ( lun, filter, iostat=status )
+      if ( status /= 0 ) go to 99
+      number_in_shape = 2 ** logSize + 1
+d312 1
+a312 1
+        & number_in_shape, 'DACSfilterShapes(n)%filterGrid', ModuleName )
+d314 1
+a314 1
+        & number_in_shape, 'DACSfilterShapes(n)%filterShape', ModuleName )
+d317 2
+a318 2
+      dx = ( rhs - lhs ) / (number_in_shape - 1)
+      do i = 1, number_in_shape
+d321 1
+a321 2
+      read ( lun, *, iostat=status ) DACSfilterShapes(n)%filterShape
+      if ( status /= 0 ) go to 99
+d324 1
+a324 1
+      number_in_chan = 2 ** logChan + 1
+d326 1
+a326 1
+        & number_in_chan, 'DACSfilterShapes(n)%lo_apod', ModuleName )
+d330 1
+d332 1
+a332 1
+        & number_in_chan, 'DACSfilterShapes(n)%ch_norm', ModuleName )
+d511 3
+@
+
+
+2.12
+log
+@Allow more general relation between sizes of filter shape and
+apodization arrays.
+@
+text
+@d56 1
+a56 1
+    & "$Id: FilterShapes_m.f90,v 2.11 2004/01/21 22:01:37 vsnyder Exp $"
+d335 1
+a335 1
+ 99 call io_error ( "While reading the filter shape file", status )
+d501 4
+@
+
+
+2.11
+log
+@Trim signal name before printing, cosmetics
+@
+text
+@d25 5
+d56 1
+a56 1
+    & "$Id: FilterShapes_m.f90,v 2.10 2003/08/15 00:20:50 michael Exp $"
+d211 2
+d215 1
+d228 1
+a228 1
+    namelist /Filter/ lhs, rhs, logSize
+d241 2
+d245 2
+d251 1
+a251 1
+      number_in_shape = number_in_shape / 2 + 1
+d253 1
+a253 1
+      read ( lun, *, iostat=status ) (lhs, i = 1, number_in_shape)
+d256 1
+a256 1
+      read ( lun, *, iostat=status ) (lhs, i = 1, number_in_shape)
+d296 1
+d315 1
+a315 1
+      number_in_shape = number_in_shape / 2 + 1
+d317 1
+a317 1
+        & number_in_shape, 'DACSfilterShapes(n)%lo_apod', ModuleName )
+d322 1
+a322 1
+        & number_in_shape, 'DACSfilterShapes(n)%ch_norm', ModuleName )
+d442 16
+a463 1
+    character(len=MaxSigLen) :: sigName
+d468 2
+a469 9
+      call output ( ':    Signal = ' )
+      call GetNameOfSignal ( DACSfilterShapes(i)%signal, sigName )
+      call output ( trim(sigName), advance='yes' )
+      call dump ( DACSfilterShapes(i)%filterShape, name='FilterShape' )
+      call dump ( DACSfilterShapes(i)%filterGrid, name='FilterGrid', &
+        & width=5, format='(f14.5)' )
+      call dump ( DACSfilterShapes(i)%lo_apod, name='LO_Apod', &
+        & width=7, format='(f10.6)' )
+      call dump ( DACSfilterShapes(i)%ch_norm, name='CH_Norm' )
+d501 3
+@
+
+
+2.10
+log
+@changed debugging switch for dump_DACS_filter_database
+@
+text
+@d51 1
+a51 1
+    & "$Id: FilterShapes_m.f90,v 2.9 2003/07/16 01:06:50 vsnyder Exp $"
+d429 1
+a429 1
+  ! ---------------------------  Dump_DACS_Filter_Database  -----
+d442 1
+a442 1
+      call output ( sigName, advance='yes' )
+d445 3
+a447 2
+        & width=4, format='(1x,1pg18.11)' )
+      call dump ( DACSfilterShapes(i)%lo_apod, name='LO_Apod' )
+d480 3
+@
+
+
+2.9
+log
+@Add DACS filter shapes
+@
+text
+@d51 1
+a51 1
+    & "$Id: FilterShapes_m.f90,v 2.8 2003/05/19 19:58:07 vsnyder Exp $"
+d315 1
+a315 1
+    if ( index(switches,'filt') /= 0 ) call dump_DACS_filter_database
+d479 3
+@
+
+
+2.8
+log
+@Remove USEs for unreferenced symbols, remove unused local variables
+@
+text
+@d19 5
+a23 3
+  public :: Open_Filter_Shapes_File, Read_Filter_Shapes_File
+  public :: Close_Filter_Shapes_File, Destroy_Filter_Shapes_Database
+  public :: Dump_Filter_Shapes_Database
+d38 11
+d51 1
+a51 1
+    & "$Id: FilterShapes_m.f90,v 2.7 2003/05/10 22:20:57 livesey Exp $"
+d116 1
+a116 1
+      read ( lun, '(a)', iostat=status ) line
+a118 3
+      if ( line == '' ) cycle           ! Skip blank lines
+      line = adjustl(line)
+      if ( line(1:1) == '!' ) cycle     ! Skip comments
+d144 1
+a144 1
+      read ( lun, '(a)', iostat=status ) line
+a146 3
+      if ( line == '' ) cycle           ! Skip blank lines
+      line = adjustl(line)
+      if ( line(1:1) == '!' ) cycle     ! Skip comments
+a171 2
+      read ( lun, *, iostat=status ) filterShapes(n)%filterShape
+      if ( status /= 0 ) go to 99
+d176 2
+d193 134
+d333 1
+a333 1
+  ! ----------------------------------- AddFilterShapeToDatabase -------
+d351 18
+d387 22
+d429 43
+d479 3
+@
+
+
+2.7
+log
+@Tried to calm down -g1..
+@
+text
+@d38 1
+a38 1
+    & "$Id$"
+d41 1
+a41 1
+    & "$RCSfile$"
+d73 1
+a73 1
+    use Toggles, only: Gen, Levels, Switches, Toggle
+d254 4
+a257 1
+! $Log$
+@
+
+
+2.6
+log
+@Merged in feb03 newfwm branch
+@
+text
+@d174 1
+a175 2
+      if ( levels(gen) > 0 .or. index(switches,'filt') /= 0 ) &
+        & call dump_filter_shapes_database
+d255 3
+@
+
+
+2.5
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d38 1
+a38 1
+    & "$Id: FilterShapes_m.f90,v 2.4 2002/09/13 22:06:22 vsnyder Exp $"
+d41 1
+a41 1
+    & "$RCSfile: FilterShapes_m.f90,v $"
+d80 1
+a80 1
+    integer :: I                        ! Loop inductor, subscript
+d82 3
+a84 1
+    integer :: Number_in_shape          ! How many points in each filter
+a89 1
+    integer :: dummy                    ! Result of add to database
+d92 1
+a92 1
+    type(filterShape_T) :: thisShape
+d98 32
+a129 2
+    nullify ( signal_indices )
+    ! if ( associated(filterShapes) ) call destroy_filter_shapes_database
+d131 2
+d135 1
+a136 1
+      if ( status < 0 ) exit
+d140 1
+d142 1
+a142 1
+      nullify ( channels ) 
+d150 3
+a152 3
+      thisShape%signal = signals(signal_indices(1))
+      thisShape%signal%sideband = sideband
+      thisShape%signal%channels => channels
+d155 1
+a155 1
+      ! Read the lhs, rhs and num_in_shape
+d159 4
+a162 6
+      ! Need to nullify so this add doesn't hose any previous work
+      nullify ( thisShape%filterShape, thisShape%filterGrid )
+      call allocate_test ( thisShape%filterGrid,&
+        & number_in_shape, 'thisShape%filterGrid', ModuleName )
+      call allocate_test ( thisShape%filterShape,&
+        & number_in_shape, 'thisShape%filterShape', ModuleName )
+d164 2
+a165 2
+      ! Read the shape array and calculate the associate abscissae
+      read ( lun, *, iostat=status ) thisShape%filterShape
+d169 1
+a169 1
+        thisShape%filterGrid(i) = lhs + (i-1) * dx
+d172 1
+a172 3
+      dummy = AddFilterShapeToDatabase ( filterShapes, thisShape )
+
+    end do
+d175 1
+a175 1
+      if ( levels(gen) > 0 .or. index(switches,'F') /= 0 ) &
+d181 3
+a183 3
+  98 call MLSMessage ( MLSMSG_Error, moduleName, "Unexpected end-of-file" )
+  99 call io_error ( "While reading the filter shape file", status )
+     call MLSMessage ( MLSMSG_Error, moduleName, "Input error" )
+d244 2
+a245 1
+      call dump ( filterShapes(i)%filterGrid, name='FilterGrid' )
+d255 7
+a261 1
+! $Log: FilterShapes_m.f90,v $
+@
+
+
+2.5.2.1
+log
+@Count filter shapes, then allocate the right size
+@
+text
+@d38 1
+a38 1
+    & "$Id: FilterShapes_m.f90,v 2.5 2002/10/08 17:08:03 pwagner Exp $"
+d80 1
+a80 1
+    integer :: I, N                     ! Loop inductor, subscript
+d82 1
+a82 3
+    integer :: Number_in_shape          ! How many points in each filter?
+    integer :: NumFilterShapes          ! How many filter shapes in file?
+    integer :: Offset                   ! From start of FilterShapes -- to extend it
+d88 1
+d91 1
+a91 1
+    type(filterShape_T), dimension(:), pointer :: TempFilterShapes
+d97 3
+a99 4
+    ! Determine the size of the created or expanded FilterShapes array
+    offset = 0
+    if ( associated(filterShapes) ) offset = size(filterShapes)
+    numFilterShapes = offset
+a101 1
+      if ( status < 0 ) exit
+a102 29
+      if ( line == '' ) cycle           ! Skip blank lines
+      line = adjustl(line)
+      if ( line(1:1) == '!' ) cycle     ! Skip comments
+      ! Read the lhs, rhs and number_in_shape
+      read ( lun, filter, iostat=status )
+      if ( status /= 0 ) go to 99
+      ! Skip the shape, using LHS for a temp
+      read ( lun, *, iostat=status ) (lhs, i = 1, number_in_shape)
+      if ( status /= 0 ) go to 99
+      numFilterShapes = numFilterShapes + 1
+    end do
+    rewind ( lun )
+
+    ! Create or expand the FilterShapes array
+    tempFilterShapes => filterShapes
+    allocate ( filterShapes(numFilterShapes), stat=status )
+    if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate // "FilterShapes")
+    if ( associated(tempFilterShapes) ) then
+      filterShapes(:offset) = tempFilterShapes
+      deallocate ( tempFilterShapes, stat=status )
+      if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_DeAllocate // "TempFilterShapes")
+    end if
+
+    ! Read and store the filter shapes
+    n = offset
+    do ! Loop over filter shapes
+      read ( lun, '(a)', iostat=status ) line
+a103 1
+      if ( status > 0 ) go to 99
+a106 1
+      n = n + 1
+d108 1
+a108 1
+      nullify ( channels, signal_indices ) 
+d116 3
+a118 3
+      filterShapes(n)%signal = signals(signal_indices(1))
+      filterShapes(n)%signal%sideband = sideband
+      filterShapes(n)%signal%channels => channels
+d121 1
+a121 1
+      ! Read the lhs, rhs and number_in_shape
+d125 6
+a130 4
+      call allocate_test ( filterShapes(n)%filterGrid,&
+        & number_in_shape, 'filterShapes(n)%filterGrid', ModuleName )
+      call allocate_test ( filterShapes(n)%filterShape,&
+        & number_in_shape, 'filterShapes(n)%filterShape', ModuleName )
+d132 2
+a133 2
+      ! Read the shape array and calculate the associated abscissae
+      read ( lun, *, iostat=status ) filterShapes(n)%filterShape
+d137 1
+a137 1
+        filterShapes(n)%filterGrid(i) = lhs + (i-1) * dx
+d140 3
+a142 1
+    end do ! Loop over filter shapes
+d145 1
+a145 1
+      if ( levels(gen) > 0 .or. index(switches,'filt') /= 0 ) &
+d151 3
+a153 3
+ 98 call MLSMessage ( MLSMSG_Error, moduleName, "Unexpected end-of-file" )
+ 99 call io_error ( "While reading the filter shape file", status )
+    call MLSMessage ( MLSMSG_Error, moduleName, "Input error" )
+d214 1
+a214 2
+      call dump ( filterShapes(i)%filterGrid, name='FilterGrid', &
+        & width=4, format='(1x,1pg18.11)' )
+a224 3
+! Revision 2.5  2002/10/08 17:08:03  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+@
+
+
+2.4
+log
+@Move a few USEs from module scope to procedure scope
+@
+text
+@d38 1
+a38 1
+    & "$Id: FilterShapes_m.f90,v 2.3 2002/05/14 20:02:12 livesey Exp $"
+d42 1
+d218 4
+d225 3
+@
+
+
+2.3
+log
+@Bug fix in handling of channels field in signal part of filter shape.
+@
+text
+@a7 1
+  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+a11 1
+  use Dump_0, only: Dump
+d38 1
+a38 1
+    & "$Id: FilterShapes_m.f90,v 2.2 2002/05/10 00:33:18 vsnyder Exp $"
+d69 1
+d182 1
+d220 3
+@
+
+
+2.2
+log
+@Repair a botched comment
+@
+text
+@d40 1
+a40 1
+    & "$Id: FilterShapes_m.f90,v 2.1 2002/05/10 00:21:39 vsnyder Exp $"
+d84 4
+a87 4
+    !                                          shape array -- all the same
+    !                                          for each signal.
+    character(len=MaxSigLen) :: SigName      ! Signal Name
+    integer :: Status                        ! From read or allocate
+d89 1
+d108 1
+a108 1
+      nullify ( thisShape%signal%channels )
+d110 2
+a111 1
+        channels=thisShape%signal%channels )
+d118 1
+d220 3
+@
+
+
+2.1
+log
+@Revise to cope with new filter shape file.  filterShapes%filterGrid
+and filterShapes%filterShape are now one-dimensional.
+filterShapes%signal%channel has exactly one .true. element that
+indicates the channel to which the shape applies.
+@
+text
+@d40 1
+a40 1
+    & "$Id: FilterShapes_m.f90,v 2.0 2001/09/17 20:26:25 livesey Exp $"
+d118 1
+a118 1
+      ! Read the lhs, rhs and num_in_filters
+d217 6
+@
+
+
+2.0
+log
+@New forward model
+@
+text
+@d25 3
+d29 2
+a30 2
+    real(r8), dimension(:,:), pointer :: FilterGrid => NULL()      ! Abscissae
+    real(r8), dimension(:,:), pointer :: FilterShape => NULL()     ! Ordinates
+d40 1
+a40 1
+    & "$Id: FilterShapes_m.f90,v 1.15 2001/05/17 01:00:22 livesey Exp $"
+a77 1
+    integer :: DataBaseSize             ! How many filter shapes?
+d80 3
+a82 3
+    integer :: I, J                     ! Loop inductors, subscripts
+    integer :: NumChannels              ! For the signal
+    integer :: NumFilterPts             ! How many points in each filter
+d92 2
+d100 1
+a100 1
+      read ( lun, *, iostat=status ) numFilterPts, sigName
+d103 7
+a109 1
+      call parse_signal ( sigName, signal_indices, sideband=sideband )
+a115 1
+      numChannels = size(thisShape%signal%frequencies)
+d117 6
+a122 2
+      
+      ! Now need to nullify so this add doesn't hose any previous work
+d125 1
+a125 2
+        & numChannels, numFilterPts, &
+        & 'thisShape%filterGrid', ModuleName )
+d127 1
+a127 2
+        & numChannels, numFilterPts, &
+        & 'thisShape%filterShape', ModuleName )
+d129 6
+a134 8
+      do i = 1, numChannels
+        call read_one_filter ( lhs, rhs, thisShape%filterShape(i,:) )
+        if ( status < 0 ) go to 99
+        if ( status > 0 ) go to 98
+        dx = ( rhs - lhs ) / (numFilterPts - 1)
+        do j = 1, numFilterPts
+          thisShape%filterGrid(i,j) = lhs + (j-1) * dx
+        end do ! j
+a151 12
+  contains
+    ! ..........................................  Read_One_Filter  .....
+    subroutine Read_One_Filter ( LHS, RHS, ArgFilterShape )
+      real(r8), intent(out) :: LHS, RHS, ArgFilterShape(:)
+      integer :: Channel           ! Only for its documentary value in the file
+      real(r8) :: FilterShape(255)
+      integer :: N
+      namelist / Filter / Channel, FilterShape, LHS, RHS
+      n = size(argFilterShape)
+      read ( lun, filter, iostat=status )
+      argFilterShape(:n) = filterShape(:n)
+    end subroutine Read_One_Filter
+d187 2
+d217 3
+@
+
+
+1.15
+log
+@Odd bug, was allowing me to call AddFilterShapeToDatabase as a
+subroutine when it was in fact a function.
+@
+text
+@d37 1
+a37 1
+    & "$Id: FilterShapes_m.f90,v 1.14 2001/05/16 23:04:29 livesey Exp $"
+d218 4
+@
+
+
+1.14
+log
+@Bug fix.
+@
+text
+@d37 1
+a37 1
+    & "$Id: FilterShapes_m.f90,v 1.13 2001/05/16 01:25:02 livesey Exp $"
+d86 1
+d128 1
+a128 1
+      call AddFilterShapeToDatabase ( filterShapes, thisShape )
+d218 3
+@
+
+
+1.13
+log
+@New version.  Stores thing differently.
+@
+text
+@d12 2
+a13 1
+  use MLSSignals_m, only: GetSignalName, MaxSigLen, Signals, Signal_T
+d37 1
+a37 1
+    & "$Id: FilterShapes_m.f90,v 1.12 2001/05/04 00:49:06 livesey Exp $"
+d102 1
+a102 4
+      if ( size ( signal_indices ) /= 1 ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & trim(sigName) // " is ambiguous." )
+
+d108 2
+d128 1
+d207 1
+a207 1
+      call GetSignalName ( filterShapes(i)%signal%index, sigName )
+d217 3
+@
+
+
+1.12
+log
+@Let destroy quit if nothing to destroy
+@
+text
+@d12 3
+a14 1
+  use MLSSignals_m, only: MaxSigLen, Signals
+d25 3
+a27 4
+    real(r8) :: LHS, RHS
+    real(r8), dimension(:), pointer :: FilterGrid => NULL()      ! Abscissae
+    real(r8), dimension(:), pointer :: FilterShape => NULL()     ! Ordinates
+    character(len=MaxSigLen) :: Signal
+d36 1
+a36 1
+    & "$Id: FilterShapes_m.f90,v 1.11 2001/05/03 22:05:22 vsnyder Exp $"
+d72 1
+a72 1
+    integer, intent(in) :: Lun               ! Logical unit number to read it
+d74 7
+a80 5
+    integer :: DataBaseSize                  ! How many filter shapes?
+    real(r8) :: DX                           ! To compute FilterGrid
+    integer :: I, J                          ! Loop inductors, subscripts
+    integer :: NumChannels                   ! For the signal
+    integer :: NumFilterPts                  ! How many points in each filter
+d86 1
+a86 1
+    type(filterShape_T), dimension(:), pointer :: TempFilterShapes
+d91 1
+a91 1
+    if ( associated(filterShapes) ) call destroy_filter_shapes_database
+d93 1
+a93 1
+    do
+d97 1
+a97 1
+      call parse_signal ( sigName, signal_indices )
+d101 7
+a107 7
+      numChannels = size(signals(signal_indices(1))%frequencies)
+      do i = 1, size(signal_indices)
+        if ( size(signals(signal_indices(i))%frequencies) /= numChannels ) &
+          call MLSMessage ( MLSMSG_Error, moduleName, &
+            & "The signals implied by " // trim(sigName) // &
+            & " do not all have the same number of frequencies" )
+      end do
+d109 10
+a118 20
+      dataBaseSize = 0
+      if ( associated(filterShapes) ) dataBaseSize = size(filterShapes)
+      tempFilterShapes => filterShapes
+      allocate ( filterShapes(dataBaseSize + numChannels), stat=status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+        & MLSMSG_Allocate // 'FilterShapes' )
+      if ( dataBaseSize > 0 ) then
+        filterShapes(:dataBaseSize) = tempFilterShapes
+        deallocate ( tempFilterShapes, stat=status )
+        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+          & MLSMSG_DeAllocate // 'TempFilterShapes' )
+      end if
+      do i = dataBaseSize + 1, dataBaseSize + numChannels
+        filterShapes(i)%signal = sigName
+        call allocate_test ( filterShapes(i)%filterGrid, numFilterPts, &
+          & "filterShapes(i)%filterGrid", moduleName )
+        call allocate_test ( filterShapes(i)%filterShape, numFilterPts, &
+          & "filterShapes(i)%filterShape", moduleName )
+        call read_one_filter ( filterShapes(i)%lhs, filterShapes(i)%rhs, &
+          filterShapes(i)%filterShape )
+d121 1
+a121 1
+        dx = (filterShapes(i)%rhs - filterShapes(i)%lhs) / (numFilterPts - 1)
+d123 1
+a123 1
+          filterShapes(i)%filterGrid(j) = filterShapes(i)%lhs + (j-1) * dx
+d126 2
+a129 1
+
+d157 1
+d161 18
+d200 1
+d206 2
+a207 5
+      call output ( trim(filterShapes(i)%signal), advance='yes' )
+      call output ( ' LHS = ' )
+      call output ( filterShapes(i)%lhs )
+      call output ( '  RHS = ' )
+      call output ( filterShapes(i)%rhs, advance='yes' )
+d209 1
+d216 3
+@
+
+
+1.11
+log
+@Add a nullify, make database SAVE,
+@
+text
+@d35 1
+a35 1
+    & "$Id: FilterShapes_m.f90,v 1.10 2001/04/26 02:36:52 vsnyder Exp $"
+d169 1
+d204 3
+@
+
+
+1.10
+log
+@Moved *_indices declarations from init_tables_module to intrinsic
+@
+text
+@d1 3
+d30 2
+a31 1
+  type(filterShape_T), dimension(:), pointer, public :: FilterShapes => NULL()
+d35 1
+a35 1
+    & "$Id: FilterShapes_m.f90,v 1.9 2001/04/21 01:21:11 vsnyder Exp $"
+d82 2
+a83 2
+    integer, pointer, dimension(:) :: Signal_Indices => NULL()   ! From Parse_Signal, q.v.
+    type(filterShape_T), dimension(:), pointer :: TempFilterShapes => NULL()
+d87 1
+d203 3
+@
+
+
+1.9
+log
+@Fix a memory leak
+@
+text
+@d31 1
+a31 1
+    & "$Id: FilterShapes_m.f90,v 1.8 2001/04/20 17:19:05 vsnyder Exp $"
+d61 1
+a61 1
+  subroutine Read_Filter_Shapes_File ( Lun, Spec_Indices )
+a67 1
+    integer, intent(in) :: Spec_Indices(:)   ! Needed by Parse_Signal, q.v.
+d89 1
+a89 1
+      call parse_signal ( sigName, signal_indices, spec_indices )
+d198 3
+@
+
+
+1.8
+log
+@Deallocate FilterGrid component in Destroy...
+@
+text
+@d31 1
+a31 1
+    & "$Id: FilterShapes_m.f90,v 1.7 2001/04/02 20:56:56 vsnyder Exp $"
+d101 1
+d131 1
+d199 3
+@
+
+
+1.7
+log
+@Add FilterGrid field and compute it
+@
+text
+@d31 1
+a31 1
+    & "$Id: FilterShapes_m.f90,v 1.6 2001/03/30 02:10:12 vsnyder Exp $"
+d164 2
+d197 3
+@
+
+
+1.6
+log
+@Improve 'dump' routine
+@
+text
+@d21 2
+a22 1
+    real(r8), dimension(:), pointer :: FilterShape => NULL()
+d31 1
+a31 1
+    & "$Id: FilterShapes_m.f90,v 1.5 2001/03/30 01:12:29 vsnyder Exp $"
+d71 2
+a72 1
+    integer :: I                             ! Loop inductor, subscript
+d115 2
+d123 5
+a127 1
+      end do
+d195 3
+@
+
+
+1.5
+log
+@Correct some comments, move "use Output" to "dump_filter_shapes_database"
+@
+text
+@d30 1
+a30 1
+    & "$Id: FilterShapes_m.f90,v 1.4 2001/03/30 00:02:06 livesey Exp $"
+d174 1
+a174 1
+      call output ( ':    Signal =' )
+d187 3
+@
+
+
+1.4
+log
+@Nullified another pointer
+@
+text
+@d3 1
+a3 3
+  ! Read the filter shapes file.  Attach each array of filter shapes to
+  ! the database for the specified signal from the Signals database in
+  ! MLSSignals_m
+a9 1
+  use Output_m, only: Output
+d30 1
+a30 1
+    & "$Id: FilterShapes_m.f90,v 1.3 2001/03/29 23:53:06 vsnyder Exp $"
+d70 1
+a70 1
+    integer :: I                             ! Loop inductors, subscripts
+d167 1
+d187 3
+@
+
+
+1.3
+log
+@This one seems to work (not just compile)
+@
+text
+@d33 1
+a33 1
+    & "$Id: FilterShapes_m.f90,v 1.2 2001/03/29 21:57:31 vsnyder Exp $"
+d80 1
+a80 1
+    integer, pointer, dimension(:) :: Signal_Indices   ! From Parse_Signal, q.v.
+d189 3
+@
+
+
+1.2
+log
+@NAG actually compiles this one
+@
+text
+@d11 1
+a11 1
+  use MLSSignals_m, only: Signals
+d25 1
+a25 1
+    character(len=80) :: Signal
+d33 1
+a33 1
+    & "$Id: FilterShapes_m.f90,v 1.1 2001/03/29 21:42:41 vsnyder Exp $"
+d78 1
+a78 1
+    character(len=80) :: SigName             ! Signal Name
+d85 1
+a85 1
+    if ( associated(filterShapes) ) call destroy_pointing_grid_database
+d115 1
+d140 1
+d143 1
+a143 1
+      namelist / Filter / LHS, RHS, FilterShape
+d176 1
+a176 1
+      call output ( ':    Signal =', advance='yes' )
+d189 3
+@
+
+
+1.1
+log
+@Changed name to FilterShapes_m
+@
+text
+@d10 1
+a10 1
+    & MLSMSG_Error, MLSMSG_Info
+d12 1
+a12 1
+  use Output_m, only: Blanks, MLSMSG_Level, Output, PrUnit
+d33 1
+a33 1
+    & "$Id: Filter_Shapes_m.f90,v 1.3 2001/03/29 21:27:05 vsnyder Exp $"
+d36 1
+a36 1
+    & "$RCSfile: Filter_Shapes_m.f90,v $"
+a65 1
+    use String_Table, only: Display_String
+d106 1
+a106 1
+      if ( status /= 0 ) call call MLSMessage ( MLSMSG_Error, moduleName, &
+d118 1
+a118 1
+          filterShapes(i)%filterShape, numFilterPts )
+d137 3
+a139 1
+    subroutine Read_One_Filter ( LHS, RHS, FilterShape, N )
+a140 1
+      real(r8), intent(out) :: LHS, RHS, FilterShape(n)
+d142 1
+d144 1
+d186 4
+a189 1
+! $Log: Filter_Shapes_m.f90,v $
+@
+

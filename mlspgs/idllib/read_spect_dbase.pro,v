@@ -1,0 +1,753 @@
+head	1.4;
+access;
+symbols
+	v5-02-NRT-19:1.4
+	v6-00:1.4
+	v5-02-NRT-18:1.4
+	v5-02:1.4
+	v5-01-NRT-17:1.4
+	v5-01-NRT-16:1.4
+	v5-01-NRT-15:1.4
+	v5-01-NRT-14:1.4
+	neuralnetworks-1-0:1.4.0.14
+	cfm-single-freq-0-1:1.4.0.12
+	v5-01:1.4
+	v5-00:1.4
+	v4-23-TA133:1.4.0.10
+	mus-emls-1-70:1.4.0.8
+	rel-1-0-englocks-work:1.4.0.6
+	VUMLS1-00:1.4
+	VPL1-00:1.4
+	V4-22-NRT-08:1.4
+	VAM1-00:1.4
+	V4-21:1.4.0.4
+	V4-13:1.4
+	V4-12:1.4
+	V4-11:1.4
+	V4-10:1.4
+	V3-43:1.4
+	M4-00:1.4
+	V3-41:1.4
+	V3-40-PlusGM57:1.4.0.2
+	V2-24-NRT-04:1.4
+	V3-33:1.4
+	V2-24:1.4
+	V3-31:1.4
+	V3-30-NRT-05:1.4
+	cfm-01-00:1.4
+	V3-30:1.4
+	V3-20:1.4
+	V3-10:1.4
+	V2-23-NRT-02:1.4
+	V2-23:1.4
+	V2-22-NRT-01:1.4
+	V2-22:1.4
+	V2-21:1.4
+	V2-20:1.4
+	V2-11:1.4
+	V2-10:1.4
+	V2-00:1.4
+	V1-51:1.4
+	V1-50:1.4
+	V1-45:1.4
+	V1-44:1.4
+	V1-43:1.4
+	V1-42:1.4
+	V1-41:1.4
+	V1-32:1.4
+	V1-40:1.4
+	V1-31:1.4
+	V1-13:1.3
+	V1-12:1.3
+	V1-11:1.3
+	V1-10:1.3
+	newfwm-feb03:1.3.0.2
+	V1-04:1.3
+	V1-03:1.3
+	V1-02:1.3
+	V1-00:1.3;
+locks; strict;
+comment	@# @;
+
+
+1.4
+date	2003.05.14.15.27.08;	author bill;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2001.10.15.17.48.16;	author livesey;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.10.08.23.07.27;	author bill;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.10.05.22.27.28;	author bill;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.4
+log
+@reads latest catalogue
+@
+text
+@; program to read spectroscopy database
+PRO read_spect_dbase,mol_file,line_file,species,sps_data, $
+                     molID=molID, lineID=lineID, readID=readID
+; inputs
+; mol_file = input file name for molecular data
+; line_file = input file name for line data
+; species = string array of species wanted or blank for all of them
+; sps_data = a structure array of molecular data
+; find out what user wants
+  readID='$Id: read_spect_dbase.pro,v 1.3 2001/10/15 17:48:16 livesey Exp $'
+  buff = ''
+  buff1 = ''
+  buff2 = ''
+  spsv = ''
+  abunv = 0.0
+  massv = 0.0
+  freqv = 0.0d+00
+  gsev  = 0.0
+  istrv = 0.0
+  wcv   = 0.0
+  ncv   = 0.0
+  psv   = 0.0
+  nsv   = 0.0
+  int1v = 0.0
+  n1v   = 0.0
+  int2v = 0.0
+  n2v   = 0.0
+  no_linesv = 0
+; added fields 19 Dec 2002 wgr
+  qnfmtv = 0L
+  qnuv = '            '
+  qnlv = '            '
+  refv = '  '
+  qv = REPLICATE(0.0,3)
+  contv = REPLICATE(0.0,6)
+; initiate storage arrays
+  sps  = [spsv]
+  abun = [abunv]
+  mass = [massv]
+  parf = [qv]
+  conf = [contv]
+  freq = [freqv]
+  gse  = [gsev]
+  istr = [istrv]
+  wc   = [wcv]
+  nc   = [ncv]
+  ps   = [psv]
+  ns   = [nsv]
+  int1 = [int1v]
+  n1   = [n1v]
+  int2 = [int2v]
+  n2   = [n2v]
+  qnfmt = [qnfmtv]
+  qnu = [qnuv]
+  qnl = [qnlv]
+  eos_band = [' ']
+  uars_band = [' ']
+  ref = [refv]
+  no_lines = [1]
+  no_sps = 1
+  OPENR,lu1,mol_file,/GET_LUN
+  molID=''
+  readf, lu1, molID
+  OPENR,lu2,line_file,/GET_LUN
+  lineID=''
+  readf, lu2, lineID
+; first line is a spacer
+  READF,lu2,buff1
+; read first species line
+  sps1 = ''
+  IF NOT EOF(lu2) THEN proc_tex_stra,lu2,buff,stra,strb,qnuv,qnlv,refv,sps1
+  IF SCALARIZE(species) EQ '' THEN BEGIN
+; user wants everything
+    WHILE NOT EOF(lu1) DO BEGIN
+      proc_tex_string,lu1,spsv,buff
+      READS,buff,abunv,massv,qv,contv
+      sps  = [sps,spsv]
+      abun = [abun,abunv]
+      mass = [mass,massv]
+      parf = [parf,qv]
+      conf = [conf,contv]
+      no_sps = no_sps + 1
+      no_linesv = 0
+      IF NOT EOF(lu2) AND sps1 EQ spsv THEN BEGIN
+        proc_tex_stra,lu2,buff,stra,strb,qnuv,qnlv,refv,sps1
+        READS,buff,freqv,gsev,istrv,wcv,ncv,psv,nsv,int1v,n1v,int2v,n2v, $
+                   qnfmtv
+        freq = [freq,freqv]
+        gse  = [gse,gsev]
+        istr = [istr,istrv]
+        wc   = [wc,wcv]
+        nc   = [nc,ncv]
+        ps   = [ps,psv]
+        ns   = [ns,nsv]
+        int1 = [int1,int1v]
+        n1   = [n1,n1v]
+        int2 = [int2,int2v]
+        n2   = [n2,n2v]
+        qnfmt = [qnfmt,qnfmtv]
+        qnu = [qnu,qnuv]
+        qnl = [qnl,qnlv]
+        uars_band = [uars_band,stra]
+        eos_band  = [eos_band,strb]
+        ref = [ref,refv]
+        no_linesv = 1
+        WHILE NOT EOF(lu2) AND sps1 EQ '' DO BEGIN
+          proc_tex_stra,lu2,buff,stra,strb,qnuv,qnlv,refv,sps1
+          IF sps1 EQ '' THEN BEGIN
+            READS,buff,freqv,gsev,istrv,wcv,ncv,psv,nsv,int1v,n1v,int2v,n2v,$
+                       qnfmtv
+            freq = [freq,freqv]
+            gse  = [gse,gsev]
+            istr = [istr,istrv]
+            wc   = [wc,wcv]
+            nc   = [nc,ncv]
+            ps   = [ps,psv]
+            ns   = [ns,nsv]
+            int1 = [int1,int1v]
+            n1   = [n1,n1v]
+            int2 = [int2,int2v]
+            n2   = [n2,n2v]
+            qnfmt = [qnfmt,qnfmtv]
+            qnu = [qnu,qnuv]
+            qnl = [qnl,qnlv]
+            uars_band = [uars_band,stra]
+            eos_band  = [eos_band,strb]
+            ref = [ref,refv]
+            no_linesv = no_linesv + 1
+          ENDIF
+        ENDWHILE
+      ENDIF
+      no_lines = [no_lines,no_linesv]
+    ENDWHILE
+  ENDIF ELSE BEGIN
+; selected molecule search mode
+    no_sps = N_ELEMENTS(species) + 1
+    FOR i = 1 , no_sps - 1 DO BEGIN
+      POINT_LUN,lu1,0
+      POINT_LUN,lu2,0
+; jump over the first two lines
+      READF,lu2,buff & READF,lu2,buff
+      proc_tex_string,lu1,spsv,buff
+      WHILE NOT EOF(lu1) AND spsv NE species(i-1) DO $
+              proc_tex_string,lu1,spsv,buff
+      IF spsv EQ species(i-1) THEN BEGIN
+; species is found
+        READS,buff,abunv,massv,qv,contv
+        sps  = [sps,spsv]
+        abun = [abun,abunv]
+        mass = [mass,massv]
+        parf = [parf,qv]
+        conf = [conf,contv]
+        sps1 = ''
+        no_linesv = 0
+        WHILE NOT EOF(lu2) DO BEGIN
+          READF,lu2,buff
+          WHILE NOT EOF(lu2) AND STRPOS(buff,'\dotfill') EQ -1 $
+            DO READF,lu2,buff
+          IF NOT EOF(lu2) THEN BEGIN
+            amp_pos = STRSPLIT(buff,'\\dotfill',LENGTH = len,/REGEX)
+            sps1 = STRTRIM(STRMID(buff,amp_pos(1),len(1)),2)
+            IF sps1 EQ species(i-1) THEN BEGIN
+              proc_tex_stra,lu2,buff,stra,strb,qnuv,qnlv,refv,sps1
+              READS,buff,freqv,gsev,istrv,wcv,ncv,psv,nsv,int1v,n1v,int2v, $
+              n2v,qnfmtv
+; This checks to see if freq, etc. have been initialized
+              freq = [freq,freqv]
+              gse  = [gse,gsev]
+              istr = [istr,istrv]
+              wc   = [wc,wcv]
+              nc   = [nc,ncv]
+              ps   = [ps,psv]
+              ns   = [ns,nsv]
+              int1 = [int1,int1v]
+              n1   = [n1,n1v]
+              int2 = [int2,int2v]
+              n2   = [n2,n2v]
+              qnfmt = [qnfmt,qnfmtv]
+              qnu = [qnu,qnuv]
+              qnl = [qnl,qnlv]
+              uars_band = [uars_band,stra]
+              eos_band  = [eos_band,strb]
+              ref = [ref,refv]
+              no_linesv = 1
+              WHILE NOT EOF(lu2) AND sps1 EQ '' DO BEGIN
+                proc_tex_stra,lu2,buff,stra,strb,qnuv,qnlv,refv,sps1
+                IF sps1 EQ '' THEN BEGIN
+                  READS,buff,freqv,gsev,istrv,wcv,ncv,psv,nsv,int1v,n1v, $
+                             int2v,n2v,qnfmtv
+                  freq = [freq,freqv]
+                  gse  = [gse,gsev]
+                  istr = [istr,istrv]
+                  wc   = [wc,wcv]
+                  nc   = [nc,ncv]
+                  ps   = [ps,psv]
+                  ns   = [ns,nsv]
+                  int1 = [int1,int1v]
+                  n1   = [n1,n1v]
+                  int2 = [int2,int2v]
+                  n2   = [n2,n2v]
+                  qnfmt = [qnfmt,qnfmtv]
+                  qnu = [qnu,qnuv]
+                  qnl = [qnl,qnlv]
+                  uars_band = [uars_band,stra]
+                  eos_band  = [eos_band,strb]
+                  ref = [ref,refv]
+                  no_linesv = no_linesv + 1
+                ENDIF
+              ENDWHILE
+              no_lines = [no_lines,no_linesv]
+            ENDIF
+          ENDIF
+        ENDWHILE
+; this species has no lines
+        IF no_linesv EQ 0 THEN no_lines = [no_lines,0]
+      ENDIF ELSE BEGIN
+        PRINT,'species ',species(i-1),' not found will try the next one'
+        no_sps = no_sps - 1
+      ENDELSE
+    ENDFOR
+  ENDELSE
+  FREE_LUN,lu1
+  FREE_LUN,lu2
+; package into a nice structure
+  IF no_sps GT 1 THEN BEGIN
+    max_no_lines = MAX(no_lines)
+    data = {name:'',abun:0.0, mass:0.0, q:FLTARR(3), cont:FLTARR(6), $
+            no_lines:0, frq:DBLARR(max_no_lines), $
+            gse:FLTARR(max_no_lines), ist:FLTARR(max_no_lines), $
+            wc:FLTARR(max_no_lines), nc:FLTARR(max_no_lines), $
+            ps:FLTARR(max_no_lines), ns:FLTARR(max_no_lines), $
+            int1:FLTARR(max_no_lines), n1:FLTARR(max_no_lines), $
+            int2:FLTARR(max_no_lines), n2:FLTARR(max_no_lines), $
+            qnfmt:LONARR(max_no_lines),qnu:STRARR(max_no_lines), $
+            qnl:STRARR(max_no_lines),uars_bands:STRARR(max_no_lines), $
+            eos_bands:STRARR(max_no_lines),ref:STRARR(max_no_lines)}
+    sps_data = REPLICATE(data,no_sps-1)
+    sps_data(*).name = sps(1:no_sps-1)
+    sps_data(*).abun = abun(1:no_sps-1)
+    sps_data(*).mass = mass(1:no_sps-1)
+    sps_data(*).q(0:2) = REFORM(parf(3:3*no_sps - 1),3,no_sps-1)
+    sps_data(*).cont(0:5) = REFORM(conf(6:6*no_sps-1),6,no_sps-1)
+    sps_data(*).no_lines = no_lines(1:no_sps-1)
+    ptr1 = 1
+    FOR i = 1 , no_sps - 1 DO BEGIN
+      IF no_lines(i) GT 0 THEN BEGIN
+        ptr2 = ptr1 + no_lines(i) - 1
+        sps_data(i-1).frq        = freq(ptr1:ptr2)
+        sps_data(i-1).gse        = gse(ptr1:ptr2)
+        sps_data(i-1).ist        = istr(ptr1:ptr2)
+        sps_data(i-1).wc         = wc(ptr1:ptr2)
+        sps_data(i-1).nc         = nc(ptr1:ptr2)
+        sps_data(i-1).ps         = ps(ptr1:ptr2)
+        sps_data(i-1).ns         = ns(ptr1:ptr2)
+        sps_data(i-1).int1       = int1(ptr1:ptr2)
+        sps_data(i-1).n1         = n1(ptr1:ptr2)
+        sps_data(i-1).int2       = int2(ptr1:ptr2)
+        sps_data(i-1).n2         = n2(ptr1:ptr2)
+        sps_data(i-1).qnfmt      = qnfmt(ptr1:ptr2)
+        sps_data(i-1).qnu        = qnu(ptr1:ptr2)
+        sps_data(i-1).qnl        = qnl(ptr1:ptr2)
+        sps_data(i-1).uars_bands = uars_band(ptr1:ptr2)
+        sps_data(i-1).eos_bands  = eos_band(ptr1:ptr2)
+        sps_data(i-1).ref        = ref(ptr1:ptr2)
+        ptr1 = ptr2 + 1
+      ENDIF
+   ENDFOR
+  ENDIF
+  RETURN
+  END
+@
+
+
+1.3
+log
+@Added ids
+@
+text
+@d10 1
+a10 1
+  readID='$Id$'
+d28 33
+a60 2
+  qv = FLTARR(3)
+  contv = FLTARR(6)
+d69 3
+a73 56
+    proc_tex_string,lu1,spsv,buff
+    READS,buff,abunv,massv,qv,contv
+    sps  = [spsv]
+    abun = [abunv]
+    mass = [massv]
+    parf = [qv]
+    conf = [contv]
+    no_sps = 1
+; now load lines for first molecule
+    proc_tex_stra,lu2,buff,stra,strb,sps1
+    no_linesv = 0
+    IF qv(0) GT 0.00001 THEN BEGIN
+      IF sps1 EQ spsv THEN BEGIN
+        proc_tex_stra,lu2,buff,stra,strb,sps1
+        READS,buff,freqv,gsev,istrv,wcv,ncv,psv,nsv,int1v,n1v,int2v,n2v
+        freq = [freqv]
+        gse  = [gsev]
+        istr = [istrv]
+        wc   = [wcv]
+        nc   = [ncv]
+        ps   = [psv]
+        ns   = [nsv]
+        int1 = [int1v]
+        n1   = [n1v]
+        int2 = [int2v]
+        n2   = [n2v]
+        eos_band = [stra]
+        uars_band = [strb]
+        no_linesv = 1
+        WHILE NOT EOF(lu2) AND sps1 EQ '' DO BEGIN
+          proc_tex_stra,lu2,buff,stra,strb,sps1
+          IF sps1 EQ '' THEN BEGIN
+            READS,buff,freqv,gsev,istrv,wcv,ncv,psv,nsv,int1v,n1v,int2v,n2v
+            freq = [freq,freqv]
+            gse  = [gse,gsev]
+            istr = [istr,istrv]
+            wc   = [wc,wcv]
+            nc   = [nc,ncv]
+            ps   = [ps,psv]
+            ns   = [ns,nsv]
+            int1 = [int1,int1v]
+            n1   = [n1,n1v]
+            int2 = [int2,int2v]
+            n2   = [n2,n2v]
+            eos_band  = [eos_band,stra]
+            uars_band = [uars_band,strb]
+            no_linesv = no_linesv + 1
+          ENDIF
+        ENDWHILE
+      ENDIF ELSE BEGIN
+        PRINT,'species match error has occured'
+        PRINT,sps1,' versus ',spsv
+        STOP
+      ENDELSE
+    ENDIF
+    no_lines = [no_linesv]
+d84 21
+a104 83
+      IF qv(0) GT 0.00001 THEN BEGIN
+        IF sps1 EQ spsv THEN BEGIN
+          proc_tex_stra,lu2,buff,stra,strb,sps1
+          READS,buff,freqv,gsev,istrv,wcv,ncv,psv,nsv,int1v,n1v,int2v,n2v
+          freq = [freq,freqv]
+          gse  = [gse,gsev]
+          istr = [istr,istrv]
+          wc   = [wc,wcv]
+          nc   = [nc,ncv]
+          ps   = [ps,psv]
+          ns   = [ns,nsv]
+          int1 = [int1,int1v]
+          n1   = [n1,n1v]
+          int2 = [int2,int2v]
+          n2   = [n2,n2v]
+          eos_band  = [eos_band,stra]
+          uars_band = [uars_band,strb]
+          no_linesv = 1
+          WHILE NOT EOF(lu2) AND sps1 EQ '' DO BEGIN
+            proc_tex_stra,lu2,buff,stra,strb,sps1
+            IF sps1 EQ '' THEN BEGIN
+              READS,buff,freqv,gsev,istrv,wcv,ncv,psv,nsv,int1v,n1v,int2v,n2v
+              freq = [freq,freqv]
+              gse  = [gse,gsev]
+              istr = [istr,istrv]
+              wc   = [wc,wcv]
+              nc   = [nc,ncv]
+              ps   = [ps,psv]
+              ns   = [ns,nsv]
+              int1 = [int1,int1v]
+              n1   = [n1,n1v]
+              int2 = [int2,int2v]
+              n2   = [n2,n2v]
+              eos_band  = [eos_band,stra]
+              uars_band = [uars_band,strb]
+              no_linesv = no_linesv + 1
+            ENDIF
+          ENDWHILE
+        ENDIF ELSE BEGIN
+          PRINT,'species match error has occured'
+          PRINT,sps1,' versus ',spsv
+          STOP
+        ENDELSE
+      ENDIF
+      no_lines = [no_lines,no_linesv]
+    ENDWHILE
+  ENDIF ELSE BEGIN
+; selected molecule search mode
+    no_sps = N_ELEMENTS(species)
+    proc_tex_string,lu1,spsv,buff
+    WHILE NOT EOF(lu1) AND spsv NE species(0) DO $
+        proc_tex_string,lu1,spsv,buff
+    IF spsv EQ species(0) THEN BEGIN
+; species is found
+      READS,buff,abunv,massv,qv,contv
+      sps  = [spsv]
+      abun = [abunv]
+      mass = [massv]
+      parf = [qv]
+      conf = [contv]
+      sps1 = ''
+      IF qv(0) GT 0.00001 THEN BEGIN
+        WHILE spsv NE sps1 DO BEGIN
+          READF,lu2,buff
+          WHILE STRPOS(buff,'\dotfill') EQ -1 DO READF,lu2,buff
+          amp_pos = STRSPLIT(buff,'\\dotfill',LENGTH = len,/REGEX)
+          sps1 = STRTRIM(STRMID(buff,amp_pos(1),len(1)),2)
+        ENDWHILE
+        proc_tex_stra,lu2,buff,stra,strb,sps1
+        READS,buff,freqv,gsev,istrv,wcv,ncv,psv,nsv,int1v,n1v,int2v,n2v
+        freq = [freqv]
+        gse  = [gsev]
+        istr = [istrv]
+        wc   = [wcv]
+        nc   = [ncv]
+        ps   = [psv]
+        ns   = [nsv]
+        int1 = [int1v]
+        n1   = [n1v]
+        int2 = [int2v]
+        n2   = [n2v]
+        eos_band  = [stra]
+        uars_band = [strb]
+d107 1
+a107 1
+          proc_tex_stra,lu2,buff,stra,strb,sps1
+d109 2
+a110 1
+            READS,buff,freqv,gsev,istrv,wcv,ncv,psv,nsv,int1v,n1v,int2v,n2v
+d122 6
+a127 2
+            eos_band  = [eos_band,stra]
+            uars_band = [uars_band,strb]
+d131 6
+a136 6
+        no_lines = [no_linesv]
+      ENDIF ELSE no_lines = [0]
+    ENDIF ELSE BEGIN
+      PRINT,'species ',species(0),' not found will try the next one'
+      no_sps = no_sps - 1
+    ENDELSE
+d140 2
+d143 1
+a143 1
+      WHILE NOT EOF(lu1) AND spsv NE species(i) DO $
+d145 1
+a145 1
+      IF spsv EQ species(i) THEN BEGIN
+d154 6
+a159 4
+        IF qv(0) GT 0.00001 THEN BEGIN
+          WHILE spsv NE sps1 DO BEGIN
+            READF,lu2,buff
+            WHILE STRPOS(buff,'\dotfill') EQ -1 DO READF,lu2,buff
+d162 4
+a165 4
+          ENDWHILE
+          proc_tex_stra,lu2,buff,stra,strb,sps1
+          READS,buff,freqv,gsev,istrv,wcv,ncv,psv,nsv,int1v,n1v,int2v,n2v
+          IF MAX(no_lines) GT 0 THEN BEGIN
+a166 33
+            freq = [freq,freqv]
+            gse  = [gse,gsev]
+            istr = [istr,istrv]
+            wc   = [wc,wcv]
+            nc   = [nc,ncv]
+            ps   = [ps,psv]
+            ns   = [ns,nsv]
+            int1 = [int1,int1v]
+            n1   = [n1,n1v]
+            int2 = [int2,int2v]
+            n2   = [n2,n2v]
+            eos_band  = [eos_band,stra]
+            uars_band = [uars_band,strb]
+          ENDIF ELSE BEGIN
+            freq = [freqv]
+            gse  = [gsev]
+            istr = [istrv]
+            wc   = [wcv]
+            nc   = [ncv]
+            ps   = [psv]
+            ns   = [nsv]
+            int1 = [int1v]
+            n1   = [n1v]
+            int2 = [int2v]
+            n2   = [n2v]
+            eos_band  = [stra]
+            uars_band = [strb]
+          ENDELSE
+          no_linesv = 1
+          WHILE NOT EOF(lu2) AND sps1 EQ '' DO BEGIN
+            proc_tex_stra,lu2,buff,stra,strb,sps1
+            IF sps1 EQ '' THEN BEGIN
+              READS,buff,freqv,gsev,istrv,wcv,ncv,psv,nsv,int1v,n1v,int2v,n2v
+d178 33
+a210 3
+              eos_band  = [eos_band,stra]
+              uars_band = [uars_band,strb]
+              no_linesv = no_linesv + 1
+d212 4
+a215 3
+          ENDWHILE
+          no_lines = [no_lines,no_linesv]
+        ENDIF ELSE no_lines = [no_lines,0]
+d217 1
+a217 1
+        PRINT,'species ',species(i),' not found will try the next one'
+d225 2
+a226 2
+  IF no_sps GT 0 THEN BEGIN
+    max_no_lines = MAX([no_lines,1])
+d234 12
+a245 10
+            eos_bands:STRARR(max_no_lines), uars_bands:STRARR(max_no_lines)}
+    sps_data = REPLICATE(data,no_sps)
+    sps_data(*).name = sps
+    sps_data(*).abun = abun
+    sps_data(*).mass = mass
+    sps_data(*).q(0:2) = REFORM(parf,3,no_sps)
+    sps_data(*).cont(0:5) = REFORM(conf,6,no_sps)
+    sps_data(*).no_lines = no_lines
+    ptr1 = 0
+    FOR i = 0 , no_sps - 1 DO BEGIN
+d248 17
+a264 13
+        sps_data(i).frq        = freq(ptr1:ptr2)
+        sps_data(i).gse        = gse(ptr1:ptr2)
+        sps_data(i).ist        = istr(ptr1:ptr2)
+        sps_data(i).wc         = wc(ptr1:ptr2)
+        sps_data(i).nc         = nc(ptr1:ptr2)
+        sps_data(i).ps         = ps(ptr1:ptr2)
+        sps_data(i).ns         = ns(ptr1:ptr2)
+        sps_data(i).int1       = int1(ptr1:ptr2)
+        sps_data(i).n1         = n1(ptr1:ptr2)
+        sps_data(i).int2       = int2(ptr1:ptr2)
+        sps_data(i).n2         = n2(ptr1:ptr2)
+        sps_data(i).eos_bands  = eos_band(ptr1:ptr2)
+        sps_data(i).uars_bands = uars_band(ptr1:ptr2)
+@
+
+
+1.2
+log
+@fixed bug associated with selected species option--wgr
+@
+text
+@d2 2
+a3 1
+  PRO read_spect_dbase,mol_file,line_file,species,sps_data
+d10 1
+d31 2
+d34 2
+@
+
+
+1.1
+log
+@New subroutine for reading spectral data base tables--wgr
+@
+text
+@d161 7
+a167 23
+      WHILE spsv NE sps1 DO BEGIN
+        READF,lu2,buff
+        WHILE STRPOS(buff,'\dotfill') EQ -1 DO READF,lu2,buff
+        amp_pos = STRSPLIT(buff,'\\dotfill',LENGTH = len,/REGEX)
+        sps1 = STRTRIM(STRMID(buff,amp_pos(1),len(1)),2)
+      ENDWHILE
+      proc_tex_stra,lu2,buff,stra,strb,sps1
+      READS,buff,freqv,gsev,istrv,wcv,ncv,psv,nsv,int1v,n1v,int2v,n2v
+      freq = [freqv]
+      gse  = [gsev]
+      istr = [istrv]
+      wc   = [wcv]
+      nc   = [ncv]
+      ps   = [psv]
+      ns   = [nsv]
+      int1 = [int1v]
+      n1   = [n1v]
+      int2 = [int2v]
+      n2   = [n2v]
+      eos_band  = [stra]
+      uars_band = [strb]
+      no_linesv = 1
+      WHILE NOT EOF(lu2) AND sps1 EQ '' DO BEGIN
+d169 37
+a205 19
+        IF sps1 EQ '' THEN BEGIN
+          READS,buff,freqv,gsev,istrv,wcv,ncv,psv,nsv,int1v,n1v,int2v,n2v
+          freq = [freq,freqv]
+          gse  = [gse,gsev]
+          istr = [istr,istrv]
+          wc   = [wc,wcv]
+          nc   = [nc,ncv]
+          ps   = [ps,psv]
+          ns   = [ns,nsv]
+          int1 = [int1,int1v]
+          n1   = [n1,n1v]
+          int2 = [int2,int2v]
+          n2   = [n2,n2v]
+          eos_band  = [eos_band,stra]
+          uars_band = [uars_band,strb]
+          no_linesv = no_linesv + 1
+        ENDIF
+      ENDWHILE
+      no_lines = [no_linesv]
+d225 7
+a231 23
+        WHILE spsv NE sps1 DO BEGIN
+          READF,lu2,buff
+          WHILE STRPOS(buff,'\dotfill') EQ -1 DO READF,lu2,buff
+          amp_pos = STRSPLIT(buff,'\\dotfill',LENGTH = len,/REGEX)
+          sps1 = STRTRIM(STRMID(buff,amp_pos(1),len(1)),2)
+        ENDWHILE
+        proc_tex_stra,lu2,buff,stra,strb,sps1
+        READS,buff,freqv,gsev,istrv,wcv,ncv,psv,nsv,int1v,n1v,int2v,n2v
+        freq = [freq,freqv]
+        gse  = [gse,gsev]
+        istr = [istr,istrv]
+        wc   = [wc,wcv]
+        nc   = [nc,ncv]
+        ps   = [ps,psv]
+        ns   = [ns,nsv]
+        int1 = [int1,int1v]
+        n1   = [n1,n1v]
+        int2 = [int2,int2v]
+        n2   = [n2,n2v]
+        eos_band  = [eos_band,stra]
+        uars_band = [uars_band,strb]
+        no_linesv = 1
+        WHILE NOT EOF(lu2) AND sps1 EQ '' DO BEGIN
+d233 3
+a235 2
+          IF sps1 EQ '' THEN BEGIN
+            READS,buff,freqv,gsev,istrv,wcv,ncv,psv,nsv,int1v,n1v,int2v,n2v
+d249 38
+a286 4
+            no_linesv = no_linesv + 1
+          ENDIF
+        ENDWHILE
+        no_lines = [no_lines,no_linesv]
+d297 1
+a297 1
+    max_no_lines = MAX(no_lines)
+@
+

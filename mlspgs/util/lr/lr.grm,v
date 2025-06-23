@@ -1,0 +1,168 @@
+head	1.3;
+access;
+symbols
+	v5-02-NRT-19:1.3
+	v6-00:1.3
+	v5-02-NRT-18:1.3
+	v5-02:1.3
+	v5-01-NRT-17:1.3
+	v5-01-NRT-16:1.3
+	v5-01-NRT-15:1.3
+	v5-01-NRT-14:1.3
+	neuralnetworks-1-0:1.3.0.10
+	cfm-single-freq-0-1:1.3.0.8
+	v5-01:1.3
+	v5-00:1.3
+	v4-23-TA133:1.3.0.6
+	mus-emls-1-70:1.3.0.4
+	rel-1-0-englocks-work:1.3.0.2
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.2
+	V4-21:1.2.0.2
+	V4-13:1.2
+	V4-12:1.2
+	V4-11:1.2
+	V4-10:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.3
+date	2017.07.28.19.16.18;	author vsnyder;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2014.01.14.00.19.16;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2014.01.14.00.17.49;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@Correct some comments
+@
+text
+@; Grammar for grammar
+
+; Semicolon not within a string enclosed in quotes or apostrophes
+; introduces a comment, which continues to the end of the line.
+
+; Define the terminal symbols using names from your Symbol_Types module.
+; The syntax is "grammar term = symbol name".  "grammar term" can be
+; either a name, or a string enclosed in quotes or apostrophes.
+
+'='    = t_equal
+'->'   = t_produces
+'=>'   = t_generates
+'?'    = t_question
+EOS    = t_eos
+EOG    = t_end_of_input ; EOG is generated; the parser assumes it is defined
+name   = t_identifier
+number = t_number
+string = t_string
+
+; Now the productions.  The syntax for one production is
+; LHS ( -> RHS ( => ACT '?' ? ) ? EOS )+
+; where LHS is a nonterminal symbol,
+;       RHS is a sequence of terminal and nonterminal symbols,
+;       ACT is the name of a tree node from your Tree_Types module, or a
+;           number,
+;       EOS means "end of statement", which is end of line or the
+;           beginning of a comment, unless the production is continued by
+;           a "$"
+;       '?' means "do the action only if the RHS generated more than one
+;           tree node,
+;       ? means "can appear zero or one times, and
+;       + means "can appear more than one time.
+
+; A comment beginning with semicolon continues to the end of the line.
+; If it appears and "$" does not appear before it, it is an end of statement.
+
+grammar -> item
+        -> grammar item
+
+item -> EOS
+     -> vocab
+     -> production
+
+vocab -> thing '=' name EOS => n_equal
+
+production -> lhs rhss => n_production
+
+lhs -> name
+    -> string
+
+rhss -> rhs
+     -> rhss rhs
+
+rhs -> rhs_alone EOS
+    -> rhs_alone act EOS => n_generates
+
+rhs_alone -> '->' => n_rhs
+          -> '->' things => n_rhs
+
+things -> thing
+       -> things thing
+
+thing -> name
+      -> number
+      -> string
+
+act -> '=>' action
+    -> '=>' action '?' => n_question
+
+action -> name
+       -> number
+
+; $Id: lr.grm,v 1.2 2014/01/14 00:19:16 vsnyder Exp $
+
+; $Log: lr.grm,v $
+; Revision 1.2  2014/01/14 00:19:16  vsnyder
+; Added CVS comments
+;
+@
+
+
+1.2
+log
+@Added CVS comments
+@
+text
+@d3 1
+a3 1
+; Semicolon noit within a string enclosed in quotes or apostrophes
+d6 1
+a6 1
+; Define the terminal symbols using names from the Symbol_Types module.
+d24 1
+a24 1
+;       ACT is the name of a tree node from the Tree_Types module of a
+d73 1
+a73 1
+; $Id: $
+d75 4
+a78 1
+; $Log: $
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d72 4
+@
+

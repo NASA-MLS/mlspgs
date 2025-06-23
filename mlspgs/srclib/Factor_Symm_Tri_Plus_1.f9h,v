@@ -1,0 +1,141 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.14
+	cfm-single-freq-0-1:1.2.0.12
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.10
+	mus-emls-1-70:1.2.0.8
+	rel-1-0-englocks-work:1.2.0.6
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.2
+	V4-21:1.2.0.4
+	V4-13:1.2
+	V4-12:1.2
+	V4-11:1.2
+	V4-10:1.2
+	V3-43:1.2
+	M4-00:1.2
+	V3-41:1.2
+	V3-40-PlusGM57:1.2.0.2
+	V3-33:1.2
+	V3-31:1.2
+	V3-30-NRT-05:1.2
+	cfm-01-00:1.2
+	V3-30:1.2
+	V3-20:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2009.12.02.01.15.15;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2009.11.18.00.07.12;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Correct some comments
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! subroutine Factor_Symm_Tri_Plus_1_r* ( DIAG, H, D, R, U, C )
+    ! Factor a symmetric tridiagonal matrix augmented by the same
+    ! nonzero element in the top right and bottom left corners (so it's
+    ! still symmetric).
+
+    ! We could use Factor_Symm_Tri to factor the top left n-1 X n-1 block
+    ! of A, and then compute D(n), C and R, but what we do here fuses the
+    ! loops.
+
+    real(rk), intent(in) :: DIAG(:) ! (1:n) Diagonal of the matrix
+    real(rk), intent(in) :: H(:)    ! (1:n) ((1:n-1) is the super- and
+                                    ! subdiagonal, H(n) is the corners
+    real(rk), intent(out) :: D(:)   ! (1:n) Inverse of diagonal of L
+                                    ! Subdiagonal of L is H(1:n-2)
+                                    !   and R(n-1)
+    real(rk), intent(out) :: R(:)   ! (1:n-1) Bottom row of L, except
+                                    !   for D(n)
+    real(rk), intent(out) :: U(:)   ! (1:n-2) Superdiagonal of U, except (n,n-1)
+                                    ! Diagonal of U is 1
+    real(rk), intent(out) :: C(:)   ! (1:n-1) Right column of U, except (n,n)
+
+    integer :: K, N
+
+    n = size(diag)
+    d(1) = 1.0 / diag(1)
+    c(1) = h(n) * d(1)
+    r(1) = h(n)
+    do k = 2, n-2
+      u(k-1) = h(k-1) * d(k-1)
+      d(k) = 1.0 / ( diag(k) - h(k-1) * u(k-1) )
+      c(k) = - h(k-1) * c(k-1) * d(k)
+      r(k) = - r(k-1) * u(k-1)
+    end do
+    u(n-2) = h(n-2) * d(n-2)
+    d(n-1) = 1.0 / ( diag(n-1) - h(n-2) * u(n-2) )
+    c(n-1) = ( h(n-1) - h(n-2) * c(n-2) ) * d(n-1)
+    r(n-1) = h(n-1) - r(n-2) * u(n-2)
+    d(n) = 1.0 / ( diag(n) - dot_product(r(1:n-1),c) )
+
+! end subroutine Factor_Symm_Tri_Plus_1_r*
+
+! $Id: Factor_Symm_Tri_Plus_1.f9h,v 1.1 2009/11/18 00:07:12 vsnyder Exp $
+
+! $Log: Factor_Symm_Tri_Plus_1.f9h,v $
+! Revision 1.1  2009/11/18 00:07:12  vsnyder
+! Bodies for Symm_Tri
+!
+@
+
+
+1.1
+log
+@Bodies for Symm_Tri
+@
+text
+@d12 1
+a12 1
+! subroutine Factor_Symm_Tri_Plus_1_r4 ( DIAG, H, D, R, U, C )
+d51 1
+a51 1
+! end subroutine Factor_Symm_Tri_Plus_1_r4
+d53 1
+a53 1
+! $Id: $
+d55 4
+a58 1
+! $Log: $
+@
+

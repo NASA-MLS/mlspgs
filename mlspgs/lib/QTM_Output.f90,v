@@ -1,0 +1,545 @@
+head	2.9;
+access;
+symbols
+	v5-02-NRT-19:2.9
+	v6-00:2.9
+	v5-02-NRT-18:2.9
+	v5-02:2.9
+	v5-01-NRT-17:2.9
+	v5-01-NRT-16:2.9
+	v5-01-NRT-15:2.9
+	v5-01-NRT-14:2.9
+	neuralnetworks-1-0:2.9.0.10
+	cfm-single-freq-0-1:2.9.0.8
+	v5-01:2.9
+	v5-00:2.9
+	v4-23-TA133:2.9.0.6
+	mus-emls-1-70:2.9.0.4
+	rel-1-0-englocks-work:2.9.0.2
+	VUMLS1-00:2.9;
+locks; strict;
+comment	@# @;
+
+
+2.9
+date	2016.12.09.00.44.40;	author vsnyder;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2016.11.02.22.59.16;	author vsnyder;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2016.10.05.23.28.22;	author vsnyder;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2016.10.01.01.54.18;	author vsnyder;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2016.09.23.01.52.59;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2016.09.15.19.20.43;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2016.09.15.00.25.45;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2016.09.14.20.08.50;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2016.09.13.20.07.44;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.9
+log
+@Spiff dumps
+@
+text
+@! Copyright 2015, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=============================================================================
+module QTM_Output
+!=============================================================================
+
+  ! Routines to dump a QTM or write it in various ways.
+
+  implicit NONE
+  private
+
+  public :: Dump, Dump_QTM, Dump_QTM_Tree, Write_QTM_Unformatted
+! public :: Write_QTM_HDF ! Maybe someday
+
+  interface Dump
+    module procedure Dump_QTM, Dump_QTM_Tree
+  end interface Dump
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: QTM_Output.f90,v $"
+  private :: not_used_here
+!---------------------------------------------------------------------------
+
+contains
+
+  recursive subroutine Dump_QTM ( QTM, Which, LatLon, Only, Before, Sons, &
+                                & Format )
+    ! Dump the frame of the QTM tree specified by Which, preceded by
+    ! QTM(which)%Depth-1 dots. Then dump its sons.
+    use Generate_QTM_m, only: QTM_node_t
+    use Output_m, only: Output
+    use QTM_dumps, only: Dump_QID
+    use QTM_m, only: RG
+
+    type(QTM_node_t), intent(in) :: QTM(:)
+    integer, intent(in) :: Which
+    logical, intent(in), optional :: LatLon ! instead of ZOT, default .false.
+    logical, intent(in), optional :: Only   ! Only dump Which frame
+    character(*), intent(in), optional :: Before
+    logical, intent(in), optional :: Sons   ! Dump sons' indices
+    character(*), intent(in), optional :: Format ! For coordinates
+
+    character(6) :: DefaultFmt(2) = [ '(f8.3)', '(f8.4)' ]
+    logical :: DoLatLon
+    integer :: I
+    character(31) :: Fmt
+    integer :: NX, NY
+    real(rg) :: X, Y
+
+    doLatLon = .false.
+    if ( present(latLon) ) doLatLon = latLon
+    if ( present(before) ) call output ( before )
+    if ( present(format) ) then
+      fmt = format
+    else if ( doLatLon ) then
+      fmt = defaultFmt(1)
+    else
+      fmt = defaultFmt(2)
+    end if
+    call output ( which, format='(i5)', after=':' )
+    call output ( repeat('.',QTM(which)%depth) )
+    call dump_qid ( QTM(which)%QID, before=' QID ' )
+    nx = QTM(which)%xn; ny = QTM(which)%yn
+    call output ( nx, before=' XN ' )
+    call output ( ny, before=' YN ' )
+    do i = 1, 3
+      call get_xy ( QTM(which)%z(i), x, y, doLatLon )
+      call output ( x, before=' (', format=fmt )
+      call output ( y, before=',', after=')', format=fmt )
+    end do
+    call output ( QTM(which)%ser(1), before=' Serial # ' )
+    call output ( QTM(which)%ser(2), before=' ' )
+    call output ( QTM(which)%ser(3), before=' ' )
+    if ( present(sons) ) then
+      if ( sons ) then
+        call output ( ' SONS' )
+        do i = 0, 3
+          call output ( QTM(which)%son(i), before=' ' )
+        end do
+      end if
+    end if
+    call output ( "", advance='yes' )
+    if ( present(only) ) then
+      if ( only ) return
+    end if
+    do i = 0, 3
+      if ( QTM(which)%son(i) /= 0 ) &
+        & call dump_QTM ( QTM, QTM(which)%son(i), latLon, sons=sons )
+    end do
+  contains
+    subroutine Get_XY ( Z, X, Y, LatLon )
+      use Geolocation_0, only: H_t, RG
+      use QTM_m, only: ZOT_t
+      type(zot_t), intent(in) :: Z
+      real(rg), intent(out) :: X, Y
+      logical, intent(in) :: LatLon
+      type(h_t) :: Geo
+      if ( latLon ) then
+        geo = z%zot_to_geo()
+        x = geo%lon%d
+        y = geo%lat
+      else
+        x = z%x
+        y = z%y
+      end if
+    end subroutine Get_XY
+  end subroutine Dump_QTM
+
+  subroutine Dump_QTM_Tree ( QTM_Trees, Format, LatLon, Details )
+    use Generate_QTM_m, only: QTM_tree_t
+    use Output_m, only: NewLine, Output
+
+    type(QTM_tree_t), intent(in) :: QTM_Trees
+    character(*), intent(in), optional :: Format(2) ! to override default,
+                                             ! Format(1) is Geo, Format(2) is ZOT
+    logical, intent(in), optional :: LatLon  ! instead of ZOT, default .false.
+    integer, intent(in), optional :: Details ! >1 Dump QTM vertices in the
+                                             !    polygon
+                                             ! >2 Dump sons' indices
+                                             ! default 1
+
+    character(31) :: Fmt(2)
+    integer :: I, J
+    integer :: MyDetails
+    logical :: MyLatLon
+
+    fmt = [ '(f8.3)', '(f8.4)' ]
+    if ( present(format) ) fmt = format
+
+    ! Dump the "inside" point
+    call output ( QTM_Trees%in_geo%lon%d, before=' Inside Geo (Lon,Lat) (', &
+      & format=fmt(1) )
+    call output ( QTM_Trees%in_geo%lat, before=',', format=fmt(1) )
+    call output ( QTM_Trees%in%x, before=') Inside ZOT (X,Y) (', format=fmt(2) )
+    call output ( QTM_Trees%in%y, before=',', format=fmt(2) )
+    call output ( ')', advance='yes' )
+    ! Dump the polygons
+    call output ( ' Polygon_Geo:', advance='yes' )
+    do i = 1, size(QTM_Trees%polygon_geo)
+      if ( mod(i,5) == 1 ) call output ( i, format='(i4,"#")' )
+      call output ( QTM_Trees%polygon_geo(i)%lon%d, before=' (', format=fmt(1) )
+      call output ( QTM_Trees%polygon_geo(i)%lat, before=',', format=fmt(1) )
+      call output ( ')' )
+      if ( mod(i,5) == 0 .or. i == size(QTM_Trees%polygon_geo) ) call newLine
+    end do
+    call output ( ' Polygon_ZOT:', advance='yes' )
+    do i = 1, size(QTM_Trees%polygon_ZOT)
+      if ( mod(i,5) == 1 ) call output ( i, format='(i4,"#")' )
+      call output ( QTM_Trees%polygon_ZOT(i)%x, before=' (', format=fmt(2) )
+      call output ( QTM_Trees%polygon_ZOT(i)%y, before=',', format=fmt(2) )
+      call output ( ')' )
+      if ( mod(i,5) == 0 .or. i == size(QTM_Trees%polygon_ZOT) ) call newLine
+    end do
+    if ( allocated(QTM_Trees%ignore_edge) ) then
+      if ( size(QTM_Trees%ignore_edge) > 0 ) then
+        call output ( ' Edges on 90*n degree meridians that have antiparallel partners:', &
+          & advance='yes' )
+        do i = 1, size(QTM_Trees%ignore_edge), 20
+          call output ( i, 4, after=": " )
+          do j = i, min(i+20,size(QTM_Trees%ignore_edge))
+            call output ( QTM_Trees%ignore_edge(j), before=" " )
+          end do
+          call newLine
+        end do
+      end if
+    end if
+
+    call output ( QTM_Trees%n, before=' QTM tree has ' )
+    call output ( ' vertices ' )
+    myLatLon = .false.
+    if ( present(latLon) ) myLatLon = latLon
+    if ( myLatLon ) then
+      call output ( '(lon,lat).  ' )
+    else
+      call output ( '(ZOT x,y).  ' )
+    end if
+    call output ( 'The first digit of QID is an octant number in 1..8.  ', &
+      & advance='yes' )
+    call output ( ' To use it to index SONS(0:3) at the top two tree levels, ' )
+    call output ( 'add seven and convert to two base-four digits.', &
+      & advance='yes' )
+    call output ( ' The remaining digits are base-four digits.  ' )
+    call output ( 'Use them directly to index SONS(0:3).', advance='yes' )
+    myDetails = 1
+    if ( present(details) ) myDetails = details
+    if ( QTM_Trees%n > 0 ) &
+      & call dump_QTM ( QTM_Trees%q, 1, latLon=latLon, sons=myDetails>2 )
+    call output ( QTM_Trees%level, before=' Mesh refined to level ' )
+    call output ( QTM_Trees%n_in, before=' has ' )
+    call output ( ' vertices within or adjacent to the polygon, and ' )
+    call output ( QTM_Trees%n_facets, after=' facets.', advance='yes' )
+    call output ( 180.0 / 2**QTM_Trees%level, before=' Latitude resolution is ', &
+      & after=' degrees = ' )
+    call output ( 20000.0 / 2**QTM_Trees%level, after=' km.', advance='yes' )
+    if ( myDetails > 1 ) then
+      myLatLon = .false.
+      if ( present(latLon) ) myLatLon = latLon
+      call output ( ' Vertices within or adjacent to the polygon' )
+      if ( myLatLon ) then
+        call output ( ' in Lon/Lat coordinates:', advance='yes' )
+        do i = 1, QTM_Trees%n_in
+          call output ( i, format='(i4)' )
+          call output ( QTM_Trees%geo_in(i)%lon%d, before=': (', format='(f9.4)' )
+          call output ( QTM_Trees%geo_in(i)%lat, before=',', format='(f9.4)' )
+          call output ( ') Adjacent facets' )
+          do j = 1, QTM_Trees%n_adjacent_in(i)
+            call output ( QTM_Trees%adjacent_in(j,i), before=' ' )
+          end do
+          call newLine
+        end do
+      else
+        call output ( ' in ZOT coordinates:', advance='yes' )
+        do i = 1, QTM_Trees%n_in
+          call output ( i, format='(i4)' )
+          call output ( QTM_Trees%ZOT_in(i)%x, before=': (', format='(f9.6)' )
+          call output ( QTM_Trees%ZOT_in(i)%y, before=',', format='(f9.6)' )
+          call output ( ') Adjacent facets' )
+          do j = 1, QTM_Trees%n_adjacent_in(i)
+            call output ( QTM_Trees%adjacent_in(j,i), before=' ' )
+          end do
+          call newLine
+        end do
+      end if
+    end if
+
+  end subroutine Dump_QTM_Tree
+
+  subroutine Write_QTM_Unformatted ( Tree, Unit )
+    ! Write the QTM tree on Fortran unformatted unit Unit to make it easier to
+    ! look at a QTM using other tools, e.g., IDL
+    use Generate_QTM_m, only: QTM_tree_t
+    type(QTM_tree_t), intent(in) :: Tree
+    integer, intent(in) :: Unit
+    integer :: I
+    write ( unit ) size(tree%polygon_geo), size(tree%polygon_zot), &
+      & tree%in_geo, tree%in, & ! Point defined to be in,  Geo, Zot
+      & tree%level, tree%n, tree%n_facets, tree%n_in
+    write ( unit ) tree%polygon_geo%h_t_fields(), tree%polygon_zot, & ! Geo, Zot
+      & tree%geo_in%h_t_fields(), tree%zot_in, & ! Vertices in polygon Geo, Zot
+      & tree%q%depth, &
+      & ( tree%q(i)%geo, i = 1, tree%n ), &  ! facet vertices Geo
+      & ( tree%q(i)%z,   i = 1, tree%n ), &  ! facet vertices ZOT
+      & tree%adjacent_in, tree%n_adjacent_in ! facets adjacent to vertices
+  end subroutine Write_QTM_Unformatted
+
+!=============================================================================
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: QTM_Output.f90,v 2.8 2016/11/02 22:59:16 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module QTM_Output
+
+! $Log: QTM_Output.f90,v $
+! Revision 2.8  2016/11/02 22:59:16  vsnyder
+! Output facets adjacent to each vertex
+!
+! Revision 2.7  2016/10/05 23:28:22  vsnyder
+! Replace ZOT_n component name with Ser because it's a serial number for
+! more than just the ZOT coordinates.
+!
+! Revision 2.6  2016/10/01 01:54:18  vsnyder
+! Spiff the dump
+!
+! Revision 2.5  2016/09/23 01:52:59  vsnyder
+! Get nonpolymorphic geolocations
+!
+! Revision 2.4  2016/09/15 19:20:43  vsnyder
+! Output both Geo and ZOT sizes for the polygon (might be different)
+!
+! Revision 2.3  2016/09/15 00:25:45  vsnyder
+! Output both Geo and ZOT
+!
+! Revision 2.2  2016/09/14 20:08:50  vsnyder
+! Cannonball polishing
+!
+! Revision 2.1  2016/09/13 20:07:44  vsnyder
+! Initial commit
+!
+@
+
+
+2.8
+log
+@Output facets adjacent to each vertex
+@
+text
+@d141 3
+a143 2
+    call output ( QTM_Trees%in_geo%lon%d, before=' Inside Geo (Lon,Lat) (' )
+    call output ( QTM_Trees%in_geo%lat, before=',' )
+d183 1
+a183 1
+      call output ( '(lon,lat):', advance='yes' )
+d185 1
+a185 1
+      call output ( '(ZOT x,y):', advance='yes' )
+d187 7
+d200 2
+a201 2
+    call output ( ' vertices within or adjacent to the polygon and ' )
+    call output ( QTM_Trees%n_facets, after=' facets', advance='yes' )
+d204 1
+a204 1
+    call output ( 20000.0 / 2**QTM_Trees%level, after=' km', advance='yes' )
+d210 1
+a210 1
+        call output ( ' in Lon/Lat coordinates', advance='yes' )
+d222 1
+a222 1
+        call output ( ' in ZOT coordinates', advance='yes' )
+d260 1
+a260 1
+       "$Id: QTM_Output.f90,v 2.7 2016/10/05 23:28:22 vsnyder Exp $"
+d270 3
+@
+
+
+2.7
+log
+@Replace ZOT_n component name with Ser because it's a serial number for
+more than just the ZOT coordinates.
+@
+text
+@a119 1
+    use Dump_Geolocation_m, only: Dump
+d200 1
+d202 11
+a212 1
+        call dump ( QTM_Trees%geo_in, ' QTM vertices in (lon,lat) coordinates:' )
+d214 11
+a224 1
+        call dump ( QTM_Trees%ZOT_in, ' QTM vertices in ZOT coordinates:' )
+d243 3
+a245 2
+      & ( tree%q(i)%geo, i = 1, tree%n ), & ! facet vertices Geo
+      & ( tree%q(i)%z,   i = 1, tree%n )    ! facet vertices ZOT
+d252 1
+a252 1
+       "$Id: QTM_Output.f90,v 2.6 2016/10/01 01:54:18 vsnyder Exp $"
+d262 4
+@
+
+
+2.6
+log
+@Spiff the dump
+@
+text
+@d81 3
+a83 3
+    call output ( QTM(which)%ZOT_n(1), before=' Serial # ' )
+    call output ( QTM(which)%ZOT_n(2), before=' ' )
+    call output ( QTM(which)%ZOT_n(3), before=' ' )
+d231 1
+a231 1
+       "$Id: QTM_Output.f90,v 2.5 2016/09/23 01:52:59 vsnyder Exp $"
+d241 3
+@
+
+
+2.5
+log
+@Get nonpolymorphic geolocations
+@
+text
+@d196 2
+a197 1
+      & after=' degrees', advance='yes' )
+d231 1
+a231 1
+       "$Id: QTM_Output.f90,v 2.4 2016/09/15 19:20:43 vsnyder Exp $"
+d241 3
+@
+
+
+2.4
+log
+@Output both Geo and ZOT sizes for the polygon (might be different)
+@
+text
+@d42 2
+a43 1
+    use QTM_m, only: Dump_QID, RG
+d219 2
+a220 2
+    write ( unit ) tree%polygon_geo, tree%polygon_zot, & ! Geo, Zot
+      & tree%geo_in, tree%zot_in, & ! Vertices in polygon  Geo, Zot
+d230 1
+a230 1
+       "$Id: QTM_Output.f90,v 2.3 2016/09/15 00:25:45 vsnyder Exp $"
+d240 3
+@
+
+
+2.3
+log
+@Output both Geo and ZOT
+@
+text
+@d215 1
+a215 1
+    write ( unit ) size(tree%polygon_geo), &
+d229 1
+a229 1
+       "$Id: QTM_Output.f90,v 2.2 2016/09/14 20:08:50 vsnyder Exp $"
+d239 3
+@
+
+
+2.2
+log
+@Cannonball polishing
+@
+text
+@d215 2
+a216 1
+    write ( unit ) size(tree%polygon_geo), tree%in_geo, &
+d218 5
+a222 2
+    write ( unit ) tree%polygon_geo, tree%geo_in, tree%q%depth, &
+      & ( tree%q(i)%geo, i = 1, tree%n )
+d229 1
+a229 1
+       "$Id: QTM_Output.f90,v 2.1 2016/09/13 20:07:44 vsnyder Exp $"
+d239 3
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d22 1
+a22 1
+! public :: QTM_HDF ! Maybe someday
+d30 1
+a30 1
+       "$RCSfile: Generate_QTM_m.f90,v $"
+d70 1
+a70 1
+    call output ( repeat('.',QTM(which)%depth - 1) )
+d194 2
+d225 1
+a225 1
+       "$Id: Generate_QTM_m.f90,v 2.12 2016/09/10 01:57:46 vsnyder Exp $"
+d234 4
+a237 1
+! $Log: Generate_QTM_m.f90,v $
+@
+

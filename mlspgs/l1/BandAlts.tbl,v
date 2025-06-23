@@ -1,0 +1,148 @@
+head	2.1;
+access;
+symbols
+	v5-02-NRT-19:2.1
+	v6-00:2.1
+	v5-02-NRT-18:2.1
+	v5-02:2.1
+	v5-01-NRT-17:2.1
+	v5-01-NRT-16:2.1
+	v5-01-NRT-15:2.1
+	v5-01-NRT-14:2.1
+	neuralnetworks-1-0:2.1.0.16
+	cfm-single-freq-0-1:2.1.0.14
+	v5-01:2.1
+	v5-00:2.1
+	v4-23-TA133:2.1.0.12
+	mus-emls-1-70:2.1.0.10
+	rel-1-0-englocks-work:2.1.0.8
+	VUMLS1-00:2.1
+	VPL1-00:2.1
+	V4-22-NRT-08:2.1
+	whdrel10_merged_to_here:2.1
+	merge_whdrel10_from_here:2.1
+	TAG_TRUNK_AFTER_PW_CHANGES:2.1
+	TAG_TRUNK_BEFORE_PW_CHANGES:2.1
+	VAM1-00:2.1
+	whd-rel-1-0:2.1.0.6
+	V4-21:2.1.0.4
+	V4-13:2.1
+	V4-12:2.1
+	V4-11:2.1
+	V4-10:2.1
+	V3-43:2.1
+	M4-00:2.1
+	V3-41:2.1
+	V3-40-PlusGM57:2.1.0.2
+	V2-24-NRT-04:2.1
+	V3-33:2.1
+	V2-24:2.1
+	V3-31:2.1
+	V3-30-NRT-05:2.1
+	cfm-01-00:2.1
+	V3-30:2.1
+	V3-20:2.1
+	V3-10:2.1
+	V2-23-NRT-02:2.1
+	V2-23:2.1
+	V2-22-NRT-01:2.1
+	V2-22:2.1
+	V2-21:2.1
+	V2-20:2.1
+	V2-11:2.1
+	V2-10:2.1
+	V2-00:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.1
+date	2006.03.24.19.26.45;	author perun;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.1
+log
+@Initial V 2.00 commit
+@
+text
+@;
+; This is the table of Altitudes (Km) per channel to use for Space views in the
+; Limb port.  A value of 0.0 or less means do not use that channel.
+;
+; This is the initial release on 2/06/06
+
+Band 1:
+ 7*80.0, 11*-1.0, 7*80.0
+Band 2:
+ 11*80.0, 3*-1.0, 11*80.0
+Band 3:
+ 80.0, -1.0, 23*80.0
+Band 4:
+ 25*80.0
+Band 5:
+ 25*80.0
+Band 6:
+ 25*80.0
+Band 7:
+ 12*80.0, -1.0, 12*80.0
+Band 8:
+ 11*80.0, 3*-1.0, 11*80.0
+Band 9:
+ 12*80.0, -1.0, 12*80.0
+Band 10:
+ 25*80.0
+Band 11:
+ 25*80.0
+Band 12:
+ 25*80.0
+Band 13:
+ 10*80.0, 5*-1.0, 9*80.0, -1.0
+Band 14:
+ 12*80.0, -1.0, 10*80.0, 2*-1.0
+Band 15:
+ 25*80.0
+Band 16:
+ 25*80.0
+Band 17:
+ 25*80.0
+Band 18:
+ 25*80.0
+Band 19:
+ 25*80.0
+Band 20:
+ 25*80.0
+Band 21:
+ 25*80.0
+Band 22:
+ 129*-1.0
+Band 23:
+ 129*-1.0
+Band 24:
+ 129*-1.0
+Band 25:
+ 129*-1.0
+Band 26:
+ 129*-1.0
+Band 27:
+ 11*80.0
+Band 28:
+ 5*80.0, -1.0, 5*80.0
+Band 29:
+ 11*80.0
+Band 30:
+ 5*80.0, -1.0, 5*80.0
+Band 31:
+ 11*80.0
+Band 32:
+ 4*80.0
+Band 33:
+ 4*80.0
+Band 34:
+ 4*80.0
+@

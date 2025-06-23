@@ -1,0 +1,881 @@
+head	1.7;
+access;
+symbols
+	v5-02-NRT-19:1.7
+	v6-00:1.7
+	v5-02-NRT-18:1.7
+	v5-02:1.7
+	v5-01-NRT-17:1.7
+	v5-01-NRT-16:1.7
+	v5-01-NRT-15:1.7
+	v5-01-NRT-14:1.7
+	neuralnetworks-1-0:1.7.0.10
+	cfm-single-freq-0-1:1.7.0.8
+	v5-01:1.7
+	v5-00:1.7
+	v4-23-TA133:1.7.0.6
+	mus-emls-1-70:1.7.0.4
+	rel-1-0-englocks-work:1.7.0.2
+	VUMLS1-00:1.6
+	VPL1-00:1.6
+	V4-22-NRT-08:1.6
+	VAM1-00:1.6
+	V4-21:1.6.0.2
+	V4-13:1.6
+	V4-12:1.6
+	V4-11:1.6
+	V4-10:1.6
+	M4-00:1.5
+	V3-33:1.5
+	V3-31:1.5;
+locks; strict;
+comment	@% @;
+
+
+1.7
+date	2017.06.08.01.27.28;	author vsnyder;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2013.05.18.01.57.57;	author vsnyder;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2011.02.05.01.31.52;	author vsnyder;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2011.01.21.00.47.38;	author vsnyder;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2010.12.23.20.32.04;	author vsnyder;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2010.12.18.03.54.28;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2010.12.18.03.53.31;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.7
+log
+@Correct description of Tau
+@
+text
+@\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9in
+
+\newcommand{\docname}{wvs-100r5}
+\newcommand{\docdate}{7 June 2017}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\renewcommand{\d}{\text{d}}
+\newcommand{\T}{\mathcal{T}}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Nathaniel, Bill, Paul, Igor\\
+Subject: \>Reducing the cost of radiance derivatives\\
+From: \>Van Snyder\\
+Reference: \>\h{wvs-093}, \h{wvs-101}, JPL D-18130 \\
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-10pt}
+
+%=========================================================================
+
+\section{Summary}
+
+Three representations of derivatives of the clear-sky non-scattering
+radiative transfer equation with respect to volume mixing ratio on a grid
+through which the path of integration passes
+
+\begin{equation*}\boxed{
+\begin{split}
+\frac{\partial I(s_m)}{\partial f^k_{lm}}
+=\,&
+ \int_{s_0}^{s_m} \T(s) \beta^k(s) \mu^k_{lm}(s)
+  ( B(s) - I(s) ) \,\d s \\
+=\,&
+ -\T(s_m) \left( I(s_0) - B(s_0) \right)
+   \int_{s_0}^{s_m} \beta^k(\sigma) \mu^k_{lm}(\sigma) \,\d \sigma \,+ \\
+\,&
+ \int_{s_0}^{s_m} \T(s) \frac{\partial B(s)}{\partial s}
+  \left( \int_s^{s_m} \beta^k(\sigma) \mu^k_{lm}(\sigma) \,\d \sigma
+  \right) \,\d s \\
+=\,& -I(s_0) \T(s_m)
+     \int_{s_0}^{s_m} \beta^k(\sigma) \mu^k_{lm}(\sigma)\, \d \sigma \,+ \\
+\,&
+\int_{s_0}^{s_m}
+ \T(s) B(s) \left( \beta^k(s) \mu^k_{lm}(s) -
+ \alpha(s) \int_s^{s_m} \beta^k(\sigma) \mu^k_{lm}(\sigma)\, \d \sigma \right)
+ \, \d s
+\end{split}}
+\end{equation*}
+
+ are developed and compared.
+
+%=========================================================================
+
+\section{Radiative transfer equation}
+
+The clear-sky non-scattering radiative transfer equation is
+
+\begin{equation}\label{rad}
+\frac{\d I(s)}{\d s} + \alpha(s) I(s) = \alpha(s) B(s)\,.
+\end{equation}
+
+The solution of Equation (\ref{rad}) can be written
+
+\begin{equation}\label{first}
+I(s_m) = I(s_0) \T(s_m) +
+ \int_{s_0}^{s_m} \T(s) \alpha(s) B(s) \,
+  \d s\,,
+\end{equation}
+
+where $s_m$ is the location of the instrument, $s_0$ is the location of the end
+of the path away from the instrument, $B(s)$ is the Planck function $\frac{h
+\nu}k \left( \exp\left(\frac{h \nu}{k T(s)}\right) -1\right)^{-1}$,
+
+\begin{equation}\label{two}
+\T(s) = \exp\left( - \int_{s_0}^s \alpha(\sigma)
+ \, \d \sigma \right)
+ \,,
+\end{equation}
+
+and $\alpha(\sigma)$ is the absorption cross section. The volume mixing
+ratio for the $k^\text{th}$ species at $(\phi^k_l,\zeta^k_m)$ is
+$f^k_{lm}$ where $\phi$ is orbit geodetic angle, $\zeta = -\log_{10}(P)$,
+and $P$ is pressure in hPa.
+
+%=========================================================================
+
+\section{Derivatives of the solution of the radiative transfer equation}
+
+The derivative of Equation (\ref{first}) with respect to $f^k_{lm}$ is
+
+\begin{equation}\label{six}
+\frac{\partial I(s_m)}{\partial f^k_{lm}}
+= I(s_0) \frac{\partial \T(s_m)}{\partial f^k_{lm}} +
+\int_{s_0}^{s_m}
+ \T(s) \frac{\partial \alpha(s)}{\partial f^k_{lm}} B(s) +
+ \frac{\partial \T(s)}{\partial f^k_{lm}} \alpha(s) B(s)
+ \, \d s \,.
+\end{equation}
+
+Substituting
+
+\begin{equation}\label{three}
+\alpha(s) = \sum_{k=1}^{N_s} \beta^k(s) \mu^k_{lm}(s) f^k_{lm}\,,
+\end{equation}
+
+where $\mu^k_{lm}(s)$ is an interpolating coefficient from
+$(\phi^k_l,\zeta^k_m)$ to $s$ and $\beta^k(s)$ is the absorption
+coefficient for the $k^\text{th}$ species at $s$, into Equation
+(\ref{two}) gives
+
+\begin{equation}\label{tau}
+\T(s) = \exp\left( - \int_s^{s_m} \sum_{k=1}^{N_s} \beta^k(\sigma) \mu^k_{lm}(\sigma) f^k_{lm}
+ \, \d \sigma \right) \,.
+\end{equation}
+
+From Equations (\ref{two}), (\ref{three}) and (\ref{tau})
+
+\begin{equation}\begin{split}\label{dT}
+\frac{\partial \alpha(s)}{\partial f^k_{lm}}
+=\,& \beta^k(s) \mu^k_{lm}(s)
+\text{ and } \\
+\frac{\partial \T(s)}{\partial f^k_{lm}}
+=\,& -\T(s) \, \frac{\partial}{\partial f^k_{lm}}
+                \int_s^{s_m} \alpha(\sigma) \,\d \sigma
+=    -\T(s) \int_s^{s_m}
+                \frac{\partial}{\partial f^k_{lm}}\, \alpha(\sigma) \,\d \sigma \\
+=\,& -\T(s) \int_s^{s_m} \beta^k(\sigma) \mu^k_{lm}(\sigma) \d \sigma
+\end{split}\end{equation}
+
+Substituting Equation (\ref{dT}) into Equation (\ref{six}) we have
+
+\begin{equation}\boxed{\begin{split}\label{dI_dfklm}
+\frac{\partial I(s_m)}{\partial f^k_{lm}}
+=\,& -I(s_0) \T(s_m)
+     \int_{s_0}^{s_m} \beta^k(\sigma) \mu^k_{lm}(\sigma)\, \d \sigma \,+ \\
+\,&
+\int_{s_0}^{s_m}
+ \T(s) B(s) \left( \beta^k(s) \mu^k_{lm}(s) -
+ \alpha(s) \int_s^{s_m} \beta^k(\sigma) \mu^k_{lm}(\sigma)\, \d \sigma \right)
+ \, \d s\,.
+\end{split}}\end{equation}
+
+Even assuming that $\T(s)$ has been saved during evaluation of
+$I(s_m)$ using Equation (\ref{first}), this is a double integral because
+of the inner integral $\int_s^{s_m} \beta^k(\sigma) \mu^k_{lm}(\sigma)\,
+\d \sigma$, which is different for every different value of $\{k,l,m\}$.
+
+%=========================================================================
+
+\section{Solutions of derivatives of the radiative transfer equation}
+
+Instead of computing the derivative of Equation (\ref{first}), compute
+the derivative of Equation (\ref{rad}) with respect to mixing ratios
+$f^k_{lm}$ on the grid giving\footnote{This derivation, and another one
+arriving at the same result starting from Equation (\ref{first}), also
+appear in \h{wvs-093}.}
+
+\begin{equation}
+\frac{\partial}{\partial f^k_{lm}} \frac{\d I(s)}{\d s} +
+ \frac{\partial \alpha(s)}{\partial f^k_{lm}} I(s) +
+ \alpha(s) \frac{\partial I(s)}{\partial f^k_{lm}} =
+ \frac{\partial \alpha(s)}{\partial f^k_{lm}} B(s) \,.
+\end{equation}
+
+Exchanging the order of differentiation, using $\frac{\partial
+\alpha(s)}{\partial f^k_{lm}} = \beta^k(s) \mu^k_{lm}(s)$, and rearranging
+the equation to the usual form gives
+
+\begin{equation}\begin{split}
+\frac{\d}{\d s} \frac{\partial I(s)}{\partial f^k_{lm}} +
+ \alpha(s) \frac{\partial I(s)}{\partial f^k_{lm}}
+=\,&
+ \frac{\partial \alpha(s)}{\partial f^k_{lm}} ( B(s) - I(s) ) \\
+=\,&
+ \beta^k(s) \mu^k_{lm}(s) ( B(s) - I(s) )\,.
+\end{split}\end{equation}
+
+Solve for $\frac{\partial I(s_m)}{\partial f^k_{lm}}$ using
+$\frac{\partial I(s_0)}{\partial f^k_{lm}}=0$ to get
+
+\newcounter{foo}
+\setcounter{foo}{\value{equation}}
+
+\begin{equation}\label{drad}\boxed{
+\frac{\partial I(s_m)}{\partial f^k_{lm}} =
+ \int_{s_0}^{s_m} \T(s) \beta^k(s) \mu^k_{lm}(s)
+  ( B(s) - I(s) ) \,\d s
+\,.}
+\end{equation}
+
+This is actually the same as Equation (\ref{dI_dfklm}). To see this,
+substitute Equation (\ref{first}) for $I(s)$ in Equation (\ref{drad}) and
+use $\T(s) \T(s) = \T(s_m)$ and $\T(\sigma,s) \T(s) =
+\T(\sigma,s_m)$ to get
+
+\begin{equation}\begin{split}
+\frac{\partial I(s_m)}{\partial f^k_{lm}}
+=\,& \dots\,
+-\int_{s_0}^{s_m} \T(s) \beta^k(s) \mu^k_{lm}(s) I(s) \,\d s \\
+=\,& \dots\,
+-\int_{s_0}^{s_m} \T(s) \beta^k(s) \mu^k_{lm}(s)
+\left[ I(s_0) \T(s) +
+ \int_{s_0}^s \T(\sigma,s) \alpha(\sigma) B(\sigma) \,\d\sigma
+\right] \d s\\
+=\,& \dots\,
+-I(s_0) \T(s_m) \int_{s_0}^{s_m} \beta^k(s) \mu^k_{lm}(s) \,\d s \\
+\,&\phantom{\dots\,}
+- \int_{s_0}^{s_m} \T(s) \beta^k(s) \mu^k_{lm}(s)
+    \int_{s_0}^s \T(\sigma,s) \alpha(\sigma) B(\sigma) \,\d\sigma
+     \,\d s \\
+=\,& \dots\,
+-I(s_0) \T(s_m) \int_{s_0}^{s_m} \beta^k(s) \mu^k_{lm}(s) \,\d s \\
+\,&\phantom{\dots\,}
+- \int_{s_0}^{s_m} \beta^k(s) \mu^k_{lm}(s)
+    \int_{s_0}^s \T(\sigma,s_m) \alpha(\sigma) B(\sigma) \,\d\sigma
+     \,\d s
+\,.
+\end{split}\end{equation}
+
+Exchanging the order of integration in the final integral above, Equation
+(\ref{drad}) becomes
+
+\begin{equation}\boxed{\begin{split}\label{dI_dfklm2}
+\frac{\partial I(s_m)}{\partial f^k_{lm}}
+=\,&
+-I(s_0) \T(s_m) \int_{s_0}^{s_m} \beta^k(s) \mu^k_{lm}(s) \,\d s\, + \\
+\,&
+\int_{s_0}^{s_m} \T(s) B(s)
+ \left( \beta^k(s) \mu^k_{lm}(s)
+ - \alpha(s)
+   \int_s^{s_m} \beta^k(\sigma) \mu^k_{lm}(\sigma) \,\d \sigma
+ \right) \,\d s
+\end{split}}
+\end{equation}
+
+which is the same as Equation (\ref{dI_dfklm}).
+
+%=========================================================================
+
+\section{Temperature derivatives}
+
+Equation (\ref{drad}) doesn't account for nonzero derivatives of $B(s)$. 
+$B(s)$ does not depend upon $f^k_{lm}$ but does depend upon temperature,
+$T_{lm}$.  To account for temperature, compute the derivative of Equation
+(\ref{rad}) with respect to temperature $f^k_{lm}$ on the grid giving
+
+\begin{equation}
+\frac{\partial}{\partial T_{lm}} \frac{\d I(s)}{\d s} +
+ \frac{\partial \alpha(s)}{\partial T_{lm}} I(s) +
+ \alpha(s) \frac{\partial I(s)}{\partial T_{lm}} =
+ \frac{\partial \alpha(s)}{\partial T_{lm}} B(s) +
+ \alpha(s) \frac{\partial B(s)}{\partial T_{lm}} \,.
+\end{equation}
+
+Proceeding as above, exchange the order of differentiation, use
+$\frac{\partial \alpha(s)}{\partial T_{lm}} =
+ \frac{\partial \alpha(s)}{\partial T(s)}
+  \frac{\partial T(s)}{\partial T_{lm}} =
+ \frac{\partial \alpha(s)}{\partial T(s)} \mu^T_{lm}(s)$, and rearrange the
+equation to the usual form to get
+
+\begin{equation}\begin{split}
+\frac{\d}{\d s} \frac{\partial I(s)}{\partial T_{lm}} +
+ \alpha(s) \frac{\partial I(s)}{\partial T_{lm}}
+=\,&
+ \frac{\partial \alpha(s)}{\partial T_{lm}} ( B(s) - I(s) ) +
+ \alpha(s) \frac{\partial B(s)}{\partial T_{lm}} \\
+=\,&
+ \left[ \frac{\partial \alpha(s)}{\partial T(s)} ( B(s) - I(s) ) +
+ \alpha(s) \frac{\partial B(s)}{\partial T(s)} \right] \mu^T_{lm}(s)
+ \,.
+\end{split}\end{equation}
+
+Solve for $\frac{\partial I(s_m)}{\partial T_{lm}}$ using
+$\frac{\partial I(s_0)}{\partial T_{lm}}=0$ to get
+
+\begin{equation}\label{drad_dT}\boxed{
+\frac{\partial I(s_m)}{\partial T_{lm}} =
+ \int_{s_0}^{s_m} \T(s)\mu^T_{lm}(s)
+  \left[ \frac{\partial \alpha(s)}{\partial T(s)} ( B(s) - I(s) ) +
+  \alpha(s) \frac{\partial B(s)}{\partial T(s)} \right] \,\d s
+\,.}
+\end{equation}
+
+This doesn't account for the dependence of $s$ upon temperature.  To do
+so, introduce a different independent variable $\xi$ and re-write Equation
+(\ref{rad}) as
+
+\begin{equation}\begin{split}\label{rad_xi}
+\frac{\d I(\xi)}{\d \xi} \frac{\d \xi}{\d s} + \alpha(\xi) I(\xi)
+=\,& \alpha(\xi) B(\xi) \text{ or }\\
+\frac{\d I(\xi)}{\d \xi} + \alpha(\xi) I(\xi) \frac{\d s}{\d \xi}
+=\,& \alpha(\xi) B(\xi) \frac{\d s}{\d \xi}\,.
+\end{split}\end{equation}
+
+Computing the derivative of Equation (\ref{rad_xi}) with respect to
+$T_{lm}$ and proceeding as above we have
+
+\begin{equation}\begin{split}
+\frac{\d}{\d \xi} \frac{\partial I(\xi)}{\partial T_{lm}} +
+ \alpha(\xi) \frac{\partial s}{\partial \xi}
+  \frac{\partial I(\xi)}{\partial T_{lm}} =
+\,&
+ \left\{
+  \left[ \frac{\partial \alpha(\xi)}{\partial T(\xi)} ( B(\xi) - I(\xi) )
+   + \alpha(\xi) \frac{\partial B(\xi)}{\partial T(\xi)} \right]
+      \frac{\partial s}{\partial \xi}
+\right. \\
+\,&
+\left.\phantom{\{}
+   + \alpha(\xi) ( B(\xi) - I(\xi) )
+      \frac{\partial^2 s}{\partial \xi \partial T(\xi)}
+ \right\} \mu^T_{lm}(\xi) \\
+\end{split}\end{equation}
+
+Solving for $\frac{\partial I(\xi)}{\partial T_{lm}}$ gives
+
+\begin{equation}\begin{split}\label{dI_tilde}
+\frac{\partial I(\xi_m)}{\partial T_{lm}} =
+\int_{\xi_0}^{\xi_m} \tilde\T(\xi,\xi_m) \mu^T_{lm}(\xi)
+ \,&
+ \left\{
+  \left[ \frac{\partial \alpha(\xi)}{\partial T(\xi)} ( B(\xi) - I(\xi) )
+   + \alpha(\xi) \frac{\partial B(\xi)}{\partial T(\xi)} \right]
+      \frac{\partial s}{\partial \xi}
+\right. \\
+\,&
+\left.\phantom{\{}
+   + \alpha(\xi) ( B(\xi) - I(\xi) )
+      \frac{\partial^2 s}{\partial \xi \partial T(\xi)}
+ \right\} \,\d \xi
+\end{split}\end{equation}
+
+where
+
+\begin{equation}\label{T_tilde}
+\tilde\T(\xi_1,\xi_2) = \exp\left( -\int_{\xi_1}^{\xi_2} \alpha(\xi)
+ \frac{\partial s}{\partial \xi} \,\d \xi \right)\,.
+\end{equation}
+
+Part of Equation (\ref{dI_tilde}) can be integrated with $s$ as the
+independent variable, giving
+
+\begin{equation}\boxed{\begin{split}\label{dIdT_two}
+\frac{\partial I(\xi_m)}{\partial T_{lm}}
+=\,&
+\int_{s_0}^{s_m} \T(s) \mu^T_{lm}(s)
+  \left[ \frac{\partial \alpha(s)}{\partial T(s)} ( B(s) - I(s) )
+   + \alpha(s) \frac{\partial B(s)}{\partial T(s)} \right]
+      \, \d s\,\, \\
++\,&
+ \int_{\xi_0}^{\xi_m} \tilde\T(\xi,\xi_m) \mu^T_{lm}(\xi)
+   \alpha(\xi) ( B(\xi) - I(\xi) )
+      \frac{\partial^2 s}{\partial \xi \partial T(\xi)}
+   \,\d \xi \,.
+\end{split}}\end{equation}
+
+Notice that the first term here is the same as Equation (\ref{drad_dT}). 
+The second term can be thought of as a ``correction'' that accounts for
+the dependence of $s$ upon $T$.  In the first term, the only nonzero
+values of $\mu^T_{lm}$ are for values of $(\phi^T_l,\zeta^T_m)$ that are
+adjacent to the path.  If the second term is integrated with $\xi = \zeta
+= - \log_{10}(P)$ where $P$ is pressure in hPa, then $\frac{\partial
+s}{\partial \xi}$ becomes $\frac{\d s}{\d h} \frac{\partial h}{\partial
+\zeta}$, where $h$ and $\zeta$ are related by hydrostatic equilibrium,
+and all values of $\mu^T_{lm}$ for which $\phi^T_{l-1} < \phi <
+\phi^T_{l+1}$ and $\zeta^T_1 < \zeta < \zeta^T_{m+1}$ are nonzero.  There
+is also a contribution to $\frac{\partial^2 s}{\partial \xi \partial
+T(\xi)}$ due to the dependence of refraction upon temperature.
+
+%=========================================================================
+
+\section{Comparison of methods for derivatives w.r.t.\ $f^k_{lm}$}
+
+An important difference between Equation (\ref{drad})
+
+\newcounter{eqsv}
+\setcounter{eqsv}{\value{equation}}
+\setcounter{equation}{\value{foo}}
+\begin{equation}\boxed{
+\frac{\partial I(s_m)}{\partial f^k_{lm}} =
+ \int_{s_0}^{s_m} \T(s) \beta^k(s) \mu^k_{lm}(s)
+  ( B(s) - I(s) ) \,\d s
+\,.}
+\end{equation}
+\setcounter{equation}{\value{eqsv}}
+
+
+and (\ref{dI_dfklm}) or (\ref{dI_dfklm2}) is that integrals of the form
+
+\begin{equation}\label{fourteen}
+\int_s^{s_m} \beta^k(\sigma) \mu^k_{lm}(\sigma) \,\d \sigma
+\end{equation}
+
+do not appear in Equation (\ref{drad}).  Assuming that $\T(s)$ and
+$I(s)$ have been saved during evaluation of $I(s_m)$ using Equation
+(\ref{first}), Equation (\ref{drad}) is a single integral, not a double
+integral, and is therefore less costly to evaluate than Equation
+(\ref{dI_dfklm}).  From \h{wvs-101}, $\mu^k_{lm}(\sigma)$ is nonzero for
+$\sigma$ in only four regions adjacent to $(\phi_k,\zeta_m)$, and the
+path passes through only two of those.  When trapezoidal quadrature is
+used, each evaluation of Equation (\ref{fourteen}) requires six
+multiplies and two adds.  When 3-point Gauss-Legendre quadrature is used,
+an additional eight multiplies and four adds are required.
+
+Assuming the values of $\beta^k(s) \mu^k_{lm}(s)$ and Equation
+(\ref{fourteen}) are saved and reused, finishing the evaluation of
+Equation (\ref{dI_dfklm2}) requires an additional twelve multiplies and
+five adds (Gauss-Legendre quadrature is not used for the outer
+integral).  When Gauss-Legendre quadrature is used for the inner
+integrals, the total cost of Equation (\ref{dI_dfklm2}) is 28 multiplies
+and 13 adds, or 41 FLOPS.  The cost to evaluate Equation (\ref{drad}) is
+twelve multiplies and three adds, or 15 FLOPS, a reduction of almost a
+factor of three.  In addition to the reduction in computation cost, the
+complexity of the {\tt rad\_tran\_m} module would be substantially
+reduced.
+
+If $\T(s) \alpha(s) = \frac{\partial \T(s)}{\partial s}$ is
+substituted in Equation (\ref{first}), and then the integral is integrated
+by parts, Equation (\ref{first}) becomes
+
+\begin{equation}\label{fifteen}
+I(s_m) = \T(s_m) \left( I(s_0) - B(s_0) \right) + B(s_m) -
+ \int_{s_0}^{s_m} \T(s) \frac{\partial B(s)}{\partial s} \,\d s\,.
+\end{equation}
+
+Taking derivatives of this representation and using Equation (\ref{dT}) we
+have
+
+\begin{equation}\begin{split}\label{sixteen}
+\frac{\partial I(s_m)}{\partial f^k_{lm}}
+=\,&
+ -\T(s_m) \left( I(s_0) - B(s_0) \right)
+   \int_{s_0}^{s_m} \beta^k(\sigma) \mu^k_{lm}(\sigma) \,\d \sigma \,+ \\
+\,&
+ \int_{s_0}^{s_m} \T(s) \frac{\partial B(s)}{\partial s}
+  \left( \int_s^{s_m} \beta^k(\sigma) \mu^k_{lm}(\sigma) \,\d \sigma
+  \right) \,\d s \,.
+\end{split}\end{equation}
+
+Although somewhat simpler than Equation (\ref{dI_dfklm2}), it still has
+the inner integral.  Its cost is 26 multiplies and ten adds, or 36
+FLOPS.  Equation (\ref{drad}) reduces the cost compared to Equation
+(\ref{sixteen}) by a factor of 2.4, and has the additional advantage that
+$\frac{\partial B(s)}{\partial s}$ is not needed.  When Equation
+(\ref{sixteen}) is approximated by a quadrature, $\frac{\partial
+B(s)}{\partial s} \d s = \d B(s)$ is approximated by $\Delta B$ using a
+central difference, which can introduce substantial error.
+
+\label{lastpage}
+\end{document}
+
+% $Id: wvs-100.tex,v 1.6 2013/05/18 01:57:57 vsnyder Exp $
+
+% $Log: wvs-100.tex,v $
+% Revision 1.6  2013/05/18 01:57:57  vsnyder
+% Trivial tweaks to spacing
+%
+% Revision 1.5  2011/02/05 01:31:52  vsnyder
+% Add temperature derivatives section
+%
+% Revision 1.4  2011/01/21 00:47:38  vsnyder
+% Add discussion of Delta B at the end
+%
+% Revision 1.3  2010/12/23 20:32:04  vsnyder
+% Add a summary, analysis of FLOPS
+%
+% Revision 1.2  2010/12/18 03:54:28  vsnyder
+% Insert CVS stuff
+%
+@
+
+
+1.6
+log
+@Trivial tweaks to spacing
+@
+text
+@d14 2
+a15 2
+\newcommand{\docname}{wvs-100r4}
+\newcommand{\docdate}{24 January 2011}
+d99 1
+a99 1
+ \int_{s_0}^{s_m} \T(s,s_m) \beta^k(s) \mu^k_{lm}(s)
+d102 1
+a102 1
+ -\T(s_0,s_m) \left( I(s_0) - B(s_0) \right)
+d105 1
+a105 1
+ \int_{s_0}^{s_m} \T(s,s_m) \frac{\partial B(s)}{\partial s}
+d108 1
+a108 1
+=\,& -I(s_0) \T(s_0,s_m)
+d112 1
+a112 1
+ \T(s,s_m) B(s) \left( \beta^k(s) \mu^k_{lm}(s) -
+d133 2
+a134 2
+I(s_m) = I(s_0) \T(s_0,s_m) +
+ \int_{s_0}^{s_m} \T(s,s_m) \alpha(s) B(s) \,
+d143 1
+a143 1
+\T(s,s_m) = \exp\left( - \int_s^{s_m} \alpha(\sigma)
+d161 1
+a161 1
+= I(s_0) \frac{\partial \T(s_0,s_m)}{\partial f^k_{lm}} +
+d163 2
+a164 2
+ \T(s,s_m) \frac{\partial \alpha(s)}{\partial f^k_{lm}} B(s) +
+ \frac{\partial \T(s,s_m)}{\partial f^k_{lm}} \alpha(s) B(s)
+d180 1
+a180 1
+\T(s,s_m) = \exp\left( - \int_s^{s_m} \sum_{k=1}^{N_s} \beta^k(\sigma) \mu^k_{lm}(\sigma) f^k_{lm}
+d190 2
+a191 2
+\frac{\partial \T(s,s_m)}{\partial f^k_{lm}}
+=\,& -\T(s,s_m) \, \frac{\partial}{\partial f^k_{lm}}
+d193 1
+a193 1
+=    -\T(s,s_m) \int_s^{s_m}
+d195 1
+a195 1
+=\,& -\T(s,s_m) \int_s^{s_m} \beta^k(\sigma) \mu^k_{lm}(\sigma) \d \sigma
+d202 1
+a202 1
+=\,& -I(s_0) \T(s_0,s_m)
+d206 1
+a206 1
+ \T(s,s_m) B(s) \left( \beta^k(s) \mu^k_{lm}(s) -
+d211 1
+a211 1
+Even assuming that $\T(s,s_m)$ has been saved during evaluation of
+d254 1
+a254 1
+ \int_{s_0}^{s_m} \T(s,s_m) \beta^k(s) \mu^k_{lm}(s)
+d261 1
+a261 1
+use $\T(s_0,s) \T(s,s_m) = \T(s_0,s_m)$ and $\T(\sigma,s) \T(s,s_m) =
+d267 1
+a267 1
+-\int_{s_0}^{s_m} \T(s,s_m) \beta^k(s) \mu^k_{lm}(s) I(s) \,\d s \\
+d269 2
+a270 2
+-\int_{s_0}^{s_m} \T(s,s_m) \beta^k(s) \mu^k_{lm}(s)
+\left[ I(s_0) \T(s_0,s) +
+d274 1
+a274 1
+-I(s_0) \T(s_0,s_m) \int_{s_0}^{s_m} \beta^k(s) \mu^k_{lm}(s) \,\d s \\
+d276 1
+a276 1
+- \int_{s_0}^{s_m} \T(s,s_m) \beta^k(s) \mu^k_{lm}(s)
+d280 1
+a280 1
+-I(s_0) \T(s_0,s_m) \int_{s_0}^{s_m} \beta^k(s) \mu^k_{lm}(s) \,\d s \\
+d294 1
+a294 1
+-I(s_0) \T(s_0,s_m) \int_{s_0}^{s_m} \beta^k(s) \mu^k_{lm}(s) \,\d s\, + \\
+d296 1
+a296 1
+\int_{s_0}^{s_m} \T(s,s_m) B(s)
+d324 5
+a328 2
+$\frac{\partial \alpha(s)}{\partial T_{lm}} = \beta^k(s)
+\mu^T_{lm}(s)$, and rearrange the equation to the usual form to get
+d347 1
+a347 1
+ \int_{s_0}^{s_m} \T(s,s_m)\mu^T_{lm}(s)
+d415 1
+a415 1
+\int_{s_0}^{s_m} \T(s,s_m) \mu^T_{lm}(s)
+d450 1
+a450 1
+ \int_{s_0}^{s_m} \T(s,s_m) \beta^k(s) \mu^k_{lm}(s)
+d463 1
+a463 1
+do not appear in Equation (\ref{drad}).  Assuming that $\T(s,s_m)$ and
+d486 1
+a486 1
+If $\T(s,s_m) \alpha(s) = \frac{\partial \T(s,s_m)}{\partial s}$ is
+d491 2
+a492 2
+I(s_m) = \T(s_0,s_m) \left( I(s_0) - B(s_0) \right) + B(s_m) -
+ \int_{s_0}^{s_m} \T(s,s_m) \frac{\partial B(s)}{\partial s} \,\d s\,.
+d501 1
+a501 1
+ -\T(s_0,s_m) \left( I(s_0) - B(s_0) \right)
+d504 1
+a504 1
+ \int_{s_0}^{s_m} \T(s,s_m) \frac{\partial B(s)}{\partial s}
+d521 1
+a521 1
+% $Id: wvs-100.tex,v 1.5 2011/02/05 01:31:52 vsnyder Exp $
+d524 3
+@
+
+
+1.5
+log
+@Add temperature derivatives section
+@
+text
+@d191 1
+a191 1
+=\,& -\T(s,s_m) \frac{\partial}{\partial f^k_{lm}}
+d194 1
+a194 1
+                \frac{\partial}{\partial f^k_{lm}} \alpha(\sigma) \,\d \sigma \\
+d518 1
+a518 1
+% $Id: wvs-100.tex,v 1.4 2011/01/21 00:47:38 vsnyder Exp $
+d521 3
+@
+
+
+1.4
+log
+@Add discussion of Delta B at the end
+@
+text
+@d14 2
+a15 2
+\newcommand{\docname}{wvs-100r2}
+\newcommand{\docdate}{20 January 2011}
+d87 2
+d119 3
+a121 1
+ 
+d153 2
+d216 2
+d272 1
+a272 1
+\right] \\
+d306 133
+a438 1
+\section{Comparison of methods}
+d518 1
+a518 1
+% $Id: wvs-100.tex,v 1.3 2010/12/23 20:32:04 vsnyder Exp $
+d521 3
+@
+
+
+1.3
+log
+@Add a summary, analysis of FLOPS
+@
+text
+@d14 2
+a15 2
+\newcommand{\docname}{wvs-100r1}
+\newcommand{\docdate}{23 December 2010}
+d371 3
+a373 3
+(\ref{sixteen}) is evaluated, $\frac{\partial B(s)}{\partial s}$ is
+approximated by a central difference, which can introduce substantial
+error.
+d378 1
+a378 1
+% $Id: wvs-100.tex,v 1.2 2010/12/18 03:54:28 vsnyder Exp $
+d381 3
+@
+
+
+1.2
+log
+@Insert CVS stuff
+@
+text
+@d14 2
+a15 2
+\newcommand{\docname}{wvs-100}
+\newcommand{\docdate}{17 December 2010}
+d79 1
+a79 2
+Subject: \>Reducing radiance derivatives from two-dimensional integrals to
+one-dimensional integrals\\
+d81 1
+a81 1
+Reference: \>\h{wvs-093}, JPL D-18130 \\
+d87 34
+a120 1
+The radiative transfer equation is
+d123 1
+a123 1
+\frac{\d I(s)}{\d s} + \alpha(s) I(s) = \alpha(s) B(s)
+d136 1
+a136 1
+\nu}k \left( \exp\left(\frac{h \nu}{k T(s)}\right) -1\right)^{-1}$, and
+d141 1
+a141 1
+ \,.
+d144 7
+d165 1
+a165 1
+\alpha(s) = \sum_{k=1}^{N_s} \beta^k(s) \mu^k_{lm}(s) f^k_{lm}
+d168 4
+a171 1
+($k$ is an index, not an exponent) into Equation (\ref{two}) gives
+d210 2
+d215 2
+a216 1
+arriving at the same result, also appear in wvs-093.}
+d296 5
+a300 2
+which is the same as Equation (\ref{dI_dfklm}). An important difference
+between Equations (\ref{drad})
+d316 1
+a316 1
+\begin{equation}
+d320 2
+a321 2
+do not appear in Equation (\ref{drad}).  Again assuming that $\T(s,s_m)$
+has been saved during evaluation of $I(s_m)$ using Equation
+d324 50
+a373 1
+(\ref{dI_dfklm}).
+d378 1
+a378 1
+% $Id: wvs-093.tex,v 1.7 2010/12/18 03:53:07 vsnyder Exp $
+d380 4
+a383 1
+% $Log: $
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d280 4
+@
+

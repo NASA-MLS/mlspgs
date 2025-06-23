@@ -1,0 +1,298 @@
+head	2.7;
+access;
+symbols
+	v5-02-NRT-19:2.7
+	v6-00:2.7
+	v5-02-NRT-18:2.7
+	v5-02:2.7
+	v5-01-NRT-17:2.7
+	v5-01-NRT-16:2.7
+	v5-01-NRT-15:2.7
+	v5-01-NRT-14:2.7
+	neuralnetworks-1-0:2.7.0.10
+	cfm-single-freq-0-1:2.7.0.8
+	v5-01:2.7
+	v5-00:2.7
+	v4-23-TA133:2.7.0.6
+	mus-emls-1-70:2.7.0.4
+	rel-1-0-englocks-work:2.7.0.2
+	VUMLS1-00:2.7
+	VPL1-00:2.7
+	V4-22-NRT-08:2.7
+	VAM1-00:2.6
+	V4-21:2.6.0.4
+	V4-13:2.6
+	V4-12:2.6
+	V4-11:2.6
+	V4-10:2.6
+	V3-43:2.6
+	M4-00:2.6
+	V3-41:2.6
+	V3-40-PlusGM57:2.6.0.2
+	V2-24-NRT-04:2.6
+	V3-33:2.6
+	V2-24:2.6
+	V3-31:2.6
+	V3-30-NRT-05:2.6
+	cfm-01-00:2.6
+	V3-30:2.6
+	V3-20:2.6
+	V3-10:2.6
+	V2-23-NRT-02:2.6
+	V2-23:2.6
+	V2-22-NRT-01:2.6
+	V2-22:2.6
+	V2-21:2.6
+	V2-20:2.6
+	V2-11:2.6
+	V2-10:2.6
+	V2-00:2.6
+	V1-51:2.5
+	V1-50:2.5
+	V1-45:2.5
+	V1-44:2.5
+	V1-43:2.5
+	V1-42:2.5
+	V1-41:2.5
+	V1-32:2.5
+	V1-40:2.5
+	V1-31:2.5
+	V1-30:2.5
+	V1-13:2.5
+	V1-12:2.5
+	V1-11:2.5
+	V1-10:2.5
+	newfwm-feb03:2.5.0.2
+	V1-04:2.5
+	V1-03:2.5
+	V1-02:2.5
+	V1-00:2.5
+	newfwm-sep01:2.4.0.2
+	V0-7:2.4
+	V0-5-Level2:2.2
+	V0-5-SIPS:2.2;
+locks; strict;
+comment	@ * @;
+
+
+2.7
+date	2016.02.29.19.48.40;	author pwagner;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2005.06.23.22.10.11;	author pwagner;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2002.02.01.23.49.27;	author livesey;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2001.05.25.01.04.19;	author livesey;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2001.05.23.01.42.44;	author livesey;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2001.03.15.01.12.23;	author livesey;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.01.24.21.50.27;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.7
+log
+@Usleep got from machine module instead of being an external
+@
+text
+@/*
+ * Copyright 2005, by the California Institute of Technology. ALL
+ * RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+ * commercial use must be negotiated with the Office of Technology Transfer
+ * at the California Institute of Technology.
+
+ * This software may be subject to U.S. export control laws. By accepting this
+ * software, the user agrees to comply with all applicable U.S. export laws and
+ * regulations. User has the responsibility to obtain export licenses, or other
+ * export authority as may be required before exporting such information to
+ * foreign countries or providing access to foreign persons.
+ */
+/* This is a set of cfortran.h wrappers for the pvm stuff.  It is
+   needed to make the f90 bindings work right */
+
+/* $Id: PVMwrappers.c,v 2.6 2005/06/23 22:10:11 pwagner Exp $ */
+
+#include "cfortran.h"
+#include "string.h"
+
+#define MAXPVMARGS 64
+#define ARGLEN 64
+
+     
+/* This horrible collection of code is needed so I can get pvmspawn
+   complete with command line arguments */
+   
+/* Someday, I will remove this file, and exploit the iso_c_binding
+   features that have become part of the Fortran standard */
+
+static int noArgs;
+static char *args[MAXPVMARGS];
+
+void clearpvmargs()
+{
+  noArgs = 0;
+}
+
+void nextpvmarg( char *str )
+{
+  int myLen;
+
+  myLen = strlen(str);
+  args[noArgs] = (char*) malloc(myLen+1);
+  strncpy ( args[noArgs], str, myLen+1 );
+  noArgs++;
+}
+
+void freepvmargs()
+{
+  int i;
+  for ( i = 0; i < noArgs; i++ ) free(args[i]);
+  noArgs=0;
+}
+
+int mypvmspawn ( char *task, int flag, char *where, int ntask, int *tids )
+{
+  int i;
+
+  args[noArgs]=NULL;
+  return ( pvm_spawn ( task, args, flag, where, ntask, tids ) );
+}
+
+/* Now other wrappers */ 
+
+FCALLSCFUN1(INT, pvm_pkstr, PVM_PKSTR, pvm_pkstr, STRING);
+     
+FCALLSCFUN3(INT, pvm_pkdouble, PVM_PKDOUBLE, pvm_pkdouble, PDOUBLE,
+	    INT, INT);
+
+FCALLSCFUN3(INT, pvm_pkbyte, PVM_PKBYTE, pvm_pkbyte, PBYTE, INT, INT);
+
+FCALLSCFUN3(INT, pvm_pkint, PVM_PKINT, pvm_pkint, PINT, INT, INT);
+
+FCALLSCFUN1(INT, pvm_upkstr, PVM_UPKSTR, pvm_upkstr, PSTRING);
+     
+FCALLSCFUN3(INT, pvm_upkdouble, PVM_UPKDOUBLE, pvm_upkdouble, PDOUBLE,
+	    INT, INT);
+
+FCALLSCFUN3(INT, pvm_upkbyte, PVM_UPKBYTE, pvm_upkbyte, PBYTE, INT, INT);
+
+FCALLSCFUN3(INT, pvm_upkint, PVM_UPKINT, pvm_upkint, PINT, INT, INT);
+
+/* FCALLSCSUB1(usleep, USLEEP, usleep, INT) */
+
+FCALLSCSUB0(clearpvmargs, CLEARPVMARGS, clearpvmargs )
+
+FCALLSCSUB0(freepvmargs, FREEPVMARGS, freepvmargs )
+
+FCALLSCSUB1(nextpvmarg, NEXTPVMARG, nextpvmarg, PSTRING )
+
+FCALLSCFUN5(INT, mypvmspawn, MYPVMSPAWN, mypvmspawn, 
+	    STRING, INT, STRING, INT, PINT )
+@
+
+
+2.6
+log
+@Reworded Copyright statement
+@
+text
+@d16 1
+a16 1
+/* $Id: PVMwrappers.c,v 2.5 2002/02/01 23:49:27 livesey Exp $ */
+d27 3
+d84 1
+a84 1
+FCALLSCSUB1(usleep, USLEEP, usleep, INT)
+@
+
+
+2.5
+log
+@Added pack/unpack byte
+@
+text
+@d1 12
+d16 1
+a16 1
+/* $Id: PVMwrappers.c,v 2.4 2001/05/25 01:04:19 livesey Exp $ */
+@
+
+
+2.4
+log
+@Bug fix
+@
+text
+@d4 1
+a4 1
+/* $Id: PVMwrappers.c,v 2.3 2001/05/23 01:42:44 livesey Exp $ */
+d56 2
+d64 2
+@
+
+
+2.3
+log
+@New version, has stuff to support args for pvmspawn
+@
+text
+@d4 1
+a4 1
+/* $Id: PVMwrappers.c,v 2.2 2001/03/15 01:12:23 livesey Exp $ */
+d30 1
+a30 1
+  strncpy ( args[noArgs], str, myLen );
+@
+
+
+2.2
+log
+@Added usleep
+@
+text
+@d4 1
+a4 1
+/* $Id: PVMwrappers.c,v 2.1 2001/01/24 21:50:27 livesey Exp $ */
+d7 43
+d67 8
+@
+
+
+2.1
+log
+@First added to cvs
+@
+text
+@d4 1
+a4 1
+/* $Id$ */
+d22 1
+a22 1
+
+@
+

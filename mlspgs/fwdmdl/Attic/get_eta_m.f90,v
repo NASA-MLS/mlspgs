@@ -1,0 +1,596 @@
+head	2.4;
+access;
+symbols
+	V1-51:2.2
+	V1-50:2.2
+	V1-45:2.2
+	V1-44:2.2
+	V1-43:2.2
+	V1-32:2.2
+	V1-31:2.2
+	V1-30:2.1
+	V1-13:2.1
+	V1-12:2.1
+	V1-11:2.1
+	V1-10:2.1
+	newfwm-feb03:2.1.0.2
+	V1-04:2.0
+	V1-03:2.0
+	V1-02:2.0
+	JointForwardModel:2.0.0.2
+	V1-00:2.0
+	newfwm-sep01:1.8.0.2
+	V0-7:1.8
+	V0-5-Level2:1.7
+	V0-5-SIPS:1.7
+	V0_1:1.1;
+locks; strict;
+comment	@# @;
+
+
+2.4
+date	2005.12.10.01.48.54;	author vsnyder;	state dead;
+branches;
+next	2.3;
+
+2.3
+date	2005.06.22.18.08.19;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2003.09.16.00.21.07;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2002.10.08.17.08.04;	author pwagner;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2001.09.17.20.26.27;	author livesey;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2001.06.07.23.30.34;	author pwagner;	state Exp;
+branches
+	1.8.2.1;
+next	1.7;
+
+1.7
+date	2001.03.31.23.40.55;	author zvi;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2001.03.29.08.51.01;	author zvi;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2001.03.21.22.46.53;	author livesey;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.01.31.01.08.48;	author zvi;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2000.11.22.23.10.03;	author zvi;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2000.11.22.23.07.27;	author zvi;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2000.05.04.18.12.05;	author vsnyder;	state Exp;
+branches;
+next	;
+
+1.8.2.1
+date	2001.09.12.21.38.48;	author zvi;	state Exp;
+branches;
+next	1.8.2.2;
+
+1.8.2.2
+date	2001.09.13.11.18.22;	author zvi;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.4
+log
+@Superceded by get_eta_matrix_m
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module GET_ETA_M
+
+  use MLSCommon, only: Ip, Rp
+  implicit NONE
+  private
+  public :: GET_ETA
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: get_eta_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+! This subroutine gets the eta function for temperature
+
+  subroutine GET_ETA ( GRID, PEAKS, ETA )
+
+    real(rp), intent(in) :: GRID(:), PEAKS(:)
+
+    real(rp), intent(out) :: ETA(:,:)
+
+    integer(ip) :: I, J,  NO_PEAKS
+    real(rp) :: R
+
+! The first coefficient is one for all values of grid below peaks(1)
+! until grid = peaks(1),then it ramps down in the usual triangular sense
+! i is the independent variable grid index and j is the coefficient index
+
+    no_peaks = size(peaks)
+    eta = 0.0_rp
+    i = 1
+
+! first basis calculation
+
+    where ( grid <= peaks(1) ) eta(:,1) = 1.0_rp
+
+! Normal triangular function for j=2 to j=no_peaks-1
+
+    do j = 2, no_peaks
+      r = peaks(j) - peaks(j-1)
+      where (peaks(j-1) < grid .AND. grid <= peaks(j) )
+        eta(:,j-1) = (peaks(j  ) - grid) / r
+        eta(:,j  ) = (grid - peaks(j-1)) / r
+      endwhere
+    end do
+
+! last basis calculation
+
+    where ( peaks(no_peaks) < grid ) eta(:,no_peaks) = 1.0_rp
+
+    return
+  end subroutine GET_ETA
+
+  logical function not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id: get_eta_m.f90,v 2.3 2005/06/22 18:08:19 pwagner Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
+end module GET_ETA_M
+
+! $Log: get_eta_m.f90,v $
+! Revision 2.3  2005/06/22 18:08:19  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.2  2003/09/16 00:21:07  vsnyder
+! Remove unused dummy arguments
+!
+! Revision 2.1  2002/10/08 17:08:04  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.0  2001/09/17 20:26:27  livesey
+! New forward model
+!
+! Revision 1.8.2.2  2001/09/13 11:18:22  zvi
+! get the correct eta
+!
+! Revision 1.1  2000/05/04 18:12:05  vsnyder
+! Initial conversion to Fortran 90
+!
+@
+
+
+2.3
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d21 1
+a21 1
+       "$RCSfile: $"
+d70 1
+a70 1
+       "$Id: $"
+d79 3
+@
+
+
+2.2
+log
+@Remove unused dummy arguments
+@
+text
+@d1 11
+d19 3
+a21 6
+!---------------------------- RCS Ident Info -------------------------------
+  private ID, ModuleName
+  character(len=*), parameter :: IdParm = &
+       "$Id: get_eta_m.f90,v 2.1 2002/10/08 17:08:04 pwagner Exp $"
+  character(len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName= "$RCSfile: get_eta_m.f90,v $"
+d68 5
+d79 3
+@
+
+
+2.1
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d2 1
+d7 1
+d10 4
+a13 3
+  CHARACTER (LEN=256) :: Id = &
+       "$Id: get_eta_m.f90,v 2.0 2001/09/17 20:26:27 livesey Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile: get_eta_m.f90,v $"
+d16 1
+d18 1
+a19 2
+!
+  Subroutine GET_ETA ( GRID, PEAKS, NO_GRID, NO_PEAKS, ETA )
+d21 8
+a28 2
+    Real(rp), intent(in) :: GRID(:), PEAKS(:)
+    Integer(ip), intent(in) :: NO_GRID, NO_PEAKS
+a29 5
+    Real(rp), intent(out) :: ETA(:,:)
+!
+    Integer(ip) :: I, J
+    Real(rp) :: R
+!
+d33 2
+a34 1
+!
+d37 1
+a37 1
+!
+d39 3
+a41 3
+!
+    WHERE(grid <= peaks(1)) eta(:,1) = 1.0_rp
+!
+d43 2
+a44 2
+!
+    DO j = 2, no_peaks
+d46 1
+a46 1
+      WHERE(peaks(j-1) < grid .AND. grid <= peaks(j))
+d49 3
+a51 3
+      ENDWHERE
+    END DO
+!
+a52 2
+!
+    WHERE(peaks(no_peaks) < grid) eta(:,no_peaks) = 1.0_rp
+d54 5
+a58 2
+    Return
+  End Subroutine GET_ETA
+d64 1
+d66 3
+d77 1
+@
+
+
+2.0
+log
+@New forward model
+@
+text
+@d9 1
+a9 1
+       "$Id: get_eta_m.f90,v 1.8.2.2 2001/09/13 11:18:22 zvi Exp $"
+d11 1
+d53 4
+d59 3
+@
+
+
+1.8
+log
+@Added Copyright statement
+@
+text
+@a0 3
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+d2 1
+a2 1
+  use MLSCommon, only: I4, R8
+d9 1
+a9 1
+       "$Id: get_eta_m.f90,v 1.7 2001/03/31 23:40:55 zvi Exp $"
+d15 13
+a27 11
+  Subroutine GET_ETA ( X, PEAKS, NO_X, NO_PEAKS, ETA )
+    Real(r8), intent(in) :: X(:), PEAKS(:)
+    Integer(i4), intent(in) :: NO_X, NO_PEAKS
+    Real(r8), intent(out) :: ETA(:,:)
+!
+    Integer(i4) :: I, J
+    Real(r8) :: R
+!
+! The first coefficient is one for all values of x below peaks(1)
+! until x = peaks(1),then it ramps down in the usual triangular sense
+! i is the independent variable x index and j is the coefficient index
+d29 1
+d31 4
+a34 6
+    do while (i <= no_x .and. peaks(1) > x(i))
+      eta(i,1) = 1.0
+      eta(i,2:no_peaks) = 0.0
+      if ( i == no_x ) exit
+      i = i + 1
+    end do
+d38 1
+a38 6
+    j = 2
+    do while (i <= no_x .and. x(i) < peaks(no_peaks))
+      do while (peaks(j) < x(i) .and. j < no_peaks)
+        j = j + 1
+      end do
+      eta(i,1:no_peaks) = 0.0
+d40 7
+a46 14
+      eta(i,j-1) = (peaks(j  ) - x(i)) / r
+      eta(i,j  ) = (x(i) - peaks(j-1)) / r
+      if ( i == no_x ) exit
+      i = i + 1
+    end do
+!
+! The no_peaks coefficient ramps up as a triangle until x = peaks(no_peaks)
+! then afterwards it is equal to one
+!
+    do while (i <= no_x)
+      eta(i,1:no_peaks-1) = 0.0
+      eta(i,no_peaks) = 1.0
+      i = i + 1
+    end do
+d48 2
+d54 2
+a55 11
+! Revision 1.7  2001/03/31 23:40:55  zvi
+! Eliminate l2pcdim (dimension parameters) move to allocatable ..
+!
+! Revision 1.6  2001/03/29 08:51:01  zvi
+! Changing the (*) toi (:) everywhere
+!
+! Revision 1.5  2001/03/21 22:46:53  livesey
+! Some bugs found with range checking fixed
+!
+! Revision 1.4  2001/01/31 01:08:48  zvi
+! New version of forward model
+@
+
+
+1.8.2.1
+log
+@Added CVS stuff
+@
+text
+@d12 1
+a12 1
+       "$Id: get_eta_m.f90,v 1.8 2001/06/07 23:30:34 pwagner Exp $"
+a15 1
+!---------------------------------------------------------------------------
+a65 3
+! Revision 1.8  2001/06/07 23:30:34  pwagner
+! Added Copyright statement
+!
+@
+
+
+1.8.2.2
+log
+@get the correct eta
+@
+text
+@d1 3
+d5 1
+a5 1
+  use MLSCommon, only: Ip, Rp
+d12 1
+a12 1
+       "$Id: get_eta_m.f90,v 1.1 2000/05/04 18:12:05 vsnyder Exp $"
+d16 1
+d19 11
+a29 13
+  Subroutine GET_ETA ( GRID, PEAKS, NO_GRID, NO_PEAKS, ETA )
+
+    Real(rp), intent(in) :: GRID(:), PEAKS(:)
+    Integer(ip), intent(in) :: NO_GRID, NO_PEAKS
+
+    Real(rp), intent(out) :: ETA(:,:)
+!
+    Integer(ip) :: I, J
+    Real(rp) :: R
+!
+! The first coefficient is one for all values of grid below peaks(1)
+! until grid = peaks(1),then it ramps down in the usual triangular sense
+! i is the independent variable grid index and j is the coefficient index
+a30 1
+    eta = 0.0_rp
+d32 6
+a37 4
+!
+! first basis calculation
+!
+    WHERE(grid <= peaks(1)) eta(:,1) = 1.0_rp
+d41 6
+a46 1
+    DO j = 2, no_peaks
+d48 14
+a61 5
+      WHERE(peaks(j-1) < grid .AND. grid <= peaks(j))
+        eta(:,j-1) = (peaks(j  ) - grid) / r
+        eta(:,j  ) = (grid - peaks(j-1)) / r
+      ENDWHERE
+    END DO
+a62 4
+! last basis calculation
+!
+    WHERE(peaks(no_peaks) < grid) eta(:,no_peaks) = 1.0_rp
+
+d67 15
+@
+
+
+1.7
+log
+@Eliminate l2pcdim (dimension parameters) move to allocatable ..
+@
+text
+@d1 3
+d12 1
+a12 1
+       "$Id: get_eta_m.f90,v 1.6 2001/03/29 08:51:01 zvi Exp $"
+d66 3
+@
+
+
+1.6
+log
+@Changing the (*) toi (:) everywhere
+@
+text
+@d9 1
+a9 1
+       "$Id: get_eta_m.f90,v 1.5 2001/03/21 22:46:53 livesey Exp $"
+d15 1
+a15 1
+  Subroutine GET_ETA ( X, PEAKS, NO_X, NO_PEAKS, Nlvl, ETA )
+d17 1
+a17 1
+    Integer(i4), intent(in) :: NO_X, NO_PEAKS, Nlvl
+d63 3
+@
+
+
+1.5
+log
+@Some bugs found with range checking fixed
+@
+text
+@d9 1
+a9 1
+       "$Id: get_eta_m.f90,v 1.4 2001/01/31 01:08:48 zvi Exp $"
+d16 1
+a16 1
+    Real(r8), intent(in) :: X(*), PEAKS(*)
+d18 1
+a18 1
+    Real(r8), intent(out) :: ETA(Nlvl,*)
+d63 3
+@
+
+
+1.4
+log
+@New version of forward model
+@
+text
+@d9 1
+a9 1
+       "$Id: get_eta_m.f90,v 1.1 2000/05/04 18:12:05 vsnyder Exp $"
+d31 1
+a34 2
+    if (i > no_x) Return
+!
+d46 1
+a49 2
+    if (i > no_x) Return
+!
+d63 3
+@
+
+
+1.3
+log
+@Re-add basic stuff
+@
+text
+@a66 1
+!
+@
+
+
+1.2
+log
+@New version
+@
+text
+@d2 1
+a2 1
+  use MLSCommon, only: I4, R4
+a5 1
+
+a11 1
+
+a12 1
+
+d16 1
+a16 1
+    Real(r4), intent(in) :: X(*), PEAKS(*)
+d18 1
+a18 1
+    Real(r4), intent(out) :: ETA(Nlvl,*)
+d21 1
+a21 1
+    Real(r4) :: R
+a63 1
+
+@
+
+
+1.1
+log
+@Initial conversion to Fortran 90
+@
+text
+@d10 1
+a10 1
+       "$Id: GET_ETA_M,v 1.12 2000/02/08 19:54:57 vsnyder Exp $"
+d68 4
+a71 1
+! $Log: GET_ETA_M,v $
+@
+

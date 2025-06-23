@@ -1,0 +1,2556 @@
+head	2.36;
+access;
+symbols
+	v5-02-NRT-19:2.36
+	v6-00:2.36
+	v5-02-NRT-18:2.36
+	v5-02:2.36
+	v5-01-NRT-17:2.36
+	v5-01-NRT-16:2.36
+	v5-01-NRT-15:2.36
+	v5-01-NRT-14:2.36
+	neuralnetworks-1-0:2.36.0.4
+	cfm-single-freq-0-1:2.36.0.2
+	v5-01:2.36
+	v5-00:2.36
+	v4-23-TA133:2.35.0.8
+	mus-emls-1-70:2.35.0.6
+	rel-1-0-englocks-work:2.35.0.4
+	VUMLS1-00:2.35
+	VPL1-00:2.35
+	V4-22-NRT-08:2.35
+	VAM1-00:2.35
+	V4-21:2.35.0.2
+	V4-13:2.35
+	V4-12:2.35
+	V4-11:2.35
+	V4-10:2.35
+	V3-43:2.14
+	M4-00:2.20
+	V3-41:2.14
+	V3-40-PlusGM57:2.14.0.2
+	V2-24-NRT-04:2.12
+	V3-33:2.14
+	V2-24:2.12
+	V3-31:2.14
+	V3-30-NRT-05:2.14
+	cfm-01-00:2.14
+	V3-30:2.14
+	V3-20:2.14
+	V3-10:2.14
+	V2-23-NRT-02:2.12
+	V2-23:2.12
+	V2-22-NRT-01:2.12
+	V2-22:2.12
+	V2-21:2.12
+	V2-20:2.12
+	V2-11:2.12
+	V2-10:2.12
+	V2-00:2.12
+	V1-51:2.10
+	V1-50:2.10
+	V1-45:2.10
+	V1-44:2.10
+	V1-43:2.7
+	V1-42:2.5
+	V1-41:2.5
+	V1-32:2.5
+	V1-40:2.5
+	V1-31:2.5
+	V1-30:2.5
+	V1-13:2.5
+	V1-12:2.5
+	V1-11:2.5
+	V1-10:2.5
+	newfwm-feb03:2.5.0.2
+	V1-04:2.3
+	V1-03:2.3
+	V1-02:2.3
+	V1-00:2.3
+	newfwm-sep01:2.2.0.2
+	V0-7:2.2
+	V0-5-Level2:2.2
+	V0-5-SIPS:2.2;
+locks; strict;
+comment	@# @;
+
+
+2.36
+date	2019.08.19.22.02.55;	author pwagner;	state Exp;
+branches;
+next	2.35;
+
+2.35
+date	2014.03.20.01.40.16;	author vsnyder;	state Exp;
+branches;
+next	2.34;
+
+2.34
+date	2014.03.05.01.06.50;	author vsnyder;	state Exp;
+branches;
+next	2.33;
+
+2.33
+date	2014.02.27.02.27.40;	author vsnyder;	state Exp;
+branches;
+next	2.32;
+
+2.32
+date	2014.02.21.19.26.03;	author vsnyder;	state Exp;
+branches;
+next	2.31;
+
+2.31
+date	2014.01.11.01.41.02;	author vsnyder;	state Exp;
+branches;
+next	2.30;
+
+2.30
+date	2014.01.08.21.11.22;	author vsnyder;	state Exp;
+branches;
+next	2.29;
+
+2.29
+date	2013.12.12.02.03.41;	author vsnyder;	state Exp;
+branches;
+next	2.28;
+
+2.28
+date	2013.10.16.01.12.02;	author vsnyder;	state Exp;
+branches;
+next	2.27;
+
+2.27
+date	2013.10.15.23.55.20;	author pwagner;	state Exp;
+branches;
+next	2.26;
+
+2.26
+date	2013.10.11.01.47.21;	author vsnyder;	state Exp;
+branches;
+next	2.25;
+
+2.25
+date	2013.09.30.23.59.24;	author vsnyder;	state Exp;
+branches;
+next	2.24;
+
+2.24
+date	2013.09.21.00.35.50;	author vsnyder;	state Exp;
+branches;
+next	2.23;
+
+2.23
+date	2013.09.19.23.27.38;	author vsnyder;	state Exp;
+branches;
+next	2.22;
+
+2.22
+date	2013.08.30.16.44.09;	author pwagner;	state Exp;
+branches;
+next	2.21;
+
+2.21
+date	2013.08.30.03.56.02;	author vsnyder;	state Exp;
+branches;
+next	2.20;
+
+2.20
+date	2012.05.07.23.00.57;	author vsnyder;	state Exp;
+branches;
+next	2.19;
+
+2.19
+date	2012.05.05.00.11.51;	author vsnyder;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2012.04.24.20.38.47;	author vsnyder;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2012.03.12.18.36.11;	author vsnyder;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2011.04.19.01.59.43;	author vsnyder;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2011.04.18.19.33.26;	author vsnyder;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2009.06.23.18.25.43;	author pwagner;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2008.09.04.20.03.09;	author vsnyder;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2005.08.04.02.55.02;	author vsnyder;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2005.06.22.17.25.48;	author pwagner;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2004.05.28.23.45.09;	author vsnyder;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2004.05.28.23.13.46;	author vsnyder;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2004.05.28.00.57.25;	author vsnyder;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2004.01.17.03.04.48;	author vsnyder;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2004.01.14.18.32.58;	author vsnyder;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2002.10.08.00.09.09;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2002.10.02.00.44.08;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2001.11.27.00.54.37;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2001.04.09.20.59.57;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2000.10.11.18.57.28;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.36
+log
+@Light housekeeping
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module EXPR_M
+
+! Evaluate an expression from its tree.
+
+  use Declaration_table, only: Value_T ! Needed for Value_ procedures
+                                       ! which cannot be internal until
+                                       ! more compilers allow generic interfaces
+                                       ! for internal procedures.
+
+  implicit none
+  private
+  public :: EXPR, EXPR_CHECK, GetIndexFlagsFromList
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: expr_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+  include "Value_T_Interfaces.f9h"
+
+contains ! ====     Public Procedures     ==============================
+  ! -------------------------------------------------------  EXPR  -----
+  recursive subroutine EXPR ( ROOT, UNITS, VALUE, TYPE, SCALE, VALUES  )
+  ! Analyze an expression, return its type, units and value.
+  ! If its result is an array, return the values in VALUES.
+
+    use Call_Stack_M, only: Stack_Depth
+    use Declaration_Table, only: Allocate_Test, Deallocate_Test, Declared, &
+      & Decls, Dump_Values, Empty, Enum_Value, Function, Label, Log_Value, &
+      & Named_Value, Num_Value, Get_Decl, Range, Str_Range, Str_Value, &
+      & Units_Name, Variable
+    use Functions, only: F_Difference, F_Exp, F_Ln, F_Log, F_Log10, &
+      & F_Intersection, F_Sqrt, F_Union, F_Without
+    use Intrinsic, only: Data_Type_Indices, Lit_Indices, Phyq_Dimensionless, &
+      & Phyq_Indices, Phyq_Invalid, L_False, L_True, T_Boolean
+    use Output_M, only: Blanks, Newline, Output
+    use StarterrorMessage_M, only: StarterrorMessage
+    use String_Table, only: Display_String, Float_Value
+    use Toggles, only: Con, Levels, Toggle
+    use Trace_M, only: Trace_Begin, Trace_End
+    use Tree, only: Decoration, Node_Id, Nsons, Sub_Rosa, Subtree, Tree_Node_Name
+    use Tree_Types ! Everything, Especially Everything Beginning With N
+
+    integer, intent(in) :: ROOT         ! Root of expression subtree
+    integer, intent(out) :: UNITS(2)    ! Units of expression value if type ==
+                                        ! num_value -- UNITS(2) is
+                                        ! PHYQ_INVALID if ROOT is not a range
+                                        ! (:) operator.  Type of expression
+                                        ! value if type == enum_value
+    double precision, intent(out) :: VALUE(2) ! Expression value, if any.  If
+                                        ! TYPE == Log_Value, zero means false.
+                                        ! Lit index if type is enum_value.
+    integer, intent(out), optional :: TYPE    ! Expression type
+    double precision, optional, intent(out) :: SCALE(2) ! Scale for units
+    type(value_t), allocatable, intent(out), optional :: Values(:)
+
+    type(decls) :: DECL            ! Declaration record for "root"
+    integer :: EnumType            ! Enum data type index if MyType == enum_type
+                                   ! or MyType == variable and VarType ==
+                                   ! enum_type
+    integer :: I, J
+    integer :: ME                  ! node_id(root)
+    integer :: MyType              ! Expression type as in Declaration_Table
+    integer :: N                   ! Size for allocating
+    logical :: OK                  ! No errors reported
+    integer :: Son1                ! First son of "root"
+    integer :: STRING              ! Sub_rosa(root)
+    integer :: Trace = -1          ! String index for trace
+    integer :: TYPE1, TYPE2        ! Type of son of "root"
+    integer :: UNITS2(2)           ! Units of an expression
+    double precision :: VALUE2(2)  ! Value of an expression
+    integer :: VarType             ! Variable type if MyType == variable
+    double precision :: SCALE2(2)  ! Units scale
+    type(value_t), allocatable :: Values1(:), Values2(:), Values3(:)
+
+    ! Error codes
+    integer, parameter :: BadNode = 1 ! Unsupported tree node in expr
+    integer, parameter :: DifferentShapes = badNode + 1 ! Shapes of operands differ
+    integer, parameter :: DifferentTypes = differentShapes + 1 ! Types of operands differ
+    integer, parameter :: NoArray = differentTypes + 1 ! No VALUES argument
+    integer, parameter :: NonNumeric = noArray + 1 ! Non numeric arg for func
+    integer, parameter :: NotFunc = nonNumeric + 1 ! Not a function
+    integer, parameter :: NotLogical = notFunc + 1 ! Not logical
+    integer, parameter :: NotScalar = notLogical + 1  ! Not scalar
+    integer, parameter :: NotUnitless = notScalar + 1 ! Not unitless
+    integer, parameter :: NotUnitlessArg = notUnitless + 1 ! Not unitless
+    integer, parameter :: OutOfRange = notUnitlessArg + 1
+    integer, parameter :: UnsupportedFunc = outOfRange + 1
+    integer, parameter :: WrongNumArgs = unsupportedFunc + 1
+    integer, parameter :: wrongUnits = wrongNumArgs + 1
+
+    call trace_begin ( trace, 'EXPR', root, string=tree_node_name(root), &
+      & cond=toggle(con) )
+    units = (/ phyq_dimensionless, phyq_invalid /)     ! default
+    value = 0.0d0                                      ! default
+    if ( present(scale) ) scale = 1.0d0                ! default
+    if ( present(values) ) call deallocate_test ( values, 'Values', moduleName )
+    OK = .true.
+    me = node_id(root)
+    select case ( me )
+    case ( n_identifier ) ! ------------------------------------------------
+      string = sub_rosa(root)
+      if ( declared(string) ) then
+        decl = get_decl ( string, [ named_value, variable, enum_value, label ] )
+      else
+        decl = decls(0.0d0, empty, phyq_invalid, 0, 0, null() )
+      end if
+      myType = decl%type
+      if ( myType /= variable ) &
+        & call allocate_test ( values1, 1, 'Values1', moduleName )
+      select case ( myType )
+      case ( enum_value )
+        enumType = decoration(subtree(1,decl%tree)) ! data type index
+        units = enumType
+        value = decl%units                          ! lit index
+                         ! What      Type     Value Units Decor
+        values1 = value_t(enum_value,enumType,value,0,    0)
+      case ( variable )
+        call allocate_test ( values1, size(decl%values), 'Values1', moduleName )
+        values1 = decl%values
+        if ( decl%units == enum_value ) then
+          varType = enum_value
+          myType = varType
+          enumType = decl%values(1)%type
+          units = enumType
+          value = decl%values(1)%value ! It's in values1
+        else
+          myType = decl%values(1)%type
+          varType = decl%values(1)%units(1)
+          units = varType
+          value = decl%values(1)%value ! It's in values1
+        end if
+      case default
+        units = decl%units
+        value = decl%value
+                         ! What  Type   value units decor
+        values1 = value_t(myType,myType,value,units,0)
+      end select
+      if ( present(values) ) then
+        ! Make sure values is allocated so we don't need to test for it
+        ! after calling EXPR recursively.
+        call allocate_test ( values, size(values1), 'Values', moduleName )
+      else if ( decl%type == variable ) then
+        if ( size(decl%values) > 1 ) call announceError ( root, noArray )
+      end if
+    case ( n_number ) ! ----------------------------------------------------
+      string = sub_rosa(root)
+      units = phyq_dimensionless
+      value = float_value(string)
+      myType = num_value
+    case ( n_string ) ! ----------------------------------------------------
+      units = phyq_dimensionless
+      value = sub_rosa(root)
+      myType = str_value
+    case ( n_func_ref ) ! --------------------------------------------------
+      son1 = subtree(1,root)
+      ! Look up the function name
+      string = sub_rosa(son1)
+      decl = get_decl(string,function)
+      if ( decl%type /= function ) call announceError ( son1, notFunc )
+      if ( nsons(root) < 2 ) call announceError ( root, wrongNumArgs )
+      if ( OK ) then
+        call expr ( subtree(2,root), units, value, type1, values=values1 )
+        myType = type1
+        if ( myType == enum_value ) enumType = units(1)
+        select case ( decl%units ) ! the function index in this case
+        case ( f_exp, f_ln, f_log, f_log10, f_sqrt ) ! One-argument numeric
+          if ( nsons(root) /= 2 ) call announceError ( root, wrongNumArgs )
+          if ( OK ) then
+            n = 0
+            if ( type1 == num_value ) n = 1
+            if ( type1 == range ) n = 2
+            if ( n == 0 ) then
+              call announceError ( subtree(2,root), nonNumeric )
+            else if ( .not. check_units(values1, unit=phyq_dimensionless) ) then
+              !??? Does the tree checker already check this?
+              call announceError ( subtree(2,root), notUnitlessArg )
+            else
+              select case ( decl%units ) ! the function index in this case
+              case ( f_exp )
+                if ( any(values1%value(1) > log(huge(values1%value(1)))) ) then
+                  call announceError ( subtree(2,root), outOfRange )
+                else
+                  values1%value(1) = exp(values1%value(1))
+                end if
+              case ( f_ln, f_log )
+                if ( any(values1%value(1) <= 0.0) ) then
+                  call announceError ( subtree(2,root), outOfRange )
+                else
+                  values1%value(1) = log(values1%value(1))
+                end if
+              case ( f_log10 )
+                if ( any(values1%value(1) <= 0.0) ) then
+                  call announceError ( subtree(2,root), outOfRange )
+                else
+                  values1%value(1) = log10(values1%value(1))
+                end if
+              case ( f_sqrt )
+                if ( any(values1%value(1) < 0.0) ) then
+                  call announceError ( subtree(2,root), outOfRange )
+                else
+                  values1%value(1) = sqrt(values1%value(1))
+                end if
+              end select
+              call set_values ( num_value )
+            end if
+          end if
+        case ( f_difference )
+          if ( nsons(root) /= 3 ) then
+            call announceError ( root, wrongNumArgs )
+          else
+            call allocate_test ( values3, 0, 'Values3', moduleName )
+            call expr ( subtree(3,root), units2, value2, type2, values=values2 )
+            myType = type2
+            call difference ( values1, values2 )
+            call move_value ( values3 )
+          end if
+        case ( f_intersection )
+          if ( nsons(root) /= 3 ) then
+            call announceError ( root, wrongNumArgs )
+          else
+            call allocate_test ( values3, 0, 'Values3', moduleName )
+            call expr ( subtree(3,root), units2, value2, type2, values=values2 )
+            myType = type2
+            call intersection ( values1, values2 )
+            call move_value ( values3 )
+          end if
+        case ( f_union )
+          call allocate_test ( values3, 0, 'Values3', moduleName )
+          do j = 1, size(values1)
+            call add_to_set ( values1(j) )
+          end do
+          do i = 3, nsons(root)
+            call expr ( subtree(i,root), units2, value2, type2, values=values2 )
+            do j = 1, size(values2)
+              call add_to_set ( values2(j) )
+            end do
+          end do
+          myType = type2
+          call move_value ( values3 )
+        case ( f_without )
+          if ( nsons(root) /= 3 ) then
+            call announceError ( root, wrongNumArgs )
+          else
+            call allocate_test ( values3, 0, 'Values3', moduleName )
+            call expr ( subtree(3,root), units2, value2, type2, values=values2 )
+            myType = type2
+            call without ( values1, values2 )
+            call move_value ( values3 )
+          end if
+        case default
+          call announceError ( son1, unsupportedFunc )
+        end select
+      end if
+    case ( n_pow ) ! -------------------------------------------------------
+      call expr ( subtree(nsons(root),root), units, value, type1, scale, values1 )
+      myType = num_value
+      do i = nsons(root)-1, 1, -1 ! Power operator is right associative
+        call expr ( subtree(i,root), units, value2, type2, scale, values2 )
+        if ( size(values1) /= size(values2) ) then
+          call announceError ( root, differentShapes )
+        else
+          if ( .not. check_units(values2, unit=phyq_dimensionless) ) then
+            call announceError ( subtree(i,root), notUnitless )
+          else
+            do j = 1, size(values2)
+              if ( values2(j)%type == num_value ) then
+                values1(j)%value = values2(j)%value(1) ** values1(j)%value
+              else
+                values1(j)%value = values2(j)%value ** values1(j)%value
+              end if
+            end do
+          end if
+          call set_values ( type2 )
+        end if
+      end do
+    case ( n_cond ) ! ------------------------------------------------------
+      ! expr ? expr ! expr
+      ! First subtree is known to be logical
+      call expr ( subtree(1,root), units, value, type1, scale, values1 )
+      if ( size(values1) /= 1 ) &
+        & call announceError ( subtree(1,root), notScalar )
+      if ( value(1) /= 0 ) then ! subtree 1 is true
+        call expr ( subtree(2,root), units, value, myType, scale, values1 )
+      else
+        call expr ( subtree(3,root), units, value, myType, scale, values1 )
+      end if
+      if ( myType == enum_value ) enumType = units(1)
+    case ( n_array ) ! -------------------------------------------------
+      if ( .not. present(values) ) then
+        if ( nsons(root) > 1 ) then
+          call announceError ( root, noArray )
+        else
+          call expr ( subtree(i,root), units, value, myType, scale )
+          if ( myType == enum_value ) enumType = units(1)
+        end if
+      else
+        call expr ( subtree(1,root), units, value2, type1, scale, values1 )
+        myType = type1
+        if ( myType == enum_value ) enumType = units(1)
+        do i = 2, nsons(root)
+          call expr ( subtree(i,root), units, value2, type2, scale, values2 )
+          call allocate_test ( values3, size(values1) + size(values2), &
+            & 'Values3', moduleName )
+          values3 = [ values1, values2 ]
+          call deallocate_test ( values1, 'Values1', moduleName )
+          call deallocate_test ( values2, 'Values2', moduleName )
+          call move_alloc ( values3, values1 )
+        end do
+        call set_values ( type2 ) ! Makes values1 deallocated
+      end if
+    case default
+      call expr ( subtree(1,root), units, value, type1, scale, values1 )
+      myType = type1
+      if ( myType == enum_value ) enumType = units(1)
+      if ( me == n_unit ) then
+        decl = get_decl(sub_rosa(subtree(2,root)), units_name)
+        units = decl%units
+        values1%units(1) = units(1)
+        values1%units(2) = units(2)
+        if ( decl%value > 0.0 ) then
+          value(1) = value(1) * decl%value
+        else
+          value(1) = value(1) - decl%value
+        end if
+        values1(1)%value(1) = value(1)
+        if ( present(scale) ) scale(1) = decl%value
+      else
+        if ( nsons(root) > 1 ) &
+          & call expr ( subtree(2,root), units2, value2, type2, scale2, values2 )
+        select case ( me )
+        case ( n_colon, n_colon_less, n_less_colon, n_less_colon_less ) ! --
+          if ( size(values1) /= size(values2) ) &
+            & call announceError ( root, differentShapes )
+          units(2) = units2(1); value(2) = value2(1)
+          values1%units(2) = units(2)
+          if ( present(scale) ) scale(2) = scale2(1)
+          if ( myType == num_value ) myType = range
+          if ( myType == str_value ) myType = str_range
+          values1%what = myType
+          values1%decor = me
+        case ( n_plus, n_minus ) ! -----------------------------------------
+          if ( nsons(root) > 1 ) then
+            if ( .not. check_units ( values1, values2 ) ) &
+               & call announceError ( root, wrongUnits )
+            if ( me == n_plus ) then
+              values1 = values1 + values2
+            else !  me == n_minus
+              values1 = values1 - values2
+            end if
+            call set_values ( type1, type2 )
+          else if ( me == n_minus ) then
+            values1 = -values1
+            call set_values ( type1 )
+          end if
+        case ( n_mult ) ! --------------------------------------------------
+          ! At least one operand must be entirely dimensionless.
+          ! We should do this on an element-by-element bases.
+          if ( .not. check_units(values1, unit=phyq_dimensionless) .and. &
+             & .not. check_units(values2, unit=phyq_dimensionless) ) &
+             & call announceError ( root, wrongUnits )
+          values1 = values1 * values2
+          do j = 1, 2
+            where ( values1%units(j) == phyq_dimensionless ) &
+              values1%units(j) = values2%units(j)
+          end do
+        case ( n_div ) ! ---------------------------------------------------
+          if ( .not. check_units(values2, unit=phyq_dimensionless) ) &
+             & call announceError ( root, wrongUnits )
+          values1 = values1 / values2
+        case ( n_into ) ! --------------------------------------------------
+          if ( .not. check_units(values1, unit=phyq_dimensionless) ) &
+             & call announceError ( root, wrongUnits )
+          values1 = values2 / values1
+          do j = 1, 2
+            values1%units(j) = values2%units(j)
+          end do
+        case ( n_equal_equal, n_not_equal )
+          myType = log_value
+          if ( type1 /= type2 ) &
+            & call announceError ( root, differentTypes )
+          if ( type1 == num_value ) then
+            if ( .not. check_units ( values1, values2 ) ) &
+              &  call announceError ( root, wrongUnits )
+          end if
+          if ( OK ) then
+            do j = 1, 2
+              select case ( me )
+              case ( n_equal_equal ) ! -------------------------------------
+                values1%value(j) = merge(l_true,l_false,values1%value(j) == values2%value(j))
+              case ( n_not_equal ) ! ---------------------------------------
+                values1%value(j) = merge(l_true,l_false,values1%value(j) /= values2%value(j))
+              end select
+            end do
+          end if
+        case ( n_less, n_less_eq, n_greater, n_greater_eq )
+          myType = log_value
+          if ( type1 /= num_value ) &
+             & call announceError ( subtree(1,root), nonNumeric )
+          if ( type2 /= num_value ) &
+             & call announceError ( subtree(2,root), nonNumeric )
+          if ( .not. check_units ( values1, values2 ) ) &
+             &  call announceError ( root, wrongUnits )
+          if ( OK ) then
+            do j = 1, 2
+              select case ( me )
+              case ( n_less ) ! --------------------------------------------
+                values1%value(j) = merge(l_true,l_false, &
+                  & values1%value(j) < values2%value(j))
+              case ( n_less_eq ) ! -----------------------------------------
+                values1%value(j) = merge(l_true,l_false, &
+                  & values1%value(j) <= values2%value(j))
+              case ( n_greater ) ! -----------------------------------------
+                values1%value(j) = merge(l_true,l_false, &
+                  & values1%value(j) > values2%value(j))
+              case ( n_greater_eq ) ! --------------------------------------
+                values1%value(j) = merge(l_true,l_false, &
+                  & values1%value(j) >= values2%value(j))
+              end select
+            end do
+          end if
+        case ( n_and, n_or ) ! ---------------------------------------------
+          myType = log_value
+          if ( .not. is_boolean(values1(1)) ) &
+             & call announceError ( subtree(1,root), notLogical )
+          if ( .not. is_boolean(values2(1)) ) &
+             &  call announceError ( subtree(2,root), notLogical )
+          if ( OK ) then
+            if ( me == n_and ) then
+              values1%value(1) = merge(l_true,l_false, &
+                & values1%value(1)==l_true .and. values2%value(1)==l_true)
+            else if ( me == n_or ) then
+              values1%value(1) = merge(l_true,l_false, &
+                & values1%value(1)==l_true .or. values2%value(1)==l_true)
+            end if
+          end if
+        case ( n_not ) ! ---------------------------------------------------
+          myType = log_value
+          if ( .not. is_boolean(values1(1)) ) then
+            call announceError ( subtree(1,root), notLogical )
+          else
+            values1%value(1) = merge(l_true,l_false,values1%value(1)==l_false)
+          end if
+        case default
+          call announceError ( root, badNode )
+        end select
+      end if
+    end select
+
+    if ( myType == log_value ) then
+      myType = enum_value
+      enumType = t_boolean
+      values1%what = enum_value
+      values1%type = t_boolean
+      value = values1%value(1)
+    end if
+
+! This doesn't work.  It demonstrates that I ought to write an expr that
+! always puts its results in values, and a wrapper that takes the old
+! [value,type,units] from that.
+!    if ( allocated(values1) ) value = values1(1)%value
+
+    n = 1
+    if ( present(values) ) then
+      if ( allocated(values) ) then
+        n = size(values)
+        if ( n == 0 ) then
+          call deallocate_test ( values, 'Values', moduleName )
+        else if ( allocated(values1) ) then
+          if ( n /= size(values1) ) then
+            call deallocate_test ( values, 'Values', moduleName )
+          else
+            values = values1
+          end if
+        end if
+      end if
+      if ( .not. allocated(values) ) then
+        ! Make sure values is allocated so we don't need to test for it
+        ! after calling EXPR recursively.
+        if ( allocated(values1) ) then
+          call allocate_test ( values, size(values1), 'Values', moduleName )
+          values = values1
+        else
+          call allocate_test ( values, 1, 'Values', moduleName )
+          select case ( myType )
+          case ( variable )
+                            ! What    Type    Value Units Decor
+            values = value_t(variable,varType,units,0,    0)
+          case ( enum_value )
+                            ! What      Type     Value Units Decor
+            values = value_t(enum_value,enumType,value,0,    0)
+          case default
+                            ! What  Type   Value Units Decor
+            values = value_t(myType,myType,value,units,0)
+          end select
+        end if
+      end if
+      if ( present(type) ) then
+        type = values(1)%type
+        if ( type == empty ) type = myType
+        if ( values(1)%what == enum_value ) then
+          type = enum_value
+          units = values(1)%type
+        end if
+      end if
+      if ( allocated(values1) ) then
+        values = values1
+      else if ( me /= n_identifier .and. me /= n_array ) then
+        select case ( values(1)%what )
+        case ( enum_value, label )
+          values%type = type1
+        case default
+          values%what = values%type
+        end select
+      end if
+      value = values(1)%value
+      units = values(1)%units
+    else if ( present(type) ) then
+      type = myType
+    end if
+    if ( myType == enum_value ) units = enumType
+
+    if ( toggle(con) .and. levels(con) > 1 ) then
+      call Blanks( Stack_Depth()+1, FillChar='_' )
+      if ( me == n_identifier ) &
+        & call display_string ( string, before=' Identifier ' )
+      select case ( myType )
+      case ( enum_value )
+        call display_string ( data_type_indices(enumType), before=' enum Type = ' )
+        if ( me /= n_array ) &
+          & call display_string ( lit_indices(nint(value(1))), before=' Value = ' )
+      case ( variable )
+        if ( varType == enum_value ) then
+          call display_string ( data_type_indices(enumType), &
+            & before=' variable enum Type = ' )
+          if ( size(decl%values) == 1 ) then
+            call display_string ( lit_indices(nint(decl%values(1)%value(1))), &
+              & before=' Value = ' )
+          end if
+        else
+          call display_string ( data_type_indices(varType), &
+            & before=' variable Type = ' ) 
+          if ( size(decl%values) == 1 ) &
+            & call display_value ( decl%values(1)%value )
+        end if
+      case default
+        call display_string ( data_type_indices(myType), before=' Type = ' )
+        call display_value ( value )
+      end select
+      call newLine
+      if ( present(values) ) then
+        if ( size(values) > 1 ) call dump_values ( values )
+      end if
+    end if
+    if ( myType /= enum_value ) then
+      call trace_end ( 'EXPR', index=n, string='Type=', &
+        & stringIndex=data_type_indices(myType), cond=toggle(con) )
+    else
+      call trace_end ( 'EXPR', index=n, string='Type=', &
+        & stringIndex=data_type_indices(enumType), cond=toggle(con) )
+    end if
+
+  contains
+
+    subroutine Add_To_Set ( Value )
+      ! Add Value to Values3, which is assumed to be allocated
+      type(value_t), intent(in) :: Value
+      type(value_t), allocatable :: Temp(:)
+
+      if ( any(value == values3) ) return ! No duplicates
+      call allocate_test ( temp, size(values3)+1, 'Temp', moduleName )
+      temp(:size(values3)) = values3
+      call deallocate_test ( values3, 'Values3', moduleName )
+      call move_alloc ( temp, values3 )
+      values3(size(values3)) = value
+    end subroutine Add_To_Set
+
+    subroutine AnnounceError ( where, what )
+      use Output_m, only: Output
+      use String_Table, only: Display_String
+      use Tree, only: Dump_Tree_Node, Dump_Tree_Node_Name, Node_Kind, &
+        & Pseudo, Sub_Rosa
+      integer, intent(in) :: Where ! Tree index
+      integer, intent(in) :: What  ! Error index
+      integer :: NodeIs
+      OK = .false.
+      call startErrorMessage ( where )
+      select case ( what )
+      case ( badNode )
+        call dump_tree_node ( where, 0 )
+        call output ( ' is not supported.', advance='yes' )
+      case ( differentShapes )
+        call dump_tree_node ( where, 0 )
+        call output ( ' has operands with different shapes.', advance='yes' )
+      case ( differentTypes )
+        call dump_tree_node ( where, 0 )
+        call output ( ' has operands with different types.', advance='yes' )
+      case ( noArray )
+        call dump_tree_node ( where, 0 )
+        call output ( ' EXPR invoked for array but VALUES argument not present.', &
+          advance='yes' )
+      case ( nonNumeric )
+        nodeIs = node_kind ( where )
+        if ( nodeIs == pseudo ) then
+          call display_string ( sub_rosa(where) )
+        else
+          call dump_tree_node_name ( where, before='Argument of ' )
+        end if
+        call output ( ' is not numeric.', advance='yes' )
+      case ( notFunc )
+        call display_string ( string )
+        call output ( ' is not a valid function.', advance='yes' )
+      case ( notLogical )
+        call dump_tree_node_name ( where, before='Argument of ' )
+        call output ( ' is not logical.', advance='yes' )
+      case ( notScalar )
+        call dump_tree_node ( where, 0 )
+        call output ( ' does not have a scalar value.', advance='yes' )
+      case ( notUnitless )
+        call output ( 'Operands of ' )
+        call dump_tree_node ( where, 0 )
+        call output ( ' are not unitless.', advance='yes' )
+      case ( notUnitlessArg )
+        call display_string ( string, before='Argument of ' )
+        call output ( ' is not unitless.', advance='yes' )
+      case ( outOfRange )
+        call display_string ( string, before='Argument of ' )
+        call output ( ' is out of range.', advance='yes' )
+      case ( unsupportedFunc )
+        call output ( 'Function ' )
+        call display_string ( string )
+        call output ( ' is not supported.', advance='yes' )
+      case ( wrongNumArgs )
+        call output ( 'Incorrect number of arguments for ' )
+        call display_string ( string, advance='yes' )
+      case ( wrongUnits )
+        call output ( 'Units of operands of ' )
+        call dump_tree_node ( where, 0 )
+        call output ( ' are not compatible.', advance='yes' )
+      end select
+      ! There's no way to return an error, so return something
+      if ( present(type) ) type = empty
+      units = PHYQ_INVALID
+      value = 0.0
+    end subroutine AnnounceError
+
+    logical function Check_Units ( V1, V2, Unit ) result ( R )
+      ! If Unit is present return true if all units in V1 are equal
+      ! to Unit, and if V2 is also present its units are also equal
+      ! to Unit.
+      ! If Unit is not present, assume both V1 and V2 are present, and
+      ! return true if all their units are equal.
+      type(value_t), intent(in) :: V1(:)
+      type(value_t), intent(in), optional :: V2(:)
+      integer, intent(in), optional :: Unit
+      integer :: J
+      r = .true.
+      if ( present(unit) ) then
+        if ( present(v2) ) then
+          do j = 1, 2
+            r = r .and. all(v1%units(j) == unit) .and. all(v2%units(j) == unit)
+          end do
+        else
+          do j = 1, 2
+            r = r .and. all(v1%units(j) == unit)
+          end do
+        end if
+      else
+        do j = 1, 2
+          r = r .and. all(v1%units(j) == v2%units(j))
+        end do
+      end if
+    end function Check_Units
+
+    subroutine Difference ( V1, V2 )
+      ! Add elements of V1 that are not in V2 to Values3
+      ! Add elements of V2 that are not in V1 to Values3
+      type(value_t), intent(in) :: V1(:), V2(:)
+      integer :: I
+
+      do i = 1, size(v1)
+        if ( all(v1(i) /= v2) ) call add_to_set ( v1(i) )
+      end do
+      do i = 1, size(v2)
+        if ( all(v1 /= v2(i)) ) call add_to_set ( v2(i) )
+      end do
+    end subroutine Difference
+
+    subroutine Display_Units ( Index )
+      ! Display the units and scale of a numeric value
+      integer, intent(in) :: Index
+      if ( units(index) /= 0 ) then
+        call display_string ( phyq_indices(units(index)), before=' ' )
+      else
+        call output ( units(index), before=' unit ' )
+      end if
+      if ( present(scale) ) call output ( scale(index), before=' Scale = ' )
+    end subroutine Display_Units
+
+    subroutine Display_Value ( Value )
+      ! Display the value as a number, a number range, a string, or a
+      ! string range
+      double precision, intent(in) :: Value(2)
+      call output ( ' Value = ' )
+      select case ( myType )
+      case ( num_value )
+        call output ( value(1) )
+        call display_units ( 1 )
+      case ( range )
+        call output ( value(1) )
+        call display_units ( 1 )
+        call output ( value(2), before=' : ' )
+        call display_units ( 2 )
+      case ( str_range )
+        call display_string ( nint(value(1)), strip=.false. )
+      case ( str_value )
+        call display_string ( nint(value(1)), strip=.false. )
+        call display_string ( nint(value(2)), strip=.false., before=' : ' )
+      end select
+    end subroutine Display_Value
+
+    subroutine Intersection ( V1, V2 )
+      ! Add elements that are both V1 and V2 to Values3
+      ! Add elements of V2 that are not in V1 to Values3
+      type(value_t), intent(in) :: V1(:), V2(:)
+      integer :: I
+      do i = 1, size(v1)
+        if ( any(v1(i) == v2) ) call add_to_set ( v1(i) )
+      end do
+    end subroutine Intersection
+
+    logical function Is_Boolean ( Value )
+      type(value_t), intent(in) :: Value
+      is_boolean = value%what == enum_value .and. value%type == t_boolean
+    end function Is_Boolean
+
+    subroutine Move_Value ( Value )
+      ! Move Value to Values
+      type(value_t), intent(inout), allocatable :: Value(:)
+      call move_alloc ( value, values )
+    end subroutine Move_Value
+
+    subroutine Set_Values ( Type1, Type2 )
+      ! Set the Values argument if it is present and Values1 is allocated
+      ! with size other than 1.  If Values1 is allocated with size 1 put
+      ! Values1%type in type and Values1%value in value.  Deallocate
+      ! Values1 and Values2.
+      integer, intent(in) :: Type1
+      integer, intent(in), optional :: Type2
+      if ( allocated(values1) ) then
+        if ( present(values) ) then
+          call move_alloc ( values1, values )
+        else
+          value = values1(1)%value
+          call deallocate_test ( values1, 'Values1', moduleName )
+        end if
+      end if
+      call deallocate_test ( values2, 'Values2', moduleName )
+    end subroutine Set_Values
+
+    integer function The_Type ( Type1, Type2 )
+      integer, intent(in) :: Type1, Type2
+      if ( type1 == type2 ) then
+        the_type = type1
+      else if ( type1 == num_value ) then
+        the_type = range
+      else
+        the_type = str_range
+      end if
+    end function The_Type
+
+    subroutine Without ( V1, V2 )
+      ! Add elements of V1 that are not in V2 to Values3
+      type(value_t), intent(in) :: V1(:), V2(:)
+      integer :: I
+
+      do i = 1, size(v1)
+        if ( all(v1(i) /= v2) ) call add_to_set ( v1(i) )
+      end do
+    end subroutine Without
+
+  end subroutine EXPR
+
+  ! -------------------------------------------------  EXPR_CHECK  -----
+  subroutine EXPR_CHECK ( ROOT, UNITS, VALUE, NEED, ERROR, TYPE, SCALE )
+  ! Analyze an expression, return its type, units and value.  Check that
+  ! its units are one of the units in NEED.  ERROR = true if not.
+    use Intrinsic, only: Phyq_Invalid
+    integer, intent(in) :: ROOT         ! Root of expression subtree
+    integer, intent(out) :: UNITS(2)    ! Units of expression value -- UNITS(2)
+                                        ! is PHYQ_INVALID if ROOT is not a
+                                        ! range (:) operator.
+    double precision, intent(out) :: VALUE(2) ! Expression value, if any
+    integer, intent(in) :: NEED(:)      ! Needed units
+    logical, intent(out) :: ERROR       ! "Wrong units"
+    integer, intent(out), optional :: TYPE    ! Expression type
+    double precision, optional, intent(out) :: SCALE(2) ! Scale for units
+    integer :: I
+
+    call expr ( root, units, value, type, scale )
+    error = .true.
+    do i = 1, size(need)
+      if ( units(1) == need(i) ) then
+        error = .false.
+        exit
+      end if
+    end do
+    if ( units(2) /= phyq_invalid .and. .not. error ) then
+      error = .true.
+      do i = 1, size(need)
+        if ( units(2) == need(i) ) then
+          error = .false.
+          exit
+        end if
+      end do
+    end if
+
+  end subroutine EXPR_CHECK
+
+  ! --------------------------------------  GetIndexFlagsFromList  -----
+
+  subroutine GetIndexFlagsFromList ( root, flags, status, lower, noError )
+    ! Given the root of a numeric/numeric range array
+    ! Set the flags array appropriately
+    use Declaration_table, only: NUM_VALUE
+    use Intrinsic, only: Phyq_Dimensionless
+    use MLSKinds, only: R8
+    use Tree, only: Node_ID, Subtree, Nsons
+    use Tree_Types, only: N_colon_less, N_less_colon, N_less_colon_less
+    integer, intent(in) :: ROOT         ! Tree node
+    logical, dimension(:), intent(inout) :: FLAGS ! Result
+    integer, intent(out) :: STATUS      ! Error flag, 0=success
+    integer, intent(in), optional :: LOWER ! Lower bound for result
+    logical, intent(in), optional :: NOERROR ! If set don't give bounds errors
+
+    ! Local variables
+    integer :: I,J                      ! Loop counters
+    real(r8), dimension(2) :: VALUE     ! From expr
+    integer, dimension(2) :: UNITS      ! From expr
+    integer :: TYPE                     ! From expr
+    integer :: RANGE_LOW, RANGE_HI      ! Range for flags
+    logical :: MYNOERROR                ! Copy of noError
+    integer :: MYLOWER                  ! Copy of lower
+    integer :: SON                      ! Tree node
+
+    ! Executable code
+    flags = .false.
+    status = 0
+    myNoError = .false.
+    if ( present ( noError ) ) myNoError = noError
+    mylower = 1
+    if ( present ( lower ) ) myLower = lower
+
+    do j = 2, nsons(root)
+      son = subtree ( j, root )
+      call expr ( son, units, value, type )
+      do i = 1, merge(1,2,type==num_value)
+        if ( units(i) /= phyq_dimensionless ) then
+          status = 1
+          return
+        end if
+      end do
+      range_low = nint(value(1))
+      range_hi = nint(value(merge(1,2,type==num_value)))
+      select case ( node_id(son) )
+      case ( n_colon_less )
+        range_hi = range_hi - 1
+      case ( n_less_colon )
+        range_low = range_low + 1
+      case ( n_less_colon_less )
+        range_low = range_low + 1
+        range_hi = range_hi - 1
+      end select
+      if ( .not. myNoError .and. &
+        & ( range_low < myLower .or. range_hi > myLower+size(flags)-1 ) ) then
+        status = 1
+        return
+      end if
+      range_low = max ( range_low, myLower )
+      range_hi = min ( range_hi, myLower+size(flags)-1 )
+      flags ( range_low-myLower+1 : range_hi-myLower+1 ) = .true.
+    end do
+  end subroutine GetIndexFlagsFromList
+
+  include "Value_T_Implementations.f9h"
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: expr_m.f90,v 2.35 2014/03/20 01:40:16 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module EXPR_M
+
+! $Log: expr_m.f90,v $
+! Revision 2.35  2014/03/20 01:40:16  vsnyder
+! Unified types in Intrinsic, repair some tracing
+!
+! Revision 2.34  2014/03/05 01:06:50  vsnyder
+! Repair blunder that caused a^b^c...x^y^z to be evaluated as a^b^c...x^y^a.
+!
+! Revision 2.33  2014/02/27 02:27:40  vsnyder
+! Corrections to units and ranges
+!
+! Revision 2.32  2014/02/21 19:26:03  vsnyder
+! Extensive work for variables and enumeration-type results
+!
+! Revision 2.31  2014/01/11 01:41:02  vsnyder
+! Decruftification
+!
+! Revision 2.30  2014/01/08 21:11:22  vsnyder
+! More type checking.  Better handling of arrays.  Allow == and /= for
+! types other than numeric.
+!
+! Revision 2.29  2013/12/12 02:03:41  vsnyder
+! Add ability to substitute variable values
+!
+! Revision 2.28  2013/10/16 01:12:02  vsnyder
+! Include Null() in for allocatable component in Decls() constructor.
+! Don't try to dump Values if it's not present.
+!
+! Revision 2.27  2013/10/15 23:55:20  pwagner
+! NAG demanded this change to intent in Move_Value
+!
+! Revision 2.26  2013/10/11 01:47:21  vsnyder
+! Revision for array results seems to work
+!
+! Revision 2.25  2013/09/30 23:59:24  vsnyder
+! Move StartErrorMessage from include to module
+!
+! Revision 2.24  2013/09/21 00:35:50  vsnyder
+! More trace output
+!
+! Revision 2.23  2013/09/19 23:27:38  vsnyder
+! More careful units checking
+!
+! Revision 2.22  2013/08/30 16:44:09  pwagner
+! Trying to fix bug in call trace usage
+!
+! Revision 2.21  2013/08/30 03:56:02  vsnyder
+! Revise use of trace_begin and trace_end
+!
+! Revision 2.20  2012/05/07 23:00:57  vsnyder
+! StartErrorMessage moved to include to avoid a circular dependence
+! between expr_m and MoreTree
+!
+! Revision 2.19  2012/05/05 00:11:51  vsnyder
+! Add support for 'not' operator
+!
+! Revision 2.18  2012/04/24 20:38:47  vsnyder
+! Get kinds from MLSKinds instead of MLSCommon
+!
+! Revision 2.17  2012/03/12 18:36:11  vsnyder
+! Add ln as synonym for log, add log10
+!
+! Revision 2.16  2011/04/19 01:59:43  vsnyder
+! Support == and /= relational operators too
+!
+! Revision 2.15  2011/04/18 19:33:26  vsnyder
+! Add support for relational operators and boolean-valued expressions
+!
+! Revision 2.14  2009/06/23 18:25:43  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.13  2008/09/04 20:03:09  vsnyder
+! Add PRINT statement in not_used_here
+!
+! Revision 2.12  2005/08/04 02:55:02  vsnyder
+! Add Expr_Check
+!
+! Revision 2.11  2005/06/22 17:25:48  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.10  2004/05/28 23:45:09  vsnyder
+! Get units from either operand of *, second operand of \\
+!
+! Revision 2.9  2004/05/28 23:13:46  vsnyder
+! Add power (^) operator, log, exp and sqrt functions
+!
+! Revision 2.8  2004/05/28 00:57:25  vsnyder
+! Move GetIndexFlagsFromList from MoreTree to Expr_m
+!
+! Revision 2.7  2004/01/17 03:04:48  vsnyder
+! Provide for functions in expressions
+!
+! Revision 2.6  2004/01/14 18:32:58  vsnyder
+! Stuff for Algebra module
+!
+! Revision 2.5  2002/10/08 00:09:09  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.4  2002/10/02 00:44:08  vsnyder
+! Add optional SCALE argument
+!
+! Revision 2.3  2001/11/27 00:54:37  vsnyder
+! Implement (partially) open ranges
+!
+! Revision 2.2  2001/04/09 20:59:57  vsnyder
+! Subtract negative scale factors instead of multiplying
+!
+! Revision 2.1  2000/10/11 18:57:28  vsnyder
+! Move from lib/cf_parser to lib; insert copyright notice
+!
+! Revision 2.0  2000/09/05 17:41:49  dcuddy
+! Change revision to 2.0
+!
+! Revision 1.1  2000/07/06 01:43:12  vsnyder
+! Initial check-in
+!
+@
+
+
+2.35
+log
+@Unified types in Intrinsic, repair some tracing
+@
+text
+@d21 1
+a21 1
+  implicit NONE
+d39 5
+a43 5
+    use Call_Stack_m, only: Stack_Depth
+    use DECLARATION_TABLE, only: Allocate_Test, Deallocate_Test, DECLARED, &
+      DECLS, Dump_Values, EMPTY, ENUM_VALUE, FUNCTION, LABEL, LOG_VALUE, &
+      NAMED_VALUE, NUM_VALUE, GET_DECL, RANGE, STR_RANGE, STR_VALUE, &
+      UNITS_NAME, Variable
+d45 10
+a54 10
+      F_Intersection, F_Sqrt, F_Union, F_Without
+    use INTRINSIC, only: Data_Type_Indices, Lit_Indices, PHYQ_Dimensionless, &
+      & PHYQ_Indices, PHYQ_Invalid, L_False, L_True, T_Boolean
+    use Output_m, only: NewLine, Output
+    use StartErrorMessage_m, only: StartErrorMessage
+    use STRING_TABLE, only: Display_String, FLOAT_VALUE
+    use TOGGLES, only: CON, LEVELS, TOGGLE
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+    use TREE, only: Decoration, NODE_ID, NSONS, SUB_ROSA, SUBTREE, Tree_Node_Name
+    use TREE_TYPES ! Everything, especially everything beginning with N_
+d536 1
+a536 3
+      do i = 0, stack_depth()
+        call output ( '_' )
+      end do
+d800 1
+a800 1
+    use INTRINSIC, only: PHYQ_INVALID
+d838 1
+a838 1
+    use Intrinsic, only: PHYQ_DIMENSIONLESS
+d840 1
+a840 1
+    use Tree, only: Node_ID, Subtree, nsons
+d902 1
+a902 1
+       "$Id: expr_m.f90,v 2.34 2014/03/05 01:06:50 vsnyder Exp $"
+d912 3
+@
+
+
+2.34
+log
+@Repair blunder that caused a^b^c...x^y^z to be evaluated as a^b^c...x^y^a.
+@
+text
+@d43 1
+a43 1
+      Type_Names, Type_Name_Indices, UNDECLARED, UNITS_NAME, Variable
+d46 2
+a47 2
+    use INTRINSIC, only: DATA_TYPE_INDICES, Lit_Indices, PHYQ_DIMENSIONLESS, &
+      & PHYQ_Indices, PHYQ_INVALID, L_False, L_True, T_Boolean
+d118 1
+a118 1
+        decl = decls(0.0d0, undeclared, phyq_invalid, 0, 0, null() )
+d482 5
+a486 2
+          if ( n /= size(values1) ) &
+            & call deallocate_test ( values, 'Values', moduleName )
+d539 2
+a540 4
+      if ( me == n_identifier ) then
+        call display_string ( string, before='Identifier ' )
+        call output ( ' ' )
+      end if
+d555 1
+a555 1
+          call display_string ( type_name_indices(varType), &
+d561 1
+a561 1
+        call display_string ( type_name_indices(myType), before=' Type = ' )
+d570 2
+a571 2
+      call trace_end ( 'EXPR', index=n, string='Type=' //trim(type_names(myType)), &
+        & cond=toggle(con) )
+d904 1
+a904 1
+       "$Id: expr_m.f90,v 2.33 2014/02/27 02:27:40 vsnyder Exp $"
+d914 3
+@
+
+
+2.33
+log
+@Corrections to units and ranges
+@
+text
+@d268 1
+a268 1
+      call expr ( subtree(1,root), units, value, type1, scale, values1 )
+d903 1
+a903 1
+       "$Id: expr_m.f90,v 2.32 2014/02/21 19:26:03 vsnyder Exp $"
+d913 3
+@
+
+
+2.32
+log
+@Extensive work for variables and enumeration-type results
+@
+text
+@d331 2
+a332 2
+        values1%units(1) = units
+        values1%units(2) = units
+d338 1
+d352 2
+d903 1
+a903 1
+       "$Id: expr_m.f90,v 2.31 2014/01/11 01:41:02 vsnyder Exp $"
+d913 3
+@
+
+
+2.31
+log
+@Decruftification
+@
+text
+@d39 1
+d46 2
+a47 1
+    use INTRINSIC, only: PHYQ_DIMENSIONLESS, PHYQ_Indices, PHYQ_INVALID
+d57 5
+a61 3
+    integer, intent(out) :: UNITS(2)    ! Units of expression value -- UNITS(2)
+                                        ! is PHYQ_INVALID if ROOT is not a
+                                        ! range (:) operator.
+d64 1
+d70 3
+d75 1
+d84 1
+d120 31
+a150 3
+      if ( present(type) ) type = decl%type
+      units = decl%units
+      value = decl%value
+d154 1
+a154 21
+        if ( decl%type == variable .and. allocated(decl%values) ) then
+          n = size(decl%values)
+          call allocate_test ( values, size(decl%values), 'Values', moduleName )
+          values = decl%values
+        else
+          call allocate_test ( values, 1, 'Values', moduleName )
+          type1 = decl%type
+          values = value_t(decl%type,decl%type,value,units,decoration(root))
+          select case ( decl%type )
+          case ( enum_value, label )
+            type1 = decl%tree ! dt_def node if enum_value, first son is type name
+                              ! spec_args node if label, first son is spec name,
+                              ! decoration of first son is spec_def node
+            if ( decl%type == label ) then
+              type1 = decoration(subtree(1,type1))
+            else
+              values(1)%type = type1
+            end if
+          end select
+          values(1)%decor = decoration(root)
+        end if
+d162 1
+a162 1
+      if ( present(type) ) type = num_value
+a163 1
+      if ( present(type) ) type = str_value
+d166 1
+d176 2
+a177 1
+        if ( present(type) ) type = type1
+a217 1
+              if ( present(type) ) type = type1
+d226 1
+d236 1
+d251 1
+d259 1
+d269 1
+d296 1
+a296 1
+        call expr ( subtree(2,root), units, value, type, scale, values1 )
+d298 1
+a298 1
+        call expr ( subtree(3,root), units, value, type, scale, values1 )
+d300 1
+d306 2
+a307 1
+          call expr ( subtree(i,root), units, value, type, scale )
+d311 2
+d326 2
+a327 1
+      if ( present(type) ) type = type1
+d331 2
+d347 1
+d349 2
+a350 4
+          if ( present(type) ) then
+            if ( type == num_value ) type = range
+            if ( type == str_value ) type = str_range
+          end if
+d388 1
+a388 1
+          if ( present(type) ) type = log_value
+d399 1
+a399 1
+                values1%value(j) = merge(1.0,0.0,values1%value(j) == values2%value(j))
+d401 1
+a401 1
+                values1%value(j) = merge(1.0,0.0,values1%value(j) /= values2%value(j))
+a403 3
+            values1%type = log_value
+            values1%what = log_value
+            call set_values ( log_value )
+d406 1
+a406 1
+          if ( present(type) ) type = log_value
+d417 2
+a418 1
+                values1%value(j) = merge(1.0,0.0,values1%value(j) < values2%value(j))
+d420 2
+a421 1
+                values1%value(j) = merge(1.0,0.0,values1%value(j) <= values2%value(j))
+d423 2
+a424 1
+                values1%value(j) = merge(1.0,0.0,values1%value(j) > values2%value(j))
+d426 2
+a427 1
+                values1%value(j) = merge(1.0,0.0,values1%value(j) >= values2%value(j))
+a429 3
+            values1%type = log_value
+            values1%what = log_value
+            call set_values ( log_value )
+d432 2
+a433 2
+          if ( present(type) ) type = log_value
+          if ( type1 /= log_value ) &
+d435 1
+a435 1
+          if ( type2 /= log_value ) &
+d439 2
+a440 1
+              values1%value(1) = values1%value(1) * values2%value(1)
+d442 2
+a443 1
+              values1%value(1) = max(values1%value(1), values2%value(1))
+a444 1
+            call set_values ( log_value )
+d447 2
+a448 2
+          if ( present(type) ) type = log_value
+          if ( type1 /= log_value ) then
+d451 1
+a451 2
+            values1%value(1) = 1 - nint(values1%value(1))
+            call set_values ( log_value )
+d459 13
+d476 1
+a476 1
+        if ( n == 0 ) &
+d478 4
+d486 17
+a502 2
+        call allocate_test ( values, 1, 'Values', moduleName )
+        values = value_t(empty,type,value,units,0)
+d506 5
+a510 1
+        if ( values(1)%what == enum_value ) type = values(1)%what
+d512 3
+a514 1
+      if ( me /= n_identifier .and. me /= n_array ) then
+d524 2
+d527 1
+d530 20
+a549 6
+      if ( node_id(root) == n_identifier ) then
+        call display_string ( string, before='Value = ' )
+      else
+        call output ( value(1), before='Value = ' )
+        if ( units(1) /= 0 ) then
+          call display_string ( phyq_indices(units(1)), before=' ' )
+d551 9
+a559 15
+          call output ( units(1), before=' unit ' )
+        end if
+        call output ( value(2), before=' ' )
+        if ( units(2) /= 0 ) then
+          call display_string ( phyq_indices(units(2)), before=' ' )
+        else
+          call output ( units(2), before=' unit ' )
+        end if
+      end if
+      if ( present(type) ) &
+        & call display_string ( type_name_indices(type), before=' Type = ' )
+      if ( present(scale) ) then
+        call output ( scale(1), before=' Scale = ' )
+        call output ( scale(2), before=' ' )
+      end if
+d565 2
+a566 2
+    if ( present(type) ) then
+      call trace_end ( 'EXPR', index=n, string='Type=' //trim(type_names(type)), &
+d569 2
+a570 1
+      call trace_end ( 'EXPR', index=n, cond=toggle(con) )
+d624 1
+a624 1
+        call display_string ( string, before='Argument of ' )
+d699 33
+d742 5
+d900 1
+a900 1
+       "$Id: expr_m.f90,v 2.30 2014/01/08 21:11:22 vsnyder Exp $"
+d910 3
+@
+
+
+2.30
+log
+@More type checking.  Better handling of arrays.  Allow == and /= for
+types other than numeric.
+@
+text
+@d45 1
+a45 1
+    use INTRINSIC, only: PHYQ_DIMENSIONLESS, PHYQ_Indices, PHYQ_INVALID, T_Unknown
+d514 2
+a515 2
+      use Tree, only: Dump_Tree_Node, Dump_Tree_Node_Name, Internal, &
+        & Node_Kind, Pseudo, Sub_Rosa
+a644 3
+      integer :: Type
+      type = type1
+      if ( present(type2) ) type = the_type ( type1, type2 )
+d785 1
+a785 1
+       "$Id: expr_m.f90,v 2.29 2013/12/12 02:03:41 vsnyder Exp $"
+d795 4
+@
+
+
+2.29
+log
+@Add ability to substitute variable values
+@
+text
+@d81 2
+a82 1
+    integer, parameter :: NoArray = differentShapes + 1 ! No VALUES argument
+d114 2
+d122 2
+a123 1
+          values = value_t(decl%type,decl%type,value,units)
+a125 2
+            ! Make sure values is allocated so we don't need to test for it
+            ! after calling EXPR recursively.
+d129 5
+a133 1
+            if ( decl%type == label ) type1 = decoration(subtree(1,type1))
+d135 1
+d137 2
+d277 20
+d358 22
+a379 1
+        case ( n_less, n_less_eq, n_greater, n_greater_eq, n_equal_equal, n_not_equal )
+a397 4
+              case ( n_equal_equal ) ! -------------------------------------
+                values1%value(j) = merge(1.0,0.0,values1%value(j) == values2%value(j))
+              case ( n_not_equal ) ! ---------------------------------------
+                values1%value(j) = merge(1.0,0.0,values1%value(j) /= values2%value(j))
+d400 2
+a425 22
+        case ( n_array ) ! -------------------------------------------------
+          if ( .not. present(values) ) then
+            if ( nsons(root) > 1 ) then
+              call announceError ( root, noArray )
+            else
+              call expr ( subtree(i,root), units, value, type, scale )
+            end if
+          else
+            call deallocate_test ( values3, 'Values3', moduleName )
+            call allocate_test ( values1, 1, 'Values1', moduleName )
+            call expr ( subtree(1,root), units, value2, type2, scale, values2 )
+            values1(1) = value_t(empty,type,value,units)
+            call set_values ( type2 ) ! Makes values1 deallocated
+            do i = 2, nsons(root)
+              call expr ( subtree(i,root), units, value2, type2, scale, values2 )
+              n = size(values) + size(values2)
+              call allocate_test ( values1, n, 'Values1', moduleName )
+              values1(1:size(values)) = values
+              values1(size(values)+1:n) = values2
+              call set_values ( type2 ) ! Makes values1 deallocated
+            end do
+          end if
+d443 13
+a455 1
+        values = value_t(empty,type,value,units)
+a456 7
+      if ( present(type) ) type = values(1)%type
+      select case ( values(1)%type )
+      case ( enum_value, label )
+        values%type = type1
+      case default
+        values%what = values%type
+      end select
+d528 3
+a650 9
+          values%type = type
+          values%what = decl%type
+          select case ( decl%type )
+          case ( enum_value )
+            values%type = decl%units
+          case ( variable )
+            values%type = decl%units
+            if ( allocated(decl%values) ) units = decl%values(1)%units(1)
+          end select
+d788 1
+a788 1
+       "$Id: expr_m.f90,v 2.28 2013/10/16 01:12:02 vsnyder Exp $"
+d798 3
+@
+
+
+2.28
+log
+@Include Null() in for allocatable component in Decls() constructor.
+Don't try to dump Values if it's not present.
+@
+text
+@d40 3
+a42 3
+      DECLS, Dump_Values, EMPTY, ENUM_VALUE, FUNCTION, LOG_VALUE, NAMED_VALUE, &
+      NUM_VALUE, GET_DECL, RANGE, STR_RANGE, STR_VALUE, Type_Names, &
+      Type_Name_Indices, UNDECLARED, UNITS_NAME, Variable
+d45 1
+a45 1
+    use INTRINSIC, only: PHYQ_DIMENSIONLESS, PHYQ_Indices, PHYQ_INVALID
+d51 1
+a51 1
+    use TREE, only: NODE_ID, NSONS, SUB_ROSA, SUBTREE, Tree_Node_Name
+d105 1
+a105 3
+        decl = get_decl(string, named_value)
+        if ( decl%type == empty ) decl = get_decl(string, enum_value)
+        if ( decl%type == empty ) decl = get_decl(string, variable)
+a111 1
+!       if ( decl%type == enum_value ) value = string
+d113 1
+a113 1
+        if ( allocated(decl%values) ) then
+d117 12
+d237 2
+a238 2
+      value = 1.0
+      do i = nsons(root), 1, -1 ! Power operator is right associative
+d354 1
+a354 1
+            call set_values ( type1 )
+d389 1
+a389 1
+            values1(1) = value_t(type,value,units)
+d417 1
+a417 1
+        values = value_t(type,value,units)
+d420 6
+d483 2
+a484 1
+      use Tree, only: Dump_Tree_Node
+d487 1
+d502 6
+a507 1
+        call display_string ( string, before='Argument of ' )
+d618 8
+d763 1
+a763 1
+       "$Id: expr_m.f90,v 2.27 2013/10/15 23:55:20 pwagner Exp $"
+d773 4
+@
+
+
+2.27
+log
+@NAG demanded this change to intent in Move_Value
+@
+text
+@d109 1
+a109 1
+        decl = decls(0.0d0, undeclared, phyq_invalid, 0, 0 )
+d439 3
+d733 1
+a733 1
+       "$Id: expr_m.f90,v 2.26 2013/10/11 01:47:21 vsnyder Exp $"
+d743 3
+@
+
+
+2.26
+log
+@Revision for array results seems to work
+@
+text
+@d575 1
+a575 1
+      type(value_t), intent(in), allocatable :: Value(:)
+d730 1
+a730 1
+       "$Id: expr_m.f90,v 2.25 2013/09/30 23:59:24 vsnyder Exp $"
+d740 3
+@
+
+
+2.25
+log
+@Move StartErrorMessage from include to module
+@
+text
+@d16 5
+d31 2
+d35 1
+a35 1
+  recursive subroutine EXPR ( ROOT, UNITS, VALUE, TYPE, SCALE )
+d37 1
+d39 8
+a46 6
+    use DECLARATION_TABLE, only: DECLARED, DECLS, EMPTY, ENUM_VALUE, &
+                                 FUNCTION, GET_DECL, LOG_VALUE, &
+                                 NAMED_VALUE, NUM_VALUE, RANGE, STR_RANGE, &
+                                 STR_VALUE, UNDECLARED, UNITS_NAME
+    use Functions, only: F_Exp, F_Ln, F_Log, F_Log10, F_Sqrt
+    use INTRINSIC, only: PHYQ_DIMENSIONLESS, PHYQ_INVALID
+d48 2
+a49 2
+    use STRING_TABLE, only: FLOAT_VALUE
+    use TOGGLES, only: CON, TOGGLE
+d51 1
+a51 1
+    use TREE, only: NODE_ID, NSONS, SUB_ROSA, SUBTREE
+d62 1
+d65 1
+a65 1
+    integer :: I
+d67 2
+d76 1
+d80 3
+a82 1
+    integer, parameter :: NonNumeric = badNode + 1 ! Non numeric arg for func
+d85 2
+a86 1
+    integer, parameter :: NotUnitless = notLogical + 1 ! Not unitless
+d93 2
+a94 1
+    call trace_begin ( trace, 'EXPR', root, cond=toggle(con) )
+d98 2
+d102 1
+a102 1
+    case ( n_identifier )
+d107 1
+d114 9
+a122 1
+    case ( n_number )
+d127 1
+a127 1
+    case ( n_string )
+d131 1
+a131 1
+    case ( n_func_ref )
+d136 81
+a216 12
+      if ( decl%type /= function ) then
+        call announceError ( son1, notFunc )
+      else
+        if ( nsons(root) /= 2 ) then
+          call announceError ( root, wrongNumArgs )
+        else
+          call expr ( subtree(2,root), units, value, type2 )
+          if ( type2 /= num_value ) then
+            call announceError ( subtree(2,root), nonNumeric )
+          else if ( units(1) /= phyq_dimensionless ) then
+            !??? Does the tree checker already check this?
+            call announceError ( subtree(2,root), notUnitlessArg )
+d218 4
+a221 29
+            select case ( decl%units ) ! the function index in this case
+            case ( f_exp )
+              if ( value(1) > log(huge(value(1))) ) then
+                call announceError ( subtree(2,root), outOfRange )
+              else
+                value(1) = exp(value(1))
+              end if
+            case ( f_ln, f_log )
+              if ( value(1) <= 0.0 ) then
+                call announceError ( subtree(2,root), outOfRange )
+              else
+                value(1) = log(value(1))
+              end if
+            case ( f_log10 )
+              if ( value(1) <= 0.0 ) then
+                call announceError ( subtree(2,root), outOfRange )
+              else
+                value(1) = log10(value(1))
+              end if
+            case ( f_sqrt )
+              if ( value(1) < 0.0 ) then
+                call announceError ( subtree(2,root), outOfRange )
+              else
+                value(1) = sqrt(value(1))
+              end if
+            case default
+              call announceError ( son1, unsupportedFunc )
+            end select
+            if ( present(type) ) type = num_value
+d223 3
+a225 1
+        end if
+d227 1
+a227 1
+    case ( n_pow )
+d230 3
+a232 5
+        call expr ( subtree(i,root), units, value2, type2 )
+        if ( any(units /= phyq_dimensionless ) ) then
+            call announceError ( subtree(2,root), notUnitless )
+        else if ( type2 == num_value ) then
+          value = value2(1) ** value
+d234 12
+a245 1
+          value = value2 ** value
+d248 11
+d260 1
+a260 1
+      call expr ( subtree(1,root), units, value, type1, scale )
+d273 1
+a273 1
+          & call expr ( subtree(2,root), units2, value2, type2, scale2 )
+d275 3
+a277 1
+        case ( n_colon, n_colon_less, n_less_colon, n_less_colon_less )
+d284 1
+a284 1
+        case ( n_plus, n_minus )
+d286 2
+a287 1
+            if ( any(units /= units2) ) call announceError ( root, wrongUnits )
+d289 1
+a289 1
+              value = value + value2
+d291 1
+a291 1
+              value = value - value2
+d293 1
+d295 2
+a296 1
+            value = - value
+d298 5
+a302 3
+        case ( n_mult )
+          if ( .not. any(units == phyq_dimensionless) .and. &
+             & .not. any(units2 == phyq_dimensionless) ) &
+d304 7
+a310 5
+          value = value * value2
+          where ( units == phyq_dimensionless ) units = units2
+        case ( n_div )
+          if ( .not. any(units == phyq_dimensionless) .and. &
+             & .not. any(units2 == phyq_dimensionless) ) &
+d312 3
+a314 4
+          value = value / value2
+        case ( n_into )
+          if ( .not. any(units == phyq_dimensionless) .and. &
+             & .not. any(units2 == phyq_dimensionless) ) &
+d316 4
+a319 2
+          value = value2 / value
+          units = units2
+d322 24
+a345 23
+          if ( type1 /= num_value ) then
+            call announceError ( subtree(1,root), nonNumeric )
+            if ( type2 /= num_value ) &
+              call announceError ( subtree(2,root), nonNumeric )
+          else if ( type2 /= num_value ) then
+            call announceError ( subtree(2,root), nonNumeric )
+          else if ( any(units /= units2) ) then
+            call announceError ( root, wrongUnits )
+          else
+            select case ( me )
+            case ( n_less )
+              value(1) = merge(1.0,0.0,value(1) < value2(1) )
+            case ( n_less_eq )
+              value(1) = merge(1.0,0.0,value(1) <= value2(1) )
+            case ( n_greater )
+              value(1) = merge(1.0,0.0,value(1) > value2(1) )
+            case ( n_greater_eq )
+              value(1) = merge(1.0,0.0,value(1) >= value2(1) )
+            case ( n_equal_equal )
+              value(1) = merge(1.0,0.0,value(1) == value2(1) )
+            case ( n_not_equal )
+              value(1) = merge(1.0,0.0,value(1) /= value2(1) )
+            end select
+d347 1
+a347 1
+        case ( n_and, n_or )
+d349 11
+a359 10
+          if ( type1 /= log_value ) then
+            call announceError ( subtree(1,root), notLogical )
+            if ( type2 /= log_value ) &
+              call announceError ( subtree(2,root), notLogical )
+          else if ( type2 /= log_value ) then
+            call announceError ( subtree(2,root), notLogical )
+          else if ( me == n_and ) then
+            value(1) = value(1) * value2(1)
+          else if ( me == n_or ) then
+            value(1) = max(value(1), value2(1))
+d361 1
+a361 1
+        case ( n_not )
+d366 24
+a389 1
+            value(1) = 1 - nint(value(1))
+d396 51
+a446 1
+    call trace_end ( 'EXPR', index=type, cond=toggle(con) )
+d448 14
+d468 1
+d474 7
+d490 3
+d521 101
+d725 2
+d730 1
+a730 1
+       "$Id: expr_m.f90,v 2.24 2013/09/21 00:35:50 vsnyder Exp $"
+d740 3
+@
+
+
+2.24
+log
+@More trace output
+@
+text
+@d37 1
+a315 2
+    include "StartErrorMessage.f9h"
+
+d422 1
+a422 1
+       "$Id: expr_m.f90,v 2.23 2013/09/19 23:27:38 vsnyder Exp $"
+d432 3
+@
+
+
+2.23
+log
+@More careful units checking
+@
+text
+@d265 1
+a265 1
+    call trace_end ( 'EXPR', cond=toggle(con) )
+d423 1
+a423 1
+       "$Id: expr_m.f90,v 2.22 2013/08/30 16:44:09 pwagner Exp $"
+d433 3
+@
+
+
+2.22
+log
+@Trying to fix bug in call trace usage
+@
+text
+@d69 2
+a70 1
+    integer, parameter :: OutOfRange = notUnitless + 1
+d73 1
+d116 2
+a117 1
+            call announceError ( subtree(2,root), notUnitless )
+d155 3
+a157 1
+        if ( type2 == num_value ) then
+d188 1
+d198 3
+d204 3
+d209 3
+d222 2
+d268 1
+a268 1
+      use OUTPUT_M, only: OUTPUT
+d270 1
+a270 1
+      use TREE, only: DUMP_TREE_NODE
+d288 4
+d304 4
+d423 1
+a423 1
+       "$Id: expr_m.f90,v 2.21 2013/08/30 03:56:02 vsnyder Exp $"
+d433 3
+@
+
+
+2.21
+log
+@Revise use of trace_begin and trace_end
+@
+text
+@d248 1
+a248 1
+    if ( toggle(con) ) call trace_end ( 'EXPR', cond=toggle(con) )
+d398 1
+a398 1
+       "$Id: expr_m.f90,v 2.20 2012/05/07 23:00:57 vsnyder Exp $"
+d408 3
+@
+
+
+2.20
+log
+@StartErrorMessage moved to include to avoid a circular dependence
+between expr_m and MoreTree
+@
+text
+@d57 1
+d73 1
+a73 1
+    if ( toggle(con) ) call trace_begin ( 'EXPR', root )
+d248 1
+a248 1
+    if ( toggle(con) ) call trace_end ( 'EXPR' )
+d398 1
+a398 1
+       "$Id: expr_m.f90,v 2.19 2012/05/05 00:11:51 vsnyder Exp $"
+d408 4
+@
+
+
+2.19
+log
+@Add support for 'not' operator
+@
+text
+@a249 1
+      use MORETREE, only: StartErrorMessage
+d288 3
+d397 1
+a397 1
+       "$Id: expr_m.f90,v 2.18 2012/04/24 20:38:47 vsnyder Exp $"
+d407 3
+@
+
+
+2.18
+log
+@Get kinds from MLSKinds instead of MLSCommon
+@
+text
+@d32 1
+a32 1
+                                 EXPRN, FUNCTION, GET_DECL, LOG_VALUE, &
+d66 2
+a67 1
+    integer, parameter :: NotUnitless = notFunc + 1 ! Not a function
+a97 2
+    case ( n_and, n_or )
+      if ( present(type) ) type = exprn
+d222 20
+d262 1
+a262 2
+        call output ( 'Argument of ' )
+        call display_string ( string )
+d267 3
+d271 1
+a271 2
+        call output ( 'Argument of ' )
+        call display_string ( string )
+d274 1
+a274 2
+        call output ( 'Argument of ' )
+        call display_string ( string )
+d395 1
+a395 1
+       "$Id: expr_m.f90,v 2.17 2012/03/12 18:36:11 vsnyder Exp $"
+d405 3
+@
+
+
+2.17
+log
+@Add ln as synonym for log, add log10
+@
+text
+@d315 1
+a315 1
+    use MLSCommon, only: R8
+d376 1
+a376 1
+       "$Id: expr_m.f90,v 2.16 2011/04/19 01:59:43 vsnyder Exp $"
+d386 3
+@
+
+
+2.16
+log
+@Support == and /= relational operators too
+@
+text
+@d35 1
+a35 1
+    use Functions, only: F_Exp, F_Log, F_Sqrt
+d123 1
+a123 1
+            case ( f_log )
+d129 6
+d376 1
+a376 1
+       "$Id: expr_m.f90,v 2.15 2011/04/18 19:33:26 vsnyder Exp $"
+d386 3
+@
+
+
+2.15
+log
+@Add support for relational operators and boolean-valued expressions
+@
+text
+@d193 1
+a193 1
+        case ( n_less, n_less_eq, n_greater, n_greater_eq )
+d204 1
+a204 1
+              value = merge(1.0,0.0,value < value2 )
+d206 1
+a206 1
+              value = merge(1.0,0.0,value <= value2 )
+d208 1
+a208 1
+              value = merge(1.0,0.0,value > value2 )
+d210 5
+a214 1
+              value = merge(1.0,0.0,value >= value2 )
+d370 1
+a370 1
+       "$Id: expr_m.f90,v 2.14 2009/06/23 18:25:43 pwagner Exp $"
+d380 3
+@
+
+
+2.14
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d22 1
+a22 1
+       "$RCSfile: $"
+d32 3
+a34 3
+                                 EXPRN, FUNCTION, GET_DECL, NAMED_VALUE, &
+                                 NUM_VALUE, RANGE, STR_RANGE, STR_VALUE, &
+                                 UNDECLARED, UNITS_NAME
+d47 2
+a48 1
+    double precision, intent(out) :: VALUE(2) ! Expression value, if any
+d57 1
+a57 1
+    integer :: TYPE2               ! Type of son of "root"
+d153 2
+a154 1
+      call expr ( subtree(1,root), units, value, type, scale )
+d166 1
+a166 1
+          call expr ( subtree(2,root), units2, value2, type, scale2 )
+d193 20
+d366 1
+a366 1
+       "$Id: read_apriori.f90 is it here $"
+d376 3
+@
+
+
+2.13
+log
+@Add PRINT statement in not_used_here
+@
+text
+@d22 1
+a22 1
+       "$RCSfile: expr_m.f90,v $"
+d341 1
+a342 1
+!---------------------------- RCS Ident Info -------------------------------
+d344 2
+a345 3
+       "$Id: expr_m.f90,v 2.12 2005/08/04 02:55:02 vsnyder Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d347 1
+a347 1
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
+d349 1
+d354 3
+@
+
+
+2.12
+log
+@Add Expr_Check
+@
+text
+@d344 1
+a344 1
+       "$Id: expr_m.f90,v 2.11 2005/06/22 17:25:48 pwagner Exp $"
+d348 1
+d354 3
+@
+
+
+2.11
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d18 1
+a18 1
+  public :: EXPR, GetIndexFlagsFromList
+d22 1
+a22 1
+       "$RCSfile: $"
+d240 36
+d344 1
+a344 1
+       "$Id: $"
+d353 3
+@
+
+
+2.10
+log
+@Get units from either operand of *, second operand of \\
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d20 1
+a20 3
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=256), private :: Id = &
+       "$Id: expr_m.f90,v 2.9 2004/05/28 23:13:46 vsnyder Exp $"
+d22 1
+a22 1
+       "$RCSfile: expr_m.f90,v $"
+d306 5
+d317 3
+@
+
+
+2.9
+log
+@Add power (^) operator, log, exp and sqrt functions
+@
+text
+@d14 1
+a14 1
+       "$Id: expr_m.f90,v 2.8 2004/05/28 00:57:25 vsnyder Exp $"
+d179 1
+d184 1
+d306 3
+@
+
+
+2.8
+log
+@Move GetIndexFlagsFromList from MoreTree to Expr_m
+@
+text
+@d14 1
+a14 1
+       "$Id: expr_m.f90,v 2.7 2004/01/17 03:04:48 vsnyder Exp $"
+d26 1
+a26 1
+                                 EXPRN, GET_DECL, NAMED_VALUE, &
+d29 1
+a30 2
+    use MORETREE, only: StartErrorMessage
+    use OUTPUT_M, only: OUTPUT
+d34 1
+a34 1
+    use TREE, only: DUMP_TREE_NODE, NODE_ID, NSONS, SUB_ROSA, SUBTREE
+d41 3
+a43 3
+    double precision, intent(out) :: VALUE(2)! Expression value, if any
+    integer, intent(out), optional :: TYPE        ! Expression type
+    double precision, optional, intent(out) :: SCALE(2)! Scale for units
+d46 1
+d48 1
+d50 1
+d55 9
+d92 53
+d184 1
+a184 7
+          call startErrorMessage ( root )
+          call dump_tree_node ( root, 0 )
+          call output ( ' is not supported.', advance='yes' )
+          ! There's no way to return an error, so return something
+          type = empty
+          units = PHYQ_INVALID
+          value = 0.0
+d189 41
+d304 3
+@
+
+
+2.7
+log
+@Provide for functions in expressions
+@
+text
+@d10 1
+a10 1
+  public :: EXPR
+d14 1
+a14 1
+       "$Id: expr_m.f90,v 2.6 2004/01/14 18:32:58 vsnyder Exp $"
+d30 1
+a30 1
+    use LEXER_CORE, only: PRINT_SOURCE
+d35 1
+a35 2
+    use TREE, only: DUMP_TREE_NODE, NODE_ID, NSONS, SOURCE_REF, SUB_ROSA, &
+      & SUBTREE
+d120 1
+a120 3
+          call output ( '***** At ', from_where = "Expr_M" )
+          call print_source ( source_ref(root) )
+          call output ( ': ' )
+d132 66
+d205 3
+@
+
+
+2.6
+log
+@Stuff for Algebra module
+@
+text
+@a7 10
+  use DECLARATION_TABLE, only: DECLARED, DECLS, EMPTY, ENUM_VALUE, &
+                               EXPRN, GET_DECL, NAMED_VALUE, &
+                               NUM_VALUE, RANGE, STR_RANGE, STR_VALUE, &
+                               UNDECLARED, UNITS_NAME
+  use INTRINSIC, only: PHYQ_DIMENSIONLESS, PHYQ_INVALID
+  use STRING_TABLE, only: FLOAT_VALUE
+  use TOGGLES, only: CON, TOGGLE
+  use TRACE_M, only: TRACE_BEGIN, TRACE_END
+  use TREE, only: NODE_ID, NSONS, SUB_ROSA, SUBTREE
+  use TREE_TYPES ! Everything, especially everything beginning with N_
+d14 1
+a14 1
+       "$Id: expr_m.f90,v 2.5 2002/10/08 00:09:09 pwagner Exp $"
+d24 15
+d121 9
+a129 1
+          ! Shouldn't get here -- presumably checked already
+d142 3
+@
+
+
+2.5
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d24 1
+a24 1
+       "$Id: expr_m.f90,v 2.4 2002/10/02 00:44:08 vsnyder Exp $"
+d113 2
+d129 3
+@
+
+
+2.4
+log
+@Add optional SCALE argument
+@
+text
+@d24 1
+a24 1
+       "$Id: expr_m.f90,v 2.3 2001/11/27 00:54:37 vsnyder Exp $"
+d27 1
+d120 4
+d127 3
+@
+
+
+2.3
+log
+@Implement (partially) open ranges
+@
+text
+@d24 1
+a24 1
+       "$Id: expr_m.f90,v 2.2 2001/04/09 20:59:57 vsnyder Exp $"
+d31 1
+a31 1
+  recursive subroutine EXPR ( ROOT, UNITS, VALUE, TYPE )
+d39 1
+d46 1
+d50 2
+a51 1
+    value = 0.0d0                  ! default
+d77 1
+a77 1
+      call expr ( subtree(1,root), units, value, type )
+d86 1
+d89 1
+a89 1
+          call expr ( subtree(2,root), units2, value2, type )
+d93 1
+d122 3
+@
+
+
+2.2
+log
+@Subtract negative scale factors instead of multiplying
+@
+text
+@d24 1
+a24 1
+       "$Id: expr_m.f90,v 2.1 2000/10/11 18:57:28 vsnyder Exp $"
+d87 1
+a87 1
+        case ( n_colon )
+d117 3
+@
+
+
+2.1
+log
+@Move from lib/cf_parser to lib; insert copyright notice
+@
+text
+@d24 1
+a24 1
+       "$Id: expr_m.f90,v 2.0 2000/09/05 17:41:49 dcuddy Exp $"
+d78 5
+a82 1
+        value(1) = value(1) * decl%value
+d117 3
+@
+

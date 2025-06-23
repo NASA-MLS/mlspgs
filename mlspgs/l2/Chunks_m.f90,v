@@ -1,0 +1,713 @@
+head	2.13;
+access;
+symbols
+	v5-02-NRT-19:2.13
+	v6-00:2.13
+	v5-02-NRT-18:2.13
+	v5-02:2.12
+	v5-01-NRT-17:2.13
+	v5-01-NRT-16:2.13
+	v5-01-NRT-15:2.13
+	v5-01-NRT-14:2.13
+	neuralnetworks-1-0:2.13.0.4
+	cfm-single-freq-0-1:2.13.0.2
+	v5-01:2.12
+	v5-00:2.12
+	v4-23-TA133:2.12.0.2
+	mus-emls-1-70:2.11.0.4
+	rel-1-0-englocks-work:2.11.0.2
+	VUMLS1-00:2.10
+	VPL1-00:2.10
+	V4-22-NRT-08:2.9
+	VAM1-00:2.9
+	V4-21:2.8.0.2
+	V4-13:2.8
+	V4-12:2.8
+	V4-11:2.8
+	V4-10:2.8
+	V3-43:2.5
+	M4-00:2.8
+	V3-41:2.5
+	V3-40-PlusGM57:2.5.0.2
+	V2-24-NRT-04:2.3
+	V3-33:2.6
+	V2-24:2.3
+	V3-31:2.6
+	V3-30-NRT-05:2.6
+	cfm-01-00:2.6
+	V3-30:2.5
+	V3-20:2.5
+	V3-10:2.5
+	V2-23-NRT-02:2.3
+	V2-23:2.3
+	V2-22-NRT-01:2.3
+	V2-22:2.3
+	V2-21:2.3
+	V2-20:2.3
+	V2-11:2.3
+	V2-10:2.3
+	V2-00:2.3
+	V1-51:2.1
+	V1-50:2.1
+	V1-45:2.1
+	V1-44:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.13
+date	2020.07.09.23.52.01;	author pwagner;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2018.11.01.23.17.33;	author pwagner;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2018.03.02.00.59.44;	author pwagner;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2016.07.28.00.41.41;	author vsnyder;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2015.06.19.00.36.39;	author pwagner;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2012.06.21.00.40.28;	author pwagner;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2011.06.29.21.53.55;	author pwagner;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2010.05.23.03.34.29;	author honghanh;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2009.06.23.18.46.18;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2009.02.03.17.58.38;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2005.09.21.23.22.42;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2005.06.22.18.57.01;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2004.05.19.19.15.07;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.13
+log
+@Added Start,EndTime components to MLSChunk_T
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=============================================================================
+module Chunks_m
+!=============================================================================
+
+  use Dates_Module, only: TAI93S2HID
+  use MLSCommon, only: MLSChunk_T
+  implicit none
+  private
+  public :: Dump, Initialize, MLSChunk_T
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: Chunks_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+  interface Dump
+    module procedure Dump_Chunks, Dump_One_Chunk
+  end interface
+
+contains ! =====     Private Procedures     ============================
+
+  ! ------------------------------------------------  Dump_Chunks  -----
+  subroutine Dump_Chunks ( Chunk )
+    ! Let's write them as a table instead of Dumping each one indivdually
+
+    use HighOutput, only: Tab, OutputNamedValue
+    use Output_m, only: Blanks, NewLine, Output
+
+    type(MLSChunk_t), intent(in) :: Chunk(:)
+    integer :: I
+    character(len=*), parameter :: The80 = &
+      & '12345678901234567890123456789012345678901234567890123456789012345678901234567890'
+    character(len=*), parameter :: TheDecades = &
+      & '         1         2         3         4         5         6         7         8'
+    call outputNamedValue ( 'Size(chunks)', size(chunk), options='--Headline' )
+    ! call output( The80, advance='yes' )
+    ! call output( TheDecades, advance='yes' )
+    ! Column headers: 3 lines
+    !                       MAF 
+    !            Index      Overlaps  Non-overlap        chunk non-overlap      phi
+    ! Chunk   First  Last  Lower Upper    First Last      size    size     start   end
+    call tab ( 3 )
+    call output( 'MAF', advance='yes' )
+    call tab ( 3 )
+    call output( 'Index', advance='no' )
+    call tab ( 7 )
+    call output( 'Overlaps', advance='no' )
+    call tab ( 10 )
+    call output( 'Non-overlaps', advance='no' )
+    call tab ( 14 )
+    call output( 'chunk', advance='no' )
+    call blanks ( 1 )
+    call output( 'Non-overlap', advance='no' )
+    call tab ( 18 )
+    call output( 'phi', advance='no' )
+    call newLine
+    
+    call output( 'chunk', advance='no' )
+    call tab
+    call output( 'First', advance='no' )
+    call tab
+    call output( 'Last', advance='no' )
+    call tab
+    call tab
+    call output( 'Lower', advance='no' )
+    call tab
+    call output( 'Upper', advance='no' )
+    call tab
+    call output( 'First', advance='no' )
+    call tab
+    call output( 'Last', advance='no' )
+    call tab
+    call tab
+    call output( 'size', advance='no' )
+    call tab
+    call output( 'size', advance='no' )
+    call tab
+    call tab
+    call output( 'start', advance='no' )
+    call tab
+    call output( 'end', advance='no' )
+    call newLine
+    do i = 1, size(chunk)
+      call output ( i, advance='no' )
+      call tab
+      call tab
+      call output ( chunk(i)%firstMAFIndex, advance='no' )
+      call tab
+      call tab
+      call output ( chunk(i)%lastMAFIndex, advance='no' )
+      call tab
+      call tab
+      call output ( chunk(i)%noMAFsLowerOverlap, advance='no' )
+      call tab
+      call tab
+      call output ( chunk(i)%noMAFsUpperOverlap, advance='no' )
+      call tab
+      call tab
+      call output ( chunk(i)%firstMAFIndex + chunk(i)%noMAFsLowerOverlap, advance='no' )
+      call tab
+      call tab
+      call output ( chunk(i)%lastMAFIndex - chunk(i)%noMAFsUpperOverlap, advance='no' )
+      call tab
+      call tab
+      call output ( chunk(i)%lastMAFIndex - chunk(i)%firstMAFIndex+1, advance='no' )
+      call tab
+      call output ( chunk(i)%lastMAFIndex - chunk(i)%firstMAFIndex &
+      & - chunk(i)%noMAFsUpperOverlap - chunk(i)%noMAFsLowerOverlap + 1, advance='no' )
+      call tab
+      call output ( chunk(i)%phiStart, advance='no', format='(F10.2)' )
+      call blanks( 1 )
+      call output ( chunk(i)%phiEnd, advance='no', format='(F10.2)' )
+      call tab
+      call output ( tai93s2hid(chunk(i)%StartTime, leapsec=.true.), advance='no', format='(F10.2)' )
+      call blanks( 1 )
+      call output ( tai93s2hid(chunk(i)%EndTime, leapsec=.true.), advance='no', format='(F10.2)' )
+      call NewLine
+    end do
+  end subroutine Dump_Chunks
+
+  subroutine Dump_Chunks_old ( Chunks )
+    ! Man, this one was terrible
+
+    use Output_m, only: Output
+
+    type(MLSChunk_t), intent(in) :: Chunks(:)
+    integer :: I
+    call output ( 'CHUNKS: SIZE = ' )
+    call output ( size(chunks), advance='yes' )
+    do i = 1, size(chunks)
+      call output ( i, before=' Chunk ', advance='yes' )
+      call dump(chunks(i))
+    end do
+  end subroutine Dump_Chunks_old
+
+  ! ---------------------------------------------  Dump_One_Chunk  -----
+  subroutine Dump_One_Chunk ( Chunk )
+
+    use Dump_0, only: Dump
+    use Output_m, only: Output
+
+    type(MLSChunk_t), intent(in) :: Chunk
+    if ( chunk%chunkNumber > -1 ) call output ( chunk%chunkNumber, before='  chunkNumber: ' )
+    call output ( chunk%firstMAFIndex, before='  firstMAFIndex: ' )
+    call output ( chunk%lastMAFIndex, before='  lastMAFIndex: ', advance='yes' )
+    call output ( chunk%noMAFsLowerOverlap, before='  noMAFsLowerOverlap: ' )
+    call output ( chunk%noMAFsUpperOverlap, before='  noMAFsUpperOverlap: ', &
+      & advance='yes' )
+    call output ( chunk%firstMAFIndex + chunk%noMAFsLowerOverlap, &
+      & before='  1st non-overlapped MAF: ' )
+    call output ( chunk%lastMAFIndex - chunk%noMAFsUpperOverlap, &
+      & before='  last non-overlapped MAF: ', advance='yes' )
+    call output ( chunk%lastMAFIndex - chunk%firstMAFIndex + 1, &
+      & before='  chunk size: ' )
+    call output ( chunk%lastMAFIndex - chunk%firstMAFIndex &
+      & - chunk%noMAFsUpperOverlap - chunk%noMAFsLowerOverlap + 1, &
+      & before='  non-overlapped chunk size: ', advance='yes' )
+    call output ( '  phi start, end: ' )
+    call output ( (/chunk%phiStart, chunk%phiEnd /), format='(F10.2)', &
+      & advance='no' )
+    call output ( '  hid start, end: ' )
+    call output ( (/tai93s2hid(chunk%StartTime, leapsec=.true.), &
+      & tai93s2hid(chunk%EndTime, leapsec=.true.) /), format='(F10.2)', &
+      & advance='yes' )
+    if ( associated(chunk%HGridOffsets) ) &
+      & call dump( chunk%HGridOffsets, 'HGrid offsets' )
+    if ( associated(chunk%HGridTotals) ) &
+      & call dump( chunk%HGridTotals, 'HGrid Totals' )
+  end subroutine Dump_One_Chunk
+
+  ! ------------------------------------------------  Initialize  -----
+  ! Override each chunk component's default values if given a precursor
+  subroutine Initialize ( Chunk, Precursor )
+    type(MLSChunk_T)                       :: Chunk
+    type(MLSChunk_T), optional, intent(in) :: Precursor
+    if ( .not. present(precursor) ) return
+    chunk%abandoned            = precursor%abandoned
+    chunk%firstMAFIndex        = precursor%lastMAFIndex + 1
+    chunk%lastMAFIndex         = chunk%firstMAFIndex + precursor%lastMAFIndex - precursor%firstMAFIndex
+    chunk%noMAFsLowerOverlap   = precursor%noMAFsLowerOverlap
+    chunk%noMAFsUpperOverlap   = precursor%noMAFsUpperOverlap
+    chunk%chunkNumber          = precursor%chunkNumber       
+    chunk%phiStart             = precursor%phiEnd      
+    chunk%phiEnd               = 2*precursor%phiEnd - precursor%phiStart
+    chunk%StartTime            = precursor%EndTime      
+    chunk%EndTime              = 2*precursor%EndTime - precursor%StartTime
+  end subroutine Initialize
+
+!=======================================================================
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: Chunks_m.f90,v 2.12 2018/11/01 23:17:33 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Chunks_m
+
+! $Log: Chunks_m.f90,v $
+! Revision 2.12  2018/11/01 23:17:33  pwagner
+! Dont need to print column numbers any more
+!
+! Revision 2.11  2018/03/02 00:59:44  pwagner
+! Improve how ChunkDivide appears when Dump-ed
+!
+! Revision 2.10  2016/07/28 00:41:41  vsnyder
+! Remove unreferenced USE
+!
+! Revision 2.9  2015/06/19 00:36:39  pwagner
+! Moved MLSChunk_T to MLSCommon in lib
+!
+! Revision 2.8  2012/06/21 00:40:28  pwagner
+! Added phi start and end to be used someday by HGrid
+!
+! Revision 2.7  2011/06/29 21:53:55  pwagner
+! Added initialize, improved dump
+!
+! Revision 2.6  2010/05/23 03:34:29  honghanh
+! Initialize firstMafIndex, lastMAfIndex and a couple of other variables
+!
+! Revision 2.5  2009/06/23 18:46:18  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.4  2009/02/03 17:58:38  pwagner
+! Added the abandoned field
+!
+! Revision 2.3  2005/09/21 23:22:42  pwagner
+! Dump may dump a single chunk
+!
+! Revision 2.2  2005/06/22 18:57:01  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.1  2004/05/19 19:15:07  vsnyder
+! Initial commit
+!
+@
+
+
+2.12
+log
+@Dont need to print column numbers any more
+@
+text
+@d16 1
+d29 1
+a29 1
+    module procedure Dump_Chunks, Dump_one_chunk
+d125 4
+d172 4
+d197 2
+d205 1
+a205 1
+       "$Id: Chunks_m.f90,v 2.11 2018/03/02 00:59:44 pwagner Exp $"
+d215 3
+@
+
+
+2.11
+log
+@Improve how ChunkDivide appears when Dump-ed
+@
+text
+@d27 1
+a27 1
+  interface DUMP
+d47 2
+a48 2
+    call output( The80, advance='yes' )
+    call output( TheDecades, advance='yes' )
+d194 1
+a194 1
+       "$Id: Chunks_m.f90,v 2.10 2016/07/28 00:41:41 vsnyder Exp $"
+d204 3
+@
+
+
+2.10
+log
+@Remove unreferenced USE
+@
+text
+@d34 96
+a129 1
+  subroutine Dump_Chunks ( Chunks )
+d141 1
+a141 1
+  end subroutine Dump_Chunks
+d194 1
+a194 1
+       "$Id: Chunks_m.f90,v 2.9 2015/06/19 00:36:39 pwagner Exp $"
+d204 3
+@
+
+
+2.9
+log
+@Moved MLSChunk_T to MLSCommon in lib
+@
+text
+@a16 1
+  use MLSKINDS, only: RP
+d33 2
+a34 2
+  ! ------------------------------------------------  DUMP_CHUNKS  -----
+  subroutine DUMP_CHUNKS ( CHUNKS )
+d36 1
+a36 1
+    use OUTPUT_M, only: OUTPUT
+d38 1
+a38 1
+    type(MLSChunk_t), intent(in) :: CHUNKS(:)
+d46 1
+a46 1
+  end subroutine DUMP_CHUNKS
+d48 2
+a49 2
+  ! ------------------------------------------------  DUMP_ONE_CHUNK  -----
+  subroutine DUMP_ONE_CHUNK ( CHUNK )
+d51 2
+a52 2
+    use DUMP_0, only: DUMP
+    use OUTPUT_M, only: OUTPUT
+d54 1
+a54 1
+    type(MLSChunk_t), intent(in) :: CHUNK
+d77 1
+a77 1
+  end subroutine DUMP_ONE_CHUNK
+d79 1
+a79 1
+  ! ------------------------------------------------  INITIALIZE  -----
+d81 3
+a83 3
+  subroutine INITIALIZE ( CHUNK, PRECURSOR )
+    type(MLSChunk_T)                       :: CHUNK
+    type(MLSChunk_T), optional, intent(in) :: PRECURSOR
+d93 1
+a93 1
+  end subroutine INITIALIZE
+d99 1
+a99 1
+       "$Id: Chunks_m.f90,v 2.8 2012/06/21 00:40:28 pwagner Exp $"
+d109 3
+@
+
+
+2.8
+log
+@Added phi start and end to be used someday by HGrid
+@
+text
+@d16 1
+a27 19
+  ! This datatype defines the `chunks' into which the input dataset is split
+
+  type MLSChunk_T
+    logical :: abandoned = .false. ! Did we abandon this chunk's retrieval?
+    integer :: firstMAFIndex = -1  ! Index of first MAF in the chunk
+    integer :: lastMAFIndex = -1   ! Index of last MAF in the chunk
+    integer :: noMAFsLowerOverlap = 0 ! Number of MAFs in the lower overlap region
+    integer :: noMAFsUpperOverlap = 0 ! Number of MAFs in the upper overlap region
+    integer :: chunkNumber        = -1             ! Index of this chunk
+    integer, dimension(:), pointer :: HGridOffsets => NULL()
+    ! This for each chunk is the index of the first non-overlapped profile in 
+    ! each hGrid into the relevant output (l2gp?) file.
+    integer, dimension(:), pointer :: HGridTotals => NULL()
+    ! This is somewhat repetetive.  It's the total number of profiles in
+    ! the output hGrid.  It's only really used in parallel runs.
+    real(rp) :: phiStart = 0. ! for use by regular HGrid
+    real(rp) :: phiEnd   = 0.
+  end type MLSChunk_T
+
+d100 1
+a100 1
+       "$Id: Chunks_m.f90,v 2.7 2011/06/29 21:53:55 pwagner Exp $"
+d110 3
+@
+
+
+2.7
+log
+@Added initialize, improved dump
+@
+text
+@d16 2
+a17 1
+  implicit NONE
+d42 2
+d74 1
+a74 1
+    call output ( chunk%chunkNumber, before='  chunkNumber: ' )
+d78 2
+a79 1
+    call output ( chunk%noMAFsUpperOverlap, before='  noMAFsUpperOverlap: ', advance='yes' )
+d89 3
+d110 2
+d118 1
+a118 1
+       "$Id: Chunks_m.f90,v 2.6 2010/05/23 03:34:29 honghanh Exp $"
+d128 3
+@
+
+
+2.6
+log
+@Initialize firstMafIndex, lastMAfIndex and a couple of other variables
+@
+text
+@d18 1
+a18 1
+  public :: Dump, MLSChunk_T
+d34 1
+a34 1
+    integer :: chunkNumber = -1             ! Index of this chunk
+d52 1
+a52 1
+    use Output_M, only: Output
+d67 2
+a68 1
+    use Output_M, only: Output
+d71 18
+a88 13
+      call output ( chunk%firstMAFIndex, before='  firstMAFIndex: ' )
+      call output ( chunk%lastMAFIndex, before='  lastMAFIndex: ', advance='yes' )
+      call output ( chunk%noMAFsLowerOverlap, before='  noMAFsLowerOverlap: ' )
+      call output ( chunk%noMAFsUpperOverlap, before='  noMAFsUpperOverlap: ', advance='yes' )
+      call output ( chunk%firstMAFIndex + chunk%noMAFsLowerOverlap, &
+        & before='  1st non-overlapped MAF: ' )
+      call output ( chunk%lastMAFIndex - chunk%noMAFsUpperOverlap, &
+        & before='  last non-overlapped MAF: ', advance='yes' )
+      call output ( chunk%lastMAFIndex - chunk%firstMAFIndex + 1, &
+        & before='  chunk size: ' )
+      call output ( chunk%lastMAFIndex - chunk%firstMAFIndex &
+        & - chunk%noMAFsUpperOverlap - chunk%noMAFsLowerOverlap + 1, &
+        & before='  non-overlapped chunk size: ', advance='yes' )
+d91 14
+d109 1
+a109 1
+       "$Id: Chunks_m.f90,v 2.5 2009/06/23 18:46:18 pwagner Exp $"
+d119 3
+@
+
+
+2.5
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d22 1
+a22 1
+       "$RCSfile: $"
+d30 5
+a34 5
+    integer :: firstMAFIndex   ! Index of first MAF in the chunk
+    integer :: lastMAFIndex    ! Index of last MAF in the chunk
+    integer :: noMAFsLowerOverlap ! Number of MAFs in the lower overlap region
+    integer :: noMAFsUpperOverlap ! Number of MAFs in the upper overlap region
+    integer :: chunkNumber              ! Index of this chunk
+d89 1
+a89 1
+       "$Id: read_apriori.f90 is it here $"
+d99 3
+@
+
+
+2.4
+log
+@Added the abandoned field
+@
+text
+@d22 1
+a22 1
+       "$RCSfile: Chunks_m.f90,v $"
+d86 1
+a87 1
+!---------------------------- RCS Ident Info -------------------------------
+d89 2
+a90 3
+       "$Id: Chunks_m.f90,v 2.3 2005/09/21 23:22:42 pwagner Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d92 1
+a92 1
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
+d94 1
+d99 3
+@
+
+
+2.3
+log
+@Dump may dump a single chunk
+@
+text
+@d29 1
+d89 1
+a89 1
+       "$Id: Chunks_m.f90,v 2.2 2005/06/22 18:57:01 pwagner Exp $"
+d93 1
+d99 3
+@
+
+
+2.2
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d22 1
+a22 1
+       "$RCSfile: $"
+d43 1
+a43 1
+    module procedure Dump_Chunks
+d59 15
+a73 5
+      call output ( chunks(i)%firstMAFIndex, before='  firstMAFIndex: ' )
+      call output ( chunks(i)%lastMAFIndex, before='  lastMAFIndex: ', advance='yes' )
+      call output ( chunks(i)%noMAFsLowerOverlap, before='  noMAFsLowerOverlap: ' )
+      call output ( chunks(i)%noMAFsUpperOverlap, before='  noMAFsUpperOverlap: ', advance='yes' )
+      call output ( chunks(i)%firstMAFIndex + chunks(i)%noMAFsLowerOverlap, &
+d75 1
+a75 1
+      call output ( chunks(i)%lastMAFIndex - chunks(i)%noMAFsUpperOverlap, &
+d77 1
+a77 1
+      call output ( chunks(i)%lastMAFIndex - chunks(i)%firstMAFIndex + 1, &
+d79 2
+a80 2
+      call output ( chunks(i)%lastMAFIndex - chunks(i)%firstMAFIndex &
+        & - chunks(i)%noMAFsUpperOverlap - chunks(i)%noMAFsLowerOverlap + 1, &
+d82 1
+a82 2
+    end do
+  end subroutine DUMP_CHUNKS
+d88 1
+a88 1
+       "$Id: $"
+d97 3
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d20 3
+a22 4
+  !---------------------------- RCS Ident Info -------------------------------
+  character (LEN=256) :: Id = &
+       "$Id: MLSCommon.f90,v 2.18 2004/01/09 00:38:04 pwagner Exp $"
+  character (LEN=*), parameter :: ModuleName= "$RCSfile: MLSCommon.f90,v $"
+d24 1
+a24 1
+  !---------------------------------------------------------------------------
+d77 5
+d87 4
+a90 1
+! $Log: $
+@
+

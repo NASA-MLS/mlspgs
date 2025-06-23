@@ -1,0 +1,851 @@
+head	1.13;
+access;
+symbols
+	v5-02-NRT-19:1.13
+	v6-00:1.13
+	v5-02-NRT-18:1.13
+	v5-02:1.13
+	v5-01-NRT-17:1.13
+	v5-01-NRT-16:1.13
+	v5-01-NRT-15:1.13
+	v5-01-NRT-14:1.13
+	neuralnetworks-1-0:1.13.0.14
+	cfm-single-freq-0-1:1.13.0.12
+	v5-01:1.13
+	v5-00:1.13
+	v4-23-TA133:1.13.0.10
+	mus-emls-1-70:1.13.0.8
+	rel-1-0-englocks-work:1.13.0.6
+	VUMLS1-00:1.13
+	VPL1-00:1.13
+	V4-22-NRT-08:1.13
+	VAM1-00:1.13
+	V4-21:1.13.0.4
+	V4-13:1.13
+	V4-12:1.13
+	V4-11:1.13
+	V4-10:1.13
+	V3-43:1.13
+	M4-00:1.13
+	V3-41:1.13
+	V3-40-PlusGM57:1.13.0.2
+	V2-24-NRT-04:1.13
+	V3-33:1.13
+	V2-24:1.13
+	V3-31:1.13
+	V3-30-NRT-05:1.13
+	cfm-01-00:1.13
+	V3-30:1.13
+	V3-20:1.13
+	V3-10:1.13
+	V2-23-NRT-02:1.13
+	V2-23:1.13
+	V2-22-NRT-01:1.13
+	V2-22:1.13
+	V2-21:1.13
+	V2-20:1.13
+	V2-11:1.13
+	V2-10:1.13
+	V2-00:1.13
+	V1-51:1.9
+	V1-50:1.9
+	V1-45:1.9
+	V1-44:1.9
+	V1-43:1.8
+	V1-42:1.7
+	V1-41:1.7
+	V1-32:1.6
+	V1-40:1.7
+	V1-31:1.6
+	V1-30:1.6
+	V1-13:1.3
+	V1-12:1.3
+	V1-11:1.3
+	V1-10:1.3
+	newfwm-feb03:1.3.0.2
+	V1-04:1.3
+	V1-03:1.3
+	V1-02:1.3
+	V1-00:1.3
+	newfwm-sep01:1.2.0.2
+	V0-7:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.13
+date	2006.02.28.20.36.33;	author cvuu;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2005.09.22.23.41.14;	author pwagner;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2005.07.12.17.18.52;	author pwagner;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2005.06.23.19.17.59;	author pwagner;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2004.08.04.23.21.23;	author pwagner;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2004.05.04.16.02.29;	author cvuu;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2004.01.08.21.21.37;	author cvuu;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2003.09.15.18.28.18;	author cvuu;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2003.04.30.18.16.29;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2003.04.06.02.30.33;	author jdone;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2001.09.06.18.50.27;	author nakamura;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.07.20.19.29.20;	author nakamura;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.07.18.15.43.44;	author nakamura;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.13
+log
+@V2.00 commit
+@
+text
+@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!==============================================================================
+MODULE mon_Open
+!==============================================================================
+
+  USE MLSCommon, ONLY: FileNameLen
+  USE MLSL3Common, ONLY: MAXWINDOW 
+  USE dates_module, only: utc_to_yyyymmdd
+  USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Fileopen
+  USE mon_L3CF, ONLY: L3CFMDef_T, L3CFMProd_T, FillL3CFM
+  USE OpenInit, ONLY: SetProcessingWindow
+  USE PCFHdr, ONLY: CreatePCFAnnotation, GlobalAttributes, FillTAI93Attribute
+  USE SDPToolkit, ONLY: PGS_S_SUCCESS, PGS_IO_GEN_CLOSEF, PGSD_IO_GEN_RSEQFRM,&
+       & PGS_PC_GETREFERENCE, PGS_IO_GEN_OPENF
+  USE GETCF_M, only: GetCF, InitGetCF
+  IMPLICIT NONE
+  private
+  PUBLIC :: PCFMData_T, GetPCFParams, OpenMON
+
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: mon_Open.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+   ! Contents:
+
+   ! Definitions -- PCFMData_T
+   ! Subroutines -- GetPCFParams
+   !                OpenMON
+
+   ! Remarks:  This is a prototype module for the routines needed for the L3
+   ! Monthly Open/Init task.
+
+   ! Parameters
+
+   ! This data type is used to store User-defined Runtime Parameters and other
+   ! information taken from the PCF.
+
+   TYPE PCFMData_T
+
+      ! log file name, WITHOUT the path (LocalGranuleID)
+
+      CHARACTER (LEN=FileNameLen) :: logGranID
+
+      ! output file names, WITH their paths
+
+      CHARACTER (LEN=FileNameLen) :: msName	! L3MM_Standard
+
+      CHARACTER (LEN=FileNameLen) :: mdName	! L3MM_Diagnostic
+
+      CHARACTER (LEN=FileNameLen) :: zsName	! L3MZ_Standard
+
+      CHARACTER (LEN=FileNameLen) :: zdName	! L3MZ_Diagnostic
+      
+      ! version string in PCF output file names
+
+      CHARACTER (LEN=15) :: outputVersion
+      ! processing window (input & output) information
+
+      CHARACTER (LEN=8) :: endDay
+
+      CHARACTER (LEN=8) :: startDay
+
+      CHARACTER (LEN=8) :: dates(maxWindow)
+
+      ! cycle # of processing run
+
+      CHARACTER (LEN=4) :: cycle
+
+      INTEGER :: nDays
+
+   END TYPE PCFMData_T
+
+CONTAINS
+
+!---------------------------------
+   SUBROUTINE GetPCFParams (l3pcf)
+!---------------------------------
+  USE MLSPCF3
+
+! Brief description of subroutine
+! This subroutine retrieves the User-Defined Runtime Parameters from the PCF
+! and stores them in variables used in the MLSL3 code.
+
+! Arguments
+
+      TYPE( PCFMData_T ), INTENT(OUT) :: l3pcf
+
+! Parameters
+
+      CHARACTER (LEN=*), PARAMETER :: UDRP_ERR = & 
+           & 'Failed to get PCF runtime parameter:  '
+
+! Functions
+
+      INTEGER, EXTERNAL :: pgs_pc_getConfigData
+
+! Variables
+
+      CHARACTER (LEN=480) :: msr
+      CHARACTER (LEN=FileNameLen) :: name
+      CHARACTER (LEN=17) :: range 
+
+      INTEGER ::  indx, mlspcf_log, returnStatus, version
+
+! Retrieve values set in PCF & assign them to variables.
+
+      returnStatus = pgs_pc_getConfigData(mlspcf_l3_param_OutputVersion, &
+           & l3pcf%outputVersion)
+      IF (returnStatus /= PGS_S_SUCCESS) THEN
+         msr = UDRP_ERR // 'OutputVersion'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      returnStatus = pgs_pc_getConfigData(mlspcf_l3_param_Cycle, l3pcf%cycle)
+      IF (returnStatus /= PGS_S_SUCCESS) THEN
+         msr = UDRP_ERR // 'Cycle'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+! Set all information on the processing window
+
+      returnStatus = pgs_pc_getConfigData(mlspcf_l3_param_L2DayRange, range)
+      IF (returnStatus /= PGS_S_SUCCESS) THEN
+         msr = UDRP_ERR // 'L2DayRange'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      l3pcf%startDay = range(1:8)
+      l3pcf%endDay = range(10:17)
+
+      CALL SetProcessingWindow(l3pcf%startDay, l3pcf%endDay, l3pcf%dates, &
+           & l3pcf%nDays)
+
+! Get the name of the log file from the PCF; remove its path
+
+      version = 1
+      mlspcf_log = 10101
+
+      returnStatus = Pgs_pc_getReference(mlspcf_log, version, name)
+      IF (returnStatus /= PGS_S_SUCCESS) CALL MLSMessage(MLSMSG_Error, &
+           & ModuleName, 'Error retrieving log file name from PCF.')
+      indx = INDEX(name, '/', .TRUE.)
+      l3pcf%logGranID = name(indx+1:)
+
+    ! Store appropriate user input as global attributes
+ 
+    GlobalAttributes%ProcessLevel = '3-monthly'
+    ! GlobalAttributes%InputVersion = l3pcf%outputVersion
+    GlobalAttributes%StartUTC = l3pcf%StartDay // &
+      & 'T00:00:00.000000Z'
+    GlobalAttributes%EndUTC = l3pcf%EndDay // &
+      & 'T23:59:59.999999Z'
+    GlobalAttributes%PGEVersion = l3pcf%outputVersion   ! l3pcf%PGEVersion
+    call utc_to_yyyymmdd(GlobalAttributes%StartUTC, returnStatus, &
+      & GlobalAttributes%GranuleYear, GlobalAttributes%GranuleMonth, &
+      & GlobalAttributes%GranuleDay)
+    call FillTAI93Attribute
+
+! Get the name of the L3MM Standard file from the PCF
+
+      version = 1
+      returnStatus = & 
+           & Pgs_pc_getReference(mlspcf_l3mms_start, version, l3pcf%msName)
+      IF (returnStatus /= PGS_S_SUCCESS) & 
+           & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+           & 'Error retrieving L3MM std file name from the PCF.')
+
+! Get the name of the L3MM Diagnostic file from the PCF
+
+      version = 1
+      returnStatus = & 
+           & Pgs_pc_getReference(mlspcf_l3mmd_start, version, l3pcf%mdName)
+      IF (returnStatus /= PGS_S_SUCCESS) & 
+           & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+           & 'Error retrieving L3MM dg file name from the PCF.')
+
+! Get the name of the L3MZ Standard file from the PCF
+
+      version = 1
+      returnStatus = & 
+           & Pgs_pc_getReference(mlspcf_l3mzs_start, version, l3pcf%zsName)
+      IF (returnStatus /= PGS_S_SUCCESS) & 
+           & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+           & 'Error retrieving L3MZ std file name from the PCF.')
+
+      ! Get the name of the L3MZ Diagnostic file from the PCF
+
+      version = 1
+      returnStatus = & 
+           & Pgs_pc_getReference(mlspcf_l3mzd_start, version, l3pcf%zdName)
+      IF (returnStatus /= PGS_S_SUCCESS) & 
+           & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+           & 'Error retrieving L3MM dg file name from the PCF.')
+
+!-----------------------------
+    END SUBROUTINE GetPCFParams
+!-----------------------------
+
+!------------------------------------------------------------
+    SUBROUTINE OpenMON (l3pcf, cf, cfStd, cfDg, cfDef, anText)
+!------------------------------------------------------------
+  USE MLSCF, ONLY: Mlscf_T
+  USE MLSPCF3, only: mlspcf_pcf_start, mlspcf_l3cf_start
+  USE L2Interface, only: ReadL2GPAttribute
+
+! Brief description of subroutine
+! This subroutine performs the Open/Init task in the MLSL3 program.
+
+! Arguments
+
+      TYPE( L3CFMDef_T ), INTENT(OUT) :: cfDef
+
+      TYPE( Mlscf_T ), INTENT(OUT) :: cf
+
+      TYPE( PCFMData_T ), INTENT(OUT) :: l3pcf
+
+      TYPE( L3CFMProd_T ), POINTER :: cfDg(:), cfStd(:)
+
+      CHARACTER (LEN=1), POINTER :: anText(:)
+
+! Parameters
+
+! Functions
+
+! Variables
+
+      CHARACTER (LEN=480) :: msr
+
+      INTEGER :: error, pcfId, returnStatus, nDays, l3mFlag = 1
+
+! Read the PCF into an annotation for file headers
+
+      CALL CreatePCFAnnotation(mlspcf_pcf_start, anText)
+
+! Retrieve values set in PCF & assign them to variables.
+
+      CALL GetPCFParams(l3pcf)
+
+! Open the configuration file
+
+      returnStatus = pgs_io_gen_openF (mlspcf_l3cf_start, &
+           & PGSd_IO_Gen_RSeqFrm, 0, pcfId, 1)
+      IF (returnStatus /= PGS_S_SUCCESS) THEN
+         msr = MLSMSG_Fileopen // 'l3cf.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+! Read the configuration file into an MLSCF_T structure
+
+      CALL InitGetCF
+
+      CALL getCF(cf, error, inUnit=pcfId)
+
+! Close the configuration file
+
+      returnStatus = pgs_io_gen_closeF (pcfId)
+      IF (returnStatus /= PGS_S_SUCCESS) CALL MLSMessage(MLSMSG_Error, &
+           & ModuleName, 'Failed to close l3cf.')
+
+      ! Check the parser output; fill L3CFProd_T
+
+      CALL FillL3CFM(cf, l3pcf%outputVersion, cfStd, cfDg, cfDef)
+
+! Get L2GP Attributes
+
+      CALL ReadL2GPAttribute(l3pcf%startDay, l3pcf%endDay, &
+	& cfStd(1)%fileTemplate, nDays, l3mFlag)
+
+!------------------------
+    END SUBROUTINE OpenMON
+!------------------------
+
+!==================
+  logical function not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id: mon_Open.f90,v 1.12 2005/09/22 23:41:14 pwagner Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+  END MODULE mon_Open
+!==================
+
+! $Log: mon_Open.f90,v $
+! Revision 1.12  2005/09/22 23:41:14  pwagner
+! date conversion procedures and functions all moved into dates module
+!
+! Revision 1.11  2005/07/12 17:18:52  pwagner
+! Dropped global attribute InputVersion
+!
+! Revision 1.10  2005/06/23 19:17:59  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 1.9  2004/08/04 23:21:23  pwagner
+! Much moved from MLSStrings to MLSStringLists
+!
+! Revision 1.8  2004/05/04 16:02:29  cvuu
+! Set GlobalAttribute%processLevel
+!
+! Revision 1.7  2004/01/08 21:21:37  cvuu
+! version 1.4 commit
+!
+! Revision 1.6  2003/09/15 18:28:18  cvuu
+! Read OrbitNumber and OrbitPeriod from the L2GP file
+!
+! Revision 1.5  2003/04/30 18:16:29  pwagner
+! Work-around for LF95 infinite compile-time bug
+!
+! Revision 1.4  2003/04/06 02:30:33  jdone
+! added indentation; added use only to modules list
+!
+! Revision 1.3  2001/09/06 18:50:27  nakamura
+! Modified so that dg products use the same data type as std prods.
+!
+! Revision 1.2  2001/07/20 19:29:20  nakamura
+! Corrected to use the parser.
+!
+! Revision 1.1  2001/07/18 15:43:44  nakamura
+! Module for the Monthly Open/Init task.
+!
+!
+@
+
+
+1.12
+log
+@date conversion procedures and functions all moved into dates module
+@
+text
+@d243 1
+a243 1
+      INTEGER :: error, pcfId, returnStatus, l3mFlag = 1
+d281 1
+a281 1
+	& cfStd(1)%fileTemplate, l3mFlag)
+d291 1
+a291 1
+       "$Id: mon_Open.f90,v 1.11 2005/07/12 17:18:52 pwagner Exp $"
+d300 3
+@
+
+
+1.11
+log
+@Dropped global attribute InputVersion
+@
+text
+@d19 1
+a19 1
+  USE MLSStringLists, only: utc_to_yyyymmdd
+d291 1
+a291 1
+       "$Id: mon_Open.f90,v 1.10 2005/06/23 19:17:59 pwagner Exp $"
+d300 3
+@
+
+
+1.10
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d34 1
+a34 1
+       "$RCSfile: $"
+d162 1
+a162 1
+    GlobalAttributes%InputVersion = l3pcf%outputVersion
+d291 1
+a291 1
+       "$Id: $"
+d300 3
+@
+
+
+1.9
+log
+@Much moved from MLSStrings to MLSStringLists
+@
+text
+@d2 10
+a11 2
+! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+a30 1
+  PRIVATE :: ID, ModuleName
+d32 5
+a36 5
+  !------------------- RCS Ident Info -----------------------
+   CHARACTER(LEN=130) :: Id = &                                               
+        "$Id: mon_Open.f90,v 1.8 2004/05/04 16:02:29 cvuu Exp $"
+   CHARACTER (LEN=*), PARAMETER :: ModuleName="$RCSfile: mon_Open.f90,v $"
+!----------------------------------------------------------
+d288 8
+d300 3
+@
+
+
+1.8
+log
+@Set GlobalAttribute%processLevel
+@
+text
+@d11 1
+a11 1
+  USE MLSStrings, only: utc_to_yyyymmdd
+d27 1
+a27 1
+        "$Id: mon_Open.f90,v 1.7 2004/01/08 21:21:37 cvuu Exp $"
+d285 3
+@
+
+
+1.7
+log
+@version 1.4 commit
+@
+text
+@d27 1
+a27 1
+        "$Id: mon_Open.f90,v 1.6 2003/09/15 18:28:18 cvuu Exp $"
+d153 2
+d285 3
+@
+
+
+1.6
+log
+@Read OrbitNumber and OrbitPeriod from the L2GP file
+@
+text
+@d11 1
+d15 1
+a15 1
+  USE PCFHdr, ONLY: CreatePCFAnnotation
+d27 1
+a27 1
+        "$Id: mon_Open.f90,v 1.5 2003/04/30 18:16:29 pwagner Exp $"
+d152 12
+d283 3
+@
+
+
+1.5
+log
+@Work-around for LF95 infinite compile-time bug
+@
+text
+@d26 1
+a26 1
+        "$Id: mon_Open.f90,v 1.4 2003/04/06 02:30:33 jdone Exp $"
+d196 1
+d221 1
+a221 1
+      INTEGER :: error, pcfId, returnStatus
+d256 4
+d270 3
+@
+
+
+1.4
+log
+@added indentation; added use only to modules list
+@
+text
+@a8 1
+  USE MLSCF, ONLY: Mlscf_T
+a11 1
+  USE MLSPCF3
+d19 2
+a20 1
+  PUBLIC
+d26 1
+a26 1
+        "$Id: mon_Open.f90,v 1.3 2001/09/06 18:50:27 nakamura Exp $"
+d84 1
+d194 2
+d265 3
+@
+
+
+1.3
+log
+@Modified so that dg products use the same data type as std prods.
+@
+text
+@d5 1
+a5 1
+!===============================================================================
+d7 1
+a7 1
+!===============================================================================
+d9 19
+a27 17
+   USE MLSCF
+   USE MLSCommon
+   USE MLSMessageModule
+   USE MLSPCF3
+   USE mon_L3CF
+   USE OpenInit, ONLY:  SetProcessingWindow
+   USE PCFHdr
+   USE SDPToolkit
+   use GETCF_M, only: GetCF, InitGetCF
+   IMPLICIT NONE
+   PUBLIC
+
+   PRIVATE :: ID, ModuleName
+
+!------------------- RCS Ident Info -----------------------
+   CHARACTER(LEN=130) :: Id = &                                                    
+   "$Id: mon_Open.f90,v 1.2 2001/07/20 19:29:20 nakamura Exp $"
+d31 1
+a31 1
+! Contents:
+d33 3
+a35 3
+! Definitions -- PCFMData_T
+! Subroutines -- GetPCFParams
+!                OpenMON
+d37 2
+a38 2
+! Remarks:  This is a prototype module for the routines needed for the L3
+! Monthly Open/Init task.
+d40 1
+a40 1
+! Parameters
+d42 2
+a43 2
+! This data type is used to store User-defined Runtime Parameters and other
+! information taken from the PCF.
+d47 1
+a47 5
+     ! cycle # of processing run
+
+     CHARACTER (LEN=4) :: cycle
+
+     ! version string in PCF output file names
+d49 1
+a49 1
+     CHARACTER (LEN=15) :: outputVersion
+d51 1
+a51 1
+     ! processing window (input & output) information
+d53 1
+a53 1
+     CHARACTER (LEN=8) :: endDay
+d55 1
+a55 1
+     CHARACTER (LEN=8) :: startDay
+d57 1
+a57 1
+     INTEGER :: nDays
+d59 3
+a61 1
+     CHARACTER (LEN=8) :: dates(maxWindow)
+d63 2
+a64 1
+     ! log file name, WITHOUT the path (LocalGranuleID)
+d66 1
+a66 1
+     CHARACTER (LEN=FileNameLen) :: logGranID
+d68 1
+a68 1
+     ! output file names, WITH their paths
+d70 1
+a70 1
+     CHARACTER (LEN=FileNameLen) :: msName	! L3MM_Standard
+d72 1
+a72 1
+     CHARACTER (LEN=FileNameLen) :: mdName	! L3MM_Diagnostic
+d74 1
+a74 1
+     CHARACTER (LEN=FileNameLen) :: zsName	! L3MZ_Standard
+d76 1
+a76 1
+     CHARACTER (LEN=FileNameLen) :: zdName	! L3MZ_Diagnostic
+d96 2
+a97 2
+      CHARACTER (LEN=*), PARAMETER :: UDRP_ERR = 'Failed to get PCF runtime &
+                                                                &parameter:  '
+a104 1
+      CHARACTER (LEN=17) :: range 
+d107 1
+d114 1
+a114 1
+                                          l3pcf%outputVersion)
+d138 1
+a138 1
+                               l3pcf%nDays)
+d147 1
+a147 1
+                        ModuleName, 'Error retrieving log file name from PCF.')
+d154 5
+a158 3
+      returnStatus = Pgs_pc_getReference(mlspcf_l3mms_start, version, l3pcf%msName)
+      IF (returnStatus /= PGS_S_SUCCESS) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+                 ModuleName, 'Error retrieving L3MM std file name from the PCF.')
+d163 5
+a167 3
+      returnStatus = Pgs_pc_getReference(mlspcf_l3mmd_start, version, l3pcf%mdName)
+      IF (returnStatus /= PGS_S_SUCCESS) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+                 ModuleName, 'Error retrieving L3MM dg file name from the PCF.')
+d172 5
+a176 3
+      returnStatus = Pgs_pc_getReference(mlspcf_l3mzs_start, version, l3pcf%zsName)
+      IF (returnStatus /= PGS_S_SUCCESS) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+                 ModuleName, 'Error retrieving L3MZ std file name from the PCF.')
+d178 1
+a178 1
+! Get the name of the L3MZ Diagnostic file from the PCF
+d181 5
+a185 3
+      returnStatus = Pgs_pc_getReference(mlspcf_l3mzd_start, version, l3pcf%zdName)
+      IF (returnStatus /= PGS_S_SUCCESS) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+                 ModuleName, 'Error retrieving L3MM dg file name from the PCF.')
+d188 1
+a188 1
+   END SUBROUTINE GetPCFParams
+d192 1
+a192 1
+   SUBROUTINE OpenMON (l3pcf, cf, cfStd, cfDg, cfDef, anText)
+d231 1
+a231 1
+                                       PGSd_IO_Gen_RSeqFrm, 0, pcfId, 1)
+d247 1
+a247 1
+                                          ModuleName, 'Failed to close l3cf.')
+d249 1
+a249 1
+! Check the parser output; fill L3CFProd_T
+d253 1
+d255 1
+a255 1
+   END SUBROUTINE OpenMON
+d259 1
+a259 1
+END MODULE mon_Open
+d263 3
+@
+
+
+1.2
+log
+@Corrected to use the parser.
+@
+text
+@d25 1
+a25 1
+   "$Id: mon_Open.f90,v 1.1 2001/07/18 15:43:44 nakamura Exp $"
+d182 3
+a184 3
+!-----------------------------------------------------------
+   SUBROUTINE OpenMON (l3pcf, cf, l3cf, cfDef, cfDg, anText)
+!-----------------------------------------------------------
+d197 1
+a197 3
+      TYPE( L3CFDg_T ), POINTER :: cfDg(:)
+
+      TYPE( L3CFMProd_T ), POINTER :: l3cf(:)
+d242 1
+a242 1
+      CALL FillL3CFM(cf, l3pcf%outputVersion, l3cf, cfDef, cfDg)
+d253 3
+@
+
+
+1.1
+log
+@Module for the Monthly Open/Init task.
+@
+text
+@d17 1
+d25 1
+a25 1
+   "$Id: mon_Open.f90,v 1.1 2001/05/02 16:00:19 nakamura Exp nakamura $"
+d211 1
+a211 1
+      INTEGER :: pcfId, returnStatus
+d232 3
+a234 1
+      CALL ReadParseMON (cf)
+d254 4
+a257 1
+! $Log: $
+@
+

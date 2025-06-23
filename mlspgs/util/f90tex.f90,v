@@ -1,0 +1,1228 @@
+head	1.24;
+access;
+symbols
+	v5-02-NRT-19:1.24
+	v6-00:1.24
+	v5-02-NRT-18:1.24
+	v5-02:1.23
+	v5-01-NRT-17:1.24
+	v5-01-NRT-16:1.24
+	v5-01-NRT-15:1.24
+	v5-01-NRT-14:1.24
+	neuralnetworks-1-0:1.24.0.2
+	cfm-single-freq-0-1:1.23.0.8
+	v5-01:1.23
+	v5-00:1.23
+	v4-23-TA133:1.23.0.6
+	mus-emls-1-70:1.23.0.4
+	rel-1-0-englocks-work:1.23.0.2
+	VUMLS1-00:1.23
+	VPL1-00:1.23
+	V4-22-NRT-08:1.23
+	VAM1-00:1.22
+	V4-21:1.22.0.2
+	V4-13:1.22
+	V4-12:1.22
+	V4-11:1.22
+	V4-10:1.22
+	V3-43:1.8
+	M4-00:1.15
+	V3-41:1.8
+	V3-40-PlusGM57:1.8.0.2
+	V2-24-NRT-04:1.8
+	V3-33:1.13
+	V2-24:1.8
+	V3-31:1.13
+	V3-30-NRT-05:1.12
+	cfm-01-00:1.10
+	V3-30:1.8
+	V3-20:1.8
+	V3-10:1.8
+	V2-23-NRT-02:1.8
+	V2-23:1.8
+	V2-22-NRT-01:1.8
+	V2-22:1.8
+	V2-21:1.8
+	V2-20:1.8
+	V2-11:1.8
+	V2-10:1.8
+	V2-00:1.8
+	V1-51:1.6
+	V1-50:1.6
+	V1-45:1.4
+	V1-44:1.4
+	V1-43:1.4
+	V1-42:1.4
+	V1-41:1.4
+	V1-32:1.4
+	V1-40:1.4
+	V1-31:1.4
+	V1-30:1.4
+	V1-13:1.4
+	V1-12:1.4
+	V1-11:1.4
+	V1-10:1.4
+	newfwm-feb03:1.4.0.4
+	V1-04:1.4
+	V1-03:1.4
+	V1-02:1.4
+	V1-00:1.4
+	newfwm-sep01:1.4.0.2
+	V0-7:1.4;
+locks; strict;
+comment	@# @;
+
+
+1.24
+date	2020.10.07.16.05.42;	author pwagner;	state Exp;
+branches;
+next	1.23;
+
+1.23
+date	2016.03.28.22.18.39;	author vsnyder;	state Exp;
+branches;
+next	1.22;
+
+1.22
+date	2013.08.09.00.40.39;	author vsnyder;	state Exp;
+branches;
+next	1.21;
+
+1.21
+date	2013.08.08.20.48.50;	author vsnyder;	state Exp;
+branches;
+next	1.20;
+
+1.20
+date	2013.08.08.20.11.14;	author vsnyder;	state Exp;
+branches;
+next	1.19;
+
+1.19
+date	2013.08.07.20.35.42;	author vsnyder;	state Exp;
+branches;
+next	1.18;
+
+1.18
+date	2013.08.07.20.19.26;	author vsnyder;	state Exp;
+branches;
+next	1.17;
+
+1.17
+date	2013.08.06.23.40.32;	author vsnyder;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2013.08.06.23.14.31;	author vsnyder;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2012.02.09.23.50.05;	author vsnyder;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2012.02.09.23.35.15;	author vsnyder;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2010.12.15.21.28.32;	author vsnyder;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2010.08.22.00.45.24;	author vsnyder;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2010.06.30.20.32.10;	author vsnyder;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2010.05.06.02.40.35;	author vsnyder;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2010.05.01.00.42.36;	author vsnyder;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2005.06.22.19.27.32;	author pwagner;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2005.06.13.23.36.08;	author vsnyder;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2004.09.22.20.18.48;	author vsnyder;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2004.09.22.19.19.24;	author vsnyder;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.06.14.23.06.48;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2001.06.01.21.50.16;	author vsnyder;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.06.01.21.49.23;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.06.01.21.47.22;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.24
+log
+@Ensure output ends LaTeX mode even if input ends unexpectedly
+@
+text
+@program F90TEX
+
+!{ Read a Fortran 90 program.  Write a LaTeX file.  Start the output with
+! the usual {\tt$\backslash$documentclass} stuff.  In the body of the
+! document, wrap code with {\tt$\backslash$begin}\{\emph{verbatim}\} and
+! {\tt$\backslash$end}\{\emph{verbatim}\} where \emph{verbatim} is given
+! by the variable {\tt CODE\_STYLE}.  When a comment begins with !\{, end
+! the {\tt$\backslash$begin}\{\emph{verbatim}\} wrapper, and start it
+! again at the end of the comment.  \emph{verbatim} is {\tt verbatim} if
+! the {\tt -v} option is specified (default) or {\tt lstlisting} if the
+! {\tt -l} option is specified.
+!
+! A block beginning with !\{ is put in a box if the {\tt -b} option is
+! specified (default) and not put in a box if the {\tt -nb} option is
+! specified.  If {\tt -nb} is not specified, {\tt$\backslash$newpage} only
+! works if it's the first line of the !\{ block, and there's nothing else on
+! the line.
+
+!>> 2013-08-08 F90TEX WV Snyder Remove linenumbers stuff using lstlistings
+!>> 2013-08-08 F90TEX WV Snyder Remove labelstyle keyword for lstlistings
+!>> 2013-08-06 F90TEX WV Snyder Remove dependence on machine module
+!>> 2012-02-09 F90TEX WV Snyder Stuff to make \cleardoublepage work
+!>> 2010-08-21 F90TEX WV Snyder Added -u option for usepackage
+!>> 2003-10-28 F90TEX WV Snyder Stuff to make \newpage work
+!>> 2000-04-07 F90TEX WV Snyder Original code
+
+! =====     Declarations     ===========================================
+
+  implicit NONE
+
+  logical :: BOX = .true.                         ! Put a box around !{ TeX?
+  character(len=8) :: DATE                        ! of program execution
+  character(127) :: Errmsg                        ! from I/O
+  character(*), parameter :: FilSep = '/'         ! file separator in path names
+  integer :: I, J                                 ! Subscript / do inductor
+  character(len=132) :: IN_FILE, OUT_FILE         ! File names
+  integer :: IN_UNIT = 10, OUT_UNIT = 11          ! Unit numbers
+  integer :: IOSTAT                               ! I/O status
+  character(len=132) :: LINE                      ! From input
+  integer :: LineNo = 0                           ! Of input
+  character(len=23) :: NOW                        ! Date and time, formatted
+  character :: NUMBER_STEP = '1'                  ! Line number step
+  integer :: Number_Packages = 0                  ! Number of packages to use
+  character(len=32) :: Packages(99)               ! LaTeX packages to use
+  logical :: Running = .true.                     ! Running line numbers
+                                                  !  else pagewise
+  character(len=*), parameter :: START_CODE(2) = &
+    (/ 'begin{lstlisting}[texcl]{ }', &
+       'begin{verbatim}            ' /)
+  integer :: STATE = 0   ! 0 => begin, 1 => doing code, 2 => doing TeX
+  character(len=*), parameter :: STOP_CODE(2) = (/ 'end{lstlisting}', &
+                                                   'end{verbatim}} ' /)
+  integer :: SX = 2      ! index for START_CODE and STOP_CODE, selected
+                         ! by the -l or -v options
+  character(len=10) :: TIME                       ! of program execution
+  character(len=*), parameter :: WIDTH = '6.25in' ! of TeX page
+  character(len=*), parameter :: WIDTHP = '6in'   ! of TeX parbox inside fbox
+
+!---------------------------- RCS Module Info --------------------------
+  character (len=*), parameter :: ModuleName= &
+       "$RCSfile: f90tex.f90,v $"
+  character (len=*), parameter :: IdParm = &
+       "$Id: f90tex.f90,v 1.23 2016/03/28 22:18:39 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+!-----------------------------------------------------------------------
+
+! =====     Executable Statements     ==================================
+
+  call date_and_time ( date, time )
+  now = date(1:4) // '/' // date(5:6) // '/' // date(7:) // ' ' // &
+        time(1:2) // ':' // time(3:4) // ':' // time(5:)
+! Get input and output file names
+
+  i = 1
+  do
+    call get_command_argument ( i, in_file )
+    if ( in_file(1:1) /= '-' ) exit
+    if ( in_file(1:2) == '- ' ) then
+      i = i + 1
+      call get_command_argument ( i, in_file )
+      exit
+    end if
+    if ( in_file(1:3) == '-l ' ) then
+      sx = 1
+    else if ( in_file(1:3) == '-v ' ) then
+      sx = 2
+    else if ( in_file(1:3) == '-b ' ) then
+      box = .true.
+    else if ( in_file(1:4) == '-nb ' ) then
+      box = .false.
+    else if ( in_file(1:2) == '-n' ) then
+      if ( in_file(3:) == '' ) then
+        i = i + 1
+        call get_command_argument ( i, number_step )
+      else
+        number_step = in_file(3:)
+      end if
+    else if ( in_file(1:3) == '-p ' ) then
+      running = .false.
+    else if ( in_file(1:2) == '-u' ) then
+      if ( number_packages == ubound(packages,1) ) then
+        print *, 'More than ', ubound(packages,1), ' ignored'
+      else
+        number_packages = number_packages + 1
+        if ( in_file(3:) == '' ) then
+          i = i + 1
+          call get_command_argument ( i, packages(number_packages) )
+        else
+          packages(number_packages) = in_file(3:)
+        end if
+      end if
+    else
+      call get_command_argument ( 0, in_file )
+      write (*,*) &
+      & 'Usage: ', trim(in_file), ' [options] [ in_file [out_file ]]'
+      write (*,*) &
+      & ' If in_file and out_file are absent, stdin and stdout are used.'
+      write (*,*) &
+      & ' If in_file is present but out_file is absent, in_file is used'
+      write (*,*) &
+      & '  for out_file, after removing the last "." after the last "', &
+      & filsep, '"'
+      write (*,*) &
+      & '  and everything after it, and adding ".tex" on the end.'
+      write (*,*) ' Options, [ ] indicates optional blanks:'
+      write (*,*) '  -b => Put a box around !{ TeX stuff (default).'
+      write (*,*) '  -nb => Don''t put a box around !{ TeX stuff.'
+      write (*,*) '  -v => Use verbatim environment for code (default).'
+      write (*,*) '  -l => Use lstlisting environment from the listings package.'
+      write (*,*) '        This package has numerous customization features;'
+      write (*,*) '        You might wish to edit the LaTeX output to exploit them.'
+      write (*,*) '        This might not work if your code has "\" in it.'
+      write (*,*) '  -n[ ]# => Line number step is # (default ', &
+      &                      number_step, ', 0 => no line numbers).'
+      write (*,*) '  -p => Pagewise line numbers, default is running numbers.'
+      write (*,*) '  -u[ ]package => Use LaTeX package; this option'
+      write (*,*) '                  can appear up to 99 times.'
+      write (*,*) '  -<anything else> => This output.'
+      write (*,*) '  -  => No more options.'
+      write (*,*) ' 8 August 2013'
+      stop
+    end if
+    i = i + 1
+  end do
+  call get_command_argument ( i+1, out_file )
+
+  if ( in_file /= ' ' ) then
+    open(in_unit, file=in_file, status='old', iostat=iostat, iomsg=errmsg)
+    if ( iostat /= 0 ) then
+      print '("Unable to open input file ",a)', trim(in_file)
+      print '("Status = ",i0," Message = ")', iostat, trim(errmsg)
+      stop
+    end if
+    if ( out_file == ' ' ) then
+      out_file = in_file
+      j = index( out_file, filsep, back=.true. )
+      i = index( out_file, '.', back=.true. )
+      if ( i == 0 .or. i < j ) i = len_trim(out_file) + 1
+      out_file(i:) = '.tex'
+    end if
+    open(out_unit, file=out_file, iostat=iostat)
+    if ( iostat /= 0 ) then
+      print '("Unable to open output file ",a)', trim(out_file)
+      print '("Status = ",i0," Message = ")', iostat, trim(errmsg)
+      stop
+    end if
+  else
+    in_unit = -1         ! Standard input
+    in_file = 'Standard Input'
+    out_unit = -1        ! Standard output
+  end if
+
+! Replace any \ in the input file name with /, so as not to confuse LaTeX
+! when it tries to produce the page header.
+
+  do i = 1, len(in_file)
+    if ( in_file(i:i) == '\' ) in_file(i:i) = '/'
+  end do
+
+! Output the beginning stuff
+
+  call output ( 'documentclass[11pt,twoside]{article}', tex=.true. )
+  call output ( 'usepackage[fleqn]{amsmath}', tex=.true. )
+  if ( sx == 1 ) call output ( 'usepackage{listings}', tex=.true. )
+  do i = 1, number_packages
+    call output ( 'usepackage{' // trim(packages(i)) // '}', tex=.true. )
+  end do
+  call output ( 'textwidth ' // width, tex=.true. )
+  call output ( 'oddsidemargin -0.25in', tex=.true. )
+  call output ( 'evensidemargin -0.25in', tex=.true. )
+  call output ( 'topmargin -0.5in', tex=.true. )
+  call output ( 'textheight 9.25in', tex=.true. )
+  if ( sx == 2 .and. number_step /= '0' ) then
+    call output ( 'usepackage{lineno}', tex=.true. )
+    call output ( 'def\linenumberfont{\normalfont\footnotesize\sffamily}', tex=.true. )
+  end if
+  call output ( 'usepackage[strings]{underscore}', tex=.true. )
+  call output ( '' )
+  call output ( 'begin{document}', tex=.true. )
+  if ( sx == 2 .and. number_step /= '0' ) then
+    if ( running ) then
+      call output ( 'runninglinenumbers', tex=.true. )
+    else
+      call output ( 'pagewiselinenumbers', tex=.true. )
+    end if
+    call output ( 'modulolinenumbers[' // number_step // ']', tex=.true. )
+  end if
+  call output ( '' )
+  call output ( 'makeatletter', tex=.true. )
+  call output ( 'def\@@biblabel#1{#1.}', tex=.true. )
+  call output ( 'newcommand{\ps@@twolines}{%', tex=.true. )
+  call output ( '  \renewcommand{\@@oddhead}{%' )
+  call output ( '    \parbox{' // width // '}{{\bf \Large \hfill%' )
+  call output ( trim(in_file) // '%', und=.true. )
+  call output ( '    }\newline%' )
+  call output ( '    ' // now // &
+  &             '\hfill Page \thepage\ of \pageref{lastpage}}}%' )
+  call output ( '  \renewcommand{\@@evenhead}{%' )
+  call output ( '    \parbox{' // width // '}{{\bf \Large %' )
+  call output ( trim(in_file) // '%', und=.true. )
+  call output ( '    }\newline%' )
+  call output ( '    Page \thepage\ of \pageref{lastpage} \hfill ' // &
+  &             now // '}}%' )
+  call output ( 'renewcommand{\@@oddfoot}{}%', tex=.true. )
+  call output ( 'renewcommand{\@@evenfoot}{}%', tex=.true. )
+  call output ( '}%' )
+  call output ( 'makeatother', tex=.true. )
+  call output ( 'pagestyle{twolines}', tex=.true. )
+  call output ( '' )
+  call output ( 'parindent 0pt \parskip 5pt', tex=.true. )
+  if ( sx == 1 ) then
+    call output ( 'lstset{language=[90]Fortran,', tex=.true. )
+    call output ( '  basicstyle=\ttfamily\footnotesize,' )
+    call output ( '  keywordstyle=\bfseries,' )
+!   It looks like the labelstyle and labelstep keywords have been removed
+!   call output ( '  labelstyle=\tiny,labelstep=' // number_step )
+    call output ( '}' )
+  end if
+
+! Copy the program text
+  do
+    lineNo = lineNo + 1
+    if ( in_unit >= 0 ) then
+      read ( in_unit, '(a)', iostat=iostat ) line
+    else
+      read ( *, '(a)', iostat=iostat ) line
+    end if
+    if ( iostat /= 0 ) exit
+    i = max(verify(line,' '),1) ! first nonblank, or first character if all blank
+    select case ( state )
+    case ( 0 ) ! begin
+      if ( line(i:i+1) /= '!{' ) then
+        state = 1
+        if ( sx == 2 ) call output ( '{\tt', adv='no' )
+        call output ( start_code(sx), tex=.true. )
+        call output ( trim(line) )
+      else
+        if ( adjustl(line(i+2:)) == '\newpage' .or. &
+           & adjustl(line(i+2:)) == '\cleardoublepage' ) then
+          state = 3
+        else if ( box .and. adjustl(line(i+2:)) /= '\newpage' .or. &
+                & box .and. adjustl(line(i+2:)) /= '\cleardoublepage' ) then
+          call output ( 'framebox[' // width // '][l]{\parbox{' // &
+                        widthp // '}{', tex=.true. )
+          state = 2
+        end if
+        call output ( trim(line(i+2:)) )
+      end if
+    case ( 1 ) ! doing code
+      if ( line(i:i+1) /= '!{' ) then
+        call output ( trim(line) )
+      else
+        call output ( stop_code(sx), tex=.true. )
+        if ( sx == 2 .and. number_step /= '0' ) &
+          & call output ( 'nolinenumbers', tex=.true. )
+        if ( adjustl(line(i+2:)) == '\newpage' .or. &
+           & adjustl(line(i+2:)) == '\cleardoublepage' ) then
+          state = 3
+        else
+          if ( box ) &
+            & call output ( 'framebox[' // width // '][l]{\parbox{' // &
+                          widthp // '}{', tex=.true. )
+          state = 2
+        end if
+        call output ( trim(line(i+2:)) )
+      end if
+    case ( 2, 3 ) ! doing LaTeX, 3 = first line is \newpage
+      if ( line(i:i) == '!' ) then
+        if ( state == 3 ) &
+          & call output ( 'framebox[' // width // '][l]{\parbox{' // &
+                        widthp // '}{', tex=.true. )
+        call output ( trim(line(i+1:)) )
+        state = 2
+      else
+        if ( box .and. state == 2 ) call output ( '}}' )
+        state = 1
+        call output ( '' ) ! without this, the previous paragraph gets line
+                           ! numbers if there is more than one paragraph in
+                           ! block
+        if ( sx == 2 .and. number_step /= '0' ) then
+          write ( now, '("linenumbers[",i0,"]")' ) lineNo
+          call output ( trim(now), tex=.true. )
+        end if
+        if ( sx == 2 ) call output ( '{\tt', adv='no' )
+        call output ( start_code(sx), tex=.true. )
+        call output ( trim(line) )
+      end if
+    end select
+  end do
+
+  if ( state == 1 ) then
+    call output ( stop_code(sx), tex=.true. )
+  else if ( state > 1 ) then
+    if ( box .and. state == 2 ) call output ( '}}' )
+    call output ( '' ) ! without this, the previous paragraph gets line
+                           ! numbers if there is more than one paragraph in
+                           ! block
+  end if
+    
+! Output the ending stuff
+! The only effect of the "vspace" line is that "lastpage" is defined
+! if a line of text after the last line would be on a new page.
+  call output ( 'vspace*{-1in}', tex=.true. )
+  call output ( 'label{lastpage}', tex=.true. )
+  call output ( 'end{document}', tex=.true. )
+
+  stop
+
+!{\newpage
+contains
+! -------------------------------------------------     OUTPUT     -----
+  subroutine OUTPUT ( TEXT, ADV, UND, TEX )
+  ! Output text to OUT_UNIT if it's positive, else to unit *.  Put a
+  ! "\" at the beginning if TEX is present (no matter with what value).
+    character(len=*), intent(in) :: TEXT
+    character(len=*), intent(in), optional :: ADV
+    logical, intent(in), optional :: UND, TEX
+    character(len=3) ::  ADVANCE   ! for I/O
+    integer :: I                   ! Subscript / do inductor
+    logical :: UNDER               ! .true. => put "\" before "_"
+
+    advance = 'yes'
+    if ( present(adv) ) advance = adv
+    under = sx == 1
+    i = verify(text,' ') ! first nonblank
+    if ( i > 0 ) then
+      if ( text(i:i) /= '!' ) under = .false.
+    end if
+    if ( present(und) ) under = und
+    if ( out_unit >= 0 ) then
+      if ( present(tex) ) write ( out_unit, '(a)', advance='no' ) '\'
+      do i = 1, len(text)
+        if ( under .and. text(i:i) == '_' ) &
+          write ( out_unit, '(a)', advance='no' ) '\'
+        write ( out_unit, '(a)', advance='no' ) text(i:i)
+      end do
+      write ( out_unit, '(a)', advance=advance )
+    else
+      if ( present(tex) ) write ( *, '(a)', advance='no' ) '\'
+      do i = 1, len(text)
+        if ( under .and. text(i:i) == '_' ) &
+          write ( *, '(a)', advance='no' ) '\'
+        write ( *, '(a)', advance='no' ) text(i:i)
+      end do
+      write ( *, '(a)', advance=advance )
+    end if
+    return
+  end subroutine OUTPUT
+
+end program F90TEX
+
+! $Log: f90tex.f90,v $
+! Revision 1.23  2016/03/28 22:18:39  vsnyder
+! Keep substring bounds for Line in range
+!
+! Revision 1.22  2013/08/09 00:40:39  vsnyder
+! Some cannonball polishing
+!
+! Revision 1.21  2013/08/08 20:48:50  vsnyder
+! Don't emit linenumbers commands if -l selected
+!
+! Revision 1.20  2013/08/08 20:11:14  vsnyder
+! Remove labelstyle and labelstep from lstlisting style
+!
+! Revision 1.19  2013/08/07 20:35:42  vsnyder
+! Replace back slash in input file name with ordinary slash.  Otherwise,
+! LaTeX thinks words in the path after the back slash are commands, and
+! gets confused while trying to produce the page heading.
+!
+! Revision 1.18  2013/08/07 20:19:26  vsnyder
+! Repair -nb option
+!
+! Revision 1.17  2013/08/06 23:40:32  vsnyder
+! Explicitly set line number after typeset box
+!
+! Revision 1.16  2013/08/06 23:14:31  vsnyder
+! Remove dependence on machine module
+!
+! Revision 1.15  2012/02/09 23:50:05  vsnyder
+! Go back to using getarg; let machine turn that into get_command_argument
+!
+! Revision 1.12  2010/08/22 00:45:24  vsnyder
+! Add -u option to include LaTeX packages
+!
+@
+
+
+1.23
+log
+@Keep substring bounds for Line in range
+@
+text
+@d63 1
+a63 1
+       "$Id: f90tex.f90,v 1.22 2013/08/09 00:40:39 vsnyder Exp $"
+d311 8
+a318 1
+  if ( state == 1 ) call output ( stop_code(sx), tex=.true. )
+d373 3
+@
+
+
+1.22
+log
+@Some cannonball polishing
+@
+text
+@d63 1
+a63 1
+       "$Id: f90tex.f90,v 1.21 2013/08/08 20:48:50 vsnyder Exp $"
+d249 1
+a249 1
+    i = verify(line,' ') ! first nonblank
+d366 3
+@
+
+
+1.21
+log
+@Don't emit linenumbers commands if -l selected
+@
+text
+@d63 1
+a63 1
+       "$Id: f90tex.f90,v 1.20 2013/08/08 20:11:14 vsnyder Exp $"
+d350 1
+a350 1
+      write ( out_unit, '(a)' )
+d358 1
+a358 1
+      write ( *, '(a)' )
+d366 3
+@
+
+
+1.20
+log
+@Remove labelstyle and labelstep from lstlisting style
+@
+text
+@d19 1
+d63 1
+a63 1
+       "$Id: f90tex.f90,v 1.19 2013/08/07 20:35:42 vsnyder Exp $"
+d132 1
+d274 2
+a275 1
+        call output ( 'nolinenumbers', tex=.true. )
+d300 4
+a303 2
+        write ( now, '("linenumbers[",i0,"]")' ) lineNo
+        call output ( trim(now), tex=.true. )
+d326 2
+a327 2
+  ! Output text to OUT_UNIT if it's positive, else to unit *.  Put a "\"
+  ! at the beginning if TEX is present (no matter with what value).
+d366 3
+@
+
+
+1.19
+log
+@Replace back slash in input file name with ordinary slash.  Otherwise,
+LaTeX thinks words in the path after the back slash are commands, and
+gets confused while trying to produce the page heading.
+@
+text
+@d19 1
+d62 1
+a62 1
+       "$Id: f90tex.f90,v 1.18 2013/08/07 20:19:26 vsnyder Exp $"
+d90 7
+a96 3
+    else if ( in_file(1:3) == '-n ' ) then
+      i = i + 1
+      call get_command_argument ( i, number_step )
+d99 1
+a99 1
+    else if ( in_file(1:3) == '-u ' ) then
+d104 6
+a109 2
+        i = i + 1
+        call get_command_argument ( i, packages(number_packages) )
+d124 15
+a138 12
+      write (*,*) ' Options: -b => put a box around !{ TeX stuff (default)'
+      write (*,*) '          -nb => don''t put a box around !{ TeX stuff'
+      write (*,*) '          -l => use lstlisting'
+      write (*,*) '          -v => use verbatim (default)'
+      write (*,*) '          -n x => line number step is x (default ', &
+      &                              number_step, ', 0 => no line numbers)'
+      write (*,*) '          -p => pagewise line numbers, default running'
+      write (*,*) '          -u package => use LaTeX package; this option'
+      write (*,*) '                        can appear up to 99 times'
+      write (*,*) '          -<anything else> => this output'
+      write (*,*) '          -  => no more options'
+      write (*,*) ' 6 August 2013'
+d233 3
+a235 1
+    call output ( '  labelstyle=\tiny,labelstep=' // number_step // '}' )
+d361 5
+@
+
+
+1.18
+log
+@Repair -nb option
+@
+text
+@d61 1
+a61 1
+       "$Id: f90tex.f90,v 1.17 2013/08/06 23:40:32 vsnyder Exp $"
+d159 7
+d347 3
+@
+
+
+1.17
+log
+@Explicitly set line number after typeset box
+@
+text
+@d61 1
+a61 1
+       "$Id: f90tex.f90,v 1.16 2013/08/06 23:14:31 vsnyder Exp $"
+d251 1
+d255 4
+a258 3
+        else if ( box ) then
+          call output ( 'framebox[' // width // '][l]{\parbox{' // &
+                        widthp // '}{', tex=.true. )
+d273 4
+a276 1
+        write ( now, '("linenumbers[",i0,"]")' ) lineNo - 1
+d340 3
+@
+
+
+1.16
+log
+@Remove dependence on machine module
+@
+text
+@d38 1
+d61 1
+a61 1
+       "$Id: f90tex.f90,v 1.15 2012/02/09 23:50:05 vsnyder Exp $"
+d219 1
+d271 2
+d335 3
+@
+
+
+1.15
+log
+@Go back to using getarg; let machine turn that into get_command_argument
+@
+text
+@d19 1
+a26 2
+  use MACHINE, only: FILSEP, GETARG, IO_ERROR
+
+d31 2
+d60 1
+a60 1
+       "$Id: f90tex.f90,v 1.12 2010/08/22 00:45:24 vsnyder Exp $"
+d73 1
+a73 1
+    call getarg ( i, in_file )
+d77 1
+a77 1
+      call getarg ( i, in_file )
+d90 1
+a90 1
+      call getarg ( i, number_step )
+d99 1
+a99 1
+        call getarg ( i, packages(number_packages) )
+d102 1
+a102 1
+      call getarg ( 0, in_file )
+d125 1
+a125 1
+      write (*,*) ' 15 December 2010'
+d130 1
+a130 1
+  call getarg ( i+1, out_file )
+d133 1
+a133 1
+    open(in_unit, file=in_file, status='old', iostat=iostat)
+d135 2
+a136 1
+      call io_error ( 'Unable to open input file', iostat, in_file )
+d148 2
+a149 1
+      call io_error ( 'Unable to open output file', iostat, out_file )
+d279 3
+d331 3
+@
+
+
+1.14
+log
+@Make cleardoublepage work like newpage
+@
+text
+@d26 1
+a26 1
+  use MACHINE, only: FILSEP, IO_ERROR
+d72 1
+a72 1
+    call get_command_argument ( i, in_file )
+d76 1
+a76 1
+      call get_command_argument ( i, in_file )
+d89 1
+a89 1
+      call get_command_argument ( i, number_step )
+d98 1
+a98 1
+        call get_command_argument ( i, packages(number_packages) )
+d101 1
+a101 1
+      call get_command_argument ( 0, in_file )
+d129 1
+a129 1
+  call get_command_argument ( i+1, out_file )
+@
+
+
+1.13
+log
+@Use the underscore package
+@
+text
+@d19 1
+d26 1
+a26 1
+  use MACHINE, only: FILSEP, HP, IO_ERROR
+d72 1
+a72 1
+    call getarg ( i+hp, in_file )
+d76 1
+a76 1
+      call getarg ( i+hp, in_file )
+d89 1
+a89 1
+      call getarg ( i+hp, number_step )
+d98 1
+a98 1
+        call getarg ( i+hp, packages(number_packages) )
+d101 1
+a101 1
+      call getarg ( 0+hp, in_file )
+d129 1
+a129 1
+  call getarg ( i+1+hp, out_file )
+d230 2
+a231 1
+        if ( adjustl(line(i+2:)) == '\newpage' ) then
+d233 2
+a234 1
+        else if ( box .and. adjustl(line(i+2:)) /= '\newpage' ) then
+d246 2
+a247 1
+        if ( adjustl(line(i+2:)) == '\newpage' ) then
+@
+
+
+1.12
+log
+@Add -u option to include LaTeX packages
+@
+text
+@d58 1
+a58 1
+       "$Id: f90tex.f90,v $"
+d123 1
+d171 1
+d320 4
+a323 1
+! $Log: $
+@
+
+
+1.11
+log
+@Use the underscore package to avoid needing to quote underscores
+@
+text
+@a0 11
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+d9 9
+a17 1
+! again at the end of the comment.
+d19 2
+d25 1
+a25 1
+  use MACHINE, only: FILSEP, HP, IO_ERROR, GETARG
+d35 1
+a35 1
+  character(len=255) :: LINE                      ! From input
+d38 4
+d54 1
+a54 1
+!---------------------------- RCS Ident Info ------------------------------
+d58 1
+a58 1
+       "$Id: f90tex.f90,v 1.10 2010/05/06 02:40:35 vsnyder Exp $"
+d60 1
+a60 1
+!---------------------------------------------------------------------------
+d89 10
+d118 3
+d158 3
+a160 2
+  call output ( 'usepackage[strings]{underscore}', tex=.true. )
+  call output ( 'usepackage[USenglish]{babel}', tex=.true. )
+d166 4
+d172 8
+d186 1
+a186 2
+  call output ( trim(in_file), adv='no', und=.true. )
+  call output ( '%' )
+d192 1
+a192 2
+  call output ( trim(in_file), adv='no', und=.true. )
+  call output ( '%' )
+d218 1
+a218 1
+    i = max(fnb(line),1) ! fnb == first nonblank
+d227 3
+a229 1
+        if ( box ) &
+d232 2
+a234 1
+        state = 2
+d241 3
+a243 1
+        if ( box ) &
+d246 2
+a248 1
+        state = 2
+d250 1
+a250 1
+    case ( 2 ) ! doing LaTeX
+d252 3
+d256 1
+d258 1
+a258 1
+        if ( box ) call output ( '}}' )
+d267 1
+a267 6
+  select case ( state )
+  case ( 1 ) ! doing code
+    call output ( stop_code(sx), tex=.true. )
+  case ( 2 ) ! doing LaTeX
+    if ( box ) call output ( '}}' )
+  end select
+d275 1
+a276 14
+! ----------------------------------------------------     FNB     -----
+  integer function FNB ( TEXT )
+  ! Find the position of the first nonblank in TEXT
+    character(len=*), intent(in) :: TEXT
+    integer :: I
+    do i = 1, len(text)
+      if ( text(i:i) /= ' ' ) then
+        fnb = i
+        return
+      end if
+    end do
+    fnb = 0
+    return
+  end function FNB
+d291 1
+a291 1
+    i = fnb(text)
+d299 1
+a299 4
+        ! Account for a bug in lstlisting, which requires \ some stuff
+        ! after !
+        if ( sx == 1 .and. text(i:i) == '!' ) under = .true.
+        if ( under .and. scan(text(i:i),'_^%&') /= 0 ) &
+d303 1
+a303 1
+      write ( out_unit, '(a)', advance=advance )
+d311 1
+a311 1
+      write ( *, '(a)', advance=advance )
+d318 1
+a318 31
+! $Log: f90tex.f90,v $
+! Revision 1.10  2010/05/06 02:40:35  vsnyder
+! Increase LINE from 132 to 255
+!
+! Revision 1.9  2010/05/01 00:42:36  vsnyder
+! Repair error if processing LaTeX at end of file
+!
+! Revision 1.8  2005/06/22 19:27:32  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 1.7  2005/06/13 23:36:08  vsnyder
+! Repair minor bug in page heading
+!
+! Revision 1.6  2004/09/22 20:18:48  vsnyder
+! Account for bugs in lstlisting
+!
+! Revision 1.5  2004/09/22 19:19:24  vsnyder
+! Repair minor bug in advancing
+!
+! Revision 1.4  2001/06/14 23:06:48  pwagner
+! Added GETARG to machine modules used
+!
+! Revision 1.3  2001/06/01 21:50:16  vsnyder
+! Remove 'private' from CVS stuff (oops!)
+!
+! Revision 1.2  2001/06/01 21:49:23  vsnyder
+! Fix up CVS log variable
+!
+! Revision 1.1  2001/06/01 21:47:22 vsnyder
+! Initial commit
+!
+@
+
+
+1.10
+log
+@Increase LINE from 132 to 255
+@
+text
+@d55 1
+a55 1
+       "$Id: f90tex.f90,v 1.9 2010/05/01 00:42:36 vsnyder Exp $"
+d142 2
+d303 3
+@
+
+
+1.9
+log
+@Repair error if processing LaTeX at end of file
+@
+text
+@d36 1
+a36 1
+  character(len=132) :: LINE                      ! From input
+d55 1
+a55 1
+       "$Id: f90tex.f90,v 1.8 2005/06/22 19:27:32 pwagner Exp $"
+d301 3
+@
+
+
+1.8
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d53 1
+a53 1
+       "$RCSfile: MLSL2.f90,v $"
+d55 1
+a55 1
+       "$Id: MLSL2.f90,v 2.138 2005/06/22 18:57:02 pwagner Exp $"
+d228 6
+a233 1
+  if ( state == 1 ) call output ( stop_code(sx), tex=.true. )
+d301 3
+@
+
+
+1.7
+log
+@Repair minor bug in page heading
+@
+text
+@d1 11
+d51 3
+a53 1
+!---------------------------- RCS Ident Info -------------------------------
+d55 1
+a55 1
+       "$Id: f90tex.f90,v 1.6 2004/09/22 20:18:48 vsnyder Exp $"
+a56 2
+  character (len=*), parameter :: ModuleName= &
+       "$RCSfile: f90tex.f90,v $"
+d296 3
+@
+
+
+1.6
+log
+@Account for bugs in lstlisting
+@
+text
+@d42 1
+a42 1
+       "$Id: f90tex.f90,v 1.5 2004/09/22 19:19:24 vsnyder Exp $"
+d144 2
+a145 1
+  call output ( trim(in_file) // '%', und=.true. )
+d151 2
+a152 1
+  call output ( trim(in_file) // '%', und=.true. )
+d285 3
+@
+
+
+1.5
+log
+@Repair minor bug in advancing
+@
+text
+@d42 1
+a42 1
+       "$Id: f90tex.f90,v 1.4 2001/06/14 23:06:48 pwagner Exp $"
+d176 1
+a176 1
+    i = fnb(line) ! fnb == first nonblank
+d260 4
+a263 1
+        if ( under .and. text(i:i) == '_' ) &
+d283 3
+@
+
+
+1.4
+log
+@Added GETARG to machine modules used
+@
+text
+@d42 1
+a42 1
+       "$Id: f90tex.f90,v 1.3 2001/06/01 21:50:16 vsnyder Exp $"
+d264 1
+a264 1
+      write ( out_unit, '(a)' )
+d272 1
+a272 1
+      write ( *, '(a)' )
+d280 3
+@
+
+
+1.3
+log
+@Remove 'private' from CVS stuff (oops!)
+@
+text
+@d15 1
+a15 1
+  use MACHINE, only: FILSEP, HP, IO_ERROR
+d42 1
+a42 1
+       "$Id: f90tex.f90,v 1.2 2001/06/01 21:49:23 vsnyder Exp $"
+d280 3
+@
+
+
+1.2
+log
+@Fix up CVS log variable
+@
+text
+@d41 4
+a44 4
+  character (len=*), private, parameter :: IdParm = &
+       "$Id: f90tex.f90,v 1.1 2001/06/01 21:47:22 vsnyder Exp $"
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName= &
+d279 4
+a282 1
+! $Log: f90tex.f90,v$
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d42 1
+a42 1
+       "$Id: RetrievalModule.f90,v 2.38 2001/06/01 21:40:18 vsnyder Exp $"
+d45 1
+a45 1
+       "$RCSfile: RetrievalModule.f90,v $"
+d279 4
+a282 1
+! $LOg: $
+@
+

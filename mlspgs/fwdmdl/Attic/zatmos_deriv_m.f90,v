@@ -1,0 +1,485 @@
+head	1.11;
+access;
+symbols
+	newfwm-sep01:1.10.0.2
+	V0-7:1.10
+	V0-5-Level2:1.10
+	V0-5-SIPS:1.9
+	V0_1:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.11
+date	2001.09.17.20.26.28;	author livesey;	state dead;
+branches;
+next	1.10;
+
+1.10
+date	2001.05.03.22.30.21;	author vsnyder;	state Exp;
+branches
+	1.10.2.1;
+next	1.9;
+
+1.9
+date	2001.04.11.00.51.02;	author livesey;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2001.04.09.20.52.07;	author zvi;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2001.03.31.23.40.56;	author zvi;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2001.03.29.08.51.01;	author zvi;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2001.03.05.21.37.20;	author zvi;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.01.31.01.08.48;	author zvi;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2000.11.22.23.10.05;	author zvi;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2000.11.22.23.07.32;	author zvi;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2000.05.04.18.12.06;	author vsnyder;	state Exp;
+branches;
+next	;
+
+1.10.2.1
+date	2001.09.10.10.01.13;	author zvi;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.11
+log
+@New forward model
+@
+text
+@! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+module ZATMOS_DERIV_M
+  use MLSCommon, only: I4, R8
+  use ForwardModelConfig, only: ForwardModelConfig_T
+  use VectorsModule, only: Vector_T, VectorValue_T, GetVectorQuantityByType
+  use GET_DRAD_NOTDER_M, only: GET_DRAD_NOTDER
+  use PATH_ENTITIES_M, only: PATH_DERIVATIVE
+  use Intrinsic, only: l_vmr
+  implicit NONE
+  private
+  public :: ZATMOS_DERIV
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
+       "$Id: zatmos_deriv_m.f90,v 1.10 2001/05/03 22:30:21 vsnyder Exp $"
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: zatmos_deriv_m.f90,v $"
+!---------------------------------------------------------------------------
+contains
+!---------------------------------------------------------------------------
+  Subroutine ZATMOS_DERIV ( ForwardModelConfig, FwdModelExtra, FwdModelIn, &
+             frq_i, mid, delta, t_script, tau, ilo, ihi, k_atmos, Ier )
+
+    type(forwardModelConfig_T), intent(in) :: forwardModelConfig
+    type (Vector_T), intent(in) :: fwdModelIn, fwdModelExtra
+
+    integer(i4), intent(in) :: mid, ILO, IHI, frq_i
+
+    real(r8), intent(in) :: DELTA(:,:,:,:)
+    real(r8), intent(in) :: T_SCRIPT(:), TAU(:)
+
+    integer(i4), intent(out) :: Ier
+
+    Type(path_derivative), intent(in out) :: k_atmos(:)
+
+    ! --- Local variables --------------------------------------------
+
+    Real(r8) :: r
+    Integer(i4) :: J, IZ, IP
+    type (VectorValue_T), pointer :: f
+
+    Ier = 0
+    do j = 1, size(forwardModelConfig%molecules)
+
+      if ( forwardModelConfig%moleculeDerivatives(j) ) then
+
+        f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+     &       quantityType=l_vmr, molecule=forwardModelConfig%molecules(j))
+
+        do ip = lbound(k_atmos(j)%values,3), ubound(k_atmos(j)%values,3)
+
+          do iz = 1, f%template%noSurfs
+
+            Call get_drad_notder (delta(1:,iz,ip,j), t_script, tau, &
+   &                              mid, ilo, ihi, r)
+            k_atmos(j)%values(frq_i,iz,ip) = r
+
+          end do
+
+        end do
+
+      end if
+
+    end do
+
+    Return
+  End Subroutine ZATMOS_DERIV
+end module ZATMOS_DERIV_M
+
+! $Log: zatmos_deriv_m.f90,v $
+! Revision 1.10  2001/05/03 22:30:21  vsnyder
+! Insert copyright notice, CVS log line, some cosmetic changes
+!
+@
+
+
+1.10
+log
+@Insert copyright notice, CVS log line, some cosmetic changes
+@
+text
+@d16 1
+a16 1
+       "$Id: $"
+d19 1
+a19 1
+       "$RCSfile: $"
+d72 4
+a75 1
+! $Log: $
+@
+
+
+1.10.2.1
+log
+@*** empty log message ***
+@
+text
+@d16 1
+a16 1
+       "$Id: zatmos_deriv_m.f90,v 1.10 2001/05/03 22:30:21 vsnyder Exp $"
+d19 1
+a19 1
+       "$RCSfile: zatmos_deriv_m.f90,v $"
+d72 1
+a72 4
+! $Log: zatmos_deriv_m.f90,v $
+! Revision 1.10  2001/05/03 22:30:21  vsnyder
+! Insert copyright notice, CVS log line, some cosmetic changes
+!
+@
+
+
+1.9
+log
+@Moving window implemented
+@
+text
+@d1 3
+d15 5
+a19 5
+  private ID, ModuleName
+  CHARACTER (LEN=256) :: Id = &
+       "$Id: zatmos_deriv_m.f90,v 1.8 2001/04/09 20:52:07 zvi Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= &
+       "$RCSfile: zatmos_deriv_m.f90,v $"
+d23 3
+a25 3
+  Subroutine ZATMOS_DERIV(ForwardModelConfig, FwdModelExtra, FwdModelIn, &
+             frq_i, mid, delta, t_script, tau, ilo, ihi, k_atmos,Ier)
+!
+d37 3
+a39 3
+!
+! --- Local variables --------------------------------------------
+!
+d43 1
+a43 1
+!
+d46 2
+a47 2
+!
+      IF (forwardModelConfig%moleculeDerivatives(j)) THEN
+d51 1
+a51 1
+!
+d55 1
+a55 1
+!
+d59 1
+a59 1
+!
+d61 1
+a61 1
+!
+d63 3
+a65 3
+!
+      ENDIF
+!
+d67 1
+a67 1
+!
+d71 2
+@
+
+
+1.8
+log
+@Debugging Derivatives version
+@
+text
+@d14 1
+a14 1
+       "$Id: zatmos_deriv_m.f90,v 1.7 2001/03/31 23:40:56 zvi Exp $"
+d49 1
+a49 1
+        do ip = 1, f%template%noInstances
+@
+
+
+1.7
+log
+@Eliminate l2pcdim (dimension parameters) move to allocatable ..
+@
+text
+@d2 3
+a5 2
+  use L2PC_PFA_STRUCTURES, only: ATMOS_COMP
+  use MLSCommon, only: I4, R8
+d7 1
+d14 1
+a14 1
+       "$Id: zatmos_deriv_m.f90,v 1.6 2001/03/29 08:51:01 zvi Exp $"
+d19 3
+a21 2
+  Subroutine ZATMOS_DERIV(atmospheric, n_sps, band, frq_i,no_coeffs_f, &
+ &           mid, delta, t_script, tau, ilo, ihi, no_phi_f, k_atmos,Ier)
+d23 2
+a24 1
+    type(atmos_comp), intent(in) :: ATMOSPHERIC(:)
+d26 1
+a26 2
+    integer(i4), intent(in) :: N_SPS, BAND, mid, ILO, IHI, frq_i
+    integer(i4), intent(in) :: NO_COEFFS_F(:), NO_PHI_F(:)
+d34 3
+a36 1
+
+d38 2
+a39 1
+    Integer(i4) :: J, IZ, IP, NO_Z, NO_PHI
+d42 1
+a42 1
+    do j = 1, n_sps
+d44 4
+a47 1
+      IF(atmospheric(j)%der_calc(band)) THEN
+d49 3
+a51 6
+        no_phi = no_phi_f(j)
+        no_z = no_coeffs_f(j)
+!
+        do ip = 1, no_phi
+!
+          do iz = 1, no_z
+@
+
+
+1.6
+log
+@Changing the (*) toi (:) everywhere
+@
+text
+@d2 1
+a2 3
+  use GET_DRAD_M, only: GET_DRAD
+  use L2PCdim, only: MAX_NO_PHI, N2LVL
+  use L2PC_FILE_PARAMETERS, only: MAX_NO_ELMNTS_PER_SV_COMPONENT
+d12 1
+a12 1
+       "$Id: zatmos_deriv_m.f90,v 1.5 2001/03/05 21:37:20 zvi Exp $"
+d17 2
+a18 3
+  Subroutine ZATMOS_DERIV(atmospheric, n_sps, band, frq_i, &
+ &           no_coeffs_f ,mid, delta, t_script, tau, ilo, ihi, no_phi_f, &
+ &           k_atmos,Ier)
+a19 3
+    Integer(i4), Parameter :: mnp=max_no_phi
+    Integer(i4), Parameter :: mxco=max_no_elmnts_per_sv_component
+
+d32 1
+a33 3
+
+    Real(r8) :: r
+    Real(r8), SAVE :: Ary_zero(N2lvl) = 0.0_r8
+d47 2
+a48 2
+            Call get_drad (delta(1:,iz,ip,j), t_script, tau, Ary_zero, &
+   &                       mid, ilo, ihi, r)
+@
+
+
+1.5
+log
+@New filter format
+@
+text
+@d14 1
+a14 1
+       "$Id: zatmos_deriv_m.f90,v 1.1 2000/05/04 18:12:06 vsnyder Exp $"
+d26 1
+a26 1
+    type(atmos_comp), intent(in) :: ATMOSPHERIC(*)
+d29 1
+a29 1
+    integer(i4), intent(in) :: NO_COEFFS_F(*), NO_PHI_F(*)
+d31 2
+a32 1
+    real(r8), intent(in) :: DELTA(N2lvl,mxco,mnp,*), T_SCRIPT(*), TAU(*)
+@
+
+
+1.4
+log
+@New version of forward model
+@
+text
+@@
+
+
+1.3
+log
+@Re-add basic stuff
+@
+text
+@d3 1
+a3 1
+  use L2PCdim, only: MAX_NO_PHI, N2LVL, Nptg
+d6 2
+a7 1
+  use MLSCommon, only: I4, R4, R8
+d19 1
+a19 1
+  Subroutine ZATMOS_DERIV(atmospheric, ptg_i, sps_tbl, n_sps, band,      &
+d21 1
+a21 1
+ &           k_atmos)
+d28 2
+a29 2
+    integer(i4), intent(in) :: PTG_I, N_SPS, BAND, mid, ILO, IHI
+    integer(i4), intent(in) :: NO_COEFFS_F(*), SPS_TBL(*), NO_PHI_F(*)
+d33 1
+a33 1
+    real(r4), intent(out) :: K_ATMOS(Nptg,mxco,mnp,*)
+d35 3
+a37 1
+    Integer(i4) :: SPS_I, SV_I, NJ, NF, K, J
+d42 2
+a43 1
+    do sps_i = 1, n_sps
+a44 1
+      j = sps_tbl(sps_i)
+d47 2
+a48 2
+        nj = no_coeffs_f(j)
+        nf = no_phi_f(sps_i)
+d50 1
+a50 1
+        do k = 1, nf
+d52 1
+a52 1
+          do sv_i = 1, nj
+d54 1
+a54 1
+            Call get_drad (delta(1:,sv_i,k,j), t_script, tau, Ary_zero, &
+d56 1
+a56 1
+            k_atmos(ptg_i,sv_i,k,j) = r
+@
+
+
+1.2
+log
+@New version
+@
+text
+@d3 1
+a3 1
+  use L2PCdim, only: MAX_NO_PHI, N2LVL, NLVL
+d6 1
+a6 1
+  use MLSCommon, only: I4, R4
+a9 1
+
+a16 1
+
+d18 3
+a20 4
+
+  Subroutine ZATMOS_DERIV ( atmospheric, ptg_i, sps_tbl, n_sps, band,   &
+ &           no_coeffs_f, IndxR, IndxL, delta, t_script, tau, ilo, ihi, &
+ &           no_phi_f, k_star_atmos )
+a25 5
+    integer(i4), intent(in) :: PTG_I, SPS_TBL(*), N_SPS, BAND
+    integer(i4), intent(in) :: NO_COEFFS_F(*), IndxR, IndxL
+    real(r4), intent(in) :: DELTA(N2lvl,mxco,mnp,*), T_SCRIPT(*), TAU(*)
+    integer(i4), intent(in) :: ILO, IHI, NO_PHI_F(*)
+    real(r4), intent(out) :: K_STAR_ATMOS(Nlvl,mxco,mnp,*)
+d27 11
+a37 2
+    Integer(i4) :: SPS_I, SV_I, NJ, NF, K, IS
+    Real(r4), save :: Ary_zero(N2lvl) = 0.0
+d41 2
+a42 2
+      is = sps_tbl(sps_i)
+      if ( atmospheric(is)%der_calc(band) ) then
+d44 1
+a44 1
+        nj = no_coeffs_f(is)
+d51 4
+a54 3
+            Call get_drad ( delta(1, sv_i, k, is), t_script, tau, Ary_zero, &
+   &                        IndxR, IndxL, ilo, ihi,                         &
+   &                        k_star_atmos(ptg_i,sv_i,k,is) )
+d59 1
+a59 1
+      endif
+@
+
+
+1.1
+log
+@Initial conversion to Fortran 90
+@
+text
+@d14 1
+a14 1
+       "$Id: ZATMOS_DERIV_M,v 1.12 2000/02/08 19:54:57 vsnyder Exp $"
+@
+

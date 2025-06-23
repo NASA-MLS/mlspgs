@@ -1,0 +1,205 @@
+head	1.6;
+access;
+symbols
+	v5-02-NRT-19:1.6
+	v6-00:1.6
+	v5-02-NRT-18:1.6
+	v5-02:1.5
+	v5-01-NRT-17:1.6
+	v5-01-NRT-16:1.6
+	v5-01-NRT-15:1.6
+	v5-01-NRT-14:1.6
+	neuralnetworks-1-0:1.6.0.4
+	cfm-single-freq-0-1:1.6.0.2
+	TES-MLuo-01:1.6
+	TES-UNKNOWN:1.5
+	v5-01:1.5
+	v5-00:1.5
+	v4-23-TA133:1.5.0.8
+	mus-emls-1-70:1.5.0.6
+	rel-1-0-englocks-work:1.5.0.4
+	VUMLS1-00:1.5
+	VPL1-00:1.5
+	V4-22-NRT-08:1.5
+	VAM1-00:1.5
+	V4-21:1.5.0.2
+	V4-13:1.5
+	V4-12:1.5
+	V4-11:1.5
+	V4-10:1.5
+	M4-00:1.5
+	V3-33:1.3
+	V3-31:1.3
+	V3-30-NRT-05:1.3
+	cfm-01-00:1.3;
+locks; strict;
+comment	@# @;
+
+
+1.6
+date	2020.07.15.20.46.50;	author pwagner;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2011.11.02.17.06.40;	author honghanh;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2011.05.03.20.14.37;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2010.06.16.18.42.35;	author honghanh;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2010.05.24.20.04.55;	author honghanh;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2010.05.23.02.53.04;	author honghanh;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.6
+log
+@Copied from MLuo
+@
+text
+@begin GlobalSettings
+
+  vGridTangent: vGrid, type=Logarithmic, coordinate=Zeta, $
+    start=1000mb, formula=[2:6,12:12,41:6]
+
+  ;; Setup the particular forward model we're going to use
+  ;; in computing analytical second derivatives
+  analyticalL2pcFwm: forwardModel, type=full,  $
+    signals = 'R3:240.B7F:O3', $
+    molecules = [ EXTINCTIONV2, $                         
+  [ HNO3, HNO3, HNO3_V7, HNO3_V9 ], [ O2, O_18_O ], [ O3, O3, $
+    O3_V1_3, O3_V2, O3_ASYM_O_18, O3_SYM_O_18 ], [ SO2, S_32_O2 ] ], $
+    LSBlblMolecules = [EXTINCTIONV2,O3,O3_V2],$      
+    USBlblMolecules = [EXTINCTIONV2,O3,O3_V2],$
+  moleculederivatives = [ EXTINCTIONV2, O3 ], $
+   ;;specificQuantities=[temperature_HR, h2o_HR], $
+    phiWindow=0 degrees, $
+    /skipOverlaps, $
+     integrationGrid=vGridTangent, tangentGrid=vGridTangent, $
+    /do_conv, /do_freq_avg, $
+    ;;/temp_der, $
+    /atmos_der, $
+    ;;tolerance= -1K, $
+        /allLinesForRadiometer
+
+end GlobalSettings
+@
+
+
+1.5
+log
+@Modified config.l2cf to work with the TES mockup.
+@
+text
+@d9 7
+a15 7
+    signals = 'R3:240.B9F:CO', $
+    molecules = [ [ CO, CO ], EXTINCTIONV2, [ O2, O_18_O ], $
+    [ HNO3, HNO3 ], $
+    [ O3, O3, O3_V2, O3_ASYM_O_18, O3_SYM_O_18 ] , [ SO2, S_32_O2 ] ], $
+    LSBlblMolecules = [CO,EXTINCTIONV2,O3],$
+    USBlblMolecules = [CO,EXTINCTIONV2,O3],$
+  moleculeDerivatives = [ CO, EXTINCTIONV2, O2, O3, HNO3, SO2 ], $
+a26 1
+
+@
+
+
+1.4
+log
+@Consistent with computing Jacobians
+@
+text
+@d3 2
+a4 2
+    vGridTangentSids: vGrid, type=Logarithmic, coordinate=Zeta, $
+       start=1000mb, formula=[19:12]
+d6 11
+a16 6
+    sidsFwm: forwardModel, type=full,  $
+    signals = [ 'R3:240.B7F:O3', 'R3:240.B8F:PT' ], $
+    molecules = [ [ H2O, H2O ], [ O2, O2 ], [ O3, O3 ]], $
+    LSBlblMolecules = [O2,O3],$
+    USBlblMolecules = [O2,O3],$
+    moleculeDerivatives = [H2O,O3],$
+d19 6
+a24 15
+    integrationGrid=vGridTangentSids,$
+        tangentGrid=vGridTangentSids, /atmos_der, /temp_der, /do_conv, /do_freq_avg, $
+    /allLinesForRadiometer
+
+    sidsFwm2: forwardModel, type=full,  $
+    signals = [ 'R2:190.B2F:H2O' ], $
+    molecules = [ [ H2O, H2O ], [ O2, O2 ], [ O3, O3 ]], $
+    LSBlblMolecules = [O2,O3],$
+    USBlblMolecules = [O2,O3],$
+    moleculeDerivatives = [H2O,O3],$
+    phiWindow=0 degrees, $
+    /skipOverlaps, $
+    integrationGrid=vGridTangentSids,$
+        tangentGrid=vGridTangentSids, /atmos_der, /temp_der, /do_conv, /do_freq_avg, $
+    /allLinesForRadiometer
+@
+
+
+1.3
+log
+@Remove Fill for GPH, since the forward model will fill GPH
+Add band 2 and band 8 in the measurement vector
+Change ForwardModel to handle an array of config objects instead of just 1
+@
+text
+@d11 1
+d15 1
+a15 1
+        tangentGrid=vGridTangentSids, /do_conv, /do_freq_avg, $
+d23 1
+d27 1
+a27 1
+        tangentGrid=vGridTangentSids, /do_conv, /do_freq_avg, $
+@
+
+
+1.2
+log
+@Shorten unneccessary comments
+@
+text
+@d7 12
+a18 1
+    signals = [ 'R3:240.B7F:O3' ], $
+@
+
+
+1.1
+log
+@Initial import of the forward model configuration file
+@
+text
+@a0 1
+; -------------------------------------------- Global settings ------
+a5 3
+    ;; Now define any forward models that will be used in more than one phase.
+
+    ;; Define the scan models
+@
+

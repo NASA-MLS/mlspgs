@@ -1,0 +1,944 @@
+head	1.6;
+access;
+symbols
+	v5-02-NRT-19:1.6
+	v6-00:1.6
+	v5-02-NRT-18:1.6
+	v5-02:1.6
+	v5-01-NRT-17:1.6
+	v5-01-NRT-16:1.6
+	v5-01-NRT-15:1.6
+	v5-01-NRT-14:1.6
+	neuralnetworks-1-0:1.6.0.4
+	cfm-single-freq-0-1:1.6.0.2
+	v5-01:1.6
+	v5-00:1.6
+	v4-23-TA133:1.2.0.4
+	mus-emls-1-70:1.2.0.2;
+locks; strict;
+comment	@% @;
+
+
+1.6
+date	2019.06.10.23.27.44;	author vsnyder;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2019.05.30.02.14.05;	author vsnyder;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2019.05.30.01.32.20;	author vsnyder;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2019.05.30.01.12.43;	author vsnyder;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2018.07.10.23.28.05;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2018.07.10.00.15.06;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.6
+log
+@Cannonball polishing
+@
+text
+@\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9in
+
+\newcommand{\docname}{wvs-149r4}
+\newcommand{\docdate}{10 June 2019}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+
+\usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\input mfpic
+\opengraphsfile{wvs-149-1}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>MLS Group\\
+Subject: \>Hashing\\
+From: \>Van Snyder\\
+%Reference: \\
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-20pt}
+
+During a presentation about how MLS programs processes configuration
+files, a question was asked ``what is this hashing stuff?'' This
+description is from a memo that Fred Krogh and I wrote in 1983.
+
+\begin{centering}
+A Re-examination of Hashing Using Separate chains\\[5pt]
+Fred T. Krogh\\
+W. Van Snyder\\[5pt]
+Section 366\\
+Computing Memorandum No. 496\\
+January 19, 1983\\
+Revised February 4, 1983\\
+Revised November 22, 1983\\
+\end{centering}
+
+\begin{abstract}
+A discussion and analysis of a well known but frequently-discounted
+hashing algorithm is presented.  We believe its use is preferred in most
+hashing applications.
+\end{abstract}
+
+CR Categories and Subject Descriptors: D.2.8 [Software Engineering]"
+Metrics -- \emph{performance measures}; E.2 [Data]: Data Storage
+Representations -- \emph{Hash-table representations}; F.2.2 [Analysis of
+Algorithms and Problem Complexity]: Numerical Algorithms and Problems --
+\emph{sorting and searching}; H.2.2 [Database management]: Physical Design
+-- \emph{access methods}; H.3.3 [Information storage and retrieval]:
+Information Search and Retrieval -- \emph{search process}
+
+General terms: Algorithms, Design, Performance, Theory
+
+Additional Key Words and Phrases: analysis of algorithms, hashing, data
+structures
+
+\section*{Introduction}
+
+The fundamental idea of hashing is that the expected location of an entry
+in a table, called the initial probe location, or hash value, is computed
+using some part, called the key, of the entry.  An algorithm for inserting
+entries into a hash table must cope with the possibility that entries
+having different keys might result in the same initial probe location. 
+When such a collision occurs, only one of the entries can be stored at the
+initial probe location; the others must be stored somewhere else.  The
+principal difference between hashing algorithms is the way they cope with
+collisions.
+
+In \cite{Vitter:1982} Vitter describes algorithms for hashing that use
+coalesced chains and a cellar.  When a collision occurs, and the entry at
+the initial probe location has a key different from the key of the new
+entry, a chain is searched from the initial probe location to determine if
+the new entry is in the table.  Each examination of an entry in the table
+is called a probe.  If the new entry is not in the chain, it is entered in
+an empty location, and the chain is extended to point to it.  The chain is
+said to be coalesced because entries having different initial probe
+locations might be members of the same chain.  The cellar is an area of
+the hash table used only to store members of chains.  Initial probe
+locations are never in the cellar.
+
+It is the purpose of this note to call attention to an algorithm that does
+not allow chains to coalesce.  That is, every entry in a chain has the
+same hash value, and entries in different chains have different hash
+values.  In addition, one may assume that the first member of every chain
+is stored at the location $P$ indicated by the hash value.  As a
+consequence of this construction, a non-empty entry at location $J$ either
+has a hash value equal to $J$, or it is a member of a chain of entries
+having a hash value different from $J$, and there is no entry having a
+hash value equal to $J$.
+
+When given an entry $G$ to be inserted, an algorithm to construct a hash
+table using separate chains must consider three conditions of the entry
+$A$ at $P$, the hash value of $G$:
+
+\begin{enumerate}
+
+\item $A$ is an empty entry, in which case $G$ may be stored at $P\,$;
+
+\item the hash value of $A$ is equal to $P$, in which case $G$ may be
+stored in any empty location, but must be made a member of the chain that
+starts at $P\,$;
+
+\item the hash value of $A$ is different from $P$, in which case the entry
+at $P$ must be moved to any empty location, resulting in the first
+condition above.
+
+\end{enumerate}
+
+Since chains do not coalesce, the expected number of probes necessary to
+locate an entry is smaller, a cellar is almost pointless because the use
+of a cellar does not decrease the expected number or probes, deletion of
+entries is simpler, and in some implementations space for links that
+define chains can be found in the space ordinarily used for the key of an
+entry.  Inserting new entries is slightly more complicated, but in our
+view the complication is justified.
+
+\section*{Notation}
+
+\begin{description}\itemsep -2pt
+
+\item[$M =$] Size of the table.
+
+\item[$N =$] Number of non-empty entries.
+
+\item[$\alpha =$] $\frac{N}M$.
+
+\item[$A =$] An entry in the table.
+
+\item[$k(A) =$] Key of $A$.
+
+\item[$h(A) \equiv h(k(A)) =$] Initial probe location.
+
+\item[$A_i,\,1 \leq i \leq k =$] Chain of entries such that $h(A_i) =
+h(A_1)$.  A chain is ordered if for some function $f(A)$ the condition
+$f(A_i) < f(A_{i+1}),\, 1 \leq i \leq k$ is imposed.
+
+\item[$C_i =$] Location of $A_i$, the $i^\text{th}$ entry in a chain.
+
+\item[$L_i,\,1 \leq i \leq k =$] Link field contained in $A_i \equiv
+C_{i+1}$.
+
+\item[$L_k =$] $C_1$ or an end mark.
+
+\item[$\mu =$] (cost of moving an entry) / (cost of probe).
+
+\item[$\sigma =$] (number of successful searches) / (number of entries
+added to the table).
+
+\item[$\nu =$] (number of unsuccessful searches) / (number of entries
+added to the table).
+
+\item[$\phi =$] (cost of following a link) / (cost of a probe) $\equiv
+0.5$.
+
+\item[$S(\alpha) =$] Expected probes for successful search when using
+unordered chains.
+
+\item[$U(\alpha) =$] Expected probes for unsuccessful search when using
+unordered chains.
+
+\item[$V(\alpha) =$] Probability that an entry must be moved when using
+unordered chains.
+
+\item[$L(\alpha) =$] Expected number of links that must be extracted from
+entries in a chain to find the predecessor of any entry that must be moved
+when using unordered chains.
+
+\item[$S^\prime,\, U^\prime, V^\prime, L^\prime =$] Quantities of $S$,
+$U$, $V$, $L$ when using ordered chains.
+
+\item[$S_V,\, U_V =$] $S$ and $V$ for Vitter's algorithm $C$ with
+$\beta = 0.86$, see \cite{Vitter:1982}.
+
+\item[{$E[S(\alpha)] =$}] Expected value of $S(\alpha)$,
+$\frac1\alpha \int_0^\alpha \, S(t)\,\text{d}t < E[S(\alpha)] <
+S(\alpha)$.
+$E[S(\alpha)]$ is usually near $S(\alpha)$.
+
+\item[{$E[U(\alpha)] =$}] $\frac1\alpha \int_0^\alpha \, U(t)\,\text{d}t$,
+with similar formulas for $E[V(\alpha)]$ and $E[L(\alpha)]$.
+
+\end{description}
+
+\section*{Algorithm {\bf S}: ``Look Up and Insert If Not Found''}
+
+\begin{itemize}
+
+\item[{\bf S}$_1$:] Compute the initial probe location $P=h(G)$ for a
+given entry $G$.  If the entry $A$ at $P$ is empty, store $G$ at P and
+exit with an indication that $G$ was inserted.  If $k(A) = k(G)$, exit
+with an indication the $G$ was found.
+
+\item[{\bf S}$_2$:] If $h(A) \neq P$ then go to step {\bf S}$_4$.  In most
+instances this may be determined efficiently using a bit in every
+(non-empty) entry.
+
+\item[{\bf S}$_3$:] $h(A)=P$.  Follow the chain starting at $P$.  If the
+key of an entry in the chain = $h(G)$, exit with an indication the $G$ was
+found.  Otherwise, find an empty entry, $E$, link the last location in the
+chain to $E$, set $L_E$ to $P$ or an end mark, and exit with in indication
+that $G$ was inserted.
+
+\item[{\bf S}$_4$:] Search the chain of which $A$ is a member to find the
+entry with $L_i = P$.  This can be done either by hashing $A$ and
+searching from $h(A)$, or by following a circular chain from $P$.  The
+appropriate choice depends upon the relative costs of computing the
+initial probe and of following a linked list.
+
+\item[{\bf S}$_5$:] Find an empty entry $E$, move $A$ to $E$, set $L_i$ to
+$E$, insert $G$ at $P$, and exit with in indication that $G$ was inserted.
+
+\end{itemize}
+
+The procedure ``find an empty entry, $E$'' can be performed by remembering
+the location of empty space nearest the end of the table, by searching
+backward from $E$ to find the next empty location, or by any other
+algorithm you like.
+
+Deletion of an entry is very simple, and results in an ``empty'' entry, as
+opposed to the ``deleted'' entry required by some algorithms.
+
+Algorithm {\bf S} is easy to extend for use in a paged environment or for
+use on secondary storage.
+
+\section*{Discussion}
+
+Knuth discusses this algorithm in \cite[page 518]{Knuth:1973}, but
+prefers the algorithm obtained by deleting steps {\bf S}$_2$, {\bf S}$_4$,
+and {\bf S}$_5$.  Algorithm {\bf S} does require the extra work to check
+whether an entry in the table is the start of a chain, to follow the chain
+to find the preceding entry, and to move an entry at $h(G)$ if it is not
+the start of a chain.  But these actions are not needed often, and since
+the expected length of chains is small the total amount of work is small. 
+Knuth shows the difference in the expected number of probes in
+\cite[fig.\ 44 on page 539]{Knuth:1973}.  The best choice clearly depends
+upon the expected number of lookups per entry, and the extra work
+mentioned above.
+
+Table \ref{tab1} gives formulas for the work performed by algorithm {\bf
+S} for the cases when chains are ordered and unordered, and these results
+are quantified in Figure \ref{fig1}.  The unordered case requires more
+probes but fewer moves than the ordered case.  If $\mu \ll 1$ or $\nu \gg
+1$, then the ordered algorithm is to be preferred.  Since $\mu$ is rarely
+$\ll 1$, the unordered algorithm is essentially always preferred when $\nu
+\approx 1$.
+
+In \cite[pp 920-921]{Vitter:1982} Vitter discounts algorithm {\bf S}
+described above because of the cost of moves.  (There is an algorithm {\bf
+S} described in \cite[p 918]{Vitter:1982}, but it is different from the
+algorithm {\bf S} described above.)  But entries must be unusually large
+(especially if the environment provides a block-move instruction), or
+there must be pointers to entries other than $L_i$, for moves to be of
+concern.  Figure \ref{figVitter} quantifies the expected work for Vitter's
+algorithm $C$ as compared to algorithm {\bf S}.  Let
+$g(\alpha;\mu,\nu,\sigma,\phi) = E[U_V(\alpha)] - E[U(\alpha)] -
+\frac\phi\nu E[L(\alpha)] - \frac\mu\nu E[V(\alpha)] + \sigma (
+E[S_V(\alpha)] - E[S(\alpha)]).$  Given $\alpha$, $\mu$, $\nu$,
+$\sigma$, and $\phi$ one would choose algorithm {\bf S} if
+$g(\alpha;\mu,\nu,\sigma,\phi) > 0$ and Vitter's algorithm {\bf C}
+otherwise.  A good rule of thumb is that algorithm {\bf S} will perform
+better than Vitter's algorithm {\bf C} when $\mu < \sigma$ and vice versa
+for $\sigma < \mu$.  For $\mu \approx \sigma$ algorithm {\bf S} is
+relatively better for small or large $\alpha$, and Vitter's algorithm {\bf
+C} is better for $\alpha \approx 0.6$.  We believe $\mu < \sigma$ to be
+the more common case.
+
+The algorithm given by Brent in \cite{Brent:1973} is apparently the
+algorithm of choice if one is doing more than a few lookups per entry,
+there are no pointers to entries, and links are not practical.  Knuth,
+however, mentions in \cite{Knuth:1973} an idea due to Butler Lampson that
+in many cases allows one to create space for the links:  Let $h(k(A)) =
+k(A) \mod M$.  Thus $k(A)$ has the form $q*M + C_1$.  Let $W = q*m +
+\text{link} = k(A) + \text{link} - C_1$.  Then one can store $W$ instead
+of $k(A)$, and reconstruct $k(A) $ from $W$ when necessary.  If one
+restricts the key to be positive and prohibits $W = $ zero for a non-empty
+entry (link = zero or $q =$ zero), then $W < 0$ can indicate that the
+entry does not start a chain, and $W = 0$ can indicate an empty entry.  By
+using algorithm {\bf S} and Lampson's idea, one could construct a smaller
+algorithm that uses exactly the same space per entry and provides the same
+function as the Fortran program given in \cite{Brent:1973}, subject to the
+restriction that the key must be positive (the Fortran program given in
+\cite{Brent:1973} does not allow the key to be $-1$ or zero), but with
+better performance.  Knuth shows the difference in the expected number of
+probes in \cite[fig.\ 44 on p 539]{Knuth:1973}.
+
+When chains coalesce, Lampson's idea cannot be used, because $C_1$ cannot
+always be discovered and therefore $k(A)$ cannot always be computed.  If
+the bits in an entry were used as efficiently as possible, Lampson's idea
+could be applied in the case of separate chains, and the case of coalesced
+chains would necessarily require that entries be sufficiently larger to
+store the link.  If the same space were used in both cases, a
+double-linked chain could be constructed in the case of separate chains,
+thereby reducing the cost of inserting an entry because the predecessor of
+an entry that must be moved could be found immediately.  Algorithm {\bf S}
+and Vitter's Algorithm {\bf C} could then be compared by using
+$g(\alpha;\mu,\nu,\sigma,\phi) = E[U_V(\alpha)] - E[U(\alpha)] -
+\frac{(\phi+\mu)}\nu E[V(\alpha)] + \sigma(E[S_V(\alpha)] -
+E[S(\alpha)])$ where $\phi$ in this case is the relative cost of
+following a backward link.
+
+\newpage
+\setlength{\LTcapwidth}{\textwidth}
+\renewcommand*{\arraystretch}{1.5}
+\begin{longtable}{lllll}
+\caption{Expected performance of Algorithm {\bf S}$^*$}\\[-15pt]
+ & \multicolumn{2}{c}{Unordered chains} & \multicolumn{2}{c}{Ordered
+ chains} \\[-10pt]
+Expected Number of & Arbitrary $\alpha$ & $\alpha = 1$ & Arbitrary
+$\alpha$ & $\alpha = 1$ \\
+\hline \\[-12pt]
+\endhead
+& & & & \\[-10pt]
+\hline\\[-5pt]
+(cont.)
+\endfoot
+\endlastfoot
+\label{tab1}
+\parbox[c]{1.75in}{\raggedright Probes for successful search, $S(\alpha)$,
+ $S^\prime(\alpha)$} &
+ $1 + \frac\alpha2$ & 1.5 & $1 + \frac\alpha2$ & 1.5 \\[10pt]
+\parbox[c]{1.75in}{\raggedright Probes for unsuccessful search, $U(\alpha)$,
+ $U^\prime(\alpha)$} &
+ $e^{-\alpha} + \alpha$ & 1.3679 &
+ $\frac12 ( e^{-\alpha} + \alpha + 1)$ & 1.1839 \\[10pt]
+\parbox[c]{1.75in}{\raggedright Probes per entry to insert $N = \alpha M$
+ entries$^{**}$, $E[U(\alpha)]$, $E[U^\prime(\alpha)]$}
+ &
+ $\frac1\alpha ( 1 - e^{-\alpha} + \frac12 \alpha^2 )$ & 1.1321 &
+ $\frac1{2 \alpha} ( 1 - e^{-\alpha} + \frac12 \alpha^2 + \alpha)$ & 1.0661
+ \\[15pt]
+\parbox[c]{1.75in}{\raggedright Moves to insert an entry, $V(\alpha)$,
+$V^\prime(\alpha)$} &
+ $e^{-\alpha} + \alpha - 1$ & 0.3679 &
+ $\frac1\alpha ( 1 - e^{-\alpha}) + \alpha - 1$ & 0.6321 \\[8pt]
+ \parbox[c]{1.75in}{\raggedright Moves per entry to insert $N = \alpha M$
+ entries$^{**}$, $E[V(\alpha)]$, $E[V^\prime(\alpha)]$}
+ &
+ $\frac1\alpha ( 1 - e^{-\alpha} + \frac12 \alpha^2) - 1$ & 0.1321 &
+ *** & 0.2966 \\[15pt]
+\parbox[c]{1.75in}{\raggedright Links looked at for moves, $L(\alpha)$,
+$L^\prime(\alpha)$} &
+ $\alpha^2$ & 1 & $\alpha^2$ & 1 \\[8pt]
+\parbox[c]{1.75in}{\raggedright Links examined per entry for moves while
+inserting $N = \alpha M$ entries, $E[L(\alpha)]$, $E[L^\prime(\alpha)]$} &
+ $\frac13 \alpha^2$ & $\frac13$ & $\frac13 \alpha^2$ & $\frac13$ \\[8pt]
+& & & & \\[-15pt]
+\hline
+& & & & \\[-20pt]
+\multicolumn{5}{l}{* We assume the initial probes are independent and
+uniformly distributed.} \\[-5pt]
+\multicolumn{5}{l}{** If $\nu = 1$ this is also the expected number of
+probes per entry for unsuccessful searches.} \\[-3pt]
+\multicolumn{5}{l}{*** This is
+$\frac\alpha4 + \sum_{k=2}^\infty \frac{(-\alpha)^k}{(k+1)(k+1)!} =
+ \frac{E_1(\alpha) + \ln(\alpha) + \gamma}\alpha + \frac\alpha2 - 1$,
+ where $E_1$ is the exponential integral} \\[-3pt]
+\multicolumn{5}{l}{\phantom{*** }
+and $\gamma \approx 0.57721\, 56649$ is Euler's constant.} \\[-5pt]
+\end{longtable}
+\renewcommand*{\arraystretch}{1.0}
+
+% \renewcommand*{\arraystretch}{1.0}
+% \begin{longtable}{ccc}
+% \caption{Comparison of Ordered and Unordered Chains Using Algorithm {\bf
+% S}} \\
+% $\alpha$ & $E[U(\alpha)] - E[U^\prime(\alpha)]$ &
+%  $E[V^\prime(\alpha)] - E[V(\alpha)]$ \\
+% \hline
+% \endhead\label{tab2}
+% 0.1 & 0.0008 & 0.0239 \\
+% 0.2 & 0.0032 & 0.0458 \\
+% 0.3 & 0.0070 & 0.0658 \\
+% 0.4 & 0.0121 & 0.0841 \\
+% 0.5 & 0.0185 & 0.1007 \\
+% 0.6 & 0.0260 & 0.1160 \\
+% 0.7 & 0.0346 & 0.1298 \\
+% 0.8 & 0.0442 & 0.1425 \\
+% 0.9 & 0.0547 & 0.1540 \\
+% 1.0 & 0.0661 & 0.1645 \\
+% \hline
+% \multicolumn{3}{l}{More probes are necessary for unordered chains}\\
+% \multicolumn{3}{l}{Move moves are necessary for ordered chains}
+% \end{longtable}
+% 
+% \newpage
+\vspace*{-0.1in}
+\newlength{\VA} % Vertical spacing after caption for Fig 1
+\ifnum \pdfoutput>0 \setlength{\VA}{2pt} \else \setlength{\VA}{2pt} \fi
+\begin{centering}
+\refstepcounter{figure}
+\label{fig1}
+\parbox[t]{2.9in}{
+Figure \ref{fig1}:~Comparison of ordered and un-\\
+\phantom{Figure \ref{fig1}:~}%
+%\hspace*{0.35in}
+ordered chains using Algorithm {\bf S}\\[\VA]
+\input wvs-149-1.txp
+}
+\\
+\end{centering}
+
+\newpage
+% \begin{longtable}{ccccc}
+% \caption{Comparison of Algorithm {\bf S} and Vitter's Algorithm {\bf C}}
+%  \\[-7pt]
+% $\alpha$ & $E[U_V(\alpha)] - E[U(\alpha)]$ & $E[L(\alpha)]$ &
+% $E[V(\alpha)]$ & $E[S_V(\alpha)] - E[S(\alpha)]^*$ \\[2pt]
+% \hline\\[-10pt]
+% \endhead
+% \label{tab3}
+% 0.1 & 0.0006 & 0.0033 & 0.0016 & 0.0041 \\
+% 0.2 & 0.0022 & 0.0133 & 0.0063 & 0.0081 \\
+% 0.3 & 0.0047 & 0.0030 & 0.0139 & 0.0122 \\
+% 0.4 & 0.0080 & 0.0533 & 0.0242 & 0.0163 \\
+% 0.5 & 0.0121 & 0.0833 & 0.0369 & 0.0203 \\
+% 0.6 & 0.0169 & 0.1200 & 0.0520 & 0.0245 \\
+% 0.7 & 0.0240 & 0.1633 & 0.0692 & 0.0294 \\
+% 0.8 & 0.0363 & 0.2133 & 0.0883 & 0.0361 \\
+% 0.9 & 0.0561 & 0.2700 & 0.1094 & 0.0452 \\
+% 1.0 & 0.0862 & 0.3333 & 0.1321 & 0.0573 \\[2pt]
+% \hline\\[-10pt]
+% \end{longtable}
+
+\vspace*{-0.1in}
+\begin{centering}
+\refstepcounter{figure}
+\label{figVitter}
+\parbox[t]{2.75in}{
+Figure \ref{figVitter}:~Comparison of Algorithm {\bf S}\\
+\phantom{Figure \ref{figVitter}:~}and Vitter's Algorithm {\bf C}\\
+%
+\input wvs-149-2.txp
+}
+%
+\hspace*{0.5in}
+\refstepcounter{figure}
+\label{fig2}
+\parbox[t]{2.75in}{
+Figure \ref{fig2}:~Moves, and links examined for\\
+\phantom{Figure \ref{fig2}:~}moves, using Algorithm {\bf S}\\[\VA]
+%
+\input wvs-149-3.txp
+}
+\\
+\end{centering}
+
+\closegraphsfile
+
+\bibliographystyle{plain}
+\bibliography{wvs-149}
+
+\section*{Appendix\\ Analysis of work expected to be performed by Algorithm
+{\bf S}}
+
+%Table \ref{tab1} and figure \ref{fig1}
+Figures \ref{fig1} -- \ref{fig2}
+%and Table \ref{tab3}
+summarize the results obtained in these appendices.
+
+Let $p_k(\alpha)$ be the probability that a given entry in the table
+\emph{starts} a chain of length $k$ or more when the table contains $N =
+\alpha M$ non-empty entries.  Clearly $p_0(\alpha) = 1$ for all $\alpha$. 
+For a small increase $\delta$ in $\alpha$, to terms of first order in
+$\delta$
+
+\begin{equation}
+p_k(\alpha+\delta) - p_k(\alpha) = \delta(p_{k-1}(\alpha) - p_k(\alpha)).
+\end{equation}
+
+This formula simply reflects the fact that the increase in chains of
+length $k$ or more will come from chains of length of exactly $k-1$. 
+Dividing by $\delta$ and taking the limit as $\delta \rightarrow 0$,
+
+\begin{equation}\label{eq2}
+\frac{\text{d} p_k(\alpha)}{\text{d}\alpha} = p_{k-1}(\alpha) -
+p_k(\alpha),\, p_0(\alpha) = 1,\, p_k(0) = 0 \text{ for } k > 0.
+\end{equation}
+
+The solution of Equation (\ref{eq2}) is
+
+\begin{equation}
+p_k(\alpha) = 1 - e^{-\alpha} \sum_{i=0}^{k-1}\, \frac{\alpha^i}{i!} =
+1 - e^{-\alpha}\, e^\alpha_{k-1} = 1 - \frac{\Gamma(k,\alpha)}{(k-1)!}
+,\,k > 0.
+\end{equation}
+
+Clearly, the probability $q_k(\alpha)$ that a given entry starts a chain
+of length exactly $k$ is given by
+
+\begin{equation}
+q_k(\alpha) = p_k(\alpha) - p_{k+1}(\alpha) =
+ \frac{e^{-\alpha}\alpha^k}{k!}
+\end{equation}
+
+A very brief derivation of the results in Table \ref{tab1} follows.
+
+\begin{equation}
+S(\alpha) = S^\prime(\alpha) = \frac1\alpha
+ \sum_{k=1}^\infty \frac{k(k+1)}2 \, q_k(\alpha) =
+  e^{-\frac{\alpha}2} \sum_{k=0}^\infty (k+2) \frac{\alpha^k}{k!}
+  = 1 + \frac\alpha2
+\end{equation}
+
+\begin{equation}
+E[S(\alpha)] = E[S^\prime(\alpha)]
+ = \frac1\alpha \int_0^\alpha S(a)\, \text{d}a = 1 + \frac\alpha4
+\end{equation}
+
+\begin{equation}
+U(\alpha) = q_0(\alpha) + \sum_{k=1}^\infty k\, q_k(\alpha) =
+ e^{-\alpha} + e^{-\alpha} \sum_{k=1}^\infty k\, \frac{\alpha^k}{k!}
+ = e^{-\alpha} + \alpha
+\end{equation}
+
+\begin{equation}
+E[U(\alpha)] = \frac1\alpha \int_0^\alpha U(a)\, \text{d}a =
+ \frac1\alpha ( 1 - e^{-\alpha} + \frac12 \alpha^2 )
+\end{equation}
+
+\begin{equation}
+U^\prime(\alpha) = q_0(\alpha) +
+ \sum_{k=1}^\infty \frac{k+1}2\,q_k(\alpha)
+ = e^{-\alpha} + \frac{e^{-\alpha}}2
+  \sum_{k=1}^\infty \,(k+1)\, \frac{\alpha^k}{k!}
+ = \frac{e^{-\alpha} + \alpha + 1}2
+\end{equation}
+
+\begin{equation}
+E[U^\prime(\alpha)] = \frac1\alpha \int_0^\alpha U^\prime(a)\, \text{d}a =
+\frac1{2 \alpha} ( 1 - e^{-\alpha} + \frac12 \alpha^2 + \alpha)
+\end{equation}
+
+\begin{equation}
+V(\alpha) = \sum_{k=2}^\infty \,(k-1)\, q_k(\alpha) =
+ e^{-\alpha} \sum_{k=2}^\infty \,(k-1)\, \frac{\alpha^k}{k!}
+ = \alpha - ( 1 - e^{-\alpha}) = \alpha - p_1(\alpha)
+ = U(\alpha) - 1
+\end{equation}
+
+\begin{equation}
+E[V(\alpha)] = E[U(\alpha)] - 1 =
+\frac1\alpha ( 1 - e^{-\alpha} + \frac12 \alpha^2) - 1
+\end{equation}
+
+\begin{equation}
+V^\prime(\alpha) = V(\alpha) +
+ \sum_{k=1}^\infty \,\frac1{k+1} \,q_k(\alpha)
+ = V(\alpha) + e^{-\alpha} \sum_{k=1}^\infty \frac{\alpha^k}{(k+1)!}
+ = \frac{1-e^{-\alpha}}\alpha + \alpha - 1
+\end{equation}
+
+\begin{equation}
+E[V^\prime(\alpha)] = \frac1\alpha \int_0^\alpha V^\prime(a)\, \text{d}a =
+\frac\alpha4 + \sum_{k=2}^\infty \frac{(-\alpha)^k}{(k+1)(k+1)!} =
+ \frac{E_1(\alpha) + \ln(\alpha) + \gamma}\alpha + \frac\alpha2 - 1
+\end{equation}
+
+where
+
+\begin{equation}
+E_1(\alpha) = \int_1^\infty \frac{e^{-t \alpha}}t \,\text{d} t
+= \int_\alpha^\infty \frac{e^{-t}}t \,\text{d} t
+\end{equation}
+
+is the exponential integral and $\gamma \approx 0.57721\, 56649$ is Euler's
+constant.
+
+\begin{equation}
+L(\alpha) = L^\prime(\alpha) = \sum_{k=2}^\infty \,k(k-1)\,q_k(\alpha)
+ = e^{-\alpha} \sum_{k=2}^\infty \,\frac{\alpha^k}{(k-2)!} = \alpha^2
+\end{equation}
+
+\begin{equation}
+E[L(\alpha)] = E[L^\prime(\alpha)] =
+ \frac1\alpha \int_0^\alpha L(a)\, \text{d}a = \frac13 \alpha^2
+\end{equation}
+
+\section*{Appendix \\ Equations from \cite[p 924]{Vitter:1982}}
+
+In \cite[p 924]{Vitter:1982}, Vitter gives expressions for $U_V(\alpha)$
+and $S_V(\alpha)$, which are repeated here as Equations (\ref{UV}) and
+(\ref{SV}).  Vitter does not provide formulae for expected values
+$E[U_V(\alpha)]$ and $E[S_V(\alpha)]$, which are provided here as
+Equations (\ref{EUV}) and (\ref{SUV}).
+
+\begin{equation}\label{UV}
+U_V(\alpha) = \left\{ \begin{array}{ll}
+ U_{V \leq}(\alpha) & \alpha \leq \zeta \\
+ U_{V \geq}(\alpha) & \alpha \geq \zeta \\
+\end{array} \right.
+\end{equation}
+
+where $\beta$ is given,
+
+\begin{equation}
+\zeta = \lambda \beta = \frac\lambda{e^{-\lambda}+\lambda}\,,
+\end{equation}
+
+$\lambda$ is the unique nonnegative solution of
+
+\begin{equation}
+e^{-\lambda} + \lambda = \frac1\beta \,,
+\end{equation}
+
+and
+
+\begin{equation}
+\begin{split}
+U_{V \leq}(\alpha) =\,&
+\frac{\alpha}\beta + e^{-\alpha/\beta} \text{ and}\\
+U_{V \geq}(\alpha) =\,&
+\frac1\beta + \frac14(e^{2(\alpha/\beta-\lambda)}-1)
+ \left(3 - \frac2\beta + 2 \lambda \right)
+  - \frac12 \left( \frac{\alpha}\beta - \lambda \right) \,.
+\end{split}
+\end{equation}
+
+For purposes of these derivations, let $\mu = \text{min}(\alpha,\zeta)$. 
+Then
+
+\begin{equation}\begin{split}\label{EUV}
+E[U_V(\alpha)] =\,& \frac1\alpha \left(
+ \int_0^\mu U_{V\leq}(a)\, \text{d}a +
+ \int_\mu^\alpha U_{V\geq}(a)\, \text{d}a
+ \right) \\
+  =\,&
+ \frac\beta\alpha \left( 1 - e^{-\mu/\beta} \right) +
+  \frac{\mu^2}{2 \alpha\beta} \, + \\
+ \,&
+ \frac1{8 \alpha}
+  \left( (2 \zeta + 3 \beta - 2 )
+       \left( e^{2 \alpha/\beta} - e^{2 \mu/\beta} \right)
+       e^{-2 \lambda} -
+       \frac2\beta \,(\mu + 3 \beta - 6 + \alpha ) ( \alpha - \mu ) \right)
+\,. \\
+\end{split}\end{equation}
+
+\begin{equation}\label{SV}
+S_V(\alpha) = \left\{ \begin{array}{ll}
+ S_{V\leq}(\alpha) & \alpha \leq \lambda \beta \\
+ S_{V\geq}(\alpha) & \alpha \geq \lambda \beta \\
+\end{array} \right.
+\end{equation}
+
+where
+
+\begin{equation}\begin{split}
+S_{V\leq}(\alpha) =\,&
+1 + \frac12 \frac{\alpha}\beta \,\,\text{ and }\\
+S_{V\geq}(\alpha) =\,&1 + \frac18 \frac{\beta}\alpha
+ \left( e^{2(\alpha/\beta-\lambda)} - 1
+  - 2 \left( \frac{\alpha}\beta - \lambda \right) \right)
+ \left( 3 - \frac2\beta + 2 \lambda \right)
+ + \frac14 \left( \frac{\alpha}\beta + \lambda \right)
+  + \frac14 \lambda \left( 1 - \frac{\lambda\beta}\alpha \right)\,. \\
+\end{split}\end{equation}
+
+\begin{equation}\begin{split}\label{SUV}
+E[S_V(\alpha)] = \,&
+ \frac1\alpha \left( \int_0^\mu S_{V\leq}(a)\, \text{d}a +
+ \int_\mu^\alpha S_{V\geq}(a)\, \text{d}a \right) \\
+ = \,&
+ \frac\mu\alpha \left( 1 + \frac\mu{4 \beta} \right) + \\
+ \,&
+ \begin{split}
+  \frac1{8\alpha}  \left( \vphantom{\frac\alpha\beta} \right. &
+      -(2 \zeta + 3 \beta - 2 )
+      \left( E_1 \left(- \frac{2 \alpha}\beta \right) -
+             E_1 \left(- \frac{2 \mu}\beta \right) \right)
+             e^{-2 \lambda} \\
+  &+ \left. ( 2 \zeta \lambda + 4 \zeta - 3 \beta - 4 \lambda + 2 )
+    \ln \frac\alpha\mu +
+    \frac{( \mu + 2 \beta + 4 + \alpha ) ( \alpha - \mu )}\beta \right) \,. \\
+ \end{split}
+\end{split}\end{equation}
+
+In \cite[p 924]{Vitter:1982}, Vitter recommends $\beta=0.86$, from which
+$\lambda \approx 0.63$ and $\zeta = \lambda \beta \approx 0.542$.
+
+\label{lastpage}
+\vspace*{-0.1in} % Somehow, this causes lastpage to be defined
+\end{document}
+
+% $Id: wvs-149.tex,v 1.5 2019/05/30 02:14:05 vsnyder Exp $
+
+% $Log: wvs-149.tex,v $
+% Revision 1.5  2019/05/30 02:14:05  vsnyder
+% Correct a typo in Equation(9)
+%
+% Revision 1.4  2019/05/30 01:32:20  vsnyder
+% Forgot to change revision number and date
+%
+% Revision 1.3  2019/05/30 01:12:43  vsnyder
+% Repair a typo
+%
+% Revision 1.2  2018/07/10 23:28:05  vsnyder
+% Add remark that Vitter does not provide expressions for expected values
+%
+% Revision 1.1  2018/07/10 00:15:06  vsnyder
+% Initial commit
+%
+% Revision 1.2  2017/10/13 19:10:51  vsnyder
+% Add CVS stuff
+%
+@
+
+
+1.5
+log
+@Correct a typo in Equation(9)
+@
+text
+@d15 2
+a16 2
+\newcommand{\docname}{wvs-149r3}
+\newcommand{\docdate}{29 May 2019}
+d163 1
+a163 1
+\item $A$ is an empty entry, in which case $G$ may be stored at $P$;
+d167 1
+a167 1
+starts at $P$;
+d548 3
+a550 2
+p_k(\alpha) = 1 - e^{-\alpha} \sum_{i=0}^{k-1}\, \frac{\alpha^i}{i!},\,
+k > 0.
+d750 1
+a750 1
+% $Id: wvs-149.tex,v 1.4 2019/05/30 01:32:20 vsnyder Exp $
+d753 3
+@
+
+
+1.4
+log
+@Forgot to change revision number and date
+@
+text
+@d15 1
+a15 1
+\newcommand{\docname}{wvs-149r2}
+d588 1
+a588 1
+ = e^{-\alpha} + e^{-\frac\alpha2}
+d749 1
+a749 1
+% $Id: wvs-149.tex,v 1.3 2019/05/30 01:12:43 vsnyder Exp $
+d752 3
+@
+
+
+1.3
+log
+@Repair a typo
+@
+text
+@d15 2
+a16 2
+\newcommand{\docname}{wvs-149r1}
+\newcommand{\docdate}{10 July 2018}
+d749 1
+a749 1
+% $Id: wvs-149.tex,v 1.2 2018/07/10 23:28:05 vsnyder Exp $
+d752 3
+@
+
+
+1.2
+log
+@Add remark that Vitter does not provide expressions for expected values
+@
+text
+@d149 1
+a149 1
+same hash value, and entries in different in chains have different hash
+d749 1
+a749 1
+% $Id: wvs-149.tex,v 1.1 2018/07/10 00:15:06 vsnyder Exp $
+d752 3
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d15 2
+a16 2
+\newcommand{\docname}{wvs-149}
+\newcommand{\docdate}{9 July 2018}
+d80 1
+a80 1
+To: \>Van\\
+d89 3
+a91 1
+This is from a memo Fred Krogh and I wrote in 1983
+d645 7
+a651 1
+\begin{equation}
+d686 1
+a686 1
+\begin{equation}\begin{split}
+d703 1
+a703 1
+\begin{equation}
+d723 1
+a723 1
+\begin{equation}\begin{split}
+d749 1
+a749 1
+% $Id: wvs-146.tex,v 1.2 2017/10/13 19:10:51 vsnyder Exp $
+d751 4
+a754 1
+% $Log: wvs-146.tex,v $
+@
+

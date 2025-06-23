@@ -1,0 +1,1936 @@
+head	2.15;
+access;
+symbols
+	V1-51:2.13
+	V1-50:2.13
+	V1-45:2.12
+	V1-44:2.12
+	V1-43:2.12
+	V1-32:2.9
+	V1-31:2.9
+	V1-30:2.9
+	V1-13:2.4
+	V1-12:2.4
+	V1-11:2.4
+	V1-10:2.4
+	newfwm-feb03:2.4.0.2
+	V1-04:2.0
+	V1-03:2.0
+	V1-02:2.0
+	JointForwardModel:2.1.0.2
+	V1-00:2.0
+	newfwm-sep01:1.11.0.2
+	V0-7:1.11
+	V0-5-Level2:1.9
+	V0-5-SIPS:1.9
+	V0_1:1.1;
+locks; strict;
+comment	@# @;
+
+
+2.15
+date	2005.06.09.02.33.26;	author vsnyder;	state dead;
+branches;
+next	2.14;
+
+2.14
+date	2005.03.03.02.04.07;	author vsnyder;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2004.12.13.20.48.34;	author vsnyder;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2004.03.27.03.35.27;	author vsnyder;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2004.03.26.02.29.18;	author vsnyder;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2004.03.20.04.08.55;	author vsnyder;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2003.07.09.23.39.56;	author vsnyder;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2003.07.04.02.46.33;	author vsnyder;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2003.05.17.01.20.52;	author vsnyder;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2003.05.16.23.52.08;	author livesey;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2003.05.05.23.00.25;	author livesey;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2002.10.08.17.08.05;	author pwagner;	state Exp;
+branches
+	2.4.2.1;
+next	2.3;
+
+2.3
+date	2002.10.03.22.16.50;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2002.09.26.23.58.35;	author livesey;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2002.05.23.22.03.35;	author zvi;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2001.09.17.20.26.27;	author livesey;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2001.06.21.13.07.08;	author zvi;	state Exp;
+branches
+	1.11.2.1;
+next	1.10;
+
+1.10
+date	2001.06.07.23.39.31;	author pwagner;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2001.04.03.07.32.45;	author zvi;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2001.03.31.23.40.55;	author zvi;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2001.02.19.22.20.40;	author zvi;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2001.02.19.22.14.21;	author zvi;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2001.02.03.02.07.01;	author zvi;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.01.31.01.08.48;	author zvi;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2000.11.22.23.10.03;	author zvi;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2000.11.22.23.07.28;	author zvi;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2000.05.04.18.12.05;	author vsnyder;	state Exp;
+branches;
+next	;
+
+1.11.2.1
+date	2001.09.10.19.56.52;	author livesey;	state Exp;
+branches;
+next	1.11.2.2;
+
+1.11.2.2
+date	2001.09.10.20.03.29;	author livesey;	state Exp;
+branches;
+next	1.11.2.3;
+
+1.11.2.3
+date	2001.09.10.20.03.57;	author livesey;	state Exp;
+branches;
+next	1.11.2.4;
+
+1.11.2.4
+date	2001.09.10.20.46.56;	author livesey;	state Exp;
+branches;
+next	1.11.2.5;
+
+1.11.2.5
+date	2001.09.10.23.48.22;	author livesey;	state Exp;
+branches;
+next	1.11.2.6;
+
+1.11.2.6
+date	2001.09.13.01.50.26;	author livesey;	state Exp;
+branches;
+next	;
+
+2.4.2.1
+date	2003.03.12.21.49.39;	author vsnyder;	state Exp;
+branches;
+next	2.4.2.2;
+
+2.4.2.2
+date	2003.03.13.00.26.50;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.15
+log
+@Move stuff to slabs_sw_m
+@
+text
+@! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+module L2PC_PFA_STRUCTURES
+
+  use L2PC_File_Parameters, only: MAX_NO_POINTINGS
+  use MLSCommon, only: I4, R4, R8
+  use SpectroscopyCatalog_m, only: Catalog_T
+
+  implicit none
+
+  public
+
+  interface DUMP
+    module procedure Dump_Slabs_Struct, Dump_Slabs_Struct_2D
+  end interface
+
+!  This has the standard structure constructions used for
+!    computing the data for the l2pc_xx.dat file.
+!  Originally written by W. G. Read on 8/13/1990.
+!  Modified, Mar/10/2000, Z. Shippony, to fit for EOS concept
+
+!---------------------------- RCS Ident Info -------------------------------
+  private :: Id, ModuleName
+  character (LEN=256) :: Id = &
+       "$Id: l2pc_pfa_structures.f90,v 2.14 2005/03/03 02:04:07 vsnyder Exp $"
+  character (LEN=*), parameter :: ModuleName = &
+       "$RCSfile: l2pc_pfa_structures.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+!_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+! Parameter declarations
+  integer(i4), parameter :: MAXSPS = 20
+  integer(i4), parameter :: MAXSUBSPS = 15
+  integer(i4), parameter :: MAXGEOM = 13
+  integer(i4), parameter :: MAXGEOPHYS = 2
+! maxsps + maxgeom + maxgeophys + 4 (for pointing and 3 X field strength
+! computations) should equal max_no_sv_components.
+! More structures :
+! These are for catagories of state vector types. This catagorization is
+! because the method of differentiation differs according to catagory.
+
+! This structure contains the a priori limb point pressure
+  type LIMB_PRESS
+    character(len=8) :: NAME
+    integer(i4) :: NO_LIN_VALUES
+    logical DER_CALC(6)
+    real(r4) :: LIN_VAL(max_no_pointings)
+  end type LIMB_PRESS
+
+! This structure contains geometric and any other parameters characterized
+! with a single value
+  type GEOM_PARAM
+    character(len=8) :: NAME
+    logical DER_CALC(6)
+    real(r4) :: LIN_VAL
+  end type GEOM_PARAM
+
+! This structure contains spectroscopic information about the species
+  type SPECTRO_PARAM
+    character(len=1) :: type
+    character(len=8) :: NAME
+    integer(i4) :: NO_PHI_VALUES
+    integer(i4) :: NO_ZETA_VALUES
+    logical DER_CALC(6)
+    real(r4) :: PHI_BASIS(12)
+    real(r4) :: ZETA_BASIS(52)
+  end type SPECTRO_PARAM
+
+! This structure contains geophysical information about the atmosphere
+  type GEOPHYS_PARAM
+    character(len=8) :: NAME
+    integer(i4) :: NO_LIN_VALUES
+    logical DER_CALC(6)
+    real(r4) :: LIN_VAL(50)
+    real(r4) :: BASIS_PEAKS(52)
+  end type GEOPHYS_PARAM
+
+! This structure contains atmospheric composition of the atmosphere
+  type ATMOS_COMP
+    character(len=8) :: NAME
+    integer(i4) :: NO_LIN_VALUES
+    logical FWD_CALC(6)
+    logical DER_CALC(6)
+    real(r4) :: LIN_VAL(50)
+    real(r4) :: BASIS_PEAKS(52)
+  end type ATMOS_COMP
+
+! This NEW structure contains info about the K matrix
+  type K_MATRIX_INFO
+    character(len=8) :: NAME
+    integer(i4) :: FIRST_DIM_INDEX
+    integer(i4) :: NO_ZETA_BASIS
+    integer(i4) :: NO_PHI_BASIS
+    real(r4)    :: PHI_BASIS(12)
+    real(r4)    :: ZETA_BASIS(52)
+  end type K_MATRIX_INFO
+
+  integer(i4), parameter :: MAXPFALINES = 6
+  integer(i4), parameter :: MAXPFACH = 45
+  integer(i4), parameter :: MAXFILTPTS = 161
+  integer(i4), parameter :: MAXLINES = 35
+
+  type :: PFA_SLAB
+    integer(i4) :: NO_SPS
+    integer(i4) :: NO_LINES
+    character(len=8) :: NAME
+    real(r8) :: QLOG(3)
+    real(r8) :: V0(maxlines)
+    real(r8) :: EL(maxlines)
+    real(r8) :: STR(maxlines)
+    real(r8) :: W(maxlines)
+    real(r8) :: PS(maxlines)
+    real(r8) :: N(maxlines)
+    real(r8) :: N1(maxlines)
+    real(r8) :: N2(maxlines)
+    real(r8) :: GAMMA(maxlines)
+    real(r8) :: DELTA(maxlines)
+  end type PFA_SLAB
+
+!--------------------------------------------------  SLABS_STRUCT  -----
+! This structure contains the "slabs preps arrays."  These are the
+! frequency-independent terms in the cross section.
+
+  type SLABS_STRUCT
+    type(catalog_t), pointer :: Catalog ! everything else is same size
+    !                                     as catalog%lines
+    real(r8), dimension(:), pointer :: v0s => NULL()
+    real(r8), dimension(:), pointer :: x1 => NULL()
+    real(r8), dimension(:), pointer :: y => NULL()
+    real(r8), dimension(:), pointer :: yi => NULL()
+    real(r8), dimension(:), pointer :: slabs1 => NULL()
+    real(r8), dimension(:), pointer :: dx1_dv0 => NULL()
+    real(r8), dimension(:), pointer :: dy_dv0 => NULL()
+    real(r8), dimension(:), pointer :: dslabs1_dv0 => NULL()
+    logical :: UseYi ! Are any yi > 0?
+    ! For temperature derivatives.  Most are logarithmic derivatives,
+    ! so dz_dT really means 1/z dz_dT.
+    real(r8), dimension(:), pointer :: dv0s_dT => NULL()    ! not * 1 / v0s
+    real(r8), dimension(:), pointer :: dx1_dT => NULL()     ! / x1
+    real(r8), dimension(:), pointer :: dy_dT => NULL()      ! / y
+    real(r8), dimension(:), pointer :: dyi_dT => NULL()     ! / yi
+    real(r8), dimension(:), pointer :: dslabs1_dT => NULL() ! / slabs1
+  end type SLABS_STRUCT
+
+contains
+
+  ! -------------------------------------------  AllocateOneSlabs  -----
+  subroutine AllocateOneSlabs ( Slabs, Catalog, TempDer )
+    ! Allocates the items in a slabs structure
+    use Allocate_Deallocate, only: ALLOCATE_TEST
+    use SpectroscopyCatalog_m, only: Catalog_T
+    type (slabs_struct), intent(inout) :: slabs ! Slabs to allocate
+    type (catalog_t), target, intent(in) :: Catalog
+    logical, intent(in), optional :: TempDer    ! "Allocate temperature
+                                                !  derivative fields"
+
+    ! Local variables
+    integer :: myl
+    logical :: MyDer
+    integer :: NL
+
+    ! Executable code
+    myDer = .false.
+    if ( present(tempDer) ) myDer = tempDer
+    if ( associated(catalog%lines) ) then
+      nl = size(catalog%lines)
+    else
+      nl = 0
+    end if
+    myL = nl
+
+    slabs%catalog => catalog
+    call Allocate_test ( slabs%v0s,         myl, 'v0s',         ModuleName )
+    call Allocate_test ( slabs%x1,          myl, 'x1',          ModuleName )
+    call Allocate_test ( slabs%y,           myl, 'y',           ModuleName )
+    call Allocate_test ( slabs%yi,          myl, 'yi',          ModuleName )
+    call Allocate_test ( slabs%slabs1,      myl, 'slabs1',      ModuleName )
+    call Allocate_test ( slabs%dx1_dv0,     myl, 'dx1_dv0',     ModuleName )
+    call Allocate_test ( slabs%dy_dv0,      myl, 'dy_dv0',      ModuleName )
+    call Allocate_test ( slabs%dslabs1_dv0, myl, 'dslabs1_dv0', ModuleName )
+    if ( myDer ) then
+      call Allocate_test ( slabs%dv0s_dT,    myl, 'dv0s_dT',    ModuleName )
+      call Allocate_test ( slabs%dx1_dT,     myl, 'dx1_dT',     ModuleName )
+      call Allocate_test ( slabs%dy_dT,      myl, 'dy_dT',      ModuleName )
+      call Allocate_test ( slabs%dyi_dT,     myl, 'dyi_dT',     ModuleName )
+      call Allocate_test ( slabs%dslabs1_dT, myl, 'dslabs1_dT', ModuleName )
+    end if
+    if ( nl == 0 ) then
+      slabs%v0s = 0.0_r8
+      slabs%x1 = 0.0_r8
+      slabs%y = 0.0_r8
+      slabs%yi = 0.0_r8
+      slabs%slabs1 = 0.0_r8
+      slabs%dx1_dv0 = 0.0_r8
+      slabs%dy_dv0 = 0.0_r8
+      slabs%dslabs1_dv0 = 0.0_r8
+      if ( myDer ) then
+        slabs%dv0s_dT = 0.0_r8
+        slabs%dx1_dT = 0.0_r8
+        slabs%dy_dT = 0.0_r8
+        slabs%dyi_dT = 0.0_r8
+        slabs%dslabs1_dT = 0.0_r8
+      end if
+    end if
+  end subroutine AllocateOneSlabs
+
+  ! --------------------------------------------  AllocateSlabs  ----------
+  subroutine AllocateSlabs ( Slabs, No_Ele, Catalog, Caller, TempDer )
+  ! Allocate an array of slabs structures, and then the items in each one
+
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
+    use SpectroscopyCatalog_m, only: Catalog_T
+
+    type (slabs_struct), dimension(:,:), pointer :: Slabs
+    integer, intent(in) :: No_Ele
+    type (catalog_t), dimension(:), intent(in) :: Catalog
+    character(len=*), intent(in) :: Caller
+    logical, intent(in), optional :: TempDer    ! "Allocate temperature
+                                                !  derivative fields"
+
+    integer :: I, J
+
+    allocate ( slabs(no_ele, size(catalog)), stat=i )
+    if ( i /= 0 ) call MLSMessage ( MLSMSG_Error, Caller, &
+      & MLSMSG_Allocate//"slabs" )
+
+    do i = 1, size(catalog)
+      do j = 1, no_ele
+        call AllocateOneSlabs ( slabs(j,i), catalog(i), TempDer )
+      end do
+    end do
+
+  end subroutine AllocateSlabs
+
+  ! ------------------------------------------ DeallocateAllSlabs ---------
+  subroutine DeallocateAllSlabs ( Slabs, inName )
+    ! Allocates the items in a slabs
+    type (slabs_struct), intent(inout), dimension(:,:) :: Slabs
+    character(len=*), intent(in) :: InName
+
+    integer :: I
+    integer :: J
+    ! Executable code
+    do i = 1, size(slabs,2)
+      do j = 1, size(slabs,1)
+        call DeallocateOneSlabs ( slabs(j,i), inName )
+      end do
+    end do
+  end subroutine DeallocateAllSlabs
+
+  ! ------------------------------------------ DeallocateOneSlabs ---------
+  subroutine DeallocateOneSlabs ( slabs, inName )
+    ! Allocates the items in a slabs
+    use Allocate_Deallocate, only: DEALLOCATE_TEST
+    type (slabs_struct), intent(inout) :: slabs ! Slabs to deallocate
+    character (len=*), intent(in) :: inName ! ModuleName of caller
+
+    ! Executable code
+    call Deallocate_test ( slabs%v0s,         'v0s',         inName )
+    call Deallocate_test ( slabs%x1,          'x1',          inName )
+    call Deallocate_test ( slabs%y,           'y',           inName )
+    call Deallocate_test ( slabs%yi,          'yi',          inName )
+    call Deallocate_test ( slabs%slabs1,      'slabs1',      inName )
+    call Deallocate_test ( slabs%dx1_dv0,     'dx1_dv0',     inName )
+    call Deallocate_test ( slabs%dy_dv0,      'dy_dv0',      inName )
+    call Deallocate_test ( slabs%dslabs1_dv0, 'dslabs1_dv0', inName )
+    call Deallocate_test ( slabs%dv0s_dT,     'dv0s_dT',     inName )
+    call Deallocate_test ( slabs%dx1_dT,      'dx1_dT',      inName )
+    call Deallocate_test ( slabs%dy_dT,       'dy_dT',       inName )
+    call Deallocate_test ( slabs%dyi_dT,      'dyi_dT',      inName )
+    call Deallocate_test ( slabs%dslabs1_dT,  'dslabs1_dT',  inName )
+  end subroutine DeallocateOneSlabs
+
+  ! ------------------------------------------- DestroyCompleteSlabs -----
+  subroutine DestroyCompleteSlabs ( Slabs )
+    ! Destroys all the components of a slabs
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Deallocate
+    type (slabs_struct), dimension(:,:), pointer :: Slabs
+
+    integer :: I
+    ! Executable code
+    call deallocateAllSlabs ( slabs, moduleName )
+    deallocate ( slabs, stat=i )
+    if ( i /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Deallocate//'slabs' )
+  end subroutine DestroyCompleteSlabs
+
+  ! ------------------------------------------  Dump_Slabs_Struct  -----
+  subroutine Dump_Slabs_Struct ( The_Slabs_Struct, Name )
+
+    use Dump_0, only: Dump
+    use Intrinsic, only: Lit_indices
+    use Output_m, only: Output
+    use String_Table, only: Display_String
+
+    type(slabs_struct), intent(in) :: The_Slabs_Struct
+    character(len=*), intent(in), optional :: Name
+
+    integer :: NL
+
+    call output ( 'Slabs_Struct ' )
+    if ( present(name) ) call output ( trim(name) )
+    nl = size(the_slabs_struct%catalog%lines)
+    if ( nl == 0 ) then
+      call output ( ' is empty', advance='yes' )
+    else
+      call output ( '', advance='yes' )
+      if ( the_slabs_struct%catalog%species_name /= 0 ) then
+        call output ( 'Species ' )
+        call display_string ( the_slabs_struct%catalog%species_name )
+      end if
+      call output ( 'Molecule ' )
+      call display_string ( lit_indices(the_slabs_struct%catalog%molecule), advance='yes' )
+      call dump ( the_slabs_struct%v0s(:nl), name='v0s' )
+      call dump ( the_slabs_struct%x1(:nl), name='x1' )
+      call dump ( the_slabs_struct%y(:nl), name='y' )
+      call dump ( the_slabs_struct%yi(:nl), name='yi' )
+      call dump ( the_slabs_struct%slabs1(:nl), name='slabs1' )
+      call dump ( the_slabs_struct%dx1_dv0(:nl), name='dx1_dv0' )
+      call dump ( the_slabs_struct%dy_dv0(:nl), name='dy_dv0' )
+      call dump ( the_slabs_struct%dslabs1_dv0(:nl), name='dslabs1_dv0' )
+      if ( associated (the_slabs_struct%dslabs1_dT) ) then
+        call dump ( the_slabs_struct%dv0s_dT(:nl), name='dv0s_dT' )
+        call dump ( the_slabs_struct%dx1_dT(:nl), name='dx1_dT' )
+        call dump ( the_slabs_struct%dy_dT(:nl), name='dy_dT' )
+        call dump ( the_slabs_struct%dyi_dT(:nl), name='dyi_dT' )
+        call dump ( the_slabs_struct%dslabs1_dT(:nl), name='dslabs1_dT' )
+      end if
+    end if
+
+  end subroutine Dump_Slabs_Struct
+
+
+  ! ---------------------------------------  Dump_Slabs_Struct_2D  -----
+  subroutine Dump_Slabs_Struct_2D ( The_Slabs_Struct, Name )
+
+    use Output_m, only: Output
+
+    type(slabs_struct), intent(in) :: The_Slabs_Struct(:,:)
+    character(len=*), intent(in), optional :: Name
+
+    integer :: I, J
+
+    call output ( 'Slabs Struct' )
+    if ( present(name) ) call output ( ' ' // trim(name) )
+    call output ( ', SIZE = ' )
+    call output ( size(the_slabs_struct,1) )
+    call output ( ' X ' )
+    call output ( size(the_slabs_struct,2), advance='yes' )
+    do j = 1, size(the_slabs_struct,2)
+      do i = 1, size(the_slabs_struct,1)
+        call output ( 'Item ' )
+        call output ( i )
+        call output ( ', ' )
+        call output ( j, advance='yes' )
+        call dump ( the_slabs_struct(i,j) )
+      end do
+    end do
+
+  end subroutine Dump_Slabs_Struct_2D
+
+  ! ----------------------------------------------  not_used_here  -----
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
+end module L2PC_PFA_STRUCTURES
+! $Log: l2pc_pfa_structures.f90,v $
+! Revision 2.14  2005/03/03 02:04:07  vsnyder
+! Set number of lines to zero if no lines
+!
+! Revision 2.13  2004/12/13 20:48:34  vsnyder
+! Add UseYi field to Slabs_Struct type definition
+!
+! Revision 2.12  2004/03/27 03:35:27  vsnyder
+! Add pointer to catalog in slabs_struct.  Use it so as not to need to drag
+! line centers and line widths around.  Write slabs_lines and slabswint_lines
+! to get sum of beta over all lines; put slabs_struct instead of its components
+! in the calling sequence.
+!
+! Revision 2.11  2004/03/26 02:29:18  vsnyder
+! Add tempDer argument in call to AllocateOneSlabs
+!
+! Revision 2.10  2004/03/20 04:08:55  vsnyder
+! Steps along the way to analytic temperature derivatives
+!
+! Revision 2.9  2003/07/09 23:39:56  vsnyder
+! Add AllocateSlabs
+!
+! Revision 2.8  2003/07/04 02:46:33  vsnyder
+! Create DeallocateAllSlabs subroutine, futzing
+!
+! Revision 2.7  2003/05/17 01:20:52  vsnyder
+! Futzing
+!
+! Revision 2.6  2003/05/16 23:52:08  livesey
+! Removed reference to spectags.  What does this module do now anyway?
+!
+! Revision 2.5  2003/05/05 23:00:25  livesey
+! Merged in feb03 newfwm branch
+!
+! Revision 2.4.2.2  2003/03/13 00:26:50  vsnyder
+! Don't dump an empty SLABS structure
+!
+! Revision 2.4.2.1  2003/03/12 21:49:39  vsnyder
+! Add dumpers for scalar and 2-d Slabs_Struct
+!
+! Revision 2.4  2002/10/08 17:08:05  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.3  2002/10/03 22:16:50  vsnyder
+! Move a USE from module scope to procedure scope
+!
+! Revision 2.2  2002/09/26 23:58:35  livesey
+! Clear arrays in zero lines case (think about whether we need to do the
+! max(nl,1) stuff later
+!
+! Revision 2.1  2002/05/23 22:03:35  zvi
+! Prevention of zero allocation size
+!
+! Revision 2.0  2001/09/17 20:26:27  livesey
+! New forward model
+!
+! Revision 1.11.2.6  2001/09/13 01:50:26  livesey
+! Added DestroyCompleteSlabs
+!
+! Revision 1.11.2.5  2001/09/10 23:48:22  livesey
+! Added some use statements
+!
+! Revision 1.11.2.4  2001/09/10 20:46:56  livesey
+! Trimmed stuff out
+!
+! Revision 1.11.2.3  2001/09/10 20:03:57  livesey
+! Tidied up a bit
+!
+! Revision 1.11.2.2  2001/09/10 20:03:29  livesey
+! Added DeallocateOneSlabs
+!
+! Revision 1.11.2.1  2001/09/10 19:56:52  livesey
+! Added AllocateOneSlabs
+!
+! Revision 1.11  2001/06/21 13:07:08  zvi
+! Speed enhancement MAJOR update
+!
+! Revision 1.10  2001/06/07 23:39:31  pwagner
+! Added Copyright statement
+!
+! Revision 1.9  2001/04/03 07:32:45  zvi
+! Modify the spectral structure - eliminating sps_ from the names
+!
+! Revision 1.8  2001/03/31 23:40:55  zvi
+! Eliminate l2pcdim (dimension parameters) move to allocatable ..
+!
+! Revision 1.7  2001/02/19 22:20:40  zvi
+! Latest modification: Conv/NoConv
+!
+! Revision 1.6  2001/02/19 22:14:21  zvi
+!
+! Revision 1.1  2000/06/21 21:56:15  zvi
+! First version D.P.
+!
+! Revision 1.1  2000/05/04 18:12:05  vsnyder
+! Initial conversion to Fortran 90
+@
+
+
+2.14
+log
+@Set number of lines to zero if no lines
+@
+text
+@d26 1
+a26 1
+       "$Id: l2pc_pfa_structures.f90,v 2.13 2004/12/13 20:48:34 vsnyder Exp $"
+d371 3
+@
+
+
+2.13
+log
+@Add UseYi field to Slabs_Struct type definition
+@
+text
+@d26 1
+a26 1
+       "$Id: l2pc_pfa_structures.f90,v 2.12 2004/03/27 03:35:27 vsnyder Exp $"
+d167 5
+a171 1
+    nl = size(catalog%lines)
+d371 3
+@
+
+
+2.12
+log
+@Add pointer to catalog in slabs_struct.  Use it so as not to need to drag
+line centers and line widths around.  Write slabs_lines and slabswint_lines
+to get sum of beta over all lines; put slabs_struct instead of its components
+in the calling sequence.
+@
+text
+@d26 1
+a26 1
+       "$Id: l2pc_pfa_structures.f90,v 2.11 2004/03/26 02:29:18 vsnyder Exp $"
+d137 1
+d367 6
+@
+
+
+2.11
+log
+@Add tempDer argument in call to AllocateOneSlabs
+@
+text
+@d5 2
+d8 2
+a9 1
+  use L2PC_File_Parameters, only: MAX_NO_POINTINGS
+d11 1
+d26 1
+a26 1
+       "$Id: l2pc_pfa_structures.f90,v 2.10 2004/03/20 04:08:55 vsnyder Exp $"
+d122 4
+a125 2
+!------------------------------------------------------------
+! This structure contains the "slabs preps arrays"
+d127 2
+a128 1
+    integer(i4) :: no_lines
+a143 1
+
+d148 2
+a149 2
+  ! -------------------------------------------- AllocateOneSlabs ---------
+  subroutine AllocateOneSlabs ( slabs, nl, TempDer )
+d152 1
+d154 1
+a154 1
+    integer, intent(in) :: nl                   ! Number of lines
+d161 1
+a163 1
+    myl = MAX(1,nl)
+d166 2
+d169 1
+a184 1
+    slabs%no_lines = nl
+d226 1
+a226 1
+        call AllocateOneSlabs ( slabs(j,i), size(catalog(i)%lines), TempDer )
+d289 1
+d291 1
+d300 1
+a300 1
+    nl = the_slabs_struct%no_lines
+d305 6
+d366 3
+@
+
+
+2.10
+log
+@Steps along the way to analytic temperature derivatives
+@
+text
+@d22 1
+a22 1
+       "$Id: l2pc_pfa_structures.f90,v 2.9 2003/07/09 23:39:56 vsnyder Exp $"
+d217 1
+a217 1
+        call AllocateOneSlabs ( slabs(j,i), size(catalog(i)%lines) )
+d349 3
+@
+
+
+2.9
+log
+@Add AllocateSlabs
+@
+text
+@d22 1
+a22 1
+       "$Id: l2pc_pfa_structures.f90,v 2.8 2003/07/04 02:46:33 vsnyder Exp $"
+d130 8
+d143 1
+a143 1
+  subroutine AllocateOneSlabs ( slabs, nl )
+d147 3
+a149 1
+    integer, intent(in) :: nl         ! Number of lines
+d153 1
+d157 3
+d168 7
+d185 7
+d196 1
+a196 1
+  subroutine AllocateSlabs ( Slabs, No_Ele, Catalog, Caller )
+d206 2
+d255 5
+d302 7
+d349 3
+@
+
+
+2.8
+log
+@Create DeallocateAllSlabs subroutine, futzing
+@
+text
+@d22 1
+a22 1
+       "$Id: l2pc_pfa_structures.f90,v 2.7 2003/05/17 01:20:52 vsnyder Exp $"
+d136 1
+a136 2
+    ! Allocates the commonly used items in a slabs, or all if the optional
+    ! Full parameter is set
+d167 26
+d307 3
+@
+
+
+2.7
+log
+@Futzing
+@
+text
+@d22 1
+a22 1
+       "$Id: l2pc_pfa_structures.f90,v 2.6 2003/05/16 23:52:08 livesey Exp $"
+d133 1
+a133 1
+  
+d141 1
+a141 1
+    
+d167 17
+a183 1
+  
+d186 1
+a186 2
+    ! Allocates the commonly used items in a slabs, or all if the optional
+    ! Full parameter is set
+d188 1
+a188 1
+    type (slabs_struct), intent(inout) :: slabs ! Slabs to allocate
+d190 1
+a190 1
+    
+d192 8
+a199 8
+    call Deallocate_test ( slabs%v0s,         'v0s',         ModuleName )
+    call Deallocate_test ( slabs%x1,          'x1',          ModuleName )
+    call Deallocate_test ( slabs%y,           'y',           ModuleName )
+    call Deallocate_test ( slabs%yi,          'yi',          ModuleName )
+    call Deallocate_test ( slabs%slabs1,      'slabs1',      ModuleName )
+    call Deallocate_test ( slabs%dx1_dv0,     'dx1_dv0',     ModuleName )
+    call Deallocate_test ( slabs%dy_dv0,      'dy_dv0',      ModuleName )
+    call Deallocate_test ( slabs%dslabs1_dv0, 'dslabs1_dv0', ModuleName )
+d201 1
+a201 1
+ 
+d203 1
+a203 1
+  subroutine DestroyCompleteSlabs ( slabs )
+d205 2
+a206 2
+    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_DEALLOCATE
+    type (slabs_struct), dimension(:,:), pointer :: slabs
+a208 1
+    integer :: J
+d210 1
+a210 5
+    do i = 1, size(slabs,2)
+      do j = 1, size(slabs,1)
+        call DeallocateOneSlabs ( slabs(j,i), ModuleName )
+      end do
+    end do
+d282 3
+@
+
+
+2.6
+log
+@Removed reference to spectags.  What does this module do now anyway?
+@
+text
+@d22 1
+a22 1
+       "$Id$"
+d24 1
+a24 1
+       "$RCSfile$"
+d147 7
+a153 7
+    call Allocate_test ( slabs%v0s, myl,         'v0s',         ModuleName )
+    call Allocate_test ( slabs%x1, myl,          'x1',          ModuleName )
+    call Allocate_test ( slabs%y, myl,           'y',           ModuleName )
+    call Allocate_test ( slabs%yi, myl,          'yi',          ModuleName )
+    call Allocate_test ( slabs%slabs1, myl,      'slabs1',      ModuleName )
+    call Allocate_test ( slabs%dx1_dv0, myl,     'dx1_dv0',     ModuleName )
+    call Allocate_test ( slabs%dy_dv0, myl,      'dy_dv0',      ModuleName )
+d271 4
+a274 1
+! $Log$
+@
+
+
+2.5
+log
+@Merged in feb03 newfwm branch
+@
+text
+@a59 1
+    integer(i4) :: SPECTAG
+a78 1
+    integer(i4) :: SPECTAG
+a103 1
+    integer(i4) :: SPECTAG
+d272 3
+@
+
+
+2.4
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d8 6
+d18 1
+d22 1
+a22 1
+       "$Id: l2pc_pfa_structures.f90,v 2.3 2002/10/03 22:16:50 vsnyder Exp $"
+d24 1
+a24 1
+       "$RCSfile: l2pc_pfa_structures.f90,v $"
+d27 1
+d158 1
+d208 61
+a268 1
+  
+d274 10
+a283 1
+! $Log: l2pc_pfa_structures.f90,v $
+@
+
+
+2.4.2.1
+log
+@Add dumpers for scalar and 2-d Slabs_Struct
+@
+text
+@a7 6
+  public
+
+  interface DUMP
+    module procedure Dump_Slabs_Struct, Dump_Slabs_Struct_2D
+  end interface
+
+a11 1
+
+d15 1
+a15 1
+       "$Id: l2pc_pfa_structures.f90,v 2.4 2002/10/08 17:08:05 pwagner Exp $"
+a19 1
+
+d199 1
+a199 52
+
+  ! ------------------------------------------  Dump_Slabs_Struct  -----
+  subroutine Dump_Slabs_Struct ( The_Slabs_Struct, Name )
+
+    use Dump_0, only: Dump
+    use Output_m, only: Output
+
+    type(slabs_struct), intent(in) :: The_Slabs_Struct
+    character(len=*), intent(in), optional :: Name
+
+    if ( present(name) ) call output ( 'Slabs_Struct ' // trim(name) )
+    call dump ( the_slabs_struct%v0s, name='v0s' )
+    call dump ( the_slabs_struct%x1, name='x1' )
+    call dump ( the_slabs_struct%y, name='y' )
+    call dump ( the_slabs_struct%yi, name='yi' )
+    call dump ( the_slabs_struct%slabs1, name='slabs1' )
+    call dump ( the_slabs_struct%dx1_dv0, name='dx1_dv0' )
+    call dump ( the_slabs_struct%dy_dv0, name='dy_dv0' )
+    call dump ( the_slabs_struct%dslabs1_dv0, name='dslabs1_dv0' )
+
+  end subroutine Dump_Slabs_Struct
+
+
+  ! ---------------------------------------  Dump_Slabs_Struct_2D  -----
+  subroutine Dump_Slabs_Struct_2D ( The_Slabs_Struct, Name )
+
+    use Output_m, only: Output
+
+    type(slabs_struct), intent(in) :: The_Slabs_Struct(:,:)
+    character(len=*), intent(in), optional :: Name
+
+    integer :: I, J
+
+    call output ( 'Slabs Struct' )
+    if ( present(name) ) call output ( ' ' // trim(name) )
+    call output ( ', SIZE = ' )
+    call output ( size(the_slabs_struct,1) )
+    call output ( ' X ' )
+    call output ( size(the_slabs_struct,2), advance='yes' )
+    do j = 1, size(the_slabs_struct,2)
+      do i = 1, size(the_slabs_struct,1)
+        call output ( 'Item ' )
+        call output ( i )
+        call output ( ', ' )
+        call output ( j, advance='yes' )
+        call dump ( the_slabs_struct(i,j) )
+      end do
+    end do
+
+  end subroutine Dump_Slabs_Struct_2D
+
+  ! ----------------------------------------------  not_used_here  -----
+a205 3
+! Revision 2.4  2002/10/08 17:08:05  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+@
+
+
+2.4.2.2
+log
+@Don't dump an empty SLABS structure
+@
+text
+@d22 1
+a22 1
+       "$Id: l2pc_pfa_structures.f90,v 2.4.2.1 2003/03/12 21:49:39 vsnyder Exp $"
+a157 1
+    slabs%no_lines = nl
+d217 9
+a225 18
+    integer :: NL
+
+    call output ( 'Slabs_Struct ' )
+    if ( present(name) ) call output ( trim(name) )
+    nl = the_slabs_struct%no_lines
+    if ( nl == 0 ) then
+      call output ( ' is empty', advance='yes' )
+    else
+      call output ( '', advance='yes' )
+      call dump ( the_slabs_struct%v0s(:nl), name='v0s' )
+      call dump ( the_slabs_struct%x1(:nl), name='x1' )
+      call dump ( the_slabs_struct%y(:nl), name='y' )
+      call dump ( the_slabs_struct%yi(:nl), name='yi' )
+      call dump ( the_slabs_struct%slabs1(:nl), name='slabs1' )
+      call dump ( the_slabs_struct%dx1_dv0(:nl), name='dx1_dv0' )
+      call dump ( the_slabs_struct%dy_dv0(:nl), name='dy_dv0' )
+      call dump ( the_slabs_struct%dslabs1_dv0(:nl), name='dslabs1_dv0' )
+    end if
+a264 3
+! Revision 2.4.2.1  2003/03/12 21:49:39  vsnyder
+! Add dumpers for scalar and 2-d Slabs_Struct
+!
+@
+
+
+2.3
+log
+@Move a USE from module scope to procedure scope
+@
+text
+@d15 1
+a15 1
+       "$Id: l2pc_pfa_structures.f90,v 2.2 2002/09/26 23:58:35 livesey Exp $"
+d18 1
+d200 4
+d206 3
+@
+
+
+2.2
+log
+@Clear arrays in zero lines case (think about whether we need to do the
+max(nl,1) stuff later
+@
+text
+@d6 1
+a6 4
+  use L2PC_File_Parameters, only: MAX_NO_ELMNTS_PER_SV_COMPONENT, &
+                                  MAX_NO_POINTINGS
+  use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+  use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_DEALLOCATE
+d15 1
+a15 1
+       "$Id: l2pc_pfa_structures.f90,v 2.1 2002/05/23 22:03:35 zvi Exp $"
+d132 1
+d165 1
+d183 1
+d201 4
+@
+
+
+2.1
+log
+@Prevention of zero allocation size
+@
+text
+@d18 1
+a18 1
+       "$Id: l2pc_pfa_structures.f90,v 2.0 2001/09/17 20:26:27 livesey Exp $"
+d151 10
+d201 3
+@
+
+
+2.0
+log
+@New forward model
+@
+text
+@d18 1
+a18 1
+       "$Id: l2pc_pfa_structures.f90,v 1.11.2.6 2001/09/13 01:50:26 livesey Exp $"
+d139 2
+a140 2
+    logical :: MYFULL
+    
+d142 9
+a150 8
+    call Allocate_test ( slabs%v0s, nl,         'v0s',         ModuleName )
+    call Allocate_test ( slabs%x1, nl,          'x1',          ModuleName )
+    call Allocate_test ( slabs%y, nl,           'y',           ModuleName )
+    call Allocate_test ( slabs%yi, nl,          'yi',          ModuleName )
+    call Allocate_test ( slabs%slabs1, nl,      'slabs1',      ModuleName )
+    call Allocate_test ( slabs%dx1_dv0, nl,     'dx1_dv0',     ModuleName )
+    call Allocate_test ( slabs%dy_dv0, nl,      'dy_dv0',      ModuleName )
+    call Allocate_test ( slabs%dslabs1_dv0, nl, 'dslabs1_dv0', ModuleName )
+d191 3
+@
+
+
+1.11
+log
+@Speed enhancement MAJOR update
+@
+text
+@d8 3
+a10 1
+  implicit NONE
+d16 4
+a19 4
+  PRIVATE :: Id, ModuleName
+  CHARACTER (LEN=256) :: Id = &
+       "$Id: l2pc_pfa_structures.f90,v 1.10 2001/06/07 23:39:31 pwagner Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName = &
+d24 4
+a27 4
+  Integer(i4), parameter :: MAXSPS = 20
+  Integer(i4), parameter :: MAXSUBSPS = 15
+  Integer(i4), parameter :: MAXGEOM = 13
+  Integer(i4), parameter :: MAXGEOPHYS = 2
+d37 3
+a39 3
+    Integer(i4) :: NO_LIN_VALUES
+    Logical DER_CALC(6)
+    Real(r4) :: LIN_VAL(max_no_pointings)
+d46 2
+a47 2
+    Logical DER_CALC(6)
+    Real(r4) :: LIN_VAL
+d52 1
+a52 1
+    character(len=1) :: TYPE
+d54 6
+a59 6
+    Integer(i4) :: SPECTAG
+    Integer(i4) :: NO_PHI_VALUES
+    Integer(i4) :: NO_ZETA_VALUES
+    Logical DER_CALC(6)
+    Real(r4) :: PHI_BASIS(12)
+    Real(r4) :: ZETA_BASIS(52)
+d65 4
+a68 4
+    Integer(i4) :: NO_LIN_VALUES
+    Logical DER_CALC(6)
+    Real(r4) :: LIN_VAL(50)
+    Real(r4) :: BASIS_PEAKS(52)
+d74 6
+a79 6
+    Integer(i4) :: SPECTAG
+    Integer(i4) :: NO_LIN_VALUES
+    Logical FWD_CALC(6)
+    Logical DER_CALC(6)
+    Real(r4) :: LIN_VAL(50)
+    Real(r4) :: BASIS_PEAKS(52)
+d85 5
+a89 5
+    Integer(i4) :: FIRST_DIM_INDEX
+    Integer(i4) :: NO_ZETA_BASIS
+    Integer(i4) :: NO_PHI_BASIS
+    Real(r4)    :: PHI_BASIS(12)
+    Real(r4)    :: ZETA_BASIS(52)
+d92 4
+a95 15
+!-----------------------------------------------------------------------
+! Physical Constants
+  Real(r4), parameter :: EARTH_MINOR = 6356.755
+  Real(r4), parameter :: EARTH_MAJOR = 6378.140
+!-----------------------------------------------------------------------
+!  NEW PFA parameters file, Z. Shippony  Jun/5/92
+!  Modified, Aug/18/92, Z. Shippony (Add new type of structure for new
+!  "PQM" approach)
+!  Modified, Jul/03/97, Z. Shippony (Add pressure shift parameter)
+!  Modified, Jun/21/97, Z. Shippony (Up maxlines from: 30  to: 35)
+!  Modified, Jul/28/95, Z. Shippony (Up maxpfach from: 25  to: 45)
+  Integer(i4), parameter :: MAXPFALINES = 6
+  Integer(i4), parameter :: MAXPFACH = 45
+  Integer(i4), parameter :: MAXFILTPTS = 161
+  Integer(i4), parameter :: MAXLINES = 35
+d98 15
+a112 15
+    Integer(i4) :: NO_SPS
+    Integer(i4) :: NO_LINES
+    Integer(i4) :: SPECTAG
+    Character(len=8) :: NAME
+    Real(r8) :: QLOG(3)
+    Real(r8) :: V0(maxlines)
+    Real(r8) :: EL(maxlines)
+    Real(r8) :: STR(maxlines)
+    Real(r8) :: W(maxlines)
+    Real(r8) :: PS(maxlines)
+    Real(r8) :: N(maxlines)
+    Real(r8) :: N1(maxlines)
+    Real(r8) :: N2(maxlines)
+    Real(r8) :: GAMMA(maxlines)
+    Real(r8) :: DELTA(maxlines)
+d118 9
+a126 19
+    Integer(i4) :: no_lines
+    Real(r8), DIMENSION(:), POINTER :: v0s
+    Real(r8), DIMENSION(:), POINTER :: v0sm
+    Real(r8), DIMENSION(:), POINTER :: v0sp
+    Real(r8), DIMENSION(:), POINTER :: x1
+    Real(r8), DIMENSION(:), POINTER :: x1m
+    Real(r8), DIMENSION(:), POINTER :: x1p
+    Real(r8), DIMENSION(:), POINTER :: y
+    Real(r8), DIMENSION(:), POINTER :: ym
+    Real(r8), DIMENSION(:), POINTER :: yp
+    Real(r8), DIMENSION(:), POINTER :: yi
+    Real(r8), DIMENSION(:), POINTER :: yim
+    Real(r8), DIMENSION(:), POINTER :: yip
+    Real(r8), DIMENSION(:), POINTER :: slabs1
+    Real(r8), DIMENSION(:), POINTER :: slabs1m
+    Real(r8), DIMENSION(:), POINTER :: slabs1p
+    Real(r8), DIMENSION(:), POINTER :: dx1_dv0
+    Real(r8), DIMENSION(:), POINTER :: dy_dv0
+    Real(r8), DIMENSION(:), POINTER :: dslabs1_dv0
+d129 59
+d190 21
+@
+
+
+1.11.2.1
+log
+@Added AllocateOneSlabs
+@
+text
+@d8 1
+a8 1
+  implicit none
+d14 4
+a17 4
+  private :: Id, ModuleName
+  character (LEN=256) :: Id = &
+       "$Id: l2pc_pfa_structures.f90,v 1.11 2001/06/21 13:07:08 zvi Exp $"
+  character (LEN=*), parameter :: ModuleName = &
+d22 4
+a25 4
+  integer(i4), parameter :: MAXSPS = 20
+  integer(i4), parameter :: MAXSUBSPS = 15
+  integer(i4), parameter :: MAXGEOM = 13
+  integer(i4), parameter :: MAXGEOPHYS = 2
+d35 3
+a37 3
+    integer(i4) :: NO_LIN_VALUES
+    logical DER_CALC(6)
+    real(r4) :: LIN_VAL(max_no_pointings)
+d44 2
+a45 2
+    logical DER_CALC(6)
+    real(r4) :: LIN_VAL
+d50 1
+a50 1
+    character(len=1) :: type
+d52 6
+a57 6
+    integer(i4) :: SPECTAG
+    integer(i4) :: NO_PHI_VALUES
+    integer(i4) :: NO_ZETA_VALUES
+    logical DER_CALC(6)
+    real(r4) :: PHI_BASIS(12)
+    real(r4) :: ZETA_BASIS(52)
+d63 4
+a66 4
+    integer(i4) :: NO_LIN_VALUES
+    logical DER_CALC(6)
+    real(r4) :: LIN_VAL(50)
+    real(r4) :: BASIS_PEAKS(52)
+d72 6
+a77 6
+    integer(i4) :: SPECTAG
+    integer(i4) :: NO_LIN_VALUES
+    logical FWD_CALC(6)
+    logical DER_CALC(6)
+    real(r4) :: LIN_VAL(50)
+    real(r4) :: BASIS_PEAKS(52)
+d83 5
+a87 5
+    integer(i4) :: FIRST_DIM_INDEX
+    integer(i4) :: NO_ZETA_BASIS
+    integer(i4) :: NO_PHI_BASIS
+    real(r4)    :: PHI_BASIS(12)
+    real(r4)    :: ZETA_BASIS(52)
+d90 15
+a104 4
+  integer(i4), parameter :: MAXPFALINES = 6
+  integer(i4), parameter :: MAXPFACH = 45
+  integer(i4), parameter :: MAXFILTPTS = 161
+  integer(i4), parameter :: MAXLINES = 35
+d107 15
+a121 15
+    integer(i4) :: NO_SPS
+    integer(i4) :: NO_LINES
+    integer(i4) :: SPECTAG
+    character(len=8) :: NAME
+    real(r8) :: QLOG(3)
+    real(r8) :: V0(maxlines)
+    real(r8) :: EL(maxlines)
+    real(r8) :: STR(maxlines)
+    real(r8) :: W(maxlines)
+    real(r8) :: PS(maxlines)
+    real(r8) :: N(maxlines)
+    real(r8) :: N1(maxlines)
+    real(r8) :: N2(maxlines)
+    real(r8) :: GAMMA(maxlines)
+    real(r8) :: DELTA(maxlines)
+d127 19
+a145 19
+    integer(i4) :: no_lines
+    real(r8), dimension(:), pointer :: v0s => NULL()
+    real(r8), dimension(:), pointer :: v0sm  => NULL()
+    real(r8), dimension(:), pointer :: v0sp => NULL()
+    real(r8), dimension(:), pointer :: x1 => NULL()
+    real(r8), dimension(:), pointer :: x1m => NULL()
+    real(r8), dimension(:), pointer :: x1p => NULL()
+    real(r8), dimension(:), pointer :: y => NULL()
+    real(r8), dimension(:), pointer :: ym => NULL()
+    real(r8), dimension(:), pointer :: yp => NULL()
+    real(r8), dimension(:), pointer :: yi => NULL()
+    real(r8), dimension(:), pointer :: yim => NULL()
+    real(r8), dimension(:), pointer :: yip => NULL()
+    real(r8), dimension(:), pointer :: slabs1 => NULL()
+    real(r8), dimension(:), pointer :: slabs1m => NULL()
+    real(r8), dimension(:), pointer :: slabs1p => NULL()
+    real(r8), dimension(:), pointer :: dx1_dv0 => NULL()
+    real(r8), dimension(:), pointer :: dy_dv0 => NULL()
+    real(r8), dimension(:), pointer :: dslabs1_dv0 => NULL()
+a147 29
+  contains
+    
+    ! -------------------------------------------- AllocateOneSlabs ---------
+    subroutine AllocateOneSlabs ( slabs, nl, inName, full )
+      ! Allocates the commonly used items in a slabs, or all if the optional
+      ! Full parameter is set
+      type (slabs_struct), intent(inout) :: slabs ! Slabs to allocate
+      integer, intent(in) :: nl         ! Number of lines
+      character (len=*), intent(in) :: inName ! ModuleName of caller
+      logical, optional, intent(in) :: full ! If present and set, do all
+
+      ! Local variables
+      logical :: MYFULL
+      
+      ! Executable code
+
+      myFull = .false.
+      if ( present(full) ) myFull=full
+
+      ! Allocate the main stuff
+      call Allocate_test ( slabs%v0s, nl,         'v0s',         inName )
+      call Allocate_test ( slabs%x1, nl,          'x1',          inName )
+      call Allocate_test ( slabs%y, nl,           'y',           inName )
+      call Allocate_test ( slabs%yi, nl,          'yi',          inName )
+      call Allocate_test ( slabs%slabs1, nl,      'slabs1',      inName )
+      call Allocate_test ( slabs%dslabs1_dv0, nl, 'dslabs1_dv0', inName )
+
+    end subroutine AllocateOneSlabs
+
+a149 3
+! Revision 1.11  2001/06/21 13:07:08  zvi
+! Speed enhancement MAJOR update
+!
+@
+
+
+1.11.2.2
+log
+@Added DeallocateOneSlabs
+@
+text
+@d16 1
+a16 1
+       "$Id: l2pc_pfa_structures.f90,v 1.11.2.1 2001/09/10 19:56:52 livesey Exp $"
+d140 1
+a140 1
+    subroutine AllocateOneSlabs ( slabs, nl, inName )
+d146 1
+d152 5
+d163 1
+a165 16
+    ! -------------------------------------------- AllocateOneSlabs ---------
+    subroutine DeallocateOneSlabs ( slabs, inName )
+      ! Allocates the commonly used items in a slabs, or all if the optional
+      ! Full parameter is set
+      type (slabs_struct), intent(inout) :: slabs ! Slabs to allocate
+      character (len=*), intent(in) :: inName ! ModuleName of caller
+
+      ! Executable code
+      call Deallocate_test ( slabs%v0s,         'v0s',         inName )
+      call Deallocate_test ( slabs%x1,          'x1',          inName )
+      call Deallocate_test ( slabs%y,           'y',           inName )
+      call Deallocate_test ( slabs%yi,          'yi',          inName )
+      call Deallocate_test ( slabs%slabs1,      'slabs1',      inName )
+      call Deallocate_test ( slabs%dslabs1_dv0, 'dslabs1_dv0', inName )
+    end subroutine DeallocateOneSlabs
+
+a167 3
+! Revision 1.11.2.1  2001/09/10 19:56:52  livesey
+! Added AllocateOneSlabs
+!
+@
+
+
+1.11.2.3
+log
+@Tidied up a bit
+@
+text
+@d16 1
+a16 1
+       "$Id: l2pc_pfa_structures.f90,v 1.11.2.2 2001/09/10 20:03:29 livesey Exp $"
+d137 1
+a137 9
+contains
+  
+  ! -------------------------------------------- AllocateOneSlabs ---------
+  subroutine AllocateOneSlabs ( slabs, nl, inName )
+    ! Allocates the commonly used items in a slabs, or all if the optional
+    ! Full parameter is set
+    type (slabs_struct), intent(inout) :: slabs ! Slabs to allocate
+    integer, intent(in) :: nl         ! Number of lines
+    character (len=*), intent(in) :: inName ! ModuleName of caller
+d139 36
+a174 28
+    ! Local variables
+    logical :: MYFULL
+    
+    ! Executable code
+    call Allocate_test ( slabs%v0s, nl,         'v0s',         inName )
+    call Allocate_test ( slabs%x1, nl,          'x1',          inName )
+    call Allocate_test ( slabs%y, nl,           'y',           inName )
+    call Allocate_test ( slabs%yi, nl,          'yi',          inName )
+    call Allocate_test ( slabs%slabs1, nl,      'slabs1',      inName )
+    call Allocate_test ( slabs%dslabs1_dv0, nl, 'dslabs1_dv0', inName )
+  end subroutine AllocateOneSlabs
+  
+  ! ------------------------------------------ DeallocateOneSlabs ---------
+  subroutine DeallocateOneSlabs ( slabs, inName )
+    ! Allocates the commonly used items in a slabs, or all if the optional
+    ! Full parameter is set
+    type (slabs_struct), intent(inout) :: slabs ! Slabs to allocate
+    character (len=*), intent(in) :: inName ! ModuleName of caller
+    
+    ! Executable code
+    call Deallocate_test ( slabs%v0s,         'v0s',         inName )
+    call Deallocate_test ( slabs%x1,          'x1',          inName )
+    call Deallocate_test ( slabs%y,           'y',           inName )
+    call Deallocate_test ( slabs%yi,          'yi',          inName )
+    call Deallocate_test ( slabs%slabs1,      'slabs1',      inName )
+    call Deallocate_test ( slabs%dslabs1_dv0, 'dslabs1_dv0', inName )
+  end subroutine DeallocateOneSlabs
+  
+a176 3
+! Revision 1.11.2.2  2001/09/10 20:03:29  livesey
+! Added DeallocateOneSlabs
+!
+@
+
+
+1.11.2.4
+log
+@Trimmed stuff out
+@
+text
+@d16 1
+a16 1
+       "$Id: l2pc_pfa_structures.f90,v 1.11.2.3 2001/09/10 20:03:57 livesey Exp $"
+d118 2
+d121 2
+d124 2
+d127 2
+d130 2
+a155 2
+    call Allocate_test ( slabs%dx1_dv0, nl,     'dx1_dv0',     inName )
+    call Allocate_test ( slabs%dy_dv0, nl,      'dy_dv0',      inName )
+a171 2
+    call Deallocate_test ( slabs%dx1_dv0,     'dx1_dv0',     inName )
+    call Deallocate_test ( slabs%dy_dv0,      'dy_dv0',      inName )
+a176 3
+! Revision 1.11.2.3  2001/09/10 20:03:57  livesey
+! Tidied up a bit
+!
+@
+
+
+1.11.2.5
+log
+@Added some use statements
+@
+text
+@a7 1
+  use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+d16 1
+a16 1
+       "$Id: l2pc_pfa_structures.f90,v 1.11.2.4 2001/09/10 20:46:56 livesey Exp $"
+a170 3
+! Revision 1.11.2.4  2001/09/10 20:46:56  livesey
+! Trimmed stuff out
+!
+@
+
+
+1.11.2.6
+log
+@Added DestroyCompleteSlabs
+@
+text
+@a8 1
+  use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_DEALLOCATE
+d17 1
+a17 1
+       "$Id: l2pc_pfa_structures.f90,v 1.11.2.5 2001/09/10 23:48:22 livesey Exp $"
+d131 1
+a131 1
+  subroutine AllocateOneSlabs ( slabs, nl )
+d136 1
+d142 8
+a149 8
+    call Allocate_test ( slabs%v0s, nl,         'v0s',         ModuleName )
+    call Allocate_test ( slabs%x1, nl,          'x1',          ModuleName )
+    call Allocate_test ( slabs%y, nl,           'y',           ModuleName )
+    call Allocate_test ( slabs%yi, nl,          'yi',          ModuleName )
+    call Allocate_test ( slabs%slabs1, nl,      'slabs1',      ModuleName )
+    call Allocate_test ( slabs%dx1_dv0, nl,     'dx1_dv0',     ModuleName )
+    call Allocate_test ( slabs%dy_dv0, nl,      'dy_dv0',      ModuleName )
+    call Allocate_test ( slabs%dslabs1_dv0, nl, 'dslabs1_dv0', ModuleName )
+d160 8
+a167 8
+    call Deallocate_test ( slabs%v0s,         'v0s',         ModuleName )
+    call Deallocate_test ( slabs%x1,          'x1',          ModuleName )
+    call Deallocate_test ( slabs%y,           'y',           ModuleName )
+    call Deallocate_test ( slabs%yi,          'yi',          ModuleName )
+    call Deallocate_test ( slabs%slabs1,      'slabs1',      ModuleName )
+    call Deallocate_test ( slabs%dx1_dv0,     'dx1_dv0',     ModuleName )
+    call Deallocate_test ( slabs%dy_dv0,      'dy_dv0',      ModuleName )
+    call Deallocate_test ( slabs%dslabs1_dv0, 'dslabs1_dv0', ModuleName )
+a168 18
+ 
+  ! ------------------------------------------- DestroyCompleteSlabs -----
+  subroutine DestroyCompleteSlabs ( slabs )
+    ! Destroys all the components of a slabs
+    type (slabs_struct), dimension(:,:), pointer :: slabs
+
+    integer :: I
+    integer :: J
+    ! Executable code
+    do i = 1, size(slabs,2)
+      do j = 1, size(slabs,1)
+        call DeallocateOneSlabs ( slabs(j,i), ModuleName )
+      end do
+    end do
+    deallocate ( slabs, stat=i )
+    if ( i /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Deallocate//'slabs' )
+  end subroutine DestroyCompleteSlabs
+a171 3
+! Revision 1.11.2.5  2001/09/10 23:48:22  livesey
+! Added some use statements
+!
+@
+
+
+1.10
+log
+@Added Copyright statement
+@
+text
+@d16 1
+a16 1
+       "$Id: l2pc_pfa_structures.f90,v 1.9 2001/04/03 07:32:45 zvi Exp $"
+d124 24
+d150 3
+@
+
+
+1.9
+log
+@Modify the spectral structure - eliminating sps_ from the names
+@
+text
+@d1 3
+d16 1
+a16 1
+       "$Id: l2pc_pfa_structures.f90,v 1.8 2001/03/31 23:40:55 zvi Exp $"
+d126 3
+@
+
+
+1.8
+log
+@Eliminate l2pcdim (dimension parameters) move to allocatable ..
+@
+text
+@d13 1
+a13 1
+       "$Id: l2pc_pfa_structures.f90,v 1.7 2001/02/19 22:20:40 zvi Exp $"
+d106 13
+a118 13
+    Integer(i4) :: SPS_SPECTAG
+    Character(len=8) :: SPS_NAME
+    Real(r8) :: SPS_QLOG(3)
+    Real(r8) :: SPS_V0(maxlines)
+    Real(r8) :: SPS_EL(maxlines)
+    Real(r8) :: SPS_STR(maxlines)
+    Real(r8) :: SPS_W(maxlines)
+    Real(r8) :: SPS_PS(maxlines)
+    Real(r8) :: SPS_N(maxlines)
+    Real(r8) :: SPS_N1(maxlines)
+    Real(r8) :: SPS_N2(maxlines)
+    Real(r8) :: SPS_GAMMA(maxlines)
+    Real(r8) :: SPS_DELTA(maxlines)
+d123 3
+@
+
+
+1.7
+log
+@Latest modification: Conv/NoConv
+@
+text
+@d3 1
+a3 3
+  use L2PCDim, only: MAX_NO_PHI, NLVL
+  use L2PC_File_Parameters, only: MAX_NO_BANDS, &
+                                  MAX_NO_ELMNTS_PER_SV_COMPONENT, &
+d13 1
+a13 1
+       "$Id: l2pc_pfa_structures.f90,v 1.6 2001/02/19 22:14:21 zvi Exp $"
+d33 1
+a33 1
+    Logical DER_CALC(max_no_bands)
+d41 1
+a41 1
+    Logical DER_CALC(max_no_bands)
+d52 3
+a54 3
+    Logical DER_CALC(max_no_bands)
+    Real(r4) :: PHI_BASIS(max_no_phi+2)
+    Real(r4) :: ZETA_BASIS(max_no_elmnts_per_sv_component+2)
+d61 3
+a63 3
+    Logical DER_CALC(max_no_bands)
+    Real(r4) :: LIN_VAL(max_no_elmnts_per_sv_component)
+    Real(r4) :: BASIS_PEAKS(max_no_elmnts_per_sv_component)
+d71 4
+a74 4
+    Logical FWD_CALC(max_no_bands)
+    Logical DER_CALC(max_no_bands)
+    Real(r4) :: LIN_VAL(max_no_elmnts_per_sv_component)
+    Real(r4) :: BASIS_PEAKS(max_no_elmnts_per_sv_component+2)
+d83 2
+a84 2
+    Real(r4)    :: PHI_BASIS(max_no_phi+2)
+    Real(r4)    :: ZETA_BASIS(max_no_elmnts_per_sv_component+2)
+d123 3
+@
+
+
+1.6
+log
+@
+Ctest modification Conv/NoConvVS: ----------------------------------------------------------------------
+@
+text
+@d15 1
+a15 1
+       "$Id: l2pc_pfa_structures.f90,v 1.1 2000/06/21 21:56:15 zvi Exp $"
+d125 2
+@
+
+
+1.5
+log
+@Changes and additions
+@
+text
+@d83 1
+d85 2
+@
+
+
+1.4
+log
+@New version of forward model
+@
+text
+@d102 1
+a102 1
+  type PFA_SLAB
+d106 12
+@
+
+
+1.3
+log
+@Re-add basic stuff
+@
+text
+@d2 1
+a6 1
+  use MLSCommon, only: I4, R4, R8
+d30 1
+d38 1
+a38 8
+! This structure contains the linearization values for magnetic field strength.
+  type MAG_FIELD
+    character(len=8) :: NAMES(3)
+    Logical DER_CALC(max_no_bands)
+    Real(r4) :: TOTAL_MAG_FIELD
+    Real(r4) :: PROP_DIR_ANGLE
+    Real(r4) :: POLAR_ANGLE
+  end type MAG_FIELD
+d46 1
+d58 1
+d67 1
+d78 8
+a85 9
+! The cross section structure
+  type CS_DATA
+    Integer(i4) :: SPECTAG
+    Integer(i4) :: NO_HTS
+    Real(r8) FREQ
+    Real(r4) :: ABS_CS(nlvl)
+    Real(r4) :: DABS_CS_DF(nlvl)
+    Real(r4) :: TEMP_DEP(nlvl)
+  end type CS_DATA
+a93 1
+!  Modified, Mar/12/00, Z. Shippony (Set maxaitkenpts back to 30)
+a96 1
+!  Modified, Apr/08/94, Z. Shippony (Up maxaitkenpts from: 25  to: 201)
+a99 1
+  Integer(i4), parameter :: MAXAITKENPTS = 30
+d101 1
+d107 1
+@
+
+
+1.2
+log
+@New version
+@
+text
+@a7 1
+
+a9 1
+
+a11 1
+
+d15 3
+a17 2
+       "$Id: l2pc_pfa_structures.f90,v 1.1 2000/05/04 18:12:05 vsnyder Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile: l2pc_pfa_structures.f90,v $"
+a18 1
+
+a19 1
+
+a20 1
+
+a24 1
+
+a26 1
+
+a29 1
+
+d31 1
+a31 2
+
+  type :: LIMB_PRESS
+d34 1
+a34 1
+    Logical*1 DER_CALC(max_no_bands)
+a36 1
+
+d38 1
+a38 2
+
+  type :: MAG_FIELD
+d40 1
+a40 1
+    Logical*1 DER_CALC(max_no_bands)
+a44 1
+
+d47 1
+a47 2
+
+  type :: GEOM_PARAM
+d49 1
+a49 1
+    Logical*1 DER_CALC(max_no_bands)
+a51 1
+
+d53 1
+a53 2
+
+  type :: SPECTRO_PARAM
+d59 1
+a59 1
+    Logical*1 DER_CALC(max_no_bands)
+a62 1
+
+d64 1
+a64 2
+
+  type :: GEOPHYS_PARAM
+d67 1
+a67 1
+    Logical*1 DER_CALC(max_no_bands)
+a70 1
+
+d72 1
+a72 2
+
+  type :: ATMOS_COMP
+d76 2
+a77 2
+    Logical*1 FWD_CALC(max_no_bands)
+    Logical*1 DER_CALC(max_no_bands)
+a80 1
+
+d82 1
+a82 2
+
+  type :: CS_DATA
+a89 1
+
+a91 1
+
+a93 1
+
+a94 1
+
+a97 1
+
+a102 1
+
+d108 1
+a108 3
+  Integer(i4), parameter :: MAXRAT = 11
+
+  type :: PFA_SLAB
+a110 1
+    Integer(i4) :: NRAT(nlvl)
+a111 16
+    Character(len=8) :: SPS_NAME
+    Real(r8) :: VARM(nlvl)
+    Real(r8) :: SPS_V0(maxlines)
+    Real(r8) :: SPS_EL(maxlines)
+    Real(r8) :: SPS_STR(maxlines)
+    Real(r8) :: SPS_W(maxlines)
+    Real(r8) :: SPS_PS(maxlines)
+    Real(r8) :: SPS_N(maxlines)
+    Real(r8) :: SPS_N1(maxlines)
+    Real(r8) :: SPS_N2(maxlines)
+    Real(r8) :: SPS_GAMMA(maxlines)
+    Real(r8) :: SPS_DELTA(maxlines)
+    Real(r8) :: SPS_PART(3,maxlines)
+    Real(r8) :: XX(maxrat,nlvl)
+    Real(r8) :: YY(maxrat,nlvl)
+    Real(r8) :: DY(maxrat,nlvl)
+a112 1
+
+a113 1
+
+d115 3
+a119 1
+!
+@
+
+
+1.1
+log
+@Initial conversion to Fortran 90
+@
+text
+@d18 1
+a18 1
+       "$Id: L2PC_PFA_STRUCTURES,v 1.12 2000/02/08 19:54:57 vsnyder Exp $"
+d162 4
+a165 1
+! $Log: L2PC_PFA_STRUCTURES,v $
+@
+

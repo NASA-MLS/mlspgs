@@ -1,0 +1,141 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.14
+	cfm-single-freq-0-1:1.1.0.12
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.10
+	mus-emls-1-70:1.1.0.8
+	rel-1-0-englocks-work:1.1.0.6
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2008.06.11.20.14.55;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9.0in
+
+\newcommand{\docname}{\bf wvs-078}
+\newcommand{\docdate}{16 April 2008}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[u]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Dave\\
+Subject: \>Tasks for cloud forward model\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 10pt
+\vspace{-20pt}
+
+The tasks needed to incorporate clouds into the full forward model
+according to the strategy Bill has laid out are
+
+\begin{enumerate}
+
+\item\label{one} Compute tables of $\beta_{c\_s}$, $\beta_{c\_e}$ and
+$P(\theta)$ for several values of temperature, ice water content and
+$\theta$.  Software to produce these tables is completed and tables have
+been computed.
+
+\item\label{two} Modify the full forward model to compute radiative
+transfer to a specific point in the atmosphere, along a specific path. 
+This is also useful for observer-in-atmosphere studies.
+
+\item Using the tables computed in step \ref{one} and a sample
+atmosphere, compute radiative transfer to specified scattering points at
+specified angles using the method made available by step \ref{two}.
+
+At each of these points, convolve the radiances and derivatives from the
+several directions with $P(\theta)$ and its derivatives with respect to
+temperature and ice water content, giving $T_{\text{scat}}$ and its
+derivatives, both with respect to state vector quantities throughout the
+atmosphere, and with respect to temperature and ice water content at the
+scattering points.
+
+Store these results in L2PC-like files for later use in steps \ref{four}
+and \ref{five}.
+
+\item\label{four} Create a linear evaluator for $T_{\text{scat}}$, along
+the lines of the quasi-linear forward model.
+
+\item\label{five} Use the linear evaluator developed in step \ref{four}
+during full forward model calculations to evaluate $T_{\text{scat}}$ and
+its derivatives at points along the gas-phase radiative transfer line of
+sight.
+
+\end{enumerate}
+
+\label{lastpage}
+\end{document}
+% $Id: wvs-078r0.tex,v 1.1 2008/06/11 20:14:55 vsnyder Exp $
+@

@@ -1,0 +1,136 @@
+head	2.1;
+access;
+symbols
+	v5-02-NRT-19:2.1
+	v6-00:2.1
+	v5-02-NRT-18:2.1
+	v5-02:2.1
+	v5-01-NRT-17:2.1
+	v5-01-NRT-16:2.1
+	v5-01-NRT-15:2.1
+	v5-01-NRT-14:2.1
+	neuralnetworks-1-0:2.1.0.10
+	cfm-single-freq-0-1:2.1.0.8
+	v5-01:2.1
+	v5-00:2.1
+	v4-23-TA133:2.1.0.6
+	mus-emls-1-70:2.1.0.4
+	rel-1-0-englocks-work:2.1.0.2
+	VUMLS1-00:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.1
+date	2017.01.26.00.51.26;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject bto U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=============================================================================
+module To_Log_Basis_m
+!=============================================================================
+
+! Copy an array from linear to log basis.
+
+  implicit NONE
+  private
+
+  ! Public procedures:
+
+  public :: To_Log_Basis
+
+  interface To_Log_Basis
+    module procedure To_Log_Basis_0,  To_Log_Basis_1, To_Log_Basis_2, &
+      & To_Log_Basis_3
+  end interface
+
+  !------------- RCS Ident Info (more below in not_used_here) ----------------
+  character (len=*), parameter, private :: ModuleName= &
+    & "$RCSfile: ForwardModelConfig.f90,v $"
+  private :: not_used_here 
+  !---------------------------------------------------------------------------
+
+contains
+
+  elemental subroutine To_Log_Basis_0 ( Value, Min_Val )
+    use VectorsModule, only: RV
+    real(rv), intent(inout) :: Value ! Converted to log(linear) on output
+    real(rv), intent(in) :: Min_Val
+    if ( value < min_val ) then
+      value = log(min_val)
+    else
+      value = log(value)
+    end if
+  end subroutine To_Log_Basis_0
+
+  pure &
+  subroutine To_Log_Basis_1 ( Value, Min_Val )
+    use VectorsModule, only: RV
+    real(rv), intent(inout) :: Value(:)
+    real(rv), intent(in) :: Min_Val
+    where ( value < min_val )
+      value = log(min_val)
+    else where
+      value = log(value)
+    end where
+  end subroutine To_Log_Basis_1
+
+  pure &
+  subroutine To_Log_Basis_2 ( Value, Min_Val )
+    use VectorsModule, only: RV
+    real(rv), intent(inout) :: Value(:,:)
+    real(rv), intent(in) :: Min_Val
+    where ( value < min_val )
+      value = log(min_val)
+    else where
+      value = log(value)
+    end where
+  end subroutine To_Log_Basis_2
+
+  pure &
+  subroutine To_Log_Basis_3 ( Value, Min_Val )
+    use VectorsModule, only: RV
+    real(rv), intent(inout) :: Value(:,:,:)
+    real(rv), intent(in) :: Min_Val
+    where ( value < min_val )
+      value = log(min_val)
+    else where
+      value = log(value)
+    end where
+  end subroutine To_Log_Basis_3
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: ForwardModelConfig.f90,v 2.136 2016/05/02 23:31:50 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module To_Log_Basis_m
+
+! $Log: $
+@

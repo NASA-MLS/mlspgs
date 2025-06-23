@@ -1,0 +1,634 @@
+head	2.14;
+access;
+symbols
+	v5-02-NRT-19:2.14
+	v6-00:2.14
+	v5-02-NRT-18:2.14
+	v5-02:2.14
+	v5-01-NRT-17:2.14
+	v5-01-NRT-16:2.14
+	v5-01-NRT-15:2.14
+	v5-01-NRT-14:2.14
+	neuralnetworks-1-0:2.14.0.10
+	cfm-single-freq-0-1:2.14.0.8
+	v5-01:2.14
+	v5-00:2.14
+	v4-23-TA133:2.14.0.6
+	mus-emls-1-70:2.14.0.4
+	rel-1-0-englocks-work:2.14.0.2
+	VUMLS1-00:2.14
+	VPL1-00:2.13
+	V4-22-NRT-08:2.13
+	VAM1-00:2.12
+	V4-21:2.12.0.2
+	V4-13:2.12
+	V4-12:2.11
+	V4-11:2.11
+	V4-10:2.11
+	V3-43:2.8
+	M4-00:2.8
+	V3-41:2.8
+	V3-40-PlusGM57:2.8.0.2
+	V2-24-NRT-04:2.3
+	V3-33:2.8
+	V2-24:2.3
+	V3-31:2.8
+	V3-30-NRT-05:2.8
+	cfm-01-00:2.8
+	V3-30:2.8
+	V3-20:2.8
+	V3-10:2.8
+	V2-23-NRT-02:2.3
+	V2-23:2.3
+	V2-22-NRT-01:2.3
+	V2-22:2.3
+	V2-21:2.2
+	V2-20:2.2
+	V2-11:2.2
+	V2-10:2.2;
+locks; strict;
+comment	@# @;
+
+
+2.14
+date	2016.09.03.00.30.09;	author vsnyder;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2016.05.02.23.32.31;	author vsnyder;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2014.08.06.23.24.51;	author vsnyder;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2014.04.22.00.36.54;	author vsnyder;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2013.07.13.00.04.58;	author vsnyder;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2013.06.12.02.18.56;	author vsnyder;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2009.06.23.18.26.10;	author pwagner;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2008.08.27.19.56.51;	author vsnyder;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2008.06.26.00.26.30;	author vsnyder;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2008.05.20.00.18.07;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2008.05.01.01.57.51;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2007.01.17.23.48.43;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2006.07.12.20.52.57;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2006.07.07.17.54.56;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.14
+log
+@Make Z_All allocatable instead of a pointer
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Compute_Z_PSIG_m
+
+  implicit NONE
+  private
+  public :: Compute_Z_PSIG
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: Compute_Z_PSIG_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+contains
+!------------------------------------------------  Compute_Z_PSIG  -----
+
+  subroutine Compute_Z_PSIG ( FwdModelConf, Z_PSIG, Observer )
+
+  ! Compute the preselected integration zeta grid.
+
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+    use ForwardModelConfig, only: ForwardModelConfig_t, QtyStuff_T
+    use Make_Z_Grid_M, only: Make_Z_Grid
+    use MLSCommon, only: RP
+    use Toggles, only: Emit, Levels, Toggle
+    use Trace_m, only: Trace_Begin, Trace_End
+    use VectorsModule, only: VectorValue_T
+
+  ! Inputs:
+    type (forwardModelConfig_T), intent(in) :: fwdModelConf
+
+  ! Outputs:
+    real(rp), allocatable, intent(out) :: Z_psig(:) ! recommended PSIG for
+      !                                  radiative transfer calculations
+
+  ! Optional inputs:
+    type (vectorValue_T), optional, intent(in) :: Observer ! Zetas for observers-in-atmosphere
+
+  ! Local variables:
+    integer :: Me = -1             ! String index cache for tracing
+    type (qtyStuff_t), pointer :: Qtys(:)         ! Array of pointers to Qty's.
+    integer :: SPS_I
+    integer :: Z_All_Prev, Z_All_Size
+    real(rp), allocatable :: Z_all(:)  ! consolidated storage of representation
+      !                              bases for z_grid determination
+
+    call trace_begin ( me, 'Compute_Z_PSIG', &
+      & cond=toggle(emit) .and. levels(emit) > 2 ) ! set by -f command-line switch
+
+    qtys => fwdModelConf%beta_group%qty
+
+! Insert automatic preselected integration gridder here. Need to make a
+! large concatenated vector of bases and pointings.
+
+! Calculate size of z_all and allocate it
+
+    z_all_size = fwdModelConf%temp%qty%template%nosurfs + 2
+    if ( associated(FwdModelConf%integrationGrid) ) &
+      & z_all_size = z_all_size + FwdModelConf%integrationGrid%nosurfs
+    if ( associated(FwdModelConf%tangentGrid) .and. .not. &
+      & associated(FwdModelConf%integrationGrid,FwdModelConf%tangentGrid) ) &
+      & z_all_size = z_all_size + FwdModelConf%tangentGrid%nosurfs
+    do sps_i = 1 , size(qtys)
+      z_all_size = z_all_size + qtys(sps_i)%qty%template%nosurfs
+    end do
+    if ( present(observer) ) z_all_size = z_all_size + observer%template%nosurfs
+    call allocate_test ( z_all, z_all_size, 'z_all', moduleName )
+
+! Fill in z_all
+! the -3.000 is a designated "surface" value
+! the  4.000 is a designated "top of the atmosphere" value
+
+    z_all_prev = fwdModelConf%temp%qty%template%nosurfs + 2
+    z_all(1) = -3.000_rp
+    z_all(2:z_all_prev-1) = fwdModelConf%temp%qty%template%surfs(:,1)
+    z_all(z_all_prev) = 4.000_rp
+
+    if ( associated(FwdModelConf%integrationGrid) ) then
+      ! Add the original Integration Grid
+      z_all_size = z_all_prev + FwdModelConf%integrationGrid%nosurfs
+      z_all(z_all_prev+1:z_all_size) = FwdModelConf%integrationGrid%surfs(:,1)
+      z_all_prev = z_all_size
+    end if
+
+    if ( associated(FwdModelConf%tangentGrid) .and. .not. &
+      & associated(FwdModelConf%integrationGrid,FwdModelConf%tangentGrid) ) then
+      ! if pointing grid is associated and not the same as the integration
+      ! grid concatenate it to the state vector
+      z_all_size = z_all_prev + FwdModelConf%tangentGrid%nosurfs
+      z_all(z_all_prev+1:z_all_size) = FwdModelConf%tangentGrid%surfs(:,1)
+      z_all_prev = z_all_size
+    end if
+
+    do sps_i = 1, size(qtys)
+      z_all_size = z_all_size + qtys(sps_i)%qty%template%nosurfs
+      z_all(z_all_prev+1:z_all_size) = qtys(sps_i)%qty%template%surfs(:,1)
+      z_all_prev = z_all_size
+    end do
+
+    if ( present(observer) ) then
+      z_all_size = z_all_prev + observer%template%nosurfs
+      z_all(z_all_prev+1:z_all_size) = observer%template%surfs(:,1)
+      z_all_prev = z_all_size
+    end if
+
+! Now, create the final grid and discard the temporary array:
+
+    call make_z_grid ( z_all, z_psig )
+    call deallocate_test ( z_all, 'z_all', moduleName )
+
+    call trace_end ( 'Compute_Z_PSIG', &
+      & cond=toggle(emit) .and. levels(emit) > 2 )
+
+  end subroutine Compute_Z_PSIG
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: Compute_Z_PSIG_m.f90,v 2.13 2016/05/02 23:32:31 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Compute_Z_PSIG_m
+
+! $Log: Compute_Z_PSIG_m.f90,v $
+! Revision 2.13  2016/05/02 23:32:31  vsnyder
+! Get temperature quantity from FwdModelConf
+!
+! Revision 2.12  2014/08/06 23:24:51  vsnyder
+! Remove USE for Switches, which is not referenced
+!
+! Revision 2.11  2014/04/22 00:36:54  vsnyder
+! Add tracing
+!
+! Revision 2.10  2013/07/13 00:04:58  vsnyder
+! Move computation of tangent pressures to Tangent_Pressures
+!
+! Revision 2.9  2013/06/12 02:18:56  vsnyder
+! Make Z_psig allocatable instead of pointer
+!
+! Revision 2.8  2009/06/23 18:26:10  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.7  2008/08/27 19:56:51  vsnyder
+! Add PRINT to not_used_here
+!
+! Revision 2.6  2008/06/26 00:26:30  vsnyder
+! Delete QTYS argument, since the info is in the config argument
+!
+! Revision 2.5  2008/05/20 00:18:07  vsnyder
+! Add Observers dummy argument
+!
+! Revision 2.4  2008/05/01 01:57:51  vsnyder
+! Make sure integrationGrid is associated before asking its size
+! Don't add both integrationGrid and tangentGrid if they're the same grid
+!
+! Revision 2.3  2007/01/17 23:48:43  vsnyder
+! Don't look at FwdModelConf%tangentGrid if it's not associated
+!
+! Revision 2.2  2006/07/12 20:52:57  vsnyder
+! Remove declarations for unused variables
+!
+! Revision 2.1  2006/07/07 17:54:56  vsnyder
+! Initial commit
+!
+@
+
+
+2.13
+log
+@Get temperature quantity from FwdModelConf
+@
+text
+@d53 1
+a53 1
+    real(rp), pointer :: Z_all(:)  ! consolidated storage of representation
+a58 1
+    nullify ( z_all )
+d80 1
+d128 1
+a128 1
+       "$Id: Compute_Z_PSIG_m.f90,v 2.12 2014/08/06 23:24:51 vsnyder Exp $"
+d138 3
+@
+
+
+2.12
+log
+@Remove USE for Switches, which is not referenced
+@
+text
+@d26 1
+a26 1
+  subroutine Compute_Z_PSIG ( FwdModelConf, Temp, Z_PSIG, Observer )
+a39 1
+    type (vectorValue_T), intent(in) :: TEMP      ! Temperature component of state vector
+d67 1
+a67 1
+    z_all_size = temp%template%nosurfs + 2
+d82 1
+a82 1
+    z_all_prev = temp%template%nosurfs + 2
+d84 1
+a84 1
+    z_all(2:z_all_prev-1) = temp%template%surfs(:,1)
+d128 1
+a128 1
+       "$Id: Compute_Z_PSIG_m.f90,v 2.11 2014/04/22 00:36:54 vsnyder Exp $"
+d138 3
+@
+
+
+2.11
+log
+@Add tracing
+@
+text
+@d34 1
+a34 1
+    use Toggles, only: Emit, Levels, Switches, Toggle
+d129 1
+a129 1
+       "$Id: Compute_Z_PSIG_m.f90,v 2.10 2013/07/13 00:04:58 vsnyder Exp $"
+d139 3
+@
+
+
+2.10
+log
+@Move computation of tangent pressures to Tangent_Pressures
+@
+text
+@d34 2
+d50 1
+d57 3
+d121 3
+d129 1
+a129 1
+       "$Id: Compute_Z_PSIG_m.f90,v 2.9 2013/06/12 02:18:56 vsnyder Exp $"
+d139 3
+@
+
+
+2.9
+log
+@Make Z_psig allocatable instead of pointer
+@
+text
+@d26 1
+a26 3
+  subroutine Compute_Z_PSIG ( FwdModelConf, Temp, &
+    &                         Nlvl, No_Tan_Hts, SurfaceTangentIndex, &
+    &                         Z_PSIG, Tan_Press, Observer )
+d28 1
+a28 2
+  ! Compute the preselected integration zeta grid.  Compute Tan_Press
+  ! because it depends on z_psig.
+a40 4
+    integer, intent(out) :: Nlvl                  ! Levels in coarse grid
+    integer, intent(out) :: No_Tan_Hts            ! Number of tangent heights
+    integer, intent(out) :: SurfaceTangentIndex   ! First or surface tangent index
+
+a42 4
+      ! THIS VARIABLE REPLACES FwdModelConf%integrationGrid%surfs
+      ! Would be intent(out) if it weren't a pointer.  First thing here
+      ! is to nullify it.
+    real(rp), pointer :: Tan_Press(:)  ! Pressures at tangent points in z_psig
+d54 1
+a54 1
+    nullify ( tan_press, z_all )
+a114 22
+! note that z_psig(1) is the designated surface
+    Nlvl = SIZE(z_psig)
+
+! Allocate tan_press and compute it from fwdModelConf%tangentGrid%surfs and
+! z_psig
+
+    if ( associated(FwdModelConf%tangentGrid) ) then
+      surfaceTangentIndex = COUNT(fwdModelConf%tangentGrid%surfs < (z_psig(1) - 0.0001_rp)) + 1
+    else
+      surfaceTangentIndex = 1
+    end if
+    no_tan_hts = Nlvl + surfaceTangentIndex - 1
+
+    call allocate_test ( tan_press, no_tan_hts, 'tan_press', moduleName )
+
+! Compute tan_press from fwdModelConf%tangentGrid%surfs and z_psig
+
+    if ( associated(FwdModelConf%tangentGrid) ) &
+      & tan_press(1:surfaceTangentIndex-1) = &
+        & fwdModelConf%tangentGrid%surfs(1:surfaceTangentIndex-1,1)
+    tan_press(surfaceTangentIndex:no_tan_hts) = z_psig
+
+d120 1
+a120 1
+       "$Id: Compute_Z_PSIG_m.f90,v 2.8 2009/06/23 18:26:10 pwagner Exp $"
+d130 3
+@
+
+
+2.8
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d20 1
+a20 1
+       "$RCSfile: $"
+d48 1
+a48 3
+  ! Would be intent(out) if they weren't pointers.  First thing here
+  ! is to nullify them.
+    real(rp), pointer :: Z_psig(:) ! recommended PSIG for
+d51 2
+d65 1
+a65 1
+    nullify ( tan_press, z_all, z_psig )
+d153 1
+a153 1
+       "$Id: read_apriori.f90 is it here $"
+d163 3
+@
+
+
+2.7
+log
+@Add PRINT to not_used_here
+@
+text
+@d20 1
+a20 1
+       "$RCSfile: Compute_Z_PSIG_m.f90,v $"
+d150 1
+a151 1
+!---------------------------- RCS Ident Info -------------------------------
+d153 2
+a154 3
+       "$Id: Compute_Z_PSIG_m.f90,v 2.6 2008/06/26 00:26:30 vsnyder Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d156 1
+a156 1
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
+d158 1
+d163 3
+@
+
+
+2.6
+log
+@Delete QTYS argument, since the info is in the config argument
+@
+text
+@d153 1
+a153 1
+       "$Id: Compute_Z_PSIG_m.f90,v 2.5 2008/05/20 00:18:07 vsnyder Exp $"
+d157 1
+d163 3
+@
+
+
+2.5
+log
+@Add Observers dummy argument
+@
+text
+@d26 1
+a26 1
+  subroutine Compute_Z_PSIG ( FwdModelConf, Temp, Qtys, &
+a41 1
+    type (qtyStuff_t), intent(in) :: Qtys(:)      ! Array of pointers to Qty's.
+d56 1
+a56 1
+    real(rp), optional, intent(in) :: Observer(:) ! Zetas for observers-in-atmosphere
+d59 1
+d66 1
+d82 1
+a82 1
+    if ( present(observer) ) z_all_size = z_all_size + size(observer)
+d116 2
+a117 2
+      z_all_size = z_all_prev + size(observer)
+      z_all(z_all_prev+1:z_all_size) = observer
+d153 1
+a153 1
+       "$Id: Compute_Z_PSIG_m.f90,v 2.4 2008/05/01 01:57:51 vsnyder Exp $"
+d162 3
+@
+
+
+2.4
+log
+@Make sure integrationGrid is associated is associated before asking its size
+Don't add both integrationGrid and tangentGrid if they're the same grid
+@
+text
+@d28 1
+a28 1
+    &                         Z_PSIG, Tan_Press )
+d44 1
+a44 1
+  ! Outputs
+d51 1
+a51 1
+    real(rp), dimension(:), pointer :: Z_psig ! recommended PSIG for
+d54 1
+a54 1
+    real(rp), dimension(:), pointer :: Tan_Press  ! Pressures at tangent points in z_psig
+d56 4
+a59 1
+  ! Local variables
+d62 2
+a63 2
+    real(rp), dimension(:), pointer :: Z_all  ! mass storage of representation
+      !                                  bases for z_grid determination
+d81 1
+d114 6
+d152 1
+a152 1
+       "$Id: Compute_Z_PSIG_m.f90,v 2.3 2007/01/17 23:48:43 vsnyder Exp $"
+d161 4
+@
+
+
+2.3
+log
+@Don't look at FwdModelConf%tangentGrid if it's not associated
+@
+text
+@d69 5
+a73 3
+    z_all_size = temp%template%nosurfs + 2 + &
+      & Size(FwdModelConf%integrationGrid%surfs)
+    if ( associated(FwdModelConf%tangentGrid) ) &
+d88 3
+a90 3
+    ! Add the original Integration Grid:
+    if ( associated(FwdModelConf%integrationGrid%surfs) ) then
+      z_all_size = z_all_prev + Size(FwdModelConf%integrationGrid%surfs)
+d95 4
+a98 2
+    if ( associated(FwdModelConf%tangentGrid) ) then
+      ! if pointing grid is associated concatenate it to the state vector
+d142 1
+a142 1
+       "$Id: Compute_Z_PSIG_m.f90,v 2.2 2006/07/12 20:52:57 vsnyder Exp $"
+d151 3
+@
+
+
+2.2
+log
+@Remove declarations for unused variables
+@
+text
+@d114 2
+a115 1
+! Allocate tan_press.
+d117 5
+a121 1
+    surfaceTangentIndex = COUNT(fwdModelConf%tangentGrid%surfs < (z_psig(1) - 0.0001_rp)) + 1
+d128 3
+a130 2
+    tan_press(1:surfaceTangentIndex-1) = &
+      & fwdModelConf%tangentGrid%surfs(1:surfaceTangentIndex-1,1)
+d138 1
+a138 1
+       "$Id: Compute_Z_PSIG_m.f90,v 2.1 2006/07/07 17:54:56 vsnyder Exp $"
+d147 3
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d20 1
+a20 1
+       "$RCSfile: Compute_GL_Grid_m.f90,v $"
+a56 1
+    integer :: I, J
+d132 1
+a132 1
+       "$Id: Compute_GL_Grid_m.f90,v 2.13 2006/06/29 19:33:44 vsnyder Exp $"
+d140 4
+a143 1
+! $Log: $
+@
+

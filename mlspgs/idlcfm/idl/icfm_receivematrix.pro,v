@@ -1,0 +1,103 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.12
+	cfm-single-freq-0-1:1.2.0.10
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.8
+	mus-emls-1-70:1.2.0.6
+	rel-1-0-englocks-work:1.2.0.4
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.2
+	V4-21:1.2.0.2
+	V4-13:1.2
+	V4-12:1.2
+	V4-11:1.2
+	V4-10:1.2
+	M4-00:1.2
+	V3-33:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2011.10.04.15.27.24;	author honghanh;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2011.09.07.06.33.35;	author honghanh;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Fix bug to not retrieve values for absent blocks
+@
+text
+@; $Id: icfm_receivematrix.pro,v 1.1 2011/09/07 06:33:35 honghanh Exp $
+
+pro icfm_receivematrix, matrix, tid, msgtag
+
+    if n_elements(tid) eq 0 then MyMessage, /error, "Missing tid"
+    if n_elements(msgtag) eq 0 then MyMessage, /error, "Missing msgtag"
+    bufid = pvm_recv(tid=tid, msgtag=msgtag)
+
+    icfm_unpack_rc, col
+    icfm_unpack_rc, row
+
+    numCol = col.numBlocks
+    numRow = row.numBlocks
+
+    matrix = creatematrix(row.vector, col.vector, colinstfirst=col.instfirst, rowinstfirst=row.instfirst)
+    for i=0,numCol-1 do begin
+        for j=0, numRow-1 do begin
+            icfm_unpack_matrixblock, block
+            a = createblock(matrix, j, i, type=block.kind)
+            if block.kind ne 'A' then a.values = block.values
+            matrix.blocks(j,i) = ptr_new(a)
+        endfor
+    endfor
+end
+
+; $Log: icfm_receivematrix.pro,v $
+; Revision 1.1  2011/09/07 06:33:35  honghanh
+; Add 3 more procedures to receive matrix
+; Add 'stacked' concept to createquantity, and icfm_sendquantity
+; and related procedures.
+;
+@
+
+
+1.1
+log
+@Add 3 more procedures to receive matrix
+Add 'stacked' concept to createquantity, and icfm_sendquantity
+and related procedures.
+@
+text
+@d1 1
+a1 1
+; $Id: icfm_receivematrix.pro,v 1.5 2002/01/10 01:55:19 honghanh Exp $
+d20 1
+a20 1
+            a.values = block.values
+d27 5
+@
+

@@ -1,0 +1,165 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.14
+	cfm-single-freq-0-1:1.1.0.12
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.10
+	mus-emls-1-70:1.1.0.8
+	rel-1-0-englocks-work:1.1.0.6
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2008.06.11.20.14.54;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9in
+
+\newcommand{\docname}{\bf wvs-057}
+\newcommand{\docdate}{12 September 2007}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Van\\
+Subject: \>Recurrences for functions related to $J_\nu(z)$, $Y_\nu(z)$\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-10pt}
+
+Start with the asymptotic expansions for $J_\nu(z)$ and $Y_\nu(z)$ as $\nu
+\rightarrow \infty$ (9.3.1-2) in [1]):
+%
+\begin{equation}\begin{split}
+J_\nu(z) \sim\,& \frac1{\sqrt{2\pi\nu}} \left(\frac{z}2\right)^\nu
+\left(\frac{e}{\nu}\right)^\nu \\
+Y_\nu(z) \sim\,& -\sqrt{\frac2{\pi\nu}} \left(\frac2z\right)^\nu
+\left(\frac{\nu}e\right)^\nu\,&
+\end{split}\end{equation}
+%
+and get a value for $\left(\frac{\nu}e\right)^\nu$ using Stirling's
+approximation for $\Gamma(\nu)$, \emph{viz.}
+%
+\begin{equation}
+\Gamma(\nu) \sim \sqrt{\frac2{\pi\nu}} \left(\frac{\nu}e\right)^\nu
+\end{equation}
+%
+to give new functions
+%
+\begin{equation}\begin{split}
+\tilde{J}_\nu(z) =\,& \Gamma(\nu+1) \left(\frac2z\right)^\nu J_\nu(z)\\
+\tilde{Y}_\nu(z) =\,& -\frac{\pi}{\Gamma(\nu)} \left(\frac{z}2\right)^\nu Y_\nu(z)\,.
+\end{split}\end{equation}
+%
+These functions follow the recurrences
+%
+\begin{equation}\begin{split}
+\tilde{J}_\nu(z) =\,& \tilde{J}_{\nu-1}(z) +
+                  \frac{z^2}{4\nu(\nu+1)} \tilde{J}_{\nu+1}(z)\\
+\tilde{Y}_\nu(z) =\,& \frac{z^2}{4\nu(\nu-1)} \tilde{Y}_{\nu-1}(z) +
+                  \tilde{Y}_{\nu+1}(z)\,.
+\end{split}\end{equation}
+%
+From 9.1.7 and 9.1.9 in [1], for $\nu$ fixed, \emph{viz.}
+%
+\begin{equation}\begin{split}
+\lim_{z \rightarrow 0}
+J_\nu(z) \sim\,& \left(\frac{z}2\right)^\nu \frac1{\Gamma(\nu+1)},\,\,
+         \nu \neq -1,\, -2,\, \dots\\
+\lim_{z \rightarrow 0}
+Y_\nu(z) \sim\,& -\frac{\Gamma(\nu)}\pi \left(\frac2z\right)^\nu,
+\end{split}\end{equation}
+%
+we have for $\nu$ fixed
+%
+\begin{equation}\begin{split}
+\lim_{z \rightarrow 0} \tilde{J}_\nu(z) =\,& 1,\,\, \nu \neq -1,\, -2,\, \dots\\
+\lim_{z \rightarrow 0} \tilde{Y}_\nu(z) =\,& 1,\,\, \nu > 0\,.
+\end{split}\end{equation}
+%
+By construction for $z$ fixed we have
+\begin{equation}\begin{split}
+\lim_{\nu \rightarrow \infty} \tilde{J}_\nu(z) = \frac1\pi\\
+\lim_{\nu \rightarrow \infty} \tilde{Y}_\nu(z) = \pi.
+\end{split}\end{equation}
+
+{\bf References}
+
+[1] Milton Abramowitz and Irene A. Stegun (Eds.), {\bf Handbook of Mathematical
+Functions}, Applied Mathematics Series 55, U. S. National Bureau of Standards
+(1972).
+
+\label{lastpage}
+\end{document}
+% $Id: wvs-057r0.tex,v 1.1 2008/06/11 20:14:54 vsnyder Exp $
+@

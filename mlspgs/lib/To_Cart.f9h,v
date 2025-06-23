@@ -1,0 +1,100 @@
+head	2.1;
+access;
+symbols
+	v5-02-NRT-19:2.1
+	v6-00:2.1
+	v5-02-NRT-18:2.1
+	v5-02:2.1
+	v5-01-NRT-17:2.1
+	v5-01-NRT-16:2.1
+	v5-01-NRT-15:2.1
+	v5-01-NRT-14:2.1
+	neuralnetworks-1-0:2.1.0.12
+	cfm-single-freq-0-1:2.1.0.10
+	v5-01:2.1
+	v5-00:2.1
+	v4-23-TA133:2.1.0.8
+	mus-emls-1-70:2.1.0.6
+	rel-1-0-englocks-work:2.1.0.4
+	VUMLS1-00:2.1
+	VPL1-00:2.1
+	V4-22-NRT-08:2.1
+	VAM1-00:2.1
+	V4-21:2.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+2.1
+date	2014.12.12.18.57.36;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+  ! Convert Geodetic latitude and longitude (degrees), and altitude (km
+  ! above sea level), to Cartesian coordinates.  The units are ERAD (see
+  ! above) unless KM is present and true, in which case the units are
+  ! kilometers.
+
+! subroutine To_Cart_* ( WHERE, CART, CT, ST, CP, SP, KM )
+  ! Convert Geodetic latitude and longitude (degrees), and altitude (km
+  ! above sea level), to Cartesian coordinates.  The units are ERAD (see
+  ! above) unless KM is present and true, in which case the units are
+  ! kilometers.
+  ! real(rk), intent(in) :: WHERE(3) ! Latitude (degrees north),
+  !                                  ! Longitude (degrees east),
+  !                                  ! Altitude (km above sea level)
+  ! real(rk), intent(out) :: CART(3) ! X, Y, Z, in average Earth radii
+  !                                  ! (See the constant ERAD above)
+  ! real(rk), intent(out), optional :: CT, ST, CP, SP ! Cosine, Sine
+  !                                  ! of Lat, Lon
+  ! logical, intent(in), optional :: KM ! Output units are kilometers
+
+! $Id: $
+
+    real(rk) :: D, MyCt, MySt, MyCp, MySp, RHO, RLAT, RLON, Unit
+
+    unit = erad
+    if ( present(km) ) then
+      if ( km ) unit = 1.0_rk
+    end if
+
+    rlat = where(1)*deg2Rad
+    myst = sin(rlat)
+    myct = cos(rlat)
+    d = sqrt(aquad*myct*myct + bquad*myst*myst)
+!   d = sqrt(aquad-(aquad-bquad)*myst*myst)
+    rlon = where(2)*deg2Rad
+    mycp = cos(rlon)
+    mysp = sin(rlon)
+    cart(3) = (where(3)+bquad/d)*myst/unit
+    rho = (where(3)+aquad/d)*myct/unit
+    cart(1) = rho*mycp
+    cart(2) = rho*mysp
+    if ( present(ct) ) ct = myst
+    if ( present(st) ) st = myct
+    if ( present(cp) ) cp = mycp
+    if ( present(sp) ) sp = mysp
+
+! $Log: $
+@

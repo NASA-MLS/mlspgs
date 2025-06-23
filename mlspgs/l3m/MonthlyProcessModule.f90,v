@@ -1,0 +1,5016 @@
+head	1.17;
+access;
+symbols
+	v5-02-NRT-19:1.17
+	v6-00:1.17
+	v5-02-NRT-18:1.17
+	v5-02:1.17
+	v5-01-NRT-17:1.17
+	v5-01-NRT-16:1.17
+	v5-01-NRT-15:1.17
+	v5-01-NRT-14:1.17
+	neuralnetworks-1-0:1.17.0.14
+	cfm-single-freq-0-1:1.17.0.12
+	v5-01:1.17
+	v5-00:1.17
+	v4-23-TA133:1.17.0.10
+	mus-emls-1-70:1.17.0.8
+	rel-1-0-englocks-work:1.17.0.6
+	VUMLS1-00:1.17
+	VPL1-00:1.17
+	V4-22-NRT-08:1.17
+	VAM1-00:1.17
+	V4-21:1.17.0.4
+	V4-13:1.17
+	V4-12:1.17
+	V4-11:1.17
+	V4-10:1.17
+	V3-43:1.17
+	M4-00:1.17
+	V3-41:1.17
+	V3-40-PlusGM57:1.17.0.2
+	V2-24-NRT-04:1.16
+	V3-33:1.17
+	V2-24:1.16
+	V3-31:1.17
+	V3-30-NRT-05:1.17
+	cfm-01-00:1.17
+	V3-30:1.17
+	V3-20:1.17
+	V3-10:1.17
+	V2-23-NRT-02:1.16
+	V2-23:1.16
+	V2-22-NRT-01:1.16
+	V2-22:1.16
+	V2-21:1.16
+	V2-20:1.16
+	V2-11:1.15
+	V2-10:1.15
+	V2-00:1.15
+	V1-51:1.12
+	V1-50:1.12
+	V1-45:1.12
+	V1-44:1.12
+	V1-43:1.12
+	V1-42:1.11
+	V1-41:1.11
+	V1-32:1.11
+	V1-40:1.11
+	V1-31:1.11
+	V1-30:1.11
+	V1-13:1.9
+	V1-12:1.9
+	V1-11:1.9
+	V1-10:1.9
+	newfwm-feb03:1.9.0.2
+	V1-04:1.8
+	V1-03:1.8
+	V1-02:1.8
+	V1-00:1.8
+	newfwm-sep01:1.7.0.2
+	V0-7:1.7;
+locks; strict;
+comment	@# @;
+
+
+1.17
+date	2008.12.02.23.20.16;	author pwagner;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2006.09.26.15.03.02;	author cvuu;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2006.05.31.21.04.35;	author cvuu;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2006.02.28.20.36.33;	author cvuu;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2005.06.23.19.17.59;	author pwagner;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2004.05.04.15.54.01;	author cvuu;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2003.04.30.18.16.29;	author pwagner;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2003.04.06.02.28.09;	author jdone;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2003.02.06.18.59.58;	author pwagner;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2002.03.27.23.27.15;	author ybj;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2001.08.08.19.27.30;	author nakamura;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2001.08.07.19.04.56;	author ybj;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2001.08.07.18.52.26;	author ybj;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.08.07.17.46.50;	author nakamura;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2001.08.06.18.18.19;	author ybj;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.08.03.23.17.28;	author ybj;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.08.02.23.35.19;	author ybj;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.17
+log
+@Extra parentheses wrongly flagged as error by Intel compiler; removed
+@
+text
+@
+! Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+!===============
+MODULE MonthlyProcessModule
+!===============
+
+  USE MLSL3Common, ONLY: DATE_LEN, maxWindow
+  USE L2GPData, ONLY: L2GPData_T, rgp, DestroyL2GPDatabase
+  USE global_data
+  USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Allocate, &
+       & MLSMSG_Deallocate
+  USE SDPToolkit, ONLY: DEG2RAD, PI
+  USE NumRecipesModule, ONLY: SPLINE, SPLINT
+  USE mon_L3CF, ONLY: L3CFMProd_T, L3CFMDef_T
+
+  Implicit none
+  private
+  public :: MonthlyCoreProcessing
+  PRIVATE :: ID, ModuleName
+
+  !------------------- RCS Ident Info -----------------------
+  CHARACTER(LEN=130) :: Id = &
+       "$Id: MonthlyProcessModule.f90,v 1.16 2006/09/26 15:03:02 cvuu Exp $"
+  CHARACTER (LEN=*), PARAMETER :: & 
+       & ModuleName= "$RCSfile: MonthlyProcessModule.f90,v $"
+  !----------------------------------------------------------
+
+  ! Contents:
+
+  ! Subroutines -- MonthlyCoreProcessing
+  !                
+  ! This subroutine will process one product for all the input days data
+!
+  ! Remarks:  This module contains subroutines related to MLS L3 Monthly Map, 
+  ! Zonal Mean and Daily Zonal Mean Processing 
+!
+
+CONTAINS
+
+  !-------------------------------------------------------------------------
+  SUBROUTINE MonthlyCoreProcessing(cfProd, pcf, cfDef, l2Days, l2gp, l3mm, & 
+       & mmA, mmD, mzA, mzD, dzA, dzD, mis_Days, mis_l2Days)
+  !-------------------------------------------------------------------------
+  USE L3DZData, ONLY: L3DZData_T, AllocateL3DZ, DestroyL3DZDatabase
+  USE L3MMData, ONLY: L3MMData_T, AllocateL3MM
+  USE L3MZData, ONLY: L3MZData_T, AllocateL3MZ, DeallocateL3MZ
+  USE mon_Open, ONLY: PCFMData_T
+
+    ! Brief description of program
+    ! This is the main program to run the Core processing.
+
+    ! Parameters
+
+    ! Variable definitions
+
+    TYPE( PCFMData_T  ) :: pcf
+    TYPE( L3CFMProd_T ) :: cfProd
+    TYPE( L3CFMDef_T  ) :: cfDef
+    TYPE( L2GPData_T  ), POINTER :: l2gp(:)
+    TYPE( L3DZData_T  ), POINTER :: l3dz(:), dzA(:), dzD(:)
+
+    TYPE( L3MMData_T ) :: l3mm, mmA, mmD
+    TYPE( L3MZData_T ) :: l3mz, mzA, mzD
+
+    CHARACTER (LEN=480) :: msr
+    INTEGER :: mis_Days(maxWindow), mis_l2Days
+
+    REAL, POINTER, DIMENSION(:, :, :) ::  & 
+         & alons(:, :, :), alats(:, :, :), &
+         & dlons(:, :, :), dlats(:, :, :), atimes(:, :, :), dtimes(:, :, :), &
+         & asolarTime(:, :, :), dsolarTime(:, :, :), & 
+         & asolarZenith(:, :, :), dsolarZenith(:, :, :), & 
+         & afields(:, :, :), dfields(:, :, :)
+    
+    INTEGER, DIMENSION(cfProd%nLats, l2gp(1)%nLevels) :: anlats, dnlats 
+
+    INTEGER ::  error, l2Days, nlev, pEndIndex, pStartIndex, j, iD, x, y
+    INTEGER ::  pcfdate_int   
+ 
+    !*** Initialize variables
+
+    nlev = 0
+    DO j = 1, l2gp(1)%nLevels
+       IF( l2gp(1)%pressures(j) >= cfProd%l3presLvl(1) .AND. &
+            l2gp(1)%pressures(j) <= cfProd%l3presLvl(2) ) THEN
+          nlev = nlev + 1
+          IF (nlev == 1) pStartIndex = j 
+          pEndIndex = j 
+       ENDIF
+    ENDDO
+
+    !*** Initialize POINTERS
+
+    ALLOCATE( l3dz(l2Days), STAT=error )
+    IF ( error /= 0 ) THEN
+       msr = MLSMSG_Allocate // ' l3dz array.'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+    ALLOCATE( dzA(l2Days), STAT=error )
+    IF ( error /= 0 ) THEN
+       msr = MLSMSG_Allocate // ' dza array.'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+    ALLOCATE( dzD(l2Days), STAT=error )
+    IF ( error /= 0 ) THEN
+       msr = MLSMSG_Allocate // ' dzd array.'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+    !!      Initialize Daily Zonal Mean 
+
+    l3dz%name = cfProd%l3prodName
+    dzA%name = TRIM(cfProd%l3prodName) // 'Ascending'
+    dzD%name = TRIM(cfProd%l3prodName) // 'Descending'
+
+    ! Filter the missing date for the L3DZ
+
+    y = 0
+    DO j = 1, l2Days
+       y = y + 1
+       do x = 1, mis_l2Days
+	  read(pcf%dates(y)(6:8), '(i3)') pcfdate_int
+	  if (pcfdate_int == mis_Days(x)) then
+	     y = y + 1
+	  endif
+       enddo
+       l3dz(j)%date = pcf%dates(y) 
+       dzA(j)%date  = pcf%dates(y) 
+       dzD(j)%date  = pcf%dates(y) 
+    ENDDO
+
+    
+    DO j = 1, l2Days
+
+       CALL AllocateL3DZ( nlev, cfDef%nNom, l3dz(j) )
+       CALL AllocateL3DZ( nlev, cfDef%nNom, dzA(j)  )
+       CALL AllocateL3DZ( nlev, cfDef%nNom, dzD(j)  )
+
+       l3dz(j)%pressure      = 0.0
+       l3dz(j)%latitude      = 0.0
+       l3dz(j)%l3dzValue     = 0.0
+       l3dz(j)%l3dzPrecision = 0.0
+       l3dz(j)%latRss        = 0.0
+       l3dz(j)%perMisPoints  = 0
+       dzA(j)%pressure       = 0.0
+       dzA(j)%latitude       = 0.0
+       dzA(j)%l3dzValue      = 0.0
+       dzA(j)%l3dzPrecision  = 0.0
+       dzA(j)%latRss         = 0.0
+       dzA(j)%perMisPoints   = 0
+       dzD(j)%pressure       = 0.0
+       dzD(j)%latitude       = 0.0
+       dzD(j)%l3dzValue      = 0.0
+       dzD(j)%l3dzPrecision  = 0.0
+       dzD(j)%latRss         = 0.0
+       dzD(j)%perMisPoints   = 0
+       
+    ENDDO
+
+    !!      Initialize Monthly Zonal Mean 
+
+    l3mz%name = cfProd%l3prodName
+    mzA%name  = TRIM(cfProd%l3prodName) // 'Ascending'
+    mzD%name  = TRIM(cfProd%l3prodName) // 'Descending'
+
+    l3mz%startTime = l2gp(1)%time(1)
+    l3mz%endTime   = l2gp(l2Days)%time(l2gp(l2Days)%nTimes)
+    mzA%startTime  = l2gp(1)%time(1)
+    mzA%endTime    = l2gp(l2Days)%time(l2gp(l2Days)%nTimes)
+    mzD%startTime  = l2gp(1)%time(1)
+    mzD%endTime    = l2gp(l2Days)%time(l2gp(l2Days)%nTimes)
+
+    CALL AllocateL3MZ( nlev, cfDef%nNom, l3mz )
+    CALL AllocateL3MZ( nlev, cfDef%nNom, mzA  )
+    CALL AllocateL3MZ( nlev, cfDef%nNom, mzD  )
+
+    l3mz%pressure      = 0.0
+    l3mz%latitude      = 0.0
+    l3mz%l3mzValue     = 0.0
+    l3mz%l3mzPrecision = 0.0
+    l3mz%latRss        = 0.0
+    l3mz%perMisPoints  = 0
+    
+    mzA%pressure      = 0.0
+    mzA%latitude      = 0.0
+    mzA%l3mzValue     = 0.0
+    mzA%l3mzPrecision = 0.0
+    mzA%latRss        = 0.0
+    mzA%perMisPoints  = 0
+
+    mzD%pressure      = 0.0
+    mzD%latitude      = 0.0
+    mzD%l3mzValue     = 0.0
+    mzD%l3mzPrecision = 0.0
+    mzD%latRss        = 0.0
+    mzD%perMisPoints  = 0
+
+    !!      Initialize Monthly Map 
+
+    l3mm%name = cfProd%l3prodName
+    mmA%name = TRIM(cfProd%l3prodName) // 'Ascending'
+    mmD%name = TRIM(cfProd%l3prodName) // 'Descending'
+
+    l3mm%startTime = l2gp(1)%time(1)
+    l3mm%endTime   = l2gp(l2Days)%time(l2gp(l2Days)%nTimes)
+    mmA%startTime  = l2gp(1)%time(1)
+    mmA%endTime    = l2gp(l2Days)%time(l2gp(l2Days)%nTimes)
+    mmD%startTime  = l2gp(1)%time(1)
+    mmD%endTime    = l2gp(l2Days)%time(l2gp(l2Days)%nTimes)
+
+    CALL AllocateL3MM( nlev, cfProd%nLats, cfProd%nLons, l3mm )
+    CALL AllocateL3MM( nlev, cfProd%nLats, cfProd%nLons, mmA  )
+    CALL AllocateL3MM( nlev, cfProd%nLats, cfProd%nLons, mmD  )
+
+    l3mm%pressure      = 0.0
+    l3mm%latitude      = 0.0
+    l3mm%longitude     = 0.0
+    l3mm%l3mmValue     = 0.0
+    l3mm%l3mmPrecision = 0.0
+    l3mm%perMisPoints  = 0
+    l3mm%misDays       = mis_Days 
+    l3mm%nMisDays      = mis_l2Days 
+
+    mmA%pressure      = 0.0
+    mmA%latitude      = 0.0
+    mmA%longitude     = 0.0
+    mmA%l3mmValue     = 0.0
+    mmA%l3mmPrecision = 0.0
+    mmA%perMisPoints  = 0
+    mmA%misDays       = mis_Days 
+    mmA%nMisDays      = mis_l2Days 
+
+    mmD%pressure      = 0.0
+    mmD%latitude      = 0.0
+    mmD%longitude     = 0.0
+    mmD%l3mmValue     = 0.0
+    mmD%l3mmPrecision = 0.0
+    mmD%perMisPoints  = 0
+    mmD%misDays       = mis_Days 
+    mmD%nMisDays      = mis_l2Days 
+
+    !*** Sort & Prepare the Data 
+
+    Call SortDataMonthly(cfProd, l2Days, l2gp, 	&
+         & pStartIndex, pEndIndex,		&
+         & anlats, dnlats, 			&
+         & alats, dlats, 			&
+         & alons, dlons, 			&
+         & atimes, dtimes, 			&
+         & afields, dfields,			&
+         & asolarTime, asolarZenith,		&
+         & dsolarTime, dsolarZenith )
+
+!*** Calculate Daily Zonal Means  
+
+    Call DailyZonalMeanFromL2(cfDef, l2gp, l2Days,  &
+         & pStartIndex, pEndIndex, l3dz, dzA, dzD )
+
+!*** Calculate Monthly Zonal Means  
+
+    Call MonthlyZonalMeanFromL2(cfDef, l2gp, l2Days,&
+         & pStartIndex, pEndIndex, l3mz, mzA, mzD )
+
+        !*** Calculate Monthly Map 
+
+   	!Call MonthlyMapFromL2(cfProd, l2gp, 		&
+	!		    pStartIndex, pEndIndex,  	&
+	!		    anlats, dnlats, 		&
+	!	            alats, dlats, 		&
+	!		    alons, dlons, 		&
+	!		    atimes, dtimes, 		&
+	!		    afields, dfields, 		&
+	!		    l3mm, mmA, mmD )
+    Call MonthlyMapFromL2_Simple(cfProd, cfDef, l2gp, l2Days, &
+         & pStartIndex, pEndIndex, l3mm, mmA, mmD )
+
+        !*** Calculate Monthly Solar Parameter Ranges  
+
+        !   	Call CalSolarRange(cfProd, l2gp, 		&
+        !			    pStartIndex, pEndIndex,  	&
+        !			    anlats, dnlats, 		&
+        !		            asolarTime, dsolarTime,	&
+        !		            asolarZenith, dsolarZenith,	&
+        !			    l3mz, mzA, mzD )
+
+        !*** Allocate space for all the arrays
+
+    if ( associated(alats) ) then 
+       DeAllocate(alats, STAT=error)
+       IF ( error /= 0 ) THEN
+          msr = MLSMSG_DeAllocate // ' alats array.'
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+       ENDIF
+    endif
+
+    if ( associated(dlats) ) then 
+       DeAllocate(dlats, STAT=error)
+       IF ( error /= 0 ) THEN
+          msr = MLSMSG_DeAllocate // ' dlats array.'
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+       ENDIF
+    endif
+
+    if ( associated(alons) ) then 
+       DeAllocate(alons, STAT=error)
+       IF ( error /= 0 ) THEN
+          msr = MLSMSG_DeAllocate // ' alons array.'
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+       ENDIF
+    endif
+
+    if ( associated(dlons) ) then 
+       DeAllocate(dlons, STAT=error)
+       IF ( error /= 0 ) THEN
+          msr = MLSMSG_DeAllocate // ' dlons array.'
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+       ENDIF
+    endif
+        
+    if ( associated(atimes) ) then 
+       DeAllocate(atimes, STAT=error)
+       IF ( error /= 0 ) THEN
+          msr = MLSMSG_DeAllocate // ' atimes array.'
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+       ENDIF
+    endif
+
+    if ( associated(dtimes) ) then 
+       DeAllocate(dtimes, STAT=error)
+       IF ( error /= 0 ) THEN
+          msr = MLSMSG_DeAllocate // ' dtimes array.'
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+       ENDIF
+    endif
+
+    if ( associated(afields) ) then 
+       DeAllocate(afields, STAT=error)
+       IF ( error /= 0 ) THEN
+          msr = MLSMSG_DeAllocate // ' afields array.'
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+       ENDIF
+    endif
+
+    if ( associated(dfields) ) then 
+       DeAllocate(dfields, STAT=error)
+       IF ( error /= 0 ) THEN
+          msr = MLSMSG_DeAllocate // ' dfields array.'
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+       ENDIF
+    endif
+
+    if ( associated(asolarTime) ) then 
+       DeAllocate(asolarTime, STAT=error)
+       IF ( error /= 0 ) THEN
+          msr = MLSMSG_DeAllocate // ' asolarTime array.'
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+       ENDIF
+    endif
+
+    if ( associated(dsolarTime) ) then 
+       DeAllocate(dsolarTime, STAT=error)
+       IF ( error /= 0 ) THEN
+          msr = MLSMSG_DeAllocate // ' dsolarTime array.'
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+       ENDIF
+    endif
+        
+    if ( associated(asolarZenith) ) then 
+       DeAllocate(asolarZenith, STAT=error)
+       IF ( error /= 0 ) THEN
+          msr = MLSMSG_DeAllocate // ' asolarZenith array.'
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+       ENDIF
+    endif
+
+    if ( associated(dsolarZenith) ) then 
+       DeAllocate(dsolarZenith, STAT=error)
+       IF ( error /= 0 ) THEN
+          msr = MLSMSG_DeAllocate // ' dsolarZenith array.'
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+       ENDIF
+    endif
+
+    CALL DestroyL2GPDatabase(l2gp)
+    CALL DestroyL3DZDatabase(l3dz)
+    CALL DeallocateL3MZ(l3mz)
+
+  !-----------------------------------
+  END SUBROUTINE MonthlyCoreProcessing
+  !-----------------------------------
+
+  !------------------------------------------------------------------------
+  SUBROUTINE SortDataMonthly(cfProd, l2Days, l2gp, & 
+       & pStartIndex, pEndIndex, anlats, dnlats, 	&
+       & alats_interp, dlats_interp, alons_interp, dlons_interp, 	&
+       & atimes_interp, dtimes_interp, afields_interp, dfields_interp, &
+       & asolarTime_interp, asolarZenith_interp, &
+       & dsolarTime_interp, dsolarZenith_interp)
+  !------------------------------------------------------------------------
+
+    TYPE( L3CFMProd_T ) :: cfProd
+    TYPE( L2GPData_T  ), POINTER :: l2gp(:)
+
+    CHARACTER (LEN=480) :: msr
+
+    REAL, POINTER, DIMENSION(:, :, :) ::  alons_interp(:, :, :), & 
+         & alats_interp(:, :, :), dlons_interp(:, :, :), & 
+         & dlats_interp(:, :, :), atimes_interp(:, :, :), & 
+         & dtimes_interp(:, :, :), asolarTime_interp(:, :, :), & 
+         & dsolarTime_interp(:, :, :), asolarZenith_interp(:, :, :), & 
+         & dsolarZenith_interp(:, :, :), afields_interp(:, :, :), & 
+         & dfields_interp(:, :, :)
+
+    REAL, POINTER, DIMENSION(:, :) ::  l2Times(:, :), l2Lons_new(:, :), & 
+         & l2Lons(:, :),  l2Lons_old(:, :), l2Lats(:, :), & 
+         & l2Values(:, :), l2SolarTime(:, :), l2SolarZenith(:, :)
+
+    REAL :: dlons, alons, lons_found, lats_found, times_found, & 
+         & fields_found, solarTime_found, solarZenith_found, &
+         & slope, slope_time, slope_solarTime, slope_solarZenith, & 
+         & slope_field, lons_found_old
+ 
+    INTEGER :: pStartIndex, pEndIndex
+
+    INTEGER, DIMENSION(cfProd%nLats, pEndIndex-pStartIndex+1) :: & 
+         & anlats, dnlats
+    
+    INTEGER :: error, i, j, iT, iD, iP, kP, nterms, nstart, nr, & 
+         & lindex, lindex_prev, l2Days, nloop, aindex, aindex_prev, & 
+         & dindex_prev, nPd
+
+    !*** Calculate the number of points in each pressure level 
+    
+    nPd = 15
+
+    nterms = 0
+    DO I = 1, l2Days
+       nterms = nterms + l2gp(I)%nTimes
+    ENDDO
+
+    !*** Allocate space for all the arrays
+    
+    ALLOCATE(l2Times(nterms, pEndIndex-pStartIndex+1), STAT=error)
+    IF ( error /= 0 ) THEN
+       msr = MLSMSG_Allocate // ' l2Times array.'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+    ALLOCATE(l2Lons(nterms, pEndIndex-pStartIndex+1), STAT=error)
+    IF ( error /= 0 ) THEN
+       msr = MLSMSG_Allocate // ' l2Lons array.'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+    ALLOCATE(l2Lats(nterms, pEndIndex-pStartIndex+1), STAT=error)
+    IF ( error /= 0 ) THEN
+       msr = MLSMSG_Allocate // ' l2Lats array.'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+    ALLOCATE(l2Values(nterms, pEndIndex-pStartIndex+1), STAT=error)
+    IF ( error /= 0 ) THEN
+       msr = MLSMSG_Allocate // ' l2Values array.'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+    ALLOCATE(l2SolarTime(nterms, pEndIndex-pStartIndex+1), STAT=error)
+    IF ( error /= 0 ) THEN
+       msr = MLSMSG_Allocate // ' l2SolarTime array.'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+    ALLOCATE(l2SolarZenith(nterms, pEndIndex-pStartIndex+1), STAT=error)
+    IF ( error /= 0 ) THEN
+       msr = MLSMSG_Allocate // ' l2SolarZenith array.'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+    ALLOCATE(l2Lons_new(nterms, pEndIndex-pStartIndex+1), STAT=error)
+    IF ( error /= 0 ) THEN
+       msr = MLSMSG_Allocate // ' l2Lons_new array.'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+    ALLOCATE(l2Lons_old(nterms, pEndIndex-pStartIndex+1), STAT=error)
+    IF ( error /= 0 ) THEN
+       msr = MLSMSG_Allocate // ' l2Lons_old array.'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+    ALLOCATE(alons_interp& 
+         & (cfProd%nLats, nPd*l2Days, pEndIndex-pStartIndex+1), STAT=error)
+    IF ( error /= 0 ) THEN
+       msr = MLSMSG_Allocate // ' alons_interp array.'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+    ALLOCATE(alats_interp& 
+         & (cfProd%nLats, nPd*l2Days, pEndIndex-pStartIndex+1), STAT=error)
+    IF ( error /= 0 ) THEN
+       msr = MLSMSG_Allocate // ' alats_interp array.'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+    ALLOCATE(atimes_interp& 
+         & (cfProd%nLats, nPd*l2Days, pEndIndex-pStartIndex+1), STAT=error)
+    IF ( error /= 0 ) THEN
+       msr = MLSMSG_Allocate // ' atimes_interp array.'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+    ALLOCATE(asolarTime_interp& 
+         & (cfProd%nLats, nPd*l2Days, pEndIndex-pStartIndex+1), STAT=error)
+    IF ( error /= 0 ) THEN
+       msr = MLSMSG_Allocate // ' asolarTime_interp array.'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+    
+    ALLOCATE(asolarZenith_interp& 
+         & (cfProd%nLats, nPd*l2Days, pEndIndex-pStartIndex+1), STAT=error)
+    IF ( error /= 0 ) THEN
+       msr = MLSMSG_Allocate // ' asolarZenith_interp array.'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+    ALLOCATE(afields_interp& 
+         & (cfProd%nLats, nPd*l2Days, pEndIndex-pStartIndex+1), STAT=error)
+    IF ( error /= 0 ) THEN
+       msr = MLSMSG_Allocate // ' afields_interp array.'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+    ALLOCATE(dlons_interp& 
+         & (cfProd%nLats, nPd*l2Days, pEndIndex-pStartIndex+1), STAT=error)
+    IF ( error /= 0 ) THEN
+       msr = MLSMSG_Allocate // ' dlons_interp array.'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+    ALLOCATE(dlats_interp& 
+         & (cfProd%nLats, nPd*l2Days, pEndIndex-pStartIndex+1), STAT=error)
+    IF ( error /= 0 ) THEN
+       msr = MLSMSG_Allocate // ' dlats_interp array.'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+    ALLOCATE(dtimes_interp& 
+         & (cfProd%nLats, nPd*l2Days, pEndIndex-pStartIndex+1), STAT=error)
+    IF ( error /= 0 ) THEN
+       msr = MLSMSG_Allocate // ' dtimes_interp array.'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+    ALLOCATE(dsolarTime_interp& 
+         & (cfProd%nLats, nPd*l2Days, pEndIndex-pStartIndex+1), STAT=error)
+    IF ( error /= 0 ) THEN
+       msr = MLSMSG_Allocate // ' dsolarTime_interp array.'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+    
+    ALLOCATE(dsolarZenith_interp& 
+         & (cfProd%nLats, nPd*l2Days, pEndIndex-pStartIndex+1), STAT=error)
+    IF ( error /= 0 ) THEN
+       msr = MLSMSG_Allocate // ' dsolarZenith_interp array.'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+    ALLOCATE(dfields_interp& 
+         & (cfProd%nLats, nPd*l2Days, pEndIndex-pStartIndex+1), STAT=error)
+    IF ( error /= 0 ) THEN
+       msr = MLSMSG_Allocate // ' dfields_interp array.'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+    !*** Re-arrange the data into longitude order for each pressure level 
+
+    nstart = 1
+    DO iD = 1, l2Days
+       DO iT = 1, l2gp(iD)%nTimes
+          iP = 0
+          DO kP = pStartIndex, pEndIndex 
+             iP = iP + 1
+             l2Times(nstart, iP)       = l2gp(iD)%time(iT)
+             l2SolarTime(nstart, iP)   = l2gp(iD)%solarTime(iT)
+             l2SolarZenith(nstart, iP) = l2gp(iD)%solarZenith(iT)
+             l2Lons(nstart, iP)        = l2gp(iD)%longitude(iT) * deg2rad
+             l2Lons_old(nstart, iP)    = l2gp(iD)%longitude(iT) * deg2rad
+             l2Lats(nstart, iP)        = l2gp(iD)%latitude(iT)
+             l2Values(nstart, iP)      = l2gp(iD)%l2gpValue(1, kP, iT) 
+          ENDDO
+          nstart = nstart + 1
+       ENDDO
+    ENDDO
+
+    !*** Re-arrange the longitude into sequence 
+    
+    iP = 0
+    DO kP = pStartIndex, pEndIndex 
+       iP = iP + 1
+       nr = 0
+       DO iT = 2, nterms 
+          IF( l2Lons(iT, iP) >= 0.0 .AND. l2Lons(iT-1, iP) < 0.0 ) THEN 
+             l2Lons_new(iT, iP) = l2Lons(iT, iP) - nr*2.0*PI - 2.0*PI
+             nr = nr + 1
+          ELSE
+             l2Lons_new(iT, iP) = l2Lons(iT, iP) - nr*2.0*PI
+          END IF
+       ENDDO
+       l2Lons_new(1, iP) = l2Lons(1, iP)
+    ENDDO
+
+    !*** Find longitudes & latitudes for L3 latitudes in L2 data points 
+
+    dlons = 0.3*DEG2RAD
+
+    iP = 0
+    DO kP = pStartIndex, pEndIndex 
+       iP = iP + 1
+
+       alons = l2Lons_new(1, iP) 
+
+       lindex = 1
+       lindex_prev = 0
+       aindex_prev = 0
+       dindex_prev = 0
+
+       nloop = (l2Lons_new(1, iP)-l2Lons_new(nterms, iP))/dlons
+
+       DO J = 1, cfProd%nLats
+          anlats(J, iP) = 0 
+          dnlats(J, iP) = 0 
+       ENDDO
+
+       DO I = 1, nloop
+          alons = alons -  dlons
+          DO iT = lindex, nterms-1 
+             IF( l2Lons_new(iT, iP) > alons .AND. & 
+                  & l2Lons_new(iT+1, iP) <= alons ) THEN
+                lindex = iT
+                EXIT
+             END IF
+          ENDDO
+
+          IF ( lindex /= lindex_prev ) THEN
+
+             lindex_prev = lindex
+
+             DO J = 1, cfProd%nLats
+                IF( ( l2Lats(lindex, iP)    <= cfProd%latGridMap(J)  .AND.&
+                     & l2Lats(lindex+1, iP) >  cfProd%latGridMap(J) ) .OR.&
+                     & ( l2Lats(lindex, iP) >= cfProd%latGridMap(J)  .AND.&
+                     & l2Lats(lindex+1, iP) < cfProd%latGridMap(J) ) ) THEN
+
+                   slope = (l2Lats(lindex+1, iP)-l2Lats(lindex, iP))/ &
+                        & (l2Lons_new(lindex+1, iP)-l2Lons_new(lindex, iP))
+
+                   slope_time = & 
+                        & (l2Times(lindex+1, iP)-l2Times(lindex, iP))/ &
+                        & (l2Lons_new(lindex+1, iP)-l2Lons_new(lindex, iP))
+
+                   slope_field = & 
+                        & (l2Values(lindex+1, iP)-l2Values(lindex, iP))/ &
+                        & (l2Lons(lindex+1, iP)-l2Lons(lindex, iP))
+
+                   slope_solarTime = & 
+                        & (l2SolarTime(lindex+1,iP) - & 
+                        & l2SolarTime(lindex,iP))/	&
+                        & (l2Lons_new(lindex+1, iP)-l2Lons_new(lindex, iP))
+
+                   slope_solarZenith = & 
+                        & (l2SolarZenith(lindex+1, iP)- & 
+                        & l2SolarZenith(lindex, iP))/	&
+                        & (l2Lons_new(lindex+1, iP)-l2Lons_new(lindex, iP))
+
+                   IF(ABS(slope) < 1.e-6) THEN
+
+                      lons_found     = l2Lons_new(lindex, iP)
+                      lons_found_old = l2Lons_old(lindex, iP)
+
+                   ELSE
+
+                      lons_found = l2Lons_new(lindex, iP) + & 
+                           & (cfProd%latGridMap(J)-l2Lats(lindex, iP))/ & 
+                           & slope
+
+                      lons_found_old = l2Lons_old(lindex, iP) + & 
+                           & (cfProd%latGridMap(J)-l2Lats(lindex, iP))/ & 
+                           & slope
+
+                   END IF
+
+                   lats_found = cfProd%latGridMap(J)
+
+                   times_found = l2Times(lindex, iP) + & 
+                        & (lons_found-l2Lons_new(lindex, iP))*slope_time
+
+                   solarTime_found = l2SolarTime(lindex, iP) + & 
+                        & (lons_found-l2Lons_new(lindex, iP))* & 
+                        & slope_solarTime
+
+                   solarZenith_found = l2SolarZenith(lindex, iP) + & 
+                        & (lons_found-l2Lons_new(lindex, iP))* & 
+                        & slope_solarZenith
+
+                   fields_found = l2Values(lindex, iP) + & 
+                        & (lons_found-l2Lons_new(lindex, iP))*slope_field
+                   aindex = J
+                   EXIT
+                END IF
+             ENDDO
+              
+             IF( slope < 0 .and. aindex /= aindex_prev) THEN
+                aindex_prev = aindex
+                !IF(dnlats(aindex, iP) > 0) THEN
+
+                anlats(aindex, iP) = anlats(aindex, iP) + 1 
+                alons_interp(aindex, anlats(aindex, iP), iP)  = lons_found
+                alats_interp(aindex, anlats(aindex, iP), iP)  = lats_found
+                atimes_interp(aindex, anlats(aindex, iP), iP) = times_found
+
+                asolarTime_interp(aindex, anlats(aindex, iP), iP) = & 
+                     & solarTime_found
+
+                asolarZenith_interp(aindex, anlats(aindex, iP), iP) = & 
+                     & solarZenith_found
+
+                afields_interp(aindex, anlats(aindex, iP), iP) = & 
+                     & fields_found
+             !END IF
+             END IF
+
+             IF( slope >= 0 .and. aindex /= dindex_prev) THEN
+                dindex_prev = aindex
+                IF(anlats(aindex, iP) > 0) THEN
+                   dnlats(aindex, iP) = dnlats(aindex, iP) + 1 
+                   dlons_interp(aindex, dnlats(aindex, iP), iP)  = & 
+                        & lons_found
+                   dlats_interp(aindex, dnlats(aindex, iP), iP)  = & 
+                        & lats_found
+                   dtimes_interp(aindex, dnlats(aindex, iP), iP) = & 
+                        & times_found
+                   dsolarTime_interp(aindex, dnlats(aindex, iP), iP) = & 
+                        & solarTime_found
+                   dsolarZenith_interp(aindex, dnlats(aindex, iP), iP) = & 
+                        & solarZenith_found
+                   dfields_interp(aindex, dnlats(aindex, iP), iP) = & 
+                        & fields_found
+                END IF
+             END IF
+
+          END IF
+          
+       ENDDO
+           
+    ENDDO
+
+    !*** Deallocate intermidiate arrays 
+
+    DEALLOCATE(l2Times, STAT=error)
+    IF ( error /= 0 ) THEN
+       msr = MLSMSG_Deallocate // ' l2Times array.'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+    DEALLOCATE(l2Lons, STAT=error)
+    IF ( error /= 0 ) THEN
+       msr = MLSMSG_Deallocate // ' l2Lons array.'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+    DEALLOCATE(l2Lats, STAT=error)
+    IF ( error /= 0 ) THEN
+       msr = MLSMSG_Deallocate // ' l2Lats array.'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+    DEALLOCATE(l2Values, STAT=error)
+    IF ( error /= 0 ) THEN
+       msr = MLSMSG_Deallocate // ' l2Values array.'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+    DEALLOCATE(l2SolarTime, STAT=error)
+    IF ( error /= 0 ) THEN
+       msr = MLSMSG_Deallocate // ' l2SolarTime array.'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+    DEALLOCATE(l2SolarZenith, STAT=error)
+    IF ( error /= 0 ) THEN
+       msr = MLSMSG_Deallocate // ' l2SolarZenith array.'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+    DEALLOCATE(l2Lons_new, STAT=error)
+    IF ( error /= 0 ) THEN
+       msr = MLSMSG_Deallocate // ' l2Lons_new array.'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+    DEALLOCATE(l2Lons_old, STAT=error)
+    IF ( error /= 0 ) THEN
+       msr = MLSMSG_Deallocate // ' l2Lons_old array.'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+  !-----------------------------------
+  END SUBROUTINE SortDataMonthly
+  !-----------------------------------
+
+  !-------------------------------------------------------------------------
+  SUBROUTINE DailyZonalMeanFromL2(cfDef, l2gp, l2Days, & 
+       & pStartIndex, pEndIndex, l3dz, dzA, dzD )
+  !-------------------------------------------------------------------------
+  USE L3DZData, ONLY: L3DZData_T, AllocateL3DZ, DestroyL3DZDatabase
+
+    TYPE( L3CFMDef_T  ) :: cfDef
+    TYPE( L2GPData_T  ), POINTER :: l2gp(:)
+    TYPE( L3DZData_T  ), POINTER :: l3dz(:), dzA(:), dzD(:)
+
+    CHARACTER (LEN=480) :: msr
+
+    REAL, POINTER, DIMENSION(:,:) :: & 
+         & comFieldArr(:, :), ascFieldArr(:, :), desFieldArr(:, :)
+
+    REAL :: slope
+
+    INTEGER, POINTER, DIMENSION(:) ::  iComArr(:), iAscArr(:), iDesArr(:)
+
+    INTEGER :: error, i, j, iT, iD, iP, kP, iCom, & 
+         & l2Days, pStartIndex, pEndIndex
+
+    !*** Allocate space for all the arrays
+
+    ALLOCATE(iComArr(cfDef%nNom), STAT=error)
+    IF ( error /= 0 ) THEN
+       msr = MLSMSG_Allocate // ' iComArr array.'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+     
+    ALLOCATE(iAscArr(cfDef%nNom), STAT=error)
+    IF ( error /= 0 ) THEN
+       msr = MLSMSG_Allocate // ' iAscArr array.'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+    ALLOCATE(iDesArr(cfDef%nNom), STAT=error)
+    IF ( error /= 0 ) THEN
+       msr = MLSMSG_Allocate // ' iDesArr array.'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+    ALLOCATE(comFieldArr(cfDef%nNom, 100), STAT=error)
+    IF ( error /= 0 ) THEN
+       msr = MLSMSG_Allocate // ' comFieldArr array.'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+    ALLOCATE(ascFieldArr(cfDef%nNom, 100), STAT=error)
+    IF ( error /= 0 ) THEN
+       msr = MLSMSG_Allocate // ' ascFieldArr array.'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+    ALLOCATE(desFieldArr(cfDef%nNom, 100), STAT=error)
+    IF ( error /= 0 ) THEN
+       msr = MLSMSG_Allocate // ' desFieldArr array.'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+    DO iT = 1, cfDef%nNom 
+       iComArr(iT) = 0
+       iAscArr(iT) = 0
+       iDesArr(iT) = 0
+       DO J = 1, 100 
+          comFieldArr(iT, J) = 0.0
+          ascFieldArr(iT, J) = 0.0
+          desFieldArr(iT, J) = 0.0
+       ENDDO
+    ENDDO
+     
+    !*** initialization 
+
+    DO iD = 1, l2Days
+       iP = 0
+       DO kP = pStartIndex, pEndIndex 
+          iP = iP + 1
+          l3dz(iD)%pressure(iP) = l2gp(1)%pressures(kP) 
+          dzA(iD)%pressure(iP)  = l2gp(1)%pressures(kP) 
+          dzD(iD)%pressure(iP)  = l2gp(1)%pressures(kP) 
+       ENDDO
+        
+       DO J = 1, cfDef%nNom 
+          l3dz(iD)%latitude(J) = cfDef%l2nomLats(J) 
+          dzA(iD)%latitude(J)  = cfDef%l2nomLats(J) 
+          dzD(iD)%latitude(J)  = cfDef%l2nomLats(J) 
+       END DO
+    ENDDO
+
+    DO iD = 1, l2Days
+       DO J = 1, cfDef%nNom 
+          l3dz(iD)%SolarZenithAngle(1, J) =  1.e20 
+          l3dz(iD)%SolarZenithAngle(2, J) = -1.e20 
+          l3dz(iD)%localSolarTime(1, J)        =  1.e20 
+          l3dz(iD)%localSolarTime(2, J)        = -1.e20 
+          DO I = 1, l3dz(iD)%nLevels 
+             l3dz(iD)%perMisPoints(I,J) = 0 
+             l3dz(iD)%dataCount(I,J) = 0 
+          ENDDO
+
+          dzA(iD)%SolarZenithAngle(1, J) =  1.e20 
+          dzA(iD)%SolarZenithAngle(2, J) = -1.e20 
+          dzA(iD)%localSolarTime(1, J)        =  1.e20 
+          dzA(iD)%localSolarTime(2, J)        = -1.e20 
+          DO I = 1, dzA(iD)%nLevels 
+             dzA(iD)%perMisPoints(I,J) = 0 
+             dzA(iD)%dataCount(I,J) = 0 
+          ENDDO
+
+          dzD(iD)%SolarZenithAngle(1, J) =  1.e20 
+          dzD(iD)%SolarZenithAngle(2, J) = -1.e20 
+          dzD(iD)%localSolarTime(1, J)        =  1.e20 
+          dzD(iD)%localSolarTime(2, J)        = -1.e20 
+          DO I = 1, dzD(iD)%nLevels 
+             dzD(iD)%perMisPoints(I,J) = 0 
+             dzD(iD)%dataCount(I,J) = 0 
+          ENDDO
+       ENDDO
+    ENDDO
+
+    !*** Re-arrange the data into longitude order for each pressure level 
+    
+    DO iD = 1, l2Days
+       iP = 0
+       DO kP = pStartIndex, pEndIndex 
+          iP = iP + 1
+          
+          !** Initilizing
+          DO iT = 1, cfDef%nNom 
+             iComArr(iT) = 0
+             iAscArr(iT) = 0
+             iDesArr(iT) = 0
+
+             l3dz(iD)%l3dzValue(iP, iT) = 0.0 
+             l3dz(iD)%l3dzPrecision(iP, iT) = 0.0
+             dzA(iD)%l3dzValue(iP, iT)  = 0.0 
+             dzA(iD)%l3dzPrecision(iP, iT) = 0.0
+             dzD(iD)%l3dzValue(iP, iT)  = 0.0 
+             dzD(iD)%l3dzPrecision(iP, iT) = 0.0
+          ENDDO
+          
+          DO iT = 1, l2gp(iD)%nTimes-1
+            IF(isGoodData(l2gp(iD)%l2gpValue(1, kP, iT), l2gp(iD)%Quality(iT), l2gp(iD)%Status(iT)) ) THEN
+             iCom = FindIndexForNormGrid(cfDef, l2gp(iD)%latitude(iT))
+             l3dz(iD)%l3dzValue(iP, iCom) = l3dz(iD)%l3dzValue(iP, iCom) + l2gp(iD)%l2gpValue(1, kP, iT)
+             l3dz(iD)%l3dzPrecision(iP, iCom) = l3dz(iD)%l3dzPrecision(iP, iCom) + l2gp(iD)%l2gpPrecision(1, kP, iT)
+             !** Solar Zenith Angle & Time
+             if(iP == 1) then
+                if( l3dz(iD)%SolarZenithAngle(2, iCom) <= l2gp(iD)%solarZenith(iT)) then
+                   l3dz(iD)%SolarZenithAngle(2, iCom) = l2gp(iD)%solarZenith(iT)
+                else if(l3dz(iD)%SolarZenithAngle(1, iCom) >= l2gp(iD)%solarZenith(iT)) then
+                   l3dz(iD)%SolarZenithAngle(1, iCom) = l2gp(iD)%solarZenith(iT)
+                end if
+
+                if(l3dz(iD)%localSolarTime(2, iCom) <= l2gp(iD)%solarTime(iT)) then
+                   l3dz(iD)%localSolarTime(2, iCom) = l2gp(iD)%solarTime(iT)
+                else if(l3dz(iD)%localSolarTime(1, iCom) >= l2gp(iD)%solarTime(iT)) then
+                   l3dz(iD)%localSolarTime(1, iCom) =  l2gp(iD)%solarTime(iT)
+                end if
+             end if
+             iComArr(iCom) = iComArr(iCom) + 1 
+             comFieldArr(iCom, iComArr(iCom)) = l2gp(iD)%l2gpValue(1, kP, iT)
+             IF( isAscending(l2gp(iD)%geodAngle(iT)) == 1 ) THEN
+                dzA(iD)%l3dzValue(iP, iCom) = dzA(iD)%l3dzValue(iP, iCom) + l2gp(iD)%l2gpValue(1, kP, iT)
+                dzA(iD)%l3dzPrecision(iP, iCom) = dzA(iD)%l3dzPrecision(iP, iCom) + l2gp(iD)%l2gpPrecision(1, kP, iT)
+                iAscArr(iCom) = iAscArr(iCom) + 1 
+                ascFieldArr(iCom, iAscArr(iCom)) = l2gp(iD)%l2gpValue(1, kP, iT)
+                if(iP == 1) then
+                   if(dzA(iD)%SolarZenithAngle(2, iCom) <= l2gp(iD)%solarZenith(iT)) then
+                      dzA(iD)%SolarZenithAngle(2, iCom) = l2gp(iD)%solarZenith(iT)
+                   else if(dzA(iD)%SolarZenithAngle(1, iCom) >= l2gp(iD)%solarZenith(iT)) then
+                      dzA(iD)%SolarZenithAngle(1, iCom) = l2gp(iD)%solarZenith(iT)
+                   end if
+
+                   if(dzA(iD)%localSolarTime(2, iCom) <= l2gp(iD)%solarTime(iT)) then
+                      dzA(iD)%localSolarTime(2, iCom) = l2gp(iD)%solarTime(iT)
+                   else if(dzA(iD)%localSolarTime(1, iCom) >= l2gp(iD)%solarTime(iT)) then
+                      dzA(iD)%localSolarTime(1, iCom) = l2gp(iD)%solarTime(iT)
+                   end if
+                end if
+             ELSE
+                dzD(iD)%l3dzValue(iP, iCom) = dzD(iD)%l3dzValue(iP, iCom) + l2gp(iD)%l2gpValue(1, kP, iT)
+                dzD(iD)%l3dzPrecision(iP, iCom) = dzD(iD)%l3dzPrecision(iP, iCom) + l2gp(iD)%l2gpPrecision(1, kP, iT)
+                iDesArr(iCom) = iDesArr(iCom) + 1 
+                desFieldArr(iCom, iDesArr(iCom)) = l2gp(iD)%l2gpValue(1, kP, iT)
+                if(iP == 1) then
+                   if(dzD(iD)%SolarZenithAngle(2, iCom) <= l2gp(iD)%solarZenith(iT)) then
+                      dzD(iD)%SolarZenithAngle(2, iCom) =  l2gp(iD)%solarZenith(iT)
+                   else if(dzD(iD)%SolarZenithAngle(1, iCom) >= l2gp(iD)%solarZenith(iT)) then
+	              dzD(iD)%SolarZenithAngle(1, iCom) = l2gp(iD)%solarZenith(iT)
+		   end if
+
+	           if(dzD(iD)%localSolarTime(2, iCom) <= l2gp(iD)%solarTime(iT)) then
+	              dzD(iD)%localSolarTime(2, iCom) = l2gp(iD)%solarTime(iT)
+		   else if(dzD(iD)%localSolarTime(1, iCom) >= l2gp(iD)%solarTime(iT)) then
+	              dzD(iD)%localSolarTime(1, iCom) =  l2gp(iD)%solarTime(iT)
+		   end if
+	        end if
+             END IF
+            END IF
+          ENDDO
+          l3dz(iD)%dataCount(iP,:)= iComArr(:)
+          dzA(iD)%dataCount(iP,:) = iAscArr(:)
+          dzD(iD)%dataCount(iP,:) = iDesArr(:)
+
+          DO iT = 1, cfDef%nNom 
+             IF(iComArr(iT) == 0) THEN
+	      	l3dz(iD)%l3dzValue(iP, iT) = -999.99 
+	      	dzA(iD)%l3dzValue(iP, iT)  = -999.99 
+	      	dzD(iD)%l3dzValue(iP, iT)  = -999.99 
+                
+	      	l3dz(iD)%l3dzPrecision(iP, iT) = -999.99 
+	      	dzA(iD)%l3dzPrecision(iP, iT)  = -999.99 
+	      	dzD(iD)%l3dzPrecision(iP, iT)  = -999.99 
+                
+	      	l3dz(iD)%latRss(iP, iT)    = -999.99 
+	      	dzA(iD)%latRss(iP, iT)     = -999.99 
+	      	dzD(iD)%latRss(iP, iT)     = -999.99 
+             ELSE
+                l3dz(iD)%l3dzValue(iP, iT) = l3dz(iD)%l3dzValue(iP, iT)/real(iComArr(iT))
+                l3dz(iD)%l3dzPrecision(iP, iT) = l3dz(iD)%l3dzPrecision(iP, iT)/real(iComArr(iT))
+                IF(iAscArr(iT) > 0) THEN
+                   dzA(iD)%l3dzValue(iP, iT) = dzA(iD)%l3dzValue(iP, iT)/real(iAscArr(iT))
+                   dzA(iD)%l3dzPrecision(iP, iT) = dzA(iD)%l3dzPrecision(iP, iT)/real(iAscArr(iT))
+                ELSE
+                   dzA(iD)%l3dzValue(iP, iT) = -999.99 
+                   dzA(iD)%l3dzPrecision(iP, iT) = -999.99 
+                END IF
+                IF(iDesArr(iT) > 0) THEN
+                   dzD(iD)%l3dzValue(iP, iT) = dzD(iD)%l3dzValue(iP, iT)/real(iDesArr(iT))
+                   dzD(iD)%l3dzPrecision(iP, iT) = dzD(iD)%l3dzPrecision(iP, iT)/real(iDesArr(iT))
+                ELSE
+                   dzD(iD)%l3dzValue(iP, iT) = -999.99 
+                   dzD(iD)%l3dzPrecision(iP, iT) = -999.99 
+                END IF
+
+                !*** calculate Root-Sum-Square for each latitude, 
+                ! dimensioned (nLevels, nLats)
+
+                DO J = 1, iComArr(iT)  
+                   l3dz(iD)%latRss(iP, iT) = l3dz(iD)%latRss(iP, iT) + &
+                        & (comFieldArr(iT, J)-l3dz(iD)%l3dzValue(iP, iT))* &
+                        & (comFieldArr(iT, J)-l3dz(iD)%l3dzValue(iP, iT))
+                ENDDO
+                l3dz(iD)%latRss(iP, iT) = l3dz(iD)%latRss(iP, iT)/real(iComArr(iT))
+
+                IF(iAscArr(iT) > 0) THEN
+                   DO J = 1, iAscArr(iT)  
+                      dzA(iD)%latRss(iP, iT) = dzA(iD)%latRss(iP, iT) + &
+                           & (ascFieldArr(iT, J)-dzA(iD)%l3dzValue(iP, iT))* &
+                           & (ascFieldArr(iT, J)-dzA(iD)%l3dzValue(iP, iT))
+                   ENDDO
+                   dzA(iD)%latRss(iP, iT) = dzA(iD)%latRss(iP, iT)/real(iAscArr(iT))
+                ELSE
+                   dzA(iD)%latRss(iP, iT) = -999.99 
+                END IF
+                
+                IF(iDesArr(iT) > 0) THEN
+                   DO J = 1, iDesArr(iT)  
+                      dzD(iD)%latRss(iP, iT) = dzD(iD)%latRss(iP, iT) + &
+                           & (desFieldArr(iT, J)-dzD(iD)%l3dzValue(iP, iT))* &
+                           & (desFieldArr(iT, J)-dzD(iD)%l3dzValue(iP, iT))
+                   ENDDO
+                   dzD(iD)%latRss(iP, iT) = dzD(iD)%latRss(iP, iT)/real(iDesArr(iT))
+                ELSE
+                   dzD(iD)%latRss(iP, iT) = -999.99 
+                END IF
+
+             END IF
+          ENDDO
+          
+       ENDDO
+    ENDDO
+
+    !*** Deallocate 
+
+    DEALLOCATE(iComArr, STAT=error)
+    IF ( error /= 0 ) THEN
+       msr = MLSMSG_Deallocate // ' iComArr array.'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+     
+    DEALLOCATE(iAscArr, STAT=error)
+    IF ( error /= 0 ) THEN
+       msr = MLSMSG_Deallocate // ' iAscArr array.'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+    DEALLOCATE(iDesArr, STAT=error)
+    IF ( error /= 0 ) THEN
+       msr = MLSMSG_Deallocate // ' iDesArr array.'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+    DEALLOCATE(comFieldArr, STAT=error)
+    IF ( error /= 0 ) THEN
+       msr = MLSMSG_Deallocate // ' comFieldArr array.'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+    DEALLOCATE(ascFieldArr, STAT=error)
+    IF ( error /= 0 ) THEN
+       msr = MLSMSG_Deallocate // ' ascFieldArr array.'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+    DEALLOCATE(desFieldArr, STAT=error)
+    IF ( error /= 0 ) THEN
+       msr = MLSMSG_Deallocate // ' desFieldArr array.'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+    
+!-----------------------------------
+  END SUBROUTINE DailyZonalMeanFromL2
+!-----------------------------------
+
+!-------------------------------------------------------------------------
+  SUBROUTINE MonthlyZonalMeanFromL2(cfDef, l2gp, l2Days, & 
+       & pStartIndex, pEndIndex, l3mz, mzA, mzD )
+!-------------------------------------------------------------------------
+  USE L3MZData, ONLY: L3MZData_T, AllocateL3MZ, DeallocateL3MZ
+
+    TYPE( L3CFMDef_T  ) :: cfDef
+    TYPE( L2GPData_T  ), POINTER :: l2gp(:)
+    TYPE( L3MZData_T  ) :: l3mz, mzA, mzD
+
+    CHARACTER (LEN=480) :: msr
+
+    REAL, POINTER, DIMENSION(:,:) :: & 
+         & comFieldArr(:, :), ascFieldArr(:, :), desFieldArr(:, :)
+
+    REAL :: slope
+
+    INTEGER, POINTER, DIMENSION(:) ::  iComArr(:), iAscArr(:), iDesArr(:)
+
+    INTEGER :: l2Days, pStartIndex, pEndIndex, error, & 
+         & i, j, iT, iD, iP, kP, iCom
+
+    !*** Allocate space for all the arrays
+
+    ALLOCATE(iComArr(cfDef%nNom), STAT=error)
+    IF ( error /= 0 ) THEN
+       msr = MLSMSG_Allocate // ' iComArr array.'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+     
+    ALLOCATE(iAscArr(cfDef%nNom), STAT=error)
+    IF ( error /= 0 ) THEN
+       msr = MLSMSG_Allocate // ' iAscArr array.'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+        
+    ALLOCATE(iDesArr(cfDef%nNom), STAT=error)
+    IF ( error /= 0 ) THEN
+       msr = MLSMSG_Allocate // ' iDesArr array.'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+    ALLOCATE(comFieldArr(cfDef%nNom, 100*l2Days), STAT=error)
+    IF ( error /= 0 ) THEN
+       msr = MLSMSG_Allocate // ' comFieldArr array.'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+        
+    ALLOCATE(ascFieldArr(cfDef%nNom, 100*l2Days), STAT=error)
+    IF ( error /= 0 ) THEN
+       msr = MLSMSG_Allocate // ' ascFieldArr array.'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+    ALLOCATE(desFieldArr(cfDef%nNom, 100*l2Days), STAT=error)
+    IF ( error /= 0 ) THEN
+       msr = MLSMSG_Allocate // ' desFieldArr array.'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+    !*** initialization 
+
+    iP = 0
+    DO kP = pStartIndex, pEndIndex 
+       iP = iP + 1
+       l3mz%pressure(iP) = l2gp(1)%pressures(kP) 
+       mzA%pressure(iP)  = l2gp(1)%pressures(kP) 
+       mzD%pressure(iP)  = l2gp(1)%pressures(kP) 
+       DO J = 1, cfDef%nNom 
+          l3mz%l3mzValue(iP, J) = 0.0 
+          mzA%l3mzValue(iP, J)  = 0.0 
+          mzD%l3mzValue(iP, J)  = 0.0 
+          l3mz%l3mzPrecision(iP, J) = 0.0 
+          mzA%l3mzPrecision(iP, J)  = 0.0 
+          mzD%l3mzPrecision(iP, J)  = 0.0 
+       ENDDO
+    ENDDO
+
+    DO J = 1, cfDef%nNom 
+       l3mz%latitude(J) = cfDef%l2nomLats(J) 
+       mzA%latitude(J)  = cfDef%l2nomLats(J) 
+       mzD%latitude(J)  = cfDef%l2nomLats(J) 
+    END DO
+
+    DO J = 1, cfDef%nNom 
+       l3mz%SolarZenithAngle(1, J) =  1.e20 
+       l3mz%SolarZenithAngle(2, J) = -1.e20 
+       l3mz%localSolarTime(1, J)        =  1.e20 
+       l3mz%localSolarTime(2, J)        = -1.e20 
+       DO I = 1, l3mz%nLevels 
+          l3mz%perMisPoints(I,J) = 0 
+       ENDDO
+
+       mzA%SolarZenithAngle(1, J) =  1.e20 
+       mzA%SolarZenithAngle(2, J) = -1.e20 
+       mzA%localSolarTime(1, J)        =  1.e20 
+       mzA%localSolarTime(2, J)        = -1.e20 
+       DO I = 1, mzA%nLevels 
+          mzA%perMisPoints(I,J) = 0 
+       ENDDO
+
+       mzD%SolarZenithAngle(1, J) =  1.e20 
+       mzD%SolarZenithAngle(2, J) = -1.e20 
+       mzD%localSolarTime(1, J)        =  1.e20 
+       mzD%localSolarTime(2, J)        = -1.e20 
+       DO I = 1, mzD%nLevels 
+          mzD%perMisPoints(I,J) = 0 
+       ENDDO
+    ENDDO
+
+    !*** Re-arrange the data into longitude order for each pressure level 
+    
+    iP = 0
+    DO kP = pStartIndex, pEndIndex 
+       iP = iP + 1
+
+       DO iT = 1, cfDef%nNom 
+          iComArr(iT) = 0
+          iAscArr(iT) = 0
+          iDesArr(iT) = 0
+          DO J = 1,  100*l2Days
+             comFieldArr(iT, J) = 0.0 
+             ascFieldArr(iT, J) = 0.0 
+             desFieldArr(iT, J) = 0.0 
+          ENDDO
+       ENDDO
+
+       DO iD = 1, l2Days
+          DO iT = 1, l2gp(iD)%nTimes-1
+
+            IF(isGoodData(l2gp(iD)%l2gpValue(1, kP, iT), l2gp(iD)%Quality(iT), l2gp(iD)%Status(iT)) ) THEN
+
+             !iCom = real(l2gp(iD)%latitude(iT)-l3mz%latitude(1))/
+             ! real(l3mz%latitude(2)-l3mz%latitude(1))+1.5
+             iCom = FindIndexForNormGrid(cfDef, l2gp(iD)%latitude(iT))
+             l3mz%l3mzValue(iP, iCom) = l3mz%l3mzValue(iP, iCom) + l2gp(iD)%l2gpValue(1, kP, iT)
+             l3mz%l3mzPrecision(iP, iCom) = l3mz%l3mzPrecision(iP, iCom) + l2gp(iD)%l2gpPrecision(1, kP, iT)
+             !** Solar Zenith Angle & Time
+             if(iP == 1) then
+                if(l3mz%SolarZenithAngle(2, iCom) <= l2gp(iD)%solarZenith(iT)) then
+                   l3mz%SolarZenithAngle(2, iCom) =  l2gp(iD)%solarZenith(iT)
+                else if(l3mz%SolarZenithAngle(1, iCom) >= l2gp(iD)%solarZenith(iT)) then
+                   l3mz%SolarZenithAngle(1, iCom) = l2gp(iD)%solarZenith(iT)
+                end if
+                
+                if(l3mz%localSolarTime(2, iCom) <= l2gp(iD)%solarTime(iT)) then
+                   l3mz%localSolarTime(2, iCom) = l2gp(iD)%solarTime(iT)
+                else if(l3mz%localSolarTime(1, iCom) >= l2gp(iD)%solarTime(iT)) then
+                   l3mz%localSolarTime(1, iCom) =  l2gp(iD)%solarTime(iT)
+                end if
+             end if
+             iComArr(iCom) = iComArr(iCom) + 1 
+             comFieldArr(iCom, iComArr(iCom)) = l2gp(iD)%l2gpValue(1, kP, iT)
+             IF( isAscending(l2gp(iD)%geodAngle(iT)) == 1 ) THEN
+                    mzA%l3mzValue(iP, iCom) = mzA%l3mzValue(iP, iCom) + l2gp(iD)%l2gpValue(1, kP, iT)
+                    mzA%l3mzPrecision(iP, iCom) = mzA%l3mzPrecision(iP, iCom) + l2gp(iD)%l2gpPrecision(1, kP, iT)
+                    iAscArr(iCom) = iAscArr(iCom) + 1 
+                    ascFieldArr(iCom, iAscArr(iCom)) = l2gp(iD)%l2gpValue(1, kP, iT)
+                    if(iP == 1) then
+                       if(mzA%SolarZenithAngle(2, iCom) <= l2gp(iD)%solarZenith(iT)) then
+                          mzA%SolarZenithAngle(2, iCom) = l2gp(iD)%solarZenith(iT)
+                       else if(mzA%SolarZenithAngle(1, iCom) >= l2gp(iD)%solarZenith(iT)) then
+                          mzA%SolarZenithAngle(1, iCom) = l2gp(iD)%solarZenith(iT)
+                       end if
+                       
+                       if(mzA%localSolarTime(2, iCom) <= l2gp(iD)%solarTime(iT)) then
+                          mzA%localSolarTime(2, iCom) = l2gp(iD)%solarTime(iT)
+                       else if(mzA%localSolarTime(1, iCom) >= l2gp(iD)%solarTime(iT)) then
+                          mzA%localSolarTime(1, iCom) =  l2gp(iD)%solarTime(iT)
+                       end if
+                    end if
+             ELSE
+                    mzD%l3mzValue(iP, iCom) = mzD%l3mzValue(iP, iCom) + l2gp(iD)%l2gpValue(1, kP, iT)
+                    mzD%l3mzPrecision(iP, iCom) = mzD%l3mzPrecision(iP, iCom) + l2gp(iD)%l2gpPrecision(1, kP, iT)
+                    iDesArr(iCom) = iDesArr(iCom) + 1 
+                    desFieldArr(iCom, iDesArr(iCom)) = l2gp(iD)%l2gpValue(1, kP, iT)
+                    if(iP == 1) then
+                       if(mzD%SolarZenithAngle(2, iCom) <= l2gp(iD)%solarZenith(iT)) then
+                          mzD%SolarZenithAngle(2, iCom) = l2gp(iD)%solarZenith(iT)
+                       else if(mzD%SolarZenithAngle(1, iCom) >= l2gp(iD)%solarZenith(iT)) then
+                          mzD%SolarZenithAngle(1, iCom) = l2gp(iD)%solarZenith(iT)
+                       end if
+                       
+                       if(mzD%localSolarTime(2, iCom) <= l2gp(iD)%solarTime(iT)) then
+                          mzD%localSolarTime(2, iCom) =  l2gp(iD)%solarTime(iT)
+                       else if(mzD%localSolarTime(1, iCom) >= l2gp(iD)%solarTime(iT)) then
+                          mzD%localSolarTime(1, iCom) =  l2gp(iD)%solarTime(iT)
+                       end if
+                    end if
+             END IF
+            END IF
+          ENDDO
+       ENDDO
+
+       ! save data count
+       l3mz%dataCount(iP,:)= iComArr(:)
+       mzA%dataCount(iP,:) = iAscArr(:)
+       mzD%dataCount(iP,:) = iDesArr(:)
+           
+       DO iT = 1, cfDef%nNom 
+              IF(iComArr(iT) == 0) THEN
+                 l3mz%l3mzValue(iP, iT) = -999.99 
+                 mzA%l3mzValue(iP, iT)  = -999.99 
+                 mzD%l3mzValue(iP, iT)  = -999.99 
+                 
+                 l3mz%l3mzPrecision(iP, iT) = -999.99 
+                 mzA%l3mzPrecision(iP, iT)  = -999.99 
+                 mzD%l3mzPrecision(iP, iT)  = -999.99 
+                 
+                 l3mz%latRss(iP, iT)    = -999.99 
+                 mzA%latRss(iP, iT)     = -999.99 
+                 mzD%latRss(iP, iT)     = -999.99 
+              ELSE
+                 l3mz%l3mzValue(iP, iT) = l3mz%l3mzValue(iP, iT)/real(iComArr(iT))
+                 l3mz%l3mzPrecision(iP, iT) = l3mz%l3mzPrecision(iP, iT)/real(iComArr(iT))
+                 IF(iAscArr(iT) > 0) THEN
+                    mzA%l3mzValue(iP, iT) = mzA%l3mzValue(iP, iT)/real(iAscArr(iT))
+                    mzA%l3mzPrecision(iP, iT) = mzA%l3mzPrecision(iP, iT)/real(iAscArr(iT))
+                 ELSE
+                    mzA%l3mzValue(iP, iT) = -999.99 
+                    mzA%l3mzPrecision(iP, iT) = -999.99 
+                 END IF
+                 IF(iDesArr(iT) > 0) THEN
+                    mzD%l3mzValue(iP, iT) = mzD%l3mzValue(iP, iT)/real(iDesArr(iT))
+                    mzD%l3mzPrecision(iP, iT) = mzD%l3mzPrecision(iP, iT)/real(iDesArr(iT))
+                 ELSE
+                    mzD%l3mzValue(iP, iT) = -999.99 
+                    mzD%l3mzPrecision(iP, iT) = -999.99 
+               END IF
+               
+               !*** calculate Root-Sum-Square for each latitude, 
+               ! dimensioned (nLevels, nLats)
+               
+               DO J = 1, iComArr(iT)  
+                  l3mz%latRss(iP, iT) = l3mz%latRss(iP, iT) + 	&
+                       & (comFieldArr(iT, J)-l3mz%l3mzValue(iP, iT))* 	&
+                       & (comFieldArr(iT, J)-l3mz%l3mzValue(iP, iT))
+               ENDDO
+               l3mz%latRss(iP, iT) = l3mz%latRss(iP, iT)/real(iComArr(iT))
+               
+               IF(iAscArr(iT) > 0) THEN
+                  DO J = 1, iAscArr(iT)  
+                     mzA%latRss(iP, iT) = mzA%latRss(iP, iT) + 	&
+                          & (ascFieldArr(iT, J)-mzA%l3mzValue(iP, iT))* &
+                          & (ascFieldArr(iT, J)-mzA%l3mzValue(iP, iT))
+                  ENDDO
+                  mzA%latRss(iP, iT) = mzA%latRss(iP, iT)/real(iAscArr(iT))
+               ELSE
+                  mzA%latRss(iP, iT) = -999.99 
+               END IF
+               
+               IF(iDesArr(iT) > 0) THEN
+                  DO J = 1, iDesArr(iT)  
+                     mzD%latRss(iP, iT) = mzD%latRss(iP, iT) + 	&
+                          & (desFieldArr(iT, J)-mzD%l3mzValue(iP, iT))* &
+                          & (desFieldArr(iT, J)-mzD%l3mzValue(iP, iT))
+                  ENDDO
+                  mzD%latRss(iP, iT) = mzD%latRss(iP, iT)/real(iDesArr(iT))
+               ELSE
+                  mzD%latRss(iP, iT) = -999.99 
+               END IF
+
+	    END IF
+         ENDDO
+         
+       ENDDO
+        
+       !*** Deallocate 
+        
+       DEALLOCATE(iComArr, STAT=error)
+       IF ( error /= 0 ) THEN
+           msr = MLSMSG_Deallocate // ' iComArr array.'
+           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+       ENDIF
+     
+       DEALLOCATE(iAscArr, STAT=error)
+       IF ( error /= 0 ) THEN
+           msr = MLSMSG_Deallocate // ' iAscArr array.'
+           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+       ENDIF
+
+       DEALLOCATE(iDesArr, STAT=error)
+       IF ( error /= 0 ) THEN
+           msr = MLSMSG_Deallocate // ' iDesArr array.'
+           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+       ENDIF
+        
+       DEALLOCATE(comFieldArr, STAT=error)
+       IF ( error /= 0 ) THEN
+           msr = MLSMSG_Deallocate // ' comFieldArr array.'
+           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+       ENDIF
+     
+       DEALLOCATE(ascFieldArr, STAT=error)
+       IF ( error /= 0 ) THEN
+           msr = MLSMSG_Deallocate // ' ascFieldArr array.'
+           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+       ENDIF
+
+       DEALLOCATE(desFieldArr, STAT=error)
+       IF ( error /= 0 ) THEN
+           msr = MLSMSG_Deallocate // ' desFieldArr array.'
+           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+       ENDIF
+
+       !-----------------------------------
+      END SUBROUTINE MonthlyZonalMeanFromL2
+      !-----------------------------------
+
+!-------------------------------------------------------------------------
+      SUBROUTINE MonthlyMapFromL2_Simple(cfProd, cfDef, l2gp, l2Days, & 
+           & pStartIndex, pEndIndex, l3mm, mmA, mmD )
+!-------------------------------------------------------------------------
+  USE L3MMData, ONLY: L3MMData_T, AllocateL3MM
+
+        TYPE( L3CFMProd_T ) :: cfProd
+	TYPE( L3CFMDef_T  ) :: cfDef
+        TYPE( L3MMData_T  ) :: l3mm, mmA, mmD
+        
+        TYPE( L2GPData_T ), POINTER :: l2gp(:)
+
+        CHARACTER (LEN=480) :: msr
+        
+	REAL, POINTER, DIMENSION(:,:,:) :: & 
+             & comFieldArr(:,:,:), ascFieldArr(:,:,:), desFieldArr(:,:,:)
+        
+	REAL :: slope
+        
+	INTEGER, POINTER, DIMENSION(:,:) :: & 
+             & iComArr(:,:), iAscArr(:,:), iDesArr(:,:)
+        
+	INTEGER ::  iComLat, iComLon, error, i, j, k, iP, kP, iT, iD, &
+             & l2Days, pStartIndex, pEndIndex
+        
+        !*** Allocate space for all the arrays
+        
+        ALLOCATE(iComArr(cfDef%nNom, cfProd%nLons), STAT=error)
+        IF ( error /= 0 ) THEN
+           msr = MLSMSG_Allocate // ' iComArr array.'
+           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+        ENDIF
+        
+        ALLOCATE(iAscArr(cfDef%nNom, cfProd%nLons), STAT=error)
+        IF ( error /= 0 ) THEN
+           msr = MLSMSG_Allocate // ' iAscArr array.'
+           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+        ENDIF
+        
+        ALLOCATE(iDesArr(cfDef%nNom, cfProd%nLons), STAT=error)
+        IF ( error /= 0 ) THEN
+           msr = MLSMSG_Allocate // ' iDesArr array.'
+           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+        ENDIF
+        
+        ALLOCATE(comFieldArr(cfDef%nNom, cfProd%nLons, 10*l2Days), STAT=error)
+        IF ( error /= 0 ) THEN
+           msr = MLSMSG_Allocate // ' comFieldArr array.'
+           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+        ENDIF
+        
+        ALLOCATE(ascFieldArr(cfDef%nNom, cfProd%nLons, 10*l2Days), STAT=error)
+        IF ( error /= 0 ) THEN
+           msr = MLSMSG_Allocate // ' ascFieldArr array.'
+           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+        ENDIF
+        
+        ALLOCATE(desFieldArr(cfDef%nNom, cfProd%nLons, 10*l2Days), STAT=error)
+        IF ( error /= 0 ) THEN
+           msr = MLSMSG_Allocate // ' desFieldArr array.'
+           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+        ENDIF
+
+        !*** initialization 
+        
+        iP = 0
+	DO kP = pStartIndex, pEndIndex 
+          iP = iP + 1
+	  l3mm%pressure(iP) = l2gp(1)%pressures(kP) 
+	  mmA%pressure(iP)  = l2gp(1)%pressures(kP) 
+	  mmD%pressure(iP)  = l2gp(1)%pressures(kP) 
+	  DO I = 1, cfProd%nLats 
+             DO J = 1, cfProd%nLons 
+                l3mm%l3mmValue(iP, I, J) = 0.0 
+                mmA%l3mmValue(iP, I, J)  = 0.0 
+                mmD%l3mmValue(iP, I, J)  = 0.0 
+                l3mm%l3mmPrecision(iP, I, J) = 0.0 
+                mmA%l3mmPrecision(iP, I, J)  = 0.0 
+                mmD%l3mmPrecision(iP, I, J)  = 0.0 
+             ENDDO
+          ENDDO
+       END DO
+       
+       DO J = 1, cfProd%nLats
+          l3mm%latitude(J) = cfProd%latGridMap(J) 
+          mmA%latitude(J)  = cfProd%latGridMap(J) 
+          mmD%latitude(J)  = cfProd%latGridMap(J) 
+       END DO
+       
+       DO K = 1, cfProd%nLons
+          l3mm%longitude(K) = cfProd%longGrid(K) 
+          mmA%longitude(K)  = cfProd%longGrid(K) 
+          mmD%longitude(K)  = cfProd%longGrid(K) 
+       END DO
+       
+       DO I = 1, l3mm%nLevels 
+          l3mm%perMisPoints(I) = 0 
+       ENDDO
+       DO I = 1, mmA%nLevels 
+          mmA%perMisPoints(I) = 0 
+       ENDDO
+       DO I = 1, mmD%nLevels 
+          mmD%perMisPoints(I) = 0 
+       ENDDO
+       
+       !*** Start calculation 
+       
+       iP = 0
+       DO kP = pStartIndex, pEndIndex 
+	  iP = iP + 1
+          
+	  DO I = 1, cfProd%nLats 
+             DO J = 1, cfProd%nLons 
+                iComArr(I,J) = 0
+                iAscArr(I,J) = 0
+                iDesArr(I,J) = 0
+                DO K = 1,  10*l2Days
+                   comFieldArr(I,J, K) = 0.0 
+                   ascFieldArr(I,J, K) = 0.0 
+                   desFieldArr(I,J, K) = 0.0 
+                ENDDO
+             ENDDO
+          ENDDO
+          
+          DO iD = 1, l2Days
+             DO iT = 1, l2gp(iD)%nTimes-1
+              IF(isGoodData(l2gp(iD)%l2gpValue(1, kP, iT), l2gp(iD)%Quality(iT), l2gp(iD)%Status(iT)) ) THEN
+                   iComLat = FindLatIndexForL3Grid(cfProd, l2gp(iD)%latitude(iT))
+                   iComLon = FindLonIndexForL3Grid(cfProd, l2gp(iD)%longitude(iT))
+                   l3mm%l3mmValue(iP, iComLat, iComLon) = & 
+                        & l3mm%l3mmValue(iP, iComLat, iComLon) + & 
+                        & l2gp(iD)%l2gpValue(1, kP, iT)
+                   l3mm%l3mmPrecision(iP, iComLat, iComLon) = & 
+                        & l3mm%l3mmPrecision(iP, iComLat, iComLon) + & 
+                        & l2gp(iD)%l2gpPrecision(1, kP, iT)
+                   iComArr(iComLat, iComLon) = iComArr(iComLat, iComLon) + 1 
+                   comFieldArr(iComLat, iComLon, iComArr(iComLat, iComLon)) =& 
+                        & l2gp(iD)%l2gpValue(1, kP, iT)
+                   IF( isAscending(l2gp(iD)%geodAngle(iT)) == 1 ) THEN
+                      mmA%l3mmValue(iP, iComLat, iComLon) = & 
+                           & mmA%l3mmValue(iP, iComLat, iComLon) + & 
+                           & l2gp(iD)%l2gpValue(1, kP, iT)
+                      mmA%l3mmPrecision(iP, iComLat, iComLon) = & 
+                           & mmA%l3mmPrecision(iP, iComLat, iComLon) + & 
+                           & l2gp(iD)%l2gpPrecision(1, kP, iT)
+                      iAscArr(iComLat, iComLon) = iAscArr(iComLat, iComLon)+1 
+                      ascFieldArr(iComLat, iComLon, iAscArr(iComLat,iComLon))&
+                           & = l2gp(iD)%l2gpValue(1, kP, iT)
+                   ELSE
+                      mmD%l3mmValue(iP, iComLat, iComLon) = & 
+                           & mmD%l3mmValue(iP, iComLat, iComLon) + & 
+                           & l2gp(iD)%l2gpValue(1, kP, iT)
+                      mmD%l3mmPrecision(iP, iComLat, iComLon) = & 
+                           & mmD%l3mmPrecision(iP, iComLat, iComLon) + & 
+                           & l2gp(iD)%l2gpPrecision(1, kP, iT)
+                      iDesArr(iComLat, iComLon) = iDesArr(iComLat, iComLon)+ 1 
+                      desFieldArr(iComLat,iComLon,iDesArr(iComLat,iComLon))= & 
+                           & l2gp(iD)%l2gpValue(1, kP, iT)
+                   END IF
+              END IF
+             ENDDO
+	  ENDDO
+          
+	  DO I = 1, cfProd%nLats 
+             DO J = 1, cfProd%nLons 
+                IF(iComArr(I, J) == 0) THEN
+                   l3mm%l3mmValue(iP, I, J) = -999.99 
+                   mmA%l3mmValue(iP, I, J)  = -999.99 
+                   mmD%l3mmValue(iP, I, J)  = -999.99 
+                   l3mm%l3mmPrecision(iP, I, J) = -999.99 
+                   mmA%l3mmPrecision(iP, I, J)  = -999.99 
+                   mmD%l3mmPrecision(iP, I, J)  = -999.99 
+                ELSE
+                   l3mm%l3mmValue(iP, I, J) = & 
+                        & l3mm%l3mmValue(iP, I, J)/real(iComArr(I, J))
+                   l3mm%l3mmPrecision(iP, I, J) = & 
+                        & l3mm%l3mmPrecision(iP, I, J)/real(iComArr(I, J))
+                   IF(iAscArr(I, J) > 0) THEN
+                      mmA%l3mmValue(iP, I, J) = & 
+                           & mmA%l3mmValue(iP, I, J)/real(iAscArr(I, J))
+                      mmA%l3mmPrecision(iP, I, J) = & 
+                           & mmA%l3mmPrecision(iP, I, J)/real(iAscArr(I, J))
+                   ELSE
+                      mmA%l3mmValue(iP, I, J) = -999.99 
+                      mmA%l3mmPrecision(iP, I, J) = -999.99 
+                   END IF
+                   IF(iDesArr(I, J) > 0) THEN
+                      mmD%l3mmValue(iP, I, J) = & 
+                           & mmD%l3mmValue(iP, I, J)/real(iDesArr(I, J))
+                      mmD%l3mmPrecision(iP, I, J) = & 
+                           & mmD%l3mmPrecision(iP, I, J)/real(iDesArr(I, J))
+                   ELSE
+                      mmD%l3mmValue(iP, I, J) = -999.99 
+                      mmD%l3mmPrecision(iP, I, J) = -999.99 
+                   END IF
+                END IF
+             ENDDO
+	  ENDDO
+          
+       ENDDO
+       
+       !*** Deallocate 
+       
+     DEALLOCATE(iComArr, STAT=error)
+     IF ( error /= 0 ) THEN
+        msr = MLSMSG_Deallocate // ' iComArr array.'
+        CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+     ENDIF
+     
+     DEALLOCATE(iAscArr, STAT=error)
+     IF ( error /= 0 ) THEN
+        msr = MLSMSG_Deallocate // ' iAscArr array.'
+        CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+     ENDIF
+     
+     DEALLOCATE(iDesArr, STAT=error)
+     IF ( error /= 0 ) THEN
+        msr = MLSMSG_Deallocate // ' iDesArr array.'
+        CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+     ENDIF
+
+     DEALLOCATE(comFieldArr, STAT=error)
+     IF ( error /= 0 ) THEN
+        msr = MLSMSG_Deallocate // ' comFieldArr array.'
+        CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+     ENDIF
+     
+     DEALLOCATE(ascFieldArr, STAT=error)
+     IF ( error /= 0 ) THEN
+        msr = MLSMSG_Deallocate // ' ascFieldArr array.'
+        CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+     ENDIF
+
+     DEALLOCATE(desFieldArr, STAT=error)
+     IF ( error /= 0 ) THEN
+        msr = MLSMSG_Deallocate // ' desFieldArr array.'
+        CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+     ENDIF
+     
+   !-----------------------------------
+   END SUBROUTINE MonthlyMapFromL2_Simple
+   !-----------------------------------
+
+   !-------------------------------------------------------------------------
+   SUBROUTINE MonthlyMapFromL2(cfProd, l2gp, pStartIndex, pEndIndex, &
+        & anlats, dnlats, alons, dlons, afields, dfields, l3mm, mmA, mmD )
+   !-------------------------------------------------------------------------
+  USE L3MMData, ONLY: L3MMData_T, AllocateL3MM
+
+     TYPE( L3CFMProd_T ) :: cfProd
+     TYPE( L3MMData_T  ) :: l3mm, mmA, mmD
+        
+     TYPE( L2GPData_T ), POINTER :: l2gp(:)
+
+     CHARACTER (LEN=480) :: msr
+
+     REAL, POINTER, DIMENSION(:, :, :) :: alons(:, :, :), &
+          & dlons(:, :, :), afields(:, :, :), dfields(:, :, :)
+     
+     REAL, POINTER, DIMENSION(:) ::  lons_rev(:), fields_rev(:), Y2(:)
+
+     REAL :: lonStart, newField
+
+     INTEGER, DIMENSION(cfProd%nLats, l2gp(1)%nLevels) :: anlats, dnlats 
+
+     INTEGER :: pStartIndex, pEndIndex, nc, error, i, j, k, iP, kP
+
+     !*** initialization 
+
+     iP = 0
+     DO kP = pStartIndex, pEndIndex 
+        iP = iP + 1
+        l3mm%pressure(iP) = l2gp(1)%pressures(kP) 
+        mmA%pressure(iP)  = l2gp(1)%pressures(kP) 
+        mmD%pressure(iP)  = l2gp(1)%pressures(kP) 
+        DO I = 1, cfProd%nLats 
+           DO J = 1, cfProd%nLons 
+	      l3mm%l3mmValue(iP, I, J) = 0.0 
+	      mmA%l3mmValue(iP, I, J)  = 0.0 
+	      mmD%l3mmValue(iP, I, J)  = 0.0 
+           ENDDO
+        ENDDO
+     END DO
+
+     DO J = 1, cfProd%nLats
+        l3mm%latitude(J) = cfProd%latGridMap(J) 
+        mmA%latitude(J)  = cfProd%latGridMap(J) 
+        mmD%latitude(J)  = cfProd%latGridMap(J) 
+     END DO
+
+     DO K = 1, cfProd%nLons
+        l3mm%longitude(K) = cfProd%longGrid(K) 
+        mmA%longitude(K)  = cfProd%longGrid(K) 
+        mmD%longitude(K)  = cfProd%longGrid(K) 
+     END DO
+
+     DO I = 1, l3mm%nLevels 
+        l3mm%perMisPoints(I) = 0 
+     ENDDO
+     DO I = 1, mmA%nLevels 
+        mmA%perMisPoints(I)  = 0 
+     ENDDO
+     DO I = 1, mmD%nLevels 
+        mmD%perMisPoints(I)  = 0 
+     ENDDO
+
+     !*** Start calculation 
+
+     iP = 0
+     DO kP = pStartIndex, pEndIndex 
+        iP = iP + 1
+        
+        DO J = 1, cfProd%nLats
+           
+           ! Ascending Mode
+           
+           IF( anlats(J, iP) > 0 ) THEN
+
+              !*** Allocate space for all the arrays
+              ALLOCATE(lons_rev(anlats(J, iP)), STAT=error)
+              IF ( error /= 0 ) THEN
+                 msr = MLSMSG_Allocate // ' lons_rev array.'
+                 CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+              ENDIF
+
+              ALLOCATE(fields_rev(anlats(J, iP)), STAT=error)
+              IF ( error /= 0 ) THEN
+                 msr = MLSMSG_Allocate // ' fields_rev array.'
+                 CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+              ENDIF
+              
+              DO i = 1, anlats(J, iP)
+                 alons(J, i, iP) = alons(J, i, iP) + (i-1)*2.0*PI
+                 lons_rev(i) = alons(J, anlats(J, iP)+1-i, iP)
+                 fields_rev(i) = afields(J, anlats(J, iP)+1-i, iP)
+              ENDDO
+
+              ALLOCATE(Y2(anlats(J, iP)), STAT=error)
+              IF ( error /= 0 ) THEN
+                 msr = MLSMSG_Allocate // ' Y2 array.'
+                 CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+              ENDIF
+
+              CALL SPLINE(lons_rev, fields_rev, anlats(J, iP), 0.0, 0.0, Y2)
+              DO K = 1, cfProd%nLons
+                 IF( cfProd%longGrid(K) > lons_rev(1) ) THEN
+                    lonStart = cfProd%longGrid(K) - 2.0*PI
+                 ELSE
+                    lonStart = cfProd%longGrid(K)
+                 END IF
+                 nc = 0
+                 mmA%l3mmValue(iP, J, K) = 0.0 
+                 DO
+                    nc = nc + 1
+                    CALL SPLINT(lons_rev, fields_rev, Y2, anlats(J, iP), lonStart, newField)
+                    mmA%l3mmValue(iP, J, K) = mmA%l3mmValue(iP, J, K) + newField 
+                    lonStart = lonStart - 2.0*PI
+                    IF( lonStart < lons_rev(anlats(J, iP)) ) EXIT
+                 ENDDO
+                 IF( nc > 0) THEN
+                    mmA%l3mmValue(iP, J, K) = mmA%l3mmValue(iP, J, K)/nc
+                    mmA%l3mmPrecision(iP, J, K) = 0.0 
+                 ELSE
+                    mmA%l3mmValue(iP, J, K) = 0.0 
+                    mmA%l3mmPrecision(iP, J, K) = 0.0 
+                 END IF
+              ENDDO
+
+              !*** Deallocate intermidiate arrays
+              DEALLOCATE(Y2, STAT=error)
+              IF ( error /= 0 ) THEN
+                 msr = MLSMSG_Deallocate // ' Y2 array.'
+                 CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+              ENDIF
+
+              DEALLOCATE(lons_rev, STAT=error) 
+              IF ( error /= 0 ) THEN
+                 msr = MLSMSG_Deallocate // ' lons_rev array.'
+                 CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+              ENDIF
+
+              DEALLOCATE(fields_rev, STAT=error) 
+              IF ( error /= 0 ) THEN
+                 msr = MLSMSG_Deallocate // ' fields_rev array.'
+                 CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+              ENDIF
+
+	     ELSE
+
+                DO K = 1, cfProd%nLons
+                   mmA%l3mmValue(iP, J, K) = 0.0 
+                   mmA%l3mmPrecision(iP, J, K) = 0.0 
+		ENDDO
+
+	     END IF
+
+	     ! Descending Mode
+
+             IF( dnlats(J, iP) > 0 ) THEN
+
+                !*** Allocate space for all the arrays
+
+        	ALLOCATE(lons_rev(dnlats(J, iP)), STAT=error)
+                IF ( error /= 0 ) THEN
+                   msr = MLSMSG_Allocate // ' alons_rev array.'
+                   CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+                ENDIF
+                
+        	ALLOCATE(fields_rev(dnlats(J, iP)), STAT=error)
+                IF ( error /= 0 ) THEN
+                   msr = MLSMSG_Allocate // ' fields_rev array.'
+                   CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+                ENDIF
+
+                DO i = 1, dnlats(J, iP)
+                    dlons(J, i, iP) = dlons(J, i, iP) + (i-1)*2.0*PI
+                    lons_rev(i) = dlons(J, dnlats(J, iP)+1-i, iP)
+                    fields_rev(i) = dfields(J, dnlats(J, iP)+1-i, iP)
+                 ENDDO
+
+                 ALLOCATE(Y2(dnlats(J, iP)), STAT=error)
+                 IF ( error /= 0 ) THEN
+                    msr = MLSMSG_Allocate // ' Y2 array.'
+                    CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+                 ENDIF
+
+                 CALL SPLINE(lons_rev, fields_rev, dnlats(J, iP), 0.0, 0.0, Y2)
+                 DO K = 1, cfProd%nLons
+                    IF( cfProd%longGrid(K) > lons_rev(1) ) THEN
+                       lonStart = cfProd%longGrid(K) - 2.0*PI
+                    ELSE
+                       lonStart = cfProd%longGrid(K)
+                    END IF
+                    nc = 0
+                    mmD%l3mmValue(iP, J, K) = 0.0 
+                    DO
+                       nc = nc + 1
+                       CALL SPLINT(lons_rev, fields_rev, Y2, dnlats(J, iP), lonStart, newField)
+                       mmD%l3mmValue(iP, J, K) = mmD%l3mmValue(iP, J, K) + newField 
+                       lonStart = lonStart - 2.0*PI
+                       IF( lonStart < lons_rev(dnlats(J, iP)) ) EXIT
+                    ENDDO
+                    IF( nc > 0) THEN
+                       mmD%l3mmValue(iP, J, K) = mmD%l3mmValue(iP, J, K)/nc
+                       mmD%l3mmPrecision(iP, J, K) = 0.0 
+                    ELSE
+                       mmD%l3mmValue(iP, J, K) = 0.0 
+                       mmD%l3mmPrecision(iP, J, K) = 0.0 
+                    END IF
+                 ENDDO
+
+                 !*** Deallocate intermidiate arrays
+                DEALLOCATE(Y2, STAT=error)
+                IF ( error /= 0 ) THEN
+                   msr = MLSMSG_Deallocate // ' Y2 array.'
+                   CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+                ENDIF
+
+                DEALLOCATE(lons_rev, STAT=error) 
+                IF ( error /= 0 ) THEN
+                   msr = MLSMSG_Deallocate // ' lons_rev array.'
+                   CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+                ENDIF
+
+                DEALLOCATE(fields_rev, STAT=error) 
+                IF ( error /= 0 ) THEN
+                   msr = MLSMSG_Deallocate // ' fields_rev array.'
+                   CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+                ENDIF
+
+	     ELSE
+
+                DO K = 1, cfProd%nLons
+		  mmD%l3mmValue(iP, J, K) = 0.0 
+		  mmD%l3mmPrecision(iP, J, K) = 0.0 
+		ENDDO
+
+	     END IF
+
+	     ! Combined Mode
+
+             IF( anlats(J, iP) > 0 .or. dnlats(J, iP) > 0 ) THEN
+                
+                DO K = 1, cfProd%nLons
+                   IF( anlats(J, iP) > 0 .and. dnlats(J, iP) == 0 ) THEN
+                      l3mm%l3mmValue(iP, J, K) = mmA%l3mmValue(iP, J, K)
+                      l3mm%l3mmPrecision(iP, J, K) = 0.0 
+                   ELSE IF( anlats(J, iP) == 0 .and. dnlats(J, iP) > 0 ) THEN
+                      l3mm%l3mmValue(iP, J, K) = mmD%l3mmValue(iP, J, K)
+                      l3mm%l3mmPrecision(iP, J, K) = 0.0 
+                   ELSE IF( anlats(J, iP) > 0 .and. dnlats(J, iP) > 0 ) THEN
+                      l3mm%l3mmValue(iP, J, K) = (mmA%l3mmValue(iP, J, K) + mmD%l3mmValue(iP, J, K))*0.5
+                      l3mm%l3mmPrecision(iP, J, K) = 0.0 
+                   END IF
+		ENDDO
+
+	     ELSE
+
+                DO K = 1, cfProd%nLons
+                   l3mm%l3mmValue(iP, J, K)     = 0.0 
+                   l3mm%l3mmPrecision(iP, J, K) = 0.0 
+		ENDDO
+
+	     END IF
+             
+	  ENDDO
+          
+	ENDDO
+
+        
+!-----------------------------------
+      END SUBROUTINE MonthlyMapFromL2
+!-----------------------------------
+
+!-------------------------------------------------------------------------
+      INTEGER FUNCTION FindIndexForNormGrid(cfDef, alat)
+!-------------------------------------------------------------------------
+
+	TYPE( L3CFMDef_T ) :: cfDef
+	REAL(rgp) :: alat
+	INTEGER:: i
+
+	DO i = 1, cfDef%nNom 
+           IF(alat <= cfDef%l2nomLats(1)) THEN
+              FindIndexForNormGrid = 1
+              EXIT
+           ELSE IF(alat >= cfDef%l2nomLats(cfDef%nNom)) THEN
+              FindIndexForNormGrid = cfDef%nNom
+              EXIT
+	  ELSE
+             IF( i == cfDef%nNom ) THEN
+                FindIndexForNormGrid = i
+                EXIT
+             ELSE IF( i == 1 ) THEN
+                IF (alat < (cfDef%l2nomLats(i)+cfDef%l2nomLats(i+1))*0.5 ) THEN 
+                   FindIndexForNormGrid = i
+                   EXIT
+                END IF
+             ELSE IF( alat >= (cfDef%l2nomLats(i)+cfDef%l2nomLats(i-1))*0.5 .and. &
+                  alat < (cfDef%l2nomLats(i)+cfDef%l2nomLats(i+1))*0.5 ) THEN
+                FindIndexForNormGrid = i
+                EXIT
+             END IF
+	  END IF
+       END DO
+       
+     !-----------------------------------
+     END FUNCTION FindIndexForNormGrid
+     !-----------------------------------
+
+!-------------------------------------------------------------------------
+     INTEGER FUNCTION FindLatIndexForL3Grid(cfProd, alat)
+!-------------------------------------------------------------------------
+
+        TYPE( L3CFMProd_T ) :: cfProd
+	REAL(rgp) :: alat
+	INTEGER:: i
+
+	DO i = 1, cfProd%nLats 
+           IF(alat <= cfProd%latGridMap(1)) THEN
+              FindLatIndexForL3Grid = 1
+              EXIT
+           ELSE IF(alat >= cfProd%latGridMap(cfProd%nLats)) THEN
+              FindLatIndexForL3Grid = cfProd%nLats 
+              EXIT
+           ELSE
+              IF( i == cfProd%nLats ) THEN
+                 FindLatIndexForL3Grid = i
+                 EXIT
+              ELSE IF( i == 1 ) THEN
+                 IF( alat < (cfProd%latGridMap(i) + cfProd%latGridMap(i+1))*0.5 ) THEN 
+                    FindLatIndexForL3Grid = i
+                    EXIT
+                 END IF
+              ELSE IF( alat >= (cfProd%latGridMap(i)+cfProd%latGridMap(i-1))*0.5 .and.&
+                   & alat < (cfProd%latGridMap(i)+cfProd%latGridMap(i+1))*0.5) THEN
+                 FindLatIndexForL3Grid = i
+                 EXIT
+              END IF
+           END IF
+	END DO
+
+!-----------------------------------
+      END FUNCTION FindLatIndexForL3Grid
+!-----------------------------------
+
+!-------------------------------------------------------------------------
+      INTEGER FUNCTION FindLonIndexForL3Grid(cfProd, alon)
+!-------------------------------------------------------------------------
+
+        TYPE( L3CFMProd_T ) :: cfProd
+	REAL (rgp) :: alon
+	INTEGER :: i
+
+	DO i = 1, cfProd%nLons 
+           IF(alon <= cfProd%longGrid(1)) THEN
+              FindLonIndexForL3Grid = 1
+              EXIT
+           ELSE IF(alon >= cfProd%longGrid(cfProd%nLons)) THEN
+              FindLonIndexForL3Grid = cfProd%nLons 
+              EXIT
+           ELSE
+              IF( i == cfProd%nLons ) THEN
+                 FindLonIndexForL3Grid = i
+                 EXIT
+              ELSE IF( i == 1 ) THEN
+                 IF( alon < (cfProd%longGrid(i)+cfProd%longGrid(i+1))*0.5) THEN 
+                    FindLonIndexForL3Grid = i
+                    EXIT
+                 END IF
+              ELSE IF( alon >= (cfProd%longGrid(i)+cfProd%longGrid(i-1))*0.5 .and. &
+                   & alon < (cfProd%longGrid(i)+cfProd%longGrid(i+1))*0.5 ) THEN
+                 FindLonIndexForL3Grid = i
+                 EXIT
+              END IF
+           END IF
+	END DO
+
+        !-----------------------------------
+      END FUNCTION FindLonIndexForL3Grid
+      !-----------------------------------
+
+      !------------------------------------------------------------------------
+      REAL FUNCTION FindRealLon(alon)
+     !-------------------------------------------------------------------------
+
+	REAL :: alon
+
+	IF(mod(alon, 2.0*PI) < -PI) THEN
+	   FindRealLon = 2.0*PI + mod(alon, 2.0*PI) 
+	ELSE IF(mod(alon, 2.0*PI) > PI) THEN
+	   FindRealLon = -2.0*PI + mod(alon, 2.0*PI) 
+	ELSE
+	   FindRealLon = mod(alon, 2.0*PI) 
+	END IF
+	IF(mod(alon, 2.0*PI) < -PI) THEN
+	   FindRealLon = 2.0*PI + mod(alon, 2.0*PI) 
+	ELSE IF(mod(alon, 2.0*PI) > PI) THEN
+	   FindRealLon = -2.0*PI + mod(alon, 2.0*PI) 
+	ELSE 
+	   FindRealLon = mod(alon, 2.0*PI) 
+	END IF
+        
+!-----------------------------------
+      END FUNCTION FindRealLon
+!-----------------------------------
+
+
+!-------------------------------------------------------------------------
+      SUBROUTINE CalSolarRange(cfProd, l2gp, pStartIndex, pEndIndex, anlats, & 
+           & dnlats, asolarTime, dsolarTime, asolarZenith, dsolarZenith)
+!-------------------------------------------------------------------------
+
+! Brief description of program
+! This is the main program to run the Core processing.
+
+! Parameters
+
+	! Variable definitions
+
+        TYPE( L3CFMProd_T ) :: cfProd
+        TYPE( L2GPData_T ), POINTER :: l2gp(:)
+
+	REAL, POINTER, DIMENSION(:, :, :) ::  asolarTime(:, :, :), & 
+             & dsolarTime(:, :, :),asolarZenith(:, :, :),dsolarZenith(:, :, :)
+
+	REAL :: solarTimeMin, solarTimeMax, solarZenithMin, solarZenithMax
+
+	INTEGER, DIMENSION(cfProd%nLats, l2gp(1)%nLevels) :: anlats, dnlats 
+
+	INTEGER :: pStartIndex, pEndIndex, iP, kP, J, I
+
+!*** Start calculation 
+        
+        iP = 0
+	DO kP = pStartIndex, pEndIndex 
+           iP = iP + 1
+          
+           DO J = 1, cfProd%nLats
+
+	     ! Ascending Mode
+              
+              IF( anlats(J, iP) > 0 ) THEN
+                
+                 solarTimeMin   =  1.e20
+                 solarTimeMax   = -1.e20
+                 solarZenithMin =  1.e20
+                 solarZenithMax = -1.e20
+
+                 DO I = 1, anlats(J, iP)
+                    if(asolarTime(J, I, iP) >= solarTimeMax) then
+                       solarTimeMax = asolarTime(J, I, iP)
+		    else if(asolarTime(J, I, iP) < solarTimeMin) then
+                       solarTimeMin = asolarTime(J, I, iP)
+		    end if
+
+                    if(asolarZenith(J, I, iP) >= solarZenithMax) then
+                       solarZenithMax = asolarZenith(J, I, iP)
+		    else if(asolarZenith(J, I, iP) < solarZenithMin) then
+                       solarZenithMin = asolarZenith(J, I, iP)
+		    end if
+                 ENDDO
+              END IF
+
+	     ! Descending Mode
+              
+              IF( dnlats(J, iP) > 0 ) THEN
+
+                solarTimeMin   =  1.e20
+                solarTimeMax   = -1.e20
+		solarZenithMin =  1.e20
+		solarZenithMax = -1.e20
+
+                DO I = 1, dnlats(J, iP)
+                   if(dsolarTime(J, I, iP) >= solarTimeMax) then
+                      solarTimeMax = dsolarTime(J, I, iP)
+                   else if(dsolarTime(J, I, iP) < solarTimeMin) then
+                      solarTimeMin = asolarTime(J, I, iP)
+                   end if
+
+                   if(dsolarZenith(J, I, iP) >= solarZenithMax) then
+                      solarZenithMax = dsolarZenith(J, I, iP)
+                   else if(dsolarZenith(J, I, iP) < solarZenithMin) then
+                      solarZenithMin = dsolarZenith(J, I, iP)
+                   end if
+                ENDDO
+	     END IF
+
+          ENDDO
+          
+       ENDDO
+       !-----------------------------------
+     END SUBROUTINE CalSolarRange
+!-----------------------------------
+
+     !-------------------------------------------------------------------------
+     Logical FUNCTION isGoodData(value, qual, status)
+     !-------------------------------------------------------------------------
+
+       Real value, qual
+       Integer status
+
+       IF(value == -999.99 .or. qual < 0.0 .or. status < 0 .or. mod(status, 2) == 1) THEN
+          isGoodData = .false.
+       ELSE
+          isGoodData = .true.
+       END IF
+
+      !-----------------------------------
+     END FUNCTION isGoodData
+     !-----------------------------------
+
+     !-------------------------------------------------------------------------
+     Integer FUNCTION isAscending(geodAngle)
+     !-------------------------------------------------------------------------
+
+       Real modGeod, geodAngle
+
+       IF(geodAngle > -360.0) THEN
+          modGeod = mod(geodAngle, 360.0)
+          IF(modGeod < 0.0) THEN
+            modGeod = modGeod + 360.0
+          ENd IF
+          IF(modGeod < 90.0 .OR. modGeod >= 270.0) THEN
+            isAscending = 1
+          ELSE IF(modGeod >= 90.0 .AND. modGeod < 270.0) THEN
+            isAscending = 2
+          ELSE
+            isAscending = 0
+          END IF
+       ELSE
+          isAscending = 0
+       END IF
+
+      !-----------------------------------
+     END FUNCTION isAscending
+     !-----------------------------------
+
+!===================
+   END MODULE MonthlyProcessModule
+!===================
+
+
+
+@
+
+
+1.16
+log
+@Rename the dataset to SolarZenithAngle, add dashes in title, and remove spaces in soft link
+@
+text
+@d25 1
+a25 1
+       "$Id: MonthlyProcessModule.f90,v 1.15 2006/05/31 21:04:35 cvuu Exp $"
+d126 1
+a126 1
+	  read((pcf%dates(y)(6:8)), '(i3)') pcfdate_int
+@
+
+
+1.15
+log
+@Exclude the missing dates that are not in the PCF
+@
+text
+@d25 1
+a25 1
+       "$Id: MonthlyProcessModule.f90,v 1.14 2006/02/28 20:36:33 cvuu Exp $"
+d906 2
+a907 2
+          l3dz(iD)%localSolarZenithAngle(1, J) =  1.e20 
+          l3dz(iD)%localSolarZenithAngle(2, J) = -1.e20 
+d915 2
+a916 2
+          dzA(iD)%localSolarZenithAngle(1, J) =  1.e20 
+          dzA(iD)%localSolarZenithAngle(2, J) = -1.e20 
+d924 2
+a925 2
+          dzD(iD)%localSolarZenithAngle(1, J) =  1.e20 
+          dzD(iD)%localSolarZenithAngle(2, J) = -1.e20 
+d963 4
+a966 4
+                if( l3dz(iD)%localSolarZenithAngle(2, iCom) <= l2gp(iD)%solarZenith(iT)) then
+                   l3dz(iD)%localSolarZenithAngle(2, iCom) = l2gp(iD)%solarZenith(iT)
+                else if(l3dz(iD)%localSolarZenithAngle(1, iCom) >= l2gp(iD)%solarZenith(iT)) then
+                   l3dz(iD)%localSolarZenithAngle(1, iCom) = l2gp(iD)%solarZenith(iT)
+d983 4
+a986 4
+                   if(dzA(iD)%localSolarZenithAngle(2, iCom) <= l2gp(iD)%solarZenith(iT)) then
+                      dzA(iD)%localSolarZenithAngle(2, iCom) = l2gp(iD)%solarZenith(iT)
+                   else if(dzA(iD)%localSolarZenithAngle(1, iCom) >= l2gp(iD)%solarZenith(iT)) then
+                      dzA(iD)%localSolarZenithAngle(1, iCom) = l2gp(iD)%solarZenith(iT)
+d1001 4
+a1004 4
+                   if(dzD(iD)%localSolarZenithAngle(2, iCom) <= l2gp(iD)%solarZenith(iT)) then
+                      dzD(iD)%localSolarZenithAngle(2, iCom) =  l2gp(iD)%solarZenith(iT)
+                   else if(dzD(iD)%localSolarZenithAngle(1, iCom) >= l2gp(iD)%solarZenith(iT)) then
+	              dzD(iD)%localSolarZenithAngle(1, iCom) = l2gp(iD)%solarZenith(iT)
+d1216 2
+a1217 2
+       l3mz%localSolarZenithAngle(1, J) =  1.e20 
+       l3mz%localSolarZenithAngle(2, J) = -1.e20 
+d1224 2
+a1225 2
+       mzA%localSolarZenithAngle(1, J) =  1.e20 
+       mzA%localSolarZenithAngle(2, J) = -1.e20 
+d1232 2
+a1233 2
+       mzD%localSolarZenithAngle(1, J) =  1.e20 
+       mzD%localSolarZenithAngle(2, J) = -1.e20 
+d1270 4
+a1273 4
+                if(l3mz%localSolarZenithAngle(2, iCom) <= l2gp(iD)%solarZenith(iT)) then
+                   l3mz%localSolarZenithAngle(2, iCom) =  l2gp(iD)%solarZenith(iT)
+                else if(l3mz%localSolarZenithAngle(1, iCom) >= l2gp(iD)%solarZenith(iT)) then
+                   l3mz%localSolarZenithAngle(1, iCom) = l2gp(iD)%solarZenith(iT)
+d1290 4
+a1293 4
+                       if(mzA%localSolarZenithAngle(2, iCom) <= l2gp(iD)%solarZenith(iT)) then
+                          mzA%localSolarZenithAngle(2, iCom) = l2gp(iD)%solarZenith(iT)
+                       else if(mzA%localSolarZenithAngle(1, iCom) >= l2gp(iD)%solarZenith(iT)) then
+                          mzA%localSolarZenithAngle(1, iCom) = l2gp(iD)%solarZenith(iT)
+d1308 4
+a1311 4
+                       if(mzD%localSolarZenithAngle(2, iCom) <= l2gp(iD)%solarZenith(iT)) then
+                          mzD%localSolarZenithAngle(2, iCom) = l2gp(iD)%solarZenith(iT)
+                       else if(mzD%localSolarZenithAngle(1, iCom) >= l2gp(iD)%solarZenith(iT)) then
+                          mzD%localSolarZenithAngle(1, iCom) = l2gp(iD)%solarZenith(iT)
+@
+
+
+1.14
+log
+@V2.00 commit
+@
+text
+@d25 1
+a25 1
+       "$Id: MonthlyProcessModule.f90,v 1.12 2004/05/04 15:54:01 cvuu Exp $"
+d79 3
+a81 2
+    INTEGER ::  error, l2Days, nlev, pEndIndex, pStartIndex, j, iD
+    
+d120 3
+d124 10
+a133 3
+       l3dz(j)%date = pcf%dates(j) 
+       dzA(j)%date  = pcf%dates(j) 
+       dzD(j)%date  = pcf%dates(j) 
+d136 1
+@
+
+
+1.13
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d2 2
+a3 10
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+d21 1
+d23 6
+a28 5
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+d900 1
+d909 1
+d918 1
+d937 1
+d939 1
+d941 1
+d945 1
+d947 2
+a948 3
+             l3dz(iD)%l3dzValue(iP, iCom) = & 
+                  & l3dz(iD)%l3dzValue(iP, iCom) + & 
+                  & l2gp(iD)%l2gpValue(1, kP, iT)
+d951 4
+a954 8
+                if( l3dz(iD)%localSolarZenithAngle(2, iCom) <= & 
+                     & l2gp(iD)%solarZenith(iT)) then
+                   l3dz(iD)%localSolarZenithAngle(2, iCom) = & 
+                        l2gp(iD)%solarZenith(iT)
+                else if(l3dz(iD)%localSolarZenithAngle(1, iCom) >= & 
+                     & l2gp(iD)%solarZenith(iT)) then
+                   l3dz(iD)%localSolarZenithAngle(1, iCom) = & 
+                        & l2gp(iD)%solarZenith(iT)
+d957 1
+a957 2
+                if(l3dz(iD)%localSolarTime(2, iCom) <= & 
+                     & l2gp(iD)%solarTime(iT)) then
+d959 1
+a959 2
+                else if(l3dz(iD)%localSolarTime(1, iCom) >= & 
+                     & l2gp(iD)%solarTime(iT)) then
+d965 3
+a967 16
+             IF( l2gp(iD)%longitude(iT) >= -PI   .AND. &
+                  l2gp(iD)%longitude(iT) < 0.0   .AND. &
+                  l2gp(iD)%longitude(iT+1) <= PI .AND. &
+                  l2gp(iD)%longitude(iT+1) > 0.0 .AND. &
+                  l2gp(iD)%longitude(iT+1) > l2gp(iD)%longitude(iT) ) THEN
+                slope = & 
+                     & (l2gp(iD)%longitude(iT+1)-2.*PI - & 
+                     & l2gp(iD)%longitude(iT))/	  &
+                     & (l2gp(iD)%latitude(iT+1)-l2gp(iD)%latitude(iT)) 
+             ELSE
+                slope = (l2gp(iD)%longitude(iT+1)-l2gp(iD)%longitude(iT))/ &
+                     & (l2gp(iD)%latitude(iT+1)-l2gp(iD)%latitude(iT)) 
+             END IF
+             IF( slope < 0.0 ) THEN
+                dzA(iD)%l3dzValue(iP, iCom) = dzA(iD)%l3dzValue(iP, iCom) + & 
+                     & l2gp(iD)%l2gpValue(1, kP, iT)
+d969 1
+a969 2
+                ascFieldArr(iCom, iAscArr(iCom)) = & 
+                     & l2gp(iD)%l2gpValue(1, kP, iT)
+d971 4
+a974 8
+                   if(dzA(iD)%localSolarZenithAngle(2, iCom) <= & 
+                        & l2gp(iD)%solarZenith(iT)) then
+                      dzA(iD)%localSolarZenithAngle(2, iCom) =  & 
+                           & l2gp(iD)%solarZenith(iT)
+                   else if(dzA(iD)%localSolarZenithAngle(1, iCom) >= & 
+                        & l2gp(iD)%solarZenith(iT)) then
+                      dzA(iD)%localSolarZenithAngle(1, iCom) = & 
+                           & l2gp(iD)%solarZenith(iT)
+d977 3
+a979 6
+                   if(dzA(iD)%localSolarTime(2, iCom) <= & 
+                        & l2gp(iD)%solarTime(iT)) then
+                      dzA(iD)%localSolarTime(2, iCom) = & 
+                           & l2gp(iD)%solarTime(iT)
+                   else if(dzA(iD)%localSolarTime(1, iCom) >= & 
+                        & l2gp(iD)%solarTime(iT)) then
+d984 2
+a985 3
+                dzD(iD)%l3dzValue(iP, iCom) = & 
+                     & dzD(iD)%l3dzValue(iP, iCom) + & 
+                     & l2gp(iD)%l2gpValue(1, kP, iT)
+d987 1
+a987 2
+                desFieldArr(iCom, iDesArr(iCom)) = & 
+                     & l2gp(iD)%l2gpValue(1, kP, iT)
+d989 4
+a992 8
+                   if(dzD(iD)%localSolarZenithAngle(2, iCom) <= & 
+                        & l2gp(iD)%solarZenith(iT)) then
+                      dzD(iD)%localSolarZenithAngle(2, iCom) =  & 
+                           & l2gp(iD)%solarZenith(iT)
+                   else if(dzD(iD)%localSolarZenithAngle(1, iCom) >= & 
+                        & l2gp(iD)%solarZenith(iT)) then
+	              dzD(iD)%localSolarZenithAngle(1, iCom) = & 
+                           & l2gp(iD)%solarZenith(iT)
+d995 3
+a997 6
+	           if(dzD(iD)%localSolarTime(2, iCom) <= & 
+                        & l2gp(iD)%solarTime(iT)) then
+	              dzD(iD)%localSolarTime(2, iCom) = & 
+                           & l2gp(iD)%solarTime(iT)
+		   else if(dzD(iD)%localSolarTime(1, iCom) >= & 
+                        & l2gp(iD)%solarTime(iT)) then
+d1002 1
+d1004 3
+d1010 7
+a1016 3
+	      	l3dz(iD)%l3dzValue(iP, iT) = 0.0 
+	      	dzA(iD)%l3dzValue(iP, iT)  = 0.0 
+	      	dzD(iD)%l3dzValue(iP, iT)  = 0.0 
+d1018 3
+a1020 3
+	      	l3dz(iD)%latRss(iP, iT)    = 0.0 
+	      	dzA(iD)%latRss(iP, iT)     = 0.0 
+	      	dzD(iD)%latRss(iP, iT)     = 0.0 
+d1022 2
+a1023 2
+                l3dz(iD)%l3dzValue(iP, iT) = & 
+                     & l3dz(iD)%l3dzValue(iP, iT)/real(iComArr(iT))
+d1025 2
+a1026 2
+                   dzA(iD)%l3dzValue(iP, iT) = & 
+                        dzA(iD)%l3dzValue(iP, iT)/real(iAscArr(iT))
+d1028 2
+a1029 1
+                   dzA(iD)%l3dzValue(iP, iT) = 0.0 
+d1032 2
+a1033 2
+                   dzD(iD)%l3dzValue(iP, iT) = & 
+                        & dzD(iD)%l3dzValue(iP, iT)/real(iDesArr(iT))
+d1035 2
+a1036 1
+                   dzD(iD)%l3dzValue(iP, iT) = 0.0 
+d1047 1
+a1047 2
+                l3dz(iD)%latRss(iP, iT) = & 
+                     & l3dz(iD)%latRss(iP, iT)/real(iComArr(iT))
+d1055 1
+a1055 2
+                   dzA(iD)%latRss(iP, iT) = & 
+                        & dzA(iD)%latRss(iP, iT)/real(iAscArr(iT))
+d1057 1
+a1057 1
+                   dzA(iD)%latRss(iP, iT) = 0.0 
+d1066 1
+a1066 2
+                   dzD(iD)%latRss(iP, iT) = & 
+                        & dzD(iD)%latRss(iP, iT)/real(iDesArr(iT))
+d1068 1
+a1068 1
+                   dzD(iD)%latRss(iP, iT) = 0.0 
+d1191 3
+d1240 3
+a1242 3
+             comFieldArr(iT, J) = 0.0
+             ascFieldArr(iT, J) = 0.0
+             desFieldArr(iT, J) = 0.0
+d1248 3
+d1254 2
+a1255 2
+             l3mz%l3mzValue(iP, iCom) = l3mz%l3mzValue(iP, iCom) + & 
+                  & l2gp(iD)%l2gpValue(1, kP, iT)
+d1258 4
+a1261 8
+                if(l3mz%localSolarZenithAngle(2, iCom) <= & 
+                     & l2gp(iD)%solarZenith(iT)) then
+                   l3mz%localSolarZenithAngle(2, iCom) =  & 
+                        & l2gp(iD)%solarZenith(iT)
+                else if(l3mz%localSolarZenithAngle(1, iCom) >= & 
+                     & l2gp(iD)%solarZenith(iT)) then
+                   l3mz%localSolarZenithAngle(1, iCom) = & 
+                        & l2gp(iD)%solarZenith(iT)
+d1264 3
+a1266 6
+                if(l3mz%localSolarTime(2, iCom) <= & 
+                     & l2gp(iD)%solarTime(iT)) then
+                   l3mz%localSolarTime(2, iCom) = & 
+                        & l2gp(iD)%solarTime(iT)
+                else if(l3mz%localSolarTime(1, iCom) >= & 
+                     & l2gp(iD)%solarTime(iT)) then
+d1271 4
+a1274 21
+             comFieldArr(iCom, iComArr(iCom)) = & 
+                  & l2gp(iD)%l2gpValue(1, kP, iT)
+             IF( l2gp(iD)%longitude(iT) >= -PI     .AND. &
+                  & l2gp(iD)%longitude(iT) < 0.0   .AND. &
+                  & l2gp(iD)%longitude(iT+1) <= PI .AND. &
+                  & l2gp(iD)%longitude(iT+1) > 0.0 .AND. &
+                  & l2gp(iD)%longitude(iT+1) > l2gp(iD)%longitude(iT) ) & 
+                  & THEN
+
+                slope = & 
+                     & (l2gp(iD)%longitude(iT+1)-2.0*PI- & 
+                     & l2gp(iD)%longitude(iT))/	&
+                     & (l2gp(iD)%latitude(iT+1)-l2gp(iD)%latitude(iT)) 
+             ELSE
+                slope = & 
+                     & (l2gp(iD)%longitude(iT+1)-l2gp(iD)%longitude(iT))/ &
+                     & (l2gp(iD)%latitude(iT+1)-l2gp(iD)%latitude(iT)) 
+             END IF
+                 IF( slope < 0.0 ) THEN
+                    mzA%l3mzValue(iP, iCom) = mzA%l3mzValue(iP, iCom) + & 
+                         & l2gp(iD)%l2gpValue(1, kP, iT)
+d1276 1
+a1276 2
+                    ascFieldArr(iCom, iAscArr(iCom)) = & 
+                         & l2gp(iD)%l2gpValue(1, kP, iT)
+d1278 4
+a1281 8
+                       if(mzA%localSolarZenithAngle(2, iCom) <= & 
+                            & l2gp(iD)%solarZenith(iT)) then
+                          mzA%localSolarZenithAngle(2, iCom) = & 
+                               & l2gp(iD)%solarZenith(iT)
+                       else if(mzA%localSolarZenithAngle(1, iCom) >= & 
+                            & l2gp(iD)%solarZenith(iT)) then
+                          mzA%localSolarZenithAngle(1, iCom) = & 
+                               & l2gp(iD)%solarZenith(iT)
+d1284 3
+a1286 6
+                       if(mzA%localSolarTime(2, iCom) <= & 
+                            & l2gp(iD)%solarTime(iT)) then
+                          mzA%localSolarTime(2, iCom) = & 
+                               & l2gp(iD)%solarTime(iT)
+                       else if(mzA%localSolarTime(1, iCom) >= & 
+                            & l2gp(iD)%solarTime(iT)) then
+d1290 3
+a1292 3
+                 ELSE
+                    mzD%l3mzValue(iP, iCom) = mzD%l3mzValue(iP, iCom) + & 
+                         & l2gp(iD)%l2gpValue(1, kP, iT)
+d1294 1
+a1294 2
+                    desFieldArr(iCom, iDesArr(iCom)) = & 
+                         & l2gp(iD)%l2gpValue(1, kP, iT)
+d1296 4
+a1299 8
+                       if(mzD%localSolarZenithAngle(2, iCom) <= & 
+                            & l2gp(iD)%solarZenith(iT)) then
+                          mzD%localSolarZenithAngle(2, iCom) = & 
+                               & l2gp(iD)%solarZenith(iT)
+                       else if(mzD%localSolarZenithAngle(1, iCom) >= & 
+                            & l2gp(iD)%solarZenith(iT)) then
+                          mzD%localSolarZenithAngle(1, iCom) = & 
+                               & l2gp(iD)%solarZenith(iT)
+d1302 1
+a1302 2
+                       if(mzD%localSolarTime(2, iCom) <= & 
+                            & l2gp(iD)%solarTime(iT)) then
+d1304 1
+a1304 2
+                       else if(mzD%localSolarTime(1, iCom) >= & 
+                            & l2gp(iD)%solarTime(iT)) then
+d1308 9
+a1316 3
+                 END IF
+              ENDDO
+           ENDDO
+d1318 1
+a1318 1
+           DO iT = 1, cfDef%nNom 
+d1320 3
+a1322 3
+                 l3mz%l3mzValue(iP, iT) = 0.0 
+                 mzA%l3mzValue(iP, iT)  = 0.0 
+                 mzD%l3mzValue(iP, iT)  = 0.0 
+d1324 7
+a1330 3
+                 l3mz%latRss(iP, iT)    = 0.0 
+                 mzA%latRss(iP, iT)     = 0.0 
+                 mzD%latRss(iP, iT)     = 0.0 
+d1332 2
+a1333 2
+                 l3mz%l3mzValue(iP, iT) = & 
+                      & l3mz%l3mzValue(iP, iT)/real(iComArr(iT))
+d1335 2
+a1336 2
+                    mzA%l3mzValue(iP, iT) = & 
+                         & mzA%l3mzValue(iP, iT)/real(iAscArr(iT))
+d1338 2
+a1339 1
+                    mzA%l3mzValue(iP, iT) = 0.0 
+d1342 2
+a1343 2
+                    mzD%l3mzValue(iP, iT) = & 
+                         & mzD%l3mzValue(iP, iT)/real(iDesArr(iT))
+d1345 2
+a1346 1
+                  mzD%l3mzValue(iP, iT) = 0.0 
+d1367 1
+a1367 1
+                  mzA%latRss(iP, iT) = 0.0 
+d1378 1
+a1378 1
+                  mzD%latRss(iP, iT) = 0.0 
+d1384 1
+a1384 1
+	ENDDO
+d1386 1
+a1386 1
+        !*** Deallocate 
+d1388 2
+a1389 2
+        DEALLOCATE(iComArr, STAT=error)
+        IF ( error /= 0 ) THEN
+d1392 1
+a1392 1
+        ENDIF
+d1394 2
+a1395 2
+        DEALLOCATE(iAscArr, STAT=error)
+        IF ( error /= 0 ) THEN
+d1398 1
+a1398 1
+        ENDIF
+d1400 2
+a1401 2
+        DEALLOCATE(iDesArr, STAT=error)
+        IF ( error /= 0 ) THEN
+d1404 1
+a1404 1
+        ENDIF
+d1406 2
+a1407 2
+        DEALLOCATE(comFieldArr, STAT=error)
+        IF ( error /= 0 ) THEN
+d1410 1
+a1410 1
+        ENDIF
+d1412 2
+a1413 2
+        DEALLOCATE(ascFieldArr, STAT=error)
+        IF ( error /= 0 ) THEN
+d1416 1
+a1416 1
+        ENDIF
+d1418 2
+a1419 2
+        DEALLOCATE(desFieldArr, STAT=error)
+        IF ( error /= 0 ) THEN
+d1422 1
+a1422 1
+        ENDIF
+d1424 1
+a1424 1
+        !-----------------------------------
+d1504 3
+d1545 3
+a1547 3
+                   comFieldArr(I,J, K) = 0.0
+                   ascFieldArr(I,J, K) = 0.0
+                   desFieldArr(I,J, K) = 0.0
+d1554 3
+a1556 3
+                iComLat = FindLatIndexForL3Grid(cfProd, l2gp(iD)%latitude(iT))
+                iComLon = FindLonIndexForL3Grid(cfProd, l2gp(iD)%longitude(iT))
+                IF(l2gp(iD)%l2gpValue(1, kP, iT) > 0.0) THEN
+d1560 3
+a1562 1
+                   l3mm%l3mmPrecision(iP, iComLat, iComLon) = 0.0 
+d1566 1
+a1566 18
+                   IF( l2gp(iD)%longitude(iT) >= -PI     .AND. &
+                        & l2gp(iD)%longitude(iT) < 0.0   .AND. &
+                        & l2gp(iD)%longitude(iT+1) <= PI .AND. &
+                        & l2gp(iD)%longitude(iT+1) > 0.0 .AND. &
+                        & l2gp(iD)%longitude(iT+1) > l2gp(iD)%longitude(iT) )& 
+                        & THEN
+                      
+                      slope = & 
+                           & (l2gp(iD)%longitude(iT+1)-2.0*PI- & 
+                           & l2gp(iD)%longitude(iT))/	&
+                           & (l2gp(iD)%latitude(iT+1)-l2gp(iD)%latitude(iT)) 
+                   ELSE
+                      slope = & 
+                           & (l2gp(iD)%longitude(iT+1)-& 
+                           & l2gp(iD)%longitude(iT))/	&
+                           & (l2gp(iD)%latitude(iT+1)-l2gp(iD)%latitude(iT)) 
+                   END IF
+                   IF( slope < 0.0 ) THEN
+d1570 3
+d1580 3
+d1587 1
+a1587 1
+                END IF
+d1594 6
+a1599 3
+                   l3mm%l3mmValue(iP, I, J) = 0.0 
+                   mmA%l3mmValue(iP, I, J)  = 0.0 
+                   mmD%l3mmValue(iP, I, J)  = 0.0 
+d1603 2
+d1608 2
+d1611 2
+a1612 1
+                      mmA%l3mmValue(iP, I, J) = 0.0 
+d1617 2
+d1620 2
+a1621 1
+                      mmD%l3mmValue(iP, I, J) = 0.0 
+d1782 2
+a1783 4
+                    CALL SPLINT(lons_rev, fields_rev, Y2, anlats(J, iP), & 
+                         & lonStart, newField)
+                    mmA%l3mmValue(iP, J, K) = & 
+                         & mmA%l3mmValue(iP, J, K) + newField 
+d1865 2
+a1866 4
+                       CALL SPLINT(lons_rev, fields_rev, Y2, dnlats(J, iP), & 
+                            & lonStart, newField)
+                       mmD%l3mmValue(iP, J, K) = & 
+                            & mmD%l3mmValue(iP, J, K) + newField 
+d1919 1
+a1919 3
+                      l3mm%l3mmValue(iP, J, K) = & 
+                           & (mmA%l3mmValue(iP, J, K)+ & 
+                           & mmD%l3mmValue(iP, J, K))*0.5
+d1962 1
+a1962 3
+                IF (alat < & 
+                     & (cfDef%l2nomLats(i)+cfDef%l2nomLats(i+1))*0.5 )&
+                     & THEN 
+d1966 2
+a1967 4
+             ELSE IF( alat >= & 
+                  & (cfDef%l2nomLats(i)+cfDef%l2nomLats(i-1))*0.5 .and. &
+                  alat <  & 
+                  & (cfDef%l2nomLats(i)+cfDef%l2nomLats(i+1))*0.5 ) THEN
+d1998 1
+a1998 3
+                 IF( alat < & 
+                      & (cfProd%latGridMap(i)+ & 
+                      & cfProd%latGridMap(i+1))*0.5 ) THEN 
+d2002 2
+a2003 5
+              ELSE IF( alat >= & 
+                   & (cfProd%latGridMap(i)+cfProd%latGridMap(i-1))*0.5 .and.&
+                   & alat < & 
+                   & (cfProd%latGridMap(i)+cfProd%latGridMap(i+1))*0.5)&
+                   & THEN
+d2034 1
+a2034 3
+                 IF( alon < & 
+                      & (cfProd%longGrid(i)+cfProd%longGrid(i+1))*0.5) &
+                      & THEN 
+d2038 2
+a2039 4
+              ELSE IF( alon >= & 
+                   & (cfProd%longGrid(i)+cfProd%longGrid(i-1))*0.5 .and. &
+                   & alon < & 
+                   & (cfProd%longGrid(i)+cfProd%longGrid(i+1))*0.5 ) THEN
+d2163 43
+a2206 8
+  logical function not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id: $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+@
+
+
+1.12
+log
+@Use int array instead of charstring for mis_days
+@
+text
+@d2 10
+a11 2
+! Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+a28 1
+  PRIVATE :: ID, ModuleName
+d30 5
+a34 6
+  !------------------- RCS Ident Info -----------------------
+  CHARACTER(LEN=130) :: Id = &
+       "$Id: MonthlyProcessModule.f90,v 1.11 2003/04/30 18:16:29 pwagner Exp $"
+  CHARACTER (LEN=*), PARAMETER :: & 
+       & ModuleName= "$RCSfile: MonthlyProcessModule.f90,v $"
+  !----------------------------------------------------------
+d2228 8
+@
+
+
+1.11
+log
+@Work-around for LF95 infinite compile-time bug
+@
+text
+@d10 1
+a10 1
+  USE L2GPData, ONLY: L2GPData_T, rgp
+d25 1
+a25 1
+       "$Id: MonthlyProcessModule.f90,v 1.10 2003/04/06 02:28:09 jdone Exp $"
+d44 1
+a44 1
+       & mmA, mmD, mzA, mzD, dzA, dzD, mis_Days)
+d68 1
+a68 1
+    CHARACTER (LEN=DATE_LEN) :: mis_Days(maxWindow)
+d82 1
+a82 1
+ 
+d214 1
+d223 1
+d232 1
+d376 1
+@
+
+
+1.10
+log
+@added allocate/deallocate for individual pointers; added indentation
+@
+text
+@a9 1
+  USE L3DZData, ONLY: L3DZData_T, AllocateL3DZ, DestroyL3DZDatabase
+a11 2
+  USE L3MMData, ONLY: L3MMData_T, AllocateL3MM
+  USE L3MZData, ONLY: L3MZData_T, AllocateL3MZ, DeallocateL3MZ
+a15 1
+  USE mon_Open, ONLY: PCFMData_T
+d19 2
+a20 1
+
+d25 1
+a25 1
+       "$Id: MonthlyProcessModule.f90,v 1.9 2003/02/06 18:59:58 pwagner Exp $"
+d46 4
+d803 1
+d1142 1
+d1472 1
+d1710 1
+@
+
+
+1.9
+log
+@Changed numeric types of some args to work with variable rgp from lib/L2GPData_T
+@
+text
+@d9 29
+a37 31
+   Use OpenInit
+   Use MLSCommon
+   USE MLSCF
+   USE MLSPCF3
+   USE L3CF
+   USE L3DZData
+   USE L2GPData
+   USE L2Interface
+   USE OutputClose
+   Use global_data
+   Use DailyMapModule
+   USE L3MMData
+   USE L3MZData
+
+   USE NumRecipesModule
+
+   Implicit none
+
+   PRIVATE :: ID, ModuleName
+
+!------------------- RCS Ident Info -----------------------
+   CHARACTER(LEN=130) :: Id = &
+   "$Id: MonthlyProcessModule.f90,v 1.8 2002/03/27 23:27:15 ybj Exp $"
+   CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile: MonthlyProcessModule.f90,v $"
+!----------------------------------------------------------
+
+! Contents:
+
+! Subroutines -- MonthlyCoreProcessing
+!                
+! This subroutine will process one product for all the input days data
+d39 2
+a40 1
+! Remarks:  This module contains subroutines related to MLS L3 Monthly Map, Zonal Mean and Daily Zonal Mean Processing 
+d45 36
+a80 43
+!-------------------------------------------------------------------------
+   SUBROUTINE MonthlyCoreProcessing(cfProd, pcf, cfDef, l2Days, l2gp, l3mm, mmA, mmD, &
+					mzA, mzD, dzA, dzD, mis_l2Days, mis_Days)
+!-------------------------------------------------------------------------
+
+! Brief description of program
+! This is the main program to run the Core processing.
+
+! Parameters
+
+	! Variable definitions
+
+        TYPE( PCFMData_T ) :: pcf
+        TYPE( L3CFMProd_T ) :: cfProd
+	TYPE( L3CFMDef_T ) :: cfDef
+        TYPE( L2GPData_T ), POINTER :: l2gp(:)
+	TYPE( L3DZData_T ), POINTER :: l3dz(:), dzA(:), dzD(:)
+
+        TYPE( L3MMData_T ) :: l3mm, mmA, mmD
+	TYPE( L3MZData_T ) :: l3mz, mzA, mzD
+
+	Real, POINTER, DIMENSION(:, :, :) ::  alons(:, :, :), alats(:, :, :)
+	Real, POINTER, DIMENSION(:, :, :) ::  dlons(:, :, :), dlats(:, :, :)
+	Real, POINTER, DIMENSION(:, :, :) ::  atimes(:, :, :), dtimes(:, :, :)
+	Real, POINTER, DIMENSION(:, :, :) ::  asolarTime(:, :, :), dsolarTime(:, :, :)
+	Real, POINTER, DIMENSION(:, :, :) ::  asolarZenith(:, :, :), dsolarZenith(:, :, :)
+	Real, POINTER, DIMENSION(:, :, :) ::  afields(:, :, :), dfields(:, :, :)
+
+	INTEGER, DIMENSION(cfProd%nLats, l2gp(1)%nLevels) :: anlats, dnlats 
+
+        CHARACTER (LEN=480) :: msr
+
+	INTEGER ::  error, l2Days, nlev, nf, nwv, numDays, pEndIndex, pStartIndex
+
+        integer mis_l2Days
+
+        CHARACTER (LEN=DATE_LEN) :: mis_Days(maxWindow)
+
+        integer i, j, iP, kP, iD, iL
+	real zonAvg, tau0, l3ret
+	real lonD0_in, lonA0_in
+
+!*** Initilize variables
+d82 159
+a240 148
+	nlev = 0
+        DO j = 1, l2gp(1)%nLevels
+           IF( l2gp(1)%pressures(j) >= cfProd%l3presLvl(1) .AND. &
+	       l2gp(1)%pressures(j) <= cfProd%l3presLvl(2) ) THEN
+	     nlev = nlev + 1
+	     IF (nlev == 1) pStartIndex = j 
+	     pEndIndex = j 
+	   ENDIF
+        ENDDO
+
+!*** Initilize POINTERS
+
+        ALLOCATE( l3dz(l2Days), dzA(l2Days), dzD(l2Days), STAT=error )
+        IF ( error /= 0 ) THEN
+           msr = MLSMSG_Allocate // ' l3dz, l3r arrays.'
+           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+        ENDIF
+
+!!      Initialize Daily Zonal Mean 
+
+        l3dz%name = cfProd%l3prodName
+        dzA%name = TRIM(cfProd%l3prodName) // 'Ascending'
+        dzD%name = TRIM(cfProd%l3prodName) // 'Descending'
+
+        DO j = 1, l2Days
+	  l3dz(j)%date = pcf%dates(j) 
+	  dzA(j)%date = pcf%dates(j) 
+	  dzD(j)%date = pcf%dates(j) 
+        ENDDO
+
+        DO j = 1, l2Days
+
+           CALL AllocateL3DZ( nlev, cfDef%nNom, l3dz(j) )
+           CALL AllocateL3DZ( nlev, cfDef%nNom, dzA(j) )
+           CALL AllocateL3DZ( nlev, cfDef%nNom, dzD(j) )
+
+           l3dz(j)%pressure = 0.0
+           l3dz(j)%latitude = 0.0
+           l3dz(j)%l3dzValue = 0.0
+           l3dz(j)%l3dzPrecision = 0.0
+           l3dz(j)%latRss = 0.0
+           l3dz(j)%perMisPoints = 0
+           dzA(j)%pressure = 0.0
+           dzA(j)%latitude = 0.0
+           dzA(j)%l3dzValue = 0.0
+           dzA(j)%l3dzPrecision = 0.0
+           dzA(j)%latRss = 0.0
+           dzA(j)%perMisPoints = 0
+           dzD(j)%pressure = 0.0
+           dzD(j)%latitude = 0.0
+           dzD(j)%l3dzValue = 0.0
+           dzD(j)%l3dzPrecision = 0.0
+           dzD(j)%latRss = 0.0
+           dzD(j)%perMisPoints = 0
+
+        ENDDO
+
+!!      Initialize Monthly Zonal Mean 
+
+        l3mz%name = cfProd%l3prodName
+        mzA%name = TRIM(cfProd%l3prodName) // 'Ascending'
+        mzD%name = TRIM(cfProd%l3prodName) // 'Descending'
+
+        l3mz%startTime = l2gp(1)%time(1)
+        l3mz%endTime = l2gp(l2Days)%time(l2gp(l2Days)%nTimes)
+        mzA%startTime = l2gp(1)%time(1)
+        mzA%endTime = l2gp(l2Days)%time(l2gp(l2Days)%nTimes)
+        mzD%startTime = l2gp(1)%time(1)
+        mzD%endTime = l2gp(l2Days)%time(l2gp(l2Days)%nTimes)
+
+        CALL AllocateL3MZ( nlev, cfDef%nNom, l3mz )
+        CALL AllocateL3MZ( nlev, cfDef%nNom, mzA )
+        CALL AllocateL3MZ( nlev, cfDef%nNom, mzD )
+
+        l3mz%pressure = 0.0
+        l3mz%latitude = 0.0
+        l3mz%l3mzValue = 0.0
+        l3mz%l3mzPrecision = 0.0
+        l3mz%latRss = 0.0
+        l3mz%perMisPoints = 0
+
+        mzA%pressure = 0.0
+        mzA%latitude = 0.0
+        mzA%l3mzValue = 0.0
+        mzA%l3mzPrecision = 0.0
+        mzA%latRss = 0.0
+        mzA%perMisPoints = 0
+
+        mzD%pressure = 0.0
+        mzD%latitude = 0.0
+        mzD%l3mzValue = 0.0
+        mzD%l3mzPrecision = 0.0
+        mzD%latRss = 0.0
+        mzD%perMisPoints = 0
+
+!!      Initialize Monthly Map 
+
+        l3mm%name = cfProd%l3prodName
+        mmA%name = TRIM(cfProd%l3prodName) // 'Ascending'
+        mmD%name = TRIM(cfProd%l3prodName) // 'Descending'
+
+        l3mm%startTime = l2gp(1)%time(1)
+        l3mm%endTime = l2gp(l2Days)%time(l2gp(l2Days)%nTimes)
+        mmA%startTime = l2gp(1)%time(1)
+        mmA%endTime = l2gp(l2Days)%time(l2gp(l2Days)%nTimes)
+        mmD%startTime = l2gp(1)%time(1)
+        mmD%endTime = l2gp(l2Days)%time(l2gp(l2Days)%nTimes)
+
+        CALL AllocateL3MM( nlev, cfProd%nLats, cfProd%nLons, l3mm )
+        CALL AllocateL3MM( nlev, cfProd%nLats, cfProd%nLons, mmA )
+        CALL AllocateL3MM( nlev, cfProd%nLats, cfProd%nLons, mmD )
+
+        l3mm%pressure = 0.0
+        l3mm%latitude = 0.0
+        l3mm%longitude = 0.0
+        l3mm%l3mmValue = 0.0
+        l3mm%l3mmPrecision = 0.0
+        l3mm%perMisPoints = 0
+        l3mm%misDays = mis_Days 
+
+        mmA%pressure = 0.0
+        mmA%latitude = 0.0
+        mmA%longitude = 0.0
+        mmA%l3mmValue = 0.0
+        mmA%l3mmPrecision = 0.0
+        mmA%perMisPoints = 0
+        mmA%misDays = mis_Days 
+
+        mmD%pressure = 0.0
+        mmD%latitude = 0.0
+        mmD%longitude = 0.0
+        mmD%l3mmValue = 0.0
+        mmD%l3mmPrecision = 0.0
+        mmD%perMisPoints = 0
+        mmD%misDays = mis_Days 
+
+!*** Sort & Prepare the Data 
+
+	Call SortDataMonthly(cfProd, l2Days, l2gp, 		&
+			pStartIndex, pEndIndex,			&
+			tau0, 					&
+			anlats, dnlats, 			&
+		        alats, dlats, 				&
+			alons, dlons, 				&
+			atimes, dtimes, 			&
+			afields, dfields,			&
+			asolarTime, asolarZenith,		&
+			dsolarTime, dsolarZenith )
+d244 2
+a245 3
+        Call DailyZonalMeanFromL2(cfProd, cfDef, l2gp, l2Days,        	&
+                                    pStartIndex, pEndIndex,     &
+                                    l3dz, dzA, dzD )
+d249 2
+a250 3
+        Call MonthlyZonalMeanFromL2(cfProd, cfDef, l2gp, l2Days,      	&
+                                    pStartIndex, pEndIndex,     &
+                                    l3mz, mzA, mzD )
+d252 1
+a252 1
+!*** Calculate Monthly Map 
+d262 2
+a263 2
+   	Call MonthlyMapFromL2_Simple(cfProd, cfDef, l2gp, l2Days, &
+			    pStartIndex, pEndIndex, l3mm, mmA, mmD )
+d265 1
+a265 1
+!*** Calculate Monthly Solar Parameter Ranges  
+d267 144
+a410 6
+!   	Call CalSolarRange(cfProd, l2gp, 		&
+!			    pStartIndex, pEndIndex,  	&
+!			    anlats, dnlats, 		&
+!		            asolarTime, dsolarTime,	&
+!		            asolarZenith, dsolarZenith,	&
+!			    l3mz, mzA, mzD )
+d412 218
+a629 1
+!*** Allocate space for all the arrays
+d631 1
+a631 2
+	DeAllocate(alats, dlats, alons, dlons, atimes, dtimes, afields, dfields)
+	DeAllocate(asolarTime, asolarZenith, dsolarTime, dsolarZenith )
+d633 1
+a633 2
+        CALL DestroyL3DZDatabase(l3dz)
+        CALL DeallocateL3MZ(l3mz)
+d635 5
+a639 3
+!-----------------------------------
+   END SUBROUTINE MonthlyCoreProcessing
+!-----------------------------------
+d641 2
+d644 3
+d648 3
+a650 7
+!-------------------------------------------------------------------------
+   SUBROUTINE SortDataMonthly(cfProd, l2Days, l2gp, pStartIndex, pEndIndex, tau0, anlats, dnlats, 	&
+		alats_interp, dlats_interp, alons_interp, dlons_interp, 	&
+		atimes_interp, dtimes_interp, afields_interp, dfields_interp, &
+		asolarTime_interp, asolarZenith_interp, &
+		dsolarTime_interp, dsolarZenith_interp)
+!-------------------------------------------------------------------------
+d652 4
+a655 2
+        integer error, i, j, iT, iD, iP, kP, nterms, nstart, nr, lindex, lindex_prev
+	INTEGER ::  l2Days, nloop, aindex, aindex_prev, dindex, dindex_prev
+d657 4
+a660 2
+        TYPE( L3CFMProd_T ) :: cfProd
+        TYPE( L2GPData_T ), POINTER :: l2gp(:)
+d662 1
+a662 2
+	Real, POINTER, DIMENSION(:, :) ::  l2Times(:, :), l2Lons_new(:, :), l2Lons(:, :),  l2Lons_old(:, :), &
+					l2Lats(:, :), l2Values(:, :), l2SolarTime(:, :), l2SolarZenith(:, :)
+d664 2
+a665 10
+	Real, POINTER, DIMENSION(:, :, :) ::  alons_interp(:, :, :), alats_interp(:, :, :)
+	Real, POINTER, DIMENSION(:, :, :) ::  dlons_interp(:, :, :), dlats_interp(:, :, :)
+	Real, POINTER, DIMENSION(:, :, :) ::  atimes_interp(:, :, :), dtimes_interp(:, :, :)
+	Real, POINTER, DIMENSION(:, :, :) ::  asolarTime_interp(:, :, :), dsolarTime_interp(:, :, :)
+	Real, POINTER, DIMENSION(:, :, :) ::  asolarZenith_interp(:, :, :), dsolarZenith_interp(:, :, :)
+	Real, POINTER, DIMENSION(:, :, :) ::  afields_interp(:, :, :), dfields_interp(:, :, :)
+
+	Real dlons, alons, lons_found, lats_found, times_found, fields_found, 	&
+		    solarTime_found, solarZenith_found, &
+		  slope, slope_time, slope_solarTime, slope_solarZenith, slope_field, sTime, ddtad
+d667 1
+a667 1
+	Real lons_found_old
+d669 3
+a671 5
+	Real tau0
+ 
+	Integer nPd, pStartIndex, pEndIndex, iMin
+
+	INTEGER, DIMENSION(cfProd%nLats, pEndIndex-pStartIndex+1) :: anlats, dnlats
+d673 3
+a675 1
+!*** Calculate the number of points in each pressure level 
+d677 1
+a677 1
+	nPd = 15
+d679 1
+a679 4
+        nterms = 0
+	DO I = 1, l2Days
+            nterms = nterms + l2gp(I)%nTimes
+	ENDDO
+d681 2
+a682 66
+!*** Allocate space for all the arrays
+
+        ALLOCATE(l2Times(nterms, pEndIndex-pStartIndex+1), STAT=error)
+        ALLOCATE(l2Lons(nterms, pEndIndex-pStartIndex+1), STAT=error)
+        ALLOCATE(l2Lats(nterms, pEndIndex-pStartIndex+1), STAT=error)
+        ALLOCATE(l2Values(nterms, pEndIndex-pStartIndex+1), STAT=error)
+        ALLOCATE(l2SolarTime(nterms, pEndIndex-pStartIndex+1), STAT=error)
+        ALLOCATE(l2SolarZenith(nterms, pEndIndex-pStartIndex+1), STAT=error)
+
+        ALLOCATE(l2Lons_new(nterms, pEndIndex-pStartIndex+1), STAT=error)
+        ALLOCATE(l2Lons_old(nterms, pEndIndex-pStartIndex+1), STAT=error)
+
+        ALLOCATE(alons_interp(cfProd%nLats, nPd*l2Days, pEndIndex-pStartIndex+1), STAT=error)
+        ALLOCATE(alats_interp(cfProd%nLats, nPd*l2Days, pEndIndex-pStartIndex+1), STAT=error)
+        ALLOCATE(atimes_interp(cfProd%nLats, nPd*l2Days, pEndIndex-pStartIndex+1), STAT=error)
+        ALLOCATE(asolarTime_interp(cfProd%nLats, nPd*l2Days, pEndIndex-pStartIndex+1), STAT=error)
+        ALLOCATE(asolarZenith_interp(cfProd%nLats, nPd*l2Days, pEndIndex-pStartIndex+1), STAT=error)
+        ALLOCATE(afields_interp(cfProd%nLats, nPd*l2Days, pEndIndex-pStartIndex+1), STAT=error)
+        ALLOCATE(dlons_interp(cfProd%nLats, nPd*l2Days, pEndIndex-pStartIndex+1), STAT=error)
+        ALLOCATE(dlats_interp(cfProd%nLats, nPd*l2Days, pEndIndex-pStartIndex+1), STAT=error)
+        ALLOCATE(dtimes_interp(cfProd%nLats, nPd*l2Days, pEndIndex-pStartIndex+1), STAT=error)
+        ALLOCATE(dsolarTime_interp(cfProd%nLats, nPd*l2Days, pEndIndex-pStartIndex+1), STAT=error)
+        ALLOCATE(dsolarZenith_interp(cfProd%nLats, nPd*l2Days, pEndIndex-pStartIndex+1), STAT=error)
+        ALLOCATE(dfields_interp(cfProd%nLats, nPd*l2Days, pEndIndex-pStartIndex+1), STAT=error)
+
+	IF(error /= 0 ) THEN
+          print *, "Allocation Error"
+	  STOP
+	END IF
+
+!*** Re-arrange the data into longitude order for each pressure level 
+
+        nstart = 1
+	DO iD = 1, l2Days
+	  DO iT = 1, l2gp(iD)%nTimes
+	    iP = 0
+	    DO kP = pStartIndex, pEndIndex 
+	        iP = iP + 1
+                l2Times(nstart, iP) = l2gp(iD)%time(iT)
+                l2SolarTime(nstart, iP) = l2gp(iD)%solarTime(iT)
+                l2SolarZenith(nstart, iP) = l2gp(iD)%solarZenith(iT)
+                l2Lons(nstart, iP) = l2gp(iD)%longitude(iT) * PI/180.0
+                l2Lons_old(nstart, iP) = l2gp(iD)%longitude(iT) * PI/180.0
+                l2Lats(nstart, iP) = l2gp(iD)%latitude(iT)
+                l2Values(nstart, iP) = l2gp(iD)%l2gpValue(1, kP, iT) 
+	    ENDDO
+            nstart = nstart + 1
+	  ENDDO
+	ENDDO
+
+!*** Re-arrange the longitude into sequence 
+
+	iP = 0
+	DO kP = pStartIndex, pEndIndex 
+	  iP = iP + 1
+          nr = 0
+	  DO iT = 2, nterms 
+                IF( l2Lons(iT, iP) >= 0.0 .AND. l2Lons(iT-1, iP) < 0.0 ) THEN 
+     			l2Lons_new(iT, iP) = l2Lons(iT, iP) - nr*2.0*PI - 2.0*PI
+     			nr = nr + 1
+		ELSE
+     			l2Lons_new(iT, iP) = l2Lons(iT, iP) - nr*2.0*PI
+		END IF
+	  ENDDO
+          l2Lons_new(1, iP) = l2Lons(1, iP)
+	ENDDO
+d684 3
+a686 1
+!*** Find longitudes & latitudes for L3 latitudes in L2 data points 
+d688 3
+a690 1
+        dlons = 0.3*PI/180.0
+d692 6
+a697 62
+	iP = 0
+	DO kP = pStartIndex, pEndIndex 
+	  iP = iP + 1
+
+ 	  alons = l2Lons_new(1, iP) 
+
+	  lindex = 1
+	  lindex_prev = 0
+	  aindex_prev = 0
+	  dindex_prev = 0
+
+          nloop = (l2Lons_new(1, iP)-l2Lons_new(nterms, iP))/dlons
+
+	  DO J = 1, cfProd%nLats
+       	     anlats(J, iP) = 0 
+       	     dnlats(J, iP) = 0 
+	  ENDDO
+
+	  DO I = 1, nloop
+	    alons = alons -  dlons
+	    DO iT = lindex, nterms-1 
+              IF( l2Lons_new(iT, iP) > alons .AND. l2Lons_new(iT+1, iP) <= alons ) THEN
+	 	 lindex = iT
+	 	 EXIT
+	      END IF
+	    ENDDO
+
+            IF ( lindex /= lindex_prev ) THEN
+
+	     lindex_prev = lindex
+
+	     DO J = 1, cfProd%nLats
+              IF( ( l2Lats(lindex, iP) <= cfProd%latGridMap(J) .AND. 	&
+		    l2Lats(lindex+1, iP) > cfProd%latGridMap(J) )  .OR.	&
+                  ( l2Lats(lindex, iP) >= cfProd%latGridMap(J) .AND. 	&
+		    l2Lats(lindex+1, iP) < cfProd%latGridMap(J) )  ) THEN
+		slope = (l2Lats(lindex+1, iP)-l2Lats(lindex, iP))/	&
+			(l2Lons_new(lindex+1, iP)-l2Lons_new(lindex, iP))
+		slope_time = (l2Times(lindex+1, iP)-l2Times(lindex, iP))/	&
+			(l2Lons_new(lindex+1, iP)-l2Lons_new(lindex, iP))
+		slope_field = (l2Values(lindex+1, iP)-l2Values(lindex, iP))/	&
+			(l2Lons(lindex+1, iP)-l2Lons(lindex, iP))
+		slope_solarTime = (l2SolarTime(lindex+1, iP)-l2SolarTime(lindex, iP))/	&
+			(l2Lons_new(lindex+1, iP)-l2Lons_new(lindex, iP))
+		slope_solarZenith = (l2SolarZenith(lindex+1, iP)-l2SolarZenith(lindex, iP))/	&
+			(l2Lons_new(lindex+1, iP)-l2Lons_new(lindex, iP))
+		IF(ABS(slope) < 1.e-6) THEN
+		   lons_found = l2Lons_new(lindex, iP)
+		   lons_found_old = l2Lons_old(lindex, iP)
+		ELSE
+		   lons_found = l2Lons_new(lindex, iP) + (cfProd%latGridMap(J)-l2Lats(lindex, iP))/slope
+		   lons_found_old = l2Lons_old(lindex, iP) + (cfProd%latGridMap(J)-l2Lats(lindex, iP))/slope
+		END IF
+		lats_found = cfProd%latGridMap(J)
+		times_found = l2Times(lindex, iP) + (lons_found-l2Lons_new(lindex, iP))*slope_time
+		solarTime_found = l2SolarTime(lindex, iP) + (lons_found-l2Lons_new(lindex, iP))*slope_solarTime
+		solarZenith_found = l2SolarZenith(lindex, iP) + (lons_found-l2Lons_new(lindex, iP))*slope_solarZenith
+		fields_found = l2Values(lindex, iP) + (lons_found-l2Lons_new(lindex, iP))*slope_field
+                aindex = J
+		EXIT
+	      END IF
+	     ENDDO
+d699 195
+a893 29
+	     IF( slope < 0 .and. aindex /= aindex_prev) THEN
+	         aindex_prev = aindex
+		 !IF(dnlats(aindex, iP) > 0) THEN
+       	           anlats(aindex, iP) = anlats(aindex, iP) + 1 
+	           alons_interp(aindex, anlats(aindex, iP), iP) = lons_found
+	           alats_interp(aindex, anlats(aindex, iP), iP) = lats_found
+	           atimes_interp(aindex, anlats(aindex, iP), iP) = times_found
+	           asolarTime_interp(aindex, anlats(aindex, iP), iP) = solarTime_found
+	           asolarZenith_interp(aindex, anlats(aindex, iP), iP) = solarZenith_found
+	           afields_interp(aindex, anlats(aindex, iP), iP) = fields_found
+	         !END IF
+	     END IF
+
+	     IF( slope >= 0 .and. aindex /= dindex_prev) THEN
+	         dindex_prev = aindex
+		 IF(anlats(aindex, iP) > 0) THEN
+       	           dnlats(aindex, iP) = dnlats(aindex, iP) + 1 
+	           dlons_interp(aindex, dnlats(aindex, iP), iP) = lons_found
+	           dlats_interp(aindex, dnlats(aindex, iP), iP) = lats_found
+	           dtimes_interp(aindex, dnlats(aindex, iP), iP) = times_found
+	           dsolarTime_interp(aindex, dnlats(aindex, iP), iP) = solarTime_found
+	           dsolarZenith_interp(aindex, dnlats(aindex, iP), iP) = solarZenith_found
+	           dfields_interp(aindex, dnlats(aindex, iP), iP) = fields_found
+	         END IF
+	     END IF
+
+
+	    END IF
+
+d896 6
+a901 56
+
+        ENDDO
+
+!*** Deallocate intermidiate arrays 
+
+        DEALLOCATE(l2Times, l2SolarTime, l2SolarZenith, l2Lons, l2Lons_new, l2Lons_old, l2Lats, l2Values)
+
+!-----------------------------------
+   END SUBROUTINE SortDataMonthly
+!-----------------------------------
+
+
+
+!-------------------------------------------------------------------------
+   SUBROUTINE DailyZonalMeanFromL2(cfProd, cfDef, l2gp, l2Days, pStartIndex, pEndIndex,  	&
+			     l3dz, dzA, dzD )
+!-------------------------------------------------------------------------
+
+        integer error, i, j, iT, iD, iP, kP, nterms, nstart, nr
+	INTEGER ::  iCom, iAasc, iDes, nloop, aindex
+
+        TYPE( L3CFMProd_T ) :: cfProd
+	TYPE( L3CFMDef_T ) :: cfDef
+        TYPE( L2GPData_T ), POINTER :: l2gp(:)
+	TYPE( L3DZData_T ), POINTER :: l3dz(:), dzA(:), dzD(:)
+
+	Integer, POINTER, DIMENSION(:) ::  iComArr(:), iAscArr(:), iDesArr(:)
+	Real, POINTER, DIMENSION(:,:) ::   comFieldArr(:, :), ascFieldArr(:, :), desFieldArr(:, :)
+
+	Integer l2Days, pStartIndex, pEndIndex, iMin
+
+	Real slope
+
+!*** Allocate space for all the arrays
+
+        ALLOCATE(iComArr(cfDef%nNom), STAT=error)
+        ALLOCATE(iAscArr(cfDef%nNom), STAT=error)
+        ALLOCATE(iDesArr(cfDef%nNom), STAT=error)
+
+        ALLOCATE(comFieldArr(cfDef%nNom, 100), STAT=error)
+        ALLOCATE(ascFieldArr(cfDef%nNom, 100), STAT=error)
+        ALLOCATE(desFieldArr(cfDef%nNom, 100), STAT=error)
+
+	IF(error /= 0 ) THEN
+          print *, "Allocation Error"
+	  STOP
+	END IF
+
+	DO iT = 1, cfDef%nNom 
+	  iComArr(iT) = 0
+	  iAscArr(iT) = 0
+	  iDesArr(iT) = 0
+	  DO J = 1, 100 
+	  	comFieldArr(iT, J) = 0.0
+	  	ascFieldArr(iT, J) = 0.0
+	  	desFieldArr(iT, J) = 0.0
+a902 1
+        ENDDO
+d904 6
+a909 9
+!*** initialization 
+
+        DO iD = 1, l2Days
+	  iP = 0
+	  DO kP = pStartIndex, pEndIndex 
+	    iP = iP + 1
+	    l3dz(iD)%pressure(iP) = l2gp(1)%pressures(kP) 
+	    dzA(iD)%pressure(iP)  = l2gp(1)%pressures(kP) 
+	    dzD(iD)%pressure(iP)  = l2gp(1)%pressures(kP) 
+d911 2
+d914 16
+a929 32
+          DO J = 1, cfDef%nNom 
+	    l3dz(iD)%latitude(J) = cfDef%l2nomLats(J) 
+	    dzA(iD)%latitude(J)  = cfDef%l2nomLats(J) 
+	    dzD(iD)%latitude(J)  = cfDef%l2nomLats(J) 
+	  END DO
+        ENDDO
+
+        DO iD = 1, l2Days
+          DO J = 1, cfDef%nNom 
+	    l3dz(iD)%localSolarZenithAngle(1, J) =  1.e20 
+	    l3dz(iD)%localSolarZenithAngle(2, J) = -1.e20 
+	    l3dz(iD)%localSolarTime(1, J) =  1.e20 
+	    l3dz(iD)%localSolarTime(2, J) = -1.e20 
+            DO I = 1, l3dz(iD)%nLevels 
+	    	l3dz(iD)%perMisPoints(I,J) = 0 
+            ENDDO
+
+	    dzA(iD)%localSolarZenithAngle(1, J) =  1.e20 
+	    dzA(iD)%localSolarZenithAngle(2, J) = -1.e20 
+	    dzA(iD)%localSolarTime(1, J) =  1.e20 
+	    dzA(iD)%localSolarTime(2, J) = -1.e20 
+            DO I = 1, dzA(iD)%nLevels 
+	    	dzA(iD)%perMisPoints(I,J) = 0 
+            ENDDO
+
+	    dzD(iD)%localSolarZenithAngle(1, J) =  1.e20 
+	    dzD(iD)%localSolarZenithAngle(2, J) = -1.e20 
+	    dzD(iD)%localSolarTime(1, J) =  1.e20 
+	    dzD(iD)%localSolarTime(2, J) = -1.e20 
+            DO I = 1, dzD(iD)%nLevels 
+	    	dzD(iD)%perMisPoints(I,J) = 0 
+            ENDDO
+d931 83
+a1013 76
+        ENDDO
+
+!*** Re-arrange the data into longitude order for each pressure level 
+
+        DO iD = 1, l2Days
+	  iP = 0
+	  DO kP = pStartIndex, pEndIndex 
+	    iP = iP + 1
+
+	!** Initilizing
+	    DO iT = 1, cfDef%nNom 
+	      iComArr(iT) = 0
+	      iAscArr(iT) = 0
+	      iDesArr(iT) = 0
+
+	      l3dz(iD)%l3dzValue(iP, iT) = 0.0 
+	      dzA(iD)%l3dzValue(iP, iT) = 0.0 
+	      dzD(iD)%l3dzValue(iP, iT) = 0.0 
+            ENDDO
+
+	    DO iT = 1, l2gp(iD)%nTimes-1
+   	      iCom = FindIndexForNormGrid(cfDef, l2gp(iD)%latitude(iT))
+	      l3dz(iD)%l3dzValue(iP, iCom) = l3dz(iD)%l3dzValue(iP, iCom) + l2gp(iD)%l2gpValue(1, kP, iT)
+      !** Solar Zenith Angle & Time
+	      if(iP == 1) then
+	         if(l3dz(iD)%localSolarZenithAngle(2, iCom) <= l2gp(iD)%solarZenith(iT)) then
+	            l3dz(iD)%localSolarZenithAngle(2, iCom) =  l2gp(iD)%solarZenith(iT)
+		 else if(l3dz(iD)%localSolarZenithAngle(1, iCom) >= l2gp(iD)%solarZenith(iT)) then
+	            l3dz(iD)%localSolarZenithAngle(1, iCom) =  l2gp(iD)%solarZenith(iT)
+		 end if
+
+	         if(l3dz(iD)%localSolarTime(2, iCom) <= l2gp(iD)%solarTime(iT)) then
+	            l3dz(iD)%localSolarTime(2, iCom) =  l2gp(iD)%solarTime(iT)
+		 else if(l3dz(iD)%localSolarTime(1, iCom) >= l2gp(iD)%solarTime(iT)) then
+	            l3dz(iD)%localSolarTime(1, iCom) =  l2gp(iD)%solarTime(iT)
+		 end if
+	      end if
+	      iComArr(iCom) = iComArr(iCom) + 1 
+	      comFieldArr(iCom, iComArr(iCom)) = l2gp(iD)%l2gpValue(1, kP, iT)
+	      IF( l2gp(iD)%longitude(iT) >= -PI .AND. &
+		  l2gp(iD)%longitude(iT) < 0.0  .AND. &
+		  l2gp(iD)%longitude(iT+1) <= PI .AND. &
+		  l2gp(iD)%longitude(iT+1) > 0.0 .AND. &
+		  l2gp(iD)%longitude(iT+1) > l2gp(iD)%longitude(iT) ) THEN
+		slope = (l2gp(iD)%longitude(iT+1)-2.0*PI-l2gp(iD)%longitude(iT))/	&
+		        (l2gp(iD)%latitude(iT+1)-l2gp(iD)%latitude(iT)) 
+ 	      ELSE
+		slope = (l2gp(iD)%longitude(iT+1)-l2gp(iD)%longitude(iT))/	&
+		        (l2gp(iD)%latitude(iT+1)-l2gp(iD)%latitude(iT)) 
+ 	      END IF
+	      IF( slope < 0.0 ) THEN
+	        dzA(iD)%l3dzValue(iP, iCom) = dzA(iD)%l3dzValue(iP, iCom) + l2gp(iD)%l2gpValue(1, kP, iT)
+	        iAscArr(iCom) = iAscArr(iCom) + 1 
+	        ascFieldArr(iCom, iAscArr(iCom)) = l2gp(iD)%l2gpValue(1, kP, iT)
+	        if(iP == 1) then
+	           if(dzA(iD)%localSolarZenithAngle(2, iCom) <= l2gp(iD)%solarZenith(iT)) then
+	              dzA(iD)%localSolarZenithAngle(2, iCom) =  l2gp(iD)%solarZenith(iT)
+		   else if(dzA(iD)%localSolarZenithAngle(1, iCom) >= l2gp(iD)%solarZenith(iT)) then
+	              dzA(iD)%localSolarZenithAngle(1, iCom) =  l2gp(iD)%solarZenith(iT)
+		   end if
+
+	           if(dzA(iD)%localSolarTime(2, iCom) <= l2gp(iD)%solarTime(iT)) then
+	              dzA(iD)%localSolarTime(2, iCom) =  l2gp(iD)%solarTime(iT)
+		   else if(dzA(iD)%localSolarTime(1, iCom) >= l2gp(iD)%solarTime(iT)) then
+	              dzA(iD)%localSolarTime(1, iCom) =  l2gp(iD)%solarTime(iT)
+		   end if
+	        end if
+	      ELSE
+	        dzD(iD)%l3dzValue(iP, iCom) = dzD(iD)%l3dzValue(iP, iCom) + l2gp(iD)%l2gpValue(1, kP, iT)
+	        iDesArr(iCom) = iDesArr(iCom) + 1 
+	        desFieldArr(iCom, iDesArr(iCom)) = l2gp(iD)%l2gpValue(1, kP, iT)
+	        if(iP == 1) then
+	           if(dzD(iD)%localSolarZenithAngle(2, iCom) <= l2gp(iD)%solarZenith(iT)) then
+	              dzD(iD)%localSolarZenithAngle(2, iCom) =  l2gp(iD)%solarZenith(iT)
+		   else if(dzD(iD)%localSolarZenithAngle(1, iCom) >= l2gp(iD)%solarZenith(iT)) then
+	              dzD(iD)%localSolarZenithAngle(1, iCom) =  l2gp(iD)%solarZenith(iT)
+d1016 6
+a1021 3
+	           if(dzD(iD)%localSolarTime(2, iCom) <= l2gp(iD)%solarTime(iT)) then
+	              dzD(iD)%localSolarTime(2, iCom) =  l2gp(iD)%solarTime(iT)
+		   else if(dzD(iD)%localSolarTime(1, iCom) >= l2gp(iD)%solarTime(iT)) then
+d1025 2
+a1026 2
+	      END IF	
+	    ENDDO
+d1028 2
+a1029 2
+	    DO iT = 1, cfDef%nNom 
+	      IF(iComArr(iT) == 0) THEN
+d1031 56
+a1086 60
+	      	dzA(iD)%l3dzValue(iP, iT) = 0.0 
+	      	dzD(iD)%l3dzValue(iP, iT) = 0.0 
+
+	      	l3dz(iD)%latRss(iP, iT) = 0.0 
+	      	dzA(iD)%latRss(iP, iT) = 0.0 
+	      	dzD(iD)%latRss(iP, iT) = 0.0 
+	      ELSE
+	      	l3dz(iD)%l3dzValue(iP, iT) = l3dz(iD)%l3dzValue(iP, iT)/real(iComArr(iT))
+		IF(iAscArr(iT) > 0) THEN
+	      		dzA(iD)%l3dzValue(iP, iT) = dzA(iD)%l3dzValue(iP, iT)/real(iAscArr(iT))
+		ELSE
+	      		dzA(iD)%l3dzValue(iP, iT) = 0.0 
+		END IF
+		IF(iDesArr(iT) > 0) THEN
+	      		dzD(iD)%l3dzValue(iP, iT) = dzD(iD)%l3dzValue(iP, iT)/real(iDesArr(iT))
+		ELSE
+	      		dzD(iD)%l3dzValue(iP, iT) = 0.0 
+		END IF
+
+		!*** calculate Root-Sum-Square for each latitude, dimensioned (nLevels, nLats)
+
+	  	DO J = 1, iComArr(iT)  
+	  		l3dz(iD)%latRss(iP, iT) = l3dz(iD)%latRss(iP, iT) + 				&
+						  (comFieldArr(iT, J)-l3dz(iD)%l3dzValue(iP, iT))* 	&
+						  (comFieldArr(iT, J)-l3dz(iD)%l3dzValue(iP, iT))
+          	ENDDO
+	  	l3dz(iD)%latRss(iP, iT) = l3dz(iD)%latRss(iP, iT)/real(iComArr(iT))
+
+		IF(iAscArr(iT) > 0) THEN
+	  	   DO J = 1, iAscArr(iT)  
+	  		dzA(iD)%latRss(iP, iT) = dzA(iD)%latRss(iP, iT) + 				&
+						 (ascFieldArr(iT, J)-dzA(iD)%l3dzValue(iP, iT))* 	&
+						 (ascFieldArr(iT, J)-dzA(iD)%l3dzValue(iP, iT))
+          	   ENDDO
+	  	   dzA(iD)%latRss(iP, iT) = dzA(iD)%latRss(iP, iT)/real(iAscArr(iT))
+		ELSE
+	  	   dzA(iD)%latRss(iP, iT) = 0.0 
+		END IF
+
+		IF(iDesArr(iT) > 0) THEN
+	  	   DO J = 1, iDesArr(iT)  
+	  		dzD(iD)%latRss(iP, iT) = dzD(iD)%latRss(iP, iT) + 				&
+						 (desFieldArr(iT, J)-dzD(iD)%l3dzValue(iP, iT))* 	&
+						 (desFieldArr(iT, J)-dzD(iD)%l3dzValue(iP, iT))
+          	   ENDDO
+	  	   dzD(iD)%latRss(iP, iT) = dzD(iD)%latRss(iP, iT)/real(iDesArr(iT))
+		ELSE
+	  	   dzD(iD)%latRss(iP, iT) = 0.0 
+		END IF
+
+	      END IF
+	    ENDDO
+
+	  ENDDO
+	ENDDO
+
+!*** Deallocate 
+
+        DEALLOCATE(iComArr, iAscArr, iDesArr)
+        DEALLOCATE(comFieldArr, ascFieldArr, desFieldArr)
+d1088 1
+a1088 51
+!-----------------------------------
+   END SUBROUTINE DailyZonalMeanFromL2
+!-----------------------------------
+
+!-------------------------------------------------------------------------
+   SUBROUTINE MonthlyZonalMeanFromL2(cfProd, cfDef, l2gp, l2Days, pStartIndex, pEndIndex,  	&
+			     	l3mz, mzA, mzD )
+!-------------------------------------------------------------------------
+
+        integer error, i, j, iT, iD, iP, kP, nterms, nstart, nr
+	INTEGER ::  iCom, iAsc, iDes, nloop, aindex
+
+        TYPE( L3CFMProd_T ) :: cfProd
+	TYPE( L3CFMDef_T ) :: cfDef
+        TYPE( L2GPData_T ), POINTER :: l2gp(:)
+	TYPE( L3MZData_T ) :: l3mz, mzA, mzD
+
+	Integer, POINTER, DIMENSION(:) ::  iComArr(:), iAscArr(:), iDesArr(:)
+	Real, POINTER, DIMENSION(:,:) ::   comFieldArr(:, :), ascFieldArr(:, :), desFieldArr(:, :)
+
+	Integer l2Days, pStartIndex, pEndIndex, iMin
+
+	Real slope
+
+!*** Allocate space for all the arrays
+
+        ALLOCATE(iComArr(cfDef%nNom), STAT=error)
+        ALLOCATE(iAscArr(cfDef%nNom), STAT=error)
+        ALLOCATE(iDesArr(cfDef%nNom), STAT=error)
+
+        ALLOCATE(comFieldArr(cfDef%nNom, 100*l2Days), STAT=error)
+        ALLOCATE(ascFieldArr(cfDef%nNom, 100*l2Days), STAT=error)
+        ALLOCATE(desFieldArr(cfDef%nNom, 100*l2Days), STAT=error)
+
+	IF(error /= 0 ) THEN
+          print *, "Allocation Error"
+	  STOP
+	END IF
+
+!*** initialization 
+
+	iP = 0
+	DO kP = pStartIndex, pEndIndex 
+	  iP = iP + 1
+	  l3mz%pressure(iP) = l2gp(1)%pressures(kP) 
+	  mzA%pressure(iP)  = l2gp(1)%pressures(kP) 
+	  mzD%pressure(iP)  = l2gp(1)%pressures(kP) 
+          DO J = 1, cfDef%nNom 
+	      l3mz%l3mzValue(iP, J) = 0.0 
+	      mzA%l3mzValue(iP, J) = 0.0 
+	      mzD%l3mzValue(iP, J) = 0.0 
+d1090 166
+a1255 49
+        ENDDO
+
+        DO J = 1, cfDef%nNom 
+	     l3mz%latitude(J) = cfDef%l2nomLats(J) 
+	     mzA%latitude(J)  = cfDef%l2nomLats(J) 
+	     mzD%latitude(J)  = cfDef%l2nomLats(J) 
+	END DO
+
+        DO J = 1, cfDef%nNom 
+	    l3mz%localSolarZenithAngle(1, J) =  1.e20 
+	    l3mz%localSolarZenithAngle(2, J) = -1.e20 
+	    l3mz%localSolarTime(1, J) =  1.e20 
+	    l3mz%localSolarTime(2, J) = -1.e20 
+            DO I = 1, l3mz%nLevels 
+	    	l3mz%perMisPoints(I,J) = 0 
+            ENDDO
+
+	    mzA%localSolarZenithAngle(1, J) =  1.e20 
+	    mzA%localSolarZenithAngle(2, J) = -1.e20 
+	    mzA%localSolarTime(1, J) =  1.e20 
+	    mzA%localSolarTime(2, J) = -1.e20 
+            DO I = 1, mzA%nLevels 
+	    	mzA%perMisPoints(I,J) = 0 
+            ENDDO
+
+	    mzD%localSolarZenithAngle(1, J) =  1.e20 
+	    mzD%localSolarZenithAngle(2, J) = -1.e20 
+	    mzD%localSolarTime(1, J) =  1.e20 
+	    mzD%localSolarTime(2, J) = -1.e20 
+            DO I = 1, mzD%nLevels 
+	    	mzD%perMisPoints(I,J) = 0 
+            ENDDO
+        ENDDO
+
+!*** Re-arrange the data into longitude order for each pressure level 
+
+	iP = 0
+	DO kP = pStartIndex, pEndIndex 
+	  iP = iP + 1
+
+	  DO iT = 1, cfDef%nNom 
+	    iComArr(iT) = 0
+	    iAscArr(iT) = 0
+	    iDesArr(iT) = 0
+	    DO J = 1,  100*l2Days
+	  	comFieldArr(iT, J) = 0.0
+	  	ascFieldArr(iT, J) = 0.0
+	  	desFieldArr(iT, J) = 0.0
+            ENDDO
+d1257 1
+d1259 158
+a1416 122
+          DO iD = 1, l2Days
+	    DO iT = 1, l2gp(iD)%nTimes-1
+	      !iCom = real(l2gp(iD)%latitude(iT)-l3mz%latitude(1))/real(l3mz%latitude(2)-l3mz%latitude(1))+1.5
+   	      iCom = FindIndexForNormGrid(cfDef, l2gp(iD)%latitude(iT))
+	      l3mz%l3mzValue(iP, iCom) = l3mz%l3mzValue(iP, iCom) + l2gp(iD)%l2gpValue(1, kP, iT)
+      !** Solar Zenith Angle & Time
+	      if(iP == 1) then
+	         if(l3mz%localSolarZenithAngle(2, iCom) <= l2gp(iD)%solarZenith(iT)) then
+	            l3mz%localSolarZenithAngle(2, iCom) =  l2gp(iD)%solarZenith(iT)
+		 else if(l3mz%localSolarZenithAngle(1, iCom) >= l2gp(iD)%solarZenith(iT)) then
+	            l3mz%localSolarZenithAngle(1, iCom) =  l2gp(iD)%solarZenith(iT)
+		 end if
+
+	         if(l3mz%localSolarTime(2, iCom) <= l2gp(iD)%solarTime(iT)) then
+	            l3mz%localSolarTime(2, iCom) =  l2gp(iD)%solarTime(iT)
+		 else if(l3mz%localSolarTime(1, iCom) >= l2gp(iD)%solarTime(iT)) then
+	            l3mz%localSolarTime(1, iCom) =  l2gp(iD)%solarTime(iT)
+		 end if
+	      end if
+	      iComArr(iCom) = iComArr(iCom) + 1 
+	      comFieldArr(iCom, iComArr(iCom)) = l2gp(iD)%l2gpValue(1, kP, iT)
+	      IF( l2gp(iD)%longitude(iT) >= -PI .AND. &
+		  l2gp(iD)%longitude(iT) < 0.0  .AND. &
+		  l2gp(iD)%longitude(iT+1) <= PI .AND. &
+		  l2gp(iD)%longitude(iT+1) > 0.0 .AND. &
+		  l2gp(iD)%longitude(iT+1) > l2gp(iD)%longitude(iT) ) THEN
+		slope = (l2gp(iD)%longitude(iT+1)-2.0*PI-l2gp(iD)%longitude(iT))/	&
+		        (l2gp(iD)%latitude(iT+1)-l2gp(iD)%latitude(iT)) 
+ 	      ELSE
+		slope = (l2gp(iD)%longitude(iT+1)-l2gp(iD)%longitude(iT))/	&
+		        (l2gp(iD)%latitude(iT+1)-l2gp(iD)%latitude(iT)) 
+ 	      END IF
+	      IF( slope < 0.0 ) THEN
+	        mzA%l3mzValue(iP, iCom) = mzA%l3mzValue(iP, iCom) + l2gp(iD)%l2gpValue(1, kP, iT)
+	        iAscArr(iCom) = iAscArr(iCom) + 1 
+	        ascFieldArr(iCom, iAscArr(iCom)) = l2gp(iD)%l2gpValue(1, kP, iT)
+	        if(iP == 1) then
+	           if(mzA%localSolarZenithAngle(2, iCom) <= l2gp(iD)%solarZenith(iT)) then
+	              mzA%localSolarZenithAngle(2, iCom) =  l2gp(iD)%solarZenith(iT)
+		   else if(mzA%localSolarZenithAngle(1, iCom) >= l2gp(iD)%solarZenith(iT)) then
+	              mzA%localSolarZenithAngle(1, iCom) =  l2gp(iD)%solarZenith(iT)
+		   end if
+
+	           if(mzA%localSolarTime(2, iCom) <= l2gp(iD)%solarTime(iT)) then
+	              mzA%localSolarTime(2, iCom) =  l2gp(iD)%solarTime(iT)
+		   else if(mzA%localSolarTime(1, iCom) >= l2gp(iD)%solarTime(iT)) then
+	              mzA%localSolarTime(1, iCom) =  l2gp(iD)%solarTime(iT)
+		   end if
+	        end if
+	      ELSE
+	        mzD%l3mzValue(iP, iCom) = mzD%l3mzValue(iP, iCom) + l2gp(iD)%l2gpValue(1, kP, iT)
+	        iDesArr(iCom) = iDesArr(iCom) + 1 
+	        desFieldArr(iCom, iDesArr(iCom)) = l2gp(iD)%l2gpValue(1, kP, iT)
+	        if(iP == 1) then
+	           if(mzD%localSolarZenithAngle(2, iCom) <= l2gp(iD)%solarZenith(iT)) then
+	              mzD%localSolarZenithAngle(2, iCom) =  l2gp(iD)%solarZenith(iT)
+		   else if(mzD%localSolarZenithAngle(1, iCom) >= l2gp(iD)%solarZenith(iT)) then
+	              mzD%localSolarZenithAngle(1, iCom) =  l2gp(iD)%solarZenith(iT)
+		   end if
+
+	           if(mzD%localSolarTime(2, iCom) <= l2gp(iD)%solarTime(iT)) then
+	              mzD%localSolarTime(2, iCom) =  l2gp(iD)%solarTime(iT)
+		   else if(mzD%localSolarTime(1, iCom) >= l2gp(iD)%solarTime(iT)) then
+	              mzD%localSolarTime(1, iCom) =  l2gp(iD)%solarTime(iT)
+		   end if
+	        end if
+	      END IF	
+	    ENDDO
+	  ENDDO
+
+	  DO iT = 1, cfDef%nNom 
+	    IF(iComArr(iT) == 0) THEN
+	      	l3mz%l3mzValue(iP, iT) = 0.0 
+	      	mzA%l3mzValue(iP, iT) = 0.0 
+	      	mzD%l3mzValue(iP, iT) = 0.0 
+
+	      	l3mz%latRss(iP, iT) = 0.0 
+	      	mzA%latRss(iP, iT) = 0.0 
+	      	mzD%latRss(iP, iT) = 0.0 
+	    ELSE
+	        l3mz%l3mzValue(iP, iT) = l3mz%l3mzValue(iP, iT)/real(iComArr(iT))
+		IF(iAscArr(iT) > 0) THEN
+	    		mzA%l3mzValue(iP, iT) = mzA%l3mzValue(iP, iT)/real(iAscArr(iT))
+		ELSE
+	    		mzA%l3mzValue(iP, iT) = 0.0 
+		END IF
+		IF(iDesArr(iT) > 0) THEN
+	    		mzD%l3mzValue(iP, iT) = mzD%l3mzValue(iP, iT)/real(iDesArr(iT))
+		ELSE
+	    		mzD%l3mzValue(iP, iT) = 0.0 
+		END IF
+
+		!*** calculate Root-Sum-Square for each latitude, dimensioned (nLevels, nLats)
+
+	  	DO J = 1, iComArr(iT)  
+	  		l3mz%latRss(iP, iT) = l3mz%latRss(iP, iT) + 				&
+					    	  (comFieldArr(iT, J)-l3mz%l3mzValue(iP, iT))* 	&
+						  (comFieldArr(iT, J)-l3mz%l3mzValue(iP, iT))
+          	ENDDO
+	  	l3mz%latRss(iP, iT) = l3mz%latRss(iP, iT)/real(iComArr(iT))
+
+		IF(iAscArr(iT) > 0) THEN
+	  	   DO J = 1, iAscArr(iT)  
+	  		mzA%latRss(iP, iT) = mzA%latRss(iP, iT) + 				&
+						 (ascFieldArr(iT, J)-mzA%l3mzValue(iP, iT))* 	&
+						 (ascFieldArr(iT, J)-mzA%l3mzValue(iP, iT))
+          	   ENDDO
+	  	   mzA%latRss(iP, iT) = mzA%latRss(iP, iT)/real(iAscArr(iT))
+		ELSE
+	  	   mzA%latRss(iP, iT) = 0.0 
+		END IF
+
+		IF(iDesArr(iT) > 0) THEN
+	  	   DO J = 1, iDesArr(iT)  
+	  		mzD%latRss(iP, iT) = mzD%latRss(iP, iT) + 				&
+						 (desFieldArr(iT, J)-mzD%l3mzValue(iP, iT))* 	&
+						 (desFieldArr(iT, J)-mzD%l3mzValue(iP, iT))
+          	   ENDDO
+	  	   mzD%latRss(iP, iT) = mzD%latRss(iP, iT)/real(iDesArr(iT))
+		ELSE
+	  	   mzD%latRss(iP, iT) = 0.0 
+		END IF
+d1419 2
+a1420 2
+	  ENDDO
+
+d1422 14
+d1437 17
+a1453 1
+!*** Deallocate 
+d1455 5
+a1459 2
+        DEALLOCATE(iComArr, iAscArr, iDesArr)
+        DEALLOCATE(comFieldArr, ascFieldArr, desFieldArr)
+d1461 3
+a1463 3
+!-----------------------------------
+   END SUBROUTINE MonthlyZonalMeanFromL2
+!-----------------------------------
+d1466 2
+a1467 2
+   SUBROUTINE MonthlyMapFromL2_Simple(cfProd, cfDef, l2gp, l2Days, pStartIndex, pEndIndex,  	&
+			     	l3mm, mmA, mmD )
+a1469 3
+        integer error, i, j, k, iT, iD, iP, kP, nterms, nstart, nr
+	INTEGER ::  iComLat, iComLon, iAsc, iDes, nloop, aindex
+
+d1471 3
+a1473 3
+	TYPE( L3CFMDef_T )  :: cfDef
+        TYPE( L3MMData_T )  :: l3mm, mmA, mmD
+
+d1476 50
+a1525 23
+	Integer, POINTER, DIMENSION(:,:) ::  iComArr(:,:), iAscArr(:,:), iDesArr(:,:)
+	Real, POINTER, DIMENSION(:,:,:) ::   comFieldArr(:,:,:), ascFieldArr(:,:,:), desFieldArr(:,:,:)
+
+	Integer l2Days, pStartIndex, pEndIndex, nc
+
+	Real slope, lonStart, newField
+
+!*** Allocate space for all the arrays
+
+        ALLOCATE(iComArr(cfProd%nLats,cfProd%nLons), STAT=error)
+        ALLOCATE(iAscArr(cfProd%nLats,cfProd%nLons), STAT=error)
+        ALLOCATE(iDesArr(cfProd%nLats,cfProd%nLons), STAT=error)
+
+        ALLOCATE(comFieldArr(cfProd%nLats,cfProd%nLons, 10*l2Days), STAT=error)
+        ALLOCATE(ascFieldArr(cfProd%nLats,cfProd%nLons, 10*l2Days), STAT=error)
+        ALLOCATE(desFieldArr(cfProd%nLats,cfProd%nLons, 10*l2Days), STAT=error)
+
+	IF(error /= 0 ) THEN
+          print *, "Allocation Error"
+	  STOP
+	END IF
+
+!*** initialization 
+d1527 2
+d1536 5
+a1540 5
+	  DO J = 1, cfProd%nLons 
+	      l3mm%l3mmValue(iP, I, J) = 0.0 
+	      mmA%l3mmValue(iP, I, J) = 0.0 
+	      mmD%l3mmValue(iP, I, J) = 0.0 
+          ENDDO
+d1542 28
+a1569 28
+	END DO
+
+        DO J = 1, cfProd%nLats
+	     l3mm%latitude(J) = cfProd%latGridMap(J) 
+	     mmA%latitude(J)  = cfProd%latGridMap(J) 
+	     mmD%latitude(J)  = cfProd%latGridMap(J) 
+	END DO
+
+        DO K = 1, cfProd%nLons
+	     l3mm%longitude(K) = cfProd%longGrid(K) 
+	     mmA%longitude(K)  = cfProd%longGrid(K) 
+	     mmD%longitude(K)  = cfProd%longGrid(K) 
+	END DO
+
+        DO I = 1, l3mm%nLevels 
+	    	l3mm%perMisPoints(I) = 0 
+        ENDDO
+        DO I = 1, mmA%nLevels 
+	    	mmA%perMisPoints(I) = 0 
+        ENDDO
+        DO I = 1, mmD%nLevels 
+	    	mmD%perMisPoints(I) = 0 
+        ENDDO
+
+!*** Start calculation 
+
+	iP = 0
+	DO kP = pStartIndex, pEndIndex 
+d1571 1
+a1571 1
+
+d1573 10
+a1582 9
+	  DO J = 1, cfProd%nLons 
+	    iComArr(I,J) = 0
+	    iAscArr(I,J) = 0
+	    iDesArr(I,J) = 0
+	    DO K = 1,  10*l2Days
+	  	comFieldArr(I,J, K) = 0.0
+	  	ascFieldArr(I,J, K) = 0.0
+	  	desFieldArr(I,J, K) = 0.0
+            ENDDO
+d1584 1
+a1584 2
+          ENDDO
+
+d1586 45
+a1630 30
+	    DO iT = 1, l2gp(iD)%nTimes-1
+   	      iComLat = FindLatIndexForL3Grid(cfProd, l2gp(iD)%latitude(iT))
+   	      iComLon = FindLonIndexForL3Grid(cfProd, l2gp(iD)%longitude(iT))
+	      IF(l2gp(iD)%l2gpValue(1, kP, iT) > 0.0) THEN
+	        l3mm%l3mmValue(iP, iComLat, iComLon) = l3mm%l3mmValue(iP, iComLat, iComLon) + l2gp(iD)%l2gpValue(1, kP, iT)
+	        l3mm%l3mmPrecision(iP, iComLat, iComLon) = 0.0 
+	        iComArr(iComLat, iComLon) = iComArr(iComLat, iComLon) + 1 
+	        comFieldArr(iComLat, iComLon, iComArr(iComLat, iComLon)) = l2gp(iD)%l2gpValue(1, kP, iT)
+	        IF( l2gp(iD)%longitude(iT) >= -PI .AND. &
+		  l2gp(iD)%longitude(iT) < 0.0  .AND. &
+		  l2gp(iD)%longitude(iT+1) <= PI .AND. &
+		  l2gp(iD)%longitude(iT+1) > 0.0 .AND. &
+		  l2gp(iD)%longitude(iT+1) > l2gp(iD)%longitude(iT) ) THEN
+		  slope = (l2gp(iD)%longitude(iT+1)-2.0*PI-l2gp(iD)%longitude(iT))/	&
+		        (l2gp(iD)%latitude(iT+1)-l2gp(iD)%latitude(iT)) 
+ 	        ELSE
+		  slope = (l2gp(iD)%longitude(iT+1)-l2gp(iD)%longitude(iT))/	&
+		        (l2gp(iD)%latitude(iT+1)-l2gp(iD)%latitude(iT)) 
+ 	        END IF
+	        IF( slope < 0.0 ) THEN
+	          mmA%l3mmValue(iP, iComLat, iComLon) = mmA%l3mmValue(iP, iComLat, iComLon) + l2gp(iD)%l2gpValue(1, kP, iT)
+	          iAscArr(iComLat, iComLon) = iAscArr(iComLat, iComLon) + 1 
+	          ascFieldArr(iComLat, iComLon, iAscArr(iComLat, iComLon)) = l2gp(iD)%l2gpValue(1, kP, iT)
+	        ELSE
+	          mmD%l3mmValue(iP, iComLat, iComLon) = mmD%l3mmValue(iP, iComLat, iComLon) + l2gp(iD)%l2gpValue(1, kP, iT)
+	          iDesArr(iComLat, iComLon) = iDesArr(iComLat, iComLon) + 1 
+	          desFieldArr(iComLat, iComLon, iDesArr(iComLat, iComLon)) = l2gp(iD)%l2gpValue(1, kP, iT)
+	        END IF	
+	      END IF	
+	    ENDDO
+d1632 1
+a1632 1
+
+d1634 22
+a1655 19
+	  DO J = 1, cfProd%nLons 
+	    IF(iComArr(I, J) == 0) THEN
+	      	l3mm%l3mmValue(iP, I, J) = 0.0 
+	      	mmA%l3mmValue(iP, I, J) = 0.0 
+	      	mmD%l3mmValue(iP, I, J) = 0.0 
+	    ELSE
+	        l3mm%l3mmValue(iP, I, J) = l3mm%l3mmValue(iP, I, J)/real(iComArr(I, J))
+		IF(iAscArr(I, J) > 0) THEN
+	    		mmA%l3mmValue(iP, I, J) = mmA%l3mmValue(iP, I, J)/real(iAscArr(I, J))
+		ELSE
+	    		mmA%l3mmValue(iP, I, J) = 0.0 
+		END IF
+		IF(iDesArr(I, J) > 0) THEN
+	    		mmD%l3mmValue(iP, I, J) = mmD%l3mmValue(iP, I, J)/real(iDesArr(I, J))
+		ELSE
+	    		mmD%l3mmValue(iP, I, J) = 0.0 
+		END IF
+	    END IF
+	  ENDDO
+d1657 42
+a1698 9
+
+        ENDDO
+
+!*** Deallocate 
+
+        DEALLOCATE(iComArr, iAscArr, iDesArr)
+        DEALLOCATE(comFieldArr, ascFieldArr, desFieldArr)
+
+!-----------------------------------
+d1700 1
+a1700 1
+!-----------------------------------
+d1702 4
+d1707 4
+a1710 5
+!-------------------------------------------------------------------------
+   SUBROUTINE MonthlyMapFromL2(cfProd, l2gp, pStartIndex, pEndIndex,  	&
+			    	anlats, dnlats, alats, dlats, alons, dlons, atimes, dtimes, afields, dfields, 	&
+			     	l3mm, mmA, mmD )
+!-------------------------------------------------------------------------
+d1712 1
+a1712 1
+        integer error, i, j, k, iT, iD, iP, kP, nterms, nstart, nr
+d1714 4
+a1717 2
+        TYPE( L3CFMProd_T ) :: cfProd
+        TYPE( L3MMData_T ) :: l3mm, mmA, mmD
+d1719 1
+a1719 9
+        TYPE( L2GPData_T ), POINTER :: l2gp(:)
+	Real, POINTER, DIMENSION(:, :, :) ::  alons(:, :, :), alats(:, :, :)
+	Real, POINTER, DIMENSION(:, :, :) ::  dlons(:, :, :), dlats(:, :, :)
+	Real, POINTER, DIMENSION(:, :, :) ::  atimes(:, :, :), dtimes(:, :, :)
+	Real, POINTER, DIMENSION(:, :, :) ::  afields(:, :, :), dfields(:, :, :)
+
+	Real, POINTER, DIMENSION(:) ::  lons_rev(:), fields_rev(:), Y2(:)
+
+	INTEGER, DIMENSION(cfProd%nLats, l2gp(1)%nLevels) :: anlats, dnlats 
+d1721 1
+a1721 1
+	Integer pStartIndex, pEndIndex, nc
+d1723 1
+a1723 1
+	Real slope, lonStart, newField
+d1725 1
+a1725 1
+!*** initialization 
+d1727 8
+a1734 8
+        iP = 0
+	DO kP = pStartIndex, pEndIndex 
+          iP = iP + 1
+	  l3mm%pressure(iP) = l2gp(1)%pressures(kP) 
+	  mmA%pressure(iP)  = l2gp(1)%pressures(kP) 
+	  mmD%pressure(iP)  = l2gp(1)%pressures(kP) 
+	  DO I = 1, cfProd%nLats 
+	  DO J = 1, cfProd%nLons 
+d1736 5
+a1740 5
+	      mmA%l3mmValue(iP, I, J) = 0.0 
+	      mmD%l3mmValue(iP, I, J) = 0.0 
+          ENDDO
+          ENDDO
+	END DO
+d1742 28
+d1771 75
+a1845 71
+	     l3mm%latitude(J) = cfProd%latGridMap(J) 
+	     mmA%latitude(J)  = cfProd%latGridMap(J) 
+	     mmD%latitude(J)  = cfProd%latGridMap(J) 
+	END DO
+
+        DO K = 1, cfProd%nLons
+	     l3mm%longitude(K) = cfProd%longGrid(K) 
+	     mmA%longitude(K)  = cfProd%longGrid(K) 
+	     mmD%longitude(K)  = cfProd%longGrid(K) 
+	END DO
+
+        DO I = 1, l3mm%nLevels 
+	    	l3mm%perMisPoints(I) = 0 
+        ENDDO
+        DO I = 1, mmA%nLevels 
+	    	mmA%perMisPoints(I) = 0 
+        ENDDO
+        DO I = 1, mmD%nLevels 
+	    	mmD%perMisPoints(I) = 0 
+        ENDDO
+
+!*** Start calculation 
+
+        iP = 0
+	DO kP = pStartIndex, pEndIndex 
+          iP = iP + 1
+
+          DO J = 1, cfProd%nLats
+
+	     ! Ascending Mode
+
+             IF( anlats(J, iP) > 0 ) THEN
+
+!*** Allocate space for all the arrays
+        	ALLOCATE(lons_rev(anlats(J, iP)), STAT=error)
+        	ALLOCATE(fields_rev(anlats(J, iP)), STAT=error)
+
+                DO i = 1, anlats(J, iP)
+                    alons(J, i, iP) = alons(J, i, iP) + (i-1)*2.0*PI
+                    lons_rev(i) = alons(J, anlats(J, iP)+1-i, iP)
+                    fields_rev(i) = afields(J, anlats(J, iP)+1-i, iP)
+                ENDDO 
+                ALLOCATE(Y2(anlats(J, iP)), STAT=error)
+		CALL SPLINE(lons_rev, fields_rev, anlats(J, iP), 0.0, 0.0, Y2)
+                DO K = 1, cfProd%nLons
+		  IF( cfProd%longGrid(K) > lons_rev(1) ) THEN
+		     lonStart = cfProd%longGrid(K) - 2.0*PI
+		  ELSE
+		     lonStart = cfProd%longGrid(K)
+		  END IF
+		  nc = 0
+		  mmA%l3mmValue(iP, J, K) = 0.0 
+		  DO
+		     nc = nc + 1
+		     CALL SPLINT(lons_rev, fields_rev, Y2, anlats(J, iP), lonStart, newField)
+		     mmA%l3mmValue(iP, J, K) = mmA%l3mmValue(iP, J, K) + newField 
+		     lonStart = lonStart - 2.0*PI
+		     IF( lonStart < lons_rev(anlats(J, iP)) ) EXIT
+		  ENDDO
+		  IF( nc > 0) THEN
+		     mmA%l3mmValue(iP, J, K) = mmA%l3mmValue(iP, J, K)/nc
+		     mmA%l3mmPrecision(iP, J, K) = 0.0 
+		  ELSE
+		     mmA%l3mmValue(iP, J, K) = 0.0 
+		     mmA%l3mmPrecision(iP, J, K) = 0.0 
+		  END IF
+		ENDDO
+
+!*** Deallocate intermidiate arrays
+                DEALLOCATE(Y2)
+        	DEALLOCATE(lons_rev, fields_rev)
+d1850 2
+a1851 2
+		  mmA%l3mmValue(iP, J, K) = 0.0 
+		  mmA%l3mmPrecision(iP, J, K) = 0.0 
+d1860 2
+a1861 1
+!*** Allocate space for all the arrays
+d1863 5
+d1869 4
+d1878 1
+a1878 26
+                ENDDO 
+                ALLOCATE(Y2(dnlats(J, iP)), STAT=error)
+		CALL SPLINE(lons_rev, fields_rev, dnlats(J, iP), 0.0, 0.0, Y2)
+                DO K = 1, cfProd%nLons
+		  IF( cfProd%longGrid(K) > lons_rev(1) ) THEN
+		     lonStart = cfProd%longGrid(K) - 2.0*PI
+		  ELSE
+		     lonStart = cfProd%longGrid(K)
+		  END IF
+		  nc = 0
+		  mmD%l3mmValue(iP, J, K) = 0.0 
+		  DO
+		     nc = nc + 1
+		     CALL SPLINT(lons_rev, fields_rev, Y2, dnlats(J, iP), lonStart, newField)
+		     mmD%l3mmValue(iP, J, K) = mmD%l3mmValue(iP, J, K) + newField 
+		     lonStart = lonStart - 2.0*PI
+		     IF( lonStart < lons_rev(dnlats(J, iP)) ) EXIT
+		  ENDDO
+		  IF( nc > 0) THEN
+		     mmD%l3mmValue(iP, J, K) = mmD%l3mmValue(iP, J, K)/nc
+		     mmD%l3mmPrecision(iP, J, K) = 0.0 
+		  ELSE
+		     mmD%l3mmValue(iP, J, K) = 0.0 
+		     mmD%l3mmPrecision(iP, J, K) = 0.0 
+		  END IF
+		ENDDO
+d1880 51
+a1930 3
+!*** Deallocate intermidiate arrays
+                DEALLOCATE(Y2)
+        	DEALLOCATE(lons_rev, fields_rev)
+d1944 1
+a1944 1
+
+d1946 12
+a1957 10
+		  IF( anlats(J, iP) > 0 .and. dnlats(J, iP) == 0 ) THEN
+		  	l3mm%l3mmValue(iP, J, K) = mmA%l3mmValue(iP, J, K)
+		  	l3mm%l3mmPrecision(iP, J, K) = 0.0 
+		  ELSE IF( anlats(J, iP) == 0 .and. dnlats(J, iP) > 0 ) THEN
+		  	l3mm%l3mmValue(iP, J, K) = mmD%l3mmValue(iP, J, K)
+		  	l3mm%l3mmPrecision(iP, J, K) = 0.0 
+		  ELSE IF( anlats(J, iP) > 0 .and. dnlats(J, iP) > 0 ) THEN
+		  	l3mm%l3mmValue(iP, J, K) = (mmA%l3mmValue(iP, J, K)+mmD%l3mmValue(iP, J, K))*0.5
+		  	l3mm%l3mmPrecision(iP, J, K) = 0.0 
+		  END IF
+d1963 2
+a1964 2
+		  l3mm%l3mmValue(iP, J, K) = 0.0 
+		  l3mm%l3mmPrecision(iP, J, K) = 0.0 
+d1968 1
+a1968 1
+
+d1970 1
+a1970 1
+
+d1973 1
+a1973 1
+
+d1975 1
+a1975 1
+   END SUBROUTINE MonthlyMapFromL2
+d1979 1
+a1979 1
+   INTEGER FUNCTION FindIndexForNormGrid(cfDef, alat)
+a1981 1
+	Real (rgp) alat
+d1983 2
+a1984 2
+
+	integer i, j
+d1987 6
+a1992 6
+	  IF(alat <= cfDef%l2nomLats(1)) THEN
+		 FindIndexForNormGrid = 1
+		 EXIT
+	  ELSE IF(alat >= cfDef%l2nomLats(cfDef%nNom)) THEN
+		 FindIndexForNormGrid = cfDef%nNom
+		 EXIT
+d1994 23
+a2016 19
+		IF( i == cfDef%nNom ) THEN
+			FindIndexForNormGrid = i
+		 	EXIT
+		ELSE IF( i == 1 ) THEN
+			IF( alat <  (cfDef%l2nomLats(i)+cfDef%l2nomLats(i+1))*0.5 ) THEN 
+				FindIndexForNormGrid = i
+		 		EXIT
+			END IF
+		ELSE IF( alat >= (cfDef%l2nomLats(i)+cfDef%l2nomLats(i-1))*0.5 .and. 	&
+			 alat <  (cfDef%l2nomLats(i)+cfDef%l2nomLats(i+1))*0.5 ) THEN
+			FindIndexForNormGrid = i
+		 	EXIT
+		END IF
+	  END IF	
+	END DO
+
+!-----------------------------------
+   END FUNCTION FindIndexForNormGrid
+!-----------------------------------
+d2019 1
+a2019 1
+   INTEGER FUNCTION FindLatIndexForL3Grid(cfProd, alat)
+a2021 1
+	Real (rgp) alat
+d2023 2
+a2024 2
+
+	integer i, j
+d2027 26
+a2052 21
+	  IF(alat <= cfProd%latGridMap(1)) THEN
+		 FindLatIndexForL3Grid = 1
+		 EXIT
+	  ELSE IF(alat >= cfProd%latGridMap(cfProd%nLats)) THEN
+		 FindLatIndexForL3Grid = cfProd%nLats 
+		 EXIT
+	  ELSE
+		IF( i == cfProd%nLats ) THEN
+			FindLatIndexForL3Grid = i
+		 	EXIT
+		ELSE IF( i == 1 ) THEN
+			IF( alat <  (cfProd%latGridMap(i)+cfProd%latGridMap(i+1))*0.5 ) THEN 
+				FindLatIndexForL3Grid = i
+		 		EXIT
+			END IF
+		ELSE IF( alat >= (cfProd%latGridMap(i)+cfProd%latGridMap(i-1))*0.5 .and. 	&
+			 alat <  (cfProd%latGridMap(i)+cfProd%latGridMap(i+1))*0.5 ) THEN
+			FindLatIndexForL3Grid = i
+		 	EXIT
+		END IF
+	  END IF	
+d2056 1
+a2056 1
+   END FUNCTION FindLatIndexForL3Grid
+d2060 1
+a2060 1
+   INTEGER FUNCTION FindLonIndexForL3Grid(cfProd, alon)
+a2062 1
+	Real (rgp) alon
+d2064 2
+a2065 2
+
+	integer i, j
+d2068 25
+a2092 21
+	  IF(alon <= cfProd%longGrid(1)) THEN
+		 FindLonIndexForL3Grid = 1
+		 EXIT
+	  ELSE IF(alon >= cfProd%longGrid(cfProd%nLons)) THEN
+		 FindLonIndexForL3Grid = cfProd%nLons 
+		 EXIT
+	  ELSE
+		IF( i == cfProd%nLons ) THEN
+			FindLonIndexForL3Grid = i
+		 	EXIT
+		ELSE IF( i == 1 ) THEN
+			IF( alon <  (cfProd%longGrid(i)+cfProd%longGrid(i+1))*0.5 ) THEN 
+				FindLonIndexForL3Grid = i
+		 		EXIT
+			END IF
+		ELSE IF( alon >= (cfProd%longGrid(i)+cfProd%longGrid(i-1))*0.5 .and. 	&
+			 alon <  (cfProd%longGrid(i)+cfProd%longGrid(i+1))*0.5 ) THEN
+			FindLonIndexForL3Grid = i
+		 	EXIT
+		END IF
+	  END IF	
+d2095 7
+a2101 7
+!-----------------------------------
+   END FUNCTION FindLonIndexForL3Grid
+!-----------------------------------
+
+!-------------------------------------------------------------------------
+   REAL FUNCTION FindRealLon(alon)
+!-------------------------------------------------------------------------
+d2103 1
+a2103 1
+	Real alon
+d2119 1
+a2119 1
+
+d2121 1
+a2121 1
+   END FUNCTION FindRealLon
+d2126 2
+a2127 4
+   SUBROUTINE CalSolarRange(cfProd, l2gp, pStartIndex, pEndIndex,  	&
+			    	anlats, dnlats, 		&
+				asolarTime, dsolarTime, asolarZenith, dsolarZenith, 	&
+			     	l3mz, mzA, mzD )
+a2136 1
+        TYPE( PCFMData_T ) :: pcf
+a2137 1
+	TYPE( L3CFMDef_T ) :: cfDef
+d2140 2
+a2141 1
+	TYPE( L3MZData_T ) :: l3mz, mzA, mzD
+d2143 1
+a2143 2
+	Real, POINTER, DIMENSION(:, :, :) ::  asolarTime(:, :, :), dsolarTime(:, :, :)
+	Real, POINTER, DIMENSION(:, :, :) ::  asolarZenith(:, :, :), dsolarZenith(:, :, :)
+d2147 1
+a2147 4
+	Integer l2Days, pStartIndex, pEndIndex, iMin
+	Integer iP, kP, J, I
+
+	Real solarTimeMin, solarTimeMax, solarZenithMin, solarZenithMax
+d2150 1
+a2150 1
+
+d2153 3
+a2155 3
+          iP = iP + 1
+
+          DO J = 1, cfProd%nLats
+d2158 7
+d2166 1
+a2166 8
+             IF( anlats(J, iP) > 0 ) THEN
+
+		solarTimeMin =  1.e20
+		solarTimeMax = -1.e20
+		solarZenithMin =  1.e20
+		solarZenithMax = -1.e20
+
+                DO I = 1, anlats(J, iP)
+d2168 1
+a2168 1
+			solarTimeMax = asolarTime(J, I, iP)
+d2170 1
+a2170 1
+			solarTimeMin = asolarTime(J, I, iP)
+d2174 1
+a2174 1
+			solarZenithMax = asolarZenith(J, I, iP)
+d2176 1
+a2176 1
+			solarZenithMin = asolarZenith(J, I, iP)
+d2178 2
+a2179 2
+                ENDDO 
+	     END IF
+d2182 2
+d2185 2
+a2186 4
+             IF( dnlats(J, iP) > 0 ) THEN
+
+		solarTimeMin =  1.e20
+		solarTimeMax = -1.e20
+d2191 12
+a2202 12
+                    if(dsolarTime(J, I, iP) >= solarTimeMax) then
+			solarTimeMax = dsolarTime(J, I, iP)
+		    else if(dsolarTime(J, I, iP) < solarTimeMin) then
+			solarTimeMin = asolarTime(J, I, iP)
+		    end if
+
+                    if(dsolarZenith(J, I, iP) >= solarZenithMax) then
+			solarZenithMax = dsolarZenith(J, I, iP)
+		    else if(dsolarZenith(J, I, iP) < solarZenithMin) then
+			solarZenithMin = dsolarZenith(J, I, iP)
+		    end if
+                ENDDO 
+d2205 5
+a2209 5
+          ENDDO 
+
+        ENDDO 
+!-----------------------------------
+   END SUBROUTINE CalSolarRange
+a2211 2
+
+
+d2213 1
+a2213 1
+END MODULE MonthlyProcessModule
+@
+
+
+1.8
+log
+@MonthlyProcessModule.f90
+@
+text
+@d31 1
+a31 1
+   "$Id: MonthlyProcessModule.f90,v 1.6 2001/08/07 19:04:56 ybj Exp $"
+d1367 1
+a1367 1
+	Real (r8) alat
+d1404 1
+a1404 1
+	Real (r8) alat
+d1441 1
+a1441 1
+	Real (r8) alon
+@
+
+
+1.7
+log
+@Added cfDef to MonthlyCoreProcessing args; added comments delineating CORE from I/O.
+@
+text
+@d48 1
+a48 1
+					l3mz, mzA, mzD, l3dz, dzA, dzD)
+d70 2
+d80 4
+d125 1
+d130 2
+d136 2
+d142 2
+d168 2
+d175 2
+d182 2
+d207 2
+d215 2
+d223 2
+d235 3
+a237 1
+			afields, dfields )
+d253 19
+a271 8
+   	Call MonthlyMapFromL2(cfProd, l2gp, 		&
+			    pStartIndex, pEndIndex,  	&
+			    anlats, dnlats, 		&
+		            alats, dlats, 		&
+			    alons, dlons, 		&
+			    atimes, dtimes, 		&
+			    afields, dfields, 		&
+			    l3mm, mmA, mmD )
+d276 4
+d290 3
+a292 1
+		atimes_interp, dtimes_interp, afields_interp, dfields_interp)
+d302 1
+a302 1
+						l2Lats(:, :), l2Values(:, :)
+d307 2
+a310 2
+	Real, POINTER, DIMENSION(:, :, :) ::  alons_interp_old(:, :, :), dlons_interp_old(:, :, :)
+
+d312 2
+a313 1
+		  slope, slope_time, slope_field, sTime, ddtad
+d338 2
+d347 2
+d353 2
+a356 3
+        ALLOCATE(alons_interp_old(cfProd%nLats, nPd*l2Days, pEndIndex-pStartIndex+1), STAT=error)
+        ALLOCATE(dlons_interp_old(cfProd%nLats, nPd*l2Days, pEndIndex-pStartIndex+1), STAT=error)
+
+d371 2
+d445 4
+d458 2
+d473 2
+a475 1
+	           alons_interp_old(aindex, anlats(aindex, iP), iP) = lons_found_old
+d486 2
+a488 1
+	           dlons_interp_old(aindex, dnlats(aindex, iP), iP) = lons_found_old
+d502 1
+a502 1
+        DEALLOCATE(l2Lons, l2Lons_new, l2Lons_old, l2Lats, l2Values)
+d524 1
+d536 4
+d549 5
+d574 28
+d608 2
+d619 1
+a620 1
+	      !iCom = real(l2gp(iD)%latitude(iT)-cfDef%l2nomLats(1))/real(cfDef%l2nomLats(2)-cfDef%l2nomLats(1))+1.5
+d623 14
+d638 1
+d653 14
+d670 14
+d692 4
+d708 32
+d749 1
+d761 1
+a761 1
+	INTEGER ::  iCom, iAasc, iDes, nloop, aindex
+d769 1
+d781 4
+a789 6
+	DO iT = 1, cfDef%nNom 
+	  iComArr(iT) = 0
+	  iAscArr(iT) = 0
+	  iDesArr(iT) = 0
+        ENDDO
+
+d798 5
+d811 26
+d842 12
+d859 14
+d874 1
+d889 14
+d906 14
+d929 4
+d945 32
+d985 1
+d991 160
+d1180 1
+a1180 1
+        DO kP = pStartIndex, pEndIndex
+d1185 7
+d1206 10
+d1219 1
+a1219 1
+        DO kP = pStartIndex, pEndIndex
+a1362 1
+
+d1383 7
+a1389 1
+		ELSE IF( alat > cfDef%l2nomLats(i) .and. alat < cfDef%l2nomLats(i+1) ) THEN
+d1401 74
+d1497 95
+@
+
+
+1.6
+log
+@*** empty log message ***
+@
+text
+@d31 1
+a31 1
+   "$Id: MonthlyProcessModule.f90,v 1.5 2001/08/07 18:52:26 ybj Exp $"
+d720 1
+a720 1
+        DO kP = pStartIndex, pStartIndex
+d742 1
+a742 1
+        DO kP = pStartIndex, pStartIndex
+@
+
+
+1.5
+log
+@*** empty log message ***
+@
+text
+@d31 1
+a31 1
+   "$Id: MonthlyProcessModule.f90,v 1.4 2001/08/07 17:46:50 nakamura Exp $"
+d494 3
+a496 3
+	    l3dz(iD)%pressure(iP) = cfProd%l3presLvl(iP) 
+	    dzA(iD)%pressure(iP)  = cfProd%l3presLvl(iP) 
+	    dzD(iD)%pressure(iP)  = cfProd%l3presLvl(iP) 
+d618 3
+a620 3
+	  l3mz%pressure(iP) = cfProd%l3presLvl(iP) 
+	  mzA%pressure(iP)  = cfProd%l3presLvl(iP) 
+	  mzD%pressure(iP)  = cfProd%l3presLvl(iP) 
+d722 3
+a724 3
+	  l3mm%pressure(iP) = cfProd%l3presLvl(iP) 
+	  mmA%pressure(iP)  = cfProd%l3presLvl(iP) 
+	  mmD%pressure(iP)  = cfProd%l3presLvl(iP) 
+@
+
+
+1.4
+log
+@Fixed over/underflow problems.
+@
+text
+@d31 1
+a31 1
+   "$Id: MonthlyProcessModule.f90,v 1.3 2001/08/06 18:18:19 ybj Exp $"
+d488 18
+d613 16
+d717 22
+a738 1
+        
+@
+
+
+1.3
+log
+@fix code dump bugs
+@
+text
+@d31 1
+a31 1
+   "$Id: MonthlyProcessModule.f90,v 1.2 2001/08/03 23:17:28 ybj Exp $"
+d119 12
+d140 7
+d151 15
+d172 7
+d183 18
+d503 1
+a503 1
+	    DO iT = 1, l2gp(iD)%nTimes
+d601 1
+a601 1
+	    DO iT = 1, l2gp(iD)%nTimes
+@
+
+
+1.2
+log
+@fix code dump bugs
+@
+text
+@d31 1
+a31 1
+   "$Id: MonthlyProcessModule.f90,v 1.1 2001/08/02 23:35:19 ybj Exp $"
+d109 6
+d152 1
+a152 1
+                
+@
+
+
+1.1
+log
+@Monthly Processing Module (new file)
+@
+text
+@d31 1
+a31 1
+   "$Id: MonthlyProcessModule.f90,v 1.13 2001/04/12 16:04:41 ybj Exp $"
+d47 1
+a47 1
+   SUBROUTINE MonthlyCoreProcessing(cfProd, pcf, l2Days, l2gp, l3mm, mmA, mmD, &
+d60 1
+d108 1
+a108 1
+        DO j = 1, numDays
+d110 3
+a112 3
+           CALL AllocateL3DZ( nlev, cfProd%nLats, l3dz(j) )
+           CALL AllocateL3DZ( nlev, cfProd%nLats, dzA(j) )
+           CALL AllocateL3DZ( nlev, cfProd%nLats, dzD(j) )
+d122 3
+a124 3
+        CALL AllocateL3MZ( nlev, cfProd%nLats, l3mz )
+        CALL AllocateL3MZ( nlev, cfProd%nLats, mzA )
+        CALL AllocateL3MZ( nlev, cfProd%nLats, mzD )
+a135 3
+
+	print *, 'Test1'
+
+a145 10
+
+	print *, 'Test2'
+
+        open(12, file='l3_newresult.dat', status='replace')
+	do j = 60, 60
+                  do i = 1, anlats(J, 1)
+                        write(12, *)  i, atimes(J, i, 1), alons(J, i, 1), alats(J, i, 1), afields(J, i, 1)
+                  end do
+        end do
+	close(12)
+d149 1
+a149 1
+        Call DailyZonalMeanFromL2(cfProd, l2gp, l2Days,        	&
+d155 1
+a155 1
+        Call MonthlyZonalMeanFromL2(cfProd, l2gp, l2Days,      	&
+d170 1
+a170 2
+!*** Main Loop 
+
+a173 2
+	close(12)
+
+d388 1
+a388 1
+   SUBROUTINE DailyZonalMeanFromL2(cfProd, l2gp, l2Days, pStartIndex, pEndIndex,  	&
+d396 1
+d408 3
+a410 3
+        ALLOCATE(iComArr(l3dz(1)%nLats), STAT=error)
+        ALLOCATE(iAscArr(l3dz(1)%nLats), STAT=error)
+        ALLOCATE(iDesArr(l3dz(1)%nLats), STAT=error)
+d417 1
+a417 1
+	DO iT = 1, l3dz(1)%nLats 
+d429 1
+a429 1
+	    DO iT = 1, l3dz(1)%nLats 
+d433 4
+d439 2
+a440 1
+	      iCom = real(l2gp(iD)%latitude(iT)-l3dz(1)%latitude(1))/real(l3dz(1)%latitude(2)-l3dz(1)%latitude(1))+1.5
+d462 19
+a480 4
+	    DO iT = 1, l3dz(1)%nLats 
+	      l3dz(iD)%l3dzValue(iP, iT) = l3dz(iD)%l3dzValue(iP, iT)/real(iComArr(iT))
+	      dzA(iD)%l3dzValue(iP, iT) = dzA(iD)%l3dzValue(iP, iT)/real(iAscArr(iT))
+	      dzD(iD)%l3dzValue(iP, iT) = dzD(iD)%l3dzValue(iP, iT)/real(iDesArr(iT))
+d482 1
+d495 1
+a495 1
+   SUBROUTINE MonthlyZonalMeanFromL2(cfProd, l2gp, l2Days, pStartIndex, pEndIndex,  	&
+d503 1
+d515 3
+a517 3
+        ALLOCATE(iComArr(l3mz%nLats), STAT=error)
+        ALLOCATE(iAscArr(l3mz%nLats), STAT=error)
+        ALLOCATE(iDesArr(l3mz%nLats), STAT=error)
+d524 1
+a524 1
+	DO iT = 1, l3mz%nLats 
+d537 2
+a538 1
+	      iCom = real(l2gp(iD)%latitude(iT)-l3mz%latitude(1))/real(l3mz%latitude(2)-l3mz%latitude(1))+1.5
+d562 18
+a579 4
+	  DO iT = 1, l3mz%nLats 
+	    l3mz%l3mzValue(iP, iT) = l3mz%l3mzValue(iP, iT)/real(iComArr(iT))
+	    mzA%l3mzValue(iP, iT) = mzA%l3mzValue(iP, iT)/real(iAscArr(iT))
+	    mzD%l3mzValue(iP, iT) = mzD%l3mzValue(iP, iT)/real(iDesArr(iT))
+a617 4
+!*** Allocate space for all the arrays
+
+        ALLOCATE(lons_rev(31), STAT=error)
+        ALLOCATE(fields_rev(31), STAT=error)
+d630 5
+d657 7
+a663 2
+		  mmA%l3mmValue(iP, J, K) = mmA%l3mmValue(iP, J, K)/nc
+		  mmA%l3mmPrecision(iP, J, K) = 0.0 
+d666 1
+d668 1
+d682 5
+d709 7
+a715 2
+		  mmD%l3mmValue(iP, J, K) = mmD%l3mmValue(iP, J, K)/nc
+		  mmD%l3mmPrecision(iP, J, K) = 0.0 
+d718 1
+d720 1
+a760 3
+!*** Deallocate intermidiate arrays
+
+        DEALLOCATE(lons_rev, fields_rev)
+d766 31
+@
+

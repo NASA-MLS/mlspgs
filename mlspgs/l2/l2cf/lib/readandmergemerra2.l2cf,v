@@ -1,0 +1,271 @@
+head	1.3;
+access;
+symbols
+	v5-02-NRT-19:1.3
+	v6-00:1.3
+	v5-02-NRT-18:1.3
+	v5-02:1.3
+	v5-01-NRT-17:1.3
+	v5-01-NRT-16:1.3
+	v5-01-NRT-15:1.3
+	v5-01-NRT-14:1.3
+	neuralnetworks-1-0:1.3.0.10
+	cfm-single-freq-0-1:1.3.0.8
+	v5-01:1.3
+	v5-00:1.3
+	v4-23-TA133:1.3.0.6
+	mus-emls-1-70:1.3.0.4
+	rel-1-0-englocks-work:1.3.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.3
+date	2018.04.05.23.58.24;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2017.06.02.18.12.12;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2017.05.01.20.51.53;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@Will stop if flagMustHaveMeteorology but none found
+@
+text
+@!divert(-1)
+;; $Id: readandmergemerra2.l2cf,v 1.2 2017/06/02 18:12:12 pwagner Exp $
+
+;; This l2cf fragment is for setting up merra2 as gridded quantities
+;; This l2cf fragment works with merra2 on native pressure levels
+
+;------------------------------------------------------
+;Attempt to automatically find the right merra2 files
+    !define(merra2Day1,{!TrimLastChar(!esyscmd(dateconverter -R 1980-01-01 -o yyyymmdd "!day"))})
+    !define(merra2Day2,{!TrimLastChar(!esyscmd(dateconverter -R 1980-01-01 +1 -o yyyymmdd "!day"))})
+    !define(merra2Year1,{!TrimLastChar(!esyscmd(dateconverter -R 1980-01-01 -o yyyy "!day"))})
+    !define(merra2Year2,{!TrimLastChar(!esyscmd(dateconverter -R 1980-01-01 +1 -o yyyy "!day"))})
+;1991 and earlier merra2 files are stream 100
+    !ifelse(!merra2Year1,1991,!define(merra2stream1,{100}),!define(merra2stream1,{200}))
+    !ifelse(!merra2Year2,1991,!define(merra2stream2,{100}),!define(merra2stream2,{200}))
+
+!divert!dnl
+  ;;  !merra2Day1 
+  ;;  !merra2Day2 
+  ;;  !merra2Year1 
+  ;;  !merra2Year2 
+  ;; !merra2stream1
+  ;; !merra2stream2
+
+; ----------------------------------------------- Read / merge merra
+
+; Assume the geos5 filenames obey the following format:
+; {something}_{typ}_v.{vers}.{yyyy}{mm}{dd}_{hhhh}.V01.hdf
+; where
+;   typ   is one of "dyn" or "prs"
+;   yyyy  is the year; e.g. 2009
+;   mm    is the month; e.g. 06
+;   dd    is the day; e.g. 09
+;   hhhh  is the time starting from 0000 and ending at 2359
+!ifdef(flagUsingPCF, 
+{
+; This L2CF fragment reads and merges the merra data for the GPH
+; 1st: pressure-level surfaces
+begin ReadApriori
+  
+  merra2GPHInput1: gridded, origin=none
+  merra2GPHInputNext: gridded, origin=none
+  readGriddedData, grid=merra2GPHInput1, origin=merra_2, field='H', $
+    dimList='XDim,YDim,Height,Time' , date='00:00:00' 
+  readGriddedData, grid=merra2GPHInputNext, origin=merra_2, field='H', $
+    dimList='XDim,YDim,Height,Time' , date='00:00:00' 
+end ReadApriori
+
+begin MergeGrids
+
+  gridGPHmerra2: Concatenate, $
+    sourceGrid=[merra2GPHInput1, merra2GPHInputNext]
+  delete, grid=merra2GPHInput1
+  delete, grid=merra2GPHInputNext
+end MergeGrids 
+
+; Next: native-level surfaces
+begin ReadApriori
+  ; The following runtime Boolean prevents resetting to the lowest PCFid
+  CarryOver: Boolean, formula="true"
+  nvmerra2TemperatureInput1: gridded, origin=none
+  nvmerra2TemperatureInputNext: gridded, origin=none
+  nvmerra2PressureInput1: gridded, origin=none
+  nvmerra2PressureInputNext: gridded, origin=none
+  readGriddedData, grid=nvmerra2TemperatureInput1, origin=merra_2, field='T', $
+    dimList='XDim,YDim,Height,Time' , date='00:00:00'
+  readGriddedData, grid=nvmerra2TemperatureInputNext, origin=merra_2, field='T', $
+    dimList='XDim,YDim,Height,Time' , date='00:00:00'
+  readGriddedData, grid=nvmerra2PressureInput1, origin=merra_2, field='DELP', $
+    dimList='XDim,YDim,Height,Time' , date='00:00:00', /sum 
+  readGriddedData, grid=nvmerra2PressureInputNext, origin=merra_2, field='DELP', $
+    dimList='XDim,YDim,Height,Time' , date='00:00:00', /sum 
+end ReadApriori
+
+!ifdef(flagMustHaveMeteorology,{
+; This stops unless we succeeded in reading the merra2 T
+begin MergeGrids
+  merra2Meteorology: Boolean, formula="false"
+  isGridEmpty, grid=nvmerra2TemperatureInput1, Boolean=merra2Meteorology
+  Reevaluate, Boolean=merra2Meteorology, formula="not merra2Meteorology"
+  Skip, formula="merra2Meteorology"
+  Dump, text="No merra2 found; so must quit"
+  Dump, /CrashBurn
+end MergeGrids 
+})
+
+begin MergeGrids
+
+  merra2Converted1: ConvertEtaToP, $
+    a=nvmerra2TemperatureInput1, b=nvmerra2PressureInput1, Grid=gridTemperature
+    delete, grid=nvmerra2TemperatureInput1
+    delete, grid=nvmerra2PressureInput1
+
+  merra2ConvertedNext: ConvertEtaToP, $
+    a=nvmerra2TemperatureInputNext, b=nvmerra2PressureInputNext, Grid=gridTemperature
+    delete, grid=nvmerra2TemperatureInputNext
+    delete, grid=nvmerra2PressureInputNext
+
+  gridTemperaturemerra2: Concatenate, $
+    sourceGrid=[merra2Converted1, merra2ConvertedNext]
+  delete, grid=merra2Converted1
+  delete, grid=merra2ConvertedNext
+end MergeGrids 
+
+},{
+
+; This L2CF fragment reads and merges the merra2 data for the GPH
+; 1st: pressure-level surfaces
+begin ReadApriori
+  
+  merra2GPHInput1: gridded, origin=none
+  merra2GPHInputNext: gridded, origin=none
+  readGriddedData, grid=merra2GPHInput1, origin=merra_2, field='H', $
+    dimList='XDim,YDim,Height,Time' , date='00:00:00', $
+    file='!inpathmerrapd/MERRA2_!merra2stream1.inst6_3d_ana_Np.!merra2Day1.nc4'
+  readGriddedData, grid=merra2GPHInputNext, origin=merra_2, field='H', $
+    dimList='XDim,YDim,Height,Time' , date='00:00:00', $
+    file='!inpathmerrapn/MERRA2_!merra2stream2.inst6_3d_ana_Np.!merra2Day2.nc4' 
+end ReadApriori
+
+begin MergeGrids
+
+  gridGPHmerra2: Concatenate, $
+    sourceGrid=[merra2GPHInput1, merra2GPHInputNext]
+  delete, grid=merra2GPHInput1
+  delete, grid=merra2GPHInputNext
+end MergeGrids 
+
+; Next: native-level surfaces
+begin ReadApriori
+  ; The following runtime Boolean prevents resetting to the lowest PCFid
+  CarryOver: Boolean, formula="true"
+  nvmerra2TemperatureInput1: gridded, origin=none
+  nvmerra2TemperatureInputNext: gridded, origin=none
+  nvmerra2PressureInput1: gridded, origin=none
+  nvmerra2PressureInputNext: gridded, origin=none
+  readGriddedData, grid=nvmerra2TemperatureInput1, origin=merra_2, field='T', $
+    dimList='XDim,YDim,Height,Time' , date='00:00:00', $
+    file='!inpathmerrand/MERRA2_!merra2stream1.inst6_3d_ana_Nv.!merra2Day1.nc4'
+  readGriddedData, grid=nvmerra2TemperatureInputNext, origin=merra_2, field='T', $
+    dimList='XDim,YDim,Height,Time' , date='00:00:00', $
+    file='!inpathmerrann/MERRA2_!merra2stream2.inst6_3d_ana_Nv.!merra2Day2.nc4'
+  readGriddedData, grid=nvmerra2PressureInput1, origin=merra_2, field='DELP', $
+    dimList='XDim,YDim,Height,Time' , date='00:00:00', $
+    file='!inpathmerrand/MERRA2_!merra2stream1.inst6_3d_ana_Nv.!merra2Day1.nc4', /sum 
+  readGriddedData, grid=nvmerra2PressureInputNext, origin=merra_2, field='DELP', $
+    dimList='XDim,YDim,Height,Time' , date='00:00:00', $
+    file='!inpathmerrann/MERRA2_!merra2stream2.inst6_3d_ana_Nv.!merra2Day2.nc4', /sum 
+end ReadApriori
+
+begin MergeGrids
+  merra2Converted1: ConvertEtaToP, $
+    a=nvmerra2TemperatureInput1, b=nvmerra2PressureInput1, Grid=gridTemperature
+    delete, grid=nvmerra2TemperatureInput1
+    delete, grid=nvmerra2PressureInput1
+
+  merra2ConvertedNext: ConvertEtaToP, $
+    a=nvmerra2TemperatureInputNext, b=nvmerra2PressureInputNext, Grid=gridTemperature
+    delete, grid=nvmerra2TemperatureInputNext
+    delete, grid=nvmerra2PressureInputNext
+
+  gridTemperaturemerra2: Concatenate, $
+    sourceGrid=[merra2Converted1, merra2ConvertedNext]
+  delete, grid=merra2Converted1
+  delete, grid=merra2ConvertedNext
+end MergeGrids 
+})
+;$Log: readandmergemerra2.l2cf,v $
+;Revision 1.2  2017/06/02 18:12:12  pwagner
+;Repaired non-PCF file names
+;
+;Revision 1.1  2017/05/01 20:51:53  pwagner
+;First commit
+;
+@
+
+
+1.2
+log
+@Repaired non-PCF file names
+@
+text
+@d2 1
+a2 1
+;; $Id: readandmergemerra2.l2cf,v 1.1 2017/05/01 20:51:53 pwagner Exp $
+d75 2
+d78 11
+d169 3
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d2 1
+a2 1
+;; $Id: readandmergemerra2.l2cf,v 1.5 2016/10/06 20:27:23 pwagner Exp $
+d38 1
+d57 1
+d95 1
+d102 1
+a102 1
+    file='!inpathmerrapd/MERRA2_!merra2stream1.inst6_3d_ana_Np.!gmaodate.nc4'
+d105 1
+a105 1
+    file='!inpathmerrapn/MERRA2_!merra2stream2.inst6_3d_ana_Np.!gmaodate.nc4' 
+d116 1
+d126 1
+a126 1
+    file='!inpathmerrapd/MERRA2_!merra2stream1.inst6_3d_ana_Np.!gmaodate.nc4'
+d129 1
+a129 1
+    file='!inpathmerrapn/MERRA2_!merra2stream2.inst6_3d_ana_Np.!gmaodate.nc4'
+d132 1
+a132 1
+    file='!inpathmerrapd/MERRA2_!merra2stream1.inst6_3d_ana_Np.!gmaodate.nc4', /sum 
+d135 1
+a135 1
+    file='!inpathmerrapn/MERRA2_!merra2stream2.inst6_3d_ana_Np.!gmaodate.nc4', /sum 
+d156 3
+@
+

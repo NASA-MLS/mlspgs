@@ -1,0 +1,50 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2022.01.05.00.33.13;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@First commit
+@
+text
+@#$MLSF95.$MLSPLAT -- a file full of macros to be included by a Makefile
+#to compile a Fortran 9x program or library
+
+# "$Id: G95.Linux,v 1.2 2012/08/21 23:55:05 pwagner Exp $"
+# "$Id: G95.Linux,v 1.2 2012/08/21 23:55:05 pwagner Exp $"
+ifndef USEMYFC
+FC = g95
+endif
+
+# Currently, unknown if DUSTY needs to be different yet
+DUSTY = $(FOPTS)
+
+# How to prefix search paths for include and .mod files
+PATH_OPTS=-d -prefix=-I
+
+# $Log: G95.Linux,v $
+# Revision 1.2  2012/08/21 23:55:05  pwagner
+# Use of USEMYFC consistent with outher compilers
+#
+# Revision 1.1  2007/05/29 17:38:47  pwagner
+# First commit
+#
+@

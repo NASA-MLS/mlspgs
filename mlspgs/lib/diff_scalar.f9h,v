@@ -1,0 +1,128 @@
+head	2.2;
+access;
+symbols
+	v5-02-NRT-19:2.2
+	v6-00:2.2
+	v5-02-NRT-18:2.2
+	v5-02:2.2
+	v5-01-NRT-17:2.2
+	v5-01-NRT-16:2.2
+	v5-01-NRT-15:2.2
+	v5-01-NRT-14:2.2
+	neuralnetworks-1-0:2.2.0.12
+	cfm-single-freq-0-1:2.2.0.10
+	v5-01:2.2
+	v5-00:2.2
+	v4-23-TA133:2.2.0.8
+	mus-emls-1-70:2.2.0.6
+	rel-1-0-englocks-work:2.2.0.4
+	VUMLS1-00:2.2
+	VPL1-00:2.2
+	V4-22-NRT-08:2.2
+	VAM1-00:2.2
+	V4-21:2.2.0.2
+	V4-13:2.2
+	V4-12:2.2
+	V4-11:2.2
+	V4-10:2.2
+	M4-00:2.2
+	V3-33:2.2;
+locks; strict;
+comment	@# @;
+
+
+2.2
+date	2011.07.07.00.27.35;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2011.06.23.17.28.53;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.2
+log
+@Assign z a value unconditionally before its first possible use
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id: diff_scalar.f9h,v 2.1 2011/06/23 17:28:53 pwagner Exp $
+
+!  elemental function DIFF_SCALAR_DOUBLE ( VALUE1, VALUE2, AUXVALUE, OPTIONS ) &
+!    & result(d)
+    ! Args
+!    double precision, intent(in)           :: value1
+!    double precision, intent(in)           :: value2
+!    double precision, optional, intent(in) :: auxvalue
+!    character(len=*), optional, intent(in) :: options
+    ! Internal variables
+    integer :: n
+    logical :: isAbsvalue
+    logical :: isFillvalue
+    logical :: isPeriod
+    logical :: isRatio
+    real(rk) :: vmax, z
+    ! Executable
+    isAbsValue = .false.
+    if ( present(options) ) isAbsValue = index(options, 'a') > 0
+    isFillValue = .false.
+    if ( present(options) ) isFillValue = index(options, 'f') > 0
+    isPeriod = .false.
+    if ( present(options) ) isPeriod = index(options, 'p') > 0
+    isRatio = .false.
+    if ( present(options) ) isRatio = index(options, 'r') > 0
+    z = 0._rk
+    if ( isFillValue ) z = -999.99_rk
+    if ( isPeriod ) z = 360.0_rk
+    if ( present(auxvalue) ) z = auxvalue
+    d = z
+    if ( isFillValue .and. any( (/ value1, value2 /) == z ) ) return
+    if ( isPeriod .and. 0.0_rk == z ) return
+    vmax = max( abs(value1), abs(value2) )
+    if ( isAbsvalue ) then
+      d = abs(value1) - abs(value2)
+    elseif ( isPeriod ) then
+      n = (value1 - value2) / z + sign(0.5_rk, value1 - value2)
+      d = value1 - value2 - n*z
+    else
+      d = value1 - value2
+    endif
+    if ( isRatio .and. vmax > 0.0_rk ) d = d / vmax
+!  end function DIFF_SCALAR_DOUBLE
+! $Log: diff_scalar.f9h,v $
+! Revision 2.1  2011/06/23 17:28:53  pwagner
+! First commit
+!
+@
+
+
+2.1
+log
+@First commit
+@
+text
+@d12 1
+a12 1
+! $Id: diff.f9h,v 2.24 2011/02/05 00:55:35 pwagner Exp $
+d37 1
+d55 4
+a58 1
+! $Log: diff.f9h,v $
+@
+

@@ -1,0 +1,88 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.8
+	cfm-single-freq-0-1:1.2.0.6
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.4
+	mus-emls-1-70:1.2.0.2;
+locks; strict;
+comment	@c @;
+
+
+1.2
+date	2018.07.09.23.06.18;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2018.07.09.22.59.07;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Replaced with netlib versions
+@
+text
+@      SUBROUTINE IERV1(LABEL,VALUE,FLAG)
+c Copyright (c) 1996 California Institute of Technology, Pasadena, CA.
+c ALL RIGHTS RESERVED.
+c Based on Government Sponsored Research NAS7-03001.
+c>> 1995-11-15 IERV1 Krogh  Moved format up for C conversion.
+C>> 1985-09-20 IERV1  Lawson  Initial code.
+C
+C     ------------------------------------------------------------
+C     SUBROUTINE ARGUMENTS
+C     --------------------
+C     LABEL     An identifing name to be printed with VALUE.
+C
+C     VALUE     A integer to be printed.
+C
+C     FLAG      See write up for FLAG in ERMSG.
+C
+C     ------------------------------------------------------------
+C
+      COMMON/M77ERR/IDELTA,IALPHA
+      INTEGER IDELTA,IALPHA,VALUE
+      CHARACTER*(*) LABEL
+      CHARACTER*1 FLAG
+      SAVE /M77ERR/
+ 1002 FORMAT(3X,A,' = ',I5)
+C
+      IF (IALPHA.GE.-1) THEN
+        WRITE (*,1002) LABEL,VALUE
+        IF (FLAG .EQ. '.') CALL ERFIN
+      ENDIF
+      RETURN
+C
+      END
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d2 3
+a4 3
+C     .  Copyright (C) 1989, California Institute of Technology.
+C     .  U. S. Government sponsorship under
+C     .  NASA contract NAS7-918 is acknowledged.
+@
+

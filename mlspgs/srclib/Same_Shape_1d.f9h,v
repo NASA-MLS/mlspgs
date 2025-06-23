@@ -1,0 +1,76 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.12
+	cfm-single-freq-0-1:1.1.0.10
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.8
+	mus-emls-1-70:1.1.0.6
+	rel-1-0-englocks-work:1.1.0.4
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.2
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2013.08.16.01.05.46;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial Commit
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! subroutine Same_Shape_*_1d ( Ref, New, ItsName, ModuleName )
+!   Some_Type, pointer, dimension(:) :: Ref, New
+    character(*), intent(in) :: ItsName, ModuleName
+    if ( .not. associated(ref) ) then
+      call deallocate_test ( new, itsName, moduleName )
+    else if ( .not. associated(new) ) then
+      call allocate_test ( new, ubound(ref,1), itsName, moduleName, &
+        & lbound(ref,1) )
+    else
+      if ( any( shape(ref) /= shape(new) ) ) &
+        & call allocate_test ( new, ubound(ref,1), itsName, moduleName, &
+          & lbound(ref,1) )
+    end if
+! end subroutine Same_Shape_*_1d
+
+! $Id: $
+
+! $Log: $
+@

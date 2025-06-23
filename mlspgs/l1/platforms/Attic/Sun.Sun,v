@@ -1,0 +1,332 @@
+head	1.9;
+access;
+symbols
+	V2-21:1.8
+	V2-20:1.8
+	V2-11:1.8
+	V2-10:1.8
+	V2-00:1.8
+	V1-51:1.8
+	V1-50:1.8
+	V1-45:1.7
+	V1-44:1.7
+	V1-43:1.7
+	V1-42:1.7
+	V1-41:1.7
+	V1-32:1.7
+	V1-40:1.7
+	V1-31:1.7
+	V1-30:1.7
+	V1-13:1.7
+	V1-12:1.7
+	V1-11:1.7
+	V1-10:1.7
+	newfwm-feb03:1.7.0.2
+	V1-04:1.3
+	V1-03:1.3
+	V1-02:1.3
+	V1-00:1.3
+	newfwm-sep01:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.9
+date	2007.06.07.19.57.09;	author pwagner;	state dead;
+branches;
+next	1.8;
+
+1.8
+date	2004.12.07.19.35.32;	author pwagner;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2002.07.17.16.54.15;	author pwagner;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2002.07.01.17.32.21;	author pwagner;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2002.06.21.23.24.09;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2002.06.18.18.53.35;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2001.09.10.13.26.28;	author pumphrey;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.09.10.12.52.12;	author archie;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.09.05.20.52.18;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.9
+log
+@compiler-specific pieces removed from platforms directory
+@
+text
+@#Makefile.mac -- a file full of macros to be included by a Makefile
+#to compile a Fortran 9x program or library
+
+# "$Id: Sun.Sun,v 1.8 2004/12/07 19:35:32 pwagner Exp $"
+
+# Path to source files:
+S = ..
+# Path to root directory of l2, lib, etc.:
+CONFDIR=../..
+
+UTILDIR=../../util
+
+# reecho.sh can filter out globbed file expansions that fail
+# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
+# However we will be using it just to create lapack_linker_line 
+# where LIB_LAPACK may contain multiple libraries
+REECHO=$(UTILDIR)/reecho.sh
+
+# Use the libmls.a directory, libdir, for .mod files
+# dir1 is the path prepended to its .o files in dependency lists
+libdir = $(CONFDIR)/lib/$(MLSCONFG)
+
+dir1 = $(libdir)/
+
+# sources shared by l2, l3 are in $(srclib)
+# these USE init_tables_module, which is different for l2 from the l3 version
+# while l2 and l3 use the same sources in srclib they do
+# require different objects--thus a source library instead of an object
+# library (such as libmls.a)
+# therefore we will tell make to add srclib to directories searched for .f90
+# while dir2, the path prepended to its .o files in dependency lists, is empty
+# so that its object files share the current working directory with those of l2
+srclib = $(CONFDIR)/srclib
+
+dir2 =
+
+# Use the libmlspack.a directory, blaslib, for .mod files
+blaslib = $(CONFDIR)/blas/$(MLSCONFG)
+
+# Set paths for finding source files (different from .o and .mod)
+
+vpath %.mod ./
+vpath %.o ./
+vpath %.f90 ../ $(srclib)
+vpath %.f9h ../ $(srclib)
+vpath %.f ../
+vpath %.c ../
+
+FC = f95
+
+# Currently, unknown if DUSTY needs to be different yet
+DUSTY = $(FOPTS)
+
+# All the paths to supply .mod and INCLUDE files used in compiling %.f90
+# Precede each path by "-I" . Don't put spaces between "-I" and the path
+# Same goes for "-M" for module paths.
+PATHS_PREFXD := $(shell ${REECHO} -d -prefixn=-M $(UNPREFXDPTHS)) \
+                $(shell ${REECHO} -d -prefixn=-I $(UNPREFXDPTHS))
+INC_PATHS = $(EXTRA_PATHS) $(PATHS_PREFXD) \
+ -M$(PGSINC) -M$(srclib) -M$S -M$(libdir) -M$(blaslib) \
+ -I$(PGSINC) -I$(srclib) -I$S -I$(libdir) -I$(blaslib)
+
+# Define some suffix rules
+
+.SUFFIXES:
+.SUFFIXES: .o .dbg.o .f90 .f .c
+.f90.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
+
+.f90.dbg.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< -o $*.dbg.o $(FAFTER)
+
+.f.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
+
+.c.o:
+	$(CC) -c ${INC_PATHS} -DNAGf90Fortran $<
+
+#Special load libraries
+l_specials = -lnsl
+
+# $Log: Sun.Sun,v $
+# Revision 1.8  2004/12/07 19:35:32  pwagner
+# Needed to look in blas directory for modules
+#
+# Revision 1.7  2002/07/17 16:54:15  pwagner
+# Omit forbidden space between -I and include directory in compile command
+#
+# Revision 1.6  2002/07/01 17:32:21  pwagner
+# No longer compiles some sources twice
+#
+# Revision 1.5  2002/06/21 23:24:09  pwagner
+# More steps enroute to ending cascades of recompiles
+#
+# Revision 1.4  2002/06/18 18:53:35  pwagner
+# Modified to correctly use he5lib modules
+#
+# Revision 1.3  2001/09/10 13:26:28  pumphrey
+# Just adding comments
+#
+# Revision 1.2  2001/09/10 12:52:12  archie
+# Removed spaces in INC_PATHS
+#
+# Revision 1.1  2001/09/05 20:52:18  pwagner
+# First commit
+#
+@
+
+
+1.8
+log
+@Needed to look in blas directory for modules
+@
+text
+@d4 1
+a4 1
+# "$Id: Sun.Sun,v 1.7 2002/07/17 16:54:15 pwagner Exp $"
+d83 3
+@
+
+
+1.7
+log
+@Omit forbidden space between -I and include directory in compile command
+@
+text
+@d4 1
+a4 1
+# "$Id: Sun.Sun,v 1.6 2002/07/01 17:32:21 pwagner Exp $"
+d37 3
+d60 2
+a61 2
+ -M$(PGSINC) -M$(srclib) -M$S -M$(libdir) \
+ -I$(PGSINC) -I$(srclib) -I$S -I$(libdir)
+d83 3
+@
+
+
+1.6
+log
+@No longer compiles some sources twice
+@
+text
+@d4 1
+a4 1
+# "$Id: Sun.Sun,v 1.5 2002/06/21 23:24:09 pwagner Exp $"
+d55 1
+a55 1
+                $(shell ${REECHO} -d -prefix=-I $(UNPREFXDPTHS))
+d80 3
+@
+
+
+1.5
+log
+@More steps enroute to ending cascades of recompiles
+@
+text
+@d4 1
+a4 1
+# "$Id: Sun.Sun,v 1.4 2002/06/18 18:53:35 pwagner Exp $"
+a78 9
+#	special options for compiling some modules--override .f90 rules
+
+OutputL1B.o: $(S)/OutputL1B.f90
+	$(UTILDIR)/newAifBdiff.sh -a outputl1b.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/OutputL1B.f90 $(FAFTER)
+outputl1b.mod:
+	$(UTILDIR)/newAifBdiff.sh -a outputl1b.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/OutputL1B.f90 $(FAFTER)
+tree_checker.mod: init_tables_module.mod
+	$(UTILDIR)/newAifBdiff.sh -a tree_checker.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(srclib)/tree_checker.f90 $(FAFTER)
+
+d80 3
+@
+
+
+1.4
+log
+@Modified to correctly use he5lib modules
+@
+text
+@d4 1
+a4 1
+# "$Id: Sun.Sun,v 1.3 2001/09/10 13:26:28 pumphrey Exp $"
+d39 1
+d82 5
+a86 1
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/OutputL1B.f90 $(FAFTER)
+d89 3
+@
+
+
+1.3
+log
+@Just adding comments
+@
+text
+@d4 1
+a4 1
+# "$Id: Sun.Sun,v 1.2 2001/09/10 12:52:12 archie Exp $"
+d8 10
+d21 1
+a21 1
+libdir = ../../lib/$(MLSCONFG)
+d33 1
+a33 1
+srclib = ../../srclib
+d53 4
+a56 1
+INC_PATHS = $(EXTRA_PATHS) -M$(PGSINC) -M$(srclib) -M$S -M$(libdir) \
+d78 5
+d84 3
+@
+
+
+1.2
+log
+@Removed spaces in INC_PATHS
+@
+text
+@d4 1
+a4 1
+# "$Id: Sun.Sun,v 1.1 2001/09/05 20:52:18 pwagner Exp $"
+d41 2
+a42 1
+# Precede each path by "-I "
+d66 3
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d4 1
+a4 1
+# "$Id: Sun.Sun,v 1.4 2001/08/15 21:03:28 pwagner Exp $"
+d42 2
+a43 2
+INC_PATHS = $(EXTRA_PATHS) -M $(PGSINC) -M $(srclib) -M $S -M $(libdir) \
+ -I $(PGSINC) -I $(srclib) -I $S -I $(libdir)
+d65 3
+@
+

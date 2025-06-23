@@ -1,0 +1,356 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.12
+	cfm-single-freq-0-1:1.1.0.10
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.8
+	mus-emls-1-70:1.1.0.6
+	rel-1-0-englocks-work:1.1.0.4
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.2
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2013.07.25.00.30.52;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9in
+
+\newcommand{\docname}{wvs-114}
+\newcommand{\docdate}{24 July 2013}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill\\
+Subject: \>MIF RHI\\
+From: \>Van Snyder\\
+Reference: \> \h{wvs-107} \\
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-10pt}
+
+\section{The problem}
+
+To solve for MIF RHI in MLSL2, several changes are made in the interface,
+{\tt ForwardModel\-Wrap\-per}, between the {\tt Retrieve} and {\tt
+ForwardModel} modules.  These changes are similar to those made for the
+purpose of solving for MIF extinction, as described in \h{wvs-107}.
+
+MIF RHI is a minor-frame quantity with a vertical grid the same as
+$P_\text{tan}$.  RHI in the forward model is a geophysical quantity with a
+vertical grid specified by the {\tt L2CF}.
+
+When the retriever calls the forward model, MIF RHI is mapped to
+forward-model RHI by interpolating vertically in MIF RHI from
+$\{\zeta_{\text{tan}_i} = - \log_{10} P_{\text{tan}_i}\,|\, i = 1, \dots,
+N_m\}$, where $N_m$ is the number of MIFs per MAF, to the geophysical
+$\zeta_g$ grid specified for forward-model RHI, and then replicating the
+result for the $N_\phi$ solution profiles specified in the {\tt L2CF}.
+
+Within a retriever state vector MIF RHI block for a single band,
+the element $R^R_{i,n}$ has an associated MAF $(n)$ number, and
+coordinates $(\phi_\text{tan}, \zeta_\text{tan})_i$.  $R^R$ is not a
+coherent quantity.
+
+Within a forward-model state vector RHI block, the element $R^F_{g,j}$ has
+associated geophysical $(\phi_j,\,\zeta_g)$ coordinates, the values and
+numbers of which are specified in the {\tt L2CF}.  $R^F$ is a coherent
+quantity.
+
+Let $P_r$ denote the lowest retrieved pressure and $\zeta_r = -\log_{10}
+P_r$.  In the interface between the retriever and forward model, blocks
+that are MIF RHI blocks are mapped to the forward model state vector using
+%
+\renewcommand{\arraystretch}{2}
+\begin{equation}\label{one}
+R^F_{g,j} = \left\{
+\begin{array}{llll}
+ \overline{R}^R_{n}(\zeta_g)
+  & \zeta_g \geq \zeta_r & j = 1, \dots, N_\phi & g = 1, \dots, N_\zeta \\
+ {R}^R_{n}(\zeta_r)
+  & \zeta_g < \zeta_r    & j = 1, \dots, N_\phi & g = 1, \dots, N_\zeta \\
+\end{array} \right.
+\end{equation}
+%
+where $\overline{R}^R_{n}(\zeta)$ indicates interpolation from
+$\{R^R_{i,n}\}$, in $\{\zeta_i\}$ only, to $\zeta$, $N_\zeta$ is the
+number of $\zeta$ ($-\log_{10}$ pressure) levels specified in the {\tt
+L2CF} for the forward model's RHI state vector block.  That is, below the
+lowest-retrieved pressure, the forward model's RHI is the same as the MIF
+RHI at the lowest-retrieved pressure.
+
+Notice that $R^F_{g,j} = R^F_{g,1},\, j= 1, \dots, N_\phi$, where
+$N_\phi$ is the number of $\phi$ instances specified for $R^F$ in the
+{\tt L2CF}.
+
+The layout of the RHI blocks of the Jacobian used by the retriever and
+those of the Jacobian computed by the forward model are the same as for
+MIF extinction, as shown in \h{wvs-107}.
+
+After the forward model returns, blocks of $K^F$ are mapped to blocks of
+$K^R$ using
+
+\begin{equation}\label{three}
+\begin{array}{lll}
+K^R_{nn,cii} = \sum_{g=1}^{N_\zeta}
+ \left( \sum_{j=1}^{N_\phi} K^F_{nj,cig} \right)
+ \frac{R^F_{g,j}}{R^R_{i,j}} & i = 1, \dots, N_m & c = 1, \dots, N_C\,. \\
+\end{array}
+\end{equation}
+
+Unlike the case for MIF extinction, correction to the radiance is not
+needed.
+
+\section{Notation}
+
+\vskip -10pt
+\renewcommand{\arraystretch}{1}
+\begin{longtable}{c|l||c|l}
+Symbol   & Usage              & Symbol    & Usage \\
+\hline
+\endhead
+         &                              &           & \\[-11pt]
+$R^F$    & FWM (profile) RHI            & $R^R$     & Retriever (MIF) RHI \\
+$K^F$    & FWM (profile) Jacobian block & $K^R$     & Retriever (MIF) Jacobian block \\
+$N_c$    & Number of channels           & $N_m$     & Number of MIFs per MAF\\
+$N_\phi$ & Number of profiles           & $N_\zeta$ & Pressure levels per profile \\
+$c$      & Channel index                & $g$       & FWM vertical index \\
+$i$      & MIF index                    & $j$       & Profile index       \\
+$n$      & MAF number                   & $r$       & Lowest retrieved pressure index \\
+\end{longtable}
+
+\section{Changes in mlsl2}
+
+A new quantity type, MIFRHI, is introduced. This is not a molecule, so it
+is impossible to tell the forward model to use it.
+
+Quantities of type vmr with their molecule being RHI, and quantities of
+type MIFRHI, are specified by the l2cf as quantities in the state vector
+template.
+
+A switch named {\tt TransformMIFRHI} is provided in the {\tt ForwardModel}
+statement in the l2cf to request transformations between RHI and MIF RHI.
+
+If the switch is set, before calling the forward model, the forward model
+wrapper destroys any RHI molecules it finds in the state vector that
+correspond to MIF RHI quantities, then re-creates them by transformation
+from corresponding MIF RHI quantities using Equation (\ref{one}).  If it
+finds MIF RHI quantities without corresponding RHI molecules, it announces
+an error.
+
+If the switch isn't set, the forward model wrapper does not destroy RHI
+molecules, acting on the assumption that the retriever is retrieving RHI,
+not MIF RHI.
+
+Upon return from the forward model, the forward model wrapper destroys MIF
+RHI quantities in the state vector, and associated columns of the
+Jacobian.  If the switch is set it re-creates MIF RHI columns of the
+Jacobian by transforming from corresponding RHI molecules' columns using
+Equation (\ref{three}), and destroys RHI molecules, and associated columns
+of the Jacobian, that correspond to MIF RHI quantities.  It does not
+destroy RHI molecules and associated columns of the Jacobian if they do
+not correspond to MIF RHI quantities.  This allows to retrieve RHI and MIF
+RHI simultaneously, provided they do not correspond.
+
+If the switch isn't set, the forward model wrapper does not re-create MIF
+RHI quantities, and associated columns of the Jacobian.  This prevents the
+retriever from retrieving MIF RHI.
+
+The correspondence between an RHI molecule and a MIF RHI quantity is
+established if they are for the same radiometer.
+
+An alternative to having the switch is to determine whether the state
+vector has any MIF RHI quantities.  This requires one to make more
+substantial changes in the l2cf to select whether to retrieve RHI or MIF
+RHI, i.e., one must change the state vector template.
+
+\section{L2CF changes}
+
+\vspace*{-8pt}
+One must be careful when constructing the l2cf to retrieve MIF RHI. 
+Considerations here are very much like the case for MIF extinction, as
+described in \h{wvs-107}.
+
+\vspace*{-5pt}
+
+\begin{itemize}\parskip 3pt
+
+\item There must be both RHI and MIF RHI quantities in the
+  retrieval state vector for bands in which MIF RHI is being
+  retrieved, because otherwise the forward model and MIF RHI
+  transformation have nowhere to record the Jacobians of radiance with
+  respect to RHI and MIF RHI, respectively.  This is because
+  the Jacobian column space is defined by reference to the retrieval state
+  vector.  This might eventually be handled automatically.
+
+\item Profile RHI for the band in which MIF RHI is being
+  retrieved needs to be a one-profile quantity, even (especially) in 2-D
+  retrievals.  Use an {\tt hGrid} something like \\
+     \hspace*{0.25in}{\tt hGridSingle: hGrid, type=explicit,
+      geodAngle=[0 degrees]}\\
+  for RHI quantities.
+
+\item It's important to use a rapidly-decaying profile for MIF RHI
+  apriori, e.g.,
+
+{\tt\small\begin{verbatim}
+    Fill, quantity=apriori.totalMIFRHI,method=profile, $
+      profileValues = [ 1000mb: 0.01, 681mb:0.01, 464mb : 0.008, 316mb : 0.004, $
+      215mb : 0.001, 147mb : 0.0005, 100mb : 0.0003, 68mb:0.0002,46mb: 0.0001,  $
+      32mb:7.0e-5,22mb:4.0e-5,15mb:9.3e-6, 10mb:2.7e-6, 1mb:1.0e-8, $
+      0.1mb:1.5e-10,0.01mb:2.0e-12,0.001mb:3.3e-14, 0.0001mb:3.0e-16, $
+      0.00001mb:3.0e-18], ptanQuantity=state.ptanGHz
+\end{verbatim}}
+
+\item Apriori precision for RHI needs to be huge, e.g.,\\[3pt]
+  {\tt Fill,
+  quantity=aprioriPrecision.totalRHI,method=explicit, \$ \\
+     \hspace*{0.25in}/spread, explicitValues=1.0e6}\\[3pt]
+  to prevent the Newton method from moving in the RHI direction. 
+  The Jacobian of radiance with respect to RHI is deleted by the
+  MIF RHI transformation, but the RHI apriori needs to be
+  present to prevent the overall Jacobian from being singular. Apriori
+  precision for MIF RHI should be what apriori precision for
+  RHI would be if MIF RHI were not being retrieved, e.g.,
+
+{\tt\small\begin{verbatim}
+    Fill, quantity=aprioriprecision.totalMIFRHI,method=profile, $
+      profileValues = [ 1000mb: 1.0E-7, 681mb:0.0005, 464mb : 0.001, 316mb : 0.001, $
+      215mb : 0.0006, 147mb : 0.0002, 100mb : 0.0001, 68mb:0.0001, 46mb: 7.0e-5, $
+      32mb:4.0e-5, 22mb:2.0e-5, 15mb:5.0e-6, 10mb:2.0e-6, 0.00001mb:1.0e-6], $
+      ptanQuantity=state.ptanGHz
+\end{verbatim}}
+
+\item There must be a lowest retrieved pressure quantity in the ``extra''
+  vector, e.g.,\\
+  {\tt lowestRetrievedPressure: Quantity, type=lowestRetrievedPressure \\
+     Fill, quantity=state.lowestRetrievedPressure, method=explicit, \$\\
+       \hspace*{0.25in}explicitValues= -2.6 zeta }\\
+  It isn't needed in the retrieval state vector, or apriori vector.
+
+\item Mask bits need to be set in MIF RHI (and indeed in any
+  retrieved minor-frame quantity) so as not to try to retrieve where there
+  are no radiances.  There is a {\tt radianceQuantity} field of the subset
+  command from which to get masks, since one cannot predict where L1 will
+  mark bad radiances.  The quantity to be masked must be a minor-frame
+  quantity.  The only other fields allowed are {\tt additional}, {\tt
+  channel}, {\tt ignore} (which reverses the sense of {\tt channel}, and
+  {\tt instances}.  If the radiance quantity channels are masked first,
+  the {\tt channels} field isn't necessary.  If no channel field appears,
+  all are selected (or ignored).  The selected channels should be
+  consistent with the signal used for retrieval.
+
+\item Tikhonov regularization needs to be turned off for MIF RHI,
+  and for RHI in bands where MIF RHI is being retrieved.
+
+\item The {\tt TransformMIFRHI} switch needs to be set in the
+forward model configuration.
+
+\end{itemize}
+
+\label{lastpage}
+\end{document}
+
+% $Id: wvs-113.tex,v 1.1 2013/07/23 20:51:54 vsnyder Exp $
+
+% $Log: wvs-113.tex,v $
+@

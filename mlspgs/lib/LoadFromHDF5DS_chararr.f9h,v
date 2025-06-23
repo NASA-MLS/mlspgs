@@ -1,0 +1,251 @@
+head	2.5;
+access;
+symbols
+	v5-02-NRT-19:2.5
+	v6-00:2.5
+	v5-02-NRT-18:2.5
+	v5-02:2.5
+	v5-01-NRT-17:2.5
+	v5-01-NRT-16:2.5
+	v5-01-NRT-15:2.5
+	v5-01-NRT-14:2.5
+	neuralnetworks-1-0:2.5.0.12
+	cfm-single-freq-0-1:2.5.0.10
+	v5-01:2.5
+	v5-00:2.5
+	v4-23-TA133:2.5.0.8
+	mus-emls-1-70:2.5.0.6
+	rel-1-0-englocks-work:2.5.0.4
+	VUMLS1-00:2.5
+	VPL1-00:2.5
+	V4-22-NRT-08:2.5
+	VAM1-00:2.5
+	V4-21:2.5.0.2
+	V4-13:2.5
+	V4-12:2.5
+	V4-11:2.5
+	V4-10:2.5
+	V3-43:2.2
+	M4-00:2.4
+	V3-41:2.2
+	V3-40-PlusGM57:2.2.0.2
+	V3-33:2.2
+	V3-31:2.2
+	V3-30-NRT-05:2.2
+	cfm-01-00:2.2
+	V3-30:2.2
+	V3-20:2.2
+	V3-10:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.5
+date	2013.08.31.01.24.53;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2011.11.04.23.40.36;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2011.11.03.23.47.07;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2009.09.29.23.31.49;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2008.05.09.23.27.18;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.5
+log
+@Replace MLSMessageCalls with trace_begin and trace_end
+@
+text
+@!   subroutine LoadFromHDF5DS_chararr* ( MLSFile, name, value, &
+!     & start, count, stride, block )
+!     ! This routine loads a predefined array with values from a DS
+!     type (MLSFile_T)   :: MLSFile
+!     character (len=*), intent(in) :: NAME ! Name for this dataset
+!     character (len=*), intent(out) :: VALUE(:,...)    ! The array itself
+!     integer, dimension(:), optional, intent(in) :: start
+!                                  ! Starting coordinates of hyperslab
+!     integer, dimension(:), optional, intent(in) :: count
+!                                  ! Num of blocks to select from dataspace
+!     integer, dimension(:), optional, intent(in) :: stride
+!                                  ! How many elements to move in each direction
+!     integer, dimension(:), optional, intent(in) :: block
+!                                  ! Size of element block
+
+    ! Local variables
+    integer :: LOCID                    ! ID of file or group or subgroup
+    integer :: MEMSPACEID               ! ID of dataspace
+    integer :: Rank
+    integer(hsize_t), dimension(size(shape(value))) :: SHP ! Shape of value
+    integer :: SPACEID                  ! ID of dataspace
+    integer :: SETID                    ! ID of dataset
+    integer :: STATUS                   ! Flag from HDF5
+    integer :: STRINGTYPE               ! String type
+    integer(kind=Size_t) :: STRINGSIZE  ! String size
+! $Id: LoadFromHDF5DS_chararr.f9h,v 2.4 2011/11/04 23:40:36 pwagner Exp $
+
+    ! Executable code
+    rank = size(shp)
+    call trace_begin ( 'LoadFromHDF5DS_chararr'//digits(rank), cond=.false. )
+    locID = MLSFile%fileID%f_id
+    if ( MLSFile%fileID%grp_id > 0 ) locID = MLSFile%fileID%grp_id
+    ! This next is inelegant: grp_id should be a linked list
+    if ( MLSFile%fileID%sd_id > 0 ) locID = MLSFile%fileID%sd_id
+    shp = shape ( value )
+    if ( .not. MLSFile%stillOpen ) then
+      call mls_openFile(MLSFile, status)
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to open file ' // trim(MLSFile%name), &
+        & MLSFile=MLSFile )
+      locID = MLSFile%fileID%f_id
+    endif
+    call h5dOpen_f ( locID, name, setID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open dataset ' // trim(name), &
+      & MLSFile=MLSFile )
+    call h5dGet_type_f ( setID, stringType, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to get type for 1D char array ' // trim(name), &
+      & MLSFile=MLSFile )
+    call h5tGet_size_f ( stringType, stringSize, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to get size for 1D char array ' // trim(name), &
+      & MLSFile=MLSFile )
+    if ( stringSize > len(value) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Value too long to fit in space given for 1D char array ' // trim(name), &
+      & MLSFile=MLSFile )
+    call h5dget_space_f ( setID, spaceID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open dataspace for dataset ' // trim(name), &
+      & MLSFile=MLSFile )
+    if ( present(start) ) then
+      call mls_hyperslab ( spaceID, shp, name, memspaceID, &
+        & start, count, stride, block )
+      call h5dread_f ( setID, stringtype, value, &
+        & (/ shp, ones(rank:6) /), status, memspaceID, spaceID )
+      call finishLoad ( name, status, spaceID, setID, &
+        & memspaceID, stringType, MLSFile=MLSFile )
+    else
+      call check_for_fit ( spaceID, shp, name )
+      call h5dread_f ( setID, stringtype, value, (/ shp, ones(1:6) /), status )
+      call finishLoad ( name, status, spaceID, setID, &
+        & stringType=stringType, MLSFile=MLSFile )
+    end if
+    call trace_end ( 'LoadFromHDF5DS_chararr'//digits(rank), cond=.false. )
+!   end subroutine LoadFromHDF5DS_chararr*
+
+! $Log: LoadFromHDF5DS_chararr.f9h,v $
+! Revision 2.4  2011/11/04 23:40:36  pwagner
+! Should handle inelegant (i.e. hackish) may of subgrouping ids
+!
+! Revision 2.3  2011/11/03 23:47:07  pwagner
+! Corrected mistaken use sd_id instead of f_id for locID
+!
+! Revision 2.2  2009/09/29 23:31:49  pwagner
+! Changes needed by 64-bit build
+!
+! Revision 2.1  2008/05/09 23:27:18  vsnyder
+! Initial commit
+!
+@
+
+
+2.4
+log
+@Should handle inelegant (i.e. hackish) may of subgrouping ids
+@
+text
+@d17 3
+a19 1
+    integer :: STATUS                   ! Flag from HDF5
+a21 1
+    integer :: MEMSPACEID               ! ID of dataspace
+d23 1
+a23 1
+    integer :: LOCID                    ! ID of file or group or subgroup
+d26 1
+a26 2
+    integer :: Rank
+! $Id: LoadFromHDF5DS_chararr.f9h,v 2.3 2011/11/03 23:47:07 pwagner Exp $
+d29 2
+a34 2
+    rank = size(shp)
+    call MLSMessageCalls( 'push', constantName='LoadFromHDF5DS_chararr'//digits(rank) )
+d75 1
+a75 1
+    call MLSMessageCalls( 'pop' )
+d79 3
+@
+
+
+2.3
+log
+@Corrected mistaken use sd_id instead of f_id for locID
+@
+text
+@d22 1
+d24 1
+a24 2
+    integer(kind=Size_t) :: STRINGSIZE               ! String size
+
+d26 1
+a26 2
+
+! $Id: LoadFromHDF5DS_chararr.f9h,v 2.2 2009/09/29 23:31:49 pwagner Exp $
+d29 4
+d36 8
+a43 1
+    call h5dOpen_f ( MLSFile%fileID%f_id, name, setID, status )
+d79 3
+@
+
+
+2.2
+log
+@Changes needed by 64-bit build
+@
+text
+@d27 1
+a27 1
+! $Id: LoadFromHDF5DS_chararr.f9h,v 2.1 2008/05/09 23:27:18 vsnyder Exp $
+d33 1
+a33 1
+    call h5dOpen_f ( MLSFile%fileID%sd_id, name, setID, status )
+d69 3
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d23 1
+a23 1
+    integer :: STRINGSIZE               ! String size
+d27 1
+a27 1
+! $Id: $
+d68 4
+a71 1
+! $Log: $
+@
+

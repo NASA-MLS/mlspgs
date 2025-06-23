@@ -1,0 +1,125 @@
+head	1.3;
+access;
+symbols
+	v5-02-NRT-19:1.3
+	v6-00:1.3
+	v5-02-NRT-18:1.3
+	v5-02:1.3
+	v5-01-NRT-17:1.3
+	v5-01-NRT-16:1.3
+	v5-01-NRT-15:1.3
+	v5-01-NRT-14:1.3
+	neuralnetworks-1-0:1.3.0.12
+	cfm-single-freq-0-1:1.3.0.10
+	v5-01:1.3
+	v5-00:1.3
+	v4-23-TA133:1.3.0.8
+	mus-emls-1-70:1.3.0.6
+	rel-1-0-englocks-work:1.3.0.4
+	VUMLS1-00:1.3
+	VPL1-00:1.3
+	V4-22-NRT-08:1.3
+	VAM1-00:1.3
+	V4-21:1.3.0.2
+	V4-13:1.3
+	V4-12:1.3
+	V4-11:1.3
+	V4-10:1.3
+	M4-00:1.3
+	V3-33:1.2
+	V3-31:1.2
+	V3-30-NRT-05:1.2
+	cfm-01-00:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.3
+date	2011.12.16.01.19.40;	author honghanh;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2010.06.29.23.56.57;	author livesey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2010.03.26.15.33.03;	author honghanh;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@Updated documentation for newer API centered on the use of agile vectors,
+and removed the concept of vector template and chunk from public API.
+@
+text
+@! Use the input given, and the L1BOA file to create a regular hGrid.
+type(HGrid_T) function CreateRegularHGrid_maf (instrumentModuleName, origin, &
+              pacing, insetOverLaps, filedatabase, &
+              firstL1Maf, lastL1Maf) result(hgrid)
+
+    ! The (x,y) origin of coordinate
+    real(r8), intent(in) :: origin
+    real(r8), intent(in) :: spacing
+    ! the filedatabase must contains L1BOA file (see CFM_MLSSetup)
+    type(MLSFile_T), dimension(:), pointer :: filedatabase
+    ! Either "GHz" or "THz" but the string is case-insensitive.
+    character(len=*), intent(in) :: instrumentModuleName
+    logical, intent(in) :: insetOverlaps
+    ! Start of the maf range in the given L1BOA in the filedatabase
+    integer, intent(in) :: firstL1Maf
+    ! End of the maf range in the given L1BOA in the filedatabase
+    integer, intent(in) :: lastL1Maf
+end function
+@
+
+
+1.2
+log
+@Getting ready for delivery
+@
+text
+@d2 16
+a17 14
+type(HGrid_T) function CreateRegularHGrid (instrumentModuleName, origin, &
+               spacing, insetOverLaps, filedatabase, &
+               chunk) result(hgrid)
+   ! The (x,y) origin of coordinate
+   real(r8), intent(in) :: origin
+   real(r8), intent(in) :: spacing
+   ! the filedatabase must contains L1BOA file (see CFM_MLSSetup)
+   type(MLSFile_T), dimension(:), pointer :: filedatabase
+   ! Either "GHz" or "THz" but the string is case-insensitive.
+   character(len=*), intent(in) :: instrumentModuleName
+   logical, intent(in) :: insetOverlaps
+   ! Contains the time range of the data to be gotten out of L1BOA
+   ! (see CFM_MLSSetup)
+   type(MLSChunk_T) :: chunk
+@
+
+
+1.1
+log
+@Update for v0.1 document
+Add subroutines creating grids
+Add ExplicitFillVectorQuantity subroutine
+Add FGrid_T data structure
+Modify mockup.f90
+Removing creating quantity template example because it can be found in the mockup
+@
+text
+@d4 1
+a4 1
+               fakeChunk) result(hgrid)
+d15 1
+a15 1
+   type(MLSChunk_T) :: fakeChunk
+@
+

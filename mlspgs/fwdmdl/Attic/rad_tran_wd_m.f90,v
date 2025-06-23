@@ -1,0 +1,984 @@
+head	1.16;
+access;
+symbols
+	newfwm-sep01:1.15.0.2
+	V0-7:1.15
+	V0-5-Level2:1.12
+	V0-5-SIPS:1.11;
+locks; strict;
+comment	@# @;
+
+
+1.16
+date	2001.09.17.20.26.27;	author livesey;	state dead;
+branches;
+next	1.15;
+
+1.15
+date	2001.07.04.00.34.24;	author zvi;	state Exp;
+branches
+	1.15.2.1;
+next	1.14;
+
+1.14
+date	2001.06.21.13.07.09;	author zvi;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2001.06.07.23.39.31;	author pwagner;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2001.05.02.20.49.23;	author zvi;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2001.04.10.02.25.14;	author livesey;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2001.04.09.22.24.38;	author livesey;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2001.04.09.20.52.07;	author zvi;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2001.03.31.23.40.55;	author zvi;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2001.03.30.20.28.21;	author zvi;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2001.03.29.08.51.01;	author zvi;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2001.03.26.17.56.14;	author zvi;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.03.08.00.11.16;	author zvi;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2001.03.05.21.37.20;	author zvi;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.01.31.01.08.48;	author zvi;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2000.11.22.23.07.29;	author zvi;	state Exp;
+branches;
+next	;
+
+1.15.2.1
+date	2001.09.10.10.01.02;	author zvi;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.16
+log
+@New forward model
+@
+text
+@! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+module RAD_TRAN_WD_M
+  use GLNP, only: NG
+  use ELLIPSE_M, only: ELLIPSE
+  use MLSCommon, only: I4, R8
+  use ForwardModelConfig, only: ForwardModelConfig_T
+  use VectorsModule, only: Vector_T, VectorValue_T, GetVectorQuantityByType
+  use L2PC_PFA_STRUCTURES, only: SPECTRO_PARAM
+  use PATH_ENTITIES_M, only: PATH_VECTOR, PATH_BETA, PATH_DERIVATIVE, &
+                             PATH_INT_VECTOR_2D
+  use D_T_SCRIPT_DTNP_M, only: D_T_SCRIPT_DTNP
+  use GET_DELTA_M, only: GET_DELTA
+  use TEMPERATURE_DERIV_M, only: TEMPERATURE_DERIV
+  use ZATMOS_DERIV_M, only: ZATMOS_DERIV
+  implicit NONE
+  private
+  public :: RAD_TRAN_WD
+!---------------------------- RCS Ident Info -------------------------------
+  CHARACTER (LEN=256) :: Id = &
+    "$Id: rad_tran_wd_m.f90,v 1.15 2001/07/04 00:34:24 zvi Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= &
+    "$RCSfile: rad_tran_wd_m.f90,v $"
+!---------------------------------------------------------------------------
+contains
+!----------------------------------------------------------------------
+! This is the radiative transfer model with derivatives
+
+Subroutine Rad_Tran_WD(ForwardModelConfig, FwdModelExtra, FwdModelIn,     &
+        &  elvar,frq_i,Frq,n_sps,z_path,h_path,t_path,phi_path,dHdz_path, &
+        &  beta_path,spsfunc_path,t_z_basis,no_t,ref_corr,no_phi_t,       &
+        &  t_phi_basis,dh_dt_path,k_temp,k_atmos,brkpt,no_ele,mid,ilo,ihi,&
+        &  t_script,tau,max_zeta_dim,max_phi_dim,midval_ndx,no_midval_ndx,&
+        &  gl_ndx,no_gl_ndx,midval_delta,Sps_zeta_loop,Sps_phi_loop,Ier)
+!
+    type(forwardModelConfig_T), intent(in) :: forwardModelConfig
+    type (Vector_T), intent(in) :: fwdModelIn, fwdModelExtra
+!
+    Type(ELLIPSE), INTENT(IN OUT) :: elvar
+
+    Integer(i4), intent(in) :: FRQ_I,NO_PHI_T,NO_T, &
+   &                           N_SPS, BRKPT, NO_ELE, MID, ILO, IHI, &
+   &                           max_zeta_dim, max_phi_dim
+
+    Integer(i4), intent(in) :: gl_ndx(:,:), no_gl_ndx
+    Integer(i4), intent(in) :: midval_ndx(:,:),no_midval_ndx
+
+    Integer(i4), intent(out) :: IER
+
+    Real(r8), intent(in) :: FRQ
+    Real(r8), intent(in) :: midval_delta(:,:)
+
+    Real(r8), intent(in) :: T_Z_BASIS(:), T_PHI_BASIS(:)
+
+    Real(r8), intent(in) :: TAU(:)
+    Real(r8), intent(in) :: T_SCRIPT(:)
+    Real(r8), intent(in) :: REF_CORR(:)
+
+    Type(path_beta), intent(in) :: BETA_PATH(:)   ! (Nsps)
+
+    Type(path_vector), intent(in) :: SPSFUNC_PATH(:)
+
+    type(path_int_vector_2d), intent(in) :: sps_phi_loop(:)
+    type(path_int_vector_2d), intent(in) :: sps_zeta_loop(:)
+
+    Type(path_vector), intent(in) :: Z_PATH, T_PATH, H_PATH, PHI_PATH, &
+   &                                 DHDZ_PATH
+
+    Real(r8), intent(in) :: dh_dt_path(:,:,:)
+
+    Type(path_derivative), intent(in out) :: k_temp
+    Type(path_derivative), intent(in out) :: k_atmos(:)
+!
+    Integer(i4) :: i, j, N_lvls
+
+    Real(r8) :: dt_scrpt_dnp(size(tau),no_t,no_phi_t)
+    Real(r8) :: delta(size(tau),max_zeta_dim,max_phi_dim,n_sps)
+!
+!  Begin code:
+!
+    ier = 0
+    N_lvls = ForwardModelConfig%integrationGrid%noSurfs
+
+    if(forwardModelConfig%atmos_der) then
+!
+!  Atmospheric derivatives:
+!
+      Call GET_DELTA(ForwardModelConfig, FwdModelExtra, FwdModelIn,     &
+   &       mid,brkpt,no_ele,z_path,h_path,phi_path,beta_path,dHdz_path, &
+   &       n_sps, N_lvls, ref_corr,spsfunc_path,elvar,midval_ndx,       &
+   &       no_midval_ndx,gl_ndx,no_gl_ndx,Sps_zeta_loop,Sps_phi_loop,   &
+   &       midval_delta,delta,Ier)
+      if (Ier /= 0) Return
+!
+! Compute atmosperic derivatives for this channel
+!
+      Call ZATMOS_DERIV(ForwardModelConfig, FwdModelExtra, FwdModelIn, &
+     &       frq_i, mid, delta, t_script, tau, ilo, ihi, k_atmos,Ier)
+      if (Ier /= 0) Return
+!
+    endif
+!
+! Compute temperature derivative for this channel (if requested)
+!
+    if (ForwardModelConfig%temp_der) then
+!
+! Create the dt_scrpt_dnp arrays for all coefficients:
+!
+      do i = 1, no_phi_t
+        do j = 1, no_t
+          CALL d_t_script_dtnp(Frq, t_z_basis, t_phi_basis,    &
+         &     brkpt, no_ele, z_path, t_path, phi_path,        &
+         &     Ng, j, i, no_t, no_phi_t, dt_scrpt_dnp(1:,j,i))
+        end do
+      end do
+!
+      Call temperature_deriv(mid,brkpt,no_ele,t_z_basis,z_path,  &
+   &       t_path,h_path,phi_path,beta_path,dHdz_path,no_phi_t,  &
+   &       no_t,N_lvls,n_sps,ref_corr,t_phi_basis,tau,t_script,  &
+   &       dt_scrpt_dnp,spsfunc_path,ilo,ihi,frq_i,dh_dt_path,   &
+   &       elvar,no_midval_ndx,midval_ndx,no_gl_ndx,gl_ndx,k_temp)
+!
+    end if
+!
+    Return
+
+  End Subroutine RAD_TRAN_WD
+end module RAD_TRAN_WD_M
+! $Log: rad_tran_wd_m.f90,v $
+! Revision 1.15  2001/07/04 00:34:24  zvi
+! Modified & new code(s) for better timing
+!
+! Revision 1.14  2001/06/21 13:07:09  zvi
+! Speed enhancement MAJOR update
+!
+! Revision 1.13  2001/06/07 23:39:31  pwagner
+! Added Copyright statement
+!
+! Revision 1.12  2001/05/02 20:49:23  zvi
+! Cleaning up code
+!
+! Revision 1.11  2001/04/10 02:25:14  livesey
+! Tidied up some code
+!
+! Revision 1.10  2001/04/09 22:24:38  livesey
+! Clear error flag on entry
+!
+! Revision 1.9  2001/04/09 20:52:07  zvi
+! Debugging Derivatives version
+!
+! Revision 1.8  2001/03/31 23:40:55  zvi
+! Eliminate l2pcdim (dimension parameters) move to allocatable ..
+!
+! Revision 1.7  2001/03/30 20:28:21  zvi
+! General fix-up to get rid of COMMON BLOCK (ELLIPSE)
+!
+! Revision 1.6  2001/03/29 08:51:01  zvi
+! Changing the (*) toi (:) everywhere
+!
+! Revision 1.5  2001/03/26 17:56:14  zvi
+! New codes to deal with dh_dt_path issue.. now being computed on the fly
+!
+! Revision 1.4  2001/03/08 00:11:16  zvi
+! *** empty log message ***
+!
+! Revision 1.1  2000/05/04 18:12:05  vsnyder
+! Initial conversion to Fortran 90
+@
+
+
+1.15
+log
+@Modified & new code(s) for better timing
+@
+text
+@d22 1
+a22 1
+    "$Id: rad_tran_wd_m.f90,v 1.14 2001/06/21 13:07:09 zvi Exp $"
+d131 3
+@
+
+
+1.15.2.1
+log
+@*** empty log message ***
+@
+text
+@d22 1
+a22 1
+    "$Id: rad_tran_wd_m.f90,v 1.15 2001/07/04 00:34:24 zvi Exp $"
+a130 3
+! Revision 1.15  2001/07/04 00:34:24  zvi
+! Modified & new code(s) for better timing
+!
+@
+
+
+1.14
+log
+@Speed enhancement MAJOR update
+@
+text
+@a14 1
+  use SPECTRO_DERIVATIVE_M, only: SPECTRO_DERIVATIVE
+d22 1
+a22 1
+    "$Id: rad_tran_wd_m.f90,v 1.13 2001/06/07 23:39:31 pwagner Exp $"
+d131 3
+@
+
+
+1.13
+log
+@Added Copyright statement
+@
+text
+@d5 1
+a5 1
+  use GL6P, only: NG
+d11 2
+a12 1
+  use PATH_ENTITIES_M, only: PATH_VECTOR, PATH_BETA, PATH_DERIVATIVE
+d23 1
+a23 1
+    "$Id: rad_tran_wd_m.f90,v 1.12 2001/05/02 20:49:23 zvi Exp $"
+d31 6
+a36 6
+Subroutine Rad_Tran_WD(ForwardModelConfig, FwdModelExtra, FwdModelIn, &
+       &   elvar,frq_i,Frq,n_sps,z_path,h_path,t_path,phi_path,  &
+       &   dHdz_path,beta_path,spsfunc_path,t_z_basis,no_t,ref_corr,  &
+       &   no_phi_t,t_phi_basis,dh_dt_path, &
+       &   k_temp,k_atmos,brkpt,    &
+       &   no_ele,mid,ilo,ihi,t_script,tau,max_zeta_dim,max_phi_dim,Ier)
+d47 2
+d53 1
+d64 4
+d90 1
+a90 1
+      Call GET_DELTA(ForwardModelConfig, FwdModelExtra, FwdModelIn, &
+d92 3
+a94 1
+   &       n_sps, N_lvls, ref_corr,spsfunc_path,elvar,delta,Ier)
+d119 5
+a123 4
+      Call temperature_deriv(mid,brkpt,no_ele,t_z_basis,z_path,t_path,   &
+     &     h_path,phi_path,beta_path,dHdz_path,dh_dt_path,no_phi_t,no_t, &
+     &     N_lvls,n_sps,ref_corr,t_phi_basis,tau,t_script, &
+     &     dt_scrpt_dnp,spsfunc_path,ilo,ihi,frq_i,elvar,k_temp)
+d132 3
+@
+
+
+1.12
+log
+@Cleaning up code
+@
+text
+@d1 3
+d22 1
+a22 1
+    "$Id: rad_tran_wd_m.f90,v 1.11 2001/04/10 02:25:14 livesey Exp $"
+d121 3
+@
+
+
+1.11
+log
+@Tidied up some code
+@
+text
+@d19 1
+a19 1
+    "$Id: rad_tran_wd_m.f90,v 1.10 2001/04/09 22:24:38 livesey Exp $"
+d65 1
+a65 4
+    CHARACTER (LEN=01) :: CA
+
+    Integer(i4) :: i, j, Ngp1, Spectag, N_lvls
+    Integer(i4) :: nf, sa, s_np, s_nz
+a72 1
+    Ngp1 = Ng + 1
+a112 61
+!     if (ForwardModelConfig%spect_der) then
+! !
+! !  ** Spectroscopic derivatives here:
+! !
+! !  Get the dI/d(Spectral parameters) (w, n & nu0) FOR EACH SPECIE,
+! !  and for each Zeta/Phi coefficient.
+! !
+!       do nf = 1, n_sps
+! !
+!         sa = spect_atmos(nf)
+!         if (sa < 1) CYCLE
+! !
+!         if(.not.spectroscopic(sa)%DER_CALC(band)) CYCLE
+! !
+!         Spectag = spectroscopic(sa)%spectag
+! !
+!         DO
+! !
+!           if(spectroscopic(sa)%Spectag /= Spectag) EXIT
+! !
+!           s_np = spectroscopic(sa)%no_phi_values
+!           s_nz = spectroscopic(sa)%no_zeta_values
+!           if(s_nz < 1 .or. s_np < 1) EXIT
+! !
+!           CA = spectroscopic(sa)%type
+
+!           if (CA == 'W') then
+!             Call spectro_derivative(mid, brkpt, no_ele, z_path,         &
+!  &               h_path, phi_path, DHDZ_PATH, N_lvls,ref_corr,    &
+!  &               spsfunc_path(nf)%values, beta_path(nf)%dbeta_dw, tau,  &
+!  &               t_script,s_np,s_nz,ilo,ihi,spectroscopic(sa), &
+!  &               frq_i,elvar,k_spect_dw(nf), Ier )
+! !
+!           else if (CA == 'N') then
+!             Call spectro_derivative(mid, brkpt, no_ele, z_path,         &
+!  &               h_path, phi_path, DHDZ_PATH, N_lvls,ref_corr,    &
+!  &               spsfunc_path(nf)%values, beta_path(nf)%dbeta_dn, tau,  &
+!  &               t_script,s_np,s_nz,ilo,ihi,spectroscopic(sa), &
+!  &               frq_i,elvar,k_spect_dn(nf), Ier )
+! !
+!           else if (CA == 'V') then
+!             Call spectro_derivative(mid, brkpt, no_ele, z_path,         &
+!  &               h_path, phi_path, DHDZ_PATH, N_lvls,ref_corr,    &
+!  &               spsfunc_path(nf)%values, beta_path(nf)%dbeta_dnu, tau, &
+!  &               t_script,s_np,s_nz,ilo,ihi,spectroscopic(sa), &
+!  &               frq_i,elvar,k_spect_dnu(nf), Ier )
+! !
+!           end if
+! !
+!           if (Ier /= 0) Return
+! !
+!           sa = sa + 1
+!           if(sa > 3 * n_sps) EXIT
+! !
+!         END DO
+! !
+!       end do                      ! On nf (Specie loop)
+! !
+!     end if                        ! on Derivatives 'if'
+!
+
+d118 3
+@
+
+
+1.10
+log
+@Clear error flag on entry
+@
+text
+@d19 1
+a19 1
+    "$Id: rad_tran_wd_m.f90,v 1.9 2001/04/09 20:52:07 zvi Exp $"
+d28 1
+a28 1
+       &   elvar,frq_i,band,Frq,n_sps,z_path,h_path,t_path,phi_path,  &
+d30 2
+a31 2
+       &   no_phi_t,t_phi_basis,dh_dt_path,spect_atmos,spectroscopic, &
+       &   k_temp,k_atmos,k_spect_dw,k_spect_dn,k_spect_dnu,brkpt,    &
+d39 1
+a39 1
+    Integer(i4), intent(in) :: FRQ_I,NO_PHI_T,NO_T, BAND, &
+a42 1
+    Integer(i4), intent(in) :: SPECT_ATMOS(:)
+a53 2
+    Type(spectro_param), intent(in) :: SPECTROSCOPIC(:)
+
+d63 1
+a63 2
+    Type(path_derivative), intent(in out) :: k_atmos(:), k_spect_dw(:), &
+                                             k_spect_dn(:), k_spect_dnu(:)
+d117 59
+a175 59
+    if (ForwardModelConfig%spect_der) then
+!
+!  ** Spectroscopic derivatives here:
+!
+!  Get the dI/d(Spectral parameters) (w, n & nu0) FOR EACH SPECIE,
+!  and for each Zeta/Phi coefficient.
+!
+      do nf = 1, n_sps
+!
+        sa = spect_atmos(nf)
+        if (sa < 1) CYCLE
+!
+        if(.not.spectroscopic(sa)%DER_CALC(band)) CYCLE
+!
+        Spectag = spectroscopic(sa)%spectag
+!
+        DO
+!
+          if(spectroscopic(sa)%Spectag /= Spectag) EXIT
+!
+          s_np = spectroscopic(sa)%no_phi_values
+          s_nz = spectroscopic(sa)%no_zeta_values
+          if(s_nz < 1 .or. s_np < 1) EXIT
+!
+          CA = spectroscopic(sa)%type
+
+          if (CA == 'W') then
+            Call spectro_derivative(mid, brkpt, no_ele, z_path,         &
+ &               h_path, phi_path, DHDZ_PATH, N_lvls,ref_corr,    &
+ &               spsfunc_path(nf)%values, beta_path(nf)%dbeta_dw, tau,  &
+ &               t_script,s_np,s_nz,ilo,ihi,spectroscopic(sa), &
+ &               frq_i,elvar,k_spect_dw(nf), Ier )
+!
+          else if (CA == 'N') then
+            Call spectro_derivative(mid, brkpt, no_ele, z_path,         &
+ &               h_path, phi_path, DHDZ_PATH, N_lvls,ref_corr,    &
+ &               spsfunc_path(nf)%values, beta_path(nf)%dbeta_dn, tau,  &
+ &               t_script,s_np,s_nz,ilo,ihi,spectroscopic(sa), &
+ &               frq_i,elvar,k_spect_dn(nf), Ier )
+!
+          else if (CA == 'V') then
+            Call spectro_derivative(mid, brkpt, no_ele, z_path,         &
+ &               h_path, phi_path, DHDZ_PATH, N_lvls,ref_corr,    &
+ &               spsfunc_path(nf)%values, beta_path(nf)%dbeta_dnu, tau, &
+ &               t_script,s_np,s_nz,ilo,ihi,spectroscopic(sa), &
+ &               frq_i,elvar,k_spect_dnu(nf), Ier )
+!
+          end if
+!
+          if (Ier /= 0) Return
+!
+          sa = sa + 1
+          if(sa > 3 * n_sps) EXIT
+!
+        END DO
+!
+      end do                      ! On nf (Specie loop)
+!
+    end if                        ! on Derivatives 'if'
+d183 3
+@
+
+
+1.9
+log
+@Debugging Derivatives version
+@
+text
+@d19 1
+a19 1
+    "$Id: rad_tran_wd_m.f90,v 1.8 2001/03/31 23:40:55 zvi Exp $"
+d79 1
+d187 3
+@
+
+
+1.8
+log
+@Eliminate l2pcdim (dimension parameters) move to allocatable ..
+@
+text
+@d5 3
+a7 1
+  use L2PC_PFA_STRUCTURES, only: ATMOS_COMP, SPECTRO_PARAM
+d19 1
+a19 1
+    "$Id: rad_tran_wd_m.f90,v 1.7 2001/03/30 20:28:21 zvi Exp $"
+d27 9
+a35 7
+Subroutine Rad_Tran_WD(elvar,frq_i,band,Frq,N_lvls,n_sps,temp_der,atmos_der,&
+      &    spect_der,z_path,h_path,t_path,phi_path,dHdz_path,atmospheric,&
+      &    beta_path,spsfunc_path,t_z_basis,f_basis,no_coeffs_f,mr_f, &
+      &    no_t, ref_corr, no_phi_f, phi_basis_f, no_phi_t, &
+      &    t_phi_basis, dh_dt_path, spect_atmos, spectroscopic, k_temp,&
+      &    k_atmos, k_spect_dw, k_spect_dn, k_spect_dnu,is_f_log,brkpt,&
+      &    no_ele, mid, ilo, ihi, t_script, tau, Ier)
+d39 3
+a41 5
+    Logical, intent(in) :: temp_der,atmos_der,spect_der
+    Logical, intent(in) :: IS_F_LOG(:)
+
+    Integer(i4), intent(in) :: FRQ_I,N_LVLS,NO_PHI_T,NO_T, BAND, &
+   &                           N_SPS, BRKPT, NO_ELE, MID, ILO, IHI
+d43 1
+a43 1
+    Integer(i4), intent(in) :: NO_COEFFS_F(:), NO_PHI_F(:), SPECT_ATMOS(:)
+a53 5
+    Real(r8), intent(in) :: F_BASIS(:,:)
+    Real(r8), intent(in) :: PHI_BASIS_F(:,:)
+    Real(r8), intent(in) :: MR_F(:,:,:)
+
+    Type(atmos_comp), intent(in) :: ATMOSPHERIC(:)
+d71 1
+a71 1
+    Integer(i4) :: i, j, Ngp1, Spectag
+a73 3
+! Real(r8), allocatable, dimension(:,:,:) :: dt_scrpt_dnp  ! N2lvl,mxco,mnp
+! Real(r8), allocatable, dimension(:,:,:,:) :: delta  ! N2lvl,mxco,mnp,Nsps
+
+d75 1
+a75 2
+    Real(r8) :: delta(size(tau),max(no_t,MAXVAL(no_coeffs_f)), &
+   &                  max(no_phi_t,MAXVAL(no_phi_f)),n_sps)
+d80 1
+d82 1
+a82 12
+!   sa = max(no_t,MAXVAL(no_coeffs_f))
+!   i = max(no_phi_t,MAXVAL(no_phi_f))
+!
+!   j = 2*(N_lvls+1)
+!   Allocate (delta(j,sa,i,n_sps),STAT=ier)
+!   if (Ier /= 0) then
+!     Print *,'** Error: Allocation error in Rad_Tran_WD routine ..'
+!     Print *,'          Allocation STAT error code: ',Ier
+!     Return
+!   endif
+
+    if(atmos_der) then
+d86 3
+a88 4
+      Call GET_DELTA(mid,brkpt,no_ele,z_path,h_path,phi_path,   &
+   &       beta_path,dHdz_path,n_sps,N_lvls,no_coeffs_f,   &
+   &       f_basis,ref_corr,no_phi_f, &
+   &       phi_basis_f,spsfunc_path,mr_f,is_f_log,elvar,delta,Ier)
+a89 1
+!     if (Ier /= 0) goto 99
+d93 2
+a94 3
+      Call zatmos_deriv(atmospheric,n_sps,band,frq_i, &
+   &              no_coeffs_f,mid,delta,t_script,tau,ilo,ihi, &
+   &              no_phi_f,k_atmos,Ier)
+a95 1
+!     if (Ier /= 0) goto 99
+d101 1
+a101 9
+    if (temp_der) then
+
+!     j = 2*(N_lvls+1)
+!     Allocate (dt_scrpt_dnp(j,no_t,no_phi_t),STAT=ier)
+!     if (Ier /= 0) then
+!       Print *,'** Error: Allocation error in Rad_Tran_WD routine ..'
+!       Print *,'          Allocation STAT error code: ',Ier
+!       goto 99
+!     endif
+d120 1
+a120 1
+    if (spect_der) then
+a168 1
+!         if (Ier /= 0) goto 99
+a179 2
+!99  Deallocate (delta,STAT=i)
+!    Deallocate (dt_scrpt_dnp,STAT=i)
+d182 1
+d186 3
+@
+
+
+1.7
+log
+@General fix-up to get rid of COMMON BLOCK (ELLIPSE)
+@
+text
+@a3 1
+  use L2PCDim, only: NLVL, NSPS, N2LVL, MNP => max_no_phi
+a4 1
+  use L2PC_FILE_PARAMETERS, only: MXCO => max_no_elmnts_per_sv_component
+d17 1
+a17 1
+    "$Id: rad_tran_wd_m.f90,v 1.6 2001/03/29 08:51:01 zvi Exp $"
+d77 2
+a78 1
+    Real(r8) :: dt_scrpt_dnp(N2lvl,mxco,mnp), delta(N2lvl,mxco,mnp,Nsps)
+d80 5
+a84 1
+    Real(r8), Parameter, Dimension(N2lvl) :: ary_zero = 0.0
+d88 11
+d104 2
+a105 2
+   &       beta_path,dHdz_path,n_sps,N_lvls,mxco,no_coeffs_f,   &
+   &       Nlvl,f_basis,ref_corr,mnp,no_phi_f, &
+d108 1
+d116 1
+d123 8
+d177 1
+a177 1
+ &               h_path, phi_path, DHDZ_PATH, N_lvls,mxco, ref_corr,mnp,&
+d179 1
+a179 1
+ &               t_script,ary_zero,s_np,s_nz,ilo,ihi,spectroscopic(sa), &
+d184 1
+a184 1
+ &               h_path, phi_path, DHDZ_PATH, N_lvls,mxco, ref_corr,mnp,&
+d186 1
+a186 1
+ &               t_script,ary_zero,s_np,s_nz,ilo,ihi,spectroscopic(sa), &
+d191 1
+a191 1
+ &               h_path, phi_path, DHDZ_PATH, N_lvls,mxco, ref_corr,mnp,&
+d193 1
+a193 1
+ &               t_script,ary_zero,s_np,s_nz,ilo,ihi,spectroscopic(sa), &
+d198 1
+d210 3
+d217 3
+@
+
+
+1.6
+log
+@Changing the (*) toi (:) everywhere
+@
+text
+@d3 1
+d19 1
+a19 1
+    "$Id: rad_tran_wd_m.f90,v 1.5 2001/03/26 17:56:14 zvi Exp $"
+d27 1
+a27 1
+Subroutine Rad_Tran_WD(frq_i,band,Frq,N_lvls,n_sps,temp_der,atmos_der,&
+d35 2
+d92 1
+a92 1
+   &       phi_basis_f,spsfunc_path,mr_f,is_f_log,delta,Ier)
+d121 1
+a121 1
+     &     dt_scrpt_dnp,spsfunc_path,ilo,ihi,frq_i,k_temp)
+d156 1
+a156 1
+ &               frq_i,k_spect_dw(nf), Ier )
+d163 1
+a163 1
+ &               frq_i,k_spect_dn(nf), Ier )
+d170 1
+a170 1
+ &               frq_i,k_spect_dnu(nf), Ier )
+d189 3
+@
+
+
+1.5
+log
+@New codes to deal with dh_dt_path issue.. now being computed on the fly
+@
+text
+@d18 1
+a18 1
+    "$Id: rad_tran_wd_m.f90,v 1.4 2001/03/08 00:11:16 zvi Exp $"
+d35 1
+a35 1
+    Logical, intent(in) :: IS_F_LOG(*)
+d40 1
+a40 1
+    Integer(i4), intent(in) :: NO_COEFFS_F(*), NO_PHI_F(*), SPECT_ATMOS(*)
+d48 6
+a53 6
+    Real(r8), intent(in) :: TAU(*)
+    Real(r8), intent(in) :: T_SCRIPT(*)
+    Real(r8), intent(in) :: REF_CORR(*)
+    Real(r8), intent(in) :: F_BASIS(mxco,*)
+    Real(r8), intent(in) :: PHI_BASIS_F(mnp,*)
+    Real(r8), intent(in) :: MR_F(mxco,mnp,*)
+d55 1
+a55 1
+    Type(atmos_comp), intent(in) :: ATMOSPHERIC(*)
+d57 1
+a57 1
+    Type(spectro_param), intent(in) :: SPECTROSCOPIC(*)
+d186 3
+@
+
+
+1.4
+log
+@*** empty log message ***
+@
+text
+@d18 1
+a18 1
+    "$Id: rad_tran_wd_m.f90,v 1.1 2000/08/30 18:12:05 Z.Shippony Exp $"
+d65 1
+a65 1
+    Type(path_derivative), intent(in) :: DH_DT_PATH
+d186 3
+@
+
+
+1.3
+log
+@New filter format
+@
+text
+@d26 2
+a27 2
+Subroutine Rad_Tran_WD(frq_i,band,Frq,N_lvls,n_sps,  &
+      &    z_path, h_path, t_path, phi_path, dHdz_path, atmospheric,  &
+d29 1
+a29 1
+      &    no_t, ref_corr, no_phi_f, phi_basis_f, temp_der, no_phi_t, &
+d34 2
+a35 1
+    Logical, intent(in) :: TEMP_DER, IS_F_LOG(*)
+d81 2
+d86 5
+a90 5
+    Call GET_DELTA(mid,brkpt,no_ele,z_path,h_path,phi_path,   &
+   &     beta_path,dHdz_path,n_sps,N_lvls,mxco,no_coeffs_f,   &
+   &     Nlvl,f_basis,ref_corr,mnp,no_phi_f, &
+   &     phi_basis_f,spsfunc_path,mr_f,is_f_log,delta,Ier)
+    if (Ier /= 0) Return
+d94 6
+a99 8
+    Call zatmos_deriv(atmospheric,n_sps,band,frq_i, &
+   &            no_coeffs_f,mid,delta,t_script,tau,ilo,ihi, &
+   &            no_phi_f,k_atmos,Ier)
+    if (Ier /= 0) Return
+!
+    if (frq_i > 0) then      ! ** DEBUG, do Deriv. for all channel(s)
+!   if (frq_i == 1) then     ! ** DEBUG, do Deriv. for 1 channel(s) only
+!   if (frq_i <= -1) then    ! ** DEBUG, Skip derivatives altogether ..
+d103 1
+a103 1
+      if (temp_der) then
+d107 5
+a111 6
+        do i = 1, no_phi_t
+          do j = 1, no_t
+            CALL d_t_script_dtnp(Frq, t_z_basis, t_phi_basis,    &
+           &     brkpt, no_ele, z_path, t_path, phi_path,        &
+           &     Ng, j, i, no_t, no_phi_t, dt_scrpt_dnp(1:,j,i))
+          end do
+d113 6
+d120 1
+a120 4
+        Call temperature_deriv(mid,brkpt,no_ele,t_z_basis,z_path,t_path,   &
+       &     h_path,phi_path,beta_path,dHdz_path,dh_dt_path,no_phi_t,no_t, &
+       &     N_lvls,n_sps,ref_corr,t_phi_basis,tau,t_script, &
+       &     dt_scrpt_dnp,spsfunc_path,ilo,ihi,frq_i,k_temp)
+d122 1
+a122 1
+      end if
+@
+
+
+1.2
+log
+@New version of forward model
+@
+text
+@@
+
+
+1.1
+log
+@New version
+@
+text
+@d3 2
+a4 2
+  use L2PCDim, only: NLVL, Nptg, NSPS, N2LVL, MNP => max_no_phi
+  use MLSCommon, only: I4, R4, R8
+d7 1
+a7 2
+  use PATH_ENTITIES_M, only: PATH_VECTOR, PATH_BETA, &
+                             PATH_DERIVATIVE
+d26 1
+a26 1
+Subroutine Rad_Tran_WD(ptg_i,frq_i,Frq,N_lvls,band,n_sps, sps_tbl,    &
+d28 5
+a32 6
+      &    beta_path, spsfunc_path, t_z_basis, f_basis,no_coeffs_f, mr_f, &
+      &    no_t, ref_corr, no_phi_f, phi_basis_f, temp_der, no_phi_t,       &
+      &    t_phi_basis, dh_dt_path, k_atmos, k_temp,                &
+      &    spect_atmos, spectroscopic, k_spect_dw, k_spect_dn, k_spect_dnu, &
+      &    is_f_log, brkpt, no_ele, mid, ilo, ihi, t_script, tau,  &
+      &    Ier)
+d36 1
+a36 1
+    Integer(i4), intent(in) :: FRQ_I,PTG_I,N_LVLS,BAND,NO_PHI_T,NO_T, &
+d39 1
+a39 2
+    Integer(i4), intent(in) :: SPS_TBL(Nsps,*), NO_COEFFS_F(*), NO_PHI_F(*), &
+   &                           SPECT_ATMOS(*)
+d66 3
+a68 5
+    Real(r4), intent(out) :: K_TEMP(Nptg,mxco,mnp)
+    Real(r4), intent(out) :: K_ATMOS(Nptg,mxco,mnp,Nsps)
+    Real(r4), intent(out) :: K_SPECT_DW(Nptg,mxco,mnp,Nsps),  &
+   &                         K_SPECT_DN(Nptg,mxco,mnp,Nsps),  &
+   &                         K_SPECT_DNU(Nptg,mxco,mnp,Nsps)
+d72 2
+a73 2
+    Integer(i4) :: i,j,k,Ngp1,Spectag
+    Integer(i4) :: nf, sa, jz, s_np, s_nz
+d85 1
+a85 1
+   &     sps_tbl(1:,band),Nlvl,f_basis,ref_corr,mnp,no_phi_f, &
+d91 8
+a98 7
+    Call zatmos_deriv(atmospheric,ptg_i,sps_tbl(1:,band),n_sps,  &
+   &            band,no_coeffs_f,mid,delta,t_script,tau,ilo,ihi, &
+   &            no_phi_f,k_atmos)
+!
+!   if (frq_i > 0) then           ! DEBUG, do Deriv. for all channel(s)
+    if (frq_i == 1) then          ! DEBUG, do Deriv. for 1 channel(s) only
+!   if (frq_i <= -1) then         ! DEBUG, Skip derivatives altogether ..
+d114 4
+a117 4
+        Call temperature_deriv(mid,brkpt,no_ele,t_z_basis,band,z_path,    &
+       &     t_path,h_path,phi_path,beta_path,dHdz_path,dh_dt_path,       &
+       &     no_phi_t,no_t,N_lvls,n_sps,ptg_i,ref_corr,sps_tbl,t_phi_basis, &
+       &     tau,t_script,dt_scrpt_dnp,spsfunc_path,ilo,ihi,k_temp)
+d126 1
+a126 2
+      k = ptg_i
+      do jz = 1, n_sps
+a127 1
+        nf = sps_tbl(jz,band)
+d129 1
+a129 1
+        if (sa >= 1) then
+d131 1
+a131 1
+          Spectag = spectroscopic(sa)%spectag
+d133 1
+a133 1
+          DO
+d135 1
+a135 1
+            if(spectroscopic(sa)%Spectag /= Spectag) EXIT
+d137 1
+a137 3
+            s_np = spectroscopic(sa)%no_phi_values
+            s_nz = spectroscopic(sa)%no_zeta_values
+            if(s_nz < 1 .or. s_np < 1) EXIT
+d139 3
+a141 1
+            CA = spectroscopic(sa)%type
+d143 8
+a150 6
+            if (CA == 'W') then
+              Call spectro_derivative(mid, brkpt, no_ele, z_path,         &
+ &                 h_path, phi_path, DHDZ_PATH, N_lvls,mxco, ref_corr,mnp,&
+ &                 spsfunc_path(nf)%values, beta_path(nf)%dbeta_dw, tau,  &
+ &                 t_script,ary_zero,s_np,s_nz,ilo,ihi,spectroscopic(sa), &
+ &                 k_spect_dw(k,1:,1:,nf), Ier )
+d152 6
+a157 6
+            else if (CA == 'N') then
+              Call spectro_derivative(mid, brkpt, no_ele, z_path,         &
+ &                 h_path, phi_path, DHDZ_PATH, N_lvls,mxco, ref_corr,mnp,&
+ &                 spsfunc_path(nf)%values, beta_path(nf)%dbeta_dn, tau,  &
+ &                 t_script,ary_zero,s_np,s_nz,ilo,ihi,spectroscopic(sa), &
+ &                 k_spect_dn(k,1:,1:,nf), Ier )
+d159 6
+a164 6
+            else if (CA == 'V') then
+              Call spectro_derivative(mid, brkpt, no_ele, z_path,         &
+ &                 h_path, phi_path, DHDZ_PATH, N_lvls,mxco, ref_corr,mnp,&
+ &                 spsfunc_path(nf)%values, beta_path(nf)%dbeta_dnu, tau, &
+ &                 t_script,ary_zero,s_np,s_nz,ilo,ihi,spectroscopic(sa), &
+ &                 k_spect_dnu(k,1:,1:,nf), Ier )
+d166 1
+a166 1
+            end if
+d168 1
+a168 1
+            if (Ier /= 0) Return
+d170 2
+a171 1
+            sa = sa + 1
+d173 1
+a173 3
+          END DO
+
+        end if
+d175 1
+a175 1
+      end do                      ! On jz (Specie loop)
+@
+

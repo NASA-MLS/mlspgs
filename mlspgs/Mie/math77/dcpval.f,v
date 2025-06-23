@@ -1,0 +1,104 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.14
+	cfm-single-freq-0-1:1.1.0.12
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.10
+	mus-emls-1-70:1.1.0.8
+	rel-1-0-englocks-work:1.1.0.6
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1;
+locks; strict;
+comment	@c @;
+
+
+1.1
+date	2009.08.05.01.29.35;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@      DOUBLE PRECISION FUNCTION DCPVAL (P,NDEGP,X)
+C     .  Copyright (C) 1989, California Institute of Technology.
+C     .  U. S. Government sponsorship under
+C     .  NASA contract NAS7-918 is acknowledged.
+C>> 1994-10-20 DCPVAL Krogh  Changes to use M77CON
+C>> 1994-04-20 DCPVAL CLL Edited to make DP & SP files similar.
+C>> 1987-12-09 DCPVAL Lawson  Initial code.
+c--D replaces "?": ?CPVAL
+C
+C     C.L.LAWSON,JPL, 1969 DEC 17   MODIFIED 1973 JULY 24
+C
+C     MODIFIED 1974 NOV 19
+C
+C     EVALUATE A POLYNOMIAL OF DEGREE NDEGP GIVEN TRANSFORMATION
+C     PARAMETERS, P(1) AND P(2), AND COEFFICIENTS RELATIVE TO THE
+C     CHEBYSHEV BASIS.
+C
+C     NDEGP               DEGREE OF POLYNOMIAL
+C     (P(I),I=1,NDEGP+3)  PARAMETERS DEFINING THE POLYNOMIAL
+C     X                  INPUT ARGUMENT
+C             THE POLYNOMIAL'S VALUE AT X IS DEFINED AS FOLLOWS.
+C
+C                             S = ( X - P(1) ) / P(2)
+C
+C                DCPVAL=SUM OF P(I+3)*T(I,S) FOR I=0,1,...NDEGP
+C
+C                             WHERE T(I,S) DENOTES THE CHEBYSHEV
+C                             POLYNOMIAL OF DEGREE I EVALUATED AT S .
+C
+      integer J, NDEGP
+      DOUBLE PRECISION P(*),W(3),S,S2,X
+      W(1)=0.0D0
+      W(2)=0.0D0
+C                             TRANSFORM X TO S
+      S=(X-P(1))/P(2)
+      S2=S+S
+C
+C                             EVALUATE POLYNOMIAL USING RECURSION
+C
+      do 30 J = NDEGP+3, 4, -1
+          W(3)=W(2)
+          W(2)=W(1)
+          W(1)=(S2*W(2)-W(3))+P(J)
+   30 continue
+      DCPVAL=(S*W(1)-W(2))+P(3)
+      RETURN
+      END
+@

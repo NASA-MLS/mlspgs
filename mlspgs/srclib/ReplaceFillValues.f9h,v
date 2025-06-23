@@ -1,0 +1,251 @@
+head	1.4;
+access;
+symbols
+	v5-02-NRT-19:1.4
+	v6-00:1.4
+	v5-02-NRT-18:1.4
+	v5-02:1.4
+	v5-01-NRT-17:1.4
+	v5-01-NRT-16:1.4
+	v5-01-NRT-15:1.4
+	v5-01-NRT-14:1.4
+	neuralnetworks-1-0:1.4.0.10
+	cfm-single-freq-0-1:1.4.0.8
+	v5-01:1.4
+	v5-00:1.4
+	v4-23-TA133:1.4.0.6
+	mus-emls-1-70:1.4.0.4
+	rel-1-0-englocks-work:1.4.0.2
+	VUMLS1-00:1.4
+	VPL1-00:1.4
+	V4-22-NRT-08:1.4
+	VAM1-00:1.3
+	V4-21:1.3.0.4
+	V4-13:1.3
+	V4-12:1.3
+	V4-11:1.3
+	V4-10:1.3
+	V3-43:1.3
+	M4-00:1.3
+	V3-41:1.3
+	V3-40-PlusGM57:1.3.0.2
+	V2-24-NRT-04:1.3
+	V3-33:1.3
+	V2-24:1.3
+	V3-31:1.3
+	V3-30-NRT-05:1.3
+	cfm-01-00:1.3
+	V3-30:1.3
+	V3-20:1.3
+	V3-10:1.3
+	V2-23-NRT-02:1.3
+	V2-23:1.3
+	V2-22-NRT-01:1.3
+	V2-22:1.3
+	V2-21:1.3
+	V2-20:1.3
+	V2-11:1.3
+	V2-10:1.3
+	V2-00:1.3;
+locks; strict;
+comment	@# @;
+
+
+1.4
+date	2016.01.13.00.48.44;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2005.08.15.20.37.07;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2005.08.05.20.35.26;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.08.03.16.35.16;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.4
+log
+@May optionally stutter instead of interpolate
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id: ReplaceFillValues.f9h,v 1.3 2005/08/15 20:37:07 pwagner Exp $
+!   subroutine ReplaceFill* ( values, FillValue, newValues, newFill, options )
+!     real(r8), dimension(:, :, :), intent(inout) :: values
+!     real(r8), intent(in) :: FillValue
+!     real(r8), dimension(:, :, :), optional, intent(in) :: newvalues
+!     real(r8), optional, intent(in) :: newFill
+!     character(len=*), optional, intent(in) :: options
+!     !
+!     ! Local variables
+
+  ! local working space
+   character(len=8) :: myOptions
+   myOptions = ''
+   if ( present(options) ) myOptions = lowercase(options)
+   DONTINTERPOLATE = .false.
+   ! So far the only options I can think of are
+   ! -n : replace fillValues and also any < 0
+   ! -p : replace fillValues and also any > 0
+   ! -i : interpolate between non-fill values
+   ! -s : "stutter': repeating neighboring non-fill values to replace Fills
+   ! -u : interpolate between non-monotonically increasing values
+   ! -d : interpolate between non-monotonically decreasing values
+   ! 1st: handle 'n' and 'p' options by replacing candidate values,
+   ! < 0 or > 0, as the case may be, with Fill values
+   if ( index(myOptions, 'n') > 0 ) then
+     where (values < 0.0)
+       values = FillValue
+     end where
+   endif
+   if ( index(myOptions, 'p') > 0 ) then
+     where (values > 0.0)
+       values = FillValue
+     end where
+   endif
+   ! Do we bridge the chassm by interpolating across?
+   if ( index(myOptions, 'i') > 0 ) then
+      call BridgeMissingValues(values, FillValue)
+      return
+   endif
+   ! Do we bridge the chassm by stuttering across?
+   if ( index(myOptions, 's') > 0 ) then
+      DONTINTERPOLATE = .true.
+      call BridgeMissingValues(values, FillValue)
+      DONTINTERPOLATE = .false.
+      return
+   endif
+   ! Do we monotonize 'u'pward or 'd'ownward?
+   if ( index(myOptions, 'u') > 0 ) then
+      call Monotonize(values)
+      return
+   endif
+   if ( index(myOptions, 'd') > 0 ) then
+      values = - values
+      call Monotonize(values)
+      values = - values
+      return
+   endif
+   ! Do we replace the Fill values with replacements we supply somehow?
+   if ( present(newValues) ) then
+     if ( any( shape(values) /= shape(newValues) ) ) &
+      & call MLSMessage ( MLSMSG_Error, &
+      & ModuleName, "Arrays in ReplaceFillValues must have same shapes" )
+     where (values == FillValue)
+       values = newValues
+     end where
+   elseif ( present(newFill) ) then
+     where (values == FillValue)
+       values = newFill
+     end where
+   else
+      call MLSMessage ( MLSMSG_Error, &
+      & ModuleName, "Either newValues or newFill must be supplied in ReplaceFillValues" )
+   endif
+! end subroutine ReplaceFill*
+
+! $Log: ReplaceFillValues.f9h,v $
+! Revision 1.3  2005/08/15 20:37:07  pwagner
+! -u and -d monotonize options now recognized
+!
+! Revision 1.2  2005/08/05 20:35:26  pwagner
+! ReplaceFillValues can now to interpolate to bridge across MissingValues
+!
+! Revision 1.1  2005/08/03 16:35:16  pwagner
+! First commit
+!
+@
+
+
+1.3
+log
+@-u and -d monotonize options now recognized
+@
+text
+@d12 1
+a12 1
+! $Id: ReplaceFillValues.f9h,v 1.2 2005/08/05 20:35:26 pwagner Exp $
+d26 1
+d31 1
+d34 2
+a35 1
+   ! These last two are too hard for now, so I'll just handle -[npi]
+d46 1
+d51 8
+a59 2
+!       call MLSMessage ( MLSMSG_Error, &
+!         & ModuleName, "Can't yet u-monotonize ReplaceFillValues" )
+a63 2
+!       call MLSMessage ( MLSMSG_Error, &
+!         & ModuleName, "Can't yet d-monotonize ReplaceFillValues" )
+d69 1
+d88 3
+@
+
+
+1.2
+log
+@ReplaceFillValues can now to interpolate to bridge across MissingValues
+@
+text
+@d12 1
+a12 1
+! $Id: ReplaceFillValues.f9h,v 1.1 2005/08/03 16:35:16 pwagner Exp $
+a43 2
+      ! call MLSMessage ( MLSMSG_Error, &
+      !   & ModuleName, "Can't yet interpolate to ReplaceFillValues" )
+d48 4
+a51 2
+      call MLSMessage ( MLSMSG_Error, &
+        & ModuleName, "Can't yet u-monotonize ReplaceFillValues" )
+d54 6
+a59 2
+      call MLSMessage ( MLSMSG_Error, &
+        & ModuleName, "Can't yet d-monotonize ReplaceFillValues" )
+d79 3
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d12 1
+a12 1
+! $Id: ReplaceFillValues.f9h,v 1.3 2005/06/22 20:03:55 pwagner Exp $
+d30 3
+a32 1
+   ! This last is to hard for now, so I'll just handle the first two
+d44 10
+d55 1
+a55 1
+        & ModuleName, "Can't yet interpolate to ReplaceFillValues" )
+d74 4
+a77 1
+! $Log: HuntArray.f9h,v $
+@
+

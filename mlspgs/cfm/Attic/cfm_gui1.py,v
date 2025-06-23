@@ -1,0 +1,73 @@
+head	1.1;
+access;
+symbols
+	cfm-single-freq-0-1:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2021.07.13.15.16.47;	author whdaffer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2021.07.13.15.16.47;	author whdaffer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@file cfm_gui1.py was initially added on branch cfm-single-freq-0-1.
+@
+text
+@@
+
+
+1.1.2.1
+log
+@Continuing work
+@
+text
+@a0 33
+#!/usr/bin/env python
+from PyQt5 import QtWidgets
+from PyQt5.QtWidgets import QApplication, QMainWindow
+import sys
+def clicked():
+  print("It was clicked")
+  
+
+def window():
+  app=QApplication(sys.argv)
+  
+  #                           x,y,width,height
+  #                          0,0, is upper left of screen, y points downward
+  win=QMainWindow()
+  win.setGeometry(200,200,300,300)
+  win.setWindowTitle("CFM_MakeL2CF_GUI")
+
+  label=QtWidgets.QLabel(win)
+  label.setText("foo bar")
+  label.move(50,50)
+
+  b1=QtWidgets.QPushButton(win)
+  b1.setText("click me")
+  b1.clicked.connect(clicked)
+
+  print("Showing window now")
+  win.show()
+  print("exiting?")
+  sys.exit(app.exec_())
+  print("done")
+
+window()
+
+@
+

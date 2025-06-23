@@ -1,0 +1,189 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.10
+	cfm-single-freq-0-1:1.1.0.8
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.6
+	mus-emls-1-70:1.1.0.4
+	rel-1-0-englocks-work:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2017.09.29.20.08.41;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@! Copyright 2015, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=============================================================================
+program TeXmkmf
+!=============================================================================
+
+  ! Read latex files and write makefile dependencies for graphics, assuming
+  ! the graphics are prepared from .obj files by "tgif".
+
+  ! foo.dvi: foo.tex xyz.jpg
+  ! xyz.jpg: xyz.obj
+  ! foo.pdf: foo.tex xyz.pdf
+  ! xyz.pdf: xyz.eps
+  ! xyz.eps: xyz.obj
+
+  ! Prints its usage if run with no command-line arguments.
+
+  use, intrinsic :: ISO_Fortran_Env, only: Error_Unit, Output_Unit
+
+  integer :: Dot            ! Position of the dot in the input file name
+  integer :: I, J           ! Character positions
+  integer :: IOStat
+  integer :: I_arg          ! Command-line argument number
+  integer :: NX = 0         ! Number of excluded file names
+  integer :: Out            ! File unit number for output, default stdout
+
+  character(255) :: Exclude(1000)
+  character(255) :: File
+  character(255) :: Line
+  character(255) :: Msg
+
+!---------------------------- RCS Module Info --------------------------
+   character (len=*), parameter :: ModuleName= &
+       "$RCSfile: f90tex.f90,v $"
+!-----------------------------------------------------------------------
+
+! =====     Executable Statements     ==================================
+
+  out = output_unit
+
+  i_arg = 0
+  do
+    i_arg = i_arg + 1
+    call get_command_argument ( i_arg, file )
+    if ( file == '' ) exit
+    if ( file(1:2) == '-o' ) then
+      if ( file(3:) == '' ) then
+        i_arg = i_arg + 1
+        call get_command_argument ( i_arg, file(3:) )
+      end if
+      close ( 11 ) ! In case it's open on some other file
+      out = 11
+      open ( 11, file=trim(file(3:)), form='formatted', access='sequential', &
+           & iostat=iostat, iomsg=msg )
+      if ( iostat /= 0 ) then
+        write ( error_unit, '(a,i0,2a/a)') 'I/O Status ', iostat, &
+          & ' while opening ', trim(file(3:)), trim(msg)
+        stop
+      end if
+      cycle
+    end if
+    if ( file(1:2) == '-x' ) then
+      if ( file(3:) == '' ) then
+        i_arg = i_arg + 1
+        call get_command_argument ( i_arg, file )
+      else
+        file = file(3:)
+      end if
+      dot = index(file,'.',back=.true.)
+      if ( dot == 0 ) then
+        dot = len_trim(file) + 1
+        file(dot:dot+3) = '.tex'
+      end if
+      nx = nx + 1
+      exclude(nx) = file
+      cycle
+    end if
+    dot = index(file,'.',back=.true.)
+    if ( dot == 0 ) then
+      dot = len_trim(file) + 1
+      file(dot:dot+3) = '.tex'
+    end if
+    if ( any(exclude(:nx) == file) ) cycle
+    open ( 10, file=trim(file), form='formatted', access='sequential', &
+           & status='old', iostat=iostat, iomsg=msg )
+    if ( iostat /= 0 ) then
+      write ( error_unit,  '(a,i0,2a/a)' ) 'I/O Status ', iostat, &
+        & ' while opening ', trim(file), trim(msg)
+      stop
+    end if
+
+    do
+      read ( 10, '(a)', end=999 ) line
+      line = adjustl(line)
+      if ( line(1:16) == '\includegraphics' ) then
+        i = index(line,'{')
+        do while ( i == 0 )
+          read ( 10, '(a)', end=999 ) line
+          i = index(line,'{')
+        end do
+        j = index(line,'}')
+        write ( out, '(9a)' ) file(1:dot-1), '.dvi: ', file(1:dot-1), '.tex: ', &
+          & line(i+1:j-1), '.jpg'
+        write ( out, '(9a)' ) line(i+1:j-1), '.jpg: ', line(i+1:j-1), '.obj'
+        write ( out, '(9a)' ) file(1:dot-1), '.pdf: ', file(1:dot-1), '.tex: ', &
+          & line(i+1:j-1), '.pdf'
+        write ( out, '(9a)' ) line(i+1:j-1), '.pdf: ', line(i+1:j-1), '.eps'
+        write ( out, '(9a)' ) line(i+1:j-1), '.eps: ', line(i+1:j-1), '.obj'
+      end if
+    end do
+999 continue
+    close ( 10 )
+  end do
+
+  if ( i_arg == 1 ) then ! No command line arguments
+    call get_command_argument ( 0, file )
+    print '(9a)', 'Usage: ', trim(file), ' [ -o[ ]output ] [ -x[ ]exclude ]', &
+      &'  inputs...'
+    print '(9a)', '  If output is not specified, stdout is used'
+    print '(9a)', '  Every time output is specified, it applies for the remaining inputs'
+    print '(9a)', '  Each -x adds an excluded file, to make *.tex more useful'
+    print '(9a)', '  If input or exclude files have no extension, .tex is added'
+  end if
+
+contains
+
+!=============================================================================
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+!---------------------------- RCS Module Info --------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id: Path_Representation_m.f90,v 2.9 2017/03/11 00:47:39 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+!-----------------------------------------------------------------------
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end program TeXmkmf
+
+! $Log: $
+@

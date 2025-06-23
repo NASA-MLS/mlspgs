@@ -1,0 +1,160 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.12
+	cfm-single-freq-0-1:1.1.0.10
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.8
+	mus-emls-1-70:1.1.0.6
+	rel-1-0-englocks-work:1.1.0.4
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.2
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	M4-00:1.1
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2010.09.21.17.57.20;	author yanovsky;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\documentclass[fleqn,10pt]{article}
+\usepackage[dvips]{graphics,color}
+\usepackage{amscd, amsfonts, amsmath, amssymb}
+\usepackage{amsthm}
+\usepackage{eucal}
+\usepackage{pifont}
+
+
+\usepackage{epsfig}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{verbatim}
+
+\setlength{\topmargin}{-1.5cm}
+\setlength{\headheight}{0.5cm}
+\setlength{\headsep}{0.7cm}
+\setlength{\topskip}{0.5cm}
+\setlength{\textheight}{23.0cm}
+\setlength{\footskip}{0.5cm}
+\setlength{\oddsidemargin}{0.5cm}
+\setlength{\evensidemargin}{0.5cm}
+\setlength{\textwidth}{14.5cm}
+
+
+
+
+\setcounter{tocdepth}{5}
+
+
+
+%\numberwithin{equation}{section}
+
+%\pagestyle{headings}
+%\markboth{Igor}{Yanovsky}
+
+
+
+\def\pdf{p}
+\def\vx{{\bf x}}
+\def\vy{{\bf y}}
+\def\vg{{\bf g}}
+\def\g{g}
+\def\vh{{\bf h}}
+\def\vf{{\bf f}}
+\def\vu{{\bf u}}
+\def\vv{{\bf v}}
+\def\vnabla{{\bf \nabla}}
+\def\vid{{\bf id}}
+\def\va{{\bf a}}
+\def\vr{{\bf r}}
+\def\vb{{\bf b}}
+
+\def\ff{\mbox f}
+
+\def\D{\mathcal{D}}
+\def\E{\mathcal{E}}
+
+\def\trace{\mbox{trace}}
+\def\divergence{\mbox{div}}
+
+\def\I{\mathcal{I}}
+\def\R{\mathcal{R}}
+\def\S{\mathcal{S}}
+\def\T{\mathcal{T}}
+
+
+\def\m{\mbox{m}}
+\def\km{\mbox{km}}
+\def\nm{\mbox{nm}}
+\def\cm{\mbox{cm}}
+\def\s{\mbox{s}}
+\def\kg{\mbox{kg}}
+\def\K{\mbox{K}}
+\def\N{\mbox{N}}
+\def\J{\mbox{J}}
+\def\Pa{\mbox{Pa}}
+\def\hPa{\mbox{hPa}}
+\def\Hz{\mbox{Hz}}
+\def\MHz{\mbox{MHz}}
+\def\AMU{\mbox{AMU}}
+
+\def\NH{\mbox{NH}}
+\def\NP{\mbox{NP}}
+
+\def\tq{f_q^T}
+
+\def\btau{\mbox{{\mathversion{bold}$\mathcal{T}$}}}
+
+\begin{document}
+
+
+
+\title{First and Second Order Taylor Approximations \\
+for Radiances}
+\author{Igor Yanovsky \\
+iy-003 }
+
+
+\maketitle
+
+%\tableofcontents
+
+\input{iy-003-01}   % Sensitivity Measurements
+
+\end{document}
+
+
+% $Id:  $
+
+@

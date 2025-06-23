@@ -1,0 +1,132 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.12
+	cfm-single-freq-0-1:1.1.0.10
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.8
+	mus-emls-1-70:1.1.0.6
+	rel-1-0-englocks-work:1.1.0.4
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.2
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	M4-00:1.1
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2010.09.21.17.57.59;	author yanovsky;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\section{Polarized Radiative Transfer}
+
+The radiative transfer equation is
+\begin{eqnarray*}
+\mathbf{I}(\vx) = \sum_{i=1}^{2N} \triangle B_i \mbox{{\mathversion{bold} $\mathcal{T}$}}_i,
+\end{eqnarray*}
+where
+\begin{eqnarray*}
+\btau_{i} &=& \mathbf{P}_i \mathbf{P}_i^*, \\
+\mathbf{P}_i &=& \mathbf{P}_{i-1} \mathbf{E}_i, \\
+\mathbf{E}_i &=& \exp \bigg( -\int_{s_i}^{s_{i-1}} \mathbf{G}(s') ds'  \bigg) \ \equiv \ \exp \Big( - \sum_k \mbox{{\mathversion{bold}$\Delta$}} \mbox{{\mathversion{bold}$\delta$}}_{i \rightarrow i-1}^k \Big) \ = \ \exp \big( - \mbox{{\mathversion{bold}$\Delta$}} \mbox{{\mathversion{bold}$\delta$}}_{i \rightarrow i-1} \big).
+\end{eqnarray*}
+In the sum over $k$, it explicitly allows the contributions of other species, with the field opacity of unpolarized species (half of their power opacities) added to $\mathbf{G}$ as multiple of the identity. \\ 
+Since
+\begin{eqnarray*}
+\mathbf{E}_1 = \mathbf{P}_1 = \mathbf{1},
+\end{eqnarray*}
+we have
+\begin{eqnarray*}
+\btau_{1} &=& \mathbf{P}_1 \mathbf{P}_1^* = \mathbf{1}.
+\end{eqnarray*}
+Also, for $i \geq 2$,
+\begin{eqnarray*}
+\mathbf{P}_i &=& \mathbf{P}_{i-1} \mathbf{E}_i \ = \ \mathbf{E}_2 \ldots \mathbf{E}_i \ = \  \exp \Big( - \sum_{j=2}^i  \mbox{{\mathversion{bold}$\Delta$}} \mbox{{\mathversion{bold}$\delta$}}_{j \rightarrow j-1} \Big), \\
+\btau_{i} &=& \mathbf{P}_i \mathbf{P}_i^* \ = \ \mathbf{E}_2 \ldots \mathbf{E}_i \mathbf{E}_i^* \ldots \mathbf{E}_2^*.
+\end{eqnarray*}
+The source function $\triangle B_i$ in differential temperature format is given by
+\begin{eqnarray*}
+\triangle B_1 &=& \frac{T_1 + T_2}{2}, \\
+\triangle B_i &=& \frac{T_{i+1} - T_{i-1}}{2}, \\
+\triangle B_{2N} &=& T_{space} - \frac{T_{2N-1} + T_{2N}}{2},
+\end{eqnarray*}
+where $T_{space} = 2.7$. \\
+\ \\
+The incremental opacity integral due to polarized O$_2$ lines is
+\begin{eqnarray*}
+\mbox{{\mathversion{bold}$\Delta$}} \mbox{{\mathversion{bold}$\delta$}}_{i \rightarrow i-1}^{\mbox{O$_2$}} &=& \frac{\triangle s_{i \rightarrow i-1}^{\mbox{refr}}}{\triangle s_{i \rightarrow i-1}} \sum_{\triangle M = -1}^{+1}  \mbox{{\mathversion{bold}$\rho$}}_{\triangle M} (\theta, \phi) \ \xi_{M,  \triangle M} \int_{\zeta_i}^{\zeta_{i-1}} F^{\mbox{O$_2$}} \big( \zeta, \phi(\zeta) \big) \ \beta_{\triangle M} \big( \zeta, \mathcal{B}(\zeta), T(\zeta), \nu \big)  \, \frac{ds}{dh} \, \frac{dh}{d\zeta} \, d\zeta,
+\end{eqnarray*}
+where $ \xi_{M,  \triangle M}$ is the O$_2$ Zeeman component fractional intensity.
+
+
+\section{Polarized Derivatives}
+
+\subsection{General Form}
+
+The {\bf derivative of the polarized radiative transfer} is
+\begin{eqnarray*}
+\frac{\partial \mathbf{I}(\vx)}{\partial x} &=& \frac{\partial}{\partial x} \sum_{i=1}^{2N} \triangle B_i \btau_i \\
+&=& \sum_{i=1}^{2N} \bigg[ \frac{\partial \triangle B_i}{\partial x} \btau_i + \triangle B_i  \frac{\partial \btau_i}{\partial x} \bigg].
+\end{eqnarray*}
+The derivative of $\btau_i$ is given as
+\begin{eqnarray*}
+\frac{\partial \btau_i}{\partial x} &=& \frac{\partial (\mathbf{P}_i \mathbf{P}_i^*)}{\partial x} \ = \ \frac{\partial \mathbf{P}_i}{\partial x} \mathbf{P}_i^*+ \mathbf{P}_i \frac{\partial \mathbf{P}_i^*}{\partial x} \ = \ \frac{\partial \mathbf{P}_i}{\partial x} \mathbf{P}_i^*+ \bigg( \frac{\partial \mathbf{P}_i}{\partial x} \mathbf{P}_i^* \bigg)^*,
+\end{eqnarray*}
+where
+\begin{eqnarray*}
+\frac{\partial \mathbf{P}_i}{\partial x} &=& \frac{\partial (\mathbf{P}_{i-1} \mathbf{E}_i)}{\partial x} \ = \ \frac{\partial \mathbf{P}_{i-1}}{\partial x} \mathbf{E}_i + \mathbf{P}_{i-1} \frac{\partial \mathbf{E}_i}{\partial x}.
+\end{eqnarray*}
+
+
+\subsection{Mixing Ratio Derivatives}
+
+
+Note that since
+\begin{eqnarray*}
+\frac{\partial \triangle B_i}{\partial f_q^k} = 0,
+\end{eqnarray*}
+The mixing ratio derivative of the polarized radiative transfer is
+\begin{eqnarray*}
+\frac{\partial \mathbf{I}(\vx)}{\partial f_q^k} &=& \sum_{i=1}^{2N} \triangle B_i  \frac{\partial \btau_i}{\partial f_q^k}.
+\end{eqnarray*}
+\ \\
+\ \\
+The {\bf incremental opacity derivative} with respect to mixing ratio is
+\begin{eqnarray*}
+\frac{   \partial \mbox{{\mathversion{bold}$\Delta$}} \mbox{{\mathversion{bold}$\delta$}}_{i \rightarrow i-1}^{k}  }{\partial f_{q}^k} = \frac{\triangle s_{i \rightarrow i-1}^{\mbox{refr}}}{\triangle s_{i \rightarrow i-1}} \sum_{\triangle M = -1}^{+1}  \mbox{{\mathversion{bold}$\rho$}}_{\triangle M} (\theta, \phi) \ \xi_{M,  \triangle M}  \int_{\zeta_i}^{\zeta_{i-1}} \eta_q^k(\zeta) \, \beta_{\triangle M}^k \big( \zeta, \mathcal{B}(\zeta), T(\zeta), \nu \big) \, \frac{ds}{dh} \, \frac{dh}{d\zeta} \, d\zeta,
+\end{eqnarray*}
+where $k$ is a molecule.
+
+
+% $Id:  $
+@

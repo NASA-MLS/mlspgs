@@ -1,0 +1,129 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2023.05.10.15.53.59;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Needed for v6.00 VA-01 006 test
+@
+text
+@!divert(-1)
+; $Id: coreplusr3flags.l2cf,v 1.20 2019/05/30 17:44:31 pwagner Exp $
+
+; ----------- Phase name vs. retrieval name
+; Some phase(s) may not have Retrieve sections
+; and so we'll need to know the last one
+!define(retrophase,{!phase})
+
+!ifdef(flagHiResO3inCPR3,{!define(O3StdProd,O3_HR)},{!define(O3StdProd,O3)})
+
+!divert!dnl
+; This l2cf fragment does all the quality flagging for the Core+R3
+; products.
+
+begin Fill
+  ;; ------------------------------------ O3-240
+  !define(flaggingBands,{7,24})
+  !define(flaggingRadiometers,{R3})!dnl
+  !makeQualityForOneProduct(product=!O3StdProd,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -20K)
+  !makeStatusForOneProduct(product=!O3StdProd,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -20K)
+
+  ;; ------------------------------------- CO-240
+  !define(flaggingBands,{9,25})
+  !define(flaggingRadiometers,{R3})!dnl
+  !makeQualityForOneProduct(product=CO,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -20K)
+  !makeStatusForOneProduct(product=CO,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -20K)
+
+  ;; ------------------------------------- HNO3-240
+  !define(flaggingBands,{7,9})
+  !define(flaggingRadiometers,{R3})!dnl
+  !makeQualityForOneProduct(product=HNO3,chisqScale=1.0,minRads=2000,cloudMax=30K,cloudMin= -20K)
+  !makeStatusForOneProduct(product=HNO3,chisqScale=1.0,minRads=2000,cloudMax=30K,cloudMin= -20K)
+
+  ;; ------------------------------------- SO2-240
+  !define(flaggingBands,{1})
+  !define(flaggingRadiometers,{R1A,R1B})!dnl
+  !makeQualityForOneProduct(product=SO2,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -20K)
+  !makeStatusForOneProduct(product=SO2,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -20K)
+
+  ;; ------------------------------------- Temperature-CorePlusR3
+  ;; By special request, its quality depends on both Bands 1 and 8
+  !define(flaggingBands,{1})
+  !define(flaggingRadiometers,{R1A,R1B})!dnl
+  !makeQualityForOneProduct(product=Temperature,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -20K)
+  !makeStatusForOneProduct(product=Temperature,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -20K)
+
+  ;; ------------------------------------- GPH-CorePlusR3
+  !define(flaggingBands,{1})
+  !define(flaggingRadiometers,{R1A,R1B})!dnl
+  !makeQualityForOneProduct(product=GPH,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -20K)
+  !makeStatusForOneProduct(product=GPH,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -20K)
+
+end Fill
+
+; $Log: coreplusr3flags.l2cf,v $
+; Revision 1.20  2019/05/30 17:44:31  pwagner
+; Reverted Temperature quality flags to v4 unless flagAddBand1ToTempQual is set
+;
+; Revision 1.19  2019/02/22 21:30:32  pwagner
+; Added Band 1 to the Temperature-StdProds flagging Bands
+;
+; Revision 1.18  2015/01/30 19:48:30  pwagner
+; Restore flagging for low clouds
+;
+; Revision 1.17  2009/07/28 20:03:21  pwagner
+; Removed Band 33
+;
+; Revision 1.16  2009/01/28 01:15:17  pwagner
+; Changed quantity name of hires ozone
+;
+; Revision 1.15  2008/10/07 18:11:49  pwagner
+; O3StdProd may be changed to O3_R3
+;
+; Revision 1.14  2006/10/13 22:13:27  dwu
+; change high cloud chisq threshold from 10 to 30
+;
+; Revision 1.13  2006/10/11 23:04:55  pwagner
+; Special retrieval phase name retrophase needed for Convergence Ratio Fill
+;
+; Revision 1.12  2006/10/04 16:51:47  pwagner
+; Compatible w/ status bits from multiple radiometers; needs review
+;
+; Revision 1.11  2006/08/08 22:27:07  pwagner
+; Fills Quality, Status for Temperature, GPH; needs revision before v2.20
+;
+; Revision 1.10  2006/07/28 18:56:20  dwu
+; add so2
+;
+; Revision 1.9  2006/07/26 21:13:50  dwu
+; modified for v2.0 clouds
+;
+; Revision 1.8  2004/09/21 23:02:59  livesey
+; Changed chiSqWeights to 1.0 for everything.
+;
+; Revision 1.7  2004/04/28 23:06:41  livesey
+; Changes to cloud flags.
+;
+; Revision 1.6  2004/04/28 00:32:04  livesey
+; Bug fix
+;
+; Revision 1.5  2004/04/27 23:51:24  livesey
+; Added log information
+;
+@

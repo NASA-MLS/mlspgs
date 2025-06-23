@@ -1,0 +1,1544 @@
+head	2.4;
+access;
+symbols
+	v5-02-NRT-19:2.4
+	v6-00:2.4
+	v5-02-NRT-18:2.4
+	v5-02:2.3
+	v5-01-NRT-17:2.4
+	v5-01-NRT-16:2.4
+	v5-01-NRT-15:2.4
+	v5-01-NRT-14:2.4
+	neuralnetworks-1-0:2.4.0.4
+	cfm-single-freq-0-1:2.4.0.2
+	v5-01:2.3
+	v5-00:2.3
+	v4-23-TA133:2.3.0.6
+	mus-emls-1-70:2.3.0.4
+	rel-1-0-englocks-work:2.3.0.2
+	VUMLS1-00:2.3
+	VPL1-00:2.2
+	V4-22-NRT-08:2.2
+	VAM1-00:2.1
+	V0_1:1.28;
+locks; strict;
+comment	@# @;
+
+
+2.4
+date	2020.04.27.17.05.43;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2017.03.08.00.12.19;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2016.03.02.00.56.12;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2015.08.10.23.20.33;	author pwagner;	state Exp;
+branches;
+next	1.29;
+
+1.29
+date	2000.09.05.17.24.00;	author dcuddy;	state dead;
+branches;
+next	1.28;
+
+1.28
+date	2000.07.18.18.21.53;	author lungu;	state Exp;
+branches;
+next	1.27;
+
+1.27
+date	2000.06.19.23.41.18;	author lungu;	state Exp;
+branches;
+next	1.26;
+
+1.26
+date	2000.02.23.20.33.48;	author perun;	state Exp;
+branches;
+next	1.25;
+
+1.25
+date	2000.02.05.00.30.14;	author livesey;	state Exp;
+branches;
+next	1.24;
+
+1.24
+date	2000.01.21.21.00.52;	author livesey;	state Exp;
+branches;
+next	1.23;
+
+1.23
+date	2000.01.11.22.51.34;	author livesey;	state Exp;
+branches;
+next	1.22;
+
+1.22
+date	2000.01.07.23.53.35;	author livesey;	state Exp;
+branches;
+next	1.21;
+
+1.21
+date	99.12.20.14.50.23;	author pumphrey;	state Exp;
+branches;
+next	1.20;
+
+1.20
+date	99.12.18.01.07.13;	author livesey;	state Exp;
+branches;
+next	1.19;
+
+1.19
+date	99.12.17.00.59.32;	author livesey;	state Exp;
+branches;
+next	1.18;
+
+1.18
+date	99.12.16.23.45.15;	author livesey;	state Exp;
+branches;
+next	1.17;
+
+1.17
+date	99.12.16.18.23.31;	author livesey;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	99.12.16.01.27.45;	author livesey;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	99.12.14.22.56.02;	author livesey;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	99.12.04.00.27.43;	author livesey;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	99.12.03.00.14.18;	author livesey;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	99.12.02.01.56.11;	author livesey;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	99.12.01.23.14.06;	author livesey;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	99.12.01.23.01.39;	author livesey;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	99.12.01.05.03.55;	author livesey;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	99.11.30.04.04.17;	author livesey;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	99.11.24.23.07.20;	author livesey;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	99.11.10.01.52.00;	author livesey;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	99.11.04.21.59.40;	author livesey;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	99.11.04.03.06.49;	author livesey;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	99.11.04.02.46.22;	author livesey;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	99.11.04.02.15.48;	author livesey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	99.11.04.00.51.11;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.4
+log
+@sbinom.f not in repository, anyway
+@
+text
+@#	Makefile
+#
+#  Lost? Type 'cd ../; make help -f MakeFC' from this directory
+#
+# Copyright 2005, by the California Institute of Technology. ALL
+# RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+# commercial use must be negotiated with the Office of Technology Transfer
+# at the California Institute of Technology.
+
+# This software may be subject to U.S. export control laws. By accepting this
+# software, the user agrees to comply with all applicable U.S. export laws and
+# regulations. User has the responsibility to obtain export licenses, or other
+# export authority as may be required before exporting such information to
+# foreign countries or providing access to foreign persons.
+
+# "$Id: Makefile,v 2.3 2017/03/08 00:12:19 pwagner Exp $"
+
+short_name=lib
+
+PROG=libmls.a
+
+# We store all the common Makefile things in one shared file
+SRCLIB=../srclib
+-include $(SRCLIB)/Makefile.h
+
+# This will set our MLS platform, compiler. etc.
+# w/o complaining if it does nor exist yet
+-include $(CONFDIR)/$(MLSCFILE)
+
+#the subdirectory where testing programs were kept
+#(outdated now)
+testdir = tests
+
+testsubdirs = $(testdir)/multiply $(testdir)/sparsify $(testdir)/test_cf_parser
+
+OMIT_SRCS := $(OMIT) CCSDS_Time.f90 MLSHashes.f90
+
+#Toolkit-free version requires *Substitute.f90
+ifdef PGSTK
+   OMIT_SRCS := $(OMIT_SRCS) PseudoToolkit.f90 SDPToolkitSubstitute.f90 \
+   MLSMessageSubstitute.f90
+endif
+
+OMIT_PREFXD := $(shell ${REECHO} -prefix=-d $(OMIT_SRCS))
+
+#These modules require custom builds, so omit build commands from dependencies
+CUSTOM_BUILDS := Hdf.f90 string_table.f90 readGriddedUtils.f90
+CUSTOM_PREFXD := $(shell ${REECHO} -prefix=-db $(CUSTOM_BUILDS))
+
+ifdef HDFINC
+   IHDFINC := -I $(HDFINC)
+else
+   IHDFINC := -I $(HDF)/../include
+endif
+
+ifdef HDF5INC
+   IHDF5INC := -I $(HDF5INC)
+   ADD2PATHS := $(ADD2PATHS) $(HDF5INC)
+else
+   IHDF5INC := -I $(HDF5)/../fortran/src -I $(HDF5)/../include
+   ADD2PATHS := $(ADD2PATHS) $(HDF5)/../fortran/src $(HDF5)/../include
+endif
+
+ifdef HDFEOSINC
+   IHDFEOSINC := -I $(HDFEOSINC)
+else
+   IHDFEOSINC := -I $(HDFEOS)/../../include
+endif
+
+ifdef HDFEOS5INC
+   IHDFEOS5INC := $(HDFEOS5INC)/hdfeos5.inc
+else
+   IHDFEOS5INC := $(HDFEOS5)/../../include/hdfeos5.inc
+endif
+
+#----------------------- Build instructions
+
+$(PROG): $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) \
+         $(libblas_objs)/libmlspack.a hdfeos5.f9h
+	@@cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
+      UNPREFXDPTHS="$(ADD2PATHS)" ; \
+        return_status=`expr $$?` ; \
+        if [ $$return_status != "0" ]; then \
+		     exit 2 ; \
+        elif [ "$(MARK_ALL_AS_UPTODATE)" != "no" ]; then \
+		     $(MAKE) mark_all_as_uptodate \
+           UNPREFXDPTHS="$(ADD2PATHS)" MARK_ALL_AS_UPTODATE= ;\
+         fi 
+
+hdfeos5.f9h: $(IHDFEOS5INC)
+	@@sed 's/^C/!/' $(IHDFEOS5INC) > hdfeos5.f9h
+
+.PHONY: configure depends clean alltests tar tarz targ mostlyclean \
+	all libmls.a ghostbuster update
+
+tar:
+
+configure:
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)" \
+          $(RECFG)
+
+$(CONFDIR)/$(MLSCFILE):
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)" \
+          $(RECFG)
+
+$(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/$(MLSCFILE)
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)" -nc  \
+          $(RECFG)
+
+depends:
+	if [ "$(PREPRO)" != "" ] ; then make $(PREPRO) ; fi
+	$(MAKE) depends--mod
+	if [ "$(PREPRO)" != "" ] ; then \
+        temp=""; \
+        for f in $(PREPRO); do temp="$$temp -e s/$$f/`basename $$f .f90`.F90/"; \
+        done; \
+        sed -i $$temp $(PLATFORMS)/$(MLSCONFG)/Makefile.dep; \
+        rm -f $(PREPRO); \
+        fi
+
+depends--mod:
+	$(MLSBIN)/makemakedep.sh -p $(PLATFORMS)/$(MLSCONFG)/Makefile.dep \
+   $(OMIT_PREFXD) $(UP_OR_LOW) \
+   $(CUSTOM_PREFXD) ./machines/$(MLSCONFG) $(srclib) $(libblas_sources)
+
+ghostbuster:
+	$(MLSBIN)/ghostbuster.sh -lib $(OMIT_PREFXD) \
+           $(PLATFORMS)/$(MLSCONFG) ./ $(srclib) ./machines/$(MLSCONFG)
+           
+update:
+	@@cd .. ; \
+   $(MAKE) update SUBDIRS="blas lib" tests_sub_dirs= JUSTSUBDIRS=yes
+
+mostlyclean:
+	@@echo "Cleaning directory $(MLSCONFG)" ; \
+	if [ "$(MLSCONFG)" != "" ] ; then  \
+		echo "Deleting $(MLSCONFG) files" ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/* ; \
+	fi ; \
+	if [ -d "$(PLATFORMS)/$(MLSCONFG)" ] ; then  \
+		echo "Deleting $(MLSCONFG) directory" ; \
+		rmdir $(PLATFORMS)/$(MLSCONFG) ; \
+	fi ; \
+	rm -f Make.dep.*
+
+clean:
+	@@echo "Cleaning objects from directory $(MLSCONFG)" ; \
+	if [ "$(MLSCONFG)" != "" ] ; then  \
+		echo "Deleting $(MLSCONFG) files" ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/*.[ao] ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/*.mod ; \
+	fi; \
+
+#	echo "Cleaning objects from $(testdir)"; \
+#	$(MAKE) -f $(MakeFName) -C $(testdir) clean
+	rm -f Make.dep.*
+
+tar:
+	rm -f ../lib.tar
+	@@echo "tar-ing lib"; \
+	$(TAR) hcvf ../lib.tar * --exclude CVS\
+	--exclude Make.dep\* --exclude lib/NAG.\* --exclude lib/LF95.\*
+
+tarz: tar
+	@@echo "... then gzipping it"; \
+	cd ..; rm -f lib.tgz; gzip lib.tar; mv lib.tar.gz lib.tgz
+
+targ:
+	rm -f ../lib.tgz
+	$(TAR) hcvzf ../lib.tgz * --exclude \*.o --exclude \*.mod
+
+#================= For testing purposes only =============
+#alltests: $(testsubdirs)
+alltests:
+	$(MAKE) -f $(MakeFName) -C $(testdir)
+
+$(testsubdirs):
+	echo "Making $@@"
+	$(MAKE) -f $(MakeFName) -C $@@
+# $Log: Makefile,v $
+# Revision 2.3  2017/03/08 00:12:19  pwagner
+# ncep_dao doesn't need custom, but readGriddedUtils does
+#
+# Revision 2.2  2016/03/02 00:56:12  pwagner
+# Omits compiling PseudoToolkit.f90
+#
+# Revision 2.1  2015/08/10 23:20:33  pwagner
+# After switching away from MakeFC
+#
+# Revision 2.68  2014/05/20 23:54:17  vsnyder
+# parser.f90 no longer needs a custom build
+#
+# Revision 2.67  2014/02/21 22:32:00  pwagner
+# Uses Parser_Tables.wc to trigger two-phase build
+#
+# Revision 2.66  2014/01/29 21:01:28  pwagner
+# Correct various bugs; shorten make update
+#
+# Revision 2.65  2014/01/28 19:49:20  pwagner
+# set UNPREFXDPTHS when building parser and Parser_Tables
+#
+# Revision 2.64  2014/01/24 00:58:47  pwagner
+# Removed certain amount of clumsiness
+#
+# Revision 2.63  2014/01/22 18:22:44  pwagner
+# More changes, bug fixes
+#
+# Revision 2.62  2014/01/18 00:55:40  pwagner
+# Could this be the fix to building Parser_Tables we sought?
+#
+# Revision 2.61  2013/08/28 00:39:15  pwagner
+# Lifted custom builds from MLSStrings.f90 MLSStringLists.f90
+#
+# Revision 2.60  2013/06/05 18:40:51  pwagner
+# Remove vulnerability if temp already exists in lib
+#
+# Revision 2.59  2010/10/12 22:24:29  pwagner
+# Uses Makefile.h from srclib
+#
+# Revision 2.58  2010/08/27 20:56:39  pwagner
+# Uses optional HDF*INC Makefile variables
+#
+# Revision 2.57  2009/10/08 23:07:24  pwagner
+# Added workarounds for buggy Intel v11 handling of strings
+#
+# Revision 2.56  2008/07/11 23:59:19  pwagner
+# 1st changes to get sunstudio to link mlsl2
+#
+# Revision 2.55  2008/04/22 17:16:45  pwagner
+# CASCADE no longer affects where Makefile.dep goes
+#
+# Revision 2.54  2007/05/31 18:31:03  pwagner
+# Added Absoft to list of tested compilers
+#
+# Revision 2.53  2007/04/14 00:41:12  vsnyder
+# Preprocess .F90 and .F9h files
+#
+# Revision 2.52  2007/04/13 20:15:18  pwagner
+# Changes in line with Intel v9.1
+#
+# Revision 2.51  2007/01/12 00:23:02  pwagner
+# Made way for MLSMessageSubstitute
+#
+# Revision 2.50  2005/06/23 22:10:11  pwagner
+# Reworded Copyright statement
+#
+# Revision 2.49  2003/05/20 18:39:23  pwagner
+# Uses DONTBUILDPREQS to stop some hunting
+#
+# Revision 2.48  2003/04/30 23:04:55  pwagner
+# Now lets you make update in each subdirectory
+#
+# Revision 2.47  2003/02/24 21:16:01  pwagner
+# Fixed bug where changes to .f9h were not triggering recompiles
+#
+# Revision 2.46  2002/09/13 22:54:17  pwagner
+# Dependencies cross over into blas
+#
+# Revision 2.45  2002/08/23 20:33:05  pwagner
+# Removed lib trickery L2GPData, MLSFiles, etc.
+#
+# Revision 2.44  2002/07/18 18:00:02  pwagner
+# NOHUNTING default when .mod-mediated dependency
+#
+# Revision 2.43  2002/07/15 17:39:10  pwagner
+# Custom builds for L2PC_m.f90 MLSFiles.f90 L2GPData.f90 so LF95 finishes in finite time
+#
+# Revision 2.42  2002/07/15 16:52:59  pwagner
+# Exits make with status 2 if error in any level
+#
+# Revision 2.41  2002/07/11 22:12:11  pwagner
+# Changes to support hdf5/hdfeos5
+#
+# Revision 2.40  2002/07/02 00:14:01  pwagner
+# Skips marking uptodate after an error
+#
+# Revision 2.39  2002/06/21 23:24:09  pwagner
+# More steps enroute to ending cascades of recompiles
+#
+# Revision 2.38  2002/06/21 00:15:28  pwagner
+# Enroute to ending cascading recompiles
+#
+# Revision 2.37  2002/05/02 00:16:32  pwagner
+# depends now creates Makefile.nodep, too
+#
+# Revision 2.36  2002/01/29 00:46:47  pwagner
+# Builds he5lib when HDFVERSIONS defined
+#
+# Revision 2.35  2002/01/15 00:40:18  pwagner
+# Now uses user-settable OMIT and internal OMIT_SRCS and OMIT_PREFIXD variables
+#
+# Revision 2.34  2001/11/15 00:09:24  pwagner
+# Rebuilds on changes to mlspgs/blas
+#
+# Revision 2.33  2001/11/09 21:52:10  pwagner
+# Dropped testdir from targets automatically cleaned
+#
+# Revision 2.32  2001/11/08 00:40:51  pwagner
+# NOCLEANING avoids massive recompiles on changes to .configure
+#
+# Revision 2.31  2001/11/03 00:00:22  pwagner
+# Added machines/mlsconfg to dependency search path
+#
+# Revision 2.30  2001/10/04 22:24:49  pwagner
+# Limit suffix-based rules to (MLSCONFG)
+#
+# Revision 2.29  2001/09/26 17:24:59  pwagner
+# Removed errors introduced with last changes; SIMPLIFYMAKE renamed NOHUNTING
+#
+# Revision 2.28  2001/09/25 20:27:15  pwagner
+# New SIMPLIFYMAKE setting; other changes
+#
+# Revision 2.27  2001/08/15 21:01:05  pwagner
+# Now excludes OMIT_SRCS from dependencies
+#
+# Revision 2.26  2001/07/03 17:18:21  pwagner
+# Shield QuantityPVM from pvm-less lib
+#
+# Revision 2.25  2001/05/31 20:24:49  pwagner
+# ghostbuster called with -lib option
+#
+# Revision 2.24  2001/05/14 23:58:43  pwagner
+# default .configure name now set by environment
+#
+# Revision 2.23  2001/05/14 17:37:14  pwagner
+# .configure now a variable file name
+#
+# Revision 2.22  2001/05/09 23:28:23  pwagner
+# Optionally builds library w/o toolkit support
+#
+# Revision 2.21  2001/05/01 17:07:44  pwagner
+# Now runs ghostbuster when updating
+#
+# Revision 2.20  2001/04/06 19:44:27  pwagner
+# Fixed double-make problem
+#
+# Revision 2.19  2001/04/05 17:15:54  pwagner
+# Added PROG to .PHONY list
+#
+# Revision 2.18  2001/04/02 17:38:50  pwagner
+# make clean no longer causes bogus error messages in tests
+#
+# Revision 2.17  2001/03/12 22:46:57  pwagner
+# Revised clean, tar; automatic symlink to Makefile
+#
+# Revision 2.16  2001/03/09 19:36:06  pwagner
+# Added TAR=... option
+#
+# Revision 2.15  2001/03/06 18:17:57  pwagner
+# clean more amitious--rms * from MLSCONFGl[13]/MakeFC
+#
+# Revision 2.14  2001/03/05 18:51:32  pwagner
+# libmls.a again automatic target
+#
+# Revision 2.13  2001/02/09 18:38:20  pwagner
+# Removed special treatment of Matrix_OBJS
+#
+# Revision 2.12  2001/02/08 23:16:46  pwagner
+# Without PVM_OBJS.inc file
+#
+# Revision 2.11  2001/01/23 19:04:54  pwagner
+# With optional PVM support
+#
+# Revision 2.10  2001/01/16 22:52:33  pwagner
+# clean* and alltests go thru testdir
+#
+# Revision 2.9  2001/01/10 23:45:34  pwagner
+# General housekeeping
+#
+# Revision 2.8  2000/11/22 21:48:20  pwagner
+# Omitting MatrixModule_n from lib
+#
+# Revision 2.7  2000/11/21 00:40:05  pwagner
+# machine.f90 out of lib/*.f90
+#
+# Revision 2.6  2000/11/17 22:09:30  pwagner
+# conditional machine.f90 chmod
+#
+# Revision 2.5  2000/11/14 23:33:41  pwagner
+# Excludes test*.f90
+#
+# Revision 2.4  2000/11/11 00:13:07  pwagner
+# libmls.a now a phony target
+#
+# Revision 2.3  2000/11/02 23:24:28  pwagner
+# clean_objs option now available
+#
+# Revision 2.2  2000/10/24 20:55:53  pwagner
+# Added tar option
+#
+# Revision 2.1  2000/10/18 21:59:19  pwagner
+# First commit
+#
+
+@
+
+
+2.3
+log
+@ncep_dao doesn't need custom, but readGriddedUtils does
+@
+text
+@d16 1
+a16 1
+# "$Id: Makefile,v 2.2 2016/03/02 00:56:12 pwagner Exp $"
+d36 1
+a36 1
+OMIT_SRCS := $(OMIT) sbinom.f
+d184 3
+@
+
+
+2.2
+log
+@Omits compiling PseudoToolkit.f90
+@
+text
+@d16 1
+a16 1
+# "$Id: Makefile,v 2.1 2015/08/10 23:20:33 pwagner Exp $"
+d47 1
+a47 1
+CUSTOM_BUILDS := Hdf.f90 string_table.f90 ncep_dao.f90
+d184 3
+@
+
+
+2.1
+log
+@After switching away from MakeFC
+@
+text
+@d16 1
+a16 1
+# "$Id: MakeFC,v 2.68 2014/05/20 23:54:17 vsnyder Exp $"
+d40 2
+a41 1
+   OMIT_SRCS := $(OMIT_SRCS) SDPToolkitSubstitute.f90 MLSMessageSubstitute.f90
+d183 4
+a186 1
+# $Log: MakeFC,v $
+@
+
+
+1.29
+log
+@removed with V0.5 per Van's instructions
+@
+text
+@d1 1
+a1 1
+# $Id: Makefile,v 1.28 2000/07/18 18:21:53 lungu Exp $
+d3 1
+a3 1
+# This is a makefile for the utils section of the mlspgs suite
+d5 4
+a8 2
+include make.inc
+MLSPGS_LIB_PATH=.
+d10 137
+a146 33
+OBJS=	MLSStrings.o MLSSignalNomenclature.o VerticalCoordinate.o \
+	QuantityTemplates.o MLSNumerics.o MLSMessageModule.o MLSCF.o\
+	SDPToolkit.o L2GPData.o L2AUXData.o VectorsModule.o Units.o \
+	VGrid.o HGrid.o L1BData.o ConstructQuantityTemplates.o\
+	ConstructVectorTemplates.o gridded_data_module.o \
+	dates_module.o MLSPCF.o GriddedData.o HDF-EOS.o
+
+OBJS_DEBUG= 	MLSStrings.dbg.o MLSSignalNomenclature.dbg.o \
+		VerticalCoordinate.dbg.o QuantityTemplates.dbg.o \
+		MLSNumerics.dbg.o MLSMessageModule.dbg.o \
+		SDPToolkit.dbg.o L2GPData.dbg.o L2AUXData.dbg.o \
+		VectorsModule.dbg.o Units.dbg.o VGrid.dbg.o \
+		HGrid.dbg.o L1BData.o ConstructQuantityTemplates.dbg.o \
+		ConstructVectorTemplates.dbg.o \
+		gridded_data_module.dbg.o dates_module.dbg.o \
+		MLSPCF.dbg.o MLSCF.dbg.o GriddedData.dbg.o
+
+Libpath=.
+MODULEPATH=.
+
+all:	mlslib.a SDPToolkitSubstitute.a
+debug:	mlslib.a_debug SDPToolkitSubstitute.a_debug
+both: all debug
+
+mlslib.a: ${OBJS}
+	ar ru $@@ $?
+mlslib.a_debug: ${OBJS_DEBUG}
+	ar ru $@@ $?
+
+SDPToolkitSubstitute.a: SDPToolkitSubstitute.o
+	ar ru $@@ $?
+SDPToolkitSubstitute.a_debug: SDPToolkitSubstitute.dbg.o
+	ar ru $@@ $?
+d149 51
+a199 1
+	-rm -f *.o *.a *.mod *.M *.dbg.o *.a_debug
+d201 2
+a202 2
+# Here we list manually dependencies present through USE statements.
+# Later on we may try to adapt Hugh's script to deal with these
+d204 101
+a304 20
+SDPToolkit.o: MLSCommon.o
+MLSCF.o: SDPToolkit.o Hdf.o MLSMessageModule.o
+gridded_data_module.o: MLSCommon.o MLSStrings.o MLSMessageModule.o \
+	dates_module.o
+MLSMessageModule.o: SDPToolkit.o
+MLSStrings.o: MLSMessageModule.o
+MLSSignalNomenclature.o: MLSStrings.o MLSMessageModule.o MLSCommon.o
+QuantityTemplates.o: MLSSignalNomenclature.o MLSStrings.o MLSMessageModule.o \
+	VGrid.o MLSCF.o
+MLSNumerics.o: MLSMessageModule.o 
+L1BData.o: Hdf.o SDPToolkit.o MLSCommon.o
+HGrid.o: MLSCommon.o MLSMessageModule.o MLSStrings.o L1BData.o MLSNumerics.o MLSCF.o
+VGrid.o: MLSCommon.o VerticalCoordinate.o MLSStrings.o MLSCF.o
+ConstructQuantityTemplates.o: MLSCommon.o MLSMessageModule.o \
+	QuantityTemplates.o VGrid.o HGrid.o VerticalCoordinate.o \
+	Units.o MLSSignalNomenclature.o MLSCF.o
+VerticalCoordinate.o: MLSCommon.o MLSStrings.o Units.o
+ConstructVectorTemplates.o: MLSCommon.o MLSMessageModule.o VectorsModule.o \
+	QuantityTemplates.o MLSCF.o
+
+d306 2
+a307 1
+# Now the debug dependencies
+d309 2
+a310 24
+
+MLSCF.dbg.o: SDPToolkit.dbg.o Hdf.dbg.o MLSMessageModule.dbg.o
+gridded_data_module.dbg.o: MLSCommon.dbg.o MLSStrings.dbg.o MLSMessageModule.dbg.o \
+	dates_module.dbg.o
+MLSMessageModule.dbg.o: SDPToolkit.dbg.o
+MLSStrings.dbg.o: MLSMessageModule.dbg.o
+MLSSignalNomenclature.dbg.o: MLSStrings.dbg.o MLSMessageModule.dbg.o MLSCommon.dbg.o
+QuantityTemplates.dbg.o: MLSSignalNomenclature.dbg.o MLSStrings.dbg.o MLSMessageModule.dbg.o \
+	VGrid.dbg.o 
+MLSNumerics.dbg.o: MLSMessageModule.dbg.o
+L1BData.dbg.o: Hdf.dbg.o SDPToolkit.dbg.o MLSCommon.dbg.o
+HGrid.dbg.o: MLSCommon.dbg.o MLSMessageModule.dbg.o MLSStrings.dbg.o L1BData.dbg.o MLSNumerics.dbg.o
+VGrid.dbg.o: MLSCommon.dbg.o VerticalCoordinate.dbg.o MLSStrings.dbg.o \
+	 MLSCF.dbg.o
+ConstructQuantityTemplates.dbg.o: MLSCommon.dbg.o MLSMessageModule.dbg.o \
+	QuantityTemplates.dbg.o VGrid.dbg.o HGrid.dbg.o VerticalCoordinate.dbg.o \
+	Units.dbg.o MLSSignalNomenclature.dbg.o
+VerticalCoordinate.dbg.o: MLSCommon.dbg.o MLSStrings.dbg.o Units.dbg.o
+ConstructVectorTemplates.dbg.o: MLSCommon.dbg.o MLSMessageModule.dbg.o VectorsModule.dbg.o \
+	QuantityTemplates.dbg.o
+
+# $Log: Makefile,v $
+# Revision 1.28  2000/07/18 18:21:53  lungu
+# Checked in for v0.1 tests.
+d312 2
+a313 2
+# Revision 1.27  2000/06/19 23:41:18  lungu
+# Added HDF-EOS.
+d315 2
+a316 2
+# Revision 1.26  2000/02/23 20:33:48  perun
+# Changed .o_debug to .dbg.o for SunOS
+d318 2
+a319 2
+# Revision 1.25  2000/02/05 00:30:14  livesey
+# Removed temporary types stuff
+d321 2
+a322 2
+# Revision 1.24  2000/01/21 21:00:52  livesey
+# No longer necessary
+d324 2
+a325 2
+# Revision 1.23  2000/01/11 22:51:34  livesey
+# Dealt with ramifications of change from read_parse_l2cf to MLSCF
+d327 2
+a328 2
+# Revision 1.22  2000/01/07 23:53:35  livesey
+# Nearly integrated, just a few tweaks.
+d330 2
+a331 2
+# Revision 1.21  1999/12/20 14:50:23  pumphrey
+# Added gridded_data_module to Makefile
+d333 2
+a334 2
+# Revision 1.20  1999/12/18 01:07:13  livesey
+# Regular commit
+d336 2
+a337 2
+# Revision 1.19  1999/12/17 00:59:32  livesey
+# Nightly checkin
+d339 2
+a340 2
+# Revision 1.18  1999/12/16 23:45:15  livesey
+# Regular commit
+d342 2
+a343 2
+# Revision 1.18  1999/12/16 23:45:15  livesey
+# Regular commit
+d345 2
+a346 2
+# Revision 1.17  1999/12/16 18:23:31  livesey
+# Routine checkin
+d348 2
+a349 2
+# Revision 1.16  1999/12/16 01:27:45  livesey
+# Routine checkin
+d351 2
+a352 2
+# Revision 1.15  1999/12/14 22:56:02  livesey
+# Regular commit
+d354 2
+a355 2
+# Revision 1.14  1999/12/04 00:27:43  livesey
+# Regular end of day checkin
+d357 2
+a358 2
+# Revision 1.13  1999/12/03 00:14:18  livesey
+# Nightly checkin
+d360 2
+a361 2
+# Revision 1.12  1999/12/02 01:56:11  livesey
+# Changed filenames to mixed case, redid makefiles.
+d363 2
+a364 2
+# Revision 1.11  1999/12/01 23:14:06  livesey
+# Renamed files to upper/lower case
+d366 2
+a367 2
+# Revision 1.10  1999/12/01 23:01:39  livesey
+# Before renaming things to upper/lower case
+d369 2
+a370 2
+# Revision 1.9  1999/12/01 05:03:55  livesey
+# Nightly checkin
+d372 2
+a373 2
+# Revision 1.8  1999/11/30 04:04:17  livesey
+# Nightly checkin
+d375 2
+a376 2
+# Revision 1.7  1999/11/24 23:07:20  livesey
+# Regular commit
+d378 2
+a379 2
+# Revision 1.6  1999/11/10 01:52:00  livesey
+# Transfer to home
+d381 2
+a382 2
+# Revision 1.5  1999/11/04 21:59:40  livesey
+# Move contents of util to lib and renamed to mlslib.a
+d384 2
+a385 2
+# Revision 1.4  1999/11/04 03:06:49  livesey
+# Got the make stuff working I think
+d387 1
+@
+
+
+1.28
+log
+@Checked in for v0.1 tests.
+@
+text
+@d1 1
+a1 1
+# $Id: Makefile,v 1.27 2000/06/19 23:41:18 lungu Exp $
+d93 3
+@
+
+
+1.27
+log
+@Added HDF-EOS.
+@
+text
+@d1 1
+a1 1
+# $Id: Makefile,v 1.26 2000/02/23 20:33:48 perun Exp $
+d9 1
+a9 1
+	QuantityTemplates.o MLSNumerics.o MLSMessageModule.o \
+d13 1
+a13 1
+	dates_module.o MLSPCF.o MLSCF.o GriddedData.o HDF-EOS.o
+d48 1
+a48 1
+
+d93 3
+@
+
+
+1.26
+log
+@Changed .o_debug to .dbg.o for SunOS
+@
+text
+@d1 1
+a1 1
+# $Id: Makefile,v 1.25 2000/02/05 00:30:14 livesey Exp $
+d13 1
+a13 1
+	dates_module.o MLSPCF.o MLSCF.o GriddedData.o
+d93 3
+@
+
+
+1.25
+log
+@Removed temporary types stuff
+@
+text
+@d1 1
+a1 1
+# $Id: Makefile,v 1.24 2000/01/21 21:00:52 livesey Exp $
+d15 9
+a23 9
+OBJS_DEBUG= 	MLSStrings.o_debug MLSSignalNomenclature.o_debug \
+		VerticalCoordinate.o_debug QuantityTemplates.o_debug \
+		MLSNumerics.o_debug MLSMessageModule.o_debug \
+		SDPToolkit.o_debug L2GPData.o_debug L2AUXData.o_debug \
+		VectorsModule.o_debug Units.o_debug VGrid.o_debug \
+		HGrid.o_debug L1BData.o ConstructQuantityTemplates.o_debug \
+		ConstructVectorTemplates.o_debug \
+		gridded_data_module.o_debug dates_module.o_debug \
+		MLSPCF.o_debug MLSCF.o_debug GriddedData.o_debug
+d39 1
+a39 1
+SDPToolkitSubstitute.a_debug: SDPToolkitSubstitute.o_debug
+d43 1
+a43 1
+	-rm -f *.o *.a *.mod *.M *.o_debug *.a_debug
+d72 19
+a90 17
+gridded_data_module.o_debug: MLSCommon.o_debug MLSStrings.o_debug MLSMessageModule.o_debug \
+	dates_module.o_debug
+MLSMessageModule.o_debug: SDPToolkit.o_debug
+MLSStrings.o_debug: MLSMessageModule.o_debug
+MLSSignalNomenclature.o_debug: MLSStrings.o_debug MLSMessageModule.o_debug MLSCommon.o_debug
+QuantityTemplates.o_debug: MLSSignalNomenclature.o_debug MLSStrings.o_debug MLSMessageModule.o_debug \
+	VGrid.o_debug 
+MLSNumerics.o_debug: MLSMessageModule.o_debug
+L1BData.o_debug: Hdf.o_debug SDPToolkit.o_debug MLSCommon.o_debug
+HGrid.o_debug: MLSCommon.o_debug MLSMessageModule.o_debug MLSStrings.o_debug L1BData.o_debug MLSNumerics.o_debug
+VGrid.o_debug: MLSCommon.o_debug VerticalCoordinate.o_debug MLSStrings.o_debug
+ConstructQuantityTemplates.o_debug: MLSCommon.o_debug MLSMessageModule.o_debug \
+	QuantityTemplates.o_debug VGrid.o_debug HGrid.o_debug VerticalCoordinate.o_debug \
+	Units.o_debug MLSSignalNomenclature.o_debug
+VerticalCoordinate.o_debug: MLSCommon.o_debug MLSStrings.o_debug Units.o_debug
+ConstructVectorTemplates.o_debug: MLSCommon.o_debug MLSMessageModule.o_debug VectorsModule.o_debug \
+	QuantityTemplates.o_debug
+d93 3
+@
+
+
+1.24
+log
+@No longer necessary
+@
+text
+@d1 1
+a1 1
+# $Id: Makefile,v 1.23 2000/01/11 22:51:34 livesey Exp $
+d12 1
+a12 1
+	Temporary_types.o ConstructVectorTemplates.o gridded_data_module.o \
+d21 1
+a21 1
+		Temporary_types.o_debug ConstructVectorTemplates.o_debug \
+d56 1
+a56 1
+	VGrid.o Temporary_types.o MLSCF.o
+d78 1
+a78 1
+	VGrid.o_debug Temporary_types.o_debug
+d82 1
+a82 1
+VGrid.o_debug: MLSCommon.o_debug VerticalCoordinate.o_debug MLSStrings.o_debug Temporary_types.o_debug
+d88 1
+a88 1
+	QuantityTemplates.o_debug Temporary_types.o_debug
+d91 3
+@
+
+
+1.23
+log
+@Dealt with ramifications of change from read_parse_l2cf to MLSCF
+@
+text
+@d1 1
+a1 1
+# $Id: Makefile,v 1.22 2000/01/07 23:53:35 livesey Exp $
+d13 1
+a13 1
+	dates_module.o MLSPCF.o MLSCF.o
+d23 1
+a23 1
+		MLSPCF.o_debug MLSCF.o_debug
+d25 1
+a25 1
+LIBPATH=.
+d91 3
+@
+
+
+1.22
+log
+@Nearly integrated, just a few tweaks.
+@
+text
+@d1 1
+a1 1
+# $Id: Makefile,v 1.21 1999/12/20 14:50:23 pumphrey Exp $
+d13 1
+a13 1
+	dates_module.o read_parse_l2cf.o MLSPCF.o
+d23 1
+a23 1
+		read_parse_l2cf.o MLSPCF.o_debug
+d49 1
+a49 1
+read_parse_l2cf.o: SDPToolkit.o Hdf.o MLSMessageModule.o
+d56 1
+a56 1
+	VGrid.o Temporary_types.o read_parse_l2cf.o
+d59 2
+a60 2
+HGrid.o: MLSCommon.o MLSMessageModule.o MLSStrings.o L1BData.o MLSNumerics.o read_parse_l2cf.o
+VGrid.o: MLSCommon.o VerticalCoordinate.o MLSStrings.o read_parse_l2cf.o
+d63 1
+a63 1
+	Units.o MLSSignalNomenclature.o read_parse_l2cf.o
+d66 1
+a66 1
+	QuantityTemplates.o read_parse_l2cf.o
+d91 3
+@
+
+
+1.21
+log
+@Added gridded_data_module to Makefile
+@
+text
+@d1 1
+a1 1
+# $Id: Makefile,v 1.20 1999/12/18 01:07:13 livesey Exp $
+d12 2
+a13 1
+	Temporary_types.o ConstructVectorTemplates.o gridded_data_module.o
+d22 2
+a23 1
+		gridded_data_module.o_debug
+d49 3
+a51 1
+gridded_data_module.o: MLSCommon.o MLSStrings.o MLSMessageModule.o
+d56 2
+a57 2
+	VGrid.o Temporary_types.o
+MLSNumerics.o: MLSMessageModule.o
+d59 2
+a60 2
+HGrid.o: MLSCommon.o MLSMessageModule.o MLSStrings.o L1BData.o MLSNumerics.o
+VGrid.o: MLSCommon.o VerticalCoordinate.o MLSStrings.o Temporary_types.o
+d63 1
+a63 1
+	Units.o MLSSignalNomenclature.o
+d66 1
+a66 1
+	QuantityTemplates.o Temporary_types.o
+d69 21
+d91 3
+@
+
+
+1.20
+log
+@Regular commit
+@
+text
+@d1 1
+a1 1
+# $Id: Makefile,v 1.19 1999/12/17 00:59:32 livesey Exp $
+d12 1
+a12 1
+	Temporary_types.o ConstructVectorTemplates.o
+d20 2
+a21 1
+		Temporary_types.o_debug ConstructVectorTemplates.o_debug
+d47 1
+d66 3
+@
+
+
+1.19
+log
+@Nightly checkin
+@
+text
+@d1 1
+a1 1
+# $Id: Makefile,v 1.18 1999/12/16 23:45:15 livesey Exp $
+d11 3
+a13 1
+	VGrid.o HGrid.o L1BData.o ConstructQuantityTemplates.o
+d19 2
+a20 1
+		HGrid.o_debug L1BData.o ConstructQuantityTemplates.o_debug
+d45 1
+d48 3
+a50 2
+MLSSignalNomenclature.o: MLSStrings.o MLSMessageModule.o
+QuantityTemplates.o: MLSSignalNomenclature.o MLSStrings.o MLSMessageModule.o
+d54 1
+a54 1
+VGrid.o: MLSCommon.o VerticalCoordinate.o MLSStrings.o
+d58 3
+a60 14
+
+MLSMessageModule.o_debug: SDPToolkit.o_debug
+MLSStrings.o_debug: MLSMessageModule.o_debug
+MLSSignalNomenclature.o_debug: MLSStrings.o_debug MLSMessageModule.o_debug
+QuantityTemplates.o_debug: MLSSignalNomenclature.o_debug MLSStrings.o_debug \
+		MLSMessageModule.o_debug
+MLSNumerics.o_debug: MLSMessageModule.o_debug
+L1BData.o_debug: Hdf.o_debug SDPToolkit.o_debug MLSCommon.o_debug
+HGrid.o_debug: MLSCommon.o_debug MLSMessageModule.o_debug MLSStrings.o_debug \
+	L1BData.o_debug MLSNumerics.o_debug
+VGrid.o_debug: MLSCommon.o_debug VerticalCoordinate.o_debug MLSStrings.o_debug
+ConstructQuantityTemplates.o_debug: MLSCommon.o_debug MLSMessageModule.o_debug \
+	QuantityTemplates.o_debug VGrid.o_debug HGrid.o_debug \
+	VerticalCoordinate.o_debug Units.o_debug MLSSignalNomenclature.o_debug
+d64 3
+@
+
+
+1.18
+log
+@Regular commit
+@
+text
+@d52 1
+a52 1
+	Units.o MLSSignalsNomenclature.o
+d66 1
+a66 1
+	VerticalCoordinate.o_debug Units.o_debug MLSSignalsNomenclature.o_debug
+d70 3
+@
+
+
+1.17
+log
+@Routine checkin
+@
+text
+@d1 1
+a1 1
+# $Id: Makefile,v 1.16 1999/12/16 01:27:45 livesey Exp $
+d9 1
+a9 1
+	VectorQuantities.o MLSNumerics.o MLSMessageModule.o \
+d11 1
+a11 2
+	VGrid.o HGrid.o L1BData.o
+
+d13 1
+a13 1
+		VerticalCoordinate.o_debug VectorQuantities.o_debug \
+d17 1
+a17 1
+		HGrid.o_debug L1BData.o
+d45 1
+a45 1
+VectorQuantities.o: MLSSignalNomenclature.o MLSStrings.o MLSMessageModule.o
+d50 3
+d57 1
+a57 1
+VectorQuantities.o_debug: MLSSignalNomenclature.o_debug MLSStrings.o_debug \
+d64 3
+d70 3
+@
+
+
+1.16
+log
+@Routine checkin
+@
+text
+@d1 1
+a1 1
+# $Id: Makefile,v 1.15 1999/12/14 22:56:02 livesey Exp $
+d11 1
+a11 1
+	VGrid.o
+d17 2
+a18 1
+		VectorsModule.o_debug Units.o_debug VGrid.o_debug
+d48 3
+d58 5
+d65 3
+@
+
+
+1.15
+log
+@Regular commit
+@
+text
+@d1 1
+a1 1
+# $Id: Makefile,v 1.14 1999/12/04 00:27:43 livesey Exp $
+d10 2
+a11 1
+	SDPToolkit.o L2GPData.o L2AUXData.o VectorsModule.o Units.o
+d17 1
+a17 1
+		VectorsModule.o_debug Units.o_debug
+d56 3
+@
+
+
+1.14
+log
+@Regular end of day checkin
+@
+text
+@d1 1
+a1 1
+# $Id: Makefile,v 1.13 1999/12/03 00:14:18 livesey Exp $
+d10 1
+a10 1
+	SDPToolkit.o L2GPData.o L2AUXData.o VectorsModule.o
+d16 1
+a16 1
+		VectorsModule.o_debug
+d55 3
+@
+
+
+1.13
+log
+@Nightly checkin
+@
+text
+@d1 1
+a1 1
+# $Id: Makefile,v 1.12 1999/12/02 01:56:11 livesey Exp $
+d10 1
+a10 1
+	SDPToolkit.o
+d15 2
+a16 1
+		SDPToolkit.o_debug
+d55 3
+@
+
+
+1.12
+log
+@Changed filenames to mixed case, redid makefiles.
+@
+text
+@d1 1
+a1 1
+# $Id: Makefile,v 1.11 1999/12/01 23:14:06 livesey Exp $
+d9 2
+a10 1
+	VectorQuantities.o MLSNumerics.o MLSMessageModule.o
+d14 2
+a15 1
+		MLSNumerics.o_debug MLSMessageModule.o_debug
+d18 1
+a18 1
+MODULEPATH=../SDPToolkit/
+d20 2
+a21 2
+all: toolkit toolkitsubstitute mlslib.a
+debug: toolkit_debug toolkitsubstitute_debug mlslib.a_debug 
+d29 4
+a32 9
+toolkit:
+	cd ../SDPToolkit/ ; ${MAKE}
+toolkit_debug:
+	cd ../SDPToolkit/ ; ${MAKE} debug
+
+toolkitsubstitute:
+	cd ../SDPToolkitSubstitute/ ; ${MAKE}
+toolkitsubstitute_debug:
+	cd ../SDPToolkitSubstitite/ ; ${MAKE} debug
+d40 1
+d46 1
+d54 3
+@
+
+
+1.11
+log
+@Renamed files to upper/lower case
+@
+text
+@d1 1
+a1 1
+# $Id: Makefile,v 1.10 1999/12/01 23:01:39 livesey Exp $
+d6 1
+d15 2
+a16 4
+TKS_OBJS= SDPToolkitSubstitute.o
+TKS_OBJS_DEBUG= SDPToolkitSubstitute.o_debug
+
+MODULEPATH=.
+d18 2
+a20 2
+all: mlslib.a SDPToolkitSubstitute.a
+debug: mlslib.a_debug SDPToolkitSubstitute.a_debug
+a23 1
+
+d27 9
+a35 4
+SDPToolkitSubstitute.a: ${TKS_OBJS}
+	ar ru SDPToolkitSubstitute.a $?
+SDPToolkitSubstitute.a_debug: ${TKS_OBJS}
+	ar ru SDPToolkitSubstitute.a $?
+d39 4
+a42 1
+
+a52 2
+
+
+d55 3
+@
+
+
+1.10
+log
+@Before renaming things to upper/lower case
+@
+text
+@d1 1
+a1 1
+# $Id: Makefile,v 1.9 1999/12/01 05:03:55 livesey Exp $
+d7 10
+a16 5
+OBJS=	mlsstrings.o mlssignalnomenclature.o verticalcoordinates.o \
+	vectorquantities.o mlsnumerics.o mlsmessagemodule.o
+OBJS_DEBUG= mlsstrings.o_debug mlssignalnomenclature.o_debug \
+	verticalcoordinates.o_debug vectorquantities.o_debug \
+	mlsnumerics.o_debug mlsmessagemodule.o_debug
+d24 1
+a24 1
+	ar ru mlslib.a $?
+d27 1
+a27 1
+	ar ru mlslib.a_debug $?
+d37 11
+a47 10
+mlsstrings.o: mlsmessagemodule.o
+mlssignalnomenclature.o: mlsstrings.o mlsmessagemodule.o
+vectorquantities.o: mlssignalnomenclature.o mlsstrings.o mlsmessagemodule.o
+mlsnumerics.o: mlsmessagemodule.o
+
+mlsstrings.o_debug: mlsmessagemodule.o_debug
+mlssignalnomenclature.o_debug: mlsstrings.o_debug mlsmessagemodule.o
+vectorquantities.o_debug: mlssignalnomenclature.o_debug mlsstrings.o_debug \
+	mlsmessagemodule.o_debug
+mlsnumerics.o_debug: mlsmessagemodule.o_debug
+d51 3
+@
+
+
+1.9
+log
+@Nightly checkin
+@
+text
+@d1 1
+a1 1
+# $Id: Makefile,v 1.8 1999/11/30 04:04:17 livesey Exp $
+d8 1
+a8 1
+	vectorquantities.o mlsnumerics.o
+d11 1
+a11 1
+	mlsnumerics.o_debug
+d14 3
+a16 2
+all: mlslib.a
+debug: mlslib.a_debug
+d24 5
+d32 10
+a41 5
+mlssignalnomenclature.o: mlsstrings.o
+vectorquantities.o: mlssignalnomenclature.o mlsstrings.o
+
+mlssignalnomenclature.o_debug: mlsstrings.o_debug
+vectorquantities.o_debug: mlssignalnomenclature.o_debug mlsstrings.o_debug
+d45 3
+@
+
+
+1.8
+log
+@Nightly checkin
+@
+text
+@d1 1
+a1 1
+# $Id: Makefile,v 1.7 1999/11/24 23:07:20 livesey Exp $
+d10 1
+a10 1
+	verticalcoordiantes.o_debug vectorquantities.o_debug \
+d34 3
+@
+
+
+1.7
+log
+@Regular commit
+@
+text
+@d1 1
+a1 1
+# $Id: Makefile,v 1.6 1999/11/10 01:52:00 livesey Exp $
+d8 1
+a8 1
+	vectorquantities.o
+d10 2
+a11 1
+	verticalcoordiantes.o_debug vectorquantities.o_debug
+d34 3
+@
+
+
+1.6
+log
+@Transfer to home
+@
+text
+@d1 1
+a1 1
+# $Id: Makefile,v 1.5 1999/11/04 21:59:40 livesey Exp $
+d7 4
+a10 2
+OBJS= mlsstrings.o mlssignalnomenclature.o
+OBJS_DEBUG= mlsstrings.o_debug mlssignalnomenclature.o_debug
+d24 7
+d33 3
+@
+
+
+1.5
+log
+@Move contents of util to lib and renamed to mlslib.a
+@
+text
+@d1 1
+a1 1
+# $Id: Makefile,v 1.4 1999/11/04 03:06:49 livesey Exp $
+d7 2
+a8 2
+OBJS= mlsstrings.o signalsfile.o
+OBJS_DEBUG= mlsstrings.o_debug signalsfile.o_debug
+d24 3
+@
+
+
+1.4
+log
+@Got the make stuff working I think
+@
+text
+@d1 1
+a1 1
+# $Id: Makefile,v 1.3 1999/11/04 02:46:22 livesey Exp $
+d11 2
+a12 2
+all: util.a
+debug: util.a_debug
+d14 2
+a15 2
+util.a: ${OBJS}
+	ar ru util.a $?
+d17 2
+a18 2
+util.a_debug: ${OBJS_DEBUG}
+	ar ru util.a_debug $?
+d23 4
+a26 1
+# $Log$
+@
+
+
+1.3
+log
+@Added make.inc
+@
+text
+@d1 1
+a1 1
+# $Id: Makefile,v 1.1 1999/11/04 00:51:11 livesey Exp $
+d5 1
+a5 1
+include make_${OSTYPE}.inc
+d9 1
+d21 3
+a23 1
+	-rm -f *.o *.a *.mod *.M
+@
+
+
+1.2
+log
+@Added make_xxx.inc stuff
+@
+text
+@d7 2
+a8 1
+OBJS=mlsstrings.o signalsfile.o
+d11 1
+d15 3
+@
+
+
+1.1
+log
+@Added makefiles
+@
+text
+@d1 1
+a1 1
+# $Id$
+d3 3
+a5 1
+# This is a Makefile for my test programs
+d7 1
+a7 1
+OBJ=mlsstrings.o signalsfile.o
+d11 1
+a11 1
+util.a: ${OBJ}
+@

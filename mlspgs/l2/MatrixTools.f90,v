@@ -1,0 +1,3469 @@
+head	1.49;
+access;
+symbols
+	v5-02-NRT-19:1.49
+	v6-00:1.49
+	v5-02-NRT-18:1.49
+	v5-02:1.49
+	v5-01-NRT-17:1.49
+	v5-01-NRT-16:1.49
+	v5-01-NRT-15:1.49
+	v5-01-NRT-14:1.49
+	neuralnetworks-1-0:1.49.0.10
+	cfm-single-freq-0-1:1.49.0.8
+	v5-01:1.49
+	v5-00:1.49
+	v4-23-TA133:1.49.0.6
+	mus-emls-1-70:1.49.0.4
+	rel-1-0-englocks-work:1.49.0.2
+	VUMLS1-00:1.47
+	VPL1-00:1.47
+	V4-22-NRT-08:1.45
+	VAM1-00:1.45
+	V4-21:1.44.0.2
+	V4-13:1.44
+	V4-12:1.41
+	V4-11:1.41
+	V4-10:1.41
+	V3-43:1.31
+	M4-00:1.37
+	V3-41:1.31
+	V3-40-PlusGM57:1.31.0.2
+	V2-24-NRT-04:1.26
+	V3-33:1.33
+	V2-24:1.26
+	V3-31:1.33
+	V3-30-NRT-05:1.33
+	cfm-01-00:1.32
+	V3-30:1.31
+	V3-20:1.31
+	V3-10:1.28
+	V2-23-NRT-02:1.26
+	V2-23:1.26
+	V2-22-NRT-01:1.26
+	V2-22:1.26
+	V2-21:1.24
+	V2-20:1.24
+	V2-11:1.21
+	V2-10:1.21
+	V2-00:1.19
+	V1-51:1.17
+	V1-50:1.17
+	V1-45:1.14
+	V1-44:1.14
+	V1-43:1.14
+	V1-32:1.13
+	V1-31:1.13
+	V1-30:1.10
+	V1-13:1.8
+	V1-12:1.8
+	V1-11:1.8
+	V1-10:1.8
+	newfwm-feb03:1.8.0.2
+	V1-04:1.6
+	V1-03:1.6
+	V1-02:1.6
+	JointForwardModel:1.6.0.2
+	V1-00:1.6
+	newfwm-sep01:1.5.0.2
+	V0-7:1.5
+	V0-5-Level2:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.49
+date	2017.12.07.01.01.23;	author vsnyder;	state Exp;
+branches;
+next	1.48;
+
+1.48
+date	2017.07.27.01.40.43;	author vsnyder;	state Exp;
+branches;
+next	1.47;
+
+1.47
+date	2016.07.28.03.27.34;	author vsnyder;	state Exp;
+branches;
+next	1.46;
+
+1.46
+date	2016.07.28.00.40.34;	author vsnyder;	state Exp;
+branches;
+next	1.45;
+
+1.45
+date	2015.03.28.02.49.25;	author vsnyder;	state Exp;
+branches;
+next	1.44;
+
+1.44
+date	2014.09.05.01.13.10;	author vsnyder;	state Exp;
+branches;
+next	1.43;
+
+1.43
+date	2014.09.05.00.49.07;	author vsnyder;	state Exp;
+branches;
+next	1.42;
+
+1.42
+date	2014.08.06.23.33.45;	author vsnyder;	state Exp;
+branches;
+next	1.41;
+
+1.41
+date	2014.02.28.01.08.20;	author vsnyder;	state Exp;
+branches;
+next	1.40;
+
+1.40
+date	2014.02.28.00.21.12;	author vsnyder;	state Exp;
+branches;
+next	1.39;
+
+1.39
+date	2013.09.24.23.47.22;	author vsnyder;	state Exp;
+branches;
+next	1.38;
+
+1.38
+date	2013.06.12.02.38.02;	author vsnyder;	state Exp;
+branches;
+next	1.37;
+
+1.37
+date	2012.01.27.02.57.54;	author vsnyder;	state Exp;
+branches;
+next	1.36;
+
+1.36
+date	2011.10.04.20.25.33;	author honghanh;	state Exp;
+branches;
+next	1.35;
+
+1.35
+date	2011.09.01.20.37.08;	author honghanh;	state Exp;
+branches;
+next	1.34;
+
+1.34
+date	2011.08.20.00.49.37;	author vsnyder;	state Exp;
+branches;
+next	1.33;
+
+1.33
+date	2010.08.06.23.02.36;	author pwagner;	state Exp;
+branches;
+next	1.32;
+
+1.32
+date	2010.03.24.20.51.43;	author vsnyder;	state Exp;
+branches;
+next	1.31;
+
+1.31
+date	2010.02.10.20.00.25;	author vsnyder;	state Exp;
+branches;
+next	1.30;
+
+1.30
+date	2009.12.17.23.56.41;	author vsnyder;	state Exp;
+branches;
+next	1.29;
+
+1.29
+date	2009.12.17.23.44.43;	author vsnyder;	state Exp;
+branches;
+next	1.28;
+
+1.28
+date	2009.06.23.18.46.18;	author pwagner;	state Exp;
+branches;
+next	1.27;
+
+1.27
+date	2009.06.16.17.40.19;	author pwagner;	state Exp;
+branches;
+next	1.26;
+
+1.26
+date	2007.10.05.23.41.06;	author vsnyder;	state Exp;
+branches;
+next	1.25;
+
+1.25
+date	2007.10.02.22.41.27;	author vsnyder;	state Exp;
+branches;
+next	1.24;
+
+1.24
+date	2006.09.21.18.48.07;	author pwagner;	state Exp;
+branches;
+next	1.23;
+
+1.23
+date	2006.09.20.00.43.21;	author vsnyder;	state Exp;
+branches;
+next	1.22;
+
+1.22
+date	2006.09.19.20.33.13;	author vsnyder;	state Exp;
+branches;
+next	1.21;
+
+1.21
+date	2006.07.27.03.53.28;	author vsnyder;	state Exp;
+branches;
+next	1.20;
+
+1.20
+date	2006.07.19.22.27.24;	author vsnyder;	state Exp;
+branches;
+next	1.19;
+
+1.19
+date	2005.06.22.18.57.02;	author pwagner;	state Exp;
+branches;
+next	1.18;
+
+1.18
+date	2005.03.15.23.50.16;	author pwagner;	state Exp;
+branches;
+next	1.17;
+
+1.17
+date	2004.10.29.20.54.11;	author vsnyder;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2004.09.28.00.40.06;	author livesey;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2004.09.25.00.16.53;	author livesey;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2004.01.21.22.00.46;	author vsnyder;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2003.10.10.23.28.33;	author vsnyder;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2003.10.09.21.03.16;	author vsnyder;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2003.10.07.01.17.36;	author vsnyder;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2003.08.15.20.28.05;	author vsnyder;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2003.05.21.19.19.06;	author vsnyder;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2002.10.08.17.36.21;	author pwagner;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2002.09.13.18.10.10;	author pwagner;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2001.09.13.00.54.06;	author livesey;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2001.07.17.17.32.15;	author livesey;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.05.08.21.33.23;	author livesey;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2001.05.08.21.32.37;	author livesey;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.05.02.20.25.32;	author livesey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.05.02.05.27.49;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.49
+log
+@Don't use host-associated variable as a DO index
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module MatrixTools                      ! Various tools for matrices
+
+  ! This module provides some tools for dealing matrices not already present in
+  ! MatrixModule_0 and MatrixModule_1.  In particular the DumpBlocks subroutine.
+
+  use MatrixModule_0, only: &
+    & M_ABSENT, M_BANDED, M_COLUMN_SPARSE, M_FULL, MATRIXELEMENT_T
+  use MatrixModule_1, only: FINDBLOCK, MATRIX_T, RC_INFO
+  use MLSKinds, only: R8, RM
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, PVMERRORMESSAGE
+  use PVM, only: PVMDATADEFAULT, PVMFINITSEND, PVMFSEND
+  use PVMIDL, only: PVMIDLPACK
+
+  implicit none
+  private
+
+  public :: DumpBlocks, CombineChannelsInMatrix, PVMSendMatrix
+
+  ! Local paramters
+  integer, parameter :: MTXMSGTAG = 202
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: MatrixTools.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains ! =====  Public procedures  ===================================
+
+  ! --------------------------------------------------  DumpBlocks  ----
+  subroutine DumpBlocks ( key, matrices, hessians )
+    ! This routine can be called whenever a DumpBlocks command is issued in the
+    ! l2cf.  It can be used to dump requested blocks from the l2cf.  It dumps
+    ! the blocks specified by the Cartesian product of the rowQuantity and
+    ! colQuantity fields.  If the rowChannels, colChannels, rowSurfaces,
+    ! colSurfaces, rowInstances or colInstances fields are specified, they
+    ! are used for all blocks.  If this is not what is desired, use a separate
+    ! DumpBlocks command for each block.  If the noAbsent field is set, it does
+    ! not dump absent blocks.
+
+    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use Dump_0, only: Dump
+    use Expr_m, only: Expr
+    use HessianModule_0, only: H_Absent, HessianElement_T
+    use HessianModule_1, only: Dump, Hessian_T
+    use Init_Tables_Module, only: F_AllHessians, F_AllMatrices, &
+      & F_ColChannels, F_ColInstances, F_ColQuantity, F_ColSurfaces, &
+      & F_Details, F_Diagonal, F_Hessian, F_Matrix, F_NoAbsent, &
+      & F_RowChannels, F_RowInstances, F_RowQuantity, F_RowSurfaces, &
+      & F_Structure
+    use Lexer_Core, only: Print_Source
+    use MatrixModule_1, only: Dump, Dump_Struct, GetFromMatrixDatabase, &
+      & Matrix_Database_t
+    use MLSStringLists, only: SwitchDetail
+    use MoreTree, only: Get_Boolean, Get_Field_Id
+    use Output_M, only: NewLine, Output
+    use String_Table, only: Display_String
+    use Toggles, only: Switches
+    use Tree, only: Decoration, NSons, Subtree, Where
+    use VectorsModule, only: GetVectorQtyByTemplateIndex, &
+      & VectorValue_T
+
+    ! Dummy arguments
+    integer, intent(in) :: Key          ! L2CF node
+    type (Matrix_Database_T), dimension(:), pointer :: Matrices ! Matrix database
+    type (Hessian_T), dimension(:), pointer :: Hessians
+
+    ! Local variables
+    integer :: Col                      ! Matrix or Hessian block column
+    integer :: Col2                     ! Hessian block second column
+    integer :: ColChannelsNode          ! Tree node
+    integer :: ColInstance              ! Loop counter
+    integer :: ColInstance2             ! Loop counter
+    integer :: ColInstancesNode         ! Tree node
+    integer :: ColQI, Colqi2            ! Index of column quantity within vector
+    integer :: ColQuantityIx            ! Index in ColQIs array
+    integer :: ColQuantityIx2           ! Index in ColQIs array for dumping Hessians
+    integer :: ColQuantityNode          ! Tree node
+    integer :: ColSurfacesNode          ! Tree node
+    integer :: DetailReduction
+    integer :: Details                  ! 0 => just shapes, >0 => values, default 1
+    logical :: Diagonal                 ! Dump only the diagonal
+    logical :: DoAny                    ! Any non-absent blocks?
+    integer :: FieldIndex               ! Type for tree node
+    integer :: HessianIndex             ! Hessian database index
+    integer :: Hessian1, HessianEnd     ! Range for HessianIndex
+    integer :: MatrixIndex              ! Matrix database index
+    integer :: Matrix1, MatrixEnd       ! Range for MatrixIndex
+    integer :: NColQ                    ! How many column quantities?
+    logical :: NoAbsent                 ! Don't dump absent blocks
+    integer :: NODE                     ! Loop counter
+    integer :: NRowQ                    ! How many row quantities?
+    integer :: ROW                      ! Matrix block row
+    integer :: RowChannelsNode          ! Tree node
+    integer :: RowInstance              ! Loop counter
+    integer :: RowInstancesNode         ! Tree node
+    integer :: RowQI                    ! Index of row quantity within vector
+    integer :: RowQuantityIx            ! Index in RowQIs array
+    integer :: RowQuantityNode          ! Tree node
+    integer :: RowSurfacesNode          ! Tree node
+    integer :: Son                      ! Tree node
+    integer :: Units(2) ! of the Details expr -- known to be phyq_dimensionless
+    double precision :: Values(2) ! of the Details expr
+
+    integer, dimension(:), pointer :: ColInds  ! Which column instances?
+    integer, dimension(:), pointer :: ColInds2 ! Which column instances for Hessians?
+    integer, dimension(:), pointer :: ColQIs   ! Which column quantities?
+    integer, dimension(:), pointer :: RowInds  ! Which row instances?
+    integer, dimension(:), pointer :: RowQIs   ! Which row quantities?
+
+    logical :: AllHessians   ! Dump all hessians
+    logical :: AllMatrices   ! Dump all matrices
+    logical :: Fail          ! No matrix to get from database
+    logical :: Stru          ! Dump sparsity structure instead of values
+
+    type (VectorValue_T), pointer :: ColQ   ! Col quantity
+    type (VectorValue_T), pointer :: RowQ   ! Row quantity
+    type (Matrix_T), pointer :: Matrix      ! The matrix to dump
+    type (MatrixElement_T), pointer :: MB   ! A block from the matrix
+    type (HessianElement_T), pointer :: HB  ! A block from the Hessian
+
+    ! Error codes for Announce_Error
+    integer, parameter :: Duplicate = 1     ! Duplicate quantity name specified
+    integer, parameter :: NeedHessianDatabase = duplicate + 1 ! Need some matrix!
+    integer, parameter :: NeedMatrixDatabase = NeedHessianDatabase + 1 ! Need some matrix!
+    integer, parameter :: NeedSomething = NeedMatrixDatabase + 1  ! Need /all or matrix
+    integer, parameter :: NoSuchQuantity = NeedSomething + 1  ! for row or column selection
+    integer, parameter :: OutOfRange = NoSuchQuantity + 1     ! Index out of range
+    integer, parameter :: QuantAndMol = outOfRange + 1 ! Both quantity and molecule
+    integer, parameter :: Redundant = quantAndMol + 1  ! Both /all and matrix
+
+    ! Executable code
+
+    ! Don't do it if the "nodb" switch is set.
+    if ( switchDetail(switches, 'nodb') > -1 ) return
+
+    ! Nor if we reduce the details level sufficiently
+    DetailReduction = switchDetail(switches, 'red')
+    if ( DetailReduction < 0 ) then ! The 'red' switch is absent
+      DetailReduction = 0
+    else if ( DetailReduction == 0 ) then ! By default, reduce details level by 2
+      DetailReduction = 2
+    end if
+
+
+    ! Set defaults
+
+    allHessians = .false.
+    allMatrices = .false.
+    colChannelsNode = 0
+    colInstancesNode = 0
+    colQuantityNode = 0
+    colSurfacesNode = 0
+    details = 1 - detailReduction
+    diagonal = .false.
+    hessianIndex = -1
+    hessian1 = 1
+    hessianEnd = -1 ! In case no Hessians are to be dumped
+    matrixIndex = -1
+    matrix1 = 1
+    matrixEnd = -1  ! In case no Matrices are to be dumped
+    noAbsent = .false.
+    rowChannelsNode = 0
+    rowInstancesNode = 0
+    rowQuantityNode = 0
+    rowSurfacesNode = 0
+    stru = .false.
+
+    nullify ( colInds, colInds2, colQIs, rowInds, rowQIs )
+
+    ! First go through the parsed information.
+    do node = 2, nsons(key)                ! Skip the DumpBlocks son
+      son = subtree(node,key)              ! This argument
+      fieldIndex = get_field_id(son)       ! ID for this field
+      select case ( fieldIndex )
+      case ( f_allHessians )
+        if ( .not. associated(hessians) ) then
+          call announce_error ( needHessianDatabase, son )
+          return
+        end if
+        allHessians = get_Boolean ( son )
+      case ( f_allMatrices )
+        if ( .not. associated(matrices) ) then
+          call announce_error ( needMatrixDatabase, son )
+          return
+        end if
+        allMatrices = get_Boolean ( son )
+      case ( f_details )
+        call expr ( subtree(2,son), units, values )
+        details = nint(values(1)) - detailReduction
+      case ( f_diagonal )
+        diagonal = get_Boolean ( son )
+      case ( f_hessian )
+        ! The decoration is the negative of the index; see Fill, where
+        ! the Hessian spec is processed.
+        hessianIndex = -decoration(decoration(subtree(2,son)))
+      case ( f_matrix )
+        ! And yet the corresponding index for the matrix is not the negative
+        ! Whatever justification was invoked for the Hessian's sign change 
+        ! was cheerfully ignored in the matrix's case.
+        ! Long term--let's forget the sign changes.
+        matrixIndex = decoration(decoration(subtree(2,son)))
+      case ( f_rowQuantity )
+        rowQuantityNode = son
+      case ( f_colQuantity )
+        colQuantityNode = son
+      case ( f_rowChannels )
+        rowChannelsNode = son
+      case ( f_colChannels )
+        colChannelsNode = son
+      case ( f_rowSurfaces )
+        rowSurfacesNode = son
+      case ( f_colSurfaces )
+        colSurfacesNode = son
+      case ( f_rowInstances )
+        rowInstancesNode = son
+      case ( f_colInstances )
+        colInstancesNode = son
+      case ( f_noAbsent )
+        noAbsent = get_Boolean ( son )
+      case ( f_structure )
+        stru = get_Boolean ( son )
+      case default ! shouldn't get here if the type checker worked
+      end select
+    end do
+
+    ! Was a matrix or hessian specified?
+    if ( .not. allMatrices .and. matrixIndex < 0 .and. &
+      &  .not. allHessians .and. hessianIndex < 0 ) then
+      call announce_error ( needSomething, key )
+      return
+    end if
+    
+    if ( details < -1 ) return ! Don't do it if details too small
+
+    if ( allMatrices ) then
+      if ( matrixIndex > 0 ) call announce_error ( redundant, key )
+      if ( details < 0 ) then
+        call dump ( matrices, details=details )
+        return
+      end if
+      matrix1 = 1
+      matrixEnd = size(matrices)
+    else if ( matrixIndex > 0 ) then
+      matrix1 = matrixIndex
+      matrixEnd = matrixIndex
+    end if
+
+    if ( allHessians ) then
+      if ( hessianIndex > 0 ) call announce_error ( redundant, key )
+      if ( details < 0 ) then
+        call dump ( hessians, details=details )
+        return
+      end if
+      hessian1 = 1
+      matrixEnd = size(hessians)
+    else if ( hessianIndex > 0 ) then
+      hessian1 = hessianIndex
+      hessianEnd = hessianIndex
+    end if
+
+    do matrixIndex = matrix1, matrixEnd
+      ! Identify the matrix
+      call GetFromMatrixDatabase ( matrices(matrixIndex), matrix, fail )
+      if ( fail ) then
+        call output ( matrixIndex, &
+          & before='No matrix to get from database at index ', advance='yes' )
+        cycle
+      end if
+      call output ( 'Dump of ' )
+      if ( diagonal ) call output ( 'diagonal of ' )
+      call display_string ( matrix%name )
+      call print_source ( where(key), before=' at ' )
+      if ( matrix%row%vec%name /= 0 ) &
+        & call display_string ( matrix%row%vec%name, before=', row vector ' )
+      if ( matrix%col%vec%name /= 0 ) &
+        & call display_string ( matrix%col%vec%name, before=', column vector ' )
+      if ( noAbsent ) call output ( ', /noAbsent' )
+      call newLine
+      if ( stru ) then
+        call dump_struct ( matrix )
+      else
+
+        ! Get the row and column quantities
+        call allocate_test ( colQIs, matrix%col%nb, 'colQIs', moduleName )
+        call allocate_test ( rowQIs, matrix%row%nb, 'rowQIs', moduleName )
+
+        call getQuantities ( matrix%col, colQIs, nColQ, colQuantityNode, 'column' )
+        call getQuantities ( matrix%row, rowQIs, nRowQ, rowQuantityNode, 'row' )
+
+        ! Dump the specified blocks
+        do rowQuantityIx = 1, nRowQ
+          rowQI = rowQIs(rowQuantityIx)
+          rowQ => matrix%row%vec%quantities(rowQI)
+          ! Fill some flags arrays
+          call FillIndicesArray ( rowInstancesNode, rowQ%template%noInstances, &
+            & rowInds )
+          do colQuantityIx = 1, nColQ
+            colQI = colQIs(colQuantityIx)
+            colQ => matrix%col%vec%quantities(colQI)
+
+            ! Fill some flags arrays
+            call FillIndicesArray ( colInstancesNode, colQ%template%noInstances, &
+              & colInds )
+
+            doAny = .not. noAbsent
+            if ( noAbsent ) then
+      o:      do colInstance = 1, size(colInds)
+                do rowInstance = 1, size(rowInds)
+                  row = FindBlock ( matrix%row, rowQI, rowInds(rowInstance) )
+                  col = FindBlock ( matrix%col, colQI, colInds(colInstance) )
+                  if ( .not. diagonal .or. row == col ) then
+                    mb => matrix%block ( row, col )
+                    doAny = mb%kind /= m_absent
+                    if ( doAny ) exit o
+                  end if
+                end do
+              end do o
+            end if
+
+            if ( doAny ) call DumpOneMatrixBlock
+            call deallocate_test ( colInds, 'colInds', ModuleName )
+
+          end do ! colQuantityIx
+
+          call deallocate_test ( rowInds, 'rowInds', ModuleName )
+        end do ! rowQuantityIx
+      end if
+
+    end do ! matrixIndex
+
+    do hessianIndex = hessian1, hessianEnd
+      call output ( 'Dump of ' )
+      call display_string ( hessians(hessianIndex)%name )
+      call print_source ( where(key), before=' at ' )
+      if ( hessians(hessianIndex)%row%vec%name /= 0 ) &
+        & call display_string ( hessians(hessianIndex)%row%vec%name, before=', row vector ' )
+      if ( hessians(hessianIndex)%col%vec%name /= 0 ) &
+        & call display_string ( hessians(hessianIndex)%col%vec%name, before=', column vectors ' )
+      if ( noAbsent ) call output ( ', /noAbsent' )
+      call newLine
+
+      ! Get the row and column quantities
+      call allocate_test ( colQIs, hessians(hessianIndex)%col%nb, 'colQIs', moduleName )
+      call allocate_test ( rowQIs, hessians(hessianIndex)%row%nb, 'rowQIs', moduleName )
+
+      call getQuantities ( hessians(hessianIndex)%col, colQIs, nColQ, colQuantityNode, 'column' )
+      call getQuantities ( hessians(hessianIndex)%row, rowQIs, nRowQ, rowQuantityNode, 'row' )
+
+      ! Dump the specified blocks
+      do rowQuantityIx = 1, nRowQ
+        rowQI = rowQIs(rowQuantityIx)
+        rowQ => hessians(hessianIndex)%row%vec%quantities(rowQI)
+        ! Fill some flags arrays
+        call FillIndicesArray ( rowInstancesNode, rowQ%template%noInstances, &
+          & rowInds )
+        do colQuantityIx = 1, nColQ
+          colQI = colQIs(colQuantityIx)
+          colQ => hessians(hessianIndex)%col%vec%quantities(colQI)
+
+          ! Fill some flags arrays
+          call FillIndicesArray ( colInstancesNode, colQ%template%noInstances, &
+            & colInds )
+          do colQuantityIx2 = 1, nColQ
+            colQI2 = colQIs(colQuantityIx2)
+
+            ! Fill some flags arrays
+            call FillIndicesArray ( colInstancesNode, colQ%template%noInstances, &
+              & colInds2 )
+
+            ! Find the block to dump.
+            nullify ( hb )
+      o2:   do rowInstance = 1, size(rowInds)
+              do colInstance = 1, size(colInds)
+                do colInstance2 = 1, size(colInds2)
+                  row = FindBlock ( hessians(hessianIndex)%row, rowQI, rowInds(rowInstance) )
+                  col = FindBlock ( hessians(hessianIndex)%col, colQI, colInds(colInstance) )
+                  col2 = FindBlock ( hessians(hessianIndex)%col, colQI2, colInds2(colInstance2) )
+                  hb => hessians(hessianIndex)%block ( row, col, col2 )
+                  if ( associated(hb) ) then
+                    if ( hb%kind /= h_absent .or. .not. noAbsent ) then
+                      if ( details >= 0 ) then
+                        call display_string ( &
+                          & hessians(hessianIndex)%row%vec%quantities(row)%template%name, before='[' )
+                        call display_string ( &
+                          & hessians(hessianIndex)%col%vec%quantities(col)%template%name, before=',' )
+                        call display_string ( &
+                          & hessians(hessianIndex)%col%vec%quantities(col2)%template%name, before=',' )
+                        call output ( '] ' )
+                      end if
+                      call DumpOneHessianBlock ( hb, (/row,col,col2/) )
+                      exit O2
+                    end if
+                  end if
+                end do
+              end do
+            end do o2
+
+          end do ! colQuantityIx2
+        end do ! colQuantityIx
+      end do ! rowQuantityIx
+
+      call deallocate_test ( rowInds, 'rowInds', ModuleName )
+      call deallocate_test ( colInds, 'colInds', ModuleName )
+      call deallocate_test ( colInds2, 'colInds2', ModuleName )
+
+    end do ! hessianIndex
+
+    call deallocate_test ( colQIs, 'colQIs', moduleName )
+    call deallocate_test ( rowQIs, 'rowQIs', moduleName )
+
+  contains
+    ! ...........................................  Announce_Error  .....
+    subroutine Announce_Error ( What, Where, Number, Text )
+      use MoreTree, only: StartErrorMessage
+      use TREE, only: SUB_ROSA
+      integer, intent(in) :: What             ! Error code 
+      integer, intent(in) :: Where            ! Tree node  
+      integer, intent(in), optional :: Number ! to stick into message
+      character(len=*), intent(in), optional :: Text ! to stick into message
+
+      call startErrorMessage ( where )
+      select case ( what )
+      case ( duplicate )
+        call display_string ( sub_rosa(where), before=': Duplicate quantity ' )
+        call output ( ' not used.', advance='yes' )
+      case ( needHessianDatabase )
+        call output ( 'There is no Hessian database', advance='yes' )
+      case ( needMatrixDatabase )
+        call output ( 'There is no matrix database', advance='yes' )
+      case ( needSomething )
+        call output ( &
+          & 'Need at least one of /allMatrices, matrix, /allHessians, hessian', &
+          & advance='yes' )
+      case ( noSuchQuantity )
+        call display_string ( sub_rosa(where) )
+        call output ( ' is not a '//text//' quantity.', advance='yes' )
+      case ( outOfRange )
+        call output ( number, before=': Index ', after=' is out of range.', &
+          & advance='yes' )
+      case ( quantAndMol )
+        call output ( 'Both quantities and molecules specified; molecules used.', &
+          & advance='yes' )
+      case ( redundant )
+        call output ( ': Both /allMatrices and a Matrix specified, ' // &
+          & 'or /allMatrices and a Hessian specified; /all used.', &
+          & advance='yes' )
+      end select
+    end subroutine Announce_Error
+
+    ! .......................................  DumpOneMatrixBlock  .....
+    subroutine DumpOneMatrixBlock
+
+      use MatrixModule_0, only: Densify, GetDiagonal
+
+      ! Local variables
+      integer :: CC                       ! Loop counter
+      integer :: CS                       ! Loop counter
+      integer :: NoColChannels            ! Number selected
+      integer :: NoColSurfaces            ! Number selected
+      integer :: NoRowChannels            ! Number selected
+      integer :: NoRowSurfaces            ! Number selected
+      integer :: RC                       ! Loop counter
+      integer :: RS                       ! Loop counter
+
+      integer, dimension(:), pointer :: RowChanInds ! Indices
+      integer, dimension(:), pointer :: ColChanInds ! Indices
+      integer, dimension(:), pointer :: RowSurfInds ! Indices
+      integer, dimension(:), pointer :: ColSurfInds ! Indices
+
+      integer :: ColInstance, RowInstance         ! Do index variables
+      real(rm), dimension(:,:), pointer :: Val    ! The values from the block
+      real(rm), dimension(:), pointer :: Val_1D   ! The diagonal
+      real(r8), dimension(:,:), pointer :: ToDump ! The 2D matrix to dump
+
+      nullify ( rowChanInds, colChanInds )
+      nullify ( rowSurfInds, colSurfInds )
+      nullify ( toDump, val_1d )
+
+      ! Set up the index arrays
+      call getSurfOrChanInds ( rowQ%template%noChans, rowChannelsNode, &
+        & rowChanInds, 'Row Channels: ' )
+      call getSurfOrChanInds ( rowQ%template%noSurfs, rowSurfacesNode, &
+        & rowSurfInds, 'Row Surfaces: ' )
+      call getSurfOrChanInds ( colQ%template%noChans, colChannelsNode, &
+        & colChanInds, 'Column Channels: ' )
+      call getSurfOrChanInds ( colQ%template%noSurfs, colSurfacesNode, &
+        & colSurfInds, 'Column Surfaces: ' )
+
+      noRowChannels = size(rowChanInds)
+      noRowSurfaces = size(rowSurfInds)
+      noColChannels = size(colChanInds)
+      noColSurfaces = size(colSurfInds)
+
+      if ( .not. diagonal ) &
+        & call allocate_test ( toDump, &
+          & noRowChannels*noRowSurfaces, &
+          & noColChannels*noColSurfaces, &
+          & 'toDump', ModuleName )
+
+      ! Loop over the row and column instances
+      do colInstance = 1, size(colInds)
+        do rowInstance = 1, size(rowInds)
+
+          row = FindBlock ( matrix%row, rowQI, rowInds(rowInstance) )
+          col = FindBlock ( matrix%col, colQI, colInds(colInstance) )
+
+          mb => matrix%block ( row, col )
+          if ( noAbsent .and. mb%kind == m_absent ) cycle
+
+          ! Dump a header
+          call display_string ( &
+            & matrix%row%vec%quantities(matrix%row%quant(row))%template%name )
+          call output ( matrix%row%inst(row), before=':', after=', ' )
+          call display_string ( &
+            & matrix%col%vec%quantities(matrix%col%quant(col))%template%name )
+          call output ( matrix%col%inst(col), before=':', after=' (' )
+          call output ( row, after=',' )
+          call output ( col, after=') is ' )
+          nullify ( val )
+          select case ( mb%kind )
+          case ( m_absent )
+            call output ( 'absent' )
+          case ( m_column_sparse, m_banded )
+            if ( mb%kind == m_column_sparse ) then
+              call output ( 'column sparse' )
+            else
+              call output ( 'banded' )
+            end if
+            if ( diagonal ) then
+              call allocate_test ( val_1d, min(mb%nRows, mb%nCols), 'val_1d', &
+                & moduleName )
+              call getDiagonal ( mb, val_1d )
+            else
+              call allocate_test ( val, mb%nRows, mb%nCols, 'val', &
+                & ModuleName )
+              call densify ( val , mb )
+            end if
+          case ( m_full )
+            call output ( 'full' )
+            if ( diagonal ) then
+              call allocate_test ( val_1d, min(mb%nRows, mb%nCols), 'val_1d', &
+                & moduleName )
+              call getDiagonal ( mb, val_1d )
+            else
+              val => mb%values
+            end if
+          case default
+          end select
+          if ( .not. diagonal ) then
+            call output ( noRowChannels*noRowSurfaces, before=' ' )
+            call output ( noColChannels*noColSurfaces, before='x' )
+          end if
+
+          if ( mb%kind /= m_absent .and. details > 0 ) then
+            if ( diagonal ) then
+              call dump ( val_1d, name=', number dumped:', options=what_options(clean=.true.) )
+              call deallocate_test ( val_1d, 'val_1d', moduleName )
+            else
+              do cs = 1, noColSurfaces
+                do cc = 1, noColChannels
+                  do rs = 1, noRowSurfaces
+                    do rc = 1, noRowChannels
+                      todump ( rc + (rs-1)*noRowChannels, &
+                        &      cc + (cs-1)*noColChannels ) = &
+                        & val ( rowChanInds(rc) + &
+                        &      (rowSurfInds(rs)-1)*rowQ%template%noChans, &
+                        &       colChanInds(cc) + &
+                        &      (colSurfInds(cs)-1)*colQ%template%noChans )
+                    end do
+                  end do
+                end do
+              end do
+              if ( mb%kind /= m_full ) &
+                & call deallocate_test ( val, 'val', ModuleName )
+              call dump ( toDump, name=', number dumped:', options=what_options(clean=.true.) )
+            end if
+          else
+            call newLine
+          end if
+
+        end do
+      end do
+
+      call deallocate_test ( toDump,       'toDump',       ModuleName )
+      call deallocate_test ( rowChanInds,  'rowChanInds',  ModuleName )
+      call deallocate_test ( colChanInds,  'colChanInds',  ModuleName )
+      call deallocate_test ( rowSurfInds,  'rowSurfInds',  ModuleName )
+      call deallocate_test ( colSurfInds,  'colSurfInds',  ModuleName )
+
+    end subroutine DumpOneMatrixBlock
+
+    ! ......................................  DumpOneHessianBlock  .....
+    subroutine DumpOneHessianBlock ( HB, Indices )
+      use HessianModule_0, only: Dump, HessianElement_T
+      type(HessianElement_T), intent(in) :: HB
+      integer, intent(in) :: Indices(:)
+      ! For now ignore the row and column instances
+      call dump ( hb, details=details, indices=indices )
+    end subroutine DumpOneHessianBlock
+
+    ! .........................................  FillIndicesArray  .....
+    subroutine FillIndicesArray ( Node, Num, Inds )
+    ! Fill Inds with sons 2..n of Node, or 1..Num if Node == 0
+
+      use Declaration_Table, only: NUM_VALUE, RANGE
+      use Expr_M, only: EXPR
+
+      integer, intent(in) :: Node         ! Tree node
+      integer, intent(in) :: Num          ! Maximum size of Inds
+      integer, pointer :: Inds(:)         ! Sons of Node, or 1...n
+
+      logical :: Error
+      logical :: Flags(num)               ! Flags(son of Node) = .true.
+      integer :: I
+      integer :: SonIx                    ! Son Index for Node
+      integer :: TYPE                     ! From expr
+      integer, dimension(2) :: UNITS      ! Units from expr
+      real(r8), dimension(2) :: VALUE     ! Value from expr
+
+      nullify ( inds )
+
+      if ( node /= 0 ) then
+        error = .false.
+        flags = .false.
+        do sonIx = 2, nsons(node)
+          call expr (subtree(sonIx,node), units, value, type)
+          if ( nint(value(1)) < 1 .or. nint(value(1)) > num ) then
+            error = .true.
+            call announce_error ( outOfRange, subtree(sonIx,node), nint(value(1)) )
+          end if
+          select case (type)
+          case (num_value)
+            if ( .not. error ) flags(nint(value(1))) = .true.
+          case (range)
+            if ( nint(value(2)) < 1 .or. nint(value(2)) > num ) then
+              error = .true.
+              call announce_error ( outOfRange, subtree(sonIx,node), nint(value(2)) )
+            end if
+            if ( .not. error ) flags(nint(value(1)):nint(value(2))) = .true.
+          case default
+          end select
+        end do
+        if ( error ) &
+          & call MLSMessage ( MLSMSG_Error, moduleName, 'Index out of range' )
+        call allocate_test ( inds, count(flags), 'Inds', moduleName )
+        inds = pack ( (/ (i, i=1, num) /), flags )
+      else
+        call allocate_test ( inds, num, 'Inds', moduleName )
+        inds = (/ (i, i=1, num) /)
+      end if
+
+    end subroutine FillIndicesArray
+
+    ! ............................................  GetQuantities  .....
+    subroutine GetQuantities ( RC, QIs, NQIs, QInode, Text )
+    ! Get quantities from the tree or the matrix.
+      use MatrixModule_1, only: RC_Info
+      use TREE, only: SUBTREE
+      type(RC_Info), intent(in) :: RC  ! Row or Column info for Matrix
+      integer, intent(out) :: QIs(:)   ! Quantity indices
+      integer, intent(out) :: NQIs     ! Number of QIs actually used
+      integer, intent(in) :: QInode    ! Tree node for quantities -- zero if not specified
+      character(len=*), intent(in) :: Text  ! 'row' or 'column' for error message
+
+      integer :: I                     ! Subscript, loop inductor
+      integer :: QI                    ! A quantity index -- may go into QIs
+      integer :: Son                   ! of Node
+      type(vectorValue_t), pointer :: Q  ! A vector quantity
+
+      nQIs = 0
+      if ( qInode /= 0 ) then
+        do i = 2, nsons(qInode)
+          son = subtree(i,qInode)
+          ! Identify the quantity.  The decoration is an index into the
+          ! quantity templates database.  We need to get it as an index into
+          ! the vector that describes the row or column.
+          Q => GetVectorQtyByTemplateIndex ( rc%vec, &
+            & decoration(decoration(son)), qi ) ! qi is output too
+          if ( .not. associated (Q) ) then
+            call announce_error ( noSuchQuantity, son, text=text )
+          else if ( any(QIs(:nQIs) == qi ) ) then
+            call announce_error ( duplicate, son )
+          else
+            nQIs = nQIs + 1
+            QIs(nQIs) = qi
+          end if
+        end do
+      else
+        do i = 1, rc%nb
+          qi = rc%quant(i)
+          if ( all(QIs(:nQIs) /= qi ) ) then
+            nQIs = nQIs + 1
+            QIs(nQIs) = qi
+          end if
+        end do
+      end if
+    end subroutine GetQuantities
+
+    ! ........................................  GetSurfOrChanInds  .....
+    subroutine GetSurfOrChanInds ( Num, Node, Inds, Text )
+      integer, intent(in) :: Num              ! vec%template%no[Chans,Surfs]     
+      integer, intent(in) :: Node             ! Tree node                        
+      integer, pointer :: Inds(:)             ! Indices                          
+      character(len=*), intent(in) :: Text    ! For the dump                     
+
+      call fillIndicesArray ( node, num, inds )
+
+      call output ( text )
+      if ( size(inds) == 0 ) then
+        call output ( '(none)', advance='yes' )
+      else if ( size(inds) == 1 ) then
+        call output ( inds(1), advance='yes' )
+      else if ( any(inds(2:)-inds(1:size(inds)-1) /= 1) ) then
+        call newLine
+        call dump ( inds )
+      else
+        call output ( inds(1), after=':' )
+        call output ( inds(size(inds)), advance='yes' )
+      end if
+
+    end subroutine GetSurfOrChanInds
+
+  end subroutine DumpBlocks
+
+  ! ------------------------------------  CombineChannelsInMatrix  -----
+  subroutine CombineChannelsInMatrix ( mOut, mIn )
+    ! This subroutine might belong better in L2PC_m, as it's really only for
+    ! working with that kind of matrix.  It takes a matrix with a
+    ! single quantity for the row vector (i.e. radiance) and multiple
+    ! quantiites for the column vector and remaps it to a 'downsampled'
+    ! set of channels
+    use ManipulateVectorQuantities, only: FILLWITHCOMBINEDCHANNELS
+    use MatrixModule_1, only: CLEARMATRIX
+    use MatrixModule_0, only: MULTIPLYMATRIX_XY
+    use Output_m, only: OUTPUT
+    use String_Table, only: DISPLAY_STRING
+    type (Matrix_T), intent(inout) :: MOUT ! Result matrix
+    type (Matrix_T), intent(in) :: MIN ! Source matrix
+    
+    ! Local variables
+    type (MatrixElement_T) :: MAPPING   ! A mapping block
+    character (len=80) :: MESSAGE       ! A possible error message
+    integer :: ROW, COL                 ! Loop counters
+
+    ! First some sanity checks
+    ! Check that the column vectors are compatible
+    if ( mOut%col%vec%template%name /= mIn%col%vec%template%name ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Matrices do not share a column vector in CombineChannels' )
+    ! Check that the row vectors contain only a single quantity.
+    if ( mOut%row%vec%template%noQuantities /= 1 .or. &
+      &  mIn%row%vec%template%noQuantities /= 1 ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Matrices must have single-quantity row vector in CombineChannels' )
+    
+    ! Now get the quantity filling command to do the first part of the work for us.
+    ! This also checks the sanity of mapping mIn%row%vec to mOut%row%vec
+    call FillWithCombinedChannels ( &
+      & mOut%row%vec%quantities(1), mIn%row%vec%quantities(1), &
+      & message, mapping )
+    if ( message /= '' ) call MLSMessage ( MLSMSG_Error, ModuleName, message )
+
+    ! OK, that's filled the vector now do the matrix
+    call ClearMatrix ( mOut )
+
+    do row = 1, mOut%row%nb
+      do col = 1, mOut%col%nb
+        ! Put out a useful progress message
+        call output ( 'Block [ ' )
+        call output ( row )
+        call output ( ', ' )
+        call output ( col )
+        call output ( ' ] -- [ ' )
+        call display_string ( mIn%row%vec%quantities(mIn%row%quant(row))%template%name, strip=.true. )
+        call output ( '(' )
+        call output ( mIn%row%inst(row) )
+        call output ( '), ' )
+        call display_string ( mIn%col%vec%quantities(mIn%col%quant(col))%template%name, strip=.true. )
+        call output ( '(' )
+        call output ( mIn%col%inst(col) )
+        call output ( ') ]: ' )
+
+        if ( mIn%block(row,col)%kind /= m_absent ) then
+          ! This does all the creation etc.
+          call output ( 'present', advance='yes' )
+          call MultiplyMatrix_XY ( mapping, mIn%block(row,col), mOut%block(row,col) )
+        else
+          call output ( 'absent', advance='yes' )
+        end if
+      end do
+    end do
+
+  end subroutine CombineChannelsInMatrix
+
+  ! -----------------------------------------------  PVMSendBlock  -----
+  subroutine PVMPackBlock ( BLOCK )
+    ! Dummy arguments
+    type (MatrixElement_T), intent(in) :: BLOCK ! The block of the matrix
+
+    ! Local variables
+    integer :: INFO                     ! Flag
+
+    ! Executable code
+    call PVMIDLPack ( (/ block%kind, block%nRows, block%nCols /), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing block info" )
+
+    if ( any (block%kind == (/M_Banded, M_Column_Sparse /) ) ) then
+      call PVMIDLPack ( (/ size(block%values) /), info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing number of values" )
+      call PVMIDLPack ( block%R1, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing R1" )
+      call PVMIDLPack ( block%R2, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing R2" )
+    end if
+
+    if ( block%kind /= M_Absent ) then
+      call PVMIDLPack ( real(block%values,kind=r8), info )
+    end if
+
+  end subroutine PVMPackBlock
+
+  ! --------------------------------------------------  PVMSendRC  -----
+  subroutine PVMPackRC ( RC )
+    ! Dummy argument
+    use QuantityPVM, only: PVMSENDQUANTITY
+    type ( RC_Info ), intent(in) :: RC  ! the rcinfo to send
+
+    ! Local variables
+    integer :: INFO                     ! Flag
+    integer :: QTY                      ! Loop counter
+
+    ! Executable code
+    ! Pack the number of blocks
+    call PVMIDLPack ( rc%nb, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'Packing NB' )
+
+    ! Pack instFirst
+    call PVMIDLPack(rc%instFirst, info)
+    if (info /= 0) call PVMErrorMessage (info, 'Packing instFirst')
+
+    ! Pack the indices
+    call PVMIDLPack ( rc%nelts, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'Packing Nelts' )
+    call PVMIDLPack ( rc%inst, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'Packing Inst' )
+    call PVMIDLPack ( rc%quant, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'Packing Quant' )
+
+    ! Pack the size of the vector
+    call PVMIDLPack ( size (rc%vec%quantities), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'Packing no quantities' )
+    do qty = 1, size (rc%vec%quantities)
+      call PVMSendQuantity ( rc%vec%quantities(qty), 0, &
+      & justPack=.true., noValues=.true., noMask=.true. )
+    end do
+
+  end subroutine PVMPackRC
+
+  ! ----------------------------------------------  PVMSendMatrix  -----
+  subroutine PVMSendMatrix ( MATRIX, TID, JUSTPACK )
+    ! Dummy arguments
+    type (Matrix_T), intent(in) :: MATRIX ! The matrix to send
+    integer, intent(in) :: TID          ! The task to send it to
+    logical, intent(in), optional :: JUSTPACK ! 
+
+    ! Local variables
+    logical :: MYJUSTPACK               ! Copy of justPack
+    integer :: BUFFERID                 ! From PVM
+    integer :: INFO                     ! Flag from PVM
+    integer :: I,J                      ! Loop counters
+
+    ! Executable code
+    myJustPack = .false.
+    if (present(justPack)) myJustPack = justPack
+
+    if (.not. myJustPack) then
+        call PVMFInitSend ( PvmDataDefault, bufferID )
+    end if
+    call PVMPackRC ( matrix%col )
+    call PVMPackRC ( matrix%row )
+
+    do j = 1, size(matrix%block,2)
+      do i = 1, size(matrix%block,1)
+        call PVMPackBlock ( matrix%block(i,j) )
+      end do
+    end do
+
+    if (.not. myJustPack) then
+      call PVMFSend ( tid, MtxMsgTag, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "sending vector values" )
+    end if
+
+  end subroutine PVMSendMatrix
+
+  function What_Options( Clean, Transpose, Trim ) result( Options )
+    use Dump_Options, only: Dopt_Clean, Dopt_Transpose, Dopt_Trim
+    use MLSStrings, only: trim_safe
+    logical, optional, intent(in) :: Clean
+    logical, optional, intent(in) :: Transpose
+    logical, optional, intent(in) :: Trim
+    character(len=8) :: options
+    options = ' '
+    if ( present(clean) ) then
+      if ( clean ) options = trim_safe(options) // Dopt_Clean
+    end if
+    if ( present(transpose) ) then
+      if ( transpose ) options = trim_safe(options) // Dopt_Transpose
+    end if
+    if ( present(trim) ) then
+      if ( trim ) options = trim_safe(options) // Dopt_Trim
+    end if
+  end function What_Options
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: MatrixTools.f90,v 1.48 2017/07/27 01:40:43 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module MatrixTools
+
+! $Log: MatrixTools.f90,v $
+! Revision 1.48  2017/07/27 01:40:43  vsnyder
+! Print the correct sizes of rows and columns
+!
+! Revision 1.47  2016/07/28 03:27:34  vsnyder
+! Cannonball polishing
+!
+! Revision 1.46  2016/07/28 00:40:34  vsnyder
+! Remove unreferenced USE
+!
+! Revision 1.45  2015/03/28 02:49:25  vsnyder
+! Added stuff to trace allocate/deallocate addresses
+!
+! Revision 1.44  2014/09/05 01:13:10  vsnyder
+! More complete and accurate allocate/deallocate size tracking.  Convert
+! some local pointer temps to allocatable.  Get kinds from MLSKinds instead
+! of from MLSCommon.
+!
+! Revision 1.43  2014/09/05 00:49:07  vsnyder
+! EmpiricalGeometry.f90 -- Wrong comment
+!
+! Revision 1.42  2014/08/06 23:33:45  vsnyder
+! Remove USE for Num_Value, which is not referenced
+!
+! Revision 1.41  2014/02/28 01:08:20  vsnyder
+! Remove unused names
+!
+! Revision 1.40  2014/02/28 00:21:12  vsnyder
+! Move type and units checking to type checker
+!
+! Revision 1.39  2013/09/24 23:47:22  vsnyder
+! Use Where instead of Source_Ref for messages
+!
+! Revision 1.38  2013/06/12 02:38:02  vsnyder
+! Cruft removal
+!
+! Revision 1.37  2012/01/27 02:57:54  vsnyder
+! Remove extraneous ' at ' in DumpBlocks
+!
+! Revision 1.36  2011/10/04 20:25:33  honghanh
+! Fixed bug in PVM_Pack_RC
+!
+! Revision 1.35  2011/09/01 20:37:08  honghanh
+! Fix the bug in PVMSendMatrix for sending NB
+!
+! Revision 1.34  2011/08/20 00:49:37  vsnyder
+! Remove unused use names and variable declarations
+!
+! Revision 1.33  2010/08/06 23:02:36  pwagner
+! Moved to using only switchdetail; negative index deplored
+!
+! Revision 1.32  2010/03/24 20:51:43  vsnyder
+! Add code to dump Hessians.  Spiff up some error messages.
+!
+! Revision 1.31  2010/02/10 20:00:25  vsnyder
+! More output from the dump
+!
+! Revision 1.30  2009/12/17 23:56:41  vsnyder
+! Correct a formatting blunder
+!
+! Revision 1.29  2009/12/17 23:44:43  vsnyder
+! Print block coordinates in dump
+!
+! Revision 1.28  2009/06/23 18:46:18  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 1.27  2009/06/16 17:40:19  pwagner
+! Changed api for dump, diff routines; now rely on options for most optional behavior
+!
+! Revision 1.26  2007/10/05 23:41:06  vsnyder
+! Don't reference element 1 of a zero-size array
+!
+! Revision 1.25  2007/10/02 22:41:27  vsnyder
+! Don't crash if a matrix can't be dumped
+!
+! Revision 1.24  2006/09/21 18:48:07  pwagner
+! Reduce level of dumps in SIDS version
+!
+! Revision 1.23  2006/09/20 00:43:21  vsnyder
+! Cannonball polishing
+!
+! Revision 1.22  2006/09/19 20:33:13  vsnyder
+! Add /diagonal field
+!
+! Revision 1.21  2006/07/27 03:53:28  vsnyder
+! Handle details field correctly
+!
+! Revision 1.20  2006/07/19 22:27:24  vsnyder
+! Add /allMatrices, details= and /structure fields
+!
+! Revision 1.19  2005/06/22 18:57:02  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 1.18  2005/03/15 23:50:16  pwagner
+! PVMERRORMESSAGE now part of MLSMessageModule
+!
+! Revision 1.17  2004/10/29 20:54:11  vsnyder
+! Remove USE for DUMP -- not referenced, some cosmetics
+!
+! Revision 1.16  2004/09/28 00:40:06  livesey
+! More informative log in CombineChannelsInMatrix
+!
+! Revision 1.15  2004/09/25 00:16:53  livesey
+! Added CombineChannelsInMatrix
+!
+! Revision 1.14  2004/01/21 22:00:46  vsnyder
+! Remove unused variable declarations
+!
+! Revision 1.13  2003/10/10 23:28:33  vsnyder
+! Substantial reorganization
+!
+! Revision 1.12  2003/10/09 21:03:16  vsnyder
+! Don't do anything if the 'nodb' switch is set
+!
+! Revision 1.11  2003/10/07 01:17:36  vsnyder
+! DumpBlocks now dumps the blocks specified by the Cartesian product of the
+! rowQuantity and colQuantity fields.  If the rowChannels, colChannels,
+! rowSurfaces, colSurfaces, rowInstances or colInstances fields are specified,
+! they are used for all blocks.  If this is not what is desired, use a separate
+! DumpBlocks command for each block.  If the noAbsent field is set, it does
+! not dump absent blocks.
+!
+! Revision 1.10  2003/08/15 20:28:05  vsnyder
+! Put a new line after 'with Y rows and X columns' for absent blocks
+!
+! Revision 1.9  2003/05/21 19:19:06  vsnyder
+! Plug some memory leaks.  Use "name" argument of "dump" routines.  Dump
+! numbers of rows and columns.
+!
+! Revision 1.8  2002/10/08 17:36:21  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 1.7  2002/09/13 18:10:10  pwagner
+! May change matrix precision rm from r8
+!
+! Revision 1.6  2001/09/13 00:54:06  livesey
+! Fixed a bug with dump blocks dumping values when kind==m_absent
+!
+! Revision 1.5  2001/07/17 17:32:15  livesey
+! Added PVM pack stuff
+!
+! Revision 1.4  2001/05/08 21:33:23  livesey
+! Added the CVS log stuff, whoops!
+!
+@
+
+
+1.48
+log
+@Print the correct sizes of rows and columns
+@
+text
+@d482 1
+d929 1
+a929 1
+       "$Id: MatrixTools.f90,v 1.47 2016/07/28 03:27:34 vsnyder Exp $"
+d939 3
+@
+
+
+1.47
+log
+@Cannonball polishing
+@
+text
+@d561 2
+a562 2
+            call output ( mb%nRows, before=' ' )
+            call output ( mb%nCols, before='x' )
+d928 1
+a928 1
+       "$Id: MatrixTools.f90,v 1.46 2016/07/28 00:40:34 vsnyder Exp $"
+d938 3
+@
+
+
+1.46
+log
+@Remove unreferenced USE
+@
+text
+@d53 1
+a53 1
+    use DUMP_0, only: DUMP
+d58 3
+a60 3
+      & F_COLCHANNELS, F_COLINSTANCES, F_COLQUANTITY, F_COLSURFACES, &
+      & F_Details, F_Diagonal, F_Hessian, F_MATRIX, F_NOABSENT, &
+      & F_ROWCHANNELS, F_ROWINSTANCES, F_ROWQUANTITY, F_ROWSURFACES, &
+d63 6
+a68 6
+    use MatrixModule_1, only: Dump, Dump_Struct, GETFROMMATRIXDATABASE, &
+      & MATRIX_DATABASE_T
+    use MLSStringLists, only: SWITCHDETAIL
+    use MoreTree, only: GET_BOOLEAN, GET_FIELD_ID
+    use Output_M, only: NewLine, OUTPUT
+    use String_Table, only: DISPLAY_STRING
+d70 1
+a70 1
+    use Tree, only: DECORATION, NSONS, SUBTREE, Where
+d72 1
+a72 1
+      & VECTORVALUE_T
+d75 2
+a76 2
+    integer, intent(in) :: KEY          ! L2CF node
+    type (Matrix_Database_T), dimension(:), pointer :: MATRICES ! Matrix database
+d80 11
+a90 11
+    integer :: COL                      ! Matrix or Hessian block column
+    integer :: COL2                     ! Hessian block second column
+    integer :: COLCHANNELSNODE          ! Tree node
+    integer :: COLINSTANCE              ! Loop counter
+    integer :: COLINSTANCE2             ! Loop counter
+    integer :: COLINSTANCESNODE         ! Tree node
+    integer :: COLQI, Colqi2            ! Index of column quantity within vector
+    integer :: COLQuantityIx            ! Index in ColQIs array
+    integer :: COLQuantityIx2           ! Index in ColQIs array for dumping Hessians
+    integer :: COLQuantityNode          ! Tree node
+    integer :: COLSURFACESNODE          ! Tree node
+d95 1
+a95 1
+    integer :: FIELDINDEX               ! Type for tree node
+d98 1
+a98 1
+    integer :: MATRIXINDEX              ! Matrix database index
+d105 8
+a112 8
+    integer :: ROWCHANNELSNODE          ! Tree node
+    integer :: ROWINSTANCE              ! Loop counter
+    integer :: ROWINSTANCESNODE         ! Tree node
+    integer :: ROWQI                    ! Index of row quantity within vector
+    integer :: ROWQuantityIx            ! Index in RowQIs array
+    integer :: ROWQuantityNode          ! Tree node
+    integer :: ROWSURFACESNODE          ! Tree node
+    integer :: SON                      ! Tree node
+d127 3
+a129 3
+    type (VectorValue_T), pointer :: COLQ   ! Col quantity
+    type (VectorValue_T), pointer :: ROWQ   ! Row quantity
+    type (Matrix_T), pointer :: MATRIX      ! The matrix to dump
+d152 1
+a152 1
+    elseif ( DetailReduction == 0 ) then ! By default, reduce details level by 2
+d154 1
+a154 1
+    endif
+d465 1
+a465 1
+      use MatrixModule_0, only: DENSIFY, GetDiagonal
+d470 4
+a473 4
+      integer :: NOCOLCHANNELS            ! Number selected
+      integer :: NOCOLSURFACES            ! Number selected
+      integer :: NOROWCHANNELS            ! Number selected
+      integer :: NOROWSURFACES            ! Number selected
+d477 8
+a484 8
+      integer, dimension(:), pointer :: ROWCHANINDS ! Indices
+      integer, dimension(:), pointer :: COLCHANINDS ! Indices
+      integer, dimension(:), pointer :: ROWSURFINDS ! Indices
+      integer, dimension(:), pointer :: COLSURFINDS ! Indices
+
+      real(rm), dimension(:,:), pointer :: VAL    ! The values from the block
+      real(rm), dimension(:), pointer :: VAL_1D   ! The diagonal
+      real(r8), dimension(:,:), pointer :: TODUMP ! The 2D matrix to dump
+d889 1
+a889 1
+    endif
+d906 2
+a907 1
+  function what_options( clean, transpose, trim ) result( options )
+d909 3
+a911 3
+    logical, optional, intent(in) :: clean
+    logical, optional, intent(in) :: transpose
+    logical, optional, intent(in) :: trim
+d915 2
+a916 2
+      if ( clean ) options = trim_safe(options) // 'c'
+    endif
+d918 2
+a919 2
+      if ( transpose ) options = trim_safe(options) // 'p'
+    endif
+d921 3
+a923 3
+      if ( trim ) options = trim_safe(options) // 't'
+    endif
+  end function what_options
+d928 1
+a928 1
+       "$Id: MatrixTools.f90,v 1.45 2015/03/28 02:49:25 vsnyder Exp $"
+d938 3
+@
+
+
+1.45
+log
+@Added stuff to trace allocate/deallocate addresses
+@
+text
+@a807 1
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+d927 1
+a927 1
+       "$Id: MatrixTools.f90,v 1.44 2014/09/05 01:13:10 vsnyder Exp $"
+d937 3
+@
+
+
+1.44
+log
+@More complete and accurate allocate/deallocate size tracking.  Convert
+some local pointer temps to allocatable.  Get kinds from MLSKinds instead
+of from MLSCommon.
+@
+text
+@d808 1
+a808 1
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+a813 2
+    real(r8), dimension(:,:), allocatable :: values
+    integer :: n_rows, n_cols, status
+d829 1
+a829 10
+!      call PVMIDLPack ( block%values, info )
+        n_rows = size(block%values, 1)
+        n_cols = size(block%values, 2)
+        allocate ( values(n_rows, n_cols), stat=status )
+        call test_allocate ( status, moduleName, 'values' )
+        values = block%values
+        call PVMIDLPack ( values, info )
+        deallocate ( values, stat=status )
+        call test_deallocate ( status, moduleName, 'values' )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing block values" )
+d928 1
+a928 1
+       "$Id: MatrixTools.f90,v 1.43 2014/09/05 00:49:07 vsnyder Exp $"
+d938 5
+@
+
+
+1.43
+log
+@EmpiricalGeometry.f90
+@
+text
+@d939 1
+a939 1
+       "$Id: MatrixTools.f90,v 1.42 2014/08/06 23:33:45 vsnyder Exp $"
+d949 3
+@
+
+
+1.42
+log
+@Remove USE for Num_Value, which is not referenced
+@
+text
+@d20 1
+a20 1
+  use MLSCommon, only: R8, RM
+d808 1
+d814 2
+a815 2
+    real(r8), dimension(:,:), pointer :: values
+    integer :: n_rows, n_cols
+d834 2
+a835 1
+        allocate(values(n_rows, n_cols))
+d838 2
+a839 1
+        deallocate(values)
+d939 1
+a939 1
+       "$Id: MatrixTools.f90,v 1.41 2014/02/28 01:08:20 vsnyder Exp $"
+d949 3
+@
+
+
+1.41
+log
+@Remove unused names
+@
+text
+@a52 1
+    use Declaration_table, only: Num_Value
+d936 1
+a936 1
+       "$Id: MatrixTools.f90,v 1.40 2014/02/28 00:21:12 vsnyder Exp $"
+d946 3
+@
+
+
+1.40
+log
+@Move type and units checking to type checker
+@
+text
+@a62 1
+    use Intrinsic, only: PHYQ_Dimensionless
+d114 1
+a114 1
+    integer :: Units(2) ! of the Details expr -- has to be phyq_dimensionless
+d937 1
+a937 1
+       "$Id: MatrixTools.f90,v 1.39 2013/09/24 23:47:22 vsnyder Exp $"
+d947 3
+@
+
+
+1.39
+log
+@Use Where instead of Source_Ref for messages
+@
+text
+@a114 1
+    integer :: Type     ! of the Details expr -- has to be num_value
+d136 1
+a136 2
+    integer, parameter :: Dimless = 1     ! Details has to be dimensionless
+    integer, parameter :: Duplicate = dimless + 1     ! Duplicate quantity name specified
+d141 1
+a141 2
+    integer, parameter :: Numeric = NoSuchQuantity + 1 ! Details can't be range
+    integer, parameter :: OutOfRange = numeric + 1     ! Index out of range
+d202 1
+a202 3
+        call expr ( subtree(2,son), units, values, type )
+        if ( units(1) /= phyq_dimensionless ) call announce_error ( son, dimless )
+        if ( type /= num_value ) call announce_error ( son, numeric )
+a436 2
+      case ( dimless )
+        call output ( "The field is not unitless." )
+a450 2
+      case ( numeric )
+        call output ( "The field is not numeric." )
+d938 1
+a938 1
+       "$Id: MatrixTools.f90,v 1.38 2013/06/12 02:38:02 vsnyder Exp $"
+d948 3
+@
+
+
+1.38
+log
+@Cruft removal
+@
+text
+@d72 1
+a72 1
+    use Tree, only: DECORATION, NSONS, SOURCE_REF, SUBTREE
+d291 1
+a291 1
+      call print_source ( source_ref(key), before=' at ' )
+d353 1
+a353 1
+      call print_source ( source_ref(key), before=' at ' )
+d947 1
+a947 1
+       "$Id: MatrixTools.f90,v 1.37 2012/01/27 02:57:54 vsnyder Exp $"
+d957 3
+@
+
+
+1.37
+log
+@Remove extraneous ' at ' in DumpBlocks
+@
+text
+@a131 1
+    type (Hessian_T), pointer :: Hessian    ! The Hessian to dump
+d947 1
+a947 1
+       "$Id: MatrixTools.f90,v 1.36 2011/10/04 20:25:33 honghanh Exp $"
+d957 3
+@
+
+
+1.36
+log
+@Fixed bug in PVM_Pack_RC
+@
+text
+@a291 1
+      call output ( ' at ' )
+d948 1
+a948 1
+       "$Id: MatrixTools.f90,v 1.35 2011/09/01 20:37:08 honghanh Exp $"
+d958 3
+@
+
+
+1.35
+log
+@Fix the bug in PVMSendMatrix for sending NB
+@
+text
+@a829 1
+
+d870 4
+d949 1
+a949 1
+       "$Id: MatrixTools.f90,v 1.34 2011/08/20 00:49:37 vsnyder Exp $"
+d959 3
+@
+
+
+1.34
+log
+@Remove unused use names and variable declarations
+@
+text
+@d28 1
+a28 1
+  public :: DumpBlocks, CombineChannelsInMatrix
+d868 1
+a868 1
+    call PVMIDLPack ( (/ rc%nelts /), info )
+d906 3
+a908 1
+    if (.not. myJustPack) call PVMFInitSend ( PvmDataDefault, bufferID )
+d946 1
+a946 1
+       "$Id: MatrixTools.f90,v 1.33 2010/08/06 23:02:36 pwagner Exp $"
+d956 3
+@
+
+
+1.33
+log
+@Moved to using only switchdetail; negative index deplored
+@
+text
+@d74 1
+a74 1
+      & GetVectorQuantityIndexByType, VECTORVALUE_T
+a121 1
+    integer, dimension(:), pointer :: ColQIs2  ! Which column quantities for Hessians??
+a130 1
+    type (VectorValue_T), pointer :: COLQ2  ! 2nd Col quantity for a Hessian
+d186 1
+a186 1
+    nullify ( colInds, colInds2, colQIs, colQIs2, rowInds, rowQIs )
+a385 1
+            colQ2 => hessians(hessianIndex)%col%vec%quantities(colQI2)
+d944 1
+a944 1
+       "$Id: MatrixTools.f90,v 1.32 2010/03/24 20:51:43 vsnyder Exp $"
+d954 3
+@
+
+
+1.32
+log
+@Add code to dump Hessians.  Spiff up some error messages.
+@
+text
+@d154 1
+a154 1
+    if ( index(switches, 'nodb') /= 0 ) return
+d219 4
+d947 1
+a947 1
+       "$Id: MatrixTools.f90,v 1.31 2010/02/10 20:00:25 vsnyder Exp $"
+d957 3
+@
+
+
+1.31
+log
+@More output from the dump
+@
+text
+@d17 1
+a17 1
+  use MatrixModule_0, only: DENSIFY, &
+d19 1
+a19 2
+  use MatrixModule_1, only: Dump_Struct, FINDBLOCK, GETFROMMATRIXDATABASE, &
+    & MATRIX_DATABASE_T, MATRIX_T, RC_INFO
+d42 1
+a42 1
+  subroutine DumpBlocks ( key, matrices )
+d56 3
+a58 1
+    use Init_Tables_Module, only: F_AllMatrices, &
+d60 1
+a60 1
+      & F_Details, F_Diagonal, F_MATRIX, F_NOABSENT, &
+d64 3
+a66 1
+    use MatrixModule_1, only: Dump
+d72 3
+a74 2
+    use Tree, only: DECORATION, NSONS, SUBTREE
+    use VectorsModule, only: GETVECTORQTYBYTEMPLATEINDEX, VECTORVALUE_T
+d79 1
+d82 2
+a83 1
+    integer :: COL                      ! Matrix block column
+d86 1
+d88 1
+a88 1
+    integer :: COLQI                    ! Index of column quantity within vector
+d90 1
+d98 2
+d119 6
+a124 4
+    integer, dimension(:), pointer :: ColInds ! Which column instances?
+    integer, dimension(:), pointer :: ColQIs  ! Which column quantities?
+    integer, dimension(:), pointer :: RowInds ! Which row instances?
+    integer, dimension(:), pointer :: RowQIs  ! Which row quantities?
+d126 1
+d131 7
+a137 4
+    type (VectorValue_T), pointer :: COLQ ! Row quantity
+    type (VectorValue_T), pointer :: ROWQ ! Row quantity
+    type (Matrix_T), pointer :: MATRIX  ! The matrix to dump
+    type (MatrixElement_T), pointer :: MB ! A block from the matrix
+d142 8
+a149 5
+    integer, parameter :: NeedMatrix = duplicate + 1  ! Need /all or matrix
+    integer, parameter :: NeedMatrixDatabase = needMatrix + 1 ! Need some matrix!
+    integer, parameter :: Numeric = needMatrixDatabase + 1 ! Details can't be range
+    integer, parameter :: OutOfRange = numeric + 1    ! Index out of range
+    integer, parameter :: Redundant = outOfRange + 1  ! Both /all and matrix
+a163 4
+    if ( .not. associated(matrices) ) then
+      call announce_error ( needMatrixDatabase, key )
+      return
+    end if
+d167 1
+d175 3
+d179 2
+d188 1
+a188 1
+    nullify ( colInds, colQIs, rowInds, rowQIs )
+d195 6
+d202 4
+d214 4
+d244 4
+a247 3
+    ! Was a matrix specified?
+    if ( .not. allMatrices .and. matrixIndex < 0 ) then
+      call announce_error ( needMatrix, key )
+d261 1
+a261 1
+    else
+d266 13
+d290 2
+d296 1
+d313 3
+a320 2
+            call FillIndicesArray ( rowInstancesNode, rowQ%template%noInstances, &
+              & rowInds )
+d339 1
+a339 3
+            if ( doAny ) call DumpOneBlock
+
+            call deallocate_test ( rowInds, 'rowInds', ModuleName )
+d343 2
+d350 78
+d433 1
+a433 1
+    subroutine Announce_Error ( What, Where, Number )
+d436 4
+a439 3
+      integer, intent(in) :: What      ! Error code
+      integer, intent(in) :: Where     ! Tree node
+      integer, intent(in), optional :: Number    ! Stuff to stick into message
+d448 2
+a449 3
+      case ( needMatrix )
+        call output ( 'Either /all or a matrix must be specified', &
+          & advance='yes' )
+d452 7
+d464 3
+d468 2
+a469 1
+        call output ( ': Both /all and a matrix specified.  /all used.', &
+d474 2
+a475 2
+    ! .............................................  DumpOneBlock  .....
+    subroutine DumpOneBlock
+d477 1
+a477 1
+      use MatrixModule_0, only: GetDiagonal
+d613 10
+a622 1
+    end subroutine DumpOneBlock
+a643 1
+      call allocate_test ( inds, num, 'Inds', moduleName )
+d685 1
+a685 1
+      integer, intent(in) :: QInode    ! Tree node -- zero if not specified
+d690 1
+d694 4
+a697 3
+      if ( QInode /= 0 ) then
+        do i = 2, nsons(QInode)
+          ! Identify the row quantity.  The decoration is an index into the
+d699 1
+a699 1
+          ! the vector that describes the row.
+d701 5
+a705 6
+            & decoration(decoration(subtree(i,QInode))), qi ) ! qi is output too
+          if ( .not. associated (Q) ) &
+            & call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & text // ' quantity was not found.' )
+          if ( any(QIs(:nQIs) == qi ) ) then
+            call announce_error ( duplicate, subtree(i,QInode), subtree(i,QInode) )
+d943 1
+a943 1
+       "$Id: MatrixTools.f90,v 1.30 2009/12/17 23:56:41 vsnyder Exp $"
+d953 3
+@
+
+
+1.30
+log
+@Correct a formatting blunder
+@
+text
+@d240 6
+a245 1
+      call display_string ( matrix%name, advance='yes' )
+d792 1
+a792 1
+       "$Id: MatrixTools.f90,v 1.29 2009/12/17 23:44:43 vsnyder Exp $"
+d802 3
+@
+
+
+1.29
+log
+@Print block coordinates in dump
+@
+text
+@d394 1
+a394 1
+          call output ( col, after=') is' )
+d787 1
+a787 1
+       "$Id: MatrixTools.f90,v 1.28 2009/06/23 18:46:18 pwagner Exp $"
+d797 3
+@
+
+
+1.28
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d36 1
+a36 1
+       "$RCSfile: $"
+d392 3
+a394 1
+          call output ( matrix%col%inst(col), before=':', after=' is ' )
+d398 1
+a398 1
+            call output ( ' absent' )
+d787 1
+a787 1
+       "$Id: read_apriori.f90 is it here $"
+d797 3
+@
+
+
+1.27
+log
+@Changed api for dump, diff routines; now rely on options for most optional behavior
+@
+text
+@d36 1
+a36 1
+       "$RCSfile: MatrixTools.f90,v $"
+d782 1
+a783 1
+!---------------------------- RCS Ident Info -------------------------------
+d785 2
+a786 3
+       "$Id: MatrixTools.f90,v 1.26 2007/10/05 23:41:06 vsnyder Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d788 1
+d790 1
+d795 3
+@
+
+
+1.26
+log
+@Don't reference element 1 of a zero-size array
+@
+text
+@d430 1
+a430 1
+              call dump ( val_1d, name=', number dumped:', clean=.true. )
+d449 1
+a449 1
+              call dump ( toDump, name=', number dumped:', clean=.true. )
+d764 18
+d785 1
+a785 1
+       "$Id: MatrixTools.f90,v 1.25 2007/10/02 22:41:27 vsnyder Exp $"
+d794 3
+@
+
+
+1.25
+log
+@Don't crash if a matrix can't be dumped
+@
+text
+@d574 3
+a576 1
+      if ( size(inds) == 1 ) then
+d767 1
+a767 1
+       "$Id: MatrixTools.f90,v 1.24 2006/09/21 18:48:07 pwagner Exp $"
+d776 3
+@
+
+
+1.24
+log
+@Reduce level of dumps in SIDS version
+@
+text
+@d115 1
+d232 6
+a237 1
+      call GetFromMatrixDatabase ( matrices(matrixIndex), matrix )
+d765 1
+a765 1
+       "$Id: MatrixTools.f90,v 1.23 2006/09/20 00:43:21 vsnyder Exp $"
+d774 3
+@
+
+
+1.23
+log
+@Cannonball polishing
+@
+text
+@d64 1
+d85 1
+d136 8
+d156 1
+a156 1
+    details = 1
+d179 1
+a179 1
+        details = nint(values(1))
+d213 2
+d759 1
+a759 1
+       "$Id: MatrixTools.f90,v 1.22 2006/09/19 20:33:13 vsnyder Exp $"
+d768 3
+@
+
+
+1.22
+log
+@Add /diagonal field
+@
+text
+@d406 2
+a407 2
+            call output ( mb%nRows )
+            call output ( mb%nCols, before='x', after='.  ' )
+d747 1
+a747 1
+       "$Id: MatrixTools.f90,v 1.21 2006/07/27 03:53:28 vsnyder Exp $"
+d756 3
+@
+
+
+1.21
+log
+@Handle details field correctly
+@
+text
+@d59 1
+a59 1
+      & F_Details, F_MATRIX, F_NOABSENT, &
+d85 1
+d147 1
+d170 2
+d221 1
+d254 5
+a258 3
+                  mb => matrix%block ( row, col )
+                  doAny = mb%kind /= m_absent
+                  if ( doAny ) exit o
+d312 2
+d330 1
+d335 1
+a335 1
+      nullify ( toDump )
+d352 5
+a356 4
+      call allocate_test ( toDump, &
+        & noRowChannels*noRowSurfaces, &
+        & noColChannels*noColSurfaces, &
+        & 'toDump', ModuleName )
+a357 1
+      call newLine
+d374 1
+a374 1
+          call output ( matrix%col%inst(col), before=':' )
+d378 1
+a378 1
+            call output ( ' is absent ' )
+d381 8
+a388 1
+              call output ( ' is column sparse ' )
+d390 3
+a392 1
+              call output ( ' is banded ' )
+a393 3
+            call allocate_test ( val, mb%nRows, mb%nCols, &
+              & 'val', ModuleName )
+            call densify ( val , mb )
+d395 8
+a402 2
+            call output ( ' is full ' )
+            val => mb%values
+d405 4
+a408 2
+          call output ( mb%nRows )
+          call output ( mb%nCols, before='x', after='.  ' )
+d411 15
+a425 10
+            do cs = 1, noColSurfaces
+              do cc = 1, noColChannels
+                do rs = 1, noRowSurfaces
+                  do rc = 1, noRowChannels
+                    todump ( rc + (rs-1)*noRowChannels, &
+                      &      cc + (cs-1)*noColChannels ) = &
+                      & val ( rowChanInds(rc) + &
+                      &      (rowSurfInds(rs)-1)*rowQ%template%noChans, &
+                      &       colChanInds(cc) + &
+                      &      (colSurfInds(cs)-1)*colQ%template%noChans )
+d429 4
+a432 4
+            end do
+            if ( mb%kind /= m_full ) &
+              & call deallocate_test ( val, 'val', ModuleName )
+            call dump ( toDump, name='Number dumped:', clean=.true. )
+d747 1
+a747 1
+       "$Id: MatrixTools.f90,v 1.20 2006/07/19 22:27:24 vsnyder Exp $"
+d756 3
+@
+
+
+1.20
+log
+@Add /allMatrices, details= and /structure fields
+@
+text
+@d63 1
+d123 2
+a124 1
+    integer, parameter :: Numeric = needMatrix + 1    ! Details can't be range
+d133 5
+d164 1
+a164 1
+        call expr ( son, units, values, type )
+d202 4
+d287 1
+a287 1
+        call output ( ': Either /all or a matrix must be specified', &
+d289 2
+d718 1
+a718 1
+       "$Id: MatrixTools.f90,v 1.19 2005/06/22 18:57:02 pwagner Exp $"
+d727 3
+@
+
+
+1.19
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d17 6
+a24 6
+  use MatrixModule_1, only: MATRIX_T, MATRIX_DATABASE_T, &
+    & FINDBLOCK, GETFROMMATRIXDATABASE, RC_INFO
+  use MatrixModule_0, only: MATRIXELEMENT_T, DENSIFY, &
+    & M_ABSENT, M_BANDED, M_COLUMN_SPARSE, M_FULL
+  use MLSCommon, only: R8, RM
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, PVMERRORMESSAGE
+d36 1
+a36 1
+       "$RCSfile: $"
+d54 1
+d56 7
+a62 3
+    use Init_Tables_Module, only: F_COLCHANNELS, F_COLINSTANCES, F_COLQUANTITY, &
+      & F_COLSURFACES, F_MATRIX, F_NOABSENT, &
+      & F_ROWCHANNELS, F_ROWINSTANCES, F_ROWQUANTITY, F_ROWSURFACES
+d67 1
+a67 1
+    use Tree, only: NSONS, SUBTREE, DECORATION
+d83 1
+d87 1
+d101 3
+d110 3
+d119 6
+a124 2
+    integer, parameter :: Duplicate = 1   ! Duplicate quantity name specified
+    integer, parameter :: OutOfRange = duplicate + 1 ! Index out of range
+d132 2
+a133 1
+    rowChannelsNode = 0
+d135 1
+a135 1
+    rowQuantityNode = 0
+a136 1
+    rowSurfacesNode = 0
+d138 4
+d143 3
+a145 2
+    colInstancesNode = 0
+    noAbsent = .false.
+d154 7
+d181 2
+d187 59
+a245 38
+    ! Identify the matrix
+    call GetFromMatrixDatabase ( matrices(matrixIndex), matrix )
+    call output ( 'Dump of ' )
+    call display_string ( matrix%name, advance='yes' )
+
+    ! Get the row and column quantities
+    call allocate_test ( colQIs, matrix%col%nb, 'colQIs', moduleName )
+    call allocate_test ( rowQIs, matrix%row%nb, 'rowQIs', moduleName )
+
+    call getQuantities ( matrix%col, colQIs, nColQ, colQuantityNode, 'column' )
+    call getQuantities ( matrix%row, rowQIs, nRowQ, rowQuantityNode, 'row' )
+
+    ! Dump the specified blocks
+    do rowQuantityIx = 1, nRowQ
+      rowQI = rowQIs(rowQuantityIx)
+      rowQ => matrix%row%vec%quantities(rowQI)
+      do colQuantityIx = 1, nColQ
+        colQI = colQIs(colQuantityIx)
+        colQ => matrix%col%vec%quantities(colQI)
+
+        ! Fill some flags arrays
+        call FillIndicesArray ( rowInstancesNode, rowQ%template%noInstances, &
+          & rowInds )
+        call FillIndicesArray ( colInstancesNode, colQ%template%noInstances, &
+          & colInds )
+
+        doAny = .not. noAbsent
+        if ( noAbsent ) then
+  o:      do colInstance = 1, size(colInds)
+            do rowInstance = 1, size(rowInds)
+              row = FindBlock ( matrix%row, rowQI, rowInds(rowInstance) )
+              col = FindBlock ( matrix%col, colQI, colInds(colInstance) )
+              mb => matrix%block ( row, col )
+              doAny = mb%kind /= m_absent
+              if ( doAny ) exit o
+            end do
+          end do o
+        end if
+d247 2
+a248 1
+        if ( doAny ) call DumpOneBlock
+d250 3
+a252 2
+        call deallocate_test ( rowInds, 'rowInds', ModuleName )
+        call deallocate_test ( colInds, 'colInds', ModuleName )
+d254 1
+a254 2
+      end do
+    end do
+d262 2
+a263 2
+      use LEXER_CORE, only: PRINT_SOURCE
+      use TREE, only: SOURCE_REF, SUB_ROSA
+d266 1
+a266 1
+      integer, intent(in) :: Number    ! Stuff to stick into message
+d268 1
+a268 2
+      call output ( '***** At ' )
+      call print_source ( source_ref(where) )
+d270 2
+d273 1
+a273 2
+        call output ( ': Duplicate quantity ' )
+        call display_string ( sub_rosa(where) )
+d275 5
+d283 3
+d373 1
+a373 1
+          if ( mb%kind /= m_absent ) then
+d705 1
+a705 1
+       "$Id: $"
+d714 3
+@
+
+
+1.18
+log
+@PVMERRORMESSAGE now part of MLSMessageModule
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
+d34 1
+a34 4
+  !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
+    "$Id: MatrixTools.f90,v 1.17 2004/10/29 20:54:11 vsnyder Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+d36 1
+a36 1
+    "$RCSfile: MatrixTools.f90,v $"
+d38 1
+a38 1
+  !---------------------------------------------------------------------------
+d642 5
+d653 3
+@
+
+
+1.17
+log
+@Remove USE for DUMP -- not referenced, some cosmetics
+@
+text
+@d1 2
+a2 2
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d9 1
+a9 1
+  use PVM, only: PVMDATADEFAULT, PVMFINITSEND, PVMFSEND, PVMERRORMESSAGE
+d16 1
+a16 1
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+d28 1
+a28 1
+    "$Id: MatrixTools.f90,v 1.16 2004/09/28 00:40:06 livesey Exp $"
+d643 3
+@
+
+
+1.16
+log
+@More informative log in CombineChannelsInMatrix
+@
+text
+@d28 2
+a29 2
+    "$Id: MatrixTools.f90,v 1.15 2004/09/25 00:16:53 livesey Exp $"
+  character (len=len(idParm)), private :: Id = idParm
+d462 1
+a462 1
+  ! ----------------------------------------- CombineChannelsInMatrix
+d471 1
+a471 1
+    use MatrixModule_0, only: MULTIPLYMATRIX_XY, DUMP
+d532 1
+a532 1
+  ! ----------------------------------------- PVMSendBlock
+d569 1
+a569 1
+  ! ----------------------------------------- PVMSendRC
+d602 1
+a602 1
+  ! ----------------------------------------- PVMSendMatrix
+d643 3
+@
+
+
+1.15
+log
+@Added CombineChannelsInMatrix
+@
+text
+@d28 1
+a28 1
+    "$Id: MatrixTools.f90,v 1.14 2004/01/21 22:00:46 vsnyder Exp $"
+d472 2
+d505 15
+d522 1
+d524 2
+d643 3
+@
+
+
+1.14
+log
+@Remove unused variable declarations
+@
+text
+@d21 1
+a21 1
+  public :: DumpBlocks
+d28 1
+a28 1
+    "$Id: MatrixTools.f90,v 1.13 2003/10/10 23:28:33 vsnyder Exp $"
+d462 50
+d623 3
+@
+
+
+1.13
+log
+@Substantial reorganization
+@
+text
+@d28 1
+a28 1
+    "$Id: MatrixTools.f90,v 1.12 2003/10/09 21:03:16 vsnyder Exp $"
+a69 1
+    integer :: ColQ1, ColQN             ! First and last column quantity index
+a84 1
+    integer :: RowQ1, RowQN             ! First and last row quantity index
+a228 2
+      integer :: I                        ! Loop counter
+      integer :: MAXIND                   ! Maximum dimension
+d249 1
+a249 1
+      call getSurfOrChanInds ( rowQ, rowQ%template%noChans, rowChannelsNode, &
+d251 1
+a251 1
+      call getSurfOrChanInds ( rowQ, rowQ%template%noSurfs, rowSurfacesNode, &
+d253 1
+a253 1
+      call getSurfOrChanInds ( colQ, colQ%template%noChans, colChannelsNode, &
+d255 1
+a255 1
+      call getSurfOrChanInds ( colQ, colQ%template%noSurfs, colSurfacesNode, &
+d439 1
+a439 2
+    subroutine GetSurfOrChanInds ( Vec, Num, Node, Inds, Text )
+      type (VectorValue_T), intent(in) :: Vec ! Row or column vector quantity    
+a444 2
+      integer :: I
+
+d573 3
+@
+
+
+1.12
+log
+@Don't do anything if the 'nodb' switch is set
+@
+text
+@d28 1
+a28 1
+    "$Id: MatrixTools.f90,v 1.11 2003/10/07 01:17:36 vsnyder Exp $"
+d58 1
+d65 1
+d67 1
+d69 3
+a71 1
+    integer :: COLQUANTITYINDEX         ! Index for column quantity
+a72 1
+    integer :: COLQuantitySon           ! Index for son of COLQuantityNode
+d74 1
+d77 1
+d80 2
+d83 1
+d85 3
+a87 1
+    integer :: ROWQUANTITYINDEX         ! Index for row quantity
+a88 1
+    integer :: ROWQuantitySon           ! Index for son of ROWQuantityNode
+d92 7
+d100 5
+d114 2
+d122 2
+d149 1
+a149 1
+      case default
+d158 7
+d166 31
+a196 5
+    do rowQuantitySon = 2, nsons(rowQuantityNode)
+      rowQuantityIndex = decoration(decoration(subtree(rowQuantitySon,rowQuantityNode)))
+      do colQuantitySon = 2, nsons(colQuantityNode)
+        colQuantityIndex = decoration(decoration(subtree(colQuantitySon,colQuantityNode)))
+        call DumpOneBlock
+d200 3
+d204 21
+a227 2
+      use VectorsModule, only: GETVECTORQTYBYTEMPLATEINDEX, VECTORVALUE_T
+
+a229 3
+      integer :: COL                      ! Matrix block column
+      integer :: COLINSTANCE              ! Loop counter
+      integer :: COLQI                    ! Index of column quantity within vector
+a230 1
+      logical :: DoAny                    ! Any non-absent blocks?
+a237 3
+      integer :: ROW                      ! Matrix block row
+      integer :: ROWINSTANCE              ! Loop counter
+      integer :: ROWQI                    ! Index of row quantity within vector
+a239 1
+      integer, dimension(:), pointer :: INDGEN ! 1,2,3,4...
+d245 1
+a245 8
+      logical, dimension(:), pointer :: ROWCHANNELS ! Do we want this channel?
+      logical, dimension(:), pointer :: COLCHANNELS ! Do we want this channel?
+      logical, dimension(:), pointer :: ROWSURFACES ! Do we want this surface?
+      logical, dimension(:), pointer :: COLSURFACES ! Do we want this surface?
+      logical, dimension(:), pointer :: ROWINSTANCES ! Do we want this surface?
+      logical, dimension(:), pointer :: COLINSTANCES ! Do we want this surface?
+
+      real(rm), dimension(:,:), pointer :: VAL ! The values from the block
+a247 7
+      type (VectorValue_T), pointer :: ROWQ ! Row quantity
+      type (VectorValue_T), pointer :: COLQ ! Row quantity
+      type (MatrixElement_T), pointer :: MB ! A block from the matrix
+
+      nullify ( rowChannels, colChannels )
+      nullify ( rowSurfaces, colSurfaces )
+      nullify ( rowInstances, colInstances )
+a249 1
+      nullify ( indgen )
+d252 14
+a265 82
+      ! Now identify the row and column quantity rowQuantityIndex and
+      ! colQuantityIndex are indices into the quantity templates database.  Now,
+      ! we need to get them as indices into the vectors describing rows and
+      ! columns.
+      rowQ => GetVectorQtyByTemplateIndex ( matrix%row%vec, &
+        & rowQuantityIndex, rowQI )
+      colQ => GetVectorQtyByTemplateIndex ( matrix%col%vec, &
+        & colQuantityIndex, colQI )
+
+      if ( .not. associated (rowQ) ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'row quantity was not found.' )
+      if ( .not. associated (colQ) ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'col quantity was not found.' )
+
+      ! Now setup flags arrays
+      call allocate_test ( rowChannels, rowQ%template%noChans, &
+        & 'rowChannels', ModuleName )
+      call allocate_test ( colChannels, colQ%template%noChans, &
+        & 'colChannels', ModuleName )
+      call allocate_test ( rowSurfaces, rowQ%template%noSurfs, &
+        & 'rowSurfaces', ModuleName )
+      call allocate_test ( colSurfaces, colQ%template%noSurfs, &
+        & 'colSurfaces', ModuleName )
+      call allocate_test ( rowInstances, rowQ%template%noInstances, &
+        & 'rowInstances', ModuleName )
+      call allocate_test ( colInstances, colQ%template%noInstances, &
+        & 'colInstances', ModuleName )
+
+      ! Now fill flags arrays
+      call FillFlagsArray ( rowChannelsNode, rowChannels, noRowChannels )
+      call FillFlagsArray ( colChannelsNode, colChannels, noColChannels )
+      call FillFlagsArray ( rowSurfacesNode, rowSurfaces, noRowSurfaces )
+      call FillFlagsArray ( colSurfacesNode, colSurfaces, noColSurfaces )
+      call FillFlagsArray ( rowInstancesNode, rowInstances )
+      call FillFlagsArray ( colInstancesNode, colInstances )
+
+      ! Now set indices arrays
+      maxInd = max ( rowQ%template%noChans, colQ%template%noChans,&
+        & rowQ%template%noSurfs, colQ%template%noSurfs )
+      call allocate_test ( indgen, maxInd, 'indgen', ModuleName )
+      indgen = (/ ( i, i = 1, maxInd ) /)
+
+      call allocate_test ( rowChanInds, noRowChannels, &
+        & 'rowChanInds', ModuleName )
+      call allocate_test ( colChanInds, noColChannels, &
+        & 'colChanInds', ModuleName )
+      call allocate_test ( rowSurfInds, noRowSurfaces, &
+        & 'rowSurfInds', ModuleName )
+      call allocate_test ( colSurfInds, noColSurfaces, &
+        & 'colSurfInds', ModuleName )
+
+      rowChanInds = pack ( indgen(1:rowQ%template%noChans), rowChannels )
+      colChanInds = pack ( indgen(1:colQ%template%noChans), colChannels )
+      rowSurfInds = pack ( indgen(1:rowQ%template%noSurfs), rowSurfaces )
+      colSurfInds = pack ( indgen(1:colQ%template%noSurfs), colSurfaces )
+
+      doAny = .not. noAbsent
+      if ( noAbsent ) then
+o:      do colInstance = 1, colQ%template%noInstances
+          if ( colInstances(colInstance) ) then
+            do rowInstance = 1, rowQ%template%noInstances
+              if ( rowInstances(rowInstance) ) then
+                row = FindBlock ( matrix%row, rowQI, rowInstance )
+                col = FindBlock ( matrix%col, colQI, colInstance )
+                mb => matrix%block ( row, col )
+                doAny = mb%kind /= m_absent
+                if ( doAny ) exit o
+              end if
+            end do
+          end if
+        end do o
+      end if
+
+      if ( doAny ) then
+        call NewLine
+        call dumpIndex ( rowChannels, rowChanInds, 'Row channels: ' )
+        call dumpIndex ( rowSurfaces, rowSurfInds, 'Row Surfaces: ' )
+        call dumpIndex ( colChannels, colChanInds, 'Column channels: ' )
+        call dumpIndex ( colSurfaces, colSurfInds, 'Column surfaces: ' )
+      end if
+d272 38
+a309 8
+      ! Now loop over the row and column instances
+      do colInstance = 1, colQ%template%noInstances
+        if ( colInstances(colInstance) ) then
+          do rowInstance = 1, rowQ%template%noInstances
+            if ( rowInstances(rowInstance) ) then
+
+              row = FindBlock ( matrix%row, rowQI, rowInstance )
+              col = FindBlock ( matrix%col, colQI, colInstance )
+d311 11
+a321 43
+              mb => matrix%block ( row, col )
+              if ( noAbsent .and. mb%kind == m_absent ) cycle
+
+              ! Dump a header
+              call output ( 'Block for ' )
+              call display_string ( rowQ%template%name )
+              call output ( rowInstance, before=' instance ', after=', ' )
+              call display_string ( colQ%template%name )
+              call output ( colInstance, before=' instance ' )
+              nullify ( val )
+              select case ( mb%kind )
+              case ( m_absent )
+                call output ( ' is absent,', advance='yes' )
+              case ( m_column_sparse, m_banded )
+                if ( mb%kind == m_column_sparse ) then
+                  call output ( ' is column sparse,', advance='yes' )
+                else
+                  call output ( ' is banded,', advance='yes' )
+                end if
+                call allocate_test ( val, mb%nRows, mb%nCols, &
+                  & 'val', ModuleName )
+                call densify ( val , mb )
+              case ( m_full )
+                call output ( ' is full,', advance='yes' )
+                val => mb%values
+              case default
+              end select
+              call output ( mb%nRows, before='with ' )
+              call output ( mb%nCols, before=' rows and ', after=' columns.  ' )
+
+              if ( mb%kind /= m_absent ) then
+                do cs = 1, noColSurfaces
+                  do cc = 1, noColChannels
+                    do rs = 1, noRowSurfaces
+                      do rc = 1, noRowChannels
+                        todump ( rc + (rs-1)*noRowChannels, &
+                          &      cc + (cs-1)*noColChannels ) = &
+                          & val ( rowChanInds(rc) + &
+                          &      (rowSurfInds(rs)-1)*rowQ%template%noChans, &
+                          &       colChanInds(cc) + &
+                          &      (colSurfInds(cs)-1)*colQ%template%noChans )
+                      end do
+                    end do
+d324 8
+a331 6
+                if ( mb%kind /= m_full ) &
+                  & call deallocate_test ( val, 'val', ModuleName )
+                call dump ( toDump, name='Number of elements dumped:', clean=.true. )
+              else
+                call NewLine
+              end if
+d333 1
+a333 3
+            end if
+          end do
+        end if
+a336 1
+      call deallocate_test ( indgen,       'indgen',       ModuleName )
+a340 6
+      call deallocate_test ( rowChannels,  'rowChannels',  ModuleName )
+      call deallocate_test ( colChannels,  'colChannels',  ModuleName )
+      call deallocate_test ( rowSurfaces,  'rowSurfaces',  ModuleName )
+      call deallocate_test ( colSurfaces,  'colSurfaces',  ModuleName )
+      call deallocate_test ( rowInstances, 'rowInstances', ModuleName )
+      call deallocate_test ( colInstances, 'colInstances', ModuleName )
+d344 3
+a346 19
+    ! ................................................  DumpIndex  .....
+    subroutine DumpIndex ( Flags, Indices, Name )
+    ! Dump an index array as 1:n if every index is there, else as-is.
+      logical, intent(in) :: Flags(:)
+      integer, intent(in) :: Indices(:)
+      character(len=*), intent(in) :: Name
+      call output ( Name )
+      if ( .not. all(flags) ) then
+        if ( size(indices) /= 1 ) call newLine
+        call dump ( indices )
+      else
+        if ( size(flags) /= 1 ) call output ( '1:' )
+        call output ( size(flags), advance='yes' )
+      end if
+    end subroutine DumpIndex
+
+    ! ...........................................  FillFlagsArray  .....
+    subroutine FillFlagsArray ( Node, Array, NFlags )
+    ! Set Array(I) = .true. for every element that is a son of Node.
+d351 7
+a357 4
+      integer, intent(in) :: Node              ! Tree node
+      logical, intent(out) :: Array(:)         ! Array to fill
+      integer, intent(out), optional :: NFlags ! Count(Array)
+
+d363 3
+d367 2
+a368 1
+        array = .false.
+d371 4
+d377 1
+a377 1
+            array(nint(value(1))) = .true.
+d379 5
+a383 1
+            array(nint(value(1)):nint(value(2))) = .true.
+d387 73
+d461 2
+a462 1
+        array = .true.
+a463 1
+      if ( present(nFlags) ) nFlags = count(array)
+d465 1
+a465 1
+    end subroutine FillFlagsArray
+d580 3
+@
+
+
+1.11
+log
+@DumpBlocks now dumps the blocks specified by the Cartesian product of the
+rowQuantity and colQuantity fields.  If the rowChannels, colChannels,
+rowSurfaces, colSurfaces, rowInstances or colInstances fields are specified,
+they are used for all blocks.  If this is not what is desired, use a separate
+DumpBlocks command for each block.  If the noAbsent field is set, it does
+not dump absent blocks.
+@
+text
+@d7 1
+a7 1
+  ! MatrixModule_0 and MatrixModule_1.  In particular the DumpBlock subroutine.
+d28 1
+a28 1
+    "$Id: MatrixTools.f90,v 1.10 2003/08/15 20:28:05 vsnyder Exp $"
+d56 1
+d86 3
+d527 8
+@
+
+
+1.10
+log
+@Put a new line after 'with Y rows and X columns' for absent blocks
+@
+text
+@a8 2
+  use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+  use DUMP_0, only: DUMP
+a16 11
+  use Init_Tables_Module, only: F_COLCHANNELS, F_COLQUANTITY, F_COLSURFACES, &
+    & F_MATRIX, F_ROWCHANNELS, F_ROWQUANTITY, F_ROWSURFACES, F_ROWINSTANCES, &
+    & F_COLINSTANCES
+  use Tree, only: NSONS, SUBTREE, DECORATION
+  use MoreTree, only: GET_FIELD_ID
+  use VectorsModule, only: GETVECTORQTYBYTEMPLATEINDEX, VECTORVALUE_T
+  use Declaration_Table, only: NUM_VALUE, RANGE
+  use Output_M, only: OUTPUT
+  use String_Table, only: DISPLAY_STRING
+  use Expr_M, only: EXPR
+  use QuantityPVM, only: PVMSENDQUANTITY
+d21 1
+a21 1
+  public :: DumpBlock
+d28 1
+a28 1
+    "$Id: MatrixTools.f90,v 1.9 2003/05/21 19:19:06 vsnyder Exp $"
+d35 1
+a35 1
+contains ! ================ Public procedures ================================
+d37 20
+a56 4
+  ! --------------------------------------------------- DumpBlock
+  subroutine DumpBlock ( key, matrices )
+    ! This routine can be called whenever a DumpBlock command is issued in the
+    ! l2cf.  It can be used to dump a requested block from the l2cf
+a62 2
+    integer :: CC                       ! Loop counter
+    integer :: COL                      ! Matrix block column
+a63 1
+    integer :: COLINSTANCE              ! Loop counter
+a64 1
+    integer :: COLQI                    ! Index of column quantity within vector
+d66 2
+a68 1
+    integer :: CS                       ! Loop counter
+a69 2
+    integer :: GSON                     ! Tree node
+    integer :: I                        ! Loop counter
+d71 1
+a71 3
+    integer :: MAXIND                   ! Maximum dimension
+    integer :: NOCOLCHANNELS            ! Number selected
+    integer :: NOCOLSURFACES            ! Number selected
+a72 4
+    integer :: NOROWCHANNELS            ! Number selected
+    integer :: NOROWSURFACES            ! Number selected
+    integer :: RC                       ! Loop counter
+    integer :: ROW                      ! Matrix block row
+a73 1
+    integer :: ROWINSTANCE              ! Loop counter
+a74 1
+    integer :: ROWQI                    ! Index of row quantity within vector
+d76 2
+a78 1
+    integer :: RS                       ! Loop counter
+a79 20
+    integer :: TYPE                     ! From expr
+
+    integer, dimension(2) :: UNITS      ! Units from expr
+    integer, dimension(:), pointer :: INDGEN ! 1,2,3,4...
+    integer, dimension(:), pointer :: ROWCHANINDS ! Indices
+    integer, dimension(:), pointer :: COLCHANINDS ! Indices
+    integer, dimension(:), pointer :: ROWSURFINDS ! Indices
+    integer, dimension(:), pointer :: COLSURFINDS ! Indices
+
+    real(r8), dimension(2) :: VALUE     ! Value from expr
+
+    logical, dimension(:), pointer :: ROWCHANNELS ! Do we want this channel?
+    logical, dimension(:), pointer :: COLCHANNELS ! Do we want this channel?
+    logical, dimension(:), pointer :: ROWSURFACES ! Do we want this surface?
+    logical, dimension(:), pointer :: COLSURFACES ! Do we want this surface?
+    logical, dimension(:), pointer :: ROWINSTANCES ! Do we want this surface?
+    logical, dimension(:), pointer :: COLINSTANCES ! Do we want this surface?
+
+    real(rm), dimension(:,:), pointer :: VAL ! The values from the block
+    real(r8), dimension(:,:), pointer :: TODUMP ! The 2D matrix to dump
+a81 3
+    type (VectorValue_T), pointer :: ROWQ ! Row quantity
+    type (VectorValue_T), pointer :: COLQ ! Row quantity
+    type (MatrixElement_T), pointer :: MB ! A block from the matrix
+a84 8
+    nullify ( rowChannels, colChannels )
+    nullify ( rowSurfaces, colSurfaces )
+    nullify ( rowInstances, colInstances )
+    nullify ( rowChanInds, colChanInds )
+    nullify ( rowSurfInds, colSurfInds )
+    nullify ( indgen )
+    nullify ( toDump )
+
+d92 1
+d95 1
+a95 1
+    do node = 2, nsons(key)                ! Skip the DumpBlock son
+a97 1
+      if (nsons(son) > 1 ) gson = subtree(2,son)
+d100 1
+a100 1
+        matrixIndex = decoration(decoration(gson))
+d102 1
+a102 1
+        rowQuantityIndex = decoration(decoration(gson))
+d104 1
+a104 1
+        colQuantityIndex = decoration(decoration(gson))
+d117 2
+d125 2
+d128 6
+a133 42
+    ! Now identify the row and column quantity rowQuantityIndex and
+    ! colQuantityIndex are indices into the quantity templates database.  Now,
+    ! we need to get them as indices into the vectors describing rows and
+    ! columns.
+    rowQ => GetVectorQtyByTemplateIndex ( matrix%row%vec, &
+      & rowQuantityIndex, rowQI )
+    colQ => GetVectorQtyByTemplateIndex ( matrix%col%vec, &
+      & colQuantityIndex, colQI )
+
+    if ( .not. associated (rowQ) ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'row quantity was not found.' )
+    if ( .not. associated (colQ) ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'col quantity was not found.' )
+
+    ! Now setup flag arrays
+    call allocate_test ( rowChannels, rowQ%template%noChans, &
+      & 'rowChannels', ModuleName )
+    call allocate_test ( colChannels, colQ%template%noChans, &
+      & 'colChannels', ModuleName )
+    call allocate_test ( rowSurfaces, rowQ%template%noSurfs, &
+      & 'rowSurfaces', ModuleName )
+    call allocate_test ( colSurfaces, colQ%template%noSurfs, &
+      & 'colSurfaces', ModuleName )
+    call allocate_test ( rowInstances, rowQ%template%noInstances, &
+      & 'rowInstances', ModuleName )
+    call allocate_test ( colInstances, colQ%template%noInstances, &
+      & 'colInstances', ModuleName )
+
+    ! Now fill these arrays
+    if ( rowChannelsNode /= 0 ) then
+      rowChannels = .false.
+      do node = 2, nsons(rowChannelsNode)
+        call expr (subtree(node,rowChannelsNode), units, value, type)
+        select case (type)
+        case (num_value)
+          rowChannels(int(value(1))) = .true.
+        case (range)
+          rowChannels(int(value(1)):int(value(2))) = .true.
+        case default
+        end select
+d135 1
+a135 3
+    else
+      rowChannels = .true.
+    end if
+d137 127
+a263 15
+    if ( colChannelsNode /= 0 ) then
+      colChannels = .false.
+      do node = 2, nsons(colChannelsNode)
+        call expr ( subtree(node,colChannelsNode), units, value, type )
+        select case (type)
+        case (num_value)
+          colChannels(int(value(1))) = .true.
+        case (range)
+          colChannels(int(value(1)):int(value(2))) = .true.
+        case default
+        end select
+      end do
+    else
+      colChannels = .true.
+    end if
+d265 7
+a271 15
+    if ( rowSurfacesNode /= 0 ) then
+      rowSurfaces = .false.
+      do node = 2, nsons(rowSurfacesNode)
+        call expr ( subtree(node,rowSurfacesNode), units, value, type )
+        select case (type)
+        case (num_value)
+          rowSurfaces(int(value(1))) = .true.
+        case (range)
+          rowSurfaces(int(value(1)):int(value(2))) = .true.
+        case default
+        end select
+      end do
+    else
+      rowSurfaces = .true.
+    end if
+d273 56
+a328 140
+    if ( colSurfacesNode /= 0 ) then
+      colSurfaces = .false.
+      do node = 2, nsons(colSurfacesNode)
+        call expr ( subtree(node,colSurfacesNode), units, value, type )
+        select case (type)
+        case (num_value)
+          colSurfaces(int(value(1))) = .true.
+        case (range)
+          colSurfaces(int(value(1)):int(value(2))) = .true.
+        case default
+        end select
+      end do
+    else
+      colSurfaces = .true.
+    end if
+
+    if ( rowInstancesNode /= 0 ) then
+      rowInstances = .false.
+      do node = 2, nsons(rowInstancesNode)
+        call expr ( subtree(node,rowInstancesNode), units, value, type )
+        select case (type)
+        case (num_value)
+          rowInstances(int(value(1))) = .true.
+        case (range)
+          rowInstances(int(value(1)):int(value(2))) = .true.
+        case default
+        end select
+      end do
+    else
+      rowInstances = .true.
+    end if
+
+    if ( colInstancesNode /= 0 ) then
+      colInstances = .false.
+      do node = 2, nsons(colInstancesNode)
+        call expr ( subtree(node,colInstancesNode), units, value, type )
+        select case (type)
+        case (num_value)
+          colInstances(int(value(1))) = .true.
+        case (range)
+          colInstances(int(value(1)):int(value(2))) = .true.
+        case default
+        end select
+      end do
+    else
+      colInstances = .true.
+    end if
+
+    ! Now set indices arrays
+    noRowChannels = count ( rowChannels )
+    noColChannels = count ( colChannels )
+    noRowSurfaces = count ( rowSurfaces )
+    noColSurfaces = count ( colSurfaces )
+
+    maxInd = max ( rowQ%template%noChans, colQ%template%noChans,&
+      & rowQ%template%noSurfs, colQ%template%noSurfs )
+    call allocate_test ( indgen, maxInd, 'indgen', ModuleName )
+    do i = 1, maxInd
+      indgen(i) = i
+    end do
+
+    call allocate_test ( rowChanInds, noRowChannels, &
+      & 'rowChanInds', ModuleName )
+    call allocate_test ( colChanInds, noColChannels, &
+      & 'colChanInds', ModuleName )
+    call allocate_test ( rowSurfInds, noRowSurfaces, &
+      & 'rowSurfInds', ModuleName )
+    call allocate_test ( colSurfInds, noColSurfaces, &
+      & 'colSurfInds', ModuleName )
+
+    rowChanInds = pack ( indgen(1:rowQ%template%noChans), rowChannels )
+    colChanInds = pack ( indgen(1:colQ%template%noChans), colChannels )
+    rowSurfInds = pack ( indgen(1:rowQ%template%noSurfs), rowSurfaces )
+    colSurfInds = pack ( indgen(1:colQ%template%noSurfs), colSurfaces )
+
+    call allocate_test ( toDump, &
+      & noRowChannels*noRowSurfaces, &
+      & noColChannels*noColSurfaces, &
+      & 'toDump', ModuleName )
+
+    ! Now loop over the row and column instances
+    call output ( 'Dump of ' )
+    call display_string ( matrix%name, advance='yes' )
+    call dump ( rowChanInds, name='Row channels:' )
+    call dump ( rowSurfInds, name='Row surfaces:' )
+    call dump ( colChanInds, name='Column channels:' )
+    call dump ( colSurfInds, name='Column surfaces:' )
+    do colInstance = 1, colQ%template%noInstances
+      if ( colInstances(colInstance) ) then
+        do rowInstance = 1, rowQ%template%noInstances
+          if ( rowInstances(rowInstance) ) then
+            ! Dump a header
+            call output ( 'Block for ' )
+            call display_string ( rowQ%template%name )
+            call output ( ' instance ' )            
+            call output ( rowInstance )
+            call output ( ', ' )
+            call display_string ( colQ%template%name )
+            call output ( ' instance ' )            
+            call output ( colInstance )
+
+            row = FindBlock ( matrix%row, rowQI, rowInstance )
+            col = FindBlock ( matrix%col, colQI, colInstance )
+
+            mb => matrix%block ( row, col )
+            nullify ( val )
+            select case ( mb%kind )
+            case ( m_absent )
+              call output ( ' is absent,', advance='yes' )
+            case ( m_column_sparse, m_banded )
+              if ( mb%kind == m_column_sparse ) then
+                call output ( ' is column sparse,', advance='yes' )
+              else
+                call output ( ' is banded,', advance='yes' )
+              end if
+              call allocate_test ( val, mb%nRows, mb%nCols, &
+                & 'val', ModuleName )
+              call densify ( val , mb )
+            case ( m_full )
+              call output ( ' is full,', advance='yes' )
+              val => mb%values
+            case default
+            end select
+            call output ( 'with ' )
+            call output ( mb%nRows )
+            call output ( ' rows and ' )
+            call output ( mb%nCols )
+            call output ( ' columns.  ' )
+
+            if ( associated(val) ) then
+              do cs = 1, noColSurfaces
+                do cc = 1, noColChannels
+                  do rs = 1, noRowSurfaces
+                    do rc = 1, noRowChannels
+                      todump ( rc + (rs-1)*noRowChannels, &
+                        &      cc + (cs-1)*noColChannels ) = &
+                        & val ( rowChanInds(rc) + &
+                        &      (rowSurfInds(rs)-1)*rowQ%template%noChans, &
+                        &       colChanInds(cc) + &
+                        &      (colSurfInds(cs)-1)*colQ%template%noChans )
+d332 7
+a338 3
+              end do
+              if ( mb%kind /= m_full ) &
+                & call deallocate_test ( val, 'val', ModuleName )
+d340 3
+d344 30
+a373 5
+            if ( mb%kind /= m_absent ) then
+              call dump ( toDump, name='Number of elements dumped:', clean=.true. )
+            else
+              call output ( '', advance='yes' )
+            end if
+d375 27
+a401 1
+          end if
+d403 2
+d406 1
+a406 1
+    end do
+d408 1
+a408 12
+    call deallocate_test ( toDump,       'toDump',       ModuleName )
+    call deallocate_test ( indgen,       'indgen',       ModuleName )
+    call deallocate_test ( rowChanInds,  'rowChanInds',  ModuleName )
+    call deallocate_test ( colChanInds,  'colChanInds',  ModuleName )
+    call deallocate_test ( rowSurfInds,  'rowSurfInds',  ModuleName )
+    call deallocate_test ( colSurfInds,  'colSurfInds',  ModuleName )
+    call deallocate_test ( rowChannels,  'rowChannels',  ModuleName )
+    call deallocate_test ( colChannels,  'colChannels',  ModuleName )
+    call deallocate_test ( rowSurfaces,  'rowSurfaces',  ModuleName )
+    call deallocate_test ( colSurfaces,  'colSurfaces',  ModuleName )
+    call deallocate_test ( rowInstances, 'rowInstances', ModuleName )
+    call deallocate_test ( colInstances, 'colInstances', ModuleName )
+d410 1
+a410 1
+  end subroutine DumpBlock
+d452 1
+d523 3
+@
+
+
+1.9
+log
+@Plug some memory leaks.  Use "name" argument of "dump" routines.  Dump
+numbers of rows and columns.
+@
+text
+@d41 1
+a41 1
+    "$Id: MatrixTools.f90,v 1.8 2002/10/08 17:36:21 pwagner Exp $"
+d391 5
+a395 2
+            if ( mb%kind /= m_absent ) &
+              & call dump ( toDump, name='Number of elements dumped:', clean=.true. )
+d527 4
+@
+
+
+1.8
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d41 1
+a41 1
+    "$Id: MatrixTools.f90,v 1.7 2002/09/13 18:10:10 pwagner Exp $"
+d136 1
+a136 1
+      fieldIndex = get_field_id(son)    ! ID for this field
+d181 3
+a183 3
+    call allocate_test (rowChannels, rowQ%template%noChans, &
+      &'rowChannels', ModuleName )
+    call allocate_test (colChannels, colQ%template%noChans, &
+d185 1
+a185 1
+    call allocate_test (rowSurfaces, rowQ%template%noSurfs, &
+d187 1
+a187 1
+    call allocate_test (colSurfaces, colQ%template%noSurfs, &
+d189 1
+a189 1
+    call allocate_test (rowInstances, rowQ%template%noInstances, &
+d191 1
+a191 1
+    call allocate_test (colInstances, colQ%template%noInstances, &
+d214 1
+a214 1
+        call expr (subtree(node,colChannelsNode), units, value, type)
+d230 1
+a230 1
+        call expr (subtree(node,rowSurfacesNode), units, value, type)
+d246 1
+a246 1
+        call expr (subtree(node,colSurfacesNode), units, value, type)
+d262 1
+a262 1
+        call expr (subtree(node,rowInstancesNode), units, value, type)
+d278 1
+a278 1
+        call expr (subtree(node,colInstancesNode), units, value, type)
+d326 4
+a329 8
+    call output ( 'Row channels:', advance='yes' )
+    call dump ( rowChanInds )
+    call output ( 'Row surfaces:', advance='yes' )
+    call dump ( rowSurfInds )
+    call output ( 'Column channels:', advance='yes' )
+    call dump ( colChanInds )
+    call output ( 'Column surfaces:', advance='yes' )
+    call dump ( colSurfInds )
+d351 1
+a351 1
+              call output ( ' is absent.', advance='yes' )
+d354 1
+a354 1
+                call output ( ' is column sparse.', advance='yes' )
+d356 1
+a356 1
+                call output ( ' is banded.', advance='yes' )
+d362 1
+a362 1
+              call output ( ' is full.', advance='yes' )
+d366 5
+d389 1
+a389 1
+            endif
+d391 2
+a392 5
+            if ( mb%kind /= m_absent ) then
+              call output ( 'Number of elements dumped:\ ' )
+              call output ( size(toDump), advance='yes' )
+              call dump ( toDump, clean=.true. )
+            end if
+d399 13
+a411 3
+    call deallocate_test ( toDump, 'toDump', ModuleName )
+    call deallocate_test ( indgen, 'indgen', ModuleName )
+    
+a419 1
+    integer :: BUFFERID                 ! From pvm
+d428 1
+a428 1
+    
+a456 1
+    integer :: BUFFERID                 ! From pvm
+d464 1
+a464 1
+    
+d503 1
+a503 1
+    
+d524 3
+@
+
+
+1.7
+log
+@May change matrix precision rm from r8
+@
+text
+@d41 1
+a41 1
+    "$Id: MatrixTools.f90,v 1.6 2001/09/13 00:54:06 livesey Exp $"
+d45 1
+d511 4
+d518 3
+@
+
+
+1.6
+log
+@Fixed a bug with dump blocks dumping values when kind==m_absent
+@
+text
+@d17 1
+a17 1
+  use MLSCommon, only: R8
+d41 1
+a41 1
+    "$Id: MatrixTools.f90,v 1.5 2001/07/17 17:32:15 livesey Exp $"
+d106 1
+a106 1
+    real(r8), dimension(:,:), pointer :: VAL ! The values from the block
+d413 2
+d431 7
+a437 1
+      call PVMIDLPack ( block%values, info )
+d513 3
+@
+
+
+1.5
+log
+@Added PVM pack stuff
+@
+text
+@d41 1
+a41 1
+    "$Id: MatrixTools.f90,v 1.4 2001/05/08 21:33:23 livesey Exp $"
+d389 5
+a393 3
+            call output ( 'Number of elements dumped:\ ' )
+            call output ( size(toDump), advance='yes' )
+            call dump ( toDump, clean=.true. )
+d505 3
+@
+
+
+1.4
+log
+@Added the CVS log stuff, whoops!
+@
+text
+@d11 2
+d14 1
+a14 1
+    & FINDBLOCK, GETFROMMATRIXDATABASE
+d29 1
+d36 3
+d41 1
+a41 1
+    "$Id: MatrixTools.f90,v 1.3 2001/05/08 21:32:37 livesey Exp $"
+d49 1
+d403 97
+d502 4
+a505 1
+! $Log$
+@
+
+
+1.3
+log
+@Minor changes.
+@
+text
+@d35 1
+a35 1
+    "$Id: MatrixTools.f90,v 1.2 2001/05/02 20:25:32 livesey Exp $"
+d398 1
+@
+
+
+1.2
+log
+@Removed some dead variables.
+@
+text
+@d35 1
+a35 1
+    "$Id: MatrixTools.f90,v 1.1 2001/05/02 05:27:49 livesey Exp $"
+d142 2
+a144 2
+      case ( f_colSurfaces )
+        rowSurfacesNode = son
+d146 2
+a148 2
+      case ( f_colInstances )
+        rowInstancesNode = son
+d382 3
+a384 1
+            call dump ( toDump )
+@
+
+
+1.1
+log
+@First version.
+@
+text
+@a16 1
+  use Init_Tables_Module, only: FIELD_FIRST, FIELD_LAST
+d35 1
+a35 1
+    "$Id: MatrixModule_1.f90,v 2.27 2001/05/01 23:54:13 vsnyder Exp $"
+d38 1
+a38 1
+    "$RCSfile: MatrixModule_1.f90,v $"
+a54 1
+    integer :: COLINDEX                 ! Index into column vector
+a73 1
+    integer :: ROWINDEX                 ! Index into row vector
+a98 2
+    logical, dimension(field_first:field_last) :: got
+
+a125 1
+    got = .false.
+a129 1
+      got(fieldIndex) = .true.
+@
+

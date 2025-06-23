@@ -1,0 +1,263 @@
+head	1.2;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2008.04.19.01.22.29;	author vsnyder;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2008.04.19.01.15.27;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Committed in error
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+program Mie_Least_Squares
+
+!{ Fit the Mie tables computed by Mie_Tables using least squares.
+
+  use Constants, only: Deg2Rad
+  use MLSKinds, only: R8
+
+  implicit NONE
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), parameter :: ModuleName= &
+       "$RCSfile: Mie_Least_Squares.f90,v $"
+!---------------------------------------------------------------------------
+
+  ! Software from Math77
+  interface
+    subroutine DCOV2 ( A, LDA, N, IP, VAR, IERR )
+      integer, intent(in) :: LDA, N
+      double precision, intent(inout) :: A(LDA,N)
+      integer, intent(in) :: IP(N)
+      double precision, intent(in) :: VAR
+      integer, intent(out) :: IERR
+    end subroutine DCOV2
+    subroutine DHFTI ( A, LDA, M, N, B, LDB, NB, TAU, KRANK, RNORM, WORK, IP )
+      integer, intent(in) :: LDA, M, N, LDB, NB
+      double precision, intent(inout) :: A(LDA,N)
+      double precision, intent(inout) :: B(LDB)
+      double precision, intent(in) :: TAU
+      integer, intent(out) :: KRANK
+      double precision, intent(out) :: RNORM
+      double precision :: WORK(N)
+      integer, intent(out) :: IP(N)
+    end subroutine DHFTI
+  end interface
+
+  character(len=1023) :: File      ! Input file, from Mie_Tables
+
+  ! For printing
+  real(r8) :: F
+  real(r8) :: R_min, R_Max
+  integer :: N_cut
+
+  ! Input
+  integer :: N_F, N_Iwc, N_T, N_Theta
+  logical :: Derivs
+  real(r8) :: T_min=-70.0, T_max=-15.0 ! For data selection
+
+  namelist /in/ File, T_Min, T_Max
+
+  do
+    read ( *, in, end=9 )
+
+    open ( 10, file=trim(file), form='unformatted', status='old' )
+    read ( 10 ) n_f, n_iwc, n_t, n_theta, r_min, r_max, n_cut, derivs
+
+    ! Do least-squares fits to results
+
+    call Do_LS
+  end do
+9 continue
+
+contains
+
+  subroutine Do_LS ! Is a subroutine to get automatic variables
+
+    ! Input
+    real(r8) :: F_s(n_f), IWC_s(n_iwc), T_s(n_t), Theta_s(n_theta)
+    integer, parameter :: I_c_e = 1, I_c_s = 2
+    real(r8) :: Beta(n_t,n_iwc,n_f,2), Eest(n_t,n_iwc,n_f,2)
+    ! For the next four, final dimension = 1 for Beta(c_e), 2 for Beta(c_s),
+    real(r8) :: dBeta_dIWC(n_t,n_iwc,n_f,2), E_dBeta_dIWC(n_t,n_iwc,n_f,2)
+    real(r8) :: dBeta_dT(n_t,n_iwc,n_f,2), E_dBeta_dT(n_t,n_iwc,n_f,2)
+    ! For MaxOrd, NFunc, the final "6" dimension is Beta(c_e), Beta(c_s),
+    ! d_Beta(c_e)_dIWC, d_beta(c_s)_dIWC, d_Beta(c_e)_dT, d_beta(c_s)_dT
+    ! For NFunc, the first "2" dimension is for number of functions, iflag
+    integer :: nFunc(2,n_t,n_iwc,n_f,6), maxOrd(n_t,n_iwc,n_f,6)
+    real(r8) :: P(n_t,n_iwc,n_theta,n_f), E_P(n_t,n_iwc,n_theta,n_f)
+    real(r8) :: dP_dIWC(n_t,n_iwc,n_theta,n_f), E_dP_dIWC(n_t,n_iwc,n_theta,n_f)
+    real(r8) :: dP_dT(n_t,n_iwc,n_theta,n_f), E_dP_dT(n_t,n_iwc,n_theta,n_f)
+    ! For MaxOrdP, NFuncP, the final "3" dimension is Phase, dPhase_dIWC,
+    ! dPhase_dT.  For NFuncP, the first "2" dimension is for number of functions,
+    ! iflag
+    integer :: NFuncP(2,n_t,n_iwc,n_theta,n_f,3), MaxOrdP(n_t,n_iwc,n_theta,n_f,3)
+
+    ! For least-squares fitting A X ~ B, where X is returned in B
+    integer, parameter :: Mxp = 20   ! Max number of parameters
+    real(r8) :: A(n_iwc*n_t*n_f*n_theta,mxp) ! Matrix of the problem
+    real(r8) :: B(n_iwc*n_t*n_f*n_theta) ! RHS, then solution
+    real(r8) :: C(n_iwc*n_t*n_f*n_theta,mxp) ! Copy of A before factoring
+    real(r8) :: Work(mxp)            ! Work space
+    integer :: I                     ! Subscript used to fill A, B
+    integer :: IERR                  ! Flag from DCOV2
+    integer :: IP(mxp)               ! Column permutations
+    integer :: KRANK
+    integer :: NP                    ! Number of parameters <= max
+    real(r8) :: RNORM
+
+    integer :: I_F, I_IWC, I_T, I_Theta
+    real(r8), parameter :: K_C = 273.18 ! Kelvin - Celsius
+
+    ! For output
+    real(r8) :: T_C_K = 273.15
+    ! Relative errors
+    real(r8) :: RElog, ReLogMax, ReLogMin, Re, ReMax, ReMin
+
+    read ( 10 ) iwc_s, t_s, theta_s, f_s
+    read ( 10 ) beta(:,:,:,i_c_e), eest(:,:,:,i_c_e), nFunc(:,:,:,:,i_c_e), maxOrd(:,:,:,i_c_e)
+    read ( 10 ) beta(:,:,:,i_c_s), eest(:,:,:,i_c_s), nFunc(:,:,:,:,i_c_s), maxOrd(:,:,:,i_c_s)
+    read ( 10 ) p, e_p, nFuncP(:,:,:,:,:,1), maxOrdP(:,:,:,:,1)
+    if ( derivs ) then
+      read ( 10 ) dBeta_dIWC(:,:,:,i_c_e),  e_dBeta_dIWC(:,:,:,i_c_e), nFunc(:,:,:,:,3), maxOrd(:,:,:,3)
+      read ( 10 ) dBeta_dIWC(:,:,:,i_c_s),  e_dBeta_dIWC(:,:,:,i_c_s), nFunc(:,:,:,:,4), maxOrd(:,:,:,4)
+      read ( 10 ) dBeta_dT(:,:,:,i_c_e),  e_dBeta_dT(:,:,:,i_c_e), nFunc(:,:,:,:,5), maxOrd(:,:,:,5)
+      read ( 10 ) dBeta_dT(:,:,:,i_c_s),  e_dBeta_dT(:,:,:,i_c_s), nFunc(:,:,:,:,6), maxOrd(:,:,:,6)
+      read ( 10 ) dP_dIWC, e_dP_dIWC, nFuncP(:,:,:,:,:,2), maxOrdP(:,:,:,:,2)
+      read ( 10 ) dP_dT, e_dP_dT, nFuncP(:,:,:,:,:,3), maxOrdP(:,:,:,:,3)
+    end if
+
+    write ( *, 1 ) minval(f_s), maxval(f_s), n_f, &
+      &            max(t_min,minval(t_s)-t_c_k), &
+      &            min(t_max,maxval(t_s)-t_c_k), n_t, &
+      &            minval(iwc_s), maxval(iwc_s), n_iwc, r_min, r_max, &
+      &            minval(theta_s)/deg2rad, maxval(theta_s)/deg2rad, &
+      &            n_theta, n_cut
+1   format ( 'F = ', f6.1, ' GHz:', f6.1, '(', i0,  &
+           & '), T = ', f5.0, ' : ', f5.0, ' (', i0, &
+           & ') Log10 IWC = ', f6.2, ' : ', f6.2, ' (', i0, ')' / &
+           & 'R = ', f6.1, ' : ', f6.1, ' Theta = ', f7.3, ' : ', f7.3, &
+           & ' (', i0, ')', ' N_Cut = ', i0 )
+
+    ! Fit log10(beta(c_e)) to x_1 + x_2 T    + x_3 T^2   + x_4 T^3
+    !                             + x_5 L    + x_6 L^2   + x_7 L_3
+    !                             + x_8 T L  + x_9 T^2 L + x_10 T L^2
+    !                             + x_11 T^4 + x_12 F^2  + x_13 F^4
+    ! where T = temperature (K) and L = log10(IWC)
+    i = 1
+    np = 13
+    do i_f = 1, n_f
+      do i_iwc = 1, n_iwc
+        do i_t = 1, n_t
+          if ( t_s(i_t) >= t_min+k_c .and. t_s(i_t) <= t_max+k_c ) then
+            ! IWC_s are log10(IWC)
+            a(i,1:np) = (/ 1.0_r8, t_s(i_t),     t_s(i_t)**2,     t_s(i_t)**3, &
+              &                    iwc_s(i_iwc), iwc_s(i_iwc)**2, iwc_s(i_iwc)**3, &
+              &                    t_s(i_t) * iwc_s(i_iwc) , &
+              &                    t_s(i_t)**2 * iwc_s(i_iwc) , &
+              &                    t_s(i_t) * iwc_s(i_iwc)**2, t_s(i_t)**4, &
+              &                    f_s(i_f)**2, f_s(i_f)**4 /)
+            b(i) = log10(beta(i_t,i_iwc,i_f,i_c_e))
+            i = i + 1
+          end if
+        end do ! i_t
+      end do ! i_iwc
+    end do ! i_f
+    c(:i-1,:np) = a(:i-1,:np)
+    call dhfti ( a, ubound(a,1), i-1, np, b, ubound(b,1), 1, 0.0_r8, krank, &
+      & rnorm, work, ip )
+    write ( *, '(a)' ) 'Rnorm, coeffs for log10 Beta(c_e) ='
+    write ( *, 11 ) &
+    & 'c0 + c1 T + c2 T^2 + c3 T^3 + c4 L + c5 L^2 + c6 L^3 + c7 T L + c8 T^2 L + c9 T L^2 + c10 T^4 + c11 F^2 + c12 F^4', &
+    & rnorm/sqrt(i-7.0), b(:np)
+11  format ( a / 1p, 9g13.5: / (13x,8g13.5) )
+    if ( krank == np ) then
+      call dcov2 ( a, ubound(a,1), np, ip, rnorm**2/(i-7), ierr )
+      if ( ierr == 0 ) write ( *, 12 ) (sqrt(a(i,i)), i = 1, np )
+12    format ( '+/-', 10x, 1p, 8g13.5: / (13x,8g13.5) )
+    end if
+    write ( *, 13 )
+13  format ( &
+      & 'log IWC   T(C)       F    log Beta Lst Sqr    diff    diff/log beta     Beta       10**LS         diff      diff/Beta' )
+    reLogMin = 0.0; reLogMax = 0.0; reMin = 0.0; reMax = 0.0
+    i = 1
+    do i_f = 1, n_f
+      do i_iwc = 1, n_iwc
+        do i_t = 1, n_t
+          if ( t_s(i_t) >= t_min+k_c .and. t_s(i_t) <= t_max+k_c ) then
+            ! IWC_s are log10(IWC)
+            rnorm = dot_product( c(i,:np), b(:np) )
+            reLog = (log10(beta(i_t,i_iwc,i_f,i_c_e)) - rnorm) / log10(beta(i_t,i_iwc,i_f,i_c_e))
+            re =    (beta(i_t,i_iwc,i_f,i_c_e) - 10.0_r8**rnorm) / beta(i_t,i_iwc,i_f,i_c_e)
+            reLogMin = min(reLogMin,reLog)
+            reLogMax = max(reLogMax,reLog)
+            reMin = min(reMin,re)
+            reMax = max(reMax,re)
+            write ( *, 14 ) iwc_s(i_iwc), t_s(i_t)-t_c_k, f_s(i_f), &
+              &  log10(beta(i_t,i_iwc,i_f,i_c_e)),  rnorm, &
+              &  log10(beta(i_t,i_iwc,i_f,i_c_e)) - rnorm, &
+              &  relog, &
+              &  beta(i_t,i_iwc,i_f,i_c_e),  10.0_r8**rnorm, &
+              &  beta(i_t,i_iwc,i_f,i_c_e) - 10.0_r8**rnorm, &
+              &  re
+14          format ( f7.3, 2f9.3, 2f8.3, 1p, 10g13.5 )
+            i = i + 1
+          end if
+        end do ! i_t
+      end do ! i_iwc
+    end do ! i_f
+    write ( *, 15 ) reLogMin, reMin, reLogMax, reMax
+15  format ( 'Minimum relative error', t55, 1p,g13.5, 39x, g13.5 / &
+      &      'Maximum relative error', t55, 1p,g13.5, 39x, g13.5 )
+
+  end subroutine Do_LS
+
+end program Mie_Least_Squares
+
+! $Log: Mie_Least_Squares.f90,v $
+! Revision 1.1  2008/04/19 01:15:27  vsnyder
+! Initial commit
+!
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d23 1
+a23 1
+       "$RCSfile: RefractiveIndex.f90,v $"
+d217 4
+a220 1
+! $Log: $
+@
+

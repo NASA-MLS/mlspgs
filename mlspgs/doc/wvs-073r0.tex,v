@@ -1,0 +1,135 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.14
+	cfm-single-freq-0-1:1.1.0.12
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.10
+	mus-emls-1-70:1.1.0.8
+	rel-1-0-englocks-work:1.1.0.6
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2008.06.11.20.14.55;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9.25in
+
+\newcommand{\docname}{\bf wvs-073}
+\newcommand{\docdate}{25 February 2008}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Nathaniel, Alyn, Bill, David, Mike, Paul\\
+Subject: \>Summary of ``faster retrieval'' meeting\\
+From: \>Van Snyder\\
+%Reference: \>wvs-058
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-10pt}
+
+The slides for my presentation of variable projection are in {\tt
+$\sim$vsnyder/mls/doc/wvs-072.pdf}.  I think the approach described therein,
+and the approach Bill discussed, are very similar.  See also {\tt
+http://www-sccm.stanford.edu/pub/sccm/sccm-02-07.ps.gz} (also in
+{\tt $\sim$vsnyder/mls/doc}).
+
+In addition to these and the topics on Nathaniel's slides, we should not forget
+that we also discussed
+
+\begin{itemize}
+\item Tomographic methods to decouple ray tracing, allowing to solve for
+temperature and mixing ratio separately in each parcel.  There is a chance that
+these are very closely related to the variable-projection and extinction-based
+methods, with the additional possibility that decoupling can be done with an
+FFT-based approach, which would have $O(n \log n)$ complexity instead of
+$O(n^3)$ complexity.
+
+\item New computing platforms, especially IBM's Cell-BE (Broadband Engine)
+architecture.  IBM has Fortran and C compilers, and system-development kits,
+for this processor.  IBM plans to produce blade-based clusters using this
+processor.  The Sony Playstation 3 is built using this processor.  Mercury
+Computer Systems, Inc.~(http://mc.com/microsites/cell/) offers systems
+(including workstations, and 1U and blade-based clusters), PCI boards, and
+software.  It may be worthwhile to investigate using graphics chips for some
+steps as well.
+
+\item VLSI neural nets, especially analog VLSI (for speed).
+
+\end{itemize}
+
+
+\label{lastpage}
+\end{document}
+% $Id: $
+@

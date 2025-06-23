@@ -1,0 +1,761 @@
+head	2.10;
+access;
+symbols
+	v5-02-NRT-19:2.10
+	v6-00:2.10
+	v5-02-NRT-18:2.10
+	v5-02:2.10
+	v5-01-NRT-17:2.10
+	v5-01-NRT-16:2.10
+	v5-01-NRT-15:2.10
+	v5-01-NRT-14:2.10
+	neuralnetworks-1-0:2.10.0.6
+	cfm-single-freq-0-1:2.10.0.4
+	v5-01:2.10
+	v5-00:2.10
+	v4-23-TA133:2.10.0.2
+	mus-emls-1-70:2.9.0.4
+	rel-1-0-englocks-work:2.9.0.2
+	VUMLS1-00:2.8
+	VPL1-00:2.8
+	V4-22-NRT-08:2.8
+	VAM1-00:2.8
+	V4-21:2.8.0.2
+	V4-13:2.8
+	V4-12:2.8
+	V4-11:2.8
+	V4-10:2.7
+	V3-43:2.6
+	M4-00:2.7
+	V3-41:2.6
+	V3-40-PlusGM57:2.6.0.2
+	V2-24-NRT-04:2.6
+	V3-33:2.6
+	V2-24:2.6
+	V3-31:2.6
+	V3-30-NRT-05:2.6
+	cfm-01-00:2.6
+	V3-30:2.6
+	V3-20:2.6
+	V3-10:2.6
+	V2-23-NRT-02:2.6
+	V2-23:2.6
+	V2-22-NRT-01:2.6
+	V2-22:2.6
+	V2-21:2.3
+	V2-20:2.3
+	V2-11:2.3
+	V2-10:2.3
+	V2-00:2.3
+	V1-51:2.2
+	V1-50:2.2
+	V1-45:2.2
+	V1-44:2.2
+	V1-43:2.2
+	V1-42:2.2
+	V1-41:2.2
+	V1-32:2.2
+	V1-40:2.2
+	V1-31:2.2
+	V1-30:2.2
+	V1-13:2.2
+	V1-12:2.2
+	V1-11:2.2;
+locks; strict;
+comment	@# @;
+
+
+2.10
+date	2019.01.17.16.16.06;	author pwagner;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2017.07.10.18.24.32;	author pwagner;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2014.05.28.21.57.19;	author pwagner;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2012.03.06.19.31.22;	author pwagner;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2007.09.27.21.53.59;	author pwagner;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2007.03.07.01.22.46;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2007.03.02.18.16.00;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2005.06.22.17.44.42;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2003.02.28.02.26.59;	author livesey;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2003.02.19.19.09.42;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.10
+log
+@Last commit re. idate1, idate2 was probably an error
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id: l3ascii_interp_field.f9h,v 2.9 2017/07/10 18:24:32 pwagner Exp $
+
+! ------------------------------------------------------------------------------
+! Part of l3ascii, used for r4 and r8 versions of routine of this name
+! Bugs and gotchas:
+! we treat the case of seasonally cyclic data in a brittle and tricky way
+! We append an extra "December" before the start of the year 
+! and an extra "January" after the end
+! Obviously bogus if the noDates /= 12
+
+! Better would be to create a new Hunt and a new Interpolate procedure
+! capable of coping with cyclic data
+logical :: DEEBUG
+integer :: gdate1, gdate2    ! grid dates corresponding to cyclic dates
+logical :: seasonalCycle     ! If true, our field data is for no particular year
+logical, parameter :: WARNIFNOT12MONTHS = .false.
+logical, parameter :: WARNIFDATESOUTSIDERANGE = .false.
+! Executable
+DEEBUG = .false.
+if ( present(debug) ) DEEBUG = debug
+nullify ( tmpalt, tmpdate )
+
+! --- Set default values for all optional parameters
+if ( present(lat) ) then
+  inlat = lat
+else
+  inlat = 30.0
+end if
+
+if ( present(pressure) ) then
+  inpressure = pressure
+else
+  inpressure = 10.0
+end if
+
+if ( present(lon) ) then
+  inlon = lon
+else
+  inlon = 0.0
+end if
+
+if ( present(sza) ) then
+  insza = sza
+else
+  insza = 30.0
+end if
+
+if ( present(lst) ) then
+  inlst = lst
+else
+  inlst = 12.0
+end if
+
+if ( present(date) ) then
+  indate = date
+else
+  indate = 15768000.0 ! This should be June (ish)
+end if
+
+! OK, that's the optional arguments sorted. 
+! Now, we have to find which two indices the chosen value lies between
+! for each of the six values.
+call ilocate ( real(field%lats, r8), inlat, ilat1, ilat2 )
+call ilocate ( real(field%lons, r8), inlon, ilon1, ilon2 )
+call ilocate ( real(field%szas, r8), insza, isza1, isza2 )
+call ilocate ( real(field%lsts, r8), inlst, ilst1, ilst2 )
+! We can't interpolate dates and prssures as they are. We construct
+! a mean date and a log pressure
+call allocate_test ( tmpalt, field%noHeights, 'tmpalt', moduleName )
+
+! Now think about cases when the gridded date is descriptive of no
+! particular year, i.e. it is seasonally cyclic
+
+! What we must do is to construct the following artificial year:
+! Dec Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec Jan
+! For 14 months in all
+! We will assume that either there is no seasonal cycle at all, in which
+! case the number of dates is 1, or else that grid supplies the 12 months
+! Jan - Dec
+
+! Actually, what we do would still work even if the grid supplies, e.g., only
+! every 2nd month Feb, Apr, Jun, Aug, Oct, Dec
+! so we will disable the warning message below
+if ( field%noYear .and. field%noDates > 1 ) then
+  if ( field%noDates /= 12 .and. WARNIFNOT12MONTHS ) &
+    & call MLSMessage ( MLSMSG_Warning, ModuleName, 'interpolating grid ' // &
+    & trim(field%description) // ' is seasonally cyclic, but isnt 12 months' )
+  ! Subtract the year information from indate.
+  ! Note this (temporarily!?) brushes over issues to do with leap years.
+  seasonalCycle = .true.
+  inDate = modulo ( inDate, 60.0_r8*60.0*24.0*365.25 )
+  call allocate_test ( tmpdate, field%noDates + 2, 'tmpdate', moduleName )
+  tmpdate(2:field%noDates + 1) = (field%dateStarts+field%dateEnds)/2.0
+  tmpdate(1) = tmpdate(field%noDates + 1) - 60.0_r8*60.0*24.0*365
+  tmpdate(field%noDates + 2) = tmpdate(2) + 60.0_r8*60.0*24.0*365
+else
+  seasonalCycle = .false.
+  call allocate_test ( tmpdate, field%noDates, 'tmpdate', moduleName )
+  tmpdate = (field%dateStarts+field%dateEnds)/2.0
+  if ( field%noYear ) inDate = modulo ( inDate, 60.0_r8*60.0*24.0*365.25 )
+end if
+
+if ( any(field%heights <= 0._rgr) ) then
+  tmpalt = field%missingValue
+    call MLSMessage ( MLSMSG_Warning, ModuleName, 'interpolating grid ' // &
+      & trim(field%description) // ' contains negative or 0 values' )
+else
+  tmpalt = -log10(field%heights)
+endif
+
+if ( inpressure <= 0._rgr ) then
+  inalt = field%missingValue
+  call outputNamedValue( 'Warning--input pressure ' // &
+    & ' is ', inPressure, advance='yes' )
+else
+  inalt = -log10(inpressure)
+endif
+call ilocate ( tmpdate, indate, idate1, idate2 )
+if ( DEEBUG ) then
+  call outputNamedValue( 'idate1, idate2', (/idate1, idate2/) )
+endif
+! Something would have to go seriously wrong for the next to occur
+if ( WARNIFDATESOUTSIDERANGE .and. &
+  & (idate2 < 1 .or. idate1 > size(field%field, 6) ) &
+  & ) then
+  call outputNamedValue( 'idate1, idate2', (/idate1, idate2/) )
+  call outputNamedValue ( 'shape(field)', shape(field%field) )
+  if ( present(date) ) call outputNamedValue ( 'Date', Date )
+  call outputNamedValue ( 'inDate', inDate )
+  call outputNamedValue ( 'tmpdate', tmpdate )
+  call outputNamedValue ( 'noYear', field%noYear )
+  call Dump( field%dateStarts, 'field%dateStarts' )
+  call Dump( field%dateEnds, 'field%dateEnds' )
+  call MLSMessage ( MLSMSG_Warning, ModuleName, &
+    & 'The date index is out of its allowed range' )
+endif
+call ilocate ( tmpalt, inalt, ialt1, ialt2 )
+! We now know that the desired point is inside the 6-D hypercuboid 
+! bin of the array field%field(ialt1:ialt2, ilat1:ilat2, .......)
+! Time to do the actual interpolation. Yuck. 
+! There are up to 2^6=64 values
+! to be taken into account. 
+
+! Lets try allocating a cube of the right shape.
+if ( ialt1 == ialt2 ) then !test whether the altitude is between two of the 
+  hcshape(1) = 1       ! grid values (so we interpolate) or if there
+else                   ! is only one value (so we just return that value)
+  hcshape(1) = 2
+end if
+if ( ilat1 == ilat2 ) then
+  hcshape(2) = 1
+else
+  hcshape(2) = 2
+end if
+if ( ilon1 == ilon2 ) then
+  hcshape(3) = 1
+else
+  hcshape(3) = 2
+end if
+if ( ilst1 == ilst2 ) then
+  hcshape(4) = 1
+else
+  hcshape(4) = 2
+end if
+if ( isza1 == isza2 ) then
+  hcshape(5) = 1
+else
+  hcshape(5) = 2
+end if
+if ( idate1 == idate2 ) then
+  hcshape(6) = 1
+else
+  hcshape(6) = 2
+end if
+
+
+if ( DEEBUG ) then
+  call outputNamedValue( 'hyper cube shape', hcshape )
+  call dump( (/indate/),  'indate', format='(1pe12.3)' )
+  call dump(  tmpdate,  'tmpdate', format='(1pe12.3)' )
+endif
+! Allocate a 6-D hypercube that our point lies in. Some of the 
+! dimensions may be "collapsed" 
+allocate ( hcube(1:hcshape(1),1:hcshape(2),1:hcshape(3), &
+  & 1:hcshape(4),1:hcshape(5),1:hcshape(6)) )
+! Copy data into hypercube
+if ( seasonalCycle .and. idate1 /= idate2 ) then
+  ! We need the following trickery:
+  !   idate     1   2   3  .. 14
+  ! grid date   12  1   2  ..  1
+  ! This translates to
+  ! gdate = 1 + mod(idate-2, noDates)
+  gdate1 = 1 + mod(idate1+field%noDates-2, field%noDates)
+  gdate2 = 1 + mod(idate2+field%noDates-2, field%noDates)
+  if ( DEEBUG ) then
+    call outputNamedValue( 'gdate1, gdate2', (/gdate1, gdate2/) )
+  endif
+  hcube(:,:,:,:,:,1) = field%field(ialt1:ialt2, ilat1:ilat2, ilon1:ilon2, &
+    & ilst1:ilst2,isza1:isza2, gdate1)
+  hcube(:,:,:,:,:,2) = field%field(ialt1:ialt2, ilat1:ilat2, ilon1:ilon2, &
+    & ilst1:ilst2,isza1:isza2, gdate2)
+else
+  hcube = field%field(ialt1:ialt2, ilat1:ilat2, ilon1:ilon2, &
+    & ilst1:ilst2,isza1:isza2, idate1:idate2)
+endif
+! If any of these are 'missing' then the result is missing
+if ( any ( hcube >= nearest ( field%missingValue, -1.0 ) .and. &
+  &        hcube <= nearest ( field%missingValue,  1.0 ) ) ) then
+  outVal = field%missingValue
+else
+
+  ! Now we interpolate along each of the axes where this is needed
+  ! Reduce 6-d to 5-d
+  if ( hcshape(6) == 2 ) then !Interpolate in date 
+    hcube(:,:,:,:,:,1) = hcube(:,:,:,:,:,1) + &
+      &  (hcube(:,:,:,:,:,2) - hcube(:,:,:,:,:,1)) * &
+      &  (indate-tmpdate(idate1)) / (tmpdate(idate2)-tmpdate(idate1))
+    if ( DEEBUG ) call outputNamedValue( 'eps', &
+      & (indate-tmpdate(idate1)) / (tmpdate(idate2)-tmpdate(idate1)) &
+      & )
+  else
+    if ( DEEBUG ) call output( 'No need to interpolate dates', advance='yes' )
+  endif
+  ! Reduce  5-d to 4d
+  if ( hcshape(5) == 2 ) then !Interpolate in local Solar zenith ang  SZA
+    hcube(:,:,:,:,1,1) = hcube(:,:,:,:,1,1) + &
+      &  (hcube(:,:,:,:,2,1) - &
+      &  hcube(:,:,:,:,1,1)) * &
+      &  (insza-field%szas(isza1)) / &
+      &  (field%szas(isza2)-field%szas(isza1))
+  end if
+
+  ! Reduce  4-d to 3d
+  if ( hcshape(4) == 2 ) then !Interpolate in local solar time
+    hcube(:,:,:,1,1,1) = hcube(:,:,:,1,1,1) + &
+      &  (hcube(:,:,:,2,1,1) - &
+      &  hcube(:,:,:,1,1,1)) * &
+      &  (inlst-field%lsts(ilst1)) / &
+      &  (field%lsts(ilst2)-field%lsts(ilst1))
+  end if
+
+  ! Reduce  3-d to 2d
+  if ( hcshape(3) == 2 ) then !Interpolate in longitude
+    hcube(:,:,1,1,1,1) = hcube(:,:,1,1,1,1) + &
+      &  (hcube(:,:,2,1,1,1) - &
+      &  hcube(:,:,1,1,1,1)) * &
+      &  (inlon-field%lons(ilon1)) / &
+      &  (field%lons(ilon2)-field%lons(ilon1))
+  end if
+  ! Reduce  2-d to 1d
+  if ( hcshape(2) == 2 ) then !Interpolate in latitude
+
+    hcube(:,1,1,1,1,1) = hcube(:,1,1,1,1,1) + &
+      &  (hcube(:,2,1,1,1,1) - &
+      &  hcube(:,1,1,1,1,1)) * &
+      &  (inlat-field%lats(ilat1)) / &
+      &  (field%lats(ilat2)-field%lats(ilat1))
+  end if
+
+  ! Reduce  1-d to 0d
+  if ( hcshape(1) == 2 ) then !interpolate in altitude
+    hcube(1,1,1,1,1,1) = hcube(1,1,1,1,1,1) + &
+      &  (hcube(2,1,1,1,1,1) - &
+      &  hcube(1,1,1,1,1,1)) * &
+      &  (inalt-tmpalt(ialt1)) / &
+      &  (tmpalt(ialt2)-tmpalt(ialt1))
+  end if
+  outval = hcube(1,1,1,1,1,1)
+end if
+call deallocate_test ( tmpdate, 'tmpdate', moduleName )
+call deallocate_test ( tmpalt, 'tmpalt', moduleName )
+deallocate ( hcube )
+! $Log: l3ascii_interp_field.f9h,v $
+! Revision 2.9  2017/07/10 18:24:32  pwagner
+! Try to catch range errors for idate1, idate2
+!
+! Revision 2.8  2014/05/28 21:57:19  pwagner
+! Prevent defining hcube for index 2 when idate1 == idate2
+!
+! Revision 2.7  2012/03/06 19:31:22  pwagner
+! Fix bug affecting seasonal cyclic symmetric grids
+!
+! Revision 2.6  2007/09/27 21:53:59  pwagner
+! Uses MLSMessage to warn instead of output
+!
+! Revision 2.5  2007/03/07 01:22:46  pwagner
+! Side-step another log of non-positive args case lf6.2 caught
+!
+! Revision 2.4  2007/03/02 18:16:00  pwagner
+! Dont take log if heights contains missingValues; only lf6.2 complained
+!
+! Revision 2.3  2005/06/22 17:44:42  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.2  2003/02/28 02:26:59  livesey
+! Added handling of missing data.
+!
+! Revision 2.1  2003/02/19 19:09:42  pwagner
+! First commit
+!
+@
+
+
+2.9
+log
+@Try to catch range errors for idate1, idate2
+@
+text
+@d12 1
+a12 1
+! $Id: l3ascii_interp_field.f9h,v 2.8 2014/05/28 21:57:19 pwagner Exp $
+d28 1
+d134 3
+a136 1
+if ( idate2 < 1 .or. idate1 > size(field%field, 6) ) then
+d145 1
+a145 1
+  call MLSMessage ( MLSMSG_Error, ModuleName, &
+d285 3
+@
+
+
+2.8
+log
+@Prevent defining hcube for index 2 when idate1 == idate2
+@
+text
+@d12 1
+a12 1
+! $Id: l3ascii_interp_field.f9h,v 2.7 2012/03/06 19:31:22 pwagner Exp $
+d132 13
+d282 3
+@
+
+
+2.7
+log
+@Fix bug affecting seasonal cyclic symmetric grids
+@
+text
+@d12 1
+a12 1
+! $Id: l3ascii_interp_field.f9h,v 2.6 2007/09/27 21:53:59 pwagner Exp $
+d182 1
+a182 1
+if ( seasonalCycle ) then
+d269 3
+@
+
+
+2.6
+log
+@Uses MLSMessage to warn instead of output
+@
+text
+@d12 1
+a12 1
+! $Id: l3ascii_interp_field.f9h,v 2.5 2007/03/07 01:22:46 pwagner Exp $
+d16 15
+a78 1
+call allocate_test ( tmpdate, field%noDates, 'tmpdate', moduleName )
+a79 1
+tmpdate = (field%dateStarts+field%dateEnds)/2.0
+d82 16
+a97 2
+! particular year.
+if ( field%noYear ) then
+d100 1
+d102 9
+d112 1
+d129 3
+d172 5
+d182 19
+a200 3
+hcube = field%field(ialt1:ialt2, ilat1:ilat2, ilon1:ilon2, &
+  & ilst1:ilst2,isza1:isza2, idate1:idate2)
+
+d213 5
+d269 3
+@
+
+
+2.5
+log
+@Side-step another log of non-positive args case lf6.2 caught
+@
+text
+@d12 1
+a12 1
+! $Id: l3ascii_interp_field.f9h,v 2.4 2007/03/02 18:16:00 pwagner Exp $
+d77 2
+a78 2
+  call output( 'Warning--interpolating grid ' // trim(field%description) // &
+    & ' contains negative or 0 values', advance='yes' )
+d202 3
+@
+
+
+2.4
+log
+@Dont take log if heights contains missingValues; only lf6.2 complained
+@
+text
+@d12 1
+a12 1
+! $Id: l3ascii_interp_field.f9h,v 2.3 2005/06/22 17:44:42 pwagner Exp $
+d82 8
+a89 1
+inalt = -log10(inpressure)
+d202 3
+@
+
+
+2.3
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d12 1
+a12 1
+! $Id: l3ascii_interp_field.f9h,v 2.2 2003/02/28 02:26:59 livesey Exp $
+d75 7
+a81 1
+tmpalt = -log10(field%heights)
+d195 3
+@
+
+
+2.2
+log
+@Added handling of missing data.
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d12 1
+a12 1
+! $Id: l3ascii_interp_field.f9h,v 2.1 2003/02/19 19:09:42 pwagner Exp $
+d189 3
+@
+
+
+2.1
+log
+@First commit
+@
+text
+@d4 1
+a4 1
+! $Id: l3ascii_interp_field.f9h,v 2.1 2003/01/08 21:29:26 livesey Exp $
+d8 1
+a8 1
+    nullify ( tmpalt, tmpdate )
+d10 174
+a183 164
+    ! --- Set default values for all optional parameters
+    if ( present(lat) ) then
+      inlat = lat
+    else
+      inlat = 30.0
+    end if
+
+    if ( present(pressure) ) then
+      inpressure = pressure
+    else
+      inpressure = 10.0
+    end if
+
+    if ( present(lon) ) then
+      inlon = lon
+    else
+      inlon = 0.0
+    end if
+
+    if ( present(sza) ) then
+      insza = sza
+    else
+      insza = 30.0
+    end if
+
+    if ( present(lst) ) then
+      inlst = lst
+    else
+      inlst = 12.0
+    end if
+
+    if ( present(date) ) then
+      indate = date
+    else
+      indate = 15768000.0 ! This should be June (ish)
+    end if
+
+    ! OK, that's the optional arguments sorted. 
+    ! Now, we have to find which two indices the chosen value lies between
+    ! for each of the six values.
+    call ilocate ( real(field%lats, r8), inlat, ilat1, ilat2 )
+    call ilocate ( real(field%lons, r8), inlon, ilon1, ilon2 )
+    call ilocate ( real(field%szas, r8), insza, isza1, isza2 )
+    call ilocate ( real(field%lsts, r8), inlst, ilst1, ilst2 )
+    ! We can't interpolate dates and prssures as they are. We construct
+    ! a mean date and a log pressure
+    call allocate_test ( tmpdate, field%noDates, 'tmpdate', moduleName )
+    call allocate_test ( tmpalt, field%noHeights, 'tmpalt', moduleName )
+    tmpdate = (field%dateStarts+field%dateEnds)/2.0
+    
+    ! Now think about cases when the gridded date is descriptive of no
+    ! particular year.
+    if ( field%noYear ) then
+      ! Subtract the year information from indate.
+      ! Note this (temporarily!?) brushes over issues to do with leap years.
+      inDate = modulo ( inDate, 60.0_r8*60.0*24.0*365.25 )
+    end if
+    tmpalt = -log10(field%heights)
+    inalt = -log10(inpressure)
+    call ilocate ( tmpdate, indate, idate1, idate2 )
+    call ilocate ( tmpalt, inalt, ialt1, ialt2 )
+    ! We now know that the desired point is inside the 6-D hypercuboid 
+    ! bin of the array field%field(ialt1:ialt2, ilat1:ilat2, .......)
+    ! Time to do the actual interpolation. Yuck. 
+    ! There are up to 2^6=64 values
+    ! to be taken into account. 
+
+    ! Lets try allocating a cube of the right shape.
+    if ( ialt1 == ialt2 ) then !test whether the altitude is between two of the 
+      hcshape(1) = 1       ! grid values (so we interpolate) or if there
+    else                   ! is only one value (so we just return that value)
+      hcshape(1) = 2
+    end if
+    if ( ilat1 == ilat2 ) then
+      hcshape(2) = 1
+    else
+      hcshape(2) = 2
+    end if
+    if ( ilon1 == ilon2 ) then
+      hcshape(3) = 1
+    else
+      hcshape(3) = 2
+    end if
+    if ( ilst1 == ilst2 ) then
+      hcshape(4) = 1
+    else
+      hcshape(4) = 2
+    end if
+    if ( isza1 == isza2 ) then
+      hcshape(5) = 1
+    else
+      hcshape(5) = 2
+    end if
+    if ( idate1 == idate2 ) then
+      hcshape(6) = 1
+    else
+      hcshape(6) = 2
+    end if
+
+
+    ! Allocate a 6-D hypercube that our point lies in. Some of the 
+    ! dimensions may be "collapsed" 
+    allocate ( hcube(1:hcshape(1),1:hcshape(2),1:hcshape(3), &
+      & 1:hcshape(4),1:hcshape(5),1:hcshape(6)) )
+    ! Copy data into hypercube
+    hcube = field%field(ialt1:ialt2, ilat1:ilat2, ilon1:ilon2, &
+      & ilst1:ilst2,isza1:isza2, idate1:idate2)
+
+    ! Now we interpolate along each of the axes where this is needed
+    ! Reduce 6-d to 5-d
+    if ( hcshape(6) == 2 ) then !Interpolate in date 
+       hcube(:,:,:,:,:,1) = hcube(:,:,:,:,:,1) + &
+            &  (hcube(:,:,:,:,:,2) - hcube(:,:,:,:,:,1)) * &
+            &  (indate-tmpdate(idate1)) / (tmpdate(idate2)-tmpdate(idate1))
+    endif
+    ! Reduce  5-d to 4d
+    if ( hcshape(5) == 2 ) then !Interpolate in local Solar zenith ang  SZA
+      hcube(:,:,:,:,1,1) = hcube(:,:,:,:,1,1) + &
+           &  (hcube(:,:,:,:,2,1) - &
+           &  hcube(:,:,:,:,1,1)) * &
+           &  (insza-field%szas(isza1)) / &
+           &  (field%szas(isza2)-field%szas(isza1))
+    end if
+
+    ! Reduce  4-d to 3d
+    if ( hcshape(4) == 2 ) then !Interpolate in local solar time
+       hcube(:,:,:,1,1,1) = hcube(:,:,:,1,1,1) + &
+            &  (hcube(:,:,:,2,1,1) - &
+            &  hcube(:,:,:,1,1,1)) * &
+            &  (inlst-field%lsts(ilst1)) / &
+            &  (field%lsts(ilst2)-field%lsts(ilst1))
+    end if
+
+    ! Reduce  3-d to 2d
+    if ( hcshape(3) == 2 ) then !Interpolate in longitude
+          hcube(:,:,1,1,1,1) = hcube(:,:,1,1,1,1) + &
+            &  (hcube(:,:,2,1,1,1) - &
+            &  hcube(:,:,1,1,1,1)) * &
+            &  (inlon-field%lons(ilon1)) / &
+            &  (field%lons(ilon2)-field%lons(ilon1))
+    end if
+    ! Reduce  2-d to 1d
+    if ( hcshape(2) == 2 ) then !Interpolate in latitude
+       
+       hcube(:,1,1,1,1,1) = hcube(:,1,1,1,1,1) + &
+            &  (hcube(:,2,1,1,1,1) - &
+            &  hcube(:,1,1,1,1,1)) * &
+            &  (inlat-field%lats(ilat1)) / &
+            &  (field%lats(ilat2)-field%lats(ilat1))
+    end if
+
+    ! Reduce  1-d to 0d
+    if ( hcshape(1) == 2 ) then !interpolate in altitude
+      hcube(1,1,1,1,1,1) = hcube(1,1,1,1,1,1) + &
+        &  (hcube(2,1,1,1,1,1) - &
+        &  hcube(1,1,1,1,1,1)) * &
+        &  (inalt-tmpalt(ialt1)) / &
+        &  (tmpalt(ialt2)-tmpalt(ialt1))
+    end if
+    outval = hcube(1,1,1,1,1,1)
+    call deallocate_test ( tmpdate, 'tmpdate', moduleName )
+    call deallocate_test ( tmpalt, 'tmpalt', moduleName )
+    deallocate ( hcube )
+! $Log: columnscale_0.f9h,v $
+@
+

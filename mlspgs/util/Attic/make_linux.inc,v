@@ -1,0 +1,76 @@
+head	1.3;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.3
+date	99.11.04.02.52.55;	author livesey;	state dead;
+branches;
+next	1.2;
+
+1.2
+date	99.11.04.02.46.22;	author livesey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	99.11.04.02.15.49;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@Removed make_xxx.inc
+@
+text
+@# $Id: make_linux.inc,v 1.2 1999/11/04 02:46:22 livesey Exp $
+#
+# This is a makefile include for running f90 on linux.  Currently it
+# assumes absoft f90. But no doubt this could be changed later
+#
+F90=f90
+F90FLAGS=
+F90DEBUGFLAGS=
+#
+.SUFFIXES: .o .o_debug .f90
+.f90.o:
+	${F90} ${F90FLAGS} ${MODPATHFLAG} -c $<
+
+.f90.o_debug:
+	${F90} ${F90DEBUGFLAGS} ${MODPATHFLAG} -c -o $*.o_debug $<
+
+@
+
+
+1.2
+log
+@Added make.inc
+@
+text
+@d1 1
+a1 1
+# $Id: make_linux.inc,v 1.1 1999/11/04 02:15:49 livesey Exp $
+@
+
+
+1.1
+log
+@Added make_xxx.inc stuff
+@
+text
+@d1 1
+a1 1
+# $Id$
+d10 7
+a16 3
+.SUFFIXES:	.o .f90
+.f90.o :
+	${F90} ${F90FLAGS} -c $<
+@

@@ -1,0 +1,178 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.12
+	cfm-single-freq-0-1:1.1.0.10
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.8
+	mus-emls-1-70:1.1.0.6
+	rel-1-0-englocks-work:1.1.0.4
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.2
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2014.05.29.04.57.12;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@First version
+@
+text
+@; This bit of an l2cf fills all the boring stuff in the `lesser' state vector
+
+begin Fill
+
+  ;; --------------------------------------------------- Isotope ratios
+
+  ;; This macro below fills the isotope ratio quanity for molecule <x>
+  ;; (apriori.<x>_ratio) with the value in the macro !isotoperatiox
+  !define(fillIsotopeRatio,{Fill, quantity=apriori.isotoperatio$1, method=explicit, $
+    explicitValues=!indir(isotoperatio$1)!nl})
+  ;; Note the use of indir as the molecule can contain underscores
+  ;; which are not part of valid macro names generally in the l2cf
+
+  ;; Call this macro for all molecules
+  !forall(fillIsotopeRatio,!isotopicMolecules)
+
+  ;; ------------------------------------- Sideband fractions
+
+  ;; This macro fills one set of sideband fraction for one band.
+  !define(fillSidebandFractions,{!dnl
+  Fill, quantity=apriori.limbSidebandFraction$1, method=explicit, $
+    explicitValues=!limbradsbfraction$1, /spread
+  Fill, quantity=apriori.calSidebandFraction$1, method=explicit, $
+    explicitValues=!calradsbfraction$1, /spread!nl})
+
+  ;; Call that macro for all sidebands
+  !forall(fillSidebandFractions,!allBandLSBs)
+  !forall(fillSidebandFractions,!allBandUSBs)
+
+  ;; ----------------------------------------- System temperatures
+
+  !ifdef(flagSkipSysTemp,{},
+  {
+  ;; This macro fills one system temperature for one band
+  !define(fillSystemTemperature,{Fill, quantity=apriori.systemTemperature$1, $
+    method=explicit, explicitValues=!GlobalSysTemp, /spread!nl})
+
+  ;; Call that macro for all bands
+  !forall(fillSystemTemperature,!allBands)
+  !forall(fillSystemTemperature,!allBandLSBs)
+  !forall(fillSystemTemperature,!allBandUSBs)
+  })
+
+  ;; ----------------------------------------- Noise bandwidths
+
+  ;; This macro fills one noise bandwidth for one band
+  !ifdef(flagSkipSysTemp,{},
+  {
+  !define(fillNoiseBandwidth,{Fill, quantity=apriori.noiseBandwidth$1, $
+    method=explicit, explicitValues=!nbw(!getBandNumber($1)),/spread!nl})
+
+  ;; Call that macro for all bands
+  !forall(fillNoiseBandwidth,!allBands)
+  !forall(fillNoiseBandwidth,!allBandLSBs)
+  !forall(fillNoiseBandwidth,!allBandUSBs)
+  })
+
+  ;; --------------------------------------------------- Minor terms
+  
+  !define(o2vmr,{0.2095 vmr})
+  !define(n2vmr,{0.805 vmr})
+  
+  !define(spaceRadiance,{2.735 K})
+  !define(earthReflectivity,{0.05})
+
+  Fill, quantity=apriori.earthReflectivity, $
+    method=explicit, explicitValues=!earthReflectivity
+
+  Fill, quantity=apriori.spaceRadiance, $
+    method=explicit, explicitValues=!spaceRadiance
+
+  Fill, quantity=apriori.n2, method=explicit,  $
+    explicitValues=!n2vmr, /spread
+  Fill, quantity=apriori.o2, method=explicit,  $
+    explicitValues=!o2vmr, /spread
+  
+  ;; --------------------------------------------- O2 
+
+  ;; Put in O2 vmr profile that drops off in the mesosphere/thermosphere
+  ;; this is what Bill used in uars
+  Fill, quantity=apriori.o2, method=profile, profileValues = $
+    [ 1.0000e+03 mb : 0.2095 vmr, $  
+      8.0131e-03 mb : 0.2095 vmr, $
+      5.8925e-03 mb : 0.2092 vmr, $
+      4.3241e-03 mb : 0.2089 vmr, $
+      3.1594e-03 mb : 0.2086 vmr, $
+      2.2961e-03 mb : 0.2083 vmr, $
+      1.6581e-03 mb : 0.2080 vmr, $
+      1.1874e-03 mb : 0.2070 vmr, $
+      8.4392e-04 mb : 0.2061 vmr, $
+      5.9869e-04 mb : 0.2051 vmr, $
+      4.2472e-04 mb : 0.2042 vmr, $
+      3.0332e-04 mb : 0.2032 vmr, $
+      2.1863e-04 mb : 0.1915 vmr, $
+      1.5948e-04 mb : 0.1798 vmr, $
+      1.1809e-04 mb : 0.1681 vmr, $
+      8.8552e-05 mb : 0.1564 vmr, $
+      6.6696e-05 mb : 0.1447 vmr ]
+
+  ;; --------------------------------------------------- Stuff from L1BOA
+
+  ;; In some cases (e.g. when computing l2pc files) the l1boa file is
+  ;; not the desired source of information
+
+  !ifdef(flagAvoidL1BOA,{
+  ;; ----------------- Avoiding l1boa
+
+  Fill, quantity=apriori.orbitInclination, $
+    method=explicit, explicitValues=98.145 degrees, /spread
+
+  ;; Get an approximate line of sight velocity
+  Fill, quantity = apriori.losVel, method = explicit, $
+    explicitValues = -6.865e3, /spread
+
+  ;; Get an approximate spacecraft geocentric altitude
+  Fill, quantity = apriori.scGeocAlt, method = explicit, $
+    explicitValues = 7070 km, /spread
+
+  ;; Note, we're doing NOTHING here about tangent point altitudes.
+  ;; The presumption is that we don't need them for an l2pc calculation.
+  },{
+  ;; ----------------- Using l1boa
+  Fill, quantity=apriori.orbitInclination, method=l1b
+
+  ;; Geocentric altitudes
+  Fill, quantity=apriori.scGeocAlt, method=l1b
+  Fill, quantity=apriori.tngtGeocAltGHz, method=l1b
+  Fill, quantity=apriori.tngtGeocAltTHz, method=l1b
+
+  Fill, quantity=apriori.losVel, method=l1b})
+
+end Fill
+@

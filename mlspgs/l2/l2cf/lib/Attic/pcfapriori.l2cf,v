@@ -1,0 +1,53 @@
+head	1.2;
+access;
+symbols
+	V1-04:1.1
+	V1-03:1.1
+	V1-02:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2002.05.13.17.24.25;	author livesey;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2002.04.29.21.54.58;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Getting close to being ready
+@
+text
+@21000|!APRIORIBASE_Temp|!theaprioripath||||1
+21001|!APRIORIBASE_GPH|!theaprioripath||||1
+21002|!APRIORIBASE_BrO|!theaprioripath||||1
+21003|!APRIORIBASE_CO|!theaprioripath||||1
+21004|!APRIORIBASE_H2O|!theaprioripath||||1
+21005|!APRIORIBASE_HCN|!theaprioripath||||1
+21006|!APRIORIBASE_HCl|!theaprioripath||||1
+21007|!APRIORIBASE_HNO3|!theaprioripath||||1
+21008|!APRIORIBASE_HO2|!theaprioripath||||1
+21009|!APRIORIBASE_HOCl|!theaprioripath||||1
+21010|!APRIORIBASE_N2O|!theaprioripath||||1
+21011|!APRIORIBASE_O3|!theaprioripath||||1
+21012|!APRIORIBASE_OH|!theaprioripath||||1
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@@
+

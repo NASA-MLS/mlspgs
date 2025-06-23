@@ -1,0 +1,859 @@
+head	1.12;
+access;
+symbols
+	newfwm-sep01:1.11.0.2
+	V0-7:1.11
+	V0-5-Level2:1.9
+	V0-5-SIPS:1.8
+	V0_1:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.12
+date	2001.09.17.20.26.27;	author livesey;	state dead;
+branches;
+next	1.11;
+
+1.11
+date	2001.07.04.00.34.24;	author zvi;	state Exp;
+branches
+	1.11.2.1;
+next	1.10;
+
+1.10
+date	2001.06.21.13.07.08;	author zvi;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2001.05.03.22.19.36;	author vsnyder;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2001.04.09.20.52.07;	author zvi;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2001.03.31.23.40.55;	author zvi;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2001.03.30.20.28.21;	author zvi;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2001.03.29.08.51.01;	author zvi;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.01.31.01.08.48;	author zvi;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2000.11.22.23.10.03;	author zvi;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2000.11.22.23.07.27;	author zvi;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2000.05.04.18.12.05;	author vsnyder;	state Exp;
+branches;
+next	;
+
+1.11.2.1
+date	2001.09.10.10.00.33;	author zvi;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.12
+log
+@New forward model
+@
+text
+@! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+module GET_DELTA_M
+  use MLSCommon, only: I4, R8
+  use ELLIPSE_M, only: ELLIPSE
+  use PATH_ENTITIES_M, only: PATH_VECTOR, PATH_BETA, PATH_INT_VECTOR_2D
+  use GENERIC_DELTA_INTEGRAL_M, only: GENERIC_DELTA_INTEGRAL
+  use ForwardModelConfig, only: ForwardModelConfig_T
+  use VectorsModule, only: Vector_T, VectorValue_T, GetVectorQuantityByType
+  use Intrinsic, only: l_vmr
+  use Units, only: Deg2Rad
+  implicit NONE
+  private
+  public :: GET_DELTA
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
+       "$Id: get_delta_m.f90,v 1.11 2001/07/04 00:34:24 zvi Exp $"
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: get_delta_m.f90,v $"
+!---------------------------------------------------------------------------
+contains
+!---------------------------------------------------------------------
+!  This routine computes the d_delta function. Integration is done
+!  using the Gauss-Legendre method.
+!
+!  ** NOTE: This routine integrate in ZETA Space !
+!
+  Subroutine GET_DELTA(ForwardModelConfig, FwdModelExtra, FwdModelIn,    &
+ &           mid,brkpt,no_ele,z_path,h_path,phi_path,beta_path,dHdz_path,&
+ &           n_sps,N_lvls,ref_corr,spsfunc_path,elvar,midval_ndx,        &
+ &           no_midval_ndx,gl_ndx,no_gl_ndx,Sps_zeta_loop,Sps_phi_loop,  &
+ &           midval_delta,delta,Ier)
+!
+    type(forwardModelConfig_T), intent(in) :: forwardModelConfig
+    type (Vector_T), intent(in) :: fwdModelIn, fwdModelExtra
+!
+    Integer(i4), intent(in) :: n_sps, N_LVLS
+    Integer(i4), intent(in) :: mid, brkpt, no_ele
+!
+    Integer(i4), intent(in) :: gl_ndx(:,:),no_gl_ndx
+    Integer(i4), intent(in) :: midval_ndx(:,:),no_midval_ndx
+
+    Real(r8), intent(in) :: REF_CORR(:)
+    Real(r8), intent(in) :: midval_delta(:,:)
+
+    Real(r8), intent(inout) :: DELTA(:,:,:,:)
+
+    Integer(i4), intent(out) :: IER
+
+    Type(ELLIPSE), intent(in out) :: elvar
+
+    Type(path_beta), intent(in) :: BETA_PATH(:)      ! (Nsps)
+
+    Type(path_vector), intent(in) :: SPSFUNC_PATH(:)
+    Type(path_vector), intent(in) :: Z_PATH, H_PATH, PHI_PATH, DHDZ_PATH
+
+    Type(path_int_vector_2d), intent(in) :: SPS_PHI_LOOP(:), &
+                                        &   SPS_ZETA_LOOP(:)
+!
+! -----     Local variables     ----------------------------------------
+!
+    Integer(i4) :: j, ip, iz, nco, npf
+
+    Real(r8) :: Q
+    Real(r8), allocatable, dimension(:) :: Integrand
+
+    type (VectorValue_T), pointer :: f
+!
+! -----     Executable statements     ----------------------------------
+!
+    Ier = 0
+    allocate ( Integrand(no_ele), STAT=ier )
+    IF(ier /= 0) THEN
+      Ier = 1
+      Print *,'** Error: ALLOCATION error in GET_DELTA routine ..'
+      goto 99
+    end if
+!
+! Start delta array computations:
+!
+    delta = 0.0
+    do j = 1, n_sps
+!
+      f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+     &     quantityType=l_vmr, molecule=forwardModelConfig%molecules(j))
+
+      IF (.not. forwardModelConfig%moleculeDerivatives(j)) CYCLE
+!
+      nco = f%template%noSurfs
+      npf = f%template%noInstances
+!
+      integrand(1:no_ele) = beta_path(j)%values(1:no_ele)
+!
+      if (f%template%logBasis) integrand(1:no_ele) = &
+     &           integrand(1:no_ele) * spsfunc_path(j)%values(1:no_ele)
+!
+! Loop over the specie's Phi's
+!
+      do ip = 1, npf
+!
+! Loop over the specie's zeta's
+!
+        do iz = 1, nco
+!
+          q = 1.0
+          if (f%template%logBasis) q = 1.0 / f%values(iz,ip)
+!
+          Call generic_delta_integral(mid,brkpt,no_ele,z_path,      &
+         &     h_path,phi_path,dhdz_path,N_lvls,ref_corr,integrand, &
+         &     f%template%surfs(:,1),Deg2Rad*f%template%phi(1,:),   &
+         &     nco,npf,iz,ip,q,elvar,midval_delta(1:,j),midval_ndx, &
+         &     no_midval_ndx,gl_ndx,no_gl_ndx,Sps_zeta_loop(j),     &
+         &     Sps_phi_loop(j),delta(1:,iz,ip,j),Ier)
+          IF(ier /= 0) goto 99
+!
+        end do
+!
+      end do
+!
+    end do
+!
+ 99  deallocate ( Integrand, STAT=j )
+!
+    Return
+!
+  End Subroutine GET_DELTA
+!
+end module GET_DELTA_M
+! $Log: get_delta_m.f90,v $
+! Revision 1.11  2001/07/04 00:34:24  zvi
+! Modified & new code(s) for better timing
+!
+! Revision 1.10  2001/06/21 13:07:08  zvi
+! Speed enhancement MAJOR update
+!
+! Revision 1.9  2001/05/03 22:19:36  vsnyder
+! Insert copyright notice, some cosmetic changes
+!
+! Revision 1.8  2001/04/09 20:52:07  zvi
+! Debugging Derivatives version
+!
+! Revision 1.7  2001/03/31 23:40:55  zvi
+! Eliminate l2pcdim (dimension parameters) move to allocatable ..
+!
+! Revision 1.6  2001/03/30 20:28:21  zvi
+! General fix-up to get rid of COMMON BLOCK (ELLIPSE)
+!
+! Revision 1.5  2001/03/29 08:51:01  zvi
+! Changing the (*) toi (:) everywhere
+!
+! Revision 1.4  2001/01/31 01:08:48  zvi
+! New version of forward model
+!
+! Revision 1.1  2000/06/21 21:56:13  zvi
+! First version D.P.
+!
+! Revision 1.1  2000/05/04 18:12:05  vsnyder
+! Initial conversion to Fortran 90
+@
+
+
+1.11
+log
+@Modified & new code(s) for better timing
+@
+text
+@d18 1
+a18 1
+       "$Id: get_delta_m.f90,v 1.10 2001/06/21 13:07:08 zvi Exp $"
+d132 3
+@
+
+
+1.11.2.1
+log
+@*** empty log message ***
+@
+text
+@d18 1
+a18 1
+       "$Id: get_delta_m.f90,v 1.11 2001/07/04 00:34:24 zvi Exp $"
+a131 3
+! Revision 1.11  2001/07/04 00:34:24  zvi
+! Modified & new code(s) for better timing
+!
+@
+
+
+1.10
+log
+@Speed enhancement MAJOR update
+@
+text
+@d18 1
+a18 1
+       "$Id: get_delta_m.f90,v 1.9 2001/05/03 22:19:36 vsnyder Exp $"
+d115 1
+a115 1
+         &     Sps_phi_loop(j),1,delta(1:,iz,ip,j),Ier)
+d132 3
+@
+
+
+1.9
+log
+@Insert copyright notice, some cosmetic changes
+@
+text
+@d7 1
+a7 1
+  use PATH_ENTITIES_M, only: PATH_VECTOR, PATH_BETA
+d18 1
+a18 1
+       "$Id: $"
+d21 1
+a21 1
+       "$RCSfile: $"
+d30 1
+a30 1
+  Subroutine GET_DELTA(ForwardModelConfig, FwdModelExtra, FwdModelIn, &
+d32 3
+a34 1
+ &           n_sps,N_lvls,ref_corr,spsfunc_path,elvar,delta,Ier)
+d41 3
+d46 1
+d58 3
+d110 6
+a115 4
+          Call generic_delta_integral(mid, brkpt, no_ele, z_path, &
+         &     h_path, phi_path, dhdz_path, N_lvls, ref_corr,integrand,&
+         &     f%template%surfs(:,1), Deg2Rad*f%template%phi(1,:), &
+         &     nco, npf, iz, ip, q, elvar, delta(1:,iz,ip,j), Ier)
+d132 3
+@
+
+
+1.8
+log
+@Debugging Derivatives version
+@
+text
+@d1 3
+d17 5
+a21 3
+  CHARACTER (LEN=256) :: Id = &
+    "$Id: get_delta_m.f90,v 1.7 2001/03/31 23:40:55 zvi Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile: get_delta_m.f90,v $"
+d58 1
+a58 1
+    Real(r8), ALLOCATABLE, DIMENSION(:) :: Integrand
+d65 1
+a65 1
+    ALLOCATE(Integrand(no_ele), STAT=ier)
+d70 1
+a70 1
+    endif
+d113 1
+a113 1
+ 99  DEALLOCATE(Integrand, STAT=j)
+d121 3
+@
+
+
+1.7
+log
+@Eliminate l2pcdim (dimension parameters) move to allocatable ..
+@
+text
+@d6 4
+d15 1
+a15 1
+    "$Id: get_delta_m.f90,v 1.6 2001/03/30 20:28:21 zvi Exp $"
+d25 8
+a32 8
+  Subroutine GET_DELTA(mid,brkpt,no_ele,z_path,h_path,phi_path,    &
+ &           beta_path,dHdz_path,n_sps,N_lvls,ncoeffs,z_basis,  &
+ &           ref_corr,no_phi_f,phi_basis,spsfunc_path,mr_f,    &
+ &           is_f_log,elvar,delta,Ier)
+
+    Logical,     intent(in) :: IS_F_LOG(:)
+    Integer(i4), intent(in) :: N_SPS, N_LVLS
+    Integer(i4), intent(in) :: NCOEFFS(:), NO_PHI_F(:)
+a35 3
+    Real(r8), intent(in) :: Z_BASIS(:,:)
+    Real(r8), intent(in) :: MR_F(:,:,:)
+    Real(r8), intent(in) :: PHI_BASIS(:,:)
+d50 1
+a50 1
+    Integer(i4) :: J, K, IP, IZ, NCO, NPF
+a52 1
+!
+d54 2
+a59 2
+    DEALLOCATE(Integrand, STAT=k)
+!
+d67 1
+a67 1
+!  Initialize all arrays:
+d69 1
+a69 1
+    k = 2 * N_lvls
+a70 2
+      delta(1:k,1:ncoeffs(j),1:no_phi_f(j),j) = 0.0
+    end do
+d72 4
+a75 1
+    do j = 1, n_sps
+d77 2
+a78 2
+      nco = ncoeffs(j)
+      npf = no_phi_f(j)
+d82 2
+a83 4
+      if(is_f_log(j)) then
+        integrand(1:no_ele) = integrand(1:no_ele) *  &
+       &                      spsfunc_path(j)%values(1:no_ele)
+      endif
+d94 1
+a94 1
+          if(is_f_log(j)) q = 1.0 / mr_f(iz,ip,j)
+d96 4
+a99 4
+          Call generic_delta_integral(mid, brkpt, no_ele, z_path,   &
+         &     h_path, phi_path, dhdz_path, N_lvls, ref_corr,       &
+         &     integrand, z_basis(1:,j), phi_basis(1:,j), nco, npf, &
+         &     iz, ip, q, elvar, delta(1:,iz,ip,j), Ier)
+d108 1
+a108 1
+ 99  DEALLOCATE(Integrand, STAT=k)
+d116 3
+@
+
+
+1.6
+log
+@General fix-up to get rid of COMMON BLOCK (ELLIPSE)
+@
+text
+@d11 1
+a11 1
+    "$Id: get_delta_m.f90,v 1.5 2001/03/29 08:51:01 zvi Exp $"
+d21 3
+a23 3
+  Subroutine GET_DELTA(mid,brkpt,no_ele,z_path,h_path,phi_path,         &
+ &           beta_path,dHdz_path,n_sps,N_lvls,Nc,ncoeffs,Nlvl,  &
+ &           z_basis,ref_corr,mnp,no_phi_f,phi_basis,spsfunc_path,mr_f, &
+d27 1
+a27 1
+    Integer(i4), intent(in) :: NLVL, NC, N_SPS, N_LVLS, MNP
+d76 1
+a77 1
+      nco = ncoeffs(j)
+d117 3
+@
+
+
+1.5
+log
+@Changing the (*) toi (:) everywhere
+@
+text
+@d3 1
+d11 1
+a11 1
+    "$Id: get_delta_m.f90,v 1.4 2001/01/31 01:08:48 zvi Exp $"
+d24 1
+a24 1
+ &           is_f_log,delta,Ier)
+d40 2
+d100 1
+a100 1
+         &     iz, ip, q, delta(1:,iz,ip,j), Ier)
+d117 3
+@
+
+
+1.4
+log
+@New version of forward model
+@
+text
+@d10 1
+a10 1
+    "$Id: get_delta_m.f90,v 1.1 2000/08/30 21:56:13 zvi Exp $"
+d25 1
+a25 1
+    Logical,     intent(in) :: IS_F_LOG(*)
+d27 1
+a27 1
+    Integer(i4), intent(in) :: NCOEFFS(*), NO_PHI_F(*)
+d30 4
+a33 4
+    Real(r8), intent(in) :: REF_CORR(*)
+    Real(r8), intent(in) :: Z_BASIS(Nc,*)
+    Real(r8), intent(in) :: MR_F(Nc,mnp,*)
+    Real(r8), intent(in) :: PHI_BASIS(mnp,*)
+d35 1
+a35 1
+    Real(r8), intent(inout) :: DELTA(2*Nlvl,Nc,mnp,*)
+d114 3
+@
+
+
+1.3
+log
+@Re-add basic stuff
+@
+text
+@d21 1
+a21 1
+ &           beta_path,dHdz_path,n_sps,N_lvls,Nc,ncoeffs,sps_tbl,Nlvl,  &
+d27 1
+a27 1
+    Integer(i4), intent(in) :: NCOEFFS(*), SPS_TBL(*), NO_PHI_F(*)
+d46 1
+a46 1
+    Integer(i4) :: SPS_I, J, K, IP, IZ, NCO, NPF
+d67 1
+a67 2
+    do sps_i = 1, n_sps
+      j = sps_tbl(sps_i)
+d71 1
+a71 1
+    do sps_i = 1, n_sps
+a72 1
+      j = sps_tbl(sps_i)
+@
+
+
+1.2
+log
+@New version
+@
+text
+@d2 3
+a4 6
+  use CS_INTRP_M, only: CS_INTRP
+  use ELLIPSE, only: HT, PS, ROC
+  use GL6P, only: GW, H_GL, NG, PHI_GL, T_GL, Z_GL
+  use MDBETA, only: MAX_NO_FREQ
+  use MLSCommon, only: I4, R4, R8
+  use S_GET_ONE_ETA_M, only: GET_ONE_ETA
+a7 1
+
+d10 1
+a10 1
+       "$Id: get_delta_m.f90,v 1.1 2000/05/04 18:12:05 vsnyder Exp $"
+a12 1
+
+a13 1
+
+d20 20
+a39 7
+  Subroutine GET_DELTA ( z_path, t_path, h_path, phi_path, dHdz_path,      &
+ &           N_lvls, cs, Frq, n_sps, ncoeffs, sps_tbl, Nc, Nlvl, no_phi_t, &
+ &           f_basis, SCLoop, ref_corr, mdb_pres, mdb_temp, mdb_freq,      &
+ &           mnp, mnf, no_freqs_f, no_phi_f, phi_basis_f, IndxR, IndxL,    &
+ &           path_brkpt, delta, Ier )
+    integer(i4), intent(in) :: NO_PHI_T
+    integer(i4), intent(in) :: MNF
+d41 2
+a42 27
+    real(r4), intent(in) :: Z_PATH(*)
+    real(r4), intent(in) :: T_PATH(*)
+    real(r4), intent(in) :: H_PATH(*)
+    real(r4), intent(in) :: PHI_PATH(*)
+    real(r4), intent(in) :: DHDZ_PATH(*)
+    integer(i4), intent(in) :: N_LVLS
+    real(r4), intent(in) :: CS(Nlvl,no_phi_t,mnf,*)
+    real(r8), intent(in) :: FRQ
+    integer(i4), intent(in) :: N_SPS
+    integer(i4), intent(in) :: NCOEFFS(*)
+    integer(i4), intent(in) :: SPS_TBL(*)
+    integer(i4), intent(in) :: NC
+    integer(i4), intent(in) :: NLVL
+    real(r4), intent(in) :: F_BASIS(Nc,*)
+    integer(i4), intent(in) :: SCLOOP(2,Nlvl,*)
+    real(r4), intent(in) :: REF_CORR(*)
+    real(r4), intent(in) :: MDB_PRES(*)
+    real(r4), intent(in) :: MDB_TEMP(*)
+    real(r8), intent(in) :: MDB_FREQ(mnf,*)
+    integer(i4), intent(in) :: MNP
+    integer(i4), intent(in) :: NO_FREQS_F(*)   ! Not used
+    integer(i4), intent(in) :: NO_PHI_F(*)
+    real(r4), intent(in) :: PHI_BASIS_F(mnp,*)
+    integer(i4), intent(in) :: INDXR, INDXL
+    integer(i4), intent(in) :: PATH_BRKPT(*)
+    real(r4), intent(inout) :: DELTA(2*Nlvl,Nc,mnp,*)
+    integer(i4), intent(out) :: IER
+d46 5
+a50 12
+    real(r4) :: BETA_GL(Ng,20), BETA_ZS(20)
+    real(r8) :: GW_DHDZ(Ng)
+    integer(i4) :: H_I
+    real(r8) :: HD
+    real(r4) :: HH, HL
+    real(r8) :: HTAN2
+    integer(i4) :: J, LC1, M, MP, NGP1
+    real(r4) :: PH, PL, RC
+    real(r8) :: SA, SB
+    integer(i4) :: SPS_I
+    real(r4) :: TH, TL, TP_GL(Ng,20), TP_ZS(20)
+    real(r4) :: ZH, ZL
+d55 8
+a62 2
+    hd = ht + RoC
+    htan2 = hd * hd
+d66 1
+a66 5
+    tp_zs = 0.0
+    beta_zs = 0.0
+    tp_GL = 0.0
+    beta_GL = 0.0
+!
+d69 1
+a69 1
+      delta(1:2 * N_lvls,1:ncoeffs(j),1:no_phi_f(j),j) = 0.0
+d72 1
+a72 1
+! First, do the right hand side of the ray path:
+d74 3
+a76 2
+    ps = -1.0
+    Ngp1 = Ng + 1
+d78 1
+a78 7
+    mp = 1
+    zh = z_path(mp)
+    th = t_path(mp)
+    hh = h_path(mp)
+    ph = phi_path(mp)
+    hd = dble(hh) + RoC
+    sb = Sqrt(abs(hd*hd-htan2))
+d80 4
+a83 1
+    do h_i = 1, IndxR
+d85 1
+a85 1
+      mp = mp + Ngp1
+d87 1
+a87 3
+      hl = hh
+      hh = h_path(mp)
+      if (hh < ht) exit
+d89 1
+a89 2
+      zl = zh
+      zh = z_path(mp)
+d91 1
+a91 2
+      tl = th
+      th = t_path(mp)
+d93 2
+a94 2
+      pl = ph
+      ph = phi_path(mp)
+d96 5
+a100 3
+      sa = sb
+      hd = dble(hh) + RoC
+      sb = Sqrt(abs(hd*hd-htan2))
+d102 1
+a102 1
+      if (abs(sa-sb) < 0.05) exit
+d104 1
+a104 14
+      m = max(1,N_lvls-h_i)
+      rc = ref_corr(m)
+!
+      call define_gl_grid_entities
+!
+      call compute_beta_and_temp_power ( th, zh )
+!
+      call gauss_legendre ( ph, zh )
+!
+    end do
+!
+! Second, do the left hand side of the ray path:
+!
+    ps = 1.0
+a105 7
+    h_i = IndxL - 1
+    mp = path_brkpt(2)
+    hh = h_path(mp)
+    do while (hh < ht)
+      h_i = h_i + 1
+      mp = mp + Ngp1
+      hh = h_path(mp)
+d108 1
+a108 38
+    zh = z_path(mp)
+    th = t_path(mp)
+    ph = phi_path(mp)
+    hd = dble(hh) + RoC
+    sb = Sqrt(abs(hd*hd-htan2))
+!
+    do while (h_i < 2 * N_lvls - 1)
+!
+      mp = mp + Ngp1
+!
+      zl = zh
+      zh = z_path(mp)
+!
+      tl = th
+      th = t_path(mp)
+!
+      pl = ph
+      ph = phi_path(mp)
+!
+      hl = hh
+      hh = h_path(mp)
+!
+      sa = sb
+      hd = dble(hh) + RoC
+      sb = Sqrt(abs(hd*hd-htan2))
+!
+      m = max(1,h_i-N_lvls+1)
+      rc = ref_corr(m)
+!
+      call define_gl_grid_entities
+!
+      call compute_beta_and_temp_power ( tl, zl )
+!
+      call gauss_legendre ( pl, zl )
+!
+      h_i = h_i + 1
+!
+    end do
+a110 66
+  ! *****     Internal procedures     **********************************
+  contains
+! ----------------------------     COMPUTE_BETA_AND_TEMP_POWER     -----
+    subroutine COMPUTE_BETA_AND_TEMP_POWER ( TS, ZS )
+      real(r4), intent(in) :: TS
+      real(r4), intent(in) :: ZS
+!
+      integer :: I, J, SPS_I
+!
+! Compute beta and temp. power on the Gauss-Legendre grid for the current
+! sub-interval:
+!
+      do sps_i = 1, n_sps
+        j = sps_tbl(sps_i)
+        Call cs_intrp(zs,ts,Frq,N_lvls,mdb_pres,mdb_temp,        &
+   &              mdb_freq(1:max_no_freq,j),cs(:,:,:,j),beta_zs(j),tp_zs(j))
+        do i = 1, Ng
+          Call cs_intrp(z_GL(i),t_GL(i),Frq,N_lvls,mdb_pres,     &
+   &           mdb_temp,mdb_freq(1:max_no_freq,j),cs(:,:,:,j),beta_GL(i,j),  &
+   &           tp_GL(i,j))
+        end do
+      end do
+    end subroutine COMPUTE_BETA_AND_TEMP_POWER
+! --------------------------------     DEFINE_GL_GRID_ENTITIES     -----
+    subroutine DEFINE_GL_GRID_ENTITIES
+!
+! Define the various GL grid entities for this sub-interval:
+!
+      real(r8) :: AYM
+      integer :: I, J
+      real(r8) :: XM, YM, Z1, Z2
+!
+      z1 = dble(zl)
+      z2 = dble(zh)
+      xm = 0.5d0 * (z2 + z1)
+      ym = 0.5d0 * (z2 - z1)
+      aym = abs(ym)
+!
+      j = mp - Ng
+      do i = 1, Ng
+        z_GL(i) = z_path(j)
+        t_GL(i) = t_path(j)
+        h_GL(i) = h_path(j)
+        phi_GL(i) = phi_path(j)
+        Gw_dHdZ(i) = Gw(i) * dhdz_path(j) * aym
+        j = j + 1
+      end do
+    end subroutine DEFINE_GL_GRID_ENTITIES
+! -----------------------------------------     GAUSS_LEGENDRE     -----
+    subroutine GAUSS_LEGENDRE ( FS, ZS )
+      real(r4), intent(in) :: FS
+      real(r4), intent(in) :: ZS
+!
+      real(r8) :: BZS
+      real(r4) :: ETAPHS, ETAZ, ETFI
+      real(r8) :: FV
+      integer :: FI, I, J, K, LC1, LC2, NCO, NPF
+      real(r8) :: SING
+      integer :: SPS_I
+      real(r8) :: SUM
+!
+      do sps_i = 1, n_sps
+!
+        j = sps_tbl(sps_i)
+        npf = no_phi_f(j)
+        nco = ncoeffs(j)
+d112 1
+a112 12
+        bzs = dble(beta_zs(j))
+!
+        lc1 = SCLoop(1,m,sps_i)
+        lc2 = SCLoop(2,m,sps_i)
+!
+! Loop over the specie's Phi's
+!
+        do fi = 1, npf
+!
+          Call Get_one_eta(fs,phi_basis_f(1:,j),npf,fi,etaphs)
+!
+! Compute this specie contribution to the integral:
+a113 38
+          do k = lc1, lc2
+!
+! Now k is a coefficient value. Note that f_basis(k,i) is the weighting
+! function peak for species i coefficient k .
+!
+            Sum = 0.0
+!
+            sing = 0.0
+            if (etaphs > 0.0) then
+              Call Get_one_eta(zs,f_basis(1:,j),nco,k,etaz)
+              if (etaz > 0.0) sing = bzs * etaz * etaphs
+            end if
+!
+! Now compute the Gauss-Legendre quadrature:
+!
+            do i = 1, Ng
+              fv = -sing
+              Call Get_one_eta(z_GL(i),f_basis(1:,j),nco,k,etaz)
+              if (etaz > 0.0) then
+                Call Get_one_eta(phi_GL(i),phi_basis_f(1:,j),npf,fi,etfi)
+                if (etfi > 0.0) then
+                  fv = fv + dble(beta_GL(i,j))*etaz*etfi
+                end if
+              end if
+              hd = dble(h_GL(i)) + RoC
+              Sum = Sum + Gw_dHdz(i) * fv * (hd / Sqrt(hd*hd-htan2))
+            end do
+!
+            fv = Sum + sing * abs(sb-sa)
+            delta(h_i,k,fi,j) = fv * rc
+!
+          end do
+!
+        end do
+!
+      end do
+    end subroutine GAUSS_LEGENDRE
+  End Subroutine GET_DELTA
+a114 1
+
+d116 3
+a120 1
+!
+@
+
+
+1.1
+log
+@Initial conversion to Fortran 90
+@
+text
+@d14 1
+a14 1
+       "$Id: GET_DELTA_M,v 1.12 2000/02/08 19:54:57 vsnyder Exp $"
+d315 4
+a318 1
+! $Log: GET_DELTA_M,v $
+@
+

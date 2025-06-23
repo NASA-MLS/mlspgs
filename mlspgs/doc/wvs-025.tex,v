@@ -1,0 +1,244 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.12
+	cfm-single-freq-0-1:1.2.0.10
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.8
+	mus-emls-1-70:1.2.0.6
+	rel-1-0-englocks-work:1.2.0.4
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.2
+	V4-21:1.2.0.2
+	V4-13:1.2
+	V4-12:1.2
+	V4-11:1.2
+	V4-10:1.2
+	V3-43:1.1
+	M4-00:1.2
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.2
+	V3-31:1.2
+	V3-30-NRT-05:1.2
+	cfm-01-00:1.2
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.2
+date	2010.04.01.02.05.24;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2008.06.11.20.14.51;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Remove revision numbers in references
+@
+text
+@\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.25in
+
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9.00in
+
+\newcommand{\docname}{\bf wvs-025r1}
+\newcommand{\docdate}{31 March 2010}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill, Nathaniel, Mike\\
+Subject: \>New frequency averaging scheme for use with PFA\\
+From: \>Van Snyder\\
+Reference: \>wvs-024\\
+\end{tabbing}
+
+\parindent 0pt \parskip 3pt
+\vspace{-20pt}
+
+\section{Introduction}\label{intro}
+
+Recall from wvs-024 the equations to combine PFA and line-by-line radiances
+for a particular channel $c$
+
+\begin{equation}\label{combined}
+I_c \approx \sum_{n=1}^{N_f} \phi_{nc} \Delta \nu_{nc}
+               \sum_{i=1}^{N_p} \Delta B_{ic} \tau^s_{in} \tau^w_{ic}
+\end{equation}
+
+and to combine PFA and line-by-line derivatives for that channel
+
+\begin{equation}\label{final}
+\frac{\partial I_c}{\partial x_k}
+\approx \sum_{n=1}^{N_f} \phi_{nc} \Delta \nu_{nc} \sum_{i=1}^{N_p}
+ \left(
+  \frac{\partial \Delta B_{ic}}{\partial x_k} -
+  \Delta B_{ic}
+   \sum_{j=1}^i \left( \frac{\partial \delta^s_{jn}}{\partial x_k} +
+                      \frac{\partial \delta^w_{jc}}{\partial x_k}
+                \right)
+  \right) \tau^s_{in} \tau^w_{ic}\,.
+\end{equation}
+
+The term $\frac{\partial \delta^s_{jn}}{\partial x_k}$ is a three-dimensional
+array that could, in the worst case, require 6 GB of storage per species.  To
+reduce this requirement, it is proposed to revise the scheme for frequency
+averaging.
+
+\section{Current frequency-averaging scheme}\label{current}
+
+The scheme outlined in section \ref{intro} isn't precisely representative. The
+forward model first calculates ``raw'' radiances and derivatives on a
+pre-specified frequency grid, the \emph{pointing frequency} grid, with a
+separate grid for each pointing:
+
+\begin{equation}\begin{split}\label{raw}
+R_n =\,& \sum_{i=1}^{N_p} \Delta B_{in} \tau^s_{in} \tau^w_{ic} \\
+\frac{\partial R_n}{\partial x_k} =\,&
+\sum_{i=1}^{N_p}
+ \left(
+  \frac{\partial \Delta B_{in}}{\partial x_k} -
+  \Delta B_{ic}
+   \sum_{j=1}^i \left( \frac{\partial \delta^s_{jn}}{\partial x_k} +
+                      \frac{\partial \delta^w_{jc}}{\partial x_k}
+                \right)
+  \right) \tau^s_{in} \tau^w_{ic}\,.
+\end{split}\end{equation}
+
+Then (in the non-DACS case), for each channel, those radiances and derivatives
+are interpolated to the frequency grid upon which the filter function for the
+channel is recorded.  Finally, the interpolated radiances and derivatives are
+multiplied by the filter function for the corresponding frequency in the filter
+grid, and these products are integrated using the Newton 3/8 quadrature rule:
+
+\begin{equation}\begin{split}\label{average}
+I_c =\,& \sum_{n=1}^{N_f} w_n \phi_{nc} \Delta \nu_{nc} \hat R_n\\
+\frac{\partial I_c}{\partial x_k} =\,&
+ \sum_{n=1}^{N_f} w_n \phi_{nc} \Delta \nu_{nc}
+  \frac{\partial \hat R_n}{\partial x_k}
+\end{split}\end{equation}
+
+where $w_n$ is a weight for the Newton 3/8 rule, the hat indicates quantities
+interpolated from the pointing frequency grid to the filter function grid, and
+$n$ now ranges over the filter grid instead of the pointing frequency grid.
+
+The computed radiances are interpolated to the filter function grid, rather
+than vice-versa, because it has a finer spacing than the pointing frequency
+grid.
+
+\section{Incremental frequency-averaging scheme}
+
+The frequency averaging scheme described in section \ref{current} can be
+applied incrementally during the frequency loop.
+
+Rather than evaluating and saving the sums over $N_p$ in Equation (\ref{raw})
+for every frequency in the pointing frequency grid, and then doing frequency
+averaging later, evaluate and save them for some fixed number of frequencies,
+say four.  Then interpolate polynomials, say cubics, to them, evaluate the
+interpolating polynomials on the filter grid, and accumulate a little bit of
+the sums in Equation (\ref{average}).  Then discard the first saved quantity,
+evaluate it for the next point in the pointing frequency grid, and repeat.  For
+cubic order, this has slightly better accuracy than the current scheme, and
+needs far less storage.  The extent of the pointing-frequency dimension for all
+quantities that have a pointing frequency dimension, including $\frac{\partial
+\delta^s_{jn}}{\partial x_k}$, is reduced to, say, four. Variations on this
+scheme are possible by changing the number of saved points on the pointing
+frequency grid and therefore the order of interpolating polynomial.
+
+A scheme based upon ideas similar to B-spline basis functions (but without the
+continuity constraints) is possible:  The sum over $N_p$ is evaluated for one
+point in the pointing frequency grid.  Then its value is assumed to be zero at
+some (even) number, say two, of symmetrically-placed adjacent points in that
+grid, and polynomials are interpolated through those values.  The interpolating
+polynomials are then evaluated on the filter grid, multiplied by the filter
+function, and a little bit of the sums in Equation (\ref{average}) is
+accumulated.  When this is repeated for every point in the pointing frequency
+grid, the effect is as if the sum over $N_p$ were evaluated at every point on
+the pointing frequency grid, and the results fitted with piecewise polynomials
+of the same order as is used for each point.  This scheme requires only one of
+each of the quantities to be saved; the storage saving is even more than in the
+previous case.  Variations on this scheme are possible by changing the number
+of adjacent points at which the values are assumed to be zero, equivalently,
+changing the order of the piecewise interpolating polynomial.  Piecewise linear
+is essentially the same as the representation basis used for mixing ratios.
+
+Both of these schemes require obvious and fairly simple special considerations
+at the ends of the pointing frequency grid.  Neither one is compatible with the
+current FFT-based method for DACS frequency averaging.
+
+\label{lastpage}
+\end{document}
+% $Id: wvs-025.tex,v 1.1 2008/06/11 20:14:51 vsnyder Exp $
+
+% $Log: $
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d9 2
+a10 2
+\newcommand{\docname}{\bf wvs-025}
+\newcommand{\docdate}{11 October 2005}
+d39 1
+a39 1
+Reference: \>wvs-024r2\\
+d47 1
+a47 1
+Recall from wvs-024r2 the equations to combine PFA and line-by-line radiances
+d157 3
+a159 1
+% $Id: $
+@
+

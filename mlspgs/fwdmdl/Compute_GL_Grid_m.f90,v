@@ -1,0 +1,898 @@
+head	2.22;
+access;
+symbols
+	v5-02-NRT-19:2.22
+	v6-00:2.22
+	v5-02-NRT-18:2.22
+	v5-02:2.22
+	v5-01-NRT-17:2.22
+	v5-01-NRT-16:2.22
+	v5-01-NRT-15:2.22
+	v5-01-NRT-14:2.22
+	neuralnetworks-1-0:2.22.0.12
+	cfm-single-freq-0-1:2.22.0.10
+	v5-01:2.22
+	v5-00:2.22
+	v4-23-TA133:2.22.0.8
+	mus-emls-1-70:2.22.0.6
+	rel-1-0-englocks-work:2.22.0.4
+	VUMLS1-00:2.22
+	VPL1-00:2.22
+	V4-22-NRT-08:2.22
+	VAM1-00:2.22
+	V4-21:2.22.0.2
+	V4-13:2.22
+	V4-12:2.22
+	V4-11:2.22
+	V4-10:2.22
+	V3-43:2.19
+	M4-00:2.20
+	V3-41:2.19
+	V3-40-PlusGM57:2.19.0.2
+	V2-24-NRT-04:2.18
+	V3-33:2.19
+	V2-24:2.18
+	V3-31:2.19
+	V3-30-NRT-05:2.19
+	cfm-01-00:2.19
+	V3-30:2.19
+	V3-20:2.19
+	V3-10:2.19
+	V2-23-NRT-02:2.18
+	V2-23:2.18
+	V2-22-NRT-01:2.18
+	V2-22:2.18
+	V2-21:2.16
+	V2-20:2.16
+	V2-11:2.14
+	V2-10:2.14
+	V2-00:2.11
+	V1-51:2.8
+	V1-50:2.8
+	V1-45:2.7
+	V1-44:2.7
+	V1-43:2.5
+	V1-32:2.4
+	V1-31:2.4
+	V1-30:2.3;
+locks; strict;
+comment	@# @;
+
+
+2.22
+date	2013.05.17.22.54.30;	author vsnyder;	state Exp;
+branches;
+next	2.21;
+
+2.21
+date	2013.04.19.23.56.23;	author vsnyder;	state Exp;
+branches;
+next	2.20;
+
+2.20
+date	2013.02.28.21.05.48;	author vsnyder;	state Exp;
+branches;
+next	2.19;
+
+2.19
+date	2009.06.23.18.26.10;	author pwagner;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2007.02.01.02.45.18;	author vsnyder;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2006.12.04.21.17.28;	author vsnyder;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2006.10.10.01.34.59;	author vsnyder;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2006.09.20.01.39.09;	author vsnyder;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2006.07.07.17.55.28;	author vsnyder;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2006.06.29.19.33.44;	author vsnyder;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2006.06.16.20.32.30;	author vsnyder;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2005.08.25.00.49.01;	author vsnyder;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2005.08.09.15.15.43;	author pwagner;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2005.06.22.18.08.18;	author pwagner;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2004.11.01.20.23.41;	author vsnyder;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2004.07.02.01.35.52;	author vsnyder;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2004.05.19.18.53.50;	author vsnyder;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2004.02.12.02.21.21;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2003.09.19.18.10.38;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2003.06.20.19.35.17;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2003.05.20.00.06.23;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2003.05.15.20.25.23;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.22
+log
+@Revise nlvl computation
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Compute_GL_Grid_M
+
+  implicit NONE
+  private
+  public :: Compute_GL_Grid
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: Compute_GL_Grid_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+contains
+!-----------------------------------------------  Compute_GL_Grid  -----
+
+  subroutine Compute_GL_Grid ( Z_PSIG, Z_GLgrid, P_GLgrid )
+
+  ! Compute the pressure and zeta GL grids.
+
+    use GLnp, only: GX, NGP1
+    use MLSCommon, only: RP, R8
+
+  ! Inputs:
+    real(rp), intent(in) :: Z_psig(:)  ! recommended PSIG for
+
+  ! Outputs
+    real(rp), dimension(:), intent(out) :: Z_GLgrid   ! Zeta on glGrid surfs
+    real(rp), dimension(:), intent(out), optional :: P_GLgrid   ! Pressure on glGrid surfs
+
+  ! Local variables
+    integer :: MaxVert     ! Levels in fine grid
+    integer :: NLVL        ! size(z_psig)
+    integer :: NLM1        ! NLVL - 1
+
+    ! New Gauss points (excluding Lobatto end points) with -1 on the left:
+    real(kind(gx)), parameter :: G_Grid(ngp1) = (/ -1.0_r8, gx /)
+
+    nlvl = size(z_psig)
+    nlm1 = nlvl - 1
+    ! Using "min" is necessary below in case there is no tangent point
+    maxVert = min ( nlvl * ngp1, ubound(z_glgrid,1) )
+! From the selected integration grid pressures define the GL pressure grid:
+
+    z_glgrid(1:maxVert-1) = reshape ( &
+      ! Midpoint of integration grid intervals:
+      & spread(0.5_rp * (z_psig(2:Nlvl) + z_psig(1:Nlm1)),1,Ngp1) + &
+      ! Half length of integration grid intervals:
+      & spread(0.5_rp * (z_psig(2:Nlvl) - z_psig(1:Nlm1)),1,Ngp1) * &
+      ! New Gauss points (excludes Lobatto end points) with -1 at front:
+      & spread(g_grid,2,NLm1), (/maxVert-1/))
+    if ( maxVert > 0 ) z_glgrid(maxVert) = z_psig(Nlvl)
+    if ( present(p_glgrid) ) p_glgrid(:maxVert) = 10.0_rp**(-z_glgrid(:maxVert))
+
+  end subroutine Compute_GL_Grid
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: Compute_GL_Grid_m.f90,v 2.21 2013/04/19 23:56:23 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Compute_GL_Grid_M
+
+! $Log: Compute_GL_Grid_m.f90,v $
+! Revision 2.21  2013/04/19 23:56:23  vsnyder
+! Don't violate array bounds
+!
+! Revision 2.19  2009/06/23 18:26:10  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.18  2007/02/01 02:45:18  vsnyder
+! Exchange order of P_GLGrid, Z_GLGrid, make P_GLGrid optional
+!
+! Revision 2.17  2006/12/04 21:17:28  vsnyder
+! Reorganize FullForwardModel to use automatic arrays instead of allocating
+! pointer arrays.  Requires testing for zero size instead of testing for
+! associated in several subsidiary procedures.
+!
+! Revision 2.16  2006/10/10 01:34:59  vsnyder
+! Compute p_glgrid correctly in non-allocate case
+!
+! Revision 2.15  2006/09/20 01:39:09  vsnyder
+! Add an optional 'allocate' argument to control whether to allocate the result
+!
+! Revision 2.14  2006/07/07 17:55:28  vsnyder
+! Move some stuff to Compute_Z_PSIG_m
+!
+! Revision 2.13  2006/06/29 19:33:44  vsnyder
+! Base grid calculations on interior (i.e., new) points in quadrature
+! formula in case of Lobatto.
+!
+! Revision 2.12  2006/06/16 20:32:30  vsnyder
+! Define NGP1 in glnp
+!
+! Revision 2.11  2005/08/25 00:49:01  vsnyder
+! Don't look at the size of integration grid if it's not associated
+!
+! Revision 2.10  2005/08/09 15:15:43  pwagner
+! Don't add pointer to z_all if not associated
+!
+! Revision 2.9  2005/06/22 18:08:18  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.8  2004/11/01 20:23:41  vsnyder
+! Moved QtyStuff_t and associated dump routine to ForwardModelConfig
+!
+! Revision 2.7  2004/07/02 01:35:52  vsnyder
+! Correct a comment
+!
+! Revision 2.6  2004/05/19 18:53:50  vsnyder
+! Remove USE for unreferenced symbol
+!
+! Revision 2.5  2004/02/12 02:21:21  vsnyder
+! Cosmetics
+!
+! Revision 2.4  2003/09/19 18:10:38  vsnyder
+! Simplify computation of tangent point indices
+!
+! Revision 2.3  2003/06/20 19:35:17  pwagner
+! Quanities now share grids stored separately in databses
+!
+! Revision 2.2  2003/05/20 00:06:23  vsnyder
+! Remove stuff not used by FullForwardModel
+!
+! Revision 2.1  2003/05/15 20:25:23  vsnyder
+! Initial commit
+!
+@
+
+
+2.21
+log
+@Don't violate array bounds
+@
+text
+@d49 1
+a49 1
+    NLm1 = Nlvl - 1
+d51 1
+a51 2
+    maxVert = min ( nlm1 * ngp1 + 1, ubound(z_glgrid,1) )
+
+d69 1
+a69 1
+       "$Id: Compute_GL_Grid_m.f90,v 2.19 2009/06/23 18:26:10 pwagner Exp $"
+d79 3
+@
+
+
+2.20
+log
+@Try to cope with short paths
+@
+text
+@d30 1
+a30 1
+    use GLnp, only: GX, NGP1 ! Gauss abscissae, # Gauss abscissae + 1
+d62 1
+a62 1
+    z_glgrid(maxVert) = z_psig(Nlvl)
+@
+
+
+2.19
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d20 1
+a20 1
+       "$RCSfile: $"
+d30 1
+a30 1
+    use GLnp, only: GX, NGP1
+d50 2
+a51 1
+    maxVert = nlm1 * ngp1 + 1
+d70 1
+a70 1
+       "$Id: read_apriori.f90 is it here $"
+d80 3
+@
+
+
+2.18
+log
+@Exchange order of P_GLGrid, Z_GLGrid, make P_GLGrid optional
+@
+text
+@d20 1
+a20 1
+       "$RCSfile: Compute_GL_Grid_m.f90,v $"
+d66 1
+a67 1
+!---------------------------- RCS Ident Info -------------------------------
+d69 2
+a70 3
+       "$Id: Compute_GL_Grid_m.f90,v 2.17 2006/12/04 21:17:28 vsnyder Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d72 1
+d74 1
+d79 3
+@
+
+
+2.17
+log
+@Reorganize FullForwardModel to use automatic arrays instead of allocating
+pointer arrays.  Requires testing for zero size instead of testing for
+associated in several subsidiary procedures.
+@
+text
+@d26 1
+a26 1
+  subroutine Compute_GL_Grid ( Z_PSIG, P_GLgrid, Z_GLgrid )
+a36 1
+    real(rp), dimension(:), intent(out) :: P_GLgrid   ! Pressure on glGrid surfs
+d38 1
+d62 1
+a62 1
+    p_glgrid(:maxVert) = 10.0_rp**(-z_glgrid(:maxVert))
+d69 1
+a69 1
+       "$Id: Compute_GL_Grid_m.f90,v 2.16 2006/10/10 01:34:59 vsnyder Exp $"
+d78 5
+@
+
+
+2.16
+log
+@Compute p_glgrid correctly in non-allocate case
+@
+text
+@d26 1
+a26 2
+  subroutine Compute_GL_Grid ( Z_PSIG, NLVL, MaxVert, P_GLgrid, Z_GLgrid, &
+    & allocate )
+a29 1
+    use Allocate_Deallocate, only: Allocate_Test
+d34 1
+a34 3
+    real(rp), dimension(:), intent(in) :: Z_psig  ! recommended PSIG for
+                                       ! radiative transfer calculations
+    integer, intent(in) :: NLVL                   ! size(z_psig)
+d37 2
+a38 9
+    integer, intent(out) :: MaxVert               ! Levels in fine grid
+
+  ! Allocated here if allocate is absent or present and true
+  ! Would be intent(out) if they weren't pointers
+    real(rp), dimension(:), pointer :: P_GLgrid   ! Pressure on glGrid surfs
+    real(rp), dimension(:), pointer :: Z_GLgrid   ! Zeta on glGrid surfs
+
+  ! Optional inputs
+    logical, intent(in), optional :: Allocate
+d41 3
+a43 2
+    logical :: Alloc
+    integer :: NLM1                               ! NLVL - 1
+d48 1
+a48 3
+    alloc = .true.
+    if ( present(allocate) ) alloc = allocate
+
+d50 1
+a50 8
+    maxVert = NLm1 * Ngp1 + 1
+
+! Allocate GL grid stuff
+    if ( alloc ) then
+      nullify ( p_glgrid, z_glgrid )
+      call allocate_test ( z_glGrid, maxVert, 'z_glGrid', moduleName )
+      call allocate_test ( p_glGrid, maxVert, 'p_glGrid', moduleName )
+    end if
+d69 1
+a69 1
+       "$Id: Compute_GL_Grid_m.f90,v 2.15 2006/09/20 01:39:09 vsnyder Exp $"
+d78 3
+@
+
+
+2.15
+log
+@Add an optional 'allocate' argument to control whether to allocate the result
+@
+text
+@d81 1
+a81 1
+    p_glgrid = 10.0_rp**(-z_glgrid)
+d88 1
+a88 1
+       "$Id: Compute_GL_Grid_m.f90,v 2.14 2006/07/07 17:55:28 vsnyder Exp $"
+d97 3
+@
+
+
+2.14
+log
+@Move some stuff to Compute_Z_PSIG_m
+@
+text
+@d26 2
+a27 1
+  subroutine Compute_GL_Grid ( Z_PSIG, NLVL, MaxVert, P_GLgrid, Z_GLgrid )
+d43 2
+a44 2
+  ! Would be intent(out) if they weren't pointers.
+  ! First thing here is to nullify them.
+d48 3
+d52 1
+d58 2
+a59 1
+    nullify ( p_glgrid, z_glgrid )
+d62 1
+d65 5
+a69 4
+
+    maxVert = NLm1 * Ngp1 + 1
+    call allocate_test ( z_glGrid, maxVert, 'z_glGrid', moduleName )
+    call allocate_test ( p_glGrid, maxVert, 'p_glGrid', moduleName )
+d88 1
+a88 1
+       "$Id: Compute_GL_Grid_m.f90,v 2.13 2006/06/29 19:33:44 vsnyder Exp $"
+d97 3
+@
+
+
+2.13
+log
+@Base grid calculations on interior (i.e., new) points in quadrature
+formula in case of Lobatto.
+@
+text
+@d26 6
+a31 12
+  subroutine Compute_GL_Grid ( FwdModelConf, Temp, Qtys, &
+    &                          Nlvl, MaxVert, P_GLgrid, Z_GLgrid, &
+    &                          Tan_Inds, Tan_Press )
+
+  ! Compute the pressure and zeta GL grids.  Compute Tan_Inds and Tan_Press
+  ! because they depend on an intermediate result of the GL grid calculation
+  ! (rec_tan_inds), that isn't needed anywhere else.
+
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+    use ForwardModelConfig, only: ForwardModelConfig_t, QtyStuff_T
+    use GLnp, only: GX, NG=>ngnew, NGP1
+    use Make_Z_Grid_M, only: Make_Z_Grid
+a32 1
+    use VectorsModule, only: VectorValue_T
+d35 3
+a37 3
+    type (forwardModelConfig_T), intent(in) :: fwdModelConf
+    type (vectorValue_T), intent(in) :: TEMP      ! Temperature component of state vector
+    type (qtyStuff_t), intent(in) :: Qtys(:)      ! Array of pointers to Qty's.
+a39 1
+    integer, intent(out) :: Nlvl                  ! Levels in coarse grid
+d42 2
+a43 2
+  ! Would be intent(out) if they weren't pointers.  First thing here
+  ! is to nullify them.
+a45 2
+    integer, dimension(:), pointer :: Tan_Inds    ! Index of tangent grid into gl grid
+    real(rp), dimension(:), pointer :: Tan_Press
+a47 1
+    integer :: I, J
+a48 8
+    integer :: No_Tan_Hts
+    integer :: SPS_I
+    integer :: Z_All_Prev, Z_All_Size
+    real(rp), dimension(:), pointer :: Z_all  ! mass storage of representation
+      !                                  bases for z_grid determination
+    real(rp), dimension(:), pointer :: Z_psig ! recommended PSIG for
+      !                                  radiative transfer calculations
+      ! THIS VARIABLE REPLACES FwdModelConf%integrationGrid%surfs
+d53 1
+a53 43
+    nullify ( p_glgrid, tan_inds, tan_press, z_all, z_glgrid, z_psig )
+
+! Insert automatic preselected integration gridder here. Need to make a
+! large concatenated vector of bases and pointings.
+
+! Calculate size of z_all and allocate it
+
+    z_all_size = temp%template%nosurfs + 2 + &
+      & Size(FwdModelConf%integrationGrid%surfs)
+    if ( associated(FwdModelConf%tangentGrid) ) &
+      & z_all_size = z_all_size + FwdModelConf%tangentGrid%nosurfs
+    do sps_i = 1 , size(qtys)
+      z_all_size = z_all_size + qtys(sps_i)%qty%template%nosurfs
+    end do
+    call allocate_test ( z_all, z_all_size, 'z_all', moduleName )
+
+! Fill in z_all
+! the -3.000 is a designated "surface" value
+
+    z_all_prev = temp%template%nosurfs + 2
+    z_all(1) = -3.000_rp
+    z_all(2:z_all_prev-1) = temp%template%surfs(:,1)
+    z_all(z_all_prev) = 4.000_rp
+
+    ! Add the original Integration Grid:
+    if ( associated(FwdModelConf%integrationGrid%surfs) ) then
+      z_all_size = z_all_prev + Size(FwdModelConf%integrationGrid%surfs)
+      z_all(z_all_prev+1:z_all_size) = FwdModelConf%integrationGrid%surfs(:,1)
+      z_all_prev = z_all_size
+    end if
+
+    if ( associated(FwdModelConf%tangentGrid) ) then
+      ! if pointing grid is associated concatenate it to the state vector
+      z_all_size = z_all_prev + FwdModelConf%tangentGrid%nosurfs
+      z_all(z_all_prev+1:z_all_size) = FwdModelConf%tangentGrid%surfs(:,1)
+      z_all_prev = z_all_size
+    end if
+
+    do sps_i = 1, size(qtys)
+      z_all_size = z_all_size + qtys(sps_i)%qty%template%nosurfs
+      z_all(z_all_prev+1:z_all_size) = qtys(sps_i)%qty%template%surfs(:,1)
+      z_all_prev = z_all_size
+    end do
+a54 7
+! Now, create the final grid and discard the temporary array:
+
+    call make_z_grid ( z_all, z_psig )
+    call deallocate_test ( z_all, 'z_all', moduleName )
+
+! note that z_psig(1) is the designated surface
+    Nlvl = SIZE(z_psig)
+a55 1
+    maxVert = NLm1 * Ngp1 + 1
+d59 3
+a61 2
+    call allocate_test ( z_glGrid,    maxVert, 'z_glGrid', moduleName )
+    call allocate_test ( p_glGrid,    maxVert, 'p_glGrid', moduleName )
+a74 20
+    call deallocate_test ( z_psig, 'z_psig', moduleName )
+
+! Allocate tan_inds and tan_press.
+
+    j = COUNT(fwdModelConf%tangentGrid%surfs < (z_glgrid(1) - 0.0001_rp))
+    no_tan_hts = Nlvl + j
+
+    call allocate_test ( tan_inds,  no_tan_hts, 'tan_inds',  moduleName )
+    call allocate_test ( tan_press, no_tan_hts, 'tan_press', moduleName )
+
+! Compute tan_inds
+
+    tan_inds(1:j) = 1
+    tan_inds(j+1:no_tan_hts) = (/ (i * Ngp1 + 1, i = 0, Nlm1) /)
+
+! Compute tan_press from fwdModelConf%tangentGrid%surfs and z_glgrid
+
+    tan_press(1:j) = fwdModelConf%tangentGrid%surfs(1:j,1)
+    tan_press(j+1:no_tan_hts) = z_glgrid(tan_inds(j+1:no_tan_hts))
+
+d80 1
+a80 1
+       "$Id: Compute_GL_Grid_m.f90,v 2.12 2006/06/16 20:32:30 vsnyder Exp $"
+d89 4
+@
+
+
+2.12
+log
+@Define NGP1 in glnp
+@
+text
+@d36 1
+a36 1
+    use GLnp, only: GX, NG, NGP1
+d38 1
+a38 1
+    use MLSCommon, only: RP
+d69 3
+d110 1
+a110 1
+    do sps_i = 1 , size(qtys)
+d138 2
+a139 2
+      ! Gauss points (with -1 at front):
+      & spread((/-1.0_rp,Gx(1:Ng)/),2,NLm1), (/maxVert-1/))
+d168 1
+a168 1
+       "$Id: Compute_GL_Grid_m.f90,v 2.11 2005/08/25 00:49:01 vsnyder Exp $"
+d177 3
+@
+
+
+2.11
+log
+@Don't look at the size of integration grid if it's not associated
+@
+text
+@d36 1
+a36 1
+    use GLnp, only: NG, GX
+a58 1
+    integer, parameter :: Ngp1 = Ng+1  ! NG + 1
+d165 1
+a165 1
+       "$Id: Compute_GL_Grid_m.f90,v 2.10 2005/08/09 15:15:43 pwagner Exp $"
+d174 3
+@
+
+
+2.10
+log
+@Don't add pointer to z_all if not associated
+@
+text
+@d95 5
+a99 4
+    z_all_size = z_all_prev + Size(FwdModelConf%integrationGrid%surfs)
+    if ( associated(FwdModelConf%integrationGrid%surfs) ) &
+      & z_all(z_all_prev+1:z_all_size) = FwdModelConf%integrationGrid%surfs(:,1)
+    z_all_prev = z_all_size
+d166 1
+a166 1
+       "$Id: Compute_GL_Grid_m.f90,v 2.9 2005/06/22 18:08:18 pwagner Exp $"
+d175 3
+@
+
+
+2.9
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d20 1
+a20 1
+       "$RCSfile: $"
+d96 2
+a97 1
+    z_all(z_all_prev+1:z_all_size) = FwdModelConf%integrationGrid%surfs(:,1)
+d165 1
+a165 1
+       "$Id: $"
+d174 3
+@
+
+
+2.8
+log
+@Moved QtyStuff_t and associated dump routine to ForwardModelConfig
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d18 3
+a20 5
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+    & "$Id: Compute_GL_Grid_m.f90,v 2.7 2004/07/02 01:35:52 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName= "$RCSfile: Compute_GL_Grid_m.f90,v $"
+d162 5
+d173 3
+@
+
+
+2.7
+log
+@Correct a comment
+@
+text
+@d12 1
+a12 1
+    & "$Id: Compute_GL_Grid_m.f90,v 2.6 2004/05/19 18:53:50 vsnyder Exp $"
+d29 1
+a29 2
+    use ForwardModelConfig, only: ForwardModelConfig_t
+    use ForwardModelVectorTools, only: QtyStuff_T
+d162 3
+@
+
+
+2.6
+log
+@Remove USE for unreferenced symbol
+@
+text
+@d12 1
+a12 1
+    & "$Id: Compute_GL_Grid_m.f90,v 2.5 2004/02/12 02:21:21 vsnyder Exp $"
+d43 1
+a43 1
+    integer, intent(out) :: MaxVert               ! Levels in find grid
+d163 3
+@
+
+
+2.5
+log
+@Cosmetics
+@
+text
+@d12 1
+a12 1
+    & "$Id: Compute_GL_Grid_m.f90,v 2.4 2003/09/19 18:10:38 vsnyder Exp $"
+d33 1
+a33 1
+    use MLSCommon, only: RP, IP
+d163 3
+@
+
+
+2.4
+log
+@Simplify computation of tangent point indices
+@
+text
+@d12 1
+a12 1
+    & "$Id: Compute_GL_Grid_m.f90,v 2.3 2003/06/20 19:35:17 pwagner Exp $"
+d72 1
+a72 1
+    z_all_size = temp%template%nosurfs+2 + &
+d84 1
+a84 1
+    z_all_prev = temp%template%nosurfs+2
+d163 3
+@
+
+
+2.3
+log
+@Quanities now share grids stored separately in databses
+@
+text
+@d12 1
+a12 1
+    & "$Id: Compute_GL_Grid_m.f90,v 2.2 2003/05/20 00:06:23 vsnyder Exp $"
+d53 1
+a53 1
+    integer :: J
+a56 2
+    integer(ip), dimension(:), pointer :: Rec_Tan_Inds ! recommended tangent
+      !                                             point indices from make_z_grid
+d65 1
+a65 2
+    nullify ( p_glgrid, rec_tan_inds, tan_inds, tan_press, z_all, z_glgrid, &
+      & z_psig )
+d109 1
+a109 1
+    call make_z_grid ( z_all, z_psig, rec_tan_inds )
+d144 1
+a144 1
+! Compute tan_inds from rec_tan_inds
+d147 1
+a147 3
+    tan_inds(j+1:no_tan_hts) = (rec_tan_inds - 1) * Ngp1 + 1
+
+    call deallocate_test ( rec_tan_inds, 'rec_tan_inds', moduleName )
+d163 3
+@
+
+
+2.2
+log
+@Remove stuff not used by FullForwardModel
+@
+text
+@d12 1
+a12 1
+    & "$Id: Compute_GL_Grid_m.f90,v 2.1 2003/05/15 20:25:23 vsnyder Exp $"
+d94 1
+a94 1
+    z_all(z_all_prev+1:z_all_size) = FwdModelConf%integrationGrid%surfs
+d100 1
+a100 1
+      z_all(z_all_prev+1:z_all_size) = FwdModelConf%tangentGrid%surfs
+d156 1
+a156 1
+    tan_press(1:j) = fwdModelConf%tangentGrid%surfs(1:j)
+d168 3
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d12 1
+a12 1
+    & "$Id: do_delta_m.f90,v 2.4 2003/05/05 23:00:25 livesey Exp $"
+d14 1
+a14 1
+  character (len=*), parameter :: ModuleName= "$RCSfile: do_delta_m.f90,v $"
+d21 1
+a21 1
+    &                          Nlvl, NLm1, MaxVert, P_GLgrid, Z_GLgrid, &
+d42 1
+a42 1
+    integer, intent(out) :: Nlvl, NLm1            ! Levels in coarse grid
+d55 1
+d167 4
+a170 1
+! $Log: $
+@
+

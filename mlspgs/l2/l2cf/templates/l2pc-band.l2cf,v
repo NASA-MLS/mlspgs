@@ -1,0 +1,334 @@
+head	1.5;
+access;
+symbols
+	v5-02-NRT-19:1.5
+	v6-00:1.5
+	v5-02-NRT-18:1.5
+	v5-02:1.5
+	v5-01-NRT-17:1.5
+	v5-01-NRT-16:1.5
+	v5-01-NRT-15:1.5
+	v5-01-NRT-14:1.5
+	neuralnetworks-1-0:1.5.0.16
+	cfm-single-freq-0-1:1.5.0.14
+	v5-01:1.5
+	v5-00:1.5
+	v4-23-TA133:1.5.0.12
+	mus-emls-1-70:1.5.0.10
+	rel-1-0-englocks-work:1.5.0.8
+	VUMLS1-00:1.5
+	VPL1-00:1.5
+	V4-22-NRT-08:1.5
+	VAM1-00:1.5
+	V4-21:1.5.0.6
+	V4-13:1.5
+	V4-12:1.5
+	V4-11:1.5
+	V4-10:1.5
+	V3-43:1.5
+	M4-00:1.5
+	V3-41:1.5
+	V3-40-PlusGM57:1.5.0.4
+	V2-24-NRT-04:1.5
+	V3-33:1.5
+	V2-24:1.5
+	V3-31:1.5
+	V3-30-NRT-05:1.5
+	cfm-01-00:1.5
+	V3-30:1.5
+	V3-20:1.5
+	V3-10:1.5
+	V2-23-NRT-02:1.5
+	V2-23:1.5
+	V2-22-NRT-01:1.5
+	V2-22:1.5
+	V2-21:1.5
+	V2-20:1.5
+	V2-11:1.5
+	V2-10:1.5
+	V2-00:1.5
+	V1-51:1.5
+	V1-50:1.5
+	V1-45:1.5
+	V1-44:1.5
+	V1-43:1.5
+	V1-32:1.5
+	V1-31:1.5
+	V1-30:1.5
+	V1-13:1.5
+	V1-12:1.5
+	V1-11:1.5
+	V1-10:1.5
+	newfwm-feb03:1.5.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.5
+date	2002.11.06.23.10.01;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2002.06.07.16.36.54;	author livesey;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2002.06.04.21.38.37;	author livesey;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2002.05.21.18.04.35;	author livesey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2002.05.17.20.24.09;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.5
+log
+@Changed leapsecfile to point at newer file on server
+@
+text
+@; This template l2cf performs a l2pc calculation for one band or
+; sideband, defined by the macro band
+
+; First some m4 directives
+include(m4defs.l2cf)
+
+; This l2cf run ignores the l1b file
+!define(avoidL1BOA,{yes})
+!define(skipHydrostatic,{yes})
+
+; Get a default for band and phi if not already supplied
+!define(day,{1996d051})
+!ifdef(band,{},{!define(band,{1})})
+!ifdef(phi,{},{!define(phi,0)})
+!ifdef(l1boaversion,{},{!define(l1boaversion,{s5--t})})
+!ifdef(l2pcversion,{},{!define(l2pcversion,{v0-9-1})})
+
+; Now define our directories
+!define(inpathl1boa,{/data/emls/l1boa/!l1boaversion/!year(!day)/})
+!define(outpathl2pc,{/bigdata/livesey/misc})
+!include(clarifypaths.l2cf)
+
+; ----------------------------------- Boiler plate l2cf stuff -------
+
+; Retrieval macros, defines bands
+!include(retrievalmacros.l2cf)
+
+; Valid signals database
+!include(!calpath/MLS-Aura_L2Cal-Signals_v1-0-0_0000d000.l2cf)
+
+; Spectroscopy and molecule/isotope information
+!include(!calpath/MLS-Aura_L2Cal-Spectroscopy_v1-0-0_0000d000.l2cf)
+
+; Sideband ratio information
+!include(!calpath/MLS-Aura_L2Cal-SBRatio_v1-0-0_0000d000.l2cf)
+
+; System temperature information
+!include(!calpath/MLS-Aura_L2Cal-Tsys_v1-0-0_0000d000.l2cf)
+
+; Noise bandwidth information
+!include(!calpath/MLS-Aura_L2Cal-NBW_v1-0-0_0000d000.l2cf)
+
+; Now include some minor calibration parameters
+!include(lesserparams.l2cf)
+
+; Now read the climatology information
+!include(readclimatology.l2cf)
+
+; -------------------------------------------- Global settings ------
+begin GlobalSettings
+
+  ;; Setup the stuff for reading and dealing with l1b files
+  l1boa, file='!inpathl1boa/MLS-Aura_L1BOA-Full_s5--t_!day.h4'
+;   startTime = '!year(!day)-!doy(!day)T00:00:00.0000'
+;   endTime = '!year(!day)-!doy(!day)T23:59:59.9999'
+;   leapsecfile = '/software/SRC/HDF-EOS/TOOLKIT-5.2.8v2.00/database/common/TD/leapsec.dat'
+
+  ;; Setup our vertical grids
+  vGridStandard: vGrid, type=Logarithmic, coordinate=Zeta, $
+    start=1000mb, formula=[37:6]
+  vGridHiRes: vGrid, type=Logarithmic, coordinate=Zeta, $
+    start=1000mb, formula=[21:12,26:6]
+  vGridBaseline: vGrid, type=Logarithmic, coordinate=Zeta, $
+    start=1000mb, formula=[37:6]
+  vGridExtinction: vGrid, type=Logarithmic, coordinate=Zeta, $
+    start=1000mb, formula=[37:6]
+  vGridRefGPH: vGrid, type=Explicit, coordinate=Zeta, values=100 mb
+  vGridPtan: vGrid, type=Logarithmic, coordinate=Zeta, $
+    start=1000mb, formula=[73:12]
+
+  ;; Define the frequency grids for the extinciton quantities
+  !include(extinctionfgrids.l2cf)
+
+  ;; Load our forward model databases
+  ForwardModelGlobal, $
+    antennaPatterns='!calpath/MLS-Aura_L2Cal-AAAP_v1-0-0_0000d000.txt', $
+    filterShapes='!calpath/MLS-Aura_L2Cal-Filters_v1-0-1_0000d000.txt', $
+    pointingGrids='!calpath/MLS-Aura_L2Cal-PFG_v1-0-1_0000d000.txt'
+
+  ;; Setup the particular forward model we're going to want
+  l2pcFwm: forwardModel, type=full,  $
+    signals = !signal(!band), $
+    molecules = !molecules(!band), $
+    moleculeDerivatives = !moleculeFamilies(!band), $
+    phiWindow=5, $
+    /skipOverlaps, $
+    integrationGrid=vGridStandard, $
+    tangentGrid=vGridStandard, /do_conv, /do_freq_avg, $
+    /temp_der, /atmos_der
+
+end GlobalSettings
+
+; ------------------------------------------ Chunk divide  ----
+!include(chunkdividel2pc.l2cf)
+
+; ------------------------------------------- Construct sections --
+
+begin Construct
+  hGridStandard: hGrid, type=explicit, module=GHz, $
+    values = [ $
+    !phi degrees - 3.0 degrees, $
+    !phi degrees - 1.5 degrees, $
+    !phi degrees, $
+    !phi degrees + 1.5 degrees, $
+    !phi degrees + 3.0 degrees ]
+
+  Forge, module=GHz, noMIFs=73, geodAngle= !phi degrees, inclination = 98.145 degrees
+  Forge, module=THz, noMIFs=73, geodAngle= !phi degrees, inclination = 98.145 degrees
+end Construct
+
+!define(skipHiRes,{yes})
+!include(constructstandardspecies.l2cf)
+
+begin Construct
+  yTemplate: VectorTemplate, quantities = [ band!band ]
+end Construct
+
+; --------------------------------------- Define and fill vectors --
+
+; This next lot of stuff may seem a little long winded, but
+; we do it this way to make the l2cf similar to others, and thus
+; containing more in common with them.
+
+; Define and fill the apriori vector
+!include(fillapriori.l2cf)
+
+begin Fill
+  ;; Now fill the two tangent pressures
+  Fill, quantity=apriori.ptanGHz, method=vGrid, sourceVGrid=vGridPtan
+  Fill, quantity=apriori.ptanTHz, method=vGrid, sourceVGrid=vGridPtan
+end Fill
+
+; Define radiance vectors and noise vector
+begin Fill
+  y: Vector, template=yTemplate
+  K: Matrix, rows=y, columns=apriori
+end Fill
+
+; -------------------------------------------- Forward model ----
+
+begin Retrieve
+ sids, fwdModelIn=apriori, fwdModelOut=y,$
+   forwardModel=[l2pcFwm], jacobian=K
+end Retrieve
+
+; ------------------------------------------ Joinp
+
+begin Join
+end Join
+
+; ---------------------------------------  Output the result
+
+; Get a nice bin name based on phi
+!ifelse(1,!eval(!phi<0),
+  {!define(phiStr,{!eval(-(!phi))S})},
+  {!define(phiStr,{!eval(!phi)N})})
+
+begin Output
+  output, file= $
+    '!outpathl2pc/MLS-Aura_L2Cal-L2PC-band!band-bin!phiStr_!l2pcversion_0000-000.txt', $
+    quantities=K, type=l2pc, /ascii
+end Output
+
+
+@
+
+
+1.4
+log
+@Added the ascii argument to the output
+@
+text
+@d56 1
+a56 1
+;   leapsecfile = '/software/SRC/TOOLKIT-5.2.7.4v1.00/database/common/TD/leapsec.dat'
+@
+
+
+1.3
+log
+@Regular updates
+@
+text
+@d161 1
+a161 1
+    quantities=K, type=l2pc
+@
+
+
+1.2
+log
+@New pointing grids and filter shapes
+@
+text
+@d9 1
+d16 1
+a16 1
+!ifdef(l2pcversion,{},{!define(l2pcversion,{v0-9-0})})
+d25 3
+d60 1
+a60 1
+    start=1000mb, formula=[73:12]
+d62 1
+a62 1
+    start=1000mb, formula=[73:12]
+d64 1
+a64 1
+    start=1000mb, formula=[73:12]
+d66 1
+a66 1
+    start=1000mb, formula=[73:12]
+d111 1
+@
+
+
+1.1
+log
+@First consolidated version
+@
+text
+@d15 1
+a15 1
+!ifdef(l2pcversion,{},{!define(l1pcversion,{v0-9-0})})
+d73 2
+a74 2
+    filterShapes='!calpath/MLS-Aura_L2Cal-Filters_v1-0-0_0000d000.txt', $
+    pointingGrids='!calpath/MLS-Aura_L2Cal-PFG_v1-0-0_0000d000.txt'
+d155 1
+a155 1
+    '!outpathl2pc/MLS-Aura_L12Cal-L2PC-band!band-bin!phiStr_!l2pcversion_0000-000.txt', $
+d158 1
+@
+

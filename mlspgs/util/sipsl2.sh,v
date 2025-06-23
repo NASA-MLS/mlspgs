@@ -1,0 +1,1628 @@
+head	1.18;
+access;
+symbols
+	v5-02-NRT-19:1.18
+	v6-00:1.18
+	v5-02-NRT-18:1.18
+	v5-02:1.18
+	v5-01-NRT-17:1.18
+	v5-01-NRT-16:1.18
+	v5-01-NRT-15:1.18
+	v5-01-NRT-14:1.18
+	neuralnetworks-1-0:1.18.0.14
+	cfm-single-freq-0-1:1.18.0.12
+	v5-01:1.18
+	v5-00:1.18
+	v4-23-TA133:1.18.0.10
+	mus-emls-1-70:1.18.0.8
+	rel-1-0-englocks-work:1.18.0.6
+	VUMLS1-00:1.18
+	VPL1-00:1.18
+	V4-22-NRT-08:1.18
+	VAM1-00:1.18
+	V4-21:1.18.0.4
+	V4-13:1.18
+	V4-12:1.18
+	V4-11:1.18
+	V4-10:1.18
+	V3-43:1.18
+	M4-00:1.18
+	V3-41:1.18
+	V3-40-PlusGM57:1.18.0.2
+	V2-24-NRT-04:1.18
+	V3-33:1.18
+	V2-24:1.18
+	V3-31:1.18
+	V3-30-NRT-05:1.18
+	cfm-01-00:1.18
+	V3-30:1.18
+	V3-20:1.18
+	V3-10:1.18
+	V2-23-NRT-02:1.18
+	V2-23:1.18
+	V2-22-NRT-01:1.18
+	V2-22:1.18
+	V2-21:1.17
+	V2-20:1.15
+	V2-11:1.14
+	V2-10:1.14
+	V2-00:1.12;
+locks; strict;
+comment	@# @;
+
+
+1.18
+date	2007.06.18.20.23.56;	author pwagner;	state Exp;
+branches;
+next	1.17;
+
+1.17
+date	2007.01.22.17.48.04;	author pwagner;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2007.01.18.23.30.12;	author pwagner;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2006.08.21.21.56.09;	author pwagner;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2006.07.13.18.12.18;	author pwagner;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2006.06.28.00.03.40;	author pwagner;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2006.05.19.19.56.25;	author pwagner;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2006.04.17.23.22.31;	author pwagner;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2006.03.23.19.18.01;	author pwagner;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2006.03.18.00.06.45;	author pwagner;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2005.07.15.22.42.43;	author pwagner;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2005.06.23.22.20.46;	author pwagner;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2005.05.20.23.10.27;	author pwagner;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2005.04.28.18.42.32;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2005.04.21.20.38.02;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2005.04.12.20.33.26;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2005.04.06.22.13.58;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.04.01.00.13.15;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.18
+log
+@Gets expected computetimes from a file; speed ups
+@
+text
+@#!/bin/bash
+# --------------- sipsl2 help
+# Show level 2 jobs running on lightspeed, scramjet
+# Usage:
+# sipsl2.sh [options]
+#    O p t i o n s
+# -h[elp]     print brief help message; exit
+# -m cluster  show jobs only for cluster named cluster
+# -Cf file    choose clusters named in file
+# -cf file    get expected compute times from file
+# -vn version show jobs only for version (e.g., V01-51)
+# -bug        show chunks lost to level 2 bug "list out of order in hunt"
+# -debug      print lots of extra debugging inof
+# -c          convert dates from yyyydoy to yyyy Month day
+# -d          show directory names
+# -x          show chunks, nodes that died
+# -D d1,d2,   ignore jobs in directories d1, d2 (declared "legally dead")
+# -Df file,   jobs in directories named in file are declared "legally dead"
+#   The following options carry an automatic restriction to running jobs
+# -r          show how many chunks running
+# -full       show full stats: running, completed, crashed, on deck, total
+# -finish     show date, time the run should complete (approximate)
+# -t          show date, time the run started
+#   The following options print one line per machine
+# -fail       show machines that jobs could not be spawned on
+#
+# Note:
+# (1) you must be logged into a host that can see /workops/jobs/science
+# (2) jobs should still be putting stdout into JOBDIR/exec_log/process.stdout
+# (3) dateconverter must be in your path to use the -c option
+#     (or else /home/pwagner/bin/dateconverter must be visible)
+# 
+# Result:
+# a table of jobs, machine, date, status, etc.
+# --------------- End sipsl2 help
+# Copyright 2005, by the California Institute of Technology. ALL
+# RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+# commercial use must be negotiated with the Office of Technology Transfer
+# at the California Institute of Technology.
+
+# This software may be subject to U.S. export control laws. By accepting this
+# software, the user agrees to comply with all applicable U.S. export laws and
+# regulations. User has the responsibility to obtain export licenses, or other
+# export authority as may be required before exporting such information to
+# foreign countries or providing access to foreign persons.
+
+# "$Id: sipsl2.sh,v 1.17 2007/01/22 17:48:04 pwagner Exp $"
+
+#---------------------------- cat_args
+#
+# Function to catenate args with optional third arg separating them,
+# else a space
+# Treat special cases where 1st or second args are blanks sensibly
+
+cat_args()
+{
+
+   # Do we have enough args?
+      separator=" "
+      if [ $# -lt 2 ]
+      then
+         echo "Usage: cat_args arg1 arg2 [arg3]"
+         exit 1
+      elif [ $# -eq 3 ]
+      then
+         separator="$3"
+      fi
+      if [ "$1" = "" ]
+      then
+        echo $2
+      elif [ "$2" = "" ]
+      then
+        echo $1
+      else
+        echo "$1${separator}$2"
+      fi
+}
+      
+#---------------------------- how_many_array_elements
+#
+# Function to return the number of elements in a shell array
+# where the array is the lone arg
+# eg given
+# how_many_array_elements 'a b c d'
+# writes '4' to standard output
+# (Note: we have thus corrected for perl's c-centric array origin)
+
+how_many_array_elements()
+{
+
+   # Do we have enough args?
+      if [ $# -lt 1 ]
+      then
+         echo "Usage: how_many_array_elements 'a b c ..'"
+         exit 1
+      fi
+      
+      perl -e '@@parts=split(" ","$ARGV[0]"); print eval($#parts + 1)' "$1"
+}
+      
+#---------------------------- note_failures
+note_failures()
+  {
+  # How many args?
+  if [ $# -lt 2 ]
+  then
+    echo "note_failures needs exactly two arguments: line_numbers and file_name"
+    exit
+  elif [ ! -r "$2" ]
+  then
+    echo "$2 not found"
+    exit
+  fi
+  echo -e "machine \t failure with"
+  for line_number in $1
+  do
+    machine_info=`sed -n ''$line_number' p' "$2" | awk '{print $9, $11}'`
+    machine=`echo $machine_info | awk '{print $1}'`
+    info=`echo $machine_info | awk '{print $2}'`
+    case "$info" in
+      -6)
+        note="$machine \t pvm demon"
+        ;;
+      -7)
+        note="$machine \t file system"
+        ;;
+      *)
+        note="$machine \t ($info: unknown)"
+        ;;
+    esac
+    echo -e $note
+  done
+}
+
+#---------------------------- print_nth_array_element
+#
+# Function to print the nth element in a space-delimited list
+# where n is the first arg, the list is the second arg, 
+# print_nth_array_element 3 'a b c d'
+# writes 'c' to standard output
+
+print_nth_array_element()
+{
+
+   # Do we have enough args?
+      if [ $# -lt 2 ]
+      then
+         echo "Usage: print_nth_array_element n 'a b c ..'"
+         exit 1
+      fi
+      
+      perl -e '@@parts=split(" ","$ARGV[0]"); print $parts[$ARGV[1]-1]' "$2" "$1"
+}
+
+#---------------------------- print_hash_element
+#
+# Function to print value corresponding to key given two space-delimited arrays
+# where the first array are the keys and the second the values
+# print_hash_element c 'a b c d' '1 2 3 4'
+# writes '3' to standard output
+print_hash_element()
+{
+   # Do we have enough args?
+      if [ $# -lt 3 ]
+      then
+         echo "Usage: print_hash_element c 'a b c ..' '1 2 3 4 ..'"
+         exit 1
+      fi
+      arg_num=`what_array_element $1 "$2"`
+      print_nth_array_element $arg_num "$3"
+}
+
+#---------------------------- read_file_into_array
+#
+# read each line of stdin
+# catenating them into an array which we will return
+# Ignore any entries beginning with '#' character
+# In fact, only first entry in each line is kept
+# Possible improvements:
+#   Other comment signifiers
+#   Choose field number other than 1
+
+read_file_into_array()
+{
+  array_result=''
+  while read line; do
+    element=`echo $line | awk '$1 !~ /^#/ {print $1}'`
+    if [ "$element" != "" ]
+    then
+      array_result="$array_result $element"
+    fi
+  done
+  echo $array_result
+}
+      
+#---------------------------- what_array_element
+#
+# Function to show what element in a space-delimited list has been supplied
+# in the first arg, the list is the second arg, 
+# what_array_element c 'a b c d'
+# writes '3' to standard output
+what_array_element()
+{
+
+   # Do we have enough args?
+      if [ $# -lt 2 ]
+      then
+         echo "Usage: what_array_element c 'a b c ..'"
+         exit 1
+      fi
+      n=0
+      count_up=1
+      for i in $2
+      do
+        # echo $i $1
+        if [ "$i" = "$1" ]
+        then
+          # echo "really, $i $1"
+          n=$count_up
+        fi
+        count_up=`expr $count_up + 1`
+      done
+      echo $n
+}
+
+# ************
+# Main Program
+# ************
+# 
+bug="no"
+# This is a shell array of all cluster names
+# In our nomenclature, array elements are separated by spaces
+# List elements are separated by commas
+clusternames="lightspeed scramjet speedracer"
+computetimes=""
+convert="no"
+corpses=""
+debug="no"
+died="no"
+dirnames="no"
+dontprintemptydates="yes"
+#                      ^------ skip printing from where sips removed l1b files
+I=sipsl2
+fail="no"
+finish="no"
+full="no"
+maxobituaries="24"
+#               ^------ stop printing dead chunks, nodes past this
+me="$0"
+my_name=sipsl2
+restrict="no"
+running="no"
+time="no"
+version=""
+DATECONVERTER=`which dateconverter 2>/dev/null`
+REECHO=`which reecho.sh 2>/dev/null`
+if [ ! -r "$DATECONVERTER" ]
+then
+  DATECONVERTER="/home/pwagner/bin/dateconverter"
+fi 
+if [ ! -r "$REECHO" ]
+then
+  REECHO="/home/pwagner/bin/reecho.sh"
+fi 
+more_opts="yes"
+while [ "$more_opts" = "yes" ] ; do
+
+    case "$1" in
+
+    -bug )
+	    shift
+       bug="yes"
+       ;;
+    -debug )
+	    shift
+       debug="yes"
+       ;;
+    -c )
+	    shift
+       convert="yes"
+       ;;
+    -Cf )
+	    shift
+       clusternames=`cat $1 | uniq | read_file_into_array`
+       shift
+       ;;
+    -cf )
+	    shift
+       computetimes=`cat $1 | uniq | read_file_into_array`
+       shift
+       ;;
+    -d )
+	    shift
+       dirnames="yes"
+       ;;
+    -D )
+	    shift
+       corpses="$1"
+       shift
+       ;;
+    -Df )
+	    shift
+       corpses=`cat $1 | uniq | read_file_into_array`
+       shift
+       ;;
+    -x )
+	    shift
+       died="yes"
+       ;;
+    -r )
+	    shift
+       running="yes"
+       restrict="yes"
+       ;;
+    -fail )
+	    shift
+       fail="yes"
+       restrict="yes"
+       ;;
+    -finish )
+	    shift
+       finish="yes"
+       restrict="yes"
+       ;;
+    -full )
+	    shift
+       full="yes"
+       restrict="yes"
+       ;;
+    -m )
+	    shift
+       clusternames="$1"
+	    shift
+       ;;
+    -vn )
+	    shift
+       version="$1"
+	    shift
+       ;;
+    -t )
+	    shift
+       time="yes"
+       restrict="yes"
+       ;;
+    -h | -help )
+       sed -n '/'$my_name' help/,/End '$my_name' help/ p' $me \
+           | sed -n 's/^.//p' | sed '1 d; $ d'
+       exit
+	     ;;
+    * )
+       more_opts="no"
+       ;;
+    esac
+done
+nclusters=`how_many_array_elements "$clusternames"`
+dirsplus=`echo /workops/jobs/science/*/mlsl2.slave`
+dirs=`echo $dirsplus | sed "s:mlsl2.slave::g"`
+if [ "$debug" = "yes" ]
+then
+  echo "dirs: $dirs"
+fi
+if [ "$nclusters" = "1" ]
+then
+  echo "status for cluster $clusternames only"
+  list="date of data"
+else
+  list='date of data \t machine'
+fi
+if [ "$restrict" != "yes" ]
+then
+  list=`cat_args "$list" "---- status ----" "\t"`
+fi
+if [ "$dirnames" = "yes" ]
+then
+  list=`cat_args "$list" "directory" "\t"`
+fi
+if [ "$bug" = "yes" ]
+then
+  list=`cat_args "$list" "lost to bug" "\t"`
+fi
+if [ "$died" = "yes" ]
+then
+  list=`cat_args "$list" "dead chunks \t killer nodes" "\t"`
+fi
+if [ "$running" = "yes" ]
+then
+  list=`cat_args "$list" "chunks running" "\t"`
+fi
+if [ "$full" = "yes" ]
+then
+  echo "Stats order: running complete crashed waiting total"
+  list=`cat_args "$list" "full stats " "\t"`
+fi
+if [ "$time" = "yes" ]
+then
+  list=`cat_args "$list" "run start (date time)" "\t"`
+fi
+if [ "$finish" = "yes" ]
+then
+  list=`cat_args "$list" "run finish (date time)" "\t"`
+fi
+if [ "$fail" = "no" ]
+then
+  echo -e $list
+fi
+
+#
+# for machine in lightspeed scramjet speedracer unknown
+# do
+# computetime=`print_hash_element $machine "$clusternames" "$computetimes"`
+# echo "$machine computetime $computetime"
+# done
+# exit
+
+afterfirst="no"
+for dir in $dirs
+do
+  # These are pretty quick (at least compared with grepping the whole
+  # file as later tests require)
+  machine=""
+  for name in $clusternames
+  do
+    # testl=`grep -i executing $dir/exec_log/process.stdout | grep -i $name`
+    testl=`head -40 $dir/exec_log/process.stdout | grep -n Executing  | grep -i $name`
+    if [ "$testl" != "" ]
+    then
+      machine="$name"
+    fi
+  done
+  theversion=`grep -i pgeversion $dir/job.PCF | awk -F"|" '{print $3}'`
+  case $theversion in
+    V01-5*)
+      computetime=24
+      ;;
+    V02-20)
+      computetime=30
+      ;;
+    V02-21)
+      computetime=33
+      ;;
+    *)
+      computetime="depends"
+      ;;
+  esac
+  statbad=`tail $dir/exec_log/process.stdout | grep -i "ended badly"`
+  # Some other signs that the job ended badly are that it was killed or
+  # the network went down
+  if [ "$statbad" = "" ]
+  then
+    statbad=`tail $dir/exec_log/process.stderr | \
+      grep -i "/home/sips/ops/bin/dispatch_l2" | grep -i killed`
+  fi
+  if [ "$statbad" = "" ]
+  then
+    statbad=`tail $dir/exec_log/process.stderr | grep -i "connection lost"`
+  fi
+  if [ "$statbad" = "" ]
+  then
+    statbad=`tail $dir/exec_log/process.stderr | grep -i "terminated"`
+  fi
+  if [ "$statbad" = "" -a "$corpses" != "" ]
+  then
+    statbad=`echo "$corpses" | grep -i "$dir"`
+    if [ "$statbad" != "" ]
+    then
+      statbad="legally dead"
+    fi
+  fi
+  statnochunks=`tail $dir/exec_log/process.stdout | grep -i "No chunks were processed"`
+  statpvmtrouble=`tail $dir/exec_log/process.stdout | grep -i "probably pvm trouble"`
+  statgood=`tail $dir/exec_log/process.stdout | grep -i "catenating chunk"`
+  l1boa=`$REECHO $dir/*L1BOA_*`
+  date=`echo $l1boa | sed "s/_/\n/g;s/.h5//" | tail -1`
+  bugs=`grep -ic 'list out of order' $dir/pvmlog/mlsl2.log 2>/dev/null`
+  if [ "$bugs" = "" ]
+  then
+    bugs=0
+  fi
+  list=""
+  if [ "$lightspeed" = "yes" -a "$testl" != "" ]
+  then
+    list="lightspeed"
+    machine="lightspeed"
+  fi
+  if [ "$scramjet" = "yes" -a "$tests" != "" ]
+  then
+    list="scramjet"
+    machine="scramjet"
+  fi
+  if [ "$machine" != "" -a "$nclusters" != "1" ]
+  then
+    list="$machine"
+  fi
+  if [ "$debug" = "yes" ]
+  then
+    echo "machine: $machine"
+    echo "version sought: $version"
+    echo "version found: $theversion"
+    echo "statbad: $statbad"
+    echo "statnochunks: $statnochunks"
+    echo "statpvmtrouble: $statpvmtrouble"
+    echo "statgood: $statgood"
+    echo "l1boa: $l1boa"
+    echo "date: $date"
+    echo "bugs: $bugs"
+    echo "list: $list"
+    echo "computetime: $computetime"
+  fi
+  if [ "$dontprintemptydates" = "yes" -a "$date" = "" ]
+  then
+    machine=""
+  fi
+  if [ "$version" != "" -a "$version" != "$theversion" ]
+  then
+    machine=""
+  fi
+  if [ "$machine" != "" ]
+  then
+    skipifrestricting="$restrict"
+    if [ "$statbad" != "" ]
+    then
+      statkilled=`echo "$statbad" | grep -i killed`
+      statterminated=`echo "$statbad" | grep -i terminated`
+      statlegallydead=`echo "$statbad" | grep -i legally`
+      if [ "$statkilled" != "" ]
+      then
+        newlist=`cat_args "$list" "killed" "\t"`
+      elif [ "$statterminated" != "" ]
+      then
+        newlist=`cat_args "$list" "terminated" "\t"`
+      elif [ "$statlegallydead" != "" ]
+      then
+        newlist=`cat_args "$list" "legally dead" "\t"`
+      else
+        newlist=`cat_args "$list" "ended badly" "\t"`
+      fi
+    elif [ "$statnochunks" != "" ]
+    then
+      newlist=`cat_args "$list" "failed (no chunks)" "\t"`
+    elif [ "$statpvmtrouble" != "" ]
+    then
+      newlist=`cat_args "$list" "failed (pvm)" "\t"`
+    elif [ "$statgood" != "" ]
+    then
+      newlist=`cat_args "$list" "completed normally" "\t"`
+    else
+      newlist=`cat_args "$list" "still running" "\t"`
+      skipifrestricting="no"
+    fi
+    if [ "$restrict" = "no" ]
+    then
+      list="$newlist"
+    fi
+    if [ "$date" = '' ]
+    then
+      list="(empty date) \t  $list"
+    elif [ "$convert" = "yes" ]
+    then
+      list="`$DATECONVERTER $date` \t  $list"
+    else
+      list="$date \t $list"
+    fi
+    if [ "$dirnames" = "yes" ]
+    then
+      list="$list \t $dir"
+    fi
+    if [ "$bug" = "yes" ]
+    then
+      list="$list \t $bugs"
+    fi
+    if [ "$debug" = "yes" ]
+    then
+      echo "skipifrestricting: $skipifrestricting"
+      echo "list: $list"
+      echo "newlist: $newlist"
+    fi
+    # These other test are slower, so skip them if we won't print the results
+    if [ "$died" = "yes" -a "$skipifrestricting" = "no" ]
+    then
+	   chunks=`grep 'died,' $dir/exec_log/process.stdout | awk '{print $7}'`
+	   nodes=`grep 'died,' $dir/exec_log/process.stdout | awk '{print $9}'`
+      ndied=`echo $chunks | wc | awk '{print $2}'`
+      if [ "$ndied" -gt "$maxobituaries" ]
+      then
+        list="$list \t ($ndied chunks) \t ($ndied nodes)"
+      else
+        list="$list \t $chunks \t $nodes"
+      fi
+    fi
+    if [ "$running" = "yes" -a "$skipifrestricting" = "no" ]
+    then
+	   chunks=`grep completed $dir/exec_log/process.stdout | tail -1 | \
+        awk '{print $8}'`
+      if [ "$chunks" = "" ]
+      then
+        chunks="(unknown)"
+      fi
+      list="$list \t $chunks"
+    fi
+    if [ "$full" = "yes" -a "$skipifrestricting" = "no" ]
+    then
+	   chunks=`grep completed $dir/exec_log/process.stdout | tail -1 | \
+        awk '{print $8, $3, $10, $12, $5}'`
+      if [ "$chunks" = "" ]
+      then
+        chunks="(unknown)"
+      fi
+      list="$list \t $chunks"
+    fi
+    if [ "$time" = "yes" -a "$skipifrestricting" = "no" ]
+    then
+	   chunks=`grep 'starting mlsl2' $dir/exec_log/process.stdout | head -1 | \
+        awk '{print $3, $4}'`
+      list="$list \t $chunks"
+    fi
+    if [ "$finish" = "yes" -a "$skipifrestricting" = "no" ]
+    then
+      numChunks=`grep -i 'nochunks:' $dir/exec_log/process.stdout | tail -1 | awk '{print $4}'`
+      # numLaunched=`grep -i launched $dir/exec_log/process.stdout | wc -l`
+      numLaunched=` grep Launched $dir/exec_log/process.stdout | tail -1 | sed -n 's/.*chunk//p' | awk '{print $1}'`
+      if [ "$numChunks" = "" ]
+      then
+        # Not all chunks launched yet, so can't tell when last one will finish
+        chunks="(unknown)"
+      elif [ "$numLaunched" = "" ]
+      then
+        # Not all chunks launched yet, so can't tell when last one will finish
+        # chunks="0 / $numChunks"
+        chunks=" "
+      elif [ "$numLaunched" -lt "$numChunks" ]
+      then
+        # Not all chunks launched yet, so can't tell when last one will finish
+        # chunks="$numLaunched / $numChunks"
+        chunks=" "
+      else
+        # Try to find when when last chunk started
+        lastline=`grep -h 'starting mlsl2' $dir/pvmlog/* | sort  | tail -1`
+        lastdate=`echo $lastline | awk '{print $1}'`
+        lasttime=`echo $lastline | awk '{print $2}'`
+        # And add an average compute time to it
+        if [ "$computetime" = "depends" ]
+        then
+          computetime=`print_hash_element $machine "$clusternames" "$computetimes"`
+        fi
+        chunks=`$DATECONVERTER +H $computetime -t $lasttime -o 'M dd' $lastdate`
+      fi
+      list="$list \t $chunks"
+    fi
+    if [ "$fail" = "yes" -a "$skipifrestricting" = "no" ]
+    then
+      if [ "$afterfirst" = "yes" ]
+      then
+        echo ""
+      fi
+      afterfirst="yes"
+      echo "Nodes on $machine on which a job could not be spawned"
+      a=`grep -n 'Unable to start slave task' $dir/exec_log/process.stdout | \
+       awk '{print $1}' | sed 's/://'`
+      if [ "$a" = "" ]
+      then
+        echo "All attempts at spawning jobs succeeded"
+      else
+        note_failures "$a" "$dir/exec_log/process.stdout"
+      fi
+    fi
+    if [ "$skipifrestricting" = "no" -a $fail = "no" ]
+    then
+      echo -e $list
+    fi
+  fi
+done
+exit 0
+# $Log: sipsl2.sh,v $
+# Revision 1.17  2007/01/22 17:48:04  pwagner
+# Repaired bug affecting runs just starting out
+#
+# Revision 1.16  2007/01/18 23:30:12  pwagner
+# Added -finish option to display predicted finish time
+#
+# Revision 1.15  2006/08/21 21:56:09  pwagner
+# Works better with v2.1 versions
+#
+# Revision 1.14  2006/07/13 18:12:18  pwagner
+# Accepts that certain jobs (corpses) may be legally declared dead
+#
+# Revision 1.13  2006/06/28 00:03:40  pwagner
+# Notes when jobs are terminated rather than completed normally
+#
+# Revision 1.12  2006/05/19 19:56:25  pwagner
+# Catches sign that a job was killed
+#
+# Revision 1.11  2006/04/17 23:22:31  pwagner
+# Tests for another condition indicating ended badly
+#
+# Revision 1.10  2006/03/23 19:18:01  pwagner
+# Handles multiple pge versions explicitly
+#
+# Revision 1.9  2006/03/18 00:06:45  pwagner
+# Avoids printing empty dates, limits printing dead chunks
+#
+# Revision 1.8  2005/07/15 22:42:43  pwagner
+# Will handle empty date fields more gracefully
+#
+# Revision 1.7  2005/06/23 22:20:46  pwagner
+# Reworded Copyright statement
+#
+# Revision 1.6  2005/05/20 23:10:27  pwagner
+# Show how many chunks succumbed to 'list out of order' bug
+#
+# Revision 1.5  2005/04/28 18:42:32  pwagner
+# Fixed bug preventing more than one machine  from reporting pvm failures
+#
+# Revision 1.4  2005/04/21 20:38:02  pwagner
+# Replace -l, -s options with -m; added speedracer name failed status
+#
+# Revision 1.3  2005/04/12 20:33:26  pwagner
+# Tightened criteria for dead chunks, killer nodes
+#
+# Revision 1.2  2005/04/06 22:13:58  pwagner
+# Fixed bug; optionally show unspawnable nodes
+#
+# Revision 1.1  2005/04/01 00:13:15  pwagner
+# First commit
+#
+@
+
+
+1.17
+log
+@Repaired bug affecting runs just starting out
+@
+text
+@d9 2
+d47 1
+a47 1
+# "$Id: sipsl2.sh,v 1.16 2007/01/18 23:30:12 pwagner Exp $"
+a78 125
+#---------------------------- change_nth_array_element
+#
+# Function to change the nth element in a comma-delimited list
+# where n is the first arg, the list is the second arg, 
+# and the new value is the third
+# eg given
+# change_nth_list_element 3 'a b c d' e
+# writes 'a b e d' to standard output
+
+change_nth_array_element()
+{
+
+   # Do we have enough args?
+      if [ $# -lt 3 ]
+      then
+         echo "Usage: change_nth_array_element n 'a b c ..' newvalue"
+         exit 1
+      fi
+      
+      perl -e '@@parts=split(" ","$ARGV[0]"); $parts[$ARGV[1]-1]=$ARGV[2]; print join(" ",@@parts)' "$2" "$1" "$3"
+}
+      
+#---------------------------- change_nth_list_element
+#
+# Function to change the nth element in a comma-delimited list
+# where n is the first arg, the list is the second arg, 
+# and the new value is the third
+# eg given
+# change_nth_list_element 3 'a,b,c,d' e
+# writes 'a,b,e,d' to standard output
+
+change_nth_list_element()
+{
+
+   # Do we have enough args?
+      if [ $# -lt 3 ]
+      then
+         echo "Usage: change_nth_list_element n 'a,b,c,..' newvalue"
+         exit 1
+      fi
+      
+      perl -e '@@parts=split(",","$ARGV[0]"); $parts[$ARGV[1]-1]=$ARGV[2]; print join(",",@@parts)' "$2" "$1" "$3"
+}
+      
+#---------------------------- convert_array_to_list
+#
+# Function to convert a space-separated array into a comma-delimited list
+# eg given
+# convert_array_to_list 'a b c d'
+# writes 'a,b,e,d' to standard output
+convert_array_to_list()
+{
+
+   # Do we have enough args?
+      if [ $# -lt 1 ]
+      then
+         echo "Usage: convert_array_to_list 'a b c d ..'"
+         exit 1
+      fi
+      
+      perl -e '@@parts=split(" ","$ARGV[0]"); print join(",",@@parts)' "$1"
+}
+      
+#---------------------------- convert_list_to_array
+#
+# Function to convert a comma-delimited list into a space-separated array
+# eg given
+# convert_list_to_array 'a,b,e,d'
+# writes 'a b c d' to standard output
+convert_list_to_array()
+{
+
+   # Do we have enough args?
+      if [ $# -lt 1 ]
+      then
+         echo "Usage: convert_list_to_array 'a,b,c,..'"
+         exit 1
+      fi
+      
+      perl -e '@@parts=split(",","$ARGV[0]"); print join(" ",@@parts)' "$1"
+}
+
+#---------------------------- get_unique_name
+#
+# Function returns a unique name based on arg, PID and HOSTNAME
+# e.g.,
+#           temp_file_name=`get_unique_name foo`
+#           echo $temp_file_name
+# might print foo.colossus.21455
+# if no arg, defaults to "temp" (very original name)
+# if two args present, assumes second is punctuation to
+# use in pace of "."
+
+get_unique_name()
+{
+
+   # How many args?
+      if [ $# -gt 1 ]
+      then
+        pt="$2"
+        temp="$1"
+      elif [ $# -gt 0 ]
+      then
+        pt="."
+        temp="$1"
+      else
+        pt="."
+        temp="temp"
+      fi
+   # Is $HOST defined?
+      if [ "$HOST" != "" ]
+      then
+         our_host_name="$HOST"
+      elif [ "$HOSTNAME" != "" ]
+      then
+         our_host_name="$HOSTNAME"
+      else
+         our_host_name="host"
+      fi
+   # if in form host.moon.planet.star.. extract host
+      our_host_name=`echo $our_host_name | sed 's/\./,/g'`
+      our_host_name=`perl -e '@@parts=split(",","$ARGV[0]"); print $parts[0]' $our_host_name`
+      echo $temp${pt}$our_host_name${pt}$$
+}
+      
+d84 1
+a84 1
+# how_many_list_elements 'a b c d'
+a100 148
+#---------------------------- how_many_list_elements
+#
+# Function to return the number of elements in a comma-delimited list
+# where the list is the lone arg
+# eg given
+# how_many_list_elements 'a,b,c,d'
+# writes '4' to standard output
+# (Note: we have thus corrected for perl's c-centric array origin)
+
+how_many_list_elements()
+{
+
+   # Do we have enough args?
+      if [ $# -lt 1 ]
+      then
+         echo "Usage: how_many_list_elements 'a,b,c,..'"
+         exit 1
+      fi
+      
+      perl -e '@@parts=split(",","$ARGV[0]"); print eval($#parts + 1)' "$1"
+}
+      
+#---------------------------- lhs_eq_rhs
+#
+# Function to assign second arg to first: lhs=rhs
+# where (lhs rhs) = ($1 $2)
+# if given optional third arg "n"
+# assigns $$..$lhs = $$..$rhs
+
+lhs_eq_rhs()
+{
+
+   # Do we have write permission in ./?
+      if [ ! -w "./" ]
+      then
+         echo "Sorry--need write permission in ./ to operate"
+         exit 1
+      fi
+      
+      lhs_unique_name=`get_unique_name lhs`
+      rm -f $lhs_unique_name
+      if [ $# -lt 3 -a "$1" != "" ]
+      then
+         echo "$1"="'"$2"'" > $lhs_unique_name
+         . $lhs_unique_name
+      else
+         mega_buck $3 $1
+         lhs=$mega_buck_result
+         if [ "$lhs" != "" ] ; then
+            mega_buck $3 $2
+            rhs=$mega_buck_result
+            echo "$lhs"="'"$rhs"'" > $lhs_unique_name
+            . $lhs_unique_name
+         fi
+      fi
+     rm -f $lhs_unique_name
+}
+      
+#------------------------------- mega_buck ------------
+#
+# Function to force multiple-evaluation of its second arg
+# i.e., $$..$color (where the number of $ signs is n)
+# usage: mega_buck n color
+
+# (uses PID to generate unique name) 
+
+mega_buck()
+{
+
+   # Trivial case (n is 0)
+   if [ "$1" -lt 1 ]
+      then
+         mega_buck_result="$2"
+   elif [ "$2" = "" ]
+      then
+         mega_buck_result="$2"
+   # Do we have write permission in ./?
+   elif [ ! -w "./" ]
+      then
+         echo "Sorry--need write permission in ./ to operate"
+         exit 1
+   else
+      
+      unique_name=`get_unique_name`
+      rm -f $unique_name
+
+      number=0
+      mega_buck_result=$2
+      while [ "$number" -lt "$1" ]
+      do
+         echo "echo \$arg" | sed 's/arg/'$mega_buck_result'/' > $unique_name
+         mega_buck_result=`. $unique_name`
+         rm -f $unique_name
+         number=`expr $number + 1`
+      done
+   fi
+}
+
+#---------------------------- nth_arg
+#
+# Function to return the nth (n > 0) arg of the std args after n
+# eg given
+# nth_arg 3 a b 'c or d' d e ..
+# writes 'c or d' to standard output (w/o ' marks)
+
+nth_arg()
+{
+
+   # Do we have enough args? No error if not, just blank output
+     # echo "Entering nth_arg with args $@@"
+      the_arg=
+      if [ $# -gt 1 ]
+      then
+         count_up=1
+         n=$1
+         shift
+         while [ $count_up -lt $n ]
+         do
+           shift
+           count_up=`expr $count_up + 1`
+         done
+         the_arg="$1"
+      fi
+     # echo "$the_arg"
+}
+      
+#---------------------------- nth_list_element
+#
+# Function to return the nth (n > 0) element of a comma-delimited list
+# where n is arg 1 and the list arg 2
+# eg given
+# nth_list_element 3 'a,b,c,d'
+# writes 'c' to standard output (w/o ' marks)
+# (Note: we have thus corrected for perl's c-centric array origin)
+
+nth_list_element()
+{
+
+   # Do we have enough args?
+      if [ $# -lt 2 ]
+      then
+         echo "Usage: nth_list_element n 'a,b,c,..'"
+         exit 1
+      fi
+      
+      perl -e '@@parts=split(",","$ARGV[1]"); print $parts[$ARGV[0]-1]' $1 "$2"
+}
+      
+d135 38
+d196 30
+d230 1
+d235 3
+a237 1
+shows="yes yes yes"
+d239 2
+d243 4
+a250 6
+I=sipsl2
+bug="no"
+convert="no"
+corpses=""
+dirnames="no"
+died="no"
+a251 1
+fail="no"
+a252 2
+full="no"
+finish="no"
+a254 1
+more_opts="yes"
+d265 1
+d282 10
+d406 9
+d423 2
+a424 1
+    testl=`grep -i executing $dir/exec_log/process.stdout | grep -i $name`
+d438 3
+d442 1
+a442 1
+      computetime=30
+d507 1
+d580 2
+a581 2
+	   chunks=`grep -i 'died,' $dir/exec_log/process.stdout | awk '{print $7}'`
+	   nodes=`grep -i 'died,' $dir/exec_log/process.stdout | awk '{print $9}'`
+d592 1
+a592 1
+	   chunks=`grep -i completed $dir/exec_log/process.stdout | tail -1 | \
+d602 1
+a602 1
+	   chunks=`grep -i completed $dir/exec_log/process.stdout | tail -1 | \
+d612 1
+a612 1
+	   chunks=`grep -i 'starting mlsl2' $dir/exec_log/process.stdout | head -1 | \
+d620 1
+a620 1
+      numLaunched=` grep -i launched $dir/exec_log/process.stdout | tail -1 | sed -n 's/.*chunk//p' | awk '{print $1}'`
+d628 2
+a629 1
+        chunks="0 / $numChunks"
+d633 2
+a634 1
+        chunks="$numLaunched / $numChunks"
+d637 1
+a637 1
+        lastline=`grep -ih 'starting mlsl2' $dir/pvmlog/* | sort  | tail -1`
+d641 4
+d674 3
+@
+
+
+1.16
+log
+@Added -finish option to display predicted finish time
+@
+text
+@d45 1
+a45 1
+# "$Id: sipsl2.sh,v 1.15 2006/08/21 21:56:09 pwagner Exp $"
+d800 9
+a808 1
+      if [ "$numLaunched" -lt "$numChunks" ]
+d847 3
+@
+
+
+1.15
+log
+@Works better with v2.1 versions
+@
+text
+@d20 1
+d45 1
+a45 1
+# "$Id: sipsl2.sh,v 1.14 2006/07/13 18:12:18 pwagner Exp $"
+d455 1
+d513 5
+d591 4
+d614 11
+d795 19
+d839 3
+@
+
+
+1.14
+log
+@Accepts that certain jobs (corpses) may be legally declared dead
+@
+text
+@d44 1
+a44 1
+# "$Id: sipsl2.sh,v 1.13 2006/06/28 00:03:40 pwagner Exp $"
+a386 2
+    #echo "line number $line_number of $2"
+    #sed -n ''$line_number' p' "$2"
+a387 1
+    #echo "machine_info: $machine_info"
+a592 2
+  #testl=`head $dir/exec_log/process.stdout | grep -i lightspeed`
+  #tests=`head $dir/exec_log/process.stdout | grep -i scramjet`
+a596 3
+    # testl=`head $dir/exec_log/process.stdout | grep -i executing | grep -i $name`
+    # testl=`grep -i pvm_hosts_info $dir/exec_log/process.stdout | grep -i $name`
+    # echo "testl: $testl"
+d629 1
+a629 1
+  statgood=`tail $dir/exec_log/process.stdout | grep -i "catenating slave"`
+d798 3
+@
+
+
+1.13
+log
+@Notes when jobs are terminated rather than completed normally
+@
+text
+@d15 2
+d44 1
+a44 1
+# "$Id: sipsl2.sh,v 1.12 2006/05/19 19:56:25 pwagner Exp $"
+d408 23
+d450 1
+d490 10
+d627 8
+d689 1
+d696 3
+d806 3
+@
+
+
+1.12
+log
+@Catches sign that a job was killed
+@
+text
+@d42 1
+a42 1
+# "$Id: sipsl2.sh,v 1.11 2006/04/17 23:22:31 pwagner Exp $"
+d587 4
+d644 1
+d648 3
+d758 3
+@
+
+
+1.11
+log
+@Tests for another condition indicating ended badly
+@
+text
+@d42 1
+a42 1
+# "$Id: sipsl2.sh,v 1.10 2006/03/23 19:18:01 pwagner Exp $"
+d576 7
+d639 7
+a645 1
+      newlist=`cat_args "$list" "ended badly" "\t"`
+d750 3
+@
+
+
+1.10
+log
+@Handles multiple pge versions explicitly
+@
+text
+@d42 1
+a42 1
+# "$Id: sipsl2.sh,v 1.9 2006/03/18 00:06:45 pwagner Exp $"
+d576 4
+a582 1
+  # l1boa=`echo $dir/*L1BOA_*`
+d737 3
+@
+
+
+1.9
+log
+@Avoids printing empty dates, limits printing dead chunks
+@
+text
+@d9 1
+d11 1
+d42 1
+a42 1
+# "$Id: sipsl2.sh,v 1.8 2005/07/15 22:42:43 pwagner Exp $"
+d432 1
+d452 4
+d488 5
+d565 2
+a566 1
+    testl=`head $dir/exec_log/process.stdout | grep -i executing | grep -i $name`
+d574 1
+d605 2
+d620 4
+d734 3
+@
+
+
+1.8
+log
+@Will handle empty date fields more gracefully
+@
+text
+@d40 1
+a40 1
+# "$Id: sipsl2.sh,v 1.7 2005/06/23 22:20:46 pwagner Exp $"
+d414 4
+d553 1
+a553 1
+    testl=`head $dir/exec_log/process.stdout | grep -i $name`
+d555 1
+d600 4
+d655 7
+a661 1
+      list="$list \t $chunks \t $nodes"
+d714 3
+@
+
+
+1.7
+log
+@Reworded Copyright statement
+@
+text
+@d40 1
+a40 1
+# "$Id: sipsl2.sh,v 1.6 2005/05/20 23:10:27 pwagner Exp $"
+d428 1
+d433 4
+d560 2
+a561 1
+  l1boa=`echo $dir/*L1BOA_*`
+d618 4
+a621 1
+    if [ "$convert" = "yes" ]
+d699 3
+@
+
+
+1.6
+log
+@Show how many chunks succumbed to 'list out of order' bug
+@
+text
+@d29 10
+a38 2
+# Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+# U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
+d40 1
+a40 1
+# "$Id: sipsl2.sh,v 1.5 2005/04/28 18:42:32 pwagner Exp $"
+d558 4
+d690 3
+@
+
+
+1.5
+log
+@Fixed bug preventing more than one machine  from reporting pvm failures
+@
+text
+@d9 1
+d32 1
+a32 1
+# "$Id: sipsl2.sh,v 1.4 2005/04/21 20:38:02 pwagner Exp $"
+d409 1
+d428 4
+d489 1
+a489 1
+  list="data date"
+d491 1
+a491 1
+  list='data date \t machine'
+d495 1
+a495 1
+  list=`cat_args "$list" "status" "\t"`
+d501 4
+d537 1
+d545 1
+d549 1
+d570 1
+d574 1
+d585 4
+a588 1
+      newlist=`cat_args "$list" "failed" "\t"`
+d610 4
+d678 3
+@
+
+
+1.4
+log
+@Replace -l, -s options with -m; added speedracer name failed status
+@
+text
+@d31 1
+a31 1
+# "$Id: sipsl2.sh,v 1.3 2005/04/12 20:33:26 pwagner Exp $"
+d592 6
+d644 2
+a645 1
+        exit
+a646 1
+      note_failures "$a" "$dir/exec_log/process.stdout"
+d656 3
+@
+
+
+1.3
+log
+@Tightened criteria for dead chunks, killer nodes
+@
+text
+@d8 1
+a8 2
+# -l          show lightspeed jobs only
+# -s          show scramjet jobs only
+d31 1
+a31 1
+# "$Id: sipsl2.sh,v 1.2 2005/04/06 22:13:58 pwagner Exp $"
+d33 326
+d399 5
+a408 2
+lightspeed="yes"
+scramjet="yes"
+d453 5
+a462 8
+    -l )
+	    shift
+       scramjet="no"
+       ;;
+    -s )
+	    shift
+       lightspeed="no"
+       ;;
+a467 1
+
+d473 1
+a473 1
+
+d480 1
+a480 1
+if [ "$restrict" = "yes" ]
+d482 3
+d486 4
+a489 2
+else
+  list='data date \t machine \t status'
+d493 1
+a493 1
+  list="$list \t directory"
+d497 1
+a497 1
+  list="$list \t dead chunks \t killer nodes"
+d501 1
+a501 1
+  list="$list \t chunks running"
+d506 1
+a506 1
+  list="$list \t full stats "
+d510 1
+a510 1
+  list="$list \t run start (date time)"
+d516 1
+d521 11
+a531 2
+  testl=`head $dir/exec_log/process.stdout | grep -i lightspeed`
+  tests=`head $dir/exec_log/process.stdout | grep -i scramjet`
+d533 1
+d548 4
+d554 1
+a554 2
+    echo "testl: $testl"
+    echo "tests: $tests"
+d556 1
+d562 1
+a562 1
+  if [ "$list" != "" ]
+d567 4
+a570 1
+      newlist="$list \t ended badly"
+d573 1
+a573 1
+      newlist="$list \t completed normally"
+d575 1
+a575 1
+      newlist="$list \t  still running"
+d627 5
+a634 1
+      #echo "a: $a"
+d650 3
+@
+
+
+1.2
+log
+@Fixed bug; optionally show unspawnable nodes
+@
+text
+@d32 1
+a32 1
+# "$Id: sipsl2.sh,v 1.1 2005/04/01 00:13:15 pwagner Exp $"
+d248 2
+a249 2
+	   chunks=`grep -i died $dir/exec_log/process.stdout | awk '{print $7}'`
+	   nodes=`grep -i died $dir/exec_log/process.stdout | awk '{print $9}'`
+d299 3
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d17 2
+d32 37
+a68 1
+# "$Id: sipsl2.sh,v 1.1 2005/03/26 00:13:25 pwagner Exp $"
+d84 1
+d115 5
+d176 2
+a177 1
+  list="$list \t stats (r co cr od tot)"
+d183 4
+a186 1
+echo -e $list
+d201 1
+d206 1
+d220 1
+a220 1
+    skipifrestricting="$restricting"
+d254 1
+a254 1
+	   chunks=`grep -i complete $dir/exec_log/process.stdout | tail -1 | \
+d256 4
+d264 1
+a264 1
+	   chunks=`grep -i complete $dir/exec_log/process.stdout | tail -1 | \
+d266 4
+d278 14
+a291 1
+    if [ "$skipifrestricting" = "no" ]
+d298 4
+a301 1
+# $Log: pvm-add.sh,v $
+@
+

@@ -1,0 +1,51 @@
+head	1.2;
+access;
+symbols
+	V1-04:1.1
+	V1-03:1.1
+	V1-02:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2002.05.17.20.24.09;	author livesey;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2002.04.29.21.54.58;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@First consolidated version
+@
+text
+@; ------------------------------------------------- Fill, rhi -----
+
+begin Fill
+
+   ;; Fill the rhi from the h2o
+   Fill, quantity=state.rhi, h2oQuantity=state.h2o, $
+    temperatureQuantity=state.temp, $
+    method=special, /dontMask
+ 
+
+end Fill
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@@
+

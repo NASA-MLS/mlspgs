@@ -1,0 +1,412 @@
+head	2.10;
+access;
+symbols
+	v5-02-NRT-19:2.10
+	v6-00:2.10
+	v5-02-NRT-18:2.10
+	v5-02:2.10
+	v5-01-NRT-17:2.10
+	v5-01-NRT-16:2.10
+	v5-01-NRT-15:2.10
+	v5-01-NRT-14:2.10
+	neuralnetworks-1-0:2.10.0.14
+	cfm-single-freq-0-1:2.10.0.12
+	v5-01:2.10
+	v5-00:2.10
+	v4-23-TA133:2.10.0.10
+	mus-emls-1-70:2.10.0.8
+	rel-1-0-englocks-work:2.10.0.6
+	VUMLS1-00:2.10
+	VPL1-00:2.10
+	V4-22-NRT-08:2.10
+	VAM1-00:2.10
+	V4-21:2.10.0.4
+	V4-13:2.10
+	V4-12:2.10
+	V4-11:2.10
+	V4-10:2.10
+	V3-43:2.10
+	M4-00:2.10
+	V3-41:2.10
+	V3-40-PlusGM57:2.10.0.2
+	V2-24-NRT-04:2.9
+	V3-33:2.10
+	V2-24:2.9
+	V3-31:2.10
+	V3-30-NRT-05:2.10
+	cfm-01-00:2.10
+	V3-30:2.10
+	V3-20:2.10
+	V3-10:2.10
+	V2-23-NRT-02:2.9
+	V2-23:2.9
+	V2-22-NRT-01:2.9
+	V2-22:2.9
+	V2-21:2.9
+	V2-20:2.9
+	V2-11:2.9
+	V2-10:2.9
+	V2-00:2.9
+	V1-51:2.8
+	V1-50:2.8
+	V1-45:2.8
+	V1-44:2.8
+	V1-43:2.8
+	V1-32:2.8
+	V1-31:2.8
+	V1-30:2.8
+	V1-13:2.8
+	V1-12:2.8
+	V1-11:2.8
+	V1-10:2.8
+	newfwm-feb03:2.8.0.2
+	V1-04:2.7
+	V1-03:2.7
+	V1-02:2.7
+	JointForwardModel:2.7.0.2
+	V1-00:2.7
+	newfwm-sep01:2.6.0.2
+	V0-7:2.6
+	V0-5-Level2:2.5
+	V0-5-SIPS:2.4;
+locks; strict;
+comment	@# @;
+
+
+2.10
+date	2009.06.23.18.46.19;	author pwagner;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2005.06.22.18.57.02;	author pwagner;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2002.10.08.17.36.23;	author pwagner;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2002.03.12.23.43.26;	author vsnyder;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2001.06.07.21.58.28;	author pwagner;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2001.04.26.02.44.17;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2001.04.10.22.27.47;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2001.04.10.17.58.57;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2001.04.06.20.12.14;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.03.15.21.05.23;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.10
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Test_Parse_Signals_m
+
+! After ingesting the l2cf, it will print "Enter radiometer strings:"
+! When you enter a radiometer string, it will parse it, and dump all
+! of the signals in the database that match it.
+
+! When you're bored with this, enter end-of-file to continue with the
+! real work.
+
+  use Allocate_Deallocate, only: Deallocate_Test
+  use Parse_Signal_m, only: Parse_Signal
+  use MLSSignals_m, only: GetSignalName
+
+  implicit NONE
+
+  private
+
+  public :: Test_Parse_Signals
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+  subroutine Test_Parse_Signals
+
+    logical, pointer, dimension(:) :: Channels
+    integer :: I
+    character(len=127) :: Line
+    integer :: Sideband
+    integer, pointer, dimension(:) :: Signal_Indices
+
+    nullify ( channels, signal_Indices )
+
+    print *, 'Enter radiometer strings: '
+    do
+      read ( *, '(a)', end=99 ) line
+      call parse_signal ( line, signal_indices, &
+        & sideband=sideband, channels=channels )
+      if ( associated(signal_indices) ) then
+        print '(10i5)', signal_indices
+        do i = 1, size(signal_indices)
+          call getSignalName ( signal_indices(i), line )
+          print *, trim(line)
+        end do
+        print *, 'Sideband =', sideband
+        if ( associated(channels) ) &
+          & print '(" Channels = ", 50l1:(/12x,50l1))', channels
+      end if
+    end do
+99  return
+  end subroutine Test_Parse_Signals
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: read_apriori.f90 is it here $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Test_Parse_Signals_m
+
+! $Log: Test_Parse_Signals_m.f90,v $
+! Revision 2.9  2005/06/22 18:57:02  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.8  2002/10/08 17:36:23  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.7  2002/03/12 23:43:26  vsnyder
+! Added IMPLICIT NONE and PRIVATE statements
+!
+! Revision 2.6  2001/06/07 21:58:28  pwagner
+! Added Copyright statement
+!
+! Revision 2.5  2001/04/26 02:44:17  vsnyder
+! Moved *_indices declarations from init_tables_module to intrinsic
+!
+! Revision 2.4  2001/04/10 22:27:47  vsnyder
+! Nullify explicitly instead of with <initialization> so as not to give
+! pointers the SAVE attribute.  <initialization> is NOT executed on each
+! entry to a procedure.
+!
+! Revision 2.3  2001/04/10 17:58:57  vsnyder
+! Handle possibility that 'channels' is not associated
+!
+! Revision 2.2  2001/04/06 20:12:14  vsnyder
+! Print Sideband and Channels
+!
+! Revision 2.1  2001/03/15 21:05:23  vsnyder
+! Set up to test Parse_Signal
+!
+@
+
+
+2.9
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d66 1
+a67 1
+!---------------------------- RCS Ident Info -------------------------------
+d69 2
+a70 3
+       "$Id: $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d72 1
+d74 1
+d79 3
+@
+
+
+2.8
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d31 3
+a33 6
+  !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+    & "$Id: Test_Parse_Signals_m.f90,v 2.7 2002/03/12 23:43:26 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName= &
+    & "$RCSfile: Test_Parse_Signals_m.f90,v $"
+d35 1
+a35 1
+  !---------------------------------------------------------------------------
+d67 5
+d78 3
+@
+
+
+2.7
+log
+@Added IMPLICIT NONE and PRIVATE statements
+@
+text
+@d25 1
+a25 1
+    & "$Id: Test_Parse_Signals_m.f90,v 2.6 2001/06/07 21:58:28 pwagner Exp $"
+d29 1
+d61 4
+d68 3
+@
+
+
+2.6
+log
+@Added Copyright statement
+@
+text
+@d17 6
+d24 2
+a25 2
+  character (len=*), private, parameter :: IdParm = &
+    & "$Id: Test_Parse_Signals_m.f90,v 2.5 2001/04/26 02:44:17 vsnyder Exp $"
+d27 1
+a27 1
+  character (len=*), parameter, private :: ModuleName= &
+d63 3
+@
+
+
+2.5
+log
+@Moved *_indices declarations from init_tables_module to intrinsic
+@
+text
+@d1 3
+d19 1
+a19 1
+    & "$Id: Test_Parse_Signals_m.f90,v 2.4 2001/04/10 22:27:47 vsnyder Exp $"
+d57 3
+@
+
+
+2.4
+log
+@Nullify explicitly instead of with <initialization> so as not to give
+pointers the SAVE attribute.  <initialization> is NOT executed on each
+entry to a procedure.
+@
+text
+@a10 1
+  use Init_Tables_Module, only: Spec_Indices
+d16 1
+a16 1
+    & "$Id: Test_Parse_Signals_m.f90,v 2.3 2001/04/10 17:58:57 vsnyder Exp $"
+d36 1
+a36 1
+      call parse_signal ( line, signal_indices, spec_indices, &
+d54 5
+@
+
+
+2.3
+log
+@Handle possibility that 'channels' is not associated
+@
+text
+@d17 1
+a17 1
+    & "$Id: Test_Parse_Signals_m.f90,v 2.2 2001/04/06 20:12:14 vsnyder Exp $"
+d26 1
+a26 1
+    logical, pointer, dimension(:) :: Channels => NULL()
+d30 3
+a32 1
+    integer, pointer, dimension(:) :: Signal_Indices => NULL()
+d55 3
+@
+
+
+2.2
+log
+@Print Sideband and Channels
+@
+text
+@d17 1
+a17 1
+    & "$Id: Test_Parse_Signals_m.f90,v 2.1 2001/03/15 21:05:23 vsnyder Exp $"
+d44 2
+a45 1
+        print '(" Channels = ", 50l1:(/12x,50l1))', channels
+d53 3
+@
+
+
+2.1
+log
+@Set up to test Parse_Signal
+@
+text
+@a2 2
+! To run this routine, uncomment its call in tree_walker%walk_tree_to_do_MLSL2.
+
+d17 1
+a17 1
+    & "$Id: MLSSignals_m.f90,v 2.4 2001/03/15 18:42:58 livesey Exp $"
+d20 1
+a20 1
+    & "$RCSfile: MLSSignals_m.f90,v $"
+d26 1
+d29 1
+d35 2
+a36 1
+      call parse_signal ( line, signal_indices, spec_indices )
+d43 2
+a44 1
+        
+d51 4
+a54 1
+! $Log: $
+@
+

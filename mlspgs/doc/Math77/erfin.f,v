@@ -1,0 +1,72 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.8
+	cfm-single-freq-0-1:1.2.0.6
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.4
+	mus-emls-1-70:1.2.0.2;
+locks; strict;
+comment	@c @;
+
+
+1.2
+date	2018.07.09.23.06.18;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2018.07.09.22.59.07;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Replaced with netlib versions
+@
+text
+@      SUBROUTINE ERFIN
+c Copyright (c) 1996 California Institute of Technology, Pasadena, CA.
+c ALL RIGHTS RESERVED.
+c Based on Government Sponsored Research NAS7-03001.
+C>> 1994-11-11 CLL Typing all variables.
+C>> 1985-09-23 ERFIN  Lawson  Initial code.
+C
+      integer idelta, ialpha
+      COMMON/M77ERR/IDELTA,IALPHA
+      SAVE /M77ERR/
+C
+ 1003 FORMAT(1X,72('$')/' ')
+      PRINT 1003
+      IF (IALPHA.GE.2) STOP
+      RETURN
+      END
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d2 3
+a4 3
+C     .  Copyright (C) 1989, California Institute of Technology.
+C     .  U. S. Government sponsorship under
+C     .  NASA contract NAS7-918 is acknowledged.
+@
+

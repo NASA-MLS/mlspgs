@@ -1,0 +1,1272 @@
+head	2.15;
+access;
+symbols
+	v5-02-NRT-19:2.15
+	v6-00:2.15
+	v5-02-NRT-18:2.15
+	v5-02:2.15
+	v5-01-NRT-17:2.15
+	v5-01-NRT-16:2.15
+	v5-01-NRT-15:2.15
+	v5-01-NRT-14:2.15
+	neuralnetworks-1-0:2.15.0.12
+	cfm-single-freq-0-1:2.15.0.10
+	v5-01:2.15
+	v5-00:2.15
+	v4-23-TA133:2.15.0.8
+	mus-emls-1-70:2.15.0.6
+	rel-1-0-englocks-work:2.15.0.4
+	VUMLS1-00:2.15
+	VPL1-00:2.15
+	V4-22-NRT-08:2.15
+	VAM1-00:2.15
+	V4-21:2.15.0.2
+	V4-13:2.15
+	V4-12:2.15
+	V4-11:2.15
+	V4-10:2.15
+	V3-43:2.12
+	M4-00:2.15
+	V3-41:2.12
+	V3-40-PlusGM57:2.12.0.2
+	V2-24-NRT-04:2.11
+	V3-33:2.15
+	V2-24:2.11
+	V3-31:2.15
+	V3-30-NRT-05:2.13
+	cfm-01-00:2.12
+	V3-30:2.12
+	V3-20:2.12
+	V3-10:2.12
+	V2-23-NRT-02:2.11
+	V2-23:2.11
+	V2-22-NRT-01:2.11
+	V2-22:2.11
+	V2-21:2.11
+	V2-20:2.11
+	V2-11:2.11
+	V2-10:2.11
+	V2-00:2.11
+	V1-51:2.9
+	V1-50:2.9
+	V1-45:2.9
+	V1-44:2.9
+	V1-43:2.9
+	V1-32:2.4
+	V1-31:2.4
+	V1-30:2.4
+	V1-13:2.2
+	V1-12:2.2
+	V1-11:2.2
+	V1-10:2.2
+	newfwm-feb03:2.2.0.2
+	V1-04:2.0
+	V1-03:2.0
+	V1-02:2.0
+	JointForwardModel:2.0.0.2
+	V1-00:2.0
+	newfwm-sep01:1.7.0.2
+	V0-7:1.7
+	V0-5-Level2:1.6
+	V0-5-SIPS:1.6
+	V0_1:1.1;
+locks; strict;
+comment	@# @;
+
+
+2.15
+date	2011.01.26.03.05.39;	author vsnyder;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2010.12.15.21.36.37;	author vsnyder;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2010.08.19.02.04.50;	author vsnyder;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2009.06.23.18.26.11;	author pwagner;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2005.11.01.23.02.21;	author vsnyder;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2005.06.22.18.08.18;	author pwagner;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2004.03.31.20.35.17;	author jonathan;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2004.03.30.00.45.09;	author vsnyder;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2004.03.27.01.36.56;	author jonathan;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2004.03.20.01.25.06;	author jonathan;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2004.03.20.01.15.10;	author jonathan;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2003.06.06.22.17.26;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2003.06.06.20.38.25;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2002.10.08.17.08.02;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2002.09.27.00.04.15;	author vsnyder;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2001.09.17.20.26.26;	author livesey;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2001.06.07.23.30.34;	author pwagner;	state Exp;
+branches
+	1.7.2.1;
+next	1.6;
+
+1.6
+date	2001.03.31.23.40.55;	author zvi;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2001.03.29.08.51.01;	author zvi;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.01.31.01.08.48;	author zvi;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2000.11.22.23.10.02;	author zvi;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2000.11.22.23.07.25;	author zvi;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2000.05.04.18.12.04;	author vsnyder;	state Exp;
+branches;
+next	;
+
+1.7.2.1
+date	2001.09.10.10.02.32;	author zvi;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.15
+log
+@Cannonball polishing + TeXnicalities
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module DO_T_SCRIPT_M
+
+  implicit NONE
+  private
+  public :: DO_T_SCRIPT, TWO_D_T_SCRIPT, TWO_D_T_SCRIPT_CLOUD
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: do_t_script_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+contains
+
+!----------------------------------------------------  DO_T_SCRIPT  -----
+  subroutine DO_T_SCRIPT ( t_path, sp_tmp, Frq, t_script )
+
+! This routine builds the t_script array.  In some notes it's called Delta B.
+
+    use D_STAT_TEMP_M, only: STAT_TEMP
+    use MLSKinds, only: RP, R8
+
+    real(rp), intent(in) :: T_PATH(:)    ! path temperatures            
+    real(r8), intent(in) :: Frq          ! Frequency                    
+    real(rp), intent(in) :: sp_tmp       ! farside boundary temperature 
+    !                                      usually cosmic space (2.7K). 
+
+    real(rp), intent(out) :: t_script(:) ! path differential temperatures
+
+    integer  :: I, N_path
+    real(rp) :: Tb(Size(t_script))
+
+    n_path = size(t_path)
+
+    tb = stat_temp(t_path,Frq)
+
+    t_script(1) = 0.5_rp * (Tb(1) + Tb(2))
+    do i = 2, n_path-1
+      t_script(i) = 0.5_rp * (Tb(i+1) - Tb(i-1))
+    end do
+    t_script(n_path) = stat_temp(sp_tmp,Frq) - 0.5_rp * (Tb(n_path-1) + Tb(n_path))
+
+    return
+  end subroutine DO_T_SCRIPT
+
+!------------------------------------------------  Two_D_T_Script  -----
+  subroutine Two_D_T_Script ( t_grid, t_space, nu, t_scr, B )
+
+
+!{ This routine builds the {\tt t_script} array.
+!  In some notes and reports it's called $\Delta B_i =
+!  \frac12 ( B_{i+1} - B_{i-1} )$
+!  for $i = 2 \dots n-1$, $\Delta B_1 = \frac12 ( B_2 + B_1 )$, and
+!  $\Delta B_{n} = B_{\text{space}} - \frac12 ( B_{n} + B_{n-1} )$,
+!  where $n$ = {\tt n_path}.
+
+    use D_STAT_TEMP_M, only: STAT_TEMP
+    use MLSKinds, only: R8, RP
+
+! Inputs:
+
+    real(rp), intent(in) :: t_grid(:) ! path temperatures
+    real(r8), intent(in) :: nu        ! Frequency
+    real(rp), intent(in) :: t_space   ! farside boundary temperature
+    !                                   usually cosmic space (2.7K).
+
+!    real(rp) :: t_tmp(size(t_grid))  ! path temperatures modified by scattering
+
+! Outputs:
+
+    real(rp), intent(out) :: t_scr(:) ! path differential temperatures
+    real(rp), intent(out) :: B(:)     ! Planck radiation function on path
+
+! Internal stuff
+
+    integer :: n_path
+
+! get path information
+
+    n_path = size(t_grid)
+  
+    B = stat_temp(t_grid,nu)
+    t_scr = 0.5_rp * (eoshift(B,1,2.0_rp * stat_temp(t_space,nu) - B(n_path)) - &
+      &               eoshift(B,-1,-B(1)))
+
+  end subroutine Two_D_T_Script
+
+!------------------------------------------  Two_D_T_Script_Cloud  -----
+  subroutine Two_D_T_Script_Cloud ( t_grid, t_scat, w0, t_space, nu, t_scr, B )
+
+!{ This routine builds the {\tt t_script} array.  In some notes it's called
+!  Delta B. This one combines B with TScat.  In the cloud scattering case,
+!  $\Delta B_i = \frac12 \left[ (1-\omega_{0_{i+1}}) B_{i+1} +
+!                             \omega_{0_{i+1}} T_{\text{scat}_{i+1}} -
+!                             (1-\omega_{0_{i-1}}) B_{i-1} -
+!                             \omega_{0_{i-1}} T_{\text{scat}_{i-1}} \right]$,
+!  for $i = 2 \dots\ n-1$,
+!  $\Delta B_1 = \frac12 \left[ (1-\omega_{0_1}) B_1 +
+!                             \omega_{0_1} T_{\text{scat}_1} +
+!                             (1-\omega_{0_2}) B_2 +
+!                             \omega_{0_2} T_{\text{scat}_2} \right]$,
+!  and
+!  $\Delta B_n = B(\text{\tt t_space}) -
+!                \frac12 \left[ (1-\omega_{0_n}) B_n +
+!                             \omega_{0_n} T_{\text{scat}_n} +
+!                             (1-\omega_{0_{n-1}}) B_{n-1} +
+!                             \omega_{0_{n-1}} T_{\text{scat}_{n-1}} \right]$,
+
+
+    use D_STAT_TEMP_M, only: STAT_TEMP
+    use MLSKinds, only: R8, RP
+
+! Inputs:
+
+    real(rp), intent(in) :: t_grid(:) ! path temperatures
+    real(rp), intent(in) :: t_scat(:) ! path scattering
+    real(rp), intent(in) :: w0(:)     ! single scattering albedo
+    real(r8), intent(in) :: nu        ! Frequency
+    real(rp), intent(in) :: t_space   ! farside boundary temperature
+    !                                   usually cosmic space (2.7K).
+
+! Outputs:
+
+    real(rp), intent(out) :: t_scr(:) ! path differential temperatures
+    real(rp), intent(out) :: B(:)     ! Planck radiation function on path
+
+! Internal stuff
+
+    integer :: n_path
+    real(rp) :: V1(size(t_grid))
+
+! get path information
+
+    n_path = size(t_grid)
+
+    B = stat_temp(t_grid,nu)                 ! clear-sky Planck  function on path
+    V1 = (1.0_rp-w0) * B + w0 * t_scat       !(1-w0)*B + w0*Tscat
+
+    t_scr = 0.5_rp * (eoshift(V1,1,2.0_rp * stat_temp(t_space,nu) - B(n_path)) - &
+      &               eoshift(V1,-1,-B(1)))
+
+  end subroutine Two_D_T_Script_Cloud
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: do_t_script_m.f90,v 2.14 2010/12/15 21:36:37 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module DO_T_SCRIPT_M
+
+! $Log: do_t_script_m.f90,v $
+! Revision 2.14  2010/12/15 21:36:37  vsnyder
+! TeXnicalities
+!
+! Revision 2.13  2010/08/19 02:04:50  vsnyder
+! Cannonball polishing
+!
+! Revision 2.12  2009/06/23 18:26:11  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.11  2005/11/01 23:02:21  vsnyder
+! PFA Derivatives
+!
+! Revision 2.10  2005/06/22 18:08:18  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.9  2004/03/31 20:35:17  jonathan
+! correction on the cloud effect term
+!
+! Revision 2.8  2004/03/30 00:45:09  vsnyder
+! Remove unused variable declaration
+!
+! Revision 2.7  2004/03/27 01:36:56  jonathan
+! now cloud effects are included
+!
+! Revision 2.6  2004/03/20 01:25:06  jonathan
+! minor changes
+!
+! Revision 2.5  2004/03/20 01:15:10  jonathan
+! add in scattering correction term in two t_script
+!
+! Revision 2.4  2003/06/06 22:17:26  vsnyder
+! Simplify do_t_script (which isn't used anywhere)
+!
+! Revision 2.3  2003/06/06 20:38:25  vsnyder
+! Add some comments about dummy arguments
+!
+! Revision 2.2  2002/10/08 17:08:02  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.1  2002/09/27 00:04:15  vsnyder
+! Insert copyright notice, cosmetic changes
+!
+! Revision 2.0  2001/09/17 20:26:26  livesey
+! New forward model
+!
+! Revision 1.7.2.1  2001/09/10 10:02:32  zvi
+! Cleanup..comp_path_entities_m.f90
+!
+! Revision 1.1  2000/08/30 18:12:04  vsnyder
+! Initial conversion to Fortran 90
+@
+
+
+2.14
+log
+@TeXnicalities
+@
+text
+@d24 1
+a25 1
+
+d31 1
+a31 1
+    use MLSKinds, only: IP, RP
+d34 1
+a34 1
+    real(rp), intent(in) :: Frq          ! Frequency                    
+d40 2
+a41 2
+    integer(ip) :: I, N_path
+    real(rp)    :: Tb(Size(t_script))
+d60 1
+a60 1
+!{ This routine builds the t\_script array.
+a86 1
+    real(rp) :: B_space
+d93 1
+a93 2
+    B_space = stat_temp(t_space,nu)
+    t_scr = 0.5_rp * (eoshift(B,1,2.0_rp * B_space - B(n_path)) - &
+d101 3
+a103 3
+!{ This routine builds the t_script array.  In some notes it's called Delta B.
+!  This one combines B with TScat.  In the cloud scattering case,
+!  $\Delta B = \frac12 \left[ (1-\omega_{0_{i+1}}) B_{i+1} +
+d106 13
+a118 1
+!                             \omega_{0_{i-1}} T_{\text{scat}_{i-1}} \right]$.
+d127 1
+a127 1
+    real(r8), intent(in) :: w0(:)     ! single scattering albedo
+d157 1
+a157 1
+       "$Id: do_t_script_m.f90,v 2.13 2010/08/19 02:04:50 vsnyder Exp $"
+d167 3
+@
+
+
+2.13
+log
+@Cannonball polishing
+@
+text
+@d60 1
+a60 1
+!{ This routine builds the t_script array.
+d103 6
+a108 3
+! This routine builds the t_script array.  In some notes it's called Delta B.
+! This one combines B with TScat.  In the case of using tabulated TScat, TScat
+! is a channel quantity so we can't produce both terms at once.
+d137 1
+a137 1
+    V1 = (1.0_rp-w0) * B + w0 * t_scat       !(1-w0)*B + W0*Tscat
+d147 1
+a147 1
+       "$Id: do_t_script_m.f90,v 2.12 2009/06/23 18:26:11 pwagner Exp $"
+d157 3
+@
+
+
+2.12
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d20 1
+a20 1
+       "$RCSfile: $"
+d59 7
+a65 1
+! This routine builds the t_script array.  In some notes it's called Delta B.
+d104 2
+a118 2
+!    real(rp) :: t_tmp(size(t_grid)) ! path temperatures modified by scattering
+
+d144 1
+a144 1
+       "$Id: read_apriori.f90 is it here $"
+d154 3
+@
+
+
+2.11
+log
+@PFA Derivatives
+@
+text
+@d20 1
+a20 1
+       "$RCSfile: do_t_script_m.f90,v $"
+d135 1
+a136 1
+!---------------------------- RCS Ident Info -------------------------------
+d138 2
+a139 3
+       "$Id: do_t_script_m.f90,v 2.10 2005/06/22 18:08:18 pwagner Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d141 1
+d143 1
+d148 3
+@
+
+
+2.10
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d16 1
+a16 1
+  public :: DO_T_SCRIPT, TWO_D_T_SCRIPT
+d20 1
+a20 1
+       "$RCSfile: $"
+d31 1
+a31 1
+    use MLSCommon, only: IP, RP
+d57 1
+d59 37
+a95 1
+  subroutine Two_D_T_Script ( t_grid, t_scat, w0, t_space, nu, t_scr )
+d100 1
+a100 1
+    use MLSCommon, only: R8, RP
+d116 1
+d121 1
+a121 2
+    real(rp) :: a, b
+    real(rp) :: V1(size(t_grid)), Tb(size(t_grid))
+a125 10
+  
+!    V1 = stat_temp(t_grid,nu)
+!    b = -stat_temp(t_grid(1),nu)
+!    a = 2.0_rp * stat_temp(t_space,nu)-stat_temp(t_grid(n_path),nu)
+!    t_scr = 0.5_rp * (eoshift(V1,1,a) - eoshift(V1,-1,b))
+
+    Tb=stat_temp(t_grid,nu)                  !clear-sky Tb
+    V1 = (1.0_rp-w0) * Tb + w0 * t_scat      !(1-w0)*Tb + W0*Tscat
+    b = -stat_temp(t_grid(1),nu)
+    a = 2.0_rp * stat_temp(t_space,nu)-stat_temp(t_grid(n_path),nu)
+d127 5
+a131 1
+    t_scr = 0.5_rp * (eoshift(V1,1,a) - eoshift(V1,-1,b))
+d133 1
+a133 1
+  end subroutine Two_D_T_Script
+d138 1
+a138 1
+       "$Id: $"
+d147 3
+@
+
+
+2.9
+log
+@correction on the cloud effect term
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d18 3
+a20 5
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+    & "$Id: do_t_script_m.f90,v 2.8 2004/03/30 00:45:09 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName = "$RCSfile: do_t_script_m.f90,v $"
+d105 5
+d116 3
+@
+
+
+2.8
+log
+@Remove unused variable declaration
+@
+text
+@d12 1
+a12 1
+    & "$Id: do_t_script_m.f90,v 2.7 2004/03/27 01:36:56 jonathan Exp $"
+d68 1
+a68 1
+    real(rp) :: t_tmp(size(t_grid)) ! path temperatures modified by scattering
+d78 1
+a78 1
+    real(rp) :: V1(size(t_grid))
+d83 1
+a83 3
+
+    t_tmp = (1.0_rp-w0) * t_grid + w0 * t_scat
+
+d87 6
+a92 3
+    V1 = stat_temp(t_tmp,nu)
+    b = -stat_temp(t_tmp(1),nu)
+    a = 2.0_rp * stat_temp(t_space,nu)-stat_temp(t_tmp(n_path),nu)
+d105 3
+@
+
+
+2.7
+log
+@now cloud effects are included
+@
+text
+@d12 1
+a12 1
+    & "$Id: do_t_script_m.f90,v 2.6 2004/03/20 01:25:06 jonathan Exp $"
+d76 1
+a76 1
+    integer :: n_path, i
+d104 3
+@
+
+
+2.6
+log
+@minor changes
+@
+text
+@d12 1
+a12 1
+    & "$Id: do_t_script_m.f90,v 2.5 2004/03/20 01:15:10 jonathan Exp $"
+d84 8
+a91 10
+    do i=1, n_path-1
+       t_tmp(i) = (1.0_rp-w0(i))*t_grid(i) + w0(i)*t_scat(i)
+!        print*, t_tmp(i), t_grid(i), grid(i), w0(i), t_scat(i)
+!       t_grid(i) = t_tmp(i)  !will be added in later soon
+    enddo
+!    stop
+
+    V1 = stat_temp(t_grid,nu)
+    b = -stat_temp(t_grid(1),nu)
+    a = 2.0_rp * stat_temp(t_space,nu)-stat_temp(t_grid(n_path),nu)
+d104 3
+@
+
+
+2.5
+log
+@add in scattering correction term in two t_script
+@
+text
+@d12 1
+a12 1
+    & "$Id: do_t_script_m.f90,v 2.4 2003/06/06 22:17:26 vsnyder Exp $"
+d86 2
+a87 2
+        print*, t_tmp(i), t_grid(i), grid(i), w0(i), t_scat(i)
+!       t_grid(i) = t_tmp(i)  !will add in later soon
+d89 1
+a89 1
+    stop
+d106 3
+@
+
+
+2.4
+log
+@Simplify do_t_script (which isn't used anywhere)
+@
+text
+@d12 1
+a12 1
+    & "$Id: do_t_script_m.f90,v 2.3 2003/06/06 20:38:25 vsnyder Exp $"
+d52 1
+a52 1
+  subroutine Two_D_T_Script ( t_grid, t_space, nu, t_scr )
+d62 2
+d68 2
+d76 1
+a76 1
+    integer :: n_path
+d83 8
+d106 3
+@
+
+
+2.3
+log
+@Add some comments about dummy arguments
+@
+text
+@d12 1
+a12 1
+    & "$Id: do_t_script_m.f90,v 2.2 2002/10/08 17:08:02 pwagner Exp $"
+d20 1
+a20 2
+  subroutine DO_T_SCRIPT ( Ngp1, Frq, sp_tmp, brkpt, no_ele, t_path, mid, &
+    &                      t_script)
+d22 1
+a22 1
+! This routine builds the t_script array
+d27 4
+a30 1
+! 'sp_tmp' is space temperature.
+d32 1
+a32 1
+    integer(ip), intent(in) :: Ngp1, brkpt, no_ele
+d34 1
+a34 8
+    real(rp), intent(in) :: Frq, sp_tmp
+
+    real(rp), intent(in) :: T_PATH(:)
+
+    integer(ip), intent(out) :: mid
+    real(rp), intent(out) :: t_script(:)
+
+    integer(ip) :: i, j, m
+d37 1
+a37 2
+    tb(1:) = 0.0_rp
+    t_script(1:) = 0.0_rp
+d39 1
+a39 23
+! 'brkpt' is the index of the path break-point (when it changes from
+!         incoming ray to outgoing ray)
+! 'no_ele' is the total number of entries in t_path(1...no_ele)
+
+    m = 0
+    j = 1 - Ngp1
+
+    do
+      j = j + Ngp1
+      if ( j > brkpt ) exit
+      m = m + 1
+      Tb(m) = stat_temp(t_path(j),Frq)
+    end do
+
+    mid = m
+    j = brkpt + 1 - Ngp1
+
+    do
+      j = j + Ngp1
+      if ( j > no_ele ) exit
+      m = m + 1
+      Tb(m) = stat_temp(t_path(j),Frq)
+    end do
+d42 1
+a42 1
+    do i = 2, mid-1
+d45 1
+a45 12
+
+    t_script(mid  ) = 0.5_rp * (Tb(mid+1) - Tb(mid-1))
+    t_script(mid+1) = 0.5_rp * (Tb(mid+2) - Tb(mid  ))
+
+! Note that Tb(mid) = Tb(mid+1) because this index is redundant
+! at the tangent vertical (or center phi)
+
+    do i = mid+2, m-1
+      t_script(i) = 0.5_rp * (Tb(i+1) - Tb(i-1))
+    end do
+
+    t_script(m) = stat_temp(sp_tmp,Frq) - 0.5_rp * (Tb(m-1) + Tb(m))
+d54 2
+d94 3
+@
+
+
+2.2
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d12 1
+a12 1
+    & "$Id: do_t_script_m.f90,v 2.1 2002/09/27 00:04:15 vsnyder Exp $"
+d45 1
+a45 1
+! 'brkpt' is the index of the path break-point (when it change from
+d99 3
+a101 2
+    real(r8), intent(in) :: nu ! Frequency
+    real(rp), intent(in) :: t_space    ! space temperature
+d131 3
+@
+
+
+2.1
+log
+@Insert copyright notice, cosmetic changes
+@
+text
+@d12 1
+a12 1
+    & "$Id: do_t_script_m.f90,v 2.0 2001/09/17 20:26:26 livesey Exp $"
+d15 1
+d123 4
+d130 3
+@
+
+
+2.0
+log
+@New forward model
+@
+text
+@d1 3
+d5 1
+a5 2
+  use MLSCommon, only: IP, R8, RP
+  use D_STAT_TEMP_M, only: STAT_TEMP
+d8 2
+a9 1
+  PUBLIC :: DO_T_SCRIPT, TWO_D_T_SCRIPT
+d11 4
+a14 4
+  CHARACTER (LEN=256) :: Id = &
+     "$Id: do_t_script_m.f90,v 1.7.2.1 2001/09/10 10:02:32 zvi Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= &
+     "$RCSfile: do_t_script_m.f90,v $"
+d17 5
+a21 1
+!-----------------------------------------------------------------------
+d23 4
+a26 3
+!
+  Subroutine DO_T_SCRIPT (Ngp1,Frq,sp_tmp,brkpt,no_ele,t_path,mid,t_script)
+!
+a27 4
+!
+    Integer(ip), intent(in) :: Ngp1, brkpt, no_ele
+!
+    Real(rp), intent(in) :: Frq, sp_tmp
+d29 8
+a36 1
+    Real(rp), intent(in) :: T_PATH(:)
+d38 1
+a38 4
+    Integer(ip), intent(out) :: mid
+    Real(rp), intent(out) :: t_script(:)
+!
+    Integer(ip) :: i, j, m
+d53 1
+a53 1
+      if (j > brkpt) EXIT
+d57 1
+a57 1
+!
+d63 1
+a63 1
+      if (j > no_ele) EXIT
+d67 1
+a67 1
+!
+d72 1
+a72 1
+!
+d75 1
+a75 1
+!
+d78 1
+a78 1
+!
+d82 1
+a82 1
+!
+d84 21
+a104 18
+!
+    Return
+  End Subroutine DO_T_SCRIPT
+!
+!---------------------------------------------------------------
+!
+  SUBROUTINE two_d_t_script(t_grid,t_space,nu,t_scr)
+!
+! INPUTS:
+!
+  REAL(rp), INTENT(in) :: t_grid(:) ! path temperatures
+  REAL(r8), INTENT(in) :: nu ! Frequency
+  REAL(rp), INTENT(in) :: t_space    ! space temperature
+!
+! OUTPUTS:
+!
+  REAL(rp), INTENT(out) :: t_scr(:) ! path differential temperatures
+!
+d106 5
+a110 5
+!
+  INTEGER :: n_path
+  Real(rp) :: a, b
+  Real(rp) :: V1(SIZE(t_grid))
+!
+d112 15
+a127 11
+  n_path = SIZE(t_grid)
+  V1 = stat_temp(t_grid,nu)
+  b = -stat_temp(t_grid(1),nu)
+  a = 2.0_rp*stat_temp(t_space,nu)-stat_temp(t_grid(n_path),nu)
+!
+  t_scr = 0.5_rp * (EOSHIFT(V1,1,a) - EOSHIFT(V1,-1,b))
+!
+  END SUBROUTINE two_d_t_script
+!
+END module DO_T_SCRIPT_M
+! $Log: do_t_script_m.f90,v $
+@
+
+
+1.7
+log
+@Added Copyright statement
+@
+text
+@a0 3
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+d2 1
+a2 2
+  use MLSCommon, only: I4, R8
+  use PATH_ENTITIES_M, only: PATH_VECTOR
+d6 1
+a6 1
+  public :: DO_T_SCRIPT
+d9 1
+a9 1
+     "$Id: do_t_script_m.f90,v 1.6 2001/03/31 23:40:55 zvi Exp $"
+d21 1
+a21 1
+    Integer(i4), intent(in) :: Ngp1, brkpt, no_ele
+d23 1
+a23 1
+    Real(r8), intent(in) :: Frq, sp_tmp
+d25 1
+a25 1
+    Type(path_vector), intent(in) :: T_PATH
+d27 2
+a28 2
+    Integer(i4), intent(out) :: mid
+    Real(r8), intent(out) :: t_script(:)
+d30 5
+a34 7
+    Integer(i4) :: i, j, m
+    Real(r8) :: Tb(size(t_script))
+!
+!  Begin code:
+!
+    tb(:) = 0.0
+    t_script(:) = 0.0
+d38 1
+a38 1
+! 'no_ele' is the total number of entries in t_path%values(1...no_ele)
+d47 1
+a47 1
+      Tb(m) = stat_temp(t_path%values(j),Frq)
+d57 1
+a57 1
+      Tb(m) = stat_temp(t_path%values(j),Frq)
+d60 1
+a60 1
+    t_script(1) = 0.5 * (Tb(1) + Tb(2))
+d62 1
+a62 1
+      t_script(i) = 0.5 * (Tb(i+1) - Tb(i-1))
+d65 2
+a66 2
+    t_script(mid  ) = 0.5 * (Tb(mid+1) - Tb(mid-1))
+    t_script(mid+1) = 0.5 * (Tb(mid+2) - Tb(mid  ))
+d72 1
+a72 1
+      t_script(i) = 0.5 * (Tb(i+1) - Tb(i-1))
+d75 1
+a75 1
+    t_script(m) = stat_temp(sp_tmp,Frq) - 0.5 * (Tb(m-1) + Tb(m))
+a78 4
+end module DO_T_SCRIPT_M
+! $Log: do_t_script_m.f90,v $
+! Revision 1.6  2001/03/31 23:40:55  zvi
+! Eliminate l2pcdim (dimension parameters) move to allocatable ..
+d80 30
+a109 2
+! Revision 1.5  2001/03/29 08:51:01  zvi
+! Changing the (*) toi (:) everywhere
+d111 4
+a114 2
+! Revision 1.4  2001/01/31 01:08:48  zvi
+! New version of forward model
+a117 1
+!
+@
+
+
+1.7.2.1
+log
+@Cleanup..comp_path_entities_m.f90
+@
+text
+@d1 3
+d5 2
+a6 1
+  use MLSCommon, only: IP, R8, RP
+d10 1
+a10 1
+  PUBLIC :: DO_T_SCRIPT, TWO_D_T_SCRIPT
+d13 1
+a13 1
+     "$Id: do_t_script_m.f90,v 1.1 2000/05/04 18:12:04 vsnyder Exp $"
+d25 1
+a25 1
+    Integer(ip), intent(in) :: Ngp1, brkpt, no_ele
+d27 1
+a27 1
+    Real(rp), intent(in) :: Frq, sp_tmp
+d29 1
+a29 1
+    Real(rp), intent(in) :: T_PATH(:)
+d31 7
+a37 2
+    Integer(ip), intent(out) :: mid
+    Real(rp), intent(out) :: t_script(:)
+d39 2
+a40 5
+    Integer(ip) :: i, j, m
+    real(rp)    :: Tb(Size(t_script))
+
+    tb(1:) = 0.0_rp
+    t_script(1:) = 0.0_rp
+d44 1
+a44 1
+! 'no_ele' is the total number of entries in t_path(1...no_ele)
+d53 1
+a53 1
+      Tb(m) = stat_temp(t_path(j),Frq)
+d63 1
+a63 1
+      Tb(m) = stat_temp(t_path(j),Frq)
+d66 1
+a66 1
+    t_script(1) = 0.5_rp * (Tb(1) + Tb(2))
+d68 1
+a68 1
+      t_script(i) = 0.5_rp * (Tb(i+1) - Tb(i-1))
+d71 2
+a72 2
+    t_script(mid  ) = 0.5_rp * (Tb(mid+1) - Tb(mid-1))
+    t_script(mid+1) = 0.5_rp * (Tb(mid+2) - Tb(mid  ))
+d78 1
+a78 1
+      t_script(i) = 0.5_rp * (Tb(i+1) - Tb(i-1))
+d81 1
+a81 1
+    t_script(m) = stat_temp(sp_tmp,Frq) - 0.5_rp * (Tb(m-1) + Tb(m))
+d85 4
+d90 2
+a91 11
+!---------------------------------------------------------------
+!
+  SUBROUTINE two_d_t_script(t_grid,t_space,nu,t_scr)
+!
+! INPUTS:
+!
+  REAL(rp), INTENT(in) :: t_grid(:) ! path temperatures
+  REAL(r8), INTENT(in) :: nu ! Frequency
+  REAL(rp), INTENT(in) :: t_space    ! space temperature
+!
+! OUTPUTS:
+d93 2
+a94 1
+  REAL(rp), INTENT(out) :: t_scr(:) ! path differential temperatures
+a95 19
+! Internal stuff
+!
+  INTEGER :: n_path
+  Real(rp) :: a, b
+  Real(rp) :: V1(SIZE(t_grid))
+!
+! get path information
+!
+  n_path = SIZE(t_grid)
+  V1 = stat_temp(t_grid,nu)
+  b = -stat_temp(t_grid(1),nu)
+  a = 2.0_rp*stat_temp(t_space,nu)-stat_temp(t_grid(n_path),nu)
+!
+  t_scr = 0.5_rp * (EOSHIFT(V1,1,a) - EOSHIFT(V1,-1,b))
+!
+  END SUBROUTINE two_d_t_script
+!
+END module DO_T_SCRIPT_M
+! $Log: do_t_script_m.f90,v $
+d98 1
+@
+
+
+1.6
+log
+@Eliminate l2pcdim (dimension parameters) move to allocatable ..
+@
+text
+@d1 3
+d13 1
+a13 1
+     "$Id: do_t_script_m.f90,v 1.5 2001/03/29 08:51:01 zvi Exp $"
+d87 3
+@
+
+
+1.5
+log
+@Changing the (*) toi (:) everywhere
+@
+text
+@a1 1
+  use L2PCdim, only: N2LVL
+d10 1
+a10 1
+     "$Id: do_t_script_m.f90,v 1.4 2001/01/31 01:08:48 zvi Exp $"
+d32 6
+a37 4
+    real(r8)    :: Tb(N2lvl)
+
+    tb(1:N2lvl) = 0.0
+    t_script(1:N2lvl) = 0.0
+d84 3
+@
+
+
+1.4
+log
+@New version of forward model
+@
+text
+@d11 1
+a11 1
+     "$Id: do_t_script_m.f90,v 1.1 2000/05/04 18:12:04 vsnyder Exp $"
+d30 1
+a30 1
+    Real(r8), intent(out) :: t_script(*)
+d83 3
+@
+
+
+1.3
+log
+@Re-add basic stuff
+@
+text
+@@
+
+
+1.2
+log
+@New version
+@
+text
+@d3 3
+a5 2
+  use MLSCommon, only: I4, R4, R8
+  use S_STAT_TEMP_M, only: STAT_TEMP
+a8 1
+
+d11 3
+a13 2
+       "$Id: do_t_script_m.f90,v 1.1 2000/05/04 18:12:04 vsnyder Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile: do_t_script_m.f90,v $"
+a14 1
+
+a15 1
+
+d19 12
+a30 2
+  Subroutine DO_T_SCRIPT ( N_lvls, Ng, Frq, sp_tmp, t_path, IndxR,   &
+ &                         IndxL, path_brkpt, t_script )
+d32 14
+a45 19
+! sp_tmp is space temperature. The begining of the ray has index 1, and
+! the end of the ray has index: 2*n. The uppermost index of the ray on the
+! right is: IndxR, and the lowermost index ot the ray on the left is: IndxL
+!
+    Integer(i4), intent(in) :: N_lvls, Ng
+    Real(r8), intent(in) :: Frq
+    Real(r4), intent(in) :: sp_tmp, t_path(*)
+    Integer(i4), intent(in) :: IndxR, IndxL, path_brkpt(*)
+    Real(r4), intent(out) :: t_script(*)
+
+    Integer(i4) :: Ngp1,i,j,k
+    real(r4) :: Tb(N2lvl)
+
+    tb = 0.0
+    t_script(1:n2lvl) = 0.0
+!
+    j = -Ng
+    Ngp1 = Ng + 1
+    do i = 1, IndxR
+d47 3
+a49 1
+      if ( j <= path_brkpt(1) ) Tb(i) = stat_temp(t_path(j),Frq)
+d52 4
+a55 3
+    k = 2 * N_lvls
+    j = path_brkpt(2) - Ngp1
+    do i = IndxL, k
+d57 3
+a59 1
+      Tb(i) = stat_temp(t_path(j),Frq)
+d63 1
+a63 1
+    do i = 2, IndxR-1
+d67 2
+a68 2
+    t_script(IndxR) = 0.5 * (Tb(IndxL) - Tb(IndxR-1))
+    t_script(IndxL) = 0.5 * (Tb(IndxL+1) - Tb(IndxR))
+d70 1
+a70 1
+! Note that Tb(IndxR) = Tb(IndxL) because this index is redundant
+d73 1
+a73 1
+    do i = IndxL+1, k-1
+d77 1
+a77 1
+    t_script(k) = stat_temp(sp_tmp,Frq) - 0.5 * (Tb(k-1) + Tb(k))
+a81 1
+
+d83 1
+a83 1
+! Revision 1.1  2000/05/04 18:12:04  vsnyder
+@
+
+
+1.1
+log
+@Initial conversion to Fortran 90
+@
+text
+@d11 1
+a11 1
+       "$Id: DO_T_SCRIPT_M,v 1.12 2000/02/08 19:54:57 vsnyder Exp $"
+d74 4
+a77 1
+! $Log: DO_T_SCRIPT_M,v $
+@
+

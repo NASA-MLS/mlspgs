@@ -1,0 +1,666 @@
+head	1.14;
+access;
+symbols
+	v5-02-NRT-19:1.14
+	v6-00:1.14
+	v5-02-NRT-18:1.14
+	v5-02:1.14
+	v5-01-NRT-17:1.14
+	v5-01-NRT-16:1.14
+	v5-01-NRT-15:1.14
+	v5-01-NRT-14:1.14
+	neuralnetworks-1-0:1.14.0.12
+	cfm-single-freq-0-1:1.14.0.10
+	v5-01:1.14
+	v5-00:1.14
+	v4-23-TA133:1.14.0.8
+	mus-emls-1-70:1.14.0.6
+	rel-1-0-englocks-work:1.14.0.4
+	VUMLS1-00:1.14
+	VPL1-00:1.14
+	V4-22-NRT-08:1.14
+	VAM1-00:1.14
+	V4-21:1.14.0.2
+	V4-13:1.14
+	V4-12:1.14
+	V4-11:1.14
+	V4-10:1.14
+	V3-43:1.12
+	M4-00:1.12
+	V3-41:1.12
+	V3-40-PlusGM57:1.12.0.2
+	V2-24-NRT-04:1.9
+	V3-33:1.12
+	V2-24:1.9
+	V3-31:1.12
+	V3-30-NRT-05:1.12
+	cfm-01-00:1.12
+	V3-30:1.12
+	V3-20:1.12
+	V3-10:1.11
+	V2-23-NRT-02:1.9
+	V2-23:1.9
+	V2-22-NRT-01:1.9
+	V2-22:1.9
+	V2-21:1.9
+	V2-20:1.9
+	V2-11:1.1
+	V2-10:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.14
+date	2014.04.29.17.13.28;	author pwagner;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2014.01.24.21.43.35;	author pwagner;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2009.11.20.01.37.25;	author pwagner;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2009.07.24.17.43.58;	author pwagner;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2009.01.28.01.18.35;	author pwagner;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2006.11.01.23.39.00;	author dwu;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2006.11.01.20.52.34;	author dwu;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2006.11.01.19.12.47;	author pwagner;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2006.11.01.18.43.05;	author dwu;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2006.11.01.18.41.25;	author dwu;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2006.10.11.23.04.55;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2006.10.04.16.51.47;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2006.08.08.22.27.07;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2006.07.28.18.49.40;	author dwu;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.14
+log
+@Correct flagging Bands for Methanol
+@
+text
+@!divert(-1)
+; $Id: coreplusr4ab14flags.l2cf,v 1.13 2014/01/24 21:43:35 pwagner Exp $
+
+; ----------- Phase name vs. retrieval name
+; Some phase(s) may not have Retrieve sections
+; and so we'll need to know the last one
+!define(retrophase,{!phase})
+
+!divert!dnl
+; This l2cf fragment does all the quality flagging for the Core+R4
+; products.
+
+begin Fill
+  ;; ------------------------------------ ClO-640
+  !define(flaggingBands,{10})
+  !define(flaggingRadiometers,{R4})!dnl
+  !makeQualityForOneProduct(product=ClO,chisqScale=1.0,minRads=600,cloudMax=10K,cloudMin= -10K)
+  !makeStatusForOneProduct(product=ClO,chisqScale=1.0,minRads=600,cloudMax=10K,cloudMin= -10K)
+
+  ;; ------------------------------------ BrO-640
+  !define(flaggingBands,{11,31})
+  !define(flaggingRadiometers,{R4})!dnl
+  !makeQualityForOneProduct(product=BrO,chisqScale=1.0,minRads=1000,cloudMax=10K,cloudMin= -10K)
+  !makeStatusForOneProduct(product=BrO,chisqScale=1.0,minRads=1000,cloudMax=10K,cloudMin= -10K)
+
+  ;; ------------------------------------ HOCl-640
+  !define(flaggingBands,{10,11,28,29})
+  !define(flaggingRadiometers,{R4})!dnl
+  !makeQualityForOneProduct(product=HOCl,chisqScale=1.0,minRads=2000,cloudMax=10K,cloudMin= -10K)
+  !makeStatusForOneProduct(product=HOCl,chisqScale=1.0,minRads=2000,cloudMax=10K,cloudMin= -10K)
+
+  ;; ------------------------------------ HCl-640
+  !define(flaggingBands,{14})
+  !define(flaggingRadiometers,{R4})!dnl
+  !makeQualityForOneProduct(product=HCl,chisqScale=1.0,minRads=1000,cloudMax=10K,cloudMin= -10K)
+  !makeStatusForOneProduct(product=HCl,chisqScale=1.0,minRads=1000,cloudMax=10K,cloudMin= -10K)
+
+  ;; ------------------------------------ O3-640
+  !define(flaggingBands,{14,30,31})
+  !define(flaggingRadiometers,{R4})!dnl
+  !makeQualityForOneProduct(product=O3,chisqScale=1.0,minRads=2000,cloudMax=10K,cloudMin= -10K)
+  !makeStatusForOneProduct(product=O3,chisqScale=1.0,minRads=2000,cloudMax=10K,cloudMin= -10K)
+
+  ;; ------------------------------------ HO2-640
+  !define(flaggingBands,{31})
+  !define(flaggingRadiometers,{R4})!dnl
+  !makeQualityForOneProduct(product=HO2,chisqScale=1.0,minRads=200,cloudMax=10K,cloudMin= -10K)
+  !makeStatusForOneProduct(product=HO2,chisqScale=1.0,minRads=200,cloudMax=10K,cloudMin= -10K)
+
+  ;; ------------------------------------ HNO3-640
+  !define(flaggingBands,{10,11,14,28,29,30,31})
+  !define(flaggingRadiometers,{R4})!dnl
+  !makeQualityForOneProduct(product=HNO3,chisqScale=1.0,minRads=4000,cloudMax=10K,cloudMin= -10K)
+  !makeStatusForOneProduct(product=HNO3,chisqScale=1.0,minRads=4000,cloudMax=10K,cloudMin= -10K)
+
+  ;; ------------------------------------ CH3Cl-640
+  !define(flaggingBands,{10})
+  !define(flaggingRadiometers,{R4})!dnl
+  !makeQualityForOneProduct(product=CH3Cl,chisqScale=1.0,minRads=600,cloudMax=10K,cloudMin= -10K)
+  !makeStatusForOneProduct(product=CH3Cl,chisqScale=1.0,minRads=600,cloudMax=10K,cloudMin= -10K)
+
+  ;; ------------------------------------ CH3CN-640
+  !define(flaggingBands,{10,11,14,28,29,30,31})
+  !define(flaggingRadiometers,{R4})!dnl
+  !makeQualityForOneProduct(product=CH3CN,chisqScale=1.0,minRads=4000,cloudMax=10K,cloudMin= -10K)
+  !makeStatusForOneProduct(product=CH3CN,chisqScale=1.0,minRads=4000,cloudMax=10K,cloudMin= -10K)
+
+  ;; ------------------------------------ CH3OH-640
+  !define(flaggingBands,{5,10,11})
+  !define(flaggingRadiometers,{R2,R4})!dnl
+  !makeQualityForOneProduct(product=CH3OH,chisqScale=1.0,minRads=4000,cloudMax=10K,cloudMin= -10K)
+  !makeStatusForOneProduct(product=CH3OH,chisqScale=1.0,minRads=4000,cloudMax=10K,cloudMin= -10K)
+
+  ;; ------------------------------------ SO2-640
+  !define(flaggingBands,{10,11,14})
+  !define(flaggingRadiometers,{R4})!dnl
+  !makeQualityForOneProduct(product=SO2,chisqScale=1.0,minRads=200,cloudMax=10K,cloudMin= -10K)
+  !makeStatusForOneProduct(product=SO2,chisqScale=1.0,minRads=200,cloudMax=10K,cloudMin= -10K)
+
+end Fill
+
+; $Log: coreplusr4ab14flags.l2cf,v $
+; Revision 1.13  2014/01/24 21:43:35  pwagner
+; Added CH3OH
+;
+; Revision 1.12  2009/11/20 01:37:25  pwagner
+; Removed Band12, because its radaince count is left at 0
+;
+; Revision 1.11  2009/07/24 17:43:58  pwagner
+; Added quality flagging for CH3Cl
+;
+; Revision 1.10  2009/01/28 01:18:35  pwagner
+; Removed Band1 and R1 products
+;
+; Revision 1.9  2006/11/01 23:39:00  dwu
+; undo the changes since yesterday
+;
+; Revision 1.8  2006/11/01 20:52:34  dwu
+; compute r4 status based on R1 cloud flags
+;
+; Revision 1.7  2006/11/01 19:12:47  pwagner
+; Removed R3 as flagging radiometer
+;
+; Revision 1.6  2006/11/01 18:43:05  dwu
+; change r4 cloud flag thresholds, correction for T and GPH
+;
+; Revision 1.5  2006/11/01 18:41:25  dwu
+; change r4 cloud flag thresholds
+;
+; Revision 1.4  2006/10/11 23:04:55  pwagner
+; Special retrieval phase name retrophase needed for Convergence Ratio Fill
+;
+; Revision 1.3  2006/10/04 16:51:47  pwagner
+; Compatible w/ status bits from multiple radiometers; needs review
+;
+; Revision 1.2  2006/08/08 22:27:07  pwagner
+; Fills Quality, Status for Temperature, GPH; needs revision before v2.20
+;
+; Revision 1.1  2006/07/28 18:49:40  dwu
+; *** empty log message ***
+@
+
+
+1.13
+log
+@Added CH3OH
+@
+text
+@d2 1
+a2 1
+; $Id: coreplusr4ab14flags.l2cf,v 1.12 2009/11/20 01:37:25 pwagner Exp $
+d69 2
+a70 2
+  !define(flaggingBands,{10,11,14,28,29,30,31})
+  !define(flaggingRadiometers,{R4})!dnl
+d83 3
+@
+
+
+1.12
+log
+@Removed Band12, because its radaince count is left at 0
+@
+text
+@d2 1
+a2 1
+; $Id: coreplusr4ab14flags.l2cf,v 1.11 2009/07/24 17:43:58 pwagner Exp $
+d68 6
+a79 12
+  ;;   ;; ------------------------------------- Temperature-CorePlusR4AB14
+  ;;   !define(flaggingBands,{1})
+  ;;   !define(flaggingRadiometers,{R1A,R1B})!dnl
+  ;;   !makeQualityForOneProduct(product=Temperature,chisqScale=1.0,minRads=800,cloudMax=30K,cloudMin= -4K)
+  ;;   !makeStatusForOneProduct(product=Temperature,chisqScale=1.0,minRads=800,cloudMax=30K,cloudMin= -4K)
+  ;; 
+  ;;   ;; ------------------------------------- GPH-CorePlusR4AB14
+  ;;   !define(flaggingBands,{1})
+  ;;   !define(flaggingRadiometers,{R1A,R1B})!dnl
+  ;;   !makeQualityForOneProduct(product=GPH,chisqScale=1.0,minRads=800,cloudMax=30K,cloudMin= -4K)
+  ;;   !makeStatusForOneProduct(product=GPH,chisqScale=1.0,minRads=800,cloudMax=30K,cloudMin= -4K)
+
+d83 3
+@
+
+
+1.11
+log
+@Added quality flagging for CH3Cl
+@
+text
+@d2 1
+a2 1
+; $Id: coreplusr4ab14flags.l2cf,v 1.10 2009/01/28 01:18:35 pwagner Exp $
+d51 1
+a51 1
+  !define(flaggingBands,{10,11,12,14,28,29,30,31})
+d63 1
+a63 1
+  !define(flaggingBands,{10,11,12,14,28,29,30,31})
+d89 3
+@
+
+
+1.10
+log
+@Removed Band1 and R1 products
+@
+text
+@d2 1
+a2 1
+; $Id: coreplusr4ab14flags.l2cf,v 1.9 2006/11/01 23:39:00 dwu Exp $
+d56 6
+d89 3
+@
+
+
+1.9
+log
+@undo the changes since yesterday
+@
+text
+@d2 1
+a2 1
+; $Id: coreplusr4ab14flags.l2cf,v 1.8 2006/11/01 20:52:34 dwu Exp $
+d68 11
+a78 11
+  ;; ------------------------------------- Temperature-CorePlusR4AB14
+  !define(flaggingBands,{1})
+  !define(flaggingRadiometers,{R1A,R1B})!dnl
+  !makeQualityForOneProduct(product=Temperature,chisqScale=1.0,minRads=800,cloudMax=30K,cloudMin= -4K)
+  !makeStatusForOneProduct(product=Temperature,chisqScale=1.0,minRads=800,cloudMax=30K,cloudMin= -4K)
+
+  ;; ------------------------------------- GPH-CorePlusR4AB14
+  !define(flaggingBands,{1})
+  !define(flaggingRadiometers,{R1A,R1B})!dnl
+  !makeQualityForOneProduct(product=GPH,chisqScale=1.0,minRads=800,cloudMax=30K,cloudMin= -4K)
+  !makeStatusForOneProduct(product=GPH,chisqScale=1.0,minRads=800,cloudMax=30K,cloudMin= -4K)
+d83 3
+@
+
+
+1.8
+log
+@compute r4 status based on R1 cloud flags
+@
+text
+@d2 1
+a2 1
+; $Id: coreplusr4ab14flags.l2cf,v 1.7 2006/11/01 19:12:47 pwagner Exp $
+d16 3
+a18 3
+  !define(flaggingRadiometers,{R1A,R1B})!dnl
+  !makeQualityForOneProduct(product=ClO,chisqScale=1.0,minRads=600,cloudMax=30K,cloudMin= -4K)
+  !makeStatusForOneProduct(product=ClO,chisqScale=1.0,minRads=600,cloudMax=30K,cloudMin= -4K)
+d22 3
+a24 3
+  !define(flaggingRadiometers,{R1A,R1B})!dnl
+  !makeQualityForOneProduct(product=BrO,chisqScale=1.0,minRads=1000,cloudMax=30K,cloudMin= -4K)
+  !makeStatusForOneProduct(product=BrO,chisqScale=1.0,minRads=1000,cloudMax=30K,cloudMin= -4K)
+d28 3
+a30 3
+  !define(flaggingRadiometers,{R1A,R1B})!dnl
+  !makeQualityForOneProduct(product=HOCl,chisqScale=1.0,minRads=2000,cloudMax=30K,cloudMin= -4K)
+  !makeStatusForOneProduct(product=HOCl,chisqScale=1.0,minRads=2000,cloudMax=30K,cloudMin= -4K)
+d34 3
+a36 3
+  !define(flaggingRadiometers,{R1A,R1B})!dnl
+  !makeQualityForOneProduct(product=HCl,chisqScale=1.0,minRads=1000,cloudMax=30K,cloudMin= -4K)
+  !makeStatusForOneProduct(product=HCl,chisqScale=1.0,minRads=1000,cloudMax=30K,cloudMin= -4K)
+d40 3
+a42 3
+  !define(flaggingRadiometers,{R1A,R1B})!dnl
+  !makeQualityForOneProduct(product=O3,chisqScale=1.0,minRads=2000,cloudMax=30K,cloudMin= -4K)
+  !makeStatusForOneProduct(product=O3,chisqScale=1.0,minRads=2000,cloudMax=30K,cloudMin= -4K)
+d46 3
+a48 3
+  !define(flaggingRadiometers,{R1A,R1B})!dnl
+  !makeQualityForOneProduct(product=HO2,chisqScale=1.0,minRads=200,cloudMax=30K,cloudMin= -4K)
+  !makeStatusForOneProduct(product=HO2,chisqScale=1.0,minRads=200,cloudMax=30K,cloudMin= -4K)
+d52 3
+a54 3
+  !define(flaggingRadiometers,{R1A,R1B})!dnl
+  !makeQualityForOneProduct(product=HNO3,chisqScale=1.0,minRads=4000,cloudMax=30K,cloudMin= -4K)
+  !makeStatusForOneProduct(product=HNO3,chisqScale=1.0,minRads=4000,cloudMax=30K,cloudMin= -4K)
+d58 3
+a60 3
+  !define(flaggingRadiometers,{R1A,R1B})!dnl
+  !makeQualityForOneProduct(product=CH3CN,chisqScale=1.0,minRads=4000,cloudMax=30K,cloudMin= -4K)
+  !makeStatusForOneProduct(product=CH3CN,chisqScale=1.0,minRads=4000,cloudMax=30K,cloudMin= -4K)
+d64 3
+a66 3
+  !define(flaggingRadiometers,{R1A,R1B})!dnl
+  !makeQualityForOneProduct(product=SO2,chisqScale=1.0,minRads=200,cloudMax=30K,cloudMin= -4K)
+  !makeStatusForOneProduct(product=SO2,chisqScale=1.0,minRads=200,cloudMax=30K,cloudMin= -4K)
+d83 3
+@
+
+
+1.7
+log
+@Removed R3 as flagging radiometer
+@
+text
+@d2 1
+a2 1
+; $Id: coreplusr4ab14flags.l2cf,v 1.6 2006/11/01 18:43:05 dwu Exp $
+d16 3
+a18 3
+  !define(flaggingRadiometers,{R4})!dnl
+  !makeQualityForOneProduct(product=ClO,chisqScale=1.0,minRads=600,cloudMax=999K,cloudMin= -999K)
+  !makeStatusForOneProduct(product=ClO,chisqScale=1.0,minRads=600,cloudMax=999K,cloudMin= -999K)
+d22 3
+a24 3
+  !define(flaggingRadiometers,{R4})!dnl
+  !makeQualityForOneProduct(product=BrO,chisqScale=1.0,minRads=1000,cloudMax=999K,cloudMin= -999K)
+  !makeStatusForOneProduct(product=BrO,chisqScale=1.0,minRads=1000,cloudMax=999K,cloudMin= -999K)
+d28 3
+a30 3
+  !define(flaggingRadiometers,{R4})!dnl
+  !makeQualityForOneProduct(product=HOCl,chisqScale=1.0,minRads=2000,cloudMax=999K,cloudMin= -999K)
+  !makeStatusForOneProduct(product=HOCl,chisqScale=1.0,minRads=2000,cloudMax=999K,cloudMin= -999K)
+d34 3
+a36 3
+  !define(flaggingRadiometers,{R4})!dnl
+  !makeQualityForOneProduct(product=HCl,chisqScale=1.0,minRads=1000,cloudMax=999K,cloudMin= -999K)
+  !makeStatusForOneProduct(product=HCl,chisqScale=1.0,minRads=1000,cloudMax=999K,cloudMin= -999K)
+d40 3
+a42 3
+  !define(flaggingRadiometers,{R4})!dnl
+  !makeQualityForOneProduct(product=O3,chisqScale=1.0,minRads=2000,cloudMax=999K,cloudMin= -999K)
+  !makeStatusForOneProduct(product=O3,chisqScale=1.0,minRads=2000,cloudMax=999K,cloudMin= -999K)
+d46 3
+a48 3
+  !define(flaggingRadiometers,{R4})!dnl
+  !makeQualityForOneProduct(product=HO2,chisqScale=1.0,minRads=200,cloudMax=999K,cloudMin= -999K)
+  !makeStatusForOneProduct(product=HO2,chisqScale=1.0,minRads=200,cloudMax=999K,cloudMin= -999K)
+d52 3
+a54 3
+  !define(flaggingRadiometers,{R4})!dnl
+  !makeQualityForOneProduct(product=HNO3,chisqScale=1.0,minRads=4000,cloudMax=999K,cloudMin= -999K)
+  !makeStatusForOneProduct(product=HNO3,chisqScale=1.0,minRads=4000,cloudMax=999K,cloudMin= -999K)
+d58 3
+a60 3
+  !define(flaggingRadiometers,{R4})!dnl
+  !makeQualityForOneProduct(product=CH3CN,chisqScale=1.0,minRads=4000,cloudMax=999K,cloudMin= -999K)
+  !makeStatusForOneProduct(product=CH3CN,chisqScale=1.0,minRads=4000,cloudMax=999K,cloudMin= -999K)
+d64 3
+a66 3
+  !define(flaggingRadiometers,{R4})!dnl
+  !makeQualityForOneProduct(product=SO2,chisqScale=1.0,minRads=200,cloudMax=999K,cloudMin= -999K)
+  !makeStatusForOneProduct(product=SO2,chisqScale=1.0,minRads=200,cloudMax=999K,cloudMin= -999K)
+d83 3
+@
+
+
+1.6
+log
+@change r4 cloud flag thresholds, correction for T and GPH
+@
+text
+@d2 1
+a2 1
+; $Id: coreplusr4ab14flags.l2cf,v 1.5 2006/11/01 18:41:25 dwu Exp $
+d68 1
+a68 1
+  ;; ------------------------------------- Temperature-640
+d70 1
+a70 1
+  !define(flaggingRadiometers,{R1A,R1B,R3})!dnl
+d74 1
+a74 1
+  ;; ------------------------------------- GPH-640
+d76 1
+a76 1
+  !define(flaggingRadiometers,{R1A,R1B,R3})!dnl
+d83 3
+@
+
+
+1.5
+log
+@change r4 cloud flag thresholds
+@
+text
+@d2 1
+a2 1
+; $Id: coreplusr4ab14flags.l2cf,v 1.4 2006/10/11 23:04:55 pwagner Exp $
+d71 2
+a72 2
+  !makeQualityForOneProduct(product=Temperature,chisqScale=1.0,minRads=800,cloudMax=5K,cloudMin= -999K)
+  !makeStatusForOneProduct(product=Temperature,chisqScale=1.0,minRads=800,cloudMax=5K,cloudMin= -999K)
+d77 2
+a78 2
+  !makeQualityForOneProduct(product=GPH,chisqScale=1.0,minRads=800,cloudMax=5K,cloudMin= -999K)
+  !makeStatusForOneProduct(product=GPH,chisqScale=1.0,minRads=800,cloudMax=5K,cloudMin= -999K)
+d83 3
+@
+
+
+1.4
+log
+@Special retrieval phase name retrophase needed for Convergence Ratio Fill
+@
+text
+@d2 1
+a2 1
+; $Id: coreplusr4ab14flags.l2cf,v 1.3 2006/10/04 16:51:47 pwagner Exp $
+d17 2
+a18 2
+  !makeQualityForOneProduct(product=ClO,chisqScale=1.0,minRads=600,cloudMax=10K,cloudMin= -10K)
+  !makeStatusForOneProduct(product=ClO,chisqScale=1.0,minRads=600,cloudMax=10K,cloudMin= -10K)
+d23 2
+a24 2
+  !makeQualityForOneProduct(product=BrO,chisqScale=1.0,minRads=1000,cloudMax=10K,cloudMin= -10K)
+  !makeStatusForOneProduct(product=BrO,chisqScale=1.0,minRads=1000,cloudMax=10K,cloudMin= -10K)
+d29 2
+a30 2
+  !makeQualityForOneProduct(product=HOCl,chisqScale=1.0,minRads=2000,cloudMax=10K,cloudMin= -10K)
+  !makeStatusForOneProduct(product=HOCl,chisqScale=1.0,minRads=2000,cloudMax=10K,cloudMin= -10K)
+d35 2
+a36 2
+  !makeQualityForOneProduct(product=HCl,chisqScale=1.0,minRads=1000,cloudMax=10K,cloudMin= -10K)
+  !makeStatusForOneProduct(product=HCl,chisqScale=1.0,minRads=1000,cloudMax=10K,cloudMin= -10K)
+d41 2
+a42 2
+  !makeQualityForOneProduct(product=O3,chisqScale=1.0,minRads=2000,cloudMax=10K,cloudMin= -10K)
+  !makeStatusForOneProduct(product=O3,chisqScale=1.0,minRads=2000,cloudMax=10K,cloudMin= -10K)
+d47 2
+a48 2
+  !makeQualityForOneProduct(product=HO2,chisqScale=1.0,minRads=200,cloudMax=10K,cloudMin= -10K)
+  !makeStatusForOneProduct(product=HO2,chisqScale=1.0,minRads=200,cloudMax=10K,cloudMin= -10K)
+d53 2
+a54 2
+  !makeQualityForOneProduct(product=HNO3,chisqScale=1.0,minRads=4000,cloudMax=10K,cloudMin= -10K)
+  !makeStatusForOneProduct(product=HNO3,chisqScale=1.0,minRads=4000,cloudMax=10K,cloudMin= -10K)
+d59 2
+a60 2
+  !makeQualityForOneProduct(product=CH3CN,chisqScale=1.0,minRads=4000,cloudMax=10K,cloudMin= -10K)
+  !makeStatusForOneProduct(product=CH3CN,chisqScale=1.0,minRads=4000,cloudMax=10K,cloudMin= -10K)
+d65 2
+a66 2
+  !makeQualityForOneProduct(product=SO2,chisqScale=1.0,minRads=200,cloudMax=10K,cloudMin= -10K)
+  !makeStatusForOneProduct(product=SO2,chisqScale=1.0,minRads=200,cloudMax=10K,cloudMin= -10K)
+d71 2
+a72 2
+  !makeQualityForOneProduct(product=Temperature,chisqScale=1.0,minRads=800,cloudMax=5K,cloudMin= -10K)
+  !makeStatusForOneProduct(product=Temperature,chisqScale=1.0,minRads=800,cloudMax=5K,cloudMin= -10K)
+d77 2
+a78 2
+  !makeQualityForOneProduct(product=GPH,chisqScale=1.0,minRads=800,cloudMax=5K,cloudMin= -10K)
+  !makeStatusForOneProduct(product=GPH,chisqScale=1.0,minRads=800,cloudMax=5K,cloudMin= -10K)
+d83 3
+@
+
+
+1.3
+log
+@Compatible w/ status bits from multiple radiometers; needs review
+@
+text
+@d1 2
+a2 1
+; $Id: coreplusr4ab14flags.l2cf,v 1.2 2006/08/08 22:27:07 pwagner Exp $
+d4 6
+d83 3
+@
+
+
+1.2
+log
+@Fills Quality, Status for Temperature, GPH; needs revision before v2.20
+@
+text
+@d1 1
+a1 1
+; $Id: coreplusr4ab14flags.l2cf,v 1.1 2006/07/28 18:49:40 dwu Exp $
+d9 3
+a11 1
+  !makeFlagsForOneProduct(product=ClO,radiometer=R4,chisqScale=1.0,minRads=600,cloudMax=10K,cloudMin= -10K)
+d15 3
+a17 1
+  !makeFlagsForOneProduct(product=BrO,radiometer=R4,chisqScale=1.0,minRads=1000,cloudMax=10K,cloudMin= -10K)
+d21 3
+a23 1
+  !makeFlagsForOneProduct(product=HOCl,radiometer=R4,chisqScale=1.0,minRads=2000,cloudMax=10K,cloudMin= -10K)
+d27 3
+a29 1
+  !makeFlagsForOneProduct(product=HCl,radiometer=R4,chisqScale=1.0,minRads=1000,cloudMax=10K,cloudMin= -10K)
+d33 3
+a35 1
+  !makeFlagsForOneProduct(product=O3,radiometer=R4,chisqScale=1.0,minRads=2000,cloudMax=10K,cloudMin= -10K)
+d39 3
+a41 1
+  !makeFlagsForOneProduct(product=HO2,radiometer=R4,chisqScale=1.0,minRads=200,cloudMax=10K,cloudMin= -10K)
+d45 3
+a47 1
+  !makeFlagsForOneProduct(product=HNO3,radiometer=R4,chisqScale=1.0,minRads=4000,cloudMax=10K,cloudMin= -10K)
+d51 3
+a53 1
+  !makeFlagsForOneProduct(product=CH3CN,radiometer=R4,chisqScale=1.0,minRads=4000,cloudMax=10K,cloudMin= -10K)
+d57 3
+a59 1
+  !makeFlagsForOneProduct(product=SO2,radiometer=R4,chisqScale=1.0,minRads=200,cloudMax=10K,cloudMin= -10K)
+d63 3
+a65 1
+  !makeFlagsForOneProduct(product=Temperature,radiometer=R1A,chisqScale=1.0,minRads=800,cloudMax=5K,cloudMin= -10K)
+d69 3
+a71 1
+  !makeFlagsForOneProduct(product=GPH,radiometer=R1A,chisqScale=1.0,minRads=800,cloudMax=5K,cloudMin= -10K)
+d76 3
+@
+
+
+1.1
+log
+@*** empty log message ***
+@
+text
+@d1 1
+a1 1
+; $Id: coreplusr4flags.l2cf,v 1.9 2006/07/26 21:13:54 dwu Exp $
+d43 8
+d53 3
+a55 28
+; $Log: coreplusr4flags.l2cf,v $
+; Revision 1.9  2006/07/26 21:13:54  dwu
+; modified for v2.0 clouds
+;
+; Revision 1.8  2004/09/21 23:02:59  livesey
+; Changed chiSqWeights to 1.0 for everything.
+;
+; Revision 1.7  2004/05/04 01:05:46  livesey
+; Added flags for CH3CN-640 and HNO3-640.
+;
+; Revision 1.6  2004/04/28 23:06:50  livesey
+; Changes to cloud flags.
+;
+; Revision 1.5  2004/04/28 00:32:11  livesey
+; Bug fix
+;
+; Revision 1.4  2004/04/27 23:50:38  livesey
+; Added low cloud flagging for temperature/GPH
+;
+; Revision 1.3  2004/04/27 23:46:26  livesey
+; Added GPH
+;
+; Revision 1.2  2004/04/17 05:47:37  livesey
+; Backed off the number of radiances missing flags
+;
+; Revision 1.1  2004/04/06 01:18:19  livesey
+; First version
+;
+@
+

@@ -1,0 +1,284 @@
+head	1.5;
+access;
+symbols
+	V1-51:1.4
+	V1-50:1.4
+	V1-45:1.2
+	V1-44:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.5
+date	2005.01.27.21.31.43;	author vsnyder;	state dead;
+branches;
+next	1.4;
+
+1.4
+date	2004.10.06.01.18.36;	author vsnyder;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2004.10.05.23.03.51;	author vsnyder;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2004.06.17.01.05.02;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.06.17.00.39.58;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.5
+log
+@Remove unformatted PFA data files from L2
+@
+text
+@! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+program DumpPFAData
+
+  ! Dump an unformatted PFAData file in the same format as a formatted file
+  ! that could have been used to create it.  See ConvertPFAData for formats.
+
+  use ISO_FORTRAN_ENV, only: Output_Unit
+  use Machine ! May need to get GETARG from here; otherwise, nothing is used
+
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+    & "$Id: DumpPFAData.f90,v 1.4 2004/10/06 01:18:36 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+!---------------------------------------------------------------------------
+
+  real, allocatable :: Absorption(:,:), dAbsDwc(:,:), dAbsDnc(:,:), dAbsDnu(:,:)
+  character(255) :: FileName
+  character(31) :: Format
+  integer :: I, L, Lun = Output_Unit
+  character(31), allocatable :: Molecules(:)
+  integer :: nTemps, nPress, nMol
+  character(127) :: Signal = ''
+  real :: TStart, TStep, VelLin, VStart, VStep
+
+  call getarg ( 1, fileName )
+  open ( 10, file=trim(fileName), form='unformatted' )
+  call getarg ( 2, fileName )
+  if ( fileName /= '' ) then
+    lun = 11
+    open ( 11, file=trim(fileName) )
+  end if
+
+  read ( 10 ) nTemps, nPress, nMol, velLin, l, signal(:l), &
+    & vStart, vStep, tStart, tStep
+
+  allocate ( absorption(nTemps,nPress), dAbsDwc(nTemps,nPress), &
+    &        dAbsDnc(nTemps,nPress), dAbsDnu(nTemps,nPress), molecules(nMol) )
+
+  read ( 10 ) absorption, dAbsDwc, dAbsDnc, dAbsDnu
+
+  molecules = ''
+  do i = 1, nMol
+    read ( 10 ) l, molecules(i)(:l)
+  end do
+
+  write ( format, '(a,i0,a)' ) '(1p,', nTemps, 'e12.4)'
+  write ( lun, '(a)', advance='no' ) 'Frequency averaged cross section file for'
+  write ( lun, '(99(1x,a))' ) (trim(molecules(i)), i = 1, nMol)
+  write ( lun, '()' )
+  write ( lun, '(a,a)' ) 'Signal, ', trim(signal)
+  write ( lun, '(3a,i0,3a)' ) 'vgrid, type=Logarithmic,coordinate=Zeta,Start=', &
+      & trim(writeIt(vStart)),'hpa,formula = [', nPress, ':', trim(writeIt(vStep)), ']'
+  write ( lun, '(3a,i0,3a)' ) 'tgrid, type=Logarithmic,coordinate=logT,Start=', &
+      & trim(writeIt(tStart)),'K,formula = [', nTemps, ':', trim(writeIt(tStep)), ']'
+  write ( lun, '(a,f6.2,a)' ) 'Velocity Linearization', velLin, ' km/sec'
+  write ( lun, '(a)' ) 'ln(Absorption (km^-1)) data(logT, logp)'
+  write ( lun, format ) absorption
+  write ( lun, '(a)' ) 'Dln(Absorption(km^-1)/Dwc(hPa/MHz) data(logT, logp)'
+  write ( lun, format ) dAbsDwc
+  write ( lun, '(a)' ) 'Dln(Absorption(km^-1)/Dnc data(logT, logp)'
+  write ( lun, format ) dAbsDnc
+  write ( lun, '(a)' ) 'Dln(Absorption(km^-1)/Dnu(MHz) data(logT, logp)'
+  write ( lun, format ) dAbsDnu
+  close ( lun )
+
+contains
+
+  character(15) function WriteIt ( Step )
+    real, intent(in) :: Step
+    if ( step == anint(step) ) then
+      write ( writeIt, '(i0)' ) nint(step)
+    else
+      write ( writeIt, '(f0.3)' ) step
+    end if
+  end function WriteIt
+
+end program DumpPFAData
+
+! $Log: DumpPFAData.f90,v $
+! Revision 1.4  2004/10/06 01:18:36  vsnyder
+! Massive simplification
+!
+! Revision 1.3  2004/10/05 23:03:51  vsnyder
+! Dump grid start and step instead of ???
+!
+! Revision 1.2  2004/06/17 01:05:02  vsnyder
+! Added 'use Machine' in case it's needed for GETARG
+!
+! Revision 1.1  2004/06/17 00:39:58  vsnyder
+! Initial commit
+!
+@
+
+
+1.4
+log
+@Massive simplification
+@
+text
+@d14 1
+a14 1
+    & "$Id: DumpPFAData.f90,v 1.3 2004/10/05 23:03:51 vsnyder Exp $"
+d82 3
+@
+
+
+1.3
+log
+@Dump grid start and step instead of ???
+@
+text
+@d1 3
+d9 1
+d14 1
+a14 1
+    & "$Id: DumpPFAData.f90,v 1.2 2004/06/17 01:05:02 vsnyder Exp $"
+d21 1
+a21 1
+  integer :: I, L, Lun = -1
+d49 25
+a73 48
+  if ( lun > 0 ) then
+    write ( lun, '(a)', advance='no' ) 'Frequency averaged cross section file for'
+    do i = 1, nMol
+      write ( lun, '(1x,a)', advance='no' ) trim(molecules(i))
+    end do
+    write ( lun, '()' )
+    write ( lun, '(a,a)' ) 'Signal, ', trim(signal)
+    if ( vStep == anint(vStep) ) then
+      write ( lun, '(a,f0.3,a,i0,a,i0,a)' ) 'vgrid, type=Logarithmic,coordinate=Zeta,Start=', &
+        & vStart,'hpa,formula = [', nPress, ':', nint(vStep), ']'
+    else
+      write ( lun, '(a,f0.3,a,i0,a,f0.3,a)' ) 'vgrid, type=Logarithmic,coordinate=Zeta,Start=', &
+        & vStart,'hpa,formula = [', nPress, ':', vStep, ']'
+    end if
+    if ( tStep == anint(tStep) ) then
+      write ( lun, '(a,f0.3,a,i0,a,i0,a)' ) 'tgrid, type=Logarithmic,coordinate=logT,Start=', &
+        & tStart,'K,formula = [', nTemps, ':', nint(tStep), ']'
+    else
+      write ( lun, '(a,f0.3,a,i0,a,f0.3,a)' ) 'tgrid, type=Logarithmic,coordinate=logT,Start=', &
+        & tStart,'K,formula = [', nTemps, ':', tStep, ']'
+    end if
+    write ( lun, '(a,f6.2,a)' ) 'Velocity Linearization', velLin, ' km/sec'
+    write ( lun, '(a)' ) 'ln(Absorption (km^-1)) data(logT, logp)'
+    write ( lun, format ) absorption
+    write ( lun, '(a)' ) 'Dln(Absorption(km^-1)/Dwc(hPa/MHz) data(logT, logp)'
+    write ( lun, format ) dAbsDwc
+    write ( lun, '(a)' ) 'Dln(Absorption(km^-1)/Dnc data(logT, logp)'
+    write ( lun, format ) dAbsDnc
+    write ( lun, '(a)' ) 'Dln(Absorption(km^-1)/Dnu(MHz) data(logT, logp)'
+    write ( lun, format ) dAbsDnu
+    close ( lun )
+  else
+    write ( *, '(a)', advance='no' ) 'Frequency averaged cross section file for'
+    do i = 1, nMol
+      write ( *, '(1x,a)', advance='no' ) trim(molecules(i))
+    end do
+    write ( *, '()' )
+    write ( *, '(a,a)' ) 'Signal, ', trim(signal)
+    if ( vStep == anint(vStep) ) then
+      write ( *, '(a,f0.3,a,i0,a,i0,a)' ) 'vgrid, type=Logarithmic,coordinate=Zeta,Start=', &
+        & vStart,'hpa,formula = [', nPress, ':', nint(vStep), ']'
+    else
+      write ( *, '(a,f0.3,a,i0,a,f0.3,a)' ) 'vgrid, type=Logarithmic,coordinate=Zeta,Start=', &
+        & vStart,'hpa,formula = [', nPress, ':', vStep, ']'
+    end if
+    if ( tStep == anint(tStep) ) then
+      write ( *, '(a,f0.3,a,i0,a,i0,a)' ) 'tgrid, type=Logarithmic,coordinate=logT,Start=', &
+        & tStart,'K,formula = [', nTemps, ':', nint(tStep), ']'
+d75 1
+a75 2
+      write ( *, '(a,f0.3,a,i0,a,f0.3,a)' ) 'tgrid, type=Logarithmic,coordinate=logT,Start=', &
+        & tStart,'K,formula = [', nTemps, ':', tStep, ']'
+d77 1
+a77 10
+    write ( *, '(a,f6.2,a)' ) 'Velocity Linearization', velLin, ' km/sec'
+    write ( *, '(a)' ) 'ln(Absorption (km^-1)) data(logT, logp)'
+    write ( *, format ) absorption
+    write ( *, '(a)' ) 'Dln(Absorption(km^-1)/Dwc(hPa/MHz) data(logT, logp)'
+    write ( *, format ) dAbsDwc
+    write ( *, '(a)' ) 'Dln(Absorption(km^-1)/Dnc data(logT, logp)'
+    write ( *, format ) dAbsDnc
+    write ( *, '(a)' ) 'Dln(Absorption(km^-1)/Dnu(MHz) data(logT, logp)'
+    write ( *, format ) dAbsDnu
+  end if
+d82 3
+@
+
+
+1.2
+log
+@Added 'use Machine' in case it's needed for GETARG
+@
+text
+@d10 1
+a10 1
+    & "$Id: DumpPFAData.f90,v 1.1 2004/06/17 00:39:58 vsnyder Exp $"
+d21 1
+a21 1
+  real :: VelLin
+d31 2
+a32 1
+  read ( 10 ) nTemps, nPress, nMol, velLin, l, signal(:l)
+d52 14
+a65 4
+    write ( lun, '(a,i0,a)' ) 'vgrid, type=Logarithmic,coordinate=Zeta,Start=???hpa,formula = [', &
+      & nPress, ':???]'
+    write ( lun, '(a,i0,a)' ) 'tgrid, type=Logarithmic,coordinate=logT,Start=???K,formula = [', &
+      & nTemps, ':???]'
+d83 14
+a96 4
+    write ( *, '(a,i0,a)' ) 'vgrid, type=Logarithmic,coordinate=Zeta,Start=???hpa,formula = [', &
+      & nPress, ':???]'
+    write ( *, '(a,i0,a)' ) 'tgrid, type=Logarithmic,coordinate=logT,Start=???K,formula = [', &
+      & nTemps, ':???]'
+d111 3
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d6 2
+d10 1
+a10 1
+    & "$Id: declaration_table.f90,v 2.8 2004/01/23 05:35:50 livesey Exp $"
+a11 2
+  character (len=*), parameter :: ModuleName= &
+       "$RCSfile: declaration_table.f90,v $"
+d89 4
+a92 1
+! $Log: $
+@
+

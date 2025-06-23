@@ -1,0 +1,468 @@
+head	1.8;
+access;
+symbols
+	V4-21:1.7.0.6
+	V4-13:1.7
+	V4-12:1.7
+	V4-11:1.7
+	V4-10:1.7
+	V3-43:1.7
+	M4-00:1.7
+	V3-41:1.7
+	V3-40-PlusGM57:1.7.0.4
+	V2-24-NRT-04:1.7
+	V3-33:1.7
+	V2-24:1.7
+	V3-31:1.7
+	V3-30-NRT-05:1.7
+	cfm-01-00:1.7
+	V3-30:1.7
+	V3-20:1.7
+	V3-10:1.7
+	V2-23-NRT-02:1.7
+	V2-23:1.7
+	V2-22-NRT-01:1.7
+	V2-22:1.7
+	V2-21:1.7
+	V2-20:1.7
+	V2-11:1.7
+	V2-10:1.7
+	V2-00:1.7
+	V1-51:1.7
+	V1-50:1.7
+	V1-45:1.7
+	V1-44:1.7
+	V1-43:1.7
+	V1-42:1.7
+	V1-41:1.7
+	V1-32:1.7
+	V1-40:1.7
+	V1-31:1.7
+	V1-30:1.7
+	V1-13:1.7
+	V1-12:1.7
+	V1-11:1.7
+	V1-10:1.7
+	newfwm-feb03:1.7.0.2
+	V1-04:1.5
+	V1-03:1.5
+	V1-02:1.5
+	V1-00:1.5;
+locks; strict;
+comment	@# @;
+
+
+1.8
+date	2015.08.12.17.42.41;	author pwagner;	state dead;
+branches;
+next	1.7;
+
+1.7
+date	2002.07.29.23.13.07;	author pwagner;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2002.05.10.22.13.58;	author pwagner;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2001.12.06.01.03.11;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.11.09.21.57.07;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2001.11.07.00.30.04;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.10.11.18.14.21;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.10.10.23.19.29;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.8
+log
+@Switched from MakeFC to Makefile
+@
+text
+@#	Makefile
+#
+# Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+#
+#special case:
+#the 1st time through, before .configure exists yet,
+#execute $(MLSBIN)/configure to create .configure
+
+#i.e., if you call are building this mls
+#by calling make with a different Makefile name,
+#say: make -f MakeFC
+#then rename the Makefiles in /l2 and /lib also MakeFC
+
+# "$Id: MakeFC,v 1.7 2002/07/29 23:13:07 pwagner Exp $"
+
+MakeFName = MakeFC
+
+# where to store .configure
+CONFDIR=../..
+
+# where configure and makemakedep.sh are stored
+MLSBIN=../../util
+
+# where sources for libmls.a are stored
+libmls_sources=../../lib
+
+# where objects and libmls.a are stored
+libmls_objs=$(libmls_sources)/$(MLSCONFG)
+
+# where sources for libmlsl1.a are stored
+mlsl1_sources=../../l1
+
+# where objects and libmlsl1.a are stored
+mlsl1_objs=$(mlsl1_sources)/$(MLSCONFG)
+
+# where sources (but not OBJS) shared with l3, etc. are stored
+srclib=../../srclib
+
+# where sources (but not OBJS) used for hdf5 file versions are stored
+he5lib=../../he5lib
+
+# where he5 objects and libhe5.a are stored
+he5lib_objs=$(he5lib)/$(MLSCONFG)
+
+# where the MLSCONFG directory is (to hold objects, prog, etc.)
+OBJ_DIR = .
+
+# where the platforms directory is
+PLATFORMS = ../../tests/l1
+
+# This is the default name of the configure file
+# It may be overridden for multiple platforms, special options, etc.
+ifdef HOSTMLSCFILE
+   MLSCFILE=$(HOSTMLSCFILE)
+else
+   MLSCFILE=.configure
+endif
+
+# This will set our MLS platform, compiler. etc.
+# w/o complaining if it does nor exist yet
+-include $(CONFDIR)/$(MLSCFILE)
+
+# All the implicit pattern-matching involving suffixes
+# will be done in the uniquely-named sub-directories, not here--so
+.SUFFIXES:
+
+# This will filter out globbed file expansions that fail
+# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
+REECHO=$(MLSBIN)/reecho.sh
+
+TAR=tar
+
+SHELL = /bin/sh
+
+#--------------- Target definitions
+# $PROG          -- automatic; built when target is not specified
+
+#                           (functional)
+# configure      -- runs mlsconfigure to (re)set compiler, platform, paths
+#                  also (re)creates uniquely-named sub-sub-directories
+#                  with custom Makefiles where *.o, *.mod, etc. built
+# depends        -- runs makemakedep.sh to calculate dependencies
+# mostlyclean    -- deletes uniquely-named sub-sub-directories
+# clean          -- deletes only *.o, *.mod from sub-subs
+# tar            -- creates a directory archive suitable for distribution
+#
+
+#----------------------------------------------------------
+libmls_f90 := $(shell ${REECHO} $(libmls_sources)/*.f $(libmls_sources)/*.f90 $(libmls_sources)/*.c)
+mlsl1_f90 := $(shell ${REECHO} $(mlsl1_sources)/*.f $(mlsl1_sources)/*.f90 $(mlsl1_sources)/*.c)
+blaslib_f := $(shell ${REECHO} $(blaslib)/*.c $(blaslib)/*.f $(blaslib)/*.f90)
+he5lib_f := $(shell ${REECHO} $(he5lib)/*.c $(he5lib)/*.f $(he5lib)/*.f90)
+
+ifdef BLAS
+   LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
+   $(libmls_sources)/machines/$(MLSCONFG)/machine.f90
+else
+   LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
+   $(libmls_sources)/machines/$(MLSCONFG)/machine.f90 \
+   $(blaslib_f)
+endif
+
+ifdef HDFVERSIONS
+   libl1_prereqs := $(libmls_objs)/libmls.a $(mlsl1_f90) \
+    $(he5lib_objs)/libhe5.a
+else
+   libl1_prereqs := $(libmls_objs)/libmls.a $(mlsl1_f90)
+endif
+
+UNPREFXDPTHS=$(HDF5)/../fortran/src $(HDF5)/../include
+EXTRA_PATHS =-I $(HDF5)/../fortran/src -I $(HDF5)/../include
+PROG=sids_l1boa
+# PROG=test
+
+#----------------------- Build instructions
+
+#$(DESIRED_PROG_NAME): $(PROG)
+#	cd $(OBJ_DIR)/$(MLSCONFG) && mv $(PROG) $(DESIRED_PROG_NAME)
+#
+$(PROG): $(CONFDIR)/$(MLSCFILE) $(OBJ_DIR)/$(MLSCONFG) \
+     $(libmls_objs)/libmls.a $(OBJ_DIR)/$(MLSCONFG)/libl1.a
+		cd $(OBJ_DIR)/$(MLSCONFG) && $(MAKE) PROG_NAME=$(PROG) $(PROG) \
+        EXTRA_PATHS="$(EXTRA_PATHS)"
+
+$(libmls_objs)/libmls.a: $(LIB_prereqs)
+	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
+
+$(OBJ_DIR)/$(MLSCONFG)/libl1.a: $(libl1_prereqs)
+	$(MAKE) -f $(MakeFName) -C $(mlsl1_sources)
+		cd $(OBJ_DIR)/$(MLSCONFG) && $(MAKE) libl1.a
+
+$(he5lib_objs)/libhe5.a: $(libmls_objs)/libmls.a $(he5lib_f)
+	@@if [ "$(NOHUNTING)" != "" ] ; then \
+	   rm -f $(he5lib_objs)/libhe5.a ; \
+	fi ; \
+	$(MAKE) -f $(MakeFName) libhe5.a -C $(he5lib)
+
+.PHONY: configure depends clean tar mostlyclean tarz targ \
+  $(PROG) $(DESIRED_PROG_NAME) update ghostbuster
+
+tar:
+
+configure:
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)" -mc "$(OBJ_DIR)"
+
+$(CONFDIR)/$(MLSCFILE):
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)" -mc "$(OBJ_DIR)"
+
+$(OBJ_DIR)/$(MLSCONFG): $(CONFDIR)/$(MLSCFILE)
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)" -mc "$(OBJ_DIR)" -nc
+
+depends:
+	@@$(MLSBIN)/makemakedep.sh -nodep \
+        $(libmls_sources) $(mlsl1_sources) $(srclib); \
+     mv Makefile.dep Makefile.nodep
+	@@$(MLSBIN)/makemakedep.sh \
+        $(libmls_sources) $(mlsl1_sources) $(srclib)
+
+ghostbuster:
+	$(MLSBIN)/ghostbuster.sh -lib $(OBJ_DIR)/$(MLSCONFG) ./ $(srclib)
+
+mostlyclean:
+	@@echo "Cleaning directory $(MLSCONFG)" ; \
+	if [ "$(MLSCONFG)" != "" ] ; then  \
+		echo "Deleting $(MLSCONFG) files" ; \
+		rm -f $(OBJ_DIR)/$(MLSCONFG)/* ; \
+	fi ; \
+	if [ -d "$(OBJ_DIR)/$(MLSCONFG)" ] ; then  \
+		echo "Deleting $(MLSCONFG) directory" ; \
+		rmdir $(OBJ_DIR)/$(MLSCONFG) ; \
+	fi
+	rm -f Make.dep.*
+
+clean:
+	@@echo "Cleaning objects from directory $(MLSCONFG)" ; \
+	if [ "$(MLSCONFG)" != "" ] ; then  \
+		rm -f $(OBJ_DIR)/$(MLSCONFG)/*.[ao] ; \
+		rm -f $(OBJ_DIR)/$(MLSCONFG)/*.mod ; \
+		rm -f $(OBJ_DIR)/$(MLSCONFG)/$(PROG) ; \
+	fi
+	rm -f Make.dep.*
+
+tar:
+	rm -f ../$(PROG).tar
+	@@echo "tar-ing l3"; \
+	$(TAR) hcvf ../$(PROG).tar * --exclude CVS\
+	--exclude Make.dep\* --exclude NAG.\* --exclude LF95.\*
+
+tarz: tar
+	@@echo "... then gzipping it"; \
+	cd ..; rm -f $(PROG).tgz; gzip $(PROG).tar; mv $(PROG).tar.gz $(PROG).tgz
+
+targ:
+	rm -f ../$(PROG).tgz
+	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude test
+
+#update: depends ghostbuster
+update:
+	@@cp $(MakeFName) Makefile; \
+	$(MLSBIN)/updatemf.sh -pc "$(PLATFORMS)" \
+         -cf "$(CONFDIR)/$(MLSCFILE)"
+#	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+#          -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)" \
+#          -mc "$(OBJ_DIR)" -nc -nd
+	$(MAKE) -f $(MakeFName) depends ghostbuster
+
+# $Log: MakeFC,v $
+# Revision 1.7  2002/07/29 23:13:07  pwagner
+# update uses updatemf.sh; hdf5-related paths available to compiler
+#
+# Revision 1.6  2002/05/10 22:13:58  pwagner
+# he5lib prereq is HDFVERSIONS set; depends produces Makefile.nodep, too
+#
+# Revision 1.5  2001/12/06 01:03:11  pwagner
+# Depends follows changes in l1 directory
+#
+# Revision 1.4  2001/11/09 21:57:07  pwagner
+# Does depends and ghostbuster after update, not beforre
+#
+# Revision 1.3  2001/11/07 00:30:04  pwagner
+# Improved and silenced update target
+#
+# Revision 1.2  2001/10/11 18:14:21  pwagner
+# Now builds sids_l1boa, not test
+#
+# Revision 1.1  2001/10/10 23:19:29  pwagner
+# First commit
+#
+
+
+@
+
+
+1.7
+log
+@update uses updatemf.sh; hdf5-related paths available to compiler
+@
+text
+@d15 1
+a15 1
+# "$Id: MakeFC,v 1.6 2002/05/10 22:13:58 pwagner Exp $"
+d212 3
+@
+
+
+1.6
+log
+@he5lib prereq is HDFVERSIONS set; depends produces Makefile.nodep, too
+@
+text
+@d15 1
+a15 1
+# "$Id: MakeFC,v 1.5 2001/12/06 01:03:11 pwagner Exp $"
+d111 2
+d123 2
+a124 1
+		cd $(OBJ_DIR)/$(MLSCONFG) && $(MAKE) PROG_NAME=$(PROG) $(PROG)
+d204 5
+a208 3
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)" \
+          -mc "$(OBJ_DIR)" -nc -nd
+d212 3
+@
+
+
+1.5
+log
+@Depends follows changes in l1 directory
+@
+text
+@d15 1
+a15 1
+# "$Id: MakeFC,v 1.4 2001/11/09 21:57:07 pwagner Exp $"
+d40 6
+d93 1
+d104 7
+d126 1
+a126 1
+$(OBJ_DIR)/$(MLSCONFG)/libl1.a: $(libmls_objs)/libmls.a $(mlsl1_f90)
+d130 6
+d154 3
+d207 3
+@
+
+
+1.4
+log
+@Does depends and ghostbuster after update, not beforre
+@
+text
+@d15 1
+a15 1
+# "$Id: MakeFC,v 1.3 2001/11/07 00:30:04 pwagner Exp $"
+d135 1
+a135 1
+        $(libmls_sources) $(srclib)
+d184 3
+@
+
+
+1.3
+log
+@Improved and silenced update target
+@
+text
+@d15 1
+a15 1
+# "$Id: MakeFC,v 1.2 2001/10/11 18:14:21 pwagner Exp $"
+d175 2
+a176 1
+update: depends ghostbuster
+d181 1
+d184 3
+@
+
+
+1.2
+log
+@Now builds sids_l1boa, not test
+@
+text
+@d15 1
+a15 1
+# "$Id: MakeFC,v 1.1 2001/10/10 23:19:29 pwagner Exp $"
+d134 1
+a134 1
+	$(MLSBIN)/makemakedep.sh \
+d175 2
+a176 2
+update: depends
+	cp $(MakeFName) Makefile
+d182 3
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d15 1
+a15 1
+# "$Id: MakeFC,v 1.6 2001/08/13 18:09:08 pwagner Exp $"
+d31 6
+d58 4
+d85 1
+d97 2
+a98 1
+PROG=test
+d102 6
+a107 2
+$(PROG): $(CONFDIR)/$(MLSCFILE) $(OBJ_DIR)/$(MLSCONFG) $(libmls_objs)/libmls.a
+		cd $(OBJ_DIR)/$(MLSCONFG) && $(MAKE) $(PROG)
+d112 6
+a117 1
+.PHONY: configure depends clean tar mostlyclean tarz targ test ghostbuster
+d182 3
+@
+

@@ -1,0 +1,896 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.14
+	cfm-single-freq-0-1:1.1.0.12
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.10
+	mus-emls-1-70:1.1.0.8
+	rel-1-0-englocks-work:1.1.0.6
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2008.08.22.00.56.15;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\documentclass[11pt]{article} \usepackage{shorteos}
+%\usepackage[mtbold,mtplusscr,mtpluscal]{mathtime}
+\usepackage{times}
+\usepackage{longtable}
+%\usepackage{epsfig}
+\usepackage{array}
+\usepackage{float}
+\usepackage{listings}
+\title{Quick reference for the syntax of the L2CF.}
+\usepackage{pstcol,pst-node}
+\author{Nathaniel J.\ Livesey (up to version 1.2), Van Snyder (later)}
+%
+\rcsInfo $Id: l2cfquickreference.tex,v 1.4 2000/07/11 23:02:45 vsnyder Exp $
+%
+\lstset{language=IDL,basicstyle=\small\ttfamily}
+%
+\begin{document}
+\maketitle
+
+\setlongtables
+
+\section{Introduction}
+\label{sec:Introduction}
+This brief document is a quick reference for the syntax of the Level~2
+Configuration File (l2cf).  The document defines the terms for
+version~0.1 of the Level~2 software.  Similar documentation for
+version~0.5 and above of the software will form Appendix~B of the
+software users' guide.
+
+Specifications are of two forms (square brackets denote optional parts,
+and ellipses denote optional repetition):\begin{lstlisting}{}
+<Parameter name> = <expression>
+[<Entity name>:] <Specification name> [, [<Field name> =] <value> ]...
+\end{lstlisting}
+
+Everything but a string is case insensitive.
+
+The \lstinline+<Entity name>+ begins with a letter, and thereafter
+consists only of letters, numbers and the underscore character.  It is a
+name by which the specification will be known for the duration of the
+program.  Entity names shall be unique.
+
+The \lstinline+<value>+ consists of an expression, or a sequence of
+expressions enclosed in square brackets.  The latter constructs a
+one-dimensional array.
+
+The type of each expression is constrained.  The type that can be used in
+each context is specified within the definition of each specification.
+subset, integer, string and enumeration types are available for parameters
+and specifications.  Table~\ref{Enums} lists the enumeration types used
+in subsequent sections, and gives the enumerators in each type.  Some
+enumerators appear in several types.  The type is always clear from the
+context.
+
+\begin{longtable}{ l >{\small\ttfamily}p{2.2in} p{3.4in} }
+\caption{The enumeration types.\label{Enums}} \\
+\hline
+\textbf{Type name} & \normalsize\rmfamily\textbf{Context} &
+\textbf{Enumerator values} \\
+                   & \normalsize\rmfamily(Parameter or spec.field) \\
+\hline
+\endfirsthead
+\caption[]{The enumeration types (cont).} \\
+\hline
+\textbf{Type name} & \normalsize\rmfamily\textbf{Context} &
+\textbf{Enumerator values} \\
+                   & \normalsize\rmfamily(Parameter or spec.field) \\
+\hline
+\endhead
+\hline
+(cont.)
+\endfoot
+\endlastfoot
+aprioriSource  & apriori.source          & temperature, GPH, H2O, HNO3,
+                                           HCL, CLO, N2O, CO and ??? \\
+%
+aprioriType    & apriori.type            & climatology, l2gp, l2aux \\
+%
+boolean        & AllowClimatologyOverloads, & true, false \\
+               & join.outputOverlaps, \\
+               & join.compareOverlaps  \\
+%
+criticalModule & CriticalScanningModules & GHz, THz, either, both, none \\
+%
+hGridType      & hGrid.type              & fractional, height, fixed,
+                                           linear, explicit \\
+%
+interpolation  & fill.*interpolation     & lower, upper, nearest, linear,
+                                           spline \\
+%
+matrixType     & matrix.type             & plain, Cholesky, Kronecker, SPD
+                                          (symmetric positive definite)\\
+%
+mergeMethod    & merge.method            & weighted, direct \\
+%
+mergeSource    & merge.source            & NCEP, DAO \\
+%
+method         & retrieve.method         & Newtonian (maybe more later) \\
+%
+module         & HomeModule, hGrid.module   & GHz, THz \\
+%
+molecule       & quantity.molecule       & H2O, HNO3, O3, HCL, CLO, N2O,
+                                           CO and ??? \\
+%
+outputType     & output.type             & l2gp, l2aux \\
+%
+quantityType   & quantity.type           & baseline, extinction, gph,
+                                          ptan, radiance, temperature,
+                                          vmr \\
+%
+radiometer     & quantity.radiometer     & r1a, r1b, r2, r3, r4, r5h, r5v \\
+%
+species        & merge.species           & temperature,
+                                           temperature\_precision, GPH,
+                                           GPH\_pre\-ci\-sion and ??? \\
+%
+units          & quantity.units          & see {\tt units} module \\
+%
+vGridCoord     & vGrid.coordinate        & angle, geodAltitude, gph,
+                                           none, pressure, theta, zeta \\
+%
+vGridType      & vGrid.type              & linear, logarithmic, explicit \\
+\hline
+\end{longtable}
+
+Each section other than \emph{GlobalSettings} and \emph{ChunkDivide} can
+contain {\tt time} specifications.  When the second, fourth, etc. {\tt time}
+specification within a section is processed, or the end of the section is
+encountered, the CPU time elapsed since the previons {\tt time} specification
+was processed is displayed.  The Fortran 95 {\tt CPU\_TIME} intrinsic
+subroutine is used to measure time.
+
+% =============================================================================
+\section{The \emph{GlobalSettings} section}
+
+Beware that this section may have changed in the light of Lori/Dave's
+suggestion of not having a `daily job' file.  This section is just
+parameter assignments.  These are described in
+Table~\ref{tab:GlobalSettings}.
+
+
+\begin{longtable}{>{\small\ttfamily}l>{\raggedright}p{3.2in}l}
+\caption{The \emph{GlobalSettings} parameters.\label{tab:GlobalSettings}} \\
+\hline
+\rmfamily\normalsize\textbf{Parameter} & \textbf{Meaning} & \textbf{Type
+(values)} \\
+\hline
+\endhead
+%
+VersionComment & Text placed into appropriate fields and/or meta data
+for each output file & string \\
+%
+InputVersionString & Substring that must be present in every input
+filename specified in the l2cf & string \\
+%
+OutputVersionString & Substring that must be present in every output
+filename specified in the l2cf & string \\
+%
+AllowClimatologyOverloads & See detailed description in v0.1 users'
+guide. & boolean (true, false) \\
+\hline
+\end{longtable}
+
+%\clearpage
+% =============================================================================
+\section{The \emph{ReadApriori} section}
+
+The {\tt apriori} specification is used in this section. The fields
+allowed, along with their definitions are given in
+Table~\ref{tab:ReadApriori}.
+
+{\bf This combines sections 3.3.2 and 3.3.3 of JPL D-18030.}
+
+
+\begin{longtable}{>{\small\ttfamily}lll}
+\caption{The fields of the \texttt{apriori}
+         specification.\label{tab:ReadApriori}}\\
+\hline
+\normalsize\rmfamily\textbf{Parameter} & \textbf{Meaning} &
+\textbf{Type (values or units)} \\
+\hline
+\endhead
+%
+type & Type of input & aprioriType (climatology, l2gp, l2aux) \\
+%
+source & Name of field in climatology input file(s) to be read. &
+aprioriSource (???)\\
+%
+file & file name of l2gp or l2aux & string\\
+%
+length & Horizontal smoothing length to be used & numeric (length) \\
+%
+versionRange & Range of allowed versions & string/(time range?) \\
+\hline
+\end{longtable}
+
+{\bf {\tt length} and {\tt versionRange} are not mentioned in section 3.3
+of JPL D-18030.}
+
+(I can foresee that the date range issues in {\small\ttfamily
+versionRange} may present problems.  Suggestions for modification are
+welcome.)
+
+% =============================================================================
+\section{The \emph{Merge a priori} section}
+To be honest, I'm not sure how much of this (if any) is going to end
+up in version~0.5  The syntax proposed in the users' guide should
+change a little in the light of the changes made since then.  
+The {\tt merge} specification is used in this section. The fields
+allowed, along with their definitions are given in
+Table~\ref{tab:MergeApriori}.
+
+\begin{longtable}{>{\small\ttfamily}l l l}
+\caption{The fields of the \texttt{merge} specification.
+         \label{tab:MergeApriori}} \\
+\hline
+\normalsize\rmfamily\textbf{Parameter} & \textbf{Meaning} &
+\textbf{Type (values or units)} \\
+\hline
+\endfirsthead
+\caption*{Table~\ref{tab:MergeApriori} (cont.): The fields of the
+          \texttt{merge} specification.} \\
+\hline
+\normalsize\rmfamily\textbf{Parameter} & \textbf{Meaning} &
+\textbf{Type (values or units)} \\
+\hline
+\endhead
+\hline
+(cont.)
+\endfoot
+\endlastfoot
+%
+target & Name of \emph{a priori} dataset to merge & entity name of an
+{\tt apriori} specification\\
+%
+source & Source of data to merge & mergeSource (NCEP, DAO)\\
+%
+species & Field within NCEP/DAO data to merge with & species (???) \\
+%
+range & Height range over which to perform the merge & numeric range
+(pressure) \\
+%
+method & Method for merge & mergeMethod (weighted or direct) \\
+%
+scale & Smoothing scale for merge operation & numeric (length) \\
+%
+height & Single height for `extraction' in merge operation & numeric
+(pressure) \\
+       & ({\small\ttfamily height} may not be needed). \\
+%
+\hline
+\end{longtable}
+
+% =============================================================================
+\section{The \emph{ChunkDivide} section}
+
+This section, like \emph{GlobalSettings}, is just a set of parameter
+assignments.  These are detailed in Table~\ref{tab:ChunkDivide}.
+
+\begin{longtable}{>{\small\ttfamily}l >{\raggedright}p{2.5in} p{2in}}
+\caption{The \emph{ChunkDivide} parameters.\label{tab:ChunkDivide}} \\
+\hline
+\endfirsthead
+\caption{The \emph{ChunkDivide} parameters (cont).} \\
+\hline
+\endhead
+\hline
+(cont.)
+\endfoot
+\endlastfoot
+\normalsize\rmfamily\textbf{Parameter} & \textbf{Meaning} &
+\textbf{Type (values or units)} \\
+\hline
+%
+IdealLength & Ideal length of orbit & numeric -- can be expressed as
+                                      angle (i.e., degrees or orbits),
+                                      Major Frames (MAFs), or time
+                                      (minutes etc.).\\
+%
+Overlap & Amount of overlap in chunks & numeric (MAFs)\\ 
+%
+HomeGeodAngle & `Try' to create a chunk starting here & numeric (angle)\\
+%
+HomeModule & Which module drives the chunk division. & module (GHz, THz)
+                                                       \\
+%
+ScanLowerLimit & Allowable range for the bottom of the scan & numeric
+                                                              range (length) \\
+%
+ScanUpperLimit & Allowable range for the top of the scan & numeric range
+                                                           (length) \\
+%
+CriticalScanningModules & Which modules must be scanning for a chunk
+& criticalModule (GHz, THz, either, both, none)\\
+%
+CriticalBands & Expression listing which bands must be on & string\\
+%
+MaxGap & Maximum length of data gap allowed in input data before chunk
+         break forced & numeric (time, MAFs or angle).\\
+\hline
+\end{longtable}
+
+%\clearpage
+% =============================================================================
+\section{The \emph{Construct} section}
+
+The \emph{construct} section of the l2cf details the construction of
+different entities within the software.  The {\tt hGrid, vGrid, quantity}
+and {\tt vectorTemplate} specifications are used in this section. The
+fields allowed in the first three of these specifications are listed in
+Tables~\ref{tab:hGrid} -- \ref{tab:Quantity}.
+
+\begin{longtable}{>{\small\ttfamily}l>{\raggedright}p{1.5in}p{1.5in}p{1.55in}}
+\caption{The fields of the \texttt{hGrid} specification. \label{tab:hGrid}} \\
+\hline
+{\normalsize\rmfamily\bfseries Parameter} & \textbf{Meaning} &
+\textbf{Context} & \textbf{Type (values or units)}\\
+\hline
+\endfirsthead
+\caption*{Table~\ref{tab:hGrid} (cont.): The fields of the \texttt{hGrid}
+          specification.} \\
+\hline
+{\normalsize\rmfamily\bfseries Parameter} & \textbf{Meaning} &
+\textbf{Context} & \textbf{Type (values or units)}\\
+\hline
+\endhead
+\hline
+(cont.)
+\endfoot
+\endlastfoot
+%
+type & type of hGrid & all hGrids         & hGridType (height,
+  fractional, fixed, linear, explicit)\\
+%
+module & module       & all hGrids         & module (Ghz, Thz)\\
+%
+fraction & Location of profile within scan & {\tt type == fractional} &
+                                             numeric (dimensionless)\\
+%
+height & Indication of desired location of profile within vertical
+scan & {\tt type == height} & numeric (length)\\
+%
+MIF    & MIF for grid & {\tt type == fixed}   & integer\\
+%
+interpolationFactor & How much to un\-der~/ over\-sam\-ple hGrid & {\tt type /=
+explicit \& type /= linear} & numeric (dimensionless)\\
+%
+values & start, step & {\tt type == linear}   & numeric (geodetic angles)\\
+       & list of angles & {\tt type == explicit} & numeric (geodetic angles)\\
+%
+\hline
+\end{longtable}
+
+\begin{longtable}{>{\small\ttfamily}l>{\raggedright}p{1.82in}lp{1.68in}}
+\caption{The fields of the \texttt{vGrid} specification.\label{tab:vGrid}} \\
+\hline
+{\normalsize\rmfamily\bfseries Parameter} & \textbf{Meaning} &
+\textbf{Context} & \textbf{Type (values or units)}\\
+\hline
+\endfirsthead
+\caption{The fields of the \texttt{vGrid} specification (cont).} \\
+\hline
+{\normalsize\rmfamily\bfseries Parameter} & \textbf{Meaning} &
+\textbf{Context} & \textbf{Type (values or units)}\\
+\hline
+\endhead
+\hline
+(cont.)
+\endfoot
+\endlastfoot
+%
+coordinate & Vertical coordinate & all vGrids & vGridCoord (angle, 
+                                                geod\-Al\-ti\-tude, gph, none, 
+                                                pressure, theta, zeta) \\
+%angle, geodAltitude, gph, none, pressure, theta, zeta
+type   & type of vGrid        & all vGrids & vGridType (linear, logarithmic,
+                                                explicit) \\
+%
+start  & starting (lowest) altitude & {\tt type /= explicit} & numeric \\
+%
+stop   & final altitude       & {\tt type == linear} & numeric\\
+%
+number & number of surfaces   & {\tt type == linear} & integer (dimensionless)\\
+       & number(s) of surfaces  & {\tt type == logarithmic} &\\
+%
+per\_decade & list of surfaces-per-decade & {\tt type ==
+                               logarithmic} & integer (dimensionless)\\
+%
+values & list of altitudes    & {\tt type == explicit} & numeric\\
+%
+\hline
+\end{longtable}
+
+{\parindent 0pt In a \texttt{vGrid} specification, if the type of a field
+is numeric, the units depend on the value of the \texttt{coordinate} field.
+If the value of the \texttt{type} field is \texttt{logarithmic}, the
+\texttt{start}, \texttt{number} and \texttt{per\_decade} fields must have
+the same number of elements.}
+
+\begin{longtable}{>{\small\ttfamily}l>{\raggedright}p{1.75in}lp{2.15in}}
+\caption{The fields of the \texttt{quantity}
+         specification.\label{tab:Quantity}} \\
+\hline
+{\normalsize\rmfamily\bfseries Parameter} & \textbf{Meaning} &
+\textbf{Context} & \textbf{Type (values or units)}\\
+\hline
+\endfirsthead
+\caption*{Table~\ref{tab:Quantity} (cont.): The fields of the
+          \texttt{quantity} specification.} \\
+\hline
+{\normalsize\rmfamily\bfseries Parameter} & \textbf{Meaning} &
+\textbf{Context} & \textbf{Type (values or units)}\\
+\hline
+\endhead
+\hline
+(cont.)
+\endfoot
+\endlastfoot
+%
+type       & `Type' of quantity template  & all quantity templates &
+quantityType (ra\-di\-ance, ex\-tinc\-tion, vmr, gph, ptan, temperature, base\-line) \\
+%
+unit       & What unit the quantity is in & all quantity templates &
+units (see {\tt units} module)\\
+%
+vGrid      & name of vGrid to use for the quantity template & all quantity
+templates  & defined vGrid\\
+%
+hGrid      & name of hGrid to use for the quantity template & all quantity
+templates  & defined hGrid\\
+%
+molecule   & Which molecule a {\small\ttfamily vmr} quantity template
+refers to  & {\tt type == vmr} & molecule\\
+%
+radiometer & Which radiometer a {\small\ttfamily ptan} quantity template
+refers to  & {\tt type == ptan} & radiometer\\
+%
+band       & What band a {\small\ttfamily radiance} quantity template
+refers to  & {\tt type == radiance} & fully qualified signal string\\
+\hline
+\end{longtable}
+
+\begin{longtable}{>{\small\ttfamily}lll}
+\caption{The fields of the \texttt{vectorTemplate}
+         specification.\label{tab:vectorTemplate}} \\
+\hline
+{\normalsize\rmfamily\bfseries Parameter} & \textbf{Meaning} &
+\textbf{Type (values or units)}\\
+\hline
+\endfirsthead
+\caption*{Table~\ref{tab:vectorTemplate} (cont.): The fields of the
+          \texttt{vectorTemplate} specification.} \\
+\hline
+{\normalsize\rmfamily\bfseries Parameter} & \textbf{Meaning} &
+\textbf{Type (values or units)}\\
+\hline
+\endhead
+\hline
+(cont.)
+\endfoot
+\endlastfoot
+%
+quantities & List of labels of {\small\ttfamily quantity} specifications &
+ label  of {\small\ttfamily quantity} specification\\
+signals    & List of complete MLS signal specifications & string \\
+\hline
+\end{longtable}
+
+In a {\small\ttfamily vectorTemplate} specification, there may be any number of
+{\small\ttfamily quantities} or {\small\ttfamily signals} fields in any order. 
+Each may have any number of elements.  The MLS signal specifications, e.g.
+{\small\ttfamily R1A:118.B1F:PT.S0.FB25-1+}, will effectively have quantity
+templates defined for them `on the fly' by the software, as their meaning is
+obvious (not really done in v0.1).
+
+% =============================================================================
+\section{The \emph{Fill} section}
+
+The fill section performs several separate tasks:
+\begin{itemize}
+\item create vectors following a particular template
+\item fill the quantities within the created vectors with appropriate
+  values, as indicated by the user.  In the v0.1 software with the liens,
+  none of the `filling' action in \emph{Fill} is implemented, so the
+  syntax for this is not defined for v0.1 (the preliminary users' guide
+  for v0.5 does define these.)
+\item create matrices having specified type, row labels, and column labels
+\item fill matrices from sources specified by the user.
+\end{itemize}
+
+A vector specification has the form
+\begin{lstlisting}{}
+<vector name>:Vector,template=<vector template name>
+\end{lstlisting}\noindent
+where the \lstinline+<vector template name>+ is the name of a vector
+template created in an earlier \emph{Construct} section.
+
+The v0.5 users' guide discusses later possible changes to this section
+of the software.
+
+{\bf This is very different from section 3.6 of JPL D-18030.}
+
+\begin{longtable}{>{\small\ttfamily}llp{3.5in}}
+\caption{The fields of the \texttt{matrix}
+         specification.\label{tab:matrix}} \\
+\hline
+{\normalsize\rmfamily\bfseries Parameter} & \textbf{Meaning} &
+\textbf{Type (values or units)}\\
+\hline
+\endfirsthead
+\caption*{Table~\ref{tab:matrix} (cont.): The fields of the
+          \texttt{matrix} specification.} \\
+\hline
+{\normalsize\rmfamily\bfseries Parameter} & \textbf{Meaning} &
+\textbf{Type (values or units)}\\
+\hline
+\endhead
+\hline
+(cont.)
+\endfoot
+\endlastfoot
+%
+columns  & vector that gives column labels & a vector \\
+rows     & vector that gives row labels    & a vector \\
+type     & matrix type                     & matrixType  (\texttt{plain}
+                                             (if absent), \texttt; if
+                                             \texttt{Cholesky} or
+                                             \texttt{SPD} only one of
+                                             \texttt{columns} or
+                                             \texttt{rows} is necessary,
+                                             but if both are present, they
+                                             shall specify the same vector
+                                             \\
+\hline
+\end{longtable}
+
+\begin{longtable}{>{\small\ttfamily}llp{3in}}
+\caption{The fields of the \texttt{fill}
+         specification.\label{tab:fill}} \\
+\hline
+{\normalsize\rmfamily\bfseries Parameter} & \textbf{Meaning} &
+\textbf{Type (values or units)}\\
+\hline
+\endfirsthead
+\caption*{Table~\ref{tab:fill} (cont.): The fields of the
+          \texttt{fill} specification.} \\
+\hline
+{\normalsize\rmfamily\bfseries Parameter} & \textbf{Meaning} &
+\textbf{Type (values or units)}\\
+\hline
+\endhead
+\hline
+(cont.)
+\endfoot
+\endlastfoot
+%
+quantity & vector quantity to fill   & vector.quantity \\
+source   & Source from which to fill & vector.quantity, apriori,
+                                       numeric (including array of numeric) \\
+latitudeInterpolation  & self explanatory & interpolation (lower, upper,
+                                       nearest, linear, spline), default
+                                       nearest; the first three are
+                                       zero'th order interpolations \\
+longitudeInterpolation & self explanatory & same \\
+heightInterpolation    & self explanatory & same \\
+dayInterpolation       & self explanatory & same \\
+\hline
+\end{longtable}
+
+\begin{longtable}{>{\small\ttfamily}llp{3in}}
+\caption{The fields of the \texttt{matrixFill}
+         specification.\label{tab:matrixFill}} \\
+\hline
+{\normalsize\rmfamily\bfseries Parameter} & \textbf{Meaning} &
+\textbf{Type (values or units)}\\
+\hline
+\endfirsthead
+\caption*{Table~\ref{tab:matrixFill} (cont.): The fields of the
+          \texttt{matrixFill} specification.} \\
+\hline
+{\normalsize\rmfamily\bfseries Parameter} & \textbf{Meaning} &
+\textbf{Type (values or units)}\\
+\hline
+\endhead
+\hline
+(cont.)
+\endfoot
+\endlastfoot
+%
+matrix   & matrix to fill            & matrix \\
+source   & Source from which to fill & apriori, numeric (including array of
+                                       numeric); \\
+\hline
+\end{longtable}
+
+The \texttt{tpfill} specification is used to create the initial estimate
+for tangent pressure quantities in a state vector.  These are calculated
+using the hydrostatic balance equation, height information from the
+appropriate module (GHz or THz), and specified temperature and geophysical
+height quantities.
+
+\begin{longtable}{>{\small\ttfamily}llp{3in}}
+\caption{The fields of the \texttt{tpfill}
+         specification.\label{tab:tpfill}} \\
+\hline
+{\normalsize\rmfamily\bfseries Parameter} & \textbf{Meaning} &
+\textbf{Type (values or units)}\\
+\hline
+\endfirsthead
+\caption*{Table~\ref{tab:tpfill} (cont.): The fields of the
+          \texttt{tpfill} specification.} \\
+\hline
+{\normalsize\rmfamily\bfseries Parameter} & \textbf{Meaning} &
+\textbf{Type (values or units)}\\
+\hline
+\endhead
+\hline
+(cont.)
+\endfoot
+\endlastfoot
+%
+quantity    & vector quantity to fill       & vector.quantity; its type
+                                              must be \texttt{ptan} \\
+type        & ??? (which equation?) ???     & ??? \\
+temperature & Source of temperature         & vector.quantity; its type
+                                              must be \texttt{temperature} \\
+gph         & Source of geopotential height & vector.quantity; its type
+                                              must be \texttt{gph} \\
+\hline
+\end{longtable}
+
+Do we need to specify where the L1B height information comes from?
+
+There is also a \texttt{create} specification.  The \texttt{create}
+specification allows \texttt{template, copy} and \texttt{autofill}
+fields.  I have no recollection of what this specification is for.
+
+% =============================================================================
+\section{The \emph{Retrieve} section}
+
+In the retrieve section, one can optionally specify that only certain
+subsets of some quantities are relevant.  If a subset is not specified
+for a quantity, all of the quantity is relevant.  When the first subset
+is specified for a quantity, all of the quantity is marked as not being
+relevant before the \texttt{subset} specification is processed.  That and
+subsequent \texttt{subset} specifications then add relevant parts to that
+quantity.  After a retrieval is complete, all subset masks are discarded.
+
+\begin{longtable}{>{\small\ttfamily}lp{4in}l}
+\caption{The fields of the \texttt{subset}
+         specification.\label{tab:subset}} \\
+\hline
+{\normalsize\rmfamily\bfseries Parameter} & \textbf{Meaning} &
+\textbf{Type (values or units)}\\
+\hline
+\endfirsthead
+\caption*{Table~\ref{tab:subset} (cont.): The fields of the
+          \texttt{subset} specification.} \\
+\hline
+{\normalsize\rmfamily\bfseries Parameter} & \textbf{Meaning} &
+\textbf{Type (values or units)}\\
+\hline
+\endhead
+\hline
+(cont.)
+\endfoot
+\endlastfoot
+%
+quantity    & vector quantity from which to
+              select a subset                         & vector.quantity \\
+test        & vector quantity to test using
+              \texttt{criteria}                       & vector.quantity \\
+criteria    & values or ranges of values of
+              \texttt{test} that indicate that values
+              of \texttt{quantity} are to be used     & numeric \\
+channels    & channels of \texttt{test} to test       & numeric \\
+\hline
+\end{longtable}
+
+If the \texttt{channels} field is specified, the sizes of the values of
+\texttt{channels} and \texttt{criteria} shall be the same, or
+\texttt{criteria} shall be a scalar.  Each criterion is applied only to
+the channels of \texttt{test} specified by the corresponding element of
+\texttt{channels}.  If \texttt{criteria} is a scalar, that value applies
+to every channel specified by \texttt{channels}.  If the
+\texttt{channels} field is not specified, the criteria are applied to
+every channel of \texttt{test}.  In this case, if \texttt{criteria} is
+not a scalar, each criterion is applied separately to all of
+\texttt{test}.
+
+The \texttt{retrieve} specification specifies the algorithm to use to
+execute the retrieval, its parameters, its inputs, its outputs, and
+auxiliary inputs and outputs of the forward model that are related
+specifically to one retrieval.
+
+The specification of other inputs to the forward model has not been
+addressed.
+
+\begin{longtable}{>{\small\ttfamily}lll}
+\caption{The fields of the \texttt{retrieve}
+         specification.\label{tab:retrieve}} \\
+\hline
+{\normalsize\rmfamily\bfseries Parameter} & \textbf{Meaning} &
+\textbf{Type (values or units)}\\
+\hline
+\endfirsthead
+\caption*{Table~\ref{tab:retrieve} (cont.): The fields of the
+          \texttt{retrieve} specification.} \\
+\hline
+{\normalsize\rmfamily\bfseries Parameter} & \textbf{Meaning} &
+\textbf{Type (values or units)}\\
+\hline
+\endhead
+\hline
+(cont.)
+\endfoot
+\endlastfoot
+%
+method        & retrieval method                   & method (Newtonian) \\
+maxIterations & maximum number of iterations       & numeric \\
+state         & state vector                       & vector \\
+fwdModelIn    & non-state inputs to forward model  & vector \\
+fwdModelOut   & non-radiance outputs from forward model      & vector \\
+measurements  & radiance measurements              & vector \\
+weight        & standard deviations of radiance measurements & vector \\
+apriori       & apriori state vector               & vector \\
+jacobian      & Jacobian matrix (if Newtonian)     & matrix \\
+covariance    & covariance of apriori              & matrix \\
+outputCovariance & solution covariance matrix      & matrix \\
+outputCovariance & diagonal of solution covariance matrix & vector \\
+\hline
+\end{longtable}
+
+% =============================================================================
+\section{The \emph{Join} section}
+
+The join section takes vector quantities and stores them in either l2gp
+or l2aux data types (joining together results from all the chunks as they
+are finished).  The {\tt l2gp} and {\tt l2aux} specifications are used in
+this section. The allowed fields are given in Table~\ref{tab:Join}.
+
+\begin{longtable}{>{\small\ttfamily}l>{\raggedright}p{4in}l}
+\caption{The fields of the \texttt{l2gp} and \texttt{l2aux}
+         specifications.\label{tab:Join}} \\
+\hline
+\normalsize\rmfamily\textbf{Parameter} & \textbf{Meaning} &
+\textbf{Type (values)} \\
+\hline
+\endfirsthead
+\caption*{Table~\ref{tab:Join} (cont.): The fields of the \texttt{l2gp}
+          and \texttt{l2aux} specifications.} \\
+\hline
+\normalsize\rmfamily\textbf{Parameter} & \textbf{Meaning} &
+\textbf{Type (values)} \\
+\hline
+\endhead
+\hline
+(cont.)
+\endfoot
+\endlastfoot
+%
+source & Source for output data (name of vector and quantity) &
+vector.quantity\\
+%
+outputOverlaps & Are the data from the overlap region to be formed and
+output? & boolean (true, false)\\
+%
+compareOverlaps & Are the adjacent overlap regions are to be compared?
+({\tt true} implies {\small\ttfamily outputOverlaps} is {\tt true}) &
+boolean (true, false)\\
+%
+hdfName & Name given to output HDF/HDF-EOS field. & string\\
+%
+\hline
+\end{longtable}
+
+If the \lstinline+outputOverlaps+ field is set, the \emph{Join} module
+will also create additional entities.  Their names will be the same as
+the name of the main l2gp/l2aux quantity with an overlap region
+specification given following an underscore character.  Their
+\lstinline+hdfName+s will be defined as described in the Level~2 file
+description document.
+
+For example, the l2cf line
+\begin{lstlisting}{}
+l2gpTemp:L2GP,source=state.temp,hdfName='Temperature',/outputOverlaps
+\end{lstlisting}\noindent
+Will also create quantities such as {\small\ttfamily l2gpTemp\_1U} with
+\lstinline+hdfName='Temperature (Overlap 1U)'+. (Note this is not yet
+implemented in v0.1).
+
+%\clearpage
+% =============================================================================
+\section{The \emph{Output} section}
+
+This section simply indicates, for each output file, which of the
+entities created by \emph{Join} it contains.  The output files are
+identified by the use of unambiguous substring matches (this is forced
+on us by the use of the PCF).  This section uses the {\tt output}
+specification.  The allowed fields are given in Table~\ref{tab:Output}.
+
+\begin{longtable}{>{\small\ttfamily}llp{4in}}
+\caption{The fields of the \texttt{output}
+specification.\label{tab:Output}} \\
+\hline
+\normalsize\rmfamily\textbf{Parameter} & \textbf{Meaning} &
+\textbf{Type (values)} \\
+\hline
+\endhead
+%
+type & Type of file &
+outputType (l2gp, l2aux)\\
+%
+file & Name of file & string \\
+%
+quantities & List of quantities to output & Entity names of {\tt l2gp} or {\tt
+l2aux} specifications (all the same type) in the \emph{join} section\\
+%
+overlaps & List of quantities to output & Entity names of {\tt l2gp} or {\tt
+l2aux} specifications (all the same type) in the \emph{join} section \\
+\hline
+\end{longtable}
+
+The \lstinline+overlaps+ field is an optional list of the entities
+defined in \emph{Join} for which the corresponding overlap regions should
+be output.
+
+(Couldn't the type of file be deduced from whether the {\tt quantities}
+and {\tt overlaps} fields are {\tt l2gp} or {\tt l2aux}?)
+
+\end{document}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: t
+%%% End: 
+
+% $Log: $
+@

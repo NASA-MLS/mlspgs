@@ -1,0 +1,396 @@
+head	1.6;
+access;
+symbols
+	v5-02-NRT-19:1.6
+	v6-00:1.6
+	v5-02-NRT-18:1.6
+	v5-02:1.6
+	v5-01-NRT-17:1.6
+	v5-01-NRT-16:1.6
+	v5-01-NRT-15:1.6
+	v5-01-NRT-14:1.6
+	neuralnetworks-1-0:1.6.0.12
+	cfm-single-freq-0-1:1.6.0.10
+	v5-01:1.6
+	v5-00:1.6
+	v4-23-TA133:1.6.0.8
+	mus-emls-1-70:1.6.0.6
+	rel-1-0-englocks-work:1.6.0.4
+	VUMLS1-00:1.6
+	VPL1-00:1.6
+	V4-22-NRT-08:1.6
+	VAM1-00:1.6
+	V4-21:1.6.0.2
+	V4-13:1.6
+	V4-12:1.5
+	V4-11:1.5
+	V4-10:1.4
+	V3-43:1.3
+	M4-00:1.4
+	V3-41:1.3
+	V3-40-PlusGM57:1.3.0.2
+	V2-24-NRT-04:1.3
+	V3-33:1.4
+	V2-24:1.3
+	V3-31:1.4
+	V3-30-NRT-05:1.4
+	cfm-01-00:1.4
+	V3-30:1.3
+	V3-20:1.3
+	V3-10:1.3
+	V2-23-NRT-02:1.3
+	V2-23:1.3
+	V2-22-NRT-01:1.3
+	V2-22:1.3
+	V2-21:1.3
+	V2-20:1.3
+	V2-11:1.3
+	V2-10:1.3
+	V2-00:1.3
+	V1-51:1.2
+	V1-50:1.2
+	V1-45:1.2
+	V1-44:1.2
+	V1-43:1.2
+	V1-42:1.2
+	V1-41:1.2
+	V1-32:1.2
+	V1-40:1.2
+	V1-31:1.2
+	V1-30:1.2
+	V1-13:1.2
+	V1-12:1.2
+	V1-11:1.2
+	V1-10:1.2
+	newfwm-feb03:1.2.0.4
+	V1-04:1.2
+	V1-03:1.2
+	V1-02:1.2
+	V1-00:1.2
+	newfwm-sep01:1.2.0.2
+	V0-7:1.2
+	V0-5-Level2:1.2
+	V0-5-SIPS:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.6
+date	2014.09.04.23.54.33;	author vsnyder;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2014.05.20.23.55.30;	author vsnyder;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2010.05.24.17.12.31;	author honghanh;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2005.06.22.20.03.55;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.04.26.02.31.25;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2000.11.02.21.36.45;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.6
+log
+@Remove unreferenced USE name
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!==============================================================================
+module GetCF_M
+!==============================================================================
+
+  use DECLARATION_TABLE, only: ALLOCATE_DECL, DUMP_DECL
+  use INIT_TABLES_MODULE, only: INIT_TABLES
+  use LEXER_CORE, only: INIT_LEXER
+  use MLSCF, only: MLSCF_T
+  use OUTPUT_M, only: OUTPUT
+  use STRING_TABLE, only: DO_LISTING, ADDINUNIT
+  use TABLE_DUMPER, only: DUMP_TABLE                 ! For debugging
+  use TABLE_GENERATOR, only: GENERATE_TABLE
+  use TOGGLES, only: SYN, TOGGLE
+  use TREE_CHECKER, only: CHECK_TREE
+  use TREE, only: ALLOCATE_TREE, PRINT_SUBTREE
+
+  implicit none
+  private
+  
+  public :: GetCF, InitGetCF
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: getCF_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains ! =====     Public Procedures     =============================
+
+  ! --------------------------------------------------  InitGetCF  -----
+  ! Initialize routines needed by GetCF.  This is separate, because it
+  ! clears the toggles.  You may want to set them before calling GetCF.
+
+  subroutine InitGetCF ( nChars, nSymbols, nHash, nDecls, nTree )
+    integer, optional, intent(in) :: nChars, nSymbols, nHash, nDecls, nTree
+      ! nChars => Number of characters in distinct input symbols, default 10000
+      ! nSymbols => Number of input symbols, default 1000
+      ! nHash => Hash table size, default 1003, should not have small factors
+      ! nDecls => Number of declarations of symbols, default 1000
+      ! nTree => Number of vertices in abstract syntax tree, default 10000
+    integer :: n_Chars, n_Symbols, n_Hash, n_Decls, n_Tree  ! See arguments
+    n_chars = 10000
+    if ( present(nChars) ) n_chars = nChars
+    n_symbols = 1000
+    if ( present(nSymbols) ) n_symbols = nSymbols
+    n_hash = 1003
+    if ( present(nHash) ) n_hash = nHash
+    n_decls = 1000
+    if ( present(nDecls) ) n_decls = nDecls
+    n_tree = 10000
+    if ( present(nTree) ) n_tree = nTree
+
+    call init_lexer ( n_chars, n_symbols, hash_table_size=n_hash )
+    call allocate_decl ( n_decls )
+    call allocate_tree ( n_tree )
+    call init_tables
+  end subroutine InitGetCF
+
+  ! ------------------------------------------------------  GetCF  -----
+  ! Parse a Configuration file, producing a data structure described in
+  ! the MLSCF module.  InitGetCF must be called first.
+
+  subroutine GetCF ( CF_Data, Status, InUnit, Listing, &
+    &                Dump, DumpEarly, DumpTree, DumpTables )
+    use Parser, only: Clean_Up_Parser, Configuration
+    use Parser_Table_m, only:  Destroy_Parser_Table, Parser_Table_t
+    use Parser_Tables_L2CF, only: Init_Parser_Table
+    type(mlscf_t), intent(out) :: CF_DATA    ! The CF data
+    integer, optional, intent(out) :: STATUS ! 0 => OK, -1 => Parser error,
+      ! >0 => type checking error.
+    integer, optional, intent(in) :: InUnit  ! Unit number from which to
+      ! read input.  It is not opened or closed here.  If it is negative,
+      ! input is read from standard input.  Default -1.
+    logical, optional, intent(in) :: Listing ! True => List input, default false
+    logical, optional, intent(in) :: Dump, DumpEarly, DumpTree, DumpTables
+      ! Dump => Dump declaration table after type checking
+      ! DumpEarly => Dump declaration table before type checking
+      ! DumpTree => Dump abstract syntax tree after parsing
+      ! DumpTables => Dump generated tables
+      ! All default .false.  It is possible to cause other output by
+      ! setting elements of Toggle in Toggles, q.v.
+
+    logical :: DO_DUMP               ! Dump declaration table
+    logical :: DO_DUMP_EARLY         ! Dump declaration table before check
+    logical :: DO_DUMP_TREE          ! Dump tree after parsing
+    logical :: DO_DUMP_TABLES        ! Dump generated tables
+    integer :: ERROR                 ! Error flag from check_tree
+    integer :: HOW_MANY_SECTIONS     ! Set by Check_Tree
+    integer :: ROOT                  ! of the abstract syntax tree
+    type(Parser_Table_t) :: Parser_Table
+
+    if ( present(inUnit) ) call AddInUnit(inunit)
+    do_dump = .false.
+    if ( present(dump) ) do_dump = dump
+    do_dump_early = .false.
+    if ( present(dumpEarly) ) do_dump_early = dumpEarly
+    do_dump_tree = .false.
+    if ( present(dumpTree) ) do_dump_tree = dumpTree
+    do_dump_tables = .false.
+    if ( present(dumpTables) ) do_dump_tables = dumpTables
+    do_listing = .false.
+    if ( present(listing) ) do_listing = listing
+
+    ! Parse the L2CF
+    call init_parser_table ( parser_table )
+    call configuration ( root, parser_table )
+    call destroy_parser_table ( parser_table )
+    call clean_up_parser
+
+    ! Type-check the abstract syntax tree.
+    if ( root > 0 ) then
+      if ( do_dump_tree ) call print_subtree ( root, 0 )
+      if ( do_dump_early ) call dump_decl
+      call check_tree ( root, error, how_many_sections=how_many_sections )
+      if ( do_dump ) call dump_decl
+      if ( toggle(syn) ) then
+        call output ( 'Begin abstract syntax tree:', advance='yes' )
+        call print_subtree ( root, 0 )
+        call output ( 'End abstract syntax tree', advance='yes' )
+      end if
+      if ( error == 0 ) then
+        call generate_table ( root, how_many_sections, cf_data )
+        if ( do_dump_tables ) call dump_table ( cf_data )
+      end if
+    else
+      error = -1
+      call output ( &
+        'A syntax error occurred -- there is no abstract syntax tree', &
+        advance='yes' )
+    end if
+    if ( present(status) ) status = error
+
+  end subroutine GetCF
+
+  logical function not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id: getCF_m.f90,v 1.5 2014/05/20 23:55:30 vsnyder Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+end module GetCF_M
+
+! $Log: getCF_m.f90,v $
+! Revision 1.5  2014/05/20 23:55:30  vsnyder
+! New parser gets its tables from an argument instead of an include
+!
+! Revision 1.4  2010/05/24 17:12:31  honghanh
+! Change to use AddInUnit instead of inunit
+!
+! Revision 1.3  2005/06/22 20:03:55  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 1.2  2001/04/26 02:31:25  vsnyder
+! Moved *_indices declarations from init_tables_module to Intrinsic
+!
+! Revision 1.1  2000/11/02 21:36:45  vsnyder
+! Initial entry into CVS
+!
+! Revision 2.1  2000/10/11 18:58:37  vsnyder
+! Move from lib/cf_parser to lib
+!
+! Revision 2.2  2000/10/03 01:37:58  vsnyder
+! Add the copyright, correct some comments.
+!
+! Revision 2.1  2000/10/03 00:54:19  vsnyder
+! Revised name from getL2CF_m.f90 to getCF_m.f90
+!
+@
+
+
+1.5
+log
+@New parser gets its tables from an argument instead of an include
+@
+text
+@a20 1
+  use PARSER, only: CONFIGURATION
+d149 1
+a149 1
+       "$Id: getCF_m.f90,v 1.4 2010/05/24 17:12:31 honghanh Exp $"
+d157 3
+@
+
+
+1.4
+log
+@Change to use AddInUnit instead of inunit
+@
+text
+@d77 3
+d102 1
+d116 7
+a122 1
+    call configuration ( root )
+d144 1
+d150 1
+a150 1
+       "$Id: getCF_m.f90,v 1.3 2005/06/22 20:03:55 pwagner Exp $"
+d158 3
+@
+
+
+1.3
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d22 1
+a22 1
+  use STRING_TABLE, only: DO_LISTING, IN_UNIT => INUNIT
+d36 1
+a36 1
+       "$RCSfile: $"
+d100 1
+a100 2
+    in_unit = -1
+    if ( present(inUnit) ) in_unit = inunit
+d139 1
+a139 1
+       "$Id: $"
+d147 3
+@
+
+
+1.2
+log
+@Moved *_indices declarations from init_tables_module to Intrinsic
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d29 6
+a34 4
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
+       "$Id: $"
+  character (len=len(idParm)), private :: Id = idParm
+d37 1
+d136 9
+d148 3
+@
+
+
+1.1
+log
+@Initial entry into CVS
+@
+text
+@d9 1
+a9 1
+  use INIT_TABLES_MODULE, only: INIT_TABLES, LIT_INDICES
+a19 1
+  use UNITS, only: INIT_UNITS
+d22 5
+a26 4
+  character (len=256) :: Id = &
+       "$Id: getCF_m.f90,v 2.1 2000/10/11 18:58:37 vsnyder Exp $"
+  character (len=*), parameter :: ModuleName= &
+       "$RCSfile: getCF_m.f90,v $"
+a57 1
+    call init_units ( lit_indices )
+d128 3
+@
+

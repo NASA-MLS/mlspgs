@@ -1,0 +1,219 @@
+head	1.3;
+access;
+symbols
+	v5-02-NRT-19:1.3
+	v6-00:1.3
+	v5-02-NRT-18:1.3
+	v5-02:1.3
+	v5-01-NRT-17:1.3
+	v5-01-NRT-16:1.3
+	v5-01-NRT-15:1.3
+	v5-01-NRT-14:1.3
+	neuralnetworks-1-0:1.3.0.16
+	cfm-single-freq-0-1:1.3.0.14
+	v5-01:1.3
+	v5-00:1.3
+	v4-23-TA133:1.3.0.12
+	mus-emls-1-70:1.3.0.10
+	rel-1-0-englocks-work:1.3.0.8
+	VUMLS1-00:1.3
+	VPL1-00:1.3
+	V4-22-NRT-08:1.3
+	VAM1-00:1.3
+	V4-21:1.3.0.6
+	V4-13:1.3
+	V4-12:1.3
+	V4-11:1.3
+	V4-10:1.3
+	V3-43:1.3
+	M4-00:1.3
+	V3-41:1.3
+	V3-40-PlusGM57:1.3.0.4
+	V2-24-NRT-04:1.3
+	V3-33:1.3
+	V2-24:1.3
+	V3-31:1.3
+	V3-30-NRT-05:1.3
+	cfm-01-00:1.3
+	V3-30:1.3
+	V3-20:1.3
+	V3-10:1.3
+	V2-23-NRT-02:1.3
+	V2-23:1.3
+	V2-22-NRT-01:1.3
+	V2-22:1.3
+	V2-21:1.3
+	V2-20:1.3
+	V2-11:1.3
+	V2-10:1.3
+	V2-00:1.3
+	V1-51:1.3
+	V1-50:1.3
+	V1-45:1.3
+	V1-44:1.3
+	V1-43:1.3
+	V1-32:1.3
+	V1-31:1.3
+	V1-30:1.3
+	V1-13:1.3
+	V1-12:1.3
+	V1-11:1.3
+	V1-10:1.3
+	newfwm-feb03:1.3.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.3
+date	2002.11.06.23.10.01;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2002.10.05.00.46.10;	author livesey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2002.05.07.22.08.37;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@Changed leapsecfile to point at newer file on server
+@
+text
+@; $Id: sids-template-l2gps.l2cf,v 1.2 2002/10/05 00:46:10 livesey Exp $
+
+; This l2cf is an attempt to retrieve ozone from r4.b14
+
+; First some m4 directives.
+include(m4defs.l2cf)
+
+; Define the paths for the input and output files
+!define(inpathl1boa,{/data/emls/l1boa/s5--t/1996})
+!define(outpathl2gp,{/bigdata/livesey/misc})
+; Clarify the path definitions.
+!include(clarifypaths.l2cf)
+
+; Define the input and output version string
+; !define(version,{s5-t})
+
+; Define the day we're processing
+!ifdef(day,{},{!define(day,1996d029)})
+
+; Now include the valid signals database
+!include(!signalsL2cf)
+
+; -------------------------------------------- Global settings ----
+begin GlobalSettings
+
+  l1Boa, file='!inpathl1boa/MLS-Aura_L1BOA-Full_s5--t_!day.h4'
+  startTime = "!year(!day)-!doy(!day)T00:00:00.000"
+  endTime =   "!year(!day)-!doy(!day)T23:59:59.9999"
+  leapsecfile = '/software/SRC/HDF-EOS/TOOLKIT-5.2.8v2.00/database/common/TD/leapsec.dat'
+
+  vGridStandard: vGrid, type=Logarithmic, coordinate=Zeta, $
+    start=1000mb, formula=[73:12]
+
+  empiricalGeometry, terms=[ $
+    -1.06863, 43.0943, -16.2062, 8.12730, -4.58416, 2.75786, -1.72880, $
+    1.11523, -0.733464, 0.489792, -0.331852, 0.227522, -0.156428, $
+    0.108031, -0.0757825, 0.0536980, -0.0375161, 0.0260555, $
+    -0.0188811, 0.0138453, -0.00959350], $
+    iterations=10
+
+end GlobalSettings
+
+; ------------------------------------------ Chunk divide  ----
+!include(chunkdivide8th.l2cf)
+
+; ------------------------------------------- Construct sections --
+begin Construct
+  hGridStandard: hGrid, type=regular, spacing=1.5 degrees, origin=0 degrees, $
+    module=GHz
+
+  qty: Quantity, hGrid=hGridStandard, type=temperature, vGrid=vGridStandard
+
+  stateTemplate: vectorTemplate, quantities=[qty]
+end Construct
+
+begin Fill
+  state: Vector, template=stateTemplate
+end Fill
+
+begin Join
+  l2gpOut: L2GP, source=state.qty
+
+end Join
+
+begin Output
+  output, quantities=l2gpOut, type=l2gp, $
+    file='!outpathl2gp/MLS-Aura_L2GP-Template_test_!day.he4'
+end Output
+
+; $Log: sids-template-l2gps.l2cf,v $
+; Revision 1.2  2002/10/05 00:46:10  livesey
+; Various minor changes
+;
+; Revision 1.1  2002/05/07 22:08:37  livesey
+; First version
+;
+@
+
+
+1.2
+log
+@Various minor changes
+@
+text
+@d1 1
+a1 1
+; $Id: sids-template-l2gps.l2cf,v 1.1 2002/05/07 22:08:37 livesey Exp $
+d29 1
+a29 1
+  leapsecfile = '/software/SRC/TOOLKIT-5.2.7.4v1.00/database/common/TD/leapsec.dat'
+d71 3
+@
+
+
+1.1
+log
+@First version
+@
+text
+@d1 1
+a1 1
+; $Id$
+d9 2
+a10 2
+!define(inpathl1boa,{/bigdata/livesey/l1boa})
+!define(outpathl2gp,{/bigdata/livesey})
+d12 1
+a12 1
+!include(clarify-paths.l2cf)
+d18 1
+a18 1
+!ifdef(day,{},{!define(day,1996-029)})
+d21 1
+a21 1
+!include(validsignals-emls.l2cf)
+d26 3
+a28 3
+  l1Boa, file='!inpathl1boa/MLS-Aura_L1BOA_Full_s5-t_!day.dat'
+  startTime = "!day{}T00:00:00.000"
+  endTime =   "!day{}T23:59:59.999"
+d67 1
+a67 1
+    file='!outpathl2gp/MLS-Aura_L2GP_Template_test_!day.dat'
+d70 4
+a73 1
+; $Log$
+@
+

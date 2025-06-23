@@ -1,0 +1,108 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.16
+	cfm-single-freq-0-1:1.2.0.14
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.12
+	mus-emls-1-70:1.2.0.10
+	rel-1-0-englocks-work:1.2.0.8
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.2
+	V4-21:1.2.0.6
+	V4-13:1.2
+	V4-12:1.2
+	V4-11:1.2
+	V4-10:1.2
+	V3-43:1.2
+	M4-00:1.2
+	V3-41:1.2
+	V3-40-PlusGM57:1.2.0.4
+	V2-24-NRT-04:1.2
+	V3-33:1.2
+	V2-24:1.2
+	V3-31:1.2
+	V3-30-NRT-05:1.2
+	cfm-01-00:1.2
+	V3-30:1.2
+	V3-20:1.2
+	V3-10:1.2
+	V2-23-NRT-02:1.2
+	V2-23:1.2
+	V2-22-NRT-01:1.2
+	V2-22:1.2
+	V2-21:1.2
+	V2-20:1.2
+	V2-11:1.2
+	V2-10:1.2
+	V2-00:1.2
+	V1-51:1.2
+	V1-50:1.2
+	V1-45:1.2
+	V1-44:1.2
+	V1-43:1.2
+	V1-32:1.2
+	V1-31:1.2
+	V1-30:1.2
+	V1-13:1.2
+	V1-12:1.2
+	V1-11:1.2
+	V1-10:1.2
+	newfwm-feb03:1.2.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2002.08.01.18.02.35;	author livesey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2002.05.28.22.36.14;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Now has 2 chunks.
+@
+text
+@; --------------------------------------------- ChunkDivide ----
+;
+; This l2cf fragment is for doing single MAF tests, but with regular
+; hGrids to follow
+begin ChunkDivide
+  ChunkDivide, method=orbital, maxLength=1 MAF, overlap=0 MAFs, $
+    homeGeodAngle=0 degrees, homeModule=GHz, criticalModules=none, maxGap=2 MAFs, $
+    noChunks=2
+end ChunkDivide
+@
+
+
+1.1
+log
+@Semi freeze of version
+@
+text
+@d8 1
+a8 1
+    noChunks=1
+@
+

@@ -1,0 +1,128 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.12
+	cfm-single-freq-0-1:1.1.0.10
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.8
+	mus-emls-1-70:1.1.0.6
+	rel-1-0-englocks-work:1.1.0.4
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.2
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	M4-00:1.1
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2010.09.21.17.57.52;	author yanovsky;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\section{Finite Difference Approximations for Jacobians}
+
+
+\subsection*{Mixing Ratio Jacobian}
+
+\begin{eqnarray*}
+\frac{\partial I_l}{\partial f_q^k} &\approx& \frac{I_l(f_q^k + \epsilon_q^k) - I_l(f_q^k)}{f_q^k + \epsilon_q^k - f_q^k} = \frac{I_l(f_q^k + \epsilon_q^k) - I_l(f_q^k)}{\epsilon_q^k},
+\end{eqnarray*}
+where $\epsilon_q^k = 0.05 f_q^k$, i.e. is about $5\%$ of the value of $f_q^k$. Hence,
+\begin{eqnarray*}
+\frac{\partial I_l}{\partial f_q^k} &\approx& \frac{I_l(1.05 f_q^k) - I_l(f_q^k)}{0.05 f_q^k}.
+\end{eqnarray*}
+
+
+\subsection*{Temperature Jacobian}
+
+\begin{eqnarray*}
+\frac{\partial I_l}{\partial f_q^T} &\approx& \frac{I_l(f_q^T + \epsilon_q^T) - I_l(f_q^T)}{f_q^T + \epsilon_q^T - f_q^T} = \frac{I_l(f_q^T + \epsilon_q^T) - I_l(f_q^T)}{\epsilon_q^T},
+\end{eqnarray*}
+where $\epsilon_q^T = 0.05 f_q^T$.
+\begin{eqnarray*}
+\frac{\partial I_l}{\partial f_q^T} &\approx& \frac{I_l(1.05 f_q^T) - I_l(f_q^T)}{0.05 f_q^T}.
+\end{eqnarray*}
+
+
+\subsection*{Antenna Radiance Mixing Ratio Jacobian}
+
+\begin{eqnarray*}
+\frac{\partial I^A_l}{\partial f_q^k} &\approx& \frac{I^A_l(f_q^k + \epsilon_q^k) - I^A_l(f_q^k)}{\epsilon_q^k}.
+\end{eqnarray*}
+
+
+\subsection*{Antenna Radiance Temperature Jacobian}
+
+\begin{eqnarray*}
+\frac{\partial I^A_l}{\partial f_q^T} &\approx& \frac{I^A_l(f_q^T + \epsilon_q^T) - I^A_l(f_q^T)}{\epsilon_q^T}.
+\end{eqnarray*}
+
+
+\subsection*{Derivative of Height with respect to Temperature}
+
+\begin{eqnarray*}
+\frac{\partial h_l}{\partial f_q^T} &\approx& \frac{h_l(f_q^T + \epsilon_q^T) - h_l(f_q^T)}{f_q^T + \epsilon_q^T - f_q^T} = \frac{h_l(f_q^T + \epsilon_q^T) - h_l(f_q^T)}{\epsilon_q^T}.
+\end{eqnarray*}
+
+
+\subsection*{Derivative of Absorption Coefficient with respect to Temperature}
+
+\begin{eqnarray*}
+\frac{\partial \beta_l}{\partial f_q^T} &\approx& \frac{\beta_l(f_q^T + \epsilon_q^T) - \beta_l(f_q^T)}{f_q^T + \epsilon_q^T - f_q^T} = \frac{\beta_l(f_q^T + \epsilon_q^T) - \beta_l(f_q^T)}{\epsilon_q^T}.
+\end{eqnarray*}
+
+
+\subsection*{Derivative of Source Function with respect to Temperature (has not been tested)}
+
+\begin{eqnarray*}
+\frac{\partial \triangle B_i}{\partial f_q^T} &\approx& \frac{\triangle B_i(f_q^T + \epsilon_q^T) - \triangle B_i(f_q^T)}{f_q^T + \epsilon_q^T - f_q^T} = \frac{\triangle B_i(f_q^T + \epsilon_q^T) - \triangle B_i(f_q^T)}{\epsilon_q^T}.
+\end{eqnarray*}
+
+
+\section{Finite Difference Approximations for Hessians}
+
+\subsection*{Radiance Hessians}
+
+\begin{eqnarray*}
+\displaystyle  \frac{\partial^2 I_l}{\partial f_q^2}  
+&\approx&  D_0^q \bigg[ \frac{\partial I_l}{\partial f_q}(\vf) \bigg] \ = \ \frac{ \displaystyle  \frac{\partial I_l}{\partial f_q}(f_q + \epsilon_q) - \frac{\partial I_l}{\partial f_q}(f_q - \epsilon_q)}{2 \epsilon_q} \\
+&\approx& D_-^q D_+^q \Big[ I_l(\vf) \Big] \ = \ \frac{I_l(f_q + \epsilon_q) - 2 I_l(f_q) + I_l(f_q - \epsilon_q)}{\epsilon_q^2}, \\
+\displaystyle  \frac{\partial^2 I_l}{\partial f_q \partial f_{\tilde{q}}} 
+&\approx&  D_0^{\tilde{q}} \bigg[ \frac{\partial I_l}{\partial f_q}(\vf) \bigg] \ = \ \frac{ \displaystyle  \frac{\partial I_l}{\partial f_q}(f_q, f_{\tilde{q}} + \epsilon_{\tilde{q}}) - \frac{\partial I_l}{\partial f_q}(f_q, f_{\tilde{q}} - \epsilon_{\tilde{q}})}{2 \epsilon_{\tilde{q}}} \\
+&\approx&  D_+^q D_+^{\tilde{q}} \Big[ I_l(\vf) \Big] \ = \ \frac{ I_l(f_q + \epsilon_q,f_{\tilde{q}} + \epsilon_{\tilde{q}}) - I_l(f_q, f_{\tilde{q}} + \epsilon_{\tilde{q}}) - I_l(f_q + \epsilon_q,f_{\tilde{q}}) + I_l(f_q,f_{\tilde{q}}) }{\epsilon_q \epsilon_{\tilde{q}}} \\
+&\approx&  D_0^q D_0^{\tilde{q}} \Big[ I_l(\vf) \Big] \ = \ \frac{ I_l(f_q + \epsilon_q,f_{\tilde{q}} + \epsilon_{\tilde{q}}) - I_l(f_q - \epsilon_q, f_{\tilde{q}} + \epsilon_{\tilde{q}}) - I_l(f_q + \epsilon_q,f_{\tilde{q}} - \epsilon_{\tilde{q}}) + I_l(f_q - \epsilon_q,f_{\tilde{q}} - \epsilon_{\tilde{q}}) }{4 \epsilon_q \epsilon_{\tilde{q}}},
+\end{eqnarray*}
+where $f_q = f_q^k$ for mixing ratios and $f_q = f_q^T$ for temperatures. If antenna radiance Jacobians are computed, then $I=I^A$ in the above formulas.
+
+
+% $Id:  $
+@

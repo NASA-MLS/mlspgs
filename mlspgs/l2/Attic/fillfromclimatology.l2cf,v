@@ -1,0 +1,133 @@
+head	2.5;
+access;
+symbols
+	V1-04:2.4
+	V1-03:2.4
+	V1-02:2.4
+	V1-00:2.4;
+locks; strict;
+comment	@# @;
+
+
+2.5
+date	2002.05.22.00.50.15;	author livesey;	state dead;
+branches;
+next	2.4;
+
+2.4
+date	2002.01.08.22.46.40;	author livesey;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2001.10.18.00.46.44;	author livesey;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2001.10.15.22.11.19;	author livesey;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.10.09.01.10.43;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.5
+log
+@L2CFs no longer belong in l2
+@
+text
+@; This fragment of an l2cf fills stuff from previously read climatology
+
+begin Fill
+  
+  Fill, quantity=apriori.temp, method=gridded, sourceGrid=gridTemperature
+  Fill, quantity=apriori.h2o,  method=gridded, sourceGrid=gridH2O
+  Fill, quantity=apriori.o3,   method=gridded, sourceGrid=gridO3
+  Fill, quantity=apriori.n2o,  method=gridded, sourceGrid=gridN2O
+  Fill, quantity=apriori.hno3, method=gridded, sourceGrid=gridHNO3
+  Fill, quantity=apriori.hcl,  method=gridded, sourceGrid=gridHCl
+  Fill, quantity=apriori.clo,  method=gridded, sourceGrid=gridClO
+  Fill, quantity=apriori.ho2,  method=gridded, sourceGrid=gridHO2
+  Fill, quantity=apriori.co,   method=gridded, sourceGrid=gridCO
+
+end Fill
+@
+
+
+2.4
+log
+@New style
+@
+text
+@@
+
+
+2.3
+log
+@Tidied up a bit
+@
+text
+@d5 9
+a13 9
+  Fill, quantity=!x.temp, method=gridded, sourceGrid=gridTemperature
+  Fill, quantity=!x.h2o,  method=gridded, sourceGrid=gridH2O
+  Fill, quantity=!x.o3,   method=gridded, sourceGrid=gridO3
+  Fill, quantity=!x.n2o,  method=gridded, sourceGrid=gridN2O
+  Fill, quantity=!x.hno3, method=gridded, sourceGrid=gridHNO3
+  Fill, quantity=!x.hcl,  method=gridded, sourceGrid=gridHCl
+  Fill, quantity=!x.clo,  method=gridded, sourceGrid=gridClO
+  Fill, quantity=!x.ho2,  method=gridded, sourceGrid=gridHO2
+  Fill, quantity=!x.co,   method=gridded, sourceGrid=gridCO
+@
+
+
+2.2
+log
+@More changes
+@
+text
+@d3 11
+a13 1
+BEGIN Fill
+d15 1
+a15 11
+    Fill, quantity=!x.temp, method=gridded, sourceGrid=gridTemperature
+    Fill, quantity=!x.h2o,  method=gridded, sourceGrid=gridH2O
+    Fill, quantity=!x.o3,   method=gridded, sourceGrid=gridO3
+    Fill, quantity=!x.n2o,  method=gridded, sourceGrid=gridN2O
+    Fill, quantity=!x.hno3, method=gridded, sourceGrid=gridHNO3
+    Fill, quantity=!x.hcl,  method=gridded, sourceGrid=gridHCl
+    Fill, quantity=!x.clo,  method=gridded, sourceGrid=gridClO
+    Fill, quantity=!x.ho2,  method=gridded, sourceGrid=gridHO2
+    Fill, quantity=!x.co,   method=gridded, sourceGrid=gridCO
+
+END Fill
+@
+
+
+2.1
+log
+@Regular commit, new m4 version
+@
+text
+@d5 9
+a13 9
+    Fill, quantity=_x.temp, method=gridded, sourceGrid=gridTemperature
+    Fill, quantity=_x.h2o,  method=gridded, sourceGrid=gridH2O
+    Fill, quantity=_x.o3,   method=gridded, sourceGrid=gridO3
+    Fill, quantity=_x.n2o,  method=gridded, sourceGrid=gridN2O
+    Fill, quantity=_x.hno3, method=gridded, sourceGrid=gridHNO3
+    Fill, quantity=_x.hcl,  method=gridded, sourceGrid=gridHCl
+    Fill, quantity=_x.clo,  method=gridded, sourceGrid=gridClO
+    Fill, quantity=_x.ho2,  method=gridded, sourceGrid=gridHO2
+    Fill, quantity=_x.co,   method=gridded, sourceGrid=gridCO
+@
+

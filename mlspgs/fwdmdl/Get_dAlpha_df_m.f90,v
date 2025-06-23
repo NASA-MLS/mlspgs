@@ -1,0 +1,580 @@
+head	2.9;
+access;
+symbols
+	v5-02-NRT-19:2.9
+	v6-00:2.9
+	v5-02-NRT-18:2.9
+	v5-02:2.9
+	v5-01-NRT-17:2.9
+	v5-01-NRT-16:2.9
+	v5-01-NRT-15:2.9
+	v5-01-NRT-14:2.9
+	neuralnetworks-1-0:2.9.0.8
+	cfm-single-freq-0-1:2.9.0.6
+	v5-01:2.9
+	v5-00:2.9
+	v4-23-TA133:2.9.0.4
+	mus-emls-1-70:2.9.0.2
+	rel-1-0-englocks-work:2.8.0.2
+	VUMLS1-00:2.7
+	VPL1-00:2.7
+	V4-22-NRT-08:2.7
+	VAM1-00:2.7
+	V4-21:2.7.0.2
+	V4-13:2.7
+	V4-12:2.7
+	V4-11:2.7
+	V4-10:2.7
+	M4-00:2.7
+	V3-33:2.2
+	V3-31:2.2;
+locks; strict;
+comment	@# @;
+
+
+2.9
+date	2018.05.14.23.44.14;	author vsnyder;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2017.08.09.20.21.06;	author vsnyder;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2011.07.08.21.09.40;	author yanovsky;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2011.06.16.17.06.40;	author yanovsky;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2011.03.17.00.00.25;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2011.03.16.00.39.00;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2011.03.11.03.08.37;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2011.02.12.02.59.06;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2011.02.05.01.16.56;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.9
+log
+@Move Hessians stuff to Hessians_m
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Get_dAlpha_df_m
+  
+  implicit NONE
+  private
+  public :: Get_dAlpha_df
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: Get_dAlpha_df_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+contains
+!---------------------------------------------------------------------------
+
+!-------------------------------------------------  Get_dAlpha_df  -----
+
+  subroutine Get_dAlpha_df ( Sps_path, Beta_Path, dBeta_df, Grids_f, dAlpha_df )
+
+    use Load_SPS_Data_M, only: Grids_T
+    use MLSKinds, only: RP
+
+    real(rp), intent(in) :: Sps_path(:,:)   ! Path mixing ratios.  Path X Sps.
+    real(rp), intent(in) :: Beta_Path(:,:)  ! Path betas.  Path X Sps.
+    real(rp), intent(in) :: dBeta_df(:,:)   ! Path beta derivatives w.r.t.
+                                            ! mixing ratio.  Path X #Sps for
+                                            ! which it exists.  The second
+                                            ! subscripts here are
+                                            ! grids_f%where_dBeta_df where
+                                            ! those are nonzero, else the
+                                            ! array is not referenced.
+    type(grids_t), intent(in) :: Grids_f    ! Only lin_log and mol components
+                                            ! per sps, not state-vector values.
+    real(rp), intent(out) :: dAlpha_df(:,:) ! Path X Sps.
+
+    !{ Compute $\frac{\partial \alpha(s)}{\partial f^k(s)}$ or
+    !  $\hat{f}^k(s) \frac{\partial \alpha(s)}{\partial \hat{f}^k(s)}$.
+    !  Ultimately, we want $\frac{\partial \alpha(s)}{\partial f^k_{lm}}
+    !  = \frac{\partial \alpha(s)}{\partial f^k(s)}
+    !  \frac{\partial f^k(s)}{\partial f^k_{lm}}$ or
+    !  $\frac{\partial \alpha(s)}{\partial \hat{f}^k(s)}
+    !  \frac{\partial \hat{f}^k(s)}{\partial f^k_{lm}}$.  There are four cases,
+    !  depending upon whether linear interpolation is used from the solution
+    !  grid to the path,
+    !  $f^k(s) = \sum_{lm} \eta^k_{lm}(s) f^k_{lm}$, or logarithmic
+    !  interpolation is used,
+    !  $\hat{f}^k(s) = \exp\left( \sum_{lm} \eta^k_{lm}(s) \ln f^k_{lm} \right)$,
+    !  and whether $\beta$ depends upon $f$.
+    !  \begin{equation*}
+    !  \begin{array}{l|l|l|l}
+    !    \alpha(s) & \frac{\partial\alpha(s)}{\partial f^k(s)} \text{ or }
+    !                \frac{\partial\alpha(s)}{\partial \hat{f}^k(s)}
+    !              & \frac{\partial f^k(s)}{\partial f^k_{lm}} \text{ or }
+    !                \frac{\partial \hat{f}^k(s)}{\partial f^k_{lm}}
+    !              & \text{Computed here} \\[5pt]
+    !    \hline &&&\\[-7pt]
+    !    \sum_k f^k(s) \beta^k(s) & \beta^k(s) & \eta^k_{lm}(s)
+    ! &    \frac{\partial\alpha(s)}{\partial f^k(s)}
+    !\\  \sum_k f^k(s) \beta^k(s,f^k(s)) &
+    !      \beta^k(s,f^k(s)) + f^k(s)
+    !       \frac{\partial\beta^k(s,f^k(s))}{\partial f^k(s)}
+    ! &    \eta^k_{lm}(s) &
+    !      \frac{\partial\alpha(s)}{\partial f^k(s)}
+    !\\  \sum_k \hat{f}^k(s) \beta^k(s) & \beta^k(s)
+    ! &    \hat{f}^k(s) \frac{\eta^k_{lm}(s)}{f^k_{lm}}
+    ! &    \hat{f}^k(s) \frac{\partial\alpha(s)}{\partial \hat{f}^k(s)}
+    !\\  \sum_k \hat{f}^k(s) \beta^k(s,\hat{f}^k(s))
+    ! &    \beta^k(s,\hat{f}^k(s)) + \hat{f}^k(s)
+    !       \frac{\partial\beta^k(s,\hat{f}^k(s))}{\partial \hat{f}^k(s)}
+    ! &    \hat{f}^k(s) \frac{\eta^k_{lm}(s)}{f^k_{lm}} &
+    !      \hat{f}^k(s) \frac{\partial\alpha(s)}{\partial \hat{f}^k(s)}
+    !\\
+    !  \end{array}
+    !  \end{equation*}
+    !  All that's left to be done to what's computed here when we want
+    !  $\frac{\partial \alpha(s)}{\partial f^k_{lm}}$ or
+    !  $\frac{\partial \alpha(s)}{\partial \hat{f}^k_{lm}}$ is to multiply by
+    !  $\eta^k_{lm}(s)$ or $\frac{\eta^k_{lm}(s)}{f^k_{lm}}$.  The reason
+    !  for this separation is that all of what is computed here is eventually
+    !  necessary to compute the desired derivatives, but in the several
+    !  integrals $\int_{\zeta_j}^{\zeta_{j-1}}
+    !     \frac{\partial \alpha(s)}{\partial f^k_{lm}} \,\text{d} s$
+    !  that {\tt dRad_tran_df} needs to compute, $\eta^k_{lm}(s)$ is only
+    !  nonzero for a few values of $s$.  For TScat computations,
+    !  $\frac{\partial \omega_{ij}(s)}{\partial f^k_{lm}}$ is needed, and
+    !  this depends upon $\frac{\partial \alpha(s)}{\partial f^k_{lm}}$.
+    !  See wvs-095 and wvs-102.
+
+    integer :: I_dBeta_df ! Second subscript of dBeta_df
+    integer :: Sps_I      ! Subscript for molecules
+
+    i_dBeta_df = 0
+
+    do sps_i = 1, ubound(Grids_f%mol,1)
+
+      i_dBeta_df = grids_f%where_dBeta_df(sps_i) ! Which column of dBeta_df?
+      if ( i_dBeta_df /= 0 ) then
+        ! beta depends upon f
+        dAlpha_df(:,sps_i) = beta_path(:,sps_i) + &
+                           & sps_path(:,sps_i) * dBeta_df(:,i_dBeta_df)
+      else ! beta does not depend upon f
+        dAlpha_df(:,sps_i) = beta_path(:,sps_i)
+      end if
+      if ( grids_f%lin_log(sps_i) ) &
+        & dAlpha_df(:,sps_i) = sps_path(:,sps_i) * dAlpha_df(:,sps_i)
+
+    end do ! sps_i
+
+  end subroutine Get_dAlpha_df
+
+!----------------------------------------------------------------------
+  logical function not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id: Get_dAlpha_df_m.f90,v 2.8 2017/08/09 20:21:06 vsnyder Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+
+end module Get_dAlpha_df_m
+
+! $Log: Get_dAlpha_df_m.f90,v $
+! Revision 2.8  2017/08/09 20:21:06  vsnyder
+! Spiff a comment
+!
+! Revision 2.7  2011/07/08 21:09:40  yanovsky
+! Include subroutine Get_d2Alpha_df2 in a list of public subroutines
+!
+! Revision 2.6  2011/06/16 17:06:40  yanovsky
+! Tex updates for second derivatives of alpha in Get_d2Alpha_df2 subroutine
+!
+! Revision 2.5  2011/03/17 00:00:25  vsnyder
+! Simplify Get_d2Alpha_df2, more fiddling TeXnicalities
+!
+! Revision 2.4  2011/03/16 00:39:00  vsnyder
+! Repair TeXnicalities, add second derivative
+!
+! Revision 2.3  2011/03/11 03:08:37  vsnyder
+! Correct TeXnicalities
+!
+! Revision 2.2  2011/02/12 02:59:06  vsnyder
+! Get column of dBeta_df from Grids_f, TeXnicalities
+!
+! Revision 2.1  2011/02/05 01:16:56  vsnyder
+! Initial commit
+!
+@
+
+
+2.8
+log
+@Spiff a comment
+@
+text
+@d16 1
+a16 1
+  public :: Get_dAlpha_df, Get_d2Alpha_df2
+d30 1
+a30 1
+    use LOAD_SPS_DATA_M, ONLY: GRIDS_T
+a120 121
+
+!-----------------------------------------------  Get_d2Alpha_df2  -----
+
+  subroutine Get_d2Alpha_df2 ( Sps_path, Beta_Path, dBeta_df, Grids_f, &
+                             & d2Alpha_df2 )
+
+    use LOAD_SPS_DATA_M, ONLY: GRIDS_T
+    use MLSKinds, only: RP
+
+    real(rp), intent(in) :: Sps_path(:,:)     ! Path mixing ratios.  Path X Sps.
+    real(rp), intent(in) :: Beta_Path(:,:)    ! Path betas.  Path X Sps.
+    real(rp), intent(in) :: dBeta_df(:,:)     ! Path beta derivatives w.r.t.
+                                              ! mixing ratio.  Path X #Sps for
+                                              ! which it exists.  The second
+                                              ! subscripts here are
+                                              ! grids_f%where_dBeta_df where
+                                              ! those are nonzero, else the
+                                              ! array is not referenced.
+    type(grids_t), intent(in) :: Grids_f      ! For lin_log and mol components.
+    real(rp), intent(out) :: d2Alpha_df2(:,:) ! Path X Sps.
+
+    !{ Compute almost everything we need for
+    !  $\frac{\partial^2 \alpha(s)}
+    !        {\partial f^k_{lm}\partial f^k_{\tilde l \tilde m}}
+    !  = \frac{\partial^2 \alpha(s)}{\partial f^k(s)^2}
+    !  \frac{\partial f^k(s)}{\partial f^k_{lm}}
+    !  \frac{\partial f^k(s)}{\partial f^k_{\tilde l \tilde m}}$ or
+    !  $\frac{\partial^2 \alpha(s)}{\partial \hat{f}^k(s)^2}
+    !  \frac{\partial \hat{f}^k(s)}{\partial f^k_{lm}}
+    !  \frac{\partial f^k(s)}{\partial f^k_{\tilde l \tilde m}}$.
+    !  $\frac{\partial^2 \alpha(s)}
+    !        {\partial f^k_{lm}\partial f^{\tilde k}_{\tilde l \tilde m}} =0$
+    !  for $k \neq \tilde k$.
+    !  There are four cases, depending upon whether linear interpolation is
+    !  used from the solution grid to the path,
+    !  $f^k(s) = \sum_{lm} \eta^k_{lm}(s) f^k_{lm}$, or logarithmic
+    !  interpolation is used,
+    !  $\hat{f}^k(s) = \exp\left( \sum_{lm} \eta^k_{lm}(s) \ln f^k_{lm} \right)$,
+    !  and whether $\beta$ depends upon $f$.  The terms involving
+    !  $\frac{\partial^2 \beta}{\partial \hat f(s)^2}$ that are shown in wvs-102
+    !  do not appear here because (so far) we have no species for which that
+    !  is nonzero.
+    !  \begin{equation*}
+    !  \begin{array}{l|l|l}
+    !  \alpha(s)
+    ! & \text{What's computed here}
+    ! & \text{Multiply by this to get}
+    !   \frac{\partial^2 \alpha(s)}
+    !        {\partial f^k_{lm}\partial f^k_{\tilde l \tilde m}}
+    ! \\[10pt]
+    !  \hline
+    ! &
+    !\\[-5pt]
+    !  \sum_k f(s)\, \beta(s) 
+    ! & 0
+    ! & \text{nothing}
+    !\\
+    !  \sum_k f(s)\, \beta(s,f(s))
+    ! & 2 \frac{\partial \beta}{\partial f(s)}
+    ! & \eta^k_{lm}(s) \eta^k_{\tilde l \tilde m}(s)
+    !\\
+    !  \sum_k \hat{f}(s)\, \beta(s)
+    ! &\beta \hat{f}(s)
+    ! & \frac{\eta^k_{lm}(s)}{f^k_{lm} f^k_{\tilde l \tilde m}}
+    !   (\eta^k_{\tilde l \tilde m}(s) - d_{lm, \tilde{l} \tilde{m}})
+    !\\
+    !  \sum_k \hat{f}(s)\, \beta(s,\hat{f}(s))
+    ! &\hat{f}(s) \left( \beta +
+    !       3 \hat{f}(s)\frac{\partial \beta}
+    !                        {\partial \hat{f}(s)} \right)
+    ! & \frac{\eta^k_{lm}(s)}{f^k_{lm} f^k_{\tilde l \tilde m}}
+    !   (\eta^k_{\tilde l \tilde m}(s) - d_{lm, \tilde{l} \tilde{m}})
+    !  \end{array}
+    ! \end{equation*}
+    ! \begin{eqnarray*}
+    ! \mbox{where } \ \ d_{lm, \tilde{l} \tilde{m}} \ = \ 
+    ! \begin{cases}  
+    ! 1, \ \ \ l = \tilde{l} \ \mbox{and} \ m = \tilde{m} \\ 
+    ! 0, \ \ \ \mbox{otherwise,} \end{cases} \ \ \ \ \mbox{is the Dirac delta function.}
+    ! \end{eqnarray*}
+    !  All that's left to be done to what's computed here when we want
+    !  $\frac{\partial^2 \alpha(s)}
+    !        {\partial f^k_{lm}\partial f^k_{\tilde l \tilde m}}$ or
+    !  $\frac{\partial^2 \alpha(s)}
+    !        {\partial \hat{f}^k_{lm}\partial \hat{f}^k_{\tilde l \tilde m}}$
+    !  is to multiply by
+    !  $\eta^k_{lm}(s)\eta^k_{\tilde l \tilde m}(s)$, and then divide by
+    !  $f^k_{lm} f^k_{\tilde l \tilde m}$ in the last two cases.
+    !  The reason for this separation is that all of what is computed here is
+    !  eventually necessary to compute the desired derivatives, but in the
+    !  several integrals $\int_{\zeta_j}^{\zeta_{j-1}}
+    !     \frac{\partial^2 \alpha(s)}
+    !          {\partial f^k_{lm}\partial f^k_{\tilde l \tilde m}} \,\text{d} s$
+    !  that {\tt d2Rad_tran_df2} needs to compute, $\eta^k_{lm}(s)$ is only
+    !  nonzero for a few values of $s$.
+
+    integer :: I_dBeta_df ! Second subscript of dBeta_df
+    integer :: Sps_I      ! Subscript for molecules
+
+    i_dBeta_df = 0
+
+    do sps_i = 1, ubound(Grids_f%mol,1)
+
+      i_dBeta_df = grids_f%where_dBeta_df(sps_i) ! Which column of dBeta_df?
+      select case ( merge(1,0,i_dBeta_df /= 0) + &
+                  & merge(2,0,grids_f%lin_log(sps_i)) )
+      case ( 0 ) ! f linear, beta doesn't depend upon f
+        d2Alpha_df2(:,sps_i) = 0.0
+      case ( 1 ) ! f linear, beta depends upon f
+        d2Alpha_df2(:,sps_i) = 2.0 * dBeta_df(:,i_dBeta_df)
+      case ( 2 ) ! f logarithmic, beta doesn't depend upon f
+        d2Alpha_df2(:,sps_i) = beta_path(:,sps_i) * sps_path(:,sps_i)
+      case ( 3 ) ! f logarithmic, beta depends upon f
+        d2Alpha_df2(:,sps_i) = sps_path(:,sps_i) * ( beta_path(:,sps_i) + &
+          & 3.0 * sps_path(:,sps_i) * dBeta_df(:,i_dBeta_df) )
+      end select
+
+    end do ! sps_i
+
+  end subroutine Get_d2Alpha_df2
+
+d125 1
+a125 1
+       "$Id: Get_dAlpha_df_m.f90,v 2.7 2011/07/08 21:09:40 yanovsky Exp $"
+d135 3
+@
+
+
+2.7
+log
+@Include subroutine Get_d2Alpha_df2 in a list of public subroutines
+@
+text
+@d42 2
+a43 1
+    type(grids_t), intent(in) :: Grids_f    ! For lin_log and mol components.
+d246 1
+a246 1
+       "$Id: Get_dAlpha_df_m.f90,v 2.6 2011/06/16 17:06:40 yanovsky Exp $"
+d256 3
+@
+
+
+2.6
+log
+@Tex updates for second derivatives of alpha in Get_d2Alpha_df2 subroutine
+@
+text
+@d16 1
+a16 1
+  public :: Get_dAlpha_df
+d245 1
+a245 1
+       "$Id: Get_dAlpha_df_m.f90,v 2.5 2011/03/17 00:00:25 vsnyder Exp $"
+d255 3
+@
+
+
+2.5
+log
+@Simplify Get_d2Alpha_df2, more fiddling TeXnicalities
+@
+text
+@d183 2
+a184 2
+    ! & \frac{\eta^k_{lm}(s)}{f^k_{lm}}
+    !   \frac{\eta^k_{\tilde l \tilde m}(s)}{f^k_{\tilde l \tilde m}}
+d190 2
+a191 2
+    ! & \frac{\eta^k_{lm}(s)}{f^k_{lm}}
+    !   \frac{\eta^k_{\tilde l \tilde m}(s)}{f^k_{\tilde l \tilde m}}
+d194 6
+d245 1
+a245 1
+       "$Id: Get_dAlpha_df_m.f90,v 2.4 2011/03/16 00:39:00 vsnyder Exp $"
+d255 3
+@
+
+
+2.4
+log
+@Repair TeXnicalities, add second derivative
+@
+text
+@d150 3
+d164 5
+a168 1
+    !  \alpha(s) & \text{What's computed here} & \text{Multiply by}
+a211 1
+    integer :: What       ! what to do
+d218 2
+a219 3
+      what = merge(1,0,i_dBeta_df /= 0) + &
+           & merge(2,0,grids_f%lin_log(sps_i))
+      select case ( what )
+d239 1
+a239 1
+       "$Id: Get_dAlpha_df_m.f90,v 2.3 2011/03/11 03:08:37 vsnyder Exp $"
+d249 3
+@
+
+
+2.3
+log
+@Correct TeXnicalities
+@
+text
+@d29 1
+d32 1
+d66 3
+a68 3
+    !    \sum_k f^k(s) \beta^k(s) & \beta^k(s) & \eta^k_{lm}(s) &
+    !      \frac{\partial\alpha(s)}{\partial f^k(s)} \\
+    !    \sum_k f^k(s) \beta^k(s,f^k(s)) &
+d70 12
+a81 11
+    !       \frac{\partial\beta^k(s,f^k(s))}{\partial f^k(s)} &
+    !      \eta^k_{lm}(s) &
+    !      \frac{\partial\alpha(s)}{\partial f^k(s)} \\
+    !    \sum_k \hat{f}^k(s) \beta^k(s) & \beta^k(s) &
+    !      \hat{f}^k(s) \frac{\eta^k_{lm}(s)}{f^k_{lm}} &
+    !      \hat{f}^k(s) \frac{\partial\alpha(s)}{\partial \hat{f}^k(s)} \\
+    !    \sum_k \hat{f}^k(s) \beta^k(s,\hat{f}^k(s)) &
+    !      \beta^k(s,\hat{f}^k(s)) + \hat{f}^k(s)
+    !       \frac{\partial\beta^k(s,\hat{f}^k(s))}{\partial \hat{f}^k(s)} &
+    !      \hat{f}^k(s) \frac{\eta^k_{lm}(s)}{f^k_{lm}} &
+    !      \hat{f}^k(s) \frac{\partial\alpha(s)}{\partial \hat{f}^k(s)} \\
+d92 1
+a92 1
+    !  that {\tt d_rad_tran_df} needs to compute, $\eta^k_{lm}(s)$ is only
+d104 1
+d120 110
+d234 1
+a234 1
+       "$Id: Get_dAlpha_df_m.f90,v 2.2 2011/02/12 02:59:06 vsnyder Exp $"
+d244 3
+@
+
+
+2.2
+log
+@Get column of dBeta_df from Grids_f, TeXnicalities
+@
+text
+@d67 1
+a67 1
+    !      \beta^k(s,f^k(s) + f^k(s)
+d75 1
+a75 1
+    !      \beta^k(s,\hat{f}^k(s) + \hat{f}^k(s)
+d111 1
+d120 1
+a120 1
+       "$Id: Get_dAlpha_df_m.f90,v 2.1 2011/02/05 01:16:56 vsnyder Exp $"
+d130 3
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d20 1
+a20 1
+       "$RCSfile: rad_tran_m.F90,v $"
+d28 1
+a28 2
+  subroutine Get_dAlpha_df ( Sps_path, Beta_Path, dBeta_df, M_dBeta_df, Grids_f, &
+                           & dAlpha_df )
+d35 5
+a39 6
+                                            ! which it exists.  The
+                                            ! second subscripts here are
+                                            ! pack([(i,i=size(grids_f%mol))],
+                                            !   any(grids_f%mol=m_beta_df))).
+    integer, intent(in) :: M_dBeta_df(:)    ! Values of grids_f%mol for which
+                                            ! dBeta_df exists.
+d43 7
+a49 4
+    !{ Compute $\frac{\partial \alpha(s)}{\partial f(s)}$ and sometimes a bit
+    !  more.  Ultimately, we want $\frac{\partial \alpha(s)}{\partial f^k_{lm}}
+    !  = \frac{\partial \alpha(s)}{\partial f(s)}
+    !  \frac{\partial f(s)}{\partial f^k_{lm}}$.  There are four cases,
+d60 3
+a62 2
+    !              & \frac{\partial f^k(s)}{\partial f^k_{lm}}
+    !              & \text{What's computed here} \\[5pt]
+d67 2
+a68 1
+    !      \beta^k(s,f^k(s) + f^k(s) \frac{\beta^k(s,f^k(s)}{\partial f^k(s)} &
+d74 1
+a74 1
+    !    \sum_k \hat{f}^k(s) \beta^k(s,f^k(s)) &
+d76 1
+a76 1
+    !       \frac{\beta^k(s,\hat{f}^k(s)}{\partial \hat{f}^k(s)} &
+d82 2
+a83 1
+    !  $\frac{\partial \alpha(s)}{\partial f^k_{lm}}$ is to multiply by
+d85 3
+a87 3
+    !  for this division is that all of what is computed here is eventually
+    !  necessary, but in the several integrals
+    !   $\int_{\zeta_j}^{\zeta_{j-1}}
+d101 2
+a102 1
+      if ( any(grids_f%mol(sps_i) == m_dBeta_df) ) then
+a103 1
+        i_dBeta_df = i_dBeta_df + 1
+d119 1
+a119 1
+       "$Id: rad_tran_m.F90,v 2.17 2011/01/28 19:17:11 vsnyder Exp $"
+d128 4
+a131 1
+! $Log: $
+@
+

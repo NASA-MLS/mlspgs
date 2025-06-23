@@ -1,0 +1,1607 @@
+head	1.54;
+access;
+symbols
+	v5-02-NRT-19:1.54
+	v6-00:1.54
+	v5-02-NRT-18:1.54
+	v5-02:1.52
+	v5-01-NRT-17:1.52
+	v5-01-NRT-16:1.52
+	v5-01-NRT-15:1.52
+	v5-01-NRT-14:1.52
+	neuralnetworks-1-0:1.52.0.12
+	cfm-single-freq-0-1:1.52.0.10
+	v5-01:1.52
+	v5-00:1.52
+	v4-23-TA133:1.52.0.8
+	mus-emls-1-70:1.52.0.6
+	rel-1-0-englocks-work:1.52.0.4
+	VUMLS1-00:1.52
+	VPL1-00:1.52
+	V4-22-NRT-08:1.52
+	VAM1-00:1.52
+	V4-21:1.52.0.2
+	V4-13:1.52
+	V4-12:1.52
+	V4-11:1.52
+	V4-10:1.52
+	V3-43:1.45
+	M4-00:1.49
+	V3-41:1.45
+	V3-40-PlusGM57:1.45.0.2
+	V2-24-NRT-04:1.40
+	V3-33:1.45
+	V2-24:1.40
+	V3-31:1.45
+	V3-30-NRT-05:1.45
+	cfm-01-00:1.45
+	V3-30:1.45
+	V3-20:1.45
+	V3-10:1.45
+	V2-23-NRT-02:1.40
+	V2-23:1.40
+	V2-22-NRT-01:1.40
+	V2-22:1.40
+	V2-21:1.40
+	V2-20:1.40
+	V2-11:1.39
+	V2-10:1.39
+	V2-00:1.35
+	V1-51:1.30
+	V1-50:1.30
+	V1-45:1.30
+	V1-44:1.30
+	V1-43:1.30
+	V1-32:1.30
+	V1-31:1.30
+	V1-30:1.29
+	V1-13:1.17
+	V1-12:1.17
+	V1-11:1.17
+	V1-10:1.17
+	newfwm-feb03:1.17.0.2
+	V1-04:1.1
+	V1-03:1.1
+	V1-02:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.54
+date	2023.05.04.20.29.45;	author pwagner;	state Exp;
+branches;
+next	1.53;
+
+1.53
+date	2023.04.25.17.09.34;	author pwagner;	state Exp;
+branches;
+next	1.52;
+
+1.52
+date	2013.10.18.22.49.38;	author pwagner;	state Exp;
+branches;
+next	1.51;
+
+1.51
+date	2013.10.17.22.33.03;	author pwagner;	state Exp;
+branches;
+next	1.50;
+
+1.50
+date	2013.09.04.17.38.34;	author pwagner;	state Exp;
+branches;
+next	1.49;
+
+1.49
+date	2013.01.24.22.40.47;	author pwagner;	state Exp;
+branches;
+next	1.48;
+
+1.48
+date	2013.01.22.18.44.27;	author pwagner;	state Exp;
+branches;
+next	1.47;
+
+1.47
+date	2012.05.14.22.28.05;	author pwagner;	state Exp;
+branches;
+next	1.46;
+
+1.46
+date	2011.11.30.22.12.37;	author pwagner;	state Exp;
+branches;
+next	1.45;
+
+1.45
+date	2009.07.28.20.09.15;	author pwagner;	state Exp;
+branches;
+next	1.44;
+
+1.44
+date	2009.06.26.00.18.10;	author pwagner;	state Exp;
+branches;
+next	1.43;
+
+1.43
+date	2009.06.23.17.34.36;	author pwagner;	state Exp;
+branches;
+next	1.42;
+
+1.42
+date	2009.05.15.20.24.17;	author pwagner;	state Exp;
+branches;
+next	1.41;
+
+1.41
+date	2008.03.22.00.10.44;	author pwagner;	state Exp;
+branches;
+next	1.40;
+
+1.40
+date	2006.10.23.17.59.49;	author pwagner;	state Exp;
+branches;
+next	1.39;
+
+1.39
+date	2006.07.25.21.37.45;	author pwagner;	state Exp;
+branches;
+next	1.38;
+
+1.38
+date	2006.07.24.23.14.56;	author pwagner;	state Exp;
+branches;
+next	1.37;
+
+1.37
+date	2006.07.19.18.19.34;	author lambert;	state Exp;
+branches;
+next	1.36;
+
+1.36
+date	2006.07.07.23.15.32;	author pwagner;	state Exp;
+branches;
+next	1.35;
+
+1.35
+date	2006.05.19.17.00.28;	author dwu;	state Exp;
+branches;
+next	1.34;
+
+1.34
+date	2006.05.11.23.25.49;	author pwagner;	state Exp;
+branches;
+next	1.33;
+
+1.33
+date	2006.05.09.16.37.29;	author pwagner;	state Exp;
+branches;
+next	1.32;
+
+1.32
+date	2006.03.17.00.09.53;	author pwagner;	state Exp;
+branches;
+next	1.31;
+
+1.31
+date	2005.10.28.23.32.21;	author pwagner;	state Exp;
+branches;
+next	1.30;
+
+1.30
+date	2003.11.14.00.11.46;	author livesey;	state Exp;
+branches;
+next	1.29;
+
+1.29
+date	2003.09.03.00.52.00;	author livesey;	state Exp;
+branches;
+next	1.28;
+
+1.28
+date	2003.09.02.22.25.25;	author pwagner;	state Exp;
+branches;
+next	1.27;
+
+1.27
+date	2003.08.06.17.49.31;	author livesey;	state Exp;
+branches;
+next	1.26;
+
+1.26
+date	2003.07.24.22.13.37;	author livesey;	state Exp;
+branches;
+next	1.25;
+
+1.25
+date	2003.07.14.23.17.32;	author livesey;	state Exp;
+branches;
+next	1.24;
+
+1.24
+date	2003.07.14.23.16.46;	author livesey;	state Exp;
+branches;
+next	1.23;
+
+1.23
+date	2003.07.11.01.23.24;	author livesey;	state Exp;
+branches;
+next	1.22;
+
+1.22
+date	2003.07.08.00.17.06;	author livesey;	state Exp;
+branches;
+next	1.21;
+
+1.21
+date	2003.06.05.23.39.06;	author livesey;	state Exp;
+branches;
+next	1.20;
+
+1.20
+date	2003.05.10.22.22.17;	author livesey;	state Exp;
+branches;
+next	1.19;
+
+1.19
+date	2003.05.08.21.08.02;	author livesey;	state Exp;
+branches;
+next	1.18;
+
+1.18
+date	2003.05.08.20.50.36;	author livesey;	state Exp;
+branches;
+next	1.17;
+
+1.17
+date	2002.12.16.16.05.57;	author mjf;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2002.11.21.18.24.02;	author livesey;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2002.11.20.19.54.11;	author mjf;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2002.10.10.23.09.23;	author livesey;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2002.10.01.18.31.13;	author mjf;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2002.08.09.21.30.44;	author livesey;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2002.08.04.16.16.55;	author mjf;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2002.07.05.21.49.45;	author livesey;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2002.07.05.21.36.52;	author livesey;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2002.07.05.17.46.38;	author livesey;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2002.06.21.23.37.25;	author livesey;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2002.06.21.20.40.36;	author livesey;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2002.06.21.20.24.59;	author livesey;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2002.06.21.16.20.06;	author livesey;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2002.06.21.03.13.10;	author livesey;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2002.05.28.22.36.14;	author livesey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2002.04.29.21.54.58;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.54
+log
+@Fixed bug in last commit: it failed if no avg kernels
+@
+text
+@!divert(-1)
+; $Id: outputstate.l2cf,v 1.53 2023/04/25 17:09:34 pwagner Exp $
+;; Except for special sids or l2pc runs, quantities are stored
+;; using DirectWrite commands in Join sections during the loop of chunks
+;; The remaining Output section task would then be to catenate the
+;; split DGG/DGM files and Copy any standard products to individual
+;; files.
+!divert!dnl
+;; Skip all output if requested to do so
+!ifdef(flagSuppressRegularOutput,{
+!clearDivert(!joinedDGGDivert,!joinedDGMDivert)
+},{
+!ifdef(flagAvoidDirectWrite,{
+;; Do any standard outputs?
+!include(outputstdprods.l2cf)
+},{
+;; otherwise it was done with direct write; so must Copy
+!include(copystdprods.l2cf)
+})
+
+begin Output
+  Dump, text='In last section of outputstate.l2cf'
+;; Now output the L2CF (but only if asked)
+!ifdef(flagWriteL2CFToDGM,{
+Output, type=l2cf, $
+  file='!DGMFileName'})
+
+;; Now output the L2CF template file (but only if asked)
+!ifdef(flagWriteL2CFTemplateToDGM,{
+Copy, inputFile='l2cf.template', inputtype=ascii, type=l2aux, $
+  file='!DGMFileName'})
+
+;; Now output the master ident file (but only if asked)
+!ifdef(flagWriteIdentToDGM,{
+Copy, inputFile='master.ident', inputtype=ascii, type=l2aux, $
+  file='!DGMFileName'})
+
+end Output
+;; These days pretty well everything is written with directWrite
+;; statements, except maybe matrices
+
+;; Now output any averaging kernel.
+!ifdef(matrixFilenameWord,{},{!define(matrixFilenameWord,{Full})})
+!ifdef(flagGotMatrices,{
+begin Output
+  Dump, text='In last section of outputstate.l2cf'
+Dump, text='Should see this statement in stdout'
+Output,  quantities=[ !undivert(!matrixDivert) ], type=l2pc, $
+  file='!outpathl2mtx/MLS-Aura_L2MTX-!matrixFilenameWord_!l2version_!day.h5'
+end Output
+  })
+})
+!divert(-1)
+; $Log: outputstate.l2cf,v $
+; Revision 1.53  2023/04/25 17:09:34  pwagner
+; Work around bug in OutputAndClose module
+;
+; Revision 1.52  2013/10/18 22:49:38  pwagner
+; Split outputstate.l2cf into 3 files
+;
+; Revision 1.51  2013/10/17 22:33:03  pwagner
+; Can write asc/desc mode to file attributes
+;
+; Revision 1.50  2013/09/04 17:38:34  pwagner
+; Add new Sleep, Catenate commands
+;
+; Revision 1.49  2013/01/24 22:40:47  pwagner
+; Prevent Copying StdProds if skipped BrO phase
+;
+; Revision 1.48  2013/01/22 18:44:27  pwagner
+; Can now Copy APriori swaths to std prod files
+;
+; Revision 1.47  2012/05/14 22:28:05  pwagner
+; No need to create OH if THz is off
+;
+; Revision 1.46  2011/11/30 22:12:37  pwagner
+; Can write l2cf template to DGM file
+;
+; Revision 1.45  2009/07/28 20:09:15  pwagner
+; Copies CH3Cl std prod to own l2gp file
+;
+; Revision 1.44  2009/06/26 00:18:10  pwagner
+; Changed input file type of master.ident to 'ascii'
+;
+; Revision 1.43  2009/06/23 17:34:36  pwagner
+; Can write mlsl2 ident to DGM file
+;
+!divert!dnl
+@
+
+
+1.53
+log
+@Work around bug in OutputAndClose module
+@
+text
+@d2 1
+a2 1
+; $Id: outputstate.l2cf,v 1.52 2013/10/18 22:49:38 pwagner Exp $
+d50 1
+a52 1
+end Output
+d55 3
+@
+
+
+1.52
+log
+@Split outputstate.l2cf into 3 files
+@
+text
+@d2 1
+a2 1
+; $Id: outputstate.l2cf,v 1.51 2013/10/17 22:33:03 pwagner Exp $
+d22 1
+d38 1
+d45 3
+d55 3
+@
+
+
+1.51
+log
+@Can write asc/desc mode to file attributes
+@
+text
+@d2 1
+a2 1
+; $Id: outputstate.l2cf,v 1.50 2013/09/04 17:38:34 pwagner Exp $
+d5 1
+a5 1
+;; The remaining Output section task would then be to cataenate the
+a8 28
+
+;; Do we need ascend/descend info?
+!ifdef(flagAscendDescend,{
+;; We ought to have a different quantity type for ascend/descend instead of
+;; resorting to this trickery
+begin Fill
+  Fill, quantity=aPriori.surfaceType, method=ascenddescend
+end Fill
+begin Join
+  Label, quantity=aPriori.surfaceType, label='Ascend(+1)Descend(-1)'
+  DirectWrite, hdfVersion=5, $
+  type=l2dgg, source=aPriori.surfaceType
+end Join
+;; What if we wish to Copy APriori?
+!define(copyAscDescToAttributei, {Copy, $
+  type=l2gp, hdfVersion=5, $
+    inputFile='DGG', swath='Ascend(+1)Descend(-1)', inputtype=l2dgg, $
+    file='!l2gpFileName($1)', $
+    /toAttribute
+})
+})
+
+begin Output
+
+;; We might make up a bunch of m4 flags to control the next two things
+Sleep, time=10000us
+Catenate
+
+a12 1
+;; Do any standard outputs, otherwise it was done with direct write
+d14 2
+a15 95
+;; --------------------------------- Standard product L2GP files ---
+;; First those with columns
+!define(outputStandardProductWithColumn, {Output, $
+  quantities=[joined_$1,joined_$1_column], type=l2gp, $
+  hdfVersion=!hdfVersion, $
+  file='!l2gpFileName($1)'!nl})
+!forall(outputStandardProductWithColumn,!allStandardProductsWithColumns)
+
+;; Now those without columns
+!define(outputStandardProductWithoutColumn, {Output, $
+  quantities=[joined_$1], type=l2gp, $
+  hdfVersion=!hdfVersion, $
+  file='!l2gpFileName($1)'!nl})
+!forall(outputStandardProductWithoutColumn,!allStandardProductsWithoutColumns)
+
+;; --------------------------------- Other files ---
+;; The IWC file is a somewhat special case
+;;;Output, quantities=[joined_iwc, joined_iwp, joined_iwcFine], type=l2gp, $
+Output, quantities=[joined_iwc, joined_iwp], type=l2gp, $
+  hdfVersion=!hdfVersion, $
+  file='!l2gpFileName(IWC)'
+},{
+
+;; These macros relate to storing standard products
+;; Special cases are handled by lists ending with 'StdProds' mostly
+;; Some are stored at high resolution: HiResStdProds
+;; Some are stored accompanied by a column abundance: ColumnStdProds
+;; Some are stored w/o a column abundance: NonColumnStdProds
+!define(HiResStdProds,{H2O, Temperature, RHI, GPH})!dnl
+;; We're planning on only O3 accompanying its column
+!ifdef(ColumnStdProds,{},{!define(ColumnStdProds,{O3})})!dnl
+;; (OH, IWC and RHI will be treated separately below)
+!ifdef(NonColumnStdProds,{},{!define(NonColumnStdProds,{BrO,CH3CN,CH3Cl,ClO,CO,H2O,HCl,HCN,HNO3,HO2,HOCl,N2O,SO2,Temperature,GPH})})!dnl
+
+!ifdef(flagCopyStandardProducts,{
+
+  ;; Don't copy anything if we skipped some phases
+  BrOEmpty: Boolean, formula="false"
+  isSwathEmpty, type=l2dgg, swath='BrO-StdProd', file='!DGGFileName', Boolean=BrOEmpty
+  Dump, Boolean=BrOEmpty
+  Skip, Boolean=BrOEmpty  ;; No need if we skipped the BrO phase
+;; Here we carry out the idea of copying standard Products out of the
+;; DGG file and into their "proper" l2gp files
+;;
+;; for this to work, we must have added an invocation of
+;; storeStandardProductWithColumn or
+;; storeStandardProductWithoutColumn to the template
+;; l2cf for each of the Standard Products
+;; Otherwise, Output will complain "Swath not found"
+;; and the run will stop
+;;
+
+!define(copyStandardProductWithoutColumn, {!dnl
+!define(StdProductPhase,{$1-!phase$1})!dnl
+Copy, $
+!ifdef(flagNRT,
+{  type=l2gp, hdfVersion=5, $
+    inputFile='!DGGFileName', swath='!StdProductPhase', inputtype=l2dgg, $
+    file='!l2gpFileName($1)', rename='$1', $
+    /create
+},
+{  type=l2gp, hdfVersion=5, $
+    inputFile='!DGGFileName', swath='$1-StdProd', inputtype=l2dgg, $
+    file='!l2gpFileName($1)', rename='$1', $
+    /create
+})!dnl
+})
+;; What if we wish to Copy APriori?
+!define(copyApriori, {Copy, $
+  type=l2gp, hdfVersion=5, $
+    inputFile='!DGGFileName', swath='$1-APriori', inputtype=l2dgg, $
+    file='!l2gpFileName($1)'
+})
+
+!forall(copyStandardProductWithoutColumn,!NonColumnStdProds)
+!ifdef(flagCopyAPiori,{
+!forall(copyApriori,!NonColumnStdProds)
+})
+!define(copyStandardProductWithColumn, {Copy, $
+  type=l2gp, hdfVersion=5, $
+    inputFile='!DGGFileName', swath='$1-StdProd column,$1-StdProd', inputtype=l2dgg, $
+    file='!l2gpFileName($1)', rename='$1 column,$1', $
+    /create
+})
+;; This is the way we'll do it if we store both column abundances
+;; (one found using mls tropopause, the other using the GMAO tropopause)
+!define(copyStandardProductWith2Columns, {Copy, $
+  type=l2gp, hdfVersion=5, $
+    inputFile='!DGGFileName', swath='$1-StdProd column-MLS,$1-StdProd column-GEOS5,$1-StdProd', inputtype=l2dgg, $
+    file='!l2gpFileName($1)', rename='$1 column-MLS,$1 column-GEOS5,$1', $
+    /create
+})
+
+!ifdef(flagNRT,{
+!forall(copyStandardProductWithoutColumn,!ColumnStdProds)
+d17 2
+a18 79
+!ifdef(flagUseGEOS5PTrop,{!dnl
+!forall(copyStandardProductWith2Columns,!ColumnStdProds)
+},{!dnl
+!forall(copyStandardProductWithColumn,!ColumnStdProds)
+})
+})
+!ifdef(flagCopyAPiori,{
+!forall(copyApriori,!ColumnStdProds)
+})
+
+!ifdef(flagNRT,{},
+{
+;; --------------------------------- Other files ---
+;; The IWC, RHI files require special treatment
+;; In each case we copy two related swaths into the same l2gp file
+Copy, type=l2gp, hdfVersion=!hdfVersion, $
+    inputFile='!DGGFileName', swath='IWC-StdProd', inputtype=l2dgg, $
+    file='!l2gpFileName(IWC)', rename='IWC', $
+    /create
+
+Copy, type=l2gp, hdfVersion=!hdfVersion, $
+    inputFile='!DGGFileName', swath='IWP-StdProd', inputtype=l2dgg, $
+    file='!l2gpFileName(IWC)', rename='IWP'
+
+Copy, type=l2gp, hdfVersion=!hdfVersion, $
+    inputFile='!DGGFileName', swath='RHI-StdProd', inputtype=l2dgg, $
+    file='!l2gpFileName(RHI)', rename='RHI', $
+    /create
+
+Copy, type=l2gp, hdfVersion=!hdfVersion, $
+    inputFile='!DGGFileName', swath='UTRHI-StdProd', inputtype=l2dgg, $
+    file='!l2gpFileName(RHI)', rename='UTRHI'
+
+!ifdef(flagCopyAPiori,{
+Copy, type=l2gp, hdfVersion=!hdfVersion, $
+    inputFile='!DGGFileName', swath='RHI-APriori', inputtype=l2dgg, $
+    file='!l2gpFileName(RHI)'
+
+Copy, type=l2gp, hdfVersion=!hdfVersion, $
+    inputFile='!DGGFileName', swath='UTRHI-APriori', inputtype=l2dgg, $
+    file='!l2gpFileName(RHI)'
+
+})
+
+!ifdef(flagUseGEOS5PTrop,
+{!dnl
+Copy, type=l2gp, hdfVersion=!hdfVersion, $
+    inputFile='!DGGFileName', swath='WMOTPPressure-StdProd-MLS', inputtype=l2dgg, $
+    file='!l2gpFileName(Temperature)', rename='WMOTPPressure-MLS'
+Copy, type=l2gp, hdfVersion=!hdfVersion, $
+    inputFile='!DGGFileName', swath='WMOTPPressure-StdProd-GEOS5', inputtype=l2dgg, $
+    file='!l2gpFileName(Temperature)', rename='WMOTPPressure-GEOS5'
+},{!dnl
+Copy, type=l2gp, hdfVersion=!hdfVersion, $
+    inputFile='!DGGFileName', swath='WMOTPPressure-StdProd', inputtype=l2dgg, $
+    file='!l2gpFileName(Temperature)', rename='WMOTPPressure'
+
+})
+})
+!ifdef(flagAscendDescend,{
+!forall(copyAscDescToAttributei,!NonColumnStdProds,!ColumnStdProds,IWC)
+})
+
+})
+
+})
+
+;; Now output the joined DGG file.
+!ifdef(flagGotJoinedDGGs,{
+Output, quantities=[ !undivert(!joinedDGGDivert) ], type=l2dgg, $
+  hdfVersion=!hdfVersion, $
+  file='!DGGFileName'})
+
+;; Now output the joined DGM file
+!ifdef(flagGotJoinedDGMs,{
+Output, quantities=[ !undivert(!joinedDGMDivert) ], type=l2aux, $
+  hdfVersion=!hdfVersion, $
+  file='!DGMFileName'})
+
+d21 1
+d38 1
+a38 1
+;; statements
+d44 1
+a44 11
+  file='!outpathl2mtx/MLS-Aura_L2MTX-!matrixFilenameWord_!l2version_!day.h5'})
+
+!ifdef(flagCopyStandardProducts,{
+  ;; Copy OH swath out to l2gp file unless empty
+  Band15OFFALLDAY: Boolean, formula="false"
+  isSwathEmpty, type=l2dgg, swath='OH-StdProd', file='!DGGFileName', Boolean=Band15OFFALLDAY
+  Dump, Boolean=Band15OFFALLDAY
+  Skip, Boolean=Band15OFFALLDAY  ;; No need to create OH if THz is off
+  !copyStandardProductWithoutColumn({OH})
+  !ifdef(flagCopyAPiori,{
+    !copyApriori(OH)
+d50 3
+@
+
+
+1.50
+log
+@Add new Sleep, Catenate commands
+@
+text
+@d2 6
+a7 7
+; $Id: outputstate.l2cf,v 1.49 2013/01/24 22:40:47 pwagner Exp $
+;; All the stuff related to the outmoded operations of
+;; outputting standard products in any manner except
+;; that controlled by flagCopyStandardProducts
+;; is slated to removed in a future revision of this file.
+;; In particular, all the early stuff immediately below the
+;; section header will be gone soon
+d9 22
+d198 4
+d258 3
+@
+
+
+1.49
+log
+@Prevent Copying StdProds if skipped BrO phase
+@
+text
+@d2 1
+a2 1
+; $Id: outputstate.l2cf,v 1.48 2013/01/22 18:44:27 pwagner Exp $
+d12 4
+d233 3
+@
+
+
+1.48
+log
+@Can now Copy APriori swaths to std prod files
+@
+text
+@d2 1
+a2 1
+; $Id: outputstate.l2cf,v 1.47 2012/05/14 22:28:05 pwagner Exp $
+d54 5
+d229 3
+@
+
+
+1.47
+log
+@No need to create OH if THz is off
+@
+text
+@d2 1
+a2 1
+; $Id: outputstate.l2cf,v 1.46 2011/11/30 22:12:37 pwagner Exp $
+d80 7
+d88 3
+a90 1
+
+d115 3
+d142 11
+d217 3
+d224 3
+@
+
+
+1.46
+log
+@Can write l2cf template to DGM file
+@
+text
+@d2 1
+a2 1
+; $Id: outputstate.l2cf,v 1.45 2009/07/28 20:09:15 pwagner Exp $
+d49 2
+a50 2
+;; (IWC and RHI will be treated separately below)
+!ifdef(NonColumnStdProds,{},{!define(NonColumnStdProds,{BrO,CH3CN,CH3Cl,ClO,CO,H2O,HCl,HCN,HNO3,HO2,HOCl,N2O,OH,SO2,Temperature,GPH})})!dnl
+d187 8
+a194 1
+
+d198 3
+@
+
+
+1.45
+log
+@Copies CH3Cl std prod to own l2gp file
+@
+text
+@d2 1
+a2 1
+; $Id: outputstate.l2cf,v 1.44 2009/06/26 00:18:10 pwagner Exp $
+d168 5
+d191 3
+@
+
+
+1.44
+log
+@Changed input file type of master.ident to 'ascii'
+@
+text
+@d2 1
+a2 1
+; $Id: outputstate.l2cf,v 1.43 2009/06/23 17:34:36 pwagner Exp $
+d50 1
+a50 1
+!ifdef(NonColumnStdProds,{},{!define(NonColumnStdProds,{BrO,CH3CN,ClO,CO,H2O,HCl,HCN,HNO3,HO2,HOCl,N2O,OH,SO2,Temperature,GPH})})!dnl
+d186 3
+@
+
+
+1.43
+log
+@Can write mlsl2 ident to DGM file
+@
+text
+@d2 1
+a2 1
+; $Id: constructstandardgrids.l2cf,v 1.32 2009/05/15 20:24:17 pwagner Exp $
+d170 1
+a170 1
+Copy, inputFile='master.ident', inputtype=l2cf, type=l2aux, $
+d185 4
+a188 1
+; $Log: coreplusr3flags.l2cf,v $
+@
+
+
+1.42
+log
+@Added UTRHi as quantity and standard product
+@
+text
+@d2 1
+d168 5
+d184 3
+@
+
+
+1.41
+log
+@Changes to allow us to build nrt version
+@
+text
+@d1 8
+d48 2
+a49 2
+;; (IWC will be handled separately)
+!ifdef(NonColumnStdProds,{},{!define(NonColumnStdProds,{BrO,CH3CN,ClO,CO,H2O,HCl,HCN,HNO3,HO2,HOCl,N2O,OH,SO2,Temperature,GPH,RHI})})!dnl
+d109 2
+a110 1
+;; The IWC file is a somewhat special case
+d120 9
+@
+
+
+1.40
+log
+@copyStandardProductWithColumn now compaible with ColumnStdProds in retrievalmacros
+@
+text
+@a37 1
+;;  !define(ColumnStdProds,{O3,CO,SO2,HNO3,H2O,HCN,CH3CN,BrO,ClO,HCl,HO2,HOCl,N2O,OH})!dnl
+d39 1
+a39 1
+!define(ColumnStdProds,{O3})!dnl
+d41 1
+a41 1
+!define(NonColumnStdProds,{BrO,CH3CN,ClO,CO,H2O,HCl,HCN,HNO3,HO2,HOCl,N2O,OH,SO2,Temperature,GPH,RHI})!dnl
+d56 17
+d87 4
+a95 6
+
+!define(copyStandardProductWithoutColumn, {Copy, $
+  type=l2gp, hdfVersion=5, $
+    inputFile='!DGGFileName', swath='$1-StdProd', inputtype=l2dgg, $
+    file='!l2gpFileName($1)', rename='$1', $
+    /create
+a96 1
+!forall(copyStandardProductWithoutColumn,!NonColumnStdProds)
+d98 2
+a106 4
+;;;Copy, type=l2gp, hdfVersion=!hdfVersion, $
+;;;    inputFile='!DGGFileName', swath='IWC3-StdProd', inputtype=l2dgg, $
+;;;    file='!l2gpFileName(IWC)', rename='IWC3'
+
+d126 1
+@
+
+
+1.39
+log
+@Do not write (currently unused) IWC3 swath
+@
+text
+@d32 12
+d72 1
+a72 1
+!forall(copyStandardProductWith2Columns,!allStandardProductsWithColumns)
+d74 1
+a74 1
+!forall(copyStandardProductWithColumn,!allStandardProductsWithColumns)
+d83 1
+a83 1
+!forall(copyStandardProductWithoutColumn,!allStandardProductsWithoutColumns)
+@
+
+
+1.38
+log
+@Repaired bug preventing copying IWP swath to IWC file
+@
+text
+@d26 2
+a27 1
+Output, quantities=[joined_iwc, joined_iwp, joined_iwcFine], type=l2gp, $
+d80 3
+a82 3
+Copy, type=l2gp, hdfVersion=!hdfVersion, $
+    inputFile='!DGGFileName', swath='IWC3-StdProd', inputtype=l2dgg, $
+    file='!l2gpFileName(IWC)', rename='IWC3'
+@
+
+
+1.37
+log
+@added IWP swath
+@
+text
+@d84 2
+a85 2
+    inputFile='!DGGFileName', swath='IWP', inputtype=l2dgg, $
+    file='!l2gpFileName(IWC)'
+@
+
+
+1.36
+log
+@With flagUseGEOS5PTrop can directwrite two columns per speciesWithColumn
+@
+text
+@d83 4
+@
+
+
+1.35
+log
+@add IWP
+@
+text
+@d50 11
+d62 1
+a78 3
+;; Our standard HGrid won't suffice for this product so we don't try
+;; to repair its geolocations
+;; (Perhaps we will in a later improvement)
+d83 14
+@
+
+
+1.34
+log
+@Fixed unbalanced m4 closures (not caught by m4, but still ..)
+@
+text
+@d26 1
+a26 1
+Output, quantities=[joined_iwc, joined_iwcFine], type=l2gp, $
+@
+
+
+1.33
+log
+@Added writing l2cf to dgm; corrected copystandardproducts for toolkitless runs
+@
+text
+@a96 2
+})
+
+@
+
+
+1.32
+log
+@Remove no-longer-needed hGridAllChunks, /repairGeolocations
+@
+text
+@d46 1
+a46 1
+    inputFile='DGG', swath='$1-StdProd column,$1-StdProd', inputtype=l2dgg, $
+d54 1
+a54 1
+    inputFile='DGG', swath='$1-StdProd', inputtype=l2dgg, $
+d63 1
+a63 1
+    inputFile='DGG', swath='IWC-StdProd', inputtype=l2dgg, $
+d71 1
+a71 1
+    inputFile='DGG', swath='IWC3-StdProd', inputtype=l2dgg, $
+d92 7
+@
+
+
+1.31
+log
+@flagCopyStandardProducts causes Master to copy standard products from DGG
+@
+text
+@a43 4
+;; This should be the same as hGridStandard, but will span all chunks
+  hGridAllChunks: hGrid, type=regular, spacing=1.5 degrees, origin=0 degrees, $
+    module=GHz, /forbidOverspill, /insetOverlaps
+
+d48 1
+a48 1
+    HGrid=hGridAllChunks, /create, /repairGeolocations
+d56 1
+a56 1
+    HGrid=hGridAllChunks, /create, /repairGeolocations
+d65 1
+a65 1
+    HGrid=hGridAllChunks, /create, /repairGeolocations
+@
+
+
+1.30
+log
+@Added support for flagSuppressRegularOutput flag
+@
+text
+@d29 51
+@
+
+
+1.29
+log
+@Bug fix, it really didn't like those comments, not sure why!
+@
+text
+@d3 4
+d43 2
+d49 1
+d52 2
+a53 1
+  file='!outpathl2mtx/MLS-Aura_L2MTX_!l2version_!day.h5'})
+@
+
+
+1.28
+log
+@Output/DirectWrite to abbreviated fileNames only if usingPCF
+@
+text
+@a10 1
+;;;  file='!outpathl2gp/MLS-Aura_L2GP-$1_!l2version_!day.he!hdfVersion'!nl})
+a17 1
+;;;  file='!outpathl2gp/MLS-Aura_L2GP-$1_!l2version_!day.he!hdfVersion'!nl})
+d25 1
+a25 2
+;;;  file='!outpathl2gp/MLS-Aura_L2GP-IWC_!l2version_!day.he!hdfVersion'
+}) 
+a31 1
+;;;  file='!outpathl2gp/MLS-Aura_L2GP-DGG_!l2version_!day.he!hdfVersion'})
+a37 1
+;;;  file='!outpathl2aux/MLS-Aura_L2AUX-DGM_!l2version_!day.h!hdfVersion'})
+@
+
+
+1.27
+log
+@Changed output of matrices
+@
+text
+@d10 2
+a11 1
+  file='!outpathl2gp/MLS-Aura_L2GP-$1_!l2version_!day.he!hdfVersion'!nl})
+d18 2
+a19 1
+  file='!outpathl2gp/MLS-Aura_L2GP-$1_!l2version_!day.he!hdfVersion'!nl})
+d26 2
+a27 1
+  file='!outpathl2gp/MLS-Aura_L2GP-IWC_!l2version_!day.he!hdfVersion'
+d34 2
+a35 1
+  file='!outpathl2gp/MLS-Aura_L2GP-DGG_!l2version_!day.he!hdfVersion'})
+d41 2
+a42 1
+  file='!outpathl2aux/MLS-Aura_L2AUX-DGM_!l2version_!day.h!hdfVersion'})
+@
+
+
+1.26
+log
+@Changed type for DGG.
+@
+text
+@d43 3
+a45 3
+!ifdef(flagGotAnyAKs,{
+Output,  quantities=[ !undivert(!AVKDivert) ], type=l2pc, $
+  file='!outpathl2ak/MLS-Aura_L2AK_!l2version_!day.h5'})
+@
+
+
+1.25
+log
+@Added hdf version stuff
+@
+text
+@d29 1
+a29 1
+Output, quantities=[ !undivert(!joinedDGGDivert) ], type=l2gp, $
+@
+
+
+1.24
+log
+@Appropriate names for hdf files.
+@
+text
+@d9 1
+d16 1
+d23 1
+d30 1
+d36 1
+@
+
+
+1.23
+log
+@Made it more backward compatible
+@
+text
+@d9 1
+a9 1
+  file='!outpathl2gp/MLS-Aura_L2GP-$1_!l2version_!day.he4'!nl})
+d15 1
+a15 1
+  file='!outpathl2gp/MLS-Aura_L2GP-$1_!l2version_!day.he4'!nl})
+d21 1
+a21 1
+  file='!outpathl2gp/MLS-Aura_L2GP-IWC_!l2version_!day.he4'
+d27 1
+a27 1
+  file='!outpathl2gp/MLS-Aura_L2GP-DGG_!l2version_!day.he4'})
+d32 1
+a32 1
+  file='!outpathl2aux/MLS-Aura_L2AUX-DGM_!l2version_!day.h4'})
+@
+
+
+1.22
+log
+@Uses the new directWrite stuff
+@
+text
+@d3 31
+@
+
+
+1.21
+log
+@New approach to IWC
+@
+text
+@d3 2
+a4 31
+;; Don't do anything if the l2version macro isn't define.  This is a
+;; short cut for testing to avoid treading on files.
+!ifdef(l2version,{
+
+;; --------------------------------- Standard product L2GP files ---
+;; First those with columns
+!define(outputStandardProductWithColumn, {Output, $
+  quantities=[joined_$1,joined_$1_column], type=l2gp, $
+  file='!outpathl2gp/MLS-Aura_L2GP-$1_!l2version_!day.he4'!nl})
+!forall(outputStandardProductWithColumn,!allStandardProductsWithColumns)
+
+;; Now those without columns
+!define(outputStandardProductWithoutColumn, {Output, $
+  quantities=[joined_$1], type=l2gp, $
+  file='!outpathl2gp/MLS-Aura_L2GP-$1_!l2version_!day.he4'!nl})
+!forall(outputStandardProductWithoutColumn,!allStandardProductsWithoutColumns)
+
+;; --------------------------------- Other files ---
+;; The IWC file is a somewhat special case
+Output, quantities=[joined_iwc, joined_iwcFine], type=l2gp, $
+  file='!outpathl2gp/MLS-Aura_L2GP-IWC_!l2version_!day.he4'
+
+;; Now output the DGG file.
+!ifdef(flagGotDGGs,{
+Output, quantities=[ !undivert(!DGGDivert) ], type=l2gp, $
+  file='!outpathl2gp/MLS-Aura_L2GP-DGG_!l2version_!day.he4'})
+
+;; Now output the DGM file
+!ifdef(flagGotDGMs,{
+Output, quantities=[ !undivert(!DGMDivert) ], type=l2aux, $
+  file='!outpathl2aux/MLS-Aura_L2AUX-DGM_!l2version_!day.h4'})
+a9 3
+
+;; The forward model radiances have been output using direct writes
+})
+@
+
+
+1.20
+log
+@New approach to standard products, joining, output, columns etc.
+@
+text
+@d21 4
+@
+
+
+1.19
+log
+@Various bug fixes and tidies
+@
+text
+@d3 10
+a12 2
+;; At some point we might want to optimize this for 'toolkit'
+;; orientated runs.
+d14 5
+a18 1
+!ifdef(l2version,{
+d20 2
+a21 32
+!define(standardProduct, {Output, $
+  quantities=!ifelse($3,{}, {joined_$1}, !dnl
+  {[joined_$1, $3_column]}), type=l2gp, $
+  file='!outpathl2gp/MLS-Aura_L2GP-$2_!l2version_!day.he4'})
+
+; !ifelse(!resolution,hiRes,{
+; !standardProduct(temperature!res,Temperature!swathRes,)
+; !standardProduct(gph!res,GPH!swathRes,)
+; !standardProduct(h2o!res,H2O!swathRes,h2o!res)
+; !standardProduct(o3!res,O3!swathRes,o3!res)
+; !standardProduct(rhi!res,RHI!swathRes,)
+; },{
+!standardProduct(temperature,Temperature,)
+!standardProduct(refgph,refGPH,)
+!standardProduct(gph,GPH,)
+!standardProduct(bro,BrO,bro)
+!standardProduct(ch3cn,CH3CN,ch3cn)
+!standardProduct(clo,ClO,clo)
+!standardProduct(co,CO,co)
+!standardProduct(h2o,H2O,h2o)
+!standardProduct(hcl,HCl,hcl)
+!standardProduct(hcn,HCN,hcn)
+!standardProduct(hno3,HNO3,hno3)
+!standardProduct(ho2,HO2,ho2)
+!standardProduct(hocl,HOCl,hocl)
+!standardProduct(n2o,N2O,n2o)
+!standardProduct(o3,O3,o3)
+!standardProduct(oh,OH,oh)
+!standardProduct(so2,SO2,so2)
+!standardProduct(rhi,RHI,)
+; }) ; end !ifelse(!resolution,hiRes
+;; Now output the DGG file
+d31 5
+d38 1
+a38 5
+!ifdef(flagGotAnyAKs,{
+  output, file= $
+    '!outpathl2ak/MLS-Aura_L2AK_!l2version_!day.h5', $
+    quantities=[ !undivert(!AVKDivert) ], type=l2pc
+})
+@
+
+
+1.18
+log
+@Got rid of the res issue
+@
+text
+@d40 1
+a40 1
+!ifdef(gotDGGs,{
+d45 1
+a45 1
+!ifdef(gotDGMs,{
+d51 1
+a51 1
+!ifdef(gotAnyAKs,{
+@
+
+
+1.17
+log
+@HiRes quantities, and output columns.
+@
+text
+@d13 7
+a19 7
+!ifelse(!resolution,hiRes,{
+!standardProduct(temperature!res,Temperature!swathRes,)
+!standardProduct(gph!res,GPH!swathRes,)
+!standardProduct(h2o!res,H2O!swathRes,h2o!res)
+!standardProduct(o3!res,O3!swathRes,o3!res)
+!standardProduct(rhi!res,RHI!swathRes,)
+},{
+d38 1
+a38 1
+}) ; end !ifelse(!resolution,hiRes
+@
+
+
+1.16
+log
+@Added Avk stuff
+@
+text
+@d13 7
+d23 14
+a36 14
+!standardProduct(bro,BrO,)
+!standardProduct(ch3cn,CH3CN,)
+!standardProduct(clo,ClO,)
+!standardProduct(co,CO,)
+!standardProduct(h2o,H2O,)
+!standardProduct(hcl,HCl,)
+!standardProduct(hcn,HCN,)
+!standardProduct(hno3,HNO3,)
+!standardProduct(ho2,HO2,)
+!standardProduct(hocl,HOCl,)
+!standardProduct(n2o,N2O,)
+!standardProduct(o3,O3,)
+!standardProduct(oh,OH,)
+!standardProduct(so2,SO2,)
+d38 1
+a38 1
+
+a44 9
+!ifdef(precisionEstimates,{
+!ifdef(gotDGMs,{
+ Output, quantities=[ $
+   joined_ptanGHz, joined_ptanTHz, $
+   joined_ptanGHz_precision, joined_ptanTHz_precision, $
+   joined_phitanGHz, joined_phitanTHz, $
+   joined_phitanGHz_precision, joined_phitanTHz_precision ], $
+   type=l2aux, file='!outpathl2aux/MLS-Aura_L2AUX-DGM_!l2version_!day.h4'})
+},{
+a47 1
+})
+@
+
+
+1.15
+log
+@Typo in L2AK filename.
+@
+text
+@d54 1
+a54 1
+!ifdef(gotAK,{
+d57 1
+a57 1
+    quantities=akOutAll, type=l2pc;, /ascii
+@
+
+
+1.14
+log
+@Changed RHi back to RHI
+@
+text
+@d56 1
+a56 1
+    '!outpathl2ak/MLS-Aura_L2AK-!l2version_!day.h5', $
+@
+
+
+1.13
+log
+@RHI changed to RHi
+@
+text
+@d30 1
+a30 1
+!standardProduct(rhi,RHi,)
+@
+
+
+1.12
+log
+@Added RHI to output
+@
+text
+@d14 1
+d30 1
+a30 1
+!standardProduct(rhi,RHI,)
+d43 2
+a44 1
+   joined_phitanGHz, joined_phitanTHz ], $
+d56 2
+a57 2
+    '!outpathl2ak/MLS-Aura_L2AK-!l2version_!day.txt', $
+    quantities=akOutAll, type=l2pc, /ascii
+@
+
+
+1.11
+log
+@Different method for DGMs for precision estimates.
+@
+text
+@d29 1
+a29 2
+;; We need to define RHI first before I can fill this properly.
+;!standardProduct(rhi,RHI,)
+@
+
+
+1.10
+log
+@Left message in by mistake!
+@
+text
+@d16 1
+d37 9
+a45 1
+;; Now outpt the DGM file
+d49 1
+d52 5
+@
+
+
+1.9
+log
+@New DGG/DGM handling
+@
+text
+@a34 1
+HereIAM
+@
+
+
+1.8
+log
+@New work for multiphase retrievals
+@
+text
+@d32 2
+a33 2
+!ifdef(DGGQuantities,{
+Output, quantities=[!DGGQuantities], type=l2gp, $
+d35 1
+d38 2
+a39 2
+!ifdef(DGMQuantities,{
+Output, quantities=[!DGMQuantities], type=l2aux, $
+@
+
+
+1.7
+log
+@Added ptan precisions
+@
+text
+@d3 3
+d8 32
+a39 34
+;  This is good for the l2cf run with the toolkit panoply
+;  !define(stdprod, {Output, quantities=joined_$1, type=l2gp, $
+;    file='$2'})
+  !define(stdprod, {Output, $
+ quantities=!ifelse($3,{}, {joined_$1}, !dnl
+ {[joined_$1, $3_column]}), type=l2gp, $
+ file='!outpathl2gp/MLS-Aura_L2GP-$2_!l2version_!day.he4'})
+
+;  This is good for the l2cf run w/o the toolkit panoply
+;  !define(stdprod, {Output, quantities=joined_$1, type=l2gp, $
+;    file='!outpath/MLS-Aura_L2GP_$2_!outputVersion_!day.dat'})
+
+!stdprod(temperature,Temperature,)
+!stdprod(gph,GPH,)
+!stdprod(bro,BrO,)
+!stdprod(clo,ClO,)
+!stdprod(co,CO,)
+!stdprod(h2o,H2O,)
+!stdprod(hcl,HCl,)
+!stdprod(hcn,HCN,)
+!stdprod(hno3,HNO3,)
+!stdprod(ho2,HO2,)
+!stdprod(hocl,HOCl,)
+!stdprod(n2o,N2O,)
+!stdprod(o3,O3,)
+!stdprod(oh,OH,)
+!stdprod(so2,SO2,)
+;!stdprod(rhi,RHI,)
+
+Output, quantities=[ $
+  joined_ptanGHz, joined_ptanTHz, $
+  joined_ptanGHz_precision, joined_ptanTHz_precision, $
+  joined_phitanGHz, joined_phitanTHz ], $
+  type=l2aux, file='!outpathl2aux/MLS-Aura_L2AUX-DGM_!l2version_!day.h4'
+d41 1
+@
+
+
+1.6
+log
+@Typo fix
+@
+text
+@d34 4
+a37 1
+Output, quantities=[ joined_ptanGHz, joined_ptanTHz, joined_phitanGHz, joined_phitanTHz ], $
+@
+
+
+1.5
+log
+@Added ptan/phitan output.
+@
+text
+@d34 1
+a34 1
+Output, [ joined_ptanGHz, joined_ptanTHz, joined_phitanGHz, joined_phitanTHz ], $
+@
+
+
+1.4
+log
+@Got rid of columns (at least for the moment), and tidied up
+the filenames.
+@
+text
+@d34 3
+@
+
+
+1.3
+log
+@Modified to use new macros
+@
+text
+@d19 13
+a31 13
+!stdprod(bro,BrO,bro)
+!stdprod(clo,ClO,clo)
+!stdprod(co,CO,co)
+!stdprod(h2o,H2O,h2o)
+!stdprod(hcl,HCl,hcl)
+!stdprod(hcn,HCN,hcn)
+!stdprod(hno3,HNO3,hno3)
+!stdprod(ho2,HO2,ho2)
+!stdprod(hocl,HOCl,hocl)
+!stdprod(n2o,N2O,n2o)
+!stdprod(o3,O3,o3)
+!stdprod(oh,OH,oh)
+!stdprod(so2,SO2,so2)
+@
+
+
+1.2
+log
+@Semi freeze of version
+@
+text
+@d3 1
+a3 1
+!ifdef(outputVersion,{
+d11 1
+a11 1
+ file='!file$2'})
+d17 1
+a17 1
+!stdprod(temp,Temp,)
+d32 1
+a32 1
+!stdprod(rhi,RHI,)
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d1 1
+a1 2
+!divert(-1)
+;; $Id: outputstate.l2cf,v 2.3 2001/11/03 01:35:50 livesey Exp $
+a2 5
+;; This l2cf fragment outputs the species joined by joinstate.l2cf
+
+
+;; Only do the output if the output version has been defined
+!divert!dnl
+d35 1
+@
+

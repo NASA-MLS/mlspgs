@@ -1,0 +1,6786 @@
+head	2.135;
+access;
+symbols
+	v5-02-NRT-19:2.135
+	v6-00:2.135
+	v5-02-NRT-18:2.135
+	v5-02:2.131
+	v5-01-NRT-17:2.134
+	v5-01-NRT-16:2.134
+	v5-01-NRT-15:2.134
+	v5-01-NRT-14:2.134
+	neuralnetworks-1-0:2.133.0.4
+	cfm-single-freq-0-1:2.133.0.2
+	v5-01:2.131
+	v5-00:2.130
+	v4-23-TA133:2.124.0.2
+	mus-emls-1-70:2.117.0.2
+	rel-1-0-englocks-work:2.114.0.2
+	VUMLS1-00:2.110
+	VPL1-00:2.108
+	V4-22-NRT-08:2.106
+	VAM1-00:2.104
+	V4-21:2.101.0.2
+	V4-13:2.98
+	V4-12:2.90
+	V4-11:2.86
+	V4-10:2.84
+	V3-43:2.48.2.2
+	M4-00:2.59
+	V3-41:2.48.2.2
+	V3-40-PlusGM57:2.48.0.2
+	V2-24-NRT-04:2.43
+	V3-33:2.48
+	V2-24:2.42
+	V3-31:2.48
+	V3-30-NRT-05:2.48
+	cfm-01-00:2.48
+	V3-30:2.48
+	V3-20:2.48
+	V3-10:2.46
+	V2-23-NRT-02:2.43
+	V2-23:2.42
+	V2-22-NRT-01:2.43
+	V2-22:2.42
+	V2-21:2.40
+	V2-20:2.39
+	V2-11:2.38
+	V2-10:2.38
+	V2-00:2.36
+	V1-51:2.30
+	V1-50:2.30
+	V1-45:2.29
+	V1-44:2.29
+	V1-43:2.28
+	V1-32:2.26
+	V1-31:2.25
+	V1-30:2.22
+	V1-13:2.19
+	V1-12:2.19
+	V1-11:2.19
+	V1-10:2.19
+	newfwm-feb03:2.19.0.2
+	V1-04:2.16
+	V1-03:2.16
+	V1-02:2.16
+	JointForwardModel:2.16.0.2
+	V1-00:2.16
+	newfwm-sep01:2.10.0.2
+	V0-7:2.10
+	V0-5-Level2:2.3
+	V0-5-SIPS:2.2;
+locks; strict;
+comment	@# @;
+
+
+2.135
+date	2023.05.25.22.26.32;	author pwagner;	state Exp;
+branches;
+next	2.134;
+
+2.134
+date	2021.07.22.23.14.53;	author pwagner;	state Exp;
+branches;
+next	2.133;
+
+2.133
+date	2020.04.09.23.19.20;	author pwagner;	state Exp;
+branches;
+next	2.132;
+
+2.132
+date	2020.02.21.21.46.47;	author pwagner;	state Exp;
+branches;
+next	2.131;
+
+2.131
+date	2020.02.07.01.16.51;	author pwagner;	state Exp;
+branches;
+next	2.130;
+
+2.130
+date	2019.08.01.23.48.13;	author pwagner;	state Exp;
+branches;
+next	2.129;
+
+2.129
+date	2019.07.22.23.22.36;	author pwagner;	state Exp;
+branches;
+next	2.128;
+
+2.128
+date	2019.07.09.20.53.22;	author pwagner;	state Exp;
+branches;
+next	2.127;
+
+2.127
+date	2019.05.15.17.28.39;	author pwagner;	state Exp;
+branches;
+next	2.126;
+
+2.126
+date	2019.05.13.23.34.52;	author pwagner;	state Exp;
+branches;
+next	2.125;
+
+2.125
+date	2019.04.18.16.25.40;	author pwagner;	state Exp;
+branches;
+next	2.124;
+
+2.124
+date	2019.03.08.00.08.55;	author pwagner;	state Exp;
+branches;
+next	2.123;
+
+2.123
+date	2019.02.13.17.33.22;	author pwagner;	state Exp;
+branches;
+next	2.122;
+
+2.122
+date	2019.01.10.21.45.59;	author pwagner;	state Exp;
+branches;
+next	2.121;
+
+2.121
+date	2018.12.07.00.20.26;	author pwagner;	state Exp;
+branches;
+next	2.120;
+
+2.120
+date	2018.10.05.20.49.21;	author pwagner;	state Exp;
+branches;
+next	2.119;
+
+2.119
+date	2018.09.13.20.20.18;	author pwagner;	state Exp;
+branches;
+next	2.118;
+
+2.118
+date	2018.07.27.23.15.40;	author pwagner;	state Exp;
+branches;
+next	2.117;
+
+2.117
+date	2018.05.31.18.04.29;	author pwagner;	state Exp;
+branches;
+next	2.116;
+
+2.116
+date	2018.05.22.23.07.29;	author pwagner;	state Exp;
+branches;
+next	2.115;
+
+2.115
+date	2018.04.19.23.44.55;	author pwagner;	state Exp;
+branches;
+next	2.114;
+
+2.114
+date	2018.02.09.01.05.40;	author pwagner;	state Exp;
+branches;
+next	2.113;
+
+2.113
+date	2017.12.07.01.01.23;	author vsnyder;	state Exp;
+branches;
+next	2.112;
+
+2.112
+date	2017.11.30.20.57.10;	author pwagner;	state Exp;
+branches;
+next	2.111;
+
+2.111
+date	2017.03.24.22.59.23;	author pwagner;	state Exp;
+branches;
+next	2.110;
+
+2.110
+date	2017.01.25.18.05.59;	author pwagner;	state Exp;
+branches;
+next	2.109;
+
+2.109
+date	2016.11.04.19.30.54;	author pwagner;	state Exp;
+branches;
+next	2.108;
+
+2.108
+date	2016.07.28.01.45.07;	author vsnyder;	state Exp;
+branches;
+next	2.107;
+
+2.107
+date	2016.05.27.00.05.43;	author pwagner;	state Exp;
+branches;
+next	2.106;
+
+2.106
+date	2016.03.18.17.57.35;	author pwagner;	state Exp;
+branches;
+next	2.105;
+
+2.105
+date	2016.01.12.00.51.35;	author pwagner;	state Exp;
+branches;
+next	2.104;
+
+2.104
+date	2015.09.24.22.08.34;	author pwagner;	state Exp;
+branches;
+next	2.103;
+
+2.103
+date	2015.09.17.23.22.46;	author pwagner;	state Exp;
+branches;
+next	2.102;
+
+2.102
+date	2015.07.16.20.51.08;	author pwagner;	state Exp;
+branches;
+next	2.101;
+
+2.101
+date	2015.03.05.18.11.04;	author pwagner;	state Exp;
+branches;
+next	2.100;
+
+2.100
+date	2015.03.04.18.33.32;	author pwagner;	state Exp;
+branches;
+next	2.99;
+
+2.99
+date	2015.02.13.00.19.54;	author pwagner;	state Exp;
+branches;
+next	2.98;
+
+2.98
+date	2014.09.11.18.30.19;	author pwagner;	state Exp;
+branches;
+next	2.97;
+
+2.97
+date	2014.09.05.01.10.03;	author vsnyder;	state Exp;
+branches;
+next	2.96;
+
+2.96
+date	2014.09.05.00.49.07;	author vsnyder;	state Exp;
+branches;
+next	2.95;
+
+2.95
+date	2014.09.02.18.03.12;	author pwagner;	state Exp;
+branches;
+next	2.94;
+
+2.94
+date	2014.08.12.23.31.35;	author pwagner;	state Exp;
+branches;
+next	2.93;
+
+2.93
+date	2014.08.06.23.32.34;	author vsnyder;	state Exp;
+branches;
+next	2.92;
+
+2.92
+date	2014.08.05.00.21.29;	author pwagner;	state Exp;
+branches;
+next	2.91;
+
+2.91
+date	2014.08.01.01.46.23;	author vsnyder;	state Exp;
+branches;
+next	2.90;
+
+2.90
+date	2014.07.18.23.19.19;	author pwagner;	state Exp;
+branches;
+next	2.89;
+
+2.89
+date	2014.06.30.23.27.47;	author pwagner;	state Exp;
+branches;
+next	2.88;
+
+2.88
+date	2014.06.25.20.45.44;	author pwagner;	state Exp;
+branches;
+next	2.87;
+
+2.87
+date	2014.06.20.20.28.31;	author pwagner;	state Exp;
+branches;
+next	2.86;
+
+2.86
+date	2014.06.16.20.29.05;	author pwagner;	state Exp;
+branches;
+next	2.85;
+
+2.85
+date	2014.06.03.22.41.33;	author pwagner;	state Exp;
+branches;
+next	2.84;
+
+2.84
+date	2014.04.22.16.33.36;	author pwagner;	state Exp;
+branches;
+next	2.83;
+
+2.83
+date	2014.04.10.00.44.58;	author pwagner;	state Exp;
+branches;
+next	2.82;
+
+2.82
+date	2014.04.09.00.44.49;	author vsnyder;	state Exp;
+branches;
+next	2.81;
+
+2.81
+date	2014.04.07.18.08.57;	author pwagner;	state Exp;
+branches;
+next	2.80;
+
+2.80
+date	2014.03.26.17.45.07;	author pwagner;	state Exp;
+branches;
+next	2.79;
+
+2.79
+date	2014.01.11.01.44.18;	author vsnyder;	state Exp;
+branches;
+next	2.78;
+
+2.78
+date	2014.01.09.00.30.24;	author pwagner;	state Exp;
+branches;
+next	2.77;
+
+2.77
+date	2013.12.12.02.10.07;	author vsnyder;	state Exp;
+branches;
+next	2.76;
+
+2.76
+date	2013.12.05.23.52.21;	author vsnyder;	state Exp;
+branches;
+next	2.75;
+
+2.75
+date	2013.11.26.22.40.51;	author vsnyder;	state Exp;
+branches;
+next	2.74;
+
+2.74
+date	2013.11.20.01.00.45;	author pwagner;	state Exp;
+branches;
+next	2.73;
+
+2.73
+date	2013.11.04.22.56.02;	author pwagner;	state Exp;
+branches;
+next	2.72;
+
+2.72
+date	2013.09.24.23.29.45;	author vsnyder;	state Exp;
+branches;
+next	2.71;
+
+2.71
+date	2013.09.14.01.22.02;	author vsnyder;	state Exp;
+branches;
+next	2.70;
+
+2.70
+date	2013.09.06.20.49.17;	author pwagner;	state Exp;
+branches;
+next	2.69;
+
+2.69
+date	2013.09.04.17.34.03;	author pwagner;	state Exp;
+branches;
+next	2.68;
+
+2.68
+date	2013.08.23.02.52.13;	author vsnyder;	state Exp;
+branches;
+next	2.67;
+
+2.67
+date	2013.08.17.00.22.14;	author pwagner;	state Exp;
+branches;
+next	2.66;
+
+2.66
+date	2013.08.13.23.05.48;	author pwagner;	state Exp;
+branches;
+next	2.65;
+
+2.65
+date	2013.08.12.23.49.41;	author pwagner;	state Exp;
+branches;
+next	2.64;
+
+2.64
+date	2013.06.19.00.40.34;	author pwagner;	state Exp;
+branches;
+next	2.63;
+
+2.63
+date	2013.06.14.01.26.37;	author vsnyder;	state Exp;
+branches;
+next	2.62;
+
+2.62
+date	2013.06.12.02.37.36;	author vsnyder;	state Exp;
+branches;
+next	2.61;
+
+2.61
+date	2013.05.22.20.21.33;	author pwagner;	state Exp;
+branches;
+next	2.60;
+
+2.60
+date	2013.05.17.00.52.58;	author pwagner;	state Exp;
+branches;
+next	2.59;
+
+2.59
+date	2013.02.12.18.14.15;	author pwagner;	state Exp;
+branches;
+next	2.58;
+
+2.58
+date	2013.02.04.22.01.02;	author pwagner;	state Exp;
+branches;
+next	2.57;
+
+2.57
+date	2012.12.04.00.15.49;	author pwagner;	state Exp;
+branches;
+next	2.56;
+
+2.56
+date	2012.08.30.20.54.08;	author pwagner;	state Exp;
+branches;
+next	2.55;
+
+2.55
+date	2012.08.16.17.46.17;	author pwagner;	state Exp;
+branches;
+next	2.54;
+
+2.54
+date	2012.07.18.00.38.00;	author pwagner;	state Exp;
+branches;
+next	2.53;
+
+2.53
+date	2012.07.10.15.23.42;	author pwagner;	state Exp;
+branches;
+next	2.52;
+
+2.52
+date	2012.07.02.20.29.32;	author pwagner;	state Exp;
+branches;
+next	2.51;
+
+2.51
+date	2012.06.27.18.02.09;	author pwagner;	state Exp;
+branches;
+next	2.50;
+
+2.50
+date	2012.05.08.17.53.51;	author pwagner;	state Exp;
+branches;
+next	2.49;
+
+2.49
+date	2011.06.29.21.43.23;	author pwagner;	state Exp;
+branches;
+next	2.48;
+
+2.48
+date	2010.04.12.22.20.23;	author pwagner;	state Exp;
+branches
+	2.48.2.1;
+next	2.47;
+
+2.47
+date	2009.11.05.00.31.21;	author pwagner;	state Exp;
+branches;
+next	2.46;
+
+2.46
+date	2009.07.24.23.22.47;	author pwagner;	state Exp;
+branches;
+next	2.45;
+
+2.45
+date	2009.06.23.18.46.18;	author pwagner;	state Exp;
+branches;
+next	2.44;
+
+2.44
+date	2009.04.13.21.00.44;	author pwagner;	state Exp;
+branches;
+next	2.43;
+
+2.43
+date	2008.01.08.00.16.29;	author pwagner;	state Exp;
+branches;
+next	2.42;
+
+2.42
+date	2007.09.06.22.42.28;	author pwagner;	state Exp;
+branches;
+next	2.41;
+
+2.41
+date	2007.06.21.22.35.22;	author pwagner;	state Exp;
+branches;
+next	2.40;
+
+2.40
+date	2007.02.06.23.15.48;	author pwagner;	state Exp;
+branches;
+next	2.39;
+
+2.39
+date	2006.11.01.20.37.38;	author pwagner;	state Exp;
+branches;
+next	2.38;
+
+2.38
+date	2006.07.27.23.06.17;	author pwagner;	state Exp;
+branches;
+next	2.37;
+
+2.37
+date	2006.07.21.20.09.56;	author pwagner;	state Exp;
+branches;
+next	2.36;
+
+2.36
+date	2006.06.13.00.16.27;	author pwagner;	state Exp;
+branches;
+next	2.35;
+
+2.35
+date	2006.02.21.19.19.27;	author pwagner;	state Exp;
+branches;
+next	2.34;
+
+2.34
+date	2006.02.10.21.13.30;	author pwagner;	state Exp;
+branches;
+next	2.33;
+
+2.33
+date	2005.07.21.23.40.54;	author pwagner;	state Exp;
+branches;
+next	2.32;
+
+2.32
+date	2005.06.22.18.57.02;	author pwagner;	state Exp;
+branches;
+next	2.31;
+
+2.31
+date	2005.03.12.00.48.01;	author pwagner;	state Exp;
+branches;
+next	2.30;
+
+2.30
+date	2004.12.14.00.04.24;	author pwagner;	state Exp;
+branches;
+next	2.29;
+
+2.29
+date	2004.07.08.22.48.44;	author pwagner;	state Exp;
+branches;
+next	2.28;
+
+2.28
+date	2004.04.27.23.49.51;	author pwagner;	state Exp;
+branches;
+next	2.27;
+
+2.27
+date	2004.03.12.00.28.56;	author pwagner;	state Exp;
+branches;
+next	2.26;
+
+2.26
+date	2004.01.23.01.06.39;	author pwagner;	state Exp;
+branches;
+next	2.25;
+
+2.25
+date	2003.12.05.00.39.35;	author pwagner;	state Exp;
+branches;
+next	2.24;
+
+2.24
+date	2003.11.07.00.46.51;	author pwagner;	state Exp;
+branches;
+next	2.23;
+
+2.23
+date	2003.10.09.23.58.34;	author pwagner;	state Exp;
+branches;
+next	2.22;
+
+2.22
+date	2003.09.05.23.22.52;	author pwagner;	state Exp;
+branches;
+next	2.21;
+
+2.21
+date	2003.06.09.22.49.32;	author pwagner;	state Exp;
+branches;
+next	2.20;
+
+2.20
+date	2003.05.02.20.53.19;	author pwagner;	state Exp;
+branches;
+next	2.19;
+
+2.19
+date	2002.10.08.17.36.21;	author pwagner;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2002.10.03.23.00.03;	author pwagner;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2002.08.28.22.25.42;	author pwagner;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2002.03.14.23.38.28;	author pwagner;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2002.02.12.00.25.25;	author pwagner;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2002.02.05.00.44.03;	author pwagner;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2002.01.29.23.49.38;	author pwagner;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2002.01.23.21.48.16;	author pwagner;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2001.09.28.17.57.47;	author pwagner;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2001.07.16.23.43.15;	author pwagner;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2001.05.30.22.56.48;	author pwagner;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2001.05.15.23.46.08;	author pwagner;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2001.05.11.23.48.23;	author pwagner;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2001.05.09.23.34.13;	author pwagner;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2001.05.06.20.54.40;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2001.05.04.22.54.31;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2001.04.20.20.41.52;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2001.04.17.20.26.28;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.04.16.23.53.10;	author pwagner;	state Exp;
+branches;
+next	;
+
+2.48.2.1
+date	2011.11.16.23.33.51;	author pwagner;	state Exp;
+branches;
+next	2.48.2.2;
+
+2.48.2.2
+date	2012.12.01.01.04.00;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.135
+log
+@Note that v4 and v5 share a single code base from now on
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=============================================================================
+module MLSL2Options              !  Options and Settings for the MLSL2 program
+!=============================================================================
+  ! Subroutines have also found their way into this module. While very handy
+  ! they go against the clean-sheet design which reserved it for
+  ! data only. We're probably too far down the path now to retreat.
+  ! A similar trespass was lib/MLSCommon which began as a data-only module
+  ! but has grown to hold lots of indispensible procedures.
+
+  use Dump_0, only: Dump
+  use Dump_1, only: Dump
+  use HDF, only: Dfacc_Rdwr
+  use HighOutput, only: Banner, OutputNamedValue, StyledOutput
+  use Intrinsic, only: L_Ascii, L_HDFEOS, L_Hours, L_Minutes, L_NetCDF4, L_Seconds
+  use, Intrinsic :: ISO_Fortran_Env, only: Error_Unit
+  use MLSCommon, only: MLSFile_T, MLSNamesAreDebug, MLSNamesAreVerbose
+  use MLSFiles, only: WildCardHDFVersion, HDFVersion_4, HDFVersion_5, Dump
+  use MLSMessageModule, only: MLSMessageConfig, &
+    & MLSMsg_Error, MLSMsg_Info, MLSMsg_TestWarning, &
+    & MLSMSG_Severity_To_Quit, MLSMsg_Severity_To_Walkback, MLSMsg_Warning, &
+    & Bummer, SayMessage => MLSMessage
+  use MLSPCF2, only: MLSPCF_L1b_Rad_End, MLSPCF_L1b_Rad_Start
+  use MLSStringLists, only: EvaluateFormula
+  use MLSStrings, only: IsComment, IsDigits, LowerCase, &
+    & ReadIntsFromChars, Replace, WriteIntsToChars
+  use PCFHdr, only: GlobalAttributes, SomeGlobalAttributes, &
+    & SomeToGlobalAttributes
+  use Output_M, only: AdvancedOptions, OutputOptions, StampOptions, &
+    & TimeStampOptions, InvalidPrUnit, StdoutPrUnit, MSGLogPrUnit, BothPrUnit, &
+    & Output, PrUnitName !, SetTruthPattern
+  use Printit_M, only: DefaultLogUnit, Get_Config, StdoutLogUnit
+
+  implicit none
+  public
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: MLSL2Options.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+  ! This module contains initial or permanent settings. 
+  ! Choose values according to what is most suitable for the environment.
+  ! For example
+  ! certain settings may be appropriate during development but not
+  ! for production use, i.e. sips. Therefore, this is a convenient place
+  ! to hold everything that needs to be changed before delivery.
+  
+  ! See also MLSL2PCF, L2ParInfo.parallel, lib/toggles.switches
+  
+  ! --------------------------------------------------------------------------
+  ! The following should be adjusted before delivery to sips
+
+  ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+  ! The following should be TRUE if run with level 1 as a single PGE
+  ! sharing a single PCF; i.e., for the near real-time (nrt)
+  ! (in which case we need to move some of the "mobile" PCF ids)
+  logical :: SharedPCF                               =  .false. 
+
+  ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+  ! We used to update these lines before each new delivery to the sips
+  ! Now we prefer to use the --versId cmdline option or else implement it
+  ! by putting "versId=xxxxx" in the optsfile.
+  ! id to print out in response to "--version" command-line option  
+  ! If no toolkit, then also the PGEVersion saved as a Global Attribute  
+  !
+  ! Beginning with v4.24/v5.02 we deliver the same compiled programs
+  ! for both v4.x and v5.x versions.
+  integer, parameter                        :: versIDLen = 32
+  character(len=versIDLen), dimension(2)    :: current_version_id = (/ &
+    & 'v4/v5 swdev team               ' , & 
+    & 'See license terms for copyright'/)
+  character(len=32)    :: UniqueID                    = ' '
+     
+  ! Set the following to MLSMSG_Error before delivering to sips;
+  ! when set higher, it allows program keep going despite errors
+  ! when set lower, the program would quit even on warnings
+  integer            :: Quit_error_threshold          = MLSMSG_Error
+
+  ! Set the following to MLSMSG_Error before delivering to sips;
+  ! when set lower, it prints chunknum and phasename for, e.g. warnings, too.
+  integer            :: Print_chunk_threshold         = MLSMSG_Warning
+
+  ! Set the following to 2 before delivering to sips;
+  ! If 0, you won't be able to distinguish normal termination
+  ! from some abnormal ones (e.g. in parser) (a bad thing)
+  ! if 2, status will be 2 only if run complete         
+  ! and without error (a good thing)
+  integer, parameter :: Normal_exit_status            = 2
+
+  ! ---------------------------------------------------------------
+  ! None of the following need to be changed before delivery to sips
+  
+  ! Assume HDF files w/o explicit HDFVersion field are this 
+  ! 4 corresponds to HDF4, 5 to HDF5 in L2GP, L2AUX, etc.        
+  integer            :: Default_HDFversion_write      = HDFversion_5
+  ! Assume std. product l2gp and dgg files are the following format
+  integer            :: Default_L2GPFormat_write      = L_HDFEOS ! l_netCDF4
+  ! Set to WildcardHDFversion if you wish to autodetect such files  
+  ! on input
+  integer            :: Default_HDFversion_read       = WildcardHDFversion  
+  integer            :: Level1_HDFversion             = WildcardHDFversion  
+
+  ! The following is false only for runs that don't need orbit/attitude info
+  logical            :: Need_L1BFiles                 = .true.
+  ! The following is false only for runs that use non-Aura satellite data
+  logical            :: Aura_L1BFiles                 = .true.
+  ! Set if run must not create file, instead just append to it
+  logical            :: Patch                         = .false. 
+  ! Whether to restart printing identical warnings at each new phase
+  logical            :: RestartWarnings               = .true.
+  ! Whether to run slave tasks in the background
+  ! (needed if they are to allow the wrapper script to forcibly terminate
+  ! hanging slave tasks)
+  logical            :: RunInBackground               = .false.
+  ! File name to which to write "finished" after slave sends sig_finished
+  character(len=255) :: NoteFile                      = ' '
+  ! What units to use in summarizing timings at end of run
+  integer            :: SectionTimingUnits            = L_seconds
+  
+  ! Whether to skip doing the direct writes--quicker when snooping
+  logical            :: SkipDirectWrites              = .false.    
+  logical            :: SkipDirectwritesOriginal      = .false.    
+  ! Whether each slave deallocates all its arrays, pointers, etc.
+  ! Sometimes slaves die or take too long to finish cleaning up
+  ! But if system fails to reclaim memory properly, subsequent slaves
+  ! may not find enough available and therefore crash
+  ! FALSE means let operating system do it automatically
+  logical            :: slavesCleanUpSelves           = .true.
+  ! Will we be using a pvm channel to pipe data to an
+  ! external running process, e.g. idl?
+  logical            :: SnoopingActive                = .false.
+  character(len=132) :: SnoopName                     = ''
+
+  ! In case special dumps are to go to a special dumpfile
+  character(len=255) :: SpecialDumpfile               = ' '
+  ! What to fill state, outputsd with if skipping retrieval
+  real               :: StateFilledBySkippedretrievals = 0.
+  ! Whether to stop after a certain section: which section it is
+  character(len=16)  :: StopAfterSection              = ' ' ! Blank means 'no'
+
+  ! Whether to exit with status 1 no matter what
+  logical            :: StopWithError                 = .false.         
+  ! Whether to do only a pre-flight checkout of paths
+  logical            :: CheckPaths                    = .false.         
+
+  logical            :: Toolkit                       = .true. ! SIPS_VERSION 
+  logical, parameter :: WriteFileAttributes           = .false.               
+  ! --------------------------------------------------------------------------
+
+  ! The following will be used only by MLSL2
+  logical :: CHECKL2CF = .false.   ! Just check the l2cf and quit
+  logical :: CHECKLEAK = .false.   ! Check parse tree for potential memory leaks
+  logical :: COUNTCHUNKS = .false. ! Just count the chunks and quit
+  integer :: DO_DUMP = 0           ! Dump declaration table if > 0
+  integer :: DUMP_TREE = -1        ! Dump tree after parsing
+  logical :: ExitToNextChunk = .false.   ! Skip rest of current chunk
+  ! Wouldn't it be better to use get_lun at the moment we open the l2cf?
+  integer, parameter :: L2CF_Unit = 20  ! Unit # if L2CF is opened by Fortran
+  integer :: L2CFNode        = 0        ! Line #, Col # of L2CF being executed
+  integer :: L2CFErrornode   = 0        ! Line #, Col # of L2CF at 1st error
+  integer :: Numswitches
+  integer :: Recl            = 20000    ! Record length for l2cf (but see --recl opt)
+  integer :: MaxChunkSize    = 21     ! Max chunk size for l2gp DirectWrites
+  character(len=128) :: phasesToSkip   = ''
+  character(len=128) :: SectionsToSkip = ''
+  logical :: SectionTimes    = .false.  ! Show times in each section
+  logical :: TotalTimes      = .false.  ! Show total times from start
+  logical :: ShowDefaults    = .false.  ! Just print default opts and quit
+  integer :: SlaveMAF        = 0        ! Slave MAF for fwmParallel mode
+  logical :: Timing          = .false.  ! -T option is set
+  ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+  ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+  ! This is the type to store the level 2 options that can be overridden
+  ! by the l2cf commands Phase or ChangeSettings
+  type :: L2Options_T
+    character(len=2048) :: Command_Line ! All the opts
+    character(len=2048) :: Originalcmds ! As set at launch
+    character(len=32)  :: CurrentPhaseName              = ' '
+    integer            :: CurrentChunkNumber            = 0
+    ! Whether to skip doing the retrieval--a pre-flight checkout of paths, etc.
+    logical            :: SkipRetrieval                 = .false.        
+    ! A holding place for the above, allowing us to skip for some phases only
+    logical            :: SkipRetrievalOriginal         = .false. 
+    logical            :: MLSL2Debug                    = .false. 
+    logical            :: Overridden                    = .false. ! Did we 
+    ! Set the following to MSGLOGPRUNIT before delivering to sips;  override?
+    ! (its possible values and their effects on normal output:
+    ! INVALIDPRUNIT  on MUTE, no output
+    ! STDOUTPRUNIT   sent to stdout (via print *, '...')
+    ! MSGLOGPRUNIT   sent to Log file (via MLSMessage)
+    ! BOTHPRUNIT     both stdout and Log file
+    ! > 0            Fortran 'unit=OUTPUT_PRINT_UNIT')
+    integer            :: Output_print_unit             = MSGLOGPRUNIT ! -2
+    real               :: GPH_MissingValue              = -1.e15 ! -999.99
+
+  end type L2Options_T
+  ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+  ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+  ! This is the type to store runtime Booleans set and used by the l2cf
+  ! We sometimes call these runtime values or runtime macros
+
+  ! Suggestion: settle on just one name and use it exclusively
+  integer, parameter :: RTVStringLength               = 1024
+  integer, parameter :: RTVArrayLength                = 128
+  
+  type :: RunTimeValues_T
+    character(len=1)                   :: sep = achar(0)
+    ! Two arrays bound as a {keys=>values} hash
+    character(len=RTVSTRINGLENGTH)     :: lkeys       = &
+      & 'true' // achar(0) // 'false' // achar(0) // 'count' 
+    character(len=RTVSTRINGLENGTH)     :: lvalues     = &
+      & 'true' // achar(0) // 'false' // achar(0) // 'count' 
+  end type runTimeValues_T
+  ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+    
+  type(L2Options_T), save :: L2Options, OriginalOptions
+  type(runTimeValues_T), save :: runTimeValues
+  type (MLSFile_T), save      :: AllocFile
+
+  ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+  ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+  ! Not used yet; the polymorphic type introduced in Fortran 2003
+  ! may be a better solution.
+  ! The basic idea is to be able to pass an object of any of the datatypes
+  ! level 2 knows about. We might do this during a call to MLSMessage, say,
+  ! if an anomalous instance is detected
+  type :: dbItem_T
+    ! This stores a generic level 2 datatype indexed by the database indx
+    ! and with the type specified by dbType
+    integer                            :: indx
+    integer                            :: dbType  ! One of DB_* types below
+  end type dbitem_T
+  ! --------------------------------------------------------------------------
+  !   For the various databases/data types
+  !   We do not support mixing data types
+  !   but for certain abstract operations, e.g. adding an item to
+  !   a database, the use of an include file is a workaround
+  !   For other cases, e.g. in an error message, we may wish to 
+  !   communicate a database entry as an index, datatype pair 
+  !   and have the calling procedure decide what to do about it
+  !   (Here's how we created the list of types that are pasted in
+  !    the table below:
+  !    grep 'type (' tree_walker.f90 | \
+  !     sed -n 's/type (//; s/_T),.*//p' tree_walker.f90
+
+  integer, parameter :: DB_Direct             = 0
+  integer, parameter :: DB_File               = DB_Direct             + 1
+  integer, parameter :: DB_Chunk              = DB_File               + 1
+  integer, parameter :: DB_DirectData         = DB_Chunk              + 1
+  integer, parameter :: DB_FGrid              = DB_DirectData         + 1
+  integer, parameter :: DB_ForwardModelConfig = DB_FGrid              + 1
+  integer, parameter :: DB_GriddedData        = DB_ForwardModelConfig + 1
+  integer, parameter :: DB_Hessian            = DB_GriddedData        + 1
+  integer, parameter :: DB_HGrid              = DB_Hessian            + 1
+  integer, parameter :: DB_L2AUXData          = DB_HGrid              + 1
+  integer, parameter :: DB_L2GPData           = DB_L2AUXData          + 1
+  integer, parameter :: DB_Matrix             = DB_L2GPData           + 1
+  integer, parameter :: DB_Vector             = DB_Matrix             + 1
+  integer, parameter :: DB_QuantityTemplate   = DB_Vector             + 1
+  integer, parameter :: DB_VectorTemplate     = DB_QuantityTemplate   + 1
+  ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+  
+  ! The following public procedures are listed here for convenience only
+  ! since they are public by default anyway
+  public :: DumpOptions
+  public :: DumpMacros
+  public :: MLSL2Message
+  public :: ProcessOptions
+  public :: RemoveRuntimeBoolean
+  public :: RestoreDefaults
+
+  logical, private, parameter :: countEmpty = .true. ! Except where Overridden locally
+  logical, private, parameter :: AllowEnvInOpts = .true. ! Like "USEOPTSENV"
+
+  ! The following is part of a mechanism to prevent L2Options in a .opts file
+  ! from overriding either
+  ! --SkipRetrieval on the cmdline, or 
+  ! [n]SkipRetrieval=true
+  logical, private, save      :: L2OptsCantResetSkipRetrvl = .false.
+  
+  type :: SomeL2Options_T
+    ! Whether to skip doing the retrieval--a pre-flight checkout of paths, etc.
+    logical            :: SkipRetrieval                 = .false.        
+    ! A holding place for the above, allowing us to skip for some phases only
+    logical            :: SkipRetrievalOriginal         = .false. 
+    logical            :: MLSL2Debug                    = .false.               
+    ! Set the following to MSGLOGPRUNIT before delivering to sips;
+    ! (its possible values and their effects on normal output:
+    ! INVALIDPRUNIT  on MUTE, no output
+    ! STDOUTPRUNIT   sent to stdout (via print *, '...')
+    ! MSGLOGPRUNIT   sent to Log file (via MLSMessage)
+    ! BOTHPRUNIT     both stdout and Log file
+    ! > 0            Fortran 'unit=OUTPUT_PRINT_UNIT')
+    integer            :: Output_print_unit             = MSGLOGPRUNIT ! -2
+    ! This next will be used as Missing values for the L2GPValue field
+    ! in any l2gp types whose names or qty template inlude 'GPH'
+    real               :: GPH_MissingValue              = -1.e15 ! -999.99
+
+  end type SomeL2Options_T
+
+  type(SomeL2Options_T), save :: SomeL2Options
+
+!=============================================================================
+contains 
+  ! -------------------------------------------------  MLSL2Message  -----
+  ! Process the level 2-savvy MLSMessage call
+  ! Optionally give l2cf line #, dump an item, and so on before summoning
+  ! regular MLSMessage
+  !
+  ! For some cases we skip calling MLSMessage, either calling output instead
+  ! or remaining mute
+  !
+  ! In certain other cases we must repeat printing the message via the
+  ! output module's commands
+  
+  ! The above is too vague. What determines these cases? Specifically
+  ! (a) When  do we call output instead of MLSL2Message? When are we mute?
+  ! (b) When must we call output and MLSL2Message both?
+  subroutine MLSL2Message ( Severity, ModuleNameIn, Message, &
+    & Advance, MLSFile, Status, Item )
+    use Lexer_Core, only: Get_Where
+    use MLSStringLists, only: SwitchDetail
+    use Toggles, only: Switches
+    use Tree, only: Where
+    integer, intent(in) :: Severity ! e.g. MLSMSG_Error
+    character (len=*), intent(in) :: ModuleNameIn ! Name of module (see below)
+    character (len=*), intent(in) :: Message ! Line of text
+    character (len=*), intent(in), optional :: Advance ! Do not advance
+    !                                 if present and the first character is 'N'
+    !                                 or 'n'
+    type(MLSFile_T), intent(in), optional :: MLSFile
+    integer, intent(out), optional :: status ! 0 if msg printed, 1 if suppressed
+    type(dbItem_T), intent(in), optional  :: item
+    ! Internal variables
+    character(len=16) :: chunkChars
+    integer :: logFileUnit  ! Where we will log
+    integer :: LogThreshold ! Severity at which we will log
+    logical :: mustRepeat   ! if we will repeat via output
+    character(len=256) :: myMessage
+    integer :: myStatus
+    logical :: outputInstead   ! if we will call output instead
+    ! Executable
+    call get_config( logFileUnit=logFileUnit )
+    myMessage = Message
+    mustRepeat = ( logFileUnit == DEFAULTLOGUNIT .and. &
+      & OutputOptions%PrUnit == STDOUTPRUNIT )
+    LogThreshold = SwitchDetail( switches, 'log' )
+    ! Treat log as if it were 'log6'; i.e. output instead every severity
+    if ( LogThreshold == 0 ) LogThreshold = 6
+    ! Should we call output instead?
+    outputInstead = .false.
+    if ( LogThreshold > -1 .and. LogThreshold < 6 ) then
+      outputInstead = ( severity < LogThreshold .and. &
+        & mustRepeat )
+    end if
+    if ( L2Options%MLSL2Debug ) then
+      print *, 'mustRepeat ', mustRepeat
+      print *, 'outputInstead ', outputInstead
+      print *, 'STDOUTPRUNIT ', STDOUTPRUNIT
+      print *, 'OutputOptions%PrUnit ', OutputOptions%PrUnit
+      print *, 'DEFAULTLOGUNIT ', DEFAULTLOGUNIT
+      print *, 'Config%logFileUnit ', logFileUnit
+    end if
+    ! Do we have a current phase name?
+    if ( len_trim(L2Options%currentPhaseName) > 0 &
+      & .and. severity >= Print_chunk_threshold ) then
+      myMessage = ' (' // trim(L2Options%currentPhaseName) // ') ' // myMessage
+    end if
+    ! Do we have a current chunk number?
+    if ( severity >= Print_chunk_threshold ) then
+      if ( L2Options%CurrentChunkNumber > 0 ) then
+        call writeIntsToChars( L2Options%CurrentChunkNumber, chunkChars )
+        myMessage = ' (chunk ' // trim(chunkChars) // ') ' // myMessage
+      else
+        myMessage = ' (no chunks) ' //  myMessage
+      end if
+    end if
+    ! For severity "info" just do the call and return
+    ! For severity "warn" do the call and 
+    ! check status to see if we need to skip printing
+    if ( severity == MLSMSG_INFO ) then
+      call SayIt ( Message )
+      return
+    else if ( severity == MLSMSG_Warning ) then
+      ! This trickery is to determine whether this warning would be suppressed
+      call SayMessage ( MLSMSG_TestWarning, ModuleNameIn, MyMessage, &
+        & Advance, MLSFile, myStatus )
+      if ( present(status) ) status = myStatus
+      if ( myStatus /= 0 ) return
+    end if
+    ! If severe enough an error, we will want to know more
+    ! in hopes of figuring out what went wrong, where, and why
+    ! Do we have an l2cf node we were processing?
+    if ( L2CFErrorNode /= 0 ) then
+      call get_where ( where(L2CFErrorNode), myMessage, &
+        & before='***** At ', after=': ' // myMessage )
+    elseif ( L2CFNode /= 0 ) then
+      call get_where ( where(L2CFNode), myMessage, &
+        & before='***** At ', after=': ' // myMessage )
+    else
+      myMessage = '(no tree node): ' // myMessage
+    end if
+    ! Were we passed an item of a recognized MLS data type to Dump?
+    if ( present(item) ) then
+      call output ( '(Not ready to dump arbitrary datatypes yet) ', advance='yes' )
+      select case ( item%dbType )
+      case ( DB_Direct             )
+      case ( DB_File               )
+      case ( DB_Chunk              )
+      case ( DB_DirectData         )
+      case ( DB_FGrid              )
+      case ( DB_ForwardModelConfig )
+      case ( DB_GriddedData        )
+      case ( DB_Hessian            )
+      case ( DB_HGrid              )
+      case ( DB_L2AUXData          )
+      case ( DB_L2GPData           )
+      case ( DB_Matrix             )
+      case ( DB_Vector             )
+      case ( DB_QuantityTemplate   )
+      case ( DB_VectorTemplate     )
+      case default
+      end select
+    end if
+    call SayIt ( myMessage )
+  contains
+    subroutine SayIt ( It )
+      ! Say it with MLSMessage
+      ! and possibly repeat it with output
+      character (len=*), intent(in) :: It
+      character(len=256)            :: mesg
+      integer, parameter            :: LineLength = 40
+      if ( Severity > MLSMSG_Warning ) then
+        mesg = trim(it) // ' (in) ' // trim(ModuleNameIn)
+        if ( present(MLSFile) ) call dump( MLSFile )
+        if ( mustRepeat ) call banner( trim(mesg), LineLength=LineLength )
+        if ( .not. outputInstead ) call Bummer ( mesg, &
+          & LineLength=LineLength, severity=severity )
+      else
+        if ( .not. outputInstead ) call SayMessage ( severity, ModuleNameIn, It, &
+          & Advance, MLSFile, status )
+        if ( mustRepeat ) call output( trim(It), advance='yes' )
+      endif
+    end subroutine SayIt
+  end subroutine MLSL2Message
+
+  ! ---------------------------------------------  ProcessOptions  -----
+  ! Process the command line options; either from
+  ! (1) the command line directly, by calls to getNextArg; or
+  ! (2) parsing cmdline, if supplied as an arg
+  ! The return value will be the filename (if any)
+  function ProcessOptions ( cmdLine, separator ) result ( fileName )
+    use Allocate_Deallocate, only: AllocateLogUnit, TrackAllocates, &
+      & ClearOnAllocate, Allocate_Test, Deallocate_Test
+    use Evaluate_Variable_M, only: Define_Variable_As_String
+    use Io_Stuff, only: Get_Lun, Get_NLines, Read_TextFile
+    use L2ParInfo, only: Parallel, InitParallel, AccumulateSlaveArguments, &
+      & SnipLastSlaveArgument
+    use Lexer_M, only: CapIdentifiers
+    use Machine, only: Getarg, Hp, Io_Error, NeverCrash
+    use Matrixmodule_0, only: CheckBlocks, SubblockLength
+    use MLSCommon, only: FileNameLen
+    use MLSMessageModule, only: Setconfig
+    use MLSStringLists, only: Catlists, &
+      & Getstringelement, Getuniquelist, &
+      & Numstringelements, Removeswitchfromlist, &
+      & Stringelement, Switchdetail, Unquote
+    use PCFHdr, only: GlobalAttributes
+    use Printit_M, only: Set_Config
+    use Set_Toggles_M, only: Set_Toggles
+    use String_Table, only: Add_Include_Directory, Do_Listing
+    use Time_M, only: Time_Config
+    use Toggles, only: Switches
+    ! Args
+    character(len=*), intent(in), optional :: cmdLine
+    character(len=1), intent(in), optional :: separator
+    character(len=FileNameLen)             :: fileName
+    ! Internal variables
+    character(len=1) :: arg_rhs      ! 'n' part of 'arg=n'
+    character(len=16) :: aSwitch
+    integer :: Degree                ! index affecting degree of option
+    logical, parameter :: DEEBUG = .false.
+    logical :: Exist
+    logical :: exitLoop
+    logical :: Field_Is_Include      ! Field is include file path, not L2CF name
+    integer :: I, J
+    character(len=2048) :: LINE      ! Into which is read the command args
+    integer :: N
+    integer :: nLines
+    logical :: Opened
+    character(len=FileNameLen)             :: optsFile
+    character(len=FileNameLen), dimension(:), pointer  :: optLines => null()
+    character(len=2) :: quotes
+    integer :: Recl = 256          ! Record length for allocation log
+    character(len=len(switches)) :: removeSwitches = ''
+    integer :: Status
+    logical :: Switch                ! "First letter after -- was not n"
+    character(len=len(switches)) :: tempSwitches
+    integer :: V
+    character(len=2048) :: Word      ! Some text
+    ! Executable
+    quotes = char(34) // char(39)   ! {'"}
+    filename = 'helphelphelp' ! This means abnormal options--should dump help mesg
+    if ( present( cmdline ) .and. DEEBUG ) then
+      print *, 'cmdline: ', trim(cmdline)
+    end if
+    ! Before looking at command-line options, TOOLKIT is set to true
+    ! So here's a good place to put any SIPS-specific settings
+    ! --- SIPS_VERSION ---
+    parallel%maxFailuresPerMachine = 2
+    parallel%maxFailuresPerChunk = 1
+    removeSwitches='slv' ! Since slave output already saved to separate files
+    ! switches='red'  ! No longer a good idea
+    DEFAULT_HDFVERSION_WRITE = HDFVERSION_5
+    MLSMessageConfig%limitWarnings = 4 ! Print less
+    time_config%use_wall_clock = .true. ! SIPS_VERSION
+    ! call SetTruthPattern ( (/ '+ ', '- ' /) ) ! Print these instead of 'T' 'F'
+    i = 1 + hp
+    ! ----------------- deprecated and deplored ----------------------------
+    ! Man, we couldn't use the Lahey compiler even if we wanted to!
+    ! Next time, let's remove these commented-out lines
+    ! do ! Process Lahey/Fujitsu run-time options; they begin with "-Wl,"
+    !   call getNextArg ( i, line )
+    !   if ( line(1:4) /= '-Wl,' ) then
+    !     call SnipLastSlaveArgument ! Don't want slaves to see this
+    !     exit
+    !   end if
+    !   call AccumulateSlaveArguments(line) ! pass them to slave processes
+    !   i = i + 1
+    ! end do
+    ! Now process the other options
+    ! -------------------------------------------------------------
+    L2Options%command_line = ' '
+    field_is_include = .false.
+cmds: do
+      call getNextArg ( i, line )
+      if ( DEEBUG ) print *, i, trim(line)
+      if ( len_trim( line ) < 1 ) then
+        exit
+      end if
+      call processLine( line, filename, exitLoop, entireLine=.false. )
+      if ( DEEBUG ) print *, 'filename: ', trim(filename)
+      if ( exitLoop ) exit
+      i = i + 1
+    enddo cmds
+    ! Did we somehow miss the filename among the args?
+    if ( filename == 'helphelphelp' ) then
+      if ( DEEBUG ) print *, 'did we miss the filename?'
+      i = i + 1
+      call getNextArg ( i, line )
+      filename = line
+      if ( DEEBUG ) print *, 'filename: ', trim(filename)
+    end if
+  ! Are any switches inappropriate for master or for slave?
+    if ( parallel%master ) &
+      & removeSwitches = catLists( trim(removeSwitches), 'bool,walk' )
+    if ( parallel%slave ) &
+      & removeSwitches = catLists( trim(removeSwitches), 'chu,l2q,mas,slv' )
+    ! Remove any quote marks from RemoveSwitches array
+    tempSwitches = unquote( removeSwitches, quotes=quotes, options='-p' )
+    call GetUniqueList( tempSwitches, removeSwitches, numSwitches, &
+          & ignoreLeadingSpaces=.true., options='-eSL' )
+    ! Remove any quote marks from switches array
+    tempSwitches = switches
+    Switches = unquote( tempSwitches, quotes=quotes, options='-p' )
+    ! Remove any switches embedded in the removeSwitches option 'R'
+    if ( DEEBUG ) print *, 'starting List ', trim(switches) 
+    if ( DEEBUG ) print *, 'to remove ', trim(removeSwitches) 
+    do i=1, NumStringElements( removeSwitches, countEmpty=.true. )
+      call GetStringElement( trim(removeSwitches), aSwitch, i, &
+        & countEmpty=.true. )
+      call RemoveSwitchFromList( switches, tempSwitches, trim(aSwitch) )
+      switches = tempSwitches
+    end do
+    if ( DEEBUG ) print *, 'result List ', trim(switches) 
+
+    ! If we like, we could move these next few statements to a standalone
+    ! subroutine named something like processSwitches
+    parallel%verbosity = switchDetail(switches, 'mas') + 1
+    if ( switchDetail(switches, 'walk') > -1 ) &
+      & MLSMSG_Severity_to_walkback = MLSMSG_Warning
+    if (  L2Options%Overridden ) then
+      outputOptions%prunit =  L2Options%Output_print_unit
+      MLSMessageConfig%logFileUnit =  L2Options%Output_print_unit
+      if ( DEEBUG ) &
+        & print *, 'Setting logFileUnit ', MLSMessageConfig%logFileUnit
+      if ( any( L2Options%Output_print_unit == &
+        & (/ MSGLOGPRUNIT, BOTHPRUNIT /) ) ) MLSMessageConfig%useToolkit = .true.
+    endif
+    ! print *, 'Ended processing options'
+  contains
+    subroutine getNextArg( i, line )
+      ! Args
+      integer, intent(in)           :: i
+      character(len=*), intent(out) :: line
+      logical, parameter :: countEmpty = .false.
+      ! Executable
+      if ( present( cmdline ) ) then
+        line = StringElement ( cmdline, i, countEmpty, inseparator=separator )
+        ! print *, 'Using cmdline:', trim(cmdline)
+        ! print *, trim(line)
+      else
+        call getArg ( i, line )
+        ! print *, 'arg #:', i
+        ! print *, trim(line)
+      end if
+      ! Check for embedded spaces
+      if ( index(trim(line), ' ') > 0 ) then
+        line = "'" // trim(line) // "'"
+      endif
+      L2Options%command_line = trim(L2Options%command_line) // ' ' // trim(line)
+      call AccumulateSlaveArguments( line ) ! pass them to slave processes
+    end subroutine getNextArg
+
+    ! process the portion of the whole cmdline beginning with the 
+    ! current arg's start
+    ! recursive because some options, --set and --setf,
+    ! provoke more calls to this subroutine
+    recursive subroutine processLine( inLine, filename, exitLoop, entireLine  )
+      character(len=*), intent(in) :: inLine
+      character(len=*)             :: filename
+      logical, intent(out)         :: exitLoop
+      logical, intent(in)          :: entireLine ! is inLine entire cmdline?
+      ! Internal variables
+      integer :: iActual, K
+      character(len=2048) :: LINE      ! Into which is read the command args
+      ! Executable
+      line = inLine
+      exitLoop = .false.
+      if ( line(1:2) == '--' ) then       ! "word" options
+        line = lowercase(line)
+        n = 0
+        switch = .true.
+        if ( line(3:3) == 'n' ) then
+          switch = .false.
+          n = 1
+        end if
+        if ( line(3+n:8+n) == 'check ' ) then
+          checkl2cf = switch
+        ! Using lowercase so either --checkPaths or --checkpaths work
+        ! Perhaps we should do this for all multiletter options
+        ! (single-letter options are case-sensitive)
+        else if ( line(3+n:8+n) == 'checkp' ) then
+          checkPaths = switch
+        else if ( line(3+n:7+n) == 'backg' ) then
+          runinbackground = switch
+        else if ( line(3+n:7) == 'chunk' ) then
+          i = i + 1
+          ! print *, 'About to read chunk num'
+          call myNextArgument( i, inLine, entireLine, line )
+          parallel%chunkRange = line
+          ! print *, 'parallel%chunkRange: ', trim(parallel%chunkRange)
+        else if ( line(3+n:18+n) == 'clearonallocate ' ) then
+          clearonallocate = switch
+        else if ( line(3+n:7+n) == 'ckbk ' ) then
+          checkBlocks = switch
+        else if ( line(3+n:14+n) == 'countchunks ' ) then
+          countChunks = switch
+        else if ( line(3+n:7+n) == 'crash' ) then
+          MLSMessageConfig%crashOnAnyError = switch
+          neverCrash = .not. switch
+        else if ( line(3+n:8+n) == 'curver' ) then
+          i = i + 1
+          call myNextArgument( i, inLine, entireLine, line )
+        else if ( line(3+n:8+n) == 'defaul' ) then
+          showDefaults = switch
+        else if ( line(3+n:7+n) == 'delay' ) then
+          if ( line(8+n:) /= ' ' ) then
+            line(:7+n) = ' '
+          else
+            i = i + 1
+            call myNextArgument( i, inLine, entireLine, line )
+          end if
+          read ( line, *, iostat=status ) parallel%Delay
+          if ( status /= 0 ) then
+            call io_error ( "After --delay option", status, line )
+            stop
+          end if
+        else if ( line(3+n:7+n) == 'dump ' ) then
+          i = i + 1
+          call myNextArgument( i, inLine, entireLine, line )
+          specialDumpFile = trim(line)
+        else if ( line(3+n:14+n) == 'fwmparallel ' ) then
+          parallel%fwmParallel = .true.
+        else if ( line(3+n:7+n) == 'host ' ) then
+          i = i + 1
+          call myNextArgument( i, inLine, entireLine, line )
+          GlobalAttributes%hostName = trim(line)
+        else if ( line(3+n:9+n) == 'idents ' ) then
+          i = i + 1
+          call myNextArgument( i, inLine, entireLine, line )
+        else if ( line(3+n:7+n) == 'inst ' ) then
+          i = i + 1
+          call myNextArgument( i, inLine, entireLine, line )
+          GlobalAttributes%InstrumentName = trim(line)
+        else if ( line(3+n:6+n) == 'l1b=' ) then
+          arg_rhs = line(7+n:7+n)
+          select case(arg_rhs)
+          case('4')
+            LEVEL1_HDFVERSION = HDFVERSION_4
+          case('5')
+            LEVEL1_HDFVERSION = HDFVERSION_5
+          case default
+            LEVEL1_HDFVERSION = WILDCARDHDFVERSION
+          end select
+        else if ( line(3+n:8+n) == 'l2gpr=' ) then
+          arg_rhs = line(9+n:9+n)
+          select case(arg_rhs)
+          case('4')
+            DEFAULT_HDFVERSION_READ = HDFVERSION_4
+          case('5')
+            DEFAULT_HDFVERSION_READ = HDFVERSION_5
+          case default
+            DEFAULT_HDFVERSION_READ = WILDCARDHDFVERSION
+          end select
+        else if ( line(3+n:8+n) == 'l2gpw=' ) then
+          arg_rhs = line(9+n:9+n)
+          select case(arg_rhs)
+          case('4')
+            DEFAULT_HDFVERSION_WRITE = HDFVERSION_4
+          case('5')
+            DEFAULT_HDFVERSION_WRITE = HDFVERSION_5
+          case default
+            DEFAULT_HDFVERSION_WRITE = HDFVERSION_5
+          end select
+        else if ( line(3+n:5+n) == 'lac' ) then
+          ! print *, 'Got the laconic option'
+          ! The laconic command-line option trims logged output
+          ! resulting from calls to MLSMessageModule which normally prefix
+          ! each line with severity and module name; e.g.,
+          ! Info (output_m):         ..Exit ReadCompleteHDF5L2PC at 11:37:19.932 
+          ! Usage: laconic n where if n is
+          ! 0  just abbreviate module names and severities
+          ! 1  omit module names and severity unless Warning or worse
+          ! 2  omit module names and severity unless Error
+          ! 3  omit module names and severity completely
+          ! 11 skip printing anything unless Warning or worse
+          ! 12 skip printing anything unless Error
+          i = i + 1
+          if ( .not. switch ) then
+            MLSMessageConfig%MaxModuleNameLength     = 10
+            MLSMessageConfig%MaxSeverityNameLength   = 8
+            return
+          end if
+          call myNextArgument( i, inLine, entireLine, line )
+          read ( line, *, iostat=status ) degree
+          if ( status /= 0 ) then
+            call io_error ( "After --lac[onic] option", status, line )
+            stop
+          end if
+          ! MLSMessageConfig%suppressDebugs = (degree > 0) ! Why do this?
+          ! MLSMessageConfig%AbbreviateModSevNames = (degree == 0)
+          if ( degree == 0 ) then
+            MLSMessageConfig%MaxModuleNameLength     = 3
+            MLSMessageConfig%MaxSeverityNameLength   = 1
+          else if ( degree == 3 ) then
+            MLSMessageConfig%MaxModuleNameLength     = 0
+            MLSMessageConfig%MaxSeverityNameLength   = 0
+          end if
+          MLSMessageConfig%skipModuleNamesThr = mod(degree, 10) + 2
+          MLSMessageConfig%skipSeverityThr = mod(degree, 10) + 2
+          MLSMessageConfig%skipMessageThr = degree - 10 + 2
+          if ( degree > 9 ) then
+            removeSwitches = catLists(trim(removeSwitches), 'log' )
+            outputOptions%prunit = INVALIDPRUNIT
+          end if
+        else if ( line(3+n:7+n) == 'leak' ) then
+          checkLeak = .true.
+        else if ( line(3+n:5+n) == 'loc' ) then
+          call SnipLastSlaveArgument ! Don't want slaves to see this
+          i = i + 1
+          call myNextArgument( i, inLine, entireLine, line )
+          call SnipLastSlaveArgument ! Don't want slaves to see this
+          GlobalAttributes%productionLoc = trim(line)
+          if ( len_trim(GlobalAttributes%hostName) < 1 ) &
+            & GlobalAttributes%hostName = trim(line)
+        else if ( line(3+n:10+n) ==  'logalloc' ) then
+          i = i + 1
+          call myNextArgument( i, inLine, entireLine, filename )
+          call get_lun ( AllocateLogUnit, msg=.true. )
+          ! We can't call InitializeMLSFile yet because
+          ! the (string, character) tables are still empty and we would seg fault
+          ! (can't we fix InitializeMLSFile somehow?)
+          
+          ! So instead let's do all that "by hand"
+          AllocFile%name          = filename
+          ! AllocFile%type = l_ascii
+          AllocFile%content       = 'logAlloc'
+          AllocFile%access        = DFACC_RDWR
+          AllocFile%FileId%f_id  = AllocateLogUnit
+          open ( unit=AllocateLogUnit, access='sequential', action='readwrite', &
+            & form='formatted', &
+            & status='unknown', file=trim(fileName), recl=recl, iostat=status )
+          if ( status /= 0 ) then
+            call io_error ( "Failed to open file to log allocates", &
+              & status, filename )
+            stop
+          else
+            print *, 'opened allocations log file ' // trim(fileName) &
+              &  // ' unit ', AllocateLogUnit
+          endif
+        else if ( line(3+n:9+n) == 'master ' ) then
+          call SnipLastSlaveArgument ! Don't want slaves to see this
+          parallel%master = .true.
+          i = i + 1
+          call myNextArgument( i, inLine, entireLine, line )
+          call SnipLastSlaveArgument ! Don't want slaves to see this
+          parallel%slaveFilename = trim ( line )
+          call InitParallel ( 0, 0 )
+          word = '--slave'
+          write ( word(len_trim(word)+1:), * ) parallel%myTid
+          call AccumulateSlaveArguments(word)
+        else if ( line(3+n:14+n) == 'maxchunksize' ) then
+          if ( line(15+n:) /= ' ' ) then
+            line(:14+n) = ' '
+          else
+            i = i + 1
+            call myNextArgument( i, inLine, entireLine, line )
+          end if
+          read ( line, *, iostat=status ) maxChunkSize
+          if ( status /= 0 ) then
+            call io_error ( "After --maxChunkSize option", status, line )
+            stop
+          end if
+        else if ( line(3+n:21+n) == 'maxfailuresperchunk' ) then
+          if ( line(22+n:) /= ' ' ) then
+            line(:21+n) = ' '
+          else
+            i = i + 1
+            call myNextArgument( i, inLine, entireLine, line )
+          end if
+          read ( line, *, iostat=status ) parallel%maxFailuresPerChunk
+          if ( status /= 0 ) then
+            call io_error ( "After --maxFailuresPerChunk option", status, line )
+            stop
+          end if
+        else if ( line(3+n:23+n) == 'maxfailurespermachine' ) then
+          if ( line(24+n:) /= ' ' ) then
+            line(:23+n) = ' '
+          else
+            i = i + 1
+            call myNextArgument( i, inLine, entireLine, line )
+          end if
+          read ( line, *, iostat=status ) parallel%maxFailuresPerMachine
+          if ( status /= 0 ) then
+            call io_error ( "After --maxFailuresPerMachine option", status, line )
+            stop
+          end if
+        else if ( line(3+n:10+n) == 'memtrack' ) then
+          v = 1
+          if ( line(11+n:) /= ' ' ) then
+            read ( line(11+n:), *, iostat=status ) v
+            if ( status /= 0 ) then
+              call io_error ( "After --memtrack option", status, line )
+              stop
+            end if
+          else
+            call myNextArgument( i, inLine, entireLine, line )
+            read ( line, *, iostat=status ) j
+            if ( status == 0 ) then
+              i = i + 1
+              v = j
+            end if
+          end if
+          if ( switch ) then
+            trackAllocates = v
+          else
+            trackAllocates = 0
+          end if
+        else if ( line(3+n:9+n) == 'msgconf' ) then
+          if ( line(10+n:10+n) /= '=' ) then
+            i = i + 1
+            call myNextArgument( i, inLine, entireLine, line(11:) )
+          end if
+          call setConfig ( [ line(11:) ] )
+        else if ( line(3+n:4+n) == 'oa' ) then
+          NEED_L1BFILES = switch
+        else if ( line(3+n:6+n) == 'aura' ) then
+          AURA_L1BFILES = switch
+        else if ( line(3+n:8+n) == 'patch ' ) then
+          patch = switch
+        else if ( line(3+n:5+n) == 'pge ' ) then
+          call SnipLastSlaveArgument ! Don't want slaves to see this
+          i = i + 1
+          call myNextArgument( i, inLine, entireLine, line )
+          call SnipLastSlaveArgument ! Don't want slaves to see this
+          parallel%pgeName = trim(line)
+        else if ( line(3+n:6) == 'pidf' ) then
+          i = i + 1
+          call myNextArgument( i, inLine, entireLine, noteFile )
+        else if ( line(3+n:6+n) == 'quit' ) then
+          if ( .not. switch ) &
+            & QUIT_ERROR_THRESHOLD = MLSMSG_Error + 10 ! Try not to quit
+        else if ( line(3+n:6+n) == 'recl' ) then
+          if ( line(7+n:) /= ' ' ) then
+            line(:6+n) = ' '
+          else
+            i = i + 1
+            call myNextArgument( i, inLine, entireLine, line )
+          end if
+          read ( line, *, iostat=status ) recl
+          if ( status /= 0 ) then
+            call io_error ( "After --recl option", status, line )
+            stop
+          end if
+        else if ( line(3+n:6+n) == 'set ' ) then
+          ! While it may seem odd, there may be cases when it is convenient
+          ! e.g., when reading a set of name=value pairs from a file
+          i = i + 1
+          call myNextArgument( i, inLine, entireLine, line )
+          ! Must save i, which will otherwise be incremented
+          iActual = i
+          call parseNameValue ( line )
+        else if ( line(3+n:6+n) == 'setf' ) then
+          i = i + 1
+          call getNextArg ( i, optsFile )
+          call get_nLines ( optsFile, nLines )
+          if ( nLines < 0 ) then
+            print *, 'Sorry, unable to open opts file ' // trim(optsFile)
+            call MLSL2Message( MLSMSG_Error, ModuleName, &
+              & 'Sorry, unable to open opts file ' // trim(optsFile) )
+          elseif ( nLines < 1 ) then
+            print *, '0 lines in opts file ' // trim(optsFile)
+            call MLSL2Message( MLSMSG_Warning, ModuleName, &
+              & 'Unexpectedly empty opts file ' // trim(optsFile) )
+          endif
+          call allocate_test ( optLines, nLines, 'optLines', &
+            & trim(ModuleName) // 'processLine' )
+          optLines = ' '
+          call read_textFile( optsFile, optLines )
+          print *, 'options read from ' // trim(optsFile)
+          print *, 'nLines', nLines 
+          do k=1, nLines
+            print *,  trim(optLines(k))
+          enddo
+          ! Must save i, which will otherwise be incremented
+          iActual = i
+          do k=1, nLines
+            ! Ignore comments and blank lines
+            if ( DEEBUG ) print *, 'len(line)', len_trim(optLines(k)) 
+            if ( DEEBUG ) print *, 'is Comment', isComment( optLines(k), '#' ) 
+            if ( len_trim(optLines(k)) < 1 .or. &
+              & isComment( optLines(k), '#' ) ) cycle
+            !
+            ! Do we ignore lines w/o the "=" sign?
+            ! They could be used to turn on special flags to pre-process
+            ! the .opts file
+            ! e.g.
+            !   USEOPTSENV
+            !   nightday=$NIGHTDAY
+            ! and if you set the global environmental parameter
+            !    NIGHTDAY=day
+            ! then mlsl2 would see
+            !   nightday=day
+            !
+            ! If we don't ignore such lines, they will cause a parse error
+            !
+            ! The parameter ALLOWENVINOPTS, if TRUE.,
+            ! allows such lines
+            if ( index( optLines(k), '=' ) < 1 ) then
+              if ( ALLOWENVINOPTS ) then
+                cycle
+              else
+                print *, 'Sorry, unable to parse this opts line'
+                print *, '(expected something like lhs=rhs)'
+                print *, 'To allow environment flags in the opts file'
+                print *, 'MLSL2Options.f90 must be recompiled '
+                print *, 'after setting ALLOWENVINOPTS = .true. '
+                print *, trim(optLines(k))
+                call MLSL2Message( MLSMSG_Error, ModuleName, &
+                  & 'Sorry, Parse error in opts file ' // trim(optsFile) )
+              endif
+            endif
+            if ( DEEBUG ) print *, 'optLines(k)', trim(optLines(k)) 
+            call parseNameValue( optLines(k) )
+          enddo
+          call deallocate_test ( optLines, 'optLines', &
+            & trim(ModuleName) // 'processLine' )
+          i = iActual ! Restore i
+        else if ( line(3+n:6+n) == 'shar' ) then
+          SHAREDPCF = switch
+        else if ( line(3+n:9+n)  == 'skipdir' ) then
+          SKIPDIRECTWRITES = switch
+        else if ( line(3+n:10+n) == 'skipretr' ) then
+          L2Options%SkipRetrieval = switch .or. L2Options%SkipRetrievalOriginal
+          L2OptsCantResetSkipRetrvl = .true.
+        else if ( line(3+n:8+n) == 'skipph' ) then
+          i = i + 1
+          call myNextArgument( i, inLine, entireLine, line )
+          phasesToSkip = lowercase(line)
+        else if ( line(3+n:9+n) == 'skipsec' ) then
+          i = i + 1
+          call myNextArgument( i, inLine, entireLine, line )
+          sectionsToSkip = lowercase(line)
+        else if ( line(3+n:10+n) == 'slavemaf' ) then
+          if ( line(11+n:) /= ' ' ) then
+            line(:10+n) = ' '
+          else
+            i = i + 1
+            call myNextArgument( i, inLine, entireLine, line )
+          end if
+          read ( line, *, iostat=status ) slaveMAF
+          if ( status /= 0 ) then
+            call io_error ( "After --slaveMAF option", status, line )
+            stop
+          end if
+        else if ( line(3+n:7+n) == 'slave' ) then
+          parallel%slave = .true.
+          if ( line(8+n:) /= ' ' .and. .false.) then
+            line(:7+n) = ' '
+          else
+            i = i + 1
+            call myNextArgument( i, inLine, entireLine, line )
+          end if
+          read ( line, *, iostat=status ) parallel%masterTid
+          if ( status /= 0 ) then
+            call io_error ( "After --slave option", status, line )
+            stop
+          end if
+          MLSMessageConfig%SendErrMsgToMaster = .true.
+          MLSMessageConfig%masterTID = parallel%masterTid
+          if ( DEEBUG ) print *, 'masterTid: ', parallel%masterTid
+        else if ( line(3+n:8+n) == 'snoop ' ) then
+          snoopingActive = .true.
+        else if ( line(3+n:12+n) == 'snoopname' ) then
+          i = i + 1
+          call myNextArgument( i, inLine, entireLine, line )
+          snoopName = line
+        else if ( line(3+n:7+n) == 'state' ) then
+          if ( line(8+n:) /= ' ' ) then
+            line(:7+n) = ' '
+          else
+            i = i + 1
+            call myNextArgument( i, inLine, entireLine, line )
+          end if
+          read ( line, *, iostat=status ) stateFilledBySkippedRetrievals
+          if ( status /= 0 ) then
+            call io_error ( "After --state option", status, line )
+            stop
+          end if
+        else if ( line(3+n:9+n) == 'stdout ' ) then
+          ! print *, 'Got --stdout option'
+          if ( .not. switch ) then
+            L2Options%Output_print_unit = INVALIDPRUNIT
+            return
+          end if
+          i = i + 1
+          call myNextArgument( i, inLine, entireLine, line )
+          ! print *, 'Its arg: ', trim(line)
+          select case ( lowercase(line) )
+          case ( 'log' )
+            L2Options%Output_print_unit = MSGLOGPRUNIT
+          case ( 'out' )
+            L2Options%Output_print_unit = STDOUTPRUNIT
+          case ( 'both' )
+            L2Options%Output_print_unit = BOTHPRUNIT
+            ! MLSMessageConfig%logFileUnit = STDOUTLOGUNIT
+          case ( 'error' ) ! Send Output to stderr instead of stdout
+            outputOptions%prUnit = error_unit
+            outputOptions%prUnitLiteral = .true. ! In case Error_Unit <= 0
+            OutputOptions%buffered = .false.
+          case ( 'unbuffered' )
+            OutputOptions%buffered = .false.
+          case default
+            OutputOptions%name = trim(line)
+            OutputOptions%buffered = .false.
+            ! outputOptions%debugUnit = 32
+            ! Make certain prUnit won't be l2cf_unit
+            open( unit=l2cf_unit, status='unknown' )
+            call get_lun ( OutputOptions%prUnit, msg=.false. )
+            close( unit=l2cf_unit )
+            inquire( unit=OutputOptions%prUnit, exist=exist, opened=opened )
+            L2Options%Output_print_unit = OutputOptions%prUnit
+          end select
+          if (  L2Options%Overridden ) then
+            outputOptions%prunit =  L2Options%Output_print_unit
+            MLSMessageConfig%logFileUnit =  L2Options%Output_print_unit
+            if ( any( L2Options%Output_print_unit == &
+              & (/ MSGLOGPRUNIT, BOTHPRUNIT /) ) ) &
+              & MLSMessageConfig%useToolkit = .true.
+            if ( DeeBug ) &
+              & print *, 'Setting logFileUnit ', MLSMessageConfig%logFileUnit
+          endif
+        else if ( line(3+n:12+n) ==  'stopafter ' ) then
+          i = i + 1
+          call myNextArgument( i, inLine, entireLine, stopAfterSection )
+        else if ( line(3+n:12+n) ==  'stopwither' ) then
+          stopWithError = switch
+        else if ( line(3+n:11+n) == 'subblock ' ) then
+          i = i + 1
+          call myNextArgument( i, inLine, entireLine, line )
+          read ( line, *, iostat=status ) subBlockLength
+          if ( status /= 0 ) then
+            call io_error ( "After --subblock option", status, line )
+            stop
+          end if
+        else if ( line(3+n:9+n) == 'submit ' ) then
+          i = i + 1
+          call myNextArgument( i, inLine, entireLine, line )
+          parallel%submit = trim ( line )
+        else if ( line(3+n:5+n) == 'tk ' ) then
+          toolkit = switch
+          call set_config ( useToolkit = switch )
+        else if ( line(3+n:5+n) == 'uid' ) then
+          i = i + 1
+          call myNextArgument( i, inLine, entireLine, uniqueId )
+        else if ( line(3+n:6+n) == 'var ' ) then
+          i = i + 1
+          call myNextArgument( i, inLine, entireLine, line ) ! The variable
+          i = i + 1
+          call myNextArgument( i, inLine, entireLine, word ) ! Its value as a string
+          call define_variable_as_string ( line, word )
+        else if ( line(3+n:10+n) == 'verbose ' ) then
+          switches = catLists( trim(switches), &
+            & 'l2q,glob,mas,bool1,opt1,log,pro1,time,apr,phase' )
+          StampOptions%showTime = .true.
+          StampOptions%dateFormat = 'yyyy-mm-dd'
+        else if ( line(3+n:8+n) == 'versid' ) then
+          i = i + 1
+          call myNextArgument( i, inLine, entireLine, line )
+          ! Undo the substitution of '%' for space done during parseNameValue
+          current_version_id(1) = Replace( trim(line), '%', ' ' )
+          GlobalAttributes%PGEVersion = current_version_id(1)
+          ! print *, 'Changed current version id'
+          ! do j=1, size(current_version_id)
+          !   print *, current_version_id(j)
+          ! end do
+        else if ( line(3+n:10+n) == 'version ' ) then
+          print '(a)', current_version_id
+          stop
+        else if ( line(3+n:7+n) == 'wall ' ) then
+          time_config%use_wall_clock = switch
+        else if ( line(3:) == ' ' ) then  ! "--" means "no more options"
+          i = i + 1
+          call myNextArgument( i, inLine, entireLine, line )
+          exitLoop = .true.
+          return
+        else
+          if ( index( line, '-help' ) < 1 ) &
+            & print *, 'unrecognized option ', trim(line), ' ignored.'
+          ! call option_usage
+          filename = 'help'
+          exitLoop = .true.
+          return ! will dump help mesg
+        end if
+      else if ( line(1:1) == '-' ) then   ! "letter" options
+        j = 1
+jloop:do while ( j < len_trim(line) )
+          j = j + 1
+          select case ( line(j:j) )
+          case ( ' ' )
+            exit
+          case ( 'A' )
+            dump_tree = 0
+            if ( line(j+1:j+1) >= '0' .and. line(j+1:j+1) <= '9' ) then
+              dump_tree = ichar(line(j+1:j+1)) - ichar('0')
+              j = j + 1
+            end if
+          case ( 'a', 'c', 'f', 'g', 'l', 'p', 't' )
+            if ( line(j+1:j+1) >= '0' .and. line(j+1:j+1) <= '9' ) then
+              call set_toggles ( line(j:j+1) )
+              j = j + 1
+            else
+              call set_toggles ( line(j:j) )
+            end if
+          case ( 'D' ) ! This turns debugging on for some modules
+            MLSNamesAreDebug = catLists(trim(MLSNamesAreDebug), line(j+1:))
+            exit ! Took the rest of the string, so there can't be more options
+          case ( 'd' ); do_dump = 1
+            if ( line(j+1:j+1) >= '0' .and. line(j+1:j+1) <= '9' ) then
+              do_dump = ichar(line(j+1:j+1)) - ichar('0')
+              j = j + 1
+            end if
+          case ( 'E' ) ! Output usually sent to stdout goes to stderr
+            outputOptions%prUnit = error_unit
+            outputOptions%prUnitLiteral = .true. ! In case Error_Unit <= 0
+            OutputOptions%buffered = .false.
+          case ( 'h', 'H', '?' )     ! Describe command line usage
+            ! call option_usage
+            filename = 'help'
+            exitLoop = .true.
+            return ! will dump help mesg
+          case ( 'I' ); field_is_include = .true. ! Next field is include path
+          case ( 'K' ); capIdentifiers = .true.
+          case ( 'k' ); capIdentifiers = .false.
+          case ( 'M' ); outputOptions%prunit = MSGLOGPRUNIT ! -2
+          case ( 'm' ); outputOptions%prunit = STDOUTPRUNIT ! -1
+          case ( 'R' ) ! This does the opposite of what S does
+            removeSwitches = catLists(trim(removeSwitches), line(j+1:))
+            if ( DeeBug ) call Dump ( removeSwitches, 'switches to be removed' )
+            exit ! Took the rest of the string, so there can't be more options
+          case ( 'S' )
+            switches = catLists(trim(switches), line(j+1:))
+            exit ! Took the rest of the string, so there can't be more options
+          case ( 'T' )
+            timing = .true.
+            do
+              if ( j >= len(line) ) exit
+              if ( line(j+1:j+1) >= '0' .and. line(j+1:j+1) <= '9' ) then
+                if( line(j+1:j+1) /= '0' ) &
+                  & switches = catLists(trim(switches), 'time')
+                sectiontimes = &
+                  & switchDetail(switches, 'time') > -1 &
+                  & .and. &
+                  & switchDetail(switches, 'time') /= 1
+                totaltimes = sectiontimes .and. switchDetail(switches, 'time') /= 2
+              else if ( lowercase(line(j+1:j+1)) == 's' ) then
+                sectionTimingUnits = l_seconds
+              else if ( lowercase(line(j+1:j+1)) == 'm' ) then
+                sectionTimingUnits = l_minutes
+              else if ( lowercase(line(j+1:j+1)) == 'h' ) then
+                sectionTimingUnits = l_hours
+              end if
+              j = j + 1
+            end do
+          case ( 'V' ) ! This sets verbose to TRUE some modules
+            MLSNamesAreVerbose = catLists(trim(MLSNamesAreVerbose), line(j+1:))
+            exit ! Took the rest of the string, so there can't be more options
+          case ( 'v' ); do_listing = .true.
+          case ( 'w' )
+            MLSMessageConfig%limitWarnings = 1
+            if ( line(j+1:j+1) == 'p' ) then
+              RESTARTWARNINGS = .false.
+              j = j + 1
+            end if
+            if ( j < len_trim(line) ) then
+              call readIntsFromChars(line(j+1:), MLSMessageConfig%limitWarnings)
+              j = j + len_trim(line(j+1:))
+            end if
+          case default
+            print *, 'Unrecognized option -', line(j:j), ' ignored.'
+            ! call option_usage
+            filename = 'help'
+            return ! will dump help mesg
+          end select
+          ! i = i + 1
+        end do jLoop
+      else if ( field_is_include ) then
+        call add_include_directory ( line )
+        field_is_include = .false.
+      else
+        filename = line
+        exitLoop = .true. ! This must be the l2cf filename
+        print *, 'This must be the l2cf filename ' // trim(line)
+        return
+      end if
+    end subroutine ProcessLine
+
+    ! Separate lhs from rhs, then treat 
+    ! as cmdline options depending on whether
+    ! lhs is one character in length or two
+    ! rhs is true, false, or a different value
+    recursive subroutine parseNameValue( inLine )
+      character(len=*), intent(in) :: inLine
+      ! Local variables
+      logical, parameter :: DEEBUG = .false.
+      logical :: exitLoop
+      character(len=fileNameLen)      :: filename
+      character(len=len(inLine)+32)   :: line
+      character(len=fileNameLen)      :: name
+      character(len=fileNameLen)      :: valu
+      logical, parameter              :: countEmpty = .true.
+      character(len=1), parameter     :: eqls = '='
+      ! Executable
+      call SubstituteRuntimeBoolean ( inLine, line )
+      call getStringElement( line, name, 1, countEmpty, eqls )
+      call getStringElement( line, valu, 2, countEmpty, eqls )
+
+      ! -------------------------------------------------------------
+      ! This mechanism optionally sets level 2 to crash with
+      ! a walkback
+      ! if it logs a message containing a fatal string
+      ! E.g., put the next line in your opts file
+      ! CrashIfMsgSays=Drop. Dead.
+      ! and your run will automatically crash at the point where it logs
+      ! any message containing the string "Drop. Dead."
+      if ( lowercase(name) == 'crashifmsgsays' ) then
+        NeverCrash = .false.
+        MLSMessageConfig%CrashIfMsgSays = valu
+        return
+      endif
+      ! See also open_init for the same mechanism implemented in the PCF
+      ! -------------------------------------------------------------
+      
+      ! ---------------------------------------------------------------
+      ! Special means for setting user-defined types:
+      ! OutputOptions, AdvancedOptions, 
+      ! StampOptions, or TimeStampOptions
+      ! Of course, here is where you could
+      ! add similar means for setting other user-defined types
+      ! ---------------------------------------------------------------
+      if ( lowercase(name) == 'outputoptions' ) then
+        read(valu,*) OutputOptions
+        return
+      elseif ( lowercase(name) == 'advancedoptions' ) then
+        read(valu,*) AdvancedOptions
+        return
+      elseif ( lowercase(name) == 'stampoptions' ) then
+        read(valu,*) StampOptions
+        return
+      elseif ( lowercase(name) == 'timestampoptions' ) then
+        read(valu,*) TimeStampOptions
+        return
+      elseif ( lowercase(name) == 'globalattributes' ) then
+        read(valu,*) SomeGlobalAttributes
+        call SomeToGlobalAttributes
+        return
+      elseif ( lowercase(name) == 'l2options' ) then
+        if ( DEEBUG ) print *, 'Reading SomeL2Options'
+        read(valu,*) SomeL2Options
+        call SomeToL2Options
+        call DumpOptions
+        return
+      endif
+      ! ---------------------------------------------------------------
+
+      ! Beware of cases where valu contains an embedded space
+      ! Replace such spaces with '%'
+      if ( len_trim(name) < 1 .or. name == eqls ) return
+      if ( len_trim(valu) > 0 ) valu = Replace ( trim(valu), ' ', '%' )
+
+      ! Special cases:
+      ! We prefer to store these in valu
+      ! because it is long enough to hold, e.g., mutiple switches
+      ! print *, trim(name) // ' set = to ' // trim(valu)
+      if ( lowercase(name) == 'switches' ) then
+        valu = '-S' // valu
+        call ProcessLine( trim(valu), filename, exitLoop, entireLine=.true. )
+        return
+      elseif ( lowercase(name) == 'remove' ) then
+        valu = '-R' // valu
+        call ProcessLine( trim(valu), filename, exitLoop, entireLine=.true. )
+        if ( DEEBUG ) print *, 'encountered a remove name/value pair ' // trim(valu)
+        return
+      elseif ( lowercase(name) == 'debugging' ) then
+        valu = '-D' // valu
+        call ProcessLine( trim(valu), filename, exitLoop, entireLine=.true. )
+        return
+      elseif ( lowercase(name) == 'verboseness' ) then
+        valu = '-V' // valu
+        call ProcessLine( trim(valu), filename, exitLoop, entireLine=.true. )
+        return
+      endif
+
+      ! Standard cases: either single-character or multi-character
+      ! If false, prefix name with 'n'
+      if ( valu == 'false' ) name = 'n' // name
+      if ( len_trim(name ) < 2 ) then
+        ! single-character options
+        name = '-' // name
+      elseif ( isDigits(name(2:) ) ) then
+        ! single-character options plus "degree"; e.g. -f4
+        name = '-' // name
+      else
+        ! multi-character options
+        name = '--' // name
+      endif
+      if ( any( valu == (/ 'true ', 'false' /) ) ) then
+        ! print *, 'processing cmdline option ', trim(name)
+        call ProcessLine( trim(name), filename, exitLoop, entireLine=.true. )
+      else
+        ! print *, 'processing cmdline option ', trim(name) // ' ' // trim(valu)
+        call ProcessLine( trim(name) // ' ' // trim(valu), filename, exitLoop, &
+          & entireLine=.true. )
+      endif
+    end subroutine parseNameValue
+    
+    ! Return either 
+    ! (1) The ith command line argument (if entireLine is false)
+    ! (2) The remainder of inLine       (if entireLine is true)
+    subroutine myNextArgument( i, inLine, entireLine, line )
+      ! Args
+      integer, intent(in)           :: i
+      character(len=*), intent(in)  :: inLine
+      logical, intent(in)           :: entireLine
+      character(len=*), intent(out) :: line
+      ! Executable
+      if ( .not. entireLine ) then
+        call getNextArg ( i, line )
+        ! print *, 'not entireLine'
+        ! print *, trim(line)
+      else
+        line = stringElement( adjustl( inLine ), 2, &
+          & countEmpty=.false., inseparator=' ' )
+        ! print *, 'entireLine'
+        ! print *, trim(line)
+      endif
+      ! print *, 'my next arg: ', trim(line)
+    end subroutine myNextArgument
+    
+  end function ProcessOptions
+  
+  ! --------------------------------------------  RestoreDefaults  -----
+  ! Restore the options to their default values
+  ! Now some things it makes no sense to overwrite, so it makes
+  ! no sense to restore them either; e.g., CHECKPATHS, parallel, etc.
+  subroutine RestoreDefaults ( complete )
+  use MLSMessageModule, only: RestoreConfig
+  use Toggles, only: Init_Toggle
+    logical, intent(in), optional            :: complete ! Restore even quit, crash!
+    ! Internal variables
+    logical, parameter :: DEEBUG = .false.
+    logical                                  :: myComplete
+    ! Executable
+    myComplete                               = present(complete)
+    if ( myComplete )   myComplete           = complete
+    if ( DEEBUG ) print *, 'Entered RestoreDefaults; myComplete ', myComplete
+    L2Options%Output_print_unit             = -2
+    Default_hdfversion_write      = HDFVERSION_5
+    Default_hdfversion_read       = WILDCARDHDFVERSION
+    Level1_hdfversion             = WILDCARDHDFVERSION
+    Restartwarnings               = .true.
+    Sectiontimingunits            = L_SECONDS
+    Skipdirectwrites              = .false.    
+    Skipdirectwritesoriginal      = .false.    
+    ! Skipretrieval                 = .false.        
+    ! Skipretrievaloriginal         = .false. 
+    SlavesCleanUpSelves           = .true.
+    Specialdumpfile               = ' '
+    Statefilledbyskippedretrievals = 0.
+    Stopaftersection              = ' ' ! Blank means 
+    Stopwitherror                 = .false.         
+    call init_toggle
+
+    if ( .not. myComplete ) return
+    Need_L1BFiles                 = .true.
+    Aura_L1BFiles                 = .true.
+    Patch                         = .false. 
+    Checkpaths                    = .false.         
+    Toolkit                       =  .true. ! SIPS_VERSION
+    call restoreConfig ( complete )
+  end subroutine RestoreDefaults
+
+  ! --------------------------------------------  SomeToL2Options  -----
+  ! Restore the options to their default values
+  ! Now some things it makes no sense to overwrite, so it makes
+  ! no sense to restore them either; e.g., CHECKPATHS, parallel, etc.
+  subroutine SomeToL2Options
+    logical, parameter :: DEEBUG = .false.
+    ! Executable
+    if ( DEEBUG ) print *, 'Entered SomeToL2Options'
+    ! Here's the mechanism to prevent L2Options from resetting either
+    ! --SkipRetrieval on the cmdline, or
+    ! [n]SkipRetrieval=true
+    if ( .not. L2OptsCantResetSkipRetrvl ) then
+    L2Options%SkipRetrieval           =  SomeL2Options%SkipRetrieval        
+    else
+      call output( 'L2Options not permitted to reset SkipRetrieval', &
+        & advance='yes' )
+    endif
+    L2Options%SkipRetrievalOriginal   =  SomeL2Options%SkipRetrievalOriginal
+    L2Options%MLSL2Debug              =  SomeL2Options%MLSL2Debug           
+    L2Options%Output_print_unit       =  SomeL2Options%Output_print_unit    
+    L2Options%GPH_MissingValue        =  SomeL2Options%GPH_MissingValue     
+    L2Options%Overridden              =   .true.
+  end subroutine SomeToL2Options
+
+  ! -------------------------------------------------  DumpOptions  -----
+  ! Dump the L2 Options
+  ! Print the cmd line in blocs of BlocLength characters
+  ! We have not yet decided how to use the details arg
+  subroutine DumpOptions ( details )
+    use HighOutput, only: AddRow, AddRow_Divider, AddRow_Header, &
+      & OutputTable, StartTable
+    integer, optional, intent(in)                :: Details ! Not used at present
+
+    call startTable
+    call addRow_header ( 'Current Level 2 Options', 'c' )
+    call addRow_divider ( '-' )
+    call addRow ('Phase            ', trim( L2Options%CurrentPhaseName        ) )
+    call addRow ('Chunk            ', L2Options%CurrentChunkNumber         )
+    call addRow ('SkipRetrieval    ', L2Options%Skipretrieval         )
+    call addRow ('Send output to   ', trim( PrUnitname( L2Options%Output_print_unit )   ) )
+    call addRow ('MLSL2Debug       ', L2Options%MLSL2Debug         )
+    call addRow ('Overridden       ', L2Options%Overridden         )
+    call addRow ('GPH MissingValue ', L2Options%GPH_MissingValue     )
+    call addRow ('Cmdline          ', trim( L2Options%Command_line        ), &
+      & BlocLen=40, options='-w' )
+    call outputTable ( sep='|', border='-' )
+  end subroutine DumpOptions
+
+  ! -------------------------------------------------  DumpMacros  -----
+  ! Dump the runtime macros
+  ! Either simply, or in a table
+  subroutine DumpMacros ( details )
+    use Dump_1, only: Dump
+    use HighOutput, only: OutputTable
+    use MLSStringLists, only: List2Array, NumStringElements, SwitchDetail
+    use Toggles, only: Switches
+    integer, optional, intent(in)           :: Details
+    character(len=256), dimension(1024, 2)  :: KeysValues
+    integer                                 :: MyDetails
+    integer                                 :: NValues
+    ! Executable
+    myDetails = SwitchDetail( switches, 'bool' )
+    if ( present(details) ) myDetails = details
+    
+    if ( myDetails < -1 ) then
+      call dump( countEmpty, runTimeValues%lkeys, runTimeValues%lvalues, &
+        & 'Run-time macros', separator=runTimeValues%sep )
+    else
+      call List2Array( runtimevalues%lkeys, keysValues(2:,1), countEmpty, &
+        & inseparator=runTimeValues%sep, &
+        & ignoreLeadingSpaces=.true. )
+      call List2Array( runtimevalues%lvalues, keysValues(2:,2), countEmpty, &
+        & inseparator=runTimeValues%sep, &
+        & ignoreLeadingSpaces=.true. )
+      nValues = NumStringElements( runtimevalues%lkeys, countEmpty, &
+        & runTimeValues%sep )
+      ! The first line will be the header
+      keysValues(1,1) = 'names'
+      keysValues(1,2) = 'Level 2 run-time macro values'
+      nValues = nValues + 1
+      call outputTable( keysValues(1:nValues, :), border='-', headliner='-' )
+    endif
+  end subroutine DumpMacros
+
+  ! -----------------------------------  SubstituteRuntimeBoolean  -----
+  ! Substitute values for named runtime macros in the original
+  subroutine SubstituteRuntimeBoolean ( original, substitute )
+    ! Args:
+    character(len=*), intent(in)  :: original
+    character(len=*), intent(out) :: substitute
+    ! Internal variables
+    substitute = EvaluateFormula ( original, &
+      & runTimeValues%lvalues, runTimeValues%lkeys, runTimeValues%sep )
+  end subroutine SubstituteRuntimeboolean
+
+  ! ---------------------------------------  RemoveRuntimeBoolean  -----
+  ! Remove the named runtime macros
+  subroutine RemoveRuntimeBoolean ( NAME )
+  use MLSStringLists, only: GetHashElement, &
+    & RemoveHashArray, RemoveHashElement
+    ! Dummy args
+    character(len=*), intent(in) :: NAME
+    ! Internal variables
+    character (len=16)                            :: keyString
+    character (len=8)                             :: nCh
+    ! Executable
+    ! First: is the name an array-valued r/t Boolean?
+    keyString = trim(name) // 'n'
+    call GetHashElement( runTimeValues%lkeys, runTimeValues%lvalues, keyString, nCh, &
+      & countEmpty, runTimeValues%sep )
+    if ( nCh /= runTimeValues%sep ) then
+      ! Yes, it is array-valued; remove it
+      call RemoveHashArray( runTimeValues%lkeys, runTimeValues%lvalues, name, &
+        & countEmpty, runTimeValues%sep )
+    else
+      ! No, so is it scalar-valued?
+      call GetHashElement( runTimeValues%lkeys, runTimeValues%lvalues, name, nCh, &
+        & countEmpty, runTimeValues%sep )
+      if ( nCh == runTimeValues%sep ) return
+      ! Yes, it is scalar-valued; remove it
+      call RemoveHashElement( runTimeValues%lkeys, runTimeValues%lvalues, name, &
+        & countEmpty, runTimeValues%sep )
+    end if
+  end subroutine RemoveRuntimeBoolean
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: MLSL2Options.f90,v 2.134 2021/07/22 23:14:53 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module MLSL2Options
+!=============================================================================
+
+!
+! $Log: MLSL2Options.f90,v $
+! Revision 2.134  2021/07/22 23:14:53  pwagner
+! May print chunknum, phase on warning mesgs
+!
+! Revision 2.133  2020/04/09 23:19:20  pwagner
+! Prevent L2Options from overriding --SkipRetrieval on cmdline or in opts file
+!
+! Revision 2.132  2020/02/21 21:46:47  pwagner
+! Added Default_L2GPFormat_write so we can choose NetCDF4 format
+!
+! Revision 2.131  2020/02/07 01:16:51  pwagner
+! Update versId string and how to re-set it at runtime
+!
+! Revision 2.130  2019/08/01 23:48:13  pwagner
+! Some light Housekeeping
+!
+! Revision 2.129  2019/07/22 23:22:36  pwagner
+! Some light housekeeping, got rid of DumpOptions_old
+!
+! Revision 2.128  2019/07/09 20:53:22  pwagner
+! Use Table ccells to DumpOptions
+!
+! Revision 2.127  2019/05/15 17:28:39  pwagner
+! Warns if opts file is empty
+!
+! Revision 2.126  2019/05/13 23:34:52  pwagner
+! lengthened KeysValues; can usually hold full l2cf path_name now
+!
+! Revision 2.125  2019/04/18 16:25:40  pwagner
+! Allow env lines in opts file (which have no '=' sign)
+!
+! Revision 2.124  2019/03/08 00:08:55  pwagner
+! Various improvements; logging now works properly more reliably
+!
+! Revision 2.123  2019/02/13 17:33:22  pwagner
+! May override L2Options at runtime; added fields GPH_MissingValue and Overriden
+!
+! Revision 2.122  2019/01/10 21:45:59  pwagner
+! SwitchDetail behaviot means no need to discard multiple switches
+!
+! Revision 2.121  2018/12/07 00:20:26  pwagner
+! If cmdline says to skip retrievals, must skip even if l2cf says otherwise
+!
+! Revision 2.120  2018/10/05 20:49:21  pwagner
+! Dont mention switches to be removed unless dbugging
+!
+! Revision 2.119  2018/09/13 20:20:18  pwagner
+! Moved changeable options to new L2Options; added DumpOptions
+!
+! Revision 2.118  2018/07/27 23:15:40  pwagner
+! Renamed MLSMessage MLSL2Message
+!
+! Revision 2.117  2018/05/31 18:04:29  pwagner
+! The opts file can now override globalattributes
+!
+! Revision 2.116  2018/05/22 23:07:29  pwagner
+! May set InstrumentName by cmdline option
+!
+! Revision 2.115  2018/04/19 23:44:55  pwagner
+! Skip may take /nextChunk flag
+!
+! Revision 2.114  2018/02/09 01:05:40  pwagner
+! Improved comments
+!
+! Revision 2.113  2017/12/07 01:01:23  vsnyder
+! Don't use host-associated variable as a DO index
+!
+! Revision 2.112  2017/11/30 20:57:10  pwagner
+! opts file mechanism may now set OutputOptions, AdvancedOptions, etc.
+!
+! Revision 2.111  2017/03/24 22:59:23  pwagner
+! Made new opts file name CrashIfMsgSays that tells level 2 to crash with walkback if special msg logged
+!
+! Revision 2.110  2017/01/25 18:05:59  pwagner
+! May skip certain Phases named in phasesToSkip cmdline opt
+!
+! Revision 2.109  2016/11/04 19:30:54  pwagner
+! restoreDefaults less complete by default
+!
+! Revision 2.108  2016/07/28 01:45:07  vsnyder
+! Refactor dump and diff
+!
+! Revision 2.107  2016/05/27 00:05:43  pwagner
+! Should now correctly process options containing an embedded space
+!
+! Revision 2.106  2016/03/18 17:57:35  pwagner
+! Make certain the L2CF line cited is actal error, not end of section
+!
+! Revision 2.105  2016/01/12 00:51:35  pwagner
+! Repair error in treating 'name=false' option
+!
+! Revision 2.104  2015/09/24 22:08:34  pwagner
+! Added --maxChunkSize option
+!
+! Revision 2.103  2015/09/17 23:22:46  pwagner
+! Now give default value to MaxChunkSize for l2gp DirectWrites
+!
+! Revision 2.102  2015/07/16 20:51:08  pwagner
+! Should quit if cant open optsFile
+!
+! Revision 2.101  2015/03/05 18:11:04  pwagner
+! Some commandline options were being truncated in parseNameValue; fixed
+!
+! Revision 2.100  2015/03/04 18:33:32  pwagner
+! Commandline option --loc also sets hostName
+!
+! Revision 2.99  2015/02/13 00:19:54  pwagner
+! Nay dump macros more nicely as a Table
+!
+! Revision 2.98  2014/09/11 18:30:19  pwagner
+! Removed unused code; corrected parsing of, e.g., f1=true
+!
+! Revision 2.97  2014/09/05 01:10:03  vsnyder
+! Get Error_Unit from intrinsic ISO_Fortran_Env module.  Delete PID stuff.
+! Add -E and --stdout error to send output to stderr.
+!
+! Revision 2.96  2014/09/05 00:49:07  vsnyder
+! EmpiricalGeometry.f90 -- Wrong comment
+!
+! Revision 2.95  2014/09/02 18:03:12  pwagner
+! Correctly distinguish --pid and --pidf (though former may disappear)
+!
+! Revision 2.94  2014/08/12 23:31:35  pwagner
+! commandline options --backg and --pidf noteFile added
+!
+! Revision 2.93  2014/08/06 23:32:34  vsnyder
+! Comment out USE for InitializeMLSFile MLS_Openfile, which are referenced
+! only in commented-out code.  Remove USE for MLS_CloseFile, which is not
+! referenced.
+!
+! Revision 2.92  2014/08/05 00:21:29  pwagner
+! Add --pId and --uId to set id_strings for slave task
+!
+! Revision 2.91  2014/08/01 01:46:23  vsnyder
+! AllocFile needs SAVE attribute because it has default initialization
+!
+! Revision 2.90  2014/07/18 23:19:19  pwagner
+! Added record length for allocation log
+!
+! Revision 2.89  2014/06/30 23:27:47  pwagner
+! Can log allocations/deallocations to separate file
+!
+! Revision 2.88  2014/06/25 20:45:44  pwagner
+! Show options read from optsFile, if any
+!
+! Revision 2.87  2014/06/20 20:28:31  pwagner
+! Added --set, --setf, and -versId
+!
+! Revision 2.86  2014/06/16 20:29:05  pwagner
+! Updated version vsn id; --recl now affects global setting
+!
+! Revision 2.85  2014/06/03 22:41:33  pwagner
+! Prints phaseName, chunkNum on severe error mesgs
+!
+! Revision 2.84  2014/04/22 16:33:36  pwagner
+! MLSMessage now prints error message as eye-catching banner
+!
+! Revision 2.83  2014/04/10 00:44:58  pwagner
+! Moved more stuff here
+!
+! Revision 2.82  2014/04/09 00:44:49  vsnyder
+! Add --var variable value option.  Cycle instead of returning with
+! --nstdout option.  Set print unit immediately at --stdout option.
+!
+! Revision 2.81  2014/04/07 18:08:57  pwagner
+! Stop Writing MLSFile_T attributes by default; they confuse users
+!
+! Revision 2.80  2014/03/26 17:45:07  pwagner
+! added cmdline option --loc to set ProductionLocation
+!
+! Revision 2.79  2014/01/11 01:44:18  vsnyder
+! Decruftification
+!
+! Revision 2.78  2014/01/09 00:30:24  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
+! Revision 2.77  2013/12/12 02:10:07  vsnyder
+! Change type of do_dump from logical to integer
+!
+! Revision 2.76  2013/12/05 23:52:21  vsnyder
+! Process # in -A# option correctly
+!
+! Revision 2.75  2013/11/26 22:40:51  vsnyder
+! Change -A to -A[n] with n>0 meaning dump the entire tree, including the
+! type-checking stuff, and n==0 or absent meaning dump only the parser output.
+!
+! Revision 2.74  2013/11/20 01:00:45  pwagner
+! slaves were dumping chunkdivide data for all chunks; fixed
+!
+! Revision 2.73  2013/11/04 22:56:02  pwagner
+! Added -Vmodules and -Dmodules to turn on verbose and debug module-wide
+!
+! Revision 2.72  2013/09/24 23:29:45  vsnyder
+! Add -I option, Use Where instead of Source_Ref for messages
+!
+! Revision 2.71  2013/09/14 01:22:02  vsnyder
+! Add MSGConf option
+!
+! Revision 2.70  2013/09/06 20:49:17  pwagner
+! Solve another case where we repeated warnings
+!
+! Revision 2.69  2013/09/04 17:34:03  pwagner
+! Replaced '--cat' cmdline option; 'Catenate' now an Output section command
+!
+! Revision 2.68  2013/08/23 02:52:13  vsnyder
+! Move PrintItOut to PrintIt_m
+!
+! Revision 2.67  2013/08/17 00:22:14  pwagner
+! New cmdline arg relaxes some for non-Aura l1b datasets
+!
+! Revision 2.66  2013/08/13 23:05:48  pwagner
+! Removd some fugitive debug printing
+!
+! Revision 2.65  2013/08/12 23:49:41  pwagner
+! FindSomethings moved to MLSFinds module
+!
+! Revision 2.64  2013/06/19 00:40:34  pwagner
+! No longer automatically reduce Details of l2cf-born Dumps
+!
+! Revision 2.63  2013/06/14 01:26:37  vsnyder
+! handle --stdout unbuffered
+!
+! Revision 2.62  2013/06/12 02:37:36  vsnyder
+! Cruft removal
+!
+! Revision 2.61  2013/05/22 20:21:33  pwagner
+! Added removeRuntimeBoolean
+!
+! Revision 2.60  2013/05/17 00:52:58  pwagner
+! runtime value sep now achar(0)
+!
+! Revision 2.59  2013/02/12 18:14:15  pwagner
+! Removed SIPS_VERSION
+!
+! Revision 2.58  2013/02/04 22:01:02  pwagner
+! Added '--verbose' option; '--lac' more so
+!
+! Revision 2.57  2012/12/04 00:15:49  pwagner
+! Removed confisuion-causing OUTSIDEOVERLAPS and its cmdline option
+!
+! Revision 2.56  2012/08/30 20:54:08  pwagner
+! Improved adding, removing switches
+!
+! Revision 2.55  2012/08/16 17:46:17  pwagner
+! Added a level 2-savvy MLSMessage to interpose between level 2 procedures and lib version
+!
+! Revision 2.54  2012/07/18 00:38:00  pwagner
+! Consistent with module parameters for prUnit
+!
+! Revision 2.53  2012/07/10 15:23:42  pwagner
+! Works properly now; api adjusted for GetUniqueList
+!
+! Revision 2.52  2012/07/02 20:29:32  pwagner
+! Improve RestoreDefaults, some housekeeping
+!
+! Revision 2.51  2012/06/27 18:02:09  pwagner
+! May overwrite command line options with options field to phase spec
+!
+! Revision 2.50  2012/05/08 17:53:51  pwagner
+! Converted runtimes to character-valued; added DB types
+!
+! Revision 2.49  2011/06/29 21:43:23  pwagner
+! Some cases may safely omit l1b files
+!
+! Revision 2.48  2010/04/12 22:20:23  pwagner
+! Changed vers. id to conform with v3.30 sips id
+!
+! Revision 2.47  2009/11/05 00:31:21  pwagner
+! Updated version id
+!
+! Revision 2.46  2009/07/24 23:22:47  pwagner
+! Updated version id, copyright statement
+!
+! Revision 2.45  2009/06/23 18:46:18  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.44  2009/04/13 21:00:44  pwagner
+! update current version id to pre-v3
+!
+! Revision 2.43  2008/01/08 00:16:29  pwagner
+! Added SHAREDPCF so levels 1 and 2 can use same PCF
+!
+! Revision 2.42  2007/09/06 22:42:28  pwagner
+! Added slavesCleanUpSelves
+!
+! Revision 2.41  2007/06/21 22:35:22  pwagner
+! Updated version string to v2.22
+!
+! Revision 2.40  2007/02/06 23:15:48  pwagner
+! CURRENT_VERSION_ID now v2.21
+!
+! Revision 2.39  2006/11/01 20:37:38  pwagner
+! CURRENT_VERSION_ID now v2.20
+!
+! Revision 2.38  2006/07/27 23:06:17  pwagner
+! update CURRENT_VERSION_ID
+!
+! Revision 2.37  2006/07/21 20:09:56  pwagner
+! Can fill state even if skipping retrievals; select what section to stop after
+!
+! Revision 2.36  2006/06/13 00:16:27  pwagner
+! catenating split dgg/dgm files now on by default
+!
+! Revision 2.35  2006/02/21 19:19:27  pwagner
+! New things to create, refer to run time booleans in l2cf
+!
+! Revision 2.34  2006/02/10 21:13:30  pwagner
+! May specify skipRetrivel for particular Phases; dumps may go to special dumpfile
+!
+! Revision 2.33  2005/07/21 23:40:54  pwagner
+! Removed unneeded ILLEGALL1BRADID, MAXNUML1BRADIDS
+!
+! Revision 2.32  2005/06/22 18:57:02  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.31  2005/03/12 00:48:01  pwagner
+! Added RESTARTWARNINGS; corrected vsn id
+!
+! Revision 2.30  2004/12/14 00:04:24  pwagner
+! New early stop options added for quicker debugging
+!
+! Revision 2.29  2004/07/08 22:48:44  pwagner
+! Made SIPS_VERSION public
+!
+! Revision 2.28  2004/04/27 23:49:51  pwagner
+! Added SKIPDIRECTWRITES option
+!
+! Revision 2.27  2004/03/12 00:28:56  pwagner
+! At last hdf version at output increased to 5
+!
+! Revision 2.26  2004/01/23 01:06:39  pwagner
+! Added CATENATESPLITS
+!
+! Revision 2.25  2003/12/05 00:39:35  pwagner
+! Added patch option, section timing units
+!
+! Revision 2.24  2003/11/07 00:46:51  pwagner
+! New quicker preflight option: --checkPaths
+!
+! Revision 2.23  2003/10/09 23:58:34  pwagner
+! Updated CURRENT_VERSION_ID to 1.4
+!
+! Revision 2.22  2003/09/05 23:22:52  pwagner
+! Has new SKIPRETRIEVAL option
+!
+! Revision 2.21  2003/06/09 22:49:32  pwagner
+! Reduced everything (PCF, PUNISH.., etc.) to TOOLKIT
+!
+! Revision 2.20  2003/05/02 20:53:19  pwagner
+! Reordered to make SIPS-dependent section clearer; default_hdfversion at read now wildcard
+!
+! Revision 2.19  2002/10/08 17:36:21  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.18  2002/10/03 23:00:03  pwagner
+! You can set l1b, l2gp hdfversions on command line
+!
+! Revision 2.17  2002/08/28 22:25:42  pwagner
+! Moved LEVEL1_HDFVERSION, ILLEGALL1BRADID, MAXNUML1BRADIDS here from global_settings
+!
+! Revision 2.16  2002/03/14 23:38:28  pwagner
+! Gets HDFVERSION_4 and 5 from MLSFiles module
+!
+! Revision 2.15  2002/02/12 00:25:25  pwagner
+! New current_version_id parameter
+!
+! Revision 2.14  2002/02/05 00:44:03  pwagner
+! Added garbage collection stuff
+!
+! Revision 2.13  2002/01/29 23:49:38  pwagner
+! Separate DEFAULT_HDFVERSION_(READ)(WRITE)
+!
+! Revision 2.12  2002/01/23 21:48:16  pwagner
+! Added DEFAULT_HDFVERSION
+!
+! Revision 2.11  2001/09/28 17:57:47  pwagner
+! SIPS_VERSION controls other logical options
+!
+! Revision 2.10  2001/07/16 23:43:15  pwagner
+! With settable NORMAL_EXIT_STATUS
+!
+! Revision 2.9  2001/05/30 22:56:48  pwagner
+! Moved PCFL2CFSAMECASE here from OutputAndClose
+!
+! Revision 2.8  2001/05/15 23:46:08  pwagner
+! Removed 2 settings from MLSL2Opts; now in switches
+!
+! Revision 2.7  2001/05/11 23:48:23  pwagner
+! Changed to not echo globals; added note on SIPS
+!
+! Revision 2.6  2001/05/09 23:34:13  pwagner
+! Added ECHO_GLOBAL_STNGS LOG_TO_STDOUT
+!
+! Revision 2.5  2001/05/06 20:54:40  pwagner
+! Default settings should work for most jpl users
+!
+! Revision 2.4  2001/05/04 22:54:31  pwagner
+! Added TOOLKIT, CREATEMETADATA, PCF_FOR_INPUT
+!
+! Revision 2.3  2001/04/20 20:41:52  pwagner
+! Added QUIT_ERROR_THRESHOLD
+!
+! Revision 2.2  2001/04/17 20:26:28  pwagner
+! Added OUTPUT_PRINT_UNIT
+!
+! Revision 2.1  2001/04/16 23:53:10  pwagner
+! First commit
+!
+@
+
+
+2.134
+log
+@May print chunknum, phase on warning mesgs
+@
+text
+@d77 3
+d82 1
+a82 1
+    & 'v5.00 swdev team               ' , & 
+d1577 1
+a1577 1
+       "$Id: MLSL2Options.f90,v 2.133 2020/04/09 23:19:20 pwagner Exp $"
+d1589 3
+@
+
+
+2.133
+log
+@Prevent L2Options from overriding --SkipRetrieval on cmdline or in opts file
+@
+text
+@d29 1
+a29 1
+  use MLSMEssageModule, only: MLSMessageConfig, &
+d88 4
+d276 1
+a276 1
+  ! since they are publi by default anyway
+d376 14
+a404 12
+    myMessage = message
+    ! Do we have a current phase name?
+    if ( len_trim(L2Options%currentPhaseName) > 0 &
+      & .and. severity >= MLSMSG_Severity_to_quit ) then
+      myMessage = ' (' // trim(L2Options%currentPhaseName) // ') ' // myMessage
+    end if
+    ! Do we have a current chunk number?
+    if ( L2Options%CurrentChunkNumber > 0 &
+      & .and. severity >= MLSMSG_Severity_to_quit ) then
+      call writeIntsToChars( L2Options%CurrentChunkNumber, chunkChars )
+      myMessage = ' (chunk ' // trim(chunkChars) // ') ' // myMessage
+    end if
+d415 1
+d1574 1
+a1574 1
+       "$Id: MLSL2Options.f90,v 2.132 2020/02/21 21:46:47 pwagner Exp $"
+d1586 3
+@
+
+
+2.132
+log
+@Added Default_L2GPFormat_write so we can choose NetCDF4 format
+@
+text
+@d282 6
+d991 1
+d1447 4
+d1452 4
+d1567 1
+a1567 1
+       "$Id: MLSL2Options.f90,v 2.131 2020/02/07 01:16:51 pwagner Exp $"
+d1579 3
+@
+
+
+2.131
+log
+@Update versId string and how to re-set it at runtime
+@
+text
+@d25 1
+a25 1
+  use Intrinsic, only: L_Ascii, L_Hours, L_Minutes, L_Seconds
+d72 1
+a72 1
+  ! We used to update these lines before delivery to sips
+d74 1
+a74 1
+  ! versId=xxxxx in the optsfile
+d101 2
+d108 1
+a108 1
+  ! The following is FALSe only for runs that don't need orbit/attitude info
+d110 1
+a110 1
+  ! The following is FALSe only for runs that use non-Aura satellite data
+d297 2
+d1552 1
+a1552 1
+       "$Id: MLSL2Options.f90,v 2.130 2019/08/01 23:48:13 pwagner Exp $"
+d1564 3
+@
+
+
+2.130
+log
+@Some light Housekeeping
+@
+text
+@d72 5
+a76 2
+  ! Update these lines before delivery to sips
+  ! id to print out in response to "--version" command-line option    
+d79 1
+a79 1
+    & 'v4.23 swdev team               ' , & 
+d1548 1
+a1548 1
+       "$Id: MLSL2Options.f90,v 2.129 2019/07/22 23:22:36 pwagner Exp $"
+d1560 3
+@
+
+
+2.129
+log
+@Some light housekeeping, got rid of DumpOptions_old
+@
+text
+@d15 5
+d52 2
+a53 2
+  ! This module contains initial or permanent settings. Values
+  ! are chosen according to what is most suitable for the environment.
+d60 1
+a60 1
+
+d266 2
+a267 1
+  ! The following list of public procedures is for convenience only
+d577 2
+a578 1
+      if ( DEEBUG ) print *, 'Setting logFileUnit ', MLSMessageConfig%logFileUnit
+d775 1
+d783 2
+a784 1
+          open ( unit=AllocateLogUnit, access='sequential', action='readwrite', form='formatted', &
+d787 2
+a788 1
+            call io_error ( "Failed to open file to log allocates", status, filename )
+d884 2
+a885 1
+          if ( .not. switch ) QUIT_ERROR_THRESHOLD = MLSMSG_Error + 10 ! Try not to quit
+d1049 1
+a1049 1
+          case ( 'error' ) ! Output usually sent to stdout goes to stderr
+d1070 4
+a1073 2
+              & (/ MSGLOGPRUNIT, BOTHPRUNIT /) ) ) MLSMessageConfig%useToolkit = .true.
+            print *, 'Setting logFileUnit ', MLSMessageConfig%logFileUnit
+d1545 1
+a1545 1
+       "$Id: MLSL2Options.f90,v 2.128 2019/07/09 20:53:22 pwagner Exp $"
+d1557 3
+@
+
+
+2.128
+log
+@Use Table ccells to DumpOptions
+@
+text
+@d36 1
+a36 1
+    & Output, PrUnitName
+d173 1
+a173 1
+    character(len=2048) :: Originalcmds ! As set when executed
+a448 2
+    ! use MLSfiles, only: InitializeMLSfile
+    ! use MLSfiles, only: MLS_Openfile
+d503 1
+a767 4
+          ! status = InitializeMLSFile( AllocFile, content = 'logAlloc', &
+          !  &  name=trim(filename), &
+          !  & type=l_ascii, access=DFACC_RDWR )
+          ! call mls_openFile( AllocFile, status )
+d925 1
+d938 3
+d947 3
+d1375 1
+a1375 1
+  subroutine restoreDefaults ( complete )
+d1385 1
+a1385 1
+    if ( DEEBUG ) print *, 'Entered restoreDefaults; myComplete ', myComplete
+d1410 1
+a1410 1
+  end subroutine restoreDefaults
+d1436 1
+a1436 4
+    ! Internal variables
+    integer, parameter                           :: BlocLength = 56
+    integer                                      :: c1, c2
+    integer                                      :: i
+a1451 61
+  subroutine DumpOptions_old ( details )
+    use HighOutput, only: OutputTable
+    integer, optional, intent(in)                :: Details ! Not used at present
+    ! Internal variables
+    integer, parameter                           :: BlocLength = 56
+    integer                                      :: c1, c2
+    integer                                      :: i
+    integer                                      :: NBlocs
+    integer                                      :: NValues ! num of rows in table
+    character(len=BlocLength), dimension(48, 2)  :: KeysValues
+    ! Executable
+    call StyledOutput ( 'Current Level 2 Options', options="--Banner" )
+    
+    ! The first row will be the header
+    keysValues(1,1) = 'names'
+    keysValues(1,2) = 'values'
+
+    keysValues(2,1) = 'phase'
+    keysValues(2,2) = L2Options%CurrentPhaseName
+
+    keysValues(3,1) = 'chunk'
+    write( keysvalues(3,2), * ) L2Options%CurrentChunkNumber
+
+    keysValues(4,1) = 'SkipRetrieval'
+    write( keysValues(4,2), * ) L2Options%Skipretrieval
+
+    keysValues(5,1) = 'Send output to'
+    ! write( keysValues(5,2), * ) L2Options%Output_print_unit
+    keysValues(5,2) = PrUnitname( L2Options%Output_print_unit )
+    
+    nValues = 6
+    keysValues(nValues,1) = 'MLSL2Debug'
+    write( keysValues(nValues,2), * ) L2Options%MLSL2Debug
+
+    nValues = nValues + 1
+    keysValues(nValues,1) = 'Overridden'
+    write( keysValues(nValues,2), * ) L2Options%Overridden
+
+    nValues = nValues + 1
+    keysValues(nValues,1) = 'GPH MissingValue'
+    write( keysValues(nValues,2), '(1pe12.5)' ) L2Options%GPH_MissingValue
+
+    ! The remaining rows will be blocs of the cmd line
+    nBlocs = ( len_trim(L2Options%Command_line)-1 )/BlocLength + 1
+    nBlocs = min( 48-nValues, NBlocs )
+    nValues = nValues + 1
+    keysValues(nValues,1) = 'cmdline'
+    keysValues(nValues,2) = L2Options%Command_line(1:BlocLength)
+    c2 = BlocLength
+    do i=2, nBlocs
+      nValues = nValues + 1
+      c1 = c2 + 1
+      c2 = min(c2 + BlocLength, len_trim(L2Options%Command_line) )
+
+      keysValues(nValues,1) = ' '
+      keysValues(nValues,2) = L2Options%Command_line(c1:c2)
+    enddo
+
+    call outputTable( keysValues(1:nValues, :), border='-', headliner='-' )
+  end subroutine DumpOptions_old
+
+d1482 1
+a1482 1
+      keysValues(1,2) = 'values'
+d1527 1
+a1527 1
+  end subroutine removeRuntimeBoolean
+d1532 1
+a1532 1
+       "$Id: MLSL2Options.f90,v 2.127 2019/05/15 17:28:39 pwagner Exp $"
+d1544 3
+@
+
+
+2.127
+log
+@Warns if opts file is empty
+@
+text
+@d1431 23
+d1512 1
+a1512 1
+  end subroutine DumpOptions
+d1594 1
+a1594 1
+       "$Id: MLSL2Options.f90,v 2.126 2019/05/13 23:34:52 pwagner Exp $"
+d1606 3
+@
+
+
+2.126
+log
+@lengthened KeysValues; can usually hold full l2cf path_name now
+@
+text
+@d908 4
+a1431 2
+    use MLSStringLists, only: SwitchDetail
+    use Toggles, only: Switches
+d1571 1
+a1571 1
+       "$Id: MLSL2Options.f90,v 2.125 2019/04/18 16:25:40 pwagner Exp $"
+d1583 3
+@
+
+
+2.125
+log
+@Allow env lines in opts file (which have no '=' sign)
+@
+text
+@d1497 4
+a1500 4
+    integer, optional, intent(in)         :: Details
+    character(len=64), dimension(1024, 2) :: KeysValues
+    integer                               :: MyDetails
+    integer                               :: NValues
+d1569 1
+a1569 1
+       "$Id: MLSL2Options.f90,v 2.124 2019/03/08 00:08:55 pwagner Exp $"
+d1581 3
+@
+
+
+2.124
+log
+@Various improvements; logging now works properly more reliably
+@
+text
+@d270 1
+d469 1
+a469 1
+    integer :: DEGREE                ! index affecting degree of option
+d471 1
+a471 1
+    logical :: EXIST
+d478 1
+a478 1
+    logical :: OPENED
+d482 1
+a482 1
+    integer :: RECL = 256          ! Record length for allocation log
+d484 2
+a485 2
+    integer :: STATUS
+    logical :: SWITCH                ! "First letter after -- was not n"
+d488 1
+a488 1
+    character(len=2048) :: WORD      ! Some text
+d495 3
+a497 3
+  ! Before looking at command-line options, TOOLKIT is set to SIPS_VERSION
+  ! So here's a good place to put any SIPS-specific settings overriding defaults
+    ! SIPS_VERSION
+d503 1
+a503 1
+    MLSMessageConfig%limitWarnings = 4 ! 50 ! Why print all that stuff?
+d506 12
+a517 9
+    do ! Process Lahey/Fujitsu run-time options; they begin with "-Wl,"
+      call getNextArg ( i, line )
+      if ( line(1:4) /= '-Wl,' ) then
+        call SnipLastSlaveArgument ! Don't want slaves to see this
+        exit
+      end if
+      call AccumulateSlaveArguments(line) ! pass them to slave processes
+      i = i + 1
+    end do
+d519 1
+d529 1
+a529 1
+     if ( DEEBUG ) print *, 'filename: ', trim(filename)
+d535 1
+a535 1
+     if ( DEEBUG ) print *, 'did we miss the filename?'
+d539 1
+a539 1
+     if ( DEEBUG ) print *, 'filename: ', trim(filename)
+d547 1
+a547 1
+    tempSwitches = unquote(removeSwitches, quotes=quotes, options='-p')
+d552 1
+a552 1
+    Switches = unquote(tempSwitches, quotes=quotes, options='-p')
+d556 4
+a559 3
+    do i=1, NumStringElements(removeSwitches, countEmpty=.true.)
+      call GetStringElement(trim(removeSwitches), aSwitch, i, countEmpty=.true.)
+      call RemoveSwitchFromList(switches, tempSwitches, trim(aSwitch))
+d572 1
+a572 1
+      print *, 'Setting logFileUnit ', MLSMessageConfig%logFileUnit
+d598 1
+a598 1
+      call AccumulateSlaveArguments(line) ! pass them to slave processes
+d907 1
+a907 1
+            & 'Sorry, unable to open opts file ' // trim(optsFile) )
+d926 23
+d1095 1
+d1228 1
+d1281 1
+a1281 1
+        print *, 'Reading SomeL2Options'
+d1289 1
+a1289 1
+      ! Beware of cases where valu conatins an embedded space
+d1374 1
+d1379 1
+a1379 1
+    print *, 'Entered restoreDefaults; myComplete ', myComplete
+d1411 1
+d1413 1
+a1413 1
+    print *, 'Entered SomeToL2Options'
+a1434 1
+    integer                                      :: MyDetails
+a1438 2
+    myDetails = SwitchDetail( switches, 'opt' )
+    if ( present(details) ) myDetails = details
+d1569 1
+a1569 1
+       "$Id: MLSL2Options.f90,v 2.123 2019/02/13 17:33:22 pwagner Exp $"
+d1581 3
+@
+
+
+2.123
+log
+@May override L2Options at runtime; added fields GPH_MissingValue and Overriden
+@
+text
+@d181 2
+a182 4
+    logical            :: Overriden                     = .false. ! Did we ovrrid?         
+    ! Set the following to MSGLOGPRUNIT before delivering to sips;
+    ! Set the following to MSGLOGPRUNIT before delivering to sips;
+    ! Set the following to MSGLOGPRUNIT before delivering to sips;
+d269 1
+a269 1
+  logical, private, parameter :: countEmpty = .true. ! Except where overriden locally
+d563 7
+a569 2
+    if (  L2Options%Overriden ) &
+      & outputOptions%prunit =  L2Options%Output_print_unit
+d731 1
+a731 1
+          MLSMessageConfig%suppressDebugs = (degree > 0)
+d1020 7
+a1026 2
+        if (  L2Options%Overriden ) &
+          & outputOptions%prunit =  L2Options%Output_print_unit
+d1253 1
+d1386 1
+a1386 1
+    L2Options%Overriden               =   .true.
+d1424 1
+a1424 1
+    keysValues(5,1) = 'Output_print_unit'
+d1428 12
+d1441 5
+a1445 4
+    nBlocs = (len_trim(L2Options%Command_line)-1)/BlocLength + 1
+    nValues = 6
+    keysValues(6,1) = 'cmdline'
+    keysValues(6,2) = L2Options%Command_line(1:BlocLength)
+d1539 1
+a1539 1
+       "$Id: MLSL2Options.f90,v 2.122 2019/01/10 21:45:59 pwagner Exp $"
+d1551 3
+@
+
+
+2.122
+log
+@SwitchDetail behaviot means no need to discard multiple switches
+@
+text
+@d180 4
+a183 1
+    logical            :: MLSL2Debug                    = .false.               
+d192 1
+d273 20
+d565 2
+a566 2
+    if ( outputOptions%prunit /= INVALIDPRUNIT ) &
+      & outputOptions%prunit = L2Options%Output_print_unit
+d1017 2
+a1018 2
+          if ( outputOptions%prunit /= INVALIDPRUNIT ) &
+            & outputOptions%prunit = L2Options%Output_print_unit
+d1241 5
+d1365 15
+d1517 1
+a1517 1
+       "$Id: MLSL2Options.f90,v 2.121 2018/12/07 00:20:26 pwagner Exp $"
+d1529 3
+@
+
+
+2.121
+log
+@If cmdline says to skip retrievals, must skip even if l2cf says otherwise
+@
+text
+@d432 1
+a432 1
+      & Sortlist, Stringelement, Switchdetail, Unquote
+a450 1
+    integer, dimension(100)           :: iarray
+a523 3
+    tempSwitches = unquote(switches, quotes=quotes, options='-p')
+    ! Now we want to keep only the swich with the highest details level
+    call sortList( tempSwitches, iarray, ',', switches )
+d525 1
+a525 2
+    call GetUniqueList( tempSwitches, Switches, numSwitches, &
+          & ignoreLeadingSpaces=.true., options='-eSL' )
+d1473 1
+a1473 1
+       "$Id: MLSL2Options.f90,v 2.120 2018/10/05 20:49:21 pwagner Exp $"
+d1485 3
+@
+
+
+2.120
+log
+@Dont mention switches to be removed unless dbugging
+@
+text
+@d909 1
+a909 1
+          L2Options%Skipretrieval = switch
+d1478 1
+a1478 1
+       "$Id: MLSL2Options.f90,v 2.119 2018/09/13 20:20:18 pwagner Exp $"
+d1490 3
+@
+
+
+2.119
+log
+@Moved changeable options to new L2Options; added DumpOptions
+@
+text
+@d338 1
+a338 1
+      call SAYMESSAGE ( MLSMSG_TestWarning, ModuleNameIn, MyMessage, &
+d403 1
+a403 1
+        if ( .not. outputInstead ) call SAYMESSAGE ( severity, ModuleNameIn, It, &
+d549 1
+a549 1
+    contains
+d1105 1
+a1105 1
+            call Dump ( removeSwitches, 'switches to be removed' )
+d1478 1
+a1478 1
+       "$Id: MLSL2Options.f90,v 2.118 2018/07/27 23:15:40 pwagner Exp $"
+d1490 3
+@
+
+
+2.118
+log
+@Renamed MLSMessage MLSL2Message
+@
+text
+@d19 1
+a19 1
+  use HighOutput, only: Banner, OutputNamedValue
+d36 1
+a36 1
+    & Output
+d70 1
+a70 1
+  character(LEN=versIDLen), dimension(2)    :: current_version_id = (/ &
+d73 1
+a73 1
+  character(LEN=32)    :: UniqueID                    = ' '
+a74 9
+  ! Set the following to MSGLOGPRUNIT before delivering to sips;
+  ! (its possible values and their effects on normal output:
+  ! INVALIDPRUNIT  on MUTE, no output
+  ! STDOUTPRUNIT   sent to stdout (via print *, '...')
+  ! MSGLOGPRUNIT   sent to Log file (via MLSMessage)
+  ! BOTHPRUNIT     both stdout and Log file
+  ! > 0            Fortran 'unit=OUTPUT_PRINT_UNIT')
+  integer            :: Output_print_unit             = MSGLOGPRUNIT ! -2
+
+a113 2
+  character(len=32)  :: CurrentPhaseName              = ' '
+  integer            :: CurrentChunkNumber            = 0
+a117 4
+  ! Whether to skip doing the retrieval--a pre-flight checkout of paths, etc.
+  logical            :: SkipRetrieval                 = .false.        
+  ! A holding place for the above, allowing us to skip for some phases only
+  logical            :: SkipRetrievalOriginal         = .false. 
+a142 1
+  logical            :: MLSL2Debug                    = .false.               
+a144 2
+  character(len=2048) :: command_line ! All the opts
+  character(len=2048) :: ORIGINALCMDS ! As set when executed
+d169 25
+d197 1
+a197 1
+  ! Suggestion: settle on a standard name and use it exclusively
+d209 1
+d211 1
+d260 2
+a261 1
+  public :: dumpMacros
+d263 3
+a265 3
+  public :: processOptions
+  public :: removeRuntimeBoolean
+  public :: restoreDefaults
+d322 1
+a322 1
+    if ( MLSL2DEBUG ) then
+d347 1
+a347 1
+    if ( len_trim(currentPhaseName) > 0 &
+d349 1
+a349 1
+      myMessage = ' (' // trim(currentPhaseName) // ') ' // myMessage
+d352 1
+a352 1
+    if ( currentChunkNumber > 0 &
+d354 1
+a354 1
+      call writeIntsToChars( currentChunkNumber, chunkChars )
+d494 1
+a494 1
+    command_line = ' '
+d547 1
+a547 1
+      & outputOptions%prunit = OUTPUT_PRINT_UNIT
+d569 1
+a569 1
+      command_line = trim(command_line) // ' ' // trim(line)
+d909 1
+a909 1
+          SKIPRETRIEVAL = switch
+d967 1
+a967 1
+            OUTPUT_PRINT_UNIT = INVALIDPRUNIT
+d975 1
+a975 1
+            OUTPUT_PRINT_UNIT = MSGLOGPRUNIT
+d977 1
+a977 1
+            OUTPUT_PRINT_UNIT = STDOUTPRUNIT
+d979 1
+a979 1
+            OUTPUT_PRINT_UNIT = BOTHPRUNIT
+d996 1
+a996 1
+            OUTPUT_PRINT_UNIT = OutputOptions%prUnit
+d999 1
+a999 1
+            & outputOptions%prunit = OUTPUT_PRINT_UNIT
+d1315 15
+a1329 15
+    OUTPUT_PRINT_UNIT             = -2
+    DEFAULT_HDFVERSION_WRITE      = HDFVERSION_5
+    DEFAULT_HDFVERSION_READ       = WILDCARDHDFVERSION
+    LEVEL1_HDFVERSION             = WILDCARDHDFVERSION
+    RESTARTWARNINGS               = .true.
+    SECTIONTIMINGUNITS            = L_SECONDS
+    SKIPDIRECTWRITES              = .false.    
+    SKIPDIRECTWRITESORIGINAL      = .false.    
+    SKIPRETRIEVAL                 = .false.        
+    SKIPRETRIEVALORIGINAL         = .false. 
+    slavesCleanUpSelves           = .true.
+    SPECIALDUMPFILE               = ' '
+    STATEFILLEDBYSKIPPEDRETRIEVALS = 0.
+    STOPAFTERSECTION              = ' ' ! Blank means 
+    STOPWITHERROR                 = .false.         
+d1333 5
+a1337 5
+    NEED_L1BFILES                 = .true.
+    AURA_L1BFILES                 = .true.
+    PATCH                         = .false. 
+    CHECKPATHS                    = .false.         
+    TOOLKIT                       =  .true. ! SIPS_VERSION
+d1341 57
+d1478 1
+a1478 1
+       "$Id: MLSL2Options.f90,v 2.117 2018/05/31 18:04:29 pwagner Exp $"
+d1490 3
+@
+
+
+2.117
+log
+@The opts file can now override globalattributes
+@
+text
+@d252 1
+a252 1
+  public :: MLSMessage
+d261 1
+a261 1
+  ! -------------------------------------------------  MLSMessage  -----
+d273 3
+a275 3
+  ! (a) When  do we call output instead of MLSMessage? When are we mute?
+  ! (b) When must we call output and MLSMessage both?
+  subroutine MLSMessage ( Severity, ModuleNameIn, Message, &
+d382 1
+a382 1
+      ! and possibly rpeat it with output
+d398 1
+a398 1
+  end subroutine MLSMessage
+d868 1
+a868 1
+            call MLSMessage( MLSMSG_Error, ModuleName, &
+d1411 1
+a1411 1
+       "$Id: MLSL2Options.f90,v 2.116 2018/05/22 23:07:29 pwagner Exp $"
+d1423 3
+@
+
+
+2.116
+log
+@May set InstrumentName by cmdline option
+@
+text
+@d32 2
+a33 1
+  use PCFHdr, only: GlobalAttributes
+d1208 4
+d1411 1
+a1411 1
+       "$Id: MLSL2Options.f90,v 2.115 2018/04/19 23:44:55 pwagner Exp $"
+d1423 3
+@
+
+
+2.115
+log
+@Skip may take /nextChunk flag
+@
+text
+@d639 4
+d1406 1
+a1406 1
+       "$Id: MLSL2Options.f90,v 2.114 2018/02/09 01:05:40 pwagner Exp $"
+d1418 3
+@
+
+
+2.114
+log
+@Improved comments
+@
+text
+@d168 1
+d1402 1
+a1402 1
+       "$Id: MLSL2Options.f90,v 2.113 2017/12/07 01:01:23 vsnyder Exp $"
+d1414 3
+@
+
+
+2.113
+log
+@Don't use host-associated variable as a DO index
+@
+text
+@d1179 1
+a1181 1
+      endif
+d1184 2
+a1185 1
+      ! Special means for setting OutputOptions, AdvancedOptions, 
+d1187 3
+d1203 1
+d1305 1
+a1305 1
+    slavesCleanUpSelves           = .false.
+d1401 1
+a1401 1
+       "$Id: MLSL2Options.f90,v 2.112 2017/11/30 20:57:10 pwagner Exp $"
+d1413 3
+@
+
+
+2.112
+log
+@opts file mechanism may now set OutputOptions, AdvancedOptions, etc.
+@
+text
+@a253 1
+  integer, private :: i ! For loop constructor below
+d440 1
+a440 1
+    integer :: J, K
+d571 1
+a571 1
+      integer :: iActual
+d1028 1
+a1028 3
+          do j=1, size(current_version_id)
+            print *, current_version_id(j)
+          end do
+d1396 1
+a1396 1
+       "$Id: MLSL2Options.f90,v 2.111 2017/03/24 22:59:23 pwagner Exp $"
+d1408 3
+@
+
+
+2.111
+log
+@Made new opts file name CrashIfMsgSays that tells level 2 to crash with walkback if special msg logged
+@
+text
+@d33 2
+a34 2
+  use Output_M, only: OutputOptions, &
+    & InvalidPrUnit, StdoutPrUnit, MSGLogPrUnit, BothPrUnit, &
+d1017 2
+d1185 17
+d1399 1
+a1399 1
+       "$Id: MLSL2Options.f90,v 2.110 2017/01/25 18:05:59 pwagner Exp $"
+d1411 3
+@
+
+
+2.110
+log
+@May skip certain Phases named in phasesToSkip cmdline opt
+@
+text
+@d1159 1
+a1159 1
+      character(len=32)               :: name
+d1167 17
+d1188 1
+d1380 1
+a1380 1
+       "$Id: MLSL2Options.f90,v 2.109 2016/11/04 19:30:54 pwagner Exp $"
+d1392 3
+@
+
+
+2.109
+log
+@restoreDefaults less complete by default
+@
+text
+@d18 1
+a18 1
+  use HDF, only: dfacc_rdwr
+d20 3
+a22 3
+  use intrinsic, only: l_ascii, l_hours, l_minutes, l_seconds
+  use, intrinsic :: ISO_Fortran_Env, only: Error_Unit
+  use MLScommon, only: MLSFile_t, MLSNamesAreDebug, MLSNamesAreVerbose
+d25 4
+a28 4
+    & MLSMsg_error, MLSMsg_info, MLSMsg_testWarning, &
+    & MLSMSG_Severity_to_quit, MLSMsg_severity_to_walkback, MLSMsg_warning, &
+    & Bummer, sayMessage => MLSMessage
+  use MLSPCF2, only: MLSPCF_l1b_rad_end, MLSPCF_l1b_rad_start
+d30 7
+a36 7
+  use MLSStrings, only: isComment, isDigits, lowerCase, &
+    & readIntsFromChars, Replace, writeIntsToChars
+  use PCFHdr, only: globalAttributes
+  use output_m, only: outputOptions, &
+    & invalidPrUnit, StdoutPrUnit, MSGLogPrUnit, bothPrUnit, &
+    & output
+  use printit_m, only: defaultLogUnit, get_config, stdoutLogUnit
+d62 1
+a62 1
+  logical :: SHAREDPCF                               =  .false. 
+d72 1
+a72 1
+  character(LEN=32)    :: uniqueID                    = ' '
+d81 1
+a81 1
+  integer            :: OUTPUT_PRINT_UNIT             = MSGLOGPRUNIT ! -2
+d86 1
+a86 1
+  integer            :: QUIT_ERROR_THRESHOLD          = MLSMSG_Error
+d93 1
+a93 1
+  integer, parameter :: NORMAL_EXIT_STATUS            = 2
+d98 4
+a101 4
+  ! Assume hdf files w/o explicit hdfVersion field are this 
+  ! 4 corresponds to hdf4, 5 to hdf5 in L2GP, L2AUX, etc.        
+  integer            :: DEFAULT_HDFVERSION_WRITE      = HDFVERSION_5
+  ! Set to WILDCARDHDFVERSION if you wish to autodetect such files  
+d103 2
+a104 2
+  integer            :: DEFAULT_HDFVERSION_READ       = WILDCARDHDFVERSION  
+  integer            :: LEVEL1_HDFVERSION             = WILDCARDHDFVERSION  
+d106 4
+a109 4
+  ! The following is FALSE only for runs that don't need orbit/attitude info
+  logical            :: NEED_L1BFILES                 = .true.
+  ! The following is FALSE only for runs that use non-Aura satellite data
+  logical            :: AURA_L1BFILES                 = .true.
+d111 1
+a111 1
+  logical            :: PATCH                         = .false. 
+d113 1
+a113 1
+  logical            :: RESTARTWARNINGS               = .true.
+d117 3
+a119 3
+  logical            :: RUNINBACKGROUND               = .false.
+  ! File name to which to write "Finished" after slave sends sig_finished
+  character(len=255) :: NOTEFILE                      = ' '
+d121 3
+a123 3
+  integer            :: SECTIONTIMINGUNITS            = L_SECONDS
+  character(len=32)  :: currentPhaseName              = ' '
+  integer            :: currentChunkNumber            = 0
+d126 2
+a127 2
+  logical            :: SKIPDIRECTWRITES              = .false.    
+  logical            :: SKIPDIRECTWRITESORIGINAL      = .false.    
+d129 1
+a129 1
+  logical            :: SKIPRETRIEVAL                 = .false.        
+d131 1
+a131 1
+  logical            :: SKIPRETRIEVALORIGINAL         = .false. 
+d140 2
+a141 2
+  logical            :: SNOOPINGACTIVE                = .false.
+  character(len=132) :: SNOOPNAME                     = ''
+d144 3
+a146 3
+  character(len=255) :: SPECIALDUMPFILE               = ' '
+  ! What to fill state, outputSD with if skipping retrieval
+  real               :: STATEFILLEDBYSKIPPEDRETRIEVALS = 0.
+d148 1
+a148 1
+  character(len=16)  :: STOPAFTERSECTION              = ' ' ! Blank means 'no'
+d151 1
+a151 1
+  logical            :: STOPWITHERROR                 = .false.         
+d153 1
+a153 1
+  logical            :: CHECKPATHS                    = .false.         
+d155 3
+a157 3
+  logical            :: TOOLKIT                       = .true. ! SIPS_VERSION 
+  logical, parameter :: WRITEFILEATTRIBUTES           = .false.               
+  logical            :: MLSL2DEBUG                    = .false.               
+d169 5
+a173 5
+  integer, parameter :: L2CF_UNIT = 20  ! Unit # if L2CF is opened by Fortran
+  integer :: L2CFNODE        = 0        ! Line #, Col # of L2CF being executed
+  integer :: L2CFERRORNODE   = 0        ! Line #, Col # of L2CF at 1st error
+  integer :: NUMSWITCHES
+  integer :: RECL            = 20000    ! Record length for l2cf (but see --recl opt)
+d175 7
+a181 6
+  character(len=128) :: SECTIONSTOSKIP = ''
+  logical :: SECTIONTIMES    = .false.  ! Show times in each section
+  logical :: TOTALTIMES      = .false.  ! Show total times from start
+  logical :: SHOWDEFAULTS    = .false.  ! Just print default opts and quit
+  integer :: SLAVEMAF        = 0        ! Slave MAF for fwmParallel mode
+  logical :: TIMING          = .false.  ! -T option is set
+d189 2
+a190 2
+  integer, parameter :: RTVSTRINGLENGTH               = 1024
+  integer, parameter :: RTVARRAYLENGTH                = 128
+d192 1
+a192 1
+  type :: runTimeValues_T
+d270 4
+d277 1
+a277 1
+    use MLSStringlists, only: SwitchDetail
+d405 23
+a427 23
+    use allocate_deallocate, only: AllocateLogUnit, trackAllocates, &
+      & clearOnAllocate, allocate_test, deallocate_test
+    use Evaluate_Variable_m, only: Define_Variable_As_String
+    use io_stuff, only: get_lun, get_nLines, read_textFile
+    use l2ParInfo, only: parallel, initparallel, accumulateslavearguments, &
+      & sniplastslaveargument
+    use lexer_m, only: capidentifiers
+    use machine, only: getarg, hp, io_error, nevercrash
+    use matrixmodule_0, only: checkblocks, subblocklength
+    use MLSCommon, only: filenamelen
+!   use MLSfiles, only: initializeMLSfile
+!   use MLSfiles, only: MLS_openfile
+    use MLSMessageModule, only: setconfig
+    use MLSStringlists, only: catlists, &
+      & getstringelement, getuniquelist, &
+      & numstringelements, removeswitchfromlist, &
+      & sortlist, stringelement, switchdetail, unquote
+    use PCFHdr, only: globalattributes
+    use printit_m, only: set_config
+    use set_toggles_m, only: set_toggles
+    use string_table, only: add_include_directory, do_listing
+    use time_m, only: time_config
+    use toggles, only: switches
+d895 4
+d1247 2
+a1248 2
+  use MLSMessageModule, only: restoreConfig
+  use toggles, only: init_toggle
+d1298 1
+a1298 1
+    if ( myDetails < 1 ) then
+d1332 2
+a1333 2
+  use MLSStringLists, only: getHashElement, &
+    & removeHashArray, removeHashElement
+d1362 1
+a1362 1
+       "$Id: MLSL2Options.f90,v 2.108 2016/07/28 01:45:07 vsnyder Exp $"
+d1374 3
+@
+
+
+2.108
+log
+@Refactor dump and diff
+@
+text
+@d16 2
+a17 1
+  use dump_0, only: dump
+d86 1
+a86 1
+  integer, parameter :: QUIT_ERROR_THRESHOLD          = MLSMSG_Error
+d516 2
+a517 2
+    ! call outputNamedValue( 'starting List', trim(switches) )
+    ! call outputNamedValue( 'to remove', trim(removeSwitches) )
+d523 1
+a523 1
+    ! call outputNamedValue( 'result List', trim(switches) )
+d830 2
+d866 1
+d874 2
+d878 1
+a878 1
+            ! call outputnamedValue( 'optLines(k)', trim(optLines(k)) )
+d1081 1
+d1173 1
+d1237 1
+a1237 1
+  subroutine restoreDefaults
+d1240 7
+a1250 3
+    NEED_L1BFILES                 = .true.
+    AURA_L1BFILES                 = .true.
+    PATCH                         = .false. 
+d1257 1
+a1257 1
+    slavesCleanUpSelves            = .false.
+d1262 6
+d1270 1
+a1270 2
+    call init_toggle
+    call restoreConfig
+d1353 1
+a1353 1
+       "$Id: MLSL2Options.f90,v 2.107 2016/05/27 00:05:43 pwagner Exp $"
+d1365 3
+@
+
+
+2.107
+log
+@Should now correctly process options containing an embedded space
+@
+text
+@d268 6
+a273 6
+  subroutine MLSMessage ( SEVERITY, MODULENAMEIN, MESSAGE, &
+    & ADVANCE, MLSFILE, STATUS, ITEM )
+    use lexer_core, only: get_where
+    use MLSStringlists, only: switchDetail
+    use toggles, only: switches
+    use tree, only: where
+d1260 8
+a1267 7
+    use highOutput, only: outputTable
+    use MLSStringLists, only: List2Array, numStringElements, switchDetail
+    use toggles, only: switches
+    integer, optional, intent(in)         :: details
+    character(len=64), dimension(1024, 2) :: keysValues
+    integer                               :: myDetails
+    integer                               :: nValues
+d1292 1
+a1292 1
+  ! ---------------------------------------  SubstituteRuntimeBoolean  -----
+d1336 1
+a1336 1
+       "$Id: MLSL2Options.f90,v 2.106 2016/03/18 17:57:35 pwagner Exp $"
+d1348 3
+@
+
+
+2.106
+log
+@Make certain the L2CF line cited is actal error, not end of section
+@
+text
+@d398 1
+a398 1
+  function ProcessOptions ( cmdLine ) result ( fileName )
+d424 1
+d540 3
+a542 1
+        line = StringElement ( cmdline, i, countEmpty, inseparator=' ' )
+d545 2
+d548 4
+d1212 2
+d1217 2
+d1335 1
+a1335 1
+       "$Id: MLSL2Options.f90,v 2.105 2016/01/12 00:51:35 pwagner Exp $"
+d1347 3
+@
+
+
+2.105
+log
+@Repair error in treating 'name=false' option
+@
+text
+@d170 1
+d338 1
+a338 1
+      myMessage = ' (chunk' // trim(chunkChars) // ') ' // myMessage
+d341 4
+a344 1
+    if ( L2CFNode /= 0 ) then
+a690 1
+          ! print *, ' Processing lac option: degree ', degree
+d1322 1
+a1322 1
+       "$Id: MLSL2Options.f90,v 2.104 2015/09/24 22:08:34 pwagner Exp $"
+d1334 3
+@
+
+
+2.104
+log
+@Added --maxChunkSize option
+@
+text
+@d59 1
+a59 1
+  ! sharing a single PCF
+a158 4
+  ! This is the type to store runtime Booleans set and used by the l2cf
+  integer, parameter :: RTVSTRINGLENGTH               = 1024
+  integer, parameter :: RTVARRAYLENGTH                = 128
+  
+d181 3
+a183 7
+  ! The following list of public procedures is for convenience only
+  public :: dumpMacros
+  public :: MLSMessage
+  public :: processOptions
+  public :: removeRuntimeBoolean
+  public :: restoreDefaults
+  integer, private :: i ! For loop constructor below
+d185 4
+d201 8
+d243 1
+d245 8
+d1163 1
+d1166 3
+a1168 1
+      elseif ( len_trim(name ) < 2 ) then
+d1178 1
+a1178 1
+      if ( valu == 'true' ) then
+a1180 3
+      elseif ( valu == 'false' ) then
+        ! print *, 'processing cmdline option ', trim('n' // name)
+        call ProcessLine( trim('n' // name), filename, exitLoop, entireLine=.true. )
+d1183 2
+a1184 1
+        call ProcessLine( trim(name) // ' ' // trim(valu), filename, exitLoop, entireLine=.true. )
+d1319 1
+a1319 1
+       "$Id: MLSL2Options.f90,v 2.103 2015/09/17 23:22:46 pwagner Exp $"
+d1331 3
+@
+
+
+2.103
+log
+@Now give default value to MaxChunkSize for l2gp DirectWrites
+@
+text
+@d726 12
+d1305 1
+a1305 1
+       "$Id: MLSL2Options.f90,v 2.102 2015/07/16 20:51:08 pwagner Exp $"
+d1317 3
+@
+
+
+2.102
+log
+@Should quit if cant open optsFile
+@
+text
+@d69 1
+a69 1
+    & 'v4.20 swdev team               ' , & 
+d176 1
+d1293 1
+a1293 1
+       "$Id: MLSL2Options.f90,v 2.101 2015/03/05 18:11:04 pwagner Exp $"
+d1305 3
+@
+
+
+2.101
+log
+@Some commandline options were being truncated in parseNameValue; fixed
+@
+text
+@d815 5
+a819 1
+          ! call outputnamedValue( 'nLines', nLines )
+d1292 1
+a1292 1
+       "$Id: MLSL2Options.f90,v 2.100 2015/03/04 18:33:32 pwagner Exp $"
+d1304 3
+@
+
+
+2.100
+log
+@Commandline option --loc also sets hostName
+@
+text
+@d1114 2
+d1118 2
+a1119 2
+        name = '-S' // valu
+        call ProcessLine( trim(name), filename, exitLoop, entireLine=.true. )
+d1122 2
+a1123 2
+        name = '-R' // valu
+        call ProcessLine( trim(name), filename, exitLoop, entireLine=.true. )
+d1126 2
+a1127 2
+        name = '-D' // valu
+        call ProcessLine( trim(name), filename, exitLoop, entireLine=.true. )
+d1130 2
+a1131 2
+        name = '-V' // valu
+        call ProcessLine( trim(name), filename, exitLoop, entireLine=.true. )
+d1288 1
+a1288 1
+       "$Id: MLSL2Options.f90,v 2.99 2015/02/13 00:19:54 pwagner Exp $"
+d1300 3
+@
+
+
+2.99
+log
+@Nay dump macros more nicely as a Table
+@
+text
+@d69 1
+a69 1
+    & 'v4.11 swdev team               ' , & 
+d686 2
+d1212 1
+a1212 1
+    use MLSStringlists, only: List2Array, numStringElements, switchDetail
+d1255 1
+a1255 1
+  subroutine REMOVERUNTIMEBOOLEAN ( NAME )
+d1286 1
+a1286 1
+       "$Id: MLSL2Options.f90,v 2.98 2014/09/11 18:30:19 pwagner Exp $"
+d1298 3
+@
+
+
+2.98
+log
+@Removed unused code; corrected parsing of, e.g., f1=true
+@
+text
+@d957 1
+a957 1
+            & 'l2q,glob,mas,bool,opt1,log,pro1,time,apr,phase' )
+d1207 31
+a1237 3
+  subroutine DUMPMACROS
+  call dump( countEmpty, runTimeValues%lkeys, runTimeValues%lvalues, &
+      & 'Run-time macros', separator=runTimeValues%sep )
+d1284 1
+a1284 1
+       "$Id: MLSL2Options.f90,v 2.97 2014/09/05 01:10:03 vsnyder Exp $"
+d1296 3
+@
+
+
+2.97
+log
+@Get Error_Unit from intrinsic ISO_Fortran_Env module.  Delete PID stuff.
+Add -E and --stdout error to send output to stderr.
+@
+text
+@d29 1
+a29 1
+  use MLSStrings, only: isComment, lowerCase, &
+a438 1
+  if ( .true.  ) then ! SIPS_VERSION
+a446 5
+  else
+    ! SCF_VERSION
+    switches='0sl'
+    time_config%use_wall_clock = .false. ! SIPS_VERSION
+  end if
+d1134 3
+d1256 1
+a1256 1
+       "$Id: MLSL2Options.f90,v 2.96 2014/09/05 00:49:07 vsnyder Exp $"
+d1268 4
+@
+
+
+2.96
+log
+@EmpiricalGeometry.f90
+@
+text
+@d1259 1
+a1259 1
+       "$Id: MLSL2Options.f90,v 2.95 2014/09/02 18:03:12 pwagner Exp $"
+d1271 3
+@
+
+
+2.95
+log
+@Correctly distinguish --pid and --pidf (though former may disappear)
+@
+text
+@d13 1
+a13 1
+MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
+d20 2
+a21 2
+  use MLScommon, only: MLSFile_t, MLSNamesAreDebug, MLSNamesAreVerbose, &
+    & processID
+d114 2
+a115 2
+  ! (needed if they are to read their own processID
+  ! and allow the wrapper script to forcibly terminate hanging slave tasks)
+d117 1
+a117 2
+  ! File name from which to read pge's own pid and to which to write
+  ! "Finished" after slave sends sig_finished
+a791 3
+        else if ( line(3+n:6+n) == 'pid ' ) then
+          i = i + 1
+          call myNextArgument( i, inLine, entireLine, processId )
+a793 1
+          ! print *, 'About to read chunk num'
+d913 4
+d1021 4
+d1259 1
+a1259 1
+       "$Id: MLSL2Options.f90,v 2.94 2014/08/12 23:31:35 pwagner Exp $"
+d1266 1
+a1266 1
+END MODULE MLSL2Options
+d1271 3
+@
+
+
+2.94
+log
+@commandline options --backg and --pidf noteFile added
+@
+text
+@d793 1
+a793 1
+        else if ( line(3+n:5+n) == 'pid' ) then
+d1256 1
+a1256 1
+       "$Id: MLSL2Options.f90,v 2.93 2014/08/06 23:32:34 vsnyder Exp $"
+d1268 3
+@
+
+
+2.93
+log
+@Comment out USE for InitializeMLSFile MLS_Openfile, which are referenced
+only in commented-out code.  Remove USE for MLS_CloseFile, which is not
+referenced.
+@
+text
+@d113 7
+d566 2
+d796 4
+d1256 1
+a1256 1
+       "$Id: MLSL2Options.f90,v 2.92 2014/08/05 00:21:29 pwagner Exp $"
+d1268 5
+@
+
+
+2.92
+log
+@Add --pId and --uId to set id_strings for slave task
+@
+text
+@d385 2
+a386 1
+    use MLSfiles, only: initializeMLSfile, MLS_openfile, MLS_closefile
+d1243 1
+a1243 1
+       "$Id: MLSL2Options.f90,v 2.90 2014/07/18 23:19:19 pwagner Exp $"
+d1255 3
+@
+
+
+2.91
+log
+@AllocFile needs SAVE attribute because it has default initialization
+@
+text
+@d20 2
+a21 1
+  use MLScommon, only: MLSFile_t, MLSNamesAreDebug, MLSNamesAreVerbose
+d28 1
+d71 1
+d783 3
+d939 3
+d1082 2
+a1083 2
+    recursive subroutine parseNameValue( line )
+      character(len=*), intent(in) :: line
+d1086 8
+a1093 5
+      character(len=fileNameLen) :: filename
+      character(len=32)          :: name
+      character(len=fileNameLen) :: valu
+      logical, parameter :: countEmpty = .true.
+      character(len=1), parameter :: eqls = '='
+d1198 11
+d1254 3
+@
+
+
+2.90
+log
+@Added record length for allocation log
+@
+text
+@d193 1
+a193 1
+  type (MLSFile_T)            :: AllocFile
+d1219 1
+a1219 1
+       "$Id: MLSL2Options.f90,v 2.89 2014/06/30 23:27:47 pwagner Exp $"
+d1231 3
+@
+
+
+2.89
+log
+@Can log allocations/deallocations to separate file
+@
+text
+@d414 1
+a414 1
+    ! integer :: RECL = 20000          ! Record length for l2cf (but see --recl opt)
+d698 1
+a698 1
+            & status='unknown', file=trim(fileName), iostat=status )
+d1219 1
+a1219 1
+       "$Id: MLSL2Options.f90,v 2.88 2014/06/25 20:45:44 pwagner Exp $"
+d1231 3
+@
+
+
+2.88
+log
+@Show options read from optsFile, if any
+@
+text
+@d17 1
+d19 1
+a19 1
+  use intrinsic, only: l_hours, l_minutes, l_seconds
+d127 1
+a127 1
+  logical            :: SLAVESDOOWNCLEANUP            = .true.
+d193 1
+d372 1
+a372 1
+    use allocate_deallocate, only: trackAllocates, &
+d382 1
+d680 26
+d809 4
+a812 2
+          if ( switchDetail(switches, 'opt') > -1 ) &
+            call dump( optLines, 'options read from ' // trim(optsFile) )
+d1077 3
+a1079 3
+      character(len=32)  :: filename
+      character(len=32) :: name
+      character(len=32) :: valu
+d1168 1
+a1168 1
+    SLAVESDOOWNCLEANUP            = .false.
+d1187 1
+a1187 1
+  ! Dump the runtime macros
+d1219 1
+a1219 1
+       "$Id: MLSL2Options.f90,v 2.87 2014/06/20 20:28:31 pwagner Exp $"
+d1231 3
+d1372 1
+a1372 1
+! Added SLAVESDOOWNCLEANUP
+@
+
+
+2.87
+log
+@Added --set, --setf, and -versId
+@
+text
+@d16 1
+d780 2
+a1150 1
+  use dump_0, only: dump
+d1188 1
+a1188 1
+       "$Id: MLSL2Options.f90,v 2.86 2014/06/16 20:29:05 pwagner Exp $"
+d1200 3
+@
+
+
+2.86
+log
+@Updated version vsn id; --recl now affects global setting
+@
+text
+@d20 1
+a20 1
+  use MLSMESSAGEMODULE, only: MLSMessageConfig, &
+d25 2
+a26 1
+  use MLSStrings, only: lowerCase, readIntsFromChars, writeIntsToChars
+d28 4
+a31 4
+  use OUTPUT_M, only: OUTPUTOPTIONS, &
+    & INVALIDPRUNIT, STDOUTPRUNIT, MSGLOGPRUNIT, BOTHPRUNIT, &
+    & OUTPUT
+  use PRINTIT_M, only: DEFAULTLOGUNIT, GET_CONFIG, STDOUTLOGUNIT
+d62 3
+a64 2
+  ! id to print out in response to "--version" command-line option       
+  character(LEN=*), dimension(2), parameter :: CURRENT_VERSION_ID = (/ &
+d174 5
+a178 5
+  public :: DUMPMACROS
+  public :: MLSMESSAGE
+  public :: PROCESSOPTIONS
+  public :: REMOVERUNTIMEBOOLEAN
+  public :: RESTOREDEFAULTS
+d243 4
+a246 4
+    use LEXER_CORE, only: GET_WHERE
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use TOGGLES, only: SWITCHES
+    use TREE, only: WHERE
+d369 2
+a370 2
+    use ALLOCATE_DEALLOCATE, only: TRACKALLOCATES, &
+      & CLEARONALLOCATE
+d372 18
+a389 18
+    use IO_STUFF, only: GET_LUN
+    use L2PARINFO, only: PARALLEL, INITPARALLEL, ACCUMULATESLAVEARGUMENTS, &
+      & SNIPLASTSLAVEARGUMENT
+    use LEXER_M, only: CAPIDENTIFIERS
+    use MACHINE, only: GETARG, HP, IO_ERROR, NEVERCRASH
+    use MATRIXMODULE_0, only: CHECKBLOCKS, SUBBLOCKLENGTH
+    use MLSCOMMON, only: FILENAMELEN
+    use MLSMESSAGEMODULE, only: SetConfig
+    use MLSSTRINGLISTS, only: CATLISTS, &
+      & GETSTRINGELEMENT, GETUNIQUELIST, &
+      & NUMSTRINGELEMENTS, REMOVESWITCHFROMLIST, &
+      & SORTLIST, STRINGELEMENT, SWITCHDETAIL, UNQUOTE
+    use PCFHDR, only: GLOBALATTRIBUTES
+    use PRINTIT_M, only: SET_CONFIG
+    use SET_TOGGLES_M, only: SET_TOGGLES
+    use STRING_TABLE, only: ADD_INCLUDE_DIRECTORY, DO_LISTING
+    use TIME_M, only: TIME_CONFIG
+    use TOGGLES, only: SWITCHES
+d399 1
+d402 1
+a402 1
+    integer :: J
+d405 1
+d407 2
+d419 1
+a419 1
+    filename = 'help' ! This means abnormal options--should dump help mesg
+d458 78
+d553 2
+a554 1
+          call getNextArg ( i, line )
+d556 1
+d566 3
+d576 1
+a576 1
+            call getNextArg ( i, line )
+d585 1
+a585 1
+          call getNextArg ( i, line )
+d591 1
+a591 1
+          call getNextArg ( i, line )
+d595 1
+a595 3
+          call getNextArg ( i, line )
+        ! else if ( line(3+n:6+n) == 'kit ' ) then
+          ! MLSMessageConfig%useToolkit = switch
+d643 1
+a643 1
+            cycle
+d645 1
+a645 1
+          call getNextArg ( i, line )
+d673 1
+a673 1
+          call getNextArg ( i, line )
+d680 1
+a680 1
+          call getNextArg ( i, line )
+d692 1
+a692 1
+            call getNextArg ( i, line )
+d704 1
+a704 1
+            call getNextArg ( i, line )
+d720 1
+a720 1
+            call getNextArg ( i+1, line )
+d735 1
+a735 1
+            call getNextArg ( i, line(11:) )
+d747 1
+a747 1
+          call getNextArg ( i, line )
+d755 1
+a755 1
+            call getNextArg ( i, line )
+d762 29
+d799 1
+a799 1
+          call getNextArg ( i, line )
+d806 1
+a806 1
+            call getNextArg ( i, line )
+d819 1
+a819 1
+            call getNextArg ( i, line )
+d833 1
+a833 1
+          call getNextArg ( i, line )
+d840 1
+a840 1
+            call getNextArg ( i, line )
+d848 1
+d851 1
+a851 1
+            cycle
+d854 2
+a855 1
+          call getNextArg ( i, line )
+d881 1
+a881 1
+          call getNextArg ( i, stopAfterSection )
+d886 1
+a886 1
+          call getNextArg ( i, line )
+d894 1
+a894 1
+          call getNextArg ( i, line )
+d901 1
+a901 1
+          call getNextArg ( i, line ) ! The variable
+d903 1
+a903 1
+          call getNextArg ( i, word ) ! Its value as a string
+d908 9
+d926 3
+a928 2
+          call getNextArg ( i, line )
+          exit
+d930 2
+a931 1
+          print *, 'unrecognized option ', trim(line), ' ignored.'
+d934 1
+d968 1
+d1029 3
+a1031 1
+        exit ! This must be the l2cf filename
+d1033 1
+a1033 33
+      i = i + 1
+    enddo cmds
+    ! Did we somehow miss the filename among the args?
+    if ( filename == 'help' ) then
+      i = i + 1
+      call getNextArg ( i, line )
+      filename = line
+    end if
+  ! Are any switches inappropriate for master or for slave?
+    if ( parallel%master ) &
+      & removeSwitches = catLists( trim(removeSwitches), 'bool,walk' )
+    if ( parallel%slave ) &
+      & removeSwitches = catLists( trim(removeSwitches), 'chu,l2q,mas,slv' )
+    ! Remove any quote marks from RemoveSwitches array
+    tempSwitches = unquote(removeSwitches, quotes=quotes, options='-p')
+    call GetUniqueList( tempSwitches, removeSwitches, numSwitches, &
+          & ignoreLeadingSpaces=.true., options='-eSL' )
+    ! Remove any quote marks from switches array
+    tempSwitches = unquote(switches, quotes=quotes, options='-p')
+    ! Now we want to keep only the swich with the highest details level
+    call sortList( tempSwitches, iarray, ',', switches )
+    tempSwitches = switches
+    call GetUniqueList( tempSwitches, Switches, numSwitches, &
+          & ignoreLeadingSpaces=.true., options='-eSL' )
+    ! Remove any switches embedded in the removeSwitches option 'R'
+    ! call outputNamedValue( 'starting List', trim(switches) )
+    ! call outputNamedValue( 'to remove', trim(removeSwitches) )
+    do i=1, NumStringElements(removeSwitches, countEmpty=.true.)
+      call GetStringElement(trim(removeSwitches), aSwitch, i, countEmpty=.true.)
+      call RemoveSwitchFromList(switches, tempSwitches, trim(aSwitch))
+      switches = tempSwitches
+    end do
+    ! call outputNamedValue( 'result List', trim(switches) )
+d1035 62
+a1096 10
+    ! If we like, we could move these next few statements to a standalone
+    ! subroutine named something like processSwitches
+    parallel%verbosity = switchDetail(switches, 'mas') + 1
+    if ( switchDetail(switches, 'walk') > -1 ) &
+      & MLSMSG_Severity_to_walkback = MLSMSG_Warning
+    if ( outputOptions%prunit /= INVALIDPRUNIT ) &
+      & outputOptions%prunit = OUTPUT_PRINT_UNIT
+    ! print *, 'Ended processing options'
+    contains
+    subroutine getNextArg( i, line )
+d1099 2
+a1101 1
+      logical, parameter :: countEmpty = .false.
+d1103 2
+a1104 2
+      if ( present( cmdline ) ) then
+        line = StringElement ( cmdline, i, countEmpty, inseparator=' ' )
+d1106 6
+a1111 5
+        call getArg ( i, line )
+      end if
+      command_line = trim(command_line) // ' ' // trim(line)
+      call AccumulateSlaveArguments(line) ! pass them to slave processes
+    end subroutine getNextArg
+d1119 2
+a1120 2
+  use MLSMESSAGEMODULE, only: RESTORECONFIG
+  use TOGGLES, only: INIT_TOGGLE
+d1148 1
+a1148 1
+  use DUMP_0, only: DUMP
+d1156 2
+a1157 2
+  use MLSSTRINGLISTS, only: GETHASHELEMENT, &
+    & REMOVEHASHARRAY, REMOVEHASHELEMENT
+d1186 1
+a1186 1
+       "$Id: MLSL2Options.f90,v 2.85 2014/06/03 22:41:33 pwagner Exp $"
+d1198 3
+@
+
+
+2.85
+log
+@Prints phaseName, chunkNum on severe error mesgs
+@
+text
+@d63 1
+a63 1
+    & 'v4.00 swdev team               ' , & 
+d404 1
+a404 1
+    integer :: RECL = 20000          ! Record length for l2cf (but see --recl opt)
+d1031 1
+a1031 1
+       "$Id: MLSL2Options.f90,v 2.84 2014/04/22 16:33:36 pwagner Exp $"
+d1043 3
+@
+
+
+2.84
+log
+@MLSMessage now prints error message as eye-catching banner
+@
+text
+@d17 2
+a18 2
+  use INTRINSIC, only: L_HOURS, L_MINUTES, L_SECONDS
+  use MLSCOMMON, only: MLSFILE_T, MLSNAMESAREDEBUG, MLSNAMESAREVERBOSE
+d22 1
+a22 1
+    & MLSMsg_severity_to_walkback, MLSMsg_warning, &
+d24 3
+a26 2
+  use MLSPCF2, only: MLSPCF_L1B_RAD_END, MLSPCF_L1B_RAD_START
+  use PCFHDR, only: GLOBALATTRIBUTES
+d255 1
+d297 14
+d314 1
+a314 1
+        & before='***** At ', after=': ' // Message )
+d316 1
+a316 1
+      myMessage = '(no tree node): ' // message
+a381 1
+    use MLSSTRINGS, only: LOWERCASE, READINTSFROMCHARS
+d1031 1
+a1031 1
+       "$Id: MLSL2Options.f90,v 2.83 2014/04/10 00:44:58 pwagner Exp $"
+d1043 3
+@
+
+
+2.83
+log
+@Moved more stuff here
+@
+text
+@d16 1
+a16 1
+  use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
+d19 5
+a23 5
+  use MLSFILES, only: WILDCARDHDFVERSION, HDFVERSION_4, HDFVERSION_5
+  use MLSMESSAGEMODULE, only: MLSMESSAGECONFIG, &
+    & MLSMSG_ERROR, MLSMSG_INFO, MLSMSG_TESTWARNING, &
+    & MLSMSG_SEVERITY_TO_WALKBACK, MLSMSG_WARNING, &
+    & SAYMESSAGE => MLSMESSAGE
+d329 13
+a341 3
+      if ( .not. outputInstead ) call SAYMESSAGE ( severity, ModuleNameIn, It, &
+        & Advance, MLSFile, status )
+      if ( mustRepeat ) call output( trim(It), advance='yes' )
+d1016 1
+a1016 1
+       "$Id: MLSL2Options.f90,v 2.82 2014/04/09 00:44:49 vsnyder Exp $"
+d1028 3
+@
+
+
+2.82
+log
+@Add --var variable value option.  Cycle instead of returning with
+--nstdout option.  Set print unit immediately at --stdout option.
+@
+text
+@d107 3
+d123 5
+d140 3
+a142 3
+  logical            :: TOOLKIT                       =  .true. ! SIPS_VERSION
+  logical, parameter :: WRITEFILEATTRIBUTES           = .false.
+  logical            :: MLSL2DEBUG                    =  .false.
+a359 1
+    use SNOOPMLSL2, only: SNOOPINGACTIVE, SNOOPNAME
+d1006 1
+a1006 1
+       "$Id: MLSL2Options.f90,v 2.81 2014/04/07 18:08:57 pwagner Exp $"
+d1018 4
+@
+
+
+2.81
+log
+@Stop Writing MLSFile_T attributes by default; they confuse users
+@
+text
+@d265 1
+a265 1
+    endif
+d273 1
+a273 1
+    endif
+d280 1
+a280 1
+    elseif ( severity == MLSMSG_Warning ) then
+d286 1
+a286 1
+    endif
+d314 1
+a314 1
+    endif
+d335 1
+d384 1
+a384 1
+    endif
+d401 1
+a401 1
+    i = 1+hp
+d407 1
+a407 1
+      endif
+d414 1
+a414 1
+    cmds:    do
+d419 1
+a419 1
+      endif
+d525 1
+a525 1
+          endif
+d537 1
+a537 1
+          elseif ( degree == 3 ) then
+d540 1
+a540 1
+          endif
+d548 1
+a548 1
+          endif
+d702 2
+a703 2
+            return
+          endif
+d727 2
+d749 7
+a755 1
+        else if ( line(3+n:9+n) == 'verbose' ) then
+d875 1
+a875 1
+    endif
+d921 1
+a921 1
+      endif
+d993 1
+a993 1
+    endif
+d999 1
+a999 1
+       "$Id: MLSL2Options.f90,v 2.80 2014/03/26 17:45:07 pwagner Exp $"
+d1011 3
+@
+
+
+2.80
+log
+@added cmdline option --loc to set ProductionLocation
+@
+text
+@d133 1
+d990 1
+a990 1
+       "$Id: MLSL2Options.f90,v 2.79 2014/01/11 01:44:18 vsnyder Exp $"
+d1002 3
+@
+
+
+2.79
+log
+@Decruftification
+@
+text
+@d25 1
+d549 6
+d989 1
+a989 1
+       "$Id: MLSL2Options.f90,v 2.78 2014/01/09 00:30:24 pwagner Exp $"
+d1001 3
+@
+
+
+2.78
+log
+@Some procedures formerly in output_m now got from highOutput
+@
+text
+@a246 1
+    character(len=16) :: myChars
+d982 1
+a982 1
+       "$Id: MLSL2Options.f90,v 2.77 2013/12/12 02:10:07 vsnyder Exp $"
+d994 3
+@
+
+
+2.77
+log
+@Change type of do_dump from logical to integer
+@
+text
+@d16 1
+d27 1
+a27 1
+    & OUTPUT, OUTPUTNAMEDVALUE
+d983 1
+a983 1
+       "$Id: MLSL2Options.f90,v 2.76 2013/12/05 23:52:21 vsnyder Exp $"
+d995 3
+@
+
+
+2.76
+log
+@Process # in -A# option correctly
+@
+text
+@d144 1
+a144 1
+  logical :: DO_DUMP = .false.     ! Dump declaration table
+d330 1
+a330 1
+  function processOptions ( cmdline ) result ( filename )
+d354 2
+a355 2
+    character(len=*), intent(in), optional :: cmdline
+    character(len=FileNameLen)             :: filename
+d781 5
+a785 1
+          case ( 'd' ); do_dump = .true.
+d982 1
+a982 1
+       "$Id: MLSL2Options.f90,v 2.75 2013/11/26 22:40:51 vsnyder Exp $"
+d994 3
+@
+
+
+2.75
+log
+@Change -A to -A[n] with n>0 meaning dump the entire tree, including the
+type-checking stuff, and n==0 or absent meaning dump only the parser output.
+@
+text
+@d767 4
+a770 2
+            if ( line(j+1:j+1) >= '0' .and. line(j+1:j+1) <= '9' ) &
+              & dump_tree = ichar(line(j+1:j+1)) - ichar('0')
+d978 1
+a978 1
+       "$Id: MLSL2Options.f90,v 2.74 2013/11/20 01:00:45 pwagner Exp $"
+d990 4
+@
+
+
+2.74
+log
+@slaves were dumping chunkdivide data for all chunks; fixed
+@
+text
+@d145 1
+a145 1
+  logical :: DUMP_TREE = .false.   ! Dump tree after parsing
+d765 4
+a768 1
+          case ( 'A' ); dump_tree = .true.
+d976 1
+a976 1
+       "$Id: MLSL2Options.f90,v 2.73 2013/11/04 22:56:02 pwagner Exp $"
+d988 3
+@
+
+
+2.73
+log
+@Added -Vmodules and -Dmodules to turn on verbose and debug module-wide
+@
+text
+@d854 1
+a854 1
+      & removeSwitches = catLists( trim(removeSwitches), 'chu,chu1,l2q,mas,slv' )
+d867 2
+d874 1
+d973 1
+a973 1
+       "$Id: MLSL2Options.f90,v 2.72 2013/09/24 23:29:45 vsnyder Exp $"
+d985 3
+@
+
+
+2.72
+log
+@Add -I option, Use Where instead of Source_Ref for messages
+@
+text
+@d17 3
+a19 3
+  use MLSCOMMON, only: MLSFILE_T
+  use MLSFiles, only: WILDCARDHDFVERSION, HDFVERSION_4, HDFVERSION_5
+  use MLSMessageModule, only: MLSMESSAGECONFIG, &
+d27 1
+a27 1
+  use PrintIt_m, only: DEFAULTLOGUNIT, GET_CONFIG, STDOUTLOGUNIT
+d229 1
+a229 1
+    use Lexer_Core, only: Get_Where
+d232 1
+a232 1
+    use TREE, only: Where
+d347 1
+a347 1
+    use PrintIt_m, only: Set_Config
+d350 1
+a350 1
+    use STRING_TABLE, only: Add_Include_Directory, DO_LISTING
+d773 3
+d813 3
+d970 1
+a970 1
+       "$Id: MLSL2Options.f90,v 2.71 2013/09/14 01:22:02 vsnyder Exp $"
+d982 3
+@
+
+
+2.71
+log
+@Add MSGConf option
+@
+text
+@d229 1
+a230 1
+    use MLSSTRINGS, only: WRITEINTSTOCHARS
+d232 1
+a232 1
+    use TREE, only: SOURCE_REF
+a249 1
+    character(len=64) :: WarningPreamble
+d287 5
+a291 6
+      call writeIntsToChars ( source_ref(L2CFNode)/256, myChars )
+      WarningPreamble = '***** At '  // trim(myChars) // ', column'
+      call writeIntsToChars ( mod(source_ref(L2CFNode), 256), myChars )
+      WarningPreamble = trim(WarningPreamble)  // ' ' // trim(myChars) 
+      myMessage = trim(WarningPreamble) // ': ' // Message
+    endif
+d350 1
+a350 1
+    use STRING_TABLE, only: DO_LISTING
+d362 1
+d410 1
+d778 1
+d829 3
+d964 1
+a964 1
+       "$Id: MLSL2Options.f90,v 2.70 2013/09/06 20:49:17 pwagner Exp $"
+d976 3
+@
+
+
+2.70
+log
+@Solve another case where we repeated warnings
+@
+text
+@d217 1
+a217 1
+  ! -------------- MLSMessage ----------------
+d327 1
+a327 1
+  ! -------------- processOptions ----------------
+d342 1
+d357 1
+a357 1
+    character(len=FiLENAMELEN)             :: filename
+d604 6
+d886 1
+a886 1
+  end function processOptions
+d888 1
+a888 1
+  ! -------------- RestoreDefaults ----------------
+d919 1
+a919 1
+  ! -------------- DumpMacros ----------------
+d927 1
+a927 1
+  ! -------------- removeRuntimeBoolean ----------------
+d960 1
+a960 1
+       "$Id: MLSL2Options.f90,v 2.69 2013/09/04 17:34:03 pwagner Exp $"
+d972 3
+@
+
+
+2.69
+log
+@Replaced '--cat' cmdline option; 'Catenate' now an Output section command
+@
+text
+@d27 1
+a27 1
+  use PrintIt_m, only: DEFAULTLOGUNIT, STDOUTLOGUNIT
+d131 1
+d243 1
+d252 1
+d254 1
+a254 1
+    mustRepeat = ( MLSMessageConfig%logFileUnit == DEFAULTLOGUNIT .and. &
+d265 8
+d953 1
+a953 1
+       "$Id: MLSL2Options.f90,v 2.68 2013/08/23 02:52:13 vsnyder Exp $"
+d965 3
+@
+
+
+2.68
+log
+@Move PrintItOut to PrintIt_m
+@
+text
+@a49 3
+  ! Set the following to TRUE before delivering level 2 to sips
+  ! logical, parameter :: SIPS_VERSION                 =  .true. 
+
+a128 2
+  ! Whether to catenate split autoDirectWrites
+  logical            :: CATENATESPLITS                = .true.
+a348 1
+    logical :: COPYARG               ! Copy this argument to parallel command line
+a399 1
+      copyArg = .true.
+d413 1
+a413 3
+        if ( line(3+n:5+n) == 'cat' ) then
+          catenateSplits = switch
+        else if ( line(3+n:8+n) == 'check ' ) then
+a436 1
+            copyArg = .false.
+a536 1
+          copyArg = .false.
+a548 1
+            copyArg = .false.
+a560 1
+            copyArg = .false.
+a573 1
+            copyArg = .false.
+a626 1
+          copyArg=.false.
+a638 1
+          copyArg=.false.
+a672 1
+          copyArg = .true.
+a713 1
+          copyArg = .false.
+a895 1
+    CATENATESPLITS                = .true.
+d942 1
+a942 1
+       "$Id: MLSL2Options.f90,v 2.67 2013/08/17 00:22:14 pwagner Exp $"
+d954 3
+@
+
+
+2.67
+log
+@New cmdline arg relaxes some for non-Aura l1b datasets
+@
+text
+@d19 1
+a19 1
+  use MLSMessageModule, only: DEFAULTLOGUNIT, MLSMESSAGECONFIG, &
+d22 1
+a22 1
+    & SAYMESSAGE => MLSMESSAGE, STDOUTLOGUNIT
+d27 1
+d327 21
+a347 20
+  use ALLOCATE_DEALLOCATE, only: TRACKALLOCATES, &
+    & CLEARONALLOCATE
+  use IO_STUFF, only: GET_LUN
+  use L2PARINFO, only: PARALLEL, INITPARALLEL, ACCUMULATESLAVEARGUMENTS, &
+    & SNIPLASTSLAVEARGUMENT
+  use LEXER_M, only: CAPIDENTIFIERS
+  use MACHINE, only: GETARG, HP, IO_ERROR, NEVERCRASH
+  use MATRIXMODULE_0, only: CHECKBLOCKS, SUBBLOCKLENGTH
+  use MLSCOMMON, only: FILENAMELEN
+  use MLSSTRINGLISTS, only: CATLISTS, &
+    & GETSTRINGELEMENT, GETUNIQUELIST, &
+    & NUMSTRINGELEMENTS, REMOVESWITCHFROMLIST, &
+    & SORTLIST, STRINGELEMENT, SWITCHDETAIL, UNQUOTE
+  use MLSSTRINGS, only: LOWERCASE, READINTSFROMCHARS
+  use PCFHDR, only: GLOBALATTRIBUTES
+  use SET_TOGGLES_M, only: SET_TOGGLES
+  use SNOOPMLSL2, only: SNOOPINGACTIVE, SNOOPNAME
+  use STRING_TABLE, only: DO_LISTING
+  use TIME_M, only: TIME_CONFIG
+  use TOGGLES, only: SWITCHES
+d737 1
+a737 1
+          MLSMessageConfig%useToolkit = switch
+d961 1
+a961 1
+       "$Id: MLSL2Options.f90,v 2.66 2013/08/13 23:05:48 pwagner Exp $"
+d973 3
+@
+
+
+2.66
+log
+@Removd some fugitive debug printing
+@
+text
+@d99 2
+d606 2
+d898 1
+d959 1
+a959 1
+       "$Id: MLSL2Options.f90,v 2.65 2013/08/12 23:49:41 pwagner Exp $"
+d971 3
+@
+
+
+2.65
+log
+@FindSomethings moved to MLSFinds module
+@
+text
+@a843 2
+    print *, 'switches ', trim(switches)
+    print *, 'removeSwitches ', trim(removeSwitches)
+a844 1
+    print *, 'tempSwitches ', trim(tempSwitches)
+a847 1
+    print *,   'After sort ', trim(tempSwitches)
+a849 1
+    print *,   'Uniquified ', trim(Switches) 
+a855 1
+    print *,   'Purified ', trim(Switches) 
+d954 1
+a954 1
+       "$Id: MLSL2Options.f90,v 2.64 2013/06/19 00:40:34 pwagner Exp $"
+d966 3
+@
+
+
+2.64
+log
+@No longer automatically reduce Details of l2cf-born Dumps
+@
+text
+@d844 2
+d847 1
+a847 1
+    ! print *,  'Before sort', trim(tempSwitches) 
+d851 1
+a851 1
+    ! print *,   'After sort', trim(tempSwitches)
+d854 1
+a854 1
+    ! print *,   'Uniquified', trim(Switches) 
+d861 1
+d960 1
+a960 1
+       "$Id: MLSL2Options.f90,v 2.63 2013/06/14 01:26:37 vsnyder Exp $"
+d972 3
+@
+
+
+2.63
+log
+@handle --stdout unbuffered
+@
+text
+@d380 1
+a380 1
+    switches='red'  ! Usually won't want to dump things looked for in testing
+d957 1
+a957 1
+       "$Id: MLSL2Options.f90,v 2.62 2013/06/12 02:37:36 vsnyder Exp $"
+d969 3
+@
+
+
+2.62
+log
+@Cruft removal
+@
+text
+@d698 2
+d957 1
+a957 1
+       "$Id: MLSL2Options.f90,v 2.61 2013/05/22 20:21:33 pwagner Exp $"
+d969 3
+@
+
+
+2.61
+log
+@Added removeRuntimeBoolean
+@
+text
+@a229 1
+    use LEXER_CORE, only: PRINT_SOURCE
+d955 1
+a955 1
+       "$Id: MLSL2Options.f90,v 2.60 2013/05/17 00:52:58 pwagner Exp $"
+d967 3
+@
+
+
+2.60
+log
+@runtime value sep now achar(0)
+@
+text
+@d36 1
+a36 1
+  ! This module simply contains initial or permanent settings. Values
+d158 8
+d917 1
+a917 1
+  subroutine DumpMacros
+d923 30
+d956 1
+a956 1
+       "$Id: MLSL2Options.f90,v 2.59 2013/02/12 18:14:15 pwagner Exp $"
+d968 3
+@
+
+
+2.59
+log
+@Removed SIPS_VERSION
+@
+text
+@d117 1
+a117 1
+  logical            :: SLAVESDOOWNCLEANUP            = .false.
+d161 6
+a166 6
+    ! Two arrays bound as a logical-valued hash
+    character(len=RTVSTRINGLENGTH)     :: lkeys       = 'true,false' 
+    character(len=RTVSTRINGLENGTH)     :: lvalues     = 'true,false'
+    ! logical, dimension(RTVARRAYLENGTH) :: lvalues     = &            
+    !  & (/ .TRUE., (.FALSE., i=2, RTVARRAYLENGTH) /)
+    ! Add two more arrays bound for each kind of hash: integer, string, real, ..
+d205 3
+d907 8
+d918 1
+a918 1
+       "$Id: MLSL2Options.f90,v 2.58 2013/02/04 22:01:02 pwagner Exp $"
+d930 3
+@
+
+
+2.58
+log
+@Added '--verbose' option; '--lac' more so
+@
+text
+@d50 1
+a50 1
+  logical, parameter :: SIPS_VERSION                 =  .false. 
+d132 1
+a132 1
+  logical            :: TOOLKIT                       =  SIPS_VERSION
+d365 1
+a365 1
+  if ( SIPS_VERSION ) then
+d373 1
+d377 1
+a378 1
+  time_config%use_wall_clock = SIPS_VERSION
+d456 2
+a457 2
+        else if ( line(3+n:6+n) == 'kit ' ) then
+          MLSMessageConfig%useToolkit = switch
+d719 1
+d899 1
+a899 1
+    TOOLKIT                       =  SIPS_VERSION
+d907 1
+a907 1
+       "$Id: MLSL2Options.f90,v 2.57 2012/12/04 00:15:49 pwagner Exp $"
+d919 3
+@
+
+
+2.57
+log
+@Removed confisuion-causing OUTSIDEOVERLAPS and its cmdline option
+@
+text
+@d524 5
+d718 3
+d851 2
+a852 1
+    outputOptions%prunit = OUTPUT_PRINT_UNIT
+d905 1
+a905 1
+       "$Id: MLSL2Options.f90,v 2.56 2012/08/30 20:54:08 pwagner Exp $"
+d917 3
+@
+
+
+2.56
+log
+@Improved adding, removing switches
+@
+text
+@a150 1
+  logical :: OUTSIDEOVERLAPS = .false.  ! Allow overlaps outside proc. range
+d217 2
+a218 2
+  subroutine MLSMessage ( severity, ModuleNameIn, Message, &
+    & Advance, MLSFile, status, item )
+a587 2
+        else if ( line(3+n:7+n) == 'overl' ) then
+          OUTSIDEOVERLAPS = switch
+d896 1
+a896 1
+       "$Id: MLSL2Options.f90,v 2.55 2012/08/16 17:46:17 pwagner Exp $"
+d908 3
+@
+
+
+2.55
+log
+@Added a level 2-savvy MLSMessage to interpose between level 2 procedures and lib version
+@
+text
+@a236 1
+    logical :: outputInstead   ! if we will call output instead
+d240 1
+d326 2
+a327 1
+    & NUMSTRINGELEMENTS, REMOVEELEMFROMLIST, STRINGELEMENT, SWITCHDETAIL, UNQUOTE
+d345 1
+d826 5
+d833 1
+d837 1
+a837 1
+      call RemoveElemFromList(switches, tempSwitches, trim(aSwitch))
+d847 1
+d899 1
+a899 1
+       "$Id: MLSL2Options.f90,v 2.54 2012/07/18 00:38:00 pwagner Exp $"
+d911 3
+@
+
+
+2.54
+log
+@Consistent with module parameters for prUnit
+@
+text
+@d17 1
+d19 4
+a22 2
+  use MLSMessageModule, only: MLSMSG_ERROR, MLSMSG_SEVERITY_TO_WALKBACK, &
+    & MLSMSG_WARNING
+d24 3
+a26 1
+  use OUTPUT_M, only: OUTPUTOPTIONS, STDOUTPRUNIT, MSGLOGPRUNIT, BOTHPRUNIT
+d67 1
+d149 1
+d151 2
+a152 2
+  logical :: OUTSIDEOVERLAPS = .false. ! Allow overlaps outside proc. range
+  integer :: RECL = 20000          ! Record length for l2cf (but see --recl opt)
+d154 5
+a158 5
+  logical          :: SECTIONTIMES = .false.  ! Show times in each section
+  logical          :: TOTALTIMES = .false.    ! Show total times from start
+  logical :: SHOWDEFAULTS = .false. ! Just print default opts and quit
+  integer :: SLAVEMAF = 0          ! Slave MAF for fwmParallel mode
+  logical :: TIMING = .false.      ! -T option is set
+d169 1
+a169 1
+  
+d171 7
+d208 101
+a323 2
+  use MLSMESSAGEMODULE, only: MLSMESSAGECONFIG, MLSMSG_SEVERITY_TO_WALKBACK, &
+    & MLSMSG_WARNING
+d493 1
+a493 1
+          ! 0  abbreviate module names 
+d496 1
+d500 5
+d512 8
+a519 1
+          MLSMessageConfig%AbbreviateModSevNames = (degree == 0)
+a667 1
+          ! copyArg = .false. ! else all the the slaves would try to write to the same file
+d669 4
+d675 19
+a693 8
+          OutputOptions%name = trim(line)
+          OutputOptions%buffered = .false.
+          ! outputOptions%debugUnit = 32
+          ! Make certain prUnit won't be l2cf_unit
+          open( unit=l2cf_unit, status='unknown' )
+          call get_lun ( OutputOptions%prUnit, msg=.false. )
+          close( unit=l2cf_unit )
+          inquire( unit=OutputOptions%prUnit, exist=exist, opened=opened )
+d890 1
+a890 1
+       "$Id: MLSL2Options.f90,v 2.53 2012/07/10 15:23:42 pwagner Exp $"
+d902 3
+@
+
+
+2.53
+log
+@Works properly now; api adjusted for GetUniqueList
+@
+text
+@d21 1
+d60 1
+a60 1
+  ! Set the following to -2 before delivering to sips;
+d62 5
+a66 5
+  ! -1          sent to stdout (via print *, '...')
+  ! -2          sent to Log file (via MLSMessage)
+  ! < -2        both stdout and Log file
+  ! > -1        Fortran 'unit=OUTPUT_PRINT_UNIT')
+  integer            :: OUTPUT_PRINT_UNIT             = -2
+a214 1
+  use OUTPUT_M, only: OUTPUTOPTIONS
+d613 2
+a614 2
+          case ( 'M' ); outputOptions%prunit = -2
+          case ( 'm' ); outputOptions%prunit = -1
+d698 1
+d750 1
+a750 1
+       "$Id: MLSL2Options.f90,v 2.52 2012/07/02 20:29:32 pwagner Exp $"
+d762 3
+@
+
+
+2.52
+log
+@Improve RestoreDefaults, some housekeeping
+@
+text
+@d249 15
+d680 2
+a681 2
+    call GetUniqueList(tempSwitches, removeSwitches, numSwitches, countEmpty=.true., &
+          & ignoreLeadingSpaces=.true.)
+d684 2
+a685 2
+    call GetUniqueList(tempSwitches, Switches, numSwitches, countEmpty=.true., &
+          & ignoreLeadingSpaces=.true.)
+d749 1
+a749 1
+       "$Id: MLSL2Options.f90,v 2.51 2012/06/27 18:02:09 pwagner Exp $"
+d761 3
+@
+
+
+2.51
+log
+@May overwrite command line options with options field to phase spec
+@
+text
+@d268 2
+a269 1
+        if ( line(1:2) == '--' ) then       ! "word" options
+d272 1
+a272 1
+        if ( line(3:3) == 'n' .or. line(3:3) == 'N' ) then
+d276 1
+a276 1
+        if ( lowercase(line(3+n:5+n)) == 'cat' ) then
+d283 1
+a283 1
+        else if ( lowercase(line(3+n:8+n)) == 'checkp' ) then
+d285 1
+a285 1
+        else if ( lowercase(line(3+n:7)) == 'chunk' ) then
+d289 1
+a289 2
+          ! command_line = trim(command_line) // ' ' // trim(parallel%chunkRange)
+        else if ( lowercase(line(3+n:18+n)) == 'clearonallocate ' ) then
+d291 1
+a291 1
+        else if ( lowercase(line(3+n:7+n)) == 'ckbk ' ) then
+d293 1
+a293 1
+        else if ( lowercase(line(3+n:14+n)) == 'countchunks ' ) then
+d295 1
+a295 1
+        else if ( lowercase(line(3+n:7+n)) == 'crash' ) then
+d298 1
+a298 1
+        else if ( lowercase(line(3+n:8+n)) == 'defaul' ) then
+a306 1
+            ! command_line = trim(command_line) // ' ' // trim(line)
+a315 1
+          ! command_line = trim(command_line) // ' ' // trim(line)
+d317 1
+a317 1
+        else if ( lowercase(line(3+n:14+n)) == 'fwmparallel ' ) then
+d319 1
+a319 1
+        else if ( lowercase(line(3+n:7+n)) == 'host ' ) then
+a321 1
+          ! command_line = trim(command_line) // ' ' // trim(line)
+a325 1
+          ! command_line = trim(command_line) // ' ' // trim(line)
+d328 1
+a328 1
+        else if ( lowercase(line(3+n:6+n)) == 'l1b=' ) then
+d338 1
+a338 1
+        else if ( lowercase(line(3+n:8+n)) == 'l2gpr=' ) then
+d348 1
+a348 1
+        else if ( lowercase(line(3+n:8+n)) == 'l2gpw=' ) then
+a371 1
+          ! command_line = trim(command_line) // ' ' // trim(line)
+a389 1
+          ! command_line = trim(command_line) // ' ' // trim(line)
+d396 1
+a396 1
+        else if ( lowercase(line(3+n:21+n)) == 'maxfailuresperchunk' ) then
+a402 1
+            ! command_line = trim(command_line) // ' ' // trim(line)
+d409 1
+a409 1
+        else if ( lowercase(line(3+n:23+n)) == 'maxfailurespermachine' ) then
+a415 1
+            ! command_line = trim(command_line) // ' ' // trim(line)
+d422 1
+a422 1
+        else if ( lowercase(line(3+n:10+n)) == 'memtrack' ) then
+a435 1
+              ! command_line = trim(command_line) // ' ' // trim(line)
+d450 1
+a450 1
+        else if ( lowercase(line(3+n:5+n)) == 'pge ' ) then
+d456 1
+a456 2
+          ! command_line = trim(command_line) // ' ' // trim(adjustl(line))
+        else if ( lowercase(line(3+n:6+n)) == 'recl' ) then
+a461 1
+            ! command_line = trim(command_line) // ' ' // trim(line)
+d470 1
+a470 1
+        else if ( lowercase(line(3+n:9+n))  == 'skipdir' ) then
+d472 1
+a472 1
+        else if ( lowercase(line(3+n:10+n)) == 'skipretr' ) then
+d474 1
+a474 1
+        else if ( lowercase(line(3+n:9+n)) == 'skipsec' ) then
+a476 1
+          ! command_line = trim(command_line) // ' ' // trim(adjustl(line))
+d478 1
+a478 1
+        else if ( lowercase(line(3+n:10+n)) == 'slavemaf' ) then
+a484 1
+            ! command_line = trim(command_line) // ' ' // trim(adjustl(line))
+a498 1
+            ! command_line = trim(command_line) // ' ' // trim(adjustl(line))
+d510 1
+a510 1
+        else if ( lowercase(line(3+n:12+n)) == 'snoopname' ) then
+a512 1
+          ! command_line = trim(command_line) // ' ' // trim(line)
+a519 1
+            ! command_line = trim(command_line) // ' ' // trim(adjustl(line))
+a530 1
+          ! command_line = trim(command_line) // ' ' // trim(line)
+d539 1
+a539 3
+        ! else if ( lowercase(line(3+n:9+n)) ==  'stgmem ' ) then
+        ! parallel%stageInMemory = .true.
+        else if ( lowercase(line(3+n:12+n)) ==  'stopafter ' ) then
+d542 1
+a542 2
+          ! command_line = trim(command_line) // ' ' // trim(adjustl(stopAfterSection))
+        else if ( lowercase(line(3+n:12+n)) ==  'stopwither' ) then
+d544 1
+a544 1
+        else if ( lowercase(line(3+n:11+n)) == 'subblock ' ) then
+a546 1
+          ! command_line = trim(command_line) // ' ' // trim(line)
+a555 1
+          ! command_line = trim(command_line) // ' ' // trim(line)
+d557 1
+a557 1
+        else if ( lowercase(line(3+n:5+n)) == 'tk ' ) then
+a568 1
+          ! command_line = trim(command_line) // ' ' // trim(line)
+d678 3
+d705 2
+a706 1
+  use TOGGLES, only: SWITCHES
+d727 2
+a728 2
+    SWITCHES                      = ' '
+    MLSMSG_Severity_to_walkback   = MLSMSG_Error
+d734 1
+a734 1
+       "$Id: MLSL2Options.f90,v 2.50 2012/05/08 17:53:51 pwagner Exp $"
+d746 3
+@
+
+
+2.50
+log
+@Converted runtimes to character-valued; added DB types
+@
+text
+@d18 2
+a19 1
+  use MLSMessageModule, only: MLSMSG_Error
+d132 19
+d193 557
+d753 1
+a753 1
+       "$Id: MLSL2Options.f90,v 2.49 2011/06/29 21:43:23 pwagner Exp $"
+d765 3
+@
+
+
+2.49
+log
+@Some cases may safely omit l1b files
+@
+text
+@d136 3
+a138 2
+    logical, dimension(RTVARRAYLENGTH) :: lvalues     = &            
+      & (/ .TRUE., (.FALSE., i=2, RTVARRAYLENGTH) /)
+d143 28
+d176 1
+a176 1
+       "$Id: MLSL2Options.f90,v 2.48 2010/04/12 22:20:23 pwagner Exp $"
+d188 3
+@
+
+
+2.48
+log
+@Changed vers. id to conform with v3.30 sips id
+@
+text
+@d52 1
+a52 1
+  ! Update these lines before delivery to sips     
+d54 2
+a55 2
+  character(LEN=*), dimension(2), parameter :: CURRENT_VERSION_ID = (/ &    
+    & 'v3.30 swdev team               ' , &       
+d58 7
+a64 11
+  ! Set the following to 1 before delivering to sips;                       
+  ! when set to 0, it allows program to run w/o creating metadata           
+  integer            :: PENALTY_FOR_NO_METADATA      = 0
+
+  ! Set the following to -2 before delivering to sips;                      
+  ! (its possible values and their effects on normal output:                
+  ! -1          sent to stdout (via print *, '...')                         
+  ! -2          sent to Log file (via MLSMessage)                           
+  ! < -2        both stdout and Log file                                    
+  ! > -1        Fortran 'unit=OUTPUT_PRINT_UNIT')                           
+  integer            :: OUTPUT_PRINT_UNIT             = -2                              
+d74 1
+a74 1
+  ! if 2, status will be 2 only if run complete                             
+d76 1
+a76 1
+  integer, parameter :: NORMAL_EXIT_STATUS            = 2          
+d81 2
+a82 2
+  ! Assume hdf files w/o explicit hdfVersion field are this                 
+  ! 4 corresponds to hdf4, 5 to hdf5 in L2GP, L2AUX, etc.                   
+d84 2
+a85 2
+  ! Set to WILDCARDHDFVERSION if you wish to autodetect such files          
+  ! on input                                                                
+d89 6
+a96 3
+  logical            :: PATCH                         = .false. ! Set if run must not create file,
+  ! Whether to restart printing identical warnings at each new phase
+  logical            :: RESTARTWARNINGS               = .true.
+d101 3
+a103 2
+  logical            :: SKIPRETRIEVAL                 = .false.                           
+  logical            :: SKIPRETRIEVALORIGINAL         = .false. ! May skip for some phases
+d108 2
+a109 1
+  logical            :: SLAVESDOOWNCLEANUP            = .false. ! Let system do it
+d122 1
+a122 1
+  logical            :: CATENATESPLITS                = .true.       
+d147 1
+a147 1
+       "$Id: MLSL2Options.f90,v 2.47 2009/11/05 00:31:21 pwagner Exp $"
+d159 3
+@
+
+
+2.48.2.1
+log
+@Can Read GEOS5.7.2 meteorology; based on v3.33
+@
+text
+@d43 1
+a43 1
+  logical, parameter :: SIPS_VERSION                 =  .true. 
+d55 1
+a55 1
+    & 'v3.40 sips production          ' , &       
+d146 1
+a146 1
+       "$Id: MLSL2Options.f90,v 2.48 2010/04/12 22:20:23 pwagner Exp $"
+a157 3
+! Revision 2.48  2010/04/12 22:20:23  pwagner
+! Changed vers. id to conform with v3.30 sips id
+!
+@
+
+
+2.48.2.2
+log
+@Shows new version_id
+@
+text
+@d55 1
+a55 1
+    & 'v3.41 sips production          ' , &       
+d146 1
+a146 1
+       "$Id: MLSL2Options.f90,v 2.48.2.1 2011/11/16 23:33:51 pwagner Exp $"
+a157 3
+! Revision 2.48.2.1  2011/11/16 23:33:51  pwagner
+! Can Read GEOS5.7.2 meteorology; based on v3.33
+!
+@
+
+
+2.47
+log
+@Updated version id
+@
+text
+@d55 1
+a55 1
+    & 'v3.20 swdev team               ' , &       
+d146 1
+a146 1
+       "$Id: MLSL2Options.f90,v 2.46 2009/07/24 23:22:47 pwagner Exp $"
+d158 3
+@
+
+
+2.46
+log
+@Updated version id, copyright statement
+@
+text
+@d55 1
+a55 1
+    & 'v3.10 swdev team               ' , &       
+d95 1
+a95 1
+  logical            :: patch                         = .false. ! Set if run must not create file,
+d146 1
+a146 1
+       "$Id: MLSL2Options.f90,v 2.45 2009/06/23 18:46:18 pwagner Exp $"
+d158 3
+@
+
+
+2.45
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d25 1
+a25 1
+       "$RCSfile: $"
+d55 2
+a56 2
+    & 'pre-v3 swdev team             ', &       
+    & 'Copyright statement omitted   '/)
+d146 1
+a146 1
+       "$Id: read_apriori.f90 is it here $"
+d158 3
+@
+
+
+2.44
+log
+@update current version id to pre-v3
+@
+text
+@d25 1
+a25 1
+       "$RCSfile: MLSL2Options.f90,v $"
+d143 1
+a144 1
+!---------------------------- RCS Ident Info -------------------------------
+d146 2
+a147 3
+       "$Id: MLSL2Options.f90,v 2.43 2008/01/08 00:16:29 pwagner Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d149 1
+a149 1
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
+d151 1
+d158 3
+@
+
+
+2.43
+log
+@Added SHAREDPCF so levels 1 and 2 can use same PCF
+@
+text
+@d43 1
+a43 1
+  logical, parameter :: SIPS_VERSION =  .false. 
+d48 1
+a48 1
+  logical :: SHAREDPCF =  .false. 
+d55 1
+a55 1
+    & 'v2.22 swdev team              ', &       
+d60 1
+a60 1
+  integer            ::                         PENALTY_FOR_NO_METADATA = 0
+d68 1
+a68 1
+  integer            :: OUTPUT_PRINT_UNIT = -2                              
+d73 1
+a73 1
+  integer, parameter :: QUIT_ERROR_THRESHOLD = MLSMSG_Error
+d80 1
+a80 1
+  integer, parameter :: NORMAL_EXIT_STATUS = 2          
+d87 1
+a87 1
+  integer            :: DEFAULT_HDFVERSION_WRITE = HDFVERSION_5
+d90 2
+a91 2
+  integer            :: DEFAULT_HDFVERSION_READ = WILDCARDHDFVERSION
+  integer            :: LEVEL1_HDFVERSION = WILDCARDHDFVERSION
+d94 2
+a95 2
+  integer            :: SECTIONTIMINGUNITS = L_SECONDS
+  logical            :: patch = .false.       ! Set if run must not create file,
+d97 4
+a100 4
+  logical            :: RESTARTWARNINGS = .true.
+  ! Whether to skip doing the direct writes--quicker when snooping       swath  
+  logical            :: SKIPDIRECTWRITES = .false.         
+  logical            :: SKIPDIRECTWRITESORIGINAL = .false.         
+d102 2
+a103 2
+  logical            :: SKIPRETRIEVAL = .false.
+  logical            :: SKIPRETRIEVALORIGINAL = .false. ! May skip for some phases
+d108 1
+a108 1
+  logical            :: SLAVESDOOWNCLEANUP = .false. ! Let system do it
+d110 1
+a110 1
+  character(len=255) :: SPECIALDUMPFILE = ' '
+d114 1
+a114 1
+  character(len=16)  :: STOPAFTERSECTION = ' ' ! Blank means 'no'
+d117 1
+a117 1
+  logical            :: STOPWITHERROR = .false.         
+d119 1
+a119 1
+  logical            :: CHECKPATHS = .false.         
+d121 1
+a121 1
+  logical            :: CATENATESPLITS = .true.         
+d123 1
+a123 1
+  logical            :: TOOLKIT =                SIPS_VERSION 
+d127 2
+a128 2
+  integer, parameter :: RTVSTRINGLENGTH = 1024
+  integer, parameter :: RTVARRAYLENGTH  = 128
+d134 2
+a135 2
+    character(len=RTVSTRINGLENGTH)     :: lkeys = 'true,false'
+    logical, dimension(RTVARRAYLENGTH) :: lvalues = &
+d146 1
+a146 1
+       "$Id: MLSL2Options.f90,v 2.42 2007/09/06 22:42:28 pwagner Exp $"
+d150 1
+d158 3
+@
+
+
+2.42
+log
+@Added SLAVESDOOWNCLEANUP
+@
+text
+@d45 5
+d146 1
+a146 1
+       "$Id: MLSL2Options.f90,v 2.41 2007/06/21 22:35:22 pwagner Exp $"
+d157 3
+@
+
+
+2.41
+log
+@Updated version string to v2.22
+@
+text
+@d99 5
+d141 1
+a141 1
+       "$Id: MLSL2Options.f90,v 2.40 2007/02/06 23:15:48 pwagner Exp $"
+d152 3
+@
+
+
+2.40
+log
+@CURRENT_VERSION_ID now v2.21
+@
+text
+@d50 1
+a50 1
+    & 'v2.21 swdev team              ', &       
+d136 1
+a136 1
+       "$Id: MLSL2Options.f90,v 2.39 2006/11/01 20:37:38 pwagner Exp $"
+d147 3
+@
+
+
+2.39
+log
+@CURRENT_VERSION_ID now v2.20
+@
+text
+@d50 1
+a50 1
+    & 'v2.20 swdev team              ', &       
+d136 1
+a136 1
+       "$Id: MLSL2Options.f90,v 2.38 2006/07/27 23:06:17 pwagner Exp $"
+d147 3
+@
+
+
+2.38
+log
+@update CURRENT_VERSION_ID
+@
+text
+@d50 1
+a50 1
+    & 'v2.10 swdev team              ', &       
+d136 1
+a136 1
+       "$Id: MLSL2Options.f90,v 2.37 2006/07/21 20:09:56 pwagner Exp $"
+d147 3
+@
+
+
+2.37
+log
+@Can fill state even if skipping retrievals; select what section to stop after
+@
+text
+@d50 1
+a50 1
+    & 'v2.00 swdev team              ', &       
+d136 1
+a136 1
+       "$Id: MLSL2Options.f90,v 2.36 2006/06/13 00:16:27 pwagner Exp $"
+d147 3
+@
+
+
+2.36
+log
+@catenating split dgg/dgm files now on by default
+@
+text
+@d101 5
+a105 4
+  ! Whether to stop after the chunk division section
+  logical            :: STOPAFTERCHUNKDIVIDE = .false.         
+  ! Whether to stop after doing the global settings section
+  logical            :: STOPAFTERGLOBAL = .false.         
+d136 1
+a136 1
+       "$Id: MLSL2Options.f90,v 2.35 2006/02/21 19:19:27 pwagner Exp $"
+d147 3
+@
+
+
+2.35
+log
+@New things to create, refer to run time booleans in l2cf
+@
+text
+@d50 1
+a50 1
+    & 'v2.xx swdev team              ', &       
+d110 1
+a110 1
+  logical            :: CATENATESPLITS = .false.         
+d135 1
+a135 1
+       "$Id: MLSL2Options.f90,v 2.34 2006/02/10 21:13:30 pwagner Exp $"
+d146 3
+@
+
+
+2.34
+log
+@May specify skipRetrivel for particular Phases; dumps may go to special dumpfile
+@
+text
+@d95 1
+d115 15
+d135 1
+a135 1
+       "$Id: MLSL2Options.f90,v 2.33 2005/07/21 23:40:54 pwagner Exp $"
+d146 3
+@
+
+
+2.33
+log
+@Removed unneeded ILLEGALL1BRADID, MAXNUML1BRADIDS
+@
+text
+@d50 1
+a50 1
+    & 'v1.51 swdev team              ', &       
+d96 4
+a99 1
+  logical            :: SKIPRETRIEVAL = .false.         
+d119 1
+a119 1
+       "$Id: MLSL2Options.f90,v 2.32 2005/06/22 18:57:02 pwagner Exp $"
+d130 3
+@
+
+
+2.32
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d25 1
+a25 1
+       "$RCSfile: $"
+d50 2
+a51 2
+    & 'v1.51 swdev team                                                      ', &       
+    & 'Copyright (c) 2005, California Institute of Technology.               '/)
+a87 4
+  integer, parameter :: ILLEGALL1BRADID=-1   ! sfstart should catch
+  integer, parameter :: MAXNUML1BRADIDS=&
+  & mlspcf_l1b_rad_end-mlspcf_l1b_rad_start+1   ! In case more than one
+
+d116 1
+a116 1
+       "$Id: $"
+d127 3
+@
+
+
+2.31
+log
+@Added RESTARTWARNINGS; corrected vsn id
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
+d23 3
+a25 5
+  private :: Id, ModuleName
+  !---------------------------- RCS Ident Info -------------------------------
+  CHARACTER (LEN=256) :: Id = &
+       "$Id: MLSL2Options.f90,v 2.30 2004/12/14 00:04:24 pwagner Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile: MLSL2Options.f90,v $"
+d27 1
+a27 1
+  !---------------------------------------------------------------------------
+d49 1
+a49 1
+  character(LEN=*), dimension(3), parameter :: CURRENT_VERSION_ID = (/ &    
+d51 1
+a51 2
+    & 'Copyright (c) 2005, California Institute of Technology.               ', &       
+    & 'U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001.' /)       
+d118 5
+d131 3
+@
+
+
+2.30
+log
+@New early stop options added for quicker debugging
+@
+text
+@d1 2
+a2 2
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d18 1
+a18 1
+       "$Id: MLSL2Options.f90,v 2.29 2004/07/08 22:48:44 pwagner Exp $"
+d44 3
+a46 3
+    & 'v1.50 swdev team                                          ', &       
+    & 'Copyright (c) 2004, California Institute of Technology.   ', &       
+    & 'U.S. Government Sponsorship under NASA Contract NAS7-1407.' /)       
+d90 2
+d121 3
+@
+
+
+2.29
+log
+@Made SIPS_VERSION public
+@
+text
+@d18 1
+a18 1
+       "$Id: MLSL2Options.f90,v 2.28 2004/04/27 23:49:51 pwagner Exp $"
+d44 1
+a44 1
+    & 'v1.43 swdev team                                          ', &       
+d94 6
+d119 3
+@
+
+
+2.28
+log
+@Added SKIPDIRECTWRITES option
+@
+text
+@d9 2
+a10 2
+  USE MLSFiles, only: WILDCARDHDFVERSION, HDFVERSION_4, HDFVERSION_5
+  USE MLSMessageModule, only: MLSMSG_Error
+d13 3
+a15 3
+  IMPLICIT NONE
+  PUBLIC
+  PRIVATE :: Id, ModuleName
+d18 1
+a18 1
+       "$Id: MLSL2Options.f90,v 2.27 2004/03/12 00:28:56 pwagner Exp $"
+d30 1
+a30 1
+  ! See also MLSL2Common and MLSL2PCF
+d37 1
+a37 1
+  logical, private, parameter :: SIPS_VERSION =  .false. 
+d44 1
+a44 1
+    & 'v1.42 swdev team                                          ', &       
+d89 2
+a90 2
+  logical            :: patch = .false.       ! Set if run must not create file, swath  
+  ! Whether to skip doing the direct writes--quicker when snooping
+d113 3
+@
+
+
+2.27
+log
+@At last hdf version at output increased to 5
+@
+text
+@d18 1
+a18 1
+       "$Id: MLSL2Options.f90,v 2.26 2004/01/23 01:06:39 pwagner Exp $"
+d44 1
+a44 1
+    & 'v1.4 swdev team                                           ', &       
+d90 2
+d113 3
+@
+
+
+2.26
+log
+@Added CATENATESPLITS
+@
+text
+@d18 1
+a18 1
+       "$Id: MLSL2Options.f90,v 2.25 2003/12/05 00:39:35 pwagner Exp $"
+d45 1
+a45 1
+    & 'Copyright (c) 2003, California Institute of Technology.   ', &       
+d77 1
+a77 1
+  integer            :: DEFAULT_HDFVERSION_WRITE = HDFVERSION_4
+d111 3
+@
+
+
+2.25
+log
+@Added patch option, section timing units
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+d18 1
+a18 1
+       "$Id: MLSL2Options.f90,v 2.24 2003/11/07 00:46:51 pwagner Exp $"
+d94 2
+d111 3
+@
+
+
+2.24
+log
+@New quicker preflight option: --checkPaths
+@
+text
+@d8 1
+d18 1
+a18 1
+       "$Id: MLSL2Options.f90,v 2.23 2003/10/09 23:58:34 pwagner Exp $"
+d87 3
+a89 2
+  ! Whether to explicitly collect garbage at end of each chunk
+  logical            :: GARBAGE_COLLECTION_BY_CHUNK = .true.         
+d109 3
+@
+
+
+2.23
+log
+@Updated CURRENT_VERSION_ID to 1.4
+@
+text
+@d17 1
+a17 1
+       "$Id: MLSL2Options.f90,v 2.22 2003/09/05 23:22:52 pwagner Exp $"
+d90 2
+d107 3
+@
+
+
+2.22
+log
+@Has new SKIPRETRIEVAL option
+@
+text
+@d17 1
+a17 1
+       "$Id: MLSL2Options.f90,v 2.21 2003/06/09 22:49:32 pwagner Exp $"
+d43 1
+a43 1
+    & 'v1.2 swdev team                                           ', &       
+d105 3
+@
+
+
+2.21
+log
+@Reduced everything (PCF, PUNISH.., etc.) to TOOLKIT
+@
+text
+@d17 1
+a17 1
+       "$Id: MLSL2Options.f90,v 2.20 2003/05/02 20:53:19 pwagner Exp $"
+d86 1
+a86 1
+  ! Whether to explicitly collect garbage at end of each chunk                
+d88 2
+d105 3
+@
+
+
+2.20
+log
+@Reordered to make SIPS-dependent section clearer; default_hdfversion at read now wildcard
+@
+text
+@d17 1
+a17 1
+       "$Id: MLSL2Options.f90,v 2.19 2002/10/08 17:36:21 pwagner Exp $"
+d43 1
+a43 1
+    & 'v1.1 swdev team                                           ', &       
+a88 8
+  ! * * *                     Overly detailed section                 * * *
+  !                         (Should probably delete all this)
+  logical            :: PUNISH_FOR_INVALID_PCF = SIPS_VERSION 
+  logical, parameter :: PUNISH_FOR_NO_L1BRAD =   SIPS_VERSION
+  logical, parameter :: PUNISH_FOR_NO_L1BOA =    SIPS_VERSION
+  logical            :: PCF_FOR_INPUT =          SIPS_VERSION 
+  logical            :: PCF =                    SIPS_VERSION 
+  logical            :: CREATEMETADATA =         SIPS_VERSION 
+a89 14
+  ! PCF controls whether the input and output file names are obtained
+  ! from the PCF or the l2cf; if .false., the l2cf must supply every
+  ! file name (L1B..) plus all the global settings (start, end times, ..)
+  ! Note the following cascade of automatic negations:
+  ! TOOLKIT=.false. means                       don't use PGS_... routines
+  ! TOOLKIT=.false. =>  PCF=.false.           ! Don't use PCF
+  ! PCF=.false.     =>  PCF_FOR_INPUT=.false. ! Don't open L2CF using PCF
+  ! PCF=.false.     =>  PUNISH_FOR_INVALID_PCF=.false.
+  ! PCF=.false.     =>  CREATEMETADATA=.false.! Don't create .met files 
+  ! PCF=.false.     =>  PENALTY_FOR_NO_METADATA=0
+
+  ! Must files named in PCF have same case as short names used in l2cf?
+  logical, parameter ::                          PCFL2CFSAMECASE = SIPS_VERSION
+  ! * * *                End of Overly detailed section             * * *
+d103 3
+@
+
+
+2.19
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+d17 1
+a17 1
+       "$Id: MLSL2Options.f90,v 2.18 2002/10/03 23:00:03 pwagner Exp $"
+a36 17
+  logical            :: PUNISH_FOR_INVALID_PCF = SIPS_VERSION 
+  logical, parameter :: PUNISH_FOR_NO_L1BRAD =   SIPS_VERSION
+  logical, parameter :: PUNISH_FOR_NO_L1BOA =    SIPS_VERSION
+  logical            :: PCF_FOR_INPUT =          SIPS_VERSION 
+  logical            :: PCF =                    SIPS_VERSION 
+  logical            :: CREATEMETADATA =         SIPS_VERSION 
+  logical            :: TOOLKIT =                SIPS_VERSION 
+  ! PCF controls whether the input and output file names are obtained
+  ! from the PCF or the l2cf; if .false., the l2cf must supply every
+  ! file name (L1B..) plus all the global settings (start, end times, ..)
+  ! Note the following cascade of automatic negations:
+  ! TOOLKIT=.false. means                       don't use PGS_... routines
+  ! TOOLKIT=.false. =>  PCF=.false.           ! Don't use PCF
+  ! PCF=.false.     =>  PCF_FOR_INPUT=.false. ! Don't open L2CF using PCF
+  ! PCF=.false.     =>  PUNISH_FOR_INVALID_PCF=.false.
+  ! PCF=.false.     =>  CREATEMETADATA=.false.! Don't create .met files 
+  ! PCF=.false.     =>  PENALTY_FOR_NO_METADATA=0
+a37 2
+  ! Must files named in PCF have same case as short names used in l2cf?
+  logical, parameter ::                          PCFL2CFSAMECASE = SIPS_VERSION
+d43 2
+a44 2
+    & 'v1.0 swdev team                                           ', &       
+    & 'Copyright (c) 2002, California Institute of Technology.   ', &       
+d59 8
+a66 8
+  ! Set the following to MLSMSG_Error before delivering to sips;            
+  ! when set higher, it allows program keep going despite errors            
+  ! when set lower, the program would quit even on warnings                 
+  integer, parameter :: QUIT_ERROR_THRESHOLD = MLSMSG_Error                 
+
+  ! Set the following to 2 before delivering to sips;                       
+  ! If 0, program simply stops both upon normal termination                 
+  ! as well as some abnormal ones (e.g. in parser)                          
+d68 2
+a69 2
+  ! and without error                                                       
+  integer, parameter :: NORMAL_EXIT_STATUS = 2                              
+d76 1
+d79 2
+a80 3
+  integer            :: DEFAULT_HDFVERSION_WRITE = HDFVERSION_4
+  integer            :: DEFAULT_HDFVERSION_READ = HDFVERSION_4
+  integer            :: LEVEL1_HDFVERSION = HDFVERSION_4
+d87 25
+a111 1
+  logical            :: GARBAGE_COLLECTION_BY_CHUNK = .true.                
+d125 3
+@
+
+
+2.18
+log
+@You can set l1b, l2gp hdfversions on command line
+@
+text
+@d17 1
+a17 1
+       "$Id: MLSL2Options.f90,v 2.17 2002/08/28 22:25:42 pwagner Exp $"
+d19 1
+d110 5
+d120 3
+@
+
+
+2.17
+log
+@Moved LEVEL1_HDFVERSION, ILLEGALL1BRADID, MAXNUML1BRADIDS here from global_settings
+@
+text
+@d13 1
+a13 1
+
+d17 1
+a17 1
+       "$Id: MLSL2Options.f90,v 2.16 2002/03/14 23:38:28 pwagner Exp $"
+d58 1
+a58 1
+  ! Update these lines before delivery to sips                                     
+a93 1
+  integer, parameter :: DEFAULT_HDFVERSION_WRITE = HDFVERSION_4
+d96 3
+a98 3
+  integer, parameter :: DEFAULT_HDFVERSION_READ = HDFVERSION_4
+
+  integer, parameter :: LEVEL1_HDFVERSION = HDFVERSION_4
+d100 2
+a101 2
+  integer, public, parameter :: ILLEGALL1BRADID=-1   ! something sfstart should catch
+  integer, public, parameter :: MAXNUML1BRADIDS=&
+d114 3
+@
+
+
+2.16
+log
+@Gets HDFVERSION_4 and 5 from MLSFiles module
+@
+text
+@d10 1
+d17 1
+a17 1
+       "$Id: MLSL2Options.f90,v 2.15 2002/02/12 00:25:25 pwagner Exp $"
+d31 1
+d61 1
+a61 1
+    & 'v0.8 swdev team                                           ', &       
+d89 3
+d99 7
+a105 1
+  ! Whether to manually collect garbage at end of each chunk                
+d107 1
+d115 3
+@
+
+
+2.15
+log
+@New current_version_id parameter
+@
+text
+@d8 1
+a8 1
+  USE MLSFiles, only: WILDCARDHDFVERSION
+d16 1
+a16 1
+       "$Id: MLSL2Options.f90,v 2.14 2002/02/05 00:44:03 pwagner Exp $"
+d65 1
+a65 1
+  integer            ::                         PENALTY_FOR_NO_METADATA = 0 
+d89 1
+a89 1
+  integer, parameter :: DEFAULT_HDFVERSION_WRITE = 4                        
+d92 1
+a92 1
+  integer, parameter :: DEFAULT_HDFVERSION_READ = 4                         
+d103 3
+@
+
+
+2.14
+log
+@Added garbage collection stuff
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+d16 1
+a16 1
+       "$Id: MLSL2Options.f90,v 2.13 2002/01/29 23:49:38 pwagner Exp $"
+d56 37
+a92 30
+   ! Set the following to 1 before delivering to sips;
+   ! when set to 0, it allows program to run w/o creating metadata
+   integer            ::                         PENALTY_FOR_NO_METADATA = 0
+
+   ! Set the following to -2 before delivering to sips;
+   ! (its possible values and their effects on normal output:
+   ! -1          sent to stdout (via print *, '...')
+   ! -2          sent to Log file (via MLSMessage)
+   ! < -2        both stdout and Log file
+   ! > -1        Fortran 'unit=OUTPUT_PRINT_UNIT')
+   integer            :: OUTPUT_PRINT_UNIT = -2
+
+   ! Set the following to MLSMSG_Error before delivering to sips;
+   ! when set higher, it allows program keep going despite errors
+   ! when set lower, the program would quit even on warnings
+   integer, parameter :: QUIT_ERROR_THRESHOLD = MLSMSG_Error
+
+   ! Set the following to 2 before delivering to sips;
+   ! If 0, program simply stops both upon normal termination
+   ! as well as some abnormal ones (e.g. in parser)
+   ! if 2, status will be 2 only if run complete
+   ! and without error
+   integer, parameter :: NORMAL_EXIT_STATUS = 2
+
+   ! Assume hdf files w/o explicit hdfVersion field are this
+   ! 4 corresponds to hdf4, 5 to hdf5 in L2GP, L2AUX, etc.
+   integer, parameter :: DEFAULT_HDFVERSION_WRITE = 4
+   ! Set to WILDCARDHDFVERSION if you wish to autodetect such files
+   ! on input
+   integer, parameter :: DEFAULT_HDFVERSION_READ = 4
+d94 2
+a95 2
+   ! Whether to manually collect garbage at end of each chunk
+   logical            :: garbage_collection_by_chunk = .true. 
+d103 3
+@
+
+
+2.13
+log
+@Separate DEFAULT_HDFVERSION_(READ)(WRITE)
+@
+text
+@d16 1
+a16 1
+       "$Id: MLSL2Options.f90,v 2.12 2002/01/23 21:48:16 pwagner Exp $"
+d87 3
+d96 3
+@
+
+
+2.12
+log
+@Added DEFAULT_HDFVERSION
+@
+text
+@d8 1
+d16 1
+a16 1
+       "$Id: MLSL2Options.f90,v 2.11 2001/09/28 17:57:47 pwagner Exp $"
+d37 4
+a40 4
+  logical            :: PCF_FOR_INPUT =          SIPS_VERSION ! Open L2CF using PCF ?
+  logical            :: PCF =                    SIPS_VERSION ! Use PCF ?
+  logical            :: CREATEMETADATA =         SIPS_VERSION ! Create .met files ?
+  logical            :: TOOLKIT =                SIPS_VERSION ! Use PGS_... routines?
+d45 3
+a47 2
+  ! TOOLKIT=.false. =>  PCF=.false.
+  ! PCF=.false.     =>  PCF_FOR_INPUT=.false.
+d49 1
+a49 1
+  ! PCF=.false.     =>  CREATEMETADATA=.false.
+d82 4
+a85 1
+   integer, parameter :: DEFAULT_HDFVERSION = 4
+d93 3
+@
+
+
+2.11
+log
+@SIPS_VERSION controls other logical options
+@
+text
+@d15 1
+a15 1
+       "$Id: MLSL2Options.f90,v 2.10 2001/07/16 23:43:15 pwagner Exp $"
+d78 4
+d88 3
+@
+
+
+2.10
+log
+@With settable NORMAL_EXIT_STATUS
+@
+text
+@d15 1
+a15 1
+       "$Id: MLSL2Options.f90,v 2.9 2001/05/30 22:56:48 pwagner Exp $"
+d31 9
+a39 8
+  ! Set each of the following to TRUE before delivering level 2 to sips
+  logical            :: PUNISH_FOR_INVALID_PCF=.false. 
+  logical, parameter :: PUNISH_FOR_NO_L1BRAD=.false. 
+  logical, parameter :: PUNISH_FOR_NO_L1BOA=.false.
+  logical            :: PCF_FOR_INPUT = .false.      ! Open L2CF using PCF ?
+  logical            :: PCF = .true.            ! Use PCF ?
+  logical            :: CREATEMETADATA = .true. ! Create .met files ?
+  logical            :: TOOLKIT = .true.        ! Use PGS_... routines?
+d44 1
+a44 1
+  ! TOOLKIT=.false. => PCF=.false.
+d51 1
+a51 1
+  logical, parameter :: PCFL2CFSAMECASE = .false.
+d56 1
+a56 1
+   integer            :: PENALTY_FOR_NO_METADATA = 0
+d76 1
+a76 1
+   integer, parameter :: NORMAL_EXIT_STATUS = 0
+d84 3
+@
+
+
+2.9
+log
+@Moved PCFL2CFSAMECASE here from OutputAndClose
+@
+text
+@d15 1
+a15 1
+       "$Id: MLSL2Options.f90,v 2.8 2001/05/15 23:46:08 pwagner Exp $"
+d70 7
+d83 3
+@
+
+
+2.8
+log
+@Removed 2 settings from MLSL2Opts; now in switches
+@
+text
+@d15 1
+a15 1
+       "$Id: MLSL2Options.f90,v 2.7 2001/05/11 23:48:23 pwagner Exp $"
+d48 3
+d76 3
+@
+
+
+2.7
+log
+@Changed to not echo globals; added note on SIPS
+@
+text
+@d15 1
+a15 1
+       "$Id: MLSL2Options.f90,v 2.6 2001/05/09 23:34:13 pwagner Exp $"
+a30 5
+  ! The foolowing are most useful for internal development
+  ! They may be set to FALSE to spare the SIPS possibly unwanted output
+  logical            :: ECHO_GLOBAL_STNGS = .false. ! Show l2cf, pcf params in log?
+  logical            :: LOG_TO_STDOUT = .true. ! Send log msgs to stdout?
+
+d73 3
+@
+
+
+2.6
+log
+@Added ECHO_GLOBAL_STNGS LOG_TO_STDOUT
+@
+text
+@d15 1
+a15 1
+       "$Id: MLSL2Options.f90,v 2.5 2001/05/06 20:54:40 pwagner Exp $"
+d31 5
+a36 2
+  logical            :: ECHO_GLOBAL_STNGS = .true. ! Show l2cf, pcf params in log?
+  logical            :: LOG_TO_STDOUT = .true. ! Send log msgs to stdout?
+d65 1
+a65 1
+   integer, parameter :: OUTPUT_PRINT_UNIT = -2
+d78 3
+@
+
+
+2.5
+log
+@Default settings should work for most jpl users
+@
+text
+@d15 1
+a15 1
+       "$Id: MLSL2Options.f90,v 2.4 2001/05/04 22:54:31 pwagner Exp $"
+d32 2
+d75 3
+@
+
+
+2.4
+log
+@Added TOOLKIT, CREATEMETADATA, PCF_FOR_INPUT
+@
+text
+@d15 1
+a15 1
+       "$Id: MLSL2Options.f90,v 2.3 2001/04/20 20:41:52 pwagner Exp $"
+d36 3
+a38 3
+  logical            :: PCF = .false.            ! Use PCF ?
+  logical            :: CREATEMETADATA = .false. ! Create .met files ?
+  logical            :: TOOLKIT = .false.        ! Use PGS_... routines?
+d73 3
+@
+
+
+2.3
+log
+@Added QUIT_ERROR_THRESHOLD
+@
+text
+@d15 1
+a15 1
+       "$Id: MLSL2Options.f90,v 2.2 2001/04/17 20:26:28 pwagner Exp $"
+d30 1
+a30 1
+  ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+d32 17
+a48 5
+  logical, parameter :: PUNISH_FOR_INVALID_PCF=.false.  ! set to true
+  logical, parameter :: PUNISH_FOR_NO_L1BRAD=.false.  ! set to true
+  logical, parameter :: PUNISH_FOR_NO_L1BOA=.false.  ! set to true
+  logical :: PCF = .false.                         ! Open L2CF using PCF ?
+  ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+d52 1
+a52 1
+   integer, parameter :: PENALTY_FOR_NO_METADATA = 0
+d60 1
+a60 1
+   integer, parameter :: OUTPUT_PRINT_UNIT = -1
+d73 3
+@
+
+
+2.2
+log
+@Added OUTPUT_PRINT_UNIT
+@
+text
+@d8 1
+a8 2
+  USE MLSCommon
+  USE MLSMessageModule
+d15 1
+a15 1
+       "$Id: MLSL2Options.f90,v 2.1 2001/04/16 23:53:10 pwagner Exp $"
+d31 1
+a31 1
+  ! Set the following to TRUE before delivering level 2 to sips
+d38 1
+a38 1
+   ! Change the following to 1 before delivering to sips;
+d42 1
+a42 1
+   ! Change the following to -2 before delivering to sips;
+d50 5
+d61 3
+@
+
+
+2.1
+log
+@First commit
+@
+text
+@d16 2
+a17 2
+       "$Id: MLSL2Common.f90,v 2.0 2000/09/05 18:57:03 ahanzel Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile: MLSL2Common.f90,v $"
+d33 3
+a35 3
+  logical, parameter :: PUNISH_FOR_INVALID_PCF=.FALSE.  ! set to true
+  logical, parameter :: PUNISH_FOR_NO_L1BRAD=.FALSE.  ! set to true
+  logical, parameter :: PUNISH_FOR_NO_L1BOA=.FALSE.  ! set to true
+d43 8
+d57 2
+a59 1
+
+@
+

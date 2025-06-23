@@ -1,0 +1,121 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.6
+	cfm-single-freq-0-1:1.2.0.4
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2018.08.06.19.59.02;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2018.08.04.02.08.46;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Use Get_C_Loc instead of C_Loc to avoid target attribute
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! Needs: 
+  ! Get_C_Loc for the type of Database must be accessible
+! in the including scoping unit or its host.
+
+! $Id: addItemToDatabase_A.f9h,v 1.1 2018/08/04 02:08:46 vsnyder Exp $
+
+    integer :: NewSize, Status
+    character(127) :: ERMSG
+
+    ! Executable code
+
+    newSize = 1
+    if ( allocated(database) )  newSize = newsize + size(database)
+
+    block
+      use Allocate_Deallocate, only: Test_Allocate, Test_DeAllocate
+      use, intrinsic :: ISO_C_Binding, only: C_Intptr_t
+      integer(C_Intptr_t) :: Addr
+      allocate ( tempDatabase(newSize), STAT=status, ERRMSG=ermsg )
+      addr = 0
+      if ( status == 0 ) addr = get_c_loc(tempDatabase)
+      call test_allocate ( status, moduleName, "tempDatabase", uBounds = newSize, &
+        & elementSize = storage_size(tempDatabase) / 8, &
+        & ERMSG=ERMSG, Address=addr )
+
+      if ( newSize>1 ) tempDatabase(1:newSize-1) = database
+      if ( allocated(database) ) then
+        addr = 0
+        if ( size(database) > 0 ) &
+          & addr = get_c_loc(database)
+        deallocate ( database, STAT=status, ERRMSG=ermsg )
+        call test_deallocate ( status, moduleName, "database", &
+          & (newSize-1) * storage_size(tempDatabase) / 8, ermsg, addr )
+      end if
+      call move_alloc ( tempDatabase, database )
+      database(newSize) = item
+    end block
+
+! $Log: addItemToDatabase_A.f9h,v $
+! Revision 1.1  2018/08/04 02:08:46  vsnyder
+! Initial commit -- for allocatable instead of pointer
+!
+@
+
+
+1.1
+log
+@Initial commit -- for allocatable instead of pointer
+@
+text
+@d13 1
+a13 1
+  ! use Allocate_Deallocate, only: Test_Allocate, Test_DeAllocate
+d16 1
+a16 1
+! $Id: addItemToDatabase.f9h,v 1.11 2018/04/19 00:43:00 vsnyder Exp $
+d27 2
+a28 1
+      use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+d32 1
+a32 1
+      if ( status == 0 ) addr = transfer ( c_loc(tempDatabase(1)), addr )
+d41 1
+a41 1
+          & addr = transfer ( c_loc(Database(lbound(database,1))), addr )
+d50 4
+a53 1
+! $Log: addItemToDatabase.f9h,v $
+@
+

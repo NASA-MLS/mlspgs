@@ -1,0 +1,838 @@
+head	2.10;
+access;
+symbols
+	V1-04:2.9
+	V1-03:2.9
+	V1-02:2.9
+	V1-00:2.8
+	newfwm-sep01:2.3.0.2
+	V0-7:2.3;
+locks; strict;
+comment	@# @;
+
+
+2.10
+date	2002.05.22.00.50.15;	author livesey;	state dead;
+branches;
+next	2.9;
+
+2.9
+date	2002.04.15.13.28.36;	author livesey;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2002.01.08.22.45.26;	author livesey;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2001.10.31.18.35.57;	author livesey;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2001.10.17.23.39.38;	author livesey;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2001.10.09.22.41.53;	author livesey;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2001.10.09.01.10.43;	author livesey;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2001.06.01.22.13.37;	author livesey;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2001.05.29.23.23.50;	author livesey;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.05.10.05.00.44;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.10
+log
+@L2CFs no longer belong in l2
+@
+text
+@; This l2cf segment is useful for constructing `standard' species.
+
+begin Construct
+  
+  ;; ----------------------------------------- Temperature / refgph
+  
+  temp: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=temperature
+  refGPH: Quantity, vGrid=vGridRefGPH, hGrid=hGridStandard, type=refGPH
+  GPH: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=GPH
+  
+  ;; ----------------------------------------- Volume mixing ratios
+
+  bro:      Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+    molecule=bro
+  br_79_o:      Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+    molecule=br_79_o
+  br_81_o:      Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+    molecule=br_81_o
+  ch3cn:      Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+    molecule=ch3cn
+  cl_35_o:          Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+    molecule=cl_35_o
+  cl_37_o:          Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+    molecule=cl_37_o
+  clo:          Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+    molecule=clo
+  co:           Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+    molecule=co
+  h2o:          Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+    molecule=h2o, /logBasis
+  h2o_18:       Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+    molecule=h2o_18, /logBasis
+  hcl:          Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+    molecule=hcl
+  hcl_35:       Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+    molecule=hcl_35
+  hcl_37:       Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+    molecule=hcl_37
+  hcn:          Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+    molecule=hcn
+  hno3:         Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+    molecule=hno3
+  ho2:          Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+    molecule=ho2
+  hocl:         Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+    molecule=hocl
+  hocl_35:      Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+    molecule=hocl_35
+  hocl_37:      Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+    molecule=hocl_37
+  n2:           Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+    molecule=n2
+  n2o:          Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+    molecule=n2o
+  o2:           Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+    molecule=o2
+  o2_v1:        Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+    molecule=o2_v1
+  o3:           Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+    molecule=o3
+  o3_asym_o_18: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+    molecule=o3_asym_o_18
+  o3_sym_o_18:  Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+    molecule=o3_sym_o_18
+  o3_v1_3:      Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+    molecule=o3_v1_3
+  o3_v2:        Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+    molecule=o3_v2
+  o_18_o:       Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+    molecule=o_18_o
+  oh:           Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+    molecule=oh
+  so2:          Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+    molecule=so2
+  s_32_o2:      Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+    molecule=s_32_o2
+
+  !define(AllMolecules, {bro, br_79_o,br_81_o, ch3cn, clo, cl_35_o, cl_37_o, $
+    co, h2o, h2o_18, hcl, hcl_35,  $
+    hcl_37, hcn, hno3, ho2, hocl, hocl_35, hocl_37, n2,  $
+    n2o, o2, o2_v1, o3, o3_asym_o_18, o3_sym_o_18, $
+    o3_v1_3, o3_v2, o_18_o, oh, so2, s_32_o2 } )
+
+  ;; ----------------------------------------- Baselines
+  baselineR1A: Quantity, type=baseline, radiometer=R1A, hGrid=hGridStandard, $
+    vGrid=vGridBaseline
+  baselineR1B: Quantity, type=baseline, radiometer=R1B, hGrid=hGridStandard, $
+    vGrid=vGridBaseline
+  baselineR2:  Quantity, type=baseline, radiometer=R2, hGrid=hGridStandard, $
+    vGrid=vGridBaseline
+  baselineR3:  Quantity, type=baseline, radiometer=R3, hGrid=hGridStandard, $
+    vGrid=vGridBaseline
+  baselineR4:  Quantity, type=baseline, radiometer=R4, hGrid=hGridStandard, $
+    vGrid=vGridBaseline
+  baselineR5H: Quantity, type=baseline, radiometer=R5H, hGrid=hGridStandard, $
+    vGrid=vGridBaseline
+  baselineR5V: Quantity, type=baseline, radiometer=R5V, hGrid=hGridStandard, $
+    vGrid=vGridBaseline
+
+  !define(AllRadiometerBaselines, {baselineR1A, baselineR1B, baselineR2, $
+    baselineR3, baselineR4, baselineR5H, baselineR5V })
+
+  ;; ----------------------------------------- Extinctions
+  extinctionR1A: Quantity, vGrid=vGridExtinction, hGrid=hGridStandard, $
+    type=extinction, radiometer=R1A, fGrid=fGridExtinctionR1A
+  extinctionR1B: Quantity, vGrid=vGridExtinction, hGrid=hGridStandard, $
+    type=extinction, radiometer=R1B, fGrid=fGridExtinctionR1B
+  extinctionR2: Quantity, vGrid=vGridExtinction, hGrid=hGridStandard, $
+    type=extinction, radiometer=R2, fGrid=fGridExtinctionR2
+  extinctionR3: Quantity, vGrid=vGridExtinction, hGrid=hGridStandard, $
+    type=extinction, radiometer=R3, fGrid=fGridExtinctionR3
+  extinctionR4: Quantity, vGrid=vGridExtinction, hGrid=hGridStandard, $
+    type=extinction, radiometer=R4, fGrid=fGridExtinctionR4
+  extinctionR5H: Quantity, vGrid=vGridExtinction, hGrid=hGridStandard, $
+    type=extinction, radiometer=R5H, fGrid=fGridExtinctionR5H
+  extinctionR5V: Quantity, vGrid=vGridExtinction, hGrid=hGridStandard, $
+      type=extinction, radiometer=R5V, fGrid=fGridExtinctionR5V
+  
+  !define(AllRadiometerExtinctions, {extinctionR1A, extinctionR1B, extinctionR2, $
+    extinctionR3, extinctionR4, extinctionR5H, extinctionR5V })
+
+  ;; ----------------------------------------- Isotope ratios
+  br_79_o_ratio:      Quantity, type=isotopeRatio, molecule=br_79_o
+  br_81_o_ratio:      Quantity, type=isotopeRatio, molecule=br_81_o
+  cl_35_o_ratio:      Quantity, type=isotopeRatio, molecule=cl_35_o
+  cl_37_o_ratio:      Quantity, type=isotopeRatio, molecule=cl_37_o
+  h2o_18_ratio:       Quantity, type=isotopeRatio, molecule=h2o_18
+  hcl_35_ratio:       Quantity, type=isotopeRatio, molecule=hcl_35
+  hcl_37_ratio:       Quantity, type=isotopeRatio, molecule=hcl_37
+  hocl_35_ratio:      Quantity, type=isotopeRatio, molecule=hocl_35
+  hocl_37_ratio:      Quantity, type=isotopeRatio, molecule=hocl_37
+  o2_v1_ratio:        Quantity, type=isotopeRatio, molecule=o2_v1
+  o3_asym_o_18_ratio: Quantity, type=isotopeRatio, molecule=o3_asym_o_18
+  o3_sym_o_18_ratio:  Quantity, type=isotopeRatio, molecule=o3_sym_o_18
+  o3_v1_3_ratio:      Quantity, type=isotopeRatio, molecule=o3_v1_3
+  o3_v2_ratio:        Quantity, type=isotopeRatio, molecule=o3_v2
+  o_18_o_ratio:       Quantity, type=isotopeRatio, molecule=o_18_o
+  s_32_o2_ratio:      Quantity, type=isotopeRatio, molecule=s_32_o2
+
+  !define(AllISORatios, { br_79_o_ratio, br_81_o_ratio, cl_35_o_ratio, $
+    cl_37_o_ratio, h2o_18_ratio, hcl_35_ratio, hcl_37_ratio, hocl_35_ratio, $
+    hocl_37_ratio, o2_v1_ratio, o3_asym_o_18_ratio, o3_sym_o_18_ratio, $
+    o3_v1_3_ratio, o3_v2_ratio, o_18_o_ratio, s_32_o2_ratio } )
+
+  ;; ----------------------------------------- Tangent pressures
+  ptanGHz: Quantity, type=ptan, module=GHz
+  ptanTHz: Quantity, type=ptan, module=THz
+
+  ;; ----------------------------------------- Radiances
+
+  ;; First the 25 channel filterbanks
+  band1:  Quantity, type=radiance, signal='R1A:118.B1F:PT'
+
+  band2:  Quantity, type=radiance, signal='R2:190.B2F:H2O'
+  band3:  Quantity, type=radiance, signal='R2:190.B3F:N2O'
+  band4:  Quantity, type=radiance, signal='R2:190.B4F:HNO3'
+  band5:  Quantity, type=radiance, signal='R2:190.B5F:ClO'
+  band6:  Quantity, type=radiance, signal='R2:190.B6F:O3'
+
+  band7:  Quantity, type=radiance, signal='R3:240.B7F:O3'
+  band8:  Quantity, type=radiance, signal='R3:240.B8F:PT'
+  band9:  Quantity, type=radiance, signal='R3:240.B9F:CO'
+
+  band10: Quantity, type=radiance, signal='R4:640.B10F:ClO'
+  band11: Quantity, type=radiance, signal='R4:640.B11F:BrO'
+  band12: Quantity, type=radiance, signal='R4:640.B12F:N2O'
+  band13: Quantity, type=radiance, signal='R4:640.B13F:HCl'
+  band14: Quantity, type=radiance, signal='R4:640.B14F:O3'
+
+  band15: Quantity, type=radiance, signal='R5H:2T5.B15F:OH'
+  band16: Quantity, type=radiance, signal='R5H:2T5.B16F:OH'
+  band17: Quantity, type=radiance, signal='R5H:2T5.B17F:PT'
+
+  band18: Quantity, type=radiance, signal='R5V:2T5.B18F:OH'
+  band19: Quantity, type=radiance, signal='R5V:2T5.B19F:OH'
+  band20: Quantity, type=radiance, signal='R5V:2T5.B20F:PT'
+
+  band21: Quantity, type=radiance, signal='R1B:118.B21F:PT'
+
+  ;; Now the DACs
+  band22: Quantity, type=radiance, signal='R1A:118.B22D:PT'
+  band23: Quantity, type=radiance, signal='R2:190.B23D:H2O'
+  band24: Quantity, type=radiance, signal='R3:240.B24D:O3'
+  band25: Quantity, type=radiance, signal='R3:240.B25D:CO'
+  band26: Quantity, type=radiance, signal='R1B:118.B26D:PT'
+
+  ;; Now the 11 channel filter banks
+  band27: Quantity, type=radiance, signal='R2:190.B27M:HCN'
+  band28: Quantity, type=radiance, signal='R4:640.B28M:HO2'
+  band29: Quantity, type=radiance, signal='R4:640.B29M:HOCl'
+  band30: Quantity, type=radiance, signal='R4:640.B30M:HO2'
+  band31: Quantity, type=radiance, signal='R4:640.B31M:BrO'
+
+  ;; Finally the wide filters
+  band32: Quantity, type=radiance, signal='R1A:118.B32W:PT'
+  band33: Quantity, type=radiance, signal='R3:240.B33W:O3'
+  band34: Quantity, type=radiance, signal='R1B:118.B34W:PT'
+
+  !define(AllBands, {!forloop({i}, 1, 33, {band!i, })band34})
+
+  ;; ----------------------------------------- OpticalDepths
+
+  ;; First the 25 channel filterbanks
+  depthBand1:  Quantity, type=opticalDepth, signal='R1A:118.B1F:PT'
+
+  depthBand2:  Quantity, type=opticalDepth, signal='R2:190.B2F:H2O'
+  depthBand3:  Quantity, type=opticalDepth, signal='R2:190.B3F:N2O'
+  depthBand4:  Quantity, type=opticalDepth, signal='R2:190.B4F:HNO3'
+  depthBand5:  Quantity, type=opticalDepth, signal='R2:190.B5F:ClO'
+  depthBand6:  Quantity, type=opticalDepth, signal='R2:190.B6F:O3'
+
+  depthBand7:  Quantity, type=opticalDepth, signal='R3:240.B7F:O3'
+  depthBand8:  Quantity, type=opticalDepth, signal='R3:240.B8F:PT'
+  depthBand9:  Quantity, type=opticalDepth, signal='R3:240.B9F:CO'
+
+  depthBand10: Quantity, type=opticalDepth, signal='R4:640.B10F:ClO'
+  depthBand11: Quantity, type=opticalDepth, signal='R4:640.B11F:BrO'
+  depthBand12: Quantity, type=opticalDepth, signal='R4:640.B12F:N2O'
+  depthBand13: Quantity, type=opticalDepth, signal='R4:640.B13F:HCl'
+  depthBand14: Quantity, type=opticalDepth, signal='R4:640.B14F:O3'
+
+  depthBand15: Quantity, type=opticalDepth, signal='R5H:2T5.B15F:OH'
+  depthBand16: Quantity, type=opticalDepth, signal='R5H:2T5.B16F:OH'
+  depthBand17: Quantity, type=opticalDepth, signal='R5H:2T5.B17F:PT'
+
+  depthBand18: Quantity, type=opticalDepth, signal='R5V:2T5.B18F:OH'
+  depthBand19: Quantity, type=opticalDepth, signal='R5V:2T5.B19F:OH'
+  depthBand20: Quantity, type=opticalDepth, signal='R5V:2T5.B20F:PT'
+
+  depthBand21: Quantity, type=opticalDepth, signal='R1B:118.B21F:PT'
+
+  ;; Now the DACs
+  depthBand22: Quantity, type=opticalDepth, signal='R1A:118.B22D:PT'
+  depthBand23: Quantity, type=opticalDepth, signal='R2:190.B23D:H2O'
+  depthBand24: Quantity, type=opticalDepth, signal='R3:240.B24D:O3'
+  depthBand25: Quantity, type=opticalDepth, signal='R3:240.B25D:CO'
+  depthBand26: Quantity, type=opticalDepth, signal='R1B:118.B26D:PT'
+
+  ;; Now the 11 channel filter banks
+  depthBand27: Quantity, type=opticalDepth, signal='R2:190.B27M:HCN'
+  depthBand28: Quantity, type=opticalDepth, signal='R4:640.B28M:HO2'
+  depthBand29: Quantity, type=opticalDepth, signal='R4:640.B29M:HOCl'
+  depthBand30: Quantity, type=opticalDepth, signal='R4:640.B30M:HO2'
+  depthBand31: Quantity, type=opticalDepth, signal='R4:640.B31M:BrO'
+
+  ;; Finally the wide filters
+  depthBand32: Quantity, type=opticalDepth, signal='R1A:118.B32W:PT'
+  depthBand33: Quantity, type=opticalDepth, signal='R3:240.B33W:O3'
+  depthBand34: Quantity, type=opticalDepth, signal='R1B:118.B34W:PT'
+
+  !define(AllOpticalDepths, {!forloop({i}, 1, 33, {depthBand!i, })depthBand34})
+
+  ;; ----------------------------------------- Scan residuals
+
+  scanResidualGHz: Quantity, type=scanResidual, module=GHz
+  scanResidualTHz: Quantity, type=scanResidual, module=THz
+
+  ;; ----------------------------------------- Elevation offsets
+
+  r1aElev: Quantity, type=elevOffset, radiometer=R1A
+  r1bElev: Quantity, type=elevOffset, radiometer=R1B
+  r2Elev:  Quantity, type=elevOffset, radiometer=R2
+  r3Elev:  Quantity, type=elevOffset, radiometer=R3
+  r4Elev:  Quantity, type=elevOffset, radiometer=R4
+  r5hElev: Quantity, type=elevOffset, radiometer=R5H
+  r5vElev: Quantity, type=elevOffset, radiometer=R5V
+
+  !define(AllElevs, {r1aElev, r1bElev, r2Elev, r3Elev, r4Elev, r5hElev, r5vElev})
+
+  ;; ----------------------------------------- Sideband ratios
+
+  ;; First the 25 channel filterbanks
+  band1ratio:  Quantity, type=sidebandRatio, signal='R1A:118.B1F:PT'
+
+  band2ratio:  Quantity, type=sidebandRatio, signal='R2:190.B2F:H2O'
+  band3ratio:  Quantity, type=sidebandRatio, signal='R2:190.B3F:N2O'
+  band4ratio:  Quantity, type=sidebandRatio, signal='R2:190.B4F:HNO3'
+  band5ratio:  Quantity, type=sidebandRatio, signal='R2:190.B5F:ClO'
+  band6ratio:  Quantity, type=sidebandRatio, signal='R2:190.B6F:O3'
+
+  band7ratio:  Quantity, type=sidebandRatio, signal='R3:240.B7F:O3'
+  band8ratio:  Quantity, type=sidebandRatio, signal='R3:240.B8F:PT'
+  band9ratio:  Quantity, type=sidebandRatio, signal='R3:240.B9F:CO'
+
+  band10ratio: Quantity, type=sidebandRatio, signal='R4:640.B10F:ClO'
+  band11ratio: Quantity, type=sidebandRatio, signal='R4:640.B11F:BrO'
+  band12ratio: Quantity, type=sidebandRatio, signal='R4:640.B12F:N2O'
+  band13ratio: Quantity, type=sidebandRatio, signal='R4:640.B13F:HCl'
+  band14ratio: Quantity, type=sidebandRatio, signal='R4:640.B14F:O3'
+
+  band15ratio: Quantity, type=sidebandRatio, signal='R5H:2T5.B15F:OH'
+  band16ratio: Quantity, type=sidebandRatio, signal='R5H:2T5.B16F:OH'
+  band17ratio: Quantity, type=sidebandRatio, signal='R5H:2T5.B17F:PT'
+
+  band18ratio: Quantity, type=sidebandRatio, signal='R5V:2T5.B18F:OH'
+  band19ratio: Quantity, type=sidebandRatio, signal='R5V:2T5.B19F:OH'
+  band20ratio: Quantity, type=sidebandRatio, signal='R5V:2T5.B20F:PT'
+
+  band21ratio: Quantity, type=sidebandRatio, signal='R1B:118.B21F:PT'
+
+  ;; Now the DACs
+  band22ratio: Quantity, type=sidebandRatio, signal='R1A:118.B22D:PT'
+  band23ratio: Quantity, type=sidebandRatio, signal='R2:190.B23D:H2O'
+  band24ratio: Quantity, type=sidebandRatio, signal='R3:240.B24D:O3'
+  band25ratio: Quantity, type=sidebandRatio, signal='R3:240.B25D:CO'
+  band26ratio: Quantity, type=sidebandRatio, signal='R1B:118.B26D:PT'
+
+  ;; Now the 11 channel filter banks
+  band27ratio: Quantity, type=sidebandRatio, signal='R2:190.B27M:HCN'
+  band28ratio: Quantity, type=sidebandRatio, signal='R4:640.B28M:HO2'
+  band29ratio: Quantity, type=sidebandRatio, signal='R4:640.B29M:HOCl'
+  band30ratio: Quantity, type=sidebandRatio, signal='R4:640.B30M:HO2'
+  band31ratio: Quantity, type=sidebandRatio, signal='R4:640.B31M:BrO'
+
+  ;; Finally the wide filters
+  band32ratio: Quantity, type=sidebandRatio, signal='R1A:118.B32W:PT'
+  band33ratio: Quantity, type=sidebandRatio, signal='R3:240.B33W:O3'
+  band34ratio: Quantity, type=sidebandRatio, signal='R1B:118.B34W:PT'
+
+  !define(AllSBRatios, {!forloop({i}, 1, 33, {band!i{}ratio, })band34ratio})
+
+  ;; ----------------------------------------- Other minor stuff
+
+  earthReflectivity: quantity, type = earthRefl
+  orbitInclination: Quantity, type = orbitInclination
+  spaceRadiance: quantity, type = spaceRadiance
+
+  scGeocAlt: Quantity, type = scGeocAlt, module= SC
+  tngtGeocAltGHz: Quantity, type=tngtGeocAlt, module=GHz
+  tngtGeocAltTHz: Quantity, type=tngtGeocAlt, module=THz
+
+  scECI: quantity, type=scECI, module=SC
+  tngtECIGHz: quantity, type=tngtECI, module=GHz
+  tngtECITHz: quantity, type=tngtECI, module=THz
+
+  scVel: quantity, type=scVel, module=SC
+  losVelGHz: quantity, type=losVel, module=GHz
+  losVelTHz: quantity, type=losVel, module=THz
+
+  !define(LesserState, 
+  {earthReflectivity, orbitInclination, spaceRadiance, $
+    scGeocAlt, tngtGeocAltGHz, tngtGeocAltTHz, scECI, tngtECIGHz, tngtECITHz, $
+    scVel, losVelGHz, losVelTHz})
+  
+end Construct
+@
+
+
+2.9
+log
+@Very long overdue update
+@
+text
+@@
+
+
+2.8
+log
+@Added extinctions
+@
+text
+@d9 1
+a9 1
+  GPH: Quantity, vGrid=vGridRefGPH, hGrid=hGridStandard, type=GPH
+d30 1
+a30 1
+    molecule=h2o
+d32 1
+a32 1
+    molecule=h2o_18
+d200 52
+@
+
+
+2.7
+log
+@New l2pc fragments
+@
+text
+@d103 19
+@
+
+
+2.6
+log
+@Added so2 and ratios.
+@
+text
+@d9 1
+d19 2
+d78 2
+a79 2
+  !define(AllMolecules, {bro, br_79_o,br_81_o, clo, cl_35_o, cl_37_o, co,  $
+    h2o, h2o_18, hcl, hcl_35,  $
+@
+
+
+2.5
+log
+@More changes for new m4 usage
+@
+text
+@d4 172
+a175 2
+    
+    ;; ----------------------------------------- Temperature / refgph
+d177 1
+a177 169
+    temp: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=temperature
+    refGPH: Quantity, vGrid=vGridRefGPH, hGrid=hGridStandard, type=refGPH
+
+    ;; ----------------------------------------- Volume mixing ratios
+
+    bro:      Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+      molecule=bro
+    br_79_o:      Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+      molecule=br_79_o
+    br_81_o:      Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+      molecule=br_81_o
+    cl_35_o:          Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+      molecule=cl_35_o
+    cl_37_o:          Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+      molecule=cl_37_o
+    clo:          Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+      molecule=clo
+    co:           Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+      molecule=co
+    h2o:          Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+      molecule=h2o
+    h2o_18:       Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+      molecule=h2o_18
+    hcl:          Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+      molecule=hcl
+    hcl_35:       Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+      molecule=hcl_35
+    hcl_37:       Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+      molecule=hcl_37
+    hcn:          Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+      molecule=hcn
+    hno3:         Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+      molecule=hno3
+    ho2:          Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+      molecule=ho2
+    hocl:         Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+      molecule=hocl
+    hocl_35:      Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+      molecule=hocl_35
+    hocl_37:      Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+      molecule=hocl_37
+    n2:           Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+      molecule=n2
+    n2o:          Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+      molecule=n2o
+    o2:           Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+      molecule=o2
+    o2_v1:        Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+      molecule=o2_v1
+    o3:           Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+      molecule=o3
+    o3_asym_o_18: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+      molecule=o3_asym_o_18
+    o3_sym_o_18:  Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+      molecule=o3_sym_o_18
+    o3_v1_3:      Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+      molecule=o3_v1_3
+    o3_v2:        Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+      molecule=o3_v2
+    o_18_o:       Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+      molecule=o_18_o
+    oh:           Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+      molecule=oh
+
+    !define(AllMolecules, {bro, br_79_o,br_81_o, clo, cl_35_o, cl_37_o, co,  $
+                           h2o, h2o_18, hcl, hcl_35,  $
+                           hcl_37, hcn, hno3, ho2, hocl, hocl_35, hocl_37, n2,  $
+                           n2o, o2, o2_v1, o3, o3_asym_o_18, o3_sym_o_18, $
+                           o3_v1_3, o3_v2, o_18_o, oh } )
+
+    ;; ----------------------------------------- Baselines
+    baselineR1A: Quantity, type=baseline, radiometer=R1A, hGrid=hGridStandard, $
+      vGrid=vGridBaseline
+    baselineR1B: Quantity, type=baseline, radiometer=R1B, hGrid=hGridStandard, $
+      vGrid=vGridBaseline
+    baselineR2:  Quantity, type=baseline, radiometer=R2, hGrid=hGridStandard, $
+      vGrid=vGridBaseline
+    baselineR3:  Quantity, type=baseline, radiometer=R3, hGrid=hGridStandard, $
+      vGrid=vGridBaseline
+    baselineR4:  Quantity, type=baseline, radiometer=R4, hGrid=hGridStandard, $
+      vGrid=vGridBaseline
+    baselineR5H: Quantity, type=baseline, radiometer=R5H, hGrid=hGridStandard, $
+      vGrid=vGridBaseline
+    baselineR5V: Quantity, type=baseline, radiometer=R5V, hGrid=hGridStandard, $
+      vGrid=vGridBaseline
+
+    !define(AllRadiometerBaselines, {baselineR1A, baselineR1B, baselineR2, $
+      baselineR3, baselineR4, baselineR5H, baselineR5V })
+
+    ;; ----------------------------------------- Isotope ratios
+
+    br_79_o_ratio:      Quantity, type=isotopeRatio, molecule=br_79_o
+    br_81_o_ratio:      Quantity, type=isotopeRatio, molecule=br_81_o
+    cl_35_o_ratio:      Quantity, type=isotopeRatio, molecule=cl_35_o
+    cl_37_o_ratio:      Quantity, type=isotopeRatio, molecule=cl_37_o
+    h2o_18_ratio:       Quantity, type=isotopeRatio, molecule=h2o_18
+    hocl_35_ratio:      Quantity, type=isotopeRatio, molecule=hocl_35
+    hocl_37_ratio:      Quantity, type=isotopeRatio, molecule=hocl_37
+    o2_v1_ratio:        Quantity, type=isotopeRatio, molecule=o2_v1
+    o3_asym_o_18_ratio: Quantity, type=isotopeRatio, molecule=o3_asym_o_18
+    o3_sym_o_18_ratio:  Quantity, type=isotopeRatio, molecule=o3_sym_o_18
+    o3_v1_3_ratio:      Quantity, type=isotopeRatio, molecule=o3_v1_3
+    o3_v2_ratio:        Quantity, type=isotopeRatio, molecule=o3_v2
+    o_18_o_ratio:       Quantity, type=isotopeRatio, molecule=o_18_o
+    hcl_35_ratio:       Quantity, type=isotopeRatio, molecule=hcl_35
+    hcl_37_ratio:       Quantity, type=isotopeRatio, molecule=hcl_37
+
+    !define(AllISORatios,
+    { br_79_o_ratio, br_81_o_ratio, cl_35_o_ratio, cl_37_o_ratio, $
+      h2o_18_ratio, hocl_35_ratio,hocl_37_ratio, o2_v1_ratio, o3_asym_o_18_ratio, $
+      o3_sym_o_18_ratio, o3_v1_3_ratio, o3_v2_ratio, o_18_o_ratio, hcl_35_ratio, $
+      hcl_37_ratio } )
+
+    ;; ----------------------------------------- Tangent pressures
+
+    ptanGHz: Quantity, type=ptan, module=GHz
+    ptanTHz: Quantity, type=ptan, module=THz
+
+    ;; ----------------------------------------- Radiances
+
+    ;; First the 25 channel filterbanks
+    band1:  Quantity, type=radiance, signal='R1A:118.B1F:PT'
+
+    band2:  Quantity, type=radiance, signal='R2:190.B2F:H2O'
+    band3:  Quantity, type=radiance, signal='R2:190.B3F:N2O'
+    band4:  Quantity, type=radiance, signal='R2:190.B4F:HNO3'
+    band5:  Quantity, type=radiance, signal='R2:190.B5F:ClO'
+    band6:  Quantity, type=radiance, signal='R2:190.B6F:O3'
+
+    band7:  Quantity, type=radiance, signal='R3:240.B7F:O3'
+    band8:  Quantity, type=radiance, signal='R3:240.B8F:PT'
+    band9:  Quantity, type=radiance, signal='R3:240.B9F:CO'
+
+    band10: Quantity, type=radiance, signal='R4:640.B10F:ClO'
+    band11: Quantity, type=radiance, signal='R4:640.B11F:BrO'
+    band12: Quantity, type=radiance, signal='R4:640.B12F:N2O'
+    band13: Quantity, type=radiance, signal='R4:640.B13F:HCl'
+    band14: Quantity, type=radiance, signal='R4:640.B14F:O3'
+
+    band15: Quantity, type=radiance, signal='R5H:2T5.B15F:OH'
+    band16: Quantity, type=radiance, signal='R5H:2T5.B16F:OH'
+    band17: Quantity, type=radiance, signal='R5H:2T5.B17F:PT'
+
+    band18: Quantity, type=radiance, signal='R5V:2T5.B18F:OH'
+    band19: Quantity, type=radiance, signal='R5V:2T5.B19F:OH'
+    band20: Quantity, type=radiance, signal='R5V:2T5.B20F:PT'
+
+    band21: Quantity, type=radiance, signal='R1B:118.B21F:PT'
+
+    ;; Now the DACs
+    band22: Quantity, type=radiance, signal='R1A:118.B22D:PT'
+    band23: Quantity, type=radiance, signal='R2:190.B23D:H2O'
+    band24: Quantity, type=radiance, signal='R3:240.B24D:O3'
+    band25: Quantity, type=radiance, signal='R3:240.B25D:CO'
+    band26: Quantity, type=radiance, signal='R1B:118.B26D:PT'
+
+    ;; Now the 11 channel filter banks
+    band27: Quantity, type=radiance, signal='R2:190.B27M:HCN'
+    band28: Quantity, type=radiance, signal='R4:640.B28M:HO2'
+    band29: Quantity, type=radiance, signal='R4:640.B29M:HOCl'
+    band30: Quantity, type=radiance, signal='R4:640.B30M:HO2'
+    band31: Quantity, type=radiance, signal='R4:640.B31M:BrO'
+
+    ;; Finally the wide filters
+    band32: Quantity, type=radiance, signal='R1A:118.B32W:PT'
+    band33: Quantity, type=radiance, signal='R3:240.B33W:O3'
+    band34: Quantity, type=radiance, signal='R1B:118.B34W:PT'
+
+    !define(AllBands, {!forloop({i}, 1, 33, {band!i, })band34})
+d181 2
+a182 2
+    scanResidualGHz: Quantity, type=scanResidual, module=GHz
+    scanResidualTHz: Quantity, type=scanResidual, module=THz
+d184 1
+a184 1
+    ;; ----------------------------------------- Elevation offsets
+d186 85
+a270 85
+    r1aElev: Quantity, type=elevOffset, radiometer=R1A
+    r1bElev: Quantity, type=elevOffset, radiometer=R1B
+    r2Elev:  Quantity, type=elevOffset, radiometer=R2
+    r3Elev:  Quantity, type=elevOffset, radiometer=R3
+    r4Elev:  Quantity, type=elevOffset, radiometer=R4
+    r5hElev: Quantity, type=elevOffset, radiometer=R5H
+    r5vElev: Quantity, type=elevOffset, radiometer=R5V
+
+    !define(AllElevs, {r1aElev, r1bElev, r2Elev, r3Elev, r4Elev, r5hElev, r5vElev})
+
+    ;; ----------------------------------------- Sideband ratios
+
+    ;; First the 25 channel filterbanks
+    band1ratio:  Quantity, type=sidebandRatio, signal='R1A:118.B1F:PT'
+
+    band2ratio:  Quantity, type=sidebandRatio, signal='R2:190.B2F:H2O'
+    band3ratio:  Quantity, type=sidebandRatio, signal='R2:190.B3F:N2O'
+    band4ratio:  Quantity, type=sidebandRatio, signal='R2:190.B4F:HNO3'
+    band5ratio:  Quantity, type=sidebandRatio, signal='R2:190.B5F:ClO'
+    band6ratio:  Quantity, type=sidebandRatio, signal='R2:190.B6F:O3'
+
+    band7ratio:  Quantity, type=sidebandRatio, signal='R3:240.B7F:O3'
+    band8ratio:  Quantity, type=sidebandRatio, signal='R3:240.B8F:PT'
+    band9ratio:  Quantity, type=sidebandRatio, signal='R3:240.B9F:CO'
+
+    band10ratio: Quantity, type=sidebandRatio, signal='R4:640.B10F:ClO'
+    band11ratio: Quantity, type=sidebandRatio, signal='R4:640.B11F:BrO'
+    band12ratio: Quantity, type=sidebandRatio, signal='R4:640.B12F:N2O'
+    band13ratio: Quantity, type=sidebandRatio, signal='R4:640.B13F:HCl'
+    band14ratio: Quantity, type=sidebandRatio, signal='R4:640.B14F:O3'
+
+    band15ratio: Quantity, type=sidebandRatio, signal='R5H:2T5.B15F:OH'
+    band16ratio: Quantity, type=sidebandRatio, signal='R5H:2T5.B16F:OH'
+    band17ratio: Quantity, type=sidebandRatio, signal='R5H:2T5.B17F:PT'
+
+    band18ratio: Quantity, type=sidebandRatio, signal='R5V:2T5.B18F:OH'
+    band19ratio: Quantity, type=sidebandRatio, signal='R5V:2T5.B19F:OH'
+    band20ratio: Quantity, type=sidebandRatio, signal='R5V:2T5.B20F:PT'
+
+    band21ratio: Quantity, type=sidebandRatio, signal='R1B:118.B21F:PT'
+
+    ;; Now the DACs
+    band22ratio: Quantity, type=sidebandRatio, signal='R1A:118.B22D:PT'
+    band23ratio: Quantity, type=sidebandRatio, signal='R2:190.B23D:H2O'
+    band24ratio: Quantity, type=sidebandRatio, signal='R3:240.B24D:O3'
+    band25ratio: Quantity, type=sidebandRatio, signal='R3:240.B25D:CO'
+    band26ratio: Quantity, type=sidebandRatio, signal='R1B:118.B26D:PT'
+
+    ;; Now the 11 channel filter banks
+    band27ratio: Quantity, type=sidebandRatio, signal='R2:190.B27M:HCN'
+    band28ratio: Quantity, type=sidebandRatio, signal='R4:640.B28M:HO2'
+    band29ratio: Quantity, type=sidebandRatio, signal='R4:640.B29M:HOCl'
+    band30ratio: Quantity, type=sidebandRatio, signal='R4:640.B30M:HO2'
+    band31ratio: Quantity, type=sidebandRatio, signal='R4:640.B31M:BrO'
+
+    ;; Finally the wide filters
+    band32ratio: Quantity, type=sidebandRatio, signal='R1A:118.B32W:PT'
+    band33ratio: Quantity, type=sidebandRatio, signal='R3:240.B33W:O3'
+    band34ratio: Quantity, type=sidebandRatio, signal='R1B:118.B34W:PT'
+
+    !define(AllSBRatios, {!forloop({i}, 1, 33, {band!i{}ratio, })band34ratio})
+
+    ;; ----------------------------------------- Other minor stuff
+
+    earthReflectivity: quantity, type = earthRefl
+    orbitInclination: Quantity, type = orbitInclination
+    spaceRadiance: quantity, type = spaceRadiance
+
+    scGeocAlt: Quantity, type = scGeocAlt, module= SC
+    tngtGeocAltGHz: Quantity, type=tngtGeocAlt, module=GHz
+    tngtGeocAltTHz: Quantity, type=tngtGeocAlt, module=THz
+
+    scECI: quantity, type=scECI, module=SC
+    tngtECIGHz: quantity, type=tngtECI, module=GHz
+    tngtECITHz: quantity, type=tngtECI, module=THz
+
+    scVel: quantity, type=scVel, module=SC
+    losVelGHz: quantity, type=losVel, module=GHz
+    losVelTHz: quantity, type=losVel, module=THz
+
+    !define(LesserState, 
+    {earthReflectivity, orbitInclination, spaceRadiance, $
+     scGeocAlt, tngtGeocAltGHz, tngtGeocAltTHz, scECI, tngtECIGHz, tngtECITHz, $
+     scVel, losVelGHz, losVelTHz})
+    
+a271 6
+
+
+
+
+
+
+@
+
+
+2.4
+log
+@Regular commit, new m4 version
+@
+text
+@d175 1
+a175 1
+    !define(AllBands, {!forloop({i}, 1, 33, {{band}i, })band34})
+d244 1
+a244 1
+    !define(AllSBRatios, {!forloop({i}, 1, 33, {{band}i{ratio}, })band34ratio})
+@
+
+
+2.3
+log
+@Regular commit
+@
+text
+@d3 1
+a3 1
+BEGIN Construct
+d71 1
+a71 1
+    define(_AllMolecules, {bro, br_79_o,br_81_o, clo, cl_35_o, cl_37_o, co,  $
+d77 19
+d114 1
+a114 1
+    define(_AllISORatios,
+d175 1
+a175 1
+    define(_AllBands, {forloop({i}, 1, 33, {{band}i, })band34})
+d192 1
+a192 1
+    define(_AllElevs, {r1aElev, r1bElev, r2Elev, r3Elev, r4Elev, r5hElev, r5vElev})
+d244 1
+a244 1
+    define(_AllSBRatios, {forloop({i}, 1, 33, {{band}i{ratio}, })band34ratio})
+d264 1
+a264 1
+    define(_LesserState, 
+d269 1
+a269 1
+END Construct
+@
+
+
+2.2
+log
+@New version
+@
+text
+@d230 1
+a230 1
+    orbitIncline: Quantity, type = orbitIncline
+d246 1
+a246 1
+    {earthReflectivity, orbitIncline, spaceRadiance, $
+@
+
+
+2.1
+log
+@First version
+@
+text
+@d12 10
+a21 2
+;    br_18_o:      Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+;      molecule=br_18_o
+d28 2
+d44 2
+d71 30
+d158 1
+a158 1
+    ;; ----------------------------------------- Scan residuals
+d225 1
+a225 1
+    define(_AllRatios, {forloop({i}, 1, 33, {{band}i{ratio}, })band34ratio})
+d235 1
+a235 1
+    tngtGeocAltTHz: Quantity, type=tngtGeocAlt, module=GHz
+@
+

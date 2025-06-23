@@ -1,0 +1,2238 @@
+head	1.48;
+access;
+symbols
+	v5-02-NRT-19:1.48
+	v6-00:1.48
+	v5-02-NRT-18:1.48
+	v5-02:1.48
+	v5-01-NRT-17:1.48
+	v5-01-NRT-16:1.48
+	v5-01-NRT-15:1.48
+	v5-01-NRT-14:1.48
+	neuralnetworks-1-0:1.48.0.4
+	cfm-single-freq-0-1:1.48.0.2
+	v5-01:1.48
+	v5-00:1.48
+	v4-23-TA133:1.46.0.6
+	mus-emls-1-70:1.46.0.4
+	rel-1-0-englocks-work:1.46.0.2
+	VUMLS1-00:1.40
+	VPL1-00:1.37
+	V4-22-NRT-08:1.36
+	VAM1-00:1.35
+	V4-21:1.34.0.2
+	V4-13:1.33
+	V4-12:1.29
+	V4-11:1.28
+	V4-10:1.28
+	V3-43:1.20
+	M4-00:1.24
+	V3-41:1.20
+	V3-40-PlusGM57:1.20.0.2
+	V2-24-NRT-04:1.17
+	V3-33:1.21
+	V2-24:1.16
+	V3-31:1.21
+	V3-30-NRT-05:1.21
+	cfm-01-00:1.21
+	V3-30:1.20
+	V3-20:1.20
+	V3-10:1.20
+	V2-23-NRT-02:1.17
+	V2-23:1.16
+	V2-22-NRT-01:1.17
+	V2-22:1.16
+	V2-21:1.13
+	V2-20:1.12
+	V2-11:1.11
+	V2-10:1.11
+	V2-00:1.11
+	V1-51:1.9
+	V1-50:1.9
+	V1-45:1.9
+	V1-44:1.9
+	V1-43:1.9
+	V1-42:1.8
+	V1-41:1.8
+	V1-32:1.9
+	V1-40:1.8
+	V1-31:1.8
+	V1-30:1.3;
+locks; strict;
+comment	@# @;
+
+
+1.48
+date	2019.08.22.16.50.29;	author pwagner;	state Exp;
+branches;
+next	1.47;
+
+1.47
+date	2019.04.18.16.19.09;	author pwagner;	state Exp;
+branches;
+next	1.46;
+
+1.46
+date	2018.02.28.21.05.30;	author pwagner;	state Exp;
+branches;
+next	1.45;
+
+1.45
+date	2018.02.21.21.20.23;	author pwagner;	state Exp;
+branches;
+next	1.44;
+
+1.44
+date	2018.02.09.17.41.10;	author pwagner;	state Exp;
+branches;
+next	1.43;
+
+1.43
+date	2018.01.26.01.29.58;	author pwagner;	state Exp;
+branches;
+next	1.42;
+
+1.42
+date	2017.12.22.00.55.42;	author pwagner;	state Exp;
+branches;
+next	1.41;
+
+1.41
+date	2017.08.02.22.33.04;	author pwagner;	state Exp;
+branches;
+next	1.40;
+
+1.40
+date	2016.11.16.19.26.50;	author pwagner;	state Exp;
+branches;
+next	1.39;
+
+1.39
+date	2016.10.20.23.26.31;	author pwagner;	state Exp;
+branches;
+next	1.38;
+
+1.38
+date	2016.09.23.00.13.07;	author pwagner;	state Exp;
+branches;
+next	1.37;
+
+1.37
+date	2016.06.04.00.25.12;	author pwagner;	state Exp;
+branches;
+next	1.36;
+
+1.36
+date	2016.05.12.17.01.28;	author pwagner;	state Exp;
+branches;
+next	1.35;
+
+1.35
+date	2015.09.25.00.12.52;	author pwagner;	state Exp;
+branches;
+next	1.34;
+
+1.34
+date	2014.11.06.01.52.18;	author pwagner;	state Exp;
+branches;
+next	1.33;
+
+1.33
+date	2014.09.29.22.32.00;	author pwagner;	state Exp;
+branches;
+next	1.32;
+
+1.32
+date	2014.09.12.22.24.48;	author pwagner;	state Exp;
+branches;
+next	1.31;
+
+1.31
+date	2014.09.02.17.54.48;	author pwagner;	state Exp;
+branches;
+next	1.30;
+
+1.30
+date	2014.08.14.00.49.58;	author pwagner;	state Exp;
+branches;
+next	1.29;
+
+1.29
+date	2014.06.25.23.08.27;	author pwagner;	state Exp;
+branches;
+next	1.28;
+
+1.28
+date	2013.11.14.23.57.50;	author pwagner;	state Exp;
+branches;
+next	1.27;
+
+1.27
+date	2013.09.04.17.44.45;	author pwagner;	state Exp;
+branches;
+next	1.26;
+
+1.26
+date	2013.08.30.17.22.46;	author pwagner;	state Exp;
+branches;
+next	1.25;
+
+1.25
+date	2013.05.09.18.04.08;	author pwagner;	state Exp;
+branches;
+next	1.24;
+
+1.24
+date	2013.02.14.19.06.36;	author pwagner;	state Exp;
+branches;
+next	1.23;
+
+1.23
+date	2012.08.10.20.08.41;	author pwagner;	state Exp;
+branches;
+next	1.22;
+
+1.22
+date	2012.07.02.23.07.15;	author pwagner;	state Exp;
+branches;
+next	1.21;
+
+1.21
+date	2010.04.23.23.18.42;	author pwagner;	state Exp;
+branches;
+next	1.20;
+
+1.20
+date	2009.05.26.20.04.21;	author pwagner;	state Exp;
+branches;
+next	1.19;
+
+1.19
+date	2008.07.31.23.57.10;	author pwagner;	state Exp;
+branches;
+next	1.18;
+
+1.18
+date	2008.04.22.18.00.41;	author pwagner;	state Exp;
+branches;
+next	1.17;
+
+1.17
+date	2008.01.08.18.44.12;	author pwagner;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2007.08.31.00.06.43;	author pwagner;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2007.08.17.00.42.02;	author pwagner;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2007.05.10.23.40.12;	author pwagner;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2007.02.09.21.31.07;	author pwagner;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2006.10.05.23.41.32;	author pwagner;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2006.04.21.23.58.39;	author pwagner;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2005.06.23.22.20.46;	author pwagner;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2004.03.05.19.09.33;	author pwagner;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2004.01.07.17.26.09;	author pwagner;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2003.12.11.23.07.57;	author pwagner;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2003.10.22.23.01.51;	author pwagner;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2003.10.20.22.22.00;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2003.10.15.20.56.27;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2003.09.11.20.17.13;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2003.09.05.23.45.51;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2003.08.01.16.46.31;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.48
+log
+@Log the options after substituting any env variables
+@
+text
+@#!/bin/sh
+# slavetmplt.sh
+# runs a slave task when mlsl2 is in parallel mode
+#
+# Copyright 2005, by the California Institute of Technology. ALL
+# RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+# commercial use must be negotiated with the Office of Technology Transfer
+# at the California Institute of Technology.
+
+# This software may be subject to U.S. export control laws. By accepting this
+# software, the user agrees to comply with all applicable U.S. export laws and
+# regulations. User has the responsibility to obtain export licenses, or other
+# export authority as may be required before exporting such information to
+# foreign countries or providing access to foreign persons.
+
+# usage: not called directly, but as mlsl2.slave after being seded
+
+# Used by mlsl2 master task mlsl2p.sh to launch slave tasks in toolkit
+# environment when running mlsl2 in parallel mode
+# mlsl2p.sh seds this file to replace ssllaavvee, ppggssbbiinn, etc.
+# as appropriate
+
+# The resulting script will be called by mlsl2 master task
+# It will attempt to set some toolkt-savvy environment variables
+# and then launch the regular mlsl2 binary
+
+#---------------------------- add_option
+# Accumulate a list of commandline options one-by-one
+# Useful to prevent adding the same option if it's already present
+# usage:
+# instead of: otheropts="--skipRetrieval $otheropts"
+# e.g.: otheropts=`add_option "$otheropts" --skipRetrieval`
+
+# By default the new options get added on at the end, each separated by a space
+# To add them on at the front, use prepend_option
+
+# Be especially careful if you plan to supply an auxiliary arg,
+# lest it duplicate an existing one
+# e.g.: otheropts=`add_option "--maxFailuresPerChunk 1" "$otheropts" `
+# e.g.: otheropts=`add_option "$otheropts"  "--maxFailuresPerChunk 1"`
+add_option()
+{
+   # How many args?
+      if [ $# -gt 1 ]
+      then
+      # Does the option to be added duplicate one already present?
+        mayday=`echo "$1" | grep -e "$2"`
+        if [  "$1" = "" ]
+        then
+          echo $2
+        elif [  "$mayday" != "" ]
+        then
+          echo $1
+        else
+          echo "$1 $2"
+        fi
+      fi
+}
+
+# Exit the entire script
+# If a separate stderr file exists, append it to our stdout
+Exit_With_Status()
+{
+   echo "Exit with status $1" >> "$LOGFILE"
+   echo "LOGFILE $LOGFILE" >> "$LOGFILE"
+   echo "STDERRFILE $STDERRFILE" >> "$LOGFILE"
+   # How many args?
+   if [ $# -lt 1 ]
+   then
+     exit 0
+   fi
+   if [ -f "$STDERRFILE" ]
+   then
+     echo cat "$STDERRFILE" >> "$LOGFILE"
+     cat "$STDERRFILE" >> "$LOGFILE"
+   fi
+   exit $1
+}
+
+#-------------- mycp ----------------
+# read each line of stdin
+# and then echo it to stdout
+# Why?
+# Lines like
+#   b=$a
+# will be echoed as
+#   b=100
+# if the env variable a has been set to 100
+mycp()
+{
+  set -o noglob
+  while read line; do
+    # Does line begin with a '#'?
+    acomment=`echo $line | grep '^#'`
+    if [ "$acomment" != "" ]
+    then
+      # Dont do anything special--just a comment
+      echo $line
+    else
+      # May need to evaluate twice if line contains a $variable
+      eval echo $line
+    fi
+  done
+  set +o noglob
+}
+
+#---------------------------- prepend_option
+# Accumulate a list of commandline options one-by-one
+# Useful to prevent adding the same option if it's already present
+# usage:
+# instead of: otheropts="--skipRetrieval $otheropts"
+# e.g.: otheropts=`prepend_option "$otheropts" --skipRetrieval`
+
+# By default the new options get added on at the beginning, each separated by a space
+# To add them on at the end, use add_option
+
+# Be especially careful if you plan to supply an auxiliary arg,
+# lest it duplicate an existing one
+# e.g.: otheropts=`prepend_option "--maxFailuresPerChunk 1" "$otheropts" `
+# e.g.: otheropts=`prepend_option "$otheropts"  "--maxFailuresPerChunk 1"`
+prepend_option()
+{
+   # How many args?
+      if [ $# -gt 1 ]
+      then
+      # Does the option to be added duplicate one already present?
+        mayday=`echo "$1" | grep -e "$2"`
+        if [  "$1" = "" ]
+        then
+          echo $2
+        elif [  "$mayday" != "" ]
+        then
+          echo $1
+        else
+          echo "$2 $1"
+        fi
+      fi
+}
+
+#---------------------------- get_unique_name
+get_unique_name()
+{
+
+      me="$0"
+      my_name=unique_name.sh
+   # How many args?
+      if [ $# -gt 1 ]
+      then
+        pt="$2"
+        temp="$1"
+      elif [ $# -gt 0 ]
+      then
+        mayday=`echo "$1" | grep '\-h'`
+        if [ "$mayday" != "" ]
+        then
+          sed -n '/'$my_name' help/,/End '$my_name' help/ p' $me \
+              | sed -n 's/^.//p' | sed '1 d; $ d'
+          exit
+        fi
+        pt="."
+        temp="$1"
+      else
+        pt="."
+        temp="temp"
+      fi
+   # Was second arg "-reverse?" If so,
+   # that's a reverse part oder in name flag, not a redef of pt
+   if [ "$pt" = "-reverse" ] 
+   then
+     reverse="yes"
+     pt="."
+   else
+     reverse="no"
+   fi
+   # Is $HOST defined?
+   if [ "$HOST" != "" ]
+   then
+      our_host_name="$HOST"
+   elif [ "$HOSTNAME" != "" ]
+   then
+      our_host_name="$HOSTNAME"
+   else
+      our_host_name="host"
+   fi
+   # if in form host.moon.planet.star.. extract host
+   our_host_name=`echo $our_host_name | sed 's/\./,/g'`
+   our_host_name=`perl -e '@@parts=split(",","$ARGV[0]"); print $parts[0]' $our_host_name`
+   if [ "$reverse" = "yes" ]
+   then
+     echo $our_host_name.$$.$temp
+   else
+     echo $temp${pt}$our_host_name${pt}$$
+   fi
+}
+      
+#---------------------------- launch_mlsl2_ntk
+#
+# launch the pge without the toolkit panoply
+launch_mlsl2_ntk()
+{
+echo $PGE_BINARY --ntk -m --slave $masterTid $otheropts $l2cf 2>&1 >> "$LOGFILE"
+if [ "$runinbackground" != "yes" ]
+then
+  echo "Must run $PGE_BINARY in foreground" >> "$LOGFILE"
+  # Run pge in foreground
+  if [ "$CAPTURE_MT" = "yes" ]
+  then
+    /echo usr/bin/time -f 'M: %M t: %e' $PGE_BINARY --ntk -m --slave $masterTid $otheropts $l2cf  "$LOGFILE"  "$STDERRFILE" >> "$LOGFILE"
+    /usr/bin/time -f 'M: %M t: %e' $PGE_BINARY --ntk -m --slave $masterTid $otheropts $l2cf  1>> "$LOGFILE" 2> "$STDERRFILE"
+  elif [ "$STDERRFILE" != "" ]
+  then
+    $PGE_BINARY --ntk -m --slave $masterTid $otheropts $l2cf 1>> "$LOGFILE" 2> "$STDERRFILE"
+  else
+    $PGE_BINARY --ntk -m --slave $masterTid $otheropts $l2cf 2>&1 >> "$LOGFILE"
+  fi
+  Exit_With_Status 0
+fi
+
+# Run pge in background
+echo "Must run $PGE_BINARY in background" >> "$LOGFILE"
+NOTEFILE=`echo "$LOGFILE" | sed 's/.log$/.note/'`
+notdone="true"
+
+if [ "$CAPTURE_MT" = "yes" ]
+then
+  /usr/bin/time -f 'M: %M t: %e' $PGE_BINARY --ntk -m --slave $masterTid --pidf "$NOTEFILE" $otheropts $l2cf  \
+    1>> "$LOGFILE" 2> "$STDERRFILE" &
+elif [ "$STDERRFILE" != "" ]
+then
+  $PGE_BINARY --ntk -m --slave $masterTid --pidf "$NOTEFILE" $otheropts $l2cf  \
+    1>> "$LOGFILE" 2> "$STDERRFILE" &
+else
+  $PGE_BINARY --ntk -m --slave $masterTid --pidf "$NOTEFILE" $otheropts $l2cf  \
+    >> "$LOGFILE" &
+fi
+}
+
+#---------------------------- launch_mlsl2_tk
+#
+# launch the pge assuming you have the toolkit panoply
+launch_mlsl2_tk()
+{
+echo $PGE_BINARY --tk -m --slave $masterTid $otheropts 2>&1 >> "$LOGFILE"
+if [ "$PGS_PC_INFO_FILE" = "" ]
+then
+  echo "PCF undefined" 2>&1 | tee -a "$LOGFILE"
+  exit 1
+fi
+if [ "$runinbackground" != "yes" ]
+then
+  echo "Must run $PGE_BINARY in foreground" >> "$LOGFILE"
+  # Run pge in foreground
+  if [ "$CAPTURE_MT" = "yes" ]
+  then
+    /usr/bin/time -f 'M: %M t: %e' \
+      $PGE_BINARY --tk -m --slave $masterTid $otheropts \
+       1>> "$LOGFILE" 2> "$STDERRFILE"
+  elif [ "$STDERRFILE" != "" ]
+  then
+    $PGE_BINARY --tk -m --slave $masterTid $otheropts 1>> "$LOGFILE" 2> "$STDERRFILE"
+  else
+    $PGE_BINARY --tk -m --slave $masterTid $otheropts 2>&1 >> "$LOGFILE"
+  fi
+  echo "Returned from $PGE_BINARY with status $?" "$LOGFILE"
+  Exit_With_Status 0
+fi
+
+# Run pge in background
+echo "Must run $PGE_BINARY in background" >> "$LOGFILE"
+NOTEFILE=`echo "$LOGFILE" | sed 's/.log$/.note/'`
+notdone="true"
+
+if [ "$CAPTURE_MT" = "yes" ]
+then
+  echo   /usr/bin/time -f 'M: %M t: %e' \
+    $PGE_BINARY --tk -m --slave $masterTid --pidf "$NOTEFILE" $otheropts  \
+    "$LOGFILE" "$STDERRFILE" >> "$LOGFILE"
+  /usr/bin/time -f 'M: %M t: %e' \
+    $PGE_BINARY --tk -m --slave $masterTid --pidf "$NOTEFILE" $otheropts  \
+    1>> "$LOGFILE" 2> "$STDERRFILE" &
+elif [ "$STDERRFILE" != "" ]
+then
+  echo "Writing standard error to $STDERRFILE" >> "$LOGFILE"
+  $PGE_BINARY --tk -m --slave $masterTid --pidf "$NOTEFILE" $otheropts \
+    1>> "$LOGFILE" 2> "$STDERRFILE" &
+else
+  $PGE_BINARY --tk -m --slave $masterTid --pidf "$NOTEFILE" $otheropts  \
+    >> "$LOGFILE" &
+fi
+
+}
+
+#---------------------------- do_the_call
+#
+# Put after a trip through the main program simply to
+# separate the various options which may have been conglomerated
+# before being passed as args to this script.
+# It's possible that "--slave {task ID}" can come through as one
+# argument containing a space, rather than as 2 arguments.
+# The same thing will happen with --idents {masterIdent}.
+
+do_the_call()
+{
+
+# Not sure why this isn't done automatically
+if [ -r "$HOME/.bashrc" ]
+then
+. $HOME/.bashrc
+fi
+
+JOBDIR=jjoobbddiirr
+PGSMEM_USESHM=ppggssmmeemmuusseesshhmm
+#LOGFILE=${HOME}/slave.log
+PGE_ROOT=ppggeerroott
+#echo $PGE_ROOT > $LOGFILE
+#env >> $LOGFILE
+PGSBIN=ppggssbbiinn
+#echo $PGSBIN >> $LOGFILE
+# **************************************************
+# These 2 sleep times can be reset here by hand 
+# or by one of the .env files below
+# pgestartdelay  how long to wait after starting pge to grep its tid
+# pgekilldelay   how long to wait per cycle before killing it
+#                  Note: this must be < WaitBeforeKillingSlaves in L2Parallel
+pgestartdelay=20
+pgekilldelay=120
+# **************************************************
+if [ -r "$JOBDIR/job.env"  ]
+then
+  # SETREAD=`which set_read_env.sh`
+  . $JOBDIR/job.env
+  # . $SETREAD < $JOBDIR/job.env
+elif [ -r "$PGE_ROOT/science_env.sh"  ]
+then
+  . ${PGE_ROOT}/science_env.sh
+elif [ -r "$PGSBIN/pgs-env.ksh" ]
+then
+  # Oops, this stomps on any PCF we might have selected
+  # so save it to be restored
+  PCF=$PGS_PC_INFO_FILE
+  . $PGSBIN/pgs-env.ksh
+  export PGS_PC_INFO_FILE=$PCF
+fi
+PGS_PC_INFO_FILE=ppccff
+SLVPROG=ssllaavveessccrriipptt
+OTHEROPTS=ootthheerrooppttss
+PGE_BINARY=ppggeebbiinnaarryy
+UsingPCF=UUssiinnggPPCCFF
+export PGS_PC_INFO_FILE PGSMEM_USESHM PGSHOME
+export FLIB_DVT_BUFFER=0
+
+# Puts each slave's output into its own unique file
+temp_file_name=`get_unique_name log -reverse`
+#OLDLOGFILE=$LOGFILE
+LOGFILE="${JOBDIR}/pvmlog/$temp_file_name"
+UNBUFFERED="${LOGFILE}.u"
+pid="$$"
+#ENVSETTINGS="${LOGFILE}.env"
+#echo $LOGFILE >> $OLDLOGFILE
+
+#env  2>&1 | tee "$ENVSETTINGS"
+
+if [ ! -w "$LOGFILE" ]
+then
+  echo "#$LOGFILE mlsl2.log" 2>&1 | tee "$LOGFILE"
+fi
+echo "Slave task slavetmplt.sh started with arguments: $@@" >> $LOGFILE
+
+# It's possible that $1 is the command name--in which case we
+# need to do a shift to get the actual args
+if [ "$1" = "$SLVPROG" ]
+then
+  shift
+  echo "Need to shift because 1st arg is command name" 2>&1 | tee -a "$LOGFILE"
+fi
+
+masterIdent="none"
+runinbackground="no"
+CAPTURE_STDERR="yes"
+otheropts="-g --uid $pid"
+switches="--stdout out -S'slv,opt,log,pro,time,glob'"
+OPTSFILE="${JOBDIR}/slave.opts"
+# otheropts="-g -S'slv,opt1,log,pro,time,glob1'"
+# otheropts="$OTHEROPTS"
+echo "otheropts starting as $otheropts" 2>&1 | tee -a "$LOGFILE"
+more_opts="yes"
+while [ "$more_opts" = "yes" ] ; do
+    echo "Considering argument: $1" >> $LOGFILE
+    case "$1" in
+    --chunk )
+       echo "Skipping chunk-setting arguments: $1 $2" >> $LOGFILE
+       shift
+       shift
+       ;;
+    --crash* )
+       otheropts=`add_option "$otheropts" $1`
+       echo "Adding argument to crash on any error: $1" >> $LOGFILE
+       echo "$otheropts" >> $LOGFILE
+       shift
+       ;;
+    --delay )
+       echo "Skipping argument to change master delay: $1 $2" >> $LOGFILE
+       echo "$otheropts" >> $LOGFILE
+       shift
+       shift
+       ;;
+    --idents )
+       masterIdent="$2"
+       shift
+       shift
+       ;;
+    --skipDir* )
+       otheropts=`add_option "$otheropts" --skipDirect`
+       echo "Adding argument to skip direct writes: $1" >> $LOGFILE
+       echo "$otheropts" >> $LOGFILE
+       shift
+       ;;
+    --skipR* )
+       otheropts=`add_option "$otheropts" --skipRetrieval`
+       echo "Adding argument to skip retrieval: $1" >> $LOGFILE
+       echo "$otheropts" >> $LOGFILE
+       shift
+       ;;
+    --skipS* )
+       otheropts=`add_option "$otheropts" --skipSections`
+       otheropts=`add_option "$otheropts" $2`
+       echo "Adding argument to skip certain sections: $1 $2" >> $LOGFILE
+       echo "$otheropts" >> $LOGFILE
+       shift
+       shift
+       ;;
+    --slave* )
+	   masterTid="$2"
+	   shift
+	   shift
+       ;;
+    --state* )
+       otheropts=`add_option "$otheropts" "$1 $2"`
+       echo "Adding argument to fill skipped retrievals: $2" >> $LOGFILE
+       echo "$otheropts" >> $LOGFILE
+       shift
+       shift
+       ;;
+    --stdout )
+       otheropts=`add_option "$otheropts" "$1 $UNBUFFERED"`
+       # Note that we can't have all the slaves and masters directing
+       # unbuffered stdout to $2
+       echo "Adding argument to buffer stdout to $UNBUFFERED" >> $LOGFILE
+       echo "$otheropts" >> $LOGFILE
+       shift
+       shift
+       ;;
+    --share* )
+       otheropts=`add_option "$otheropts" --sharedPCF`
+       shift
+       ;;
+    --submit )
+       echo "Skipping argument to submit to a special l2 queue manager: $1 $2" >> $LOGFILE
+       echo "$otheropts" >> $LOGFILE
+       shift
+       shift
+       ;;
+    --backg* )
+       otheropts=`add_option "$otheropts" $1`
+       echo "Skipping argument to run slave pge in background" >> $LOGFILE
+       echo "$otheropts" >> $LOGFILE
+       runinbackground="yes"
+       shift
+       ;;
+    --tk )
+       otheropts=`add_option "$otheropts" --tk`
+       shift
+       ;;
+    --wall )
+       otheropts=`add_option "$otheropts" --wall`
+       echo "Adding argument to use wall clock: $1" >> $LOGFILE
+       echo "$otheropts" >> $LOGFILE
+       shift
+       ;;
+    --patch* )
+       otheropts=`add_option "$otheropts" $1`
+       echo "Adding argument to patch existing directWrite files" >> $LOGFILE
+       echo "$otheropts" >> $LOGFILE
+       shift
+       ;;
+    --maxChun* )
+       otheropts=`add_option "$otheropts" "$1 $2"`
+       echo "Adding arguments to set max chunk size: $1 $2" >> $LOGFILE
+       echo "$otheropts" >> $LOGFILE
+       shift
+       shift
+       ;;
+    --maxFailuresPerCh* )
+       otheropts=`add_option "$otheropts" "$1 $2"`
+       echo "Adding arguments to set max failures per chunk: $1 $2" >> $LOGFILE
+       echo "$otheropts" >> $LOGFILE
+       shift
+       shift
+       ;;
+    --maxFailuresPerM* )
+       otheropts=`add_option "$otheropts" "$1 $2"`
+       echo "Adding arguments to set max failures per machine: $1 $2" >> $LOGFILE
+       echo "$otheropts" >> $LOGFILE
+       shift
+       shift
+       ;;
+    --lac* )
+       otheropts=`add_option "$otheropts" "$1 $2"`
+       echo "Adding arguments to reduce output: $1 $2" >> $LOGFILE
+       echo "$otheropts" >> $LOGFILE
+       shift
+       shift
+       ;;
+    --setf* )
+       # Read opts from a file
+       if [ ! -f "$OPTSFILE" ]
+       then
+         sed 's/chunk=/#chunk=/; s/submit=/#submit=/' "$2" > "$OPTSFILE"
+       fi
+       otheropts=`add_option "$otheropts" "$1 $OPTSFILE"`
+       echo "Adding arguments to read opts from file: $1 $OPTSFILE" >> $LOGFILE
+       echo "$otheropts" >> $LOGFILE
+       # Are we setting to run in background?
+       a=`grep '^backg=true' $OPTSFILE`
+       if [ "$a" != "" ]
+       then
+         runinbackground="yes"
+       fi
+       # Are we setting to capture stderr?
+       a=`grep '^stderr=true' $OPTSFILE`
+       if [ "$a" != "" ]
+       then
+         CAPTURE_STDERR="yes"
+       fi
+       # Are we pre-processing the opts using environment variables?
+       a=`grep '^USEOPTSENV' $OPTSFILE`
+       echo "a is $a" >> "$LOGFILE"
+       ls $JOBDIR/job.env  >> "$LOGFILE"
+       if [ "$a" != "" ]
+       then
+         mv $OPTSFILE $OPTSFILE.1
+         mycp < $OPTSFILE.1 > $OPTSFILE
+         echo "Planning to use these opts" >> "$LOGFILE"
+         mycp < $OPTSFILE.1 >> "$LOGFILE"
+         rm $OPTSFILE.1
+       fi
+       shift
+       shift
+       ;;
+    --set* )
+       # set one cmdline opt
+       otheropts=`add_option "$otheropts" "$1 $2"`
+       echo "Setting one cmdline opt: $1 $2" >> $LOGFILE
+       echo "$otheropts" >> $LOGFILE
+       shift
+       shift
+       ;;
+    --versid* )
+       # set current version id
+       otheropts=`add_option "$otheropts" "$1 $2"`
+       echo "Setting current version id: $1 $2" >> $LOGFILE
+       echo "$otheropts" >> $LOGFILE
+       shift
+       shift
+       ;;
+    --* )
+       otheropts=`add_option "$otheropts" $1`
+       echo "Adding unrecognized option: $1" >> $LOGFILE
+       shift
+       ;;
+    -[DRSV]* )
+       switches="$switches $1"
+       echo "Appending one of the switch-setting arguments: $1" >> $LOGFILE
+       shift
+       ;;
+    -f* )
+       otheropts=`add_option "$otheropts" $1`
+       echo "Adding argument to trace forward model: $1" >> $LOGFILE
+       shift
+       ;;
+    -g* )
+       echo "Skipping superfluous argument to trace execution: $1" >> $LOGFILE
+       shift
+       ;;
+    -* )
+       echo "Skipping unknown argument: $1" >> $LOGFILE
+       shift
+       ;;
+    * )
+       echo "Finished considering arguments" >> $LOGFILE
+       more_opts="no"
+       ;;
+    esac
+done
+
+otheropts="$otheropts $switches"
+
+if [ "$STDERRFILE" = "" ]
+then
+  if [ "$CAPTURE_MT" = "yes" -o "$CAPTURE_STDERR" = "yes"  ]
+  then
+    STDERRFILE="$LOGFILE.stderr"
+  fi
+fi
+
+echo "PGS_PC_INFO_FILE: $PGS_PC_INFO_FILE" 2>&1 | tee -a "$LOGFILE"
+echo "masterTid: $masterTid" 2>&1 | tee -a "$LOGFILE"
+echo "masterIdent file: $masterIdent" 2>&1 | tee -a "$LOGFILE"
+echo "executable: $PGE_BINARY" 2>&1 | tee -a "$LOGFILE"
+echo "otheropts $otheropts" 2>&1 | tee -a "$LOGFILE"
+echo "STDERRFILE $STDERRFILE" 2>&1 | tee -a "$LOGFILE"
+
+if [ "$masterTid" = "" ]
+then
+  echo "masterTid undefined" 2>&1 | tee -a "$LOGFILE"
+  exit 1
+elif [ ! -x "$PGE_BINARY" ]
+then
+  echo "$PGE_BINARY not found/executable" 2>&1 | tee -a "$LOGFILE"
+  exit 1
+fi
+
+# Compare master task's ident with this slave's
+# If different, quit with error message
+if [ -f "$masterIdent" ]
+then
+  the_diff=`ident "$PGE_BINARY" | diff - "$masterIdent"`
+  if [ ! "$the_diff" = "" ]
+  then
+     echo "master task ident differs from slave"
+     echo "Possibly an error in paths; please check PVM_BIN, PVM_EP, ~/bin"
+     exit 1
+  fi
+fi
+
+#env | sort > "$ENVSETTINGS"
+ulimit -s unlimited
+#ulimit -a >> "$ENVSETTINGS"
+if [ "$UsingPCF" != "" ]
+then
+  launch_mlsl2_tk
+else
+  l2cf=$1
+  launch_mlsl2_ntk
+fi
+pgepid=$!
+echo "pge pid: $pgepid"  >> "$LOGFILE"
+sleep $pgestartdelay
+echo "Find the pge's pid; call it pgepid2" >> "$LOGFILE"
+ps aux | grep "uid"  >> "$LOGFILE"
+ps aux | grep "uid $pid " | egrep -v '(grep|time)' >> "$LOGFILE"
+pgepid2=`ps aux | grep "uid $pid " | egrep -v '(grep|/time)' | awk '{print $2}'`
+if [ "$pgepid" != "$pgepid2" -a "$CAPTURE_MT" != "yes" ]
+then
+  echo "Warning-- $pgepid and $pgepid2 differ" >> "$LOGFILE"
+  ps -l -p "$pgepid" >> "$LOGFILE"
+  ps -l -p "$pgepid2" >> "$LOGFILE"
+  kill -9 $pgepid
+  kill -9 $pgepid2
+  Exit_With_Status 1
+else
+  echo "pgepid and pgepid2 are both $pgepid2" >> "$LOGFILE"
+fi
+pgepid=$pgepid2
+# Did the launch fail immediately?
+if [ "$pgepid" = "" ]
+then
+  echo "Failed to launch $PGE_BINARY in background" >> "$LOGFILE"
+  Exit_With_Status 1
+fi
+
+# Write this pid to a uniquely-named file
+echo "$pgepid" > "$NOTEFILE"
+echo "$pgepid echoed to $NOTEFILE" >> "$LOGFILE"
+# Now cycle endlessly until we learn the pge we launched is finished
+# We do this so that we can
+# (1) append the stderr file onto the end of the logfile
+# (2) kill -9 in case it was left only "mostly dead"
+while [ "$notdone" = "true" ]
+do
+  sleep $pgekilldelay
+  # Either of two signs that we finished:
+  # the pge wrote Finished to the note file
+  a=`grep Finished "$NOTEFILE"`
+  if [ "$a" != "" ]
+  then
+    notdone=finished
+  fi
+  # its pid disappears
+  a=`ps p $pgepid | grep "$pgepid"`
+  if [ "$a" = "" ]
+  then
+    notdone=disappeared
+  fi
+done
+echo "$notdone; Returned from $PGE_BINARY with status $?" >> "$LOGFILE"
+if [ -f "$STDERRFILE" ]
+then
+  echo cat "$STDERRFILE" >> "$LOGFILE"
+  cat "$STDERRFILE" >> "$LOGFILE"
+fi
+echo "cat $NOTEFILE" >> "$LOGFILE"
+cat $NOTEFILE >> "$LOGFILE"
+# For good measure, we alo kill the pge's own pid (n case it was left hanging)
+echo "killing $pgepid" >> "$LOGFILE"
+kill -9 "$pgepid"
+}
+      
+#------------------------------- Main Program ------------
+
+#****************************************************************
+#                                                               *
+#                  * * * Main Program  * * *                    *
+#                                                               *
+#                                                               *
+#	The entry point where control is given to the script         *
+#****************************************************************
+
+# This just separates any args that have suffered conglomeration
+# e.g., "arg1 arg2" being passed as a single space-containing arg
+all_my_opts=$@@
+do_the_call $all_my_opts
+Exit_With_Status 0
+
+# $Log: slavetmplt.sh,v $
+# Revision 1.47  2019/04/18 16:19:09  pwagner
+# May evaluate variables in opts file if USEOPTSENV is set
+#
+# Revision 1.46  2018/02/28 21:05:30  pwagner
+# This version handles both --tk and --ntk cases
+#
+# Revision 1.45  2018/02/21 21:20:23  pwagner
+# Remove unised exits
+#
+# Revision 1.44  2018/02/09 17:41:10  pwagner
+# Correct spelling error
+#
+# Revision 1.43  2018/01/26 01:29:58  pwagner
+# Tried to fix hanging when running in foreground
+#
+# Revision 1.42  2017/12/22 00:55:42  pwagner
+# Correct some bugs in saving stderrfile
+#
+# Revision 1.41  2017/08/02 22:33:04  pwagner
+# Fixed an error in defining pgepid
+#
+# Revision 1.40  2016/11/16 19:26:50  pwagner
+# Avoids stomping on an already-selected PCF
+#
+# Revision 1.39  2016/10/20 23:26:31  pwagner
+# Append chunk stderr to chunk log
+#
+# Revision 1.38  2016/09/23 00:13:07  pwagner
+# Reduce default switches for opt and glob
+#
+# Revision 1.37  2016/06/04 00:25:12  pwagner
+# Tried to prevent another cause of slave deaths
+#
+# Revision 1.36  2016/05/12 17:01:28  pwagner
+# Obey CAPTURE_MT by capturing time, mmory footpint to stderr
+#
+# Revision 1.35  2015/09/25 00:12:52  pwagner
+# Added --maxChunkSize option
+#
+# Revision 1.34  2014/11/06 01:52:18  pwagner
+# Now add_option with auxiliary args pairwise
+#
+# Revision 1.33  2014/09/29 22:32:00  pwagner
+# pgepid obtained from $! mechanism
+#
+# Revision 1.32  2014/09/12 22:24:48  pwagner
+# Enhanced diagnostic logging
+#
+# Revision 1.31  2014/09/02 17:54:48  pwagner
+# Corrected bugs related to running in background
+#
+# Revision 1.30  2014/08/14 00:49:58  pwagner
+# Should correctly run PGE_BINARY as backg task
+#
+# Revision 1.29  2014/06/25 23:08:27  pwagner
+# Handle --set, --setf, --versid
+#
+# Revision 1.28  2013/11/14 23:57:50  pwagner
+# Treats options -D, -V, -R, -S equally
+#
+# Revision 1.27  2013/09/04 17:44:45  pwagner
+# Replaced '--cat' cmdline option; 'Catenate' now an Output section command
+#
+# Revision 1.26  2013/08/30 17:22:46  pwagner
+# Trying to stop slaves from writing to toolkit log
+#
+# Revision 1.25  2013/05/09 18:04:08  pwagner
+# Log return status
+#
+# Revision 1.24  2013/02/14 19:06:36  pwagner
+# Defaults to adding instead of skipping unknown args
+#
+# Revision 1.23  2012/08/10 20:08:41  pwagner
+# Some changes to accommodate goldbrick
+#
+# Revision 1.22  2012/07/02 23:07:15  pwagner
+# Fixed long-standing bug
+#
+# Revision 1.21  2010/04/23 23:18:42  pwagner
+# Removed argumentless 'export' which was killing pvmd
+#
+# Revision 1.20  2009/05/26 20:04:21  pwagner
+# Can pass 3 more options from master
+#
+# Revision 1.19  2008/07/31 23:57:10  pwagner
+# Pass --skipDirectWrite option to slave tasks
+#
+# Revision 1.18  2008/04/22 18:00:41  pwagner
+# Removed things causing more harm than good
+#
+# Revision 1.17  2008/01/08 18:44:12  pwagner
+# Pass --sharedPCF option to slaves
+#
+# Revision 1.16  2007/08/31 00:06:43  pwagner
+# Passes -f, --crash options to slaves
+#
+# Revision 1.15  2007/08/17 00:42:02  pwagner
+# Passes switches from master task to slave
+#
+# Revision 1.14  2007/05/10 23:40:12  pwagner
+# Used ulimit to increase tiny stacksize so Intel-built mlsl2 can finish
+#
+# Revision 1.13  2007/02/09 21:31:07  pwagner
+# Sets environmental variable as work-around to Lahey 6.2 bug; accepts --delay --stdout opts
+#
+# Revision 1.12  2006/10/05 23:41:32  pwagner
+# Needed for latest options, to work at scf (needs sips testing)
+#
+# Revision 1.11  2006/04/21 23:58:39  pwagner
+# Ugly LASTDITCHPGSBIN set to overcome unknown problem with some scf hosts; remove later
+#
+# Revision 1.10  2005/06/23 22:20:46  pwagner
+# Reworded Copyright statement
+#
+# Revision 1.9  2004/03/05 19:09:33  pwagner
+# Passes --cat option to mlsl2
+#
+# Revision 1.8  2004/01/07 17:26:09  pwagner
+# Merged in sips-friendly changes
+#
+# Revision 1.7  2003/12/11 23:07:57  pwagner
+# May check each slaves ident against master to verify pge versions are the same
+#
+# Revision 1.6  2003/10/22 23:01:51  pwagner
+# Changed each slaves temp log file name to bzzz.host.log
+#
+# Revision 1.5  2003/10/20 22:22:00  pwagner
+# Use tee to let slaves output to stdout--which pvm reechoes to master
+#
+# Revision 1.4  2003/10/15 20:56:27  pwagner
+# Each slave sends its stdout to a unique file
+#
+# Revision 1.3  2003/09/11 20:17:13  pwagner
+# Passes --skipRetr[] option to mlsl2
+#
+# Revision 1.2  2003/09/05 23:45:51  pwagner
+# Made name of log file a variable: LOGFILE; tweaked initial comments
+#
+# Revision 1.1  2003/08/01 16:46:31  pwagner
+# First commit
+#
+
+@
+
+
+1.47
+log
+@May evaluate variables in opts file if USEOPTSENV is set
+@
+text
+@d543 2
+d726 3
+@
+
+
+1.46
+log
+@This version handles both --tk and --ntk cases
+@
+text
+@d80 27
+d330 1
+d332 1
+d535 10
+d724 3
+@
+
+
+1.45
+log
+@Remove unised exits
+@
+text
+@d169 97
+d319 1
+a319 1
+
+a575 4
+elif [ "$PGS_PC_INFO_FILE" = "" ]
+then
+  echo "PCF undefined" 2>&1 | tee -a "$LOGFILE"
+  exit 1
+d598 1
+a598 2
+echo $PGE_BINARY --tk -m --slave $masterTid $otheropts 2>&1 >> "$LOGFILE"
+if [ "$runinbackground" != "yes" ]
+d600 1
+a600 35
+  echo "Must run $PGE_BINARY in foreground" >> "$LOGFILE"
+  # Run pge in foreground
+  if [ "$CAPTURE_MT" = "yes" ]
+  then
+    /usr/bin/time -f 'M: %M t: %e' \
+      $PGE_BINARY --tk -m --slave $masterTid $otheropts \
+       1>> "$LOGFILE" 2> "$STDERRFILE"
+  elif [ "$STDERRFILE" != "" ]
+  then
+    $PGE_BINARY --tk -m --slave $masterTid $otheropts 1>> "$LOGFILE" 2> "$STDERRFILE"
+  else
+    $PGE_BINARY --tk -m --slave $masterTid $otheropts 2>&1 >> "$LOGFILE"
+  fi
+  echo "Returned from $PGE_BINARY with status $?" "$LOGFILE"
+  Exit_With_Status 0
+fi
+
+# Run pge in background
+echo "Must run $PGE_BINARY in background" >> "$LOGFILE"
+NOTEFILE=`echo "$LOGFILE" | sed 's/.log$/.note/'`
+notdone="true"
+
+if [ "$CAPTURE_MT" = "yes" ]
+then
+  echo   /usr/bin/time -f 'M: %M t: %e' \
+    $PGE_BINARY --tk -m --slave $masterTid --pidf "$NOTEFILE" $otheropts  \
+    "$LOGFILE" "$STDERRFILE" >> "$LOGFILE"
+  /usr/bin/time -f 'M: %M t: %e' \
+    $PGE_BINARY --tk -m --slave $masterTid --pidf "$NOTEFILE" $otheropts  \
+    1>> "$LOGFILE" 2> "$STDERRFILE" &
+elif [ "$STDERRFILE" != "" ]
+then
+  echo "Writing standard error to $STDERRFILE" >> "$LOGFILE"
+  $PGE_BINARY --tk -m --slave $masterTid --pidf "$NOTEFILE" $otheropts \
+    1>> "$LOGFILE" 2> "$STDERRFILE" &
+d602 2
+a603 2
+  $PGE_BINARY --tk -m --slave $masterTid --pidf "$NOTEFILE" $otheropts  \
+    >> "$LOGFILE" &
+d685 3
+@
+
+
+1.44
+log
+@Correct spelling error
+@
+text
+@d20 1
+a20 1
+# mlsl2p.sh sed's this file to replace ssllaavvee, ppggssbbiinn, etc.
+a522 1
+  exit 0
+a561 1
+  # exit 1
+a570 1
+  # exit 1
+d624 1
+a624 2
+  Exit_With_Status 0
+  # exit 0
+d627 3
+@
+
+
+1.43
+log
+@Tried to fix hanging when running in foreground
+@
+text
+@d522 1
+a522 1
+  Exit_with_Status 0
+d562 1
+a562 1
+  Exit_with_Status 1
+d572 1
+a572 1
+  Exit_with_Status 1
+d627 1
+a627 1
+  Exit_with_Status 0
+d631 3
+@
+
+
+1.42
+log
+@Correct some bugs in saving stderrfile
+@
+text
+@d253 1
+a253 1
+CAPTURE_STDERR="no"
+d508 1
+d523 1
+a523 1
+  # exit 0
+d541 1
+d631 3
+@
+
+
+1.41
+log
+@Fixed an error in defining pgepid
+@
+text
+@d60 20
+d195 9
+d253 1
+d403 6
+d460 8
+d473 1
+a504 6
+
+if [ "$CAPTURE_MT" = "yes" -a "$STDERRFILE" = "" ]
+then
+  STDERRFILE="$LOGFILE.stderr"
+fi
+
+d520 3
+a522 2
+  echo "Returned from $PGE_BINARY with status $?" 2>&1 >> "$LOGFILE"
+  exit 0
+d537 1
+a537 1
+    1>> "$LOGFILE" 2> "$STDERRFILE" 2>> "$LOGFILE" &
+d541 1
+a541 1
+    1>> "$LOGFILE" 2> "$STDERRFILE" 2>> "$LOGFILE" &
+d548 1
+a548 1
+sleep 20
+d560 2
+a561 1
+  exit 1
+d570 2
+a571 1
+  exit 1
+d577 4
+d583 1
+a583 1
+  sleep 120
+d599 5
+d625 2
+a626 1
+exit 0
+d629 3
+@
+
+
+1.40
+log
+@Avoids stomping on an already-selected PCF
+@
+text
+@d521 2
+d524 1
+a524 1
+pgepid=pgepid2
+d577 3
+@
+
+
+1.39
+log
+@Append chunk stderr to chunk log
+@
+text
+@d183 3
+d187 1
+d575 3
+@
+
+
+1.38
+log
+@Reduce default switches for opt and glob
+@
+text
+@d493 1
+a493 1
+    1>> "$LOGFILE" 2> "$STDERRFILE" &
+d497 1
+a497 1
+    1>> "$LOGFILE" 2> "$STDERRFILE" &
+a551 1
+
+d571 3
+@
+
+
+1.37
+log
+@Tried to prevent another cause of slave deaths
+@
+text
+@d221 1
+a221 1
+switches="--stdout out -S'slv,opt1,log,pro,time,glob1'"
+d572 3
+@
+
+
+1.36
+log
+@Obey CAPTURE_MT by capturing time, mmory footpint to stderr
+@
+text
+@d190 1
+a190 1
+export PGS_PC_INFO_FILE PGSMEM_USESHM
+d572 3
+@
+
+
+1.35
+log
+@Added --maxChunkSize option
+@
+text
+@d457 5
+d466 11
+a476 1
+  $PGE_BINARY --tk -m --slave $masterTid $otheropts 2>&1 >> "$LOGFILE"
+d486 16
+a501 2
+$PGE_BINARY --tk -m --slave $masterTid --pidf "$NOTEFILE" $otheropts 2>&1 \
+  >> "$LOGFILE" &
+d503 1
+a503 1
+echo "pge pid: $pgepid" 2>&1 >> "$LOGFILE"
+d505 9
+a513 8
+# Find the pge's pid; call it pgepid
+ps aux | grep "uid $pid " | grep -v grep 2>&1 >> "$LOGFILE"
+pgepid2=`ps aux | grep "uid $pid " | grep -v grep | awk '{print $2}'`
+if [ "$pgepid" != "$pgepid2" ]
+then
+  echo "Warning-- $pgepid and $pgepid2 differ" 2>&1 >> "$LOGFILE"
+  ps -l -p "$pgepid" 2>&1 >> "$LOGFILE"
+  ps -l -p "$pgepid2" 2>&1 >> "$LOGFILE"
+d518 1
+a518 1
+
+d522 1
+a522 1
+  echo "Failed to launch $PGE_BINARY in background" 2>&1 >> "$LOGFILE"
+d546 3
+a548 3
+echo "$notdone; Returned from $PGE_BINARY with status $?" 2>&1 >> "$LOGFILE"
+echo "cat $NOTEFILE" 2>&1 >> "$LOGFILE"
+cat $NOTEFILE 2>&1 >> "$LOGFILE"
+d550 1
+a550 1
+echo "killing $pgepid" 2>&1 >> "$LOGFILE"
+d572 3
+@
+
+
+1.34
+log
+@Now add_option with auxiliary args pairwise
+@
+text
+@d326 7
+d542 3
+@
+
+
+1.33
+log
+@pgepid obtained from $! mechanism
+@
+text
+@d28 2
+a29 1
+# To prevent adding the same option if it's already part
+d32 2
+a33 1
+# try: otheropts=`add_option "$otheropts" --skipRetrieval`
+d35 6
+a40 2
+# To add them on at the front, supply a third arg
+# e.g.: otheropts=`add_option "$otheropts" --skipRetrieval to_front`
+d54 28
+a81 1
+        elif [ $# -gt 2 ]
+d83 5
+a88 2
+        else
+          echo "$1 $2"
+d278 1
+a278 2
+       otheropts=`add_option "$otheropts" $1`
+       otheropts=`add_option "$otheropts" $2`
+d285 1
+a285 1
+       otheropts=`add_option "$otheropts" $1`
+a287 1
+       otheropts=`add_option "$otheropts" $UNBUFFERED`
+d327 2
+a328 2
+       otheropts=`add_option "$otheropts" $1`
+       echo "Adding argument to set max falures per chunk" >> $LOGFILE
+a330 1
+       otheropts=`add_option "$otheropts" $1`
+d334 2
+a335 2
+       otheropts=`add_option "$otheropts" $1`
+       echo "Adding argument to set max falures per machine" >> $LOGFILE
+a337 1
+       otheropts=`add_option "$otheropts" $1`
+d341 1
+a341 2
+       otheropts=`add_option "$otheropts" $1`
+       otheropts=`add_option "$otheropts" $2`
+d353 1
+a353 2
+       otheropts=`add_option "$otheropts" $1`
+       otheropts=`add_option "$otheropts" "$OPTSFILE"`
+d367 1
+a367 2
+       otheropts=`add_option "$otheropts" $1`
+       otheropts=`add_option "$otheropts" $2`
+d375 1
+a375 2
+       otheropts=`add_option "$otheropts" $1`
+       otheropts=`add_option "$otheropts" $2`
+d535 3
+@
+
+
+1.32
+log
+@Enhanced diagnostic logging
+@
+text
+@d422 1
+a422 1
+echo $PGE_BINARY --tk -m --slave $masterTid $otheropts 2>&1 | tee -a "$LOGFILE"
+d426 2
+a427 2
+  $PGE_BINARY --tk -m --slave $masterTid $otheropts 2>&1 | tee -a "$LOGFILE"
+  echo "Returned from $PGE_BINARY with status $?" 2>&1 | tee -a "$LOGFILE"
+d437 3
+a439 1
+  | tee -a "$LOGFILE" &
+d442 11
+a452 2
+ps aux | grep "uid $pid " | grep -v grep 2>&1 | tee -a "$LOGFILE"
+pgepid=`ps aux | grep "uid $pid " | grep -v grep | awk '{print $2}'`
+d457 1
+a457 1
+  echo "Failed to launch $PGE_BINARY in background" 2>&1 | tee -a "$LOGFILE"
+d463 1
+a463 1
+echo "$pgepid echoed to $NOTEFILE" | tee -a "$LOGFILE"
+d481 3
+a483 3
+echo "$notdone; Returned from $PGE_BINARY with status $?" 2>&1 | tee -a "$LOGFILE"
+echo "cat $NOTEFILE" 2>&1 | tee -a "$LOGFILE"
+cat $NOTEFILE 2>&1 | tee -a "$LOGFILE"
+d485 1
+a485 1
+echo "killing $pgepid" 2>&1 | tee -a "$LOGFILE"
+d507 3
+@
+
+
+1.31
+log
+@Corrected bugs related to running in background
+@
+text
+@d440 1
+a440 1
+ps aux | grep "uid $pid " >> $LOGFILE
+d452 1
+d461 1
+a461 1
+    notdone=false
+d464 2
+a465 2
+  a=`ps aux | grep "uid $pid " | grep -v grep | awk '{print $2}'`
+  if [ "$a" != "$pgepid" ]
+d467 1
+a467 1
+    notdone=false
+d470 3
+a472 1
+echo "Returned from $PGE_BINARY with status $?" 2>&1 | tee -a "$LOGFILE"
+d474 1
+d496 3
+@
+
+
+1.30
+log
+@Should correctly run PGE_BINARY as backg task
+@
+text
+@d273 1
+d326 6
+d432 1
+d436 1
+a436 1
+$PGE_BINARY --tk -m --slave $masterTid --note "$NOTEFILE" $otheropts 2>&1 \
+d440 10
+a449 1
+pgepid=`ps aux | grep "uid $pid" | awk '{print $2}' | grep -v grep`
+d455 2
+d462 6
+d492 3
+@
+
+
+1.29
+log
+@Handle --set, --setf, --versid
+@
+text
+@d162 1
+d183 2
+a184 1
+otheropts="-g"
+d217 1
+a217 1
+       otheropts=`add_option "$otheropts" --skipRetrieval`
+d269 6
+d416 28
+a443 1
+$PGE_BINARY --tk -m --slave $masterTid $otheropts 2>&1 | tee -a "$LOGFILE"
+d445 2
+d467 3
+@
+
+
+1.28
+log
+@Treats options -D, -V, -R, -S equally
+@
+text
+@d184 1
+d307 31
+d430 3
+@
+
+
+1.27
+log
+@Replaced '--cat' cmdline option; 'Catenate' now an Output section command
+@
+text
+@d311 1
+a311 9
+#   --* )
+#      echo "Skipping unknown argument: $1" >> $LOGFILE
+#      shift
+#      ;;
+#    -S* )
+#       echo "Skipping switch-setting argument: $1" >> $LOGFILE
+#       shift
+#       ;;
+    -S* )
+d313 1
+a313 1
+       echo "Appending switch-setting argument: $1" >> $LOGFILE
+d398 3
+@
+
+
+1.26
+log
+@Trying to stop slaves from writing to toolkit log
+@
+text
+@a269 6
+    --cat )
+       otheropts=`add_option "$otheropts" --cat`
+       echo "Adding argument to catenate split dgg/dgm files: $1" >> $LOGFILE
+       echo "$otheropts" >> $LOGFILE
+       shift
+       ;;
+d406 3
+@
+
+
+1.25
+log
+@Log return status
+@
+text
+@d183 1
+a183 1
+switches="-S'slv,opt1,log,pro,time,glob1'"
+d412 3
+@
+
+
+1.24
+log
+@Defaults to adding instead of skipping unknown args
+@
+text
+@d391 1
+d412 3
+@
+
+
+1.23
+log
+@Some changes to accommodate goldbrick
+@
+text
+@d304 8
+d313 2
+a314 1
+       echo "Skipping unknown argument: $1" >> $LOGFILE
+d317 4
+d411 3
+@
+
+
+1.22
+log
+@Fixed long-standing bug
+@
+text
+@d131 2
+d139 1
+a139 1
+if [ -r "$PGE_ROOT/science_env.sh"  ]
+d141 4
+a144 1
+. ${PGE_ROOT}/science_env.sh
+d147 1
+a147 1
+. $PGSBIN/pgs-env.ksh
+a148 1
+
+a149 1
+PGSMEM_USESHM=ppggssmmeemmuusseesshhmm
+d153 1
+a153 1
+JOBDIR=jjoobbddiirr
+d398 3
+@
+
+
+1.21
+log
+@Removed argumentless 'export' which was killing pvmd
+@
+text
+@d257 6
+d395 3
+@
+
+
+1.20
+log
+@Can pass 3 more options from master
+@
+text
+@d144 1
+a144 1
+export
+d389 3
+@
+
+
+1.19
+log
+@Pass --skipDirectWrite option to slave tasks
+@
+text
+@d273 22
+d389 3
+@
+
+
+1.18
+log
+@Removed things causing more harm than good
+@
+text
+@d210 6
+d367 3
+@
+
+
+1.17
+log
+@Pass --sharedPCF option to slaves
+@
+text
+@a130 2
+#This only works at the scf--change it when copying to the sips
+LASTDITCHPGSBIN="/software/toolkit/LF6.1/toolkit/bin/linux"
+a133 7
+if [ -r "${HOME}/mlspgs/util/tkreset.sh"  ]
+then
+#echo ${HOME}/mlspgs/util/tkreset.sh >> $LOGFILE
+#echo ". ${HOME}/mlspgs/util/tkreset.sh"  >> $LOGFILE
+#. ${HOME}/mlspgs/util/tkreset.sh  >> $LOGFILE
+. ${HOME}/mlspgs/util/tkreset.sh
+fi
+a142 3
+else
+#Last ditch--if this doesn't work we're outta here
+. $LASTDITCHPGSBIN/pgs-env.ksh
+d154 1
+a154 4
+# The following choice puts the outputs of all the slaves into a single file
+#LOGFILE="${JOBDIR}/pvmlog/mlsl2.log"
+
+# The next choice, in contrast, puts each slave's output into its own unique file
+d361 3
+@
+
+
+1.16
+log
+@Passes -f, --crash options to slaves
+@
+text
+@d262 4
+d376 3
+@
+
+
+1.15
+log
+@Passes switches from master task to slave
+@
+text
+@d208 6
+d291 9
+d372 3
+@
+
+
+1.14
+log
+@Used ulimit to increase tiny stacksize so Intel-built mlsl2 can finish
+@
+text
+@d194 3
+a196 1
+otheropts="-g -S'slv,opt1,log,pro,time'"
+d276 4
+d281 2
+a282 1
+       echo "Skipping switch-setting argument: $1" >> $LOGFILE
+d296 2
+d357 3
+@
+
+
+1.13
+log
+@Sets environmental variable as work-around to Lahey 6.2 bug; accepts --delay --stdout opts
+@
+text
+@d125 1
+a125 1
+# Not sure why this isn't done automatcially
+d133 1
+a133 1
+#LASTDITCHPGSBIN="/science/pge/v0200-l2/toolkit5.2.14/bin/linux"
+d135 11
+d171 1
+d174 4
+d322 4
+d348 3
+@
+
+
+1.12
+log
+@Needed for latest options, to work at scf (needs sips testing)
+@
+text
+@d153 1
+d161 1
+d190 6
+d228 10
+d328 3
+@
+
+
+1.11
+log
+@Ugly LASTDITCHPGSBIN set to overcome unknown problem with some scf hosts; remove later
+@
+text
+@d125 7
+d133 1
+d142 1
+a142 1
+#Last ditch--if this doens't work we're outta here
+d199 8
+d212 8
+d310 3
+@
+
+
+1.10
+log
+@Reworded Copyright statement
+@
+text
+@d125 1
+d127 4
+a130 1
+if [ ! -r "$PGE_ROOT/science_env.sh"  ]
+d134 2
+a135 1
+. ${PGE_ROOT}/science_env.sh
+d286 3
+@
+
+
+1.9
+log
+@Passes --cat option to mlsl2
+@
+text
+@d5 10
+a14 2
+# Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
+# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d281 3
+@
+
+
+1.8
+log
+@Merged in sips-friendly changes
+@
+text
+@d187 6
+d273 3
+@
+
+
+1.7
+log
+@May check each slaves ident against master to verify pge versions are the same
+@
+text
+@d5 1
+a5 1
+# Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+d19 31
+d104 1
+d109 4
+a112 1
+# before being passed as args to this script
+d116 9
+a124 6
+# Do we need MLSHOME?
+# MLSHOME=mlshhoommee
+# MLSUTIL=$MLSHOME/util
+# PVM_BIN=$HOME/pvm3/bin/LINUX
+PVM_BIN=ppvvmmbbiinn
+PGSMEM_USESHM=NO
+d126 6
+d134 1
+a134 1
+#LOGFILE="$PVM_BIN/mlsl2.log"
+d138 1
+a138 1
+LOGFILE="$PVM_BIN/$temp_file_name"
+d144 1
+a145 2
+SLVPROG=mlsl2.ssllaavvee
+# echo "All the opts to mlsl2.slave: $@@"
+d151 1
+a151 1
+  # echo "Need to shift because 1st arg is command name" 2>&1 | tee -a "$LOGFILE"
+d156 2
+d160 1
+a160 1
+
+d163 1
+d173 3
+a175 1
+       otheropts="--skipRetrieval $otheropts"
+d178 7
+a184 3
+    --slave )
+       masterTid="$2"
+       shift
+d188 3
+a190 1
+       otheropts="--wall $otheropts"
+d194 5
+d202 1
+d206 1
+d215 2
+a216 4
+echo "executable: $PVM_BIN/mlsl2" 2>&1 | tee -a "$LOGFILE"
+
+export PGSMEM_USESHM
+export PGS_PC_INFO_FILE
+d226 1
+a226 1
+elif [ ! -x "$PVM_BIN/mlsl2" ]
+d228 1
+a228 1
+  echo "$PVM_BIN/mlsl2 not found/executable" 2>&1 | tee -a "$LOGFILE"
+d236 1
+a236 1
+  the_diff=`ident $PVM_BIN/mlsl2 | diff - "$masterIdent"`
+d245 2
+a246 2
+# echo "otheropts: $otheropts"
+$PVM_BIN/mlsl2 --tk -m --slave $masterTid $otheropts  2>&1 | tee -a "$LOGFILE"
+d260 2
+a261 3
+PGSBIN=ppggssbbiinn
+. $PGSBIN/pgs-env.ksh
+
+d267 3
+d288 1
+@
+
+
+1.6
+log
+@Changed each slaves temp log file name to bzzz.host.log
+@
+text
+@d102 1
+d108 1
+a108 1
+  echo "Need to shift because 1st arg is command name" 2>&1 | tee -a "$LOGFILE"
+d111 1
+d121 5
+d135 4
+d153 1
+d173 14
+a187 1
+# $PVM_BIN/mlsl2 --tk -m --slave $masterTid -g -S'slv,opt1,log,pro,time'  2>&1 | tee -a "$LOGFILE"
+d209 3
+@
+
+
+1.5
+log
+@Use tee to let slaves output to stdout--which pvm reechoes to master
+@
+text
+@d44 9
+d54 9
+a62 10
+      if [ "$HOST" != "" ]
+      then
+         our_host_name="$HOST"
+      elif [ "$HOSTNAME" != "" ]
+      then
+         our_host_name="$HOSTNAME"
+      else
+         our_host_name="host"
+      fi
+    #  echo $our_host_name
+d64 8
+a71 3
+      our_host_name=`echo $our_host_name | sed 's/\./,/g'`
+      our_host_name=`perl -e '@@parts=split(",","$ARGV[0]"); print $parts[0]' $our_host_name`
+      echo $temp${pt}$our_host_name${pt}$$
+d93 1
+a93 1
+temp_file_name=`get_unique_name mlsl2`
+d184 3
+@
+
+
+1.4
+log
+@Each slave sends its stdout to a unique file
+@
+text
+@d85 1
+a85 1
+  echo "#$LOGFILE mlsl2.log" > "$LOGFILE"
+d94 1
+a94 1
+  echo "Need to shift because 1st arg is command name" >> "$LOGFILE"
+d127 3
+a129 3
+echo "PGS_PC_INFO_FILE: $PGS_PC_INFO_FILE" >> "$LOGFILE"
+echo "masterTid: $masterTid" >> "$LOGFILE"
+echo "executable: $PVM_BIN/mlsl2" >> "$LOGFILE"
+d136 1
+a136 1
+  echo "masterTid undefined" >> "$LOGFILE"
+d140 1
+a140 1
+  echo "PCF undefined" >> "$LOGFILE"
+d144 1
+a144 1
+  echo "$PVM_BIN/mlsl2 not found/executable" >> "$LOGFILE"
+d148 2
+a149 2
+$PVM_BIN/mlsl2 --tk -m --slave $masterTid $otheropts  >> "$LOGFILE"
+# $PVM_BIN/mlsl2 --tk -m --slave $masterTid -g -S'slv,opt1,log,pro,time'  >> "$LOGFILE"
+d171 3
+@
+
+
+1.3
+log
+@Passes --skipRetr[] option to mlsl2
+@
+text
+@d19 41
+d77 1
+a77 1
+LOGFILE="$PVM_BIN/mlsl2.log"
+d80 2
+a81 2
+#temp_file_name=`unique_name.sh mlsl2`
+#LOGFILE="$PVM_BIN/$temp_file_name"
+d85 1
+a85 1
+  echo "#mlsl2.log" > "$LOGFILE"
+d171 3
+@
+
+
+1.2
+log
+@Made name of log file a variable: LOGFILE; tweaked initial comments
+@
+text
+@a45 5
+#echo "Called as $@@" >> "$LOGFILE"
+#echo "command is $0" >> "$LOGFILE"
+#echo "1st arg is $1" >> "$LOGFILE"
+#echo "2nd arg is $2" >> "$LOGFILE"
+#echo "3rd arg is $3" >> "$LOGFILE"
+d56 1
+d65 4
+d107 2
+a108 1
+$PVM_BIN/mlsl2 --tk -m --slave $masterTid -g -S'slv,opt1,log,pro,time' >> "$LOGFILE"
+d130 3
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d3 1
+a3 6
+# run a program specified as the variable MLSPROG
+# assuming that it's in directory MLSBIN
+# Then return an exit status of:
+# 1 if program's exit status is different from
+# the variable specified as NORMAL_STATUS; otherwise
+# 0
+d8 1
+a8 1
+# usage: slavetmplt.sh [option_1] [option_2] ..
+a14 1
+
+d35 8
+a42 1
+if [ ! -w "$PVM_BIN/mlsl2.log" ]
+d44 1
+a44 1
+  echo "#mlsl2.log" > "$PVM_BIN/mlsl2.log"
+d46 5
+a50 5
+# echo "Called as $@@" >> "$PVM_BIN/mlsl2.log"
+# echo "command is $0" >> "$PVM_BIN/mlsl2.log"
+# echo "1st arg is $1" >> "$PVM_BIN/mlsl2.log"
+# echo "2nd arg is $2" >> "$PVM_BIN/mlsl2.log"
+# echo "3rd arg is $3" >> "$PVM_BIN/mlsl2.log"
+d58 1
+a58 1
+  # echo "Need to shift because 1st arg is command name" >> "$PVM_BIN/mlsl2.log"
+d65 4
+d86 3
+a88 3
+echo "PGS_PC_INFO_FILE: $PGS_PC_INFO_FILE" >> "$PVM_BIN/mlsl2.log"
+echo "masterTid: $masterTid" >> "$PVM_BIN/mlsl2.log"
+echo "executable: $PVM_BIN/mlsl2" >> "$PVM_BIN/mlsl2.log"
+d95 1
+a95 1
+  echo "masterTid undefined" >> "$PVM_BIN/mlsl2.log"
+d99 1
+a99 1
+  echo "PCF undefined" >> "$PVM_BIN/mlsl2.log"
+d103 1
+a103 1
+  echo "$PVM_BIN/mlsl2 not found/executable" >> "$PVM_BIN/mlsl2.log"
+d107 1
+a107 1
+$PVM_BIN/mlsl2 --tk --slave $masterTid -g -S'slv,opt1,log,pro,time'  >> "$PVM_BIN/mlsl2.log"
+d128 4
+a131 1
+# $Log: mlsprog.sh,v $
+@
+

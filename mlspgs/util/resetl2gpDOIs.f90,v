@@ -1,0 +1,352 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2023.03.16.16.24.29;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@First commit
+@
+text
+@! Copyright 2022, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=================================
+program resetl2gpDOIs ! inserts values of L2GPData files, e.g. nrt
+!=================================
+
+   use Dump_0, only: Dump
+   use HDF, only: DFACC_Create, Dfacc_RdOnly, Dfacc_Rdwr
+   use HDF5, only: HSize_T
+   use HDFEOS5, only: HE5T_Native_Int, &
+     & HE5T_Native_Double, MLS_CharType
+   use HighOutput, only: OutputNamedValue
+   use Intrinsic, only: L_HDF, L_Swath
+   use L2GPData, only: L2GPData_T, L2GPnamelen, MaxSwathNamesBufSize, Rgp, &
+     & AppendL2GPData, DestroyL2GPContents, Dump, &
+     & ReadL2GPData, SetupNewL2GPRecord
+   use Machine, only: Hp, Getarg
+   use MLSCommon, only: MLSFile_T
+   use MLSFiles, only: HDFVersion_5, &
+     & Dump, MLS_CloseFile, MLS_OpenFile, MLS_Exists, &
+     & MLS_Inqswath, InitializeMLSFile
+   use MLSFinds, only: FindFirst, FindLast
+   use MLSHDFEOS, only: He5_Ehrdglatt, HE5_EHWRGlAtt, HSize, &
+     & MLS_EhwrGlAtt, MLS_IsGlAtt
+   use MLSHDF5, only: GetAllHDF5DSNames, GetHDF5DSDims, LoadFromHDF5DS, &
+     & MLS_H5open, MLS_H5close
+   use MLSMessageModule, only: MLSMessageConfig, MLSMessage, MLSMSG_Error
+   use MLSStringLists, only: GetStringElement, &
+     & Intersection, NumStringElements, StringElementNum
+   use Output_M, only: Blanks, Output
+   use PCFHdr, only: GlobalAttributes, GlobalAttributes_T, &
+     & DumpGlobalAttributes, He5_ReadGlobalAttr, He5_WriteGlobalAttr
+   use Time_M, only: Time_Now, Time_Config
+   
+   implicit none
+
+!---------------------------- RCS Ident Info ------------------------------
+  character (len=*), parameter :: ModuleName= &
+       "$RCSfile: resetl2gpDOIs.f90,v $"
+  character (len=*), parameter :: IdParm = &
+       "$Id: resetl2gpDOIs.f90,v 1.6 2023/03/14 16:04:24 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+!---------------------------------------------------------------------------
+
+! Brief description of program
+! Reset the value of a file attribute in an L2GPData file
+! using its hdfeos api
+
+! To use this, copy it into
+! mlspgs/tests/lib
+! then enter "make depends" followed by "make"
+
+! Then run it something like this
+! Usage: dmp (derived meteorological products
+!    resetl2gpDOIs \ 
+!       -a attr_name \
+!       -V attr_value \
+!       L2GP_File
+
+! rm DMP.he5 DMP.out ;
+! /users/pwagner/mlspgs/bin/IFC.Linux.ifc19-OL8/resetl2gpDOIs -v \
+!  -a 'identifier_product_doi' \
+!  -V "10.5067/AURA/MLS/DATA2524" \
+!  DMP.he5 > DMP.out
+
+! We'll use it to convert the older DMP files to genuine hdfeos files
+! that can be read by users with, e.g., python-based tools.
+  type options_T
+    logical               :: debug       = .false.
+    logical               :: silent      = .false.
+    logical               :: verbose     = .false.
+    logical               :: dryrun      = .false.
+    character(len=255)    :: attr_Name   = 'identifier_product_doi' 
+                                                     ! which attribute to modify
+    character(len=255)    :: attr_Value  = ' '       ! its new value
+  end type options_T
+  
+  type ( options_T ) :: options
+
+  integer, parameter ::          MAXFILES = 10 ! Usually just 1
+  logical, parameter ::          countEmpty = .true.
+  character(len=255) :: filename          ! input filename
+  character(len=255), dimension(MAXFILES) :: filenames
+  integer            :: n_filenames
+  integer     ::  status, error ! Counting indices & Error flags
+  real        :: t1
+  real        :: t2
+  real        :: tFile
+  ! DSName and swath must be long enough to hold the full path
+  ! set by everything beginning with "/HDFEOS/.."s
+  character(len=255)                  :: DSName
+  character(len=MAXSWATHNAMESBUFSIZE) :: DSList
+  character(len=255)                  :: swath
+  character(len=MAXSWATHNAMESBUFSIZE) :: swathList
+  character(len=MAXSWATHNAMESBUFSIZE) :: swathList1
+  integer :: ACCESS
+  integer :: listSize
+  integer :: NUMSWATHSSOFAR
+  integer, allocatable, dimension(:)  :: nearestProfiles
+  integer, allocatable, dimension(:)  :: Output_Pressure_Levels_Indices
+  real (rgp), dimension(:,:), allocatable :: GeodAngle
+  real (rgp), dimension(:,:), allocatable :: GeodLat
+  real (rgp), dimension(:,:), allocatable :: Pressure
+  ! 
+  MLSMessageConfig%useToolkit = .false.
+  MLSMessageConfig%logFileUnit = -1
+  time_config%use_wall_clock = .true.
+  CALL mls_h5open(error)
+  n_filenames = 0
+  do      ! Loop over filenames
+     call get_filename( filename, n_filenames, options )
+     if ( filename(1:1) == '-' ) cycle
+     if ( filename == ' ' ) exit
+     if ( mls_exists(trim(filename)) /= 0 ) then
+       print *, 'Sorry--file not found: ', trim(filename)
+       cycle
+     endif
+     n_filenames = n_filenames + 1
+     filenames(n_filenames) = filename
+  enddo
+  if ( n_filenames == 0 ) then
+    if ( options%verbose ) print *, 'Sorry no files to insert'
+  else
+    call time_now ( t1 )
+    if ( options%silent ) then
+      options%debug   = .false.
+      options%verbose = .false.
+    endif
+
+    numswathssofar = 0
+    if ( options%verbose ) &
+      & call Dump ( filenames(1:n_filenames), 'l2gp files', width=1 )
+      call reset_attr ( Dfacc_Rdwr )
+  endif
+  call mls_h5close(error)
+contains
+
+!------------------------- reset_attr ---------------------
+! Reset the file-level attribute's value
+
+  subroutine reset_attr ( ACCESS )
+    ! Dummy args
+    integer, intent (in)            :: ACCESS
+    ! Internal variables
+    integer :: i
+    integer :: iSwathNum
+    ! integer :: jj
+    type(L2GPData_T)  :: L2GP
+    type( MLSFile_T ) :: L2GPFile
+    type( MLSFile_T ) :: valuesFile
+    type( MLSFile_T ) :: AttributesFile  ! If needed to copy global attributes from
+    integer :: nPr
+    integer :: nPrs
+    integer :: numProfs
+    integer :: numTotProfs
+    integer :: NvTimes
+    type (GlobalAttributes_T)               :: gAttributes
+    character(len=*), parameter             :: identifier_product_doi_merra = &
+      & "10.5067/AURA/MLS/DATA2524"
+    character(len=*), parameter             :: identifier_product_doi = &
+      & "10.5067/AURA/MLS/DATA2523"
+!      & "10.5067/AURA/MLS/DATA2521"
+    
+    ! --------------------------------------------------------------------
+    ! --------------------------------------------------------------------
+    ! Executable
+    ! ------------------------------------------------------------------------
+    call time_now ( tFile )
+    ! swath = options%swathNames
+    if ( .not. options%silent ) call Blanks( 72, fillChar='-', advance='yes' )
+    i = 1
+    if ( options%verbose ) &
+      & print *, 'Beginning with L2GP file ' // trim(filenames(i))
+
+    status = InitializeMLSFile( L2GPFile, type=l_swath, access=ACCESS, &
+        & content='L2GP', name=trim(filenames(i)), hdfVersion=HDFVERSION_5 )
+    call mls_openFile( L2GPFile, Status )
+    if ( Status /= 0 ) &
+      call MLSMessage( MLSMSG_Error, ModuleName, &
+      & 'Unable to open l2gp file', MLSFile=L2GPFile )
+
+    if ( options%dryrun ) then
+      print *, 'L2GPFile%fileID%f_id:', L2GPFile%fileID%f_id
+      print *, 'options%attr_name:', trim(options%attr_name)
+      print *, 'options%attr_value:', trim(options%attr_value)
+    else
+      status = mls_EHwrglatt( L2GPFile%fileID%f_id, &
+        & trim(options%attr_name), MLS_CHARTYPE, 1, &
+        &  trim(options%attr_value) )
+    endif
+    call sayTime('resetting this attribute', tFile)
+    if ( .not. options%silent ) call Blanks( 72, advance='yes' )
+    call MLS_CloseFile( L2GPFile )
+    call sayTime('inserting all DMP swaths')
+  end subroutine reset_attr
+
+!------------------------- get_filename ---------------------
+    subroutine get_filename(filename, n_filenames, options)
+    ! Added for command-line processing
+     character(len=255), intent(out) :: filename          ! filename
+     integer, intent(in)             :: n_filenames
+     type ( options_T ), intent(inout) :: options
+     ! Local variables
+     integer ::                         error = 1
+     integer, save ::                   i = 1
+  ! Get inputfile name, process command-line args
+  ! (which always start with -)
+    do
+      call getarg ( i+hp, filename )
+      ! print *, i, ' th Arg: ', trim(filename)
+      error = 0
+      if ( filename(1:1) /= '-' ) exit
+      if ( filename(1:3) == '-h ' ) then
+        call print_help
+      elseif ( filename(1:4) == '-deb' ) then
+        options%debug = .true.
+        exit
+      elseif ( filename(1:4) == '-dry' ) then
+        options%dryrun = .true.
+        exit
+      elseif ( filename(1:7) == '-silent' ) then
+        options%silent = .true.
+        exit
+      elseif ( filename(1:3) == '-v ' ) then
+        options%verbose = .true.
+        exit
+      else if ( filename(1:3) == '-f ' ) then
+        call getarg ( i+1+hp, filename )
+        i = i + 1
+        exit
+      else if ( filename(1:3) == '-a ' ) then
+        call getarg ( i+1+hp, options%attr_name )
+        i = i + 1
+        exit
+      else if ( filename(1:3) == '-V ' ) then
+        call getarg ( i+1+hp, options%attr_value )
+        i = i + 1
+        exit
+      else
+        call print_help
+      end if
+      i = i + 1
+    end do
+    if ( error /= 0 ) then
+      call print_help
+    endif
+    i = i + 1
+    if (trim(filename) == ' ' .and. n_filenames == 0) then
+
+    ! Last chance to enter filename
+      print *,  "Enter the name of the L2GP file. " // &
+       &  "The default output file name will be used."
+      read(*,'(a)') filename
+    endif
+    
+  end subroutine get_filename
+!------------------------- print_help ---------------------
+  subroutine print_help
+  ! Print brief but helpful message
+      write (*,*) &
+      & 'Reset a file attribute value using the hdfeos format'
+      write (*,*) &
+      & '    of an L2GPData file'
+      write (*,*) &
+      & 'Usage: resetl2gpDOIs [options] [filenames]'
+      write (*,*) &
+      & ' If no filenames supplied, you will be prompted to supply one'
+      write (*,*) ' Options:'
+      write (*,*) ' -dryrun       => dont execute, just describe'
+      write (*,*) ' -f filename   => add filename to list of l2gp filenames'
+      write (*,*) '                  (can do the same w/o the -f)'
+      write (*,*) ' -a name       => name of attribute to modify'
+      write (*,*) '                  (defaults to identifier_product_doi)'
+      write (*,*) ' -V value      => its new value'
+      write (*,*) ' -debug        => switch on debug mode'
+      write (*,*) ' -v            => switch on verbose mode'
+      write (*,*) ' -silent       => switch on silent mode'
+      write (*,*) ' -h            => print brief help'
+      stop
+  end subroutine print_help
+!------------------------- SayTime ---------------------
+  subroutine SayTime ( What, startTime )
+    character(len=*), intent(in) :: What
+    real, intent(in), optional :: startTime
+    real :: myt1
+    if ( present(startTime) ) then
+      myt1 = startTime
+    else
+      myt1 = t1
+    endif
+    call time_now ( t2 )
+    if ( options%silent ) return
+    call output ( "Timing for " // what // " = " )
+    call output ( dble(t2 - myt1), advance = 'yes' )
+  end subroutine SayTime
+!------------------------- dgetarg ---------------------
+  subroutine dgetarg ( pos, darg )
+   integer, intent(in) :: pos
+   double precision, intent(out) :: darg
+   character(len=16) :: arg
+   call getarg ( pos, arg )
+   read(arg, *) darg
+  end subroutine dgetarg
+!------------------------- igetarg ---------------------
+  subroutine igetarg ( pos, iarg )
+   integer, intent(in) :: pos
+   integer, intent(out) :: iarg
+   character(len=16) :: arg
+   call getarg ( pos, arg )
+   read(arg, *) iarg
+  end subroutine igetarg
+
+!==================
+end program resetl2gpDOIs
+!==================
+
+! $Log: resetl2gpDOIs.f90,v $
+@

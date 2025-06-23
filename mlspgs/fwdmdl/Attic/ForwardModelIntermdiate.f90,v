@@ -1,0 +1,108 @@
+head	1.2;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2001.04.10.22.17.05;	author livesey;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2001.04.10.22.06.26;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Renamed module
+@
+text
+@! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+!=============================================================================
+module ForwardModelIntermediate
+!=============================================================================
+
+  ! This module simply defines a data type passed around forward model routines. 
+  ! It contains hydrostatic information and so on, and is remembered by the
+  ! calling code.
+
+  use MLSCommon, only: R8
+  use Path_entities_m, only: PATH_VECTOR, PATH_VECTOR_2D
+  use Ellipse_m, only: ELLIPSE
+
+  implicit none
+  private
+
+  type, public :: ForwardModelIntermediate_T
+
+    real (r8), dimension(:,:),             pointer :: h_glgrid
+    real (r8), dimension(:,:),             pointer :: t_glgrid
+    real (r8), dimension(:),               pointer :: z_glgrid
+
+    real (r8), dimension(:,:,:),           pointer :: dh_dt_glgrid
+    real (r8), dimension(:,:),             pointer :: dhdz_glgrid
+
+    real (r8), dimension(:,:),             pointer :: tan_hts
+    real (r8), dimension(:,:),             pointer :: tan_temp
+    real (r8), dimension(:,:,:),           pointer :: tan_dh_dt
+
+    type (path_vector), dimension(:,:),    pointer :: z_path
+    type (path_vector), dimension(:,:),    pointer :: h_path
+    type (path_vector), dimension(:,:),    pointer :: t_path
+
+    type (path_vector), dimension(:,:),    pointer :: phi_path
+    type (path_vector), dimension(:,:),    pointer :: dhdz_path
+    type (path_Vector_2d), dimension(:,:), pointer :: eta_phi
+    type (ellipse), dimension(:,:),        pointer :: elvar
+
+  end type ForwardModelIntermediate_T
+
+  type, public :: ForwardModelStatus_T
+    logical :: newHydros                ! Need to recompute hydrostatic
+    integer :: maf                      ! The next maf to process
+    logical :: finished                 ! Flag to calling code to indicate completion
+  end type ForwardModelStatus_T
+
+  !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter, private :: IdParm = &
+    & "$Id: ForwardModelIntermdiate.f90,v 1.1 2001/04/10 22:06:26 livesey Exp $"
+  character (len=len(idParm)) :: Id = IdParm
+  character (len=*), parameter, private :: ModuleName= &
+    & "$RCSfile: ForwardModelIntermdiate.f90,v $"
+  !---------------------------------------------------------------------------
+
+end module ForwardModelIntermediate
+
+! $Log: ForwardModelIntermdiate.f90,v $
+! Revision 1.1  2001/04/10 22:06:26  livesey
+! Very first version.  Bare bones only.
+!
+@
+
+
+1.1
+log
+@Very first version.  Bare bones only.
+@
+text
+@d51 1
+a51 1
+    & "$Id: ForwardModelConfig.f90,v 1.1 2001/04/07 01:56:25 vsnyder Exp $"
+d54 1
+a54 1
+    & "$RCSfile: ForwardModelConfig.f90,v $"
+d59 4
+a62 1
+! $Log$
+@
+

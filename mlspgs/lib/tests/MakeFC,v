@@ -1,0 +1,204 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.18
+	cfm-single-freq-0-1:1.2.0.16
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.14
+	mus-emls-1-70:1.2.0.12
+	rel-1-0-englocks-work:1.2.0.10
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.2
+	V4-21:1.2.0.8
+	V4-13:1.2
+	V4-12:1.2
+	V4-11:1.2
+	V4-10:1.2
+	V3-43:1.2
+	M4-00:1.2
+	V3-41:1.2
+	V3-40-PlusGM57:1.2.0.6
+	V2-24-NRT-04:1.2
+	V3-33:1.2
+	V2-24:1.2
+	V3-31:1.2
+	V3-30-NRT-05:1.2
+	cfm-01-00:1.2
+	V3-30:1.2
+	V3-20:1.2
+	V3-10:1.2
+	V2-23-NRT-02:1.2
+	V2-23:1.2
+	V2-22-NRT-01:1.2
+	V2-22:1.2
+	V2-21:1.2
+	V2-20:1.2
+	V2-11:1.2
+	V2-10:1.2
+	V2-00:1.2
+	V1-51:1.2
+	V1-50:1.2
+	V1-45:1.2
+	V1-44:1.2
+	V1-43:1.2
+	V1-42:1.2
+	V1-41:1.2
+	V1-32:1.2
+	V1-40:1.2
+	V1-31:1.2
+	V1-30:1.2
+	V1-13:1.2
+	V1-12:1.2
+	V1-11:1.2
+	V1-10:1.2
+	newfwm-feb03:1.2.0.4
+	V1-04:1.2
+	V1-03:1.2
+	V1-02:1.2
+	V1-00:1.2
+	newfwm-sep01:1.2.0.2
+	V0-7:1.2
+	V0-5-Level2:1.2
+	V0-5-SIPS:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2000.11.11.00.16.02;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2000.10.24.20.56.46;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@rebuilds both tests/* and libmls.a
+@
+text
+@#	Makefile
+#	targets: configure and depends and clean
+#	true targets: $(MLSCONFG)/Makefile and $(MLSCONFG)/libmls.a
+#
+#special case:
+#the 1st time through, before .configure exists yet,
+#execute $(MLSBIN)/configure to create .configure
+
+#This file name is usu. Makefile but may be different;
+#i.e., if you call are building this mls
+#by calling make with a different Makefile name,
+#say: make -f MakeFC
+#then rename the Makefiles in /l2 and /lib also MakeFC
+
+# "$Id: MakeFC,v 1.1 2000/10/24 20:56:46 pwagner Exp $"
+
+MakeFName = MakeFC
+
+# where to store .configure
+CONFDIR=../..
+
+# where configure and makemakedep.sh are stored
+MLSBIN=../../util
+
+# where the platforms directory is
+PLATFORMS = .
+
+# This will set our MLS platform, compiler. etc.
+# w/o complaining if it does nor exist yet
+-include $(CONFDIR)/.configure
+
+SHELL = /bin/sh
+
+PROG=tests
+
+#the subdirectory where testing programs kept
+#testdir = tests
+
+#testsubdirs = multiply sparsify test_cf_parser multiply_vector cholesky
+testsubdirs = multiply sparsify test_cf_parser cholesky
+
+
+#================= For testing purposes only =============
+alltests: $(testsubdirs)
+
+$(PROG): $(testsubdirs)
+
+$(testsubdirs):
+	echo "Making $@@"
+	$(MAKE) -f $(MakeFName) -C $@@
+
+.PHONY: configure depends clean alltests $(testsubdirs) tar $(PROG)
+
+tar: clean
+
+configure:
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)"
+
+$(CONFDIR)/.configure:
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)"
+
+depends:
+	@@echo "Calculating dependencies $(testsubdirs)"; \
+	 for dir in $(testsubdirs); do \
+	  $(MAKE) -f $(MakeFName) -C $$dir depends; \
+	done
+
+clean:
+	@@echo "Cleaning $(testsubdirs)"; \
+	 for dir in $(testsubdirs); do \
+	  $(MAKE) -f $(MakeFName) -C $$dir clean; \
+	done
+
+tar:
+	rm -f ../$(PROG).tgz
+	tar hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod
+
+# $Log: MakeFC,v $
+# Revision 1.1  2000/10/24 20:56:46  pwagner
+# First commit
+#
+# Revision 2.1  2000/10/18 21:59:19  pwagner
+# First commit
+#
+
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d15 1
+a15 1
+# "$Id: MakeFC,v 2.1 2000/10/18 21:59:19 pwagner Exp $"
+d39 2
+a40 1
+testsubdirs = multiply sparsify test_cf_parser
+d67 1
+a67 1
+		$(MLSBIN)/makemakedep.sh ; \
+d81 3
+@
+

@@ -1,0 +1,64 @@
+head	1.2;
+access;
+symbols
+	V0_1:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2001.01.31.01.14.50;	author zvi;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2000.06.21.21.56.09;	author zvi;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@No longer needed
+@
+text
+@!
+!----------------------------------------------------------------------
+!  This routine reverse the order in a chracter array
+!
+      SUBROUTINE C_REVERSE(N,ARY)
+
+      IMPLICIT NONE
+!
+      INTEGER, INTENT(IN) :: N
+      CHARACTER(LEN=*), INTENT(INOUT) :: ARY(*)
+
+      INTEGER :: I,K,L
+      CHARACTER(LEN=78) :: CA
+!
+      IF(N < 2) RETURN
+!
+      DO I = 1, N/2
+        CA(1:)=' '
+        K = N-I+1
+        CA = ARY(K)
+        L = LEN_TRIM(CA)
+        ARY(K) = ARY(I)
+        ARY(I) = CA(1:L)
+      END DO
+!
+      END SUBROUTINE C_REVERSE
+@
+
+
+1.1
+log
+@First version D.P.
+@
+text
+@@
+

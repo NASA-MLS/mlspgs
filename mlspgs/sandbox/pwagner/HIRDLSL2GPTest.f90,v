@@ -1,0 +1,160 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.14
+	cfm-single-freq-0-1:1.2.0.12
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.10
+	mus-emls-1-70:1.2.0.8
+	rel-1-0-englocks-work:1.2.0.6
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.2
+	V4-21:1.2.0.4
+	V4-13:1.2
+	V4-12:1.2
+	V4-11:1.2
+	V4-10:1.2
+	V3-43:1.2
+	M4-00:1.2
+	V3-41:1.2
+	V3-40-PlusGM57:1.2.0.2
+	V2-24-NRT-04:1.2
+	V3-33:1.2
+	V2-24:1.2
+	V3-31:1.2
+	V3-30-NRT-05:1.2
+	cfm-01-00:1.2
+	V3-30:1.2
+	V3-20:1.2
+	V3-10:1.2
+	V2-23-NRT-02:1.2
+	V2-23:1.2
+	V2-22-NRT-01:1.2
+	V2-22:1.2
+	V2-21:1.2
+	V2-20:1.2
+	V2-11:1.2
+	V2-10:1.2
+	V2-00:1.2
+	V1-51:1.2
+	V1-50:1.2
+	V1-45:1.2
+	V1-44:1.2
+	V1-43:1.2
+	V1-42:1.1
+	V1-41:1.1
+	V1-32:1.1
+	V1-40:1.1
+	V1-31:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2004.02.21.00.09.28;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2003.04.17.23.02.43;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Changed sample file name to MOSS3
+@
+text
+@! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+!=================================
+PROGRAM HIRDLSL2GPtest ! reads HIRDLS L2GPData file
+!=================================
+
+   use L2GPData, only: Dump, L2GPData_T, ReadL2GPData
+   use MLSFiles, only: MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF, &
+    & HDFVERSION_4, HDFVERSION_5
+   use MLSMessageModule, only: MLSMessageConfig
+   
+   IMPLICIT NONE
+
+!------------------- RCS Ident Info -----------------------
+   CHARACTER(LEN=130) :: Id = &                                                    
+   "$Id: HIRDLSL2GPTest.f90,v 1.1 2003/04/17 23:02:43 pwagner Exp $"
+   CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile: HIRDLSL2GPTest.f90,v $"
+!----------------------------------------------------------
+
+! Brief description of program
+! This program tests the L2GPData subroutines.
+
+! To use this, copy it into
+! mlspgs/tests/lib
+! then enter "make depends" followed by "make"
+
+
+! Then run it
+! rm -f l2gp.h4 l2gptest.out ; echo "1,4" | LF95.Linux.atlas/test > l2gptest.out
+
+! Variables
+   type (L2GPData_T)            :: l2gp
+   integer                      :: hdfVersion
+   integer                      :: returnStatus, swfid, record_length, swid
+   character(len=*), parameter  :: l2gpFilename = &
+     & '/users/pwagner/docs/mls/l2gpsamples/HIRDLS2-MOSS3_b035_2000d275.he5'
+   !  & '/users/pwagner/docs/mls/l2gpsamples/HIRDLS2-Aura12h_b027_2000d275.he5'
+   character(len=*), parameter  :: swathName = 'H2O'
+   ! Executable
+   MLSMessageConfig%logFileUnit = -1
+   MLSMessageConfig%useToolkit = .false.
+   call h5open_f(returnStatus)
+
+   hdfVersion = HDFVERSION_5
+   call ReadL2GPData ( l2gpFilename, swathName, l2gp, &
+    & hdfVersion=hdfVersion, HMOT='H' )
+   call dump(l2gp)
+   call h5close_f(returnStatus)
+!==================
+END PROGRAM HIRDLSL2GPtest
+!==================
+
+! $Log: HIRDLSL2GPTest.f90,v $
+! Revision 1.1  2003/04/17 23:02:43  pwagner
+! First commit
+!
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d17 2
+a18 2
+   "$Id: L2GPtest.f90,v 1.4 2003/04/10 17:12:10 pwagner Exp $"
+   CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile: L2GPtest.f90,v $"
+d37 2
+a38 1
+     & '/users/pwagner/docs/mls/l2gpsamples/HIRDLS2-Aura12h_b027_2000d275.he5'
+d54 4
+a57 1
+! $Log: L2GPtest.f90,v $
+@
+

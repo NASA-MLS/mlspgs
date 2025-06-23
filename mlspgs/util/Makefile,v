@@ -1,0 +1,452 @@
+head	1.10;
+access;
+symbols
+	v5-02-NRT-19:1.10
+	v6-00:1.10
+	v5-02-NRT-18:1.10
+	v5-02:1.10
+	v5-01-NRT-17:1.10
+	v5-01-NRT-16:1.10
+	v5-01-NRT-15:1.10
+	v5-01-NRT-14:1.10
+	neuralnetworks-1-0:1.10.0.12
+	cfm-single-freq-0-1:1.10.0.10
+	v5-01:1.10
+	v5-00:1.10
+	v4-23-TA133:1.10.0.8
+	mus-emls-1-70:1.10.0.6
+	rel-1-0-englocks-work:1.10.0.4
+	VUMLS1-00:1.10
+	VPL1-00:1.10
+	V4-22-NRT-08:1.10
+	VAM1-00:1.10
+	V4-21:1.10.0.2
+	V4-13:1.10
+	V4-12:1.10
+	V4-11:1.10
+	V4-10:1.10
+	V3-43:1.8
+	M4-00:1.8
+	V3-41:1.8
+	V3-40-PlusGM57:1.8.0.2
+	V2-24-NRT-04:1.8
+	V3-33:1.8
+	V2-24:1.8
+	V3-31:1.8
+	V3-30-NRT-05:1.8
+	cfm-01-00:1.8
+	V3-30:1.8
+	V3-20:1.8
+	V3-10:1.8
+	V2-23-NRT-02:1.8
+	V2-23:1.8
+	V2-22-NRT-01:1.8
+	V2-22:1.8
+	V2-21:1.8
+	V2-20:1.7
+	V2-11:1.7
+	V2-10:1.7
+	V2-00:1.7
+	V1-51:1.7
+	V1-50:1.7
+	V1-45:1.5
+	V1-44:1.5
+	V1-43:1.4
+	V1-42:1.4
+	V1-41:1.4
+	V1-32:1.4
+	V1-40:1.4
+	V1-31:1.4
+	V1-30:1.4
+	V1-13:1.2
+	V1-12:1.2
+	V1-11:1.2
+	V1-10:1.2
+	newfwm-feb03:1.2.0.4
+	V1-04:1.2
+	V1-03:1.2
+	V1-02:1.2
+	V1-00:1.2
+	newfwm-sep01:1.2.0.2
+	V0-7:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.10
+date	2013.08.07.00.14.26;	author vsnyder;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2013.08.06.23.14.31;	author vsnyder;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2007.01.10.00.58.36;	author vsnyder;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2004.09.23.23.16.11;	author vsnyder;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2004.09.22.19.22.50;	author vsnyder;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2004.06.17.01.05.26;	author vsnyder;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2003.08.13.18.16.45;	author livesey;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2003.08.13.18.16.36;	author livesey;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.07.25.02.07.24;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.06.01.21.52.45;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.10
+log
+@Add UnwrapList and WrapList
+@
+text
+@# $RCSfile: Makefile,v $
+
+# Compiler vendor name, to select machine_$(CVN)
+CVN = lf95
+
+MLSCFILE=.configure
+include ../$(MLSCFILE)
+
+machine_$(CVN).o machine.mod: machine_$(CVN).f90
+	$(FC) $(FOPTS) -c machine_$(CVN).f90
+
+compare: compare.f90
+	$(FC) $(FOPTS) -o compare compare.f90
+
+CondenseLeakLog: CondenseLeakLog.f90
+	$(FC) $(FOPTS) -o CondenseLeakLog -I $(HOME)/mlspgs/lib/$(MLSCONFG) \
+          CondenseLeakLog.f90 -L $(HOME)/mlspgs/lib/$(MLSCONFG) -lmls
+
+ConvertPFA: ConvertPFA.f90
+	$(FC) $(FOPTS) -o ConvertPFA -I $(HOME)/mlspgs/lib/$(MLSCONFG) \
+          ConvertPFA.f90 -L $(HOME)/mlspgs/lib/$(MLSCONFG) -lmls
+
+convert_spectroscopy: convert_spectroscopy.f90
+	$(FC) $(FOPTS) -o convert_spectroscopy -I $(HOME)/mlspgs/lib/$(MLSCONFG) \
+          convert_spectroscopy.f90 -L $(HOME)/mlspgs/lib/$(MLSCONFG) -lmls \
+          -L $(PGSLIB) -lPGSTK
+
+CopyElevMap: CopyElevMap.f90
+	$(FC) $(FOPTS) -o CopyElevMap CopyElevMap.f90
+
+Dump_HDF5_Structure.o: Dump_HDF5_Structure.f90 MyMLSDataInfo.mod
+	$(FC) -c $(FOPTS) -I . -I ../lib/$(MLSCONFG) -I $(HDF5)/../fortran/src \
+          -I $(HDF5)/../include Dump_HDF5_Structure.f90 $(FAFTER)
+
+Dump_HDF5_Structure: Dump_HDF5_Structure.o MyMLSDataInfo.o
+	$(FC) $(LDOPTS) -o Dump_HDF5_Structure \
+         Dump_HDF5_Structure.o MyMLSDataInfo.o \
+         -L ../lib/$(MLSCONFG) -lmls \
+         -L $(PGSLIB) -lPGSTK \
+         -L $(HDF5) -lhdf5_fortran -lhdf5  \
+         -lz \
+         -ljpeg \
+         -lz -L/usr/lib/gcc-lib/i386-redhat-linux/3.2.3 -lgcc $(LAFTER)
+
+DumpPFAData: DumpPFAData.f90
+	$(FC) $(FOPTS) -o DumpPFAData -I $(HOME)/mlspgs/lib/$(MLSCONFG) \
+          DumpPFAData.f90 -L $(HOME)/mlspgs/lib/$(MLSCONFG) -lmls
+
+Filter_Fit: Filter_Fit.f90
+	$(FC) $(FOPTS) -o Filter_Fit Filter_Fit.f90 \
+          -L/van1/vsnyder/math77/fortran/LF95/opt/ -lmath77 \
+          -L/van1/vsnyder/math77/fortran/blas/LF95/opt/ -lblas
+
+f90tex: f90tex.f90
+	$(FC) $(FOPTS) -o f90tex f90tex.f90
+
+init_gen: init_gen.f90
+	$(FC) $(FOPTS) -o init_gen init_gen.f90 \
+        -I $(HOME)/mlspgs/lib/$(MLSCONFG) \
+          -L $(HOME)/mlspgs/lib/$(MLSCONFG) -lmls
+
+h5cat: h5cat.c
+	$(CC) -g -o h5cat -I $(HDF5INC) h5cat.c \
+          -L $(HDF5LIB) -lz -lm -lhdf5
+
+MyMLSDataInfo.mod: MyMLSDataInfo.o
+
+MyMLSDataInfo.o: MyMLSDataInfo.f90
+	$(FC) -c $(FOPTS) -I . -I ../lib/$(MLSCONFG) -I $(HDF5)/../fortran/src \
+          -I $(HDF5)/../include MyMLSDataInfo.f90 $(FAFTER)
+
+Type_Generator: Type_Generator.f90
+	$(FC) $(FOPTS) -o Type_Generator -I $(HOME)/mlspgs/lib/$(MLSCONFG) \
+          Type_Generator.f90 \
+         -L ../lib/$(MLSCONFG) -lmls \
+         -L $(PGSLIB) -lPGSTK \
+         -L $(HDF5) -lhdf5_fortran -lhdf5  \
+         -lz \
+         -ljpeg \
+         -L $(PVM_ROOT)/lib/$(PVM_ARCH) -lfpvm3 -lgpvm3 -lpvm3 \
+         -lz -L/usr/lib/gcc-lib/i386-redhat-linux/3.2.3 -lgcc $(LAFTER)
+
+UnwrapList: UnwrapList.f90
+	$(FC) $(FOPTS) -o UnwrapList UnwrapList.f90
+
+WrapList: WrapList.f90
+	$(FC) $(FOPTS) -o WrapList WrapList.f90
+
+# $Log: Makefile,v $
+# Revision 1.9  2013/08/06 23:14:31  vsnyder
+# Remove dependence on machine module
+#
+# Revision 1.8  2007/01/10 00:58:36  vsnyder
+# Add CopyElevMap
+#
+# Revision 1.7  2004/09/23 23:16:11  vsnyder
+# Simplify make for compare
+#
+# Revision 1.6  2004/09/22 19:22:50  vsnyder
+# Repair make for f90tex
+#
+# Revision 1.5  2004/06/17 01:05:26  vsnyder
+# Account for ConvertPFA, DumpPFAData
+#
+# Revision 1.4  2003/08/13 18:16:45  livesey
+# Typo
+#
+# Revision 1.3  2003/08/13 18:16:36  livesey
+# New HDF5 library.
+#
+# Revision 1.2  2001/07/25 02:07:24  vsnyder
+# Account for init_gen
+#
+# Revision 1.1  2001/06/01 21:52:45  vsnyder
+# Initial commit
+#
+@
+
+
+1.9
+log
+@Remove dependence on machine module
+@
+text
+@d3 3
+d9 5
+a13 2
+compare2: compare2.f90
+	$(FC) $(FOPTS) -o compare2 compare2.f90
+d83 6
+d90 3
+@
+
+
+1.8
+log
+@Add CopyElevMap
+@
+text
+@d3 2
+a4 2
+# Compiler vendor name, to select machine_$(CVN)
+CVN = lf95
+d6 2
+a7 31
+FC= lf95
+FOPTS= -g --chk
+LDOPTS=
+PLATFORM= LF95.Linux.slow
+#PGSLIB= /van1/vsnyder/mlspgs/SDPToolkit/LF95
+CC=cc
+#HDF5INC=/users/pwagner/apps/test/vrh9.0-lf95/hdf5-1.4.4/include
+#HDF5LIB=/users/pwagner/apps/test/vrh9.0-lf95/hdf5-1.4.4/lib
+
+FAFTER=2>&1|hl
+LAFTER=2>&1|hl
+MLSF95=LF95
+MLSPLAT=Linux
+MLSCONFG=LF95.Linux
+
+PGSINC=/software/toolkit/E-LF6.1-tk5.2.11.A/toolkit5.2.11.A/include
+PGSTK=/software/toolkit/E-LF6.1-tk5.2.11.A/toolkit5.2.11.A/lib/linux
+HDFEOS=/software/toolkit/E-LF6.1-tk5.2.11.A/hdfeos/lib/linux
+HDFEOS5=/software/toolkit/E-LF6.1-tk5.2.11.A/hdfeos5/lib/linux
+HDF=/software/toolkit/E-LF6.1-tk5.2.11.A/HDF4.1r5/lib
+HDF5=/software/toolkit/E-LF6.1-tk5.2.11.A/hdf5-1.6.2/lib
+GCTP=/software/toolkit/E-LF6.1-tk5.2.11.A/hdfeos/lib/linux
+PGSLIB=/software/toolkit/E-LF6.1-tk5.2.11.A/toolkit5.2.11.A/lib/linux
+HDFEOS_LIB=/software/toolkit/E-LF6.1-tk5.2.11.A/hdfeos/lib/linux
+HDFLIB=/software/toolkit/E-LF6.1-tk5.2.11.A/HDF4.1r5/lib
+
+machine_$(CVN).o machine.mod: machine_$(CVN).f90
+	$(FC) $(FOPTS) -c machine_$(CVN).f90
+
+compare: compare.f90 machine.mod machine_$(CVN).o
+	$(FC) $(FOPTS) -o compare compare.f90 machine_$(CVN).o
+d10 2
+a11 2
+	$(FC) $(FOPTS) -o CondenseLeakLog -I $(HOME)/mlspgs/lib/$(PLATFORM) \
+          CondenseLeakLog.f90 -L $(HOME)/mlspgs/lib/$(PLATFORM) -lmls
+d14 2
+a15 2
+	$(FC) $(FOPTS) -o ConvertPFA -I $(HOME)/mlspgs/lib/$(PLATFORM) \
+          ConvertPFA.f90 -L $(HOME)/mlspgs/lib/$(PLATFORM) -lmls
+d18 2
+a19 2
+	$(FC) $(FOPTS) -o convert_spectroscopy -I $(HOME)/mlspgs/lib/$(PLATFORM) \
+          convert_spectroscopy.f90 -L $(HOME)/mlspgs/lib/$(PLATFORM) -lmls \
+d40 2
+a41 2
+	$(FC) $(FOPTS) -o DumpPFAData -I $(HOME)/mlspgs/lib/$(PLATFORM) \
+          DumpPFAData.f90 -L $(HOME)/mlspgs/lib/$(PLATFORM) -lmls
+d48 2
+a49 2
+f90tex: f90tex.f90 machine.mod machine_$(CVN).o
+	$(FC) $(FOPTS) -o f90tex f90tex.f90 machine_$(CVN).o -static
+d53 2
+a54 2
+        -I $(HOME)/mlspgs/lib/$(PLATFORM) \
+          -L $(HOME)/mlspgs/lib/$(PLATFORM) -lmls
+d66 11
+d78 3
+@
+
+
+1.7
+log
+@Simplify make for compare
+@
+text
+@d7 1
+a7 1
+FOPTS= -g --chk --info --version
+d10 1
+a10 1
+PGSLIB= /van1/vsnyder/mlspgs/SDPToolkit/LF95
+d12 19
+a30 2
+HDF5INC=/users/pwagner/apps/test/vrh9.0-lf95/hdf5-1.4.4/include
+HDF5LIB=/users/pwagner/apps/test/vrh9.0-lf95/hdf5-1.4.4/lib
+d51 17
+d89 6
+d96 3
+@
+
+
+1.6
+log
+@Repair make for f90tex
+@
+text
+@d8 1
+a14 3
+compare.o: compare.f90 machine.mod
+	$(FC) $(FOPTS) -c compare.f90
+
+d18 2
+a19 2
+compare: compare.o machine_$(CVN).o
+	$(FC) $(FOPTS) -o compare compare.o machine_$(CVN).o
+d56 3
+@
+
+
+1.5
+log
+@Account for ConvertPFA, DumpPFAData
+@
+text
+@d7 1
+a7 1
+FOPTS= -g --chk --info
+d45 2
+a46 4
+f90tex: f90tex.f90
+	$(FC) $(FOPTS) -o f90tex f90tex.f90 \
+          -I $(HOME)/mlspgs/lib/$(PLATFORM) \
+          -L $(HOME)/mlspgs/lib/$(PLATFORM) -lmls -static
+d58 3
+@
+
+
+1.4
+log
+@Typo
+@
+text
+@d3 3
+d14 9
+d27 4
+d36 4
+d60 3
+@
+
+
+1.3
+log
+@New HDF5 library.
+@
+text
+@d36 1
+a36 1
+	$(CC) -g -o h5cat -I $(HDF5INC) h5cat.c -static -static-libgcc \
+d40 3
+@
+
+
+1.2
+log
+@Account for init_gen
+@
+text
+@d5 1
+a5 1
+PLATFORM= LF95.Linux
+d7 3
+d28 1
+a28 1
+          -L $(HOME)/mlspgs/lib/$(PLATFORM) -lmls
+d35 4
+d40 3
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d1 1
+a1 1
+# $RCSfile: $
+d27 9
+a35 1
+# $Log: $
+@
+

@@ -1,0 +1,1004 @@
+head	2.19;
+access;
+symbols
+	v5-02-NRT-19:2.19
+	v6-00:2.19
+	v5-02-NRT-18:2.19
+	v5-02:2.19
+	v5-01-NRT-17:2.19
+	v5-01-NRT-16:2.19
+	v5-01-NRT-15:2.19
+	v5-01-NRT-14:2.19
+	neuralnetworks-1-0:2.19.0.12
+	cfm-single-freq-0-1:2.19.0.10
+	v5-01:2.19
+	v5-00:2.19
+	v4-23-TA133:2.19.0.8
+	mus-emls-1-70:2.19.0.6
+	rel-1-0-englocks-work:2.19.0.4
+	VUMLS1-00:2.19
+	VPL1-00:2.19
+	V4-22-NRT-08:2.19
+	VAM1-00:2.19
+	V4-21:2.19.0.2
+	V4-13:2.19
+	V4-12:2.19
+	V4-11:2.19
+	V4-10:2.19
+	V3-43:2.10
+	M4-00:2.14
+	V3-41:2.10
+	V3-40-PlusGM57:2.10.0.2
+	V2-24-NRT-04:2.9
+	V3-33:2.10
+	V2-24:2.9
+	V3-31:2.10
+	V3-30-NRT-05:2.10
+	cfm-01-00:2.10
+	V3-30:2.10
+	V3-20:2.10
+	V3-10:2.10
+	V2-23-NRT-02:2.9
+	V2-23:2.9
+	V2-22-NRT-01:2.9
+	V2-22:2.9
+	V2-21:2.9
+	V2-20:2.9
+	V2-11:2.9
+	V2-10:2.9
+	V2-00:2.9
+	V1-51:2.8
+	V1-50:2.8
+	V1-45:2.8
+	V1-44:2.8
+	V1-43:2.6
+	V1-42:2.4
+	V1-41:2.4
+	V1-32:2.4
+	V1-40:2.4
+	V1-31:2.4
+	V1-30:2.4
+	V1-13:2.4
+	V1-12:2.4
+	V1-11:2.4
+	V1-10:2.4
+	newfwm-feb03:2.4.0.2
+	V1-04:2.3
+	V1-03:2.3
+	V1-02:2.3
+	V1-00:2.3
+	newfwm-sep01:2.1.0.2
+	V0-7:2.1
+	V0-5-Level2:2.1
+	V0-5-SIPS:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.19
+date	2014.02.21.19.21.00;	author vsnyder;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2013.12.12.01.57.49;	author vsnyder;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2013.11.26.22.44.08;	author vsnyder;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2013.10.09.01.10.30;	author vsnyder;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2013.10.02.01.34.46;	author vsnyder;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2012.05.05.00.11.51;	author vsnyder;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2012.05.01.22.10.26;	author vsnyder;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2011.04.19.01.59.43;	author vsnyder;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2011.04.18.19.33.26;	author vsnyder;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2009.06.23.18.25.44;	author pwagner;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2005.06.22.17.25.51;	author pwagner;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2004.05.29.02.42.59;	author vsnyder;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2004.05.28.23.12.21;	author vsnyder;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2004.01.17.03.04.48;	author vsnyder;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2004.01.14.18.32.58;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2002.10.08.00.09.15;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2001.11.28.03.15.19;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2001.11.27.00.54.37;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2000.10.11.18.33.25;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.19
+log
+@Add CYCLE, DO, EXIT, WHILE
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module TREE_TYPES
+  use STRING_TABLE, only: ADD_CHAR
+  use SYMBOL_TYPES, only: MIN_PSEUDO, MAX_PSEUDO
+  public
+
+  ! Parameters giving tree node indices.  The first two are required.
+  integer, parameter :: FIRST_TREE_NODE = 1
+  integer, parameter :: N_NULL = FIRST_TREE_NODE ! Used in InitTree and Parser.
+    ! Pseudo-terminals must be contiguous
+  integer, parameter :: N_IDENTIFIER =  n_null + 1
+  integer, parameter :: N_NUMBER =      n_identifier + 1
+  integer, parameter :: N_STRING =      n_number + 1
+
+  integer, parameter :: N_AND =         n_string + 1
+  integer, parameter :: N_ARG_DEF =     n_and + 1        ! Types of func args
+  integer, parameter :: N_ARRAY =       n_arg_def + 1    ! []
+  integer, parameter :: N_ASG =         n_array + 1      ! = in spec
+  integer, parameter :: N_CASE =        n_asg +1         ! CASE in SELECT block
+  integer, parameter :: N_CF =          n_case +1        ! A spec (config)
+  integer, parameter :: N_CFS =         n_cf +1          ! All the configs
+  integer, parameter :: N_COLON =       n_cfs + 1        ! A range
+  integer, parameter :: N_COLON_LESS =  n_colon + 1      ! Range open on right
+  integer, parameter :: N_COND =        n_colon_less + 1
+  integer, parameter :: N_CYCLE =       n_cond + 1
+  integer, parameter :: N_DEFAULT =     n_cycle + 1
+  integer, parameter :: N_DIV =         n_default + 1
+  integer, parameter :: N_DO =          n_div + 1       
+  integer, parameter :: N_DO_HEAD =     n_do + 1        
+  integer, parameter :: N_DOT =         n_do_head + 1
+  integer, parameter :: N_DT_DEF =      n_dot + 1        ! Data type definition
+  integer, parameter :: N_ELSE =        n_dt_def + 1     ! ELSE block in IF construct
+  integer, parameter :: N_EQUAL =       n_else + 1       ! = in X = Y spec
+  integer, parameter :: N_EQUAL_EQUAL = n_equal + 1
+  integer, parameter :: N_EXIT =        n_equal_equal + 1
+  integer, parameter :: N_FIELD_SPEC =  n_exit + 1
+  integer, parameter :: N_FIELD_TYPE =  n_field_spec + 1
+  integer, parameter :: N_FUNC_DEF =    n_field_type + 1
+  integer, parameter :: N_FUNC_REF =    n_func_def + 1
+  integer, parameter :: N_GREATER =     n_func_ref + 1
+  integer, parameter :: N_GREATER_EQ =  n_greater + 1
+  integer, parameter :: N_IF =          n_greater_eq + 1 ! IF construct
+  integer, parameter :: N_INTO =        n_if + 1         ! A divided into B: A\B
+  integer, parameter :: N_LESS =        n_into + 1
+  integer, parameter :: N_LESS_COLON =  n_less + 1       ! Range open on left
+  integer, parameter :: N_LESS_COLON_LESS = n_less_colon + 1 ! Open range
+  integer, parameter :: N_LESS_EQ =     n_less_colon_less + 1
+  integer, parameter :: N_MINUS =       n_less_eq + 1
+  integer, parameter :: N_MULT =        n_minus + 1
+  integer, parameter :: N_NAME_DEF =    n_mult + 1       ! Names OK in section
+  integer, parameter :: N_NAMED =       n_name_def + 1   ! labelled spec
+  integer, parameter :: N_NOT =         n_named + 1
+  integer, parameter :: N_NOT_EQUAL =   n_not + 1
+  integer, parameter :: N_OR =          n_not_equal + 1
+  integer, parameter :: N_PLUS =        n_or + 1
+  integer, parameter :: N_POW =         n_plus + 1
+  integer, parameter :: N_SECTION =     n_pow + 1        ! what specs in section?
+  integer, parameter :: N_SELECT =      n_section + 1    ! SELECT CASE construct
+  integer, parameter :: N_SET_ONE =     n_select + 1     ! /foo
+  integer, parameter :: N_SPEC_ARGS =   n_set_one + 1    ! x,y=z,...
+  integer, parameter :: N_SPEC_DEF =    n_spec_args + 1  ! what fields in spec?
+  integer, parameter :: N_SUBSCRIPT =   n_spec_def + 1   ! name [ expr ]
+  integer, parameter :: N_TEST =        n_subscript + 1  ! expr in IF or ELSE IF
+  integer, parameter :: N_UNCHECKED =   n_test + 1       ! field type not checked
+  integer, parameter :: N_UNIT =        n_unchecked + 1  ! number // units
+  integer, parameter :: N_VARIABLE =    n_unit + 1       ! := in name := expr
+  integer, parameter :: N_VARIABLE_REF = n_variable + 1  ! field needs a variable
+  integer, parameter :: N_WHILE =       n_variable_ref + 1
+
+  integer, parameter :: LAST_TREE_NODE = N_WHILE
+
+  ! mapping from pseudo-terminal indices to corresponding tree nodes.
+  integer, parameter :: tree_map ( min_pseudo: max_pseudo ) = &
+  !    t_identifier, t_number, t_string
+    (/ n_identifier, n_number, n_string /)
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: tree_types.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  subroutine TREE_INIT ( TREE_NODE )
+  ! Put the name of a tree node into the character table.  Everything
+  ! else is handled in TREE % INIT_TREE
+
+    integer, intent(in) :: TREE_NODE    ! One of the parameters above
+
+    select case ( tree_node )
+    case ( n_Null );            call add_char ( '<null>' )
+    case ( n_Identifier );      call add_char ( '<identifier>' )
+    case ( n_Number );          call add_char ( '<number>' )
+    case ( n_String );          call add_char ( '<string>' )
+    case ( n_And );             call add_char ( '<and>' )
+    case ( n_Arg_Def );         call add_char ( '<arg_def>' )
+    case ( n_Array );           call add_char ( '<array>' )
+    case ( n_Asg );             call add_char ( '<assign>' )
+    case ( n_Case ) ;           call add_char ( '<case>' )
+    case ( n_Cf );              call add_char ( '<cf>' )
+    case ( n_Cfs );             call add_char ( '<cfs>' )
+    case ( n_Colon );           call add_char ( '<colon>' )
+    case ( n_Colon_less );      call add_char ( '<colon_less>' )
+    case ( n_Cond );            call add_char ( '<cond>' )
+    case ( n_Cycle );           call add_char ( '<cycle>' )
+    case ( n_Default );         call add_char ( '<default>' )
+    case ( n_Div );             call add_char ( '<div>' )
+    case ( n_Do );              call add_char ( '<do>' )
+    case ( n_Do_Head );         call add_char ( '<do_head>' )
+    case ( n_Dot );             call add_char ( '<dot>' )
+    case ( n_DT_Def );          call add_char ( '<dt_def>' )
+    case ( n_Else );            call add_char ( '<else>' )
+    case ( n_Equal );           call add_char ( '<equal>' )
+    case ( n_Equal_Equal );     call add_char ( '<equal_equal>' )
+    case ( n_Exit );            call add_char ( '<exit>' )
+    case ( n_Field_Spec );      call add_char ( '<field_spec>' )
+    case ( n_Field_Type );      call add_char ( '<field_type>' )
+    case ( n_Func_Def );        call add_char ( '<func_def>' )
+    case ( n_Func_Ref );        call add_char ( '<func_ref>' )
+    case ( n_Greater );         call add_char ( '<greater>' )
+    case ( n_Greater_eq );      call add_char ( '<greater_eq>' )
+    case ( n_If );              call add_char ( '<if>' )
+    case ( n_Into );            call add_char ( '<into>' )
+    case ( n_Less );            call add_char ( '<less>' )
+    case ( n_Less_colon );      call add_char ( '<less_colon>' )
+    case ( n_Less_colon_less ); call add_char ( '<less_colon_less>' )
+    case ( n_Less_eq );         call add_char ( '<less_eq>' )
+    case ( n_Minus );           call add_char ( '<minus>' )
+    case ( n_Mult );            call add_char ( '<mult>' )
+    case ( n_Name_def );        call add_char ( '<name_def>' )
+    case ( n_Named );           call add_char ( '<named>' )
+    case ( n_Not );             call add_char ( '<not>' )
+    case ( n_Not_Equal );       call add_char ( '<not_equal>' )
+    case ( n_Or );              call add_char ( '<or>' )
+    case ( n_Plus );            call add_char ( '<plus>' )
+    case ( n_Pow );             call add_char ( '<power>' )
+    case ( n_Section );         call add_char ( '<section>' )
+    case ( n_Select );          call add_char ( '<select>' )
+    case ( n_Set_one );         call add_char ( '<set_one>' )
+    case ( n_Spec_args );       call add_char ( '<spec_args>' )
+    case ( n_Spec_def );        call add_char ( '<spec_def>' )
+    case ( n_Subscript );       call add_char ( '<subscript>' )
+    case ( n_Test );            call add_char ( '<test>' )
+    case ( n_Unchecked );       call add_char ( '<unchecked>' )
+    case ( n_Unit );            call add_char ( '<unit>' )
+    case ( n_Variable );        call add_char ( '<variable>' )
+    case ( n_Variable_ref );    call add_char ( '<variable_ref>' )
+    case ( n_While );           call add_char ( '<while>' )
+    case default
+      write ( *,* ) 'TREE_TYPES%TREE_INIT-E- No initializer for &
+                    &tree node with index ', tree_node
+      stop
+    end select
+
+  end subroutine TREE_INIT
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: tree_types.f90,v 2.18 2013/12/12 01:57:49 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module TREE_TYPES
+
+! $Log: tree_types.f90,v $
+! Revision 2.18  2013/12/12 01:57:49  vsnyder
+! Add variable definition, and IF and SELECT constructs
+!
+! Revision 2.17  2013/11/26 22:44:08  vsnyder
+! Add CASE, DEFAULT, ELSE, IF, SELECT, TEST and SUBSCRIPT nodes
+!
+! Revision 2.16  2013/10/09 01:10:30  vsnyder
+! Add Variable_Ref tree node for field type definition
+!
+! Revision 2.15  2013/10/02 01:34:46  vsnyder
+! Add conditional ?...! and variable assignment := tree nodes
+!
+! Revision 2.14  2012/05/05 00:11:51  vsnyder
+! Add support for 'not' operator
+!
+! Revision 2.13  2012/05/01 22:10:26  vsnyder
+! Add TrueList subroutine
+!
+! Revision 2.12  2011/04/19 01:59:43  vsnyder
+! Support == and /= relational operators too
+!
+! Revision 2.11  2011/04/18 19:33:26  vsnyder
+! Add support for relational operators and boolean-valued expressions
+!
+! Revision 2.10  2009/06/23 18:25:44  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.9  2005/06/22 17:25:51  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.8  2004/05/29 02:42:59  vsnyder
+! Rearrange function definition stuff
+!
+! Revision 2.7  2004/05/28 23:12:21  vsnyder
+! Add power (^) operator
+!
+! Revision 2.6  2004/01/17 03:04:48  vsnyder
+! Provide for functions in expressions
+!
+! Revision 2.5  2004/01/14 18:32:58  vsnyder
+! Stuff for Algebra module
+!
+! Revision 2.4  2002/10/08 00:09:15  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.3  2001/11/28 03:15:19  vsnyder
+! Implement arrays of arrays
+!
+! Revision 2.2  2001/11/27 00:54:37  vsnyder
+! Implement (partially) open ranges
+!
+! Revision 2.1  2000/10/11 18:33:25  vsnyder
+! Move from lib/cf_parser to lib; insert copyright notice
+!
+! Revision 2.0  2000/09/05 17:41:51  dcuddy
+! Change revision to 2.0
+!
+! Revision 1.1  2000/07/06 01:43:12  vsnyder
+! Initial check-in
+!
+@
+
+
+2.18
+log
+@Add variable definition, and IF and SELECT constructs
+@
+text
+@d18 2
+a19 2
+  integer, parameter :: N_EOF = 0       ! Root of the parse tree.
+  integer, parameter :: N_NULL = 1      ! Used in InitTree.
+d21 23
+a43 20
+  integer, parameter :: N_IDENTIFIER = n_null + 1
+  integer, parameter :: N_NUMBER =     n_identifier + 1
+  integer, parameter :: N_STRING =     n_number + 1
+
+  integer, parameter :: N_AND =        n_string + 1
+  integer, parameter :: N_ARG_DEF =    n_and + 1       ! Types of func args
+  integer, parameter :: N_ARRAY =      n_arg_def + 1   ! []
+  integer, parameter :: N_ASG =        n_array + 1     ! = in spec
+  integer, parameter :: N_CASE =       n_asg +1        ! CASE in SELECT block
+  integer, parameter :: N_CF =         n_case +1       ! A spec (config)
+  integer, parameter :: N_CFS =        n_cf +1         ! All the configs
+  integer, parameter :: N_COLON =      n_cfs + 1       ! A range
+  integer, parameter :: N_COLON_LESS = n_colon + 1     ! Range open on right
+  integer, parameter :: N_COND =       n_colon_less + 1
+  integer, parameter :: N_DEFAULT =    n_cond + 1
+  integer, parameter :: N_DIV =        n_default + 1
+  integer, parameter :: N_DOT =        n_div + 1
+  integer, parameter :: N_DT_DEF =     n_dot + 1       ! Data type definition
+  integer, parameter :: N_ELSE =       n_dt_def + 1    ! ELSE block in IF construct
+  integer, parameter :: N_EQUAL =      n_else + 1      ! = in X = Y spec
+d45 11
+a55 10
+  integer, parameter :: N_FIELD_SPEC = n_equal_equal + 1
+  integer, parameter :: N_FIELD_TYPE = n_field_spec + 1
+  integer, parameter :: N_FUNC_DEF =   n_field_type + 1
+  integer, parameter :: N_FUNC_REF =   n_func_def + 1
+  integer, parameter :: N_GREATER =    n_func_ref + 1
+  integer, parameter :: N_GREATER_EQ = n_greater + 1
+  integer, parameter :: N_IF =         n_greater_eq + 1 ! IF construct
+  integer, parameter :: N_INTO =       n_if + 1        ! A divided into B: A\B
+  integer, parameter :: N_LESS =       n_into + 1
+  integer, parameter :: N_LESS_COLON = n_less + 1      ! Range open on left
+d57 22
+a78 21
+  integer, parameter :: N_LESS_EQ =    n_less_colon_less + 1
+  integer, parameter :: N_MINUS =      n_less_eq + 1
+  integer, parameter :: N_MULT =       n_minus + 1
+  integer, parameter :: N_NAME_DEF =   n_mult + 1      ! Names OK in section
+  integer, parameter :: N_NAMED =      n_name_def + 1  ! labelled spec
+  integer, parameter :: N_NOT =        n_named + 1
+  integer, parameter :: N_NOT_EQUAL =  n_not + 1
+  integer, parameter :: N_OR =         n_not_equal + 1
+  integer, parameter :: N_PLUS =       n_or + 1
+  integer, parameter :: N_POW =        n_plus + 1
+  integer, parameter :: N_SECTION =    n_pow + 1       ! what specs in section?
+  integer, parameter :: N_SELECT =     n_section + 1   ! SELECT CASE construct
+  integer, parameter :: N_SET_ONE =    n_select + 1    ! /foo
+  integer, parameter :: N_SPEC_ARGS =  n_set_one + 1   ! x,y=z,...
+  integer, parameter :: N_SPEC_DEF =   n_spec_args + 1 ! what fields in spec?
+  integer, parameter :: N_SUBSCRIPT =  n_spec_def + 1  ! name [ expr ]
+  integer, parameter :: N_TEST =       n_subscript + 1 ! expr in IF or ELSE IF
+  integer, parameter :: N_UNCHECKED =  n_test + 1      ! field type not checked
+  integer, parameter :: N_UNIT =       n_unchecked + 1 ! number // units
+  integer, parameter :: N_VARIABLE =   n_unit + 1      ! := in name := expr
+  integer, parameter :: N_VARIABLE_REF = n_variable + 1 ! field needs a variable
+d80 1
+a80 1
+  integer, parameter :: LAST_TREE_NODE = N_VARIABLE_REF
+a101 1
+    case ( n_Eof );             call add_char ( '<eof>' )
+d116 1
+d119 2
+d126 1
+d159 1
+d171 1
+a171 1
+       "$Id: tree_types.f90,v 2.17 2013/11/26 22:44:08 vsnyder Exp $"
+d181 3
+@
+
+
+2.17
+log
+@Add CASE, DEFAULT, ELSE, IF, SELECT, TEST and SUBSCRIPT nodes
+@
+text
+@d97 54
+a150 54
+    case ( n_Eof );             call add_char ( 'eof' )
+    case ( n_Null );            call add_char ( 'null' )
+    case ( n_Identifier );      call add_char ( 'identifier' )
+    case ( n_Number );          call add_char ( 'number' )
+    case ( n_String );          call add_char ( 'string' )
+    case ( n_And );             call add_char ( 'and' )
+    case ( n_Arg_Def );         call add_char ( 'arg_def' )
+    case ( n_Array );           call add_char ( 'array' )
+    case ( n_Asg );             call add_char ( 'assign' )
+    case ( n_Case ) ;           call add_char ( 'case' )
+    case ( n_Cf );              call add_char ( 'cf' )
+    case ( n_Cfs );             call add_char ( 'cfs' )
+    case ( n_Colon );           call add_char ( 'colon' )
+    case ( n_Colon_less );      call add_char ( 'colon_less' )
+    case ( n_Cond );            call add_char ( 'cond' )
+    case ( n_Default );         call add_char ( 'default' )
+    case ( n_Div );             call add_char ( 'div' )
+    case ( n_Dot );             call add_char ( 'dot' )
+    case ( n_DT_Def );          call add_char ( 'dt_def' )
+    case ( n_Else );            call add_char ( 'else' )
+    case ( n_Equal );           call add_char ( 'equal' )
+    case ( n_Equal_Equal );     call add_char ( 'equal_equal' )
+    case ( n_Field_Spec );      call add_char ( 'field_spec' )
+    case ( n_Field_Type );      call add_char ( 'field_type' )
+    case ( n_Func_Def );        call add_char ( 'func_def' )
+    case ( n_Func_Ref );        call add_char ( 'func_ref' )
+    case ( n_Greater );         call add_char ( 'greater' )
+    case ( n_Greater_eq );      call add_char ( 'greater_eq' )
+    case ( n_If );              call add_char ( 'if' )
+    case ( n_Into );            call add_char ( 'into' )
+    case ( n_Less );            call add_char ( 'less' )
+    case ( n_Less_colon );      call add_char ( 'less_colon' )
+    case ( n_Less_colon_less ); call add_char ( 'less_colon_less' )
+    case ( n_Less_eq );         call add_char ( 'less_eq' )
+    case ( n_Minus );           call add_char ( 'minus' )
+    case ( n_Mult );            call add_char ( 'mult' )
+    case ( n_Name_def );        call add_char ( 'name_def' )
+    case ( n_Named );           call add_char ( 'named' )
+    case ( n_Not );             call add_char ( 'not' )
+    case ( n_Not_Equal );       call add_char ( 'not_equal' )
+    case ( n_Or );              call add_char ( 'or' )
+    case ( n_Plus );            call add_char ( 'plus' )
+    case ( n_Pow );             call add_char ( 'power' )
+    case ( n_Section );         call add_char ( 'section' )
+    case ( n_Select );          call add_char ( 'select' )
+    case ( n_Set_one );         call add_char ( 'set_one' )
+    case ( n_Spec_args );       call add_char ( 'spec_args' )
+    case ( n_Spec_def );        call add_char ( 'spec_def' )
+    case ( n_Subscript );       call add_char ( 'subscript' )
+    case ( n_Test );            call add_char ( 'test' )
+    case ( n_Unchecked );       call add_char ( 'unchecked' )
+    case ( n_Unit );            call add_char ( 'unit' )
+    case ( n_Variable );        call add_char ( 'variable' )
+    case ( n_Variable_ref );    call add_char ( 'variable_ref' )
+d162 1
+a162 1
+       "$Id: tree_types.f90,v 2.16 2013/10/09 01:10:30 vsnyder Exp $"
+d172 3
+@
+
+
+2.16
+log
+@Add Variable_Ref tree node for field type definition
+@
+text
+@d29 2
+a30 1
+  integer, parameter :: N_CF =         n_asg +1        ! A spec (config)
+d35 2
+a36 1
+  integer, parameter :: N_DIV =        n_cond + 1
+d39 2
+a40 1
+  integer, parameter :: N_EQUAL =      n_dt_def + 1    ! = in X = Y spec
+d48 2
+a49 1
+  integer, parameter :: N_INTO =       n_greater_eq + 1 ! A divided into B: A\B
+d64 2
+a65 1
+  integer, parameter :: N_SET_ONE =    n_section + 1   ! /foo
+d68 3
+a70 1
+  integer, parameter :: N_UNCHECKED =  n_spec_def + 1  ! field type not checked
+d93 1
+d95 1
+d97 32
+a128 28
+    case ( n_Eof );          call add_char ( 'eof' )
+    case ( n_Null );         call add_char ( 'null' )
+    case ( n_Identifier );   call add_char ( 'identifier' )
+    case ( n_Number );       call add_char ( 'number' )
+    case ( n_String );       call add_char ( 'string' )
+    case ( n_And );          call add_char ( 'and' )
+    case ( n_Arg_Def );      call add_char ( 'arg_def' )
+    case ( n_Array );        call add_char ( 'array' )
+    case ( n_Asg );          call add_char ( 'assign' )
+    case ( n_Cf );           call add_char ( 'cf' )
+    case ( n_Cfs );          call add_char ( 'cfs' )
+    case ( n_Colon );        call add_char ( 'colon' )
+    case ( n_Colon_less );   call add_char ( 'colon_less' )
+    case ( n_cond );         call add_char ( 'cond' )
+    case ( n_Div );          call add_char ( 'div' )
+    case ( n_Dot );          call add_char ( 'dot' )
+    case ( n_DT_Def );       call add_char ( 'dt_def' )
+    case ( n_Equal );        call add_char ( 'equal' )
+    case ( n_Equal_Equal );  call add_char ( 'equal_equal' )
+    case ( n_Field_Spec );   call add_char ( 'field_spec' )
+    case ( n_Field_Type );   call add_char ( 'field_type' )
+    case ( n_Func_Def );     call add_char ( 'func_def' )
+    case ( n_Func_Ref );     call add_char ( 'func_ref' )
+    case ( n_Greater );      call add_char ( 'greater' )
+    case ( n_Greater_eq );   call add_char ( 'greater_eq' )
+    case ( n_Into );         call add_char ( 'into' )
+    case ( n_Less );         call add_char ( 'less' )
+    case ( n_Less_colon );   call add_char ( 'less_colon' )
+d130 21
+a150 18
+    case ( n_Less_eq );      call add_char ( 'less_eq' )
+    case ( n_Minus );        call add_char ( 'minus' )
+    case ( n_Mult );         call add_char ( 'mult' )
+    case ( n_Name_def );     call add_char ( 'name_def' )
+    case ( n_Named );        call add_char ( 'named' )
+    case ( n_Not );          call add_char ( 'not' )
+    case ( n_Not_Equal );    call add_char ( 'not_equal' )
+    case ( n_Or );           call add_char ( 'or' )
+    case ( n_Plus );         call add_char ( 'plus' )
+    case ( n_Pow );          call add_char ( 'power' )
+    case ( n_Section );      call add_char ( 'section' )
+    case ( n_Set_one );      call add_char ( 'set_one' )
+    case ( n_Spec_args );    call add_char ( 'spec_args' )
+    case ( n_Spec_def );     call add_char ( 'spec_def' )
+    case ( n_Unchecked );    call add_char ( 'unchecked' )
+    case ( n_Unit );         call add_char ( 'unit' )
+    case ( n_Variable );     call add_char ( 'variable' )
+    case ( n_Variable_ref ); call add_char ( 'variable_ref' )
+d152 2
+a153 2
+      write ( *,* )'TREE_TYPES%TREE_INIT-E- No initializer for &
+                     &tree node with index ', tree_node
+d156 1
+d158 1
+d162 1
+a162 1
+       "$Id: tree_types.f90,v 2.15 2013/10/02 01:34:46 vsnyder Exp $"
+d172 3
+@
+
+
+2.15
+log
+@Add conditional ?...! and variable assignment := tree nodes
+@
+text
+@d66 1
+d68 1
+a68 1
+  integer, parameter :: LAST_TREE_NODE = N_VARIABLE
+d88 28
+a115 28
+    case ( n_Eof );        call add_char ( 'eof' )
+    case ( n_Null );       call add_char ( 'null' )
+    case ( n_Identifier ); call add_char ( 'identifier' )
+    case ( n_Number );     call add_char ( 'number' )
+    case ( n_String );     call add_char ( 'string' )
+    case ( n_And );        call add_char ( 'and' )
+    case ( n_Arg_Def );    call add_char ( 'arg_def' )
+    case ( n_Array );      call add_char ( 'array' )
+    case ( n_Asg );        call add_char ( 'assign' )
+    case ( n_Cf );         call add_char ( 'cf' )
+    case ( n_Cfs );        call add_char ( 'cfs' )
+    case ( n_Colon );      call add_char ( 'colon' )
+    case ( n_Colon_less ); call add_char ( 'colon_less' )
+    case ( n_cond );       call add_char ( 'cond' )
+    case ( n_Div );        call add_char ( 'div' )
+    case ( n_Dot );        call add_char ( 'dot' )
+    case ( n_DT_Def );     call add_char ( 'dt_def' )
+    case ( n_Equal );      call add_char ( 'equal' )
+    case ( n_Equal_Equal ); call add_char ( 'equal_equal' )
+    case ( n_Field_Spec ); call add_char ( 'field_spec' )
+    case ( n_Field_Type ); call add_char ( 'field_type' )
+    case ( n_Func_Def );   call add_char ( 'func_def' )
+    case ( n_Func_Ref );   call add_char ( 'func_ref' )
+    case ( n_Greater );    call add_char ( 'greater' )
+    case ( n_Greater_eq ); call add_char ( 'greater_eq' )
+    case ( n_Into );       call add_char ( 'into' )
+    case ( n_Less );       call add_char ( 'less' )
+    case ( n_Less_colon ); call add_char ( 'less_colon' )
+d117 18
+a134 17
+    case ( n_Less_eq );    call add_char ( 'less_eq' )
+    case ( n_Minus );      call add_char ( 'minus' )
+    case ( n_Mult );       call add_char ( 'mult' )
+    case ( n_Name_def );   call add_char ( 'name_def' )
+    case ( n_Named );      call add_char ( 'named' )
+    case ( n_Not );        call add_char ( 'not' )
+    case ( n_Not_Equal );  call add_char ( 'not_equal' )
+    case ( n_Or );         call add_char ( 'or' )
+    case ( n_Plus );       call add_char ( 'plus' )
+    case ( n_Pow );        call add_char ( 'power' )
+    case ( n_Section );    call add_char ( 'section' )
+    case ( n_Set_one );    call add_char ( 'set_one' )
+    case ( n_Spec_args );  call add_char ( 'spec_args' )
+    case ( n_Spec_def );   call add_char ( 'spec_def' )
+    case ( n_Unchecked );  call add_char ( 'unchecked' )
+    case ( n_Unit );       call add_char ( 'unit' )
+    case ( n_Variable );   call add_char ( 'variable' )
+d144 1
+a144 1
+       "$Id: tree_types.f90,v 2.14 2012/05/05 00:11:51 vsnyder Exp $"
+d154 3
+@
+
+
+2.14
+log
+@Add support for 'not' operator
+@
+text
+@d33 2
+a34 1
+  integer, parameter :: N_DIV =        n_colon_less + 1
+d65 1
+d67 1
+a67 1
+  integer, parameter :: LAST_TREE_NODE = N_UNIT
+d71 1
+a71 1
+  !    t_identifier, t_number
+d100 1
+d110 2
+a111 2
+    case ( n_greater );    call add_char ( 'greater' )
+    case ( n_greater_eq ); call add_char ( 'greater_eq' )
+d132 1
+d142 1
+a142 1
+       "$Id: tree_types.f90,v 2.13 2012/05/01 22:10:26 vsnyder Exp $"
+d152 3
+@
+
+
+2.13
+log
+@Add TrueList subroutine
+@
+text
+@d53 2
+a54 1
+  integer, parameter :: N_NOT_EQUAL =  n_named + 1
+d118 1
+d138 1
+a138 1
+       "$Id: tree_types.f90,v 2.12 2011/04/19 01:59:43 vsnyder Exp $"
+d148 3
+@
+
+
+2.12
+log
+@Support == and /= relational operators too
+@
+text
+@d55 3
+a57 3
+  integer, parameter :: N_POW =        n_or + 1
+  integer, parameter :: N_PLUS =       n_pow + 1
+  integer, parameter :: N_SECTION =    n_plus + 1      ! what specs in section?
+d136 1
+a136 1
+       "$Id: tree_types.f90,v 2.11 2011/04/18 19:33:26 vsnyder Exp $"
+d146 3
+@
+
+
+2.11
+log
+@Add support for relational operators and boolean-valued expressions
+@
+text
+@d37 2
+a38 1
+  integer, parameter :: N_FIELD_SPEC = n_equal + 1
+d53 2
+a54 1
+  integer, parameter :: N_OR =         n_named + 1
+d101 1
+d117 1
+d136 1
+a136 1
+       "$Id: tree_types.f90,v 2.10 2009/06/23 18:25:44 pwagner Exp $"
+d146 3
+@
+
+
+2.10
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d41 5
+a45 2
+  integer, parameter :: N_INTO =       n_func_ref + 1  ! A divided into B: A\B
+  integer, parameter :: N_LESS_COLON = n_into + 1      ! Range open on left
+d47 2
+a48 1
+  integer, parameter :: N_MINUS =      n_less_colon_less + 1
+d59 2
+a60 1
+  integer, parameter :: N_UNIT =       n_spec_def + 1  ! number // units
+d71 1
+a71 1
+       "$RCSfile: $"
+d103 2
+d106 1
+d109 1
+d121 1
+d132 1
+a132 1
+       "$Id: read_apriori.f90 is it here $"
+d142 3
+@
+
+
+2.9
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d119 1
+a120 1
+!---------------------------- RCS Ident Info -------------------------------
+d122 2
+a123 3
+       "$Id: $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d125 1
+d127 1
+d132 3
+@
+
+
+2.8
+log
+@Rearrange function definition stuff
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d64 1
+a64 3
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=256), private :: Id = &
+       "$Id: tree_types.f90,v 2.7 2004/05/28 23:12:21 vsnyder Exp $"
+d66 1
+a66 1
+       "$RCSfile: tree_types.f90,v $"
+d120 5
+d131 3
+@
+
+
+2.7
+log
+@Add power (^) operator
+@
+text
+@d18 2
+a19 1
+  integer, parameter :: N_ARRAY =      n_and + 1       ! []
+d31 3
+a33 2
+  integer, parameter :: N_FUNC_REF = n_field_type + 1
+  integer, parameter :: N_INTO = n_func_ref + 1        ! A divided into B: A\B
+d58 1
+a58 1
+       "$Id: tree_types.f90,v 2.6 2004/01/17 03:04:48 vsnyder Exp $"
+d77 1
+d90 1
+d120 3
+@
+
+
+2.6
+log
+@Provide for functions in expressions
+@
+text
+@d39 2
+a40 1
+  integer, parameter :: N_PLUS =       n_or + 1
+d56 1
+a56 1
+       "$Id: tree_types.f90,v 2.5 2004/01/14 18:32:58 vsnyder Exp $"
+d97 1
+d116 3
+@
+
+
+2.5
+log
+@Stuff for Algebra module
+@
+text
+@d30 2
+a31 1
+  integer, parameter :: N_INTO = n_field_type + 1      ! A divided into B: A\B
+d55 1
+a55 1
+       "$Id: tree_types.f90,v 2.4 2002/10/08 00:09:15 pwagner Exp $"
+d86 1
+d114 3
+@
+
+
+2.4
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d30 2
+a31 1
+  integer, parameter :: N_LESS_COLON = n_field_type + 1 ! Range open on left
+d54 1
+a54 1
+       "$Id: tree_types.f90,v 2.3 2001/11/28 03:15:19 vsnyder Exp $"
+d85 1
+d112 3
+@
+
+
+2.3
+log
+@Implement arrays of arrays
+@
+text
+@d53 1
+a53 1
+       "$Id: tree_types.f90,v 2.2 2001/11/27 00:54:37 vsnyder Exp $"
+d56 1
+d103 4
+d110 3
+@
+
+
+2.2
+log
+@Implement (partially) open ranges
+@
+text
+@d18 2
+a19 1
+  integer, parameter :: N_ASG =        n_and + 1       ! = in spec
+d23 1
+a23 1
+  integer, parameter :: N_COLON_LESS = n_colon + 1
+d30 2
+a31 2
+  integer, parameter :: N_LESS_COLON = n_field_type + 1
+  integer, parameter :: N_LESS_COLON_LESS = n_less_colon + 1
+d53 1
+a53 1
+       "$Id: tree_types.f90,v 2.1 2000/10/11 18:33:25 vsnyder Exp $"
+d71 1
+d105 3
+@
+
+
+2.1
+log
+@Move from lib/cf_parser to lib; insert copyright notice
+@
+text
+@d22 2
+a23 1
+  integer, parameter :: N_DIV =        n_colon + 1
+d29 3
+a31 1
+  integer, parameter :: N_MINUS =      n_field_type + 1
+d52 1
+a52 1
+       "$Id: tree_types.f90,v 2.0 2000/09/05 17:41:51 dcuddy Exp $"
+d74 1
+d81 2
+d103 3
+@
+

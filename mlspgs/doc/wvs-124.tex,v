@@ -1,0 +1,276 @@
+head	1.3;
+access;
+symbols
+	v5-02-NRT-19:1.3
+	v6-00:1.3
+	v5-02-NRT-18:1.3
+	v5-02:1.3
+	v5-01-NRT-17:1.3
+	v5-01-NRT-16:1.3
+	v5-01-NRT-15:1.3
+	v5-01-NRT-14:1.3
+	neuralnetworks-1-0:1.3.0.4
+	cfm-single-freq-0-1:1.3.0.2
+	v5-01:1.3
+	v5-00:1.3
+	v4-23-TA133:1.2.0.6
+	mus-emls-1-70:1.2.0.4
+	rel-1-0-englocks-work:1.2.0.2
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.2;
+locks; strict;
+comment	@% @;
+
+
+1.3
+date	2019.05.29.20.56.10;	author vsnyder;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2015.08.25.21.49.13;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2015.05.07.00.28.10;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@Add xref for wvs-035
+@
+text
+@\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9in
+
+\newcommand{\docname}{wvs-124r2}
+\newcommand{\docdate}{29 May 2019}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\newcommand{\TS}{T_\text{scat}}
+\newcommand{\TSs}[1]{T_{\text{scat}_{#1}}}
+\newcommand{\DB}{\Delta B}
+\newcommand{\oDB}{\overline{\DB}}
+\newcommand{\MT}{\mathcal{T}}
+\newcommand{\hMT}{\MT^s}
+\newcommand{\IF}[1]{\,\mathcal{A}_n\!\left(#1\right)} % Interpolation Function
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Nathaniel, Paul, Van\\
+Subject: \>Improvement on gradient move in the Newton solver\\
+From: \>Van Snyder\\
+Reference: \h{wvs-035}\>
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-20pt}
+
+The Newton solver {\tt DNWT} computes $\mathbf{x}$ such that
+$\mathbf{F}(\mathbf{x}) \simeq 0$, where $\mathbf{x}$ is the atmospheric
+state and $\mathbf{F}(\mathbf{x})$ is the difference between computed and
+observed radiance.
+
+Let $F(\mathbf{x}) = |\mathbf{F}(\mathbf{x})|$, $\mathbf{x}$ be the
+current position, and $\mathbf{x}_b$ be the best position, i.e.
+$F(\mathbf{x}_b)$ is the smallest value found.  Let $\nabla
+\mathbf{F}(\mathbf{x}) = \mathbf{J}(\mathbf{x})^T \mathbf{F}(\mathbf{x})$
+be the gradient at the current position, and $\nabla
+\mathbf{F}(\mathbf{x}_b)$ be the gradient at the best position, where
+$\mathbf{J}(\mathbf{x})$ is the Jacobian of $\mathbf{F}(\mathbf{x})$ with
+respect to $\mathbf{x}$.
+
+Let $\delta \mathbf{x}$ be the most recent Newton move, and let
+%
+\begin{equation}
+\alpha = \min \left( \frac{|\delta \mathbf{x}|}
+                          {8 |\nabla \mathbf{F}(\mathbf{x}_b)|},
+                     \sup \{ N_i \} ^{-2} \right)\,,
+\end{equation}
+%
+where $N_i$ is the $\ell_1$ norm of the $i^\text{th}$ column of the
+upper-triangular Cholesky factor of $\mathbf{J}(\mathbf{x})^T
+\mathbf{J}(\mathbf{x})$.
+
+If $F(\mathbf{x} + \delta \mathbf{x}) > F(\mathbf{x})$, {\tt DNWT} does
+not always and immediately take a gradient move from $\mathbf{x}_b$, i.e.,
+it does not always replace $\mathbf{x}$ with $\mathbf{x}_b + \alpha\,
+\nabla \mathbf{F}(\mathbf{x}_b)$.  Rather, it considers several criteria,
+including the angle between the gradient and the Newton move.  Frequently,
+accepting an ``uphill'' move is productive, i.e., the next Newton move
+frequently results in a position that is much superior to $\mathbf{x}_b +
+\alpha\, \nabla \mathbf{F}(\mathbf{x}_b)$.
+
+Sometimes, however, it becomes clear that a gradient move is necessary. 
+In this case, an improvement on a gradient move might be possible.
+
+Define $\mathbf{\Delta} = \mathbf{x} - \mathbf{x}_b$.
+
+Let $D(\mathbf{x}) = \mathbf{\Delta} \cdot \nabla \mathbf{F}(\mathbf{x})$
+be the directional derivative of $F(\mathbf{x})$, that is the derivative
+of $F(\mathbf{x})$ in the direction of $\mathbf{\Delta}$, and let
+$D(\mathbf{x}_b) = \mathbf{\Delta} \cdot \nabla \mathbf{F}(\mathbf{x}_b)$
+be the directional derivative of $F(\mathbf{x}_b)$.
+
+Having $F(\mathbf{x})$, $F(\mathbf{x}_b)$, $D(\mathbf{x})$, and
+$D(\mathbf{x}_b)$ allows to determine an Hermite cubic polynomial $P(s) =
+a_3 s^3 + a_2 s^2 + a_1 s + a_0$, where $s = 0$ at $\mathbf{x}_b$ and $s =
+1$ at $\mathbf{x}$.  Equating $P(0) = F(\mathbf{x}_b)$, $P(1) =
+F(\mathbf{x})$, $P^\prime(0) = D(\mathbf{x}_b)$, and $P^\prime(1) =
+D(\mathbf{x})$ gives
+%
+\begin{equation}\begin{split}
+a_0 =\,& F(\mathbf{x}_b) \\
+a_1 =\,& D(\mathbf{x}_b) \\
+a_2 + a_3 =\,& F(\mathbf{x}) - a_0 - a_1
+          = F(\mathbf{x}) - F(\mathbf{x}_b) - D(\mathbf{x}_b) \\
+2 a_2 + 3 a_3 =\,& D(\mathbf{x}) - a_1
+              = D(\mathbf{x}) - D(\mathbf{x}_b) \,, \\
+\end{split}\end{equation}
+%
+from which
+%
+\begin{equation}\begin{split}
+a_2 =\,& 3 ( F(\mathbf{x}) - F(\mathbf{x}_b) ) - D(\mathbf{x}) -
+         2 D(\mathbf{x}_b) \\
+a_3 =\,& -2 ( F(\mathbf{x}) - F(\mathbf{x}_b) ) + D(\mathbf{x}) +
+         D(\mathbf{x}_b) \,. \\
+\end{split}\end{equation}
+%
+Let $P(\hat{s})$ be the minimum of $P(s)$.  If $\hat{s}$ is real and $0 <
+\hat{s} \leq 1$, then replacing $\mathbf{x}$ with $\mathbf{x}_b +
+\hat{s}\, \mathbf{\Delta}$ might be a better move than a gradient move.
+
+This would be a fairly easy experiment to implement in the Retrieval
+module.
+
+\label{lastpage}
+\vspace*{-0.1in} % Somehow, this causes lastpage to be defined
+\end{document}
+
+% $Id: wvs-124.tex,v 1.2 2015/08/25 21:49:13 vsnyder Exp $
+
+% $Log: wvs-124.tex,v $
+% Revision 1.2  2015/08/25 21:49:13  vsnyder
+% Correct a typo
+%
+% Revision 1.1  2015/05/07 00:28:10  vsnyder
+% Initial commit
+%
+@
+
+
+1.2
+log
+@Correct a typo
+@
+text
+@d15 2
+a16 2
+\newcommand{\docname}{wvs-124r1}
+\newcommand{\docdate}{25 August 2015}
+d87 1
+a87 1
+%Reference: \>
+d175 1
+a175 1
+% $Id: wvs-124.tex,v 1.1 2015/05/07 00:28:10 vsnyder Exp $
+d178 3
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d15 2
+a16 2
+\newcommand{\docname}{wvs-124}
+\newcommand{\docdate}{6 May 2015}
+d164 1
+a164 1
+Let $P(\hat{s})$ be the minimum of $P(s)$.  If $s$ is real and $0 <
+d175 1
+a175 1
+% $Id: wvs-123.tex,v 1.1 2015/04/30 17:48:12 vsnyder Exp $
+d177 4
+a180 1
+% $Log: wvs-123.tex,v $
+@
+

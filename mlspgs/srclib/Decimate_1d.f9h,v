@@ -1,0 +1,168 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.12
+	cfm-single-freq-0-1:1.2.0.10
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.8
+	mus-emls-1-70:1.2.0.6
+	rel-1-0-englocks-work:1.2.0.4
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.2
+	V4-21:1.2.0.2
+	V4-13:1.2
+	V4-12:1.2
+	V4-11:1.2
+	V4-10:1.2
+	V3-43:1.1
+	M4-00:1.2
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.2
+	V3-31:1.2
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2010.11.11.19.54.09;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2010.02.17.22.28.40;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@May select values by relative size
+@
+text
+@! Copyright 2008, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id: Decimate_1d.f9h,v 1.1 2010/02/17 22:28:40 pwagner Exp $
+
+    ! Dummy args
+    real(rk), dimension(:), intent(in) :: array ! The larger array
+    integer, dimension(:), intent(out)     :: i
+    integer, intent(out)               :: n
+    real(rk), intent(in), optional     :: testvalue
+    real(rk), dimension(:), intent(out), optional :: values
+    character(len=*), intent(in), optional :: options
+    ! Local variables
+    character(len=4) :: myOptions
+    real(rk) :: myMaxvalue
+    real(rk) :: myTestvalue
+    character :: myAbs
+    character(len=3) :: myCase
+    character :: myRelation
+    ! Executable
+    i = 0
+    myOptions = '/' ! Defaults to picking non-zero elements
+    if ( present(options) ) myOptions = options
+    myTestvalue = 0._rk
+    if ( present(testvalue) ) myTestValue = testvalue
+    myAbs = 'z'
+    if ( index(myOptions, '||') > 0 ) myAbs = 'a'
+    if ( index(myOptions, '+') > 0 ) then
+      myRelation = 'g'
+      myMaxvalue = maxval(abs(array))
+    else
+      myRelation = 'n'
+      myMaxvalue = maxval(array)
+    endif
+    if ( index(myOptions, '%') > 0 ) myTestValue = testvalue*myMaxValue
+    n = 0
+    if ( index(myOptions, 'r') > 0 ) then
+      myCase = myAbs // myRelation // 'r'
+    else
+      myCase = myAbs // myRelation
+    endif
+    select case(myCase)
+    case('zn') ! array(i) /= testvalue
+      call FindAll( (/ array /= myTestvalue /), which=i, how_many=n )
+    case('zg') ! array(i) > testvalue
+      call FindAll( (/ array > myTestvalue /), which=i, how_many=n )
+    case('an') ! |array(i)| /= testvalue
+      call FindAll( (/ abs(array) /= myTestvalue /), which=i, how_many=n )
+    case('ag') ! |array(i)| > testvalue
+      call FindAll( (/ abs(array) > myTestvalue /), which=i, how_many=n )
+    ! These are all reversed
+    case('znr') ! array(i) == testvalue
+      call FindAll( (/ array == myTestvalue /), which=i, how_many=n )
+    case('zgr') ! array(i) <= testvalue
+      call FindAll( (/ array <= myTestvalue /), which=i, how_many=n )
+    case('anr') ! |array(i)| == testvalue
+      call FindAll( (/ abs(array) == myTestvalue /), which=i, how_many=n )
+    case('agr') ! |array(i)| <= testvalue
+      call FindAll( (/ abs(array) <= myTestvalue /), which=i, how_many=n )
+    case default
+      call MLSMessage ( MLSMSG_Error, &
+      & ModuleName // "/Decimate_1d", &
+      & "Unexpected combination of myAbs and myRelation: " &
+      & // myCase )
+    end select
+    if ( n > 0 .and. present(values) ) then
+      values(1:n) = array( i(1:n) )
+    endif
+! $Log: Decimate_1d.f9h,v $
+! Revision 1.1  2010/02/17 22:28:40  pwagner
+! First commit
+!
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d12 1
+a12 1
+! $Id: Decimate_1d.f9h,v 1.1 2008/09/03 20:08:46 pwagner Exp $
+d23 1
+d26 1
+d36 8
+a43 2
+    myRelation = 'n'
+    if ( index(myOptions, '+') > 0 ) myRelation = 'g'
+d45 6
+a50 1
+    select case(myAbs // myRelation)
+d59 9
+d72 1
+a72 1
+      & // myAbs // myRelation )
+d78 3
+@
+

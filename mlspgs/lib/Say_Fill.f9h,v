@@ -1,0 +1,122 @@
+head	2.2;
+access;
+symbols
+	v5-02-NRT-19:2.2
+	v6-00:2.2
+	v5-02-NRT-18:2.2
+	v5-02:2.2
+	v5-01-NRT-17:2.2
+	v5-01-NRT-16:2.2
+	v5-01-NRT-15:2.2
+	v5-01-NRT-14:2.2
+	neuralnetworks-1-0:2.2.0.12
+	cfm-single-freq-0-1:2.2.0.10
+	v5-01:2.2
+	v5-00:2.2
+	v4-23-TA133:2.2.0.8
+	mus-emls-1-70:2.2.0.6
+	rel-1-0-englocks-work:2.2.0.4
+	VUMLS1-00:2.2
+	VPL1-00:2.2
+	V4-22-NRT-08:2.2
+	VAM1-00:2.2
+	V4-21:2.2.0.2
+	V4-13:2.2
+	V4-12:2.2
+	V4-11:2.2
+	V4-10:2.2
+	V3-43:2.1
+	M4-00:2.2
+	V3-41:2.1
+	V3-40-PlusGM57:2.1.0.2
+	V3-33:2.1
+	V3-31:2.1
+	V3-30-NRT-05:2.1
+	cfm-01-00:2.1
+	V3-30:2.1
+	V3-20:2.1
+	V3-10:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.2
+date	2011.07.12.00.13.07;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2009.04.01.23.29.42;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.2
+log
+@Passes format to printIt
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id: Say_Fill.f9h,v 2.1 2009/04/01 23:29:42 pwagner Exp $
+!  ! --------------------------------------------  Say_Fill  -----
+!  subroutine Say_Fill_Double ( Subs, NumZeroRows, Fill, Inc, Format )
+    integer, intent(in) :: Subs(:)
+    integer, intent(inout) :: NumZeroRows
+!    double precision, intent(in) :: Fill
+    integer, intent(in), optional :: Inc
+    character(len=*), intent(in), optional :: FORMAT
+    if ( numZeroRows /= 0 ) then
+      if ( present(inc) ) then
+        call say_subs ( (/ subs(:inc-1), subs(inc)+1, subs(inc+1:) /), numZeroRows )
+      else
+        call say_subs ( subs, numZeroRows )
+      endif
+      call printIt( Fill, format=format )
+      call output ( ' not printed.', advance='yes' )
+      numZeroRows = 0
+    end if
+    if ( present(inc) ) &
+      & call say_subs_only ( (/ subs(:inc-1), subs(inc)+1, subs(inc+1:) /) )
+!  end subroutine Say_Fill_Double
+
+! $Log: Say_Fill.f9h,v $
+! Revision 2.1  2009/04/01 23:29:42  pwagner
+! First commit
+!
+@
+
+
+2.1
+log
+@First commit
+@
+text
+@d12 1
+a12 1
+! $Id: LdFrmHDF5DS_ID.f9h,v 2.1 2008/05/09 23:27:17 vsnyder Exp $
+d14 1
+a14 1
+!  subroutine Say_Fill_Double ( Subs, NumZeroRows, Fill, Inc )
+d19 1
+d26 1
+a26 1
+      call printIt( Fill )
+d34 4
+a37 1
+! $Log: LdFrmHDF5DS_ID.f9h,v $
+@
+

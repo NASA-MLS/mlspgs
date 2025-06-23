@@ -1,0 +1,863 @@
+head	1.22;
+access;
+symbols
+	V4-21:1.20.0.2
+	V4-13:1.19
+	V4-12:1.19
+	V4-11:1.19
+	V4-10:1.19
+	V3-43:1.7
+	M4-00:1.18
+	V3-41:1.7
+	V3-40-PlusGM57:1.7.0.2
+	V3-33:1.12
+	V3-31:1.12
+	V3-30-NRT-05:1.11
+	cfm-01-00:1.10
+	V3-30:1.7
+	V3-20:1.7;
+locks; strict;
+comment	@# @;
+
+
+1.22
+date	2015.08.11.16.33.08;	author pwagner;	state dead;
+branches;
+next	1.21;
+
+1.21
+date	2015.08.10.22.26.37;	author pwagner;	state Exp;
+branches;
+next	1.20;
+
+1.20
+date	2014.11.21.21.20.00;	author pwagner;	state Exp;
+branches;
+next	1.19;
+
+1.19
+date	2013.08.07.18.55.20;	author pwagner;	state Exp;
+branches;
+next	1.18;
+
+1.18
+date	2012.09.12.00.38.15;	author pwagner;	state Exp;
+branches;
+next	1.17;
+
+1.17
+date	2012.04.20.22.39.18;	author pwagner;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2012.04.04.16.31.52;	author pwagner;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2012.04.04.00.47.01;	author pwagner;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2011.05.31.22.11.25;	author pwagner;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2011.05.25.20.34.11;	author pwagner;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2010.12.07.00.22.21;	author pwagner;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2010.07.14.20.54.39;	author pwagner;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2010.06.29.20.58.27;	author pwagner;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2010.06.03.23.32.47;	author pwagner;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2010.05.26.22.56.10;	author pwagner;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2010.02.26.02.01.49;	author pwagner;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2010.01.06.17.34.22;	author pwagner;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2010.01.05.19.24.29;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2009.12.16.19.33.44;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2009.12.08.19.51.37;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2009.09.22.17.46.29;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2009.09.18.19.47.31;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.22
+log
+@Replaced with Makefile
+@
+text
+@# "$Id: MakeFC,v 1.21 2015/08/10 22:26:37 pwagner Exp $"
+#	Makefile
+#
+#  Lost? Type 'make help -f MakeFC' from the directory where you see this file
+#
+# Copyright 2009, by the California Institute of Technology. ALL
+# RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+# commercial use must be negotiated with the Office of Technology Transfer
+# at the California Institute of Technology.
+
+# This software may be subject to U.S. export control laws. By accepting this
+# software, the user agrees to comply with all applicable U.S. export laws and
+# regulations. User has the responsibility to obtain export licenses, or other
+# export authority as may be required before exporting such information to
+# foreign countries or providing access to foreign persons.
+
+# Help screens
+# --------------- main help
+# To see help on specific topics:
+# Topic                               Command
+# tex files in this directory         'make help--doc'
+# tex files in cfm                    'make help--cfm'
+# tex files in icfm                   'make help--icfm'
+# --------------- End main help
+# --------------- doc help
+# To build all the tex files in this directory type
+# 'make' or 'make doc'
+# to build just one, say wvs-022.pdf, type
+# make wvs-022.pdf
+# Look for the dvi and pdf products in the subdirectories named 'dvi' and 'pdf'
+# --------------- End doc help
+# --------------- ocfm help
+# To build the documentation for the callable forward model, type
+# 'make cfm'
+# or else cd to the cfm subdirectory and just type 'make'
+# From there look in the subdirectories named 'dvi' and 'pdf'
+# --------------- End ocfm help
+# --------------- icfm help
+# To build the documentation for the idl-callable forward model, type
+# 'make icfm'
+# or else cd to the icfm subdirectory and just type 'make'
+# From there look in the subdirectories named 'dvi' and 'pdf'
+# --------------- End icfm help
+# ---------------------- The name of this file (is the right-hand-side below)
+MakeFName = Makefile
+# If the right-hand-side is not Makefile
+# then to make mls with this file you must instead  of bare "make" use
+#     make -f $(MakeFName)
+
+# The name of this file must be used in each of $(SUBDIRS)
+# i.e., if you are calling make with a different Makefile name,
+#        say: make -f MakeFC
+# then (re)name the Makefiles in /l2 /lib etc. also MakeFC
+
+# This is the default name of the configure file
+# It may be overridden for multiple platforms, special options, etc.
+ifdef HOSTMLSCFILE
+   MLSCFILE=$(HOSTMLSCFILE)
+else
+   MLSCFILE=.configure
+endif
+
+# where to store .configure; 
+CONFDIR=..
+
+UTILDIR=$(CONFDIR)/util
+
+# Where non-standard build commands are kept
+CUSTOM = $(CONFDIR)/customblds
+
+# reecho.sh can filter out globbed file expansions that fail
+# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
+# However we will be using it just to prefix any unprefixed preset paths
+REECHO=$(UTILDIR)/reecho.sh
+
+# Get any settings from our .configure
+include $(CONFDIR)/$(MLSCFILE)
+
+short_name=doc
+
+# l2 won't build yet (it lacks certain files, e.g. l2cf_Fill_BinMax.tex)
+#SUBDIRS := $(shell ${REECHO} -d cfm)
+
+# Errors in the .tex sources require us to omit the following
+# OMIT_SRCS := wvs-004.tex wvs-051-neural_body.tex wvs-111.tex wvs-118.tex \
+#     iy-002.tex iy-003.tex iy-008.tex iy-009.tex \
+#     iy-010.tex iy-011.tex texmacros.tex
+OMIT_SRCS := $(shell cat tex.omitted)
+OMIT_PREFXD := $(shell ${REECHO} -prefix=-d $(OMIT_SRCS))
+OMIT_SRCS_REV := 'wvs-004\*.tex' 'wvs-051\*.tex' 'wvs-063\*.tex'
+OMIT_SRCS_SUB := 'iy-001-\*.tex' \
+   'iy-002-\*.tex' 'iy-003-\*.tex' 'iy-004-\*.tex' 'iy-008-\*.tex' \
+   'iy-009-\*.tex' 'iy-010-\*.tex'
+OMIT_PREFXD_REV := $(shell ${REECHO} -prefix=-d -escape -nlast $(OMIT_SRCS_REV))
+OMIT_PREFXD_SUB := $(shell ${REECHO} -prefix=-d -escape $(OMIT_SRCS_SUB))
+
+# Set paths for finding source files
+
+# DOCDIR = $(CONFDIR)/doc
+DOCDIR = $(shell pwd)
+TEXDIR = $(DOCDIR)/tex
+DVIDIR = $(DOCDIR)/dvi
+LOGDIR = $(DOCDIR)/log
+PDFDIR = $(DOCDIR)/pdf
+
+vpath %.tex $(DOCDIR)
+vpath %.dvi $(DVIDIR)
+vpath %.l2cf $(CONFDIR)/l2/l2cf/lib
+vpath %.log $(LOGDIR)
+vpath %.pdf $(PDFDIR)
+vpath %.eps $(DOCDIR)
+
+# Define some suffix rules
+
+.SUFFIXES:
+.SUFFIXES: .tex .dvi .pdf .eps
+.tex.dvi:
+	echo "\def\dvidir{$(DVIDIR)}" | cat - $< > $*.temp
+	echo "\def\pdfdir{$(PDFDIR)}" | cat - $*.temp > $(TEXDIR)/$<
+	echo "\end" | latex $(TEXDIR)/$<; \
+	echo "\end" | latex $(TEXDIR)/$<
+	mv $@@ $(DVIDIR)
+
+.dvi.pdf:
+	# dvipdf $(DVIDIR)/$<
+	if [ "$*" != "index" ]; then \
+	  echo "\end" | latex $(TEXDIR)/$*.tex; \
+	  echo "\end" | latex $(TEXDIR)/$*.tex; \
+	  mv $*.dvi $(DVIDIR); \
+	  dvipdf $(DVIDIR)/$<; \
+	else \
+	  pdflatex $(TEXDIR)/$*.tex; \
+	fi
+	mv $@@ $(PDFDIR)
+	mv `${REECHO} $*.log $*.aux $*.out` $(LOGDIR)
+	rm -f $*.dvi $*.temp
+
+all doc:
+
+debug:
+	echo "$(OMIT_SRCS)"
+	echo "$(OMIT_PREFXD)"
+
+-include Makefile.dep
+
+all: doc cfm icfm
+
+doc: ${NEAROBJS} ${OBJS} MakeFC
+	date > doc; echo $(OBJS) >> doc
+
+include $(CUSTOM)/$(MLSF95).$(MLSPLAT)
+
+# ========================================================================
+
+clean:
+	rm -fr *.dvi *.pdf $(DVIDIR) $(PDFDIR) $(LOGDIR) $(TEXDIR)
+
+depends:
+	$(MAKE) -f $(MakeFName) internalupdate
+	$(UTILDIR)/makemakedep.sh -s tex -o dvi -p Makefile.dep.1 \
+     $(OMIT_PREFXD) $(OMIT_PREFXD_REV) $(OMIT_PREFXD_SUB)
+	sed 's/OBJS =/NEAROBJS =/' Makefile.dep.1 > Makefile.dep.2
+	$(UTILDIR)/makemakedep.sh -s tex -o pdf -p Makefile.dep.1 \
+     $(OMIT_PREFXD) $(OMIT_PREFXD_REV) $(OMIT_PREFXD_SUB)
+	cat Makefile.dep.1 Makefile.dep.2 > Makefile.dep
+	if [ ! -d $(TEXDIR) ] ; then \
+	  		mkdir $(TEXDIR) ;\
+			fi ; \
+	if [ ! -d $(DVIDIR) ] ; then \
+	  		mkdir $(DVIDIR) ;\
+			fi ; \
+	if [ ! -d $(PDFDIR) ] ; then \
+	  		mkdir $(PDFDIR) ;\
+			fi ; \
+	if [ ! -d $(LOGDIR) ] ; then \
+	  		mkdir $(LOGDIR) ;\
+			fi
+	 for dir in $(shell ${REECHO} -d cfm icfm); do \
+	  $(MAKE) -f $(MakeFName) -C $$dir DOCDIR=$(DOCDIR)/$$dir depends; \
+	done
+
+help:
+	@@TOPIC=main; sed -n '/'$$TOPIC' help/,/End '$$TOPIC' help/ p' $(DOCDIR)/MakeFC \
+		| sed -n 's/^..//p' | sed '1 d; $$ d'
+
+help--cfm:
+	@@TOPIC=ocfm; sed -n '/'$$TOPIC' help/,/End '$$TOPIC' help/ p' $(DOCDIR)/MakeFC \
+		| sed -n 's/^..//p' | sed '1 d; $$ d'
+
+help--doc:
+	@@TOPIC=doc; sed -n '/'$$TOPIC' help/,/End '$$TOPIC' help/ p' $(DOCDIR)/MakeFC \
+		| sed -n 's/^..//p' | sed '1 d; $$ d'
+
+help--icfm:
+	@@TOPIC=icfm; sed -n '/'$$TOPIC' help/,/End '$$TOPIC' help/ p' $(DOCDIR)/MakeFC \
+		| sed -n 's/^..//p' | sed '1 d; $$ d'
+
+internalupdate:
+	@@echo "Copying or linking MakeFC to Makefile in $(shell ${REECHO} -d cfm icfm)" ; \
+	cp MakeFC Makefile
+
+cfm: $(DOCDIR)/cfm $(DOCDIR)/cfm/MakeFC
+	$(MAKE) -f $(MakeFName) -C $@@ DOCDIR=$(DOCDIR)/cfm
+
+icfm: $(DOCDIR)/icfm $(DOCDIR)/icfm/MakeFC
+	$(MAKE) -f $(MakeFName) -C $@@ DOCDIR=$(DOCDIR)/icfm
+
+l2:
+	$(MAKE) -f $(MakeFName) -C $@@  DOCDIR=$(DOCDIR)/l2
+
+tar:
+	rm -f doc.tgz
+	tar hcvzf docs.tgz * --exclude \*.dvi --exclude \*.pdf --exclude doc
+
+update: internalupdate
+	$(MAKE) -f $(MakeFName) depends
+
+.PHONY: all clean depends internalupdate tar update l2 \
+
+# ========================================================================
+# $Log: MakeFC,v $
+# Revision 1.21  2015/08/10 22:26:37  pwagner
+# Last Changes before switching over entirely to makefile
+#
+# Revision 1.20  2014/11/21 21:20:00  pwagner
+# OMIT_SRCS now got from tex.omitted
+#
+# Revision 1.19  2013/08/07 18:55:20  pwagner
+# omits wvs-004.tex
+#
+# Revision 1.18  2012/09/12 00:38:15  pwagner
+# Fixed ill-considered make updating subdirectories; added help; omoy wvs-111
+#
+# Revision 1.17  2012/04/20 22:39:18  pwagner
+# Works around bugs in pdflatex href implementaion
+#
+# Revision 1.16  2012/04/04 16:31:52  pwagner
+# Removed include of doc.h
+#
+# Revision 1.15  2012/04/04 00:47:01  pwagner
+# Adds new builds for more wvs- sources
+#
+# Revision 1.14  2011/05/31 22:11:25  pwagner
+# Added commands to build icfm
+#
+# Revision 1.13  2011/05/25 20:34:11  pwagner
+# CONFDIR reverted to point to parent directory
+#
+# Revision 1.12  2010/12/07 00:22:21  pwagner
+# Works correctly with current directory contents
+#
+# Revision 1.11  2010/07/14 20:54:39  pwagner
+# Simple fix to problem redefining SUBDIRS
+#
+# Revision 1.10  2010/06/29 20:58:27  pwagner
+# Must omit wvs-095.tex
+#
+# Revision 1.9  2010/06/03 23:32:47  pwagner
+# Because wvs-083.tex needs a graphic
+#
+# Revision 1.8  2010/05/26 22:56:10  pwagner
+# Should work better, even for index
+#
+# Revision 1.7  2010/02/26 02:01:49  pwagner
+# Fixed bug in if statement
+#
+# Revision 1.6  2010/01/06 17:34:22  pwagner
+# Should use MakeFC to make depends in SUBDIRS
+#
+# Revision 1.5  2010/01/05 19:24:29  pwagner
+# Preserves Makefiles under subdirectories
+#
+# Revision 1.4  2009/12/16 19:33:44  pwagner
+# Hope this fixes goldbrick
+#
+# Revision 1.3  2009/12/08 19:51:37  pwagner
+# Working prior to adding cfm items
+#
+# Revision 1.2  2009/09/22 17:46:29  pwagner
+# Can now ignore sources marked by revision number
+#
+# Revision 1.1  2009/09/18 19:47:31  pwagner
+# First commit
+#
+@
+
+
+1.21
+log
+@Last Changes before switching over entirely to makefile
+@
+text
+@d1 1
+a1 1
+# "$Id: MakeFC,v 1.20 2014/11/21 21:20:00 pwagner Exp $"
+d222 3
+@
+
+
+1.20
+log
+@OMIT_SRCS now got from tex.omitted
+@
+text
+@d1 1
+a1 1
+# "$Id: MakeFC,v 1.19 2013/08/07 18:55:20 pwagner Exp $"
+d45 1
+a45 1
+MakeFName = MakeFC
+d222 3
+@
+
+
+1.19
+log
+@omits wvs-004.tex
+@
+text
+@d1 1
+a1 1
+# "$Id: MakeFC,v 1.18 2012/09/12 00:38:15 pwagner Exp $"
+d85 4
+a88 3
+OMIT_SRCS := wvs-004.tex wvs-051-neural_body.tex wvs-111.tex \
+     iy-002.tex iy-003.tex iy-008.tex iy-009.tex \
+     iy-010.tex texmacros.tex
+d140 4
+d222 3
+@
+
+
+1.18
+log
+@Fixed ill-considered make updating subdirectories; added help; omoy wvs-111
+@
+text
+@d1 1
+a1 1
+# "$Id: MakeFC,v 1.17 2012/04/20 22:39:18 pwagner Exp $"
+d85 1
+a85 1
+OMIT_SRCS := wvs-051-neural_body.tex wvs-111.tex \
+d217 3
+@
+
+
+1.17
+log
+@Works around bugs in pdflatex href implementaion
+@
+text
+@d1 1
+a1 1
+# "$Id: MakeFC,v 1.16 2012/04/04 16:31:52 pwagner Exp $"
+d4 2
+d17 27
+d85 1
+a85 1
+OMIT_SRCS := wvs-051-neural_body.tex \
+d177 16
+a195 6
+	 for dir in $(shell ${REECHO} -d cfm icfm); do \
+	  if [ ! -f $$dir/MakeFC ]; then \
+	  cp MakeFC $$dir; \
+	  cp MakeFC $$dir/Makefile; \
+	  fi; \
+	done
+d217 3
+@
+
+
+1.16
+log
+@Removed include of doc.h
+@
+text
+@d1 1
+a1 1
+# "$Id: MakeFC,v 1.15 2012/04/04 00:47:01 pwagner Exp $"
+d69 2
+a70 1
+DOCDIR = $(CONFDIR)/doc
+d178 3
+@
+
+
+1.15
+log
+@Adds new builds for more wvs- sources
+@
+text
+@d1 1
+a1 1
+# "$Id: MakeFC,v 1.14 2011/05/31 22:11:25 pwagner Exp $"
+a116 1
+include $(CUSTOM)/doc.h
+d177 3
+@
+
+
+1.14
+log
+@Added commands to build icfm
+@
+text
+@d1 1
+a1 1
+# "$Id: MakeFC,v 1.13 2011/05/25 20:34:11 pwagner Exp $"
+d26 8
+d39 3
+d47 5
+d56 2
+a57 2
+OMIT_SRCS := wvs-010.tex wvs-074.tex wvs-051-neural_body.tex wvs-083.tex \
+     wvs-089.tex wvs-095.tex iy-002.tex iy-003.tex iy-008.tex iy-009.tex \
+d80 1
+d85 1
+a85 1
+.SUFFIXES: .tex .dvi .pdf
+d116 3
+d178 3
+@
+
+
+1.13
+log
+@CONFDIR reverted to point to parent directory
+@
+text
+@d1 1
+a1 1
+# "$Id: MakeFC,v 1.12 2010/12/07 00:22:21 pwagner Exp $"
+d90 1
+a90 1
+doc:
+d94 1
+a94 1
+all: doc
+d96 1
+a96 1
+doc: ${NEAROBJS} ${OBJS}
+d124 1
+a124 1
+	 for dir in $(shell ${REECHO} -d cfm); do \
+d129 1
+a129 1
+	@@echo "Copying or linking MakeFC to Makefile in $(shell ${REECHO} -d cfm)" ; \
+d131 1
+a131 1
+	 for dir in $(shell ${REECHO} -d cfm); do \
+d138 1
+a138 1
+cfm:
+d141 3
+d158 3
+@
+
+
+1.12
+log
+@Works correctly with current directory contents
+@
+text
+@d1 1
+a1 1
+# "$Id: MakeFC,v 1.11 2010/07/14 20:54:39 pwagner Exp $"
+d27 1
+a27 1
+CONFDIR=${HOME}/mlspgs
+d41 2
+a42 1
+     wvs-089.tex wvs-095.tex iy-002.tex iy-003.tex
+d46 2
+a47 1
+   'iy-002-\*.tex' 'iy-003-\*.tex' 'iy-004-\*.tex'
+d155 3
+@
+
+
+1.11
+log
+@Simple fix to problem redefining SUBDIRS
+@
+text
+@d1 1
+a1 1
+# "$Id: MakeFC,v 1.10 2010/06/29 20:58:27 pwagner Exp $"
+d41 1
+a41 1
+     wvs-089.tex wvs-095.tex
+d44 2
+d47 1
+d105 1
+a105 1
+     $(OMIT_PREFXD) $(OMIT_PREFXD_REV)
+d108 1
+a108 1
+     $(OMIT_PREFXD) $(OMIT_PREFXD_REV)
+d153 3
+@
+
+
+1.10
+log
+@Must omit wvs-095.tex
+@
+text
+@d1 1
+a1 1
+# "$Id: MakeFC,v 1.9 2010/06/03 23:32:47 pwagner Exp $"
+d37 1
+a37 1
+SUBDIRS := $(shell ${REECHO} -d cfm)
+d119 1
+a119 1
+	 for dir in $(SUBDIRS); do \
+d124 1
+a124 1
+	@@echo "Copying or linking MakeFC to Makefile in $(SUBDIRS)" ; \
+d126 1
+a126 1
+	 for dir in $(SUBDIRS); do \
+d150 3
+@
+
+
+1.9
+log
+@Because wvs-083.tex needs a graphic
+@
+text
+@d1 1
+a1 1
+# "$Id: MakeFC,v 1.8 2010/05/26 22:56:10 pwagner Exp $"
+d40 2
+a41 1
+OMIT_SRCS := wvs-010.tex wvs-074.tex wvs-051-neural_body.tex wvs-083.tex wvs-089.tex
+d67 1
+a67 1
+	echo "\end" | latex $(TEXDIR)/$<
+d75 1
+d150 3
+@
+
+
+1.8
+log
+@Should work better, even for index
+@
+text
+@d1 1
+a1 1
+# "$Id: MakeFC,v 1.7 2010/02/26 02:01:49 pwagner Exp $"
+d40 1
+a40 1
+OMIT_SRCS := wvs-010.tex wvs-074.tex wvs-051-neural_body.tex wvs-089.tex
+d148 3
+@
+
+
+1.7
+log
+@Fixed bug in if statement
+@
+text
+@d1 1
+a1 1
+# "$Id: MakeFC,v 1.6 2010/01/06 17:34:22 pwagner Exp $"
+a26 1
+#CONFDIR=..
+d40 1
+a40 1
+OMIT_SRCS := wvs-010.tex wvs-074.tex wvs-051-neural_body.tex
+d47 5
+a51 3
+DVIDIR = ./dvi/
+LOGDIR = ./log/
+PDFDIR = ./pdf/
+d53 1
+a53 1
+vpath %.tex ./
+d64 4
+a67 2
+	echo "\end" | latex $<
+	echo "\end" | latex $<
+a68 1
+	mv $*.log $(LOGDIR)
+d71 8
+a78 1
+	dvipdf $<
+d80 2
+d95 1
+a95 1
+	rm -fr *.dvi *.pdf $(DVIDIR) $(PDFDIR)
+d105 3
+d118 1
+a118 1
+	  $(MAKE) -f $(MakeFName) -C $$dir depends; \
+d132 1
+a132 1
+	$(MAKE) -f $(MakeFName) -C $@@
+d135 1
+a135 1
+	$(MAKE) -f $(MakeFName) -C $@@
+d148 3
+@
+
+
+1.6
+log
+@Should use MakeFC to make depends in SUBDIRS
+@
+text
+@d1 1
+a1 1
+# "$Id: MakeFC,v 1.5 2010/01/05 19:24:29 pwagner Exp $"
+d111 1
+a111 1
+	  if [ ! -f $$dir/MakeFC]; then \
+d134 3
+@
+
+
+1.5
+log
+@Preserves Makefiles under subdirectories
+@
+text
+@d1 1
+a1 1
+# "$Id: MakeFC,v 1.4 2009/12/16 19:33:44 pwagner Exp $"
+d104 1
+a104 1
+	  $(MAKE) -C $$dir depends; \
+d128 1
+a128 1
+	$(MAKE) depends
+d134 3
+@
+
+
+1.4
+log
+@Hope this fixes goldbrick
+@
+text
+@d1 1
+a1 1
+# "$Id: MakeFC,v 1.3 2009/12/08 19:51:37 pwagner Exp $"
+d111 1
+d114 1
+d134 3
+@
+
+
+1.3
+log
+@Working prior to adding cfm items
+@
+text
+@d1 1
+a1 1
+# "$Id: MakeFC,v 1.2 2009/09/22 17:46:29 pwagner Exp $"
+d87 1
+d132 3
+@
+
+
+1.2
+log
+@Can now ignore sources marked by revision number
+@
+text
+@d1 1
+a1 1
+# "$Id: MakeFC,v 1.1 2009/09/18 19:47:31 pwagner Exp $"
+d27 2
+a28 1
+CONFDIR=..
+d37 3
+d54 1
+a54 1
+vpath %.l2cf ../l2/l2cf/lib
+d102 3
+d107 1
+a107 1
+	@@echo "Copying or linking MakeFC to Makefile in ./" ; \
+d109 10
+d127 1
+a127 1
+.PHONY: all clean depends internalupdate tar update \
+d131 3
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d1 1
+a1 1
+# "$Id: MakeFC $"
+d37 1
+a37 1
+OMIT_SRCS := wvs-004*.tex wvs-010.tex wvs-051*.tex wvs-063*.tex wvs-074.tex
+d39 2
+d84 1
+a84 1
+     $(OMIT_PREFXD)
+d87 1
+a87 1
+     $(OMIT_PREFXD)
+d99 4
+d107 5
+d113 4
+a116 1
+# $Log: targets,v $
+@
+

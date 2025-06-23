@@ -1,0 +1,971 @@
+head	2.10;
+access;
+symbols
+	v5-02-NRT-19:2.10
+	v6-00:2.10
+	v5-02-NRT-18:2.10
+	v5-02:2.10
+	v5-01-NRT-17:2.10
+	v5-01-NRT-16:2.10
+	v5-01-NRT-15:2.10
+	v5-01-NRT-14:2.10
+	neuralnetworks-1-0:2.10.0.14
+	cfm-single-freq-0-1:2.10.0.12
+	v5-01:2.10
+	v5-00:2.10
+	v4-23-TA133:2.10.0.10
+	mus-emls-1-70:2.10.0.8
+	rel-1-0-englocks-work:2.10.0.6
+	VUMLS1-00:2.10
+	VPL1-00:2.10
+	V4-22-NRT-08:2.10
+	VAM1-00:2.10
+	V4-21:2.10.0.4
+	V4-13:2.10
+	V4-12:2.10
+	V4-11:2.10
+	V4-10:2.10
+	V3-43:2.10
+	M4-00:2.10
+	V3-41:2.10
+	V3-40-PlusGM57:2.10.0.2
+	V2-24-NRT-04:2.9
+	V3-33:2.10
+	V2-24:2.9
+	V3-31:2.10
+	V3-30-NRT-05:2.10
+	cfm-01-00:2.10
+	V3-30:2.10
+	V3-20:2.10
+	V3-10:2.10
+	V2-23-NRT-02:2.9
+	V2-23:2.9
+	V2-22-NRT-01:2.9
+	V2-22:2.9
+	V2-21:2.6
+	V2-20:2.6
+	V2-11:2.6
+	V2-10:2.6
+	V2-00:2.6
+	V1-51:2.5
+	V1-50:2.5
+	V1-45:2.4
+	V1-44:2.4
+	V1-43:2.4
+	V1-32:2.4
+	V1-31:2.4
+	V1-30:2.4
+	V1-13:2.3
+	V1-12:2.3
+	V1-11:2.3
+	V1-10:2.3
+	newfwm-feb03:2.3.0.2
+	V1-04:2.1
+	V1-03:2.1
+	V1-02:2.1
+	JointForwardModel:2.1.0.2
+	V1-00:2.1
+	newfwm-sep01:1.10.0.2
+	V0-7:1.10
+	V0-5-Level2:1.9
+	V0-5-SIPS:1.2;
+locks; strict;
+comment	@# @;
+
+
+2.10
+date	2009.06.23.18.26.10;	author pwagner;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2007.07.25.20.11.17;	author vsnyder;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2007.06.29.19.32.42;	author vsnyder;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2006.12.19.02.53.49;	author vsnyder;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2005.06.22.18.08.18;	author pwagner;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2004.09.01.01.47.41;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2003.07.09.00.53.10;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2002.10.08.17.08.03;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2002.08.22.00.05.42;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.10.02.16.51.41;	author livesey;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2001.09.17.20.26.25;	author livesey;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2001.06.04.22.43.02;	author livesey;	state Exp;
+branches
+	1.10.2.1;
+next	1.9;
+
+1.9
+date	2001.05.03.23.07.12;	author livesey;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2001.05.01.00.23.00;	author livesey;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2001.04.28.07.05.54;	author livesey;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2001.04.23.21.40.46;	author livesey;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2001.04.19.23.57.00;	author livesey;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.04.19.21.04.42;	author livesey;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2001.04.19.20.29.46;	author livesey;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.04.10.23.16.14;	author livesey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.04.10.22.17.05;	author livesey;	state Exp;
+branches;
+next	;
+
+1.10.2.1
+date	2001.09.07.19.58.49;	author zvi;	state Exp;
+branches;
+next	1.10.2.2;
+
+1.10.2.2
+date	2001.09.07.22.50.09;	author livesey;	state Exp;
+branches;
+next	1.10.2.3;
+
+1.10.2.3
+date	2001.09.10.10.02.32;	author zvi;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.10
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=============================================================================
+module ForwardModelIntermediate
+!=============================================================================
+
+  ! This module simply defines a data type passed around forward model routines.
+  ! It contains hydrostatic information and so on, and is remembered by the
+  ! calling code.
+
+  implicit none
+  private
+
+  type, public :: ForwardModelStatus_T
+    integer :: Flags                    ! Bits indicate problems.  See B_...
+    integer :: Maf                      ! The MAF to process
+    logical :: NewScanHydros = .true.   ! Scan model needs to recompute hydrostatic
+    logical, dimension(:), pointer :: Rows=>NULL() ! Flag to indicate this row has non zeros
+  end type ForwardModelStatus_T
+
+  ! Bits set in Flags:
+  integer, public, parameter :: B_Ptg_Angles = 1              ! Patched some
+    ! out-of-order pointing angles
+  integer, public, parameter :: B_Refraction = 2*b_ptg_angles ! Computation of
+    ! refraction coefficient failed or was not as accurate as desired.
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: read_apriori.f90 is it here $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module ForwardModelIntermediate
+
+! $Log: ForwardModelIntermediate.f90,v $
+! Revision 2.9  2007/07/25 20:11:17  vsnyder
+! Delete USE for unreferenced entities
+!
+! Revision 2.8  2007/06/29 19:32:42  vsnyder
+! Make ForwardModelIntermediate_t private to ScanModelModule
+!
+! Revision 2.7  2006/12/19 02:53:49  vsnyder
+! Get rid of B_Metrics flag, which nobody uses any more
+!
+! Revision 2.6  2005/06/22 18:08:18  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.5  2004/09/01 01:47:41  vsnyder
+! Add flag field to ForwardModelStatus_T
+!
+! Revision 2.4  2003/07/09 00:53:10  vsnyder
+! Remove unreferenced variables
+!
+! Revision 2.3  2002/10/08 17:08:03  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.2  2002/08/22 00:05:42  vsnyder
+! Move USE statements from module scope to procedure scope
+!
+! Revision 2.1  2001/10/02 16:51:41  livesey
+! Removed fmStat%finished and reordered loops in forward models
+!
+! Revision 2.0  2001/09/17 20:26:25  livesey
+! New forward model
+!
+! Revision 1.10.2.3  2001/09/10 10:02:32  zvi
+! Cleanup..comp_path_entities_m.f90
+!
+! Revision 1.10.2.2  2001/09/07 22:50:09  livesey
+! Very intermediate
+!
+! Revision 1.10.2.1  2001/09/07 19:58:49  zvi
+! Starting new code developement
+!
+! Revision 1.10  2001/06/04 22:43:02  livesey
+! Added belowRef
+!
+! Revision 1.9  2001/05/03 23:07:12  livesey
+! Added scan model stuff
+!
+! Revision 1.8  2001/05/01 00:23:00  livesey
+! Nullified fmStat%rows by default
+!
+! Revision 1.7  2001/04/28 07:05:54  livesey
+! Tidy up destruction of ForwardModelIntermediate, for cases where
+! forward model has not been run.
+!
+! Revision 1.6  2001/04/23 21:40:46  livesey
+! Moved closestInstances into ifm
+!
+! Revision 1.5  2001/04/19 23:57:00  livesey
+! New fmStat
+!
+! Revision 1.4  2001/04/19 21:04:42  livesey
+! Bug fix, sized arrays wrongly
+!
+! Revision 1.3  2001/04/19 20:29:46  livesey
+! Added destroy routine
+!
+! Revision 1.2  2001/04/10 23:16:14  livesey
+! Working version.
+!
+! Revision 1.1  2001/04/10 22:17:05  livesey
+! Renamed module
+!
+! Revision 1.1  2001/04/10 22:06:26  livesey
+! Very first version.  Bare bones only.
+!
+@
+
+
+2.9
+log
+@Delete USE for unreferenced entities
+@
+text
+@d38 1
+a38 1
+       "$RCSfile: ForwardModelIntermediate.f90,v $"
+d44 1
+a45 1
+!---------------------------- RCS Ident Info -------------------------------
+d47 2
+a48 3
+       "$Id: ForwardModelIntermediate.f90,v 2.8 2007/06/29 19:32:42 vsnyder Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d50 1
+d52 1
+d57 3
+@
+
+
+2.8
+log
+@Make ForwardModelIntermediate_t private to ScanModelModule
+@
+text
+@a19 2
+  use MLSCommon, only: R8
+
+d47 1
+a47 1
+       "$Id: ForwardModelIntermediate.f90,v 2.7 2006/12/19 02:53:49 vsnyder Exp $"
+d56 3
+@
+
+
+2.7
+log
+@Get rid of B_Metrics flag, which nobody uses any more
+@
+text
+@a24 10
+  type, public :: ForwardModelIntermediate_T
+
+    ! These ones are for the scan model
+    real (r8), dimension(:,:),             pointer :: BasisGph=>NULL()
+    real (r8), dimension(:),               pointer :: R=>NULL()
+    real (r8), dimension(:,:),             pointer :: RT=>NULL()
+    integer :: BelowRef                 ! T. basis at or below refGPH
+
+  end type ForwardModelIntermediate_T
+
+d28 1
+a28 1
+    logical :: NewScanHydros            ! Scan model needs to recompute hydrostatic
+a37 2
+  public :: DestroyForwardModelIntermediate
+
+a45 15
+  ! -----------------------------  DestroyForwardModelIntemediate  -----
+  subroutine DestroyForwardModelIntermediate ( ifm )
+
+    use Allocate_Deallocate, only: DEALLOCATE_TEST
+
+    type (ForwardModelIntermediate_T), intent(inout) :: ifm
+
+    ! Exectuable code
+
+    call Deallocate_test ( ifm%basisGPH, 'basisGPH', ModuleName )
+    call Deallocate_test ( ifm%RT, 'RT', ModuleName )
+    call Deallocate_test ( ifm%R, 'R', ModuleName )
+
+  end subroutine DestroyForwardModelIntermediate
+
+d49 1
+a49 1
+       "$Id: ForwardModelIntermediate.f90,v 2.6 2005/06/22 18:08:18 pwagner Exp $"
+d58 3
+@
+
+
+2.6
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d43 1
+a43 2
+  integer, public, parameter :: B_Metrics = 1 ! Trouble with metrics
+  integer, public, parameter :: B_Ptg_Angles = 2*b_metrics ! Patched some
+d52 1
+a52 1
+       "$RCSfile: $"
+d76 1
+a76 1
+       "$Id: $"
+d85 3
+@
+
+
+2.5
+log
+@Add flag field to ForwardModelStatus_T
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d51 5
+a55 8
+  !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter, private :: IdParm = &
+    & "$Id: ForwardModelIntermediate.f90,v 2.4 2003/07/09 00:53:10 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = IdParm
+  character (len=*), parameter, private :: ModuleName= &
+    & "$RCSfile: ForwardModelIntermediate.f90,v $"
+  private :: not_used_here
+  !---------------------------------------------------------------------------
+d75 5
+d86 3
+@
+
+
+2.4
+log
+@Remove unreferenced variables
+@
+text
+@d20 2
+a21 1
+    real (r8), dimension(:,:),             pointer :: basisGph=>NULL()
+d23 1
+a23 2
+    real (r8), dimension(:),               pointer :: R=>NULL()
+    integer :: belowRef                 ! T. basis at or below refGPH
+d28 4
+a31 3
+    logical :: newScanHydros            ! Scan model needs to recompute hydrostatic
+    integer :: maf                      ! The MAF to process
+    logical, dimension(:), pointer :: rows=>NULL() ! Flag to indicate this row has non zeros
+d34 7
+d45 1
+a45 1
+    & "$Id: ForwardModelIntermediate.f90,v 2.3 2002/10/08 17:08:03 pwagner Exp $"
+d49 1
+a49 1
+  private :: not_used_here 
+d76 3
+@
+
+
+2.3
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d37 1
+a37 1
+    & "$Id: ForwardModelIntermediate.f90,v 2.2 2002/08/22 00:05:42 vsnyder Exp $"
+d46 1
+a46 1
+  ! ------------------------------------------ DestroyForwardModelIntemediate ---
+a52 5
+    ! Local variables
+    integer :: i,j                      ! Loop counters
+    integer :: noMAFs, no_tan_hts       ! Dimensions
+    integer :: status                   ! Flag
+
+d68 3
+@
+
+
+2.2
+log
+@Move USE statements from module scope to procedure scope
+@
+text
+@d37 1
+a37 1
+    & "$Id: ForwardModelIntermediate.f90,v 2.1 2001/10/02 16:51:41 livesey Exp $"
+d41 1
+d66 4
+d73 3
+@
+
+
+2.1
+log
+@Removed fmStat%finished and reordered loops in forward models
+@
+text
+@a12 2
+  use MLSMessageModule, only: MLSMESSAGE, MLSMSG_Deallocate, MLSMSG_ERROR
+  use Allocate_Deallocate, only: DEALLOCATE_TEST
+d37 1
+a37 1
+    & "$Id: ForwardModelIntermediate.f90,v 2.0 2001/09/17 20:26:25 livesey Exp $"
+d47 3
+d68 3
+@
+
+
+2.0
+log
+@New forward model
+@
+text
+@a29 1
+    logical :: newHydros                ! Need to recompute hydrostatic
+d31 1
+a31 2
+    integer :: maf                      ! The next maf to process
+    logical :: finished                 ! Flag to calling code to indicate completion
+d39 1
+a39 1
+    & "$Id: ForwardModelIntermediate.f90,v 1.10.2.3 2001/09/10 10:02:32 zvi Exp $"
+d67 3
+@
+
+
+1.10
+log
+@Added belowRef
+@
+text
+@d8 1
+a8 1
+  ! This module simply defines a data type passed around forward model routines. 
+a12 2
+  use Path_entities_m, only: PATH_VECTOR, PATH_VECTOR_2D, PATH_INDEX
+  use Ellipse_m, only: ELLIPSE
+a20 26
+    real (r8), dimension(:,:),             pointer :: H_GLGRID=>NULL()
+    real (r8), dimension(:,:),             pointer :: T_GLGRID=>NULL()
+    real (r8), dimension(:),               pointer :: z_glgrid=>NULL()
+
+    real (r8), dimension(:,:,:),           pointer :: dh_dt_glgrid=>NULL()
+    real (r8), dimension(:,:),             pointer :: dhdz_glgrid=>NULL()
+    integer                                        :: gl_count
+
+    real (r8), dimension(:,:),             pointer :: tan_hts=>NULL()
+    real (r8), dimension(:,:),             pointer :: tan_temp=>NULL()
+    real (r8), dimension(:,:,:),           pointer :: tan_dh_dt=>NULL()
+    real (r8), dimension(:),               pointer :: GEOC_LAT=>NULL()
+    real (r8), dimension(:),               pointer :: E_RAD=>NULL()
+
+    type (path_vector), dimension(:,:),    pointer :: z_path=>NULL()
+    type (path_vector), dimension(:,:),    pointer :: h_path=>NULL()
+    type (path_vector), dimension(:,:),    pointer :: t_path=>NULL()
+
+    type (path_vector), dimension(:,:),    pointer :: phi_path=>NULL()
+    type (path_vector), dimension(:,:),    pointer :: dhdz_path=>NULL()
+    type (path_Vector_2d), dimension(:,:), pointer :: eta_phi=>NULL()
+    type (path_index),  dimension(:,:),    pointer :: NDX_PATH=>NULL()
+    type (ellipse), dimension(:),          pointer :: elvar=>NULL()
+
+    integer, dimension(:),                 pointer :: closestInstances=>NULL()
+
+d41 1
+a41 1
+    & "$Id: ForwardModelIntermediate.f90,v 1.9 2001/05/03 23:07:12 livesey Exp $"
+d60 3
+a62 67
+    if ( associated( ifm%z_path) ) then
+      no_tan_hts = size ( ifm%z_path, 1)
+      noMAFs = size ( ifm%z_path, 2)
+      
+      deallocate (ifm%ndx_path, stat=status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+        & MLSMSG_Deallocate//'ndx_path' )
+      
+      do j = 1, noMAFs
+        do i = 1, No_tan_hts
+          deallocate (ifm%z_path(i,j)%values, stat=status )
+          if( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+            & MLSMSG_Deallocate//'z_path%values' )
+          deallocate (ifm%h_path(i,j)%values, stat=status )
+          if( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+            & MLSMSG_Deallocate//'h_path%values' )
+          deallocate (ifm%t_path(i,j)%values, stat=status )
+          if( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+            & MLSMSG_Deallocate//'t_path%values' )
+          deallocate (ifm%phi_path(i,j)%values, stat=status )
+          if( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+            & MLSMSG_Deallocate//'phi_path%values' )
+          deallocate (ifm%dhdz_path(i,j)%values, stat=status )
+          if( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+            & MLSMSG_Deallocate//'dhdz_path%values' )
+          deallocate (ifm%eta_phi(i,j)%values, stat=status )
+          if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+            & MLSMSG_Deallocate//'eta_phi%values' )
+        end do
+      end do
+      
+      deallocate (ifm%z_path, stat=status )
+      if( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+        & MLSMSG_Deallocate//'z_path' )
+    endif
+
+    deallocate (ifm%h_path, stat=status )
+!     if( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+!       & MLSMSG_Deallocate//'h_path' )
+    Deallocate (ifm%t_path, stat=status )
+!     if( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+!       & MLSMSG_Deallocate//'t_path' )
+    deallocate (ifm%phi_path, stat=status )
+!     if( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+!       & MLSMSG_Deallocate//'phi_path' )
+    deallocate (ifm%dhdz_path, stat=status )
+!     if( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+!       & MLSMSG_Deallocate//'dhdz_path' )
+    deallocate (ifm%eta_phi, stat=status )
+!     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+!       & MLSMSG_Deallocate//'eta_phi' )
+
+    deallocate ( ifm%elvar, stat=status )
+!     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+!       & MLSMSG_Deallocate//'elvar' )
+
+    call deallocate_test ( ifm%geoc_lat, 'geoc_lat', ModuleName )
+    call deallocate_test ( ifm%e_rad, 'e_rad', ModuleName )
+
+    call deallocate_test ( ifm%h_glgrid, 'h_glgrid', ModuleName )
+    call deallocate_test ( ifm%t_glgrid, 't_glgrid', ModuleName )
+    call deallocate_test ( ifm%z_glgrid, 'z_glgrid', ModuleName )
+    call deallocate_test ( ifm%dh_dt_glgrid, 'dh_dt_glgrid', ModuleName )
+    call deallocate_test ( ifm%dhdz_glgrid, 'dhdz_glgrid', ModuleName )
+    call deallocate_test ( ifm%tan_hts,'tan_hts', ModuleName )
+    call deallocate_test ( ifm%tan_temp,'tan_temp', ModuleName )
+    call deallocate_test ( ifm%tan_dh_dt, 'tan_dh_dt', ModuleName )
+a63 2
+    call deallocate_test ( ifm%closestInstances, 'closestInstances', ModuleName )
+    
+d69 12
+@
+
+
+1.10.2.1
+log
+@Starting new code developement
+@
+text
+@d8 1
+a8 1
+  ! This module simply defines a data type passed around forward model routines.
+d31 1
+d33 1
+a33 1
+    real (r8), dimension(:,:),             pointer :: tan_dh_dt=>NULL()
+d37 3
+a39 6
+    real (r8), dimension(:),               pointer :: z_path=>NULL()
+    real (r8), dimension(:),               pointer :: h_path=>NULL()
+    real (r8), dimension(:),               pointer :: t_path=>NULL()
+
+    real (r8), dimension(:),               pointer :: phi_path=>NULL()
+    real (r8), dimension(:),               pointer :: dhdz_path=>NULL()
+d41 2
+d44 2
+d69 1
+a69 1
+    & "$Id: ForwardModelIntermediate.f90,v 1.10 2001/06/04 22:43:02 livesey Exp $"
+d91 1
+a91 1
+
+d95 1
+a95 1
+
+d118 1
+a118 1
+
+d157 1
+a157 1
+
+a162 3
+! Revision 1.10  2001/06/04 22:43:02  livesey
+! Added belowRef
+!
+@
+
+
+1.10.2.2
+log
+@Very intermediate
+@
+text
+@d23 24
+d67 1
+a67 1
+    & "$Id: ForwardModelIntermediate.f90,v 1.10.2.1 2001/09/07 19:58:49 zvi Exp $"
+d86 69
+a154 3
+    call Deallocate_test ( ifm%basisGPH, 'basisGPH', ModuleName )
+    call Deallocate_test ( ifm%RT, 'RT', ModuleName )
+    call Deallocate_test ( ifm%R, 'R', ModuleName )
+a160 3
+! Revision 1.10.2.1  2001/09/07 19:58:49  zvi
+! Starting new code developement
+!
+@
+
+
+1.10.2.3
+log
+@Cleanup..comp_path_entities_m.f90
+@
+text
+@d13 2
+d43 1
+a43 1
+    & "$Id: ForwardModelIntermediate.f90,v 1.10.2.2 2001/09/07 22:50:09 livesey Exp $"
+a70 3
+! Revision 1.10.2.2  2001/09/07 22:50:09  livesey
+! Very intermediate
+!
+@
+
+
+1.9
+log
+@Added scan model stuff
+@
+text
+@d53 1
+d69 1
+a69 1
+    & "$Id: ForwardModelIntermediate.f90,v 1.8 2001/05/01 00:23:00 livesey Exp $"
+d163 3
+@
+
+
+1.8
+log
+@Nullified fmStat%rows by default
+@
+text
+@d49 5
+d58 1
+d68 1
+a68 1
+    & "$Id: ForwardModelIntermediate.f90,v 1.7 2001/04/28 07:05:54 livesey Exp $"
+d162 3
+@
+
+
+1.7
+log
+@Tidy up destruction of ForwardModelIntermediate, for cases where
+forward model has not been run.
+@
+text
+@d55 1
+a55 1
+    logical, dimension(:), pointer :: rows ! Flag to indicate this row has non zeros
+d62 1
+a62 1
+    & "$Id: ForwardModelIntermediate.f90,v 1.6 2001/04/23 21:40:46 livesey Exp $"
+d156 4
+@
+
+
+1.6
+log
+@Moved closestInstances into ifm
+@
+text
+@d62 1
+a62 1
+    & "$Id: ForwardModelIntermediate.f90,v 1.5 2001/04/19 23:57:00 livesey Exp $"
+d81 29
+a109 27
+    no_tan_hts = size ( ifm%z_path, 1)
+    noMAFs = size ( ifm%z_path, 2)
+
+    deallocate (ifm%ndx_path, stat=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+      & MLSMSG_Deallocate//'ndx_path' )
+
+    do j = 1, noMAFs
+      do i = 1, No_tan_hts
+        deallocate (ifm%z_path(i,j)%values, stat=status )
+        if( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+          & MLSMSG_Deallocate//'z_path%values' )
+        deallocate (ifm%h_path(i,j)%values, stat=status )
+        if( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+          & MLSMSG_Deallocate//'h_path%values' )
+        deallocate (ifm%t_path(i,j)%values, stat=status )
+        if( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+          & MLSMSG_Deallocate//'t_path%values' )
+        deallocate (ifm%phi_path(i,j)%values, stat=status )
+        if( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+          & MLSMSG_Deallocate//'phi_path%values' )
+        deallocate (ifm%dhdz_path(i,j)%values, stat=status )
+        if( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+          & MLSMSG_Deallocate//'dhdz_path%values' )
+        deallocate (ifm%eta_phi(i,j)%values, stat=status )
+        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+          & MLSMSG_Deallocate//'eta_phi%values' )
+d111 5
+a115 1
+    end do
+a116 3
+    deallocate (ifm%z_path, stat=status )
+    if( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+      & MLSMSG_Deallocate//'z_path' )
+d118 5
+a122 5
+    if( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+      & MLSMSG_Deallocate//'h_path' )
+    deallocate (ifm%t_path, stat=status )
+    if( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+      & MLSMSG_Deallocate//'t_path' )
+d124 2
+a125 2
+    if( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+      & MLSMSG_Deallocate//'phi_path' )
+d127 2
+a128 2
+    if( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+      & MLSMSG_Deallocate//'dhdz_path' )
+d130 2
+a131 2
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+      & MLSMSG_Deallocate//'eta_phi' )
+d134 2
+a135 2
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+      & MLSMSG_Deallocate//'elvar' )
+d156 3
+@
+
+
+1.5
+log
+@New fmStat
+@
+text
+@d47 2
+d62 1
+a62 1
+    & "$Id: ForwardModelIntermediate.f90,v 1.4 2001/04/19 21:04:42 livesey Exp $"
+d145 2
+d153 3
+@
+
+
+1.4
+log
+@Bug fix, sized arrays wrongly
+@
+text
+@d53 1
+d60 1
+a60 1
+    & "$Id: ForwardModelIntermediate.f90,v 1.3 2001/04/19 20:29:46 livesey Exp $"
+d149 3
+@
+
+
+1.3
+log
+@Added destroy routine
+@
+text
+@d59 1
+a59 1
+    & "$Id: ForwardModelIntermediate.f90,v 1.2 2001/04/10 23:16:14 livesey Exp $"
+d78 2
+a79 2
+    noMAFs = size ( ifm%z_path, 1)
+    no_tan_hts = size ( ifm%z_path, 2)
+d148 3
+@
+
+
+1.2
+log
+@Working version.
+@
+text
+@d15 2
+d55 2
+d59 1
+a59 1
+    & "$Id: ForwardModelIntermediate.f90,v 1.1 2001/04/10 22:17:05 livesey Exp $"
+d65 80
+d148 3
+@
+
+
+1.1
+log
+@Renamed module
+@
+text
+@d13 1
+a13 1
+  use Path_entities_m, only: PATH_VECTOR, PATH_VECTOR_2D
+d21 23
+a43 20
+    real (r8), dimension(:,:),             pointer :: H_GLGRID
+    real (r8), dimension(:,:),             pointer :: T_GLGRID
+    real (r8), dimension(:),               pointer :: z_glgrid
+
+    real (r8), dimension(:,:,:),           pointer :: dh_dt_glgrid
+    real (r8), dimension(:,:),             pointer :: dhdz_glgrid
+
+    real (r8), dimension(:,:),             pointer :: tan_hts
+    real (r8), dimension(:,:),             pointer :: tan_temp
+    real (r8), dimension(:,:,:),           pointer :: tan_dh_dt
+
+    type (path_vector), dimension(:,:),    pointer :: z_path
+    type (path_vector), dimension(:,:),    pointer :: h_path
+    type (path_vector), dimension(:,:),    pointer :: t_path
+
+    type (path_vector), dimension(:,:),    pointer :: phi_path
+    type (path_vector), dimension(:,:),    pointer :: dhdz_path
+    type (path_Vector_2d), dimension(:,:), pointer :: eta_phi
+    type (path_index),  dimension(:,:),    pointer :: NDX_PATH
+    type (ellipse), dimension(:,:),        pointer :: elvar
+d55 1
+a55 1
+    & "$Id: ForwardModelIntermdiate.f90,v 1.1 2001/04/10 22:06:26 livesey Exp $"
+d58 1
+a58 1
+    & "$RCSfile: ForwardModelIntermdiate.f90,v $"
+d63 4
+a66 1
+! $Log: ForwardModelIntermdiate.f90,v $
+@
+

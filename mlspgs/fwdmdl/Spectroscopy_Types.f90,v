@@ -1,0 +1,457 @@
+head	2.10;
+access;
+symbols
+	v5-02-NRT-19:2.10
+	v6-00:2.10
+	v5-02-NRT-18:2.10
+	v5-02:2.10
+	v5-01-NRT-17:2.10
+	v5-01-NRT-16:2.10
+	v5-01-NRT-15:2.10
+	v5-01-NRT-14:2.10
+	neuralnetworks-1-0:2.10.0.6
+	cfm-single-freq-0-1:2.10.0.4
+	v5-01:2.10
+	v5-00:2.10
+	v4-23-TA133:2.10.0.2
+	mus-emls-1-70:2.7.0.2
+	rel-1-0-englocks-work:2.6.0.2
+	VUMLS1-00:2.6
+	VPL1-00:2.6
+	V4-22-NRT-08:2.6
+	VAM1-00:2.6
+	V4-21:2.5.0.2
+	V4-13:2.5
+	V4-12:2.4
+	V4-11:2.4
+	V4-10:2.4
+	M4-00:2.3
+	V3-33:2.3;
+locks; strict;
+comment	@# @;
+
+
+2.10
+date	2018.08.13.22.20.11;	author pwagner;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2018.08.06.19.42.42;	author vsnyder;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2018.08.04.02.10.00;	author vsnyder;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2018.04.11.22.25.23;	author vsnyder;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2015.03.28.02.06.20;	author vsnyder;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2014.09.05.20.54.24;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2014.04.04.19.22.33;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2011.11.08.19.49.25;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2011.11.01.22.15.41;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2011.11.01.20.50.06;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.10
+log
+@Work around a NAG-6.1 bug; NAG-6.2 was OK with old declarations
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Spectroscopy_Types
+
+  use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+  use Intrinsic, only: L_None
+  use MLSKINDS, only: R8
+  implicit NONE
+  private
+
+  ! Public procedures
+  public :: AddLineToDatabase, Get_C_Loc
+
+  ! Parameters
+  integer, public, parameter :: MaxContinuum = 6
+
+  ! Public types:
+  type, public :: Line_T           ! One line in the spectrum for a species
+    integer :: Line_Name = 0       ! Sub_rosa index
+    real(r8) :: DELTA              ! Delta interference coefficient at 300K 1/mb
+    real(r8) :: EL                 ! Lower state energy cm-1
+    real(r8) :: GAMMA              ! Gamma interference coefficient at 300K 1/mb
+    real(r8) :: N                  ! Temperature power dependence of w
+    real(r8) :: N1                 ! Temperature dependency of delta
+    real(r8) :: N2                 ! Temperature dependency of gamma
+    real(r8) :: NS                 ! Pressure shift dependency on temperature
+    real(r8) :: PS                 ! Pressure shift parameter in MHz/mbar
+    real(r8) :: STR                ! Integrated spectral intensity
+                                   ! Log(nm**2 MHz) at 300 K
+    real(r8) :: V0                 ! Line center frequency MHz
+    real(r8) :: W                  ! Collision broadening parameter
+                                   ! MHz/mbar at 300 K
+    logical :: UseYi               ! Delta /= 0 .or. Gamma /= 0
+    integer, dimension(:), pointer :: QN=>NULL()  ! Optional quantum numbers.
+                                   ! The first element is assumed to be the
+                                   ! quantum number format;  The low-order digit
+                                   ! of the quantum number format is the number
+                                   ! of quantum number pairs.  The rest,
+                                   ! necessarily an even number, are the actual
+                                   ! quantum numbers.  The extent of this array
+                                   ! is twice the low-order digit of the format,
+                                   ! plus one.
+    integer, dimension(:), pointer :: Signals=>NULL()   ! List of signal indices for line
+    integer, dimension(:), pointer :: Sidebands=>NULL() ! Sidebands for above bands (-1,0,1)
+    logical, dimension(:), pointer :: Polarized=>NULL() ! Process this signal and
+                                   ! sideband using the polarized model
+  end type Line_T
+
+  type, public :: Catalog_T        ! Catalog entry for a species
+    real(r8) :: Continuum(MaxContinuum)  ! Continuum coefficients
+    real :: DefaultIsotopeRatio = 1.0
+    integer, pointer :: Lines(:)=>NULL() ! Indices in Lines database
+    real(r8) :: Mass               ! Molecular mass in AMU
+    integer :: Molecule = l_none   ! L_...; l_none => no catalog entry
+    logical, pointer :: Polarized(:)=>NULL() ! Used only in catalog extract to
+                                   ! indicate that the lines(:) are to be
+                                   ! processed with the polarized model
+    real(r8) :: Qlog(3)            ! Logarithm of the partition function
+                                   ! at 300, 225, and 150 K
+    integer :: Species_Name = 0    ! Sub_rosa index of s_spectra label
+  end type Catalog_T
+
+  ! The lines database:
+  type(Line_T), allocatable, public, save :: Lines(:)
+
+  interface AddLineToDatabase
+    module procedure AddLineToDatabase_A, AddLineToDatabase_P
+  end interface AddLineToDatabase
+
+  interface Get_C_Loc
+! Uncomment this when processors can distinguish between specifics using
+! allocatable vs. pointer
+!     module procedure Get_C_Loc_Catalog_A
+    module procedure Get_C_Loc_Catalog_P
+    module procedure Get_C_Loc_Line_A
+! Uncomment this when processors can distinguish between specifics using
+! allocatable vs. pointer
+!     module procedure Get_C_Loc_Line_P
+  end interface Get_C_Loc
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: Spectroscopy_Types.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  ! ----------------------------------------  AddLineToDatabase_A  -----
+  integer function AddLineToDatabase_A ( Database, Item ) result ( addLineToDatabase )
+  ! Add a line to the Lines database, creating the database
+  ! if necessary.
+
+    ! Dummy arguments
+    type(line_T), allocatable, dimension(:) :: Database
+    type(line_T), intent(in) :: Item
+
+
+    ! Local variables
+    type(line_T), allocatable, dimension(:) :: tempDatabase
+
+    include "addItemToDatabase_A.f9h"
+
+    AddLineToDatabase = newSize
+  end function AddLineToDatabase_A
+
+  ! ----------------------------------------  AddLineToDatabase_P  -----
+  integer function AddLineToDatabase_P ( Database, Item ) result ( addLineToDatabase )
+  ! Add a line to the Lines database, creating the database
+  ! if necessary.
+
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+
+    ! Dummy arguments
+    type(line_T), pointer, dimension(:) :: Database
+    type(line_T), intent(in) :: Item
+
+
+    ! Local variables
+    type(line_T), pointer, dimension(:) :: tempDatabase
+
+    include "addItemToDatabase.f9h"
+
+    AddLineToDatabase = newSize
+  end function AddLineToDatabase_P
+
+  ! --------------------------------------------------  Get_C_Loc  -----
+
+  integer(c_intptr_t) function Get_C_Loc_Catalog_A ( Catalog ) result (addr)
+    type(catalog_t), allocatable, intent(in), target :: Catalog(:)
+    addr = transfer(c_loc(Catalog(lbound(Catalog,1))), addr)
+  end function Get_C_Loc_Catalog_A
+
+  integer(c_intptr_t) function Get_C_Loc_Catalog_P ( Catalog ) result (addr)
+    type(catalog_t), pointer, intent(in) :: Catalog(:)
+    addr = transfer(c_loc(Catalog(lbound(Catalog,1))), addr)
+  end function Get_C_Loc_Catalog_P
+
+  integer(c_intptr_t) function Get_C_Loc_Line_A ( Line ) result (addr)
+    type(line_t), allocatable, intent(in), target :: Line(:)
+    addr = transfer(c_loc(line(lbound(line,1))), addr)
+  end function Get_C_Loc_Line_A
+
+  integer(c_intptr_t) function Get_C_Loc_Line_P ( Line ) result (addr)
+    type(line_t), pointer, intent(in) :: Line(:)
+    addr = transfer(c_loc(line(lbound(line,1))), addr)
+  end function Get_C_Loc_Line_P
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: Spectroscopy_Types.f90,v 2.9 2018/08/06 19:42:42 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Spectroscopy_Types
+
+! $Log: Spectroscopy_Types.f90,v $
+! Revision 2.9  2018/08/06 19:42:42  vsnyder
+! Add Get_C_Loc functions, remove TARGET from Lines
+!
+! Revision 2.8  2018/08/04 02:10:00  vsnyder
+! Make Lines database allocatable instead of a pointer
+!
+! Revision 2.7  2018/04/11 22:25:23  vsnyder
+! Remove USE for unused names
+!
+! Revision 2.6  2015/03/28 02:06:20  vsnyder
+! Added stuff to trace allocate/deallocate addresses
+!
+! Revision 2.5  2014/09/05 20:54:24  vsnyder
+! More complete and accurate allocate/deallocate size tracking
+!
+! Revision 2.4  2014/04/04 19:22:33  vsnyder
+! More comments about QN component of Lines_t
+!
+! Revision 2.3  2011/11/08 19:49:25  vsnyder
+! Get L_None from Intrinsic module
+!
+! Revision 2.2  2011/11/01 22:15:41  vsnyder
+! Add a comment to describe the Lines pointer
+!
+! Revision 2.1  2011/11/01 20:50:06  vsnyder
+! Initial commit
+!
+@
+
+
+2.9
+log
+@Add Get_C_Loc functions, remove TARGET from Lines
+@
+text
+@d14 1
+a138 1
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+a143 1
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+a148 1
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+a153 1
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+d161 1
+a161 1
+       "$Id: Spectroscopy_Types.f90,v 2.8 2018/08/04 02:10:00 vsnyder Exp $"
+d171 3
+@
+
+
+2.8
+log
+@Make Lines database allocatable instead of a pointer
+@
+text
+@d19 2
+a20 2
+  ! Public procedure
+  public :: AddLineToDatabase
+d72 1
+a72 1
+  type(Line_T), allocatable, target, public, save :: Lines(:)
+d78 11
+a101 2
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+
+d135 26
+a160 1
+! ------------------------------------------------  not_used_here  -----
+d164 1
+a164 1
+       "$Id: Spectroscopy_Types.f90,v 2.7 2018/04/11 22:25:23 vsnyder Exp $"
+d174 3
+@
+
+
+2.7
+log
+@Remove USE for unused names
+@
+text
+@d72 5
+a76 1
+  type(Line_T), pointer, public, save :: Lines(:) => NULL()
+d86 22
+a107 2
+  ! ------------------------------------------  AddLineToDatabase  -----
+  integer function AddLineToDatabase ( Database, Item )
+d119 1
+a119 1
+    type(line_T), dimension(:), pointer :: tempDatabase
+d124 1
+a124 1
+  end function AddLineToDatabase
+d130 1
+a130 1
+       "$Id: Spectroscopy_Types.f90,v 2.6 2015/03/28 02:06:20 vsnyder Exp $"
+d140 3
+@
+
+
+2.6
+log
+@Added stuff to trace allocate/deallocate addresses
+@
+text
+@a87 1
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+d106 1
+a106 1
+       "$Id: Spectroscopy_Types.f90,v 2.5 2014/09/05 20:54:24 vsnyder Exp $"
+d116 3
+@
+
+
+2.5
+log
+@More complete and accurate allocate/deallocate size tracking
+@
+text
+@d88 1
+d107 1
+a107 1
+       "$Id: Spectroscopy_Types.f90,v 2.4 2014/04/04 19:22:33 vsnyder Exp $"
+d117 3
+@
+
+
+2.4
+log
+@More comments about QN component of Lines_t
+@
+text
+@d87 1
+a87 2
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
+      & MLSMSG_Error
+d106 1
+a106 1
+       "$Id: Spectroscopy_Types.f90,v 2.3 2011/11/08 19:49:25 vsnyder Exp $"
+d116 3
+@
+
+
+2.3
+log
+@Get L_None from Intrinsic module
+@
+text
+@d42 10
+a51 2
+    integer, dimension(:), pointer :: QN=>NULL()      ! Optional quantum numbers
+    integer, dimension(:), pointer :: Signals=>NULL() ! List of signal indices for line
+d107 1
+a107 1
+       "$Id: Spectroscopy_Types.f90,v 2.2 2011/11/01 22:15:41 vsnyder Exp $"
+d117 3
+@
+
+
+2.2
+log
+@Add a comment to describe the Lines pointer
+@
+text
+@d14 1
+a14 1
+!   use Intrinsic, only: L_None
+d54 1
+a54 2
+!     integer :: Molecule = l_none   ! L_...; l_none => no catalog entry
+    integer :: Molecule = 0   ! L_...; l_none => no catalog entry
+d99 1
+a99 1
+       "$Id: Spectroscopy_Types.f90,v 2.1 2011/11/01 20:50:06 vsnyder Exp $"
+d109 3
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d64 1
+d100 1
+a100 1
+       "$Id: Spectroscopy_Types.f90,v 2.50 2011/05/09 17:55:12 pwagner Exp $"
+d109 4
+a112 1
+! $Log: $
+@
+

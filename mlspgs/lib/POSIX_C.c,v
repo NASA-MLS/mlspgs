@@ -1,0 +1,119 @@
+head	2.1;
+access;
+symbols
+	v5-02-NRT-19:2.1
+	v6-00:2.1
+	v5-02-NRT-18:2.1
+	v5-02:2.1
+	v5-01-NRT-17:2.1
+	v5-01-NRT-16:2.1
+	v5-01-NRT-15:2.1
+	v5-01-NRT-14:2.1
+	neuralnetworks-1-0:2.1.0.10
+	cfm-single-freq-0-1:2.1.0.8
+	v5-01:2.1
+	v5-00:2.1
+	v4-23-TA133:2.1.0.6
+	mus-emls-1-70:2.1.0.4
+	rel-1-0-englocks-work:2.1.0.2
+	VUMLS1-00:2.1;
+locks; strict;
+comment	@ * @;
+
+
+2.1
+date	2016.10.21.22.53.17;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@/* Copyright 2005, by the California Institute of Technology. ALL
+   RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+   commercial use must be negotiated with the Office of Technology Transfer
+   at the California Institute of Technology.
+
+   This software may be subject to U.S. export control laws. By accepting this
+   software, the user agrees to comply with all applicable U.S. export laws and
+   regulations. User has the responsibility to obtain export licenses, or other
+   export authority as may be required before exporting such information to
+   foreign countries or providing access to foreign persons.
+*/
+
+/* We can't usefully access stat() or readdir() directly from Fortran using
+   interoperability features because their results are structs for which the
+   order and sizes of members, and the presence or absence of padding, are not
+   standardized.
+*/
+
+#include <dirent.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+
+#include <stdio.h>
+
+char Id[] = "$Id: $";
+
+/* Get the file type using stat() */
+
+int FileType ( const char *PathName, int *Error )
+/* Returns S_IFSOCK   0140000   socket
+           S_IFLNK    0120000   symbolic link
+           S_IFREG    0100000   regular file
+           S_IFBLK    0060000   block device
+           S_IFDIR    0040000   directory
+           S_IFCHR    0020000   character device
+           S_IFIFO    0010000   FIFO
+shifted right 12 bits (i.e., eliminating the four low-order octal zeros) if
+PathName is one of these, else -1 (usually because PathName doesn't exist).
+Because we use stat() instead of lstat(), S_IFLNK is never returned.
+If the result value is -1, Error is set equal to errno, else it's zero.
+*/
+{
+  struct stat sb;
+  if ( stat ( PathName, &sb ) < 0 )
+  { *Error = errno;
+    return -1;
+  }
+  *Error = 0;
+  return ( ( sb.st_mode & S_IFMT ) >> 12 );
+}
+
+/* Read the next item from a directory opened by opendir().  If the
+   returned file type is a link (DT_LNK == S_IFLNK >> 12), you can use
+   FileType to inquire the type of file the link refers to. */
+
+int ReadDir ( DIR *DirHandle, char **FileName, int *FileType )
+{
+  struct dirent *dp;
+  dp = readdir ( DirHandle );
+  if ( dp == 0 )
+  { FileName = 0;
+    return -1;
+  };
+  if ( dp->d_reclen <= 0 )
+  { FileName = 0;
+    return -1;
+  };
+  if ( dp->d_name == 0 )
+  { FileName = 0;
+    return -1;
+  };
+  *FileName = dp->d_name;
+  *FileType = dp->d_type;
+  return dp->d_reclen;
+}
+
+/* $Log: $
+
+*/
+@

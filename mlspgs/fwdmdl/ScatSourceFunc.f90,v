@@ -1,0 +1,2063 @@
+head	2.19;
+access;
+symbols
+	v5-02-NRT-19:2.19
+	v6-00:2.19
+	v5-02-NRT-18:2.19
+	v5-02:2.19
+	v5-01-NRT-17:2.19
+	v5-01-NRT-16:2.19
+	v5-01-NRT-15:2.19
+	v5-01-NRT-14:2.19
+	neuralnetworks-1-0:2.19.0.12
+	cfm-single-freq-0-1:2.19.0.10
+	v5-01:2.19
+	v5-00:2.19
+	v4-23-TA133:2.19.0.8
+	mus-emls-1-70:2.19.0.6
+	rel-1-0-englocks-work:2.19.0.4
+	VUMLS1-00:2.19
+	VPL1-00:2.19
+	V4-22-NRT-08:2.19
+	VAM1-00:2.19
+	V4-21:2.19.0.2
+	V4-13:2.19
+	V4-12:2.19
+	V4-11:2.19
+	V4-10:2.19
+	V3-43:2.17
+	M4-00:2.18
+	V3-41:2.17
+	V3-40-PlusGM57:2.17.0.2
+	V2-24-NRT-04:2.15
+	V3-33:2.18
+	V2-24:2.15
+	V3-31:2.18
+	V3-30-NRT-05:2.18
+	cfm-01-00:2.18
+	V3-30:2.17
+	V3-20:2.17
+	V3-10:2.17
+	V2-23-NRT-02:2.15
+	V2-23:2.15
+	V2-22-NRT-01:2.15
+	V2-22:2.15
+	V2-21:2.13
+	V2-20:2.13
+	V2-11:2.13
+	V2-10:2.13
+	V2-00:2.13
+	V1-51:2.12
+	V1-50:2.12
+	V1-45:2.12
+	V1-44:2.12
+	V1-43:2.11
+	V1-32:2.9
+	V1-31:2.9
+	V1-30:2.1
+	newfwm-feb03:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+2.19
+date	2013.06.12.02.23.25;	author vsnyder;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2010.06.07.23.21.30;	author vsnyder;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2009.06.23.18.26.10;	author pwagner;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2009.05.13.20.03.01;	author vsnyder;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2007.10.02.22.32.45;	author vsnyder;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2007.07.25.20.19.42;	author vsnyder;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2005.06.22.18.08.19;	author pwagner;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2004.08.05.18.58.45;	author vsnyder;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2004.03.31.20.35.33;	author jonathan;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2004.03.20.01.15.47;	author jonathan;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2003.12.08.17.53.28;	author jonathan;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2003.12.07.19.46.25;	author jonathan;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2003.12.01.17.25.02;	author jonathan;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2003.11.19.22.22.03;	author jonathan;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2003.11.17.18.04.45;	author jonathan;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2003.11.05.19.26.15;	author jonathan;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2003.10.29.17.22.35;	author jonathan;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2003.10.28.22.06.37;	author jonathan;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2003.05.05.23.00.25;	author livesey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2003.03.28.18.14.53;	author jonathan;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2003.03.28.18.14.53;	author jonathan;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2003.04.04.20.24.30;	author jonathan;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2003.04.07.17.14.00;	author jonathan;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2003.04.10.16.13.45;	author jonathan;	state Exp;
+branches;
+next	1.1.2.5;
+
+1.1.2.5
+date	2003.04.16.00.29.17;	author vsnyder;	state Exp;
+branches;
+next	1.1.2.6;
+
+1.1.2.6
+date	2003.04.16.17.26.09;	author vsnyder;	state Exp;
+branches;
+next	1.1.2.7;
+
+1.1.2.7
+date	2003.04.16.19.31.43;	author vsnyder;	state Exp;
+branches;
+next	1.1.2.8;
+
+1.1.2.8
+date	2003.04.24.23.54.18;	author jonathan;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.19
+log
+@Cruft removal
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module ScatSourceFunc
+
+! -------------------------------------------------------------------------  
+! PERFORM ITERATIVE RADIATIVE TRANSFER CALCULATION
+! -------------------------------------------------------------------------
+
+  implicit NONE
+  private
+  public :: T_Scat, Interp_Tscat, Convert_grid
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: ScatSourceFunc.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+      
+contains
+
+   subroutine T_SCAT ( TEMP_AIR, FREQ, Z, Pres, VMR_H2O, VMR_O3, VMR_N2O, &
+                     & NU, NUA, NAB, NR, NC, &
+                     & TB_SCAT, Scat_alb, Cloud_ext, THETA )  
+
+      use Cloud_extinction,    only: Get_beta_cloud
+      use CRREXP_m,            only: RREXP    ! ( exp(x)-1 ) / x, for Planck fn.
+      use Interpack,           only: LOCATE
+      use MLSKinds,            only: RK => R8 ! working REAL kind
+      use Physics,             only: H_OVER_K ! h/k in Kelvin/MHz
+      use ScatteringAngle,     only: Angle
+      use Constants,           only: Pi
+      use Non_scat_ext,        only: GET_BETA_CLEAR
+
+    ! Arguments
+      real(rk), intent(in) :: Temp_Air(:) ! MEAN AIR TEMPERATURES, Kelvin
+      real(rk), intent(in) :: Freq        ! FREQUENCY, MHz
+      real(rk), intent(in) :: Z(:)        ! Model height (meters)
+      real(rk), intent(in) :: Pres(size(Z))     ! Pressure (hPa)
+      integer, intent(in) :: NU           ! Number of scattering angles
+      integer, intent(in) :: NUA          ! Number of azimuth angles
+      integer, intent(in) :: NAB          ! Number of AB terms
+      integer, intent(in) :: NR           ! Number of size bins
+      integer, intent(in) :: NC           ! Number of cloud species
+      real(rk), intent(in) :: VMR_H2O(:), VMR_O3(:), VMR_N2O(:)
+
+      real(rk), intent(inout) :: TB_scat(:,:)   ! TB FROM SCATTERING PHASE FUNCTION
+      real(rk), intent(inout) :: Scat_alb(:,:)  ! Single Scattering albedo 
+      real(rk), intent(inout) :: Cloud_ext(:,:) ! Cloud extinction
+      real(rk) , intent(inout) :: THETA(:)      ! SCATTERING ANGLES
+
+    ! Local variables
+      real(rk), parameter :: COLD = 2.7_rk   ! kelvins
+      real(rk), parameter :: FIRST = 250._rk ! FIRST GUESS OF UPWELLING TB
+      real(rk), parameter :: Pi2 = 0.5 * Pi
+
+      real(rk) :: CLD_EXT
+      real(rk) :: DELTA                   ! DELTA TB FOR CONVERGENCE CHECK
+      real(rk) :: dTAU( size(temp_air) )  ! Optical depth increment at each layer 
+      real(rk) :: ext_air( size(temp_air) )
+      real(rk) :: DU(NU)                  ! DELTA U
+      real(rk) :: ITS0                    ! NO. OF MAXIMUM ITERATIONS
+      real(rk) :: PHH( NU, size(TEMP_AIR) )
+      real(rk) :: PHI(NUA)                ! SCATTERING AZIMUTH ANGLES
+      real(rk) :: RS( NU/2 )
+      real(rk) :: TAVG                    ! TB AVERAGED OVER PHI AT A GIVEN U
+      real(rk) :: TB( NU, size(TEMP_AIR) )! TB IN FLAT PLANE GEOMETRY
+                                          ! 1->NU/2 UPWELLING, NU/2->NU DOWNWELLING
+      real(rk) :: TB0 ( NU )   ! TB AT THE SURFACE
+      real(rk) :: TEMP( size(temp_air) )  ! BRIGHTNESS TEMPERATURE FROM TEMP_AIR
+      real(rk) :: THETAI(NU,NU,NUA) ! ANGLES FOR INCIDENT TB
+      real(rk) :: TSCAT(NU,size(Z))
+      real(rk) :: Tsource
+      real(rk) :: TSPACE                  ! COSMIC BACKGROUND RADIANCE
+      real(rk) :: TS                      ! SURFACE TEMPERATURE (K)
+      real(rk) :: UA(NUA)                 ! COSINES OF SCATTERING AZIMUTH ANGLES
+      real(rk) :: UEFF                    ! EFFECTIVE U BETWEEN K AND K+1
+      real(rk) :: UI(NU,NU,NUA) ! COSINES OF THETAI
+      real(rk) :: U(NU)        ! COSINES OF THETA
+      real(rk) :: W0( size(temp_air) )
+      real(rk) :: WC(2, size(temp_air) )
+      real(rk) :: WK
+      real(rk) :: WW0
+      real(rk) :: X2
+      real(rk) :: XTB(size(TEMP_AIR))
+
+      real(rk) :: D_mid_Z(size(Z)-2)
+
+      integer :: I
+                                          ! 3 = NEAR SIDE CLOUD ONLY
+      integer :: IH, IND, IP, ITS, J, JM, K, K1, L
+
+!-------------------------------------------------------------------------------------
+
+      L = size(temp_air,1) ! == size(tb_scat,1)
+      TB    = 0.0_rk
+      TB_scat = 0.0_rk
+      Tscat   = 0.0_rk
+      tsource = 0.0_rk
+      Scat_alb= 0.0_rk
+!--------------------------------------------------
+!     FIND BRIGHTNESS TEMPERATURE AT EACH LAYER
+!--------------------------------------------------
+
+      !{Planck black body function:
+      ! $\frac{\frac{h \nu}k}{\exp\left(\frac{h \nu}{k T}\right)-1}$.
+      ! We need to be careful how this is calculated because $\exp x -1$ has
+      ! cancellation for small $x$.  $\frac{h \nu}{k T}$ is $\approx 0.04$ for
+      ! $\nu \approx 240$ GHz and $T \approx 250$ K.
+
+      temp = temp_air / rrexp(h_over_k * freq / temp_air)
+      tspace = cold / rrexp(h_over_k * freq / cold)
+
+      call ANGLE(THETA,U,DU,NU,PHI,UA,NUA,UI,THETAI)
+
+      WC=0.0
+      PHH=0.0
+      cld_ext=0.0
+      W0=0.0_rk
+      Cloud_ext =0.0_rk
+      WC(1,7) = 0.01   !test only
+      WC(1,8) = 0.01   !test only
+      dtau =0.0
+      ext_air=0.0
+
+      CALL get_beta_clear ( L, FREQ, TEMP_AIR, Pres, VMR_H2O, VMR_O3, VMR_N2O, &
+        & NU, ext_air )
+
+      do I=1, L-2
+        D_mid_Z(I) = (Z(I+1)-Z(I))
+      enddo
+
+      do K=1,L
+        call get_beta_cloud ( FREQ, TEMP_AIR(K), WC(:,K), 1000,         &
+     &                 NC, NU, NUA, NAB, NR, cld_ext, W0(K), PHH(:,K) )      
+        
+        if (K .ge. 2 .and. K .le. L-1) then
+            dtau(k)= D_mid_Z(K-1) * (cld_ext + ext_air(K))            
+        endif
+        if (cld_ext + ext_air(K) .gt. 0.0) then
+           W0(K) = (W0(K)*cld_ext)/(cld_ext + ext_air(K))
+        else
+           W0(K) = 0.0_rk
+        endif
+        Cloud_ext(K,1) = cld_ext
+        Cloud_ext(K,2) = cld_ext
+      end do
+      dtau(1)=dtau(2) 
+      dtau(L)=dtau(L-1)
+      
+!----------------------------------------------------
+!     DETERMINE NO. OF ITERATIONS
+!----------------------------------------------------
+
+      ITS0=1
+      DELTA=0.01_rk
+
+      if ( any(w0 /= 0.0) ) ITS0=20
+      
+!---------------------------------------------------
+!     INITIAL GUESS OF TB, L=0 IS THE SURFACE
+!---------------------------------------------------
+      do K=1,L
+         XTB(K)=0._rk
+         TB(1:NU/2,K)=FIRST
+         TB(NU/2+1:NU,K)=TSPACE
+      end do
+
+!------------------------------------------------
+!     START ITERATION
+!------------------------------------------------
+      ITS=1
+ 1000 CONTINUE
+    
+      TB(NU/2+1:NU,L)=TSPACE         ! BOUNDARY CONDITION AT TOP OF ATMOS
+
+!------------------------------------------------
+!     COMPUTING TSCAT FOR EACH ANGLE AND LAYER
+!------------------------------------------------
+
+      do IP=1,NU
+         do K=1,L-1
+            TSCAT(IP,K)=0.0_rk
+            if ( PHH(1,K) /= 0._rk ) then 
+               do IH=1,NU
+                  TAVG=0.0_rk
+                  do J=1,NUA
+                     K1=K
+                     if ( THETAI(IP,IH,J) < pi2) K1=K-1
+                     if ( K1 .EQ. 0) K1 = 1
+                     if ( THETAI(IP,IH,J) > pi2) K1=K+1
+                     call LOCATE(THETA,NU,NU,THETAI(IP,IH,J),JM)
+                     WK=(TB(JM+1,K1)*(THETAI(IP,IH,J)-THETA(JM))+      &
+     &                   TB(JM,K1)*(THETA(JM+1)-THETAI(IP,IH,J)))/     &
+     &                   (THETA(JM+1)-THETA(JM))
+                     TAVG = TAVG + WK*(PHI(2)-PHI(1))/2._rk/PI
+                  end do
+                  TSCAT(IP,K)=TSCAT(IP,K)+                             &
+     &                              2._rk*PHH(IH,K)*TAVG*DU(IH)
+               end do
+            else
+              TSCAT(IP,K)=0._rk         !CLEAR SKY
+            end if
+         end do
+      end do
+
+!------------------------------------
+!     COMPUTE TB AT ANGLES U
+!     INTEGRATION FROM TOP TO BOTTOM
+!------------------------------------
+      DO I=NU/2+1,NU
+         X2 = U(I)*U(I)
+         UEFF = ABS(U(I))
+         DO K=L-1,1,-1
+            WK=0._rk
+            WW0=0._rk
+               WK=WK+TSCAT(I,K)*W0(K)
+               WW0=WW0+W0(K)
+
+            tsource=(1-WW0)*TEMP(K)+WK
+
+            TB(I,K)=TB(I,K+1)*EXP(-dTAU(K)/UEFF)+           &
+     &              (1._rk-EXP(-dTAU(K)/UEFF))*tsource
+         END DO
+      END DO
+
+!-----------------------------------------------------------------------
+!     DETERMINE SURFACE REFLECTION 
+!-----------------------------------------------------------------------
+      TS    = 288._rk
+
+      DO J=1,NU/2
+         RS(J)=0.05_rk
+         TB0(J)=TS*(1._rk-RS(J))+TB(J+NU/2,1)*RS(J)
+         TB(J,1) = TB0(J)
+      ENDDO
+
+!------------------------------------
+!     COMPUTE TB AT ANGLES U
+!     INTEGRATION FROM BOTTOM TO TOP
+!------------------------------------
+      DO I=1,NU/2
+        X2 = U(I)*U(I)
+        UEFF = ABS(U(I))
+        DO K=1,L-1
+          WK=0._rk
+           WW0=0._rk
+              WK=WK+TSCAT(I,K)*W0(K)
+              WW0=WW0+W0(K)
+
+           tsource=(1-WW0)*TEMP(K)+WK
+
+           TB(I,K+1)=TB(I,K)*EXP(-dTAU(K)/UEFF)+      &
+     &               (1._rk-EXP(-dTAU(K)/UEFF))*tsource
+        END DO
+      END DO
+
+!------------------------------------
+!     CHECK CONVERGENCE
+!------------------------------------
+      IND=0
+      X2=0._rk
+      DO J=1,NU/2
+         X2=X2+(XTB(J)-TB(J,L))**2/NU
+         IF (ABS(XTB(J)-TB(J,L)) .GT. DELTA) IND=1
+      ENDDO
+ 
+      IF (IND.NE.0 .AND. ITS.LT.ITS0) THEN
+      DO J=1,NU
+         XTB(J)=TB(J,L)
+      ENDDO
+
+         ITS=ITS+1
+         GOTO 1000
+      ENDIF
+      
+!-------------------------------------------------------------------------
+!     AFTER TB CONVERGENCE IS FOUND, OUTPUT THE SCATERING SOURCE FUNCTION
+!-------------------------------------------------------------------------
+
+     do K=1,L
+         do IP=1,NU
+           TB_scat(K, IP) = Tscat(IP, K)
+         enddo
+         Scat_alb(K,1)=W0(K)
+         Scat_alb(K,2)=W0(K)
+    enddo
+
+  end subroutine T_SCAT
+
+  subroutine Interp_Tscat (TB_SCAT, THETA, PHI_angle, TT_SCAT)
+
+      use Interpack,           only: LOCATE
+      use MLSKinds,            only: RK => R8 ! working REAL kind
+      use Constants,           only: Pi
+
+    ! Arguments
+      real(rk), intent(in) :: TB_scat(:,:)   ! TB FROM SCATTERING PHASE FUNCTION
+      real(rk), intent(in) :: THETA(:)       ! Scattering angles 
+      real(rk), intent(in) :: PHI_angle(:)   ! Phi Angles
+      real(rk), intent(inout) :: TT_scat(:,:)! 
+      real(rk) :: PHI_90(size(PHI_angle))
+      real(rk) :: eta
+      INTEGER :: I, JM, No_ele, No_ang
+!-----------------------------------------------------------------------------
+
+      No_ele= size(PHI_angle)
+      No_ang= size(THETA)
+
+!      PHI_90 = pi + PHI_angle
+       PHI_90 = pi/2. + (PHI_angle - PHI_angle(No_ele/2))
+
+      DO I=1, No_ele
+
+          CALL LOCATE ( THETA, No_ang, No_ang, PHI_90(I), JM )
+
+          eta=(THETA(JM+1)-PHI_90(I)) / (THETA(JM+1)-THETA(JM))
+
+          TT_SCAT(I,1) = eta*TB_SCAT(I,JM) + (1-eta)*TB_SCAT(I,JM+1)
+
+      ENDDO
+
+  end subroutine Interp_Tscat
+
+  subroutine Convert_grid ( salb_path, cext_path, tt_path, path_inds, &
+                          & beta_path_cloud, w0_path, tt_path_c )
+
+    use MLSKinds, only: RP, IP
+
+    real(rp), intent(in) :: Salb_path(:,:) ! single scattering albedo gl grids  
+    real(rp), intent(in) :: Cext_path(:,:) ! cloud extinction on gl grids
+    real(rp), intent(in) :: tt_path(:,:)   ! scating source func on gl grids
+
+    integer(ip), intent(in) :: Path_inds(:) ! indicies for reading gl_slabs
+
+    real(rp), intent(out) :: beta_path_cloud(:) ! cloud extinction on coarse grids
+    real(rp), intent(out) :: w0_path(:)         ! single scattering albedo coarse grids
+    real(rp), intent(out) :: tt_path_c(:)       ! scattering source func coarse grids
+
+    integer(ip) :: j, k, n_path
+
+! ---------------------------------------------------------------------------------
+
+    beta_path_cloud = 0.0_rp
+    w0_path         = 0.0_rp
+    tt_path_c       = 0.0_rp
+
+    n_path = size(path_inds)
+
+    do j = 1, n_path
+       k = path_inds(j)
+       beta_path_cloud(j) = beta_path_cloud(j) + Cext_path(k,1)
+       w0_path(j)         = w0_path(j)         + Salb_path(k,1)     
+       tt_path_c(j)       = tt_path_c(j)       + tt_path(k,1)  
+            
+    end do
+
+  end subroutine Convert_grid
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: ScatSourceFunc.f90,v 2.18 2010/06/07 23:21:30 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module ScatSourceFunc
+
+! $Log: ScatSourceFunc.f90,v $
+! Revision 2.18  2010/06/07 23:21:30  vsnyder
+! Changed some calling sequences
+!
+! Revision 2.17  2009/06/23 18:26:10  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.16  2009/05/13 20:03:01  vsnyder
+! Get constants from Constants, kinds from MLSKinds
+!
+! Revision 2.15  2007/10/02 22:32:45  vsnyder
+! Modernization: No shared-do-term statements
+!
+! Revision 2.14  2007/07/25 20:19:42  vsnyder
+! Delete USE for unreferenced entities and declarations for unused variables
+!
+! Revision 2.13  2005/06/22 18:08:19  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.12  2004/08/05 18:58:45  vsnyder
+! Remove unused USE names in Convert_Grid
+!
+! Revision 2.11  2004/03/31 20:35:33  jonathan
+! some minor changes
+!
+! Revision 2.10  2004/03/20 01:15:47  jonathan
+! w0 and cext now has extra dimention
+!
+! Revision 2.9  2003/12/08 17:53:28  jonathan
+! add tt_path in convert_grid
+!
+! Revision 2.8  2003/12/07 19:46:25  jonathan
+! update for use in 2D cloud FWM
+!
+! Revision 2.7  2003/12/01 17:25:02  jonathan
+! add scat alb
+!
+! Revision 2.6  2003/11/19 22:22:03  jonathan
+! some update
+!
+! Revision 2.5  2003/11/17 18:04:45  jonathan
+! correct working version
+!
+! Revision 2.3  2003/10/29 17:22:35  jonathan
+! fix bug
+!
+! Revision 2.2  2003/10/28 22:06:37  jonathan
+! add Z as input variable for later use
+!
+! Revision 2.1  2003/05/05 23:00:25  livesey
+! Merged in feb03 newfwm branch
+!
+! Revision 1.1.2.8  2003/04/24 23:54:18  jonathan
+! update construction
+!
+! Revision 1.1.2.7  2003/04/16 19:31:43  vsnyder
+! Move working storage into T_Scat, using automatic arrays.  Use assumed-
+! shape dummy arguments.  Alphabetize declarations of local variables.
+! Use RREXP to calculate Planck blackbody function, to avoid cancellation
+! for small values of h nu / k T.
+!
+! Revision 1.1.2.6  2003/04/16 17:26:09  vsnyder
+! Planck now expects frequency in MHz
+!
+! Revision 1.1.2.5  2003/04/16 00:29:17  vsnyder
+! Move USE statements down to procedure scope, futzing
+!
+! Revision 1.1.2.4  2003/04/10 16:13:45  jonathan
+! fix bug
+!
+! Revision 1.1.2.3  2003/04/07 17:14:00  jonathan
+! modified cal to T_scat
+!
+! Revision 1.1.2.2  2003/04/04 20:24:30  jonathan
+! first working version
+!
+! Revision 1.1.2.1  2003/03/28 18:14:53  jonathan
+! new scaterring source module in construction
+!
+@
+
+
+2.18
+log
+@Changed some calling sequences
+@
+text
+@a70 1
+      real(rk) :: JJ0
+a83 1
+      real(rk) :: U1(NU)
+a94 1
+      real(rk) :: mid_Z(size(Z)-1)
+a136 4
+      do I=1, L-1
+        mid_Z(I) = Z(I) +(Z(I+1)-Z(I))/2.
+      enddo
+
+a164 1
+      jj0=1.e-9_rk
+a189 1
+         U1(IP)=-U(IP)
+d371 1
+a371 1
+       "$Id: ScatSourceFunc.f90,v 2.17 2009/06/23 18:26:10 pwagner Exp $"
+d381 3
+@
+
+
+2.17
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d24 1
+a24 1
+       "$RCSfile: $"
+d30 2
+a31 1
+   subroutine T_SCAT ( TEMP_AIR, FREQ, Z, Pres, VMRin, NS, NU, NUA, NAB, NR, NC, &
+d53 2
+a54 3
+      integer, intent(in) :: NS           ! Number of chemical species
+      real(rk), intent(in) :: VMRin(NS, size(Z) )        ! VMR
+      
+d56 1
+a56 1
+      real(rk), intent(inout) :: Scat_alb(:,:) ! Single Scattering albedo 
+d58 1
+a80 1
+      real(rk) , intent(inout) :: THETA(:)    ! SCATTERING ANGLES
+d137 2
+a138 1
+      CALL get_beta_clear ( L, FREQ, TEMP_AIR, Pres, VMRin, NU, NS, ext_air )
+d380 1
+a380 1
+       "$Id: read_apriori.f90 is it here $"
+d390 3
+@
+
+
+2.16
+log
+@Get constants from Constants, kinds from MLSKinds
+@
+text
+@d24 1
+a24 1
+       "$RCSfile: ScatSourceFunc.f90,v $"
+d376 1
+a377 1
+!---------------------------- RCS Ident Info -------------------------------
+d379 2
+a380 3
+       "$Id: ScatSourceFunc.f90,v 2.15 2007/10/02 22:32:45 vsnyder Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d382 1
+d384 1
+d389 3
+@
+
+
+2.15
+log
+@Modernization: No shared-do-term statements
+@
+text
+@d36 1
+a36 1
+      use MLSCommon,           only: RK => R8 ! working REAL kind
+d39 1
+a39 1
+      use Units,               only: Pi
+d310 2
+a311 2
+      use MLSCommon,           only: RK => R8 ! working REAL kind
+      use Units,               only: Pi
+d344 1
+a344 1
+    use MLSCommon, only: RP, IP
+d379 1
+a379 1
+       "$Id: ScatSourceFunc.f90,v 2.14 2007/07/25 20:19:42 vsnyder Exp $"
+d388 3
+@
+
+
+2.14
+log
+@Delete USE for unreferenced entities and declarations for unused variables
+@
+text
+@d227 1
+a227 1
+      DO 1100 I=NU/2+1,NU
+d230 1
+a230 1
+         DO 1100 K=L-1,1,-1
+d240 2
+a241 2
+
+ 1100 CONTINUE
+d258 1
+a258 1
+      DO 1200 I=1,NU/2
+d261 1
+a261 1
+        DO 1200 K=1,L-1
+d271 2
+a272 2
+
+ 1200 CONTINUE
+d379 1
+a379 1
+       "$Id: ScatSourceFunc.f90,v 2.13 2005/06/22 18:08:19 pwagner Exp $"
+d388 3
+@
+
+
+2.13
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d24 1
+a24 1
+       "$RCSfile: $"
+a63 1
+      real(rk) :: CHK(size(TEMP_AIR))
+a64 2
+      real(rk) :: D1
+      real(rk) :: D2
+a68 1
+      real(rk) :: DY
+a72 1
+      real(rk) :: RSAVG
+a78 1
+      real(rk) :: TGT
+a86 1
+      real(rk) :: UAVE(size(temp_air),size(temp_air)) ! INCIDENT ANGLES FOR EACH TANGENT HT
+a89 1
+      real(rk) :: UU
+a92 1
+      real(rk) :: WK1
+a93 3
+      real(rk) :: Wwk
+      real(rk) :: Wwk1
+      real(rk) :: Www0
+a100 1
+      integer :: ICON                     ! CONTROL SWITCH
+d102 1
+a102 2
+      integer :: IH, IND, IP, ISPI, ITS, ITT, J, JM, K, K1, L
+      integer :: LMIN( size(temp_air) )   ! LOWEST LAYER REACHED BY A TANGENT HT
+a310 2
+      use Physics,             only: H_OVER_K ! h/k in Kelvin/MHz
+      use ScatteringAngle,     only: Angle
+d319 1
+a319 1
+      real(rk) :: WK, eta
+d379 1
+a379 1
+       "$Id: $"
+d388 3
+@
+
+
+2.12
+log
+@Remove unused USE names in Convert_Grid
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d22 3
+a24 6
+ !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm =                          &
+    "$Id: ScatSourceFunc.f90,v 2.11 2004/03/31 20:35:33 jonathan Exp $"
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName=                       &
+    "$RCSfile: ScatSourceFunc.f90,v $"
+d26 1
+a26 1
+ !---------------------------------------------------------------------------
+d393 5
+d404 3
+@
+
+
+2.11
+log
+@some minor changes
+@
+text
+@d16 1
+a16 1
+    "$Id: ScatSourceFunc.f90,v 2.10 2004/03/20 01:15:47 jonathan Exp $"
+d355 1
+a355 2
+    use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
+    use MLSCommon, only: R8, RP, IP
+d394 3
+@
+
+
+2.10
+log
+@w0 and cext now has extra dimention
+@
+text
+@d16 1
+a16 1
+    "$Id: ScatSourceFunc.f90,v 2.9 2003/12/08 17:53:28 jonathan Exp $"
+d141 2
+a142 2
+      WC(1,10) = 0.01   !test only
+      WC(1,11) = 0.01   !test only
+d395 3
+@
+
+
+2.9
+log
+@add tt_path in convert_grid
+@
+text
+@d16 1
+a16 1
+    "$Id: ScatSourceFunc.f90,v 2.8 2003/12/07 19:46:25 jonathan Exp $"
+d50 1
+a50 1
+      real(rk), intent(inout) :: TB_scat(:,:)  ! TB FROM SCATTERING PHASE FUNCTION
+d141 2
+a142 2
+!      WC(1,10) = 0.01   !test only
+!      WC(1,11) = 0.01   !test only
+d144 1
+d163 5
+a167 1
+        W0(K) = (W0(K)*cld_ext)/(cld_ext + ext_air(K))
+d169 1
+d311 2
+a312 1
+     enddo
+d337 2
+a338 1
+      PHI_90 = pi + PHI_angle
+d343 5
+a347 3
+          TT_SCAT(I,1) = ( TB_SCAT(I,JM)   * (THETA(JM+1)-PHI_90(I)) + &
+                       &   TB_SCAT(I,JM+1) * (PHI_90(I)-THETA(JM)) ) / &
+                       &   (THETA(JM+1)-THETA(JM))
+a378 1
+
+d395 3
+@
+
+
+2.8
+log
+@update for use in 2D cloud FWM
+@
+text
+@d16 1
+a16 1
+    "$Id: ScatSourceFunc.f90,v 2.7 2003/12/01 17:25:02 jonathan Exp $"
+d342 2
+a343 1
+  subroutine Convert_grid ( salb_path, cext_path, path_inds, beta_path_cloud, w0_path )
+d350 2
+d356 1
+d364 1
+d373 1
+d386 3
+@
+
+
+2.7
+log
+@add scat alb
+@
+text
+@d12 1
+a12 1
+  public :: T_Scat
+d16 1
+a16 1
+    "$Id: ScatSourceFunc.f90,v 2.6 2003/11/19 22:22:03 jonathan Exp $"
+d25 2
+a26 1
+   subroutine T_SCAT ( TEMP_AIR, FREQ, Z, Pres, VMRin, NS, NU, NUA, NAB, NR, NC, TB_SCAT, Scat_alb )  
+d52 1
+d75 1
+a75 1
+      real(rk) :: TB( NU, size(TEMP_AIR) ) ! TB IN FLAT PLANE GEOMETRY
+d81 1
+a81 1
+      real(rk) :: THETA(NU)    ! SCATTERING ANGLES
+d120 1
+a120 1
+
+d135 1
+a135 1
+      
+d139 2
+d163 1
+d309 64
+d380 3
+@
+
+
+2.6
+log
+@some update
+@
+text
+@d16 1
+a16 1
+    "$Id: ScatSourceFunc.f90,v 2.5 2003/11/17 18:04:45 jonathan Exp $"
+d25 1
+a25 1
+   subroutine T_SCAT ( TEMP_AIR, FREQ, Z, Pres, VMRin, NS, NU, NUA, NAB, NR, NC, TB_SCAT )  
+d49 2
+a50 1
+      real(rk), intent(inout) :: TB_scat(:,:) ! TB FROM SCATTERING PHASE FUNCTION
+d156 1
+a156 1
+            dtau(k)= D_mid_Z(K-1) * (cld_ext + ext_air(K))
+d158 1
+d295 2
+a296 2
+     do IP=1,NU
+         do K=1,L
+d299 1
+d311 3
+@
+
+
+2.5
+log
+@correct working version
+@
+text
+@d16 1
+a16 1
+    "$Id: ScatSourceFunc.f90,v 2.3 2003/10/29 17:22:35 jonathan Exp $"
+d25 1
+a25 1
+   subroutine T_SCAT ( TEMP_AIR, FREQ, Z, Pres, VMRin, NS, NU, NUA, NAB, NR, NC, TSCAT )  
+d49 1
+a49 1
+      real(rk), intent(out) :: TScat(:,:) ! TB FROM SCATTERING PHASE FUNCTION
+d62 1
+d79 1
+d112 1
+a112 1
+      L = size(temp_air,1) ! == size(tscat,1)
+d114 2
+a115 1
+      Tscat = 0.0_rk
+d136 2
+a137 2
+      WC(1,10) = 0.01   !test only
+      WC(1,11) = 0.01   !test only
+d140 1
+a140 9
+!      print*, NS
+!      print*, TEMP_AIR, VMRin(1,:), VMRin(2,:), VMRin(3,:)
+
+!      print*, TEMP_AIR
+
+!      print*, Pres
+!      stop
+
+      CALL get_beta_clear ( L, FREQ, TEMP_AIR, Pres, VMRin, NU, NS, dtau )
+a143 1
+!        print*, Z(I), mid_Z(I)
+a145 1
+
+a147 1
+!        print*, Z(I), mid_Z(I), D_mid_Z(I)
+a148 1
+!      stop
+d150 1
+a150 2
+
+      do K=2,L-1
+d153 4
+a156 2
+        dtau(k)= D_mid_Z(K-1) *cld_ext
+!        print*, dtau(k), D_mid_Z(K-1), cld_ext, TEMP_AIR(K), WC(1,K), W0(K)
+d158 1
+a158 1
+      dtau(1)=dtau(2)
+d160 1
+a160 2
+!      STOP
+
+d236 1
+a236 1
+!            print*, TB(I,K), I, K
+a237 1
+!            stop
+d267 1
+a267 1
+!           print*, TB(I,K), I,K
+d269 1
+a269 1
+!           stop
+d289 11
+a299 1
+   end subroutine T_SCAT
+d308 3
+@
+
+
+2.4
+log
+@add stuff for use later in cld model
+@
+text
+@d25 1
+a25 1
+   subroutine T_SCAT ( TEMP_AIR, FREQ, Z, VMRin, NS, NU, NUA, NAB, NR, NC, TSCAT )  
+d34 1
+d40 1
+a40 1
+
+d99 3
+d137 21
+a157 5
+!         under construction
+!         CALL CLEAR_SKY(L-1,NU,TS,S,LORS,SWIND,                         &
+!              &         YZ,YP,YT,YQ,VMR,NS,                             &
+!              &         FREQUENCY(IFR),RS,U,TEMP,Z,TAU0,tau_wetAll,     &
+!              &         tau_dry,Catalog, Bill_data, LosVel, i_saturation ) 
+d159 3
+a161 2
+      do K=1,L-1
+        call get_beta_cloud ( FREQ, TEMP_AIR(K), WC(:,K), 1000,        &
+d163 2
+a164 2
+!        print*, FREQ, TEMP_AIR(K), WC(1,K), cld_ext, W0(K)
+        dtau(k)=(Z(K+1)-Z(K))*cld_ext
+d166 2
+a167 1
+
+d245 1
+a245 1
+
+d247 1
+d277 1
+a277 1
+
+d279 1
+a279 1
+
+d298 1
+a298 1
+
+@
+
+
+2.3
+log
+@fix bug
+@
+text
+@d16 1
+a16 1
+    "$Id: ScatSourceFunc.f90,v 2.2 2003/10/28 22:06:37 jonathan Exp $"
+d25 1
+a25 1
+   subroutine T_SCAT ( TEMP_AIR, FREQ, Z, NU, NUA, NAB, NR, NC, TSCAT )  
+d27 7
+a33 7
+      use Cloud_extinction, only: Get_beta_cloud
+      use CRREXP_m,         only: RREXP    ! ( exp(x)-1 ) / x, for Planck fn.
+      use Interpack,        only: LOCATE
+      use MLSCommon,        only: RK => R8 ! working REAL kind
+      use Physics,          only: H_OVER_K ! h/k in Kelvin/MHz
+      use ScatteringAngle,  only: Angle
+      use Units,            only: Pi
+d39 1
+d45 3
+d133 1
+d285 3
+@
+
+
+2.2
+log
+@add Z as input variable for later use
+@
+text
+@d16 1
+a16 1
+    "$Id: ScatSourceFunc.f90,v 2.1 2003/05/05 23:00:25 livesey Exp $"
+a98 1
+      integer :: NU                       ! Number of scattering angles
+a121 1
+
+d129 5
+d280 3
+@
+
+
+2.1
+log
+@Merged in feb03 newfwm branch
+@
+text
+@d16 1
+a16 1
+    "$Id$"
+d19 1
+a19 1
+    "$RCSfile$"
+d25 1
+a25 1
+   subroutine T_SCAT ( TEMP_AIR, FREQ, NUA, NAB, NR, NC, TSCAT )  
+d38 2
+d57 1
+a57 1
+      real(rk) :: DU(size(tscat,2))       ! DELTA U
+d61 1
+a61 1
+      real(rk) :: PHH( size(tscat,2), size(TEMP_AIR) )
+d64 1
+a64 1
+      real(rk) :: RS( size(tscat,2)/2 )
+d66 1
+a66 1
+      real(rk) :: TB( size(tscat,2), size(TEMP_AIR) ) ! TB IN FLAT PLANE GEOMETRY
+d68 1
+a68 1
+      real(rk) :: TB0 ( size(tscat,2) )   ! TB AT THE SURFACE
+d71 2
+a72 2
+      real(rk) :: THETAI(size(tscat,2),size(tscat,2),NUA) ! ANGLES FOR INCIDENT TB
+      real(rk) :: THETA(size(tscat,2))    ! SCATTERING ANGLES
+d76 1
+a76 1
+      real(rk) :: U1(size(tscat,2))
+d80 2
+a81 2
+      real(rk) :: UI(size(tscat,2),size(tscat,2),NUA) ! COSINES OF THETAI
+      real(rk) :: U(size(tscat,2))        ! COSINES OF THETA
+a103 1
+      NU = size(tscat,2)
+d106 1
+a122 2
+      WC(1,10) = 0.01
+      WC(1,11) = 0.01
+d124 8
+a131 1
+      do K=1,L
+d135 1
+a135 1
+        dtau(k)=0._rk
+d276 4
+a279 1
+! $Log$
+@
+
+
+1.1
+log
+@file ScatSourceFunc.f90 was initially added on branch newfwm-feb03.
+@
+text
+@d1 296
+@
+
+
+1.1.2.1
+log
+@new scaterring source module in construction
+@
+text
+@a0 172
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+module ScatSourceFunc
+
+! -------------------------------------------------------------------------  
+! PERFORM ITERATIVE RADIATIVE TRANSFER CALCULATION
+! -------------------------------------------------------------------------
+
+      use MLSCommon, only: r8 
+      use Units     
+      use ScatteringAngle,         only: ANGLE
+      IMPLICIT NONE
+      Private
+      Public :: T_scat
+
+ !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm =                          &
+    "$Id: ScatSourceFunc.f90,v 1.00 2003/02/03 19:24:46 jonathan Exp $"
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName=                       &
+    "$RCSfile: ScatSourceFunc.f90,v $"
+  private :: not_used_here 
+ !---------------------------------------------------------------------------
+      
+contains
+
+      SUBROUTINE T_SCAT(L, TEMP_AIR, FREQ, TSCAT, NU, NUA,  &
+                    &   U, DU, UA, THETA, PHI, UI, THETAI )  
+
+      use MLSCommon, only: r8
+
+      IMPLICIT NONE
+
+      INTEGER :: NU, NUA, L
+      
+      REAL(r8) :: FIRST                   ! FIRST GUESS OF UPWELLING TB
+      PARAMETER (FIRST=250._r8)
+
+      REAL(r8) :: U(NU), DU(NU), THETA(NU), PHI(NUA), THETAI(NU,NU,NUA), &
+                  & UI(NU,NU,NUA), UA(NUA) 
+      REAL(r8) :: TEMP_AIR(L)           ! MEAN AIR TEMPERATURE AT L
+
+      REAL(r8), dimension( size(U), size(TEMP_AIR) ) :: PHH
+      REAL(r8), dimension( size(U)/2 ) :: RS
+      REAL(r8), dimension( size(TEMP_AIR) ) :: W0
+
+      REAL(r8), dimension( size(TEMP_AIR) ) :: dTAU     ! Optical depth increment at each layer 
+      REAL(r8) :: FREQ                    ! FREQUENCY (GHz)
+      REAL(r8) :: TSPACE                  ! COSMIC BACKGROUND RADIANCE
+      REAL(r8) :: TS                      ! SURFACE TEMPERATURE (K)
+      REAL(r8), dimension( size(TEMP_AIR) ) :: TEMP     ! BRIGHTNESS TEMPERATURE FROM TEMP_AIR
+      REAL(r8), dimension( size(U) ) :: TB0               ! TB AT THE SURFACE
+      REAL(r8) :: TAVG                    ! TB AVERAGED OVER PHI AT A GIVEN U
+      REAL(r8), dimension( size(U), size(TEMP_AIR) ) :: TB   ! TB IN FLAT PLANE GEOMETRY
+                                          ! 1->NU/2 UPWELLING, NU/2->NU DOWNWELLING
+      REAL(r8) :: TSCAT(NU,L)         ! TB FROM SCATTERING PHASE FUNCTION
+
+      INTEGER, dimension( size(TEMP_AIR) ) :: LMIN  ! LOWEST LAYER REACHED BY A TANGENT HT
+
+      INTEGER :: ICON                     ! CONTROL SWITCH
+                                          ! 3 = NEAR SIDE CLOUD ONLY
+
+      REAL(r8),dimension(size(TEMP_AIR),size(TEMP_AIR)) :: UAVE 
+                                                 ! INCIDENT ANGLES FOR EACH TANGENT HT
+      REAL(r8) :: UEFF                    ! EFFECTIVE U BETWEEN K AND K+1
+
+      REAL(r8) :: ITS0                    ! NO. OF MAXIMUM ITERATIONS
+      REAL(r8) :: DELTA                   ! DELTA TB FOR CONVERGENCE CHECK
+
+      INTEGER :: I,J,K,K1,ITS,ITT,IH,IP,JM,IND,ISPI
+      REAL(r8) :: D1,D2,DY,TGT, jj0
+!      REAL(r8) :: WK, WK1, U1(NU), UU, X2, RSAVG, XTB(L+1), WW0, CHK(L+1)
+      REAL(r8) :: tsource, wwk, wwk1,www0
+
+!-------------------------------------------------------------------------------------
+
+      TB    = 0.0_r8
+      Tscat = 0.0_r8
+
+!------------------------------------------------
+!     FIND BRIGHTNESS TEMPERATURE AT EACH LAYER
+!------------------------------------------------
+
+!!      DO K=1,L
+!!         CALL PLANCK(TEMP_AIR(K),FREQ,TEMP(K))
+!!      ENDDO
+
+!!      CALL PLANCK(2.7_r8,FREQ,TSPACE)
+
+      CALL ANGLE(THETA,U,DU,NU,PHI,UA,NUA,UI,THETAI)
+
+!------------------------------------------------
+!     DETERMINE NO. OF ITERATIONS
+!------------------------------------------------
+!!      ITS0=1
+!!      DELTA=0.01_r8
+!!      jj0=1.e-9_r8
+!!
+!!      DO K=1,L
+!!         CHK(K)=0._r8
+!!         DO ISPI=1,N
+!!            CHK(K)=CHK(K)+W0(ISPI,K)
+!!         ENDDO
+!!         IF(CHK(K).NE.0.) ITS0=20
+!!      ENDDO
+      
+!------------------------------------------------
+!     INITIAL GUESS OF TB, L=0 IS THE SURFACE
+!------------------------------------------------
+!!      DO K=1,L+1
+!!         XTB(K)=0._r8
+!!         DO I=1,NU/2
+!!            TB(I,K)=FIRST
+!!         ENDDO
+!!         DO I=NU/2+1,NU
+!!            TB(I,K)=TSPACE
+!!         ENDDO
+!!      ENDDO
+
+!------------------------------------------------
+!     START ITERATION
+!------------------------------------------------
+!!      ITS=1
+!! 1000 CONTINUE
+!!
+!!      DO J=1,NU/2
+!!         TB(J+NU/2,L+1)=TSPACE         ! BOUNDARY CONDITION AT TOP OF ATMOS
+!!      ENDDO
+
+!------------------------------------------------
+!     COMPUTING TSCAT FOR EACH ANGLE AND LAYER
+!------------------------------------------------
+
+!!      DO ISPI=1,N                         
+!!         DO 1009 IP=1,NU
+!!            U1(IP)=-U(IP)
+!!            DO 1008 K=1,L
+!!               TSCAT(ISPI,IP,K)=0.0_r8
+!!               IF(PHH(ISPI,1,K).NE.0._r8)THEN 
+!!                  DO IH=1,NU
+!!                     TAVG=0._r8
+!!                     DO J=1,NUA
+!!                        K1=K
+!!                        IF(THETAI(IP,IH,J).LT.PI/2) K1=K-1
+!!                        IF(K1 .EQ. 0) K1 = 1
+!!                        IF(THETAI(IP,IH,J).GT.PI/2) K1=K+1
+!!                        CALL LOCATE(THETA,NU,NU,THETAI(IP,IH,J),JM)
+!!                        WK=(TB(JM+1,K1)*(THETAI(IP,IH,J)-THETA(JM))+  &
+!!     &                     TB(JM,K1)*(THETA(JM+1)-THETAI(IP,IH,J)))/  &
+!!     &                     (THETA(JM+1)-THETA(JM))
+!!                        TAVG = TAVG + WK*(PHI(2)-PHI(1))/2._r8/PI
+!!                     ENDDO
+!!                     TSCAT(ISPI,IP,K)=TSCAT(ISPI,IP,K)+               &
+!!     &                                2._r8*PHH(ISPI,IH,K)*TAVG*DU(IH)
+!!                  ENDDO
+!!               ELSE
+!!                 TSCAT(ISPI,IP,K)=0._r8         !CLEAR SKY
+!!               ENDIF
+!! 1008       CONTINUE
+!! 1009    CONTINUE
+!!      ENDDO
+!!
+      END SUBROUTINE T_SCAT
+
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
+end module ScatSourceFunc
+
+! $Log: ScatSourceFunc.f90,v $
+@
+
+
+1.1.2.2
+log
+@first working version
+@
+text
+@d12 1
+a12 2
+      use Interpack, only: LOCATE
+
+d19 1
+a19 1
+    "$Id: ScatSourceFunc.f90,v 1.1.2.1 2003/03/28 18:14:53 jonathan Exp $"
+d29 1
+a29 2
+                    &   U, DU, UA, THETA, PHI, UI, THETAI,  &
+                    &   IPSD, NAB, NR, NC )  
+d31 1
+a31 3
+      use ScatteringAngle,         only: ANGLE
+      use Blackbody,               only: PLANCK
+      use cloud_extinction,        only: get_beta_cloud
+d35 1
+a35 1
+      INTEGER :: NU, NUA, L, NAB, NR, NC
+d41 2
+a42 3
+                  & UI(NU,NU,NUA), UA(NUA)
+ 
+      REAL(r8) :: TEMP_AIR(L)             ! MEAN AIR TEMPERATURE AT L
+d48 2
+a49 2
+      REAL(r8), dimension( size(TEMP_AIR) ) :: dTAU        ! Optical depth increment at each layer 
+      REAL(r8) :: FREQ                    ! FREQUENCY 
+d52 2
+a53 2
+      REAL(r8), dimension( size(TEMP_AIR) ) :: TEMP        ! BRIGHTNESS TEMPERATURE FROM TEMP_AIR
+      REAL(r8), dimension( size(U) ) :: TB0                ! TB AT THE SURFACE
+d55 1
+a55 1
+      REAL(r8), dimension( size(U), size(TEMP_AIR) ) :: TB ! TB IN FLAT PLANE GEOMETRY
+d57 1
+a57 1
+      REAL(r8) :: TSCAT(NU,L)             ! TB FROM SCATTERING PHASE FUNCTION
+d59 1
+a59 1
+      INTEGER, dimension( size(TEMP_AIR) ) :: LMIN         ! LOWEST LAYER REACHED BY A TANGENT HT
+d65 2
+a66 1
+                                          ! INCIDENT ANGLES FOR EACH TANGENT HT
+a67 3
+      REAL(r8), dimension (2, size(TEMP_AIR) ) :: WC
+
+      REAL(r8) :: UEFF                    ! EFFECTIVE U BETWEEN K AND K+1
+a69 2
+      REAL(r8) :: CLD_EXT
+      INTEGER, intent(in) :: IPSD ( size(TEMP_AIR) )
+d73 1
+a73 1
+      REAL(r8) :: WK, WK1, U1(size(U)), UU, X2, RSAVG, XTB(size(TEMP_AIR)), WW0, CHK(size(TEMP_AIR))
+d81 1
+a81 1
+!--------------------------------------------------
+d83 5
+a87 1
+!--------------------------------------------------
+d89 1
+a89 3
+      DO K=1,L
+         CALL PLANCK(TEMP_AIR(K),FREQ/1.e3,TEMP(K))
+      ENDDO
+a90 1
+      CALL PLANCK(2.7_r8,FREQ/1.e3,TSPACE)
+d93 1
+a93 5
+      call get_beta_cloud (FREQ, TEMP_AIR(K),                          &
+                          &  WC(1:N,K), IPSD(K), NC, NU, NUA, NAB, NR, &
+                          &  cld_ext, W0(K), PHH(1:NU,K)                )      
+
+!----------------------------------------------------
+d95 12
+a106 9
+!----------------------------------------------------
+
+      ITS0=1
+      DELTA=0.01_r8
+      jj0=1.e-9_r8
+
+      DO K=1,L
+         IF(W0(K).NE.0.) ITS0=20
+      ENDDO
+d111 9
+a119 9
+      DO K=1,L+1
+         XTB(K)=0._r8
+         DO I=1,NU/2
+            TB(I,K)=FIRST
+         ENDDO
+         DO I=NU/2+1,NU
+            TB(I,K)=TSPACE
+         ENDDO
+      ENDDO
+d124 6
+a129 7
+      ITS=1
+    
+ 1000 CONTINUE
+
+      DO J=1,NU/2
+         TB(J+NU/2,L+1)=TSPACE         ! BOUNDARY CONDITION AT TOP OF ATMOS
+      ENDDO
+d135 29
+a163 27
+         DO 1009 IP=1,NU
+            U1(IP)=-U(IP)
+            DO 1008 K=1,L
+               TSCAT(IP,K)=0.0_r8
+               IF(PHH(1,K).NE.0._r8)THEN 
+                  DO IH=1,NU
+                     TAVG=0._r8
+                     DO J=1,NUA
+                        K1=K
+                        IF(THETAI(IP,IH,J).LT.PI/2) K1=K-1
+                        IF(K1 .EQ. 0) K1 = 1
+                        IF(THETAI(IP,IH,J).GT.PI/2) K1=K+1
+                        CALL LOCATE(THETA,NU,NU,THETAI(IP,IH,J),JM)
+                        WK=(TB(JM+1,K1)*(THETAI(IP,IH,J)-THETA(JM))+  &
+      &                     TB(JM,K1)*(THETA(JM+1)-THETAI(IP,IH,J)))/  &
+      &                     (THETA(JM+1)-THETA(JM))
+                        TAVG = TAVG + WK*(PHI(2)-PHI(1))/2._r8/PI
+                     ENDDO
+                     TSCAT(IP,K)=TSCAT(IP,K)+               &
+      &                                2._r8*PHH(IH,K)*TAVG*DU(IH)
+                  ENDDO
+               ELSE
+                 TSCAT(IP,K)=0._r8         !CLEAR SKY
+               ENDIF
+ 1008       CONTINUE
+ 1009    CONTINUE
+
+a172 3
+! Revision 1.1.2.1  2003/03/28 18:14:53  jonathan
+! new scaterring source module in construction
+!
+@
+
+
+1.1.2.3
+log
+@modified cal to T_scat
+@
+text
+@d20 1
+a20 1
+    "$Id: ScatSourceFunc.f90,v 1.1.2.2 2003/04/04 20:24:30 jonathan Exp $"
+d31 1
+a31 1
+                    &   NAB, NR, NC )  
+d78 1
+d101 3
+a103 6
+      DO K=1,L
+
+      call get_beta_cloud (FREQ, TEMP_AIR(K),                        &
+                          &  WC(:,K), 1000, NC, NU, NUA, NAB, NR, &
+                          &  cld_ext, W0(K), PHH(:,K)                )      
+      END DO
+d117 1
+a117 1
+!---------------------------------------------------
+d119 2
+a120 2
+!---------------------------------------------------
+      DO K=1,L
+d138 1
+a138 1
+         TB(J+NU/2,L)=TSPACE         ! BOUNDARY CONDITION AT TOP OF ATMOS
+d147 1
+a147 1
+            DO 1008 K=1,L-1
+d158 1
+a158 1
+                        WK=(TB(JM+1,K1)*(THETAI(IP,IH,J)-THETA(JM))+   &
+a180 3
+! Revision 1.1.2.2  2003/04/04 20:24:30  jonathan
+! first working version
+!
+@
+
+
+1.1.2.4
+log
+@fix bug
+@
+text
+@d20 1
+a20 1
+    "$Id: ScatSourceFunc.f90,v 1.1.2.3 2003/04/07 17:14:00 jonathan Exp $"
+a98 3
+      
+      WC(1,10) = 0.01
+      WC(1,11) = 0.01
+d101 4
+a104 3
+        call get_beta_cloud (FREQ, TEMP_AIR(K), WC(:,K), 1000, &
+          &  NC, NU, NUA, NAB, NR, cld_ext, W0(K), PHH(:,K)    )      
+!        print*, FREQ, TEMP_AIR(K), WC(1,K), cld_ext, W0(K)
+a106 2
+!      STOP
+
+a182 3
+! Revision 1.1.2.3  2003/04/07 17:14:00  jonathan
+! modified cal to T_scat
+!
+@
+
+
+1.1.2.5
+log
+@Move USE statements down to procedure scope, futzing
+@
+text
+@d10 7
+a16 3
+  implicit NONE
+  private
+  public :: T_Scat
+d20 1
+a20 1
+    "$Id: ScatSourceFunc.f90,v 1.1.2.4 2003/04/10 16:13:45 jonathan Exp $"
+d29 1
+a29 1
+   subroutine T_SCAT(L, TEMP_AIR, FREQ, TSCAT, NU, NUA,  &
+d33 3
+a35 6
+      use Blackbody,               only: Planck
+      use Cloud_extinction,        only: Get_beta_cloud
+      use Interpack,               only: LOCATE
+      use MLSCommon,               only: r8 
+      use ScatteringAngle,         only: Angle
+      use Units,                   only: Pi
+d37 3
+a39 1
+      integer :: NU, NUA, L, NAB, NR, NC
+d41 2
+a42 2
+      real(r8), parameter :: FIRST = 250._r8 ! FIRST GUESS OF UPWELLING TB
+      real(r8), parameter :: Pi2 = 0.5 * Pi
+d44 1
+a44 1
+      real(r8) :: U(NU), DU(NU), THETA(NU), PHI(NUA), THETAI(NU,NU,NUA), &
+d47 1
+a47 1
+      real(r8) :: TEMP_AIR(L)             ! MEAN AIR TEMPERATURE AT L
+d49 12
+a60 12
+      real(r8), dimension( size(U), size(TEMP_AIR) ) :: PHH
+      real(r8), dimension( size(U)/2 ) :: RS
+      real(r8), dimension( size(TEMP_AIR) ) :: W0
+
+      real(r8), dimension( size(TEMP_AIR) ) :: dTAU        ! Optical depth increment at each layer 
+      real(r8) :: FREQ                    ! FREQUENCY 
+      real(r8) :: TSPACE                  ! COSMIC BACKGROUND RADIANCE
+      real(r8) :: TS                      ! SURFACE TEMPERATURE (K)
+      real(r8), dimension( size(TEMP_AIR) ) :: TEMP        ! BRIGHTNESS TEMPERATURE FROM TEMP_AIR
+      real(r8), dimension( size(U) ) :: TB0                ! TB AT THE SURFACE
+      real(r8) :: TAVG                    ! TB AVERAGED OVER PHI AT A GIVEN U
+      real(r8), dimension( size(U), size(TEMP_AIR) ) :: TB ! TB IN FLAT PLANE GEOMETRY
+d62 1
+a62 1
+      real(r8) :: TSCAT(NU,L)             ! TB FROM SCATTERING PHASE FUNCTION
+d64 1
+a64 1
+      integer, dimension( size(TEMP_AIR) ) :: LMIN         ! LOWEST LAYER REACHED BY A TANGENT HT
+d66 1
+a66 1
+      integer :: ICON                     ! CONTROL SWITCH
+d69 1
+a69 1
+      real(r8),dimension(size(TEMP_AIR),size(TEMP_AIR)) :: UAVE 
+d72 1
+a72 1
+      real(r8), dimension (2, size(TEMP_AIR) ) :: WC
+d74 9
+a82 9
+      real(r8) :: UEFF                    ! EFFECTIVE U BETWEEN K AND K+1
+      real(r8) :: ITS0                    ! NO. OF MAXIMUM ITERATIONS
+      real(r8) :: DELTA                   ! DELTA TB FOR CONVERGENCE CHECK
+      real(r8) :: CLD_EXT
+
+      integer :: I,J,K,K1,ITS,ITT,IH,IP,JM,IND,ISPI
+      real(r8) :: D1,D2,DY,TGT, jj0
+      real(r8) :: WK, WK1, U1(size(U)), UU, X2, RSAVG, XTB(size(TEMP_AIR)), WW0, CHK(size(TEMP_AIR))
+      real(r8) :: tsource, wwk, wwk1,www0
+d93 3
+a95 3
+      do K=1,L
+         call PLANCK(TEMP_AIR(K),FREQ/1.e3,TEMP(K))
+      end do
+d97 2
+a98 2
+      call PLANCK(2.7_r8,FREQ/1.e3,TSPACE)
+      call ANGLE(THETA,U,DU,NU,PHI,UA,NUA,UI,THETAI)
+d103 3
+a105 3
+      do K=1,L
+        call get_beta_cloud ( FREQ, TEMP_AIR(K), WC(:,K), 1000,        &
+     &                 NC, NU, NUA, NAB, NR, cld_ext, W0(K), PHH(:,K) )      
+d107 1
+a107 1
+      end do
+d119 3
+a121 1
+      if ( any(w0 /= 0.0) ) ITS0=20
+d126 1
+a126 1
+      do K=1,L
+d128 7
+a134 3
+         TB(1:NU/2,K)=FIRST
+         TB(NU/2+1:NU,K)=TSPACE
+      end do
+d141 5
+a145 1
+      TB(NU/2+1:NU,L)=TSPACE         ! BOUNDARY CONDITION AT TOP OF ATMOS
+d151 26
+a176 26
+      do IP=1,NU
+         U1(IP)=-U(IP)
+         do K=1,L-1
+            TSCAT(IP,K)=0.0_r8
+            if ( PHH(1,K) /= 0._r8 ) then 
+               do IH=1,NU
+                  TAVG=0.0_r8
+                  do J=1,NUA
+                     K1=K
+                     if ( THETAI(IP,IH,J) < pi2) K1=K-1
+                     if ( K1 .EQ. 0) K1 = 1
+                     if ( THETAI(IP,IH,J) > pi2) K1=K+1
+                     call LOCATE(THETA,NU,NU,THETAI(IP,IH,J),JM)
+                     WK=(TB(JM+1,K1)*(THETAI(IP,IH,J)-THETA(JM))+      &
+     &                   TB(JM,K1)*(THETA(JM+1)-THETAI(IP,IH,J)))/     &
+     &                   (THETA(JM+1)-THETA(JM))
+                     TAVG = TAVG + WK*(PHI(2)-PHI(1))/2._r8/PI
+                  end do
+                  TSCAT(IP,K)=TSCAT(IP,K)+                             &
+     &                              2._r8*PHH(IH,K)*TAVG*DU(IH)
+               end do
+            else
+              TSCAT(IP,K)=0._r8         !CLEAR SKY
+            end if
+         end do
+      end do
+d178 1
+a178 1
+   end subroutine T_SCAT
+a186 3
+! Revision 1.1.2.4  2003/04/10 16:13:45  jonathan
+! fix bug
+!
+@
+
+
+1.1.2.6
+log
+@Planck now expects frequency in MHz
+@
+text
+@d16 1
+a16 1
+    "$Id: ScatSourceFunc.f90,v 1.1.2.5 2003/04/16 00:29:17 vsnyder Exp $"
+d91 1
+a91 1
+         call PLANCK(TEMP_AIR(K),FREQ,TEMP(K))
+d94 1
+a94 1
+      call PLANCK(2.7_r8,FREQ,TSPACE)
+a173 3
+! Revision 1.1.2.5  2003/04/16 00:29:17  vsnyder
+! Move USE statements down to procedure scope, futzing
+!
+@
+
+
+1.1.2.7
+log
+@Move working storage into T_Scat, using automatic arrays.  Use assumed-
+shape dummy arguments.  Alphabetize declarations of local variables.
+Use RREXP to calculate Planck blackbody function, to avoid cancellation
+for small values of h nu / k T.
+@
+text
+@d16 1
+a16 1
+    "$Id: ScatSourceFunc.f90,v 1.1.2.6 2003/04/16 17:26:09 vsnyder Exp $"
+d25 10
+a34 1
+   subroutine T_SCAT ( TEMP_AIR, FREQ, NUA, NAB, NR, NC, TSCAT )  
+d36 22
+a57 38
+      use Cloud_extinction, only: Get_beta_cloud
+      use CRREXP_m,         only: RREXP    ! ( exp(x)-1 ) / x, for Planck fn.
+      use Interpack,        only: LOCATE
+      use MLSCommon,        only: RK => R8 ! working REAL kind
+      use Physics,          only: H_OVER_K ! h/k in Kelvin/MHz
+      use ScatteringAngle,  only: Angle
+      use Units,            only: Pi
+
+    ! Arguments
+      real(rk), intent(in) :: Temp_Air(:) ! MEAN AIR TEMPERATURES, Kelvin
+      real(rk), intent(in) :: Freq        ! FREQUENCY, MHz
+      integer, intent(in) :: NUA          ! Number of azimuth angles
+      integer, intent(in) :: NAB          ! Number of AB terms
+      integer, intent(in) :: NR           ! Number of size bins
+      integer, intent(in) :: NC           ! Number of cloud species
+      real(rk), intent(out) :: TScat(:,:) ! TB FROM SCATTERING PHASE FUNCTION
+
+    ! Local variables
+      real(rk), parameter :: COLD = 2.7_rk   ! kelvins
+      real(rk), parameter :: FIRST = 250._rk ! FIRST GUESS OF UPWELLING TB
+      real(rk), parameter :: Pi2 = 0.5 * Pi
+
+      real(rk) :: CHK(size(TEMP_AIR))
+      real(rk) :: CLD_EXT
+      real(rk) :: D1
+      real(rk) :: D2
+      real(rk) :: DELTA                   ! DELTA TB FOR CONVERGENCE CHECK
+      real(rk) :: dTAU( size(temp_air) )  ! Optical depth increment at each layer 
+      real(rk) :: DU(size(tscat,2))       ! DELTA U
+      real(rk) :: DY
+      real(rk) :: ITS0                    ! NO. OF MAXIMUM ITERATIONS
+      real(rk) :: JJ0
+      real(rk) :: PHH( size(tscat,2), size(TEMP_AIR) )
+      real(rk) :: PHI(NUA)                ! SCATTERING AZIMUTH ANGLES
+      real(rk) :: RSAVG
+      real(rk) :: RS( size(tscat,2)/2 )
+      real(rk) :: TAVG                    ! TB AVERAGED OVER PHI AT A GIVEN U
+      real(rk) :: TB( size(tscat,2), size(TEMP_AIR) ) ! TB IN FLAT PLANE GEOMETRY
+d59 3
+a61 25
+      real(rk) :: TB0 ( size(tscat,2) )   ! TB AT THE SURFACE
+      real(rk) :: TEMP( size(temp_air) )  ! BRIGHTNESS TEMPERATURE FROM TEMP_AIR
+      real(rk) :: TGT
+      real(rk) :: THETAI(size(tscat,2),size(tscat,2),NUA) ! ANGLES FOR INCIDENT TB
+      real(rk) :: THETA(size(tscat,2))    ! SCATTERING ANGLES
+      real(rk) :: Tsource
+      real(rk) :: TSPACE                  ! COSMIC BACKGROUND RADIANCE
+      real(rk) :: TS                      ! SURFACE TEMPERATURE (K)
+      real(rk) :: U1(size(tscat,2))
+      real(rk) :: UA(NUA)                 ! COSINES OF SCATTERING AZIMUTH ANGLES
+      real(rk) :: UAVE(size(temp_air),size(temp_air)) ! INCIDENT ANGLES FOR EACH TANGENT HT
+      real(rk) :: UEFF                    ! EFFECTIVE U BETWEEN K AND K+1
+      real(rk) :: UI(size(tscat,2),size(tscat,2),NUA) ! COSINES OF THETAI
+      real(rk) :: U(size(tscat,2))        ! COSINES OF THETA
+      real(rk) :: UU
+      real(rk) :: W0( size(temp_air) )
+      real(rk) :: WC(2, size(temp_air) )
+      real(rk) :: WK
+      real(rk) :: WK1
+      real(rk) :: WW0
+      real(rk) :: Wwk
+      real(rk) :: Wwk1
+      real(rk) :: Www0
+      real(rk) :: X2
+      real(rk) :: XTB(size(TEMP_AIR))
+a62 1
+      integer :: I
+d65 15
+a79 3
+      integer :: IH, IND, IP, ISPI, ITS, ITT, J, JM, K, K1, L
+      integer :: LMIN( size(temp_air) )   ! LOWEST LAYER REACHED BY A TANGENT HT
+      integer :: NU                       ! Number of scattering angles
+d83 2
+a84 4
+      L = size(temp_air,1) ! == size(tscat,1)
+      NU = size(tscat,2)
+      TB    = 0.0_rk
+      Tscat = 0.0_rk
+d90 3
+a92 8
+      !{Planck black body function:
+      ! $\frac{\frac{h \nu}k}{\exp\left(\frac{h \nu}{k T}\right)-1}$.
+      ! We need to be careful how this is calculated because $\exp x -1$ has
+      ! cancellation for small $x$.  $\frac{h \nu}{k T}$ is $\approx 0.04$ for
+      ! $\nu \approx 240$ GHz and $T \approx 250$ K.
+
+      temp = temp_air / rrexp(h_over_k * freq / temp_air)
+      tspace = cold / rrexp(h_over_k * freq / cold)
+d94 1
+d113 2
+a114 2
+      DELTA=0.01_rk
+      jj0=1.e-9_rk
+d122 1
+a122 1
+         XTB(K)=0._rk
+d141 2
+a142 2
+            TSCAT(IP,K)=0.0_rk
+            if ( PHH(1,K) /= 0._rk ) then 
+d144 1
+a144 1
+                  TAVG=0.0_rk
+d154 1
+a154 1
+                     TAVG = TAVG + WK*(PHI(2)-PHI(1))/2._rk/PI
+d157 1
+a157 1
+     &                              2._rk*PHH(IH,K)*TAVG*DU(IH)
+d160 1
+a160 1
+              TSCAT(IP,K)=0._rk         !CLEAR SKY
+a173 3
+! Revision 1.1.2.6  2003/04/16 17:26:09  vsnyder
+! Planck now expects frequency in MHz
+!
+@
+
+
+1.1.2.8
+log
+@update construction
+@
+text
+@d16 1
+a16 1
+    "$Id: ScatSourceFunc.f90,v 1.1.2.7 2003/04/16 19:31:43 vsnyder Exp $"
+a127 1
+        dtau(k)=0._rk
+a154 1
+ 1000 CONTINUE
+a188 70
+!------------------------------------
+!     COMPUTE TB AT ANGLES U
+!     INTEGRATION FROM TOP TO BOTTOM
+!------------------------------------
+      DO 1100 I=NU/2+1,NU
+         X2 = U(I)*U(I)
+         UEFF = ABS(U(I))
+         DO 1100 K=L-1,1,-1
+            WK=0._rk
+            WW0=0._rk
+               WK=WK+TSCAT(I,K)*W0(K)
+               WW0=WW0+W0(K)
+
+            tsource=(1-WW0)*TEMP(K)+WK
+
+            TB(I,K)=TB(I,K+1)*EXP(-dTAU(K)/UEFF)+           &
+     &              (1._rk-EXP(-dTAU(K)/UEFF))*tsource
+
+ 1100 CONTINUE
+
+!-----------------------------------------------------------------------
+!     DETERMINE SURFACE REFLECTION 
+!-----------------------------------------------------------------------
+      TS    = 288._rk
+
+      DO J=1,NU/2
+         RS(J)=0.05_rk
+         TB0(J)=TS*(1._rk-RS(J))+TB(J+NU/2,1)*RS(J)
+         TB(J,1) = TB0(J)
+      ENDDO
+
+!------------------------------------
+!     COMPUTE TB AT ANGLES U
+!     INTEGRATION FROM BOTTOM TO TOP
+!------------------------------------
+      DO 1200 I=1,NU/2
+        X2 = U(I)*U(I)
+        UEFF = ABS(U(I))
+        DO 1200 K=1,L-1
+          WK=0._rk
+           WW0=0._rk
+              WK=WK+TSCAT(I,K)*W0(K)
+              WW0=WW0+W0(K)
+
+           tsource=(1-WW0)*TEMP(K)+WK
+
+           TB(I,K+1)=TB(I,K)*EXP(-dTAU(K)/UEFF)+      &
+     &               (1._rk-EXP(-dTAU(K)/UEFF))*tsource
+
+ 1200 CONTINUE
+
+!------------------------------------
+!     CHECK CONVERGENCE
+!------------------------------------
+      IND=0
+      X2=0._rk
+      DO J=1,NU/2
+         X2=X2+(XTB(J)-TB(J,L))**2/NU
+         IF (ABS(XTB(J)-TB(J,L)) .GT. DELTA) IND=1
+      ENDDO
+ 
+      IF (IND.NE.0 .AND. ITS.LT.ITS0) THEN
+      DO J=1,NU
+         XTB(J)=TB(J,L)
+      ENDDO
+
+         ITS=ITS+1
+         GOTO 1000
+      ENDIF
+
+a197 6
+! Revision 1.1.2.7  2003/04/16 19:31:43  vsnyder
+! Move working storage into T_Scat, using automatic arrays.  Use assumed-
+! shape dummy arguments.  Alphabetize declarations of local variables.
+! Use RREXP to calculate Planck blackbody function, to avoid cancellation
+! for small values of h nu / k T.
+!
+@
+
+

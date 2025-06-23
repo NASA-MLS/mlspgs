@@ -1,0 +1,174 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.14
+	cfm-single-freq-0-1:1.1.0.12
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.10
+	mus-emls-1-70:1.1.0.8
+	rel-1-0-englocks-work:1.1.0.6
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2008.06.11.20.14.50;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.25in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9.00in
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+%\settowidth{\hW}{\bf wvs-005}
+\settowidth{\hW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    29 January 2001\hfill Page \thepage\ of \pageref{lastpage}\hfill{\bf
+    wvs-012}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Dave, Nathaniel\\
+Subject: \>Computing the covariance matrix\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 3pt
+\vspace{-20pt}
+
+One interpretation\footnote{Other interpretations of the covariance
+matrix are $\sigma^2 H^{-1} J^T J H^{-1} / (m-n)$ and $\sigma^2 H^{-1} /
+(m-n)$, where $H$ is the Hessian matrix, but these are far too expensive
+even to consider.  We hope the residual $\sigma$ is small, in which case
+$J^T J \approx H$, and therefore all three interpretations are
+approximately the same.} of the covariance matrix $C$ of a nonlinear
+least-squares problem is $C = \sigma^2 (J^T J)^{-1} / (m-n)$, where
+$\sigma$ is the norm of the residual, and $J$ is the $m \times n$
+Jacobian matrix.  Let $U$ be the Cholesky factor of $J^T J$, i.e.~$U$ is
+square, upper triangular and (hopefully) nonsingular, and $U^T U = J^T
+J$.  We have a matrix $\tilde U$ that is used to solve $A^T A \, \delta
+{\bf x} = A^T {\bf r}$ in each step of the Newton iteration, where $A$
+consists of the Jacobian, the a priori covariance and the
+Levenberg-Marquardt stabilization.  Unfortunately, it is less work to
+subtract the a priori covariance and the Levenberg-Marquardt
+stabilization from $A^T A$ and re-factor it than it is to update $\tilde
+U$ to get $U$.
+
+{\bf Problem:} Given $U$, compute $C$ such that $U^T U C = I$.  Since $U$
+is triangular, this seems superficially to be a simple two-backsolve
+problem:  Let $B = U C$; solve $U^T B = I$ for $B$, then solve $U C = B$
+for $C$.  In the case of dense matrices with scalar elements, the problem
+is this simple.
+
+In the MLS Level 2 software, however, we have very large sparse matrices,
+in which the elements are themselves sparse matrices, with one
+representation at the top level, and four different representations at
+the lower level.  At the lower level, two of the sparsity representations
+are column oriented, and the choice of sparse representation depends on
+the entire block.  Since the back solves work in opposite directions,
+back-solving twice would require to keep an entire block of columns of
+$B$, and then of $C$, before sparsifying them.  This may cause a storage
+problem.
+
+To avoid this problem, let $L = U^T$.  Observe that $C = (U^T U)^{-1} =
+U^{-1} U^{-T} = L^{-T} L^{-1}$.  To compute $L^{-1} = U^{-T}$,
+block-back-solve the equation $U^T B = L B = I$, \emph{viz}.
+
+\begin{equation}\label{B}
+B_{ik} =
+ U_{ii}^{-T} \left ( \Delta_{ik} - \sum_{j=k}^{i-1} U_{ji}^T B_{jk} \right )
+  = U_{ii}^{-T} R_{ik} , \, i = 1 (1) n, \, k = 1 (1) i,
+\end{equation}
+
+where $\Delta_{ik}$ is zero if $i \neq k$ and the appropriate-size
+identity matrix if $i = k$.  (Notice that $B_{ik} = 0$ for $i < k$.) 
+Since the diagonal elements of $U$, i.e.~$U_{ii}$, are triangular,
+equation (\ref{B}) can be formulated as a scalar back-solve operation for
+the equation $U_{ii}^T B_{ik} = R_{ik}$.
+
+Having $B$, and observing that $U_{ii}^{-1} = B_{ii}^T$, one could then
+block-back-solve $U C = B$ for $C$, \emph{viz}.
+
+\begin{equation}
+C_{ik} = B_{ii}^T \left ( B_{ik} - \sum_{j=i+1}^n U_{ij}C_{jk} \right ),
+\, i = n (-1) 1, \, k = i (1) n.
+\end{equation}
+
+This is undesirable, however, because as a consequence of the
+column-oriented sparsity representation, the matrix modules in the MLS
+Level 2 software are able to perform matrix product operations only of
+the form $X^T Y$, i.e.~computing $U_{ij}C_{jk}$ is difficult.  The
+back-solve can be formulated column-wise instead of row-wise, but this
+results in what are called SAXPY operations, which are unkind to the
+cache on a non-vector computer.  Instead, compute $C = L^{-T} L^{-1}$. 
+The back-solve form and the matrix-product form have the same cost --
+they both require $O(n^3)$ operations.  Also observe that $C$ is
+symmetric, so that one need only compute its upper (or lower) triangle.
+
+Observe that equation (\ref{B}) and evaluating $L^{-T} L^{-1}$ involve
+matrix product operations only of the form $X^T Y$.
+
+It may occur that one ultimately wants only the diagonal elements of $C$. 
+There is some cost that can be avoided in this case:  Compute $L^{-1}$,
+but then compute only the diagonal elements of $L^{-T} L^{-1}$.
+
+\label{lastpage}
+\end{document}
+% $Id: $
+@

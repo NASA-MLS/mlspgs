@@ -1,0 +1,1917 @@
+head	2.24;
+access;
+symbols
+	v5-02-NRT-19:2.24
+	v6-00:2.24
+	v5-02-NRT-18:2.24
+	v5-02:2.24
+	v5-01-NRT-17:2.24
+	v5-01-NRT-16:2.24
+	v5-01-NRT-15:2.24
+	v5-01-NRT-14:2.24
+	neuralnetworks-1-0:2.24.0.14
+	cfm-single-freq-0-1:2.24.0.12
+	v5-01:2.24
+	v5-00:2.24
+	v4-23-TA133:2.24.0.10
+	mus-emls-1-70:2.24.0.8
+	rel-1-0-englocks-work:2.24.0.6
+	VUMLS1-00:2.24
+	VPL1-00:2.24
+	V4-22-NRT-08:2.24
+	VAM1-00:2.24
+	V4-21:2.24.0.4
+	V4-13:2.24
+	V4-12:2.24
+	V4-11:2.24
+	V4-10:2.24
+	V3-43:2.24
+	M4-00:2.24
+	V3-41:2.24
+	V3-40-PlusGM57:2.24.0.2
+	V2-24-NRT-04:2.22
+	V3-33:2.24
+	V2-24:2.22
+	V3-31:2.24
+	V3-30-NRT-05:2.24
+	cfm-01-00:2.24
+	V3-30:2.24
+	V3-20:2.24
+	V3-10:2.23
+	V2-23-NRT-02:2.22
+	V2-23:2.22
+	V2-22-NRT-01:2.22
+	V2-22:2.22
+	V2-21:2.21
+	V2-20:2.21
+	V2-11:2.21
+	V2-10:2.21
+	V2-00:2.21
+	V1-51:2.19
+	V1-50:2.19
+	V1-45:2.19
+	V1-44:2.19
+	V1-43:2.19
+	V1-32:2.15
+	V1-31:2.15
+	V1-30:2.12
+	newfwm-feb03:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+2.24
+date	2010.02.04.23.09.28;	author vsnyder;	state Exp;
+branches;
+next	2.23;
+
+2.23
+date	2009.06.23.18.26.11;	author pwagner;	state Exp;
+branches;
+next	2.22;
+
+2.22
+date	2006.12.13.02.32.03;	author vsnyder;	state Exp;
+branches;
+next	2.21;
+
+2.21
+date	2006.04.21.22.10.37;	author vsnyder;	state Exp;
+branches;
+next	2.20;
+
+2.20
+date	2005.06.22.18.08.19;	author pwagner;	state Exp;
+branches;
+next	2.19;
+
+2.19
+date	2004.04.20.00.47.51;	author vsnyder;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2004.04.12.18.19.12;	author vsnyder;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2004.03.06.00.16.03;	author bill;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2004.02.23.23.20.48;	author vsnyder;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2003.12.17.03.03.40;	author vsnyder;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2003.09.11.23.22.45;	author vsnyder;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2003.09.10.22.35.24;	author vsnyder;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2003.09.09.00.05.05;	author vsnyder;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2003.09.09.00.04.46;	author vsnyder;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2003.08.15.20.29.26;	author vsnyder;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2003.08.14.19.37.55;	author vsnyder;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2003.06.09.20.52.37;	author vsnyder;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2003.05.28.01.25.02;	author vsnyder;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2003.05.27.22.31.12;	author vsnyder;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2003.05.24.02.26.18;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2003.05.15.03.29.44;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2003.05.10.01.05.07;	author livesey;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2003.05.09.19.27.02;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2003.05.05.23.00.26;	author livesey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2003.02.14.03.54.10;	author vsnyder;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2003.02.14.03.54.10;	author vsnyder;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2003.02.15.00.28.42;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.24
+log
+@Use kind= in CMPLX
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module MCRT_m
+
+!       Magnetic    Condensed    Radiative    Transfer
+
+  implicit NONE
+  private
+  public :: MCRT, MCRT_Der
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: mcrt_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+! ---------------------------------------------------------  Mcrt  -----
+  subroutine Mcrt ( T_script, Sqrt_earth_ref, Del_tau, Tan_pt, P_Stop, Prod, &
+    &               Tau, Radiance )
+
+!       Magnetic    Condensed    Radiative    Transfer
+
+! Compute the polarized radiative transfer using a condensed algorithm.
+! Enter t_script(*) in a quantity that is linear in power.
+! where T is intensity of a black body radiator having temperature t
+! at frequency f (usually entered in units of kelvin being derived from
+! T_{i} = h v / [ k ( exp{h v / (k t_{i}) } - 1)]).
+! sqrt_earth_ref is the square root of Earth's reflectivity.
+
+!{\begin{equation*}
+! \begin{split}
+!  {\bf I} =& \sum_{i=1}^n \Delta B_i {\bf \tau}_i,
+!  \text{ where {\bf I} is {\tt Radiance} (output), }
+!        \Delta B \text{ is {\tt T\_script} (input)},\\
+!  {\bf \tau}_i =& {\bf P}_i {\bf P}_i^\dagger,~
+!    {\bf \tau} \text{ is {\tt Tau} (output), {\bf P} is {\tt Prod} (output), }
+!    \dagger\text{ means conjugate transpose,}\\
+!  {\bf P}_i = & \prod_{k=2}^{i} {\bf E}_k \text{ and } {\bf E} \text{ is
+!    {\tt Del\_tau} (input), which is}\\
+!  {\bf E}_i = & \exp \left( - \int_{s_i}^{s_{i-1}} {\bf G} (s^\prime)
+!                \text{d} s^\prime \right )
+! \end{split}
+! \end{equation*}
+!
+! $\mathbf{E}_1$ is the incremental transmissivity from the spacecraft to
+! the top of the atmosphere, which is obviously identity, being the exponential
+! of zero.  That's why we start with $\mathbf{E}_2$.
+
+    use MLSCommon, only: Rk => Rp
+
+    real(rk), intent(in) :: T_script(:)          ! Called Delta B in some notes
+    real(rk), intent(in) :: Sqrt_earth_ref
+    complex(rk), intent(in) :: Del_tau(:,:,:)    ! 2 x 2 x path = exp(del_opcty).
+                                                 ! Called P in some notes and
+                                                 ! E in other notes.  It's E here.
+    integer, intent(in) :: Tan_pt                ! Tangent point index in T_Script
+    integer, intent(in) :: P_Stop                ! Stop here
+    complex(rk), intent(out) :: Prod(:,:,:)      ! 2 x 2 x path.  Called P in some
+                                                 ! notes.  Prod(:,:,I) is the
+                                                 ! product of del_tau(:,:,:I).
+    complex(rk), intent(out) :: Tau(:,:,:)       ! 2 x 2 x path.  
+                                                 ! Matmul(Prod,conjg(Prod)).
+    complex(rk), intent(out) :: Radiance(2,2)    ! Sum(Delta B_i * matmul (
+                                                 !  Prod(:,:,i), conjg(
+                                                 !   transpose(Prod(:,:,i)))))
+
+    integer :: i, n_path
+
+    complex(rk), parameter :: Ident(2,2) = reshape( (/ 1.0, 0.0, &
+                                                     & 0.0, 1.0 /), (/2,2/) )
+
+    n_path = size(t_script)
+
+! Initialize segment 1 calculation
+
+    prod(:,:,1) = ident
+    tau(:,:,1) = ident
+    ! radiance = t_script(1) * tau(1)
+    radiance(1,1) = t_script(1)
+    radiance(1,2) = 0.0_rk
+    radiance(2,1) = 0.0_rk
+    radiance(2,2) = t_script(1)
+
+! Proceed with first segment integration
+
+! We use 1:2 instead of : for the first two dimensions of the arrays of
+! 2x2 matrices, in the hope that some compiler someday may be able to use
+! the information for optimization.  Writing out the multiplies explicitly
+! probably helps, too.
+
+    do i = 2, min(tan_pt,p_stop)
+    ! prod(1:2,1:2,i) = matmul ( prod(1:2,1:2,i-1), del_tau(1:2,1:2,i) )
+      prod(1:2,1:2,i) = reshape ( (/ &
+        & prod(1,1,i-1) * del_tau(1,1,i) + prod(1,2,i-1) * del_tau(2,1,i), &
+        & prod(2,1,i-1) * del_tau(1,1,i) + prod(2,2,i-1) * del_tau(2,1,i), &
+        & prod(1,1,i-1) * del_tau(1,2,i) + prod(1,2,i-1) * del_tau(2,2,i), &
+        & prod(2,1,i-1) * del_tau(1,2,i) + prod(2,2,i-1) * del_tau(2,2,i) /), &
+        & (/ 2,2 /) )
+      call updaterad ( radiance, t_script(i), prod(1:2,1:2,i), tau(1:2,1:2,i) )
+    end do
+
+! Tangent point (or Earth intersecting) layer.  If it's not
+! an Earth intersecting layer, sqrt_earth_ref will be 1.0.
+
+    if ( p_stop <= tan_pt ) return
+    prod(1:2,1:2,tan_pt+1) = sqrt_earth_ref * prod(1:2,1:2,tan_pt)
+    call updaterad ( &
+      & radiance, t_script(tan_pt+1), prod(1:2,1:2,tan_pt+1), tau(1:2,1:2,tan_pt+1) )
+
+! Proceed with third segment integration, which includes the
+! space radiance contribution.
+
+    do i = tan_pt+2, min(n_path,p_stop)
+    ! prod(1:2,1:2,i) = matmul ( prod(1:2,1:2,i-1) , del_tau(1:2,1:2,i-1) )
+      prod(1:2,1:2,i) = reshape ( (/ &
+        & prod(1,1,i-1) * del_tau(1,1,i-1) + prod(1,2,i-1) * del_tau(2,1,i-1), &
+        & prod(2,1,i-1) * del_tau(1,1,i-1) + prod(2,2,i-1) * del_tau(2,1,i-1), &
+        & prod(1,1,i-1) * del_tau(1,2,i-1) + prod(1,2,i-1) * del_tau(2,2,i-1), &
+        & prod(2,1,i-1) * del_tau(1,2,i-1) + prod(2,2,i-1) * del_tau(2,2,i-1) /), &
+        & (/ 2,2 /) )
+      call updaterad ( radiance, t_script(i), prod(1:2,1:2,i), tau(1:2,1:2,i) )  
+    end do                                                       
+
+  contains
+  ! ..................................................  Updaterad  .....
+
+    subroutine Updaterad ( Radiance, Scalar, Prod, Tau )
+
+! Update the radiance from the prod:
+! Radiance = Radiance + Scalar * Prod * conjg(transpose(Prod))
+! We know that Radiance is Hermitian, so the diagonal elements are
+! real and the off-diagonal elements are conjugates.  Exploiting
+! this saves roughly half of the work.
+
+      complex(rk), intent(inout) :: Radiance(2,2)
+      real(rk), intent(in) :: Scalar
+      complex(rk), intent(in) :: Prod(:,:) ! Really (2,2), but this may
+                                           ! avoid a copy-in/copy-out
+      complex(rk), intent(out) :: Tau(:,:) ! Really (2,2), but this may
+                                           ! avoid a copy-in/copy-out
+
+      real(rk) t11r, t11i, t12r, t12i, t21r, t21i, t22r, t22i
+
+!     tau = matmul(prod,conjg(transpose(prod)))
+
+      t11r = real(prod(1,1))
+      t11i = aimag(prod(1,1))
+      t12r = real(prod(1,2))
+      t12i = aimag(prod(1,2))
+      t21r = real(prod(2,1))
+      t21i = aimag(prod(2,1))
+      t22r = real(prod(2,2))
+      t22i = aimag(prod(2,2))
+
+!     tau(1,1) = (prod(1,1)*conjg(prod(1,1)) + prod(1,2)*conjg(prod(1,2)) )
+      tau(1,1) =  ( t11r * t11r + t11i * t11i + t12r * t12r + t12i * t12i )
+
+!     tau(1,2) = (prod(1,1)*conjg(prod(2,1)) + prod(1,2)*conjg(prod(2,2)) )
+      tau(1,2) = cmplx( t11r * t21r + t11i * t21i + t12r * t22r + t12i * t22i, &
+               &       -t11r * t21i + t11i * t21r - t12r * t22i + t12i * t22r, kind=rk )
+
+      tau(2,1) = conjg(tau(1,2))
+
+!     tau(2,2) = (prod(2,1)*conjg(prod(2,1)) + prod(2,2)*conjg(prod(2,2)) )
+      tau(2,2) = ( t21r * t21r + t21i * t21i + t22r * t22r + t22i * t22i )
+
+!     Specifying the ranges hopefully prevents accessing the dope vectors
+      radiance(1:2,1:2) = radiance(1:2,1:2) + scalar * tau(1:2,1:2)
+
+    end subroutine Updaterad
+
+  end subroutine Mcrt
+
+! -----------------------------------------------------  Mcrt_Der  -----
+  subroutine Mcrt_Der ( T_script, Sqrt_earth_ref, E, D_E, Prod, Tau, P_Stop, &
+    & Tan_pt, D_Radiance, D_T_script )
+
+!       Magnetic    Condensed    Radiative    Transfer    Derivative
+
+! Compute d(Radiance)/d(Whatever) given T_script (aka Delta_B), E,
+! D_E (d(Deltau)/d(x)), Prod (product of E's), Tau (P * P^*) and
+! D_T_script (aka D_Delta_B).  E and D_E are layer quantities, which
+! means that after the tangent point, we use the previous one instead
+! of the current one.  T_script, Prod and Tau are boundary quantities.
+
+  !{\begin{equation*}
+  ! \begin{split}
+  !  \frac{\partial \mathbf{I}}{\partial x} = &
+  !   \sum_{i=1}^n
+  !   \frac{\partial (\mathbf{\tau}_i \Delta B_i)}{\partial x} =
+  !   \sum_{i=1}^n
+  !   \left [ \frac{\partial \mathbf{\tau}_i}{\partial x} \Delta B_i +
+  !           \mathbf{\tau}_i \frac{\partial \Delta B_i}{\partial x}
+  !   \right ],\text{ where}
+  !\\
+  !  \frac{\partial \mathbf{\tau}_i}{\partial x} = &
+  !   \frac{\partial \mathbf{P}_i \mathbf{P}_i^\dagger}{\partial x}
+  != \frac{\partial\mathbf{P}_i}{\partial x}\mathbf{P}_i^\dagger +
+  !  \mathbf{P}_i \frac{\partial\mathbf{P}_i^\dagger}{\partial x}
+  != \frac{\partial\mathbf{P}_i}{\partial x}\mathbf{P}_i^\dagger +
+  !  \left( \frac{\partial\mathbf{P}_i}{\partial x}\mathbf{P}_i^\dagger \right )^\dagger
+  !  \text{ (}\dagger\text{ = conjugate transpose).}
+  ! \end{split}
+  ! \end{equation*}
+  !
+  ! Writing $\mathbf{P}_i = \mathbf{P}_{i-1} \mathbf{E}_i$ instead of
+  ! $\mathbf{P}_i = \prod_{k=2}^i \mathbf{E}_k$, we have
+  ! \begin{equation*}
+  !  \frac{\partial\mathbf{P}_i}{\partial x} =
+  !   \frac{\partial\mathbf{P}_{i-1}}{\partial x} \mathbf{E}_i +
+  !   \mathbf{P}_{i-1} \frac{\partial\mathbf{E}_i}{\partial x}
+  ! \end{equation*}
+
+    use MLSCommon, only: Rk => Rp
+
+    ! SVE == state_vector_elements
+    real(rk), intent(in) :: T_script(:)     ! Path.  Called Delta B above
+    real(rk), intent(in) :: Sqrt_earth_ref
+    complex(rk), intent(in) :: E(:,:,:)     ! 2 x 2 x path.  Deltau
+    complex(rk), intent(in) :: D_E(:,:,:,:) ! 2 x 2 x path x sve.
+                                            ! D (deltau) / D (x)
+    complex(rk), intent(in) :: Prod(:,:,:)  ! 2 x 2 x path.  Called P above.
+    complex(rk), intent(in) :: Tau(:,:,:)   ! 2 x 2 x path. Matmul(Prod,conjg(Prod)).
+    integer, intent(in) :: P_Stop           ! Where to stop on the path
+    integer, intent(in) :: Tan_pt           ! Tangent point index in T_Script
+    complex(rk), intent(out) :: D_Radiance(:,:,:) ! 2 x 2 x sve
+    real(rk), intent(in), optional :: D_T_script(:,:) ! path x sve. a.k.a D Delta B
+    ! T script or Delta B depends only on temperature and frequency, so it's
+    ! only needed for temperature derivatives.
+
+    complex(rk) :: DPDx(2,2)                ! D (P_i) / D (x)
+    complex(rk) :: DTauDx(2,2)              ! D (Tau_i) / D (x)
+    real(rk) :: Earth_Ref
+    integer :: I_P, I_pp, I_Sv              ! Path, State vector indices
+
+    earth_ref = sqrt_earth_ref**2
+
+    ! This is for the case of a two-element path, which has no layers,
+    ! and just the middle boundary twice.  It doesn't need to be inside
+    ! the loops, because dTauDx will always be zero in this case.
+    dTauDx = 0.0_rk
+
+    ! dTauDx is Hermitian, so we calculate the elements explicitly, saving
+    ! eleven multiplies on each diagonal (where we know the imaginary part
+    ! is zero).  We save two more in updating D_radiance.  Although this
+    ! saves 20% of the multiplies in the inner loop, in the big scheme of
+    ! things, this doesn't save much because we don't spend much time here,
+    ! but it's all done so we might as well leave it.
+
+    if ( present(d_t_script) ) then
+      do i_sv = 1, size(d_radiance,3)      ! state vector elements
+        d_radiance(1,1,i_sv) = d_t_script(1,i_sv) ! Tau(1)=Ident
+        d_radiance(1,2,i_sv) = 0.0_rk             ! D(Tau(1)) / D(x) = 0
+        d_radiance(2,1,i_sv) = 0.0_rk
+        d_radiance(2,2,i_sv) = d_t_script(1,i_sv)
+        i_pp = 2
+        dPdx = d_e(1:2,1:2,2,i_sv)         ! D (P_2) / D (x) = D (E_2) / D (x)
+        do i_p = 2, p_stop                 ! path elements
+        ! dTauDx = matmul(dPdx,conjg(transpose(prod(1:2,1:2,i_p))))
+        ! dTauDx = dTauDx + conjg(transpose(dTauDx))
+          if ( i_p /= tan_pt + 1 ) then
+            dTauDx(1,1) = 2.0_rk * (real(dPdx(1,1)) *  real(prod(1,1,i_p)) + &
+                        &          aimag(dPdx(1,1)) * aimag(prod(1,1,i_p)) + &
+                        &           real(dPdx(1,2)) *  real(prod(1,2,i_p)) + &
+                        &          aimag(dPdx(1,2)) * aimag(prod(1,2,i_p)) )
+            dTauDx(1,2) =   cmplx(  real(dPdx(1,1)) *  real(prod(2,1,i_p))  &
+                        &        + aimag(dPdx(1,1)) * aimag(prod(2,1,i_p))  &
+                        &        +  real(dPdx(1,2)) *  real(prod(2,2,i_p))  &
+                        &        + aimag(dPdx(1,2)) * aimag(prod(2,2,i_p))  &
+                        &        +  real(dPdx(2,1)) *  real(prod(1,1,i_p))  &
+                        &        + aimag(dPdx(2,1)) * aimag(prod(1,1,i_p))  &
+                        &        +  real(dPdx(2,2)) *  real(prod(1,2,i_p))  &
+                        &        + aimag(dPdx(2,2)) * aimag(prod(1,2,i_p)), &
+                        &        -  real(dPdx(1,1)) * aimag(prod(2,1,i_p))  &
+                        &        + aimag(dPdx(1,1)) *  real(prod(2,1,i_p))  &
+                        &        -  real(dPdx(1,2)) * aimag(prod(2,2,i_p))  &
+                        &        + aimag(dPdx(1,2)) *  real(prod(2,2,i_p))  &
+                        &        +  real(dPdx(2,1)) * aimag(prod(1,1,i_p))  &
+                        &        - aimag(dPdx(2,1)) *  real(prod(1,1,i_p))  &
+                        &        +  real(dPdx(2,2)) * aimag(prod(1,2,i_p))  &
+                        &        - aimag(dPdx(2,2)) *  real(prod(1,2,i_p)), kind=rk )
+          ! dTauDx(2,1) = conjg(dTauDx(1,2))
+            dTauDx(2,2) = 2.0_rk * (real(dPdx(2,1)) *  real(prod(2,1,i_p)) + &
+                        &          aimag(dPdx(2,1)) * aimag(prod(2,1,i_p)) + &
+                        &           real(dPdx(2,2)) *  real(prod(2,2,i_p)) + &
+                        &          aimag(dPdx(2,2)) * aimag(prod(2,2,i_p)) )
+          else
+            dTauDx = earth_ref * dTauDx
+          end if
+        ! d_radiance(1:2,1:2,i_sv) = d_radiance(1:2,1:2,i_sv) + &
+        !                          & dTauDx * t_script(i_p) + &
+        !                          & tau(1:2,1:2,i_p) * d_t_script(i_p,i_sv)
+          d_radiance(1,1,i_sv) = d_radiance(1,1,i_sv) + &
+                               & dTauDx(1,1) * t_script(i_p) + &
+                               & tau(1,1,i_p) * d_t_script(i_p,i_sv)
+          d_radiance(1,2,i_sv) = d_radiance(1,2,i_sv) + &
+                               & dTauDx(1,2) * t_script(i_p) + &
+                               & tau(1,2,i_p) * d_t_script(i_p,i_sv)
+!       ! d_radiance(2,1,i_sv) = conjg(d_radiance(1,2,i_sv)) ! not needed 'til end
+          d_radiance(2,2,i_sv) = d_radiance(2,2,i_sv) + &
+                               & dTauDx(2,2) * t_script(i_p) + &
+                               & tau(2,2,i_p) * d_t_script(i_p,i_sv)
+
+          if ( i_p < p_stop ) then
+            if ( i_p /= tan_pt + 1 ) then
+              i_pp = i_pp + 1
+            ! dPdx = matmul(dPdx,             e(1:2,1:2,i_pp)) + &
+            !   &    matmul(prod(1:2,1:2,i_p),d_e(1:2,1:2,i_pp,i_sv))
+              dPdx = reshape ( (/ &
+                & dPdx(1,1)    *e(1,1,i_pp)        + dPdx(1,2)    *e(2,1,i_pp) +       &
+                & prod(1,1,i_p)*d_e(1,1,i_pp,i_sv) + prod(1,2,i_p)*d_e(2,1,i_pp,i_sv), &
+                & dPdx(2,1)    *e(1,1,i_pp)        + dPdx(2,2)    *e(2,1,i_pp) +       &
+                & prod(2,1,i_p)*d_e(1,1,i_pp,i_sv) + prod(2,2,i_p)*d_e(2,1,i_pp,i_sv), &
+                & dPdx(1,1)    *e(1,2,i_pp)        + dPdx(1,2)    *e(2,2,i_pp) +       &
+                & prod(1,1,i_p)*d_e(1,2,i_pp,i_sv) + prod(1,2,i_p)*d_e(2,2,i_pp,i_sv), &
+                & dPdx(2,1)    *e(1,2,i_pp)        + dPdx(2,2)    *e(2,2,i_pp) +       &
+                & prod(2,1,i_p)*d_e(1,2,i_pp,i_sv) + prod(2,2,i_p)*d_e(2,2,i_pp,i_sv) /), &
+                & (/ 2,2 /) )
+            else
+              dPdx = sqrt_earth_ref * dPdx
+            end if
+          end if
+        end do ! i_p
+        d_radiance(2,1,i_sv) = conjg(d_radiance(1,2,i_sv))
+      end do ! i_sv
+    else
+      do i_sv = 1, size(d_radiance,3)      ! state vector elements
+        d_radiance(1:2,1:2,i_sv) = 0.0_rk
+        i_pp = 2
+        dPdx = d_e(1:2,1:2,2,i_sv)         ! D (P_2) / D (x) = D (E_2) / D (x)
+        do i_p = 2, p_stop                 ! path elements
+          if ( i_p /= tan_pt + 1 ) then
+          ! dTauDx = matmul(dPdx,conjg(transpose(prod(1:2,1:2,i_p))))
+          ! dTauDx = dTauDx + conjg(transpose(dTauDx))
+            dTauDx(1,1) = 2.0_rk * (real(dPdx(1,1)) *  real(prod(1,1,i_p)) + &
+                        &          aimag(dPdx(1,1)) * aimag(prod(1,1,i_p)) + &
+                        &           real(dPdx(1,2)) *  real(prod(1,2,i_p)) + &
+                        &          aimag(dPdx(1,2)) * aimag(prod(1,2,i_p)) )
+            dTauDx(1,2) =   cmplx(  real(dPdx(1,1)) *  real(prod(2,1,i_p))  &
+                        &        + aimag(dPdx(1,1)) * aimag(prod(2,1,i_p))  &
+                        &        +  real(dPdx(1,2)) *  real(prod(2,2,i_p))  &
+                        &        + aimag(dPdx(1,2)) * aimag(prod(2,2,i_p))  &
+                        &        +  real(dPdx(2,1)) *  real(prod(1,1,i_p))  &
+                        &        + aimag(dPdx(2,1)) * aimag(prod(1,1,i_p))  &
+                        &        +  real(dPdx(2,2)) *  real(prod(1,2,i_p))  &
+                        &        + aimag(dPdx(2,2)) * aimag(prod(1,2,i_p)), &
+                        &        -  real(dPdx(1,1)) * aimag(prod(2,1,i_p))  &
+                        &        + aimag(dPdx(1,1)) *  real(prod(2,1,i_p))  &
+                        &        -  real(dPdx(1,2)) * aimag(prod(2,2,i_p))  &
+                        &        + aimag(dPdx(1,2)) *  real(prod(2,2,i_p))  &
+                        &        +  real(dPdx(2,1)) * aimag(prod(1,1,i_p))  &
+                        &        - aimag(dPdx(2,1)) *  real(prod(1,1,i_p))  &
+                        &        +  real(dPdx(2,2)) * aimag(prod(1,2,i_p))  &
+                        &        - aimag(dPdx(2,2)) *  real(prod(1,2,i_p)), kind=rk )
+          ! dTauDx(2,1) = conjg(dTauDx(1,2))
+            dTauDx(2,2) = 2.0_rk * (real(dPdx(2,1)) *  real(prod(2,1,i_p)) + &
+                        &          aimag(dPdx(2,1)) * aimag(prod(2,1,i_p)) + &
+                        &           real(dPdx(2,2)) *  real(prod(2,2,i_p)) + &
+                        &          aimag(dPdx(2,2)) * aimag(prod(2,2,i_p)) )
+          else
+            dTauDx = earth_ref * dTauDx
+          end if
+        ! d_radiance(1:2,1:2,i_sv) = d_radiance(1:2,1:2,i_sv) + &
+        !                          & dTauDx * t_script(i_p)      
+          d_radiance(1,1,i_sv) = d_radiance(1,1,i_sv) + &
+                               & dTauDx(1,1) * t_script(i_p)
+          d_radiance(1,2,i_sv) = d_radiance(1,2,i_sv) + &
+                               & dTauDx(1,2) * t_script(i_p)
+!       ! d_radiance(2,1,i_sv) = conjg(d_radiance(1,2,i_sv)) ! not needed 'til end
+          d_radiance(2,2,i_sv) = d_radiance(2,2,i_sv) + &
+                               & dTauDx(2,2) * t_script(i_p)
+          if ( i_p < p_stop ) then
+            if ( i_p /= tan_pt + 1 ) then
+              i_pp = i_pp + 1
+            ! dPdx = matmul(dPdx,             e(1:2,1:2,i_pp)) + &
+            !   &    matmul(prod(1:2,1:2,i_p),d_e(1:2,1:2,i_pp,i_sv))
+              dPdx = reshape ( (/ &
+                & dPdx(1,1)    *e(1,1,i_pp)        + dPdx(1,2)    *e(2,1,i_pp) +       &
+                & prod(1,1,i_p)*d_e(1,1,i_pp,i_sv) + prod(1,2,i_p)*d_e(2,1,i_pp,i_sv), &
+                & dPdx(2,1)    *e(1,1,i_pp)        + dPdx(2,2)    *e(2,1,i_pp) +       &
+                & prod(2,1,i_p)*d_e(1,1,i_pp,i_sv) + prod(2,2,i_p)*d_e(2,1,i_pp,i_sv), &
+                & dPdx(1,1)    *e(1,2,i_pp)        + dPdx(1,2)    *e(2,2,i_pp) +       &
+                & prod(1,1,i_p)*d_e(1,2,i_pp,i_sv) + prod(1,2,i_p)*d_e(2,2,i_pp,i_sv), &
+                & dPdx(2,1)    *e(1,2,i_pp)        + dPdx(2,2)    *e(2,2,i_pp) +       &
+                & prod(2,1,i_p)*d_e(1,2,i_pp,i_sv) + prod(2,2,i_p)*d_e(2,2,i_pp,i_sv) /), &
+                & (/ 2,2 /) )
+            else
+              dPdx = sqrt_earth_ref * dPdx
+            end if
+          end if
+        end do ! i_p
+        d_radiance(2,1,i_sv) = conjg(d_radiance(1,2,i_sv))
+      end do ! i_sv
+    end if
+
+  end subroutine Mcrt_Der
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: mcrt_m.f90,v 2.23 2009/06/23 18:26:11 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module MCRT_m
+
+! $Log: mcrt_m.f90,v $
+! Revision 2.23  2009/06/23 18:26:11  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.22  2006/12/13 02:32:03  vsnyder
+! Drag the tangent point around instead of assuming it's the middle one
+!
+! Revision 2.21  2006/04/21 22:10:37  vsnyder
+! Spiff TeXnicalities, delete unused computations, some optimizations
+!
+! Revision 2.20  2005/06/22 18:08:19  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.19  2004/04/20 00:47:51  vsnyder
+! Make sure dTau_dT always has an initial value
+!
+! Revision 2.18  2004/04/12 18:19:12  vsnyder
+! Make sure dTauDx is defined for paths of length 2
+!
+! Revision 2.17  2004/03/06 00:16:03  bill
+! fixed a bug in mcrt_der
+!
+! Revision 2.16  2004/02/23 23:20:48  vsnyder
+! Fix some subscript errors
+!
+! Revision 2.15  2003/12/17 03:03:40  vsnyder
+! Beautify some comments
+!
+! Revision 2.14  2003/09/11 23:22:45  vsnyder
+! Write out MATMULs explicitly -- saves 80% of multiplies
+!
+! Revision 2.13  2003/09/10 22:35:24  vsnyder
+! Slight performance improvement
+!
+! Revision 2.12  2003/09/09 00:05:05  vsnyder
+! New method to compute derivatives
+!
+! Revision 2.10  2003/08/15 20:29:26  vsnyder
+! Implement polarized VMR derivatives
+!
+! Revision 2.9  2003/08/14 19:37:55  vsnyder
+! Futzing with comments
+!
+! Revision 2.8  2003/06/09 20:52:37  vsnyder
+! More work on polarized derivatives
+!
+! Revision 2.7  2003/05/28 01:25:02  vsnyder
+! Hopefully squashed some more bugs in polarized derivatives
+!
+! Revision 2.6  2003/05/27 22:31:12  vsnyder
+! More work on polarized derivatives
+!
+! Revision 2.5  2003/05/24 02:26:18  vsnyder
+! More work on polarized temperature derivatives
+!
+! Revision 2.4  2003/05/15 03:29:44  vsnyder
+! Implement polarized model's temperature derivatives
+!
+! Revision 2.3  2003/05/10 01:05:07  livesey
+! Typo!
+!
+! Revision 2.2  2003/05/09 19:27:02  vsnyder
+! Initial stuff for temperature derivatives
+!
+! Revision 2.1  2003/05/05 23:00:26  livesey
+! Merged in feb03 newfwm branch
+!
+! Revision 1.1.2.2  2003/02/15 00:28:42  vsnyder
+! Don't exp(del_opcty) here, it's done by the caller
+!
+! Revision 1.1.2.1  2003/02/14 03:54:10  vsnyder
+! Initial commit
+!
+@
+
+
+2.23
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d22 1
+a22 1
+       "$RCSfile: $"
+d171 1
+a171 1
+               &       -t11r * t21i + t11i * t21r - t12r * t22i + t12i * t22r )
+d292 1
+a292 1
+                        &        - aimag(dPdx(2,2)) *  real(prod(1,2,i_p)) )
+d365 1
+a365 1
+                        &        - aimag(dPdx(2,2)) *  real(prod(1,2,i_p)) )
+d412 1
+a412 1
+       "$Id: read_apriori.f90 is it here $"
+d422 3
+@
+
+
+2.22
+log
+@Drag the tangent point around instead of assuming it's the middle one
+@
+text
+@d22 1
+a22 1
+       "$RCSfile: mcrt_m.f90,v $"
+d409 1
+a410 1
+!---------------------------- RCS Ident Info -------------------------------
+d412 2
+a413 3
+       "$Id: mcrt_m.f90,v 2.21 2006/04/21 22:10:37 vsnyder Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d415 1
+d417 1
+d422 3
+@
+
+
+2.21
+log
+@Spiff TeXnicalities, delete unused computations, some optimizations
+@
+text
+@d29 2
+a30 1
+  subroutine Mcrt ( T_script, Sqrt_earth_ref, Del_tau, P_Stop, Prod, Tau, Radiance )
+d67 1
+d78 1
+a78 1
+    integer :: i, i_tan, n_path
+d102 1
+a102 2
+    i_tan = n_path / 2
+    do i = 2, min(i_tan,p_stop)
+d116 2
+a117 2
+    if ( p_stop <= i_tan ) return
+    prod(1:2,1:2,i_tan+1) = sqrt_earth_ref * prod(1:2,1:2,i_tan)
+d119 1
+a119 1
+      & radiance, t_script(i_tan+1), prod(1:2,1:2,i_tan+1), tau(1:2,1:2,i_tan+1) )
+d124 1
+a124 1
+    do i = i_tan+2, min(n_path,p_stop)
+d187 1
+a187 1
+    & D_Radiance, D_T_script )
+d236 1
+a245 1
+    integer :: I_Tan                        ! Tangent point
+a246 1
+    i_tan = size(t_script) / 2
+d272 1
+a272 1
+          if ( i_p /= i_tan + 1 ) then
+d316 1
+a316 1
+            if ( i_p /= i_tan + 1 ) then
+d343 1
+a343 1
+          if ( i_p /= i_tan + 1 ) then
+d384 1
+a384 1
+            if ( i_p /= i_tan + 1 ) then
+d412 1
+a412 1
+       "$Id: mcrt_m.f90,v 2.20 2005/06/22 18:08:19 pwagner Exp $"
+d421 3
+@
+
+
+2.20
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d22 1
+a22 1
+       "$RCSfile: $"
+d46 2
+a47 1
+!    {\bf \tau} \text{ is {\tt Tau} (output), {\bf P} is {\tt Prod} (output),}\\
+d198 4
+a201 1
+  !  \frac{\partial \mathbf{I}}{\partial x} = &\sum_{i=1}^n
+d212 1
+a212 1
+  !  \text{.}
+d293 1
+d310 1
+a310 1
+          d_radiance(2,1,i_sv) = conjg(d_radiance(1,2,i_sv))
+d335 1
+d366 1
+d375 1
+a375 1
+        !                          & dTauDx * t_script(i_p)
+d380 1
+a380 1
+          d_radiance(2,1,i_sv) = conjg(d_radiance(1,2,i_sv))
+d403 1
+d412 1
+a412 1
+       "$Id: $"
+d421 3
+@
+
+
+2.19
+log
+@Make sure dTau_dT always has an initial value
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d20 3
+a22 6
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+    &  "$Id: mcrt_m.f90,v 2.18 2004/04/12 18:19:12 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName= &
+    &  "$RCSfile: mcrt_m.f90,v $"
+d402 5
+d413 3
+@
+
+
+2.18
+log
+@Make sure dTauDx is defined for paths of length 2
+@
+text
+@d14 1
+a14 1
+    &  "$Id: mcrt_m.f90,v 2.17 2004/03/06 00:16:03 bill Exp $"
+d243 1
+a243 1
+    if ( i_tan == 1 ) dTauDx = 0.0_rk
+d403 3
+@
+
+
+2.17
+log
+@fixed a bug in mcrt_der
+@
+text
+@d14 1
+a14 1
+    &  "$Id: mcrt_m.f90,v 2.16 2004/02/23 23:20:48 vsnyder Exp $"
+d227 1
+a227 1
+    real(rk), intent(in),optional :: D_T_script(:,:) ! path x sve. a.k.a D Delta B
+d233 1
+d238 6
+d263 28
+a290 28
+        if ( i_p /= i_tan + 1 ) then
+          dTauDx(1,1) = 2.0_rk * (real(dPdx(1,1)) *  real(prod(1,1,i_p)) + &
+                      &          aimag(dPdx(1,1)) * aimag(prod(1,1,i_p)) + &
+                      &           real(dPdx(1,2)) *  real(prod(1,2,i_p)) + &
+                      &          aimag(dPdx(1,2)) * aimag(prod(1,2,i_p)) )
+          dTauDx(1,2) =   cmplx(  real(dPdx(1,1)) *  real(prod(2,1,i_p))  &
+                      &        + aimag(dPdx(1,1)) * aimag(prod(2,1,i_p))  &
+                      &        +  real(dPdx(1,2)) *  real(prod(2,2,i_p))  &
+                      &        + aimag(dPdx(1,2)) * aimag(prod(2,2,i_p))  &
+                      &        +  real(dPdx(2,1)) *  real(prod(1,1,i_p))  &
+                      &        + aimag(dPdx(2,1)) * aimag(prod(1,1,i_p))  &
+                      &        +  real(dPdx(2,2)) *  real(prod(1,2,i_p))  &
+                      &        + aimag(dPdx(2,2)) * aimag(prod(1,2,i_p)), &
+                      &        -  real(dPdx(1,1)) * aimag(prod(2,1,i_p))  &
+                      &        + aimag(dPdx(1,1)) *  real(prod(2,1,i_p))  &
+                      &        -  real(dPdx(1,2)) * aimag(prod(2,2,i_p))  &
+                      &        + aimag(dPdx(1,2)) *  real(prod(2,2,i_p))  &
+                      &        +  real(dPdx(2,1)) * aimag(prod(1,1,i_p))  &
+                      &        - aimag(dPdx(2,1)) *  real(prod(1,1,i_p))  &
+                      &        +  real(dPdx(2,2)) * aimag(prod(1,2,i_p))  &
+                      &        - aimag(dPdx(2,2)) *  real(prod(1,2,i_p)) )
+          dTauDx(2,2) = 2.0_rk * (real(dPdx(2,1)) *  real(prod(2,1,i_p)) + &
+                      &          aimag(dPdx(2,1)) * aimag(prod(2,1,i_p)) + &
+                      &           real(dPdx(2,2)) *  real(prod(2,2,i_p)) + &
+                      &          aimag(dPdx(2,2)) * aimag(prod(2,2,i_p)) )
+        else
+          dTauDx = sqrt_earth_ref * sqrt_earth_ref * dTauDx
+        endif
+d332 30
+a361 30
+        if ( i_p /= i_tan + 1 ) then
+        ! dTauDx = matmul(dPdx,conjg(transpose(prod(1:2,1:2,i_p))))
+        ! dTauDx = dTauDx + conjg(transpose(dTauDx))
+          dTauDx(1,1) = 2.0_rk * (real(dPdx(1,1)) *  real(prod(1,1,i_p)) + &
+                      &          aimag(dPdx(1,1)) * aimag(prod(1,1,i_p)) + &
+                      &           real(dPdx(1,2)) *  real(prod(1,2,i_p)) + &
+                      &          aimag(dPdx(1,2)) * aimag(prod(1,2,i_p)) )
+          dTauDx(1,2) =   cmplx(  real(dPdx(1,1)) *  real(prod(2,1,i_p))  &
+                      &        + aimag(dPdx(1,1)) * aimag(prod(2,1,i_p))  &
+                      &        +  real(dPdx(1,2)) *  real(prod(2,2,i_p))  &
+                      &        + aimag(dPdx(1,2)) * aimag(prod(2,2,i_p))  &
+                      &        +  real(dPdx(2,1)) *  real(prod(1,1,i_p))  &
+                      &        + aimag(dPdx(2,1)) * aimag(prod(1,1,i_p))  &
+                      &        +  real(dPdx(2,2)) *  real(prod(1,2,i_p))  &
+                      &        + aimag(dPdx(2,2)) * aimag(prod(1,2,i_p)), &
+                      &        -  real(dPdx(1,1)) * aimag(prod(2,1,i_p))  &
+                      &        + aimag(dPdx(1,1)) *  real(prod(2,1,i_p))  &
+                      &        -  real(dPdx(1,2)) * aimag(prod(2,2,i_p))  &
+                      &        + aimag(dPdx(1,2)) *  real(prod(2,2,i_p))  &
+                      &        +  real(dPdx(2,1)) * aimag(prod(1,1,i_p))  &
+                      &        - aimag(dPdx(2,1)) *  real(prod(1,1,i_p))  &
+                      &        +  real(dPdx(2,2)) * aimag(prod(1,2,i_p))  &
+                      &        - aimag(dPdx(2,2)) *  real(prod(1,2,i_p)) )
+          dTauDx(2,2) = 2.0_rk * (real(dPdx(2,1)) *  real(prod(2,1,i_p)) + &
+                      &          aimag(dPdx(2,1)) * aimag(prod(2,1,i_p)) + &
+                      &           real(dPdx(2,2)) *  real(prod(2,2,i_p)) + &
+                      &          aimag(dPdx(2,2)) * aimag(prod(2,2,i_p)) )
+        else
+          dTauDx = sqrt_earth_ref * sqrt_earth_ref * dTauDx
+        endif
+d403 3
+@
+
+
+2.16
+log
+@Fix some subscript errors
+@
+text
+@d14 1
+a14 1
+    &  "$Id: mcrt_m.f90,v 2.15 2003/12/17 03:03:40 vsnyder Exp $"
+d256 1
+d281 3
+d297 1
+d325 1
+d352 3
+d396 3
+@
+
+
+2.15
+log
+@Beautify some comments
+@
+text
+@d14 1
+a14 1
+    &  "$Id: mcrt_m.f90,v 2.14 2003/09/11 23:22:45 vsnyder Exp $"
+d50 2
+a51 2
+! the top of the atmosphere, which is obviously zero.  That's why we start
+! with $\mathbf{E}_2$.
+d258 4
+a261 4
+                      &           real(dPdx(1,2)) *  real(prod(2,1,i_p)) + &
+                      &          aimag(dPdx(1,2)) * aimag(prod(2,1,i_p)) )
+          dTauDx(1,2) =   cmplx(  real(dPdx(1,1)) *  real(prod(1,2,i_p))  &
+                      &        + aimag(dPdx(1,1)) * aimag(prod(1,2,i_p))  &
+d266 4
+a269 4
+                      &        +  real(dPdx(2,2)) *  real(prod(2,1,i_p))  &
+                      &        + aimag(dPdx(2,2)) * aimag(prod(2,1,i_p)), &
+                      &        -  real(dPdx(1,1)) * aimag(prod(1,2,i_p))  &
+                      &        + aimag(dPdx(1,1)) *  real(prod(1,2,i_p))  &
+d274 4
+a277 4
+                      &        +  real(dPdx(2,2)) * aimag(prod(2,1,i_p))  &
+                      &        - aimag(dPdx(2,2)) *  real(prod(2,1,i_p)) )
+          dTauDx(2,2) = 2.0_rk * (real(dPdx(2,1)) *  real(prod(1,2,i_p)) + &
+                      &          aimag(dPdx(2,1)) * aimag(prod(1,2,i_p)) + &
+d324 4
+a327 4
+                      &           real(dPdx(1,2)) *  real(prod(2,1,i_p)) + &
+                      &          aimag(dPdx(1,2)) * aimag(prod(2,1,i_p)) )
+          dTauDx(1,2) =   cmplx(  real(dPdx(1,1)) *  real(prod(1,2,i_p))  &
+                      &        + aimag(dPdx(1,1)) * aimag(prod(1,2,i_p))  &
+d332 4
+a335 4
+                      &        +  real(dPdx(2,2)) *  real(prod(2,1,i_p))  &
+                      &        + aimag(dPdx(2,2)) * aimag(prod(2,1,i_p)), &
+                      &        -  real(dPdx(1,1)) * aimag(prod(1,2,i_p))  &
+                      &        + aimag(dPdx(1,1)) *  real(prod(1,2,i_p))  &
+d340 4
+a343 4
+                      &        +  real(dPdx(2,2)) * aimag(prod(2,1,i_p))  &
+                      &        - aimag(dPdx(2,2)) *  real(prod(2,1,i_p)) )
+          dTauDx(2,2) = 2.0_rk * (real(dPdx(2,1)) *  real(prod(1,2,i_p)) + &
+                      &          aimag(dPdx(2,1)) * aimag(prod(1,2,i_p)) + &
+d387 3
+@
+
+
+2.14
+log
+@Write out MATMULs explicitly -- saves 80% of multiplies
+@
+text
+@d14 1
+a14 1
+    &  "$Id: mcrt_m.f90,v 2.13 2003/09/10 22:35:24 vsnyder Exp $"
+d238 6
+a243 6
+    ! dTauDx is Hermitian, so We calculate the elements explicitly, saving
+    ! save eleven multiplies on each diagonal (where we know the imaginary
+    ! part is zero).  We save two more in updating D_radiance.  Although
+    ! this saves 20% of the multiplies in the inner loop, In the big scheme
+    ! of things, this doesn't save much because we don't spend much time
+    ! here, but it's all done so we might as well leave it.
+d387 3
+@
+
+
+2.13
+log
+@Slight performance improvement
+@
+text
+@d14 1
+a14 1
+    &  "$Id: mcrt_m.f90,v 2.12 2003/09/09 00:05:05 vsnyder Exp $"
+d90 3
+a92 2
+! 2x2 matrices, in the hope that some compiler someday may be able to
+! use the information for optimization.
+d96 7
+a102 1
+      prod(1:2,1:2,i) = matmul ( prod(1:2,1:2,i-1), del_tau(1:2,1:2,i) )
+d118 7
+a124 1
+      prod(1:2,1:2,i) = matmul ( prod(1:2,1:2,i-1) , del_tau(1:2,1:2,i-1) )
+d238 6
+a243 5
+    ! dTauDx is Hermitian, so if we calculated the elements explicitly we
+    ! could save eight multiplies on the diagonals (where we know the imaginary
+    ! part is zero).  We also would only need to compute one off-diagonal.
+    ! BUT... the profiler says we're not spending any time here, so just keep
+    ! it simple.
+d254 39
+a292 5
+          dTauDx = matmul(dPdx,conjg(transpose(prod(1:2,1:2,i_p))))
+          dTauDx = dTauDx + conjg(transpose(dTauDx))
+          d_radiance(1:2,1:2,i_sv) = d_radiance(1:2,1:2,i_sv) + &
+                                   & dTauDx * t_script(i_p) + &
+                                   & tau(1:2,1:2,i_p) * d_t_script(i_p,i_sv)
+d296 12
+a307 2
+              dPdx = matmul(dPdx,e(1:2,1:2,i_pp)) + &
+                &    matmul(prod(1:2,1:2,i_p),d_e(1:2,1:2,i_pp,i_sv))
+d320 35
+a354 4
+          dTauDx = matmul(dPdx,conjg(transpose(prod(1:2,1:2,i_p))))
+          dTauDx = dTauDx + conjg(transpose(dTauDx))
+          d_radiance(1:2,1:2,i_sv) = d_radiance(1:2,1:2,i_sv) + &
+                                   & dTauDx * t_script(i_p)
+d358 12
+a369 2
+              dPdx = matmul(dPdx,e(1:2,1:2,i_pp)) + &
+                &    matmul(prod(1:2,1:2,i_p),d_e(1:2,1:2,i_pp,i_sv))
+d387 3
+@
+
+
+2.12
+log
+@New method to compute derivatives
+@
+text
+@d14 1
+a14 1
+    &  "$Id: mcrt_m.f90,v 2.10 2003/08/15 20:29:26 vsnyder Exp $"
+a246 2
+              dPdx = matmul(dPdx,e(1:2,1:2,i_pp+1)) + &
+                &    matmul(prod(1:2,1:2,i_p),d_e(1:2,1:2,i_pp+1,i_sv))
+d248 2
+a267 2
+              dPdx = matmul(dPdx,e(1:2,1:2,i_pp+1)) + &
+                &    matmul(prod(1:2,1:2,i_p),d_e(1:2,1:2,i_pp+1,i_sv))
+d269 2
+d288 3
+@
+
+
+2.11
+log
+@Clean up some loose ends before switching to new method
+@
+text
+@d171 5
+a175 3
+! Compute d(Radiance)/d(Whatever) given T_script (aka Delta_B),
+! D_T_script (aka D_Delta_B), D_E (d(Deltau)/d(Whatever)), Prod
+! (product of E's), and Tau (P * P^*).
+d179 3
+a181 3
+  !  \frac{\partial \bf I}{\partial x} = &\sum_{i=1}^n
+  !   \left [ \frac{\partial {\bf \tau}_i}{\partial x} \Delta B_i +
+  !           {\bf \tau}_i \frac{\partial \Delta B_i}{\partial x}
+d184 7
+a190 14
+  !  \frac{\partial {\bf \tau}_i}{\partial x} = &
+  !   \frac{\partial {\bf P}_i {\bf P}_i^\dagger}{\partial x}
+  !\\
+  !  = & \sum_{k=2}^{i} \left [ {\bf E}_2 \dots {\bf E}_{k-1}
+  !       \frac{\partial {\bf E}_k}{\partial x} {\bf E}_{k+1} \dots
+  !       {\bf E}_i {\bf P}_i^\dagger +
+  !       {\bf P}_i {\bf E}_i^\dagger \dots {\bf E}_{k+1}
+  !       \frac{\partial {\bf E}_k^\dagger}{\partial x}
+  !       {\bf E}_{k-1}^\dagger \dots {\bf E}_2^\dagger \right ]
+  !\\
+  !  = & \sum_{k=2}^{i} \left [ {\bf P}_{k-1}
+  !       \frac{\partial {\bf E}_k}{\partial x} {\bf P}_k^{-1} {\bf \tau}_i
+  !     + {\bf \tau}_i^\dagger {\bf P}_k^{-\dagger}
+  !       \frac{\partial {\bf E}_k^\dagger}{\partial x} {\bf P}_{k-1}^\dagger \right ]
+d193 3
+a195 1
+  ! Notice that $\tau = \tau^\dagger$ by construction (see {\tt MCRT}).  Then
+d197 3
+a199 11
+  ! \begin{split}
+  !  \frac{\partial {\bf I}}{\partial x} =& \sum_{i=1}^n
+  !    \mathcal{Q}_i {\bf \tau}_i + {\bf \tau}_i^\dagger \mathcal{Q}_i^\dagger
+  !    \text{, where}
+  !\\
+  !  \mathcal{Q}_i =& \frac12 \frac{\partial \Delta B_i}{\partial x} \mathbf{1} +
+  !    \Delta B_i \mathcal{W}_i \text{ and}
+  !\\
+  !  \mathcal{W}_i =& \sum_{k=2}^i {\bf P}_{k-1}
+  !                     \frac{\partial {\bf E}_k}{\partial x} {\bf P}_k^{-1}
+  ! \end{split}
+a200 2
+  ! {\bf 1} is the identity matrix (we're using ${\bf I}$ for the radiance
+  ! matrix).
+d205 1
+a205 1
+    real(rk), intent(in) :: T_script(:)     ! sve.  Called Delta B above
+d209 1
+a209 1
+                                            ! D (deltau) / D (Whatever)
+d218 2
+a221 9
+    complex(rk) :: PDET                     ! Det(P_{k+1})
+    complex(rk) :: PINV(2,2,size(t_script)) ! P_{k+1}^{-1}
+!   real(rk), parameter :: PTOL = (radix(0.0_rk)+0.0_rk) ** minexponent(0.0_rk)
+      ! PTOL = sqrt(tiny(0.0_rk))
+    real(rk), parameter :: PTOL = epsilon(0.0_rk) ! defines "PDET is too small"
+    complex(rk) :: Q(2,2)
+    complex(rk) :: Q_Tau(2,2)               ! Q x Tau
+    integer :: NP                           ! Index of first PINV not computed
+    complex(rk) :: W(2,2)
+d225 5
+a229 16
+    ! Compute the P_{k+1}^{-1} matrices, but only up to where det(P_{k+1})
+    ! becomes small.  We can get away with this for two reasons.  First, we
+    ! use P_{k+1}^{-1} \tau_i to get \prod{j=k+1}^{i-1} E_j.  Second,
+    ! because |P| <= 1.0, a product of P's is smaller than any of them.
+
+    do np = 2, p_stop
+      pdet = prod(1,1,np)*prod(2,2,np) - prod(1,2,np)*prod(2,1,np)
+      if ( abs(pdet) <= ptol ) & ! getting too small
+    exit
+      pinv(:,:,np) = reshape( (/ prod(2,2,np), -prod(2,1,np), &
+                &               -prod(1,2,np),  prod(1,1,np) /), (/2,2/) ) / &
+                &    pdet
+    end do
+    ! NP-1 is the index of the last computed PINV
+
+    d_radiance = 0.0_rk
+d233 3
+a235 1
+        d_radiance(1,1,i_sv) = d_t_script(1,i_sv) ! W(1)=0 and Tau(1)=Ident
+a236 1
+        w = 0.0_rk
+d238 15
+a252 8
+        do i_p = 2, np - 1                 ! path elements
+          ! w = w + P_k DE_k P_{k+1}^{-1}
+          if ( i_p /= i_tan + 1 ) then ! Skip adding to W at the tangent point
+            w = w + matmul ( matmul ( &
+            &                prod(1:2,1:2,i_p-1), d_e(1:2,1:2,i_pp,i_sv) ), &
+            &       pinv(:,:,i_p) )
+          else
+            i_pp = i_p - 1
+a253 8
+          q(1,1) = 0.5 * d_t_script(i_p,i_sv) + t_script(i_p) * w(1,1)
+          q(1,2) =                              t_script(i_p) * w(1,2)
+          q(2,1) =                              t_script(i_p) * w(2,1)
+          q(2,2) = 0.5 * d_t_script(i_p,i_sv) + t_script(i_p) * w(2,2)
+          q_tau = matmul(q,tau(1:2,1:2,i_p))
+          d_radiance(1:2,1:2,i_sv) = d_radiance(1:2,1:2,i_sv) + &
+                                   &   q_tau + conjg(transpose(q_tau))
+          i_pp = i_pp + 1
+d258 1
+a258 1
+        w = 0.0_rk
+d260 14
+a273 8
+        do i_p = 2, np - 1                 ! path elements
+          ! w = w + P_k DE_k P_{k+1}^{-1}
+          if ( i_p /= i_tan + 1 ) then ! Skip adding to W at the tangent point
+            w = w + matmul ( matmul ( &
+            &                prod(1:2,1:2,i_p-1), d_e(1:2,1:2,i_pp,i_sv) ), &
+            &       pinv(:,:,i_p) )
+          else
+            i_pp = i_p - 1
+a274 8
+          q(1,1) = t_script(i_p) * w(1,1)
+          q(1,2) = t_script(i_p) * w(1,2)
+          q(2,1) = t_script(i_p) * w(2,1)
+          q(2,2) = t_script(i_p) * w(2,2)
+          q_tau = matmul(q,tau(1:2,1:2,i_p))
+          d_radiance(1:2,1:2,i_sv) = d_radiance(1:2,1:2,i_sv) + &
+                                   &   q_tau + conjg(transpose(q_tau))
+          i_pp = i_pp + 1
+@
+
+
+2.10
+log
+@Implement polarized VMR derivatives
+@
+text
+@d14 1
+a14 1
+    &  "$Id: mcrt_m.f90,v 2.9 2003/08/14 19:37:55 vsnyder Exp $"
+d42 1
+a42 1
+!  {\bf P}_i = & \prod_{k=1}^{i-1} {\bf E}_k \text{ and } {\bf E} \text{ is
+d48 4
+d166 2
+a167 2
+  subroutine Mcrt_Der ( T_script, D_E, Prod, Tau, P_Stop, D_Radiance, &
+    & D_T_script )
+d179 1
+a179 1
+  !           {\bf \tau}_i \frac{\partial \Delta B_i}{\partial x} \mathbf{1}
+d185 1
+a185 1
+  !  = & \sum_{k=1}^{i-1} \left [ {\bf E}_1 \dots {\bf E}_{k-1}
+d187 2
+a188 2
+  !       {\bf E}_{i-1} {\bf P}_i^\dagger +
+  !       {\bf P}_i {\bf E}_{i-1}^\dagger \dots {\bf E}_{k+1}
+d190 1
+a190 1
+  !       {\bf E}_{k-1}^\dagger \dots {\bf E}_1^\dagger \right ]
+d192 4
+a195 4
+  !  = & \sum_{k=1}^{i-1} \left [ {\bf P}_k
+  !       \frac{\partial {\bf E}_k}{\partial x} {\bf P}_{k+1}^{-1} {\bf \tau}_i
+  !     + {\bf \tau}_i^\dagger {\bf P}_{k+1}^{-\dagger}
+  !       \frac{\partial {\bf E}_k^\dagger}{\partial x} {\bf P}_k^\dagger \right ]
+d205 1
+a205 1
+  !  \mathcal{Q}_i =& \frac12 \frac{\partial \Delta B_i}{\partial x} {\bf 1} +
+d208 2
+a209 2
+  !  \mathcal{W}_i =& \sum_{k=1}^{i-1} {\bf P}_k
+  !                     \frac{\partial {\bf E}_k}{\partial x} {\bf P}_{k+1}^{-1}
+d219 2
+d227 1
+a227 1
+    real(rk), intent(in),optional :: D_T_script(:,:) ! path x sve. ak.k.a D Delta B
+d321 3
+@
+
+
+2.9
+log
+@Futzing with comments
+@
+text
+@d14 1
+a14 1
+    &  "$Id: mcrt_m.f90,v 2.8 2003/06/09 20:52:37 vsnyder Exp $"
+d162 2
+a163 2
+  subroutine Mcrt_Der ( T_script, D_T_script, D_E, Prod, Tau, P_Stop, &
+    & D_Radiance )
+a214 1
+    real(rk), intent(in) :: D_T_script(:,:) ! path x sve. D Delta B
+d221 3
+d255 50
+a304 24
+    do i_sv = 1, size(d_radiance,3)      ! state vector elements
+      d_radiance(1,1,i_sv) = d_t_script(1,i_sv) ! W(1)=0 and Tau(1)=Ident
+      d_radiance(2,2,i_sv) = d_t_script(1,i_sv)
+      w = 0.0_rk
+      i_pp = 2
+      do i_p = 2, np - 1                 ! path elements
+        ! w = w + P_k DE_k P_{k+1}^{-1}
+        if ( i_p /= i_tan + 1 ) then ! Skip adding to W at the tangent point
+          w = w + matmul ( matmul ( &
+          &                prod(1:2,1:2,i_p-1), d_e(1:2,1:2,i_pp,i_sv) ), &
+          &       pinv(:,:,i_p) )
+        else
+          i_pp = i_p - 1
+        end if
+        q(1,1) = 0.5 * d_t_script(i_p,i_sv) + t_script(i_p) * w(1,1)
+        q(1,2) =                              t_script(i_p) * w(1,2)
+        q(2,1) =                              t_script(i_p) * w(2,1)
+        q(2,2) = 0.5 * d_t_script(i_p,i_sv) + t_script(i_p) * w(2,2)
+        q_tau = matmul(q,tau(1:2,1:2,i_p))
+        d_radiance(1:2,1:2,i_sv) = d_radiance(1:2,1:2,i_sv) + &
+                                 &   q_tau + conjg(transpose(q_tau))
+        i_pp = i_pp + 1
+      end do ! i_p
+    end do ! i_sv
+d315 3
+@
+
+
+2.8
+log
+@More work on polarized derivatives
+@
+text
+@d14 1
+a14 1
+    &  "$Id: mcrt_m.f90,v 2.7 2003/05/28 01:25:02 vsnyder Exp $"
+d167 3
+a169 2
+! Compute the derivative of Radiance given T_script (aka Delta_B),
+! D_T_script (aka D_Delta_B), D_E, Prod (product of E's), and Tau (P * P^*).
+d214 1
+a214 1
+    real(rk), intent(in) :: T_script(:)     ! Called Delta B above
+d216 2
+a217 1
+    complex(rk), intent(in) :: D_E(:,:,:,:) ! 2 x 2 x path x sve.  D (deltau) / dT
+d221 1
+a221 1
+    complex(rk), intent(out) :: D_Radiance(:,:,:) ! 2,2,sve
+d229 1
+a229 1
+    real(rk), parameter :: PTOL = epsilon(0.0_rk)
+d232 1
+a232 1
+    integer :: NP                           ! The first PINV not computed
+d287 3
+@
+
+
+2.7
+log
+@Hopefully squashed some more bugs in polarized derivatives
+@
+text
+@d14 1
+a14 1
+    &  "$Id: mcrt_m.f90,v 2.6 2003/05/27 22:31:12 vsnyder Exp $"
+d24 1
+a24 1
+  subroutine Mcrt ( T_script, Sqrt_earth_ref, Del_tau, Prod, Tau, Radiance )
+d56 1
+d76 2
+a77 1
+    ! radiance = t_script(1) * ident
+d79 2
+a80 2
+    radiance(1,2) = 0.0
+    radiance(2,1) = 0.0
+d90 1
+a90 1
+    do i = 2, i_tan
+d98 1
+d106 1
+a106 1
+    do i = i_tan+2, n_path
+d154 1
+a154 1
+!     Specifying the rangees hopefully prevents accessing the dope vectors
+d162 1
+a162 1
+  subroutine Mcrt_Der ( T_script, D_T_script, D_E, Prod, Tau, Do_Calc, &
+d174 1
+a174 1
+  !           {\bf \tau}_i \frac{\partial \Delta B_i}{\partial x}
+d180 1
+a180 1
+  !  = & \sum_{k=1}^{i-1} \left [ {\bf E}_i \dots E_{k-1}
+a209 1
+    use dExDt_M, only: dExDt               ! D (exp(2x2 matrix))
+d218 1
+a218 1
+    logical, intent(in) :: Do_Calc(:,:)     ! path x sve. Eta_Zxp /= 0.0
+d221 2
+a222 2
+    logical :: Do_Tau(size(t_script))       ! Some Tau(:,:,*) /= 0.0
+    integer :: i_p, i_sv, k
+d225 1
+a225 1
+    real(rk), parameter :: PTOL = (radix(0.0_rk)+0.0_rk) ** minexponent(0.0_rk)
+d227 1
+d230 1
+a230 1
+    integer :: NP                           ! How many terms do we need in W?
+d233 1
+a233 6
+    ! Find where Tau is not zero, so we don't test eight numbers (at
+    ! most) at every path point for every state vector element.
+
+    do i_p = 1, size(t_script)
+      do_tau = any(tau(1:2,1:2,i_p) /= 0.0)
+    end do
+d240 1
+a240 1
+    do np = 2, size(t_script)
+d248 1
+d252 12
+a263 16
+      do i_p = 1, size(t_script)         ! path elements
+        if ( do_tau(i_p) ) then
+          w = 0.0_rk
+          do k = 1, min(np,i_p)-1
+            ! w = w + P_k DE_k P_{k+1}^{-1}
+            if ( do_calc(k,i_sv) ) &     ! non-zero derivative D_E
+              & w = w + matmul ( matmul ( prod(1:2,1:2,k), d_e(1:2,1:2,k,i_sv) ), &
+                  &              pinv(:,:,k+1) )
+          end do ! k = 1, i_p-1
+          q(1,1) = 0.5 * d_t_script(i_p,i_sv) + t_script(i_p) * w(1,1)
+          q(1,2) =                              t_script(i_p) * w(1,2)
+          q(2,1) =                              t_script(i_p) * w(2,2)
+          q(2,2) = 0.5 * d_t_script(i_p,i_sv) + t_script(i_p) * w(2,2)
+          q_tau = matmul(q,tau(1:2,1:2,i_p))
+          d_radiance(1:2,1:2,i_sv) = d_radiance(1:2,1:2,i_sv) + &
+                                   &   q_tau + conjg(transpose(q_tau))
+d265 8
+d285 3
+@
+
+
+2.6
+log
+@More work on polarized derivatives
+@
+text
+@d14 1
+a14 1
+    &  "$Id: mcrt_m.f90,v 2.5 2003/05/24 02:26:18 vsnyder Exp $"
+d219 1
+d230 7
+d254 1
+a254 1
+        if ( do_calc(i_p,i_sv) ) then    ! non-zero derivative D_E
+d256 6
+a261 7
+          if ( any(tau(1:2,1:2,i_p) /= 0.0) ) then
+            do k = 1, min(np,i_p)-1
+              ! w = w + P_k DE_k P_{k+1}^{-1}
+              w = w + matmul ( matmul ( prod(1:2,1:2,k), d_e(1:2,1:2,k,i_sv) ), &
+                &              pinv(:,:,k+1) )
+            end do ! k = 1, i_p-1
+          end if
+d282 3
+@
+
+
+2.5
+log
+@More work on polarized temperature derivatives
+@
+text
+@d14 1
+a14 1
+    &  "$Id: mcrt_m.f90,v 2.4 2003/05/15 03:29:44 vsnyder Exp $"
+d238 2
+a239 2
+      pinv(:,:,np) = reshape( (/ prod(2,2,k+1), -prod(2,1,k+1), &
+                &               -prod(1,2,k+1), prod(1,1,k+1) /), (/2,2/) ) / &
+d275 3
+@
+
+
+2.4
+log
+@Implement polarized model's temperature derivatives
+@
+text
+@d14 1
+a14 1
+    &  "$Id: mcrt_m.f90,v 2.3 2003/05/10 01:05:07 livesey Exp $"
+d53 1
+a53 1
+    complex(rk), intent(in) :: Del_tau(:,:,:)    ! 2 x 2 x : = exp(del_opcty).
+d55 2
+a56 2
+                                                 ! E in other notes.
+    complex(rk), intent(out) :: Prod(:,:,:)      ! 2 x 2 x :.  Called P in some
+d59 1
+a59 1
+    complex(rk), intent(out) :: Tau(:,:,:)       ! 2 x 2 x :.  
+d83 4
+d89 2
+a90 2
+      prod(:,:,i) = matmul ( prod(:,:,i-1), del_tau(:,:,i) )
+      call updaterad ( radiance, t_script(i), prod(:,:,i), tau(:,:,i) )
+d96 1
+a96 1
+    prod(:,:,i_tan+1) = sqrt_earth_ref * prod(:,:,i_tan)
+d98 1
+a98 1
+      & radiance, t_script(i_tan+1), prod(:,:,i_tan+1), tau(:,:,i_tan+1) )
+d104 2
+a105 2
+      prod(:,:,i) = matmul ( prod(:,:,i-1) , del_tau(:,:,i-1) )
+      call updaterad ( radiance, t_script(i), prod(:,:,i), tau(:,:,i) )  
+d220 4
+a223 1
+    complex(rk) :: PINV(2,2)                ! P_{k+1}^{-1}
+d226 1
+d229 14
+d246 1
+a246 1
+        if ( do_calc(i_p,i_sv) ) then
+d248 2
+a249 2
+          if ( do_calc(i_p,i_sv) ) then     ! non-zero derivative D_E
+            do k = 1, i_p-1
+d251 3
+a253 12
+              pinv = reshape( (/ prod(2,2,k+1), -prod(2,1,k+1), &
+                &             -prod(1,2,k+1), prod(1,1,k+1) /), (/2,2/) ) / &
+                &   ( prod(1,1,k+1)*prod(2,2,k+1) - prod(1,2,k+1)*prod(2,1,k+1) )
+              w = w + matmul ( matmul ( prod(1:2,1:2,k), d_e(1:2,1:2,k,i_p) ), pinv )
+            end do
+            q(1,1) = 0.5 * d_t_script(k,i_p) + t_script(k) * w(1,1)
+            q(1,2) =                           t_script(k) * w(1,2)
+            q(2,1) =                           t_script(k) * w(2,2)
+            q(2,2) = 0.5 * d_t_script(k,i_p) + t_script(k) * w(2,2)
+            q_tau = matmul(q,tau(1:2,1:2,i_p))
+            d_radiance(1:2,1:2,i_sv) = d_radiance(1:2,1:2,i_sv) + &
+                                     &  q_tau + conjg(transpose(q_tau))
+d255 7
+d275 3
+@
+
+
+2.3
+log
+@Typo!
+@
+text
+@d14 1
+a14 1
+    &  "$Id: mcrt_m.f90,v 2.2 2003/05/09 19:27:02 vsnyder Exp $"
+d155 2
+a156 1
+  subroutine Mcrt_Der ( T_script, D_T_script, D_E, Prod, Tau, D_Radiance )
+d206 8
+a213 6
+    real(rk), intent(in) :: T_script(:)    ! Called Delta B above
+    real(rk), intent(in) :: D_T_script(:)  ! 0.5 * D Delta B
+    complex(rk), intent(in) :: D_E(:,:,:)  ! 2 x 2 x :.  D (deltau)
+    complex(rk), intent(in) :: Prod(:,:,:) ! 2 x 2 x :.  Called P above.
+    complex(rk), intent(in) :: Tau(:,:,:)  ! 2 x 2 x :. Matmul(Prod,conjg(Prod)).
+    complex(rk), intent(out) :: D_Radiance(2,2)
+d215 2
+a216 2
+    integer :: i, k
+    complex(rk) :: PINV(2,2)               ! P_{k+1}^{-1}
+d218 1
+a218 1
+    complex(rk) :: Q_Tau(2,2)              ! Q x Tau
+d222 23
+a244 16
+    do i = 1, size(t_script)
+      w = 0.0_rk
+      do k = 1, i-1
+        ! w = w + P_k DE_k P_{k+1}^{-1}
+        pinv = reshape( (/ prod(2,2,k+1), -prod(2,1,k+1), &
+          &             -prod(1,2,k+1), prod(1,1,k+1) /), (/2,2/) ) / &
+          &   ( prod(1,1,k+1)*prod(2,2,k+1) - prod(1,2,k+1)*prod(2,1,k+1) )
+        w = w + matmul ( matmul ( prod(1:2,1:2,k), d_e(1:2,1:2,k) ), pinv )
+      end do
+      q(1,1) = d_t_script(k) + t_script(k) * w(1,1)
+      q(1,2) =                 t_script(k) * w(1,2)
+      q(2,1) =                 t_script(k) * w(2,2)
+      q(2,2) = d_t_script(k) + t_script(k) * w(2,2)
+      q_tau = matmul(q,tau(1:2,1:2,i))
+      d_radiance = d_radiance + q_tau + conjg(transpose(q_tau))
+    end do
+d255 3
+@
+
+
+2.2
+log
+@Initial stuff for temperature derivatives
+@
+text
+@d14 1
+a14 1
+    &  "$Id: mcrt_m.f90,v 2.1 2003/05/05 23:00:26 livesey Exp $"
+a226 1
+          &  
+d245 3
+@
+
+
+2.1
+log
+@Merged in feb03 newfwm branch
+@
+text
+@d10 1
+a10 1
+  public :: MCRT
+d14 1
+a14 1
+    &  "$Id$"
+d17 1
+a17 1
+    &  "$RCSfile$"
+d24 1
+a24 1
+  subroutine Mcrt ( t_script, sqrt_earth_ref, del_tau, tau, radiance )
+d35 14
+a48 1
+    use CS_Expmat_M, only: CS_Expmat
+d51 13
+a63 7
+    real(rk), intent(in) :: t_script(:)
+    real(rk), intent(in) :: sqrt_earth_ref
+    complex(rk), intent(inout) :: del_tau(:,:,:) ! 2 x 2 x : = exp(del_opcty)
+                                                 ! Called P in the notes
+                                                 ! The middle one is changed
+    complex(rk), intent(out) :: tau(:,:,:)       ! 2 x 2 x :
+    complex(rk), intent(out) :: radiance(2,2)
+d74 1
+a74 1
+    tau(:,:,1) = ident
+d85 2
+a86 2
+      tau(:,:,i) = matmul ( tau(:,:,i-1), del_tau(:,:,i) )
+      call updaterad ( radiance, t_script(i), tau(:,:,i) )
+d92 3
+a94 3
+    del_tau(:,:,i_tan+1) = del_tau(:,:,i_tan)
+    tau(:,:,i_tan+1) = sqrt_earth_ref * tau(:,:,i_tan)
+    call updaterad ( radiance, t_script(i_tan+1), tau(:,:,i_tan+1) )
+d100 2
+a101 2
+      tau(:,:,i) = matmul ( tau(:,:,i-1) , del_tau(:,:,i-1) )
+      call updaterad ( radiance, t_script(i), tau(:,:,i) )  
+d107 1
+a107 1
+    subroutine Updaterad ( Radiance, Scalar, Tau )
+d109 2
+a110 2
+! Update the radiance from the tau:
+! Radiance = Radiance + Scalar * Tau * conjg(transpose(Tau))
+d117 4
+a120 1
+      complex(rk), intent(in) :: Tau(2,2)
+d124 25
+a148 26
+      t11r = real(tau(1,1))
+      t11i = aimag(tau(1,1))
+      t12r = real(tau(1,2))
+      t12i = aimag(tau(1,2))
+      t21r = real(tau(2,1))
+      t21i = aimag(tau(2,1))
+      t22r = real(tau(2,2))
+      t22i = aimag(tau(2,2))
+
+!     radiance(1,1) = radiance(1,1) + scalar * (tau(1,1)*conjg(tau(1,1)) + &
+!                                            &  tau(1,2)*conjg(tau(1,2)) )
+      radiance(1,1) = radiance(1,1) + scalar * &
+        & ( t11r * t11r + t11i * t11i + t12r * t12r + t12i * t12i )
+
+!     radiance(1,2) = radiance(1,2) + scalar * (tau(1,1)*conjg(tau(2,1)) + &
+!                                            &  tau(1,2)*conjg(tau(2,2)) )
+      radiance(1,2) = radiance(1,2) + scalar * &
+        & cmplx( t11r * t21r + t11i * t21i + t12r * t22r + t12i * t22i, &
+        &       -t11r * t21i + t11i * t21r - t12r * t22i + t12i * t22r )
+
+      radiance(2,1) = conjg(radiance(1,2))
+
+!     radiance(2,2) = radiance(2,2) + scalar * (tau(2,1)*conjg(tau(2,1)) + &
+!                                            &  tau(2,2)*conjg(tau(2,2)) )
+      radiance(2,2) = radiance(2,2) + scalar * &
+        & ( t21r * t21r + t21i * t21i + t22r * t22r + t22i * t22i )
+d154 85
+d245 4
+a248 1
+! $Log$
+@
+
+
+1.1
+log
+@file mcrt_m.f90 was initially added on branch newfwm-feb03.
+@
+text
+@d1 145
+@
+
+
+1.1.2.1
+log
+@Initial commit
+@
+text
+@a0 145
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+module MCRT_m
+
+!       Magnetic    Condensed    Radiative    Transfer
+
+  implicit NONE
+  private
+  public :: MCRT
+
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+    &  "$Id: freq_avg_m.f90,v 2.5 2002/10/08 17:08:03 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName= &
+    &  "$RCSfile: freq_avg_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+! ---------------------------------------------------------  Mcrt  -----
+  subroutine Mcrt ( t_script, sqrt_earth_ref, del_opcty, &
+     &              tau, del_tau, radiance )
+
+!       Magnetic    Condensed    Radiative    Transfer
+
+! Compute the polarized radiative transfer using a condensed algorithm.
+! Enter t_script(*) in a quantity that is linear in power.
+! where T is intensity of a black body radiator having temperature t
+! at frequency f (usually entered in units of kelvin being derived from
+! T_{i} = h v / [ k ( exp{h v / (k t_{i}) } - 1)]).
+! sqrt_earth_ref is the square root of Earth's reflectivity.
+! User also enters del_opcty which is the following integral...
+! int_{h_i}^{h_{i+1}}  G(s) ds
+
+    use CS_Expmat_M, only: CS_Expmat
+    use MLSCommon, only: Rk => Rp
+
+    real(rk), intent(in) :: t_script(:)
+    real(rk), intent(in) :: sqrt_earth_ref
+    complex(rk), intent(in) :: del_opcty(2,2,*)
+    complex(rk), intent(out) :: tau(2,2,*)
+    complex(rk), intent(out) :: del_tau(2,2,*)
+    complex(rk), intent(out) :: radiance(2,2)
+
+    integer :: i, i_tan, n_path
+
+    complex(rk), parameter :: Ident(2,2) = reshape( (/ 1.0, 0.0, &
+                                                     & 0.0, 1.0 /), (/2,2/) )
+
+    n_path = size(t_script)
+
+! Initialize segment 1 calculation
+
+    tau(:,:,1) = ident
+    ! radiance = t_script(1) * ident
+    radiance(1,1) = t_script(1)
+    radiance(1,2) = 0.0
+    radiance(2,1) = 0.0
+    radiance(2,2) = t_script(1)
+
+! Proceed with first segment integration
+
+    i_tan = n_path / 2
+    do i = 2, i_tan
+      ! del_tau(:,:,i) = exp(del_opcty(:,:,i))
+      call cs_expmat ( del_opcty(:,:,i), del_tau(:,:,i) )
+      tau(:,:,i) = matmul ( tau(:,:,i-1), del_tau(:,:,i) )
+      call updaterad ( radiance, t_script(i), tau(:,:,i) )
+    end do
+
+! Tangent point (or Earth intersecting) layer.  If it's not
+! an Earth intersecting layer, sqrt_earth_ref will be 1.0.
+
+    del_tau(:,:,i_tan+1) = del_tau(:,:,i_tan)
+    tau(:,:,i_tan+1) = sqrt_earth_ref * tau(:,:,i_tan)
+    call updaterad ( radiance, t_script(i_tan+1), tau(:,:,i_tan+1) )
+
+! Proceed with third segment integration, which includes the
+! space radiance contribution.
+
+    do i = i_tan+2, n_path
+      ! del_tau(:,:,i-1) = exp(del_opcty(:,:,i-1))
+      call cs_expmat ( del_opcty(:,:,i-1), del_tau(:,:,i-1) )
+      tau(:,:,i) = matmul ( tau(:,:,i-1) , del_tau(:,:,i-1) )
+      call updaterad ( radiance, t_script(i), tau(:,:,i) )  
+    end do                                                       
+
+  contains
+  ! ..................................................  Updaterad  .....
+
+    subroutine Updaterad ( Radiance, Scalar, Tau )
+
+! Update the radiance from the tau:
+! Radiance = Radiance + Scalar * Tau * conjg(transpose(Tau))
+! We know that Radiance is Hermitian, so the diagonal elements are
+! real and the off-diagonal elements are conjugates.  Exploiting
+! this saves roughly half of the work.
+
+      complex(rk), intent(inout) :: Radiance(2,2)
+      real(rk), intent(in) :: Scalar
+      complex(rk), intent(in) :: Tau(2,2)
+
+      real(rk) t11r, t11i, t12r, t12i, t21r, t21i, t22r, t22i
+
+      t11r = real(tau(1,1))
+      t11i = aimag(tau(1,1))
+      t12r = real(tau(1,2))
+      t12i = aimag(tau(1,2))
+      t21r = real(tau(2,1))
+      t21i = aimag(tau(2,1))
+      t22r = real(tau(2,2))
+      t22i = aimag(tau(2,2))
+
+!     radiance(1,1) = radiance(1,1) + scalar * (tau(1,1)*conjg(tau(1,1)) + &
+!                                            &  tau(1,2)*conjg(tau(1,2)) )
+      radiance(1,1) = radiance(1,1) + scalar * &
+        & ( t11r * t11r + t11i * t11i + t12r * t12r + t12i * t12i )
+
+!     radiance(1,2) = radiance(1,2) + scalar * (tau(1,1)*conjg(tau(2,1)) + &
+!                                            &  tau(1,2)*conjg(tau(2,2)) )
+      radiance(1,2) = radiance(1,2) + scalar * &
+        & cmplx( t11r * t21r + t11i * t21i + t12r * t22r + t12i * t22i, &
+        &       -t11r * t21i + t11i * t21r - t12r * t22i + t12i * t22r )
+
+      radiance(2,1) = conjg(radiance(1,2))
+
+!     radiance(2,2) = radiance(2,2) + scalar * (tau(2,1)*conjg(tau(2,1)) + &
+!                                            &  tau(2,2)*conjg(tau(2,2)) )
+      radiance(2,2) = radiance(2,2) + scalar * &
+        & ( t21r * t21r + t21i * t21i + t22r * t22r + t22i * t22i )
+
+    end subroutine Updaterad
+
+  end subroutine Mcrt
+
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
+end module MCRT_m
+
+! $Log: $
+@
+
+
+1.1.2.2
+log
+@Don't exp(del_opcty) here, it's done by the caller
+@
+text
+@d14 1
+a14 1
+    &  "$Id: mcrt_m.f90,v 1.1.2.1 2003/02/14 03:54:10 vsnyder Exp $"
+d17 1
+a17 1
+    &  "$RCSfile: mcrt_m.f90,v $"
+d24 2
+a25 1
+  subroutine Mcrt ( t_script, sqrt_earth_ref, del_tau, tau, radiance )
+d35 2
+d43 3
+a45 4
+    complex(rk), intent(inout) :: del_tau(:,:,:) ! 2 x 2 x : = exp(del_opcty)
+                                                 ! Called P in the notes
+                                                 ! The middle one is changed
+    complex(rk), intent(out) :: tau(:,:,:)       ! 2 x 2 x :
+d68 2
+d85 2
+d145 1
+a145 4
+! $Log: mcrt_m.f90,v $
+! Revision 1.1.2.1  2003/02/14 03:54:10  vsnyder
+! Initial commit
+!
+@
+
+

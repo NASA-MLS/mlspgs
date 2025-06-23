@@ -1,0 +1,2635 @@
+head	1.23;
+access;
+symbols
+	v5-02-NRT-19:1.23
+	v6-00:1.23
+	v5-02-NRT-18:1.23
+	v5-02:1.23
+	v5-01-NRT-17:1.23
+	v5-01-NRT-16:1.23
+	v5-01-NRT-15:1.23
+	v5-01-NRT-14:1.23
+	neuralnetworks-1-0:1.23.0.14
+	cfm-single-freq-0-1:1.23.0.12
+	v5-01:1.23
+	v5-00:1.23
+	v4-23-TA133:1.23.0.10
+	mus-emls-1-70:1.23.0.8
+	rel-1-0-englocks-work:1.23.0.6
+	VUMLS1-00:1.23
+	VPL1-00:1.23
+	V4-22-NRT-08:1.23
+	VAM1-00:1.23
+	V4-21:1.23.0.4
+	V4-13:1.23
+	V4-12:1.23
+	V4-11:1.23
+	V4-10:1.23
+	V3-43:1.23
+	M4-00:1.23
+	V3-41:1.23
+	V3-40-PlusGM57:1.23.0.2
+	V2-24-NRT-04:1.23
+	V3-33:1.23
+	V2-24:1.23
+	V3-31:1.23
+	V3-30-NRT-05:1.23
+	cfm-01-00:1.23
+	V3-30:1.23
+	V3-20:1.23
+	V3-10:1.23
+	V2-23-NRT-02:1.23
+	V2-23:1.23
+	V2-22-NRT-01:1.23
+	V2-22:1.23
+	V2-21:1.22
+	V2-20:1.22
+	V2-11:1.22
+	V2-10:1.22
+	V2-00:1.22
+	V1-51:1.21
+	V1-50:1.21
+	V1-45:1.21
+	V1-44:1.21
+	V1-43:1.21
+	V1-42:1.20
+	V1-41:1.20
+	V1-32:1.19
+	V1-40:1.20
+	V1-31:1.19
+	V1-30:1.19
+	V1-13:1.17
+	V1-12:1.17
+	V1-11:1.17
+	V1-10:1.17
+	newfwm-feb03:1.17.0.2
+	V1-04:1.17
+	V1-03:1.17
+	V1-02:1.17
+	V1-00:1.15
+	newfwm-sep01:1.14.0.2
+	V0-7:1.14
+	V0-5-Level2:1.10
+	V0-5-SIPS:1.10;
+locks; strict;
+comment	@# @;
+
+
+1.23
+date	2007.08.08.04.46.21;	author cvuu;	state Exp;
+branches;
+next	1.22;
+
+1.22
+date	2005.06.23.19.07.38;	author pwagner;	state Exp;
+branches;
+next	1.21;
+
+1.21
+date	2004.05.13.20.19.20;	author ybj;	state Exp;
+branches;
+next	1.20;
+
+1.20
+date	2004.01.07.21.43.18;	author cvuu;	state Exp;
+branches;
+next	1.19;
+
+1.19
+date	2003.04.30.18.15.48;	author pwagner;	state Exp;
+branches;
+next	1.18;
+
+1.18
+date	2003.03.22.02.38.29;	author jdone;	state Exp;
+branches;
+next	1.17;
+
+1.17
+date	2002.04.29.23.38.27;	author ybj;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2002.04.10.21.57.04;	author jdone;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2001.10.05.20.12.02;	author nakamura;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2001.07.18.15.53.30;	author nakamura;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2001.05.10.13.39.37;	author nakamura;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2001.05.09.16.17.35;	author nakamura;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2001.05.04.18.29.16;	author nakamura;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2001.03.27.17.26.11;	author nakamura;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2001.02.21.20.43.43;	author nakamura;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2001.01.18.16.51.07;	author nakamura;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2001.01.16.17.41.49;	author nakamura;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2000.12.29.20.44.46;	author nakamura;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2000.12.07.21.21.50;	author nakamura;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2000.12.07.19.31.38;	author nakamura;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2000.11.15.21.05.55;	author nakamura;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2000.10.17.20.20.04;	author nakamura;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.23
+log
+@add fields convergence,quality and precision
+@
+text
+@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!==============================================================================
+MODULE L3CF
+!==============================================================================
+
+  USE MLSCommon, ONLY: r8, FileNameLen
+  USE MLSL3Common, ONLY: maxWindow, maxGridPoints, GridNameLen, CCSDSB_LEN
+  USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Allocate
+  USE MLSStrings, ONLY: LinearSearchStringArray
+  IMPLICIT NONE
+  private
+  PUBLIC :: L3CFDef_T, L3CFProd_T
+  PUBLIC :: CalculateArray, FillL3CF
+
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: L3CF.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+  ! Contents:
+
+  ! Definition -- L3CFDef_T
+  !               L3CFProd_T
+  ! Subroutines -- CalculateArray
+  !                FillL3CF
+
+  ! Remarks:  This module defines a data type to hold L3CF input and contains
+  !           subroutines used to process these data into forms used by L3.
+
+  ! Parameters
+
+  ! This data type is used to store global definitions read from the l3cf.
+
+  TYPE L3CFDef_T
+
+     CHARACTER (LEN=7) :: hdfOutputVersionString ! HDF versions of output.
+
+     CHARACTER (LEN=3) :: intpMethod ! method of interpolation (lin/csp)
+
+     REAL(r8) :: averageOrbitalPeriod	! average orbital period
+
+     INTEGER :: minDays
+     ! # of days of input data needed to process an l3 product
+
+     INTEGER :: N
+     ! number for "largest differences" diagnostics
+
+  END TYPE L3CFDef_T
+
+  ! This data type is used to store product-dependent cf input.
+
+  TYPE L3CFProd_T
+
+     ! Standard section
+
+     CHARACTER (LEN=GridNameLen) :: l3prodNameD
+	! name of product processed at l3
+     
+     CHARACTER (LEN=3) :: mode				! asc/des/com/all
+     
+     REAL(r8), DIMENSION(maxWindow) :: timeD		! dimensioned (nDays)
+     ! array of TAI93 synoptic times for each day in the processing window
+
+     REAL(r8), DIMENSION(maxGridPoints) :: latGridMap     ! dimensioned (nLats)
+
+     REAL(r8), DIMENSION(maxGridPoints) :: longGrid       ! dimensioned (nLons)
+
+     REAL(r8), DIMENSION(2) :: l3presLvl  ! min, max combined pressure levels
+
+     REAL(r8), DIMENSION(2) :: ascPresLvl ! min, max ascending pressure levels
+
+     REAL(r8), DIMENSION(2) :: desPresLvl ! min, max descending pressure levels
+
+     REAL(r8) :: qual        ! quality 
+
+     REAL(r8) :: conv            ! convergence 
+
+     REAL(r8) :: prec       	 ! precision 
+
+     INTEGER :: nWave		! number of waves to be outputed 
+
+     INTEGER :: nLons		! number of points in longitude grid
+
+     INTEGER :: nLats 	        ! number of points in latitude grid
+     
+     INTEGER :: nDays		! number of days in the l3 processing window
+
+     ! Output section
+
+     CHARACTER (LEN=FileNameLen) :: fileTemplate	! file name from CF
+
+     INTEGER :: mcfNum				! PCF number for the MCF
+
+  END TYPE L3CFProd_T
+
+CONTAINS
+
+  !-----------------------------------------------------------------
+  SUBROUTINE CalculateArray (start, max, delta, array, numPoints)
+  !-----------------------------------------------------------------
+
+    ! Brief description of subroutine
+    ! This subroutine calculates array an array of values, 
+    ! and the number of points
+    ! in it, given the starting value, maximum value an element may take, 
+    ! and the desired increment between elements.
+
+    ! Arguments
+
+    REAL(r8), INTENT(IN) :: delta, max, start
+
+    INTEGER, INTENT(OUT) :: numPoints
+
+    REAL(r8), INTENT(OUT) :: array(:)
+
+    ! Parameters
+
+    ! Functions
+
+    ! Variables
+
+    INTEGER :: i
+
+    array = 0.0
+    array(1) = start
+      
+    DO i = 2, maxGridPoints
+
+       array(i) = array(i-1) + delta
+
+       IF (array(i) > max) EXIT
+
+    ENDDO
+
+    numPoints = i-1
+
+  !-------------------------------
+  END SUBROUTINE CalculateArray
+  !-------------------------------
+
+  !-------------------------------------------------------------------
+  SUBROUTINE FillL3CF (cf, pcfL3Ver, l3Days, l3Window, l3cf, cfDef)
+  !-------------------------------------------------------------------
+  USE MLSCF, ONLY: Mlscf_T
+  USE MLSPCF3, ONLY: mlspcf_mcf_l3dm_start, mlspcf_mcf_l3dm_end
+  USE PCFModule, ONLY: SearchPCFNames
+  USE SDPToolkit, ONLY: PGS_S_SUCCESS
+
+    ! Brief description of subroutine
+    ! This subroutine checks the parser output and fills L3CFProd_T.
+
+    ! Arguments
+
+    TYPE( Mlscf_T ), INTENT(IN) :: cf
+    
+    CHARACTER (LEN=*), INTENT(IN) :: pcfL3Ver
+    
+    CHARACTER (LEN=*), INTENT(IN) :: l3Days(:)
+
+    INTEGER, INTENT(IN) :: l3Window
+    
+    TYPE( L3CFDef_T ), INTENT(OUT) :: cfDef
+
+    TYPE( L3CFProd_T ), POINTER  :: l3cf(:)
+
+    ! Parameters
+
+    ! Functions
+
+    INTEGER, EXTERNAL :: pgs_td_utcToTAI
+
+    ! Variables
+
+    CHARACTER (LEN=480) :: msr
+    CHARACTER (LEN=FileNameLen) :: match, mcfName
+    CHARACTER (LEN=CCSDSB_LEN) :: timeB(maxWindow)
+    CHARACTER (LEN=10) :: l3Ver, label
+    CHARACTER (LEN=8) :: hhmmss
+    
+    REAL(r8) :: start, end, delta, latGrid(maxGridPoints)
+
+    INTEGER :: err, i, iGlob, iLab, iMap, iOut, indx, j, mlspcf_mcf, nLat, & 
+         numProds, returnStatus
+
+    ! Find the section indices in the CF
+
+    iGlob = LinearSearchStringArray(cf%Sections%MlscfSectionName, &
+         & 'GlobalSettings')
+    iMap = LinearSearchStringArray(cf%Sections%MlscfSectionName, 'Standard')
+    iOut = LinearSearchStringArray(cf%Sections%MlscfSectionName, 'Output')
+
+    ! Check that the version number given in the CF 
+    ! will match the PCF file names
+
+    indx = LinearSearchStringArray(cf%Sections(iGlob)%Cells%Keyword, &
+         & 'OutputVersionString')
+    IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, & 
+         & 'No entry in the CF for OutputVersionString.')
+    l3Ver = cf%Sections(iGlob)%Cells(indx)%CharValue
+    IF (l3Ver /= pcfL3Ver) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+         & 'Output versions in the CF and PCF differ.')
+    
+    ! Find/save HDF Output Version from GlobalSettings
+
+    indx = LinearSearchStringArray(cf%Sections(iGlob)%Cells%Keyword,&
+         & 'HDFOutputVersionString')
+    IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, & 
+         & 'No entry in the CF for HDFOutputVersionString.')
+    cfDef%hdfOutputVersionString = cf%Sections(iGlob)%Cells(indx)%CharValue
+    
+    ! Find/save average orbital period from GlobalSettings
+    
+    indx = LinearSearchStringArray(cf%Sections(iGlob)%Cells%Keyword,&
+         & 'AverageOrbitalPeriod')
+    IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, & 
+         & 'No entry in the CF for AverageOrbitalPeriod.')
+    cfDef%averageOrbitalPeriod = cf%Sections(iGlob)%Cells(indx)%RealValue
+
+! Find/save minDays from GlobalSettings
+
+    indx = LinearSearchStringArray(cf%Sections(iGlob)%Cells%Keyword,'MinDays')
+    IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+         & 'No entry in the CF for MinDays.')
+    cfDef%minDays = cf%Sections(iGlob)%Cells(indx)%RealValue
+
+    ! Find/save N
+
+    indx = LinearSearchStringArray(cf%Sections(iGlob)%Cells%Keyword,'N')
+    IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+         & 'No entry in the CF for N.')
+    cfDef%N = cf%Sections(iGlob)%Cells(indx)%RealValue
+    
+    ! Find/save the interpolation method
+
+    indx = LinearSearchStringArray(cf%Sections(iGlob)%Cells%Keyword, &
+         & 'intpMethod')
+    IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+         & 'No entry in the CF for intpMethod.')
+    cfDef%intpMethod = cf%Sections(iGlob)%Cells(indx)%CharValue
+
+    ! Find the boundaries of the latitude grid
+
+    indx = LinearSearchStringArray(cf%Sections(iGlob)%Cells%Keyword, &
+         & 'latGridMap')
+    IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+         & 'No entry in the CF for latGridMap.')
+    start = cf%Sections(iGlob)%Cells(indx)%RealValue
+    end = cf%Sections(iGlob)%Cells(indx)%RangeUpperBound
+
+  ! Find the increment of the latitude grid
+
+  indx = LinearSearchStringArray(cf%Sections(iGlob)%Cells%Keyword, 'dLat')
+  IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, & 
+       & 'No entry in the CF for dLat.')
+  delta = cf%Sections(iGlob)%Cells(indx)%RealValue
+
+  ! Calculate the array containing the latitude grid
+
+  CALL CalculateArray(start, end, delta, latGrid, nLat)
+
+  ! Find the number of products for which L3 processing was requested
+
+  numProds = cf%Sections(iMap)%NoSectionEntries
+
+  if (numProds .gt. 0) then 
+     
+     ALLOCATE (l3cf(numProds), STAT=err)
+     IF ( err /= 0 ) THEN
+        msr = MLSMSG_Allocate // ' array of L3CFProd_T pointers.'
+        CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+     ENDIF
+     
+  endif
+
+  ! Fill L3CFProd_T from the Standard & Output sections of the cf
+
+  DO i = 1, numProds
+
+     mcfName = ''
+
+     ! Find/save the product name
+
+     indx = LinearSearchStringArray( &
+          cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'l3prodName')
+     IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, & 
+          & 'Missing keyword L3PRODNAMED in the Standard section of the l3cf.')
+     l3cf(i)%l3prodNameD = trim(cf%Sections(iMap)%Entries(i)%Cells(indx)%CharValue)
+  
+     ! Find the input synoptic time
+
+     indx = LinearSearchStringArray( &
+          cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'timeD')
+     IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, & 
+          & 'Missing keyword TIMED in the Standard section of the l3cf.')
+     hhmmss = cf%Sections(iMap)%Entries(i)%Cells(indx)%CharValue
+     
+     ! Save nDays from input
+
+     l3cf(i)%nDays = l3Window
+
+     ! For each DOY in the processing window, calculate the TAI time
+
+     DO j = 1, l3Window
+        timeB(j) = l3Days(j) // 'T' // hhmmss // '.000000Z'
+        returnStatus = pgs_td_utcToTAI( timeB(j), l3cf(i)%timeD(j) )
+        IF (returnStatus /= PGS_S_SUCCESS) CALL MLSMessage(MLSMSG_Error, &
+             & ModuleName, 'Error converting from CCSDSB to TAI.')
+     ENDDO
+
+     ! Find/save mode
+
+     indx = LinearSearchStringArray( &
+          & cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'mode')
+     IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, & 
+          & 'Missing keyword MODE in the Standard section of the l3cf.')
+     l3cf(i)%mode = cf%Sections(iMap)%Entries(i)%Cells(indx)%CharValue
+     
+     ! Save the latitude grid quantities
+     
+     l3cf(i)%latGridMap = latGrid
+     l3cf(i)%nLats = nLat
+
+     ! Find the boundaries of the longitude grid
+
+     indx = LinearSearchStringArray( &
+          & cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'longGrid')
+     IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, & 
+          & 'Missing keyword LONGGRID in the Standard section of the l3cf.')
+     start = cf%Sections(iMap)%Entries(i)%Cells(indx)%RealValue
+     end = cf%Sections(iMap)%Entries(i)%Cells(indx)%RangeUpperBound
+
+     ! Find the increment of the longitude grid
+
+     indx = LinearSearchStringArray( &
+          & cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'dLon')
+     IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, & 
+          & 'Missing keyword DLON in the Standard section of the l3cf.')
+     delta = cf%Sections(iMap)%Entries(i)%Cells(indx)%RealValue
+  
+     ! Calculate the array containing the longitude grid
+
+     CALL CalculateArray(start, end, delta, l3cf(i)%longGrid, l3cf(i)%nLons)
+  
+     ! Find/save the min & max of the pressure levels for the desired modes
+
+     IF ( (l3cf(i)%mode == 'com') .OR. (l3cf(i)%mode == 'all') .OR. & 
+          (l3cf(i)%mode == 'ado') ) THEN
+        indx = LinearSearchStringArray( &
+             & cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'l3presLvl')
+        IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, & 
+             &'Missing keyword L3PRESLVL in the Standard section of the l3cf.')
+        l3cf(i)%l3presLvl(1) = & 
+             & cf%Sections(iMap)%Entries(i)%Cells(indx)%RealValue
+        l3cf(i)%l3presLvl(2) = &
+             & cf%Sections(iMap)%Entries(i)%Cells(indx)%RangeUpperBound
+     ELSE
+        l3cf(i)%l3presLvl = 0.0
+     ENDIF
+  
+     IF ( INDEX(l3cf(i)%mode,'a') /= 0) THEN
+     
+        indx = LinearSearchStringArray( &
+             & cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'ascPresLvl')
+        IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, & 
+             &'Missing keyword ASCPRESLVL in Standard section of the l3cf.')
+        l3cf(i)%ascPresLvl(1) = & 
+             & cf%Sections(iMap)%Entries(i)%Cells(indx)%RealValue
+        l3cf(i)%ascPresLvl(2) = &
+             & cf%Sections(iMap)%Entries(i)%Cells(indx)%RangeUpperBound
+     ELSE
+        l3cf(i)%ascPresLvl = 0.0
+     ENDIF
+  
+     IF ( (INDEX(l3cf(i)%mode,'d') /= 0) .OR. (l3cf(i)%mode == 'all') ) THEN
+     
+        indx = LinearSearchStringArray( &
+             & cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'desPresLvl')
+        IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, & 
+             &'Missing keyword DESPRESLVL in Standard section of the l3cf.')
+        l3cf(i)%desPresLvl(1) = & 
+             & cf%Sections(iMap)%Entries(i)%Cells(indx)%RealValue
+        l3cf(i)%desPresLvl(2) = &
+             & cf%Sections(iMap)%Entries(i)%Cells(indx)%RangeUpperBound
+     ELSE
+        l3cf(i)%desPresLvl = 0.0
+     ENDIF
+
+     ! Find/save the number of waves
+
+     indx = LinearSearchStringArray( &
+          & cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'nWave')
+     IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, & 
+          & 'Missing keyword NWAVE in the Standard section of the l3cf.')
+     l3cf(i)%nWave = & 
+     	  & cf%Sections(iMap)%Entries(i)%Cells(indx)%RealValue
+  
+     indx = LinearSearchStringArray( &
+          & cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'qual')
+     IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, & 
+          & 'Missing keyword QUALITY in the Standard section of the l3cf.')
+     l3cf(i)%qual = & 
+     	  & cf%Sections(iMap)%Entries(i)%Cells(indx)%RealValue
+
+     indx = LinearSearchStringArray( &
+          & cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'conv')
+     IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, & 
+          & 'Missing keyword CONVERGENCE in the Standard section of the l3cf.')
+     l3cf(i)%conv = & 
+     	  & cf%Sections(iMap)%Entries(i)%Cells(indx)%RealValue
+
+     indx = LinearSearchStringArray( &
+          & cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'prec')
+     IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, & 
+          & 'Missing keyword PRECISION in the Standard section of the l3cf.')
+     l3cf(i)%prec = & 
+     	  & cf%Sections(iMap)%Entries(i)%Cells(indx)%RealValue
+
+     ! Find the label in the Standard section
+  
+     indx = LinearSearchStringArray( &
+          & cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'label')
+     IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, & 
+          & 'Missing keyword LABEL in the Standard section of the l3cf.')
+     label = cf%Sections(iMap)%Entries(i)%Cells(indx)%CharValue
+  
+     ! Match it to one in the Output section
+  
+     iLab = LinearSearchStringArray( &
+          & cf%Sections(iOut)%Entries%MlscfLabelName, TRIM(label) )
+     IF (iLab == 0) THEN
+        msr = 'Missing l3cf Output specification for ' // label
+        CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+     ENDIF
+  
+     ! Find the MCF file name; save it in L3CFProd_T
+  
+     indx = LinearSearchStringArray( &
+          & cf%Sections(iOut)%Entries(iLab)%Cells%Keyword, 'mcf')
+     IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, & 
+          & 'Missing keyword MCF in the Output section of the l3cf.')
+     mcfName = cf%Sections(iOut)%Entries(iLab)%Cells(indx)%CharValue
+
+     ! Search for a match in the PCF
+
+     CALL SearchPCFNames(mcfName, mlspcf_mcf_l3dm_start, mlspcf_mcf_l3dm_end, &
+          & mlspcf_mcf, match)
+     IF (mlspcf_mcf == -1) THEN
+        msr = 'No match in the PCF for file ' // mcfName
+        CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+     ENDIF
+
+     ! Save the PCF number in L3CFProd_T
+
+     l3cf(i)%mcfNum = mlspcf_mcf
+
+     ! Find the file template from Output; save it in L3CFProd_T
+
+     indx = LinearSearchStringArray( &
+          & cf%Sections(iOut)%Entries(iLab)%Cells%Keyword, 'file')
+     IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, & 
+          & 'Missing keyword FILE in the Output section of the l3cf.') 
+     l3cf(i)%fileTemplate = & 
+          & cf%Sections(iOut)%Entries(iLab)%Cells(indx)%CharValue
+     
+  ENDDO
+
+!-------------------------
+END SUBROUTINE FillL3CF
+!-------------------------
+
+!==============
+  logical function not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id: L3CF.f90,v 1.22 2005/06/23 19:07:38 pwagner Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+END MODULE L3CF
+!==============
+
+! $Log: L3CF.f90,v $
+! Revision 1.22  2005/06/23 19:07:38  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 1.21  2004/05/13 20:19:20  ybj
+! *** empty log message ***
+!
+! Revision 1.20  2004/01/07 21:43:18  cvuu
+! version 1.4 commit
+!
+! Revision 1.19  2003/04/30 18:15:48  pwagner
+! Work-around for LF95 infinite compile-time bug
+!
+! Revision 1.18  2003/03/22 02:38:29  jdone
+! added HDF output string and average orbital period value
+!
+! Revision 1.17  2002/04/29 23:38:27  ybj
+! Modified Option for ado
+!
+! Revision 1.16  2002/04/10 21:57:04  jdone
+! error checking on allocated statements
+!
+! Revision 1.15  2001/10/05 20:12:02  nakamura
+! Added N for diagnostics.
+!
+! Revision 1.14  2001/07/18 15:53:30  nakamura
+! Revised for new l3cf; added asc/des lvls; removed DZ stuff.
+!
+! Revision 1.13  2001/05/10 13:39:37  nakamura
+! Removed separate pressure specifications for DZ.
+!
+! Revision 1.12  2001/05/09 16:17:35  nakamura
+! Added calculation of the negative part of the l2 nominal lat grid.
+!
+! Revision 1.11  2001/05/04 18:29:16  nakamura
+! Added DZ stuff.
+!
+! Revision 1.10  2001/03/27 17:26:11  nakamura
+! Moved maxGridPoints to MLSL3Common.
+!
+! Revision 1.9  2001/02/21 20:43:43  nakamura
+! Changed MLSPCF to MLSPCF3; removed InputVersion & check; added L3DZ stuff.
+!
+! Revision 1.8  2001/01/18 16:51:07  nakamura
+! Added type L3CFDef_T; moved minDays from PCF to cf.
+!
+! Revision 1.7  2001/01/16 17:41:49  nakamura
+! Added mcfName to L3CFProd_T; extract logType from cf.
+!
+! Revision 1.6  2000/12/29 20:44:46  nakamura
+! Replaced USE of L3DMData with MLSL3Common; removed bpFlag, nGrids, quantities from L3CFProd_T.
+!
+! Revision 1.5  2000/12/07 21:21:50  nakamura
+! Changed negative return from SearchPCFNames to be a PCF number of -1.
+!
+! Revision 1.4  2000/12/07 19:31:38  nakamura
+! Updated for file name return from SearchPCFNames.
+!
+! Revision 1.3  2000/11/15 21:05:55  nakamura
+! Moved parameter GridNameLen to module L3DMData; changed name of mlspcf_mcf start & end numbers.
+!
+! Revision 1.2  2000/10/24 19:18:03  nakamura
+! Removed temporary subroutine ReadParseMLSCF; added PCF number for MCF to L3CFProd_T.
+!
+! Revision 1.1  2000/10/17 20:20:04  nakamura
+! Module for customizing the CF parser output to L3.
+!
+@
+
+
+1.22
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d29 1
+a29 1
+       "$RCSfile: $"
+d87 6
+d410 21
+d488 1
+a488 1
+       "$Id: $"
+d497 3
+@
+
+
+1.21
+log
+@*** empty log message ***
+@
+text
+@d2 10
+a11 2
+! Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+a25 1
+  PRIVATE :: ID, ModuleName
+d27 5
+a31 5
+  !------------------- RCS Ident Info -----------------------
+  CHARACTER(LEN=130) :: Id = &
+       "$Id: L3CF.f90,v 1.20 2004/01/07 21:43:18 cvuu Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile: L3CF.f90,v $"
+  !----------------------------------------------------------
+d458 8
+d470 3
+@
+
+
+1.20
+log
+@version 1.4 commit
+@
+text
+@d22 1
+a22 1
+       "$Id: L3CF.f90,v 1.19 2003/04/30 18:15:48 pwagner Exp $"
+d80 1
+a80 1
+     REAL(r8), DIMENSION(2) :: rangFrequency	! min, max of frequency range
+a81 2
+     INTEGER, DIMENSION(2) :: rangWavenumber	! min, max of wave # range
+     
+d388 1
+a388 10
+     ! Find/save the min & max for the ranges of frequencies, wavenumbers
+  
+     indx = LinearSearchStringArray( &
+          & cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'rangFrequency')
+     IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, & 
+          & 'Missing keyword RANGFREQUENCY in Standard section of the l3cf.')
+     l3cf(i)%rangFrequency(1) = & 
+          & cf%Sections(iMap)%Entries(i)%Cells(indx)%RealValue
+     l3cf(i)%rangFrequency(2) = &
+          & cf%Sections(iMap)%Entries(i)%Cells(indx)%RangeUpperBound
+d391 1
+a391 1
+          & cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'rangWavenumber')
+d393 3
+a395 5
+          &'Missing keyword RANGWAVENUMBER in Standard section of the l3cf.')
+     l3cf(i)%rangWavenumber(1) = & 
+          & cf%Sections(iMap)%Entries(i)%Cells(indx)%RealValue
+     l3cf(i)%rangWavenumber(2) = & 
+          & cf%Sections(iMap)%Entries(i)%Cells(indx)%RangeUpperBound
+d455 3
+@
+
+
+1.19
+log
+@Work-around for LF95 infinite compile-time bug
+@
+text
+@d22 1
+a22 1
+       "$Id: L3CF.f90,v 1.18 2003/03/22 02:38:29 jdone Exp $"
+d289 2
+a290 2
+     l3cf(i)%l3prodNameD = cf%Sections(iMap)%Entries(i)%Cells(indx)%CharValue
+     
+d468 3
+@
+
+
+1.18
+log
+@added HDF output string and average orbital period value
+@
+text
+@a8 1
+  USE MLSCF, ONLY: Mlscf_T
+a11 1
+  USE MLSPCF3, ONLY: mlspcf_mcf_l3dm_start, mlspcf_mcf_l3dm_end
+a12 2
+  USE PCFModule, ONLY: SearchPCFNames
+  USE SDPToolkit, ONLY: PGS_S_SUCCESS, pgs_td_utcToTAI
+d14 3
+a16 1
+  PUBLIC
+d22 1
+a22 1
+       "$Id: L3CF.f90,v 1.17 2002/04/29 23:38:27 ybj Exp $"
+d146 4
+d468 3
+@
+
+
+1.17
+log
+@Modified Option for ado
+@
+text
+@d5 1
+a5 1
+!===============================================================================
+d7 1
+a7 1
+!===============================================================================
+d9 10
+a18 25
+   USE MLSCF
+   USE MLSCommon
+   USE MLSL3Common
+   USE MLSMessageModule
+   USE MLSPCF3
+   USE MLSStrings
+   USE PCFModule
+   USE SDPToolkit
+   IMPLICIT NONE
+   PUBLIC
+
+   PRIVATE :: ID, ModuleName
+
+!------------------- RCS Ident Info -----------------------
+   CHARACTER(LEN=130) :: Id = &
+   "$Id: L3CF.f90,v 1.16 2002/04/10 21:57:04 jdone Exp $"
+   CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile: L3CF.f90,v $"
+!----------------------------------------------------------
+
+! Contents:
+
+! Definition -- L3CFDef_T
+!               L3CFProd_T
+! Subroutines -- CalculateArray
+!                FillL3CF
+d20 1
+a20 2
+! Remarks:  This module defines a data type to hold L3CF input and contains
+!           subroutines used to process these data into forms used by L3.
+d22 5
+a26 1
+! Parameters
+d28 1
+a28 1
+! This data type is used to store global definitions read from the l3cf.
+d30 19
+a48 1
+   TYPE L3CFDef_T
+d51 1
+a51 1
+	! # of days of input data needed to process an l3 product
+d54 1
+a54 1
+	! number for "largest differences" diagnostics
+d56 1
+a56 1
+     CHARACTER (LEN=3) :: intpMethod		! method of interpolation (lin/csp)
+d58 1
+a58 1
+   END TYPE L3CFDef_T
+d60 1
+a60 3
+! This data type is used to store product-dependent cf input.
+
+   TYPE L3CFProd_T
+d66 3
+a68 3
+
+     INTEGER :: nDays			! number of days in the l3 processing window
+
+d70 1
+a70 7
+	! array of TAI93 synoptic times for each day in the processing window
+
+     CHARACTER (LEN=3) :: mode					! asc/des/com/all
+
+     INTEGER :: nLats 			! number of points in latitude grid
+
+     REAL(r8), DIMENSION(maxGridPoints) :: latGridMap      ! dimensioned (nLats)
+d72 1
+a72 1
+     INTEGER :: nLons			! number of points in longitude grid
+d74 1
+a74 1
+     REAL(r8), DIMENSION(maxGridPoints) :: longGrid        ! dimensioned (nLons)
+d76 1
+a76 1
+     REAL(r8), DIMENSION(2) :: l3presLvl       ! min, max combined pressure levels
+d78 1
+a78 1
+     REAL(r8), DIMENSION(2) :: ascPresLvl      ! min, max ascending pressure levels
+d80 1
+a80 1
+     REAL(r8), DIMENSION(2) :: desPresLvl      ! min, max descending pressure levels
+d85 6
+d94 2
+d98 1
+a98 3
+     CHARACTER (LEN=FileNameLen) :: fileTemplate	! file name from CF
+
+   END TYPE L3CFProd_T
+d102 3
+a104 3
+!-----------------------------------------------------------------
+   SUBROUTINE CalculateArray (start, max, delta, array, numPoints)
+!-----------------------------------------------------------------
+d106 5
+a110 4
+! Brief description of subroutine
+! This subroutine calculates array an array of values, and the number of points
+! in it, given the starting value, maximum value an element may take, and the
+! desired increment between elements.
+d112 1
+a112 1
+! Arguments
+d114 1
+a114 1
+      REAL(r8), INTENT(IN) :: delta, max, start
+d116 1
+a116 1
+      INTEGER, INTENT(OUT) :: numPoints
+d118 1
+a118 1
+      REAL(r8), INTENT(OUT) :: array(:)
+d120 1
+a120 1
+! Parameters
+d122 1
+a122 1
+! Functions
+d124 1
+a124 1
+! Variables
+d126 1
+a126 1
+      INTEGER :: i
+d128 4
+a131 2
+      array = 0.0
+      array(1) = start
+d133 1
+a133 1
+      DO i = 2, maxGridPoints
+d135 1
+a135 1
+         array(i) = array(i-1) + delta
+d137 1
+a137 18
+         IF (array(i) > max) EXIT
+
+      ENDDO
+
+      numPoints = i-1
+
+!-------------------------------
+   END SUBROUTINE CalculateArray
+!-------------------------------
+
+!-------------------------------------------------------------------
+   SUBROUTINE FillL3CF (cf, pcfL3Ver, l3Days, l3Window, l3cf, cfDef)
+!-------------------------------------------------------------------
+
+! Brief description of subroutine
+! This subroutine checks the parser output and fills L3CFProd_T.
+
+! Arguments
+d139 1
+a139 1
+      TYPE( Mlscf_T ), INTENT(IN) :: cf
+d141 77
+a217 46
+      CHARACTER (LEN=*), INTENT(IN) :: pcfL3Ver
+
+      CHARACTER (LEN=*), INTENT(IN) :: l3Days(:)
+
+      INTEGER, INTENT(IN) :: l3Window
+
+      TYPE( L3CFDef_T ), INTENT(OUT) :: cfDef
+
+      TYPE( L3CFProd_T ), POINTER  :: l3cf(:)
+
+! Parameters
+
+! Functions
+
+      INTEGER, EXTERNAL :: pgs_td_utcToTAI
+
+! Variables
+
+      CHARACTER (LEN=8) :: hhmmss
+      CHARACTER (LEN=10) :: l3Ver, label
+      CHARACTER (LEN=480) :: msr
+      CHARACTER (LEN=CCSDSB_LEN) :: timeB(maxWindow)
+      CHARACTER (LEN=FileNameLen) :: match, mcfName
+
+      INTEGER :: err, i, iGlob, iLab, iMap, iOut, indx, j
+      INTEGER :: mlspcf_mcf, nLat, numProds, returnStatus
+
+      REAL(r8) :: start, end, delta
+      REAL(r8) :: latGrid(maxGridPoints)
+
+! Find the section indices in the CF
+
+      iGlob = LinearSearchStringArray(cf%Sections%MlscfSectionName, &
+                                      'GlobalSettings')
+      iMap = LinearSearchStringArray(cf%Sections%MlscfSectionName, 'Standard')
+      iOut = LinearSearchStringArray(cf%Sections%MlscfSectionName, 'Output')
+
+! Check that the version number given in the CF will match the PCF file names
+
+      indx = LinearSearchStringArray(cf%Sections(iGlob)%Cells%Keyword, &
+                                     'OutputVersionString')
+      IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'No entry in &
+                                     &the CF for OutputVersionString.')
+      l3Ver = cf%Sections(iGlob)%Cells(indx)%CharValue
+      IF (l3Ver /= pcfL3Ver) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+                                  'Output versions in the CF and PCF differ.')
+d221 235
+a455 229
+      indx = LinearSearchStringArray(cf%Sections(iGlob)%Cells%Keyword,'MinDays')
+      IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'No entry in the CF &
+                                     &for MinDays.')
+      cfDef%minDays = cf%Sections(iGlob)%Cells(indx)%RealValue
+
+! Find/save N
+
+      indx = LinearSearchStringArray(cf%Sections(iGlob)%Cells%Keyword,'N')
+      IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'No entry in the CF &
+                                     &for N.')
+      cfDef%N = cf%Sections(iGlob)%Cells(indx)%RealValue
+
+! Find/save the interpolation method
+
+      indx = LinearSearchStringArray(cf%Sections(iGlob)%Cells%Keyword, 'intpMethod')
+      IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'No entry in the CF &
+                                     &for intpMethod.')
+      cfDef%intpMethod = cf%Sections(iGlob)%Cells(indx)%CharValue
+
+! Find the boundaries of the latitude grid
+
+      indx = LinearSearchStringArray(cf%Sections(iGlob)%Cells%Keyword, 'latGridMap')
+      IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'No entry in the CF &
+                     &for latGridMap.')
+      start = cf%Sections(iGlob)%Cells(indx)%RealValue
+      end = cf%Sections(iGlob)%Cells(indx)%RangeUpperBound
+
+! Find the increment of the latitude grid
+
+      indx = LinearSearchStringArray(cf%Sections(iGlob)%Cells%Keyword, 'dLat')
+      IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'No entry in the CF &
+                                     &for dLat.')
+      delta = cf%Sections(iGlob)%Cells(indx)%RealValue
+
+! Calculate the array containing the latitude grid
+
+      CALL CalculateArray(start, end, delta, latGrid, nLat)
+
+! Find the number of products for which L3 processing was requested
+
+      numProds = cf%Sections(iMap)%NoSectionEntries
+
+      if (numProds .gt. 0) then 
+
+      ALLOCATE (l3cf(numProds), STAT=err)
+      IF ( err /= 0 ) THEN
+         msr = MLSMSG_Allocate // ' array of L3CFProd_T pointers.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      endif
+
+! Fill L3CFProd_T from the Standard & Output sections of the cf
+
+      DO i = 1, numProds
+
+       mcfName = ''
+
+! Find/save the product name
+
+       indx = LinearSearchStringArray( &
+                     cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'l3prodName')
+       IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
+                    &keyword L3PRODNAMED in the Standard section of the l3cf.')
+       l3cf(i)%l3prodNameD = cf%Sections(iMap)%Entries(i)%Cells(indx)%CharValue
+
+! Find the input synoptic time
+
+       indx = LinearSearchStringArray( &
+                           cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'timeD')
+       IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
+                          &keyword TIMED in the Standard section of the l3cf.')
+       hhmmss = cf%Sections(iMap)%Entries(i)%Cells(indx)%CharValue
+
+! Save nDays from input
+
+       l3cf(i)%nDays = l3Window
+
+! For each DOY in the processing window, calculate the TAI time
+
+       DO j = 1, l3Window
+          timeB(j) = l3Days(j) // 'T' // hhmmss // '.000000Z'
+          returnStatus = pgs_td_utcToTAI( timeB(j), l3cf(i)%timeD(j) )
+          IF (returnStatus /= PGS_S_SUCCESS) CALL MLSMessage(MLSMSG_Error, &
+                            ModuleName, 'Error converting from CCSDSB to TAI.')
+       ENDDO
+
+! Find/save mode
+
+       indx = LinearSearchStringArray( &
+                           cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'mode')
+       IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
+                           &keyword MODE in the Standard section of the l3cf.')
+       l3cf(i)%mode = cf%Sections(iMap)%Entries(i)%Cells(indx)%CharValue
+
+! Save the latitude grid quantities
+
+       l3cf(i)%latGridMap = latGrid
+       l3cf(i)%nLats = nLat
+
+! Find the boundaries of the longitude grid
+
+       indx = LinearSearchStringArray( &
+                     cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'longGrid')
+       IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
+                       &keyword LONGGRID in the Standard section of the l3cf.')
+       start = cf%Sections(iMap)%Entries(i)%Cells(indx)%RealValue
+       end = cf%Sections(iMap)%Entries(i)%Cells(indx)%RangeUpperBound
+
+! Find the increment of the longitude grid
+
+       indx = LinearSearchStringArray( &
+                           cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'dLon')
+       IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
+                           &keyword DLON in the Standard section of the l3cf.')
+       delta = cf%Sections(iMap)%Entries(i)%Cells(indx)%RealValue
+
+! Calculate the array containing the longitude grid
+
+       CALL CalculateArray(start, end, delta, l3cf(i)%longGrid, l3cf(i)%nLons)
+
+! Find/save the min & max of the pressure levels for the desired modes
+
+       IF ( (l3cf(i)%mode == 'com') .OR. (l3cf(i)%mode == 'all') .OR. (l3cf(i)%mode == 'ado') ) THEN
+          indx = LinearSearchStringArray( &
+                        cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'l3presLvl')
+          IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
+                         &keyword L3PRESLVL in the Standard section of the l3cf.')
+          l3cf(i)%l3presLvl(1) = cf%Sections(iMap)%Entries(i)%Cells(indx)%RealValue
+          l3cf(i)%l3presLvl(2) = &
+                         cf%Sections(iMap)%Entries(i)%Cells(indx)%RangeUpperBound
+       ELSE
+          l3cf(i)%l3presLvl = 0.0
+       ENDIF
+
+       IF ( INDEX(l3cf(i)%mode,'a') /= 0) THEN
+
+          indx = LinearSearchStringArray( &
+                        cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'ascPresLvl')
+          IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
+                         &keyword ASCPRESLVL in the Standard section of the l3cf.')
+          l3cf(i)%ascPresLvl(1) = cf%Sections(iMap)%Entries(i)%Cells(indx)%RealValue
+          l3cf(i)%ascPresLvl(2) = &
+                         cf%Sections(iMap)%Entries(i)%Cells(indx)%RangeUpperBound
+       ELSE
+          l3cf(i)%ascPresLvl = 0.0
+       ENDIF
+
+      IF ( (INDEX(l3cf(i)%mode,'d') /= 0) .OR. (l3cf(i)%mode == 'all') ) THEN
+
+          indx = LinearSearchStringArray( &
+                        cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'desPresLvl')
+          IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
+                         &keyword DESPRESLVL in the Standard section of the l3cf.')
+          l3cf(i)%desPresLvl(1) = cf%Sections(iMap)%Entries(i)%Cells(indx)%RealValue
+          l3cf(i)%desPresLvl(2) = &
+                         cf%Sections(iMap)%Entries(i)%Cells(indx)%RangeUpperBound
+
+      ELSE
+          l3cf(i)%desPresLvl = 0.0
+      ENDIF
+
+! Find/save the min & max for the ranges of frequencies, wavenumbers
+
+       indx = LinearSearchStringArray( &
+                   cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'rangFrequency')
+       IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
+                  &keyword RANGFREQUENCY in the Standard section of the l3cf.')
+       l3cf(i)%rangFrequency(1) = cf%Sections(iMap)%Entries(i)%Cells(indx)%RealValue
+       l3cf(i)%rangFrequency(2) = &
+                            cf%Sections(iMap)%Entries(i)%Cells(indx)%RangeUpperBound
+
+       indx = LinearSearchStringArray( &
+               cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'rangWavenumber')
+       IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
+                 &keyword RANGWAVENUMBER in the Standard section of the l3cf.')
+       l3cf(i)%rangWavenumber(1) = &
+                             cf%Sections(iMap)%Entries(i)%Cells(indx)%RealValue
+       l3cf(i)%rangWavenumber(2) = &
+                       cf%Sections(iMap)%Entries(i)%Cells(indx)%RangeUpperBound
+
+! Find the label in the Standard section
+
+       indx = LinearSearchStringArray( &
+                           cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'label')
+       IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
+                          &keyword LABEL in the Standard section of the l3cf.')
+       label = cf%Sections(iMap)%Entries(i)%Cells(indx)%CharValue
+
+! Match it to one in the Output section
+
+       iLab = LinearSearchStringArray( &
+                     cf%Sections(iOut)%Entries%MlscfLabelName, TRIM(label) )
+       IF (iLab == 0) THEN
+          msr = 'Missing l3cf Output specification for ' // label
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+       ENDIF
+
+! Find the MCF file name; save it in L3CFProd_T
+
+       indx = LinearSearchStringArray( &
+                          cf%Sections(iOut)%Entries(iLab)%Cells%Keyword, 'mcf')
+       IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
+                              &keyword MCF in the Output section of the l3cf.')
+       mcfName = cf%Sections(iOut)%Entries(iLab)%Cells(indx)%CharValue
+
+! Search for a match in the PCF
+
+       CALL SearchPCFNames(mcfName, mlspcf_mcf_l3dm_start, mlspcf_mcf_l3dm_end, &
+                           mlspcf_mcf, match)
+       IF (mlspcf_mcf == -1) THEN
+          msr = 'No match in the PCF for file ' // mcfName
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+       ENDIF
+
+! Save the PCF number in L3CFProd_T
+
+       l3cf(i)%mcfNum = mlspcf_mcf
+
+! Find the file template from Output; save it in L3CFProd_T
+
+       indx = LinearSearchStringArray( &
+                         cf%Sections(iOut)%Entries(iLab)%Cells%Keyword, 'file')
+       IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
+                             &keyword FILE in the Output section of the l3cf.') 
+       l3cf(i)%fileTemplate = &
+                          cf%Sections(iOut)%Entries(iLab)%Cells(indx)%CharValue
+
+    ENDDO
+d458 1
+a458 1
+   END SUBROUTINE FillL3CF
+d466 3
+@
+
+
+1.16
+log
+@error checking on allocated statements
+@
+text
+@d24 1
+a24 1
+   "$Id: L3CF.f90,v 1.15 2001/10/05 20:12:02 nakamura Exp $"
+d323 1
+a323 1
+       IF ( (l3cf(i)%mode == 'com') .OR. (l3cf(i)%mode == 'all') ) THEN
+d439 3
+@
+
+
+1.15
+log
+@Added N for diagnostics.
+@
+text
+@d24 1
+a24 1
+   "$Id: L3CF.f90,v 1.14 2001/07/18 15:53:30 nakamura Exp $"
+d242 2
+d250 2
+d439 3
+@
+
+
+1.14
+log
+@Revised for new l3cf; added asc/des lvls; removed DZ stuff.
+@
+text
+@d24 1
+a24 1
+   "$Id: L3CF.f90,v 1.16 2001/06/12 13:05:14 nakamura Exp nakamura $"
+d47 3
+d123 1
+d205 7
+d435 3
+@
+
+
+1.13
+log
+@Removed separate pressure specifications for DZ.
+@
+text
+@d24 1
+a24 1
+   "$Id: L3CF.f90,v 1.12 2001/05/09 16:17:35 nakamura Exp $"
+a43 19
+     INTEGER :: nNom		! number of points in the L2 nominal latitude grid
+
+     REAL(r8), DIMENSION(maxGridPoints) :: l2nomLats		! dimensioned (nNom)
+
+     CHARACTER (LEN=FileNameLen) :: logType
+	! template for the log file name
+
+     CHARACTER (LEN=FileNameLen) :: stdType
+	! template for the l3dz file for Standard products
+
+     CHARACTER (LEN=FileNameLen) :: dgType
+	! template for the l3dz file for Diagnostic products
+
+     CHARACTER (LEN=FileNameLen) :: stdMCFname	! Standard MCF name
+     CHARACTER (LEN=FileNameLen) :: dgMCFname	! Diagnostic MCF name
+
+     INTEGER :: stdMCFnum			! Standard MCF number
+     INTEGER :: dgMCFnum			! Diagnostic MCF number
+
+d47 2
+d55 1
+a55 1
+     ! DailyMap section
+d69 1
+a69 1
+     REAL(r8), DIMENSION(maxGridPoints) :: latGridMap	! dimensioned (nLats)
+d73 1
+a73 1
+     REAL(r8), DIMENSION(maxGridPoints) :: longGrid	! dimensioned (nLons)
+a84 6
+     CHARACTER (LEN=3) :: intpMethod	! method of interpolation (lin/csp)
+
+     ! Daily Zonal Mean specifications
+
+     CHARACTER (LEN=2) :: calMethod			! calculation method (l2/l3)
+
+a86 2
+     CHARACTER (LEN=FileNameLen) :: mcfName	! MCF name
+
+d139 1
+d169 1
+a169 1
+      CHARACTER (LEN=FileNameLen) :: match
+d172 1
+a172 1
+      INTEGER :: mlspcf_mcf, nNon, numProds, returnStatus
+d175 1
+a175 1
+      REAL(r8) :: non(maxGridPoints)
+d181 1
+a181 1
+      iMap = LinearSearchStringArray(cf%Sections%MlscfSectionName, 'DailyMap')
+a193 29
+! Find the non-negative values for the L2 nominal latitude grid in the
+! GlobalSettings section of the cf; add the negative values, and save all in
+! L3CFDef_T
+
+      indx = LinearSearchStringArray(cf%Sections(iGlob)%Cells%Keyword, &
+                                     'l2nomLats')
+      IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'No entry in &
+                                     &the CF for l2nomLats.')
+
+      DO i = 1, maxGridPoints
+         non(i) = cf%Sections(iGlob)%Cells(indx)%RealValue
+         IF (cf%Sections(iGlob)%Cells(indx)%More == 0) EXIT
+         indx = indx + 1
+      ENDDO
+      nNon = i
+      cfDef%nNom = 2*nNon - 1
+      cfDef%l2nomLats(nNon:cfDef%nNom) = non(:nNon)
+
+      DO i = 1, nNon-1
+         cfDef%l2nomLats(i) = -non( nNon-(i-1) )
+      ENDDO
+ 
+! Find/save the log type from the GlobalSettings section of the cf
+
+      indx = LinearSearchStringArray(cf%Sections(iGlob)%Cells%Keyword,'LogType')
+      IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'No entry in &
+                                    &the CF for LogType.')
+      cfDef%logType = cf%Sections(iGlob)%Cells(indx)%CharValue
+
+d197 2
+a198 2
+      IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'No entry in &
+                                    &the CF for MinDays.')
+d201 1
+a201 1
+! Find the L3DZS label
+d203 4
+a206 7
+       label = 'L3DZS'
+       iLab = LinearSearchStringArray( &
+                     cf%Sections(iOut)%Entries%MlscfLabelName, TRIM(label) )
+       IF (iLab == 0) THEN
+          msr = 'Missing l3cf Output specification for ' // label
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+       ENDIF
+d208 1
+a208 1
+! Find the Standard MCF file name; save it in L3CFDef_T
+d210 5
+a214 5
+       indx = LinearSearchStringArray( &
+                          cf%Sections(iOut)%Entries(iLab)%Cells%Keyword, 'mcf')
+       IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
+                              &keyword MCF in the Output section of the l3cf.')
+       cfDef%stdMCFName = cf%Sections(iOut)%Entries(iLab)%Cells(indx)%CharValue
+d216 1
+a216 1
+! Search for a match in the PCF
+d218 4
+a221 6
+       CALL SearchPCFNames(cfDef%stdMCFName, mlspcf_mcf_l3dz_start, &
+                           mlspcf_mcf_l3dz_end, mlspcf_mcf, match)
+       IF (mlspcf_mcf == -1) THEN
+          msr = 'No match in the PCF for file ' // cfDef%stdMCFName
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+       ENDIF
+d223 1
+a223 5
+! Save the PCF number in L3CFProd_T
+
+       cfDef%stdMCFNum = mlspcf_mcf
+
+! Find the file template from Output; save it in L3CFDef_T
+d225 1
+a225 44
+       indx = LinearSearchStringArray( &
+                         cf%Sections(iOut)%Entries(iLab)%Cells%Keyword, 'file')
+       IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
+                             &keyword FILE in the Output section of the l3cf.')
+       cfDef%stdType = cf%Sections(iOut)%Entries(iLab)%Cells(indx)%CharValue
+
+! Find the L3DZD label
+
+       label = 'L3DZD'
+       iLab = LinearSearchStringArray( &
+                     cf%Sections(iOut)%Entries%MlscfLabelName, TRIM(label) )
+       IF (iLab == 0) THEN
+          msr = 'Missing l3cf Output specification for ' // label
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+       ENDIF
+
+! Find the Diagnostic MCF file name; save it in L3CFDef_T
+
+       indx = LinearSearchStringArray( &
+                          cf%Sections(iOut)%Entries(iLab)%Cells%Keyword, 'mcf')
+       IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
+                              &keyword MCF in the Output section of the l3cf.')
+       cfDef%dgMCFName = cf%Sections(iOut)%Entries(iLab)%Cells(indx)%CharValue
+
+! Search for a match in the PCF
+
+       CALL SearchPCFNames(cfDef%dgMCFName, mlspcf_mcf_l3dz_start, &
+                           mlspcf_mcf_l3dz_end, mlspcf_mcf, match)
+       IF (mlspcf_mcf == -1) THEN
+          msr = 'No match in the PCF for file ' // cfDef%dgMCFName
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+       ENDIF
+
+! Save the PCF number in L3CFProd_T
+
+       cfDef%dgMCFNum = mlspcf_mcf
+
+! Find the file template from Output; save it in L3CFDef_T
+
+       indx = LinearSearchStringArray( &
+                         cf%Sections(iOut)%Entries(iLab)%Cells%Keyword, 'file')
+       IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
+                             &keyword FILE in the Output section of the l3cf.')
+       cfDef%dgType = cf%Sections(iOut)%Entries(iLab)%Cells(indx)%CharValue
+d237 1
+a237 1
+! Fill L3CFProd_T from the DailyMap & Output sections of the cf
+d241 2
+d246 1
+a246 1
+                     cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'l3prodNameD')
+d248 1
+a248 1
+                    &keyword L3PRODNAMED in the DailyMap section of the l3cf.')
+d256 1
+a256 1
+                          &keyword TIMED in the DailyMap section of the l3cf.')
+d259 2
+d277 1
+a277 1
+                           &keyword MODE in the DailyMap section of the l3cf.')
+d280 1
+a280 1
+! Find the boundaries of the latitude grid
+d282 2
+a283 19
+       indx = LinearSearchStringArray( &
+                     cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'latGridMap')
+       IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
+                     &keyword LATGRIDMAP in the DailyMap section of the l3cf.')
+       start = cf%Sections(iMap)%Entries(i)%Cells(indx)%RealValue
+       end = cf%Sections(iMap)%Entries(i)%Cells(indx)%RangeUpperBound
+
+! Find the increment of the latitude grid
+
+       indx = LinearSearchStringArray( &
+                           cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'dLat')
+       IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
+                           &keyword DLAT in the DailyMap section of the l3cf.')
+       delta = cf%Sections(iMap)%Entries(i)%Cells(indx)%RealValue
+
+! Calculate the array containing the latitude grid
+
+       CALL CalculateArray(start, end, delta, l3cf(i)%latGridMap, &
+                           l3cf(i)%nLats)
+d290 1
+a290 1
+                       &keyword LONGGRID in the DailyMap section of the l3cf.')
+d299 1
+a299 1
+                           &keyword DLON in the DailyMap section of the l3cf.')
+d312 1
+a312 1
+                         &keyword L3PRESLVL in the DailyMap section of the l3cf.')
+d320 1
+a320 1
+       IF ( (l3cf(i)%mode == 'asc') .OR. (l3cf(i)%mode == 'all') ) THEN
+d325 1
+a325 1
+                         &keyword ASCPRESLVL in the DailyMap section of the l3cf.')
+d333 1
+a333 1
+      IF ( (l3cf(i)%mode == 'des') .OR. (l3cf(i)%mode == 'all') ) THEN
+d338 1
+a338 1
+                         &keyword DESPRESLVL in the DailyMap section of the l3cf.')
+d352 1
+a352 1
+                  &keyword RANGFREQUENCY in the DailyMap section of the l3cf.')
+d360 1
+a360 1
+                 &keyword RANGWAVENUMBER in the DailyMap section of the l3cf.')
+d366 1
+a366 9
+! Find/save the interpolation method
+
+       indx = LinearSearchStringArray( &
+                     cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'intpMethod')
+       IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
+                     &keyword INTPMETHOD in the DailyMap section of the l3cf.')
+       l3cf(i)%intpMethod = cf%Sections(iMap)%Entries(i)%Cells(indx)%CharValue
+
+! Find the label in the DailyMap section
+d371 1
+a371 1
+                          &keyword LABEL in the DailyMap section of the l3cf.')
+d389 1
+a389 1
+       l3cf(i)%mcfName = cf%Sections(iOut)%Entries(iLab)%Cells(indx)%CharValue
+d393 2
+a394 2
+       CALL SearchPCFNames(l3cf(i)%mcfName, mlspcf_mcf_l3dm_start, &
+                           mlspcf_mcf_l3dm_end, mlspcf_mcf, match)
+d396 1
+a396 1
+          msr = 'No match in the PCF for file ' // l3cf(i)%mcfName
+a412 8
+! Find/save the calculation method for Daily Zonal Means
+
+       indx = LinearSearchStringArray( &
+                     cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'calMethod')
+       IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
+                     &keyword CALMETHOD in the DailyMap section of the l3cf.')
+       l3cf(i)%calMethod = cf%Sections(iMap)%Entries(i)%Cells(indx)%CharValue
+
+d424 3
+@
+
+
+1.12
+log
+@Added calculation of the negative part of the l2 nominal lat grid.
+@
+text
+@d24 1
+a24 1
+   "$Id: L3CF.f90,v 1.11 2001/05/04 18:29:16 nakamura Exp $"
+a107 6
+     REAL(r8), DIMENSION(2) :: zComLvl		! min, max com pressure levels
+
+     REAL(r8), DIMENSION(2) :: zAscLvl		! min, max asc pressure levels
+
+     REAL(r8), DIMENSION(2) :: zDesLvl		! min, max des pressure levels
+
+d539 1
+a539 1
+! Daily Zonal Mean specifications -- find/save the DZ calculation method
+a546 26
+! Find/save the DZ min:max pressure levels
+
+       indx = LinearSearchStringArray( &
+                     cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'zComLvl')
+       IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
+                      &keyword ZCOMLVL in the DailyMap section of the l3cf.')
+       l3cf(i)%zComLvl(1) = cf%Sections(iMap)%Entries(i)%Cells(indx)%RealValue
+       l3cf(i)%zComLvl(2) = &
+                      cf%Sections(iMap)%Entries(i)%Cells(indx)%RangeUpperBound
+
+       indx = LinearSearchStringArray( &
+                     cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'zAscLvl')
+       IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
+                      &keyword ZASCLVL in the DailyMap section of the l3cf.')
+       l3cf(i)%zAscLvl(1) = cf%Sections(iMap)%Entries(i)%Cells(indx)%RealValue
+       l3cf(i)%zAscLvl(2) = &
+                      cf%Sections(iMap)%Entries(i)%Cells(indx)%RangeUpperBound
+
+       indx = LinearSearchStringArray( &
+                     cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'zDesLvl')
+       IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
+                      &keyword ZDESLVL in the DailyMap section of the l3cf.')
+       l3cf(i)%zDesLvl(1) = cf%Sections(iMap)%Entries(i)%Cells(indx)%RealValue
+       l3cf(i)%zDesLvl(2) = &
+                      cf%Sections(iMap)%Entries(i)%Cells(indx)%RangeUpperBound
+
+d558 3
+@
+
+
+1.11
+log
+@Added DZ stuff.
+@
+text
+@d24 1
+a24 1
+   "$Id: L3CF.f90,v 1.10 2001/03/27 17:26:11 nakamura Exp $"
+d202 1
+a202 1
+      INTEGER :: mlspcf_mcf, numProds, returnStatus
+d205 1
+d224 3
+a226 2
+! Find the L2 nominal latitude grid in the GlobalSettings section of the cf;
+! save it in L3CFDef_T
+d234 1
+a234 1
+         cfDef%l2nomLats(i) = cf%Sections(iGlob)%Cells(indx)%RealValue
+d238 7
+a244 1
+      cfDef%nNom = i
+d590 3
+@
+
+
+1.10
+log
+@Moved maxGridPoints to MLSL3Common.
+@
+text
+@d24 1
+a24 1
+   "$Id: L3CF.f90,v 1.9 2001/02/21 20:43:43 nakamura Exp $"
+d44 4
+d77 1
+a77 1
+     INTEGER :: nDays		! number of days in the l3 processing window
+d82 1
+a82 1
+     CHARACTER (LEN=3) :: intpMethod	! method of interpolation (lin/csp)
+d86 1
+a86 1
+     REAL(r8), DIMENSION(maxGridPoints) :: latGridMap      ! dimensioned (nLats)
+d90 3
+a92 1
+     REAL(r8), DIMENSION(maxGridPoints) :: longGrid        ! dimensioned (nLons)
+d94 1
+a94 1
+     INTEGER :: nFreqs			! number of frequencies in range
+d96 1
+a96 1
+     REAL(r8), DIMENSION(maxGridPoints) :: rangFrequency ! dimensioned (nFreqs)
+d98 1
+a98 1
+     REAL(r8), DIMENSION(2) :: l3presLvl	! min, max pressure levels
+d102 11
+a112 1
+     CHARACTER (LEN=3) :: mode			! asc/des/com/all
+d223 15
+d245 1
+a245 1
+! Find/save minDays from the GlobalSettings section of the cf
+d371 1
+a371 1
+! Find/save the interpolation method
+d374 1
+a374 1
+                     cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'intpMethod')
+d376 2
+a377 2
+                     &keyword INTPMETHOD in the DailyMap section of the l3cf.')
+       l3cf(i)%intpMethod = cf%Sections(iMap)%Entries(i)%Cells(indx)%CharValue
+d422 13
+a434 1
+! Find the boundaries of the frequency range
+d436 1
+a436 6
+       indx = LinearSearchStringArray( &
+                   cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'rangFrequency')
+       IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
+                  &keyword RANGFREQUENCY in the DailyMap section of the l3cf.')
+       start = cf%Sections(iMap)%Entries(i)%Cells(indx)%RealValue
+       end = cf%Sections(iMap)%Entries(i)%Cells(indx)%RangeUpperBound
+d438 10
+a447 1
+! Find the increment of the frequency range
+d449 1
+a449 5
+       indx = LinearSearchStringArray( &
+                           cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'dF')
+       IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
+                             &keyword DF in the DailyMap section of the l3cf.')
+       delta = cf%Sections(iMap)%Entries(i)%Cells(indx)%RealValue
+d451 7
+a457 1
+! Calculate the array containing the frequency range
+d459 3
+a461 2
+       CALL CalculateArray(start, end, delta, l3cf(i)%rangFrequency, &
+                           l3cf(i)%nFreqs)
+d463 1
+a463 1
+! Find/save the min & max for the pressure levels, range of wavenumbers
+d466 1
+a466 1
+                     cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'l3presLvl')
+d468 4
+a471 4
+                      &keyword L3PRESLVL in the DailyMap section of the l3cf.')
+       l3cf(i)%l3presLvl(1) = cf%Sections(iMap)%Entries(i)%Cells(indx)%RealValue
+       l3cf(i)%l3presLvl(2) = &
+                      cf%Sections(iMap)%Entries(i)%Cells(indx)%RangeUpperBound
+d482 1
+a482 1
+! Find/save mode
+d485 1
+a485 1
+                           cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'mode')
+d487 2
+a488 2
+                           &keyword MODE in the DailyMap section of the l3cf.')
+       l3cf(i)%mode = cf%Sections(iMap)%Entries(i)%Cells(indx)%CharValue
+d537 34
+d582 3
+@
+
+
+1.9
+log
+@Changed MLSPCF to MLSPCF3; removed InputVersion & check; added L3DZ stuff.
+@
+text
+@d24 1
+a24 1
+   "$Id: L3CF.f90,v 1.10 2001/01/18 17:10:51 nakamura Exp nakamura $"
+a39 2
+   INTEGER, PARAMETER :: maxGridPoints = 500
+
+d498 3
+@
+
+
+1.8
+log
+@Added type L3CFDef_T; moved minDays from PCF to cf.
+@
+text
+@d13 1
+a13 1
+   USE MLSPCF
+d24 1
+a24 1
+   "$Id: L3CF.f90,v 1.7 2001/01/16 17:41:49 nakamura Exp $"
+d49 12
+d153 3
+a155 3
+!-----------------------------------------------------------------------------
+   SUBROUTINE FillL3CF (cf, pcfL2Ver, pcfL3Ver, l3Days, l3Window, l3cf, cfDef)
+!-----------------------------------------------------------------------------
+d163 1
+a163 1
+      CHARACTER (LEN=*), INTENT(IN) :: pcfL2Ver, pcfL3Ver
+d182 1
+a182 1
+      CHARACTER (LEN=10) :: l2Ver, l3Ver, label
+d199 1
+a199 8
+! Check that the version numbers given in the CF will match the PCF file names
+
+      indx = LinearSearchStringArray(cf%Sections(iGlob)%Cells%Keyword,'L2Ver')
+      IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'No entry in &
+                                    &the CF for L2Ver.')
+      l2Ver = cf%Sections(iGlob)%Cells(indx)%CharValue
+      IF (l2Ver /= pcfL2Ver) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Input &
+                                      &versions in the CF and PCF differ.')
+d223 78
+d500 3
+@
+
+
+1.7
+log
+@Added mcfName to L3CFProd_T; extract logType from cf.
+@
+text
+@d24 1
+a24 1
+   "$Id: L3CF.f90,v 1.6 2000/12/29 20:44:46 nakamura Exp $"
+d30 2
+a31 1
+! Definition -- L3CFProd_T
+d42 13
+a54 1
+! This data type is used to store cf input needed to process l3dm data.
+d141 3
+a143 4
+!------------------------------------------------------------------------
+   SUBROUTINE FillL3CF (cf, pcfL2Ver, pcfL3Ver, l3Days, l3Window, l3cf, &
+                        logType)
+!------------------------------------------------------------------------
+d157 2
+a160 2
+      CHARACTER (LEN=*), INTENT(OUT) :: logType
+
+d175 1
+a175 1
+      INTEGER :: err, i, iGlob, iLab, iLog, iMap, iOut, iVer, indx, j
+d189 2
+a190 2
+      iVer = LinearSearchStringArray(cf%Sections(iGlob)%Cells%Keyword,'L2Ver')
+      IF (iVer == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'No entry in &
+d192 1
+a192 1
+      l2Ver = cf%Sections(iGlob)%Cells(iVer)%CharValue
+d196 1
+a196 1
+      iVer = LinearSearchStringArray(cf%Sections(iGlob)%Cells%Keyword, &
+d198 1
+a198 1
+      IF (iVer == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'No entry in &
+d200 1
+a200 1
+      l3Ver = cf%Sections(iGlob)%Cells(iVer)%CharValue
+d206 2
+a207 2
+      iLog = LinearSearchStringArray(cf%Sections(iGlob)%Cells%Keyword,'LogType')
+      IF (iLog == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'No entry in &
+d209 8
+a216 1
+      logType = cf%Sections(iGlob)%Cells(iLog)%CharValue
+d417 3
+@
+
+
+1.6
+log
+@Replaced USE of L3DMData with MLSL3Common; removed bpFlag, nGrids, quantities from L3CFProd_T.
+@
+text
+@d24 1
+a24 1
+   "$Id: L3CF.f90,v 1.5 2000/12/07 21:21:50 nakamura Exp $"
+d77 3
+a79 1
+     INTEGER :: mcf				! PCF number for the MCF
+d128 4
+a131 3
+!----------------------------------------------------------------------
+   SUBROUTINE FillL3CF (cf, pcfL2Ver, pcfL3Ver, l3Days, l3Window, l3cf)
+!----------------------------------------------------------------------
+d147 2
+d161 1
+a161 1
+      CHARACTER (LEN=FileNameLen) :: match, mcfName
+d163 1
+a163 1
+      INTEGER :: err, i, iGlob, iLab, iMap, iOut, iVer, indx, j
+d192 7
+d357 1
+a357 1
+! Find the MCF file name
+d363 1
+a363 1
+       mcfName = cf%Sections(iOut)%Entries(iLab)%Cells(indx)%CharValue
+d367 1
+a367 1
+       CALL SearchPCFNames(mcfName, mlspcf_mcf_l3dm_start, &
+d370 1
+a370 1
+          msr = 'No match in the PCF for file ' // mcfName
+d376 1
+a376 1
+       l3cf(i)%mcf = mlspcf_mcf
+d398 3
+@
+
+
+1.5
+log
+@Changed negative return from SearchPCFNames to be a PCF number of -1.
+@
+text
+@d9 1
+a9 1
+   USE L3DMData
+d11 3
+a13 1
+   USE MLSCF
+d15 1
+a15 1
+   USE MLSMessageModule
+a16 2
+   USE PCFModule
+   USE MLSPCF
+d24 1
+a24 1
+   "$Id: L3CF.f90,v 1.4 2000/12/07 19:31:38 nakamura Exp $"
+a80 7
+     INTEGER :: bpFlag				! bypass the PCF file name
+
+     INTEGER :: nGrids				! number of possible grids
+
+     CHARACTER (LEN=GridNameLen), DIMENSION(maxNumGrids) :: quantities
+	! names of possible grids, dimensioned (nGrids)
+
+d158 1
+a158 1
+      INTEGER :: err, i, ig, iq, iGlob, iLab, iMap, iOut, iVer, indx, j
+d366 1
+a366 1
+! Find the file template, bypass flag from Output; save them in L3CFProd_T
+a374 22
+       indx = LinearSearchStringArray( &
+                    cf%Sections(iOut)%Entries(iLab)%Cells%Keyword, 'bypassPCF')
+       IF (indx /= 0) THEN
+         l3cf(i)%bpFlag = cf%Sections(iOut)%Entries(iLab)%Cells(indx)%RealValue
+       ELSE
+         l3cf(i)%bpFlag = 0
+       ENDIF
+
+! Find/save the number of possible grids & their names
+
+       iq = LinearSearchStringArray( &
+                   cf%Sections(iOut)%Entries(iLab)%Cells%Keyword, 'quantities')
+
+       DO j = 1, maxNumGrids
+          ig = iq + (j-1)
+          l3cf(i)%quantities(j) = &
+                            cf%Sections(iOut)%Entries(iLab)%Cells(ig)%CharValue
+          IF (cf%Sections(iOut)%Entries(iLab)%Cells(ig)%More == 0) EXIT
+       ENDDO
+
+       l3cf(i)%nGrids = j
+      
+d386 3
+@
+
+
+1.4
+log
+@Updated for file name return from SearchPCFNames.
+@
+text
+@d24 1
+a24 1
+   "$Id: L3CF.f90,v 1.3 2000/11/15 21:05:55 nakamura Exp $"
+d364 1
+a364 1
+       IF (TRIM(match) == 'NONE') THEN
+d415 3
+@
+
+
+1.3
+log
+@Moved parameter GridNameLen to module L3DMData; changed name of mlspcf_mcf start & end numbers.
+@
+text
+@d24 1
+a24 1
+   "$Id: L3CF.f90,v 1.2 2000/10/24 19:18:03 nakamura Exp $"
+d163 1
+a163 1
+      CHARACTER (LEN=FileNameLen) :: mcfName
+d165 1
+a165 1
+      INTEGER :: err, i, ig, iq, iGlob, iLab, iMap, iOut, iVer, indx, j, match
+d364 1
+a364 1
+       IF (match == 0) THEN
+d415 3
+@
+
+
+1.1
+log
+@Module for customizing the CF parser output to L3.
+@
+text
+@d15 2
+d24 1
+a24 1
+   "$Id: L3CF.f90,v 1.1 2000/10/17 20:20:04 nakamura Exp $"
+a32 1
+!                ReadParseMLSCF
+a38 1
+   INTEGER, PARAMETER :: GridNameLen = 64
+d73 1
+a73 1
+     CHARACTER (LEN=3) :: mode				! asc/des/com/all
+d77 1
+a77 1
+     CHARACTER (LEN=FileNameLen) :: mcf			! MCF file name in CF
+d163 1
+d165 2
+a166 2
+      INTEGER :: err, i, ig, iq, iGlob, iLab, iMap, iOut, iVer, indx, j
+      INTEGER :: numProds, returnStatus
+d352 1
+a352 1
+! Find/save the MCF file name
+d358 14
+a371 1
+       l3cf(i)%mcf = cf%Sections(iOut)%Entries(iLab)%Cells(indx)%CharValue
+a409 507
+!---------------------------------------
+   SUBROUTINE ReadParseMLSCF (pcfId, cf)
+!---------------------------------------
+
+! Brief description of subroutine
+! This subroutine simulates the running of the parser in the delivery
+! environment.
+
+! Arguments
+
+      INTEGER, INTENT(IN) :: pcfId
+
+      TYPE( Mlscf_T ), INTENT(OUT) :: cf
+
+! Parameters
+
+! Functions
+
+! Variables
+
+      CHARACTER (LEN=480) :: msr
+
+      INTEGER :: err
+
+      cf%NoSections = 3
+
+      ALLOCATE (cf%Sections(cf%NoSections), STAT=err )
+      IF ( err /= 0 ) THEN
+         msr = MLSMSG_Allocate // ' Section structures for L3CF.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      cf%Sections(1)%MlscfSectionName = 'GlobalSettings'
+      cf%Sections(1)%NoSectionDefs = 2
+      cf%Sections(1)%Cells(1)%Keyword = 'L2Ver'
+      cf%Sections(1)%Cells(1)%CharValue = 'v0-05'
+      cf%Sections(1)%Cells(2)%Keyword = 'OutputVersionString'
+      cf%Sections(1)%Cells(2)%CharValue = 'v0-05'
+
+      cf%Sections(2)%MlscfSectionName = 'DailyMap'
+      cf%Sections(2)%NoSectionEntries = 10
+      cf%Sections(2)%Entries(1)%MlscfEntryName = 'mapSpec'
+      cf%Sections(2)%Entries(1)%Cells(1)%Keyword = 'l3prodNameD'
+      cf%Sections(2)%Entries(1)%Cells(1)%CharValue = 'ClO'
+      cf%Sections(2)%Entries(1)%Cells(2)%Keyword = 'timeD'
+      cf%Sections(2)%Entries(1)%Cells(2)%CharValue = '12:00:00'
+      cf%Sections(2)%Entries(1)%Cells(3)%Keyword = 'intpMethod'
+      cf%Sections(2)%Entries(1)%Cells(3)%CharValue = 'lin'
+      cf%Sections(2)%Entries(1)%Cells(4)%Keyword = 'latGridMap'
+      cf%Sections(2)%Entries(1)%Cells(4)%RealValue = -82.0
+      cf%Sections(2)%Entries(1)%Cells(4)%RangeUpperBound = 82.0
+      cf%Sections(2)%Entries(1)%Cells(5)%Keyword = 'dLat'
+      cf%Sections(2)%Entries(1)%Cells(5)%RealValue = 2.0
+      cf%Sections(2)%Entries(1)%Cells(6)%Keyword = 'longGrid'
+      cf%Sections(2)%Entries(1)%Cells(6)%RealValue = -180.0
+      cf%Sections(2)%Entries(1)%Cells(6)%RangeUpperBound = 180.0
+      cf%Sections(2)%Entries(1)%Cells(7)%Keyword = 'dLon'
+      cf%Sections(2)%Entries(1)%Cells(7)%RealValue = 4.0
+      cf%Sections(2)%Entries(1)%Cells(8)%Keyword = 'rangFrequency'
+      cf%Sections(2)%Entries(1)%Cells(8)%RealValue = 0.1
+      cf%Sections(2)%Entries(1)%Cells(8)%RangeUpperBound =1.0
+      cf%Sections(2)%Entries(1)%Cells(9)%Keyword = 'dF'
+      cf%Sections(2)%Entries(1)%Cells(9)%RealValue = 0.25
+      cf%Sections(2)%Entries(1)%Cells(10)%Keyword = 'l3presLvl'
+      cf%Sections(2)%Entries(1)%Cells(10)%RealValue = 1.0
+      cf%Sections(2)%Entries(1)%Cells(10)%RangeUpperBound =100.0
+      cf%Sections(2)%Entries(1)%Cells(11)%Keyword = 'rangWavenumber'
+      cf%Sections(2)%Entries(1)%Cells(11)%RealValue = 1.0
+      cf%Sections(2)%Entries(1)%Cells(11)%RangeUpperBound =15.0
+      cf%Sections(2)%Entries(1)%Cells(12)%Keyword = 'mode'
+      cf%Sections(2)%Entries(1)%Cells(12)%CharValue = 'all'
+      cf%Sections(2)%Entries(1)%Cells(13)%Keyword = 'label'
+      cf%Sections(2)%Entries(1)%Cells(13)%CharValue = 'CLOL3DM'
+      cf%Sections(2)%Entries(2)%Cells(1)%Keyword = 'l3prodNameD'
+      cf%Sections(2)%Entries(2)%Cells(1)%CharValue = 'GeopotentialHeight'
+      cf%Sections(2)%Entries(2)%Cells(2)%Keyword = 'timeD'
+      cf%Sections(2)%Entries(2)%Cells(2)%CharValue = '12:00:00'
+      cf%Sections(2)%Entries(2)%Cells(3)%Keyword = 'intpMethod'
+      cf%Sections(2)%Entries(2)%Cells(3)%CharValue = 'lin'
+      cf%Sections(2)%Entries(2)%Cells(4)%Keyword = 'latGridMap'
+      cf%Sections(2)%Entries(2)%Cells(4)%RealValue = -82.0
+      cf%Sections(2)%Entries(2)%Cells(4)%RangeUpperBound = 82.0
+      cf%Sections(2)%Entries(2)%Cells(5)%Keyword = 'dLat'
+      cf%Sections(2)%Entries(2)%Cells(5)%RealValue = 2.0
+      cf%Sections(2)%Entries(2)%Cells(6)%Keyword = 'longGrid'
+      cf%Sections(2)%Entries(2)%Cells(6)%RealValue = -180.0
+      cf%Sections(2)%Entries(2)%Cells(6)%RangeUpperBound = 180.0
+      cf%Sections(2)%Entries(2)%Cells(7)%Keyword = 'dLon'
+      cf%Sections(2)%Entries(2)%Cells(7)%RealValue = 4.0
+      cf%Sections(2)%Entries(2)%Cells(8)%Keyword = 'rangFrequency'
+      cf%Sections(2)%Entries(2)%Cells(8)%RealValue = 0.1
+      cf%Sections(2)%Entries(2)%Cells(8)%RangeUpperBound =1.0
+      cf%Sections(2)%Entries(2)%Cells(9)%Keyword = 'dF'
+      cf%Sections(2)%Entries(2)%Cells(9)%RealValue = 0.25
+      cf%Sections(2)%Entries(2)%Cells(10)%Keyword = 'l3presLvl'
+      cf%Sections(2)%Entries(2)%Cells(10)%RealValue = 0.01
+      cf%Sections(2)%Entries(2)%Cells(10)%RangeUpperBound =464.0
+      cf%Sections(2)%Entries(2)%Cells(11)%Keyword = 'rangWavenumber'
+      cf%Sections(2)%Entries(2)%Cells(11)%RealValue = 1.0
+      cf%Sections(2)%Entries(2)%Cells(11)%RangeUpperBound =15.0
+      cf%Sections(2)%Entries(2)%Cells(12)%Keyword = 'mode'
+      cf%Sections(2)%Entries(2)%Cells(12)%CharValue = 'com'
+      cf%Sections(2)%Entries(2)%Cells(13)%Keyword = 'label'
+      cf%Sections(2)%Entries(2)%Cells(13)%CharValue = 'ZL3DM'
+      cf%Sections(2)%Entries(3)%Cells(1)%Keyword = 'l3prodNameD'
+      cf%Sections(2)%Entries(3)%Cells(1)%CharValue = 'H2O'
+      cf%Sections(2)%Entries(3)%Cells(2)%Keyword = 'timeD'
+      cf%Sections(2)%Entries(3)%Cells(2)%CharValue = '12:00:00'
+      cf%Sections(2)%Entries(3)%Cells(3)%Keyword = 'intpMethod'
+      cf%Sections(2)%Entries(3)%Cells(3)%CharValue = 'lin'
+      cf%Sections(2)%Entries(3)%Cells(4)%Keyword = 'latGridMap'
+      cf%Sections(2)%Entries(3)%Cells(4)%RealValue = -82.0
+      cf%Sections(2)%Entries(3)%Cells(4)%RangeUpperBound = 82.0
+      cf%Sections(2)%Entries(3)%Cells(5)%Keyword = 'dLat'
+      cf%Sections(2)%Entries(3)%Cells(5)%RealValue = 2.0
+      cf%Sections(2)%Entries(3)%Cells(6)%Keyword = 'longGrid'
+      cf%Sections(2)%Entries(3)%Cells(6)%RealValue = -180.0
+      cf%Sections(2)%Entries(3)%Cells(6)%RangeUpperBound = 180.0
+      cf%Sections(2)%Entries(3)%Cells(7)%Keyword = 'dLon'
+      cf%Sections(2)%Entries(3)%Cells(7)%RealValue = 4.0
+      cf%Sections(2)%Entries(3)%Cells(8)%Keyword = 'rangFrequency'
+      cf%Sections(2)%Entries(3)%Cells(8)%RealValue = 0.1
+      cf%Sections(2)%Entries(3)%Cells(8)%RangeUpperBound =1.0
+      cf%Sections(2)%Entries(3)%Cells(9)%Keyword = 'dF'
+      cf%Sections(2)%Entries(3)%Cells(9)%RealValue = 0.25
+      cf%Sections(2)%Entries(3)%Cells(10)%Keyword = 'l3presLvl'
+      cf%Sections(2)%Entries(3)%Cells(10)%RealValue = 0.01
+      cf%Sections(2)%Entries(3)%Cells(10)%RangeUpperBound =464.0
+      cf%Sections(2)%Entries(3)%Cells(11)%Keyword = 'rangWavenumber'
+      cf%Sections(2)%Entries(3)%Cells(11)%RealValue = 1.0
+      cf%Sections(2)%Entries(3)%Cells(11)%RangeUpperBound =15.0
+      cf%Sections(2)%Entries(3)%Cells(12)%Keyword = 'mode'
+      cf%Sections(2)%Entries(3)%Cells(12)%CharValue = 'com'
+      cf%Sections(2)%Entries(3)%Cells(13)%Keyword = 'label'
+      cf%Sections(2)%Entries(3)%Cells(13)%CharValue = 'H2OL3DM'
+      cf%Sections(2)%Entries(4)%Cells(1)%Keyword = 'l3prodNameD'
+      cf%Sections(2)%Entries(4)%Cells(1)%CharValue = 'HCl'
+      cf%Sections(2)%Entries(4)%Cells(2)%Keyword = 'timeD'
+      cf%Sections(2)%Entries(4)%Cells(2)%CharValue = '12:00:00'
+      cf%Sections(2)%Entries(4)%Cells(3)%Keyword = 'intpMethod'
+      cf%Sections(2)%Entries(4)%Cells(3)%CharValue = 'lin'
+      cf%Sections(2)%Entries(4)%Cells(4)%Keyword = 'latGridMap'
+      cf%Sections(2)%Entries(4)%Cells(4)%RealValue = -82.0
+      cf%Sections(2)%Entries(4)%Cells(4)%RangeUpperBound = 82.0
+      cf%Sections(2)%Entries(4)%Cells(5)%Keyword = 'dLat'
+      cf%Sections(2)%Entries(4)%Cells(5)%RealValue = 2.0
+      cf%Sections(2)%Entries(4)%Cells(6)%Keyword = 'longGrid'
+      cf%Sections(2)%Entries(4)%Cells(6)%RealValue = -180.0
+      cf%Sections(2)%Entries(4)%Cells(6)%RangeUpperBound = 180.0
+      cf%Sections(2)%Entries(4)%Cells(7)%Keyword = 'dLon'
+      cf%Sections(2)%Entries(4)%Cells(7)%RealValue = 4.0
+      cf%Sections(2)%Entries(4)%Cells(8)%Keyword = 'rangFrequency'
+      cf%Sections(2)%Entries(4)%Cells(8)%RealValue = 0.1
+      cf%Sections(2)%Entries(4)%Cells(8)%RangeUpperBound =1.0
+      cf%Sections(2)%Entries(4)%Cells(9)%Keyword = 'dF'
+      cf%Sections(2)%Entries(4)%Cells(9)%RealValue = 0.25
+      cf%Sections(2)%Entries(4)%Cells(10)%Keyword = 'l3presLvl'
+      cf%Sections(2)%Entries(4)%Cells(10)%RealValue = 1.0
+      cf%Sections(2)%Entries(4)%Cells(10)%RangeUpperBound =100.0
+      cf%Sections(2)%Entries(4)%Cells(11)%Keyword = 'rangWavenumber'
+      cf%Sections(2)%Entries(4)%Cells(11)%RealValue = 1.0
+      cf%Sections(2)%Entries(4)%Cells(11)%RangeUpperBound =15.0
+      cf%Sections(2)%Entries(4)%Cells(12)%Keyword = 'mode'
+      cf%Sections(2)%Entries(4)%Cells(12)%CharValue = 'com'
+      cf%Sections(2)%Entries(4)%Cells(13)%Keyword = 'label'
+      cf%Sections(2)%Entries(4)%Cells(13)%CharValue = 'HCLL3DM'
+      cf%Sections(2)%Entries(5)%Cells(1)%Keyword = 'l3prodNameD'
+      cf%Sections(2)%Entries(5)%Cells(1)%CharValue = 'HCN'
+      cf%Sections(2)%Entries(5)%Cells(2)%Keyword = 'timeD'
+      cf%Sections(2)%Entries(5)%Cells(2)%CharValue = '12:00:00'
+      cf%Sections(2)%Entries(5)%Cells(3)%Keyword = 'intpMethod'
+      cf%Sections(2)%Entries(5)%Cells(3)%CharValue = 'lin'
+      cf%Sections(2)%Entries(5)%Cells(4)%Keyword = 'latGridMap'
+      cf%Sections(2)%Entries(5)%Cells(4)%RealValue = -82.0
+      cf%Sections(2)%Entries(5)%Cells(4)%RangeUpperBound = 82.0
+      cf%Sections(2)%Entries(5)%Cells(5)%Keyword = 'dLat'
+      cf%Sections(2)%Entries(5)%Cells(5)%RealValue = 2.0
+      cf%Sections(2)%Entries(5)%Cells(6)%Keyword = 'longGrid'
+      cf%Sections(2)%Entries(5)%Cells(6)%RealValue = -180.0
+      cf%Sections(2)%Entries(5)%Cells(6)%RangeUpperBound = 180.0
+      cf%Sections(2)%Entries(5)%Cells(7)%Keyword = 'dLon'
+      cf%Sections(2)%Entries(5)%Cells(7)%RealValue = 4.0
+      cf%Sections(2)%Entries(5)%Cells(8)%Keyword = 'rangFrequency'
+      cf%Sections(2)%Entries(5)%Cells(8)%RealValue = 0.1
+      cf%Sections(2)%Entries(5)%Cells(8)%RangeUpperBound =1.0
+      cf%Sections(2)%Entries(5)%Cells(9)%Keyword = 'dF'
+      cf%Sections(2)%Entries(5)%Cells(9)%RealValue = 0.25
+      cf%Sections(2)%Entries(5)%Cells(10)%Keyword = 'l3presLvl'
+      cf%Sections(2)%Entries(5)%Cells(10)%RealValue = 22.0
+      cf%Sections(2)%Entries(5)%Cells(10)%RangeUpperBound =100.0
+      cf%Sections(2)%Entries(5)%Cells(11)%Keyword = 'rangWavenumber'
+      cf%Sections(2)%Entries(5)%Cells(11)%RealValue = 1.0
+      cf%Sections(2)%Entries(5)%Cells(11)%RangeUpperBound =15.0
+      cf%Sections(2)%Entries(5)%Cells(12)%Keyword = 'mode'
+      cf%Sections(2)%Entries(5)%Cells(12)%CharValue = 'com'
+      cf%Sections(2)%Entries(5)%Cells(13)%Keyword = 'label'
+      cf%Sections(2)%Entries(5)%Cells(13)%CharValue = 'HCNL3DM'
+      cf%Sections(2)%Entries(6)%Cells(1)%Keyword = 'l3prodNameD'
+      cf%Sections(2)%Entries(6)%Cells(1)%CharValue = 'HNO3'
+      cf%Sections(2)%Entries(6)%Cells(2)%Keyword = 'timeD'
+      cf%Sections(2)%Entries(6)%Cells(2)%CharValue = '12:00:00'
+      cf%Sections(2)%Entries(6)%Cells(3)%Keyword = 'intpMethod'
+      cf%Sections(2)%Entries(6)%Cells(3)%CharValue = 'lin'
+      cf%Sections(2)%Entries(6)%Cells(4)%Keyword = 'latGridMap'
+      cf%Sections(2)%Entries(6)%Cells(4)%RealValue = -82.0
+      cf%Sections(2)%Entries(6)%Cells(4)%RangeUpperBound = 82.0
+      cf%Sections(2)%Entries(6)%Cells(5)%Keyword = 'dLat'
+      cf%Sections(2)%Entries(6)%Cells(5)%RealValue = 2.0
+      cf%Sections(2)%Entries(6)%Cells(6)%Keyword = 'longGrid'
+      cf%Sections(2)%Entries(6)%Cells(6)%RealValue = -180.0
+      cf%Sections(2)%Entries(6)%Cells(6)%RangeUpperBound = 180.0
+      cf%Sections(2)%Entries(6)%Cells(7)%Keyword = 'dLon'
+      cf%Sections(2)%Entries(6)%Cells(7)%RealValue = 4.0
+      cf%Sections(2)%Entries(6)%Cells(8)%Keyword = 'rangFrequency'
+      cf%Sections(2)%Entries(6)%Cells(8)%RealValue = 0.1
+      cf%Sections(2)%Entries(6)%Cells(8)%RangeUpperBound =1.0
+      cf%Sections(2)%Entries(6)%Cells(9)%Keyword = 'dF'
+      cf%Sections(2)%Entries(6)%Cells(9)%RealValue = 0.25
+      cf%Sections(2)%Entries(6)%Cells(10)%Keyword = 'l3presLvl'
+      cf%Sections(2)%Entries(6)%Cells(10)%RealValue = 1.0
+      cf%Sections(2)%Entries(6)%Cells(10)%RangeUpperBound =100.0
+      cf%Sections(2)%Entries(6)%Cells(11)%Keyword = 'rangWavenumber'
+      cf%Sections(2)%Entries(6)%Cells(11)%RealValue = 1.0
+      cf%Sections(2)%Entries(6)%Cells(11)%RangeUpperBound =15.0
+      cf%Sections(2)%Entries(6)%Cells(12)%Keyword = 'mode'
+      cf%Sections(2)%Entries(6)%Cells(12)%CharValue = 'com'
+      cf%Sections(2)%Entries(6)%Cells(13)%Keyword = 'label'
+      cf%Sections(2)%Entries(6)%Cells(13)%CharValue = 'HNO3L3DM'
+      cf%Sections(2)%Entries(7)%Cells(1)%Keyword = 'l3prodNameD'
+      cf%Sections(2)%Entries(7)%Cells(1)%CharValue = 'N2O'
+      cf%Sections(2)%Entries(7)%Cells(2)%Keyword = 'timeD'
+      cf%Sections(2)%Entries(7)%Cells(2)%CharValue = '12:00:00'
+      cf%Sections(2)%Entries(7)%Cells(3)%Keyword = 'intpMethod'
+      cf%Sections(2)%Entries(7)%Cells(3)%CharValue = 'lin'
+      cf%Sections(2)%Entries(7)%Cells(4)%Keyword = 'latGridMap'
+      cf%Sections(2)%Entries(7)%Cells(4)%RealValue = -82.0
+      cf%Sections(2)%Entries(7)%Cells(4)%RangeUpperBound = 82.0
+      cf%Sections(2)%Entries(7)%Cells(5)%Keyword = 'dLat'
+      cf%Sections(2)%Entries(7)%Cells(5)%RealValue = 2.0
+      cf%Sections(2)%Entries(7)%Cells(6)%Keyword = 'longGrid'
+      cf%Sections(2)%Entries(7)%Cells(6)%RealValue = -180.0
+      cf%Sections(2)%Entries(7)%Cells(6)%RangeUpperBound = 180.0
+      cf%Sections(2)%Entries(7)%Cells(7)%Keyword = 'dLon'
+      cf%Sections(2)%Entries(7)%Cells(7)%RealValue = 4.0
+      cf%Sections(2)%Entries(7)%Cells(8)%Keyword = 'rangFrequency'
+      cf%Sections(2)%Entries(7)%Cells(8)%RealValue = 0.1
+      cf%Sections(2)%Entries(7)%Cells(8)%RangeUpperBound =1.0
+      cf%Sections(2)%Entries(7)%Cells(9)%Keyword = 'dF'
+      cf%Sections(2)%Entries(7)%Cells(9)%RealValue = 0.25
+      cf%Sections(2)%Entries(7)%Cells(10)%Keyword = 'l3presLvl'
+      cf%Sections(2)%Entries(7)%Cells(10)%RealValue = 1.0
+      cf%Sections(2)%Entries(7)%Cells(10)%RangeUpperBound =215.0
+      cf%Sections(2)%Entries(7)%Cells(11)%Keyword = 'rangWavenumber'
+      cf%Sections(2)%Entries(7)%Cells(11)%RealValue = 1.0
+      cf%Sections(2)%Entries(7)%Cells(11)%RangeUpperBound =15.0
+      cf%Sections(2)%Entries(7)%Cells(12)%Keyword = 'mode'
+      cf%Sections(2)%Entries(7)%Cells(12)%CharValue = 'com'
+      cf%Sections(2)%Entries(7)%Cells(13)%Keyword = 'label'
+      cf%Sections(2)%Entries(7)%Cells(13)%CharValue = 'N2OL3DM'
+      cf%Sections(2)%Entries(8)%Cells(1)%Keyword = 'l3prodNameD'
+      cf%Sections(2)%Entries(8)%Cells(1)%CharValue = 'O3'
+      cf%Sections(2)%Entries(8)%Cells(2)%Keyword = 'timeD'
+      cf%Sections(2)%Entries(8)%Cells(2)%CharValue = '12:00:00'
+      cf%Sections(2)%Entries(8)%Cells(3)%Keyword = 'intpMethod'
+      cf%Sections(2)%Entries(8)%Cells(3)%CharValue = 'lin'
+      cf%Sections(2)%Entries(8)%Cells(4)%Keyword = 'latGridMap'
+      cf%Sections(2)%Entries(8)%Cells(4)%RealValue = -82.0
+      cf%Sections(2)%Entries(8)%Cells(4)%RangeUpperBound = 82.0
+      cf%Sections(2)%Entries(8)%Cells(5)%Keyword = 'dLat'
+      cf%Sections(2)%Entries(8)%Cells(5)%RealValue = 2.0
+      cf%Sections(2)%Entries(8)%Cells(6)%Keyword = 'longGrid'
+      cf%Sections(2)%Entries(8)%Cells(6)%RealValue = -180.0
+      cf%Sections(2)%Entries(8)%Cells(6)%RangeUpperBound = 180.0
+      cf%Sections(2)%Entries(8)%Cells(7)%Keyword = 'dLon'
+      cf%Sections(2)%Entries(8)%Cells(7)%RealValue = 4.0
+      cf%Sections(2)%Entries(8)%Cells(8)%Keyword = 'rangFrequency'
+      cf%Sections(2)%Entries(8)%Cells(8)%RealValue = 0.1
+      cf%Sections(2)%Entries(8)%Cells(8)%RangeUpperBound =1.0
+      cf%Sections(2)%Entries(8)%Cells(9)%Keyword = 'dF'
+      cf%Sections(2)%Entries(8)%Cells(9)%RealValue = 0.25
+      cf%Sections(2)%Entries(8)%Cells(10)%Keyword = 'l3presLvl'
+      cf%Sections(2)%Entries(8)%Cells(10)%RealValue = 0.01
+      cf%Sections(2)%Entries(8)%Cells(10)%RangeUpperBound =316.0
+      cf%Sections(2)%Entries(8)%Cells(11)%Keyword = 'rangWavenumber'
+      cf%Sections(2)%Entries(8)%Cells(11)%RealValue = 1.0
+      cf%Sections(2)%Entries(8)%Cells(11)%RangeUpperBound =15.0
+      cf%Sections(2)%Entries(8)%Cells(12)%Keyword = 'mode'
+      cf%Sections(2)%Entries(8)%Cells(12)%CharValue = 'all'
+      cf%Sections(2)%Entries(8)%Cells(13)%Keyword = 'label'
+      cf%Sections(2)%Entries(8)%Cells(13)%CharValue = 'O3L3DM'
+      cf%Sections(2)%Entries(9)%Cells(1)%Keyword = 'l3prodNameD'
+      cf%Sections(2)%Entries(9)%Cells(1)%CharValue = 'OH'
+      cf%Sections(2)%Entries(9)%Cells(2)%Keyword = 'timeD'
+      cf%Sections(2)%Entries(9)%Cells(2)%CharValue = '12:00:00'
+      cf%Sections(2)%Entries(9)%Cells(3)%Keyword = 'intpMethod'
+      cf%Sections(2)%Entries(9)%Cells(3)%CharValue = 'lin'
+      cf%Sections(2)%Entries(9)%Cells(4)%Keyword = 'latGridMap'
+      cf%Sections(2)%Entries(9)%Cells(4)%RealValue = -82.0
+      cf%Sections(2)%Entries(9)%Cells(4)%RangeUpperBound = 82.0
+      cf%Sections(2)%Entries(9)%Cells(5)%Keyword = 'dLat'
+      cf%Sections(2)%Entries(9)%Cells(5)%RealValue = 2.0
+      cf%Sections(2)%Entries(9)%Cells(6)%Keyword = 'longGrid'
+      cf%Sections(2)%Entries(9)%Cells(6)%RealValue = -180.0
+      cf%Sections(2)%Entries(9)%Cells(6)%RangeUpperBound = 180.0
+      cf%Sections(2)%Entries(9)%Cells(7)%Keyword = 'dLon'
+      cf%Sections(2)%Entries(9)%Cells(7)%RealValue = 4.0
+      cf%Sections(2)%Entries(9)%Cells(8)%Keyword = 'rangFrequency'
+      cf%Sections(2)%Entries(9)%Cells(8)%RealValue = 0.1
+      cf%Sections(2)%Entries(9)%Cells(8)%RangeUpperBound =1.0
+      cf%Sections(2)%Entries(9)%Cells(9)%Keyword = 'dF'
+      cf%Sections(2)%Entries(9)%Cells(9)%RealValue = 0.25
+      cf%Sections(2)%Entries(9)%Cells(10)%Keyword = 'l3presLvl'
+      cf%Sections(2)%Entries(9)%Cells(10)%RealValue = 0.1
+      cf%Sections(2)%Entries(9)%Cells(10)%RangeUpperBound =10.0
+      cf%Sections(2)%Entries(9)%Cells(11)%Keyword = 'rangWavenumber'
+      cf%Sections(2)%Entries(9)%Cells(11)%RealValue = 1.0
+      cf%Sections(2)%Entries(9)%Cells(11)%RangeUpperBound =15.0
+      cf%Sections(2)%Entries(9)%Cells(12)%Keyword = 'mode'
+      cf%Sections(2)%Entries(9)%Cells(12)%CharValue = 'all'
+      cf%Sections(2)%Entries(9)%Cells(13)%Keyword = 'label'
+      cf%Sections(2)%Entries(9)%Cells(13)%CharValue = 'OHL3DM'
+      cf%Sections(2)%Entries(10)%Cells(1)%Keyword = 'l3prodNameD'
+      cf%Sections(2)%Entries(10)%Cells(1)%CharValue = 'Temperature'
+      cf%Sections(2)%Entries(10)%Cells(2)%Keyword = 'timeD'
+      cf%Sections(2)%Entries(10)%Cells(2)%CharValue = '12:00:00'
+      cf%Sections(2)%Entries(10)%Cells(3)%Keyword = 'intpMethod'
+      cf%Sections(2)%Entries(10)%Cells(3)%CharValue = 'lin'
+      cf%Sections(2)%Entries(10)%Cells(4)%Keyword = 'latGridMap'
+      cf%Sections(2)%Entries(10)%Cells(4)%RealValue = -82.0
+      cf%Sections(2)%Entries(10)%Cells(4)%RangeUpperBound = 82.0
+      cf%Sections(2)%Entries(10)%Cells(5)%Keyword = 'dLat'
+      cf%Sections(2)%Entries(10)%Cells(5)%RealValue = 2.0
+      cf%Sections(2)%Entries(10)%Cells(6)%Keyword = 'longGrid'
+      cf%Sections(2)%Entries(10)%Cells(6)%RealValue = -180.0
+      cf%Sections(2)%Entries(10)%Cells(6)%RangeUpperBound = 180.0
+      cf%Sections(2)%Entries(10)%Cells(7)%Keyword = 'dLon'
+      cf%Sections(2)%Entries(10)%Cells(7)%RealValue = 4.0
+      cf%Sections(2)%Entries(10)%Cells(8)%Keyword = 'rangFrequency'
+      cf%Sections(2)%Entries(10)%Cells(8)%RealValue = 0.1
+      cf%Sections(2)%Entries(10)%Cells(8)%RangeUpperBound =1.0
+      cf%Sections(2)%Entries(10)%Cells(9)%Keyword = 'dF'
+      cf%Sections(2)%Entries(10)%Cells(9)%RealValue = 0.25
+      cf%Sections(2)%Entries(10)%Cells(10)%Keyword = 'l3presLvl'
+      cf%Sections(2)%Entries(10)%Cells(10)%RealValue = 0.01
+      cf%Sections(2)%Entries(10)%Cells(10)%RangeUpperBound =464.0
+      cf%Sections(2)%Entries(10)%Cells(11)%Keyword = 'rangWavenumber'
+      cf%Sections(2)%Entries(10)%Cells(11)%RealValue = 1.0
+      cf%Sections(2)%Entries(10)%Cells(11)%RangeUpperBound =15.0
+      cf%Sections(2)%Entries(10)%Cells(12)%Keyword = 'mode'
+      cf%Sections(2)%Entries(10)%Cells(12)%CharValue = 'com'
+      cf%Sections(2)%Entries(10)%Cells(13)%Keyword = 'label'
+      cf%Sections(2)%Entries(10)%Cells(13)%CharValue = 'TL3DM'
+
+      cf%Sections(3)%MlscfSectionName = 'Output'
+      cf%Sections(3)%NoSectionEntries = 10
+      cf%Sections(3)%Entries(1)%MlscfLabelName = 'CLOL3DM'
+      cf%Sections(3)%Entries(1)%MlscfEntryName = 'output'
+      cf%Sections(3)%Entries(1)%MlscfEntryNoKeys = 6
+      cf%Sections(3)%Entries(1)%Cells(1)%Keyword = 'quantities'
+      cf%Sections(3)%Entries(1)%Cells(1)%CharValue = 'ClO'
+      cf%Sections(3)%Entries(1)%Cells(1)%More = 2
+      cf%Sections(3)%Entries(1)%Cells(2)%CharValue = 'ClOAscending'
+      cf%Sections(3)%Entries(1)%Cells(2)%More = 1
+      cf%Sections(3)%Entries(1)%Cells(3)%CharValue = 'ClODescending'
+      cf%Sections(3)%Entries(1)%Cells(3)%More = 0
+      cf%Sections(3)%Entries(1)%Cells(4)%Keyword = 'mcf'
+      cf%Sections(3)%Entries(1)%Cells(4)%CharValue = &
+                                            '/duke/nakamura/L1BOA/META/MCF.clo'
+      cf%Sections(3)%Entries(1)%Cells(5)%Keyword = 'file'
+      cf%Sections(3)%Entries(1)%Cells(5)%CharValue = &
+                   '/duke/nakamura/L1BOA/mls_l3dm_clo_$version-$cycle_$day.dat'
+!     cf%Sections(3)%Entries(1)%Cells(6)%Keyword = 'bypassPCF'
+!     cf%Sections(3)%Entries(1)%Cells(6)%RealValue = 1.0
+      cf%Sections(3)%Entries(2)%MlscfLabelName = 'ZL3DM'
+      cf%Sections(3)%Entries(2)%MlscfEntryNoKeys = 5
+      cf%Sections(3)%Entries(2)%Cells(1)%Keyword = 'quantities'
+      cf%Sections(3)%Entries(2)%Cells(1)%CharValue = 'GeopotentialHeight'
+      cf%Sections(3)%Entries(2)%Cells(1)%More = 2
+      cf%Sections(3)%Entries(2)%Cells(2)%CharValue = &
+                                                  'GeopotentialHeightAscending'
+      cf%Sections(3)%Entries(2)%Cells(2)%More = 1
+      cf%Sections(3)%Entries(2)%Cells(3)%CharValue = &
+                                                 'GeopotentialHeightDescending'
+      cf%Sections(3)%Entries(2)%Cells(3)%More = 0
+      cf%Sections(3)%Entries(2)%Cells(4)%Keyword = 'mcf'
+      cf%Sections(3)%Entries(2)%Cells(4)%CharValue = &
+                                              '/duke/nakamura/L1BOA/META/MCF.z'
+      cf%Sections(3)%Entries(2)%Cells(5)%Keyword = 'file'
+      cf%Sections(3)%Entries(2)%Cells(5)%CharValue = &
+                  '/duke/nakamura/L1BOA/mls_l3dm_z_$version-$cycle_$day.dat'
+      cf%Sections(3)%Entries(3)%MlscfLabelName = 'H2OL3DM'
+      cf%Sections(3)%Entries(3)%Cells(1)%Keyword = 'quantities'
+      cf%Sections(3)%Entries(3)%Cells(1)%CharValue = 'H2O'
+      cf%Sections(3)%Entries(3)%Cells(1)%More = 2
+      cf%Sections(3)%Entries(3)%Cells(2)%CharValue = 'H2OAscending'
+      cf%Sections(3)%Entries(3)%Cells(2)%More = 1
+      cf%Sections(3)%Entries(3)%Cells(3)%CharValue = 'H2ODescending'
+      cf%Sections(3)%Entries(3)%Cells(3)%More = 0
+      cf%Sections(3)%Entries(3)%Cells(4)%Keyword = 'mcf'
+      cf%Sections(3)%Entries(3)%Cells(4)%CharValue = &
+                                            '/duke/nakamura/L1BOA/META/MCF.h2o'
+      cf%Sections(3)%Entries(3)%Cells(5)%Keyword = 'file'
+      cf%Sections(3)%Entries(3)%Cells(5)%CharValue = &
+                  '/duke/nakamura/L1BOA/mls_l3dm_h2o_$version-$cycle_$day.dat'
+      cf%Sections(3)%Entries(4)%MlscfLabelName = 'HCLL3DM'
+      cf%Sections(3)%Entries(4)%Cells(1)%Keyword = 'quantities'
+      cf%Sections(3)%Entries(4)%Cells(1)%CharValue = 'HCl'
+      cf%Sections(3)%Entries(4)%Cells(1)%More = 2
+      cf%Sections(3)%Entries(4)%Cells(2)%CharValue = 'HClAscending'
+      cf%Sections(3)%Entries(4)%Cells(2)%More = 1
+      cf%Sections(3)%Entries(4)%Cells(3)%CharValue = 'HClDescending'
+      cf%Sections(3)%Entries(4)%Cells(3)%More = 0
+      cf%Sections(3)%Entries(4)%Cells(4)%Keyword = 'mcf'
+      cf%Sections(3)%Entries(4)%Cells(4)%CharValue = &
+                                            '/duke/nakamura/L1BOA/META/MCF.hcl'
+      cf%Sections(3)%Entries(4)%Cells(5)%Keyword = 'file'
+      cf%Sections(3)%Entries(4)%Cells(5)%CharValue = &
+                  '/duke/nakamura/L1BOA/mls_l3dm_hcl_$version-$cycle_$day.dat'
+      cf%Sections(3)%Entries(5)%MlscfLabelName = 'HCNL3DM'
+      cf%Sections(3)%Entries(5)%Cells(1)%Keyword = 'quantities'
+      cf%Sections(3)%Entries(5)%Cells(1)%CharValue = 'HCN'
+      cf%Sections(3)%Entries(5)%Cells(1)%More = 2
+      cf%Sections(3)%Entries(5)%Cells(2)%CharValue = 'HCNAscending'
+      cf%Sections(3)%Entries(5)%Cells(2)%More = 1
+      cf%Sections(3)%Entries(5)%Cells(3)%CharValue = 'HCNDescending'
+      cf%Sections(3)%Entries(5)%Cells(3)%More = 0
+      cf%Sections(3)%Entries(5)%Cells(4)%Keyword = 'mcf'
+      cf%Sections(3)%Entries(5)%Cells(4)%CharValue = &
+                                            '/duke/nakamura/L1BOA/META/MCF.hcn'
+      cf%Sections(3)%Entries(5)%Cells(5)%Keyword = 'file'
+      cf%Sections(3)%Entries(5)%Cells(5)%CharValue = &
+                  '/duke/nakamura/L1BOA/mls_l3dm_hcn_$version-$cycle_$day.dat'
+      cf%Sections(3)%Entries(6)%MlscfLabelName = 'HNO3L3DM'
+      cf%Sections(3)%Entries(6)%Cells(1)%Keyword = 'quantities'
+      cf%Sections(3)%Entries(6)%Cells(1)%CharValue = 'HNO3'
+      cf%Sections(3)%Entries(6)%Cells(1)%More = 2
+      cf%Sections(3)%Entries(6)%Cells(2)%CharValue = 'HNO3Ascending'
+      cf%Sections(3)%Entries(6)%Cells(2)%More = 1
+      cf%Sections(3)%Entries(6)%Cells(3)%CharValue = 'HNO3Descending'
+      cf%Sections(3)%Entries(6)%Cells(3)%More = 0
+      cf%Sections(3)%Entries(6)%Cells(4)%Keyword = 'mcf'
+      cf%Sections(3)%Entries(6)%Cells(4)%CharValue = &
+                                          '/duke/nakamura/L1BOA/META/MCF.hno3'
+      cf%Sections(3)%Entries(6)%Cells(5)%Keyword = 'file'
+      cf%Sections(3)%Entries(6)%Cells(5)%CharValue = &
+                  '/duke/nakamura/L1BOA/mls_l3dm_hno3_$version-$cycle_$day.dat'
+      cf%Sections(3)%Entries(7)%MlscfLabelName = 'N2OL3DM'
+      cf%Sections(3)%Entries(7)%Cells(1)%Keyword = 'quantities'
+      cf%Sections(3)%Entries(7)%Cells(1)%CharValue = 'N2O'
+      cf%Sections(3)%Entries(7)%Cells(1)%More = 2
+      cf%Sections(3)%Entries(7)%Cells(2)%CharValue = 'N2OAscending'
+      cf%Sections(3)%Entries(7)%Cells(2)%More = 1
+      cf%Sections(3)%Entries(7)%Cells(3)%CharValue = 'N2ODescending'
+      cf%Sections(3)%Entries(7)%Cells(3)%More = 0
+      cf%Sections(3)%Entries(7)%Cells(4)%Keyword = 'mcf'
+      cf%Sections(3)%Entries(7)%Cells(4)%CharValue = &
+                                            '/duke/nakamura/L1BOA/META/MCF.n2o'
+      cf%Sections(3)%Entries(7)%Cells(5)%Keyword = 'file'
+      cf%Sections(3)%Entries(7)%Cells(5)%CharValue = &
+                  '/duke/nakamura/L1BOA/mls_l3dm_n2o_$version-$cycle_$day.dat'
+      cf%Sections(3)%Entries(8)%MlscfLabelName = 'O3L3DM'
+      cf%Sections(3)%Entries(8)%Cells(1)%Keyword = 'quantities'
+      cf%Sections(3)%Entries(8)%Cells(1)%CharValue = 'O3'
+      cf%Sections(3)%Entries(8)%Cells(1)%More = 2
+      cf%Sections(3)%Entries(8)%Cells(2)%CharValue = 'O3Ascending'
+      cf%Sections(3)%Entries(8)%Cells(2)%More = 1
+      cf%Sections(3)%Entries(8)%Cells(3)%CharValue = 'O3Descending'
+      cf%Sections(3)%Entries(8)%Cells(3)%More = 0
+      cf%Sections(3)%Entries(8)%Cells(4)%Keyword = 'mcf'
+      cf%Sections(3)%Entries(8)%Cells(4)%CharValue = &
+                                             '/duke/nakamura/L1BOA/META/MCF.o3'
+      cf%Sections(3)%Entries(8)%Cells(5)%Keyword = 'file'
+      cf%Sections(3)%Entries(8)%Cells(5)%CharValue = &
+                  '/duke/nakamura/L1BOA/mls_l3dm_o3_$version-$cycle_$day.dat'
+      cf%Sections(3)%Entries(9)%MlscfLabelName = 'OHL3DM'
+      cf%Sections(3)%Entries(9)%Cells(1)%Keyword = 'quantities'
+      cf%Sections(3)%Entries(9)%Cells(1)%CharValue = 'OH'
+      cf%Sections(3)%Entries(9)%Cells(1)%More = 2
+      cf%Sections(3)%Entries(9)%Cells(2)%CharValue = 'OHAscending'
+      cf%Sections(3)%Entries(9)%Cells(2)%More = 1
+      cf%Sections(3)%Entries(9)%Cells(3)%CharValue = 'OHDescending'
+      cf%Sections(3)%Entries(9)%Cells(3)%More = 0
+      cf%Sections(3)%Entries(9)%Cells(4)%Keyword = 'mcf'
+      cf%Sections(3)%Entries(9)%Cells(4)%CharValue = &
+                                             '/duke/nakamura/L1BOA/META/MCF.oh'
+      cf%Sections(3)%Entries(9)%Cells(5)%Keyword = 'file'
+      cf%Sections(3)%Entries(9)%Cells(5)%CharValue = &
+                  '/duke/nakamura/L1BOA/mls_l3dm_oh_$version-$cycle_$day.dat'
+      cf%Sections(3)%Entries(10)%MlscfLabelName = 'TL3DM'
+      cf%Sections(3)%Entries(10)%Cells(1)%Keyword = 'quantities'
+      cf%Sections(3)%Entries(10)%Cells(1)%CharValue = 'Temperature'
+      cf%Sections(3)%Entries(10)%Cells(1)%More = 2
+      cf%Sections(3)%Entries(10)%Cells(2)%CharValue = 'TemperatureAscending'
+      cf%Sections(3)%Entries(10)%Cells(2)%More = 1
+      cf%Sections(3)%Entries(10)%Cells(3)%CharValue = 'TemperatureDescending'
+      cf%Sections(3)%Entries(10)%Cells(3)%More = 0
+      cf%Sections(3)%Entries(10)%Cells(4)%Keyword = 'mcf'
+      cf%Sections(3)%Entries(10)%Cells(4)%CharValue = &
+                                              '/duke/nakamura/L1BOA/META/MCF.t'
+      cf%Sections(3)%Entries(10)%Cells(5)%Keyword = 'file'
+      cf%Sections(3)%Entries(10)%Cells(5)%CharValue = &
+                  '/duke/nakamura/L1BOA/mls_l3dm_t_$version-$cycle_$day.dat'
+
+!-------------------------------
+   END SUBROUTINE ReadParseMLSCF
+!-------------------------------
+
+d415 6
+@
+
+

@@ -1,0 +1,351 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.14
+	cfm-single-freq-0-1:1.1.0.12
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.10
+	mus-emls-1-70:1.1.0.8
+	rel-1-0-englocks-work:1.1.0.6
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2008.06.11.20.14.54;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9in
+
+\newcommand{\docname}{\bf wvs-066r1}
+\newcommand{\docdate}{13 December 2007}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Dong, Van\\
+Subject: \>Derivatives for Mie $\beta$\\
+From: \>Van Snyder\\
+Reference: \>wvs-058
+\end{tabbing}
+
+\section{Ice particle size distribution}
+
+\parindent 0pt \parskip 6pt
+\vspace{-10pt}
+
+\newcommand{\I}{\text{IWC}}
+
+Let $D = 2r$ and $n(D) = n_1(D) + n_2(D)$ where
+\begin{equation*}\begin{array}{cc}
+ n_1(D) = \frac1{\rho_{\text{ice}}}
+           N_1 D \exp(-\alpha D) &
+ n_2(D) = \frac1{\rho_{\text{ice}}}
+            \frac{N_2}D \exp \left( -\frac12 \gamma^2\right) \\
+ N_1 = \frac{\text{IWC}_{<100} \alpha^5}{4 \pi}
+ &
+ N_2 = \frac6{\sqrt{2 \pi^3}}
+       \frac{\text{IWC}_{>100}}
+            {D_0 \sigma \exp( 3 \mu + 4.5 \sigma^2)}\,, \\
+ \gamma = \frac{\log(D/D_0) - \mu}\sigma & \\
+\end{array}\end{equation*}
+%
+$D_0 = 1 \mu$m, $\rho_{\text{ice}} = 0.91$ g/m$^3$.
+
+\begin{equation*}\begin{split}
+ & \text{IWC}_{<100} = \min[\text{IWC},
+                            0.252(\text{IWC}/\text{IWC}_0)^{0.837}] \\
+ & \text{IWC}_{>100} = \text{IWC} - \text{IWC}_{<100} \\
+ & \alpha = -4.99\times 10^{-3} + 0.0494
+              \log_{10} (\text{IWC}_{<100}/\text{IWC}_0) \\
+ & \mu = (5.2 + 0.0013 T) + (0.026 - 1.2 \times 10^{-3}T)
+          \log_{10} (\text{IWC}_{>100}/\text{IWC}_0) \\
+ & \sigma = (0.47 + 2.1 \times 10^{-3}T) + (0.018 - 2.1 \times 10^{-4} T)
+             \log_{10} (\text{IWC}_{<100}/\text{IWC}_0)
+\end{split}\end{equation*}
+%
+where IWC$_0$ = 1 g/m$^3$ and $T$ is the atmospheric temperature in Celsius.
+
+\subsection{IWC derivatives}
+
+There are two cases for the derivatives w.r.t. IWC
+
+\subsubsection{$\I < 0.252\, (\I/\I_0)^{0.837} \equiv \I< 2.126232151 \times
+10^{-4}$}
+
+In this case $\I_{<100}\I$ and $\I_{>100} = 0$.
+
+\begin{equation*}\begin{split}
+\frac{\partial\alpha}{\partial\I} =\,& \frac{-0.0494\, \I_0}{\I\, \ln 10} =
+ -0.02145\, \frac{\I_0}{\I} \\
+\frac1{N_1} \frac{\partial N_1}{\partial\I} =\,& \frac1{\I} +
+ \frac5{\alpha} \frac{\partial\alpha}{\partial\I} \\
+\frac1{n_1} \frac{\partial n_1}{\partial\I} =\,&
+ \frac1{N_1} \frac{\partial N_1}{\partial\I} -
+ D \frac{\partial\alpha}{\partial\I} \\
+\frac{\partial\mu}{\partial\I} =\,&
+ \frac{\partial\sigma}{\partial\I} =\,
+ \frac{\partial n_2}{\partial\I} =\, 0\\
+\end{split}\end{equation*}
+
+\subsubsection{$\I\geq 0.252\, (\I/\I_0)^{0.837} \equiv \I< 2.126232151 \times
+10^{-4}$}
+
+In this case $\I_{<100} = 0.252(\I/\I_0)^{0.837}$, $\I_{>100} = \I -
+\I_{<100}$, $\frac{\partial\I_{<100}}{\partial\I} = 0.252 \times 0.837
+\left(\I/\I_0\right)^{0.837-1} = 0.837\, \frac{\I_0}{\I}\, \I_{<100}$ and
+$\frac{\partial\I_{>100}}{\partial\I} = 1 -
+\frac{\partial\I_{<100}}{\partial\I}$.
+
+\begin{equation*}\begin{split}
+\frac{\partial\alpha}{\partial\I} =\,&
+ \frac{-0.0494\, \I_0}{\I\, \ln 10} \,
+ \frac{\partial\I_{<100}}{\partial\I} =
+ -0.02145\, \frac{\I_0}{\I}\, \frac{\partial\I_{<100}}{\partial\I} \\
+ =\,& -0.01795365 \left( \frac{\I_0}{\I}\right)^2 \I_{<100} \\
+\frac{\partial\mu}{\partial\I} =\,&
+ \frac{-1.2\times10^{-3}\, T\, \I_0}{\I\, \ln 10} \,
+ \frac{\partial\I_{>100}}{\partial\I} =
+ -5.2115 \times 10^{-4}\, T\, \frac{\I_0}{\I}\,
+  \frac{\partial\I_{>100}}{\partial\I} \\
+\frac{\partial\sigma}{\partial\I} =\,&
+ \frac{-2.1\times10^{-4} \, T \, \I_0}{\I\, \ln 10} \,
+ \frac{\partial\I_{>100}}{\partial\I} =
+ -9.1202 \times 10^{-5}\, T\, \frac{\I_0}{\I}\,
+ \frac{\partial\I_{>100}}{\partial\I} \\
+\frac1{N_1} \frac{\partial N_1}{\partial\I} =\,&
+ \frac1{\I_{<100}} \, \frac{\partial\I_{<100}}{\partial\I} +
+ \frac5{\alpha} \frac{\partial\alpha}{\partial\I} \\
+\frac1{N_2} \frac{\partial N_2}{\partial\I} =\,&
+ \frac1{\I_{>100}} \, \frac{\partial\I_{>100}}{\partial\I} -
+3 \frac{\partial\mu}{\partial\I} - 4.5 \frac{\partial\sigma}{\partial\I} \\
+\frac1{n_1} \frac{\partial n_1}{\partial\I} =\,&
+ \frac1{N_1} \frac{\partial N_1}{\partial\I} -
+ D \frac{\partial\alpha}{\partial\I} \\
+\frac1{n_2}\frac{\partial n_2}{\partial\I} =\,&
+ \frac1{N_2} \frac{\partial N_2}{\partial\I} + \frac\gamma\sigma \,
+ \left( \frac{\partial\mu}{\partial\I} +
+ \gamma \frac{\partial\sigma}{\partial\I} \right) \\
+\end{split}\end{equation*}
+
+\subsection{Temperature derivatives}
+
+\begin{equation*}
+\frac{\partial\alpha}{\partial T} =\,
+ \frac{\partial N_1}{\partial T} =\,
+ \frac{\partial n_1}{\partial T} =\, 0
+\end{equation*}
+
+For $\I < 0.252\, (\I/\I_0)^{0.837}$, $N_2 = 0$ and therefore the remaining
+derivatives are zero.  Otherwise
+
+\begin{equation*}\begin{split}
+\frac{\partial\mu}{\partial T} =\,&
+ -1.2 \times 10^{-3} \frac{\I_0}{\I\,\ln 10} =\,
+ -5.2115 \times 10^{-4}\, \frac{\I_0}{\I} \\
+\frac{\partial\sigma}{\partial T} =\,&
+ -2.1 \times 10^{-4} \frac{\I_0}{\I\,\ln 10} =\,
+ -9.1202 \times 10^{-5}\, \frac{\I_0}{\I}\\
+\frac1{N_2} \frac{\partial N_2}{\partial T} =\,& -
+3 \frac{\partial\mu}{\partial T} - 4.5 \frac{\partial\sigma}{\partial T} \\
+\frac1{n_2}\frac{\partial n_2}{\partial T} =\,&
+ \frac1{N_2} \frac{\partial N_2}{\partial T} +
+ \frac{\gamma}{\sigma} \left( \frac{\partial\mu}{\partial T} +
+ \gamma \frac{\partial\sigma}{\partial T} \right) \\
+\end{split}\end{equation*}
+
+\section{Refractive index temperature derivative}
+
+The refractive index
+$\epsilon = 3.15 - i \left(\frac{a}f + f(b + c f^2 \sqrt{3.15}) \right)$ where \\
+$a = (50.4 + 62(\theta-1)) 10^{-4} \exp(-22.1(\theta-1))$,
+$\theta=\frac{300}T$,
+$b = 2.11 \times 10^{-7} T - 1.31 \times 10^{-5} +
+ \frac{0.04947229919}{(302.2061046 - T)^2}$ and $c$ is a constant.
+
+From this
+\begin{equation*}\begin{split}
+\frac{\partial \epsilon}{\partial T} =\,&
+ -i \left( \frac1f \frac{\partial a}{\partial T} +
+  f \frac{\partial b}{\partial T} \right) \text{ where}\\
+\frac{\partial a}{\partial T} =\,&
+ \left( 62\times 10^{-4} \exp(-22.1(\theta-1)) -
+ 22.1(50.4 + 62(\theta-1)) 10^{-4} \exp(-22.1(\theta-1)) \right)
+ \frac{\partial \theta}{\partial T} \\
+\frac{\partial b}{\partial T} =\,&
+ 2.11 \times 10^{-7} + 2 \frac{0.04947229919}{(302.2061046 - T)^3} \\
+\frac{\partial \theta}{\partial T} =\,& -\frac{300}{T^2}
+\end{split}\end{equation*}
+
+\section{Mie efficiency temperature derivative}
+
+From wvs-058
+%
+\begin{equation*}\begin{split}
+A_n =\,& - \frac{n}{m \chi} + \frac{J_{n-\frac12}(m \chi)}{J_{n+\frac12}(m \chi)}
+    = - \frac{n}{m \chi} + \frac{j_{n-1}(m \chi)}{j_n(m \chi)}\,, \\
+a_n =\,& \frac{\hat a_n \Re(W_n) - \Re(W_{n-1})}
+           {\hat a_n W_n - W_{n-1}}  \text{ where }
+ \hat a_n = \frac{A_n}m + \frac{n}\chi \\
+b_n =\,& \frac{\hat b_n \Re(W_n) - \Re(W_{n-1})}
+           {\hat b_n W_n - W_{n-1}}  \text{ where }
+ \hat b_n = m A_n + \frac{n}\chi \\
+\end{split}\end{equation*}
+%
+Thus
+%
+\begin{equation*}\begin{split}
+\frac{\partial A_n}{\partial m} = \,&
+ \frac{n-m^2\chi^2}{m^2\chi} +
+ \frac{2n}m\, \frac{J_{n-\frac12}(m \chi)}{J_{n+\frac12}(m \chi)} -
+ \chi \left( \frac{J_{n-\frac12}(m \chi)}{J_{n+\frac12}(m \chi)} \right)^2 =
+ \frac{n-m^2\chi^2}{m^2\chi} +
+ \frac{2n}m\, \left( A_n + \frac{n}{m \chi} \right) -
+ \chi \left( A_n + \frac{n}{m \chi} \right)^2 \\
+\frac{\partial a_n}{\partial T} = \,&
+ -\frac{\partial \hat a_n}{\partial T} 
+  \frac{\Re(W_n) W_{n-1} - W_n \Re(W_{n-1})}
+       {(\hat a_n W_n - W_{n-1})^2} \text{ where }
+ \frac{\partial \hat a_n}{\partial m} =
+  \frac1m \frac{\partial A_n}{\partial m} - \frac1{m^2} A_n \\
+\frac{\partial b_n}{\partial T} = \,&
+ -\frac{\partial \hat b_n}{\partial T} 
+  \frac{\Re(W_n) W_{n-1} - W_n \Re(W_{n-1})}
+       {(\hat b_n W_n - W_{n-1})^2} \text{ where }
+ \frac{\partial \hat b_n}{\partial m} =
+  m \frac{\partial A_n}{\partial m} - A_n \\
+\end{split}\end{equation*}
+%
+Since $m = \sqrt{\epsilon}$
+%
+\begin{equation*}
+\frac{\partial A_n}{\partial T} =
+ \frac{\partial A_n}{\partial m} \frac{\partial m}{\partial \epsilon}
+ \frac{\partial \epsilon}{\partial T} = \frac1{2m}
+ \frac{\partial A_n}{\partial m} \frac{\partial \epsilon}{\partial T}\,
+ \text{ and similarly for } \frac{\partial a_n}{\partial T}
+ \text{ and } \frac{\partial b_n}{\partial T}\,.
+\end{equation*}
+%
+From wvs-065
+%
+\begin{equation*}\begin{split}
+\xi_s =\,& \frac2{\chi^2} \sum_{n=1}^{n_\text{cut}}
+      (2 n + 1 ) ( |a_n|^2 + |b_n|^2 )
+      = \frac2{\chi^2} \sum_{n=1}^{n_\text{cut}}
+      (2 n + 1 ) ( (\Re a_n)^2 + (\Im a_n)^2 + (\Re b_n)^2 + (\Im b_n)^2 )
+ \text{ and } \\
+\xi_e =\,& \frac2{\chi^2} \sum_{n=1}^{n_\text{cut}}
+      (2 n + 1 ) \Re( a_n + b_n )
+\end{split}\end{equation*}
+%
+from which
+%
+\begin{equation*}\begin{split}
+\frac{\partial \xi_s}{\partial T} = \,&
+ \frac4{\chi^2}  \sum_{n=1}^{n_\text{cut}}
+      (2 n + 1 ) \left( \Re a_n \Re \frac{\partial a_n}{\partial T} +
+                        \Im a_n \Im \frac{\partial a_n}{\partial T} +
+                        \Re b_n \Re \frac{\partial b_n}{\partial T} +
+                        \Im b_n \Im \frac{\partial b_n}{\partial T} \right)
+\text{ and }\\
+\frac{\partial \xi_e}{\partial T} = \,&
+ \frac2{\chi^2}  \sum_{n=1}^{n_\text{cut}}
+      (2 n + 1 ) \left( \Re \frac{\partial a_n}{\partial T} +
+                        \Re \frac{\partial b_n}{\partial T} \right)\,.\\
+\end{split}\end{equation*}
+
+Finally
+%
+\begin{equation*}
+\beta_{c\_e} = 2 \pi \int_0^\infty r^2 \, n(r) \, \xi_e(r) \text{d} r \text{ and }
+\beta_{c\_s} = 2 \pi \int_0^\infty r^2 \, n(r) \, \xi_s(r) \text{d} r
+\end{equation*}
+%
+from which
+%
+\begin{equation*}\begin{split}
+\frac{\partial \beta_{c\_e}}{\partial T} = \,&
+ 2 \pi \int_0^\infty r^2 \, n(r) \, \frac{\partial \xi_e(r)}{\partial T} +
+  \frac{\partial n(r)}{\partial T}\, \xi_e(r) \text{d} r\,, \\
+\frac{\partial \beta_{c\_s}}{\partial T} = \,&
+ 2 \pi \int_0^\infty r^2 \, n(r) \, \frac{\partial \xi_s(r)}{\partial T} +
+  \frac{\partial n(r)}{\partial T}\, \xi_s(r) \text{d} r\,, \\
+\frac{\partial \beta_{c\_e}}{\partial \I} = \,&
+ 2 \pi \int_0^\infty r^2 \, \frac{\partial n(r)}{\partial \I}\,
+ \xi_e(r) \text{d} r \text{ and } \\
+\frac{\partial \beta_{c\_s}}{\partial \I} = \,&
+ 2 \pi \int_0^\infty r^2 \, \frac{\partial n(r)}{\partial \I}\,
+ \xi_s(r) \text{d} r \text{ and } \\
+\end{split}\end{equation*}
+
+\label{lastpage}
+\end{document}
+% $Id: $
+@

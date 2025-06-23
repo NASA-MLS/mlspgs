@@ -1,0 +1,75 @@
+head	1.1;
+access;
+symbols
+	cfm-single-freq-0-1:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2020.10.29.16.36.24;	author whdaffer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2020.10.29.16.36.24;	author whdaffer;	state Exp;
+branches;
+next	;
+
+
+desc
+@notes about fortran
+@
+
+
+1.1
+log
+@file fortran_notes.org was initially added on branch cfm-single-freq-0-1.
+@
+text
+@@
+
+
+1.1.2.1
+log
+@Initial revision
+@
+text
+@a0 34
+* Compilation Errors
+
+** no matching specific subroutine for this generic subroutine call
+   ../mockup.f90(983): error #6285: There is no matching specific subroutine for this generic subroutine call.   [ALLOCATE_TEST]
+   CALL Allocate_Test(signal,1,subroutineName,'signal')
+
+  You're trying to allocate something (like a user defined type) that
+  doesn't have a generic function. Normally, for a usertype, you
+  allocate the individual parts of it, e.g.
+
+  TYPE(SpectrometerType_T) :: SpectrometerType
+  
+  call Allocate_Test ( spectrometerType%frequencies, last, &
+  & 'spectrometerType%frequencies', SubroutineName, lowBound = first )
+
+
+** Array name is invalid in this context
+
+   Originally got this when the offending statement was...
+   TYPE (Module_T),DIMENSION(:),intent(inout) :: modules ! the modules database   
+
+   Changed it to
+
+   TYPE (Module_T),intent(inout) :: modules(:) ! the modules database
+
+   But got the same error
+
+
+** The assignment operation or the binary expression operation is invalid for the data types of the two operands.
+../mockup.f90(916): error #6303: The assignment operation or the binary expression operation is invalid for the data types of the two operands.   [TRIM]
+  radiometer%Polarization = trim(Polarization)
+
+** 
+
+@
+

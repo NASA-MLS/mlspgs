@@ -1,0 +1,528 @@
+head	2.5;
+access;
+symbols
+	v5-02-NRT-19:2.5
+	v6-00:2.5
+	v5-02-NRT-18:2.5
+	v5-02:2.5
+	v5-01-NRT-17:2.5
+	v5-01-NRT-16:2.5
+	v5-01-NRT-15:2.5
+	v5-01-NRT-14:2.5
+	neuralnetworks-1-0:2.5.0.10
+	cfm-single-freq-0-1:2.5.0.8
+	v5-01:2.5
+	v5-00:2.5
+	v4-23-TA133:2.5.0.6
+	mus-emls-1-70:2.5.0.4
+	rel-1-0-englocks-work:2.5.0.2
+	VUMLS1-00:2.5
+	VPL1-00:2.5
+	V4-22-NRT-08:2.5
+	whdrel10_merged_to_here:2.5
+	merge_whdrel10_from_here:2.4.6.1
+	TAG_TRUNK_AFTER_PW_CHANGES:2.4
+	TAG_TRUNK_BEFORE_PW_CHANGES:2.4
+	VAM1-00:2.4
+	whd-rel-1-0:2.4.0.6
+	V4-21:2.4.0.4
+	V4-13:2.4
+	V4-12:2.4
+	V4-11:2.4
+	V4-10:2.4
+	V3-43:2.4
+	M4-00:2.4
+	V3-41:2.4
+	V3-40-PlusGM57:2.4.0.2
+	V2-24-NRT-04:2.3
+	V3-33:2.4
+	V2-24:2.3
+	V3-31:2.4
+	V3-30-NRT-05:2.4
+	cfm-01-00:2.4
+	V3-30:2.4
+	V3-20:2.4
+	V3-10:2.4
+	V2-23-NRT-02:2.3
+	V2-23:2.3
+	V2-22-NRT-01:2.3
+	V2-22:2.3
+	V2-21:2.3
+	V2-20:2.3
+	V2-11:2.3
+	V2-10:2.3
+	V2-00:2.3
+	V1-51:2.2
+	V1-50:2.2
+	V1-45:2.1
+	V1-44:2.1
+	V1-43:2.1
+	V1-42:2.1
+	V1-41:2.1
+	V1-32:2.1
+	V1-40:2.1
+	V1-31:2.1
+	V1-30:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.5
+date	2016.03.15.22.17.59;	author whdaffer;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2009.05.13.20.33.05;	author vsnyder;	state Exp;
+branches
+	2.4.6.1;
+next	2.3;
+
+2.3
+date	2005.06.23.18.41.35;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2004.11.10.15.36.53;	author perun;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2003.08.15.14.25.04;	author perun;	state Exp;
+branches;
+next	;
+
+2.4.6.1
+date	2015.10.09.10.21.38;	author whdaffer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.5
+log
+@Merged whd-rel-1-0 back onto main branch. Most changes
+are to comments, but there's some modification to Calibration.f90
+and MLSL1Common to support some new modules: MLSL1Debug and SnoopMLSL1.
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=============================================================================
+MODULE FOV   ! Field-Of-View routines/data
+!=============================================================================
+
+  USE Constants, ONLY: Pi, Deg2Rad
+  USE MLSKinds, ONLY: R8
+
+  IMPLICIT NONE
+
+  PRIVATE
+
+  PUBLIC :: InitFOVconsts, CalcMountsToFOV, GroundToFlightMountsGHz, &
+       GroundToFlightMountsTHz, ScToGroundMountsGHz, ScToGroundMountsTHz 
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: FOV.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+  ! Last dimension equals 2 where 1 = GHz and 2 = THz:
+
+  REAL(r8) :: n0(3,2)
+  REAL(r8) :: M(3,3,2)
+  REAL(r8) :: S1(3,2)
+
+  REAL(r8), PARAMETER :: H1(3,2) = RESHAPE ( &
+       (/ -0.9047748d0,  0.0023903d0, -0.4258837d0, &
+          -0.9047769d0, -0.0017294d0, -0.4258824d0 /), (/ 3, 2 /))
+
+  REAL(r8), PARAMETER :: GroundToFlightMountsGHz(3,3) = &
+       & RESHAPE ((/ 1.0, 0.0, 0.0, &
+       &             0.0, 1.0, 0.0, &
+       &             0.0, 0.0, 1.0 /), (/ 3, 3 /))
+
+  REAL(r8), PARAMETER :: GroundToFlightMountsTHz(3,3) = &
+       & RESHAPE ((/ 1.0, 0.0, 0.0, &
+       &             0.0, 1.0, 0.0, &
+       &             0.0, 0.0, 1.0 /), (/ 3, 3 /))
+
+  !<whd> 
+  ! 
+  ! Construct some rotation matrices that handle the small rotations
+  ! found while doing integration and test.
+  !
+  ! </whd>
+
+  REAL(r8), PARAMETER :: ScToGroundMountsGHz(3,3) = RESHAPE ((/ &
+       1.000000,  -0.000401, 0.000428, &
+       0.000401,   1.00000,  0.000586, &
+      -0.000428,  -0.000586, 1.0000000 /), (/ 3, 3 /))
+
+  ! <whd> Same, same for THz antenna </whd>
+
+  REAL(r8), PARAMETER :: ScToGroundMountsTHz(3,3) = RESHAPE ((/ &
+       1.000000, -0.000376, -0.000090, &
+       0.000376, 1.00000, 0.000050, &
+       0.000090, -0.000050, 1.0000000 /), (/ 3, 3 /))
+
+
+CONTAINS
+
+!=============================================================================
+  SUBROUTINE InitFOVconsts   ! initialize FOV constants
+!=============================================================================
+
+    INTEGER :: i, n
+
+! constants for each Module
+! <whd> 1 for Ghz, 2 for THz </whd>
+
+    REAL(r8), PARAMETER :: dc(2) = (/ -0.001217d0, 0.000274d0 /)
+    REAL(r8), PARAMETER :: thx(2) = (/ 0.000903d0, -0.001574d0 /)
+    REAL(r8), PARAMETER :: thz(2) = (/ -0.002263d0, 0.000980d0 /)
+
+! constants for each Rdm
+
+    REAL(r8), PARAMETER :: dx(2) = (/ 0.000025d0, -0.000348d0 /)
+    REAL(r8), PARAMETER :: dz(2) = (/ 0.000046d0, 0.001144d0 /)
+
+! other constants
+
+    REAL(r8), PARAMETER :: pi_4 = Pi / 4.0d0
+
+! Initialize other constants
+
+    DO n = 1, 2    ! GHz/THz
+
+       n0(:,n) = (/ COS(pi_4 - dc(n)), SIN(pi_4 - dc(n)), 0.0d0 /)
+
+       M(:,:,n) = RESHAPE ((/ &
+            & COS(thz(n)), (COS(thx(n)) * SIN(thz(n))), (SIN(thx(n)) * SIN(thz(n))), &
+            & -SIN(thz(n)),(COS(thx(n)) * COS(thz(n))), (SIN(thx(n)) * COS(thz(n))), &
+            &  0.0d0,                -SIN(thx(n)),              COS(thx(n)) /), &
+            &  (/ 3, 3 /))
+
+       DO i = 1, 3
+          S1(i,n)  = DOT_PRODUCT (M(i,:,n), (/ dx(n), &
+               -SQRT (1.0 - dx(n)**2 - dz(n)**2), dz(n) /))
+       ENDDO
+    ENDDO
+
+  END SUBROUTINE InitFOVconsts
+
+!=============================================================================
+  SUBROUTINE CalcMountsToFOV (eps_deg, gtindx, MountsToFOV)
+!=============================================================================
+
+    REAL, INTENT (IN) :: eps_deg
+    INTEGER, INTENT(IN) :: gtindx   ! 1 = GHz, 2 = THz
+    REAL(r8), INTENT (OUT) :: MountsToFOV(3,3)
+
+    INTEGER :: i
+    REAL(r8) :: E2(3), eps
+    REAL(r8) :: S(3,3), n(3), ns(3), h2(3), s2(3)
+
+    eps = eps_deg * Deg2Rad   ! convert degrees to radians
+
+    !<whd> FOV is rotated eps degress about the mounts 'y' axis</whd>
+    S = RESHAPE ((/ &
+         &  COS(eps),  0.0d0,    SIN(eps), &
+         &   0.0d0,    1.0d0,      0.0d0, &
+         &  -SIN(eps), 0.0d0,    COS(eps) /), &
+             & (/ 3, 3 /))
+
+    DO i = 1, 3
+       ns(i)  = DOT_PRODUCT (s(i,:), n0(:,gtindx))
+    ENDDO
+
+    DO i = 1, 3
+       n(i)  = DOT_PRODUCT (M(i,:,gtindx), ns)
+    ENDDO
+
+    !<whd> Snell's law: S = look vector, H is magnetic vector, n the
+    !normal to the plane.</whd>
+    s2 = s1(:,gtindx) - 2 * DOT_PRODUCT (n, s1(:,gtindx)) * n
+    h2 = h1(:,gtindx) - 2 * DOT_PRODUCT (n, h1(:,gtindx)) * n
+
+    ! <whd> E (electric field vector?) = H cross S </whd>
+    E2(1) = h2(2) * s2(3) - h2(3) * s2(2)
+    E2(2) = h2(3) * s2(1) - h2(1) * s2(3)
+    E2(3) = h2(1) * s2(2) - h2(2) * s2(1)
+
+    MountsToFOV(1,:) = E2
+    MountsToFOV(2,:) = H2
+    MountsToFOV(3,:) = S2
+
+  END SUBROUTINE CalcMountsToFOV
+
+!=============================================================================
+
+  logical function not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id: FOV.f90,v 2.4.6.1 2015/10/09 10:21:38 whdaffer Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+END MODULE FOV
+!=============================================================================
+! $Log: FOV.f90,v $
+! Revision 2.4.6.1  2015/10/09 10:21:38  whdaffer
+! checkin of continuing work on branch whd-rel-1-0
+!
+! Revision 2.4  2009/05/13 20:33:05  vsnyder
+! Get constants from Constants, kinds from MLSKinds
+!
+! Revision 2.3  2005/06/23 18:41:35  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.2  2004/11/10 15:36:53  perun
+! Revise calculations per REC
+!
+! Revision 2.1  2003/08/15 14:25:04  perun
+! Version 1.2 commit
+!
+@
+
+
+2.4
+log
+@Get constants from Constants, kinds from MLSKinds
+@
+text
+@d37 1
+d42 17
+a58 4
+  REAL(r8), PARAMETER :: GroundToFlightMountsGHz(3,3) = RESHAPE ((/ &
+       1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0 /), (/ 3, 3 /))
+  REAL(r8), PARAMETER :: GroundToFlightMountsTHz(3,3) = RESHAPE ((/ &
+       1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0 /), (/ 3, 3 /))
+d60 6
+a65 3
+       1.000000, -0.000401, 0.000428, &
+       0.000401, 1.00000, 0.000586, &
+       -0.000428, -0.000586, 1.0000000 /), (/ 3, 3 /))
+d71 1
+d81 1
+d102 5
+a106 4
+       M(:,:,n) = RESHAPE ((/ COS(thz(n)), (COS(thx(n)) * SIN(thz(n))), &
+            (SIN(thx(n)) * SIN(thz(n))), -SIN(thz(n)), &
+            (COS(thx(n)) * COS(thz(n))), (SIN(thx(n)) * COS(thz(n))), 0.0d0, &
+            -SIN(thx(n)),  COS(thx(n)) /), (/ 3, 3 /))
+d130 1
+d132 4
+a135 2
+         COS(eps), 0.0d0, SIN(eps), 0.0d0, 1.0d0, 0.0d0, &
+         -SIN(eps), 0.0d0, COS(eps) /), (/ 3, 3 /))
+d145 2
+d150 1
+d162 1
+d166 1
+a166 1
+       "$Id: FOV.f90,v 2.3 2005/06/23 18:41:35 pwagner Exp $"
+d174 6
+@
+
+
+2.4.6.1
+log
+@checkin of continuing work on branch whd-rel-1-0
+@
+text
+@a36 1
+
+d41 4
+a44 17
+  REAL(r8), PARAMETER :: GroundToFlightMountsGHz(3,3) = &
+       & RESHAPE ((/ 1.0, 0.0, 0.0, &
+       &             0.0, 1.0, 0.0, &
+       &             0.0, 0.0, 1.0 /), (/ 3, 3 /))
+
+  REAL(r8), PARAMETER :: GroundToFlightMountsTHz(3,3) = &
+       & RESHAPE ((/ 1.0, 0.0, 0.0, &
+       &             0.0, 1.0, 0.0, &
+       &             0.0, 0.0, 1.0 /), (/ 3, 3 /))
+
+  !<whd> 
+  ! 
+  ! Construct some rotation matrices that handle the small rotations
+  ! found while doing integration and test.
+  !
+  ! </whd>
+
+d46 3
+a48 6
+       1.000000,  -0.000401, 0.000428, &
+       0.000401,   1.00000,  0.000586, &
+      -0.000428,  -0.000586, 1.0000000 /), (/ 3, 3 /))
+
+  ! <whd> Same, same for THz antenna </whd>
+
+a53 1
+
+a62 1
+! <whd> 1 for Ghz, 2 for THz </whd>
+d83 4
+a86 5
+       M(:,:,n) = RESHAPE ((/ &
+            & COS(thz(n)), (COS(thx(n)) * SIN(thz(n))), (SIN(thx(n)) * SIN(thz(n))), &
+            & -SIN(thz(n)),(COS(thx(n)) * COS(thz(n))), (SIN(thx(n)) * COS(thz(n))), &
+            &  0.0d0,                -SIN(thx(n)),              COS(thx(n)) /), &
+            &  (/ 3, 3 /))
+a109 1
+    !<whd> FOV is rotated eps degress about the mounts 'y' axis</whd>
+d111 2
+a112 4
+         &  COS(eps),  0.0d0,    SIN(eps), &
+         &   0.0d0,    1.0d0,      0.0d0, &
+         &  -SIN(eps), 0.0d0,    COS(eps) /), &
+             & (/ 3, 3 /))
+a121 2
+    !<whd> Snell's law: S = look vector, H is magnetic vector, n the
+    !normal to the plane.</whd>
+a124 1
+    ! <whd> E (electric field vector?) = H cross S </whd>
+a135 1
+
+d139 1
+a139 1
+       "$Id: FOV.f90,v 2.4 2009/05/13 20:33:05 vsnyder Exp $"
+a146 3
+! Revision 2.4  2009/05/13 20:33:05  vsnyder
+! Get constants from Constants, kinds from MLSKinds
+!
+@
+
+
+2.3
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d16 2
+a17 2
+  USE MLSCommon, ONLY: R8
+  USE Units, ONLY: Pi, Deg2Rad
+d28 1
+a28 1
+       "$RCSfile: $"
+d139 1
+a139 1
+       "$Id: $"
+d147 3
+@
+
+
+2.2
+log
+@Revise calculations per REC
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d26 5
+a30 5
+  !------------------------------- RCS Ident Info ------------------------------
+  CHARACTER(LEN=130) :: id = &
+       "$Id: FOV.f90,v 2.1 2003/08/15 14:25:04 perun Exp $"
+  CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile: FOV.f90,v $"
+  !-----------------------------------------------------------------------------
+d136 8
+d147 3
+@
+
+
+2.1
+log
+@Version 1.2 commit
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+d15 2
+a16 1
+  PUBLIC :: InitFOVconsts, CalcMountsToFOV
+d20 2
+a21 2
+       "$Id: $"
+  CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile: $"
+d24 21
+a44 4
+  REAL(r8) :: n0(3)
+  REAL(r8) :: M(3,3)
+  REAL(r8) :: S1(3)
+  REAL(r8), PARAMETER :: H1(3) = (/ -0.904784d0, 0.002174d0, -0.425866d0 /)
+d52 1
+a52 1
+    INTEGER :: i
+d54 1
+a54 1
+! constants for GHz Module
+d56 3
+a58 3
+    REAL(r8), PARAMETER :: dc = -0.001181d0
+    REAL(r8), PARAMETER :: thx = 0.000852d0
+    REAL(r8), PARAMETER :: thz = -0.002201d0
+d60 1
+a60 1
+! constants for each GHz Rdm
+d62 2
+a63 2
+    REAL(r8), PARAMETER :: dx = 0.000012d0
+    REAL(r8), PARAMETER :: dz = 0.000399d0
+d71 1
+a71 1
+    n0 = (/ COS(pi_4 - dc), SIN(pi_4 - dc), 0.0d0 /)
+d73 1
+a73 3
+    M = RESHAPE ((/ COS(thz), (COS(thx) * SIN(thz)), (SIN(thx) * SIN(thz)),&
+         -SIN(thz), (COS(thx) * COS(thz)), (SIN(thx) * COS(thz)), &
+         0.0d0, -SIN(thx),  COS(thx) /), (/ 3, 3 /))
+d75 9
+a83 2
+    DO i = 1, 3
+       S1(i)  = DOT_PRODUCT (M(i,:), (/ dx, -SQRT (1.0 - dx**2 - dz**2), dz /))
+d89 1
+a89 1
+  SUBROUTINE CalcMountsToFOV (eps_deg, MountsToFOV)
+d93 1
+d107 1
+a107 1
+       ns(i)  = DOT_PRODUCT (s(i,:), n0)
+d111 1
+a111 1
+       n(i)  = DOT_PRODUCT (M(i,:), ns)
+d114 2
+a115 2
+    s2 = s1 - 2 * DOT_PRODUCT (n, s1) * n
+    h2 = h1 - 2 * DOT_PRODUCT (n, h1) * n
+a120 4
+!!$    MountsToFOV(:,1) = E2
+!!$    MountsToFOV(:,2) = H2
+!!$    MountsToFOV(:,3) = S2
+
+d130 4
+a133 1
+! $Log: $
+@
+

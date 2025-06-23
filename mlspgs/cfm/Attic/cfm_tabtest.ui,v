@@ -1,0 +1,213 @@
+head	1.1;
+access;
+symbols
+	cfm-single-freq-0-1:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2021.07.19.20.24.17;	author whdaffer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2021.07.19.20.24.17;	author whdaffer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@file cfm_tabtest.ui was initially added on branch cfm-single-freq-0-1.
+@
+text
+@@
+
+
+1.1.2.1
+log
+@continuing work
+@
+text
+@a0 173
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1192</width>
+    <height>904</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <widget class="QTabWidget" name="tabWidget">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>10</y>
+      <width>1111</width>
+      <height>531</height>
+     </rect>
+    </property>
+    <property name="currentIndex">
+     <number>1</number>
+    </property>
+    <widget class="QWidget" name="Radiometer">
+     <attribute name="title">
+      <string>Radiometer</string>
+     </attribute>
+     <attribute name="toolTip">
+      <string>Click here to define the Radiometer</string>
+     </attribute>
+     <widget class="QLabel" name="RadiometerNameLabel">
+      <property name="geometry">
+       <rect>
+        <x>40</x>
+        <y>20</y>
+        <width>131</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Radiometer Name: </string>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="RadiometerLineEdit">
+      <property name="geometry">
+       <rect>
+        <x>210</x>
+        <y>20</y>
+        <width>841</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="toolTip">
+       <string>Enter name of Radiometer</string>
+      </property>
+      <property name="placeholderText">
+       <string>Enter the name of the Radiometer (e.g. R1A)</string>
+      </property>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="SpectrometerType">
+     <attribute name="title">
+      <string>SpectrometerType</string>
+     </attribute>
+     <widget class="QLabel" name="SpectrometerTypeNameLabel">
+      <property name="geometry">
+       <rect>
+        <x>30</x>
+        <y>10</y>
+        <width>181</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="statusTip">
+       <string/>
+      </property>
+      <property name="text">
+       <string>SpectrometerType Name:</string>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="SpectrometerTypeLineEdit">
+      <property name="geometry">
+       <rect>
+        <x>250</x>
+        <y>10</y>
+        <width>821</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="toolTip">
+       <string>Enter SpectrometerType name</string>
+      </property>
+      <property name="statusTip">
+       <string>SpectrometerType</string>
+      </property>
+      <property name="placeholderText">
+       <string>Enter the name of the Spectrometer Type (e.g. FB25)</string>
+      </property>
+     </widget>
+    </widget>
+   </widget>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1192</width>
+     <height>24</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <widget class="QMenu" name="menuWrite">
+     <property name="title">
+      <string>Write</string>
+     </property>
+     <addaction name="FileMenuActionWritePickle_file"/>
+     <addaction name="FileMenuActionWriteL2CF"/>
+    </widget>
+    <addaction name="FileMenuActionOpenPickleFile"/>
+    <addaction name="menuWrite"/>
+   </widget>
+   <addaction name="menuFile"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="FileMenuActionOpenPickleFile">
+   <property name="text">
+    <string>Open Pickle File</string>
+   </property>
+   <property name="toolTip">
+    <string>Open a CFM pickle file.</string>
+   </property>
+   <property name="statusTip">
+    <string>Open</string>
+   </property>
+   <property name="shortcut">
+    <string>Meta+O</string>
+   </property>
+  </action>
+  <action name="FileMenuActionWritePickle_file">
+   <property name="text">
+    <string>Write Pickle file</string>
+   </property>
+   <property name="toolTip">
+    <string>Write the CFM pickle file</string>
+   </property>
+   <property name="shortcut">
+    <string>Meta+P</string>
+   </property>
+  </action>
+  <action name="FileMenuActionWriteL2CF">
+   <property name="text">
+    <string>Write L2CF File</string>
+   </property>
+   <property name="toolTip">
+    <string>Write the L2CF File</string>
+   </property>
+   <property name="shortcut">
+    <string>Meta+L</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
+@
+

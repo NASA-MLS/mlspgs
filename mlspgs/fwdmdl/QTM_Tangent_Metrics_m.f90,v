@@ -1,0 +1,474 @@
+head	2.9;
+access;
+symbols
+	v5-02-NRT-19:2.9
+	v6-00:2.9
+	v5-02-NRT-18:2.9
+	v5-02:2.9
+	v5-01-NRT-17:2.9
+	v5-01-NRT-16:2.9
+	v5-01-NRT-15:2.9
+	v5-01-NRT-14:2.9
+	neuralnetworks-1-0:2.9.0.8
+	cfm-single-freq-0-1:2.9.0.6
+	v5-01:2.9
+	v5-00:2.9
+	v4-23-TA133:2.9.0.4
+	mus-emls-1-70:2.9.0.2
+	rel-1-0-englocks-work:2.8.0.2
+	VUMLS1-00:2.7
+	VPL1-00:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.9
+date	2018.05.14.23.45.19;	author vsnyder;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2017.08.28.20.28.08;	author livesey;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2016.11.23.00.12.28;	author vsnyder;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2016.11.17.01.48.49;	author vsnyder;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2016.11.12.01.38.18;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2016.11.11.01.58.36;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2016.11.02.22.50.36;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2016.09.02.00.22.19;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2016.08.24.22.59.43;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.9
+log
+@Move Hessians stuff to Hessians_m
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module QTM_Tangent_Metrics_m
+
+  implicit NONE
+  private
+
+  public :: QTM_Tangent_Metrics
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: QTM_Tangent_Metrics_m.f90,v $"
+  private :: not_used_here
+!---------------------------------------------------------------------------
+
+contains
+
+  ! ----------------------------------------  QTM_Tangent_Metrics  -----
+                                   ! Inputs
+  subroutine QTM_Tangent_Metrics ( Tan_Pt, QTM, H_Ref, Tan_Ind_F, &
+                                   ! Outputs
+    &                              H_Surf, H_Tan, &
+                                   ! Optional inputs
+    &                              Z_Ref, Tan_press, Surf_temp, Surf_height )
+
+  ! Compute the surface height and the tangent height at Tan_Pt.
+
+    use Geolocation_0, only: H_v_geod !, RG
+    use Generate_QTM_m, only: QTM_Tree_t
+    use MLSKinds, only: RP
+    use QTM_Interpolation_Weights_m, only: QTM_Interpolation_Weights
+    use QTM_Interpolation_Weights_m, only: Value_QTM_2D_list_t
+
+    ! Inputs:
+    class(h_v_geod), intent(in) :: Tan_Pt ! Tangent point coordinates
+                                       ! (lon,lat, ht) degrees, m
+    type(QTM_Tree_t), intent(in) :: QTM   ! Horizontal grid
+    real(rp), intent(in) :: H_Ref(:,:) ! Geodetic heights (above Earth Reference
+                                       ! Ellipsoid) by fine zeta and index of
+                                       ! vertex near the path, km
+    integer, intent(in) :: Tan_Ind_f   ! First (vertical) index of tangent
+                                       ! point in H_Ref, which is on the fine
+                                       ! zeta grid.
+
+    ! Outputs:
+    real(rp), intent(out) :: H_Surf    ! Geodetic height of the pressure
+                                       ! reference surface at Tan_Pt, km --
+                                       ! interpolated in Surf_Height if
+                                       ! present(Surf_Height) else interpolated
+                                       ! in row 1 of H_REF, km
+    real(rp), intent(out) :: H_Tan     ! Tangent height above H_Surf (negative
+                                       ! for Earth-intersecting rays), km.
+                                       ! Interpolated in Tan_Ind_F row of H_Ref.
+
+    ! optional inputs
+    ! We have Z_Ref, Tan_Press and Surf_Temp if the pointing is below the
+    ! surface index (where zeta Z_Ref) and we don't have Surf_Height.
+    ! Otherwise we have Surf_Height.
+    real(rp), optional, intent(in) :: Z_Ref        ! Zeta corresponding to H_Ref(1,:)
+    real(rp), optional, intent(in) :: Tan_press    ! Tangent pressure
+    real(rp), optional, intent(in) :: Surf_temp(:) ! Surface temperature on QTM grid.
+    real(rp), optional, intent(in) :: Surf_height(:) ! Surface height in km
+                                       ! above mean sea level (whatever that
+                                       ! means) on QTM grid.
+
+!     type(value_QTM_2D_list_t(rg)) :: Eta ! Interpolation coefficients
+    type(value_QTM_2D_list_t) :: Eta   ! Interpolation coefficients
+
+    ! Get interpolation coefficients and QTM serial numbers from QTM to Tan_Pt.
+    call QTM_Interpolation_Weights ( QTM, Tan_Pt%h_t, Eta )
+
+    if ( present(surf_height) ) then
+      ! We set the surface reference at the actual surface height if we
+      ! have it, and adjust r_eq and h_tan relative to this, and adjust
+      ! h_ref accordingly.
+      h_surf = dot_product ( surf_height(eta%v%j), eta%v%v )
+    else
+      ! If we don't have the actual surface height, we set the surface
+      ! reference at the input z_ref and adjust r_eq and h_tan relative to
+      ! this, and adjust h_ref accordingly.  H_Ref is adjacent to the path,
+      ! so index it using the inverse of f_and_v%vertices, which would be
+      ! qtm%path_vertices(eta%n) if we hadn't already computed it and put it
+      ! into eta%np..
+      h_surf = dot_product ( h_ref(1,eta%v%jp), eta%v%v )
+    end if
+
+    if ( present(tan_press) .and. present(surf_temp) .and. present(z_ref) .and. &
+      &  .not. present(surf_height) ) then
+      ! Earth intersecting ray. Compute GP height (km) of tangent pressure
+      ! below surface. This will be negative because tan_press < z_ref.
+      ! present(tan_press) requires present(surf_temp) and present(z_ref). 
+      ! We don't need to subtract h_surf here because this gives km from
+      ! the z_ref surface.
+      h_tan = dot_product ( surf_temp(eta%v%j),eta%v%v ) * &
+            & (tan_press-z_ref)/14.8
+    else
+      ! H_Ref is adjacent to the path, so index it using the inverse of
+      ! f_and_v%vertices, which would be qtm%path_vertices(eta%n) if we
+      ! hadn't already computed it and put it into eta%np.
+      h_tan = dot_product ( h_ref(tan_ind_f,eta%v%jp), eta%v%v ) - h_surf
+    end if
+
+  end subroutine QTM_Tangent_Metrics
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: QTM_Tangent_Metrics_m.f90,v 2.8 2017/08/28 20:28:08 livesey Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module QTM_Tangent_Metrics_m
+
+! $Log: QTM_Tangent_Metrics_m.f90,v $
+! Revision 2.8  2017/08/28 20:28:08  livesey
+! Changed the n,nf,np,nz elements to j,jf,...
+!
+! Revision 2.7  2016/11/23 00:12:28  vsnyder
+! Use types from Indexed_Values_m.
+!
+! Revision 2.6  2016/11/17 01:48:49  vsnyder
+! Use eta%np instead of qtm%path_vertices(eta%n)
+!
+! Revision 2.5  2016/11/12 01:38:18  vsnyder
+! Use subscript of vertex near path instead of QTM serial number for H_Ref
+!
+! Revision 2.4  2016/11/11 01:58:36  vsnyder
+! Make computation involving Z_Ref contingent upon Z_Ref being present.
+!
+! Revision 2.3  2016/11/02 22:50:36  vsnyder
+! Use Value_t from Path_Representation instead of Weight_t from
+! QTM_Interpolation_Weights_m
+!
+! Revision 2.2  2016/09/02 00:22:19  vsnyder
+! Calculate H_Surf and H_Tan if they're requested
+!
+! Revision 2.1  2016/08/24 22:59:43  vsnyder
+! Initial commit
+!
+@
+
+
+2.8
+log
+@Changed the n,nf,np,nz elements to j,jf,...
+@
+text
+@d41 1
+a41 1
+    use Indexed_Values_m, only: Value_QTM_2D_list_t
+d117 1
+a117 1
+       "$Id: QTM_Tangent_Metrics_m.f90,v 2.7 2016/11/23 00:12:28 vsnyder Exp $"
+d127 3
+@
+
+
+2.7
+log
+@Use types from Indexed_Values_m.
+@
+text
+@d85 1
+a85 1
+      h_surf = dot_product ( surf_height(eta%v%n), eta%v%v )
+d93 1
+a93 1
+      h_surf = dot_product ( h_ref(1,eta%v%np), eta%v%v )
+d103 1
+a103 1
+      h_tan = dot_product ( surf_temp(eta%v%n),eta%v%v ) * &
+d109 1
+a109 1
+      h_tan = dot_product ( h_ref(tan_ind_f,eta%v%np), eta%v%v ) - h_surf
+d117 1
+a117 1
+       "$Id: QTM_Tangent_Metrics_m.f90,v 2.6 2016/11/17 01:48:49 vsnyder Exp $"
+d127 3
+@
+
+
+2.6
+log
+@Use eta%np instead of qtm%path_vertices(eta%n)
+@
+text
+@d37 1
+a37 1
+    use Geolocation_0, only: H_v_geod
+d41 1
+a41 1
+    use Path_Representation_m, only: Value_t
+d75 2
+a76 1
+    type(value_t) :: Eta(3)            ! Interpolation coefficients
+d79 1
+a79 1
+    call QTM_Interpolation_Weights ( QTM, Tan_Pt, Eta )
+d85 1
+a85 1
+      h_surf = dot_product ( surf_height(eta%n), eta%v )
+d93 1
+a93 1
+      h_surf = dot_product ( h_ref(1,eta%np), eta%v )
+d103 1
+a103 1
+      h_tan = dot_product ( surf_temp(eta%n),eta%v ) * &
+d109 1
+a109 1
+      h_tan = dot_product ( h_ref(tan_ind_f,eta%np), eta%v ) - h_surf
+d117 1
+a117 1
+       "$Id: QTM_Tangent_Metrics_m.f90,v 2.5 2016/11/12 01:38:18 vsnyder Exp $"
+d127 3
+@
+
+
+2.5
+log
+@Use subscript of vertex near path instead of QTM serial number for H_Ref
+@
+text
+@a77 3
+    ! Serial numbers put into Eta%n will necessarily be serial numbers of
+    ! vertices adjacent to the path, so subscripting qtm%path_vertices with
+    ! Eta%n will be meaningful.
+d87 6
+a92 4
+      ! reference at the input z_ref and adjust r_eq and h_tan relative
+      ! to this, and adjust h_ref accordingly.  H_Ref is adjacent to the
+      ! path, so index it using the inverse of f_and_v%vertices.
+      h_surf = dot_product ( h_ref(1,qtm%path_vertices(eta%n)), eta%v )
+d99 3
+a101 2
+      ! present(tan_press) requires present(surf_temp).  We don't need to
+      ! subtract h_surf here because this gives km from the z_ref surface.
+d106 3
+a108 3
+      ! f_and_v%vertices.
+      h_tan = dot_product ( h_ref(tan_ind_f,qtm%path_vertices(eta%n)), eta%v ) - &
+              h_surf
+d116 1
+a116 1
+       "$Id: QTM_Tangent_Metrics_m.f90,v 2.4 2016/11/11 01:58:36 vsnyder Exp $"
+d126 3
+@
+
+
+2.4
+log
+@Make computation involving Z_Ref contingent upon Z_Ref being present.
+@
+text
+@d22 1
+a22 1
+  private :: not_used_here 
+d48 2
+a49 2
+                                       ! Ellipsoid) by fine zeta and QTM grid
+                                       ! serial number, km
+d77 4
+a80 1
+    ! Get interpolation coefficients and QTM serial numbers from QTM to Tan_Pt
+d91 3
+a93 2
+      ! to this, and adjust h_ref accordingly.
+      h_surf = dot_product ( h_ref(1,eta%n), eta%v )
+d105 4
+a108 1
+      h_tan = dot_product ( h_ref(tan_ind_f,eta%n), eta%v ) - h_surf
+d110 1
+a110 1
+    
+d116 1
+a116 1
+       "$Id: QTM_Tangent_Metrics_m.f90,v 2.3 2016/11/02 22:50:36 vsnyder Exp $"
+d126 3
+@
+
+
+2.3
+log
+@Use Value_t from Path_Representation instead of Weight_t from
+QTM_Interpolation_Weights_m
+@
+text
+@d92 1
+a92 1
+    if ( present(tan_press) .and. present(surf_temp) .and. &
+d109 1
+a109 1
+       "$Id: QTM_Tangent_Metrics_m.f90,v 2.2 2016/09/02 00:22:19 vsnyder Exp $"
+d119 4
+@
+
+
+2.2
+log
+@Calculate H_Surf and H_Tan if they're requested
+@
+text
+@d37 1
+a37 1
+    use Geolocation_0, only: H_t
+d40 2
+a41 1
+    use QTM_Interpolation_Weights_m, only: Weight_t, QTM_Interpolation_Weights
+d44 2
+a45 1
+    class(h_t), intent(in) :: Tan_Pt   ! Tangent point horizontal coordinates
+d47 2
+a48 1
+    real(rp), intent(in) :: H_Ref(:,:) ! Heights by fine zeta and QTM grid
+d55 5
+a59 4
+    real(rp), intent(out) :: H_Surf    ! Height of the pressure reference
+                                       ! surface at Tan_Pt, km -- interpolated
+                                       ! in Surf_Height if present(Surf_Height)
+                                       ! else interpolated in row 1 of H_REF, km
+d61 1
+a61 1
+                                       ! for Earth-intersecting rays).
+d75 1
+a75 1
+    type(Weight_t) :: Eta(3)           ! Interpolation coefficients
+d84 1
+a84 1
+      h_surf = dot_product ( surf_height(eta%which), eta%weight )
+d89 1
+a89 1
+      h_surf = dot_product ( h_ref(1,eta%which), eta%weight )
+d98 1
+a98 1
+      h_tan = dot_product ( surf_temp(eta%which),eta%weight ) * &
+d101 1
+a101 1
+      h_tan = dot_product ( h_ref(tan_ind_f,eta%which), eta%weight ) - h_surf
+d109 1
+a109 1
+       "$Id: QTM_Tangent_Metrics_m.f90,v 2.1 2016/08/24 22:59:43 vsnyder Exp $"
+d119 3
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d21 1
+a21 1
+       "$RCSfile: metrics_m.f90,v $"
+d35 1
+a35 1
+  ! Compute the surface height and the tangent height at Phi_T.
+d43 1
+a43 1
+    type(h_t), intent(in) :: Tan_Pt    ! Tangent point horizontal coordinates
+d53 2
+a54 2
+                                       ! surface at Phi_t -- interpolated in
+                                       ! Surf_Height if present(Surf_Height)
+d57 2
+a58 1
+    !                                  ! for Earth-intersecting rays), km
+d73 1
+d76 23
+a98 7
+    ! ====================================================================
+    ! !!!!! For now, don't fiddle with the optional stuff.  Look in  !!!!!
+    ! !!!!! metrics_m to see how it's done in the 2-D case.          !!!!!
+    ! ====================================================================
+
+    h_surf = dot_product ( h_ref(1,eta%which), eta%weight )
+    h_tan = dot_product ( h_ref(tan_ind_f,eta%which), eta%weight ) - h_surf
+d105 1
+a105 1
+       "$Id: metrics_m.f90,v 2.76 2016/08/20 00:55:08 vsnyder Exp $"
+d114 4
+a117 1
+! $Log: metrics_m.f90,v $
+@
+

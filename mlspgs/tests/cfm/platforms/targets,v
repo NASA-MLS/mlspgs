@@ -1,0 +1,301 @@
+head	1.3;
+access;
+symbols
+	v5-02-NRT-19:1.3
+	v6-00:1.3
+	v5-02-NRT-18:1.3
+	v5-02:1.3
+	v5-01-NRT-17:1.3
+	v5-01-NRT-16:1.3
+	v5-01-NRT-15:1.3
+	v5-01-NRT-14:1.3
+	neuralnetworks-1-0:1.3.0.12
+	cfm-single-freq-0-1:1.3.0.10
+	v5-01:1.3
+	v5-00:1.3
+	v4-23-TA133:1.3.0.8
+	mus-emls-1-70:1.3.0.6
+	rel-1-0-englocks-work:1.3.0.4
+	VUMLS1-00:1.3
+	VPL1-00:1.3
+	V4-22-NRT-08:1.3
+	VAM1-00:1.3
+	V4-21:1.3.0.2
+	V4-13:1.3
+	V4-12:1.3
+	V4-11:1.3
+	V4-10:1.3
+	M4-00:1.3
+	V3-33:1.2
+	V3-31:1.2
+	V3-30-NRT-05:1.2
+	cfm-01-00:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.3
+date	2011.11.11.00.42.10;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2010.07.14.20.49.48;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2010.07.09.21.29.49;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@Added to MODPATHS what was missing
+@
+text
+@# "$Id: targets,v 1.2 2010/07/14 20:49:48 pwagner Exp $"
+SHELL = /bin/sh
+
+# Path to source files:
+S = ..
+
+CONFDIR=../../..
+
+# Use the libmls.a directory, libdir, for .mod files
+# dir1 is the path prepended to its .o files in dependency lists
+libdir = ../../../lib/$(MLSCONFG)
+
+dir1 = $(libdir)/
+
+# sources shared by l2, l3 are in $(srclib)
+# these USE init_tables_module, which is different for l2 from the l3 version
+# while l2 and l3 use the same sources in srclib they do
+# require different objects--thus a source library instead of an object
+# library (such as libmls.a)
+# therefore we will tell make to add srclib to directories searched for .f90
+# while dir2, the path prepended to its .o files in dependency lists, is empty
+# so that its object files share the current working directory with those of l2
+srclib = ../../../srclib
+
+# This is the directory name from which we will get init_tables_module
+# (either l1, l2, or l3)
+init_m_dir = l2
+
+itmdir=../../../$(init_m_dir)/$(MLSCONFG)
+
+dir2 = $(itmdir)/
+
+# Use the libmlspack.a directory, blaslib, for .mod files
+blaslib = $(CONFDIR)/blas/$(MLSCONFG)
+
+# Use the fwdmdl directory, fwdmdldir, for more .mod files
+# dir3 is the path prepended to its .o files in dependency lists
+fwdmdldir = ../../../fwdmdl/$(MLSCONFG)
+
+dir3 = $(fwdmdldir)/
+
+# Use the cloud directory, clouddir, for more .mod files
+# dir4 is the path prepended to its .o files in dependency lists
+clouddir = ../../../cloudfwdm/$(MLSCONFG)
+
+dir4 = $(clouddir)/
+
+# Use the cfm directory, cfmdir, for all .mod files
+# dir5 is the path prepended to its .o files in dependency lists
+cfmdir = ../../../cfm/$(MLSCONFG)
+
+dir5 = $(cfmdir)/
+
+# Use the libmlspack.a directory, blaslib, for .mod files
+blaslib = ../../../blas/$(MLSCONFG)
+
+MODPATHS = $(dir1) $(dir2) $(dir3) $(dir4) $(blaslib) $(dir5)
+#MODPATHS = $(dir1) $(dir5)
+
+UTILDIR=../../../util
+
+# reecho.sh can filter out globbed file expansions that fail
+# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
+# However we will be using it just to create lapack_linker_line 
+# where LIB_LAPACK may contain multiple libraries
+REECHO=$(UTILDIR)/reecho.sh
+
+# Set paths for finding source files (different from .o and .mod)
+
+vpath %.o ./
+vpath %.f90 ../ $(srclib)
+vpath %.f9h ../ $(srclib)
+vpath %.f ../
+vpath %.c ../
+
+include $(srclib)/$(MLSF95).$(MLSPLAT)
+# All the paths to supply .mod and INCLUDE files used in compiling %.f90
+# Precede each path by "-I "
+INC_PATHS := $(EXTRA_PATHS) \
+  $(shell ${REECHO} ${PATH_OPTS} \
+  $(UNPREFXDPTHS) $(MODPATHS) $(PGSINC) $(srclib) $S)
+
+testscfm_f90 := $(shell ${REECHO} -dir ../ *.f90)
+PROGS := $(shell echo $(testscfm_f90) | sed 's/.f90//g')
+
+all: $(PROGS)
+# Define some suffix rules
+
+.SUFFIXES:
+.SUFFIXES: .o .dbg.o .f90 .f .c
+.f90.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
+
+.f90.dbg.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< -o $*.dbg.o $(FAFTER)
+
+.f.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
+
+.c.o:
+	$(CC) -c $(COPTS) ${INC_PATHS} -DNAGf90Fortran $<
+
+# This is the default name of the configure file
+# It may be overridden for multiple platforms, special options, etc.
+ifdef HOSTMLSCFILE
+   MLSCFILE=$(HOSTMLSCFILE)
+else
+   MLSCFILE=.configure
+endif
+
+include ../Makefile.dep
+
+# ========================================================================
+# An automatically constructed Makefile
+# This file was built by mlsconfigure
+# by catenating three files:
+# (1) .configure -- a file of mls settings: compiler, platform, etc.
+# (2) common     -- a file of macros specific for this directory, e.g. paths
+#                   these might be compiler switches, 
+# (3) targets    -- a file of targets with instructions how to build them
+#                    (except for .f90.o rules which are still in MLSCONFG)
+
+# Other files referred to by means of "include" statements:
+#   srclib/$(MLSF95).$(MLSPLAT) -- macros specific for the 
+#         compiler.platform combo; e.g., NAG.Sun
+#   Makefile.dep -- dependencies among the primary Fortran modules
+#   srclib/Makefile.dep -- dependencies among the shared Fortran modules
+#   srclib/targets.h -- linker lines whenever building an executable
+
+# ========================================================================
+ifdef MLSINSTALLDIR
+   INSTALLDIR:=$(MLSINSTALLDIR)
+else
+ifndef INSTALLDIR
+   INSTALLDIR:=$(CONFDIR)/bin/$(MLSCONFG)
+endif
+endif
+
+STATIC_LINK := $(shell echo $(LDOPTS) | grep -e "-static")
+ALLOBJS = $(OBJS)
+
+PROG_NAME=all
+
+include $(srclib)/targets.h
+
+libl2_sources = ../../../$(init_m_dir)/
+
+libl2_f90 := $(shell ${REECHO} $(libl2_sources)/*.f90)
+
+libl2_objs := $(shell ${REECHO} $(itmdir)/*.o)
+
+l2_driver = mlsl2 test.o
+
+# "yes" is safer--
+# in case modules have been deleted or excluded since the last build
+# Nope--will need to think harder about what to do about excluded modules
+delete_lib_first = no
+
+mlspack_dir=../../../blas/$(MLSCONFG)
+mlspack_linker_line=-L${mlspack_dir} -lmlspack
+mlspack_message=Building $(PROG_NAME) with mlspack
+
+# In the long run just evict the stuff that assumes l2_NEEDS_fwdmdl is undefined
+l2_NEEDS_fwdmdl = true
+
+cfm_linker_line=-L${cfmdir} -lcfm_all
+
+prereqs=$(ALLOBJS)
+# ========================================================================
+
+show: $(prereqs) $(cfmdir)/libcfm_all.a
+	echo $(PROGS)
+	echo $(FC)
+	echo $(testscfm_f90)
+
+$(PROGS): $(prereqs) $(cfmdir)/libcfm_all.a
+	for program in $(PROGS) ; do \
+		$(FC) $(LDOPTS) -o $$program $$program.o \
+                      $(cfm_linker_line) \
+        $(l_specials) $(LAFTER); \
+	done
+# ========================================================================
+
+clean:
+	rm -f *.o *.mod $(PROG_NAME)
+
+tar:
+	rm -f libtest.tgz
+	tar hcvzf libtest.tgz * --exclude \*.o --exclude \*.mod --exclude $(PROG_NAME)
+
+# ========================================================================
+# $Log: targets,v $
+# Revision 1.2  2010/07/14 20:49:48  pwagner
+# Builds every program matching pattern .f90
+#
+# Revision 1.1  2010/07/09 21:29:49  pwagner
+# First commit
+#
+@
+
+
+1.2
+log
+@Builds every program matching pattern .f90
+@
+text
+@d1 1
+a1 1
+# "$Id: targets,v 1.1 2010/07/09 21:29:49 pwagner Exp $"
+d57 2
+a58 2
+#MODPATHS = $(dir1) $(dir2) $(dir3) $(dir4) $(blaslib)
+MODPATHS = $(dir1) $(dir5)
+d193 3
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d1 1
+a1 1
+# "$Id: targets,v 1.27 2009/07/17 20:27:32 pwagner Exp $"
+d83 4
+d142 1
+a142 1
+PROG_NAME=test
+d171 8
+a178 2
+$(PROG_NAME): $(prereqs) $(cfmdir)/libcfm_all.a
+		$(FC) $(LDOPTS) -o $(PROG_NAME) $(ALLOBJS) \
+d180 2
+a181 2
+        $(l_specials) $(LAFTER) \
+
+d193 3
+@
+

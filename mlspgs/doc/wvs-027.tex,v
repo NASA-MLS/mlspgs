@@ -1,0 +1,480 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.12
+	cfm-single-freq-0-1:1.2.0.10
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.8
+	mus-emls-1-70:1.2.0.6
+	rel-1-0-englocks-work:1.2.0.4
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.2
+	V4-21:1.2.0.2
+	V4-13:1.2
+	V4-12:1.2
+	V4-11:1.2
+	V4-10:1.2
+	V3-43:1.1
+	M4-00:1.2
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.2
+date	2011.10.05.17.55.48;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2008.06.11.20.14.51;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Show monocromatic and frequency averaged results explicitly
+Add a decision table
+@
+text
+@\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\ifx\dvidir\undefined
+  \newcommand\hr[1]{\href{#1.dvi}{dvi} \href{#1.pdf}{pdf}}
+\else
+  \newcommand\hr[1]{\href{\dvidir/#1.dvi}{dvi} \href{\pdfdir/#1.pdf}{pdf}}
+\fi
+\newcommand\h[1]{#1 \hr{#1}}
+
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textwidth 6.25in
+\textheight 9.00in
+
+\newcommand{\docname}{\bf wvs-027r2}
+\newcommand{\docdate}{3 October 2011}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill, Nathaniel, Mike\\
+Subject: \>Revised method to combine line-by-line and PFA\\
+From: \>Van Snyder\\
+References: \>\h{wvs-024}, \h{wvs-025}, \h{wvs-026}\\
+\end{tabbing}
+
+\parindent 0pt \parskip 3pt
+\vspace{-20pt}
+
+\section{Introduction}
+
+The radiative transfer equations used for line-by-line (LBL) calculations
+are
+
+\begin{align}
+I_c =& \int \text{d}\nu\, \phi_c(\nu)
+      \int \text{d} z\, \Delta B(z,\nu) \tau(z,\nu)
+ \approx \sum_{n=1}^{N_f} \phi_{nc} \Delta \nu_{nc}
+               \sum_{i=1}^{N_p} \Delta B_{in} \tau^s_{in}
+      & \text{(averaged)}\label{basic} \\
+I_c =& \int \text{d} z\, \Delta B(z,\nu) \tau(z,\nu)
+ \approx \sum_{i=1}^{N_p} \Delta B_{in} \tau^s_{in}
+      & \text{(monochromatic)}\label{mono}
+\end{align}
+
+where $\tau^s_{in}$ is the incremental transmittance due to strong
+spectral lines.  Recall from wvs-024r2 that incremental transmittances
+from strong and weak (pre-frequency-averaged or PFA) lines are combined
+using
+
+\begin{align}
+I_c \approx & \sum_{n=1}^{N_f} \phi_{nc} \Delta \nu_{nc}
+               \sum_{i=1}^{N_p} \Delta B_{ic} \tau^s_{in} \tau^w_{ic}
+               \text{, and} \label{combined}
+ && \text{(averaged)} \\
+I_c \approx & \sum_{i=1}^{N_p} \Delta B_{ic} \tau^s_{in} \tau^w_{ic} \,.
+ && \text{(monochromatic)} \label{combined-mono}
+\end{align}
+
+Memo \h{wvs-026} developed a frequency-averaged incremental radiance in
+each channel at each point along the path by exchanging the order of
+summation in Equations (\ref{basic},\ref{mono}) and then postponing the
+outer sum
+
+\begin{align}
+\overline{I^s_{ic}} = &
+ \sum_{n=1}^{N_f} \phi_{nc} \Delta \nu_{nc} \Delta B_{in} \tau^s_{in}
+ \approx
+ \Delta B_{ic} \sum_{n=1}^{N_f} \phi_{nc} \Delta \nu_{nc}
+  \tau^s_{in}\text{, and}
+ && \text{(averaged)} \label{FrqAvgPath} \\
+\overline{I^s_{ic}} = &
+ \Delta B_{ic} \tau^s_{ic}\,.
+ && \text{(monochromatic)} \label{mono-path}
+\end{align}
+
+Exchanging the order of summation in Equation (\ref{combined}) we have
+
+\begin{equation}\label{exchanged}
+I_c \approx \sum_{i=1}^{N_p} \tau^w_{ic} \Delta B_{ic}
+             \sum_{n=1}^{N_f} \phi_{nc} \Delta \nu_{nc} \tau^s_{in}
+    = \sum_{i=1}^{N_p} \overline{I^s_{ic}} \tau^w_{ic}
+\end{equation}
+
+which is the same if there is no frequency averaging for LBL.  The
+special treatment needed at the zero-thickness tangent-point layer is
+applied when $\tau^s_{in}$ and $\tau^w_{ic}$ are calculated, so no
+special care is needed here.
+
+Memo \h{wvs-026} developed the approximations
+
+\begin{align}
+\frac{\partial I_c}{\partial x_k}
+\approx &
+ \sum_{n=1}^{N_f} \phi_{nc} \Delta \nu_{nc} \sum_{i=1}^{N_p}
+ \left(
+  \frac{\partial \Delta B_{in}}{\partial x_k} -
+  \Delta B_{in}
+   \sum_{j=1}^i \frac{\partial \delta^s_{jn}}{\partial x_k}
+  \right) \tau^s_{in}
+ -
+ \sum_{i=1}^{N_p} \overline{I^s_{ic}} \tau^w_{ic}
+  \sum_{j=1}^i\frac{\partial \delta^w_{jc}}{\partial x_k} && \text{(avg.)}
+  \label{deriv} \\
+\frac{\partial I_c}{\partial x_k}
+\approx &
+ \sum_{i=1}^{N_p}
+ \left(
+  \frac{\partial \Delta B_{ic}}{\partial x_k} -
+  \Delta B_{ic}
+   \sum_{j=1}^i \frac{\partial \delta^s_{jc}}{\partial x_k}
+  \right) \tau^s_{ic}
+ -
+ \sum_{i=1}^{N_p} \overline{I^s_{ic}} \tau^w_{ic}
+  \sum_{j=1}^i\frac{\partial \delta^w_{jc}}{\partial x_k} &&
+  \text{(mono.)} \label{deriv-mono}
+\end{align}
+
+to combine LBL and PFA derivatives.
+
+Setting $\frac{\partial \Delta B_{in}}{\partial x_k} \equiv 0$ and
+$\frac{\partial \Delta B_{ic}}{\partial x_k} \equiv 0$ because $B$ does
+not depend upon mixing ratios, these simplify to
+
+\begin{align}
+\frac{\partial I_c}{\partial x_k}
+\approx &
+ -\sum_{n=1}^{N_f} \phi_{nc} \Delta \nu_{nc} \sum_{i=1}^{N_p}
+  \Delta B_{in}
+   \sum_{j=1}^i \frac{\partial \delta^s_{jn}}{\partial x_k}
+   \tau^s_{in}
+ -
+ \sum_{i=1}^{N_p} \overline{I^s_{ic}} \tau^w_{ic}
+  \sum_{j=1}^i\frac{\partial \delta^w_{jc}}{\partial x_k} && \text{(avg.)}
+  \label{deriv0} \\
+\frac{\partial I_c}{\partial x_k}
+\approx &
+ -\sum_{i=1}^{N_p}
+  \Delta B_{ic}
+   \sum_{j=1}^i \frac{\partial \delta^s_{jc}}{\partial x_k}
+   \tau^s_{ic}
+ -
+ \sum_{i=1}^{N_p} \overline{I^s_{ic}} \tau^w_{ic}
+  \sum_{j=1}^i\frac{\partial \delta^w_{jc}}{\partial x_k} &&
+  \text{(mono.)} \label{deriv0-mono}
+\end{align}
+
+In the LBL-only case
+
+\begin{align}
+\frac{\partial I_c}{\partial x_k}
+\approx &
+ -\sum_{n=1}^{N_f} \phi_{nc} \Delta \nu_{nc} \sum_{i=1}^{N_p}
+  \Delta B_{in} \tau^s_{in}
+   \sum_{j=1}^i \frac{\partial \delta^s_{jn}}{\partial x_k}
+ && \text{(averaged)}
+  \label{LBL0} \\
+\frac{\partial I_c}{\partial x_k}
+\approx &
+ -\sum_{i=1}^{N_p}
+  \Delta B_{ic} \tau^s_{ic}
+   \sum_{j=1}^i \frac{\partial \delta^s_{jc}}{\partial x_k}
+ &&
+  \text{(monochromatic)} \label{LBL0-mono}
+\end{align}
+
+Special care must be taken for the zero-thickness tangent-point layer,
+both in Equation (\ref{LBL0-mono}), and in the second term in Equations
+(\ref{deriv},\ref{deriv-mono}).  Subroutine {\tt dscrt\_dx} takes this
+special care in evaluating Equation (\ref{LBL0-mono}).
+
+By replacing $\Delta B_{ic}$ by $\overline{I^s_{ic}}$ and $\frac{\partial
+\delta^s_{jc}}{\partial x_k}$ by $\frac{\partial \delta^w_{jc}}{\partial
+x_k}$, Equation (\ref{LBL0-mono}) becomes the second term in Equations
+(\ref{deriv},\ref{deriv-mono}).  Therefore, {\tt dscrt\_dx} can evaluate
+the second term in Equations (\ref{deriv},\ref{deriv-mono}).
+
+In the PFA-only case, everything reduces to the monochromatic LBL-only
+case:
+
+\begin{align}
+I_c =\,& \int \text{d} z\, \Delta B(z,\nu) \tau(z,\nu)
+ \approx \sum_{i=1}^{N_p} \Delta B_{ic} \tau^s_{ic}\label{LBL}\\
+\frac{\partial I_c}{\partial x_k}
+ \approx\,& \sum_{i=1}^{N_p}
+  \left(
+   \frac{\partial \Delta B_{ic}}{\partial x_k} -
+   \Delta B_{ic}
+    \sum_{j=1}^i \frac{\partial \delta^w_{jn}}{\partial x_k}
+   \right) \tau^w_{ic}
+ = - \sum_{i=1}^{N_p} \Delta B_{ic} \tau^w_{ic}
+       \sum_{j=1}^i \frac{\partial \delta^w_{jn}}{\partial x_k}\,,
+   \label{LBL-deriv}
+\end{align}
+
+the last result arising because $B$ does not depend upon mixing ratios.
+
+\newpage
+\section{Sixteen cases in the Forward Model}
+
+There are sixteen cases in the Forward Model, of which four are
+impossible.  Processing is described by the following decision table.
+Combinations of possibilities are above the line; actions are below the
+line.  Hyphen means ``don't care.''
+
+\begin{longtable}{p{2.5in}|ccccccccccccc}
+Frequency avg.      (8) & -   & N & N & - & - & N & N &  Y &  Y &  Y &  Y \\
+PFA (4)                 & N   & N & N & Y & Y & Y & Y &  N &  N &  Y &  Y \\
+LBL (2)                 & N   & Y & Y & N & N & Y & Y &  Y &  Y &  Y &  Y \\
+Derivatives (1)         & -   & N & Y & N & Y & N & Y &  N &  Y &  N &  Y \\
+{\tt Frq_Avg_Sel value} & 0,1 & 2 & 3 & 4 & 5 & 6 & 7 & 10 & 11 & 14 & 15 \\
+                        & 8,9 &   &   &12 &13 &   &   &    &    &    &    \\
+&\\[-9pt]
+\hline
+&\\[-9pt]
+Impossible              & x   &   &   &   &   &   &   &    &    &    &    \\
+Radiances = {\tt RadV}  &     & \ref{LBL}
+                                  & \ref{LBL}
+                                      & \ref{LBL}
+                                          & \ref{LBL}
+                                              &   &   &    &    &    &    \\
+{\tt K = K_frq}         &     &   & \ref{LBL-deriv}
+                                      &   & \ref{LBL-deriv}
+                                              &   &   &    &    &    &    \\
+\raggedright Frequency average path integrated LBL radiance
+                        &     &   &   &   &   &   &   & \ref{basic}
+                                                           & \ref{basic}
+                                                                & \ref{basic}
+                                                                     &    \\
+\raggedright Combine total path radiances
+                        &     &   &   &   &   & \ref{combined-mono}
+                                                  & \ref{combined-mono}
+                                                      &    &    &    &    \\
+\raggedright Frequency average integrated LBL derivative
+                        &     &   &   &   &   &   &   &    & \ref{LBL0}
+                                                                &    & \ref{LBL0} \\
+\raggedright Frequency average radiance along path
+                        &     &   &   &   &   &   &   &    &    &    & \ref{FrqAvgPath} \\
+\raggedright Combine radiances along path
+                        &     &   &   &   &   &   &   &    &    & \ref{exchanged}
+                                                                     & \ref{exchanged} \\
+\raggedright Combine LBL and PFA derivatives
+                        &     &   &   &   &   &   & \ref{deriv0-mono}
+                                                      &    &    &    & \ref{deriv0-mono} \\
+\end{longtable}
+
+
+\label{lastpage}
+\end{document}
+% $Id: wvs-027.tex,v 1.1 2008/06/11 20:14:51 vsnyder Exp $
+
+% $Log: $
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d2 41
+a42 1
+\usepackage[fleqn]{amsmath}\textwidth 6.25in
+d47 1
+d50 2
+a51 2
+\newcommand{\docname}{\bf wvs-027r1}
+\newcommand{\docdate}{18 October 2005}
+d80 1
+a80 1
+References: \>wvs-024r2, wvs-025, wvs-026r2\\
+d88 2
+a89 2
+The radiative transfer equation used for line-by-line (LBL) calculations
+is
+d91 2
+a92 2
+\begin{equation}\label{basic}
+I_c = \int \text{d}\nu\, \phi_c(\nu)
+d96 5
+a100 1
+\end{equation}
+d107 8
+a114 4
+\begin{equation}\label{combined}
+I_c \approx \sum_{n=1}^{N_f} \phi_{nc} \Delta \nu_{nc}
+               \sum_{i=1}^{N_p} \Delta B_{ic} \tau^s_{in} \tau^w_{ic}\,.
+\end{equation}
+d116 1
+a116 1
+Memo wvs-026r2 developed a frequency-averaged incremental radiance in
+d118 2
+a119 1
+summation in Equation (\ref{basic}) and then postponing the outer sum
+d121 2
+a122 2
+\begin{equation}
+\overline{I^s_{ic}} =
+d126 6
+a131 8
+  \tau^s_{in}\,.
+\end{equation}
+
+If there is no frequency averaging for LBL, this is simplified to
+
+\begin{equation}
+ \overline{I^s_{ic}} = \Delta B_{ic} \tau^s_{ic}\,.
+\end{equation}
+d146 1
+a146 1
+Memo wvs-026r2 developed the approximation 
+d148 1
+a148 1
+\begin{equation}\label{deriv}
+d150 2
+a151 1
+\approx \sum_{n=1}^{N_f} \phi_{nc} \Delta \nu_{nc} \sum_{i=1}^{N_p}
+d159 15
+a173 2
+  \sum_{j=1}^i\frac{\partial \delta^w_{jc}}{\partial x_k}
+\end{equation}
+d177 28
+a204 8
+Setting aside frequency averaging in Equation (\ref{deriv}) and setting
+$\frac{\partial \Delta B_{in}}{\partial x_k} \equiv 0$, the first term
+becomes
+
+\begin{equation}\label{final}
+- \sum_{i=1}^{N_p} \Delta B_{in} \tau^s_{in}
+  \sum_{j=1}^i \frac{\partial \delta^s_{jn}}{\partial x_k}\,.
+\end{equation}
+d206 27
+a232 10
+Special care must be taken for the zero-thickness tangent-point layer, both in
+evaluating the inner sum here and the inner sum in the second term in Equation
+(\ref{deriv}).  Subroutine {\tt dscrt\_dx} takes this special care in
+evaluating Equation (\ref{final}).
+
+By replacing $\Delta B_{in}$ by $\overline{I^s_{ic}}$ and $\frac{\partial
+\delta^s_{jn}}{\partial x_k}$ by $\frac{\partial \delta^w_{jc}}{\partial
+x_k}$, Equation (\ref{final}) becomes the second term in Equation
+(\ref{deriv}).  Therefore, {\tt dscrt\_dx} can evaluate the second term
+in Equation (\ref{deriv}).
+d234 2
+a235 2
+In the PFA-only case, everything reduces to the LBL-only case, but without
+frequency averaging:
+d237 1
+a237 1
+\begin{equation}\begin{split}
+d239 1
+a239 1
+ \approx \sum_{i=1}^{N_p} \Delta B_{ic} \tau^s_{ic}\\
+d247 56
+a302 1
+\end{split}\end{equation}
+d306 3
+a308 1
+% $Id: wvs-027r1.tex,v 1.1 2008/06/11 20:14:51 vsnyder Exp $
+@
+

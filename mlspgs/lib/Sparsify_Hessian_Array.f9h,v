@@ -1,0 +1,250 @@
+head	2.6;
+access;
+symbols
+	v5-02-NRT-19:2.6
+	v6-00:2.6
+	v5-02-NRT-18:2.6
+	v5-02:2.6
+	v5-01-NRT-17:2.6
+	v5-01-NRT-16:2.6
+	v5-01-NRT-15:2.6
+	v5-01-NRT-14:2.6
+	neuralnetworks-1-0:2.6.0.10
+	cfm-single-freq-0-1:2.6.0.8
+	v5-01:2.6
+	v5-00:2.6
+	v4-23-TA133:2.6.0.6
+	mus-emls-1-70:2.6.0.4
+	rel-1-0-englocks-work:2.6.0.2
+	VUMLS1-00:2.6
+	VPL1-00:2.6
+	V4-22-NRT-08:2.6
+	VAM1-00:2.6
+	V4-21:2.5.0.2
+	V4-13:2.5
+	V4-12:2.4
+	V4-11:2.4
+	V4-10:2.4
+	V3-43:2.1
+	M4-00:2.4
+	V3-41:2.1
+	V3-40-PlusGM57:2.1.0.2
+	V3-33:2.4
+	V3-31:2.4
+	V3-30-NRT-05:2.3
+	cfm-01-00:2.3
+	V3-30:2.1
+	V3-20:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.6
+date	2015.03.28.01.43.10;	author vsnyder;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2014.09.05.00.18.51;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2010.11.19.23.51.49;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2010.03.24.20.18.55;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2010.02.25.18.35.44;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2010.02.12.21.08.45;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.6
+log
+@Added stuff to trace allocate/deallocate addresses
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id: Sparsify_Hessian_Array.f9h,v 2.5 2014/09/05 00:18:51 vsnyder Exp $
+
+! Remarks
+! (1) Uncertain what would happen if n is 0
+!     What would be good would be to set h%kind to H_absent
+! (2) The order in which to store the sparse representation should be the one to
+!     result in the fastest possible execution during
+!     Hessian_Vector_Vector_Multiply_0; by one way of reckoning,
+!     i should then be the slowest-changing index instead of the fastest
+!     However, if you actually examine the code to be invoked, the aim
+!     of minimiizing cache hits by steering toward locality has already
+!     been sacrificed for the sake of sparsity.
+    integer(c_intptr_t) :: Addr         ! For tracing
+    h%kind   = H_Sparse
+    h%nRows  = size ( h_array, 1 )
+    h%nCols1 = size ( h_array, 2 )
+    h%nCols2 = size ( h_array, 3 )
+
+    if ( associated(h%tuples) ) then
+      n = size(h%tuples) * storage_size(h%tuples) / 8
+      addr = 0
+      if ( n > 0 ) addr = transfer(c_loc(h%tuples(1)), addr)
+      deallocate ( h%tuples, stat=stat )
+      call test_deallocate ( stat, moduleName, "H%Tuples", n, address=addr )
+    end if
+    n = count(h_array /= 0)
+    allocate ( h%tuples(n), stat=stat )
+    addr = 0
+    if ( stat == 0 .and. n > 0 ) addr = transfer(c_loc(h%tuples(1)), addr)
+    call test_allocate ( stat, moduleName, "H%Tuple", (/ 1 /), (/ n /), &
+      & storage_size(h%tuples) / 8, address=addr )
+
+    l = 0
+    do k = 1, size(h_array,3)
+      do j = 1, size(h_array,2)
+        do i = 1, size(h_array,1)
+          if ( h_array(i,j,k) /= 0._rk ) then
+            l = l + 1
+            h%tuples(l) = tuple_t(h_array(i,j,k),i,j,k)
+          end if
+        end do
+      end do
+    end do
+    h%tuplesFilled = l
+    call deallocate_test ( h%values, "H%Values in Sparsify_Hessian", moduleName )
+
+! $Log: Sparsify_Hessian_Array.f9h,v $
+! Revision 2.5  2014/09/05 00:18:51  vsnyder
+! More complete and accurate allocate/deallocate size tracking
+!
+! Revision 2.4  2010/11/19 23:51:49  pwagner
+! Set tuplesFilled component
+!
+! Revision 2.3  2010/03/24 20:18:55  vsnyder
+! Squash memory leaks
+!
+! Revision 2.2  2010/02/25 18:35:44  pwagner
+! Conforms with changed Hessian structure
+!
+! Revision 2.1  2010/02/12 21:08:45  vsnyder
+! Initial commit
+!
+@
+
+
+2.5
+log
+@More complete and accurate allocate/deallocate size tracking
+@
+text
+@d12 1
+a12 1
+! $Id: Sparsify_Hessian_Array.f9h,v 2.4 2010/11/19 23:51:49 pwagner Exp $
+d24 1
+d32 2
+d35 1
+a35 1
+      call test_deallocate ( stat, moduleName, "H%Tuples", n )
+d39 2
+d42 1
+a42 1
+      & storage_size(h%tuples) / 8 )
+d59 3
+@
+
+
+2.4
+log
+@Set tuplesFilled component
+@
+text
+@d12 1
+a12 1
+! $Id: Decimate_1d.f9h,v 1.2 2010/11/11 19:54:09 pwagner Exp $
+a23 1
+    n = count(h_array /= 0)
+d30 1
+d32 1
+a32 1
+      call test_deallocate ( stat, moduleName, "H%Tuples" )
+d34 1
+d36 2
+a37 1
+    call test_allocate ( stat, moduleName, "H%Tuple", (/ 1 /), (/ n /), -1 )
+d54 3
+@
+
+
+2.3
+log
+@Squash memory leaks
+@
+text
+@d12 1
+d14 10
+d41 1
+a41 1
+          if ( h_array(i,j,k) /= 0 ) then
+d48 1
+a50 1
+! $Id: Sparsify_Hessian_Array.f9h,v 2.2 2010/02/25 18:35:44 pwagner Exp $
+d52 3
+@
+
+
+2.2
+log
+@Conforms with changed Hessian structure
+@
+text
+@d19 4
+d37 1
+d39 1
+a39 1
+! $Id: Sparsify_Hessian_Array.f9h,v 2.1 2010/02/12 21:08:45 vsnyder Exp $
+d41 3
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d14 6
+a19 3
+    h%rows = size(h_array,3)
+    h%columns = size(h_array,2)
+    allocate ( h%tuple(n), stat=stat )
+d28 1
+a28 1
+            h%tuple(l) = tuple_t(h_array(i,j,k),i,j,k)
+d34 5
+a38 2
+! $Id: $
+! $Log: $
+@
+

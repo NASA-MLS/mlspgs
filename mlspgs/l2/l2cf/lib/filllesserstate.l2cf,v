@@ -1,0 +1,945 @@
+head	1.26;
+access;
+symbols
+	v5-02-NRT-19:1.26
+	v6-00:1.26
+	v5-02-NRT-18:1.26
+	v5-02:1.26
+	v5-01-NRT-17:1.26
+	v5-01-NRT-16:1.26
+	v5-01-NRT-15:1.26
+	v5-01-NRT-14:1.26
+	neuralnetworks-1-0:1.26.0.10
+	cfm-single-freq-0-1:1.26.0.8
+	v5-01:1.26
+	v5-00:1.26
+	v4-23-TA133:1.26.0.6
+	mus-emls-1-70:1.26.0.4
+	rel-1-0-englocks-work:1.26.0.2
+	VUMLS1-00:1.26
+	VPL1-00:1.26
+	V4-22-NRT-08:1.26
+	VAM1-00:1.26
+	V4-21:1.25.0.2
+	V4-13:1.25
+	V4-12:1.25
+	V4-11:1.25
+	V4-10:1.25
+	V3-43:1.23
+	M4-00:1.25
+	V3-41:1.23
+	V3-40-PlusGM57:1.23.0.2
+	V2-24-NRT-04:1.23
+	V3-33:1.23
+	V2-24:1.23
+	V3-31:1.23
+	V3-30-NRT-05:1.23
+	cfm-01-00:1.23
+	V3-30:1.23
+	V3-20:1.23
+	V3-10:1.23
+	V2-23-NRT-02:1.23
+	V2-23:1.23
+	V2-22-NRT-01:1.23
+	V2-22:1.23
+	V2-21:1.23
+	V2-20:1.23
+	V2-11:1.23
+	V2-10:1.23
+	V2-00:1.23
+	V1-51:1.23
+	V1-50:1.23
+	V1-45:1.23
+	V1-44:1.23
+	V1-43:1.23
+	V1-32:1.20
+	V1-31:1.20
+	V1-30:1.19
+	V1-13:1.6
+	V1-12:1.6
+	V1-11:1.6
+	V1-10:1.6
+	newfwm-feb03:1.6.0.2
+	V1-04:1.1
+	V1-03:1.1
+	V1-02:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.26
+date	2015.03.27.18.01.30;	author pwagner;	state Exp;
+branches;
+next	1.25;
+
+1.25
+date	2012.04.06.16.55.33;	author pwagner;	state Exp;
+branches;
+next	1.24;
+
+1.24
+date	2012.04.05.19.11.23;	author pwagner;	state Exp;
+branches;
+next	1.23;
+
+1.23
+date	2004.03.23.21.30.06;	author livesey;	state Exp;
+branches;
+next	1.22;
+
+1.22
+date	2004.02.07.00.48.07;	author livesey;	state Exp;
+branches;
+next	1.21;
+
+1.21
+date	2004.02.05.23.31.34;	author livesey;	state Exp;
+branches;
+next	1.20;
+
+1.20
+date	2003.10.15.13.36.24;	author mjf;	state Exp;
+branches;
+next	1.19;
+
+1.19
+date	2003.06.09.17.39.54;	author livesey;	state Exp;
+branches;
+next	1.18;
+
+1.18
+date	2003.06.03.19.25.52;	author livesey;	state Exp;
+branches;
+next	1.17;
+
+1.17
+date	2003.05.29.20.27.32;	author livesey;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2003.05.29.20.02.35;	author livesey;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2003.05.29.18.19.39;	author livesey;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2003.05.29.16.40.33;	author livesey;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2003.05.27.20.39.02;	author livesey;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2003.05.27.20.33.48;	author michael;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2003.05.22.04.06.53;	author livesey;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2003.05.20.18.16.36;	author livesey;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2003.05.08.21.52.59;	author dwu;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2003.05.08.00.14.33;	author livesey;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2003.05.07.20.54.12;	author livesey;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2002.11.20.19.52.05;	author mjf;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2002.08.04.16.15.16;	author mjf;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2002.07.23.23.47.38;	author livesey;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2002.06.14.16.39.22;	author livesey;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2002.05.17.20.24.09;	author livesey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2002.04.29.21.54.58;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.26
+log
+@Preparing for new magneticField
+@
+text
+@; This bit of an l2cf fills all the boring stuff in the `lesser' state vector
+
+begin Fill
+
+!ifdef(flagElevOffsetFromFile, {
+  elevOffset: vector, template=ElevOffsetTemplate
+  DirectRead, Vector=elevOffset, hdfVersion=5, type=hdf, $
+    file='!ElevOffsetHDF'
+  Transfer, source=elevOffset, destination=apriori
+},{
+  ;; -------------------------------------------------- Elev offsets
+ 
+  ;; This macro below fills <x>Elev for radiometer <x> with the value
+  ;; given in the macro !elev<x>
+  !define(fillElevOffset,{Fill, quantity=apriori.elev$1, method=explicit, $
+    explicitValues=!NegElevation$1!nl})
+
+  ;; Call that macro for all radiometers
+  !ifdef(flagPreV14Configuration,{},{!forall(fillElevOffset,!allBandLSBs,!allBandUSBs)})
+})
+
+!ifdef(flagIsotopeRatioFromFile, {
+  isotopeRatio: vector, template=IsotopeRatioTemplate
+  DirectRead, Vector=isotopeRatio, hdfVersion=5, type=hdf, $
+    file='!IsotopeRatioHDF'
+  Transfer, source=isotopeRatio, destination=apriori
+},{
+  ;; --------------------------------------------------- Isotope ratios
+
+  ;; This macro below fills the isotope ratio quanity for molecule <x>
+  ;; (apriori.<x>_ratio) with the value in the macro !isotoperatiox
+  !define(fillIsotopeRatio,{Fill, quantity=apriori.isotoperatio$1, method=explicit, $
+    explicitValues=!indir(isotoperatio$1)!nl})
+  ;; Note the use of indir as the molecule can contain underscores
+  ;; which are not part of valid macro names generally in the l2cf
+
+  ;; Call this macro for all molecules
+  !forall(fillIsotopeRatio,!isotopicMolecules)
+
+})
+
+!ifdef(flagSBFractionFromFile, {
+  SBFraction: vector, template=SBFTemplate
+  DirectRead, Vector=SBFraction, hdfVersion=5, type=hdf, $
+    file='!SBFractionHDF'
+  Transfer, source=SBFraction, destination=apriori
+},{
+  ;; ------------------------------------- Sideband fractions
+
+  ;; This macro fills one set of sideband fraction for one band.
+  !define(fillSidebandFractions,{!dnl
+  Fill, quantity=apriori.limbSidebandFraction$1, method=explicit, $
+    explicitValues=!limbradsbfraction$1
+  Fill, quantity=apriori.calSidebandFraction$1, method=explicit, $
+    explicitValues=!calradsbfraction$1!nl})
+
+  ;; Call that macro for all sidebands
+  !forall(fillSidebandFractions,!allBandLSBs)
+  !forall(fillSidebandFractions,!allBandUSBs)
+
+  ;; Possibly replace the sideband fractions for R1ABL with 1 to emulate
+  ;; old behavior
+  !define(resetSidebandFractions,{!dnl
+  Fill, quantity=apriori.limbSidebandFraction$1, method=explicit, $
+    explicitValues=1.0,/spread
+  Fill, quantity=apriori.calSidebandFraction$1, method=explicit, $
+    explicitValues=1.0,/spread!nl})
+  
+  !ifdef(flagPreV14Configuration,{!forall(resetSidebandFractions,1L,22L,32L,21l,26l,34L)})
+
+})
+
+!ifdef(flagSystemTemperatureFromFile, {
+  SystemTemperature: vector, template=SystemTemperatureTemplate
+  DirectRead, Vector=SystemTemperature, hdfVersion=5, type=hdf, $
+    file='!SystemTemperatureHDF'
+  Transfer, source=SystemTemperature, destination=apriori
+},{
+  ;; ----------------------------------------- System temperatures
+
+  !ifdef(flagSkipSysTemp,{},
+  {
+  ;; This macro fills one system temperature for one band
+  !define(fillSystemTemperature,{Fill, quantity=apriori.systemTemperature$1, $
+    method=explicit, explicitValues=!systemp(!getBandNumber($1))!nl})
+
+  ;; Call that macro for all bands
+  !forall(fillSystemTemperature,!allBands)
+  !forall(fillSystemTemperature,!allBandLSBs)
+  !forall(fillSystemTemperature,!allBandUSBs)
+  })
+
+})
+
+!ifdef(flagNoiseBandwidthFromFile, {
+  NoiseBandwidth: vector, template=NoiseBandwidthTemplate
+  DirectRead, Vector=NoiseBandwidth, hdfVersion=5, type=hdf, $
+    file='!NoiseBandwidthHDF'
+  Transfer, source=NoiseBandwidth, destination=apriori
+},{
+  ;; ----------------------------------------- Noise bandwidths
+
+  ;; This macro fills one noise bandwidth for one band
+  !ifdef(flagSkipSysTemp,{},
+  {
+  !define(fillNoiseBandwidth,{Fill, quantity=apriori.noiseBandwidth$1, $
+    method=explicit, explicitValues=!nbw(!getBandNumber($1))!nl})
+
+  ;; Call that macro for all bands
+  !forall(fillNoiseBandwidth,!allBands)
+  !forall(fillNoiseBandwidth,!allBandLSBs)
+  !forall(fillNoiseBandwidth,!allBandUSBs)
+  })
+
+})
+
+!ifdef(flagMiscFromFile, {
+  Misc: vector, template=MiscTemplate
+  DirectRead, Vector=Misc, hdfVersion=5, type=hdf, $
+    file='!MiscHDF'
+  Transfer, source=Misc, destination=apriori
+},{
+  ;; --------------------------------------------------- Minor terms
+
+  Fill, quantity=apriori.earthReflectivity, $
+    method=explicit, explicitValues=!earthReflectivity
+
+  Fill, quantity=apriori.spaceRadiance, $
+    method=explicit, explicitValues=!spaceRadiance
+
+  Fill, quantity=apriori.earthradius, $
+    method=explicit, explicitValues=6370.0km, /spread
+
+;   !ifdef(flagPrecisionEstimates,{
+;   ;  O2 and N2 are in the climatology for PEs (vmr not constant in the
+;   ;  meso/thermosphere)
+;   },{
+  Fill, quantity=apriori.n2, method=explicit,  $
+    explicitValues=!n2vmr, /spread
+
+  ;; --------------------------------------------- O2 
+
+  ;; Put in O2 vmr profile that drops off in the mesosphere/thermosphere
+  ;; this is what Bill used in uars
+  Fill, quantity=apriori.o2, method=profile, profileValues = $
+    [ 1.0000e+03 mb : 0.2095 vmr, $  
+      8.0131e-03 mb : 0.2095 vmr, $
+      5.8925e-03 mb : 0.2092 vmr, $
+      4.3241e-03 mb : 0.2089 vmr, $
+      3.1594e-03 mb : 0.2086 vmr, $
+      2.2961e-03 mb : 0.2083 vmr, $
+      1.6581e-03 mb : 0.2080 vmr, $
+      1.1874e-03 mb : 0.2070 vmr, $
+      8.4392e-04 mb : 0.2061 vmr, $
+      5.9869e-04 mb : 0.2051 vmr, $
+      4.2472e-04 mb : 0.2042 vmr, $
+      3.0332e-04 mb : 0.2032 vmr, $
+      2.1863e-04 mb : 0.1915 vmr, $
+      1.5948e-04 mb : 0.1798 vmr, $
+      1.1809e-04 mb : 0.1681 vmr, $
+      8.8552e-05 mb : 0.1564 vmr, $
+      6.6696e-05 mb : 0.1447 vmr ]
+;   })
+
+})
+
+  ;; --------------------------------------------------- Stuff from L1BOA
+
+  ;; In some cases (e.g. when computing l2pc files) the l1boa file is
+  ;; not the desired source of information
+
+  !ifdef(flagAvoidL1BOA,{
+  ;; ----------------- Avoiding l1boa
+
+  Fill, quantity=apriori.orbitInclination, $
+    method=explicit, explicitValues=98.145 degrees, /spread
+
+  ;; Get an approximate line of sight velocity
+  Fill, quantity = apriori.losVelGHz, method = explicit, $
+    explicitValues = -6.865e3, /spread
+  Fill, quantity = apriori.losVelTHz, method = explicit, $
+    explicitValues = -6.865e3, /spread
+
+  ;; Get an approximate spacecraft geocentric altitude
+  Fill, quantity = apriori.scGeocAlt, method = explicit, $
+    explicitValues = 7070 km, /spread
+
+  ;; Fake an identity matrix as the ECRtoFOV
+  Subset, quantity = apriori.ecrtofov, mask=fill, channels=[2:4,6:8], /ignore
+  Fill, quantity=apriori.ecrtofov, method=explicit, explicitValues=1.0, /spread
+  Subset, quantity = apriori.ecrtofov, mask=fill, /reset
+
+  ;; Note, we're doing NOTHING here about tangent point altitudes.
+  ;; The presumption is that we don't need them for an l2pc calculation.
+  !ifdef(flagMagneticFieldOnHeightGrid,!dnl
+  {
+  ;; Which is utterly wrong .. again
+  ;; Really must stop making assumptions that come back
+  ;; later to harm us
+  Fill, quantity = apriori.scECI, method = explicit, $
+    explicitValues = 7070 km, /spread
+  Fill, quantity = apriori.tngtECITHz, method = explicit, $
+    explicitValues = 7070 km, /spread
+  Fill, quantity = apriori.tngtECITHz, method = explicit, $
+    explicitValues = 7070 km, /spread
+  Fill, quantity = apriori.scVelECI, method = explicit, $
+    explicitValues = 7070 , /spread
+  Fill, quantity = apriori.scVelECR, method = explicit, $
+    explicitValues = 7070 , /spread
+  })
+  },{
+  ;; ----------------- Using l1boa
+  Fill, quantity=apriori.orbitInclination, method=l1b
+
+  ;; Geocentric altitudes
+  Fill, quantity=apriori.scGeocAlt, method=l1b
+  Fill, quantity=apriori.tngtGeocAltGHz, method=l1b
+  Fill, quantity=apriori.tngtGeocAltTHz, method=l1b
+
+  ;; Here we're after LOS velocities.  Newer L1BOA files have this
+  ;; information in them. For older files we have to extract it ourselves
+  !ifdef(flagOldStyleL1BOA, {
+  ;; We're after the line of sight velocities here, have to get them
+  ;; in a slightly awkward manner.  First get the position of the
+  ;; spacecraft and tangent points in ECI coordinates.
+  Fill, quantity=apriori.scECI, method=l1b
+  Fill, quantity=apriori.tngtECIGHz, method=l1b
+  Fill, quantity=apriori.tngtECITHz, method=l1b
+
+  ;; Now get the spacecraft velocity in both sets of coordinates
+  Fill, quantity=apriori.scVelECI, method=l1b
+  Fill, quantity=apriori.scVelECR,, method=l1b
+
+  ;; Now do a special vector computation to get the LOS velocities.
+  ;; Note that this DOES take into account the earth's rotation, even
+  ;; though it's been given ECI coordinates.
+  Fill, quantity=apriori.losVelGHz, tngtECI=apriori.tngtECIGHz, $
+    scECI=apriori.scECI, scVelECI=apriori.scVelECI, method=special
+  Fill, quantity=apriori.losVelTHz, tngtECI=apriori.tngtECITHz, $
+    scECI=apriori.scECI, scVelECI=apriori.scVelECI, method=special
+  },{
+  ;; Get it from the L1BOA file
+  Fill, quantity=apriori.losVelGHz, method=l1b
+  Fill, quantity=apriori.losVelTHz, method=l1b
+  })
+
+  ;; For newer L1BOA files, read the ECRtoFOV rotation matrix,
+  ;; older files don't have this, so I guess we leave it blank.
+  !ifdef(flagOldStyleL1BOA,{},{Fill, quantity=apriori.ECRtoFOV, method=l1b})
+  })
+
+end Fill
+@
+
+
+1.25
+log
+@Changed from flagSIDS being undefined to flagSkipSysTemp being defined
+@
+text
+@d195 16
+d230 1
+a230 1
+  ;; Now get the spacecraft velocity in ECI coordinates
+d232 1
+@
+
+
+1.24
+log
+@All may be DirectRead from Files
+@
+text
+@d81 2
+a82 1
+  !ifdef(flagSIDS,{
+d104 2
+a105 1
+  !ifdef(flagSIDS,{
+@
+
+
+1.23
+log
+@Made l2pc los velocity more appropriate for upper parts of scan.
+@
+text
+@d5 6
+d20 1
+d22 6
+d40 8
+d71 8
+d92 8
+d113 8
+d163 2
+@
+
+
+1.22
+log
+@Removed antenna loss terms
+@
+text
+@d131 1
+a131 1
+    explicitValues = -6.8e3, /spread
+d133 1
+a133 1
+    explicitValues = -6.8e3, /spread
+@
+
+
+1.21
+log
+@Added radiometer offsets and option to reset sideband fractions in
+flagPreV14Configuration case.
+@
+text
+@a75 54
+  ;; --------------------------------------------------- Antenna loss
+
+  !ifdef(flagSkipLossTerms,{},{
+  ;; First the 'constant' terms
+  !define(fillAntennaTerms,{!dnl
+  Fill, quantity=apriori.reflReflPrimary$1, method=explicit, explicitValues=!OhmicPri$1
+  Fill, quantity=apriori.reflTransPrimary$1, method=explicit, explicitValues=!EffPri$1
+  Fill, quantity=apriori.reflReflSecondary$1, method=explicit, explicitValues=!OhmicSec$1
+  Fill, quantity=apriori.reflTransSecondary$1, method=explicit, explicitValues=!EffSec$1
+  Fill, quantity=apriori.reflReflTertiary$1, method=explicit, explicitValues=!OhmicTer$1
+  Fill, quantity=apriori.reflTransTertiary$1, method=explicit, explicitValues=!EffTer$1
+  Fill, quantity=apriori.reflTransComplete$1, method=explicit, explicitValues=!EffAA$1!nl})
+  !forall(fillAntennaTerms,!allBandLSBs,!allBandUSBs)
+  ;; Next the time varying ones.  We can get these from L1B or fake them
+  !ifdef(flagFakeAntennaLoss,{!dnl
+  ;; Fake them
+  !define(fillOneStrayRadiance,{!dnl
+  Fill, quantity=apriori.strayRadiance$1, method=explicit, $
+    explicitValues=150 K, /spread!nl})
+  !forall(fillOneStrayRadiance,!allBandLSBs,!allBandUSBs)
+
+  !define(fillOneSetOfReflSpills,{!dnl
+  Fill, quantity=apriori.reflSpillPrimary$1, method=explicit, $
+    explicitValues=100 K, /spread
+  Fill, quantity=apriori.reflSpillSecondary$1, method=explicit, $
+    explicitValues=140 K, /spread
+  Fill, quantity=apriori.reflSpillTertiary$1, method=explicit, $
+    explicitValues=120 K, /spread!nl})
+  !forall(fillOneSetOfReflSpills,!allBandLSBs,!allBandUSBs)
+
+  Fill, quantity=apriori.reflTempPrimary, method=reflectorTempModel, $
+    phiZero=240.297 degrees, terms = [ $
+    273.15 K + 26.0625 K, -6.94899 K, -7.8007 K, -4.0625 K, -1.375 K, $
+    -2.17601 K, 0.199301 K ]
+  Fill, quantity=apriori.reflTempSecondary, method=reflectorTempModel, $
+    phiZero=240.297 degrees, terms = [ $
+    273.15 K+ 51.3125 K, -2.05308 K, 1.14775 K, 0.125 K, $
+    0.0625 K, -0.196922 K -0.352252 K ]
+  Fill, quantity=apriori.reflTempTertiary, method=reflectorTempModel, $
+    phiZero=240.297 degrees, terms = [ $
+    273.15 K + 39.3725 K, -1.39889 K, -1.73351 K, -0.625 K, $
+    -0.2775 K,  -0.476113 K,  -0.108506 K ]
+  },{!dnl
+  ;; Read them from L1B
+  !M4Error({Reading antenna loss terms from L1B not yet supported})
+  })
+  ;; Original terms from Rick's Email
+  ;; t0 = 3960s, T=5932.659
+  ;; PM 26.0625 -6.94899 -7.8007  -4.0625 -1.375  -2.17601   0.199301
+  ;; SM 51.3125 -2.05308  1.14775  0.125   0.0625 -0.196922 -0.352252
+  ;; TM 39.3725 -1.39889 -1.73351 -0.625 -0.2775  -0.476113 -0.108506
+})
+
+
+@
+
+
+1.20
+log
+@Tidied up a comment.
+@
+text
+@d9 2
+a10 2
+;   !define(fillElevOffset,{Fill, quantity=apriori.elev$1, method=explicit, $
+;     explicitValues=!elev$1!nl})
+d12 2
+a13 2
+;   ;; Call that macro for all radiometers
+;   !forall(fillElevOffset,!allRadiometers)
+d38 11
+a48 1
+  !forall(fillSidebandFractions,!allBandUSBs)  
+@
+
+
+1.19
+log
+@Can now skip the sids related stuff
+@
+text
+@d131 4
+d160 1
+@
+
+
+1.18
+log
+@Added flagSkipLossTerms
+@
+text
+@d42 1
+d51 1
+d56 1
+d64 1
+@
+
+
+1.17
+log
+@Bug fix
+@
+text
+@d64 1
+a74 1
+
+d113 2
+@
+
+
+1.16
+log
+@Now invokes the reflector temperature model.
+@
+text
+@a76 3
+  ;; Read them from L1B
+  !M4Error({Reading antenna loss terms from L1B not yet supported})
+  },{!dnl
+d104 3
+@
+
+
+1.15
+log
+@Now fills constant antenna loss terms
+@
+text
+@d64 1
+d74 39
+@
+
+
+1.14
+log
+@New sideband fraction stuff
+@
+text
+@d62 12
+@
+
+
+1.13
+log
+@Bug fixes with new O2 profile.
+@
+text
+@d27 1
+a27 1
+  ;; ------------------------------------- Sideband ratios
+d29 6
+a34 3
+  ;; This macro fills one sideband ratio for one band.
+  !define(fillSidebandRatio,{Fill, quantity=apriori.sidebandRatio$1, method=explicit, $
+    explicitValues=!sbfraction$1!nl})
+d37 2
+a38 2
+  !forall(fillSidebandRatio,!allBandLSBs)
+  !forall(fillSidebandRatio,!allBandUSBs)  
+@
+
+
+1.12
+log
+@Added uars climatology for o2 mixing ratio in mesosphere and thermosphere.
+@
+text
+@d70 3
+a72 7
+;;  Check with Bill if this is going to be OK for the PEs
+;   !ifdef(precisionEstimates,{
+;   ;  O2 and N2 are in the climatology for PEs (vmr not constant in the
+;   ;  meso/thermosphere)
+;   },{
+    Fill, quantity=apriori.n2, method=explicit,  $
+      explicitValues=!n2vmr, /spread
+d77 18
+a94 20
+  Fill, quantity=apriori.o2, method=profile,  profileValues = $
+    [   1.0000e+03 mb: .2095 vmr, $  
+        8.0131e-03 mb: .2095 vmr, $
+        5.8925e-03 mb: .2092 vmr, $
+        4.3241e-03 mb: .2089 vmr, $
+        3.1594e-03 mb: .2086 vmr, $
+        2.2961e-03 mb: .2083 vmr, $
+        1.6581e-03 mb: .2080 vmr, $
+        1.1874e-03 mb: .2070 vmr, $
+        8.4392e-04 mb: .2061 vmr, $
+        5.9869e-04 mb: .2051 vmr, $
+        4.2472e-04 mb: .2042 vmr, $
+        3.0332e-04 mb: .2032 vmr, $
+        2.1863e-04 mb: .1915 vmr, $
+        1.5948e-04 mb: .1798 vmr, $
+        1.1809e-04 mb: .1681 vmr, $
+        8.8552e-05 mb: .1564 vmr, $
+        6.6696e-05 mb: .1447 vmr ]
+;   })
+
+@
+
+
+1.11
+log
+@Commented out the filling of elevOffset temporarily.
+@
+text
+@a74 2
+    Fill, quantity=apriori.o2, method=explicit,  $
+      explicitValues=!o2vmr, /spread
+d77 22
+d100 1
+@
+
+
+1.10
+log
+@Added explicit fill of identity for ECRtoFOV for case where we're
+avoiding the l2pc.
+@
+text
+@d9 2
+a10 2
+  !define(fillElevOffset,{Fill, quantity=apriori.elev$1, method=explicit, $
+    explicitValues=!elev$1!nl})
+d12 2
+a13 2
+  ;; Call that macro for all radiometers
+  !forall(fillElevOffset,!allRadiometers)
+@
+
+
+1.9
+log
+@Bug fix
+@
+text
+@d102 5
+@
+
+
+1.8
+log
+@Various changes.
+@
+text
+@d115 1
+a115 1
+  !ifdef(flagOldSyleL1BOA, {
+@
+
+
+1.7
+log
+@Various changes, and (hopefully) improvements
+@
+text
+@a144 9
+
+
+
+
+
+
+
+
+
+@
+
+
+1.6
+log
+@O2 and N2 constant with height: needs discussion with Bill on effects
+on varying them with height in the thermosphere.
+@
+text
+@d67 3
+d86 1
+a86 1
+  !ifdef(avoidL1BOA,{
+d113 3
+d133 4
+d138 6
+@
+
+
+1.5
+log
+@O2 and N2 come from climatology in precision estimates.
+@
+text
+@d67 10
+a76 7
+  !ifdef(precisionEstimates,{},{
+  Fill, quantity=apriori.o2, method=explicit,  $
+    explicitValues=!o2vmr, /spread
+
+  Fill, quantity=apriori.n2, method=explicit,  $
+    explicitValues=!n2vmr, /spread
+  })
+@
+
+
+1.4
+log
+@Added code for split sidebands
+@
+text
+@d67 1
+d73 1
+@
+
+
+1.3
+log
+@Fixed problem with orbital inclination, now got from l1 if possible.
+@
+text
+@d41 1
+a41 1
+    method=explicit, explicitValues=!systemp$1!nl})
+d45 2
+d52 1
+a52 1
+    method=explicit, explicitValues=!nbw$1!nl})
+d56 2
+@
+
+
+1.2
+log
+@First consolidated version
+@
+text
+@d78 1
+a78 1
+    method=explicit, explicitValues=98.145 degrees
+d94 2
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d3 1
+a3 1
+BEGIN Fill
+d5 1
+a5 51
+    ;; Now the elevation offsets
+    Fill, quantity=apriori.r1aElev, method=explicit, explicitValues= 0.0 degrees
+    Fill, quantity=apriori.r1bElev, method=explicit, explicitValues= 0.0 degrees
+    Fill, quantity=apriori.r2Elev,  method=explicit, explicitValues= 0.0 degrees
+    Fill, quantity=apriori.r3Elev,  method=explicit, explicitValues= 0.0 degrees
+    Fill, quantity=apriori.r4Elev,  method=explicit, explicitValues= 0.0 degrees
+    Fill, quantity=apriori.r5hElev, method=explicit, explicitValues= 0.0 degrees
+    Fill, quantity=apriori.r5vElev, method=explicit, explicitValues= 0.0 degrees
+
+    ;; Now the isotope ratios
+    
+    Fill, quantity=apriori.br_79_o_ratio,      method=explicit, explicitValues= 0.50418
+    Fill, quantity=apriori.br_81_o_ratio,      method=explicit, explicitValues= 0.49341
+    Fill, quantity=apriori.cl_35_o_ratio,      method=explicit, explicitValues= 0.75348
+    Fill, quantity=apriori.cl_37_o_ratio,      method=explicit, explicitValues= 0.24411
+    Fill, quantity=apriori.h2o_18_ratio,       method=explicit, explicitValues= 0.00204
+    Fill, quantity=apriori.hocl_35_ratio,      method=explicit, explicitValues= 0.75337
+    Fill, quantity=apriori.hocl_37_ratio,      method=explicit, explicitValues= 0.24407
+    Fill, quantity=apriori.o2_v1_ratio,        method=explicit, explicitValues= 0.20950
+    Fill, quantity=apriori.o3_asym_o_18_ratio, method=explicit, explicitValues= 0.00406
+    Fill, quantity=apriori.o3_sym_o_18_ratio,  method=explicit, explicitValues= 0.00203
+    Fill, quantity=apriori.o3_v1_3_ratio,      method=explicit, explicitValues= 0.99279
+    Fill, quantity=apriori.o3_v2_ratio,        method=explicit, explicitValues= 0.99279
+    Fill, quantity=apriori.o_18_o_ratio,       method=explicit, explicitValues= 0.00407
+;   Fill, quantity=apriori.c_12_o_18_ratio,    method=explicit,
+;   explicitValues= 0.98652
+    Fill, quantity=apriori.hcl_35_ratio,       method=explicit, explicitValues= 0.75519
+    Fill, quantity=apriori.hcl_37_ratio,       method=explicit, explicitValues= 0.24466
+    Fill, quantity=apriori.s_32_o2_ratio,      method=explicit, explicitValues= 0.94548
+
+    ;; Now the more minor stuff
+    Fill, quantity = apriori.earthReflectivity, $
+      method = explicit, explicitValues = 0.05
+    Fill, quantity = apriori.orbitInclination, $
+      method = explicit, explicitValues = 98.145 degrees
+    Fill, quantity = apriori.spaceRadiance, $
+      method =explicit, explicitValues = 2.735 K
+
+    Fill, quantity=apriori.scGeocAlt, method=l1b
+    Fill, quantity=apriori.tngtGeocAltGHz, method=l1b
+    Fill, quantity=apriori.tngtGeocAltTHz, method=l1b
+
+    Fill, quantity=apriori.scECI, method = l1b
+    Fill, quantity=apriori.tngtECIGHz, method = l1b
+    Fill, quantity=apriori.tngtECITHz, method = l1b
+
+;    Fill, quantity=apriori.scVel, method = l1b
+;    Fill, quantity = apriori.losVelGHz, tngtECI=apriori.tngtECIGHz, $
+;      scECI=apriori.scECI, scVel=apriori.scVel, method=special
+;    Fill, quantity = apriori.losVelTHz, tngtECI=apriori.tngtECITHz, $
+;      scECI=apriori.scECI, scVel=apriori.scVel, method=special
+d7 119
+a125 10
+    Fill, quantity=apriori.scVelECR, method = l1b
+    Fill, quantity = apriori.losVelGHz, tngtECI=apriori.tngtECIGHz, $
+      scECI=apriori.scECI, scVelECR=apriori.scVelECR, method=special
+    Fill, quantity = apriori.losVelTHz, tngtECI=apriori.tngtECITHz, $
+      scECI=apriori.scECI, scVelECR=apriori.scVelECR, method=special
+ 
+    Fill, quantity = apriori.o2, method = explicit,  $
+      explicitValues = 0.2095 vmr , /spread
+    Fill, quantity = apriori.n2, method = explicit,  $
+      explicitValues = 0.805 vmr , /spread
+a126 1
+END Fill
+@
+

@@ -1,0 +1,168 @@
+head	2.4;
+access;
+symbols
+	V1-04:2.3
+	V1-03:2.3
+	V1-02:2.3
+	V1-00:2.3
+	newfwm-sep01:2.1.0.2
+	V0-7:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.4
+date	2002.05.22.00.50.15;	author livesey;	state dead;
+branches;
+next	2.3;
+
+2.3
+date	2002.01.08.22.46.54;	author livesey;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2001.10.09.22.41.53;	author livesey;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.07.24.10.50.08;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.4
+log
+@L2CFs no longer belong in l2
+@
+text
+@; This partial l2cf fills isotope quantities
+
+BEGIN Fill
+    Fill, quantity=!vec.br_79_o,      ratioQuantity=apriori.br_79_o_ratio, $
+      sourceQuantity=!vec.bro, method=isotope
+    Fill, quantity=!vec.br_81_o,      ratioQuantity=apriori.br_81_o_ratio, $
+      sourceQuantity=!vec.bro, method=isotope
+    Fill, quantity=!vec.cl_35_o,      ratioQuantity=apriori.cl_35_o_ratio, $
+      sourceQuantity=!vec.clo, method=isotope
+    Fill, quantity=!vec.cl_37_o,      ratioQuantity=apriori.cl_37_o_ratio, $
+      sourceQuantity=!vec.clo, method=isotope
+    Fill, quantity=!vec.h2o_18,       ratioQuantity=apriori.h2o_18_ratio, $
+      sourceQuantity=!vec.h2o, method=isotope
+    Fill, quantity=!vec.hocl_35,      ratioQuantity=apriori.hocl_35_ratio, $
+      sourceQuantity=!vec.hocl, method=isotope
+    Fill, quantity=!vec.hocl_37,      ratioQuantity=apriori.hocl_37_ratio, $
+      sourceQuantity=!vec.hocl, method=isotope
+    Fill, quantity=!vec.o2_v1,        ratioQuantity=apriori.o2_v1_ratio, $
+      sourceQuantity=!vec.o2, method=isotope
+    Fill, quantity=!vec.o3_asym_o_18, ratioQuantity=apriori.o3_asym_o_18_ratio, $
+      sourceQuantity=!vec.o3, method=isotope
+    Fill, quantity=!vec.o3_sym_o_18,  ratioQuantity=apriori.o3_sym_o_18_ratio, $
+      sourceQuantity=!vec.o3, method=isotope
+    Fill, quantity=!vec.o3_v1_3,      ratioQuantity=apriori.o3_v1_3_ratio, $
+      sourceQuantity=!vec.o3, method=isotope
+    Fill, quantity=!vec.o3_v2,        ratioQuantity=apriori.o3_v2_ratio, $
+      sourceQuantity=!vec.o3, method=isotope
+    Fill, quantity=!vec.o_18_o,       ratioQuantity=apriori.o_18_o_ratio, $
+      sourceQuantity=!vec.o2, method=isotope
+    Fill, quantity=!vec.hcl_35,      ratioQuantity=apriori.hcl_35_ratio, $
+      sourceQuantity=!vec.hcl, method=isotope
+    Fill, quantity=!vec.hcl_37,      ratioQuantity=apriori.hcl_37_ratio, $
+      sourceQuantity=!vec.hcl, method=isotope
+
+END Fill
+@
+
+
+2.3
+log
+@New style
+@
+text
+@@
+
+
+2.2
+log
+@More changes for new m4 usage
+@
+text
+@d4 30
+a33 30
+    Fill, quantity=!x.br_79_o,      ratioQuantity=!b.br_79_o_ratio, $
+      sourceQuantity=!x.bro, method=isotope
+    Fill, quantity=!x.br_81_o,      ratioQuantity=!b.br_81_o_ratio, $
+      sourceQuantity=!x.bro, method=isotope
+    Fill, quantity=!x.cl_35_o,      ratioQuantity=!b.cl_35_o_ratio, $
+      sourceQuantity=!x.clo, method=isotope
+    Fill, quantity=!x.cl_37_o,      ratioQuantity=!b.cl_37_o_ratio, $
+      sourceQuantity=!x.clo, method=isotope
+    Fill, quantity=!x.h2o_18,       ratioQuantity=!b.h2o_18_ratio, $
+      sourceQuantity=!x.h2o, method=isotope
+    Fill, quantity=!x.hocl_35,      ratioQuantity=!b.hocl_35_ratio, $
+      sourceQuantity=!x.hocl, method=isotope
+    Fill, quantity=!x.hocl_37,      ratioQuantity=!b.hocl_37_ratio, $
+      sourceQuantity=!x.hocl, method=isotope
+    Fill, quantity=!x.o2_v1,        ratioQuantity=!b.o2_v1_ratio, $
+      sourceQuantity=!x.o2, method=isotope
+    Fill, quantity=!x.o3_asym_o_18, ratioQuantity=!b.o3_asym_o_18_ratio, $
+      sourceQuantity=!x.o3, method=isotope
+    Fill, quantity=!x.o3_sym_o_18,  ratioQuantity=!b.o3_sym_o_18_ratio, $
+      sourceQuantity=!x.o3, method=isotope
+    Fill, quantity=!x.o3_v1_3,      ratioQuantity=!b.o3_v1_3_ratio, $
+      sourceQuantity=!x.o3, method=isotope
+    Fill, quantity=!x.o3_v2,        ratioQuantity=!b.o3_v2_ratio, $
+      sourceQuantity=!x.o3, method=isotope
+    Fill, quantity=!x.o_18_o,       ratioQuantity=!b.o_18_o_ratio, $
+      sourceQuantity=!x.o2, method=isotope
+    Fill, quantity=!x.hcl_35,      ratioQuantity=!b.hcl_35_ratio, $
+      sourceQuantity=!x.hcl, method=isotope
+    Fill, quantity=!x.hcl_37,      ratioQuantity=!b.hcl_37_ratio, $
+      sourceQuantity=!x.hcl, method=isotope
+@
+
+
+2.1
+log
+@First version
+@
+text
+@d4 30
+a33 30
+    Fill, quantity=_x.br_79_o,      ratioQuantity=_b.br_79_o_ratio, $
+      sourceQuantity=_x.bro, method=isotope
+    Fill, quantity=_x.br_81_o,      ratioQuantity=_b.br_81_o_ratio, $
+      sourceQuantity=_x.bro, method=isotope
+    Fill, quantity=_x.cl_35_o,      ratioQuantity=_b.cl_35_o_ratio, $
+      sourceQuantity=_x.clo, method=isotope
+    Fill, quantity=_x.cl_37_o,      ratioQuantity=_b.cl_37_o_ratio, $
+      sourceQuantity=_x.clo, method=isotope
+    Fill, quantity=_x.h2o_18,       ratioQuantity=_b.h2o_18_ratio, $
+      sourceQuantity=_x.h2o, method=isotope
+    Fill, quantity=_x.hocl_35,      ratioQuantity=_b.hocl_35_ratio, $
+      sourceQuantity=_x.hocl, method=isotope
+    Fill, quantity=_x.hocl_37,      ratioQuantity=_b.hocl_37_ratio, $
+      sourceQuantity=_x.hocl, method=isotope
+    Fill, quantity=_x.o2_v1,        ratioQuantity=_b.o2_v1_ratio, $
+      sourceQuantity=_x.o2, method=isotope
+    Fill, quantity=_x.o3_asym_o_18, ratioQuantity=_b.o3_asym_o_18_ratio, $
+      sourceQuantity=_x.o3, method=isotope
+    Fill, quantity=_x.o3_sym_o_18,  ratioQuantity=_b.o3_sym_o_18_ratio, $
+      sourceQuantity=_x.o3, method=isotope
+    Fill, quantity=_x.o3_v1_3,      ratioQuantity=_b.o3_v1_3_ratio, $
+      sourceQuantity=_x.o3, method=isotope
+    Fill, quantity=_x.o3_v2,        ratioQuantity=_b.o3_v2_ratio, $
+      sourceQuantity=_x.o3, method=isotope
+    Fill, quantity=_x.o_18_o,       ratioQuantity=_b.o_18_o_ratio, $
+      sourceQuantity=_x.o2, method=isotope
+    Fill, quantity=_x.hcl_35,      ratioQuantity=_b.hcl_35_ratio, $
+      sourceQuantity=_x.hcl, method=isotope
+    Fill, quantity=_x.hcl_37,      ratioQuantity=_b.hcl_37_ratio, $
+      sourceQuantity=_x.hcl, method=isotope
+@
+

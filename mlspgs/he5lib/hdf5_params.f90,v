@@ -1,0 +1,175 @@
+head	1.4;
+access;
+symbols
+	v5-02-NRT-19:1.4
+	v6-00:1.4
+	v5-02-NRT-18:1.4
+	v5-02:1.4
+	v5-01-NRT-17:1.4
+	v5-01-NRT-16:1.4
+	v5-01-NRT-15:1.4
+	v5-01-NRT-14:1.4
+	neuralnetworks-1-0:1.4.0.16
+	cfm-single-freq-0-1:1.4.0.14
+	v5-01:1.4
+	v5-00:1.4
+	v4-23-TA133:1.4.0.12
+	mus-emls-1-70:1.4.0.10
+	rel-1-0-englocks-work:1.4.0.8
+	VUMLS1-00:1.4
+	VPL1-00:1.4
+	V4-22-NRT-08:1.4
+	VAM1-00:1.4
+	V4-21:1.4.0.6
+	V4-13:1.4
+	V4-12:1.4
+	V4-11:1.4
+	V4-10:1.4
+	V3-43:1.4
+	M4-00:1.4
+	V3-41:1.4
+	V3-40-PlusGM57:1.4.0.4
+	V2-24-NRT-04:1.4
+	V3-33:1.4
+	V2-24:1.4
+	V3-31:1.4
+	V3-30-NRT-05:1.4
+	cfm-01-00:1.4
+	V3-30:1.4
+	V3-20:1.4
+	V3-10:1.4
+	V2-23-NRT-02:1.4
+	V2-23:1.4
+	V2-22-NRT-01:1.4
+	V2-22:1.4
+	V2-21:1.4
+	V2-20:1.4
+	V2-11:1.4
+	V2-10:1.4
+	V2-00:1.4
+	V1-51:1.4
+	V1-50:1.4
+	V1-45:1.4
+	V1-44:1.4
+	V1-43:1.4
+	V1-32:1.4
+	V1-31:1.4
+	V1-13:1.4
+	V1-12:1.4
+	V1-11:1.4
+	V1-10:1.4
+	newfwm-feb03:1.4.0.2
+	V1-04:1.4
+	V1-03:1.4
+	V1-02:1.4
+	V1-00:1.4
+	newfwm-sep01:1.3.0.2
+	V0-7:1.3
+	V0-5-Level2:1.3
+	V0-5-SIPS:1.3;
+locks; strict;
+comment	@# @;
+
+
+1.4
+date	2001.11.28.17.46.28;	author pumphrey;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2001.04.02.19.54.26;	author pumphrey;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.03.29.17.33.28;	author pumphrey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2000.12.22.15.55.53;	author pumphrey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.4
+log
+@In the middle of syncing up l2gpdata with HDF4 version in lib.
+Compiles, but not tested. Hack to write char swaths cut-n-pasted but not
+examined for sanity
+@
+text
+@module hdf5_params
+
+! This module is a QnD way to provide some of the HDF5 parameters used by 
+! HDF-EOS5 programs. These are not needed by the Fortran 90 interface to
+! straight HDF5 -- it provides its own parameters via the module HDF5.
+
+integer,public,parameter::H5F_ACC_RDWR=0, H5F_ACC_TRUNC=2, H5F_ACC_RDONLY=1
+integer,public,parameter::H5S_UNLIMITED=-1
+
+! is this right......
+integer,public,parameter::H5T_NATIVE_DOUBLE=2, H5T_NATIVE_FLOAT=1
+integer,public,parameter::H5T_NATIVE_INT=0,H5T_NATIVE_CHAR=3
+
+! These kind types depend on (a) your f9x compiler and (b) how
+! you built the hdf5 library. In particular, you may have disabled hsize_t
+! because your C compiler doesn't do "long long" right in which case both 
+! will be ordinary integers. (They are only in here for an experiment that 
+! proved unnecessary -- The Fortran interface to HDF-EOS doesn't know abuot 
+! HSIZE_T. )
+integer,public,parameter::HSIZE_T=4,HID_T=3
+
+
+end module hdf5_params
+@
+
+
+1.3
+log
+@Notalot
+@
+text
+@d7 1
+a7 1
+integer,public,parameter::H5F_ACC_RDWR=1, H5F_ACC_TRUNC=2, H5F_ACC_RDONLY=0
+@
+
+
+1.2
+log
+@Huge changes to L2GPData to sync with the HDF4 version and add unlimited
+dimension along the track
+@
+text
+@d4 2
+a5 3
+! HDF-EOS5 programs. If one had the Fortran interface to HDF5 _and_ the 
+! Fortran interface to HDF-EOS5 working together, then this would not be
+! needed, you could use HDF5 and call  h5init_f(istat) instead.
+a6 2
+
+  
+d17 3
+a19 1
+! will be ordinary integers. 
+@
+
+
+1.1
+log
+@Initial commit of HDF-EOS5 versions of L2GP interface.
+@
+text
+@d6 1
+a6 1
+! needed, you could use HDF5 and call  h5init_types_f(istat) instead.
+d8 2
+d11 1
+d16 6
+@
+

@@ -1,0 +1,355 @@
+head	1.6;
+access;
+symbols
+	v5-02-NRT-19:1.6
+	v6-00:1.6
+	v5-02-NRT-18:1.6
+	v5-02:1.6
+	v5-01-NRT-17:1.6
+	v5-01-NRT-16:1.6
+	v5-01-NRT-15:1.6
+	v5-01-NRT-14:1.6
+	neuralnetworks-1-0:1.6.0.6
+	cfm-single-freq-0-1:1.6.0.4
+	v5-01:1.6
+	v5-00:1.6
+	v4-23-TA133:1.6.0.2
+	mus-emls-1-70:1.5.0.6
+	rel-1-0-englocks-work:1.5.0.4
+	VUMLS1-00:1.5
+	VPL1-00:1.5
+	V4-22-NRT-08:1.5
+	VAM1-00:1.5
+	V4-21:1.5.0.2
+	V4-13:1.5
+	V4-12:1.5
+	V4-11:1.5
+	V4-10:1.5
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.6
+date	2018.10.19.01.17.31;	author pwagner;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2014.04.29.23.19.15;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2014.04.29.23.15.16;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2013.08.23.02.51.48;	author vsnyder;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2013.08.12.23.50.59;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2010.04.13.20.30.46;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.6
+log
+@removed unused stuff
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+program tellMasterToQuit
+  use HighOutput, only: Timestamp
+  use L2parinfo, only: Parallel, &
+    & Giveuptag, Machinenamelen
+  use Machine ! At Least Hp For Command Lines, And Maybe Getarg, Too
+  use MLSMessagemodule, only: MLSMessageconfig
+  use Output_M, only: Output
+  use Printit_M, only: Set_Config
+  use Pvm, only: PvmDatadefault, Pvmfinitsend, Pvmf90pack, &
+    & Pvmfsend
+  use Time_M, only: Time_Config
+
+  ! === (start of toc) ===
+  !     c o n t e n t s
+  !     - - - - - - - -
+
+  ! Main program to tell master to quit
+  ! === (end of toc) ===
+  ! (It is assumed that pvm is already up and running)
+  ! Usage:
+  ! tellMasterToQuit [options] [--] [<] [list]
+  ! where list is a list of master tids
+  
+  ! For a list of options 
+  ! tellMasterToQuit --help
+  
+
+  implicit none
+
+  integer :: BUFFERID
+  integer :: INFO
+  integer :: TID                   ! TID of master
+
+  character(len=*), parameter :: GROUPNAME = "mlsl2"
+!---------------------------- RCS Ident Info ------------------------------
+  character (len=*), parameter :: ModuleName= &
+       "$RCSfile: tellMasterToQuit.f90,v $"
+  character (len=*), parameter :: IdParm = &
+       "$Id: tellMasterToQuit.f90,v 1.5 2014/04/29 23:19:15 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+!---------------------------------------------------------------------------
+
+  ! Our data type for the master tasks we'll be communicating with via pvm
+  type master_T
+    character(len=MACHINENAMELEN) :: name = ' '
+    character(len=16            ) :: date = ' '
+    integer                       :: tid = 0
+    integer                       :: numChunks = 0
+    integer                       :: numHosts = 0
+    integer                       :: numFreed = 0
+    integer, dimension(:), pointer:: hosts => null() ! hosts assigned to this master
+    logical                       :: needs_host = .false.
+    logical                       :: owes_thanks = .false.
+    logical                       :: finished = .false.
+  end type master_T
+
+  !
+  call set_config ( useToolkit = .false., logFileUnit = -1 )
+  MLSMessageConfig%CrashOnAnyError = .true.
+  time_config%use_wall_clock = .true.
+  parallel%master = .true.  ! not merely master, but master of masters
+  parallel%slaveFilename = 'pvm' ! for later cures only
+  ! call get_options
+  print *, 'tid of master you wish to quit'
+  read *, tid
+  call PVMFInitSend ( PvmDataDefault, bufferID )
+  call PVMF90Pack ( GROUPNAME, info )
+  ! By default we won't to quit if an error occurs
+  ! (unless you want us to)
+  call PVMFSend ( tid, GiveUpTag, info )
+  call output('Already-running tellMasterToQuit tid: ', advance='no')
+  call timestamp(tid, advance='yes')
+  call timestamp(' commanded to quit', advance='yes')
+end program tellMasterToQuit
+
+! $Log: tellMasterToQuit.f90,v $
+! Revision 1.5  2014/04/29 23:19:15  pwagner
+! Fixed bug in last commit
+!
+! Revision 1.4  2014/04/29 23:15:16  pwagner
+! Builds successfully with highOutput module
+!
+! Revision 1.3  2013/08/23 02:51:48  vsnyder
+! Move PrintItOut to PrintIt_m
+!
+! Revision 1.2  2013/08/12 23:50:59  pwagner
+! FindSomethings moved to MLSFinds module
+!
+! Revision 1.1  2010/04/13 20:30:46  pwagner
+! First commit
+!
+@
+
+
+1.5
+log
+@Fixed bug in last commit
+@
+text
+@d13 10
+a22 34
+  use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+  use dates_module, only: DATEFORM, REFORMATDATE
+  use highOutput, only: OUTPUT_DATE_AND_TIME, outputNamedValue, &
+    & TIMESTAMP
+  use L2PARINFO, only: PARALLEL, INITPARALLEL
+  use L2ParInfo, only: MACHINE_T, PARALLEL, &
+    & PETITIONTAG, GIVEUPTAG, GRANTEDTAG, NOTIFYTAG, &
+    & SIG_FINISHED, SIG_REGISTER, SIG_SWEARALLEGIANCE, SIG_SWITCHALLEGIANCE, &
+    & SIG_HOSTDIED, SIG_RELEASEHOST, SIG_REQUESTHOST, SIG_THANKSHOST, &
+    & MACHINENAMELEN, GETMACHINENAMES, &
+    & DUMP, ADDMACHINETODATABASE
+  use MACHINE ! At least HP for command lines, and maybe GETARG, too
+  use MLSCOMMON, only: FILENAMELEN
+  use MLSL2Options, only: CURRENT_VERSION_ID
+  use MLSMessageModule, only: MLSMessage, MLSMessageConfig, MLSMessageExit, &
+    & MLSMSG_Allocate, MLSMSG_DeAllocate, MLSMSG_Debug, MLSMSG_Error, &
+    & MLSMSG_Info, MLSMSG_Success, MLSMSG_Warning, PVMERRORMESSAGE
+  use MLSFINDS, only: FINDFIRST
+  use MLSSTRINGLISTS, only: CATLISTS, GETSTRINGELEMENT, NUMSTRINGELEMENTS, &
+    & STRINGELEMENTNUM
+  use MLSSTRINGS, only: LOWERCASE, READINTSFROMCHARS, STREQ
+  use OUTPUT_M, only: BLANKS, NEWLINE, &
+    & OUTPUT, OutputOptions
+  use PrintIt_m, only: Set_Config
+  use PVM, only: PVMOK, &
+    & ClearPVMArgs, GETMACHINENAMEFROMTID, &
+    & PVMDATADEFAULT, PVMFINITSEND, PVMF90PACK, PVMFKILL, PVMFMYTID, &
+    & PVMF90UNPACK, PVMFPSTAT, &
+    & PVMFSEND, PVMFNOTIFY, PVMTASKEXIT, &
+    & PVMFFREEBUF
+  use Sort_M, only: SORT
+  use Time_M, only: Time_Now, time_config
+  use TOGGLES, only: GEN, LEVELS, &
+    & TOGGLE
+a41 6
+  character(len=2048) :: command_line ! All the opts
+  logical, parameter :: COUNTEMPTY = .true.
+  logical, parameter :: DEEBUG = .false.
+  logical, parameter :: DUMPDBSONDEBUG = .false.
+  integer :: ERROR
+  integer :: I
+a42 11
+  integer :: INUNIT = -1       ! Input unit, * if < 0
+  character(len=2048) :: LINE      ! Into which is read the command args
+  integer, parameter :: LIST_UNIT = 20  ! Unit # for hosts file if not stdin
+  character(len=MachineNameLen), dimension(:), pointer :: MACHINENAMES => null()
+  integer, parameter :: MAXNUMMASTERS = 100 ! Mas num running simultaneously
+  integer, parameter :: MAXNUMMULTIPROCS = 8 ! For some architectures > 1000 
+  integer :: RECL = 10000          ! Record length for list
+  integer :: STATUS                ! From OPEN
+  logical :: SWITCH                ! "First letter after -- was not n"
+  real :: T0, T1, T2, T_CONVERSION ! For timing
+  integer :: TAG
+a43 1
+  character(len=32) :: TIDSTR
+a45 25
+  character(len=*), parameter :: LISTNAMEEXTENSION = ".txt"
+  integer, parameter          :: AVOIDSELECTEDHOSTSTAG = GIVEUPTAG - 1
+  integer, parameter          :: CHECKREVIVEDHOSTSTAG = AVOIDSELECTEDHOSTSTAG - 1
+  integer, parameter          :: CHECKSELECTEDHOSTSTAG = CHECKREVIVEDHOSTSTAG - 1
+  integer, parameter          :: CLEANMASTERDBTAG = CHECKSELECTEDHOSTSTAG - 1
+  integer, parameter          :: DUMPDBTAG = CLEANMASTERDBTAG - 1
+  integer, parameter          :: DUMPMASTERSDBTAG = DUMPDBTAG - 1
+  integer, parameter          :: DUMPHOSTSDBTAG = DUMPMASTERSDBTAG - 1
+  integer, parameter          :: FREEANYHOSTSTAG = DUMPHOSTSDBTAG - 1
+  integer, parameter          :: FREEHOSTSTAG = FREEANYHOSTSTAG - 1
+  integer, parameter          :: KILLMASTERSTAG = FREEHOSTSTAG - 1
+  integer, parameter          :: SUICIDETAG = KILLMASTERSTAG - 1
+  integer, parameter          :: SWITCHDUMPFILETAG = SUICIDETAG - 1
+  integer, parameter          :: TURNREVIVALSONTAG = SWITCHDUMPFILETAG - 1
+  integer, parameter          :: TURNREVIVALSOFFTAG = TURNREVIVALSONTAG - 1
+
+  ! These are special tid values
+  integer, parameter          :: UNASSIGNED = -1
+  integer, parameter          :: AWAITINGREVIVAL = UNASSIGNED - 1
+  integer, parameter          :: AWAITINGTHANKS = AWAITINGREVIVAL - 1
+
+  integer, parameter          :: DUMPUNIT = LIST_UNIT + 1
+  integer, parameter          :: TEMPUNIT = DUMPUNIT + 1
+  integer, parameter          :: HDBUNIT = TEMPUNIT + 1
+  integer, parameter          :: MDBUNIT = HDBUNIT + 1
+d50 1
+a50 1
+       "$Id: tellMasterToQuit.f90,v 1.4 2014/04/29 23:15:16 pwagner Exp $"
+a53 8
+! To use this, copy it into
+! mlspgs/tests/lib
+! then enter "make depends" followed by "make"
+
+
+! Then run it
+! LF95.Linux/test [options] [input files]
+
+d88 3
+@
+
+
+1.4
+log
+@Builds successfully with highOutput module
+@
+text
+@d15 2
+a16 1
+  use highOutput, only: OUTPUT_DATE_AND_TIME, outputNamedValue, 
+d35 1
+a35 2
+    & OUTPUT, OutputOptions, &
+    & TIMESTAMP
+d117 1
+a117 1
+       "$Id: tellMasterToQuit.f90,v 1.3 2013/08/23 02:51:48 vsnyder Exp $"
+d163 3
+@
+
+
+1.3
+log
+@Move PrintItOut to PrintIt_m
+@
+text
+@d15 1
+d34 1
+a34 1
+    & OUTPUT, OUTPUT_DATE_AND_TIME, outputNamedValue, OutputOptions, &
+d117 1
+a117 1
+       "$Id: tellMasterToQuit.f90,v 1.2 2013/08/12 23:50:59 pwagner Exp $"
+d163 3
+@
+
+
+1.2
+log
+@FindSomethings moved to MLSFinds module
+@
+text
+@d35 1
+d116 1
+a116 1
+       "$Id: tellMasterToQuit.f90,v 1.1 2010/04/13 20:30:46 pwagner Exp $"
+d143 1
+a143 2
+  MLSMessageConfig%useToolkit = .false.
+  MLSMessageConfig%logFileUnit = -1
+d162 3
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d28 1
+a28 1
+  use MLSSETS, only: FINDFIRST
+d115 1
+a115 1
+       "$Id: tellMasterToQuit.f90,v 1.29 2009/09/02 22:05:36 pwagner Exp $"
+d162 3
+@
+

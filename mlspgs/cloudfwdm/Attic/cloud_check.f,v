@@ -1,0 +1,171 @@
+head	1.4;
+access;
+symbols;
+locks; strict;
+comment	@c @;
+
+
+1.4
+date	2001.07.25.17.58.00;	author jonathan;	state dead;
+branches;
+next	1.3;
+
+1.3
+date	2001.06.08.22.31.42;	author jonathan;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.06.04.19.07.15;	author jonathan;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.06.04.18.12.11;	author jonathan;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.4
+log
+@deleted .f files, jonathan
+@
+text
+@
+      SUBROUTINE CLOUD_CHECK(PRESSURE,IWC,LWC,IPSD,NZ,
+     >                        PSDF,CHK_CLD,NH)
+
+C=========================================================================C
+C  CHECK VERTICAL PROFILES OF CLOUD ICE-WATER-CONTENT                     C
+C  - J.JIANG (05/18/2001)                                                 C
+C=========================================================================C
+
+      INTEGER NH,NZ
+C---------------------------------------------------
+C     MODEL GRID
+C---------------------------------------------------
+      INTEGER PSDF(NH)  ! SIZE-DISTRIBUTION FLAG
+      REAL WC(2,640)     ! CLOUD WATER CONTENT (g/m3)
+                        ! (1=ICE,2=WATER)
+      REAL CHK_CLD(NH)  ! CLOUD CHECKER      
+C--------------------------------------------------
+C     L2 GRID
+C--------------------------------------------------
+      INTEGER IPSD(NZ)  ! SIZE-DISTRIBUTION FLAG
+      REAL IWC(NZ)      ! CLOUD ICE WATER CONTENT
+      REAL LWC(NZ)      ! CLOUD LIQUID WATER CONTENT
+      REAL PRESSURE(NZ) ! L2 ATMOSPHERIC PRESSURE
+
+      INTEGER NH0
+
+      PARAMETER(NH0=2000)
+      
+      REAL PTOP,PBOTTOM,DP,ZH(NH0),ZA(NH0),WK
+      INTEGER I,JM,J
+C--------------------------------------------------------------------
+
+      IF (NZ .NE. NH) THEN
+
+         PTOP = 40./16.-3.             ! TOP OF THE MODEL
+         PBOTTOM=-ALOG10(PRESSURE(1))  ! BOTTOM OF THE MODEL
+         DP=(PTOP-PBOTTOM)/NH          ! LAYER THICKNESS
+
+         DO I=1,NH
+            ZH(I)=PBOTTOM+(I-1)*DP
+         END DO
+
+         DO I=1,NZ
+            ZA(I)=-ALOG10(PRESSURE(I))
+         END DO
+
+
+         DO J=1,NH
+
+            CALL LOCATE (ZA,NZ,NH,ZH(J),JM)             
+
+            WC(1,J)=((ZA(JM+1)-ZH(J))*IWC(JM)+(ZH(J)-ZA(JM))*
+     >                IWC(JM+1))/(ZA(JM+1)-ZA(JM))
+
+            WC(2,J)=((ZA(JM+1)-ZH(J))*LWC(JM)+(ZH(J)-ZA(JM))*
+     >                LWC(JM+1))/(ZA(JM+1)-ZA(JM))
+
+            PSDF(J)=((ZA(JM+1)-ZH(J))*IPSD(JM)+(ZH(J)-ZA(JM))*
+     >                IPSD(JM+1))/(ZA(JM+1)-ZA(JM))
+           
+         ENDDO
+
+      ELSE    
+         DO J=1,NH
+            WC(1,J)=IWC(J)
+            WC(2,J)=LWC(J)
+            PSDF(J)=IPSD(J)
+         ENDDO
+      ENDIF
+
+      DO I=1,NH
+         CHK_CLD(I)=WC(1,I)+WC(2,I)
+      ENDDO
+C---------------------------------------------------------------------------
+
+      RETURN
+      END
+
+! $Log: cloud_check.f,v      
+
+
+@
+
+
+1.3
+log
+@First working version
+@
+text
+@@
+
+
+1.2
+log
+@FIRST WORKING VERSION OF FULL_CLOUD_FORWARD_MODEL
+@
+text
+@d2 2
+a3 1
+      SUBROUTINE CLOUD_CHECK(PRESSURE,IWC,LWC,NZ,WC,CHK_CLD,NH)
+d6 1
+a6 1
+C  CHECK VERTICAL PROFILES OF CLOUD ICE-WATER-CONTENT                    C
+d11 6
+a16 2
+
+      REAL WC(2,NH)     ! CLOUD WATER CONTENT (g/m3)
+d18 4
+a21 1
+
+d24 1
+a24 1
+      REAL PRESSURE(NZ) ! 
+a31 1
+
+d58 4
+a63 1
+
+d68 1
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d5 1
+a5 1
+C  DEFINE VERTICAL PROFILES OF CLOUD ICE-WATER-CONTENT                    C
+d69 1
+@
+

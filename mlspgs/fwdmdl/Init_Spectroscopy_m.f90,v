@@ -1,0 +1,1169 @@
+head	2.20;
+access;
+symbols
+	v5-02-NRT-19:2.20
+	v6-00:2.20
+	v5-02-NRT-18:2.20
+	v5-02:2.20
+	v5-01-NRT-17:2.20
+	v5-01-NRT-16:2.20
+	v5-01-NRT-15:2.20
+	v5-01-NRT-14:2.20
+	neuralnetworks-1-0:2.20.0.12
+	cfm-single-freq-0-1:2.20.0.10
+	v5-01:2.20
+	v5-00:2.20
+	v4-23-TA133:2.20.0.8
+	mus-emls-1-70:2.20.0.6
+	rel-1-0-englocks-work:2.20.0.4
+	VUMLS1-00:2.20
+	VPL1-00:2.20
+	V4-22-NRT-08:2.20
+	VAM1-00:2.20
+	V4-21:2.20.0.2
+	V4-13:2.20
+	V4-12:2.20
+	V4-11:2.20
+	V4-10:2.20
+	V3-43:2.18
+	M4-00:2.19
+	V3-41:2.18
+	V3-40-PlusGM57:2.18.0.2
+	V2-24-NRT-04:2.17
+	V3-33:2.18
+	V2-24:2.17
+	V3-31:2.18
+	V3-30-NRT-05:2.18
+	cfm-01-00:2.18
+	V3-30:2.18
+	V3-20:2.18
+	V3-10:2.18
+	V2-23-NRT-02:2.17
+	V2-23:2.17
+	V2-22-NRT-01:2.17
+	V2-22:2.17
+	V2-21:2.17
+	V2-20:2.17
+	V2-11:2.17
+	V2-10:2.17
+	V2-00:2.17
+	V1-51:2.13
+	V1-50:2.13
+	V1-45:2.13
+	V1-44:2.13
+	V1-43:2.12
+	V1-32:2.9
+	V1-31:2.9
+	V1-30:2.9
+	V1-13:2.6
+	V1-12:2.6
+	V1-11:2.6
+	V1-10:2.6
+	newfwm-feb03:2.6.0.2
+	V1-04:2.4
+	V1-03:2.4
+	V1-02:2.4
+	JointForwardModel:2.4.0.2
+	V1-00:2.4
+	newfwm-sep01:1.5.0.2
+	V0-7:1.5
+	V0-5-Level2:1.4
+	V0-5-SIPS:1.3;
+locks; strict;
+comment	@# @;
+
+
+2.20
+date	2014.04.22.00.37.51;	author vsnyder;	state Exp;
+branches;
+next	2.19;
+
+2.19
+date	2011.10.25.22.14.13;	author pwagner;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2009.06.23.18.26.10;	author pwagner;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2005.06.22.18.08.19;	author pwagner;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2005.04.19.19.13.28;	author livesey;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2005.01.13.01.32.24;	author vsnyder;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2004.12.31.02.40.44;	author vsnyder;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2004.05.29.02.43.27;	author vsnyder;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2004.04.02.23.58.09;	author vsnyder;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2004.01.09.08.13.30;	author livesey;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2004.01.09.07.25.20;	author livesey;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2003.05.16.23.51.05;	author livesey;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2003.05.16.02.44.46;	author vsnyder;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2003.05.05.23.00.25;	author livesey;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2002.12.03.01.26.22;	author vsnyder;	state Exp;
+branches
+	2.6.2.1;
+next	2.5;
+
+2.5
+date	2002.10.08.17.08.04;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2001.10.15.18.10.51;	author livesey;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2001.10.09.22.38.23;	author livesey;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2001.09.18.01.25.48;	author livesey;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.09.18.00.08.17;	author livesey;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2001.09.17.20.26.26;	author livesey;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2001.06.07.23.30.33;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.04.26.02.36.52;	author vsnyder;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2001.04.04.17.59.42;	author vsnyder;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.04.04.02.10.06;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.04.03.19.41.40;	author vsnyder;	state Exp;
+branches;
+next	;
+
+2.6.2.1
+date	2003.02.22.00.49.58;	author vsnyder;	state Exp;
+branches;
+next	2.6.2.2;
+
+2.6.2.2
+date	2003.03.01.03.17.29;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.20
+log
+@Add Signals and SignalsPol fields, and sanity checks
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Init_Spectroscopy_m
+
+  use Init_MLSSignals_m, only: Init_MLSSignals, &
+    & Last_Signal_Field, Last_Signal_Lit, Last_Signal_Spec, Last_Signal_Type
+
+  implicit NONE
+
+  public
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: Init_Spectroscopy_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+  ! Types used in spectroscopy specifications (there aren't any):
+  integer, parameter :: Last_Spectroscopy_Type = last_signal_type
+
+  ! Literals
+  integer, parameter :: Last_Spectroscopy_Lit = last_Signal_Lit
+
+  ! Fields used in spectroscopy specifications:
+  integer, parameter :: First_Spectroscopy_Field = last_signal_field + 1
+  integer, parameter :: F_continuum  = first_Spectroscopy_Field
+  integer, parameter :: F_defaultIsotopeRatio = f_continuum + 1
+  integer, parameter :: F_delta      = f_defaultIsotopeRatio + 1
+  integer, parameter :: F_el         = f_delta + 1
+  integer, parameter :: F_emlsSignals  = f_el + 1
+  integer, parameter :: F_emlsSignalsPol  = f_emlsSignals + 1
+  integer, parameter :: F_file       = f_emlsSignalsPol + 1
+  integer, parameter :: F_gamma      = f_file + 1
+  integer, parameter :: F_lines      = f_gamma + 1
+  integer, parameter :: F_mass       = f_lines + 1
+  integer, parameter :: F_molecule   = f_mass + 1
+  integer, parameter :: F_n          = f_molecule + 1
+  integer, parameter :: F_n1         = f_n + 1
+  integer, parameter :: F_n2         = f_n1 + 1
+  integer, parameter :: F_ns         = f_n2 + 1
+  integer, parameter :: F_ps         = f_ns + 1
+  integer, parameter :: F_qlog       = f_ps + 1
+  integer, parameter :: F_qn         = f_qlog + 1
+  integer, parameter :: F_signals    = f_qn + 1
+  integer, parameter :: F_signalsPol = f_signals + 1
+  integer, parameter :: F_str        = f_signalsPol + 1
+  integer, parameter :: F_umlsSignals  = f_str + 1
+  integer, parameter :: F_v0         = f_umlsSignals + 1
+  integer, parameter :: F_w          = f_v0 + 1
+  integer, parameter :: F_Xptl1Signals = f_w + 1
+  integer, parameter :: Last_Spectroscopy_Field = f_xptl1Signals
+
+  ! Spectroscopy specifications:
+  integer, parameter :: S_Line              = last_signal_spec + 1
+  integer, parameter :: S_ReadSpectroscopy  = s_line + 1
+  integer, parameter :: S_Spectra           = s_readSpectroscopy + 1
+  integer, parameter :: S_ReadIsotopeRatios = s_spectra + 1
+  integer, parameter :: S_WriteSpectroscopy = S_ReadIsotopeRatios + 1
+  integer, parameter :: Last_Spectroscopy_Spec = s_writeSpectroscopy
+
+  ! The Spectroscopy section is NOT defined here, because it appears
+  ! in the section ordering requirements array in init_tables_module.
+
+contains
+  ! ------------------------------------------  Init_Spectroscopy  -----
+  subroutine Init_Spectroscopy ( N_DATA_TYPE_INDICES, N_FIELD_INDICES, &
+    & N_LIT_INDICES, FIRST_PARM_INDEX, LAST_PARM_INDEX, N_SECTION_INDICES, &
+    & N_SPEC_INDICES )
+
+    use INTRINSIC, only: Add_Ident, Begin, F, G, L, N, NR, NDP, P, S, T, &
+      & T_Numeric, Z, T_String
+    use INTRINSIC, only: DATA_TYPE_INDICES, FIELD_INDICES, FUNC_INDICES, &
+      & LIT_INDICES, PARM_INDICES, SECTION_INDICES, SPEC_INDICES
+    use Molecules, only: T_Molecule
+    ! This really belongs in make_tree, but "make depends" can't see it there
+    ! (because of the "include"):
+    use TREE, only:
+    use TREE_TYPES, only: N_FIELD_SPEC, N_FIELD_TYPE, N_SPEC_DEF
+
+    integer, intent(in) :: N_DATA_TYPE_INDICES
+    integer, intent(in) :: N_FIELD_INDICES
+    integer, intent(in) :: N_LIT_INDICES
+    integer, intent(in) :: FIRST_PARM_INDEX, LAST_PARM_INDEX
+    integer, intent(in) :: N_SECTION_INDICES
+    integer, intent(in) :: N_SPEC_INDICES
+
+    call init_MLSSignals ( n_data_type_indices, n_field_indices, n_lit_indices, &
+      & first_parm_index, last_parm_index, n_section_indices, n_spec_indices )
+
+    ! Put field names into the symbol table
+    field_indices(f_continuum)  = add_ident ( 'continuum' )
+    field_indices(f_defaultIsotopeRatio) = add_ident ( 'defaultIsotopeRatio' )
+    field_indices(f_delta)      = add_ident ( 'delta' )
+    field_indices(f_el)         = add_ident ( 'el' )
+    field_indices(f_emlsSignals)  = add_ident ( 'emlsSignals' )
+    field_indices(f_emlsSignalsPol)  = add_ident ( 'emlsSignalsPol' )
+    field_indices(f_file)       = add_ident ( 'file' )
+    field_indices(f_gamma)      = add_ident ( 'gamma' )
+    field_indices(f_lines)      = add_ident ( 'lines' )
+    field_indices(f_mass)       = add_ident ( 'mass' )
+    field_indices(f_molecule)   = add_ident ( 'molecule' )
+    field_indices(f_n1)         = add_ident ( 'n1' )
+    field_indices(f_n2)         = add_ident ( 'n2' )
+    field_indices(f_n)          = add_ident ( 'n' )
+    field_indices(f_ns)         = add_ident ( 'ns' )
+    field_indices(f_ps)         = add_ident ( 'ps' )
+    field_indices(f_qlog)       = add_ident ( 'qlog' )
+    field_indices(f_qn)         = add_ident ( 'qn' )
+    field_indices(f_signals)    = add_ident ( 'signals' )
+    field_indices(f_signalsPol) = add_ident ( 'signalsPol' )
+    field_indices(f_str)        = add_ident ( 'str' )
+    field_indices(f_umlsSignals)  = add_ident ( 'umlsSignals' )
+    field_indices(f_v0)         = add_ident ( 'v0' )
+    field_indices(f_w)          = add_ident ( 'w' )
+    field_indices(f_xptl1Signals) = add_ident ( 'xptl1Signals' )
+
+    ! Put spec names into the symbol table
+    spec_indices(s_line)    = add_ident ( 'line' )
+    spec_indices(s_readSpectroscopy) = add_ident ( 'readSpectroscopy' )
+    spec_indices(s_spectra) = add_ident ( 'spectra' )
+    spec_indices(s_readIsotopeRatios) = add_ident ( 'readIsotopeRatios' )
+    spec_indices(s_writeSpectroscopy) = add_ident ( 'writeSpectroscopy' )
+
+    ! Definitions are represented by trees.  The notation in the comments
+    ! for the trees is < root first_son ... last_son >.  This is sometimes
+    ! called "Cambridge Polish Notation."  It was developed to represent
+    ! LISP by McCarthy et. al. at MIT (in Cambridge, MA).
+
+    ! Notice that in the argument for make_tree, the tree node id is at
+    ! the END of the subtree, while in Cambridge Polish Notation it is at
+    ! the BEGINNING of the subtree!
+
+    ! Put the definition trees into the tree space before the parser runs.
+    ! After the parsing is done, they're automatically "glued in" to the
+    ! "left" of the trees that represent the input.  The tree-walker
+    ! stumbles upon them in its normal course of operation, never really
+    ! realizing they're special (because by then they're not).
+
+    ! Define the relations between specs and fields, and the field types
+    ! or names of other specifications allowed.  These are represented by
+    ! trees of the form
+    !  < n_spec_def s_spec_name
+    !               < n_field_type f_field_name t_type ... t_type > ...
+    !               < n_field_spec f_field_name s_spec ... s_spec > ...
+    !               < n_dot f_field_name s_spec f_field_name ... >
+    !  >
+    ! The n_field_type, n_field_spec, and n_dot subtrees may appear in
+    ! any quantity or order.
+    ! The n_field_type subtree indicates the types allowed for a field.
+    ! The n_field_spec subtree indicates the specifications whose names
+    ! are allowed to appear for a field.
+    ! The n_dot subtree indicates that the field given by the first
+    ! f_field_name is required to be of the form spec_name.field_name,
+    ! where spec_name is required to be a label of a specification of the
+    ! type given by the s_spec son, and field_name is required to be
+    ! present in the field given by the last f_field_name, which is
+    ! required to be in a specification named by the next-to-last
+    ! f_field_name ... of the specification named by the spec_name.
+
+    call make_tree ( (/ &
+      begin, s+s_line, &
+             begin, f+f_delta, t+t_numeric, nr+n_field_type, &
+             begin, f+f_el, t+t_numeric, nr+n_field_type, &
+             begin, f+f_emlsSignals, t+t_string, n+n_field_type, &
+             begin, f+f_emlsSignalsPol, t+t_string, n+n_field_type, &
+             begin, f+f_gamma, t+t_numeric, nr+n_field_type, &
+             begin, f+f_n1, t+t_numeric, nr+n_field_type, &
+             begin, f+f_n2, t+t_numeric, nr+n_field_type, &
+             begin, f+f_ns, t+t_numeric, nr+n_field_type, &
+             begin, f+f_n, t+t_numeric, nr+n_field_type, &
+             begin, f+f_ps, t+t_numeric, nr+n_field_type, &
+             begin, f+f_qn, t+t_numeric, n+n_field_type, &
+             begin, f+f_signals, t+t_string, n+n_field_type, &
+             begin, f+f_signalsPol, t+t_string, n+n_field_type, &
+             begin, f+f_str, t+t_numeric, nr+n_field_type, &
+             begin, f+f_umlsSignals, t+t_string, n+n_field_type, &
+             begin, f+f_v0, t+t_numeric, nr+n_field_type, &
+             begin, f+f_w, t+t_numeric, nr+n_field_type, &
+             ndp+n_spec_def, &
+      begin, s+s_readSpectroscopy, &
+             begin, f+f_file, t+t_string, nr+n_field_type, &
+             ndp+n_spec_def, &
+      begin, s+s_readIsotopeRatios, &
+             begin, f+f_file, t+t_string, nr+n_field_type, &
+             ndp+n_spec_def, &
+      begin, s+s_spectra, & ! Must be AFTER S_Line
+             begin, f+f_continuum, t+t_numeric, n+n_field_type, &
+             begin, f+f_defaultIsotopeRatio, t+t_numeric, n+n_field_type, &
+             begin, f+f_lines, s+s_line, n+n_field_spec, &
+             begin, f+f_mass, t+t_numeric, n+n_field_type, &
+             begin, f+f_molecule, t+t_molecule, nr+n_field_type, &
+             begin, f+f_qlog, t+t_numeric, n+n_field_type, &
+             ndp+n_spec_def, &
+      begin, s+s_writeSpectroscopy, &
+             begin, f+f_file, t+t_string, nr+n_field_type, &
+             ndp+n_spec_def /) )
+
+  contains
+    ! --------------------------------------------------  MAKE_TREE  -----
+    include "make_tree.f9h"
+
+  end subroutine Init_Spectroscopy
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: Init_Spectroscopy_m.f90,v 2.19 2011/10/25 22:14:13 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Init_Spectroscopy_m
+
+! $Log: Init_Spectroscopy_m.f90,v $
+! Revision 2.19  2011/10/25 22:14:13  pwagner
+! added readIsotopeRatios
+!
+! Revision 2.18  2009/06/23 18:26:10  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.17  2005/06/22 18:08:19  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.16  2005/04/19 19:13:28  livesey
+! Changed mls1 to xptl1
+!
+! Revision 2.15  2005/01/13 01:32:24  vsnyder
+! Add DefaultIsotopeRatio to Catalog_t
+!
+! Revision 2.14  2004/12/31 02:40:44  vsnyder
+! Read/Write HDF Spectroscopy catalog
+!
+! Revision 2.13  2004/05/29 02:43:27  vsnyder
+! Rearrange function definition stuff
+!
+! Revision 2.12  2004/04/02 23:58:09  vsnyder
+! Remove to names from USE that aren't referenced
+!
+! Revision 2.11  2004/01/09 08:13:30  livesey
+! Bug fix
+!
+! Revision 2.10  2004/01/09 07:25:20  livesey
+! Added the fictitious instrument mls1
+!
+! Revision 2.9  2003/05/16 23:51:05  livesey
+! Added mass.
+!
+! Revision 2.8  2003/05/16 02:44:46  vsnyder
+! Removed USE's for unreferenced symbols
+!
+! Revision 2.7  2003/05/05 23:00:25  livesey
+! Merged in feb03 newfwm branch
+!
+! Revision 2.6.2.2  2003/03/01 03:17:29  vsnyder
+! Add the 'emlsSignalsPol' field to the 'line' spec
+!
+! Revision 2.6.2.1  2003/02/22 00:49:58  vsnyder
+! Add EMLSSignalsPol field to Line
+!
+! Revision 2.6  2002/12/03 01:26:22  vsnyder
+! Add QN field to lines spec
+!
+! Revision 2.5  2002/10/08 17:08:04  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.4  2001/10/15 18:10:51  livesey
+! Added continuum
+!
+! Revision 2.3  2001/10/09 22:38:23  livesey
+! Added stuff for ns
+!
+! Revision 2.2  2001/09/18 01:25:48  livesey
+! Changed emls/umls bands to emls/umls signals
+!
+! Revision 2.1  2001/09/18 00:08:17  livesey
+! Added the bands information stuff
+!
+! Revision 2.0  2001/09/17 20:26:26  livesey
+! New forward model
+!
+! Revision 1.5  2001/06/07 23:30:33  pwagner
+! Added Copyright statement
+!
+! Revision 1.4  2001/04/26 02:36:52  vsnyder
+! Moved *_indices declarations from init_tables_module to intrinsic
+!
+! Revision 1.3  2001/04/04 17:59:42  vsnyder
+! Insert "USE TREE" because "make depends" can't see the one in "make_tree"
+! (because of the "include").
+!
+! Revision 1.2  2001/04/04 02:10:06  vsnyder
+! Repair a literal name
+!
+! Revision 1.1  2001/04/03 19:41:40  vsnyder
+! Initial commit
+!
+@
+
+
+2.19
+log
+@added readIsotopeRatios
+@
+text
+@d34 2
+a35 1
+  integer, parameter :: F_continuum  = last_signal_field + 1
+d53 3
+a55 1
+  integer, parameter :: F_str        = f_qn + 1
+d118 2
+d182 2
+d215 1
+a215 1
+       "$Id: Init_Spectroscopy_m.f90,v 2.18 2009/06/23 18:26:10 pwagner Exp $"
+d225 3
+@
+
+
+2.18
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d23 1
+a23 1
+       "$RCSfile: $"
+d63 2
+a64 1
+  integer, parameter :: S_WriteSpectroscopy = s_spectra + 1
+d125 1
+d185 3
+d208 1
+a208 1
+       "$Id: read_apriori.f90 is it here $"
+d218 3
+@
+
+
+2.17
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d200 1
+a201 1
+!---------------------------- RCS Ident Info -------------------------------
+d203 2
+a204 3
+       "$Id: $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d206 1
+d208 1
+d213 3
+@
+
+
+2.16
+log
+@Changed mls1 to xptl1
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d21 1
+a21 4
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
+       "$Id: Init_Spectroscopy_m.f90,v 2.15 2005/01/13 01:32:24 vsnyder Exp $"
+  character (len=len(idParm)), private :: Id = idParm
+d23 1
+a23 1
+       "$RCSfile: Init_Spectroscopy_m.f90,v $"
+d201 5
+d212 3
+@
+
+
+2.15
+log
+@Add DefaultIsotopeRatio to Catalog_t
+@
+text
+@d15 1
+a15 1
+       "$Id: Init_Spectroscopy_m.f90,v 2.14 2004/12/31 02:40:44 vsnyder Exp $"
+d39 1
+a39 2
+  integer, parameter :: F_mls1Signals  = f_mass + 1
+  integer, parameter :: F_molecule   = f_mls1Signals + 1
+d51 2
+a52 1
+  integer, parameter :: Last_Spectroscopy_Field = f_w
+a100 1
+    field_indices(f_mls1Signals)       = add_ident ( 'mls1Signals' )
+d113 1
+d202 3
+@
+
+
+2.14
+log
+@Read/Write HDF Spectroscopy catalog
+@
+text
+@d15 1
+a15 1
+       "$Id: Init_Spectroscopy_m.f90,v 2.13 2004/05/29 02:43:27 vsnyder Exp $"
+d30 2
+a31 1
+  integer, parameter :: F_delta      = f_continuum + 1
+d92 1
+d180 1
+d202 3
+@
+
+
+2.13
+log
+@Rearrange function definition stuff
+@
+text
+@d15 1
+a15 1
+       "$Id: Init_Spectroscopy_m.f90,v 2.12 2004/04/02 23:58:09 vsnyder Exp $"
+d34 2
+a35 1
+  integer, parameter :: F_gamma      = f_emlsSignalsPol + 1
+d54 5
+a58 3
+  integer, parameter :: S_Line     = last_signal_spec + 1
+  integer, parameter :: S_Spectra  = s_line + 1
+  integer, parameter :: Last_Spectroscopy_Spec = s_spectra
+d95 1
+d115 1
+d117 1
+d173 3
+d182 3
+d199 3
+@
+
+
+2.12
+log
+@Remove to names from USE that aren't referenced
+@
+text
+@d15 1
+a15 1
+       "$Id: Init_Spectroscopy_m.f90,v 2.11 2004/01/09 08:13:30 livesey Exp $"
+d66 1
+a66 1
+    use INTRINSIC, only: Add_Ident, Begin, F, L, N, NR, NDP, P, S, T, &
+d68 1
+a68 1
+    use INTRINSIC, only: DATA_TYPE_INDICES, FIELD_INDICES, &
+d187 3
+@
+
+
+2.11
+log
+@Bug fix
+@
+text
+@d6 2
+a7 3
+  use Init_MLSSignals_m, only: Field_First, Init_MLSSignals, &
+    & Last_Signal_Field, Last_Signal_Lit, Last_Signal_Spec, Last_Signal_Type, &
+    & Spec_First
+d15 1
+a15 1
+       "$Id: Init_Spectroscopy_m.f90,v 2.10 2004/01/09 07:25:20 livesey Exp $"
+d187 3
+@
+
+
+2.10
+log
+@Added the fictitious instrument mls1
+@
+text
+@d16 1
+a16 1
+       "$Id: Init_Spectroscopy_m.f90,v 2.9 2003/05/16 23:51:05 livesey Exp $"
+d96 1
+a96 1
+    field_indices(f_mass)       = add_ident ( 'mls1Signals' )
+d188 3
+@
+
+
+2.9
+log
+@Added mass.
+@
+text
+@d16 1
+a16 1
+       "$Id$"
+d19 1
+a19 1
+       "$RCSfile$"
+d38 2
+a39 1
+  integer, parameter :: F_molecule   = f_mass + 1
+d96 1
+d187 4
+a190 1
+! $Log$
+@
+
+
+2.8
+log
+@Removed USE's for unreferenced symbols
+@
+text
+@d16 1
+a16 1
+       "$Id: Init_Spectroscopy_m.f90,v 2.7 2003/05/05 23:00:25 livesey Exp $"
+d19 1
+a19 1
+       "$RCSfile: Init_Spectroscopy_m.f90,v $"
+d37 2
+a38 1
+  integer, parameter :: F_molecule   = f_lines + 1
+d94 1
+d169 1
+d185 4
+a188 1
+! $Log: Init_Spectroscopy_m.f90,v $
+@
+
+
+2.7
+log
+@Merged in feb03 newfwm branch
+@
+text
+@d16 1
+a16 1
+       "$Id$"
+d19 1
+a19 1
+       "$RCSfile$"
+d65 1
+a65 3
+    ! This really belongs in make_tree, but "make depends" can't see it there
+    ! (because of the "include"):
+    use INTRINSIC, only: Add_Ident, Begin, F, L, N, NR, NDP, NADP, P, S, T, &
+d70 4
+a73 2
+    use TREE, only: BUILD_TREE, PUSH_PSEUDO_TERMINAL
+    use TREE_TYPES, only: N_DT_DEF, N_FIELD_SPEC, N_FIELD_TYPE, N_SPEC_DEF
+d182 4
+a185 1
+! $Log$
+@
+
+
+2.6
+log
+@Add QN field to lines spec
+@
+text
+@a5 2
+  use INTRINSIC, only: Add_Ident, Begin, F, L, N, NR, NDP, NADP, P, S, T, &
+    & T_Numeric, Z, T_String
+a8 3
+  use INTRINSIC, only: DATA_TYPE_INDICES, FIELD_INDICES, &
+    & LIT_INDICES, PARM_INDICES, SECTION_INDICES, SPEC_INDICES
+  use Molecules, only: T_Molecule
+d16 1
+a16 1
+       "$Id: Init_Spectroscopy_m.f90,v 2.5 2002/10/08 17:08:04 pwagner Exp $"
+d19 1
+a19 1
+       "$RCSfile: Init_Spectroscopy_m.f90,v $"
+d33 3
+a35 1
+  integer, parameter :: F_gamma      = f_el + 1
+d46 2
+a47 1
+  integer, parameter :: F_v0         = f_str + 1
+d49 1
+a49 3
+  integer, parameter :: F_emlsSignals  = f_w + 1
+  integer, parameter :: F_umlsSignals  = f_emlsSignals + 1
+  integer, parameter :: Last_Spectroscopy_Field = f_umlsSignals
+d67 5
+d89 2
+a93 1
+    field_indices(f_n)          = add_ident ( 'n' )
+d96 1
+d102 1
+a104 2
+    field_indices(f_emlsSignals)  = add_ident ( 'emlsSignals' )
+    field_indices(f_umlsSignals)  = add_ident ( 'umlsSignals' )
+d150 2
+a152 1
+             begin, f+f_n, t+t_numeric, nr+n_field_type, &
+d156 1
+d160 1
+a162 2
+             begin, f+f_emlsSignals, t+t_string, n+n_field_type, &
+             begin, f+f_umlsSignals, t+t_string, n+n_field_type, &
+d165 1
+a167 1
+             begin, f+f_continuum, t+t_numeric, n+n_field_type, &
+d182 10
+a191 1
+! $Log: Init_Spectroscopy_m.f90,v $
+@
+
+
+2.6.2.1
+log
+@Add EMLSSignalsPol field to Line
+@
+text
+@d6 2
+d11 3
+d21 1
+a21 1
+       "$Id: Init_Spectroscopy_m.f90,v 2.6 2002/12/03 01:26:22 vsnyder Exp $"
+d38 1
+a38 3
+  integer, parameter :: F_emlsSignals  = f_el + 1
+  integer, parameter :: F_emlsSignalsPol  = f_emlsSignals + 1
+  integer, parameter :: F_gamma      = f_emlsSignalsPol + 1
+d49 1
+a49 2
+  integer, parameter :: F_umlsSignals  = f_str + 1
+  integer, parameter :: F_v0         = f_umlsSignals + 1
+d51 3
+a53 1
+  integer, parameter :: Last_Spectroscopy_Field = f_w
+a70 5
+    use INTRINSIC, only: Add_Ident, Begin, F, L, N, NR, NDP, NADP, P, S, T, &
+      & T_Numeric, Z, T_String
+    use INTRINSIC, only: DATA_TYPE_INDICES, FIELD_INDICES, &
+      & LIT_INDICES, PARM_INDICES, SECTION_INDICES, SPEC_INDICES
+    use Molecules, only: T_Molecule
+a87 2
+    field_indices(f_emlsSignals)  = add_ident ( 'emlsSignals' )
+    field_indices(f_emlsSignalsPol)  = add_ident ( 'emlsSignalsPol' )
+d91 1
+a93 1
+    field_indices(f_n)          = add_ident ( 'n' )
+a98 1
+    field_indices(f_umlsSignals)  = add_ident ( 'umlsSignals' )
+d101 2
+a147 1
+             begin, f+f_emlsSignals, t+t_string, n+n_field_type, &
+d149 1
+a152 1
+             begin, f+f_n, t+t_numeric, nr+n_field_type, &
+a155 1
+             begin, f+f_umlsSignals, t+t_string, n+n_field_type, &
+d158 2
+a161 1
+             begin, f+f_continuum, t+t_numeric, n+n_field_type, &
+d164 1
+a179 3
+! Revision 2.6  2002/12/03 01:26:22  vsnyder
+! Add QN field to lines spec
+!
+@
+
+
+2.6.2.2
+log
+@Add the 'emlsSignalsPol' field to the 'line' spec
+@
+text
+@d16 1
+a16 1
+       "$Id: Init_Spectroscopy_m.f90,v 2.6.2.1 2003/02/22 00:49:58 vsnyder Exp $"
+a150 1
+             begin, f+f_emlsSignalsPol, t+t_string, n+n_field_type, &
+a181 3
+! Revision 2.6.2.1  2003/02/22 00:49:58  vsnyder
+! Add EMLSSignalsPol field to Line
+!
+@
+
+
+2.5
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d21 1
+a21 1
+       "$Id: Init_Spectroscopy_m.f90,v 2.4 2001/10/15 18:10:51 livesey Exp $"
+d47 2
+a48 1
+  integer, parameter :: F_str        = f_qlog + 1
+d97 1
+d154 1
+d180 3
+@
+
+
+2.4
+log
+@Added continuum
+@
+text
+@d21 1
+a21 1
+       "$Id: Init_Spectroscopy_m.f90,v 2.3 2001/10/09 22:38:23 livesey Exp $"
+d25 1
+d170 4
+d177 3
+@
+
+
+2.3
+log
+@Added stuff for ns
+@
+text
+@d21 1
+a21 1
+       "$Id: Init_Spectroscopy_m.f90,v 2.2 2001/09/18 01:25:48 livesey Exp $"
+d34 2
+a35 1
+  integer, parameter :: F_delta      = last_signal_field + 1
+d83 1
+d160 1
+d172 3
+@
+
+
+2.2
+log
+@Changed emls/umls bands to emls/umls signals
+@
+text
+@d21 1
+a21 1
+       "$Id: Init_Spectroscopy_m.f90,v 2.1 2001/09/18 00:08:17 livesey Exp $"
+d42 2
+a43 1
+  integer, parameter :: F_ps         = f_n2 + 1
+d90 1
+d147 1
+d157 1
+a157 1
+             begin, f+f_molecule, t+t_molecule, n+n_field_type, &
+d159 1
+a159 1
+             nadp+n_spec_def /) )
+d169 3
+@
+
+
+2.1
+log
+@Added the bands information stuff
+@
+text
+@d21 1
+a21 1
+       "$Id: Init_Spectroscopy_m.f90,v 2.0 2001/09/17 20:26:26 livesey Exp $"
+d47 3
+a49 3
+  integer, parameter :: F_emlsBands  = f_w + 1
+  integer, parameter :: F_umlsBands  = f_emlsBands + 1
+  integer, parameter :: Last_Spectroscopy_Field = f_umlsBands
+d94 2
+a95 2
+    field_indices(f_emlsBands)  = add_ident ( 'emlsBands' )
+    field_indices(f_umlsBands)  = add_ident ( 'umlsBands' )
+d149 2
+a150 2
+             begin, f+f_emlsBands, t+t_string, n+n_field_type, &
+             begin, f+f_umlsBands, t+t_string, n+n_field_type, &
+d166 3
+@
+
+
+2.0
+log
+@New forward model
+@
+text
+@d6 2
+a7 1
+  use INTRINSIC, only: Add_Ident, Begin, F, L, N, NADP, P, S, T, T_Numeric, Z
+d21 1
+a21 1
+       "$Id: Init_Spectroscopy_m.f90,v 1.5 2001/06/07 23:30:33 pwagner Exp $"
+d34 16
+a49 14
+  integer, parameter :: F_delta    = last_signal_field + 1
+  integer, parameter :: F_el       = f_delta + 1
+  integer, parameter :: F_gamma    = f_el + 1
+  integer, parameter :: F_lines    = f_gamma + 1
+  integer, parameter :: F_molecule = f_lines + 1
+  integer, parameter :: F_n        = f_molecule + 1
+  integer, parameter :: F_n1       = f_n + 1
+  integer, parameter :: F_n2       = f_n1 + 1
+  integer, parameter :: F_ps       = f_n2 + 1
+  integer, parameter :: F_qlog     = f_ps + 1
+  integer, parameter :: F_str      = f_qlog + 1
+  integer, parameter :: F_v0       = f_str + 1
+  integer, parameter :: F_w        = f_v0 + 1
+  integer, parameter :: Last_Spectroscopy_Field = f_w
+d81 15
+a95 13
+    field_indices(f_delta)    = add_ident ( 'delta' )
+    field_indices(f_el)       = add_ident ( 'el' )
+    field_indices(f_gamma)    = add_ident ( 'gamma' )
+    field_indices(f_lines)    = add_ident ( 'lines' )
+    field_indices(f_molecule) = add_ident ( 'molecule' )
+    field_indices(f_n)        = add_ident ( 'n' )
+    field_indices(f_n1)       = add_ident ( 'n1' )
+    field_indices(f_n2)       = add_ident ( 'n2' )
+    field_indices(f_ps)       = add_ident ( 'ps' )
+    field_indices(f_qlog)     = add_ident ( 'qlog' )
+    field_indices(f_str)      = add_ident ( 'str' )
+    field_indices(f_v0)       = add_ident ( 'v0' )
+    field_indices(f_w)        = add_ident ( 'w' )
+d139 13
+a151 11
+             begin, f+f_delta, t+t_numeric, n+n_field_type, &
+             begin, f+f_el, t+t_numeric, n+n_field_type, &
+             begin, f+f_gamma, t+t_numeric, n+n_field_type, &
+             begin, f+f_n, t+t_numeric, n+n_field_type, &
+             begin, f+f_n1, t+t_numeric, n+n_field_type, &
+             begin, f+f_n2, t+t_numeric, n+n_field_type, &
+             begin, f+f_ps, t+t_numeric, n+n_field_type, &
+             begin, f+f_str, t+t_numeric, n+n_field_type, &
+             begin, f+f_v0, t+t_numeric, n+n_field_type, &
+             begin, f+f_w, t+t_numeric, n+n_field_type, &
+             nadp+n_spec_def, &
+d166 3
+@
+
+
+1.5
+log
+@Added Copyright statement
+@
+text
+@d20 1
+a20 1
+       "$Id: Init_Spectroscopy_m.f90,v 1.4 2001/04/26 02:36:52 vsnyder Exp $"
+d159 3
+@
+
+
+1.4
+log
+@Moved *_indices declarations from init_tables_module to intrinsic
+@
+text
+@d1 3
+d20 1
+a20 1
+       "$Id: Init_Spectroscopy_m.f90,v 1.3 2001/04/04 17:59:42 vsnyder Exp $"
+d159 3
+@
+
+
+1.3
+log
+@Insert "USE TREE" because "make depends" can't see the one in "make_tree"
+(because of the "include").
+@
+text
+@d7 2
+d17 1
+a17 1
+       "$Id: Init_Spectroscopy_m.f90,v 1.2 2001/04/04 02:10:06 vsnyder Exp $"
+d55 3
+a57 2
+  subroutine Init_Spectroscopy ( Data_Type_Indices, Field_Indices, Lit_Indices, &
+    & Parm_Indices, Section_Indices, Spec_Indices )
+d64 6
+a69 6
+    integer, intent(inout) :: Data_Type_Indices(:)
+    integer, intent(inout) :: Lit_Indices(:)
+    integer, intent(inout) :: Field_Indices(field_First:last_Spectroscopy_Field)
+    integer, intent(inout) :: Parm_Indices(:)
+    integer, intent(inout) :: Section_Indices(:)
+    integer, intent(inout) :: Spec_Indices(spec_First:last_Spectroscopy_Spec)
+d71 2
+a72 2
+    call init_MLSSignals ( data_type_indices, field_indices, lit_indices, &
+      & parm_indices, section_indices, spec_indices )
+d156 4
+@
+
+
+1.2
+log
+@Repair a literal name
+@
+text
+@d15 1
+a15 1
+       "$Id: Init_Spectroscopy_m.f90,v 1.1 2001/04/03 19:41:40 vsnyder Exp $"
+d56 3
+d153 3
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d15 1
+a15 1
+       "$Id: Init_MLSSignals_m.f90,v 2.6 2001/03/28 19:50:43 vsnyder Exp $"
+d18 1
+a18 1
+       "$RCSfile: Init_MLSSignals_m.f90,v $"
+d70 1
+a70 1
+    field_indices(f_el)       = add_ident ( 'el)' )
+d149 4
+a152 1
+! $Log: $
+@
+

@@ -1,0 +1,560 @@
+head	1.8;
+access;
+symbols
+	v5-02-NRT-19:1.8
+	v6-00:1.8
+	v5-02-NRT-18:1.8
+	v5-02:1.8
+	v5-01-NRT-17:1.8
+	v5-01-NRT-16:1.8
+	v5-01-NRT-15:1.8
+	v5-01-NRT-14:1.8
+	neuralnetworks-1-0:1.8.0.14
+	cfm-single-freq-0-1:1.8.0.12
+	v5-01:1.8
+	v5-00:1.8
+	v4-23-TA133:1.8.0.10
+	mus-emls-1-70:1.8.0.8
+	rel-1-0-englocks-work:1.8.0.6
+	VUMLS1-00:1.8
+	VPL1-00:1.8
+	V4-22-NRT-08:1.8
+	VAM1-00:1.8
+	V4-21:1.8.0.4
+	V4-13:1.8
+	V4-12:1.8
+	V4-11:1.8
+	V4-10:1.8
+	V3-43:1.8
+	M4-00:1.8
+	V3-41:1.8
+	V3-40-PlusGM57:1.8.0.2
+	V2-24-NRT-04:1.7
+	V3-33:1.8
+	V2-24:1.7
+	V3-31:1.8
+	V3-30-NRT-05:1.8
+	cfm-01-00:1.8
+	V3-30:1.8
+	V3-20:1.8
+	V3-10:1.8
+	V2-23-NRT-02:1.7
+	V2-23:1.7
+	V2-22-NRT-01:1.7
+	V2-22:1.7
+	V2-21:1.6
+	V2-20:1.6
+	V2-11:1.6
+	V2-10:1.6
+	V2-00:1.6
+	V1-51:1.5
+	V1-50:1.5
+	V1-45:1.4
+	V1-44:1.4
+	V1-43:1.4
+	V1-42:1.3
+	V1-41:1.3
+	V1-32:1.3
+	V1-40:1.3
+	V1-31:1.3
+	V1-30:1.2
+	V1-13:1.2
+	V1-12:1.2
+	V1-11:1.2
+	V1-10:1.2
+	newfwm-feb03:1.2.0.2
+	V1-04:1.2
+	V1-03:1.2
+	V1-02:1.2
+	V1-00:1.2
+	newfwm-sep01:1.1.0.2
+	V0-7:1.1
+	V0-5-Level2:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.8
+date	2008.08.20.18.31.21;	author pwagner;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2007.03.06.21.30.10;	author pwagner;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2005.06.23.22.22.46;	author pwagner;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2004.11.03.19.09.33;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2004.03.18.17.58.09;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2003.09.24.19.18.42;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.11.26.23.46.45;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.05.01.17.03.31;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.8
+log
+@Puts .f90 and .F90 source files on equal footing
+@
+text
+@# Usage: f90GhostFiles.pl 'b_dir' 's_dir1' 's_dir2' ..
+#
+# Generate a list of files with .o and .mod suffixes in
+# binary-directory b_dir for which corresponding files with .f90
+# suffixes are not found in any of the source-directories s_dirn. 
+# The most likely reason being that the original source file
+# has been moved or deleted, yet the persistent .o or .mod
+# file still "haunts" the binary-directory.
+#
+# Output:
+# (printed to stdout)
+# Ghost1.o Ghost2.o .. Ghostn.o ghost1.mod ghost2.mod .. ghostn.mod
+#
+# P.A. Wagner (April 25 2001)
+# Copyright 2005, by the California Institute of Technology. ALL
+# RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+# commercial use must be negotiated with the Office of Technology Transfer
+# at the California Institute of Technology.
+
+# This software may be subject to U.S. export control laws. By accepting this
+# software, the user agrees to comply with all applicable U.S. export laws and
+# regulations. User has the responsibility to obtain export licenses, or other
+# export authority as may be required before exporting such information to
+# foreign countries or providing access to foreign persons.
+#
+# "$Id: f90GhostFiles.pl,v 1.7 2007/03/06 21:30:10 pwagner Exp $"
+
+#         Settings which affect how the script operates
+#         * * * * * * * * * * * * * * * * * * * * * * * 
+# if TRUE, include source files with .c suffixes
+$CC_SOURCES = TRUE;
+
+# if TRUE, include source files with .f suffixes
+$F77_SOURCES = TRUE;
+
+# if TRUE, format output suitable for inclusion in a Makefile
+$MAKEFILE_FORMAT = FALSE;
+
+$debug = 0;				# Print more if 1
+
+#         * * * * * * * * * * * * * * * * * * * * * * * 
+# Fool the script into writing to stdout instead of an actual file
+open(MAKEFILE, ">-");
+
+print STDERR "Binary directory: $ARGV[0] \n" unless !($debug);
+print STDERR "Source directory: $ARGV[1] \n" unless !($debug);
+
+# GhostFiles
+#
+&GhostFiles($ARGV[1], $ARGV[2]);
+
+#
+# &PrintWords(current output column, extra tab?, word list); --- print words
+#    nicely
+#
+sub PrintWords {
+   local($columns) = 78 - shift(@@_);
+   local($extratab) = shift(@@_);
+   local($wordlength);
+   #
+   print MAKEFILE @@_[0];
+   $columns -= length(shift(@@_));
+   foreach $word (@@_) {
+      $wordlength = length($word);
+      if ($wordlength + 1 < $columns) {
+         print MAKEFILE " $word";
+         $columns -= $wordlength + 1;
+         }
+      else {
+         #
+         # Continue onto a new line
+         #
+         if ($extratab) {
+            print MAKEFILE " \\\n\t\t$word";
+            $columns = 62 - $wordlength;
+            }
+         else {
+            print MAKEFILE " \\\n\t$word";
+            $columns = 70 - $wordlength;
+            }
+         }
+      }
+   }
+
+#
+# &toLower(string); --- convert string into lower case
+#
+sub toLower {
+   local($string) = @@_[0];
+   $string =~ tr/A-Z/a-z/;
+   $string;
+   }
+
+#
+# &uniq(sorted word list); --- remove adjacent duplicate words
+#
+sub uniq {
+   local(@@words);
+   foreach $word (@@_) {
+      if ($word ne $words[$#words]) {
+         push(@@words, $word);
+         }
+      }
+   @@words;
+   }
+
+#
+# GhostFiles; --- lists dead .o and .mod files
+#
+sub GhostFiles {
+   local($source_dir) = $ARGV[$[ + 1];
+   local($binary_dir) = $ARGV[$[];
+   local($current_source_dir_num);
+   local($extra_source_dir);
+   local(@@f90_sources);
+   local($num_source_dirs);
+   local(@@objects);
+   local($recasedF90Source);
+   local(@@source_dirs);
+   local(@@sources);
+   local($modulename);
+   local(@@modules);
+   local($objfile);
+   local($cwd);
+   local($arg_number);
+   local($num_sources);
+   local($is_ghost);
+   local($got_module);
+
+print STDERR "Num args: $#ARGV \n" unless !($debug);
+print STDERR "Source directory: $source_dir \n" unless !($debug);
+print STDERR "Binary directory: $binary_dir \n" unless !($debug);
+
+   if ($#ARGV > 1) {
+      $extra_source_dir = $ARGV[$[ + 2];
+   } else {
+      $extra_source_dir = ' ';
+   }
+print STDERR "Extra source directory: $extra_source_dir \n" unless !($debug);
+   $num_source_dirs = $#ARGV;
+#   $source_dirs[0] = $source_dir;
+#   $source_dirs[1] = $extra_source_dir;
+   $current_source_dir_num = 0;
+   
+   while ($current_source_dir_num < $num_source_dirs) {
+#  source directories
+      $source_dirs[$current_source_dir_num] = $ARGV[$current_source_dir_num + 1];;
+      $current_source_dir_num++;
+   }     # end while loop over source_dirs
+   
+   #
+   chomp($cwd = `pwd`);
+   $num_sources = 0;
+
+   $num_source_dirs = $#ARGV;
+   $current_source_dir_num = 0;
+   
+   while ($current_source_dir_num < $num_source_dirs) {
+#  source directories
+   	die "Can't cd to source_dir:$!\n"
+        	unless chdir $source_dirs[$current_source_dir_num] ;
+   # Associate each module with the name of the file that contains it
+   #
+   @@f90_sources = <*.[fF]90>;
+   foreach $file (@@f90_sources) {
+      $sources[$num_sources] = $file;
+      ($recasedF90Source = $file) =~ s/\.F90$/.f90/;
+      ($objfile = $recasedF90Source) =~ s/\.f90$/.o/;
+      $objects[$num_sources] = $objfile;
+    $got_module = "false";
+     open(FILE, $file) || warn "Cannot open $file: $!\n";
+print STDERR "file: $file \n" unless !($debug);
+      while (<FILE>) {
+         if ($got_module ne "true") {
+#print STDERR "line: $_ \n" unless !($debug);
+          if (/^\s*module\s+(\w+)/i) {
+            /^\s*module\s+(\w+)/i &&
+            ($modulename = &toLower($1) . ".f90") =~ s/\.f90$/.mod/;
+             $got_module = "true";
+#print STDERR "line where got module was: $_ \n" unless !($debug);
+#print STDERR "module was: $modulename \n" unless !($debug);
+             }
+            }
+         }
+      $modules[$num_sources] = $modulename;
+      $num_sources++;
+#      exit;
+      }
+
+print STDERR "num_sources: $num_sources \n \n" unless !($debug);
+print STDERR "sources: @@sources \n \n" unless !($debug);
+print STDERR "objects: @@objects \n \n" unless !($debug);
+print STDERR "modules: @@modules \n \n" unless !($debug);
+
+   # In case any .c or .f files
+   #
+   if ($CC_SOURCES) {
+    foreach $file (<*.c>) {
+      $sources[$num_sources] = $file;
+      ($objfile = $file) =~ s/\.c$/.o/;
+      $objects[$num_sources] = $objfile;
+# Of course, they will produce no .mod files when compiled
+      $modules[$num_sources] = ' ';
+      $num_sources++;
+      }
+     }
+
+   if ($F77_SOURCES) {
+    foreach $file (<*.f>) {
+      $sources[$num_sources] = $file;
+      ($objfile = $file) =~ s/\.f$/.o/;
+      $objects[$num_sources] = $objfile;
+# Of course, they will produce no .mod files when compiled
+      $modules[$num_sources] = ' ';
+      $num_sources++;
+      }
+     }
+
+       chdir $cwd;
+
+   $current_source_dir_num++;
+   }     # end while loop over source_dirs
+
+   	die "Can't cd to binary_dir:$!\n"
+        	unless chdir $binary_dir ;
+
+   # Check for ghosts among the .o suffixes
+   #
+   undef @@ghosts;
+   foreach $file (<*.o>) {
+    $arg_number = 0;
+    $is_ghost = "true";
+      while ($is_ghost ne "false" && $arg_number < $num_sources) {
+         if ($file ne $objects[$arg_number]) {
+         } else {
+          $is_ghost = "false";
+            }
+ #        print STDERR "file, object[i]: $file, $objects[$arg_number], $is_ghost  \n" unless !($debug);
+        $arg_number++;
+         }
+    if ($is_ghost eq "true") {
+            push(@@ghosts, $file);
+         }
+      }
+
+   # Check for ghosts among the .mod suffixes
+   #
+   foreach $file (<*.mod>) {
+    $arg_number = 0;
+    $is_ghost = "true";
+      while ($is_ghost ne "false" && $arg_number < $num_sources) {
+#       We have decided to store only lower-case module names in modules, so ..
+#         if ($file ne $modules[$arg_number]) {
+         if (&toLower($file) ne $modules[$arg_number]) {
+         } else {
+          $is_ghost = "false";
+            }
+ #        print STDERR "file, modules[i]: $file, $modules[$arg_number], $is_ghost  \n" unless !($debug);
+        $arg_number++;
+         }
+    if ($is_ghost eq "true") {
+            push(@@ghosts, $file);
+         }
+      }
+
+   if ($MAKEFILE_FORMAT) {
+    &PrintWords(1, 0,
+                     &uniq(sort(@@ghosts)));
+     print MAKEFILE "\n";
+   } else {
+     print MAKEFILE &uniq(sort(@@ghosts));
+   }
+  }
+# $Log: f90GhostFiles.pl,v $
+# Revision 1.7  2007/03/06 21:30:10  pwagner
+# Deleted outmoded lines concerning 'actua;l location of perl'
+#
+# Revision 1.6  2005/06/23 22:22:46  pwagner
+# Reworded Copyright statement
+#
+# Revision 1.5  2004/11/03 19:09:33  pwagner
+# perl scripts now get launched via perl rather than as stand-alone executables
+#
+# Revision 1.4  2004/03/18 17:58:09  pwagner
+# Ended foolish use of temp file to learn cwd
+#
+# Revision 1.3  2003/09/24 19:18:42  pwagner
+# Restored to proper functioning despite new perl
+#
+# Revision 1.2  2001/11/26 23:46:45  pwagner
+# Now works better with Absoft--test lower-case against module names
+#
+# Revision 1.1  2001/05/01 17:03:31  pwagner
+# First commit
+#
+@
+
+
+1.7
+log
+@Deleted outmoded lines concerning 'actua;l location of perl'
+@
+text
+@d26 1
+a26 1
+# "$Id: f90GhostFiles.pl,v 1.6 2005/06/23 22:22:46 pwagner Exp $"
+d113 1
+d115 1
+a116 1
+   local($current_source_dir_num);
+d118 1
+d164 2
+a165 1
+   foreach $file (<*.f90>) {
+d167 2
+a168 1
+      ($objfile = $file) =~ s/\.f90$/.o/;
+d275 3
+@
+
+
+1.6
+log
+@Reworded Copyright statement
+@
+text
+@a13 3
+# To run this, it will be necessary to modify the first line of this script
+# to point to the actual location of Perl on your system.
+#
+d26 1
+a26 1
+# "$Id: f90GhostFiles.pl,v 1.5 2004/11/03 19:09:33 pwagner Exp $"
+d271 3
+@
+
+
+1.5
+log
+@perl scripts now get launched via perl rather than as stand-alone executables
+@
+text
+@d18 10
+a27 2
+# Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
+# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d29 1
+a29 1
+# "$Id: f90GhostFiles.pl,v 1.4 2004/03/18 17:58:09 pwagner Exp $"
+d274 3
+@
+
+
+1.4
+log
+@Ended foolish use of temp file to learn cwd
+@
+text
+@a0 2
+#!/usr/local/bin/perl
+#
+d21 1
+a21 1
+# "$Id: f90GhostFiles.pl,v 1.3 2003/09/24 19:18:42 pwagner Exp $"
+d266 3
+@
+
+
+1.3
+log
+@Restored to proper functioning despite new perl
+@
+text
+@d20 2
+a21 1
+# (see mlsconfigure.sh for copyright statement)
+d23 1
+a23 1
+# "$Id: f90GhostFiles.pl,v 1.2 2001/11/26 23:46:45 pwagner Exp $"
+d147 1
+a147 13
+   # chop($cwd = \`pwd\`);
+   # The above line, although found among man pages, won't pass muster
+   #
+   # The following is a poor way to fill $cwd with the current working directory
+   # Ask a more perl-savvy programmer how to do this w/o creating temp file
+     system "pwd > temp";
+     open (TEMPFILE, temp);
+     while (<TEMPFILE>) {
+       chop;
+       $cwd = $_;
+       }
+     unlink temp;
+
+d268 3
+a275 1
+#
+@
+
+
+1.2
+log
+@Now works better with Absoft--test lower-case against module names
+@
+text
+@d1 1
+a1 1
+#!/usr/bin/perl
+d22 1
+a22 1
+# "$Id: f90GhostFiles.pl,v 1.1 2001/05/01 17:03:31 pwagner Exp $"
+d180 2
+a181 3
+#          if ($_ =~  /^\s*module\s+([^\s!]+)/) {
+          if ($_ =~  /^\s*[mM][oO][dD][uU][lL][eE]\s+([^\s!]+)/) {
+            /^\s*module\s+([^\s!]+)/i &&
+d279 3
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d22 1
+a22 1
+# "$Id: f90GhostFiles.pl,v 1.2 2000/11/02 23:22:38 pwagner Exp $"
+d257 3
+a259 1
+         if ($file ne $modules[$arg_number]) {
+d280 3
+@
+

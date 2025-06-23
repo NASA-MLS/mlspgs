@@ -1,0 +1,2391 @@
+head	2.37;
+access;
+symbols
+	v5-02-NRT-19:2.37
+	v6-00:2.37
+	v5-02-NRT-18:2.37
+	v5-02:2.37
+	v5-01-NRT-17:2.37
+	v5-01-NRT-16:2.37
+	v5-01-NRT-15:2.37
+	v5-01-NRT-14:2.37
+	neuralnetworks-1-0:2.37.0.10
+	cfm-single-freq-0-1:2.37.0.8
+	v5-01:2.37
+	v5-00:2.37
+	v4-23-TA133:2.37.0.6
+	mus-emls-1-70:2.37.0.4
+	rel-1-0-englocks-work:2.37.0.2
+	VUMLS1-00:2.37
+	VPL1-00:2.37
+	V4-22-NRT-08:2.37
+	VAM1-00:2.37
+	V4-21:2.36.0.2
+	V4-13:2.36
+	V4-12:2.35
+	V4-11:2.35
+	V4-10:2.35
+	M4-00:2.31
+	V3-33:2.19
+	V3-31:2.19
+	V3-30-NRT-05:2.11
+	cfm-01-00:2.8;
+locks; strict;
+comment	@# @;
+
+
+2.37
+date	2015.03.28.01.04.57;	author vsnyder;	state Exp;
+branches;
+next	2.36;
+
+2.36
+date	2014.09.04.23.42.47;	author vsnyder;	state Exp;
+branches;
+next	2.35;
+
+2.35
+date	2014.01.09.00.25.06;	author pwagner;	state Exp;
+branches;
+next	2.34;
+
+2.34
+date	2013.09.24.23.27.14;	author vsnyder;	state Exp;
+branches;
+next	2.33;
+
+2.33
+date	2013.08.31.01.24.53;	author vsnyder;	state Exp;
+branches;
+next	2.32;
+
+2.32
+date	2013.06.12.02.10.27;	author vsnyder;	state Exp;
+branches;
+next	2.31;
+
+2.31
+date	2012.02.16.22.46.45;	author pwagner;	state Exp;
+branches;
+next	2.30;
+
+2.30
+date	2012.02.02.01.12.36;	author pwagner;	state Exp;
+branches;
+next	2.29;
+
+2.29
+date	2012.01.30.18.16.28;	author pwagner;	state Exp;
+branches;
+next	2.28;
+
+2.28
+date	2012.01.27.01.03.05;	author pwagner;	state Exp;
+branches;
+next	2.27;
+
+2.27
+date	2012.01.25.01.13.45;	author pwagner;	state Exp;
+branches;
+next	2.26;
+
+2.26
+date	2011.10.10.23.59.00;	author pwagner;	state Exp;
+branches;
+next	2.25;
+
+2.25
+date	2011.10.07.00.03.32;	author pwagner;	state Exp;
+branches;
+next	2.24;
+
+2.24
+date	2011.09.20.22.35.45;	author pwagner;	state Exp;
+branches;
+next	2.23;
+
+2.23
+date	2011.04.02.01.21.55;	author vsnyder;	state Exp;
+branches;
+next	2.22;
+
+2.22
+date	2011.03.31.19.54.41;	author vsnyder;	state Exp;
+branches;
+next	2.21;
+
+2.21
+date	2011.03.02.02.04.29;	author vsnyder;	state Exp;
+branches;
+next	2.20;
+
+2.20
+date	2011.02.25.22.01.39;	author pwagner;	state Exp;
+branches;
+next	2.19;
+
+2.19
+date	2011.02.18.17.53.29;	author pwagner;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2011.02.05.01.38.50;	author pwagner;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2010.11.25.01.17.11;	author pwagner;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2010.11.19.23.57.20;	author pwagner;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2010.11.08.19.01.58;	author pwagner;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2010.11.05.23.02.06;	author pwagner;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2010.11.05.20.27.28;	author vsnyder;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2010.11.03.18.31.41;	author pwagner;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2010.09.16.23.54.57;	author pwagner;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2010.08.20.23.17.48;	author pwagner;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2010.08.13.22.06.22;	author pwagner;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2010.06.29.19.56.40;	author vsnyder;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2010.06.28.17.02.28;	author pwagner;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2010.06.23.22.43.15;	author vsnyder;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2010.05.14.22.45.33;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2010.03.26.23.15.45;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2010.03.24.20.38.14;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2010.02.25.21.14.33;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2010.02.25.18.14.02;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.37
+log
+@Added stuff to trace allocate/deallocate addresses
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=============================================================================
+module HessianModule_1          ! High-level Hessians in the MLS PGS suite
+!=============================================================================
+
+! This module provides the composite Block Hessian type.  Blocks of this
+! type are used to compose the Hessians inside L2PC.
+
+  use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+  use DUMP_0, only: DUMP
+  use HESSIANMODULE_0, only: CLEARBLOCK, COPYBLOCK, CREATEBLOCK, &
+    & DESTROYBLOCK, HESSIANELEMENT_T, RH, &
+    & H_ABSENT, H_SPARSE, H_FULL, OPTIMIZEBLOCK
+  use HIGHOUTPUT, only: BLANKSTOCOLUMN, OUTPUTNAMEDVALUE
+  use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+  use LEXER_CORE, only: WHERE_T
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
+  use MATRIXMODULE_1, only: DEFINERCINFO, DESTROYRCINFO, NULLIFYRCINFO, RC_INFO
+  use MLSSTRINGLISTS, only: SWITCHDETAIL
+  use OUTPUT_M, only: NEWLINE, OUTPUT
+  use STRING_TABLE, only: DISPLAY_STRING
+  use TOGGLES, only: SWITCHES
+  use TRACE_M, only: TRACE_BEGIN, TRACE_END
+  use VECTORSMODULE, only: VECTOR_T
+
+  implicit none
+  private
+
+  type :: Hessian_T
+    integer :: Name = 0    ! Sub-rosa index of Hessian name, if any, else zero
+    type(where_t) :: Where ! in input, if created if by L2CF
+    type(RC_Info) :: Col, Row  ! Column and row info
+    type(HessianElement_T), dimension(:,:,:), pointer :: BLOCK => NULL()
+    logical :: optimizedAlready = .false. ! Have we been through OptimizeHessian?
+  end type Hessian_T
+ 
+  public :: Hessian_T
+  public :: AddHessianToDatabase
+  public :: CopyHessianValue, CreateBlock, CreateEmptyHessian
+  public :: DestroyHessian, DestroyHessianDatabase, Diff, Dump, Dump_Layout
+  public :: InsertHessianPlane, Multiply, NullifyHessian
+  public :: OptimizeHessian, StreamlineHessian
+
+  interface CreateBlock
+    module procedure CreateHessianBlock_1
+  end interface
+
+  interface Diff
+    module procedure Diff_Hessians
+  end interface
+
+  interface Dump
+    module procedure Dump_Hessian, Dump_Hessian_Database
+  end interface
+
+  interface Dump_Layout
+    module procedure Dump_Hessian_Layout
+  end interface
+
+  interface InsertHessianPlane
+    module procedure InsertHessianPlane_1
+  end interface
+
+  interface Multiply
+    module procedure Hessian_Vector_Vector_Multiply
+  end interface
+
+  interface NullifyHessian
+    module procedure NullifyHessian_1
+  end interface
+
+  interface OptimizeHessian
+    module procedure OptimizeHessian_1
+  end interface
+
+  interface StreamlineHessian
+    module procedure StreamlineHessian_1
+  end interface
+
+  logical, parameter :: DEEBUG = .false.
+  logical, parameter :: HIDEABSENTBLOCKS = .true.
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: HessianModule_1.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  ! ----------------------------------------- AddHessianToDatabase -----
+  integer function AddHessianToDatabase ( DATABASE, ITEM )
+
+  ! This routine adds a vector to a database of such vectors, 
+  ! creating the database if necessary.
+
+    ! Dummy arguments
+    type (Hessian_T), dimension(:), pointer :: DATABASE
+    type (Hessian_T), intent(in) ::            ITEM
+
+    ! Local variables
+    type (Hessian_T), dimension(:), pointer :: tempDatabase
+
+    include "addItemToDatabase.f9h"
+
+    AddHessianToDatabase = newSize
+  end function AddHessianToDatabase
+
+  ! --------------------------------------------  CopyHessianValue  -----
+  subroutine CopyHessianValue ( Z, X, ALLOWNAMEMISMATCH )   ! Copy the elements of X to Z.
+  ! Z and X must have the same template.
+    type(Hessian_T), intent(inout) :: Z
+    type(Hessian_T), intent(in) :: X
+    logical, intent(in), optional :: ALLOWNAMEMISMATCH
+    integer :: I, J, K ! Subscripts and loop inductors
+    logical :: MYALLOW
+    myAllow = .false.
+    if ( present ( allowNameMismatch ) ) myAllow = allowNameMismatch
+    if ( ( ( x%col%vec%template%name /= z%col%vec%template%name  &
+      & .or. x%row%vec%template%name /= z%row%vec%template%name ) &
+      &   .and. .not. myAllow ) &
+      & .or. (x%col%instFirst .neqv. z%col%instFirst) &
+      & .or. (x%row%instFirst .neqv. z%row%instFirst) ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & "Incompatible arrays in CopyHessianValue" )
+    do i = 1, min(x%row%nb,z%row%nb)
+      do j = 1, min(x%col%nb,z%col%nb)
+        do k = 1, min(x%col%nb,z%col%nb)
+          call copyBlock ( z%block(i, j, k), x%block(i, j, k) )
+        end do ! k
+      end do ! j
+    end do ! i
+  end subroutine CopyHessianValue
+
+  ! ------------------------------------------- CreateEmptyHessian -----
+
+  type (Hessian_T) function CreateEmptyHessian ( Name, Row, Col, &
+    & Row_Quan_First, Col_Quan_First, Text, where, Potemkin ) result ( H )
+    use Symbol_Types, only: T_IDENTIFIER
+    use Symbol_Table, only: ENTER_TERMINAL
+
+    integer, intent(in) :: Name         ! Sub-rosa index of its name, or zero
+    type (Vector_T), intent(in) :: Row   ! Vector used to define the row
+    !                                     space of the matrix.
+    type (Vector_T), intent(in) :: Col   ! Vector used to define the column
+    !                                     space of the matrix.
+    logical, intent(in), optional :: Row_Quan_First    ! True (default false)
+      ! means the quantity is the major order of the rows of blocks and the
+      ! instance is the minor order.
+    logical, intent(in), optional :: Col_Quan_First    ! True (default false)
+      ! means the quantity is the major order of the columns of blocks and the
+      ! instance is the minor order.
+    character(len=*), intent(in), optional :: Text     ! A name to use
+      ! instead of "Name."
+    type(where_t), intent(in), optional :: Where ! in input, if created if by L2CF
+    logical, intent(in), optional :: Potemkin    ! Don't allocate if TRUE
+
+    integer(c_intptr_t) :: Addr         ! For tracing
+    integer :: I, J, K                  ! Loop counters
+    integer :: STATUS                   ! Flag
+
+    call destroyHessian ( H )  ! Avoid a memory leak if it isn't freshly minted
+    h%name = name
+    if ( present(text) ) h%name = enter_terminal ( text, t_identifier )
+    call defineRCInfo ( h%row, row, row_quan_first )
+    call defineRCInfo ( h%col, col, col_quan_first )
+    if ( present(where) ) h%where = where
+
+    if ( present(Potemkin) ) then
+      if ( Potemkin ) return
+    end if
+    allocate ( h%block ( h%row%nb, h%col%nb, h%col%nb ), stat=status )
+    addr = 0
+    if ( status == 0 ) then
+      if ( size(h%block) > 0 ) addr = transfer(c_loc(h%block(1,1,1)), addr)
+    end if
+    call test_allocate ( status, ModuleName, "H%Block", &
+      & ubounds=[h%row%nb, h%col%nb, h%col%nb], &
+      & elementSize = storage_size(h%block) / 8, address=addr )
+
+    do i = 1, h%row%nb ! Now create absent blocks with the correct sizes
+      do j = 1, h%col%nb
+        do k = 1, h%col%nb
+          call createBlock ( h, i, j, k, h_absent )
+        end do
+      end do
+    end do
+  end function CreateEmptyHessian
+
+  ! ----------------------------------------- CreateHessianBlock_1 -----
+  subroutine CreateHessianBlock_1 ( H, RowNum, ColNum1, ColNum2, H_Kind, &
+                                  & InitTuples, Fill )
+  ! Create the hessian block H%Block(RowNum,ColNum), which sprang into
+  ! existence with kind M_Absent.  Create it with the specified Kind.
+  ! See HessianModule_0 for a list of the kinds.  If the Kind is
+  ! M_Sparse the initial number of tuples is required
+    type (Hessian_T), intent(inout) :: H ! The matrix having the block
+    integer, intent(in) :: RowNum, ColNum1, ColNum2 ! Row and column of the block
+    integer, intent(in) :: H_Kind        ! Kind of block, see HessianModule_0
+    integer, intent(in), optional :: InitTuples     ! Number of nonzeros
+    real(rh), intent(in), optional :: &
+      & Fill ! Fill value if H_Kind == H_Full
+    call createBlock ( h%block ( rowNum, colNum1, colNum2 ), &
+      & h%row%nelts ( rowNum ), &
+      & h%col%nelts ( colNum1 ), &
+      & h%col%nelts ( colNum2 ), &
+      & h_kind, &
+      & initTuples, &
+      & fill )
+  end subroutine CreateHessianBlock_1
+
+  ! ----------------------------------------------- DestroyHessian -----
+  subroutine DestroyHessian ( hessian )
+    ! This subroutine destroys a hessian
+    
+    ! Dummy argument
+    type (Hessian_T), intent (inout) :: hessian
+    integer(c_intptr_t) :: Addr         ! For tracing
+    integer :: I, J, K
+    
+    integer :: status
+    hessian%name = 0
+    hessian%where = where_t(0,0)
+    if ( associated(hessian%block) ) then
+      do i = 1, hessian%row%nb
+        do j = 1, hessian%col%nb
+          do k = 1, hessian%col%nb
+            call DestroyBlock ( hessian%block(i,j,k) )
+          end do
+        end do
+      end do
+    endif
+    call destroyRCInfo ( hessian%row )
+    call destroyRCInfo ( hessian%col )
+    if ( associated(hessian%block) ) then
+      k = size(hessian%block) * storage_size(hessian%block) / 8
+      addr = 0
+      if ( k > 0 ) addr = transfer(c_loc(hessian%block(1,1,1)), addr)
+      deallocate ( hessian%block, stat=status )
+      call test_deallocate ( status, ModuleName, "Hessian%Block", k, address=addr )
+    end if
+  end subroutine DestroyHessian
+
+  ! --------------------------------------- DestroyHessianDatabase -----
+  subroutine DestroyHessianDatabase ( database )
+
+  ! This subroutine destroys a vector database
+
+    ! Dummy argument
+    type (Hessian_T),  dimension(:), pointer :: database
+
+    ! Local variables
+    integer(c_intptr_t) :: Addr         ! For tracing
+    integer :: hessianIndex, S, Status
+
+    if ( associated(database) ) then
+      do hessianIndex = 1, SIZE(database)
+        call DestroyHessian ( database(hessianIndex) )
+      end do
+      s = size(database) * storage_size(database) / 8
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(database(1)), addr)
+      deallocate ( database, stat=status )
+      call test_deallocate ( status, moduleName, 'database', s, address=addr )
+    end if
+  end subroutine DestroyHessianDatabase
+
+  ! ------------------------------------------------- Diff_Hessians -----
+  ! Diff two Hessians, presumed to match somehow
+  subroutine Diff_Hessians ( H1, H2, Details, options, Clean )
+    use HESSIANMODULE_0, only: DIFF
+    use LEXER_CORE, only: PRINT_SOURCE
+    use MLSSTRINGS, only: LOWERCASE
+    use MLSSTRINGLISTS, only: ISINLIST, OPTIONDETAIL
+    use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
+
+    type (Hessian_T), intent(inout) :: H1, H2
+    integer, intent(in), optional :: Details ! Print details, default 1
+      ! <= -3 => no output
+      ! -2 => Just name, size, and where created
+      ! -1 => Just row and col info for each block
+      ! 0 => Dimensions of each block,
+      ! 1 => Values in each block
+    character(len=*), intent(in), optional :: options
+    logical, intent(in), optional :: CLEAN   ! print \size
+    ! Internal variables
+    integer :: I, J, K    ! Subscripts, loop inductors
+    character(len=128) :: molecules
+    integer :: My_Details
+    logical :: myForce
+
+    my_details = 1
+    if ( present(details) ) my_details = details
+    if ( my_details <= -3 ) return
+    molecules = '*'
+    myForce = .false.
+    if ( present(options) ) then
+      Molecules = lowercase( optionDetail( options, 'b' ) )
+      if ( Molecules == 'no' ) Molecules = '*'
+      if ( DEEBUG ) call outputNamedValue('Molecules', Molecules)
+      myForce = ( optionDetail( options, 'f' ) == 'yes' )
+    end if
+    if ( h1%name > 0 .and. h2%name > 0 ) then
+      call output ( 'Diffing ' )
+      call display_string ( h1%name )
+      call output ( ' and ' )
+      call display_string ( h2%name )
+    else
+      call output ( ' (unnamed l2pcs) ' )
+    end if
+    if ( h1%where%source > 0 .and. h2%where%source > 0 ) then
+      call output ( ', created at ' )
+      call print_source ( h1%where )
+      call output ( ' and ' )
+      call print_source ( h2%where )
+    else
+      call output ( ' (no loci) ' )
+    end if
+    call newLine
+    if ( .not. associated(h1%block) .or. .not. associated(h2%block) ) then
+      call output ( '(the hessians have been destroyed)', advance='yes' )
+      return
+    end if
+    ! Check that the two Hessians match somehow
+    if ( h1%col%nb /= h1%col%nb .or. h1%row%nb /= h2%row%nb ) then
+      call output ( 'the hessians have different shapes', advance='yes' )
+      return
+    end if
+    if ( my_Details < -1 ) return
+    do k = 1, h1%col%nb
+      do j = 1, h1%col%nb
+        do i = 1, h1%row%nb
+          if( molecules /= '*' ) then
+            if ( skipThisBlock ( &
+              & 2, h1%col%vec%quantities(h1%col%quant(j))%template%name &
+              &  ) .and. skipThisBlock ( &
+              & 2, h2%col%vec%quantities(h2%col%quant(j))%template%name &
+              &  ) .and. skipThisBlock ( &
+              & 3, h1%col%vec%quantities(h1%col%quant(k))%template%name &
+              &  ).and. skipThisBlock ( &
+              & 3, h2%col%vec%quantities(h2%col%quant(k))%template%name &
+              &  ) ) cycle
+          end if
+          if ( h1%block(i,j,k)%kind /= h2%block(i,j,k)%kind .and. &
+            & .not. myForce ) then
+            call output ( 'the hessians at (i,j,k) ')
+            call output( (/ i,j,k /) )
+            call output( 'are of different kinds', advance='yes' )
+            cycle
+          end if
+          if ( my_details < 0 .or. &
+            & ( HIDEABSENTBLOCKS .and. h1%block(i,j,k)%kind == h_absent ) ) cycle
+          call output ( i, before='Block at row ' )
+          call output ( j, before=' and columns ' )
+          call output ( k, before=', ', after=' (' )
+          if ( h1%row%vec%quantities(h1%row%quant(i))%template%name /= 0 ) then
+            call display_string ( &
+              & h1%row%vec%quantities(h1%row%quant(i))%template%name )
+            call output ( ':' )
+          else
+            call output ( '<No template>:' )
+          end if
+          call output ( h1%row%Inst(i) )
+          call output (' , ')
+          if ( h1%col%vec%quantities(h1%col%quant(j))%template%name /= 0 ) then
+            call display_string ( &
+              & h1%col%vec%quantities(h1%col%quant(j))%template%name )
+            call output ( ':' )
+          else
+            call output ( '<No template>:' )
+          end if
+          call output ( h1%col%Inst(j) )
+          call output (' , ')
+          if ( h1%col%vec%quantities(h1%col%quant(k))%template%name /= 0 ) then
+            call display_string ( &
+              & h1%col%vec%quantities(h1%col%quant(k))%template%name )
+            call output ( ':' )
+          else
+            call output ( '<No template>:' )
+          end if
+          call output ( h1%col%Inst(k) )
+          call output ( ' )' )
+          call newLine
+          call Diff ( h1%block(i,j,k), h2%block(i,j,k), &
+            & details=my_details, options=options, clean=clean )
+        end do
+      end do
+    end do
+
+    contains
+    function skipThisBlock ( s, tid ) result( doWe )
+      ! Return TRUE only if we are to skip diffing this block
+      integer, intent(in) :: s ! 1 : i; 2 : j; 3 : k
+      integer, intent(in) :: tid ! qty template id
+      logical :: doWe
+      character(len=32)  ::     templateNameStr
+      ! Executable
+      templateNameStr = '(not found)'
+      doWe = .false.
+      if ( tid > 0 ) call get_string ( tid, templateNameStr )
+      if ( s > 1 .and. molecules /= '*' ) &
+        & doWe = ( .not. isInList( molecules, lowercase(trim(templateNameStr)) ) )
+    end function skipThisBlock
+  end subroutine Diff_Hessians
+
+  ! ------------------------------------------------  Dump_Hessian_Layout  -----
+  subroutine Dump_Hessian_Layout ( H, Name )
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    type(Hessian_T), intent(in) :: H
+    character(len=*), intent(in), optional :: Name
+
+    integer :: I, J, K             ! Subscripts, loop inductors
+    integer :: TotalSize           ! of all blocks
+    character(len=1), dimension(:,:,:), pointer :: layout => null() ! ., s, or f
+
+    if ( present(name) ) call output ( name )
+    if ( H%name > 0 ) then
+      if ( present(name) ) call output ( ', ' )
+      call output ( 'Name = ' )
+      call display_string ( H%name )
+    end if
+    call allocate_Test( layout, h%row%nb, h%col%nb, h%col%nb, &
+      & 'Layout of blocks in Hessian', moduleName // '%Dump_Hessian', Fill='.' )
+    totalSize = 0
+    do k = 1, h%col%nb
+      do j = 1, h%col%nb
+        do i = 1, h%row%nb
+          if ( h%block(i,j,k)%kind == h_absent ) cycle
+          select case ( h%block(i,j,k)%kind )
+          case ( h_sparse )
+            layout(i, j, k) = 'S'
+            if ( associated(h%block(i,j,k)%tuples) ) &
+              & totalSize = totalSize + h%block(i,j,k)%TuplesFilled
+          case ( h_full )
+            layout(i, j, k) = 'F'
+            if ( associated(h%block(i,j,k)%values) ) &
+              & totalSize = totalSize + size(h%block(i,j,k)%values)
+          end select
+        end do
+      end do
+    end do
+    call outputNamedValue( 'Total size', TotalSize )
+    call dump( layout, 'Layout of blocks in Hessian', width=h%col%nb )
+    call output( 'Total blocks' )
+    call blanksToColumn( 21 )
+    call output( 'Absent' )
+    call blanksToColumn( 36 )
+    call output( 'Sparse' )
+    call blanksToColumn( 51 )
+    call output( 'Full' )
+    call newLine
+    call blanksToColumn( 3 )
+    call output( h%col%nb * h%col%nb * h%row%nb )
+    call blanksToColumn( 21 )
+    call output( count(layout == '.') )
+    call blanksToColumn( 38 )
+    call output( count(layout == 'S') )
+    call blanksToColumn( 52 )
+    call output( count(layout == 'F') )
+    call newLine
+    call deallocate_test ( layout, moduleName // '%Dump_Hessian', &
+      & "layout of Hessian Blocks" )
+  end subroutine Dump_Hessian_Layout
+
+  ! ------------------------------------------------- Dump_Hessian -----
+  subroutine Dump_Hessian ( H, Name, Details, &
+    & onlyTheseBlocks, options, Clean )
+    use HESSIANMODULE_0, only: DUMP
+    use LEXER_CORE, only: PRINT_SOURCE
+    use MATRIXMODULE_1, only: DUMP_RC
+    use MLSSTRINGS, only: LOWERCASE
+    use MLSSTRINGLISTS, only: ISINLIST, OPTIONDETAIL
+    use OUTPUT_M, only: RESUMEOUTPUT, SUSPENDOUTPUT
+    use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
+
+    type (Hessian_T), intent(in) :: H
+    character(len=*), intent(in), optional :: NAME
+    integer, intent(in), optional :: Details ! Print details, default 1
+      ! <= -3 => no output, exceept warning, error messages
+      ! -2 => Just name, size, and where created
+      ! -1 => Just row and col info for each block, but not their values
+      ! 0 => Layout of blocks, but not their values
+      ! 1 => Add dimensions of each block,
+      ! 2 => Values in each block
+    character(len=*), dimension(3), intent(in), optional :: onlyTheseBlocks
+    character(len=*), intent(in), optional :: options
+    logical, intent(in), optional :: CLEAN   ! print \size
+    ! Internal variables
+    logical, parameter :: DEEBUG = .false.
+    character(len=32) :: dumpOptions
+    integer :: I, J, K    ! Subscripts, loop inductors
+    character(len=128) :: molecules
+    integer :: My_Details
+    character(len=32), dimension(3) :: myBlocks
+    integer :: TotalSize  ! of all blocks
+    ! Executable
+    my_details = 1
+    if ( present(details) ) my_details = details
+    if ( my_details == 0 ) call Dump_Hessian_Layout( H, name )
+    if ( my_details <= -3 ) call suspendOutput !  return
+    if ( present(name) ) call output ( name )
+    myBlocks = '*'
+    if ( present(onlyTheseBlocks) ) myBlocks = onlyTheseBlocks
+    dumpOptions = ''
+    molecules = '*'
+    if ( present(options) ) then
+      call outputNamedValue( 'options', options )
+      Molecules = lowercase( optionDetail( options, 'b' ) )
+      if ( Molecules == 'no' ) Molecules = '*'
+      if ( DEEBUG .or. .true. ) call outputNamedValue('Molecules', Molecules)
+      dumpOptions = lowercase( optionDetail( options, 'd' ) )
+      if ( dumpOptions == 'no' ) dumpOptions = ''
+      if ( DEEBUG .or. .true. ) call outputNamedValue('dumpOptions', dumpOptions)
+    end if
+    if ( h%name > 0 ) then
+      if ( present(name) ) call output ( ', ' )
+      call output ( 'Name = ' )
+      call display_string ( h%name )
+    end if
+    if ( h%where%source > 0 ) then
+      call output ( ', created at ' )
+      call print_source ( h%where )
+    end if
+    call newLine
+    if ( my_details > -2 ) then
+      call dump_rc ( h%row, 'row', .true. )
+      call dump_rc ( h%col, 'col', .true. )
+    end if
+    if ( .not. associated(h%block) ) then
+      call output ( '      (the hessian has been destroyed)', advance='yes' )
+      if ( my_details <= -3 ) call resumeOutput
+      return
+    end if
+    ! Print list of molecules in this block
+    call output( 'Molecule derivatives in this hessian block', advance='yes' )
+    do j = 1, h%col%nb
+      i = h%col%vec%quantities(h%col%quant(j))%template%name
+      if ( i > 0 ) then
+        call display_string( i )
+        call newLine
+      end if
+    end do
+    if ( my_details < 1 ) return
+    totalSize = 0
+    do k = 1, h%col%nb
+      do j = 1, h%col%nb
+        do i = 1, h%row%nb
+          if ( HIDEABSENTBLOCKS .and. h%block(i,j,k)%kind == h_absent ) cycle
+          select case ( h%block(i,j,k)%kind )
+          case ( h_sparse )
+            if ( associated(h%block(i,j,k)%tuples) ) &
+              & totalSize = totalSize + h%block(i,j,k)%TuplesFilled
+          case ( h_full )
+            if ( associated(h%block(i,j,k)%values) ) &
+              & totalSize = totalSize + size(h%block(i,j,k)%values)
+          end select
+          if ( my_details < 0 .and. my_details > -3 ) cycle
+          if ( present(onlyTheseBlocks) ) then
+            if ( skipThisBlock ( &
+              & 1, h%row%vec%quantities(h%row%quant(i))%template%name &
+              &  ) ) cycle
+            if ( skipThisBlock ( &
+              & 2, h%col%vec%quantities(h%col%quant(j))%template%name &
+              &  ) ) cycle
+            if ( skipThisBlock ( &
+              & 3, h%col%vec%quantities(h%col%quant(k))%template%name &
+              &  ) ) cycle
+          else if( molecules /= '*' ) then
+            if ( skipThisBlock ( &
+              & 2, h%col%vec%quantities(h%col%quant(j))%template%name &
+              &  ) .and. skipThisBlock ( &
+              & 3, h%col%vec%quantities(h%col%quant(k))%template%name &
+              &  ) ) cycle
+          end if
+          call output ( i, before='Block at row ' )
+          call output ( j, before=' and columns ' )
+          call output ( k, before=', ', after=' (' )
+          if ( h%row%vec%quantities(h%row%quant(i))%template%name /= 0 ) then
+            call display_string ( &
+              & h%row%vec%quantities(h%row%quant(i))%template%name )
+            call output ( ':' )
+          else
+            call output ( '<No template>:' )
+          end if
+          call output ( h%row%Inst(i) )
+          call output (' , ')
+          if ( h%col%vec%quantities(h%col%quant(j))%template%name /= 0 ) then
+            call display_string ( &
+              & h%col%vec%quantities(h%col%quant(j))%template%name )
+            call output ( ':' )
+          else
+            call output ( '<No template>:' )
+          end if
+          call output ( h%col%Inst(j) )
+          call output (' , ')
+          if ( h%col%vec%quantities(h%col%quant(k))%template%name /= 0 ) then
+            call display_string ( &
+              & h%col%vec%quantities(h%col%quant(k))%template%name )
+            call output ( ':' )
+          else
+            call output ( '<No template>:' )
+          end if
+          call output ( h%col%Inst(k) )
+          call output ( ' )' )
+          call newLine
+          call dump ( h%block(i,j,k), &
+            & details=my_details, clean=clean, options=dumpOptions )
+        end do
+      end do
+    end do
+    call outputNamedValue( 'Total size', TotalSize )
+    call outputNamedValue( 'optimized already?', h%optimizedAlready )
+    if ( my_details <= -3 ) call resumeOutput
+    contains
+    function skipThisBlock ( s, tid ) result( doWe )
+      ! Return TRUE only if we are to skip dumping this block
+      integer, intent(in) :: s ! 1 : i; 2 : j; 3 : k
+      integer, intent(in) :: tid ! qty template id
+      logical :: doWe
+      character(len=32)  ::     templateNameStr
+      ! Executable
+      templateNameStr = '(not found)'
+      ! call outputNamedValue( 'Checking whether to skip this block', (/ s, tid /) )
+      if ( tid > 0 ) call get_string ( tid, templateNameStr )
+      doWe = ( myBlocks(s) /= '*' .and. &
+        & SwitchDetail( myBlocks(s), trim(templateNameStr), options='-wcf' ) < 0 &
+        & )
+      if ( s > 1 .and. molecules /= '*' ) &
+        & doWe = ( doWe .or. &
+        & .not. isInList( molecules, lowercase(trim(templateNameStr)) ) )
+      if ( s>1 .and. DEEBUG ) then
+        call outputNamedValue ( 'templateNameStr', templateNameStr )
+        call outputNamedValue ( 'myBlocks(s)', myBlocks(s) )
+        call outputNamedValue ( 'molecules', molecules )
+        call outputNamedValue ( 'SwitchDetail', SwitchDetail( myBlocks(s), trim(templateNameStr), options='-wcf' ) )
+        call outputNamedValue ( 'isInList', isInList( molecules, lowercase(trim(templateNameStr)) ) )
+        call outputNamedValue ( 'skip', doWe )
+      end if
+    end function skipThisBlock
+
+  end subroutine Dump_Hessian
+
+  ! ---------------------------------------- Dump_Hessian_Database -----
+  subroutine Dump_Hessian_Database ( H, Details, Clean, Options )
+    type (Hessian_T), intent(in) :: H(:)
+    integer, intent(in), optional :: Details ! See Dump_Hessian
+    logical, intent(in), optional :: CLEAN   ! print \size
+    character(len=*), intent(in), optional :: options
+
+    integer :: I
+
+    do i = 1, size(h)
+      call dump ( h(i), details=details, clean=clean, options=options )
+    end do
+
+  end subroutine Dump_Hessian_Database
+
+  ! ------------------------------- Hessian_Vector_Vector_Multiply -----
+  subroutine Hessian_Vector_Vector_Multiply ( H, V, P, Scalar, Update )
+  !{ Multiply Hessian {\tt H} by vector {\tt V} twice, with a factor of
+  !  {\tt scalar}, giving {\tt P}: $P^k := P^k + \text{\tt scalar}\times
+  !  H^k_{ij} V^i V^j$. This is the  second-order term of a Taylor
+  !  series when {\tt scalar} = $\frac12$.  {\tt P} is initially set to
+  !  zero unless {\tt Update} is present and true.
+
+    use HESSIANMODULE_0, only: MULTIPLY
+    use MLSKINDS, only: RV
+    use VECTORSMODULE, only: VECTOR_T
+
+    type(Hessian_T), intent(in) :: H
+    type(Vector_T), intent(in) :: V
+    type(Vector_T), intent(inout) :: P
+    real(rv), intent(in) :: Scalar
+    logical, intent(in), optional :: Update
+
+    integer :: I, J, K                  ! Loop indices
+    integer :: IQ, JQ, KQ               ! Quantity indices
+    integer :: II, JI, KI               ! Instance indices
+
+    ! Error checking assumes templates were created by L2CF.
+    if ( h%row%vec%template%name /= p%template%name ) &
+      & call MLSMessage ( MLSMSG_Error, moduleName, &
+        & "Row of Hessian (H) incompatible with product (P) vector." )
+    if ( h%col%vec%template%name /= v%template%name ) &
+      & call MLSMessage ( MLSMSG_Error, moduleName, &
+        & "Column of Hessian (H) incompatible with factor (V) vector." )
+
+    if ( DEEBUG ) then
+      call output( "Performing H-v-v times", advance="yes" )
+      call outputNamedValue( "shape(h%block)", shape(h%block) )
+      call outputNamedValue( "max(h%block%1st index)", h%row%nb )
+      call outputNamedValue( "max(h%block%2nd index)", h%col%nb )
+      call outputNamedValue( "max(h%block%3rd index)", h%col%nb )
+    end if
+    do i = 1, h%col%nb
+      iq = h%col%quant ( i )
+      ii = h%col%inst ( i )
+      do j = 1, h%col%nb
+        jq = h%col%quant ( j )
+        ji = h%col%inst ( j )
+        do k = 1, h%row%nb
+          kq = h%row%quant ( k )
+          ki = h%row%inst ( k )
+          ! Rows of H%block (first subscript) correspond to quantities
+          ! of P; columns (second and third subscripts) correspond to
+          ! quantities of V.
+          if ( DEEBUG ) call outputNamedValue( "(k,i,j)", (/k,i,j/) )
+          call multiply ( h%block(k,i,j), &
+            & v%quantities(iq)%values(:,ii), &
+            & v%quantities(jq)%values(:,ji), scalar, &
+            & p%quantities(kq)%values(:,ki), &
+            & update )
+        end do
+      end do
+    end do
+
+  end subroutine Hessian_Vector_Vector_Multiply
+
+  ! ----------------------------------------- InsertHessianPlane_1 -----
+  subroutine InsertHessianPlane_1 ( H, M, B, EL, MOLECULES, MIRROR )
+    ! Insert matrix M as a plane (block B, element EL) of the Hessian H
+    ! If Mirror is set, populate the transpose set also
+    use HESSIANMODULE_0, only: INSERTHESSIANPLANE
+    use INTRINSIC, only: L_TEMPERATURE
+    use MATRIXMODULE_1, only: MATRIX_T
+    ! Dummy arguments
+    type(Hessian_T), intent(inout) :: H
+    type(Matrix_T), intent(in) :: M
+    integer, intent(in) :: B            ! One of the column blocks
+    integer, intent(in) :: EL           ! The element of that block
+    integer, intent(in), optional, target :: MOLECULES(:) ! don't save things not
+                                        ! in this list, unless it's empty
+    logical, intent(in), optional :: MIRROR
+    ! Local variables
+    integer :: CB                       ! Column block
+    integer :: RB                       ! Row block
+    integer :: Me = -1                  ! String index for trace cacheing
+    logical :: MYMIRROR                 ! Copy of mirror
+    integer, pointer :: MyMolecules(:)
+
+    call trace_begin ( me, 'InsertHessianPlane_1', cond=.false. )
+    myMirror = .false.
+    if ( present ( mirror ) ) myMirror = mirror
+    nullify ( myMolecules )
+    if ( present(molecules) ) then
+      if ( size(molecules) > 0 ) then
+        myMolecules => molecules
+        ! Is B for a block we want to keep?
+        if ( m%col%vec%quantities(m%col%quant(b))%template%quantityType /= l_temperature &
+           & .and. .not. &
+           & any( m%col%vec%quantities(m%col%quant(b))%template%molecule == &
+           &      myMolecules) ) then
+          call trace_end ( cond=.false. )
+          return
+        endif
+      end if
+    end if
+
+    ! Check that the Jacobian and Hessian match
+    if ( h%col%vec%template%name /= m%col%vec%template%name &
+      & .or. h%row%vec%template%name /= m%row%vec%template%name &
+      & .or. (h%col%instFirst .neqv. m%col%instFirst) &
+      & .or. (h%row%instFirst .neqv. m%row%instFirst) )&
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Hessian and Matrix incompatible in InsertHessianPlane' )
+
+    ! Loop over the rows
+    do rb = 1, H%row%nb
+      do cb = 1, H%col%nb
+        if ( associated(myMolecules) ) then
+          ! Is CB for a block we want to keep?
+          if ( m%col%vec%quantities(m%col%quant(cb))%template%quantityType /= l_temperature &
+            & .and. .not. &
+            & any( m%col%vec%quantities(m%col%quant(cb))%template%molecule == &
+            &      myMolecules) ) cycle 
+        end if
+        call InsertHessianPlane ( H%block(rb,cb,b), M%block(rb,cb), el )
+        if ( myMirror ) then
+          call InsertHessianPlane ( H%block(rb,b,cb), M%block(rb,cb), el, &
+          & mirroring=.true. )
+        end if
+      end do
+    end do
+    
+    call trace_end ( cond=.false. )
+  end subroutine InsertHessianPlane_1
+
+  ! ----------------------------------------------- NullifyHessian -----
+  subroutine NullifyHessian_1 ( H )
+    ! Given a matrix, nullify all the pointers associated with it
+    type(Hessian_T), intent(inout) :: H
+
+    ! Executable code
+    h%name = 0
+    call nullifyRCInfo ( h%col )
+    call nullifyRCInfo ( h%row )
+    nullify ( h%block )
+  end subroutine NullifyHessian_1
+
+  ! -------------------------------------------- OptimizeHessian_1 -----
+  subroutine OptimizeHessian_1 ( H )
+  ! Get rid of duplicates and zeroes
+    type (Hessian_T), intent(inout) :: H
+    integer :: I, J, K
+    if ( h%optimizedAlready ) return
+    do k = lbound(h%block,3), ubound(h%block,3)
+      do j = lbound(h%block,2), ubound(h%block,2)
+        do i = lbound(h%block,1), ubound(h%block,1)
+          call optimizeBlock ( h%block(i,j,k) )
+        end do
+      end do
+    end do
+    h%optimizedAlready = .true.
+  end subroutine OptimizeHessian_1
+
+  ! ------------------------------------------ StreamlineHessian_1 -----
+  ! Given a Hessian, trim off the elements that are further away than indicated in
+  ! scale height (for zeta coordinates) or geodAngle.  In each block, zero out
+  ! any that are smaller in magnitude than the maximum by
+  ! a factor of threshold.
+  
+  ! Among the many mistakes we have corrected is the undeclared decision not
+  ! to streamline "diagonal blocks", i.e. those blocks for the column
+  ! numbers j and k are equal
+  subroutine StreamlineHessian_1 ( H, Surface, ScaleHeight, GeodAngle, Threshold )
+
+    use HESSIANMODULE_0, only: STREAMLINEHESSIAN
+    use MLSKINDS, only: R8
+    use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T
+    type (Hessian_T), intent(inout) :: H
+    type (HessianElement_T), pointer :: HBU, HBL ! In Upper and Lower triangle
+    integer, intent(in) ::  Surface     ! Negative if not specified
+    real(r8), intent(in) :: ScaleHeight ! Negative if not specified
+    real(r8), intent(in) :: GeodAngle   ! Negative if not specified
+    real(r8), intent(in) :: Threshold   ! Negative if not specified
+
+    type (QuantityTemplate_T), pointer :: Q1, Q2 ! For 1st, 2nd cols of H
+    integer :: P1, P2   ! Profile indices for 1st, 2nd cols of H
+    integer :: I, J, K  ! Loop counters
+    logical :: DROPBLOCK
+    logical :: VERBOSE
+
+    verbose = ( switchDetail(switches, 'hess') > -1 )
+    h%optimizedAlready = .false.
+    if ( verbose ) then
+      call outputNamedValue( 'Streamlining Hessian sized', (/h%row%nb, h%col%nb/) )
+      call outputNamedValue( 'ScaleHeight', ScaleHeight )
+      call outputNamedValue( 'Surface   ', surface )
+      call outputNamedValue( 'Threshold ', threshold )
+    endif
+    do i = 1, h%row%nb
+      do j = 1, h%col%nb - 1
+        p1 = h%col%inst(j)
+        q1 => h%col%vec%quantities ( h%col%quant(j) ) % template
+        do k = j + 1, h%col%nb
+          p2 = h%col%inst(k)
+          q2 => h%col%vec%quantities ( h%col%quant(k) ) % template
+
+          hbu => h%block ( i, j, k )
+          hbl => h%block ( i, k, j )
+          if ( .not. any( hbu%kind == (/h_full, h_sparse/) ) .and. &
+            &  .not. any( hbl%kind == (/h_full, h_sparse/) ) ) cycle
+          
+          ! Decide whether to drop these on horizontal grounds
+          dropBlock = .false.
+          if ( q1%stacked .and. q2%stacked .and. ( geodAngle > 0.0 ) ) &
+            & dropBlock = abs ( q1%phi(1,p1) - q2%phi(1,p2) ) > geodAngle
+          if ( dropBlock ) then
+            if ( verbose ) &
+              & call output( 'Dropping these blocks horizontally', advance='yes' )
+            call ClearBlock ( hbu )
+            call ClearBlock ( hbl )
+          else if ( q1%coherent .and. q2%coherent ) then
+            if ( verbose ) &
+              & call outputNamedValue( 'Streamlining these blocks', (/i,j,k/) )
+            call streamlineHessian ( hbu, q1, q2, surface, scaleHeight, threshold )
+            call streamlineHessian ( hbl, q2, q1, surface, scaleHeight, threshold )
+          end if
+        end do
+      end do
+      ! Now we must go back and do the diagonal blocks, too
+      do k = 1, h%col%nb
+        p2 = h%col%inst(k)
+        q2 => h%col%vec%quantities ( h%col%quant(k) ) % template
+
+        hbu => h%block ( i, k, k )
+        if ( .not. any( hbu%kind == (/h_full, h_sparse/) ) ) cycle
+
+        if ( q2%coherent ) then
+          if ( verbose ) &
+            & call outputNamedValue( 'Streamlining this diagonal block', (/i,k/) )
+          call streamlineHessian ( hbu, q2, q2, surface, scaleHeight, threshold )
+        end if
+      end do
+    end do
+    H%optimizedAlready = .true.
+  end subroutine StreamlineHessian_1
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: HessianModule_1.f90,v 2.36 2014/09/04 23:42:47 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module HessianModule_1
+
+! $Log: HessianModule_1.f90,v $
+! Revision 2.36  2014/09/04 23:42:47  vsnyder
+! More complete and accurate allocate/deallocate size tracking
+!
+! Revision 2.35  2014/01/09 00:25:06  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
+! Revision 2.34  2013/09/24 23:27:14  vsnyder
+! Use Get_Where or Print_Source to start error messages
+!
+! Revision 2.33  2013/08/31 01:24:53  vsnyder
+! Replace MLSMessageCalls with trace_begin and trace_end
+!
+! Revision 2.32  2013/06/12 02:10:27  vsnyder
+! Cruft removal
+!
+! Revision 2.31  2012/02/16 22:46:45  pwagner
+! Separated Dump_Hessian_Layout from Dump_Hessian
+!
+! Revision 2.30  2012/02/02 01:12:36  pwagner
+! Added CopyHessianValue like what we do with matrices
+!
+! Revision 2.29  2012/01/30 18:16:28  pwagner
+! Fixed bug that led to segment faults in goldbrick
+!
+! Revision 2.28  2012/01/27 01:03:05  pwagner
+! Potemkin optional arg can create empty Hessian w/o allocating anything
+!
+! Revision 2.27  2012/01/25 01:13:45  pwagner
+! Fixed typo in parameter name
+!
+! Revision 2.26  2011/10/10 23:59:00  pwagner
+! Added InsertHessianPlane to MLSCallStack
+!
+! Revision 2.25  2011/10/07 00:03:32  pwagner
+! Some improvements to speed; still hangs though in Streamline
+!
+! Revision 2.24  2011/09/20 22:35:45  pwagner
+! Repaired most obvious bugs in Streamline
+!
+! Revision 2.23  2011/04/02 01:21:55  vsnyder
+! Don't check molecules in InsertHessianPlane_1 if block is for temperature
+!
+! Revision 2.22  2011/03/31 19:54:41  vsnyder
+! Delete declarations for unused entities
+!
+! Revision 2.21  2011/03/02 02:04:29  vsnyder
+! TeXnicalities, add Molecules argument to InsertHessianPlane_1
+!
+! Revision 2.20  2011/02/25 22:01:39  pwagner
+! Dump Hessian blocks as layout of S[parse], F[ull], .[bsent] chars
+!
+! Revision 2.19  2011/02/18 17:53:29  pwagner
+! dumpOptions needed to be longer; long enough?; print list of molecule derivatives
+!
+! Revision 2.18  2011/02/05 01:38:50  pwagner
+! Passes DumpOptions d[..] to dump routines
+!
+! Revision 2.17  2010/11/25 01:17:11  pwagner
+! Tweaked an output
+!
+! Revision 2.16  2010/11/19 23:57:20  pwagner
+! May choose which molecule's blocks to diff; set streamline gap by num of surfaces
+!
+! Revision 2.15  2010/11/08 19:01:58  pwagner
+! Fixed something NAG and Lahey called a bug
+!
+! Revision 2.14  2010/11/05 23:02:06  pwagner
+! Dump subroutine takes new options arg
+!
+! Revision 2.13  2010/11/05 20:27:28  vsnyder
+! Delete unused declarations.  Rename Kind argument of CreateHessianBlock_1
+! as H_Kind to make the KIND intrinsic function available.  Add an optional
+! Fill argument to CreateHessianBlock_1.
+!
+! Revision 2.12  2010/11/03 18:31:41  pwagner
+! Dumps now take moleculelist to choose which blocks to dump
+!
+! Revision 2.11  2010/09/16 23:54:57  pwagner
+! dump with details=-3 warns of NaNs
+!
+! Revision 2.10  2010/08/20 23:17:48  pwagner
+! May specify which blocks to dump by name
+!
+! Revision 2.9  2010/08/13 22:06:22  pwagner
+! Added diff; skips mention of absent blocks
+!
+! Revision 2.8  2010/06/29 19:56:40  vsnyder
+! Add SCALAR argument instead of buried 0.5 factor
+!
+! Revision 2.7  2010/06/28 17:02:28  pwagner
+! Fixed a few bugs; added debugging output
+!
+! Revision 2.6  2010/06/23 22:43:15  vsnyder
+! Remove nonsense loop, use h%row where it should be used, in multiply
+!
+! Revision 2.5  2010/05/14 22:45:33  pwagner
+! CreateBlock must be public
+!
+! Revision 2.4  2010/03/26 23:15:45  vsnyder
+! Add Threshold to StreamlineHessian
+!
+! Revision 2.3  2010/03/24 20:38:14  vsnyder
+! Add Dump and Optimize.  Replace 'continue' with 'cycle'.
+!
+! Revision 2.2  2010/02/25 21:14:33  pwagner
+! Replaced non-standard component separator '.' with '%'
+!
+! Revision 2.1  2010/02/25 18:14:02  pwagner
+! First commit
+!
+@
+
+
+2.36
+log
+@More complete and accurate allocate/deallocate size tracking
+@
+text
+@d19 1
+a19 1
+  use ALLOCATE_DEALLOCATE, only: Test_Allocate, TEST_DEALLOCATE
+d25 1
+a106 2
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+
+d168 1
+d183 4
+d189 1
+a189 1
+      & elementSize = storage_size(h%block) / 8 )
+d228 1
+d247 2
+d250 1
+a250 1
+      call test_deallocate ( status, ModuleName, "Hessian%Block", k )
+d263 2
+a264 1
+    integer :: hessianIndex, Status
+d270 3
+d274 1
+a274 1
+      call test_deallocate ( status, moduleName, 'database', 0 )
+d912 1
+a912 1
+       "$Id: HessianModule_1.f90,v 2.35 2014/01/09 00:25:06 pwagner Exp $"
+d922 3
+@
+
+
+2.35
+log
+@Some procedures formerly in output_m now got from highOutput
+@
+text
+@d19 1
+a19 1
+  use ALLOCATE_DEALLOCATE, only: TEST_DEALLOCATE
+d26 1
+a26 2
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, &
+    & MLSMSG_DEALLOCATE, MLSMSG_ERROR, MLSMSG_WARNING
+d106 2
+d181 1
+a181 1
+    endif
+d183 3
+a185 2
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate // "H%Block in CreateEmptyHessian" )
+d241 1
+d243 1
+a243 2
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & MLSMSG_DeAllocate // "HESSIAN%H in DestroyHessian" )
+d901 1
+a901 1
+       "$Id: HessianModule_1.f90,v 2.34 2013/09/24 23:27:14 vsnyder Exp $"
+d911 3
+@
+
+
+2.34
+log
+@Use Get_Where or Print_Source to start error messages
+@
+text
+@d24 2
+a25 1
+  use Lexer_Core, only: Where_T
+d30 1
+a30 1
+  use OUTPUT_M, only: BLANKSTOCOLUMN, NEWLINE, OUTPUT, OUTPUTNAMEDVALUE
+d899 1
+a899 1
+       "$Id: HessianModule_1.f90,v 2.33 2013/08/31 01:24:53 vsnyder Exp $"
+d909 3
+@
+
+
+2.33
+log
+@Replace MLSMessageCalls with trace_begin and trace_end
+@
+text
+@d24 1
+d39 2
+a40 2
+    integer :: Name = 0  ! Sub-rosa index of Hessian name, if any, else zero
+    integer :: Where = 0 ! Source_ref for creation if by L2CF
+d164 1
+a164 1
+    integer, intent(in), optional :: Where             ! source_ref
+d225 1
+a225 1
+    hessian%where = 0
+d307 1
+a307 1
+    if ( h1%where > 0 .and. h2%where > 0 ) then
+d516 1
+a516 1
+    if ( h%where > 0 ) then
+d898 1
+a898 1
+       "$Id: HessianModule_1.f90,v 2.32 2013/06/12 02:10:27 vsnyder Exp $"
+d908 3
+@
+
+
+2.32
+log
+@Cruft removal
+@
+text
+@d24 1
+a24 1
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECALLS, MLSMSG_ALLOCATE, &
+d31 1
+d732 1
+d736 1
+a736 1
+    call MLSMessageCalls( 'push', constantName=ModuleName // '%InsertHessianPlane_1' )
+d748 1
+a748 1
+          call MLSMessageCalls( 'pop' )
+d780 1
+a780 1
+    call MLSMessageCalls( 'pop' )
+d897 1
+a897 1
+       "$Id: HessianModule_1.f90,v 2.31 2012/02/16 22:46:45 pwagner Exp $"
+d907 3
+@
+
+
+2.31
+log
+@Separated Dump_Hessian_Layout from Dump_Hessian
+@
+text
+@a284 1
+    integer :: TotalSize  ! of all blocks
+a323 1
+    totalSize = 0
+a672 4
+    logical :: MYUPDATE                 ! Copy of update
+
+    myUpdate = .false.
+    if ( present ( update ) ) myUpdate = update
+d895 1
+a895 1
+       "$Id: HessianModule_1.f90,v 2.30 2012/02/02 01:12:36 pwagner Exp $"
+d905 3
+@
+
+
+2.30
+log
+@Added CopyHessianValue like what we do with matrices
+@
+text
+@d20 1
+d28 2
+a29 1
+  use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
+d33 1
+a33 1
+  implicit NONE
+d44 1
+d47 1
+a47 1
+  public :: DestroyHessian, DestroyHessianDatabase, Diff, Dump, Hessian_T
+d63 4
+a268 1
+    use OUTPUT_M, only: OUTPUT, NEWLINE
+d402 59
+a463 1
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+d468 2
+a469 3
+    use MLSSTRINGLISTS, only: ISINLIST, OPTIONDETAIL, SWITCHDETAIL
+    use OUTPUT_M, only: NEWLINE, OUTPUT, OUTPUTNAMEDVALUE, &
+      & RESUMEOUTPUT, SUSPENDOUTPUT
+d477 4
+a480 3
+      ! -1 => Just row and col info for each block
+      ! 0 => Dimensions of each block,
+      ! 1 => Values in each block
+a487 1
+    character(len=1), dimension(:,:,:), pointer :: layout => null() ! ., s, or f
+d495 1
+d539 1
+a539 2
+    call allocate_Test( layout, h%row%nb, h%col%nb, h%col%nb, &
+      & 'Layout of blocks in Hessian', moduleName // '%Dump_Hessian', Fill='.' )
+a546 1
+            layout(i, j, k) = 'S'
+a549 1
+            layout(i, j, k) = 'F'
+a607 3
+    call dump( layout, 'Layout of blocks in Hessian', width=h%col%nb )
+    call deallocate_test ( layout, moduleName // '%Dump_Hessian', &
+      & "layout of Hessian Blocks" )
+d901 1
+a901 1
+       "$Id: HessianModule_1.f90,v 2.29 2012/01/30 18:16:28 pwagner Exp $"
+d911 3
+@
+
+
+2.29
+log
+@Fixed bug that led to segment faults in goldbrick
+@
+text
+@d20 3
+a22 3
+  use HESSIANMODULE_0, only: CLEARBLOCK, CREATEBLOCK, &
+    & DESTROYBLOCK, HESSIANELEMENT_T, H_ABSENT, RH, &
+    & H_SPARSE, H_FULL, OPTIMIZEBLOCK
+d42 2
+a43 1
+  public :: AddHessianToDatabase, CreateBlock, CreateEmptyHessian
+d109 26
+d843 1
+a843 1
+       "$Id: HessianModule_1.f90,v 2.28 2012/01/27 01:03:05 pwagner Exp $"
+d853 3
+@
+
+
+2.28
+log
+@Potemkin optional arg can create empty Hessian w/o allocating anything
+@
+text
+@d190 6
+a195 4
+    do i = 1, hessian%row%nb
+      do j = 1, hessian%col%nb
+        do k = 1, hessian%col%nb
+          call DestroyBlock ( hessian%block(i,j,k) )
+d198 1
+a198 1
+    end do
+d816 1
+a816 1
+       "$Id: HessianModule_1.f90,v 2.27 2012/01/25 01:13:45 pwagner Exp $"
+d826 3
+@
+
+
+2.27
+log
+@Fixed typo in parameter name
+@
+text
+@d111 1
+a111 1
+    & Row_Quan_First, Col_Quan_First, Text, where ) result ( H )
+d129 1
+d141 3
+d814 1
+a814 1
+       "$Id: HessianModule_1.f90,v 2.26 2011/10/10 23:59:00 pwagner Exp $"
+d824 3
+@
+
+
+2.26
+log
+@Added InsertHessianPlane to MLSCallStack
+@
+text
+@d80 1
+a80 1
+  logical, parameter :: HIDEBSENTBLOCKS = .true.
+d309 1
+a309 1
+            & ( HIDEBSENTBLOCKS .and. h1%block(i,j,k)%kind == h_absent ) ) cycle
+d448 1
+a448 1
+          if ( HIDEBSENTBLOCKS .and. h%block(i,j,k)%kind == h_absent ) cycle
+d514 1
+a514 1
+    call dump( layout, 'Layout of blocks in hessian', width=h%col%nb )
+d810 1
+a810 1
+       "$Id: HessianModule_1.f90,v 2.25 2011/10/07 00:03:32 pwagner Exp $"
+d820 3
+@
+
+
+2.25
+log
+@Some improvements to speed; still hangs though in Streamline
+@
+text
+@d23 1
+a23 1
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, &
+d649 1
+d660 4
+a663 1
+           &      myMolecules) ) return
+d693 1
+d810 1
+a810 1
+       "$Id: HessianModule_1.f90,v 2.24 2011/09/20 22:35:45 pwagner Exp $"
+d820 3
+@
+
+
+2.24
+log
+@Repaired most obvious bugs in Streamline
+@
+text
+@d39 1
+d513 1
+d517 1
+d708 1
+d716 1
+d746 8
+a753 1
+    verbose = ( switchDetail(switches, 'hgrid') > -1 )
+d764 2
+d778 1
+a778 1
+              & call output( 'Steamlining these blocks', advance='yes' )
+d790 1
+d794 1
+a794 1
+            & call output( 'Steamlining this diagonal block', advance='yes' )
+d799 1
+a799 1
+
+d805 1
+a805 1
+       "$Id: HessianModule_1.f90,v 2.23 2011/04/02 01:21:55 vsnyder Exp $"
+d815 3
+@
+
+
+2.23
+log
+@Don't check molecules in InsertHessianPlane_1 if block is for temperature
+@
+text
+@d19 11
+a29 9
+  use Allocate_Deallocate, only: Test_Deallocate
+  use HessianModule_0, only: ClearBlock, CreateBlock, &
+    & DestroyBlock, HessianElement_T, H_Absent, RH, &
+    & H_Sparse, H_Full, OptimizeBlock
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
+    & MLSMSG_DeAllocate, MLSMSG_Error, MLSMSG_Warning
+  use MatrixModule_1, only: DefineRCInfo, DestroyRCInfo, NullifyRCInfo, RC_Info
+  use Output_M, only: Output, outputNamedValue
+  use VectorsModule, only: Vector_T
+d111 2
+a112 2
+    use Symbol_Types, only: T_identifier
+    use Symbol_Table, only: Enter_Terminal
+d224 6
+a229 6
+    use HessianModule_0, only: Diff
+    use Lexer_core, only: Print_Source
+    use MLSStrings, only: lowercase
+    use MLSStringLists, only: isInList, optionDetail
+    use Output_m, only: Output, NewLine
+    use String_Table, only: Display_String, get_string
+d365 9
+a373 9
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+    use HessianModule_0, only: Dump
+    use Lexer_core, only: Print_Source
+    use MatrixModule_1, only: Dump_RC
+    use MLSStrings, only: lowercase
+    use MLSStringLists, only: isInList, optionDetail, switchDetail
+    use Output_m, only: NewLine, output, outputNamedValue, &
+      & resumeOutput, suspendOutput
+    use String_Table, only: Display_String, GET_STRING
+d568 3
+a570 3
+    use HessianModule_0, only: Multiply
+    use MLSKinds, only: RV
+    use VectorsModule, only: Vector_T
+d629 3
+a631 3
+    use HessianModule_0, only: InsertHessianPlane
+    use Intrinsic, only: L_Temperature
+    use MatrixModule_1, only: Matrix_T
+d719 4
+d725 3
+a727 3
+    use HessianModule_0, only: StreamlineHessian
+    use MLSKinds, only: R8
+    use QuantityTemplates, only: QuantityTemplate_T
+d739 1
+d741 1
+d758 2
+d763 2
+d770 13
+d790 1
+a790 1
+       "$Id: HessianModule_1.f90,v 2.22 2011/03/31 19:54:41 vsnyder Exp $"
+d800 3
+@
+
+
+2.22
+log
+@Delete declarations for unused entities
+@
+text
+@d255 1
+a255 1
+    endif
+d281 1
+a281 1
+    endif
+d297 1
+a297 1
+          endif
+d304 1
+a304 1
+          endif
+d410 1
+a410 1
+    endif
+d437 2
+a438 2
+      endif
+    enddo
+d467 1
+a467 1
+          elseif( molecules /= '*' ) then
+d473 1
+a473 1
+          endif
+d538 1
+a538 1
+      endif
+d598 1
+a598 1
+    endif
+d628 1
+d648 8
+a655 1
+      if ( size(molecules) > 0 ) myMolecules => molecules
+d670 5
+a674 3
+          if ( .not. any( &
+            & m%col%vec%quantities(m%col%quant(cb))%template%molecule == &
+            & myMolecules) ) cycle 
+d752 1
+a752 1
+          elseif ( q1%coherent .and. q2%coherent ) then
+d765 1
+a765 1
+       "$Id: HessianModule_1.f90,v 2.21 2011/03/02 02:04:29 vsnyder Exp $"
+d775 3
+@
+
+
+2.21
+log
+@TeXnicalities, add Molecules argument to InsertHessianPlane_1
+@
+text
+@d225 1
+a225 1
+    use MLSStringLists, only: isInList, optionDetail, switchDetail
+a709 1
+    use Intrinsic, only: L_ZETA
+d755 1
+a755 1
+       "$Id: HessianModule_1.f90,v 2.20 2011/02/25 22:01:39 pwagner Exp $"
+d765 3
+@
+
+
+2.20
+log
+@Dump Hessian blocks as layout of S[parse], F[ull], .[bsent] chars
+@
+text
+@d561 4
+a564 3
+  !  $\frac12$, giving {\tt P}: $P^k = P^k + \frac12 H^k_{ij} V^i V^j$.
+  !  This is the  second-order term of a Taylor series.  {\tt P} is
+  !  initially set to zero unless {\tt Update} is present and true.
+d624 1
+a624 1
+  subroutine InsertHessianPlane_1 ( H, M, B, EL, MIRROR )
+d634 2
+d641 1
+d645 4
+d661 5
+d756 1
+a756 1
+       "$Id: HessianModule_1.f90,v 2.19 2011/02/18 17:53:29 pwagner Exp $"
+d766 3
+@
+
+
+2.19
+log
+@dumpOptions needed to be longer; long enough?; print list of molecule derivatives
+@
+text
+@d363 1
+d388 1
+d439 2
+d448 1
+d452 1
+d510 3
+d743 1
+a743 1
+       "$Id: HessianModule_1.f90,v 2.18 2011/02/05 01:38:50 pwagner Exp $"
+d753 3
+@
+
+
+2.18
+log
+@Passes DumpOptions d[..] to dump routines
+@
+text
+@d385 1
+a385 1
+    character(len=16) :: dumpOptions
+d401 1
+d404 1
+a404 1
+      if ( DEEBUG ) call outputNamedValue('Molecules', Molecules)
+d407 1
+a407 1
+      if ( DEEBUG ) call outputNamedValue('dumpOptions', dumpOptions)
+d428 9
+d734 1
+a734 1
+       "$Id: HessianModule_1.f90,v 2.17 2010/11/25 01:17:11 pwagner Exp $"
+d744 3
+@
+
+
+2.17
+log
+@Tweaked an output
+@
+text
+@d385 1
+d398 1
+d404 3
+d489 2
+a490 1
+          call dump ( h%block(i,j,k), details=my_details, clean=clean )
+d724 1
+a724 1
+       "$Id: HessianModule_1.f90,v 2.16 2010/11/19 23:57:20 pwagner Exp $"
+d734 3
+@
+
+
+2.16
+log
+@May choose which molecule's blocks to diff; set streamline gap by num of surfaces
+@
+text
+@d261 2
+d269 2
+d718 1
+a718 1
+       "$Id: HessianModule_1.f90,v 2.15 2010/11/08 19:01:58 pwagner Exp $"
+d728 3
+@
+
+
+2.15
+log
+@Fixed something NAG and Lahey called a bug
+@
+text
+@d16 2
+a17 2
+! This module provides the elementary Hessian type.  Blocks of this
+! type are used to compose block Hessians.
+d221 1
+a221 1
+  subroutine Diff_Hessians ( H1, H2, Details, Clean )
+d224 2
+d227 1
+a227 1
+    use String_Table, only: Display_String
+d229 1
+a229 1
+    type (Hessian_T), intent(in) :: H1, H2
+d236 1
+d238 1
+a238 1
+
+d240 1
+d242 1
+d248 8
+d283 13
+a295 1
+          if ( h1%block(i,j,k)%kind /= h2%block(i,j,k)%kind ) then
+d334 2
+a335 1
+          call Diff ( h1%block(i,j,k), h2%block(i,j,k), details=my_details, clean=clean )
+d340 14
+d661 5
+a665 1
+  subroutine StreamlineHessian_1 ( H, ScaleHeight, GeodAngle, Threshold )
+a670 4
+    ! Given a Hessian, trim off the elements that are further away than indicated in
+    ! scale height (for zeta coordinates) or geodAngle.  In each block, replace
+    ! ones that are smaller in magnitude than the maximum in the block by
+    ! a factor of threshold by zero.
+d673 1
+d701 3
+a703 10
+          else
+            ! Now clear elements on vertical grounds, but only for simple quantities
+            if ( q1%coherent .and. q1%verticalCoordinate == l_zeta .and. &
+               & q2%coherent .and. q2%verticalCoordinate == l_zeta .and. &
+               & scaleHeight > 0.0 ) then
+
+              call streamlineHessian ( hbu, q1, q2, scaleHeight, threshold )
+              call streamlineHessian ( hbl, q2, q1, scaleHeight, threshold )
+
+            end if
+d714 1
+a714 1
+       "$Id: HessianModule_1.f90,v 2.14 2010/11/05 23:02:06 pwagner Exp $"
+d724 3
+@
+
+
+2.14
+log
+@Dump subroutine takes new options arg
+@
+text
+@d21 1
+a21 1
+    & DestroyBlock, HessianElement_T, H_Absent, &
+d161 1
+a161 1
+    real(kind(h%block(rowNum,colNum1,colNum2)%values)), intent(in), optional :: &
+d680 1
+a680 1
+       "$Id: HessianModule_1.f90,v 2.13 2010/11/05 20:27:28 vsnyder Exp $"
+d690 3
+@
+
+
+2.13
+log
+@Delete unused declarations.  Rename Kind argument of CreateHessianBlock_1
+as H_Kind to make the KIND intrinsic function available.  Add an optional
+Fill argument to CreateHessianBlock_1.
+@
+text
+@d318 1
+a318 1
+    & onlyTheseBlocks, MoleculeList, Clean )
+d323 3
+a325 2
+    use MLSStringLists, only: optionDetail, switchDetail
+    use Output_m, only: Output, NewLine, resumeOutput, suspendOutput
+d337 1
+a337 1
+    character(len=*), intent(in), optional :: moleculeList
+d339 2
+a340 1
+
+d342 1
+a344 1
+    character(len=128) :: molecules
+d346 1
+a346 1
+
+d354 5
+a358 1
+    if ( present(moleculeList) ) molecules = moleculeList
+d392 17
+a408 9
+          if ( skipThisBlock ( &
+            & 1, h%row%vec%quantities(h%row%quant(i))%template%name &
+            &  ) ) cycle
+          if ( skipThisBlock ( &
+            & 2, h%col%vec%quantities(h%col%quant(j))%template%name &
+            &  ) ) cycle
+          if ( skipThisBlock ( &
+            & 3, h%col%vec%quantities(h%col%quant(k))%template%name &
+            &  ) ) cycle
+d459 11
+a469 3
+      if ( s > 1 ) &
+        & doWe = ( doWe .and. &
+        & optionDetail( molecules, lowercase(trim(templateNameStr)) ) == 'yes' )
+d475 1
+a475 1
+  subroutine Dump_Hessian_Database ( H, Details, Clean )
+d479 1
+d484 1
+a484 1
+      call dump ( h(i), details=details, clean=clean )
+d680 1
+a680 1
+       "$Id: HessianModule_1.f90,v 2.12 2010/11/03 18:31:41 pwagner Exp $"
+d690 5
+@
+
+
+2.12
+log
+@Dumps now take moleculelist to choose which blocks to dump
+@
+text
+@d19 1
+a19 1
+  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test, Test_Deallocate
+a22 2
+  use LEXER_CORE, only: INIT_LEXER
+  use MLSKinds, only: RM
+d151 2
+a152 1
+  subroutine CreateHessianBlock_1 ( H, RowNum, ColNum1, ColNum2, Kind, InitTuples )
+d159 1
+a159 1
+    integer, intent(in) :: Kind          ! Kind of block, see HessianModule_0
+d161 2
+d167 3
+a169 2
+      & kind, &
+      & initTuples )
+d657 1
+a657 1
+       "$Id: HessianModule_1.f90,v 2.11 2010/09/16 23:54:57 pwagner Exp $"
+d667 3
+@
+
+
+2.11
+log
+@dump with details=-3 warns of NaNs
+@
+text
+@d315 2
+a316 1
+  subroutine Dump_Hessian ( H, Name, Details, onlyTheseBlocks, Clean )
+d320 2
+a321 1
+    use MLSStringLists, only: switchDetail
+d334 1
+d340 1
+d349 2
+d443 3
+d655 1
+a655 1
+       "$Id: HessianModule_1.f90,v 2.10 2010/08/20 23:17:48 pwagner Exp $"
+d665 3
+@
+
+
+2.10
+log
+@May specify which blocks to dump by name
+@
+text
+@d320 1
+a320 1
+    use Output_m, only: Output, NewLine
+d326 1
+a326 1
+      ! <= -3 => no output
+d341 1
+a341 1
+    if ( my_details <= -3 ) return
+d361 1
+d377 1
+a377 1
+          if ( my_details < 0 ) cycle
+d422 1
+d646 1
+a646 1
+       "$Id: HessianModule_1.f90,v 2.9 2010/08/13 22:06:22 pwagner Exp $"
+d656 3
+@
+
+
+2.9
+log
+@Added diff; skips mention of absent blocks
+@
+text
+@d315 1
+a315 1
+  subroutine Dump_Hessian ( H, Name, Details, Clean )
+d319 1
+d321 1
+a321 1
+    use String_Table, only: Display_String
+d331 1
+d336 1
+d343 2
+d377 9
+d421 15
+d644 1
+a644 1
+       "$Id: HessianModule_1.f90,v 2.8 2010/06/29 19:56:40 vsnyder Exp $"
+d654 3
+@
+
+
+2.8
+log
+@Add SCALAR argument instead of buried 0.5 factor
+@
+text
+@d20 2
+a21 1
+  use HessianModule_0, only: ClearBlock, CreateBlock, DestroyBlock, HessianElement_T, H_Absent, &
+d23 1
+d42 1
+a42 1
+  public :: DestroyHessian, DestroyHessianDatabase, Dump, Hessian_T
+d50 4
+d79 1
+d217 97
+d362 1
+d615 1
+a615 1
+       "$Id: HessianModule_1.f90,v 2.7 2010/06/28 17:02:28 pwagner Exp $"
+d625 3
+@
+
+
+2.7
+log
+@Fixed a few bugs; added debugging output
+@
+text
+@d320 1
+a320 1
+  subroutine Hessian_Vector_Vector_Multiply ( H, V, P, Update )
+d327 1
+d333 1
+d374 1
+a374 1
+            & v%quantities(jq)%values(:,ji), &
+d510 1
+a510 1
+       "$Id: HessianModule_1.f90,v 2.6 2010/06/23 22:43:15 vsnyder Exp $"
+d520 3
+@
+
+
+2.6
+log
+@Remove nonsense loop, use h%row where it should be used, in multiply
+@
+text
+@d26 1
+d72 2
+d350 8
+a357 1
+    do i = 1, h%row%nb
+d363 1
+a363 1
+        do k = 1, h%col%nb
+d369 1
+d508 1
+a508 1
+       "$Id: HessianModule_1.f90,v 2.5 2010/05/14 22:45:33 pwagner Exp $"
+d518 3
+@
+
+
+2.5
+log
+@CreateBlock must be public
+@
+text
+@d144 1
+a144 1
+  ! Create the hessian block Z%Block(RowNum,ColNum), which sprang into
+d148 4
+a151 4
+    type (Hessian_T), intent(inout) :: H       ! The matrix having the block
+    integer, intent(in) :: RowNum, ColNum1, ColNum2    ! Row and column of the block
+    integer, intent(in) :: Kind         ! Kind of block, see MatrixModule_0
+    integer, intent(in), optional :: InitTuples  ! Number of nonzeros
+d318 4
+a321 5
+  !{ Multiply a Hessian {\tt H} by {\tt V} twice, with a factor of $\frac12$,
+  !  giving {\tt P}: $P^k = \frac12 H^k_{ij} V^i V^j$ or $P^k = P^k + \frac12
+  !  H^k_{ij} V^i V^j$, depending upon {\tt Update}.  This is the
+  !  second-order term of a Taylor series.  {\tt P} is initially set to zero
+  !  unless {\tt Update} is present and true.
+d331 1
+a331 1
+    integer :: I, J, K, L
+d338 8
+a345 1
+    ! Error checking on campatibility of H%row with P and H%col with V here.
+d354 10
+a363 9
+          kq = h%col%quant ( k )
+          ki = h%col%inst ( k )
+          do l = 1, h%col%vec%quantities(kq)%template%instanceLen
+            call multiply ( h%block(i,j,k), &
+              & v%quantities(iq)%values(:,ii), &
+              & v%quantities(jq)%values(:,ji), &
+              & p%quantities(kq)%values(:,ki), &
+              & myUpdate )
+          end do
+d497 1
+a497 1
+       "$Id: HessianModule_1.f90,v 2.4 2010/03/26 23:15:45 vsnyder Exp $"
+d507 3
+@
+
+
+2.4
+log
+@Add Threshold to StreamlineHessian
+@
+text
+@d38 2
+a39 2
+  public :: AddHessianToDatabase, CreateEmptyHessian, DestroyHessian
+  public :: DestroyHessianDatabase, Dump, Hessian_T
+d490 1
+a490 1
+       "$Id: HessianModule_1.f90,v 2.3 2010/03/24 20:38:14 vsnyder Exp $"
+d500 3
+@
+
+
+2.3
+log
+@Add Dump and Optimize.  Replace 'continue' with 'cycle'.
+@
+text
+@d67 4
+d79 1
+a79 1
+  ! ----------------------------------------  AddHessianToDatabase  -----
+d97 1
+a97 1
+  ! ------------------------------ CreateEmptyHessian ---
+d142 1
+a142 1
+  ! ----------------------------------- CreateHessianBlock_1 ----
+d160 1
+a160 1
+  ! --------------------------------------  DestroyHessian  -----
+d187 1
+a187 1
+  ! --------------------------------------  DestroyHessianDatabase  -----
+d207 1
+a207 1
+  ! -----------------------------------------------  Dump_Hessian  -----
+d302 1
+a302 1
+  ! --------------------------------------  Dump_Hessian_Database  -----
+d363 1
+a363 1
+  ! ---------------------------------- InsertHessianPlane_1 ----
+d404 1
+a404 1
+  ! -------------------------------------- NullifyHessian ------
+d416 1
+a416 1
+  ! -------------------------------------  OptimizeHessian_1  -----
+d430 4
+a433 2
+  ! -------------------------------------- StreamlineHessian ------
+  subroutine StreamlineHessian ( H, scaleHeight, geodAngle )
+d438 3
+a440 1
+    ! scale height (for zeta coordinates) and geodAngle
+d442 8
+a449 8
+    type (HessianElement_T), pointer :: HB
+    real(r8), intent(in) :: scaleHeight
+    real(r8), intent(in) :: geodAngle
+
+    type (QuantityTemplate_T), pointer :: Q1, Q2
+    integer :: P1, P2, S1, S2           ! Profile and surface for column quantities
+    integer :: I, J, K                  ! Loop counters
+    integer :: T, II, JJ, KK            ! More loop counters and indices
+d453 1
+a453 1
+      do j = 1, h%col%nb
+d456 1
+a456 1
+        do k = 1, h%col%nb
+d460 2
+a461 1
+          hb => h%block ( i, j, k )
+d463 1
+a463 1
+          ! Decide whether to drop this on horizontal grounds
+d465 1
+a465 1
+          if ( q1%stacked .and. q2%stacked .and. ( geodAngle > 0 ) ) &
+d468 2
+a469 1
+            call ClearBlock ( hb )
+d472 3
+a474 23
+            if ( .not. q1%coherent .or. .not. q2%coherent ) cycle
+            if ( q1%verticalCoordinate /= l_zeta .or. &
+              &  q2%verticalCoordinate /= l_zeta ) cycle
+
+            select case ( hb%kind )
+            case ( h_absent )
+            case ( h_sparse )
+              do t = 1, hb%tuplesFilled
+                s1 = ( hb%tuples(t)%j-1 ) / q1%noChans + 1
+                s2 = ( hb%tuples(t)%k-1 ) / q1%noChans + 1
+                if ( abs ( q1%surfs(s1,1) - q2%surfs(s2,1) ) > scaleHeight ) &
+                  & hb%tuples(t)%h = 0
+              end do
+            case ( h_full )
+              do kk = 1, hb%nCols2
+                s2 = ( kk-1 ) / q2%noChans + 1
+                do jj = 1, hb%nCols1
+                  s1 = ( jj-1 ) / q1%noChans + 1
+                  if ( abs ( q1%surfs(s1,1) - q2%surfs(s2,1) ) > scaleHeight ) &
+                    & hb%values ( :, jj, kk ) = 0
+                end do
+              end do
+            end select
+d476 4
+a479 2
+            ! Now optimize this block
+            call OptimizeBlock ( hb )
+d485 1
+a485 1
+  end subroutine StreamlineHessian
+d490 1
+a490 1
+       "$Id: HessianModule_1.f90,v 2.2 2010/02/25 21:14:33 pwagner Exp $"
+d500 3
+@
+
+
+2.2
+log
+@Replaced non-standard component separator '.' with '%'
+@
+text
+@d32 1
+a32 1
+    integer :: Name = 0  ! Sub-rosa index of hHessian name, if any, else zero
+d39 3
+a41 2
+  public :: DestroyHessianDatabase, Hessian_T
+  public :: InsertHessianPlane, Multiply, NullifyHessian, StreamlineHessian
+d47 4
+d63 3
+d203 109
+d362 1
+a362 1
+    ! If set, populate the transpose set also
+d379 1
+a379 1
+    ! Check that the jacobian and hessian match
+d391 4
+a394 3
+        if ( myMirror ) &
+          & call InsertHessianPlane ( H%block(rb,b,cb), M%block(rb,cb), &
+          & el, mirroring=.true. )
+d412 14
+d462 1
+a462 1
+            if ( .not. q1%coherent .or. .not. q2%coherent ) continue
+d464 1
+a464 1
+              &  q2%verticalCoordinate /= l_zeta ) continue
+d498 1
+a498 1
+       "$Id: HessianModule_1.f90,v 2.1 2010/02/25 18:14:02 pwagner Exp $"
+d508 3
+@
+
+
+2.1
+log
+@First commit
+@
+text
+@d61 1
+a61 1
+       "$RCSfile: Hessian_1.f90,v $"
+d338 2
+a339 2
+                s1 = ( hb%tuples(t)%j-1 ) / q1.noChans + 1
+                s2 = ( hb%tuples(t)%k-1 ) / q1.noChans + 1
+d345 1
+a345 1
+                s2 = ( kk-1 ) / q2.noChans + 1
+d347 1
+a347 1
+                  s1 = ( jj-1 ) / q1.noChans + 1
+d366 1
+a366 1
+       "$Id: VectorsModule.f90,v 2.147 2010/02/25 18:07:14 pwagner Exp $"
+d375 4
+a378 1
+! $Log: Hessian_1.f90,v $
+@
+

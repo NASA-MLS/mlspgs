@@ -1,0 +1,842 @@
+head	2.17;
+access;
+symbols
+	v5-02-NRT-19:2.17
+	v6-00:2.17
+	v5-02-NRT-18:2.17
+	v5-02:2.17
+	v5-01-NRT-17:2.17
+	v5-01-NRT-16:2.17
+	v5-01-NRT-15:2.17
+	v5-01-NRT-14:2.17
+	neuralnetworks-1-0:2.17.0.14
+	cfm-single-freq-0-1:2.17.0.12
+	v5-01:2.17
+	v5-00:2.17
+	v4-23-TA133:2.17.0.10
+	mus-emls-1-70:2.17.0.8
+	rel-1-0-englocks-work:2.17.0.6
+	VUMLS1-00:2.17
+	VPL1-00:2.17
+	V4-22-NRT-08:2.17
+	VAM1-00:2.17
+	V4-21:2.17.0.4
+	V4-13:2.17
+	V4-12:2.17
+	V4-11:2.17
+	V4-10:2.17
+	V3-43:2.17
+	M4-00:2.17
+	V3-41:2.17
+	V3-40-PlusGM57:2.17.0.2
+	V2-24-NRT-04:2.16
+	V3-33:2.17
+	V2-24:2.16
+	V3-31:2.17
+	V3-30-NRT-05:2.17
+	cfm-01-00:2.17
+	V3-30:2.17
+	V3-20:2.17
+	V3-10:2.17
+	V2-23-NRT-02:2.16
+	V2-23:2.16
+	V2-22-NRT-01:2.16
+	V2-22:2.16
+	V2-21:2.16
+	V2-20:2.16
+	V2-11:2.16
+	V2-10:2.16
+	V2-00:2.16
+	V1-51:2.15
+	V1-50:2.15
+	V1-45:2.15
+	V1-44:2.15
+	V1-43:2.15
+	V1-42:2.15
+	V1-41:2.15
+	V1-32:2.15
+	V1-40:2.15
+	V1-31:2.15
+	V1-30:2.15
+	V1-13:2.14
+	V1-12:2.14
+	V1-11:2.14
+	V1-10:2.14
+	newfwm-feb03:2.14.0.2
+	V1-04:2.11
+	V1-03:2.11
+	V1-02:2.11
+	V1-00:2.11
+	newfwm-sep01:2.11.0.2
+	V0-7:2.11
+	V0-5-Level2:2.10
+	V0-5-SIPS:2.10
+	V0_1:1.4;
+locks; strict;
+comment	@# @;
+
+
+2.17
+date	2009.06.23.18.25.42;	author pwagner;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2005.06.22.17.25.49;	author pwagner;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2003.06.06.22.48.24;	author pwagner;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2002.10.08.00.09.09;	author pwagner;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2002.10.01.22.03.54;	author pwagner;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2002.10.01.20.27.26;	author bwknosp;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2001.05.12.00.24.44;	author livesey;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2001.03.15.00.36.03;	author pwagner;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2001.03.14.00.33.42;	author pwagner;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2001.03.03.00.45.25;	author pwagner;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2001.02.24.01.01.26;	author pwagner;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2001.02.23.17.27.20;	author pwagner;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2001.02.02.21.39.56;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2000.09.17.20.49.33;	author pumphrey;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2000.09.14.11.16.00;	author pumphrey;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2000.09.13.16.56.22;	author pumphrey;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2000.09.13.16.28.49;	author pumphrey;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2000.09.05.17.41.06;	author dcuddy;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2000.06.19.23.47.00;	author lungu;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2000.01.21.01.22.02;	author lungu;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.17
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!===============================================================================
+module HDFEOS               ! F90 interface to HDF-EOS.
+!===============================================================================
+
+  implicit none
+  public
+
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+  ! Now define f90 interfaces for some HDF-EOS.
+
+  interface
+
+  ! grid interfaces
+   integer function GDATTACH ( GDFID, GRIDNAME )
+      integer, intent(in) :: GDFID
+      character (len=*), intent(in) :: GRIDNAME
+    end function GDATTACH
+
+    integer function GDCLOSE ( FILE_ID )
+      integer, intent(in) :: FILE_ID
+    end function GDCLOSE
+
+    integer function GDCREATE ( GDFID, GRIDNAME,&
+      & XDIMSIZE,YDIMSIZE,UPLEFT,LOWRIGHT )
+      integer, intent(in) :: GDFID
+      character (len=*), intent(in) :: GRIDNAME
+      integer,intent(in)::XDIMSIZE
+      integer,intent(in)::YDIMSIZE
+      double precision,dimension(2),intent(in)::UPLEFT
+      double precision,dimension(2),intent(in)::LOWRIGHT
+    end function GDCREATE
+
+    integer function GDDETACH ( GRIDID )
+      integer, intent(in) :: GRIDID
+    end function GDDETACH
+
+    integer function GDDIMINFO (GRIDID,DIMNAME)
+       integer,intent(in)::GRIDID
+       character(len=*),intent(IN)::DIMNAME
+    end function GDDIMINFO
+
+    integer function GDFLDINFO (GRIDID,FIELDNAME,RANK,DIMS,NUMBERTYPE,DIMLIST)
+       integer,intent(in)::GRIDID
+       character(len=*),intent(IN)::FIELDNAME
+       integer,intent(out),dimension(*):: DIMS
+       integer,intent(out)             :: RANK, NUMBERTYPE
+       character(len=*),intent(OUT)::DIMLIST
+    end function GDFLDINFO
+
+    integer function GDINQATTRS (GRIDID,ATTRLIST,STRINGBUFFERSIZE)
+       integer,intent(in)::GRIDID
+       character(len=*),intent(out)::ATTRLIST
+       integer,intent(out)::STRINGBUFFERSIZE
+    end function GDINQATTRS
+    
+    integer function GDINQDIMS (GRIDID,DIMNAME,DIMS)
+       integer,intent(in)::GRIDID
+       character(len=*),intent(out)::DIMNAME
+       integer,intent(out),dimension(*)::DIMS
+    end function GDINQDIMS
+    
+    integer function GDINQFLDS (GRIDID, FIELDLIST, RANK, NUMBERTYPE)
+       integer,intent(in)::GRIDID
+       character(len=*),intent(out)::FIELDLIST
+       integer,intent(out),dimension(*)::RANK, NUMBERTYPE
+    end function GDINQFLDS
+    
+    integer function GDINQGRID (FILENAME, GRIDLIST, STRINGBUFFERSIZE)
+       character (len=*), intent(in) :: FILENAME
+       character(len=*),intent(out)::GRIDLIST
+       integer,intent(out)::STRINGBUFFERSIZE
+    end function GDINQGRID
+    
+    integer function GDNENTRIES (GRIDID, ENTRYCODE, STRINGBUFFERSIZE)
+       integer,intent(in)::GRIDID
+       integer,intent(in)::ENTRYCODE
+       integer,intent(out)::STRINGBUFFERSIZE
+    end function GDNENTRIES
+    
+    integer function GDOPEN ( FILENAME, ACCESS_MODE )
+      character (len=*), intent(in) :: FILENAME
+      integer, intent(in) :: ACCESS_MODE
+    end function GDOPEN
+
+  ! swath interfaces
+    integer function SWATTACH ( SWFID, SWATHNAME )
+      integer, intent(in) :: SWFID
+      character (len=*), intent(in) :: SWATHNAME
+    end function SWATTACH
+
+    integer function SWCLOSE ( FILE_ID )
+      integer, intent(in) :: FILE_ID
+    end function SWCLOSE
+
+    integer function SWCREATE ( SWFID, SWATHNAME )
+      integer, intent(in) :: SWFID
+      character (len=*), intent(in) :: SWATHNAME
+    end function SWCREATE
+
+    integer function SWDEFDFLD ( SWATHID, FIELDNAME, DIMLIST, NUMBERTYPE, &
+      & MERGE )
+      integer, intent(in) :: SWATHID
+      character (len=*), intent(in) :: FIELDNAME
+      character (len=*), intent(in) :: DIMLIST
+      integer, intent(in) :: NUMBERTYPE
+      integer, intent(in) :: MERGE
+    end function SWDEFDFLD
+
+    integer function SWDEFDIM ( SWATHID, FIELDNAME, DIM )
+      integer, intent(in)  :: SWATHID
+      character (len=*), intent(in) :: FIELDNAME
+      integer, intent(in) :: DIM
+    end function SWDEFDIM 
+
+    integer function SWDEFGFLD ( SWATHID, FIELDNAME, DIMLIST, NUMBERTYPE, &
+      & MERGE )
+      integer, intent(in) :: SWATHID
+      character (len=*), intent(in) :: FIELDNAME
+      character (len=*), intent(in) :: DIMLIST
+      integer, intent(in) :: NUMBERTYPE
+      integer, intent(in) :: MERGE
+    end function SWDEFGFLD
+
+    integer function SWDETACH ( SWID )
+      integer, intent(in) :: SWID
+    end function SWDETACH
+
+    integer function SWOPEN ( FILENAME, ACCESS_MODE )
+      character (len=*), intent(in) :: FILENAME
+      integer, intent(in) :: ACCESS_MODE
+    end function SWOPEN
+
+    integer function SWINQSWATH (FILENAME,SWATHLIST,STRBUFSIZE)
+      character (len=*), intent(in) :: FILENAME
+      character (len=*), intent(inout) :: SWATHLIST
+      integer, intent(out):: STRBUFSIZE
+    end function SWINQSWATH
+
+    integer function SWINQDIMS (SWATHID,DIMNAME,DIMS)
+       integer,intent(in)::SWATHID
+       character(len=*),intent(out)::DIMNAME
+       integer,intent(out),dimension(*)::DIMS
+    end function SWINQDIMS
+    
+    integer function SWINQDFLDS (SWATHID, FIELDLIST, RANK, NUMBERTYPE)
+       integer,intent(in)::SWATHID
+       character(len=*),intent(out)::FIELDLIST
+       integer,intent(out),dimension(*)::RANK, NUMBERTYPE
+    end function SWINQDFLDS
+    
+    integer function SWDIMINFO (SWATHID,DIMNAME)
+       integer,intent(in)::SWATHID
+       character(len=*),intent(IN)::DIMNAME
+    end function SWDIMINFO
+
+
+  end interface
+
+!PAGE_BREAK
+!---------------------------------
+! Access types for gdnentries
+!---------------------------------
+
+   INTEGER, PARAMETER :: HDFE_NENTDIM            =     0
+   INTEGER, PARAMETER :: HDFE_NENTDFLD           =     4
+
+!====================
+contains 
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: read_apriori.f90 is it here $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module HDFEOS
+!====================
+
+!
+! $Log: HDF-EOS.f90,v $
+! Revision 2.16  2005/06/22 17:25:49  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.15  2003/06/06 22:48:24  pwagner
+! Added interface for gdcreate
+!
+! Revision 2.14  2002/10/08 00:09:09  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.13  2002/10/01 22:03:54  pwagner
+! Fixed RCS Ident Block
+!
+! Revision 2.12  2002/10/01 20:27:26  bwknosp
+! Fixed problem
+!
+! Revision 2.11  2001/05/12 00:24:44  livesey
+! Changed intent out to inout for SWInqSwath
+!
+! Revision 2.10  2001/03/15 00:36:03  pwagner
+! Added gdfldinfo
+!
+! Revision 2.9  2001/03/14 00:33:42  pwagner
+! Added gdinqattrs
+!
+! Revision 2.8  2001/03/03 00:45:25  pwagner
+! New grid interfaces--except for gdrdfld
+!
+! Revision 2.7  2001/02/24 01:01:26  pwagner
+! Started adding gd routine interfaces
+!
+! Revision 2.6  2001/02/23 17:27:20  pwagner
+! Added Access types for gdnentries
+!
+! Revision 2.5  2001/02/02 21:39:56  pwagner
+! Added swinqdflds
+!
+! Revision 2.4  2000/09/17 20:49:33  pumphrey
+! Removed references to SWRDFLD as these are handled by swapi.f90
+!
+! Revision 2.3  2000/09/14 11:16:00  pumphrey
+! HCP added SWRDFLD_REAL etc as ways to call SWRDFLD. Is there a better way?
+!
+! Revision 2.2  2000/09/13 16:56:22  pumphrey
+! HCP added  swdiminfo and swinqdims -- more to do, though.
+!
+! Revision 2.1  2000/09/13 16:28:49  pumphrey
+! HCP added SWINQSWATH
+!
+! Revision 2.0  2000/09/05 17:41:06  dcuddy
+! Change revision to 2.0
+!
+! Revision 1.5  2000/09/02 01:58:30  vsnyder
+! Cosmetic changes
+!
+@
+
+
+2.16
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d186 1
+a187 1
+!---------------------------- RCS Ident Info -------------------------------
+d189 2
+a190 3
+       "$Id: $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d192 1
+d194 1
+d201 3
+@
+
+
+2.15
+log
+@Added interface for gdcreate
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d20 3
+a22 6
+  !---------------------------- RCS Ident Info -------------------------------
+  character(len=*), private, parameter :: IdParm = &
+    & "$Id: HDF-EOS.f90,v 2.14 2002/10/08 00:09:09 pwagner Exp $"
+  character(len=len(idparm)), private :: Id = idParm
+  character(len=*), private, parameter :: ModuleName = &
+       & "$RCSfile: HDF-EOS.f90,v $"
+d24 1
+a24 1
+  !---------------------------------------------------------------------------
+d187 5
+d200 3
+@
+
+
+2.14
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
+d14 1
+a14 1
+    & "$Id: HDF-EOS.f90,v 2.13 2002/10/01 22:03:54 pwagner Exp $"
+d35 10
+d190 3
+@
+
+
+2.13
+log
+@Fixed RCS Ident Block
+@
+text
+@d14 1
+a14 1
+    & "$Id: L2GPData.f90,v 2.47 2002/08/22 20:17:47 livesey Exp $"
+d17 2
+a18 1
+       & "$RCSfile: L2GPData.f90,v $"
+d170 5
+d180 3
+@
+
+
+2.12
+log
+@Fixed problem
+@
+text
+@d12 7
+a18 6
+  !------------------- RCS Ident Info -----------------------
+  character(len=130), private :: Id = &
+    & "$Id: HDF-EOS.f90,v 2.11 2001/05/12 00:24:44 livesey Exp $"&
+  character(len=*), parameter, private :: ModuleName= &
+    & "$RCSfile: HDF-EOS.f90,v $"
+  !----------------------------------------------------------
+d174 3
+@
+
+
+2.11
+log
+@Changed intent out to inout for SWInqSwath
+@
+text
+@d14 1
+a14 1
+    & "$Id: HDF-EOS.f90,v 2.10 2001/03/15 00:36:03 pwagner Exp $"
+d173 3
+@
+
+
+2.10
+log
+@Added gdfldinfo
+@
+text
+@d14 1
+a14 1
+    & "$Id: HDF-EOS.f90,v 2.9 2001/03/14 00:33:42 pwagner Exp $"
+d135 1
+a135 1
+      character (len=*), intent(out) :: SWATHLIST
+d173 3
+@
+
+
+2.9
+log
+@Added gdinqattrs
+@
+text
+@d14 1
+a14 1
+    & "$Id: HDF-EOS.f90,v 2.8 2001/03/03 00:45:25 pwagner Exp $"
+d42 1
+a42 1
+    integer function GDFIELDINFO (GRIDID,FIELDNAME,RANK,DIMS,NUMBERTYPE,DIMLIST)
+d48 1
+a48 1
+    end function GDFIELDINFO
+d173 3
+@
+
+
+2.8
+log
+@New grid interfaces--except for gdrdfld
+@
+text
+@d14 1
+a14 1
+    & "$Id: HDF-EOS.f90,v 2.7 2001/02/24 01:01:26 pwagner Exp $"
+d50 6
+d173 3
+@
+
+
+2.7
+log
+@Started adding gd routine interfaces
+@
+text
+@d14 1
+a14 1
+    & "$Id: HDF-EOS.f90,v 2.6 2001/02/23 17:27:20 pwagner Exp $"
+d24 1
+a24 1
+    integer function GDATTACH ( GDFID, GRIDNAME )
+d29 9
+a37 1
+        integer function GDDIMINFO (GRIDID,DIMNAME)
+d42 37
+d167 3
+@
+
+
+2.6
+log
+@Added Access types for gdnentries
+@
+text
+@d14 1
+a14 1
+    & "$Id: HDF-EOS.f90,v 2.5 2001/02/02 21:39:56 pwagner Exp $"
+d22 13
+d43 1
+a91 1
+    
+a97 1
+    
+d122 3
+@
+
+
+2.5
+log
+@Added swinqdflds
+@
+text
+@d14 1
+a14 1
+    & "$Id: HDF-EOS.f90,v 2.4 2000/09/17 20:49:33 pumphrey Exp $"
+d96 8
+d110 3
+@
+
+
+2.4
+log
+@Removed references to SWRDFLD as these are handled by swapi.f90
+@
+text
+@d14 1
+a14 1
+    & "$Id: HDF-EOS.f90,v 2.3 2000/09/14 11:16:00 pumphrey Exp $"
+d81 7
+d102 3
+@
+
+
+2.3
+log
+@HCP added SWRDFLD_REAL etc as ways to call SWRDFLD. Is there a better way?
+@
+text
+@a10 4
+!  I don't know how to do an interface block for this function 
+  real:: SWRDFLD
+  external SWRDFLD
+
+d14 1
+a14 1
+    & "$Id: HDF-EOS.f90,v 2.2 2000/09/13 16:56:22 pumphrey Exp $"
+a88 34
+
+    contains
+
+    ! We provide functions SWRDFLD_REAL, SWRDFLD_CHAR and SWRDFIELD_DBLE.
+    ! This is done because one of the arguments of SWRDFLD can be of any 
+    ! type  -- you can read fields which are real, integer, double etc.
+
+    integer function SWRDFLD_REAL(SWATHID,FIELDNAME,START,STRIDE,EDGE,BUFFER)
+       integer,intent(in)::SWATHID
+       character(len=*),intent(in)::FIELDNAME
+       integer,intent(in),dimension(*)::START,STRIDE,EDGE
+       real,intent(out),dimension(*)::BUFFER
+       SWRDFLD_REAL=SWRDFLD(SWATHID,FIELDNAME,START,STRIDE,EDGE,BUFFER)
+    end function SWRDFLD_REAL
+
+    integer function SWRDFLD_DBLE(SWATHID,FIELDNAME,START,STRIDE,EDGE,BUFFER)
+       integer,intent(in)::SWATHID
+       character(len=*),intent(in)::FIELDNAME
+       integer,intent(in),dimension(*)::START,STRIDE,EDGE
+       double precision,intent(out),dimension(*)::BUFFER
+       SWRDFLD_DBLE=SWRDFLD(SWATHID,FIELDNAME,START,STRIDE,EDGE,BUFFER)
+    end function SWRDFLD_DBLE
+
+
+    integer function SWRDFLD_CHAR(SWATHID,FIELDNAME,START,STRIDE,EDGE,BUFFER)
+       integer,intent(in)::SWATHID
+       character(len=*),intent(in)::FIELDNAME
+       integer,intent(in),dimension(*)::START,STRIDE,EDGE
+       character,intent(out),dimension(*)::BUFFER
+       SWRDFLD_CHAR=SWRDFLD(SWATHID,FIELDNAME,START,STRIDE,EDGE,BUFFER)
+    end function SWRDFLD_CHAR
+
+
+
+d95 3
+@
+
+
+2.2
+log
+@HCP added  swdiminfo and swinqdims -- more to do, though.
+@
+text
+@d11 5
+d18 1
+a18 1
+    & "$Id: HDF-EOS.f90,v 2.1 2000/09/13 16:28:49 pumphrey Exp $"
+d89 1
+a89 1
+      
+d93 34
+d133 3
+@
+
+
+2.1
+log
+@HCP added SWINQSWATH
+@
+text
+@d13 1
+a13 1
+    & "$Id: HDF-EOS.f90,v 2.0 2000/09/05 17:41:06 dcuddy Exp $"
+d73 13
+d94 3
+@
+
+
+2.0
+log
+@Change revision to 2.0
+@
+text
+@d13 1
+a13 1
+    & "$Id: HDF-EOS.f90,v 1.5 2000/09/02 01:58:30 vsnyder Exp $"
+d66 7
+d81 3
+@
+
+
+1.4
+log
+@Removed  swwrfld.
+@
+text
+@d5 1
+a5 1
+MODULE HDFEOS               ! F90 interface to HDF-EOS.
+d8 2
+a9 2
+   IMPLICIT NONE
+   PUBLIC
+d11 56
+a66 29
+   PRIVATE :: ID, ModuleName
+
+!------------------- RCS Ident Info -----------------------
+CHARACTER(LEN=130) :: Id = &
+   "$Id: HDF-EOS.f90,v 1.4 2000/06/19 23:47:00 lungu Exp $"
+CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile: HDF-EOS.f90,v $"
+!----------------------------------------------------------
+
+
+
+! Now define f90 interfaces for some HDF-EOS.
+
+   INTERFACE
+      INTEGER FUNCTION swopen(filename, access_mode)
+        CHARACTER (LEN=*) :: filename
+        INTEGER:: access_mode
+      END FUNCTION swopen
+!      INTEGER FUNCTION swattach(sfwid, swathname)
+!         INTEGER :: swfid
+!         CHARACTER (LEN=*) :: swathname
+!      END FUNCTION swattach
+      INTEGER FUNCTION swdetach(swid)
+         INTEGER :: swid
+      END FUNCTION swdetach
+      INTEGER FUNCTION swclose(file_id)
+        INTEGER:: file_id
+      END FUNCTION swclose
+
+   END INTERFACE
+d69 1
+a69 1
+END MODULE HDFEOS
+d74 2
+a75 5
+! Revision 1.4  2000/06/19 23:47:00  lungu
+! Removed  swwrfld.
+!
+! Revision 1.3  2000/01/21 01:46:46  lungu
+! Made ModuleName private.
+d77 2
+a78 2
+! Revision 1.2  2000/01/21 01:28:23  lungu
+! Fixed typo.
+a79 8
+! Revision 1.1  2000/01/21 01:22:02  lungu
+! Initial release.
+!
+!
+
+
+
+
+@
+
+
+1.1
+log
+@Initial release.
+@
+text
+@d11 1
+a11 1
+   PRIVATE :: ID
+d15 1
+a15 1
+   "$Id: HDF-EOS.f90,v 1.1 2000/01/21 01:22:02 lungu Exp $"
+d28 7
+d37 3
+a39 1
+      END FUNCTION swopen
+d47 9
+@
+
+

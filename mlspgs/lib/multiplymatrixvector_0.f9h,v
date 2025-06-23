@@ -1,0 +1,215 @@
+head	2.3;
+access;
+symbols
+	v5-02-NRT-19:2.3
+	v6-00:2.3
+	v5-02-NRT-18:2.3
+	v5-02:2.3
+	v5-01-NRT-17:2.3
+	v5-01-NRT-16:2.3
+	v5-01-NRT-15:2.3
+	v5-01-NRT-14:2.3
+	neuralnetworks-1-0:2.3.0.14
+	cfm-single-freq-0-1:2.3.0.12
+	v5-01:2.3
+	v5-00:2.3
+	v4-23-TA133:2.3.0.10
+	mus-emls-1-70:2.3.0.8
+	rel-1-0-englocks-work:2.3.0.6
+	VUMLS1-00:2.3
+	VPL1-00:2.3
+	V4-22-NRT-08:2.3
+	VAM1-00:2.3
+	V4-21:2.3.0.4
+	V4-13:2.3
+	V4-12:2.3
+	V4-11:2.3
+	V4-10:2.3
+	V3-43:2.3
+	M4-00:2.3
+	V3-41:2.3
+	V3-40-PlusGM57:2.3.0.2
+	V2-24-NRT-04:2.3
+	V3-33:2.3
+	V2-24:2.3
+	V3-31:2.3
+	V3-30-NRT-05:2.3
+	cfm-01-00:2.3
+	V3-30:2.3
+	V3-20:2.3
+	V3-10:2.3
+	V2-23-NRT-02:2.3
+	V2-23:2.3
+	V2-22-NRT-01:2.3
+	V2-22:2.3
+	V2-21:2.2
+	V2-20:2.2
+	V2-11:2.2
+	V2-10:2.2
+	V2-00:2.2
+	V1-51:2.1
+	V1-50:2.1
+	V1-45:2.1
+	V1-44:2.1
+	V1-43:2.1
+	V1-42:2.1
+	V1-41:2.1
+	V1-32:2.1
+	V1-40:2.1
+	V1-31:2.1
+	V1-30:2.1
+	V1-13:2.1
+	V1-12:2.1
+	V1-11:2.1
+	V1-10:2.1
+	newfwm-feb03:2.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+2.3
+date	2007.07.27.00.23.05;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2005.06.22.17.44.42;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2003.01.08.21.29.27;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.3
+log
+@Work around bug in Intel 10.0.025 with -check pointer
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id: multiplymatrixvector_0.f9h,v 2.2 2005/06/22 17:44:42 pwagner Exp $
+
+! ------------------------------------------------------------------------------
+! Part of MatrixModule_0, used for r4 and r8 versions of routine of this name
+
+    if ( a%nRows /= size(v) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & "Matrix block and vector not compatible in MultiplyMatrixVector_0" )
+    if ( a%nCols /= size(p) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & "Matrix block and result not compatible in MultiplyMatrixVector_0" )
+    my_update = .false.
+    if ( present(update) ) my_update = update
+    my_sub = .false.
+    if ( present(subtract) ) my_sub = subtract
+    nullify ( my_Mask )
+!   if ( present(mask) ) my_mask => mask
+    if ( present(mask) ) then ! work around Intel 10.0.025 bug
+      if ( associated(mask) ) my_mask => mask
+    end if
+    s = 1.0_rm
+    if ( my_sub ) s = -1.0_rm
+    if ( .not. my_update ) p = 0.0_r8
+    select case ( a%kind )
+    case ( M_Absent )
+    case ( M_Banded )
+!$OMP PARALLEL DO private ( v1, n, m, av )
+      do i = 1, size(p)
+        if ( associated(my_mask) ) then
+          if ( iand(ichar(my_mask(i)),m_LinAlg) /= 0 ) &
+      cycle
+        end if
+        v1 = a%r2(i-1)             ! starting position in A%VALUES - 1
+        n = a%r2(i) - v1           ! how many values
+        if ( n <= 0 ) cycle
+        m = a%r1(i)                ! starting position in V
+        av = dot(n, a%values(v1+1,1), 1, v(m), 1)
+!       av = dot_product( a%values(v1+1:v1+n,1), v(m:m+n-1) )
+        p(i) = p(i) + s * av
+      end do ! i
+!$OMP END PARALLEL DO
+     case ( M_Column_Sparse )
+      do i = 1, size(p)
+        if ( associated(my_mask) ) then
+          if ( iand(ichar(my_mask(i)),m_LinAlg) /= 0 ) &
+      cycle
+        end if
+        av = 0.0_r8
+        do n = a%r1(i-1)+1, a%r1(i)
+          av = av + a%values(n,1) * v(a%r2(n))
+        end do ! n
+        p(i) = p(i) + s * av
+      end do ! i
+    case ( M_Full )
+      if ( associated(my_mask) ) then
+!$OMP PARALLEL DO
+        do i = 1, size(p)
+          if ( iand(ichar(my_mask(i)),m_LinAlg) /= 0 ) &
+        cycle
+          p(i) = p(i) + s * dot(size(v), a%values(1,i), 1, v(1), 1)
+!         p(i) = p(i) + s * dot_product( a%values(:,i), v)
+        end do ! i
+!$OMP END PARALLEL DO
+      else
+        call gemv ( 't', size(a%values,1), size(a%values,2), s, a%values, &
+          & size(a%values,1), v, 1, 1.0_rm, p, 1 )
+!       p = p + s * matmul(transpose(a%values),v)
+      end if
+    end select
+
+! $Log: multiplymatrixvector_0.f9h,v $
+! Revision 2.2  2005/06/22 17:44:42  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.1  2003/01/08 21:29:27  livesey
+! First version, extracted from MatrixModule_0
+!
+@
+
+
+2.2
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d12 1
+a12 1
+! $Id: multiplymatrixvector_0.f9h,v 2.1 2003/01/08 21:29:27 livesey Exp $
+d26 4
+a29 1
+    if ( present(mask) ) my_mask => mask
+d81 3
+@
+
+
+2.1
+log
+@First version, extracted from MatrixModule_0
+@
+text
+@d1 4
+a4 2
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d6 7
+a12 1
+! $Id$
+d77 4
+a80 1
+! $Log$
+@
+

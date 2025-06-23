@@ -1,0 +1,298 @@
+head	1.9;
+access;
+symbols
+	v5-02-NRT-19:1.9
+	v6-00:1.9
+	v5-02-NRT-18:1.9
+	v5-02:1.9
+	v5-01-NRT-17:1.9
+	v5-01-NRT-16:1.9
+	v5-01-NRT-15:1.9
+	v5-01-NRT-14:1.9
+	neuralnetworks-1-0:1.9.0.8
+	cfm-single-freq-0-1:1.9.0.6
+	v5-01:1.9
+	v5-00:1.9
+	v4-23-TA133:1.9.0.4
+	mus-emls-1-70:1.9.0.2
+	rel-1-0-englocks-work:1.8.0.2
+	VUMLS1-00:1.8
+	VPL1-00:1.8
+	V4-22-NRT-08:1.7
+	VAM1-00:1.7
+	V4-21:1.6.0.2
+	V4-13:1.6
+	V4-12:1.5
+	V4-11:1.5
+	V4-10:1.5
+	V3-43:1.4
+	M4-00:1.4
+	V3-41:1.4
+	V3-40-PlusGM57:1.4.0.2
+	V2-24-NRT-04:1.4
+	V3-33:1.4
+	V2-24:1.4
+	V3-31:1.4
+	V3-30-NRT-05:1.4
+	cfm-01-00:1.4
+	V3-30:1.4
+	V3-20:1.4
+	V3-10:1.4
+	V2-23-NRT-02:1.4
+	V2-23:1.4
+	V2-22-NRT-01:1.4
+	V2-22:1.4
+	V2-21:1.3
+	V2-20:1.3
+	V2-11:1.3
+	V2-10:1.3
+	V2-00:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.9
+date	2018.04.19.00.43.00;	author vsnyder;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2016.05.25.00.18.56;	author vsnyder;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2015.03.28.00.53.02;	author vsnyder;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2014.09.04.23.51.27;	author vsnyder;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2013.06.12.02.16.51;	author vsnyder;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2007.07.27.00.24.34;	author vsnyder;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2006.07.31.20.02.03;	author vsnyder;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2005.10.03.18.03.45;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.07.20.01.29.46;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.9
+log
+@Turn on address computation for tracking
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!------------------------------- RCS Ident Info ------------------------------
+! $RCSfile: Deallocate_Test.f9h,v $
+!-----------------------------------------------------------------------------
+
+! Probably only useful within Allocate_Deallocate.f90
+
+    character(len=*), intent(in) :: ItsName, ModuleName
+    integer(c_intptr_t) :: Addr
+    integer :: STATUS
+    integer :: S
+    character(127) :: ERMSG
+    if ( associated(To_Deallocate) ) then
+! Fortran 2008 prohibits the argument of C_LOC to be a non-interoperable array.
+! LOGICAL isn't interoperable.  Unfortunately, NAG 6201 calls this an error,
+! not a warning.
+addr = 0
+!       addr = transfer ( c_loc(to_deallocate), addr )
+      if ( mod(trackallocates,2) > 0 ) &
+        & call trackDeAllocate ( to_deAllocate, itsName, moduleName )
+      s = byte_size(to_deallocate)
+      deallocate ( To_Deallocate, stat=status, errmsg=ermsg )
+      call test_deallocate ( status, moduleName, itsName, s, ermsg=ermsg, &
+        & address=addr )
+      nullify ( to_Deallocate ) ! in case of nonzero status
+    end if
+
+! $Log: Deallocate_Test.f9h,v $
+! Revision 1.8  2016/05/25 00:18:56  vsnyder
+! Use Storage_Size and Size instead of Byte_Size
+!
+! Revision 1.7  2015/03/28 00:53:02  vsnyder
+! Stuff to trace allocate/deallocate addresses -- mostly commented out
+! because NAG build 1017 doesn't yet allow arrays as arguments to C_LOC.
+!
+! Revision 1.6  2014/09/04 23:51:27  vsnyder
+! Change size tracking from Memory_Units to bytes
+!
+! Revision 1.5  2013/06/12 02:16:51  vsnyder
+! Add and use BYTES and BYTE_SIZE
+!
+! Revision 1.4  2007/07/27 00:24:34  vsnyder
+! Work on memory tracking
+!
+! Revision 1.3  2006/07/31 20:02:03  vsnyder
+! Tracking for leak checker
+!
+! Revision 1.2  2005/10/03 18:03:45  pwagner
+! Allocated memory now tracked in units of MEMORY_UNITS
+!
+! Revision 1.1  2005/07/20 01:29:46  vsnyder
+! Initial commit
+!
+@
+
+
+1.8
+log
+@Use Storage_Size and Size instead of Byte_Size
+@
+text
+@d24 5
+a28 1
+!      addr = transfer ( c_loc(to_deallocate), addr )
+d31 1
+a31 1
+      s = ( storage_size(to_deallocate) * size(to_deallocate) ) / 8
+d33 2
+a34 3
+      call test_deallocate ( status, moduleName, itsName, s, ermsg=ermsg &
+!        & , address=addr &
+        )
+d39 3
+@
+
+
+1.7
+log
+@Stuff to trace allocate/deallocate addresses -- mostly commented out
+because NAG build 1017 doesn't yet allow arrays as arguments to C_LOC.
+@
+text
+@d27 1
+a27 1
+      s = byte_size(to_deallocate)
+d36 4
+@
+
+
+1.6
+log
+@Change size tracking from Memory_Units to bytes
+@
+text
+@d19 1
+d22 1
+d24 3
+a26 1
+      if ( trackallocates > 0 ) call trackDeAllocate ( to_deAllocate, itsName, moduleName )
+d28 4
+a31 2
+      deallocate ( To_Deallocate, stat=status )
+      call test_deallocate ( status, moduleName, itsName, s )
+d36 3
+@
+
+
+1.5
+log
+@Add and use BYTES and BYTE_SIZE
+@
+text
+@d20 1
+a20 1
+    real :: S
+d23 1
+a23 1
+      s = (byte_size(to_deallocate)) / MEMORY_UNITS
+d30 3
+@
+
+
+1.4
+log
+@Work on memory tracking
+@
+text
+@d23 1
+a23 1
+      s = (eSize * size(to_deallocate)) / MEMORY_UNITS
+d30 3
+@
+
+
+1.3
+log
+@Tracking for leak checker
+@
+text
+@d23 1
+a23 1
+      s = (eSize/MEMORY_UNITS) * size(to_deallocate)
+d30 3
+@
+
+
+1.2
+log
+@Allocated memory now tracked in units of MEMORY_UNITS
+@
+text
+@d22 2
+a23 1
+      if ( trackAllocates ) s = (eSize/MEMORY_UNITS) * size(to_deallocate)
+d26 1
+a26 1
+      nullify ( to_Deallocate )
+d30 3
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d13 1
+a13 1
+! $RCSfile: Allocate_Deallocate.f90,v $
+d19 2
+a20 1
+    integer :: STATUS, S
+d22 1
+a22 1
+      if ( trackAllocates ) s = eSize * size(to_deallocate)
+d28 4
+a31 1
+! $Log: $
+@
+

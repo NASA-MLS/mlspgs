@@ -1,0 +1,555 @@
+head	1.7;
+access;
+symbols
+	newfwm-sep01:1.6.0.2
+	V0-7:1.6
+	V0-5-Level2:1.6
+	V0-5-SIPS:1.3;
+locks; strict;
+comment	@# @;
+
+
+1.7
+date	2001.09.17.20.26.26;	author livesey;	state dead;
+branches;
+next	1.6;
+
+1.6
+date	2001.04.20.01.10.01;	author vsnyder;	state Exp;
+branches
+	1.6.2.1;
+next	1.5;
+
+1.5
+date	2001.04.19.22.54.46;	author vsnyder;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.04.19.06.48.13;	author zvi;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2001.03.30.20.28.21;	author zvi;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.01.31.01.08.48;	author zvi;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2000.11.22.23.07.26;	author zvi;	state Exp;
+branches;
+next	;
+
+1.6.2.1
+date	2001.09.10.10.00.23;	author zvi;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.7
+log
+@New forward model
+@
+text
+@! Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+module ELLIPSE_SW_M
+  use MLSCommon, only: R8
+  use ELLIPSE_M, only: ELLIPSE
+  Implicit NONE
+  Private
+  Public :: PHI_TO_H_S, H_TO_S_PHI, S_TO_H_PHI
+
+!---------------------------- RCS Ident Info -------------------------------
+  character(len=*), parameter :: IdParm = &
+       "$Id: ellipse_sw_m.f90,v 1.6 2001/04/20 01:10:01 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName= &
+       "$RCSfile: ellipse_sw_m.f90,v $"
+!---------------------------------------------------------------------------
+
+contains
+!----------------------------------------------------  Phi_to_H_S  -----
+!  Given Phi, get H and S
+!  ** Note: This routine is using The Equivalent Circle concept
+
+  Subroutine Phi_to_H_S ( Elvar, Phi, H, S )
+
+    Real(r8), Intent(in) :: Phi
+    Real(r8), Intent(out) :: H, S
+
+    Type(ellipse), intent(in out) :: Elvar
+
+    Real(r8) :: Delphi, Q, Rt, V
+
+    delphi = Phi - elvar%Phi_tan
+    v = Cos(delphi)
+
+    if ( .not. elvar%EarthX ) then
+      rt = elvar%ht + elvar%RoC
+      h = rt / v - elvar%RoC
+      S = rt * Tan(delphi)
+    else
+      if ( elvar%ps > 0.0 ) &
+        &  v = Cos(Phi-(2.0*elvar%Phi_s-elvar%Phi_tan))
+      h = elvar%RoC * (elvar%Rr / v - 1.0)
+      q = Sin(Phi-elvar%Phi_s) / v
+      S = elvar%RoC * abs(q)
+    end if
+
+    Return
+  End Subroutine Phi_to_H_S
+
+! ---------------------------------------------------  H_to_S_Phi  -----
+!  Given H, get S and Phi
+!  ** Note: This routine is using The Equivalent Circle concept
+
+  Subroutine H_to_S_Phi ( Elvar, H, S, Phi )
+
+    Real(r8), intent(in) :: H
+    Real(r8), intent(out) :: S, Phi
+
+    Type(ellipse), intent(in out) :: Elvar
+
+    Real(r8) :: Q, R, Rt, V
+
+    r = h + elvar%RoC
+
+    if ( .not. elvar%EarthX ) then
+      S = 0.0
+      Phi = elvar%Phi_tan
+      rt = elvar%ht + elvar%RoC
+      q = r * r - rt * rt
+      if ( q >= 1.0e-6_r8 ) S = Sqrt(q)
+      v = rt / r
+      if ( abs(v) > 1.0 ) v = Sign(1.0_r8,v)
+      Phi = elvar%Phi_tan + elvar%ps * Acos(v)
+    else
+      v = (elvar%RoC / r) * elvar%Rr   ! Rr = Cos(Phi_tan-Phi_s)=(ht+RoC)/RoC
+      if ( abs(v) > 1.0 ) v = Sign(1.0_r8,v)
+      if ( elvar%ps < 0.0 ) then
+        Phi = elvar%Phi_tan - Acos(v)
+      else
+        Phi = 2.0 * elvar%Phi_s - elvar%Phi_tan + Acos(v)
+      end if
+      q = Sin(Phi-elvar%Phi_s) / v
+      S = elvar%RoC * abs(q)
+    end if
+
+    Return
+  End Subroutine H_to_S_Phi
+
+!----------------------------------------------------  S_to_H_Phi  -----
+!  Given S, get H and Phi
+!  ** Note: This routine is using The Equivalent Circle concept
+
+  Subroutine S_to_H_Phi ( Elvar, S, H, Phi )
+
+    Real(r8), intent(in) :: S
+    Real(r8), intent(out) :: Phi, H
+
+    Type(ellipse), intent(in out) :: ELVAR
+
+    Real(r8) :: Q, R, Rt, V
+
+    if ( .not. elvar%EarthX ) then
+      rt = elvar%ht + elvar%RoC
+      r = Sqrt(S*S + rt*rt)
+      h = r - elvar%RoC
+      v = rt / r
+      if ( abs(v) > 1.0 ) v = Sign(1.0_r8,v)
+      Phi = elvar%Phi_tan + elvar%ps * Acos(v)
+    else
+      q = elvar%ps * S / elvar%RoC
+      if ( elvar%ps < 0.0 ) then
+        Phi = Atan2(q*elvar%cpt+elvar%sps,elvar%cps-q*elvar%spt)
+        v = Cos(Phi - elvar%Phi_tan)
+      else
+        Phi = Atan2(q*elvar%cpts+elvar%sps,elvar%cps-q*elvar%spts)
+        v = Cos(Phi- 2.0 * elvar%Phi_s + elvar%Phi_tan)
+      end if
+      h = elvar%RoC * (elvar%Rr / v - 1.0)
+    end if
+
+    Return
+  End Subroutine S_to_H_Phi
+!---------------------------------------------------------------------------
+end module ELLIPSE_SW_M
+
+! $Log: ellipse_sw_m.f90,v $
+! Revision 1.6  2001/04/20 01:10:01  vsnyder
+! Replace Datan2 by Atan2, delete "d0" (let the compiler choose).
+! Insert copyright notice.  Change RCS stuff method.  Cosmetic changes.
+!
+! Revision 1.5  2001/04/19 22:54:46  vsnyder
+! Use generic ACOS instead of specific DACOS
+!
+! Revision 1.4  2001/04/19 06:48:13  zvi
+! Fixing memory leaks..
+!
+! Revision 1.3  2001/03/30 20:28:21  zvi
+! General fix-up to get rid of COMMON BLOCK (ELLIPSE)
+!
+! Revision 1.1  2000/05/04 18:12:05  Z.Shippony
+! Initial conversion to Fortran 90
+!
+@
+
+
+1.6
+log
+@Replace Datan2 by Atan2, delete "d0" (let the compiler choose).
+Insert copyright notice.  Change RCS stuff method.  Cosmetic changes.
+@
+text
+@d13 1
+a13 1
+       "$Id: ellipse_sw_m.f90,v 1.5 2001/04/19 22:54:46 vsnyder Exp $"
+d128 4
+@
+
+
+1.6.2.1
+log
+@*** empty log message ***
+@
+text
+@d13 1
+a13 1
+       "$Id: ellipse_sw_m.f90,v 1.6 2001/04/20 01:10:01 vsnyder Exp $"
+a127 4
+! Revision 1.6  2001/04/20 01:10:01  vsnyder
+! Replace Datan2 by Atan2, delete "d0" (let the compiler choose).
+! Insert copyright notice.  Change RCS stuff method.  Cosmetic changes.
+!
+@
+
+
+1.5
+log
+@Use generic ACOS instead of specific DACOS
+@
+text
+@d1 3
+a3 1
+!
+d9 2
+a10 1
+  Public PHI_TO_H_S, H_TO_S_PHI, S_TO_H_PHI
+d12 4
+a15 4
+  private ID, ModuleName
+  CHARACTER (LEN=256) :: Id = &
+       "$Id: ellipse_sw_m.f90,v 1.4 2001/04/19 06:48:13 zvi Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= &
+d18 1
+d20 1
+a20 1
+!---------------------------------------------------------------------------
+d22 11
+a32 12
+!  ** Note: This routine is using The Equivalent Circel concept
+!
+  Subroutine Phi_to_H_S(elvar,Phi,h,S)
+!
+    Real(r8), Intent(IN) :: Phi
+    Real(r8), Intent(OUT) :: H, S
+!   
+    Type(ELLIPSE), intent(in out) :: elvar
+!
+!
+    Real(r8) :: rt,delphi,q,v
+! 
+d35 2
+a36 2
+!
+    if(.not.elvar%EarthX) then
+d41 3
+a43 3
+      if(elvar%ps.gt.0.0) &
+     &     v = Cos(Phi-(2.0d0*elvar%Phi_s-elvar%Phi_tan))
+      h = elvar%RoC * (elvar%Rr / v - 1.0d0)
+d47 1
+a47 1
+!
+d50 2
+a51 2
+!
+!------------------------------------------------------------------------
+d53 12
+a64 8
+!  ** Note: This routine is using The Equivalent Circel concept
+!
+      Subroutine H_to_S_Phi(elvar,h,S,Phi)
+!
+      Real(r8), intent(IN) :: h
+      Real(r8), intent(OUT) :: S, Phi
+!
+      Type(ELLIPSE), intent(in out) :: elvar
+d66 14
+a79 13
+      Real(r8) :: q,v,r,rt
+!
+      r = h + elvar%RoC
+!
+      if(.not.elvar%EarthX) then
+        S = 0.0d0
+        Phi = elvar%Phi_tan
+        rt = elvar%ht + elvar%RoC
+        q = r * r - rt * rt
+        if(q.ge.1.0d-6) S = Sqrt(q)
+        v = rt / r
+        if(abs(v).gt.1.0d0) v = Sign(1.0_r8,v)
+        Phi = elvar%Phi_tan + elvar%ps * Acos(v)
+d81 1
+a81 9
+        v = (elvar%RoC / r) * elvar%Rr   ! Rr = Cos(Phi_tan-Phi_s)=(ht+RoC)/RoC
+        if(abs(v).gt.1.0d0) v = Sign(1.0_r8,v)
+        if(elvar%ps.lt.0.0) then
+          Phi = elvar%Phi_tan - Acos(v)
+        else
+          Phi = 2.0d0 * elvar%Phi_s - elvar%Phi_tan + Acos(v)
+        end if
+        q = Sin(Phi-elvar%Phi_s) / v
+        S = elvar%RoC * abs(q)
+d83 8
+a90 5
+!
+      Return
+      End Subroutine H_to_S_Phi
+!
+!------------------------------------------------------------------------
+d92 10
+a101 8
+!  ** Note: This routine is using The Equivalent Circel concept
+!
+      Subroutine S_to_H_Phi(elvar,S,h,Phi)
+!
+      Real(r8), intent(IN) :: S
+      Real(r8), intent(OUT) :: Phi,H
+!
+      Type(ELLIPSE), intent(in out) :: elvar
+d103 12
+a114 9
+      Real(r8) :: rt,r,q,v
+!
+      if(.not.elvar%EarthX) then
+        rt = elvar%ht + elvar%RoC
+        r = Sqrt(S*S + rt*rt)
+        h = r - elvar%RoC
+        v = rt / r
+        if(abs(v).gt.1.0d0) v = Sign(1.0_r8,v)
+        Phi = elvar%Phi_tan + elvar%ps * Acos(v)
+d116 2
+a117 9
+        q = elvar%ps * S / elvar%RoC
+        if(elvar%ps.lt.0.0) then
+          Phi = DAtan2(q*elvar%cpt+elvar%sps,elvar%cps-q*elvar%spt)
+          v = Cos(Phi - elvar%Phi_tan)
+        else
+          Phi = DAtan2(q*elvar%cpts+elvar%sps,elvar%cps-q*elvar%spts)
+          v = Cos(Phi- 2.0d0 * elvar%Phi_s + elvar%Phi_tan)
+        end if
+        h = elvar%RoC * (elvar%Rr / v - 1.0d0)
+d119 5
+a123 3
+!
+      Return
+      End Subroutine S_to_H_Phi
+d126 1
+d128 3
+@
+
+
+1.4
+log
+@Fixing memory leaks..
+@
+text
+@d11 1
+a11 1
+       "$Id: ellipse_sw_m.f90,v 1.3 2001/03/30 20:28:21 zvi Exp $"
+d20 1
+a20 1
+      Subroutine Phi_to_H_S(elvar,Phi,h,S)
+d22 2
+a23 2
+      Real(r8), Intent(IN) :: Phi
+      Real(r8), Intent(OUT) :: H, S
+d25 1
+a25 1
+      Type(ELLIPSE), intent(in out) :: elvar
+d28 1
+a28 1
+      Real(r8) :: rt,delphi,q,v
+d30 2
+a31 2
+      delphi = Phi - elvar%Phi_tan
+      v = Cos(delphi)
+d33 11
+a43 11
+      if(.not.elvar%EarthX) then
+        rt = elvar%ht + elvar%RoC
+        h = rt / v - elvar%RoC
+        S = rt * Tan(delphi)
+      else
+        if(elvar%ps.gt.0.0) &
+       &     v = Cos(Phi-(2.0d0*elvar%Phi_s-elvar%Phi_tan))
+        h = elvar%RoC * (elvar%Rr / v - 1.0d0)
+        q = Sin(Phi-elvar%Phi_s) / v
+        S = elvar%RoC * abs(q)
+      endif
+d45 2
+a46 2
+      Return
+      End Subroutine Phi_to_H_S
+d71 1
+a71 1
+        Phi = elvar%Phi_tan + elvar%ps * DAcos(v)
+d76 1
+a76 1
+          Phi = elvar%Phi_tan - DAcos(v)
+d78 2
+a79 2
+          Phi = 2.0d0 * elvar%Phi_s - elvar%Phi_tan + DAcos(v)
+        endif
+d82 1
+a82 1
+      endif
+d106 1
+a106 1
+        Phi = elvar%Phi_tan + elvar%ps * DAcos(v)
+d115 1
+a115 1
+        endif
+d117 1
+a117 1
+      endif
+d124 3
+@
+
+
+1.3
+log
+@General fix-up to get rid of COMMON BLOCK (ELLIPSE)
+@
+text
+@d11 1
+a11 1
+       "$Id: ellipse_sw_m.f90,v 1.2 2001/01/31 01:08:48 zvi Exp $"
+d70 2
+a71 1
+        if(abs(v).lt.1.0d0) Phi = elvar%Phi_tan + elvar%ps * DAcos(v)
+d74 1
+d105 1
+d124 3
+@
+
+
+1.2
+log
+@New version of forward model
+@
+text
+@d4 1
+a4 2
+  use ELLIPSE, only: CPT, SPT, CPS, SPS, CPTS, SPTS, HT, RR, PHI_TAN, &
+                     PHI_S, PS, ROC, EARTHX
+d11 1
+a11 1
+       "$Id: ellipse_sw_m.f90,v 1.1 2000/05/04 18:12:05 Z.Shippony Exp $"
+d20 1
+a20 1
+      Subroutine Phi_to_H_S(Phi,h,S)
+d24 3
+d29 2
+a30 2
+!
+      delphi = Phi - Phi_tan
+d33 3
+a35 3
+      if(.not.EarthX) then
+        rt = ht + RoC
+        h = rt / v - RoC
+d38 5
+a42 4
+        if(ps.gt.0.0) v = Cos(Phi-(2.0d0*Phi_s-Phi_tan))
+        h = RoC * (Rr / v - 1.0d0)
+        q = Sin(Phi-Phi_s) / v
+        S = RoC * abs(q)
+d52 1
+a52 1
+      Subroutine H_to_S_Phi(h,S,Phi)
+d56 2
+d61 1
+a61 1
+      r = h + RoC
+d63 1
+a63 1
+      if(.not.EarthX) then
+d65 2
+a66 2
+        Phi = Phi_tan
+        rt = ht + RoC
+d70 1
+a70 1
+        if(abs(v).lt.1.0d0) Phi = Phi_tan + ps * DAcos(v)
+d72 3
+a74 3
+        v = (RoC / r) * Rr        ! Rr = Cos(Phi_tan-Phi_s)=(ht+RoC)/RoC
+        if(ps.lt.0.0) then
+          Phi = Phi_tan - DAcos(v)
+d76 1
+a76 1
+          Phi = 2.0d0 * Phi_s - Phi_tan + DAcos(v)
+d78 2
+a79 2
+        q = Sin(Phi-Phi_s) / v
+        S = RoC * abs(q)
+d89 1
+a89 1
+      Subroutine S_to_H_Phi(S,h,Phi)
+d93 2
+d98 2
+a99 2
+      if(.not.EarthX) then
+        rt = ht + RoC
+d101 1
+a101 1
+        h = r - RoC
+d103 1
+a103 1
+        Phi = Phi_tan + ps * DAcos(v)
+d105 4
+a108 4
+        q = ps * S / RoC
+        if(ps.lt.0.0) then
+          Phi = DAtan2(q*cpt+sps,cps-q*spt)
+          v = Cos(Phi - Phi_tan)
+d110 2
+a111 2
+          Phi = DAtan2(q*cpts+sps,cps-q*spts)
+          v = Cos(Phi- 2.0d0 * Phi_s + Phi_tan)
+d113 1
+a113 1
+        h = RoC * (Rr / v - 1.0d0)
+@
+
+
+1.1
+log
+@New version
+@
+text
+@@
+

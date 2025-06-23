@@ -1,0 +1,74 @@
+head	1.2;
+access;
+symbols
+	V0_1:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2001.01.31.01.14.51;	author zvi;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2000.06.21.21.56.15;	author zvi;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@No longer needed
+@
+text
+@module MDBETA
+  use MLSCommon, only: I4, R4, R8
+  implicit NONE
+  private
+  public :: MAX_NO_ZETA, MAX_NO_FREQ, NO_T_PHI, MDB_BETA_REC
+!  This contains all the parameters and structure definitions
+!  needed by the EOS Master DataBase routines
+!  Written by: Z. Shippony, June/24/1998
+!---------------------------- RCS Ident Info -------------------------------
+  CHARACTER (LEN=256) :: Id = &
+       "$Id: mdbeta.f90,v 1.1 2000/06/21 21:56:15 zvi Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile: mdbeta.f90,v $"
+!---------------------------------------------------------------------------
+  Integer(i4), parameter :: MAX_NO_ZETA = 337
+  Integer(i4), parameter :: MAX_NO_FREQ= 15
+  Integer(i4), parameter :: NO_T_PHI = 5
+  type :: MDB_BETA_REC
+    Integer(i4) :: NO_FREQ
+    Integer(i4) :: SPECTAG
+    Real(r8) :: FREQ_P(max_no_freq)
+    Real(r8) :: FREQ_I(max_no_freq)
+    Real(r8) :: BETA_P(max_no_zeta,no_t_phi,max_no_freq)
+    Real(r8) :: BETA_I(max_no_zeta,no_t_phi,max_no_freq)
+  end type MDB_BETA_REC
+end module MDBETA
+! $Log: mdbeta.f90,v $
+! Revision 1.1  2000/06/21 21:56:15  zvi
+! First version D.P.
+!
+! Revision 1.1  2000/05/04 18:12:05  vsnyder
+! Initial conversion to Fortran 90
+!
+@
+
+
+1.1
+log
+@First version D.P.
+@
+text
+@d11 1
+a11 1
+       "$Id: mdbeta.f90,v 1.1 2000/05/04 18:12:05 vsnyder Exp $"
+d27 3
+@
+

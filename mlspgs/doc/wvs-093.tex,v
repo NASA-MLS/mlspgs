@@ -1,0 +1,2418 @@
+head	1.13;
+access;
+symbols
+	v5-02-NRT-19:1.13
+	v6-00:1.13
+	v5-02-NRT-18:1.13
+	v5-02:1.13
+	v5-01-NRT-17:1.13
+	v5-01-NRT-16:1.13
+	v5-01-NRT-15:1.13
+	v5-01-NRT-14:1.13
+	neuralnetworks-1-0:1.13.0.12
+	cfm-single-freq-0-1:1.13.0.10
+	v5-01:1.13
+	v5-00:1.13
+	v4-23-TA133:1.13.0.8
+	mus-emls-1-70:1.13.0.6
+	rel-1-0-englocks-work:1.13.0.4
+	VUMLS1-00:1.13
+	VPL1-00:1.13
+	V4-22-NRT-08:1.13
+	VAM1-00:1.13
+	V4-21:1.13.0.2
+	V4-13:1.13
+	V4-12:1.13
+	V4-11:1.13
+	V4-10:1.13
+	M4-00:1.12
+	V3-33:1.10
+	V3-31:1.10
+	V3-30-NRT-05:1.2
+	cfm-01-00:1.2;
+locks; strict;
+comment	@% @;
+
+
+1.13
+date	2013.05.18.01.56.55;	author vsnyder;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2013.03.14.01.49.35;	author vsnyder;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2012.08.24.22.06.53;	author vsnyder;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2011.02.05.01.29.11;	author vsnyder;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2010.12.30.00.51.43;	author vsnyder;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2010.12.23.20.33.48;	author vsnyder;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2010.12.18.03.53.07;	author vsnyder;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2010.12.14.23.57.07;	author vsnyder;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2010.12.04.02.24.40;	author vsnyder;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2010.11.23.22.53.30;	author vsnyder;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2010.11.23.21.48.42;	author vsnyder;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2010.05.20.23.47.56;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2010.04.09.02.23.24;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.13
+log
+@Improve exposition of temperature derivatives
+@
+text
+@\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.45in
+\textheight 9.6in
+
+\newcommand{\docname}{\bf wvs-093r12}
+\newcommand{\docdate}{14 March 2013}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\ifx\dvidir\undefined
+  \newcommand\hr[1]{\href{#1.dvi}{dvi} \href{#1.pdf}{pdf}}
+\else
+  \newcommand\hr[1]{\href{\dvidir/#1.dvi}{dvi} \href{\pdfdir/#1.pdf}{pdf}}
+\fi
+\newcommand\h[1]{#1 \hr{#1}}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[u]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\renewcommand{\d}{\text{d}}
+\newcommand{\T}{\mathcal{T}}
+\newcommand{\M}{\mathcal{M}}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill, Nathaniel, Igor\\
+Subject: \>Computing derivatives in the MLS Full Forward Model\\
+From: \>Van Snyder\\
+References: \> \h{iy-007}, \h{wvs-100}, \h{wvs-101}\\
+\end{tabbing}
+
+\parindent 0pt \parskip 5pt
+\vspace{-20pt}
+
+\section{Introduction}
+
+This note shows that the MLS Full Forward Model could compute the Jacobian
+matrix necessary for retrieval more efficiently than it presently does.
+
+Thanks are due to the seminar \emph{Sensitivity Analysis of Mathematical Models}
+on 29 March -- 1 April 2010 by Eugene Ustinov.
+
+\section{Mathematical generalities}
+
+Consider a function $F(x_1, \dots, x_n)$ with Maclaurin series $c +
+\sum_j a_j x_j + \sum_{jk} b_{jk} x_j x_k \dots$.  Its variation due to
+variation $\delta x_j$ of its arguments is $\delta F = \sum_j a_j \delta
+x_j + O(\delta x_j^2)$.  From this, in the limit $\delta x_j \rightarrow
+0$, it is obvious that the sensitivities of $F$ due to variations in its
+arguments are the partial derivatives
+
+\begin{equation}
+\frac{\partial F}{\partial x_j} = a_j\,.
+\end{equation}
+
+If we carry this over to a functional $F[X(\xi)]$ of a continuum $X(\xi)$
+instead of a function of the finite set $\{x_1,\dots,x_n\}$, replacing
+the summations in the Maclaurin series with integrals,
+\emph{viz.}
+
+\begin{equation}
+F[X(\xi)] = c + \int_{\xi_0}^{\xi_1} a(\xi) X(\xi) \,\d \xi +
+ \int_{\xi_0}^{\xi_1} \int_{\xi_0}^{\xi_1} b(\xi,\xi^\prime) X(\xi)
+ X(\xi^\prime) \d \xi \d \xi^\prime + \dots
+\end{equation}
+
+then its variation due to variation $\delta X(\xi)$ of its argument
+function (also known as ``continuous parameter'') $X(\xi)$, for small
+variation $\delta X(\xi)$, is
+
+\begin{equation}\label{VAR}
+\delta F[X(\xi)] = \int_{\xi_0}^{\xi_1} a(\xi) \,\delta X(\xi) \,\d \xi
+  + O(\delta X(\xi)^2)
+ = \lim_{\Delta \xi_i \rightarrow 0}
+  \sum_i a(\xi_i) \delta X(\xi_i) \Delta \xi_i + O(\delta X(\xi)^2)
+\end{equation}
+
+and its sensitivity due to variation $\delta X(\xi)$ of its argument
+function $X(\xi)$ is
+
+\begin{equation}\label{SENS}
+\frac{\delta F[X(\xi)]}{\delta X(\xi)}
+ \equiv \lim_{\Delta \xi \rightarrow 0 \atop \delta X(\xi) \rightarrow 0}
+  \frac{\partial F[X(\xi)]}{\Delta \xi \partial X(\xi)}
+ = \frac{a(\xi) \delta X(\xi) \Delta \xi}{\delta X(\xi) \Delta \xi}
+ = a(\xi)
+\end{equation}
+
+(also see pages 27-29 of {\bf Calculus of Variations} by I. M. Gelfand
+and S. V. Fomin).
+
+%=========================================================================
+
+\section{Radiance}
+
+The radiance is the solution of the non-scattering radiative transfer
+equation
+
+\begin{equation}\label{diff eq}
+\frac{\partial I(s)}{\partial s} + \alpha(s) I(s) = \alpha(s) B(s)\,.
+\end{equation}
+
+Using notation similar to iy-007 and following the arguments therein, the
+solution is usually written as
+
+\begin{equation}\label{first}
+I[\alpha(s),s_\M] = I(s_0) \T(s_0,s_\M) +
+ \int_{s_0}^{s_\M} \T(s,s_\M) \alpha(s) B(s) \,
+  \d s\,,
+\end{equation}
+
+(meaning $I$ is explicitly a functional of $\alpha(s)$ and a function of
+$s_\M$) where $s_\M$ is the location of the instrument, $s_0$ is the
+location of the end of the path away from the instrument, $B(s)$ is the
+Planck function $\frac{h \nu}k \left( \exp\left(\frac{h \nu}{k
+T(s)}\right) -1\right)^{-1}$,
+
+\begin{equation}\label{two}
+\T(s,s_\M) = \exp\left( - \int_s^{s_\M} \alpha(\sigma)
+ \, \d \sigma \right) \,,
+\end{equation}
+
+$\alpha(\sigma) = \sum_k \beta^k(\sigma) f^k(\sigma) = \sum_k
+\beta^k(\sigma) f^k_{lm} \mu^k_{lm}(\sigma)$ is the volume absorption
+coefficient, $f^k(\sigma)$ is the volume mixing ratio of the $k^\text{th}$
+species at $\sigma$, $f^k_{lm}$ is the volume mixing ratio of the
+$k^\text{th}$ species at the $(\phi^k_l,\zeta^k_m)$ representation basis
+point for the $k^\text{th}$ species, $\mu^k_{lm}(\sigma)$ is the
+interpolation coefficient from the $(\phi^k_l,\zeta^k_m)$ representation
+basis point for the $k^\text{th}$ species to the point $\sigma$ on the
+integration path (see \h{wvs-101}), and $\beta^k(\sigma)$ is the
+absorption cross section for the $k^\text{th}$ species at $\sigma$.
+
+From Equation (\ref{two})
+
+\begin{equation}
+\frac{\partial \T(s,s_\M)}{\partial s} = \alpha(s) \T(s,s_\M).
+\end{equation}
+
+Substituting this into Equation (\ref{first}) gives
+
+\begin{equation}\label{RAD}
+I[\alpha(s),s_\M] = \T(s_0,s_\M) I(s_0) +
+ \int_{s_0}^{s_\M} B(s) \frac{\partial \T(s,s_\M)}{\partial s}
+  \, \d s \,.
+\end{equation}
+
+In the MLS full forward model, Equation (\ref{RAD}) is
+integrated by parts to give
+
+\begin{equation}\begin{split}\label{I}
+I[\alpha(s),s_\M] =\,& \T(s_0,s_\M) (I(s_0)-B(s_0)) + B(s_\M) -
+ \int_{s_0}^{s_\M} \T(s,s_\M) \, B^\prime(s) \,
+  \d s \\
+=\,& \T(s_0,s_\M) (I(s_0)-B(s_0)) + B(s_\M) -
+ \int_{B(s_0)}^{B(s_\M)} \T(s,s_\M) \, \d B(s)\,,
+\end{split}\end{equation}
+
+where $B^\prime(s) = \frac{\partial B(s)}{\partial s}$ (remember
+$\T(s_\M,s_\M)=1$). Henceforth, $I[\alpha(\sigma),s_\M]$ will be abbreviated
+to $I(s_\M)$.
+
+%=========================================================================
+
+\section{Sensitivity of radiance to variation of $\alpha(\sigma)$}
+
+Since $B(\sigma)$ does not depend upon $\alpha(\sigma)$, the variation of
+$I(s_\M)$ as a result of variation of $\alpha(\sigma)$ is
+
+\begin{equation}\label{I var}
+\delta_\alpha I(s_\M) =
+ \left( I(s_0)-B(s_0) \right) \delta_\alpha \T(s_0,s_\M) -
+  \int_{s_0}^{s_\M} \left(\delta_\alpha \T(\sigma,s_\M) \right)\,
+   B^\prime(\sigma) \, \d \sigma\,.
+\end{equation}
+
+To compute $\delta_\alpha \T(\sigma,s_\M)$, replace $\alpha(\sigma)$
+in Equation (\ref{two}) by $\alpha(\hat\sigma) +
+\delta\alpha(\hat\sigma)$ and compute the difference from Equation
+(\ref{two}):
+
+\begin{equation}\begin{split}\label{tau vary}
+\delta_\alpha \T(\sigma,s_\M)
+=\,& \exp\left( - \int_\sigma^{s_\M} (\alpha(\hat\sigma) +
+                                       \delta\alpha(\hat\sigma) )
+         \, \d \hat\sigma \right) -
+     \exp\left( - \int_\sigma^{s_\M} \alpha(\hat\sigma)
+         \, \d \hat\sigma \right) \\
+=\,& \exp\left( - \int_\sigma^{s_\M} \alpha(\hat\sigma)
+         \, \d \hat\sigma \right)
+     \exp\left( - \int_\sigma^{s_\M} \delta\alpha(\hat\sigma)
+         \, \d \hat\sigma \right) -
+     \exp\left( - \int_\sigma^{s_\M} \alpha(\hat\sigma)
+         \, \d \hat\sigma \right) \\
+=\,& \exp\left( - \int_\sigma^{s_\M} \alpha(\hat\sigma)
+         \, \d \hat\sigma \right)
+     \left(
+       \exp\left( - \int_\sigma^{s_\M} \delta\alpha(\hat\sigma)
+         \, \d \hat\sigma \right) -1
+     \right) \\
+=\,& \exp\left( - \int_\sigma^{s_\M} \alpha(\hat\sigma)
+         \, \d \hat\sigma \right)
+     \left(1 - \int_\sigma^{s_\M} \delta\alpha(\hat\sigma)
+                \, \d \hat\sigma +
+           O\left( \left( \int_\sigma^{s_\M} \delta\alpha(\hat\sigma)
+                           \, \d \hat\sigma
+            \right)^2 \right) - 1 \right)\,.
+\end{split}\end{equation}
+
+Therefore, in the limit for small perturbation $\delta
+\alpha(\hat\sigma)$
+
+\begin{equation}\label{tau var}
+\delta_\alpha \T(\sigma,s_\M) =
+ \exp \left( - \int_\sigma^{s_\M} \alpha(\hat\sigma) \,\d \hat\sigma \right)
+ \cdot
+ \left( - \int_\sigma^{s_\M} \delta \alpha(\hat\sigma) \,\d \hat\sigma \right)
+=
+ -\T(\sigma,s_\M) \int_\sigma^{s_\M} \delta \alpha(\hat\sigma) \,\d \hat\sigma\,.
+\end{equation}
+
+Substituting Equation (\ref{tau var}) into the integral in Equation
+(\ref{I var}) gives (exchanging the order of integration in the last step)
+
+\begin{equation}\begin{split}\label{var1}
+- \int_{s_0}^{s_\M} \delta_\alpha \T(\sigma,s_\M) \,
+ B^\prime(\sigma) \, \d \sigma
+=\,&
+ \int_{s_0}^{s_\M} \d \sigma \,\T(\sigma,s_\M)\,
+    B^\prime(\sigma) 
+    \int_\sigma^{s_\M} \d \hat\sigma\, \delta
+    \alpha(\hat\sigma) \\
+=\,&
+ \int_{s_0}^{s_\M} \d \sigma\, \delta \alpha(\sigma)
+   \int_{s_0}^\sigma \d \hat\sigma \, \T(\hat\sigma,s_\M) \,
+    B^\prime(\hat\sigma)\,.
+\end{split}\end{equation}
+
+Substituting Equation (\ref{tau var}) into the first term for $\delta_\alpha
+I(s_\M)$ in Equation (\ref{I var}) gives
+
+\begin{equation}\label{var2}
+\left( I(s_0)-B(s_0) \right) \delta_\alpha \T(s_0,s_\M)
+= -\T(s_0,s_\M) \left( I(s_0)-B(s_0) \right)
+   \int_{s_0}^{s_\M} \delta \alpha(\sigma)\, \d \sigma\,.
+\end{equation}
+
+Collecting Equations (\ref{var1}) and (\ref{var2}) and factoring, the
+resulting variation in $I(s_\M)$ due to variation in $\alpha(\sigma)$ is
+
+\begin{equation}\begin{split}
+\delta_\alpha I(s_\M)
+=\,& \int_{s_0}^{s_\M} \d \sigma \,\delta \alpha(\sigma)
+ \left\{ \int_{s_0}^\sigma \T(\hat\sigma,s_\M) \,
+    B^\prime(\hat\sigma) \,
+     \d \hat\sigma
+ - \T(s_0,s_\M) \left( I(s_0)-B(s_0) \right) \right\} \\
+=\,& \int_{s_0}^{s_\M} \d \sigma \,\delta \alpha(\sigma)
+ \left\{ \T(\sigma,s_\M) \left[ \int_{s_0}^\sigma \T(\hat\sigma,\sigma) \,
+    B^\prime(\hat\sigma) \,
+     \d \hat\sigma
+ - \T(s_0,\sigma) \left( I(s_0)-B(s_0) \right) \right] \right\}\,.
+\end{split}\end{equation}
+
+According to Equations (\ref{VAR}) and (\ref{SENS}), the sensitivity of
+$I(s_\M)$ to variation $\delta \alpha(\sigma)$ in $\alpha(\sigma)$ is the
+factor between \{ and \}, \emph{viz.}
+
+
+\begin{equation}\label{I var alpha}
+\frac{\delta I(s_\M)}{\delta \alpha(\sigma)}
+=
+ \T(\sigma,s_\M) \left[ \int_{s_0}^\sigma \T(\hat\sigma,s_\M) \,
+    B^\prime(\hat\sigma) \,
+     \d \hat\sigma
+ - \T(s_0,\sigma) \left( I(s_0)-B(s_0) \right) \right] \,.
+\end{equation}
+
+Using Equation (\ref{I}) in Equation (\ref{I var alpha}) we have
+
+\begin{equation}\label{var I}\boxed{
+\frac{\delta I(s_\M)}{\delta \alpha(\sigma)} =
+ \T(\sigma,s_\M) \left( B(\sigma) - I(\sigma) \right)}\,.
+\end{equation}
+
+%=========================================================================
+
+\section{Alternative derivation of sensitivity to $\alpha(\sigma)$}
+
+Instead of computing the variation of Equation (\ref{first}) with respect
+to variation of $\alpha(\sigma)$, we can compute the derivative of
+Equation (\ref{diff eq}) with respect to variation of $\alpha(\sigma)$
+and solve the resulting differential equation:
+
+\begin{equation}\label{four}
+\frac{\partial}{\partial \alpha(\sigma)} \frac{\d}{\d s} I(s) +
+ \frac{\partial \alpha(s)}{\partial \alpha(\sigma)} I(s) +
+  \alpha(s) \frac{\partial I(s)}{\partial \alpha(\sigma)}
+= \frac{\partial \alpha(s)}{\partial \alpha(\sigma)} B(s)\,.
+\end{equation}
+
+Replacing $\frac{\partial \alpha(s)}{\partial \alpha(\sigma)}$ by
+the Dirac $\delta$ function $\delta(s-\sigma)$ and exchanging the order of
+differentiation, we have
+
+\begin{equation}\begin{split}\label{five}
+\frac{\d}{\d s} \frac{\partial I(s)}{\partial \alpha(\sigma)} +
+ \delta(s-\sigma) I(s) +
+  \alpha(s) \frac{\partial I(s)}{\partial \alpha(\sigma)}
+=\,& \delta(s-\sigma) B(s) \text{ or}\\
+\frac{\d}{\d s} \frac{\partial I(s)}{\partial \alpha(\sigma)} +
+ \alpha(s) \frac{\partial I(s)}{\partial \alpha(\sigma)}
+=\,&
+ \delta(s-\sigma) (B(s)-I(s))\,.
+\end{split}\end{equation}
+
+Using the initial condition $\frac{\partial I(s_0)}{\partial \alpha(\sigma)}=0$
+the solution for Equation (\ref{five}) can be written
+
+\begin{equation}\begin{split}
+\frac{\partial I(s)}{\partial \alpha(\sigma)}
+=\,& \int_{s_0}^s \delta(\hat{s}-\sigma)
+  (B(\hat{s})-I(\hat{s})) \T(\hat{s},s)\, \d \hat{s} \\
+  \,&\\
+=\,& (B(\sigma)-I(\sigma)) \T(\sigma,s)\,,
+\end{split}\end{equation}
+
+which is (reassuringly) the same result as Equation (\ref{var I}).
+
+%=========================================================================
+
+\section{Sensitivity to mixing ratio, $f^k_{lm}$, on the grid}
+
+Remember that Equation (\ref{var I}) is the variation of the
+\emph{functional} $I[\alpha(\sigma),s_\M]$ with respect to variation of
+the \emph{function} $\alpha(\sigma)$.
+
+
+Using bilinear interpolation of mixing ratios $f^k_{lm}$ from a
+$(\phi^k_l,\phi^k_{l+1}) \times (\zeta^k_m,\zeta^k_{m+1})$ grid cell for
+the $k^\text{th}$ species to path points within the cell,
+%
+\begin{equation}\begin{split}\label{three}
+\alpha(s)
+\,&= \sum_k \beta^k(s) f^k(s)
+ = \sum_k \beta^k(s) \sum_{l,m}
+     \left[ \begin{array}{ll} \xi^k_l(s) &
+                               1-\xi^k_l(s) \end{array} \right]
+      \left[ \begin{array}{ll} f^k_{\ell,m}   & f^k_{\ell,m+1} \\
+                               f^k_{\ell+1,m} & f^k_{\ell+1,m+1}
+             \end{array} \right]
+      \left[ \begin{array}{l} \eta^k_m(s) \\ 1-\eta^k_m(s)
+      \end{array} \right] \\
+=\,& \sum_k \beta^k(s) \sum_{l,m} \mu^k_{lm}(s) f^k_{lm} \\
+\end{split}\end{equation}
+\vspace*{-0.35in}
+\begin{equation}\begin{split}
+\text{ where }
+\xi^k_l(s)
+=\,& \frac{\phi^k_{l+1}-\phi(s)}{\phi^k_{l+1}-\phi^k_l}
+ \text{ for } \phi^k_l \leq \phi(s) \leq \phi^k_{l+1}
+ \text{ and zero elsewhere, and } \\
+\eta^k_m(s)
+=\,& \frac{\zeta^k_{m+1}-\zeta(s)}{\zeta^k_{m+1}-\zeta^k_m}
+ \text{ for } \zeta^k_m \leq \zeta(s) \leq \zeta^k_{m+1}
+ \text{ and zero elsewhere.} \\
+\end{split}\end{equation}
+
+and where by shifting indices in Equation (\ref{three})
+%
+\begin{equation}\begin{split}\label{mu}
+\mu^k_{lm}(s) =
+\left\{
+\begin{array}{lll}
+\xi_{i,\ell}(s) \eta_{i,m}(s)
+  & \phi_l \leq \phi(s) \leq \phi_{l+1}
+  & \zeta_m \leq \zeta(s) \leq \zeta_{m+1} \\
+(1-\xi_{i,\ell-1}(s)) \eta_{i,m}(s)
+  & \phi_{l-1} \leq \phi(s) \leq \phi_l
+  & \zeta_m \leq \zeta(s) \leq \zeta_{m+1} \\
+\xi_{i,\ell}(s) (1-\eta_{i,m-1}(s))
+  & \phi_l \leq \phi(s) \leq \phi_{l+1}
+  & \zeta_{m-1} \leq \zeta(s) \leq \zeta_m \\
+(1-\xi_{i,\ell-1}(s))  (1-\eta_{i,m-1}(s))
+  & \phi_{l-1} \leq \phi(s) \leq \phi_l
+  & \zeta_{m-1} \leq \zeta(s) \leq \zeta_m \\
+0 & \text{elsewhere} \\
+\end{array}
+\right.
+\end{split}\end{equation}
+
+Thus, using $\frac{\partial \alpha(s)}{\partial f^k_{lm}} = \beta^k(s)
+\mu^k_{lm}(s)$,  the sensitivity of $I(s_\M)$ to variation of the discrete
+parameter $f^k_{lm}$, that is, a \emph{partial derivative}, is
+%
+\begin{equation}
+\boxed{
+\begin{split}\label{dI_dfklm}
+\frac{\partial I(s_\M)}{\partial f^k_{lm}}
+=\,&
+ \int_{s_0}^{s_\M}
+ \frac{\delta I(s_\M)}{\delta \alpha(\sigma)}
+  \frac{\partial \alpha(\sigma)}{\partial f^k(\sigma)}
+  \frac{\partial f^k(\sigma)}{\partial f^k_{lm}} \,\d \sigma =
+ \int_{s_0}^{s_\M}
+ \frac{\delta I(s_\M)}{\delta \alpha(\sigma)} \beta^k(\sigma)
+  \mu^k_{lm}(\sigma) \,\d \sigma\\
+=\,&
+ \int_{s_0}^{s_\M}
+ \T(\sigma,s_\M)
+  \left( B(\sigma) - I(\sigma) \right) \beta^k(\sigma) \mu^k_{lm}(\sigma)
+  \,\d \sigma \,.
+\end{split}}
+\end{equation}
+
+See \h{wvs-100} for a derivation of the relationship of this result to
+the form used in the full forward model.  From Equation (\ref{mu}),
+$\mu^k_{lm}(\sigma)$ is nonzero for only a small range of $\sigma$.
+
+Replacing integrals by quadratures, if we evaluate the indefinite product
+and indefinite sum
+%
+\begin{equation}\begin{split}\label{sum}
+P_i
+=\,& \prod_{j=i}^{N_p-1} \exp \left(
+  - \sum_k w_k \alpha(\sigma_{jk}) \Delta \sigma_j
+  \right)
+ = P_{i+1} \exp \left(- \sum_k w_k \alpha(\sigma_{jk}) \Delta \sigma_i
+                 \right)
+ \approx \T(\sigma_i,s_\M)
+  \text{ and} \\
+S_j
+=\,& P_0 \left(I(s_0)-B(s_0)\right) + B(s_\M)
+ - \sum_{i=1}^j  P_i \Delta B(\sigma_i)
+ = S_{j-1} - P_j \Delta B(\sigma_j)
+ \approx I(\sigma_j)
+\end{split}\end{equation}
+%
+where $s_0 = \sigma_0 < \sigma_1 < \sigma_2 \dots < \sigma_{N_p}
+\leq s_\M$, and $w_k$ and $\sigma_j \leq \sigma_{jk} \leq \sigma_{j+1}$
+are quadrature weights and abscissae, then from Equations (\ref{I}) and
+(\ref{var I}) we have
+%
+\begin{equation}\boxed{\boxed{
+\begin{split}\label{var sum}
+I(s_\M) \approx\,& S_{N_p} \text{ and}\\
+\frac{\delta I(s_\M)}{\delta f^k_{lm}}
+ \approx\,&
+  \sum_j
+  P_j \beta^k(\sigma_j) \mu^k_{lm}(\sigma_j)
+    (S_j - B(\sigma_j) ) \Delta \sigma_j
+ = \sum_j
+  P_j \beta^k(\zeta_j) \mu^k_{lm}(\zeta_j)
+    (S_j - B(\zeta_j) ) \frac{\d \sigma_j}{\d h_j}
+                         \frac{\d h_j}{\d \zeta_j} \Delta \zeta_j\\
+\end{split}}}
+\end{equation}
+
+where $h$ is height, $\zeta = -\log_{10}(p)$, and $p$ is pressure.  The
+second formulation allows for the path to depend upon temperature, since
+height and pressure are related by hydrostatic equilibrium, which depends
+upon temperature.
+
+Since we use bilinear interpolation, $\mu^k_{lm}(\sigma_j)$ is nonzero
+only for two values of $j$. Therefore, we can evaluate both $I(s_\M)$ and
+its sensitivity to variation in the discrete parameters $f^k_{lm}$ by
+evaluating one indefinite sum, and multiplying each of the $N_p$ elements
+by $2 N_s$ molecular absorption cross sections, $2 N_r$ interpolation
+coefficients, and two values of $\Delta \sigma$ , where $N_r$ is the
+number of points in the representation basis.  The additional cost to
+compute the sensitivities is $6 N_p \times N_s \times N_r$ multiplies and
+two adds.
+
+In the present scheme, we compute the sensitivities by evaluating $N_p
+\times N_s \times N_r$ additional quadrature steps, each requiring $2 N_p
++ 11 G + N_s N_p^2$ FLOPS, where $0 \leq G \leq N_p$ is the number of
+panels requiring three-point Gauss-Legendre quadrature instead of
+trapezoidal quadrature, because we compute the derivative of Equation
+(\ref{first}) with respect to $f^k(\sigma)$, and leave
+$\frac{\partial\alpha(\sigma)}{\partial f^k_{lm}} = \beta^k(\sigma)$
+inside the integral:
+
+\begin{equation}\begin{split}
+\frac{\partial I(s_\M)}{\partial f^k_{lm}}
+=\,&
+ \int_{s_0}^{s_\M} \frac{\delta \T(s,s_\M)}{\delta \alpha(s)}
+  \frac{\delta \alpha(s)}{\delta f^k(s)}
+  \frac{\partial f^k(s)}{\partial f^k_{lm}}
+  B^\prime(s) \, \d s
+=\,&
+ -\int_{s_0}^{s_\M} \T(s,s_\M) \mu^k_{lm}(s) \beta^k(s)
+  B^\prime(s) \, \d s
+  \,,
+\end{split}\end{equation}
+
+in which the integral defining $\T(s,s_\M)$ is recomputed.  Thus the
+approach described here should be less time consuming by a factor of
+$O(N_s \times N_p^2)$, and require less memory than the current method.
+
+Evaluating the Hessian tensor should similarly be possible at lower cost.
+
+%=========================================================================
+
+\section{Alternative derivation of sensitivity to $f^k_{lm}$}
+
+Start with the clear-sky non-scattering radiative transfer equation:
+
+\begin{equation}\label{D1}
+\frac{\d I(s)}{\d s} + \alpha(s) I(s) = \alpha(s) B(s)\,.
+\end{equation}
+
+Taking derivatives of Equation (\ref{D1}) with respect to mixing ratios
+$f^k_{lm}$ on the grid gives
+
+\begin{equation}
+\frac{\partial}{\partial f^k_{lm}} \frac{\d I(s)}{\d s} +
+ \frac{\partial \alpha(s)}{\partial f^k_{lm}} I(s) +
+ \alpha(s) \frac{\partial I(s)}{\partial f^k_{lm}} =
+ \frac{\partial \alpha(s)}{\partial f^k_{lm}} B(s) \,.
+\end{equation}
+
+Exchanging the order of differentiation, using $\frac{\partial
+\alpha(s)}{\partial f^k_{lm}} = \beta^k(s) \mu^k_{lm}(s)$, and rearranging
+the equation to the usual form gives
+
+\begin{equation}\begin{split}
+\frac{\d}{\d s} \frac{\partial I(s)}{\partial f^k_{lm}} +
+ \alpha(s) \frac{\partial I(s)}{\partial f^k_{lm}}
+=\,&
+ \frac{\partial \alpha(s)}{\partial f^k_{lm}} ( B(s) - I(s) ) \\
+=\,&
+ \beta^k(s) \mu^k_{lm}(s) ( B(s) - I(s) )\,.
+\end{split}\end{equation}
+
+Solve for $\frac{\partial I(s_\M)}{\partial f^k_{lm}}$ using
+$\frac{\partial I(s_0)}{\partial f^k_{lm}}=0$ to get
+
+\begin{equation}\boxed{
+\frac{\partial I(s_\M)}{\partial f^k_{lm}} =
+ \int_{s_0}^{s_\M} \T(s,s_\M) \beta^k(s) \mu^k_{lm}(s)
+  ( B(s) - I(s) )\, \d s
+}
+\end{equation}
+
+which is (reassuringly) the same as Equation (\ref{dI_dfklm}).
+
+%=========================================================================
+
+\section{Sensitivity of radiance to variation of temperature}
+
+Because both $\T$ and $B$ depend upon temperature
+
+\begin{equation}\begin{split}\label{T vary}
+\delta_T I(s_\M) =\,& -\delta_T B(s_0)) \T(s_0,s_\M)
+ + (I(s_0) - B(s_0)) \delta_T \T(s_0,s_\M) + \delta_T B(s_\M) \\
+& - \int_{s_0}^{s_\M} \delta_T
+  \T(\sigma,s_\M) B^\prime(\sigma) \, \d \sigma
+ - \int_{s_0}^{s_\M}
+  \T(\sigma,s_\M) \delta_T B^\prime(\sigma)
+  \, \d \sigma\,.
+\end{split}\end{equation}
+
+Following a development similar to Equations (\ref{tau vary}--\ref{tau
+var}),
+
+\begin{equation}\begin{split}
+\int_{s_0}^{s_\M} \delta_T
+  \T(\sigma,s_\M) B^\prime(\sigma) \d \sigma
+= \,&
+  \int_{s_0}^{s_\M} \d \sigma\,
+   \delta T(\sigma) \frac{\partial \alpha(\sigma)}{\partial T(\sigma)}
+   \int_{s_0}^\sigma \d \hat\sigma\,
+    \T(\hat\sigma,s_\M) B^\prime(\hat\sigma) \\
+=\,& \int_{s_0}^{s_\M} \d \sigma\,
+   \delta T(\sigma) \frac{\partial \alpha(\sigma)}{\partial T(\sigma)}
+   \T(\sigma,s_\M) \int_{s_0}^\sigma \d \hat\sigma\,
+    \T(\hat\sigma,\sigma) B^\prime(\hat\sigma)
+\end{split}\end{equation}
+
+while
+
+\begin{equation}
+\int_{s_0}^{s_\M} \T(\sigma,s_\M) \delta_T B^\prime(\sigma)\, \d \sigma =
+ \int_{s_0}^{s_\M} \d \sigma\, \delta T(\sigma) \T(\sigma,s_\M)
+  \frac{\partial B^\prime(\sigma)}{\partial T(\sigma)}\,.
+\end{equation}
+
+Therefore, again using Equations (\ref{VAR}--\ref{SENS}),
+
+\begin{equation}\begin{split}\label{dIdT B'}
+\frac{\delta I(s_\M)}{\delta T(\sigma)} =\,&
+ -\frac{\delta B(s_0)}{\delta T(\sigma)} \T(s_0,s_\M)
+  + (I(s_0) - B(s_0)) \frac{\delta \T(s_0,s_\M)}{\delta T(\sigma)}
+  + \frac{\delta B(s_\M)}{\delta T(\sigma)}\\
+&
+  - \frac{\partial \alpha(\sigma)}{\partial T(\sigma)}
+    \T(\sigma,s_\M)
+    \int_{s_0}^\sigma \d \hat\sigma\,
+     \T(\hat\sigma,\sigma) B^\prime(\hat\sigma)
+  - \T(\sigma,s_\M) \frac{\partial B^\prime(\sigma)}{\partial T(\sigma)} \\
+=\,&
+ (I(s_0) - B(s_0)) \frac{\delta \T(s_0,s_\M)}{\delta \alpha(\sigma)}
+  \frac{\partial \alpha(\sigma)}{\partial T(\sigma)}
+  - \frac{\partial \alpha(\sigma)}{\partial T(\sigma)}
+    \T(\sigma,s_\M)
+    \int_{s_0}^\sigma \d \hat\sigma\,
+     \T(\hat\sigma,\sigma) B^\prime(\hat\sigma)
+  - \T(\sigma,s_\M) \frac{\partial B^\prime(\sigma)}{\partial T(\sigma)} \\
+=\,&
+  -(I(s_0) - B(s_0)) \T(s_0,s_\M)
+  \frac{\partial \alpha(\sigma)}{\partial T(\sigma)}
+  - \frac{\partial \alpha(\sigma)}{\partial T(\sigma)}
+    \T(\sigma,s_\M)
+    \int_{s_0}^\sigma \d \hat\sigma\,
+     \T(\hat\sigma,\sigma) B^\prime(\hat\sigma)
+  - \T(\sigma,s_\M) \frac{\partial B^\prime(\sigma)}{\partial T(\sigma)} \\
+=\,&
+  \T(\sigma,s_\M) \left( B(s_\M) - I(\sigma) \right)
+  \frac{\partial \alpha(\sigma)}{\partial T(\sigma)}
+  - \T(\sigma,s_\M) \frac{\partial B^\prime(\sigma)}{\partial T(\sigma)}
+ = \frac{\partial \alpha(\sigma)}{\partial T(\sigma)}
+   \frac{\delta I(s_\M)}{\delta \alpha(\sigma)}
+   - \T(\sigma,s_\M) \frac{\partial B^\prime(\sigma)}{\partial T(\sigma)} \,,
+\end{split}\end{equation}
+
+where Equation (\ref{I var alpha}) has been used in the last step to
+represent the integral in Equation (\ref{dIdT B'}).
+
+The factor $\frac{\partial B^\prime(\sigma)}{\partial T(\sigma)}$ in the
+final expression is troublesome.  If we start instead with Equation
+(\ref{first}) we arrive at the alternative result
+
+\begin{equation}\label{dIdT}
+\frac{\delta I(s_\M)}{\delta T(\sigma)} =
+ \frac{\delta I(s_\M)}{\delta \alpha(\sigma)}
+   \frac{\partial \alpha(\sigma)}{\partial T(\sigma)} +
+   \alpha(\sigma) \T(\sigma,s_\M)
+    \frac{\partial B(\sigma)}{\partial T(\sigma)}\,.
+\end{equation}
+
+$B(\sigma)$ satisfies the differential equation $\frac{\partial
+B(\sigma)}{\partial T(\sigma)} = \frac{B(\sigma)}{T(\sigma)^2} \left(
+\frac{h \nu}k + B(\sigma) \right)$.  Inserting this result into Equation
+(\ref{dIdT}) we have
+
+\begin{equation}\label{var T}
+\boxed{\begin{split}
+\frac{\delta I(s_\M)}{\delta T(\sigma)}
+=\,&
+ \frac{\delta I(s_\M)}{\delta \alpha(\sigma)}
+   \frac{\partial \alpha(\sigma)}{\partial T(\sigma)} +
+   \alpha(\sigma) \T(\sigma,s_\M)
+    \frac{B(\sigma)}{T(\sigma)^2} \left( \frac{h \nu}k + B(\sigma) \right)
+\\
+ =\,&
+  \T(\sigma,s_\M)
+   \left[ \left( B(\sigma) - I(\sigma) \right)
+    \frac{\partial \alpha(\sigma)}{\partial T(\sigma)} +
+    \alpha(\sigma)
+    \frac{B(\sigma)}{T(\sigma)^2} \left( \frac{h \nu}k + B(\sigma) \right)
+   \right]
+\end{split}}
+\end{equation}
+
+%=========================================================================
+
+\section{Alternative derivation of sensitivity to temperature}
+
+Instead of computing the variation of Equation (\ref{first}) with respect
+to variation of $T(\sigma)$, we can compute the derivative of
+Equation (\ref{diff eq}) with respect to variation of $T(\sigma)$
+and solve the resulting differential equation:
+
+\begin{equation}\begin{split}\label{T four}
+\frac{\partial}{\partial T(\sigma)} \frac{\d}{\d s} I(s) +
+ \frac{\partial \alpha(s)}{\partial T(\sigma)} I(s) +
+  \alpha(s) \frac{\partial I(s)}{\partial T(\sigma)}
+=\,& \frac{\partial \alpha(s)}{\partial T(\sigma)} B(s)
+  +  \alpha(s) \frac{\partial B(s)}{\partial T(\sigma)} \text{ or}\\
+\frac{\partial}{\partial T(\sigma)} \frac{\d}{\d s} I(s) +
+ \frac{\partial \alpha(s)}{\partial \alpha(\sigma)}
+ \frac{\partial \alpha(\sigma)}{\partial T(\sigma)} I(s) +
+  \alpha(s) \frac{\partial I(s)}{\partial T(\sigma)}
+=\,& \frac{\partial \alpha(s)}{\partial \alpha(\sigma)}
+     \frac{\partial \alpha(\sigma)}{\partial T(\sigma)} B(s)
+  +  \alpha(s)
+      \frac{\partial B(s)}{\partial B(\sigma)}
+      \frac{\partial B(\sigma)}{\partial T(\sigma)}\,.
+\end{split}\end{equation}
+
+Replacing $\frac{\partial \alpha(s)}{\partial \alpha(\sigma)}$ and
+$\frac{\partial B(s)}{\partial B(\sigma)}$ by the Dirac $\delta$
+function $\delta(s-\sigma)$ and exchanging the order of differentiation,
+we have
+
+\begin{equation}\begin{split}\label{T five}
+\frac{\d}{\d s} \frac{\partial I(s)}{\partial T(\sigma)} +
+ \delta(s-\sigma) \frac{\partial \alpha(\sigma)}{\partial T(\sigma)} I(s) +
+  \alpha(s) \frac{\partial I(s)}{\partial T(\sigma)}
+=\,& \delta(s-\sigma) \left( \frac{\partial \alpha(\sigma)}{\partial T(\sigma)}
+     B(s) + \alpha(s) \frac{\partial B(\sigma)}{\partial T(\sigma)} \right
+     ) \text{ or}\\
+\frac{\d}{\d s} \frac{\partial I(s)}{\partial \alpha(\sigma)} +
+ \alpha(s) \frac{\partial I(s)}{\partial \alpha(\sigma)}
+=\,&
+ \delta(s-\sigma)
+  \left( \frac{\partial \alpha(\sigma)}{\partial T(\sigma)}
+    \left(B(s)-I(s)\right) +
+    \alpha(s) \frac{\partial B(\sigma)}{\partial T(\sigma)}
+    \right )\,.
+\end{split}\end{equation}
+
+Using the initial condition $\frac{\partial I(s_0)}{\partial \alpha(\sigma)}=0$
+the solution for Equation (\ref{T five}) can be written
+
+\begin{equation}\begin{split}\label{T9}
+\frac{\partial I(s)}{\partial T(\sigma)}
+=\,& \int_{s_0}^s \delta(\hat{s}-\sigma)
+  \left ( \frac{\partial \alpha(\sigma)}{\partial T(\sigma)}
+    \left(B(s)-I(s)\right) +
+    \alpha(s) \frac{\partial B(\sigma)}{\partial T(\sigma)}
+    \right ) \T(\hat{s},s) \,\d \hat{s} \\
+  \,&\\
+=\,& \left (
+    \frac{\partial \alpha(\sigma)}{\partial T(\sigma)}
+    \left(B(s)-I(s)\right) +
+     \alpha(s) \frac{\partial B(\sigma)}{\partial T(\sigma)}
+     \right ) \T(\sigma,s)
+ = \frac{\delta I(s)}{\delta \alpha(\sigma)}
+   \frac{\partial \alpha(\sigma)}{\partial T(\sigma)} +
+   \alpha(\sigma) \T(\sigma,s)
+    \frac{\partial B(\sigma)}{\partial T(\sigma)} \,,
+\end{split}\end{equation}
+
+which is (reassuringly) the same result as Equation (\ref{dIdT}).
+
+%=========================================================================
+
+\section{Sensitivity to temperature, $T_{lm}$, on the grid}
+
+Compute the derivative of Equation (\ref{diff eq}) with respect to
+$T_{lm}$ to get
+
+\begin{equation}
+\frac{\partial}{\partial T_{lm}} \frac{\d}{\d s} I(s) +
+ \frac{\partial \alpha(s)}{\partial T_{lm}} I(s) +
+  \alpha(s) \frac{\partial I(s)}{\partial T_{lm}}
+=\frac{\partial \alpha(s)}{\partial T_{lm}} B(s)
+  +  \alpha(s) \frac{\partial B(s)}{\partial T_{lm}} \,.
+\end{equation}
+
+Exchanging the order of integration and collecting terms involving
+$\frac{\partial I(s)}{\partial T_{lm}}$ on the left gives
+
+\begin{equation}
+\frac{\d}{\d s}\frac{\partial I(s)}{\partial T_{lm}} +
+  \alpha(s) \frac{\partial I(s)}{\partial T_{lm}}
+=\frac{\partial \alpha(s)}{\partial T_{lm}} \left( B(s) - I(s) \right)
+  +  \alpha(s) \frac{\partial B(s)}{\partial T_{lm}} \,.
+\end{equation}
+
+Replacing $\frac{\partial \alpha(s)}{\partial T_{lm}} = \frac{\partial
+\alpha(s)}{\partial T(s)} \frac{\partial T(s)}{\partial T_{lm}} =
+\frac{\partial \alpha(s)}{\partial T(s)} \mu^T_{lm}(s)$ and
+$\frac{\partial B(s)}{\partial T_{lm}} = \frac{\partial
+B(s)}{\partial T(s)} \frac{\partial T(s)}{\partial T_{lm}} =
+\frac{\partial B(s)}{\partial T(s)} \mu^T_{lm}(s)$, where $\mu^T_{lm}(s)$
+is the interpolation coefficient from $(\phi_l^T,\zeta_m^T)$ to $s$, gives
+
+\begin{equation}
+\frac{\d}{\d s}\frac{\partial I(s)}{\partial T_{lm}} +
+  \alpha(s) \frac{\partial I(s)}{\partial T_{lm}}
+= \mu^T_{lm}(s) \left[
+ \frac{\partial \alpha(s)}{\partial T(s)} \left( B(s) - I(s) \right)
+  +  \alpha(s) \frac{\partial B(s)}{\partial T(s)} \right] \,,
+\end{equation}
+
+for which the solution, using $\frac{\partial I(s_0)}{\partial
+T_{lm}} = 0$, is
+
+\begin{equation}\label{T10}\boxed{
+\frac{\partial I(s)}{\partial T_{lm}} =
+ \int_{s_0}^s \T(\hat{s},s_\M)\, \mu^T_{lm}(\hat{s})
+  \left[
+ \frac{\partial \alpha(\hat{s})}{\partial T(\hat{s})} \left( B(\hat{s}) - I(\hat{s}) \right)
+  +  \alpha(\hat{s}) \frac{\partial B(\hat{s})}{\partial T(\hat{s})} \right]
+ \,\d \hat{s} \,.
+}\end{equation}
+
+This is the same as the integral in Equation (\ref{T9}), with
+$\delta(\hat{s}-\sigma)$ replaced by $\frac{\partial
+T(\hat{s})}{\partial T_{lm}} = \mu^T_{lm}(\hat{s})$.
+
+Taking the derivative of Equation (\ref{I}) with respect to $T_{lm}$ gives
+
+\begin{equation}\begin{split}\label{Teq}
+\frac{\partial I(s)}{\partial T_{lm}}
+=\,&
+ -\T(s_0,s) \left(I(s_0) -B(s_0) \right)
+  \int_{s_0}^s \frac{\partial \alpha(\hat{s})}{\partial T(\hat{s})}
+   \mu^T_{lm}(\hat{s}) \,\d \hat{s} \\
+ +
+\,&
+ \int_{s_0}^s \mu^T_{lm}(\hat{s}) \left[ B^\prime(\hat{s})
+  \int_s^s  \frac{\partial \alpha(\sigma)}{\partial T(\sigma)}
+   \,\d \sigma -
+   \T(\hat{s},s) \frac{\partial B^\prime(\hat{s})}{\partial T(\hat{s})}
+   \right] \,\d \hat{s}\,.
+\end{split}\end{equation}
+
+This is equivalent to Equation (\ref{T10}), as can be seen (after some
+work) by substituting Equation (\ref{I}) into Equation (\ref{T10}).
+
+Equations (\ref{T10}) and (\ref{Teq}) are both complicated by the fact
+that the path depends upon temperature everywhere below the path.  When
+integrated in $\zeta = -\log_{10}(p)$ coordinates, Equation (\ref{T10})
+becomes
+
+\begin{equation}\label{T half}
+\frac{\partial I(s)}{\partial T_{lm}} =
+ \int_{\zeta_0}^{\zeta_\M} \T(\zeta,\zeta_\M)\, \mu^T_{lm}(\zeta)
+  \left[
+ \frac{\partial \alpha(\zeta)}{\partial T(\zeta)}
+     \left( B(\zeta) - I(\zeta) \right)
+  +  \alpha(\zeta) \frac{\partial B(\zeta)}{\partial T(\zeta)} \right]
+ \, \frac{\d s}{\d h} \frac{\d h}{\d \zeta}
+ \,\d \zeta \,,
+\end{equation}
+
+where $\frac{\d h}{\d \zeta}$ depends upon temperature below the path
+through hydrostatic equilibrium.
+
+Equation (\ref{T half}) is not sufficient to capture all of the dependence
+upon temperature below the path.  If the integral in Equation (\ref{I}) is
+written in $\zeta$ coordinates we have
+
+\begin{equation}
+\int_{\zeta_0}^{\zeta_\M} \T(\zeta,\zeta_\M) B^\prime(\zeta)
+ \, \frac{\d s}{\d h} \frac{\d h}{\d \zeta}
+ \,\d \zeta \,.
+\end{equation}
+
+Taking the derivative with respect to $T_{lm}$ gives
+
+\begin{equation}
+\int_{\zeta_0}^{\zeta_\M}
+ \frac{\partial \T(\zeta,\zeta_\M) B^\prime(\zeta)}
+      {\partial T_{lm}}
+ \, \frac{\d s}{\d h} \frac{\d h}{\d \zeta}
+ \,\d \zeta \,+
+\int_{\zeta_0}^{\zeta_\M}
+ \T(\zeta,\zeta_\M) B^\prime(\zeta) \,
+ \frac{\partial}{\partial T_{lm}} \left[
+  \frac{\d s}{\d h} \frac{\d h}{\d \zeta} \right]
+ \,\d \zeta \,.
+\end{equation}
+
+The first integral, together with the derivative of the boundary terms in
+Equation (\ref{I}), are equivalent to Equation (\ref{T half}).  The
+complete expression for the derivative is therefore
+
+\begin{equation}\boxed{\begin{split}
+\frac{\partial I(s)}{\partial T_{lm}}
+=\,&
+ \int_{\zeta_0}^{\zeta_\M} \T(\zeta,\zeta_\M)\, \mu^T_{lm}(\zeta)
+  \left(
+ \frac{\partial \alpha(\zeta)}{\partial T(\zeta)}
+  \left( B(\zeta) - I(\zeta) \right)
+  +  \alpha(\zeta) \frac{\partial B(\zeta)}{\partial T(\zeta)} \right)
+ \, \frac{\d s}{\d h} \frac{\d h}{\d \zeta}
+ \,\d \zeta \\
+\,& + \int_{\zeta_0}^{\zeta_\M}
+ \T(\zeta,\zeta_\M) B^\prime(\zeta) \,
+   \frac{\partial}{\partial T_{lm}} \left[
+  \frac{\d s}{\d h} \frac{\d h}{\d \zeta} \right]
+ \,\d \zeta \\
+=\,&
+  \int_{\zeta_0}^{\zeta_\M} \T(\zeta,\zeta_\M)\, \left[ \mu^T_{lm}(\zeta)
+  \left(
+ \frac{\partial \alpha(\zeta)}{\partial T(\zeta)}
+  \left( B(\zeta) - I(\zeta) \right)
+  +  \alpha(\zeta) \frac{\partial B(\zeta)}{\partial T(\zeta)} \right)
+  -\alpha(\zeta) B(\zeta) \right]
+ \, \frac{\d s}{\d h} \frac{\d h}{\d \zeta}
+ \,\d \zeta \\
+\,& + \int_{\zeta_0}^{\zeta_\M}
+ \T(\zeta,\zeta_\M) B(\zeta) \,
+ \frac{\partial}{\partial T_{lm}} \left[
+  \frac{\d s}{\d h} \frac{\d h}{\d \zeta} \right]
+ \,\d \zeta \\
+=\,&
+  \int_{\zeta_0}^{\zeta_\M} \T(\zeta,\zeta_\M)\, \left[ \mu^T_{lm}(\zeta)
+  \left(
+ \frac{\partial \alpha(\zeta)}{\partial T(\zeta)}
+  \left( B(\zeta) - I(\zeta) \right)
+  +  \alpha(\zeta) \frac{\partial B(\zeta)}{\partial T(\zeta)} \right)
+  -\alpha(\zeta) B(\zeta) \right]
+ \, \frac{\d s}{\d h} \frac{\d h}{\d \zeta}
+ \,\d \zeta \\
+\,& + \int_{\zeta_0}^{\zeta_\M}
+ \T(\zeta,\zeta_\M) B(\zeta)\mu^T_l(\zeta) \mu^T_m(\phi(\zeta)) \,
+   \frac{\partial}{\partial T} \left[
+  \frac{\d s}{\d h} \frac{\d h}{\d \zeta} \right]
+ \,\d \zeta
+ \,.
+\end{split}}
+\end{equation}
+
+The first integral accounts for the dependence of $\alpha(\zeta)$ and
+$B(\zeta)$ on the path upon $T_{lm}$, for which $\mu^T_{lm}(\zeta)$ is
+only nonzero where $(\phi^T_l,\zeta^T_m)$ is adjacent to the path.  The
+second accounts for the dependence of the path upon $T_{lm}$, for which
+$\mu^T_l(\zeta)$ and $\mu^T_m(\phi(\zeta))$ are nonzero where
+$(\phi^T_l,\zeta^T_m)$ are adjacent to or below the path.
+
+From the 19 August 2004 ATBD,
+
+\begin{equation}
+\frac{\d s}{\d h} = \frac{h(T)}{\sqrt{h(T)^2-H_t(T)^2}}
+\text{ and }
+\frac{\d h}{\d \zeta} = \frac{h(T)^2 k\, T \ln 10}{g_0 R^2_0 \mathcal{M}} \,,
+\end{equation}
+
+where $t$ denotes the tangent point.  From this,
+
+\begin{equation}
+\frac{\partial}{\partial T}
+ \left[ \frac{\d s}{\d h} \frac{\d h}{\d \zeta} \right] =
+ \left(
+ \frac{2 h(T)^2 - 3 H_t(T)^2}{\left(h(T)^2-H_t(T)^2\right)^\frac32}
+  \frac{\d h(T)}{\d T} +
+ \frac{h(T) H_t(T)}{\left(h(T)^2-H_t(T)^2\right)^\frac32}
+  \frac{\d H_t(T)}{\d T} +
+ \frac1T \frac{\d s}{\d h}
+ \right)  \frac{\d h}{\d \zeta} \,.
+\end{equation}
+
+From the definition of $B(\zeta)$ given after Equation (\ref{first}),
+
+\begin{equation}
+\frac{\text{d} B}{\text{d} T} =
+\frac{B}{T^2} \left( \frac{h\nu}k + B \right)\,.
+\end{equation}
+
+\label{lastpage}
+\end{document}
+
+% $Id: wvs-093.tex,v 1.12 2013/03/14 01:49:35 vsnyder Exp $
+
+% $Log: wvs-093.tex,v $
+% Revision 1.12  2013/03/14 01:49:35  vsnyder
+% Correct some typos, reduce notation confusion
+%
+% Revision 1.11  2012/08/24 22:06:53  vsnyder
+% Cannonball polishing
+%
+% Revision 1.10  2011/02/05 01:29:11  vsnyder
+% More temperature derivatives on the grid
+%
+% Revision 1.9  2010/12/30 00:51:43  vsnyder
+% Temperature derivative on the grid
+%
+% Revision 1.8  2010/12/23 20:33:48  vsnyder
+% Simplify discussion of interpolation coefficients by reference to wvs-101
+%
+% Revision 1.7  2010/12/18 03:53:07  vsnyder
+% Correct typo in Equation (30)
+%
+% Revision 1.6  2010/12/14 23:57:07  vsnyder
+% Maybe it's correct now
+%
+% Revision 1.5  2010/12/04 02:24:40  vsnyder
+% Correct VMR derivative, add temperature derivative
+%
+% Revision 1.4  2010/11/23 22:53:30  vsnyder
+% Repair a typo in the final equation
+%
+% Revision 1.3  2010/11/23 21:48:42  vsnyder
+% Incorporate interpolating factors, re-work temperature derivatives
+%
+% Revision 1.2  2010/05/20 23:47:56  vsnyder
+% Add Id line
+%
+% Revision 1.1  2010/04/09 02:23:24  vsnyder
+% Initial commit -- yes, at r1, not r0
+%
+@
+
+
+1.12
+log
+@Correct some typos, reduce notation confusion
+@
+text
+@d10 2
+a11 2
+\newcommand{\docname}{\bf wvs-093r11}
+\newcommand{\docdate}{12 March 2013}
+d905 4
+a908 2
+ \T(\zeta,\zeta_\M) B^\prime(\zeta) \, \frac{\d s}{\d h}
+ \frac{\partial^2 h}{\partial T_{lm} \partial \zeta} \,\d \zeta \,.
+d926 4
+a929 2
+ \T(\zeta,\zeta_\M) B^\prime(\zeta) \, \frac{\d s}{\d h}
+ \frac{\partial^2 h}{\partial T_{lm} \partial \zeta} \,\d \zeta \\
+d940 4
+a943 2
+ \T(\zeta,\zeta_\M) B(\zeta) \, \frac{\d s}{\d h}
+ \frac{\partial^2 h}{\partial T_{lm} \partial \zeta} \,\d \zeta \\
+d954 5
+a958 3
+ \T(\zeta,\zeta_\M) B(\zeta)\mu^T_{lm}(\zeta) \, \frac{\d s}{\d h}
+ \frac{\partial^2 h}{\partial T\, \partial \zeta} \,\d \zeta
+\,.
+d963 34
+a996 3
+$B(\zeta)$ on the path upon $T_{lm}$ where $(\phi^T_l,\zeta^T_m)$ is
+adjacent to the path.  The second accounts for the dependence of the path
+upon $T_{lm}$ where $(\phi^T_l,\zeta^T_m)$ is below the path.
+d1001 1
+a1001 1
+% $Id: wvs-093.tex,v 1.11 2012/08/24 22:06:53 vsnyder Exp $
+d1004 3
+@
+
+
+1.11
+log
+@Cannonball polishing
+@
+text
+@d7 2
+a8 2
+\topmargin -0.25in
+\textheight 9.1in
+d10 2
+a11 2
+\newcommand{\docname}{\bf wvs-093r10}
+\newcommand{\docdate}{24 August 2012}
+d74 1
+d160 2
+a161 2
+I[\alpha(s),s_m] = I(s_0) \T(s_0,s_m) +
+ \int_{s_0}^{s_m} \T(s,s_m) \alpha(s) B(s) \,
+d166 4
+a169 4
+$s_m$) where $s_m$ is the location of the instrument, $s_0$ is the location of
+the end of the path away from the instrument, $B(s)$ is the Planck
+function $\frac{h \nu}k \left( \exp\left(\frac{h \nu}{k T(s)}\right)
+-1\right)^{-1}$,
+d172 1
+a172 1
+\T(s,s_m) = \exp\left( - \int_s^{s_m} \alpha(\sigma)
+d180 6
+a185 6
+$k^\text{th}$ species at the $(\phi_l,\zeta_m)$ representation basis
+point, $\mu^k_{lm}(\sigma)$ is the interpolation coefficient from the
+$(\phi_l,\zeta_m)$ representation basis point for the $k^\text{th}$
+species to the point $\sigma$ on the integration path (see \h{wvs-101}),
+and $\beta^k(\sigma)$ is the absorption cross section for the
+$k^\text{th}$ species at $\sigma$. 
+d190 1
+a190 1
+\frac{\partial \T(s,s_m)}{\partial s} = \alpha(s) \T(s,s_m).
+d196 2
+a197 2
+I[\alpha(s),s_m] = \T(s_0,s_m) I(s_0) +
+ \int_{s_0}^{s_m} B(s) \frac{\partial \T(s,s_m)}{\partial s}
+d205 2
+a206 2
+I[\alpha(s),s_m] =\,& \T(s_0,s_m) (I(s_0)-B(s_0)) + B(s_m) -
+ \int_{s_0}^{s_m} \T(s,s_m) \, B^\prime(s) \,
+d208 2
+a209 2
+=\,& \T(s_0,s_m) (I(s_0)-B(s_0)) + B(s_m) -
+ \int_{B(s_0)}^{B(s_m)} \T(s,s_m) \, \d B(s)\,,
+d213 2
+a214 2
+$\T(s_m,s_m)=1$). Henceforth, $I[\alpha(\sigma),s_m]$ will be abbreviated
+to $I(s_m)$.
+d221 1
+a221 1
+$I(s_m)$ as a result of variation of $\alpha(\sigma)$ is
+d224 3
+a226 3
+\delta_\alpha I(s_m) =
+ \left( I(s_0)-B(s_0) \right) \delta_\alpha \T(s_0,s_m) -
+  \int_{s_0}^{s_m} \left(\delta_\alpha \T(\sigma,s_m) \right)\,
+d230 3
+a232 3
+To compute $\delta_\alpha \T(\sigma,s_m)$, replace $\alpha(\sigma)$
+in Equation (\ref{two}) by $\alpha(\sigma^\prime) +
+\delta\alpha(\sigma^\prime)$ and compute the difference from Equation
+d236 14
+a249 14
+\delta_\alpha \T(\sigma,s_m)
+=\,& \exp\left( - \int_\sigma^{s_m} (\alpha(\sigma^\prime) +
+                                       \delta\alpha(\sigma^\prime) )
+         \, \d \sigma^\prime \right) -
+     \exp\left( - \int_\sigma^{s_m} \alpha(\sigma^\prime)
+         \, \d \sigma^\prime \right) \\
+=\,& \exp\left( - \int_\sigma^{s_m} \alpha(\sigma^\prime)
+         \, \d \sigma^\prime \right)
+     \exp\left( - \int_\sigma^{s_m} \delta\alpha(\sigma^\prime)
+         \, \d \sigma^\prime \right) -
+     \exp\left( - \int_\sigma^{s_m} \alpha(\sigma^\prime)
+         \, \d \sigma^\prime \right) \\
+=\,& \exp\left( - \int_\sigma^{s_m} \alpha(\sigma^\prime)
+         \, \d \sigma^\prime \right)
+d251 2
+a252 2
+       \exp\left( - \int_\sigma^{s_m} \delta\alpha(\sigma^\prime)
+         \, \d \sigma^\prime \right) -1
+d254 6
+a259 6
+=\,& \exp\left( - \int_\sigma^{s_m} \alpha(\sigma^\prime)
+         \, \d \sigma^\prime \right)
+     \left(1 - \int_\sigma^{s_m} \delta\alpha(\sigma^\prime)
+                \, \d \sigma^\prime +
+           O\left( \left( \int_\sigma^{s_m} \delta\alpha(\sigma^\prime)
+                           \, \d \sigma^\prime
+d264 1
+a264 1
+\alpha(\sigma^\prime)$
+d267 2
+a268 2
+\delta_\alpha \T(\sigma,s_m) =
+ \exp \left( - \int_\sigma^{s_m} \alpha(\sigma^\prime) \,\d \sigma^\prime \right)
+d270 1
+a270 1
+ \left( - \int_\sigma^{s_m} \delta \alpha(\sigma^\prime) \,\d \sigma^\prime \right)
+d272 1
+a272 1
+ -\T(\sigma,s_m) \int_\sigma^{s_m} \delta \alpha(\sigma^\prime) \,\d \sigma^\prime\,.
+d279 1
+a279 1
+- \int_{s_0}^{s_m} \delta_\alpha \T(\sigma,s_m) \,
+d282 1
+a282 1
+ \int_{s_0}^{s_m} \d \sigma \,\T(\sigma,s_m)\,
+d284 2
+a285 2
+    \int_\sigma^{s_m} \d \sigma^\prime\, \delta
+    \alpha(\sigma^\prime) \\
+d287 3
+a289 3
+ \int_{s_0}^{s_m} \d \sigma\, \delta \alpha(\sigma)
+   \int_{s_0}^\sigma \d \sigma^\prime \, \T(\sigma^\prime,s_m) \,
+    B^\prime(\sigma^\prime)\,.
+d293 1
+a293 1
+I(s_m)$ in Equation (\ref{I var}) gives
+d296 3
+a298 3
+\left( I(s_0)-B(s_0) \right) \delta_\alpha \T(s_0,s_m)
+= -\T(s_0,s_m) \left( I(s_0)-B(s_0) \right)
+   \int_{s_0}^{s_m} \delta \alpha(\sigma)\, \d \sigma\,.
+d302 1
+a302 1
+resulting variation in $I(s_m)$ due to variation in $\alpha(\sigma)$ is
+d305 10
+a314 10
+\delta_\alpha I(s_m)
+=\,& \int_{s_0}^{s_m} \d \sigma \,\delta \alpha(\sigma)
+ \left\{ \int_{s_0}^\sigma \T(\sigma^\prime,s_m) \,
+    B^\prime(\sigma^\prime) \,
+     \d \sigma^\prime
+ - \T(s_0,s_m) \left( I(s_0)-B(s_0) \right) \right\} \\
+=\,& \int_{s_0}^{s_m} \d \sigma \,\delta \alpha(\sigma)
+ \left\{ \T(\sigma,s_m) \left[ \int_{s_0}^\sigma \T(\sigma^\prime,\sigma) \,
+    B^\prime(\sigma^\prime) \,
+     \d \sigma^\prime
+d319 1
+a319 1
+$I(s_m)$ to variation $\delta \alpha(\sigma)$ in $\alpha(\sigma)$ is the
+d324 1
+a324 1
+\frac{\delta I(s_m)}{\delta \alpha(\sigma)}
+d326 3
+a328 3
+ \T(\sigma,s_m) \left[ \int_{s_0}^\sigma \T(\sigma^\prime,s_m) \,
+    B^\prime(\sigma^\prime) \,
+     \d \sigma^\prime
+d335 2
+a336 2
+\frac{\delta I(s_m)}{\delta \alpha(\sigma)} =
+ \T(\sigma,s_m) \left( B(\sigma) - I(\sigma) \right)}\,.
+d375 2
+a376 2
+=\,& \int_{s_0}^s \delta(s^\prime-\sigma)
+  (B(s^\prime)-I(s^\prime)) \T(s^\prime,s)\, \d s^\prime \\
+d388 2
+a389 2
+\emph{functional} $I[\alpha(\sigma),s_m]$ with respect to variation of
+the \emph{function} $\alpha(sigma)$.
+d445 3
+a447 2
+Thus the sensitivity of $I(s_m)$ to variation of the discrete parameter
+$f^k_{lm}$, that is, a \emph{partial derivative}, is
+d452 1
+a452 1
+\frac{\partial I(s_m)}{\partial f^k_{lm}}
+d454 2
+a455 2
+ \int_{s_0}^{s_m}
+ \frac{\delta I(s_m)}{\delta \alpha(\sigma)}
+d458 2
+a459 2
+ \int_{s_0}^{s_m}
+ \frac{\delta I(s_m)}{\delta \alpha(\sigma)} \beta^k(\sigma)
+d462 2
+a463 2
+ \int_{s_0}^{s_m}
+ \T(\sigma,s_m)
+d483 1
+a483 1
+ \approx \T(\sigma_i,s_m)
+d486 1
+a486 1
+=\,& P_0 \left(I(s_0)-B(s_0)\right) + B(s_m)
+d493 1
+a493 1
+\leq s_m$, and $w_k$ and $\sigma_j \leq \sigma_{jk} \leq \sigma_{j+1}$
+d499 2
+a500 2
+I(s_m) \approx\,& S_{N_p} \text{ and}\\
+\frac{\delta I(s_m)}{\delta f^k_{lm}}
+d518 1
+a518 1
+only for two values of $j$. Therefore, we can evaluate both $I(s_m)$ and
+d537 1
+a537 1
+\frac{\partial I(s_m)}{\partial f^k_{lm}}
+d539 1
+a539 1
+ \int_{s_0}^{s_m} \frac{\delta \T(s,s_m)}{\delta \alpha(s)}
+d544 1
+a544 1
+ -\int_{s_0}^{s_m} \T(s,s_m) \mu^k_{lm}(s) \beta^k(s)
+d549 1
+a549 1
+in which the integral defining $\T(s,s_m)$ is recomputed.  Thus the
+d588 1
+a588 1
+Solve for $\frac{\partial I(s_m)}{\partial f^k_{lm}}$ using
+d592 2
+a593 2
+\frac{\partial I(s_m)}{\partial f^k_{lm}} =
+ \int_{s_0}^{s_m} \T(s,s_m) \beta^k(s) \mu^k_{lm}(s)
+d607 6
+a612 6
+\delta_T I(s_m) =\,& -\delta_T B(s_0)) \T(s_0,s_m)
+ + (I(s_0) - B(s_0)) \delta_T \T(s_0,s_m) + \delta_T B(s_m) \\
+& - \int_{s_0}^{s_m} \delta_T
+  \T(\sigma,s_m) B^\prime(\sigma) \, \d \sigma
+ - \int_{s_0}^{s_m}
+  \T(\sigma,s_m) \delta_T B^\prime(\sigma)
+d620 2
+a621 2
+\int_{s_0}^{s_m} \delta_T
+  \T(\sigma,s_m) B^\prime(\sigma) \d \sigma
+d623 1
+a623 1
+  \int_{s_0}^{s_m} \d \sigma\,
+d625 3
+a627 3
+   \int_{s_0}^\sigma \d \sigma^\prime\,
+    \T(\sigma^\prime,s_m) B^\prime(\sigma^\prime) \\
+=\,& \int_{s_0}^{s_m} \d \sigma\,
+d629 2
+a630 2
+   \T(\sigma,s_m) \int_{s_0}^\sigma \d \sigma^\prime\,
+    \T(\sigma^\prime,\sigma) B^\prime(\sigma^\prime)
+d636 2
+a637 2
+\int_{s_0}^{s_m} \T(\sigma,s_m) \delta_T B^\prime(\sigma)\, \d \sigma =
+ \int_{s_0}^{s_m} \d \sigma\, \delta T(\sigma) \T(\sigma,s_m)
+d644 4
+a647 4
+\frac{\delta I(s_m)}{\delta T(\sigma)} =\,&
+ -\frac{\delta B(s_0)}{\delta T(\sigma)} \T(s_0,s_m)
+  + (I(s_0) - B(s_0)) \frac{\delta \T(s_0,s_m)}{\delta T(\sigma)}
+  + \frac{\delta B(s_m)}{\delta T(\sigma)}\\
+d650 4
+a653 4
+    \T(\sigma,s_m)
+    \int_{s_0}^\sigma \d \sigma^\prime\,
+     \T(\sigma^\prime,\sigma) B^\prime(\sigma^\prime)
+  - \T(\sigma,s_m) \frac{\partial B^\prime(\sigma)}{\partial T(\sigma)} \\
+d655 1
+a655 1
+ (I(s_0) - B(s_0)) \frac{\delta \T(s_0,s_m)}{\delta \alpha(\sigma)}
+d658 4
+a661 4
+    \T(\sigma,s_m)
+    \int_{s_0}^\sigma \d \sigma^\prime\,
+     \T(\sigma^\prime,\sigma) B^\prime(\sigma^\prime)
+  - \T(\sigma,s_m) \frac{\partial B^\prime(\sigma)}{\partial T(\sigma)} \\
+d663 1
+a663 1
+  -(I(s_0) - B(s_0)) \T(s_0,s_m)
+d666 4
+a669 4
+    \T(\sigma,s_m)
+    \int_{s_0}^\sigma \d \sigma^\prime\,
+     \T(\sigma^\prime,\sigma) B^\prime(\sigma^\prime)
+  - \T(\sigma,s_m) \frac{\partial B^\prime(\sigma)}{\partial T(\sigma)} \\
+d671 1
+a671 1
+  \T(\sigma,s_m) \left( B(s_m) - I(\sigma) \right)
+d673 1
+a673 1
+  - \T(\sigma,s_m) \frac{\partial B^\prime(\sigma)}{\partial T(\sigma)}
+d675 2
+a676 2
+   \frac{\delta I(s_m)}{\delta \alpha(\sigma)}
+   - \T(\sigma,s_m) \frac{\partial B^\prime(\sigma)}{\partial T(\sigma)} \,,
+d687 2
+a688 2
+\frac{\delta I(s_m)}{\delta T(\sigma)} =
+ \frac{\delta I(s_m)}{\delta \alpha(\sigma)}
+d690 1
+a690 1
+   \alpha(\sigma) \T(\sigma,s_m)
+d701 1
+a701 1
+\frac{\delta I(s_m)}{\delta T(\sigma)}
+d703 1
+a703 1
+ \frac{\delta I(s_m)}{\delta \alpha(\sigma)}
+d705 1
+a705 1
+   \alpha(\sigma) \T(\sigma,s_m)
+d709 1
+a709 1
+  \T(\sigma,s_m)
+d771 1
+a771 1
+=\,& \int_{s_0}^s \delta(s^\prime-\sigma)
+d775 1
+a775 1
+    \right ) \T(s^\prime,s) \,\d s^\prime \\
+d836 1
+a836 1
+ \int_{s_0}^s \T(s^\prime,s_m)\, \mu^T_{lm}(s^\prime)
+d838 3
+a840 3
+ \frac{\partial \alpha(s^\prime)}{\partial T(s^\prime)} \left( B(s^\prime) - I(s^\prime) \right)
+  +  \alpha(s^\prime) \frac{\partial B(s^\prime)}{\partial T(s^\prime)} \right]
+ \,\d s^\prime \,.
+d844 2
+a845 2
+$\delta(s^\prime-\sigma)$ replaced by $\frac{\partial
+T(s^\prime)}{\partial T_{lm}} = \mu^T_{lm}(s^\prime)$.
+d853 2
+a854 2
+  \int_{s_0}^s \frac{\partial \alpha(s^\prime)}{\partial T(s^\prime)}
+   \mu^T_{lm}(s^\prime) \,\d s^\prime \\
+d857 1
+a857 1
+ \int_{s_0}^s \mu^T_{lm}(s^\prime) \left[ B^\prime(s^\prime)
+d860 2
+a861 2
+   \T(s^\prime,s) \frac{\partial B^\prime(s^\prime)}{\partial T(s^\prime)}
+   \right] \,\d s^\prime\,.
+d874 1
+a874 1
+ \int_{\zeta_0}^{\zeta_m} \T(\zeta,\zeta_m)\, \mu^T_{lm}(\zeta)
+d876 2
+a877 1
+ \frac{\partial \alpha(\zeta)}{\partial T(\zeta)} \left( B(\zeta) - I(\zeta) \right)
+d891 1
+a891 1
+\int_{\zeta_0}^{\zeta_m} \T(\zeta,\zeta_m) B^\prime(\zeta)
+d899 2
+a900 2
+\int_{\zeta_0}^{\zeta_m}
+ \frac{\partial \T(\zeta,\zeta_m) B^\prime(\zeta)}
+d904 2
+a905 2
+\int_{\zeta_0}^{\zeta_m}
+ \T(\zeta,\zeta_m) B^\prime(\zeta) \, \frac{\d s}{\d h}
+d916 1
+a916 1
+ \int_{\zeta_0}^{\zeta_m} \T(\zeta,\zeta_m)\, \mu^T_{lm}(\zeta)
+d918 2
+a919 1
+ \frac{\partial \alpha(\zeta)}{\partial T(\zeta)} \left( B(\zeta) - I(\zeta) \right)
+d923 2
+a924 2
+\,& + \int_{\zeta_0}^{\zeta_m}
+ \T(\zeta,\zeta_m) B^\prime(\zeta) \, \frac{\d s}{\d h}
+d927 1
+a927 1
+  \int_{\zeta_0}^{\zeta_m} \T(\zeta,\zeta_m)\, \left[ \mu^T_{lm}(\zeta)
+d929 2
+a930 1
+ \frac{\partial \alpha(\zeta)}{\partial T(\zeta)} \left( B(\zeta) - I(\zeta) \right)
+d935 16
+a950 3
+\,& + \int_{\zeta_0}^{\zeta_m}
+ \T(\zeta,\zeta_m) B(\zeta) \, \frac{\d s}{\d h}
+ \frac{\partial^2 h}{\partial T_{lm} \partial \zeta} \,\d \zeta \,.
+d955 3
+a957 3
+$B(\zeta)$ on the path upon $T_{lm}$ where $(\phi_l,\zeta_m)$ is adjacent
+to the path.  The second accounts for the dependence of the path upon
+$T_{lm}$ where $(\phi_l,\zeta_m)$ is below the path.
+d962 1
+a962 1
+% $Id: wvs-093.tex,v 1.10 2011/02/05 01:29:11 vsnyder Exp $
+d965 3
+@
+
+
+1.10
+log
+@More temperature derivatives on the grid
+@
+text
+@d8 1
+a8 1
+\textheight 9.0in
+d10 2
+a11 2
+\newcommand{\docname}{\bf wvs-093r9}
+\newcommand{\docdate}{2 January 2011}
+d93 1
+a93 1
+on 29 March -- 1 April by Eugene Ustinov.
+d177 8
+a184 8
+coefficient, $f^k(\sigma)$ is the volume mixing ratio of the
+$k^\text{th}$ species at $\sigma$, $f^k_{lm}$ is the volume mixing ratio
+of the $k^\text{th}$ species at the $(l,m)$ representation basis point,
+$\mu^k_{lm}(\sigma)$ is the interpolation coefficient from the $(l,m)$
+representation basis point for the $k^\text{th}$ species to the point
+$\sigma$ on the integration path (see \h{wvs-101}), and $\beta^k(\sigma)$
+is the absorption cross section for the $k^\text{th}$ species at
+$\sigma$. 
+d391 1
+a391 1
+Using bilinear interpolation of mixing ratios from a
+d439 1
+d444 2
+a445 2
+Thus the sensitivity of $I(s_m)$ to variation of $f^k_{lm}$, that is, a
+\emph{partial derivative}, is
+d510 8
+a517 3
+Since we use linear interpolation, $\mu^k_{lm}(\sigma_j)$ is nonzero only
+for two values of $j$. Therefore, we can evaluate both $I(s_m)$ and its
+sensitivity to variation in the discrete parameters $f^k_{lm}$ by
+d522 2
+a523 2
+compute the sensitivities is $6 N_p \times N_s \times N_r$ additional
+multiplies and two additional adds.
+d528 5
+a532 4
+panels requiring Gauss-Legendre quadrature, because we compute the
+derivative of Equation (\ref{first}) with respect to $f^k(\sigma)$, and
+leave $\frac{\partial\alpha(\sigma)}{\partial f^k_{lm}} =
+\beta^k(\sigma)$ inside the integral:
+d592 1
+a592 1
+  ( B(s) - I(s) ) \d s
+d819 1
+a819 1
+is the interpolation coefficient from $(\phi_l,\zeta_m)$ to $s$, gives
+d867 2
+a868 1
+integrated in log pressure coordinates, Equation (\ref{T10}) becomes
+d944 1
+a944 1
+% $Id: wvs-093.tex,v 1.9 2010/12/30 00:51:43 vsnyder Exp $
+d947 3
+@
+
+
+1.9
+log
+@Temperature derivative on the grid
+@
+text
+@d10 2
+a11 2
+\newcommand{\docname}{\bf wvs-093r8}
+\newcommand{\docdate}{29 December 2010}
+d862 1
+a862 1
+\begin{equation}
+d864 1
+a864 1
+ \int_{s_0}^{s_m} \T(\zeta,s_m)\, \mu^T_{lm}(\zeta)
+d875 58
+d936 1
+a936 1
+% $Id: wvs-093.tex,v 1.8 2010/12/23 20:33:48 vsnyder Exp $
+d939 3
+@
+
+
+1.8
+log
+@Simplify discussion of interpolation coefficients by reference to wvs-101
+@
+text
+@d10 2
+a11 2
+\newcommand{\docname}{\bf wvs-093r7}
+\newcommand{\docdate}{20 December 2010}
+d760 1
+a760 1
+\begin{equation}\begin{split}
+d781 94
+d878 1
+a878 1
+% $Id: wvs-093.tex,v 1.7 2010/12/18 03:53:07 vsnyder Exp $
+d881 3
+@
+
+
+1.7
+log
+@Correct typo in Equation (30)
+@
+text
+@d10 2
+a11 2
+\newcommand{\docname}{\bf wvs-093r6}
+\newcommand{\docdate}{13 December 2010}
+d81 1
+a81 1
+Reference: \> \h{iy-007}\\
+d176 2
+a177 2
+\beta^k(\sigma) \sum_l f^k_{lm} \mu^k_{lm}(\sigma)$ is the volume
+absorption coefficient, $f^k(\sigma)$ is the volume mixing ratio of the
+d180 5
+a184 8
+$\mu^k_{lm}(\sigma) = \xi^k_l(\sigma) \eta^k_m(\sigma)$,
+$\xi^k_l(\sigma) = (\phi^k_{l+1}-\phi(\sigma))/(\phi^k_{l+1}-\phi_l)$ for
+$\phi_l \leq \phi(\sigma) \leq \phi^k_{l+1}$ and zero otherwise and
+$\eta_m(\sigma) = (\zeta^k_{m+1}-\zeta(\sigma))/(\zeta^k_{m+1}-\zeta_m)$
+for $\zeta_m \leq \zeta(\sigma) \leq \zeta^k_{m+1}$ and zero otherwise
+are interpolation coefficients from the representation basis for the
+$k^\text{th}$ species to the integration path, and $\beta^k(\sigma)$ is
+the absorption cross section for the $k^\text{th}$ species at $\sigma$. 
+d466 3
+a468 2
+From Equation (\ref{mu}), $\mu^k_{lm}(\sigma)$ is nonzero for only a
+small range of $\sigma$.
+d784 1
+a784 1
+% $Id: wvs-093.tex,v 1.6 2010/12/14 23:57:07 vsnyder Exp $
+d787 3
+@
+
+
+1.6
+log
+@Maybe it's correct now
+@
+text
+@d565 1
+a565 1
+ \frac{\partial \alpha(s)}{\partial f^k_{lm}} I(s) \,.
+d786 1
+a786 1
+% $Id: wvs-093.tex,v 1.5 2010/12/04 02:24:40 vsnyder Exp $
+d789 3
+@
+
+
+1.5
+log
+@Correct VMR derivative, add temperature derivative
+@
+text
+@d10 2
+a11 2
+\newcommand{\docname}{\bf wvs-093r5}
+\newcommand{\docdate}{2 December 2010}
+d164 2
+a165 1
+where $s_m$ is the location of the instrument, $s_0$ is the location of
+d175 3
+a177 3
+$\alpha(\sigma) = \sum_k \beta^k(s) f^k(s) = \sum_k \beta^k(s) \sum_l
+f^k_{lm} \mu_{lm}(s)$ is the total absorption cross section for all
+mole\-cules, $f^k(\sigma)$ is the volume mixing ratio of the
+d180 10
+a189 8
+$\mu_{lm}(s) = (\xi_l(s) + \xi_{l-1}(s))(\eta_m(s) + \eta_{m-1}(s))$,
+$\xi_l(s) = (\phi_{l+1}-\phi(s))/(\phi_{l+1}-\phi_l)$ for $\phi_l \leq
+\phi(s) \leq \phi_{l+1}$ and zero otherwise and $\eta_m(s) =
+(\zeta_{m+1}-\zeta(s))/(\zeta_{m+1}-\zeta_m)$ for $\zeta_m \leq \zeta(s)
+\leq \zeta_{m+1}$ and zero otherwise are interpolation coefficients from
+the representation basis to the integration path, and $\beta^k(\sigma)$
+is the absorption cross section for the $k^\text{th}$ species at
+$\sigma$.  From Equation (\ref{two})
+d216 1
+a216 1
+to $I$.
+d222 2
+a223 2
+Since $B(\sigma)$ doesn't depend upon $\alpha(\sigma)$, the variation of
+$I$ as a result of variation of $\alpha(\sigma)$ is
+d226 1
+a226 1
+\delta_\alpha I =
+d228 1
+a228 1
+  \int_{s_0}^{s_m} \delta_\alpha \T(\sigma,s_m) \,
+d295 1
+a295 1
+I$ in Equation (\ref{I var}) gives
+d304 1
+a304 1
+resulting variation in $I$ due to variation in $\alpha(\sigma)$ is
+d307 1
+a307 1
+\delta_\alpha I
+d321 1
+a321 1
+$I$ to variation $\delta \alpha(\sigma)$ in $\alpha(\sigma)$ is the
+d326 1
+a326 1
+\frac{\delta I}{\delta \alpha(\sigma)}
+d337 1
+a337 1
+\frac{\delta I}{\delta \alpha(\sigma)} =
+a340 63
+From this and $\frac{\partial \alpha(\sigma)}{\partial f^k_{lm}} =
+\beta^k(\sigma) \mu_{lm}(\sigma)$, we can compute the sensitivity of $I$
+to variation of $f^k_{lm}$ as
+
+\begin{equation}
+\frac{\delta I}{\delta f^k_{lm}} =
+ \frac{\delta I}{\delta \alpha(\sigma)}
+  \frac{\partial \alpha(\sigma)}{\partial f^k_{lm}} =
+ \frac{\delta I}{\delta \alpha(\sigma)} \beta^k(\sigma) \mu_{lm}(\sigma) =
+ \T(\sigma,s_m)
+  \left( B(\sigma) - I(\sigma) \right) \beta^k(\sigma) \mu_{lm}(\sigma) \,.
+\end{equation}
+
+If we evaluate the indefinite sum
+
+\begin{equation}\label{sum}
+S_j = \sum_{i=1}^j
+ \frac12\left(\T(\sigma_i,s_m)+\T(\sigma_{i-1},s_m)\right)
+  \Delta B(\sigma_i) -
+   \T(s_0,s_m)\left(I(s_0)-B(s_0)\right)
+\approx \frac1{\T(\sigma,s_m)} \frac{\delta I}{\delta \alpha(\sigma_j)}
+\end{equation}
+
+with $\sigma_0 = s_0$ and $s_0 < \sigma_1 < \sigma_2 \dots < \sigma_{N_p}
+\leq s_m$, then from Equation (\ref{I}) we have
+
+\begin{equation}\begin{split}\label{var sum}
+I(s_m) =\,& 
+ B(s_m) - \frac1{\T(\sigma,s_m)} \frac{\delta I}{\delta \alpha(s_m)} 
+ \approx B(s_m) - S_{N_p} \text{ and}\\
+\frac{\delta I(s_m)}{\delta f^k_{lm}}
+ \approx\,& \T(\sigma,s_m) \beta^k(\sigma_j) \mu_{lm}(\sigma_j) S_j \\
+\end{split}\end{equation}
+
+That is, we can evaluate both $I$ and its sensitivity to variation in the
+discrete parameters $f^k_{lm}$ by evaluating one indefinite sum, and
+multiplying each of the $N_p$ elements by $N_s$ molecular absorption
+cross sections and $N_r$ interpolation coefficients, where $N_r$ is the
+number of points in the representation basis.  The additional cost to
+compute the sensitivities is $N_p \times N_s \times N_r$ additional
+multiplies.
+
+In the present scheme, we compute the sensitivities by evaluating $N_p
+\times N_s \times N_r$ additional quadrature steps, each requiring $2 N_p
++ 11 G + N_s N_p^2$ FLOPS, where $0 \leq G \leq N_p$ is the number of
+panels requiring Gauss-Legendre quadrature, because we compute the
+derivative of Equation (\ref{first}) with respect to $f^k(\sigma)$, and
+leave $\frac{\partial\alpha(\sigma)}{\partial f^k(\sigma)} =
+\beta^k(\sigma)$ inside the integral:
+
+\begin{equation}
+\frac{\partial I(s_m)}{\partial f^k(\sigma)} =
+ \int_{s_0}^\sigma \frac{\partial \T(s,s_m)}{\partial f^k(s)}
+  B^\prime(s) \, \d s
+\end{equation}
+
+Thus the approach described here should be less time consuming by a
+factor of $O(N_s \times N_p^2)$, and require less memory than the current
+method.
+
+Evaluating the Hessian tensor should similarly be possible without integrating
+variational equations.
+
+d383 209
+a591 1
+which is the same result as Equation (\ref{var I}).
+d600 1
+a600 1
+\delta_T I =\,& -\delta_T B(s_0)) \T(s_0,s_m)
+d681 2
+a682 2
+ \frac{\partial \alpha(\sigma)}{\partial T(\sigma)}
+   \frac{\delta I(s_m)}{\delta \alpha(\sigma)} +
+d692 6
+a697 4
+\begin{equation}\label{var T}\boxed{
+\frac{\delta I(s_m)}{\delta T(\sigma)} =
+ \frac{\partial \alpha(\sigma)}{\partial T(\sigma)}
+   \frac{\delta I(s_m)}{\delta \alpha(\sigma)} +
+d700 9
+a708 1
+}\,.
+d775 2
+a776 2
+ = \frac{\partial \alpha(\sigma)}{\partial T(\sigma)}
+   \frac{\delta I(s)}{\delta \alpha(\sigma)} +
+d781 1
+a781 1
+which is the same result as Equation (\ref{var T}).
+d786 1
+a786 1
+% $Id: wvs-093.tex,v 1.4 2010/11/23 22:53:30 vsnyder Exp $
+d789 3
+@
+
+
+1.4
+log
+@Repair a typo in the final equation
+@
+text
+@d10 2
+a11 2
+\newcommand{\docname}{\bf wvs-093r3}
+\newcommand{\docdate}{23 November 2010}
+d73 1
+d97 6
+a102 4
+Consider a function $F(x_1, \dots, x_n)$.  From the first term of its Taylor
+series, its variation due to variation $\delta x_j$ of its arguments is $\delta
+F = \sum_j a_j \delta x_j$.  From this it is obvious that the sensitivities of
+$F$ due to variations in its arguments are the partial derivatives
+d109 3
+a111 1
+instead of a function of the finite set $\{x_1,\dots,x_n\}$, \emph{viz.}
+d114 3
+a116 1
+F[X(\xi)] = \int_{\xi_0}^{\xi_1} a(\xi) X(\xi) \,\d \xi
+d119 3
+a121 2
+then its variation due to variation $\delta X(\xi)$ of its argument function
+(also known as ``continuous parameter'') $X(\xi)$ is
+d125 3
+d130 2
+a131 2
+and its sensitivity due to variation $\delta X(\xi)$ of its argument function
+$X(\xi)$ is
+d134 5
+a138 1
+\frac{\delta F[X(\xi)]}{\delta X(\xi)} = a(\xi)
+d141 2
+a142 3
+(replace the integral in Equation (\ref{VAR}) by a quadrature, or see
+pages 27-29 of {\bf Calculus of Variations} by I. M. Gelfand and S. V.
+Fomin).
+d148 2
+a149 1
+The radiance is the solution of the non-scattering radiative transfer equation
+d159 2
+a160 2
+I[\alpha(s),s_m] = I(s_0) \mathcal{T}(s_0) +
+ \int_{s_0}^{s_m} \mathcal{T}(s) \alpha(s) B(s) \,
+d170 1
+a170 1
+\mathcal{T}(s) = \exp\left( - \int_s^{s_m} \alpha(\sigma)
+d182 5
+a186 5
+(\phi_{m+1}-\phi(s))/(\phi_{m+1}-\phi_m)$ for $\phi_m \leq \phi(s) \leq
+\phi_{m+1}$ and zero otherwise are interpolation coefficients from the
+representation basis to the integration path, and $\beta^k(\sigma)$ is
+the absorption cross section for the $k^\text{th}$ species at $\sigma$. 
+From Equation (\ref{two})
+d189 1
+a189 1
+\frac{\partial \mathcal{T}(s)}{\partial s} = \alpha(s) \mathcal{T}(s).
+d195 2
+a196 2
+I[\alpha(s),s_m] = \mathcal{T}(s_0) I(s_0) +
+ \int_{s_0}^{s_m} B(s) \frac{\partial \mathcal{T}(s)}{\partial s}
+d204 2
+a205 2
+I[\alpha(s),s_m] =\,& \mathcal{T}(s_0) (I(s_0)-B(s_0)) + B(s_m) -
+ \int_{s_0}^{s_m} \mathcal{T}(s) \, \frac{\partial B(s)}{\partial s} \,
+d207 2
+a208 2
+=\,& \mathcal{T}(s_0) (I(s_0)-B(s_0)) + B(s_m) -
+ \int_{B(s_0)}^{B(s_m)} \mathcal{T}(s) \, \d B(s)
+d211 3
+a213 2
+(remember $\mathcal{T}(s_m)=1$). Henceforth, $I[\alpha(\sigma),s_m]$ will
+be abbreviated to $I$.
+d224 3
+a226 3
+ \left( I(s_0)-B(s_0) \right) \delta_\alpha \mathcal{T}(s_0) -
+  \int_{s_0}^{s_m} \delta_\alpha \mathcal{T}(\sigma) \,
+   \frac{\partial B(\sigma)}{\partial\sigma} \, \d \sigma\,.
+d229 1
+a229 1
+To compute $\delta_\alpha \mathcal{T}(\sigma)$, replace $\alpha(\sigma)$
+d235 1
+a235 1
+\delta_\alpha \mathcal{T}(\sigma)
+d255 2
+a256 1
+     \left(1 - \int_\sigma^{s_m} \delta\alpha(\sigma^\prime) +
+d266 1
+a266 1
+\delta_\alpha \mathcal{T}(\sigma) =
+d271 1
+a271 1
+ -\mathcal{T}(\sigma) \int_\sigma^{s_m} \delta \alpha(\sigma^\prime) \,\d \sigma^\prime\,.
+d278 2
+a279 2
+- \int_{s_0}^{s_m} \delta_\alpha \mathcal{T}(\sigma) \,
+ \frac{\partial B(\sigma)}{\partial\sigma} \, \d \sigma
+d281 2
+a282 2
+ \int_{s_0}^{s_m} \d \sigma \,\mathcal{T}(\sigma)\,
+    \frac{\partial B(\sigma)}{\partial\sigma} 
+d287 2
+a288 2
+   \int_{s_0}^\sigma \d \sigma^\prime \, \mathcal{T}(\sigma^\prime) \,
+    \frac{\partial B(\sigma^\prime)}{\partial\sigma^\prime}\,.
+d295 2
+a296 2
+\left( I(s_0)-B(s_0) \right) \delta_\alpha \mathcal{T}(s_0)
+= -\mathcal{T}(s_0) \left( I(s_0)-B(s_0) \right)
+d303 24
+a326 4
+\begin{equation}
+\delta_\alpha I = \int_{s_0}^{s_m} \d \sigma \,\delta \alpha(\sigma)
+ \left\{ \int_{s_0}^\sigma \mathcal{T}(\sigma^\prime) \,
+    \frac{\partial B(\sigma^\prime)}{\partial\sigma^\prime} \,
+d328 1
+a328 1
+ - \mathcal{T}(s_0) \left( I(s_0)-B(s_0) \right) \right\}\,.
+d331 1
+a331 3
+According to Equations (\ref{VAR}) and (\ref{SENS}), the sensitivity of $I$ to
+variation $\delta \alpha(\sigma)$ in $\alpha(\sigma)$ is the factor between \{
+and \}, \emph{viz.}
+d333 1
+a333 1
+\begin{equation}\label{I var alpha}
+d335 1
+a335 4
+ \int_{s_0}^\sigma \mathcal{T}(\sigma^\prime) \,
+    \frac{\partial B(\sigma^\prime)}{\partial\sigma^\prime} \,
+     \d \sigma^\prime
+ - \mathcal{T}(s_0) \left( I(s_0)-B(s_0) \right)\,.
+d338 3
+a340 3
+From this and $\frac{\partial \alpha(\sigma)}{\partial f^k_{lm}}
+= \beta^k(\sigma) \mu_{lm}(\sigma)$, we can compute the sensitivity of
+$I$ to variation of $f^k_{lm}$ as
+d347 2
+a348 1
+ \left( B(\sigma) - I(\sigma) \right) \beta^k(\sigma) \mu_{lm}(\sigma) \,.
+a350 3
+The last result follows because the integrands in Equation (\ref{I var
+alpha}) and Equation (\ref{I}) are the same.
+
+d355 1
+a355 1
+ \frac12\left(\mathcal{T}(\sigma_i)+\mathcal{T}(\sigma_{i-1})\right)
+d357 2
+a358 2
+   \mathcal{T}(s_0)\left(I(s_0)-B(s_0)\right)
+\approx \frac{\delta I}{\delta \alpha(\sigma_j)}
+d366 1
+a366 1
+ B(s_m) - \frac{\delta I}{\delta \alpha(s_m)} 
+d369 1
+a369 1
+ \approx\,& \beta^k(\sigma_j) \mu_{lm}(\sigma_j) S_j \\
+d390 2
+a391 2
+ \int_{s_0}^\sigma \frac{\partial \mathcal{T}(s)}{\partial f^k(s)}
+  \frac{\partial B(s)}{\partial s} \, \d s
+d403 44
+d449 1
+a449 1
+Because both $\mathcal{T}$ and $B$ depend upon temperature
+d452 2
+a453 2
+\delta_T I =\,& -\delta_T B(s_0)) \mathcal{T}(s_0)
+ + (I(s_0) - B(s_0)) \delta_T \mathcal{T}(s_0) + \delta_T B(s_m) \\
+d455 1
+a455 1
+  \mathcal{T}(\sigma) B^\prime(\sigma) \, \d \sigma
+d457 2
+a458 2
+  \mathcal{T}(\sigma) \delta_T B^\prime(\sigma)
+  \, \d \sigma\,,
+a460 1
+where $B^\prime(\sigma) = \frac{\partial B(\sigma)}{\partial \sigma}$.
+d464 1
+a464 1
+\begin{equation}
+d466 2
+a467 1
+  \mathcal{T}(\sigma) B^\prime(\sigma) \d \sigma = 
+d471 6
+a476 2
+    \mathcal{T}(\sigma^\prime) B^\prime(\sigma^\prime)
+\end{equation}
+d481 2
+a482 2
+\int_{s_0}^{s_m} \mathcal{T}(\sigma) \delta_T B(\sigma)\, \d \sigma =
+ \int_{s_0}^{s_m} \d \sigma\, \delta T(\sigma) \mathcal{T}(\sigma)
+d488 1
+a488 1
+\begin{equation}\begin{split}\label{dIdT}
+d490 2
+a491 2
+ -\frac{\delta B(s_0)}{\delta T(\sigma)} \mathcal{T}(s_0)
+  + (I(s_0) - B(s_0)) \frac{\delta \mathcal{T}(s_0)}{\delta T(\sigma)}
+d495 4
+a498 3
+   \int_{s_0}^\sigma \d \sigma^\prime\,
+    \mathcal{T}(\sigma^\prime) B^\prime(\sigma^\prime)
+  - \mathcal{T}(\sigma) \frac{\partial B^\prime(\sigma)}{\partial T(\sigma)} \\
+d500 1
+a500 1
+ (I(s_0) - B(s_0)) \frac{\delta \mathcal{T}(s_0)}{\delta \alpha(\sigma)}
+d503 4
+a506 3
+   \int_{s_0}^\sigma \d \sigma^\prime\,
+    \mathcal{T}(\sigma^\prime) B^\prime(\sigma^\prime)
+  - \mathcal{T}(\sigma) \frac{\partial B^\prime(\sigma)}{\partial T(\sigma)} \\
+d508 1
+a508 1
+  -(I(s_0) - B(s_0)) \mathcal{T}(s_0)
+d511 4
+a514 3
+   \int_{s_0}^\sigma \d \sigma^\prime\,
+    \mathcal{T}(\sigma^\prime) B^\prime(\sigma^\prime)
+  - \mathcal{T}(\sigma) \frac{\partial B^\prime(\sigma)}{\partial T(\sigma)} \\
+d516 1
+a516 1
+  \frac{\delta I}{\delta \alpha(\sigma)}
+d518 4
+a521 1
+  - \mathcal{T}(\sigma) \frac{\partial B^\prime(\sigma)}{\partial T(\sigma)},
+d525 5
+a529 1
+represent the integral in Equation (\ref{dIdT}).
+d531 12
+a542 4
+To integrate Equation (\ref{T vary}) in $\zeta$ instead of $\sigma$
+coordinates, replace $B^\prime(\sigma) = \frac{\partial B(\sigma)}{\partial
+\sigma} \frac{\d \sigma}{\d h} \frac{\partial h}{\partial \zeta}$, from which
+Equation (\ref{dIdT}) becomes
+d544 1
+a544 1
+\begin{equation}
+d546 5
+a550 9
+  \frac{\delta I}{\delta \alpha(\sigma)}
+  \frac{\partial \alpha(\sigma)}{\partial T(\sigma)}
+- \mathcal{T}(\sigma) \frac{\d \sigma}{\d h}
+   \left( \frac{\partial^2 B(\sigma)}{\partial \sigma \partial T(\sigma)}
+    \frac{\partial h}{\partial \zeta} +
+   \frac{\partial B(\sigma)}{\partial \sigma}
+    \frac{\partial^2 h}{\partial \zeta \partial T(\sigma)}
+   \right)
+   \,.
+d553 71
+a623 3
+%Thus we can compute both $\frac{\partial I}{\partial f_i^k}$
+%and $\frac{\partial I}{\partial T_i}$ by evaluating Equation (\ref{var
+%sum}) only once, as an indefinite sum for $j = 1, \dots, N_p$.
+d628 1
+a628 1
+% $Id: wvs-093.tex,v 1.3 2010/11/23 21:48:42 vsnyder Exp $
+d631 3
+@
+
+
+1.3
+log
+@Incorporate interpolating factors, re-work temperature derivatives
+@
+text
+@d10 1
+a10 1
+\newcommand{\docname}{\bf wvs-093r2}
+d451 1
+d468 1
+a468 1
+% $Id: wvs-093.tex,v 1.2 2010/05/20 23:47:56 vsnyder Exp $
+d471 3
+@
+
+
+1.2
+log
+@Add Id line
+@
+text
+@d10 40
+a49 2
+\newcommand{\docname}{\bf wvs-093r1}
+\newcommand{\docdate}{6 April 2010}
+d72 2
+d80 1
+d106 1
+a106 1
+instead a function of the finite set $\{x_1,\dots,x_n\}$, \emph{viz.}
+d109 1
+a109 1
+F[X(\xi)] = \int_{\xi_0}^{\xi_1} a(\xi) X(\xi) \,\text{d} \xi
+d116 1
+a116 1
+\delta F[X(\xi)] = \int_{\xi_0}^{\xi_1} a(\xi) \,\delta X(\xi) \,\text{d} \xi
+d130 2
+d134 44
+a177 2
+The radiance is the solution of the radiative transfer equation.  It is usually
+written in the form
+d180 3
+a182 2
+I[\alpha(\zeta)] = -\int_0^{\zeta_0} B(\zeta) \,\text{d}\tau(\zeta) +
+ \tau(\zeta_0) \Upsilon B_s
+d185 2
+a186 2
+as a functional of the function $\alpha(\zeta)$, which can be transformed by
+integrating by parts to
+d189 5
+a193 6
+I[\alpha(\zeta)] =\,& B(0) + \int_0^{\zeta_0} \tau(\zeta) \,\text{d} B(\zeta) +
+ \tau(\zeta_0) \left[ \Upsilon B_s - B(\zeta_0) \right] \\
+=\,& B(0) + \int_0^{\zeta_0} \tau(\zeta) \,\frac{\text{d} B(\zeta)}{\text{d} s}
+ \frac{\text{d} s}{\text{d} h} \frac{\text{d} h}{\text{d} \zeta}
+ \,\text{d} \zeta +
+ \tau(\zeta_0) \left[ \Upsilon B_s - B(\zeta_0) \right]
+d196 2
+a197 2
+where $\frac{\text{d} s}{\text{d} h}$ and $\frac{\text{d} h}{\text{d} \zeta}$
+appear in Equation (10.11) on page 45 of the 19 August 2004 ATBD,
+d199 1
+a199 3
+\begin{equation}
+\tau(\zeta) = \exp \left( -\int_0^\zeta \alpha(\zeta^\prime) \,\text{d} \zeta^\prime \right)\,,
+\end{equation}
+d201 1
+a201 4
+$B(\zeta)$ is the atmospheric Planck function, $\Upsilon$ is the surface
+emissivity, and $B_s$ is the surface Planck function.  (This is the form for
+nadir sounding; limb sounding has space radiance instead of surface radiance.) 
+Henceforth, $I[\alpha(\zeta)]$ will be abbreviated to $I$.
+d203 2
+a204 4
+\section{Sensitivity of radiance to variation of $\alpha(\zeta)$}
+
+Since $B$ doesn't depend upon $\alpha(\zeta)$, the variation of $I$ as a result
+of variation of $\alpha(\zeta)$ is
+d207 37
+a243 3
+\delta_\alpha I = \int_0^{\zeta_0} \delta_\alpha \tau(\zeta) \,\text{d} B(\zeta) +
+ \delta_\alpha \tau(\zeta_0) \left[ \Upsilon B_s - B(\zeta_0) \right]
+\end{equation}
+d245 2
+a246 1
+where
+d249 2
+a250 2
+\delta_\alpha \tau(\zeta) =
+ \exp \left( - \int_0^\zeta \alpha(\zeta^\prime) \,\text{d} \zeta^\prime \right)
+d252 1
+a252 1
+ \left( - \int_0^\zeta \delta \alpha(\zeta^\prime) \,\text{d} \zeta^\prime \right)
+d254 1
+a254 1
+ -\tau(\zeta) \int_0^\zeta \delta \alpha(\zeta^\prime) \,\text{d} \zeta^\prime\,.
+d257 2
+a258 3
+Substituting Equation (\ref{tau var}) into the first term for $\delta_\alpha I$
+in Equation (\ref{I var}) gives (exchanging the order of integration in the
+last step)
+d260 13
+a272 9
+\begin{equation}\label{var1}
+\int_0^{\zeta_0} \delta_\alpha \tau(\zeta) \,\text{d} B(\zeta)
+=
+ - \int_0^{\zeta_0}\text{d} B(\zeta)\, \tau(\zeta)
+    \int_0^\zeta \text{d} \zeta^\prime\, \delta \alpha(\zeta^\prime)
+=
+- \int_0^{\zeta_0} \text{d} \zeta\, \delta \alpha(\zeta)
+   \int_\zeta^{\zeta_0} \text{d} B(\zeta^\prime)\, \tau(\zeta^\prime)\,.
+\end{equation}
+d274 1
+a274 1
+Substituting Equation (\ref{tau var}) into the second term for $\delta_\alpha
+d278 3
+a280 3
+\delta_\alpha \tau(\zeta_0) \left[ \Upsilon B_s - B(\zeta_0) \right]
+= -\tau(\zeta_0) \left[ \Upsilon B_s - B(\zeta_0) \right]
+   \int_0^{\zeta_0}\text{d} \zeta\, \delta \alpha(\zeta)\,.
+d284 1
+a284 1
+resulting variation in $I$ due to variation in $\alpha(\zeta)$ is
+d287 5
+a291 3
+\delta_\alpha I = -\int_0^{\zeta_0} \text{d} \zeta \,\delta \alpha(\zeta)
+ \left\{ \int_\zeta^{\zeta_0} \tau(\zeta^\prime) \,\text{d} B(\zeta^\prime)
+ + \tau(\zeta_0) \left[ \Upsilon B_s - B(\zeta_0) \right] \right\}\,.
+d295 1
+a295 1
+variation $\delta \alpha(\zeta)$ in $\alpha(\zeta)$ is the factor between \{
+d299 5
+a303 3
+\frac{\delta I}{\delta \alpha(\zeta)} = -
+ \left\{ \int_\zeta^{\zeta_0} \tau(\zeta^\prime) \,\text{d} B(\zeta^\prime) +
+  \tau(\zeta_0) \left[ \Upsilon B_s - B(\zeta_0) \right] \right\}\,.
+d306 3
+a308 1
+From this and
+d311 5
+a315 3
+\alpha(\zeta) = \sum_{k=1}^{N_s} f^k(\zeta) \beta^k(\zeta)
+\text{, from which }
+\frac{\partial \alpha(\zeta)}{\partial f^k(\zeta)} = \beta^k(\zeta)\,,
+d318 2
+a319 4
+where $N_s$ is the number of species, $f^k(\zeta)$ is the volume mixing ratio
+of the $k^\text{th}$ species at $\zeta$, and $\beta^k(\zeta)$ is the absorption
+cross section for the $k^\text{th}$ species at $\zeta$, we can compute the
+sensitivity of $I$ to variation of $f^k(\zeta)$ as
+d321 1
+a321 14
+\begin{equation}
+\frac{\delta I}{\delta f^k(\zeta)} =
+ \frac{\delta I}{\delta \alpha(\zeta)} \frac{\partial \alpha(\zeta)}{\partial f^k(\zeta)} =
+ \frac{\delta I}{\delta \alpha(\zeta)} \beta^k(\zeta)\,.
+\end{equation}
+
+Notice that the integrand in Equation (\ref{I var alpha}) is the same as the
+integrand in Equation (\ref{I}).  In fact,
+
+\begin{equation}
+I = B(0) - \frac{\delta I}{\delta \alpha(0)}\,.
+\end{equation}
+
+This means that while we approximate the integral in Equation (\ref{I}) as
+d324 17
+a340 11
+\int_0^{\zeta_0} \tau(\zeta) \,\text{d} B(\zeta) \approx
+ \sum_{i=1}^{N_p} \tau(\zeta_i) \Delta B(\zeta_i)
+\end{equation}
+
+we can at the same time approximate the integrals in Equation (\ref{I var
+alpha}) for $\zeta \in \{\zeta_j | \, j = 1, \dots, N_p\}$ as
+
+\begin{equation}\label{var sum}
+\int_{\zeta_j}^{\zeta_0} \tau(\zeta) \,\text{d} B(\zeta) \approx
+ \sum_{i=j}^{N_p} \tau(\zeta_i) \Delta B(\zeta_i)\,,\, j = 1, \dots, N_p\,.
+\end{equation}
+d343 24
+a366 15
+discrete parameters $\alpha(\zeta_j)$ by evaluating one indefinite sum.  It
+might seem that we need to evaluate $N_p+1$ sums, but the sums in Equation
+(\ref{var sum}) can be organized as a single indefinite sum taken in the order
+$N_p$, $N_p-1$, \dots, 1 if we save the terms $\tau(\zeta_i) \Delta B(\zeta_i)$
+or evaluate them in that order; the last of the sums in Equation (\ref{var
+sum}) is the sum in Equation (\ref{sum}).  We can therefore evaluate both $I$
+and its sensitivity to variations in the mixing ratios of $N_s$ species at
+$N_p$ points by evaluating one indefinite sum, followed by $N_p \times N_s$
+multiplies by the $N_s$ absorption cross sections $\{\beta^k(\zeta_j)|\,
+k=1,\dots,N_s,\, j=1,\dots,N_p\}$ at the $N_p$ points on the integration path.
+
+In the present scheme, we evaluate $N_s$ indefinite sums because we leave
+$\frac{\partial\alpha(\zeta)}{\partial f^k(\zeta)}$ inside the integral. Thus
+the approach described here should be less time consuming and require less
+memory than evaluating $N_s$ sums as the current method does.
+d371 2
+d375 1
+a375 1
+Rewrite Equation (\ref{RAD}) in the form
+d377 9
+a385 9
+\begin{equation}
+I[G(\zeta)] = -\int_0^{\zeta_0} G(\zeta)
+ \frac{\text{d} s(\zeta)}{\text{d} h}
+ \,\text{d} \zeta +
+ \tau(\zeta_0) \Upsilon B_s
+ \text{ where }
+ G = B(\zeta) \frac{\text{d} h}{\text{d} \zeta}
+  \frac{\text{d} \tau(\zeta)}{\text{d} s}
+\end{equation}
+d387 52
+a438 2
+because all of the factors of $G(\zeta)$ depend upon $T$, but $\frac{\text{d}
+s(\zeta)}{\text{d} h}$ does not.  Then
+d440 2
+a441 5
+\begin{equation}
+\delta_G I = -\int_0^{\zeta_0} \delta G(\zeta)
+ \frac{\text{d} s(\zeta)}{\text{d} h}
+ \,\text{d} \zeta
+\end{equation}
+d443 20
+a462 20
+from which by Equation (\ref{SENS})
+
+\begin{equation}
+\frac{\delta I}{\delta G(\zeta)} =
+ - \frac{\text{d} s(\zeta)}{\text{d} h}\,.
+\end{equation}
+
+Then
+
+\begin{equation}
+\frac{\delta I}{\delta T(\zeta)} =
+ \frac{\delta I}{\delta \alpha(\zeta)} \frac{\partial \alpha(z)}{\partial T} +
+ \frac{\delta I}{\delta G(\zeta)} \frac{\partial G(\zeta)}{\partial T} +
+ \frac{\partial}{\partial T} \left[ \tau(\zeta_0) \Upsilon B_s \right]
+\end{equation}
+
+where $\frac{\delta I}{\delta \alpha(\zeta)}$ is computed using Equation
+(\ref{I var alpha}).  Thus we can compute both $\frac{\partial I}{\partial
+f_i^k}$ and $\frac{\partial I}{\partial T_i}$ by evaluating Equation (\ref{var
+sum}) only once, as an indefinite sum for $j = 1, \dots, N_p$.
+d467 1
+a467 1
+% $Id: $
+d470 3
+@
+
+
+1.1
+log
+@Initial commit -- yes, at r1, not r0
+@
+text
+@d294 6
+a299 1
+% $Log: $
+@
+

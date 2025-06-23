@@ -1,0 +1,230 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.6
+	cfm-single-freq-0-1:1.2.0.4
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.2
+	mus-emls-1-70:1.1.0.6
+	rel-1-0-englocks-work:1.1.0.4
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.2
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	M4-00:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.2
+date	2018.11.06.00.45.04;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2012.08.31.23.37.31;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Add reference to wvs-035
+@
+text
+@\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9.1in
+
+\newcommand{\docname}{wvs-111r1}
+\newcommand{\docdate}{5 November 2018}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\newcommand{\TS}{T_\text{scat}}
+\newcommand{\TSs}[1]{T_{\text{scat}_{#1}}}
+\newcommand{\DB}{\Delta B}
+\newcommand{\oDB}{\overline{\DB}}
+\newcommand{\MT}{\mathcal{T}}
+\newcommand{\hMT}{\MT^s}
+\newcommand{\IF}[1]{\,\mathcal{A}_n\!\left(#1\right)} % Interpolation Function
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill, Nathaniel, Paul, Alyn, Van\\
+Subject: \>Effect of minimum value of $\lambda$ on convergence\\
+From: \>Van Snyder\\
+Reference: \> \h{wvs-035}, \h{wvs-110}
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-10pt}
+
+Some phases of some retrievals have significant convergence problems. 
+Below are shown plots of the logarithm of the residual (black), and the
+minimum norm expected for a linear model (red), for a retrieval of chunk
+56 of 2005d037, using three profiles per chunk with no overlap.  The
+retrieval was stopped after CorePlusR3; subsequent phases converged
+rapidly and gracefully.
+
+This plot shows the result if no minimum is put on the Levenberg-Marquardt
+stabilization parameter, $\lambda$:
+
+\includegraphics[scale=0.6,angle=270]{wvs-111-MinLambda=0}
+
+\newpage
+
+At Fred Krogh's suggestion, a facility was added to specify a minimum
+value for $\lambda$ on the {\tt retrieve} specification in the {\tt l2cf},
+using a {\tt lambdaMin} field.  This plot shows the result if the minimum
+value of $\lambda$ in InitUTH is set to 0.25, and the minimum value of
+$\lambda$ in CorePlusR3 is set to 0.5.  An experiment with a minimum value
+of 0.1 did not significantly improve CorePlusR3.
+
+\includegraphics[scale=0.6,angle=270]{wvs-111-MinLambda-not=0}
+
+In both cases, the values of {\tt maxJ} were 8 for InitPTAN, 10 for
+InitR2, 10 for FinalPTAN, 10 for InitRHI, 30 for InitUTH, and 20 for
+CorePlusR3.  The value for {\tt ftolerance} was 0.1 in all phases.
+
+There are several possible causes for the failure to converge gracefully
+in the first case.  One is that the constraints are not tight enough,
+allowing the state vector to enter regions where the forward model is not
+physically realistic.  Another is that the problem is strongly nonlinear. 
+In this case, ignoring Hessian information that would be used in a full
+Newton iteration (as described in \h{wvs-110} might produce undesirable
+Newton moves.  Another possibility is that the gradient moves do not have
+a useful length.  In 2006, Herb suggested a strategy to calculate a
+gradient move length.  This is described in \h{wvs-035}.
+
+Another is that the Jacobian is ill conditioned.  Forcing a minimum value
+for $\lambda$ improves the condition.
+
+An alternative to cope with ill conditioning is to factor the problem
+using Householder transformations, instead of forming normal equations,
+followed by Cholesky factorization.  The latter method, which is presently
+used, squares the condition number.  The former method requires about
+twice as much work as the latter method.  It is not presently supported by
+{\tt MatrixModule_0}, {\tt MatrixModule_1}, or {\tt RetrievalModule}.
+
+\label{lastpage}
+\end{document}
+
+% $Id: wvs-111.tex,v 1.1 2012/08/31 23:37:31 vsnyder Exp $
+
+% $Log: wvs-111.tex,v $
+% Revision 1.1  2012/08/31 23:37:31  vsnyder
+% Original commit
+%
+@
+
+
+1.1
+log
+@Original commit
+@
+text
+@d13 1
+a13 1
+\textheight 9in
+d15 2
+a16 2
+\newcommand{\docname}{wvs-111}
+\newcommand{\docdate}{30 August 2012}
+d87 1
+a87 1
+Reference: \> \h{wvs-110}
+d126 6
+a131 2
+Newton moves.  Another is that the Jacobian is ill conditioned.  Forcing a
+minimum value for $\lambda$ improves the condition.
+d143 1
+a143 1
+% $Id: wvs-095.tex,v 1.14 2011/07/26 23:46:55 vsnyder Exp $
+d145 4
+a148 1
+% $Log: wvs-095.tex,v $
+@
+

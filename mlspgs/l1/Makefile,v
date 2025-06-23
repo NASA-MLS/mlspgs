@@ -1,0 +1,1230 @@
+head	2.11;
+access;
+symbols
+	v5-02-NRT-19:2.11
+	v6-00:2.11
+	v5-02-NRT-18:2.11
+	v5-02:2.11
+	v5-01-NRT-17:2.11
+	v5-01-NRT-16:2.11
+	v5-01-NRT-15:2.11
+	v5-01-NRT-14:2.11
+	neuralnetworks-1-0:2.11.0.10
+	cfm-single-freq-0-1:2.11.0.8
+	v5-01:2.11
+	v5-00:2.11
+	v4-23-TA133:2.11.0.6
+	mus-emls-1-70:2.11.0.4
+	rel-1-0-englocks-work:2.11.0.2
+	VUMLS1-00:2.11
+	VPL1-00:2.11
+	V4-22-NRT-08:2.11
+	whdrel10_merged_to_here:2.11
+	merge_whdrel10_from_here:2.10
+	TAG_TRUNK_AFTER_PW_CHANGES:2.10
+	TAG_TRUNK_BEFORE_PW_CHANGES:2.10
+	VAM1-00:2.10
+	whd-rel-1-0:2.10.0.2
+	V4-21:2.6.0.4
+	V4-13:2.6
+	V4-12:2.6
+	V4-11:2.6
+	V4-10:2.6
+	V3-43:2.6
+	M4-00:2.6
+	V3-41:2.6
+	V3-40-PlusGM57:2.6.0.2
+	V2-24-NRT-04:2.6
+	V3-33:2.6
+	V2-24:2.6
+	V3-31:2.6
+	V3-30-NRT-05:2.6
+	cfm-01-00:2.6
+	V3-30:2.6
+	V3-20:2.6
+	V3-10:2.6
+	V2-23-NRT-02:2.6
+	V2-23:2.6
+	V2-22-NRT-01:2.6
+	V2-22:2.6
+	V2-21:2.6
+	V2-20:2.6
+	V2-11:2.6
+	V2-10:2.6
+	V2-00:2.6
+	V1-51:2.6
+	V1-50:2.6
+	V1-45:2.6
+	V1-44:2.6
+	V1-43:2.5
+	V1-42:2.5
+	V1-41:2.5
+	V1-32:2.4
+	V1-40:2.5
+	V1-31:2.4
+	V1-30:2.4
+	V1-13:2.1
+	V1-12:2.1
+	V1-11:2.1
+	V1-10:2.1
+	newfwm-feb03:2.1.0.4
+	V1-04:2.1
+	V1-03:2.1
+	V1-02:2.1
+	V1-00:2.1
+	newfwm-sep01:2.1.0.2
+	V0-7:2.1
+	V0-5-Level2:2.1
+	V0-5-SIPS:2.1
+	V0_1:1.7;
+locks; strict;
+comment	@# @;
+
+
+2.11
+date	2016.03.15.22.17.59;	author whdaffer;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2015.08.14.20.06.51;	author whdaffer;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2015.08.10.23.15.57;	author pwagner;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2015.08.10.23.14.54;	author pwagner;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2015.04.23.17.46.27;	author whdaffer;	state dead;
+branches;
+next	2.6;
+
+2.6
+date	2004.08.12.13.51.50;	author perun;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2004.01.09.17.46.22;	author perun;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2003.09.15.17.15.53;	author perun;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2003.08.15.14.54.55;	author perun;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2003.08.15.14.25.04;	author perun;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.02.23.18.26.11;	author perun;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2000.09.05.18.55.14;	author ahanzel;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2000.03.24.21.33.16;	author perun;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2000.03.22.19.57.51;	author perun;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2000.02.23.20.34.45;	author perun;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2000.02.22.19.11.58;	author perun;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2000.02.15.19.05.41;	author nakamura;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2000.02.14.17.27.56;	author perun;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2000.02.08.21.45.16;	author perun;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.11
+log
+@Merged whd-rel-1-0 back onto main branch. Most changes
+are to comments, but there's some modification to Calibration.f90
+and MLSL1Common to support some new modules: MLSL1Debug and SnoopMLSL1.
+@
+text
+@#	Makefile
+#
+#  Lost? Type 'cd ../; make help -f MakeFC' from this directory
+#
+# Copyright 2005, by the California Institute of Technology. ALL
+# RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+# commercial use must be negotiated with the Office of Technology Transfer
+# at the California Institute of Technology.
+
+# This software may be subject to U.S. export control laws. By accepting this
+# software, the user agrees to comply with all applicable U.S. export laws and
+# regulations. User has the responsibility to obtain export licenses, or other
+# export authority as may be required before exporting such information to
+# foreign countries or providing access to foreign persons.
+
+# "$Id: Makefile,v 2.10 2015/08/14 20:06:51 whdaffer Exp $"
+
+short_name=l1
+
+PROG=mlsl1log mlsl1g mlsl1t mlsl0sn
+
+# We store all the common Makefile things in one shared file
+SRCLIB=../srclib
+-include $(SRCLIB)/Makefile.h
+
+# This will set our MLS platform, compiler. etc.
+# w/o complaining if it does nor exist yet
+-include $(CONFDIR)/$(MLSCFILE)
+
+PROG_prereqs := $(CONFDIR)/$(MLSCFILE) \
+   $(PLATFORMS)/$(MLSCONFG) $(libmls_objs)/libmls.a \
+   $(INSTALLDIR)/libutctotai.a
+
+# Any sources to explicitly exclude from dependency list?  Include any
+# source files that have a 'program' statement in them in this line. If
+# you don't do this your first l1 link will fail with the opaque error
+# message that there are multiple "'mains' defined"
+OMIT_SRCS := $(OMIT) MLSL1.f90 test_streq.f90
+
+OMIT_PREFXD := $(shell ${REECHO} -prefix=-d $(OMIT_SRCS))
+
+#These are the source files for the drivers; they should be excluded from OBJS
+DRIVERS=MLSL1G.f90 MLSL1log.f90 MLSL1T.f90 MLSL0SN.f90
+DRIVERS_PREFXD := $(shell ${REECHO} -prefix=-do $(DRIVERS))
+
+#These modules require custom builds, so omit build commands from dependencies
+CUSTOM_BUILDS=OutputL1B.f90 OutputL1B_HDF4.f90 EngTbls.f90 \
+  CalibWeightsFlags.f90 L1LogUtils.f90 
+CUSTOM_PREFXD := $(shell ${REECHO} -prefix=-db $(CUSTOM_BUILDS))
+
+ifdef HDF5INC
+   ADD2PATHS := $(ADD2PATHS) $(HDF5INC)
+else
+   ADD2PATHS := $(ADD2PATHS) $(HDF5)/../fortran/src $(HDF5)/../include
+endif
+
+#----------------------- Build instructions
+
+$(PROG):  $(PROG_prereqs)
+	if [ ! -f Calibration.f9h ]; then \
+          pwd; \
+          ls Calibration*.f9h;\
+          cp Calibration-normal.f9h Calibration.f9h; \
+        fi; \
+	#grep WinMAFs Calibration.f9h
+	cat Calibration.f9h
+	@@cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
+        UNPREFXDPTHS="$(ADD2PATHS)" ;\
+        return_status=`expr $$?` ; \
+        if [ $$return_status != "0" ]; then \
+		     exit 2 ; \
+        elif [ "$(MARK_ALL_AS_UPTODATE)" != "no" ]; then \
+		     $(MAKE) mark_all_as_uptodate \
+           UNPREFXDPTHS="$(ADD2PATHS)" MARK_ALL_AS_UPTODATE= ;\
+         fi
+
+$(PLATFORMS)/$(MLSCONFG)/mlsl0sn \
+$(PLATFORMS)/$(MLSCONFG)/mlsl1log \
+$(PLATFORMS)/$(MLSCONFG)/mlslg \
+$(PLATFORMS)/$(MLSCONFG)/mlsl1t : $(PROG)
+	@@cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
+        UNPREFXDPTHS="$(ADD2PATHS)" ;\
+        return_status=`expr $$?` ; \
+        if [ $$return_status != "0" ]; then \
+		     exit 2 ; \
+        elif [ "$(MARK_ALL_AS_UPTODATE)" != "no" ]; then \
+		     $(MAKE) mark_all_as_uptodate \
+           UNPREFXDPTHS="$(ADD2PATHS)" MARK_ALL_AS_UPTODATE= ;\
+         fi
+
+.PHONY: clean configure depends depends--mod ghostbuster install \
+  internalupdate mlsl0sn mlsl1log mlsl1g mlsl1t mostlyclean \
+  tar targ tarz update
+
+tar:
+
+configure:
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)" \
+          $(RECFG)
+
+$(CONFDIR)/$(MLSCFILE):
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)" \
+          $(RECFG)
+
+$(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/$(MLSCFILE)
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)" -nc \
+          $(RECFG)
+
+depends:
+	$(MLSBIN)/makemakedep.sh -p $(PLATFORMS)/$(MLSCONFG)/Makefile.dep \
+    $(OMIT_PREFXD) $(DRIVERS_PREFXD) $(UP_OR_LOW) $(CUSTOM_PREFXD) \
+	    $(libmls_sources) $(srclib)
+
+ghostbuster:
+	$(MLSBIN)/ghostbuster.sh $(OMIT_PREFXD) \
+       $(PLATFORMS)/$(MLSCONFG) ./ $(srclib)
+
+update:
+	@@cd .. ; \
+   $(MAKE) update SUBDIRS="blas lib l1" tests_sub_dirs=
+
+mostlyclean:
+	@@echo "Cleaning directory $(MLSCONFG)" ; \
+	if [ "$(MLSCONFG)" != "" ] ; then  \
+		echo "Deleting $(MLSCONFG) files" ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/* ; \
+	fi ; \
+	if [ -d "$(PLATFORMS)/$(MLSCONFG)" ] ; then  \
+		echo "Deleting $(MLSCONFG) directory" ; \
+		rmdir $(PLATFORMS)/$(MLSCONFG) ; \
+	fi
+	rm -f Make.dep.*
+
+clean:
+	@@echo "Cleaning objects from directory $(MLSCONFG)" ; \
+	if [ "$(MLSCONFG)" != "" ] ; then  \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/*.[ao] ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/*.mod ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/$(PROG) ; \
+	fi
+	rm -f Make.dep.*
+
+internalupdate: 
+	@@echo "Updating the Makefile in ./"; \
+    m_option="-machine" ; \
+		$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+         -cf "$(MLSCFILE)" -nc -nd $$m_option; \
+      m_option=""
+
+# install $(PROG) into $(INSTALLDIR)
+install: $(PROG)
+	@@cd .. ; \
+   $(MAKE) install LEVELS=l1
+
+tar:
+	rm -f ../$(PROG).tar
+	@@echo "tar-ing l1"; \
+	rm -f ../$(PROG).tar
+	$(TAR) hcvf ../$(PROG).tar * --exclude CVS\
+	--exclude Make.dep\* --exclude NAG.\* --exclude LF95.\*
+
+tarz: tar
+	@@echo "... then gzipping it"; \
+	cd ..; rm -f $(PROG).tgz; gzip $(PROG).tar; mv $(PROG).tar.gz $(PROG).tgz
+
+targ:
+	rm -f ../$(PROG).tgz
+	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl1
+
+# $Log: Makefile,v $
+# Revision 2.10  2015/08/14 20:06:51  whdaffer
+# A comment that I think explains the issue with new files with
+# `program' statements failure
+#
+# Revision 2.9  2015/08/10 23:15:57  pwagner
+# *** empty log message ***
+#
+# Revision 2.60  2015/04/23 23:04:37  pwagner
+# Should fix problem with first checkout before Calibration.f9h initialized
+#
+# Revision 2.59  2015/04/23 17:46:27  whdaffer
+# removed Makefile
+#
+# Revision 2.58  2010/10/12 22:24:29  pwagner
+# Uses Makefile.h from srclib
+#
+# Revision 2.57  2010/08/27 20:56:39  pwagner
+# Uses optional HDF*INC Makefile variables
+#
+# Revision 2.56  2008/07/11 23:59:19  pwagner
+# 1st changes to get sunstudio to link mlsl2
+#
+# Revision 2.55  2008/04/22 17:20:21  pwagner
+# CASCADE no longer affects where Makefile.dep goes
+#
+# Revision 2.54  2007/05/31 18:31:02  pwagner
+# Added Absoft to list of tested compilers
+#
+# Revision 2.53  2007/04/13 20:15:18  pwagner
+# Changes in line with Intel v9.1
+#
+# Revision 2.52  2006/04/01 01:11:58  pwagner
+# Moved installation commands to ../MakeFC
+#
+# Revision 2.51  2006/03/28 21:54:33  pwagner
+# Must turn off optimization to work around Lahey bug
+#
+# Revision 2.50  2006/03/27 19:18:30  pwagner
+# Added new pge mlsl0sn to store switch settings
+#
+# Revision 2.49  2005/08/25 19:21:58  pwagner
+# Removed MLSL1BOA as target
+#
+# Revision 2.48  2005/06/23 23:02:30  pwagner
+# Reworded Copyright statement
+#
+# Revision 2.47  2004/03/30 00:21:50  pwagner
+# Take care that lib is rebuilt after changes in machines directory
+#
+# Revision 2.46  2003/10/24 20:59:21  pwagner
+# Added mlsl1boa utility as new target
+#
+# Revision 2.45  2003/06/03 20:38:24  pwagner
+# Renamed mkdir_cascade mkpath
+#
+# Revision 2.44  2003/05/21 20:52:13  pwagner
+# Added PROG to .PHONY list as appropriate
+#
+# Revision 2.43  2003/05/20 18:39:23  pwagner
+# Uses DONTBUILDPREQS to stop some hunting
+#
+# Revision 2.42  2003/05/19 23:43:06  pwagner
+# Defined MLSHOME used by install command
+#
+# Revision 2.41  2003/04/30 23:04:55  pwagner
+# Now lets you make update in each subdirectory
+#
+# Revision 2.40  2003/03/06 19:45:58  pwagner
+# Added libutctotai as explicit prerequisite
+#
+# Revision 2.39  2003/02/24 21:16:01  pwagner
+# Fixed bug where changes to .f9h were not triggering recompiles
+#
+# Revision 2.38  2003/01/31 23:52:42  pwagner
+# Changed for new l1 with 3 executables
+#
+# Revision 2.37  2002/11/18 19:26:16  pwagner
+# Added Output_HDF4.f90 to CUSTOM_BUILDS
+#
+# Revision 2.36  2002/07/18 18:00:01  pwagner
+# NOHUNTING default when .mod-mediated dependency
+#
+# Revision 2.35  2002/07/16 17:18:31  pwagner
+# UNPREFXDPTHS adds hdf5 dirs for f95 to search
+#
+# Revision 2.34  2002/07/15 16:52:59  pwagner
+# Exits make with status 2 if error in any level
+#
+# Revision 2.33  2002/07/02 00:14:01  pwagner
+# Skips marking uptodate after an error
+#
+# Revision 2.32  2002/06/21 23:24:09  pwagner
+# More steps enroute to ending cascades of recompiles
+#
+# Revision 2.31  2002/06/21 00:15:27  pwagner
+# Enroute to ending cascading recompiles
+#
+# Revision 2.30  2002/06/19 19:39:46  pwagner
+# Allows use of .mod and .f9h files from hdf5
+#
+# Revision 2.29  2002/06/18 18:53:35  pwagner
+# Modified to correctly use he5lib modules
+#
+# Revision 2.28  2002/05/02 00:16:32  pwagner
+# depends now creates Makefile.nodep, too
+#
+# Revision 2.27  2002/01/29 00:46:47  pwagner
+# Builds he5lib when HDFVERSIONS defined
+#
+# Revision 2.26  2002/01/15 00:40:18  pwagner
+# Now uses user-settable OMIT and internal OMIT_SRCS and OMIT_PREFIXD variables
+#
+# Revision 2.25  2001/11/08 00:40:51  pwagner
+# NOCLEANING avoids massive recompiles on changes to .configure
+#
+# Revision 2.24  2001/10/04 22:25:36  pwagner
+# Limit suffix-based rules to (MLSCONFG); add lib/lit_names.txt to dependency list
+#
+# Revision 2.23  2001/09/26 17:24:59  pwagner
+# Removed errors introduced with last changes; SIMPLIFYMAKE renamed NOHUNTING
+#
+# Revision 2.22  2001/09/25 20:27:15  pwagner
+# New SIMPLIFYMAKE setting; other changes
+#
+# Revision 2.21  2001/08/22 22:46:13  pwagner
+# Made reecho.sh a prerequisite where appropriate
+#
+# Revision 2.20  2001/08/15 21:01:04  pwagner
+# Now excludes OMIT_SRCS from dependencies
+#
+# Revision 2.19  2001/08/13 18:09:08  pwagner
+# replaced shell echo -> shell {REECHO}
+#
+# Revision 2.18  2001/05/31 20:19:31  pwagner
+# Added ghostbuster to .PHONY list
+#
+# Revision 2.17  2001/05/24 17:56:39  pwagner
+# Expanded LIB_prereqs
+#
+# Revision 2.16  2001/05/17 20:02:59  pwagner
+# Automatically rebuilds lib on change to machine.f90
+#
+# Revision 2.15  2001/05/14 23:58:42  pwagner
+# default .configure name now set by environment
+#
+# Revision 2.14  2001/05/14 17:37:14  pwagner
+# .configure now a variable file name
+#
+# Revision 2.13  2001/05/01 18:32:13  pwagner
+# Added .configure to prereqs for lib
+#
+# Revision 2.12  2001/05/01 17:07:43  pwagner
+# Now runs ghostbuster when updating
+#
+# Revision 2.11  2001/04/12 22:03:08  pwagner
+# Changes to lib or fwdmdl trigger rebuilds even on suns
+#
+# Revision 2.10  2001/04/05 17:15:54  pwagner
+# Added PROG to .PHONY list
+#
+# Revision 2.9  2001/03/13 19:07:59  pwagner
+# clean now removes executables, too
+#
+# Revision 2.8  2001/03/12 22:46:57  pwagner
+# Revised clean, tar; automatic symlink to Makefile
+#
+# Revision 2.7  2001/03/09 19:36:06  pwagner
+# Added TAR=... option
+#
+# Revision 2.6  2001/03/06 18:17:57  pwagner
+# clean more amitious--rms * from MLSCONFGl[13]/MakeFC
+#
+# Revision 2.5  2001/02/08 23:16:46  pwagner
+# Without PVM_OBJS.inc file
+#
+# Revision 2.4  2001/01/23 23:27:38  pwagner
+# With optional PVM support
+#
+# Revision 2.3  2001/01/10 23:45:33  pwagner
+# General housekeeping
+#
+# Revision 2.2  2000/11/17 20:54:34  pwagner
+# Using srclib_f90 as preq to lib
+#
+# Revision 2.1  2000/11/15 00:11:27  pwagner
+# First commit
+#
+#
+
+
+@
+
+
+2.10
+log
+@A comment that I think explains the issue with new files with
+`program' statements failure
+@
+text
+@d16 1
+a16 1
+# "$Id: Makefile,v 2.9 2015/08/10 23:15:57 pwagner Exp $"
+d65 2
+a66 1
+	grep WinMAFs Calibration.f9h
+d174 4
+@
+
+
+2.9
+log
+@*** empty log message ***
+@
+text
+@d16 1
+a16 1
+# "$Id: MakeFC,v 2.60 2015/04/23 23:04:37 pwagner Exp $"
+d34 4
+a37 1
+#Any sources to explicitly exclude from dependency list?
+d172 4
+a175 1
+# $Log: MakeFC,v $
+@
+
+
+2.8
+log
+@*** empty log message ***
+@
+text
+@d5 20
+a24 62
+# Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
+# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+# "$Id: Makefile,v 2.6 2004/08/12 13:51:50 perun Exp $"
+
+# ---------------------- The name of this file (is the right-hand-side below)
+MakeFName = MakeFC
+
+# where to store .configure
+CONFDIR=..
+
+ifdef MLSINSTALLDIR
+   INSTALLDIR=$(MLSINSTALLDIR)
+else
+   INSTALLDIR=$(CONFDIR)/bin/$(MLSCONFG)
+endif
+
+# ---------------------- Paths to special directories
+# This is where this Makefile is located
+# Also beginning path for all relative paths defined below; e.g. CONFDIR
+# This assumes therefore that you have summoned this via
+#    cd $(MLSHOME)
+#    make
+# otherwise the following definition will fail
+# You might try something like
+#    make -f mlspgs/Makefile MLSHOME=$HOME/mlspgs
+# but this has not been tested.
+# Anyway, why would you want to
+# make things more difficult?
+MLSHOME := $(shell pwd)
+
+# where configure and makemakedep.sh are stored
+MLSBIN=../util
+
+# where sources for libmls.a are stored
+libmls_sources=../lib
+
+# where objects and libmls.a are stored
+libmls_objs=$(libmls_sources)/$(MLSCONFG)
+
+# where sources (but not OBJS) shared with l3, etc. are stored
+srclib=../srclib
+
+# where sources (but not OBJS) shared with l3, etc. are stored
+blaslib=../blas
+
+# where sources (but not OBJS) used for hdf5 file versions are stored
+he5lib=../he5lib
+
+# where he5 objects and libhe5.a are stored
+he5lib_objs=$(he5lib)/$(MLSCONFG)
+
+# where the platforms directory is
+PLATFORMS = .
+
+# This is the default name of the configure file
+# It may be overridden for multiple platforms, special options, etc.
+ifdef HOSTMLSCFILE
+   MLSCFILE=$(HOSTMLSCFILE)
+else
+   MLSCFILE=.configure
+endif
+a29 40
+# All the implicit pattern-matching involving suffixes
+# will be done in the uniquely-named sub-directories, not here--so
+.SUFFIXES:
+
+# This will filter out globbed file expansions that fail
+# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
+REECHO=$(MLSBIN)/reecho.sh
+
+# This is in case tar doesn't summon GNU tar, you may still use it via
+# something like
+#    make -f MakeFC tar_sips TAR=/usr/local/gnu/bin/tar
+TAR=tar
+
+SHELL = /bin/sh
+
+#--------------- Target definitions
+# $PROG          -- automatic; built when target is not specified
+
+#                           (functional)
+# configure      -- runs mlsconfigure to (re)set compiler, platform, paths
+#                  also (re)creates uniquely-named sub-sub-directories
+#                  with custom Makefiles where *.o, *.mod, etc. built
+# depends        -- runs makemakedep.sh to calculate dependencies
+# mostlyclean    -- deletes uniquely-named sub-sub-directories
+# clean          -- deletes only *.o, *.mod from sub-subs
+# tar            -- creates a directory archive suitable for distribution
+#
+
+#----------------------------------------------------------
+#wildcard seems to no longer work right (maybe some change to our suns?)
+libmls_f90 := $(shell ${REECHO} $(libmls_sources)/*.f $(libmls_sources)/*.f90 \
+  $(libmls_sources)/*.f9h $(srclib)/*.f9h $(libmls_sources)/*.c \
+  $(libmls_sources)/lit_names.txt)
+blaslib_f := $(shell ${REECHO} $(blaslib)/*.c $(blaslib)/*.f $(blaslib)/*.f90 \
+  $(blaslib)/*.f9h $(srclib)/*.f9h)
+he5lib_f := $(shell ${REECHO} $(he5lib)/*.c $(he5lib)/*.f $(he5lib)/*.f90)
+machinelib := $(libmls_sources)/machines/$(MLSCONFG)/
+machine_f := $(shell ${REECHO} $(machinelib)/*.c $(machinelib)/*.f \
+  $(machinelib)/*.f90)
+
+a33 20
+ifdef HDFVERSIONS
+   PROG_prereqs := $(PROG_prereqs) $(he5lib_objs)/libhe5.a
+   ADD2PATHS := $(ADD2PATHS) ../$(he5lib)/$(MLSCONFG) \
+   $(HDF5)/../fortran/src $(HDF5)/../include
+#   ADD2PATHS := $(ADD2PATHS) ../$(he5lib)/$(MLSCONFG)
+endif
+
+ifndef DONTBUILDPREQS
+ifdef BLAS
+   LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
+   $(machine_f) \
+   $(REECHO) $(libmls_objs)
+else
+   LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
+   $(machine_f) \
+   $(blaslib_f) $(REECHO) $(libmls_objs)
+endif
+HE5_LIB_prereqs=$(libmls_objs)/libmls.a $(he5lib_f)
+endif
+
+d35 1
+a35 4
+OMIT_SRCS := $(OMIT) MLSL1.f90
+
+PROG=mlsl1log mlsl1g mlsl1t mlsl1boa
+# PROG=mlsl1
+d40 1
+a40 1
+DRIVERS=MLSL1G.f90 MLSL1log.f90 MLSL1T.f90 MLSL1BOA.f90
+a42 16
+#CASCADE determines whether to create/use .mod dependencies:
+#if CASCADE, use older .o dependencies, which entail cascades
+#of massive recompilation
+#These are configurations for which I have tested CASCADE-avoidance
+CAN_AVOID="NAG.Linux LF95.Linux NAG.Sun Sun.Sun"
+#CAN_AVOID=""
+ifndef CASCADE
+  WE_CAN := $(shell echo $(CAN_AVOID) | grep $(MLSF95).$(MLSPLAT))
+ifndef WE_CAN
+  CASCADE := yes
+endif
+endif
+
+ifdef WE_CAN
+NOHUNTING := yes
+endif
+d44 2
+a45 1
+CUSTOM_BUILDS=OutputL1B.f90 OutputL1B_HDF4.f90 EngTbls.f90
+d47 3
+a49 2
+ifeq ($(MLSF95),Abs)
+  UP_OR_LOW := -mod UPPER
+d51 1
+a51 16
+  UP_OR_LOW := -mod lower
+endif
+
+#MARK_ALL_AS_UPTODATE determines whether, on rebuilding any module,
+#all modules, rebuilt or not, should be marked as up to date
+#ifndef MARK_ALL_AS_UPTODATE
+#  MARK_ALL_AS_UPTODATE := $(shell echo $(CAN_AVOID) | grep $(MLSF95).$(MLSPLAT))
+#endif
+
+#NOCLEANING determines value of RECFG passed to mlsconfigure script
+#RECFG determines whether changing .configure triggers deleting
+#existing sub-directory, and thus recompiling every source file
+#Set NOCLEANING to "yes" if you want to preserve existing compiled objects
+#even when changing .configure file
+ifdef NOCLEANING
+   RECFG = -nd
+d57 6
+d64 1
+a64 1
+        UNPREFXDPTHS="$(ADD2PATHS) $(HDF5)/../fortran/src $(HDF5)/../include" ;\
+d68 1
+a68 1
+        elif [ "$(WE_CAN)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" ]; then \
+d73 1
+a73 1
+# $(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PROG)
+d78 1
+a78 1
+        UNPREFXDPTHS="$(ADD2PATHS) $(HDF5)/../fortran/src $(HDF5)/../include" ;\
+d82 1
+a82 1
+        elif [ "$(WE_CAN)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" ]; then \
+a86 17
+$(libmls_objs)/libmls.a: $(LIB_prereqs)
+	@@if [ "$(NOHUNTING)" != "" ] ; then \
+	   rm -f $(libmls_objs)/libmls.a ; \
+	fi ; \
+	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources) \
+     MARK_ALL_AS_UPTODATE=no DONTBUILDPREQS=TRUE
+
+$(he5lib_objs)/libhe5.a: $(HE5_LIB_prereqs)
+	@@if [ "$(NOHUNTING)" != "" ] ; then \
+	   rm -f $(he5lib_objs)/libhe5.a ; \
+	fi ; \
+	$(MAKE) -f $(MakeFName) libhe5.a -C $(he5lib) \
+     MARK_ALL_AS_UPTODATE=no DONTBUILDPREQS=TRUE
+
+$(INSTALLDIR)/libutctotai.a:
+	$(MAKE) -f $(MakeFName) utctotai -C $(CONFDIR)
+
+d88 1
+a88 1
+  internalsaymake internalupdate mlsl1log mlsl1g mlsl1t mostlyclean \
+a108 10
+ifdef CASCADE
+	$(MLSBIN)/makemakedep.sh -nodep -p Makefile.nodep \
+      $(OMIT_PREFXD) $(DRIVERS_PREFXD)
+	$(MLSBIN)/makemakedep.sh $(OMIT_PREFXD) $(DRIVERS_PREFXD) \
+      $(libmls_sources) $(srclib) 
+else
+	$(MAKE) depends--mod
+endif
+
+depends--mod:
+d142 1
+a142 5
+internalsaymake:
+	@@echo "Copying or linking MakeFC to Makefile in ./" ; \
+	cp MakeFC Makefile
+
+internalupdate: internalsaymake
+d151 2
+a152 22
+	@@echo "Installing $(PROG) into $(INSTALLDIR)"; \
+	if [ ! -d $(INSTALLDIR) ] ; then \
+	   $(MLSBIN)/mkpath.sh $(INSTALLDIR) ; \
+	fi ; \
+	if [ -f $(PLATFORMS)/$(MLSCONFG)/mlsl1log ] ; then \
+	   mv $(PLATFORMS)/$(MLSCONFG)/mlsl1boa $(INSTALLDIR) ; \
+	fi ; \
+	if [ -f $(PLATFORMS)/$(MLSCONFG)/mlsl1log ] ; then \
+	   mv $(PLATFORMS)/$(MLSCONFG)/mlsl1log $(INSTALLDIR) ; \
+	fi ; \
+	if [ -f $(PLATFORMS)/$(MLSCONFG)/mlsl1t ] ; then \
+	   mv $(PLATFORMS)/$(MLSCONFG)/mlsl1t $(INSTALLDIR) ; \
+	fi ; \
+	if [ -f $(PLATFORMS)/$(MLSCONFG)/mlsl1g ] ; then \
+	   mv $(PLATFORMS)/$(MLSCONFG)/mlsl1g $(INSTALLDIR) ; \
+      rm -f $(INSTALLDIR)/mlsl1.sh ; \
+	   sed "s=mlsxxyyzz_1=mlsl1log=; s=mlsxxyyzz_2=mlsl1g=; \
+        s=mlsxxyyzz_3=mlsl1t=; s=mlsbbiinn=$(INSTALLDIR)=; \
+        s=mlshhoommee=$(MLSHOME)=; s=mlseexxttrraa==" \
+        $(MLSBIN)/mlsl1prog.sh > $(INSTALLDIR)/mlsl1.sh ; \
+      chmod a+x $(INSTALLDIR)/mlsl1.sh ; \
+	fi
+d169 39
+a207 3
+# $Log: Makefile,v $
+# Revision 2.6  2004/08/12 13:51:50  perun
+# Version 1.44 commit
+@
+
+
+2.7
+log
+@removed Makefile
+@
+text
+@@
+
+
+2.6
+log
+@Version 1.44 commit
+@
+text
+@d8 1
+a8 1
+# "$Id: MakeFC,v 2.47 2004/03/30 00:21:50 pwagner Exp $"
+d348 4
+a351 1
+# $Log: MakeFC,v $
+@
+
+
+2.5
+log
+@Version 1.4 commit
+@
+text
+@d5 1
+a5 1
+# Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+d8 1
+a8 1
+# "$Id: MakeFC,v 2.45 2003/06/03 20:38:24 pwagner Exp $"
+d108 3
+d126 1
+a126 1
+   $(libmls_sources)/machines/$(MLSCONFG)/machine.f90 \
+d130 1
+a130 1
+   $(libmls_sources)/machines/$(MLSCONFG)/machine.f90 \
+d139 1
+a139 1
+PROG=mlsl1log mlsl1g mlsl1t
+d145 1
+a145 1
+DRIVERS=MLSL1G.f90 MLSL1log.f90 MLSL1T.f90
+d315 3
+d349 6
+@
+
+
+2.4
+log
+@Version 1.3 commit
+@
+text
+@@
+
+
+2.3
+log
+@Version 1.2 commit
+@
+text
+@@
+
+
+2.2
+log
+@Version 1.2 commit
+@
+text
+@@
+
+
+2.1
+log
+@Version 0.5 commit
+@
+text
+@d1 6
+a6 1
+F95=f95
+d8 1
+a8 30
+.SUFFIXES: .o .f90
+.f90.o:
+	${F95} ${F95FLAGS} ${MODULEPATHPREFIX}${MODULEPATH} -c $<
+
+MODULEPATHPREFIX=-I
+MODULEPATH=${HOME}/mlspgs/lib/NAG.Sun
+MLSPGS_LIB_PATH=${HOME}/mlspgs/lib/NAG.Sun
+TOOLKIT_LIB=${PGSLIB}/libPGSTK.a $
+HDF_LIB_PATH=/software/SRC/TOOLKIT-5.2.6v1.00.NAG/hdf/sun5/HDF4.1r3/lib
+HDF_LIB=$(HDF_LIB_PATH)/libmfhdf.a $(HDF_LIB_PATH)/libdf.a \
+	$(HDF_LIB_PATH)/libz.a $(HDF_LIB_PATH)/libjpeg.a /usr/lib/libnsl.a
+MLSLIB= ${MLSPGS_LIB_PATH}/libmls.a
+# F95FLAGS=-g -w=all -C=all
+F95FLAGS=-O -w=all
+OBJSL= MLSL1Utils.o MLSL1Common.o L0_sci_tbls.o EngTbls.o Interpolation.o \
+ Calibration.o MLSPCF1.o InitPCFs.o Init_tables_module.o tree_checker.o \
+ MLSL1Config.o MLSL1Rad.o OutputL1B.o Orbit.o OpenInit.o L0Utils.o SciUtils.o \
+ EngUtils.o SortQualify.o Radiances.o Scan.o TkL1B.o L1BOutUtils.o \
+ WriteMetaL1.o Close_Files.o
+
+LDFLAGS= -unsharedf95 -Bstatic
+
+all: MLSL1
+
+OutputL1B.o : OutputL1B.f90
+	${F95} ${F95FLAGS} ${MODULEPATHPREFIX}${MODULEPATH} -dusty -c $<
+
+tree_checker.o: ${HOME}/mlspgs/srclib/tree_checker.f90
+	${F95} ${F95FLAGS} ${MODULEPATHPREFIX}${MODULEPATH} -c \
+	${HOME}/mlspgs/srclib/tree_checker.f90
+d10 2
+a11 2
+MLSL1: $(OBJSL) MLSL1.o
+	${F95} ${LDFLAGS} -o $@@ ${OBJSL} MLSL1.o ${MLSLIB} ${TOOLKIT_LIB} ${HDF_LIB}
+d13 271
+a283 1
+MLSL1.o: $(OBJSL)
+d286 195
+a480 1
+	-rm -f *.o *.a *.M *.mod
+@
+
+
+2.0
+log
+@Changing file revision to 2.0.
+@
+text
+@d1 9
+a9 7
+# $Id: Makefile,v 1.7 2000/03/24 21:33:16 perun Exp $
+#
+# This is the makefile for the EOS MLS Level 1 software
+#
+LDFLAGS= -lnsl
+MODULEPATH=../lib/
+MLSPGS_LIB_PATH=../lib
+d11 1
+a11 1
+HDF_LIB_PATH=/usr/local/HDF/lib
+d13 9
+a21 14
+	$(HDF_LIB_PATH)/libz.a
+MLSLIB= ${MLSPGS_LIB_PATH}/mlslib.a
+MLSLIB_DEBUG= ${MLSPGS_LIB_PATH}/mlslib.a_debug
+
+# Note we define OBJS to be all the files EXCEPT MLSL1.o as this allows
+# the dependencies to be defined more simply.  Where we need to, we add
+# MLSL1.o in.
+
+OBJS= MLSL1Common.o MLSL1Rad.o OutputL1B.o open_init.o sort_qualify.o calib.o \
+	close_files.o Scan.o Orbit.o TkL1B.o PGS_TD_ADEOSIItoTAI.obj
+OBJS_DEBUG= MLSL1Common.dbg.o MLSL1Rad.dbg.o OutputL1B.dbg.o \
+	open_init.dbg.o sort_qualify.dbg.o calib.dbg.o \
+	close_files.dbg.o Scan.dbg.o Orbit.o TkL1B.dbg.o \
+	PGS_TD_ADEOSIItoTAI.obj
+d23 1
+a23 1
+include ${MLSPGS_LIB_PATH}/make.inc
+a25 7
+debug: MLSL1_debug
+both: all debug
+
+# Now give the additional dependencies through the use statement
+
+$(MLSLIB):
+	(cd ${MLSPGS_LIB_PATH}; ${MAKE})
+d27 2
+a28 2
+#$(MLSLIB_DEBUG):
+#	(cd ${MLSPGS_LIB_PATH}; ${MAKE} debug)
+d30 3
+a32 1
+$(OBJS): $(MLSLIB)
+d34 2
+a35 1
+#$(OBJS_DEBUG): $(MLSLIB_DEBUG)
+d37 1
+a37 10
+MLSL1: $(OBJS) MLSL1.o $(MLSLIB)
+	${F90} ${F90FLAGS} ${LDFLAGS} -o $@@ ${OBJS} \
+	MLSL1.o ${MLSLIB} ${TOOLKIT_LIB} ${HDF_LIB}
+MLSL1_debug: $(OBJS_DEBUG) MLSL1.dbg.o $(MLSLIB_DEBUG)
+	${F90} ${F90DEBUGFLAGS} ${LDFLAGS} -o $@@ ${OBJS} MLSL1.dbg.o  \
+	${MLSLIB_DEBUG} ${TOOLKIT_LIB} ${HDF_LIB}
+
+MLSL1.o: $(OBJS)
+
+MLSL1.dbg.o: $(OBJS_DEBUG)
+d40 1
+a40 26
+	-rm -f *.o *.mod *.M *.dbg.o
+
+#
+# $Log: Makefile,v $
+# Revision 1.7  2000/03/24 21:33:16  perun
+# Added MLSLIB dependency
+#
+# Revision 1.6  2000/03/22 19:57:51  perun
+# Added HDF_LIB_PATH variable
+#
+# Revision 1.5  2000/02/23 20:34:45  perun
+# Changed .o_debug to .dbg.o for SunOS
+#
+# Revision 1.4  2000/02/22 19:11:58  perun
+# Added use of F90{DEBUG}FLAGS
+#
+# Revision 1.3  2000/02/15 19:05:41  nakamura
+# Removed Mc module.
+#
+# Revision 1.2  2000/02/14 17:27:56  perun
+# Added modules for L1BOA records and L1B data
+#
+# Revision 1.1  2000/02/08 21:45:16  perun
+# Initial version
+#
+#
+@
+
+
+1.7
+log
+@Added MLSLIB dependency
+@
+text
+@d1 1
+a1 1
+# $Id: Makefile,v 1.6 2000/03/22 19:57:51 perun Exp $
+d60 3
+@
+
+
+1.6
+log
+@Added HDF_LIB_PATH variable
+@
+text
+@d1 1
+a1 1
+# $Id: Makefile,v 1.5 2000/02/23 20:34:45 perun Exp $
+d12 2
+d20 1
+a20 1
+	close_files.o Scan.o Orbit.o TkL1B.o
+d23 2
+a24 1
+	close_files.dbg.o Scan.dbg.o Orbit.o TkL1B.dbg.o
+d32 16
+a47 4
+MLSL1: $(OBJS) MLSL1.o mlslib
+	${F90} ${F90FLAGS} ${LDFLAGS} PGS_TD_ADEOSIItoTAI.obj -o $@@ ${OBJS} \
+	MLSL1.o ${MLSPGS_LIB_PATH}/mlslib.a ${TOOLKIT_LIB} ${HDF_LIB}
+MLSL1_debug: $(OBJS_DEBUG) MLSL1.dbg.o mlslib_debug
+d49 1
+a49 1
+	${MLSPGS_LIB_PATH}/mlslib.a_debug ${TOOLKIT_LIB} ${HDF_LIB}
+a57 4
+# Now give the additional dependencies through the use statement
+
+include ${MLSPGS_LIB_PATH}/makelibs.inc
+
+d60 3
+@
+
+
+1.5
+log
+@Changed .o_debug to .dbg.o for SunOS
+@
+text
+@d1 1
+a1 1
+# $Id: Makefile,v 1.4 2000/02/22 19:11:58 perun Exp $
+d5 1
+a5 1
+LDFLAGS= -lm -lnsl
+d9 3
+a11 2
+HDF_LIB=/usr/local/HDF/lib/libmfhdf.a /usr/local/HDF/lib/libdf.a \
+	/usr/local/HDF/lib/libz.a
+d49 3
+@
+
+
+1.4
+log
+@Added use of F90{DEBUG}FLAGS
+@
+text
+@d1 1
+a1 1
+# $Id: Makefile,v 1.3 2000/02/15 19:05:41 nakamura Exp $
+d18 3
+a20 3
+OBJS_DEBUG= MLSL1Common.o_debug MLSL1Rad.o_debug OutputL1B.o_debug \
+	open_init.o_debug sort_qualify.o_debug calib.o_debug \
+	close_files.o_debug Scan.o_debug Orbit.o TkL1B.o_debug
+d25 2
+a26 1
+debug: MLSL1
+d31 2
+a32 2
+MLSL1_debug: $(OBJS_DEBUG) MLSL1.o_debug mlslib_debug
+	${F90} ${F90DEBUGFLAGS} ${LDFLAGS} -o $@@ ${OBJS} MLSL1.o_debug  \
+d37 2
+d40 1
+a40 1
+	-rm -f *.o *.mod *.M
+d48 3
+@
+
+
+1.3
+log
+@Removed Mc module.
+@
+text
+@d1 1
+a1 1
+# $Id: Makefile,v 1.2 2000/02/14 17:27:56 perun Exp $
+d28 2
+a29 2
+	${F90} ${LDFLAGS} PGS_TD_ADEOSIItoTAI.obj -o $@@ ${OBJS} MLSL1.o \
+	${MLSPGS_LIB_PATH}/mlslib.a ${TOOLKIT_LIB} ${HDF_LIB}
+d31 1
+a31 1
+	${F90} ${LDFLAGS} -o $@@ ${OBJS} MLSL1.o_debug  \
+d45 3
+@
+
+
+1.2
+log
+@Added modules for L1BOA records and L1B data
+@
+text
+@d1 1
+a1 1
+# $Id: Makefile,v 1.1 2000/02/08 21:45:16 perun Exp $
+d17 1
+a17 1
+	close_files.o Scan.o Orbit.o Mc.o TkL1B.o
+d20 1
+a20 1
+	close_files.o_debug Scan.o_debug Orbit.o Mc.o_debug TkL1B.o_debug
+d45 3
+@
+
+
+1.1
+log
+@Initial version
+@
+text
+@d1 1
+a1 1
+# $Id: $
+d16 5
+a20 3
+OBJS= MLSL1Common.o MLSL1Rad.o open_init.o sort_qualify.o calib.o close_files.o
+OBJS_DEBUG= MLSL1Common.o_debug MLSL1Rad.o_debug open_init.o_debug \
+	sort_qualify.o_debug calib.o_debug close_files.o_debug
+d44 4
+a47 1
+# $Log: $
+@
+

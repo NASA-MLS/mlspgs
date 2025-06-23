@@ -1,0 +1,654 @@
+head	1.9;
+access;
+symbols
+	V0-5-Level2:1.6
+	V0-5-SIPS:1.6
+	V0_1:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.9
+date	2001.07.04.00.28.36;	author zvi;	state dead;
+branches;
+next	1.8;
+
+1.8
+date	2001.06.21.13.07.08;	author zvi;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2001.06.07.23.39.31;	author pwagner;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2001.03.30.20.28.21;	author zvi;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2001.03.29.08.51.01;	author zvi;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.01.31.01.08.48;	author zvi;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2000.11.22.23.10.04;	author zvi;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2000.11.22.23.07.29;	author zvi;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2000.05.04.18.12.05;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.9
+log
+@*** empty log message ***
+@
+text
+@! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+module PFA_DB_DELTA_M
+  use MLSCOmmon, only: I4, R8
+  use ELLIPSE_M, only: ELLIPSE
+  use PATH_ENTITIES_M, only: PATH_VECTOR, PATH_INT_VECTOR_2D
+  use GENERIC_DELTA_INTEGRAL_M, only: GENERIC_DELTA_INTEGRAL
+  implicit NONE
+  private
+  public :: PFA_DB_DELTA
+!---------------------------- RCS Ident Info -------------------------------
+  CHARACTER (LEN=256) :: Id = &
+       "$Id: pfa_db_delta_m.f90,v 1.8 2001/06/21 13:07:08 zvi Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= &
+       "$RCSfile: pfa_db_delta_m.f90,v $"
+!---------------------------------------------------------------------------
+contains
+!---------------------------------------------------------------------
+!  This routine computes the d_delta_db function. Integration is done
+!  using the Gauss-Legendre method.
+!
+!  ** NOTE: This routine integrates in ZETA Space !
+!
+  Subroutine PFA_DB_DELTA (mid, brkpt, no_ele, z_path, h_path, phi_path, &
+ &           dhdz_path, N_lvls, ref_corr, spsfunc_s, pfa_dbeta_s,        &
+ &           z_basis, phi_basis, nz, np, iz, ip, elvar, &
+ &           midval_delta,midval_ndx, no_midval_ndx,gl_ndx,no_gl_ndx, &
+ &           Sps_zeta_loop, Sps_phi_loop, delta_s, Ier)
+!
+    Integer(i4), intent(in) :: N_LVLS, MID, BRKPT, NO_ELE, NZ, NP, &
+   &                           IZ, IP
+
+    Integer(i4), intent(in) :: gl_ndx(:,:), no_gl_ndx
+    Integer(i4), intent(in) :: midval_ndx(:,:), no_midval_ndx
+!
+    Type(path_int_vector_2d), intent(in) :: Sps_zeta_loop,Sps_phi_loop
+    Type(path_vector), intent(in) :: Z_PATH, H_PATH, PHI_PATH, DHDZ_PATH
+
+    Type(ELLIPSE), intent(in out) :: elvar
+!
+    Real(r8), intent(in) :: REF_CORR(:)
+    Real(r8), intent(in) :: SPSFUNC_S(:)
+    Real(r8), intent(in) :: PFA_DBETA_S(:)
+    Real(r8), intent(in) :: midval_delta(:)
+
+    Real(r8), intent(in) :: Z_BASIS(:)
+    Real(r8), intent(in) :: PHI_BASIS(:)
+
+    Real(r8), intent(out) :: DELTA_S(:)
+
+    Integer(i4), intent(out) :: IER
+!
+!  Local variables:
+!
+    Integer(i4) :: I
+!
+    Real(r8) :: Q
+    Real(r8), ALLOCATABLE, DIMENSION(:) :: Integrand
+!
+! Start code:
+!
+    Ier = 0
+    DEALLOCATE(Integrand, STAT=i)
+!
+    ALLOCATE(Integrand(no_ele), STAT=ier)
+    IF(ier /= 0) THEN
+      Ier = 1
+      Print *,'** Error: ALLOCATION error in PFA_DB_DELTA routine ..'
+      goto 99
+    endif
+!
+!  Initialize all arrays:
+!
+    i = 2 * N_lvls
+    delta_s(1:i) = 0.0
+!
+    q = 1.0
+    integrand(1:no_ele) = pfa_dbeta_s(1:no_ele) * spsfunc_s(1:no_ele)
+!
+    Call generic_delta_integral(mid, brkpt, no_ele, z_path, h_path, &
+   &     phi_path, dhdz_path, N_lvls, ref_corr, integrand, z_basis, &
+   &     phi_basis, nz, np, iz, ip,q,elvar,midval_delta,midval_ndx, &
+   &     no_midval_ndx,gl_ndx,no_gl_ndx,Sps_zeta_loop,Sps_phi_loop, &
+   &     0, delta_s, Ier)
+!
+ 99  DEALLOCATE(Integrand, STAT=i)
+!
+    Return
+!
+  End Subroutine PFA_DB_DELTA
+!
+end module PFA_DB_DELTA_M
+! $Log: pfa_db_delta_m.f90,v $
+! Revision 1.8  2001/06/21 13:07:08  zvi
+! Speed enhancement MAJOR update
+!
+! Revision 1.7  2001/06/07 23:39:31  pwagner
+! Added Copyright statement
+!
+! Revision 1.6  2001/03/30 20:28:21  zvi
+! General fix-up to get rid of COMMON BLOCK (ELLIPSE)
+!
+! Revision 1.5  2001/03/29 08:51:01  zvi
+! Changing the (*) toi (:) everywhere
+!
+! Revision 1.4  2001/01/31 01:08:48  zvi
+! New version of forward model
+!
+! Revision 1.1  2000/06/21 21:56:16  zvi
+! First version D.P.
+!
+! Revision 1.1  2000/05/04 18:12:05  vsnyder
+! Initial conversion to Fortran 90
+@
+
+
+1.8
+log
+@Speed enhancement MAJOR update
+@
+text
+@d14 1
+a14 1
+       "$Id: pfa_db_delta_m.f90,v 1.7 2001/06/07 23:39:31 pwagner Exp $"
+d95 3
+@
+
+
+1.7
+log
+@Added Copyright statement
+@
+text
+@d7 1
+a7 1
+  use PATH_ENTITIES_M, only: PATH_VECTOR
+d14 1
+a14 1
+       "$Id: pfa_db_delta_m.f90,v 1.6 2001/03/30 20:28:21 zvi Exp $"
+d27 3
+a29 1
+ &           z_basis, phi_basis, nz, np, iz, ip, elvar, delta_s, Ier )
+d33 3
+d37 1
+d45 1
+d83 3
+a85 1
+   &     phi_basis, nz, np, iz, ip, q, elvar, delta_s, Ier )
+d95 3
+@
+
+
+1.6
+log
+@General fix-up to get rid of COMMON BLOCK (ELLIPSE)
+@
+text
+@d1 3
+d14 1
+a14 1
+       "$Id: pfa_db_delta_m.f90,v 1.5 2001/03/29 08:51:01 zvi Exp $"
+d86 3
+@
+
+
+1.5
+log
+@Changing the (*) toi (:) everywhere
+@
+text
+@d3 1
+d11 1
+a11 1
+       "$Id: pfa_db_delta_m.f90,v 1.4 2001/01/31 01:08:48 zvi Exp $"
+d24 1
+a24 1
+ &           z_basis, phi_basis, nz, np, iz, ip, delta_s, Ier )
+d30 2
+d73 1
+a73 1
+   &     phi_basis, nz, np, iz, ip, q, delta_s, Ier )
+d83 3
+@
+
+
+1.4
+log
+@New version of forward model
+@
+text
+@d10 1
+a10 1
+       "$Id: pfa_db_delta_m.f90,v 1.1 2000/06/21 21:56:16 zvi Exp $"
+d30 3
+a32 3
+    Real(r8), intent(in) :: REF_CORR(*)
+    Real(r8), intent(in) :: SPSFUNC_S(*)
+    Real(r8), intent(in) :: PFA_DBETA_S(*)
+d37 1
+a37 1
+    Real(r8), intent(out) :: DELTA_S(*)
+d80 3
+@
+
+
+1.3
+log
+@Re-add basic stuff
+@
+text
+@@
+
+
+1.2
+log
+@New version
+@
+text
+@d2 3
+a4 6
+  use ELLIPSE, only: HT, PS, ROC
+  use GL6P, only: GW, H_GL, NG, PHI_GL, T_GL, Z_GL
+  use MLSCOmmon, only: I4, R4, R8
+  use PFA_DBETA_INTRP_M, only: PFA_DBETA_INTRP
+  use S_GET_ONE_ETA_M, only: GET_ONE_ETA
+  use TWO_D_POLATE_M, only: TWO_D_POLATE
+a7 1
+
+d10 1
+a10 1
+       "$Id: pfa_db_delta_m.f90,v 1.1 2000/05/04 18:12:05 vsnyder Exp $"
+a13 1
+
+a14 1
+
+d21 3
+a23 60
+  Subroutine PFA_DB_DELTA ( z_path, t_path, h_path, phi_path, dHdz_path, &
+ &           N_lvls, jf, ch, jsps, ncoeffs, Nc, N2lvl, maxaitkenpts,     &
+ &           maxpfach, f_basis, mr_f, ref_corr, mnp, no_phi_f,           &
+ &           phi_basis_f, IndxR, IndxL, path_brkpt, beta_t_power,        &
+ &           pfa_dbeta_s, s_z_basis, s_phi_basis, s_nz, s_np, iz, ip,    &
+ &           delta_s, Ier )
+!
+    real(r4), intent(in) :: Z_PATH(*)
+    real(r4), intent(in) :: T_PATH(*)
+    real(r4), intent(in) :: H_PATH(*)
+    real(r4), intent(in) :: PHI_PATH(*)
+    real(r4), intent(in) :: DHDZ_PATH(*)
+    integer(i4), intent(in) :: N_LVLS
+    integer(i4), intent(in) :: JSPS
+    integer(i4), intent(in) :: NCOEFFS(*)
+    integer(i4), intent(in) :: NC
+    integer(i4), intent(in) :: N2LVL
+    integer(i4), intent(in) :: MAXAITKENPTS
+    integer(i4), intent(in) :: MAXPFACH
+    real(r4), intent(in) :: F_BASIS(Nc,*)
+    real(r4), intent(in) :: MR_F(Nc,mnp,*)
+    real(r4), intent(in) :: REF_CORR(*)
+    integer(i4), intent(in) :: MNP
+    integer(i4), intent(in) :: NO_PHI_F(*)
+    real(r4), intent(in) :: PHI_BASIS_F(mnp,*)
+    integer(i4), intent(in) :: INDXR, INDXL
+    integer(i4), intent(in) :: PATH_BRKPT(*)
+!   Real(r4), intent(in) :: BETA_T_POWER(N2lvl,maxaitkenpts,maxpfach,*)
+    Real(r4), intent(in) :: BETA_T_POWER(N2lvl,maxaitkenpts,2,*)
+!   Real(r4), intent(in) :: PFA_DBETA_S(N2lvl,maxaitkenpts,maxpfach,*)
+    Real(r4), intent(in) :: PFA_DBETA_S(N2lvl,maxaitkenpts,2,*)
+    real(r4), intent(in) :: S_Z_BASIS(*)
+    real(r4), intent(in) :: S_PHI_BASIS(*)
+    integer(i4), intent(in) :: S_NZ
+    integer(i4), intent(in) :: S_NP
+    integer(i4), intent(in) :: IZ
+    integer(i4), intent(in) :: IP
+    Real(r4), intent(out) :: DELTA_S(*)
+    integer(i4), intent(out) :: IER
+
+    real(r8) :: AYM
+    integer(i4) :: CH
+    real(r4) :: DBETA_S_GL(Ng)
+    real(r8) :: DBETA_S_ZS, ETANP_SING
+    real(r4) :: DS, ETAP, ETAZ, F, FS, FV_S, GW_DHDZ(Ng)
+    integer(i4) :: H_I
+    real(r8) :: HD
+    integer(i4) :: HEND
+    real(r4) :: HH, HL
+    real(r8) :: HTAN2
+    integer(i4) :: I, J, JF, K, KP1, KP2, M, MP, NGP1, NCO, NPF
+    real(r4) :: PH, PHI, PL, RC, RZ
+    real(r8) :: SA, SB, SING_S, SUM_S
+    real(r4) :: TH, TL, VETAP(Ng), VETAZ(Ng)
+    real(r8) :: XM, YM, Z1, Z2
+    real(r4) :: ZH, ZL, ZS
+!
+    Ier = 0
+    hd = ht + RoC
+    htan2 = hd * hd
+d25 2
+a26 1
+!  Initialize all arrays:
+d28 1
+a28 1
+    dbeta_s_GL = 0.0
+d30 8
+a37 63
+    hend = 2 * N_lvls - 1
+    Kp2 = hend + 1
+    delta_s(1:Kp2) = 0.0
+!
+    npf = no_phi_f(jsps)
+    nco = ncoeffs(jsps)
+!
+! First, do the right hand side of the ray path:
+!
+    ps = -1.0
+    Ngp1 = Ng + 1
+!
+    Kp1 = 1
+    Kp2 = IndxR * Ngp1 - Ng
+!
+    mp = 1
+    zh = z_path(mp)
+    th = t_path(mp)
+    hh = h_path(mp)
+    ph = phi_path(mp)
+    hd = dble(hh) + RoC
+    sb = Sqrt(abs(hd*hd-htan2))
+!
+    do h_i = 1, IndxR
+!
+      mp = mp + Ngp1
+      if (mp > Kp2) exit
+!
+      hl = hh
+      hh = h_path(mp)
+      if (hh < ht) exit
+!
+      zl = zh
+      zh = z_path(mp)
+!
+      tl = th
+      th = t_path(mp)
+!
+      pl = ph
+      ph = phi_path(mp)
+!
+      sa = sb
+      hd = dble(hh) + RoC
+      sb = Sqrt(abs(hd*hd-htan2))
+!
+      if (abs(sa-sb) < 0.05) exit
+!
+      zs = zh
+      fs = ph
+!
+      k = min(IndxR,h_i + 1)
+      dbeta_s_zs = dble(pfa_dbeta_s(k,jf,ch,jsps))
+!
+      etanp_sing = 0.0
+      Call get_one_eta(zs,s_z_basis,s_nz,iz,etaz)
+      if (etaz > 0.0) then
+        etanp_sing = dble(etaz)
+        Call get_one_eta(fs,s_phi_basis,s_np,ip,etap)
+        etanp_sing = etanp_sing * dble(etap)
+      end if
+!
+      m = max(1,N_lvls-h_i)
+      rc = ref_corr(m)
+d39 1
+a39 1
+      call define_gl_grid_entities
+d41 1
+a41 2
+! Compute beta and temp. power on the Gauss-Legendre grid for the current
+! sub-interval:
+d43 1
+a43 5
+      do i = 1, Ng
+        Call pfa_dbeta_intrp(z_GL(i),t_GL(i),z_path,t_path,1,IndxR,    &
+   &         Kp1,Kp2,Ngp1,beta_t_power(1,jf,ch,jsps),                  &
+   &         pfa_dbeta_s(1,jf,ch,jsps),dbeta_s_GL(i))
+      end do
+d45 2
+a46 3
+!  Compute the value of the integrand at the starting point of the interval
+!  (This is done in order to eliminate the singularities. We call these
+!  the 'singularities factors')
+d48 1
+a48 1
+! First: Two-Dimensional interpolation of the mixing ratio (in: zeta & phi)
+d50 2
+a51 2
+      Call Two_d_polate(f_basis(1,jsps),mr_f(1,1,jsps),Nc,nco,         &
+   &                    phi_basis_f(1,jsps),npf,zs,fs,f)
+d53 6
+a58 1
+! Now compute the 'singularities factors':
+d60 1
+a60 32
+      sing_s = dble(f) * dbeta_s_zs * etanp_sing
+!
+      call gauss_legendre
+!
+    end do
+!
+! Second, do the left hand side of the ray path:
+!
+    ps = 1.0
+!
+    h_i = IndxL - 1
+    mp = path_brkpt(2)
+    hh = h_path(mp)
+    do while (hh < ht)
+      h_i = h_i + 1
+      mp = mp + Ngp1
+      hh = h_path(mp)
+    end do
+!
+    Kp1 = mp
+    Kp2 = hend * Ngp1 - Ng + 1
+!
+    zh = z_path(mp)
+    th = t_path(mp)
+    ph = phi_path(mp)
+    hd = dble(hh) + RoC
+    sb = Sqrt(abs(hd*hd-htan2))
+!
+    do while (h_i < hend)
+!
+      mp = mp + Ngp1
+      if (mp > Kp2) Return
+d62 2
+a63 2
+      zl = zh
+      zh = z_path(mp)
+d65 2
+a66 2
+      tl = th
+      th = t_path(mp)
+d68 3
+a70 2
+      pl = ph
+      ph = phi_path(mp)
+d72 1
+a72 51
+      hl = hh
+      hh = h_path(mp)
+!
+      sa = sb
+      hd = dble(hh) + RoC
+      sb = Sqrt(abs(hd*hd-htan2))
+!
+      zs = zl
+      fs = pl
+      dbeta_s_zs = dble(pfa_dbeta_s(h_i,jf,ch,jsps))
+!
+      etanp_sing = 0.0
+      Call get_one_eta(zs,s_z_basis,s_nz,iz,etaz)
+      if (etaz > 0.0) then
+        etanp_sing = dble(etaz)
+        Call get_one_eta(fs,s_phi_basis,s_np,ip,etap)
+        etanp_sing = etanp_sing * dble(etap)
+      end if
+!
+      m = max(1,h_i-N_lvls)
+      rc = ref_corr(m)
+
+      call define_gl_grid_entities
+!
+! Compute beta and temp. power on the Gauss-Legendre grid for the current
+! sub-interval:
+!
+      do i = 1, Ng
+        Call pfa_dbeta_intrp(z_GL(i),t_GL(i),z_path,t_path,IndxL,      &
+   &         hend,Kp1,Kp2,Ngp1,beta_t_power(1,jf,ch,jsps),             &
+   &         pfa_dbeta_s(1,jf,ch,jsps),dbeta_s_GL(i))
+      end do
+!
+!  Compute the value of the integrand at the starting point of the interval
+!  (This is done in order to eliminate the singularities. We call these
+!  the 'singularities factors')
+!
+! First: Two-Dimensional interpolation of the mixing ratio (in: zeta & phi)
+!
+      Call Two_d_polate(f_basis(1,jsps),mr_f(1,1,jsps),Nc,nco,         &
+   &                    phi_basis_f(1,jsps),npf,zs,fs,f)
+!
+! Now compute the 'singularities factors':
+!
+      sing_s = dble(f) * dbeta_s_zs * etanp_sing
+!
+      call gauss_legendre
+!
+      h_i = h_i + 1
+!
+    end do
+a74 4
+  ! *****     Internal procedures     **********************************
+  contains
+! --------------------------------     DEFINE_GL_GRID_ENTITIES     -----
+    subroutine DEFINE_GL_GRID_ENTITIES
+d76 1
+a76 24
+! Define the various GL grid entities for this sub-interval:
+!
+      z1 = dble(zl)
+      z2 = dble(zh)
+      xm = 0.5 * (z2 + z1)
+      ym = 0.5 * (z2 - z1)
+      aym = abs(ym)
+!
+      j = mp - Ngp1
+      do i = 1, Ng
+        j = j + 1
+        z_GL(i) = z_path(j)
+        t_GL(i) = t_path(j)
+        h_GL(i) = h_path(j)
+        phi_GL(i) = phi_path(j)
+        Gw_dHdZ(i) = Gw(i) * dhdz_path(j) * aym
+        rz = z_GL(i)
+        phi = phi_GL(i)
+        Call get_one_eta(rz,s_z_basis,s_nz,iz,vetaz(i))
+        Call get_one_eta(phi,s_phi_basis,s_np,ip,vetap(i))
+      end do
+    end subroutine DEFINE_GL_GRID_ENTITIES
+! -----------------------------------------     GAUSS_LEGENDRE     -----
+    subroutine GAUSS_LEGENDRE
+a77 39
+! Now compute the Gauss-Legendre quadrature, subtructing the 'singularities
+! factors':
+!
+      Sum_s = 0.0
+!
+      do i = 1, Ng
+!
+! Compute the "Hydrostatic" contribution to the derivative:
+!
+        hd = dble(h_GL(i)) + RoC
+        ds = hd / Sqrt(hd*hd-htan2)
+!
+        fv_s = -sing_s
+!
+        rz = z_GL(i)
+        phi = phi_GL(i)
+!
+        Call Two_d_polate(f_basis(1,jsps),mr_f(1,1,jsps),Nc,nco,       &
+   &                      phi_basis_f(1,jsps),npf,rz,phi,f)
+        if (f /= 0.0) then
+          fv_s = fv_s + dble(dbeta_s_GL(i)) * dble(f)
+        end if
+!
+! The final integrand:
+!
+        Sum_s = Sum_s + fv_s * Gw_dHdz(i) * ds
+!
+      end do
+!
+! Now add the 'singularities factors' back in, multiplied by their
+! respective analytical integral:
+!
+      fv_s = Sum_s + sing_s * abs(sb-sa)
+!
+! And Finally - define the delta:
+!
+      delta_s(h_i) = fv_s * rc            ! for (iz,ip)
+    end subroutine GAUSS_LEGENDRE
+  End Subroutine PFA_DB_DELTA
+a78 1
+
+d80 3
+a84 1
+!
+@
+
+
+1.1
+log
+@Initial conversion to Fortran 90
+@
+text
+@d14 1
+a14 1
+       "$Id: PFA_DB_DELTA_M,v 1.12 2000/02/08 19:54:57 vsnyder Exp $"
+d344 4
+a347 1
+! $Log: PFA_DB_DELTA_M,v $
+@
+

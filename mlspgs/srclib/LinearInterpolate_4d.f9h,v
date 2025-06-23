@@ -1,0 +1,76 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.12
+	cfm-single-freq-0-1:1.1.0.10
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.8
+	mus-emls-1-70:1.1.0.6
+	rel-1-0-englocks-work:1.1.0.4
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.2
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	M4-00:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2012.05.25.20.51.49;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@First commit
+@
+text
+@! Copyright 2012, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id: LinearInterpolate_4d.f9h,v 1.2 2009/10/03 00:37:30 vsnyder Exp $
+
+! function LinearInterpolate_4d_r4 ( values, coords ) result(value)
+    ! Args
+    real(rk), dimension(:,:,:,:), intent(in) :: values
+    real(rk), dimension(4), intent(in)       :: coords
+    real(rk), dimension(2,4), intent(in)     :: vertices
+    real(rk)                                 :: value
+    ! Internal variables
+    real(rk) :: eps
+    ! Executable
+    eps = ( coords(1) - vertices(1,1) ) / ( vertices(2,1) - vertices(1,1) )
+    value = LinearInterpolate( (1._rk - eps) * values(1,:,:,:) + eps*values(2,:,:,:), &
+      & coords(2:), vertices(:,2:) )
+! end function LinearInterpolate_4d_r*
+
+! $Log: LinearInterpolate_4d.f9h,v $
+@

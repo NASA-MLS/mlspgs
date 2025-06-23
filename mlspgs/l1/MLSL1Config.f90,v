@@ -1,0 +1,2446 @@
+head	2.37;
+access;
+symbols
+	v5-02-NRT-19:2.37
+	v6-00:2.37
+	v5-02-NRT-18:2.37
+	v5-02:2.36
+	v5-01-NRT-17:2.36
+	v5-01-NRT-16:2.36
+	v5-01-NRT-15:2.36
+	v5-01-NRT-14:2.36
+	neuralnetworks-1-0:2.36.0.10
+	cfm-single-freq-0-1:2.36.0.8
+	v5-01:2.36
+	v5-00:2.36
+	v4-23-TA133:2.36.0.6
+	mus-emls-1-70:2.36.0.4
+	rel-1-0-englocks-work:2.36.0.2
+	VUMLS1-00:2.35
+	VPL1-00:2.35
+	V4-22-NRT-08:2.35
+	whdrel10_merged_to_here:2.34
+	merge_whdrel10_from_here:2.33.4.1
+	TAG_TRUNK_AFTER_PW_CHANGES:2.33
+	TAG_TRUNK_BEFORE_PW_CHANGES:2.33
+	VAM1-00:2.33
+	whd-rel-1-0:2.33.0.4
+	V4-21:2.33.0.2
+	V4-13:2.33
+	V4-12:2.33
+	V4-11:2.33
+	V4-10:2.32
+	V3-43:2.30
+	M4-00:2.32
+	V3-41:2.30
+	V3-40-PlusGM57:2.30.0.2
+	V2-24-NRT-04:2.30
+	V3-33:2.32
+	V2-24:2.30
+	V3-31:2.32
+	V3-30-NRT-05:2.32
+	cfm-01-00:2.31
+	V3-30:2.30
+	V3-20:2.30
+	V3-10:2.30
+	V2-23-NRT-02:2.30
+	V2-23:2.30
+	V2-22-NRT-01:2.29
+	V2-22:2.28
+	V2-21:2.28
+	V2-20:2.27
+	V2-11:2.26
+	V2-10:2.26
+	V2-00:2.24
+	V1-51:2.17
+	V1-50:2.16
+	V1-45:2.14
+	V1-44:2.14
+	V1-43:2.13
+	V1-42:2.12
+	V1-41:2.12
+	V1-32:2.11
+	V1-40:2.12
+	V1-31:2.11
+	V1-30:2.11
+	V1-13:2.10
+	V1-12:2.10
+	V1-11:2.10
+	V1-10:2.10
+	newfwm-feb03:2.10.0.2
+	V1-04:2.5
+	V1-03:2.5
+	V1-02:2.5
+	V1-00:2.5
+	newfwm-sep01:2.3.0.2
+	V0-7:2.3
+	V0-5-Level2:2.3
+	V0-5-SIPS:2.2;
+locks; strict;
+comment	@# @;
+
+
+2.37
+date	2023.06.06.22.33.03;	author pwagner;	state Exp;
+branches;
+next	2.36;
+
+2.36
+date	2018.04.09.22.15.02;	author whdaffer;	state Exp;
+branches;
+next	2.35;
+
+2.35
+date	2016.05.10.20.30.57;	author mmadatya;	state Exp;
+branches;
+next	2.34;
+
+2.34
+date	2016.03.15.22.17.59;	author whdaffer;	state Exp;
+branches;
+next	2.33;
+
+2.33
+date	2014.05.20.23.57.14;	author vsnyder;	state Exp;
+branches
+	2.33.4.1;
+next	2.32;
+
+2.32
+date	2010.08.06.17.53.43;	author pwagner;	state Exp;
+branches;
+next	2.31;
+
+2.31
+date	2010.05.23.04.13.48;	author honghanh;	state Exp;
+branches;
+next	2.30;
+
+2.30
+date	2008.03.04.20.01.54;	author perun;	state Exp;
+branches;
+next	2.29;
+
+2.29
+date	2008.01.15.19.54.35;	author perun;	state Exp;
+branches;
+next	2.28;
+
+2.28
+date	2007.02.09.15.05.24;	author perun;	state Exp;
+branches;
+next	2.27;
+
+2.27
+date	2006.09.28.16.15.37;	author perun;	state Exp;
+branches;
+next	2.26;
+
+2.26
+date	2006.08.02.19.23.50;	author pwagner;	state Exp;
+branches;
+next	2.25;
+
+2.25
+date	2006.08.02.18.55.22;	author perun;	state Exp;
+branches;
+next	2.24;
+
+2.24
+date	2006.06.14.13.47.00;	author perun;	state Exp;
+branches;
+next	2.23;
+
+2.23
+date	2006.04.05.18.10.57;	author perun;	state Exp;
+branches;
+next	2.22;
+
+2.22
+date	2006.03.24.15.12.19;	author perun;	state Exp;
+branches;
+next	2.21;
+
+2.21
+date	2005.12.06.19.27.12;	author perun;	state Exp;
+branches;
+next	2.20;
+
+2.20
+date	2005.10.10.19.06.27;	author perun;	state Exp;
+branches;
+next	2.19;
+
+2.19
+date	2005.06.23.18.41.35;	author pwagner;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2005.05.02.16.04.15;	author perun;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2005.01.28.17.00.29;	author perun;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2004.12.01.17.10.07;	author perun;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2004.11.10.15.39.17;	author perun;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2004.08.12.13.51.50;	author perun;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2004.05.14.15.59.11;	author perun;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2004.01.09.17.46.22;	author perun;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2003.08.15.14.25.04;	author perun;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2002.11.21.16.57.46;	author perun;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2002.11.20.18.30.50;	author perun;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2002.11.19.20.35.16;	author perun;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2002.11.14.16.51.13;	author perun;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2002.11.07.21.35.03;	author jdone;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2002.04.04.19.30.49;	author perun;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2002.03.29.20.18.34;	author perun;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2001.04.27.14.00.32;	author perun;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2001.03.22.16.45.06;	author perun;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.02.23.20.50.54;	author perun;	state Exp;
+branches;
+next	;
+
+2.33.4.1
+date	2015.10.09.10.21.38;	author whdaffer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.37
+log
+@Reduce routine printing
+@
+text
+@! Copyright 2006, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=============================================================================
+MODULE MLSL1Config  ! Level 1 Configuration
+!=============================================================================
+
+  USE MLSCommon, ONLY: TAI93_Range_T
+  USE MLSL1Common, ONLY: MaxMIFs, NumBands, BandChanBad
+  USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Info
+  USE Init_tables_module, ONLY: First_Parm, Last_Parm
+  USE INTRINSIC, ONLY: parm_indices
+  USE Output_m, ONLY: OutputOptions, Output, BOTHPRUNIT, STDOUTPRUNIT
+  USE STRING_TABLE, ONLY: Get_string
+
+  IMPLICIT NONE
+
+  PRIVATE
+
+  PUBLIC :: L1Config_T, L1Config, Globals_T, Calib_T, Output_T, GHz_seq, &
+       GHz_seq_use, THz_seq, THz_seq_use, MIFsGHz, MIFsTHz
+  PUBLIC :: GetL1Config
+
+  INTEGER, PARAMETER :: MIFsGHz = 125   ! Length (MIFs) of GHz module data
+  INTEGER, PARAMETER :: MIFsTHz = 125   ! Length (MIFs) of THz module data
+
+!---------------------------- RCS Module Info ------------------------------
+  CHARACTER (len=*), PRIVATE, PARAMETER :: ModuleName= &
+       "$RCSfile: MLSL1Config.f90,v $"
+  PRIVATE :: not_used_here 
+!---------------------------------------------------------------------------
+
+  TYPE Globals_T
+     CHARACTER(LEN=80) :: OutputVersionString
+     LOGICAL :: ProduceL1BOA = .TRUE.
+     LOGICAL :: SimOA = .FALSE.
+  END TYPE Globals_T
+
+  TYPE Calib_T
+     INTEGER :: CalWindow
+     INTEGER :: MIFsPerMAF
+     INTEGER :: MAFexpandNum             ! number of MAFs to expand at both ends
+     INTEGER :: MaxDataGaps              ! maximum allowed data gaps
+     INTEGER :: MaxErroneousCounterMAFs  ! maximum error logs count
+     INTEGER :: DiffBeginEndEng          ! Beging and End for Engineering times difference
+     INTEGER :: MinSpaceLimbs            ! minimum "Space" views per MAF
+     INTEGER :: DACSwindow
+     REAL :: GHzSpaceTemp, GHzTargetTemp
+     REAL :: THzSpaceTemp, THzTargetTemp
+     REAL :: THzSpaceAngle, THzMaxBias
+     REAL :: MIF_duration, MIF_DeadTime
+     REAL :: MoonToSpaceAngle
+     REAL :: AntOffsetsScale = 1.0       ! scale factor for antenna offsets
+     LOGICAL :: UseDefaultGains = .FALSE.
+     LOGICAL :: CalibDACS = .TRUE.
+     LOGICAL :: TPdigital = .TRUE.
+     LOGICAL :: THzColdCal = .TRUE.
+     LOGICAL :: Do_Slimb = .FALSE.
+     CHARACTER(LEN=1) :: GHz_seq(0:MaxMIFs-1), THz_seq(0:MaxMIFs-1)
+     CHARACTER(LEN=1) :: GHz_seq_use, THz_seq_use
+  END TYPE Calib_T
+
+  TYPE Output_T
+     LOGICAL :: RemoveBaseline = .TRUE.             ! For GHz Baseline removal
+     LOGICAL :: DeconvolveDACS = .FALSE.            ! For DACS deconvolution
+     LOGICAL :: DisableRadOut(NumBands) = .FALSE.   ! To output band radiances
+     LOGICAL :: SubtractBinnedBaseline(NumBands) = .FALSE. ! To adjust baseline
+     LOGICAL :: EnableChi2Err(NumBands) = .FALSE.   ! For RadErr calculation
+     
+     ! Limits on certain logged messages
+     !        'Found Attenuation WALL at MAF time'
+     ! (not yet configurable by the user)
+     integer :: MaxAttenuationWalls             = 10000 
+
+     integer :: NumAttenuationWalls             = 0
+     
+     ! Keep a close eye on UpdateCalWindow in case of .. trouble
+     logical :: DebugUpdateCalWindow            = .false.
+  END TYPE Output_T
+
+  TYPE L1Config_T
+     TYPE (TAI93_Range_T) :: Input_TAI, Expanded_TAI
+     TYPE (Globals_T) :: Globals
+     TYPE (Calib_T) :: Calib
+     TYPE (Output_T) :: Output
+  END TYPE L1Config_T
+
+  TYPE (L1Config_T), SAVE, TARGET :: L1Config
+
+  CHARACTER(LEN=1), POINTER, DIMENSION(:) :: GHz_seq, THz_seq
+  CHARACTER(LEN=1), POINTER :: GHz_seq_use, THz_seq_use
+
+  LOGICAL :: GotParm(First_Parm:Last_Parm) = .FALSE.
+  CHARACTER(LEN=32) :: ParmName
+
+  CONTAINS
+
+!=============================================================================
+    SUBROUTINE GetL1Config
+!=============================================================================
+
+      !! Opens and parses the L1CF file.
+
+      USE Declaration_Table, ONLY: Allocate_Decl
+      USE Init_tables_module, ONLY: Init_tables, z_globalsettings, &
+           z_calibration, z_output
+      USE Lexer_Core, ONLY: Init_Lexer
+      USE MLSPCF1, ONLY: mlspcf_l1cf_start
+      USE Parser, ONLY: Clean_Up_Parser, Configuration
+      USE Parser_Table_m, ONLY:  Destroy_Parser_Table, Parser_Table_t
+      USE Parser_Tables_L2CF, ONLY: Init_Parser_Table
+      USE SDPToolkit, ONLY: PGS_PC_GetReference, PGS_S_SUCCESS, &
+           PGSd_IO_Gen_RSeqFrm, PGS_IO_Gen_openF, PGS_IO_Gen_closeF
+      USE STRING_TABLE, ONLY: AddInUnit
+      USE Tree, ONLY: Allocate_Tree, Decoration, Nsons, Subtree
+      USE Tree_checker, ONLY: Check_tree
+
+      CHARACTER (LEN=132) :: physicalFilename
+      INTEGER :: i, returnStatus, version
+      INTEGER :: error           ! error return from tree checker
+      INTEGER :: first_section   ! index of son of root of first n_cf_node
+      INTEGER :: root            ! of the abstract syntax tree
+      INTEGER :: son             ! of root
+      integer :: l1cf_unit
+      type(Parser_Table_t) :: Parser_Table
+
+!! Open config file:
+
+      version = 1
+      returnStatus = PGS_PC_getReference (mlspcf_l1cf_start, version, &
+           & physicalFilename)
+
+      version = 1
+
+      returnStatus = PGS_IO_Gen_openF (mlspcf_l1cf_start, PGSd_IO_Gen_RSeqFrm, &
+           0, l1cf_unit, version)
+      IF (returnstatus /= PGS_S_SUCCESS) THEN
+         CALL MLSMessage (MLSMSG_Error, ModuleName, &
+              & "Could not open L1 Config file: " // physicalFilename)
+      END IF
+!! Initialize the lexer, symbol table and tree checker's tables:
+
+      CALL Init_Lexer (n_chars=10000, n_symbols=1000, hash_table_size=1003)
+      CALL Allocate_Decl (ndecls=1000)
+      CALL Allocate_Tree (n_tree=10000)
+      CALL Init_tables
+
+      call AddInUnit(l1cf_unit)
+      CALL MLSMessage (MLSMSG_Info, ModuleName, &
+           & "Opened L1 Config file: " // physicalFilename)
+
+!! Produce the abstract syntax tree
+
+      CALL init_parser_table ( parser_table )
+      CALL Configuration (root, parser_table)
+      CALL destroy_parser_table ( parser_table )
+      CALL clean_up_parser
+
+      IF (root <= 0) THEN
+
+         CALL MLSMessage (MLSMSG_Error, ModuleName, &
+              "Syntax error -- no abstract syntax tree")
+
+      ENDIF
+
+!! Close config file:
+
+      returnStatus = PGS_IO_Gen_CloseF (l1cf_unit)
+
+      IF (returnstatus /= PGS_S_SUCCESS) THEN
+         CALL MLSMessage (MLSMSG_Error, ModuleName, &
+              & "Could not close L1 Config file")
+      END IF
+
+      CALL MLSMessage (MLSMSG_Info, ModuleName, &
+           & "Closed L1 Config file")
+
+!! Check tree syntax
+
+      ! This may be causing problems, so I'm resetting it to STDOUTPRUNIT
+      !OutputOptions%prunit = BOTHPRUNIT  ! to output to MLSMessage (and terminal)
+      OutputOptions%prunit = STDOUTPRUNIT
+
+      CALL Check_tree (root, error, first_section)
+
+      IF (error /= 0 .OR. first_section <= 0) THEN
+
+         CALL MLSMessage (MLSMSG_Error, ModuleName, "L1 CF Syntax check error")
+
+      ENDIF
+
+      DO i = first_section, Nsons (root)
+
+         son = Subtree (i, root)
+
+         SELECT CASE (Decoration (Subtree (1, son)))
+
+         CASE (z_globalsettings)
+
+            CALL Set_globalsettings (son)
+
+         CASE (z_calibration)
+
+            CALL Set_calibration (son)
+
+         CASE (z_output)
+
+            CALL Set_output (son)
+
+         CASE DEFAULT
+
+            CALL MLSMessage (MLSMSG_Error, ModuleName, 'Unknown section')
+
+         END SELECT
+
+      ENDDO
+
+
+! Check for any missing required parameters:
+
+      IF (ANY (.NOT. (GotParm))) THEN  ! All parameters are required!
+
+         DO i = First_Parm, Last_Parm
+            IF (.NOT. GotParm(i)) THEN
+               CALL Get_String (Parm_indices(i), ParmName)
+               CALL Output ('Missing L1CF parameter: '//TRIM(ParmName), &
+                    advance='yes')
+            ENDIF
+         ENDDO
+
+         CALL MLSMessage (MLSMSG_Error, ModuleName, 'Missing L1CF parameter(s)')
+
+      ENDIF
+
+    END SUBROUTINE GetL1Config
+
+!=============================================================================
+    SUBROUTINE Set_globalsettings (root)
+!=============================================================================
+
+      USE INIT_TABLES_MODULE, ONLY: p_output_version_string, p_produce_l1boa, &
+           p_simoa
+      USE TREE, ONLY: Decoration, Nsons, Subtree, Sub_rosa
+      USE MoreTree, ONLY: Get_Boolean
+
+      INTEGER :: root
+
+      INTEGER :: i, son
+
+      DO i = 2, Nsons (root) - 1
+
+         son = Subtree (i, root)
+
+         GotParm(Decoration (Subtree (1,son))) = .TRUE.
+
+         SELECT CASE (Decoration (Subtree (1,son)))
+
+         CASE (p_output_version_string)
+
+            CALL Get_string (Sub_rosa (Subtree(2,son)), &
+                 L1Config%Globals%OutputVersionString, strip=.TRUE.)
+
+         CASE (p_produce_l1boa)
+
+            L1Config%Globals%ProduceL1BOA = Get_Boolean (son)
+
+         CASE (p_simoa)
+
+            L1Config%Globals%SimOA = Get_Boolean (son)
+
+         END SELECT
+
+      ENDDO
+
+    END SUBROUTINE Set_globalsettings
+
+!=============================================================================
+   SUBROUTINE Set_output (root)
+!=============================================================================
+
+      USE EXPR_M, ONLY: Expr
+      USE INIT_TABLES_MODULE, ONLY: p_removebaseline, p_deconvolveDACS, &
+           s_chi2err, f_bandno, s_subtractbinnedbaseline, s_disableradout
+      USE TREE, ONLY: Decoration, Nsons, Subtree, Node_id
+      USE TREE_TYPES
+      USE MoreTree, ONLY: Get_Boolean
+
+      INTEGER :: root, i, j, k, son, key, spec
+      INTEGER :: expr_units(2)
+      DOUBLE PRECISION :: expr_value(2)
+
+      DO i = 2, Nsons (root) - 1
+
+         son = Subtree (i, root)
+
+         SELECT CASE (node_id (son))
+
+         CASE (n_equal)
+
+            GotParm(Decoration (Subtree (1,son))) = .TRUE.
+
+            SELECT CASE (Decoration (Subtree (1,son)))
+
+            CASE (p_removebaseline)
+
+               L1Config%Output%RemoveBaseline = Get_Boolean (son)
+
+            CASE (p_deconvolveDACS)
+
+               L1Config%Output%DeconvolveDACS = Get_Boolean (son)
+
+            END SELECT
+
+         CASE (n_spec_args)
+
+            key = son
+            spec = decoration (subtree (1, decoration(subtree (1, key))))
+
+            SELECT CASE (spec)
+
+            CASE (s_chi2err, s_subtractbinnedbaseline, s_disableradout)
+
+               DO j = 2, nsons (key)
+
+                  son = subtree (j, key)
+
+                  SELECT CASE (decoration (subtree(1,son)))   ! field
+
+                  CASE (f_bandno)
+
+                     DO k = 2, nsons (son)
+                        CALL Expr (subtree (k, son), expr_units, expr_value)
+                        IF (MINVAL (INT (expr_value)) < 0 .OR. &
+                             MAXVAL (INT (expr_value)) > 34) THEN
+                           CALL MLSMessage (MLSMSG_Error, ModuleName, &
+                            'Input band number out of range!')
+                        ENDIF
+                        IF (spec == s_chi2err) THEN
+                           L1Config%Output%EnableChi2Err(INT(expr_value(1)): &
+                            INT(expr_value(2))) = .TRUE.
+                        ELSE IF (spec == s_disableradout) THEN
+                           L1Config%Output%DisableRadOut(INT(expr_value(1)): &
+                            INT(expr_value(2))) = .TRUE.
+                        ELSE IF (spec == s_subtractbinnedbaseline) THEN
+                           L1Config%Output%SubtractBinnedBaseline &
+                            (INT(expr_value(1)): INT(expr_value(2))) = .TRUE.
+                        ENDIF
+                     ENDDO
+
+                  END SELECT
+
+               ENDDO
+
+            END SELECT
+
+         END SELECT
+
+      ENDDO
+
+      IF (ANY(L1Config%Output%EnableChi2Err)) THEN
+         CALL MLSMessage (MLSMSG_Info, ModuleName, &
+              'Chi2 adjustments to Radiance precisions are ENABLED.')
+      ELSE
+         CALL MLSMessage (MLSMSG_Info, ModuleName, &
+              'Chi2 adjustments to Radiance precisions are NOT ENABLED.')
+      ENDIF
+
+    END SUBROUTINE Set_output
+
+!=============================================================================
+    SUBROUTINE Set_calibration (root)
+!=============================================================================
+
+      !parse the 'Calibration' section of the .cf file.
+
+
+      USE EXPR_M, ONLY: Expr
+      USE INIT_TABLES_MODULE, ONLY: p_calwindow, s_spaceMIFs, s_targetMIFs, &
+           s_limbMIFs, s_discardMIFs, f_mifs, f_use, l_match, l_override, &
+           f_module, f_secondary, p_usedefaultgains, p_GHzSpaceTemp, &
+           p_GHzTargetTemp, p_THzSpaceTemp, p_THzTargetTemp, p_mif_duration, &
+           p_mif_dead_time, p_mifspermaf, p_calibDACS, p_THzMaxBias, &
+           p_thzspaceangle, f_bandno, f_chan, s_markchanbad, p_thzcoldcal, &
+           p_MoonToSpaceAngle, p_DACSwindow, p_UseAntOffsets, p_MinSpaceLimbs, &
+           p_MAFexpandNum, p_MaxDataGaps, p_MaxErroneousCounterMAFs, p_DiffBeginEndEng, p_TPdigital, p_Do_Slimb, f_yrdoy
+      USE BrightObjects_m, ONLY: s_BrightObject, f_angle, f_name, f_negate, &
+           l_mercury, BO_Angle_GHz, BO_Angle_THz, BO_NumGHz, BO_NumTHz, &
+           BO_Index_GHz, BO_Index_THz, BO_Negate_GHz, BO_Negate_THz
+      USE INTRINSIC, ONLY: l_ghz, l_thz, phyq_mafs, phyq_temperature, &
+           phyq_mifs, phyq_time, phyq_angle
+      USE TREE, ONLY: Decoration, Nsons, Subtree, Sub_rosa, Node_id
+      USE TREE_TYPES
+      USE MoreTree, ONLY: Get_Boolean
+      USE InitPCFs, ONLY: L1PCF
+      USE SDPToolkit, ONLY: PGS_S_SUCCESS
+
+      INTEGER :: root
+
+      CHARACTER(LEN=1), POINTER, DIMENSION(:) :: scan_seq
+      CHARACTER(LEN=1), POINTER :: scan_use
+      CHARACTER(LEN=80) :: identifier
+      CHARACTER(LEN=17) :: chanbad_UTC = '20YY-DOYT00:00:00'
+      INTEGER :: i, j, k, son, key, spec, stat, bandno, channo, yrdoy
+      INTEGER :: expr_units(2), BO_index
+      REAL :: BO_angle
+      DOUBLE PRECISION :: expr_value(2), start_TAI, chanbad_TAI
+      LOGICAL :: GHz_mod, sec_tgt, Negate
+
+      ! This type is used to store calibration directives from the .cf file. The
+      ! TYPE= 'L', 'S', 'T' 'D', or 't'. 't' means 'secondary target' -- not
+      ! listed in the user type documentatin here, but you see it in the code --
+      ! however, this would only come into play if 1) it's the GHz module and
+      ! 2)the line defining the MIFs that are of a particular type had the
+      ! declaration `secondary' in them. No extant .cf file has this
+      ! characteristic, and Paul Wagner assures me that no .cf file in the past,
+      ! nor any in the future will.
+
+      ! if USE='M'atch, the telemetry must agree with what's in the .cf ifle
+      TYPE Scan_T
+         CHARACTER(LEN=1) :: USE    ! 'M'atch or 'O'verride, 
+         CHARACTER(LEN=1) :: TYPE   ! 'L'imb, 'S'pace, 'T'arget, or 'D'iscard
+         INTEGER :: MIF(0:MaxMIFs-1) ! The MIFs numbers that are of type `TYPE'
+      END TYPE Scan_T
+
+      TYPE (Scan_T) :: scan
+
+      CHARACTER(LEN=1), PARAMETER :: ignore = "I", unknown = "U", overlap = "O"
+
+      INTEGER, EXTERNAL :: PGS_TD_UTCtoTAI
+
+! Current input time for comparisons:
+
+      stat = PGS_TD_UTCtoTAI (L1PCF%startUTC, start_TAI)
+
+! Initialize desired scan sequences
+
+      L1Config%Calib%GHz_seq = unknown
+      L1Config%Calib%GHz_seq_use = ignore
+
+      L1Config%Calib%THz_seq = unknown
+      L1Config%Calib%THz_seq_use = ignore
+
+! Initialize Target Temp to not input (and not required!)
+
+      L1Config%Calib%GHzTargetTemp = -1.0
+      L1Config%Calib%THzTargetTemp = -1.0
+
+      GotParm(p_GHzTargetTemp) = .TRUE.
+      GotParm(p_THzTargetTemp) = .TRUE.
+
+      DO i = 2, Nsons (root) - 1
+
+         son = Subtree (i, root)
+
+
+
+         SELECT CASE (node_id (son))
+
+         CASE (n_equal)
+
+            GotParm(Decoration (Subtree (1,son))) = .TRUE.
+
+            SELECT CASE (decoration (subtree (1,son)))
+
+               ! remove the 'p_' and look for the remaining string in the .cf
+               ! file
+            CASE (p_calwindow)
+
+               CALL Expr (subtree (2, son), expr_units, expr_value)
+               L1Config%Calib%CalWindow = expr_value(1)
+               IF (expr_units(1) /= phyq_mafs) THEN
+                  CALL Get_string (Sub_rosa (Subtree(1,son)), identifier)
+                  CALL MLSMessage (MLSMSG_Error, ModuleName, &
+                       TRIM (identifier)//' is not input as MAFs')
+               ENDIF
+
+            CASE (p_MAFexpandNum)
+
+               CALL Expr (subtree (2, son), expr_units, expr_value)
+               L1Config%Calib%MAFexpandNum = expr_value(1)
+               IF (expr_units(1) /= phyq_mafs) THEN
+                  CALL Get_string (Sub_rosa (Subtree(1,son)), identifier)
+                  CALL MLSMessage (MLSMSG_Error, ModuleName, &
+                       TRIM (identifier)//' is not input as MAFs')
+               ENDIF
+	       
+            CASE (p_MaxDataGaps)
+
+               CALL Expr (subtree (2, son), expr_units, expr_value)
+               L1Config%Calib%MaxDataGaps = expr_value(1)
+          
+	    CASE (p_MaxErroneousCounterMAFs)
+
+               CALL Expr (subtree (2, son), expr_units, expr_value)
+               L1Config%Calib%MaxErroneousCounterMAFs = expr_value(1)
+	       
+	    CASE (p_DiffBeginEndEng)
+
+               CALL Expr (subtree (2, son), expr_units, expr_value)
+               L1Config%Calib%DiffBeginEndEng = expr_value(1)           
+
+            CASE (p_MinSpaceLimbs)
+
+               CALL Expr (subtree (2, son), expr_units, expr_value)
+               L1Config%Calib%MinSpaceLimbs = expr_value(1)
+               IF (expr_units(1) /= phyq_mifs) THEN
+                  CALL Get_string (Sub_rosa (Subtree(1,son)), identifier)
+                  CALL MLSMessage (MLSMSG_Error, ModuleName, &
+                       TRIM (identifier)//' is not input as MIFs')
+               ENDIF
+
+            CASE (p_mifspermaf)
+
+               CALL Expr (subtree (2, son), expr_units, expr_value)
+               L1Config%Calib%MIFsPerMAF = expr_value(1)
+               IF (expr_units(1) /= phyq_mifs) THEN
+                  CALL Get_string (Sub_rosa (Subtree(1,son)), identifier)
+                  CALL MLSMessage (MLSMSG_Error, ModuleName, &
+                       TRIM (identifier)//' is not input as MIFs')
+               ENDIF
+
+            CASE (p_GHzSpaceTemp)
+
+               CALL Expr (subtree (2, son), expr_units, expr_value)
+               L1Config%Calib%GHzSpaceTemp = expr_value(1)
+               IF (expr_units(1) /= phyq_temperature) THEN
+                  CALL Get_string (Sub_rosa (Subtree(1,son)), identifier)
+                  CALL MLSMessage (MLSMSG_Error, ModuleName, &
+                       TRIM (identifier)//' is not input as K')
+               ENDIF
+
+            CASE (p_GHzTargetTemp)
+
+               CALL Expr (subtree (2, son), expr_units, expr_value)
+               L1Config%Calib%GHzTargetTemp = expr_value(1)
+               IF (expr_units(1) /= phyq_temperature) THEN
+                  CALL Get_string (Sub_rosa (Subtree(1,son)), identifier)
+                  CALL MLSMessage (MLSMSG_Error, ModuleName, &
+                       TRIM (identifier)//' is not input as K')
+               ENDIF
+
+            CASE (p_THzSpaceTemp)
+
+               CALL Expr (subtree (2, son), expr_units, expr_value)
+               L1Config%Calib%THzSpaceTemp = expr_value(1)
+               IF (expr_units(1) /= phyq_temperature) THEN
+                  CALL Get_string (Sub_rosa (Subtree(1,son)), identifier)
+                  CALL MLSMessage (MLSMSG_Error, ModuleName, &
+                       TRIM (identifier)//' is not input as K')
+               ENDIF
+
+            CASE (p_THzTargetTemp)
+
+               CALL Expr (subtree (2, son), expr_units, expr_value)
+               L1Config%Calib%THzTargetTemp = expr_value(1)
+               IF (expr_units(1) /= phyq_temperature) THEN
+                  CALL Get_string (Sub_rosa (Subtree(1,son)), identifier)
+                  CALL MLSMessage (MLSMSG_Error, ModuleName, &
+                       TRIM (identifier)//' is not input as K')
+               ENDIF
+
+            CASE (p_THzSpaceAngle)
+
+               CALL Expr (subtree (2, son), expr_units, expr_value)
+               L1Config%Calib%THzSpaceAngle = expr_value(1)
+               IF (expr_units(1) /= phyq_angle) THEN
+                  CALL Get_string (Sub_rosa (Subtree(1,son)), identifier)
+                  CALL MLSMessage (MLSMSG_Error, ModuleName, &
+                       TRIM (identifier)//' is not input as deg[rees]')
+               ENDIF
+
+            CASE (p_THzMaxBias)
+
+               CALL Expr (subtree (2, son), expr_units, expr_value)
+               L1Config%Calib%THzMaxBias = expr_value(1)
+
+            CASE (p_THzColdCal)
+
+               L1Config%Calib%THzColdCal = Get_Boolean (son)
+
+            CASE (p_MoonToSpaceAngle)
+
+               CALL Expr (subtree (2, son), expr_units, expr_value)
+               L1Config%Calib%MoonToSpaceAngle = expr_value(1)
+               IF (expr_units(1) /= phyq_angle) THEN
+                  CALL Get_string (Sub_rosa (Subtree(1,son)), identifier)
+                  CALL MLSMessage (MLSMSG_Error, ModuleName, &
+                       TRIM (identifier)//' is not input as deg[rees]')
+               ENDIF
+
+            CASE (p_dacswindow)
+
+               CALL Expr (subtree (2, son), expr_units, expr_value)
+               L1Config%Calib%DACSwindow = expr_value(1)
+               IF (expr_units(1) /= phyq_mafs) THEN
+                  CALL Get_string (Sub_rosa (Subtree(1,son)), identifier)
+                  CALL MLSMessage (MLSMSG_Error, ModuleName, &
+                       TRIM (identifier)//' is not input as MAFs')
+               ENDIF
+
+            CASE (p_mif_duration)
+
+               CALL Expr (subtree (2, son), expr_units, expr_value)
+               L1Config%Calib%MIF_duration = expr_value(1)
+               IF (expr_units(1) /= phyq_time) THEN
+                  CALL Get_string (Sub_rosa (Subtree(1,son)), identifier)
+                  CALL MLSMessage (MLSMSG_Error, ModuleName, &
+                       TRIM (identifier)//' is not input as seconds')
+               ENDIF
+
+            CASE (p_mif_dead_time)
+
+               CALL Expr (subtree (2, son), expr_units, expr_value)
+               L1Config%Calib%MIF_DeadTime = expr_value(1)
+               IF (expr_units(1) /= phyq_time) THEN
+                  CALL Get_string (Sub_rosa (Subtree(1,son)), identifier)
+                  CALL MLSMessage (MLSMSG_Error, ModuleName, &
+                       TRIM (identifier)//' is not input as seconds')
+               ENDIF
+
+            CASE (p_usedefaultgains)
+
+               L1Config%Calib%UseDefaultGains = Get_Boolean (son)
+
+            CASE (p_UseAntOffsets)
+
+               IF (Get_Boolean (son)) THEN
+                  L1Config%Calib%AntOffsetsScale = 1.0
+               ELSE
+                  L1Config%Calib%AntOffsetsScale = 0.0
+               ENDIF
+
+            CASE (p_calibDACS)
+
+               L1Config%Calib%calibDACS = Get_Boolean (son)
+
+            CASE (p_TPdigital)
+
+               L1Config%Calib%TPdigital = Get_Boolean (son)
+
+            CASE (p_Do_Slimb)
+
+               L1Config%Calib%Do_Slimb = Get_Boolean (son)
+
+            END SELECT
+
+         CASE (n_spec_args)
+            ! to handle constructs like 
+            !  `limbMIFs, MIFs=[2:122], use=match, module=GHz'
+
+            key = son
+            spec = decoration (subtree (1, decoration(subtree (1, key))))
+
+            SELECT CASE (spec)
+
+            CASE (s_spaceMIFs, s_targetMIFs, s_limbMIFs, s_discardMIFs)
+
+               SELECT CASE (spec)
+
+               CASE (s_spaceMIFs)
+                  scan%Type = "S"
+               CASE (s_targetMIFs)
+                  scan%Type = "T" ! though, can be changed to 't' if sec_tgt
+                  sec_tgt = .FALSE.
+               CASE (s_limbMIFs)
+                  scan%Type = "L"
+               CASE (s_discardMIFs)
+                  scan%Type = "D"
+               END SELECT
+
+               scan%MIF = 0
+
+               DO j = 2, nsons (key)
+
+                  son = subtree (j, key)
+
+                  SELECT CASE (decoration (subtree(1,son)))   ! field
+
+                  CASE (f_mifs)
+                     DO k = 2, nsons (son)
+                        CALL Expr (subtree (k, son), expr_units, expr_value)
+                        IF (MINVAL (INT (expr_value)) < 0 .OR. &
+                             MAXVAL (INT (expr_value)) > 149) THEN
+                           CALL MLSMessage (MLSMSG_Error, ModuleName, &
+                            'Input MIF number out of range for scan type "'// &
+                            scan%Type//'"!')
+                        ENDIF
+                      scan%MIF(INT(expr_value(1)):INT(expr_value(2))) = 1
+                     ENDDO
+                  CASE (f_use)
+                     SELECT CASE (decoration (subtree (2, son)))
+
+                     CASE (l_match)
+                        scan%Use = "M"
+                     CASE (l_override)
+                        scan%Use = "O"
+                     END SELECT
+
+                  CASE (f_secondary)
+
+                     sec_tgt = Get_Boolean (son)
+
+                  CASE (f_module)
+
+                     SELECT CASE (decoration (subtree (2, son)))
+
+                     CASE (l_ghz)
+                        scan_use => L1Config%Calib%GHz_seq_use
+                        scan_seq => L1Config%Calib%GHz_seq
+                        GHz_mod = .TRUE.
+                     CASE (l_thz)
+                        scan_use => L1Config%Calib%THz_seq_use
+                        scan_seq => L1Config%Calib%THz_seq
+                        GHz_mod = .FALSE.
+                     END SELECT
+
+                  END SELECT
+
+               ENDDO
+
+               IF (scan_use == ignore) THEN
+                  ! if scan_use (i.e. L1Config%Calib%{G,T}Hz) == ignore, it
+                  ! means it hasn't been set yet, so we set it to the value
+                  ! we've just read from the .cf file.
+                  scan_use = scan%Use
+               ELSE IF (scan_use /= scan%Use) THEN
+                  ! how can this possibly happen?!? 
+                  CALL MLSMessage (MLSMSG_Error, ModuleName, &
+                       'USE fields do not match in L1CF Calib section!')
+               ENDIF
+
+!! GHz module Target type:
+
+               IF (scan%type == "T" .AND. GHz_mod) THEN
+
+!! Reverse target type if secondary target
+
+                  IF (sec_tgt) scan%type = "t"
+
+               ENDIF
+
+               WHERE (scan_seq == unknown .AND. scan%MIF == 1)
+                  scan_seq = scan%type
+               ELSEWHERE
+                  WHERE (scan_seq /= unknown .AND. scan%MIF == 1)
+                     scan_seq = overlap
+                  END WHERE
+               END WHERE
+               IF (ANY (scan_seq == overlap)) THEN
+                  CALL MLSMessage (MLSMSG_Error, ModuleName, &
+                       'Scan sequence overlap in L1CF Calib section!')
+               ENDIF
+
+            CASE (s_markchanbad)
+
+               chanbad_TAI = 0.0d00   ! No current bad time
+
+               DO j = 2, nsons (key)
+
+                  son = subtree (j, key)
+
+                  SELECT CASE (decoration (subtree(1,son)))   ! field
+
+                  CASE (f_chan)
+
+                     CALL Expr (subtree (2, son), expr_units, expr_value)
+                     channo = expr_value(1)
+                     
+                  CASE (f_bandno)
+                     CALL Expr (subtree (2, son), expr_units, expr_value)
+                     bandno = expr_value(1)
+
+                  CASE (f_yrdoy)
+
+                     CALL Expr (subtree (2, son), expr_units, expr_value)
+                     yrdoy = expr_value(1)
+                     write (chanbad_UTC(3:4), '(I2.2)') (yrdoy / 1000)
+                     write (chanbad_UTC(6:8), '(I3.3)') MOD (yrdoy, 1000)
+                     stat = PGS_TD_UTCtoTAI (chanbad_UTC, chanbad_TAI)
+                     IF (stat /= PGS_S_SUCCESS) THEN
+                        CALL MLSMessage (MLSMSG_Error, ModuleName, &
+                             'MarkChanBad YRDOY input field is incorrect!')
+                     ENDIF
+
+                   END SELECT
+
+               ENDDO
+
+               IF (bandno < 1 .OR. bandno > NumBands) THEN
+                  CALL MLSMessage (MLSMSG_Error, ModuleName, &
+                       'Bandno number out of range!')
+               ENDIF
+               IF (channo < 1 .OR. channo > BandChanBad%MaxChan(bandno)) THEN
+                  CALL MLSMessage (MLSMSG_Error, ModuleName, &
+                       'ChanNo number out of range!')
+               ENDIF
+
+               IF (start_TAI >= chanbad_TAI) &
+                    BandChanBad%Sign(bandno,channo) = -1.0  ! Mark as "Bad"
+
+            CASE (s_BrightObject)   ! Bright Objects
+
+               Negate = .FALSE.  ! Initialize to do not negate
+               DO j = 2, nsons (key)
+
+                  son = subtree (j, key)
+
+                  SELECT CASE (decoration (subtree(1,son)))   ! field
+
+                  CASE (f_module)
+
+                     SELECT CASE (decoration (subtree (2, son)))
+
+                     CASE (l_ghz)
+                        GHz_mod = .TRUE.
+                     CASE (l_thz)
+                        GHz_mod = .FALSE.
+                     END SELECT
+
+                  CASE(f_name)
+                     CALL Expr (subtree (2, son), expr_units, expr_value)
+                     BO_index = INT(expr_value(1)) - l_mercury + 1
+                  CASE (f_angle)
+                     CALL Expr (subtree (2, son), expr_units, expr_value)
+                     BO_angle = expr_value(1)
+                  CASE (f_negate)
+                     Negate = Get_Boolean (son)
+                  ENDSELECT
+
+               ENDDO
+
+               IF (GHz_mod) THEN   ! Save appropriate BO info
+                  BO_NumGHz = BO_NumGHz + 1
+                  BO_Index_GHz(BO_NumGHz) = BO_index
+                  BO_Angle_GHz(BO_index) = BO_angle
+                  BO_Negate_GHz(BO_NumGHz) = Negate
+               ELSE
+                  BO_NumTHz = BO_NumTHz + 1
+                  BO_Index_THz(BO_NumTHz) = BO_index
+                  BO_Angle_THz(BO_index) = BO_angle
+                  BO_Negate_THz(BO_NumTHz) = Negate
+                ENDIF
+
+            CASE DEFAULT
+
+               PRINT *, 'unknown spec!'
+
+         END SELECT
+
+         CASE DEFAULT
+
+            PRINT *, 'cal default son', son
+
+         END SELECT
+
+      ENDDO
+
+! Save pointers for sort/qualify:
+
+      GHz_seq_use => L1Config%Calib%GHz_seq_use
+      GHz_seq => L1Config%Calib%GHz_seq
+      THz_seq_use => L1Config%Calib%THz_seq_use
+      THz_seq => L1Config%Calib%THz_seq
+
+      IF (ANY (L1Config%Calib%GHz_seq == unknown)) THEN
+         CALL MLSMessage (MLSMSG_Error, ModuleName, &
+              'Undefined MIF(s) for GHz module in L1CF Calib section!')
+      ENDIF
+
+      IF (ANY (L1Config%Calib%THz_seq == unknown)) THEN
+         CALL MLSMessage (MLSMSG_Error, ModuleName, &
+              'Undefined MIF(s) for THz module in L1CF Calib section!')
+      ENDIF
+
+    END SUBROUTINE Set_calibration
+
+  LOGICAL FUNCTION not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  CHARACTER (len=*), PARAMETER :: IdParm = &
+       "$Id: MLSL1Config.f90,v 2.36 2018/04/09 22:15:02 whdaffer Exp $"
+  CHARACTER (len=LEN(idParm)), SAVE :: Id = idParm
+!---------------------------------------------------------------------------
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  END FUNCTION not_used_here
+END MODULE MLSL1Config
+
+! $Log: MLSL1Config.f90,v $
+! Revision 2.36  2018/04/09 22:15:02  whdaffer
+! STDOUTPRUNIT
+!
+! Revision 2.35  2016/05/10 20:30:57  mmadatya
+! To get the error-checking parameters from the l1 configuration file instead of them being hard-coded into the source code
+!
+! Revision 2.34  2016/03/15 22:17:59  whdaffer
+! Merged whd-rel-1-0 back onto main branch. Most changes
+! are to comments, but there's some modification to Calibration.f90
+! and MLSL1Common to support some new modules: MLSL1Debug and SnoopMLSL1.
+!
+! Revision 2.33.4.1  2015/10/09 10:21:38  whdaffer
+! checkin of continuing work on branch whd-rel-1-0
+!
+! Revision 2.33  2014/05/20 23:57:14  vsnyder
+! New parser gets its tables from an argument instead of an include
+!
+! Revision 2.32  2010/08/06 17:53:43  pwagner
+! Moved call to AddInUnit after init_lexer
+!
+! Revision 2.31  2010/05/23 04:13:48  honghanh
+! Use AddInunit instead of inunit due to change in string_table
+!
+! Revision 2.30  2008/03/04 20:01:54  perun
+! Use optional YRDOY field in MarkChanBad entry to determine when to mark channel data bad.
+!
+! Revision 2.29  2008/01/15 19:54:35  perun
+! Add DisableRadOut to disable outputting unwanted bands.
+!
+! Revision 2.28  2007/02/09 15:05:24  perun
+! Add Do_Slimb flag
+!
+! Revision 2.27  2006/09/28 16:15:37  perun
+! Remove WriteDiagOffsets
+!
+! Revision 2.26  2006/08/02 19:23:50  pwagner
+! prunit now a component of OutputOptions
+!
+! Revision 2.25  2006/08/02 18:55:22  perun
+! Added SubtractBinnedBaseline field
+!
+! Revision 2.24  2006/06/14 13:47:00  perun
+! Handle TPdigital input
+!
+! Revision 2.23  2006/04/05 18:10:57  perun
+! Remove unused variables
+!
+! Revision 2.22  2006/03/24 15:12:19  perun
+! Add MAFexpandNum, MinSpaceLimbs, THzColdCal, WriteDiagOffsets and remove Switch
+!
+! Revision 2.21  2005/12/06 19:27:12  perun
+! Removed MoonToLimbAngles parsing and added Bright Object parsing
+!
+! Revision 2.20  2005/10/10 19:06:27  perun
+! Add DeconvolveDACS field
+!
+! Revision 2.19  2005/06/23 18:41:35  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.18  2005/05/02 16:04:15  perun
+! Add UseAntOffsets field and AntOffsetsScale factor
+!
+! Revision 2.17  2005/01/28 17:00:29  perun
+! Split MoonToLimbAngle into GHz and THz
+!
+! Revision 2.16  2004/12/01 17:10:07  perun
+! Remove VersionComment and add DACSwindow
+!
+! Revision 2.15  2004/11/10 15:39:17  perun
+! Add case to set BandChanBad value based on user input
+!
+! Revision 2.14  2004/08/12 13:51:50  perun
+! Version 1.44 commit
+!
+! Revision 2.13  2004/05/14 15:59:11  perun
+! Version 1.43 commit
+!
+! Revision 2.12  2004/01/09 17:46:22  perun
+! Version 1.4 commit
+!
+! Revision 2.11  2003/08/15 14:25:04  perun
+! Version 1.2 commit
+!
+! Revision 2.10  2002/11/21 16:57:46  perun
+! Moved default HDFversion number to declaration
+!
+! Revision 2.9  2002/11/20 18:30:50  perun
+! Restated HDFVersionString error message
+!
+! Revision 2.8  2002/11/19 20:35:16  perun
+! Convert HDFVersionstring to HDFversion number
+!
+! Revision 2.7  2002/11/14 16:51:13  perun
+! Split space & target temps between GHz & THz
+!
+! Revision 2.6  2002/11/07 21:35:03  jdone
+! Added HDF4/HDF5 switch.
+!
+! Revision 2.5  2002/04/04 19:30:49  perun
+! Check for correct input MIFs
+!
+! Revision 2.4  2002/03/29 20:18:34  perun
+! Version 1.0 commit
+!
+! Revision 2.3  2001/04/27 14:00:32  perun
+! For the latest parser version
+!
+! Revision 2.2  2001/03/22 16:45:06  perun
+! Changed call to Get_string to strip "'s from globals
+!
+! Revision 2.1  2001/02/23 20:50:54  perun
+! Version 0.5 commit
+!
+@
+
+
+2.36
+log
+@STDOUTPRUNIT
+@
+text
+@d77 10
+d888 1
+a888 1
+       "$Id: MLSL1Config.f90,v 2.35 2016/05/10 20:30:57 mmadatya Exp $"
+d896 3
+@
+
+
+2.35
+log
+@To get the error-checking parameters from the l1 configuration file instead of them being hard-coded into the source code
+@
+text
+@d21 1
+a21 1
+  USE Output_m, ONLY: OutputOptions, Output, BOTHPRUNIT
+d178 3
+a180 1
+      OutputOptions%prunit = BOTHPRUNIT  ! to output to MLSMessage (and terminal)
+d878 1
+a878 1
+       "$Id: MLSL1Config.f90,v 2.34 2016/03/15 22:17:59 whdaffer Exp $"
+d886 3
+@
+
+
+2.34
+log
+@Merged whd-rel-1-0 back onto main branch. Most changes
+are to comments, but there's some modification to Calibration.f90
+and MLSL1Common to support some new modules: MLSL1Debug and SnoopMLSL1.
+@
+text
+@d51 3
+d381 1
+a381 1
+           p_MAFexpandNum, p_TPdigital, p_Do_Slimb, f_yrdoy
+d482 15
+d876 1
+a876 1
+       "$Id: MLSL1Config.f90,v 2.33.4.1 2015/10/09 10:21:38 whdaffer Exp $"
+d884 5
+@
+
+
+2.33
+log
+@New parser gets its tables from an argument instead of an include
+@
+text
+@d21 1
+a21 1
+  USE Output_m, ONLY: OutputOptions, Output
+d97 2
+d175 1
+a175 1
+      OutputOptions%prunit = -9                  ! to output to MLSMessage (and terminal)
+d367 3
+d402 10
+d413 3
+a415 3
+         CHARACTER(LEN=1) :: USE    ! M or O
+         CHARACTER(LEN=1) :: TYPE   ! L, S, T, or D
+         INTEGER :: MIF(0:MaxMIFs-1)
+d448 2
+d458 2
+d626 2
+d641 1
+a641 1
+                  scan%Type = "T"
+d700 3
+d705 1
+d858 1
+a858 1
+       "$Id: MLSL1Config.f90,v 2.32 2010/08/06 17:53:43 pwagner Exp $"
+d866 6
+@
+
+
+2.33.4.1
+log
+@checkin of continuing work on branch whd-rel-1-0
+@
+text
+@d21 1
+a21 1
+  USE Output_m, ONLY: OutputOptions, Output, BOTHPRUNIT
+a96 2
+      !! Opens and parses the L1CF file.
+
+d173 1
+a173 1
+      OutputOptions%prunit = BOTHPRUNIT  ! to output to MLSMessage (and terminal)
+a364 3
+      !parse the 'Calibration' section of the .cf file.
+
+
+a396 10
+      ! This type is used to store calibration directives from the .cf file. The
+      ! TYPE= 'L', 'S', 'T' 'D', or 't'. 't' means 'secondary target' -- not
+      ! listed in the user type documentatin here, but you see it in the code --
+      ! however, this would only come into play if 1) it's the GHz module and
+      ! 2)the line defining the MIFs that are of a particular type had the
+      ! declaration `secondary' in them. No extant .cf file has this
+      ! characteristic, and Paul Wagner assures me that no .cf file in the past,
+      ! nor any in the future will.
+
+      ! if USE='M'atch, the telemetry must agree with what's in the .cf ifle
+d398 3
+a400 3
+         CHARACTER(LEN=1) :: USE    ! 'M'atch or 'O'verride, 
+         CHARACTER(LEN=1) :: TYPE   ! 'L'imb, 'S'pace, 'T'arget, or 'D'iscard
+         INTEGER :: MIF(0:MaxMIFs-1) ! The MIFs numbers that are of type `TYPE'
+a432 2
+
+
+a440 2
+               ! remove the 'p_' and look for the remaining string in the .cf
+               ! file
+a606 2
+            ! to handle constructs like 
+            !  `limbMIFs, MIFs=[2:122], use=match, module=GHz'
+d620 1
+a620 1
+                  scan%Type = "T" ! though, can be changed to 't' if sec_tgt
+a678 3
+                  ! if scan_use (i.e. L1Config%Calib%{G,T}Hz) == ignore, it
+                  ! means it hasn't been set yet, so we set it to the value
+                  ! we've just read from the .cf file.
+a680 1
+                  ! how can this possibly happen?!? 
+d833 1
+a833 1
+       "$Id: MLSL1Config.f90,v 2.33 2014/05/20 23:57:14 vsnyder Exp $"
+a840 3
+! Revision 2.33  2014/05/20 23:57:14  vsnyder
+! New parser gets its tables from an argument instead of an include
+!
+@
+
+
+2.32
+log
+@Moved call to AddInUnit after init_lexer
+@
+text
+@d102 3
+a104 1
+      USE Parser, ONLY: Configuration
+d118 1
+d147 4
+a150 1
+      CALL Configuration (root)
+d833 1
+a833 1
+       "$Id: MLSL1Config.f90,v 2.31 2010/05/23 04:13:48 honghanh Exp $"
+d841 3
+@
+
+
+2.31
+log
+@Use AddInunit instead of inunit due to change in string_table
+@
+text
+@a130 4
+      call AddInUnit(l1cf_unit)
+      CALL MLSMessage (MLSMSG_Info, ModuleName, &
+           & "Opened L1 Config file: " // physicalFilename)
+
+d138 4
+d827 1
+a827 1
+       "$Id: MLSL1Config.f90,v 2.30 2008/03/04 20:01:54 perun Exp $"
+d835 3
+@
+
+
+2.30
+log
+@Use optional YRDOY field in MarkChanBad entry to determine when to mark channel data bad.
+@
+text
+@d105 1
+a105 1
+      USE STRING_TABLE, ONLY: l1cf_unit => inunit
+d115 1
+d131 1
+a131 1
+
+d827 1
+a827 1
+       "$Id: MLSL1Config.f90,v 2.29 2008/01/15 19:54:35 perun Exp $"
+d835 3
+@
+
+
+2.29
+log
+@Add DisableRadOut to disable outputting unwanted bands.
+@
+text
+@d366 1
+a366 1
+           p_MAFexpandNum, p_TPdigital, p_Do_Slimb
+d375 2
+d383 2
+a384 1
+      INTEGER :: i, j, k, son, key, spec, bandno, channo
+d387 1
+a387 1
+      DOUBLE PRECISION :: expr_value(2)
+d400 6
+d702 2
+d719 13
+a731 1
+                  END SELECT
+d743 3
+a745 1
+               BandChanBad%Sign(bandno,channo) = -1.0  ! Mark as "Bad"
+d826 1
+a826 1
+       "$Id: MLSL1Config.f90,v 2.28 2007/02/09 15:05:24 perun Exp $"
+d834 3
+@
+
+
+2.28
+log
+@Add Do_Slimb flag
+@
+text
+@d71 1
+d267 1
+a267 1
+           s_chi2err, f_bandno, s_subtractbinnedbaseline
+a274 3
+      LOGICAL :: chi2entry
+
+      chi2entry = .FALSE.   ! initialize to no entry yet
+d305 1
+a305 7
+            CASE (s_chi2err, s_subtractbinnedbaseline)
+
+               IF (spec == s_chi2err) THEN
+                  chi2entry = .TRUE.
+               ELSE
+                  chi2entry = .FALSE.
+               ENDIF
+d322 1
+a322 1
+                        IF (chi2entry) THEN
+d325 4
+a328 1
+                        ELSE
+d344 1
+a344 1
+      IF (chi2entry) THEN
+d801 1
+a801 1
+       "$Id: MLSL1Config.f90,v 2.27 2006/09/28 16:15:37 perun Exp $"
+d809 3
+@
+
+
+2.27
+log
+@Remove WriteDiagOffsets
+@
+text
+@d63 1
+d371 1
+a371 1
+           p_MAFexpandNum, p_TPdigital
+d589 4
+d806 1
+a806 1
+       "$Id: MLSL1Config.f90,v 2.26 2006/08/02 19:23:50 pwagner Exp $"
+d814 3
+@
+
+
+2.26
+log
+@prunit now a component of OutputOptions
+@
+text
+@a67 1
+     LOGICAL :: WriteDiagOffsets = .FALSE.          ! For P/Model Offsets
+d265 1
+a265 1
+           s_chi2err, f_bandno, p_WriteDiagOffsets, s_subtractbinnedbaseline
+a296 4
+            CASE (p_WriteDiagOffsets)
+
+               L1Config%Output%WriteDiagOffsets = Get_Boolean (son)
+
+d801 1
+a801 1
+       "$Id: MLSL1Config.f90,v 2.25 2006/08/02 18:55:22 perun Exp $"
+d809 3
+@
+
+
+2.25
+log
+@Added SubtractBinnedBaseline field
+@
+text
+@d21 1
+a21 1
+  USE Output_m, ONLY: prunit, Output
+d165 1
+a165 1
+      prunit = -9                  ! to output to MLSMessage (and terminal)
+d806 1
+a806 1
+       "$Id: MLSL1Config.f90,v 2.24 2006/06/14 13:47:00 perun Exp $"
+d814 3
+@
+
+
+2.24
+log
+@Handle TPdigital input
+@
+text
+@d71 1
+d266 1
+a266 1
+           s_chi2err, f_bandno, p_WriteDiagOffsets
+d311 1
+a311 1
+            CASE (s_chi2err)
+d313 5
+a317 1
+               chi2entry = .TRUE.
+d334 7
+a340 2
+                        L1Config%Output%EnableChi2Err(INT(expr_value(1)): &
+                             INT(expr_value(2))) = .TRUE.
+d806 1
+a806 1
+       "$Id: MLSL1Config.f90,v 2.23 2006/04/05 18:10:57 perun Exp $"
+d814 3
+@
+
+
+2.23
+log
+@Remove unused variables
+@
+text
+@d61 1
+d365 1
+a365 1
+           p_MAFexpandNum
+d579 4
+d796 1
+a796 1
+       "$Id: MLSL1Config.f90,v 2.22 2006/03/24 15:12:19 perun Exp $"
+d804 3
+@
+
+
+2.22
+log
+@Add MAFexpandNum, MinSpaceLimbs, THzColdCal, WriteDiagOffsets and remove Switch
+@
+text
+@d17 1
+a17 1
+  USE MLSL1Common, ONLY: MaxMIFs, BandSwitch, NumBands, BandChanBad
+d265 1
+a265 1
+      USE TREE, ONLY: Decoration, Nsons, Subtree, Sub_rosa, Node_id
+a266 1
+      USE MLSStrings, ONLY: lowercase
+d379 1
+a379 1
+      INTEGER :: i, j, k, son, key, spec, swno, bandno, channo
+d791 1
+a791 1
+       "$Id: MLSL1Config.f90,v 2.21 2005/12/06 19:27:12 perun Exp $"
+d799 3
+@
+
+
+2.21
+log
+@Removed MoonToLimbAngles parsing and added Bright Object parsing
+@
+text
+@d1 1
+a1 1
+! Copyright 2005, by the California Institute of Technology. ALL
+d20 1
+a20 1
+  USE Intrinsic, ONLY: parm_indices
+d36 1
+a36 1
+  character (len=*), private, parameter :: ModuleName= &
+d38 1
+a38 1
+  private :: not_used_here 
+d50 2
+d61 1
+d67 1
+d264 1
+a264 1
+           s_chi2err, f_bandno
+d297 4
+d362 4
+a365 3
+           p_mif_dead_time, p_mifspermaf, p_calibDACS, p_THzMaxBias, s_switch, &
+           p_thzspaceangle, f_s, f_bandno, f_chan, s_markchanbad, &
+           p_MoonToSpaceAngle, p_DACSwindow, p_UseAntOffsets
+d387 2
+a388 2
+         CHARACTER(LEN=1) :: Use    ! M or O
+         CHARACTER(LEN=1) :: Type   ! L, S, T, or D
+d434 20
+d519 4
+a681 27
+            CASE (s_switch)
+
+               DO j = 2, nsons (key)
+
+                  son = subtree (j, key)
+
+                  SELECT CASE (decoration (subtree(1,son)))   ! field
+
+                  CASE (f_s)
+
+                     CALL Expr (subtree (2, son), expr_units, expr_value)
+                     swno = expr_value(1)
+                     IF (swno < 1 .OR. swno > 5) THEN
+                        CALL MLSMessage (MLSMSG_Error, ModuleName, &
+                             'Switch number out of range (1-5)!')
+                     ENDIF
+                     
+                  CASE (f_bandno)
+                     CALL Expr (subtree (2, son), expr_units, expr_value)
+                     bandno = expr_value(1)
+
+                  END SELECT
+
+               ENDDO
+
+               BandSwitch(swno) = bandno
+
+a786 11
+!! Check switches
+
+      DO swno = 1, 5
+         IF (BandSwitch(swno) == 0) THEN
+            WRITE (identifier, "(I1)") swno
+            CALL MLSMessage (MLSMSG_Error, ModuleName, &
+                 'Undefined switch no '//TRIM(identifier)//&
+                 ' in L1CF Calib section!')
+         ENDIF
+      ENDDO
+
+d789 1
+a789 1
+  logical function not_used_here()
+d791 3
+a793 3
+  character (len=*), parameter :: IdParm = &
+       "$Id: MLSL1Config.f90,v 2.20 2005/10/10 19:06:27 perun Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+d796 1
+a796 1
+  end function not_used_here
+d800 3
+@
+
+
+2.20
+log
+@Add DeconvolveDACS field
+@
+text
+@a55 1
+     REAL :: MoonToLimbAngle_GHz, MoonToLimbAngle_THz
+a100 1
+      USE Units, ONLY: Init_units
+a132 1
+      CALL Init_units
+d356 4
+a359 2
+           p_MoonToSpaceAngle, p_MoonToLimbAngle_GHz, p_MoonToLimbAngle_THz, &
+           p_DACSwindow, p_UseAntOffsets
+d372 2
+a373 1
+      INTEGER :: expr_units(2)
+d375 1
+a375 1
+      LOGICAL :: GHz_mod, sec_tgt
+a488 5
+!!$               IF (expr_units(1) /= phyq_temperature) THEN ! Add Volts later?
+!!$                  CALL Get_string (Sub_rosa (Subtree(1,son)), identifier)
+!!$                  CALL MLSMessage (MLSMSG_Error, ModuleName, &
+!!$                       TRIM (identifier)//' is not input as K')
+!!$               ENDIF
+a499 20
+            CASE (p_MoonTolimbAngle_GHz)
+
+               CALL Expr (subtree (2, son), expr_units, expr_value)
+               L1Config%Calib%MoonToLimbAngle_GHz = expr_value(1)
+               IF (expr_units(1) /= phyq_angle) THEN
+                  CALL Get_string (Sub_rosa (Subtree(1,son)), identifier)
+                  CALL MLSMessage (MLSMSG_Error, ModuleName, &
+                       TRIM (identifier)//' is not input as deg[rees]')
+               ENDIF
+
+            CASE (p_MoonTolimbAngle_THz)
+
+               CALL Expr (subtree (2, son), expr_units, expr_value)
+               L1Config%Calib%MoonToLimbAngle_THz = expr_value(1)
+               IF (expr_units(1) /= phyq_angle) THEN
+                  CALL Get_string (Sub_rosa (Subtree(1,son)), identifier)
+                  CALL MLSMessage (MLSMSG_Error, ModuleName, &
+                       TRIM (identifier)//' is not input as deg[rees]')
+               ENDIF
+
+d706 44
+d797 1
+a797 1
+       "$Id: MLSL1Config.f90,v 2.19 2005/06/23 18:41:35 pwagner Exp $"
+d805 3
+@
+
+
+2.19
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d37 1
+a37 1
+       "$RCSfile: $"
+d66 1
+d262 2
+a263 1
+      USE INIT_TABLES_MODULE, ONLY: p_removebaseline, s_chi2err, f_bandno
+d292 4
+d778 1
+a778 1
+       "$Id: $"
+d786 3
+@
+
+
+2.18
+log
+@Add UseAntOffsets field and AntOffsetsScale factor
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d35 5
+a39 5
+  !------------------------------- RCS Ident Info ------------------------------
+  CHARACTER(LEN=130) :: id = &
+       "$Id: MLSL1Config.f90,v 2.17 2005/01/28 17:00:29 perun Exp $"
+  CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile: MLSL1Config.f90,v $"
+  !-----------------------------------------------------------------------------
+d769 8
+d780 3
+@
+
+
+2.17
+log
+@Split MoonToLimbAngle into GHz and THz
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
+d29 1
+a29 1
+       "$Id: MLSL1Config.f90,v 2.16 2004/12/01 17:10:07 perun Exp $"
+d49 1
+d346 1
+a346 1
+           p_DACSwindow
+d545 8
+d764 3
+@
+
+
+2.16
+log
+@Remove VersionComment and add DACSwindow
+@
+text
+@d29 1
+a29 1
+       "$Id: MLSL1Config.f90,v 2.15 2004/11/10 15:39:17 perun Exp $"
+d47 2
+a48 1
+     REAL :: MoonToSpaceAngle, MoonToLimbAngle
+d344 2
+a345 1
+           p_MoonToSpaceAngle, p_MoonToLimbAngle, p_DACSwindow
+d490 1
+a490 1
+            CASE (p_MoonTolimbAngle)
+d493 11
+a503 1
+               L1Config%Calib%MoonToLimbAngle = expr_value(1)
+d755 3
+@
+
+
+2.15
+log
+@Add case to set BandChanBad value based on user input
+@
+text
+@d29 1
+a29 1
+       "$Id: MLSL1Config.f90,v 2.14 2004/08/12 13:51:50 perun Exp $"
+a34 1
+     CHARACTER(LEN=80) :: VersionComment
+d36 1
+a36 1
+     LOGICAL :: SimOA = .TRUE.
+d42 1
+d210 2
+a211 2
+      USE INIT_TABLES_MODULE, ONLY: p_output_version_string, &
+           p_version_comment, p_produce_l1boa, p_simoa
+a231 5
+         CASE (p_version_comment)
+
+            CALL Get_string (Sub_rosa (Subtree(2,son)), &
+                 L1Config%Globals%VersionComment, strip=.TRUE.)
+
+d343 1
+a343 1
+           p_MoonToSpaceAngle, p_MoonToLimbAngle
+d498 10
+d743 3
+@
+
+
+2.14
+log
+@Version 1.44 commit
+@
+text
+@d9 1
+a9 1
+  USE MLSL1Common, ONLY: MaxMIFs, BandSwitch, NumBands
+d29 1
+a29 1
+       "$Id: MLSL1Config.f90,v 2.13 2004/05/14 15:59:11 perun Exp $"
+d347 2
+a348 1
+           p_thzspaceangle, f_s, f_bandno, p_MoonToSpaceAngle, p_MoonToLimbAngle
+d360 1
+a360 1
+      INTEGER :: i, j, k, son, key, spec, swno, bandno
+d661 30
+d738 3
+@
+
+
+2.13
+log
+@Version 1.43 commit
+@
+text
+@d9 1
+a9 1
+  USE MLSL1Common, ONLY: MaxMIFs, BandSwitch
+d29 1
+a29 1
+       "$Id: MLSL1Config.f90,v 2.12 2004/01/09 17:46:22 perun Exp $"
+d56 1
+d255 4
+a258 2
+      USE INIT_TABLES_MODULE, ONLY: p_removebaseline
+      USE TREE, ONLY: Decoration, Nsons, Subtree, Sub_rosa
+d262 6
+a267 1
+      INTEGER :: root, i, son
+d273 43
+a315 1
+         GotParm(Decoration (Subtree (1,son))) = .TRUE.
+d317 1
+a317 1
+         SELECT CASE (Decoration (Subtree (1,son)))
+d319 1
+a319 1
+         CASE (p_removebaseline)
+d321 1
+a321 1
+            L1Config%Output%RemoveBaseline = Get_Boolean (son)
+d327 8
+d707 3
+@
+
+
+2.12
+log
+@Version 1.4 commit
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+d29 1
+a29 1
+       "$Id: MLSL1Config.f90,v 2.11 2003/08/15 14:25:04 perun Exp $"
+d47 1
+d289 1
+a289 1
+           p_thzspaceangle, f_s, f_bandno
+d424 20
+d649 3
+@
+
+
+2.11
+log
+@Version 1.2 commit
+@
+text
+@d10 5
+a14 3
+  USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Info, &
+       MLSMSG_Warning
+  USE MLSFiles, ONLY: HDFVERSION_4, HDFVERSION_5
+d24 2
+a25 2
+  INTEGER :: MIFsGHz   ! Length (MIFs) of GHz module data
+  INTEGER :: MIFsTHz   ! Length (MIFs) of THz module data
+d29 1
+a29 1
+       "$Id: MLSL1Config.f90,v 2.10 2002/11/21 16:57:46 perun Exp $"
+d45 1
+d54 1
+a54 2
+     CHARACTER(LEN=80) :: HDFVersionString = 'hdf4'
+     INTEGER :: HDFversion = HDFVERSION_4           ! "version 4" for now
+d69 3
+d79 2
+a80 2
+      USE Init_tables_module, ONLY: Init_tables, lit_indices, &
+           z_globalsettings, z_calibration, z_output
+a82 1
+      USE Output_m, ONLY: prunit
+a184 1
+!! Will get the User Inputs from the L1CF file here
+d186 15
+a200 2
+      MIFsGHz = 125
+      MIFsTHz = 125
+a209 1
+      USE STRING_TABLE, ONLY: Get_string
+d221 2
+d253 1
+a253 2
+      USE INIT_TABLES_MODULE, ONLY: p_hdf_version_string
+      USE STRING_TABLE, ONLY: Get_string
+d256 1
+d264 2
+d268 1
+a268 1
+         CASE (p_hdf_version_string)
+d270 1
+a270 14
+            CALL Get_string (Sub_rosa (Subtree(2,son)), &
+                 L1Config%Output%HDFVersionString, strip=.TRUE.)
+
+            SELECT CASE (lowercase(TRIM(L1Config%Output%HDFVersionString))) 
+            CASE ('hdf4')
+               L1Config%Output%HDFversion = HDFVERSION_4
+            CASE ('hdf5')
+               L1Config%Output%HDFversion = HDFVERSION_5
+            CASE default
+               CALL MLSMessage (MLSMSG_Error, ModuleName, &
+                    'HDFVersionString '//&
+                    '"'//TRIM(L1Config%Output%HDFVersionString)//'"'// &
+                    ' is not a correct input')
+            END SELECT
+d287 2
+a288 1
+           p_mif_dead_time, p_mifspermaf, p_calibDACS, s_switch, f_s, f_bandno
+d290 1
+a290 1
+           phyq_mifs, phyq_time
+a293 1
+      USE STRING_TABLE, ONLY: Get_string
+d323 1
+a323 1
+! Initialize Target Temp to not input
+d328 3
+d339 2
+d393 1
+a393 1
+              CASE (p_THzTargetTemp)
+d403 21
+a423 1
+          CASE (p_mif_duration)
+d628 3
+@
+
+
+2.10
+log
+@Moved default HDFversion number to declaration
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+d27 1
+a27 1
+       "$Id: MLSL1Config.f90,v 2.9 2002/11/20 18:30:50 perun Exp $"
+d35 1
+d183 2
+a184 2
+      MIFsGHz = 120
+      MIFsTHz = 120
+d193 1
+a193 1
+           p_version_comment, p_produce_l1boa
+a199 1
+      CHARACTER(LEN=80) :: line
+d222 4
+a240 1
+      CHARACTER(LEN=80) :: line
+d597 3
+@
+
+
+2.9
+log
+@Restated HDFVersionString error message
+@
+text
+@d27 1
+a27 1
+       "$Id: MLSL1Config.f90,v 2.8 2002/11/19 20:35:16 perun Exp $"
+d51 1
+a51 1
+     INTEGER :: HDFversion
+a239 4
+! Set default HDF version
+
+      L1Config%Output%HDFversion = HDFVERSION_4
+
+d594 3
+@
+
+
+2.8
+log
+@Convert HDFVersionstring to HDFversion number
+@
+text
+@d27 1
+a27 1
+       "$Id: MLSL1Config.f90,v 2.7 2002/11/14 16:51:13 perun Exp $"
+d262 3
+a264 1
+                    L1Config%Output%HDFVersionString//' is not a legal input')
+d598 3
+@
+
+
+2.7
+log
+@Split space & target temps between GHz & THz
+@
+text
+@d12 1
+d27 1
+a27 1
+       "$Id: MLSL1Config.f90,v 2.6 2002/11/07 21:35:03 jdone Exp $"
+d51 1
+d235 1
+d240 4
+d255 10
+d281 1
+a281 1
+      USE Intrinsic, ONLY: l_ghz, l_thz, phyq_mafs, phyq_temperature, &
+d551 1
+a551 1
+               print *, 'unknown spec!'
+d557 1
+a557 1
+            print *, 'cal default son', son
+d596 3
+@
+
+
+2.6
+log
+@Added HDF4/HDF5 switch.
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+d10 2
+a11 1
+  USE MLSMessageModule, ONLY:MLSMessage,MLSMSG_Error,MLSMSG_Info,MLSMSG_Warning
+d15 6
+a23 1
+  PRIVATE :: Id, ModuleName
+d26 1
+a26 1
+       "$Id: MLSL1Config.f90,v 2.5 2002/04/04 19:30:49 perun Exp $"
+d29 1
+d31 2
+a32 1
+     CHARACTER(LEN=80) :: OutputVersionString, VersionComment
+a35 4
+  TYPE Output_T
+     CHARACTER(LEN=80) :: HDFVersionString = 'hdf4'
+  END TYPE Output_T
+
+d37 5
+a41 2
+     INTEGER :: CalWindow, MIFsPerMAF
+     REAL :: SpaceTemp, TargetTemp, MIF_duration, MIF_DeadTime
+d48 4
+d66 1
+d68 1
+d98 1
+d185 1
+d187 1
+d189 2
+a190 2
+      USE INIT_TABLES_MODULE, ONLY: p_output_version_string, p_version_comment, &
+           p_produce_l1boa
+d195 2
+d198 1
+a198 1
+      INTEGER :: root, i, son
+d226 3
+a228 1
+    SUBROUTINE Set_output (root)
+d254 1
+d256 1
+d261 3
+a263 3
+           f_module, f_secondary, p_usedefaultgains, p_spacetemp, p_targettemp, &
+           p_mif_duration, p_mif_dead_time, p_mifspermaf, p_calibDACS, s_switch, &
+           f_s, f_bandno
+d271 10
+a289 6
+      CHARACTER(LEN=1), POINTER, DIMENSION(:) :: scan_seq
+      CHARACTER(LEN=1), POINTER :: scan_use
+      CHARACTER(LEN=80) :: identifier
+      DOUBLE PRECISION :: expr_value(2)
+      INTEGER :: i, j, k, son, key, spec, swno, bandno, expr_units(2), root
+      LOGICAL :: GHz_mod, sec_tgt
+d301 2
+a302 1
+      L1Config%Calib%TargetTemp = -1.0
+d334 21
+a354 1
+            CASE (p_spacetemp)
+d357 1
+a357 1
+               L1Config%Calib%SpaceTemp = expr_value(1)
+d364 1
+a364 1
+            CASE (p_targettemp)
+d367 1
+a367 1
+               L1Config%Calib%TargetTemp = expr_value(1)
+d374 1
+a374 1
+            CASE (p_mif_duration)
+d546 7
+a573 7
+! Save pointers for sort/qualify:
+
+      GHz_seq_use => L1Config%Calib%GHz_seq_use
+      GHz_seq => L1Config%Calib%GHz_seq
+      THz_seq_use => L1Config%Calib%THz_seq_use
+      THz_seq => L1Config%Calib%THz_seq
+
+d579 3
+@
+
+
+2.5
+log
+@Check for correct input MIFs
+@
+text
+@d10 1
+a10 2
+  USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Info, &
+       MLSMSG_Warning
+d20 1
+a20 1
+       "$Id: MLSL1Config.f90,v 2.4 2002/03/29 20:18:34 perun Exp $"
+a22 1
+
+d24 1
+a24 2
+     CHARACTER(LEN=80) :: OutputVersionString
+     CHARACTER(LEN=80) :: VersionComment
+d28 4
+d33 2
+a34 4
+     INTEGER :: CalWindow
+     INTEGER :: MIFsPerMAF
+     REAL :: SpaceTemp, TargetTemp
+     REAL :: MIF_duration, MIF_DeadTime
+d42 1
+a42 2
+     TYPE (TAI93_Range_T) :: Input_TAI 
+     TYPE (TAI93_Range_T) :: Expanded_TAI
+d45 1
+d59 1
+a59 1
+           z_globalsettings, z_calibration
+d152 4
+a178 4
+      INTEGER :: root
+
+      INTEGER :: i, son
+
+d180 1
+d208 26
+a248 10
+      INTEGER :: root
+
+      CHARACTER(LEN=1), POINTER, DIMENSION(:) :: scan_seq
+      CHARACTER(LEN=1), POINTER :: scan_use
+      CHARACTER(LEN=80) :: identifier
+      INTEGER :: i, j, k, son, key, spec, swno, bandno
+      INTEGER :: expr_units(2)
+      DOUBLE PRECISION :: expr_value(2)
+      LOGICAL :: GHz_mod, sec_tgt
+
+d258 6
+d532 3
+@
+
+
+2.4
+log
+@Version 1.0 commit
+@
+text
+@d21 1
+a21 1
+       "$Id: MLSL1Config.f90,v 2.3 2001/04/27 14:00:32 perun Exp $"
+d368 7
+a374 1
+                        scan%MIF(INT(expr_value(1)):INT(expr_value(2))) = 1
+d510 3
+a515 1
+! $Log: MLSL1Config.f90,v $
+@
+
+
+2.3
+log
+@For the latest parser version
+@
+text
+@d9 1
+d21 1
+a21 1
+       "$Id: MLSL1Config.f90,v 2.2 2001/03/22 16:45:06 perun Exp $"
+d28 1
+d31 11
+d46 1
+d49 4
+a52 1
+  TYPE (L1Config_T) :: L1Config
+d90 1
+a90 1
+              & "Could not open L1 Config file" // physicalFilename)
+d94 1
+a94 1
+           & "Opened L1 Config file" // physicalFilename)
+d151 1
+a151 1
+            !CALL Set_calibration (son)
+d164 1
+a164 1
+      MIFsTHz = 114
+d170 5
+a174 3
+      use INIT_TABLES_MODULE, ONLY: p_output_version_string, p_version_comment
+      use STRING_TABLE, ONLY: Get_string
+      use TREE, ONLY: Decoration, Nsons, Subtree, Sub_rosa
+d198 263
+d463 5
+d471 29
+a499 1
+    END SUBROUTINE Set_globalsettings
+d503 4
+@
+
+
+2.2
+log
+@Changed call to Get_string to strip "'s from globals
+@
+text
+@d20 1
+a20 1
+       "$Id: MLSL1Config.f90,v 2.1 2001/02/23 20:50:54 perun Exp $"
+d85 1
+a85 1
+      CALL Init_units (lit_indices)
+d189 3
+@
+
+
+2.1
+log
+@Version 0.5 commit
+@
+text
+@d20 2
+a21 2
+       "$Id:$"
+  CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile:$"
+d172 1
+a172 1
+                 L1Config%Globals%OutputVersionString)
+d177 1
+a177 1
+                 L1Config%Globals%VersionComment)
+d188 4
+a191 1
+! $Log:$
+@
+

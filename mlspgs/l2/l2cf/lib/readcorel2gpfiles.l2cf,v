@@ -1,0 +1,434 @@
+head	1.14;
+access;
+symbols
+	v5-02-NRT-19:1.14
+	v6-00:1.14
+	v5-02-NRT-18:1.14
+	v5-02:1.14
+	v5-01-NRT-17:1.14
+	v5-01-NRT-16:1.14
+	v5-01-NRT-15:1.14
+	v5-01-NRT-14:1.14
+	neuralnetworks-1-0:1.14.0.14
+	cfm-single-freq-0-1:1.14.0.12
+	v5-01:1.14
+	v5-00:1.14
+	v4-23-TA133:1.14.0.10
+	mus-emls-1-70:1.14.0.8
+	rel-1-0-englocks-work:1.14.0.6
+	VUMLS1-00:1.14
+	VPL1-00:1.14
+	V4-22-NRT-08:1.14
+	VAM1-00:1.14
+	V4-21:1.14.0.4
+	V4-13:1.14
+	V4-12:1.14
+	V4-11:1.14
+	V4-10:1.14
+	V3-43:1.14
+	M4-00:1.14
+	V3-41:1.14
+	V3-40-PlusGM57:1.14.0.2
+	V2-24-NRT-04:1.14
+	V3-33:1.14
+	V2-24:1.14
+	V3-31:1.14
+	V3-30-NRT-05:1.14
+	cfm-01-00:1.14
+	V3-30:1.14
+	V3-20:1.14
+	V3-10:1.14
+	V2-23-NRT-02:1.14
+	V2-23:1.14
+	V2-22-NRT-01:1.14
+	V2-22:1.14
+	V2-21:1.14
+	V2-20:1.14
+	V2-11:1.13
+	V2-10:1.13
+	V2-00:1.12
+	V1-51:1.12
+	V1-50:1.12
+	V1-45:1.12
+	V1-44:1.12
+	V1-43:1.12
+	V1-32:1.12
+	V1-31:1.12
+	V1-30:1.7
+	V1-13:1.3
+	V1-12:1.3
+	V1-11:1.3
+	V1-10:1.3
+	newfwm-feb03:1.3.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.14
+date	2006.08.05.02.00.04;	author lambert;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2006.06.27.00.30.33;	author lambert;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2003.11.12.04.23.19;	author livesey;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2003.11.05.19.22.53;	author livesey;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2003.10.18.01.18.18;	author livesey;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2003.10.15.01.09.31;	author livesey;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2003.10.11.01.38.18;	author livesey;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2003.09.03.05.18.18;	author livesey;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2003.08.15.05.53.07;	author livesey;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2003.08.11.23.29.34;	author livesey;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2003.05.08.23.58.42;	author livesey;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2003.01.18.02.38.05;	author livesey;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2002.11.26.23.38.39;	author livesey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2002.11.06.02.02.13;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.14
+log
+@changed DTbands
+@
+text
+@; $Id: readcorel2gpfiles.l2cf,v 1.13 2006/06/27 00:30:33 lambert Exp $
+
+;; This l2cf fragment is called to read the l2gp files to take the
+;; results from the 'core' retrievals
+
+begin ReadApriori
+  !ifdef(CoreHDFVersion,{},{!define(CoreHDFVersion,4)})
+
+  ;; These are the species for which we want to read Core data (no
+  ;; continuations allowed).
+  !ifdef(coreL2GPSpecies,{},{!define(coreL2GPSpecies,{Temperature,H2O,RHI,refGPH,O3})})
+
+  ;; The user might have requested specific versions for specific
+  ;; products
+  !define(initCoreSource,{!dnl
+  !ifelse(!defn(coreversion$1),{},{!define(coreversion$1,!coreversion)})
+  !ifelse(!defn(inpathcore$1),{},{!define(inpathcore$1,!inpathcore)})
+  !ifelse(!defn(corephase$1),{},{!define(corephase$1,{!corephase})})
+  })
+  !forall(initCoreSource,!coreL2GPSpecies,ptan)
+
+  ;; This macro reads in the core l2gps for species $1 from swath name
+  ;; $1-Core
+  !define(readCoreL2GP,{l2gpCore$1Input: l2gp, $
+    file='!inpathcore$1/MLS-Aura_L2GP-DGG_!coreversion$1_!day.he!coreHDFVersion', $
+    swath='$1-!corephase$1', hdfVersion=!coreHDFVersion!nl})
+  !forall(readCoreL2GP,!coreL2GPSpecies)
+
+  ;; Ptan we have to get from an l2aux file, this could be fun!
+  l2auxCorePtanInput: l2aux, $
+    file='!inpathcoreptan/MLS-Aura_L2AUX-DGM_!coreversionptan_!day.h!coreHDFVersion', $
+    sdName='GHz.ptan-!corephaseptan', quantityType=ptan, hdfVersion=!coreHDFVersion
+
+l2auxCoreDTBand32: l2aux, $
+  file='!inpathcoreptan/MLS-Aura_L2AUX-Cloud_!coreversionptan_!day.h!coreHDFVersion', $
+  sdName='R1A:118.B32W:PT.S0.WF4-1.C4 DT-Core', quantityType=radiance, hdfVersion=!coreHDFVersion
+
+l2auxCoreDTBand5: l2aux, $
+  file='!inpathcoreptan/MLS-Aura_L2AUX-Cloud_!coreversionptan_!day.h!coreHDFVersion', $
+  sdName='R2:190.B5F:CLO.S0.FB25-5.C1 DT-Core', quantityType=radiance, hdfVersion=!coreHDFVersion
+
+l2auxCoreDTBand33: l2aux, $
+  file='!inpathcoreptan/MLS-Aura_L2AUX-Cloud_!coreversionptan_!day.h!coreHDFVersion', $
+  sdName='R3:240.B33W:O3.S0.WF4-2.C3 DT-Core', quantityType=radiance, hdfVersion=!coreHDFVersion
+
+end ReadApriori
+@
+
+
+1.13
+log
+@added l2auxCore variables for cloud flags
+@
+text
+@d1 1
+a1 1
+; $Id: readcorel2gpfiles.l2cf,v 1.12 2003/11/12 04:23:19 livesey Exp $
+d34 1
+a34 1
+l2auxCoreDTBand32C1: l2aux, $
+d36 1
+a36 1
+  sdName='R1A:118.B32W:PT.S0.WF4-1.C1 DT', quantityType=radiance, hdfVersion=!coreHDFVersion
+d38 1
+a38 1
+l2auxCoreDTBand5C1: l2aux, $
+d40 1
+a40 1
+  sdName='R2:190.B5F:CLO.S0.FB25-5.C1 DTcore', quantityType=radiance, hdfVersion=!coreHDFVersion
+d44 1
+a44 1
+  sdName='R3:240.B33W:O3.S0.WF4-2 DT', quantityType=radiance, hdfVersion=!coreHDFVersion
+@
+
+
+1.12
+log
+@Added ability to read more species
+@
+text
+@d1 1
+a1 1
+; $Id: readcorel2gpfiles.l2cf,v 1.11 2003/11/05 19:22:53 livesey Exp $
+d34 12
+@
+
+
+1.11
+log
+@Allowed the user to specify alternative sources for individual products
+@
+text
+@d1 1
+a1 1
+; $Id: readcorel2gpfiles.l2cf,v 1.10 2003/10/18 01:18:18 livesey Exp $
+d11 1
+a11 1
+  !define(coreL2GPSpecies,{Temperature,H2O,RHI,refGPH,O3})
+d18 1
+a18 1
+  !ifelse(!defn(corephase$1),{},{!define(corephase$1,{Core})})
+d31 2
+a32 2
+    file='!inpathcoreptan/MLS-Aura_L2AUX-DGM_!coreversion_!day.h!coreHDFVersion', $
+    sdName='GHz.ptan-Core', quantityType=ptan, hdfVersion=!coreHDFVersion
+@
+
+
+1.10
+log
+@Added reading of O3.  This is currently a hack as it has to come from
+O3-UpdatePtan.  Move it to core later.
+@
+text
+@d1 1
+a1 1
+; $Id: readcorel2gpfiles.l2cf,v 1.9 2003/10/15 01:09:31 livesey Exp $
+d8 14
+a21 1
+  
+d25 3
+a27 8
+    file='!inpathcore/MLS-Aura_L2GP-DGG_!coreversion_!day.he!coreHDFVersion', $
+    swath='$1-Core', hdfVersion=!coreHDFVersion!nl})
+  ;; These are the species for which we want to read Core data (no
+  ;; continuations allowed).
+  !define(coreL2GPSpecies,{Temperature,H2O,RHI,refGPH,O3})
+  !forall(readCoreL2GP,Temperature,H2O,RHI,refGPH)
+  l2gpCoreO3Input: l2gp,  file='!inpathcore/MLS-Aura_L2GP-DGG_!coreversion_!day.he!coreHDFVersion', $
+    swath='O3-UpdatePtan', hdfVersion=!coreHDFVersion
+d31 1
+a31 1
+    file='!inpathcore/MLS-Aura_L2AUX-DGM_!coreversion_!day.h!coreHDFVersion', $
+a32 7
+
+  b1CoreInput: l2aux, $
+    file='!inpathcore/MLS-Aura_L2FWM-GHz_!coreversion_!day.h!coreHDFVersion', $
+    sdName='R1A:118.B1F:PT.S0.FB25-1 UpdatePtan', quantityType=radiance, hdfVersion=!coreHDFVersion
+  b32CoreInput: l2aux, $
+    file='!inpathcore/MLS-Aura_L2FWM-GHz_!coreversion_!day.h!coreHDFVersion', $
+    sdName='R1A:118.B32W:PT.S0.WF4-1 UpdatePtan', quantityType=radiance, hdfVersion=!coreHDFVersion
+@
+
+
+1.9
+log
+@Changed name of variable
+@
+text
+@d1 1
+a1 1
+; $Id: readcorel2gpfiles.l2cf,v 1.8 2003/10/11 01:38:18 livesey Exp $
+d16 4
+a19 2
+  !define(coreL2GPSpecies,{Temperature,H2O,RHI,refGPH})
+  !forall(readCoreL2GP,!coreL2GPSpecies)
+@
+
+
+1.8
+log
+@Added radiances.
+@
+text
+@d1 1
+a1 1
+; $Id: readcorel2gpfiles.l2cf,v 1.7 2003/09/03 05:18:18 livesey Exp $
+d12 2
+a13 2
+    file='!inpathcore/MLS-Aura_L2GP-DGG_!coreversion_!day.he!CoreHDFVersion', $
+    swath='$1-Core', hdfVersion=!CoreHDFVersion!nl})
+d21 2
+a22 2
+    file='!inpathcore/MLS-Aura_L2AUX-DGM_!coreversion_!day.h!CoreHDFVersion', $
+    sdName='GHz.ptan-Core', quantityType=ptan, hdfVersion=!CoreHDFVersion
+d25 2
+a26 2
+    file='!inpathcore/MLS-Aura_L2FWM-GHz_!coreversion_!day.h!CoreHDFVersion', $
+    sdName='R1A:118.B1F:PT.S0.FB25-1 UpdatePtan', quantityType=radiance, hdfVersion=!CoreHDFVersion
+d28 2
+a29 2
+    file='!inpathcore/MLS-Aura_L2FWM-GHz_!coreversion_!day.h!CoreHDFVersion', $
+    sdName='R1A:118.B32W:PT.S0.WF4-1 UpdatePtan', quantityType=radiance, hdfVersion=!CoreHDFVersion
+@
+
+
+1.7
+log
+@Now supports HDF5.
+@
+text
+@d1 1
+a1 1
+; $Id: readcorel2gpfiles.l2cf,v 1.6 2003/08/15 05:53:07 livesey Exp $
+d23 7
+@
+
+
+1.6
+log
+@Removed baseline stuff
+@
+text
+@d1 1
+a1 1
+; $Id: readcorel2gpfiles.l2cf,v 1.5 2003/08/11 23:29:34 livesey Exp $
+d7 1
+d12 2
+a13 1
+    file='!inpathcore/MLS-Aura_L2GP-DGG_!coreversion_!day.he4', swath='$1-Core'!nl})
+d21 2
+a22 2
+    file='!inpathcore/MLS-Aura_L2AUX-DGM_!coreversion_!day.h4', sdName='GHz.ptan-Core', $
+    quantityType=ptan, hdfVersion=4
+@
+
+
+1.5
+log
+@Made reading the old baseline optional (for when basis has changed)
+@
+text
+@d1 1
+a1 1
+; $Id: readcorel2gpfiles.l2cf,v 1.4 2003/05/08 23:58:42 livesey Exp $
+d14 1
+a14 3
+  !ifdef(flagSkipCoreBaseline,
+  {!define(coreL2GPSpecies,{Temperature,H2O,RHI,refGPH,ExtinctionConstantR2})},
+  {!define(coreL2GPSpecies,{Temperature,H2O,RHI,refGPH,BaselineR1A,ExtinctionConstantR2})})
+@
+
+
+1.4
+log
+@Added hdfVersion=4
+@
+text
+@d1 1
+a1 1
+; $Id: readcorel2gpfiles.l2cf,v 1.3 2003/01/18 02:38:05 livesey Exp $
+d14 3
+a16 1
+  !define(coreL2GPSpecies,{Temperature,H2O,RHI,refGPH,BaselineR1A,ExtinctionConstantR2})
+@
+
+
+1.3
+log
+@Added the quantity type info to l2aux stuff
+@
+text
+@d1 1
+a1 1
+; $Id: readcorel2gpfiles.l2cf,v 1.2 2002/11/26 23:38:39 livesey Exp $
+d20 1
+a20 1
+    quantityType=ptan
+@
+
+
+1.2
+log
+@Fewer things read in (less retrieved in newer cores - test 159)
+@
+text
+@d1 1
+a1 1
+; $Id: readcorel2gpfiles.l2cf,v 1.1 2002/11/06 02:02:13 livesey Exp $
+d19 2
+a20 1
+    file='!inpathcore/MLS-Aura_L2AUX-DGM_!coreversion_!day.h4', sdName='GHz.ptan-Core'
+@
+
+
+1.1
+log
+@First version
+@
+text
+@d1 1
+a1 1
+; $Id$
+d14 1
+a14 1
+  !define(coreL2GPSpecies,{Temperature,H2O,RHI,refGPH,BaselineR1A,BaselineR2,BaselineR3,ExtinctionShapedR1A,ExtinctionConstantR2,ExtinctionConstantR3})
+@
+

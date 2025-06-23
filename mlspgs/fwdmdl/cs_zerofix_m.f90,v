@@ -1,0 +1,210 @@
+head	2.3;
+access;
+symbols
+	v5-02-NRT-19:2.3
+	v6-00:2.3
+	v5-02-NRT-18:2.3
+	v5-02:2.3
+	v5-01-NRT-17:2.3
+	v5-01-NRT-16:2.3
+	v5-01-NRT-15:2.3
+	v5-01-NRT-14:2.3
+	neuralnetworks-1-0:2.3.0.14
+	cfm-single-freq-0-1:2.3.0.12
+	v5-01:2.3
+	v5-00:2.3
+	v4-23-TA133:2.3.0.10
+	mus-emls-1-70:2.3.0.8
+	rel-1-0-englocks-work:2.3.0.6
+	VUMLS1-00:2.3
+	VPL1-00:2.3
+	V4-22-NRT-08:2.3
+	VAM1-00:2.3
+	V4-21:2.3.0.4
+	V4-13:2.3
+	V4-12:2.3
+	V4-11:2.3
+	V4-10:2.3
+	V3-43:2.3
+	M4-00:2.3
+	V3-41:2.3
+	V3-40-PlusGM57:2.3.0.2
+	V2-24-NRT-04:2.2
+	V3-33:2.3
+	V2-24:2.2
+	V3-31:2.3
+	V3-30-NRT-05:2.3
+	cfm-01-00:2.3
+	V3-30:2.3
+	V3-20:2.3
+	V3-10:2.3
+	V2-23-NRT-02:2.2
+	V2-23:2.2
+	V2-22-NRT-01:2.2
+	V2-22:2.2
+	V2-21:2.2
+	V2-20:2.2
+	V2-11:2.2
+	V2-10:2.2
+	V2-00:2.2
+	V1-51:2.1
+	V1-50:2.1
+	V1-45:2.1
+	V1-44:2.1
+	V1-43:2.1
+	V1-32:2.1
+	V1-31:2.1
+	V1-30:2.1
+	V1-13:2.1
+	V1-12:2.1
+	V1-11:2.1
+	V1-10:2.1
+	newfwm-feb03:2.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+2.3
+date	2009.06.23.18.26.10;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2005.06.22.18.08.18;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2003.02.04.01.41.06;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.3
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module CS_ZeroFix_M
+
+!--------------------------------------------------------------------
+!  Fix a complex number such that small parts are zeroed out
+
+  implicit NONE
+  private
+  public :: CS_ZeroFix
+
+  interface CS_ZeroFix
+    module procedure CS_ZeroFix_D, CS_ZeroFix_S
+  end interface
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  elemental function CS_ZeroFix_D ( W ) result ( V )
+
+    integer, parameter :: RK = kind(0.0d0)
+
+    complex(rk), intent(in) :: W
+    complex(rk) :: V
+
+    include "cs_zerofix.f9h"
+
+  end function CS_ZeroFix_D
+
+  elemental function CS_ZeroFix_S ( W ) result ( V )
+
+    integer, parameter :: RK = kind(0.0e0)
+
+    complex(rk), intent(in) :: W
+    complex(rk) :: V
+
+    include "cs_zerofix.f9h"
+
+  end function CS_ZeroFix_S
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: read_apriori.f90 is it here $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module CS_ZeroFix_M
+
+! $Log: cs_zerofix_m.f90,v $
+! Revision 2.2  2005/06/22 18:08:18  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.1  2003/02/04 01:41:06  vsnyder
+! Initial commit
+!
+
+@
+
+
+2.2
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d55 1
+a56 1
+!---------------------------- RCS Ident Info -------------------------------
+d58 2
+a59 3
+       "$Id: $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d61 1
+d63 1
+d68 3
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d25 3
+a27 6
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+    &  "$Id: freq_avg_m.f90,v 2.5 2002/10/08 17:08:03 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName= &
+    &  "$RCSfile: freq_avg_m.f90,v $"
+d56 5
+d66 4
+a69 1
+! $Log: $
+@
+

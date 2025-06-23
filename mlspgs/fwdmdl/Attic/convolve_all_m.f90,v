@@ -1,0 +1,5440 @@
+head	2.35;
+access;
+symbols
+	V1-51:2.33
+	V1-50:2.33
+	V1-45:2.32
+	V1-44:2.32
+	V1-43:2.31
+	V1-32:2.31
+	V1-31:2.31
+	V1-30:2.30
+	V1-13:2.28
+	V1-12:2.28
+	V1-11:2.28
+	V1-10:2.28
+	newfwm-feb03:2.28.0.2
+	V1-04:2.5
+	V1-03:2.5
+	V1-02:2.5
+	JointForwardModel:2.12.0.2
+	V1-00:2.5
+	newfwm-sep01:1.29.0.2
+	V0-7:1.29
+	V0-5-Level2:1.26
+	V0-5-SIPS:1.15;
+locks; strict;
+comment	@# @;
+
+
+2.35
+date	2005.07.06.02.15.57;	author vsnyder;	state dead;
+branches;
+next	2.34;
+
+2.34
+date	2005.06.22.18.08.18;	author pwagner;	state Exp;
+branches;
+next	2.33;
+
+2.33
+date	2004.11.01.20.22.46;	author vsnyder;	state Exp;
+branches;
+next	2.32;
+
+2.32
+date	2004.07.07.19.42.11;	author vsnyder;	state Exp;
+branches;
+next	2.31;
+
+2.31
+date	2003.10.09.22.17.30;	author livesey;	state Exp;
+branches;
+next	2.30;
+
+2.30
+date	2003.05.19.19.58.07;	author vsnyder;	state Exp;
+branches;
+next	2.29;
+
+2.29
+date	2003.05.05.23.00.25;	author livesey;	state Exp;
+branches;
+next	2.28;
+
+2.28
+date	2002.11.13.17.07.17;	author livesey;	state Exp;
+branches
+	2.28.2.1;
+next	2.27;
+
+2.27
+date	2002.10.10.19.36.22;	author vsnyder;	state Exp;
+branches;
+next	2.26;
+
+2.26
+date	2002.10.10.01.00.10;	author vsnyder;	state Exp;
+branches;
+next	2.25;
+
+2.25
+date	2002.10.10.00.54.16;	author vsnyder;	state Exp;
+branches;
+next	2.24;
+
+2.24
+date	2002.10.08.17.08.01;	author pwagner;	state Exp;
+branches;
+next	2.23;
+
+2.23
+date	2002.09.26.18.01.52;	author livesey;	state Exp;
+branches;
+next	2.22;
+
+2.22
+date	2002.09.11.17.43.39;	author pwagner;	state Exp;
+branches;
+next	2.21;
+
+2.21
+date	2002.09.10.17.05.45;	author livesey;	state Exp;
+branches;
+next	2.20;
+
+2.20
+date	2002.09.07.00.52.24;	author vsnyder;	state Exp;
+branches;
+next	2.19;
+
+2.19
+date	2002.09.05.20.48.13;	author livesey;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2002.08.20.22.36.39;	author livesey;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2002.07.23.22.26.38;	author livesey;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2002.07.16.08.47.11;	author mjf;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2002.07.08.17.45.38;	author zvi;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2002.07.05.07.52.46;	author zvi;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2002.06.28.11.06.47;	author zvi;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2002.06.19.11.00.31;	author zvi;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2002.06.17.22.19.36;	author bill;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2002.06.17.16.31.04;	author bill;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2002.06.07.23.22.36;	author bill;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2002.06.07.04.50.25;	author bill;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2002.06.04.10.28.02;	author zvi;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2002.05.22.19.42.44;	author zvi;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2002.02.15.22.52.16;	author livesey;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2002.02.06.08.31.55;	author zvi;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2002.02.02.11.20.17;	author zvi;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2002.01.27.08.37.47;	author zvi;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.11.08.00.10.36;	author livesey;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2001.09.17.20.26.26;	author livesey;	state Exp;
+branches;
+next	1.29;
+
+1.29
+date	2001.08.24.03.42.26;	author jonathan;	state Exp;
+branches
+	1.29.2.1;
+next	1.28;
+
+1.28
+date	2001.05.18.00.01.19;	author livesey;	state Exp;
+branches;
+next	1.27;
+
+1.27
+date	2001.05.09.19.46.49;	author vsnyder;	state Exp;
+branches;
+next	1.26;
+
+1.26
+date	2001.05.03.02.03.16;	author vsnyder;	state Exp;
+branches;
+next	1.25;
+
+1.25
+date	2001.05.02.20.49.23;	author zvi;	state Exp;
+branches;
+next	1.24;
+
+1.24
+date	2001.05.01.17.48.33;	author vsnyder;	state Exp;
+branches;
+next	1.23;
+
+1.23
+date	2001.05.01.00.42.54;	author zvi;	state Exp;
+branches;
+next	1.22;
+
+1.22
+date	2001.04.28.17.48.08;	author livesey;	state Exp;
+branches;
+next	1.21;
+
+1.21
+date	2001.04.27.22.37.54;	author vsnyder;	state Exp;
+branches;
+next	1.20;
+
+1.20
+date	2001.04.27.00.13.10;	author zvi;	state Exp;
+branches;
+next	1.19;
+
+1.19
+date	2001.04.26.22.54.41;	author zvi;	state Exp;
+branches;
+next	1.18;
+
+1.18
+date	2001.04.20.23.09.13;	author livesey;	state Exp;
+branches;
+next	1.17;
+
+1.17
+date	2001.04.20.02.57.09;	author livesey;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2001.04.19.23.56.52;	author livesey;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2001.04.10.10.14.16;	author zvi;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2001.04.10.02.25.14;	author livesey;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2001.04.10.01.16.34;	author livesey;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2001.04.05.22.54.39;	author vsnyder;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2001.03.31.23.40.55;	author zvi;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2001.03.29.12.08.17;	author zvi;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2001.03.28.01.32.12;	author livesey;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2001.03.28.00.40.01;	author zvi;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2001.03.26.17.56.14;	author zvi;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2001.03.21.01.10.31;	author livesey;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2001.03.07.23.45.14;	author zvi;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.02.26.09.01.16;	author zvi;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2001.02.19.22.20.40;	author zvi;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.02.19.22.14.21;	author zvi;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.01.31.22.40.12;	author zvi;	state Exp;
+branches;
+next	;
+
+1.29.2.1
+date	2001.09.13.11.18.20;	author zvi;	state Exp;
+branches;
+next	;
+
+2.28.2.1
+date	2003.03.20.01.42.26;	author vsnyder;	state Exp;
+branches;
+next	2.28.2.2;
+
+2.28.2.2
+date	2003.03.21.02.47.03;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.35
+log
+@Replaced by Convolve_All_m.f90
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Convolve_All_m
+
+  implicit NONE
+  private
+  public :: CONVOLVE_ALL
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: convolve_all_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+ contains
+! ============================================  convolve_all =====
+! This subprogram adds the effects of antenna smearing to the radiance.
+
+  subroutine Convolve_All ( FwdMdlConfig, FwdMdlIn, FwdMdlExtra, maf, channel, &
+           & winStart, winFinish, Qtys, temp, ptan, radiance, update, chi_in,  &
+           & rad_in, chi_out, dhdz_out, dx_dh_out, sbRatio, AntennaPattern,    &
+           & t_deriv_flag, Grids_f, Jacobian, rowFlags, req, rsc, earth_frac,  &
+           & surf_angle, di_dt, dx_dt, d2x_dxdt, dxdt_tan, dxdt_surface, di_df,&
+           & ptan_Der )
+
+    use Allocate_Deallocate, only: allocate_test, deallocate_test
+    use AntennaPatterns_m, only: AntennaPattern_T
+    use ForwardModelConfig, only: ForwardModelConfig_T, QtyStuff_T
+    use Fov_Convolve_m, only: Fov_Convolve
+    use Load_sps_data_m, only: Grids_T
+    use MatrixModule_0, only: M_ABSENT, M_BANDED, M_FULL, CHECKFORSIMPLEBANDEDLAYOUT
+    use MatrixModule_1, only: CREATEBLOCK, FINDBLOCK, MATRIX_T
+    use MLSCommon, only: I4, R8, RP, RM
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use VectorsModule, only: Vector_T, VectorValue_T
+
+! inputs
+
+    type (ForwardModelConfig_T), intent(in) :: FwdMdlCONFIG
+    type (Vector_t), intent(in) :: FwdMdlIN, FwdMdlEXTRA
+
+    integer, intent(in) :: MAF
+    integer, intent(in) :: CHANNEL
+    integer, intent(in) :: WINSTART
+    integer, intent(in) :: WINFINISH
+    type(QtyStuff_T), intent(in) :: Qtys(:)
+
+    type (vectorvalue_t), intent(in) :: TEMP
+    type (vectorvalue_t), intent(in) :: PTAN
+
+    real(rp), intent(in) :: chi_in(:)    ! inputted pointing angles radians
+    real(rp), intent(in) :: rad_in(:)    ! inputted radiances
+    real(rp), intent(in) :: chi_out(:)   ! outputted pointing angles radians
+    real(rp), intent(in) :: dhdz_out(:)  ! dhdz on the outputted pointing grid
+    real(rp), intent(in) :: dx_dh_out(:) ! dx/dh on the outputted pointing grid
+
+    real(r8), intent(in) :: SbRatio
+
+    type(antennaPattern_T), intent(in) :: AntennaPattern
+
+    logical, dimension(:), pointer :: t_deriv_flag
+
+    type (Grids_T), intent(in) :: Grids_f
+    type (Matrix_t), optional, intent(inout) :: Jacobian
+
+    logical, intent(inout) :: rowFlags(:) ! Flag to calling code
+
+    real(rp), optional, intent(in) :: Req ! equivalent earth radius
+    real(rp), optional, intent(in) :: Rsc ! spacecraft radius
+    real(rp), optional, intent(in) :: Earth_frac ! fraction of earth in total
+!                                   filled out pattern
+    logical, intent(in), optional :: Ptan_der ! Flag
+    logical, intent(in) :: Update       ! If set, just add to radiance don't overwrite
+
+! note req, rsc and earth_frac are non critical parameters and don't
+! really need to be supplied externally. They are used to partition the
+! full fft field between earth and space components.
+
+! stuff for temperature derivatives
+
+    real(rp), optional, intent(in) :: surf_angle ! An angle that defines the
+!                                   Earth surface.
+    real(rp), optional, intent(in) :: di_dt(:,:) ! derivative of radiance wrt
+!                                   temperature on chi_in
+    real(rp), optional, intent(in) :: dx_dt(:,:) ! derivative of angle wrt
+!                                   temperature on chi_in
+    real(rp), optional, intent(in) :: d2x_dxdt(:,:) ! 2nd derivative wrt angle
+!                                   temperature on chi_in
+    real(rp), optional, intent(in) :: dxdt_tan(:,:) ! derivative of angle wrt
+!                                   temperature on chi_in
+    real(rp), optional, intent(in) :: dxdt_surface(:,:) ! derivative of angle
+!                                   wrt temperature at the surface
+
+! stuff for atmospheric derivatives
+
+    real(rp), optional, intent(in) :: di_df(:,:) ! mixing ratio derivatives or
+!                                   any parameter where a simple convolution
+!                                   will suffice
+! outputs
+
+    type (VectorValue_T), intent(inout) :: RADIANCE   ! Outputed radiances
+
+! Internal stuff
+
+    integer(i4) :: k, Row, Col, ind, sps_i, ptg_i, noPtan, noChans, jf, nfz
+
+    integer :: n_t_zeta, no_sv_p_t, sv_t_len, sv_f, f_len
+
+    real(r8) :: R
+
+    real(r8), pointer :: drad_dt_out(:,:)
+    real(r8), pointer :: drad_df_out(:,:)
+
+    real(r8), pointer :: temp_dxdt_tan(:,:)
+
+    real(r8) :: SRad(ptan%template%noSurfs), di_dx(ptan%template%noSurfs)
+
+    logical :: my_ptan_der
+
+    my_ptan_der = .false.
+    if ( present ( ptan_der ) ) my_ptan_der = ptan_der
+    n_t_zeta = temp%template%noSurfs
+    no_sv_p_t = winFinish - winStart + 1
+    sv_t_len = n_t_zeta * no_sv_p_t
+
+    noChans = Radiance%template%noChans
+    noPtan = ptan%template%nosurfs
+
+    f_len = 0
+    if ( present(di_df) ) f_len = SIZE(di_df,dim=2)
+
+! Load the Radiance values into the Radiance structure:
+
+    SRad = 0.0_r8
+    call fov_convolve ( antennaPattern, chi_in, rad_in, chi_out, SRad,  &
+                     &  drad_dx_out=di_dx )
+
+    if ( update ) then
+      do ptg_i = 1, noPtan
+        ind = channel + noChans * (ptg_i - 1)
+        Radiance%values(ind,maf) = Radiance%values(ind,maf) + &
+          &  sbRatio * SRad(ptg_i)
+      end do
+    else
+      do ptg_i = 1, noPtan
+        ind = channel + noChans * (ptg_i - 1)
+        Radiance%values(ind,maf) = sbRatio * SRad(ptg_i)
+      end do
+    end if
+
+    if ( .not. present(Jacobian) ) return
+
+! Compute dI/dPtan using the chain rule:
+
+    SRad = sbRatio * di_dx * dx_dh_out * dhdz_out
+
+! Now, load the dI/dPtan values into the Jacobian:
+! (First, find index location in Jacobian and write the derivative)
+
+    row = FindBlock( Jacobian%row, radiance%index, maf )
+    rowFlags(row) = .TRUE.
+
+! Of course, we might not care about ptan
+
+    if ( my_ptan_der ) then
+      col = FindBlock ( Jacobian%col, ptan%index, maf )
+
+      select case (jacobian%block(Row,col)%kind)
+        case (m_absent)
+          call CreateBlock ( Jacobian, row, col, m_banded, noPtan*noChans, &
+                           & bandHeight=noChans, init=0.0_rm )
+        case (m_banded)
+          call CheckForSimpleBandedLayout ( jacobian%block(row,col), noChans, &
+            & 'd[radiance]/d[ptan] in convolution' )
+        case default
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'Wrong matrix type for ptan derivative' )
+      end select
+
+      if ( update ) then 
+        do ptg_i = 1, noPtan
+          ind = channel + noChans * (ptg_i-1)
+          r = jacobian%block(row,col)%values(ind,1)
+          Jacobian%block(row,col)%values(ind, 1) = r + SRad(ptg_i)
+        end do
+      else
+        do ptg_i = 1, noPtan
+          ind = channel + noChans * (ptg_i-1)
+          Jacobian%block(row,col)%values(ind, 1) = SRad(ptg_i)
+        end do
+      end if
+    end if
+
+    if ( .not. ANY( (/FwdMdlConfig%temp_der, FwdMdlConfig%atmos_der, &
+                  &  FwdMdlConfig%spect_der/)) ) return
+
+    nullify ( drad_dt_out, drad_df_out, temp_dxdt_tan )
+
+    if ( FwdMdlConfig%atmos_der .AND. .not. FwdMdlConfig%temp_der ) then
+
+      SRad = 0.0_r8
+      call allocate_test ( drad_df_out, noPtan, f_len, 'drad_df_out', ModuleName )
+      call fov_convolve ( antennaPattern, chi_in, Rad_in, chi_out, SRad,  &
+                        & DI_DF=di_df,  DI_DF_FLAG=grids_f%deriv_flags,  &
+                        & DRAD_DF_OUT=drad_df_out )
+
+    else if ( FwdMdlConfig%temp_der ) then
+
+      call allocate_test ( drad_dt_out, noPtan, sv_t_len, 'drad_dt_out', &
+                         & ModuleName )
+
+      call allocate_test ( temp_dxdt_tan, noPtan, sv_t_len, 'temp_dxdt_tan', &
+                        &  ModuleName )
+
+      temp_dxdt_tan = dxdt_tan - SPREAD(dxdt_surface(1,:),1,noPtan)
+
+      if ( FwdMdlConfig%atmos_der ) then
+
+        call allocate_test ( drad_df_out, noPtan, f_len, 'drad_df_out', ModuleName)
+        call fov_convolve ( antennaPattern, chi_in, Rad_in, chi_out, SRad,  &
+           & SURF_ANGLE=surf_angle, DI_DT=di_dt, DX_DT=dx_dt,               &
+           & DDX_DXDT=d2x_dxdt, DX_DT_OUT=temp_dxdt_tan,                    &
+           & DRAD_DT_OUT=drad_dt_out, DI_DF=di_df, DI_DT_FLAG=t_deriv_flag, &
+           & DI_DF_FLAG=grids_f%deriv_flags, DRAD_DF_OUT=drad_df_out )
+             
+
+      else
+
+        call fov_convolve ( antennaPattern, chi_in, Rad_in, chi_out, SRad,  &
+           & SURF_ANGLE=surf_angle, DI_DT=di_dt, DX_DT=dx_dt,               &
+           & DDX_DXDT=d2x_dxdt, DX_DT_OUT=temp_dxdt_tan,                    &
+           & DI_DT_FLAG=t_deriv_flag, DRAD_DT_OUT=drad_dt_out )
+
+      end if
+
+! Load the Temp. derivative values into the Jacobian
+
+      row = FindBlock( Jacobian%row, Radiance%index, maf )
+      rowFlags(row) = .TRUE.
+
+      sv_t_len = 0
+      do jf = winStart, winFinish
+
+        col = FindBlock ( Jacobian%col, temp%index, jf )
+        select case ( Jacobian%block(row,col)%kind )
+          case ( m_absent )
+            call CreateBlock ( Jacobian, row, col, m_full, init=0.0_rm )
+          case ( m_full )
+          case default
+            call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & 'Wrong type block for temperature derivative matrix' )
+        end select
+
+        do k = 1, n_t_zeta
+
+! Check if derivatives are needed for this (zeta & phi) :
+
+          sv_t_len = sv_t_len + 1
+          if ( .NOT. t_deriv_flag(sv_t_len)) cycle
+
+! run through representation basis coefficients
+        
+          if ( update ) then
+            do ptg_i = 1, noPtan
+              r = drad_dt_out(ptg_i,sv_t_len)
+              ind = channel + noChans * (ptg_i-1)
+              jacobian%block(row,col)%values(ind,k) =  &
+                & jacobian%block(row,col)%values(ind,k) + sbRatio * r
+            end do
+          else
+            do ptg_i = 1, noPtan
+              r = drad_dt_out(ptg_i,sv_t_len)
+              ind = channel + noChans * (ptg_i-1)
+              jacobian%block(row,col)%values(ind,k) = sbRatio * r
+            end do
+          end if
+        end do
+
+      end do
+
+      call deallocate_test ( drad_dt_out, 'drad_dt_out', ModuleName )
+      call deallocate_test ( temp_dxdt_tan, 'temp_dxdt_tan', ModuleName )
+
+    end if
+
+    if ( .not. FwdMdlConfig%atmos_der) Return
+
+! load Atmospheric derivatives into jacobian
+
+    row = FindBlock( Jacobian%row, Radiance%index, maf )
+    rowFlags(row) = .TRUE.
+
+    do sps_i = 1, size(qtys)
+
+      if ( .not. qtys(sps_i)%foundInFirst ) cycle
+
+      sv_f = grids_f%l_v(sps_i-1)
+      nfz = (Grids_f%l_f(sps_i) - Grids_f%l_f(sps_i-1)) * &
+          & (Grids_f%l_z(sps_i) - Grids_f%l_z(sps_i-1))
+
+      do jf = Grids_f%windowStart(sps_i), Grids_f%windowfinish(sps_i)
+
+        col = FindBlock ( Jacobian%col, qtys(sps_i)%qty%index, jf)
+        select case ( Jacobian%block(row,col)%kind )
+          case ( m_absent )
+            call CreateBlock ( Jacobian, row, col, m_full, init=0.0_rm )
+          case ( m_full )
+          case default
+            call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'Wrong type block for atmospheric derivative matrix' )
+        end select
+
+        do k = 1, nfz
+! Check if derivatives are needed for this (zeta & phi) :
+
+          sv_f = sv_f + 1
+          if ( .NOT. Grids_f%deriv_flags(sv_f) ) cycle
+
+! run through representation basis coefficients
+
+          if ( update ) then 
+            do ptg_i = 1, noPtan
+              r = drad_df_out(ptg_i,sv_f)
+              ind = channel + noChans * (ptg_i-1)
+              jacobian%block(row,col)%values(ind,k) = &
+                & jacobian%block(row,col)%values(ind,k) + sbRatio * r
+            end do
+          else
+            do ptg_i = 1, noPtan
+              r = drad_df_out(ptg_i,sv_f)
+              ind = channel + noChans * (ptg_i-1)
+              jacobian%block(row,col)%values(ind,k) = sbRatio * r
+            end do
+          end if
+        end do
+
+      end do
+
+    end do
+
+    call deallocate_test ( drad_df_out, 'drad_df_out', ModuleName )
+
+  end subroutine Convolve_All
+
+  logical function not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id: convolve_all_m.f90,v 2.34 2005/06/22 18:08:18 pwagner Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
+end module Convolve_All_m
+
+! $Log: convolve_all_m.f90,v $
+! Revision 2.34  2005/06/22 18:08:18  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.33  2004/11/01 20:22:46  vsnyder
+! Moved QtyStuff_t and associated dump routine to ForwardModelConfig
+!
+! Revision 2.32  2004/07/07 19:42:11  vsnyder
+! Use new Init argument of CreateBlock
+!
+! Revision 2.31  2003/10/09 22:17:30  livesey
+! Added call to CheckForSimpleBandedLayout
+!
+! Revision 2.30  2003/05/19 19:58:07  vsnyder
+! Remove USEs for unreferenced symbols, remove unused local variables
+!
+! Revision 2.29  2003/05/05 23:00:25  livesey
+! Merged in feb03 newfwm branch
+!
+! Revision 2.28.2.2  2003/03/21 02:47:03  vsnyder
+! Use an array of pointers to quantities instead of GetQuantityForForwardModel
+!
+! Revision 2.28.2.1  2003/03/20 01:42:26  vsnyder
+! Revise Grids_T structure
+!
+! Revision 2.28  2002/11/13 17:07:17  livesey
+! Bug fix, now takes FwdMdlExtra
+!
+! Revision 2.27  2002/10/10 19:36:22  vsnyder
+! Add di_dt_flag
+!
+! Revision 2.26  2002/10/10 01:00:10  vsnyder
+! Delete unreferenced entities from USE list
+!
+! Revision 2.25  2002/10/10 00:54:16  vsnyder
+! Give Id a value, sort USEs, cosmetic changes
+!
+! Revision 2.24  2002/10/08 17:08:01  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.23  2002/09/26 18:01:52  livesey
+! Now uses GetQuantityForForwardModel.
+!
+! Revision 2.22  2002/09/11 17:43:39  pwagner
+! Began changes needed to conform with matrix%values type move to rm from r8
+!
+! Revision 2.21  2002/09/10 17:05:45  livesey
+! Added update argument
+!
+! Revision 2.20  2002/09/07 00:52:24  vsnyder
+! Cosmetic changes, copyright notice
+!
+! Revision 2.19  2002/09/05 20:48:13  livesey
+! Fixed handling of vmr derivative flags.
+!
+! Revision 2.18  2002/08/20 22:36:39  livesey
+! Moved uses inside routine
+!
+! Revision 2.17  2002/07/23 22:26:38  livesey
+! Added ptan_der handling
+!
+! Revision 2.16  2002/07/16 08:47:11  mjf
+! Nullified temp_dxdt_tan along with drad_dt_out, etc.
+!
+! Revision 2.15  2002/07/08 17:45:38  zvi
+! Remove unnecessary variables
+!
+! Revision 2.14  2002/07/05 07:52:46  zvi
+! Coor. switch (phi,z) -> (z,phi)
+!
+! Revision 2.13  2002/06/28 11:06:47  zvi
+! compute dI/dPtan using chain rule
+!
+! Revision 2.12  2002/06/19 11:00:31  zvi
+! Removing debug statements
+!
+! Revision 2.10  2002/06/17 23:22:36  bill
+! Add zvis modifications, some name changing
+!
+! Revision 2.9  2002/06/07 23:22:36  bill
+! debugging study--wgr
+!
+! Revision 2.8  2002/06/07 04:50:25  bill
+! fixes and improvements--wgr
+!
+! Revision 2.7  2002/06/04 10:28:02  zvi
+! Encorporate deriv. flag into convolution, fixing a bug with 
+! species ruuning index
+!
+! Revision 2.6  2002/05/22 19:42:44  zvi
+! Fix a bug in the mol. index loop
+!
+! Revision 2.5  2002/02/15 22:52:16  livesey
+! Bug fix for case where no ptan derivative
+!
+! Revision 2.4  2002/02/06 08:31:55  zvi
+! Adding Temp. Deriv. correction
+!
+! Revision 2.3  2002/02/02 11:20:17  zvi
+! Code to overwrite the l2cf integration & tanget grids
+!
+! Revision 2.2  2002/01/27 08:37:47  zvi
+! Adding Users selected coefficients for derivatives
+!
+! Revision 2.1  2001/11/08 00:10:36  livesey
+! Updated for extinction stuff
+!
+! Revision 2.0  2001/09/17 20:26:26  livesey
+! New forward model
+!
+! Revision 1.29.2.1  2001/09/13 11:18:20  zvi
+! Fix temp. derv. bug
+!
+! Revision 1.29  2001/08/24 03:42:26  jonathan
+! change Ntr to Ntr-1 in do while loop
+!
+! Revision 1.28  2001/05/18 00:01:19  livesey
+! Zero out some arrays to start with (mainly to make them safe to dump).
+!
+! Revision 1.27  2001/05/09 19:46:49  vsnyder
+! Use new bandHeight argument of createBlock
+!
+! Revision 1.26  2001/05/03 02:03:16  vsnyder
+! Insert copyright notice
+!
+! Revision 1.25  2001/05/02 20:49:23  zvi
+! Cleaning up code
+!
+! Revision 1.24  2001/05/01 17:48:33  vsnyder
+! Cosmetic changes -- put dummy arg declarations in same order as in header
+!
+! Revision 1.23  2001/05/01 00:42:54  zvi
+! Fixing phi window bug
+!
+! Revision 1.22  2001/04/28 17:48:08  livesey
+! Now accepts and sets rowFlags
+!
+! Revision 1.21  2001/04/27 22:37:54  vsnyder
+! Don't compute derivatives if Jacobian isn't present
+!
+! Revision 1.20  2001/04/27 00:13:10  zvi
+! Fixing some more phiwindow bug
+!
+! Revision 1.19  2001/04/26 22:54:41  zvi
+! Fixing some phiwindow bug
+!
+! Revision 1.18  2001/04/20 23:09:13  livesey
+! Cleaned up multi-channel case, also does folding in place
+!
+! Revision 1.17  2001/04/20 02:57:09  livesey
+! Writes derivatives in matrix_t
+!
+! Revision 1.16  2001/04/19 23:56:52  livesey
+! New parameters
+!
+! Revision 1.15  2001/04/10 10:14:16  zvi
+! Fixing bug in convolve routines
+!
+! Revision 1.14  2001/04/10 02:25:14  livesey
+! Tidied up some code
+!
+! Revision 1.13  2001/04/10 01:16:34  livesey
+! Tidied up convolution
+!
+! Revision 1.12  2001/04/05 22:54:39  vsnyder
+! Use AntennaPatterns_M
+!
+! Revision 1.11  2001/03/31 23:40:55  zvi
+! Eliminate l2pcdim (dimension parameters) move to allocatable ..
+!
+! Revision 1.10  2001/03/29 12:08:17  zvi
+! Fixing bugs
+!
+! Revision 1.9  2001/03/28 01:32:12  livesey
+! Working version
+!
+! Revision 1.8  2001/03/28 00:40:01  zvi
+! Fixing up convolution code, some minor changes in geoc_geod
+!
+! Revision 1.7  2001/03/26 17:56:14  zvi
+! New codes to deal with dh_dt_path issue.. now being computed on the fly
+!
+! Revision 1.6  2001/03/21 01:10:31  livesey
+! Now gets Ptan from vector
+!
+! Revision 1.5  2001/03/07 23:45:14  zvi
+! Adding logical flags fro Temp, Atmos & Spect. derivatives
+!
+! Revision 1.1  2000/06/21 21:56:14  zvi
+! First version D.P.
+!
+! Revision 1.1  2000/05/04 18:12:05  vsnyder
+! Initial conversion to Fortran 90
+@
+
+
+2.34
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d20 1
+a20 1
+       "$RCSfile: $"
+d356 1
+a356 1
+       "$Id: $"
+d365 3
+@
+
+
+2.33
+log
+@Moved QtyStuff_t and associated dump routine to ForwardModelConfig
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d18 3
+a20 6
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+    & "$Id: convolve_all_m.f90,v 2.32 2004/07/07 19:42:11 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName = &
+    & "$RCSfile: convolve_all_m.f90,v $"
+d353 6
+a358 1
+  logical function NOT_USED_HERE()
+d360 1
+a360 1
+  end function NOT_USED_HERE
+d365 3
+@
+
+
+2.32
+log
+@Use new Init argument of CreateBlock
+@
+text
+@d12 1
+a12 1
+    & "$Id: convolve_all_m.f90,v 2.31 2003/10/09 22:17:30 livesey Exp $"
+d31 1
+a31 2
+    use ForwardModelConfig, only: ForwardModelConfig_T
+    use ForwardModelVectorTools, only: QtyStuff_T
+d355 3
+@
+
+
+2.31
+log
+@Added call to CheckForSimpleBandedLayout
+@
+text
+@d12 1
+a12 1
+    & "$Id: convolve_all_m.f90,v 2.30 2003/05/19 19:58:07 vsnyder Exp $"
+d162 1
+a162 1
+! (First, find index location Jacobian and write the derivative)
+d175 1
+a175 2
+                           & bandHeight=noChans )
+          jacobian%block(row,col)%values = 0.0_rm
+d251 1
+a251 2
+            call CreateBlock ( Jacobian, row, col, m_full )
+            jacobian%block(row,col)%values = 0.0_rm
+d310 1
+a310 2
+            call CreateBlock ( Jacobian, row, col, m_full )
+            jacobian%block(row,col)%values = 0.0_rm
+d356 3
+@
+
+
+2.30
+log
+@Remove USEs for unreferenced symbols, remove unused local variables
+@
+text
+@d12 1
+a12 1
+    & "$Id: convolve_all_m.f90,v 2.29 2003/05/05 23:00:25 livesey Exp $"
+d35 1
+a35 1
+    use MatrixModule_0, only: M_ABSENT, M_BANDED, M_FULL
+d178 2
+d182 1
+a182 1
+                          & 'Wrong matrix type for ptan derivative' )
+d359 3
+@
+
+
+2.29
+log
+@Merged in feb03 newfwm branch
+@
+text
+@d12 1
+a12 1
+    & "$Id$"
+d15 1
+a15 1
+    & "$RCSfile$"
+a33 1
+    use Intrinsic, only: L_VMR
+a122 1
+    logical :: foundInFirst             ! Flag
+d356 4
+a359 1
+! $Log$
+@
+
+
+2.28
+log
+@Bug fix, now takes FwdMdlExtra
+@
+text
+@d12 1
+a12 1
+    & "$Id: convolve_all_m.f90,v 2.27 2002/10/10 19:36:22 vsnyder Exp $"
+d15 1
+a15 1
+    & "$RCSfile: convolve_all_m.f90,v $"
+d23 1
+a23 1
+           & winStart, winFinish, mol_cat_index, temp, ptan, radiance, update, chi_in, &
+d32 1
+a32 1
+    use ForwardModelVectorTools, only: GetQuantityForForwardModel
+d51 1
+a51 1
+    integer, intent(in) :: Mol_Cat_Index(:)
+d110 1
+a110 1
+    type (VectorValue_T), pointer :: F   ! An arbitrary species
+d112 1
+a112 3
+    integer(i4) :: k, Row, Col, ind, jz, sps_i, ptg_i, noPtan, noChans, jf
+
+    integer :: n_t_zeta, no_sv_p_t, sv_t_len, sv_f, f_len, no_mol
+a131 1
+    no_mol = size(mol_cat_index)
+d299 3
+a301 2
+    sv_f = 0
+    do sps_i = 1, no_mol
+d303 3
+a305 11
+      jz = mol_cat_index(sps_i)
+      f => GetQuantityForForwardModel ( FwdMdlIn, FwdMdlExtra, quantityType=l_vmr,&
+        & molIndex=jz, radiometer=fwdMdlConfig%signals(1)%radiometer, &
+        & noError=.true., config=fwdMdlConfig, foundInFirst=foundInFirst )
+      
+      if ( .not. associated(f) .or. .not. foundInFirst ) then
+        jf = Grids_f%windowfinish(sps_i)-Grids_f%windowStart(sps_i)+1
+        k = Grids_f%no_f(sps_i) * Grids_f%no_z(sps_i)
+        sv_f = sv_f + jf * k
+        cycle
+      end if
+d309 1
+a309 1
+        col = FindBlock ( Jacobian%col, f%index, jf)
+d320 1
+a320 2
+        do k = 1, Grids_f%no_f(sps_i) * Grids_f%no_z(sps_i)
+
+d358 10
+a367 1
+! $Log: convolve_all_m.f90,v $
+@
+
+
+2.28.2.1
+log
+@Revise Grids_T structure
+@
+text
+@d12 1
+a12 1
+    & "$Id: convolve_all_m.f90,v 2.28 2002/11/13 17:07:17 livesey Exp $"
+d112 1
+a112 1
+    integer(i4) :: k, Row, Col, ind, jz, sps_i, ptg_i, noPtan, noChans, jf, nfz
+d302 1
+d310 6
+a315 5
+      if ( .not. associated(f) .or. .not. foundInFirst ) cycle
+
+      sv_f = grids_f%l_v(sps_i-1)
+      nfz = (Grids_f%l_f(sps_i) - Grids_f%l_f(sps_i-1)) * &
+          & (Grids_f%l_z(sps_i) - Grids_f%l_z(sps_i-1))
+d330 2
+a331 1
+        do k = 1, nfz
+a369 3
+! Revision 2.28  2002/11/13 17:07:17  livesey
+! Bug fix, now takes FwdMdlExtra
+!
+@
+
+
+2.28.2.2
+log
+@Use an array of pointers to quantities instead of GetQuantityForForwardModel
+@
+text
+@d12 1
+a12 1
+    & "$Id: convolve_all_m.f90,v 2.28.2.1 2003/03/20 01:42:26 vsnyder Exp $"
+d23 1
+a23 1
+           & winStart, winFinish, Qtys, temp, ptan, radiance, update, chi_in,  &
+d32 1
+a32 1
+    use ForwardModelVectorTools, only: QtyStuff_T
+d51 1
+a51 1
+    type(QtyStuff_T), intent(in) :: Qtys(:)
+d110 1
+a110 1
+    integer(i4) :: k, Row, Col, ind, sps_i, ptg_i, noPtan, noChans, jf, nfz
+d112 3
+a114 1
+    integer :: n_t_zeta, no_sv_p_t, sv_t_len, sv_f, f_len
+d134 1
+d302 1
+a302 1
+    do sps_i = 1, size(qtys)
+d304 6
+a309 1
+      if ( .not. qtys(sps_i)%foundInFirst ) cycle
+d317 1
+a317 1
+        col = FindBlock ( Jacobian%col, qtys(sps_i)%qty%index, jf)
+a366 3
+! Revision 2.28.2.1  2003/03/20 01:42:26  vsnyder
+! Revise Grids_T structure
+!
+@
+
+
+2.27
+log
+@Add di_dt_flag
+@
+text
+@d12 1
+a12 1
+    & "$Id: convolve_all_m.f90,v 2.26 2002/10/10 01:00:10 vsnyder Exp $"
+d126 1
+d306 1
+a306 1
+      f => GetQuantityForForwardModel ( FwdMdlIn, quantityType=l_vmr,&
+d308 1
+a308 1
+        & noError=.true., config=fwdMdlConfig )
+d310 1
+a310 1
+      if ( .not. associated(f) ) then
+d370 3
+@
+
+
+2.26
+log
+@Delete unreferenced entities from USE list
+@
+text
+@d12 1
+a12 1
+    & "$Id: convolve_all_m.f90,v 2.25 2002/10/10 00:54:16 vsnyder Exp $"
+d228 5
+a232 3
+           & SURF_ANGLE=surf_angle, DI_DT=di_dt, DX_DT=dx_dt, DDX_DXDT=d2x_dxdt,  &
+           & DX_DT_OUT=temp_dxdt_tan, DRAD_DT_OUT=drad_dt_out, DI_DF=di_df,  &
+           & DI_DF_FLAG=grids_f%deriv_flags,  DRAD_DF_OUT=drad_df_out )
+d237 3
+a239 2
+           & SURF_ANGLE=surf_angle, DI_DT=di_dt, DX_DT=dx_dt, DDX_DXDT=d2x_dxdt, &
+           & DX_DT_OUT=temp_dxdt_tan, DRAD_DT_OUT=drad_dt_out )
+d369 3
+@
+
+
+2.25
+log
+@Give Id a value, sort USEs, cosmetic changes
+@
+text
+@d12 1
+a12 1
+    & "$Id: convolve_all_m.f90,v 2.24 2002/10/08 17:08:01 pwagner Exp $"
+d34 1
+a34 1
+    use intrinsic, only: L_VMR
+d38 1
+a38 1
+    use MLSCommon, only: I4, r4, R8, rp, RM
+a39 1
+    use Molecules, only: L_EXTINCTION
+d51 1
+a51 1
+    integer, intent(IN) :: mol_cat_index(:)
+d366 3
+@
+
+
+2.24
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d12 2
+a13 2
+    & "$Id: convolve_all_m.f90,v 2.23 2002/09/26 18:01:52 livesey Exp $"
+  character (len=len(idParm)) :: Id
+a28 3
+    use MLSCommon, only: I4, r4, R8, rp, RM
+    use intrinsic, only: L_VMR
+    use Molecules, only: L_EXTINCTION
+d30 1
+d34 2
+a35 3
+    use VectorsModule, only: Vector_T, VectorValue_T
+    use AntennaPatterns_m, only: AntennaPattern_T
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+d38 4
+a41 1
+    use Load_sps_data_m, only: Grids_T
+d358 1
+a358 1
+ end subroutine Convolve_All
+d360 1
+a360 1
+  logical function not_used_here()
+d362 1
+a362 1
+  end function not_used_here
+d367 3
+@
+
+
+2.23
+log
+@Now uses GetQuantityForForwardModel.
+@
+text
+@d12 1
+a12 1
+    & "$Id: convolve_all_m.f90,v 2.22 2002/09/11 17:43:39 pwagner Exp $"
+d16 1
+d360 4
+d367 3
+@
+
+
+2.22
+log
+@Began changes needed to conform with matrix%values type move to rm from r8
+@
+text
+@d12 1
+a12 1
+    & "$Id: convolve_all_m.f90,v 2.21 2002/09/10 17:05:45 livesey Exp $"
+d33 1
+d35 1
+a35 1
+    use VectorsModule, only: Vector_T, VectorValue_T, GetVectorQuantityByType
+d302 4
+a305 9
+      k = FwdMdlConfig%molecules(jz)
+      if ( k == l_extinction ) then
+        f => GetVectorQuantityByType ( FwdMdlIn, quantityType= &
+            l_extinction, radiometer=fwdMdlConfig%signals(1)%radiometer, noError=.true.)
+      else
+        f => GetVectorQuantityByType ( FwdMdlIn, &
+           & quantityType=l_vmr, molecule=k, noError=.true. )
+      end if
+
+d362 3
+@
+
+
+2.21
+log
+@Added update argument
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+d12 1
+a12 1
+    & "$Id: convolve_all_m.f90,v 2.20 2002/09/07 00:52:24 vsnyder Exp $"
+d28 1
+a28 1
+    use MLSCommon, only: I4, r4, R8, rp
+d179 1
+a179 1
+          jacobian%block(row,col)%values = 0.0_r8
+d251 1
+a251 1
+            jacobian%block(row,col)%values = 0.0_r8
+d323 1
+a323 1
+            jacobian%block(row,col)%values = 0.0_r8
+d366 3
+@
+
+
+2.20
+log
+@Cosmetic changes, copyright notice
+@
+text
+@d12 1
+a12 1
+    & "$Id: convolve_all_m.f90,v 2.19 2002/09/05 20:48:13 livesey Exp $"
+d22 1
+a22 1
+           & winStart, winFinish, mol_cat_index, temp, ptan, radiance, chi_in, &
+d77 1
+d145 12
+a156 5
+    do ptg_i = 1, noPtan
+      ind = channel + noChans * (ptg_i - 1)
+      Radiance%values(ind,maf) = Radiance%values(ind,maf) + &
+                                       &  sbRatio * SRad(ptg_i)
+    end do
+d186 12
+a197 6
+      do ptg_i = 1, noPtan
+        ind = channel + noChans * (ptg_i-1)
+        r = jacobian%block(row,col)%values(ind,1)
+        Jacobian%block(row,col)%values(ind, 1) = r + SRad(ptg_i)
+      end do
+
+d267 14
+a280 7
+          do ptg_i = 1, noPtan
+            r = drad_dt_out(ptg_i,sv_t_len)
+            ind = channel + noChans * (ptg_i-1)
+            jacobian%block(row,col)%values(ind,k) =  &
+                 & jacobian%block(row,col)%values(ind,k) + sbRatio * r
+          end do
+
+d339 5
+a343 4
+          do ptg_i = 1, noPtan
+            r = drad_df_out(ptg_i,sv_f)
+            ind = channel + noChans * (ptg_i-1)
+            jacobian%block(row,col)%values(ind,k) = &
+d345 8
+a352 2
+          end do
+
+d366 3
+@
+
+
+2.19
+log
+@Fixed handling of vmr derivative flags.
+@
+text
+@d1 2
+a2 1
+MODULE convolve_all_m
+d4 3
+a6 1
+  implicit none
+d11 5
+a15 4
+  CHARACTER (LEN=256) :: Id = &
+     "$Id: convolve_all_m.f90,v 2.18 2002/08/20 22:36:39 livesey Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName = &
+     "$RCSfile: convolve_all_m.f90,v $"
+d17 1
+a17 1
+ CONTAINS
+a19 6
+!
+  SUBROUTINE convolve_all(FwdMdlConfig,FwdMdlIn,FwdMdlExtra,maf,channel,&
+           & winStart,winFinish,mol_cat_index,temp,ptan,radiance,chi_in,&
+           & rad_in,chi_out,dhdz_out,dx_dh_out,sbRatio,AntennaPattern,  &
+           & t_deriv_flag,Grids_f,Jacobian,rowFlags,req,rsc,earth_frac, &
+           & surf_angle,di_dt,dx_dt,d2x_dxdt,dxdt_tan,dxdt_surface,di_df,ptan_Der)
+d21 8
+a28 1
+    use MLSCommon, ONLY: I4, r4, R8, rp
+d33 1
+a33 1
+    use FOV_CONVOLVE_M, only: FOV_CONVOLVE
+d40 1
+a40 1
+!
+a41 20
+!
+  Type (ForwardModelConfig_T), intent(in) :: FwdMdlCONFIG
+  Type (Vector_t), intent(in) :: FwdMdlIN, FwdMdlEXTRA
+!
+  Integer, intent(in) :: MAF
+  Integer, intent(in) :: CHANNEL
+  Integer, intent(in) :: WINSTART
+  Integer, intent(in) :: WINFINISH
+  Integer, intent(IN) :: mol_cat_index(:)
+!
+  Type (VectorValue_T), intent(in) :: TEMP
+  Type (VectorValue_T), intent(in) :: PTAN
+!
+  REAL(rp), INTENT(in) :: chi_in(:)    ! inputted pointing angles radians
+  REAL(rp), INTENT(in) :: rad_in(:)    ! inputted radiances
+  REAL(rp), INTENT(in) :: chi_out(:)   ! outputted pointing angles radians
+  REAL(rp), INTENT(in) :: dhdz_out(:)  ! dhdz on the outputted pointing grid
+  REAL(rp), INTENT(in) :: dx_dh_out(:) ! dx/dh on the outputted pointing grid
+!
+  Real(r8), intent(in) :: SbRatio
+d43 32
+a74 12
+  Type(antennaPattern_T), intent(in) :: AntennaPattern
+!
+  Logical, dimension(:), pointer :: t_deriv_flag
+!
+  Type (Grids_T), intent(in) :: Grids_f
+  Type (Matrix_T), OPTIONAL, intent(inout) :: Jacobian
+!
+  Logical, intent(inout) :: rowFlags(:) ! Flag to calling code
+!
+  REAL(rp), OPTIONAL, INTENT(in) :: req ! equivalent earth radius
+  REAL(rp), OPTIONAL, INTENT(in) :: rsc ! spacecraft radius
+  REAL(rp), OPTIONAL, INTENT(in) :: earth_frac ! fraction of earth in total
+d76 1
+a76 1
+  logical, intent(in), optional :: ptan_der ! Flag
+d81 1
+a81 1
+!
+d83 2
+a84 2
+!
+  REAL(rp), OPTIONAL, INTENT(in) :: surf_angle ! An angle that defines the
+d86 1
+a86 1
+  REAL(rp), OPTIONAL, INTENT(in) :: di_dt(:,:) ! derivative of radiance wrt
+d88 1
+a88 1
+  REAL(rp), OPTIONAL, INTENT(in) :: dx_dt(:,:) ! derivative of angle wrt
+d90 1
+a90 1
+  REAL(rp), OPTIONAL, INTENT(in) :: d2x_dxdt(:,:) ! 2nd derivative wrt angle
+d92 1
+a92 1
+  REAL(rp), OPTIONAL, INTENT(in) :: dxdt_tan(:,:) ! derivative of angle wrt
+d94 1
+a94 1
+  REAL(rp), OPTIONAL, INTENT(in) :: dxdt_surface(:,:) ! derivative of angle
+d96 1
+a96 1
+!
+d98 2
+a99 2
+!
+  REAL(rp), OPTIONAL, INTENT(in) :: di_df(:,:) ! mixing ratio derivatives or
+d103 3
+a105 3
+!
+  Type (VectorValue_T), intent(inout) :: RADIANCE   ! Outputed radiances
+!
+a106 2
+!
+  type (VectorValue_T), pointer :: F   ! An arbitrary species
+d108 14
+a121 1
+  Integer(i4) :: j,k,Row,Col,ind,jz,sps_i,ptg_i,noPtan,noChans,jf
+d123 1
+a123 6
+  Integer :: n_t_zeta, no_sv_p_t, sv_t_len, sv_f, f_len, no_mol
+!
+  REAL(r8) :: r
+!
+  REAL(r8), POINTER :: drad_dt_out(:,:)
+  REAL(r8), POINTER :: drad_df_out(:,:)
+d125 5
+a129 1
+  REAL(r8), POINTER :: temp_dxdt_tan(:,:)
+d131 3
+a133 1
+  Real(r8) :: SRad(ptan%template%noSurfs), di_dx(ptan%template%noSurfs)
+d135 2
+a136 11
+  logical :: my_ptan_der
+!
+  my_ptan_der = .false.
+  if ( present ( ptan_der ) ) my_ptan_der = ptan_der
+  n_t_zeta = temp%template%noSurfs
+  no_sv_p_t = winFinish - winStart + 1
+  sv_t_len = n_t_zeta * no_sv_p_t
+
+  no_mol = SIZE(mol_cat_index)
+  noChans = Radiance%template%noChans
+  noPtan = ptan%template%nosurfs
+a137 3
+  f_len = 0
+  if ( PRESENT(di_df) ) f_len = SIZE(di_df,dim=2)
+!
+d139 13
+a151 15
+!
+  SRad = 0.0_r8
+  CALL fov_convolve(antennaPattern,chi_in,rad_in,chi_out,SRad, &
+                 &  drad_dx_out=di_dx)
+
+  do ptg_i = 1, noPtan
+    ind = channel + noChans * (ptg_i - 1)
+    Radiance%values(ind,maf) = Radiance%values(ind,maf) + &
+                                     &  sbRatio * SRad(ptg_i)
+  end do
+!
+  j = 0
+  IF ( PRESENT(Jacobian) ) j = 2
+  if(j < 1) Return
+!
+d153 3
+a155 3
+!
+  SRad = sbRatio * di_dx * dx_dh_out * dhdz_out
+!
+d158 3
+a160 3
+!
+  row = FindBlock( Jacobian%row, radiance%index, maf )
+  rowFlags(row) = .TRUE.
+d164 34
+a197 2
+  if ( my_ptan_der ) then
+    col = FindBlock ( Jacobian%col, ptan%index, maf )
+d199 1
+a199 10
+    select case (jacobian%block(Row,col)%kind)
+      case (m_absent)
+        call CreateBlock (Jacobian, row, col, m_banded, noPtan*noChans, &
+                        & bandHeight=noChans)
+        jacobian%block(row,col)%values = 0.0_r8
+      case (m_banded)
+      case default
+        call MLSMessage (MLSMSG_Error, ModuleName,&
+                      & 'Wrong matrix type for ptan derivative')
+    end select
+d201 17
+a217 5
+    do ptg_i = 1, noPtan
+      ind = channel + noChans * (ptg_i-1)
+      r = jacobian%block(row,col)%values(ind,1)
+      Jacobian%block(row,col)%values(ind, 1) = r + SRad(ptg_i)
+    end do
+d219 3
+a221 1
+  endif
+d223 1
+a223 16
+  IF (.not. ANY( (/FwdMdlConfig%temp_der, FwdMdlConfig%atmos_der, &
+                &  FwdMdlConfig%spect_der/)) ) RETURN
+!
+  nullify (drad_dt_out,drad_df_out,temp_dxdt_tan)
+!
+  IF (FwdMdlConfig%atmos_der .AND. .not. FwdMdlConfig%temp_der) THEN
+!
+    SRad = 0.0_r8
+    CALL ALLOCATE_TEST(drad_df_out,noPtan,f_len,'drad_df_out',ModuleName)
+    CALL fov_convolve(antennaPattern,chi_in,Rad_in,chi_out,SRad, &
+                        & DI_DF=di_df, DI_DF_FLAG=grids_f%deriv_flags, &
+                        & DRAD_DF_OUT=drad_df_out)
+!
+  ELSE IF (FwdMdlConfig%temp_der) THEN
+!
+    CALL ALLOCATE_TEST(drad_dt_out,noPtan,sv_t_len,'drad_dt_out',ModuleName)
+a224 21
+    Call ALLOCATE_TEST(temp_dxdt_tan,noPtan,sv_t_len,'temp_dxdt_tan',&
+                    &  ModuleName )
+!
+    temp_dxdt_tan = dxdt_tan - SPREAD(dxdt_surface(1,:),1,noPtan)
+!
+    IF (FwdMdlConfig%atmos_der) then
+!
+      CALL ALLOCATE_TEST(drad_df_out,noPtan,f_len,'drad_df_out',ModuleName)
+      CALL fov_convolve(antennaPattern,chi_in,Rad_in,chi_out,SRad, &
+         & SURF_ANGLE=surf_angle,DI_DT=di_dt,DX_DT=dx_dt,DDX_DXDT=d2x_dxdt, &
+         & DX_DT_OUT=temp_dxdt_tan,DRAD_DT_OUT=drad_dt_out,DI_DF=di_df, &
+         & DI_DF_FLAG=grids_f%deriv_flags, DRAD_DF_OUT=drad_df_out)
+!
+    ELSE
+!
+      CALL fov_convolve(antennaPattern,chi_in,Rad_in,chi_out,SRad, &
+         & SURF_ANGLE=surf_angle,DI_DT=di_dt,DX_DT=dx_dt,DDX_DXDT=d2x_dxdt,&
+         & DX_DT_OUT=temp_dxdt_tan,DRAD_DT_OUT=drad_dt_out)
+!
+    ENDIF
+!
+a225 3
+!
+    row = FindBlock( Jacobian%row, Radiance%index, maf )
+    rowFlags(row) = .TRUE.
+d227 5
+a231 2
+    sv_t_len = 0
+    do jf = winStart, winFinish
+d233 10
+a242 10
+      col = FindBlock ( Jacobian%col, temp%index, jf )
+      select case ( Jacobian%block(row,col)%kind )
+        case ( m_absent )
+                call CreateBlock ( Jacobian, row, col, m_full )
+                jacobian%block(row,col)%values = 0.0_r8
+        case ( m_full )
+        case default
+                call MLSMessage ( MLSMSG_Error, ModuleName, &
+                  & 'Wrong type for temperature derivative matrix' )
+      end select
+d244 1
+a244 1
+      do k = 1, n_t_zeta
+d248 2
+a249 2
+        sv_t_len = sv_t_len + 1
+        if(.NOT. t_deriv_flag(sv_t_len)) CYCLE
+d253 7
+a259 5
+        do ptg_i = 1, noPtan
+          r = drad_dt_out(ptg_i,sv_t_len)
+          ind = channel + noChans * (ptg_i-1)
+          jacobian%block(row,col)%values(ind,k) =  &
+               & jacobian%block(row,col)%values(ind,k) + sbRatio * r
+d264 4
+a267 4
+    end do
+!
+    CALL DEALLOCATE_TEST(drad_dt_out,'drad_dt_out',ModuleName)
+    Call DEALLOCATE_TEST(temp_dxdt_tan,'temp_dxdt_tan',ModuleName)
+d269 1
+a269 1
+  ENDIF
+a270 2
+  IF (.not. FwdMdlConfig%atmos_der) Return
+!
+a271 36
+!
+  row = FindBlock( Jacobian%row, Radiance%index, maf )
+  rowFlags(row) = .TRUE.
+!
+  sv_f = 0
+  do sps_i = 1, no_mol
+!
+    jz = mol_cat_index(sps_i)
+    k = FwdMdlConfig%molecules(jz)
+    if (k == l_extinction ) then
+      f => GetVectorQuantityByType ( FwdMdlIn, quantityType= &
+          l_extinction, radiometer=fwdMdlConfig%signals(1)%radiometer, noError=.true.)
+    else
+      f => GetVectorQuantityByType ( FwdMdlIn, &
+         & quantityType=l_vmr, molecule=k, noError=.true. )
+    endif
+
+    if(.not. associated(f) ) then
+      jf = Grids_f%windowfinish(sps_i)-Grids_f%windowStart(sps_i)+1
+      k = Grids_f%no_f(sps_i) * Grids_f%no_z(sps_i)
+      sv_f = sv_f + jf * k
+      CYCLE
+    endif
+!
+    DO jf = Grids_f%windowStart(sps_i), Grids_f%windowfinish(sps_i)
+!
+      col = FindBlock ( Jacobian%col, f%index, jf)
+      select case ( Jacobian%block(row,col)%kind )
+        case ( m_absent )
+          call CreateBlock ( Jacobian, row, col, m_full )
+          jacobian%block(row,col)%values = 0.0_r8
+        case ( m_full )
+        case default
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Wrong type for atmospheric derivative matrix' )
+      end select
+d273 37
+a309 1
+      DO k = 1, Grids_f%no_f(sps_i) * Grids_f%no_z(sps_i)
+d313 2
+a314 2
+        sv_f = sv_f + 1
+        if(.NOT. Grids_f%deriv_flags(sv_f) ) CYCLE
+d318 7
+a324 5
+        do ptg_i = 1, noPtan
+          r = drad_df_out(ptg_i,sv_f)
+          ind = channel + noChans * (ptg_i-1)
+          jacobian%block(row,col)%values(ind,k) = &
+              & jacobian%block(row,col)%values(ind,k) + sbRatio * r
+d326 1
+a326 1
+!
+d328 1
+a328 1
+!
+a329 6
+!
+  end do
+!
+  Call Deallocate_test ( drad_df_out, 'drad_df_out', ModuleName )
+!
+ END SUBROUTINE convolve_all
+d331 6
+a336 1
+END MODULE convolve_all_m
+d338 3
+@
+
+
+2.18
+log
+@Moved uses inside routine
+@
+text
+@d9 1
+a9 1
+     "$Id: convolve_all_m.f90,v 2.17 2002/07/23 22:26:38 livesey Exp $"
+d193 2
+a194 1
+                        & DI_DF=di_df, DRAD_DF_OUT=drad_df_out)
+d209 1
+a209 1
+         & SURF_ANGLE=surf_angle,DI_DT=di_dt,DX_DT=dx_dt,DDX_DXDT=d2x_dxdt,&
+d211 1
+a211 1
+         & DRAD_DF_OUT=drad_df_out)
+d333 3
+@
+
+
+2.17
+log
+@Added ptan_der handling
+@
+text
+@d3 3
+a5 12
+  USE MLSCommon, ONLY: I4, r4, R8, rp
+  use intrinsic, only: L_VMR
+  use Molecules, only: L_EXTINCTION
+  USE Allocate_Deallocate, only: allocate_test, deallocate_test
+  USE ForwardModelConfig, only: ForwardModelConfig_T
+  use FOV_CONVOLVE_M, only: FOV_CONVOLVE
+  USE VectorsModule, only: Vector_T, VectorValue_T, GetVectorQuantityByType
+  USE AntennaPatterns_m, only: AntennaPattern_T
+  USE MLSMessageModule, only: MLSMessage, MLSMSG_Error
+  USE MatrixModule_0, only: M_ABSENT, M_BANDED, M_FULL
+  USE MatrixModule_1, only: CREATEBLOCK, FINDBLOCK, MATRIX_T
+  USE Load_sps_data_m, only: Grids_T
+a6 1
+  IMPLICIT none
+d9 1
+a9 1
+     "$Id: convolve_all_m.f90,v 2.16 2002/07/16 08:47:11 mjf Exp $"
+d22 13
+d332 3
+@
+
+
+2.16
+log
+@Nullified temp_dxdt_tan along with drad_dt_out, etc.
+@
+text
+@d19 1
+a19 1
+     "$Id: convolve_all_m.f90,v 2.15 2002/07/08 17:45:38 zvi Exp $"
+d31 1
+a31 1
+           & surf_angle,di_dt,dx_dt,d2x_dxdt,dxdt_tan,dxdt_surface,di_df)
+d68 2
+d114 2
+d117 2
+a154 1
+  col = FindBlock ( Jacobian%col, ptan%index, maf )
+d158 2
+a159 1
+  if (col > 0) then
+a175 2
+      Jacobian%block(row,col)%r1(ptg_i) = 1 + noChans * (ptg_i - 1)
+      Jacobian%block(row,col)%r2(ptg_i) = noChans * ptg_i
+d244 1
+a244 1
+
+d274 2
+a275 2
+      f => GetVectorQuantityByType ( FwdMdlIn, FwdMdlExtra,quantityType= &
+          l_extinction, radiometer=fwdMdlConfig%signals(1)%radiometer)
+d277 2
+a278 2
+      f => GetVectorQuantityByType ( FwdMdlIn, FwdMdlExtra, &
+         & quantityType=l_vmr, molecule=k)
+d329 3
+@
+
+
+2.15
+log
+@Remove unnecessary variables
+@
+text
+@d19 1
+a19 1
+     "$Id: convolve_all_m.f90,v 2.14 2002/07/05 07:52:46 zvi Exp $"
+d179 1
+a179 1
+  nullify (drad_dt_out,drad_df_out)
+d325 3
+@
+
+
+2.14
+log
+@Coor. switch (phi,z) -> (z,phi)
+@
+text
+@d19 1
+a19 1
+     "$Id: convolve_all_m.f90,v 2.13 2002/06/28 11:06:47 zvi Exp $"
+a105 7
+  REAL(r8), POINTER :: p(:)
+  REAL(r8), POINTER :: dp(:)
+  REAL(r8), POINTER :: angles(:)
+  REAL(r8), POINTER :: rad_fft(:)
+  REAL(r8), POINTER :: rad_fft1(:)
+  REAL(r8), POINTER :: drad_dt_temp(:)
+
+d179 1
+a179 2
+  nullify (p,dp,angles,rad_fft,rad_fft1,drad_dt_temp,drad_dt_out, &
+         & drad_df_out)
+d325 3
+@
+
+
+2.13
+log
+@compute dI/dPtan using chain rule
+@
+text
+@d19 1
+a19 1
+     "$Id: convolve_all_m.f90,v 2.12 2002/06/19 11:00:31 zvi Exp $"
+d78 1
+a78 1
+  REAL(rp), OPTIONAL, INTENT(in) :: dx_dt(:,:,:) ! derivative of angle wrt
+d80 1
+a80 1
+  REAL(rp), OPTIONAL, INTENT(in) :: d2x_dxdt(:,:,:) ! 2nd derivative wrt angle
+d82 1
+a82 1
+  REAL(rp), OPTIONAL, INTENT(in) :: dxdt_tan(:,:,:) ! derivative of angle wrt
+d84 1
+a84 1
+  REAL(rp), OPTIONAL, INTENT(in) :: dxdt_surface(:,:,:) ! derivative of angle
+d100 1
+a100 2
+  INTEGER(i4) :: j, k, Row, Col, ind, jz, sps_i, ptg_i, &
+               & no_tan_hts, noPtan, noChans, jf
+d104 1
+a104 1
+  REAL(r8) :: r, q
+a112 3
+  REAL(r8), POINTER :: test1(:,:)
+  REAL(r8), POINTER :: test2(:,:)
+  REAL(r8), POINTER :: test3(:,:)
+d116 2
+a123 1
+  no_tan_hts = SIZE(chi_in)
+d175 4
+a178 4
+      jacobian%block(row,col)%values(ind, 1) = &
+              & jacobian%block(row,col)%values(ind, 1) + SRad(ptg_i)
+      jacobian%block(row,col)%r1(ptg_i) = 1 + noChans * (ptg_i - 1)
+      jacobian%block(row,col)%r2(ptg_i) = noChans * ptg_i
+d187 1
+a187 1
+         & drad_df_out,test1,test2,test3) 
+a197 3
+    CALL ALLOCATE_TEST(test1,no_tan_hts,sv_t_len,'test1',Modulename)
+    CALL ALLOCATE_TEST(test2,no_tan_hts,sv_t_len,'test2',Modulename)
+    CALL ALLOCATE_TEST(test3,noPtan,    sv_t_len,'test3',Modulename)
+d199 3
+d203 1
+a203 9
+    DO j = 1, no_sv_p_t
+      DO k = 1, n_t_zeta
+        r = dxdt_surface(1,j,k)
+        test1(:,k+n_t_zeta*(j-1)) = dx_dt(:,j,k)
+        test2(:,k+n_t_zeta*(j-1)) = d2x_dxdt(:,j,k)
+! This arithmatic makes a surface value adjustment:
+        test3(:,k+n_t_zeta*(j-1)) = dxdt_tan(:,j,k) - r
+      end do
+    end do
+d209 2
+a210 2
+         & SURF_ANGLE=surf_angle,DI_DT=di_dt,DX_DT=test1,DDX_DXDT=test2,&
+         & DX_DT_OUT=test3,DRAD_DT_OUT=drad_dt_out,DI_DF=di_df, &
+d216 2
+a217 2
+         & SURF_ANGLE=surf_angle,DI_DT=di_dt,DX_DT=test1, &
+         & DDX_DXDT=test2,DX_DT_OUT=test3,DRAD_DT_OUT=drad_dt_out)
+d261 1
+a261 3
+    CALL DEALLOCATE_TEST(test1,'test1',Modulename)
+    CALL DEALLOCATE_TEST(test2,'test2',Modulename)
+    CALL DEALLOCATE_TEST(test3,'test3',Modulename)
+d276 2
+a277 1
+    if (FwdMdlConfig%molecules(jz) == l_extinction ) then
+d282 1
+a282 1
+         & quantityType=l_vmr, molecule=FwdMdlConfig%molecules(jz))
+d302 1
+a302 1
+          & 'Wrong type for temperature derivative matrix' )
+d310 1
+a310 1
+        if(.NOT. Grids_f%deriv_flags(sv_f)) CYCLE
+d333 3
+@
+
+
+2.12
+log
+@Removing debug statements
+@
+text
+@a11 1
+  USE MLSNumerics, ONLY: interpolatevalues, hunt
+d19 1
+a19 1
+     "$Id: convolve_all_m.f90,v 2.11 2002/06/17 22:19:36 bill Exp $"
+d28 4
+a31 4
+           & winStart,winFinish,mol_cat_index,temp,ptan,radiance,chi_in,   &
+           & rad_in,chi_out,sbRatio,AntennaPattern,t_deriv_flag,Grids_f,    &
+           & Jacobian,rowFlags,req,rsc,earth_frac,surf_angle,di_dt, &
+           & dx_dt,d2x_dxdt,dxdt_tan,dxdt_surface,di_df)
+d47 5
+a51 3
+  REAL(rp), INTENT(in) :: chi_in(:)! inputted pointing angles radians
+  REAL(rp), INTENT(in) :: rad_in(:)! inputted radiances
+  REAL(rp), INTENT(in) :: chi_out(:)! outputted pointing angles radians
+a104 2
+  Logical :: Want_Deriv
+!
+d120 1
+a120 1
+  Real(r8) :: SRad(ptan%template%noSurfs), Term(ptan%template%noSurfs)
+d136 4
+a139 3
+  Term = 0.0_r8
+  CALL fov_convolve(antennaPattern,chi_in,rad_in,chi_out,Term)
+  SRad = sbRatio * Term
+d142 2
+a143 1
+    Radiance%values(ind,maf) = Radiance%values(ind,maf) + SRad(ptg_i)
+d146 3
+a148 5
+  want_deriv = PRESENT(jacobian) .AND. ANY( (/FwdMdlConfig%temp_der, &
+               & FwdMdlConfig%atmos_der,FwdMdlConfig%spect_der/) )
+
+! Find out if user wants pointing derivatives
+    if ( .not. want_deriv ) Return
+d150 1
+a150 1
+! Compute Ptan derivatives:
+d152 1
+a152 7
+  Term(:) = 0.0_r8
+  do ptg_i = 1, noPtan
+    j = 1
+    if(ptg_i == noPtan) j = -1
+    q = Ptan%values(ptg_i+j,maf) -  Ptan%values(ptg_i,maf)
+    Term(ptg_i) = (SRad(ptg_i+j) - SRad(ptg_i) ) / q
+  end do
+d154 2
+a155 1
+! Find index location Jacobian and write the derivative
+d158 1
+a158 1
+  rowFlags(row) = .true.
+d162 1
+d164 1
+d166 8
+a173 8
+    case (m_absent)
+      call CreateBlock (Jacobian, row, col, m_banded, noPtan*noChans, &
+                      & bandHeight=noChans)
+      jacobian%block(row,col)%values = 0.0_r8
+    case (m_banded)
+    case default
+      call MLSMessage (MLSMSG_Error, ModuleName,&
+                    & 'Wrong matrix type for ptan derivative')
+d175 1
+d179 1
+a179 1
+              & jacobian%block(row,col)%values(ind, 1) + Term(ptg_i)
+d183 5
+a187 1
+  end if
+a188 2
+  IF (.not. FwdMdlConfig%atmos_der .AND. .not. FwdMdlConfig%temp_der) RETURN
+
+d235 1
+a235 1
+    rowFlags(row) = .true.
+d283 1
+a283 1
+  rowFlags(row) = .true.
+d345 3
+@
+
+
+2.11
+log
+@side band correction bug fixed?--wgr
+@
+text
+@d20 1
+a20 1
+     "$Id: convolve_all_m.f90,v 2.10 2002/06/17 16:31:04 bill Exp $"
+d25 1
+a25 1
+! ============================================  new_convolve_all =====
+d52 1
+a52 1
+  Real(r8), intent(in) :: SBRATIO
+d102 1
+a102 1
+  Integer :: n_t_zeta, no_sv_p_t, sv_t_len, sv_f, sv_i, f_len, no_mol
+d265 1
+a265 1
+          & jacobian%block(row,col)%values(ind,k) + sbRatio * r
+d297 7
+a317 1
+      sv_i = 0
+a324 14
+! *** ZEBUG
+!       if(channel == 13) then
+!         if(ANY(drad_df_out(:,sv_f) /= 0.0)) then
+!           ind=Grids_f%no_f(sps_i)
+!           Print *,' ch,sps_i,kf,sv_f:',channel,sps_i,ind,sv_f
+!           Print *,' Window width:', &
+!             Grids_f%windowfinish(sps_i)-Grids_f%windowStart(sps_i)+1
+!           Print *,' drad_df_out(ptg_i,sv_f),ptg_i=1,noPtan'
+!           Print 905,(drad_df_out(ptg_i,sv_f),ptg_i=1,noPtan)
+!         endif
+!       endif
+!905    format ( 5(2x, 1pg13.6) )
+! *** END ZEBUG
+
+a326 1
+        sv_i = sv_i + 1
+d328 1
+d330 2
+a331 3
+          jacobian%block(row,col)%values(ind,sv_i) = &
+                      jacobian%block(row,col)%values(ind,sv_i) + &
+                          & sbRatio * drad_df_out(ptg_i,sv_f)
+d345 118
+@
+
+
+2.10
+log
+@inc zvis changes--wgr
+@
+text
+@d20 1
+a20 1
+     "$Id: new_convolve_all_m.f90,v 2.2 2002/06/11 22:21:09 bill Exp $"
+d22 1
+a22 1
+     "$RCSfile: new_convolve_all_m.f90,v $"
+d142 1
+a142 1
+    Radiance%values(ind,maf) = SRad(ptg_i)
+d264 2
+a265 1
+          jacobian%block(row,col)%values(ind,k) = sbRatio * r
+d339 1
+@
+
+
+2.9
+log
+@debugging study--wgr
+@
+text
+@d1 1
+a1 2
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d3 5
+a7 7
+module CONVOLVE_ALL_M
+  use AntennaPatterns_m, only: AntennaPattern_T
+  use Load_sps_data_m, only: Grids_T
+  use DCSPLINE_DER_M, only: CSPLINE_DER
+  use DUMP_0, only: DUMP
+  use D_LINTRP_M, only: LINTRP
+  use D_CSPLINE_M, only: CSPLINE
+d9 9
+a17 16
+  use HYDROSTATIC_INTRP, only: GET_PRESSURES
+  use L2PC_PFA_STRUCTURES, only: K_MATRIX_INFO
+  use VectorsModule, only: Vector_T, VectorValue_T, GetVectorQuantityByType
+  use ForwardModelConfig, only: ForwardModelConfig_T
+  use MLSCommon, only: I4, R4, R8
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+  use Molecules, only: L_EXTINCTION
+  use Intrinsic, only: L_VMR
+  use String_table, only: GET_STRING
+  use MatrixModule_0, only: M_ABSENT, M_BANDED, M_FULL, DUMP
+  use MatrixModule_1, only: CREATEBLOCK, FINDBLOCK, MATRIX_T, DUMP
+  use Toggles, only: Switches
+
+  implicit NONE
+  private
+  public :: CONVOLVE_ALL
+d19 4
+a22 5
+  character (len=*), private, parameter :: IdParm = &
+       "$Id: convolve_all_m.f90,v 2.8 2002/06/07 04:50:25 bill Exp $"
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: convolve_all_m.f90,v $"
+d24 161
+a184 106
+contains
+  !---------------------------------------------------------------------------
+  ! This subroutine transfers the derivatives over from the internal
+  ! convolution grid to the users specified points. This module uses
+  ! cubic spline interpolation to do the job.
+
+  Subroutine convolve_all (ForwardModelConfig, ForwardModelIn, maf, channel, &
+  & windowStart, windowFinish, mafTInstance, temp, ptan, radiance, tan_press,&
+  & ptg_angles,tan_temp,dx_dt,d2x_dxdt, si,center_angle,i_raw, k_temp,       &
+  & k_atmos, sbRatio, t_deriv_flag, Grids_f, Jacobian, rowFlags,             &
+  & AntennaPattern, mol_cat_indx, Ier, lu_debug)
+
+    ! Dummy arguments
+    type (ForwardModelConfig_T), intent(in) :: FORWARDMODELCONFIG
+    type (Vector_t), intent(in) :: FORWARDMODELIN
+    integer, intent(in) :: MAF
+    integer, intent(in) :: CHANNEL
+    integer, intent(in) :: WINDOWSTART
+    integer, intent(in) :: WINDOWFINISH
+    integer, intent(in) :: MAFTINSTANCE
+    integer, intent(IN) :: mol_cat_indx(:)
+    type (VectorValue_T), intent(in) :: TEMP
+    type (VectorValue_T), intent(in) :: PTAN
+    type (VectorValue_T), intent(inout) :: RADIANCE
+    real(r8), intent(IN) :: TAN_PRESS(:), PTG_ANGLES(:), TAN_TEMP(:)
+    real(r8), intent(IN) :: DX_DT(:,:), D2X_DXDT(:,:)
+    integer, intent(IN) :: si
+    real(r8), intent(IN) :: CENTER_ANGLE
+    real(r8), intent(IN) :: I_RAW(:)
+    Real(r4), intent(in) :: k_temp(:,:,WindowStart:)
+    Real(r4), intent(in) :: k_atmos(:,:,:,WindowStart:,:)
+    real(r8), intent(in) :: SBRATIO
+    logical, dimension(:), pointer :: t_deriv_flag
+    type (Grids_T), intent(in) :: Grids_f
+    type (Matrix_T), intent(inout), optional :: Jacobian
+    logical, dimension(:), intent(inout) :: rowFlags ! Flag to calling code
+    type(antennaPattern_T), intent(in) :: AntennaPattern
+    integer, intent(out) :: ier         ! Flag
+
+    ! -----     Local Variables     ----------------------------------------
+
+    type (VectorValue_t), pointer :: f
+
+    integer :: FFT_INDEX(size(antennaPattern%aaap))
+    integer :: Ind, ht_ind(1),kp,kz,kf  ! Indecies and various sizes
+    integer :: Row, Col                 ! Matrix entries
+    integer :: FFT_pts, Is, J, Ktr, Nf, Ntr, Ptg_i, Sv_i
+    integer :: No_tan_hts, Lk, Uk, no_mol, jf, jz, l, sv_t, sv_f
+
+    logical :: Want_Deriv
+
+    real(r8) :: K_star_tmp(ptan%template%noSurfs)
+    Real(r8) :: Q, R
+    Real(r8) :: SRad(ptan%template%noSurfs), Term(ptan%template%noSurfs)
+    Real(r8), dimension(size(fft_index)) :: FFT_PRESS, FFT_ANGLES, RAD
+! bills debug
+    INTEGER(i4), intent(in) :: lu_debug
+
+ ! -----  Begin the code  -----------------------------------------
+
+    k_star_tmp = 0.0
+    no_tan_hts = size(tan_press)
+
+    ! Compute the ratio of the strengths
+
+    ! This subroutine is called by channel
+
+    Ier = 0
+    Ntr = Size(antennaPattern%aaap)
+
+    Rad = 0.0
+    Rad(1:no_tan_hts) = i_raw(1:no_tan_hts)
+
+    j = ptan%template%noSurfs
+
+    ! Compute the convolution of the mixed radiances
+
+    fft_pts = nint(Log(Real(Ntr))/log(2.0))
+
+    fft_angles = 0.0
+    fft_angles(1:no_tan_hts) = ptg_angles(1:no_tan_hts)
+
+    Call fov_convolve ( fft_angles, Rad, center_angle, 1, no_tan_hts, &
+      &                 fft_pts, AntennaPattern, Ier )
+    if ( Ier /= 0) Return
+
+    !  Get 'Ntr' pressures associated with the fft_angles:
+
+    Call get_pressures ( 'a', ptg_angles, tan_temp, tan_press, no_tan_hts, &
+      &                   fft_angles, fft_press, Ntr, Ier )
+! bills debug
+    if ( index(switches,'billsdebug') /= 0 ) then
+      WRITE(lu_debug,'(a)') 'fft_angles, fft_press, rad'
+      DO  is = 1 , ntr 
+        WRITE(lu_debug,'(f11.8,1x,f10.5,1x,f9.4)') fft_angles(is), &
+             fft_press(is), rad(is)
+      ENDDO
+    endif
+    if ( Ier /= 0) Return
+
+    ! Make sure the fft_press array is MONOTONICALY increasing:
+
+    is = 1
+    fft_index = 0
+    do while (is < Ntr-1  .and.  fft_press(is) >= fft_press(is+1))
+      is = is + 1
+d186 3
+d190 25
+a214 13
+    Ktr = 1
+    Rad(Ktr) = Rad(is)
+    fft_index(Ktr) = is
+    fft_press(Ktr) = fft_press(is)
+
+    do ptg_i = is+1, Ntr
+      q = fft_press(ptg_i)
+      if ( q > fft_press(Ktr)) then
+        Ktr = Ktr + 1
+        fft_press(Ktr) = q
+        Rad(Ktr) = Rad(ptg_i)
+        fft_index(Ktr) = ptg_i
+      end if
+d216 21
+d238 2
+a239 1
+    if(Ktr == Ntr) fft_index(1) = -2
+d241 9
+a249 37
+! Interpolate the output values
+! (Store the radiances derivative with respect to pointing pressures in: Term)
+
+    want_deriv = present(jacobian) .and. any( (/ &
+      & forwardModelConfig%temp_der, &
+      & forwardModelConfig%atmos_der,&
+      & forwardModelConfig%spect_der/) )
+
+!??? Can we use cspline instead of cspline_der if .not. want_deriv ???
+
+    Call Cspline_der(fft_press,Ptan%values(:,maf),Rad,SRad,Term,Ktr,j) 
+    do ptg_i = 1, j
+      ind = channel + radiance%template%noChans*(ptg_i-1)
+      radiance%values( ind, maf ) = radiance%values ( ind, maf ) + &
+        & sbRatio*SRad(ptg_i)
+    end do
+
+    ! Find out if user wants pointing derivatives
+    if ( .not. want_deriv ) return
+
+    ! Derivatives wanted,find index location Jacobian and write the derivative
+    row = FindBlock( Jacobian%row, radiance%index, maf )
+    rowFlags(row) = .true.
+    col = FindBlock ( Jacobian%col, ptan%index, maf )
+
+    ! Of course, we might not care about ptan
+    if ( col > 0 ) then
+      select case (jacobian%block(Row,col)%kind)
+      case (m_absent)
+        call CreateBlock ( Jacobian, row, col, m_banded, &
+          & radiance%template%noSurfs*radiance%template%noChans, &
+          & bandHeight=radiance%template%noChans )
+        jacobian%block(row,col)%values = 0.0_r8
+      case (m_banded)
+      case default
+        call MLSMessage ( MLSMSG_Error, ModuleName,&
+          & 'Wrong matrix type for ptan derivative')
+a250 10
+      do ptg_i = 1, j
+        ind = channel + radiance%template%noChans*(ptg_i-1)
+        jacobian%block(row,col)%values( ind, 1 ) = &
+          & jacobian%block(row,col)%values( ind, 1 ) + sbRatio*term(ptg_i)
+        jacobian%block(row,col)%r1(ptg_i) = &
+          & 1 + radiance%template%noChans*(ptg_i-1)
+        jacobian%block(row,col)%r2(ptg_i) = &
+          & radiance%template%noChans*ptg_i
+      end do
+    end if
+d252 1
+a252 2
+    ! Now transfer the other fwd_mdl derivatives to the output pointing
+    ! values
+d254 1
+a254 1
+    ! ********************* Temperature derivatives ******************
+d256 2
+a257 1
+    ! check to determine if derivative is desired for this parameter
+d259 1
+a259 1
+    if ( forwardModelConfig%temp_der) then
+d261 5
+a265 1
+    ! Derivatives needed continue to process
+d267 1
+a267 2
+      sv_t = 0
+      ht_ind = 0
+d269 32
+a300 4
+      do nf = windowStart, windowFinish
+
+        col = FindBlock ( Jacobian%col, temp%index, nf )
+        select case ( Jacobian%block(row,col)%kind )
+d307 2
+a308 2
+            & 'Wrong type for temperature derivative matrix' )
+        end select
+d310 2
+a311 1
+        do jz = 1, temp%template%noSurfs
+d315 2
+a316 2
+          sv_t = sv_t + 1
+          if(.NOT. t_deriv_flag(sv_t)) CYCLE
+d318 22
+a339 87
+          ! run through representation basis coefficients
+          ! Integrand over temperature derivative plus pointing differential
+
+!  *** Bill's correction
+!
+          IF ( ANY(d2x_dxdt(:,jz) > 0.0)) THEN
+!
+            ht_ind = MAXLOC(d2x_dxdt(:,jz)) 
+
+            do ptg_i = 1, no_tan_hts
+              q = d2x_dxdt(ptg_i,jz)
+              Rad(ptg_i) = (i_raw(ptg_i) - i_raw(ht_ind(1))) * q + &
+                         &  k_temp(ptg_i,jz,nf)
+            end do
+
+          ! Now, Convolve:
+
+            fft_angles(1:no_tan_hts) = ptg_angles(1:no_tan_hts)
+            Call fov_convolve ( fft_angles, Rad, center_angle, 1, &
+                             &  no_tan_hts, fft_pts, AntennaPattern, Ier )
+            if ( Ier /= 0) Return
+
+            if ( fft_index(1).gt.0) then
+              do ptg_i = 1, Ktr
+                Rad(ptg_i) = Rad(fft_index(ptg_i))
+              end do
+            end if
+
+            Call Cspline ( fft_press, Ptan%values(:,maf), Rad, SRad, Ktr, j )
+            k_star_tmp(1:j) = SRad(1:j)
+
+          ! Now the convolution of radiance with the derivative antenna field
+
+            Rad(1:no_tan_hts) = i_raw(1:no_tan_hts)
+
+          ! Now, Convolve:
+
+            fft_angles(1:no_tan_hts) = ptg_angles(1:no_tan_hts)
+            Call fov_convolve ( fft_angles, Rad, center_angle, 2, &
+                             &  no_tan_hts, fft_pts, AntennaPattern, Ier )
+            if ( Ier /= 0) Return
+
+            if ( fft_index(1).gt.0) then
+              do ptg_i = 1, Ktr
+                Rad(ptg_i) = Rad(fft_index(ptg_i))
+              end do
+            end if
+
+            Call Cspline ( fft_press, Ptan%values(:,maf), Rad, Term, Ktr, j )
+
+          ! Transfer dx_dt from convolution grid onto the output grid
+
+            Call Lintrp (tan_press, Ptan%values(:,maf), dx_dt(1:,jz), SRad, &
+                       & no_tan_hts, j )
+
+            k_star_tmp = k_star_tmp + srad*term
+
+          ! the convolution of the radiance weighted hydrostatic derivative
+          ! with the antenna derivative
+
+            Rad(1:no_tan_hts) = dx_dt(1:no_tan_hts,jz) * &
+                            & (i_raw(1:no_tan_hts) - i_raw(ht_ind(1)))
+
+          ! Now, convolve:
+
+            fft_angles(1:no_tan_hts) = ptg_angles(1:no_tan_hts)
+            Call fov_convolve ( fft_angles, Rad, center_angle, 2, &
+                             &  no_tan_hts, fft_pts, AntennaPattern, Ier )
+            if ( Ier /= 0) Return
+
+            if ( fft_index(1).gt.0) then
+              do ptg_i = 1, Ktr
+                Rad(ptg_i) = Rad(fft_index(ptg_i))
+              end do
+            end if
+
+            Call Cspline(fft_press,Ptan%values(:,maf),Rad,Term,Ktr,j)
+
+            do ptg_i = 1, j
+              q = k_star_tmp(ptg_i)
+              ind = channel + radiance%template%noChans*(ptg_i-1)
+              r = jacobian%block(row,col)%values( ind, jz)
+              jacobian%block(row,col)%values( ind, jz) = r + &
+                                          &    sbRatio*(q - Term(ptg_i))
+            end do
+!
+          ELSE          ! On IF(ANY(d2x_dxdt(:,jz) > 0.0)) THEN
+a340 32
+! If All the d2x_dxdt(:,jz) = 0.0 then it is a simple cycle, like VMR:
+!
+! run through the Temp. representation basis coefficients
+!
+            Rad(1:no_tan_hts) = k_temp(1:no_tan_hts,jz,nf)
+
+! Now Convolve the derivative
+
+            fft_angles(1:no_tan_hts) = ptg_angles(1:no_tan_hts)
+            Call fov_convolve ( fft_angles, Rad, center_angle, 1, &
+                             &  no_tan_hts, fft_pts, AntennaPattern, Ier )
+            if ( Ier /= 0) Return
+
+            if ( fft_index(1).gt.0) then
+              do ptg_i = 1, Ktr 
+                Rad(ptg_i) = Rad(fft_index(ptg_i))
+              end do
+            end if
+
+            Call Lintrp(fft_press,Ptan%values(:,maf),Rad,SRad,Ktr,j)
+
+            do ptg_i = 1, j
+              ind = channel + radiance%template%noChans*(ptg_i-1)
+              q = jacobian%block(row,col)%values( ind, jz )
+              jacobian%block(row,col)%values( ind, jz ) = &
+                                         &    q + sbRatio*Srad(ptg_i)
+            end do
+
+          ENDIF    ! On IF(ANY(d2x_dxdt(:,jz) > 0.0)) THEN
+
+        end do
+
+a341 92
+
+    end if
+
+    ! ****************** atmospheric derivatives ******************
+
+    if ( forwardModelConfig%atmos_der) then
+
+      sv_f = 0
+      no_mol = size(mol_cat_indx)
+
+      lk = lbound(k_atmos,4)   ! The lower Phi dimension
+      uk = ubound(k_atmos,4)   ! The upper Phi dimension
+
+      do is = 1, no_mol
+
+        kp = Grids_f%no_p(is)
+        kz = Grids_f%no_z(is)
+        kf = Grids_f%no_f(is)
+
+        jz = mol_cat_indx(is)
+        l = forwardModelConfig%molecules(jz)
+        if ( l == l_extinction ) then
+          f => GetVectorQuantityByType(forwardModelIn, &
+            &                          quantityType=l_extinction, &
+            &  radiometer=radiance%template%radiometer, noError=.true. )
+        else
+          f => GetVectorQuantityByType ( forwardModelIn, quantityType=l_vmr, &
+            &  molecule=l, noError=.true. )
+        endif
+
+        if ( associated(f)) then
+
+          do nf = 1, kp
+
+          ! run through phi representation basis coefficients
+
+            if ( nf+lk-1 > uk) then
+              sv_f = sv_f + kf * kz * (kp-nf+1)
+              EXIT
+            endif
+
+            col = FindBlock ( Jacobian%col, f%index, nf+windowStart-1 )
+            select case ( Jacobian%block(row,col)%kind )
+            case ( m_absent )
+              call CreateBlock ( Jacobian, row, col, m_full )
+              jacobian%block(row,col)%values = 0.0_r8
+            case ( m_full )
+            case default
+              call MLSMessage ( MLSMSG_Error, ModuleName, &
+                & 'Wrong type for vmr derivative matrix' )
+            end select
+
+            sv_i = 0
+            do jz = 1, kz
+
+            ! run through zeta representation basis coefficients
+
+              do jf = 1, kf
+
+! Check if derivatives are needed for this molecule (zeta, phi & channel) :
+
+                sv_f = sv_f + 1
+                IF(.NOT. Grids_f%deriv_flags(sv_f)) CYCLE
+
+                ! run through Frequencies basis coefficients
+
+                sv_i = sv_i + 1
+                Rad(1:no_tan_hts) = k_atmos(1:no_tan_hts,jf,jz,nf+lk-1,is)
+
+                ! Now Convolve the derivative
+
+                fft_angles(1:no_tan_hts) = ptg_angles(1:no_tan_hts)
+                Call fov_convolve(fft_angles,Rad,center_angle,1,no_tan_hts, &
+                  &               fft_pts,AntennaPattern,Ier)
+                if ( Ier /= 0) Return
+
+                if ( fft_index(1).gt.0) then
+                  do ptg_i = 1, Ktr
+                    Rad(ptg_i) = Rad(fft_index(ptg_i))
+                  end do
+                end if
+
+                ! Interpolate onto the output grid, and store in Jacobian ..
+
+                Call Lintrp(fft_press,Ptan%values(:,maf),Rad,SRad,Ktr,j)
+
+                do ptg_i = 1, j
+                  ind = channel + radiance%template%noChans*(ptg_i-1)
+                  q = jacobian%block(row,col)%values( ind, sv_i )
+                  jacobian%block(row,col)%values( ind, sv_i ) = &
+                                            &    q + sbRatio*Srad(ptg_i)
+                end do                  ! Pointing
+d343 1
+a343 7
+              end do                    ! F channels (Frequencies)
+!
+            end do                      ! F surfs
+!
+          end do                        ! F instances
+!
+        else                            ! On: if ( associated(f)) ...
+d345 1
+a345 1
+          sv_f = sv_f + kp * kz * kf
+d347 1
+a347 1
+        end if                          ! Want derivatives for this species
+d349 1
+a349 5
+      end do                            ! Loop over species
+!
+    end if                              ! Any derivatives
+!
+10  CONTINUE
+d351 1
+a351 116
+    Return
+!
+  End Subroutine CONVOLVE_ALL
+!
+end module CONVOLVE_ALL_M
+! $Log: convolve_all_m.f90,v $
+! Revision 2.8  2002/06/07 04:50:25  bill
+! fixes and improvements--wgr
+!
+! Revision 2.7  2002/06/04 10:28:02  zvi
+! Encorporate deriv. flag into convolution, fixing a bug with species ruuning index
+!
+! Revision 2.6  2002/05/22 19:42:44  zvi
+! Fix a bug in the mol. index loop
+!
+! Revision 2.5  2002/02/15 22:52:16  livesey
+! Bug fix for case where no ptan derivative
+!
+! Revision 2.4  2002/02/06 08:31:55  zvi
+! Adding Temp. Deriv. correction
+!
+! Revision 2.3  2002/02/02 11:20:17  zvi
+! Code to overwrite the l2cf integration & tanget grids
+!
+! Revision 2.2  2002/01/27 08:37:47  zvi
+! Adding Users selected coefficients for derivatives
+!
+! Revision 2.1  2001/11/08 00:10:36  livesey
+! Updated for extinction stuff
+!
+! Revision 2.0  2001/09/17 20:26:26  livesey
+! New forward model
+!
+! Revision 1.29.2.1  2001/09/13 11:18:20  zvi
+! Fix temp. derv. bug
+!
+! Revision 1.29  2001/08/24 03:42:26  jonathan
+! change Ntr to Ntr-1 in do while loop
+!
+! Revision 1.28  2001/05/18 00:01:19  livesey
+! Zero out some arrays to start with (mainly to make them safe to dump).
+!
+! Revision 1.27  2001/05/09 19:46:49  vsnyder
+! Use new bandHeight argument of createBlock
+!
+! Revision 1.26  2001/05/03 02:03:16  vsnyder
+! Insert copyright notice
+!
+! Revision 1.25  2001/05/02 20:49:23  zvi
+! Cleaning up code
+!
+! Revision 1.24  2001/05/01 17:48:33  vsnyder
+! Cosmetic changes -- put dummy arg declarations in same order as in header
+!
+! Revision 1.23  2001/05/01 00:42:54  zvi
+! Fixing phi window bug
+!
+! Revision 1.22  2001/04/28 17:48:08  livesey
+! Now accepts and sets rowFlags
+!
+! Revision 1.21  2001/04/27 22:37:54  vsnyder
+! Don't compute derivatives if Jacobian isn't present
+!
+! Revision 1.20  2001/04/27 00:13:10  zvi
+! Fixing some more phiwindow bug
+!
+! Revision 1.19  2001/04/26 22:54:41  zvi
+! Fixing some phiwindow bug
+!
+! Revision 1.18  2001/04/20 23:09:13  livesey
+! Cleaned up multi-channel case, also does folding in place
+!
+! Revision 1.17  2001/04/20 02:57:09  livesey
+! Writes derivatives in matrix_t
+!
+! Revision 1.16  2001/04/19 23:56:52  livesey
+! New parameters
+!
+! Revision 1.15  2001/04/10 10:14:16  zvi
+! Fixing bug in convolve routines
+!
+! Revision 1.14  2001/04/10 02:25:14  livesey
+! Tidied up some code
+!
+! Revision 1.13  2001/04/10 01:16:34  livesey
+! Tidied up convolution
+!
+! Revision 1.12  2001/04/05 22:54:39  vsnyder
+! Use AntennaPatterns_M
+!
+! Revision 1.11  2001/03/31 23:40:55  zvi
+! Eliminate l2pcdim (dimension parameters) move to allocatable ..
+!
+! Revision 1.10  2001/03/29 12:08:17  zvi
+! Fixing bugs
+!
+! Revision 1.9  2001/03/28 01:32:12  livesey
+! Working version
+!
+! Revision 1.8  2001/03/28 00:40:01  zvi
+! Fixing up convolution code, some minor changes in geoc_geod
+!
+! Revision 1.7  2001/03/26 17:56:14  zvi
+! New codes to deal with dh_dt_path issue.. now being computed on the fly
+!
+! Revision 1.6  2001/03/21 01:10:31  livesey
+! Now gets Ptan from vector
+!
+! Revision 1.5  2001/03/07 23:45:14  zvi
+! Adding logical flags fro Temp, Atmos & Spect. derivatives
+!
+! Revision 1.1  2000/06/21 21:56:14  zvi
+! First version D.P.
+!
+! Revision 1.1  2000/05/04 18:12:05  vsnyder
+! Initial conversion to Fortran 90
+@
+
+
+2.8
+log
+@fixes and improvements--wgr
+@
+text
+@d23 1
+d30 1
+a30 1
+       "$Id: convolve_all_m.f90,v 2.7 2002/06/04 10:28:02 zvi Exp $"
+d126 7
+a132 5
+    WRITE(lu_debug,'(a)') 'fft_angles, fft_press, rad'
+    DO  is = 1 , ntr 
+      WRITE(lu_debug,'(f11.8,1x,f10.5,1x,f9.4)') fft_angles(is), &
+           fft_press(is), rad(is)
+    ENDDO
+d481 3
+@
+
+
+2.7
+log
+@Encorporate deriv. flag into convolution, fixing a bug with species ruuning index
+@
+text
+@d29 1
+a29 1
+       "$Id: convolve_all_m.f90,v 2.6 2002/05/22 19:42:44 zvi Exp $"
+d44 1
+a44 1
+  & AntennaPattern, mol_cat_indx, Ier)
+d89 2
+d124 6
+d478 3
+@
+
+
+2.6
+log
+@Fix a bug in the mol. index loop
+@
+text
+@d6 1
+d29 1
+a29 1
+       "$Id: convolve_all_m.f90,v 2.5 2002/02/15 22:52:16 livesey Exp $"
+d41 4
+a44 3
+    windowStart, windowFinish, mafTInstance, temp, ptan, radiance, tan_press,&
+    ptg_angles,tan_temp,dx_dt,d2x_dxdt, si,center_angle,i_raw, k_temp,       &
+    k_atmos, sbRatio, Jacobian, rowFlags, AntennaPattern, mol_cat_indx, Ier)
+d66 2
+d78 1
+a78 1
+    integer :: Ind, ht_ind(1)           ! Indecies
+d81 1
+a81 1
+    integer :: No_tan_hts, Lk, Uk, no_mol, jf, jz, l
+d127 1
+d147 2
+d207 1
+a207 1
+      ! Derivatives needed continue to process
+d209 1
+d227 5
+d360 3
+a364 1
+      no_mol = size(mol_cat_indx)
+d368 4
+d375 2
+a376 1
+          f => GetVectorQuantityByType(forwardModelIn,quantityType=l_extinction, &
+d385 1
+a385 1
+          ! Derivatives needed continue to process
+d387 1
+a387 1
+          do nf = 1, f%template%noInstances
+d389 4
+a392 1
+          ! run through phi representation basis coefficients
+a393 1
+            if ( nf+lk-1 > uk) EXIT
+d406 1
+a406 1
+            do jz = 1, f%template%noSurfs
+d410 6
+a415 1
+              do jf = 1, f%template%noChans
+d445 1
+d447 1
+d449 1
+d451 5
+d457 1
+d459 1
+d470 3
+@
+
+
+2.5
+log
+@Bug fix for case where no ptan derivative
+@
+text
+@d28 1
+a28 1
+       "$Id: convolve_all_m.f90,v 2.4 2002/02/06 08:31:55 zvi Exp $"
+d40 3
+a42 3
+    windowStart, windowFinish, mafTInstance, temp, ptan, radiance, &
+    tan_press,ptg_angles,tan_temp,dx_dt,d2x_dxdt, si,center_angle,i_raw, &
+    k_temp, k_atmos, sbRatio, Jacobian, rowFlags, AntennaPattern,Ier)
+d52 1
+d77 1
+a77 1
+    integer :: No_tan_hts, Lk, Uk, n_sps, jf, jz
+d349 1
+a349 1
+      n_sps = size(ForwardModelConfig%molecules)
+d351 1
+a351 1
+      do is = 1, n_sps
+d353 3
+a355 1
+        if ( forwardModelConfig%molecules(is) == l_extinction ) then
+d360 1
+a360 1
+            &  molecule=forwardModelConfig%molecules(is), noError=.true. )
+d433 3
+@
+
+
+2.4
+log
+@Adding Temp. Deriv. correction
+@
+text
+@d28 1
+a28 1
+       "$Id: convolve_all_m.f90,v 2.3 2002/02/02 11:20:17 zvi Exp $"
+d165 24
+a188 20
+    select case (jacobian%block(Row,col)%kind)
+    case (m_absent)
+      call CreateBlock ( Jacobian, row, col, m_banded, &
+        & radiance%template%noSurfs*radiance%template%noChans, &
+        & bandHeight=radiance%template%noChans )
+      jacobian%block(row,col)%values = 0.0_r8
+    case (m_banded)
+    case default
+      call MLSMessage ( MLSMSG_Error, ModuleName,&
+        & 'Wrong matrix type for ptan derivative')
+    end select
+    do ptg_i = 1, j
+      ind = channel + radiance%template%noChans*(ptg_i-1)
+      jacobian%block(row,col)%values( ind, 1 ) = &
+        & jacobian%block(row,col)%values( ind, 1 ) + sbRatio*term(ptg_i)
+      jacobian%block(row,col)%r1(ptg_i) = &
+        & 1 + radiance%template%noChans*(ptg_i-1)
+      jacobian%block(row,col)%r2(ptg_i) = &
+        & radiance%template%noChans*ptg_i
+    end do
+d430 3
+@
+
+
+2.3
+log
+@Code to overwrite the l2cf integration & tanget grids
+@
+text
+@d28 1
+a28 1
+       "$Id: convolve_all_m.f90,v 2.2 2002/01/27 08:37:47 zvi Exp $"
+d73 1
+a73 1
+    integer :: Ind                      ! Index
+d197 2
+d217 5
+a221 7
+          do ptg_i = 1, no_tan_hts
+            q = 0.0
+            if ( nf == mafTInstance) q = d2x_dxdt(ptg_i,jz)
+            Rad(ptg_i) = i_raw(ptg_i) * q + k_temp(ptg_i,jz,nf)
+          end do
+
+          ! Now, Convolve:
+d223 4
+a226 8
+          fft_angles(1:no_tan_hts) = ptg_angles(1:no_tan_hts)
+          Call fov_convolve ( fft_angles, Rad, center_angle, 1, no_tan_hts, &
+            &                 fft_pts, AntennaPattern, Ier )
+          if ( Ier /= 0) Return
+
+          if ( fft_index(1).gt.0) then
+            do ptg_i = 1, Ktr
+              Rad(ptg_i) = Rad(fft_index(ptg_i))
+a227 1
+          end if
+d229 1
+a229 2
+          Call Cspline ( fft_press, Ptan%values(:,maf), Rad, SRad, Ktr, j )
+          k_star_tmp(1:j) = SRad(1:j)
+d231 10
+a240 1
+          !  For any index off center Phi, skip the rest of the phi loop ...
+d242 2
+a243 9
+          if ( nf /= mafTInstance) then
+            do ptg_i = 1, j
+              ind = channel + radiance%template%noChans*(ptg_i-1)
+              q = jacobian%block(row,col)%values( ind, jz )
+              jacobian%block(row,col)%values( ind, jz ) = &
+                                          & q + sbRatio*k_star_tmp(ptg_i)
+            end do
+            CYCLE
+          end if
+d247 1
+a247 1
+          Rad(1:no_tan_hts) = i_raw(1:no_tan_hts)
+d251 10
+a260 10
+          fft_angles(1:no_tan_hts) = ptg_angles(1:no_tan_hts)
+          Call fov_convolve ( fft_angles, Rad, center_angle, 2, no_tan_hts, &
+            &                 fft_pts, AntennaPattern, Ier )
+          if ( Ier /= 0) Return
+
+          if ( fft_index(1).gt.0) then
+            do ptg_i = 1, Ktr
+              Rad(ptg_i) = Rad(fft_index(ptg_i))
+            end do
+          end if
+d262 1
+a262 1
+          Call Cspline ( fft_press, Ptan%values(:,maf), Rad, Term, Ktr, j )
+d266 2
+a267 2
+          Call Lintrp (tan_press, Ptan%values(:,maf), dx_dt(1:,jz), SRad, &
+                     & no_tan_hts, j )
+d269 1
+a269 1
+          k_star_tmp = k_star_tmp + srad*term
+d274 2
+a275 2
+          Rad(1:no_tan_hts) = &
+            dx_dt(1:no_tan_hts,jz) * i_raw(1:no_tan_hts)
+d279 19
+a297 8
+          fft_angles(1:no_tan_hts) = ptg_angles(1:no_tan_hts)
+          Call fov_convolve ( fft_angles, Rad, center_angle, 2, no_tan_hts, &
+            &                 fft_pts, AntennaPattern, Ier )
+          if ( Ier /= 0) Return
+
+          if ( fft_index(1).gt.0) then
+            do ptg_i = 1, Ktr
+              Rad(ptg_i) = Rad(fft_index(ptg_i))
+d299 21
+a319 1
+          end if
+d321 1
+a321 1
+          Call Cspline(fft_press,Ptan%values(:,maf),Rad,Term,Ktr,j)
+d323 8
+a330 7
+          do ptg_i = 1, j
+            q = k_star_tmp(ptg_i)
+            ind = channel + radiance%template%noChans*(ptg_i-1)
+            r = jacobian%block(row,col)%values( ind, jz)
+            jacobian%block(row,col)%values( ind, jz) = r + &
+                                             sbRatio*(q - Term(ptg_i))
+          end do
+d426 3
+@
+
+
+2.2
+log
+@Adding Users selected coefficients for derivatives
+@
+text
+@d28 1
+a28 1
+       "$Id: convolve_all_m.f90,v 2.1 2001/11/08 00:10:36 livesey Exp $"
+d85 3
+a87 1
+    ! -----  Begin the code  -----------------------------------------
+a88 1
+    k_star_tmp = 0.0
+d95 1
+a95 1
+    ntr = size(antennaPattern%aaap)
+d97 1
+a97 1
+    rad=0.0
+d104 1
+a104 1
+    fft_pts = nint(log(real(size(AntennaPattern%aaap)))/log(2.0))
+d106 2
+a107 2
+    fft_angles=0.0
+    fft_angles(1:size(tan_press)) = ptg_angles(1:size(tan_press))
+d109 1
+a109 1
+    Call fov_convolve ( fft_angles, Rad,center_angle, 1, no_tan_hts, &
+d141 2
+a142 2
+    ! Interpolate the output values
+    ! (Store the radiances derivative with respect to pointing pressures in: Term)
+d148 1
+d150 2
+a151 1
+    Call Cspline_der ( fft_press, Ptan%values(:,maf), Rad, SRad, Term, Ktr, j )
+d160 1
+d398 3
+@
+
+
+2.1
+log
+@Updated for extinction stuff
+@
+text
+@d28 1
+a28 1
+       "$Id: convolve_all_m.f90,v 2.0 2001/09/17 20:26:26 livesey Exp $"
+d60 2
+a61 2
+    Real(r4), intent(in) :: k_temp(:,:,WindowStart:)   ! (Nptg,mxco,mnp)
+    Real(r4), intent(in) :: k_atmos(:,:,WindowStart:,:) ! (Nptg,mxco,mnp,Nsps)
+d74 1
+d76 1
+a76 2
+    integer :: Row, Col                 ! Matrix entries
+    integer :: No_tan_hts, Lk, Uk
+d81 1
+a81 1
+    Real(r8) :: Q
+d157 1
+a157 1
+    ! Derivatives wanted,find index location k_star_all and write the derivative
+d196 1
+a196 1
+        select case ( Jacobian%block(row,col)%kind ) 
+d206 1
+a206 1
+        do sv_i = 1, temp%template%noSurfs
+d213 2
+a214 2
+            if ( nf == mafTInstance) q = d2x_dxdt(ptg_i,sv_i)
+            Rad(ptg_i) = i_raw(ptg_i) * q + k_temp(ptg_i,sv_i,nf)
+d238 3
+a240 3
+              jacobian%block(row,col)%values( ind, sv_i ) = &
+                & jacobian%block(row,col)%values( ind, sv_i ) + &
+                &   sbRatio*k_star_tmp(ptg_i)
+d242 1
+a242 1
+            cycle
+d266 1
+a266 1
+          Call Lintrp (tan_press, Ptan%values(:,maf), dx_dt(1:,sv_i), SRad, &
+d275 1
+a275 1
+            dx_dt(1:no_tan_hts,sv_i) * i_raw(1:no_tan_hts)
+d295 3
+a297 2
+            jacobian%block(row,col)%values( ind, sv_i ) = &
+              jacobian%block(row,col)%values( ind, sv_i ) + sbRatio*(q - Term(ptg_i))
+d310 6
+a315 3
+      lk = lbound(k_atmos,3)
+      uk = ubound(k_atmos,3)
+      do is = 1, size(ForwardModelConfig%molecules) ! What about derivatives!???NJL
+d317 2
+a318 3
+          f => GetVectorQuantityByType ( forwardModelIn, &
+            & quantityType=l_extinction, radiometer=radiance%template%radiometer, &
+            & noError=.true. )
+d320 2
+a321 2
+          f => GetVectorQuantityByType ( forwardModelIn, &
+            & quantityType=l_vmr, molecule=forwardModelConfig%molecules(is), noError=.true. )
+d323 1
+d329 3
+d334 1
+a334 1
+            select case ( Jacobian%block(row,col)%kind ) 
+d344 6
+a349 1
+            do sv_i = 1, f%template%noSurfs
+d351 1
+a351 1
+              ! run through representation basis coefficients
+d353 2
+a354 1
+              Rad(1:no_tan_hts) = k_atmos(1:no_tan_hts,sv_i,nf+lk-1,is)
+d356 1
+a356 1
+              ! Now Convolve the derivative
+d358 4
+a361 4
+              fft_angles(1:no_tan_hts) = ptg_angles(1:no_tan_hts)
+              Call fov_convolve(fft_angles,Rad,center_angle,1,no_tan_hts, &
+                &               fft_pts,AntennaPattern,Ier)
+              if ( Ier /= 0) Return
+d363 5
+a367 5
+              if ( fft_index(1).gt.0) then
+                do ptg_i = 1, Ktr
+                  Rad(ptg_i) = Rad(fft_index(ptg_i))
+                end do
+              end if
+d369 1
+a369 1
+              ! Interpolate onto the output grid, and store in k_star_all ..
+d371 9
+a379 6
+              Call Lintrp(fft_press,Ptan%values(:,maf),Rad,SRad,Ktr,j)
+              do ptg_i = 1,j
+                ind = channel+ radiance%template%noChans*(ptg_i-1)
+                jacobian%block(row,col)%values( ind, sv_i ) = &
+                  & jacobian%block(row,col)%values( ind, sv_i ) + sbRatio*Srad(ptg_i)
+              end do                    ! Pointing
+d394 3
+@
+
+
+2.0
+log
+@New forward model
+@
+text
+@d17 1
+d28 1
+a28 1
+       "$Id: convolve_all_m.f90,v 1.29.2.1 2001/09/13 11:18:20 zvi Exp $"
+d312 8
+a319 4
+
+        f => GetVectorQuantityByType ( forwardModelIn, quantityType=l_vmr, &
+          & molecule=forwardModelConfig%molecules(is), noError=.true. )
+
+d378 3
+@
+
+
+1.29
+log
+@change Ntr to Ntr-1 in do while loop
+@
+text
+@d27 1
+a27 1
+       "$Id: convolve_all_m.f90,v 1.28 2001/05/18 00:01:19 livesey Exp $"
+d76 1
+d193 1
+d204 1
+d266 1
+a266 1
+            & no_tan_hts, j )
+d373 6
+@
+
+
+1.29.2.1
+log
+@Fix temp. derv. bug
+@
+text
+@d27 1
+a27 1
+       "$Id: convolve_all_m.f90,v 1.29 2001/08/24 03:42:26 jonathan Exp $"
+a75 1
+
+a191 1
+
+a201 1
+
+d263 1
+a263 1
+                     & no_tan_hts, j )
+a369 3
+! Revision 1.29  2001/08/24 03:42:26  jonathan
+! change Ntr to Ntr-1 in do while loop
+!
+@
+
+
+1.28
+log
+@Zero out some arrays to start with (mainly to make them safe to dump).
+@
+text
+@d27 1
+a27 1
+       "$Id: convolve_all_m.f90,v 1.27 2001/05/09 19:46:49 vsnyder Exp $"
+d119 1
+a119 1
+    do while (is < Ntr  .and.  fft_press(is) >= fft_press(is+1))
+d370 3
+@
+
+
+1.27
+log
+@Use new bandHeight argument of createBlock
+@
+text
+@d27 1
+a27 1
+       "$Id: convolve_all_m.f90,v 1.26 2001/05/03 02:03:16 vsnyder Exp $"
+d94 1
+d102 2
+d105 1
+d370 3
+@
+
+
+1.26
+log
+@Insert copyright notice
+@
+text
+@d27 1
+a27 1
+       "$Id: convolve_all_m.f90,v 1.25 2001/05/02 20:49:23 zvi Exp $"
+d158 2
+a159 1
+        &    radiance%template%noSurfs*radiance%template%noChans )
+a160 6
+      do ptg_i = 1, j
+        jacobian%block(row,col)%r1(ptg_i) = &
+          & 1 + radiance%template%noChans*(ptg_i-1)
+        jacobian%block(row,col)%r2(ptg_i) = &
+          & radiance%template%noChans*ptg_i
+      end do
+d366 3
+@
+
+
+1.25
+log
+@Cleaning up code
+@
+text
+@d1 3
+d27 1
+a27 1
+       "$Id: convolve_all_m.f90,v 1.24 2001/05/01 17:48:33 vsnyder Exp $"
+d371 3
+@
+
+
+1.24
+log
+@Cosmetic changes -- put dummy arg declarations in same order as in header
+@
+text
+@d24 1
+a24 1
+       "$Id: convolve_all_m.f90,v 1.23 2001/05/01 00:42:54 zvi Exp $"
+d70 1
+a70 1
+    integer :: FFT_pts, I, Is, J, Kc, Ki, Ktr, N, Nf, Ntr, Ptg_i, Spectag, Sv_i
+d72 1
+a72 1
+    integer :: No_phi_t, No_t, No_tan_hts, Lk, Uk
+d76 1
+a76 1
+    Real(r8) :: Q, R
+a79 2
+    Character :: CA
+
+a80 2
+    no_t = temp%template%noSurfs
+    no_phi_t = temp%template%noInstances
+a92 2
+    kc = 0
+    ki = 0
+d360 2
+a361 78
+    !     ! ****************** Spectroscopic derivatives ******************
+    ! !
+    !     if ( spect_der) then
+    ! !
+    !       do is = 1, n_sps
+    ! !
+    !         i = spect_atmos(is)
+    !         if ( i < 1) CYCLE
+    !         if ( .not.spectroscopic(i)%DER_CALC(band)) CYCLE
+    ! !
+    !         ! Derivatives needed continue to process
+    ! !
+    !         Spectag = atmospheric(is)%spectag
+    ! !
+    !         DO
+    ! !
+    !           if ( spectroscopic(i)%Spectag /= Spectag) EXIT
+    !           n = spectroscopic(i)%no_phi_values
+    !           nz = spectroscopic(i)%no_zeta_values
+    !           CA = spectroscopic(i)%type
+    !           ki = ki + 1
+    !           kc = kc + 1
+    !           k_star_info(kc)%name = spectroscopic(i)%NAME
+    !           k_star_info(kc)%first_dim_index = ki
+    !           k_star_info(kc)%no_phi_basis = n
+    !           k_star_info(kc)%no_zeta_basis = nz
+    !           k_star_info(kc)%zeta_basis(1:nz) = &
+    !             &  spectroscopic(i)%zeta_basis(1:nz)
+    ! !
+    !           do nf = 1, n
+    ! !
+    !             do sv_i = 1, nz
+    ! !
+    !               select case ( CA )
+    !               case ( 'W' )
+    !                 Rad(1:no_tan_hts) = k_spect_dw(1:no_tan_hts,sv_i,nf,i)
+    !               case ( 'N' )
+    !                 Rad(1:no_tan_hts) = k_spect_dn(1:no_tan_hts,sv_i,nf,i)
+    !               case ( 'V' )
+    !                 Rad(1:no_tan_hts) = k_spect_dnu(1:no_tan_hts,sv_i,nf,i)
+    !               case default
+    !                 Ier = -99
+    !                 Print *,'** Unknown Spectroscopic element !'
+    !                 Return
+    !               end select
+    ! !
+    !               ! Now Convolve the derivative
+    ! !
+    !               fft_angles(1:no_tan_hts) = ptg_angles(1:no_tan_hts)
+    !               Call fov_convolve(fft_angles,Rad,center_angle,1,no_tan_hts, &
+    !                 &               fft_pts,AntennaPattern,Ier)
+    !               if ( Ier /= 0) Return
+    ! !
+    !               if ( fft_index(1).gt.0) then
+    !                 do ptg_i = 1, Ktr
+    !                   Rad(ptg_i) = Rad(fft_index(ptg_i))
+    !                 end do
+    !               end if
+    ! !
+    !               ! Interpolate onto the output grid, and store in k_star_all ..
+    ! !
+    !               Call Lintrp(fft_press,Ptan,Rad,SRad,Ktr,j)
+    !               k_star_all(ki,sv_i,nf,1:j) = SRad(1:j)
+    ! !
+    !             end do        ! sv_i loop
+    ! !
+    !           end do          ! nf loop
+    ! !
+    !           i = i + 1
+    !           if ( i > 3 * n_sps) EXIT
+    ! !
+    !         END DO
+    ! !
+    !       end do
+    ! !
+    !     end if
+!
+10  CONTINUE ! K_INFO_COUNT = kc
+d368 3
+@
+
+
+1.23
+log
+@Fixing phi window bug
+@
+text
+@d24 1
+a24 1
+       "$Id: convolve_all_m.f90,v 1.22 2001/04/28 17:48:08 livesey Exp $"
+d51 2
+a52 2
+    type (Matrix_T), intent(inout), optional :: Jacobian
+
+a55 5
+    real(r8), intent(IN) :: TAN_PRESS(:), PTG_ANGLES(:), TAN_TEMP(:)
+    real(r8), intent(IN) :: DX_DT(:,:), D2X_DXDT(:,:)
+    real(r8), intent(in) :: SBRATIO
+    type(antennaPattern_T), intent(in) :: AntennaPattern
+!
+d58 2
+a59 2
+
+    real(r8) :: k_star_tmp(ptan%template%noSurfs)
+d61 1
+a61 1
+
+d70 1
+a70 1
+    integer :: N, I, J, Is, Ktr, Nf, Ntr, Ptg_i, Sv_i, Spectag, Ki, Kc, FFT_pts
+d72 1
+a72 1
+    integer :: No_t, No_tan_hts, No_phi_t, Lk, Uk
+d75 1
+d450 3
+@
+
+
+1.22
+log
+@Now accepts and sets rowFlags
+@
+text
+@d24 1
+a24 1
+       "$Id: convolve_all_m.f90,v 1.21 2001/04/27 22:37:54 vsnyder Exp $"
+d60 3
+a62 3
+
+    Real(r4), intent(in) :: k_temp(:,:,:)                   ! (Nptg,mxco,mnp)
+    Real(r4), intent(in) :: k_atmos(:,:,:,:)                ! (Nptg,mxco,mnp,Nsps)
+d77 1
+a77 1
+    integer :: No_t, No_tan_hts, No_phi_t, PhiWindow, Lk, Uk
+a86 1
+    phiWindow = windowFinish - windowStart +1
+d199 2
+a200 3
+      do nf = 1, phiWindow
+        lk = nf + windowStart - 1
+        col = FindBlock ( Jacobian%col, temp%index, lk )
+d218 1
+a218 1
+            Rad(ptg_i) = i_raw(ptg_i) * q + k_temp(ptg_i,sv_i,lk)
+d454 3
+@
+
+
+1.21
+log
+@Don't compute derivatives if Jacobian isn't present
+@
+text
+@d24 1
+a24 1
+       "$Id: $"
+d27 1
+a27 1
+       "$RCSfile: $"
+d38 1
+a38 1
+    k_temp, k_atmos, sbRatio, Jacobian,AntennaPattern,Ier)
+d65 1
+d161 1
+d456 3
+@
+
+
+1.20
+log
+@Fixing some more phiwindow bug
+@
+text
+@d22 7
+a28 6
+  !---------------------------- RCS Ident Info -------------------------------
+  CHARACTER (LEN=256) :: Id = &
+    "$Id: convolve_all_m.f90,v 1.19 2001/04/26 22:54:41 zvi Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= &
+    "$RCSfile: convolve_all_m.f90,v $"
+  !---------------------------------------------------------------------------
+d73 5
+a77 4
+    integer :: n,i,j,is,Ktr,nf,Ntr,ptg_i,sv_i,Spectag,ki,kc, fft_pts
+    integer :: row,col                  ! Matrix entries
+    integer :: no_t, no_tan_hts, no_phi_t, phiWindow, lk, uk
+    integer :: ind                      ! Index
+d83 1
+a83 1
+    Character(LEN=01) :: CA
+d109 3
+a111 3
+    Call fov_convolve(fft_angles,Rad,center_angle,1,no_tan_hts, &
+      &               fft_pts,AntennaPattern,Ier)
+    if (Ier /= 0) Return
+d115 3
+a117 3
+    Call get_pressures('a',ptg_angles,tan_temp,tan_press,no_tan_hts, &
+      &                   fft_angles,fft_press,Ntr,Ier)
+    if (Ier /= 0) Return
+d133 1
+a133 1
+      if (q > fft_press(Ktr)) then
+d138 1
+a138 1
+      endif
+d144 6
+a149 1
+    Call Cspline_der(fft_press,Ptan%values(:,maf),Rad,SRad,Term,Ktr,j)
+d157 9
+a165 20
+    if (present(Jacobian) ) then                    ! Add a condition later !??? NJL
+      ! Derivatives wanted,find index location k_star_all and write the derivative
+      row = FindBlock( Jacobian%row, radiance%index, maf )
+      col = FindBlock ( Jacobian%col, ptan%index, maf )
+      select case (jacobian%block(Row,col)%kind)
+      case (m_absent)
+        call CreateBlock ( Jacobian, row, col, m_banded, &
+          &    radiance%template%noSurfs*radiance%template%noChans )
+        jacobian%block(row,col)%values = 0.0_r8
+        do ptg_i = 1, j
+          jacobian%block(row,col)%r1(ptg_i) = &
+            & 1 + radiance%template%noChans*(ptg_i-1)
+          jacobian%block(row,col)%r2(ptg_i) = &
+            & radiance%template%noChans*ptg_i
+        end do
+      case (m_banded)
+      case default
+        call MLSMessage ( MLSMSG_Error, ModuleName,&
+          & 'Wrong matrix type for ptan derivative')
+      end select
+a166 3
+        ind = channel + radiance%template%noChans*(ptg_i-1)
+        jacobian%block(row,col)%values( ind, 1 ) = &
+          & jacobian%block(row,col)%values( ind, 1 ) + sbRatio*term(ptg_i)
+d172 14
+a185 9
+    endif
+
+    if(.not. ANY((/forwardModelConfig%temp_der, &
+      & forwardModelConfig%atmos_der,&
+      & forwardModelConfig%spect_der/))) then
+      Return
+    endif
+
+    row = FindBlock( Jacobian%row, radiance%index, maf )
+d194 1
+a194 1
+    if (forwardModelConfig%temp_der) then
+d217 1
+a217 1
+            if(nf == mafTInstance) q = d2x_dxdt(ptg_i,sv_i)
+d224 3
+a226 3
+          Call fov_convolve(fft_angles,Rad,center_angle,1,no_tan_hts, &
+            &               fft_pts,AntennaPattern,Ier)
+          if (Ier /= 0) Return
+d228 1
+a228 1
+          if(fft_index(1).gt.0) then
+d232 1
+a232 1
+          endif
+d234 1
+a234 1
+          Call Cspline(fft_press,Ptan%values(:,maf),Rad,SRad,Ktr,j)
+d239 1
+a239 1
+          if(nf /= mafTInstance) then
+d247 1
+a247 1
+          endif
+d256 3
+a258 3
+          Call fov_convolve(fft_angles,Rad,center_angle,2,no_tan_hts, &
+            &               fft_pts,AntennaPattern,Ier)
+          if (Ier /= 0) Return
+d260 1
+a260 1
+          if(fft_index(1).gt.0) then
+d264 1
+a264 1
+          endif
+d266 1
+a266 1
+          Call Cspline(fft_press,Ptan%values(:,maf),Rad,Term,Ktr,j)
+d270 2
+a271 1
+          Call Lintrp(tan_press,Ptan%values(:,maf),dx_dt(1:,sv_i),SRad,no_tan_hts,j)
+d284 3
+a286 3
+          Call fov_convolve(fft_angles,Rad,center_angle,2,no_tan_hts, &
+            &               fft_pts,AntennaPattern,Ier)
+          if (Ier /= 0) Return
+d288 1
+a288 1
+          if(fft_index(1).gt.0) then
+d292 1
+a292 1
+          endif
+d307 1
+a307 1
+    endif
+d311 1
+a311 1
+    if(forwardModelConfig%atmos_der) then
+d320 1
+a320 1
+        if (associated(f)) then
+d325 1
+a325 1
+            if(nf+lk-1 > uk) EXIT
+d348 1
+a348 1
+              if (Ier /= 0) Return
+d350 1
+a350 1
+              if(fft_index(1).gt.0) then
+d354 1
+a354 1
+              endif
+d368 1
+a368 1
+    endif                               ! Any derivatives
+d372 1
+a372 1
+    !     if(spect_der) then
+d377 2
+a378 2
+    !         if(i < 1) CYCLE
+    !         if(.not.spectroscopic(i)%DER_CALC(band)) CYCLE
+d386 1
+a386 1
+    !           if(spectroscopic(i)%Spectag /= Spectag) EXIT
+d421 1
+a421 1
+    !               if (Ier /= 0) Return
+d423 1
+a423 1
+    !               if(fft_index(1).gt.0) then
+d427 1
+a427 1
+    !               endif
+d439 1
+a439 1
+    !           if(i > 3 * n_sps) EXIT
+d445 1
+a445 1
+    !     endif
+d454 3
+@
+
+
+1.19
+log
+@Fixing some phiwindow bug
+@
+text
+@d24 1
+a24 1
+    "$Id: convolve_all_m.f90,v 1.18 2001/04/20 23:09:13 livesey Exp $"
+a199 2
+      lk = lbound(k_temp,3)
+      uk = ubound(k_temp,3)
+d201 2
+a202 2
+        if(nf+lk-1 > uk) EXIT
+        col = FindBlock ( Jacobian%col, temp%index, nf+windowStart-1 )
+d220 1
+a220 1
+            Rad(ptg_i) = i_raw(ptg_i) * q + k_temp(ptg_i,sv_i,nf+lk-1)
+d455 3
+@
+
+
+1.18
+log
+@Cleaned up multi-channel case, also does folding in place
+@
+text
+@d24 1
+a24 1
+    "$Id: convolve_all_m.f90,v 1.17 2001/04/20 02:57:09 livesey Exp $"
+d36 2
+a37 3
+    tan_press,ptg_angles,tan_temp,dx_dt,d2x_dxdt,  &
+    si,center_angle,i_raw, k_temp, k_atmos, &
+    sbRatio, Jacobian,AntennaPattern,Ier)
+d74 1
+a74 1
+    integer :: no_t, no_tan_hts, no_phi_t, phiWindow
+d200 2
+d203 1
+d222 1
+a222 1
+            Rad(ptg_i) = i_raw(ptg_i) * q + k_temp(ptg_i,sv_i,nf)
+d316 2
+d328 1
+d344 1
+a344 1
+              Rad(1:no_tan_hts) = k_atmos(1:no_tan_hts,sv_i,nf,is)
+d457 3
+@
+
+
+1.17
+log
+@Writes derivatives in matrix_t
+@
+text
+@d13 1
+d16 1
+a16 1
+  use MatrixModule_0, only: M_BANDED, M_FULL, DUMP
+d24 1
+a24 1
+    "$Id: convolve_all_m.f90,v 1.16 2001/04/19 23:56:52 livesey Exp $"
+d38 1
+a38 1
+    i_star_all, Jacobian,AntennaPattern,Ier)
+d58 1
+a58 1
+    real(r8), intent(OUT) :: i_star_all(:) 
+d61 2
+a62 2
+    Real(r4) :: k_temp(:,:,:)                   ! (Nptg,mxco,mnp)
+    Real(r4) :: k_atmos(:,:,:,:)                ! (Nptg,mxco,mnp,Nsps)
+d64 1
+a64 3
+    real(r8) :: k_star_tmp(temp%template%noSurfs, &
+      & windowFinish-windowStart+1, &
+      & ptan%template%noSurfs)
+d76 1
+d144 5
+a148 1
+    i_star_all(1:j) = SRad(1:j)
+d155 16
+a170 3
+      call CreateBlock ( Jacobian, row, col, m_banded, &
+        & radiance%template%noSurfs*radiance%template%noChans )
+      jacobian%block(row,col)%values = 0.0_r8
+d172 3
+a174 2
+        jacobian%block(row,col)%values( channel + &
+          & radiance%template%noChans*(ptg_i-1),1 ) = term(ptg_i)
+a200 1
+
+d203 9
+a211 2
+        call CreateBlock ( Jacobian, row, col, m_full )
+        
+d237 1
+a237 1
+          k_star_tmp(sv_i,nf,1:j) = SRad(1:j)
+d243 4
+a246 4
+              q = k_star_tmp(sv_i,nf,ptg_i)
+              jacobian%block(row,col)%values( channel+&
+                & radiance%template%noChans*(ptg_i-1),sv_i) = &
+                k_star_tmp(sv_i,nf,ptg_i)
+d274 1
+a274 5
+          do ptg_i = 1, j
+            r = SRad(ptg_i) * Term(ptg_i)
+            q = k_star_tmp(sv_i,nf,ptg_i)
+            k_star_tmp(sv_i,nf,ptg_i) = q + r
+          end do
+d298 4
+a301 3
+            q = k_star_tmp(sv_i,nf,ptg_i)
+            jacobian%block(row,col)%values( channel+&
+              & radiance%template%noChans*(ptg_i-1),sv_i) = q - Term(ptg_i)
+d325 9
+a333 1
+            call CreateBlock ( Jacobian, row, col, m_full )
+d358 3
+a360 2
+                jacobian%block(row,col)%values( channel+&
+                  & radiance%template%noChans*(ptg_i-1),sv_i) = Srad(ptg_i)
+d452 3
+@
+
+
+1.16
+log
+@New parameters
+@
+text
+@d15 2
+a16 1
+  use MatrixModule_1, only: FINDBLOCK, Matrix_T
+d23 1
+a23 1
+    "$Id: convolve_all_m.f90,v 1.15 2001/04/10 10:14:16 zvi Exp $"
+d33 2
+a34 2
+  Subroutine convolve_all (ForwardModelConfig, ForwardModelIn, maf, &
+    windowStart, windowFinish, temp, ptan, radiance, &
+d43 1
+d45 2
+a46 1
+    integer, intent(out) :: WINDOWFINISH
+d63 4
+d71 1
+d73 2
+a74 4
+    type (VectorValue_t), pointer :: f
+!
+    integer :: FFT_INDEX(size(antennaPattern%aaap)), nz
+    integer :: n,i,j,is,Ktr,nf,Ntr,ptg_i,sv_i,Spectag,ki,kc,jp, fft_pts
+d76 2
+a77 2
+    integer :: no_t, no_tan_hts, no_phi_t
+!
+d81 1
+a81 1
+!
+d83 1
+a83 1
+!
+d85 1
+d89 2
+a90 1
+!
+d92 1
+a92 1
+!
+d94 1
+a94 1
+!
+d97 1
+a97 3
+!    K_INFO_COUNT = 0
+    jp = (no_phi_t+1)/2
+!
+d99 1
+a99 1
+!
+d103 1
+a103 1
+!
+d105 1
+a105 1
+!
+d111 1
+a111 1
+!
+d113 1
+a113 1
+!
+d117 1
+a117 1
+!
+d119 1
+a119 1
+!
+d124 1
+a124 1
+!
+d129 1
+a129 1
+!
+d139 1
+a139 1
+!
+d142 1
+a142 1
+!
+d145 1
+a145 1
+!
+a146 1
+!
+a147 1
+!
+d149 13
+a161 11
+      row = FindBlock( Jacobian%row, ptan%index, maf )
+!      col = 
+
+!
+      ki = ki + 1
+      kc = kc + 1
+!       k_star_info(kc)%name = 'PTAN'
+!       k_star_info(kc)%first_dim_index = ki
+!       k_star_info(kc)%no_phi_basis = 1
+!       k_star_all(ki,1,1,1:j) = Term(1:j)
+!
+a166 1
+!      K_INFO_COUNT = kc
+d169 3
+a171 1
+!
+d174 1
+a174 1
+!
+d176 1
+a176 1
+!
+d178 1
+a178 1
+!
+d180 1
+a180 1
+!
+d182 8
+a189 13
+!
+      ki = ki + 1
+      kc = kc + 1
+!       k_star_info(kc)%name = 'TEMP'
+!       k_star_info(kc)%first_dim_index = ki
+!       k_star_info(kc)%no_zeta_basis = no_t
+!       k_star_info(kc)%no_phi_basis = no_phi_t
+!       k_star_info(kc)%zeta_basis(1:no_t) = t_z_basis(1:no_t)
+!
+      do nf = 1, no_phi_t
+!
+        do sv_i = 1, no_t
+!
+a190 1
+!
+d192 1
+a192 1
+!
+d195 1
+a195 1
+            if(nf == jp) q = d2x_dxdt(ptg_i,sv_i)
+d198 1
+a198 1
+!
+d200 1
+a200 1
+!
+d205 1
+a205 1
+!
+d211 1
+a211 1
+!
+d213 2
+a214 2
+!          k_star_all(ki,sv_i,nf,1:j) = SRad(1:j)
+!
+d216 11
+a226 3
+!
+          if(nf /= jp) CYCLE
+!
+d228 1
+a228 1
+!
+d230 1
+a230 1
+!
+d232 1
+a232 1
+!
+d237 1
+a237 1
+!
+d243 1
+a243 1
+!
+d245 1
+a245 1
+!
+d247 1
+a247 1
+!
+d249 1
+a249 1
+!
+d252 2
+a253 2
+!???ZVI            q = k_star_all(ki,sv_i,nf,ptg_i)
+!???ZVI            k_star_all(ki,sv_i,nf,ptg_i) = q + r
+d255 1
+a255 1
+!
+d258 1
+a258 1
+!
+d261 1
+a261 1
+!
+d263 1
+a263 1
+!
+d268 1
+a268 1
+!
+d274 1
+a274 1
+!
+d276 1
+a276 1
+!
+d278 3
+a280 2
+!????ZVI            q = k_star_all(ki,sv_i,nf,ptg_i)
+!????ZVI            k_star_all(ki,sv_i,nf,ptg_i) = q - Term(ptg_i)
+d282 1
+a282 1
+!
+d284 1
+a284 1
+!
+d286 1
+a286 1
+!
+d288 1
+a288 1
+!
+d290 1
+a290 1
+!
+d292 1
+a292 1
+!
+d294 1
+a294 1
+!
+d299 1
+a299 10
+!
+          ki = ki + 1
+          kc = kc + 1
+          nz = f%template%noSurfs
+!           call get_string(f%template%name,k_star_info(kc)%name)
+!           k_star_info(kc)%first_dim_index = ki
+!           k_star_info(kc)%no_phi_basis = f%template%noInstances
+!           k_star_info(kc)%no_zeta_basis = nz
+!           k_star_info(kc)%zeta_basis(1:nz) = f%template%surfs(1:nz,1)
+!
+d301 1
+a301 1
+!
+d303 3
+a305 1
+!
+d307 1
+a307 1
+!
+d309 1
+a309 1
+!
+d311 1
+a311 1
+!
+d313 1
+a313 1
+!
+d318 1
+a318 1
+!
+d324 1
+a324 1
+!
+d326 1
+a326 1
+!
+d328 86
+a413 88
+!              k_star_all(ki,sv_i,nf,1:j) = SRad(1:j)
+!
+            end do
+!
+          end do
+!
+        endif
+!
+      end do
+!
+    endif
+!
+!     ! ****************** Spectroscopic derivatives ******************
+! !
+!     if(spect_der) then
+! !
+!       do is = 1, n_sps
+! !
+!         i = spect_atmos(is)
+!         if(i < 1) CYCLE
+!         if(.not.spectroscopic(i)%DER_CALC(band)) CYCLE
+! !
+!         ! Derivatives needed continue to process
+! !
+!         Spectag = atmospheric(is)%spectag
+! !
+!         DO
+! !
+!           if(spectroscopic(i)%Spectag /= Spectag) EXIT
+!           n = spectroscopic(i)%no_phi_values
+!           nz = spectroscopic(i)%no_zeta_values
+!           CA = spectroscopic(i)%type
+!           ki = ki + 1
+!           kc = kc + 1
+!           k_star_info(kc)%name = spectroscopic(i)%NAME
+!           k_star_info(kc)%first_dim_index = ki
+!           k_star_info(kc)%no_phi_basis = n
+!           k_star_info(kc)%no_zeta_basis = nz
+!           k_star_info(kc)%zeta_basis(1:nz) = &
+!             &  spectroscopic(i)%zeta_basis(1:nz)
+! !
+!           do nf = 1, n
+! !
+!             do sv_i = 1, nz
+! !
+!               select case ( CA )
+!               case ( 'W' )
+!                 Rad(1:no_tan_hts) = k_spect_dw(1:no_tan_hts,sv_i,nf,i)
+!               case ( 'N' )
+!                 Rad(1:no_tan_hts) = k_spect_dn(1:no_tan_hts,sv_i,nf,i)
+!               case ( 'V' )
+!                 Rad(1:no_tan_hts) = k_spect_dnu(1:no_tan_hts,sv_i,nf,i)
+!               case default
+!                 Ier = -99
+!                 Print *,'** Unknown Spectroscopic element !'
+!                 Return
+!               end select
+! !
+!               ! Now Convolve the derivative
+! !
+!               fft_angles(1:no_tan_hts) = ptg_angles(1:no_tan_hts)
+!               Call fov_convolve(fft_angles,Rad,center_angle,1,no_tan_hts, &
+!                 &               fft_pts,AntennaPattern,Ier)
+!               if (Ier /= 0) Return
+! !
+!               if(fft_index(1).gt.0) then
+!                 do ptg_i = 1, Ktr
+!                   Rad(ptg_i) = Rad(fft_index(ptg_i))
+!                 end do
+!               endif
+! !
+!               ! Interpolate onto the output grid, and store in k_star_all ..
+! !
+!               Call Lintrp(fft_press,Ptan,Rad,SRad,Ktr,j)
+!               k_star_all(ki,sv_i,nf,1:j) = SRad(1:j)
+! !
+!             end do        ! sv_i loop
+! !
+!           end do          ! nf loop
+! !
+!           i = i + 1
+!           if(i > 3 * n_sps) EXIT
+! !
+!         END DO
+! !
+!       end do
+! !
+!     endif
+d422 3
+@
+
+
+1.15
+log
+@Fixing bug in convolve routines
+@
+text
+@d15 1
+d22 1
+a22 1
+    "$Id: convolve_all_m.f90,v 1.14 2001/04/10 02:25:14 livesey Exp $"
+d32 2
+a33 2
+  Subroutine convolve_all (ForwardModelConfig, ForwardModelIn,&
+    Ptan,n_sps, &
+d36 1
+a36 3
+    no_tan_hts,k_info_count,  &
+    i_star_all,k_star_all,k_star_info,no_t,no_phi_t,     &
+    t_z_basis,AntennaPattern,Ier)
+d41 7
+a47 4
+    real(r8), dimension(:), intent(IN) :: Ptan
+
+    integer(i4), intent(IN) :: no_t, n_sps, no_tan_hts, si,&
+      &                           no_phi_t
+d49 1
+d51 1
+a51 1
+    real(r8), intent(IN) :: I_RAW(:), T_Z_BASIS(:)
+d54 1
+d59 3
+a61 9
+!
+    ! -----     Output Variables   ----------------------------------------
+!
+    integer(i4), intent(out) :: IER, K_INFO_COUNT
+!
+    real(r8), intent(OUT) :: I_STAR_ALL(:)
+    real(r4), intent(OUT) :: K_STAR_ALL(:,:,:,:)
+    type(k_matrix_info), intent(OUT) :: k_star_info(:)
+!
+d64 1
+d67 4
+a70 2
+    integer(i4) :: FFT_INDEX(size(antennaPattern%aaap)), nz
+    integer(i4) :: n,i,j,is,Ktr,nf,Ntr,ptg_i,sv_i,Spectag,ki,kc,jp, fft_pts
+d73 1
+a73 1
+    Real(r8) :: SRad(size(Ptan)), Term(size(Ptan))
+d79 3
+d89 1
+a89 1
+    K_INFO_COUNT = 0
+d96 1
+a96 1
+    j = size(Ptan)
+d101 1
+a101 1
+    fft_angles(1:no_tan_hts) = ptg_angles(1:no_tan_hts)
+d137 1
+a137 1
+    Call Cspline_der(fft_press,Ptan,Rad,SRad,Term,Ktr,j)
+d142 1
+a142 1
+    if (.true.) then                    ! Add a condition later !??? NJL
+d145 3
+d151 4
+a154 4
+      k_star_info(kc)%name = 'PTAN'
+      k_star_info(kc)%first_dim_index = ki
+      k_star_info(kc)%no_phi_basis = 1
+      k_star_all(ki,1,1,1:j) = Term(1:j)
+d161 1
+a161 1
+      K_INFO_COUNT = kc
+d178 5
+a182 5
+      k_star_info(kc)%name = 'TEMP'
+      k_star_info(kc)%first_dim_index = ki
+      k_star_info(kc)%no_zeta_basis = no_t
+      k_star_info(kc)%no_phi_basis = no_phi_t
+      k_star_info(kc)%zeta_basis(1:no_t) = t_z_basis(1:no_t)
+d211 2
+a212 2
+          Call Cspline(fft_press,Ptan,Rad,SRad,Ktr,j)
+          k_star_all(ki,sv_i,nf,1:j) = SRad(1:j)
+d235 1
+a235 1
+          Call Cspline(fft_press,Ptan,Rad,Term,Ktr,j)
+d239 1
+a239 1
+          Call Lintrp(tan_press,Ptan,dx_dt(1:,sv_i),SRad,no_tan_hts,j)
+d243 2
+a244 2
+            q = k_star_all(ki,sv_i,nf,ptg_i)
+            k_star_all(ki,sv_i,nf,ptg_i) = q + r
+d266 1
+a266 1
+          Call Cspline(fft_press,Ptan,Rad,Term,Ktr,j)
+d269 2
+a270 2
+            q = k_star_all(ki,sv_i,nf,ptg_i)
+            k_star_all(ki,sv_i,nf,ptg_i) = q - Term(ptg_i)
+d283 1
+a283 1
+      do is = 1, n_sps
+d293 5
+a297 5
+          call get_string(f%template%name,k_star_info(kc)%name)
+          k_star_info(kc)%first_dim_index = ki
+          k_star_info(kc)%no_phi_basis = f%template%noInstances
+          k_star_info(kc)%no_zeta_basis = nz
+          k_star_info(kc)%zeta_basis(1:nz) = f%template%surfs(1:nz,1)
+d324 2
+a325 2
+              Call Lintrp(fft_press,Ptan,Rad,SRad,Ktr,j)
+              k_star_all(ki,sv_i,nf,1:j) = SRad(1:j)
+d414 1
+a414 1
+10  K_INFO_COUNT = kc
+d421 3
+@
+
+
+1.14
+log
+@Tidied up some code
+@
+text
+@d21 1
+a21 1
+    "$Id: convolve_all_m.f90,v 1.13 2001/04/10 01:16:34 livesey Exp $"
+d99 1
+a99 1
+      &                  fft_pts,AntennaPattern,Ier)
+d195 1
+a195 1
+            &           fft_pts,AntennaPattern,Ier)
+d219 1
+a219 1
+            &           fft_pts,AntennaPattern,Ier)
+d250 1
+a250 1
+            &           fft_pts,AntennaPattern,Ier)
+d290 1
+a290 1
+          k_star_info(kc)%zeta_basis(1:f%template%noSurfs) = f%template%surfs(:,1)
+d380 1
+a380 1
+!                 &               band,fft_pts,AntennaPattern,Ier)
+d414 3
+@
+
+
+1.13
+log
+@Tidied up convolution
+@
+text
+@d9 1
+a9 1
+  use L2PC_PFA_STRUCTURES, only: ATMOS_COMP, LIMB_PRESS, K_MATRIX_INFO
+d21 1
+a21 1
+    "$Id: convolve_all_m.f90,v 1.12 2001/04/05 22:54:39 vsnyder Exp $"
+d34 1
+a34 1
+    si,center_angle,fft_pts,i_raw, k_temp, k_atmos, &
+d45 1
+a45 1
+      &                           fft_pts, no_phi_t
+d68 2
+a69 2
+    integer(i4) :: FFT_INDEX(2**fft_pts), nz
+    integer(i4) :: n,i,j,is,Ktr,nf,Ntr,ptg_i,sv_i,Spectag,ki,kc,jp
+d73 1
+a73 2
+    Real(r8) :: FFT_PRESS(2**fft_pts), FFT_ANGLES(2**fft_pts), &
+      &            RAD(2**fft_pts)
+d84 1
+a84 1
+    ntr = 2**fft_pts
+d96 1
+d414 3
+@
+
+
+1.12
+log
+@Use AntennaPatterns_M
+@
+text
+@d9 3
+a11 2
+  use L2PC_PFA_STRUCTURES, only: ATMOS_COMP, LIMB_PRESS, SPECTRO_PARAM, &
+                                 K_MATRIX_INFO
+d13 2
+d19 1
+a19 1
+!---------------------------- RCS Ident Info -------------------------------
+d21 1
+a21 1
+     "$Id: convolve_all_m.f90,v 1.11 2001/03/31 23:40:55 zvi Exp $"
+d23 2
+a24 2
+     "$RCSfile: convolve_all_m.f90,v $"
+!---------------------------------------------------------------------------
+d26 16
+a41 12
+!---------------------------------------------------------------------------
+! This subroutine transfers the derivatives over from the internal
+! convolution grid to the users specified points. This module uses
+! cubic spline interpolation to do the job.
+!
+Subroutine convolve_all (Ptan,atmospheric,n_sps,temp_der,atmos_der, &
+           spect_der,tan_press,ptg_angles,tan_temp,dx_dt,d2x_dxdt,band,  &
+           si,center_angle,fft_pts,i_raw, k_temp, k_atmos, k_spect_dw,   &
+           k_spect_dn,k_spect_dnu,spect_atmos,no_tan_hts,k_info_count,  &
+           i_star_all,k_star_all,k_star_info,no_t,no_phi_t,no_phi_f,     &
+           spectroscopic,t_z_basis,AntennaPattern,IAS,Ier)
+!
+d43 4
+a46 6
+    Logical, intent(IN) :: temp_der,atmos_der,spect_der
+!
+    integer(i4), intent(IN) :: no_t, n_sps, no_tan_hts, si, band, &
+   &                           fft_pts, no_phi_t, IAS
+    integer(i4), intent(IN) :: no_phi_f(:), spect_atmos(:)
+!
+a54 3
+    Real(r4) :: k_spect_dw(:,:,:,:)             ! (Nptg,mxco,mnp,Nsps)
+    Real(r4) :: k_spect_dn(:,:,:,:)             ! (Nptg,mxco,mnp,Nsps)
+    Real(r4) :: k_spect_dnu(:,:,:,:)            ! (Nptg,mxco,mnp,Nsps)
+d56 1
+a56 4
+    type(atmos_comp), intent(IN) :: ATMOSPHERIC(:)
+    type (spectro_param), intent(IN) :: SPECTROSCOPIC(:)
+!
+! -----     Output Variables   ----------------------------------------
+d64 3
+a66 1
+! -----     Local Variables     ----------------------------------------
+d74 1
+a74 1
+   &            RAD(2**fft_pts)
+d78 1
+a78 1
+! -----  Begin the code  -----------------------------------------
+d80 1
+a80 1
+! Compute the ratio of the strengths
+d82 1
+a82 1
+! This subroutine is called by channel
+d95 1
+a95 1
+! Compute the convolution of the mixed radiances
+d98 2
+a99 2
+    Call fov_convolve(fft_angles,Rad,center_angle,1,no_tan_hts,band, &
+   &                  fft_pts,AntennaPattern,IAS,Ier)
+d102 1
+a102 1
+!  Get 'Ntr' pressures associated with the fft_angles:
+d105 1
+a105 1
+   &                   fft_angles,fft_press,Ntr,Ier)
+d108 1
+a108 1
+! Make sure the fft_press array is MONOTONICALY increasing:
+d130 2
+a131 2
+! Interpolate the output values
+! (Store the radiances derivative with respect to pointing pressures in: Term)
+d136 1
+a136 1
+! Find out if user wants pointing derivatives
+d140 1
+a140 1
+! Derivatives wanted,find index location k_star_all and write the derivative
+d151 3
+a153 1
+    if(.not. ANY((/temp_der,atmos_der,spect_der/))) then
+d158 2
+a159 2
+! Now transfer the other fwd_mdl derivatives to the output pointing
+! values
+d161 1
+a161 1
+! ********************* Temperature derivatives ******************
+d163 1
+a163 1
+! check to determine if derivative is desired for this parameter
+d165 1
+a165 1
+    if (temp_der) then
+d167 1
+a167 1
+! Derivatives needed continue to process
+d181 1
+a181 1
+! run through representation basis coefficients
+d183 1
+a183 1
+! Integrand over temperature derivative plus pointing differential
+d191 1
+a191 1
+! Now, Convolve:
+d195 1
+a195 1
+   &           band,fft_pts,AntennaPattern,IAS,Ier)
+d207 1
+a207 1
+!  For any index off center Phi, skip the rest of the phi loop ...
+d211 1
+a211 1
+! Now the convolution of radiance with the derivative antenna field
+d215 1
+a215 1
+! Now, Convolve:
+d219 1
+a219 1
+   &           band,fft_pts,AntennaPattern,IAS,Ier)
+d230 1
+a230 1
+! Transfer dx_dt from convolution grid onto the output grid
+d240 2
+a241 2
+! the convolution of the radiance weighted hydrostatic derivative
+! with the antenna derivative
+d244 1
+a244 1
+              dx_dt(1:no_tan_hts,sv_i) * i_raw(1:no_tan_hts)
+d246 1
+a246 1
+! Now, convolve:
+d250 1
+a250 1
+   &           band,fft_pts,AntennaPattern,IAS,Ier)
+d272 1
+a272 1
+! ****************** atmospheric derivatives ******************
+d274 1
+a274 1
+    if(atmos_der) then
+d278 4
+a281 1
+        if (atmospheric(is)%der_calc(band)) then
+d285 2
+a286 2
+          nz = atmospheric(is)%no_lin_values
+          k_star_info(kc)%name = atmospheric(is)%name
+d288 1
+a288 1
+          k_star_info(kc)%no_phi_basis = no_phi_f(is)
+d290 1
+a290 2
+          k_star_info(kc)%zeta_basis(1:nz) = &
+                  &  atmospheric(is)%basis_peaks(1:nz)
+d292 1
+a292 1
+! Derivatives needed continue to process
+d294 1
+a294 1
+          do nf = 1, no_phi_f(is)
+d296 1
+a296 1
+            do sv_i = 1, nz
+d298 1
+a298 1
+! run through representation basis coefficients
+d302 1
+a302 1
+! Now Convolve the derivative
+d306 1
+a306 1
+   &               band,fft_pts,AntennaPattern,IAS,Ier)
+d315 1
+a315 1
+! Interpolate onto the output grid, and store in k_star_all ..
+d330 76
+a405 45
+! ****************** Spectroscopic derivatives ******************
+!
+    if(spect_der) then
+!
+      do is = 1, n_sps
+!
+        i = spect_atmos(is)
+        if(i < 1) CYCLE
+        if(.not.spectroscopic(i)%DER_CALC(band)) CYCLE
+!
+! Derivatives needed continue to process
+!
+        Spectag = atmospheric(is)%spectag
+!
+        DO
+!
+          if(spectroscopic(i)%Spectag /= Spectag) EXIT
+          n = spectroscopic(i)%no_phi_values
+          nz = spectroscopic(i)%no_zeta_values
+          CA = spectroscopic(i)%type
+          ki = ki + 1
+          kc = kc + 1
+          k_star_info(kc)%name = spectroscopic(i)%NAME
+          k_star_info(kc)%first_dim_index = ki
+          k_star_info(kc)%no_phi_basis = n
+          k_star_info(kc)%no_zeta_basis = nz
+          k_star_info(kc)%zeta_basis(1:nz) = &
+                  &  spectroscopic(i)%zeta_basis(1:nz)
+!
+          do nf = 1, n
+!
+            do sv_i = 1, nz
+!
+              select case ( CA )
+                case ( 'W' )
+                  Rad(1:no_tan_hts) = k_spect_dw(1:no_tan_hts,sv_i,nf,i)
+                case ( 'N' )
+                  Rad(1:no_tan_hts) = k_spect_dn(1:no_tan_hts,sv_i,nf,i)
+                case ( 'V' )
+                  Rad(1:no_tan_hts) = k_spect_dnu(1:no_tan_hts,sv_i,nf,i)
+                case default
+                  Ier = -99
+                  Print *,'** Unknown Spectroscopic element !'
+                  Return
+              end select
+d407 1
+a407 32
+! Now Convolve the derivative
+!
+              fft_angles(1:no_tan_hts) = ptg_angles(1:no_tan_hts)
+              Call fov_convolve(fft_angles,Rad,center_angle,1,no_tan_hts, &
+   &               band,fft_pts,AntennaPattern,IAS,Ier)
+              if (Ier /= 0) Return
+!
+              if(fft_index(1).gt.0) then
+                do ptg_i = 1, Ktr
+                  Rad(ptg_i) = Rad(fft_index(ptg_i))
+                end do
+              endif
+!
+! Interpolate onto the output grid, and store in k_star_all ..
+!
+              Call Lintrp(fft_press,Ptan,Rad,SRad,Ktr,j)
+              k_star_all(ki,sv_i,nf,1:j) = SRad(1:j)
+!
+            end do        ! sv_i loop
+!
+          end do          ! nf loop
+!
+          i = i + 1
+          if(i > 3 * n_sps) EXIT
+!
+        END DO
+!
+      end do
+!
+    endif
+!
+ 10 K_INFO_COUNT = kc
+d414 3
+@
+
+
+1.11
+log
+@Eliminate l2pcdim (dimension parameters) move to allocatable ..
+@
+text
+@d2 5
+a6 1
+  use MLSCommon, only: I4, R4, R8
+d11 2
+a12 4
+  use DUMP_0, only: DUMP
+  use D_LINTRP_M, only: LINTRP
+  use D_CSPLINE_M, only: CSPLINE
+  use DCSPLINE_DER_M, only: CSPLINE_DER
+d18 1
+a18 1
+     "$Id: convolve_all_m.f90,v 1.10 2001/03/29 12:08:17 zvi Exp $"
+d33 1
+a33 1
+           spectroscopic,t_z_basis,XLAMDA,AAAP,D1AAP,D2AAP,IAS,Ier)
+d42 1
+a42 1
+    real(r8), intent(IN) :: CENTER_ANGLE, XLAMDA
+d46 1
+a46 1
+    Real(r8), intent(in) :: AAAP(:,:),D1AAP(:,:),D2AAP(:,:)
+d98 1
+a98 1
+   &                  fft_pts,XLAMDA,AAAP,D1AAP,D2AAP,IAS,Ier)
+d192 1
+a192 1
+   &           band,fft_pts,XLAMDA,AAAP,D1AAP,D2AAP,IAS,Ier)
+d216 1
+a216 1
+   &           band,fft_pts,XLAMDA,AAAP,D1AAP,D2AAP,IAS,Ier)
+d247 1
+a247 1
+   &           band,fft_pts,XLAMDA,AAAP,D1AAP,D2AAP,IAS,Ier)
+d301 1
+a301 1
+   &               band,fft_pts,XLAMDA,AAAP,D1AAP,D2AAP,IAS,Ier)
+d375 1
+a375 1
+   &               band,fft_pts,XLAMDA,AAAP,D1AAP,D2AAP,IAS,Ier)
+d409 3
+@
+
+
+1.10
+log
+@Fixing bugs
+@
+text
+@a2 1
+  use L2PCDIM, only: Nlvl, Nsps, Nptg, MNP => max_no_phi
+a4 1
+  use L2PC_FILE_PARAMETERS, only: MXCO => max_no_elmnts_per_sv_component
+d16 1
+a16 1
+     "$Id: convolve_all_m.f90,v 1.9 2001/03/28 01:32:12 livesey Exp $"
+d46 5
+a50 5
+    Real(r4) :: k_temp(Nptg,mxco,mnp)
+    Real(r4) :: k_atmos(Nptg,mxco,mnp,Nsps)
+    Real(r4) :: k_spect_dw(Nptg,mxco,mnp,Nsps),  &
+                k_spect_dn(Nptg,mxco,mnp,Nsps),  &
+                k_spect_dnu(Nptg,mxco,mnp,Nsps)
+d68 4
+a71 3
+    real(r8) :: FFT_PRESS(2**fft_pts)
+    real(r8) :: FFT_ANGLES(2**fft_pts), RAD(2**fft_pts)
+    real(r8) :: SRad(Nlvl), Term(Nlvl), Q, R
+d143 2
+a144 4
+      k_star_info(kc)%no_phi_basis = mnp
+      do nf = 1, mnp
+        k_star_all(ki,1,nf,1:j) = Term(1:j)
+      end do
+d407 3
+@
+
+
+1.9
+log
+@Working version
+@
+text
+@d18 1
+a18 1
+     "$Id: convolve_all_m.f90,v 1.8 2001/03/28 00:40:01 zvi Exp $"
+d103 1
+a103 1
+                       fft_angles,fft_press,Ntr,Ier)
+d410 3
+@
+
+
+1.8
+log
+@Fixing up convolution code, some minor changes in geoc_geod
+@
+text
+@d9 1
+d18 1
+a18 1
+     "$Id: convolve_all_m.f90,v 1.7 2001/03/26 17:56:14 zvi Exp $"
+d410 3
+@
+
+
+1.7
+log
+@New codes to deal with dh_dt_path issue.. now being computed on the fly
+@
+text
+@d17 1
+a17 1
+     "$Id: convolve_all_m.f90,v 1.6 2001/03/21 01:10:31 livesey Exp $"
+d29 1
+a29 1
+           center_angle,fft_pts,i_raw, k_temp, k_atmos, k_spect_dw,      &
+d37 1
+a37 1
+    integer(i4), intent(IN) :: no_t, n_sps, no_tan_hts, band, &
+d39 1
+a39 1
+    integer(i4), intent(IN) :: no_phi_f(*), spect_atmos(*)
+d42 3
+a44 3
+    real(r8), intent(IN) :: I_RAW(*), T_Z_BASIS(*)
+    real(r8), intent(IN) :: TAN_PRESS(*), PTG_ANGLES(*), TAN_TEMP(*)
+    real(r8), intent(IN) :: DX_DT(Nptg,*), D2X_DXDT(Nptg,*)
+d53 2
+a54 2
+    type(atmos_comp), intent(IN) :: ATMOSPHERIC(*)
+    type (spectro_param), intent(IN) :: SPECTROSCOPIC(*)
+d60 1
+a60 1
+    real(r8), intent(OUT) :: I_STAR_ALL(*)
+d62 1
+a62 1
+    type(k_matrix_info), intent(OUT) :: k_star_info(*)
+d67 1
+a67 1
+    integer(i4) :: n,i,is,j,k,nf,Ntr,ptg_i,sv_i,Spectag,ki,kc,jp,si
+a98 9
+    si = no_tan_hts - j + 1
+    Call Cspline(fft_angles,ptg_angles(si:no_tan_hts),Rad,SRad,Ntr,j)
+    i_star_all(1:j) = SRad(1:j)
+!
+! Find out if user wants pointing derivatives
+!
+    if (.true.) then                    ! Add a condition later !??? NJL
+      
+!
+d101 3
+a103 3
+      Call get_pressures('a',ptg_angles,tan_temp,tan_press,no_tan_hts, &
+                        fft_angles,fft_press,Ntr,Ier)
+      if (Ier /= 0) Return
+d107 19
+a125 4
+      is = 1
+      do while (is < Ntr.and.fft_press(is) >= fft_press(is+1))
+        is = is + 1
+      end do
+d127 2
+a128 14
+      k = 1
+      Rad(k) = Rad(is)
+      fft_index(k) = is
+      fft_press(k) = fft_press(is)
+!
+      do ptg_i = is+1, Ntr
+        q = fft_press(ptg_i)
+        if (q > fft_press(k)) then
+          k = k + 1
+          fft_press(k) = q
+          Rad(k) = Rad(ptg_i)
+          fft_index(k) = ptg_i
+        endif
+      end do
+d130 2
+a131 1
+      if (k == Ntr) fft_index(1) = -2
+d133 1
+a133 2
+! Interpolate the output values and store the radiances derivative
+! with respect to pointing pressures in: Term
+d135 1
+a135 2
+      j = size(Ptan)
+      Call Cspline_der(fft_press,Ptan,Rad,SRad,Term,k,j)
+d195 7
+a201 1
+          Call Cspline(fft_angles,ptg_angles(si:no_tan_hts),Rad,SRad,Ntr,j)
+d219 7
+a225 1
+          Call Cspline(fft_angles,ptg_angles(si:no_tan_hts),Rad,Term,Ntr,j)
+d250 7
+a256 1
+          Call Cspline(fft_angles,ptg_angles(si:no_tan_hts),Rad,Term,Ntr,j)
+d304 6
+d312 1
+a312 1
+              Call Lintrp(fft_angles,ptg_angles(si:no_tan_hts),Rad,SRad,Ntr,j)
+d378 6
+d386 1
+a386 1
+              Call Lintrp(fft_angles,ptg_angles(si:no_tan_hts),Rad,SRad,Ntr,j)
+d409 3
+@
+
+
+1.6
+log
+@Now gets ptan from vector
+@
+text
+@d17 1
+a17 1
+     "$Id: convolve_all_m.f90,v 1.5 2001/03/07 23:45:14 zvi Exp $"
+d27 1
+a27 1
+Subroutine convolve_all (ptan,atmospheric,n_sps,temp_der,atmos_der, &
+d34 1
+a34 1
+    real(r8), dimension(:), intent(IN) :: ptan
+d71 1
+a71 1
+    real(r8) :: SC1(Nlvl), TERM(Nlvl), PtP(Nlvl), Q, R
+d90 1
+a90 2
+    j = size(ptan)
+    PtP(1:j) = ptan
+d100 2
+a101 2
+    Call Cspline(fft_angles,ptg_angles(si:no_tan_hts),Rad,Sc1,Ntr,j)
+    i_star_all(1:j) = Sc1(1:j)
+d139 1
+a139 1
+! with respect to pointing pressures in: term
+d141 2
+a142 2
+      j = size(ptan)
+      Call Cspline_der(fft_press,PtP,Rad,Sc1,term,k,j)
+d152 1
+a152 1
+        k_star_all(ki,1,nf,1:j) = term(1:j)
+d202 2
+a203 2
+          Call Cspline(fft_angles,ptg_angles(si:no_tan_hts),Rad,Sc1,Ntr,j)
+          k_star_all(ki,sv_i,nf,1:j) = Sc1(1:j)
+d220 1
+a220 1
+          Call Cspline(fft_angles,ptg_angles(si:no_tan_hts),Rad,term,Ntr,j)
+d224 1
+a224 1
+          Call Lintrp(tan_press,PtP,dx_dt(1:,sv_i),Sc1,no_tan_hts,j)
+d227 1
+a227 1
+            r = Sc1(ptg_i) * term(ptg_i)
+d245 1
+a245 1
+          Call Cspline(fft_angles,ptg_angles(si:no_tan_hts),Rad,term,Ntr,j)
+d249 1
+a249 1
+            k_star_all(ki,sv_i,nf,ptg_i) = q - term(ptg_i)
+d295 2
+a296 2
+              Call Lintrp(fft_angles,ptg_angles(si:no_tan_hts),Rad,Sc1,Ntr,j)
+              k_star_all(ki,sv_i,nf,1:j) = Sc1(1:j)
+d363 2
+a364 2
+              Call Lintrp(fft_angles,ptg_angles(si:no_tan_hts),Rad,Sc1,Ntr,j)
+              k_star_all(ki,sv_i,nf,1:j) = Sc1(1:j)
+d386 3
+@
+
+
+1.5
+log
+@Adding logical flags fro Temp, Atmos & Spect. derivatives
+@
+text
+@d17 1
+a17 1
+     "$Id: convolve_all_m.f90,v 1.1 2000/06/21 21:56:14 zvi Exp $"
+d27 1
+a27 1
+Subroutine convolve_all (ptg_press,atmospheric,n_sps,temp_der,atmos_der, &
+d34 1
+a52 1
+    type(limb_press), intent(IN) :: PTG_PRESS
+d90 2
+a91 2
+    j = ptg_press%no_lin_values
+    PtP(1:j) = dble(ptg_press%lin_val(1:j))
+d106 2
+a107 1
+    if (ptg_press%der_calc(band)) then
+d142 1
+a142 1
+      j = ptg_press%no_lin_values
+d387 3
+@
+
+
+1.4
+log
+@New version - Using "Super-Structures"
+@
+text
+@d27 6
+a32 6
+Subroutine convolve_all (ptg_press,atmospheric,n_sps,temp_der,tan_press,   &
+           ptg_angles,tan_temp,dx_dt,d2x_dxdt,band,center_angle,fft_pts,   &
+           i_raw, k_temp, k_atmos, k_spect_dw, k_spect_dn,k_spect_dnu,     &
+           spect_atmos, no_tan_hts, k_info_count, i_star_all,k_star_all,   &
+           k_star_info,no_t,no_phi_t,no_phi_f,spectroscopic,t_z_basis,     &
+           XLAMDA,AAAP,D1AAP,D2AAP,IAS,Ier)
+d34 1
+a34 1
+    Logical, intent(IN) :: temp_der
+d89 1
+d146 1
+a146 1
+      ki = 1
+d156 5
+d173 1
+a173 1
+      ki = 2
+d260 3
+a262 2
+    ki = 2
+    do is = 1, n_sps
+d264 1
+a264 1
+      if (atmospheric(is)%der_calc(band)) then
+d266 9
+a274 9
+        ki = ki + 1
+        kc = kc + 1
+        nz = atmospheric(is)%no_lin_values
+        k_star_info(kc)%name = atmospheric(is)%name
+        k_star_info(kc)%first_dim_index = ki
+        k_star_info(kc)%no_phi_basis = no_phi_f(is)
+        k_star_info(kc)%no_zeta_basis = nz
+        k_star_info(kc)%zeta_basis(1:nz) = &
+                &  atmospheric(is)%basis_peaks(1:nz)
+d278 1
+a278 1
+        do nf = 1, no_phi_f(is)
+d280 1
+a280 1
+          do sv_i = 1, nz
+d284 1
+a284 1
+            Rad(1:no_tan_hts) = k_atmos(1:no_tan_hts,sv_i,nf,is)
+d288 4
+a291 4
+            fft_angles(1:no_tan_hts) = ptg_angles(1:no_tan_hts)
+            Call fov_convolve(fft_angles,Rad,center_angle,1,no_tan_hts, &
+   &             band,fft_pts,XLAMDA,AAAP,D1AAP,D2AAP,IAS,Ier)
+            if (Ier /= 0) Return
+d295 4
+a298 2
+            Call Lintrp(fft_angles,ptg_angles(si:no_tan_hts),Rad,Sc1,Ntr,j)
+            k_star_all(ki,sv_i,nf,1:j) = Sc1(1:j)
+d302 1
+a302 1
+        end do
+d304 1
+a304 1
+      endif
+d306 1
+a306 1
+    end do
+d310 3
+a312 1
+    do is = 1, n_sps
+d314 3
+a316 3
+      i = spect_atmos(is)
+      if(i < 1) CYCLE
+      if(.not.spectroscopic(i)%DER_CALC(band)) CYCLE
+d320 1
+a320 1
+      Spectag = atmospheric(is)%spectag
+d322 1
+a322 1
+      DO
+d324 29
+a352 29
+        if(spectroscopic(i)%Spectag /= Spectag) EXIT
+        n = spectroscopic(i)%no_phi_values
+        nz = spectroscopic(i)%no_zeta_values
+        CA = spectroscopic(i)%type
+        ki = ki + 1
+        kc = kc + 1
+        k_star_info(kc)%name = spectroscopic(i)%NAME
+        k_star_info(kc)%first_dim_index = ki
+        k_star_info(kc)%no_phi_basis = n
+        k_star_info(kc)%no_zeta_basis = nz
+        k_star_info(kc)%zeta_basis(1:nz) = &
+                &  spectroscopic(i)%zeta_basis(1:nz)
+!
+        do nf = 1, n
+!
+          do sv_i = 1, nz
+!
+            select case ( CA )
+              case ( 'W' )
+                Rad(1:no_tan_hts) = k_spect_dw(1:no_tan_hts,sv_i,nf,i)
+              case ( 'N' )
+                Rad(1:no_tan_hts) = k_spect_dn(1:no_tan_hts,sv_i,nf,i)
+              case ( 'V' )
+                Rad(1:no_tan_hts) = k_spect_dnu(1:no_tan_hts,sv_i,nf,i)
+              case default
+                Ier = -99
+                Print *,'** Unknown Spectroscopic element !'
+                Return
+            end select
+d356 4
+a359 4
+            fft_angles(1:no_tan_hts) = ptg_angles(1:no_tan_hts)
+            Call fov_convolve(fft_angles,Rad,center_angle,1,no_tan_hts, &
+   &             band,fft_pts,XLAMDA,AAAP,D1AAP,D2AAP,IAS,Ier)
+            if (Ier /= 0) Return
+d363 2
+a364 2
+            Call Lintrp(fft_angles,ptg_angles(si:no_tan_hts),Rad,Sc1,Ntr,j)
+            k_star_all(ki,sv_i,nf,1:j) = Sc1(1:j)
+d366 1
+a366 1
+          end do        ! sv_i loop
+d368 1
+a368 1
+        end do          ! nf loop
+d370 2
+a371 2
+        i = i + 1
+        if(i > 3 * n_sps) EXIT
+d373 1
+a373 1
+      END DO
+d375 3
+a377 1
+    end do
+d379 1
+a379 1
+    K_INFO_COUNT = kc
+@
+
+
+1.3
+log
+@Latest modification: Conv/NoConv
+@
+text
+@d17 1
+a17 1
+     "$Id: convolve_all_m.f90,v 1.2 2001/02/19 22:14:21 zvi Exp $"
+d31 2
+a32 2
+           k_star_info,no_t,no_phi_t,no_phi_f,InDir,Aaap,spectroscopic,    &
+           t_z_basis, Ier)
+d37 1
+a37 1
+   &                           fft_pts, no_phi_t
+d40 1
+a40 1
+    real(r8), intent(IN) :: CENTER_ANGLE
+d44 1
+a51 2
+    Character(LEN=*), intent(IN) :: InDir, Aaap
+!
+d96 1
+a96 1
+   &                  fft_pts,InDir,Aaap,Ier)
+d98 1
+a98 1
+
+d193 1
+a193 1
+   &           band,fft_pts,InDir,Aaap,Ier)
+d211 1
+a211 1
+   &           band,fft_pts,InDir,Aaap,Ier)
+d236 1
+a236 1
+   &           band,fft_pts,InDir,Aaap,Ier)
+d283 1
+a283 1
+   &             band,fft_pts,InDir,Aaap,Ier)
+d347 1
+a347 1
+   &             band,fft_pts,InDir,Aaap,Ier)
+a372 2
+! Revision 1.2  2001/02/19 22:14:21  zvi
+!
+@
+
+
+1.2
+log
+@
+Ctest modification Conv/NoConvVS: ----------------------------------------------------------------------
+@
+text
+@d17 1
+a17 1
+     "$Id: convolve_all_m.f90,v 1.1 2000/06/21 21:56:14 zvi Exp $"
+d374 2
+@
+
+
+1.1
+log
+@Add new version
+@
+text
+@d27 17
+a43 17
+Subroutine convolve_all (ich, ptg_press, atmospheric, n_sps, temp_der, &
+           tan_press,ptg_angles,tan_temp,dx_dt,d2x_dxdt,band,center_angle, &
+           fft_pts, i_raw, k_temp, k_atmos, k_spect_dw, k_spect_dn,    &
+           k_spect_dnu, spect_atmos, no_tan_hts, k_info_count, i_star_all, &
+           k_star_all, k_star_info, no_t, no_phi_t, no_phi_f, InDir, Aaap, &
+           spectroscopic, Ier)
+!
+    Logical, intent(in) :: temp_der
+!
+    integer(i4), intent(in) :: no_t, n_sps, no_tan_hts, band, &
+   &                           ich, fft_pts, no_phi_t
+    integer(i4), intent(in) :: no_phi_f(*), spect_atmos(*)
+!
+    real(r8), intent(in) :: CENTER_ANGLE
+    real(r8), intent(in) :: TAN_PRESS(*), PTG_ANGLES(*), TAN_TEMP(*)
+    real(r8), intent(in) :: DX_DT(Nptg,*), D2X_DXDT(Nptg,*)
+    real(r8), intent(in) :: I_RAW(*)
+d51 1
+a51 1
+    Character(LEN=*), intent(in) :: InDir, Aaap
+d53 3
+a55 3
+    type(limb_press), intent(in) :: PTG_PRESS
+    type(atmos_comp), intent(in) :: ATMOSPHERIC(*)
+    type (spectro_param), intent(in) :: SPECTROSCOPIC(*)
+d61 3
+a63 3
+    real(r8), intent(out) :: I_STAR_ALL(*)
+    real(r4), intent(out) :: K_STAR_ALL(20,mxco,mnp,Nptg)
+    type(k_matrix_info), intent(out) :: k_star_info(20)
+d67 2
+a68 2
+    integer(i4) :: FFT_INDEX(2**fft_pts)
+    integer(i4) :: N, I, IS, J, K, NF, NTR, PTG_I, SV_I, Spectag, ki, kc
+d72 1
+a72 2
+    real(r8) :: SC1(Nlvl), SC2(Nlvl)
+    real(r8) :: TERM(Nlvl), PtP(Nlvl), Q, R
+d85 1
+d99 4
+d104 1
+a104 1
+!  Get 'ntr' pressures associated with the fft_angles:
+d106 1
+a106 3
+    Call get_pressures('a',ptg_angles,tan_temp,tan_press,no_tan_hts, &
+                        fft_angles,fft_press,ntr,Ier)
+    if (Ier /= 0) Return
+d108 1
+a108 1
+! Make sure the fft_press array is MONOTONICALY increasing:
+d110 3
+a112 4
+    is = 1
+    do while (is < ntr.and.fft_press(is) >= fft_press(is+1))
+      is = is + 1
+    end do
+d114 1
+a114 14
+    k = 1
+    Rad(k) = Rad(is)
+    fft_index(k) = is
+    fft_press(k) = fft_press(is)
+!
+    do ptg_i = is+1, ntr
+      q = fft_press(ptg_i)
+      if (q > fft_press(k)) then
+        k = k + 1
+        fft_press(k) = q
+        Rad(k) = Rad(ptg_i)
+        fft_index(k) = ptg_i
+      endif
+    end do
+d116 4
+a119 1
+    if (k == ntr) fft_index(1) = -2
+d121 14
+a134 1
+! Interpolate the output values and store the radiances in: i_star_all
+d136 1
+a136 2
+    j = ptg_press%no_lin_values
+    Call Cspline_der(fft_press,PtP,Rad,i_star_all,term,k,j)
+d138 2
+a139 1
+! Find out if user wants pointing derivatives
+d141 2
+a142 1
+    if (ptg_press%der_calc(band)) then
+d172 1
+d174 1
+d185 2
+a186 1
+            q = d2x_dxdt(ptg_i,sv_i)
+d197 4
+a200 5
+          if (fft_index(1) > 0) then
+            do ptg_i = 1, k
+              Rad(ptg_i) = Rad(fft_index(ptg_i))
+            end do
+          endif
+d202 1
+a202 2
+          Call Cspline(fft_press,PtP,Rad,Sc1,k,j)
+          k_star_all(ki,sv_i,nf,1:j) = Sc1(1:j)
+d215 1
+a215 7
+          if (fft_index(1) > 0) then
+            do ptg_i = 1, k
+              Rad(ptg_i) = Rad(fft_index(ptg_i))
+            end do
+          endif
+!
+          Call Cspline(fft_press,PtP,Rad,term,k,j)
+d219 1
+a219 1
+          Call Lintrp(tan_press,PtP,dx_dt(1:,sv_i),sc2,no_tan_hts,j)
+d222 1
+a222 1
+            r = sc2(ptg_i) * term(ptg_i)
+d240 1
+a240 7
+          if (fft_index(1) > 0) then
+            do ptg_i = 1, k
+              Rad(ptg_i) = Rad(fft_index(ptg_i))
+            end do
+          endif
+!
+          Call Cspline(fft_press,PtP,Rad,term,k,j)
+a250 21
+! *** DEBUG
+!
+      if (ich == 61) then
+        sv_i = 9
+        r = -1.666667
+        write(*,910) sv_i,r
+        do nf = 1, no_phi_t
+          write(*,919) nf,char(92),j
+          write(*,909) (k_star_all(ki,sv_i,nf,ptg_i),ptg_i=1,j)
+        end do
+      endif
+!
+ 909  Format(6(1x,1pe12.5))
+ 919  Format('di_dtemp_phi_',i1,a1,i4.4,'n')
+!
+ 910  Format(/,21x,'CONVOLVED k_temp dump',/,4x,     &
+     &'Derivatrives of Radiance with respect to TEMP',i2.2,  &
+     &' (Zeta=',f7.4,')',/)
+!
+! *** END DEBUG
+!
+d262 1
+d266 3
+d274 1
+a274 1
+          do sv_i = 1, atmospheric(is)%no_lin_values
+a286 6
+            if (fft_index(1) > 0) then
+              do ptg_i = 1, k
+                Rad(ptg_i) = Rad(fft_index(ptg_i))
+              end do
+            endif
+!
+d289 1
+a289 1
+            Call Lintrp(fft_press,PtP,Rad,Sc1,k,j)
+a295 21
+! *** DEBUG
+!
+        if (ich == 61 .and. atmospheric(is)%name == 'H2O') then
+          sv_i = 9
+          r = -1.666667
+          write(*,911) sv_i,r
+          do nf = 1, no_phi_f(is)
+            write(*,918) nf,char(92),j
+            write(*,908) (k_star_all(ki,sv_i,nf,ptg_i),ptg_i=1,j)
+          end do
+        endif
+!
+ 908  Format(6(1x,1pe12.5))
+ 918  Format('di_dh2o_phi_',i1,a1,i4.4,'n')
+!
+ 911  Format(/,21x,'CONVOLVED k_atmos_dump',/,4x,       &
+     &'Derivatrives of Radiance with respect to H2O',i2.2,   &
+     &' (Zeta=',f7.4,')',/)
+!
+! *** END DEBUG
+!
+d304 3
+a306 3
+      j = spect_atmos(is)
+      if(j < 1) CYCLE
+      if(.not.spectroscopic(j)%DER_CALC(band)) CYCLE
+d314 4
+a317 3
+        if(spectroscopic(j)%Spectag /= Spectag) EXIT
+        n = spectroscopic(j)%no_phi_values
+        i = spectroscopic(j)%no_zeta_values
+d320 1
+a320 1
+        k_star_info(kc)%name = spectroscopic(j)%NAME
+d323 3
+a325 1
+        CA = spectroscopic(j)%type
+d329 1
+a329 1
+          do sv_i = 1, i
+d333 1
+a333 1
+                Rad(1:no_tan_hts) = k_spect_dw(1:no_tan_hts,sv_i,nf,j)
+d335 1
+a335 1
+                Rad(1:no_tan_hts) = k_spect_dn(1:no_tan_hts,sv_i,nf,j)
+d337 1
+a337 1
+                Rad(1:no_tan_hts) = k_spect_dnu(1:no_tan_hts,sv_i,nf,j)
+a350 6
+            if (fft_index(1) > 0) then
+              do ptg_i = 1, k
+                Rad(ptg_i) = Rad(fft_index(ptg_i))
+              end do
+            endif
+!
+d353 1
+a353 1
+            Call Lintrp(fft_press,PtP,Rad,Sc1,k,j)
+d360 2
+a361 2
+        j = j + 1
+        if(j > 3 * n_sps) EXIT
+a363 21
+!
+! *** DEBUG
+!
+      if (ich == 61 .and. atmospheric(is)%name == 'H2O') then
+        sv_i = 9
+        r = -1.666667
+        write(*,912) sv_i,r
+        do nf = 1, no_phi_f(is)
+          write(*,917) nf,char(92),j
+          write(*,907) (k_star_all(ki,sv_i,nf,ptg_i),ptg_i=1,j)
+        end do
+      endif
+!
+ 907  Format(6(1x,1pe12.5))
+ 917  Format('di_dh2o_w_phi_',i1,a1,i4.4,'n')
+!
+ 912  Format(/,21x,'CONVOLVED k_spectro_dump',/,4x,       &
+     &'Derivatrives of Radiance with respect to H2O_W',i2.2,   &
+     &' (Zeta=',f7.4,')',/)
+!
+! *** END DEBUG
+@
+

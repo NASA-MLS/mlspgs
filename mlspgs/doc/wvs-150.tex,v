@@ -1,0 +1,183 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.4
+	cfm-single-freq-0-1:1.2.0.2
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.1.0.2;
+locks; strict;
+comment	@% @;
+
+
+1.2
+date	2019.09.12.00.16.20;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2018.07.25.03.23.02;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Make usual transitions broad red lines
+@
+text
+@% Instructions to generate graphics:
+% dot -Teps -o dnwt.epsi dnwt.dot; epstopdf dnwt.epsi
+
+\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9in
+
+\newcommand{\docname}{wvs-150r1}
+\newcommand{\docdate}{11 September 2019}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+   
+\usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>MLS group\\
+Subject: \>State transitions in DNWT\\
+From: \>Van Snyder\\
+%Reference: \\
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+
+Starting state is green.  Blue states are final states.  Red states are
+error states.  White states are work caller needs to do.  User can restart
+at own peril from final or error states.  The usual sequence of
+transitions is shown with broad red edges.
+
+\begin{centering}
+\vspace*{0.6in}
+\includegraphics[bb=38 38 316 540, scale=0.9]{dnwt}
+\\
+\end{centering}
+
+\label{lastpage}
+\vspace*{-0.1in} % Somehow, this causes lastpage to be defined
+\end{document}
+
+% $Id: wvs-150.tex,v 1.1 2018/07/25 03:23:02 vsnyder Exp $
+
+% $Log: wvs-150.tex,v $
+% Revision 1.1  2018/07/25 03:23:02  vsnyder
+% Initial commit
+%
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d1 3
+d18 2
+a19 2
+\newcommand{\docname}{wvs-150}
+\newcommand{\docdate}{24 July 2018}
+d88 6
+a93 8
+Starting state is green.  Blue states are final states.  Red states are error
+states.  White states are work caller needs to do.  User can restart at own
+peril from final or error states.
+
+\ifnum\pdfoutput>0
+\vspace*{-2.5in}
+\includegraphics[scale=0.9]{dnwt}
+\else
+d95 3
+a97 2
+\includegraphics[bb=38 38 316 540, scale=0.9]{dnwt.epsi}
+\fi
+d103 1
+a103 1
+% $Id: wvs-142.tex,v 1.2 2017/09/23 00:11:42 vsnyder Exp $
+d105 4
+a108 1
+% $Log: $
+@
+

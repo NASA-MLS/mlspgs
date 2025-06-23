@@ -1,0 +1,100 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.12
+	cfm-single-freq-0-1:1.2.0.10
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.8
+	mus-emls-1-70:1.2.0.6
+	rel-1-0-englocks-work:1.2.0.4
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.2
+	V4-21:1.2.0.2
+	V4-13:1.2
+	V4-12:1.2
+	V4-11:1.2
+	V4-10:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2013.08.16.02.07.21;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2013.08.16.02.03.58;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Repair fat finger blunder
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! subroutine Same_Shape_*_2d_a ( New, ItsName, ModuleName, TheShape )
+!   Some_Type, pointer, dimension(:...) :: New
+    integer, intent(in) :: TheShape(:)
+    character(*), intent(in) :: ItsName, ModuleName
+    if ( .not. associated(new) ) then
+      call allocate_test ( new, theShape, itsName, moduleName )
+    else
+      if ( any( shape(new) /=  theShape ) ) &
+        & call allocate_test ( new, theShape, itsName, moduleName )
+    end if
+! end subroutine Same_Shape_*_2d_a
+
+! $Id: Same_Shape_md_a.f9h,v 1.1 2013/08/16 02:03:58 vsnyder Exp $
+
+! $Log: Same_Shape_md_a.f9h,v $
+! Revision 1.1  2013/08/16 02:03:58  vsnyder
+! Initial commit
+!
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d13 2
+a14 2
+!   Some_Type, pointer, dimension(:) :: New
+    integer, intent(in) :: TheShape(:...)
+d24 1
+a24 1
+! $Id: Same_Shape_1d.f9h,v 1.1 2013/08/16 01:05:46 vsnyder Exp $
+d26 4
+a29 1
+! $Log: Same_Shape_1d.f9h,v $
+@
+

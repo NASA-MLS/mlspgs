@@ -1,0 +1,98 @@
+head	2.2;
+access;
+symbols
+	v5-02-NRT-19:2.2
+	v6-00:2.2
+	v5-02-NRT-18:2.2
+	v5-02:2.2
+	v5-01-NRT-17:2.2
+	v5-01-NRT-16:2.2
+	v5-01-NRT-15:2.2
+	v5-01-NRT-14:2.2
+	neuralnetworks-1-0:2.2.0.8
+	cfm-single-freq-0-1:2.2.0.6
+	v5-01:2.2
+	v5-00:2.2
+	v4-23-TA133:2.2.0.4
+	mus-emls-1-70:2.2.0.2
+	rel-1-0-englocks-work:2.1.0.4
+	VUMLS1-00:2.1
+	VPL1-00:2.1
+	V4-22-NRT-08:2.1
+	VAM1-00:2.1
+	V4-21:2.1.0.2
+	V4-13:2.1
+	V4-12:2.1
+	V4-11:2.1
+	V4-10:2.1
+	M4-00:2.1
+	V3-33:2.1
+	V3-31:2.1
+	V3-30-NRT-05:2.1
+	cfm-01-00:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.2
+date	2018.05.15.03.26.16;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2010.06.07.23.15.49;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.2
+log
+@Repair TeXnicalities
+@
+text
+@! subroutine Interpolate_Stru_2D_? ( From, Eta_1, Eta_2, To )
+!   real(rk), intent(in) :: From(:,:)
+!   type (eta_?_t), intent(in) :: Eta_1(:), Eta_2 ! Gotten from Get_Eta_Stru
+!   real(rk), intent(out) :: To(:)       ! Eta's and To assumed same length
+    integer :: I, L1, L2
+    real(rk) :: H1, H2
+    do i = 1, size(to)
+      l1 = eta_1(i)%l
+      l2 = eta_2(i)%l
+      h1 = eta_1(i)%eta
+      h2 = eta_2(i)%eta
+      !{ Denote the $2 \times 2$ subarray {\tt From(l1:l1+1,l2:l2+1)} by
+      !  $\left[ \begin{array}{ll} F_{11} & F_{21} \\ F_{12} & F_{22} \\
+      !          \end{array} \right]$ (yes, I know, the indices are backward).
+      !  Let $\eta_1$ denote the linear interpolating coefficient for the first
+      !  dimension, and $\eta_2$ denote the one for the second dimension.  Then
+      !  the interpolated value is
+      !  $v = \eta_1 \eta_2 F_{11} + (1-\eta_1) \eta_2 F_{21} +
+      !       \eta_1 (1-\eta_2) F_{12} + (1-\eta_1) (1-\eta_2) F_{22}$.
+      !  Rearranging it to minimize operations gives
+      !  $v = ( (F_{22} - F_{21} - F_{12} + F_{11} ) \eta_2 -
+      !         (F_{22} - F_{12} ) ) \eta_1 - ( F_{22} - F_{21} ) \eta_2 + F_{22}$.
+
+      to(i) = &
+        & ((from(l1+1,l2+1) - from(l1+1,l2) - from(l1,l2+1) + from(l1,l2))*h2 - &
+        &  (from(l1+1,l2+1) - from(l1,l2+1))) * h1 - &
+        & (from(l1+1,l2+1) - from(l1+1,l2))   * h2 + from(l1+1,l2+1)
+    end do
+! end subroutine Interpolate_Stru_2D_?
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d22 1
+a22 1
+      !         (F_{22} - F_{12} ) \eta_1 - ( F_{22} - F_{21} ) \eta_2 + F_{22}$.
+@
+

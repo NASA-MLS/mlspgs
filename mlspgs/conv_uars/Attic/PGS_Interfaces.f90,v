@@ -1,0 +1,117 @@
+head	1.2;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2015.01.22.23.25.17;	author vsnyder;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2015.01.22.02.18.56;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Moved to SPDToolkit
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module PGS_Interfaces
+
+  implicit NONE
+  public
+
+  interface
+
+    integer function pgs_csc_ecitoecr ( N, AsciiUTC, Offsets, &
+                                      & PosVelECI, PosVelECR )
+      integer, intent(in) :: N
+      character(*), intent(in) :: AsciiUTC
+      double precision, intent(in) :: Offsets(n)      ! Seconds
+      double precision, intent(in) :: PosVelECI(6,n)  ! meters, meters/second
+      double precision, intent(out) :: PosVelECR(6,n) ! meters, meters/second
+    end function pgs_csc_ecitoecr
+
+    integer function pgs_csc_ecrtoeci ( N, AsciiUTC, Offsets, &
+                                      & PosVelECR, PosVelECI )
+      integer, intent(in) :: N
+      character(*), intent(in) :: AsciiUTC
+      double precision, intent(in) :: Offsets(n)      ! Seconds
+      double precision, intent(in) :: PosVelECR(6,n)  ! meters, meters/second
+      double precision, intent(out) :: PosVelECI(6,n) ! meters, meters/second
+    end function pgs_csc_ecrtoeci
+
+    integer function pgs_csc_geotoecr ( Longitude, Latitude, Altitude, &
+                                      & EarthEllipseTag, POSECR )
+      ! Convert geodetic coordinates to ECR
+      double precision, intent(in) :: Longitude, Latitude ! Radians, geodetic
+      double precision, intent(in) :: Altitude            ! Meters, geodetic
+      character(*), intent(in) :: EarthEllipseTag
+      double precision, intent(out) :: POSECR(3)          ! Meters
+    end function pgs_csc_geotoecr
+
+  end interface
+
+  !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: PGS_Interfaces.f90,v $"
+  private :: not_used_here 
+  !---------------------------------------------------------------------------
+
+contains
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: PGS_Interfaces.f90,v 1.1 2015/01/22 02:18:56 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module PGS_Interfaces
+
+! $Log: PGS_Interfaces.f90,v $
+! Revision 1.1  2015/01/22 02:18:56  vsnyder
+! PGS_Interfaces.f90
+!
+@
+
+
+1.1
+log
+@PGS_Interfaces.f90
+@
+text
+@d50 1
+a50 1
+       "$RCSfile: uars_to_emls_oa.f90,v $"
+d59 1
+a59 1
+       "$Id: uars_to_emls_oa.f90,v 1.5 2014/12/11 00:48:51 vsnyder Exp $"
+d68 4
+a71 1
+! $Log: $
+@
+

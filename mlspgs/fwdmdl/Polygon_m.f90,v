@@ -1,0 +1,406 @@
+head	2.4;
+access;
+symbols
+	v5-02-NRT-19:2.4
+	v6-00:2.4
+	v5-02-NRT-18:2.4
+	v5-02:2.4
+	v5-01-NRT-17:2.4
+	v5-01-NRT-16:2.4
+	v5-01-NRT-15:2.4
+	v5-01-NRT-14:2.4
+	neuralnetworks-1-0:2.4.0.10
+	cfm-single-freq-0-1:2.4.0.8
+	v5-01:2.4
+	v5-00:2.4
+	v4-23-TA133:2.4.0.6
+	mus-emls-1-70:2.4.0.4
+	rel-1-0-englocks-work:2.4.0.2
+	VUMLS1-00:2.4
+	VPL1-00:2.3
+	V4-22-NRT-08:2.3;
+locks; strict;
+comment	@# @;
+
+
+2.4
+date	2016.12.09.00.45.08;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2016.03.25.18.23.26;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2016.02.19.23.23.05;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2016.01.29.00.54.14;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.4
+log
+@Spiff dumps
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Polygon_m
+
+  ! Open, Read, Close a polygon file.
+  ! Publish the database of polygon vertices and the point inside
+  ! the polygon.
+  ! Dump and destroy the polygon database.
+
+  use Geolocation_0, only: H_t ! Generic horizontal (lat/lon) structure,
+                               ! agnostic whether latitude is geocentric or
+                               ! geodetic
+  use MLSMessageModule, only: MLSMessage, MLSMsg_Error
+
+  implicit NONE
+  private
+
+  ! Public procedures:
+  public :: Open_Polygon_File, Read_Polygon_File, Close_Polygon_File
+  public :: Destroy_Polygon_Database, Dump_Polygon_Database
+
+  ! The polygon database
+
+  ! A point defined to be inside the polygon is needed because the
+  ! concept of "inside a polygon" is ambiguous on the surface of a sphere.
+  type(h_t), public :: Polygon_Inside
+  type(h_t), public, allocatable :: Polygon_Vertices(:)
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: Polygon_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  ! ------------------------------------------  Open_Polygon_File  -----
+  subroutine Open_Polygon_File ( Filename, Lun, Stat )
+
+    use IO_Stuff, only: Get_Lun
+    use Machine, only: Crash_Burn
+
+    character(len=*), intent(in) :: Filename ! Name of the antenna pattern file
+    integer, intent(out) :: Lun              ! Logical unit number to read it
+    integer, intent(out), optional :: Stat
+
+    character(255) :: IOMsg
+    integer :: Status
+
+    call get_lun ( lun )
+    if ( lun < 0 ) then
+      if ( present(stat) ) then
+        stat = lun
+        return
+      end if
+      call MLSMessage ( MLSMSG_Error, moduleName, &
+        & "No logical unit numbers available to read the polygon file" )
+      call crash_burn
+    end if
+    open ( unit=lun, file=trim(filename), status='old', form='formatted', &
+      & access='sequential', iostat=status, iomsg=iomsg )
+    if ( status /= 0 ) then
+      if ( present(stat) ) then
+        stat = status
+        return
+      end if
+      call MLSMessage ( MLSMSG_Error, moduleName, &
+                      & "Unable to open polygon file " // trim(filename) // &
+                      & ", message " // trim(iomsg))
+      call crash_burn
+    end if
+  end subroutine Open_Polygon_File
+
+  ! ------------------------------------------  Read_Polygon_File  -----
+  subroutine Read_Polygon_File ( Lun, Where )
+
+    ! A polygon file consists of a (lon,lat) pair that specifies a point
+    ! defined to be inside the polygon.  This is necessary because the
+    ! concept "inside a polygon" is ambiguous on the surface of a sphere.
+
+    ! This is followed by however many (lon,lat) pairs as necessary to
+    ! specify the boundary.
+
+    ! The units of latitudes and longitudes are degrees.
+
+    ! This is agnostic concerning whether latitudes are geocentric or
+    ! geodetic, so long as they are consistent with latitudes and longitudes
+    ! used for finding facets in the QTM and interpolating within them.
+
+    ! Everything on a line after # or ! is ignored.
+    ! The "inside" point needs to be on a line of its own.
+    ! Thereafter, for points on the boundary, as many (lon,lat) pairs
+    ! as desired may be placed on a line, but a (lon,lat) pair cannot
+    ! be split between lines.
+
+    use Allocate_Deallocate, only: Test_Allocate
+    use MoreMessage, only: MLSMessage
+    use Toggles, only: GEN, Toggle
+    use Trace_m, only: Trace_Begin, Trace_End
+
+    integer, intent(in) :: Lun     ! Logical unit number to read it
+    integer, intent(in), optional :: Where   ! In the L2CF tree, for tracing
+
+    integer :: I, L, N
+    character(127) :: IOMSG
+    integer :: Me = -1             ! For tracing
+    character(1023) :: Line
+    integer :: Status
+    type(h_t) :: Vertices(100)     ! Assume no more than 100 per line
+
+    call trace_begin ( me, "Read_Polygon_File", where, cond=toggle(gen) )
+
+    if ( allocated(polygon_vertices) ) call destroy_polygon_database
+
+    ! First, read through the file and count how much stuff is there.
+    l = 0
+    do ! Read the "inside" vertex
+      l = l + 1
+      read ( lun, '(a)', end=98, err=99, iostat=status, iomsg=iomsg ) line
+      i = scan(line,'!#')
+      if ( i > 0 ) line(i:) = ''
+      if ( line == '' ) cycle
+      read ( line, *, err=99, iostat=status, iomsg=iomsg ) polygon_inside
+      exit
+    end do
+
+    n = 0
+    do ! Count the boundary vertices
+      l = l + 1
+      read ( lun, '(a)', end=9, err=99, iostat=status, iomsg=iomsg ) line
+      if ( status < 0 ) exit
+      i = scan(line,'!#')
+      if ( i > 0 ) line(i:) = ''
+      if ( line == '' ) cycle
+      vertices%lat = -99999.0
+      read ( line, *, err=99, iostat=status, iomsg=iomsg ) vertices
+      do i = 0, size(vertices)-1
+        if ( vertices(i+1)%lat <= -99999.0 ) exit
+      end do
+      n = n + i
+    end do
+  9 continue
+    rewind ( lun )
+
+    allocate ( polygon_vertices(n), stat=status )
+    call test_allocate ( status, moduleName, 'Polygon_Vertices', [1], [n], &
+      & storage_size(polygon_inside) / 8 )
+
+    l = 0
+    do ! Read the "inside" vertex
+      l = l + 1
+      read ( lun, '(a)', end=98, err=99, iostat=status, iomsg=iomsg ) line
+      i = scan(line,'!#')
+      if ( i > 0 ) line(i:) = ''
+      if ( line == '' ) cycle
+      read ( line, *, err=99, iostat=status, iomsg=iomsg ) polygon_inside
+      exit
+    end do
+
+    n = 0
+    do ! Read the boundary vertices
+      l = l + 1
+      read ( lun, '(a)', err=99, iostat=status, iomsg=iomsg ) line
+      if ( status < 0 ) exit
+      i = scan(line,'!#')
+      if ( i > 0 ) line(i:) = ''
+      if ( line == '' ) cycle
+      vertices%lat = -99999.0
+      read ( line, *, err=99, iostat=status, iomsg=iomsg ) vertices
+      do i = 0, size(vertices)-1
+        if ( vertices(i+1)%lat <= -99999.0 ) exit
+      end do
+      polygon_vertices(n+1:n+i) = vertices(:i)
+      n = n + i
+    end do
+
+    call trace_end ( "Read_Polygon_File_File", cond=toggle(gen) )
+    return
+
+ 98 call MLSMessage ( MLSMSG_Error, moduleName, &
+      & "Unexpected end-of-file while reading the polygon file" )
+ 99 call MLSMessage ( MLSMSG_Error, moduleName, &
+      & "Input error " // trim(iomsg) // &
+      & " while reading line $d of the polygon file", l )
+
+  end subroutine Read_Polygon_File
+
+  ! -----------------------------------------  Close_Polygon_File  -----
+  subroutine Close_Polygon_File ( Lun )
+    integer, intent(in) :: lun
+    close ( lun )
+  end subroutine Close_Polygon_File
+
+  ! -----------------------------------  Destroy_Polygon_Database  -----
+  subroutine Destroy_Polygon_Database
+    use Allocate_Deallocate, only: Test_Deallocate
+
+    integer :: S, Status
+
+    if ( .not. allocated(polygon_vertices) ) return ! silently
+    s = size(polygon_vertices) / storage_size(polygon_inside) / 8
+    deallocate ( polygon_vertices, stat=status )
+    call test_deallocate ( status, moduleName, 'Polygon_Vertices', s )
+  end subroutine Destroy_Polygon_Database
+
+  ! --------------------------------------  Dump_Polygon_Database  -----
+  subroutine Dump_Polygon_Database
+    use Dump_Geolocation_m, only: Dump_H_t
+    use Output_m, only: Output
+
+    if ( .not. allocated(polygon_vertices) ) return ! silently
+
+    call output ( polygon_inside%lon%d, before='Point inside polygon (lon,lat): (', &
+      & format='(f8.3)' )
+    call output ( polygon_inside%lat, before=',', after=')', format='(f8.3)', &
+      & advance='yes' )
+    call dump_h_t ( polygon_vertices, &
+      & 'Polygon boundary vertices (lon,lat):', format='(f8.3)' )
+
+  end subroutine Dump_Polygon_Database
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: Polygon_m.f90,v 2.3 2016/03/25 18:23:26 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Polygon_m
+
+! $Log: Polygon_m.f90,v $
+! Revision 2.3  2016/03/25 18:23:26  vsnyder
+! Lon component now needs to acces its %d component
+!
+! Revision 2.2  2016/02/19 23:23:05  vsnyder
+! Remove unreferenced USE name, spiff an error message
+!
+! Revision 2.1  2016/01/29 00:54:14  vsnyder
+! Initial commit
+!
+@
+
+
+2.3
+log
+@Lon component now needs to acces its %d component
+@
+text
+@d222 4
+a225 2
+    call output ( polygon_inside%lon%d, before='Point inside polygon (lon,lat): (' )
+    call output ( polygon_inside%lat, before=',', after=')', advance='yes' )
+d234 1
+a234 1
+       "$Id: Polygon_m.f90,v 2.2 2016/02/19 23:23:05 vsnyder Exp $"
+d244 3
+@
+
+
+2.2
+log
+@Remove unreferenced USE name, spiff an error message
+@
+text
+@d222 1
+a222 1
+    call output ( polygon_inside%lon, before='Point inside polygon (lon,lat): (' )
+d232 1
+a232 1
+       "$Id: Polygon_m.f90,v 2.1 2016/01/29 00:54:14 vsnyder Exp $"
+d242 3
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d40 1
+a40 1
+       "$RCSfile: AntennaPatterns_m.f90,v $"
+a105 1
+    use Machine, only: IO_Error
+d114 1
+d128 1
+a128 1
+      read ( lun, '(a)', end=98, err=99, iostat=status ) line
+d132 1
+a132 1
+      read ( line, *, err=99, iostat=status ) polygon_inside
+d139 1
+a139 1
+      read ( lun, '(a)', end=9, err=99, iostat=status ) line
+d145 1
+a145 1
+      read ( line, *, err=99, iostat=status ) vertices
+d161 1
+a161 1
+      read ( lun, '(a)', end=98, err=99, iostat=status ) line
+d165 1
+a165 1
+      read ( line, *, err=99, iostat=status ) polygon_inside
+d172 1
+a172 1
+      read ( lun, '(a)', err=99, iostat=status ) line
+d178 1
+a178 1
+      read ( line, *, err=99, iostat=status ) vertices
+d192 2
+a193 1
+      & "Input error while reading line $d of the polygon file", l )
+d217 2
+a218 2
+    use Output_m, only: NewLine, Output
+    integer :: I, J, N
+a221 1
+    n = size(polygon_vertices)
+d224 3
+a226 11
+    call output ( 'Polygon boundary vertices (lon,lat):', advance='yes' )
+    do i = 1, n, 5
+      call output ( i, 4 )
+      call output ( ':' )
+      do j = i, min(i+4,n)
+        call output ( polygon_vertices(j)%lon, before=' (', format='(f8.3)' )
+        call output ( polygon_vertices(j)%lat, before=',', format='(f7.3)' )
+        call output ( ')' )
+      end do
+      call NewLine
+    end do
+d232 1
+a232 1
+       "$Id: string_table.f90,v 2.45 2015/07/14 23:15:43 pwagner Exp $"
+d241 4
+a244 1
+! $Log: $
+@
+

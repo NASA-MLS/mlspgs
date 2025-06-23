@@ -1,0 +1,902 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.14
+	cfm-single-freq-0-1:1.1.0.12
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.10
+	mus-emls-1-70:1.1.0.8
+	rel-1-0-englocks-work:1.1.0.6
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2008.06.11.20.14.56;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@%!PS-Adobe-3.0 EPSF-3.0
+%%BoundingBox: 68 140 541 703
+%%Title: scatter
+%%CreationDate: Thu Mar 27 18:02:06 2008
+%%Creator: Tgif-4.1.45-QPL written by William Chia-Wei Cheng (bill.cheng@@acm.org)
+%%ProducedBy: (unknown)
+%%Pages: 1
+%%DocumentFonts: (atend)
+%%EndComments
+%%BeginProlog
+
+/tgifdict 54 dict def
+tgifdict begin
+
+/tgifarcdict 8 dict def
+tgifarcdict /mtrx matrix put
+
+/TGAN % tgifarcn
+ { tgifarcdict begin
+      /endangle exch def
+      /startangle exch def
+      /yrad exch def
+      /xrad exch def
+      /y exch def
+      /x exch def
+      /savematrix mtrx currentmatrix def
+      x y translate
+      xrad yrad scale
+      0 0 1 startangle endangle arc
+      savematrix setmatrix
+   end
+ } def
+
+/TGAR % tgifarc
+ { tgifarcdict begin
+      /endangle exch def
+      /startangle exch def
+      /yrad exch def
+      /xrad exch def
+      /y exch def
+      /x exch def
+      /savematrix mtrx currentmatrix def
+      x y translate
+      xrad yrad scale
+      0 0 1 startangle endangle arcn
+      savematrix setmatrix
+   end
+ } def
+
+/TGMAX
+ { exch dup 3 1 roll exch dup 3 1 roll gt { pop } { exch pop } ifelse
+ } def
+/TGMIN
+ { exch dup 3 1 roll exch dup 3 1 roll lt { pop } { exch pop } ifelse
+ } def
+/TGSW { stringwidth pop } def
+
+/bd { bind def } bind def
+
+/GS { gsave } bd
+/GR { grestore } bd
+/NP { newpath } bd
+/CP { closepath } bd
+/CHP { charpath } bd
+/CT { curveto } bd
+/L { lineto } bd
+/RL { rlineto } bd
+/M { moveto } bd
+/RM { rmoveto } bd
+/S { stroke } bd
+/F { fill } bd
+/TR { translate } bd
+/RO { rotate } bd
+/SC { scale } bd
+/MU { mul } bd
+/DI { div } bd
+/DU { dup } bd
+/NE { neg } bd
+/AD { add } bd
+/SU { sub } bd
+/PO { pop } bd
+/EX { exch } bd
+/CO { concat } bd
+/CL { clip } bd
+/EC { eoclip } bd
+/EF { eofill } bd
+/IM { image } bd
+/IMM { imagemask } bd
+/ARY { array } bd
+/SG { setgray } bd
+/RG { setrgbcolor } bd
+/SD { setdash } bd
+/W { setlinewidth } bd
+/SM { setmiterlimit } bd
+/SLC { setlinecap } bd
+/SLJ { setlinejoin } bd
+/SH { show } bd
+/FF { findfont } bd
+/MS { makefont setfont } bd
+/AR { arcto 4 {pop} repeat } bd
+/CURP { currentpoint } bd
+/FLAT { flattenpath strokepath clip newpath } bd
+/TGSM { tgiforigctm setmatrix } def
+/TGRM { savematrix setmatrix } def
+
+end
+
+%%EndProlog
+%%Page: 1 1
+
+%%PageBoundingBox: 68 140 541 703
+tgifdict begin
+/tgifsavedpage save def
+
+1 SM
+1 W
+
+0 SG
+
+72 0 MU 72 11 MU TR
+72 128 DI 100.000 MU 100 DI DU NE SC
+
+GS
+
+/tgiforigctm matrix currentmatrix def
+
+% ARC
+0.000 0.000 1.000 RG
+GS
+   GS
+      NP
+         541 1152 566 566 -43 -137 TGAR
+      3 W
+      S
+   GR
+GR
+
+% TEXT
+NP
+0 SG
+   GS
+      1 W
+      525 800 M
+      GS
+        GS
+        0
+            /Courier FF [14 0 0 -14 0 0] MS
+            (Ht1) TGSW 
+        AD
+        GR
+      NE 0 RM
+            0 SG
+            /Courier FF [14 0 0 -14 0 0] MS
+            (Ht1) SH
+      GR
+   GR
+
+% TEXT
+NP
+0 SG
+   GS
+      1 W
+      525 968 M
+      GS
+        GS
+        0
+            /Symbol FF [14 0 0 -14 0 0] MS
+            (f) TGSW 
+        AD
+        GR
+      NE 0 RM
+            0 SG
+            /Symbol FF [14 0 0 -14 0 0] MS
+            (f) SH
+      GR
+   GR
+
+% POLY/OPEN-SPLINE
+1.000 0.000 0.000 RG
+GS
+   NP
+      541 1152 M
+      541 216 L
+   TGSM
+   1 W
+   S
+GR
+
+% POLY/OPEN-SPLINE
+0 SG
+GS
+   NP
+      958 448 M
+      125 448 L
+   TGSM
+   3 W
+   S
+   1 W
+GR
+
+% POLY/OPEN-SPLINE
+0 SG
+GS
+   NP
+      540 468 M
+      516 468 L
+      516 448 L
+   TGSM
+   1 W
+   S
+GR
+
+% TEXT
+NP
+0 SG
+   GS
+      1 W
+      365 432 M
+      GS
+        GS
+        0
+            /Symbol FF [14 0 0 -14 0 0] MS
+            (f) TGSW 
+        AD
+        GR
+      NE 0 RM
+            0 SG
+            /Symbol FF [14 0 0 -14 0 0] MS
+            (f) SH
+      GR
+   GR
+
+% POLY/OPEN-SPLINE
+0 SG
+GS
+   NP
+      541 1152 M
+      189 288 L
+   TGSM
+   1 W
+   S
+GR
+
+% POLY/OPEN-SPLINE
+0 SG
+GS
+   -705 345 TR
+   [-0.926 0.379 0.379 0.926 1601 -158] CO
+   -705 NE 345 NE TR
+GS
+   NP
+      -775 343 M
+      128 345 L
+   TGSM
+   1 W
+   S
+GR
+GR
+
+% POLY/OPEN-SPLINE
+0 SG
+GS
+   -31 449 TR
+   [-0.926 0.379 0.379 0.926 283 0] CO
+   -31 NE 449 NE TR
+GS
+   NP
+      -31 469 M
+      -7 469 L
+      -7 449 L
+   TGSM
+   1 W
+   S
+GR
+GR
+
+% POLY/OPEN-SPLINE
+0 SG
+GS
+   -448 428 TR
+   [-0.985 0.174 0.174 0.985 1158 -62] CO
+   -448 NE 428 NE TR
+GS
+   NP
+      -146 1167 M
+      -448 428 L
+   TGSM
+   1 W
+   S
+GR
+GR
+
+% POLY/OPEN-SPLINE
+0 SG
+GS
+   -1490 521 TR
+   [0.977 0.212 -0.212 0.977 1634 -95] CO
+   -1490 NE 521 NE TR
+GS
+   NP
+      -1510 520 M
+      -657 521 L
+   TGSM
+   3 W
+   S
+   1 W
+GR
+GR
+
+% POLY/OPEN-SPLINE
+0 SG
+GS
+   -664 593 TR
+   [0.977 0.212 -0.212 0.977 1336 -53] CO
+   -664 NE 593 NE TR
+GS
+   NP
+      -664 613 M
+      -640 613 L
+      -640 593 L
+   TGSM
+   1 W
+   S
+GR
+GR
+
+% TEXT
+NP
+0 SG
+   GS
+      1 W
+      565 1000 M
+      GS
+        GS
+        0
+            /Symbol FF [14 0 0 -14 0 0] MS
+            (x2) TGSW 
+        AD
+        GR
+      NE 0 RM
+            0 SG
+            /Symbol FF [14 0 0 -14 0 0] MS
+            (x2) SH
+      GR
+   GR
+
+% TEXT
+NP
+0 SG
+   GS
+      1 W
+      673 756 M
+      GS
+        GS
+        0
+            /NewCenturySchlbk-Roman FF [14 0 0 -14 0 0] MS
+            (Ht2) TGSW 
+        AD
+        GR
+      NE 0 RM
+            0 SG
+            /NewCenturySchlbk-Roman FF [14 0 0 -14 0 0] MS
+            (Ht2) SH
+      GR
+   GR
+
+% TEXT
+NP
+0 SG
+   GS
+      1 W
+      381 468 M
+      GS
+        GS
+        0
+            /Symbol FF [14 0 0 -14 0 0] MS
+            (x2) TGSW 
+        AD
+        GR
+      NE 0 RM
+            0 SG
+            /Symbol FF [14 0 0 -14 0 0] MS
+            (x2) SH
+      GR
+   GR
+
+% POLY/OPEN-SPLINE
+0 SG
+GS
+   -111 360 TR
+   [-0.966 0.259 0.259 0.966 472 2] CO
+   -111 NE 360 NE TR
+GS
+   NP
+      -111 604 M
+      110 274 L
+   TGSM
+   3 W
+   S
+   1 W
+GR
+GR
+
+% POLY/OPEN-SPLINE
+0 SG
+GS
+   -227 356 TR
+   [-0.966 0.259 0.259 0.966 702 -28] CO
+   -227 NE 356 NE TR
+GS
+   NP
+      -111 601 M
+      -266 366 L
+   TGSM
+   3 W
+   S
+   1 W
+GR
+GR
+
+% POLY/OPEN-SPLINE
+0 SG
+GS
+   NP
+      381 560 M
+      869 1004 L
+   TGSM
+   1 W
+   S
+GR
+
+% POLY/OPEN-SPLINE
+0 SG
+GS
+   NP
+      445 540 M
+      245 1104 L
+   TGSM
+   1 W
+   S
+GR
+
+% POLY/OPEN-SPLINE
+0 SG
+GS
+   -525 924 TR
+   [-0.766 -0.643 -0.643 0.766 1284 -23] CO
+   -525 NE 924 NE TR
+GS
+   NP
+      -525 924 M
+      -518 1255 L
+   TGSM
+   1 W
+   S
+GR
+GR
+
+% POLY/OPEN-SPLINE
+0 SG
+GS
+   77 1012 TR
+   [-0.342 0.940 0.940 0.342 190 38] CO
+   77 NE 1012 NE TR
+GS
+   NP
+      78 1008 M
+      77 1305 L
+   TGSM
+   1 W
+   S
+GR
+GR
+
+% POLY/OPEN-SPLINE
+0 SG
+GS
+   -244 1085 TR
+   [0.379 -0.926 0.926 0.379 510 -37] CO
+   -244 NE 1085 NE TR
+GS
+   NP
+      -244 1105 M
+      -220 1105 L
+      -222 1081 L
+   TGSM
+   1 W
+   S
+GR
+GR
+
+% POLY/OPEN-SPLINE
+0 SG
+GS
+   -751 961 TR
+   [0.679 0.734 -0.734 0.679 1508 -57] CO
+   -751 NE 961 NE TR
+GS
+   NP
+      -751 981 M
+      -727 981 L
+      -730 957 L
+   TGSM
+   1 W
+   S
+GR
+GR
+
+% ARC
+0 SG
+GS
+   GS
+      NP
+         541 1148 172 172 -90 -114 TGAR
+      S
+   GR
+GR
+
+% TEXT
+NP
+0 SG
+   GS
+      1 W
+      325 488 M
+      GS
+        GS
+        0
+            /Symbol FF [14 0 0 -14 0 0] MS
+            (x3) TGSW 
+        AD
+        GR
+      NE 0 RM
+            0 SG
+            /Symbol FF [14 0 0 -14 0 0] MS
+            (x3) SH
+      GR
+   GR
+
+% ARC
+0 SG
+GS
+   GS
+      NP
+         253 448 136 136 0 14 TGAN
+      S
+   GR
+GR
+
+% ARC
+0 SG
+GS
+   GS
+      NP
+         253 448 56 56 0 43 TGAN
+      S
+   GR
+GR
+
+% ARC
+0 SG
+GS
+   GS
+      NP
+         253 448 91 91 -24 0 TGAN
+      S
+   GR
+GR
+
+% TEXT
+NP
+0 SG
+   GS
+      1 W
+      389 1120 M
+      GS
+        GS
+        0
+            /NewCenturySchlbk-Roman FF [14 0 0 -14 0 0] MS
+            (Ht3) TGSW 
+        AD
+        GR
+      NE 0 RM
+            0 SG
+            /NewCenturySchlbk-Roman FF [14 0 0 -14 0 0] MS
+            (Ht3) SH
+      GR
+   GR
+
+% TEXT
+NP
+0 SG
+   GS
+      1 W
+      685 1040 M
+      GS
+        GS
+        0
+            /NewCenturySchlbk-Roman FF [14 0 0 -14 0 0] MS
+            (Ht3) TGSW 
+        AD
+        GR
+      NE 0 RM
+            0 SG
+            /NewCenturySchlbk-Roman FF [14 0 0 -14 0 0] MS
+            (Ht3) SH
+      GR
+   GR
+
+% ARC
+0 SG
+GS
+   GS
+      NP
+         541 1148 134 134 -79 -90 TGAR
+      S
+   GR
+GR
+
+% ARC
+0 SG
+GS
+   GS
+      NP
+         541 1152 104 104 -90 -49 TGAN
+      S
+   GR
+GR
+
+% TEXT
+NP
+0 SG
+   GS
+      1 W
+      605 1044 M
+      GS
+        GS
+        0
+            /Symbol FF [14 0 0 -14 0 0] MS
+            (x3) TGSW 
+        AD
+        GR
+      NE 0 RM
+            0 SG
+            /Symbol FF [14 0 0 -14 0 0] MS
+            (x3) SH
+      GR
+   GR
+
+% POLY/OPEN-SPLINE
+0 SG
+GS
+   [12 4] 0 SD
+   NP
+      541 1156 M
+      425 600 L
+   TGSM
+   1 W
+   S
+   [] 0 SD
+GR
+
+% ARC
+0 SG
+GS
+   GS
+      NP
+         541 1148 110 110 -103 -161 TGAR
+      [12 4] 0 SD
+      S
+   GR
+GR
+
+% TEXT
+NP
+0 SG
+   GS
+      1 W
+      457 1060 M
+      GS
+        GS
+        0
+            /Symbol FF [14 0 0 -14 0 0] MS
+            (q) TGSW 
+        AD
+        GR
+      NE 0 RM
+            0 SG
+            /Symbol FF [14 0 0 -14 0 0] MS
+            (q) SH
+      GR
+   GR
+
+% ARC
+0 SG
+GS
+   GS
+      NP
+         541 1148 72 72 -90 -161 TGAR
+      S
+   GR
+GR
+
+% TEXT
+NP
+0 SG
+   GS
+      1 W
+      509 1108 M
+      GS
+        GS
+        0
+            /Symbol FF [14 0 0 -14 0 0] MS
+            (x4) TGSW 
+        AD
+        GR
+      NE 0 RM
+            0 SG
+            /Symbol FF [14 0 0 -14 0 0] MS
+            (x4) SH
+      GR
+   GR
+
+% TEXT
+NP
+0 SG
+   GS
+      1 W
+      465 848 M
+      GS
+        GS
+        0
+            /NewCenturySchlbk-Roman FF [14 0 0 -14 0 0] MS
+            (R) TGSW 
+        AD
+        GR
+      NE 0 RM
+            0 SG
+            /NewCenturySchlbk-Roman FF [14 0 0 -14 0 0] MS
+            (R) SH
+      GR
+   GR
+
+% TEXT
+NP
+0 SG
+   GS
+      1 W
+      289 576 M
+      GS
+        GS
+        0
+            /NewCenturySchlbk-Roman FF [14 0 0 -14 0 0] MS
+            (H) TGSW 
+        AD
+        GR
+      NE 0 RM
+            0 SG
+            /NewCenturySchlbk-Roman FF [14 0 0 -14 0 0] MS
+            (H) SH
+      GR
+   GR
+
+% POLY/OPEN-SPLINE
+0 SG
+GS
+   [20 4 4 4] 0 SD
+   NP
+      253 452 M
+      957 696 L
+   TGSM
+   1 W
+   S
+   [] 0 SD
+GR
+
+% ARC
+0 SG
+GS
+   GS
+      NP
+         253 448 180 180 0 20 TGAN
+      [20 4 4 4] 0 SD
+      S
+   GR
+GR
+
+% TEXT
+NP
+0 SG
+   GS
+      1 W
+      453 472 M
+      GS
+        GS
+        0
+            /Symbol FF [14 0 0 -14 0 0] MS
+            (x) TGSW 
+        AD
+            /NewCenturySchlbk-Roman FF [14 0 0 -14 0 0] MS
+            (c) TGSW 
+        AD
+        GR
+      NE 0 RM
+            0 SG
+            /Symbol FF [14 0 0 -14 0 0] MS
+            (x) SH
+            0 SG
+            /NewCenturySchlbk-Roman FF [14 0 0 -14 0 0] MS
+            (c) SH
+      GR
+   GR
+
+% TEXT
+NP
+0 SG
+   GS
+      1 W
+      273 420 M
+      GS
+        GS
+        0
+            /Helvetica FF [20 0 0 -20 0 0] MS
+            (P) TGSW 
+        AD
+        GR
+      NE 0 RM
+            0 SG
+            /Helvetica FF [20 0 0 -20 0 0] MS
+            (P) SH
+      GR
+   GR
+
+GR
+tgifsavedpage restore
+end
+showpage
+
+%%Trailer
+%MatchingCreationDate: Thu Mar 27 18:02:06 2008
+%%DocumentFonts: Helvetica
+%%+ NewCenturySchlbk-Roman
+%%+ Symbol
+%%+ Courier
+%%EOF
+@

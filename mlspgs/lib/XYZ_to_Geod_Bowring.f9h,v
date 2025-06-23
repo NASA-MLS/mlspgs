@@ -1,0 +1,127 @@
+head	2.2;
+access;
+symbols
+	v5-02-NRT-19:2.2
+	v6-00:2.2
+	v5-02-NRT-18:2.2
+	v5-02:2.2
+	v5-01-NRT-17:2.2
+	v5-01-NRT-16:2.2
+	v5-01-NRT-15:2.2
+	v5-01-NRT-14:2.2
+	neuralnetworks-1-0:2.2.0.12
+	cfm-single-freq-0-1:2.2.0.10
+	v5-01:2.2
+	v5-00:2.2
+	v4-23-TA133:2.2.0.8
+	mus-emls-1-70:2.2.0.6
+	rel-1-0-englocks-work:2.2.0.4
+	VUMLS1-00:2.2
+	VPL1-00:2.2
+	V4-22-NRT-08:2.2
+	VAM1-00:2.2
+	V4-21:2.2.0.2;
+locks; strict;
+comment	@# @;
+
+
+2.2
+date	2015.02.05.21.46.01;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2014.11.26.23.50.14;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.2
+log
+@Tighten convergence tolerance
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! pure function XYZ_to_Geod_Bowring_* ( XYZ ) result ( Geod )
+
+! Convert Geocentric Cartesian coordinates (XYZ) in meters to Longitude
+! (Geod(2)) in radians, Geodetic Latitude (Geod(1)) in radians, and
+! Geodetic Height (Geod(3)) in meters.
+
+  real(rk), parameter :: A = EarthRadA, B = EarthRadB
+  ! Square of first eccentricity = 1 - a^2/b^2
+  real(rk), parameter :: E2 = Eccentricity_Sq
+  real(rk), parameter :: E2B = ( a - b ) * ( a + b ) ! a^2 - b^2 = - e^2 * b^2
+  integer, parameter :: MaxIt = 10     ! Maximum number of iterations
+  real(rk), parameter :: TolB = 1.0e-9 ! Tolerance for lambda convergence
+
+  real(rk) :: C_mu   ! Cos(mu)
+  integer :: I       ! Loop counter
+  real(rk) :: Lambda ! Estimate of geodetic latitude
+  real(rk) :: Mu     ! Used to compute height
+  real(rk) :: S      ! Equatorial radius of XYZ = sqrt(x^2+y^2)
+  real(rk) :: S_mu   ! Sin(mu)
+  real(rk) :: T1, T2 ! Temps used in iteration to compute lambda
+
+  geod(2) = atan2 ( xyz(2), xyz(1) ) ! Longitude is easy
+
+  s = sqrt ( xyz(1)**2 + xyz(2)**2 )
+
+  ! First estimate of geodetic latitude
+  lambda = atan2 ( a * xyz(3), b * s )
+
+  ! Now iterate to convergence on geodetic latitude
+  do i = 1, maxIt
+    t1 = b * xyz(3) + e2b * sin(lambda) ** 3
+    t2 = a * s      - e2b * cos(lambda) ** 3
+    geod(1) = atan2 ( t1, t2 )
+    if ( abs(lambda-geod(1)) <= tolB ) exit
+    lambda = geod(1)
+  end do
+
+  ! Now compute the geodetic height
+  mu = atan2 ( a * t1, b * t2 )
+  c_mu = cos(mu)
+  s_mu = sin(mu)
+
+  geod(3) = s * c_mu + xyz(3) * s_mu - sqrt ( a**2 * c_mu**2 + b**2 * s_mu**2 )
+
+! $Id: XYZ_to_Geod_Bowring.f9h,v 2.1 2014/11/26 23:50:14 vsnyder Exp $
+
+! $Log: XYZ_to_Geod_Bowring.f9h,v $
+! Revision 2.1  2014/11/26 23:50:14  vsnyder
+! Initial commit
+!
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d23 1
+a23 1
+  real(rk), parameter :: TolB = 1.0e-5 ! Tolerance for lambda convergence
+d56 1
+a56 1
+! $Id: $
+d58 4
+a61 1
+! $Log: $
+@
+

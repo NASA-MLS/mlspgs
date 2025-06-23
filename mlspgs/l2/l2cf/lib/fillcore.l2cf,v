@@ -1,0 +1,373 @@
+head	1.12;
+access;
+symbols
+	v5-02-NRT-19:1.12
+	v6-00:1.12
+	v5-02-NRT-18:1.12
+	v5-02:1.12
+	v5-01-NRT-17:1.12
+	v5-01-NRT-16:1.12
+	v5-01-NRT-15:1.12
+	v5-01-NRT-14:1.12
+	neuralnetworks-1-0:1.12.0.12
+	cfm-single-freq-0-1:1.12.0.10
+	v5-01:1.12
+	v5-00:1.12
+	v4-23-TA133:1.12.0.8
+	mus-emls-1-70:1.12.0.6
+	rel-1-0-englocks-work:1.12.0.4
+	VUMLS1-00:1.12
+	VPL1-00:1.12
+	V4-22-NRT-08:1.12
+	VAM1-00:1.12
+	V4-21:1.12.0.2
+	V4-13:1.12
+	V4-12:1.12
+	V4-11:1.12
+	V4-10:1.12
+	V3-43:1.11
+	M4-00:1.12
+	V3-41:1.11
+	V3-40-PlusGM57:1.11.0.2
+	V2-24-NRT-04:1.11
+	V3-33:1.11
+	V2-24:1.11
+	V3-31:1.11
+	V3-30-NRT-05:1.11
+	cfm-01-00:1.11
+	V3-30:1.11
+	V3-20:1.11
+	V3-10:1.11
+	V2-23-NRT-02:1.11
+	V2-23:1.11
+	V2-22-NRT-01:1.11
+	V2-22:1.11
+	V2-21:1.11
+	V2-20:1.11
+	V2-11:1.10
+	V2-10:1.10
+	V2-00:1.7
+	V1-51:1.6
+	V1-50:1.6
+	V1-45:1.4
+	V1-44:1.4
+	V1-43:1.4
+	V1-32:1.4
+	V1-31:1.4
+	V1-30:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.12
+date	2013.04.11.16.35.34;	author pwagner;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2006.08.05.01.59.18;	author lambert;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2006.07.19.18.20.23;	author lambert;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2006.06.29.01.19.38;	author lambert;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2006.06.27.00.28.40;	author lambert;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2006.06.13.23.55.18;	author livesey;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2004.12.07.19.02.29;	author livesey;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2004.11.24.22.44.52;	author livesey;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2003.11.05.19.22.34;	author livesey;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2003.11.04.01.12.20;	author livesey;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2003.09.04.03.06.13;	author livesey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2003.09.03.05.15.04;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.12
+log
+@Replaced 4 degree phiWindows with 5 profiles
+@
+text
+@; $Id: fillcore.l2cf,v 1.11 2006/08/05 01:59:18 lambert Exp $
+
+;; This L2CF fragment sets the contents of parts of stateCore to the results
+;; of the `core' retrievals.
+
+begin Fill
+  Transfer, source=apriori, destination=stateCore
+  Transfer, source=aprioriPrecision, destination=outputPrecisionCore
+
+;  !define(fillFromOneCoreL2GP,{!dnl
+;    Fill, quantity=stateCore.$1, method=l2gp, $
+;      sourceL2GP=l2gpCore$1Input!nl})
+;  !forall(fillFromOneCoreL2GP,!coreL2GPSpecies)
+
+
+  ;; temperature_hr
+  Fill, quantity=stateCore.Temperature_hr, method=l2gp, $
+    sourceL2GP=l2gpCoreTemperatureInput
+
+  ;; totalextinctionr3
+  Fill, quantity=stateCore.totalextinctionr3, method=l2gp, $
+    sourceL2GP=l2gpCoreExtinctionR3Input
+
+  ;; H2O_hr
+  Fill, quantity=stateCore.H2O_hr, method=l2gp, $
+    sourceL2GP=l2gpCoreH2OInput
+
+  ;; O3
+  Fill, quantity=stateCore.O3, method=l2gp, $
+    sourceL2GP=l2gpCoreO3Input
+
+  ;; HNO3
+  Fill, quantity=stateCore.HNO3, method=l2gp, $
+    sourceL2GP=l2gpCoreHNO3Input
+   
+
+  ;; GPH_hr
+  Fill, quantity=stateCore.GPH_hr, method=hydrostatic, refGPHQuantity=stateCore.refGPH, $
+    temperatureQuantity=stateCore.temperature_hr
+
+  ;; Also do ptan
+  Fill, quantity=stateCore.ptanGHz, method=l2aux, sourceL2AUX=l2auxCorePtanInput
+
+  ;; Do a THz ptan from the GHz information
+  Fill, quantity=stateCore.ptanTHz, method=hydrostatic, $
+    h2oQuantity=stateCore.h2o_hr, $
+    temperatureQuantity=stateCore.temperature_hr, $
+    refGPHQuantity=stateCore.refGPH, $
+    geocAltitudeQuantity=stateCore.tngtGeocAltTHz, $
+    orbitInclination=stateCore.orbitInclination, $
+    phiTan=stateCore.phiTanTHz, $
+    maxIterations=20, $
+    phiWindow=5 profiles
+
+; don't fill _hr here anymore
+;  ;; Transfer the low resolution data into the high resolution data
+;  Fill, quantity=stateCore.h2o_hr, method=vector, sourceQuantity=stateCore.h2o, /interpolate
+;  Fill, quantity=stateCore.o3_hr, method=vector, sourceQuantity=stateCore.o3, /interpolate
+;  Fill, quantity=stateCore.temperature_hr, method=vector, sourceQuantity=stateCore.temperature, /interpolate
+  
+  ;; Transfer stateCore into standard products for those phases where we
+  ;; 'restore' things
+  Transfer, source=stateCore, destination=standardProducts
+
+end Fill
+@
+
+
+1.11
+log
+@changed ExtinctionR3Input; added HNO3Input
+@
+text
+@d1 1
+a1 1
+; $Id: fillcore.l2cf,v 1.10 2006/07/19 18:20:23 lambert Exp $
+d53 1
+a53 1
+    phiWindow=4 degrees
+@
+
+
+1.10
+log
+@added fill for O3
+@
+text
+@d1 1
+a1 1
+; $Id: fillcore.l2cf,v 1.9 2006/06/29 01:19:38 lambert Exp $
+a6 3
+  ;; Define our stateCore and outputPrecisionCore vectors
+  stateCore: Vector, template=stateTemplate
+  outputPrecisionCore: Vector, template=stateTemplate
+d22 1
+a22 1
+    sourceL2GP=l2gpCoreExtinctionR3Input, /interpolate ;; lowres to highres (remove when extinction is put back to vGridGxtinction)
+d31 4
+@
+
+
+1.9
+log
+@temporary fix for extinctionr3 and h2o_hr
+@
+text
+@d1 1
+a1 1
+; $Id: fillcore.l2cf,v 1.8 2006/06/27 00:28:40 lambert Exp $
+d30 5
+a34 1
+  
+@
+
+
+1.8
+log
+@mods for temperature_hr and gph_hr
+@
+text
+@d1 1
+a1 1
+; $Id: fillcore.l2cf,v 1.7 2006/06/13 23:55:18 livesey Exp $
+d19 1
+a19 1
+       ;; Also do temperature_hr
+d23 10
+a32 1
+  ;; Also do GPH_hr
+d35 1
+@
+
+
+1.7
+log
+@Transfer stateCore into standardProducts
+@
+text
+@d1 1
+a1 1
+; $Id: fillcore.l2cf,v 1.6 2004/12/07 19:02:29 livesey Exp $
+d13 13
+a25 8
+  !define(fillFromOneCoreL2GP,{!dnl
+    Fill, quantity=stateCore.$1, method=l2gp, $
+      sourceL2GP=l2gpCore$1Input!nl})
+  !forall(fillFromOneCoreL2GP,!coreL2GPSpecies)
+
+  ;; Also do GPH
+  Fill, quantity=stateCore.GPH, method=hydrostatic, refGPHQuantity=stateCore.refGPH, $
+    temperatureQuantity=stateCore.temperature
+d31 2
+a32 2
+    h2oQuantity=stateCore.h2o, $
+    temperatureQuantity=stateCore.temperature, $
+d40 5
+a44 4
+  ;; Transfer the low resolution data into the high resolution data
+  Fill, quantity=stateCore.h2o_hr, method=vector, sourceQuantity=stateCore.h2o, /interpolate
+  Fill, quantity=stateCore.o3_hr, method=vector, sourceQuantity=stateCore.o3, /interpolate
+  Fill, quantity=stateCore.temperature_hr, method=vector, sourceQuantity=stateCore.temperature, /interpolate
+@
+
+
+1.6
+log
+@Changed the ptan guesser for THz to 2D
+@
+text
+@d1 1
+a1 1
+; $Id: fillcore.l2cf,v 1.5 2004/11/24 22:44:52 livesey Exp $
+d39 4
+@
+
+
+1.5
+log
+@Added ammendment to fill THz.ptan reasonably too.
+@
+text
+@d1 1
+a1 1
+; $Id: fillcore.l2cf,v 1.4 2003/11/05 19:22:34 livesey Exp $
+d33 1
+a33 1
+    phiWindow=0 degrees
+@
+
+
+1.4
+log
+@Removed part that overwrote strat H2O
+@
+text
+@d1 1
+a1 1
+; $Id: fillcore.l2cf,v 1.3 2003/11/04 01:12:20 livesey Exp $
+d23 11
+@
+
+
+1.3
+log
+@Fill the _HR species from their low resolution counterparts.
+@
+text
+@d1 1
+a1 1
+; $Id: fillcore.l2cf,v 1.2 2003/09/04 03:06:13 livesey Exp $
+a22 5
+
+  ;; Put the apriori back in the stratospheric h2o
+  Subset, quantity=stateCore.h2o, height=[1000mb:680mb, 68.0mb:0.00001mb], mask=fill
+  Fill, quantity=stateCore.h2o, method=vector, sourceQuantity=apriori.h2o
+  Subset, quantity=stateCore.h2o, mask=fill, /reset
+@
+
+
+1.2
+log
+@Now puts a priori in the core state before overwriting other species
+@
+text
+@d1 1
+a1 1
+; $Id: fillcore.l2cf,v 1.1 2003/09/03 05:15:04 livesey Exp $
+d28 5
+@
+
+
+1.1
+log
+@First version
+@
+text
+@d1 1
+a1 1
+; $Id: fillfromcore.l2cf,v 1.4 2003/08/15 05:49:58 livesey Exp $
+d10 2
+@
+

@@ -1,0 +1,84 @@
+head	1.2;
+access;
+symbols
+	V0_1:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2000.11.22.23.07.23;	author zvi;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2000.05.04.18.12.04;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@New version
+@
+text
+@module ABS_CS_O2_CONT_M
+  implicit NONE
+  private
+  public :: ABS_CS_O2_CONT
+
+!---------------------------- RCS Ident Info -------------------------------
+  CHARACTER (LEN=256) :: Id = &
+       "$Id: abs_cs_o2_cont_m.f90,v 1.1 2000/05/04 18:12:04 vsnyder Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= &
+       "$RCSfile: abs_cs_o2_cont_m.f90,v $"
+!---------------------------------------------------------------------------
+
+  integer, private, parameter :: RK = kind(0.0d0)
+
+contains
+
+  pure real(rk) Function ABS_CS_O2_CONT (p, t, frq )
+    real(rk), intent(in) :: P    ! pressure, mbar
+    real(rk), intent(in) :: T    ! temperature, Kelvins
+    real(rk), intent(in) :: FRQ  ! frequency, MegaHertz
+!
+    real(rk), Parameter :: DEBYE=1.10816E-3_RK, W_NONRES=0.48_RK, &
+                           NO2=0.8_RK
+!
+    real(rk) :: F2, QT, SLABS_NONRES, Y_NONRES, Y2
+!
+    f2 = frq * frq
+    qt = (300.0_rk / t) ** no2
+    slabs_nonres = debye * p / (t * t)
+    y_nonres = p * w_nonres * qt
+    y2 = y_nonres * y_nonres
+    abs_cs_o2_cont = slabs_nonres * f2 * y_nonres / (f2 + y2)
+!
+  End Function ABS_CS_O2_CONT
+end module ABS_CS_O2_CONT_M
+
+! $Log: abs_cs_o2_cont_m.f90,v $
+! Revision 1.1  2000/05/04 18:12:04  vsnyder
+! Initial conversion to Fortran 90
+!
+@
+
+
+1.1
+log
+@Initial conversion to Fortran 90
+@
+text
+@d8 1
+a8 1
+       "$Id: ABS_CS_O2_CONT_M,v 1.12 2000/02/08 19:54:57 vsnyder Exp $"
+d37 4
+a40 1
+! $Log: ABS_CS_O2_CONT_M,v $
+@
+

@@ -1,0 +1,363 @@
+head	2.5;
+access;
+symbols
+	v5-02-NRT-19:2.5
+	v6-00:2.5
+	v5-02-NRT-18:2.5
+	v5-02:2.5
+	v5-01-NRT-17:2.5
+	v5-01-NRT-16:2.5
+	v5-01-NRT-15:2.5
+	v5-01-NRT-14:2.5
+	neuralnetworks-1-0:2.5.0.10
+	cfm-single-freq-0-1:2.5.0.8
+	v5-01:2.5
+	v5-00:2.5
+	v4-23-TA133:2.5.0.6
+	mus-emls-1-70:2.5.0.4
+	rel-1-0-englocks-work:2.5.0.2
+	VUMLS1-00:2.3
+	VPL1-00:2.3
+	V4-22-NRT-08:2.3
+	VAM1-00:2.3
+	V4-21:2.3.0.2
+	V4-13:2.3
+	V4-12:2.3
+	V4-11:2.3
+	V4-10:2.3
+	V3-43:2.1
+	M4-00:2.1
+	V3-41:2.1
+	V3-40-PlusGM57:2.1.0.2
+	V3-33:2.1
+	V3-31:2.1
+	V3-30-NRT-05:2.1
+	cfm-01-00:2.1
+	V3-30:2.1
+	V3-20:2.1
+	V3-10:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.5
+date	2017.08.11.19.35.16;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2017.08.10.22.41.55;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2014.04.22.00.06.31;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2013.08.31.01.24.53;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2008.05.09.23.27.18;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.5
+log
+@Fixed error in numeric data type
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!   subroutine SaveAsHDF5DS_dblarr* ( locID, name, value, &
+!     & start, count, stride, block, may_add_to, adding_to, fillValue )
+!     ! This routine does the initial work of creating a dataset
+!     integer, intent(in) :: LOCID        ! Where to place it (group/file)
+!     character (len=*), intent(in) :: NAME ! Name for this dataset
+!     real, intent(in) :: VALUE(:,...)  ! The array itself
+!     real, optional, intent(in) :: FILLVALUE
+!     integer, dimension(:), optional, intent(in) :: start
+!                                  ! Starting coordinatess of hyperslab
+!     integer, dimension(:), optional, intent(in) :: count
+!                                  ! Num of blocks to select from dataspace
+!     integer, dimension(:), optional, intent(in) :: stride
+!                                  ! How many elements to move in each direction
+!     integer, dimension(:), optional, intent(in) :: block
+!                                  ! Size of element block
+!     logical, optional, intent(in)               :: may_add_to
+!                                  ! May call again to add to same dataset
+!     logical, optional, intent(in)               :: adding_to
+!                                  ! Calling again to add to same dataset
+
+! $Id: SaveAsHDF5DS_dblarr.f9h,v 2.4 2017/08/10 22:41:55 pwagner Exp $
+
+    ! Local variables
+    integer(hsize_t), dimension(size(shape(value))) :: &
+      & chunk_dims, dims, maxdims, shp
+    integer :: filespaceID              ! ID for filespace
+    integer :: Me = -1                  ! String index for trace cacheing
+    integer :: memSpaceID               ! ID for arrayspace
+    integer :: Rank                     ! Rank of VALUE
+    integer (HID_T) :: setID            ! ID for dataset
+    integer :: spaceID                  ! ID for filespace
+    integer :: status                   ! Flag from HDF5
+    integer :: style   ! fixed static (0), dynamic 1st (1), adding to (2)
+
+    ! Executable code
+    rank = size(shp)
+
+    call trace_begin ( me, 'SaveAsHDF5DS_dbllarr'//digits(rank), cond=.false. )
+    style = 0  ! The default
+    if ( present(may_add_to) ) then
+      if ( may_add_to ) style = 1
+    end if
+    if ( present(adding_to) ) then
+      if ( adding_to ) style = 2
+    end if
+    if ( DEEBUG ) print *, 'style:   ', style
+
+    ! Create the dataspace
+    shp = shape(value)
+    maxdims = shp
+    dims = shp
+    chunk_dims = shp
+    ! Create the dataset
+    if ( style == 0 ) then
+      call h5sCreate_simple_f ( rank, int(shp,hSize_T), spaceID, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to create dataspace for '//digits(rank)//'D real array ' // trim(name) )
+      if ( present(fillValue) ) then
+        call h5pcreate_f(H5P_DATASET_CREATE_F, cparms, status)
+        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Unable to create property list for '//digits(rank)//'D real array ' // trim(name) )
+        call h5pset_fill_value_f (cparms, H5t_Native_Double, fillValue, status)
+        if ( status /= 0) call MLSMessage (MLSMSG_Error, ModuleName, &
+          &  "Unable to set Fill value for '//digits(rank)//'D real array " // trim (name))
+        call h5dCreate_f ( locID, trim(name), H5t_Native_Double, spaceID, setID, &
+          & status, cparms )
+      else
+        call h5dCreate_f ( locID, trim(name), H5t_Native_Double, spaceID, setID, &
+          & status )
+      end if
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to create dataset for '//digits(rank)//'D real array ' // trim(name) )
+      memspaceID = spaceID
+      filespaceID = spaceID
+    else if ( style == 1 ) then
+      maxdims(rank) = H5S_UNLIMITED_F
+      dims(rank) = max(int(1, hsize_T), shp(rank))
+      chunk_dims(rank) = 1
+      call h5screate_simple_f ( rank, dims, memspaceID, status, maxdims )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to create memspace for '//digits(rank)//'D real array ' // trim(name) )
+      spaceID = memspaceID
+      call h5pcreate_f(H5P_DATASET_CREATE_F, cparms, status)
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to create property list for '//digits(rank)//'D real array ' // trim(name) )
+      call h5pset_chunk_f(cparms, rank, chunk_dims, status)
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to set chunking '//digits(rank)//'D real array ' // trim(name) )
+      if ( present(fillValue) ) then
+        call h5pset_fill_value_f (cparms, H5t_Native_Double, fillValue, status)
+        if ( status /= 0) call MLSMessage (MLSMSG_Error, ModuleName, &
+          &  "Unable to set Fill value for '//digits(rank)//'D real array " // trim (name))
+      end if
+      call h5dCreate_f ( locID, trim(name), H5t_Native_Double, spaceID, setID, &
+        & status, cparms )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to create dataset for '//digits(rank)//'D real array ' // trim(name) )
+      call h5dextend_f ( setID, dims, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to extend dataset creating '//digits(rank)//'D real array ' // trim(name) )
+      call h5dget_space_f(setID, filespaceID, status)
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to get filespaceID creating '//digits(rank)//'D real array ' // trim(name) )
+    else
+      call h5dopen_f ( locID, trim(name), setID, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to open dataset for '//digits(rank)//'D real array ' // trim(name) )
+      call h5dget_space_f ( setID, spaceID, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to get dataspace for '//digits(rank)//'D real array ' // trim(name) )
+      if ( .not. present(start) ) &
+        & call mls_extend ( setID, shp )
+      memspaceID = spaceID
+      call h5dget_space_f( setID, filespaceID, status)
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to get dataspace for '//digits(rank)//'D real array ' // trim(name) )
+    end if
+    if ( present(start) ) then
+      call mls_extend ( setID, int(Count, hsize_T), start, filespaceID )
+      call mls_hyperslab_save ( filespaceID, start, count, stride, block )
+!     Check before actually writing
+      if ( style == 2 ) &
+        & call h5screate_simple_f(rank, dims, memspaceID, status, maxdims)
+      call h5dWrite_f ( setID, H5t_Native_Double, value, &
+        & int ( (/ shp, ones(rank:6) /), hsize_t ), status, &
+        & memspaceID, filespaceID )
+      spaceID = filespaceID
+    else
+      ! Write the data
+      call h5dWrite_f ( setID, H5t_Native_Double, value, &
+        & int ( (/ shp, ones(rank:6) /), hsize_t ), status )
+    end if
+    if ( present(start) ) then
+      call finishSaveDS ( name, status, setID, spaceID, memspaceID=memspaceID )
+    else
+      call finishSaveDS ( name, status, setID, spaceID )
+    end if
+    call trace_end ( cond=.false. )
+!   end subroutine SaveAsHDF5DS_dblarr*
+
+! $Log: SaveAsHDF5DS_dblarr.f9h,v $
+! Revision 2.4  2017/08/10 22:41:55  pwagner
+! Make apis for d.p. SaveAsHDF5DS like s.p.
+!
+! Revision 2.3  2014/04/22 00:06:31  vsnyder
+! Use the cached trace version
+!
+! Revision 2.2  2013/08/31 01:24:53  vsnyder
+! Replace MLSMessageCalls with trace_begin and trace_end
+!
+! Revision 2.1  2008/05/09 23:27:18  vsnyder
+! Initial commit
+!
+@
+
+
+2.4
+log
+@Make apis for d.p. SaveAsHDF5DS like s.p.
+@
+text
+@d32 1
+a32 1
+! $Id: SaveAsHDF5DS_snglarr.f9h,v 2.2 2013/08/31 01:24:53 vsnyder Exp $
+d73 1
+a73 1
+        call h5pset_fill_value_f (cparms, H5T_NATIVE_REAL, fillValue, status)
+d76 1
+a76 1
+        call h5dCreate_f ( locID, trim(name), H5T_NATIVE_REAL, spaceID, setID, &
+d79 1
+a79 1
+        call h5dCreate_f ( locID, trim(name), H5T_NATIVE_REAL, spaceID, setID, &
+d101 1
+a101 1
+        call h5pset_fill_value_f (cparms, H5T_NATIVE_REAL, fillValue, status)
+d105 1
+a105 1
+      call h5dCreate_f ( locID, trim(name), H5T_NATIVE_REAL, spaceID, setID, &
+d135 1
+a135 1
+      call h5dWrite_f ( setID, H5T_NATIVE_REAL, value, &
+d141 1
+a141 1
+      call h5dWrite_f ( setID, H5T_NATIVE_REAL, value, &
+d153 3
+@
+
+
+2.3
+log
+@Use the cached trace version
+@
+text
+@d13 1
+a13 1
+!     & finalShape, fillValue, adding_to )
+d15 1
+a15 1
+!     integer, intent(in) :: LOCID          ! Where to place it (group/file)
+d17 14
+a30 4
+!     double precision, intent(in) :: VALUE(:,...)  ! The array itself
+!     double precision, optional, intent(in) :: FILLVALUE
+!     integer, dimension(size(shape(value))), optional, intent(in) :: FINALSHAPE
+!     logical, optional, intent(in)     :: adding_to
+d32 1
+a32 1
+! $Id: SaveAsHDF5DS_dblarr.f9h,v 2.2 2013/08/31 01:24:53 vsnyder Exp $
+d35 3
+d39 1
+d42 1
+a42 2
+    integer(hsize_t), dimension(size(shape(value))) :: SHP, MAXDIMS ! Shape
+    integer :: spaceID                  ! ID for dataspace
+d44 1
+d49 11
+a59 1
+    call trace_begin ( me, 'SaveAsHDF5DS_dblarr'//digits(rank), cond=.false. )
+d62 87
+a148 10
+    if ( present(finalShape) ) maxdims = finalShape
+    ! Create the dataspace
+    call createSpaceSet ( locID, name, maxdims, H5T_NATIVE_DOUBLE, &
+      & spaceID, setID, status, adding_to, dFill=fillValue )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to create dataset for '//digits(rank)//'D double array ' // trim(name) )
+    ! Write the data
+    call h5dWrite_f ( setID, H5T_NATIVE_DOUBLE, value, &
+      & int ( (/ shp, ones(rank:6) /), hsize_t ), status )
+    call finishSaveDS ( name, status, setID, spaceID )
+d153 3
+@
+
+
+2.2
+log
+@Replace MLSMessageCalls with trace_begin and trace_end
+@
+text
+@d22 1
+a22 1
+! $Id: SaveAsHDF5DS_dblarr.f9h,v 2.1 2008/05/09 23:27:18 vsnyder Exp $
+d35 1
+a35 1
+    call trace_begin ( 'SaveAsHDF5DS_dblarr'//digits(rank), cond=.false. )
+d52 3
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d22 1
+a22 1
+! $Id: $
+d25 4
+a29 1
+    integer (HID_T) :: setID            ! ID for dataset
+a30 2
+    integer(hsize_t), dimension(size(shape(value))) :: SHP, MAXDIMS ! Shape
+    integer :: Rank                     ! Rank of VALUE
+d35 1
+a35 1
+    call MLSMessageCalls( 'push', constantName='SaveAsHDF5DS_dblarr'//digits(rank) )
+d48 1
+a48 1
+    call MLSMessageCalls( 'pop' )
+d51 4
+a54 1
+! $Log: $
+@
+

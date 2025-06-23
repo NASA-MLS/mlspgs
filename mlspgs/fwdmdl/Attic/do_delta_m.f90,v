@@ -1,0 +1,1232 @@
+head	2.16;
+access;
+symbols
+	mus-emls-1-70:2.15.0.2
+	rel-1-0-englocks-work:2.14.0.6
+	VUMLS1-00:2.14
+	VPL1-00:2.14
+	V4-22-NRT-08:2.14
+	VAM1-00:2.14
+	V4-21:2.14.0.4
+	V4-13:2.14
+	V4-12:2.14
+	V4-11:2.14
+	V4-10:2.14
+	V3-43:2.14
+	M4-00:2.14
+	V3-41:2.14
+	V3-40-PlusGM57:2.14.0.2
+	V2-24-NRT-04:2.13
+	V3-33:2.14
+	V2-24:2.13
+	V3-31:2.14
+	V3-30-NRT-05:2.14
+	cfm-01-00:2.14
+	V3-30:2.14
+	V3-20:2.14
+	V3-10:2.14
+	V2-23-NRT-02:2.13
+	V2-23:2.13
+	V2-22-NRT-01:2.13
+	V2-22:2.13
+	V2-21:2.13
+	V2-20:2.13
+	V2-11:2.13
+	V2-10:2.13
+	V2-00:2.13
+	V1-51:2.12
+	V1-50:2.12
+	V1-45:2.12
+	V1-44:2.12
+	V1-43:2.12
+	V1-32:2.12
+	V1-31:2.12
+	V1-30:2.6
+	V1-13:2.3
+	V1-12:2.3
+	V1-11:2.3
+	V1-10:2.3
+	newfwm-feb03:2.3.0.2
+	V1-04:2.0
+	V1-03:2.0
+	V1-02:2.0
+	JointForwardModel:2.0.0.2
+	V1-00:2.0
+	newfwm-sep01:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+2.16
+date	2018.09.12.20.53.35;	author vsnyder;	state dead;
+branches;
+next	2.15;
+
+2.15
+date	2018.05.14.23.48.16;	author vsnyder;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2009.06.23.18.26.11;	author pwagner;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2005.06.22.18.08.18;	author pwagner;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2003.11.04.01.53.54;	author vsnyder;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2003.11.01.03.01.29;	author vsnyder;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2003.10.30.20.34.42;	author vsnyder;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2003.09.26.01.25.56;	author vsnyder;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2003.09.25.20.04.48;	author vsnyder;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2003.09.24.22.19.55;	author vsnyder;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2003.06.09.20.52.37;	author vsnyder;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2003.05.15.03.25.20;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2003.05.05.23.00.25;	author livesey;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2003.02.07.00.39.58;	author michael;	state Exp;
+branches
+	2.3.2.1;
+next	2.2;
+
+2.2
+date	2002.10.08.17.08.02;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2002.10.02.20.08.16;	author vsnyder;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2001.09.17.20.26.26;	author livesey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.09.10.10.09.35;	author zvi;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+2.3.2.1
+date	2003.03.05.03.40.35;	author vsnyder;	state Exp;
+branches;
+next	2.3.2.2;
+
+2.3.2.2
+date	2003.03.06.21.52.39;	author vsnyder;	state Exp;
+branches;
+next	;
+
+1.1.2.1
+date	2001.09.10.10.09.35;	author zvi;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2001.09.12.21.38.45;	author zvi;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.16
+log
+@Inlined its trivial procedures into rad_tran
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module DO_DELTA_M
+
+  implicit NONE
+  private
+! public :: PATH_OPACITY, HYD_OPACITY ! Inlined, no longer used anywhere
+  public :: Polarized_Path_Opacity
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: do_delta_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+contains
+!--------------------------------------------------  PATH_OPACITY  -----
+
+  subroutine PATH_OPACITY ( DEL_ZETA, SINGULARITY, FUNCT, DS_DZ_GW, &
+                     &      INTEGRAL, C_Inds, F_Inds )
+
+! Assume FUNCT, DS_DH_GL and DH_DZ_GL have been evaluated at NG Gauss
+! abscissae in each DEL_ZETA interval.  Then for each of those intervals,
+! estimate the integral of (FUNCT-SINGULARITY) * DS_DH_GL * DH_DZ_GL
+! using the NG-point Gauss quadrature.
+
+    use GLNP, only: NG
+    use MLSCommon, only: IP, RP
+
+! Inputs
+
+    real(rp), intent(in) :: Del_zeta(:) ! difference in integration boundary
+                                        ! in -log(p) units
+    real(rp), intent(in) :: Singularity(:) ! value of function at lower boundary
+    real(rp), intent(in) :: Funct(:)    ! function evaluated on gl integration
+                                        ! grid
+    real(rp), intent(in) :: Ds_dz_gw(:) ! path length  derivative wrt zeta * gw
+                                        ! on entire grid
+
+! Output
+
+    real(rp), intent(out) :: Integral(:) ! result from integration
+
+! Optional
+
+    integer(ip), intent(in) :: C_inds(:) ! Coarse path inds, for Singularity
+    integer(ip), intent(in) :: F_Inds(:) ! Subset of ds_dh_gl, dh_dz_gl
+
+! Internals
+
+    integer(ip) a, aa, i
+
+! Start calculation
+
+    !{ Apply Gauss-Legendre quadrature to the panels indicated by
+    !  {\tt C\_inds}.  We remove a singularity (which actually only
+    !  occurs at the tangent point) by writing
+    !  $\int_{\zeta_i}^{\zeta_{i-1}} G(\zeta) \frac{\text{d}s}{\text{d}h}
+    !   \frac{\text{d}h}{\text{d}\zeta} \text{d}\zeta =
+    !  G(\zeta_i) \int_{\zeta_i}^{\zeta_{i-1}} \frac{\text{d}s}{\text{d}h}
+    !   \frac{\text{d}h}{\text{d}\zeta} \text{d}\zeta +
+    !  \int_{\zeta_i}^{\zeta_{i-1}} \left[ G(\zeta) - G(\zeta_i) \right]
+    !   \frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}
+    !   \text{d}\zeta$.  The first integral is easy -- it's just
+    !  $G(\zeta_i) (\zeta_{i-1}-\zeta_i)$.  We don't use it here.
+    !  In the second integral, $G(\zeta)$ is {\tt funct} -- which has
+    !  already been evaluated at the appropriate abscissae -- and
+    !  $G(\zeta_i)$ is {\tt singularity}.  The weights are {\tt gw}.
+
+    a = 1
+    do i = 1, size(c_inds)
+      aa = f_inds(a)
+      integral(i) = del_zeta(i) *                                  &
+               &  sum((funct(a:a+ng-1) - singularity(c_inds(i))) * &
+               &     ds_dz_gw(aa:aa+ng-1) )
+      a = a + ng
+    end do
+
+  end subroutine PATH_OPACITY
+
+! ---------------------------------------  Polarized_Path_Opacity  -----
+
+  subroutine Polarized_Path_Opacity ( Del_Zeta, Singularity, &
+                                    & Funct, ds_dz_Gw, &
+                                    & Integral, C_Inds, F_Inds )
+    use GLNP, only: NG
+    use MLSCommon, only: IP, RP
+
+! Inputs
+
+    real(rp), intent(in) :: Del_Zeta(:) ! difference in integration boundary
+                                        ! in -log(p) units
+!   logical, intent(in) :: do_gl(:)  ! Where INTEGRAL needs to be evaluated
+    complex(rp), intent(in) :: Singularity(-1:,:) ! value of function at lower
+    complex(rp), intent(in) :: Funct(-1:,:)    ! function evaluated on coarse &
+                                        ! gl integration grid
+    real(rp), intent(in) :: ds_dz_Gw(:) ! path length derivative wrt zeta * gw
+                                        ! on entire grid.  Only the gl_inds part
+                                        ! is used.
+
+! Output
+
+    complex(rp), intent(out) :: Integral(-1:,:) ! result from integration
+
+! Optional
+
+    integer(ip), intent(in) :: C_inds(:) ! Coarse path inds, for
+                                         ! Singularity
+    integer(ip), intent(in) :: F_Inds(:) ! Subset of funct, ds_dh, dh_dz
+
+! Internals
+
+    integer(ip) a, aa, i, j
+
+! Start calculation
+
+    !{ Apply Gauss-Legendre quadrature to the panels indicated by
+    !  {\tt C\_inds}.  We remove a singularity (which actually only
+    !  occurs at the tangent point) by writing
+    !  $\int_{\zeta_i}^{\zeta_{i-1}} G(\zeta) \frac{\text{d}s}{\text{d}h}
+    !   \frac{\text{d}h}{\text{d}\zeta} \text{d}\zeta =
+    !  G(\zeta_i) \int_{\zeta_i}^{\zeta_{i-1}} \frac{\text{d}s}{\text{d}h}
+    !   \frac{\text{d}h}{\text{d}\zeta} \text{d}\zeta +
+    !  \int_{\zeta_i}^{\zeta_{i-1}} \left[ G(\zeta) - G(\zeta_i) \right]
+    !   \frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}
+    !   \text{d}\zeta$.  The first integral is easy -- it's just
+    !  $G(\zeta_i) (\zeta_{i-1}-\zeta_i)$.  We don't use it here.
+    !  In the second integral, $G(\zeta)$ is {\tt funct} -- which has
+    !  already been evaluated at the appropriate abscissae -- and
+    !  $G(\zeta_i)$ is {\tt singularity}.  The weights are {\tt gw}.
+
+    a = 1
+    do i = 1, size(c_inds)
+      aa = f_inds(a)
+      do j = -1, 1
+        integral(j,i) = del_zeta(c_inds(i)) *                             &
+               &  sum( (funct(j,aa:aa+ng-1) - singularity(j,c_inds(i))) * &
+               &       ds_dz_gw(aa:aa+ng-1) )
+      end do 
+      a = a + ng
+    end do
+
+  end subroutine Polarized_Path_Opacity
+
+
+!---------------------------------------------------  HYD_OPACITY  -----
+
+  subroutine HYD_OPACITY ( DEL_ZETA, SINGULARITY, ALPHA_PATH, H_PATH,     &
+                     &     DH_DT_PATH, T_PATH, H_TAN, DH_DT_TAN, ETA_ZXP, &
+                     &     DS_DH, DH_DZ_GW, GL_inds, C_inds, F_inds, INTEGRAL )
+    use GLNP, only: NG
+    use MLSCommon, only: IP, RP
+
+! Inputs
+
+    real(rp), intent(in) :: del_zeta(:) ! difference in integration boundary
+                                        ! in -log(p) units
+    real(rp), intent(in) :: singularity(:) ! value of function at lower
+                                        ! integration boundary.
+    real(rp), intent(in) :: alpha_path(:) ! absorption coefficient on gl grid.
+    real(rp), intent(in) :: h_path(:)   ! path heights + req on gl grid.
+    real(rp), intent(in) :: dh_dt_path(:) ! path height derivative wrt
+                                        ! temperature coefficient on gl grid.
+    real(rp), intent(in) :: t_path(:)   ! path temperature on gl grid.
+    real(rp), intent(in) :: h_tan       ! tangent height + req.
+    real(rp), intent(in) :: dh_dt_tan   ! height derivative wrt temperature
+                                        ! coefficient at the tangent.
+    real(rp), intent(in) :: eta_zxp(:)  ! basis function for temperature
+                                        ! coefficient on gl grid.
+    real(rp), intent(in) :: ds_dh(:)    ! path length derivative wrt height on
+                                        ! entire grid.  Only the gl_inds part
+                                        ! is used.
+    real(rp), intent(in) :: dh_dz_gw(:) ! height derivative wrt zeta * gw on
+                                        ! entire grid.  Only the gl_inds part
+                                        ! is used.
+    integer(ip), intent(in) :: GL_inds(:) ! GL indices, for ds_dh and dh_dz_gw
+    integer(ip), intent(in) :: C_inds(:) ! Coarse path inds, for Singularity
+    integer(ip), intent(in) :: F_inds(:) ! The first GL path ind for the
+                                        ! corresponding C_inds element, for
+                                        ! other than Del_zeta and Singularity.
+                                        ! Something like all_inds(::ng)
+! Output
+
+    real(rp), intent(out) :: integral(:) ! result from integration
+
+! Internals
+
+    integer(ip) a, b, i
+
+! Start calculation
+
+    do i = 1 , size(c_inds)
+      a = f_inds(i)
+      b = a + ng - 1
+      integral(i) = del_zeta(c_inds(i)) *                              &
+        & sum( ( alpha_path(a:b) - singularity(c_inds(i)) )            &
+        &      * (((2.0_rp*h_path(a:b)**2 - 3.0_rp*h_tan**2)           &
+        &         * dh_dt_path(a:b) + h_path(a:b) * h_tan * dh_dt_tan) &
+        &         / (sqrt(h_path(a:b)**2 - h_tan**2))**3               &
+        &         + eta_zxp(a:b)*ds_dh(gl_inds(a:b)) / t_path(a:b)) *  &
+        &         dh_dz_gw(gl_inds(a:b)) )
+    end do
+
+  end subroutine HYD_OPACITY
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: do_delta_m.f90,v 2.15 2018/05/14 23:48:16 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module DO_DELTA_M
+!---------------------------------------------------
+! $Log: do_delta_m.f90,v $
+! Revision 2.15  2018/05/14 23:48:16  vsnyder
+! Cannonball polishing
+!
+! Revision 2.14  2009/06/23 18:26:11  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.13  2005/06/22 18:08:18  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.12  2003/11/04 01:53:54  vsnyder
+! Cosmetic changes
+!
+! Revision 2.11  2003/11/01 03:01:29  vsnyder
+! Use ds_dz_gw instead of ds_dh, dh_dz and gw
+!
+! Revision 2.10  2003/10/30 20:34:42  vsnyder
+! Use c_inds for del_zeta
+!
+! Revision 2.9  2003/09/26 01:25:56  vsnyder
+! Restore a deleted CVS log comment
+!
+! Revision 2.8  2003/09/25 20:04:48  vsnyder
+! Insert TeXnicalities
+!
+! Revision 2.7  2003/09/24 22:19:55  vsnyder
+! Get rid of some array temps
+!
+! Revision 2.6  2003/06/09 20:52:37  vsnyder
+! More work on polarized derivatives
+!
+! Revision 2.5  2003/05/15 03:25:20  vsnyder
+! Added some comments
+!
+! Revision 2.4  2003/05/05 23:00:25  livesey
+! Merged in feb03 newfwm branch
+!
+! Revision 2.3.2.2  2003/03/06 21:52:39  vsnyder
+! Use the correct size
+!
+! Revision 2.3.2.1  2003/03/05 03:40:35  vsnyder
+! More polarized work
+!
+! Revision 2.3  2003/02/07 00:39:58  michael
+! add polarized_path_opacity
+!
+! Revision 2.2  2002/10/08 17:08:02  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.1  2002/10/02 20:08:16  vsnyder
+! Insert copyright notice, other cosmetic changes
+!
+! Revision 2.0  2001/09/17 20:26:26  livesey
+! New forward model
+!
+! Revision 1.1.2.2  2001/09/12 21:38:45  zvi
+! Added CVS stuff
+!
+!
+@
+
+
+2.15
+log
+@Cannonball polishing
+@
+text
+@d217 1
+a217 1
+       "$Id: do_delta_m.f90,v 2.14 2009/06/23 18:26:11 pwagner Exp $"
+d227 3
+@
+
+
+2.14
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d16 2
+a17 1
+  public :: PATH_OPACITY, HYD_OPACITY, POLARIZED_PATH_OPACITY
+d21 1
+a21 1
+       "$RCSfile: $"
+d89 1
+a89 1
+! ---------------------------------------  POLARIZED_PATH_OPACITY  -----
+d91 3
+a93 3
+  subroutine POLARIZED_PATH_OPACITY ( DEL_ZETA, SINGULARITY, &
+                     &      FUNCT, DS_DZ_GW, &
+                     &      INTEGRAL, C_Inds, F_Inds )
+d99 1
+a99 1
+    real(rp), intent(in) :: del_zeta(:) ! difference in integration boundary
+d102 4
+a105 4
+    complex(rp), intent(in) :: singularity(-1:,:) ! value of function at lower
+    complex(rp), intent(in) :: funct(-1:,:)    ! function evaluated on gl integration
+                                        ! grid
+    real(rp), intent(in) :: ds_dz_gw(:) ! path length derivative wrt zeta * gw
+d111 1
+a111 1
+    complex(rp), intent(out) :: integral(-1:,:) ! result from integration
+d117 1
+a117 1
+    integer(ip), intent(in) :: F_Inds(:) ! Subset of ds_dh, dh_dz
+d144 2
+a145 2
+        integral(j,i) = del_zeta(c_inds(i)) *                           &
+               &  sum( (funct(j,a:a+ng-1) - singularity(j,c_inds(i))) * &
+d151 1
+a151 1
+  end subroutine POLARIZED_PATH_OPACITY
+d217 1
+a217 1
+       "$Id: read_apriori.f90 is it here $"
+d227 3
+@
+
+
+2.13
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d213 1
+a214 1
+!---------------------------- RCS Ident Info -------------------------------
+d216 2
+a217 3
+       "$Id: $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d219 1
+d221 1
+d226 3
+@
+
+
+2.12
+log
+@Cosmetic changes
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d18 3
+a20 5
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+    & "$Id: do_delta_m.f90,v 2.10 2003/10/30 20:34:42 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName= "$RCSfile: do_delta_m.f90,v $"
+d214 5
+d225 3
+@
+
+
+2.11
+log
+@Use ds_dz_gw instead of ds_dh, dh_dz and gw
+@
+text
+@d99 2
+a100 1
+                                        ! on entire grid
+d172 2
+a173 1
+                                        ! entire grid.
+d175 2
+a176 1
+                                        ! entire grid.
+d214 3
+@
+
+
+2.10
+log
+@Use c_inds for del_zeta
+@
+text
+@d12 1
+a12 1
+    & "$Id: do_delta_m.f90,v 2.9 2003/09/26 01:25:56 vsnyder Exp $"
+d20 1
+a20 1
+  subroutine PATH_OPACITY ( DEL_ZETA, SINGULARITY, FUNCT, DS_DH_GL, DH_DZ_GL, &
+d28 1
+a28 1
+    use GLNP, only: NG, GW
+d38 2
+a39 3
+    real(rp), intent(in) :: Ds_dh_gl(:) ! path length derivative wrt height on
+                                        ! gl grid
+    real(rp), intent(in) :: Dh_dz_gl(:) ! height derivative wrt zeta on gl grid
+d74 1
+a74 1
+      integral(i) = 0.5_rp * del_zeta(i) * &
+d76 1
+a76 1
+               &     ds_dh_gl(aa:aa+ng-1) * dh_dz_gl(aa:aa+ng-1) * gw)
+d85 1
+a85 1
+                     &      FUNCT, DS_DH_GL, DH_DZ_GL, &
+d87 1
+a87 1
+    use GLNP, only: NG, GW
+d98 2
+a99 3
+    real(rp), intent(in) :: ds_dh_gl(:) ! path length derivative wrt height on
+                                        ! gl grid
+    real(rp), intent(in) :: dh_dz_gl(:) ! height derivative wrt zeta on gl grid
+d109 1
+a109 1
+    integer(ip), intent(in) :: F_Inds(:) ! Subset of ds_dh_gl, dh_dz_gl
+a113 2
+    complex(rp) :: ds_dh_dh_dz_gw(ng) ! ds_dh_gl * dh_dz_gl * gw is the same
+      !                                 for all j = -1..1
+d136 3
+a138 3
+        integral(j,i) = 0.5_rp * del_zeta(c_inds(i)) * &
+               &  sum((funct(j,a:a+ng-1) - singularity(j,c_inds(i))) * &
+               &  ds_dh_gl(aa:aa+ng-1) * dh_dz_gl(aa:aa+ng-1) * gw)
+d150 2
+a151 2
+                     &     DS_DH_GL, DH_DZ_GL, C_inds, F_inds, INTEGRAL )
+    use GLNP, only: NG, GW
+d170 5
+a174 3
+    real(rp), intent(in) :: ds_dh_gl(:) ! path length derivative wrt height on
+                                        ! gl grid on gl grid.
+    real(rp), intent(in) :: dh_dz_gl(:) ! height derivative wrt zeta on gl grid.
+d193 1
+a193 1
+      integral(i) = 0.5_rp * del_zeta(c_inds(i)) *                             &
+d198 2
+a199 2
+        &         + eta_zxp(a:b)*ds_dh_gl(a:b)/t_path(a:b)) *          &
+        &         dh_dz_gl(a:b) * gw )
+d211 3
+@
+
+
+2.9
+log
+@Restore a deleted CVS log comment
+@
+text
+@d12 1
+a12 1
+    & "$Id: do_delta_m.f90,v 2.8 2003/09/25 20:04:48 vsnyder Exp $"
+d140 1
+a140 1
+        integral(j,i) = 0.5_rp * del_zeta(i) * &
+d195 1
+a195 1
+      integral(i) = 0.5_rp * del_zeta(i) *                             &
+d213 3
+@
+
+
+2.8
+log
+@Insert TeXnicalities
+@
+text
+@d12 1
+a12 1
+    & "$Id: do_delta_m.f90,v 2.6 2003/06/09 20:52:37 vsnyder Exp $"
+d213 6
+@
+
+
+2.7
+log
+@Get rid of some array temps
+@
+text
+@d53 1
+a53 1
+    integer(ip) a, aa, b, i
+d57 15
+d115 1
+a115 1
+    integer(ip) a, aa, b, i, j
+d120 15
+@
+
+
+2.6
+log
+@More work on polarized derivatives
+@
+text
+@d12 1
+a12 1
+    & "$Id: do_delta_m.f90,v 2.5 2003/05/15 03:25:20 vsnyder Exp $"
+d21 1
+a21 1
+                     &      INTEGRAL )
+d33 8
+a40 8
+    real(rp), intent(in) :: del_zeta(:) ! difference in integration boundary
+!                                         in -log(p) units
+    real(rp), intent(in) :: singularity(:) ! value of function at lower boundary
+    real(rp), intent(in) :: funct(:)    ! function evaluated on gl integration
+!                                         grid
+    real(rp), intent(in) :: ds_dh_gl(:) ! path length derivative wrt height on
+!                                         gl grid
+    real(rp), intent(in) :: dh_dz_gl(:) ! height derivative wrt zeta on gl grid
+d44 6
+a49 1
+    real(rp), intent(out) :: integral(:) ! result from integration
+d53 1
+a53 1
+    integer(ip) a, b, i
+d58 5
+a62 4
+    b = ng
+    do i = 1, size(singularity)
+      integral(i) = 0.5_rp * del_zeta(i) * sum((funct(a:b) - singularity(i))  &
+               &  * ds_dh_gl(a:b) * dh_dz_gl(a:b) * gw)
+a63 1
+      b = b + ng
+d67 2
+a68 1
+!--------------------------------------------------  PATH_OPACITY  -----
+d72 1
+a72 1
+                     &      INTEGRAL )
+d79 1
+a79 1
+!                                         in -log(p) units
+d83 1
+a83 1
+!                                         grid
+d85 1
+a85 1
+!                                         gl grid
+d92 6
+d100 3
+a102 1
+    integer(ip) a, b, i, j
+d107 8
+a114 10
+    b = ng
+    do i = 1, size(singularity,2)
+!     if ( do_gl(i) ) then
+        do j = -1, 1
+          integral(j,i) = 0.5_rp * del_zeta(i) * sum((funct(j,a:b) - singularity(j,i))  &
+                 &  * ds_dh_gl(a:b) * dh_dz_gl(a:b) * gw)
+        end do 
+        a = a + ng
+        b = b + ng
+!     end if
+d124 1
+a124 1
+                     &     DS_DH_GL, DH_DZ_GL, INTEGRAL )
+d131 1
+a131 1
+!                                         in -log(p) units
+d133 1
+a133 1
+!                                        integration boundary.
+d137 1
+a137 1
+!                                       temperature coefficient on gl grid.
+d139 1
+a139 1
+    real(rp), intent(in) :: h_tan ! tangent height + req.
+d141 1
+a141 1
+!                           coefficient at the tangent.
+d143 1
+a143 1
+!                                         coefficient.
+d145 7
+a151 3
+!                                         gl grid
+    real(rp), intent(in) :: dh_dz_gl(:) ! height derivative wrt zeta on gl grid
+
+d162 10
+a171 10
+    a = 1
+    b = ng
+    do i = 1 , size(singularity)
+      integral(i) = 0.5_rp*del_zeta(i)*sum((alpha_path(a:b) - singularity(i)) &
+                  * (((2.0_rp*h_path(a:b)**2 - 3.0_rp*h_tan**2) &
+                  * dh_dt_path(a:b) + h_path(a:b) * h_tan * dh_dt_tan) &
+                  / (sqrt(h_path(a:b)**2 - h_tan**2))**3   &
+                  + eta_zxp(a:b)*ds_dh_gl(a:b)/t_path(a:b))*dh_dz_gl(a:b)*gw)
+      a = a + ng
+      b = b + ng
+d183 3
+@
+
+
+2.5
+log
+@Added some comments
+@
+text
+@d12 1
+a12 1
+    & "$Id: do_delta_m.f90,v 2.4 2003/05/05 23:00:25 livesey Exp $"
+d64 1
+a64 1
+  subroutine POLARIZED_PATH_OPACITY ( DEL_ZETA, DO_GL, SINGULARITY, &
+d74 1
+a74 1
+    logical, intent(in) :: do_gl(:)  ! Where INTEGRAL needs to be evaluated
+d95 1
+a95 1
+      if ( do_gl(i) ) then
+d102 1
+a102 1
+      end if
+d167 3
+@
+
+
+2.4
+log
+@Merged in feb03 newfwm branch
+@
+text
+@d1 1
+a1 1
+ ! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+d12 1
+a12 1
+    & "$Id$"
+d14 1
+a14 1
+  character (len=*), parameter :: ModuleName= "$RCSfile$"
+d22 6
+d35 1
+a35 1
+    real(rp), intent(in) :: singularity(:) ! value of function at lower
+d166 4
+a169 1
+! $Log$
+@
+
+
+2.3
+log
+@add polarized_path_opacity
+@
+text
+@d12 1
+a12 1
+    & "$Id: do_delta_m.f90,v 2.2 2002/10/08 17:08:02 pwagner Exp $"
+d14 1
+a14 1
+  character (len=*), parameter :: ModuleName= "$RCSfile: do_delta_m.f90,v $"
+d58 2
+a59 1
+  subroutine POLARIZED_PATH_OPACITY ( DEL_ZETA, SINGULARITY, FUNCT, DS_DH_GL, DH_DZ_GL, &
+d68 3
+a70 2
+    complex(rp), intent(in) :: singularity(:,:) ! value of function at lower
+    complex(rp), intent(in) :: funct(:,:)    ! function evaluated on gl integration
+d78 1
+a78 1
+    complex(rp), intent(out) :: integral(:,:) ! result from integration
+d88 9
+a96 7
+    do i = 1, size(singularity)
+      do j=1, 3
+        integral(j,i) = 0.5_rp * del_zeta(i) * sum((funct(j,a:b) - singularity(j,i))  &
+               &  * ds_dh_gl(a:b) * dh_dz_gl(a:b) * gw)
+      end do 
+      a = a + ng
+      b = b + ng
+d160 10
+a169 1
+! $Log: do_delta_m.f90,v $
+@
+
+
+2.3.2.1
+log
+@More polarized work
+@
+text
+@d12 1
+a12 1
+    & "$Id: do_delta_m.f90,v 2.3 2003/02/07 00:39:58 michael Exp $"
+d58 1
+a58 2
+  subroutine POLARIZED_PATH_OPACITY ( DEL_ZETA, DO_GL, SINGULARITY, &
+                     &      FUNCT, DS_DH_GL, DH_DZ_GL, &
+d67 2
+a68 3
+    logical, intent(in) :: do_gl(:)  ! Where INTEGRAL needs to be evaluated
+    complex(rp), intent(in) :: singularity(-1:,:) ! value of function at lower
+    complex(rp), intent(in) :: funct(-1:,:)    ! function evaluated on gl integration
+d76 1
+a76 1
+    complex(rp), intent(out) :: integral(-1:,:) ! result from integration
+d87 6
+a92 8
+      if ( do_gl(i) ) then
+        do j = -1, 1
+          integral(j,i) = 0.5_rp * del_zeta(i) * sum((funct(j,a:b) - singularity(j,i))  &
+                 &  * ds_dh_gl(a:b) * dh_dz_gl(a:b) * gw)
+        end do 
+        a = a + ng
+        b = b + ng
+      end if
+a156 3
+! Revision 2.3  2003/02/07 00:39:58  michael
+! add polarized_path_opacity
+!
+@
+
+
+2.3.2.2
+log
+@Use the correct size
+@
+text
+@d12 1
+a12 1
+    & "$Id: do_delta_m.f90,v 2.3.2.1 2003/03/05 03:40:35 vsnyder Exp $"
+d88 1
+a88 1
+    do i = 1, size(singularity,2)
+a160 3
+! Revision 2.3.2.1  2003/03/05 03:40:35  vsnyder
+! More polarized work
+!
+@
+
+
+2.2
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d8 1
+a8 1
+  public :: PATH_OPACITY, HYD_OPACITY
+d12 1
+a12 1
+    & "$Id: do_delta_m.f90,v 2.1 2002/10/02 20:08:16 vsnyder Exp $"
+d56 41
+d157 3
+@
+
+
+2.1
+log
+@Insert copyright notice, other cosmetic changes
+@
+text
+@d12 1
+a12 1
+    & "$Id: $"
+d14 2
+a15 1
+  character (len=*), parameter :: ModuleName= "$RCSfile: $"
+d109 4
+d116 3
+@
+
+
+2.0
+log
+@New forward model
+@
+text
+@d1 3
+d5 1
+a5 2
+  USE GLNP, ONLY: NG, GW
+  use MLSCommon, only: IP, RP
+d8 2
+a9 1
+  PUBLIC :: PATH_OPACITY, HYD_OPACITY
+d11 4
+a14 4
+  CHARACTER (LEN=256) :: Id = &
+ "$Id: do_delta_m.f90,v 1.1.2.2 2001/09/12 21:38:45 zvi Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= &
+ "$RCSfile: do_delta_m.f90,v $"
+d16 8
+a23 6
+CONTAINS
+!---------------------------------------------------------------------------
+!
+ SUBROUTINE path_opacity(del_zeta,singularity,funct,ds_dh_gl,dh_dz_gl, &
+                     &   integral)
+!
+d25 10
+a34 10
+!
+  REAL(rp), INTENT(in) :: del_zeta(:) ! difference in integration boundary
+!                                       in -log(p) units
+  REAL(rp), INTENT(in) :: singularity(:) ! value of function at lower
+  REAL(rp), INTENT(in) :: funct(:)    ! function evaluated on gl integration
+!                                       grid
+  REAL(rp), INTENT(in) :: ds_dh_gl(:) ! path length derivative wrt height on
+!                                       gl grid
+  REAL(rp), INTENT(in) :: dh_dz_gl(:) ! height derivative wrt zeta on gl grid
+!
+d36 3
+a38 2
+!
+  REAL(rp), INTENT(out) :: integral(:) ! result from integration
+d40 3
+a42 3
+!
+  INTEGER(ip) a,b,i
+!
+d44 20
+a63 17
+!
+  a = 1
+  b = ng
+  DO i = 1 , SIZE(singularity)
+    integral(i) = 0.5_rp * del_zeta(i) * SUM((funct(a:b) - singularity(i))  &
+             &  * ds_dh_gl(a:b) * dh_dz_gl(a:b) * Gw)
+    a = a + ng
+    b = b + ng
+  ENDDO
+!
+ END SUBROUTINE path_opacity
+!--------------------------------------------------------------------
+!
+ SUBROUTINE hyd_opacity(del_zeta,singularity,alpha_path,h_path,dh_dt_path, &
+                     &  t_path,h_tan,dh_dt_tan,eta_zxp,ds_dh_gl,dh_dz_gl, &
+                     &  integral)
+!
+d65 19
+a83 19
+!
+  REAL(rp), INTENT(in) :: del_zeta(:) ! difference in integration boundary
+!                                       in -log(p) units
+  REAL(rp), INTENT(in) :: singularity(:) ! value of function at lower
+!                                      integration boundary.
+  REAL(rp), INTENT(in) :: alpha_path(:) ! absorption coefficient on gl grid.
+  REAL(rp), INTENT(in) :: h_path(:) ! path heights + req on gl grid.
+  REAL(rp), INTENT(in) :: dh_dt_path(:) ! path height derivative wrt
+!                                     temperature coefficient on gl grid.
+  REAL(rp), INTENT(in) :: t_path(:) ! path temperature on gl grid.
+  REAL(rp), INTENT(in) :: h_tan ! tangent height + req.
+  REAL(rp), INTENT(in) :: dh_dt_tan ! height derivative wrt temperature
+!                         coefficient at the tangent.
+  REAL(rp), INTENT(in) :: eta_zxp(:) ! basis function for temperature
+!                                      coefficient.
+  REAL(rp), INTENT(in) :: ds_dh_gl(:) ! path length derivative wrt height on
+!                                       gl grid
+  REAL(rp), INTENT(in) :: dh_dz_gl(:) ! height derivative wrt zeta on gl grid
+!
+d85 3
+a87 3
+!
+  REAL(rp), INTENT(out) :: integral(:) ! result from integration
+!
+d89 3
+a91 3
+!
+  INTEGER(ip) a,b,i
+!
+d93 16
+a108 16
+!
+  a = 1
+  b = ng
+  DO i = 1 , SIZE(singularity)
+    integral(i) = 0.5_rp*del_zeta(i)*SUM((alpha_path(a:b) - singularity(i)) &
+                * (((2.0_rp*h_path(a:b)**2 - 3.0_rp*h_tan**2) &
+                * dh_dt_path(a:b) + h_path(a:b) * h_tan * dh_dt_tan) &
+                / (SQRT(h_path(a:b)**2 - h_tan**2))**3   &
+                + eta_zxp(a:b)*ds_dh_gl(a:b)/t_path(a:b))*dh_dz_gl(a:b)*Gw)
+    a = a + ng
+    b = b + ng
+  ENDDO
+!
+ END SUBROUTINE hyd_opacity
+!
+END module DO_DELTA_M
+d111 3
+@
+
+
+1.1
+log
+@file do_delta_m.f90 was initially added on branch newfwm-sep01.
+@
+text
+@d1 105
+@
+
+
+1.1.2.1
+log
+@Major Design change..
+@
+text
+@a0 95
+module DO_DELTA_M
+  USE GLNP, ONLY: NG, GW
+  use MLSCommon, only: IP, RP
+  implicit NONE
+  private
+  PUBLIC :: PATH_OPACITY, HYD_OPACITY
+!---------------------------------------------------------------------------
+contains
+!
+!--------------------------------------------------------------------
+!
+ SUBROUTINE path_opacity(del_zeta,singularity,funct,ds_dh_gl,dh_dz_gl, &
+                     &   integral)
+!
+! Inputs
+!
+  REAL(rp), INTENT(in) :: del_zeta(:) ! difference in integration boundary
+!                                       in -log(p) units
+  REAL(rp), INTENT(in) :: singularity(:) ! value of function at lower
+  REAL(rp), INTENT(in) :: funct(:)    ! function evaluated on gl integration
+!                                       grid
+  REAL(rp), INTENT(in) :: ds_dh_gl(:) ! path length derivative wrt height on
+!                                       gl grid
+  REAL(rp), INTENT(in) :: dh_dz_gl(:) ! height derivative wrt zeta on gl grid
+!
+! Output
+!
+  REAL(rp), INTENT(out) :: integral(:) ! result from integration
+! Internals
+!
+  INTEGER(ip) a,b,i
+!
+! Start calculation
+!
+  a = 1
+  b = ng
+  DO i = 1 , SIZE(singularity)
+    integral(i) = 0.5_rp * del_zeta(i) * SUM((funct(a:b) - singularity(i))  &
+             &  * ds_dh_gl(a:b) * dh_dz_gl(a:b) * Gw)
+    a = a + ng
+    b = b + ng
+  ENDDO
+!
+ END SUBROUTINE path_opacity
+!--------------------------------------------------------------------
+!
+ SUBROUTINE hyd_opacity(del_zeta,singularity,alpha_path,h_path,dh_dt_path, &
+                     &  t_path,h_tan,dh_dt_tan,eta_zxp,ds_dh_gl,dh_dz_gl, &
+                     &  integral)
+!
+! Inputs
+!
+  REAL(rp), INTENT(in) :: del_zeta(:) ! difference in integration boundary
+!                                       in -log(p) units
+  REAL(rp), INTENT(in) :: singularity(:) ! value of function at lower
+!                                      integration boundary.
+  REAL(rp), INTENT(in) :: alpha_path(:) ! absorption coefficient on gl grid.
+  REAL(rp), INTENT(in) :: h_path(:) ! path heights + req on gl grid.
+  REAL(rp), INTENT(in) :: dh_dt_path(:) ! path height derivative wrt
+!                                     temperature coefficient on gl grid.
+  REAL(rp), INTENT(in) :: t_path(:) ! path temperature on gl grid.
+  REAL(rp), INTENT(in) :: h_tan ! tangent height + req.
+  REAL(rp), INTENT(in) :: dh_dt_tan ! height derivative wrt temperature
+!                         coefficient at the tangent.
+  REAL(rp), INTENT(in) :: eta_zxp(:) ! basis function for temperature
+!                                      coefficient.
+  REAL(rp), INTENT(in) :: ds_dh_gl(:) ! path length derivative wrt height on
+!                                       gl grid
+  REAL(rp), INTENT(in) :: dh_dz_gl(:) ! height derivative wrt zeta on gl grid
+!
+! Output
+!
+  REAL(rp), INTENT(out) :: integral(:) ! result from integration
+!
+! Internals
+!
+  INTEGER(ip) a,b,i
+!
+! Start calculation
+!
+  a = 1
+  b = ng
+  DO i = 1 , SIZE(singularity)
+    integral(i) = 0.5_rp*del_zeta(i)*SUM((alpha_path(a:b) - singularity(i)) &
+                * (((2.0_rp*h_path(a:b)**2 - 3.0_rp*h_tan**2) &
+                * dh_dt_path(a:b) + h_path(a:b) * h_tan * dh_dt_tan) &
+                / (SQRT(h_path(a:b)**2 - h_tan**2))**3   &
+                + eta_zxp(a:b)*ds_dh_gl(a:b)/t_path(a:b))*dh_dz_gl(a:b)*Gw)
+    a = a + ng
+    b = b + ng
+  ENDDO
+!
+ END SUBROUTINE hyd_opacity
+!
+END module DO_DELTA_M
+@
+
+
+1.1.2.2
+log
+@Added CVS stuff
+@
+text
+@a6 7
+!---------------------------- RCS Ident Info -------------------------------
+  CHARACTER (LEN=256) :: Id = &
+ "$Id: two_d_hydrostatic_m.f90,v 1.9.2.1 2001/09/10 10:02:32 zvi Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= &
+ "$RCSfile: two_d_hydrostatic_m.f90,v $"
+!---------------------------------------------------------------------------
+CONTAINS
+d8 3
+a95 3
+!---------------------------------------------------
+! $Log$
+!
+@
+
+

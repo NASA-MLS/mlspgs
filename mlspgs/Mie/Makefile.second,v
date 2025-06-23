@@ -1,0 +1,231 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.12
+	cfm-single-freq-0-1:1.2.0.10
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.8
+	mus-emls-1-70:1.2.0.6
+	rel-1-0-englocks-work:1.2.0.4
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.2
+	V4-21:1.2.0.2
+	V4-13:1.2
+	V4-12:1.2
+	V4-11:1.2
+	V4-10:1.2
+	M4-00:1.2
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2012.10.11.20.08.38;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2010.05.07.00.52.13;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Correct PLAT variable and an include path
+@
+text
+@# Copyright 2005, by the California Institute of Technology. ALL
+# RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+# commercial use must be negotiated with the Office of Technology Transfer
+# at the California Institute of Technology.
+
+# This software may be subject to U.S. export control laws. By accepting this
+# software, the user agrees to comply with all applicable U.S. export laws and
+# regulations. User has the responsibility to obtain export licenses, or other
+# export authority as may be required before exporting such information to
+# foreign countries or providing access to foreign persons.
+
+# "$Id: Makefile.second,v 1.1 2010/05/07 00:52:13 vsnyder Exp $"
+
+MLSCFILE=.configure
+include $(MLSCFILE)
+
+FOPTS=                      
+LDOPTS= -Wl,-noinhibit-exec
+MATH77= math77
+MATH77LIB= math77
+# Set NO=No when building Mie_Tables_NoHDF
+NO=
+
+PLAT= $(MLSCONFG)
+
+DVIS= Ice_Size_Distribution.dvi Mie_Efficiencies_m.dvi Mie_Tables.dvi \
+      Phase_m.dvi RefractiveIndex.dvi sphbes.dvi
+
+MODS= cadre_m.mod constants.mod ice_size_distribution.mod \
+      mie_efficiencies_m.mod mlskinds.mod \
+      p1_m.mod phase_m.mod physics.mod polyfit_m.mod refractiveindex.mod
+
+OBJS= Mie_Tables.o \
+      cadre.o Constants.o Ice_Size_Distribution.o \
+      Mie_Efficiencies_m.o MLSKinds.o P1_m.o \
+      Phase_m.o physics.o Polyfit_m.o RefractiveIndex.o sphbes.o \
+      Write$(NO)HDF_m.o
+
+.SUFFIXES:
+.SUFFIXES: .o .dbg.o .f90 .f .c
+
+vpath %.f $(MATH77)/
+
+%.o: %.f
+	$(FC) -c -o $@@ $(FOPTS) $<
+
+all: Mie_Tables
+
+cadre_m.mod cadre.o: cadre.f90
+	$(FC) -c $(FOPTS) cadre.f90
+
+constants.mod Constants.o: Constants.f90 mlskinds.mod
+	$(FC) -c $(FOPTS) Constants.f90
+
+ice_size_distribution.mod Ice_Size_Distribution.o: Ice_Size_Distribution.f90 \
+                                                   constants.mod mlskinds.mod
+	$(FC) -c $(FOPTS) Ice_Size_Distribution.f90
+
+mie_efficiencies_m.mod Mie_Efficiencies_m.o: Mie_Efficiencies_m.f90 \
+                                             mlskinds.mod sphbess.mod
+	$(FC) -c $(FOPTS) Mie_Efficiencies_m.f90
+
+Mie_Tables.o: Mie_Tables.f90 cadre_m.mod constants.mod \
+              ice_size_distribution.mod mie_efficiencies_m.mod mlskinds.mod \
+              p1_m.mod phase_m.mod physics.mod polyfit_m.mod \
+              refractiveindex.mod Write$(NO)HDF_m.o
+	$(FC) -c $(FOPTS) Mie_Tables.f90
+
+mlskinds.mod MLSKinds.o: MLSKinds.f90
+	$(FC) -c $(FOPTS) MLSKinds.f90
+
+outlier_m.mod Outlier_m.o: Outlier_m.f90
+	$(FC) -c $(FOPTS) Outlier_m.f90
+
+polyfit_m.mod Polyfit_m.o: Polyfit_m.f90
+	$(FC) -c $(FOPTS) Polyfit_m.f90
+
+p1_m.mod P1_m.o: P1_m.f90 mlskinds.mod
+	$(FC) -c $(FOPTS) P1_m.f90
+
+phase_m.mod Phase_m.o: Phase_m.f90 mlskinds.mod p1_m.mod
+	$(FC) -c $(FOPTS) Phase_m.f90
+
+physics.mod physics.o: physics.f90
+	$(FC) -c $(FOPTS) physics.f90
+
+refractiveindex.mod RefractiveIndex.o: RefractiveIndex.f90 constants.mod \
+                                       mlskinds.mod
+	$(FC) -c $(FOPTS) RefractiveIndex.f90
+
+sphbess.mod sphbes.o: sphbes.f90 mlskinds.mod
+	$(FC) -c $(FOPTS) sphbes.f90
+
+WriteHDF_m.o: WriteHDF_m.f90 mlskinds.mod
+	$(FC) -c $(FOPTS) WriteHDF_m.f90 -I $(HOME)/mlspgs/lib/$(PLAT) \
+              -I $(HDF5)/../include
+
+WriteNoHDF_m.o: WriteNoHDF_m.f90 mlskinds.mod
+	$(FC) -c $(FOPTS) WriteNoHDF_m.f90
+
+Mie_Tables:   $(OBJS) $(MATH77)/lib$(MATH77LIB).a
+	$(FC) -o Mie_Tables $(LDOPTS) $(OBJS) -L$(MATH77) -l$(MATH77LIB) \
+              -L$(HOME)/mlspgs/lib/$(PLAT) -lmls \
+              -L$(PGSTK) -lPGSTK \
+              -L$(HDFEOS) -lhdfeos \
+              -L$(HDFEOS5) -lhe5_hdfeos \
+              -L$(HDF5) -lhdf5_fortran -lhdf5 -lhdf5_hl \
+              -L$(HDFLIB) -lmfhdf \
+              -ldf -lz -ljpeg -lsz \
+              -lGctp \
+              -L$(PVM_ROOT)/lib/LINUX -lfpvm3 -lgpvm3 -lpvm3
+
+Mie_Tables_NoHDF:   $(OBJS) $(MATH77)/lib$(MATH77LIB).a
+	$(FC) -o Mie_Tables_NoHDF $(LDOPTS) $(OBJS) -L$(MATH77) -l$(MATH77LIB)
+
+clean:
+	rm -f Mie_Tables Mie_Tables_NoHDF \
+              $(OBJS) Write*HDF_m.o $(MODS) writehdf_m.mod
+	(cd $(MATH77) ; make clean)
+
+$(MATH77)/lib$(MATH77LIB).a:
+	(cd $(MATH77); make)
+
+tar:
+	tar czf Mie.tgz -h Makefile *.f90 $(MATH77)/*.f $(MATH77)/Makefile\
+                *.dvi  runs/Mie_Tables.in
+
+%.dvi: %.f90
+	f90tex $<
+	latex $*.tex
+	latex $*.tex
+
+AllDVI: $(DVIS)
+
+# $Log: Makefile.second,v $
+# Revision 1.1  2010/05/07 00:52:13  vsnyder
+# Changed name from just plain Makefile
+#
+# Revision 1.4  2008/05/22 01:56:53  vsnyder
+# MLS libraries, for HDF output
+#
+# Revision 1.3  2008/04/19 02:36:40  vsnyder
+# Corrected path for amach
+#
+# Revision 1.2  2008/04/19 01:37:27  vsnyder
+# Removed test harness makes
+#
+# Revision 1.1  2008/04/19 01:15:26  vsnyder
+# Initial commit
+#
+@
+
+
+1.1
+log
+@Changed name from just plain Makefile
+@
+text
+@d12 1
+a12 1
+# "$Id: Makefile,v 1.4 2008/05/22 01:56:53 vsnyder Exp $"
+d24 1
+a24 1
+PLAT= $(MLSF95).$(MLSPLAT)
+d95 2
+a96 1
+	$(FC) -c $(FOPTS) WriteHDF_m.f90 -I $(HOME)/mlspgs/lib/$(PLAT) -I $(HDF5)
+d107 1
+a107 1
+              -L$(HDF5) -lhdf5_fortran -lhdf5 \
+d135 4
+a138 1
+# $Log: Makefile,v $
+@
+

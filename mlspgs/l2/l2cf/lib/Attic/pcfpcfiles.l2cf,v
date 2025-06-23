@@ -1,0 +1,48 @@
+head	1.2;
+access;
+symbols
+	V1-04:1.1
+	V1-03:1.1
+	V1-02:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2002.05.13.17.24.25;	author livesey;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2002.04.29.21.54.58;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Getting close to being ready
+@
+text
+@20034|!L2PCBASE_Band1L|!thel2pcpath||||1
+20035|!L2PCBASE_Band2|!thel2pcpath||||1
+20036|!L2PCBASE_Band6|!thel2pcpath||||1
+20037|!L2PCBASE_Band8|!thel2pcpath||||1
+20038|!L2PCBASE_Band14|!thel2pcpath||||1
+20039|!L2PCBASE_Band32L|!thel2pcpath||||1
+20040|!L2PCBASE_Band33|!thel2pcpath||||1
+20041|!L2PCBASE_Band34|!thel2pcpath||||1
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@@
+

@@ -1,0 +1,830 @@
+head	2.11;
+access;
+symbols
+	v5-02-NRT-19:2.11
+	v6-00:2.11
+	v5-02-NRT-18:2.11
+	v5-02:2.11
+	v5-01-NRT-17:2.11
+	v5-01-NRT-16:2.11
+	v5-01-NRT-15:2.11
+	v5-01-NRT-14:2.11
+	neuralnetworks-1-0:2.11.0.10
+	cfm-single-freq-0-1:2.11.0.8
+	v5-01:2.11
+	v5-00:2.11
+	v4-23-TA133:2.11.0.6
+	mus-emls-1-70:2.11.0.4
+	rel-1-0-englocks-work:2.11.0.2
+	VUMLS1-00:2.11
+	VPL1-00:2.11
+	V4-22-NRT-08:2.11
+	VAM1-00:2.11
+	V4-21:2.9.0.2
+	V4-13:2.9
+	V4-12:2.9
+	V4-11:2.9
+	V4-10:2.9
+	V3-43:2.7
+	M4-00:2.7
+	V3-41:2.7
+	V3-40-PlusGM57:2.7.0.2
+	V2-24-NRT-04:2.5
+	V3-33:2.7
+	V2-24:2.5
+	V3-31:2.7
+	V3-30-NRT-05:2.7
+	cfm-01-00:2.7
+	V3-30:2.7
+	V3-20:2.7
+	V3-10:2.7
+	V2-23-NRT-02:2.5
+	V2-23:2.5
+	V2-22-NRT-01:2.5
+	V2-22:2.5
+	V2-21:2.5
+	V2-20:2.5
+	V2-11:2.4
+	V2-10:2.4
+	V2-00:2.4
+	V1-51:2.3
+	V1-50:2.3
+	V1-45:2.3
+	V1-44:2.3
+	V1-43:2.3
+	V1-42:2.3
+	V1-41:2.3
+	V1-32:2.3
+	V1-40:2.3
+	V1-31:2.3
+	V1-30:2.3
+	V1-13:2.3
+	V1-12:2.3
+	V1-11:2.3
+	V1-10:2.3
+	newfwm-feb03:2.3.0.2
+	V1-04:2.0
+	V1-03:2.0
+	V1-02:2.0
+	V1-00:2.0
+	newfwm-sep01:2.0.0.2
+	V0-7:2.0
+	V0-5-Level2:2.0
+	V0-5-SIPS:2.0
+	V0_1:1.1;
+locks; strict;
+comment	@# @;
+
+
+2.11
+date	2015.04.29.00.51.10;	author vsnyder;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2015.03.28.01.57.03;	author vsnyder;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2013.05.02.00.17.48;	author vsnyder;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2013.05.01.23.18.52;	author vsnyder;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2009.06.23.18.25.43;	author pwagner;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2009.05.13.20.40.05;	author vsnyder;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2006.09.28.20.39.22;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2005.06.22.17.25.49;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2002.10.08.00.09.10;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2002.09.26.20.56.53;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2002.09.26.20.54.43;	author vsnyder;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2000.09.05.17.41.07;	author dcuddy;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	99.12.20.14.39.24;	author pumphrey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.11
+log
+@Use lat instead of lat_geoc because lat_geoc is optional
+@
+text
+@module heights_module
+
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+  ! This module provides conversions from geodetic (geometric height above
+  ! earth surface) to geopotential height (above geoid).
+  ! Formulae taken from  "Theoretical basis for EOS-MLS geopotential
+  ! and scan calculations" by N. J. Livesey
+
+
+  use Constants, only: Deg2Rad, Rad2Deg
+
+  use Geometry, only: Earth_Major_Axis => EarthRadA, &
+                    & Earth_Minor_Axis => EarthRadB, EarthSurfaceGPH, GM, G0, &
+                    & GeodToGeocLat, J2, J4, Omega => W
+
+  use MLSKinds, only: R8
+
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
+
+  implicit NONE
+  private
+  public:: Geom_to_GPH, GPH_to_geom
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: heights_module.f90,v $"
+  private :: not_used_here
+!---------------------------------------------------------------------------
+
+contains
+
+  ! ------------------------------------------------  geom_to_gph  -----
+  function geom_to_gph ( geom_height, lat_geoc, lat_geod ) result (gph)
+    ! Converts geometric height in meters above the geoid to geopotential
+    ! height in meters above the geoid.
+    ! This applies Equation 40 in "Theoretical basis for EOS-MLS geopotential
+    ! and scan calculations" by N. J. Livesey
+    ! If I have got this right, the difference between the two heights is
+    ! piffling at ground level, going to about 1km at 80km.
+
+    !----Argument----!
+    real(kind=r8), intent(in) :: geom_height ! above geoid
+    real(kind=r8), intent(in), optional :: lat_geoc, lat_geod
+    !----Function result----!
+    real(kind=r8)::gph
+    !---Local variabules---!
+    real(kind=r8) :: p2, p4, sinlat, h_inf, ahrat, coslat, h0, hc, lat
+    !---------Executable statements-------!
+
+    if ( present(lat_geoc) .and. present(lat_geod) ) then
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+           "in function geom_to_gph,"// &
+           "Both geometric and geodetic lats supplied: using geometric" )
+      lat = lat_geoc
+    else if ( present(lat_geoc) ) then
+      lat = lat_geoc
+    else if ( present(lat_geod) ) then
+      lat = rad2deg * geodToGeocLat(lat_geod)
+    else
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+           "in function geom_to_gph, Called with no latitude - assuming 45deg N" )
+      lat = 45.0_r8
+    end if
+
+    sinlat = sin(lat*deg2rad)**2
+    coslat = 1.0_r8 - sinlat
+
+    !{ Calculate height of Earth's surface at given geocentric latitude $\beta$
+    !  \begin{equation*}
+    !   H_0 = \sqrt{R_a^2 \cos^2\beta + R_b^2 \sin^2\beta}
+    !  \end{equation*}
+    !  where $R_a$ is the Earth's semi-major axis and $R_b$ is the
+    !  semi-minor axis.
+
+    h0 = sqrt( earth_major_axis**2*coslat + earth_minor_axis**2*sinlat )
+    hc = h0 + geom_height ! requested height, from center of geoid
+
+    !{ Coefficients in the spherical harmonic expansion of the Earth's
+    !  figure: $P_2 = ( 3 \sin^2 \beta - 1 ) /2$ and
+    !          $P_4 = ( 35 \sin^4 \beta - 30 \sin^2 \beta + 3 ) / 8$.
+    p2 = (3*sinlat -1)/2
+    p4 = (35*(sinlat**2) - 30*sinlat +3)/8
+
+    !{ Let $r$ be the ratio of the Earth's major axis to the height
+    !  measured from the center of the geoid, $r = R_a / H_c$
+    ahrat = earth_major_axis / hc
+    ahrat = ahrat*ahrat
+
+    !{ Compute geopotential height, accounting for latitude, the Earth's
+    !  figure up to fourth-order zonal harmonics, and centripetal acceleration:
+    !  \begin{equation*}
+    !   H_\infty = \frac{Gm}{g_0 H_c} \left(
+    !    1 - J_2 P_2 r^2 - J_4 P_4 r^4 \right) +
+    !     \frac{\omega^2 r^2 \cos^2 \beta}{2 g_0}
+    !  \end{equation*}
+    !  where $J_2$ and $J_4$ are zonal spherical harmonics.
+    h_inf = (gm/(g0*hc))*(1-j2*p2*ahrat - j4*p4*ahrat*ahrat) + &
+      &  (omega*omega*hc*hc*coslat)/(2*g0)
+
+    gph = earthSurfaceGPH - h_inf
+
+  end function geom_to_gph
+
+  ! ------------------------------------------------  gph_to_geom  -----
+  function gph_to_geom ( gph, lat_geoc, lat_geod ) result (geom_height)
+    ! This converts Geopotential height (GPH) in meters above the geoid
+    ! back to geometric height in meters above the geoid.
+    ! We use a yucky secant-method iteration mainly out of idleness --
+    ! we can't be bothered to invert the function analytically. Of course,
+    ! the present hack has the advantage that gph_to_geom and geom_to_gph
+    ! are always consistent with each other.
+    ! Tests suggest that the secant method converges after either 3 or 4
+    ! iterations over the 0-100km range.
+
+    !----Argument----!
+    real(kind=r8), intent(in) :: gph
+    real(kind=r8), intent(in), optional :: lat_geoc, lat_geod
+    !----Function result----!
+    real(kind=r8)::geom_height
+    !---Local variabules---!
+    real(kind=r8),parameter:: accuracy=0.001
+    real(kind=r8)::geom1,geom2,newgeom,dgph1,dgph2,lat
+    !---------Executable statements-------!
+
+    if ( present(lat_geoc) .and. present(lat_geod) ) then
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+           "in function gph_to_geom,"// &
+           "Both geometric and geodetic lats supplied: using geometric" )
+      lat = lat_geoc
+    else if ( present(lat_geoc) ) then
+      lat = lat_geoc
+    else if ( present(lat_geod) ) then
+      lat = rad2deg * geodToGeocLat(lat_geod)
+    else
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+           "in function gph_to_geom, heights_module"// &
+           "Called with no latitude - assuming 45deg N" )
+      lat = 45.0_r8
+    end if
+
+    geom1 = gph
+    geom2 = gph+1.0
+    dgph1 = geom_to_gph(geom1,lat)-gph
+  secantloop: do
+      dgph2 = geom_to_gph(geom2,lat)-gph
+      newgeom = geom1 - dgph1*(geom2-geom1)/(dgph2-dgph1)
+      if ( abs(newgeom-geom2) < accuracy ) then
+         exit secantloop
+      end if
+      geom1 = geom2
+      dgph1 = dgph2
+      geom2 = newgeom
+    end do secantloop
+    geom_height = newgeom
+
+  end function gph_to_geom
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: heights_module.f90,v 2.10 2015/03/28 01:57:03 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module heights_module
+
+! $Log: heights_module.f90,v $
+! Revision 2.10  2015/03/28 01:57:03  vsnyder
+! Deleted Lat_geod_to_geoc (its functionality is in Geometry).
+!
+! Revision 2.9  2013/05/02 00:17:48  vsnyder
+! LaTeX corrections, but it doesn't matter because nobody uses this module
+!
+! Revision 2.8  2013/05/01 23:18:52  vsnyder
+! LaTeX cannonball polishing
+!
+! Revision 2.7  2009/06/23 18:25:43  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.6  2009/05/13 20:40:05  vsnyder
+! Get constants from Constants, kinds from MLSKinds
+!
+! Revision 2.5  2006/09/28 20:39:22  vsnyder
+! Correct singularity in lat_geod_to_geoc
+!
+! Revision 2.4  2005/06/22 17:25:49  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.3  2002/10/08 00:09:10  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.2  2002/09/26 20:56:53  vsnyder
+! Move Earth_Axis_Ratio_Squared from heights_module to Geometry
+!
+! Revision 2.1  2002/09/26 20:54:43  vsnyder
+! Get constants from Geometry and Units, cosmetic changes
+!
+@
+
+
+2.10
+log
+@Deleted Lat_geod_to_geoc (its functionality is in Geometry).
+@
+text
+@d15 2
+a16 2
+  ! earth surface) to geopotential height (above geoid). 
+  ! Formulae taken from  "Theoretical basis for EOS-MLS geopotential 
+d37 1
+a37 1
+  private :: not_used_here 
+d44 3
+a46 2
+    ! Converts geometric height above the geoid to  geopotential height
+    ! This applies Equation 40 in "Theoretical basis for EOS-MLS geopotential 
+d48 2
+a49 2
+    ! If I have got this right, the difference between the two heights is 
+    ! piffling at ground level, going to about 1km at 80km. 
+d61 4
+a64 4
+       call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            "in function geom_to_gph,"// &
+            "Both geometric and geodetic lats supplied: using geometric" )
+       lat = lat_geoc
+d66 1
+a66 1
+       lat = lat_geoc
+d68 1
+a68 1
+       lat = rad2deg * geodToGeocLat(lat_geod)
+d70 3
+a72 3
+       call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            "in function geom_to_gph, Called with no latitude - assuming 45deg N" )
+       lat = 45.0_r8
+d75 1
+a75 1
+    sinlat = sin(lat_geoc*deg2rad)**2
+d116 5
+a120 4
+    ! This converts Geopotential height (GPH) back to geometric height
+    ! We use a yucky secant-method iteration mainly out of idleness -- 
+    ! we can't be bothered to invert the function analytically. Of course, 
+    ! the present hack has the advantage that gph_to_geom and geom_to_gph 
+d131 1
+a131 1
+    real(kind=r8),parameter:: accuracy=0.001 
+d136 4
+a139 4
+       call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            "in function gph_to_geom,"// &
+            "Both geometric and geodetic lats supplied: using geometric" )
+       lat = lat_geoc
+d141 1
+a141 1
+       lat = lat_geoc
+d143 1
+a143 1
+       lat = rad2deg * geodToGeocLat(lat_geod)
+d145 4
+a148 4
+       call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            "in function gph_to_geom, heights_module"// &
+            "Called with no latitude - assuming 45deg N" )
+       lat = 45.0_r8
+d154 1
+a154 1
+    secantloop:do 
+d156 1
+a156 2
+      newgeom =  geom1 - dgph1*(geom2-geom1)/(dgph2-dgph1)
+      !     print*,geom1,geom2,newgeom
+a162 1
+
+d171 1
+a171 1
+       "$Id: heights_module.f90,v 2.9 2013/05/02 00:17:48 vsnyder Exp $"
+d181 3
+@
+
+
+2.9
+log
+@LaTeX corrections, but it doesn't matter because nobody uses this module
+@
+text
+@d22 1
+a22 2
+  use Geometry, only: Earth_Axis_Ratio_Squared, &
+                    & Earth_Major_Axis => EarthRadA, &
+d24 1
+a24 1
+                    & J2, J4, Omega => W
+d32 1
+a32 1
+  public:: Geom_to_GPH, Lat_geod_to_geoc, GPH_to_geom
+d67 1
+a67 1
+       lat = lat_geod_to_geoc(lat_geod)
+a112 14
+  ! -------------------------------------------  lat_geod_to_geoc  -----
+  pure function lat_geod_to_geoc ( lat_geod ) result (lat_geoc)
+    ! Converts geodetic latitude to geometric (geocentric) latitude,
+    ! both in degrees, not radians
+    ! If I have got this right, the difference between the two latitudes 
+    ! is 0 at equator and pole with a maximum of 0.2 degrees at midlatitudes
+    real(kind=r8), intent(in) :: lat_geod
+    real(kind=r8) :: lat_geoc
+!   The obvious implementation fails at the poles (tan 90 is infinite):
+!   lat_geoc = rad2deg * atan( tan(lat_geod*deg2rad) / earth_axis_ratio_squared )
+    lat_geoc = rad2deg * atan2( sin(lat_geod*deg2rad) , &
+      &                         cos(lat_geod*deg2rad) * earth_axis_ratio_squared )
+  end function lat_geod_to_geoc
+
+d141 1
+a141 1
+       lat = lat_geod_to_geoc(lat_geod)
+d171 1
+a171 1
+       "$Id: heights_module.f90,v 2.8 2013/05/01 23:18:52 vsnyder Exp $"
+d181 3
+@
+
+
+2.8
+log
+@LaTeX cannonball polishing
+@
+text
+@d78 1
+a78 1
+    !{ Calculate radius of earth at given geocentric latitude $\beta$
+d80 1
+a80 1
+    !   h_0 = \sqrt{R_a^2 \cos^2\beta + R_b^2 \sin^2\beta}
+d86 1
+a86 1
+    hc = h0 + geom_height
+d95 1
+a95 1
+    !  measured from center of the geoid, $r = R_a / H_c$
+d103 1
+a103 1
+    !    1 - J_2 P_2 r^2 - J_4 P_4 r^2 \right) +
+d186 1
+a186 1
+       "$Id: heights_module.f90,v 2.7 2009/06/23 18:25:43 pwagner Exp $"
+d196 3
+@
+
+
+2.7
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d37 1
+a37 1
+       "$RCSfile: $"
+d52 1
+a52 1
+    real(kind=r8), intent(in) :: geom_height
+d78 6
+a83 1
+    ! Calculate radius of earth at given latitude
+d87 4
+d94 2
+d99 8
+d186 1
+a186 1
+       "$Id: read_apriori.f90 is it here $"
+d196 3
+@
+
+
+2.6
+log
+@Get constants from Constants, kinds from MLSKinds
+@
+text
+@d37 1
+a37 1
+       "$RCSfile: heights_module.f90,v $"
+d164 1
+a165 1
+!---------------------------- RCS Ident Info -------------------------------
+d167 2
+a168 3
+       "$Id: heights_module.f90,v 2.5 2006/09/28 20:39:22 vsnyder Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d170 1
+a170 1
+    print *, not_used_here ! .mod files sometimes change if PRINT is added
+d172 1
+d177 3
+@
+
+
+2.5
+log
+@Correct singularity in lat_geod_to_geoc
+@
+text
+@d20 2
+d27 1
+a27 1
+  use MLSCommon, only: R8
+a30 2
+  use Units, only: Deg2Rad, Rad2Deg
+
+d167 1
+a167 1
+       "$Id: heights_module.f90,v 2.4 2005/06/22 17:25:49 pwagner Exp $"
+d171 1
+d177 3
+@
+
+
+2.4
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@a12 1
+  ! acknowledged.
+d37 1
+a37 1
+       "$RCSfile: $"
+d97 2
+a98 1
+    ! Converts geodetic latitude to geometric (geocentric) latitude
+d101 6
+a106 3
+    real(kind=r8),intent(in)::lat_geod
+    real(kind=r8)::lat_geoc
+    lat_geoc = rad2deg * atan( tan(lat_geod*deg2rad) / earth_axis_ratio_squared )
+d167 1
+a167 1
+       "$Id: $"
+d176 3
+@
+
+
+2.3
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d3 10
+a12 3
+  ! Copyright (c) © 1999 the University of Edinburgh. All rights reserved 
+  ! U.K. Government funding under NERC contract F14/6/33 acknowledged. 
+  ! U.S. Government Sponsorship under NASA Contract NAS7-1407 also 
+d36 3
+a38 5
+  !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id: heights_module.f90,v 2.2 2002/09/26 20:56:53 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName= "$RCSfile: heights_module.f90,v $"
+d40 1
+a40 1
+  !---------------------------------------------------------------------------
+d162 5
+d173 3
+@
+
+
+2.2
+log
+@Move Earth_Axis_Ratio_Squared from heights_module to Geometry
+@
+text
+@d31 1
+a31 1
+       "$Id: heights_module.f90,v 2.1 2002/09/26 20:54:43 vsnyder Exp $"
+d34 1
+d156 4
+d163 3
+@
+
+
+2.1
+log
+@Get constants from Geometry and Units, cosmetic changes
+@
+text
+@d14 2
+a15 1
+  use Geometry, only: Earth_Major_Axis => EarthRadA, &
+a28 7
+  ! Geodetic parameter used by more than one routine. 
+  ! Should maybe be public if it doesn't interfere with anyone elses
+  ! code
+  real(kind=r8), private, parameter :: earth_axis_ratio_squared = &
+       & earth_major_axis**2 / earth_minor_axis**2
+
+
+d31 1
+a31 1
+       "$Id: Geometry.f90,v 2.5 2002/09/26 16:27:14 livesey Exp $"
+d33 1
+a33 1
+  character (len=*), parameter :: ModuleName= "$RCSfile: Geometry.f90,v $"
+d157 4
+a160 1
+! $Log: $
+@
+
+
+2.0
+log
+@Change revision to 2.0
+@
+text
+@d9 1
+a9 1
+  ! earth surface)  to geopotential height (above geoid). 
+a12 4
+  !  use kinds_module
+  use MLSCommon  !Only the kinds info is used
+  !
+  use MLSMessageModule
+d14 11
+a24 1
+  implicit none
+d26 4
+a29 3
+  public:: geom_to_gph,lat_geod_to_geoc,gph_to_geom
+  ! Geodetic parameters used by more than one routine. 
+  ! Some of these should be public if they don't interfere with anyone elses
+d31 3
+a33 6
+  real(kind=r8),private,parameter::   g0 = 9.80665_r8,&
+       dpi                       =  3.141592653589793115997963_r8,&
+       earth_major_axis         = 6378137.0_r8, & 
+       earth_minor_axis         = 6356752.3141_r8, &
+       earth_axis_ratio_squared = (earth_major_axis*earth_major_axis / &
+       (earth_minor_axis*earth_minor_axis))
+d35 6
+a40 2
+  character(len=*),parameter::ModuleName=&
+       "$RCSfile: heights_module.f90,v $"
+d44 2
+a45 1
+  function geom_to_gph(geom_height,lat_geoc,lat_geod) result (gph)
+d53 2
+a54 2
+    real(kind=r8),intent(in)::geom_height
+    real(kind=r8),intent(in),optional::lat_geoc,lat_geod
+d58 1
+a58 3
+    real(kind=r8),parameter::omega=7.292115e-5_r8,      gm=3.986005e14_r8, &
+         j2=              0.0010826256,       j4=-0.0000023709122_r8
+    real(kind=r8)::p2,p4,sinlat,h_inf,ahrat,coslat,h0,hc,lat
+d61 2
+a62 2
+    if(present(lat_geoc) .and. present(lat_geod)) then
+       call MLSMessage(MLSMSG_Warning,ModuleName,&
+d64 6
+a69 6
+            "Both geometric and geodetic lats supplied: using geometric")
+       lat=lat_geoc
+    else if(present(lat_geoc) )then
+       lat=lat_geoc
+    else if(present(lat_geod)) then
+       lat=lat_geod_to_geoc(lat_geod)
+d71 4
+a74 4
+       call MLSMessage(MLSMSG_Warning,ModuleName,&
+            "in function geom_to_gph, Called with no latitude - assuming 45deg N")
+       lat=45.0_r8
+    endif
+d76 2
+a77 2
+    sinlat=sin(lat_geoc*dpi/180.0_r8)
+    coslat=cos(lat_geoc*dpi/180.0_r8)
+d81 4
+a84 4
+    h0=sqrt( (earth_major_axis*coslat)**2 + (earth_minor_axis*sinlat)**2)
+    hc=h0+geom_height
+    p2=(3*sinlat*sinlat -1)/2
+    p4=(35*(sinlat**4) - 30*sinlat*sinlat +3)/8
+d86 2
+a87 2
+    ahrat=earth_major_axis/hc
+    ahrat=ahrat*ahrat
+d89 2
+a90 2
+    h_inf=(gm/(g0*hc))*(1-j2*p2*ahrat - j4*p4*ahrat*ahrat) + &
+         (omega*omega*hc*hc*coslat*coslat)/(2*g0)
+d92 1
+a92 1
+    gph=6387182.265_r8-h_inf
+d96 2
+a97 1
+  function lat_geod_to_geoc(lat_geod) result(lat_geoc)
+d103 1
+a103 2
+    lat_geoc=(180.0_r8/dpi)*atan(tan(lat_geod*dpi/180.0_r8)&
+         /earth_axis_ratio_squared)
+d106 2
+a107 1
+  function gph_to_geom(gph,lat_geoc,lat_geod) result (geom_height)
+d117 2
+a118 2
+    real(kind=r8),intent(in)::gph
+    real(kind=r8),intent(in),optional::lat_geoc,lat_geod
+d126 2
+a127 2
+    if(present(lat_geoc) .and. present(lat_geod)) then
+       call MLSMessage(MLSMSG_Warning,ModuleName,&
+d129 6
+a134 6
+            "Both geometric and geodetic lats supplied: using geometric")
+       lat=lat_geoc
+    else if(present(lat_geoc) )then
+       lat=lat_geoc
+    else if(present(lat_geod)) then
+       lat=lat_geod_to_geoc(lat_geod)
+d136 1
+a136 1
+       call MLSMessage(MLSMSG_Warning,ModuleName,&
+d138 7
+a144 7
+            "Called with no latitude - assuming 45deg N")
+       lat=45.0_r8
+    endif
+
+    geom1=gph
+    geom2=gph+1.0
+    dgph1=geom_to_gph(geom1,lat)-gph
+d146 2
+a147 2
+      dgph2=geom_to_gph(geom2,lat)-gph
+      newgeom= geom1 - dgph1*(geom2-geom1)/(dgph2-dgph1)
+d149 1
+a149 1
+      if (abs(newgeom-geom2) < accuracy) then
+d151 4
+a154 4
+      endif
+      geom1=geom2
+      dgph1=dgph2
+      geom2=newgeom
+d156 2
+a157 2
+    enddo secantloop
+    geom_height=newgeom
+d162 2
+@
+
+
+1.1
+log
+@Added heights_module and test_geom to mlspgs tree
+@
+text
+@@
+
+

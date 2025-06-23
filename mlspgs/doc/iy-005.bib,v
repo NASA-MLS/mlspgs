@@ -1,0 +1,136 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.4
+	cfm-single-freq-0-1:1.2.0.2
+	v5-01:1.2
+	v5-00:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2019.06.19.01.35.08;	author yanovsky;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2019.06.18.22.48.19;	author yanovsky;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Corrected citations
+@
+text
+@@@BOOK{rod00,
+  author = {Rodgers, Clive},
+  year = 2000,
+  title = {Inverse Methods for Atmospheric Sounding : {T}heory and Practice},
+  publisher = {World Scientific Publishing Company}
+}
+
+@@ARTICLE{iy004,
+  author = {Yanovsky, Igor},
+  year = 2010,
+  title = {Nonlinear Optimization Methods},
+  journal = {MLS iy-004}
+  }
+  
+@@ARTICLE{bowrodkul07,
+  author = {Bowman, Kevin and Rodgers, Clive and Kulawik, Susan and Worden, John and Sarkissian, Edwin and Osterman, Greg and Steck, Tilman and Lou, Ming and Eldering, Annmarie and Shephard, Mark and Worden, Helen and Lampel, Michael and Clough, Shepard and Brown, Pat and Rinsland, Curtis and Gunson, Michael and Beer, Reinhard},
+  year = 2007,
+  title = {{T}ropospheric {E}mission {S}pectrometer: {R}etrieval Method and Error Analysis},
+  journal = {{IEEE} Transactions on Geoscience and Remote Sensing},
+  volume = 44,
+  number = 5,
+  pages = {1297-1307}
+}
+
+@@inproceedings{dashsu07,
+ author = {Dasgupta, Sanjoy and Hsu, Daniel},
+ title = {On-line estimation with the multivariate Gaussian distribution},
+ booktitle = {COLT'07: Proceedings of the 20th annual conference on Learning theory},
+ year = {2007},
+ isbn = {978-3-540-72925-9},
+ pages = {278--292},
+ location = {San Diego, CA, USA},
+ publisher = {Springer-Verlag},
+ address = {Berlin, Heidelberg},
+ }
+
+@@INCOLLECTION{jan93,
+  author = {Janssen, M.},
+  editor = {Janssen, M.},
+  year = 1993,
+  title = {An Introduction to the Passive Microwave Remote Sensing of Atmospheres},
+  booktitle = {Atmospheric Remote Sensing by Microwave Radiometry (Wiley Series in Remote Sensing and Image Processing)},
+  publisher = {John Wiley \& Sons}
+}
+
+@@ARTICLE{bueerikuh05,
+  author = {Buehler, S. and Eriksson,  P. and Kuhn, T. and von Engeln, A. and Verdes, C.},
+  year = 2005,
+  title = {{ARTS}, the atmospheric radiative transfer simulator},
+  journal = {Journal of Quantitative Spectroscopy and Radiative Transfer},
+  volume = 91,
+  number = 1,
+  pages = {65-93 }
+}
+
+@@ARTICLE{reashisch06,
+  author = {Read, W. and Shippony, Z. and Schwartz, M. and Livesey, N. and Snyder, W.},
+  title = {The clear-sky unpolarized forward model for the {EOS} {A}ura {M}icrowave {L}imb {S}ounder ({MLS})},
+  year = {2006},
+  journal = {{IEEE} Transactions on Geoscience and Remote Sensing}, 
+  volume = {44},
+  number = {5},
+  pages = { 1367-1379}
+}
+
+@@misc{wikipedia,
+   author = {Wikipedia},
+   title = "Wikipedia{,} {T}he {F}ree {E}ncyclopedia",
+   year = "2008"
+}
+
+@@misc{wolfram,
+   author = {Weisstein, Eric W.},
+   title = {{E}ric {W}eisstein's {W}orld of {P}hysics},
+   notes = {http://scienceworld.wolfram.com/physics/}
+}
+
+@@BOOK{elazyl06,
+  author = {Elachi, C. and van Zyl, J.},
+  year = 2006,
+  title = {Introduction To The Physics and Techniques of Remote Sensing},
+  publisher = {Wiley-Interscience; Second Edition}
+}
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d1 14
+d60 1
+a60 1
+  journal = tgars, 
+@
+

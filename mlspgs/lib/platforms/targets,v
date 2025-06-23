@@ -1,0 +1,1921 @@
+head	1.54;
+access;
+symbols
+	v5-02-NRT-19:1.54
+	v6-00:1.54
+	v5-02-NRT-18:1.54
+	v5-02:1.54
+	v5-01-NRT-17:1.54
+	v5-01-NRT-16:1.54
+	v5-01-NRT-15:1.54
+	v5-01-NRT-14:1.54
+	neuralnetworks-1-0:1.54.0.12
+	cfm-single-freq-0-1:1.54.0.10
+	v5-01:1.54
+	v5-00:1.54
+	v4-23-TA133:1.54.0.8
+	mus-emls-1-70:1.54.0.6
+	rel-1-0-englocks-work:1.54.0.4
+	VUMLS1-00:1.54
+	VPL1-00:1.54
+	V4-22-NRT-08:1.54
+	VAM1-00:1.54
+	V4-21:1.54.0.2
+	V4-13:1.54
+	V4-12:1.54
+	V4-11:1.54
+	V4-10:1.54
+	V3-43:1.53
+	M4-00:1.54
+	V3-41:1.53
+	V3-40-PlusGM57:1.53.0.2
+	V2-24-NRT-04:1.51
+	V3-33:1.54
+	V2-24:1.51
+	V3-31:1.54
+	V3-30-NRT-05:1.54
+	cfm-01-00:1.53
+	V3-30:1.53
+	V3-20:1.53
+	V3-10:1.52
+	V2-23-NRT-02:1.51
+	V2-23:1.51
+	V2-22-NRT-01:1.51
+	V2-22:1.51
+	V2-21:1.50
+	V2-20:1.50
+	V2-11:1.50
+	V2-10:1.50
+	V2-00:1.50
+	V1-51:1.50
+	V1-50:1.50
+	V1-45:1.50
+	V1-44:1.50
+	V1-43:1.50
+	V1-42:1.49
+	V1-41:1.49
+	V1-32:1.49
+	V1-40:1.49
+	V1-31:1.49
+	V1-30:1.49
+	V1-13:1.49
+	V1-12:1.49
+	V1-11:1.49
+	V1-10:1.49
+	newfwm-feb03:1.49.0.2
+	V1-04:1.45
+	V1-03:1.45
+	V1-02:1.45
+	V1-00:1.44
+	newfwm-sep01:1.30.0.2
+	V0-7:1.30
+	V0-5-Level2:1.24
+	V0-5-SIPS:1.24;
+locks; strict;
+comment	@# @;
+
+
+1.54
+date	2010.08.27.20.57.16;	author pwagner;	state Exp;
+branches;
+next	1.53;
+
+1.53
+date	2009.12.01.21.33.15;	author pwagner;	state Exp;
+branches;
+next	1.52;
+
+1.52
+date	2009.07.17.20.27.32;	author pwagner;	state Exp;
+branches;
+next	1.51;
+
+1.51
+date	2007.05.29.17.42.18;	author pwagner;	state Exp;
+branches;
+next	1.50;
+
+1.50
+date	2004.03.30.00.22.24;	author pwagner;	state Exp;
+branches;
+next	1.49;
+
+1.49
+date	2002.07.25.20.59.56;	author pwagner;	state Exp;
+branches;
+next	1.48;
+
+1.48
+date	2002.07.01.23.21.56;	author pwagner;	state Exp;
+branches;
+next	1.47;
+
+1.47
+date	2002.07.01.17.32.22;	author pwagner;	state Exp;
+branches;
+next	1.46;
+
+1.46
+date	2002.06.21.00.16.44;	author pwagner;	state Exp;
+branches;
+next	1.45;
+
+1.45
+date	2002.05.02.22.35.17;	author pwagner;	state Exp;
+branches;
+next	1.44;
+
+1.44
+date	2002.02.08.18.33.50;	author pwagner;	state Exp;
+branches;
+next	1.43;
+
+1.43
+date	2002.02.06.00.42.59;	author pwagner;	state Exp;
+branches;
+next	1.42;
+
+1.42
+date	2002.01.31.00.33.13;	author pwagner;	state Exp;
+branches;
+next	1.41;
+
+1.41
+date	2002.01.23.21.55.13;	author livesey;	state Exp;
+branches;
+next	1.40;
+
+1.40
+date	2001.11.15.00.07.57;	author pwagner;	state Exp;
+branches;
+next	1.39;
+
+1.39
+date	2001.11.14.17.30.23;	author pwagner;	state Exp;
+branches;
+next	1.38;
+
+1.38
+date	2001.11.12.21.42.46;	author pwagner;	state Exp;
+branches;
+next	1.37;
+
+1.37
+date	2001.11.12.19.17.38;	author pwagner;	state Exp;
+branches;
+next	1.36;
+
+1.36
+date	2001.11.07.00.31.44;	author pwagner;	state Exp;
+branches;
+next	1.35;
+
+1.35
+date	2001.11.03.00.56.03;	author pwagner;	state Exp;
+branches;
+next	1.34;
+
+1.34
+date	2001.11.02.01.03.30;	author pwagner;	state Exp;
+branches;
+next	1.33;
+
+1.33
+date	2001.10.15.17.20.09;	author pwagner;	state Exp;
+branches;
+next	1.32;
+
+1.32
+date	2001.10.04.19.57.57;	author pwagner;	state Exp;
+branches;
+next	1.31;
+
+1.31
+date	2001.09.14.17.00.39;	author pwagner;	state Exp;
+branches;
+next	1.30;
+
+1.30
+date	2001.08.15.21.03.28;	author pwagner;	state Exp;
+branches;
+next	1.29;
+
+1.29
+date	2001.05.30.23.56.55;	author livesey;	state Exp;
+branches;
+next	1.28;
+
+1.28
+date	2001.05.30.20.45.23;	author pwagner;	state Exp;
+branches;
+next	1.27;
+
+1.27
+date	2001.05.29.22.35.31;	author pwagner;	state Exp;
+branches;
+next	1.26;
+
+1.26
+date	2001.05.25.22.18.19;	author pwagner;	state Exp;
+branches;
+next	1.25;
+
+1.25
+date	2001.05.09.23.28.23;	author pwagner;	state Exp;
+branches;
+next	1.24;
+
+1.24
+date	2001.04.02.17.39.57;	author pwagner;	state Exp;
+branches;
+next	1.23;
+
+1.23
+date	2001.03.16.19.31.21;	author pwagner;	state Exp;
+branches;
+next	1.22;
+
+1.22
+date	2001.03.12.23.57.47;	author pwagner;	state Exp;
+branches;
+next	1.21;
+
+1.21
+date	2001.03.09.19.38.14;	author pwagner;	state Exp;
+branches;
+next	1.20;
+
+1.20
+date	2001.03.01.21.46.18;	author pwagner;	state Exp;
+branches;
+next	1.19;
+
+1.19
+date	2001.02.28.22.02.13;	author pwagner;	state Exp;
+branches;
+next	1.18;
+
+1.18
+date	2001.02.27.17.28.25;	author pwagner;	state Exp;
+branches;
+next	1.17;
+
+1.17
+date	2001.02.09.18.38.49;	author pwagner;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2001.02.08.23.22.14;	author pwagner;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2001.02.08.00.31.54;	author pwagner;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2001.02.06.00.45.44;	author pwagner;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2001.01.23.19.05.53;	author pwagner;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2001.01.13.00.24.42;	author pwagner;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2000.11.27.18.17.06;	author pwagner;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2000.11.21.18.01.42;	author pwagner;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2000.11.21.17.46.23;	author pwagner;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2000.11.21.00.40.33;	author pwagner;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2000.11.17.22.07.47;	author pwagner;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2000.11.16.22.57.02;	author pwagner;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2000.11.09.00.00.37;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2000.10.27.23.02.09;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2000.10.23.17.15.07;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2000.10.19.17.39.20;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2000.10.18.22.09.54;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.54
+log
+@Uses optional HDF*INC Makefile variables
+@
+text
+@# "$Id: targets,v 1.53 2009/12/01 21:33:15 pwagner Exp $"
+
+# Path to source files:
+S = ..
+
+# Path to root directory of l2, lib, etc.:
+CONFDIR=../..
+
+# include files %.f9h shared by l2, lib are in $(srclib)
+srclib = $(CONFDIR)/srclib
+
+# Set paths for finding source files (different from .o and .mod)
+
+# .mod files needed by lib are in $(blaslib)
+blaslib = $(CONFDIR)/blas/$(MLSCONFG)
+
+# This is the machines directory--its files are compiled directly into libdir
+MACH_DIR=../machines/$(MLSCONFG)
+dir1 =
+
+# This is the srclib directory--its files are compiled directly into libdir
+dir2 =
+
+# This is the blas directory
+dir3 = $(blaslib)/
+
+MODPATHS = $(dir3)
+
+TESTSDIR=../../tests
+
+UTILDIR=$(CONFDIR)/util
+
+# reecho.sh can filter out globbed file expansions that fail
+# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
+# However we will be using it just to prefix any unprefixed preset paths
+REECHO=$(UTILDIR)/reecho.sh
+
+# Set paths for finding source files (different from .o and .mod)
+
+vpath %.mod ./
+vpath %.o ./
+vpath %.f90 ../ $(MACH_DIR)
+vpath %.F90 ../ $(MACH_DIR)
+vpath %.f9h ../ $(srclib)
+vpath %.f ../ $(PGSINC)
+vpath %.c ../
+
+include $(srclib)/$(MLSF95).$(MLSPLAT)
+# All the paths to supply .mod and INCLUDE files used in compiling %.f90
+# Precede each path by "-I "
+INC_PATHS := $(EXTRA_PATHS) \
+  $(shell ${REECHO} ${PATH_OPTS} \
+  $(UNPREFXDPTHS) $(MODPATHS) $(PGSINC) $(srclib) $S)
+
+# Define some suffix rules
+
+.SUFFIXES:
+.SUFFIXES: .o .dbg.o .f90 .f .c
+.f90.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
+
+.f90.dbg.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< -o $*.dbg.o $(FAFTER)
+
+.f.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
+
+.c.o:
+	$(CC) -c $(COPTS) ${INC_PATHS} -DNAGf90Fortran $<
+
+libmls.a: L2PC_m.o
+
+short_name=lib
+# This is the default name of the configure file
+# It may be overridden for multiple platforms, special options, etc.
+ifdef HOSTMLSCFILE
+   MLSCFILE=$(HOSTMLSCFILE)
+else
+   MLSCFILE=.configure
+endif
+
+include Makefile.dep
+
+ifdef MLSINSTALLDIR
+   INSTALLDIR:=$(MLSINSTALLDIR)
+else
+ifndef INSTALLDIR
+   INSTALLDIR:=$(CONFDIR)/bin/$(MLSCONFG)
+endif
+endif
+
+include ../../customblds/$(MLSF95).$(MLSPLAT)
+
+machines_f90 := $(shell ${REECHO} $(REECHOMACHOPTS) -dir $(MACH_DIR) -escape \*.f90)
+MACH_OBJS := $(shell echo ${machines_f90} | sed 's/\.f90/.o/g;s/\.f/.o/g;s/\.c/.o/g')
+#machines_f90 := $(shell cd $(MACH_DIR); echo *.f90)
+#MACH_OBJS := $(shell echo ${machines_f90} | sed 's/f90/o/g')
+record_file=newAifBdiff.out
+
+MARKING_ARG=-f$(MARK_ALL_AS_UPTODATE) -s$(SKIP_PREREQ_DIRS)
+
+# ========================================================================
+# An automatically constructed Makefile
+# This file was built by mlsconfigure
+# by catenating three files:
+# (1) .configure -- a file of mls settings: compiler, platform, etc.
+# (2) common     -- a file of macros specific for this directory, e.g. paths
+#                   these might be compiler switches, 
+# (3) targets    -- a file of targets with instructions how to build them
+#                    (except for .f90.o rules which are still in MLSCONFG)
+
+# Other files referred to by means of "include" statements:
+#   srclib/$(MLSF95).$(MLSPLAT) -- macros specific for the 
+#         compiler.platform combo; e.g., NAG.Sun
+#   Makefile.dep -- dependencies among the primary Fortran modules
+#   srclib/Makefile.dep -- dependencies among the shared Fortran modules
+#   srclib/targets.h -- linker lines whenever building an executable
+
+# ========================================================================
+#          The different versions of libmls.a
+all: libmls.a
+#
+#libmls.a      will contain all the OBJS plus machine.o
+#                                      except for 
+#	if PGSTK non-blank                SDPToolkitSubstitute.o
+#	if PGSTK blank                
+#	if PVM_ROOT non-blank               PVMwrappers.o
+#	if PVM_ROOT blank                
+#                                    and also from the blas 
+#	if BLAS blank, LIB_BLAS != f95   sdot.o ddot.o dot_external_m.o
+#	if BLAS blank, LIB_BLAS = f95        dot_intrinsic.o
+#	if BLAS non-blank                    dot_external_m.o
+
+#--------------------- default name of GNU-compatible c compiler
+CC=cc
+
+# "yes" is safer--
+# in case modules have been deleted or excluded since the last build
+# Nope--will need to think harder about what to do about excluded modules
+delete_lib_first = no
+
+ifdef PVM_ROOT
+   pvm_message=Building mlslib with PVM support
+   PVM_OBJS=PVMwrappers.o
+else
+   pvm_message=Building mlslib without PVM support
+   PVM_OBJS=
+endif
+
+ifdef BLAS
+   blas_message=Building mlslib with external blas support
+else
+ifeq ($(LIB_BLAS),f95)
+   blas_message=Building mlslib with blas supplied by f95 intrinsics
+else
+   blas_message=Building mlslib with internal blas support
+endif
+endif
+
+ifdef LAPACK
+   lapack_message=Building mlslib with external lapack support
+else
+   lapack_message=Building mlslib with lapack supplied by f95 intrinsics
+endif
+
+ifdef PGSTK
+   tk_message=Building mlslib with toolkit
+else
+   tk_message=Building mlslib without toolkit; using SDPToolkitSubstitute
+endif
+
+libmls.a: ${OBJS} ${MACH_OBJS} ${PVM_OBJS}
+		@@if [ "$(MODULES)" != "" -a "$(MARK_ALL_AS_UPTODATE)" = "yes" ]; then \
+		 $(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -fyes ; \
+		fi
+		@@echo "$(pvm_message)"
+		@@echo "$(blas_message)"
+		@@echo "$(lapack_message)"
+		@@echo "$(tk_message)"
+ifeq ($(delete_lib_first),yes)
+		rm -f $@@
+endif
+	ar ru $@@ $?
+
+# ========================================================================
+
+clean:
+	rm -f *.o *.mod *.a
+
+mark_all_as_uptodate:
+		@@if [ "$(MODULES)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" ]; then \
+		 $(UTILDIR)/mark_as_uptodate.sh -T libmls.a -M $(MAKE) $(MARKING_ARG); \
+		fi
+
+tar:
+	rm -f libmls.tgz
+	tar hcvzf libmls.tgz * --exclude \*.o --exclude \*.mod --exclude libmls.a
+
+# ========================================================================
+# $Log: targets,v $
+# Revision 1.53  2009/12/01 21:33:15  pwagner
+# May use the REECHOMACHOPTS mechanism to exclude certain files from machines
+#
+# Revision 1.52  2009/07/17 20:27:32  pwagner
+# Added COPTS as cc options
+#
+# Revision 1.51  2007/05/29 17:42:18  pwagner
+# compiler-specific settings now in srclib, not platforms
+#
+# Revision 1.50  2004/03/30 00:22:24  pwagner
+# Take care that lib is rebuilt after changes in machines directory
+#
+# Revision 1.49  2002/07/25 20:59:56  pwagner
+# lib not shielded from marking as a prerequisite directory
+#
+# Revision 1.48  2002/07/01 23:21:56  pwagner
+# Fixed mistaken short_name assignments
+#
+# Revision 1.47  2002/07/01 17:32:22  pwagner
+# No longer compiles some sources twice
+#
+# Revision 1.46  2002/06/21 00:16:44  pwagner
+# Enroute to ending cascading recompiles
+#
+# Revision 1.45  2002/05/02 22:35:17  pwagner
+# NOCASCADE setting in place; forestalls unwanted recompilations
+#
+# Revision 1.44  2002/02/08 18:33:50  pwagner
+# Custom build for machine.o depends on whether collecting garbage
+#
+# Revision 1.43  2002/02/06 00:42:59  pwagner
+# Where to get machine.f90 now depends on whether to collect garbage
+#
+# Revision 1.42  2002/01/31 00:33:13  pwagner
+# Prefixes preset paths just like forwaard model
+#
+# Revision 1.41  2002/01/23 21:55:13  livesey
+# Add stuff so lf95 doesn't do unassigned checking on ncep_dao.f90
+#
+# Revision 1.40  2001/11/15 00:07:57  pwagner
+# Now works with new libmlspack.a and .mod files in blas
+#
+# Revision 1.39  2001/11/14 17:30:23  pwagner
+# Added ..gemv.. stuff
+#
+# Revision 1.38  2001/11/12 21:42:46  pwagner
+# gemm_external_m.o now always there
+#
+# Revision 1.37  2001/11/12 19:17:38  pwagner
+# gemm_intinsic replaced by sgemm_intrinsic and dgemm_intrinsic
+#
+# Revision 1.36  2001/11/07 00:31:44  pwagner
+# Added lapack linker line and msg
+#
+# Revision 1.35  2001/11/03 00:56:03  pwagner
+# Some small changes to blas; changes to MACH_OBJS no longer trigger recompile of every module
+#
+# Revision 1.34  2001/11/02 01:03:30  pwagner
+# Added stuff for lapack, inrinsic BLAS
+#
+# Revision 1.33  2001/10/15 17:20:09  pwagner
+# Uses new -j option in init_gen
+#
+# Revision 1.32  2001/10/04 19:57:57  pwagner
+# New custom build command for intrinsic
+#
+# Revision 1.31  2001/09/14 17:00:39  pwagner
+# Introduced MACH_OBJS instead of machine.o
+#
+# Revision 1.30  2001/08/15 21:03:28  pwagner
+# Default rules for .f and .c; EXTRA_PATHS added to INC_PATHS
+#
+# Revision 1.29  2001/05/30 23:56:55  livesey
+# Hdf now dusty, L1BData not
+#
+# Revision 1.28  2001/05/30 20:45:23  pwagner
+# Set delete_lib_first to no with note to think harder
+#
+# Revision 1.27  2001/05/29 22:35:31  pwagner
+# Added delete_lib_first
+#
+# Revision 1.26  2001/05/25 22:18:19  pwagner
+# sdot and ddot receive custom builds to avoid NAG runtime error
+#
+# Revision 1.25  2001/05/09 23:28:23  pwagner
+# Optionally builds library w/o toolkit support
+#
+# Revision 1.24  2001/04/02 17:39:57  pwagner
+# PVM and PVMIDL no longer treated as clumsily
+#
+# Revision 1.23  2001/03/16 19:31:21  pwagner
+# (\gcc) instead of cc in build command for PVMWrapper.c
+#
+# Revision 1.22  2001/03/12 23:57:47  pwagner
+# New FAFTER, LAFTER flags to postprocess compile & link steps
+#
+# Revision 1.21  2001/03/09 19:38:14  pwagner
+# Removed TEST_ONLY exceptions
+#
+# Revision 1.20  2001/03/01 21:46:18  pwagner
+# Handles -O[n] properly
+#
+# Revision 1.19  2001/02/28 22:02:13  pwagner
+# Merely filters offending -O from FOPTS for string_table, leaving others alone
+#
+# Revision 1.18  2001/02/27 17:28:25  pwagner
+# Added special treatment for string_table: FOPTS=-O causes NAG to panic on it
+#
+# Revision 1.17  2001/02/09 18:38:49  pwagner
+# Removed special treatment of Matrix_OBJS
+#
+# Revision 1.16  2001/02/08 23:22:14  pwagner
+# variable_linker_line tied to PVM and BLAS
+#
+# Revision 1.15  2001/02/08 00:31:54  pwagner
+# Conditionally links sdot and ddot unless BLAS defined
+#
+# Revision 1.14  2001/02/06 00:45:44  pwagner
+# DUSTY unnecessary for L2GPData
+#
+# Revision 1.13  2001/01/23 19:05:53  pwagner
+# With optional PVM support
+#
+# Revision 1.12  2001/01/13 00:24:42  pwagner
+# uses lib/machines/MLSCONFG/machine.f90
+#
+# Revision 1.11  2000/11/27 18:17:06  pwagner
+# MatrixModules part of lib only for LF95
+#
+# Revision 1.10  2000/11/21 18:01:42  pwagner
+# Repaired machine.o commands
+#
+# Revision 1.9  2000/11/21 17:46:23  pwagner
+# Added prereq to machine.o dependency
+#
+# Revision 1.8  2000/11/21 00:40:33  pwagner
+# machine.f90 out of lib/*.f90
+#
+# Revision 1.7  2000/11/17 22:07:47  pwagner
+# table* needed by getCF_m
+#
+# Revision 1.6  2000/11/16 22:57:02  pwagner
+# Looks for %.f9h in srclib
+#
+# Revision 1.5  2000/11/09 00:00:37  pwagner
+# Account for new test sources
+#
+# Revision 1.4  2000/10/27 23:02:09  pwagner
+# getCF_m back in lib
+#
+# Revision 1.3  2000/10/23 17:15:07  pwagner
+# keep TEST_ONLY out of libmls.a
+#
+# Revision 1.2  2000/10/19 17:39:20  pwagner
+# fixed bug maybe added by cvs
+#
+# Revision 1.1  2000/10/18 22:09:54  pwagner
+# First commit
+#
+@
+
+
+1.53
+log
+@May use the REECHOMACHOPTS mechanism to exclude certain files from machines
+@
+text
+@d1 1
+a1 1
+# "$Id: targets,v 1.52 2009/07/17 20:27:32 pwagner Exp $"
+a171 4
+ifdef HDFVERSIONS
+   he5lib_message=mlslib will support files with either hdf version
+endif
+
+a179 1
+		@@echo "$(he5lib_message)"
+d201 3
+@
+
+
+1.52
+log
+@Added COPTS as cc options
+@
+text
+@d1 1
+a1 1
+# "$Id: targets,v 1.51 2007/05/29 17:42:18 pwagner Exp $"
+d94 1
+a94 1
+machines_f90 := $(shell ${REECHO} -dirn $(MACH_DIR))
+d206 3
+@
+
+
+1.51
+log
+@compiler-specific settings now in srclib, not platforms
+@
+text
+@d1 1
+a1 1
+# "$Id: common,v 1.49 2006/06/15 19:31:35 pwagner Exp $"
+d69 1
+a69 1
+	$(CC) -c ${INC_PATHS} -DNAGf90Fortran $<
+d206 3
+@
+
+
+1.50
+log
+@Take care that lib is rebuilt after changes in machines directory
+@
+text
+@d1 70
+a81 8
+ifndef CASCADE
+the_file := $(shell ${REECHO} Makefile.dep)
+ifeq ($(strip $(the_file)),)
+CASCADE = "yes"
+endif
+endif
+
+ifndef CASCADE
+a82 7
+else
+ifdef NOCASCADE
+include ../Makefile.nodep
+else
+include ../Makefile.dep
+endif
+endif
+a101 1
+# "$Id: targets,v 1.49 2002/07/25 20:59:56 pwagner Exp $"
+d107 1
+a107 2
+# (2) MLSCONFG   -- a file of macros specific for the compiler.platform combo
+#                   e.g., NAG.Sun
+d113 5
+a117 23
+#   ../Makefile.dep -- dependencies among the primary Fortran modules
+
+# Special areas:
+# PVM
+# If it is desired to link the executable with PVM support,
+# the variables PVM_PATH, PVM_ARCH should be defined
+# e.g. in .configure
+# If this is done, i.e. if PVM is defined, then PVM_OBJS will
+# be defined and built and added to libmls.a
+
+# PGSTK
+# This variable is defined only if you will use the toolkit
+# to build the library and all the other software
+# otherwise it is blank
+
+# MACH_OBJS
+# This variable is calculated based on the contents of 
+# lib/machines/$(MLSCONFG)
+# but with object paths the same as all of those derived from lib's own modules
+# It satisfies the dependencies of some of lib's modules
+# Note similarly that dir1, which gets prepended to machine.o in Makefile.dep,
+# is *not* set to lib/machines/$(MLSCONFG) because the compiled
+# objects get placed here in cwd, not there
+d206 3
+@
+
+
+1.49
+log
+@lib not shielded from marking as a prerequisite directory
+@
+text
+@d39 4
+a42 2
+machines_f90 := $(shell cd $(MACH_DIR); echo *.f90)
+MACH_OBJS := $(shell echo ${machines_f90} | sed 's/f90/o/g')
+d47 1
+a47 1
+# "$Id: targets,v 1.48 2002/07/01 23:21:56 pwagner Exp $"
+a140 1
+#libmls.a: ${OBJS} ${MACH_OBJS} ${PVM_OBJS} $(MODULES)
+a160 5
+#> 		@@if [ "$(MODULES)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" ]; then \
+#>        if [ -f $(record_file) -o "$(MARK_ALL_AS_UPTODATE)" = "yes" ]; then \
+#> 		 $(UTILDIR)/mark_as_uptodate.sh -T libmls.a -M $(MAKE) -fyes ; \
+#> 		fi; \
+#>        fi
+a169 46
+
+# Custom build commands for some modules
+
+# This uses the utility program init_gen to create two
+# up-to-date prereqs for intrinsic
+# $(INSTALLDIR)/init_gen:# $(UTILDIR)/init_gen.f90
+#    $(UTILDIR)/build_f90_in_misc.sh# -p# init_gen# \
+#    -d# $(INSTALLDIR)# -t# $(TESTSDIR)# -M# $(MAKE)# \
+#    -FC# $(FC)# -CC# $(CC)# -C# $(MLSCFILE)# \
+# # # # $(UTILDIR)/init_gen.f90
+# 
+# $(S)/lit_parm.f9h# $(S)/lit_add.f9h:# $(S)/lit_names.txt# $(INSTALLDIR)/init_gen
+#    sort# -f# $(S)/lit_names.txt# |# $(INSTALLDIR)/init_gen# \
+# # # # # # # # # # # -l# last_intrinsic_lit# -pl_# \
+# # # # # # # # # # # -j# lit_names.txt# \
+# # # # # # # # # # # $(S)/lit_parm.f9h# $(S)/lit_add.f9h# lit_indices
+#	rm -f temp
+#	sed 's/<file_name_here>/lit_names.txt/' $(S)/lit_add.f9h > temp
+#	mv temp $(S)/lit_add.f9h
+#	sed 's/<file_name_here>/lit_names.txt/' $(S)/lit_parm.f9h > temp
+#	mv temp $(S)/lit_parm.f9h
+
+# machine.o: $(MACH_DIR)/machine.f90
+# 	rm -f machine.f90 ; \
+# 	sed '/Start $(BAD_MATCH)/,/End $(BAD_MATCH)/ d' $(MACH_DIR)/machine.f90 \
+#      # machine.f90
+# 	$(FC) -c $(FOPTS) $(INC_PATHS) machine.f90 $(FAFTER)
+# 	rm -f machine.f90
+# 
+# intrinsic.o: $(S)/lit_parm.f9h $(S)/lit_add.f9h
+# 
+# BUGGY := $(shell echo ${FOPTS} | sed 's/-O[0-9]*//')
+# NOUNASS := $(shell echo ${FOPTS} | sed 's/\(--chk [aesx,]*\),u\([aesx,]*\)/\1\2/')
+# 
+# DUSTY_NO_OPT := $(shell echo ${DUSTY} | sed 's/-O[0-9]*//')
+# 
+# Hdf.o:
+# 	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/Hdf.f90 $(FAFTER)
+# string_table.o:
+# 	$(FC) -c $(BUGGY) $(INC_PATHS) $(S)/string_table.f90 $(FAFTER)
+# 
+# # ncep_dao module doesn't play well with the lf95 undefined variable
+# # runtime checker because of endian swapping
+# ncep_dao.o:
+# 	$(FC) -c $(NOUNASS) $(INC_PATHS) $(S)/ncep_dao.f90 $(FAFTER)
+
+d171 3
+@
+
+
+1.48
+log
+@Fixed mistaken short_name assignments
+@
+text
+@d45 1
+a45 1
+# "$Id: targets,v 1.47 2002/07/01 17:32:22 pwagner Exp $"
+d160 5
+d166 2
+a167 4
+       if [ -f $(record_file) -o "$(MARK_ALL_AS_UPTODATE)" = "yes" ]; then \
+		 $(UTILDIR)/mark_as_uptodate.sh -T libmls.a -M $(MAKE) -fyes ; \
+		fi; \
+       fi
+d221 3
+@
+
+
+1.47
+log
+@No longer compiles some sources twice
+@
+text
+@d3 1
+a3 1
+short_name=l3m
+d45 1
+a45 1
+# "$Id: targets,v 1.46 2002/06/21 00:16:44 pwagner Exp $"
+d218 3
+@
+
+
+1.46
+log
+@Enroute to ending cascading recompiles
+@
+text
+@d3 1
+d29 10
+d45 1
+a45 1
+# "$Id: targets,v 1.45 2002/05/02 22:35:17 pwagner Exp $"
+d139 2
+a140 1
+libmls.a: ${OBJS} ${MACH_OBJS} ${PVM_OBJS} $(MODULES)
+d218 3
+@
+
+
+1.45
+log
+@NOCASCADE setting in place; forestalls unwanted recompilations
+@
+text
+@d1 2
+d11 10
+d26 1
+d30 5
+a34 1
+# "$Id: targets,v 1.44 2002/02/08 18:33:50 pwagner Exp $"
+a88 12
+CONFDIR=../..
+UTILDIR=../../util
+TESTSDIR=../../tests
+
+ifdef MLSINSTALLDIR
+   INSTALLDIR:=$(MLSINSTALLDIR)
+else
+ifndef INSTALLDIR
+   INSTALLDIR:=$(CONFDIR)/bin/$(MLSCONFG)
+endif
+endif
+
+d128 4
+a131 1
+libmls.a: ${OBJS} ${MACH_OBJS} ${PVM_OBJS}
+d147 7
+d164 11
+a174 11
+$(INSTALLDIR)/init_gen: $(UTILDIR)/init_gen.f90
+	$(UTILDIR)/build_f90_in_misc.sh -p init_gen \
+	-d $(INSTALLDIR) -t $(TESTSDIR) -M $(MAKE) \
+	-FC $(FC) -CC $(CC) -C $(MLSCFILE) \
+   $(UTILDIR)/init_gen.f90
+
+$(S)/lit_parm.f9h $(S)/lit_add.f9h: $(S)/lit_names.txt $(INSTALLDIR)/init_gen
+	sort -f $(S)/lit_names.txt | $(INSTALLDIR)/init_gen \
+          -l last_intrinsic_lit -pl_ \
+          -j lit_names.txt \
+          $(S)/lit_parm.f9h $(S)/lit_add.f9h lit_indices
+d181 23
+a203 23
+machine.o: $(MACH_DIR)/machine.f90
+	rm -f machine.f90 ; \
+	sed '/Start $(BAD_MATCH)/,/End $(BAD_MATCH)/ d' $(MACH_DIR)/machine.f90 \
+     > machine.f90
+	$(FC) -c $(FOPTS) $(INC_PATHS) machine.f90 $(FAFTER)
+	rm -f machine.f90
+
+intrinsic.o: $(S)/lit_parm.f9h $(S)/lit_add.f9h
+
+BUGGY := $(shell echo ${FOPTS} | sed 's/-O[0-9]*//')
+NOUNASS := $(shell echo ${FOPTS} | sed 's/\(--chk [aesx,]*\),u\([aesx,]*\)/\1\2/')
+
+DUSTY_NO_OPT := $(shell echo ${DUSTY} | sed 's/-O[0-9]*//')
+
+Hdf.o:
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/Hdf.f90 $(FAFTER)
+string_table.o:
+	$(FC) -c $(BUGGY) $(INC_PATHS) $(S)/string_table.f90 $(FAFTER)
+
+# ncep_dao module doesn't play well with the lf95 undefined variable
+# runtime checker because of endian swapping
+ncep_dao.o:
+	$(FC) -c $(NOUNASS) $(INC_PATHS) $(S)/ncep_dao.f90 $(FAFTER)
+d206 3
+@
+
+
+1.44
+log
+@Custom build for machine.o depends on whether collecting garbage
+@
+text
+@d9 3
+d13 1
+d17 1
+a17 1
+# "$Id: targets,v 1.43 2002/02/06 00:42:59 pwagner Exp $"
+d191 3
+@
+
+
+1.43
+log
+@Where to get machine.f90 now depends on whether to collect garbage
+@
+text
+@d13 1
+a13 1
+# "$Id: targets,v 1.42 2002/01/31 00:33:13 pwagner Exp $"
+d162 7
+d187 3
+@
+
+
+1.42
+log
+@Prefixes preset paths just like forwaard model
+@
+text
+@d11 1
+a11 1
+machines_f90 := $(shell cd ../machines/$(MLSCONFG); echo *.f90)
+d13 1
+a13 1
+# "$Id: targets,v 1.41 2002/01/23 21:55:13 livesey Exp $"
+d180 3
+@
+
+
+1.41
+log
+@Add stuff so lf95 doesn't do unassigned checking on ncep_dao.f90
+@
+text
+@d13 1
+a13 1
+# "$Id: targets,v 1.40 2001/11/15 00:07:57 pwagner Exp $"
+d115 4
+d124 1
+d180 3
+@
+
+
+1.40
+log
+@Now works with new libmlspack.a and .mod files in blas
+@
+text
+@d13 1
+a13 1
+# "$Id: targets,v 1.39 2001/11/14 17:30:23 pwagner Exp $"
+d160 1
+d169 5
+d175 3
+@
+
+
+1.39
+log
+@Added ..gemv.. stuff
+@
+text
+@d13 1
+a13 1
+# "$Id: targets,v 1.38 2001/11/12 21:42:46 pwagner Exp $"
+a35 22
+# LAPACK
+# If it is desired to link the executable with external LAPACK support,
+# the variable LAPACK should be defined
+# e.g. in the make statement: make LAPACK=/my_path/to_lapack_library
+# If this is done, i.e., LAPACK is defined, then 
+# lapack_objs will be gemm_external_m.o
+# otherwise it will be gemm_intrinsic.o
+
+# BLAS
+# If it is desired to link the executable with external BLAS support,
+# the variable BLAS should be defined
+# e.g. in the make statement: make BLAS=/my_path/to_BLAS_library
+# If this is done, i.e., BLAS is defined, then blas_objs will
+# be blank
+# Otherwise, i.e. if BLAS is left undefined, then blas_objs will
+# depend on LIB_BLAS:
+# if LIB_BLAS is f95, then blas will be supported by f95 intrinsics
+# and blas_objs will be dot_intrinsic.o; otherwise
+# be set to the compiled objects based on the routines in blaslib
+# currently sdot and ddot, which will be built and added to libmls.a
+# along with dot_external_m
+
+a94 1
+   blas_objs := dot_external_m.o
+a97 1
+   blas_objs := dot_intrinsic.o
+a99 1
+   blas_objs := sdot.o ddot.o  dot_external_m.o
+a104 1
+   lapack_objs := gemm_external_m.o gemv_external_m.o
+a106 3
+#   lapack_objs := gemm_intrinsic.o
+   lapack_objs := dgemm_intrinsic.o sgemm_intrinsic.o gemm_external_m.o \
+        dgemv_intrinsic.o sgemv_intrinsic.o gemv_external_m.o
+d115 1
+a115 7
+#${OBJS}: machine.o
+#${OBJS}: ${MACH_OBJS} ${blas_objs} ${lapack_objs}
+
+MatrixModule_0.o MatrixModule_0.o: ${blas_objs} ${lapack_objs}
+
+#libmls.a: ${OBJS} machine.o ${PVM_OBJS} ${blas_objs}
+libmls.a: ${OBJS} ${MACH_OBJS} ${PVM_OBJS} ${blas_objs} ${lapack_objs}
+a166 4
+ddot.o:
+	$(FC) -c $(DUSTY_NO_OPT) -O $(INC_PATHS) $(blaslib)/ddot.f $(FAFTER)
+sdot.o:
+	$(FC) -c $(DUSTY_NO_OPT) -O $(INC_PATHS) $(blaslib)/sdot.f $(FAFTER)
+d169 3
+@
+
+
+1.38
+log
+@gemm_external_m.o now always there
+@
+text
+@d13 1
+a13 1
+# "$Id: targets,v 1.37 2001/11/12 19:17:38 pwagner Exp $"
+d130 1
+a130 1
+   lapack_objs := gemm_external_m.o
+d134 2
+a135 1
+   lapack_objs := dgemm_intrinsic.o sgemm_intrinsic.o gemm_external_m.o
+d208 3
+@
+
+
+1.37
+log
+@gemm_intinsic replaced by sgemm_intrinsic and dgemm_intrinsic
+@
+text
+@d13 1
+a13 1
+# "$Id: targets,v 1.36 2001/11/07 00:31:44 pwagner Exp $"
+d134 1
+a134 1
+   lapack_objs := dgemm_intrinsic.o sgemm_intrinsic.o
+d207 3
+@
+
+
+1.36
+log
+@Added lapack linker line and msg
+@
+text
+@d13 1
+a13 1
+# "$Id: targets,v 1.35 2001/11/03 00:56:03 pwagner Exp $"
+d133 2
+a134 1
+   lapack_objs := gemm_intrinsic.o
+d207 3
+@
+
+
+1.35
+log
+@Some small changes to blas; changes to MACH_OBJS no longer trigger recompile of every module
+@
+text
+@d13 1
+a13 1
+# "$Id: targets,v 1.34 2001/11/02 01:03:30 pwagner Exp $"
+d41 1
+a41 1
+# lapack_objs will be gemm_external.o
+d130 1
+a130 1
+   lapack_objs := gemm_external.o
+d206 3
+@
+
+
+1.34
+log
+@Added stuff for lapack, inrinsic BLAS
+@
+text
+@d13 1
+a13 1
+# "$Id: targets,v 1.33 2001/10/15 17:20:09 pwagner Exp $"
+d36 8
+d51 3
+d56 1
+d63 9
+d83 3
+a85 2
+#	if BLAS blank                      sdot.o ddot.o
+#	if BLAS non-blank                
+a101 2
+#--------------------- dependency rules for PVM_OBJS
+
+d117 1
+a117 1
+   blas_objs :=
+d124 1
+a124 1
+   blas_objs := sdot.o ddot.o
+d143 3
+a145 1
+${OBJS}: ${MACH_OBJS}
+a168 5
+# vpath %.c $(S) $(srclib)
+
+#PVMwrappers.o: $(S)/PVMwrappers.c
+#	$(CC) -c -I${PGSINC} -DNAGf90Fortran $(S)/PVMwrappers.c
+
+a195 2
+#L1BData.o:
+#	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L1BData.f90 $(FAFTER)
+a197 2
+#L2GPData.o:
+#	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L2GPData.f90 $(FAFTER)
+d206 3
+@
+
+
+1.33
+log
+@Uses new -j option in init_gen
+@
+text
+@d13 1
+a13 1
+# "$Id: targets,v 1.32 2001/10/04 19:57:57 pwagner Exp $"
+d96 6
+a101 2
+   blas_message=Building mlslib without internal blas support
+   blas_objs =
+d104 10
+a113 1
+   blas_objs = sdot.o ddot.o
+d126 1
+a126 1
+libmls.a: ${OBJS} ${MACH_OBJS} ${PVM_OBJS} ${blas_objs}
+d129 1
+d193 3
+@
+
+
+1.32
+log
+@New custom build command for intrinsic
+@
+text
+@d13 1
+a13 1
+# "$Id: targets,v 1.31 2001/09/14 17:00:39 pwagner Exp $"
+d151 1
+d153 5
+a157 5
+	rm -f temp
+	sed 's/<file_name_here>/lit_names.txt/' $(S)/lit_add.f9h > temp
+	mv temp $(S)/lit_add.f9h
+	sed 's/<file_name_here>/lit_names.txt/' $(S)/lit_parm.f9h > temp
+	mv temp $(S)/lit_parm.f9h
+d179 3
+@
+
+
+1.31
+log
+@Introduced MACH_OBJS instead of machine.o
+@
+text
+@d1 8
+d13 1
+a13 1
+# "$Id: targets,v 1.30 2001/08/15 21:03:28 pwagner Exp $"
+d68 12
+d138 21
+a158 1
+#	special options for compiling some modules--override .f90 rules
+d178 3
+@
+
+
+1.30
+log
+@Default rules for .f and .c; EXTRA_PATHS added to INC_PATHS
+@
+text
+@d3 3
+a5 1
+# "$Id: targets,v 1.29 2001/05/30 23:56:55 livesey Exp $"
+d89 2
+a90 1
+${OBJS}: machine.o
+d92 2
+a93 1
+libmls.a: ${OBJS} machine.o ${PVM_OBJS} ${blas_objs}
+d138 3
+@
+
+
+1.29
+log
+@Hdf now dusty, L1BData not
+@
+text
+@d3 1
+a3 1
+# "$Id: targets,v 1.28 2001/05/30 20:45:23 pwagner Exp $"
+d29 1
+a29 1
+# e.g. in the make statement: make -f MakeFC BLAS=/my_path/to_BLAS_library
+d42 1
+a42 1
+#          The three versions of libmls.a
+d49 5
+d111 2
+a112 2
+PVMwrappers.o: $(S)/PVMwrappers.c
+	$(CC) -c -I${PGSINC} -DNAGf90Fortran $(S)/PVMwrappers.c
+d134 3
+@
+
+
+1.28
+log
+@Set delete_lib_first to no with note to think harder
+@
+text
+@d3 1
+a3 1
+# "$Id: targets,v 1.27 2001/05/29 22:35:31 pwagner Exp $"
+d115 4
+a118 2
+L1BData.o:
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L1BData.f90 $(FAFTER)
+d129 3
+@
+
+
+1.27
+log
+@Added delete_lib_first
+@
+text
+@d3 1
+a3 1
+# "$Id: targets,v 1.26 2001/05/25 22:18:19 pwagner Exp $"
+d57 2
+a58 1
+delete_lib_first = yes
+d127 3
+@
+
+
+1.26
+log
+@sdot and ddot receive custom builds to avoid NAG runtime error
+@
+text
+@d3 1
+a3 1
+# "$Id: targets,v 1.25 2001/05/09 23:28:23 pwagner Exp $"
+d55 4
+d87 3
+d126 3
+@
+
+
+1.25
+log
+@Optionally builds library w/o toolkit support
+@
+text
+@d3 1
+a3 1
+# "$Id: targets,v 1.24 2001/04/02 17:39:57 pwagner Exp $"
+d105 2
+d113 4
+d119 3
+@
+
+
+1.24
+log
+@PVM and PVMIDL no longer treated as clumsily
+@
+text
+@d3 1
+a3 1
+# "$Id: targets,v 1.23 2001/03/16 19:31:21 pwagner Exp $"
+d36 3
+a38 2
+# MATRIX_OBJS
+# This variable is defined only if MLSCONFG=LF95.Linux
+a39 2
+# This is because of MatrixModule_0 which the NAG f95 v4.0
+# compiler cannot handle
+d43 1
+a43 1
+all: libmlsSub.a libmls.a libmlsSDPTK.a
+d45 4
+a48 31
+#libmls.a      will contain all the OBJS plus machine.o except for 
+#	                SDPToolkit.o  and  SDPToolkitSubstitute.o
+#libmlsSDPTK.a will contain libmls.a plus SDPToolkit.o
+#libmlsSub.a   will contain libmls.a plus SDPToolkitSubstitute.o
+#
+#An arithmetic analogy for adding and subtracting objects from archives:
+#
+#libTemp = lib + SDP.o + Sub.o
+#libSub  = libTemp - SDP.o
+#lib     = libSub  - Sub.o
+#libSDP  = lib     + SDP.o
+#
+#The following just a temporary archive holding every *.o
+#libmlsTemp.a: ${OBJS}
+#	ar ru $@@ $?
+#
+#libmlsSub.a: libmlsTemp.a
+#	mv libmlsTemp.a $@@
+#
+#If any of the routines from tests come back to OBJS
+#we still don't want them compiled into libmls.a
+#(I deleted them before creating Makefile.dep, but a new make depends
+#may resurrect them)
+#Therefore they will be deleted explicitly
+
+#TEST_ONLY=test_multiply.o test_sparsify.o \
+#	test_cholesky.o test_multiply_vector.o
+
+#Dependency rules for MATRIX_OBJS (if we need them)
+#MatrixModule_0.o: MatrixModule_0.f90 ${OBJS}
+#MatrixModule_1.o: MatrixModule_1.f90 ${OBJS}
+a54 3
+#PVM.o: PVM.f90 ${OBJS}
+#PVMIDL.o: PVMIDL.f90 ${OBJS} PVM.o
+
+d71 6
+d79 1
+a79 2
+#libmlsSub.a: ${OBJS} ${MATRIX_OBJS} machine.o ${PVM_OBJS} ${blas_objs}
+libmlsSub.a: ${OBJS} machine.o ${PVM_OBJS} ${blas_objs}
+d82 1
+a83 9
+#	ar d $@@ SDPToolkit.o $(TEST_ONLY)
+
+libmls.a: libmlsSub.a
+	cp libmlsSub.a $@@
+	ar d $@@ SDPToolkitSubstitute.o
+
+libmlsSDPTK.a: libmls.a
+	cp libmls.a $@@
+	ar ru $@@ SDPToolkit.o
+d113 3
+@
+
+
+1.23
+log
+@(\gcc) instead of cc in build command for PVMWrapper.c
+@
+text
+@d3 1
+a3 1
+# "$Id: targets,v 1.22 2001/03/12 23:57:47 pwagner Exp $"
+d83 2
+a84 2
+PVM.o: PVM.f90 ${OBJS}
+PVMIDL.o: PVMIDL.f90 ${OBJS} PVM.o
+d88 1
+a88 1
+   PVM_OBJS=PVMwrappers.o PVM.o PVMIDL.o
+d147 3
+@
+
+
+1.22
+log
+@New FAFTER, LAFTER flags to postprocess compile & link steps
+@
+text
+@d3 1
+a3 1
+# "$Id: targets,v 1.21 2001/03/09 19:38:14 pwagner Exp $"
+d78 3
+d133 1
+a133 1
+	cc -c -I${PGSINC} -DNAGf90Fortran $(S)/PVMwrappers.c
+d147 3
+@
+
+
+1.21
+log
+@Removed TEST_ONLY exceptions
+@
+text
+@d3 1
+a3 1
+# "$Id: targets,v 1.20 2001/03/01 21:46:18 pwagner Exp $"
+d137 1
+a137 1
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L1BData.f90
+d139 1
+a139 1
+#	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L2GPData.f90
+d141 1
+a141 1
+	$(FC) -c $(BUGGY) $(INC_PATHS) $(S)/string_table.f90
+d144 3
+@
+
+
+1.20
+log
+@Handles -O[n] properly
+@
+text
+@d3 1
+a3 1
+# "$Id: targets,v 1.19 2001/02/28 22:02:13 pwagner Exp $"
+d71 2
+a72 2
+TEST_ONLY=test_multiply.o test_sparsify.o \
+	test_cholesky.o test_multiply_vector.o
+d106 1
+a106 1
+	ar d $@@ SDPToolkit.o $(TEST_ONLY)
+d144 3
+@
+
+
+1.19
+log
+@Merely filters offending -O from FOPTS for string_table, leaving others alone
+@
+text
+@d3 1
+a3 1
+# "$Id: targets,v 1.18 2001/02/27 17:28:25 pwagner Exp $"
+d134 1
+a134 1
+BUGGY := $(shell echo ${FOPTS} | sed 's/-O//')
+d144 3
+@
+
+
+1.18
+log
+@Added special treatment for string_table: FOPTS=-O causes NAG to panic on it
+@
+text
+@d3 1
+a3 1
+# "$Id: targets,v 1.17 2001/02/09 18:38:49 pwagner Exp $"
+d134 2
+d141 1
+a141 1
+	$(FC) -c $(INC_PATHS) $(S)/string_table.f90
+d144 3
+@
+
+
+1.17
+log
+@Removed special treatment of Matrix_OBJS
+@
+text
+@d3 1
+a3 1
+# "$Id: targets,v 1.16 2001/02/08 23:22:14 pwagner Exp $"
+d138 2
+d142 3
+@
+
+
+1.16
+log
+@variable_linker_line tied to PVM and BLAS
+@
+text
+@d3 1
+a3 1
+# "$Id: targets,v 1.15 2001/02/08 00:31:54 pwagner Exp $"
+d23 2
+d30 5
+d75 2
+a76 2
+MatrixModule_0.o: MatrixModule_0.f90 ${OBJS}
+MatrixModule_1.o: MatrixModule_1.f90 ${OBJS}
+d78 1
+a78 10
+#                  PVM v. non-PVM options
+# If we implement an option to allow non-PVM-dependent installations
+# uncomment this next line; this will set our PVM objects
+# w/o complaining if it does not exist yet;
+# the latter case leaves PVM_OBJS empty
+#-include ../PVM_OBJS.inc
+#-------------------- without the non-PVM option
+# The following lines hardwire PVM_OBJS and so *require* PVM
+# If we implement the non-PVM option, comment out all these
+#PVM_OBJS=PVMwrappers.o PVM.o PVMIDL.o
+a82 2
+#--------------------- end of hardwired PVM_OBJS
+
+d92 1
+d95 1
+d101 4
+a104 1
+libmlsSub.a: ${OBJS} ${MATRIX_OBJS} machine.o ${PVM_OBJS} ${blas_objs}
+a106 12
+#libmlsSub.a: ${OBJS} ${MATRIX_OBJS} machine.o
+#	@@case "$(PVM_ROOT)" in \
+#		"") \
+#		echo "Building mls library without PVM support" ; \
+#		ar ru $@@ $? ; \
+#		;; \
+#		*) \
+#		echo "Building mls library with PVM support" ; \
+#		ar ru $@@ $? ${PVM_OBJS} ; \
+#		;; \
+#	esac 
+#	ar d $@@ SDPToolkit.o $(TEST_ONLY)
+d140 3
+@
+
+
+1.15
+log
+@Conditionally links sdot and ddot unless BLAS defined
+@
+text
+@d3 32
+a34 1
+# "$Id: targets,v 1.14 2001/02/06 00:45:44 pwagner Exp $"
+d76 1
+a76 1
+-include ../PVM_OBJS.inc
+d87 8
+d151 3
+@
+
+
+1.14
+log
+@DUSTY unnecessary for L2GPData
+@
+text
+@d3 1
+a3 1
+# "$Id: targets,v 1.13 2001/01/23 19:05:53 pwagner Exp $"
+d56 6
+d64 1
+a64 1
+libmlsSub.a: ${OBJS} ${MATRIX_OBJS} machine.o ${PVM_OBJS}
+d112 3
+@
+
+
+1.13
+log
+@With optional PVM support
+@
+text
+@d3 1
+a3 1
+# "$Id: targets,v 1.12 2001/01/13 00:24:42 pwagner Exp $"
+d102 2
+a103 2
+L2GPData.o:
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L2GPData.f90
+d106 3
+@
+
+
+1.12
+log
+@uses lib/machines/MLSCONFG/machine.f90
+@
+text
+@d3 1
+a3 1
+# "$Id: targets,v 1.11 2000/11/27 18:17:06 pwagner Exp $"
+d27 2
+a28 2
+#If any of the routines from tests still are back in OBJS
+#we don't want them compiled into libmls.a
+d30 2
+a31 1
+#will probably re-insert them)
+d40 16
+d57 2
+a58 1
+libmlsSub.a: ${OBJS} ${MATRIX_OBJS} machine.o
+d61 12
+d93 5
+a103 5
+#machine.o: $(S)/platforms/$(MLSCONFG).machine
+#	rm -f machine.f90
+#	cp "$(S)/platforms/$(MLSCONFG).machine" machine.f90
+#	chmod u+w machine.f90
+#	$(FC) -c $(DUSTY) machine.f90
+d106 3
+@
+
+
+1.11
+log
+@MatrixModules part of lib only for LF95
+@
+text
+@d3 1
+a3 1
+# "$Id: targets,v 1.10 2000/11/21 18:01:42 pwagner Exp $"
+d69 5
+a73 5
+machine.o: $(S)/platforms/$(MLSCONFG).machine
+	rm -f machine.f90
+	cp "$(S)/platforms/$(MLSCONFG).machine" machine.f90
+	chmod u+w machine.f90
+	$(FC) -c $(DUSTY) machine.f90
+d76 3
+@
+
+
+1.10
+log
+@Repaired machine.o commands
+@
+text
+@d3 1
+a3 1
+# "$Id: targets,v 1.9 2000/11/21 17:46:23 pwagner Exp $"
+d35 4
+d40 1
+a40 1
+libmlsSub.a: ${OBJS} machine.o
+d76 3
+@
+
+
+1.9
+log
+@Added prereq to machine.o dependency
+@
+text
+@d3 1
+a3 1
+# "$Id: targets,v 1.8 2000/11/21 00:40:33 pwagner Exp $"
+d68 1
+a68 1
+        chmod u+w machine.f90
+d72 3
+@
+
+
+1.8
+log
+@machine.f90 out of lib/*.f90
+@
+text
+@d3 1
+a3 1
+# "$Id: targets,v 1.7 2000/11/17 22:07:47 pwagner Exp $"
+d65 2
+a66 1
+machine.o:
+d68 1
+d72 3
+@
+
+
+1.7
+log
+@table* needed by getCF_m
+@
+text
+@d3 1
+a3 1
+# "$Id: targets,v 1.6 2000/11/16 22:57:02 pwagner Exp $"
+d8 1
+a8 1
+#libmls.a      will contain all the OBJS except for 
+d35 2
+a36 1
+libmlsSub.a: ${OBJS}
+d65 3
+d70 3
+@
+
+
+1.6
+log
+@Looks for %.f9h in srclib
+@
+text
+@d3 1
+a3 1
+# "$Id: targets,v 1.5 2000/11/09 00:00:37 pwagner Exp $"
+d32 1
+a32 1
+TEST_ONLY=table_dumper.o table_generator.o test_multiply.o test_sparsify.o \
+d66 3
+@
+
+
+1.5
+log
+@Account for new test sources
+@
+text
+@d3 1
+a3 1
+# "$Id: targets,v 1.4 2000/10/27 23:02:09 pwagner Exp $"
+d61 1
+a61 1
+	$(FC) -c $(DUSTY) -I $(PGSINC) -I $S $(S)/L1BData.f90
+d63 1
+a63 1
+	$(FC) -c $(DUSTY) -I $(PGSINC) -I $S $(S)/L2GPData.f90
+d66 3
+@
+
+
+1.4
+log
+@getCF_m back in lib
+@
+text
+@d3 1
+a3 1
+# "$Id: targets,v 1.3 2000/10/23 17:15:07 pwagner Exp $"
+d32 2
+a33 1
+TEST_ONLY=table_dumper.o table_generator.o test_multiply.o test_sparsify.o
+d66 3
+@
+
+
+1.3
+log
+@keep TEST_ONLY out of libmls.a
+@
+text
+@d3 1
+a3 1
+# "$Id: targets,v 1.2 2000/10/19 17:39:20 pwagner Exp $"
+d32 1
+a32 1
+TEST_ONLY=getCF_m.o table_dumper.o table_generator.o test_multiply.o test_sparsify.o
+d65 3
+@
+
+
+1.2
+log
+@fixed bug maybe added by cvs
+@
+text
+@d3 1
+a3 1
+# "$Id: targets,v 1.1 2000/10/18 22:09:54 pwagner Exp $"
+d26 8
+d36 1
+a36 1
+	ar d $@@ SDPToolkit.o
+d65 3
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d3 1
+a3 1
+# "$Id:  $"
+d54 6
+a59 2
+	$(FC) -c $(DUSTY) -I $(PGSINC) -I $S $(S)/L2GPData.f90# $Log: $
+# $Log: $
+@
+

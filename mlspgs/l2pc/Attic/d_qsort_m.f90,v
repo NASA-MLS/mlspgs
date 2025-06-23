@@ -1,0 +1,66 @@
+head	1.2;
+access;
+symbols
+	V0_1:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2001.01.31.01.14.50;	author zvi;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2000.06.21.21.56.11;	author zvi;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@No longer needed
+@
+text
+@module D_QSORT_M
+  implicit NONE
+  private
+  public D_QSORT, QSORT
+  interface QSORT; module procedure D_QSORT; end interface
+!---------------------------- RCS Ident Info -------------------------------
+  CHARACTER (LEN=256) :: Id = &
+    "$Id: d_qsort_m.f90,v 1.1 2000/06/21 21:56:11 zvi Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= &
+    "$RCSfile: d_qsort_m.f90,v $"
+!---------------------------------------------------------------------------
+  integer, private, parameter :: RK = kind(0.0d0)
+contains
+  subroutine d_qsort (N,RA)
+    include 'qsort.f9h'
+  end subroutine d_qsort
+end module D_QSORT_M
+! $Log: d_qsort_m.f90,v $
+! Revision 1.1  2000/06/21 21:56:11  zvi
+! First version D.P.
+!
+! Revision 1.1  2000/05/04 18:12:04  Z.Shippony
+! Initial conversion to Fortran 90
+!
+@
+
+
+1.1
+log
+@First version D.P.
+@
+text
+@d8 1
+a8 1
+    "$Id: d_qsort_m.f90,v 1.1 2000/05/04 18:12:04 Z.Shippony Exp $"
+d19 3
+@
+

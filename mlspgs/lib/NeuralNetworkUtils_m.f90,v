@@ -1,0 +1,3817 @@
+head	2.13;
+access;
+symbols
+	v5-02-NRT-19:2.13
+	v6-00:2.13
+	v5-02-NRT-18:2.13
+	v5-01-NRT-17:2.13
+	v5-01-NRT-16:2.13
+	v5-01-NRT-15:2.11
+	v5-01-NRT-14:2.10
+	neuralnetworks-1-0:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+2.13
+date	2022.04.28.20.45.26;	author pwagner;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2022.04.13.21.37.42;	author pwagner;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2021.10.14.22.22.51;	author pwagner;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2021.07.28.23.41.37;	author pwagner;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2021.07.08.23.29.11;	author pwagner;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2021.06.18.15.20.33;	author pwagner;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2021.05.27.23.41.00;	author pwagner;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2021.05.18.15.52.46;	author pwagner;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2021.04.01.23.46.21;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2021.03.18.23.47.41;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2021.03.05.00.53.34;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2021.02.19.00.29.46;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2021.02.05.05.14.40;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2021.01.24.19.48.45;	author whdaffer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2021.01.24.19.48.45;	author whdaffer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2021.01.25.21.13.33;	author whdaffer;	state Exp;
+branches;
+next	;
+
+
+desc
+@implements utility code for Neural Networks retrievals
+@
+
+
+2.13
+log
+@First steps toward a 2nd n-n retrieval
+@
+text
+@! Copyright 2021, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use  must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+!
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+  ! ----------------------------------------------------------------------------
+  ! This module contains the utility code to be used when calculating
+  ! species using Frank Werner's Neural Network solutions. At the time
+  ! of this writing (2021/01/20) only Temperature is being retrieved,
+  ! but the code should be able to do any species, provided the correct
+  ! training data is provided. 
+
+  ! To adapt to other species, we must revisit the hardcoded use  of some
+  ! signal names, arrays sizes, etc. both here and in l2/NeuralNet_m.f90
+  !
+  ! Note that it currently supports only the retrieval of Temperature
+  ! Also it assumes Bands 1, 8, and 22 are supplied
+  ! The current weights file format is hard-coded here. 
+  ! It would require changes and testing if that format should ever change.
+  ! We also assume the weights are stored in a manner consistent
+  ! with the following order for the "collapsed" measurement vector:
+  !   [b1c1m1,b1c2m1,..,b1c1m2,b1c2m2,..,b2c1m1,..,..,b22c1m1,..]
+  ! where
+  !   bk is Band k
+  !   cj is channel j
+  !   mi is MIF i
+  ! ----------------------------------------------------------------------------
+
+MODULE NeuralNetUtils_M
+
+  use  Dump_0, only: Dump
+  use  HighOutput, only: OutputNamedValue
+  use  MLSCommon, only: MLSFile_T, UndefinedValue
+  use  MLSHDF5, only: SaveAsHDF5DS
+  use  MLSFinds, only: FindFirst
+  use  MLSKinds, only: R4, R8, Rv
+  use  MLSMessageModule, only: MLSMessage, MLSMSG_Error
+  use  Output_M, only: Output 
+
+  implicit none
+
+  type Radiance_T
+     character(len=64) :: signal
+     !integer :: NumMAFS ! <----- it's only ever going to be one MAF, right?
+     integer :: NumChannels
+     integer :: NumMIFs
+     real(r8), dimension(:,:), allocatable :: values
+  end type Radiance_T
+
+  type NeuralNetCoeffs_T
+     ! One of 'relu,sigmoid,tanh'
+     character(len=32)                             :: Activation_Function
+     ! Sizes of allocatable arrays
+     integer                                       :: NumberOfBands
+     integer                                       :: MaxNumberOfChannels
+     integer                                       :: NumberOfPressLevels
+     integer                                       :: NumberOfNeurons
+     integer                                       :: NumberOfVars
+     ! Will be allocated in the caller. 
+     ! [3]  Number of Bands
+     character(len=32),  dimension(:), allocatable :: Bands
+     
+     ! The first index is M, the max num of channels used (probably 51)
+     ! The second index is the number of Bands (currently 3 or 4)
+     ! We need this info because  the Neural Net doesn't currently use
+     ! every channel in the DACS 
+     ! (and someday may even skip some in the non-DACS)
+     ! So (M,3)
+     integer,   dimension(:,:), allocatable :: Channels_In_Each_Band
+     ! Variables of this type will be allocated in the caller. 
+
+     ! Note that the rank of many of these arrays in the coefficients file
+     ! is one higher. That's to account for the 18 different Bins. For
+     ! such arrays we will read and store only a single Bin at a time.
+     
+     ! These are the dimensions for each part (assuming that we keep
+     ! with Frank set up for Temperature retrieval)
+
+     ! [42], number of pressure levels
+     real(r8),  dimension(:), allocatable :: Intercepts_Hidden_Labels_Layer
+     real(r8),  dimension(:), allocatable :: Output_Pressure_Levels
+     integer,   dimension(:), allocatable :: Output_Pressure_Levels_Indices
+
+     ! [5078]. Number of Neurons in hidden layers
+     real(r8),  dimension(:),allocatable :: Intercepts_Hidden_Layer_1
+     real(r8),  dimension(:),allocatable :: Intercepts_Hidden_Layer_2
+     real(r8),  dimension(:),allocatable :: Intercepts_Hidden_Layer_3
+     real(r8),  dimension(:),allocatable :: Intercepts_Hidden_Layer_4
+
+     ! [5078, 42] = [nNeurons, nLevs]
+     real(r8),  dimension(:,:),allocatable :: Weights_Hidden_Labels_Layer
+     ! [7575,5078] = [nVars, nNeurons]
+     real(r8),  dimension(:,:),allocatable :: Weights_Hidden_Layer_1
+     ! [nNeurons, nNeurons]
+     real(r8),  dimension(:,:),allocatable :: Weights_Hidden_Layer_2
+     real(r8),  dimension(:,:),allocatable :: Weights_Hidden_Layer_3
+     real(r8),  dimension(:,:),allocatable :: Weights_Hidden_Layer_4
+
+
+     ! [42]. Number of levels
+     real(r8),  dimension(:),allocatable :: Normalization_Labels_Max
+     real(r8),  dimension(:),allocatable :: Normalization_Labels_Min
+
+     
+     ! [75]. Number of MIFs
+     integer,  dimension(:), allocatable :: MIFs
+
+     ! [7575] number of 'variables', i.e. 2*25*75 + 51*75
+     ! This is band 1[channel X MIF] + band 8 [channel X MIF ]  and 
+     ! band 22 [channel X MIF]
+     real(r8),  dimension(:),allocatable :: Standardization_Brightness_Temperature_Mean
+     real(r8),  dimension(:),allocatable :: Standardization_Brightness_Temperature_Std
+
+     ! [42] = [nLevs ]
+     real(r8),  dimension(:),allocatable :: Standardization_Labels_Mean
+     real(r8),  dimension(:),allocatable :: Standardization_Labels_Std
+
+     ! Just for debugging
+     real(r8),  dimension(:,:), allocatable :: Stddevs
+     real(r8),  dimension(:,:), allocatable :: Means
+  end type NeuralNetCoeffs_T
+
+
+  ! The following two separate datatypes should be replaced by
+  ! type (Radiance_T), dimension(:), pointer :: InputRadiances
+
+  type NeuralNetInputData_T
+     ! I'm assuming that will have been corrected for the baseline and
+     ! reduced to the appropriate MIFs, 22-96 for all bands, all 25
+     ! channels for Bands 1 and 8 and channels 40-90 for Band
+     ! 22. 
+     !
+     ! All of these will end up having 
+     ! These will be allocated in the caller.
+
+     type (Radiance_T) :: Band_1_Radiances 
+     type (Radiance_T) :: Band_8_Radiances
+     type (Radiance_T) :: Band_22_Radiances 
+
+  end type NeuralNetInputData_T
+
+  type NeuralNetInputData_2_T
+     ! I'm assuming that will have been corrected for the baseline and
+     ! reduced to the appropriate MIFs, 22-96 for all bands, all 25
+     ! channels for Bands 2 and 8 and channels 40-90 for Band
+     ! 23. 
+     !
+     ! All of these will end up having 
+     ! These will be allocated in the caller.
+
+     type (Radiance_T) :: Band_1_Radiances 
+     type (Radiance_T) :: Band_2_Radiances 
+     type (Radiance_T) :: Band_3_Radiances
+     type (Radiance_T) :: Band_23_Radiances 
+
+  end type NeuralNetInputData_2_T
+
+  ! Paul; I used this type to pass info out of the routine. In the
+  ! final configuration, all you'll need is `prediction', so you could
+  ! modify the type to use  just that variable, or comment it out
+  ! entirely and just put `prediction' directly into the interface for
+  ! NeuralNetFit. 
+  type NeuralNetOutputData_T
+     real(r8), dimension(:), allocatable::prediction, &
+          &  working_space, &
+          & neuronValues, &
+          & neuronValues2, &
+          & y_pred
+  end type NeuralNetOutputData_T
+
+  interface Dump
+    module procedure Dump_Coeffs !, Dump_Radiance, Dump_InputData
+  end interface
+
+  interface NeuralNetFit
+    module procedure NeuralNetFit_1, NeuralNetFit_2
+  end interface
+
+  interface StandardizeRadiances
+    module procedure StandardizeRadiances_1, StandardizeRadiances_2
+  end interface
+
+
+  ! In case we're checking against Frank's results
+  ! These are purely for debugging against matched results
+  ! Comment them out, and references to them, when you're
+  ! satisfied our results match.
+  real(r8),  dimension(7575), public, save :: matchedStdRadiances = 0
+  integer, public, save                    :: matchedbinNum       = 0
+  integer, public, save                    :: matchedMAF          = 0
+
+  public :: CheckMAFs, Dump, &
+       & NeuralNetInputData_T, & 
+       & NeuralNetInputData_2_T, & 
+       & NeuralNetCoeffs_T, & 
+       & NeuralNetFit, & 
+       & Radiance_T, &
+       & StandardizeRadiances
+
+  
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: NeuralNetworkUtils_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+
+contains 
+  subroutine CheckTemperatures ( TempFileID, ProfileRange, TemperatureValues )
+    ! Compare with the Temperature values written to the TempFile by
+    ! Frank's python script
+    use  Intrinsic, only: L_HDF
+    use  MLSHDF5, only: LoadFromHDF5DS
+    use  MLSFiles, only: HDFVersion_5
+    ! Dummy args
+    integer, intent(in)                  :: TempFileID ! For optional comparisons
+    integer,  dimension(:), intent(in)    :: ProfileRange ! For optional comparisons
+    real(rv),   dimension(:)              :: TemperatureValues
+    ! Internal variables
+    integer                                :: profile
+    type (MLSFile_T)                       :: TempFile
+    real(r4), allocatable,  dimension(:,:)  :: values2
+    ! Executable
+    call outputNamedValue( 'Range of profiles to read Temperatures', ProfileRange )
+    TempFile%FileID%f_id = TempFileID
+    TempFile%StillOpen = .true.
+    TempFile%type = l_hdf
+    TempFile%hdfVersion = HDFVersion_5
+    allocate ( values2(55, 3495) )
+    call LoadFromHDF5DS ( TempFile, &
+      & "ANN_Prediction", &
+      & values2 )
+    do profile = ProfileRange(1), ProfileRange(2)
+      TemperatureValues = values2(:, profile)
+    enddo
+  end subroutine CheckTemperatures 
+
+  function CheckMafs ( TempFileID, StdRadiances ) result ( MAF )
+    ! Compare with the standardized rads written to the TempFile by
+    ! Frank's python script
+    ! This comparison seeks to find which MAF he most likely used
+    use  Intrinsic, only: L_HDF
+    use  MLSHDF5, only: LoadFromHDF5DS
+    use  MLSFiles, only: HDFVersion_5
+    ! Dummy args
+    integer, intent(in)                     :: TempFileID ! For optional comparisons
+    real(r8),  dimension(:), intent(in)     :: StdRadiances
+    integer                                 :: MAF ! Remember--starts at 0
+    ! Internal variables
+    integer                                 :: j
+    type (MLSFile_T)                        :: TempFile
+    real(r4), allocatable,  dimension(:,:)  :: ratios2
+    real(r4), allocatable,  dimension(:)    :: recalc
+    ! Executable
+    TempFile%FileID%f_id = TempFileID
+    TempFile%StillOpen = .true.
+    TempFile%type = l_hdf
+    TempFile%hdfVersion = HDFVersion_5
+    ! Recalculate ratios using Frank's own radiances, means, and stddevs
+    ! Then check against the ratios he wrote out to TempFile
+    allocate ( ratios2(7575, 3495) )
+    call LoadFromHDF5DS ( TempFile, &
+      & "Standardized_Brightness_Temps_Matrix", &
+      & ratios2 )
+    MAF = FindFirst ( &
+      & (StdRadiances(1)-ratios2(1,:))**2 &
+      &  + &
+      & (StdRadiances(2)-ratios2(2,:))**2 &
+      & < 1.e-6 ) - 1
+    call OutputNamedValue ( 'min std rads', minval(StdRadiances) )
+    call OutputNamedValue ( 'max std rads', maxval(StdRadiances) )
+    call OutputNamedValue ( 'min matched rads', minval(matchedStdRadiances) )
+    call OutputNamedValue ( 'max matched rads', maxval(matchedStdRadiances) )
+    call OutputNamedValue ( 'min rads(matchedMAF)', minval(ratios2(:,matchedMAF+1)) )
+    call OutputNamedValue ( 'max rads(matchedMAF)', maxval(ratios2(:,matchedMAF+1)) )
+  end function CheckMafs
+
+  subroutine CheckBinNums ( TempFileID, MAFRange, nnCoeffs )
+    ! Compare with the standardized rads written to the TempFile by
+    ! Frank's python script
+    ! This comparison seeks to find which bin number he most likely used
+    use  Intrinsic, only: L_HDF
+    use  MLSHDF5, only: LoadFromHDF5DS
+    use  MLSFiles, only: HDFVersion_5
+    ! Dummy args
+    integer, intent(in)                    :: TempFileID ! For optional comparisons
+    integer,  dimension(:), intent(in)     :: MAFRange ! For optional comparisons
+    type (NeuralNetCoeffs_T), intent(in)   :: nnCoeffs
+    ! Internal variables
+    integer                                :: binNum
+    integer                                :: binNum2
+    integer                                :: j
+    integer                                :: MAF ! Remember--MAFs start at 0
+    type (MLSFile_T)                       :: TempFile
+    real(r4), allocatable,  dimension(:,:) :: ratios2 
+    real(r4), allocatable,  dimension(:,:) :: recalc  
+    real(r4), allocatable,  dimension(:,:) :: values2 
+    ! Executable
+    call outputNamedValue( 'Range of MAFs to check bin numbers', MAFRange )
+    TempFile%FileID%f_id = TempFileID
+    TempFile%StillOpen = .true.
+    TempFile%type = l_hdf
+    TempFile%hdfVersion = HDFVersion_5
+    ! Recalculate ratios using Frank's own radiances, means, and stddevs
+    ! Then check against the ratios he wrote out to TempFile
+    allocate ( ratios2(7575, 3495) )
+    allocate ( values2(7575, 3495) )
+    call LoadFromHDF5DS ( TempFile, &
+      & "Brightness_Temps_Matrix", &
+      & values2 )
+    call LoadFromHDF5DS ( TempFile, &
+      & "Standardized_Brightness_Temps_Matrix", &
+      & ratios2 )
+    do MAF = MAFRange(1), min(MAFRange(2), size(values2, 2) - 1)
+      allocate ( recalc(18,2) )
+      do binNum=1, 18
+        recalc(binNum,1:2) = &
+          & (values2(1:2, MAF+1) - nnCoeffs%means(binNum,1:2)) &
+          & / &
+          & nnCoeffs%stddevs(binNum,1:2)
+      enddo
+      ! Now for the musical question:
+      ! which binNum most closely approximates Frank's ratio?
+      binNum = FindFirst ( (ratios2(1,MAF+1)-recalc(:,1))**2 + &
+        &  (ratios2(2,MAF+1)-recalc(:,2))**2 < 1.e-8 )
+      if ( binNum < 1 ) then
+        call output ( 'No matching binNum found in Franks file', advance='yes' )
+      else
+        call outputNamedValue ( 'MAF, Bin num matched', (/MAF, BinNum /) )
+        call outputNamedValue ( 'Frank,me', (/ratios2(1,MAF+1),recalc(binNum,1) /) )
+        j = 1 + mod(binNum,18)
+        call outputNamedValue ( 'if wrong Bin', recalc(j,2)  )
+        ! Check if a second bin number also matches
+        if ( binNum < 18 ) then
+          binNum2 = FindFirst ( (ratios2(1,MAF+1)-recalc(binNum+1:,1))**2 + &
+            & (ratios2(2,MAF+1)-recalc(binNum+1:,2))**2 < 1.e-8 )
+          if ( binNum2 > 0 ) then
+            call outputNamedValue ( 'A 2nd match found after 1st', BinNum+BinNum2 )
+            ! stop
+          endif
+        endif
+        matchedBinNum = binNum
+        ! We match at the first MIF, channel, and Band. How about all the rest?
+        deallocate ( recalc )
+        allocate ( recalc(7575,1) )
+        do j=1, 7575
+          recalc(j,1) = &
+            & (values2(j, MAF+1) - nnCoeffs%means(binNum,j)) &
+            & / &
+            & nnCoeffs%stddevs(binNum,j)
+        enddo
+        call outputNamedValue ( 'max diff over all MIFs, etc.', &
+          & maxval( abs(ratios2(:,MAF+1)-recalc(:,1)) ) )
+      endif
+      deallocate ( recalc )
+    enddo
+
+  end subroutine CheckBinNums
+
+  subroutine CompareStandardizedRads ( TempFileID, MAFRange, Rads, &
+    & standardized, MatchingMAF, Recalculate, mean, stddev )
+    ! Compare with the standardized rads written to the TempFile by
+    ! Frank's python script
+    use  Intrinsic, only: L_HDF
+    use  MLSHDF5, only: LoadFromHDF5DS
+    use  MLSFiles, only: HDFVersion_5
+    ! Dummy args
+    integer, intent(in)                 :: TempFileID ! For optional comparisons
+    integer,  dimension(:), intent(in)  :: MAFRange ! For optional comparisons
+    real(r8), intent(in),  dimension(:) :: Rads
+    logical, intent(in)                 :: standardized
+    integer, intent(out), optional      :: MatchingMAF ! starts at 0
+    logical, intent(in), optional       :: Recalculate
+    real(r8),  dimension(:), intent(in), optional :: Mean
+    real(r8),  dimension(:), intent(in), optional :: StdDev
+    !
+    type (MLSFile_T)                        :: TempFile
+    real(r4), allocatable,  dimension(:,:)  :: ratios2
+    real(r4), allocatable,  dimension(:)    :: recalc
+    real(r4), allocatable,  dimension(:,:)  :: values2
+    real(r4),  dimension(size(Rads))        :: diffs
+    character(len=32)                       :: radianceType
+    integer                                 :: j
+    integer                                 :: MAF ! Remember--starts at 0
+    integer                                 :: MIF
+    logical                                 :: DEEBug
+    logical                                 :: myRecalculate
+    ! Executable
+    if ( present(MatchingMAF) ) MatchingMAF = 0
+    myRecalculate = .false.
+    if ( present(Recalculate) ) myRecalculate = Recalculate
+    call outputNamedValue( 'Range of MAFs to compare', MAFRange )
+    TempFile%FileID%f_id = TempFileID
+    TempFile%StillOpen = .true.
+    TempFile%type = l_hdf
+    TempFile%hdfVersion = HDFVersion_5
+    allocate ( ratios2(7575, 3495) )
+    call LoadFromHDF5DS ( TempFile, &
+      & "Standardized_Brightness_Temps_Matrix", &
+      & ratios2 )
+    if ( myRecalculate ) then
+      call output ( 'Recalculating the standardized brightness Temps in Franks file', &
+        & advance='yes' )
+      ! Recalculate ratios using Frank's own radiances, means, and stddevs
+      ! Then check against the ratios he wrote out to TempFile
+      allocate ( recalc(7575) )
+      allocate ( values2(7575, 3495) )
+      call LoadFromHDF5DS ( TempFile, &
+        & "Brightness_Temps_Matrix", &
+        & values2 )
+      do MAF = MAFRange(1), min(MAFRange(2), size(values2, 2) - 1)
+        do j=1, size(mean)
+          recalc(j) = (values2(j, MAF+1) - mean(j)) / stddev(j)
+        enddo
+        diffs = recalc - ratios2(:,MAF+1)
+        call ShowDiffs ( MAF+1 )
+      enddo
+      return
+    endif
+    allocate ( values2(7575, 3495) )
+    if ( standardized ) then
+      call LoadFromHDF5DS ( TempFile, &
+        & "Standardized_Brightness_Temps_Matrix", &
+        & values2 )
+      radiancetype = 'standardized'
+      DEEBug = .true. ! .false.
+    else
+      call LoadFromHDF5DS ( TempFile, &
+        & "Brightness_Temps_Matrix", &
+        & values2 )
+      radiancetype = 'original'
+      DEEBug = .true.
+    endif
+!     call output( '     ------------------', advance='yes' )
+!     call output( '   (Full matrix for last MAF)', advance='yes' )
+!     call Dump ( diffs, 'diffs' )
+    if ( .not. DEEBug ) return
+    do MAF = MAFRange(1), min(MAFRange(2), size(values2, 2) - 1)
+      call ShowDiffs ( MAF )
+    enddo
+    call output( '     ------------------', advance='yes' )
+    ! MAF = FindFirst ( abs(Rads(1)-values2(1,:)) < 1.e-4     )
+    MAF = FindFirst ( (Rads(1)-values2(1,:))**2 + &
+      & (Rads(2)-values2(2,:))**2 < 1.e-8     ) - 1 ! Remember--MAFs start at 0
+    if ( present(MatchingMAF) ) MatchingMAF = MAF
+    if ( MAF < 0 ) then
+      call output( 'No matching MAF found', advance='yes' )
+      call outputNamedValue( 'Closest we come is', &
+        & minval(abs(Rads(1)-values2(1,:))) )
+      call outputNamedValue( 'at MAF', &
+        & minloc(abs(Rads(1)-values2(1,:))) )
+      return
+    else
+      call outputNamedValue( 'Matching MAF in Franks file', MAF )
+      call output ( (/ real(rads(1), r4), values2(1,MAF+1) /), advance='yes' )
+      call output( '     ------------------', advance='yes' )
+      call ShowDiffs ( MAF )
+      ! Could the MIF indexes be jumbled?
+      MIF = FindFirst ( abs(Rads(2)-values2(:,MAF+1)) < 1.e-4     )
+      if ( MIF < 1 ) then
+        call output( 'No matching MIF found for our 2', advance='yes' )
+      else
+        call outputNamedValue( 'Matching MIF in Franks file for MIF=2', MIF )
+        call output ( (/ real(rads(2), r4), values2(MIF,MAF+1) /), advance='yes' )
+        call output( '     ------------------', advance='yes' )
+      endif
+    endif
+    ! Are we saving the matched valus for comparisons and debugging?
+    matchedMAF = MAF
+    matchedStdRadiances = ratios2(:,MAF+1)
+    call OutputNamedValue ( 'min matched rads', minval(matchedStdRadiances) )
+    call OutputNamedValue ( 'max matched rads', maxval(matchedStdRadiances) )
+    if ( MAF+1 > size(values2,2) ) return
+    ! Check for a 2nd matching MAF
+    MAF = FindFirst ( abs(Rads(1)-values2(1,MAF+2:)) < 1.e-4     )
+    if ( MAF > 0 ) then
+      call outputNamedValue( '2nd Matching MAF in Franks file', MAF )
+    else
+      call output( 'No 2nd matching MAF found', advance='yes' )
+    endif    
+    contains
+      subroutine ShowDiffs ( MAF )
+        integer, intent(in)          :: MAF
+        ! Executable
+        if ( .not. present(Recalculate) ) then
+          call output( '     ------------------', advance='yes' )
+          call outputNamedValue ( 'MAF used for comparison', MAF )
+          call output( '     (As we compute them)', advance='yes' )
+          call outputNamedValue ( trim(radianceType) // 'Rad min', minval(Rads) )
+          call outputNamedValue ( trim(radianceType) // 'Rad max', maxval(Rads) )
+          if ( MAF+1 > size(values2,2) ) then
+            call outputNamedValue ( 'MAF too big', MAF )
+            call output( '     ------------------', advance='yes' )
+            return
+          else
+          call output( '     (As read from Franks file)', advance='yes' )
+          call outputNamedValue ( trim(radianceType) // 'Rad min', minval(values2(:, MAF+1)) )
+          call outputNamedValue ( trim(radianceType) // 'Rad max', maxval(values2(:, MAF+1)) )
+          diffs = Rads - values2(:, MAF+1)
+          endif
+        endif
+        call outputNamedValue ( 'min diff', minval(diffs) )
+        call outputNamedValue ( 'max diff', maxval(diffs) )
+        call Dump ( diffs, 'diffs', options='@@' )
+        call output( '     ------------------', advance='yes' )
+      end subroutine ShowDiffs
+      
+  end subroutine CompareStandardizedRads
+
+  subroutine Dump_Coeffs ( Coeffs, Details )
+
+    use  HighOutput, only: OutputNamedValue
+    type ( NeuralNetCoeffs_T )                 :: Coeffs
+    integer, intent(in), optional              :: Details
+    !                                          
+    integer                                    :: myDetails
+    ! Executable
+    myDetails = 0
+    if ( present(Details) ) myDetails = Details
+    
+    call outputNamedValue ( 'Activation Function', trim(Coeffs%Activation_Function) )
+    ! call outputNamedValue ( 'Number of Bands', size(Coeffs%Bands) )
+    ! if ( myDetails > 0 ) then
+    ! call dump ( Coeffs%Bands, 'Bands' )
+    ! call dump ( Coeffs%Channels_In_Each_Band, 'Channels' )
+    ! endif
+
+    ! call outputNamedValue ( 'Number of MIFs', size(Coeffs%MIFs) )
+    ! if ( myDetails > 0 ) &
+    ! call dump ( Coeffs%MIFs, 'MIFs' )
+    
+    call outputNamedValue ( 'Number of pressure levels', &
+         & SIZE(Coeffs%Intercepts_Hidden_Labels_Layer) )
+    if ( myDetails > 0 ) THEN
+      !call dump ( Coeffs%Output_Pressure_Levels, 'Output_Pressure_Levels' )
+      !call dump ( Coeffs%Output_Pressure_Levels_Indices, 'Output_Pressure_Indices' )
+      call dump ( Coeffs%Intercepts_Hidden_Labels_Layer, 'Intercepts layer' )
+      call dump ( Coeffs%Normalization_Labels_Max, 'Normalization Labels Max' )
+      call dump ( Coeffs%Normalization_Labels_Min, 'Normalization Labels Max' )
+    endif
+
+    call outputNamedValue ( 'Number of neurons', size(Coeffs%Intercepts_Hidden_Layer_1) )
+    if ( myDetails < 0 ) return    
+    if ( myDetails > 0 ) then
+    call dump ( Coeffs%Intercepts_Hidden_Layer_1, 'Intercepts layer 1' )
+    
+    call dump ( Coeffs%Intercepts_Hidden_Layer_2, 'Intercepts layer 2' )
+    endif
+    
+    call outputNamedValue ( 'shape(WHLL)', shape(Coeffs%Weights_Hidden_Labels_Layer ) )
+    call outputNamedValue ( 'shape(WHL1)', shape(Coeffs%Weights_Hidden_Layer_1      ) )
+    call outputNamedValue ( 'shape(WHL2)', shape(Coeffs%Weights_Hidden_Layer_2      ) )
+    if ( myDetails < 1 ) return
+    call dump ( Coeffs%Intercepts_Hidden_Layer_1, 'Intercepts layer 1' )
+    
+    call dump ( Coeffs%Weights_Hidden_Labels_Layer, 'Weights_Hidden_Labels_Layer' )
+    call dump ( Coeffs%Weights_Hidden_Layer_1     , 'Weights_Hidden_Layer_1     ' )
+    call dump ( Coeffs%Weights_Hidden_Layer_2     , 'Weights_Hidden_Layer_2     ' )
+    
+
+    call dump ( Coeffs%Standardization_Brightness_Temperature_Mean, 'Std_Bright_Temp_Mean' )
+    call dump ( Coeffs%Standardization_Brightness_Temperature_Std , 'Std_Bright_Temp_Std ' )
+  end subroutine Dump_Coeffs
+
+  ! ----------------------------------------------------------------------------
+  ! This family of routines apply the trained neural net to the
+  ! nnInputData to produce a prediction and its paired precision array
+
+  subroutine NeuralNetFit_1( nnInputData, nnCoeffs, nHL, prediction, precision, &
+    & RadFileID, TempFileID, MAF, profile, Debugging, StdRadiances, &
+    & NNOutputData )
+
+    ! Fortran version of the IDL code in `example_idl.pro' from Frank
+    ! to predict temperatures
+
+    type (NeuralNetInputData_T),intent(in):: nnInputData
+    type (NeuralNetCoeffs_T), intent(in)  :: nnCoeffs
+    integer,intent(in) :: nHL ! number of hidden layers. Will probably always be 2
+    ! These will already have been allocated by the caller
+    real(r8),  dimension(:) :: prediction
+    real(r8),  dimension(:) :: precision
+    integer, optional, intent(in) :: RadFileID ! For optionally saving Datasets
+    integer, optional, intent(in) :: TempFileID ! For optional comparisons
+    integer, optional, intent(in) :: MAF ! For optional comparisons
+    integer, optional, intent(in) :: profile ! For optional comparisons
+    logical, optional, intent(in) :: Debugging
+    real(r8), optional,  dimension(:), intent(in) :: StdRadiances
+    type(NeuralNetOutputData_T), optional :: NNOutputData
+
+
+
+    ! Local variables
+    logical,save :: first = .TRUE.
+    integer, save:: nMIFs
+    integer, save,  dimension(2) :: nChans
+    integer, save :: nSurfs, nVars, nNeurons
+    character(len=8) :: type ! One of 'tanh', 'relu' or 'sigmoid'
+
+    ! Various working space arrays
+    real(r8), dimension(:), allocatable :: working_space
+    real(r8), dimension(:), allocatable :: NeuronValues, NeuronValues2
+
+    real(r8) :: y_pred2
+
+    integer :: c, n, m, jj, s, v ! various counters
+    integer :: istat
+    integer :: status
+    integer, dimension(2) :: dims2
+    logical :: debug
+    real(r8) :: spread
+
+    ! ----------- executable statements -----------------
+     type = nnCoeffs%Activation_Function
+     status = 0
+     debug = .false.
+     if (PRESENT(debugging)) debug=debugging
+     if (debug) THEN 
+       ! open an output file (for debugging purposes)
+       OPEN(unit=7,file='intermediate_results.dat',status='replace',&
+            & form='unformatted', iostat=istat, &
+            & access='stream')
+       if (istat /= 0) THEN 
+         print *,'bad open! istat = ',istat
+         return
+       endif
+     endif
+
+    ! make sure type is correct.
+    if ( index( 'relu,sigmoid,tanh', trim(type) ) < 1 ) then 
+      print *,"input var type must be one of 'relu', 'tanh' or 'sigmoid'"
+      call MLSMessage ( MLSMSG_Error, moduleName, &
+        & 'Illegal activation type ' // trim(type) )
+    endif
+    if (NHL /=  1 .AND. NHL /= 2) THEN 
+      print *,"NHL must equal either 1 or 2"
+     endif
+
+
+    ! These are fixed for the run
+    if (FIRST) THEN 
+      nMIFs = nnInputData%Band_1_Radiances%numMIFs
+      nChans(1)=nnInputData%Band_1_Radiances%numChannels
+      nChans(2)=nnInputData%Band_22_Radiances%numChannels
+      nSurfs = SIZE(nnCoeffs%Intercepts_HIdden_Labels_Layer)
+      dims2= size( nnCoeffs%Intercepts_HIdden_Layer_1 )
+      nNeurons = dims2(1)
+      dims2=SIZE( nnCoeffs%Standardization_Brightness_Temperature_Mean ) 
+      nVars = dims2(1)
+      first=.FALSE.
+    endif
+
+
+    if (debug) THEN 
+      print *,'nMIFs=',nMIFs
+      print *,'nChans=',nChans
+      print *,'nSurfs=',nSurfs
+      print *,'nNeurons=',nNeurons
+      print *,'nVars=',nVars
+    endif
+
+    ! allocate space                        
+    ! nVars = 2*Chanels(bands 1&8) *  nMIFs + nChans(22)*nMIFs
+    ! = 2*25*75 + 51*75  = 7575
+    ! nNeurons=5078
+    ! nLevs=42
+    allocate( working_space(nVars )) 
+    allocate(neuronValues(nNeurons))
+    ! These will have already have been allocated in the caller
+
+    allocate(neuronValues2(nNeurons))
+
+    ! <Paul> See note above about this output user type.
+    if ( present(nnOutputData) ) then
+      allocate(nnOutputData%working_space( nVars )) 
+      allocate(nnOutputData%neuronValues(nNeurons))
+      allocate(nnOutputData%neuronValues2(nNeurons))
+      allocate(nnOutputData%prediction(nSurfs))
+      allocate(nnOutputData%y_pred(nSurfs)) 
+    endif
+
+
+    neuronValues = 0.0
+    prediction   = 0.0
+    precision    = 0.0
+
+    ! load the data into the working_space
+    jj = 1
+    ! Load band1
+    do m=1,nMIFs
+      do c=1,nChans(1)
+        working_space( jj ) = nnInputData%Band_1_Radiances%Values(c,m)
+        jj = jj + 1
+      enddo
+    enddo
+
+    ! Load band8
+    do m=1,nMIFs
+      do c=1,nChans(1)
+        working_space( jj ) = nnInputData%Band_8_Radiances%Values(c,m)
+        jj = jj + 1
+      enddo
+    enddo
+
+    ! load band 22
+    do m=1,nMIFs
+      do c=1,nChans(2)
+        working_space( jj ) = nnInputData%Band_22_Radiances%Values(c,m)
+        jj = jj + 1
+      enddo
+    enddo
+
+    if (debug) THEN 
+      print *,'before normalization: size(working_space) = ',SIZE(working_space)
+      WRITE (7,iostat=istat) working_space
+
+    ! ============ normalize the brightness temperatures.  ===========
+
+    ! <Paul> I don't recall whether this is done when running in the L2
+    ! environment. If not, uncomment these lines
+    ! working_space = (working_space - &
+    !      & nnCoeffs%Standardization_Brightness_Temperature_Mean ) / &
+    !      & nnCoeffs%Standardization_Brightness_Temperature_Std
+
+    call OutputNamedValue ( 'nVars', nVars )
+    call OutputNamedValue ( 'shape(WHL1)', &
+         SHAPE(nnCoeffs%Weights_Hidden_Layer_1) )
+
+      print *,'sbtm, sbts'
+      write (7,iostat=istat) nnCoeffs%Standardization_Brightness_Temperature_Mean 
+      write (7,iostat=istat) nnCoeffs%Standardization_Brightness_Temperature_Std
+      print *,'after normalization: size(working_space) e= ',SIZE(working_space)
+      write (7,iostat=istat) working_space
+
+      print *,'whl1 [nNeurons, nVars], whl2 [nNeurons, nNeurons]'
+      print *,'size(Weights_Hidden_Layer_1)=',SIZE(nnCoeffs%Weights_Hidden_Layer_1)
+      print *,'size(Weights_Hidden_Layer_2) = ',SIZE(nnCoeffs%Weights_Hidden_Layer_2)
+      write (7,iostat=istat) nnCoeffs%Weights_Hidden_Layer_1, & 
+           & nnCoeffs%Weights_Hidden_Layer_2
+    endif
+
+    neuronValues=0.0
+    ! working_space is [nVars]
+    ! weights_hl_1 is [nNeurons,nVars]
+    ! weights_hl_2 is [nNeurons,nNeurons]
+    ! neuronValues is [nNeurons]
+    ! Weights_Hidden_layer_1 is [numNeurons, numVars]
+    ! Weights_Hidden_layer_2 is [numNeurons,numNeurons ]
+    do v=1,nVars
+      neuronValues = neuronValues + &
+           & working_space(v) * nnCoeffs%Weights_Hidden_Layer_1(v,:) 
+    enddo
+    if (debug) THEN 
+      print *,'after calculation with whl1: size(neuronValues) = ',SIZE(neuronValues)
+      WRITE(7,iostat=istat) neuronValues
+    endif
+    !print *,'k = ',k ! 8
+    ! k=k+1
+    neuronValues = Activation ( type, neuronValues + & 
+           & nnCoeffs%Intercepts_Hidden_Layer_1 )
+    if (debug) THEN 
+      print *,'After ihl1'
+      print*,'intercepts_hidden_layer_[12]',size(nnCoeffs%Intercepts_Hidden_Layer_1)
+      WRITE (7) nnCoeffs%Intercepts_Hidden_Layer_1, nnCoeffs%Intercepts_Hidden_Layer_2
+      print *,'ihll '
+      WRITE (7) nnCoeffs%Intercepts_Hidden_Labels_Layer
+      print *,'whll'
+      WRITE (7) nnCoeffs%Weights_Hidden_Labels_Layer
+      print *,'after ihl1: size(neuronValues) = ',SIZE(neuronValues)
+      WRITE(7,iostat=istat) neuronValues
+    endif
+    if ( debug ) then
+      call OutputNamedValue ( 'num neurons', nNeurons )
+      call OutputNamedValue ( 'shape(WHLL)', shape(nnCoeffs%Weights_Hidden_Labels_Layer) )
+    endif
+
+
+    if (nHL .EQ. 1) THEN 
+      ! 1 hidden layer
+      ! Loop over surfaces
+      
+      do s=1,nSurfs 
+
+        y_pred2 = dot_product( neuronValues, &
+             & nnCoeffs%Weights_Hidden_Labels_Layer(:,s)  ) + &
+             &   nnCoeffs%Intercepts_Hidden_Labels_Layer(s)
+
+        if ( present(nnOutputData) ) then
+          nnOutputData%y_pred(s)=y_pred2
+
+          ! Denormalize the 'labels'
+          nnOutputData%prediction(s) = y_pred2 * &
+               & ( nnCoeffs%Normalization_Labels_Max(s) - &
+               &   nnCoeffs%Normalization_Labels_Min(s)) + &
+               &   nnCoeffs%Normalization_Labels_Min(s)
+        endif
+        prediction(s) = y_pred2 * &
+             & ( nnCoeffs%Normalization_Labels_Max(s) - &
+             &   nnCoeffs%Normalization_Labels_Min(s)) + &
+             &   nnCoeffs%Normalization_Labels_Min(s)
+
+        !print '(a14,",",i2,",",f0.2,",",f0.2)','s, yp2,pred = ',&
+        !     &              s,y_pred2,nnOutputData%prediction(s)
+      enddo ! loop over pressure surfaces
+
+    elseif (nHL .EQ. 2) THEN 
+
+
+      ! 2 hidden layers
+      neuronValues2=0.0
+      do n=1,nNeurons
+        neuronValues2 = neuronValues2 + &
+             & neuronValues(n) * nnCoeffs%Weights_Hidden_Layer_2(n,:)
+      enddo
+
+      if (debug) THEN 
+        print *,'Writing size(neuronValues2) = ',SIZE(neuronValues2)
+        WRITE(7,iostat=istat) neuronValues2
+      endif
+      neuronValues2 = Activation ( type, neuronValues2 + & 
+           & nnCoeffs%Intercepts_Hidden_Layer_1 )
+      if (debug) THEN 
+        print *,'after applying ihl2: Writing size(neuronValues2) = ',SIZE(neuronValues2)
+        WRITE(7,iostat=istat) neuronValues2
+      endif
+
+      ! Calculate the final product
+      do s=1,nSurfs 
+
+        y_pred2 = dot_product( neuronValues2, &
+             & nnCoeffs%Weights_Hidden_Labels_Layer(:,s)  ) + &
+             &   nnCoeffs%Intercepts_Hidden_Labels_Layer(s)
+
+        if ( present(nnOutputData) ) then
+        nnOutputData%y_pred(s)=y_pred2
+
+        ! Denormalize the 'labels'
+        nnOutputData%prediction(s) = y_pred2 * &
+             & ( nnCoeffs%Normalization_Labels_Max(s) - &
+             &   nnCoeffs%Normalization_Labels_Min(s)) + &
+             &   nnCoeffs%Normalization_Labels_Min(s)
+        endif
+        prediction(s) = y_pred2 * &
+             & ( nnCoeffs%Normalization_Labels_Max(s) - &
+             &   nnCoeffs%Normalization_Labels_Min(s)) + &
+             &   nnCoeffs%Normalization_Labels_Min(s)
+
+        !print '(a14,",",i2,",",f0.2,",",f0.2)','s, yp2,pred = ',&
+        !     &              s,y_pred2,nnOutputData%prediction(s)
+      enddo ! loop over pressure surfaces
+      if (debug) THEN 
+        print *,'Normalization labels min/max'
+        write (7,iostat=istat) nnCoeffs%Normalization_Labels_Min, &
+             & nnCoeffs%Normalization_Labels_Max
+        if ( present(nnOutputData) ) then
+          print *,'size(nnOutputData%y_pred) = ',SIZE(nnOutputData%y_pred)
+          write(7,iostat=istat) nnOutputData%y_pred
+          print *,'size(nnOutputData%prediction) = ',SIZE(nnOutputData%prediction)
+          write(7,iostat=istat) nnOutputData%prediction
+        endif
+      endif
+
+    endif ! NHl .eq. 2
+
+    ! Check that the prediction is within the range
+    !    [min-spread[s], max+spread[s]]
+    ! where spread[s] = max - min
+    ! If any level strays outisde the range, set all predictions to -999.99
+    do s=1,nSurfs 
+      spread = &
+        & nnCoeffs%Normalization_Labels_Max(s) &
+        & - &
+        & nnCoeffs%Normalization_Labels_Min(s)
+        if ( &
+          & (prediction(s) < nnCoeffs%Normalization_Labels_Min(s) - spread) &
+          & .or. & 
+          & (prediction(s) > nnCoeffs%Normalization_Labels_Max(s) + spread) &
+          & ) &
+          & precision = UndefinedValue
+    enddo
+
+
+
+
+    if ( present(nnOutputData) ) then
+      nnOutputData%neuronValues  = neuronValues
+      nnOutputData%neuronValues2 = neuronValues2
+      nnOutputData%working_space = working_space
+    endif
+
+    status=1
+
+    if (debug) CLOSE(7)
+  end subroutine NeuralNetFit_1
+
+  subroutine NeuralNetFit_2( nnInputData, nnCoeffs, nHL, prediction, precision, &
+    & RadFileID, TempFileID, MAF, profile, Debugging, StdRadiances, &
+    & NNOutputData )
+
+    ! Fortran version of the IDL code in `example_idl.pro' from Frank
+    ! to predict H2O values
+
+    type (NeuralNetInputData_2_T),intent(in):: nnInputData
+    type (NeuralNetCoeffs_T), intent(in)  :: nnCoeffs
+    integer,intent(in) :: nHL ! number of hidden layers. Will probably always be 2
+    ! These will already have been allocated by the caller
+    real(r8),  dimension(:) :: prediction
+    real(r8),  dimension(:) :: precision
+    integer, optional, intent(in) :: RadFileID ! For optionally saving Datasets
+    integer, optional, intent(in) :: TempFileID ! For optional comparisons
+    integer, optional, intent(in) :: MAF ! For optional comparisons
+    integer, optional, intent(in) :: profile ! For optional comparisons
+    logical, optional, intent(in) :: Debugging
+    real(r8), optional,  dimension(:), intent(in) :: StdRadiances
+    type(NeuralNetOutputData_T), optional :: NNOutputData
+
+
+
+    ! Local variables
+    logical,save :: first = .TRUE.
+    integer, save:: nMIFs
+    integer, save,  dimension(2) :: nChans
+    integer, save :: nSurfs, nVars, nNeurons
+    character(len=8) :: type ! One of 'tanh', 'relu' or 'sigmoid'
+
+    ! Various working space arrays
+    real(r8), dimension(:), allocatable :: working_space
+    real(r8), dimension(:), allocatable :: NeuronValues, NeuronValues2
+
+    real(r8) :: y_pred2
+
+    integer :: c, n, m, jj, s, v ! various counters
+    integer :: istat
+    integer :: status
+    integer, dimension(2) :: dims2
+    logical :: debug
+    real(r8) :: spread
+
+    ! ----------- executable statements -----------------
+     type = nnCoeffs%Activation_Function
+     status = 0
+     debug = .false.
+     if (PRESENT(debugging)) debug=debugging
+     if (debug) THEN 
+       ! open an output file (for debugging purposes)
+       OPEN(unit=7,file='intermediate_results.dat',status='replace',&
+            & form='unformatted', iostat=istat, &
+            & access='stream')
+       if (istat /= 0) THEN 
+         print *,'bad open! istat = ',istat
+         return
+       endif
+     endif
+
+    ! make sure type is correct.
+    if ( index( 'relu,sigmoid,tanh', trim(type) ) < 1 ) then 
+      print *,"input var type must be one of 'relu', 'tanh' or 'sigmoid'"
+      call MLSMessage ( MLSMSG_Error, moduleName, &
+        & 'Illegal activation type ' // trim(type) )
+    endif
+    if (NHL /=  1 .AND. NHL /= 2) THEN 
+      print *,"NHL must equal either 1 or 2"
+     endif
+
+
+    ! These are fixed for the run
+    if (FIRST) THEN 
+      nMIFs = nnInputData%Band_2_Radiances%numMIFs
+      nChans(1)=nnInputData%Band_2_Radiances%numChannels
+      nChans(2)=nnInputData%Band_23_Radiances%numChannels
+      nSurfs = SIZE(nnCoeffs%Intercepts_HIdden_Labels_Layer)
+      dims2= size( nnCoeffs%Intercepts_HIdden_Layer_1 )
+      nNeurons = dims2(1)
+      dims2=SIZE( nnCoeffs%Standardization_Brightness_Temperature_Mean ) 
+      nVars = dims2(1)
+      first=.FALSE.
+    endif
+
+
+    if (debug) THEN 
+      print *,'nMIFs=',nMIFs
+      print *,'nChans=',nChans
+      print *,'nSurfs=',nSurfs
+      print *,'nNeurons=',nNeurons
+      print *,'nVars=',nVars
+    endif
+
+    ! allocate space                        
+    ! nVars = 2*Chanels(bands 1&8) *  nMIFs + nChans(22)*nMIFs
+    ! = 2*25*75 + 51*75  = 7575
+    ! nNeurons=5078
+    ! nLevs=42
+    allocate( working_space(nVars )) 
+    allocate(neuronValues(nNeurons))
+    ! These will have already have been allocated in the caller
+
+    allocate(neuronValues2(nNeurons))
+
+    ! <Paul> See note above about this output user type.
+    if ( present(nnOutputData) ) then
+      allocate(nnOutputData%working_space( nVars )) 
+      allocate(nnOutputData%neuronValues(nNeurons))
+      allocate(nnOutputData%neuronValues2(nNeurons))
+      allocate(nnOutputData%prediction(nSurfs))
+      allocate(nnOutputData%y_pred(nSurfs)) 
+    endif
+
+
+    neuronValues = 0.0
+    prediction   = 0.0
+    precision    = 0.0
+
+    ! load the data into the working_space
+    jj = 1
+    ! Load band1
+    do m=1,nMIFs
+      do c=1,nChans(1)
+        working_space( jj ) = nnInputData%Band_1_Radiances%Values(c,m)
+        jj = jj + 1
+      enddo
+    enddo
+
+    ! Load band2
+    do m=1,nMIFs
+      do c=1,nChans(1)
+        working_space( jj ) = nnInputData%Band_2_Radiances%Values(c,m)
+        jj = jj + 1
+      enddo
+    enddo
+
+    ! Load band3
+    do m=1,nMIFs
+      do c=1,nChans(1)
+        working_space( jj ) = nnInputData%Band_3_Radiances%Values(c,m)
+        jj = jj + 1
+      enddo
+    enddo
+
+    ! load band 23
+    do m=1,nMIFs
+      do c=1,nChans(2)
+        working_space( jj ) = nnInputData%Band_23_Radiances%Values(c,m)
+        jj = jj + 1
+      enddo
+    enddo
+
+    if (debug) THEN 
+      print *,'before normalization: size(working_space) = ',SIZE(working_space)
+      WRITE (7,iostat=istat) working_space
+
+    ! ============ normalize the brightness temperatures.  ===========
+
+    ! <Paul> I don't recall whether this is done when running in the L2
+    ! environment. If not, uncomment these lines
+    ! working_space = (working_space - &
+    !      & nnCoeffs%Standardization_Brightness_Temperature_Mean ) / &
+    !      & nnCoeffs%Standardization_Brightness_Temperature_Std
+
+    call OutputNamedValue ( 'nVars', nVars )
+    call OutputNamedValue ( 'shape(WHL1)', &
+         SHAPE(nnCoeffs%Weights_Hidden_Layer_1) )
+
+      print *,'sbtm, sbts'
+      write (7,iostat=istat) nnCoeffs%Standardization_Brightness_Temperature_Mean 
+      write (7,iostat=istat) nnCoeffs%Standardization_Brightness_Temperature_Std
+      print *,'after normalization: size(working_space) e= ',SIZE(working_space)
+      write (7,iostat=istat) working_space
+
+      print *,'whl1 [nNeurons, nVars], whl2 [nNeurons, nNeurons]'
+      print *,'size(Weights_Hidden_Layer_1)=',SIZE(nnCoeffs%Weights_Hidden_Layer_1)
+      print *,'size(Weights_Hidden_Layer_2) = ',SIZE(nnCoeffs%Weights_Hidden_Layer_2)
+      write (7,iostat=istat) nnCoeffs%Weights_Hidden_Layer_1, & 
+           & nnCoeffs%Weights_Hidden_Layer_2
+    endif
+
+    neuronValues=0.0
+    ! working_space is [nVars]
+    ! weights_hl_1 is [nNeurons,nVars]
+    ! weights_hl_2 is [nNeurons,nNeurons]
+    ! neuronValues is [nNeurons]
+    ! Weights_Hidden_layer_1 is [numNeurons, numVars]
+    ! Weights_Hidden_layer_2 is [numNeurons,numNeurons ]
+    do v=1,nVars
+      neuronValues = neuronValues + &
+           & working_space(v) * nnCoeffs%Weights_Hidden_Layer_1(v,:) 
+    enddo
+    if (debug) THEN 
+      print *,'after calculation with whl1: size(neuronValues) = ',SIZE(neuronValues)
+      WRITE(7,iostat=istat) neuronValues
+    endif
+    !print *,'k = ',k ! 8
+    ! k=k+1
+    neuronValues = Activation ( type, neuronValues + & 
+           & nnCoeffs%Intercepts_Hidden_Layer_1 )
+    if (debug) THEN 
+      print *,'After ihl1'
+      print*,'intercepts_hidden_layer_[12]',size(nnCoeffs%Intercepts_Hidden_Layer_1)
+      WRITE (7) nnCoeffs%Intercepts_Hidden_Layer_1, nnCoeffs%Intercepts_Hidden_Layer_2
+      print *,'ihll '
+      WRITE (7) nnCoeffs%Intercepts_Hidden_Labels_Layer
+      print *,'whll'
+      WRITE (7) nnCoeffs%Weights_Hidden_Labels_Layer
+      print *,'after ihl1: size(neuronValues) = ',SIZE(neuronValues)
+      WRITE(7,iostat=istat) neuronValues
+    endif
+    if ( debug ) then
+      call OutputNamedValue ( 'num neurons', nNeurons )
+      call OutputNamedValue ( 'shape(WHLL)', shape(nnCoeffs%Weights_Hidden_Labels_Layer) )
+    endif
+
+
+    if (nHL .EQ. 1) THEN 
+      ! 1 hidden layer
+      ! Loop over surfaces
+      
+      do s=1,nSurfs 
+
+        y_pred2 = dot_product( neuronValues, &
+             & nnCoeffs%Weights_Hidden_Labels_Layer(:,s)  ) + &
+             &   nnCoeffs%Intercepts_Hidden_Labels_Layer(s)
+
+        if ( present(nnOutputData) ) then
+          nnOutputData%y_pred(s)=y_pred2
+
+          ! Denormalize the 'labels'
+          nnOutputData%prediction(s) = y_pred2 * &
+               & ( nnCoeffs%Normalization_Labels_Max(s) - &
+               &   nnCoeffs%Normalization_Labels_Min(s)) + &
+               &   nnCoeffs%Normalization_Labels_Min(s)
+        endif
+        prediction(s) = y_pred2 * &
+             & ( nnCoeffs%Normalization_Labels_Max(s) - &
+             &   nnCoeffs%Normalization_Labels_Min(s)) + &
+             &   nnCoeffs%Normalization_Labels_Min(s)
+
+        !print '(a14,",",i2,",",f0.2,",",f0.2)','s, yp2,pred = ',&
+        !     &              s,y_pred2,nnOutputData%prediction(s)
+      enddo ! loop over pressure surfaces
+
+    elseif (nHL .EQ. 2) THEN 
+
+
+      ! 2 hidden layers
+      neuronValues2=0.0
+      do n=1,nNeurons
+        neuronValues2 = neuronValues2 + &
+             & neuronValues(n) * nnCoeffs%Weights_Hidden_Layer_2(n,:)
+      enddo
+
+      if (debug) THEN 
+        print *,'Writing size(neuronValues2) = ',SIZE(neuronValues2)
+        WRITE(7,iostat=istat) neuronValues2
+      endif
+      neuronValues2 = Activation ( type, neuronValues2 + & 
+           & nnCoeffs%Intercepts_Hidden_Layer_1 )
+      if (debug) THEN 
+        print *,'after applying ihl2: Writing size(neuronValues2) = ',SIZE(neuronValues2)
+        WRITE(7,iostat=istat) neuronValues2
+      endif
+
+      ! Calculate the final product
+      do s=1,nSurfs 
+
+        y_pred2 = dot_product( neuronValues2, &
+             & nnCoeffs%Weights_Hidden_Labels_Layer(:,s)  ) + &
+             &   nnCoeffs%Intercepts_Hidden_Labels_Layer(s)
+
+        if ( present(nnOutputData) ) then
+        nnOutputData%y_pred(s)=y_pred2
+
+        ! Denormalize the 'labels'
+        nnOutputData%prediction(s) = y_pred2 * &
+             & ( nnCoeffs%Normalization_Labels_Max(s) - &
+             &   nnCoeffs%Normalization_Labels_Min(s)) + &
+             &   nnCoeffs%Normalization_Labels_Min(s)
+        endif
+        prediction(s) = y_pred2 * &
+             & ( nnCoeffs%Normalization_Labels_Max(s) - &
+             &   nnCoeffs%Normalization_Labels_Min(s)) + &
+             &   nnCoeffs%Normalization_Labels_Min(s)
+
+        !print '(a14,",",i2,",",f0.2,",",f0.2)','s, yp2,pred = ',&
+        !     &              s,y_pred2,nnOutputData%prediction(s)
+      enddo ! loop over pressure surfaces
+      if (debug) THEN 
+        print *,'Normalization labels min/max'
+        write (7,iostat=istat) nnCoeffs%Normalization_Labels_Min, &
+             & nnCoeffs%Normalization_Labels_Max
+        if ( present(nnOutputData) ) then
+          print *,'size(nnOutputData%y_pred) = ',SIZE(nnOutputData%y_pred)
+          write(7,iostat=istat) nnOutputData%y_pred
+          print *,'size(nnOutputData%prediction) = ',SIZE(nnOutputData%prediction)
+          write(7,iostat=istat) nnOutputData%prediction
+        endif
+      endif
+
+    endif ! NHl .eq. 2
+
+    ! Check that the prediction is within the range
+    !    [min-spread[s], max+spread[s]]
+    ! where spread[s] = max - min
+    ! If any level strays outisde the range, set all predictions to -999.99
+    do s=1,nSurfs 
+      spread = &
+        & nnCoeffs%Normalization_Labels_Max(s) &
+        & - &
+        & nnCoeffs%Normalization_Labels_Min(s)
+        if ( &
+          & (prediction(s) < nnCoeffs%Normalization_Labels_Min(s) - spread) &
+          & .or. & 
+          & (prediction(s) > nnCoeffs%Normalization_Labels_Max(s) + spread) &
+          & ) &
+          & precision = UndefinedValue
+    enddo
+
+
+
+
+    if ( present(nnOutputData) ) then
+      nnOutputData%neuronValues  = neuronValues
+      nnOutputData%neuronValues2 = neuronValues2
+      nnOutputData%working_space = working_space
+    endif
+
+    status=1
+
+    if (debug) CLOSE(7)
+  end subroutine NeuralNetFit_2
+
+  ! ----------------------- StandardizeRadiances -------------------------
+  ! This family of routines
+  ! Compute the ratio
+  !       values - mean
+  !       --------------
+  !           StdDev
+  ! and use  it to replace corresponding values in NNMeasurements.
+  subroutine StandardizeRadiances_1 ( nnInputData, &
+              & Mean, &
+              & StdDev, &
+              & TempFileID, MAF, nnCoeffs, Debugging )
+    type (NeuralNetInputData_T),intent(inout)              :: nnInputData
+    real(r8),  dimension(:), intent(in)                    :: Mean
+    real(r8),  dimension(:), intent(in)                    :: StdDev
+    integer, optional, intent(in) :: TempFileID ! For optional comparisons
+    integer, optional, intent(in) :: MAF ! For optional comparisons; starts at 0
+    type (NeuralNetCoeffs_T), optional, intent(in)        :: nnCoeffs
+    logical, optional, intent(in)       :: Debugging
+    ! Internal variables
+    real(r8),  dimension(:), allocatable                   :: ratio
+    real(r8),  dimension(:), allocatable                   :: values
+    integer                                               :: channel
+    logical                                               :: DeeBug
+    integer                                               :: j ! index into mean
+    integer                                               :: MatchingMAF
+    integer                                               :: MIF
+    integer                                               :: n ! how many overall
+    ! Executable
+    DeeBug = .false.
+    if ( present(Debugging) ) DeeBug = Debugging
+    if ( size(mean) /= size(stddev) ) then
+         CALL MLSMessage( MLSMSG_error, ModuleName, &
+             & "input arrays mean and stddev must have the same size" )
+    endif
+    allocate( values(size(mean) ) )
+    allocate( ratio(size(mean) ) )
+    ! Gather values
+    j = 0
+    ! Band _1_
+    do MIF=1, nnInputData%Band_1_Radiances%NumMIFs
+      do channel=1, nnInputData%Band_1_Radiances%NumChannels
+        j = j + 1
+        values(j) = nnInputData%Band_1_Radiances%values(channel, MIF)
+      enddo
+    enddo
+    ! Band _8_
+    do MIF=1, nnInputData%Band_8_Radiances%NumMIFs
+      do channel=1, nnInputData%Band_8_Radiances%NumChannels
+        j = j + 1
+        values(j) = nnInputData%Band_8_Radiances%values(channel, MIF)
+      enddo
+    enddo
+    ! Band _22_
+    do MIF=1, nnInputData%Band_22_Radiances%NumMIFs
+      do channel=1, nnInputData%Band_22_Radiances%NumChannels
+        j = j + 1
+        values(j) = nnInputData%Band_22_Radiances%values(channel, MIF)
+      enddo
+    enddo
+    n = j
+    if ( n /= size(mean) ) then
+         CALL MLSMessage(MLSMSG_error, ModuleName, &
+             & "n must equal size of mean array")
+    endif
+    if ( DeeBug ) print *, 'n: ', n
+    do j=1, n
+      ratio(j) = ( values(j) - mean(j) ) / stddev(j)
+    enddo
+    if ( DeeBug ) then
+      call OutputNamedValue ( '1st(values)', values(1) )
+      call OutputNamedValue ( 'max(values)', maxval(values) )
+      call OutputNamedValue ( '1st(mean  )', mean(1) )
+      call OutputNamedValue ( 'max(mean  )', maxval(mean) )
+      call OutputNamedValue ( '1st(stddev)', stddev(1) )
+      call OutputNamedValue ( 'max(stddev)', maxval(stddev) )
+      call OutputNamedValue ( '1st(Ratio )', ratio(1) )
+      call OutputNamedValue ( 'min(Ratio)', minval(ratio) )
+      call OutputNamedValue ( 'max(Ratio)', maxval(ratio) )
+    endif
+    if ( present(TempFileID) ) then
+      call CompareStandardizedRads ( TempFileID, &
+      & (/ MAF, MAF /), values, &
+      & standardized=.false., MatchingMAF=MatchingMAF )
+      call OutputNamedValue ( 'Matching MAF', MatchingMAF )
+      call OutputNamedValue ( 'Compared to', MAF )
+    endif
+    ! Now use  these standardized radiances to replace the measurement's values
+    j = 0
+    ! Band _1_
+    do MIF=1, nnInputData%Band_1_Radiances%NumMIFs
+      do channel=1, nnInputData%Band_1_Radiances%NumChannels
+        j = j + 1
+        nnInputData%Band_1_Radiances%values(channel, MIF) = ratio(j)
+      enddo
+    enddo
+    ! Band _8_
+    do MIF=1, nnInputData%Band_8_Radiances%NumMIFs
+      do channel=1, nnInputData%Band_8_Radiances%NumChannels
+        j = j + 1
+        nnInputData%Band_8_Radiances%values(channel, MIF) = ratio(j)
+      enddo
+    enddo
+    ! Band _22_
+    do MIF=1, nnInputData%Band_22_Radiances%NumMIFs
+      do channel=1, nnInputData%Band_22_Radiances%NumChannels
+        j = j + 1
+        nnInputData%Band_22_Radiances%values(channel, MIF) = ratio(j)
+      enddo
+    enddo
+    !
+    if ( .not. present(TempFileID) ) return
+    call CompareStandardizedRads ( TempFileID, &
+    & (/ MAF, MAF /), values, &
+    & standardized=.true., recalculate=.true., mean=mean, stddev=stddev )
+    
+    ! What if the binNum we used was different from Frank's?
+    if ( present(nnCoeffs) ) &
+      & call CheckBinNums ( TempFileID, (/ MAF, MAF /), nnCoeffs )
+    
+  end subroutine StandardizeRadiances_1
+
+  subroutine StandardizeRadiances_2 ( nnInputData, &
+              & Mean, &
+              & StdDev, &
+              & TempFileID, MAF, nnCoeffs, Debugging )
+    type (NeuralNetInputData_2_T),intent(inout)            :: nnInputData
+    real(r8),  dimension(:), intent(in)                    :: Mean
+    real(r8),  dimension(:), intent(in)                    :: StdDev
+    integer, optional, intent(in) :: TempFileID ! For optional comparisons
+    integer, optional, intent(in) :: MAF ! For optional comparisons; starts at 0
+    type (NeuralNetCoeffs_T), optional, intent(in)        :: nnCoeffs
+    logical, optional, intent(in)       :: Debugging
+    ! Internal variables
+    real(r8),  dimension(:), allocatable                   :: ratio
+    real(r8),  dimension(:), allocatable                   :: values
+    integer                                               :: channel
+    logical                                               :: DeeBug
+    integer                                               :: j ! index into mean
+    integer                                               :: MatchingMAF
+    integer                                               :: MIF
+    integer                                               :: n ! how many overall
+    ! Executable
+    DeeBug = .false.
+    if ( present(Debugging) ) DeeBug = Debugging
+    if ( size(mean) /= size(stddev) ) then
+         CALL MLSMessage( MLSMSG_error, ModuleName, &
+             & "input arrays mean and stddev must have the same size" )
+    endif
+    allocate( values(size(mean) ) )
+    allocate( ratio(size(mean) ) )
+    ! Gather values
+    j = 0
+    ! Band _1_
+    do MIF=1, nnInputData%Band_1_Radiances%NumMIFs
+      do channel=1, nnInputData%Band_1_Radiances%NumChannels
+        j = j + 1
+        values(j) = nnInputData%Band_1_Radiances%values(channel, MIF)
+      enddo
+    enddo
+    ! Band _2_
+    do MIF=1, nnInputData%Band_2_Radiances%NumMIFs
+      do channel=1, nnInputData%Band_2_Radiances%NumChannels
+        j = j + 1
+        values(j) = nnInputData%Band_2_Radiances%values(channel, MIF)
+      enddo
+    enddo
+    ! Band _3_
+    do MIF=1, nnInputData%Band_3_Radiances%NumMIFs
+      do channel=1, nnInputData%Band_3_Radiances%NumChannels
+        j = j + 1
+        values(j) = nnInputData%Band_3_Radiances%values(channel, MIF)
+      enddo
+    enddo
+    ! Band _23_
+    do MIF=1, nnInputData%Band_23_Radiances%NumMIFs
+      do channel=1, nnInputData%Band_23_Radiances%NumChannels
+        j = j + 1
+        values(j) = nnInputData%Band_23_Radiances%values(channel, MIF)
+      enddo
+    enddo
+    n = j
+    if ( n /= size(mean) ) then
+         CALL MLSMessage(MLSMSG_error, ModuleName, &
+             & "n must equal size of mean array")
+    endif
+    if ( DeeBug ) print *, 'n: ', n
+    do j=1, n
+      ratio(j) = ( values(j) - mean(j) ) / stddev(j)
+    enddo
+    if ( DeeBug ) then
+      call OutputNamedValue ( '1st(values)', values(1) )
+      call OutputNamedValue ( 'max(values)', maxval(values) )
+      call OutputNamedValue ( '1st(mean  )', mean(1) )
+      call OutputNamedValue ( 'max(mean  )', maxval(mean) )
+      call OutputNamedValue ( '1st(stddev)', stddev(1) )
+      call OutputNamedValue ( 'max(stddev)', maxval(stddev) )
+      call OutputNamedValue ( '1st(Ratio )', ratio(1) )
+      call OutputNamedValue ( 'min(Ratio)', minval(ratio) )
+      call OutputNamedValue ( 'max(Ratio)', maxval(ratio) )
+    endif
+    if ( present(TempFileID) ) then
+      call CompareStandardizedRads ( TempFileID, &
+      & (/ MAF, MAF /), values, &
+      & standardized=.false., MatchingMAF=MatchingMAF )
+      call OutputNamedValue ( 'Matching MAF', MatchingMAF )
+      call OutputNamedValue ( 'Compared to', MAF )
+    endif
+    ! Now use  these standardized radiances to replace the measurement's values
+    j = 0
+    ! Band _1_
+    do MIF=1, nnInputData%Band_1_Radiances%NumMIFs
+      do channel=1, nnInputData%Band_1_Radiances%NumChannels
+        j = j + 1
+        nnInputData%Band_1_Radiances%values(channel, MIF) = ratio(j)
+      enddo
+    enddo
+    ! Band _2_
+    do MIF=1, nnInputData%Band_2_Radiances%NumMIFs
+      do channel=1, nnInputData%Band_2_Radiances%NumChannels
+        j = j + 1
+        nnInputData%Band_2_Radiances%values(channel, MIF) = ratio(j)
+      enddo
+    enddo
+    ! Band _3_
+    do MIF=1, nnInputData%Band_3_Radiances%NumMIFs
+      do channel=1, nnInputData%Band_3_Radiances%NumChannels
+        j = j + 1
+        nnInputData%Band_3_Radiances%values(channel, MIF) = ratio(j)
+      enddo
+    enddo
+    ! Band _23_
+    do MIF=1, nnInputData%Band_23_Radiances%NumMIFs
+      do channel=1, nnInputData%Band_23_Radiances%NumChannels
+        j = j + 1
+        nnInputData%Band_23_Radiances%values(channel, MIF) = ratio(j)
+      enddo
+    enddo
+    !
+    if ( .not. present(TempFileID) ) return
+    call CompareStandardizedRads ( TempFileID, &
+    & (/ MAF, MAF /), values, &
+    & standardized=.true., recalculate=.true., mean=mean, stddev=stddev )
+    
+    ! What if the binNum we used was different from Frank's?
+    if ( present(nnCoeffs) ) &
+      & call CheckBinNums ( TempFileID, (/ MAF, MAF /), nnCoeffs )
+    
+  end subroutine StandardizeRadiances_2
+
+  ! ----------------------- Private procedures -------------------------
+  ! 
+  function Activation ( type, args ) result ( values )
+    ! Apply the activation function type to the args
+    ! returning the result in values
+    character(len=*), intent(in)           :: type
+    real(r8), dimension(:), intent(in)     :: args
+    real(r8), dimension(size(args))        :: values
+    ! Executable
+    select case ( trim(type) )
+    case ( 'tanh' )  
+      ! In Frank's code he calls this `neuronValuesActivation', but I'm
+      ! just going to reuse  the variable.
+      print *, '*** tanh *** '
+      Values = TANH( args )
+    case ( 'sigmoid' )
+      print *, '*** sigmoid *** '
+      call sigmoid( args, Values )
+
+    case ( 'relu' )
+      print *, '*** relu *** '
+      Values = max( 0._r8, args )
+
+    end select
+  end function Activation
+
+  ! Dot product.
+  ! (Not used)
+  real(r8) function dot(X,Y)
+    real(r8), dimension(:), intent(in):: x,y
+    integer :: i,nn
+    dot=0
+    nn=size(x)
+    if (nn .NE. SIZE(y)) THEN 
+      CALL MLSMessage(MLSMSG_error, ModuleName, &
+           & 'The two vectors are not the same size!')
+    endif
+
+    do i=1,SIZE(x)
+      dot = dot + x(i)*y(i)
+    enddo
+  end function dot
+
+  ! Sigmoid subroutine
+  subroutine sigmoid(x,s) 
+    real(r8), dimension(:),intent(in) :: x
+    real(r8), dimension(:) :: s
+    s = 1.0/(1.0+EXP(-x))
+  end subroutine sigmoid
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: NeuralNetworkUtils_m.f90,v 2.12 2022/04/13 21:37:42 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if print is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module NeuralNetUtils_M
+! $Log: NeuralNetworkUtils_m.f90,v $
+! Revision 2.12  2022/04/13 21:37:42  pwagner
+! Removed some unneeded debugging
+!
+! Revision 2.11  2021/10/14 22:22:51  pwagner
+! NeuralNetFit now a subroutine; takes precision as an extra arg
+!
+! Revision 2.10  2021/07/28 23:41:37  pwagner
+! Fix bug preventing full use of relu activation function
+!
+! Revision 2.9  2021/07/08 23:29:11  pwagner
+! New api for NeuralNetFit; new 'relu' type; housekeeping
+!
+! Revision 2.8  2021/06/18 15:20:33  pwagner
+! Refine search for matching bins; avoid array bounds error
+!
+! Revision 2.7  2021/05/27 23:41:00  pwagner
+! Corrected errors traced to MAF index starting at 0; removed undefined variable 'k'
+!
+! Revision 2.6  2021/05/18 15:52:46  pwagner
+! Many bugs fixed
+!
+! Revision 2.5  2021/04/01 23:46:21  pwagner
+! many more (too many?) debugging options
+!
+! Revision 2.4  2021/03/18 23:47:41  pwagner
+! Fixed some more errors; added more debugging aids
+!
+! Revision 2.3  2021/03/05 00:53:34  pwagner
+! Some progress but still wrong
+!
+! Revision 2.2  2021/02/19 00:29:46  pwagner
+! repaired many bugs; still unsatisfactory imo
+!
+! Revision 2.1  2021/02/05 05:14:40  pwagner
+! First commit
+!
+@
+
+
+2.12
+log
+@Removed some unneeded debugging
+@
+text
+@d70 1
+a70 1
+     ! The second index is the number of Bands (currently 3)
+d78 5
+a82 1
+     ! these are the dimensions for each part (assuming that we keep
+d93 2
+d102 2
+d120 4
+d130 1
+a130 1
+  ! The following should be replaced by
+d148 16
+d170 1
+a170 1
+     real(r8),  dimension(:),allocatable::prediction, &
+d181 8
+d200 1
+d571 5
+a575 1
+  subroutine NeuralNetFit( nnInputData, nnCoeffs, nHL, prediction, precision, &
+d580 1
+d811 1
+a811 1
+    ELSEif (nHL .EQ. 2) THEN 
+d899 330
+a1228 21
+    contains
+      function Activation ( type, args ) result ( values )
+        ! Apply the activation function type to the args
+        ! returning the result in values
+        character(len=*), intent(in)           :: type
+        real(r8), dimension(:), intent(in)     :: args
+        real(r8), dimension(size(args))        :: values
+        ! Executable
+        select case ( trim(type) )
+        case ( 'tanh' )  
+          ! In Frank's code he calls this `neuronValuesActivation', but I'm
+          ! just going to reuse  the variable.
+          print *, '*** tanh *** '
+          Values = TANH( args )
+        case ( 'sigmoid' )
+          print *, '*** sigmoid *** '
+          call sigmoid( args, Values )
+
+        case ( 'relu' )
+          print *, '*** relu *** '
+          Values = max( 0._r8, args )
+d1230 1
+a1230 2
+        end select
+      end function Activation
+d1232 2
+a1233 1
+  end subroutine NeuralNetFit
+d1235 8
+a1242 1
+  subroutine StandardizeRadiances ( nnInputData, &
+a1245 5
+    ! Compute the ratio
+    !       values - mean
+    !       --------------
+    !           StdDev
+    ! and use  it to replace corresponding values in NNMeasurements.
+d1354 155
+a1508 1
+  end subroutine StandardizeRadiances
+d1537 1
+a1537 1
+       "$Id: NeuralNetworkUtils_m.f90,v 2.11 2021/10/14 22:22:51 pwagner Exp $"
+d1546 3
+@
+
+
+2.11
+log
+@NeuralNetFit now a subroutine; takes precision as an extra arg
+@
+text
+@d57 1
+d59 6
+d76 1
+a76 1
+     ! Variabls of this type will be allocated in the caller. 
+d118 3
+d137 1
+a137 1
+  ! final configutation, all you'll need is `prediction', so you could
+d503 1
+a503 1
+    IF ( myDetails > 0 ) THEN
+d509 1
+a509 1
+    ENDIF
+d580 2
+a581 2
+     IF (PRESENT(debugging)) debug=debugging
+     IF (debug) THEN 
+d586 1
+a586 1
+       IF (istat /= 0) THEN 
+d589 2
+a590 2
+       ENDIF
+     ENDIF
+d593 1
+a593 1
+    IF ( index( 'relu,sigmoid,tanh', trim(type) ) < 1 ) then 
+d597 2
+a598 2
+    ENDIF
+    IF (NHL /=  1 .AND. NHL /= 2) THEN 
+d600 1
+a600 1
+     ENDIF
+d604 1
+a604 1
+    IF (FIRST) THEN 
+d614 1
+a614 1
+    ENDIF
+d617 1
+a617 1
+    IF (debug) THEN 
+d623 1
+a623 1
+    ENDIF
+a632 2
+!     allocate(prediction(nSurfs))
+!     allocate(precision(nSurfs))
+d653 2
+a654 2
+    DO m=1,nMIFs
+      DO c=1,nChans(1)
+d657 2
+a658 2
+      end DO
+    end DO
+d661 2
+a662 2
+    DO m=1,nMIFs
+      DO c=1,nChans(1)
+d665 2
+a666 2
+      end DO
+    end DO
+d669 2
+a670 2
+    DO m=1,nMIFs
+      DO c=1,nChans(2)
+d673 2
+a674 2
+      end DO
+    end DO
+d676 1
+a676 1
+    IF (debug) THEN 
+d703 1
+a703 1
+    ENDIF
+d712 1
+a712 1
+    DO v=1,nVars
+d715 2
+a716 3
+!           & working_space(v) * nnCoeffs%Weights_Hidden_Layer_1(:,v) 
+    end DO
+    IF (debug) THEN 
+d719 1
+a719 1
+    ENDIF
+d724 1
+a724 1
+    IF (debug) THEN 
+d734 1
+a734 1
+    ENDIF
+d741 1
+a741 6
+    !print *,'k = ',k ! 9
+    ! k=k+1
+
+
+    !print *,'nHL = ',nHL
+    IF (nHL .EQ. 1) THEN 
+d745 1
+a745 1
+      DO s=1,nSurfs 
+a746 1
+!        y_pred2 = DOT( neuronValues, &
+d752 1
+a752 1
+        nnOutputData%y_pred(s)=y_pred2
+d754 5
+a758 5
+        ! Denormalize the 'labels'
+        nnOutputData%prediction(s) = y_pred2 * &
+             & ( nnCoeffs%Normalization_Labels_Max(s) - &
+             &   nnCoeffs%Normalization_Labels_Min(s)) + &
+             &   nnCoeffs%Normalization_Labels_Min(s)
+d767 1
+a767 1
+      ENDDO ! loop over pressure surfaces
+d769 1
+a769 1
+    ELSEIF (nHL .EQ. 2) THEN 
+d774 1
+a774 1
+      DO n=1,nNeurons
+d777 1
+a777 1
+      end DO
+d779 1
+a779 1
+      IF (debug) THEN 
+d782 1
+a782 1
+      ENDIF
+d785 1
+a785 1
+      IF (debug) THEN 
+d788 1
+a788 1
+      ENDIF
+d791 1
+a791 1
+      DO s=1,nSurfs 
+a792 1
+!        y_pred2 = DOT( neuronValues2, &
+d813 2
+a814 2
+      ENDDO ! loop over pressure surfaces
+      IF (debug) THEN 
+a855 3
+    !print *,'k = ',k ! 10
+    ! k=k+1
+
+a949 6
+    if ( .false. ) then
+      call Dump( values, 'values' )
+      call Dump( mean ,  'mean  ' )
+      call Dump( stddev, 'stddev' )
+      call Dump( ratio , 'ratio ' )
+    endif
+a976 2
+!     print *, 'j: ', j
+!     print *, ratio(j)
+a983 2
+!     print *, 'j: ', j
+!     print *, ratio(j)
+a990 2
+!     print *, 'j: ', j
+!     print *, ratio(j)
+d1010 1
+a1010 1
+    IF (nn .NE. SIZE(y)) THEN 
+d1013 1
+a1013 1
+    ENDIF
+d1015 1
+a1015 1
+    DO i=1,SIZE(x)
+d1017 1
+a1017 1
+    end DO
+d1030 1
+a1030 1
+       "$Id: NeuralNetworkUtils_m.f90,v 2.10 2021/07/28 23:41:37 pwagner Exp $"
+d1039 3
+@
+
+
+2.10
+log
+@Fix bug preventing full use of relu activation function
+@
+text
+@d39 1
+a39 1
+  use  MLSCommon, only: MLSFile_T
+d48 1
+a48 1
+  type radiance_T
+d54 1
+a54 1
+  end type radiance_T
+d524 1
+a524 1
+  function NeuralNetFit( nnInputData, nnCoeffs, nHL, &
+d526 1
+a526 2
+    & NNOutputData ) &
+    & result( prediction )
+d533 3
+a535 1
+    real(r8),  dimension(:), allocatable :: prediction
+d554 2
+a555 2
+    real(r8), dimension(:),allocatable :: working_space
+    real(r8),  dimension(:), allocatable  :: NeuronValues, NeuronValues2
+d564 1
+a564 1
+
+d577 1
+a577 1
+         PRINT *,'bad open! istat = ',istat
+d584 1
+a584 1
+      PRINT *,"input var type must be one of 'relu', 'tanh' or 'sigmoid'"
+d589 1
+a589 1
+      PRINT *,"NHL must equal either 1 or 2"
+d608 5
+a612 5
+      PRINT *,'nMIFs=',nMIFs
+      PRINT *,'nChans=',nChans
+      PRINT *,'nSurfs=',nSurfs
+      PRINT *,'nNeurons=',nNeurons
+      PRINT *,'nVars=',nVars
+d620 5
+a624 3
+    ALLOCATE( working_space(nVars )) 
+    ALLOCATE(neuronValues(nNeurons))
+    ALLOCATE(prediction(nSurfs))
+d626 1
+a626 1
+    ALLOCATE(neuronValues2(nNeurons))
+d630 5
+a634 5
+    ALLOCATE(nnOutputData%working_space( nVars )) 
+    ALLOCATE(nnOutputData%neuronValues(nNeurons))
+    ALLOCATE(nnOutputData%neuronValues2(nNeurons))
+    ALLOCATE(nnOutputData%prediction(nSurfs))
+    ALLOCATE(nnOutputData%y_pred(nSurfs)) 
+d639 2
+a640 1
+    prediction = 0.0
+d643 1
+a643 1
+    jj=1
+d669 1
+a669 1
+      PRINT *,'before normalization: size(working_space) = ',SIZE(working_space)
+d710 1
+a710 1
+      PRINT *,'after calculation with whl1: size(neuronValues) = ',SIZE(neuronValues)
+d718 2
+a719 2
+      PRINT *,'After ihl1'
+      PRINT*,'intercepts_hidden_layer_[12]',size(nnCoeffs%Intercepts_Hidden_Layer_1)
+d721 1
+a721 1
+      PRINT *,'ihll '
+d723 1
+a723 1
+      PRINT *,'whll'
+d725 1
+a725 1
+      PRINT *,'after ihl1: size(neuronValues) = ',SIZE(neuronValues)
+d738 1
+a738 1
+    !PRINT *,'nHL = ',nHL
+d764 1
+a764 1
+        !PRINT '(a14,",",i2,",",f0.2,",",f0.2)','s, yp2,pred = ',&
+d779 1
+a779 1
+        PRINT *,'Writing size(neuronValues2) = ',SIZE(neuronValues2)
+d785 1
+a785 1
+        PRINT *,'after applying ihl2: Writing size(neuronValues2) = ',SIZE(neuronValues2)
+d811 1
+a811 1
+        !PRINT '(a14,",",i2,",",f0.2,",",f0.2)','s, yp2,pred = ',&
+d815 2
+a816 2
+        PRINT *,'Normalization labels min/max'
+        WRITE (7,iostat=istat) nnCoeffs%Normalization_Labels_Min, &
+d819 4
+a822 4
+        PRINT *,'size(nnOutputData%y_pred) = ',SIZE(nnOutputData%y_pred)
+        WRITE(7,iostat=istat) nnOutputData%y_pred
+        PRINT *,'size(nnOutputData%prediction) = ',SIZE(nnOutputData%prediction)
+        WRITE(7,iostat=istat) nnOutputData%prediction
+d824 3
+a826 1
+      ENDIF
+d828 16
+a843 1
+    ENDIF ! NHl .eq. 2
+d849 3
+a851 3
+    nnOutputData%neuronValues=neuronValues
+    nnOutputData%neuronValues2=neuronValues2
+    nnOutputData%working_space=working_space
+d885 1
+a885 1
+  end function NeuralNetFit
+d1045 1
+a1045 1
+       "$Id: NeuralNetworkUtils_m.f90,v 2.9 2021/07/08 23:29:11 pwagner Exp $"
+d1048 1
+a1048 1
+    print *, Id ! .mod files sometimes change if PRINT is added
+d1054 3
+@
+
+
+2.9
+log
+@New api for NeuralNetFit; new 'relu' type; housekeeping
+@
+text
+@a533 1
+    ! character(len=*),intent(in) :: type ! One of 'tanh', 'relu' or 'sigmoid'
+d584 2
+d711 1
+a711 7
+
+    select case ( trim(type) )
+    case ( 'tanh' )  
+      ! In Frank's code he calls this `neuronValuesActivation', but I'm
+      ! just going to reuse  the variable.
+      print *, '*** tanh *** '
+      neuronValues = TANH( neuronValues + & 
+a712 11
+    case ( 'sigmoid' )
+      print *, '*** sigmoid *** '
+      call sigmoid( neuronValues + & 
+           & nnCoeffs%Intercepts_Hidden_Layer_1, neuronValues )
+
+    case ( 'relu' )
+      print *, '*** relu *** '
+      neuronValues = max( 0._r8, neuronValues + & 
+           & nnCoeffs%Intercepts_Hidden_Layer_1, neuronValues )
+
+    end select
+d778 2
+a779 5
+      IF (TRIM(TYPE) .EQ. 'tanh') THEN
+        neuronValues2 = TANH(neuronValues2 + nnCoeffs%Intercepts_Hidden_Layer_2)
+      ELSE IF(trim(TYPE) .EQ. 'sigmoid') THEN 
+        call SIGMOID(neuronValues2 + nnCoeffs%Intercepts_Hidden_Layer_2,neuronValues)
+      ENDIF
+d839 24
+d1024 1
+a1024 1
+       "$Id: NeuralNetworkUtils_m.f90,v 2.8 2021/06/18 15:20:33 pwagner Exp $"
+d1033 3
+@
+
+
+2.8
+log
+@Refine search for matching bins; avoid array bounds error
+@
+text
+@d3 1
+a3 1
+! commercial use must be negotiated with the Office of Technology Transfer
+d19 1
+a19 1
+  ! To adapt to other species, we must revisit the hardcoded use of some
+d37 8
+a44 8
+  use Dump_0, only: Dump
+  use HighOutput, only: OutputNamedValue
+  use MLSCommon, only: MLSFile_T
+  use MLSHDF5, only: SaveAsHDF5DS
+  use MLSFinds, only: FindFirst
+  use MLSKinds, only: R4, R8, Rv
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+  use Output_M, only: Output 
+d57 1
+d64 1
+a64 1
+     ! We need this info because the Neural Net doesn't currently use
+d128 1
+a128 1
+  ! modify the type to use just that variable, or comment it out
+d171 3
+a173 3
+    use Intrinsic, only: L_HDF
+    use MLSHDF5, only: LoadFromHDF5DS
+    use MLSFiles, only: HDFVersion_5
+d201 3
+a203 3
+    use Intrinsic, only: L_HDF
+    use MLSHDF5, only: LoadFromHDF5DS
+    use MLSFiles, only: HDFVersion_5
+d241 3
+a243 3
+    use Intrinsic, only: L_HDF
+    use MLSHDF5, only: LoadFromHDF5DS
+    use MLSFiles, only: HDFVersion_5
+d323 3
+a325 3
+    use Intrinsic, only: L_HDF
+    use MLSHDF5, only: LoadFromHDF5DS
+    use MLSFiles, only: HDFVersion_5
+d471 1
+a471 1
+    USE HighOutput, ONLY: OutputNamedValue
+d480 1
+d522 1
+a522 1
+  END subroutine Dump_Coeffs
+d524 1
+a524 1
+  function NeuralNetFit( nnInputData, nnCoeffs, nHL, TYPE, &
+d527 1
+a527 1
+    & RESULT(prediction)
+d534 1
+a534 1
+    CHARACTER(len=*),intent(in) :: type ! type  may be either 'tanh' or 'sigmoid'
+d547 5
+a551 4
+    LOGICAL,SAVE :: first = .TRUE.
+    integer, SAVE:: nMIFs
+    integer, SAVE,  dimension(2) :: nChans
+    integer, SAVE :: nSurfs, nVars, nNeurons
+d567 2
+a568 2
+
+     status=0
+d583 2
+a584 3
+    IF ( TRIM(TYPE) .NE. 'tanh' .AND. &
+         & TRIM(TYPE) .NE. 'sigmoid' ) THEN 
+      PRINT *,"input var type must equal either 'tanh' or 'sigmoid'"
+d644 2
+a645 2
+      END DO
+    END DO
+d652 2
+a653 2
+      END DO
+    END DO
+d660 2
+a661 2
+      END DO
+    END DO
+a665 1
+    ENDIF
+d679 10
+a688 11
+    IF (debug) THEN 
+      PRINT *,'sbtm, sbts'
+      WRITE (7,iostat=istat) nnCoeffs%Standardization_Brightness_Temperature_Mean 
+      WRITE (7,iostat=istat) nnCoeffs%Standardization_Brightness_Temperature_Std
+      PRINT *,'after normalization: size(working_space) e= ',SIZE(working_space)
+      WRITE (7,iostat=istat) working_space
+
+      PRINT *,'whl1 [nNeurons, nVars], whl2 [nNeurons, nNeurons]'
+      PRINT *,'size(Weights_Hidden_Layer_1)=',SIZE(nnCoeffs%Weights_Hidden_Layer_1)
+      PRINT *,'size(Weights_Hidden_Layer_2) = ',SIZE(nnCoeffs%Weights_Hidden_Layer_2)
+      WRITE (7,iostat=istat) nnCoeffs%Weights_Hidden_Layer_1, & 
+d703 1
+a703 1
+    END DO
+d711 2
+a712 2
+    
+    IF (TRIM(TYPE) .EQ. 'tanh') THEN 
+d714 13
+a726 6
+      ! just going to reuse the variable.
+      neuronValues=TANH(neuronValues + & 
+           & nnCoeffs%Intercepts_Hidden_Layer_1)
+    ELSE IF (TRIM(TYPE) .EQ. 'sigmoid') THEN 
+      CALL SIGMOID(neuronValues + & 
+           & nnCoeffs%Intercepts_Hidden_Layer_1, neuronValues)
+d728 1
+a728 1
+    ENDIF
+d740 4
+a743 3
+
+    call OutputNamedValue ( 'num neurons', nNeurons )
+    call OutputNamedValue ( 'shape(WHLL)', shape(nnCoeffs%Weights_Hidden_Labels_Layer) )
+d788 1
+a788 1
+      END DO
+d859 1
+a859 1
+  END function NeuralNetFit
+d869 1
+a869 1
+    ! and use it to replace corresponding values in NNMeasurements.
+d923 1
+a923 1
+    print *, 'n: ', n
+d933 11
+a943 9
+    call OutputNamedValue ( '1st(values)', values(1) )
+    call OutputNamedValue ( 'max(values)', maxval(values) )
+    call OutputNamedValue ( '1st(mean  )', mean(1) )
+    call OutputNamedValue ( 'max(mean  )', maxval(mean) )
+    call OutputNamedValue ( '1st(stddev)', stddev(1) )
+    call OutputNamedValue ( 'max(stddev)', maxval(stddev) )
+    call OutputNamedValue ( '1st(Ratio )', ratio(1) )
+    call OutputNamedValue ( 'min(Ratio)', minval(ratio) )
+    call OutputNamedValue ( 'max(Ratio)', maxval(ratio) )
+d951 1
+a951 1
+    ! Now use these standardized radiances to replace the measurement's values
+d960 2
+a961 2
+    print *, 'j: ', j
+    print *, ratio(j)
+d969 2
+a970 2
+    print *, 'j: ', j
+    print *, ratio(j)
+d978 2
+a979 2
+    print *, 'j: ', j
+    print *, ratio(j)
+d1006 2
+a1007 2
+    END DO
+  END function dot
+d1014 1
+a1014 1
+  END subroutine sigmoid
+d1019 1
+a1019 1
+       "$Id: NeuralNetworkUtils_m.f90,v 2.7 2021/05/27 23:41:00 pwagner Exp $"
+d1026 1
+a1026 1
+END MODULE NeuralNetUtils_M
+d1028 3
+@
+
+
+2.7
+log
+@Corrected errors traced to MAF index starting at 0; removed undefined variable 'k'
+@
+text
+@d244 3
+a246 3
+    integer, intent(in)                  :: TempFileID ! For optional comparisons
+    integer,  dimension(:), intent(in)    :: MAFRange ! For optional comparisons
+    type (NeuralNetCoeffs_T), intent(in) :: nnCoeffs
+d253 3
+a255 3
+    real(r4), allocatable,  dimension(:,:)  :: ratios2
+    real(r4), allocatable,  dimension(:)    :: recalc
+    real(r4), allocatable,  dimension(:,:)  :: values2
+d272 2
+a273 2
+    do MAF = MAFRange(1), MAFRange(2)
+      allocate ( recalc(18) )
+d275 2
+a276 2
+        recalc(binNum) = &
+          & (values2(1, MAF+1) - nnCoeffs%means(binNum,1)) &
+d278 1
+a278 1
+          & nnCoeffs%stddevs(binNum,1)
+d282 2
+a283 1
+      binNum = FindFirst ( abs(ratios2(1,MAF+1)-recalc(:)) < 1.e-4 )
+d288 1
+a288 1
+        call outputNamedValue ( 'Frank,me', (/ratios2(1,MAF+1),recalc(binNum) /) )
+d290 1
+a290 1
+        call outputNamedValue ( 'if wrong Bin', recalc(j)  )
+d293 2
+a294 1
+          binNum2 = FindFirst ( abs(ratios2(1,MAF+1)-recalc(binNum+1:)) < 1.e-4 )
+d296 2
+a297 2
+            call outputNamedValue ( 'A 2nd match found at 1st', BinNum+BinNum2 )
+            stop
+d303 1
+a303 1
+        allocate ( recalc(7575) )
+d305 1
+a305 1
+          recalc(j) = &
+d311 1
+a311 1
+          & maxval( abs(ratios2(:,MAF+1)-recalc(:)) ) )
+d369 1
+a369 1
+      do MAF = MAFRange(1), MAFRange(2)
+d396 1
+a396 1
+    do MAF = MAFRange(1), MAFRange(2)
+d449 5
+d458 1
+d1009 1
+a1009 1
+       "$Id: NeuralNetworkUtils_m.f90,v 2.6 2021/05/18 15:52:46 pwagner Exp $"
+d1018 3
+@
+
+
+2.6
+log
+@Many bugs fixed
+@
+text
+@d46 1
+a46 1
+  IMPLICIT NONE
+d48 1
+a48 1
+  TYPE radiance_T
+d50 5
+a54 5
+     !INTEGER :: NumMAFS ! <----- it's only ever going to be one MAF, right?
+     INTEGER :: NumChannels
+     INTEGER :: NumMIFs
+     real(r8),  dimension(:,:),ALLOCATABLE :: values
+  END TYPE radiance_T
+d56 1
+a56 1
+  TYPE NeuralNetCoeffs_T
+d83 1
+a83 1
+     real(r8),  dimension(:,:),ALLOCATABLE :: Weights_Hidden_Labels_Layer
+d107 1
+a107 1
+  END TYPE NeuralNetCoeffs_T
+d110 1
+a110 1
+  TYPE NeuralNetInputData_T
+d119 3
+a121 3
+     TYPE (Radiance_T) :: Band_1_Radiances 
+     TYPE (Radiance_T) :: Band_8_Radiances
+     TYPE (Radiance_T) :: Band_22_Radiances 
+d123 1
+a123 1
+  END TYPE NeuralNetInputData_T
+d130 2
+a131 2
+  TYPE NeuralNetOutputData_T
+     real(r8),  dimension(:),ALLOCATABLE::prediction, &
+d136 1
+a136 1
+  END TYPE NeuralNetOutputData_T
+d145 1
+a145 1
+  ! Comment them out, and references o them, when you're
+d148 2
+a149 2
+  integer, public, save                   :: matchedbinNum       = 0
+  integer, public, save                   :: matchedMAF          = 0
+d151 1
+a151 1
+  PUBLIC :: CheckMAFs, Dump, &
+d204 1
+a204 1
+    integer, intent(in)                    :: TempFileID ! For optional comparisons
+d206 1
+a206 1
+    integer                                :: MAF
+d208 2
+a209 2
+    integer                                :: j
+    type (MLSFile_T)                       :: TempFile
+d227 1
+a227 1
+      & < 1.e-6 )
+d232 2
+a233 2
+    call OutputNamedValue ( 'min rads(matchedMAF)', minval(ratios2(:,matchedMAF)) )
+    call OutputNamedValue ( 'max rads(matchedMAF)', maxval(ratios2(:,matchedMAF)) )
+d251 1
+a251 1
+    integer                                :: MAF
+d276 1
+a276 1
+          & (values2(1, MAF) - nnCoeffs%means(binNum,1)) &
+d282 1
+a282 1
+      binNum = FindFirst ( abs(ratios2(1,MAF)-recalc(:)) < 1.e-4 )
+d287 1
+a287 1
+        call outputNamedValue ( 'Frank,me', (/ratios2(1,MAF),recalc(binNum) /) )
+d292 1
+a292 1
+          binNum2 = FindFirst ( abs(ratios2(1,MAF)-recalc(binNum+1:)) < 1.e-4 )
+d304 1
+a304 1
+            & (values2(j, MAF) - nnCoeffs%means(binNum,j)) &
+d309 1
+a309 1
+          & maxval( abs(ratios2(:,MAF)-recalc(:)) ) )
+d324 1
+a324 1
+    integer, intent(in)                :: TempFileID ! For optional comparisons
+d327 3
+a329 3
+    logical, intent(in)                :: standardized
+    integer, intent(out), optional     :: MatchingMAF
+    logical, intent(in), optional      :: Recalculate
+d333 1
+a333 1
+    type (MLSFile_T)                       :: TempFile
+d338 6
+a343 6
+    character(len=32)                      :: radianceType
+    integer                                :: j
+    integer                                :: MAF
+    integer                                :: MIF
+    logical                                :: DEEBug
+    logical                                :: myRecalculate
+d369 1
+a369 1
+          recalc(j) = (values2(j, MAF) - mean(j)) / stddev(j)
+d371 2
+a372 2
+        diffs = recalc - ratios2(:,MAF)
+        call ShowDiffs ( MAF )
+d381 1
+a381 1
+      radianceType = 'standardized'
+d387 1
+a387 1
+      radianceType = 'original'
+d400 1
+a400 1
+      & (Rads(2)-values2(2,:))**2 < 1.e-8     )
+d402 1
+a402 1
+    if ( MAF < 1 ) then
+d411 1
+a411 1
+      call output ( (/ real(rads(1), r4), values2(1,MAF) /), advance='yes' )
+d415 1
+a415 1
+      MIF = FindFirst ( abs(Rads(2)-values2(:,MAF)) < 1.e-4     )
+d420 1
+a420 1
+        call output ( (/ real(rads(2), r4), values2(MIF,MAF) /), advance='yes' )
+d426 1
+a426 1
+    matchedStdRadiances = ratios2(:,MAF)
+d431 2
+a432 2
+    MAF = FindFirst ( abs(Rads(1)-values2(1,MAF+1:)) < 1.e-4     )
+    if ( MAF >0 ) then
+d448 3
+a450 3
+          call outputNamedValue ( trim(radianceType) // 'Rad min', minval(values2(:, MAF)) )
+          call outputNamedValue ( trim(radianceType) // 'Rad max', maxval(values2(:, MAF)) )
+          diffs = Rads - values2(:, MAF)
+d521 2
+a522 2
+    TYPE (NeuralNetInputData_T),intent(in):: nnInputData
+    TYPE (NeuralNetCoeffs_T), intent(in)  :: nnCoeffs
+d524 1
+a524 1
+    CHARACTER(len=*),intent(in) :: TYPE ! type  may be either 'tanh' or 'sigmoid'
+d538 3
+a540 3
+    INTEGER, SAVE:: nMIFs
+    INTEGER, SAVE,  dimension(2) :: nChans
+    INTEGER, SAVE :: nSurfs, nVars, nNeurons
+d543 2
+a544 2
+    real(r8), dimension(:),ALLOCATABLE :: working_space
+    real(r8),  dimension(:), ALLOCATABLE  :: NeuronValues, NeuronValues2
+d548 4
+a551 4
+    INTEGER :: c,n,m,jj,s,k,v ! various counters
+    integer:: istat
+    integer:: status
+    INTEGER,  dimension(2) :: dims2
+d571 1
+a571 1
+    ! make sure TYPE is correct.
+d574 1
+a574 1
+      PRINT *,"input var TYPE must equal either 'tanh' or 'sigmoid'"
+d701 1
+a701 1
+    k=k+1
+d731 1
+a731 1
+    k=k+1
+d839 1
+a839 1
+    k=k+1
+d854 1
+a854 1
+    type (NeuralNetInputData_T),intent(inout)             :: nnInputData
+d858 2
+a859 2
+    integer, optional, intent(in) :: MAF ! For optional comparisons
+    TYPE (NeuralNetCoeffs_T), optional, intent(in)        :: nnCoeffs
+d978 1
+a978 1
+    INTEGER :: i,nn
+d1001 1
+a1001 1
+       "$Id: NeuralNetworkUtils_m.f90,v 1.1.2.2 2021/01/25 21:13:33 whdaffer Exp $"
+d1010 3
+@
+
+
+2.5
+log
+@many more (too many?) debugging options
+@
+text
+@d44 3
+a46 2
+  use Output_M, only: Output
+  implicit none
+d51 3
+a53 7
+     !
+     ! Instead of the original quantity's larger number of channels and MIFs,
+     ! we store only the useful ones, by downsampling using integer
+     ! arrays in the NeuralNetCoeffs (see below)
+     integer :: NumChannels
+     integer :: NumMIFs
+     real(R8), dimension(:,:), allocatable :: values
+d59 1
+a59 1
+     character(len=32), dimension(:), allocatable :: Bands
+d67 2
+a68 1
+     integer,  dimension(:,:), allocatable :: Channels_In_Each_Band
+d74 3
+a76 3
+     real(R8), dimension(:), allocatable :: Intercepts_Hidden_Labels_Layer
+     real(R8), dimension(:), allocatable :: Output_Pressure_Levels
+     integer,  dimension(:), allocatable :: Output_Pressure_Levels_Indices
+d79 9
+a87 2
+     real(R8), dimension(:), allocatable :: Intercepts_Hidden_Layer_1
+     real(R8), dimension(:), allocatable :: Intercepts_Hidden_Layer_2
+a88 4
+     ! [5078, 42] = [nNeurons, nLevels]
+     real(R8), dimension(:,:), allocatable :: Weights_Hidden_Labels_Layer
+     real(R8), dimension(:,:), allocatable :: Weights_Hidden_Layer_1
+     real(R8), dimension(:,:), allocatable :: Weights_Hidden_Layer_2
+d91 3
+a93 2
+     real(R8), dimension(:), allocatable :: Normalization_Labels_Max
+     real(R8), dimension(:), allocatable :: Normalization_Labels_Min
+d96 1
+a96 1
+     integer, dimension(:), allocatable :: MIFs
+d101 3
+a103 2
+     real(R8), dimension(:), allocatable :: Standardization_Brightness_Temperature_Mean
+     real(r8), dimension(:), allocatable :: Standardization_Brightness_Temperature_Std
+d105 3
+a107 2
+     real(r8), dimension(:,:), allocatable :: Stddevs
+     real(r8), dimension(:,:), allocatable :: Means
+a108 1
+  END TYPE NeuralNetCoeffs_T
+d125 12
+d141 2
+a142 1
+  
+d147 1
+a147 1
+  real(r8), dimension(7575), public, save :: matchedStdRadiances = 0
+a158 1
+  
+d175 2
+a176 2
+    integer, dimension(:), intent(in)    :: ProfileRange ! For optional comparisons
+    real(Rv),  dimension(:)              :: TemperatureValues
+d180 1
+a180 1
+    real(r4), allocatable, dimension(:,:)  :: values2
+d205 1
+a205 1
+    real(r8), dimension(:), intent(in)     :: StdRadiances
+d210 2
+a211 2
+    real(r4), allocatable, dimension(:,:)  :: ratios2
+    real(r4), allocatable, dimension(:)    :: recalc
+d245 1
+a245 1
+    integer, dimension(:), intent(in)    :: MAFRange ! For optional comparisons
+d253 3
+a255 3
+    real(r4), allocatable, dimension(:,:)  :: ratios2
+    real(r4), allocatable, dimension(:)    :: recalc
+    real(r4), allocatable, dimension(:,:)  :: values2
+d325 2
+a326 2
+    integer, dimension(:), intent(in)  :: MAFRange ! For optional comparisons
+    real(r8), intent(in), dimension(:) :: Rads
+d330 2
+a331 2
+    real(r8), dimension(:), intent(in), optional :: Mean
+    real(r8), dimension(:), intent(in), optional :: StdDev
+d334 4
+a337 4
+    real(r4), allocatable, dimension(:,:)  :: ratios2
+    real(r4), allocatable, dimension(:)    :: recalc
+    real(r4), allocatable, dimension(:,:)  :: values2
+    real(r4), dimension(size(Rads))        :: diffs
+d411 1
+a411 1
+      call output ( (/ Real(rads(1), r4), values2(1,MAF) /), advance='yes' )
+d420 1
+a420 1
+        call output ( (/ Real(rads(2), r4), values2(MIF,MAF) /), advance='yes' )
+d461 2
+d471 9
+a479 9
+    call outputNamedValue ( 'Number of Bands', size(Coeffs%Bands) )
+    if ( myDetails > 0 ) then
+    call dump ( Coeffs%Bands, 'Bands' )
+    call dump ( Coeffs%Channels_In_Each_Band, 'Channels' )
+    endif
+
+    call outputNamedValue ( 'Number of MIFs', size(Coeffs%MIFs) )
+    if ( myDetails > 0 ) &
+    call dump ( Coeffs%MIFs, 'MIFs' )
+d483 8
+a490 8
+    if ( myDetails > 0 ) then
+    call dump ( Coeffs%Output_Pressure_Levels, 'Output_Pressure_Levels' )
+    call dump ( Coeffs%Output_Pressure_Levels_Indices, 'Output_Pressure_Indices' )
+    call dump ( Coeffs%Intercepts_Hidden_Labels_Layer, 'Intercepts layer' )
+    call dump ( Coeffs%Normalization_Labels_Max, 'Normalization Labels Max' )
+    call dump ( Coeffs%Normalization_Labels_Min, 'Normalization Labels Max' )
+    endif
+    
+d512 1
+a512 1
+  end subroutine Dump_Coeffs
+d514 3
+a516 2
+  FUNCTION NeuralNetFit( nnInputData, nnCoeffs, nHL, TYPE, &
+    & RadFileID, TempFileID, MAF, profile, Debugging, StdRadiances ) &
+d525 1
+a525 1
+    real(r8), dimension(:), allocatable :: prediction
+d531 4
+a534 1
+    real(r8), optional, dimension(:), intent(in) :: StdRadiances
+d537 4
+a540 4
+    logical,save :: first = .TRUE.
+    integer, save:: nMIFs
+    integer, save, dimension(2) :: nChans
+    integer, save :: nSurfs, nVars, nNeurons
+d543 2
+a544 2
+    real(r8),dimension(:), allocatable :: working_space
+    real(r8), dimension(:), allocatable  :: NeuronValues, NeuronValues2
+d546 1
+a546 1
+    real(r8) :: y_pred
+d548 22
+a569 9
+    integer :: c,n,m,jj,s,v! various counters
+    integer :: MatchingMAF
+    integer, dimension(2) :: dims2
+    logical                     :: DEEBug
+
+
+    ! Executable
+    DeeBug = .false.
+    if ( present(Debugging) ) DeeBug = Debugging
+d571 1
+a571 1
+    ! make sure TYPE is one of the recognized types
+d574 1
+a574 3
+       call OutputNamedValue (  'Unrecognized type', trim(type) )
+       CALL MLSMessage(MLSMSG_error, ModuleName, &
+           & "input var TYPE must equal either 'tanh' or 'sigmoid'")
+d577 1
+a577 2
+       CALL MLSMessage(MLSMSG_error, ModuleName, &
+           & "NHL must equal either 1 or 2")
+a579 4
+    if ( DeeBug ) then
+      call output ( 'Dumping n-n weights', advance='yes' )
+      call Dump ( nnCoeffs, Details=-1 )
+    endif
+d594 10
+a603 3
+    if ( DeeBug ) call output ( 'Allocating', advance='yes' )
+    ! allocate space
+    ! nMIFs=75 for all bands (so far)
+d605 3
+d610 2
+d613 10
+a622 1
+    ALLOCATE(prediction(nSurfs))
+d627 7
+a633 13
+    ! Did we pass the already-standardized radiances as an optional arg?
+    if ( .not. present(StdRadiances) ) then
+      ! load the data into the working_space. The data is arranged as
+      ! the radiances in MIF, then channel order for band 1, band 8 and
+      ! then band 22
+      jj=1
+
+      ! Load band1
+      DO m=1,nMIFs
+        DO c=1,nChans(1)
+          working_space( jj ) = nnInputData%Band_1_Radiances%Values(c,m)
+          jj = jj + 1
+        END DO
+d635 1
+d637 5
+a641 6
+      ! Load band8
+      DO m=1,nMIFs
+        DO c=1,nChans(1)
+          working_space( jj ) = nnInputData%Band_8_Radiances%Values(c,m)
+          jj = jj + 1
+        END DO
+d643 1
+d645 5
+a649 6
+      ! load band 22
+      DO m=1,nMIFs
+        DO c=1,nChans(2)
+          working_space( jj ) = nnInputData%Band_22_Radiances%Values(c,m)
+          jj = jj + 1
+        END DO
+d651 8
+a658 6
+    else
+      if ( DeeBug ) call output( 'Using optional stdRadiances', advance='yes' )
+      jj = size(StdRadiances)
+      working_space(1:jj) = StdRadiances
+      jj = jj + 1 ! to synchronize with its value after the nested loops we skipped
+    endif
+d660 23
+a682 26
+    if ( DeeBug ) then
+      call OutputNamedValue ( 'nVars', nVars )
+      call OutputNamedValue ( 'jj-1', jj-1 )
+      call OutputNamedValue ( 'min(Rads)', minval(working_space(1:jj-1)) )
+      call OutputNamedValue ( 'max(Rads)', maxval(working_space(1:jj-1)) )
+      call OutputNamedValue ( '1st,last(Rads)', (/ &
+        & working_space(1), working_space(jj-1) &
+        & /)&
+        & )
+    endif
+    
+    ! Optionally save this dataset for comparison with
+    ! PyThon or iDl or whaTeVer you guys use these daYs
+    if ( present(RadFileID) ) &
+      & call SaveAsHDF5DS ( RadFileID, 'Radiances', working_space(1:jj-1) )
+
+    ! Optionally save this dataset for comparison with
+    ! PyThon or iDl or whaTeVer you guys use these daYs
+    if ( present(TempFileID) ) &
+      & call CompareStandardizedRads ( TempFileID, &
+      & (/ MAF, MAF /), working_space(1:jj-1), &
+      & standardized=.true., MatchingMAF=MatchingMAF )
+    if ( MatchingMAF > 0 ) then
+      call OutputNamedValue ( 'Matching MAF', MatchingMAF )
+      call OutputNamedValue ( 'Compared to', MAF )
+    endif
+d684 1
+a684 2
+    ! unlike the IDL code, this routine will only ever see 1 MAF
+    ! (sample) at a time, so we don't need the IDL loop over `samples'
+d686 2
+a687 1
+    ! weights is [nVars,nNeurons]
+d689 2
+d693 2
+a694 1
+           & SUM( working_space(v) * nnCoeffs%Weights_Hidden_Layer_1(v,:))
+d696 6
+d703 1
+a703 1
+
+d705 2
+d714 73
+a786 4
+    if ( DeeBug ) then
+      call OutputNamedValue ( 'num neurons', nNeurons )
+      call OutputNamedValue ( 'shape(WHLL)', shape(nnCoeffs%Weights_Hidden_Labels_Layer) )
+    endif
+d788 2
+d791 32
+a822 29
+    neuronValues2=0.0
+    ! Loop over surfaces
+    DO s=1,nSurfs 
+      ! neuron values 'activation' 
+      IF (nHL .EQ. 1) THEN 
+
+        IF (TRIM(TYPE) .EQ. 'tanh') THEN
+          neuronValues = TANH(neuronValues + &
+               & nnCoeffs%Weights_Hidden_Labels_Layer(:,s)) + &
+               & nnCoeffs%Intercepts_Hidden_labels_layer(s)
+        ELSE IF(trim(TYPE) .EQ. 'sigmoid') THEN 
+          CALL SIGMOID(neuronValues + &
+               & nnCoeffs%Weights_Hidden_Labels_Layer(:,s), neuronValues)
+               neuronValues = neuronValues + nnCoeffs%Intercepts_Hidden_Labels_Layer(s)
+        ENDIF
+
+      ELSEIF (nHL .EQ. 2) THEN 
+
+        DO n=1,nNeurons
+          neuronValues2 = neuronValues2 + &
+               & SUM( neuronValues(n) * nnCoeffs%Weights_Hidden_Layer_2(n,:))
+        END DO
+
+
+        IF (TRIM(TYPE) .EQ. 'tanh') THEN
+          neuronValues2 = TANH(neuronValues2 + nnCoeffs%Intercepts_Hidden_Layer_2)
+        ELSE IF(trim(TYPE) .EQ. 'sigmoid') THEN 
+          call SIGMOID(neuronValues2 + nnCoeffs%Intercepts_Hidden_Layer_2,neuronValues)
+        ENDIF
+d825 10
+a834 3
+      y_pred = DOT( neuronValues2, &
+           & nnCoeffs%Weights_Hidden_Labels_Layer(:,s) ) + &
+           &   nnCoeffs%Intercepts_Hidden_Labels_Layer(s)
+d836 1
+a836 5
+      ! Calculate the final product
+      prediction(s) = y_pred * &
+           & ( nnCoeffs%Normalization_Labels_Max(s) - &
+           &   nnCoeffs%Normalization_Labels_Min(s)) + &
+           &   nnCoeffs%Normalization_Labels_Min(s)
+d838 2
+a839 1
+    ENDDO ! loop over pressure surfaces
+d841 1
+d844 1
+a844 1
+  
+d855 2
+a856 2
+    real(r8), dimension(:), intent(in)                    :: Mean
+    real(r8), dimension(:), intent(in)                    :: StdDev
+d862 2
+a863 2
+    real(r8), dimension(:), allocatable                   :: ratio
+    real(r8), dimension(:), allocatable                   :: values
+d975 4
+a978 3
+  real(r8) FUNCTION dot(X,Y)
+    real(r8), dimension(:),intent(in):: x,y
+    integer :: i,nn
+d989 1
+a989 1
+  END FUNCTION dot
+d992 3
+a994 3
+  SUBROUTINE sigmoid(x,s) 
+    real(r8),dimension(:),intent(in) :: x
+    real(r8),dimension(:) :: s
+d996 1
+a996 1
+  END SUBROUTINE sigmoid
+d1001 1
+a1001 1
+       "$Id: NeuralNetworkUtils_m.f90,v 2.4 2021/03/18 23:47:41 pwagner Exp $"
+d1010 3
+@
+
+
+2.4
+log
+@Fixed some more errors; added more debugging aids
+@
+text
+@d42 1
+a42 1
+  use MLSKinds, only: R4, R8
+d126 8
+d135 1
+a135 1
+  PUBLIC :: Dump, &
+d152 69
+d231 1
+a231 1
+    TYPE (NeuralNetCoeffs_T), intent(in) :: nnCoeffs
+d234 1
+d277 3
+a279 3
+          binNum = FindFirst ( abs(ratios2(1,MAF)-recalc(binNum+1:)) < 1.e-4 )
+          if ( binNum > 0 ) then
+            call outputNamedValue ( 'A 2nd match found at 1st +', BinNum )
+d283 1
+d338 4
+a346 1
+      allocate ( ratios2(7575, 3495) )
+a351 3
+      call LoadFromHDF5DS ( TempFile, &
+        & "Standardized_Brightness_Temps_Matrix", &
+        & ratios2 )
+d383 3
+a385 1
+    MAF = FindFirst ( abs(Rads(1)-values2(1,:)) < 1.e-4     )
+d396 1
+a396 1
+      call output ( (/ Real(rads(1), r4), values2(1,MAF) /) )
+d399 1
+a399 1
+      ! Could the indexes be jumbled?
+d405 1
+a405 1
+        call output ( (/ Real(rads(2), r4), values2(MIF,MAF) /) )
+d409 7
+d475 1
+a475 1
+    
+a481 1
+    call outputNamedValue ( 'Number of neurons', size(Coeffs%Intercepts_Hidden_Layer_1) )
+d498 2
+a499 1
+    & RadFileID, TempFileID, MAF, profile ) RESULT(prediction)
+d512 2
+d530 1
+d533 3
+a535 1
+    ! ----------- executable statements -----------------
+d537 1
+a537 1
+    ! make sure TYPE is correct.
+d540 1
+d549 4
+a552 2
+
+    call Dump ( nnCoeffs )
+d567 1
+d579 13
+a591 10
+    ! load the data into the working_space. The data is arranged as
+    ! the radiances in MIF, then channel order for band 1, band 8 and
+    ! then band 22
+    jj=1
+
+    ! Load band1
+    DO m=1,nMIFs
+      DO c=1,nChans(1)
+        working_space( jj ) = nnInputData%Band_1_Radiances%Values(c,m)
+        jj = jj + 1
+a592 1
+    END DO
+d594 6
+a599 5
+    ! Load band8
+    DO m=1,nMIFs
+      DO c=1,nChans(1)
+        working_space( jj ) = nnInputData%Band_8_Radiances%Values(c,m)
+        jj = jj + 1
+a600 1
+    END DO
+d602 6
+a607 5
+    ! load band 22
+    DO m=1,nMIFs
+      DO c=1,nChans(2)
+        working_space( jj ) = nnInputData%Band_22_Radiances%Values(c,m)
+        jj = jj + 1
+d609 6
+a614 1
+    END DO
+d616 10
+a625 5
+
+    call OutputNamedValue ( 'nVars', nVars )
+    call OutputNamedValue ( 'shape(WHL1)', shape(nnCoeffs%Weights_Hidden_Layer_1) )
+    call OutputNamedValue ( 'min(Rads)', minval(working_space(1:jj-1)) )
+    call OutputNamedValue ( 'max(Rads)', maxval(working_space(1:jj-1)) )
+d662 4
+a665 3
+    
+    call OutputNamedValue ( 'num neurons', nNeurons )
+    call OutputNamedValue ( 'shape(WHLL)', shape(nnCoeffs%Weights_Hidden_Labels_Layer) )
+d717 1
+a717 1
+              & TempFileID, MAF, nnCoeffs )
+d729 1
+d734 1
+d740 2
+d840 1
+d869 1
+a869 1
+       "$Id: NeuralNetworkUtils_m.f90,v 2.3 2021/03/05 00:53:34 pwagner Exp $"
+d878 3
+@
+
+
+2.3
+log
+@Some progress but still wrong
+@
+text
+@d12 22
+a33 8
+! This module contains the utility code to be used when calculating
+! species using Frank Werner's Neural Network solutions. At the time
+! of this writing (2021/01/20) only Temperature is being retrieved,
+! but the code should be able to do any species, provided the correct
+! training data is provided. 
+
+! To adapt to other species, we must revisit the hardcoded use of some
+! signal names, arrays sizes, etc. both here and in l2/NeuralNet_m.f90
+d41 1
+d101 3
+d143 81
+a223 2
+CONTAINS 
+  subroutine CompareStandardizedRads ( TempFileID, MAF, Rads, standardized )
+d230 2
+a231 2
+    integer, intent(in) :: TempFileID ! For optional comparisons
+    integer, intent(in) :: MAF ! For optional comparisons
+d233 5
+a237 1
+    logical, intent(in) :: standardized
+d240 2
+d245 5
+d251 4
+d259 23
+d288 1
+d294 1
+d296 7
+a302 11
+    diffs = Rads - values2(:, MAF)
+    call output( '     ------------------', advance='yes' )
+    call output( '     (As we compute them)', advance='yes' )
+    call outputNamedValue ( trim(radianceType) // 'Rad min', minval(Rads) )
+    call outputNamedValue ( trim(radianceType) // 'Rad max', maxval(Rads) )
+    call output( '     (As read from Franks file)', advance='yes' )
+    call outputNamedValue ( trim(radianceType) // 'Rad min', minval(values2(:, MAF)) )
+    call outputNamedValue ( trim(radianceType) // 'Rad max', maxval(values2(:, MAF)) )
+    call outputNamedValue ( 'min diff', minval(diffs) )
+    call outputNamedValue ( 'max diff', maxval(diffs) )
+    call Dump ( diffs, 'diffs', options='@@' )
+d304 51
+d438 1
+d488 2
+a489 2
+    DO c=1,nChans(1)
+      DO m=1,nMIFs
+d496 2
+a497 2
+    DO c=1,nChans(1)
+      DO m=1,nMIFs
+d504 2
+a505 2
+    DO c=1,nChans(2)
+      DO m=1,nMIFs
+d525 7
+a531 2
+      & call CompareStandardizedRads ( TempFileID, MAF, working_space(1:jj-1), &
+      & standardized=.true. )
+d606 1
+a606 1
+              & TempFileID, MAF )
+d617 1
+d623 1
+d665 13
+a677 4
+    call Dump( values, 'values' )
+    call Dump( mean ,  'mean  ' )
+    call Dump( stddev, 'stddev' )
+    call Dump( ratio , 'ratio ' )
+d680 7
+a686 3
+    if ( present(TempFileID) ) &
+      & call CompareStandardizedRads ( TempFileID, MAF, values, &
+      & standardized=.false. )
+d716 9
+d753 1
+a753 1
+       "$Id: NeuralNetworkUtils_m.f90,v 2.2 2021/02/19 00:29:46 pwagner Exp $"
+d762 3
+@
+
+
+2.2
+log
+@repaired many bugs; still unsatisfactory imo
+@
+text
+@d18 3
+d23 8
+a30 6
+  USE Dump_0, only: Dump
+  USE HighOutput, only: OutputNamedValue
+  USE MLSHDF5, only: SaveAsHDF5DS
+  USE MLSKinds, only: R8
+  USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error
+  IMPLICIT NONE
+d35 7
+a41 3
+     INTEGER :: NumChannels
+     INTEGER :: NumMIFs
+     REAL(R8), dimension(:,:), allocatable :: values
+d55 1
+a55 1
+     Integer,  dimension(:,:), allocatable :: Channels_In_Each_Band
+d61 3
+a63 3
+     REAL(R8), dimension(:), allocatable :: Intercepts_Hidden_Labels_Layer
+     REAL(R8), dimension(:), allocatable :: Output_Pressure_Levels
+     Integer,  dimension(:), allocatable :: Output_Pressure_Levels_Indices
+d66 2
+a67 2
+     REAL(R8), dimension(:), allocatable :: Intercepts_Hidden_Layer_1
+     REAL(R8), dimension(:), allocatable :: Intercepts_Hidden_Layer_2
+d70 3
+a72 3
+     REAL(R8), dimension(:,:), allocatable :: Weights_Hidden_Labels_Layer
+     REAL(R8), dimension(:,:), allocatable :: Weights_Hidden_Layer_1
+     REAL(R8), dimension(:,:), allocatable :: Weights_Hidden_Layer_2
+d75 2
+a76 2
+     REAL(R8), dimension(:), allocatable :: Normalization_Labels_Max
+     REAL(R8), dimension(:), allocatable :: Normalization_Labels_Min
+d84 2
+a85 2
+     REAL(R8), dimension(:), allocatable :: Standardization_Brightness_Temperature_Mean
+     REAL(r8), dimension(:), allocatable :: Standardization_Brightness_Temperature_Std
+d113 2
+a114 1
+       & Radiance_T
+d126 47
+d226 2
+a227 2
+  FUNCTION NeuralNetFit(nnInputData, nnCoeffs, nHL, TYPE, &
+    & FileID ) RESULT(prediction)
+d231 9
+a239 8
+    TYPE (NeuralNetInputData_T),intent(IN):: nnInputData
+    TYPE (NeuralNetCoeffs_T), INTENT(IN)  :: nnCoeffs
+    INTEGER,intent(in) :: nHL ! number of hidden layers. Will probably always be 2
+    CHARACTER(len=*),INTENT(IN) :: TYPE ! type  may be either 'tanh' or 'sigmoid'
+    REAL(r8), dimension(:), ALLOCATABLE :: prediction
+    integer, optional, intent(in) :: FileID ! For optionally saving Datasets
+
+
+d242 4
+a245 4
+    LOGICAL,SAVE :: first = .TRUE.
+    INTEGER, SAVE:: nMIFs
+    INTEGER, SAVE, dimension(2) :: nChans
+    INTEGER, SAVE :: nSurfs, nVars, nNeurons
+d248 2
+a249 2
+    REAL(r8),dimension(:), allocatable :: working_space
+    REAL(r8), dimension(:), ALLOCATABLE  :: NeuronValues, NeuronValues2
+d253 2
+a254 2
+    INTEGER :: c,n,m,jj,s,v! various counters
+    INTEGER, dimension(2) :: dims2
+d329 2
+d334 8
+a341 2
+    if ( present(FileID) ) &
+      & call SaveAsHDF5DS ( FileID, 'Radiances', working_space(1:jj-1) )
+d412 100
+a511 1
+
+d514 3
+a516 3
+  REAL(r8) FUNCTION dot(X,Y)
+    REAL(r8), dimension(:),INTENT(IN):: x,y
+    INTEGER :: i,nn
+d531 2
+a532 2
+    REAL(r8),dimension(:),INTENT(in) :: x
+    REAL(r8),dimension(:) :: s
+d539 1
+a539 1
+       "$Id: NeuralNetworkUtils_m.f90,v 2.1 2021/02/05 05:14:40 pwagner Exp $"
+d548 3
+@
+
+
+2.1
+log
+@First commit
+@
+text
+@d22 1
+d32 1
+a32 1
+     REAL(R8), DIMENSION(:,:),ALLOCATABLE :: values
+a34 1
+  ! According to Frank, the 
+d39 8
+d52 3
+a54 1
+     REAL(R8), DIMENSION(:),allocatable :: Intercepts_Hidden_Labels_Layer
+d57 2
+a58 2
+     REAL(R8), DIMENSION(:),allocatable :: Intercepts_Hidden_Layer_1
+     REAL(R8), DIMENSION(:),allocatable :: Intercepts_Hidden_Layer_2
+d60 8
+a67 8
+     ! [5078, 41] = [nNeurons, nLevels]
+     REAL(R8), DIMENSION(:,:),allocatable :: Weights_Hidden_Labels_Layer
+     REAL(R8), DIMENSION(:,:),allocatable :: Weights_Hidden_Layer_1
+     REAL(R8), DIMENSION(:,:),allocatable :: Weights_Hidden_Layer_2
+
+     ! [41]. Number of levels
+     REAL(R8), DIMENSION(:),allocatable :: Normalization_Labels_Max
+     REAL(R8), DIMENSION(:),allocatable :: Normalization_Labels_Min
+d75 2
+a76 2
+     REAL(R8), DIMENSION(:),allocatable :: Standardization_Brightness_Temperature_Mean
+     REAL(r8), DIMENSION(:),allocatable :: Standardization_Brightness_Temperature_Std
+d126 1
+a126 1
+    if ( myDetails > 0 ) &
+d128 2
+d135 2
+a136 1
+    call outputNamedValue ( 'Number of pressure levels', size(Coeffs%Intercepts_Hidden_Labels_Layer) )
+d138 2
+d169 2
+a170 1
+  FUNCTION NeuralNetFit(nnInputData, nnCoeffs, nHL,TYPE) RESULT(prediction)
+d178 2
+a179 1
+    REAL(r8), DIMENSION(:), ALLOCATABLE :: prediction
+d186 1
+a186 1
+    INTEGER, SAVE, DIMENSION(2) :: nChans
+d190 2
+a191 2
+    REAL(r8),DIMENSION(:),ALLOCATABLE :: working_space
+    REAL(r8), DIMENSION(:), ALLOCATABLE  :: NeuronValues
+d195 1
+a195 1
+    INTEGER :: c,n,m,jj,s ! various counters
+d200 13
+d228 4
+a231 2
+    ! allocate space                                   
+    ALLOCATE( working_space(nVars )) ! nVars = 2*Chanels(bands 1&8) *  nMIFs + nChans(22)*nMIFs
+d233 1
+d239 3
+a241 1
+    ! load the data into the working_space
+d263 1
+a263 1
+        working_space( jj ) = nnInputData%Band_8_Radiances%Values(c,m)
+d271 14
+a284 3
+      
+    DO n=1,nNeurons
+      neuronValues(n) = DOT( working_space, nnCoeffs%Weights_Hidden_Layer_1(n,:))
+d286 10
+d299 4
+a302 1
+      
+a303 1
+
+d308 3
+a310 1
+          neuronValues = TANH(neuronValues + nnCoeffs%Intercepts_Hidden_Layer_1)
+d312 3
+a314 1
+          call SIGMOID(neuronValues + nnCoeffs%Intercepts_Hidden_Layer_2,neuronValues)
+d319 6
+d326 1
+a326 1
+          neuronValues = TANH(neuronValues + nnCoeffs%Intercepts_Hidden_Layer_2)
+d328 1
+a328 1
+          call SIGMOID(neuronValues + nnCoeffs%Intercepts_Hidden_Layer_2,neuronValues)
+a329 6
+
+      ELSE 
+
+        CALL MLSMessage(MLSMSG_error, ModuleName, &
+             & "input var TYPE must equal either 'tanh' or 'sigmoid'")
+
+d332 3
+a334 3
+      y_pred = DOT( neuronValues,nnCoeffs%Weights_Hidden_Labels_Layer(:,s)) + &
+           nnCoeffs%Intercepts_Hidden_Labels_Layer(s)
+      
+d337 4
+a340 4
+       prediction(s) = y_pred * &
+            & ( nnCoeffs%Normalization_Labels_Max(s) - &
+            &   nnCoeffs%Normalization_Labels_Min(s)) + &
+            &   nnCoeffs%Normalization_Labels_Min(s)
+d344 1
+d350 1
+a350 1
+    REAL(r8), DIMENSION(:),INTENT(IN):: x,y
+d364 1
+a364 1
+  ! Sigmoid function 
+d366 2
+a367 2
+    REAL(r8),DIMENSION(:),INTENT(in) :: x
+    REAL(r8),DIMENSION(:) :: s
+d374 1
+a374 1
+       "$Id: NeuralNetworkUtils_m.f90,v 1.1.2.2 2021/01/25 21:13:33 whdaffer Exp $"
+d382 4
+a385 1
+! $Log: dump_0.f90,v $
+@
+
+
+1.1
+log
+@file NeuralNetworkUtils_m.f90 was initially added on branch neuralnetworks-1-0.
+@
+text
+@d1 319
+@
+
+
+1.1.2.1
+log
+@Initial revision
+@
+text
+@a0 224
+! Copyright 2021, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+!
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! This module contains the utility code to be used when calculating
+! species using Frank Werner's Neural Network solutions. At the time
+! of this writing (2021/01/20) only Temperature is being retrieved,
+! but the code should be able to do any species, provided the correct
+! training data is provided. 
+
+MODULE NeuralNetUtils_M
+
+  IMPLICIT NONE
+
+  TYPE radiance_T
+     character(len=64) :: signal
+     !INTEGER :: NumMAFS ! <----- it's only ever going to be one MAF, right?
+     INTEGER :: NumChannels
+     INTEGER :: NumMIFs
+     REAL(rt), DIMENSION(NumChannels, NumMIFs) :: values
+  END TYPE radiance_T
+
+  ! According to Frank, the 
+  TYPE NeuralNetCoeffs_T
+     ! Will be allocated in the caller. 
+
+     ! these are the dimensions for each part (assuming that we keep
+     ! with Frank set up for Temperature retrieval)
+
+     ! [42], number of pressure levels
+     REAL(R8), DIMENSION(:),allocateable :: Intercepts_Hidden_Labels_Layer
+
+     ! [5078]. NUmber of Neurons in hidden layers
+     REAL(R8), DIMENSION(:),allocateable :: Intercepts_Hidden_Layer_1
+     REAL(R8), DIMENSION(:),allocateable :: Intercepts_Hidden_Layer_2
+
+     ! [5078, 42] = [nNeurons, nLevels]
+     REAL(R8), DIMENSION(:,:),allocateable :: Weights_Hidden_Labels_Layer
+     REAL(R8), DIMENSION(:,:),allocateable :: Weights_Hidden_Layer_1
+     REAL(R8), DIMENSION(:,:),allocateable :: Weights_Hidden_Layer_2
+
+     ! [42]. Number of levels
+     REAL(R8), DIMENSION(:),allocateable :: Normalization_Labels_Max
+     REAL(R8), DIMENSION(:),allocateable :: Normalization_Labels_Min
+
+     ! [7575] number of 'variables', i.e. 2*25*75 + 51*75
+     REAL(R8), DIMENSION(:),allocateable :: Standardization_Brightness_Temperature_Mean
+     REAL(r8), DIMENSION(:),allocateable :: Standardization_Brightness_Temperature_Std
+
+
+  END TYPE NeuralNet_T
+
+  TYPE NeuralNetInputData_T
+     ! I'm assuming that will have been corrected for the baseline and
+     ! reduced to the appropriate MIFs, 22-96 for all bands, all 25
+     ! channels for Bands 1 and 8 and channels 40-90 for Band
+     ! 22. 
+     !
+     ! All of these will end up having 
+     ! These will be allocated in the caller.
+
+     (TYPE) Radiance_T :: Band_1_Radiances 
+     (TYPE) Radiance_T :: Band_8_Radiances
+     (TYPE) Radiance_T :: Band_22_Radiances 
+
+  END TYPE NeuralNetInputData_T
+
+
+  PUBLIC NeuralNetUtils_M, &
+       & NeuralNetInputData_T, & 
+       & NeuralNetCoeffs_T, & 
+       & NeuralNetFit, & 
+       & Radiance_T
+
+  
+
+
+  REAL(r8) FUNCTION NeuralNetFit(nnInputData, nnCoeffs, first,nHL,TYPE) RESULT(prediction)
+    ! Fortran version of the IDL code in `example_idl.pro' from Frank
+    TYPE (NeuratNetCoeffs_T), INTENT(IN)  :: nnCoeffs
+    TYPE (NeuralNetInputData_T),intent(IN):: nnInputData
+
+    INTEGER,intent(in) :: nHL ! number of hidden layers. Will probably always be 2
+    CHARACTER(len=*),INTENT(IN) :: TYPE ! type  may be either 'tanh' or 'sigmoid'
+
+
+    ! Local variables
+    LOGICAL, SAVE, INTENT(IN) :: first/.FALSE./
+    REAL(r8), DIMENSION(:),INTENT(OUT), allocatable:: prediction
+
+    INTEGER, SAVE:: nMIFs, nMAFs
+    INTEGER, SAVE, DIMENSION(2) :: nChans
+    INTEGER, SAVE :: nSurfs, nVars, nNeurons
+
+    ! Various working space arrays
+    REAL(r8),DIMENSION(:),ALLOCATABLE :: working_spave
+    REAL(r8), DIMENSION(:), ALLOCATABLE  :: NeuronValues
+    
+
+    real(r8) :: pred1
+
+    INTEGER :: c,m,jj,v ! various counters
+
+    ! These are fixed for the run
+    IF (first .EQ. .TRUE.) THEN 
+      nMIFs = nnInputData%Band_1_Radiances%numMIFs
+      nChans(1)=nnInputData%Band_1_Radiances%numChannels
+      nChans(2)=nnInputData%Band_22_Radiances%numChannels
+      nSurfs = SIZE(nnCoeffs%Intercepts_HIdden_Labels_Layer)
+      nNeurons = ( size(nnCoeffs%Intercepts_HIdden_Layer_1))(1)
+      nVars = (size(Standardization_Brightness_Temperatures_Mean))(1)
+      first=.FALSE.
+    ENDIF
+    !                                                       
+    working_space = ALLOCATE( nVars ) ! 2*Chanels(bands 1&8) *  nMIFs + nChans(22)*nMIFs
+    neuronValues = ALLOCATE(nVars)
+    prediction = ALLOCATE(nSurfs)
+
+    neuronValues = 0.0
+    neuronValuesActivation = 0.0
+    prediction = 0.0
+
+    ! load the data into the working_space
+    jj=1
+
+    ! Load band1
+    DO c=1,nChans(1)
+      DO m=1,nMIFs
+        working_space( jj ) = nnInputData%Band_1_Radiances%Values(c,m)
+        jj = jj + 1
+      END DO
+    END DO
+
+    ! Load band8
+    DO c=1,nChans(1)
+      DO m=1,nMIFs
+        working_space( jj ) = nnInputData%Band_8_Radiances%Values(c,m)
+        jj = jj + 1
+      END DO
+    END DO
+
+    ! load band 22
+    DO c=1,nChans(2x)
+      DO m=1,nMIFs
+        working_space( jj ) = nnInputData%Band_8_Radiances%Values(c,m)
+        jj = jj + 1
+      END DO
+    END DO
+
+
+    DO v=1,nVars
+      neuronValues(v) = dot(input_matrix,weights_hl_1)
+    END DO
+      
+    DO iSurf=1,nSurfs 
+
+      ! neuron values 'activation' 
+      IF (nHL .EQ. 1) THEN 
+
+        IF (TRIM(TYPE) .EQ. 'tanh') THEN
+          neuronValues = TANH(neuronValues + nnCoeffs%Intercepts_Hidden_Layer_1
+        ELSE IF(trim(TYPE) .EQ. 'sigmoid') THEN 
+          neuronValues=SIGMOID(neuronValues + nnCoeffs%Intercepts_Hidden_Layer_1
+        ENDIF
+
+      ELSEIF (nHL .EQ. 2) THEN 
+
+        IF (TRIM(TYPE) .EQ. 'tanh') THEN
+          neuronValues = TANH(neuronValues + nnCoeffs%Intercepts_Hidden_Layer_1
+        ELSE IF(trim(TYPE) .EQ. 'sigmoid') THEN 
+          neuronValues=SIGMOID(neuronValues + nnCoeffs%Intercepts_Hidden_Layer_1
+        ENDIF
+
+      ELSE 
+
+        CALL MLSMessage(MLSMSG_error, ModuleName, &
+             & "input var TYPE must equal either 'tanh' or 'sigmoid'")
+
+      ENDIF
+
+      ! Do the dot product
+      y_pred = DOT( neuronValues, &
+           & nnCoeffs%Intercepts_Hidden_Labels_Layer)
+      
+
+      ! Calculate the final product
+       prediction(iSurf) = y_pred * &
+            & ( nnCoeff%Normalization_Labels_Max - &
+            &   nnCoeff%Normalization_Labels_Min) + &
+            &   nnCoeff%Normalization_Labels_Min
+
+    ENDDO ! loop over pressure surfaces
+
+  END function NeuralNetFit
+
+
+  ! Dot product.
+  REAL(r8), ELEMENTAL FUNCTION dot(X,Y)
+    REAL(r8), DIMENSION(:),intention(IN):: x,y
+    INTEGER :: n,i,nn
+    dot=0
+    nn=size(x)
+    IF (nn .NE. SIZE(y)) THEN 
+      CALL MLSMessage(MLSMSG_error, ModuleName, &
+           & 'The two vectors are not the same size!')
+    ENDIF
+
+    DO i=0,SIZE(x)
+      dot = dot + x[i]*y[i]
+    END DO
+  END FUNCTION dot
+
+  ! Sigmoid function 
+  REAL(r8),ELEMENTAL FUNCTION sigmoid(x)
+    REAL(r8),intent(in) :: x
+    sigmoid = 1.0/(1.0+EXP(-x))
+  END FUNCTION sigmoid
+@
+
+
+1.1.2.2
+log
+@Fixing compilation bugs, first revision to compile
+@
+text
+@a19 2
+  USE MLSKinds, only: R8
+  USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error
+d27 1
+a27 1
+     REAL(R8), DIMENSION(:,:),ALLOCATABLE :: values
+d38 1
+a38 1
+     REAL(R8), DIMENSION(:),allocatable :: Intercepts_Hidden_Labels_Layer
+d40 12
+a51 12
+     ! [5078]. Number of Neurons in hidden layers
+     REAL(R8), DIMENSION(:),allocatable :: Intercepts_Hidden_Layer_1
+     REAL(R8), DIMENSION(:),allocatable :: Intercepts_Hidden_Layer_2
+
+     ! [5078, 41] = [nNeurons, nLevels]
+     REAL(R8), DIMENSION(:,:),allocatable :: Weights_Hidden_Labels_Layer
+     REAL(R8), DIMENSION(:,:),allocatable :: Weights_Hidden_Layer_1
+     REAL(R8), DIMENSION(:,:),allocatable :: Weights_Hidden_Layer_2
+
+     ! [41]. Number of levels
+     REAL(R8), DIMENSION(:),allocatable :: Normalization_Labels_Max
+     REAL(R8), DIMENSION(:),allocatable :: Normalization_Labels_Min
+d54 2
+a55 4
+     ! This is band 1[channel X MIF] + band 8 [channel X MIF ]  and 
+     ! band 22 [channel X MIF]
+     REAL(R8), DIMENSION(:),allocatable :: Standardization_Brightness_Temperature_Mean
+     REAL(r8), DIMENSION(:),allocatable :: Standardization_Brightness_Temperature_Std
+d57 2
+a58 1
+  END TYPE NeuralNetCoeffs_T
+d69 3
+a71 3
+     TYPE (Radiance_T) :: Band_1_Radiances 
+     TYPE (Radiance_T) :: Band_8_Radiances
+     TYPE (Radiance_T) :: Band_22_Radiances 
+d76 2
+a77 1
+  PUBLIC NeuralNetInputData_T, & 
+a82 8
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+
+CONTAINS 
+a83 1
+  FUNCTION NeuralNetFit(nnInputData, nnCoeffs, nHL,TYPE) RESULT(prediction)
+d85 1
+d87 2
+a89 2
+    TYPE (NeuralNetInputData_T),intent(IN):: nnInputData
+    TYPE (NeuralNetCoeffs_T), INTENT(IN)  :: nnCoeffs
+a91 1
+    REAL(r8), DIMENSION(:), ALLOCATABLE :: prediction
+d94 3
+d98 1
+a98 3
+    ! Local variables
+    LOGICAL,SAVE :: first = .TRUE.
+    INTEGER, SAVE:: nMIFs
+d103 1
+a103 1
+    REAL(r8),DIMENSION(:),ALLOCATABLE :: working_space
+d105 1
+d107 1
+a107 5
+    real(r8) :: y_pred
+
+    INTEGER :: c,n,m,jj,s ! various counters
+    INTEGER, dimension(2) :: dims2
+
+d109 1
+a109 1
+    ! ----------- executable statements -----------------
+d112 1
+a112 1
+    IF (FIRST) THEN 
+d117 2
+a118 4
+      dims2= size( nnCoeffs%Intercepts_HIdden_Layer_1 )
+      nNeurons = dims2(1)
+      dims2=SIZE( nnCoeffs%Standardization_Brightness_Temperature_Mean ) 
+      nVars = dims2(1)
+d121 4
+a124 5
+
+    ! allocate space                                   
+    ALLOCATE( working_space(nVars )) ! nVars = 2*Chanels(bands 1&8) *  nMIFs + nChans(22)*nMIFs
+    ALLOCATE(neuronValues(nNeurons))
+    ALLOCATE(prediction(nSurfs))
+d127 1
+d150 1
+a150 1
+    DO c=1,nChans(2)
+d158 2
+a159 2
+    DO n=1,nNeurons
+      neuronValues(n) = DOT( working_space, nnCoeffs%Weights_Hidden_Layer_1(n,:))
+d162 1
+a162 1
+    DO s=1,nSurfs 
+d168 1
+a168 1
+          neuronValues = TANH(neuronValues + nnCoeffs%Intercepts_Hidden_Layer_1)
+d170 1
+a170 1
+          call SIGMOID(neuronValues + nnCoeffs%Intercepts_Hidden_Layer_2,neuronValues)
+d176 1
+a176 1
+          neuronValues = TANH(neuronValues + nnCoeffs%Intercepts_Hidden_Layer_2)
+d178 1
+a178 1
+          call SIGMOID(neuronValues + nnCoeffs%Intercepts_Hidden_Layer_2,neuronValues)
+d188 3
+a190 2
+      y_pred = DOT( neuronValues,nnCoeffs%Weights_Hidden_Labels_Layer(:,s)) + &
+           nnCoeffs%Intercepts_Hidden_Labels_Layer(s)
+d194 4
+a197 4
+       prediction(s) = y_pred * &
+            & ( nnCoeffs%Normalization_Labels_Max(s) - &
+            &   nnCoeffs%Normalization_Labels_Min(s)) + &
+            &   nnCoeffs%Normalization_Labels_Min(s)
+d205 3
+a207 3
+  REAL(r8) FUNCTION dot(X,Y)
+    REAL(r8), DIMENSION(:),INTENT(IN):: x,y
+    INTEGER :: i,nn
+d216 1
+a216 1
+      dot = dot + x(i)*y(i)
+d221 4
+a224 17
+  SUBROUTINE sigmoid(x,s) 
+    REAL(r8),DIMENSION(:),INTENT(in) :: x
+    REAL(r8),DIMENSION(:) :: s
+    s = 1.0/(1.0+EXP(-x))
+  END SUBROUTINE sigmoid
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+END MODULE NeuralNetUtils_M
+@
+
+

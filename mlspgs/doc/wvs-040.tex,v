@@ -1,0 +1,168 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.14
+	cfm-single-freq-0-1:1.1.0.12
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.10
+	mus-emls-1-70:1.1.0.8
+	rel-1-0-englocks-work:1.1.0.6
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2008.06.11.20.14.52;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.2in
+\textheight 9.2in
+
+\newcommand{\docname}{\bf wvs-040}
+\newcommand{\docdate}{13 July 2006}
+
+\usepackage{longtable}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill\\
+Subject: \>Calculating $\phi$ for $\zeta_{\text{max}}$\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-20pt}
+
+We wish to find a point along the line-of-sight path such that
+$\frac{\text{d}\zeta}{\text{d}s} = 0$.  Using $s = \sqrt{h^2 - h_t^2}$ and
+therefore $\frac{\text{d}s}{\text{d}h} = \frac{h}s$ we can write this as
+
+\begin{equation}\label{one}
+\frac{\text{d}\zeta}{\text{d}s} =
+ \frac{\text{d}h}{\text{d}s} \frac{\text{d}\zeta}{\text{d}h} =
+ \frac{\sqrt{h^2 - h_t^2}}h \frac{\text{d}\zeta}{\text{d}h} = 0
+\end{equation}
+
+Denoting the height at which $\frac{\text{d}\zeta}{\text{d}s} = 0$ by $h_m$,
+letting  $\phi_m$ correspond to
+$h_m$, and
+expanding $\frac{\text{d}\zeta}{\text{d}h}$ to first order in $\phi$, we have
+
+\begin{equation}
+\left.\frac{\text{d}\zeta}{\text{d}h}\right|_{h=h_m} =
+\left.\frac{\text{d}\zeta}{\text{d}h}\right|_{h=h_t} +
+(\phi_m-\phi_t)
+\left.\frac{\text{d}^2\zeta}{\text{d}h\text{d}\phi}\right|_{h=h_t,\,\phi=\phi_t}
+\end{equation}
+
+Using $\frac{h_t}{h_m} = \cos(\phi_m-\phi_t)$, Equation (\ref{one}) becomes
+
+\begin{equation}
+\frac{\text{d}\zeta}{\text{d}s} =
+\sqrt{1-\frac{h_t^2}{h_m^2}} \left.\frac{\text{d}\zeta}{\text{d}h}\right|_{h=h_m} =
+\sin(\phi_m-\phi_t)
+ \left(\left.\frac{\text{d}\zeta}{\text{d}h}\right|_{h=h_t} +
+(\phi_m-\phi_t)
+\left.\frac{\text{d}^2\zeta}{\text{d}h\text{d}\phi}\right|_{h=h_t,\,\phi=\phi_t}
+\right) = 0
+\end{equation}
+
+Solving for $\Delta \phi = \phi_m-\phi_t$ there are two possibilities.  If
+$\frac{\text{d}^2\zeta}{\text{d}h\text{d}\phi} = 0$ then
+$\sin \Delta \phi = 0$ or equivalently $\Delta \phi = 0$.  Otherwise
+
+\begin{equation}
+\Delta\phi =
+-\frac{\left.\frac{\text{d}\zeta}{\text{d}h}\right|_{h=h_t}}
+      {\left.\frac{\text{d}^2\zeta}{\text{d}h\text{d}\phi}\right|_{h=h_t,\,\phi=\phi_t}}
+\,,\,\text{ or }
+\phi_m = \phi_t
+-\frac{\left.\frac{\text{d}\zeta}{\text{d}h}\right|_{h=h_t}}
+      {\left.\frac{\text{d}^2\zeta}{\text{d}h\text{d}\phi}\right|_{h=h_t,\,\phi=\phi_t}}
+\,.
+\end{equation}
+
+Having $\phi_m$, compute $h_m$ and $\zeta_m$ as in {\tt wvs-038}.
+
+Is this correct?  The {\tt hydrostatic} routine produces
+$\frac{\text{d}\zeta}{\text{d}h}$, but where do I get
+$\frac{\text{d}^2\zeta}{\text{d}h\text{d}\phi}$?
+
+How about just interpolating the $\zeta$ grid that {\tt metrics} produces
+using a cubic spline and finding a maximum in that?
+
+Once I have $\phi_m$, $h_m$ and $\zeta_m$, should I just insert them into
+the grids that {\tt metrics} produces, or is there more to do?  Should I
+also put new ones symmetrically placed about the tangent point so that
+the tangent point is still in the middle of the path?
+
+\label{lastpage}
+\end{document}
+% $Id: wvs-040r0.tex,v 1.1 2008/06/11 20:14:52 vsnyder Exp $
+@

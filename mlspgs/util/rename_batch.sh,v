@@ -1,0 +1,150 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.6
+	cfm-single-freq-0-1:1.1.0.4
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2018.11.14.18.48.03;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@First commit
+@
+text
+@#!/bin/sh
+# --------------- rename_batch.sh help
+# rename_batch.sh
+# renames the files in all the subdirectories of each arg
+#
+# rename_batch.sh dir1 .. [dirn]
+
+#     O p t i o n s
+#    -dryrun          Merely echo the commands that would be executed
+#    -os old_string   old string to be replaced
+#    -rs new_string   new string to use
+#    -f command       Use command instead of rename_all
+#    -v            operate verbosely
+
+# Bugs and limitations
+# (1) You have write permission to dir1
+
+# ~/mlspgs/util/rename_batch.sh -v \
+#   -os vMUS01-50 \
+#   -rs vMUS01-60 \
+#   /testing/workspace/pwagner/mustard/emls/l2aux/vMUS01.50
+# cd /testing/workspace/pwagner/mustard/emls/l2aux/vMUS01.50
+# /users/pwagner/mlspgs/util/rename_batch.sh -v \
+#   -os vMUS01-50 \
+#   -rs vMUS01-60 \
+#   2004 2005 2006 2007 2008 2009 2010 2011 2012 2013 2014 2015 2016 2017 2018
+# --------------- End rename_batch.sh help
+#------------------------------- Main Program ------------
+
+#****************************************************************
+#                                                               *
+#                  * * * Main Program  * * *                    *
+#                                                               *
+#                                                               *
+#	The entry point where control is given to the script    *
+#****************************************************************
+#
+debug=1
+#     ^  -- set this to 1 if worried
+
+# Some annoying warnings come from H5EDIT unless 
+# we set the following environment variable
+HDF5_DISABLE_VERSION_CHECK=2
+export HDF5_DISABLE_VERSION_CHECK
+
+me="$0"
+my_name=rename_batch.sh
+I=rename_batch
+dryrun="no"
+verbose="no"
+FIXER=rename_all
+more_opts="yes"
+old_string=""
+new_string=""
+while [ "$more_opts" = "yes" ] ; do
+
+    case "$1" in
+
+    -dryrun )
+	    dryrun="yes"
+	    shift
+       ;;
+    -f )
+	    FIXER="$2"
+	    shift
+	    shift
+       ;;
+    -os )
+	    old_string="$2"
+	    shift
+	    shift
+       ;;
+    -rs )
+	    new_string="$2"
+	    shift
+	    shift
+       ;;
+    -v )
+	    verbose="yes"
+	    shift
+       ;;
+    -h | -help )
+       sed -n '/'$my_name' help/,/End '$my_name' help/ p' $me \
+           | sed -n 's/^.//p' | sed '1 d; $ d'
+       exit
+	     ;;
+    * )
+       more_opts="no"
+       ;;
+    esac
+done
+
+old_dir=`pwd`
+for i
+do
+  cd $i
+  days=`/bin/ls `
+  #days=001
+  for day in $days
+  do
+    cd $day
+    ls
+    if [ "$dryrun" = "yes" ]
+    then
+      echo $FIXER "$old_string" "$new_string"
+    else
+      $FIXER "$old_string" "$new_string"
+    fi
+    ls
+    cd ..
+  done
+  cd $old_dir
+done
+exit
+@

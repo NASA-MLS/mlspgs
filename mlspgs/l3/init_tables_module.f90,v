@@ -1,0 +1,1204 @@
+head	1.17;
+access;
+symbols
+	v5-02-NRT-19:1.17
+	v6-00:1.17
+	v5-02-NRT-18:1.17
+	v5-02:1.17
+	v5-01-NRT-17:1.17
+	v5-01-NRT-16:1.17
+	v5-01-NRT-15:1.17
+	v5-01-NRT-14:1.17
+	neuralnetworks-1-0:1.17.0.14
+	cfm-single-freq-0-1:1.17.0.12
+	v5-01:1.17
+	v5-00:1.17
+	v4-23-TA133:1.17.0.10
+	mus-emls-1-70:1.17.0.8
+	rel-1-0-englocks-work:1.17.0.6
+	VUMLS1-00:1.17
+	VPL1-00:1.17
+	V4-22-NRT-08:1.17
+	VAM1-00:1.17
+	V4-21:1.17.0.4
+	V4-13:1.17
+	V4-12:1.17
+	V4-11:1.17
+	V4-10:1.17
+	V3-43:1.17
+	M4-00:1.17
+	V3-41:1.17
+	V3-40-PlusGM57:1.17.0.2
+	V2-24-NRT-04:1.17
+	V3-33:1.17
+	V2-24:1.17
+	V3-31:1.17
+	V3-30-NRT-05:1.17
+	cfm-01-00:1.17
+	V3-30:1.17
+	V3-20:1.17
+	V3-10:1.17
+	V2-23-NRT-02:1.17
+	V2-23:1.17
+	V2-22-NRT-01:1.17
+	V2-22:1.17
+	V2-21:1.16
+	V2-20:1.16
+	V2-11:1.16
+	V2-10:1.16
+	V2-00:1.16
+	V1-51:1.15
+	V1-50:1.15
+	V1-45:1.15
+	V1-44:1.15
+	V1-43:1.15
+	V1-42:1.14
+	V1-41:1.14
+	V1-32:1.14
+	V1-40:1.14
+	V1-31:1.14
+	V1-30:1.14
+	V1-13:1.13
+	V1-12:1.13
+	V1-11:1.13
+	V1-10:1.13
+	newfwm-feb03:1.13.0.4
+	V1-04:1.13
+	V1-03:1.13
+	V1-02:1.13
+	V1-00:1.13
+	newfwm-sep01:1.13.0.2
+	V0-7:1.13
+	V0-5-Level2:1.8
+	V0-5-SIPS:1.8;
+locks; strict;
+comment	@# @;
+
+
+1.17
+date	2007.08.08.04.46.21;	author cvuu;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2005.06.23.19.07.38;	author pwagner;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2004.05.13.20.19.39;	author ybj;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2003.03.22.02.08.42;	author jdone;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2001.07.19.15.55.49;	author nakamura;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2001.07.19.14.04.35;	author nakamura;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2001.07.18.15.49.17;	author nakamura;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2001.05.10.13.39.10;	author nakamura;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2001.05.04.18.43.22;	author nakamura;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2001.04.11.18.53.24;	author nakamura;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2001.04.04.17.46.41;	author pwagner;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2001.03.16.16.33.43;	author nakamura;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2001.02.21.21.19.40;	author nakamura;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.01.18.16.53.25;	author nakamura;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2001.01.16.17.53.03;	author nakamura;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2000.12.29.21.46.35;	author nakamura;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2000.10.24.19.47.17;	author nakamura;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.17
+log
+@add fields convergence,quality and precision
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module INIT_TABLES_MODULE
+
+! Preload the string and symbol tables with specification and field
+! names.  Preload the tree with definitions of types, lits, fields,
+! specifications, sections ....
+
+! Declaring the definitions is handled by the tree walker.
+
+  use Init_MLSSignals_m ! Everything.
+  use INTRINSIC ! Everything. ADD_IDENT, FIRST_LIT, INIT_INTRINSIC,
+    ! L_FALSE, L_TRUE, LAST_INTRINSIC_LIT, T_BOOLEAN, T_FIRST,
+    ! T_LAST_INTRINSIC, T_NUMERIC, T_NUMERIC_RANGE and T_STRING are used
+    ! here, but everything is included so that it can be gotten by
+    ! USE INIT_TABLES_MODULE.
+  use Units, only: Init_Units
+
+  implicit NONE
+  public ! This would be a MUCH LONGER list than the list of private
+  !        names below.
+  private :: ADD_IDENT, MAKE_TREE
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: init_tables_module.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+! Enumeration types:
+  integer, public, parameter :: T_INTP           = Last_signal_type+1
+  integer, public, parameter :: T_PMODE          = t_intp+1
+  integer, public, parameter :: T_UNITS          = t_pmode+1
+  integer, public, parameter :: T_LAST           = t_units
+! Field indices:
+  integer, public, parameter :: F_ALVL = last_Signal_Field + 1
+  integer, public, parameter :: F_DLON = f_alvl + 1
+  integer, public, parameter :: F_DLVL = f_dlon + 1
+  integer, public, parameter :: F_FILE = f_dlvl + 1
+  integer, public, parameter :: F_LABEL = f_file + 1
+  integer, public, parameter :: F_LONGRID = f_label + 1
+  integer, public, parameter :: F_MCF = f_longrid + 1
+  integer, public, parameter :: F_MODE = f_mcf + 1
+  integer, public, parameter :: F_PRESLVL = f_mode + 1
+  integer, public, parameter :: F_PRODNAME = f_preslvl + 1
+  integer, public, parameter :: F_NWAVE = f_prodname + 1
+  integer, public, parameter :: F_QUAL = f_nwave + 1
+  integer, public, parameter :: F_CONV = f_qual + 1
+  integer, public, parameter :: F_PREC = f_conv + 1
+  integer, public, parameter :: F_TIME = f_prec + 1
+  integer, public, parameter :: FIELD_LAST = f_time
+! Enumeration literals:
+  integer, public, parameter :: L_ADO   = last_signal_lit+1
+  integer, public, parameter :: L_ALL   = l_ado + 1
+  integer, public, parameter :: L_ASC   = l_all + 1
+  integer, public, parameter :: L_COM 	= l_asc + 1
+  integer, public, parameter :: L_CSP   = l_com + 1
+  integer, public, parameter :: L_DES   = l_csp + 1
+  integer, public, parameter :: L_LIN   = l_des + 1
+  integer, public, parameter :: LAST_LIT = l_lin
+! Section identities:
+  integer, public, parameter :: Z_GLOBALSETTINGS = 1
+  integer, public, parameter :: Z_STANDARD       = 2
+  integer, public, parameter :: Z_DIAGNOSTIC     = 3
+  integer, public, parameter :: Z_OUTPUT         = 4
+  integer, public, parameter :: SECTION_FIRST    = z_globalSettings, &
+                                SECTION_LAST     = z_Output
+! Specification indices:
+  integer, public, parameter :: S_DG = last_Signal_Spec + 1
+  integer, public, parameter :: S_OUT = s_dg + 1
+  integer, public, parameter :: S_STD = s_out + 1
+  integer, public, parameter :: SPEC_LAST = s_Std
+! Parameter names:
+  ! In GlobalSettings section:
+  integer, public, parameter :: P_OUTPUT_VERSION_STRING = spec_last + 1
+  integer, public, parameter :: & 
+       & P_HDF_OUTPUT_VERSION_STRING = p_output_version_string + 1
+  integer, public, parameter :: & 
+       & P_Average_Orbital_Period = p_hdf_output_version_string + 1
+  integer, public, parameter :: P_L2_MAP_LATS = p_average_orbital_period + 1
+  integer, public, parameter :: P_DLAT = p_l2_map_lats + 1
+  integer, public, parameter :: P_L2_NOM_LATS = p_dlat + 1
+  integer, public, parameter :: P_L2DGTYPE = p_l2_nom_lats + 1
+  integer, public, parameter :: P_STYPE = p_l2dgtype + 1
+  integer, public, parameter :: P_DTYPE = p_stype + 1
+  integer, public, parameter :: P_MIN_DAYS = p_dtype + 1
+  integer, public, parameter :: P_MAX_GAP = p_min_days + 1
+  integer, public, parameter :: P_N = p_max_gap + 1
+  integer, public, parameter :: P_IMETHOD = p_n + 1
+  integer, public, parameter :: FIRST_PARM = P_OUTPUT_VERSION_STRING
+  integer, public, parameter :: LAST_PARM = P_IMETHOD
+
+! Table for section ordering:
+  integer, public, parameter :: OK = 1, & ! NO = 0
+    SECTION_ORDERING(section_first:section_last, &
+                     section_first-1:section_last) = reshape( &
+! To: | globalSettings             |
+!     |       Standard             |
+!     |           Diagnostic       |
+!     |                    Output  |
+! ====|============================|== From: ==
+        (/OK,    0,    0,    0,  & ! Start
+           0,   OK,    0,    0,  & ! GlobalSettings
+           0,    0,   OK,    0,  & ! Standard
+           0,    0,    0,   OK,  & ! Diagnostic
+           0,    0,    0,    0/) & ! Output
+!       , shape(section_ordering) )
+        , (/ section_last-section_first+1, section_last-section_first+2 /) )
+
+contains ! =====     Public procedures     =============================
+! --------------------------------------------------  INIT_TABLES  -----
+  subroutine INIT_TABLES
+     use TREE_TYPES, only: N_DT_DEF, N_FIELD_TYPE, &
+                           N_NAME_DEF, N_SECTION, N_SPEC_DEF
+  ! Put intrinsic predefined identifiers into the symbol table.
+    call init_MLSSignals ( t_last, field_last, last_lit, &
+    & first_parm, last_parm, section_last, spec_last )
+  ! Put nonintrinsic predefined identifiers into the symbol table.
+    ! Put enumeration type names into the symbol table
+    data_type_indices(t_intp) =             add_ident ( 'interpolationMethod' )
+    data_type_indices(t_pmode) =            add_ident ( 'processingMode' )
+    data_type_indices(t_units) =            add_ident ( 'units' )
+    ! Put enumeration literals into the symbol table:
+    lit_indices(l_ado) =                    add_ident ( 'ado' )
+    lit_indices(l_all) =                    add_ident ( 'all' )
+    lit_indices(l_asc) =                    add_ident ( 'asc' )
+    lit_indices(l_com) =                    add_ident ( 'com' )
+    lit_indices(l_csp) =                    add_ident ( 'csp' )
+    lit_indices(l_des) =                    add_ident ( 'des' )
+    lit_indices(l_lin) =                    add_ident ( 'lin' )
+    ! Put field names into the symbol table
+    field_indices(f_alvl) =                 add_ident ( 'ascPresLvl' )
+    field_indices(f_dlon) =                 add_ident ( 'dLon' )
+    field_indices(f_dlvl) =                 add_ident ( 'desPresLvl' )
+    field_indices(f_file) =                 add_ident ( 'file' )
+    field_indices(f_label) =                add_ident ( 'label' )
+    field_indices(f_longrid) =              add_ident ( 'longGrid' )
+    field_indices(f_mcf) =                  add_ident ( 'mcf' )
+    field_indices(f_mode) =                 add_ident ( 'mode' )
+    field_indices(f_preslvl) =              add_ident ( 'l3presLvl' )
+    field_indices(f_prodname) =             add_ident ( 'l3prodName' )
+    field_indices(f_nwave) =                add_ident ( 'nWave' )
+    field_indices(f_qual) =                add_ident ( 'qual' )
+    field_indices(f_conv) =                add_ident ( 'conv' )
+    field_indices(f_prec) =                add_ident ( 'prec' )
+    field_indices(f_time) =                 add_ident ( 'timeD' )
+
+    ! Put parameter names into the symbol table
+
+    parm_indices(p_output_version_string)     = & 
+         & add_ident ( 'OutputVersionString' )
+    parm_indices(p_hdf_output_version_string) = & 
+         & add_ident ( 'HDFOutputVersionString' )
+    parm_indices(p_average_orbital_period)    = & 
+         & add_ident ( 'AverageOrbitalPeriod' )
+    parm_indices(p_l2_map_lats)               = add_ident ( 'latGridMap' )
+    parm_indices(p_dlat)                      = add_ident ( 'dLat' )
+    parm_indices(p_l2_nom_lats)               = add_ident ( 'l2nomLats' )
+    parm_indices(p_l2dgtype)                  = add_ident ( 'L2dgType' )
+    parm_indices(p_stype)                     = add_ident ( 'stdType' )
+    parm_indices(p_dtype)                     = add_ident ( 'dgType' )
+    parm_indices(p_min_days)                  = add_ident ( 'MinDays' )
+    parm_indices(p_max_gap)                   = add_ident ( 'MaxGap' )
+    parm_indices(p_n)                         = add_ident ( 'N' )
+    parm_indices(p_imethod)                   = add_ident ( 'intpMethod' )
+
+    ! Put section names into the symbol table
+
+    section_indices(z_globalsettings) =     add_ident ( 'GlobalSettings' )
+    section_indices(z_standard) =           add_ident ( 'Standard' )
+    section_indices(z_diagnostic) =         add_ident ( 'Diagnostic' )
+    section_indices(z_output) =             add_ident ( 'Output' )
+
+    ! Put spec names into the symbol table
+    spec_indices(s_dg) =                    add_ident ( 'dg' )
+    spec_indices(s_out) =                   add_ident ( 'out' )
+    spec_indices(s_std) =                   add_ident ( 'std' )
+
+  ! Now initialize the units tables.  Init_Units depends on the lit tables
+  ! having been initialized.
+
+    call init_units
+
+  ! Definitions are represented by trees.  The notation in the comments
+  ! for the trees is < root first_son ... last_son >.  This is sometimes
+  ! called "Cambridge Polish Notation."  It was developed to represent
+  ! LISP by McCarthy et. al. at MIT (in Cambridge, MA).
+
+  ! Put the definition trees into the tree space before the parser runs.
+  ! After the parsing is done, they're automatically "glued in" to the
+  ! "left" of the trees that represent the input.  The tree-walker
+  ! stumbles upon them in its normal course of operation, never really
+  ! realizing they're special (because by then they're not).
+
+  ! Start with the definitions of types. These are represented by trees of
+  ! the form  < n_dt_def t_type_name l_lit ... l_lit >
+    ! Define the intrinsic data types
+    call make_tree ( (/ &
+      begin, t+t_intp, l+l_csp, l+l_lin, n+n_dt_def, &
+      begin, t+t_pmode, l+l_ado, l+l_all, l+l_asc, l+l_com, l+l_des, & 
+      & n+n_dt_def, &
+      begin, t+t_units, l+l_days, l+l_deg, l+l_degrees, &
+             l+l_dimensionless, l+l_dimless, l+l_dl, l+l_ghz, &
+             l+l_hours, l+l_hpa, l+l_hz, l+l_k, l+l_khz, l+l_km, l+l_logp, &
+             l+l_m, l+l_maf, l+l_mafs, l+l_mb, l+l_meters, l+l_mhz, &
+             l+l_mif, l+l_mifs, l+l_minutes, l+l_orbits, l+l_pa, l+l_ppbv, &
+             l+l_ppmv, l+l_pptv, l+l_rad, l+l_radians, l+l_s, l+l_seconds, &
+             l+l_thz, l+l_vmr, l+l_zeta, n+n_dt_def /) )
+    ! Define the relations between specs and fields, and the field types
+    ! or names of other specifications allowed.  These are represented by
+    ! trees of the form
+    !  < n_spec_def s_spec_name
+    !               < n_field_type f_field_name t_type ... t_type > ...
+    !               < n_field_spec f_field_name s_spec ... s_spec > ...
+    !               < n_dot f_field_name s_spec f_field_name ... >
+    !  >
+    ! The n_field_type, n_field_spec, and n_dot subtrees may appear in
+    ! any quantity or order.
+    ! The n_field_type subtree indicates the type allowed for a field.
+    ! The n_field_spec subtree indicates the specifications whose names
+    ! are allowed to appear for a field.
+    ! The n_dot subtree indicates that the field given by the first
+    ! f_field_name  is required to be of the form spec_name.field_name,
+    ! where spec_name is required to be a label of a specification of the
+    ! type given by the s_spec son, and field_name is required to be
+    ! present in the field given by the last f_field_name, which is
+    ! required to be in a specification named by the next-to-last
+    ! f_field_name ... of the specification named by the spec_name.
+    call make_tree ( (/ &
+      begin, s+s_std, &
+             begin, f+f_prodname, t+t_string, n+n_field_type, &
+             begin, f+f_time, t+t_string, n+n_field_type, &
+             begin, f+f_mode, t+t_pmode, n+n_field_type, &
+             begin, f+f_label, t+t_string, n+n_field_type, &
+             begin, f+f_longrid, t+t_numeric_range, n+n_field_type, &
+             begin, f+f_dlon, t+t_numeric, n+n_field_type, &
+             begin, f+f_preslvl, t+t_numeric_range, n+n_field_type, &
+             begin, f+f_alvl, t+t_numeric_range, n+n_field_type, &
+             begin, f+f_dlvl, t+t_numeric_range, n+n_field_type, &
+             begin, f+f_nwave, t+t_numeric, n+n_field_type, &
+             begin, f+f_qual, t+t_numeric, n+n_field_type, &
+             begin, f+f_conv, t+t_numeric, n+n_field_type, &
+             begin, f+f_prec, t+t_numeric, n+n_field_type, &
+             n+n_spec_def /) )
+    call make_tree ( (/ &
+      begin, s+s_dg, &
+             begin, f+f_prodname, t+t_string, n+n_field_type, &
+             begin, f+f_preslvl, t+t_numeric_range, n+n_field_type, &
+             begin, f+f_longrid, t+t_numeric_range, n+n_field_type, &
+             begin, f+f_dlon, t+t_numeric, n+n_field_type, &
+             n+n_spec_def /) )
+    call make_tree ( (/ &
+      begin, s+s_out, &
+             begin, f+f_mcf, t+t_string, n+n_field_type, &
+             begin, f+f_file, t+t_string, n+n_field_type, &
+             n+n_spec_def /) )
+    ! Define the relations between sections and specs.  These are
+    ! represented by trees of the form
+    !  < n_section section_name
+    !              < n_name_def p_parameter t_type ... t_type > ...
+    !  > or
+    !  < n_section section_name s_spec ... s_spec >
+
+    call make_tree ( (/ &
+      begin, z+z_globalsettings, &
+             begin, p+p_output_version_string, t+t_string, n+n_name_def, &
+             begin, p+p_hdf_output_version_string, t+t_string, n+n_name_def, &
+             begin, p+p_average_orbital_period, t+t_numeric, n+n_name_def, &
+             begin, p+p_l2_map_lats, t+t_numeric_range, n+n_name_def, &
+             begin, p+p_dlat, t+t_numeric, n+n_name_def, &
+             begin, p+p_l2_nom_lats, t+t_numeric, n+n_name_def, &
+             begin, p+p_l2dgtype, t+t_string, n+n_name_def, &
+             begin, p+p_stype, t+t_string, n+n_name_def, &
+             begin, p+p_dtype, t+t_string, n+n_name_def, &
+             begin, p+p_min_days, t+t_numeric, n+n_name_def, &
+             begin, p+p_max_gap, t+t_numeric, n+n_name_def, &
+             begin, p+p_n, t+t_numeric, n+n_name_def, &
+             begin, p+p_imethod, t+t_intp, n+n_name_def, &
+             n+n_section, &
+      begin, z+z_standard, s+s_std, n+n_section, &
+      begin, z+z_diagnostic, s+s_dg, n+n_section, &
+      begin, z+z_output, s+s_out, n+n_section /) )
+  end subroutine INIT_TABLES
+
+! =====     Private procedures     =====================================
+  ! --------------------------------------------------  MAKE_TREE  -----
+  include "make_tree.f9h"
+
+  logical function not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id: init_tables_module.f90,v 1.16 2005/06/23 19:07:38 pwagner Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+end module INIT_TABLES_MODULE
+
+! $Log: init_tables_module.f90,v $
+! Revision 1.16  2005/06/23 19:07:38  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 1.15  2004/05/13 20:19:39  ybj
+! *** empty log message ***
+!
+! Revision 1.14  2003/03/22 02:08:42  jdone
+! added average orbital period value and HDF output string
+!
+! Revision 1.13  2001/07/19 15:55:49  nakamura
+! Corrected l3prodName field.
+!
+! Revision 1.12  2001/07/19 14:04:35  nakamura
+! Changed dLat from field to parameter.
+!
+! Revision 1.11  2001/07/18 15:49:17  nakamura
+! Modified to work with L3M as well.
+!
+! Revision 1.10  2001/05/10 13:39:10  nakamura
+! Removed separate pressure specifications for DZ.
+!
+! Revision 1.9  2001/05/04 18:43:22  nakamura
+! Includes new DZ specs, latest parser changes.
+!
+! Revision 1.8  2001/04/11 18:53:24  nakamura
+! Removed references to unused parser items.
+!
+! Revision 1.7  2001/04/04 17:46:41  pwagner
+! compiles with new make_tree.f9h
+!
+! Revision 1.6  2001/03/16 16:33:43  nakamura
+! Updated for parser compatibility.
+!
+! Revision 1.5  2001/02/21 21:19:40  nakamura
+! Removed l2Ver.
+!
+! Revision 1.4  2001/01/18 16:53:25  nakamura
+! Moved minDays from PCF to cf.
+!
+! Revision 1.3  2001/01/16 17:53:03  nakamura
+! Added a template for the log file name to GlobalSettings.
+!
+! Revision 1.2  2000/12/29 21:46:35  nakamura
+! Removed bypass flag, quantities.
+!
+! Revision 1.1  2000/10/24 19:47:17  nakamura
+! Customized for L3.
+!
+@
+
+
+1.16
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d35 1
+a35 1
+       "$RCSfile: $"
+d56 4
+a59 1
+  integer, public, parameter :: F_TIME = f_nwave + 1
+d152 3
+d250 3
+d301 1
+a301 1
+       "$Id: $"
+d309 3
+@
+
+
+1.15
+log
+@*** empty log message ***
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d33 1
+a33 3
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=256), private :: Id = &
+       "$Id: init_tables_module.f90,v 1.14 2003/03/22 02:08:42 jdone Exp $"
+d35 2
+a36 1
+       "$RCSfile: init_tables_module.f90,v $"
+d289 8
+d300 3
+@
+
+
+1.14
+log
+@added average orbital period value and HDF output string
+@
+text
+@d27 1
+a27 1
+       "$Id: init_tables_module.f90,v 1.13 2001/07/19 15:55:49 nakamura Exp $"
+d48 2
+a49 3
+  integer, public, parameter :: F_RANGFREQ = f_prodname + 1
+  integer, public, parameter :: F_RANGWAVNUM = f_rangfreq + 1
+  integer, public, parameter :: F_TIME = f_rangwavnum + 1
+d141 1
+a141 2
+    field_indices(f_rangfreq) =             add_ident ( 'rangFrequency' )
+    field_indices(f_rangwavnum) =           add_ident ( 'rangWavenumber' )
+d236 1
+a236 2
+             begin, f+f_rangfreq, t+t_numeric_range, n+n_field_type, &
+             begin, f+f_rangwavnum, t+t_numeric_range, n+n_field_type, &
+d285 3
+@
+
+
+1.13
+log
+@Corrected l3prodName field.
+@
+text
+@d27 1
+a27 1
+       "$Id: init_tables_module.f90,v 1.12 2001/07/19 14:04:35 nakamura Exp $"
+a61 1
+  integer, public, parameter :: Z_DIAGNOSTIC = 3
+d63 5
+a67 4
+  integer, public, parameter :: Z_OUTPUT = 4
+  integer, public, parameter :: Z_STANDARD = 2
+  integer, public, parameter :: SECTION_FIRST = z_globalSettings, &
+                                SECTION_LAST = z_Output
+d75 8
+a82 5
+  integer, public, parameter :: P_DLAT = spec_last + 1
+  integer, public, parameter :: P_DTYPE = p_dlat + 1
+  integer, public, parameter :: P_IMETHOD = p_dtype + 1
+  integer, public, parameter :: P_L2_MAP_LATS = p_imethod + 1
+  integer, public, parameter :: P_L2_NOM_LATS = p_l2_map_lats + 1
+d84 8
+a91 7
+  integer, public, parameter :: P_MAX_GAP = p_l2dgtype + 1
+  integer, public, parameter :: P_MIN_DAYS = p_max_gap + 1
+  integer, public, parameter :: P_N = p_min_days + 1
+  integer, public, parameter :: P_OUTPUT_VERSION_STRING = p_n + 1
+  integer, public, parameter :: P_STYPE = p_output_version_string + 1
+  integer, public, parameter :: FIRST_PARM = P_DLAT
+  integer, public, parameter :: LAST_PARM = P_STYPE
+d145 1
+d147 18
+a164 11
+    parm_indices(p_dlat) =                  add_ident ( 'dLat' )
+    parm_indices(p_dtype) =                 add_ident ( 'dgType' )
+    parm_indices(p_imethod) =               add_ident ( 'intpMethod' )
+    parm_indices(p_l2_map_lats) =           add_ident ( 'latGridMap' )
+    parm_indices(p_l2_nom_lats) =           add_ident ( 'l2nomLats' )
+    parm_indices(p_l2dgtype) =              add_ident ( 'L2dgType' )
+    parm_indices(p_max_gap) =               add_ident ( 'MaxGap' )
+    parm_indices(p_min_days) =              add_ident ( 'MinDays' )
+    parm_indices(p_n)=                      add_ident ( 'N' )
+    parm_indices(p_output_version_string) = add_ident ( 'OutputVersionString' )
+    parm_indices(p_stype) =                 add_ident ( 'stdType' )
+d166 3
+a169 1
+    section_indices(z_globalsettings) =     add_ident ( 'GlobalSettings' )
+d171 1
+a171 1
+    section_indices(z_standard) =           add_ident ( 'Standard' )
+d198 2
+a199 1
+      begin, t+t_pmode, l+l_ado, l+l_all, l+l_asc, l+l_com, l+l_des, n+n_dt_def, &
+d259 1
+d263 2
+d288 3
+@
+
+
+1.12
+log
+@Changed dLat from field to parameter.
+@
+text
+@d27 1
+a27 1
+       "$Id: init_tables_module.f90,v 1.11 2001/07/18 15:49:17 nakamura Exp $"
+d137 1
+a137 1
+    field_indices(f_prodname) =             add_ident ( 'l3prodNameD' )
+d270 3
+@
+
+
+1.11
+log
+@Modified to work with L3M as well.
+@
+text
+@d27 1
+a27 1
+       "$Id: init_tables_module.f90,v 1.12 2001/05/10 13:55:02 nakamura Exp nakamura $"
+d39 1
+a39 1
+  integer, public, parameter :: F_DLON = f_dlat + 1
+d270 3
+@
+
+
+1.10
+log
+@Removed separate pressure specifications for DZ.
+@
+text
+@d27 1
+a27 1
+       "$Id: init_tables_module.f90,v 1.9 2001/05/04 18:43:22 nakamura Exp $"
+d33 1
+a33 2
+  integer, public, parameter :: T_CAL            = Last_signal_type+1
+  integer, public, parameter :: T_INTP           = t_cal+1
+a38 2
+  integer, public, parameter :: F_CMETHOD = f_alvl + 1
+  integer, public, parameter :: F_DLAT = f_cmethod + 1
+d42 2
+a43 4
+  integer, public, parameter :: F_IMETHOD = f_file + 1
+  integer, public, parameter :: F_LABEL = f_imethod + 1
+  integer, public, parameter :: F_LATGRID = f_label + 1
+  integer, public, parameter :: F_LONGRID = f_latgrid + 1
+d53 2
+a54 1
+  integer, public, parameter :: L_ALL   = last_signal_lit+1
+d59 1
+a59 3
+  integer, public, parameter :: L_L2    = l_des + 1
+  integer, public, parameter :: L_L3    = l_l2 + 1
+  integer, public, parameter :: L_LIN   = l_l3 + 1
+d62 1
+a62 1
+  integer, public, parameter :: Z_DAILYMAP = 2
+d64 2
+a65 1
+  integer, public, parameter :: Z_OUTPUT = 3
+d69 4
+a72 3
+  integer, public, parameter :: S_MAPSPEC = last_Signal_Spec + 1
+  integer, public, parameter :: S_OUTPUT = s_mapspec + 1
+  integer, public, parameter :: SPEC_LAST = s_Output
+d75 7
+a81 3
+  integer, public, parameter :: P_L2_NOM_LATS = spec_last + 1
+  integer, public, parameter :: P_LOG_TYPE = p_l2_nom_lats + 1
+  integer, public, parameter :: P_MAX_GAP = p_log_type + 1
+d85 3
+a87 3
+  integer, public, parameter :: P_VERSION_COMMENT = p_output_version_string + 1
+  integer, public, parameter :: FIRST_PARM = P_L2_NOM_LATS
+  integer, public, parameter :: LAST_PARM = P_VERSION_COMMENT
+d93 10
+a102 8
+! To: | globalSettings       |
+!     |       dailyMap       |
+!     |             output   |
+! ====|==============================|== From: ==
+        (/OK,    0,    0,  & ! Start
+           0,   OK,    0,  & ! GlobalSettings
+           0,    0,   OK,  & ! DailyMap
+           0,    0,    0/) & ! Output
+a115 1
+    data_type_indices(t_cal) =              add_ident ( 'calculationMethod' )
+d120 1
+a125 2
+    lit_indices(l_l2) =                     add_ident ( 'l2' )
+    lit_indices(l_l3) =                     add_ident ( 'l3' )
+a128 2
+    field_indices(f_cmethod) =              add_ident ( 'calMethod' )
+    field_indices(f_dlat) =                 add_ident ( 'dLat' )
+a131 1
+    field_indices(f_imethod) =              add_ident ( 'intpMethod' )
+a132 1
+    field_indices(f_latgrid) =              add_ident ( 'latGridMap' )
+d142 4
+d147 1
+a147 1
+    parm_indices(p_log_type) =              add_ident ( 'LogType' )
+d152 1
+a152 1
+    parm_indices(p_version_comment) =       add_ident ( 'VersionComment' )
+d154 1
+a154 1
+    section_indices(z_dailymap) =           add_ident ( 'DailyMap' )
+d157 1
+d159 3
+a161 2
+    spec_indices(s_mapspec) =               add_ident ( 'mapSpec' )
+    spec_indices(s_output) =                add_ident ( 'output' )
+a182 1
+      begin, t+t_cal, l+l_l2, l+l_l3, n+n_dt_def, &
+d184 1
+a184 1
+      begin, t+t_pmode, l+l_all, l+l_asc, l+l_com, l+l_des, n+n_dt_def, &
+d213 1
+a213 1
+      begin, s+s_mapSpec, &
+d217 1
+a217 2
+             begin, f+f_latgrid, t+t_numeric_range, n+n_field_type, &
+             begin, f+f_dlat, t+t_numeric, n+n_field_type, &
+a224 3
+             begin, f+f_imethod, t+t_intp, n+n_field_type, &
+             begin, f+f_label, t+t_string, n+n_field_type, &
+             begin, f+f_cmethod, t+t_cal, n+n_field_type, &
+d227 8
+a234 1
+      begin, s+s_output, &
+a245 1
+             begin, p+p_version_comment, t+t_string, n+n_name_def, &
+d247 2
+d250 3
+a252 1
+             begin, p+p_log_type, t+t_string, n+n_name_def, &
+d256 1
+d258 3
+a260 2
+      begin, z+z_dailymap, s+s_mapspec, n+n_section, &
+      begin, z+z_output, s+s_output, n+n_section /) )
+d270 3
+@
+
+
+1.9
+log
+@Includes new DZ specs, latest parser changes.
+@
+text
+@d27 1
+a27 1
+       "$Id: init_tables_module.f90,v 1.8 2001/04/11 18:53:24 nakamura Exp $"
+d56 1
+a56 4
+  integer, public, parameter :: F_ZASC = f_time + 1
+  integer, public, parameter :: F_ZCOM = f_zasc + 1
+  integer, public, parameter :: F_ZDES = f_zcom + 1
+  integer, public, parameter :: FIELD_LAST = f_zdes
+a144 3
+    field_indices(f_zasc) =                 add_ident ( 'zAscLvl' )
+    field_indices(f_zcom) =                 add_ident ( 'zComLvl' )
+    field_indices(f_zdes) =                 add_ident ( 'zDesLvl' )
+a227 3
+             begin, f+f_zCom, t+t_numeric_range, n+n_field_type, &
+             begin, f+f_zAsc, t+t_numeric_range, n+n_field_type, &
+             begin, f+f_zDes, t+t_numeric_range, n+n_field_type, &
+d261 3
+@
+
+
+1.8
+log
+@Removed references to unused parser items.
+@
+text
+@d18 1
+d27 1
+a27 1
+       "$Id: init_tables_module.f90,v 1.7 2001/04/04 17:46:41 pwagner Exp $"
+d33 3
+a35 2
+  integer, public, parameter :: T_METHOD         = Last_signal_type+1
+  integer, public, parameter :: T_PMODE          = t_method+1
+a37 1
+  integer, public :: DATA_TYPE_INDICES(t_first:t_last)
+d39 3
+a41 2
+  integer, public, parameter :: F_DF = last_Signal_Field + 1
+  integer, public, parameter :: F_DLAT = f_df + 1
+d43 2
+a44 1
+  integer, public, parameter :: F_FILE = f_dlon + 1
+d56 4
+a59 2
+  integer, public, parameter :: FIELD_LAST = f_time
+  integer, public :: FIELD_INDICES(field_first:field_last)
+d66 3
+a68 1
+  integer, public, parameter :: L_LIN   = l_des + 1
+a69 1
+  integer, public :: LIT_INDICES(first_lit:last_lit)
+a75 1
+  integer, public :: SECTION_INDICES(section_first:section_last)
+a79 1
+  integer, public :: SPEC_INDICES(spec_first:spec_last)
+d82 2
+a83 1
+  integer, public, parameter :: P_LOG_TYPE = spec_last + 1
+d89 1
+a89 1
+  integer, public, parameter :: FIRST_PARM = P_LOG_TYPE
+a90 1
+  integer, public :: PARM_INDICES(first_parm:last_parm)
+d113 2
+a114 2
+    call init_MLSSignals ( Data_Type_Indices, Field_Indices, Lit_Indices, &
+    & Parm_Indices, Section_Indices, Spec_Indices )
+d117 2
+a118 1
+    data_type_indices(t_method) =           add_ident ( 'interpolationMethod' )
+d127 2
+d131 2
+a132 1
+    field_indices(f_df) =                   add_ident ( 'dF' )
+d135 1
+d148 3
+d152 1
+d167 5
+d187 2
+a188 1
+      begin, t+t_method, l+l_csp, l+l_lin, n+n_dt_def, &
+d221 1
+a221 1
+             begin, f+f_imethod, t+t_method, n+n_field_type, &
+d226 3
+a229 2
+             begin, f+f_df, t+t_numeric, n+n_field_type, &
+             begin, f+f_preslvl, t+t_numeric_range, n+n_field_type, &
+d231 1
+a231 1
+             begin, f+f_mode, t+t_pmode, n+n_field_type, &
+d233 4
+d253 1
+d270 3
+@
+
+
+1.7
+log
+@compiles with new make_tree.f9h
+@
+text
+@d22 1
+a22 1
+  private :: ADD_IDENT, INIT_INTRINSIC, MAKE_TREE
+d26 1
+a26 1
+       "$Id: init_tables_module.f90,v 1.6 2001/03/16 16:33:43 nakamura Exp $"
+a31 1
+!  integer, public, parameter :: T_METHOD         = t_last_signal+1
+a108 1
+!    call init_intrinsic ( data_type_indices, lit_indices )
+d245 3
+@
+
+
+1.6
+log
+@Updated for parser compatibility.
+@
+text
+@d26 1
+a26 1
+       "$Id: init_tables_module.f90,v 1.5 2001/02/21 21:19:40 nakamura Exp $"
+d32 2
+a33 1
+  integer, public, parameter :: T_METHOD         = t_last_signal+1
+d110 3
+a112 3
+    call init_intrinsic ( data_type_indices, lit_indices )
+    call init_MLSSignals ( data_type_indices, field_indices, lit_indices, spec_indices )
+
+d247 3
+@
+
+
+1.5
+log
+@Removed l2Ver.
+@
+text
+@d12 2
+a13 1
+  use INTRINSIC ! Everything. FIRST_LIT, INIT_INTRINSIC,
+a17 5
+  use SYMBOL_TABLE, only: ENTER_TERMINAL
+  use SYMBOL_TYPES, only: T_IDENTIFIER
+  use TREE, only: BUILD_TREE, PUSH_PSEUDO_TERMINAL
+  use TREE_TYPES, only: N_DOT, N_DT_DEF, N_FIELD_SPEC, N_FIELD_TYPE, &
+                        N_NAME_DEF, N_SECTION, N_SPEC_DEF
+d22 1
+a22 4
+  private :: ADD_IDENT, BUILD_TREE, ENTER_TERMINAL, INIT_INTRINSIC
+  private :: MAKE_TREE, N_DOT, N_DT_DEF, N_FIELD_SPEC, N_FIELD_TYPE
+  private :: N_NAME_DEF, N_SECTION, N_SPEC_DEF, PUSH_PSEUDO_TERMINAL
+  private :: T_IDENTIFIER
+d26 1
+a26 1
+       "$Id: init_tables_module.f90,v 1.4 2001/01/18 16:53:25 nakamura Exp $"
+d32 1
+a32 1
+  integer, public, parameter :: T_METHOD         = t_last_intrinsic+1
+d38 16
+a53 16
+  integer, public, parameter :: F_DF = 1
+  integer, public, parameter :: F_DLAT = 2
+  integer, public, parameter :: F_DLON = 3
+  integer, public, parameter :: F_FILE = 4
+  integer, public, parameter :: F_IMETHOD = 5
+  integer, public, parameter :: F_LABEL = 6
+  integer, public, parameter :: F_LATGRID = 7
+  integer, public, parameter :: F_LONGRID = 8
+  integer, public, parameter :: F_MCF = 9
+  integer, public, parameter :: F_MODE = 10
+  integer, public, parameter :: F_PRESLVL = 11
+  integer, public, parameter :: F_PRODNAME = 12
+  integer, public, parameter :: F_RANGFREQ = 13
+  integer, public, parameter :: F_RANGWAVNUM = 14
+  integer, public, parameter :: F_TIME = 15
+  integer, public, parameter :: FIELD_FIRST = f_df, FIELD_LAST = f_time
+d56 1
+a56 1
+  integer, public, parameter :: L_ALL   = last_intrinsic_lit + 1
+a63 11
+! Parameter names:
+  ! In GlobalSettings section:
+  integer, public, parameter :: P_LOG_TYPE = 1
+  integer, public, parameter :: P_MAX_GAP = 2
+  integer, public, parameter :: P_MIN_DAYS = 3
+  integer, public, parameter :: P_N = 4
+  integer, public, parameter :: P_OUTPUT_VERSION_STRING = 5
+  integer, public, parameter :: P_VERSION_COMMENT = 6
+  integer, public, parameter :: FIRST_PARM = P_LOG_TYPE
+  integer, public, parameter :: LAST_PARM = P_VERSION_COMMENT
+  integer, public :: PARM_INDICES(first_parm:last_parm)
+d72 3
+a74 3
+  integer, public, parameter :: S_MAPSPEC = 1
+  integer, public, parameter :: S_OUTPUT = 2
+  integer, public, parameter :: SPEC_FIRST = s_mapSpec, SPEC_LAST = s_Output
+d76 11
+a102 4
+  integer, private, parameter :: F = 1000, L = 2000, N = 0, P = 3000
+  integer, private, parameter :: S = 4000, T = 5000, Z = 6000
+  integer, private, parameter :: BEGIN = -1
+
+d106 2
+d110 1
+a169 6
+      begin, t+t_numeric, n+n_dt_def, &
+      begin, t+t_numeric_range, n+n_dt_def, &
+      begin, t+t_string, n+n_dt_def /) )
+    ! Define the enumerated types
+    call make_tree ( (/ &
+      begin, t+t_boolean, l+l_true, l+l_false, n+n_dt_def, &
+d241 1
+a241 57
+  subroutine MAKE_TREE ( IDS )
+  ! Build a tree specified by the "ids" array.  "begin" marks the
+  ! beginning of a tree.  A tree-node marks the end of the corresponding
+  ! tree.  Pseudo-terminals are decorated with their indices.
+    integer, intent(in) :: IDS(:)
+
+    integer :: I, ID, M, N_IDS, STACK(0:30), STRING, WHICH
+
+    n_ids = size(ids)
+    m = 0
+    stack(0) = 0 ! just so it's defined, in case it gets incremented
+                 ! after build_tree
+    if ( ids(1) >= 0 ) then
+      m = 1
+      stack(1) = 0
+    end if
+    do i = 1, n_ids
+      if ( ids(i) == begin ) then
+        m = m + 1
+        stack(m) = 0
+      else
+        id = mod(ids(i), 1000)
+        which = ids(i) / 1000
+       select case ( which )
+       case ( f/1000 ) ! Fields
+         string = field_indices(id)
+       case ( l/1000 ) ! Enumeration literals
+         string = lit_indices(id)
+       case ( p/1000 ) ! Parameter names
+         string = parm_indices(id)
+       case ( s/1000 ) ! Specs
+         string = spec_indices(id)
+       case ( t/1000 ) ! Intrinsic data types
+         string = data_type_indices(id)
+       case ( z/1000 ) ! Sections
+         string = section_indices(id)
+       case ( n/1000 ) ! Tree nodes
+         call build_tree ( id, stack(m) )
+         m = m - 1
+         stack(m) = stack(m) + 1
+    cycle
+       end select
+       if ( string == 0 ) then
+         print *, 'INIT_TABLES_MODULE%MAKE_TREE-E- Element ', i, &
+           & ' of a list is undefined'
+           stop
+         end if
+       call push_pseudo_terminal ( string, 0, decor = id )
+       stack(m) = stack(m) + 1
+      end if
+    end do
+  end subroutine MAKE_TREE
+
+  integer function ADD_IDENT ( TEXT )
+    character(len=*), intent(in) :: TEXT
+    add_ident = enter_terminal ( text, t_identifier )
+  end function ADD_IDENT
+d246 3
+@
+
+
+1.4
+log
+@Moved minDays from PCF to cf.
+@
+text
+@d33 1
+a33 1
+       "$Id: init_tables_module.f90,v 1.3 2001/01/16 17:53:03 nakamura Exp $"
+d73 7
+a79 8
+  integer, public, parameter :: P_L2_VER = 1
+  integer, public, parameter :: P_LOG_TYPE = 2
+  integer, public, parameter :: P_MAX_GAP = 3
+  integer, public, parameter :: P_MIN_DAYS = 4
+  integer, public, parameter :: P_N = 5
+  integer, public, parameter :: P_OUTPUT_VERSION_STRING = 6
+  integer, public, parameter :: P_VERSION_COMMENT = 7
+  integer, public, parameter :: FIRST_PARM = P_L2_VER
+a148 1
+    parm_indices(p_l2_ver) =                add_ident ( 'L2Ver' )
+a242 1
+             begin, p+p_l2_ver, t+t_string, n+n_name_def, &
+d316 3
+@
+
+
+1.3
+log
+@Added a template for the log file name to GlobalSettings.
+@
+text
+@d33 1
+a33 1
+       "$Id: init_tables_module.f90,v 1.5 2001/01/12 19:54:12 nakamura Exp nakamura $"
+d76 4
+a79 3
+  integer, public, parameter :: P_N = 4
+  integer, public, parameter :: P_OUTPUT_VERSION_STRING = 5
+  integer, public, parameter :: P_VERSION_COMMENT = 6
+d153 1
+d248 1
+d319 3
+@
+
+
+1.2
+log
+@Removed bypass flag, quantities.
+@
+text
+@d33 1
+a33 1
+       "$Id: init_tables_module.f90,v 1.4 2000/10/24 20:39:23 nakamura Exp nakamura $"
+d74 5
+a78 4
+  integer, public, parameter :: P_MAX_GAP = 2
+  integer, public, parameter :: P_N = 3
+  integer, public, parameter :: P_OUTPUT_VERSION_STRING = 4
+  integer, public, parameter :: P_VERSION_COMMENT = 5
+d150 1
+d245 1
+d316 3
+@
+
+
+1.1
+log
+@Customized for L3.
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
+d33 1
+a33 1
+       "$Id: init_tables_module.f90,v 2.1 2000/10/12 00:35:57 vsnyder Exp $"
+d45 16
+a60 18
+  integer, public, parameter :: F_BYPASS = 1
+  integer, public, parameter :: F_DF = 2
+  integer, public, parameter :: F_DLAT = 3
+  integer, public, parameter :: F_DLON = 4
+  integer, public, parameter :: F_FILE = 5
+  integer, public, parameter :: F_IMETHOD = 6
+  integer, public, parameter :: F_LABEL = 7
+  integer, public, parameter :: F_LATGRID = 8
+  integer, public, parameter :: F_LONGRID = 9
+  integer, public, parameter :: F_MCF = 10
+  integer, public, parameter :: F_MODE = 11
+  integer, public, parameter :: F_PRESLVL = 12
+  integer, public, parameter :: F_PRODNAME = 13
+  integer, public, parameter :: F_QUANTITIES = 14
+  integer, public, parameter :: F_RANGFREQ = 15
+  integer, public, parameter :: F_RANGWAVNUM = 16
+  integer, public, parameter :: F_TIME = 17
+  integer, public, parameter :: FIELD_FIRST = f_bypass, FIELD_LAST = f_time
+a131 1
+    field_indices(f_bypass) =               add_ident ( 'bypassPCF' )
+a143 1
+    field_indices(f_quantities) =           add_ident ( 'quantities' )
+a228 1
+             begin, f+f_quantities, t+t_string, n+n_field_type, &
+a230 1
+             begin, f+f_bypass, t+t_boolean, n+n_field_type, &
+d312 4
+a315 1
+! $Log: $
+@
+

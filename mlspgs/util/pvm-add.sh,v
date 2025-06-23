@@ -1,0 +1,177 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.14
+	cfm-single-freq-0-1:1.2.0.12
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.10
+	mus-emls-1-70:1.2.0.8
+	rel-1-0-englocks-work:1.2.0.6
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.2
+	V4-21:1.2.0.4
+	V4-13:1.2
+	V4-12:1.2
+	V4-11:1.2
+	V4-10:1.2
+	V3-43:1.2
+	M4-00:1.2
+	V3-41:1.2
+	V3-40-PlusGM57:1.2.0.2
+	V2-24-NRT-04:1.2
+	V3-33:1.2
+	V2-24:1.2
+	V3-31:1.2
+	V3-30-NRT-05:1.2
+	cfm-01-00:1.2
+	V3-30:1.2
+	V3-20:1.2
+	V3-10:1.2
+	V2-23-NRT-02:1.2
+	V2-23:1.2
+	V2-22-NRT-01:1.2
+	V2-22:1.2
+	V2-21:1.2
+	V2-20:1.2
+	V2-11:1.2
+	V2-10:1.2
+	V2-00:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2005.06.23.22.20.46;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.03.26.00.13.25;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Reworded Copyright statement
+@
+text
+@#!/bin/bash
+
+# --------------- pvm-add help
+# Script to add nodes to pvm and optionally set them to useable by
+# an already-running l2q
+# Usage:
+# pvm-add.sh [opt] node1 [node2] .. [noden]
+#
+#    O p t i o n s
+# -h[elp]       print brief help message; exit
+# -l2q          tell l2q to resurrect nodes, too
+#
+# Note:
+# (1) pvm (and l2q) must be in your PATH and runnable
+# (2) passwordless ssh must be enabled
+# (3) nodes must be visible and reachable by ssh
+# 
+# Result:
+# pvm will be started on nodes
+# Optionally, already-running l2q will be able to grant nodes to master tasks
+# --------------- End pvm-add help
+# Copyright 2005, by the California Institute of Technology. ALL
+# RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+# commercial use must be negotiated with the Office of Technology Transfer
+# at the California Institute of Technology.
+
+# This software may be subject to U.S. export control laws. By accepting this
+# software, the user agrees to comply with all applicable U.S. export laws and
+# regulations. User has the responsibility to obtain export licenses, or other
+# export authority as may be required before exporting such information to
+# foreign countries or providing access to foreign persons.
+
+# "$Id: pvm-add.sh,v 1.1 2005/03/26 00:13:25 pwagner Exp $"
+
+# ************
+# Main Program
+# ************
+# 
+me="$0"
+my_name=pvm-add
+I=pvm-add
+resurrect="no"
+list=""
+more_opts="yes"
+while [ "$more_opts" = "yes" ] ; do
+
+    case "$1" in
+
+    -l2q )
+	    shift
+       resurrect="yes"
+       ;;
+    -h | -help )
+       sed -n '/'$my_name' help/,/End '$my_name' help/ p' $me \
+           | sed -n 's/^.//p' | sed '1 d; $ d'
+       exit
+	     ;;
+
+    * )
+       more_opts="no"
+       ;;
+    esac
+done
+
+list="$@@"
+for node
+do
+pvm <<EOF
+add $node
+quit
+EOF
+done
+
+if [ "$resurrect" = "no" ]
+then
+  exit 0
+fi
+
+comma_list=`echo $list | sed 's/ /,/g'`
+l2q -c check $comma_list
+
+exit 0
+# $Log: pvm-add.sh,v $
+# Revision 1.1  2005/03/26 00:13:25  pwagner
+# First commit
+#
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d22 10
+a31 2
+# Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+# U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
+d33 1
+a33 1
+# "$Id: chunktimes.sh,v 1.4 2004/11/03 19:09:33 pwagner Exp $"
+d84 3
+@
+

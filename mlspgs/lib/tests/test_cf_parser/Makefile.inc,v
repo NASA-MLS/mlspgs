@@ -1,0 +1,293 @@
+head	1.3;
+access;
+symbols
+	v5-02-NRT-19:1.3
+	v6-00:1.3
+	v5-02-NRT-18:1.3
+	v5-02:1.3
+	v5-01-NRT-17:1.3
+	v5-01-NRT-16:1.3
+	v5-01-NRT-15:1.3
+	v5-01-NRT-14:1.3
+	neuralnetworks-1-0:1.3.0.16
+	cfm-single-freq-0-1:1.3.0.14
+	v5-01:1.3
+	v5-00:1.3
+	v4-23-TA133:1.3.0.12
+	mus-emls-1-70:1.3.0.10
+	rel-1-0-englocks-work:1.3.0.8
+	VUMLS1-00:1.3
+	VPL1-00:1.3
+	V4-22-NRT-08:1.3
+	VAM1-00:1.3
+	V4-21:1.3.0.6
+	V4-13:1.3
+	V4-12:1.3
+	V4-11:1.3
+	V4-10:1.3
+	V3-43:1.3
+	M4-00:1.3
+	V3-41:1.3
+	V3-40-PlusGM57:1.3.0.4
+	V2-24-NRT-04:1.3
+	V3-33:1.3
+	V2-24:1.3
+	V3-31:1.3
+	V3-30-NRT-05:1.3
+	cfm-01-00:1.3
+	V3-30:1.3
+	V3-20:1.3
+	V3-10:1.3
+	V2-23-NRT-02:1.3
+	V2-23:1.3
+	V2-22-NRT-01:1.3
+	V2-22:1.3
+	V2-21:1.3
+	V2-20:1.3
+	V2-11:1.3
+	V2-10:1.3
+	V2-00:1.3
+	V1-51:1.3
+	V1-50:1.3
+	V1-45:1.3
+	V1-44:1.3
+	V1-43:1.3
+	V1-42:1.3
+	V1-41:1.3
+	V1-32:1.3
+	V1-40:1.3
+	V1-31:1.3
+	V1-30:1.3
+	V1-13:1.3
+	V1-12:1.3
+	V1-11:1.3
+	V1-10:1.3
+	newfwm-feb03:1.3.0.2
+	V1-04:1.3
+	V1-03:1.3
+	V1-02:1.3
+	V1-00:1.3
+	newfwm-sep01:1.2.0.2
+	V0-7:1.2
+	V0-5-Level2:1.2
+	V0-5-SIPS:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.3
+date	2001.11.28.03.05.06;	author vsnyder;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2000.11.30.20.50.58;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2000.10.20.23.36.54;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@Changes to account for revised position of test_cf_parser
+@
+text
+@# Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+# $Id: Makefile.inc,v 1.2 2000/11/30 20:50:58 vsnyder Exp $
+
+# Variables set before this file is included:
+# A = Path to directory for application's source, to get init_tables_module.f90
+# F90 = Name of Fortran compiler
+# FOPTS = Options for Fortran compiler, other than -c
+# FWM = path to MLS forward model's .mod files and libfwdmdl.a
+# I = option to tell compiler path to includes and .mod files (usually -I)
+# M = path to MLS library's .mod files and libmls.a
+# MLS = path to MLS library's source files
+# S = path to source files
+# SRC = path to source library (as opposed to sources for object library)
+# SDP = "Substitute" or empty -- used as: SDPToolkit$(SDP).o
+# TOOLKIT = Beginning of path to HDFEOS's GCT library, and to HDF's libraries,
+#           e.g. /software/SRC/TOOLKIT-5.2.6v1.00.NAG
+
+# Object files needed from lib:
+
+OBJLIB = $M/declaration_table.o $M/error_handler.o     $M/expr_m.o \
+         $M/hash.o              $M/intrinsic.o         $M/io_stuff.o \
+         $M/lexer_core.o        $M/lexer_m.o           $M/machine.o \
+         $M/MLSCF.o             $M/MLSMessageModule.o  $M/output_m.o \
+         $M/parser.o            $M/string_table.o      $M/symbol_table.o \
+         $M/symbol_types.o      $M/table_dumper.o      $M/table_generator.o \
+         $M/toggles_core.o      $M/trace_m.o           $M/tree.o \
+         $M/tree_types.o        $M/units.o
+
+L = $(MLS)/..
+
+# These are used to make tar, which is from the parent of $(MLS):
+LIBSRC = $L/declaration_table.f90 $L/error_handler.f90     $L/expr_m.f90 \
+         $L/hash.f90              $L/intrinsic.f90         $L/io_stuff.f90 \
+         $L/lexer_core.f90        $L/lexer_m.f90           $L/machine.f90 \
+         $L/MLSCF.f90             $L/MLSMessageModule.f90  $L/output_m.f90 \
+         $L/parser.f90            $L/string_table.f90      $L/symbol_table.f90 \
+         $L/symbol_types.f90      $L/table_dumper.f90      $L/table_generator.f90 \
+         $L/toggles_core.f90      $L/trace_m.f90           $L/tree.f90 \
+         $L/tree_types.f90        $L/units.f90
+
+# Files that must be compiled here from sources in the application:
+ 
+OBJ_L2 = init_tables_module.o
+
+# These are used to make tar, which is done from the parent of $(MLS):
+SRC_L2 = $A/init_tables_module.f90
+
+# Files that must be compiled here from sources in $(srclib), because
+# they depend on init_tables_module:
+
+OBJ_SRC_LIB = getCF_m.o tree_checker.o
+
+# These are used to make tar, which is from the parent of $(MLS):
+SRC_LIB = $(srclib)/getCF_m.f90 $(srclib)/tree_checker.f90
+
+all: test
+
+init_tables_module.o: $A/init_tables_module.f90 $M/intrinsic.o \
+                      $M/symbol_table.o $M/symbol_types.o $M/tree.o \
+                      $M/tree_types.o
+	$(F90) -c $(FOPTS) $I$M $I$(FWM) $I$(SRC) $A/init_tables_module.f90
+
+tree_checker.o: $(SRC)/tree_checker.f90 $M/declaration_table.o \
+                init_tables_module.o $M/lexer_core.o $M/output_m.o \
+                $M/string_table.o $M/toggles_core.o $M/trace_m.o $M/tree.o \
+                $M/tree_types.o
+	$(F90) -c $(FOPTS) $I$M $I$(FWM) $I$(SRC) $(SRC)/tree_checker.f90
+
+getCF_m.o: $(SRC)/getCF_m.f90 $M/declaration_table.o init_tables_module.o \
+           $M/lexer_core.o $M/MLSCF.o $M/output_m.o $M/parser.o \
+           $M/string_table.o $M/table_dumper.o $M/table_generator.o \
+           $M/toggles_core.o tree_checker.o $M/tree.o $M/units.o
+	$(F90) -c $(FOPTS) $I$M $I$(FWM) $I$(SRC) $(SRC)/getCF_m.f90
+
+$M/libmls.a:
+	cd $M; make libmls.a
+
+# =====     For test harness     =========================================
+
+OBJS = test.o $(OBJLIB) $(OBJ_L2) $(OBJ_SRC_LIB)
+
+test.o: $S/test.f90 getCF_m.o $M/machine.o $M/MLSCF.o $M/output_m.o \
+        $M/toggles_core.o
+	$(F90) -c $(FOPTS) $I$S $I$M $I$(FWM) $I$(SRC) $S/test.f90
+
+test: $(OBJS) $M/libmls.a
+	$(F90) $(LDOPTS) -o test $(OBJS) $M/SDPToolkit$(SDP).o \
+              -L$(PGSTK) -lPGSTK \
+              -L$(FWM) -lfwdmdl \
+              -L$M -lmls
+
+out.test: test $S/in.test
+	./test -a $S/in.test out.test
+
+# =====     Additional Targets     =======================================
+
+clean:
+	rm -f *.o *.mod test out.test Log[RSU]* *.tgz
+
+tar:
+	rm -f $S/parser.tgz
+	cd $(MLS)/.. ; \
+	tar hcvzf lib/test_cf_parser/parser.tgz $(LIBSRC) $(SRC_L2) \
+          $(SRC_LIB) lib/test_cf_parser/*
+
+# $Log: Makefile.inc,v $
+# Revision 1.2  2000/11/30 20:50:58  vsnyder
+# Make sure init_tables_module gets compiled if necessary
+#
+# Revision 1.1  2000/10/20 23:36:54  pwagner
+# moved to test directory
+#
+# Revision 1.1  2000/10/11 20:54:39  vsnyder
+# Initial addition
+#
+@
+
+
+1.2
+log
+@Make sure init_tables_module gets compiled if necessary
+@
+text
+@d4 1
+a4 1
+# $Id: Makefile.inc,v 1.1 2000/10/20 23:36:54 pwagner Exp $
+d10 1
+d15 1
+d63 1
+a63 1
+	$(F90) -c $(FOPTS) $I$M $A/init_tables_module.f90
+d65 1
+a65 1
+tree_checker.o: $(MLS)/tree_checker.f90 $M/declaration_table.o \
+d69 1
+a69 1
+	$(F90) -c $(FOPTS) $I$M $(MLS)/tree_checker.f90
+d71 1
+a71 1
+getCF_m.o: $(MLS)/getCF_m.f90 $M/declaration_table.o init_tables_module.o \
+d75 1
+a75 1
+	$(F90) -c $(FOPTS) $I$M $(MLS)/getCF_m.f90
+d86 1
+a86 1
+	$(F90) -c $(FOPTS) $I$S $I$M $S/test.f90
+d91 2
+d109 3
+@
+
+
+1.1
+log
+@moved to test directory
+@
+text
+@d4 1
+a4 1
+# $Id: Makefile.inc,v 1.1 2000/10/11 20:54:39 vsnyder Exp $
+a12 2
+# PLATFORM = The "platform" part of the path to HDF and HDFEOS libraries,
+#            e.g. linux, sgi or sun5.
+d29 2
+d32 8
+a39 8
+SRCLIB = lib/declaration_table.f90 lib/error_handler.f90     lib/expr_m.f90 \
+         lib/hash.f90              lib/intrinsic.f90         lib/io_stuff.f90 \
+         lib/lexer_core.f90        lib/lexer_m.f90           lib/machine.f90 \
+         lib/MLSCF.f90             lib/MLSMessageModule.f90  lib/output_m.f90 \
+         lib/parser.f90            lib/string_table.f90      lib/symbol_table.f90 \
+         lib/symbol_types.f90      lib/table_dumper.f90      lib/table_generator.f90 \
+         lib/toggles_core.f90      lib/trace_m.f90           lib/tree.f90 \
+         lib/tree_types.f90        lib/units.f90
+d45 2
+a46 2
+# These are used to make tar, which is from the parent of $(MLS):
+SRC_L2 = l2/init_tables_module.f90
+d48 1
+a48 1
+# Files that must be compiled here from sources in lib, because
+d54 1
+a54 1
+SRC_LIB = lib/getCF_m.f90 lib/tree_checker.f90
+d101 1
+a101 1
+	tar hcvzf lib/test_cf_parser/parser.tgz $(SRCLIB) $(SRC_L2) \
+d105 3
+@
+

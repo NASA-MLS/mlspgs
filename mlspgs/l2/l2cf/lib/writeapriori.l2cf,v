@@ -1,0 +1,338 @@
+head	1.10;
+access;
+symbols
+	v5-02-NRT-19:1.10
+	v6-00:1.10
+	v5-02-NRT-18:1.8
+	v5-02:1.8
+	v5-01-NRT-17:1.8
+	v5-01-NRT-16:1.8
+	v5-01-NRT-15:1.8
+	v5-01-NRT-14:1.8
+	neuralnetworks-1-0:1.8.0.10
+	cfm-single-freq-0-1:1.8.0.8
+	v5-01:1.8
+	v5-00:1.8
+	v4-23-TA133:1.8.0.6
+	mus-emls-1-70:1.8.0.4
+	rel-1-0-englocks-work:1.8.0.2
+	VUMLS1-00:1.6
+	VPL1-00:1.6
+	V4-22-NRT-08:1.6
+	VAM1-00:1.5
+	V4-21:1.5.0.2
+	V4-13:1.3
+	V4-12:1.3
+	V4-11:1.3
+	V4-10:1.3
+	M4-00:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.10
+date	2024.02.05.17.45.19;	author pwagner;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2024.02.02.21.42.08;	author pwagner;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2017.12.15.18.27.25;	author mmadatya;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2017.11.07.21.24.40;	author pwagner;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2016.01.05.00.34.13;	author pwagner;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2014.12.11.17.53.10;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2014.12.10.23.05.29;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2014.04.07.18.15.30;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2013.10.15.17.57.25;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2013.01.25.21.26.18;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.10
+log
+@Fixed error intreoduced with last change
+@
+text
+@!divert(-1)
+;; $Id: writeapriori.l2cf,v 1.9 2024/02/02 21:42:08 pwagner Exp $
+
+  ;; This is for the case where we wish to store the a priori quantities
+  ;; in the dgg files
+  !define(LabelOneAPQuantity,{!dnl
+!ifelse($1,{Temperature}, {
+  Label, quantity=aPriori.$1_HR, label='$1-APriori'
+  Label, quantity=aPrioriPrecision.$1_HR, label='$1-APrioriPrecision'},
+$1,{GPH}, {
+  Label, quantity=aPriori.$1_HR, label='$1-APriori'
+  Label, quantity=aPrioriPrecision.$1_HR, label='$1-APrioriPrecision'},
+$1,{geoHeight}, {
+  Label, quantity=aPriori.$1_HR, label='$1-APriori'
+  Label, quantity=aPrioriPrecision.$1_HR, label='$1-APrioriPrecision'},
+$1,{H2O}, {
+  Label, quantity=aPriori.$1, label='$1_LR-APriori'
+  Label, quantity=aPrioriPrecision.$1, label='$1_LR-APrioriPrecision'},
+$1,{O3}, {
+  Label, quantity=aPriori.$1, label='$1_LR-APriori'
+  Label, quantity=aPrioriPrecision.$1, label='$1_LR-APrioriPrecision'},
+$1,{O3_HR}, {
+  Label, quantity=aPriori.$1, label='O3-APriori'
+  Label, quantity=aPrioriPrecision.$1, label='O3-APrioriPrecision'},
+{
+  Label, quantity=aPriori.$1, label='$1-APriori'
+  Label, quantity=aPrioriPrecision.$1, label='$1-APrioriPrecision'})
+})
+  !define(DirectWriteOneAPQuantity,{, $
+!ifelse($1,{Temperature},
+   {  source=aPriori.$1_HR, precision=aPrioriPrecision.$1_HR}, 
+   $1,{GPH}, 
+   {  source=aPriori.$1_HR, precision=aPrioriPrecision.$1_HR},
+   $1,{geoHeight}, 
+   {  source=aPriori.$1_HR, precision=aPrioriPrecision.$1_HR},
+   {  source=aPriori.$1, precision=aPrioriPrecision.$1})})
+  
+!ifdef(allAprioriProducts,{},{
+!define(allAprioriProducts,{!allStandardProducts})
+})
+!divert!dnl
+
+  !ifdef(flagWriteAPrioriToDGG,{
+begin Join
+  !forall(LabelOneAPQuantity,!allAprioriProducts)
+  DirectWrite, hdfVersion=!hdfVersion, $
+  type=l2dgg !forall(DirectWriteOneAPQuantity,!allAprioriProducts)
+  
+; Not an APriori quantity, but this a convenient place to write
+; Cloud Top Height anyway
+  Label, quantity=aPriori.CloudTopPressure, label='CloudTopPressure-StdProd'
+  Label, quantity=aPrioriPrecision.CloudTopPressure, label='CloudTopPressure-StdProdPrecision'
+  DirectWrite, hdfVersion=!hdfVersion, $
+  type=l2dgg, source=aPriori.CloudTopPressure, precision=aPrioriPrecision.CloudTopPressure
+end Join
+;begin Join
+;  Label, quantity=aPriori.surfaceType, label='Ascend(+1)Descend(-1)'
+;  DirectWrite, hdfVersion=!hdfVersion, $
+;  type=l2dgg, source=aPriori.surfaceType
+;end Join
+  })
+!divert(-1)
+;$Log: writeapriori.l2cf,v $
+;Revision 1.9  2024/02/02 21:42:08  pwagner
+;Added CloudTopPressure as new std prod
+;
+;Revision 1.8  2017/12/15 18:27:25  mmadatya
+;Added geoHeight as new quantity template
+;
+;Revision 1.7  2017/11/07 21:24:40  pwagner
+;Added allAprioriProducts to define which apriori swaths to write
+;
+;Revision 1.6  2016/01/05 00:34:13  pwagner
+;Supplied command to resume output
+;
+;Revision 1.5  2014/12/11 17:53:10  pwagner
+;Ascend/Descend Mode no longer used in all l2gp and dgg DirectWrites so not Filled
+;
+;Revision 1.4  2014/12/10 23:05:29  pwagner
+;Correct erroneous calculation of AscDescMode; now based on geodAngle
+;
+;Revision 1.3  2014/04/07 18:15:30  pwagner
+;Added stuff for writing Ascending/Descending Mode flags
+;
+;Revision 1.2  2013/10/15 17:57:25  pwagner
+;Spacecraft ascend/descend mode now written to dgg
+;
+;Revision 1.1  2013/01/25 21:26:18  pwagner
+;First commit
+;
+!divert!dnl
+@
+
+
+1.9
+log
+@Added CloudTopPressure as new std prod
+@
+text
+@d2 1
+a2 1
+;; $Id: writeapriori.l2cf,v 1.8 2017/12/15 18:27:25 mmadatya Exp $
+d52 1
+a52 1
+  Label, quantity=aPrioriPrecision.CloudTopPressure, label='CloudTopPressure-StdProdPrecision'})
+d64 3
+@
+
+
+1.8
+log
+@Added geoHeight as new quantity template
+@
+text
+@d2 1
+a2 1
+;; $Id: writeapriori.l2cf,v 1.7 2017/11/07 21:24:40 pwagner Exp $
+d49 6
+d64 3
+@
+
+
+1.7
+log
+@Added allAprioriProducts to define which apriori swaths to write
+@
+text
+@d2 1
+a2 1
+;; $Id: writeapriori.l2cf,v 1.6 2016/01/05 00:34:13 pwagner Exp $
+d13 3
+d34 2
+d58 3
+@
+
+
+1.6
+log
+@Supplied command to resume output
+@
+text
+@d2 1
+a2 1
+;; $Id: writeapriori.l2cf,v 1.5 2014/12/11 17:53:10 pwagner Exp $
+d33 3
+d40 1
+a40 1
+  !forall(LabelOneAPQuantity,!allStandardProducts)
+d42 1
+a42 1
+  type=l2dgg !forall(DirectWriteOneAPQuantity,!allStandardProducts)
+d53 3
+@
+
+
+1.5
+log
+@Ascend/Descend Mode no longer used in all l2gp and dgg DirectWrites so not Filled
+@
+text
+@d2 1
+a2 1
+;; $Id: writeapriori.l2cf,v 1.4 2014/12/10 23:05:29 pwagner Exp $
+d50 3
+d65 1
+@
+
+
+1.4
+log
+@Correct erroneous calculation of AscDescMode; now based on geodAngle
+@
+text
+@d2 1
+a2 1
+;; $Id: writeapriori.l2cf,v 1.3 2014/04/07 18:15:30 pwagner Exp $
+a34 6
+;; Ascend/Descend Mode will be used in all l2gp and dgg DirectWrites
+begin Fill
+  Fill, quantity=ADModeVector.AscDescMode, method=ascenddescend, $
+    ptanQuantity=apriori.ptanGHz
+end Fill
+
+d50 3
+@
+
+
+1.3
+log
+@Added stuff for writing Ascending/Descending Mode flags
+@
+text
+@d2 1
+a2 1
+;; $Id: writeapriori.l2cf,v 1.2 2013/10/15 17:57:25 pwagner Exp $
+d37 2
+a38 1
+  Fill, quantity=ADModeVector.AscDescMode, method=ascenddescend
+d44 1
+a44 1
+  DirectWrite, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+d56 3
+@
+
+
+1.2
+log
+@Spacecraft ascend/descend mode now written to dgg
+@
+text
+@d2 1
+a2 1
+;; $Id: writeapriori.l2cf,v 1.1 2013/01/25 21:26:18 pwagner Exp $
+d34 6
+d43 1
+a43 1
+  DirectWrite, hdfVersion=!hdfVersion, $
+d47 5
+a51 11
+
+;; We ought to have a different quantity type for ascend/descend instead of
+;; resorting to this trickery
+begin Fill
+  Fill, quantity=aPriori.surfaceType, method=ascenddescend
+end Fill
+begin Join
+  Label, quantity=aPriori.surfaceType, label='Ascend(+1)Descend(-1)'
+  DirectWrite, hdfVersion=!hdfVersion, $
+  type=l2dgg, source=aPriori.surfaceType
+end Join
+d55 3
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d2 1
+a2 1
+;; $Id: writeapriori.l2cf,v 1.151 2012/10/09 00:32:43 pwagner Exp $
+d41 11
+d55 3
+@
+

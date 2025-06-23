@@ -1,0 +1,663 @@
+head	1.8;
+access;
+symbols
+	v5-02-NRT-19:1.8
+	v6-00:1.8
+	v5-02-NRT-18:1.8
+	v5-02:1.8
+	v5-01-NRT-17:1.8
+	v5-01-NRT-16:1.8
+	v5-01-NRT-15:1.8
+	v5-01-NRT-14:1.8
+	neuralnetworks-1-0:1.8.0.12
+	cfm-single-freq-0-1:1.8.0.10
+	v5-01:1.8
+	v5-00:1.8
+	v4-23-TA133:1.8.0.8
+	mus-emls-1-70:1.8.0.6
+	rel-1-0-englocks-work:1.8.0.4
+	VUMLS1-00:1.8
+	VPL1-00:1.8
+	V4-22-NRT-08:1.8
+	VAM1-00:1.8
+	V4-21:1.8.0.2
+	V4-13:1.8
+	V4-12:1.8
+	V4-11:1.8
+	V4-10:1.8
+	V3-43:1.7
+	M4-00:1.8
+	V3-41:1.7
+	V3-40-PlusGM57:1.7.0.2
+	V2-24-NRT-04:1.7
+	V3-33:1.7
+	V2-24:1.7
+	V3-31:1.7
+	V3-30-NRT-05:1.7
+	cfm-01-00:1.7
+	V3-30:1.7
+	V3-20:1.7
+	V3-10:1.7
+	V2-23-NRT-02:1.7
+	V2-23:1.7
+	V2-22-NRT-01:1.7
+	V2-22:1.7
+	V2-21:1.7
+	V2-20:1.7
+	V2-11:1.7
+	V2-10:1.7
+	V2-00:1.7
+	V1-51:1.5
+	V1-50:1.5
+	V1-45:1.5
+	V1-44:1.4
+	V1-43:1.4
+	V1-42:1.4
+	V1-41:1.4
+	V1-32:1.4
+	V1-40:1.4
+	V1-31:1.4
+	V1-30:1.3;
+locks; strict;
+comment	@# @;
+
+
+1.8
+date	2012.04.04.00.45.10;	author pwagner;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2006.04.03.22.12.40;	author pwagner;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2005.09.08.00.25.01;	author pwagner;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2004.08.19.00.07.46;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2003.10.08.21.13.15;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2003.05.21.17.46.02;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2003.05.17.00.04.52;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2003.04.25.23.02.14;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.8
+log
+@Makes use of common Makefile.h file
+@
+text
+@# "$Id: G95.Linux,v 1.7 2006/04/03 22:12:40 pwagner Exp $"
+
+#	special options for compiling some modules--override .f90 rules
+
+# Should put this elsewhere--but in a hurry
+TABLES_DIR=../../tables
+
+# split_path.sh can split off a file name from any prefixed paths
+SPLIT_PATH=$(UTILDIR)/split_path.sh
+
+# FC_NAME may be something like f95 if we need a real compiler, or
+# mark_as_uptodate.sh if we're being asked just to touch targets
+FC_NAME := $(shell ${SPLIT_PATH} -f $(FC))
+
+BUGGY := $(shell echo ${FOPTS} | sed 's/-O[0-9]*//')
+DUSTIER := $(DUSTY)
+
+# Where we and the configuration-specific files that include us are to be
+custom = $(CONFDIR)/customblds
+
+include $(custom)/Makefile.h
+
+# $Log: G95.Linux,v $
+# Revision 1.7  2006/04/03 22:12:40  pwagner
+# Uniform changes to accommodate buggy Lahey optimizer in l1
+#
+# Revision 1.6  2005/09/08 00:25:01  pwagner
+# Fixed bug is build command for l1/EngTbls.o
+#
+# Revision 1.5  2004/08/19 00:07:46  pwagner
+# Fixed missing mod dependencies for machine.o
+#
+# Revision 1.4  2003/10/08 21:13:15  pwagner
+# Changed options to sort to tolerate duplicate entries
+#
+# Revision 1.3  2003/05/21 17:46:02  pwagner
+# Commands to build mol_...f9h now formatted correctly
+#
+# Revision 1.2  2003/05/17 00:04:52  pwagner
+# Now create mol_.. files in lib to be used by Molecules.f90 there
+#
+# Revision 1.1  2003/04/25 23:02:14  pwagner
+# First commit
+#
+@
+
+
+1.7
+log
+@Uniform changes to accommodate buggy Lahey optimizer in l1
+@
+text
+@d1 1
+a1 1
+# "$Id: G95.Linux,v 1.6 2005/09/08 00:25:01 pwagner Exp $"
+d16 1
+a16 2
+ifndef CASCADE
+#	l1
+d18 2
+a19 33
+CalibWeightsFlags.o: calibweightsflags.mod
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T CalibWeightsFlags.o calibweightsflags.mod
+calibweightsflags.mod:
+	$(UTILDIR)/newAifBdiff.sh -a calibweightsflags.mod $(FC) -c $(BUGGY) \
+   $(INC_PATHS) $(S)/CalibWeightsFlags.f90 $(FAFTER)
+EngTbls.o: engtbls.mod
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T EngTbls.o engtbls.mod 
+engtbls.mod:
+	$(UTILDIR)/newAifBdiff.sh -a engtbls.mod $(FC) -c $(DUSTY) \
+   $(INC_PATHS) $(S)/EngTbls.f90 $(FAFTER)
+L1LogUtils.o: l1logutils.mod
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T L1LogUtils.o l1logutils.mod
+l1logutils.mod:
+	$(UTILDIR)/newAifBdiff.sh -a l1logutils.mod $(FC) -c $(BUGGY) \
+   $(INC_PATHS) $(S)/L1LogUtils.f90 $(FAFTER)
+OutputL1B.o: outputl1b.mod
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T OutputL1B.o outputl1b.mod 
+outputl1b.mod:
+	$(UTILDIR)/newAifBdiff.sh -a outputl1b.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/OutputL1B.f90 $(FAFTER)
+OutputL1B_HDF4.o: outputl1b_hdf4.mod
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T OutputL1B_HDF4.o outputl1b_hdf4.mod 
+outputl1b_hdf4.mod:
+	$(UTILDIR)/newAifBdiff.sh -a outputl1b_hdf4.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/OutputL1B_HDF4.f90 $(FAFTER)
+tree_checker.mod: tree_checker.f90 init_tables_module.mod
+	$(UTILDIR)/newAifBdiff.sh -a tree_checker.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(srclib)/tree_checker.f90 $(FAFTER)
+tree_checker.o: tree_checker.mod tree_checker.f90
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T tree_checker.o tree_checker.mod 
+d21 1
+a21 24
+# l2
+# This keeps switch_usage up-to-date with notes/switches
+# (and similarly for options)
+MLSL2.o: $(CONFDIR)/notes/switches $(CONFDIR)/notes/options $(S)/MLSL2.f90
+	@@rm -f MLSL2.f90 part_1 part_2 part_3 ; \
+	sed -n '1,/=== (start of automatic usage lines) ===/ p' $(S)/MLSL2.f90 > part_1 ; \
+	sed -n '/=== (end of automatic usage lines) ===/,$$ p' $(S)/MLSL2.f90 > part_3 ; \
+	sed -n '/mlsl2 =========/,/mlsl2 ========/p' $(CONFDIR)/notes/switches > part_2 ; \
+	sed '1 d; $$ d' part_2 > MLSL2.f90 ; \
+	mv MLSL2.f90 part_2 ; \
+	sed -n -f $(CONFDIR)/notes/switch_usage.sed part_2 > MLSL2.f90 ; \
+	mv MLSL2.f90 part_2 ; \
+	cat part_1 part_2 part_3 > MLSL2.f90 ; \
+	rm -f part_1 part_2 part_3 ; \
+	sed -n '1,/=== (start of automatic option lines) ===/ p' MLSL2.f90 > part_1 ; \
+	sed -n '/=== (end of automatic option lines) ===/,$$ p' MLSL2.f90 > part_3 ; \
+	sed -n '/mlsl2 =========/,/mlsl2 ========/p' $(CONFDIR)/notes/options > part_2 ; \
+	sed '1 d; $$ d' part_2 > MLSL2.f90 ; \
+	mv MLSL2.f90 part_2 ; \
+	sed -n -f $(CONFDIR)/notes/switch_usage.sed part_2 > MLSL2.f90 ; \
+	mv MLSL2.f90 part_2 ; \
+	cat part_1 part_2 part_3 > MLSL2.f90
+	$(FC) -c $(FOPTS) $(INC_PATHS) MLSL2.f90 $(FAFTER)
+	rm -f MLSL2.f90 part_1 part_2 part_3
+a22 288
+#tree_checker.mod: init_tables_module.mod
+#	$(UTILDIR)/newAifBdiff.sh -a tree_checker.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(srclib)/tree_checker.f90 $(FAFTER)
+
+ifeq ($(short_name),l2)
+# This uses the utility program init_gen to create two
+# up-to-date prereqs for init_tables_module
+$(INSTALLDIR)/init_gen: $(UTILDIR)/init_gen.f90
+	$(UTILDIR)/build_f90_in_misc.sh -p init_gen \
+	-d $(INSTALLDIR) -t $(TESTSDIR) -M $(MAKE) \
+	-FC $(FC) -CC $(CC) -C $(MLSCFILE) \
+   $(UTILDIR)/init_gen.f90
+
+$(S)/field_parm.f9h $(S)/field_add.f9h: $(S)/field_names.txt $(INSTALLDIR)/init_gen
+	sort -f -u $(S)/field_names.txt | $(INSTALLDIR)/init_gen \
+          -f"last_Spectroscopy_Field + 1" -l field_last -pF_ \
+          -j field_names.txt \
+          $(S)/field_parm.f9h $(S)/field_add.f9h field_indices
+
+$(S)/lit_parm.f9h $(S)/lit_add.f9h: $(S)/lit_names.txt $(INSTALLDIR)/init_gen
+	sort -f -u $(S)/lit_names.txt | $(INSTALLDIR)/init_gen \
+          -f"last_Spectroscopy_Lit + 1" -l last_lit -pl_ \
+          -j lit_names.txt \
+          $(S)/lit_parm.f9h $(S)/lit_add.f9h lit_indices
+
+
+endif
+#	l3
+
+l2interface.mod:
+	$(UTILDIR)/newAifBdiff.sh -a l2interface.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L2Interface.f90 $(FAFTER)
+L2Interface.o: l2interface.mod
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T L2Interface.o l2interface.mod 
+l3dmdata.mod:
+	$(UTILDIR)/newAifBdiff.sh -a l3dmdata.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DMData.f90 $(FAFTER)
+L3DMData.o: l3dmdata.mod
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T L3DMData.o l3dmdata.mod 
+#tree_checker.mod: init_tables_module.mod
+#	$(UTILDIR)/newAifBdiff.sh -a tree_checker.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(srclib)/tree_checker.f90 $(FAFTER)
+getcf_m.mod: init_tables_module.mod tree_checker.mod
+	$(UTILDIR)/newAifBdiff.sh -a getcf_m.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(srclib)/getCF_m.f90 $(FAFTER)
+getCF_m.o: getcf_m.mod
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T getCF_m.o getcf_m.mod 
+
+#  l3m
+l3dzdata.mod:
+	$(UTILDIR)/newAifBdiff.sh -a l3dzdata.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DZData.f90 $(FAFTER)
+L3DZData.o: l3dzdata.mod
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T L3DZData.o l3dzdata.mod 
+
+l3mzdata.mod:
+	$(UTILDIR)/newAifBdiff.sh -a l3mzdata.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3MZData.f90 $(FAFTER)
+L3MZData.o: l3mzdata.mod
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T L3MZData.o l3mzdata.mod 
+
+l3mmdata.mod:
+	$(UTILDIR)/newAifBdiff.sh -a l3mmdata.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3MMData.f90 $(FAFTER)
+L3MMData.o: l3mmdata.mod
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T L3MMData.o l3mmdata.mod 
+
+# lib
+
+ifeq ($(short_name),lib)
+# This uses the utility program init_gen to create two
+# up-to-date prereqs for intrinsic
+$(INSTALLDIR)/init_gen: $(UTILDIR)/init_gen.f90
+	$(UTILDIR)/build_f90_in_misc.sh -p init_gen \
+	-d $(INSTALLDIR) -t $(TESTSDIR) -M $(MAKE) \
+	-FC $(FC) -CC $(CC) -C $(MLSCFILE) \
+   $(UTILDIR)/init_gen.f90
+
+$(S)/lit_parm.f9h $(S)/lit_add.f9h: $(S)/lit_names.txt $(INSTALLDIR)/init_gen
+	sort -f -u $(S)/lit_names.txt | $(INSTALLDIR)/init_gen \
+          -l last_intrinsic_lit -pl_ \
+          -j lit_names.txt \
+          $(S)/lit_parm.f9h $(S)/lit_add.f9h lit_indices
+
+$(S)/mol_parm.f9h $(S)/mol_add.f9h: $(TABLES_DIR)/sps_cross_ref_table.txt $(INSTALLDIR)/init_gen
+	sed -n '/---\*/,$$ p' $(TABLES_DIR)/sps_cross_ref_table.txt | sed '1 d' | \
+          sed '/H2O_R/ d' | awk ' {print $$2}' | sort -f -u| \
+          $(INSTALLDIR)/init_gen \
+          -f "last_rxx_molecule+1" -l last_molecule -pl_ \
+          -j sps_cross_ref_table.txt \
+          $(S)/mol_parm.f9h $(S)/mol_add.f9h lit_indices
+
+machine.mod: $(MACH_DIR)/machine.f90
+	rm -f machine.f90 ; \
+	sed '/Start $(BAD_MATCH)/,/End $(BAD_MATCH)/ d' $(MACH_DIR)/machine.f90 \
+     > machine.f90
+	$(UTILDIR)/newAifBdiff.sh -a machine.mod $(FC) -c $(FOPTS) $(INC_PATHS) machine.f90 $(FAFTER)
+	rm -f machine.f90
+machine.o: machine.mod $(MACH_DIR)/machine.f90
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T machine.o machine.mod 
+
+intrinsic.o: $(S)/lit_parm.f9h $(S)/lit_add.f9h
+
+endif
+
+NOUNASS := $(shell echo ${FOPTS} | sed 's/\(--chk [aesx,]*\),u\([aesx,]*\)/\1\2/')
+SLOWASMOLASSES := -g --ap --pca --f95 --chk a,e,s
+
+DUSTY_NO_OPT := $(shell echo ${DUSTY} | sed 's/-O[0-9]*//')
+
+hdf.mod:
+	$(UTILDIR)/newAifBdiff.sh -a hdf.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/Hdf.f90 $(FAFTER)
+Hdf.o: hdf.mod
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T Hdf.o hdf.mod 
+string_table.mod:
+	$(UTILDIR)/newAifBdiff.sh -a string_table.mod $(FC) -c $(BUGGY) $(INC_PATHS) $(S)/string_table.f90 $(FAFTER)
+string_table.o: string_table.mod
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T string_table.o string_table.mod 
+
+# ncep_dao module doesn't play well with the lf95 undefined variable
+# runtime checker because of endian swapping
+ncep_dao.mod:
+	$(UTILDIR)/newAifBdiff.sh -a ncep_dao.mod $(FC) -c $(NOUNASS) $(INC_PATHS) $(S)/ncep_dao.f90 $(FAFTER)
+ncep_dao.o: ncep_dao.mod
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T ncep_dao.o ncep_dao.mod 
+
+#ifeq ($(short_name),fwdmdl)
+# LinearizedForwardModel_m.f90 must be compiled with checks on to keep
+# resulting executable from bombing on some chunks
+# --  f i x e d  --
+#linearizedforwardmodel_m.mod:
+#	$(UTILDIR)/newAifBdiff.sh -a linearizedforwardmodel_m.mod $(FC) -c $(SLOWASMOLASSES) $(INC_PATHS) $(S)/LinearizedForwardModel_m.f90 $(FAFTER)
+#LinearizedForwardModel_m.o: linearizedforwardmodel_m.mod
+#	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+#   -T LinearizedForwardModel_m.o linearizedforwardmodel_m.mod 
+#endif
+
+else
+#	l1
+
+CalibWeightsFlags.o: $(S)/CalibWeightsFlags.f90
+	$(FC) -c $(BUGGY) $(INC_PATHS) $(S)/CalibWeightsFlags.f90 $(FAFTER)
+EngTbls.o: $(S)/EngTbls.f90
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/EngTbls.f90 $(FAFTER)
+L1LogUtils.o: $(S)/L1LogUtils.f90
+	$(FC) -c $(BUGGY) $(INC_PATHS) $(S)/L1LogUtils.f90 $(FAFTER)
+OutputL1B.o: $(S)/OutputL1B.f90
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/OutputL1B.f90 $(FAFTER)
+OutputL1B_HDF4.o: $(S)/OutputL1B_HDF4.f90
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/OutputL1B_HDF4.f90 $(FAFTER)
+
+# l2
+# This keeps switch_usage up-to-date with notes/switches
+# (and similarly for options)
+MLSL2.o: $(CONFDIR)/notes/switches $(CONFDIR)/notes/options $(S)/MLSL2.f90
+	@@rm -f MLSL2.f90 part_1 part_2 part_3 ; \
+	sed -n '1,/=== (start of automatic usage lines) ===/ p' $(S)/MLSL2.f90 > part_1 ; \
+	sed -n '/=== (end of automatic usage lines) ===/,$$ p' $(S)/MLSL2.f90 > part_3 ; \
+	sed -n '/mlsl2 =========/,/mlsl2 ========/p' $(CONFDIR)/notes/switches > part_2 ; \
+	sed '1 d; $$ d' part_2 > MLSL2.f90 ; \
+	mv MLSL2.f90 part_2 ; \
+	sed -n -f $(CONFDIR)/notes/switch_usage.sed part_2 > MLSL2.f90 ; \
+	mv MLSL2.f90 part_2 ; \
+	cat part_1 part_2 part_3 > MLSL2.f90 ; \
+	rm -f part_1 part_2 part_3 ; \
+	sed -n '1,/=== (start of automatic option lines) ===/ p' MLSL2.f90 > part_1 ; \
+	sed -n '/=== (end of automatic option lines) ===/,$$ p' MLSL2.f90 > part_3 ; \
+	sed -n '/mlsl2 =========/,/mlsl2 ========/p' $(CONFDIR)/notes/options > part_2 ; \
+	sed '1 d; $$ d' part_2 > MLSL2.f90 ; \
+	mv MLSL2.f90 part_2 ; \
+	sed -n -f $(CONFDIR)/notes/switch_usage.sed part_2 > MLSL2.f90 ; \
+	mv MLSL2.f90 part_2 ; \
+	cat part_1 part_2 part_3 > MLSL2.f90
+	$(FC) -c $(FOPTS) $(INC_PATHS) MLSL2.f90 $(FAFTER)
+	rm -f MLSL2.f90 part_1 part_2 part_3
+
+ifeq ($(short_name),l2)
+# This uses the utility program init_gen to create two
+# up-to-date prereqs for init_tables_module
+$(INSTALLDIR)/init_gen: $(UTILDIR)/init_gen.f90
+	$(UTILDIR)/build_f90_in_misc.sh -p init_gen \
+	-d $(INSTALLDIR) -t $(TESTSDIR) -M $(MAKE) \
+	-FC $(FC) -CC $(CC) -C $(MLSCFILE) \
+   $(UTILDIR)/init_gen.f90
+
+$(S)/field_parm.f9h $(S)/field_add.f9h: $(S)/field_names.txt $(INSTALLDIR)/init_gen
+	sort -f -u $(S)/field_names.txt | $(INSTALLDIR)/init_gen \
+          -f"last_Spectroscopy_Field + 1" -l field_last -pF_ \
+          -j field_names.txt \
+          $(S)/field_parm.f9h $(S)/field_add.f9h field_indices
+
+$(S)/lit_parm.f9h $(S)/lit_add.f9h: $(S)/lit_names.txt $(INSTALLDIR)/init_gen
+	sort -f -u $(S)/lit_names.txt | $(INSTALLDIR)/init_gen \
+          -f"last_Spectroscopy_Lit + 1" -l last_lit -pl_ \
+          -j lit_names.txt \
+          $(S)/lit_parm.f9h $(S)/lit_add.f9h lit_indices
+
+endif
+#	l3
+
+L2Interface.o: $(S)/L2Interface.f90
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L2Interface.f90 $(FAFTER)
+L3DMData.o: $(S)/L3DMData.f90
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DMData.f90 $(FAFTER)
+L3DMDiag.o: $(S)/L3DMDiag.f90
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DMDiag.f90 $(FAFTER)
+
+#  l3m
+L3DZData.o: $(S)/L3DZData.f90
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DZData.f90 $(FAFTER)
+
+L3MZData.o: $(S)/L3MZData.f90
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3MZData.f90 $(FAFTER)
+
+L3MMData.o: $(S)/L3MMData.f90
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3MMData.f90 $(FAFTER)
+
+L3DZDiag.o: $(S)/L3DZDiag.f90
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DZDiag.f90 $(FAFTER)
+
+L3MZDiag.o: $(S)/L3MZDiag.f90
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3MZDiag.f90 $(FAFTER)
+
+L3MMDiag.o: $(S)/L3MMDiag.f90
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3MMDiag.f90 $(FAFTER)
+
+# Custom build commands for some modules
+
+ifeq ($(short_name),lib)
+# This uses the utility program init_gen to create two
+# up-to-date prereqs for intrinsic
+$(INSTALLDIR)/init_gen: $(UTILDIR)/init_gen.f90
+	$(UTILDIR)/build_f90_in_misc.sh -p init_gen \
+	-d $(INSTALLDIR) -t $(TESTSDIR) -M $(MAKE) \
+	-FC $(FC) -CC $(CC) -C $(MLSCFILE) \
+   $(UTILDIR)/init_gen.f90
+
+$(S)/lit_parm.f9h $(S)/lit_add.f9h: $(S)/lit_names.txt $(INSTALLDIR)/init_gen
+	sort -f -u $(S)/lit_names.txt | $(INSTALLDIR)/init_gen \
+          -l last_intrinsic_lit -pl_ \
+          -j lit_names.txt \
+          $(S)/lit_parm.f9h $(S)/lit_add.f9h lit_indices
+
+$(S)/mol_parm.f9h $(S)/mol_add.f9h: $(TABLES_DIR)/sps_cross_ref_table.txt $(INSTALLDIR)/init_gen
+	sed -n '/---\*/,$$ p' $(TABLES_DIR)/sps_cross_ref_table.txt | sed '1 d' | \
+          sed '/H2O_R/ d' | awk ' {print $$2}' | sort -f -u| \
+          $(INSTALLDIR)/init_gen \
+          -f "last_rxx_molecule+1" -l last_molecule -pl_ \
+          -j sps_cross_ref_table.txt \
+          $(S)/mol_parm.f9h $(S)/mol_add.f9h lit_indices
+
+machine.o: $(MACH_DIR)/machine.f90
+	rm -f machine.f90 ; \
+	sed '/Start $(BAD_MATCH)/,/End $(BAD_MATCH)/ d' $(MACH_DIR)/machine.f90 \
+     > machine.f90
+	$(FC) -c $(FOPTS) $(INC_PATHS) machine.f90 $(FAFTER)
+	rm -f machine.f90
+
+intrinsic.o: $(S)/lit_parm.f9h $(S)/lit_add.f9h
+
+endif
+
+BUGGY := $(shell echo ${FOPTS} | sed 's/-O[0-9]*//')
+NOUNASS := $(shell echo ${FOPTS} | sed 's/\(--chk [aesx,]*\),u\([aesx,]*\)/\1\2/')
+
+DUSTY_NO_OPT := $(shell echo ${DUSTY} | sed 's/-O[0-9]*//')
+
+Hdf.o:
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/Hdf.f90 $(FAFTER)
+string_table.o:
+	$(FC) -c $(BUGGY) $(INC_PATHS) $(S)/string_table.f90 $(FAFTER)
+
+# ncep_dao module doesn't play well with the lf95 undefined variable
+# runtime checker because of endian swapping
+ncep_dao.o:
+	$(FC) -c $(NOUNASS) $(INC_PATHS) $(S)/ncep_dao.f90 $(FAFTER)
+
+#ifeq ($(short_name),fwdmdl)
+# LinearizedForwardModel_m.f90 must be compiled with checks on to keep
+# resulting executable from bombing on some chunks
+# --  f i x e d  --
+#LinearizedForwardModel_m.o:
+#	$(FC) -c $(SLOWASMOLASSES) $(INC_PATHS) $(S)/LinearizedForwardModel_m.f90 $(FAFTER) 
+#endif
+
+endif
+d24 3
+@
+
+
+1.6
+log
+@Fixed bug is build command for l1/EngTbls.o
+@
+text
+@d1 1
+a1 1
+# "$Id: G95.Linux,v 1.5 2004/08/19 00:07:46 pwagner Exp $"
+d15 1
+d19 6
+d31 6
+a181 1
+BUGGY := $(shell echo ${FOPTS} | sed 's/-O[0-9]*//')
+d220 2
+d224 2
+d367 3
+@
+
+
+1.5
+log
+@Fixed missing mod dependencies for machine.o
+@
+text
+@d1 1
+a1 1
+# "$Id: G95.Linux,v 1.4 2003/10/08 21:13:15 pwagner Exp $"
+d20 1
+a20 1
+   -T EngTbls.o outputl1b.mod 
+d209 1
+a209 1
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/OutputL1B.f90 $(FAFTER)
+d351 3
+@
+
+
+1.4
+log
+@Changed options to sort to tolerate duplicate entries
+@
+text
+@d1 1
+a1 1
+# "$Id: G95.Linux,v 1.3 2003/05/21 17:46:02 pwagner Exp $"
+d155 1
+a155 1
+machine.mod:
+d161 1
+a161 1
+machine.o: machine.mod
+d351 3
+@
+
+
+1.3
+log
+@Commands to build mol_...f9h now formatted correctly
+@
+text
+@d1 1
+a1 1
+# "$Id: G95.Linux,v 1.2 2003/05/17 00:04:52 pwagner Exp $"
+d78 1
+a78 1
+	sort -f $(S)/field_names.txt | $(INSTALLDIR)/init_gen \
+d84 1
+a84 1
+	sort -f $(S)/lit_names.txt | $(INSTALLDIR)/init_gen \
+d142 1
+a142 1
+	sort -f $(S)/lit_names.txt | $(INSTALLDIR)/init_gen \
+d149 1
+a149 1
+          sed '/H2O_R/ d' | awk ' {print $$2}' | sort -f | \
+d250 1
+a250 1
+	sort -f $(S)/field_names.txt | $(INSTALLDIR)/init_gen \
+d256 1
+a256 1
+	sort -f $(S)/lit_names.txt | $(INSTALLDIR)/init_gen \
+d302 1
+a302 1
+	sort -f $(S)/lit_names.txt | $(INSTALLDIR)/init_gen \
+d309 1
+a309 1
+          sed '/H2O_R/ d' | awk ' {print $$2}' | sort -f | \
+d351 3
+@
+
+
+1.2
+log
+@Now create mol_.. files in lib to be used by Molecules.f90 there
+@
+text
+@d1 1
+a1 1
+# "$Id: G95.Linux,v 1.1 2003/04/25 23:02:14 pwagner Exp $"
+d148 1
+a148 1
+	sed -n '/---\*/, $$ p' $(TABLES_DIR)/sps_cross_ref_table.txt | sed '1 d' | \
+d308 1
+a308 1
+	sed -n '/---\*/, $$ p' $(TABLES_DIR)/sps_cross_ref_table.txt | sed '1 d' | \
+d351 3
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d1 1
+a1 1
+# "$Id: LF95.Linux,v 1.12 2003/02/01 00:01:35 pwagner Exp $"
+d5 3
+a88 6
+# > init_tables_module.mod: $(S)/field_parm.f9h $(S)/field_add.f9h \
+# >    $(S)/lit_parm.f9h $(S)/lit_add.f9h $(S)/init_tables_module.f90
+# > 	$(UTILDIR)/newAifBdiff.sh -a init_tables_module.mod $(FC) -c $(FOPTS) $(INC_PATHS) $(S)/init_tables_module.f90 $(FAFTER)
+# > init_tables_module.o: init_tables_module.mod
+# > 	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+# >    -T init_tables_module.o init_tables_module.mod 
+d147 8
+a260 3
+# > init_tables_module.o: $(S)/field_parm.f9h $(S)/field_add.f9h \
+# >    $(S)/lit_parm.f9h $(S)/lit_add.f9h $(S)/init_tables_module.f90
+
+d307 8
+d350 4
+a353 1
+# $Log: LF95.Linux,v $
+@
+

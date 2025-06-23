@@ -1,0 +1,144 @@
+head	2.2;
+access;
+symbols
+	v5-02-NRT-19:2.2
+	v6-00:2.2
+	v5-02-NRT-18:2.2
+	v5-02:2.2
+	v5-01-NRT-17:2.2
+	v5-01-NRT-16:2.2
+	v5-01-NRT-15:2.2
+	v5-01-NRT-14:2.2
+	neuralnetworks-1-0:2.2.0.12
+	cfm-single-freq-0-1:2.2.0.10
+	v5-01:2.2
+	v5-00:2.2
+	v4-23-TA133:2.2.0.8
+	mus-emls-1-70:2.2.0.6
+	rel-1-0-englocks-work:2.2.0.4
+	VUMLS1-00:2.2
+	VPL1-00:2.2
+	V4-22-NRT-08:2.2
+	VAM1-00:2.2
+	V4-21:2.2.0.2
+	V4-13:2.2
+	V4-12:2.2
+	V4-11:2.2
+	V4-10:2.2
+	V3-43:2.1
+	M4-00:2.1
+	V3-41:2.1
+	V3-40-PlusGM57:2.1.0.2
+	V3-33:2.1
+	V3-31:2.1
+	V3-30-NRT-05:2.1
+	cfm-01-00:2.1
+	V3-30:2.1
+	V3-20:2.1
+	V3-10:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.2
+date	2013.08.31.01.24.53;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2008.05.09.23.27.18;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.2
+log
+@Replace MLSMessageCalls with trace_begin and trace_end
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!   subroutine SaveAsHDF5DS_intarr* ( locID, name, value, &
+!     & finalShape, fillValue, adding_to )
+!     ! This routine does the initial work of creating a dataset
+!     integer, intent(in) :: LOCID          ! Where to place it (group/file)
+!     character (len=*), intent(in) :: NAME ! Name for this dataset
+!     integer, intent(in) :: VALUE(:,...)  ! The array itself
+!     integer, optional, intent(in) :: FILLVALUE
+!     integer, dimension(size(shape(value))), optional, intent(in) :: FINALSHAPE
+!     logical, optional, intent(in)     :: adding_to
+
+! $Id: SaveAsHDF5DS_intarr.f9h,v 2.1 2008/05/09 23:27:18 vsnyder Exp $
+
+    ! Local variables
+    integer :: Me = -1                  ! String index for trace cacheing
+    integer :: Rank                     ! Rank of VALUE
+    integer (HID_T) :: setID            ! ID for dataset
+    integer(hsize_t), dimension(size(shape(value))) :: SHP, MAXDIMS ! Shape
+    integer :: spaceID                  ! ID for dataspace
+    integer :: status                   ! Flag from HDF5
+
+    ! Executable code
+    rank = size(shp)
+
+    call trace_begin ( me, 'SaveAsHDF5DS_intarr'//digits(rank), cond=.false. )
+    shp = shape(value)
+    maxdims = shp
+    if ( present(finalShape) ) maxdims = finalShape
+    ! Create the dataspace
+    call createSpaceSet ( locID, name, maxdims, H5T_NATIVE_INTEGER, &
+      & spaceID, setID, status, adding_to, iFill=fillValue )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to create dataset for '//digits(rank)//'D integer array ' // trim(name) )
+    ! Write the data
+    call h5dWrite_f ( setID, H5T_NATIVE_INTEGER, value, &
+      & int ( (/ shp, ones(rank:6) /), hsize_t ), status )
+    call finishSaveDS ( name, status, setID, spaceID )
+    call trace_end ( cond=.false. )
+!   end subroutine SaveAsHDF5DS_intarr*
+
+! $Log: SaveAsHDF5DS_intarr.f9h,v $
+! Revision 2.1  2008/05/09 23:27:18  vsnyder
+! Initial commit
+!
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d22 1
+a22 1
+! $Id: $
+d25 4
+a29 1
+    integer (HID_T) :: setID            ! ID for dataset
+a30 2
+    integer(hsize_t), dimension(size(shape(value))) :: SHP, MAXDIMS ! Shape
+    integer :: Rank                     ! Rank of VALUE
+d35 1
+a35 1
+    call MLSMessageCalls( 'push', constantName='SaveAsHDF5DS_intarr'//digits(rank) )
+d48 1
+a48 1
+    call MLSMessageCalls( 'pop' )
+d51 4
+a54 1
+! $Log: $
+@
+

@@ -1,0 +1,405 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.1.0.4
+	cfm-single-freq-0-1:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2021.01.22.16.42.24;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2020.07.22.23.34.23;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Changes to prevent FG-01-001 from crashing
+@
+text
+@!divert(-1)
+;; $Id: fillandmergegph.l2cf,v 1.1 2020/07/22 23:34:23 pwagner Exp $
+
+;; This l2cf fragment is for setting up meteorology as gridded quantities
+;; In general we could have had any of 4 types:
+;;    geos 5 Classic (prior to 5.7)
+;;    Merra
+;;    geos 5.7 or 5.9
+;;    none (when we'll make do with climatology alone)
+;; This l2cf fragment works only with 5.9 and later
+;; If instead you have merra or geos5 Classic, you're out of luck
+;;
+;; What it does do is to read gmao's GPH field 'H'
+;; in addition to the usual Temperature 'T' and Pressure 'PL'
+;; If you'll be using a PCF, don't forget to include extra lines
+;; in the DFPITI3 section
+;;
+;; This version is included during the loop of chunks
+;; instead of during apriori.
+;; Hopefully this will reduce each chunk's memory footprint and
+;; prevent the chunk crashes seen with v5.0x
+
+!ifdef(flagUsingPCF,
+  {!define(geos5TFile1,{})!define(geos5TFile2,{})!define(geos5TFile3,{})!define(geos5TFile4,{})
+   !define(geos5TFile5,{})!define(geos5TFile6,{})!define(geos5TFile7,{})!define(geos5TFile8,{})
+   !define(geos5PFile1,{})!define(geos5PFile2,{})!define(geos5PFile3,{})!define(geos5PFile4,{})
+   !define(geos5PFile5,{})!define(geos5PFile6,{})!define(geos5PFile7,{})!define(geos5PFile8,{})
+   !define(geos5TFileN,{})!define(geos5PFileN,{})
+   !define(getgeos59dateStrings,{})
+   },{
+    !define(geos5Day1,{!TrimLastChar(!esyscmd(dateconverter -o yyyymmdd "!day"))})
+    !define(geos5Day2,{!TrimLastChar(!esyscmd(dateconverter +1 -o yyyymmdd "!day"))})
+    !ifdef(geos5Head,{},{!define(geos5Head,{DFPITI3NVASMMLS.rpit2.asm.inst3_3d_asm_Nv.GEOS591})})
+    !define(setgeos59dateStrings,{!dnl
+    !ProcessParVal(g59dateString,$@@)!dnl
+    !define(getgeos59dateStrings,{, file=!g59dateString$1})
+    })
+    !setgeos59dateStrings(1='!inpathgeos5pd/!geos5Head.!geos5Day1_0000.V01.nc4')
+    !setgeos59dateStrings(2='!inpathgeos5pd/!geos5Head.!geos5Day1_0300.V01.nc4')
+    !setgeos59dateStrings(3='!inpathgeos5pd/!geos5Head.!geos5Day1_0600.V01.nc4')
+    !setgeos59dateStrings(4='!inpathgeos5pd/!geos5Head.!geos5Day1_0900.V01.nc4')
+    !setgeos59dateStrings(5='!inpathgeos5pd/!geos5Head.!geos5Day1_1200.V01.nc4')
+    !setgeos59dateStrings(6='!inpathgeos5pd/!geos5Head.!geos5Day1_1500.V01.nc4')
+    !setgeos59dateStrings(7='!inpathgeos5pd/!geos5Head.!geos5Day1_1800.V01.nc4')
+    !setgeos59dateStrings(8='!inpathgeos5pd/!geos5Head.!geos5Day1_2100.V01.nc4')
+    !setgeos59dateStrings(Next='!inpathgeos5pn/!geos5Head.!geos5Day2_0000.V01.nc4')
+    !define(g59dateStringNext,{'!inpathgeos5pn/!geos5Head.!geos5Day2_0000.V01.nc4'})
+    !define(getgeos59dateStrings,{, file=!g59dateString$1})
+    !ifdef(flagUsingMERRA,
+    {!dnl
+      !define(geos5TFile1,{, file='!inpathmerradd/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day1.hdf'})
+      !define(geos5TFile2,{, file='!inpathmerradd/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day1.hdf'})
+      !define(geos5TFile3,{, file='!inpathmerradd/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day1.hdf'})
+      !define(geos5TFile4,{, file='!inpathmerradd/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day1.hdf'})
+      !define(geos5TFileN,{, file='!inpathmerradn/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day2.hdf'})
+      !define(geos5PFile1,{, file='!inpathmerrapd/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day1.hdf'})
+      !define(geos5PFile2,{, file='!inpathmerrapd/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day1.hdf'})
+      !define(geos5PFile3,{, file='!inpathmerrapd/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day1.hdf'})
+      !define(geos5PFile4,{, file='!inpathmerrapd/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day1.hdf'})
+      !define(geos5PFileN,{, file='!inpathmerrapn/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day2.hdf'})
+      !define(geos5TFile5,{})!define(geos5TFile6,{})!define(geos5TFile7,{})!define(geos5TFile8,{})
+      !define(geos5PFile5,{})!define(geos5PFile6,{})!define(geos5PFile7,{})!define(geos5PFile8,{})
+    },{!ifelse(!gmaovsn,{DFPITI},{!dnl
+      !define(geos5TFile1,{, file='!inpathgeos5pd/!geos5Head.!geos5Day1_0000.V01.nc4'})
+      !define(geos5TFile2,{, file='!inpathgeos5pd/!geos5Head.!geos5Day1_0300.V01.nc4'})
+      !define(geos5TFile3,{, file='!inpathgeos5pd/!geos5Head.!geos5Day1_0600.V01.nc4'})
+      !define(geos5TFile4,{, file='!inpathgeos5pd/!geos5Head.!geos5Day1_0900.V01.nc4'})
+      !define(geos5TFile5,{, file='!inpathgeos5pd/!geos5Head.!geos5Day1_1200.V01.nc4'})
+      !define(geos5TFile6,{, file='!inpathgeos5pd/!geos5Head.!geos5Day1_1500.V01.nc4'})
+      !define(geos5TFile7,{, file='!inpathgeos5pd/!geos5Head.!geos5Day1_1800.V01.nc4'})
+      !define(geos5TFile8,{, file='!inpathgeos5pd/!geos5Head.!geos5Day1_2100.V01.nc4'})
+      !define(geos5TFileN,{, file='!inpathgeos5pn/!geos5Head.!geos5Day2_0000.V01.nc4'})
+      !define(geos5PFile1,{, file='!inpathgeos5pd/!geos5Head.!geos5Day1_0000.V01.nc4'})
+      !define(geos5PFile2,{, file='!inpathgeos5pd/!geos5Head.!geos5Day1_0300.V01.nc4'})
+      !define(geos5PFile3,{, file='!inpathgeos5pd/!geos5Head.!geos5Day1_0600.V01.nc4'})
+      !define(geos5PFile4,{, file='!inpathgeos5pd/!geos5Head.!geos5Day1_0900.V01.nc4'})
+      !define(geos5PFile5,{, file='!inpathgeos5pd/!geos5Head.!geos5Day1_1200.V01.nc4'})
+      !define(geos5PFile6,{, file='!inpathgeos5pd/!geos5Head.!geos5Day1_1500.V01.nc4'})
+      !define(geos5PFile7,{, file='!inpathgeos5pd/!geos5Head.!geos5Day1_1800.V01.nc4'})
+      !define(geos5PFile8,{, file='!inpathgeos5pd/!geos5Head.!geos5Day1_2100.V01.nc4'})
+      !define(geos5PFileN,{, file='!inpathgeos5pn/!geos5Head.!geos5Day2_0000.V01.nc4'})
+    },{!dnl
+      !ifdef(geos5Head,{},{!define(geos5Head,{DAS.ops.asm.tavg3d})})
+      !define(geos5TFile1,{, file='!inpathgeos5dd/!geos5Head_dyn_v.!gmaovsn.!geos5Day1_0000.V01.hdf'})
+      !define(geos5TFile2,{, file='!inpathgeos5dd/!geos5Head_dyn_v.!gmaovsn.!geos5Day1_0600.V01.hdf'})
+      !define(geos5TFile3,{, file='!inpathgeos5dd/!geos5Head_dyn_v.!gmaovsn.!geos5Day1_1200.V01.hdf'})
+      !define(geos5TFile4,{, file='!inpathgeos5dd/!geos5Head_dyn_v.!gmaovsn.!geos5Day1_1800.V01.hdf'})
+      !define(geos5TFileN,{, file='!inpathgeos5dn/!geos5Head_dyn_v.!gmaovsn.!geos5Day2_0000.V01.hdf'})
+      !define(geos5PFile1,{, file='!inpathgeos5pd/!geos5Head_prs_v.!gmaovsn.!geos5Day1_0000.V01.hdf'})
+      !define(geos5PFile2,{, file='!inpathgeos5pd/!geos5Head_prs_v.!gmaovsn.!geos5Day1_0600.V01.hdf'})
+      !define(geos5PFile3,{, file='!inpathgeos5pd/!geos5Head_prs_v.!gmaovsn.!geos5Day1_1200.V01.hdf'})
+      !define(geos5PFile4,{, file='!inpathgeos5pd/!geos5Head_prs_v.!gmaovsn.!geos5Day1_1800.V01.hdf'})
+      !define(geos5PFileN,{, file='!inpathgeos5pn/!geos5Head_prs_v.!gmaovsn.!geos5Day2_0000.V01.hdf'})
+      !define(geos5TFile5,{})!define(geos5TFile6,{})!define(geos5TFile7,{})!define(geos5TFile8,{})
+      !define(geos5PFile5,{})!define(geos5PFile6,{})!define(geos5PFile7,{})!define(geos5PFile8,{})
+      })
+  })
+})
+!divert!dnl
+; ----------------------------------------------- Fill / merge geos5
+
+; Assume the geos5 filenames obey the following format:
+; {something}_{typ}_v.{vers}.{yyyy}{mm}{dd}_{hhhh}.V01.hdf
+; where
+;   typ   is one of "dyn" or "prs"
+;   yyyy  is the year; e.g. 2009
+;   mm    is the month; e.g. 06
+;   dd    is the day; e.g. 09
+;   hhhh  is the time starting from 0000 and ending at 2359
+
+; -------------------- Fill sections ----------------
+
+;   D e c l a r a t i o n s
+; Just declare the grids that will hold our inputs
+; We will try to read them later in each of their possible
+; formats
+begin Fill
+  mergedTemperature: gridded, origin=none
+  ;; wmo p trop (using the values from mid-day)
+  geos5EtaWMOPTrop: gridded, origin=none
+end Fill
+
+begin Fill
+  gmaoTemperatureInput: gridded, origin=none
+  gmaoTemperatureInput1: gridded, origin=none
+  gmaoTemperatureInput2: gridded, origin=none
+  gmaoTemperatureInput3: gridded, origin=none
+  gmaoTemperatureInput4: gridded, origin=none
+  gmaoTemperatureInput5: gridded, origin=none
+  gmaoTemperatureInput6: gridded, origin=none
+  gmaoTemperatureInput7: gridded, origin=none
+  gmaoTemperatureInput8: gridded, origin=none
+  gmaoTemperatureInputNext: gridded, origin=none
+  gmaoPressureInput: gridded, origin=none
+  gmaoPressureInput1: gridded, origin=none
+  gmaoPressureInput2: gridded, origin=none
+  gmaoPressureInput3: gridded, origin=none
+  gmaoPressureInput4: gridded, origin=none
+  gmaoPressureInput5: gridded, origin=none
+  gmaoPressureInput6: gridded, origin=none
+  gmaoPressureInput7: gridded, origin=none
+  gmaoPressureInput8: gridded, origin=none
+  gmaoPressureInputNext: gridded, origin=none
+  gmaoGPHInput: gridded, origin=none
+  gmaoGPHInput1: gridded, origin=none
+  gmaoGPHInput2: gridded, origin=none
+  gmaoGPHInput3: gridded, origin=none
+  gmaoGPHInput4: gridded, origin=none
+  gmaoGPHInput5: gridded, origin=none
+  gmaoGPHInput6: gridded, origin=none
+  gmaoGPHInput7: gridded, origin=none
+  gmaoGPHInput8: gridded, origin=none
+  gmaoGPHInputNext: gridded, origin=none
+end Fill
+
+; We will need a gridded quantity with a compatible set pf  pressure levels
+; strangely, the Temperature field from Climatology is not suitable
+; so we will try extinction, instead
+; This will be used first for GPH
+begin Fill
+  gridEXTN: gridded,field='EXTN', origin=climatology, $
+       file='Climatologies'
+end Fill
+
+; Initialize the run-time Booleans and flags
+begin Fill
+  meteorologyType: Boolean, label="geos5_9-nc4"  ;; The kind of meteorology used
+  merraMeteorology: Boolean, formula="false"
+  geos59Meteorology: Boolean, formula="true"
+  geos5Meteorology: Boolean, formula="false"
+end Fill
+
+!define(setgeos59dates,{!dnl
+!ProcessParVal(g59date,$@@)!dnl
+})
+!setgeos59dates(1='00:00:00',2='03:00:00',3='06:00:00',4='09:00:00')
+!setgeos59dates(5='12:00:00',6='15:00:00',7='18:00:00',8='21:00:00',Next='00:00:00')
+
+!define(g59dateNext,{'00:00:00'})
+!define(geos5TFileNext,{!geos5TFileN})
+!define(geos5PFileNext,{!geos5PFileN})
+!define(getgeos59dates,{!g59date$1})
+
+!define(readgeos59TPAndConvert,{
+
+;; What determines which grids we Read and which grids we Destroy?
+;; Don't read any more grids past the grid for which
+;;       -> the chunk ends before this grid starts
+;; Delete the previously read grid unless
+;;       -> the chunk ends before this grid starts
+begin Fill
+  Dump, Boolean=before
+  Skip, Boolean=before ;; using the previous value of "before"
+  readGriddedData, grid=gmaoTemperatureInput$1, origin=geos5_7, field='T', $
+    dimList='XDim,YDim,Height,Time' , date=!getgeos59dates($1) !getgeos59dateStrings($1)
+  Reevaluate, Boolean=carryover, formula="true"
+  readGriddedData, grid=gmaoPressureInput$1, origin=geos5_7, field='PL', $
+    dimList='XDim,YDim,Height,Time' , date=!getgeos59dates($1) !getgeos59dateStrings($1)
+  readGriddedData, grid=gmaoGPHInput$1, origin=geos5_7, field='H', $
+    dimList='XDim,YDim,Height,Time' , date=!getgeos59dates($1) !getgeos59dateStrings($1)
+
+  ;; Redefine the runtime flag "before" with this grid
+  ;; If before was already TRUE, it remains TRUE
+  ChunkEndsBefore, Boolean=before, grid=gmaoTemperatureInput$1
+  Dump, text="based on gmaoTemperatureInput$1"
+  Dump, Boolean=before
+  Skip, Boolean=before ;; using the previous value of before
+  Delete, grid=!PreviousTemperatureGrid
+  Delete, grid=!PreviousPressureGrid
+  Delete, grid=!PreviousGPHGrid
+end Fill
+
+; Now redefine what we mean by "Previous"
+!define(PreviousTemperatureGrid,{gmaoTemperatureInput$1})
+!define(PreviousPressureGrid,{gmaoPressureInput$1})
+!define(PreviousGPHGrid,{gmaoGPHInput$1})
+})
+
+;; Choose harmless initial values for the Previous grids
+!define(PreviousTemperatureGrid,{gmaoTemperatureInputNext})
+!define(PreviousPressureGrid,{gmaoPressureInputNext})
+!define(PreviousGPHGrid,{gmaoGPHInputNext})
+begin Fill
+  after: Boolean, formula="false"
+  before: Boolean, formula="false"
+end Fill
+begin Fill
+  carryover: Boolean, formula="false"
+  geos59Merged1: gridded, origin=none
+  geos59Merged2: gridded, origin=none
+  geos59Merged3: gridded, origin=none
+  geos59Merged4: gridded, origin=none
+  geos59Merged5: gridded, origin=none
+  geos59Merged6: gridded, origin=none
+  geos59Merged7: gridded, origin=none
+  geos59Merged8: gridded, origin=none
+  geos59Mergednext: gridded, origin=none
+end Fill
+  !forall( readgeos59TPAndConvert,1,2,3,4,5,6,7,8,Next)
+
+begin Fill
+  ConcatenateGrids, grid=gmaoTemperatureInput, $
+    sourceGrid=[gmaoTemperatureInput1, gmaoTemperatureInput2, $
+    gmaoTemperatureInput3, gmaoTemperatureInput4, gmaoTemperatureInput5, gmaoTemperatureInput6, $
+    gmaoTemperatureInput7, gmaoTemperatureInput8, $
+    gmaoTemperatureInputNext], /deleteGrids, /allowEmptyGrids
+  Delete, grid=gmaoTemperatureInput1
+  Delete, grid=gmaoTemperatureInput2
+  Delete, grid=gmaoTemperatureInput3
+  Delete, grid=gmaoTemperatureInput4
+  Delete, grid=gmaoTemperatureInput5
+  Delete, grid=gmaoTemperatureInput6
+  Delete, grid=gmaoTemperatureInput7
+  Delete, grid=gmaoTemperatureInput8
+  Delete, grid=gmaoTemperatureInputNext
+end Fill
+
+begin Fill
+  ConcatenateGrids, grid=gmaoPressureInput, $
+    sourceGrid=[gmaoPressureInput1, gmaoPressureInput2, $
+    gmaoPressureInput3, gmaoPressureInput4, gmaoPressureInput5, gmaoPressureInput6, $
+    gmaoPressureInput7, gmaoPressureInput8, $
+    gmaoPressureInputNext], /deleteGrids, /allowEmptyGrids
+  Delete, grid=gmaoPressureInput1
+  Delete, grid=gmaoPressureInput2
+  Delete, grid=gmaoPressureInput3
+  Delete, grid=gmaoPressureInput4
+  Delete, grid=gmaoPressureInput5
+  Delete, grid=gmaoPressureInput6
+  Delete, grid=gmaoPressureInput7
+  Delete, grid=gmaoPressureInput8
+  Delete, grid=gmaoPressureInputNext
+end Fill
+
+begin Fill
+  ConcatenateGrids, grid=gmaoGPHInput, $
+    sourceGrid=[gmaoGPHInput1, gmaoGPHInput2, $
+    gmaoGPHInput3, gmaoGPHInput4, gmaoGPHInput5, gmaoGPHInput6, $
+    gmaoGPHInput7, gmaoGPHInput8, $
+    gmaoGPHInputNext], /deleteGrids, /allowEmptyGrids
+  Delete, grid=gmaoGPHInput1
+  Delete, grid=gmaoGPHInput2
+  Delete, grid=gmaoGPHInput3
+  Delete, grid=gmaoGPHInput4
+  Delete, grid=gmaoGPHInput5
+  Delete, grid=gmaoGPHInput6
+  Delete, grid=gmaoGPHInput7
+  Delete, grid=gmaoGPHInput8
+  Delete, grid=gmaoGPHInputNext
+end Fill
+
+; Now convert to pressure surfaces
+;; An unmerged, separate Concatenated Temperature grid of GMAO
+begin Fill
+  gmaoTemperatures: ConvertEtaToP, $
+    a=gmaoTemperatureInput, b=gmaoPressureInput, Grid=gridTemperature, /logBasis
+end Fill
+
+;; An unmerged, separate Concatenated GPH grid of GMAO
+;; (So why is it named "mergedGPH"?)
+begin Fill
+  mergedGPH: ConvertEtaToP, $
+    a=gmaoGPHInput, b=gmaoPressureInput, Grid=gridTemperature, /logBasis
+end Fill
+
+;; Tropopause
+begin Fill
+  wmoTropFromGrids, grid=geos5EtaWMOPTrop, $
+    a=gmaoTemperatureInput, b=gmaoPressureInput
+end Fill
+
+;; Housekeeping
+;; Now that the grids have been converted to pressure surfaces
+;; we no longer need their original beta-surface grids
+begin Fill
+  Delete, grid=gmaoTemperatureInput
+  Delete, grid=gmaoPressureInput
+  Delete, grid=gmaoGPHInput
+end Fill
+
+;; A merged Temperature grid of GMAO, climatology
+begin Fill
+  MergeGrids, grid=MergedTemperature, operational=gmaoTemperatures, $
+    climatology=gridTemperature, height=1mb, scale=5km
+end Fill
+
+; Did we succeed?
+begin Fill
+  Dump, text='Now check what kinds of apriori files we actually believe we had'
+  Dump, Boolean=geos5Meteorology
+  Dump, Boolean=merraMeteorology
+  Dump, Boolean=geos59Meteorology
+  Dump, Boolean=meteorologyType
+  ;;Dump, Details=0, grid=geos5EtaWMOPTrop
+  ;;Dump, Details=0, grid=mergedTemperature
+end Fill
+
+;$Log: fillandmergegph.l2cf,v $
+;Revision 1.1  2020/07/22 23:34:23  pwagner
+;First commit
+;
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d2 1
+a2 1
+;; $Id: fillandmergegph.l2cf,v 1.5 2019/10/03 17:28:29 pwagner Exp $
+a200 1
+end Fill
+a201 1
+begin Fill
+d203 1
+d246 1
+a246 1
+    gmaoTemperatureInputNext], /deleteGrids
+d263 1
+a263 1
+    gmaoPressureInputNext], /deleteGrids
+d280 1
+a280 1
+    gmaoGPHInputNext], /deleteGrids
+d339 3
+@
+

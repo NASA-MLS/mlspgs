@@ -1,0 +1,485 @@
+head	1.5;
+access;
+symbols
+	v5-02-NRT-19:1.5
+	v6-00:1.5
+	v5-02-NRT-18:1.5
+	v5-02:1.5
+	v5-01-NRT-17:1.5
+	v5-01-NRT-16:1.5
+	v5-01-NRT-15:1.5
+	v5-01-NRT-14:1.5
+	neuralnetworks-1-0:1.5.0.12
+	cfm-single-freq-0-1:1.5.0.10
+	v5-01:1.5
+	v5-00:1.5
+	v4-23-TA133:1.5.0.8
+	mus-emls-1-70:1.5.0.6
+	rel-1-0-englocks-work:1.5.0.4
+	VUMLS1-00:1.5
+	VPL1-00:1.5
+	V4-22-NRT-08:1.5
+	VAM1-00:1.5
+	V4-21:1.5.0.2
+	V4-13:1.5
+	V4-12:1.5
+	V4-11:1.5
+	V4-10:1.5
+	V3-43:1.3
+	M4-00:1.4
+	V3-41:1.3
+	V3-40-PlusGM57:1.3.0.2
+	V2-24-NRT-04:1.1
+	V3-33:1.4
+	V2-24:1.1
+	V3-31:1.4
+	V3-30-NRT-05:1.3
+	cfm-01-00:1.3
+	V3-30:1.3
+	V3-20:1.3
+	V3-10:1.3
+	V2-23-NRT-02:1.1
+	V2-23:1.1
+	V2-22-NRT-01:1.1
+	V2-22:1.1
+	V2-21:1.1
+	V2-20:1.1
+	V2-11:1.1
+	V2-10:1.1
+	V2-00:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.5
+date	2013.12.10.19.15.40;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2010.11.20.00.03.30;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2008.10.15.16.31.09;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2008.05.27.16.59.49;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2006.04.27.23.52.57;	author lambert;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.5
+log
+@Expand moleculeFamiliesForInstrument back to full list
+@
+text
+@;; $Id: redefinemoleculesforradiometers.l2cf,v 1.4 2010/11/20 00:03:30 pwagner Exp $
+
+;; redefinemoleculesfor radiometers
+
+; trample over the spectroscopy definitions of moleculesForRRx
+; with a more restricted set of molecules matching the definitions
+; in constructstandardspecies  
+
+; molecules for radiometers taken from
+; /data/emls/l2cal/MLS-Aura_L2Cal-Spectroscopy_v1-5-7_0000d000.l2cf
+; except HNO3_V5 is removed from R2 and R4
+
+!define(moleculesForR1AL,{[ EXTINCTION, EXTINCTIONV2, [ H2O, H2O, H2O_R1A ], [ HNO3, $
+    HNO3 ], [ N2, N2 ], [ O2, O2, O2_V1, O_17_O, O_18_O ], [ O3, O3, $
+    O3_R1A ] ]})
+!define(moleculeFamiliesForR1AL,{[ EXTINCTION, EXTINCTIONV2, H2O, HNO3, N2, O2, O3 ]})
+!define(moleculesForR1A,{[ EXTINCTION, EXTINCTIONV2, [ H2O, H2O, H2O_R1A ], [ HNO3, $
+    HNO3 ], [ N2, N2 ], [ O2, O2, O2_V1, O_17_O, O_18_O ], [ O3, O3, $
+    O3_R1A ] ]})
+!define(moleculeFamiliesForR1A,{[ EXTINCTION, EXTINCTIONV2, H2O, HNO3, N2, O2, O3 ]})
+!define(moleculesForR1AU,{[ EXTINCTION, EXTINCTIONV2, [ H2O, H2O, H2O_R1A ], [ N2, N2 ], $
+  [ O2, O2 ], [ O3, O3, O3_R1A ] ]})
+!define(moleculeFamiliesForR1AU,{[ EXTINCTION, EXTINCTIONV2, H2O, N2, O2, O3 ]})
+
+!define(moleculesForR1BL,{[ EXTINCTION, EXTINCTIONV2, [ H2O, H2O, H2O_R1B ], [ HNO3, $
+    HNO3 ], [ N2, N2 ], [ O2, O2, O2_V1, O_17_O, O_18_O ], [ O3, O3, $
+    O3_R1B ] ]})
+!define(moleculeFamiliesForR1BL,{[ EXTINCTION, EXTINCTIONV2, H2O, HNO3, N2, O2, O3 ]})
+!define(moleculesForR1B,{[ EXTINCTION, EXTINCTIONV2, [ H2O, H2O, H2O_R1B ], [ HNO3, $
+    HNO3 ], [ N2, N2 ], [ O2, O2, O2_V1, O_17_O, O_18_O ], [ O3, O3, $
+    O3_R1B ] ]})
+!define(moleculeFamiliesForR1B,{[ EXTINCTION, EXTINCTIONV2, H2O, HNO3, N2, O2, O3 ]})
+!define(moleculesForR1BU,{[ EXTINCTION, EXTINCTIONV2, [ H2O, H2O, H2O_R1B ], [ N2, N2 ], $
+  [ O2, O2 ], [ O3, O3, O3_R1B ] ]})
+!define(moleculeFamiliesForR1BU,{[ EXTINCTION, EXTINCTIONV2, H2O, N2, O2, O3 ]})
+
+!define(moleculesForR2L,{[ [ CH3CN, CH3CN ], [ CH3COCH3, CH3COCH3 ], $
+  [ CH3OH, CH3OH ], EXTINCTION, EXTINCTIONV2, [ H2O, H2O, H2O_R2 ], [ HCN, HCN ], $
+  [ HNO3, HNO3, HNO3_V6, HNO3_V7, HNO3_V8, HNO3_V9 ], [ N2, N2 ], $
+  [ O2, O2 ], [ O3, O3, O3_R2, O3_V1_3, O3_V2, O3_2V2, O3_ASYM_O_18, $
+    O3_SYM_O_18 ], [ OCS, OCS_32 ], [ SO2, S_32_O2, S_32_O2_V2, S_34_O2 ] ]})
+!define(moleculeFamiliesForR2L,{[ CH3CN, CH3COCH3, CH3OH, EXTINCTION, EXTINCTIONV2, $
+  H2O, HCN, HNO3, N2, O2, O3, OCS, SO2 ]})
+!define(moleculesForR2,{[ [ CH3CN, CH3CN ], [ CH3COCH3, CH3COCH3 ], $
+  [ CH3OH, CH3OH ], [ CLO, CL_35_O, CL_37_O ], EXTINCTION, EXTINCTIONV2, [ H2O, H2O, $
+    H2O_R2, H2O_18 ], [ H2O2, H2O2 ], [ HCN, HCN ], [ HNO3, HNO3, $
+    HNO3_V6, HNO3_V7, HNO3_V8, HNO3_V9 ], [ HO2, HO2 ], [ N2, $
+    N2 ], [ N2O, N2O, N2O_V2 ], [ O2, O2 ], [ O3, O3, O3_R2, O3_V1_3, $
+    O3_V2, O3_2V2, O3_ASYM_O_18, O3_SYM_O_18 ], [ OCS, OCS_32 ], [ SO2, $
+    S_32_O2, S_32_O2_V2, S_34_O2 ] ]})
+!define(moleculeFamiliesForR2,{[ CH3CN, CH3COCH3, CH3OH, CLO, EXTINCTION, EXTINCTIONV2, $
+  H2O, H2O2, HCN, HNO3, HO2, N2, N2O, O2, O3, OCS, SO2 ]})
+!define(moleculesForR2U,{[ [ CH3CN, CH3CN ], [ CH3COCH3, CH3COCH3 ], $
+  [ CH3OH, CH3OH ], [ CLO, CL_35_O, CL_37_O ], EXTINCTION, EXTINCTIONV2, [ H2O, H2O, $
+    H2O_R2, H2O_18 ], [ H2O2, H2O2 ], [ HNO3, HNO3, HNO3_V6, $
+    HNO3_V7, HNO3_V8, HNO3_V9 ], [ HO2, HO2 ], [ N2, N2 ], [ N2O, N2O, $
+    N2O_V2 ], [ O2, O2 ], [ O3, O3, O3_R2, O3_V1_3, O3_V2, O3_2V2, $
+    O3_ASYM_O_18, O3_SYM_O_18 ], [ OCS, OCS_32 ], [ SO2, S_32_O2, $
+    S_32_O2_V2, S_34_O2 ] ]})
+!define(moleculeFamiliesForR2U,{[ CH3CN, CH3COCH3, CH3OH, CLO, $
+  EXTINCTION, EXTINCTIONV2, H2O, H2O2, HNO3, HO2, N2, N2O, O2, O3, OCS, SO2 ]})
+
+!define(moleculesForR3L,{[ [ CH2CHCN, CH2CHCN ], [ CH3CH2CN, CH3CH2CN ], $
+  [ CH3CH2OH, CH3CH2OH ], [ CH3CL, CH3CL_37 ], [ CH3COCH3, CH3COCH3 ], $
+  [ CH3OH, CH3OH ], [ CH3OOH, CH3OOH ], [ CO, CO ], EXTINCTION, EXTINCTIONV2, [ H2O, H2O, H2O_R3 ], $
+  [ HNO3, HNO3 ], [ N2, N2 ], [ O2, O2, O_18_O ], [ O3, O3, O3_R3, $
+    O3_V1_3, O3_V2, O3_ASYM_O_18, O3_SYM_O_18 ], [ SO2, S_32_O2 ] ]})
+!define(moleculeFamiliesForR3L,{[ CH2CHCN, CH3CH2CN, CH3CH2OH, CH3CL, $
+  CH3COCH3, CH3OH, CH3OOH, CO, EXTINCTION, EXTINCTIONV2, H2O, HNO3, N2, O2, O3, $
+  SO2 ]})
+!define(moleculesForR3,{[ [ CH2CHCN, CH2CHCN ], $
+  [ CH3CH2CN, CH3CH2CN ], [ CH3CH2OH, CH3CH2OH ], [ CH3CL, CH3CL_37 ], $
+  [ CH3COCH3, CH3COCH3 ], [ CH3OH, CH3OH ], [ CH3OOH, CH3OOH ], [ CO, CO ], EXTINCTION, EXTINCTIONV2, [ H2O, H2O, H2O_R3 ], $
+  [ HNO3, HNO3 ], [ N2, N2 ], [ O2, O2, O_18_O ], [ O3, O3, O3_R3, $
+    O3_V1_3, O3_V2, O3_ASYM_O_18, O3_SYM_O_18 ], [ SO2, S_32_O2 ] ]})
+!define(moleculeFamiliesForR3,{[ CH2CHCN, CH3CH2CN, CH3CH2OH, CH3CL, $
+  CH3COCH3, CH3OH, CH3OOH, CO, EXTINCTION, EXTINCTIONV2, H2O, HNO3, N2, O2, O3, $
+  SO2 ]})
+!define(moleculesForR3U,{[ [ CH2CHCN, CH2CHCN ], $
+  [ CH3CH2CN, CH3CH2CN ], [ CH3CH2OH, CH3CH2OH ], [ CH3COCH3, CH3COCH3 ], $
+  [ CH3OH, CH3OH ], [ CH3OOH, CH3OOH ], EXTINCTION, EXTINCTIONV2, [ H2O, H2O, H2O_R3 ], [ HNO3, $
+    HNO3 ], [ N2, N2 ], [ O2, O2 ], [ O3, O3, O3_R3, O3_V1_3, O3_V2, $
+    O3_ASYM_O_18, O3_SYM_O_18 ], [ SO2, S_32_O2 ] ]})
+!define(moleculeFamiliesForR3U,{[ CH2CHCN, CH3CH2CN, CH3CH2OH, $
+  CH3COCH3, CH3OH, CH3OOH, EXTINCTION, EXTINCTIONV2, H2O, HNO3, N2, O2, O3, SO2 ]})
+
+!define(moleculesForR4L,{[ [ BRO, BR_81_O ], [ CH3CL, CH3CL_35, CH3CL_37 ], $
+  [ CH3CN, CH3CN ], [ CH3COCH3, CH3COCH3 ], [ CH3OH, CH3OH ], EXTINCTION, EXTINCTIONV2, $
+  [ H2O, H2O, H2O_R4 ], [ H2O2, H2O2 ], [ H2S, H2S_32 ], [ HCL, HCL_35, $
+    HCL_37 ], [ HNO3, HNO3, HNO3_V6, HNO3_V7, HNO3_V8, HNO3_V9 ], $
+  [ HO2, HO2 ], [ HOCL, HOCL_35, HOCL_37 ], [ N2, N2 ], [ O2, O2 ], [ O3, $
+    O3, O3_R4, O3_V1_3, O3_V2, O3_2V2, O3_V1_3_V2, O3_ASYM_O_17, $
+    O3_SYM_O_17, O3_ASYM_O_18, O3_ASYM_O_18_V2, O3_SYM_O_18, $
+    O3_SYM_O_18_V2 ], [ SO2, S_32_O2, S_32_O2_V2, S_34_O2 ] ]})
+!define(moleculeFamiliesForR4L,{[ BRO, CH3CL, CH3CN, CH3COCH3, CH3OH, $
+  EXTINCTION, EXTINCTIONV2, H2O, H2O2, H2S, HCL, HNO3, HO2, HOCL, N2, O2, O3, SO2 ]})
+!define(moleculesForR4,{[ [ BRO, BR_79_O, BR_81_O ], [ CH3CL, CH3CL_35, $
+    CH3CL_37 ], [ CH3CN, CH3CN ], [ CH3COCH3, CH3COCH3 ], [ CH3OH, CH3OH ], $
+  [ CLO, CL_35_O ], [ CO, C_13_O ], EXTINCTION, EXTINCTIONV2, [ H2CO, H2CO ], [ H2O, $
+    H2O, H2O_R4 ], [ H2O2, H2O2 ], [ H2S, H2S_32 ], [ HCL, HCL_35, $
+    HCL_37 ], [ HNO3, HNO3, HNO3_V6, HNO3_V7, HNO3_V8, HNO3_V9 ], $
+  [ HO2, HO2 ], [ HOCL, HOCL_35, HOCL_37 ], [ N2, N2 ], [ N2O, N2O, $
+    N2O_V2, NN_15_O ], [ NO, NO ], [ NO2, NO2 ], [ O2, O2 ], [ O3, O3, $
+    O3_R4, O3_V1_3, O3_V2, O3_2V2, O3_V1_3_V2, O3_ASYM_O_17, O3_SYM_O_17, $
+    O3_ASYM_O_18, O3_ASYM_O_18_V2, O3_SYM_O_18, O3_SYM_O_18_V2 ], [ SO2, $
+    S_32_O2, S_32_O2_V2, S_34_O2 ] ]})
+!define(moleculeFamiliesForR4,{[ BRO, CH3CL, CH3CN, CH3COCH3, CH3OH, CLO, $
+  CO, EXTINCTION, EXTINCTIONV2, H2CO, H2O, H2O2, H2S, HCL, HNO3, HO2, HOCL, N2, N2O, $
+  NO, NO2, O2, O3, SO2 ]})
+!define(moleculesForR4U,{[ [ BRO, BR_79_O, BR_81_O ], [ CH3CL, CH3CL_37 ], $
+  [ CH3CN, CH3CN ], [ CH3COCH3, CH3COCH3 ], [ CLO, CL_35_O ], [ CO, $
+    C_13_O ], EXTINCTION, EXTINCTIONV2, [ H2CO, H2CO ], [ H2O, H2O, H2O_R4 ], [ H2O2, $
+    H2O2 ], [ H2S, H2S_32 ], [ HNO3, HNO3, HNO3_V6, HNO3_V7, $
+    HNO3_V8, HNO3_V9 ], [ HO2, HO2 ], [ HOCL, HOCL_35, HOCL_37 ], [ N2, $
+    N2 ], [ N2O, N2O, N2O_V2, NN_15_O ], [ NO, NO ], [ NO2, NO2 ], [ O2, $
+    O2 ], [ O3, O3, O3_R4, O3_V1_3, O3_V2, O3_2V2, O3_V1_3_V2, $
+    O3_ASYM_O_17, O3_SYM_O_17, O3_ASYM_O_18, O3_ASYM_O_18_V2, $
+    O3_SYM_O_18, O3_SYM_O_18_V2 ], [ SO2, S_32_O2, S_32_O2_V2, S_34_O2 ] ]})
+!define(moleculeFamiliesForR4U,{[ BRO, CH3CL, CH3CN, CH3COCH3, CLO, CO, $
+  EXTINCTION, EXTINCTIONV2, H2CO, H2O, H2O2, H2S, HNO3, HO2, HOCL, N2, N2O, NO, NO2, $
+  O2, O3, SO2 ]})
+
+!define(moleculesForR5HL,{[ EXTINCTION, EXTINCTIONV2, [ H2O, H2O, H2O_R5H ], [ HO2, $
+    HO2 ], [ HOCL, HOCL_35 ], [ N2, N2 ], [ O2, O2 ], [ O3, O3, O3_R5H, $
+    O3_V1_3, O3_V2, O3_ASYM_O_18, O3_SYM_O_18 ], [ OH, OH ], [ SO2, $
+    S_32_O2 ] ]})
+!define(moleculeFamiliesForR5HL,{[ EXTINCTION, EXTINCTIONV2, H2O, HO2, HOCL, N2, O2, $
+  O3, OH, SO2 ]})
+!define(moleculesForR5H,{[ EXTINCTION, EXTINCTIONV2, [ H2O, H2O, H2O_R5H ], [ HO2, HO2 ], $
+  [ HOCL, HOCL_35 ], [ N2, N2 ], [ O2, O2 ], [ O3, O3, O3_R5H, O3_V1_3, $
+    O3_V2, O3_2V2, O3_ASYM_O_18, O3_SYM_O_18 ], [ OH, OH ], [ SO2, $
+    S_32_O2 ] ]})
+!define(moleculeFamiliesForR5H,{[ EXTINCTION, EXTINCTIONV2, H2O, HO2, HOCL, N2, O2, O3, $
+  OH, SO2 ]})
+!define(moleculesForR5HU,{[ EXTINCTION, EXTINCTIONV2, [ H2O, H2O, H2O_R5H ], [ N2, N2 ], $
+  [ O2, O2 ], [ O3, O3, O3_R5H, O3_V1_3, O3_V2, O3_2V2, O3_SYM_O_18 ], $
+  [ SO2, S_32_O2 ] ]})
+!define(moleculeFamiliesForR5HU,{[ EXTINCTION, EXTINCTIONV2, H2O, N2, O2, O3, SO2 ]})
+
+!define(moleculesForR5VL,{[ EXTINCTION, EXTINCTIONV2, [ H2O, H2O, H2O_R5V ], [ HO2, $
+    HO2 ], [ HOCL, HOCL_35 ], [ N2, N2 ], [ O2, O2 ], [ O3, O3, O3_R5V, $
+    O3_V1_3, O3_V2, O3_ASYM_O_18, O3_SYM_O_18 ], [ OH, OH ], [ SO2, $
+    S_32_O2 ] ]})
+!define(moleculeFamiliesForR5VL,{[ EXTINCTION, EXTINCTIONV2, H2O, HO2, HOCL, N2, O2, $
+  O3, OH, SO2 ]})
+!define(moleculesForR5V,{[ EXTINCTION, EXTINCTIONV2, [ H2O, H2O, H2O_R5V ], [ HO2, HO2 ], $
+  [ HOCL, HOCL_35 ], [ N2, N2 ], [ O2, O2 ], [ O3, O3, O3_R5V, O3_V1_3, $
+    O3_V2, O3_2V2, O3_ASYM_O_18, O3_SYM_O_18 ], [ OH, OH ], [ SO2, $
+    S_32_O2 ] ]})
+!define(moleculeFamiliesForR5V,{[ EXTINCTION, EXTINCTIONV2, H2O, HO2, HOCL, N2, O2, O3, $
+  OH, SO2 ]})
+!define(moleculesForR5VU,{[ EXTINCTION, EXTINCTIONV2, [ H2O, H2O, H2O_R5V ], [ N2, N2 ], $
+  [ O2, O2 ], [ O3, O3, O3_R5V, O3_V1_3, O3_V2, O3_2V2, O3_SYM_O_18 ], $
+  [ SO2, S_32_O2 ] ]})
+!define(moleculeFamiliesForR5VU,{[ EXTINCTION, EXTINCTIONV2, H2O, N2, O2, O3, SO2 ]})
+    
+!define(moleculesForInstrument,{[ [ BRO, BR_79_O, BR_79_O_V1, BR_81_O, $
+    BR_81_O_V1 ], [ CH3CL, CH3CL_35, CH3CL_37 ], [ CH3CN, CH3CN ], $
+  [ CH3COCH3, CH3COCH3 ], [ CH3OH, CH3OH ], [ CLO, CL_35_O, CL_35_O_V1, $
+    CL_37_O, CL_37_O_V1 ], [ CLONO2, CL_35_ONO2, CL_37_ONO2 ], [ CLOOCL, $
+    CL_35_OOCL_35, CL_35_OOCL_37 ], [ CLOUD_A, CLOUD_A ], [ CLOUD_S, $
+    CLOUD_S ], [ CO, CO, C_13_O, CO_17, CO_18 ], [ CO2, OCO_18 ], [ COF2, $
+    COF2 ], EXTINCTION, EXTINCTIONV2, [ H2CO, H2CO, H2C_13_O, H2CO_18 ], [ H2O, H2O, $
+    H2O_R1A, H2O_R1B, H2O_R2, H2O_R3, H2O_R4, H2O_R5H, H2O_R5V, H2O_V2, $
+    H2O_17, H2O_17_V2, H2O_18, H2O_18_V2, D2O, HDO, HDO_V2, HDO_18 ], $
+  [ H2O2, H2O2 ], [ H2S, H2S_32 ], [ H2SO4, H2S_32_O4 ], [ HBR, HBR_79, $
+    HBR_81 ], [ HCL, HCL_35, HCL_37, DCL_35, DCL_37 ], [ HCN, HCN, $
+    HCN_V2, HC_13_N, HCN_15 ], [ HCOOH, HCOOH ], [ HF, HF, DF ], [ HNO3, $
+    HNO3, HNO3_V5, HNO3_V6, HNO3_V7, HNO3_V8, HNO3_V9 ], [ HO2, HO2 ], $
+  [ HOBR, HOBR_79, HOBR_81 ], [ HOCL, HOCL_35, HOCL_37 ], [ HOONO2, $
+    HOONO2 ], [ N2, N2 ], [ N2O, N2O, N2O_V1, N2O_V2, N2O_2V2, N_15_NO, $
+    NN_15_O, N2O_17, N2O_18 ], [ NO, NO ], [ NO2, NO2 ], [ O, O ], [ O2, $
+    O2, O2_V1, O_17_O, O_18_O, O_18_O_V1 ], [ O3, O3, O3_R1A, O3_R1B, $
+    O3_R2, O3_R3, O3_R4, O3_R5H, O3_R5V, O3_V1_3, O3_V2, O3_2V2, $
+    O3_V1_3_V2, O3_ASYM_O_17, O3_SYM_O_17, O3_ASYM_O_18, O3_ASYM_O_18_V2, $
+    O3_SYM_O_18, O3_SYM_O_18_V2 ], [ OCLO, OCL_35_O, OCL_37_O ], [ OCS, $
+    OCS_32, OCS_34, OC_13_S_32 ], [ OH, OH, O_18_H, OD ], $
+  [ SNGLT_DLTA_O2, SNGLT_DLTA_O2, SNGLT_DLTA_O_18_O ], [ SO2, S_32_O2, $
+    S_32_O2_V2, S_33_O2, S_34_O2 ] ]})
+
+    ;;; !define(moleculeFamiliesForInstrument,{[ BRO, CH3CL, CH3CN, CH3COCH3, $
+    ;;;   CH3OH, CLO, CLONO2, CLOOCL, CLOUD_A, CLOUD_S, CO, CO2, COF2, $
+    ;;;   EXTINCTION, EXTINCTIONV2, H2CO, H2O, H2O2, H2S, H2SO4, HBR, HCL, HCN, HCOOH, HF, $
+    ;;;   HNO3, HO2, HOBR, HOCL, HOONO2, N2, N2O, NO, NO2, O, O2, O3, OCLO, OCS, $
+    ;;;   OH, SNGLT_DLTA_O2, SO2 ]})
+!define(moleculeFamiliesForInstrument,{[ BRO, CH2CHCN, CH3CH2CN, $
+  CH3CH2OH, CH3CL, CH3CN, CH3COCH3, CH3OH, CH3OOH, CLO, CLOOCL, CLOUD_A, $
+  CLOUD_S, CO, COF2, EXTINCTION, EXTINCTIONV2, H2CO, H2O, H2O2, H2S, $
+  H2SO4, HCL, HCN, HCOCH2OH, HF, HNO3, HO2, HOCL, HONO, HOONO, HOONO2, $
+  N2, N2O, NO, NO2, O2, O3, OCLO, OCS, OH, SO2 ]})
+
+;; The following are a even further slimmed-down set of molecules
+;; for which we will seek second-order corrections to our l2pc-based
+;; forward models using Hessians
+!define(molFamiliesFor2ndDerR1A,{[ EXTINCTION, EXTINCTIONV2, H2O, O3 ]})
+!define(molFamiliesFor2ndDerR1B,{[ EXTINCTION, EXTINCTIONV2, H2O, O3 ]})
+!define(molFamiliesFor2ndDerR2,{[  EXTINCTION, EXTINCTIONV2, H2O, O3 ]})
+!define(molFamiliesFor2ndDerR3,{[  EXTINCTION, EXTINCTIONV2, H2O, O3 ]})
+!define(molFamiliesFor2ndDerR4,{[  EXTINCTION, EXTINCTIONV2, H2O, O3 ]})
+!define(molFamiliesFor2ndDerR5H,{[ EXTINCTION, EXTINCTIONV2, H2O, O3 ]})
+!define(molFamiliesFor2ndDerR5V,{[ EXTINCTION, EXTINCTIONV2, H2O, O3 ]})
+@
+
+
+1.4
+log
+@New macro for setting which molecule blocks to fill of analytic Hessians
+@
+text
+@d1 1
+a1 1
+;; $Id: redefinemoleculesforradiometers.l2cf,v 1.3 2008/10/15 16:31:09 pwagner Exp $
+d181 10
+a190 5
+!define(moleculeFamiliesForInstrument,{[ BRO, CH3CL, CH3CN, CH3COCH3, $
+  CH3OH, CLO, CLONO2, CLOOCL, CLOUD_A, CLOUD_S, CO, CO2, COF2, $
+  EXTINCTION, EXTINCTIONV2, H2CO, H2O, H2O2, H2S, H2SO4, HBR, HCL, HCN, HCOOH, HF, $
+  HNO3, HO2, HOBR, HOCL, HOONO2, N2, N2O, NO, NO2, O, O2, O3, OCLO, OCS, $
+  OH, SNGLT_DLTA_O2, SO2 ]})
+@
+
+
+1.3
+log
+@Added extinctionv2 molecules
+@
+text
+@d1 1
+a1 1
+;; $Id: redefinemoleculesforradiometers.l2cf,v 1.2 2008/05/27 16:59:49 pwagner Exp $
+d187 10
+@
+
+
+1.2
+log
+@Added new methyl molecules
+@
+text
+@d1 1
+a1 1
+;; $Id: redefinemoleculesforradiometers.l2cf,v 1.1 2006/04/27 23:52:57 lambert Exp $
+d13 1
+a13 1
+!define(moleculesForR1AL,{[ EXTINCTION, [ H2O, H2O, H2O_R1A ], [ HNO3, $
+d16 2
+a17 2
+!define(moleculeFamiliesForR1AL,{[ EXTINCTION, H2O, HNO3, N2, O2, O3 ]})
+!define(moleculesForR1A,{[ EXTINCTION, [ H2O, H2O, H2O_R1A ], [ HNO3, $
+d20 2
+a21 2
+!define(moleculeFamiliesForR1A,{[ EXTINCTION, H2O, HNO3, N2, O2, O3 ]})
+!define(moleculesForR1AU,{[ EXTINCTION, [ H2O, H2O, H2O_R1A ], [ N2, N2 ], $
+d23 1
+a23 1
+!define(moleculeFamiliesForR1AU,{[ EXTINCTION, H2O, N2, O2, O3 ]})
+d25 1
+a25 1
+!define(moleculesForR1BL,{[ EXTINCTION, [ H2O, H2O, H2O_R1B ], [ HNO3, $
+d28 2
+a29 2
+!define(moleculeFamiliesForR1BL,{[ EXTINCTION, H2O, HNO3, N2, O2, O3 ]})
+!define(moleculesForR1B,{[ EXTINCTION, [ H2O, H2O, H2O_R1B ], [ HNO3, $
+d32 2
+a33 2
+!define(moleculeFamiliesForR1B,{[ EXTINCTION, H2O, HNO3, N2, O2, O3 ]})
+!define(moleculesForR1BU,{[ EXTINCTION, [ H2O, H2O, H2O_R1B ], [ N2, N2 ], $
+d35 1
+a35 1
+!define(moleculeFamiliesForR1BU,{[ EXTINCTION, H2O, N2, O2, O3 ]})
+d38 1
+a38 1
+  [ CH3OH, CH3OH ], EXTINCTION, [ H2O, H2O, H2O_R2 ], [ HCN, HCN ], $
+d42 1
+a42 1
+!define(moleculeFamiliesForR2L,{[ CH3CN, CH3COCH3, CH3OH, EXTINCTION, $
+d45 1
+a45 1
+  [ CH3OH, CH3OH ], [ CLO, CL_35_O, CL_37_O ], EXTINCTION, [ H2O, H2O, $
+d51 1
+a51 1
+!define(moleculeFamiliesForR2,{[ CH3CN, CH3COCH3, CH3OH, CLO, EXTINCTION, $
+d54 1
+a54 1
+  [ CH3OH, CH3OH ], [ CLO, CL_35_O, CL_37_O ], EXTINCTION, [ H2O, H2O, $
+d61 1
+a61 1
+  EXTINCTION, H2O, H2O2, HNO3, HO2, N2, N2O, O2, O3, OCS, SO2 ]})
+d65 1
+a65 1
+  [ CH3OH, CH3OH ], [ CH3OOH, CH3OOH ], [ CO, CO ], EXTINCTION, [ H2O, H2O, H2O_R3 ], $
+d69 1
+a69 1
+  CH3COCH3, CH3OH, CH3OOH, CO, EXTINCTION, H2O, HNO3, N2, O2, O3, $
+d73 1
+a73 1
+  [ CH3COCH3, CH3COCH3 ], [ CH3OH, CH3OH ], [ CH3OOH, CH3OOH ], [ CO, CO ], EXTINCTION, [ H2O, H2O, H2O_R3 ], $
+d77 1
+a77 1
+  CH3COCH3, CH3OH, CH3OOH, CO, EXTINCTION, H2O, HNO3, N2, O2, O3, $
+d81 1
+a81 1
+  [ CH3OH, CH3OH ], [ CH3OOH, CH3OOH ], EXTINCTION, [ H2O, H2O, H2O_R3 ], [ HNO3, $
+d85 1
+a85 1
+  CH3COCH3, CH3OH, CH3OOH, EXTINCTION, H2O, HNO3, N2, O2, O3, SO2 ]})
+d88 1
+a88 1
+  [ CH3CN, CH3CN ], [ CH3COCH3, CH3COCH3 ], [ CH3OH, CH3OH ], EXTINCTION, $
+d96 1
+a96 1
+  EXTINCTION, H2O, H2O2, H2S, HCL, HNO3, HO2, HOCL, N2, O2, O3, SO2 ]})
+d99 1
+a99 1
+  [ CLO, CL_35_O ], [ CO, C_13_O ], EXTINCTION, [ H2CO, H2CO ], [ H2O, $
+d108 1
+a108 1
+  CO, EXTINCTION, H2CO, H2O, H2O2, H2S, HCL, HNO3, HO2, HOCL, N2, N2O, $
+d112 1
+a112 1
+    C_13_O ], EXTINCTION, [ H2CO, H2CO ], [ H2O, H2O, H2O_R4 ], [ H2O2, $
+d120 1
+a120 1
+  EXTINCTION, H2CO, H2O, H2O2, H2S, HNO3, HO2, HOCL, N2, N2O, NO, NO2, $
+d123 1
+a123 1
+!define(moleculesForR5HL,{[ EXTINCTION, [ H2O, H2O, H2O_R5H ], [ HO2, $
+d127 1
+a127 1
+!define(moleculeFamiliesForR5HL,{[ EXTINCTION, H2O, HO2, HOCL, N2, O2, $
+d129 1
+a129 1
+!define(moleculesForR5H,{[ EXTINCTION, [ H2O, H2O, H2O_R5H ], [ HO2, HO2 ], $
+d133 1
+a133 1
+!define(moleculeFamiliesForR5H,{[ EXTINCTION, H2O, HO2, HOCL, N2, O2, O3, $
+d135 1
+a135 1
+!define(moleculesForR5HU,{[ EXTINCTION, [ H2O, H2O, H2O_R5H ], [ N2, N2 ], $
+d138 1
+a138 1
+!define(moleculeFamiliesForR5HU,{[ EXTINCTION, H2O, N2, O2, O3, SO2 ]})
+d140 1
+a140 1
+!define(moleculesForR5VL,{[ EXTINCTION, [ H2O, H2O, H2O_R5V ], [ HO2, $
+d144 1
+a144 1
+!define(moleculeFamiliesForR5VL,{[ EXTINCTION, H2O, HO2, HOCL, N2, O2, $
+d146 1
+a146 1
+!define(moleculesForR5V,{[ EXTINCTION, [ H2O, H2O, H2O_R5V ], [ HO2, HO2 ], $
+d150 1
+a150 1
+!define(moleculeFamiliesForR5V,{[ EXTINCTION, H2O, HO2, HOCL, N2, O2, O3, $
+d152 1
+a152 1
+!define(moleculesForR5VU,{[ EXTINCTION, [ H2O, H2O, H2O_R5V ], [ N2, N2 ], $
+d155 1
+a155 1
+!define(moleculeFamiliesForR5VU,{[ EXTINCTION, H2O, N2, O2, O3, SO2 ]})
+d163 1
+a163 1
+    COF2 ], EXTINCTION, [ H2CO, H2CO, H2C_13_O, H2CO_18 ], [ H2O, H2O, $
+d183 1
+a183 1
+  EXTINCTION, H2CO, H2O, H2O2, H2S, H2SO4, HBR, HCL, HCN, HCOOH, HF, $
+@
+
+
+1.1
+log
+@redefines moleculesForRRx to match definitions in constructstandardspecies
+@
+text
+@d1 1
+a1 1
+;; $Id$
+d63 3
+a65 1
+!define(moleculesForR3L,{[ [ CO, CO ], EXTINCTION, [ H2O, H2O, H2O_R3 ], $
+d68 2
+a69 1
+!define(moleculeFamiliesForR3L,{[ CO, EXTINCTION, H2O, HNO3, N2, O2, O3, $
+d71 3
+a73 1
+!define(moleculesForR3,{[ [ CO, CO ], EXTINCTION, [ H2O, H2O, H2O_R3 ], $
+d76 2
+a77 1
+!define(moleculeFamiliesForR3,{[ CO, EXTINCTION, H2O, HNO3, N2, O2, O3, $
+d79 3
+a81 1
+!define(moleculesForR3U,{[ EXTINCTION, [ H2O, H2O, H2O_R3 ], [ HNO3, $
+d84 2
+a85 1
+!define(moleculeFamiliesForR3U,{[ EXTINCTION, H2O, HNO3, N2, O2, O3, SO2 ]})
+@
+

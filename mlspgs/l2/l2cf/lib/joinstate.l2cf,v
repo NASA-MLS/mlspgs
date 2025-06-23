@@ -1,0 +1,1014 @@
+head	1.35;
+access;
+symbols
+	v5-02-NRT-19:1.35
+	v6-00:1.35
+	v5-02-NRT-18:1.35
+	v5-02:1.35
+	v5-01-NRT-17:1.35
+	v5-01-NRT-16:1.35
+	v5-01-NRT-15:1.35
+	v5-01-NRT-14:1.35
+	neuralnetworks-1-0:1.35.0.10
+	cfm-single-freq-0-1:1.35.0.8
+	v5-01:1.35
+	v5-00:1.35
+	v4-23-TA133:1.35.0.6
+	mus-emls-1-70:1.35.0.4
+	rel-1-0-englocks-work:1.35.0.2
+	VUMLS1-00:1.35
+	VPL1-00:1.35
+	V4-22-NRT-08:1.35
+	VAM1-00:1.34
+	V4-21:1.34.0.4
+	V4-13:1.34
+	V4-12:1.34
+	V4-11:1.34
+	V4-10:1.34
+	V3-43:1.34
+	M4-00:1.34
+	V3-41:1.34
+	V3-40-PlusGM57:1.34.0.2
+	V2-24-NRT-04:1.32
+	V3-33:1.34
+	V2-24:1.32
+	V3-31:1.34
+	V3-30-NRT-05:1.34
+	cfm-01-00:1.34
+	V3-30:1.34
+	V3-20:1.34
+	V3-10:1.34
+	V2-23-NRT-02:1.32
+	V2-23:1.32
+	V2-22-NRT-01:1.32
+	V2-22:1.32
+	V2-21:1.32
+	V2-20:1.32
+	V2-11:1.32
+	V2-10:1.32
+	V2-00:1.31
+	V1-51:1.29
+	V1-50:1.29
+	V1-45:1.29
+	V1-44:1.29
+	V1-43:1.26
+	V1-32:1.20
+	V1-31:1.20
+	V1-30:1.19
+	V1-13:1.8
+	V1-12:1.8
+	V1-11:1.8
+	V1-10:1.8
+	newfwm-feb03:1.8.0.2
+	V1-04:1.1
+	V1-03:1.1
+	V1-02:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.35
+date	2015.12.01.21.46.32;	author pwagner;	state Exp;
+branches;
+next	1.34;
+
+1.34
+date	2009.03.14.02.47.04;	author honghanh;	state Exp;
+branches;
+next	1.33;
+
+1.33
+date	2008.05.28.22.28.40;	author pwagner;	state Exp;
+branches;
+next	1.32;
+
+1.32
+date	2006.07.25.21.37.45;	author pwagner;	state Exp;
+branches;
+next	1.31;
+
+1.31
+date	2006.05.19.17.00.34;	author dwu;	state Exp;
+branches;
+next	1.30;
+
+1.30
+date	2005.10.28.23.30.51;	author pwagner;	state Exp;
+branches;
+next	1.29;
+
+1.29
+date	2004.08.14.00.01.20;	author livesey;	state Exp;
+branches;
+next	1.28;
+
+1.28
+date	2004.08.14.00.00.36;	author livesey;	state Exp;
+branches;
+next	1.27;
+
+1.27
+date	2004.06.29.20.16.21;	author pwagner;	state Exp;
+branches;
+next	1.26;
+
+1.26
+date	2004.04.16.00.46.17;	author livesey;	state Exp;
+branches;
+next	1.25;
+
+1.25
+date	2004.03.30.19.07.03;	author livesey;	state Exp;
+branches;
+next	1.24;
+
+1.24
+date	2004.02.12.02.06.24;	author livesey;	state Exp;
+branches;
+next	1.23;
+
+1.23
+date	2004.02.11.21.49.27;	author livesey;	state Exp;
+branches;
+next	1.22;
+
+1.22
+date	2004.02.11.21.41.27;	author livesey;	state Exp;
+branches;
+next	1.21;
+
+1.21
+date	2004.02.03.21.43.56;	author livesey;	state Exp;
+branches;
+next	1.20;
+
+1.20
+date	2003.11.14.00.12.03;	author livesey;	state Exp;
+branches;
+next	1.19;
+
+1.19
+date	2003.09.02.22.25.25;	author pwagner;	state Exp;
+branches;
+next	1.18;
+
+1.18
+date	2003.07.31.16.52.28;	author pwagner;	state Exp;
+branches;
+next	1.17;
+
+1.17
+date	2003.07.11.01.23.15;	author livesey;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2003.07.08.00.16.59;	author livesey;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2003.06.05.23.39.13;	author livesey;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2003.05.11.05.06.35;	author livesey;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2003.05.10.22.22.17;	author livesey;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2003.05.09.19.14.29;	author livesey;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2003.05.08.20.51.15;	author livesey;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2003.04.24.19.58.44;	author dwu;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2003.04.24.19.50.17;	author dwu;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2002.12.16.16.05.13;	author mjf;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2002.11.21.01.18.30;	author livesey;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2002.10.20.00.42.20;	author livesey;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2002.10.01.18.30.46;	author mjf;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2002.08.16.17.42.12;	author livesey;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2002.06.21.20.40.41;	author livesey;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2002.05.28.22.36.14;	author livesey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2002.04.29.21.54.58;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.35
+log
+@Writes DS "nearest profile" to dgm file
+@
+text
+@;; $Id: joinstate.l2cf,v 1.34 2009/03/14 02:47:04 honghanh Exp $
+
+begin Join
+
+!ifdef(flagSuppressRegularOutput,{},{
+  !ifdef(flagAvoidDirectWrite,{
+  ;; Join the tropopause pressure
+  joined_tpPressure: l2gp, source=state.tpPressure, swath='TPPressureWMO-DGG'
+  !storeJoinedDGG(joined_tpPressure)
+
+  !define(joinStandardProduct,{joined_$1: l2gp, source=state.$1, $
+    precision=outputPrecision.$1, swath='$1'!nl})
+  !forall(joinStandardProduct,!allStandardProducts)
+
+  ;; Join the columns
+  !define(joinStandardColumn,{joined_$1_column: l2gp, source=state.column_$1, $
+    precision=outputPrecision.column_$1, swath='$1 Column wmo'!nl})
+  !forall(joinStandardColumn,!allStandardProductsWithColumns)
+
+  ;; IWC is a special case
+  joined_iwc: l2gp, source=state.iwc, precision=outputPrecision.iwc, $
+    swath='IWC'
+  joined_iwp: l2gp, source=state.iwp, precision=outputPrecision.iwp, $
+    swath='IWP'
+  joined_iwcFine: l2gp, source=state.iwcFine, precision=outputPrecision.iwcFine, $
+  swath='IWC-fine'
+},{
+
+  ;; First the species with columns
+  !define(writeStandardProductWithColumn,{
+  Label, quantity=state.$1, label='$1'
+  Label, quantity=state.column_$1, label='$1 column'
+  DirectWrite, type=l2gp, hdfVersion=!hdfVersion, $
+    file='!l2gpFileName($1)', $
+    source=state.$1, precision=outputPrecision.$1, $
+    status=otherDiagnostics.status$1, quality=otherDiagnostics.quality$1, $
+    source=state.column_$1, precision=outputPrecision.column_$1!nl})
+!ifdef(flagCopyStandardProducts,{
+},{
+  !forall(writeStandardProductWithColumn,!allStandardProductsWithColumns)
+})
+
+  ;; Now the species without columns
+  !define(writeStandardProductWithoutColumn,{
+  Label, quantity=state.$1, label='$1'
+  DirectWrite, type=l2gp, hdfVersion=!hdfVersion, $
+    file='!l2gpFileName($1)', $
+    source=state.$1, precision=outputPrecision.$1, $
+    status=otherDiagnostics.status$1,quality=otherDiagnostics.quality$1!nl})
+!ifdef(flagCopyStandardProducts,{
+},{
+  !forall(writeStandardProductWithoutColumn,!allStandardProductsWithoutColumns)
+  ;; IWC is a special case
+  Label, quantity=state.iwc, label='IWC'
+  Label, quantity=state.iwp, label='IWP'
+  ;;;Label, quantity=state.iwcFine, label='IWC3'
+  DirectWrite, type=l2gp, hdfVersion=!hdfVersion, $
+    file='!l2gpFileName(IWC)', $
+    source=state.iwc, precision=outputPrecision.iwc, $
+    source=state.iwp, precision=outputPrecision.iwp
+
+    ;;;source=state.iwp, precision=outputPrecision.iwp, $
+    ;;;source=state.iwcFine, precision=outputPrecision.iwcFine
+
+  ;; Also put tpPressure in the temperature file
+  Label, quantity=state.tpPressure, label='TPPressureWMO'
+  DirectWrite, type=l2gp, hdfVersion=!hdfVersion, $
+    file='!l2gpFileName(Temperature)', source=state.tpPressure
+
+})
+
+  !flushDGGDGMFiles
+})})
+end Join
+
+;; In the future the following may be moved to a separate l2cf fragment
+;; e.g., writephasetiming.l2cf
+!ifdef(flagAvoidDirectWrite,{},{
+begin Fill
+  timing: Vector, template=timingTemplate
+  Fill, quantity=timing.phaseTiming, method=phaseTiming
+  Fill, quantity=timing.sectionTiming, method=sectionTiming
+  Fill, quantity=timing.chunkNumMMAF,    method=geoLocation, manipulation='chunk'
+  Fill, quantity=timing.geodLatMMAF,     method=geoLocation, manipulation='geodlat'
+  Fill, quantity=timing.solarZenithMMAF, method=geoLocation, manipulation='solarzenith'
+  Fill, quantity=timing.profileNum, method=geoLocation, manipulation='profile', $
+        hGrid=hGridStandard
+end Fill
+
+begin Join
+  Label, quantity=timing.phaseTiming,     label='phase timing'
+  Label, quantity=timing.sectionTiming,   label='section timing'
+  Label, quantity=timing.chunkNumMMAF,    label='chunk number'
+  Label, quantity=timing.geodLatMMAF,     label='geod lat'
+  Label, quantity=timing.solarZenithMMAF, label='solar zenith'
+  Label, quantity=timing.profileNum,      label='nearest profile'
+  DirectWrite, hdfVersion=5, $
+  type=l2aux, $
+    source=timing.phaseTiming, source=timing.sectionTiming, $
+    source=timing.chunkNumMMAF, source=timing.geodLatMMAF, $
+    source=timing.solarZenithMMAF, source=timing.profileNum
+end Join
+})
+@
+
+
+1.34
+log
+@Add dnwt_abandoned
+@
+text
+@d1 1
+a1 1
+;; $Id: joinstate.l2cf,v 1.33 2008/05/28 22:28:40 pwagner Exp $
+d86 2
+d89 1
+d96 1
+d100 2
+a101 2
+    source=timing.chunkNumMMAF, source=timing.geodLatMMAF, source=timing.solarZenithMMAF
+  
+@
+
+
+1.33
+log
+@Writes chunk number[maf] to dgm
+@
+text
+@d1 1
+a1 1
+;; $Id: joinstate.l2cf,v 1.32 2006/07/25 21:37:45 pwagner Exp $
+a78 13
+begin Construct
+  phaseTiming: quantity, type=phaseTiming,  $
+    vGrid=vGridPhases
+  sectionTiming: quantity, type=phaseTiming,  $
+    vGrid=vGridPhases
+  chunkNumMMAF: quantity, type=geolocation, module= GHz
+  geodLatMMAF: quantity, type=geolocation, module= GHz
+  solarZenithMMAF: quantity, type=geolocation, module= GHz
+  timingTemplate: VectorTemplate, quantities = [ $
+    phaseTiming, sectionTiming, chunkNumMMAF, geodLatMMAF, solarZenithMMAF $
+    ]
+
+end Construct
+@
+
+
+1.32
+log
+@Do not write (currently unused) IWC3 swath
+@
+text
+@d1 1
+a1 1
+;; $Id: joinstate.l2cf,v 1.31 2006/05/19 17:00:34 dwu Exp $
+d84 3
+d88 1
+a88 1
+    phaseTiming, sectionTiming $
+d96 3
+d101 6
+a106 3
+  Label, quantity=timing.phaseTiming, label='phase timing'
+  Label, quantity=timing.sectionTiming, label='section timing'
+  !DirectWriteDGMCommand, hdfVersion=!hdfVersion, $
+d108 2
+a109 1
+    source=timing.phaseTiming, source=timing.sectionTiming
+@
+
+
+1.31
+log
+@add IWP
+@
+text
+@d1 1
+a1 1
+;; $Id: joinstate.l2cf,v 1.30 2005/10/28 23:30:51 pwagner Exp $
+d26 1
+a26 1
+    swath='IWC-fine'
+d56 1
+a56 1
+  Label, quantity=state.iwcFine, label='IWC3'
+d60 4
+a63 2
+    source=state.iwp, precision=outputPrecision.iwp, $
+    source=state.iwcFine, precision=outputPrecision.iwcFine
+@
+
+
+1.30
+log
+@flagCopyStandardProducts prevents each chunk from writing standard products
+@
+text
+@d1 1
+a1 1
+;; $Id: joinstate.l2cf,v 1.29 2004/08/14 00:01:20 livesey Exp $
+d23 2
+d55 1
+d60 1
+@
+
+
+1.29
+log
+@Bug fix.
+@
+text
+@d1 1
+a1 1
+;; $Id: joinstate.l2cf,v 1.28 2004/08/14 00:00:36 livesey Exp $
+d36 2
+d39 1
+d48 2
+a50 1
+
+d64 2
+@
+
+
+1.28
+log
+@Removed the tpPressure from the DGG file.
+@
+text
+@d1 1
+a1 1
+;; $Id: joinstate.l2cf,v 1.27 2004/06/29 20:16:21 pwagner Exp $
+d56 1
+a56 1
+  ;; Let it keep the label it got already
+@
+
+
+1.27
+log
+@Saves phase, section timings to l2aux
+@
+text
+@d1 1
+a1 1
+;; $Id: joinstate.l2cf,v 1.26 2004/04/16 00:46:17 livesey Exp $
+d8 1
+a8 1
+  joined_tpPressure: l2gp, source=state.tpPressure, swath='tpPressure wmo'
+a25 3
+
+  ;; Join the tropopause pressure
+  !directWriteDGGNoPrecisionNotState(state.tpPressure,'tpPressure wmo')
+@
+
+
+1.26
+log
+@Renamed IWC-fine swath
+@
+text
+@d1 1
+a1 1
+;; $Id: joinstate.l2cf,v 1.25 2004/03/30 19:07:03 livesey Exp $
+d66 28
+@
+
+
+1.25
+log
+@Output tpPressure in temperature file.
+@
+text
+@d1 1
+a1 1
+;; $Id: joinstate.l2cf,v 1.24 2004/02/12 02:06:24 livesey Exp $
+d52 1
+a52 1
+  Label, quantity=state.iwcFine, label='IWC-fine'
+@
+
+
+1.24
+log
+@Added status and quality writes
+@
+text
+@d1 1
+a1 1
+;; $Id: joinstate.l2cf,v 1.23 2004/02/11 21:49:27 livesey Exp $
+d57 5
+@
+
+
+1.23
+log
+@Typo!
+@
+text
+@d1 1
+a1 1
+;; $Id: joinstate.l2cf,v 1.22 2004/02/11 21:41:27 livesey Exp $
+d37 1
+@
+
+
+1.22
+log
+@Added status and quality output
+@
+text
+@d1 1
+a1 1
+;; $Id: joinstate.l2cf,v 1.21 2004/02/03 21:43:56 livesey Exp $
+d45 1
+a45 1
+    source=state.$1, precision=outputPrecision.$1
+@
+
+
+1.21
+log
+@Updated handling of chisqBinned stuff
+@
+text
+@d1 1
+a1 1
+;; $Id: joinstate.l2cf,v 1.20 2003/11/14 00:12:03 livesey Exp $
+d45 2
+a46 1
+    source=state.$1, precision=outputPrecision.$1!nl})
+@
+
+
+1.20
+log
+@Added support for flagSuppressRegularOutput flag
+@
+text
+@d1 1
+a1 1
+;; $Id: joinstate.l2cf,v 1.19 2003/09/02 22:25:25 pwagner Exp $
+d28 1
+a28 1
+  !directWriteDGGNoPrecision(state.tpPressure,'tpPressure wmo')
+@
+
+
+1.19
+log
+@Output/DirectWrite to abbreviated fileNames only if usingPCF
+@
+text
+@d1 1
+a1 1
+;; $Id: joinstate.l2cf,v 1.18 2003/07/31 16:52:28 pwagner Exp $
+d5 1
+a33 2
+;;;  DirectWrite, type=l2gp, hdfVersion=!hdfVersion, $
+;;;    file='!outpathl2gp/MLS-Aura_L2GP-$1_!l2version_!day.he!hdfVersion', $
+a42 2
+;;;  DirectWrite, type=l2gp, hdfVersion=!hdfVersion, $
+;;;    file='!outpathl2gp/MLS-Aura_L2GP-$1_!l2version_!day.he!hdfVersion', $
+a50 2
+;;;  DirectWrite, type=l2gp, hdfVersion=!hdfVersion, $
+;;;    file='!outpathl2gp/MLS-Aura_L2GP-IWC_!l2version_!day.he!hdfVersion', $
+d57 1
+a57 1
+})
+@
+
+
+1.18
+log
+@DirectWrite now specifies hdfVersion, reflected in file names
+@
+text
+@d1 1
+a1 1
+;; $Id: joinstate.l2cf,v 1.17 2003/07/11 01:23:15 livesey Exp $
+d33 2
+d36 1
+a36 1
+    file='!outpathl2gp/MLS-Aura_L2GP-$1_!l2version_!day.he!hdfVersion', $
+d44 2
+d47 1
+a47 1
+    file='!outpathl2gp/MLS-Aura_L2GP-$1_!l2version_!day.he!hdfVersion', $
+d54 2
+d57 1
+a57 1
+    file='!outpathl2gp/MLS-Aura_L2GP-IWC_!l2version_!day.he!hdfVersion', $
+@
+
+
+1.17
+log
+@Made it more backwards compatible
+@
+text
+@d1 1
+a1 1
+;; $Id: joinstate.l2cf,v 1.16 2003/07/08 00:16:59 livesey Exp $
+d33 2
+a34 1
+  DirectWrite, type=l2gp, file='!outpathl2gp/MLS-Aura_L2GP-$1_!l2version_!day.he4', $
+d42 2
+a43 1
+  DirectWrite, type=l2gp, file='!outpathl2gp/MLS-Aura_L2GP-$1_!l2version_!day.he4', $
+d50 2
+a51 1
+  DirectWrite, type=l2gp, file='!outpathl2gp/MLS-Aura_L2GP-IWC_!l2version_!day.he4', $
+@
+
+
+1.16
+log
+@Now uses the new direct write stuff
+@
+text
+@d1 1
+a1 1
+;; $Id: joinstate.l2cf,v 1.15 2003/06/05 23:39:13 livesey Exp $
+d5 21
+d35 1
+a35 2
+    source=state.column_$1, precision=outputPrecision.column_$1
+})
+d42 1
+a42 2
+    source=state.$1, precision=outputPrecision.$1
+})
+d53 1
+@
+
+
+1.15
+log
+@New approach to IWC
+@
+text
+@d1 1
+a1 1
+;; $Id: joinstate.l2cf,v 1.14 2003/05/11 05:06:35 livesey Exp $
+d6 1
+a6 2
+  joined_tpPressure: l2gp, source=state.tpPressure, swath='tpPressure wmo'
+  !storeDGG(joined_tpPressure)
+d8 17
+a24 8
+  !define(joinStandardProduct,{joined_$1: l2gp, source=state.$1, $
+    precision=outputPrecision.$1, swath='$1'!nl})
+  !forall(joinStandardProduct,!allStandardProducts)
+
+  ;; Join the columns
+  !define(joinStandardColumn,{joined_$1_column: l2gp, source=state.column_$1, $
+    precision=outputPrecision.column_$1, swath='$1 Column wmo'!nl})
+  !forall(joinStandardColumn,!allStandardProductsWithColumns)
+d27 5
+a31 4
+  joined_iwc: l2gp, source=state.iwc, precision=outputPrecision.iwc, $
+    swath='IWC'
+  joined_iwcFine: l2gp, source=state.iwcFine, precision=outputPrecision.iwcFine, $
+    swath='IWC-fine'
+d33 1
+@
+
+
+1.14
+log
+@Added DGG joining of tpPressure
+@
+text
+@d1 1
+a1 1
+;; $Id: joinstate.l2cf,v 1.13 2003/05/10 22:22:17 livesey Exp $
+d17 6
+@
+
+
+1.13
+log
+@New approach to standard products, joining, output, columns etc.
+@
+text
+@d1 1
+a1 1
+;; $Id: joinstate.l2cf,v 1.12 2003/05/09 19:14:29 livesey Exp $
+d4 4
+@
+
+
+1.12
+log
+@Took out the swathres stuff.
+@
+text
+@d1 1
+a1 1
+;; $Id: joinstate.l2cf,v 1.11 2003/05/08 20:51:15 livesey Exp $
+d5 3
+a7 2
+  !define(l2gpJoin,{joined_$1: l2gp, source=state.$1, $
+    precision=outputPrecision.$1, swath='$2'})
+d9 4
+a12 20
+  !l2gpJoin(temperature,Temperature)
+  !l2gpJoin(refgph,refGPH)
+  !l2gpJoin(gph,GPH)
+  !l2gpJoin(bro,BrO)
+  !l2gpJoin(ch3cn,CH3CN)
+  !l2gpJoin(clo,ClO)
+  !l2gpJoin(co,CO)
+  !l2gpJoin(h2o,H2O)
+  !l2gpJoin(hcl,HCl)
+  !l2gpJoin(hcn,HCN)
+  !l2gpJoin(hno3,HNO3)
+  !l2gpJoin(ho2,HO2)
+  !l2gpJoin(hocl,HOCl)
+  !l2gpJoin(n2o,N2O)
+  !l2gpJoin(o3,O3)
+  !l2gpJoin(oh,OH)
+  !l2gpJoin(so2,SO2)
+  !l2gpJoin(rhi,RHI)
+
+  !include(joincolumns.l2cf)
+@
+
+
+1.11
+log
+@Got rid of !res
+@
+text
+@d1 1
+a1 1
+;; $Id: joinstate.l2cf,v 1.10 2003/04/24 19:58:44 dwu Exp $
+d8 1
+a8 1
+  !l2gpJoin(temperature,Temperature!swathRes)
+d10 1
+a10 1
+  !l2gpJoin(gph,GPH!swathRes)
+d15 1
+a15 1
+  !l2gpJoin(h2o,H2O!swathRes)
+d22 1
+a22 1
+  !l2gpJoin(o3,O3!swathRes)
+d25 1
+a25 1
+  !l2gpJoin(rhi,RHI!swathRes)
+@
+
+
+1.10
+log
+@remove cldRadMin
+@
+text
+@d1 1
+a1 1
+;; $Id: joinstate.l2cf,v 1.9 2003/04/24 19:50:17 dwu Exp $
+d8 1
+a8 1
+  !l2gpJoin(temperature!res,Temperature!swathRes)
+d10 1
+a10 1
+  !l2gpJoin(gph!res,GPH!swathRes)
+d15 1
+a15 1
+  !l2gpJoin(h2o!res,H2O!swathRes)
+d22 1
+a22 1
+  !l2gpJoin(o3!res,O3!swathRes)
+d25 1
+a25 1
+  !l2gpJoin(rhi!res,RHI!swathRes)
+@
+
+
+1.9
+log
+@add cldRadMin and cldRadMax
+@
+text
+@d1 1
+a1 1
+;; $Id: joinstate.l2cf,v 1.8 2002/12/16 16:05:13 mjf Exp $
+a25 3
+
+  !l2gpJoin(cldRadMin,cldRadMin)
+  !l2gpJoin(cldRadMax,cldRadMax)
+@
+
+
+1.8
+log
+@Deal with HiRes quantities (called _HR internally, -HR externally).
+@
+text
+@d1 1
+a1 1
+;; $Id: joinstate.l2cf,v 1.7 2002/11/21 01:18:30 livesey Exp $
+d26 3
+@
+
+
+1.7
+log
+@Removed commented out baseline stuff
+@
+text
+@d1 1
+a1 1
+;; $Id: joinstate.l2cf,v 1.6 2002/10/20 00:42:20 livesey Exp $
+d8 1
+a8 1
+  !l2gpJoin(temperature,Temperature)
+d10 1
+a10 1
+  !l2gpJoin(gph,GPH)
+d15 1
+a15 1
+  !l2gpJoin(h2o,H2O)
+d22 1
+a22 1
+  !l2gpJoin(o3,O3)
+d25 1
+a25 1
+  !l2gpJoin(rhi,RHI)
+d27 1
+a27 9
+  !define(l2auxJoin,!dnl
+  {joined_$1: l2aux, source=state.$1, sdName='$2'
+  joined_$1_precision: l2aux, source=outputPrecision.$1, $
+    sdName='$2 precision'})
+
+  !l2auxJoin(ptanGHz,GHz.ptan)
+  !l2auxJoin(ptanTHz,THz.ptan)
+  !l2auxJoin(phitanGHz,GHz.phitan)
+  !l2auxJoin(phitanTHz,THz.phitan)
+@
+
+
+1.6
+log
+@Changed RHi to RHI
+@
+text
+@d1 1
+a1 1
+;; $Id: joinstate.l2cf,v 1.5 2002/10/01 18:30:46 mjf Exp $
+a25 7
+;   !l2gpJoin(baselineR1A,baselineR1A)
+;   !l2gpJoin(baselineR1B,baselineR1B)
+;   !l2gpJoin(baselineR2,baselineR2)
+;   !l2gpJoin(baselineR3,baselineR3)
+;   !l2gpJoin(baselineR4,baselineR4)
+;   !l2gpJoin(baselineR5H,baselineR5H)
+;   !l2gpJoin(baselineR5V,baselineR5V)
+@
+
+
+1.5
+log
+@RHI should be RHi
+@
+text
+@d1 1
+a1 1
+;; $Id: joinstate.l2cf,v 1.4 2002/08/16 17:42:12 livesey Exp $
+d25 1
+a25 1
+  !l2gpJoin(rhi,RHi)
+@
+
+
+1.4
+log
+@Commented out join baseline for the moment.
+@
+text
+@d1 1
+a1 1
+;; $Id: joinstate.l2cf,v 1.3 2002/06/21 20:40:41 livesey Exp $
+d9 1
+d25 1
+a25 1
+  !l2gpJoin(rhi,RHI)
+@
+
+
+1.3
+log
+@Joined phitan
+@
+text
+@d1 1
+a1 1
+;; $Id: joinstate.l2cf,v 1.2 2002/05/28 22:36:14 livesey Exp $
+d25 7
+a31 7
+  !l2gpJoin(baselineR1A,baselineR1A)
+  !l2gpJoin(baselineR1B,baselineR1B)
+  !l2gpJoin(baselineR2,baselineR2)
+  !l2gpJoin(baselineR3,baselineR3)
+  !l2gpJoin(baselineR4,baselineR4)
+  !l2gpJoin(baselineR5H,baselineR5H)
+  !l2gpJoin(baselineR5V,baselineR5V)
+@
+
+
+1.2
+log
+@Semi freeze of version
+@
+text
+@d1 1
+a1 1
+;; $Id: joinstate.l2cf,v 1.1 2002/04/29 21:54:58 pwagner Exp $
+d38 4
+a41 4
+  !l2auxJoin(ptanGHz,ptanGHz)
+  !l2auxJoin(ptanTHz,ptanTHz)
+  !l2auxJoin(losVelGHz,losVelGHz)
+  !l2auxJoin(losVelTHz,losVelTHz)
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d1 1
+a1 2
+!divert(-1)
+;; $Id: joinstate.l2cf,v 2.1 2001/10/27 00:15:42 livesey Exp $
+d3 1
+a3 1
+;; This l2cf fragment joins all the products
+d8 1
+a8 2
+!divert!dnl
+  !l2gpJoin(temp,Temperature)
+d32 12
+a43 9
+!define(l2auxJoin,!dnl
+{joined_$1: l2aux, source=state.$1, sdName='$2'
+ joined_$1_precision: l2aux, source=outputPrecision.$1, $
+  sdName='$2 precision'})
+
+!l2auxJoin(ptanGHz,ptanGHz)
+!l2auxJoin(ptanTHz,ptanTHz)
+!l2auxJoin(losVelGHz,losVelGHz)
+!l2auxJoin(losVelTHz,losVelTHz)
+@
+

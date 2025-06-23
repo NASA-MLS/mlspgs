@@ -1,0 +1,712 @@
+head	2.13;
+access;
+symbols
+	v5-02-NRT-19:2.13
+	v6-00:2.13
+	v5-02-NRT-18:2.13
+	v5-02:2.13
+	v5-01-NRT-17:2.13
+	v5-01-NRT-16:2.13
+	v5-01-NRT-15:2.13
+	v5-01-NRT-14:2.13
+	neuralnetworks-1-0:2.13.0.14
+	cfm-single-freq-0-1:2.13.0.12
+	v5-01:2.13
+	v5-00:2.13
+	v4-23-TA133:2.13.0.10
+	mus-emls-1-70:2.13.0.8
+	rel-1-0-englocks-work:2.13.0.6
+	VUMLS1-00:2.13
+	VPL1-00:2.13
+	V4-22-NRT-08:2.13
+	VAM1-00:2.13
+	V4-21:2.13.0.4
+	V4-13:2.13
+	V4-12:2.13
+	V4-11:2.13
+	V4-10:2.13
+	V3-43:2.13
+	M4-00:2.13
+	V3-41:2.13
+	V3-40-PlusGM57:2.13.0.2
+	V2-24-NRT-04:2.11
+	V3-33:2.13
+	V2-24:2.11
+	V3-31:2.13
+	V3-30-NRT-05:2.13
+	cfm-01-00:2.13
+	V3-30:2.13
+	V3-20:2.13
+	V3-10:2.12
+	V2-23-NRT-02:2.11
+	V2-23:2.11
+	V2-22-NRT-01:2.11
+	V2-22:2.11
+	V2-21:2.11
+	V2-20:2.11
+	V2-11:2.11
+	V2-10:2.11
+	V2-00:2.11
+	V1-51:2.10
+	V1-50:2.10
+	V1-45:2.10
+	V1-44:2.10
+	V1-43:2.10
+	V1-42:2.8
+	V1-41:2.8
+	V1-32:2.9
+	V1-40:2.8
+	V1-31:2.8
+	V1-30:2.8
+	V1-13:2.4
+	V1-12:2.4
+	V1-11:2.4
+	V1-10:2.3
+	newfwm-feb03:2.3.0.2;
+locks; strict;
+comment	@# @;
+
+
+2.13
+date	2009.09.29.23.33.12;	author pwagner;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2009.06.23.18.25.42;	author pwagner;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2005.06.22.17.25.48;	author pwagner;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2004.03.24.23.52.11;	author pwagner;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2004.02.26.21.58.23;	author pwagner;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2003.09.03.22.38.42;	author pwagner;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2003.06.03.20.39.39;	author pwagner;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2003.04.21.19.30.07;	author pwagner;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2003.04.11.23.32.23;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2003.03.07.00.34.18;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2002.12.11.22.21.47;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2002.10.08.00.09.09;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2002.07.11.22.18.26;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.13
+log
+@Changes needed by 64-bit build
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!===========================================================================
+module HDFEOS5               ! F90 interface to HDF-EOS5.
+!===========================================================================
+  implicit none
+  ! use hdf5, only: hsize_t, hssize_t, size_t ! Someday should be import
+  public
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: HDF-EOS5.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+  !The following is included only because the original file
+  ! $(HDFEOS5)/../../include/hdfeos5.inc isn't f95-compatible
+  ! as of Toolkit version 5.2.8
+  include 'hdfeos5.f9h'
+
+  ! To switch to/from hdfeos5.1.6(+) swap comments between next 2 lines
+  integer, parameter         :: MLS_CHARTYPE = HE5T_NATIVE_SCHAR
+  ! integer, parameter         :: MLS_CHARTYPE = HE5T_CHARSTRING
+
+  ! Now define f90 interfaces for some HDF-EOS5.
+  ! Warning: as you are calling C directly, make sure that your 
+  ! array args are like this.
+  !integer function HE5_SWGONKULATE(ARRAY)
+  !  integer,intent(in),dimension(*)::ARRAY
+  !end function HE5_SWGONKULATE!
+  ! NOT like this.
+  !integer function HE5_SWGONKULATE(ARRAY)
+  !  integer,intent(in),dimension(:)::ARRAY
+  !end function HE5_SWGONKULATE!  ^
+  !                               |
+  !                        OY! NO! NOT like this! No (:)s already!
+
+  ! ------------------------------------------------------------------------
+  ! Bugs and limitations: 
+  ! (1) Due to misguided Fortran standard, we are not permitted module-level
+  ! variables in the interfaces below. Fortran 2008 will permit
+  ! the import command in place of use, but until then we tediously add
+  ! multiple instances of use ..
+  ! (2) (don't) use hdf5_params !
+  ! some integers in HDF-EOS5 fortran interface are
+  ! C long (see, e.g. SWapi.c). Hsize_t as declared in hdf5 is ignored.
+  ! Right now we're use-ing size_t from the hdf5 library as an ad hoc type.
+  ! A better plan would be to declare a module variable, either here 
+  ! or in MLSKinds, corresponding to the hdfeos wrappers, calling
+  ! it hdfeos5size_t
+  ! integer, parameter, public         :: hdfeos5size_t = SIZE_T
+  ! ------------------------------------------------------------------------
+  
+  interface
+    integer function HE5_EHINQGLATTS ( FILE_ID, ATTRLIST, LISTSIZE )
+      integer, intent(in)              :: FILE_ID
+      character(len=*), intent(out)    :: attrlist
+      integer, intent(out)             :: listsize
+    end function HE5_EHINQGLATTS
+
+    integer function HE5_GDCLOSE ( FILE_ID )
+      integer, intent(in) :: FILE_ID
+    end function HE5_GDCLOSE
+
+    integer function HE5_GDOPEN ( FILENAME, ACCESS_MODE )
+      character (len=*), intent(in) :: FILENAME
+      integer, intent(in) :: ACCESS_MODE
+    end function HE5_GDOPEN
+
+    integer function HE5_GDATTACH ( GDFID, GRIDNAME )
+      integer, intent(in) :: GDFID
+      character (len=*), intent(in) :: GRIDNAME
+    end function HE5_GDATTACH
+
+    integer function HE5_GDCREATE ( GDFID, GRIDNAME,&
+      & XDIMSIZE,YDIMSIZE,UPLEFT,LOWRIGHT )
+      use hdf5, only: hsize_t, hssize_t, size_t
+      integer, intent(in) :: GDFID
+      character (len=*), intent(in) :: GRIDNAME
+       integer(kind=size_t),intent(in)::XDIMSIZE
+       integer(kind=size_t),intent(in)::YDIMSIZE
+       double precision,dimension(2),intent(in)::UPLEFT
+       double precision,dimension(2),intent(in)::LOWRIGHT
+    end function HE5_GDCREATE
+
+    integer function HE5_GDDETACH ( GDID )
+      integer, intent(in) :: GDID
+    end function HE5_GDDETACH
+
+    integer function HE5_GDINQGRID (FILENAME,GRIDLIST,STRBUFSIZE)
+      use hdf5, only: hsize_t, hssize_t, size_t
+      character (len=*), intent(in) :: FILENAME
+      character (len=*), intent(out) :: GRIDLIST
+      integer(kind=size_t), intent(out):: STRBUFSIZE
+    end function HE5_GDINQGRID
+
+    integer function HE5_GDINQDIMS (GRIDID,DIMNAME,DIMS)
+      use hdf5, only: hsize_t, hssize_t, size_t
+       integer,intent(in)::GRIDID
+       character(len=*),intent(out)::DIMNAME
+       integer(kind=size_t),intent(out),dimension(*)::DIMS
+    
+    end function HE5_GDINQDIMS
+    
+    integer function HE5_GDDIMINFO (GRIDID,DIMNAME)
+       integer,intent(in)::GRIDID
+       character(len=*),intent(IN)::DIMNAME
+    end function HE5_GDDIMINFO
+
+    integer function HE5_GDGRIDINFO (GRIDID,XDIMSIZE,YDIMSIZE,UPLEFT,LOWRIGHT)
+      use hdf5, only: hsize_t, hssize_t, size_t
+       integer,intent(in)::GRIDID
+       integer(kind=size_t),intent(out)::XDIMSIZE
+       integer(kind=size_t),intent(out)::YDIMSIZE
+       double precision,dimension(2),intent(out)::UPLEFT
+       double precision,dimension(2),intent(out)::LOWRIGHT
+    end function HE5_GDGRIDINFO
+
+    integer function HE5_GDFLDINFO (GRIDID,FIELDNAME,&
+     & RANK,DIMS,NUMBERTYPE,DIMLIST, MAXDIMLIST)
+      use hdf5, only: hsize_t, hssize_t, size_t
+       integer,intent(in)::GRIDID
+       character(len=*),intent(IN)::FIELDNAME
+       integer(kind=size_t),intent(out),dimension(*):: DIMS
+       integer,intent(out)             :: RANK, NUMBERTYPE
+       character(len=*),intent(OUT)::DIMLIST
+       character(len=*),intent(OUT)::MAXDIMLIST
+    end function HE5_GDFLDINFO
+
+    integer function HE5_GDNENTRIES (GRIDID, ENTRYCODE, STRINGBUFFERSIZE)
+      use hdf5, only: hsize_t, hssize_t, size_t
+       integer,intent(in)::GRIDID
+       integer,intent(in)::ENTRYCODE
+       integer(kind=size_t),intent(out)::STRINGBUFFERSIZE
+    end function HE5_GDNENTRIES
+    
+    integer function HE5_GDPROJINFO (GRIDID,&
+      & PROJCODE,ZONECODE,SPHERECODE,PROJPARM)
+       integer,intent(in)::GRIDID
+       integer,intent(out)::PROJCODE
+       integer,intent(out)::ZONECODE
+       integer,intent(out)::SPHERECODE
+       double precision,dimension(*),intent(out)::PROJPARM
+    end function HE5_GDPROJINFO
+
+    integer function HE5_GDINQFLDS (GRIDID, FIELDLIST, RANK, NUMBERTYPE)
+       integer,intent(in)::GRIDID
+       character(len=*),intent(out)::FIELDLIST
+       integer,intent(out),dimension(*)::RANK, NUMBERTYPE
+    end function HE5_GDINQFLDS
+    
+    integer function HE5_SWATTACH ( SWFID, SWATHNAME )
+      integer, intent(in) :: SWFID
+      character (len=*), intent(in) :: SWATHNAME
+    end function HE5_SWATTACH
+
+    integer function HE5_SWCLOSE ( FILE_ID )
+      integer, intent(in) :: FILE_ID
+    end function HE5_SWCLOSE
+
+    integer function HE5_SWCREATE ( SWFID, SWATHNAME )
+      integer, intent(in) :: SWFID
+      character (len=*), intent(in) :: SWATHNAME
+    end function HE5_SWCREATE
+
+    integer function HE5_SWDEFCHUNK(SWATHID,CHUNKRANK,CHUNKDIMS)
+      use hdf5, only: hsize_t, hssize_t, size_t
+      integer, intent(in) :: SWATHID,CHUNKRANK
+      integer(kind=size_t), intent(in),dimension(*) :: CHUNKDIMS
+    end function HE5_SWDEFCHUNK
+
+    integer function HE5_SWDEFDFLD ( SWATHID, FIELDNAME, DIMLIST, MAXDIMLIST,&
+         NUMBERTYPE,MERGE )
+      integer, intent(in) :: SWATHID
+      character (len=*), intent(in) :: FIELDNAME
+      character (len=*), intent(in) :: DIMLIST
+      character (len=*), intent(in) :: MAXDIMLIST
+      integer, intent(in) :: NUMBERTYPE
+      integer, intent(in) :: MERGE
+    end function HE5_SWDEFDFLD
+
+    integer function HE5_SWDEFDIM ( SWATHID, FIELDNAME, DIM )
+      use hdf5, only: hsize_t, hssize_t, size_t
+      integer, intent(in)  :: SWATHID
+      character (len=*), intent(in) :: FIELDNAME
+      integer(kind=size_t), intent(in) :: DIM
+    end function HE5_SWDEFDIM 
+
+    integer function HE5_SWDEFGFLD ( SWATHID, FIELDNAME, DIMLIST, MAXDIMLIST,&
+         NUMBERTYPE,  MERGE )
+      integer, intent(in) :: SWATHID
+      character (len=*), intent(in) :: FIELDNAME
+      character (len=*), intent(in) :: DIMLIST
+      character (len=*), intent(in) :: MAXDIMLIST
+      integer, intent(in) :: NUMBERTYPE
+      integer, intent(in) :: MERGE
+    end function HE5_SWDEFGFLD
+
+    integer function HE5_SWDETACH ( SWID )
+      integer, intent(in) :: SWID
+    end function HE5_SWDETACH
+
+    integer function HE5_SWOPEN ( FILENAME, ACCESS_MODE )
+      character (len=*), intent(in) :: FILENAME
+      integer, intent(in) :: ACCESS_MODE
+    end function HE5_SWOPEN
+
+    integer function HE5_SWINQSWATH (FILENAME,SWATHLIST,STRBUFSIZE)
+      use hdf5, only: hsize_t, hssize_t, size_t
+      character (len=*), intent(in) :: FILENAME
+      character (len=*), intent(out) :: SWATHLIST
+      integer(kind=size_t), intent(out):: STRBUFSIZE
+    end function HE5_SWINQSWATH
+
+    integer function HE5_SWINQDIMS (SWATHID,DIMNAME,DIMS)
+      use hdf5, only: hsize_t, hssize_t, size_t
+       integer,intent(in)::SWATHID
+       character(len=*),intent(out)::DIMNAME
+       integer(kind=size_t),intent(out),dimension(*)::DIMS
+    end function HE5_SWINQDIMS
+    
+    integer function HE5_SWDIMINFO (SWATHID,DIMNAME)
+       integer,intent(in)::SWATHID
+       character(len=*),intent(IN)::DIMNAME
+    end function HE5_SWDIMINFO
+
+    integer function HE5_SWFLDINFO (SWATHID,FIELDNAME,&
+     & RANK,DIMS,NUMBERTYPE,DIMLIST, MAXDIMLIST)
+      use hdf5, only: hsize_t, hssize_t, size_t
+       integer,intent(in)::SWATHID
+       character(len=*),intent(IN)::FIELDNAME
+       integer(kind=size_t),intent(out),dimension(*):: DIMS
+       integer,intent(out),dimension(*):: NUMBERTYPE
+       integer,intent(out)             :: RANK
+       character(len=*),intent(OUT)::DIMLIST
+       character(len=*),intent(OUT)::MAXDIMLIST
+    end function HE5_SWFLDINFO
+
+    integer function HE5_SWINQDFLDS (SWATHID, FIELDLIST, RANK, NUMBERTYPE)
+       integer,intent(in)::SWATHID
+       character(len=*),intent(out)::FIELDLIST
+       integer,intent(out),dimension(*)::RANK, NUMBERTYPE
+    end function HE5_SWINQDFLDS
+    
+    integer function HE5_SWSETALIAS (SWATHID,FIELDNAME,ALIASLIST)
+       integer,intent(in)::SWATHID
+       character(len=*),intent(IN)::FIELDNAME
+       character(len=*),intent(IN)::ALIASLIST
+    end function HE5_SWSETALIAS
+
+  end interface
+
+!====================
+contains 
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: HDF-EOS5.f90,v 2.12 2009/06/23 18:25:42 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module HDFEOS5
+!====================
+
+! $Log: HDF-EOS5.f90,v $
+! Revision 2.12  2009/06/23 18:25:42  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.11  2005/06/22 17:25:48  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.10  2004/03/24 23:52:11  pwagner
+! Added MLS_CHARTYPE
+!
+! Revision 2.9  2004/02/26 21:58:23  pwagner
+! Added HE5_EHINQGLATTS
+!
+! Revision 2.8  2003/09/03 22:38:42  pwagner
+! Added HE5_SWFLDINFO
+!
+! Revision 2.7  2003/06/03 20:39:39  pwagner
+! Added some grid apis
+!
+! Revision 2.6  2003/04/21 19:30:07  pwagner
+! Added interface to HE5_SWINQDFLDS
+!
+! Revision 2.5  2003/04/11 23:32:23  pwagner
+! Moved he5_swsetfill he5_ehwrglatt interfaces
+!
+! Revision 2.4  2003/03/07 00:34:18  pwagner
+! Added HE5_SWSETFILL
+!
+! Revision 2.3  2002/12/11 22:21:47  pwagner
+! Added HE5_SWSETALIAS
+!
+! Revision 2.2  2002/10/08 00:09:09  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.1  2002/07/11 22:18:26  pwagner
+! First commit in this directory--welcome old friendshe5*.f90
+!
+! Revision 1.4  2002/05/28 23:11:23  pwagner
+! Changed to comply with hdf5.1.4.3/hdfeos5.1.2
+!
+! Revision 1.3  2002/01/29 00:49:26  pwagner
+! Added he5_gd(open)(close) functions
+!
+@
+
+
+2.12
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d16 1
+d21 1
+a21 1
+       "$RCSfile: $"
+d47 16
+d86 1
+d89 2
+a90 2
+       integer,intent(in)::XDIMSIZE
+       integer,intent(in)::YDIMSIZE
+d100 1
+d103 1
+a103 1
+      integer, intent(out):: STRBUFSIZE
+d107 1
+d110 1
+a110 1
+       integer,intent(out),dimension(*)::DIMS
+d120 1
+d122 2
+a123 2
+       integer,intent(out)::XDIMSIZE
+       integer,intent(out)::YDIMSIZE
+d130 1
+d133 1
+a133 1
+       integer,intent(out),dimension(*):: DIMS
+d140 1
+d143 1
+a143 1
+       integer,intent(out)::STRINGBUFFERSIZE
+d176 1
+a176 2
+      ! use hdf5_params ! Note: all integers in HDF-EOS5 fortran interface are
+      ! C long. Hsize_t is not known about.
+d178 1
+a178 1
+      integer, intent(in),dimension(*) :: CHUNKDIMS
+d192 1
+d195 1
+a195 1
+      integer, intent(in) :: DIM
+d218 1
+d221 1
+a221 1
+      integer, intent(out):: STRBUFSIZE
+d225 1
+d228 1
+a228 2
+       integer,intent(out),dimension(*)::DIMS
+    
+d238 1
+d241 2
+a242 1
+       integer,intent(out),dimension(*):: DIMS, NUMBERTYPE
+d267 1
+a267 1
+       "$Id: read_apriori.f90 is it here $"
+d278 3
+@
+
+
+2.11
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d238 1
+a239 1
+!---------------------------- RCS Ident Info -------------------------------
+d241 2
+a242 3
+       "$Id: $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d244 1
+d246 1
+d252 3
+@
+
+
+2.10
+log
+@Added MLS_CHARTYPE
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d18 3
+a20 5
+  !------------------- RCS Ident Info -----------------------
+  character(len=130), private :: Id = &
+    & "$Id: HDF-EOS5.f90,v 2.9 2004/02/26 21:58:23 pwagner Exp $"
+  character(len=*), parameter, private :: ModuleName= &
+    & "$RCSfile: HDF-EOS5.f90,v $"
+d22 1
+a22 1
+  !----------------------------------------------------------
+d239 5
+d251 3
+@
+
+
+2.9
+log
+@Added HE5_EHINQGLATTS
+@
+text
+@d12 1
+a12 1
+    & "$Id: HDF-EOS5.f90,v 2.8 2003/09/03 22:38:42 pwagner Exp $"
+d23 4
+d240 3
+@
+
+
+2.8
+log
+@Added HE5_SWFLDINFO
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+d12 1
+a12 1
+    & "$Id: HDF-EOS5.f90,v 2.7 2003/06/03 20:39:39 pwagner Exp $"
+d37 6
+d236 3
+@
+
+
+2.7
+log
+@Added some grid apis
+@
+text
+@d12 1
+a12 1
+    & "$Id: HDF-EOS5.f90,v 2.6 2003/04/21 19:30:07 pwagner Exp $"
+d196 10
+d230 3
+@
+
+
+2.6
+log
+@Added interface to HE5_SWINQDFLDS
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+d12 1
+a12 1
+    & "$Id: HDF-EOS5.f90,v 2.5 2003/04/11 23:32:23 pwagner Exp $"
+d23 1
+a23 1
+  ! Now define f90 interfaces for some HDF-EOS.
+d46 76
+d220 3
+@
+
+
+2.5
+log
+@Moved he5_swsetfill he5_ehwrglatt interfaces
+@
+text
+@d12 1
+a12 1
+    & "$Id: HDF-EOS5.f90,v 2.4 2003/03/07 00:34:18 pwagner Exp $"
+d120 6
+d144 3
+@
+
+
+2.4
+log
+@Added HE5_SWSETFILL
+@
+text
+@d12 1
+a12 1
+    & "$Id: HDF-EOS5.f90,v 2.3 2002/12/11 22:21:47 pwagner Exp $"
+a125 7
+    integer function HE5_SWSETFILL (SWATHID, FIELDNAME, NUMBERTYPE, FILLVALUE)
+       integer,intent(in)::SWATHID
+       character(len=*),intent(IN)::FIELDNAME
+       integer, intent(in) :: NUMBERTYPE
+       real, intent(in) :: FILLVALUE
+    end function HE5_SWSETFILL
+
+d138 3
+@
+
+
+2.3
+log
+@Added HE5_SWSETALIAS
+@
+text
+@d12 1
+a12 1
+    & "$Id: HDF-EOS5.f90,v 2.2 2002/10/08 00:09:09 pwagner Exp $"
+d126 7
+d145 3
+@
+
+
+2.2
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d12 1
+a12 1
+    & "$Id: HDF-EOS5.f90,v 2.1 2002/07/11 22:18:26 pwagner Exp $"
+d18 1
+a18 1
+  !The following is included only because hte original file
+d120 6
+d138 3
+@
+
+
+2.1
+log
+@First commit in this directory--welcome old friendshe5*.f90
+@
+text
+@d12 1
+a12 1
+    & "$Id: HDF-EOS5.f90,v 1.4 2002/05/28 23:11:23 pwagner Exp $"
+d15 1
+d123 5
+d132 3
+@
+

@@ -1,0 +1,251 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-02:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.12
+	cfm-single-freq-0-1:1.2.0.10
+	v5-01:1.2
+	v5-00:1.2
+	v4-23-TA133:1.2.0.8
+	mus-emls-1-70:1.2.0.6
+	rel-1-0-englocks-work:1.2.0.4
+	VUMLS1-00:1.2
+	VPL1-00:1.2
+	V4-22-NRT-08:1.2
+	VAM1-00:1.2
+	V4-21:1.2.0.2
+	V4-13:1.2
+	V4-12:1.2
+	V4-11:1.2
+	V4-10:1.2
+	M4-00:1.2
+	V3-33:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2011.09.07.06.33.35;	author honghanh;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2011.06.08.21.24.36;	author honghanh;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Add 3 more procedures to receive matrix
+Add 'stacked' concept to createquantity, and icfm_sendquantity
+and related procedures.
+@
+text
+@; noChans is only needed when frequencies is not specified 
+pro CreateQuantity, quantity, name, type, instanceOffset, value=value, logbasis=logbasis, startValue=startValue, badValue=badValue, molecule=molecule, module=instrumentModule, signal=signal, radiometer=radiometer, frequencies=frequencies, frequencyCoordinate=frequencyCoordinate, noChans=noChans, surfs=surfaces, nosurfs=noSurfs, verticalCoordinate=verticalCoordinate, noprofs=noprofs, phi=phi, geodlat=geodlat, longitude=lon, losAngle=losAngle, solarZenith=solarZenith, solarTime=solarTime, time=time, mask=mask
+
+    ; Sanitize data type
+    if size(type, /type) ne 7 then MyMessage, /error, "type must be string."
+    if size(instanceOffset, /type) ne 3 then MyMessage, /error, "instanceOffset must be long."
+    if n_elements(value) gt 0 and size(value, /type) ne 5 then MyMessage, /error, "value must be double."
+    if n_elements(startValue) gt 0 and size(startValue, /type) ne 5 then MyMessage, /error, "startValue must be double."
+    if n_elements(badValue) gt 0 and size(badValue, /type) ne 5 then MyMessage, /error, "badValue must be double."
+    if size(name, /type) ne 7 then MyMessage, /error, "name must be string."
+    if n_elements(molecule) gt 0 and size(molecule, /type) ne 7 then MyMessage, /error, "molecule must be string."
+    if n_elements(instrumentModule) gt 0 and size(instrumentModule, /type) ne 7 then MyMessage, /error, "instrumentModule must be string."
+    if n_elements(signal) gt 0 and size(signal, /type) ne 7 then MyMessage, /error, "signal must be string."
+    if n_elements(radiometer) gt 0 and size(radiometer, /type) ne 7 then MyMessage, /error, "radiometer must be string."
+    if n_elements(frequencies) gt 0 and size(frequencies, /type) ne 5 then MyMessage, /error, "frequencies must be double."
+    if n_elements(frequencyCoordinate) gt 0 and size(frequencyCoordinate, /type) ne 7 then MyMessage, /error, "frequencyCoordinate must be string."
+    if n_elements(noChans) gt 0 and size(noChans, /type) ne 3 then MyMessage, /error, "noChans must be long."
+    if n_elements(noSurfs) gt 0 and size(noSurfs, /type) ne 3 then MyMessage, /error, "noSurfs must be long."
+    if n_elements(surfaces) gt 0 and size(surfaces, /type) ne 5 then MyMessage, /error, "surfs must be double."
+    if n_elements(verticalCoordinate) gt 0 and size(verticalCoordinate, /type) ne 7 then MyMessage, /error, "verticalCoordinate must be string."
+    if n_elements(phi) gt 0 and size(phi, /type) ne 5 then MyMessage, /error, "phi must be double."
+    if n_elements(geodlat) gt 0 and size(geodlat, /type) ne 5 and size(geodlat, /n_dimensions) ne 2 $
+    then MyMessage, /error, "geodlat must be a 2-dimensional array of doubles."
+    if n_elements(lon) gt 0 and size(lon, /type) ne 5 then MyMessage, /error, "longitude must be double."
+    if n_elements(losAngle) gt 0 and size(losAngle, /type) ne 5 then MyMessage, /error, "losAngle must be double."
+    if n_elements(solarZenith) gt 0 and size(solarZenith, /type) ne 5 then MyMessage, /error, "solarZenith must be double."
+    if n_elements(solarTime) gt 0 and size(solarTime, /type) ne 5 then MyMessage, /error, "solarTime must be double."
+    if n_elements(time) gt 0 and size(time, /type) ne 5 then MyMessage, /error, "time must be double."
+    if n_elements(noprofs) gt 0 and size(noprofs, /type) ne 3 then MyMessage, /error, "noprofs must be long."
+    if n_elements(mask) gt 0 then begin
+        sz1 = size(value)
+        sz2 = size(mask)
+        if size(mask, /type) ne 7 then MyMessage, /error, "mask's elements must be characters"
+        sz2[n_elements(sz2) - 2] = 5
+        if any(sz1 ne sz2) then MyMessage, /error, "mask must have the same shape as value"
+    endif
+
+    ;; Creating structure
+    quantity = {type:type, instanceOffset:instanceOffset, instanceLen:0L}
+
+    if n_elements(value) gt 0 then begin
+        quantity = create_struct(['value'], value, quantity)
+    endif
+
+    if n_elements(logbasis) ne 0 then begin
+        if n_elements(startValue) eq 0 then MyMessage, /error, "logbasis must be given along with startValue"
+        if logbasis then begin
+            quantity = create_struct(['logbasis', 'startValue'], 1L, startValue, quantity)
+        endif else begin
+            quantity = create_struct(['logbasis'], 0L, quantity)
+        endelse
+    endif
+    if n_elements(badValue) ne 0 then begin
+        quantity = create_struct(['badValue'], badValue, quantity)
+    endif
+    if n_elements(name) ne 0 then begin
+        quantity = create_struct(['name'], name, quantity)
+    endif
+    if n_elements(molecule) ne 0 then begin
+        quantity = create_struct(['molecule'], molecule, quantity)
+    endif
+    if n_elements(instrumentModule) ne 0 then begin
+        quantity = create_struct(['module'], instrumentModule, quantity)
+    endif
+    if n_elements(signal) ne 0 then begin
+        quantity = create_struct(['signal'], signal, quantity)
+    endif
+    if n_elements(radiometer) ne 0 then begin
+        quantity = create_struct(['radiometer'], radiometer, quantity)
+    endif
+    if n_elements(frequencies) ne 0 then begin
+        quantity = create_struct(['frequencies', 'noChans'], frequencies, n_elements(frequencies), quantity)
+    endif else if n_elements(noChans) ne 0 then begin
+        quantity = create_struct(['noChans'], noChans, quantity)
+    endif else begin
+        quantity = create_struct(['noChans'], 1L, quantity)
+    endelse
+    if n_elements(frequencyCoordinate) ne 0 then begin
+        quantity = create_struct(['frequencyCoordinate'], frequencyCoordinate, quantity)
+    endif
+    if n_elements(surfaces) ne 0 then begin
+        quantity = create_struct(['surfaces'], surfaces, quantity)
+    endif
+
+    ; setting noSurfs to a default value of 1 is to imitate what's done
+    ; in the Fortran version of the library in cfm/cfm_qtytemplate.f90
+    if n_elements(noSurfs) eq 0 then noSurfs = 1L
+    quantity = create_struct(['noSurfs'], noSurfs, quantity)
+    if n_elements(verticalCoordinate) ne 0 then begin
+        quantity = create_struct(['verticalCoordinate'], verticalCoordinate, quantity)
+    endif
+
+    ; setting noProfs to a default value of 1 is also to imitate what's done
+    ; in the Fortran version of the library
+    if n_elements(noprofs) eq 0 then noprofs = 1L
+    quantity = create_struct(['noInstances'], noProfs, quantity)
+    if n_elements(phi) ne 0 then begin
+        quantity = create_struct(['phi'], phi, quantity)
+    endif
+    if n_elements(geodlat) ne 0 then begin
+        quantity = create_struct(['geodlat'], geodlat, quantity)
+    endif
+    if n_elements(time) ne 0 then begin        
+        quantity = create_struct(['time'], time, quantity)
+    endif
+    if n_elements(solartime) ne 0 then begin        
+        quantity = create_struct(['solartime'], solartime, quantity)
+    endif
+    if n_elements(solarzenith) ne 0 then begin        
+        quantity = create_struct(['solarzenith'], solarzenith, quantity)
+    endif
+    if n_elements(lon) ne 0 then begin        
+        quantity = create_struct(['longitude'], lon, quantity)
+    endif
+    ; this is a hack because losAngle is not present in radiance
+    if n_elements(losAngle) ne 0 then begin
+        quantity = create_struct(['losAngle'], losAngle, quantity)
+    endif
+    if (n_elements(mask) ne 0) then begin
+        quantity = create_struct(['mask'], mask, quantity)
+    endif
+
+    ; Set coherence based on the dimension of surfs
+    ; Coherence only matters if surfaces is present
+    ; if surfaces is not present, it can be set to any value,
+    ; but it must be set nonetheless.
+    ; if surfaces[nosurfs, noprofs] or surfaces[noprofs, nosurfs], 
+    ; then the quantity is not coherent. Else, it's coherent.
+    ; Here, noSurfs is guaranteed to be defined, and to be at least 1L
+    if n_elements(surfaces) eq noSurfs then coherence = 1L else coherence = 0L
+    quantity = create_struct(['coherent'], coherence, quantity)
+
+    ; Set stack based on the dimension of one of the hgrid related fields.
+    
+    ; the size of any 'solartime', 'losangle', 'lon', 'time', 'geodlat',
+    ; 'phi', 'solarzenith' if present, should be the same
+    n_solartime = n_elements(solartime)
+    n_losangle = n_elements(losangle)
+    n_lon = n_elements(lon)
+    n_time = n_elements(time)
+    n_phi = n_elements(phi)
+    n_geodlat = n_elements(geodlat)
+    n_solarzenith = n_elements(solarzenith)
+    n = [n_solartime, n_losangle, n_lon, n_time, n_phi, n_geodlat, n_solarzenith]
+    max_n = max(n)
+    if any(n ne max_n and n ne 0) then begin
+        MyMessage, /error, "The fields 'phi', 'solartime', 'geodlat', 'losangle', 'solarzenith', 'time', 'lon' if present, must have the same number of elements."
+    endif
+
+    ; If n_elements of 'solartime', 'losangle', 'lon', 'time', 'geodlat',
+    ; 'phi', 'solarzenith' equal to noprofs, then the quatity is stacked.
+    if max_n eq noprofs then stack = 1L else stack = 0L
+    quantity = create_struct(['stacked'], stack, quantity)
+
+    quantity.instanceLen = quantity.noSurfs * quantity.noChans
+
+    if n_elements(value) gt 0 then begin
+        sz = size(value)
+        if sz[0] ne 2 then MyMessage, /error, "value must be 2-dimensional array"
+        if sz[1] ne quantity.instanceLen then MyMessage, /error, "The first dimension of value must have " + string(quantity.instanceLen) + " elements."
+        if sz[2] ne quantity.noInstances then MyMessage, /error, "The second dimension of value must have " + string(quantity.noInstances) + " elements."
+    endif
+end 
+@
+
+
+1.1
+log
+@Initial import of the IDL portion of IDLCFM (a.k.a. ICFM)
+@
+text
+@d2 1
+a2 1
+pro CreateQuantity, quantity, name, type, instanceOffset, value=value, logbasis=logbasis, startValue=startValue, badValue=badValue, molecule=molecule, module=instrumentModule, signal=signal, radiometer=radiometer, frequencies=frequencies, frequencyCoordinate=frequencyCoordinate, noChans=noChans, surfs=surfaces, nosurfs=noSurfs, verticalCoordinate=verticalCoordinate, noprofs=noprofs, phi=phi, geodlat=geodlat, longitude=lon, losAngle=losAngle, solarZenith=solarZenith, solarTime=solarTime, time=time, mask=mask, coherence=coherence
+a29 5
+;    if n_elements(phi) ne n_elements(geodlat) or n_elements(lon) ne n_elements(losAngle) $
+;    or n_elements(solarZenith) ne n_elements(solarTime)  $
+;    or n_elements(geodlat) ne n_elements(losAngle) $
+;    or n_elements(solarTime) ne n_elements(time) or n_elements(geodlat) ne n_elements(time) $
+;    then MyMessage, /error, "phi, geodlat, lon, losAngle, solarZenith, solarTime, time must all be absent or present with the same number of elements"
+d84 3
+d92 5
+a96 5
+    if n_elements(noprofs) ne 0 then begin
+        quantity = create_struct(['noInstances'], noProfs, quantity)
+    endif else begin
+        quantity = create_struct(['noInstances'], 1L, quantity)
+    endelse
+d122 26
+a147 3
+    if (n_elements(coherence) ne 0) then begin
+        if coherence then coherence = 1L else coherence = 0L
+        quantity = create_struct(['coherence'], coherence, quantity)
+d149 6
+@
+

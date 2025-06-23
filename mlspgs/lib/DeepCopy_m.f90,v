@@ -1,0 +1,190 @@
+head	2.2;
+access;
+symbols
+	v5-02-NRT-19:2.2
+	v6-00:2.2
+	v5-02-NRT-18:2.2
+	v5-02:2.2
+	v5-01-NRT-17:2.2
+	v5-01-NRT-16:2.2
+	v5-01-NRT-15:2.2
+	v5-01-NRT-14:2.2
+	neuralnetworks-1-0:2.2.0.12
+	cfm-single-freq-0-1:2.2.0.10
+	v5-01:2.2
+	v5-00:2.2
+	v4-23-TA133:2.2.0.8
+	mus-emls-1-70:2.2.0.6
+	rel-1-0-englocks-work:2.2.0.4
+	VUMLS1-00:2.2
+	VPL1-00:2.2
+	V4-22-NRT-08:2.2
+	VAM1-00:2.2
+	V4-21:2.2.0.2
+	V4-13:2.2
+	V4-12:2.2
+	V4-11:2.2
+	V4-10:2.2
+	M4-00:2.2;
+locks; strict;
+comment	@# @;
+
+
+2.2
+date	2012.07.18.22.13.13;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2012.07.10.03.10.40;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.2
+log
+@Improve a comment
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module DeepCopy_m
+
+  ! call deepCopy ( a, b ) does a deep copy of b to a by destroying a,
+  ! cloning a to be like b, and then, if a is not disassociated,
+  ! copying the value of b to a.
+
+  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+
+  implicit NONE
+  private
+  public :: DeepCopy
+
+  interface DeepCopy
+    module procedure DeepCopy_C1, DeepCopy_C2, DeepCopy_C3 ! Complex
+    module procedure DeepCopy_D1, DeepCopy_D2, DeepCopy_D3 ! Double Precision
+    module procedure DeepCopy_I1, DeepCopy_I2, DeepCopy_I3 ! Integer
+    module procedure DeepCopy_R1, DeepCopy_R2, DeepCopy_R3 ! Real
+  end interface
+
+  !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+    "$RCSfile: DeepCopy_m.f90,v $"
+  private :: not_used_here 
+  !---------------------------------------------------------------------------
+
+contains
+
+  subroutine DeepCopy_C1 ( A, B )
+    complex, pointer :: A(:), B(:)
+    include 'deepCopy_1.f9h'
+  end subroutine DeepCopy_C1
+
+  subroutine DeepCopy_D1 ( A, B )
+    double precision, pointer :: A(:), B(:)
+    include 'deepCopy_1.f9h'
+  end subroutine DeepCopy_D1
+
+  subroutine DeepCopy_I1 ( A, B )
+    integer, pointer :: A(:), B(:)
+    include 'deepCopy_1.f9h'
+  end subroutine DeepCopy_I1
+
+  subroutine DeepCopy_R1 ( A, B )
+    real, pointer :: A(:), B(:)
+    include 'deepCopy_1.f9h'
+  end subroutine DeepCopy_R1
+
+  subroutine DeepCopy_C2 ( A, B )
+    complex, pointer :: A(:,:), B(:,:)
+    include 'deepCopy.f9h'
+  end subroutine DeepCopy_C2
+
+  subroutine DeepCopy_D2 ( A, B )
+    double precision, pointer :: A(:,:), B(:,:)
+    include 'deepCopy.f9h'
+  end subroutine DeepCopy_D2
+
+  subroutine DeepCopy_I2 ( A, B )
+    integer, pointer :: A(:,:), B(:,:)
+    include 'deepCopy.f9h'
+  end subroutine DeepCopy_I2
+
+  subroutine DeepCopy_R2 ( A, B )
+    real, pointer :: A(:,:), B(:,:)
+    include 'deepCopy.f9h'
+  end subroutine DeepCopy_R2
+
+  subroutine DeepCopy_C3 ( A, B )
+    complex, pointer :: A(:,:,:), B(:,:,:)
+    include 'deepCopy.f9h'
+  end subroutine DeepCopy_C3
+
+  subroutine DeepCopy_D3 ( A, B )
+    double precision, pointer :: A(:,:,:), B(:,:,:)
+    include 'deepCopy.f9h'
+  end subroutine DeepCopy_D3
+
+  subroutine DeepCopy_I3 ( A, B )
+    integer, pointer :: A(:,:,:), B(:,:,:)
+    include 'deepCopy.f9h'
+  end subroutine DeepCopy_I3
+
+  subroutine DeepCopy_R3 ( A, B )
+    real, pointer :: A(:,:,:), B(:,:,:)
+    include 'deepCopy.f9h'
+  end subroutine DeepCopy_R3
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: DeepCopy_m.f90,v 2.1 2012/07/10 03:10:40 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module DeepCopy_m
+
+! $Log: DeepCopy_m.f90,v $
+! Revision 2.1  2012/07/10 03:10:40  vsnyder
+! Initial commit
+!
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d14 3
+a16 3
+  ! Deep copy a pointer by destroying the new one, cloning the old one's
+  ! pointer association status and bounds, then, if not disassociated,
+  ! copying its value.
+d33 1
+a33 1
+    "$RCSfile: ForwardModelWrappers.f90,v $"
+d102 1
+a102 1
+       "$Id: ForwardModelWrappers.f90,v 2.49 2012/07/06 01:54:33 vsnyder Exp $"
+d111 4
+a114 1
+! $Log: $
+@
+

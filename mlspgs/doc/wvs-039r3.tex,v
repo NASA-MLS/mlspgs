@@ -1,0 +1,155 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.14
+	cfm-single-freq-0-1:1.1.0.12
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.10
+	mus-emls-1-70:1.1.0.8
+	rel-1-0-englocks-work:1.1.0.6
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2008.06.11.20.14.52;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.2in
+\textheight 9.2in
+
+\newcommand{\docname}{\bf wvs-039r3}
+\newcommand{\docdate}{10 July 2006}
+
+\usepackage{longtable}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill\\
+Subject: \>Calculating $H_m$ in modification to {\tt metrics\_m}\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-20pt}
+
+The basic formula for $H_m$ is $H_m = H_t / \cos \phi_m$, where $H_t$ is
+tangent height, which is derived from $\phi_m = \cos^{-1} \frac{H_t}{H_m}$. 
+{\tt metrics} thinks in terms of offsets from the equivalent circular earth
+radius, and from $\phi_t$, so the latter becomes
+
+\begin{equation}\label{one}
+\phi_m = \phi_t \pm
+ \cos^{-1}\frac{H_t+R^\oplus_\text{eq}}{H_m+R^\oplus_\text{eq}}\,,
+\end{equation}
+
+where the sign depends on the side of the tangent point.   Solving for $H_m$
+yields
+
+\begin{equation}
+H_m = \frac{H_t+R^\oplus_\text{eq}}{\cos(\phi_m-\phi_t)} - R^\oplus_\text{eq}\,,
+\end{equation}
+
+at least when the ray is not an earth-intersecting ray and there is no
+refractive correction.
+
+When there is an earth-intersecting ray, Equation (\ref{one}) becomes more
+complicated for the second half of the path, \emph{viz.}
+
+\begin{equation}\label{two}
+\phi_m = \phi_t -
+ 2 \cos^{-1}\frac{N+R^\oplus_\text{eq}}{R^\oplus_\text{eq}} \pm
+ \cos^{-1}\frac{H_t+R^\oplus_\text{eq}}{H_m+R^\oplus_\text{eq}}\,,
+\end{equation}
+
+where $N$ is the ``negative tangent height.''  Incorporating the refractive
+correction $\phi_n$, which is referenced to zero at the tangent point, we have
+
+\begin{equation}\label{four}
+\phi_m = \phi_t -
+ 2 \cos^{-1}\frac{N+R^\oplus_\text{eq}}{R^\oplus_\text{eq}} \pm
+ \left[ \phi_n +
+ \cos^{-1}\frac{H_t+R^\oplus_\text{eq}}{H_m+R^\oplus_\text{eq}}
+ \right]\,,
+\end{equation}
+
+Solving for $H_m$ we have
+
+\begin{equation}
+H_m = \frac{H_t+R^\oplus_\text{eq}}
+      {\cos\left(\phi_m-\phi_t
+       +2\cos^{-1}\frac{N+R^\oplus_\text{eq}}{R^\oplus_\text{eq}}
+       \pm \phi_n \right)}
+      -R^\oplus_\text{eq}
+\end{equation}
+
+\label{lastpage}
+\end{document}
+% $Id: $
+@

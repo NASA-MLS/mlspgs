@@ -1,0 +1,717 @@
+head	2.9;
+access;
+symbols
+	v5-02-NRT-19:2.9
+	v6-00:2.9
+	v5-02-NRT-18:2.9
+	v5-02:2.9
+	v5-01-NRT-17:2.9
+	v5-01-NRT-16:2.9
+	v5-01-NRT-15:2.9
+	v5-01-NRT-14:2.9
+	neuralnetworks-1-0:2.9.0.12
+	cfm-single-freq-0-1:2.9.0.10
+	v5-01:2.9
+	v5-00:2.9
+	v4-23-TA133:2.9.0.8
+	mus-emls-1-70:2.9.0.6
+	rel-1-0-englocks-work:2.9.0.4
+	VUMLS1-00:2.9
+	VPL1-00:2.9
+	V4-22-NRT-08:2.9
+	VAM1-00:2.9
+	V4-21:2.9.0.2
+	V4-13:2.9
+	V4-12:2.9
+	V4-11:2.9
+	V4-10:2.9
+	V3-43:2.8
+	M4-00:2.8
+	V3-41:2.8
+	V3-40-PlusGM57:2.8.0.2
+	V2-24-NRT-04:2.7
+	V3-33:2.8
+	V2-24:2.7
+	V3-31:2.8
+	V3-30-NRT-05:2.8
+	cfm-01-00:2.8
+	V3-30:2.8
+	V3-20:2.8
+	V3-10:2.8
+	V2-23-NRT-02:2.7
+	V2-23:2.7
+	V2-22-NRT-01:2.7
+	V2-22:2.7
+	V2-21:2.6
+	V2-20:2.6
+	V2-11:2.6
+	V2-10:2.6
+	V2-00:2.6
+	V1-51:2.5
+	V1-50:2.5
+	V1-45:2.5
+	V1-44:2.5
+	V1-43:2.5
+	V1-32:2.5
+	V1-31:2.5
+	V1-30:2.4
+	V1-13:2.3
+	V1-12:2.3
+	V1-11:2.3
+	V1-10:2.3
+	newfwm-feb03:2.3.0.2;
+locks; strict;
+comment	@# @;
+
+
+2.9
+date	2013.06.12.02.24.16;	author vsnyder;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2009.06.23.18.26.10;	author pwagner;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2007.07.25.20.20.49;	author vsnyder;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2005.06.22.18.08.18;	author pwagner;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2003.11.19.22.12.24;	author jonathan;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2003.05.05.23.00.25;	author livesey;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2003.01.31.20.21.01;	author jonathan;	state Exp;
+branches
+	2.3.2.1;
+next	2.2;
+
+2.2
+date	2003.01.31.20.18.06;	author jonathan;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2003.01.31.18.36.25;	author jonathan;	state Exp;
+branches;
+next	;
+
+2.3.2.1
+date	2003.02.14.00.21.42;	author jonathan;	state Exp;
+branches;
+next	2.3.2.2;
+
+2.3.2.2
+date	2003.02.24.23.41.08;	author jonathan;	state Exp;
+branches;
+next	2.3.2.3;
+
+2.3.2.3
+date	2003.02.27.23.17.05;	author vsnyder;	state Exp;
+branches;
+next	2.3.2.4;
+
+2.3.2.4
+date	2003.03.24.21.50.53;	author jonathan;	state Exp;
+branches;
+next	2.3.2.5;
+
+2.3.2.5
+date	2003.04.03.22.50.04;	author jonathan;	state Exp;
+branches;
+next	2.3.2.6;
+
+2.3.2.6
+date	2003.04.10.16.13.51;	author jonathan;	state Exp;
+branches;
+next	2.3.2.7;
+
+2.3.2.7
+date	2003.04.16.00.57.24;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.9
+log
+@Cruft removal
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+ 
+module Cloud_Extinction
+
+  IMPLICIT NONE
+  private
+  public ::  get_beta_cloud
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: cloud_extinction.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains 
+
+  subroutine get_beta_cloud (frequency, temperature,           &
+                          &  WC, IPSD, N, NU, NUA, NAB, NR,    &
+                          &  CLD_EXT, CLD_W0, CLD_PHH          )
+
+    use CloudySkyModule,         only: CLOUDY_SKY
+    use MLSCommon,               only: r8
+    use ScatteringAngle,         only: ANGLE
+
+!--------------------------------INPUT PARAMETERS----------------------------------
+
+      INTEGER, intent(in) :: IPSD         ! SIZE-DISTRIBUTION FLAG
+                                          ! 1000:     MHDISTRIBUTION 
+                                          ! 1100:     LIU-CURRY
+                                          ! 2000-3900:MODIFIED GAMMA WITH VARIOUS De, alpha
+                                          ! 4000-5900:KNOLLENBERG WITH VARIOUS b1
+                                          ! 6000:     PSD FOR PSC
+
+      INTEGER, intent(in) :: N            ! NUMBER OF CLOUD SPECIES
+      INTEGER, intent(in) :: NU           ! NO. OF SCATTERING ANGLES
+      INTEGER, intent(in) :: NUA          ! NO. OF SCAT. AZIMUTH ANGLES
+      INTEGER, intent(in) :: NAB          ! MAX. NO. OF A,B, TERMS 
+      INTEGER, intent(in) :: NR           ! NUMBER OF SIZE BINS
+
+      REAL(r8),intent(in) :: TEMPERATURE  ! in Kelvin
+      REAL(r8),intent(in) :: FREQUENCY    ! in MegaHertz
+      REAL(r8),intent(in) :: WC(N)        ! CLOUD WATER CONTENT
+                                          ! N=1: ICE; N=2: LIQUID
+
+!--------------------------------OUTPUT PARAMETERS--------------------------------
+
+      REAL(r8),intent(out) :: cld_W0      ! SINGLE SCATTERING ALBEDO
+      REAL(r8),intent(out) :: cld_PHH(NU) ! PHASE FUNCTION
+      REAL(r8),intent(out) :: cld_ext     ! CLOUD EXTINCTION 
+     
+
+!-------------------------------Internal parameters-------------------------------
+
+      REAL(r8) :: W0(N)                   ! SINGLE SCATTERING ALBEDO
+      REAL(r8) :: PHH(N,NU)               ! PHASE FUNCTION
+      REAL(r8) :: CWC                     ! CLOUD WATER CONTENT (g/m3)
+      REAL(r8) :: THETA(NU)               ! SCATTERING ANGLES
+      REAL(r8) :: U(NU)                   ! COSINE OF SCATTERING ANGLES      
+      REAL(r8) :: DU(NU)                  ! DELTA U
+      REAL(r8) :: PHI(NUA)                ! SCATTERING AZIMUTH ANGLES
+      REAL(r8) :: UA(NUA)                 ! COSINE OF SCAT AZIMUTH ANGLES
+      REAL(r8) :: UI(NU,NU,NUA)           ! COSINE OF INCIDENT TB ANGLES
+      REAL(r8) :: THETAI(NU,NU,NUA)       ! ANGLES FOR INCIDENT TB
+      REAL(r8) :: P11(NU)
+      REAL(r8) :: RC11(3)
+      REAL(r8) :: DMA
+      REAL(r8) :: PH1(NU)                 ! SINGLE PARTICLE PHASE FUNCTION
+      REAL(r8) :: P(NAB,NU)               ! LEGENDRE POLYNOMIALS l=1
+      REAL(r8) :: DP(NAB,NU)              ! Delt LEGENDRE POLYNOMIALS l=1
+      REAL(r8) :: R(NR)                   ! PARTICLE RADIUS
+      REAL(r8) :: RN(NR)                  ! NUMBER OF PARTICLES IN EACH BIN
+      REAL(r8) :: BC(3,NR)                ! SINGLE PARTICLE ABS/SCAT/EXT COEFFS 
+      REAL(r8) :: RC_TMP(N,3)
+      REAL(r8) :: RC_TOT(3)               ! TOTAL ABS.SCAT.EXT COEFFS.
+      COMPLEX(r8) A(NR,NAB),B(NR,NAB)     ! MIE COEFFICIENCIES
+
+      INTEGER :: NABR(NR)                 ! TRUNCATION NUMBER FOR A, B
+      INTEGER :: ISPI, J
+!===================================================================================
+
+      cld_ext = 0.0
+      cld_w0  = 0.0
+      cld_phh = 0.0
+      phh = 0.0
+      p11 = 0.0
+
+      RC_TMP = 0._r8
+      RC_TOT = 0._r8
+
+      CALL ANGLE(THETA,U,DU,NU,PHI,UA,NUA,UI,THETAI)
+
+      DO ISPI=1,N
+
+         CWC = WC(ISPI) 
+         IF (CWC .ne. 0._r8 ) then           
+            CWC = MAX(1.E-9_r8, abs(CWC) )
+            CALL CLOUDY_SKY (ISPI, CWC, TEMPERATURE, FREQUENCY/1000., &
+                   &         NU, U, DU, P11, RC11, IPSD, DMA,         &
+                   &         PH1, NAB, P, DP, NR, R, RN, BC, A, B, NABR)    
+
+                   PHH(ISPI,:)   = P11     ! INTERGRATED PHASE FUNCTION
+                   RC_TMP(ISPI,:)= RC11    ! VOLUME EXT/SCAT/ABS COEFFS
+         ENDIF
+      ENDDO
+                      
+      DO J=1,3                             ! ADD all COEFFICIENTS
+         RC_TOT(J) = RC_TMP(1,J)+RC_TMP(2,J)
+      ENDDO
+
+      DO ISPI=1,N
+         IF (RC_TOT(3) .ne. 0.) THEN
+           W0(ISPI) = min( 1._r8, RC_TMP(ISPI,2)/RC_TOT(3) )
+         ELSE
+           W0(ISPI) = 0.
+         ENDIF
+      ENDDO
+     
+      cld_ext = RC_TOT(3)
+      cld_w0  = W0(1)
+      cld_phh = PHH(1,:) 
+
+  end Subroutine get_beta_cloud
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: cloud_extinction.f90,v 2.8 2009/06/23 18:26:10 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Cloud_Extinction
+
+! $Log: cloud_extinction.f90,v $
+! Revision 2.8  2009/06/23 18:26:10  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.7  2007/07/25 20:20:49  vsnyder
+! Delete USE for unreferenced entities
+!
+! Revision 2.6  2005/06/22 18:08:18  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.5  2003/11/19 22:12:24  jonathan
+! some bug fix
+!
+! Revision 2.4  2003/05/05 23:00:25  livesey
+! Merged in feb03 newfwm branch
+!
+! Revision 2.3.2.7  2003/04/16 00:57:24  vsnyder
+! Move USE statements from module scope to procedure scope
+!
+! Revision 2.3.2.6  2003/04/10 16:13:51  jonathan
+! fix bug
+!
+! Revision 2.3.2.5  2003/04/03 22:50:04  jonathan
+! fix bug
+!
+! Revision 2.3.2.4  2003/03/24 21:50:53  jonathan
+! remove unused 'pressure' in call to cloud_extinction
+!
+! Revision 2.3.2.3  2003/02/27 23:17:05  vsnyder
+! Remove unused 'pressure' argument
+!
+! Revision 2.3.2.1  2003/02/14 00:21:42  jonathan
+! add singl. scat. albedo W0, ph funct PHH
+!
+! Revision 2.3  2003/01/31 20:21:01  jonathan
+! fix bug
+!
+! Revision 2.2  2003/01/31 20:18:06  jonathan
+! add ScatteringAngle module
+!
+! Revision 2.1  2003/01/31 18:36:25  jonathan
+! new module for cloud extinction
+!
+@
+
+
+2.8
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d20 1
+a20 1
+       "$RCSfile: $"
+a82 1
+      REAL(r8) :: DDm(N)                         
+a111 1
+                   DDm(ISPI)     = DMA     ! MASS-MEAN-DIAMETER
+d136 1
+a136 1
+       "$Id: read_apriori.f90 is it here $"
+d146 3
+@
+
+
+2.7
+log
+@Delete USE for unreferenced entities
+@
+text
+@d20 1
+a20 1
+       "$RCSfile: cloud_extinction.f90,v $"
+d135 1
+a136 1
+!---------------------------- RCS Ident Info -------------------------------
+d138 2
+a139 3
+       "$Id: cloud_extinction.f90,v 2.6 2005/06/22 18:08:18 pwagner Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d141 1
+d143 1
+d148 3
+@
+
+
+2.6
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d20 1
+a20 1
+       "$RCSfile: $"
+d31 1
+a31 1
+    use MLSCommon,               only: r8, rp
+d138 1
+a138 1
+       "$Id: $"
+d147 3
+@
+
+
+2.5
+log
+@some bug fix
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d18 3
+a20 6
+ !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm =                          &
+    "$Id: cloud_extinction.f90,v 2.4 2003/05/05 23:00:25 livesey Exp $"
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName=                       &
+    "$RCSfile: cloud_extinction.f90,v $"
+d22 1
+a22 1
+ !---------------------------------------------------------------------------
+d136 5
+d147 3
+@
+
+
+2.4
+log
+@Merged in feb03 newfwm branch
+@
+text
+@d12 1
+a12 1
+    "$Id$"
+d15 1
+a15 1
+    "$RCSfile$"
+d89 2
+d136 4
+a139 1
+! $Log$
+@
+
+
+2.3
+log
+@fix bug
+@
+text
+@a5 4
+  use MLSCommon,               only: r8, rp
+  use ScatteringAngle,         only: ANGLE
+  use CloudySkyModule,         only: CLOUDY_SKY
+
+d12 1
+a12 1
+    "$Id: cloud_extinction.f90,v 2.2 2003/01/31 20:18:06 jonathan Exp $"
+d15 1
+a15 1
+    "$RCSfile: cloud_extinction.f90,v $"
+d21 1
+a21 1
+  SUBROUTINE get_beta_cloud (frequency, temperature, pressure, &
+d23 5
+a27 1
+                          &  CLD_EXT, W0, PHH                   )
+a44 1
+      REAL(r8),intent(in) :: PRESSURE     ! in mbar
+d51 2
+a52 2
+      REAL(r8),intent(out) :: W0(N)       ! SINGLE SCATTERING ALBEDO
+      REAL(r8),intent(out) :: PHH(N,NU)   ! PHASE FUNCTION
+d54 1
+d58 2
+d86 7
+d97 1
+a97 1
+         CWC = 0.*WC(ISPI) !0 for now
+d99 2
+a100 3
+            CWC = MAX(1.E-9_r8, abs(CWC))
+
+            CALL CLOUDY_SKY (ISPI, CWC, TEMPERATURE, 1000.*FREQUENCY,       &
+d115 5
+a119 1
+         W0(ISPI) = min( 1._r8, RC_TMP(ISPI,2)/RC_TOT(3) )
+d122 3
+d126 1
+a126 3
+
+
+end Subroutine get_beta_cloud
+d134 22
+a155 1
+! $Log: cloud_extinction.f90,v $
+@
+
+
+2.3.2.1
+log
+@add singl. scat. albedo W0, ph funct PHH
+@
+text
+@d16 1
+a16 1
+    "$Id: cloud_extinction.f90,v 2.3 2003/01/31 20:21:01 jonathan Exp $"
+d27 1
+a27 1
+                          &  CLD_EXT, CLD_W0, CLD_PHH          )
+d52 2
+a53 2
+      REAL(r8),intent(out) :: cld_W0      ! SINGLE SCATTERING ALBEDO
+      REAL(r8),intent(out) :: cld_PHH(NU) ! PHASE FUNCTION
+a54 1
+     
+a57 2
+      REAL(r8) :: W0(N)                   ! SINGLE SCATTERING ALBEDO
+      REAL(r8) :: PHH(N,NU)               ! PHASE FUNCTION
+a83 4
+      cld_ext = 0.0
+      cld_w0  = 0.0
+      cld_phh = 0.0
+
+d110 2
+a111 3
+      cld_ext = RC_TOT(3)
+      cld_w0  = W0(1)
+      cld_phh = PHH(1,:) 
+a121 3
+! Revision 2.3  2003/01/31 20:21:01  jonathan
+! fix bug
+!
+@
+
+
+2.3.2.2
+log
+@change input for cloud_extinction
+@
+text
+@d16 1
+a16 1
+    "$Id: cloud_extinction.f90,v 2.3.2.1 2003/02/14 00:21:42 jonathan Exp $"
+d25 1
+a25 1
+  SUBROUTINE get_beta_cloud (frequency, temperature,           &
+d45 1
+a129 3
+! Revision 2.3.2.1  2003/02/14 00:21:42  jonathan
+! add singl. scat. albedo W0, ph funct PHH
+!
+@
+
+
+2.3.2.3
+log
+@Remove unused 'pressure' argument
+@
+text
+@d25 1
+a25 1
+  SUBROUTINE get_beta_cloud (frequency, temperature, pressure, &
+a44 1
+      REAL(r8),intent(in) :: PRESSURE     ! in mbar
+@
+
+
+2.3.2.4
+log
+@remove unused 'pressure' in call to cloud_extinction
+@
+text
+@d16 1
+a16 1
+    "$Id: cloud_extinction.f90,v 2.3.2.3 2003/02/27 23:17:05 vsnyder Exp $"
+d25 1
+a25 1
+  SUBROUTINE get_beta_cloud (frequency, temperature,           &
+d45 1
+a45 1
+!      REAL(r8),intent(in) :: PRESSURE     ! in mbar
+a129 3
+! Revision 2.3.2.3  2003/02/27 23:17:05  vsnyder
+! Remove unused 'pressure' argument
+!
+@
+
+
+2.3.2.5
+log
+@fix bug
+@
+text
+@d16 1
+a16 1
+    "$Id: cloud_extinction.f90,v 2.3.2.4 2003/03/24 21:50:53 jonathan Exp $"
+d99 1
+a99 1
+            CALL CLOUDY_SKY (ISPI, CWC, TEMPERATURE, FREQUENCY/1000., &
+a129 3
+! Revision 2.3.2.4  2003/03/24 21:50:53  jonathan
+! remove unused 'pressure' in call to cloud_extinction
+!
+@
+
+
+2.3.2.6
+log
+@fix bug
+@
+text
+@d16 1
+a16 1
+    "$Id: cloud_extinction.f90,v 2.3.2.5 2003/04/03 22:50:04 jonathan Exp $"
+d45 1
+a90 3
+      RC_TMP = 0._r8
+      RC_TOT = 0._r8
+
+d95 1
+a95 1
+         CWC = WC(ISPI) 
+d97 2
+a98 1
+            CWC = MAX(1.E-9_r8, abs(CWC) )
+d114 1
+a114 5
+         IF (RC_TOT(3) .ne. 0.) THEN
+           W0(ISPI) = min( 1._r8, RC_TMP(ISPI,2)/RC_TOT(3) )
+         ELSE
+           W0(ISPI) = 0.
+         ENDIF
+a129 3
+! Revision 2.3.2.5  2003/04/03 22:50:04  jonathan
+! fix bug
+!
+@
+
+
+2.3.2.7
+log
+@Move USE statements from module scope to procedure scope
+@
+text
+@d6 4
+d16 1
+a16 1
+    "$Id: cloud_extinction.f90,v 2.3.2.6 2003/04/10 16:13:51 jonathan Exp $"
+d25 1
+a25 1
+  subroutine get_beta_cloud (frequency, temperature,           &
+a28 4
+    use CloudySkyModule,         only: CLOUDY_SKY
+    use MLSCommon,               only: r8, rp
+    use ScatteringAngle,         only: ANGLE
+
+d126 1
+a126 1
+  end Subroutine get_beta_cloud
+a134 3
+! Revision 2.3.2.6  2003/04/10 16:13:51  jonathan
+! fix bug
+!
+@
+
+
+2.2
+log
+@add ScatteringAngle module
+@
+text
+@d16 1
+a16 1
+    "$Id: cloud_extinction.f90,v 2.1 2003/01/31 18:36:25 jonathan Exp $"
+d88 1
+a88 1
+         CWC = 0*.WC(ISPI) !0 for now
+d122 3
+@
+
+
+2.1
+log
+@new module for cloud extinction
+@
+text
+@d7 2
+d16 1
+a16 1
+    "$Id: cloud_extinction.f90,v 1.0 2003/01/16 18:39:41 jonathan Exp $"
+d27 1
+a27 1
+                          &  RC_TOT, W0, PHH                   )
+a51 1
+      REAL(r8),intent(out) :: RC_TOT(3)   ! TOTAL ABS.SCAT.EXT COEFFS.
+d53 2
+a54 1
+      REAL(r8),intent(out) :: PHH(N,NU)   ! PHASE FUNCTION 
+d77 1
+a77 1
+
+d88 1
+a88 1
+         CWC = WC(ISPI)
+d92 1
+a92 1
+            CALL CLOUDY_SKY (ISPI, CWC, TEMPERATURE, FREQUENCY,       &
+d121 4
+a124 1
+! $Log: create_beta_m.f90,v $
+@
+

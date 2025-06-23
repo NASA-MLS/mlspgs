@@ -1,0 +1,224 @@
+head	2.5;
+access;
+symbols
+	v5-02-NRT-19:2.5
+	v6-00:2.5
+	v5-02-NRT-18:2.5
+	v5-02:2.5
+	v5-01-NRT-17:2.5
+	v5-01-NRT-16:2.5
+	v5-01-NRT-15:2.5
+	v5-01-NRT-14:2.5
+	neuralnetworks-1-0:2.5.0.10
+	cfm-single-freq-0-1:2.5.0.8
+	v5-01:2.5
+	v5-00:2.5
+	v4-23-TA133:2.5.0.6
+	mus-emls-1-70:2.5.0.4
+	rel-1-0-englocks-work:2.5.0.2
+	VUMLS1-00:2.4
+	VPL1-00:2.4
+	V4-22-NRT-08:2.4
+	VAM1-00:2.4;
+locks; strict;
+comment	@# @;
+
+
+2.5
+date	2017.10.31.23.46.29;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2015.07.29.00.23.05;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2015.04.11.01.27.25;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2015.04.04.00.50.06;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2015.04.04.00.49.48;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.5
+log
+@Make Coefficients and UnifDiscreteFn parameterized types
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id: InterpolateExtrapolate.f9h,v 2.4 2015/07/29 00:23:05 vsnyder Exp $
+
+! subroutine InterpolateExtrapolate ( OldX, OldY, NewX, NewY, Second )
+
+!   ! Interpolate ( OldX(:), OldY(:,:) ) to ( NewX(:), NewY(:,:) ), where
+!   ! the dimension upon which to interpolate is merge(2,1,second).
+!   ! Extrapolate outside the range of OldX using the average slope, not
+!   ! the slope nearest the end where NewX is outside the range of OldX.
+
+!   use MLSNumerics, only: Coefficients, InterpolateArraySetup, &
+!     & InterpolateArrayTeardown, InterpolateValues
+
+!   integer, parameter :: RK = kind(0.0e0)
+!   real(rk), intent(in) :: OldX(:), OldY(:,:), NewX(:)
+!   real(rk), intent(out) :: NewY(:,:)
+!   logical, intent(in) :: Second
+!   type(coefficients(r?)) :: Coeffs
+
+    real(rk) :: AvgDiff(size(oldY,merge(1,2,second)))
+    integer :: Bot, I, Top
+    integer :: D ! Dimension upon which to interpolate -- 1 or 2
+
+    d = merge(2,1,second) ! Dimension upon which to interpolate
+    bot = minloc(oldX,1)
+    top = maxloc(oldX,1)
+
+    ! Calculate the average slope of oldY/oldX using the extremes of oldX.
+    ! Alternatives are a least-squares fit to a straight line, or averaging
+    ! the individual difference quotients.
+    if ( d == 1 ) then
+      avgDiff = ( oldY(top,:) - oldY(bot,:) ) / ( oldX(top) - oldX(bot) )
+    else ! d == 2
+      avgDiff = ( oldY(:,top) - oldY(:,bot) ) / ( oldX(top) - oldX(bot) )
+    end if
+
+    ! Do the interpolations with clamped extrapolation.
+    call interpolateArraySetup ( oldX, newX, &
+      & Method='L', coeffs=coeffs, extrapolate='C' )
+    if ( d == 1 ) then
+      call interpolateValues ( coeffs, oldX, oldY, &
+        & newX, newY, Method='L', extrapolate='C' )
+    else ! d == 2
+      do i = 1, size(newY,1)
+        call interpolateValues ( coeffs, oldX, oldY(i,:), &
+          & newX, newY(i,:), Method='L', extrapolate='C' )
+      end do
+    end if
+    call interpolateArrayTeardown ( coeffs )
+
+    ! Do the extrapolations
+    if ( d == 1 ) then
+      do i = 1, size(newY,2)
+        where ( newX < oldX(bot) ) &
+          & newY(:,i) = oldY(bot,i) + avgDiff(i) * ( newX - oldX(bot) )
+        where ( newX > oldX(top) ) &
+          & newY(:,i) = oldY(top,i) + avgDiff(i) * ( newX - oldX(top) )
+      end do
+    else ! d == 2
+      do i = 1, size(newY,1)
+        where ( newX < oldX(bot) ) &
+          & newY(i,:) = oldY(i,bot) + avgDiff(i) * ( newX - oldX(bot) )
+        where ( newX > oldX(top) ) &
+          & newY(i,:) = oldY(i,top) + avgDiff(i) * ( newX - oldX(top) )
+      end do
+    end if
+
+! $Log: InterpolateExtrapolate.f9h,v $
+! Revision 2.4  2015/07/29 00:23:05  vsnyder
+! Repair incorrect loop bound in d==1 case
+!
+! Revision 2.3  2015/04/11 01:27:25  vsnyder
+! Tiny simplification
+!
+! Revision 2.2  2015/04/04 00:50:06  vsnyder
+! Remove debugging print
+!
+! Revision 2.1  2015/04/04 00:49:48  vsnyder
+! Initial commit
+!
+@
+
+
+2.4
+log
+@Repair incorrect loop bound in d==1 case
+@
+text
+@d12 1
+a12 1
+! $Id: InterpolateExtrapolate.f9h,v 2.3 2015/04/11 01:27:25 vsnyder Exp $
+d21 1
+a21 1
+!   use MLSNumerics, only: Coefficients_r4, InterpolateArraySetup, &
+d28 1
+a28 1
+!   type(coefficients_r?) :: Coeffs
+d79 3
+@
+
+
+2.3
+log
+@Tiny simplification
+@
+text
+@d12 1
+a12 1
+! $Id: InterpolateExtrapolate.f9h,v 2.2 2015/04/04 00:50:06 vsnyder Exp $
+d17 1
+a17 1
+!   ! the dimension upon which to interpolate is merge(2,1,second)
+d51 2
+a52 2
+       call interpolateValues ( coeffs, oldX, oldY, &
+         & newX, newY, Method='L', extrapolate='C' )
+d63 1
+a63 1
+      do i = 1, size(newY,1)
+d79 3
+@
+
+
+2.2
+log
+@Remove debugging print
+@
+text
+@d12 1
+a12 1
+! $Id: InterpolateExtrapolate.f9h,v 2.1 2015/04/04 00:49:48 vsnyder Exp $
+d54 1
+a54 1
+      do i = 1, size(newY,merge(1,2,second))
+d79 3
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d12 1
+a12 1
+! $Id: Get_Monotone.f9h,v 2.2 2015/03/27 02:07:05 vsnyder Exp $
+a43 1
+print '(a,2(1x,i0))', 'Shape(OldY) ', shape(oldY)
+d78 4
+a81 1
+! $Log: $
+@
+

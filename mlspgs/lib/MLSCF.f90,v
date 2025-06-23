@@ -1,0 +1,1527 @@
+head	2.6;
+access;
+symbols
+	v5-02-NRT-19:2.6
+	v6-00:2.6
+	v5-02-NRT-18:2.6
+	v5-02:2.6
+	v5-01-NRT-17:2.6
+	v5-01-NRT-16:2.6
+	v5-01-NRT-15:2.6
+	v5-01-NRT-14:2.6
+	neuralnetworks-1-0:2.6.0.14
+	cfm-single-freq-0-1:2.6.0.12
+	v5-01:2.6
+	v5-00:2.6
+	v4-23-TA133:2.6.0.10
+	mus-emls-1-70:2.6.0.8
+	rel-1-0-englocks-work:2.6.0.6
+	VUMLS1-00:2.6
+	VPL1-00:2.6
+	V4-22-NRT-08:2.6
+	VAM1-00:2.6
+	V4-21:2.6.0.4
+	V4-13:2.6
+	V4-12:2.6
+	V4-11:2.6
+	V4-10:2.6
+	V3-43:2.6
+	M4-00:2.6
+	V3-41:2.6
+	V3-40-PlusGM57:2.6.0.2
+	V2-24-NRT-04:2.5
+	V3-33:2.6
+	V2-24:2.5
+	V3-31:2.6
+	V3-30-NRT-05:2.6
+	cfm-01-00:2.6
+	V3-30:2.6
+	V3-20:2.6
+	V3-10:2.6
+	V2-23-NRT-02:2.5
+	V2-23:2.5
+	V2-22-NRT-01:2.5
+	V2-22:2.5
+	V2-21:2.5
+	V2-20:2.5
+	V2-11:2.5
+	V2-10:2.5
+	V2-00:2.5
+	V1-51:2.4
+	V1-50:2.4
+	V1-45:2.4
+	V1-44:2.4
+	V1-43:2.4
+	V1-42:2.4
+	V1-41:2.4
+	V1-32:2.4
+	V1-40:2.4
+	V1-31:2.4
+	V1-30:2.4
+	V1-13:2.4
+	V1-12:2.4
+	V1-11:2.4
+	V1-10:2.4
+	newfwm-feb03:2.4.0.2
+	V1-04:2.3
+	V1-03:2.3
+	V1-02:2.3
+	V1-00:2.3
+	newfwm-sep01:2.3.0.2
+	V0-7:2.3
+	V0-5-Level2:2.3
+	V0-5-SIPS:2.3
+	V0_1:1.10;
+locks; strict;
+comment	@# @;
+
+
+2.6
+date	2009.06.23.18.25.42;	author pwagner;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2005.06.22.17.25.49;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2002.10.08.00.09.11;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2001.02.22.01.54.41;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2000.10.19.22.05.02;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2000.10.19.22.04.29;	author vsnyder;	state dead;
+branches;
+next	2.0;
+
+2.0
+date	2000.09.05.17.41.06;	author dcuddy;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2000.06.30.00.45.21;	author lungu;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2000.01.11.22.44.15;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.6
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=============================================================================
+MODULE MLSCF                    ! MLSCF stuff excluding reading and parsing
+!=============================================================================
+
+  ! This is a grossly stripped-down instance of the version 0.1 MLSCF
+  ! module.  All it does is provide some parameters, some types and an
+  ! allocator. It is only used in the test harness.  It is not used
+  ! in the revised MLSCF parser.
+
+  implicit NONE
+  public
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+  integer, parameter :: MaxKeyLen = 25
+  integer, parameter :: MaxTypeLen = 6
+  integer, parameter :: MaxNOMlscfKeys = 20
+  integer, parameter :: MaxCharValueLen = 132
+  integer, parameter :: ShortCharValueLen = 30 ! for upper end of string range
+  integer, parameter :: UnitsLen = 10
+  integer, parameter :: MlscfEntryLen = 25
+  integer, parameter :: MaxNoKeysPerEntry = 60
+  integer, parameter :: MaxNoDefsPerSection = 100
+  integer, parameter :: MaxNoEntriesPerSection = 100
+
+  type MlscfKey_T
+    character (len=MaxKeyLen) :: Keyword
+    character (len=MaxTypeLen):: TYPE
+    integer :: Keylen
+  end type MlscfKey_T
+
+
+  type MlscfCell_T
+
+    ! This datatype defines a Mlscf "cell", i.e. a contruction of type:
+    ! "keyword=value" or "keyword=LowerBound..UpperBound[units]"
+
+    ! First the "keyword" holder:
+
+    character (len=MaxKeyLen) :: Keyword
+
+    ! Type: Label of a specification, String, Real Value, Range, etc.
+    ! See the DECLARATION_TABLE module.
+    integer :: TYPE
+
+    ! Value holder for "real" type
+
+    double precision :: RealValue
+
+    ! Value holder for "character" type
+
+    character (len= MaxCharValueLen) :: CharValue
+
+    ! Value holder for "units" field.  See the UNITS module.
+
+    integer :: Units
+
+    ! Value holder for numerical upper bound.  Lower bound is in RealValue.
+
+    double precision :: RangeUpperBound
+
+    ! Value holder for character upper bound.  Lower bound is CharValue
+
+    character ( len= ShortCharValueLen) :: CharRangeUpperBound
+
+    ! How many more CELLS are part of the same datum.  The following
+    ! ones have a blank keyword.
+
+    integer :: More
+
+  end type MlscfCell_T
+
+
+  type MlscfEntry_T
+
+    ! This datatype defines am Mlscf entry, i.e. a name followed by
+    ! a list of "keyword=value" cells
+
+    ! Entry label, i.e. the name before the colon before the entry,
+    ! if any.
+
+    character (len=MlscfEntryLen) :: MlscfLabelName
+
+    ! Entry name, e.g. aprioriTemp
+
+    character (len=MlscfEntryLen) :: MlscfEntryName
+
+    ! Number of "keyword=value" cells
+
+    integer :: MlscfEntryNoKeys
+
+    !Cells holder 
+
+    type (MlscfCell_T), dimension(MaxNoKeysPerEntry) :: Cells
+
+  end type MlscfEntry_T
+
+
+  type MlscfSection_T
+
+    ! For each section:
+    ! Name, Number of "X=..." definitions, the definitions,
+    ! Number Y,... entries, the entries.
+    character (len=MlscfEntryLen) MlscfSectionName
+    integer NoSectionDefs, NoSectionEntries
+
+    ! The definitions:
+
+    type (MlscfCell_T), dimension(MaxNoDefsPerSection) :: Cells
+
+    ! The entries:
+
+    type (MlscfEntry_T), dimension(MaxNoEntriesPerSection) :: Entries ! (NoSectionEntries)
+
+  end type MlscfSection_T
+
+
+  type Mlscf_T
+
+    ! This datatype defines the mlscf as an array of MlscfSections
+
+    integer :: NoSections
+
+    type (MlscfSection_T), POINTER, DIMENSION (:) :: Sections ! (NoSections) 
+
+  end type Mlscf_T
+
+
+
+! =====     Public Procedures     ======================================
+
+contains
+
+! -----------------------------------------------  ALLOCATE_MLSCF  -----
+  subroutine ALLOCATE_MLSCF ( MLSCF_DATA, HOW_MANY_SECTIONS )
+  ! Allocate the "mlscf_data % sections" field with "how_many_sections"
+  ! elements
+
+    type(mlscf_t), intent(out) :: MLSCF_DATA
+    integer, intent(in) :: HOW_MANY_SECTIONS
+    integer :: STATUS
+    allocate ( mlscf_data % sections ( how_many_sections ), stat = status )
+    mlscf_data%NoSections = how_many_sections
+    if ( status == 0 ) return
+!   call MLSMessage ( MLSMSG_Error, ModuleName, &
+!     & 'Unable to allocate "sections" field of "mlscf_data"' )
+    stop
+  end subroutine ALLOCATE_MLSCF
+!=======================
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: read_apriori.f90 is it here $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module MLSCF
+!=======================
+
+! $Log: MLSCF.f90,v $
+! Revision 2.5  2005/06/22 17:25:49  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.4  2002/10/08 00:09:11  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.3  2001/02/22 01:54:41  vsnyder
+! Periodic commit
+!
+! Revision 2.2  2000/10/19 22:05:02  vsnyder
+! Try to get the new one to stick
+!
+! Revision 2.0  2000/09/05 17:41:49  dcuddy
+! Change revision to 2.0
+!
+! Revision 1.2  2000/09/01 21:42:15  vsnyder
+! Add "more" field to MLSCF_CELL type
+!
+@
+
+
+2.5
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d165 1
+a166 1
+!---------------------------- RCS Ident Info -------------------------------
+d168 2
+a169 3
+       "$Id: $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d171 1
+d173 1
+d179 3
+@
+
+
+2.4
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d24 3
+a26 5
+  !------------------- RCS Ident Info -----------------------
+  character(len=130), private :: Id = &                                                    
+    & "$Id: MLSCF.f90,v 2.3 2001/02/22 01:54:41 vsnyder Exp $"
+  character (len=*), private, parameter :: ModuleName = &
+    & "$RCSfile: MLSCF.f90,v $"
+d28 1
+a28 1
+  !----------------------------------------------------------
+d166 5
+d178 3
+@
+
+
+2.3
+log
+@Periodic commit
+@
+text
+@d18 1
+a18 1
+    & "$Id: MLSCF.f90,v 2.2 2000/10/19 22:05:02 vsnyder Exp $"
+d21 1
+d159 4
+d167 3
+@
+
+
+2.2
+log
+@Try to get the new one to stick
+@
+text
+@d18 1
+a18 1
+    & "$Id: MLSCF.f90,v 2.0 2000/09/05 17:41:49 dcuddy Exp $"
+d30 3
+a32 3
+  integer, parameter :: MaxNoKeysPerEntry = 30
+  integer, parameter :: MaxNoDefsPerSection = 50
+  integer, parameter :: MaxNoEntriesPerSection = 50
+d162 3
+@
+
+
+2.1
+log
+@Try to get rid of the old one
+@
+text
+@d5 1
+a5 1
+MODULE MLSCF                    ! MLSCF stuff including reading
+d8 4
+a11 677
+USE SDPToolkit
+USE Hdf
+USE MLSMessageModule
+USE MLSStrings
+USE MLSCommon
+
+IMPLICIT NONE
+PUBLIC
+
+
+PRIVATE :: Id, ModuleName
+
+
+!------------------- RCS Ident Info -----------------------
+CHARACTER(LEN=130) :: Id = &                                                    
+"$Id: MLSCF.f90,v 2.0 2000/09/05 17:41:06 dcuddy Exp $"
+CHARACTER (LEN=*), PARAMETER :: ModuleName="$RCSfile: MLSCF.f90,v $"
+!----------------------------------------------------------
+ 
+INTEGER, PARAMETER :: MaxKeyLen = 25
+INTEGER, PARAMETER :: MaxTypeLen = 6
+INTEGER, PARAMETER :: MaxNOMlscfKeys = 38
+INTEGER, PARAMETER :: MaxCharValueLen =80
+INTEGER, PARAMETER :: UnitsLen = 10
+INTEGER, PARAMETER :: MlscfEntryLen = 25
+INTEGER, PARAMETER :: MaxNoKeysPerEntry = 20
+INTEGER, PARAMETER :: MaxNoEntriesPerSection = 26
+
+TYPE mlscfKey_T
+  CHARACTER (len=MaxKeyLen) :: Keyword
+  CHARACTER (len=MaxTypeLen):: TYPE
+  INTEGER :: Keylen
+END TYPE mlscfKey_T
+
+
+
+TYPE MlscfCell_T
+
+   ! This datatype defines a Mlscf "cell", i.e. a contruction of type:
+   ! "keyword=value" or "keyword=LowerBound..UpperBound[units]"
+
+   ! First the "keyword" holder:
+
+   CHARACTER (len=MaxKeyLen) :: Keyword
+   ! Value holder for "real" type
+
+   REAL (R8) :: RealValue
+
+   ! Value holder for integer type
+
+   INTEGER :: IntValue
+
+   ! Value holder for "character" type
+
+   CHARACTER (len= MaxCharValueLen) :: CharValue
+
+   ! Value holder for "units" field
+
+   CHARACTER (len=UnitsLen) :: Units
+
+   ! Value holder for upper and lower bounds fields
+
+   REAL (R8) :: RangeLowerBound
+   REAL (R8) :: RangeUpperBound
+
+
+END TYPE MlscfCell_T
+
+
+TYPE MlscfEntry_T
+
+   ! This datatype defines am Mlscf entry, i.e. a name followed by
+   ! a list of "keyword=value" cells
+ 
+   ! Entry name, e.g. aprioriTemp
+
+   CHARACTER (len=MlscfEntryLen) MlscfEntryName
+
+   ! Number of "keyword=value" cells
+
+   INTEGER MlscfEntryNoKeys
+
+   !Cells holder 
+
+   TYPE (MlscfCell_T), DIMENSION(MaxNoKeysPerEntry) :: Cells
+
+END TYPE MlscfEntry_T
+
+
+TYPE MlscfSection_T
+
+
+   ! For each section:
+   ! Name, Number of entries within section
+   CHARACTER (len=MlscfEntryLen) MlscfSectionName
+   INTEGER NoSectionEntries
+
+   ! The actual entries:
+
+   TYPE (MlscfEntry_T), DIMENSION(MaxNoEntriesPerSection) :: Entries ! (NoSectionEntries)
+
+
+END TYPE MlscfSection_T
+
+
+
+
+TYPE Mlscf_T
+
+! This datatype defines the mlscf as an array of MlscfSections
+
+  INTEGER NoSections
+
+  TYPE (MlscfSection_T), POINTER, DIMENSION (:) :: Sections ! (NoSections) 
+
+END TYPE mlscf_T
+
+
+
+! --------------------------------------------------------------------------
+
+CONTAINS
+
+
+! This function extracts a named section from the mlscf
+
+!========================================
+FUNCTION GetMLSCFSection(mlscfInfo,sectionName)
+!========================================
+
+  ! Dummy arguments
+  TYPE (mlscf_T), INTENT(IN) :: mlscfInfo
+  CHARACTER (LEN=*), INTENT(IN) :: sectionName
+
+  ! Function result
+  TYPE (mlscfSection_T) :: GetMLSCFSection
+
+  ! Local variables
+  INTEGER :: sindex
+  LOGICAL :: found
+
+  ! Executable code
+  sindex = 1
+  found = .false.
+
+  do while (.not. found .and. sindex <= mlscfInfo%NoSections)
+     if(sectionName(1:) == mlscfInfo%sections(sindex)%mlscfSectionName(1:))then
+        found = .true.
+     else
+        sindex = sindex + 1
+     end if
+  end do 
+
+  IF (.not. found) CALL MLSMessage(MLSMSG_Error,ModuleName,&
+       & "No such mlscf section:"//sectionName)
+
+  GetMLSCFSection=mlscfInfo%sections(sindex)
+END FUNCTION GetMLSCFSection
+  
+!========================================
+SUBROUTINE Strip_Blanks (line, nc, ncnb)
+!========================================
+ 
+
+CHARACTER (LEN=*) :: line
+INTEGER :: nc, ncnb
+INTEGER :: i, ncc
+
+LOGICAL :: done = .FALSE.
+
+done = .FALSE.
+ncc = nc
+
+! check for blank line
+line = TRIM(line(1:ncc))
+ncnb = LEN_TRIM(line)
+IF (ncnb ==  0)RETURN
+
+! ignore trailing comments
+
+i= INDEX(line, ';')
+IF(  i /= 0)THEN
+  ncc = i-1
+  ncnb = ncc
+
+! check again for blank line
+  line = TRIM(line(1:ncc))
+  ncnb = LEN_TRIM(line)
+  IF (ncnb ==  0)RETURN
+
+END IF
+
+! strip leading blanks
+
+done = .false.
+  
+DO WHILE (.NOT. done)  
+  IF (line(1:1) /= ' ')THEN
+    done =.TRUE.
+    ncnb = ncc
+  ELSE
+    line(1:ncc-1)= line (2:ncc)
+    ncc = ncc-1
+    ncnb = ncc
+  END IF
+END DO
+
+! strip double blanks
+
+done = .false.
+DO WHILE (.NOT. done)
+  i = INDEX(line(1:ncc), '  ')
+  IF (i == 0)THEN
+    done =.TRUE.
+    ncnb = ncc
+  ELSE 
+    line(i:ncc-1)= line (i+1:ncc)
+    ncc = ncc-1
+    ncnb = ncc
+  END IF
+END DO
+! strip extraneous blanks
+
+done = .false.
+DO WHILE (.NOT. done)   
+  i = INDEX(line(1:ncc), ', ')
+  IF (i == 0)THEN
+    done =.TRUE.
+    ncnb = ncc
+  ELSE
+    line(i+1:ncc-1)= line (i+2:ncc)
+    ncc = ncc-1
+    ncnb = ncc  
+  END IF
+END DO
+
+done = .false.
+DO WHILE (.NOT. done)
+  i = INDEX(line(1:ncc), ' ,')
+  IF (i == 0)THEN
+    done =.TRUE.
+    ncnb = ncc
+  ELSE
+    line(i+1:ncc-1)= line (i+2:ncc)
+    ncc = ncc-1
+    ncnb = ncc
+  END IF
+END DO
+
+done = .false.
+DO WHILE (.NOT. done)
+  i = INDEX(line(1:ncc), '.. ')
+  IF (i == 0)THEN
+    done =.TRUE.
+    ncnb = ncc
+  ELSE
+    line(i+2:ncc-1)= line (i+3:ncc)
+    ncc = ncc-1
+    ncnb = ncc   
+  END IF
+END DO
+
+done = .false.
+DO WHILE (.NOT. done)
+  i = INDEX(line(1:ncc), ' ..')
+  IF (i == 0)THEN
+    done =.TRUE.
+    ncnb = ncc
+  ELSE
+    line(i:ncc-1)= line (i+1:ncc)
+    ncc = ncc-1
+    ncnb = ncc
+  END IF
+END DO
+
+!strip trailing blanks    
+
+done = .false.
+DO WHILE (.NOT. done)
+  if (line(ncnb:ncnb) == ' ')then
+     ncnb = ncnb - 1
+  else
+     done = .true.
+  end if
+END DO
+
+
+IF (LEN_TRIM(line) .EQ.  0)ncnb = 0
+
+RETURN
+END SUBROUTINE Strip_Blanks
+
+
+!===================================
+SUBROUTINE read_parse_mlscf (MLSCFUnit, Mlscf_data) 
+!===================================
+
+! This subroutine reads and parses MLSCF and does some preliminary checking on 
+! tokens.
+
+! Arguments
+
+INTEGER, INTENT (IN):: MLSCFUnit 
+TYPE (mlscf_T), INTENT (OUT) :: Mlscf_data
+
+! Parameters
+
+
+CHARACTER (LEN=*), PARAMETER :: lineFmt = "(a)"
+
+
+
+! Functions
+
+
+! Variables
+
+INTEGER ::  returnStatus, perror
+
+TYPE (mlscfKey_T), DIMENSION(MaxNoMlscfKeys) :: MlscfTable
+
+CHARACTER (LEN=256) :: line
+CHARACTER (LEN=256) :: msg
+CHARACTER (LEN=2048) :: buff
+CHARACTER (LEN=MlscfEntryLen) :: mnemonic, section, AnEntry
+CHARACTER (LEN=maxKeyLen) :: key
+CHARACTER (LEN=MaxCharValueLen)Value
+INTEGER :: nc, ncnb, ncb, version, isection, i, ib, ie, igs, ios, j, jj, k
+INTEGER :: CellIndex, ValueLen, keyLen, recl, status
+REAL :: tmp
+LOGICAL :: eof = .FALSE.
+LOGICAL :: found = .FALSE.
+LOGICAL :: flag_section = .FALSE.
+
+ALLOCATE (Mlscf_data%Sections(10), STAT=status)
+if (status /= 0)&
+         CALL MLSMessage (MLSMSG_Error, ModuleName, 'Error allocating MLSCF')
+do isection = 1, 10
+   do igs = 1, MaxNoEntriesPerSection
+     Mlscf_data%Sections(isection)%Entries(igs)%MlscfEntryNoKeys = 0
+   end do
+   Mlscf_data%Sections(isection)%NoSectionEntries = 0
+end do
+
+MlscfTable(1)%Keyword = 'InputVersionString       '
+MlscfTable(1)%Type = 'string'
+MlscfTable(1)%Keylen =  18
+MlscfTable(2)%Keyword = 'OutputVersionString      '
+MlscfTable(2)%Type = 'string'
+MlscfTable(2)%Keylen =  19
+MlscfTable(3)%Keyword = 'AllowClimatologyOverloads'
+MlscfTable(3)%Type = 'string'
+MlscfTable(3)%Keylen =  25
+MlscfTable(4)%Keyword = 'source                   '
+MlscfTable(4)%Type = 'string'
+MlscfTable(4)%Keylen =  6
+MlscfTable(5)%Keyword = 'length                   '
+MlscfTable(5)%Type = 'real  '
+MlscfTable(5)%Keylen =  6
+MlscfTable(6)%Keyword = 'versionRange             '
+MlscfTable(6)%Type = 'string'
+MlscfTable(6)%Keylen =  12
+MlscfTable(7)%Keyword = 'species                  '
+MlscfTable(7)%Type = 'string'
+MlscfTable(7)%Keylen =  7
+MlscfTable(8)%Keyword = 'range                    '
+MlscfTable(8)%Type = 'range '
+MlscfTable(8)%Keylen =  5
+MlscfTable(9)%Keyword = 'method                   '
+MlscfTable(9)%Type = 'string'
+MlscfTable(9)%Keylen =  6
+MlscfTable(10)%Keyword = 'scale                    '
+MlscfTable(10)%Type = 'real  '
+MlscfTable(10)%Keylen =  5
+MlscfTable(11)%Keyword ='height                   '
+MlscfTable(11)%Type ='real  '
+MlscfTable(11)%Keylen = 6
+MlscfTable(12)%Keyword ='Overlap                  '
+MlscfTable(12)%Type ='int   '
+MlscfTable(12)%Keylen = 7
+MlscfTable(13)%Keyword ='IdealLength              '
+MlscfTable(13)%Type ='real  '
+MlscfTable(13)%Keylen = 11
+MlscfTable(14)%Keyword ='HomeGeodAngle            '
+MlscfTable(14)%Type ='real  '
+MlscfTable(14)%Keylen = 13
+MlscfTable(15)%Keyword ='ScanLowerLimit           '
+MlscfTable(15)%Type ='range'
+MlscfTable(15)%Keylen = 14
+MlscfTable(16)%Keyword ='CriticalBands            '
+MlscfTable(16)%Type = 'string'
+MlscfTable(16)%Keylen = 13
+MlscfTable(17)%Keyword ='MaxGap                   '
+MlscfTable(17)%Type ='real  '
+MlscfTable(17)%Keylen = 6
+MlscfTable(18)%Keyword = 'type                    '
+MlscfTable(18)%Type ='string' 
+MlscfTable(18)%Keylen = 4
+MlscfTable(19)%Keyword ='fraction                 '
+MlscfTable(19)%Type ='real  '
+MlscfTable(19)%Keylen = 8
+MlscfTable(20)%Keyword ='interpolationfactor      '
+MlscfTable(20)%Type ='real  '
+MlscfTable(20)%Keylen = 19
+MlscfTable(21)%Keyword ='VersionComment           '
+MlscfTable(21)%Type ='string'
+MlscfTable(21)%Keylen = 14
+MlscfTable(22)%Keyword ='ScanUpperLimit           '
+MlscfTable(22)%Type ='range' 
+MlscfTable(22)%Keylen = 14
+MlscfTable(23)%Keyword ='name                     '
+MlscfTable(23)%Type ='string'
+MlscfTable(23)%Keylen = 4
+MlscfTable(24)%Keyword ='coordinate               '
+MlscfTable(24)%Type ='string'
+MlscfTable(24)%Keylen = 10
+MlscfTable(25)%Keyword ='values                   '
+MlscfTable(25)%Type ='string'
+MlscfTable(25)%Keylen = 6
+MlscfTable(26)%Keyword ='vGrid                    '
+MlscfTable(26)%Type ='string'
+MlscfTable(26)%Keylen = 5
+MlscfTable(27)%Keyword ='hGrid                    '
+MlscfTable(27)%Type ='string'
+MlscfTable(27)%Keylen = 5
+MlscfTable(28)%Keyword ='type                     '
+MlscfTable(28)%Type ='string'
+MlscfTable(28)%Keylen = 4
+MlscfTable(29)%Keyword ='molecule                 '
+MlscfTable(29)%Type ='string'
+MlscfTable(29)%Keylen = 8
+MlscfTable(30)%Keyword ='unit                     '
+MlscfTable(30)%Type ='string'
+MlscfTable(30)%Keylen = 4
+MlscfTable(31)%Keyword ='species                  '
+MlscfTable(31)%Type ='string'
+MlscfTable(31)%Keylen = 7
+MlscfTable(32)%Keyword ='radiances                '
+MlscfTable(32)%Type ='string'
+MlscfTable(32)%Keylen = 9
+MlscfTable(33)%Keyword ='template                 '   
+MlscfTable(33)%Type ='string'
+MlscfTable(33)%Keylen = 8
+MlscfTable(34)%Keyword ='copy                     '
+MlscfTable(34)%Type ='string'
+MlscfTable(34)%Keylen = 4
+MlscfTable(35)%Keyword ='l2gp_temp                '
+MlscfTable(35)%Type ='string'
+MlscfTable(35)%Keylen = 9
+MlscfTable(36)%Keyword ='CriticalScanningModules  '
+MlscfTable(36)%Type = 'string'
+MlscfTable(36)%Keylen = 23
+MlscfTable(37)%Keyword ='module                   '
+MlscfTable(37)%Type = 'string'
+MlscfTable(37)%Keylen = 6
+MlscfTable(38)%Keyword ='l2aux                    '
+MlscfTable(38)%Type ='string'
+MlscfTable(38)%Keylen = 5
+
+isection = 0
+igs=0
+
+! Read  input
+
+DO WHILE (.NOT. eof)
+   ncnb = 0
+   DO WHILE (ios .EQ. 0 .AND. ncnb .EQ. 0)
+      READ(UNIT=MLSCFUnit, IOSTAT=ios, FMT=LineFmt) line
+      nc = LEN (TRIM(line))
+
+      ! strip leading, trailing and multiple blanks from line
+
+      CALL MLSMessage (MLSMSG_Debug, ' ', line(1:nc))
+
+      CALL Strip_Blanks(line, nc, ncnb)
+
+   END DO
+
+   IF(ios .EQ. 0) THEN
+
+      IF (INDEX(line, 'BEGIN' ) /= 0 .AND. ncnb .GT. 0) THEN
+         ! Is this a BEGIN Section Line?
+         isection = isection + 1
+         igs = 0
+         Mlscf_data%Sections(isection)%MlscfSectionName=line(7:ncnb)
+         flag_section =.FALSE.
+      ELSE IF (isection .EQ. 0 .AND. ncnb .GT. 0)THEN
+         ! If not and there was no BEGIN before and this is not a comment line, log error and exit
+         CALL MLSMessage (MLSMSG_Error, ModuleName, 'Missing BEGIN')
+      ELSE
+
+         ib = 1
+
+         ! ignore comment lines
+
+         IF(INDEX(line, 'END') /= 1) THEN
+
+            buff(ib:ib+ncnb-1) = line(1:ncnb)
+            ib = ib + ncnb
+! copy continuation lines into buff
+
+            DO WHILE (line(ncnb:ncnb) .EQ. '$')
+               ib = ib- 1
+
+               READ(UNIT=MLSCFUnit, IOSTAT=ios, FMT=lineFmt) line
+               nc = LEN (TRIM(line))
+               CALL MLSMessage (MLSMSG_Debug, ' ', line(1:nc))
+
+
+               IF (ios == 0) THEN
+
+                  CALL Strip_Blanks(line, nc, ncnb)
+                  buff(ib:ib+ncnb-1) = line(1:ncnb)
+                  ib = ib+ncnb
+               ELSE
+                  eof = .TRUE.
+               END IF
+
+            END DO
+            ncb = ib-1
+
+            ! Proces mlscf entry
+
+            AnEntry(1:MlscfEntryLen) =' '
+            ib = INDEX(buff, ',')
+
+            IF (ib .EQ.  0) THEN
+               CALL MLSMessage (MLSMSG_Error, ModuleName, "Comma expected, : "//buff(1:ncb))
+            END IF
+
+            AnEntry(1:ib-1)=buff(1:ib-1)
+            ib = ib + 1
+            igs = igs + 1
+            Mlscf_data%Sections(isection)%Entries(igs)%MlscfEntryName = AnEntry
+            CellIndex = 1
+
+            ! Process keyword = value pairs
+
+            DO WHILE (ib < ncb)
+               ie = INDEX(buff(ib:ncb), '=')
+
+               IF (ie .EQ. 0) THEN
+                  CALL MLSMessage (MLSMSG_Error, ModuleName, "= expected, : "//buff(1:ncb))
+               END IF
+
+               ie = ie+ib-1
+               key(1:maxKeyLen) = ' '
+               Key = Capitalize(trim(buff(ib: ie-1))) 
+               keyLen = ie-ib
+               ib = ie + 1
+               ie = INDEX(buff(ib:ncb), ',')
+
+               IF (ie == 0)THEN
+                  ie=ncb+1
+               ELSE
+                  ie=ie+ib-1
+               END IF
+
+               Value (1:MaxCharValueLen) = ' '
+               Value = trim(buff(ib: ie-1))
+               ValueLen = ie-ib
+               ib = ie + 1
+
+               found = .FALSE.
+               i = 1
+
+               DO WHILE ((.NOT. found) .AND. (i <= MaxNoMlscfKeys))
+
+                  IF(key(1:KeyLen) == Capitalize(mlscfTable(i)%Keyword(1:mlscfTable(i)%Keylen)))THEN
+                     found = .TRUE.
+                  ELSE
+                     i = i + 1
+                  END IF
+               END DO
+
+               IF(found) THEN
+
+
+                  Mlscf_data%Sections(isection)%Entries(igs)%MlscfEntryNoKeys = &
+                       Mlscf_data%Sections(isection)%Entries(igs)%MlscfEntryNoKeys + 1
+                  Mlscf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%Keyword= Key(1:Keylen)
+
+                  IF(mlscfTable(i)%Type .EQ. 'real')THEN
+                     j = 1     
+                     DO WHILE((j <= ValueLen) .AND. (Value(j:j) /= ' '))
+                        j = j + 1
+                     END DO
+                     READ (unit=Value(1:j-1), fmt=*)Mlscf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%RealValue
+                     Mlscf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%units=Value(j+1:ValueLen)
+                  ELSE IF(mlscfTable(i)%Type .EQ. 'int')THEN
+                     j = 1     
+                     DO WHILE((j <= ValueLen) .AND. (Value(j:j) /= ' '))
+                        j = j + 1
+                     END DO
+                     READ (unit=Value(1:j-1), fmt=*)Mlscf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%IntValue
+                     Mlscf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%units=Value(j+1:ValueLen)
+                  ELSE IF(mlscfTable(i)%Type .EQ. 'range')THEN
+                     j = INDEX(Value, '..')
+                     IF (j > 0)THEN
+                        READ (unit=Value(1:j-1), fmt=*) &
+                             Mlscf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%RangeLowerBound
+                        k=j+2
+
+                        DO WHILE((k <= ValueLen) .AND. (Value(k:k) /= ' '))
+                           k = k + 1
+                        END DO
+
+                        READ (unit=Value(j+2:k), fmt=*) &
+                             Mlscf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%RangeUpperBound
+                        Mlscf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%units=Value(k+1:ValueLen)
+
+                        IF(Mlscf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%RangeUpperBound < &
+                             Mlscf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%RangeUpperBound)THEN
+
+                           tmp = Mlscf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%RangeUpperBound
+                           Mlscf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%RangeUpperBound = &
+                                Mlscf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%RangeLowerBound
+                           Mlscf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%RangeLowerBound = tmp
+
+                        END IF ! (Mlscf_data%Sections(isection)%Entries
+                     ELSE
+                        CALL MLSMessage (MLSMSG_Error, ModuleName, "Range expected, : "//Value)
+                     END IF ! (j > 0)
+
+                  ELSE IF(mlscfTable(i)%Type .EQ. 'string')THEN
+
+                     j = INDEX(Value, '"')
+                     IF(j > 0)THEN
+                        k = INDEX(Value(j+1:ValueLen), '"')
+                        IF(k > 0)THEN
+                           Mlscf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%CharValue=Value(j+1:k)
+                        ELSE
+                           CALL MLSMessage (MLSMSG_Error, ModuleName, "Quote expected, : "//Value(1:ValueLen))
+                        END IF
+                     ELSE
+                        CALL MLSMessage (MLSMSG_Error, ModuleName, "Quote expected, : "//Value(1:ValueLen))
+                     END IF ! j > 0
+
+                  END IF ! mlscfTable(i)%Type
+
+               ELSE            
+                  CALL MLSMessage (MLSMSG_Error, ModuleName, "Illegal Keyword : " //key(1:KeyLen))
+               END IF ! (found)                      
+               CellIndex = CellIndex + 1  
+            END DO ! ib < ncb
+         ELSE
+            ! Check whether END Section matches BEGIN
+            IF (Mlscf_data%Sections(isection)%MlscfSectionName .NE. line(5:ncnb))THEN
+               CALL MLSMessage (MLSMSG_Warning, ModuleName, "BEGIN and END Section Names don't match " // &
+                    Mlscf_data%Sections(isection)%Entries(igs)%MlscfEntryName//' , '//line(5:ncnb))
+            END IF
+            Mlscf_data%Sections(isection)%NoSectionEntries = igs
+            Mlscf_data%NoSections= isection
+            flag_section = .TRUE.
+         END IF !INDEX(line, 'END') /= 1  
+
+
+      END IF ! INDEX(line, 'BEGIN' ) /= 0 .and. ncnb .gt. 0
+
+   ELSE
+
+      eof = .TRUE.
+      IF(.NOT. flag_section) THEN
+         CALL MLSMessage (MLSMSG_Warning, ModuleName, 'Premature EOF &
+              &          encountered')
+      END IF
+
+   END IF ! (ios .eq.  0)
+
+
+END DO ! (.not. eof)
+
+
+
+!==============================
+END SUBROUTINE  read_parse_mlscf
+!==============================
+d13 144
+d158 1
+a158 1
+END MODULE MLSCF
+a160 1
+!
+d162 1
+a162 1
+! Revision 2.0  2000/09/05 17:41:06  dcuddy
+d165 2
+a166 2
+! Revision 1.10  2000/06/30 00:45:21  lungu
+! Made MaxNoKeysPerEntry = 20.
+@
+
+
+2.0
+log
+@Change revision to 2.0
+@
+text
+@d23 1
+a23 1
+"$Id: MLSCF.f90,v 1.10 2000/06/30 00:45:21 lungu Exp $"
+d692 3
+@
+
+
+1.10
+log
+@Made MaxNoKeysPerEntry = 20.
+@
+text
+@d23 1
+a23 1
+"$Id: MLSCF.f90,v 1.10 2000/06/30 00:45:21 lungu Exp $"
+d692 3
+a696 50
+!
+! Revision 1.9  2000/06/20 22:29:38  lungu
+! Changed DOUBLE PRECISION to REAL (r8).
+!
+! Revision 1.8  2000/06/19 23:02:45  lungu
+! Added one more keyword to keytable.
+! Renamed index to sindex to avoid confusion
+! with intrinsic function.
+!
+! Revision 1.7  2000/05/17 23:41:29  lungu
+! Fixed Mlscf_data%Sections(isection)%NoSectionEntries.
+!
+! Revision 1.6  2000/05/17 18:18:26  lungu
+! Capitalized keywords, so that HGrid, VGRid, etc. work
+!
+! Revision 1.5  2000/05/11 16:45:27  lungu
+! Fixed cvs-caused v1.3 - v1.4 collisions.
+!
+! Revision 1.4  2000/04/24 21:31:45  lungu
+! Minor bugs fixed. Added keywords to table.
+!
+! Revision 1.3  2000/04/13 23:50:44  vsnyder
+! Removed DEC-ism "q" format
+!
+! Revision 1.2  2000/01/11 22:45:58  livesey
+! Whoops, forgot to include the new RCS log field
+!
+!
+! Revision 1.1 2000/01/11 22:44:15   livesey
+! Renamed from read_parse_l2cf.  All occurances of l2cf changed to
+! MLSCF, and _T's added to the data type names
+! -----------------------------------------------------------------
+! This module was previously read_parse_l2cf.  The history from that
+! File is reproduced below
+!
+! Log: read_parse_mlscf.f90,v 
+! Revision 1.8  2000/01/07 23:53:35  livesey
+! Nearly integrated, just a few tweaks.
+!
+! Revision 1.7  2000/01/07 19:30:04  lungu
+! Revoved returnStatus from argument list.
+!
+! Revision 1.6  2000/01/06 23:39:00  lungu
+! Finalized error handling.
+!
+! Revision 1.5  2000/01/06 02:37:22  lungu
+! Made a module out of read_parse_mlscf, strip_blanks and data structures.
+!
+! Revision 1.4  2000/01/04 19:46:23  lungu
+! Changed error handling using MLSMessage
+@
+
+
+1.1
+log
+@Renamed from read_parse_l2cf.  All occurances of l2cf changed to
+MLSCF, and _T's added to the data type names
+@
+text
+@d12 1
+a12 1
+
+d23 1
+a23 1
+"$Id: MLSCF.f90,v 1.1 2000/01/11 22:44:15 livesey Exp $"
+d29 2
+a30 2
+INTEGER, PARAMETER :: MaxNOMlscfKeys = 20
+INTEGER, PARAMETER :: MaxCharValueLen =25
+d33 2
+a34 2
+INTEGER, PARAMETER :: MaxNoKeysPerEntry = 10
+INTEGER, PARAMETER :: MaxNoEntriesPerSection = 15
+d54 1
+a54 1
+   DOUBLE PRECISION :: RealValue
+d70 2
+a71 2
+   DOUBLE PRECISION :: RangeLowerBound
+   DOUBLE PRECISION :: RangeUpperBound
+d146 2
+a147 1
+  INTEGER :: index
+d150 10
+d161 1
+a161 3
+  index=LinearSearchStringArray(mlscfInfo%sections%mlscfSectionName,sectionName,&
+       & caseInsensitive=.TRUE.)
+  IF (index==0) CALL MLSMessage(MLSMSG_Error,ModuleName,&
+d164 1
+a164 1
+  GetMLSCFSection=mlscfInfo%sections(index)
+d178 1
+d182 3
+a184 6
+line = TRIM(line)
+IF (LEN(line) .EQ.  0)THEN
+  ncnb = 0
+  RETURN
+END IF
+
+d191 7
+d200 1
+a200 1
+! replace double blanks by single ones
+d202 16
+d220 1
+a220 1
+  IF (i .EQ. 0)THEN
+d226 1
+d229 67
+a312 5
+
+
+
+
+
+d316 1
+a316 1
+CHARACTER (LEN=*), PARAMETER :: lineFmt = "(q,<nc>a1)"
+d325 1
+a325 1
+INTEGER ::  returnStatus
+d335 2
+a336 2
+INTEGER :: nc, ncnb, ncb, version, isection, i, ib, ie, igs, ios, j, k, processMLSCF
+INTEGER :: CellIndex, ValueLen, keyLen
+d342 10
+d391 1
+a391 1
+MlscfTable(14)%Keyword ='HomeLatitude             '
+d393 4
+a396 4
+MlscfTable(14)%Keylen = 12
+MlscfTable(15)%Keyword ='CriticalScanningModules  '
+MlscfTable(15)%Type ='string'
+MlscfTable(15)%Keylen = 23
+d412 54
+a466 1
+version = 1
+a468 1
+! Open the MLSCF as a generic file for reading
+d470 1
+a470 10
+returnStatus = Pgs_io_gen_openF (MLSCFUnit, PGSd_IO_Gen_RSeqFrm, 0, &
+                                processMLSCF, version)
+
+IF (returnStatus /= PGS_S_SUCCESS) THEN
+
+  CALL Pgs_smf_getMsg(returnStatus, mnemonic, msg)
+  CALL MLSMessage (MLSMSG_Error, &
+                  ModuleName, "Error opening MLSCF:  "//mnemonic//" "//msg)
+
+ENDIF
+a471 1
+! Read  input
+d473 4
+d478 1
+a478 6
+  READ(UNIT=processMLSCF, IOSTAT=ios, FMT=lineFmt) nc, line
+  IF (ios .eq. 0) THEN
+
+! strip leading, trailing and multiple blanks from line
+ 
+    CALL Strip_Blanks(line, nc, ncnb)
+d480 1
+a480 15
+    IF (INDEX(line, 'BEGIN' ) /= 0 ) THEN
+! Is this a BEGIN Section Line?
+       isection = isection + 1
+       section(1:) = line (7:ncnb)
+       flag_section =.false.
+    ELSE IF (isection .eq. 0 .and. ncnb .gt. 0)Then
+! If not and there was no BEGIN before and this is not a comment line, log error and exit
+        CALL MLSMessage (MLSMSG_Error, ModuleName, 'Missing BEGIN')
+     
+    END IF
+
+    ib = 1
+    READ(UNIT=processMLSCF, IOSTAT=ios, FMT=lineFmt) nc, line
+    
+    IF (ios .eq.  0) THEN
+d484 1
+a484 1
+! ignore comment lines
+d486 1
+a486 1
+      IF(INDEX(line, ';' ) /= 1) THEN
+d488 10
+a497 1
+        IF(INDEX(line, 'END') /= 1) THEN
+d499 1
+a499 2
+          buff(ib:ib+ncnb-1) = line(1:ncnb)
+          ib = ib + ncnb
+d501 1
+a501 1
+! copy continuation lines into buff
+d503 1
+a503 2
+          DO WHILE (line(ncnb:ncnb) .eq. '$')
+            ib = ib- 1
+d505 3
+a507 2
+            READ(UNIT=processMLSCF, IOSTAT=ios, FMT=lineFmt) nc, line
+            IF (ios /= 0) THEN
+d509 2
+a510 6
+              CALL Strip_Blanks(line, nc, ncnb)
+              buff(ib:ib+ncnb-1) = line(1:ncnb)
+              ib = ib+ncnb
+            ELSE
+              eof = .TRUE.
+            END IF
+d512 13
+a524 2
+          END DO
+          ncb = ib
+d526 2
+a527 1
+! Proces mlscf entry
+d529 1
+a529 2
+          AnEntry(1:MlscfEntryLen) =' '
+          ib = INDEX(buff, ',')
+d531 2
+a532 3
+          IF (ib .eq.  0) THEN
+            CALL MLSMessage (MLSMSG_Error, ModuleName, "Comma expected, : "//buff(1:ncb))
+          END IF          
+d534 3
+a536 5
+          AnEntry(1:ib-1)=buff(1:ib-1)
+          ib = ib + 1
+          igs = igs + 1
+          Mlscf_data%Sections(isection)%Entries(igs)%MlscfEntryName = AnEntry
+          CellIndex = 1
+d538 125
+a662 1
+! Process keyword = value pairs
+a663 2
+          DO WHILE (ib < ncb)
+            ie = INDEX(buff(ib:ncb), '=')
+d665 1
+a665 30
+            IF (ie .eq. 0) THEN
+              CALL MLSMessage (MLSMSG_Error, ModuleName, "= expected, : "//buff(1:ncb))
+            END IF
+ 
+            key(1:maxKeyLen) = ' '
+            Key = buff(ib: ie-1) 
+            keyLen = ie-ib
+            ib = ie + 1
+            ie = INDEX(buff(ib:ncb), ',')
+
+            IF (ie .eq. 0) THEN
+              CALL MLSMessage (MLSMSG_Error, ModuleName, "Comma expected, : "//buff(ib:ncb))
+            END IF 
+
+            Value (1:MaxCharValueLen) = ' '
+            Value = buff(ib: ie-1)
+            ValueLen = ie-ib
+            ib = ie + 1
+
+            found = .FALSE.
+            i = 1
+
+            DO WHILE ((.NOT. found) .AND. (i <= MaxNoMlscfKeys))
+
+              IF(key(1:KeyLen) .EQ. mlscfTable(i)%Keyword(1:mlscfTable(i)%Keylen))THEN
+                found = .TRUE.
+              ELSE
+                i = i + 1
+              END IF
+            END DO
+d667 1
+a667 1
+            IF(found) THEN
+d669 5
+a673 88
+                
+               Mlscf_data%Sections(isection)%Entries(igs)%MlscfEntryNoKeys = &
+               Mlscf_data%Sections(isection)%Entries(igs)%MlscfEntryNoKeys + 1
+               Mlscf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%Keyword= Key(1:Keylen)
+
+               IF(mlscfTable(i)%Type .eq. 'real')THEN
+                 j = 1     
+                 DO WHILE((j <= ValueLen) .and. (Value(j:j) /= ' '))
+                   j = j + 1
+                 END DO
+                 READ (unit=Value(1:j-1), fmt=*)Mlscf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%RealValue
+                 Mlscf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%units=Value(j:ValueLen)
+               ELSE IF(mlscfTable(i)%Type .eq. 'int')THEN
+                 j = 1     
+                 DO WHILE((j <= ValueLen) .AND. (Value(j:j) /= ' '))
+                   j = j + 1
+                 END DO
+                 READ (unit=Value(1:j-1), fmt=*)Mlscf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%IntValue
+                 Mlscf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%units=Value(j:ValueLen)
+               ELSE IF(mlscfTable(i)%Type .eq. 'range')THEN
+                 j = INDEX(Value, '..')
+                 IF (j > 0)THEN
+                   READ (unit=Value(1:j-1), fmt=*) &
+                   Mlscf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%RangeLowerBound
+                   k=j+2
+
+                   DO WHILE((k <= ValueLen) .AND. (Value(k:k) /= ' '))
+                    k = k + 1
+                   END DO  
+            
+                   READ (unit=Value(1:j-1), fmt=*) &
+                   Mlscf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%RangeUpperBound
+                   Mlscf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%units=Value(k:ValueLen)
+
+                   IF(Mlscf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%RangeUpperBound < &
+                      Mlscf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%RangeUpperBound)THEN
+
+                     tmp = Mlscf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%RangeUpperBound
+                     Mlscf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%RangeUpperBound = &
+                     Mlscf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%RangeLowerBound
+                     Mlscf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%RangeLowerBound = tmp
+
+                   END IF ! (Mlscf_data%Sections(isection)%Entries
+                 ELSE
+                   CALL MLSMessage (MLSMSG_Error, ModuleName, "Range expected, : "//Value)
+                 END IF ! (j > 0)
+
+               ELSE IF(mlscfTable(i)%Type .EQ. 'string')THEN
+
+                 j = INDEX(Value, '"')
+                 IF(j > 0)THEN
+                   k = INDEX(Value(j+1:ValueLen), '"')
+                   IF(k > 0)THEN
+                      Mlscf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%CharValue=Value(j:k)
+                   ELSE
+                     CALL MLSMessage (MLSMSG_Error, ModuleName, "Quote expected, : "//Value(1:ValueLen))
+                   END IF
+                 ELSE
+                   CALL MLSMessage (MLSMSG_Error, ModuleName, "Quote expected, : "//Value(1:ValueLen))
+                 END IF ! j > 0
+    
+               END IF ! mlscfTable(i)%Type
+
+            ELSE            
+              CALL MLSMessage (MLSMSG_Error, ModuleName, "Illegal Keyword : " //key(1:KeyLen))
+            END IF ! (found)                      
+            CellIndex = CellIndex + 1  
+          END DO ! ib < ncb
+          igs = igs + 1
+        ELSE
+          if (  Mlscf_data%Sections(isection)%Entries(igs)%MlscfEntryName .ne. line(5:ncnb))THEN
+             CALL MLSMessage (MLSMSG_Warning, ModuleName, "BEGIN and END Section Names don't match " // &
+                              Mlscf_data%Sections(isection)%Entries(igs)%MlscfEntryName//' , '//line(5:ncnb))
+          end if
+          isection = isection + 1
+          flag_section = .true.
+! Check whether END Section matches BEGIN
+        END IF !INDEX(line, 'END') /= 1  
+      ELSE
+        eof = .TRUE.
+      END IF ! (INDEX(line, ';' ) /= 1)
+    ELSE
+
+      eof = .true.
+      if(.not. flag_section) then
+        CALL MLSMessage (MLSMSG_Warning, ModuleName, 'Premature EOF encountered')
+      end if
+    END IF ! (ios .eq.  0)
+d675 1
+a675 1
+  ELSE
+a676 6
+    eof = .true.
+    if(.not. flag_section) then
+       CALL MLSMessage (MLSMSG_Warning, ModuleName, 'Premature EOF encountered')
+    end if
+  END IF ! (ios .eq.  0)
+ 
+a679 11
+! Close MLSCF
+
+returnStatus = Pgs_io_gen_closeF (processMLSCF)
+
+IF (returnStatus /= PGS_S_SUCCESS) THEN
+  CALL Pgs_smf_getMsg(returnStatus, mnemonic, msg)
+  CALL MLSMessage (MLSMSG_Error, ModuleName, 'Error closing MLSCF:  '//mnemonic//' '//msg)
+ 
+ENDIF
+
+
+d690 36
+a725 1
+
+@
+
+

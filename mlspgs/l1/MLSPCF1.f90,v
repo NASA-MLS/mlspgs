@@ -1,0 +1,670 @@
+head	2.14;
+access;
+symbols
+	v5-02-NRT-19:2.14
+	v6-00:2.14
+	v5-02-NRT-18:2.14
+	v5-02:2.14
+	v5-01-NRT-17:2.14
+	v5-01-NRT-16:2.14
+	v5-01-NRT-15:2.14
+	v5-01-NRT-14:2.14
+	neuralnetworks-1-0:2.14.0.14
+	cfm-single-freq-0-1:2.14.0.12
+	v5-01:2.14
+	v5-00:2.14
+	v4-23-TA133:2.14.0.10
+	mus-emls-1-70:2.14.0.8
+	rel-1-0-englocks-work:2.14.0.6
+	VUMLS1-00:2.14
+	VPL1-00:2.14
+	V4-22-NRT-08:2.14
+	whdrel10_merged_to_here:2.14
+	merge_whdrel10_from_here:2.14
+	TAG_TRUNK_AFTER_PW_CHANGES:2.14
+	TAG_TRUNK_BEFORE_PW_CHANGES:2.14
+	VAM1-00:2.14
+	whd-rel-1-0:2.14.0.4
+	V4-21:2.14.0.2
+	V4-13:2.14
+	V4-12:2.14
+	V4-11:2.14
+	V4-10:2.14
+	V3-43:2.13
+	M4-00:2.13
+	V3-41:2.13
+	V3-40-PlusGM57:2.13.0.2
+	V2-24-NRT-04:2.13
+	V3-33:2.13
+	V2-24:2.13
+	V3-31:2.13
+	V3-30-NRT-05:2.13
+	cfm-01-00:2.13
+	V3-30:2.13
+	V3-20:2.13
+	V3-10:2.13
+	V2-23-NRT-02:2.13
+	V2-23:2.13
+	V2-22-NRT-01:2.13
+	V2-22:2.13
+	V2-21:2.13
+	V2-20:2.13
+	V2-11:2.13
+	V2-10:2.13
+	V2-00:2.13
+	V1-51:2.10
+	V1-50:2.10
+	V1-45:2.9
+	V1-44:2.9
+	V1-43:2.8
+	V1-42:2.7
+	V1-41:2.7
+	V1-32:2.6
+	V1-40:2.7
+	V1-31:2.6
+	V1-30:2.6
+	V1-13:2.5
+	V1-12:2.5
+	V1-11:2.5
+	V1-10:2.5
+	newfwm-feb03:2.5.0.2
+	V1-04:2.3
+	V1-03:2.3
+	V1-02:2.3
+	V1-00:2.3
+	newfwm-sep01:2.2.0.2
+	V0-7:2.2
+	V0-5-Level2:2.2
+	V0-5-SIPS:2.2;
+locks; strict;
+comment	@# @;
+
+
+2.14
+date	2014.04.11.16.52.54;	author pwagner;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2006.06.14.13.47.23;	author perun;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2006.03.24.15.14.13;	author perun;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2005.06.23.18.41.36;	author pwagner;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2004.11.10.15.36.34;	author perun;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2004.08.12.13.51.50;	author perun;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2004.05.14.15.59.11;	author perun;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2004.01.09.17.46.22;	author perun;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2003.08.15.14.25.04;	author perun;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2003.01.31.18.13.34;	author perun;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2002.11.20.20.44.12;	author perun;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2002.03.29.20.18.34;	author perun;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2001.03.12.16.16.05;	author perun;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.02.23.20.53.12;	author perun;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.14
+log
+@reserved PCFId for DOI
+@
+text
+@! Copyright 2006, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+! NOTE: This module is automatically created by the makemlspcfmodule
+!       perl script.  Do *NOT* attempt to modify this by hand.
+!
+
+MODULE MLSPCF1
+
+  IMPLICIT NONE
+
+  PUBLIC
+
+!---------------------------- RCS Module Info ------------------------------
+  CHARACTER (len=*), PRIVATE, PARAMETER :: ModuleName= &
+       "$RCSfile: MLSPCF1.f90,v $"
+  PRIVATE :: not_used_here 
+!---------------------------------------------------------------------------
+
+  INTEGER, PARAMETER :: mlspcf_l1_param_StartUTC = 1001
+  INTEGER, PARAMETER :: mlspcf_l1_param_EndUTC = 1002
+  INTEGER, PARAMETER :: mlspcf_l1_param_OutputVersion = 1003
+  INTEGER, PARAMETER :: mlspcf_l1_param_Cycle = 1004
+  INTEGER, PARAMETER :: mlspcf_l1_param_doinames = 1010
+!
+  INTEGER, PARAMETER :: mlspcf_pcf_start = 900
+  INTEGER, PARAMETER :: mlspcf_pcf_end = 900
+!
+  INTEGER, PARAMETER :: mlspcf_APID1732_start = 21000
+  INTEGER, PARAMETER :: mlspcf_APID1732_end = 21019
+!
+  INTEGER, PARAMETER :: mlspcf_APID1734_start = 21020
+  INTEGER, PARAMETER :: mlspcf_APID1734_end = 21039
+!
+  INTEGER, PARAMETER :: mlspcf_APID1736_start = 21040
+  INTEGER, PARAMETER :: mlspcf_APID1736_end = 21059
+!
+  INTEGER, PARAMETER :: mlspcf_APID1738_start = 21060
+  INTEGER, PARAMETER :: mlspcf_APID1738_end = 21079
+!
+  INTEGER, PARAMETER :: mlspcf_APID1740_start = 21080
+  INTEGER, PARAMETER :: mlspcf_APID1740_end = 21099
+!
+  INTEGER, PARAMETER :: mlspcf_APID1742_start = 21100
+  INTEGER, PARAMETER :: mlspcf_APID1742_end = 21119
+!
+  INTEGER, PARAMETER :: mlspcf_APID1744_start = 21120
+  INTEGER, PARAMETER :: mlspcf_APID1744_end = 21139
+!
+  INTEGER, PARAMETER :: mlspcf_APID1746_start = 21140
+  INTEGER, PARAMETER :: mlspcf_APID1746_end = 21159
+!
+  INTEGER, PARAMETER :: mlspcf_APID1748_start = 21160
+  INTEGER, PARAMETER :: mlspcf_APID1748_end = 21179
+!
+  INTEGER, PARAMETER :: mlspcf_l1cf_start = 901
+  INTEGER, PARAMETER :: mlspcf_l1cf_end = 901
+!
+  INTEGER, PARAMETER :: mlspcf_nomen_start = 902
+  INTEGER, PARAMETER :: mlspcf_nomen_end = 902
+!
+  INTEGER, PARAMETER :: mlspcf_engtbl_start = 903
+  INTEGER, PARAMETER :: mlspcf_engtbl_end = 903
+!
+  INTEGER, PARAMETER :: mlspcf_defltgains_start = 904
+  INTEGER, PARAMETER :: mlspcf_defltgains_end = 904
+!
+  INTEGER, PARAMETER :: mlspcf_defltzeros_start = 905
+  INTEGER, PARAMETER :: mlspcf_defltzeros_end = 906
+!
+  INTEGER, PARAMETER :: mlspcf_dacsconst_start = 907
+  INTEGER, PARAMETER :: mlspcf_dacsconst_end = 907
+!
+  INTEGER, PARAMETER :: mlspcf_sidebandfrac_start = 908
+  INTEGER, PARAMETER :: mlspcf_sidebandfrac_end = 908
+!
+  INTEGER, PARAMETER :: mlspcf_spilloverloss_start = 909
+  INTEGER, PARAMETER :: mlspcf_spilloverloss_end = 909
+!
+  INTEGER, PARAMETER :: mlspcf_defltchi2_start = 910
+  INTEGER, PARAMETER :: mlspcf_defltchi2_end = 910
+!
+  INTEGER, PARAMETER :: mlspcf_defltbaselineAC_start = 911
+  INTEGER, PARAMETER :: mlspcf_defltbaselineAC_end = 911
+!
+  INTEGER, PARAMETER :: mlspcf_bandalts_start = 912
+  INTEGER, PARAMETER :: mlspcf_bandalts_end = 912
+!
+  INTEGER, PARAMETER :: mlspcf_bandsw_start = 913
+  INTEGER, PARAMETER :: mlspcf_bandsw_end = 913
+!
+  INTEGER, PARAMETER :: mlspcf_strayrad_start = 914
+  INTEGER, PARAMETER :: mlspcf_strayrad_end = 914
+!
+  INTEGER, PARAMETER :: mlspcf_sciMAF_start = 920
+  INTEGER, PARAMETER :: mlspcf_sciMAF_end = 920
+!
+  INTEGER, PARAMETER :: mlspcf_engMAF_start = 921
+  INTEGER, PARAMETER :: mlspcf_engMAF_end = 921
+!
+  INTEGER, PARAMETER :: mlspcf_MAF_data_start = 922
+  INTEGER, PARAMETER :: mlspcf_MAF_data_end = 922
+!
+  INTEGER, PARAMETER :: mlspcf_l1b_radf_start = 30000
+  INTEGER, PARAMETER :: mlspcf_l1b_radf_end = 30000
+!
+  INTEGER, PARAMETER :: mlspcf_l1b_radd_start = 30001
+  INTEGER, PARAMETER :: mlspcf_l1b_radd_end = 30001
+!
+  INTEGER, PARAMETER :: mlspcf_l1b_oa_start = 30002
+  INTEGER, PARAMETER :: mlspcf_l1b_oa_end = 30002
+!
+  INTEGER, PARAMETER :: mlspcf_l1b_eng_start = 30003
+  INTEGER, PARAMETER :: mlspcf_l1b_eng_end = 30003
+!
+  INTEGER, PARAMETER :: mlspcf_l1b_diag_start = 30004
+  INTEGER, PARAMETER :: mlspcf_l1b_diag_end = 30004
+!
+  INTEGER, PARAMETER :: mlspcf_l1b_radt_start = 30005
+  INTEGER, PARAMETER :: mlspcf_l1b_radt_end = 30005
+!
+  INTEGER, PARAMETER :: mlspcf_l1b_log_start = 30006
+  INTEGER, PARAMETER :: mlspcf_l1b_log_end = 30006
+!
+  INTEGER, PARAMETER :: mlspcf_l1b_diagT_start = 30007
+  INTEGER, PARAMETER :: mlspcf_l1b_diagT_end = 30007
+!
+  INTEGER, PARAMETER :: mlspcf_mcf_l1log_start = 4000
+  INTEGER, PARAMETER :: mlspcf_mcf_l1log_end = 4000
+!
+  INTEGER, PARAMETER :: mlspcf_mcf_l1boa_start = 4001
+  INTEGER, PARAMETER :: mlspcf_mcf_l1boa_end = 4001
+!
+  INTEGER, PARAMETER :: mlspcf_mcf_l1bradf_start = 4002
+  INTEGER, PARAMETER :: mlspcf_mcf_l1bradf_end = 4002
+!
+  INTEGER, PARAMETER :: mlspcf_mcf_l1bradd_start = 4003
+  INTEGER, PARAMETER :: mlspcf_mcf_l1bradd_end = 4003
+!
+  INTEGER, PARAMETER :: mlspcf_mcf_l1bradt_start = 4004
+  INTEGER, PARAMETER :: mlspcf_mcf_l1bradt_end = 4004
+
+CONTAINS
+
+  LOGICAL FUNCTION not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  CHARACTER (len=*), PARAMETER :: IdParm = &
+       "$Id: MLSPCF1.f90,v 2.13 2006/06/14 13:47:23 perun Exp $"
+  CHARACTER (len=LEN(idParm)), SAVE :: Id = idParm
+!---------------------------------------------------------------------------
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  END FUNCTION not_used_here
+END MODULE MLSPCF1
+
+! $Log: MLSPCF1.f90,v $
+! Revision 2.13  2006/06/14 13:47:23  perun
+! Add pcf numbers for stray radiance table
+!
+! Revision 2.12  2006/03/24 15:14:13  perun
+! Add pcf numbers for BandAlts and BandSwitches tables
+!
+! Revision 2.11  2005/06/23 18:41:36  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.10  2004/11/10 15:36:34  perun
+! Add pcf number for default baselineAC table file
+!
+! Revision 2.9  2004/08/12 13:51:50  perun
+! Version 1.44 commit
+!
+! Revision 2.8  2004/05/14 15:59:11  perun
+! Version 1.43 commit
+!
+! Revision 2.7  2004/01/09 17:46:22  perun
+! Version 1.4 commit
+!
+! Revision 2.6  2003/08/15 14:25:04  perun
+! Version 1.2 commit
+!
+@
+
+
+2.13
+log
+@Add pcf numbers for stray radiance table
+@
+text
+@d31 1
+d155 1
+a155 1
+       "$Id: MLSPCF1.f90,v 2.12 2006/03/24 15:14:13 perun Exp $"
+d163 3
+@
+
+
+2.12
+log
+@Add pcf numbers for BandAlts and BandSwitches tables
+@
+text
+@d98 3
+d154 1
+a154 1
+       "$Id: MLSPCF1.f90,v 2.11 2005/06/23 18:41:36 pwagner Exp $"
+d162 3
+@
+
+
+2.11
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d1 1
+a1 1
+! Copyright 2005, by the California Institute of Technology. ALL
+d22 3
+a24 3
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: $"
+  private :: not_used_here 
+d92 6
+d146 3
+a148 2
+contains
+  logical function not_used_here()
+d150 3
+a152 3
+  character (len=*), parameter :: IdParm = &
+       "$Id: $"
+  character (len=len(idParm)), save :: Id = idParm
+d155 1
+a155 1
+  end function not_used_here
+d159 3
+@
+
+
+2.10
+log
+@Add pcf number for default baselineAC table file
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d21 5
+a25 5
+  !------------------------------- RCS Ident Info ------------------------------
+  CHARACTER(LEN=130), PRIVATE :: id = &
+       "$Id: MLSPCF1.f90,v 2.9 2004/08/12 13:51:50 perun Exp $"
+  CHARACTER(LEN=*), PRIVATE, PARAMETER :: ModuleName="$RCSfile: MLSPCF1.f90,v $"
+  !-----------------------------------------------------------------------------
+d140 9
+d152 3
+@
+
+
+2.9
+log
+@Version 1.44 commit
+@
+text
+@d15 1
+a15 1
+       "$Id: MLSPCF1.f90,v 2.8 2004/05/14 15:59:11 perun Exp $"
+d81 3
+d135 3
+@
+
+
+2.8
+log
+@Version 1.43 commit
+@
+text
+@d15 1
+a15 1
+       "$Id: MLSPCF1.f90,v 2.7 2004/01/09 17:46:22 perun Exp $"
+d78 2
+a79 2
+  INTEGER, PARAMETER :: mlspcf_sciMAF_start = 910
+  INTEGER, PARAMETER :: mlspcf_sciMAF_end = 910
+d81 2
+a82 2
+  INTEGER, PARAMETER :: mlspcf_engMAF_start = 911
+  INTEGER, PARAMETER :: mlspcf_engMAF_end = 911
+d84 5
+a88 2
+  INTEGER, PARAMETER :: mlspcf_MAF_data_start = 912
+  INTEGER, PARAMETER :: mlspcf_MAF_data_end = 912
+d132 3
+@
+
+
+2.7
+log
+@Version 1.4 commit
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+d15 1
+a15 1
+       "$Id: MLSPCF1.f90,v 2.6 2003/08/15 14:25:04 perun Exp $"
+d108 3
+d129 3
+@
+
+
+2.6
+log
+@Version 1.2 commit
+@
+text
+@d15 2
+a16 2
+       "$Id: $"
+  CHARACTER(LEN=*), PRIVATE, PARAMETER :: ModuleName="$RCSfile: $"
+d63 2
+a64 2
+  INTEGER, PARAMETER :: mlspcf_bwtbl_start = 904
+  INTEGER, PARAMETER :: mlspcf_bwtbl_end = 904
+d66 1
+a66 4
+  INTEGER, PARAMETER :: mlspcf_defltgains_start = 905
+  INTEGER, PARAMETER :: mlspcf_defltgains_end = 905
+!
+  INTEGER, PARAMETER :: mlspcf_defltzeros_start = 906
+d125 4
+a128 1
+! $Log: $
+@
+
+
+2.5
+log
+@Version 1.1 commit
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+d6 1
+d8 118
+a125 92
+   INTEGER, PARAMETER :: mlspcf_l1_param_StartUTC = 1001
+   INTEGER, PARAMETER :: mlspcf_l1_param_EndUTC = 1002
+   INTEGER, PARAMETER :: mlspcf_l1_param_OutputVersion = 1003
+   INTEGER, PARAMETER :: mlspcf_l1_param_Cycle = 1004
+   !
+   INTEGER, PARAMETER :: mlspcf_pcf_start = 900
+   INTEGER, PARAMETER :: mlspcf_pcf_end = 900
+   !
+   INTEGER, PARAMETER :: mlspcf_APID1732_start = 21000
+   INTEGER, PARAMETER :: mlspcf_APID1732_end = 21019
+   !
+   INTEGER, PARAMETER :: mlspcf_APID1734_start = 21020
+   INTEGER, PARAMETER :: mlspcf_APID1734_end = 21039
+   !
+   INTEGER, PARAMETER :: mlspcf_APID1736_start = 21040
+   INTEGER, PARAMETER :: mlspcf_APID1736_end = 21059
+   !
+   INTEGER, PARAMETER :: mlspcf_APID1738_start = 21060
+   INTEGER, PARAMETER :: mlspcf_APID1738_end = 21079
+   !
+   INTEGER, PARAMETER :: mlspcf_APID1740_start = 21080
+   INTEGER, PARAMETER :: mlspcf_APID1740_end = 21099
+   !
+   INTEGER, PARAMETER :: mlspcf_APID1742_start = 21100
+   INTEGER, PARAMETER :: mlspcf_APID1742_end = 21119
+   !
+   INTEGER, PARAMETER :: mlspcf_APID1744_start = 21120
+   INTEGER, PARAMETER :: mlspcf_APID1744_end = 21139
+   !
+   INTEGER, PARAMETER :: mlspcf_APID1746_start = 21140
+   INTEGER, PARAMETER :: mlspcf_APID1746_end = 21159
+   !
+   INTEGER, PARAMETER :: mlspcf_APID1748_start = 21160
+   INTEGER, PARAMETER :: mlspcf_APID1748_end = 21179
+   !
+   INTEGER, PARAMETER :: mlspcf_l1cf_start = 901
+   INTEGER, PARAMETER :: mlspcf_l1cf_end = 901
+   !
+   INTEGER, PARAMETER :: mlspcf_nomen_start = 902
+   INTEGER, PARAMETER :: mlspcf_nomen_end = 902
+   !
+   INTEGER, PARAMETER :: mlspcf_engtbl_start = 903
+   INTEGER, PARAMETER :: mlspcf_engtbl_end = 903
+   !
+   INTEGER, PARAMETER :: mlspcf_bwtbl_start = 904
+   INTEGER, PARAMETER :: mlspcf_bwtbl_end = 904
+   !
+   INTEGER, PARAMETER :: mlspcf_defltgains_start = 905
+   INTEGER, PARAMETER :: mlspcf_defltgains_end = 905
+   !
+   INTEGER, PARAMETER :: mlspcf_defltzeros_start = 906
+   INTEGER, PARAMETER :: mlspcf_defltzeros_end = 906
+   !
+   INTEGER, PARAMETER :: mlspcf_dacsconst_start = 907
+   INTEGER, PARAMETER :: mlspcf_dacsconst_end = 907
+   !
+   INTEGER, PARAMETER :: mlspcf_l1b_radf_start = 30000
+   INTEGER, PARAMETER :: mlspcf_l1b_radf_end = 30000
+   !
+   INTEGER, PARAMETER :: mlspcf_l1b_radd_start = 30001
+   INTEGER, PARAMETER :: mlspcf_l1b_radd_end = 30001
+   !
+   INTEGER, PARAMETER :: mlspcf_l1b_oa_start = 30002
+   INTEGER, PARAMETER :: mlspcf_l1b_oa_end = 30002
+   !
+   INTEGER, PARAMETER :: mlspcf_l1b_eng_start = 30003
+   INTEGER, PARAMETER :: mlspcf_l1b_eng_end = 30003
+   !
+   INTEGER, PARAMETER :: mlspcf_l1b_diag_start = 30004
+   INTEGER, PARAMETER :: mlspcf_l1b_diag_end = 30004
+   !
+   INTEGER, PARAMETER :: mlspcf_l1b_radt_start = 30005
+   INTEGER, PARAMETER :: mlspcf_l1b_radt_end = 30005
+   !
+   INTEGER, PARAMETER :: mlspcf_l1b_log_start = 30006
+   INTEGER, PARAMETER :: mlspcf_l1b_log_end = 30006
+   !
+   INTEGER, PARAMETER :: mlspcf_mcf_l1log_start = 4000
+   INTEGER, PARAMETER :: mlspcf_mcf_l1log_end = 4000
+   !
+   INTEGER, PARAMETER :: mlspcf_mcf_l1boa_start = 4001
+   INTEGER, PARAMETER :: mlspcf_mcf_l1boa_end = 4001
+   !
+   INTEGER, PARAMETER :: mlspcf_mcf_l1bradf_start = 4002
+   INTEGER, PARAMETER :: mlspcf_mcf_l1bradf_end = 4002
+   !
+   INTEGER, PARAMETER :: mlspcf_mcf_l1bradd_start = 4003
+   INTEGER, PARAMETER :: mlspcf_mcf_l1bradd_end = 4003
+   !
+   INTEGER, PARAMETER :: mlspcf_mcf_l1bradt_start = 4004
+   INTEGER, PARAMETER :: mlspcf_mcf_l1bradt_end = 4004
+   !
+d127 2
+@
+
+
+2.4
+log
+@Add RADT and DACS constants PCF numbers
+@
+text
+@d59 1
+a59 1
+    !
+d62 1
+a62 1
+  !
+d80 3
+@
+
+
+2.3
+log
+@Version 1.0 commit
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+d59 4
+a62 1
+   !
+d78 3
+d92 3
+@
+
+
+2.2
+log
+@Add OutputVersion and Cycle
+@
+text
+@d54 6
+d71 3
+@
+
+
+2.1
+log
+@Version 0.5 commit
+@
+text
+@d7 4
+a10 4
+   INTEGER, PARAMETER :: mlspcf_l1_param_OutputVersion = 1000
+   INTEGER, PARAMETER :: mlspcf_l1_param_Cycle = 1001
+   INTEGER, PARAMETER :: mlspcf_l1_param_timeRangeStart = 1002
+   INTEGER, PARAMETER :: mlspcf_l1_param_timeRangeEnd = 1003
+a78 2
+
+! $Log:$
+@
+

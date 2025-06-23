@@ -1,0 +1,254 @@
+head	1.4;
+access;
+symbols
+	v5-02-NRT-19:1.4
+	v6-00:1.4
+	v5-02-NRT-18:1.4
+	v5-02:1.4
+	v5-01-NRT-17:1.4
+	v5-01-NRT-16:1.4
+	v5-01-NRT-15:1.4
+	v5-01-NRT-14:1.4
+	neuralnetworks-1-0:1.4.0.14
+	cfm-single-freq-0-1:1.4.0.12
+	v5-01:1.4
+	v5-00:1.4
+	v4-23-TA133:1.4.0.10
+	mus-emls-1-70:1.4.0.8
+	rel-1-0-englocks-work:1.4.0.6
+	VUMLS1-00:1.4
+	VPL1-00:1.4
+	V4-22-NRT-08:1.4
+	VAM1-00:1.4
+	V4-21:1.4.0.4
+	V4-13:1.4
+	V4-12:1.4
+	V4-11:1.4
+	V4-10:1.4
+	V3-43:1.4
+	M4-00:1.4
+	V3-41:1.4
+	V3-40-PlusGM57:1.4.0.2
+	V2-24-NRT-04:1.4
+	V3-33:1.4
+	V2-24:1.4
+	V3-31:1.4
+	V3-30-NRT-05:1.4
+	cfm-01-00:1.4
+	V3-30:1.4
+	V3-20:1.4
+	V3-10:1.4
+	V2-23-NRT-02:1.4
+	V2-23:1.4
+	V2-22-NRT-01:1.4
+	V2-22:1.4
+	V2-21:1.4
+	V2-20:1.4
+	V2-11:1.4
+	V2-10:1.4
+	V2-00:1.4
+	V1-51:1.4
+	V1-50:1.4
+	V1-45:1.4
+	V1-44:1.4
+	V1-43:1.4
+	V1-32:1.4
+	V1-31:1.4;
+locks; strict;
+comment	@% @;
+
+
+1.4
+date	2003.04.04.00.11.58;	author livesey;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2003.03.27.06.26.07;	author livesey;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2003.03.27.01.27.20;	author livesey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2003.03.26.23.46.57;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.4
+log
+@More minor changes
+@
+text
+@% This is the master file for the EOS MLS Level 2 software users' guide.
+% I anticipate lots of small input files.
+%
+% $Id: l2ug.tex,v 1.3 2003/03/27 06:26:07 livesey Exp $
+%
+% First setup the global packages etc.
+\documentclass[twoside,11pt]{report}
+\usepackage{largemls}
+\usepackage[mtbold,mtplusscr,mtpluscal]{mathtime}
+\usepackage{times}
+\usepackage{graphicx}
+\usepackage{array}
+\usepackage[square]{natbib}
+\usepackage{pifont}
+\usepackage{amsmath}
+\usepackage{listings}
+\usepackage{xspace}
+\usepackage{makeidx}
+\usepackage[letterpaper,dvips,breaklinks,bookmarksopen=true,extension=dvi]{hyperref}
+%
+% General preamble macros
+\lstloadlanguages{Idl}
+\makeindex
+\renewcommand{\sfdefault}{cmss}
+\renewcommand{\ttdefault}{cmtt}
+%
+% Now begin the document and setup various counters etc.
+\begin{document}
+\rcsInfo $Id: l2ug.tex,v 1.3 2003/03/27 06:26:07 livesey Exp $
+%
+\lhead[\fancyplain{}{\large\it Contents}]{\fancyplain{}\rcsLockedStatus}
+\rhead[\fancyplain{}\rcsLockedStatus]{\fancyplain{}{\large\it Contents}}
+%
+\bibliographystyle{plainnat}
+%
+% Now some macros and definitions
+\input{l2ugmacros.tex}
+%
+% Setup the listings
+\lstset{language=Idl,basicstyle=\ttfamily}
+\lstset{commentstyle=\color{red}}
+\lstset{keywordstyle=\color{blue}}
+\lstset{basewidth=0.5em}
+%% \lstset{breaklines=true}
+%% \lstset{prebreak=$} % $ close dollar to stop confusing emacs
+%
+% ------------------------------------------------------------------------------
+%
+% Now do the title page etc.
+%
+\newcommand{\showstamp}[2][10cm]{\psframebox[%
+   linewidth=0.3pt,fillstyle=solid,fillcolor=white]{%
+   \epsfig{bbllx=0,bblly=0,bburx=612,bbury=792,file=#2,
+   width=#1}}}
+%
+\pagenumbering{roman}
+\title{EOS MLS Level~2 Software Users' Guide}
+\shorttitle{MLSL2 users' guide}
+\author{N. J. Livesey, P. A. Wagner, M. J. Filipiak, W. V. Snyder,
+ D. L. Wu and J. H. Jiang}
+\coverpicture{Some relevant picture to go here}
+\jpld{18030}
+\maketitle
+%
+% ------------------------------------------------------------------------------
+%
+% Now do the table of contents etc.
+%
+\tableofcontents
+%
+% ------------------------------------------------------------------------------
+%
+% Now call in the various chapters
+%
+\cleardoublepage
+\pagenumbering{arabic}
+%
+% \lhead[\fancyplain{}{\large\it\leftmark}]{\fancyplain{}\rcsLockedStatus}
+% \rhead[\fancyplain{}\rcsLockedStatus]{\fancyplain{}{\large\it\rightmark}}
+%
+\input{chapIntroduction.tex}
+%
+\input{chapRunning.tex}
+%
+\input{chapL2CFIntro.tex}
+%
+\input{chapL2CFRef.tex}
+%
+\input{chapm4.tex}
+%
+\input{chapSnoop.tex}
+%
+\bibliography{shortnames,mybib}
+\printindex
+\end{document}
+@
+
+
+1.3
+log
+@Slow progress
+@
+text
+@d4 1
+a4 1
+% $Id: l2ug.tex,v 1.2 2003/03/27 01:27:20 livesey Exp $
+d29 1
+a29 1
+\rcsInfo $Id: l2ug.tex,v 1.2 2003/03/27 01:27:20 livesey Exp $
+d93 1
+a93 1
+\bibliography{fullnames,mybib}
+@
+
+
+1.2
+log
+@More early work
+@
+text
+@d4 1
+a4 1
+% $Id: l2ug.tex,v 1.1 2003/03/26 23:46:57 livesey Exp $
+d29 1
+a29 1
+\rcsInfo $Id: l2ug.tex,v 1.1 2003/03/26 23:46:57 livesey Exp $
+d90 2
+@
+
+
+1.1
+log
+@Just stubs
+@
+text
+@d4 1
+a4 1
+% $Id$
+d13 1
+a13 1
+\usepackage{chicago}
+d16 3
+d21 6
+d29 1
+a29 2
+\rcsInfo $Id$
+%
+d34 1
+a34 1
+\bibliographystyle{chicago}
+d39 8
+d78 2
+a79 2
+\lhead[\fancyplain{}{\large\it\leftmark}]{\fancyplain{}\rcsLockedStatus}
+\rhead[\fancyplain{}\rcsLockedStatus]{\fancyplain{}{\large\it\rightmark}}
+d92 1
+a92 2
+\renewcommand{\leftmark}{Bibliography}
+\renewcommand{\rightmark}{Bibliography}
+a93 2
+
+
+@
+

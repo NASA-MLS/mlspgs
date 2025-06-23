@@ -1,0 +1,566 @@
+head	2.13;
+access;
+symbols
+	v5-02-NRT-19:2.13
+	v6-00:2.13
+	v5-02-NRT-18:2.13
+	v5-02:2.13
+	v5-01-NRT-17:2.13
+	v5-01-NRT-16:2.13
+	v5-01-NRT-15:2.13
+	v5-01-NRT-14:2.13
+	neuralnetworks-1-0:2.13.0.10
+	cfm-single-freq-0-1:2.13.0.8
+	v5-01:2.13
+	v5-00:2.13
+	v4-23-TA133:2.13.0.6
+	mus-emls-1-70:2.13.0.4
+	rel-1-0-englocks-work:2.13.0.2
+	VUMLS1-00:2.11
+	VPL1-00:2.11
+	V4-22-NRT-08:2.10
+	VAM1-00:2.10
+	V4-21:2.10.0.2
+	V4-13:2.10
+	V4-12:2.10
+	V4-11:2.10
+	V4-10:2.10
+	V3-43:2.2
+	M4-00:2.10
+	V3-41:2.2
+	V3-40-PlusGM57:2.2.0.2
+	V3-33:2.3
+	V3-31:2.3
+	V3-30-NRT-05:2.2
+	cfm-01-00:2.2
+	V3-30:2.2
+	V3-20:2.2
+	V3-10:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.13
+date	2018.03.05.19.27.18;	author pwagner;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2017.07.19.22.49.46;	author pwagner;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2016.07.28.01.42.27;	author vsnyder;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2012.06.22.20.25.18;	author pwagner;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2011.11.11.00.30.22;	author vsnyder;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2011.07.12.00.11.29;	author pwagner;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2011.04.20.22.25.07;	author pwagner;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2011.04.07.20.05.34;	author pwagner;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2011.03.15.23.58.26;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2011.03.08.00.03.46;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2011.02.05.00.58.04;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2009.11.20.01.11.40;	author pwagner;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2009.06.24.22.34.21;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.13
+log
+@Try harder to avoid double-printing the name
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id: dump2d.f9h,v 2.12 2017/07/19 22:49:46 pwagner Exp $
+
+! subroutine DUMP_2D_DOUBLE ( ARRAY, NAME, &
+!   & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
+!   double precision, intent(in) :: ARRAY(:,:)
+!   character(len=*), intent(in), optional :: NAME
+!   double precision, intent(in), optional :: FILLVALUE
+!   integer, intent(in), optional :: WIDTH
+!   character(len=*), intent(in), optional :: FORMAT
+!   integer, intent(in), optional :: LBOUND ! to print for first dimension
+!   character(len=*), intent(in), optional :: options
+!   integer :: I, J, K
+!   integer :: NumZeroRows
+!   double precision :: myFillValue
+!   character(len=64) :: MyFormat
+!   integer :: nUnique
+!   integer, dimension(MAXNUMELEMENTS) :: counts
+!   double precision, dimension(MAXNUMELEMENTS) :: elements
+    ! Executable
+    call theDumpBegins ( options, Name=Name )
+    if ( dopts(myTranspose)%v ) then
+      call dump ( transpose(array), name, &
+        & fillvalue, width, format, lbound, &
+        & options=snipoption(options, dopt_transpose) )
+      return
+    endif
+    myRank = 2
+    myFillValue = 0
+    if ( present(FillValue) ) myFillValue = FillValue
+    MyWidth = 5
+    if ( present(width) ) MyWidth = width
+    if ( dopts(unique)%v ) then
+      call FindUnique( reshape( array, (/ product(shape(array)) /) ), &
+        & elements, nUnique, counts )
+      if ( nUnique < 2 ) then
+        call output( 'Every value is ', advance='no' )
+        call output( elements(1), advance='yes' )
+      else
+        call output( '    value             counts', advance='yes' )
+        do j=1, nUnique
+          call output( j , advance='no' )
+          call blanks( 3 )
+          call output( elements(j) , advance='no' )
+          call blanks( 3 )
+          call output( counts(j), advance='yes' )
+        enddo
+      endif
+      if ( uniqueonly ( options ) ) return
+    endif
+    include 'dumpstats.f9h'
+    nameHasBeenPrinted = .true. ! So we don't double-print
+    if ( present(format) ) myFormat = format
+    if ( index(myFormat, '*') > 0 ) myFormat = numNeedsFormat( maxval(abs(array)), format )
+
+!    include 'dump2db.f9h'
+!   end subroutine DUMP_2D_INTEGER
+! $Log: dump2d.f9h,v $
+! Revision 2.12  2017/07/19 22:49:46  pwagner
+! Pass Name to theDumpBegins
+!
+! Revision 2.11  2016/07/28 01:42:27  vsnyder
+! Refactoring dump and diff
+!
+! Revision 2.10  2012/06/22 20:25:18  pwagner
+! Specify advance arg because we may now set default to 'yes'
+!
+! Revision 2.9  2011/11/11 00:30:22  vsnyder
+! Simplify notice of rank reduction
+!
+! Revision 2.8  2011/07/12 00:11:29  pwagner
+! whoarray dump moved to dump[123]db.f9h
+!
+! Revision 2.7  2011/04/20 22:25:07  pwagner
+! Made all dumpnd.f9h files consistent
+!
+! Revision 2.6  2011/04/07 20:05:34  pwagner
+! Fixed bug introduced with last changes
+!
+! Revision 2.5  2011/03/15 23:58:26  pwagner
+! Fixed bugs added with last change; also bug inherited from dump_0 parents
+!
+! Revision 2.4  2011/03/08 00:03:46  pwagner
+! Skip printing row of zeros only if multiple
+!
+! Revision 2.3  2011/02/05 00:58:04  pwagner
+! L(aconic) option skips printing array name and size; transpose handled in module body
+!
+! Revision 2.2  2009/11/20 01:11:40  pwagner
+! Added new options to just show array rank, shape
+!
+! Revision 2.1  2009/06/24 22:34:21  pwagner
+! First commit
+!
+@
+
+
+2.12
+log
+@Pass Name to theDumpBegins
+@
+text
+@d12 1
+a12 1
+! $Id: dump2d.f9h,v 2.11 2016/07/28 01:42:27 vsnyder Exp $
+d62 1
+a62 1
+
+d69 3
+@
+
+
+2.11
+log
+@Refactoring dump and diff
+@
+text
+@d12 1
+a12 1
+! $Id: dump2d.f9h,v 2.10 2012/06/22 20:25:18 pwagner Exp $
+d31 1
+a31 1
+    call theDumpBegins ( options )
+d69 3
+@
+
+
+2.10
+log
+@Specify advance arg because we may now set default to 'yes'
+@
+text
+@d12 1
+a12 1
+! $Id: dump2d.f9h,v 2.9 2011/11/11 00:30:22 vsnyder Exp $
+d32 1
+a32 1
+    if ( myTranspose ) then
+d43 1
+a43 1
+    if ( myUnique ) then
+d69 3
+@
+
+
+2.9
+log
+@Simplify notice of rank reduction
+@
+text
+@d12 1
+a12 1
+! $Id: dump2d.f9h,v 2.8 2011/07/12 00:11:29 pwagner Exp $
+d52 1
+a52 1
+          call output( j )
+d54 1
+a54 1
+          call output( elements(j) )
+d69 3
+@
+
+
+2.8
+log
+@whoarray dump moved to dump[123]db.f9h
+@
+text
+@d12 1
+a12 1
+! $Id: dump2d.f9h,v 2.7 2011/04/20 22:25:07 pwagner Exp $
+d21 1
+a21 1
+!   integer, intent(in), optional :: LBOUND
+d69 3
+@
+
+
+2.7
+log
+@Made all dumpnd.f9h files consistent
+@
+text
+@d12 1
+a12 1
+! $Id: dump2d.f9h,v 2.6 2011/04/07 20:05:34 pwagner Exp $
+d64 1
+d66 1
+a66 45
+    numZeroRows = 0
+    if ( any(shape(array) == 0) ) then
+      call empty ( name )
+    else if ( product(shape(array)) == 1 ) then
+      call name_and_size ( name, myClean, 1 )
+      call output ( array(1,1), format=myFormat, advance='yes' )
+    else if ( size(array, 1) == 1 ) then
+      call dump ( array(1,:), name, &
+        & fillValue=fillValue, format=format, options=options )
+    else if ( size(array,2) == 1 ) then
+      call dump ( array(:,1), name, &
+        & fillValue=fillValue, format=format, options=options )
+    else
+      call name_and_size ( name, myClean, size(array) )
+      if ( present(name) .and. .not. myLaconic ) call newLine
+      do i = 1, size(array,1)
+        do j = 1, size(array,2), MyWidth
+          DumpTheseZeros = myClean .or. &
+            & any(array(i,j:min(j+2*MyWidth-1, size(array,2))) /= myFillValue) &
+            & .or. &
+            & ( j+MyWidth >= size(array,2) .and. &
+            & any(array(min(i+1, size(array,1)),1:min(1+MyWidth-1, size(array,2))) &
+            & /= myFillValue) &
+            & )
+          if (.not. myClean) then
+            if ( DumpTheseZeros ) then
+              call say_fill ( (/ i, size(array,1), j-1, size(array,2) /), &
+                & numZeroRows, myFillValue, inc=3 )
+            else
+              numZeroRows = numZeroRows + 1
+            end if
+          end if
+          if ( DumpTheseZeros ) then
+            do k = j, min(j+MyWidth-1, size(array,2))
+              call output ( array(i,k), format=myFormat )
+            end do
+            call newLine
+            numZeroRows = 0
+          end if
+        end do
+      end do
+      call say_fill ( (/ i-1, size(array,1), j-MyWidth, size(array,2) /), &
+        & numZeroRows, myFillValue )
+    end if
+    call theDumpEnds
+d69 3
+@
+
+
+2.6
+log
+@Fixed bug introduced with last changes
+@
+text
+@d12 1
+a12 1
+! $Id: dump2d.f9h,v 2.5 2011/03/15 23:58:26 pwagner Exp $
+d66 1
+a66 1
+    if ( size(array) == 0 ) then
+d72 2
+a73 1
+      call dump ( array(1,:), name, options=options )
+d75 2
+a76 1
+      call dump ( array(:,1), name, options=options )
+d112 3
+@
+
+
+2.5
+log
+@Fixed bugs added with last change; also bug inherited from dump_0 parents
+@
+text
+@d12 1
+a12 1
+! $Id: dump2d.f9h,v 2.4 2011/03/08 00:03:46 pwagner Exp $
+d68 1
+a68 1
+    else if ( size(array) == 1 ) then
+d70 3
+a72 1
+      ! call output ( array(1,1), format=myFormat, advance='yes' )
+a86 5
+          ! call output( shape(array(i,j:min(j+2*MyWidth-1, size(array,2))) ), advance='yes' )
+          ! call outputNamedValue( 'min?', minval(array(i,j:min(j+2*MyWidth-1, size(array,2))) ))
+          ! call outputNamedValue( 'max?', maxval(array(i,j:min(j+2*MyWidth-1, size(array,2))) ))
+          ! call outputNamedValue( 'fill?', myFillValue )
+          ! call outputNamedValue( 'dump?', DumpTheseZeros )
+a101 1
+          ! call outputNamedValue( 'numZeroRows', numZeroRows )
+d110 3
+@
+
+
+2.4
+log
+@Skip printing row of zeros only if multiple
+@
+text
+@d12 1
+a12 1
+! $Id: dump2d.f9h,v 2.3 2011/02/05 00:58:04 pwagner Exp $
+d47 2
+a48 2
+        ! call output( 'Every value is ', advance='no' )
+        ! call output( elements(1), advance='yes' )
+d50 1
+a50 1
+        ! call output( '    value             counts', advance='yes' )
+d52 1
+a52 1
+          ! call output( j )
+d54 1
+a54 1
+          ! call output( elements(j) )
+d56 1
+a56 1
+          ! call output( counts(j), advance='yes' )
+a110 2
+    call say_fill ( (/ i-5, size(array,1), j-1, size(array,2) /), &
+      & numZeroRows, myFillValue )
+d114 3
+@
+
+
+2.3
+log
+@L(aconic) option skips printing array name and size; transpose handled in module body
+@
+text
+@d12 1
+a12 1
+! $Id: dump2d.f9h,v 2.2 2009/11/20 01:11:40 pwagner Exp $
+d41 2
+d47 2
+a48 2
+        call output( 'Every value is ', advance='no' )
+        call output( elements(1), advance='yes' )
+d50 1
+a50 1
+        call output( '    value             counts', advance='yes' )
+d52 1
+a52 1
+          call output( j )
+d54 1
+a54 1
+          call output( elements(j) )
+d56 1
+a56 1
+          call output( counts(j), advance='yes' )
+d70 1
+a70 1
+      call output ( array(1,1), format=myFormat, advance='yes' )
+d77 13
+a89 1
+        do j = 1, size(array,2), 5
+d91 1
+a91 1
+            if ( any(array(i,j:min(j+4, size(array,2))) /= myFillValue) ) then
+d98 2
+a99 2
+          if ( myClean .or. any(array(i,j:min(j+4, size(array,2))) /= myFillValue) ) then
+            do k = j, min(j+4, size(array,2))
+d103 1
+d105 1
+d108 1
+a108 1
+      call say_fill ( (/ i-1, size(array,1), j-5, size(array,2) /), &
+d116 3
+@
+
+
+2.2
+log
+@Added new options to just show array rank, shape
+@
+text
+@d12 1
+a12 1
+! $Id: dump2d.f9h,v 2.1 2009/06/24 22:34:21 pwagner Exp $
+d32 6
+d73 5
+a77 28
+      if ( .not. myTranspose ) then
+        if ( present(name) ) call output ( '', advance='yes' )
+        do i = 1, size(array,1)
+          do j = 1, size(array,2), 5
+            if (.not. myClean) then
+              if ( any(array(i,j:min(j+4, size(array,2))) /= myFillValue) ) then
+                call say_fill ( (/ i, size(array,1), j-1, size(array,2) /), &
+                  & numZeroRows, myFillValue, inc=3 )
+              else
+                numZeroRows = numZeroRows + 1
+              end if
+            end if
+            if ( myClean .or. any(array(i,j:min(j+4, size(array,2))) /= myFillValue) ) then
+              do k = j, min(j+4, size(array,2))
+                call output ( array(i,k), format=myFormat )
+              end do
+              call output ( '', advance='yes' )
+            end if
+          end do
+        end do
+        call say_fill ( (/ i-1, size(array,1), j-5, size(array,2) /), &
+          & numZeroRows, myFillValue )
+      else ! Dump the transpose
+        if ( present(name) ) call output ( ' ' )
+        call output ( '(transposed)', advance='yes' )
+        do j = 1, size(array,2)
+          do i = 1, size(array,1), 5
+            if ( any(array(i:min(i+4, size(array,1)),j) /= myFillValue) ) then  
+d80 10
+a89 10
+            else                                                            
+              numZeroRows = numZeroRows + 1                                 
+            end if                                                          
+            if ( myClean .or. any(array(i:min(i+4, size(array,1)),j) /= myFillValue) ) then
+              do k = i, min(i+4, size(array,1))
+                call output ( array(k,j), format=myFormat )
+              end do
+              call output ( '', advance='yes' )
+            end if                                                          
+          end do
+d91 2
+a92 2
+      end if
+      call say_fill ( (/ i-5, size(array,1), j-1, size(array,2) /), &
+d95 2
+d100 3
+@
+
+
+2.1
+log
+@First commit
+@
+text
+@d12 1
+a12 1
+! $Id: diff.f9h,v 2.18 2009/06/16 17:12:55 pwagner Exp $
+d32 1
+a32 1
+
+d114 4
+a117 1
+! $Log: diff.f9h,v $
+@
+

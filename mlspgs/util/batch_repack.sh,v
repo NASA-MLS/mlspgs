@@ -1,0 +1,413 @@
+head	1.4;
+access;
+symbols
+	v5-02-NRT-19:1.4
+	v6-00:1.4
+	v5-02-NRT-18:1.4
+	v5-02:1.4
+	v5-01-NRT-17:1.4
+	v5-01-NRT-16:1.4
+	v5-01-NRT-15:1.4
+	v5-01-NRT-14:1.4
+	neuralnetworks-1-0:1.4.0.14
+	cfm-single-freq-0-1:1.4.0.12
+	v5-01:1.4
+	v5-00:1.4
+	v4-23-TA133:1.4.0.10
+	mus-emls-1-70:1.4.0.8
+	rel-1-0-englocks-work:1.4.0.6
+	VUMLS1-00:1.4
+	VPL1-00:1.4
+	V4-22-NRT-08:1.4
+	VAM1-00:1.4
+	V4-21:1.4.0.4
+	V4-13:1.4
+	V4-12:1.4
+	V4-11:1.4
+	V4-10:1.4
+	V3-43:1.4
+	M4-00:1.4
+	V3-41:1.4
+	V3-40-PlusGM57:1.4.0.2
+	V2-24-NRT-04:1.1
+	V3-33:1.4
+	V2-24:1.1
+	V3-31:1.4
+	V3-30-NRT-05:1.4
+	cfm-01-00:1.4
+	V3-30:1.4
+	V3-20:1.4
+	V3-10:1.3
+	V2-23-NRT-02:1.1
+	V2-23:1.1
+	V2-22-NRT-01:1.1
+	V2-22:1.1
+	V2-21:1.1
+	V2-20:1.1
+	V2-11:1.1
+	V2-10:1.1
+	V2-00:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.4
+date	2009.12.10.18.53.33;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2009.07.21.20.37.52;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2009.01.16.01.52.57;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2006.03.23.19.28.49;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.4
+log
+@Attempts to find command first in PATH, then inder HDFTOOLS
+@
+text
+@#!/bin/sh
+# --------------- batch_h5repack.sh help
+# batch_repack.sh
+# h5repack all the files in dir1, saving them in dir2
+#
+# batch_h5repack.sh [opt1] [opt2] ..  str1 [str2] .. - dir1 dir2
+# where each string is a valid species name; e.g., H2O
+# and dir1, dir2 are the directories holding the l2gp files from the two runs
+#       * Special value expanded into all standard species *
+# Special notes on species names:
+# (1) If str1 is StdProd it is expanded into the current standard products
+# i.e.,  
+# BrO CH3CN ClO CO GPH H2O HCl HCN HNO3 HO2 HOCl IWC N2O O3 OH RHI Temperature
+# (2) If str1 is L2FWM-.. it is expanded into the appropriate l2fwm files
+# (3) If str1 is L2AUX-.. it is expanded into the appropriate l2aux files
+# (4) If str1 is all it is expanded into all hdf5 files with .h5 or .he5 suffixes
+
+#     O p t i o n s
+#    -dryrun              Merely echo the commands that would be executed
+#    -c cycle             Insist on cycle number c"cycle"
+#    -gzip level          What level of compression ("" means none)
+#    -nozip               Don't use compression (same as -gzip "")
+#    -h5repack command    Use command instead of h5repack
+
+# Bugs and limitations
+# (1) h5repack is assumed to exist, to be an executable, and to be in
+#     $HOME/bin/LINUX
+# (2) The l2gp file names are assumed to match the pattern
+#      MLS-Aura_L2GP-xxxx_*.he5 ; l2fwm, l2aux as indicated above
+# (3) If multiple matches, we try always to pick out the last
+#      in alphabetical order (which may or may not have the highest cycle num:
+#      which is why we have the -c1 and -c2)
+
+# usage: see (1) above
+
+# --------------- End batch_h5repack.sh help
+# Copyright 2005, by the California Institute of Technology. ALL
+# RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+# commercial use must be negotiated with the Office of Technology Transfer
+# at the California Institute of Technology.
+
+# This software may be subject to U.S. export control laws. By accepting this
+# software, the user agrees to comply with all applicable U.S. export laws and
+# regulations. User has the responsibility to obtain export licenses, or other
+# export authority as may be required before exporting such information to
+# foreign countries or providing access to foreign persons.
+
+#------------------------------- extant_files ------------
+#
+# Function to return only those files among the args
+# that actually exist
+# Useful when passed something like *.f which may 
+# (1) expand to list of files, returned as extant_files_result, or
+# (2) stay *.f, in which case a blank is returned as extant_files_result 
+#     (unless you have perversely named a file '*.f')
+# usage: extant_files arg1 [arg2] ..
+
+extant_files()
+{
+   extant_files_result=
+   # Trivial case ($# = 0)
+   if [ "$1" != "" ]
+   then
+      for file
+      do
+         if [ -f "$file" ]
+         then
+               extant_files_result="$extant_files_result $file"
+         fi
+      done
+   fi
+}
+
+#------------------------------- Main Program ------------
+
+#****************************************************************
+#                                                               *
+#                  * * * Main Program  * * *                    *
+#                                                               *
+#                                                               *
+#	The entry point where control is given to the script         *
+#****************************************************************
+#
+GZIPLEVEL="1"
+#          ^^^---- compression level ("" means none)
+
+
+stdprods='BrO CH3CN ClO CO GPH H2O HCl HCN HNO3 HO2 HOCl IWC N2O O3 OH RHI Temperature'
+debug=0
+#     ^  -- set this to 1 if worried
+me="$0"
+my_name=batch_h5repack.sh
+I=batch_h5repack
+H5REPACK=`which h5repack 2>/dev/null`
+if [ ! -x "$H5REPACK" ]
+then
+  H5REPACK=$HDFTOOLS/h5repack
+fi
+reecho="`echo $0 | sed 's/'$I'/reecho/'`"
+h5repack_opts=""
+list=""
+cycle=""
+doall="no"
+dryrun="no"
+more_opts="yes"
+more_strs="yes"
+while [ "$more_strs" = "yes" ] ; do
+
+    case "$1" in
+
+    - )
+	    shift
+       more_opts="no"
+       more_strs="no"
+       ;;
+    -c )
+	    cycle="$2"
+	    shift
+	    shift
+       ;;
+    -gzip )
+	    GZIPLEVEL="$2"
+	    shift
+	    shift
+       ;;
+    -nozip )
+	    GZIPLEVEL=""
+	    shift
+       ;;
+    -dryrun )
+	    dryrun="yes"
+	    shift
+       ;;
+    -h5repack )
+	    H5REPACK="$2"
+	    shift
+	    shift
+       ;;
+    -h | -help )
+       sed -n '/'$my_name' help/,/End '$my_name' help/ p' $me \
+           | sed -n 's/^.//p' | sed '1 d; $ d'
+       exit
+	     ;;
+    -* )
+       if [ "$h5repack_opts" = "" ]
+       then
+	       h5repack_opts="$1"
+       else
+	       h5repack_opts="$h5repack_opts $1"
+       fi
+       if [ "$1" = "-d" -o "$1" = "-f" ]
+       then
+	       h5repack_opts="$h5repack_opts $2"
+          shift
+       fi
+	    shift
+       ;;
+    * )
+       more_opts="no"
+       sptest=`echo $1 | grep -i st`
+       if [ "$sptest" != "" ]
+       then
+         list="$stdprods"
+       elif [ "$list" != "" ]
+       then
+         list="$list $1"
+       else
+         list="$1"
+       fi
+	    shift
+       ;;
+    esac
+done
+
+dir1="$1"
+dir2="$2"
+
+if [ "$list" = "" ]
+then
+  sed -n '/'$my_name' help/,/End '$my_name' help/ p' $me \
+      | sed -n 's/^.//p' | sed '1 d; $ d'
+  exit
+elif [ "$list" = "all" ]
+then
+    extant_files $dir1/*.h5 $dir1/*.he5
+    list="$extant_files_result"
+    doall="yes"
+fi
+
+if [ "$GZIPLEVEL" != "" ]
+then
+  filter="-f GZIP=$GZIPLEVEL"
+else
+  filter=""
+fi
+h5repack_opts="$h5repack_opts $filter"
+
+if [ "$debug" = 1 ]
+then
+  echo "h5repack $H5REPACK"
+  echo "h5repack_opts $h5repack_opts"
+  echo "list $list"
+  echo "cycle $cycle"
+  echo "dir1 $dir1"
+  echo "dir2 $dir2"
+fi
+if [ "$dir1" = "$dir2" ]
+then
+  echo "Sorry--dir1 and dir2 must be different"
+elif [ ! -d "$dir1" ]
+then
+  echo "Sorry--dir1 must be a directory"
+elif [ ! -d "$dir2" ]
+then
+  echo "Sorry--dir2 must also be a directory"
+elif [ ! -x "$H5REPACK" ]
+then
+  echo "Sorry--h5repack must exist and be executable"
+  exit
+fi
+
+for i in $list
+do
+  l2aux=`echo $i | grep -i l2aux`
+  l2fwm=`echo $i | grep -i l2fwm`
+  # echo "l2aux $l2aux"
+  # echo "l2fwm $l2fwm"
+  if [ "$doall" = "yes" ]
+  then
+    extant_files_result="$i"
+  elif [ "$l2fwm" != "" ]
+  then
+    # echo $dir1/MLS-Aura_${i}_*c${cycle}*.h5
+    extant_files $dir1/MLS-Aura_${i}_*c${cycle}*.h5
+  elif [ "$l2aux" != "" ]
+  then
+    # echo $dir1/MLS-Aura_${i}_*c${cycle}*.h5
+    extant_files $dir1/MLS-Aura_${i}_*c${cycle}*.h5
+  else
+    extant_files $dir1/MLS-Aura_L2GP-${i}_*c${cycle}*.he5
+  fi
+  nfiles=`echo "$extant_files_result" | wc | awk '{print $2}'`
+  # echo "files $extant_files_result"
+  # echo "nfiles $nfiles"
+  if [ "$nfiles" -gt 1 ]
+  then
+    file1=`echo $extant_files_result | sed 's/ /\n/g' | tail -1`
+  elif [ "$nfiles" -lt 1 ]
+  then
+    echo "Sorry--no matching files for species $i in $dir1"
+  else
+    file1="$extant_files_result"
+  fi
+  file2=`echo "$file1" | sed 's:'$dir1':'$dir2':'`
+
+  if [ "$debug" = 1 ]
+  then
+    echo "species $i"
+    echo "file1 $file1"
+    echo "file2 $file2"
+  fi
+  if [ "$dryrun" = "yes" ]
+  then
+    echo $H5REPACK -i $file1 -o $file2 $h5repack_opts
+  else
+    echo "Packing $file1 into $file2"
+    rm -f $file2
+    $H5REPACK -i $file1 -o $file2 $h5repack_opts
+  fi
+done
+
+# $Log: batch_repack.sh,v $
+# Revision 1.3  2009/07/21 20:37:52  pwagner
+# Print tid when logging masters thanks for hostl2q.f90
+#
+# Revision 1.2  2009/01/16 01:52:57  pwagner
+# Will hrepack all eligible files if string is 'all'
+#
+# Revision 1.1  2006/03/23 19:28:49  pwagner
+# First commit
+#
+@
+
+
+1.3
+log
+@Print tid when logging masters thanks for hostl2q.f90
+@
+text
+@d94 5
+a98 1
+H5REPACK=$HOME/bin/h5repack
+d273 3
+@
+
+
+1.2
+log
+@Will hrepack all eligible files if string is 'all'
+@
+text
+@d27 1
+a27 1
+#     $HOME/pvm3/bin/LINUX
+d269 3
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d12 2
+d16 1
+a16 2
+# i.e.,  
+# BrO CH3CN ClO CO GPH H2O HCl HCN HNO3 HO2 HOCl IWC N2O O3 OH RHI Temperature
+d99 1
+d171 3
+d179 5
+a184 2
+dir1="$1"
+dir2="$2"
+d224 4
+a227 1
+  if [ "$l2fwm" != "" ]
+d269 3
+@
+

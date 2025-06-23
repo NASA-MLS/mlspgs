@@ -1,0 +1,184 @@
+head	2.3;
+access;
+symbols
+	v5-02-NRT-19:2.3
+	v6-00:2.3
+	v5-02-NRT-18:2.3
+	v5-02:2.3
+	v5-01-NRT-17:2.3
+	v5-01-NRT-16:2.3
+	v5-01-NRT-15:2.3
+	v5-01-NRT-14:2.3
+	neuralnetworks-1-0:2.3.0.10
+	cfm-single-freq-0-1:2.3.0.8
+	v5-01:2.3
+	v5-00:2.3
+	v4-23-TA133:2.3.0.6
+	mus-emls-1-70:2.3.0.4
+	rel-1-0-englocks-work:2.3.0.2
+	VUMLS1-00:2.3
+	VPL1-00:2.2
+	V4-22-NRT-08:2.1
+	VAM1-00:2.1
+	V4-21:2.1.0.2
+	V4-13:2.1
+	V4-12:2.1
+	V4-11:2.1
+	V4-10:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.3
+date	2016.09.03.00.31.06;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2016.06.03.23.44.44;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2013.07.11.00.00.01;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.3
+log
+@Make Tan_Press intent(out) to ensure it gets deallocated first
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Tangent_Pressures_m
+
+  implicit NONE
+  private
+  public :: Tangent_Pressures
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: Tangent_Pressures_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains ! =====     Public Procedures     =============================
+
+!---------------------------------------------  Tangent_Pressures  -----
+
+  subroutine Tangent_Pressures ( FwdModelConf, Z_grid, No_Tan_Hts, &
+    &                            SurfaceTangentIndex, Tan_Press )
+
+    ! Compute SurfaceTangentIndex, and from that No_Tan_Hts.
+    ! Compute Tan_Press from fwdModelConf%tangentGrid%surfs and z_grid
+
+    use Allocate_Deallocate, only: Allocate_Test
+    use ForwardModelConfig, only: ForwardModelConfig_t
+    use MLSCommon, only: RP
+
+  ! Inputs:
+    type (forwardModelConfig_T), intent(in) :: FwdModelConf
+    real(rp), intent(in) :: Z_Grid(:)
+
+  ! Outputs:
+    integer, intent(out) :: No_Tan_Hts          ! Number of tangent heights
+    integer, intent(out) :: SurfaceTangentIndex ! First or surface tangent index
+    real(rp), allocatable, intent(out) :: Tan_Press(:)  ! Pressures at tangent
+                                                ! points in z_grid
+
+    ! Allocate tan_press and compute it from fwdModelConf%tangentGrid%surfs
+    ! and z_grid
+
+    if ( associated(FwdModelConf%tangentGrid) ) then
+      surfaceTangentIndex = COUNT( fwdModelConf%tangentGrid%surfs < &
+                                 & (z_grid(1) - 0.0001_rp)) + 1
+    else
+      surfaceTangentIndex = 1
+    end if
+    no_tan_hts = size(z_grid) + surfaceTangentIndex - 1
+
+    call allocate_test ( tan_press, no_tan_hts, 'tan_press', moduleName )
+
+! Compute tan_press from fwdModelConf%tangentGrid%surfs and z_grid
+
+    if ( associated(FwdModelConf%tangentGrid) ) &
+      & tan_press(1:surfaceTangentIndex-1) = &
+        & fwdModelConf%tangentGrid%surfs(1:surfaceTangentIndex-1,1)
+    tan_press(surfaceTangentIndex:no_tan_hts) = z_grid
+
+  end subroutine Tangent_Pressures
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: Tangent_Pressures_m.f90,v 2.2 2016/06/03 23:44:44 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Tangent_Pressures_m
+
+! $Log: Tangent_Pressures_m.f90,v $
+! Revision 2.2  2016/06/03 23:44:44  vsnyder
+! Make Tan_Press allocatable instead of a pointer
+!
+! Revision 2.1  2013/07/11 00:00:01  vsnyder
+! Initial commit
+!
+@
+
+
+2.2
+log
+@Make Tan_Press allocatable instead of a pointer
+@
+text
+@d45 2
+a46 1
+    real(rp), allocatable :: Tan_Press(:)  ! Pressures at tangent points in z_psig
+d73 1
+a73 1
+       "$Id: Tangent_Pressures_m.f90,v 2.1 2013/07/11 00:00:01 vsnyder Exp $"
+d83 3
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d20 1
+a20 1
+       "$RCSfile: Compute_Z_PSIG_m.f90,v $"
+d45 1
+a45 1
+    real(rp), pointer :: Tan_Press(:)  ! Pressures at tangent points in z_psig
+a49 2
+    nullify ( tan_press )
+
+d72 1
+a72 1
+       "$Id: Compute_Z_PSIG_m.f90,v 2.9 2013/06/12 02:18:56 vsnyder Exp $"
+d81 4
+a84 1
+! $Log: $
+@
+

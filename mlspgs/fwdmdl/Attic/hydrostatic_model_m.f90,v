@@ -1,0 +1,1165 @@
+head	1.20;
+access;
+symbols
+	newfwm-sep01:1.19.0.2
+	V0-7:1.19
+	V0-5-Level2:1.16
+	V0-5-SIPS:1.15;
+locks; strict;
+comment	@# @;
+
+
+1.20
+date	2001.09.17.20.26.27;	author livesey;	state dead;
+branches;
+next	1.19;
+
+1.19
+date	2001.06.21.13.07.08;	author zvi;	state Exp;
+branches
+	1.19.2.1;
+next	1.18;
+
+1.18
+date	2001.06.07.23.39.31;	author pwagner;	state Exp;
+branches;
+next	1.17;
+
+1.17
+date	2001.05.11.22.18.03;	author livesey;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2001.04.23.21.43.28;	author zvi;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2001.04.09.20.52.07;	author zvi;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2001.04.06.23.58.46;	author zvi;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2001.04.06.20.54.21;	author zvi;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2001.03.29.23.58.48;	author livesey;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2001.03.29.02.27.04;	author zvi;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2001.03.29.02.09.28;	author zvi;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2001.03.29.01.39.42;	author zvi;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2001.03.29.01.27.15;	author livesey;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2001.03.29.01.21.50;	author zvi;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2001.03.28.23.50.11;	author zvi;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2001.03.05.21.37.20;	author zvi;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.02.26.09.01.16;	author zvi;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2001.02.19.22.20.40;	author zvi;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.02.19.22.14.21;	author zvi;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.01.31.22.40.12;	author zvi;	state Exp;
+branches;
+next	;
+
+1.19.2.1
+date	2001.09.10.10.00.43;	author zvi;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.20
+log
+@New forward model
+@
+text
+@! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+module HYDROSTATIC_MODEL_M
+  use MLSCommon, only: I4, R8
+  use GLNP, only: NG, GX
+  use D_HUNT_M, only: HUNT
+  use D_LINTRP_M, only: LINTRP
+  use GET_ETA_M, only: GET_ETA
+  use D_GET_ONE_ETA_M, only: GET_ONE_ETA
+  use HYDROSTATIC_INTRP, only: GET_HEIGHTS, GET_PRESSURES
+
+  implicit NONE
+!---------------------------- RCS Ident Info -------------------------------
+  CHARACTER (LEN=256) :: Id = &
+  "$Id: hydrostatic_model_m.f90,v 1.19 2001/06/21 13:07:08 zvi Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= &
+  "$RCSfile: hydrostatic_model_m.f90,v $"
+!---------------------------------------------------------------------------
+contains
+!---------------------------------------------------------------
+
+SUBROUTINE hydrostatic_model(si, no_phi_t, geoc_lat, Href, &
+           Zref, z_grid, t_z_basis, t_coeff, z_glgrid, h_glgrid,     &
+           t_glgrid, dhdz_glgrid, dh_dt_glgrid, tan_press, tan_hts,  &
+           tan_temp, tan_dh_dt, gl_count, Ier)
+
+!  ===============================================================
+!  Declaration of variables for sub-program: hydrostatic_model
+!  ===============================================================
+!  ---------------------------
+!  Calling sequence variables:
+!  ---------------------------
+
+Integer(i4), INTENT(IN) :: si, no_phi_t
+
+Integer(i4), INTENT(OUT) :: Ier, gl_count
+
+Real(r8), INTENT(IN) :: geoc_lat(:), Zref, Href(:), z_grid(:)
+
+Real(r8), INTENT(IN) :: t_z_basis(:)
+
+Real(r8), INTENT(IN) :: t_coeff(:,:)
+
+Real(r8), INTENT(OUT) :: z_glgrid(:), h_glgrid(:,:), t_glgrid(:,:), &
+                         dhdz_glgrid(:,:), dh_dt_glgrid(:,:,:)
+
+Real(r8), INTENT(IN) :: tan_press(:)
+Real(r8), INTENT(OUT) :: tan_hts(:,:),  tan_temp(:,:)
+
+Real(r8), INTENT(OUT) :: tan_dh_dt(:,:,:)
+
+!  ----------------------
+!  Local variables:
+!  ----------------
+Integer(i4) :: cast(Size(z_grid))
+Integer(i4) :: h_i,i,j,k,l,m,jj,cnt,Ngp1,no_tan_hts,n_lvls,no_t,NLm1
+
+Real(r8) :: zGx(Ng+1)
+Real(r8) :: G,Reff,const,q,h,z,t,v,z1,z2
+Real(r8) :: h_grid(Size(z_grid)),t_grid(Size(z_grid)),dhdt(Size(t_z_basis))
+
+Real(r8), DIMENSION(:), ALLOCATABLE :: xm, ym
+Real(r8), DIMENSION(:,:), ALLOCATABLE :: Eta
+
+! Begin the code here
+
+  ier = 0
+  Ngp1 = Ng + 1
+  N_lvls = Size(z_grid)
+  no_t = Size(t_z_basis)
+  no_tan_hts = Size(tan_press) - si + 1
+!
+  j = -1
+  do i = 1, no_tan_hts
+    z1 = tan_press(i+si-1)
+    Call Hunt(z1,z_grid,n_lvls,j,k)
+    if(abs(z1-z_grid(j)) > abs(z1-z_grid(k))) j=k
+    if(abs(z1-z_grid(j)) > 1.0e-4) then
+      Ier = 1
+      Print *,'** Error in hydrostatic_model routine ..'
+      Print *,'   Tanget array NOT a subset of Integration grid !'
+      Print *,'   Nathaniel is a LIAR !'
+      Return
+    endif
+    cast(i) = 1 + (j - 1) * Ngp1
+  end do
+!
+  NLm1 = N_Lvls - 1
+  ALLOCATE(xm(NLm1),ym(NLm1),STAT=ier)
+  if(ier /= 0) then
+    Print *,'** Error in hydrostatic_model routine ..'
+    Print *,'   Allocation error for vaectors: xm and ym, STAT=',ier
+    Return
+  endif
+!
+! From the selected integration grid pressures define the GL pressure
+! grid:
+
+  zGx(1) = -1.0d0
+  zGx(2:Ngp1) = Gx(1:Ng)
+!
+  xm(1:NLm1) = 0.5d0 * ( z_grid(2:N_Lvls) + z_grid(1:NLm1) )
+  ym(1:NLm1) = 0.5d0 * ( z_grid(2:N_Lvls) - z_grid(1:NLm1) )
+
+  k = NLm1 * Ngp1
+  z_glgrid(1:k) = RESHAPE ( (SPREAD(xm,1,Ngp1) +                 &
+                   &    SPREAD(ym,1,Ngp1) * SPREAD(zGx,2,NLm1)), &
+                   &   (/k/))
+  gl_count = k + 1
+  z_glgrid(gl_count) = z_grid(N_Lvls)
+!
+  DEALLOCATE(xm,ym,STAT=i)
+!
+! *** Create the Temperature on the GL grid by linear interpolation via
+!     the get_eta procedure (Bill's request)
+!
+  ALLOCATE(Eta(gl_count,no_t),STAT=ier)
+  if(ier /= 0) then
+    Print *,'** Error in hydrostatic_model routine ..'
+    Print *,'   Allocation error for matrix: Eta, STAT=',ier
+    Return
+  endif
+
+  Call GET_ETA(z_glgrid,t_z_basis,gl_count,no_t,Eta)
+
+  t_glgrid(1:gl_count,:) = MATMUL(Eta,t_coeff)
+
+! Get Hydrostatically balanced group ([zth]_glgrid, dhdz_glgrid and
+! dh_dt_glgrid on the GL grid:
+
+  DO l = 1, no_phi_t
+    Call get_h_dhdt(t_coeff(1:,l),t_z_basis,Zref,         &
+      &  Href(l),geoc_lat(l),z_glgrid,t_glgrid(1:,l),Eta, &
+      &  h_glgrid(1:,l),dhdz_glgrid(:,l),dh_dt_glgrid(:,l,:))
+  END DO
+
+  DEALLOCATE(Eta,STAT=i)
+!
+! Define tan_hts as a TRUE subset of h_grid for each mmaf:
+!
+  k = no_tan_hts + si - 1
+  DO l = 1, no_phi_t
+    tan_hts(si:k,l) = h_glgrid((/(cast(i),i=1,no_tan_hts)/),l)
+   tan_temp(si:k,l) = t_glgrid((/(cast(i),i=1,no_tan_hts)/),l)
+   if(si > 1) tan_temp(1:si-1,l) = t_glgrid(1,l)
+  END DO
+  no_tan_hts = k
+
+  if(si > 1) then
+
+! Interpolate the hydrostatic grid for conv. grid heights
+! for the values BELOW Earth surface only:
+
+    h_grid(1:) = 0.0
+    t_grid(1:) = 0.0
+    DO l = 1, no_phi_t
+      h_grid(1:) = h_glgrid(1:gl_count:Ngp1,l)
+      t_grid(1:) = t_glgrid(1:gl_count:Ngp1,l)
+      CALL get_heights('h',h_grid,t_grid,z_grid,N_Lvls, &
+                        tan_press,tan_hts(:,l),si-1,ier)
+      IF(ier /= 0) RETURN
+    end do
+
+  endif
+!
+! Cast the dh_dt into the tan_press grid:
+!
+  k = no_tan_hts-si+1
+  DO m = 1, no_t
+    DO l = 1, no_phi_t
+      tan_dh_dt(si:no_tan_hts,l,m)=dh_dt_glgrid((/(cast(i),i=1,k)/),l,m)
+      if(si > 1) tan_dh_dt(1:si-1,l,m) = 0.0
+    END DO
+  END DO
+
+  RETURN
+END SUBROUTINE hydrostatic_model
+
+!----------------------------------------------------------------------
+!  The 2 dimensional Hydrostatic integrator
+
+SUBROUTINE get_h_dhdt(t_profile,t_basis,Zref,Href,geoc_lat,z_grid, &
+                   &  t_grid,Pqi,h_grid,dhdz,dhdt)
+!  ===============================================================
+!  Declaration of variables for sub-program: get_h_dhdt
+!  ===============================================================
+!  ---------------------------
+!  Calling sequence variables:
+!  ---------------------------
+
+Real(r8), INTENT(IN) :: t_profile(:), t_basis(:), z_grid(:), t_grid(:)
+Real(r8), INTENT(IN) :: geoc_lat, Zref, Href
+
+Real(r8), INTENT(OUT) :: h_grid(:), dhdz(:)
+Real(r8), INTENT(OUT) :: dhdt(:,:), Pqi(:,:)
+
+!  ----------------------
+!  PARAMETER Declaration:
+!  ----------------------
+Real(r8), Parameter :: m0 = 28.964125d0
+Real(r8), Parameter :: boltzxln10 = 19.14486942d0
+!  ----------------
+!  Local variables:
+!  ----------------
+Integer(i4) :: j, iter, nt, nz
+
+Real(r8) :: G, Reff, z_prev, z_surf, h, f_prev, f_surf, v, s, dh_dz_s
+
+Real(r8) :: pm(Size(t_basis))
+
+! Begin the code here
+
+!  Compute Surface zeta, given Href & Zref
+
+  nt = Size(t_basis)
+  nz = Size(z_grid)
+!
+  s = 0.0d0
+  Pqi = 0.0
+  pm(1:nt) = 0.0
+  CALL get_g_reff(geoc_lat,s,G,Reff)
+
+  z_surf = z_grid(1)
+  z_prev = z_surf + 1.0
+  f_surf = 1.0
+  iter = 0
+
+  DO
+
+    iter = iter + 1
+    IF(ABS(z_surf-z_prev) < 1.0e-5 .OR. iter > 10) EXIT
+
+    DO j = 1, nt
+      Call pq_ana(z_surf,Zref,t_basis,j,nt,pm(j))
+    END DO
+
+    s = SUM(t_profile(1:nt)*pm(1:nt))
+    h = boltzxln10 * s / G
+    f_surf = h - Href
+    IF(ABS(f_surf) < 1.0e-4) EXIT
+
+    if(iter == 1) then
+      z_prev = z_surf
+      f_prev = f_surf
+      z_surf = z_prev + 0.05
+    else
+      dh_dz_s = (f_surf - f_prev) / (z_surf - z_prev)
+      z_prev = z_surf
+      f_prev = f_surf
+      z_surf = z_prev - f_prev / dh_dz_s
+    endif
+
+  END DO
+
+! compute the piq integrals relative to the surface
+
+  Call do_pqi(z_surf,z_grid,t_basis,nz,nt,Pqi)
+
+! compute the height vector
+
+  v = G * Reff
+  s = boltzxln10 / (v * Reff)
+  h_grid(1:nz) = boltzxln10*MATMUL(Pqi,t_profile)    ! GPH * G
+  h_grid(1:nz) = Reff * h_grid(1:nz) / (v - h_grid(1:nz))
+  dhdz(1:nz) = s * ((h_grid(1:nz) + Reff)**2)
+  dhdt(1:nz,:) = SPREAD(dhdz(1:nz),2,nt) * Pqi
+  dhdz(1:nz) = dhdz(1:nz) * t_grid(1:nz) / m0
+
+  RETURN
+END SUBROUTINE get_h_dhdt
+
+!---------------------------------------------------------------------
+
+SUBROUTINE get_g_reff(geoc_lat,Href,G,Reff)
+
+!  ===============================================================
+!  Declaration of variables for sub-program: get_g_reff
+!  ===============================================================
+!  ---------------------------
+!  Calling sequence variables:
+!  ---------------------------
+Real(r8), INTENT(IN) :: geoc_lat, Href
+
+Real(r8), INTENT(OUT) :: G, Reff
+!  ----------------------
+!  PARAMETER Declaration:
+!  ----------------------
+Real(r8), Parameter :: g0 = 9.80616d0
+Real(r8), Parameter :: g1 = 2.6373d-3
+Real(r8), Parameter :: g2 = 5.9d-6
+Real(r8), Parameter :: r1 = 3.085462d-3
+Real(r8), Parameter :: r2 = 2.27d-6
+Real(r8), Parameter :: r3 = 2.0d-9
+!  ----------------
+!  Local variables:
+!  ----------------
+Real(r8) :: cr, crr, a
+
+! Begin code:
+
+  cr   = Cos(2.0D0 * geoc_lat)
+  G    = g0 * (1.0D0 - cr * (g1 - cr * g2))       ! Modified G
+  crr  = 2.0D0 * cr * cr - 1.0D0                  ! Cos(4*geoc_lat)
+  Reff = 2.0D0 * g / (r1 + r2 * cr - r3 * crr)    ! Reff in Kilometers
+
+  if(Href == 0.0) Return
+
+! Make approriate correction for Href not being the surface
+
+  a = (1.0D0 + Href / Reff)
+  G = G / (a * a)
+  Reff = Reff + Href
+
+  RETURN
+END SUBROUTINE get_g_reff
+
+!---------------------------------------------------------------------
+
+SUBROUTINE do_pqi(Zsurf,z_grid,zetabase,nz,nt,pqi)
+
+!  ===============================================================
+!  Declaration of variables for sub-program: do_pqi
+!  ===============================================================
+!  ---------------------------
+!  Calling sequence variables:
+!  ---------------------------
+Integer(i4), INTENT(IN) :: nz,nt
+
+Real(r8), INTENT(IN) :: z_grid(:),zetabase(:), Zsurf
+Real(r8), INTENT(OUT) :: pqi(:,:)
+
+Integer(i4) :: i,j
+
+    DO j = 1, nt
+      DO i = 1, nz
+        Call pq_ana(Zsurf,z_grid(i),zetabase,j,nt,pqi(i,j))
+      END DO
+    END DO
+
+  RETURN
+END SUBROUTINE do_pqi
+
+!---------------------------------------------------------------------
+
+SUBROUTINE pq_ana(lower_lim,upper_lim,zetabase,iq,nt,v)
+
+!  ===============================================================
+!  Declaration of variables for sub-program: pq_ana
+!  ===============================================================
+!  ---------------------------
+!  Calling sequence variables:
+!  ---------------------------
+Integer(i4), INTENT(IN) :: iq, nt
+
+Real(r8), INTENT(IN) :: lower_lim, upper_lim, zetabase(:)
+Real(r8), INTENT(OUT) :: v
+!  ----------------------
+!  PARAMETER Declaration:
+!  ----------------------
+Real(r8), Parameter :: m0 = 28.964125d0
+!  ----------------
+!  Local variables:
+!  ----------------
+Real(r8) :: sgn, z_0, z_i, h, l, q
+
+! Begin code:
+
+  v = 0.0_r8
+  IF(ABS(upper_lim-lower_lim) < 1.0E-4) RETURN
+
+  sgn = 1.0
+  z_0 = lower_lim
+  z_i = upper_lim
+  IF(lower_lim > upper_lim) THEN
+    sgn = -1.0
+    z_0 = upper_lim
+    z_i = lower_lim
+  END IF
+
+  IF(iq > 1) THEN
+
+! Standard lower triangular integration
+
+    h = MIN(zetabase(iq),MAX(z_i,zetabase(iq-1)))
+    l = MAX(zetabase(iq-1),MIN(z_0,zetabase(iq)))
+    q = m0 * (zetabase(iq) - zetabase(iq-1))
+    v = (h - l) * (0.5 * (h + l) - zetabase(iq-1)) / q
+
+  ELSE
+
+! Special lower rectangular integration
+
+    h = MIN(z_i,zetabase(1))
+    l = MIN(z_0,zetabase(1))
+    v = (h - l) / m0
+
+  END IF
+
+  IF(iq < nt) THEN
+
+! Standard upper triangular integration
+
+    h = MIN(zetabase(iq+1),MAX(z_i,zetabase(iq)))
+    l = MAX(zetabase(iq),MIN(z_0,zetabase(iq+1)))
+    q = m0 * (zetabase(iq+1) - zetabase(iq))
+    v = sgn * (v + (h - l) * (zetabase(iq+1) - 0.5 * (h + l)) / q)
+
+  ELSE
+
+! Special upper rectangular integration
+
+    h = MAX(z_i,zetabase(nt))
+    l = MAX(z_0,zetabase(nt))
+    v = sgn * (v + (h - l) / m0)
+
+  END IF
+
+  RETURN
+END SUBROUTINE pq_ana
+
+end module HYDROSTATIC_MODEL_M
+! $Log: hydrostatic_model_m.f90,v $
+! Revision 1.19  2001/06/21 13:07:08  zvi
+! Speed enhancement MAJOR update
+!
+! Revision 1.18  2001/06/07 23:39:31  pwagner
+! Added Copyright statement
+!
+! Revision 1.17  2001/05/11 22:18:03  livesey
+! Changed an old fixed dimension variable.
+!
+! Revision 1.16  2001/04/23 21:43:28  zvi
+! Introducing no_phi_t etc.
+!
+! Revision 1.15  2001/04/09 20:52:07  zvi
+! Debugging Derivatives version
+!
+! Revision 1.14  2001/04/06 23:58:46  zvi
+! Fix a bug LF95 was compalining about (tan_hts ..)
+!
+! Revision 1.13  2001/04/06 20:54:21  zvi
+! Fix a small bug concerning initialization of JLO in HUNT
+!
+! Revision 1.12  2001/03/29 23:58:48  livesey
+! Turned phi_tan etc. into an array
+!
+! Revision 1.11  2001/03/29 02:27:04  zvi
+! *** empty log message ***
+!
+! Revision 1.10  2001/03/29 02:09:28  zvi
+! Fix an error
+!
+! Revision 1.9  2001/03/29 01:39:42  zvi
+! Fixing an error in tan_hts computations
+!
+! Revision 1.8  2001/03/29 01:27:15  livesey
+! Fixed bug with wrong intent for tan_press
+!
+! Revision 1.7  2001/03/29 01:21:50  zvi
+! Interim version
+!
+! Revision 1.6  2001/03/28 23:50:11  zvi
+! Tanget below surface are now in Zeta units..
+!
+! Revision 1.5  2001/03/05 21:37:20  zvi
+! New filter format
+!
+! Revision 1.1 2000/06/09 00:08:13  Z.Shippony
+! Initial conversion to Fortran 90
+@
+
+
+1.19
+log
+@Speed enhancement MAJOR update
+@
+text
+@d16 1
+a16 1
+  "$Id: hydrostatic_model_m.f90,v 1.18 2001/06/07 23:39:31 pwagner Exp $"
+d424 3
+@
+
+
+1.19.2.1
+log
+@*** empty log message ***
+@
+text
+@d16 1
+a16 1
+  "$Id: hydrostatic_model_m.f90,v 1.19 2001/06/21 13:07:08 zvi Exp $"
+a423 3
+! Revision 1.19  2001/06/21 13:07:08  zvi
+! Speed enhancement MAJOR update
+!
+@
+
+
+1.18
+log
+@Added Copyright statement
+@
+text
+@d6 1
+a6 1
+  use GL6P, only: NG, GX
+d9 1
+d16 1
+a16 1
+  "$Id: hydrostatic_model_m.f90,v 1.17 2001/05/11 22:18:03 livesey Exp $"
+d56 2
+a57 2
+Integer(i4) :: t_index(Size(z_grid))
+Integer(i4) :: h_i,i,j,k,l,m,jj,cnt,Ngp1,no_tan_hts,n_lvls,no_t
+d59 2
+a60 1
+Real(r8) :: G,Reff,const,q,h,z,t,v,z1,z2,xm,ym
+d63 3
+d86 1
+a86 1
+    t_index(i) = j
+d88 9
+a96 1
+
+d100 5
+a104 14
+  gl_count = 0
+  z2 = z_grid(1)
+  DO i = 2, n_lvls
+    z1 = z2
+    z2 = z_grid(i)
+    xm = 0.5D0 * (z2 + z1)
+    ym = 0.5D0 * (z2 - z1)
+    gl_count = gl_count + 1
+    z_glgrid(gl_count) = z1
+    DO j = 1, Ng
+      gl_count = gl_count + 1
+      z_glgrid(gl_count) = xm + ym * Gx(j)
+    END DO
+  END DO
+d106 8
+a113 2
+  gl_count = gl_count + 1
+  z_glgrid(gl_count) = z2
+d118 10
+a127 11
+  DO l = 1, no_phi_t
+    do i = 1, gl_count
+      t = 0.0
+      z = z_glgrid(i)
+      do h_i = 1, no_t
+        CALL get_one_eta(z,t_z_basis,no_t,h_i,v)
+        t = t + t_coeff(h_i,l) * v
+      end do
+      t_glgrid(i,l) = t
+    end do
+  END DO
+d132 4
+a135 11
+  DO h_i = 1, gl_count
+    z = z_glgrid(h_i)
+    j = (h_i + Ng) / Ngp1
+    DO l = 1, no_phi_t
+      CALL get_h_dhdt(t_coeff(1:,l),t_z_basis,z,Zref,Href(l), &
+           geoc_lat(l),Reff,G,const,no_t,h,dhdt)
+      h_glgrid(h_i,l) = h
+      q = h + Reff
+      dhdz_glgrid(h_i,l) = q * q * const * t_glgrid(h_i,l)
+      dh_dt_glgrid(h_i,l,1:no_t) = dhdt(1:no_t)
+    END DO
+d137 2
+d142 9
+a150 17
+  h_grid(1:) = 0.0
+  jj = Size(z_grid)
+  cnt = (gl_count + Ng) / Ngp1
+  do l = 1, no_phi_t
+    tan_temp(1:si-1,l) = t_glgrid(1,l)
+    h_grid(1:cnt) = h_glgrid(1:gl_count:Ngp1,l)
+    if(cnt < jj) h_grid(cnt+1:jj) = h_glgrid(gl_count,l)
+    t_grid(1:cnt) = t_glgrid(1:gl_count:Ngp1,l)
+    if(cnt < jj) t_grid(cnt+1:jj) = t_glgrid(gl_count,l)
+    do i = 1, no_tan_hts
+      j = t_index(i)
+      tan_hts(si+i-1,l) = h_grid(j)
+      tan_temp(si+i-1,l) = t_grid(j)
+    end do
+  end do
+!
+  no_tan_hts = no_tan_hts + si - 1
+d155 9
+a163 11
+  h_grid(1:) = 0.0
+  t_grid(1:) = 0.0
+  do l = 1, no_phi_t
+    h_grid(1:cnt) = h_glgrid(1:gl_count:Ngp1,l)
+    t_grid(1:cnt) = t_glgrid(1:gl_count:Ngp1,l)
+    if(cnt < jj) h_grid(cnt+1:jj) = h_glgrid(gl_count,l)
+    if(cnt < jj) t_grid(cnt+1:jj) = t_glgrid(gl_count,l)
+    CALL get_heights('h',h_grid,t_grid,z_grid,n_lvls,tan_press, &
+   &                  tan_hts(1:si-1,l),si-1,ier)
+    IF(ier /= 0) RETURN
+  end do
+d165 9
+a173 9
+! Interpolate the dh_dt into the tan_press grid:
+
+  t_grid(1:cnt) = 0.0
+  DO l = 1, no_phi_t
+    DO m = 1, no_t
+      t_grid(1:cnt) = dh_dt_glgrid(1:gl_count:Ngp1,l,m)
+      CALL lintrp(z_grid,tan_press(si:),t_grid,tan_dh_dt(si:,l,m), &
+     &            cnt,no_tan_hts-si+1)
+      tan_dh_dt(1:si-1,l,m) = 0.0
+d183 2
+a184 3
+SUBROUTINE get_h_dhdt(t_profile,t_basis,zeta,Zref,Href,geoc_lat, &
+           Reff,G,const,nt,h,dhdt)
+
+a190 1
+Integer(i4), INTENT(IN) :: nt
+d192 5
+a196 2
+Real(r8), INTENT(IN) :: t_profile(:)
+Real(r8), INTENT(IN) :: geoc_lat, Href, Zref, zeta, t_basis(:)
+a197 1
+Real(r8), INTENT(OUT) :: const, h, G, Reff, dhdt(:)
+d206 5
+a210 1
+Integer(i4) :: j
+d212 1
+a212 1
+Real(r8) :: v, denom, sum
+d214 1
+a214 1
+Real(r8), SAVE :: gr2, c, prevlat = -500.0
+d216 12
+a227 1
+Real(r8), dimension(nt) :: pm
+d229 1
+a229 1
+! Begin the code here
+d231 2
+a232 1
+  pm=0.0
+d234 3
+a236 7
+  IF(geoc_lat /= prevlat) THEN
+    prevlat = geoc_lat
+    CALL get_g_reff(geoc_lat,Href,G,Reff)
+    c = G * Reff
+    gr2 = c * Reff
+    const = boltzxln10 / (gr2 * m0)
+  END IF
+d238 15
+a252 1
+  dhdt(1:) = 0.0
+a253 3
+  DO j = 1, nt
+    Call pq_ana(Zref,zeta,t_basis,j,nt,v)
+    pm(j) = v
+d256 3
+a258 4
+  sum = 0.0D0
+  DO j = 1, nt
+    sum = sum + t_profile(j) * pm(j)
+  END DO
+d260 1
+a260 8
+  IF(sum /= 0.0D0) THEN
+    denom = c - boltzxln10 * sum
+    h = gr2 / denom - Reff + Href
+    v = gr2 * boltzxln10 / (denom * denom)
+  ELSE
+    h = Href
+    v = boltzxln10 / G
+  END IF
+d262 7
+a268 1
+  dhdt(1:nt) = v * pm(1:nt)
+d307 2
+d320 26
+d424 3
+@
+
+
+1.17
+log
+@Changed an old fixed dimension variable.
+@
+text
+@d1 3
+d15 1
+a15 1
+  "$Id: hydrostatic_model_m.f90,v 1.16 2001/04/23 21:43:28 zvi Exp $"
+d381 3
+@
+
+
+1.16
+log
+@Introducing no_phi_t etc.
+@
+text
+@d12 1
+a12 1
+  "$Id: hydrostatic_model_m.f90,v 1.15 2001/04/09 20:52:07 zvi Exp $"
+d215 1
+a215 1
+Real(r8) :: pm(50) = 0.0
+d219 2
+d378 3
+@
+
+
+1.15
+log
+@Debugging Derivatives version
+@
+text
+@d12 1
+a12 1
+  "$Id: hydrostatic_model_m.f90,v 1.14 2001/04/06 23:58:46 zvi Exp $"
+d19 1
+a19 1
+SUBROUTINE hydrostatic_model(si,no_mmaf, geoc_lat, Href, &
+d31 1
+a31 1
+Integer(i4), INTENT(IN) :: si,no_mmaf
+d105 1
+a105 1
+  DO l = 1, no_mmaf
+d123 1
+a123 1
+    DO l = 1, no_mmaf
+d138 1
+a138 1
+  do l = 1, no_mmaf
+d158 1
+a158 1
+  do l = 1, no_mmaf
+a167 8
+  k = no_mmaf / 2
+  h_grid(1:) = 0.0
+  t_grid(1:) = 0.0
+  h_grid(1:cnt) = h_glgrid(1:gl_count:Ngp1,k)
+  t_grid(1:cnt) = t_glgrid(1:gl_count:Ngp1,k)
+  if(cnt < jj) h_grid(cnt+1:jj) = h_glgrid(gl_count,k)
+  if(cnt < jj) t_grid(cnt+1:jj) = t_glgrid(gl_count,k)
+
+d171 1
+a171 1
+  DO l = 1, no_mmaf
+d376 3
+@
+
+
+1.14
+log
+@Fix a bug LF95 was compalining about (tan_hts ..)
+@
+text
+@d12 1
+a12 1
+  "$Id: hydrostatic_model_m.f90,v 1.13 2001/04/06 20:54:21 zvi Exp $"
+d64 1
+a64 1
+  no_tan_hts = Size(tan_press) - si + 1 
+d153 1
+a153 1
+! Interpolate the hydrostatic grid for conv. grid heights 
+d384 3
+@
+
+
+1.13
+log
+@Fix a small bug concerning initialization of JLO in HUNT
+@
+text
+@d12 1
+a12 1
+  "$Id: hydrostatic_model_m.f90,v 1.12 2001/03/29 23:58:48 livesey Exp $"
+d164 1
+a164 1
+   &                  tan_hts(:,l),si-1,ier)
+d384 3
+@
+
+
+1.12
+log
+@Turned phi_tan etc. into an array
+@
+text
+@d12 1
+a12 1
+  "$Id: hydrostatic_model_m.f90,v 1.11 2001/03/29 02:27:04 zvi Exp $"
+d66 1
+d384 3
+@
+
+
+1.11
+log
+@*** empty log message ***
+@
+text
+@d12 1
+a12 1
+  "$Id: hydrostatic_model_m.f90,v 1.10 2001/03/29 02:09:28 zvi Exp $"
+d35 1
+a35 1
+Real(r8), INTENT(IN) :: geoc_lat, Zref, Href(:), z_grid(:)
+d124 1
+a124 1
+           geoc_lat,Reff,G,const,no_t,h,dhdt)
+d383 3
+@
+
+
+1.10
+log
+@Fix an error
+@
+text
+@d12 1
+a12 1
+  "$Id: hydrostatic_model_m.f90,v 1.9 2001/03/29 01:39:42 zvi Exp $"
+a183 1
+      tan_dh_dt(no_tan_hts+1:,l,m) = dh_dt_glgrid(gl_count,l,m)
+d383 3
+@
+
+
+1.9
+log
+@Fixing an error in tan_hts computations
+@
+text
+@d12 1
+a12 1
+  "$Id: hydrostatic_model_m.f90,v 1.8 2001/03/29 01:27:15 livesey Exp $"
+d155 12
+a174 6
+  do l = 1, no_mmaf
+    CALL get_heights('h',h_grid,t_grid,z_grid,n_lvls,tan_press, &
+   &                  tan_hts(:,l),si-1,ier)
+    IF(ier /= 0) RETURN
+  end do
+
+d384 3
+@
+
+
+1.8
+log
+@Fixed bug with wrong intent for tan_press
+@
+text
+@d12 1
+a12 1
+  "$Id: hydrostatic_model_m.f90,v 1.7 2001/03/29 01:21:50 zvi Exp $"
+d162 6
+a167 3
+  CALL get_heights('h',h_grid,t_grid,z_grid,n_lvls,tan_press,tan_hts, &
+ &                  si-1,ier)
+  IF(ier /= 0) RETURN
+d378 3
+@
+
+
+1.7
+log
+@Interim version
+@
+text
+@d12 1
+a12 1
+  "$Id: hydrostatic_model_m.f90,v 1.6 2001/03/28 23:50:11 zvi Exp $"
+d44 1
+a44 1
+Real(r8), INTENT(IN OUT) :: tan_press(:)
+d375 3
+@
+
+
+1.6
+log
+@Tanget below surface are now in Zeta units..
+@
+text
+@d4 1
+a4 2
+  use L2PCDIM, only: N2lvl, Nlvl
+  use L2PC_FILE_PARAMETERS, only: MXCO => max_no_elmnts_per_sv_component
+d12 1
+a12 1
+  "$Id: hydrostatic_model_m.f90,v 1.5 2001/03/05 21:37:20 zvi Exp $"
+d19 4
+a22 5
+SUBROUTINE hydrostatic_model(si,n_lvls,no_t,no_mmaf,t_indx,   &
+           no_tan_hts, geoc_lat, Href, Zref, z_grid, t_z_basis,  &
+           t_coeff, z_glgrid, h_glgrid, t_glgrid, dhdz_glgrid,         &
+           dh_dt_glgrid, tan_press, tan_hts, tan_temp, tan_dh_dt,      &
+           gl_count, Ier)
+d31 1
+a31 4
+Integer(i4), INTENT(IN) :: t_indx(*)
+Integer(i4), INTENT(IN) :: si,N_lvls,no_t,no_mmaf
+
+Integer(i4), INTENT(IN OUT) :: no_tan_hts
+d52 2
+a53 1
+Integer(i4) :: h_i,i,j,k,l,m,jj,cnt,Ngp1
+d56 1
+a56 1
+Real(r8) :: h_grid(Nlvl),t_grid(Nlvl),dhdt(mxco)
+d62 17
+d135 1
+a135 1
+  jj = min(Nlvl,n_lvls+1)
+d140 1
+a140 1
+    h_grid(cnt+1:jj) = h_glgrid(gl_count,l)
+d142 1
+a142 1
+    t_grid(cnt+1:jj) = t_glgrid(gl_count,l)
+d144 1
+a144 1
+      j = t_indx(i)
+d160 2
+a161 2
+  h_grid(cnt+1:jj) = h_glgrid(gl_count,k)
+  t_grid(cnt+1:jj) = t_glgrid(gl_count,k)
+d375 3
+@
+
+
+1.5
+log
+@New filter format
+@
+text
+@d13 1
+a13 1
+  "$Id: hydrostatic_model_m.f90,v 1.1 2000/06/09 00:08:13  Z.Shippony Exp $"
+d21 1
+a21 1
+           no_tan_hts, geoc_lat, Href, Zref, z_grid, thbs, t_z_basis,  &
+d40 1
+a40 1
+Real(r8), INTENT(IN) :: geoc_lat, Zref, Href(*), z_grid(*), thbs(*)
+a124 1
+    tan_hts(1:si-1,l) = thbs(1:si-1)
+d139 1
+a139 1
+! Interpolate the hydrostatic grid for conv. grid pressures (tan_press)
+d149 2
+a150 2
+  CALL get_pressures('h',h_grid,t_grid,z_grid,n_lvls,thbs,tan_press, &
+ &                    si-1,ier)
+d362 3
+@
+
+
+1.4
+log
+@New version - Using "Super-Structures"
+@
+text
+@d40 1
+a40 2
+Real(r8), INTENT(IN) :: geoc_lat, Href(*), Zref(*), z_grid(*), &
+                        thbs(*)
+d110 1
+a110 1
+      CALL get_h_dhdt(t_coeff(1:,l),t_z_basis,z,Zref(j),Href(j), &
+@
+
+
+1.3
+log
+@Latest modification: Conv/NoConv
+@
+text
+@d13 1
+a13 1
+  "$Id: hydrostatic_model_m.f90,v 1.2 2001/02/19 22:14:21 zvi Exp $"
+d50 2
+a51 1
+Real(r8), INTENT(OUT) :: tan_press(:), tan_hts(:,:),  tan_temp(:,:)
+a138 8
+! Define tan_press as a TRUE subset of z_grid:
+!
+  tan_press(1:si-1) = -5.0
+  do i = 1, no_tan_hts
+    j = t_indx(i)
+    tan_press(si+i-1) = z_grid(j)
+  end do
+
+a363 2
+! Revision 1.2  2001/02/19 22:14:21  zvi
+!
+@
+
+
+1.2
+log
+@
+Ctest modification Conv/NoConvVS: ----------------------------------------------------------------------
+@
+text
+@d13 1
+a13 1
+  "$Id: hydrostatic_model_m.f90,v 1.1 2000/06/09 00:08:13  Z.Shippony Exp $"
+d371 2
+@
+
+
+1.1
+log
+@Add new version
+@
+text
+@d20 1
+a20 1
+SUBROUTINE hydrostatic_model(si, n_lvls, no_t, no_mmaf, t_indx,        &
+d33 2
+a34 1
+Integer(i4), INTENT(IN) :: si, n_lvls, no_t, no_mmaf, t_indx(*)
+d171 1
+a171 1
+      tan_dh_dt(h_i+1:,l,m) = dh_dt_glgrid(gl_count,l,m)
+@
+

@@ -1,0 +1,2402 @@
+head	1.83;
+access;
+symbols
+	v5-02-NRT-19:1.83
+	v6-00:1.83
+	v5-02-NRT-18:1.83
+	v5-02:1.75
+	v5-01-NRT-17:1.83
+	v5-01-NRT-16:1.83
+	v5-01-NRT-15:1.83
+	v5-01-NRT-14:1.83
+	neuralnetworks-1-0:1.82.0.4
+	cfm-single-freq-0-1:1.82.0.2
+	v5-01:1.75
+	v5-00:1.75
+	v4-23-TA133:1.68.0.2
+	mus-emls-1-70:1.65.0.2
+	rel-1-0-englocks-work:1.64.0.2
+	VUMLS1-00:1.55
+	VPL1-00:1.53
+	V4-22-NRT-08:1.53
+	VAM1-00:1.47
+	V4-21:1.43.0.2
+	V4-13:1.42
+	V4-12:1.42
+	V4-11:1.41
+	V4-10:1.40
+	V3-43:1.7
+	M4-00:1.34
+	V3-41:1.7
+	V3-40-PlusGM57:1.7.0.2
+	V3-33:1.23
+	V3-31:1.23
+	V3-30-NRT-05:1.12
+	cfm-01-00:1.11
+	V3-30:1.7
+	V3-20:1.7
+	V3-10:1.2;
+locks; strict;
+comment	@% @;
+
+
+1.83
+date	2021.04.21.23.48.58;	author pwagner;	state Exp;
+branches;
+next	1.82;
+
+1.82
+date	2020.07.23.01.05.44;	author vsnyder;	state Exp;
+branches;
+next	1.81;
+
+1.81
+date	2020.07.09.23.26.47;	author vsnyder;	state Exp;
+branches;
+next	1.80;
+
+1.80
+date	2020.07.01.00.01.20;	author vsnyder;	state Exp;
+branches;
+next	1.79;
+
+1.79
+date	2020.06.10.00.35.50;	author vsnyder;	state Exp;
+branches;
+next	1.78;
+
+1.78
+date	2020.03.18.23.43.27;	author vsnyder;	state Exp;
+branches;
+next	1.77;
+
+1.77
+date	2019.11.06.02.28.59;	author vsnyder;	state Exp;
+branches;
+next	1.76;
+
+1.76
+date	2019.10.03.00.54.10;	author vsnyder;	state Exp;
+branches;
+next	1.75;
+
+1.75
+date	2019.09.24.02.00.19;	author vsnyder;	state Exp;
+branches;
+next	1.74;
+
+1.74
+date	2019.09.12.02.52.06;	author vsnyder;	state Exp;
+branches;
+next	1.73;
+
+1.73
+date	2019.08.27.00.49.45;	author vsnyder;	state Exp;
+branches;
+next	1.72;
+
+1.72
+date	2019.08.27.00.48.30;	author vsnyder;	state Exp;
+branches;
+next	1.71;
+
+1.71
+date	2019.06.24.18.49.10;	author pwagner;	state Exp;
+branches;
+next	1.70;
+
+1.70
+date	2019.06.19.01.39.01;	author yanovsky;	state Exp;
+branches;
+next	1.69;
+
+1.69
+date	2019.05.29.02.12.45;	author vsnyder;	state Exp;
+branches;
+next	1.68;
+
+1.68
+date	2018.11.29.21.35.17;	author vsnyder;	state Exp;
+branches;
+next	1.67;
+
+1.67
+date	2018.10.22.23.27.58;	author vsnyder;	state Exp;
+branches;
+next	1.66;
+
+1.66
+date	2018.07.25.19.42.34;	author vsnyder;	state Exp;
+branches;
+next	1.65;
+
+1.65
+date	2018.07.10.00.21.05;	author vsnyder;	state Exp;
+branches;
+next	1.64;
+
+1.64
+date	2017.11.28.01.29.53;	author vsnyder;	state Exp;
+branches;
+next	1.63;
+
+1.63
+date	2017.10.13.19.12.39;	author vsnyder;	state Exp;
+branches;
+next	1.62;
+
+1.62
+date	2017.10.03.00.51.31;	author vsnyder;	state Exp;
+branches;
+next	1.61;
+
+1.61
+date	2017.09.26.23.08.45;	author vsnyder;	state Exp;
+branches;
+next	1.60;
+
+1.60
+date	2017.09.23.00.00.07;	author vsnyder;	state Exp;
+branches;
+next	1.59;
+
+1.59
+date	2017.09.21.23.12.58;	author vsnyder;	state Exp;
+branches;
+next	1.58;
+
+1.58
+date	2017.08.31.01.07.57;	author vsnyder;	state Exp;
+branches;
+next	1.57;
+
+1.57
+date	2017.06.08.01.27.42;	author vsnyder;	state Exp;
+branches;
+next	1.56;
+
+1.56
+date	2017.06.05.20.55.31;	author vsnyder;	state Exp;
+branches;
+next	1.55;
+
+1.55
+date	2017.03.08.02.38.38;	author vsnyder;	state Exp;
+branches;
+next	1.54;
+
+1.54
+date	2016.11.04.01.30.24;	author vsnyder;	state Exp;
+branches;
+next	1.53;
+
+1.53
+date	2016.05.19.01.15.35;	author vsnyder;	state Exp;
+branches;
+next	1.52;
+
+1.52
+date	2016.03.17.19.06.34;	author vsnyder;	state Exp;
+branches;
+next	1.51;
+
+1.51
+date	2016.03.15.18.37.56;	author pwagner;	state Exp;
+branches;
+next	1.50;
+
+1.50
+date	2016.02.19.01.26.24;	author vsnyder;	state Exp;
+branches;
+next	1.49;
+
+1.49
+date	2016.02.18.20.57.21;	author vsnyder;	state Exp;
+branches;
+next	1.48;
+
+1.48
+date	2015.12.02.01.59.30;	author vsnyder;	state Exp;
+branches;
+next	1.47;
+
+1.47
+date	2015.09.18.22.49.58;	author vsnyder;	state Exp;
+branches;
+next	1.46;
+
+1.46
+date	2015.08.25.21.49.24;	author vsnyder;	state Exp;
+branches;
+next	1.45;
+
+1.45
+date	2015.05.07.00.28.18;	author vsnyder;	state Exp;
+branches;
+next	1.44;
+
+1.44
+date	2015.04.30.17.48.40;	author vsnyder;	state Exp;
+branches;
+next	1.43;
+
+1.43
+date	2014.11.10.20.27.18;	author vsnyder;	state Exp;
+branches;
+next	1.42;
+
+1.42
+date	2014.07.17.22.08.15;	author yanovsky;	state Exp;
+branches;
+next	1.41;
+
+1.41
+date	2014.05.08.00.03.48;	author vsnyder;	state Exp;
+branches;
+next	1.40;
+
+1.40
+date	2014.02.28.22.00.45;	author vsnyder;	state Exp;
+branches;
+next	1.39;
+
+1.39
+date	2014.02.21.20.03.35;	author vsnyder;	state Exp;
+branches;
+next	1.38;
+
+1.38
+date	2013.10.08.00.42.23;	author vsnyder;	state Exp;
+branches;
+next	1.37;
+
+1.37
+date	2013.08.16.02.59.27;	author vsnyder;	state Exp;
+branches;
+next	1.36;
+
+1.36
+date	2013.07.25.00.31.30;	author vsnyder;	state Exp;
+branches;
+next	1.35;
+
+1.35
+date	2013.04.24.20.11.17;	author vsnyder;	state Exp;
+branches;
+next	1.34;
+
+1.34
+date	2013.04.11.03.07.52;	author vsnyder;	state Exp;
+branches;
+next	1.33;
+
+1.33
+date	2013.04.11.01.23.46;	author vsnyder;	state Exp;
+branches;
+next	1.32;
+
+1.32
+date	2012.08.31.23.39.27;	author vsnyder;	state Exp;
+branches;
+next	1.31;
+
+1.31
+date	2012.08.24.22.06.53;	author vsnyder;	state Exp;
+branches;
+next	1.30;
+
+1.30
+date	2012.07.27.04.05.20;	author vsnyder;	state Exp;
+branches;
+next	1.29;
+
+1.29
+date	2012.03.29.23.17.04;	author vsnyder;	state Exp;
+branches;
+next	1.28;
+
+1.28
+date	2011.12.15.02.52.06;	author vsnyder;	state Exp;
+branches;
+next	1.27;
+
+1.27
+date	2011.07.28.20.12.04;	author vsnyder;	state Exp;
+branches;
+next	1.26;
+
+1.26
+date	2011.05.24.01.33.52;	author vsnyder;	state Exp;
+branches;
+next	1.25;
+
+1.25
+date	2011.03.17.20.43.21;	author yanovsky;	state Exp;
+branches;
+next	1.24;
+
+1.24
+date	2011.03.11.03.38.25;	author vsnyder;	state Exp;
+branches;
+next	1.23;
+
+1.23
+date	2011.02.08.02.25.02;	author vsnyder;	state Exp;
+branches;
+next	1.22;
+
+1.22
+date	2011.02.05.01.34.08;	author vsnyder;	state Exp;
+branches;
+next	1.21;
+
+1.21
+date	2010.12.21.01.25.30;	author vsnyder;	state Exp;
+branches;
+next	1.20;
+
+1.20
+date	2010.12.18.03.55.10;	author vsnyder;	state Exp;
+branches;
+next	1.19;
+
+1.19
+date	2010.12.17.01.12.28;	author vsnyder;	state Exp;
+branches;
+next	1.18;
+
+1.18
+date	2010.12.07.00.23.18;	author pwagner;	state Exp;
+branches;
+next	1.17;
+
+1.17
+date	2010.12.04.02.50.57;	author vsnyder;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2010.11.22.18.50.39;	author yanovsky;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2010.11.13.01.34.25;	author vsnyder;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2010.11.10.19.57.39;	author yanovsky;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2010.10.22.03.53.16;	author yanovsky;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2010.08.27.23.53.02;	author vsnyder;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2010.06.08.19.06.06;	author yanovsky;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2010.05.26.22.56.57;	author pwagner;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2010.05.20.23.50.05;	author vsnyder;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2010.04.09.02.32.08;	author vsnyder;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2010.01.26.02.09.04;	author vsnyder;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2009.12.15.23.26.34;	author vsnyder;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2009.12.15.21.22.01;	author vsnyder;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2009.10.15.22.57.49;	author vsnyder;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2009.07.29.03.10.53;	author vsnyder;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2008.06.25.00.31.49;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2008.06.12.00.53.05;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.83
+log
+@Mentions Vans last contributions
+@
+text
+@\documentclass[12pt]{article}
+
+\topmargin -0.5in
+\textheight 9in
+\textwidth 6.5in
+\oddsidemargin 0in
+\evensidemargin 0in
+
+\usepackage{amsmath}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\renewcommand{\d}{\text{d}}
+\ifx\dvidir\undefined
+  \newcommand\hr[1]{\href{#1.dvi}{dvi} \href{#1.pdf}{pdf}}
+\else
+  \newcommand\hr[1]{\href{\dvidir/#1.dvi}{dvi} \href{\pdfdir/#1.pdf}{pdf}}
+\fi
+\newcommand\h[1]{#1 \hr{#1}}
+\newcommand\hh[2]{#1 \hr{#2}}
+\newcommand\hrpdf[1]{\href{#1.pdf}{pdf}}
+\newcommand\hpdf[1]{#1 \hrpdf{#1}}
+
+% #2 in these macros is the path relative to the index, which might be
+% deeper than ./ or ./\dvidir/ or ./\pdfdir/
+\newcommand\hrlongdvi[2]{#1 \href{#2/#1.dvi}{dvi}}
+\newcommand\hrlongpdf[2]{#1 \href{#2/#1.pdf}{pdf}}
+
+\begin{document}
+
+\makeatletter
+\newcommand{\ps@@headfoot}{%
+\renewcommand{\@@oddhead}{%
+ \hfill \sffamily \bfseries \Large Document Index \hfill}
+\renewcommand{\@@evenhead}{%
+ \hfill \sffamily \bfseries \Large Document Index \hfill}
+\renewcommand{\@@oddfoot}{%
+ \hfill \thepage \hfill}
+\renewcommand{\@@evenfoot}{%
+ \hfill \thepage \hfill}
+}%
+\makeatother
+\pagestyle{headfoot}
+
+\newcommand{\TS}{T_\text{scat}}
+\newcommand{\TSs}[1]{T_{\text{scat}_{#1}}}
+
+\section*{Groups of papers}
+
+\begin{itemize}
+\item \hyperref[papers]{In order by paper number}
+\item \hyperref[frontend]{Parsing, type checking, {\tt l2cf} format}
+\item \hyperref[retrieval]{Retrieval}
+\item \hyperref[forwardmodel]{Forward model}
+\item \hyperref[PFA]{PFA}
+\item \hyperref[TSCAT]{TSCAT}
+\item \hyperref[QTM]{QTM}
+\item \hyperref[geometry]{Algebra and Geometry}
+\end{itemize}
+
+\section*{In order by paper number}
+
+\begin{longtable}[l]{l|p{5in}}\label{papers}
+\hh{l2cf}{l2cfquickreference} & l2cf quick reference (very old)\\
+% This doesn't work, and I don't know why not
+%\hrlongpdf{l2cf}{pdf/l2cf/} & l2cf: Sections and Run-time Flags \\
+cfm \href{../cfm/pdf/cfm.pdf}{pdf} & Callable Forward Model: Fortran API \\
+icfm \href{../icfm/pdf/icfm.pdf}{pdf} & Callable Forward Model: idl API \\
+l2cf \href{../l2cf/pdf/l2cf.pdf}{pdf} & l2cf: Sections and Run-time Flags \\
+\h{wvs-001} & Observations Concerning Code in the {\tt mlspgs/l2} Directory\\
+\h{wvs-002} & The retrieval iteration in the form of a least-squares problem\\
+\h{wvs-003} & The Forward Model\\
+\h{wvs-004} & Configuration File Parser Users' Guide\\
+\h{wvs-005} & What would Fred Krogh do for the Level 2 Program?\\
+\h{wvs-006} & Changes I've made or suggest for the L2CF format, and questions
+          about it\\
+\h{wvs-007} & Changes in the {\tt MLSCF} module\\
+\h{wvs-008} & Summary of work I asked Fred Krogh to do recently\\
+\h{wvs-009} & Changes in mathematical method for EOS MLS retrieval\\
+\h{wvs-010} & Interfaces for VectorsModule, MatrixModule\_0 and MatrixModule\_1\\
+\h{wvs-011} & More remarks on solving the linear system during retrieval\\
+\h{wvs-012} & Computing the covariance matrix\\
+\h{wvs-013} & Continuation of consulting agreement 1202403\\
+\h{wvs-014} & More remarks on solving the linear system during retrieval\\
+\h{wvs-015} & Exponential of a matrix, and derivative thereof\\
+\h{wvs-016} & Alternative formulation for polarized radiance derivatives\\
+\h{wvs-017} & Pre-frequency-averaging\\
+\h{wvs-018} & Temperature derivatives\\
+\h{wvs-019} & Betas, {\tt slabs\_sw\_m}\\
+\h{wvs-020} & Reading and writing spectroscopy data in MLSL2\\
+\h{wvs-021} & Pre-frequency-averaged radiance calculation\\
+\h{wvs-022} & Spectroscopy derivatives\\
+\h{wvs-023} & Spectral parameter offsets and derivatives\\
+\h{wvs-024} & PFA derivatives\\
+\h{wvs-025} & New frequency averaging scheme for use with PFA\\
+\h{wvs-026} & Simplifying assumption to combine line-by-line and PFA\\
+\h{wvs-027} & Revised method to combine line-by-line and PFA\\
+\h{wvs-028} & Summary of line-by-line and PFA radiance and derivatives\\
+\h{wvs-029} & Refractive correction for $\phi$\\
+\h{wvs-030} & Points on line and surface of ellipsoid that are nearest
+          to each other\\
+\h{wvs-031} & Relative humidity configuration\\
+\h{wvs-032} & Incoherent-to-coherent fill\\
+\h{wvs-033} & Path integrations\\
+\h{wvs-034} & Equation 11.4 in ATBD\\
+\h{wvs-035} & Alternative to gradient move in DNWT\\
+\h{wvs-036} & Retrieval diagnostic vector quantities\\
+\h{wvs-037} & Updated non-GL correction in forward model\\
+\h{wvs-038} & Modification to {\tt metrics\_m}\\
+\h{wvs-039} & Calculating $H_m$ in modification to {\tt metrics\_m}\\
+\h{wvs-040} & Calculating $\phi$ for $\zeta_{\text{max}}$\\
+\h{wvs-041} & Maximum $\zeta$\\
+\h{wvs-042} & $H$--$\phi$ iteration in {\tt metrics}\\
+\h{wvs-043} & Inverting the $\phi$ refractive correction\\
+\h{wvs-044} & What to do in {\tt metrics\_m}\\
+\h{wvs-045} & What to do in {\tt metrics\_m} to get $\zeta_\text{min}$\\
+\h{wvs-046} & Interesting result concerning $\zeta_{\text{min}}$\\
+\h{wvs-047} & Revised metrics plan\\
+\h{wvs-048} & Different solution for $\phi$--$H$ calculation in {\tt metrics\_m}\\
+\h{wvs-049} & Making PFA tables\\
+\hpdf{wvs-050} & Presentation: Summary of Retriever\\
+\h{wvs-051} & Speeding up MLS Level 2 retrievals, with possible application to
+          SMLS\\
+\h{wvs-052} & ATBD equations\\
+\h{wvs-053} & Alternative minimum $\zeta$ calculation\\
+\h{wvs-054} & A few more ideas for speeding up MLS Level 2 retrievals, with possible application to SMLS\\
+\h{wvs-055} & Summary of changes made to reduce MLSL2 run time\\
+\h{wvs-056} & Refractive correction\\
+\h{wvs-057} & Recurrences for functions related to $J_\nu(z)$, $Y_\nu(z)$\\
+\h{wvs-058} & Mie solution in terms of Bessel functions\\
+\h{wvs-059} & Another look at metrics\\
+\h{wvs-060} & Trouble with GL correction in the forward model\\
+\h{wvs-061} & Trouble with path length in the forward model\\
+\h{wvs-062} & Minimum and maximum state vector elements during retrieval\\
+\hpdf{wvs-063} & Presentation: Summary of Full Forward Model\\
+\h{wvs-064} & Summary of summary of changes made to reduce MLSL2 run time\\
+\h{wvs-065} & Summary of Mie parameters\\
+\h{wvs-066} & Derivatives for Mie $\beta$\\
+\h{wvs-067} & Summary of Mie formulae\\
+\h{wvs-068} & Mie phase function, integrated scattering, and derivatives\\
+\h{wvs-069} & Inverting the radiative transfer equation\\
+\h{wvs-070} & Reducing Mie phase function integrated
+          scattering from double to single integrals \\
+\hpdf{wvs-071} & Presentation: Accurate and efficient computation of Mie
+          parameters\\
+\hpdf{wvs-072} & Presentation: Variable projection and retrievals\\
+\h{wvs-073} & Summary of ``faster retrieval'' meeting\\
+\h{wvs-074} & Tangent heights and angles for scattering calculations\\
+\h{wvs-075} & Title and abstract for ``Scientific Computation on High Performance
+          Workstations''\\
+\h{wvs-076} & Organization of changes to Full Forward Model for
+          TSCAT-com\-pu\-ta\-tion mode\\
+\h{wvs-077} & Antenna convolution as a Stieltjes integral\\
+\h{wvs-078} & Tasks for cloud forward model\\
+\h{wvs-079} & Logarithm of $2 \times 2$ matrix\\
+\h{wvs-080} & TScat and derivatives\\
+\h{wvs-081} & Variable projection applied to retrieval\\
+\h{wvs-082} & Current status of scattering additions to forward model\\
+\h{wvs-083} & 2-d interpolation\\
+\h{wvs-084} & Total IWC\\
+\h{wvs-085} & Scattered brightness temperature\\
+\h{wvs-086} & Periodic cubic spline interpolation with unequally spaced abscissae\\
+\h{wvs-087} & Potential speedup of full forward model by nearly $4\times$\\
+\h{wvs-088} & Canceling singularity incorrectly\\
+\h{wvs-089} & TScat derivatives w.r.t. T and IWC\\
+\h{wvs-090} & Derivation of radiative transfer equation used in Forward Model\\
+\h{wvs-091} & Accessing the TScat Jacobian as a {\tt Matrix\_T} object\\
+\h{wvs-092} & Hessian representation and multiplication\\
+\h{wvs-093} & Computing derivatives in the MLS Full Forward Model\\
+\h{wvs-094} & Usage of {\tt Mie\_Tables} program\\
+\h{wvs-095} & Radiance and derivatives incorporating $\TSs{i}$\\
+\h{wvs-096} & Combining LBL, PFA and $\TS$\\
+\h{wvs-097} & Full forward model changes to combine LBL, PFA and $\TS$\\
+\h{wvs-098} & Mixing-ratio derivative of radiance (oversimplified -- see wvs-093
+or wvs-099)\\
+\h{wvs-099} & Variational derivatives of first-order linear differential equations \\
+\h{wvs-100} & Reducing the cost of radiance derivatives \\
+\h{wvs-101} & Interpolating derivatives from grid to path\\
+\h{wvs-102} & Derivatives of $\alpha$ \\
+\h{wvs-103} & Error in temperature derivative of oxygen continuum\\
+\h{wvs-104} & Revisiting $2\times2$ matrix exponential and derivatives, for polarized model\\
+\h{wvs-105} & Init_Tables_Module generator\\
+\h{wvs-106} & Alternative formulation for derivatives\\
+\h{wvs-107} & MIF Extinction\\
+\h{wvs-108} & IGRF magnetic field coefficients\\
+\h{wvs-109} & Might be doing Tikhonov wrong\\
+\h{wvs-110} & Incorporating Hessian information into the Newton method\\
+\h{wvs-111} & Effect of minimum value of $\lambda$ on convergence\\
+\h{wvs-112} & New representation of temperature derivatives\\
+\h{wvs-113} & Considerations for out-of-orbit-plane modeling\\
+\h{wvs-114} & MIF RHI\\
+\h{wvs-115} & Out-of-orbit-plane modeling\\
+\h{wvs-116} & Using Fortran's C interoperability features for IDL CALL_EXTERNAL\\
+\h{wvs-117} & New MLS programs configuration file (e.g., {\tt l2cf}) capabilities\\
+\h{wvs-118} & Grammar for MLS configuration files\\
+\h{wvs-119} & Exploiting sparsity in Cholesky factorization\\
+\h{wvs-120} & Magnetic fields\\
+\h{wvs-121} & Three-dimensional rotation about a specified axis\\
+\h{wvs-122} & Computing cross-orbit viewing geometry \\
+\h{wvs-123} & Magnetic field specification in l2cf \\
+\h{wvs-124} & Improvement on gradient move in the Newton solver \\
+\h{wvs-125} & PhiWindow is now a tuple or a number \\
+\h{wvs-126} & Calculate node of great circle and angular distance from a node \\
+\h{wvs-127} & Representing state vector quantities and line of sight geometry\\
+\h{wvs-128} & Quaternary Triangular Mesh\\
+\h{wvs-129} & Intersections of a line with a cone\\
+\h{wvs-130} & Intersection of a line with a plane\\
+\h{wvs-131} & Intersection of a line with an ellipsoid\\
+\h{wvs-132} & Center of a sphere (or circle) defined by three (or two) points
+and its radius\\
+\h{wvs-133} & Reflection of a line from a plane\\
+\h{wvs-134} & Intersection of a line with a surface at constant height above
+the Earth reference ellipsoid\\
+\h{wvs-135} & Outline of 3-dimensional forward model \\
+\h{wvs-136} & Closest approach between two lines \\
+\h{wvs-137} & Interpolation coefficient lists OBSOLETE! \\
+\h{wvs-138} & Interpolating coefficients, index arrays, and flags in the
+forward model \\
+\hpdf{wvs-139} & Presentation: Forward model summary \\
+\h{wvs-140} & Layer quantities and boundary quantities in the forward model \\
+\h{wvs-141} & Intersection of a line with a circle defined by two points and
+its radius \\
+\h{wvs-142} & Point on line nearest to a given point \\
+\h{wvs-143} & Definition of path of integration \\
+\h{wvs-144} & Sparse-matrix representation of interpolation coefficients \\
+\h{wvs-145} & Organization of the Full Forward Model \\
+\h{wvs-146} & Radii of curvature of an oblate spheroid \\
+\hpdf{wvs-147} & Presentation: Configuration file processing \\
+\h{wvs-148} & Alternative to state-vector representation \\
+\h{wvs-149} & A Re-examination of Hashing Using Separate Chains \\
+\h{wvs-150} & State transitions in DNWT \\
+\hpdf{wvs-151} & Presentation: Sparse interpolation matrices \\
+\h{wvs-152} & Solving for Transmissivity \\
+\h{wvs-153} & Derivation of block Cholesky factorization \\
+\h{wvs-154} & Angle between two vectors \\
+\hpdf{wvs-155} & Presentation: Summary of QTM \\
+\h{wvs-156} & Calculating incremental optical depth \\
+\h{wvs-157} & Calculating the $\chi$ angle \\
+\h{wvs-158} & ``Correct'' $\vec{d}$ vector -- ATBD Equation (5.22) \\
+\h{wvs-159} & Converting Geocentric Cartesian (ECR) to Geodetic co\"ordinates\\
+\hpdf{wvs-160} & 3-D QTM Metrics \\
+\h{wvs-161} & Area of spherical triangle using vertex co\"ordinates\\
+\h{wvs-162} & Forward Model Configuration\\
+\h{wvs-163} & {\tt Retrieve} and {\tt SIDS} Statements\\
+\h{wvs-164} & ``Correct'' and ``Wrong'' Trapezoidal Quadrature\\
+\h{wvs-165} & Control structures in {\tt l2cf}\\
+\hpdf{wvs-166} & Presentation: Ground Data Processing as a Language Interpreter\\
+\hpdf{wvs-167} & Presentation: Ground Data Processing as a Language
+Interpreter~--  Incomplete continuation of wvs-166\\
+%
+\h{ch08-01} & Math77 Documentation for zero finder \\
+%
+\h{iy-001}  & Radiative Transfer and Second Order Model for the Microwave Limb Sounder (MLS)\\
+\h{iy-002} & Comparisons of Analytical and Numerical Mixing Ratios and Temperature Jacobians\\
+\h{iy-003} & First and Second Order Taylor Approximations for Radiances\\
+\h{iy-004} & Nonlinear Optimization Methods\\
+\h{iy-005} & Inverse Problems in Atmospheric Sciences\\
+\h{iy-006} & Optimal Methods for Retrieval and Fusion of Atmospheric Data\\
+\h{iy-007} & Radiative Transfer: Deriving Integral Equation from Differential Equation\\
+\h{iy-008} & Radiative Transfer First and Second Derivatives\\
+\h{iy-009} & Mixing Ratio First and Second Derivatives in Linear and Logarithmic Basis \\
+\h{iy-010} & Temperature First and Second Derivatives \\
+\h{iy-011} & Radiative Transfer Equation for Cloudy Atmospheres \\
+\end{longtable}
+
+\section*{Parsing, type checking, {\tt l2cf} format}
+
+\begin{longtable}[l]{l|p{5in}}\label{frontend}
+l2cf \href{l2cf/pdf/l2cf.pdf}{pdf} & l2cf: Sections and Run-time Flags \\
+\h{wvs-004} & Configuration File Parser Users' Guide\\
+\h{wvs-006} & Changes I've made or suggest for the L2CF format, and questions
+          about it\\
+\h{wvs-007} & Changes in the {\tt MLSCF} module\\
+\h{wvs-020} & Reading and writing spectroscopy data in MLSL2\\
+\h{wvs-032} & Incoherent-to-coherent fill\\
+\h{wvs-105} & Init_Tables_Module generator\\
+\h{wvs-117} & New MLS programs configuration file (e.g., {\tt l2cf}) capabilities\\
+\h{wvs-118} & Grammar for MLS configuration files\\
+\h{wvs-123} & Magnetic field specification in l2cf \\
+\h{wvs-125} & PhiWindow is now a tuple or a number \\
+\hpdf{wvs-147} & Presentation: Configuration file processing \\
+\h{wvs-149} & A Re-examination of Hashing Using Separate Chains \\
+\end{longtable} % frontend
+
+\section*{Retrieval}
+
+\begin{longtable}[l]{l|p{5in}}\label{retrieval}
+\h{wvs-002} & The retrieval iteration in the form of a least-squares problem\\
+\h{wvs-009} & Changes in mathematical method for EOS MLS retrieval\\
+\h{wvs-011} & More remarks on solving the linear system during retrieval\\
+\h{wvs-012} & Computing the covariance matrix\\
+\h{wvs-014} & More remarks on solving the linear system during retrieval\\
+\h{wvs-035} & Alternative to gradient move in DNWT\\
+\h{wvs-036} & Retrieval diagnostic vector quantities\\
+\hpdf{wvs-050} & Presentation: Summary of Retriever\\
+\h{wvs-051} & Speeding up MLS Level 2 retrievals, with possible application to
+          SMLS\\
+\h{wvs-054} & A few more ideas for speeding up MLS Level 2 retrievals, with possible application to SMLS\\
+\h{wvs-055} & Summary of changes made to reduce MLSL2 run time\\
+\h{wvs-062} & Minimum and maximum state vector elements during retrieval\\
+\h{wvs-064} & Summary of summary of changes made to reduce MLSL2 run time\\
+\h{wvs-069} & Inverting the radiative transfer equation\\
+\hpdf{wvs-072} & Presentation: Variable projection and retrievals\\
+\h{wvs-073} & Summary of ``faster retrieval'' meeting\\
+\h{wvs-081} & Variable projection applied to retrieval\\
+\h{wvs-109} & Might be doing Tikhonov wrong\\
+\h{wvs-110} & Incorporating Hessian information into the Newton method\\
+\h{wvs-111} & Effect of minimum value of $\lambda$ on convergence\\
+\h{wvs-119} & Exploiting sparsity in Cholesky factorization\\
+\h{wvs-124} & Improvement on gradient move in the Newton solver \\
+\h{wvs-150} & State transitions in DNWT \\
+\h{wvs-152} & Solving for Transmissivity \\
+\h{wvs-163} & {\tt Retrieve} and {\tt SIDS} Statements\\
+\end{longtable} % retrieval
+
+\section*{Forward model}
+
+\begin{longtable}[l]{l|p{5in}}\label{forwardmodel}
+\h{wvs-003} & The Forward Model\\
+\h{wvs-015} & Exponential of a matrix, and derivative thereof\\
+\h{wvs-016} & Alternative formulation for polarized radiance derivatives\\
+\h{wvs-017} & Pre-frequency-averaging\\
+\h{wvs-018} & Temperature derivatives\\
+\h{wvs-019} & Betas, {\tt slabs\_sw\_m}\\
+\h{wvs-022} & Spectroscopy derivatives\\
+\h{wvs-023} & Spectral parameter offsets and derivatives\\
+\h{wvs-029} & Refractive correction for $\phi$\\
+\h{wvs-031} & Relative humidity configuration\\
+\h{wvs-033} & Path integrations\\
+\h{wvs-034} & Equation 11.4 in ATBD\\
+\h{wvs-037} & Updated non-GL correction in forward model\\
+\h{wvs-038} & Modification to {\tt metrics\_m}\\
+\h{wvs-039} & Calculating $H_m$ in modification to {\tt metrics\_m}\\
+\h{wvs-040} & Calculating $\phi$ for $\zeta_{\text{max}}$\\
+\h{wvs-041} & Maximum $\zeta$\\
+\h{wvs-042} & $H$--$\phi$ iteration in {\tt metrics}\\
+\h{wvs-043} & Inverting the $\phi$ refractive correction\\
+\h{wvs-044} & What to do in {\tt metrics\_m}\\
+\h{wvs-045} & What to do in {\tt metrics\_m} to get $\zeta_\text{min}$\\
+\h{wvs-046} & Interesting result concerning $\zeta_{\text{min}}$\\
+\h{wvs-047} & Revised metrics plan\\
+\h{wvs-048} & Different solution for $\phi$--$H$ calculation in {\tt metrics\_m}\\
+\h{wvs-052} & ATBD equations\\
+\h{wvs-053} & Alternative minimum $\zeta$ calculation\\
+\h{wvs-056} & Refractive correction\\
+\h{wvs-059} & Another look at metrics\\
+\h{wvs-060} & Trouble with GL correction in the forward model\\
+\h{wvs-061} & Trouble with path length in the forward model\\
+\hpdf{wvs-063} & Presentation: Summary of Full Forward Model\\
+\h{wvs-077} & Antenna convolution as a Stieltjes integral\\
+\h{wvs-079} & Logarithm of $2 \times 2$ matrix\\
+\h{wvs-087} & Potential speedup of full forward model by nearly $4\times$\\
+\h{wvs-088} & Canceling singularity incorrectly\\
+\h{wvs-090} & Derivation of radiative transfer equation used in Forward Model\\
+\h{wvs-092} & Hessian representation and multiplication\\
+\h{wvs-093} & Computing derivatives in the MLS Full Forward Model\\
+\h{wvs-098} & Mixing-ratio derivative of radiance (oversimplified -- see wvs-093
+or wvs-099)\\
+\h{wvs-099} & Variational derivatives of first-order linear differential equations \\
+\h{wvs-100} & Reducing the cost of radiance derivatives \\
+\h{wvs-101} & Interpolating derivatives from grid to path\\
+\h{wvs-102} & Derivatives of $\alpha$ \\
+\h{wvs-103} & Error in temperature derivative of oxygen continuum\\
+\h{wvs-106} & Alternative formulation for derivatives\\
+\h{wvs-107} & MIF Extinction\\
+\h{wvs-108} & IGRF magnetic field coefficients\\
+\h{wvs-112} & New representation of temperature derivatives\\
+\h{wvs-113} & Considerations for out-of-orbit-plane modeling\\
+\h{wvs-114} & MIF RHI\\
+\h{wvs-115} & Out-of-orbit-plane modeling\\
+\h{wvs-120} & Magnetic fields\\
+\h{wvs-127} & Representing state vector quantities and line of sight geometry\\
+\h{wvs-135} & Outline of 3-dimensional forward model \\
+\h{wvs-137} & Interpolation coefficient lists OBSOLETE! \\
+\h{wvs-138} & Interpolating coefficients, index arrays, and flags in the
+forward model \\
+\hpdf{wvs-139} & Presentation: Forward model summary \\
+\h{wvs-140} & Layer quantities and boundary quantities in the forward model \\
+\h{wvs-143} & Definition of path of integration \\
+\h{wvs-144} & Sparse-matrix representation of interpolation coefficients \\
+\h{wvs-145} & Organization of the Full Forward Model \\
+\h{wvs-148} & Alternative to state-vector representation \\
+\hpdf{wvs-151} & Presentation: Sparse interpolation matrices \\
+\h{wvs-156} & Calculating incremental optical depth\\
+\h{wvs-157} & Calculating the $\chi$ angle \\
+\h{wvs-158} & ``Correct'' $\vec{d}$ vector -- ATBD Equation (5.22) \\
+\h{wvs-162} & Forward Model Configuration\\
+\end{longtable} % forwardmodel
+
+\section*{PFA}
+
+\begin{longtable}[l]{l|p{5in}}\label{PFA}
+\h{wvs-017} & Pre-frequency-averaging\\
+\h{wvs-021} & Pre-frequency-averaged radiance calculation\\
+\h{wvs-024} & PFA derivatives\\
+\h{wvs-025} & New frequency averaging scheme for use with PFA\\
+\h{wvs-026} & Simplifying assumption to combine line-by-line and PFA\\
+\h{wvs-027} & Revised method to combine line-by-line and PFA\\
+\h{wvs-028} & Summary of line-by-line and PFA radiance and derivatives\\
+\h{wvs-049} & Making PFA tables\\
+\h{wvs-096} & Combining LBL, PFA and $\TS$\\
+\h{wvs-097} & Full forward model changes to combine LBL, PFA and $\TS$\\
+\end{longtable} % PFA
+
+\section*{TSCAT}
+
+\begin{longtable}[l]{l|p{5in}}\label{TSCAT}
+\h{wvs-057} & Recurrences for functions related to $J_\nu(z)$, $Y_\nu(z)$\\
+\h{wvs-058} & Mie solution in terms of Bessel functions\\
+\h{wvs-065} & Summary of Mie parameters\\
+\h{wvs-066} & Derivatives for Mie $\beta$\\
+\h{wvs-067} & Summary of Mie formulae\\
+\h{wvs-068} & Mie phase function, integrated scattering, and derivatives\\
+\h{wvs-070} & Reducing Mie phase function integrated
+          scattering from double to single integrals \\
+\hpdf{wvs-071} & Presentation: Accurate and efficient computation of Mie
+          parameters\\
+\h{wvs-074} & Tangent heights and angles for scattering calculations\\
+\h{wvs-076} & Organization of changes to Full Forward Model for
+          TSCAT-com\-pu\-ta\-tion mode\\
+\h{wvs-078} & Tasks for cloud forward model\\
+\h{wvs-080} & TScat and derivatives\\
+\h{wvs-082} & Current status of scattering additions to forward model\\
+\h{wvs-084} & Total IWC\\
+\h{wvs-085} & Scattered brightness temperature\\
+\h{wvs-089} & TScat derivatives w.r.t. T and IWC\\
+\h{wvs-091} & Accessing the TScat Jacobian as a {\tt Matrix\_T} object\\
+\h{wvs-095} & Radiance and derivatives incorporating $\TSs{i}$\\
+\h{wvs-096} & Combining LBL, PFA and $\TS$\\
+\h{wvs-097} & Full forward model changes to combine LBL, PFA and $\TS$\\
+\end{longtable} % TSCAT
+
+%\pagebreak[4]
+\section*{QTM}
+
+\begin{longtable}[l]{l|p{5in}}\label{QTM}
+\h{wvs-128} & Quaternary Triagular Mesh\\
+\h{wvs-129} & Intersections of a line with a cone\\
+\h{wvs-130} & Intersection of a line with a plane\\
+\h{wvs-131} & Intersection of a line with an ellipsoid\\
+\h{wvs-132} & Center of a sphere (or circle) defined by three (or two) points
+and its radius\\
+\h{wvs-133} & Reflection of a line from a plane\\
+\h{wvs-134} & Intersection of a line with a surface at constant height above
+the Earth reference ellipsoid\\
+\h{wvs-135} & Outline of 3-dimensional forward model \\
+\hpdf{wvs-155} & Presentation: Summary of QTM\\
+\hpdf{wvs-160} & 3-D QTM Metrics \\
+\end{longtable} % QTM
+
+\section*{Algebra and Geometry}
+
+\begin{longtable}[l]{l|p{5in}}\label{geometry}
+\h{wvs-015} & Exponential of a matrix, and derivative thereof\\
+\h{wvs-030} & Points on line and surface of ellipsoid that are nearest
+          to each other\\
+\h{wvs-079} & Logarithm of $2 \times 2$ matrix\\
+\h{wvs-083} & 2-d interpolation\\
+\h{wvs-086} & Periodic cubic spline interpolation with unequally spaced abscissae\\
+\h{wvs-104} & Revisiting $2\times2$ matrix exponential and derivatives, for polarized model\\
+\h{wvs-121} & Three-dimensional rotation about a specified axis\\
+\h{wvs-122} & Computing cross-orbit viewing geometry \\
+\h{wvs-126} & Calculate node of great circle and angular distance from a node \\
+\h{wvs-129} & Intersections of a line with a cone\\
+\h{wvs-130} & Intersection of a line with a plane\\
+\h{wvs-131} & Intersection of a line with an ellipsoid\\
+\h{wvs-132} & Center of a sphere (or circle) defined by three (or two) points
+and its radius\\
+\h{wvs-133} & Reflection of a line from a plane\\
+\h{wvs-134} & Intersection of a line with a surface at constant height above
+the Earth reference ellipsoid\\
+\h{wvs-136} & Closest approach between two lines \\
+\h{wvs-141} & Intersection of a line with a circle defined by two points and
+its radius \\
+\h{wvs-142} & Point on line nearest to a given point \\
+\h{wvs-146} & Radii of curvature of an oblate spheroid \\
+\h{wvs-153} & Derivation of block Cholesky factorization \\
+\h{wvs-154} & Angle between two vectors \\
+\h{wvs-158} & ``Correct'' $\vec{d}$ vector -- ATBD Equation (5.22) \\
+\h{wvs-159} & Converting Geocentric Cartesian (ECR) to Geodetic co\"ordinates\\
+\h{wvs-161} & Area of spherical triangle using vertex co\"ordinates\\
+\end{longtable} % geometry
+
+\end{document}
+
+% $Id: index.tex,v 1.81 2020/07/09 23:26:47 vsnyder Exp $
+
+% $Log: index.tex,v $
+% Revision 1.82  2020/07/23 01:05:44  vsnyder
+% Add wvs-163. Add wvs-157 and wvs-158 to Forward Model section
+%
+% Revision 1.81  2020/07/09 23:26:47  vsnyder
+% Add wvs-162
+%
+% Revision 1.80  2020/07/01 00:01:20  vsnyder
+% Add wvs-017 to PFA section
+%
+% Revision 1.78  2020/03/18 23:43:27  vsnyder
+% Add wvs-159
+%
+% Revision 1.77  2019/11/06 02:28:59  vsnyder
+% Add wvs-158
+%
+% Revision 1.76  2019/10/03 00:54:10  vsnyder
+% Add wvs-156
+%
+% Revision 1.75  2019/09/24 02:00:19  vsnyder
+% Add wvs-155
+%
+% Revision 1.74  2019/09/12 02:52:06  vsnyder
+% Add wvs-154
+%
+% Revision 1.73  2019/08/27 00:49:45  vsnyder
+% Add wvs-153 to Algebra and Geometry section too
+%
+% Revision 1.72  2019/08/27 00:48:30  vsnyder
+% Add wvs-153
+%
+% Revision 1.71  2019/06/24 18:49:10  pwagner
+% Corrected paths in some hrefs
+%
+% Revision 1.70  2019/06/19 01:39:01  yanovsky
+% Add iy-005
+%
+% Revision 1.69  2019/05/29 02:12:45  vsnyder
+% Add category sections, Add wvs-152
+%
+% Revision 1.68  2018/11/29 21:35:17  vsnyder
+% Add wvs-151
+%
+% Revision 1.67  2018/10/22 23:27:58  vsnyder
+% Trying to make some other-directory macros
+%
+% Revision 1.66  2018/07/25 19:42:34  vsnyder
+% Add wvs-150
+%
+% Revision 1.65  2018/07/10 00:21:05  vsnyder
+% Add wvs-149
+%
+% Revision 1.64  2017/11/28 01:29:53  vsnyder
+% Add wvs-147 amd wvs-148
+%
+% Revision 1.63  2017/10/13 19:12:39  vsnyder
+% Change title of wvs-132, add wvs-145 and wvs-146
+%
+% Revision 1.62  2017/10/03 00:51:31  vsnyder
+% Changed title of wvs-143 again
+%
+% Revision 1.61  2017/09/26 23:08:45  vsnyder
+% Changed the title of wvs-143
+%
+% Revision 1.60  2017/09/23 00:00:07  vsnyder
+% Add wvs-144
+%
+% Revision 1.59  2017/09/21 23:12:58  vsnyder
+% Add wvs-142 and wvs-143
+%
+% Revision 1.58  2017/08/31 01:07:57  vsnyder
+% Add wvs-141
+%
+% Revision 1.57  2017/06/08 01:27:42  vsnyder
+% Add wvs-139
+%
+% Revision 1.56  2017/06/05 20:55:31  vsnyder
+% Add wvs-138
+%
+% Revision 1.55  2017/03/08 02:38:38  vsnyder
+% Add wvs-137
+%
+% Revision 1.54  2016/11/04 01:30:24  vsnyder
+% Add wvs-136
+%
+% Revision 1.53  2016/05/19 01:15:35  vsnyder
+% Change title of wvs-030
+%
+% Revision 1.52  2016/03/17 19:06:34  vsnyder
+% Add wvs-134
+%
+% Revision 1.51  2016/03/15 18:37:56  pwagner
+% Added wvs-133
+%
+% Revision 1.50  2016/02/19 01:26:24  vsnyder
+% Add wvs-132
+%
+% Revision 1.49  2016/02/18 20:57:21  vsnyder
+% Add wvs-129, wvs-130, wvs-131
+%
+% Revision 1.48  2015/12/02 01:59:30  vsnyder
+% Add wvs-128
+%
+% Revision 1.47  2015/09/18 22:49:58  vsnyder
+% Add wvs-126
+%
+% Revision 1.46  2015/08/25 21:49:24  vsnyder
+% Add wvs-125
+%
+% Revision 1.45  2015/05/07 00:28:18  vsnyder
+% Add wvs-124
+%
+% Revision 1.44  2015/04/30 17:48:40  vsnyder
+% Add wvs-122, wvs-123
+%
+% Revision 1.43  2014/11/10 20:27:18  vsnyder
+% Add wvs-120 and wvs-121
+%
+% Revision 1.42  2014/07/17 22:08:15  yanovsky
+% Add iy-011
+%
+% Revision 1.41  2014/05/08 00:03:48  vsnyder
+% Add wvs-119
+%
+% Revision 1.40  2014/02/28 22:00:45  vsnyder
+% Add wvs-118
+%
+% Revision 1.39  2014/02/21 20:03:35  vsnyder
+% Add wvs-117
+%
+% Revision 1.38  2013/10/08 00:42:23  vsnyder
+% Add wvs-116
+%
+% Revision 1.37  2013/08/16 02:59:27  vsnyder
+% Add wvs-115
+%
+% Revision 1.36  2013/07/25 00:31:30  vsnyder
+% Add wvs-113 and wvs-114
+%
+% Revision 1.35  2013/04/24 20:11:17  vsnyder
+% Revise title of wvs-112
+%
+% Revision 1.34  2013/04/11 03:07:52  vsnyder
+% Correct subject of wvs-112
+%
+% Revision 1.33  2013/04/11 01:23:46  vsnyder
+% Add wvs-112
+%
+% Revision 1.32  2012/08/31 23:39:27  vsnyder
+% Add wvs-110 and wvs-111
+%
+% Revision 1.31  2012/08/24 22:06:53  vsnyder
+% Cannonball polishing
+%
+% Revision 1.30  2012/07/27 04:05:20  vsnyder
+% Add wvs-109
+%
+% Revision 1.29  2012/03/29 23:17:04  vsnyder
+% Add wvs-108
+%
+% Revision 1.28  2011/12/15 02:52:06  vsnyder
+% Add wvs-107
+%
+% Revision 1.27  2011/07/28 20:12:04  vsnyder
+% Add wvs-106
+%
+% Revision 1.26  2011/05/24 01:33:52  vsnyder
+% Correct title of wvs-084
+%
+% Revision 1.25  2011/03/17 20:43:21  yanovsky
+% Add iy-008, iy-009, iy-010
+%
+% Revision 1.24  2011/03/11 03:38:25  vsnyder
+% Add wvs-104
+%
+% Revision 1.23  2011/02/08 02:25:02  vsnyder
+% Add wvs-103
+%
+% Revision 1.22  2011/02/05 01:34:08  vsnyder
+% Add wvs-102
+%
+% Revision 1.21  2010/12/21 01:25:30  vsnyder
+% Add wvs-101
+%
+% Revision 1.20  2010/12/18 03:55:10  vsnyder
+% Add wvs-100
+%
+% Revision 1.19  2010/12/17 01:12:28  vsnyder
+% Replace LaTeX/PDF ligature ff with plain text ff
+%
+% Revision 1.18  2010/12/07 00:23:18  pwagner
+% Treats all index entries equally (Why not?)
+%
+% Revision 1.17  2010/12/04 02:50:57  vsnyder
+% Add wvs-099
+%
+% Revision 1.16  2010/11/22 18:50:39  yanovsky
+% Add iy-004
+%
+% Revision 1.15  2010/11/13 01:34:25  vsnyder
+% Add wvs-097 and wvs-098
+%
+% Revision 1.14  2010/11/10 19:57:39  yanovsky
+% Add iy-007
+%
+% Revision 1.13  2010/10/22 03:53:16  yanovsky
+% Add iy-006
+%
+% Revision 1.12  2010/08/27 23:53:02  vsnyder
+% Add wvs-096
+%
+% Revision 1.11  2010/06/08 19:06:06  yanovsky
+% Added iy-001, iy-002, and iy-003. Added macros defining \hrpdf and \hpdf.
+%
+% Revision 1.10  2010/05/26 22:56:57  pwagner
+% Should produce clickable links when built with make
+%
+% Revision 1.9  2010/05/20 23:50:05  vsnyder
+% Add wvs-094, wvs-095
+%
+% Revision 1.8  2010/04/09 02:32:08  vsnyder
+% Add wvs-090 -091 -092 -093
+%
+% Revision 1.7  2010/01/26 02:09:04  vsnyder
+% Add wvs-088 and wvs-089
+%
+% Revision 1.6  2009/12/15 23:26:34  vsnyder
+% Add l2cfquickreference
+%
+% Revision 1.5  2009/12/15 21:22:01  vsnyder
+% Add wvs-086 and wvs-087
+%
+% Revision 1.4  2009/10/15 22:57:49  vsnyder
+% Add wvs-086
+%
+% Revision 1.3  2009/07/29 03:10:53  vsnyder
+% Add wvs-082 -083 -084
+%
+% Revision 1.2  2008/06/25 00:31:49  vsnyder
+% add wvs-081
+%
+% Revision 1.1  2008/06/12 00:53:05  vsnyder
+% Initial commit
+%
+@
+
+
+1.82
+log
+@Add wvs-163. Add wvs-157 and wvs-158 to Forward Model section
+@
+text
+@d276 5
+d520 3
+@
+
+
+1.81
+log
+@Add wvs-162
+@
+text
+@d275 1
+d339 1
+d411 2
+d512 1
+a512 1
+% $Id: index.tex,v 1.80 2020/07/01 00:01:20 vsnyder Exp $
+d515 3
+@
+
+
+1.80
+log
+@Add wvs-017 to PFA section
+@
+text
+@d274 1
+d409 1
+d508 1
+a508 1
+% $Id: index.tex,v 1.78 2020/03/18 23:43:27 vsnyder Exp $
+d511 3
+@
+
+
+1.79
+log
+@Add wvs-160 and wvs-161
+@
+text
+@d413 1
+@
+
+
+1.78
+log
+@Add wvs-159
+@
+text
+@d272 2
+d452 1
+a452 1
+\pagebreak[4]
+d467 1
+d500 1
+d505 1
+a505 1
+% $Id: index.tex,v 1.77 2019/11/06 02:28:59 vsnyder Exp $
+d508 3
+@
+
+
+1.77
+log
+@Add wvs-158
+@
+text
+@d236 1
+a236 1
+\h{wvs-128} & Quaternary Triagular Mesh\\
+d271 1
+d496 1
+d501 1
+a501 1
+% $Id: index.tex,v 1.76 2019/10/03 00:54:10 vsnyder Exp $
+d504 3
+@
+
+
+1.76
+log
+@Add wvs-156
+@
+text
+@d267 4
+a270 2
+\hpdf{wvs-155} & Presentation: Summary of QTM\\
+\h{wvs-156} & Calculating incremental optical depth\\
+d494 1
+d499 1
+a499 1
+% $Id: index.tex,v 1.75 2019/09/24 02:00:19 vsnyder Exp $
+d502 3
+@
+
+
+1.75
+log
+@Add wvs-155
+@
+text
+@d268 1
+d402 1
+d496 1
+a496 1
+% $Id: index.tex,v 1.74 2019/09/12 02:52:06 vsnyder Exp $
+d499 3
+@
+
+
+1.74
+log
+@Add wvs-154
+@
+text
+@d267 1
+d459 1
+d494 1
+a494 1
+% $Id: index.tex,v 1.73 2019/08/27 00:49:45 vsnyder Exp $
+d497 3
+@
+
+
+1.73
+log
+@Add wvs-153 to Algebra and Geometry section too
+@
+text
+@d266 1
+a401 1
+\pagebreak[4]
+d444 1
+d487 1
+d492 1
+a492 1
+% $Id: index.tex,v 1.72 2019/08/27 00:48:30 vsnyder Exp $
+d495 3
+@
+
+
+1.72
+log
+@Add wvs-153
+@
+text
+@d485 1
+d490 1
+a490 1
+% $Id: index.tex,v 1.71 2019/06/24 18:49:10 pwagner Exp $
+d493 3
+@
+
+
+1.71
+log
+@Corrected paths in some hrefs
+@
+text
+@d265 1
+d401 1
+d489 1
+a489 1
+% $Id: index.tex,v 1.70 2019/06/19 01:39:01 yanovsky Exp $
+d492 3
+@
+
+
+1.70
+log
+@Add iy-005
+@
+text
+@d98 3
+a100 1
+l2cf \href{pdf/l2cf/l2cf.pdf}{pdf} & l2cf: Sections and Run-time Flags \\
+d284 1
+a284 1
+l2cf \href{pdf/l2cf/l2cf.pdf}{pdf} & l2cf: Sections and Run-time Flags \\
+d487 1
+a487 1
+% $Id: index.tex,v 1.69 2019/05/29 02:12:45 vsnyder Exp $
+d490 3
+@
+
+
+1.69
+log
+@Add category sections, Add wvs-152
+@
+text
+@d270 1
+d485 1
+a485 1
+% $Id: index.tex,v 1.68 2018/11/29 21:35:17 vsnyder Exp $
+d488 3
+@
+
+
+1.68
+log
+@Add wvs-151
+@
+text
+@d79 16
+a94 1
+\begin{longtable}[l]{l|p{5in}}
+d262 2
+d265 1
+d278 204
+d484 1
+a484 1
+% $Id: index.tex,v 1.67 2018/10/22 23:27:58 vsnyder Exp $
+d487 3
+@
+
+
+1.67
+log
+@Trying to make some other-directory macros
+@
+text
+@d135 1
+a135 1
+\h{wvs-050} & Presentation: Summary of Retriever\\
+d149 1
+a149 1
+\h{wvs-063} & Presentation: Summary of Full Forward Model\\
+d158 1
+a158 1
+\h{wvs-071} & Presentation: Accurate and efficient computation of Mie
+d160 1
+a160 1
+\h{wvs-072} & Presentation: Variable projection and retrievals\\
+d230 1
+a230 1
+\h{wvs-137} & Interpolation coefficient lists \\
+d233 1
+a233 1
+\h{wvs-139} & Slides for a forward model summary \\
+d242 1
+a242 1
+\hpdf{wvs-147} & Configuration file processing \\
+d246 1
+d262 1
+a262 1
+% $Id: index.tex,v 1.66 2018/07/25 19:42:34 vsnyder Exp $
+d265 3
+@
+
+
+1.66
+log
+@Add wvs-150
+@
+text
+@d55 5
+d81 3
+d261 1
+a261 1
+% $Id: index.tex,v 1.65 2018/07/10 00:21:05 vsnyder Exp $
+d264 3
+@
+
+
+1.65
+log
+@Add wvs-149
+@
+text
+@d237 1
+d253 1
+a253 1
+% $Id: index.tex,v 1.64 2017/11/28 01:29:53 vsnyder Exp $
+d256 3
+@
+
+
+1.64
+log
+@Add wvs-147 amd wvs-148
+@
+text
+@d236 1
+d252 1
+a252 1
+% $Id: index.tex,v 1.63 2017/10/13 19:12:39 vsnyder Exp $
+d255 3
+@
+
+
+1.63
+log
+@Change title of wvs-132, add wvs-145 and wvs-146
+@
+text
+@d234 2
+d251 1
+a251 1
+% $Id: index.tex,v 1.62 2017/10/03 00:51:31 vsnyder Exp $
+d254 3
+@
+
+
+1.62
+log
+@Changed title of wvs-143 again
+@
+text
+@d215 2
+a216 1
+\h{wvs-132} & Center of a sphere defined by three points and its radius\\
+d232 2
+d249 1
+a249 1
+% $Id: index.tex,v 1.61 2017/09/26 23:08:45 vsnyder Exp $
+d252 3
+@
+
+
+1.61
+log
+@Changed the title of wvs-143
+@
+text
+@d229 1
+a229 1
+\h{wvs-143} & Geometric definition of path of integration \\
+d246 1
+a246 1
+% $Id: index.tex,v 1.60 2017/09/23 00:00:07 vsnyder Exp $
+d249 3
+@
+
+
+1.60
+log
+@Add wvs-144
+@
+text
+@d229 1
+a229 1
+\h{wvs-143} & Determining what part of the path to integrate \\
+d246 1
+a246 1
+% $Id: index.tex,v 1.59 2017/09/21 23:12:58 vsnyder Exp $
+d249 3
+@
+
+
+1.59
+log
+@Add wvs-142 and wvs-143
+@
+text
+@d230 1
+d246 1
+a246 1
+% $Id: index.tex,v 1.58 2017/08/31 01:07:57 vsnyder Exp $
+d249 3
+@
+
+
+1.58
+log
+@Add wvs-141
+@
+text
+@d228 2
+d245 1
+a245 1
+% $Id: index.tex,v 1.57 2017/06/08 01:27:42 vsnyder Exp $
+d248 3
+@
+
+
+1.57
+log
+@Add wvs-139
+@
+text
+@d225 3
+d243 1
+a243 1
+% $Id: index.tex,v 1.56 2017/06/05 20:55:31 vsnyder Exp $
+d246 3
+@
+
+
+1.56
+log
+@Add wvs-138
+@
+text
+@d224 1
+d240 1
+a240 1
+% $Id: index.tex,v 1.55 2017/03/08 02:38:38 vsnyder Exp $
+d243 3
+@
+
+
+1.55
+log
+@Add wvs-137
+@
+text
+@d127 1
+a127 1
+\h{wvs-050} & Summary of Retriever\\
+d141 1
+a141 1
+\h{wvs-063} & Summary of Full Forward Model\\
+d150 3
+a152 2
+\h{wvs-071} & Accurate and efficient computation of Mie parameters\\
+\h{wvs-072} & Variable projection and retrievals\\
+d222 2
+d239 1
+a239 1
+% $Id: index.tex,v 1.54 2016/11/04 01:30:24 vsnyder Exp $
+d242 3
+@
+
+
+1.54
+log
+@Add wvs-136
+@
+text
+@d220 1
+d236 1
+a236 1
+% $Id: index.tex,v 1.53 2016/05/19 01:15:35 vsnyder Exp $
+d239 3
+@
+
+
+1.53
+log
+@Change title of wvs-030
+@
+text
+@d219 1
+d235 1
+a235 1
+% $Id: index.tex,v 1.52 2016/03/17 19:06:34 vsnyder Exp $
+d238 3
+@
+
+
+1.52
+log
+@Add wvs-134
+@
+text
+@d106 1
+a106 1
+\h{wvs-030} & Points on line and surface of oblate spheroid that are nearest
+d216 4
+a219 2
+\h{wvs-134} & Intersection of line with surface at constant height above Earth
+reference ellipsoid\\
+d234 1
+a234 1
+% $Id: index.tex,v 1.51 2016/03/15 18:37:56 pwagner Exp $
+d237 3
+@
+
+
+1.51
+log
+@Added wvs-133
+@
+text
+@d216 2
+d232 1
+a232 1
+% $Id: index.tex,v 1.50 2016/02/19 01:26:24 vsnyder Exp $
+d235 3
+@
+
+
+1.50
+log
+@Add wvs-132
+@
+text
+@d215 1
+d230 1
+a230 1
+% $Id: index.tex,v 1.49 2016/02/18 20:57:21 vsnyder Exp $
+d233 3
+@
+
+
+1.49
+log
+@Add wvs-129, wvs-130, wvs-131
+@
+text
+@d214 1
+d229 1
+a229 1
+% $Id: index.tex,v 1.48 2015/12/02 01:59:30 vsnyder Exp $
+d232 3
+@
+
+
+1.48
+log
+@Add wvs-128
+@
+text
+@d211 3
+d228 1
+a228 1
+% $Id: index.tex,v 1.47 2015/09/18 22:49:58 vsnyder Exp $
+d231 3
+@
+
+
+1.47
+log
+@Add wvs-126
+@
+text
+@d209 2
+d225 1
+a225 1
+% $Id: index.tex,v 1.46 2015/08/25 21:49:24 vsnyder Exp $
+d228 3
+@
+
+
+1.46
+log
+@Add wvs-125
+@
+text
+@d208 1
+d223 1
+a223 1
+% $Id: index.tex,v 1.45 2015/05/07 00:28:18 vsnyder Exp $
+d226 3
+@
+
+
+1.45
+log
+@Add wvs-124
+@
+text
+@d207 1
+d222 1
+a222 1
+% $Id: index.tex,v 1.44 2015/04/30 17:48:40 vsnyder Exp $
+d225 3
+@
+
+
+1.44
+log
+@Add wvs-122, wvs-123
+@
+text
+@d206 1
+d221 1
+a221 1
+% $Id: index.tex,v 1.43 2014/11/10 20:27:18 vsnyder Exp $
+d224 3
+@
+
+
+1.43
+log
+@Add wvs-120 and wvs-121
+@
+text
+@d204 2
+d220 1
+a220 1
+% $Id: index.tex,v 1.42 2014/07/17 22:08:15 yanovsky Exp $
+d223 3
+@
+
+
+1.42
+log
+@Add iy-011
+@
+text
+@d202 2
+d218 1
+a218 1
+% $Id: index.tex,v 1.41 2014/05/08 00:03:48 vsnyder Exp $
+d221 3
+@
+
+
+1.41
+log
+@Add wvs-119
+@
+text
+@d211 1
+d216 1
+a216 1
+% $Id: index.tex,v 1.40 2014/02/28 22:00:45 vsnyder Exp $
+d219 3
+@
+
+
+1.40
+log
+@Add wvs-118
+@
+text
+@d201 1
+d215 1
+a215 1
+% $Id: index.tex,v 1.39 2014/02/21 20:03:35 vsnyder Exp $
+d218 3
+@
+
+
+1.39
+log
+@Add wvs-117
+@
+text
+@d200 1
+d214 1
+a214 1
+% $Id: index.tex,v 1.38 2013/10/08 00:42:23 vsnyder Exp $
+d217 3
+@
+
+
+1.38
+log
+@Add wvs-116
+@
+text
+@d199 1
+d213 1
+a213 1
+% $Id: index.tex,v 1.37 2013/08/16 02:59:27 vsnyder Exp $
+d216 3
+@
+
+
+1.37
+log
+@Add wvs-115
+@
+text
+@d198 1
+d212 1
+a212 1
+% $Id: index.tex,v 1.36 2013/07/25 00:31:30 vsnyder Exp $
+d215 3
+@
+
+
+1.36
+log
+@Add wvs-113 and wvs-114
+@
+text
+@d197 1
+d211 1
+a211 1
+% $Id: index.tex,v 1.35 2013/04/24 20:11:17 vsnyder Exp $
+d214 3
+@
+
+
+1.35
+log
+@Revise title of wvs-112
+@
+text
+@d195 2
+d210 1
+a210 1
+% $Id: index.tex,v 1.34 2013/04/11 03:07:52 vsnyder Exp $
+d213 3
+@
+
+
+1.34
+log
+@Correct subject of wvs-112
+@
+text
+@d194 1
+a194 1
+\h{wvs-112} & More on derivatives of radiative transfer\\
+d208 1
+a208 1
+% $Id: index.tex,v 1.33 2013/04/11 01:23:46 vsnyder Exp $
+d211 3
+@
+
+
+1.33
+log
+@Add wvs-112
+@
+text
+@d194 1
+a194 2
+\h{wvs-112} & Alternative method to compute $\Delta s$ and
+              $\frac{\d \Delta s}{\d T}$\\
+d208 1
+a208 1
+% $Id: index.tex,v 1.32 2012/08/31 23:39:27 vsnyder Exp $
+d211 3
+@
+
+
+1.32
+log
+@Add wvs-110 and wvs-111
+@
+text
+@d44 1
+d194 2
+d209 1
+a209 1
+% $Id: index.tex,v 1.31 2012/08/24 22:06:53 vsnyder Exp $
+d212 3
+@
+
+
+1.31
+log
+@Cannonball polishing
+@
+text
+@d191 2
+d206 1
+a206 1
+% $Id: index.tex,v 1.30 2012/07/27 04:05:20 vsnyder Exp $
+d209 3
+@
+
+
+1.30
+log
+@Add wvs-109
+@
+text
+@d178 2
+a179 1
+\h{wvs-098} & Mixing-ratio derivative of radiance\\
+d204 1
+a204 1
+% $Id: index.tex,v 1.29 2012/03/29 23:17:04 vsnyder Exp $
+d207 3
+@
+
+
+1.29
+log
+@Add wvs-108
+@
+text
+@d189 1
+d203 1
+a203 1
+% $Id: index.tex,v 1.28 2011/12/15 02:52:06 vsnyder Exp $
+d206 3
+@
+
+
+1.28
+log
+@Add wvs-107
+@
+text
+@d188 1
+d202 1
+a202 1
+% $Id: index.tex,v 1.27 2011/07/28 20:12:04 vsnyder Exp $
+d205 3
+@
+
+
+1.27
+log
+@Add wvs-106
+@
+text
+@d187 1
+d201 1
+a201 1
+% $Id: index.tex,v 1.26 2011/05/24 01:33:52 vsnyder Exp $
+d204 3
+@
+
+
+1.26
+log
+@Correct title of wvs-084
+@
+text
+@d180 1
+a180 2
+\h{wvs-100} & Reducing radiance derivatives from two-dimensional integrals to
+one-dimensional integrals\\
+d186 1
+d200 1
+a200 1
+% $Id: index.tex,v 1.25 2011/03/17 20:43:21 yanovsky Exp $
+d203 3
+@
+
+
+1.25
+log
+@Add iy-008, iy-009, iy-010
+@
+text
+@d11 1
+d164 1
+a164 1
+\h{wvs-084} & Total IWC content\\
+d186 1
+d200 1
+a200 1
+% $Id: index.tex,v 1.24 2011/03/11 03:38:25 vsnyder Exp $
+d203 3
+@
+
+
+1.24
+log
+@Add wvs-104
+@
+text
+@d191 3
+d198 1
+a198 1
+% $Id: index.tex,v 1.23 2011/02/08 02:25:02 vsnyder Exp $
+d201 3
+@
+
+
+1.23
+log
+@Add wvs-103
+@
+text
+@d184 1
+d195 1
+a195 1
+% $Id: index.tex,v 1.22 2011/02/05 01:34:08 vsnyder Exp $
+d198 3
+@
+
+
+1.22
+log
+@Add wvs-102
+@
+text
+@d183 1
+d194 1
+a194 1
+% $Id: index.tex,v 1.21 2010/12/21 01:25:30 vsnyder Exp $
+d197 3
+@
+
+
+1.21
+log
+@Add wvs-101
+@
+text
+@d182 1
+d193 1
+a193 1
+% $Id: index.tex,v 1.20 2010/12/18 03:55:10 vsnyder Exp $
+d196 3
+@
+
+
+1.20
+log
+@Add wvs-100
+@
+text
+@d181 1
+d192 1
+a192 1
+% $Id: index.tex,v 1.19 2010/12/17 01:12:28 vsnyder Exp $
+d195 3
+@
+
+
+1.19
+log
+@Replace LaTeX/PDF ligature ff with plain text ff
+@
+text
+@d179 2
+d191 1
+a191 1
+% $Id: index.tex,v 1.18 2010/12/07 00:23:18 pwagner Exp $
+d194 3
+@
+
+
+1.18
+log
+@Treats all index entries equally (Why not?)
+@
+text
+@d184 1
+a184 1
+\h{iy-007} & Radiative Transfer: Deriving Integral Equation from Diﬀerential Equation\\
+d189 1
+a189 1
+% $Id: index.tex,v 1.17 2010/12/04 02:50:57 vsnyder Exp $
+d192 3
+@
+
+
+1.17
+log
+@Add wvs-099
+@
+text
+@d180 2
+a181 2
+\hpdf{iy-002} & Comparisons of Analytical and Numerical Mixing Ratios and Temperature Jacobians\\
+\hpdf{iy-003} & First and Second Order Taylor Approximations for Radiances\\
+d189 1
+a189 1
+% $Id: index.tex,v 1.16 2010/11/22 18:50:39 yanovsky Exp $
+d192 3
+@
+
+
+1.16
+log
+@Add iy-004
+@
+text
+@d178 1
+d189 1
+a189 1
+% $Id: index.tex,v 1.15 2010/11/13 01:34:25 vsnyder Exp $
+d192 3
+@
+
+
+1.15
+log
+@Add wvs-097 and wvs-098
+@
+text
+@d181 1
+d188 1
+a188 1
+% $Id: index.tex,v 1.14 2010/11/10 19:57:39 yanovsky Exp $
+d191 3
+@
+
+
+1.14
+log
+@Add iy-007
+@
+text
+@d176 2
+d187 1
+a187 1
+% $Id: index.tex,v 1.13 2010/10/22 03:53:16 yanovsky Exp $
+d190 3
+@
+
+
+1.13
+log
+@Add iy-006
+@
+text
+@d180 1
+d185 1
+a185 1
+% $Id: index.tex,v 1.12 2010/08/27 23:53:02 vsnyder Exp $
+d188 3
+@
+
+
+1.12
+log
+@Add wvs-096
+@
+text
+@d179 1
+d184 1
+a184 1
+% $Id: index.tex,v 1.11 2010/06/08 19:06:06 yanovsky Exp $
+d187 3
+@
+
+
+1.11
+log
+@Added iy-001, iy-002, and iy-003. Added macros defining \hrpdf and \hpdf.
+@
+text
+@d69 1
+d175 1
+d183 1
+a183 1
+% $Id: index.tex,v 1.10 2010/05/26 22:56:57 pwagner Exp $
+d186 3
+@
+
+
+1.10
+log
+@Should produce clickable links when built with make
+@
+text
+@d50 2
+d174 3
+d181 1
+a181 1
+% $Id: index.tex,v 1.9 2010/05/20 23:50:05 vsnyder Exp $
+d184 3
+@
+
+
+1.9
+log
+@Add wvs-094, wvs-095
+@
+text
+@d43 5
+a47 1
+\newcommand\hr[1]{\href{#1.dvi}{dvi} \href{#1.pdf}{pdf}}
+d176 1
+a176 1
+% $Id: index.tex,v 1.8 2010/04/09 02:32:08 vsnyder Exp $
+d179 3
+@
+
+
+1.8
+log
+@Add wvs-090 -091 -092 -093
+@
+text
+@d63 2
+d166 2
+d172 1
+a172 1
+% $Id: index.tex,v 1.7 2010/01/26 02:09:04 vsnyder Exp $
+d175 3
+@
+
+
+1.7
+log
+@Add wvs-088 and wvs-089
+@
+text
+@d160 4
+d168 1
+a168 1
+% $Id: index.tex,v 1.6 2009/12/15 23:26:34 vsnyder Exp $
+d171 3
+@
+
+
+1.6
+log
+@Add l2cfquickreference
+@
+text
+@d159 1
+d164 1
+a164 1
+% $Id: index.tex,v 1.5 2009/12/15 21:22:01 vsnyder Exp $
+d167 3
+@
+
+
+1.5
+log
+@Add wvs-086 and wvs-087
+@
+text
+@d43 3
+a45 1
+\newcommand\h[1]{#1 \href{#1.dvi}{dvi} \href{#1.pdf}{pdf}}
+d64 1
+d163 1
+a163 1
+% $Id: index.tex,v 1.4 2009/10/15 22:57:49 vsnyder Exp $
+d166 3
+@
+
+
+1.4
+log
+@Add wvs-086
+@
+text
+@d154 2
+d160 1
+a160 1
+% $Id: index.tex,v 1.3 2009/07/29 03:10:53 vsnyder Exp $
+d163 3
+@
+
+
+1.3
+log
+@Add wvs-082 -083 -084
+@
+text
+@d152 2
+d158 1
+a158 1
+% $Id: index.tex,v 1.2 2008/06/25 00:31:49 vsnyder Exp $
+d161 3
+@
+
+
+1.2
+log
+@add wvs-081
+@
+text
+@d149 3
+d156 1
+a156 1
+% $Id: index.tex,v 1.1 2008/06/12 00:53:05 vsnyder Exp $
+d159 3
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d113 1
+d127 1
+d136 2
+d148 1
+d153 1
+a153 1
+% $Id: $
+d155 4
+a158 1
+% $Log: $
+@
+

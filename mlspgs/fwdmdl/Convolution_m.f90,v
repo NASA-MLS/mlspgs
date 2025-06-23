@@ -1,0 +1,1078 @@
+head	2.14;
+access;
+symbols
+	v5-02-NRT-19:2.14
+	v6-00:2.14
+	v5-02-NRT-18:2.14
+	v5-02:2.13
+	v5-01-NRT-17:2.14
+	v5-01-NRT-16:2.14
+	v5-01-NRT-15:2.14
+	v5-01-NRT-14:2.14
+	neuralnetworks-1-0:2.14.0.2
+	cfm-single-freq-0-1:2.13.0.2
+	v5-01:2.13
+	v5-00:2.13
+	v4-23-TA133:2.11.0.4
+	mus-emls-1-70:2.11.0.2
+	rel-1-0-englocks-work:2.10.0.2
+	VUMLS1-00:2.8
+	VPL1-00:2.6
+	V4-22-NRT-08:2.3;
+locks; strict;
+comment	@# @;
+
+
+2.14
+date	2020.08.28.21.41.58;	author vsnyder;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2019.06.24.23.28.16;	author pwagner;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2019.04.17.00.08.50;	author vsnyder;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2018.05.14.23.42.42;	author vsnyder;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2017.10.31.23.49.35;	author vsnyder;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2017.03.31.00.47.10;	author vsnyder;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2016.11.11.01.54.36;	author vsnyder;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2016.10.24.22.13.42;	author vsnyder;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2016.08.20.00.53.48;	author vsnyder;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2016.07.28.00.44.55;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2016.06.03.23.49.50;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2016.05.10.00.02.35;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2016.05.02.23.32.15;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2016.04.21.01.59.12;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.14
+log
+@Set up to calculate chi angles for QTM
+@
+text
+@! Copyright 2015, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=============================================================================
+module Convolution_m
+!=============================================================================
+
+  implicit NONE
+  private
+
+  public :: Convolution, Convolution_Setup
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: Convolution_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  ! ------------------------------------------------  Convolution  -----
+  subroutine Convolution ( DH_DZ_Out, DX_DH_Out, DX_DT, DXDT_Surface, &
+                         & DXDT_Tan, D2X_DXDT, F_and_V, &
+                         & EarthRadC_sq, Est_ScGeocAlt, FirstSignal, FmStat, &
+                         & FwdModelConf, FwdModelExtra, FwdModelIn, FwdModelOut, &
+                         & Grids_f, Grids_n, Grids_tmp, Grids_v, Grids_w, &
+                         & H_Atmos, K_Atmos, K_Spect_DN, K_Spect_DV, K_Spect_DW, &
+                         & K_Temp, L1BMIF_TAI, MIFDeadTime, PTan, PTan_Der, &
+                         & Ptg_Angles, Radiances, Sideband, S_T, Surf_Angle, &
+                         & Tan_Chi_Out, Tan_Phi, Temp, ThisSideband, &
+                         & Jacobian, ExtraJacobian, Hessian )
+
+    ! Convolution if needed, or interpolation to ptan ----------------
+
+    use AntennaPatterns_m, only: AntennaPatterns
+    use Intrinsic, only: L_ElevOffset, L_LimbSidebandFraction
+    use Constants, only: Deg2Rad
+    use Convolve_All_m, only: Convolve_Radiance, Convolve_Temperature_Deriv, &
+      & Convolve_Other_Deriv, Interpolate_Radiance, &
+      & Interpolate_Temperature_Deriv, Interpolate_Other_Deriv
+!     use Convolve_All_m, only: Convolve_Temperature_Deriv_Normalization, &
+!       & Convolve_Radiance_Normalization
+    use Dump_0, only: Dump
+    use ForwardModelConfig, only: Beta_Group_T, Channels_T, ForwardModelConfig_T
+    use ForwardModelIntermediate, only: B_Ptg_Angles, ForwardModelStatus_T
+    use ForwardModelVectorTools, only: GetQuantityForForwardModel
+    use FOV_Convolve_m, only: Convolve_Support_t, FOV_Convolve_Setup, &
+      & FOV_Convolve_Teardown, No_FFT
+    use Geometry, only: Get_R_EQ
+    use HessianModule_1, only: Hessian_T
+    use Hessians_m, only: Convolve_Other_Second_Deriv
+    use Intrinsic, only: L_Radiance
+    use Load_SPS_Data_M, only: Grids_T
+    use MatrixModule_1, only: Matrix_T
+    use MLSKinds, only: RP, RV, R4, R8
+    use MLSMessageModule, only: MLSMessage, MLSMsg_Warning
+    use MLSNumerics, only: Average, Coefficients, InterpolateArraySetup, &
+      & InterpolateArrayTeardown
+    use MLSSignals_M, only: AreSignalsSuperset, Signal_T
+    use MLSStringLists, only: SwitchDetail
+    use Path_Representation_m, only: Facets_and_Vertices_t
+    use Toggles, only: Emit, Levels, Switches, Toggle
+    use Trace_M, only: Trace_Begin, Trace_End
+    use VectorsModule, only: Vector_T, VectorValue_T
+
+    real(rp), intent(in), contiguous :: DH_DZ_Out(:) ! (ptan%template%nosurfs)
+    real(rp), intent(in), contiguous :: DX_DH_Out(:) ! (ptan%template%nosurfs)
+    real(rp), intent(in), contiguous :: DX_DT(:,:) ! (no_tan_hts,s_t*sv_t_len)     ! (No_tan_hts, nz*np)
+    real(rp), intent(in), contiguous :: DXDT_Surface(:,:) ! (1,s_t*sv_t_len)
+    real(rp), intent(in), contiguous :: DXDT_Tan(:,:) ! (ptan%template%nosurfs,s_t*sv_t_len)
+    real(rp), intent(in), contiguous :: D2X_DXDT(:,:) ! (no_tan_hts,s_t*sv_t_len)    ! (No_tan_hts, nz*np)
+    type (Facets_and_Vertices_t) :: F_and_V(:) ! Facets and vertices under each
+                                ! path through a QTM.  Used to map columns of
+                                ! K_Atmos and K_Temp to columns of Jacobian. If
+                                ! not QTM, F_and_V()%vertices is not allocated.
+    type(vectorValue_t), intent(in) :: EarthRadC_sq  ! (minor axis of orbit plane projected Earth ellipse)**2
+    real(rp), intent(in), contiguous :: Est_ScGeocAlt(:) ! Est S/C geocentric altitude /m
+    type (Signal_T), intent(in)  :: FirstSignal ! The first signal we're dealing with
+    type(forwardModelStatus_t), intent(inout) :: FmStat ! Reverse comm. stuff
+    type(forwardModelConfig_T), intent(in) :: FwdModelConf
+    type(vector_T), intent(in) :: FwdModelExtra, FwdModelIn
+    type(vector_T), intent(inout) :: FwdModelOut  ! Radiances, etc.
+    type (Grids_T), intent(in) :: Grids_f   ! All the coordinates for VMR
+    type (Grids_T), intent(in) :: Grids_n   ! All the spectroscopy(N) coordinates
+    type (Grids_T), intent(in) :: Grids_tmp ! All the coordinates for TEMP
+    type (Grids_T), intent(in) :: Grids_v   ! All the spectroscopy(V) coordinates
+    type (Grids_T), intent(in) :: Grids_w   ! All the spectroscopy(W) coordinates
+    real(r4), intent(in) :: H_Atmos(:,:,:,:) ! (noUsedChannels,no_tan_hts,s_h*size(grids_f%values),s_h*size(grids_f%values))
+    real(r4), intent(in) :: K_Atmos(:,:,:) ! (noUsedChannels,no_tan_hts,s_a*size(grids_f%values))
+    real(r4), intent(in) :: K_Spect_DN(:,:,:) ! (noUsedChannels,no_tan_hts,s_td*size(grids_n%values))
+    real(r4), intent(in) :: K_Spect_DV(:,:,:) ! (noUsedChannels,no_tan_hts,s_lc*size(grids_v%values))
+    real(r4), intent(in) :: K_Spect_DW(:,:,:) ! (noUsedChannels,no_tan_hts,s_lw*size(grids_w%values))
+    real(r4), intent(in) :: K_Temp(:,:,:) ! (noUsedChannels,no_tan_hts,s_t*sv_t_len)
+    real(rv), intent(in), pointer :: L1BMIF_TAI(:,:)   ! MIF Times
+    real(rv), intent(in), pointer :: MIFDeadTime(:,:)  ! Not collecting data
+    type (VectorValue_T), intent(in) :: PTan   ! Tangent pressure component of state vector
+    logical, intent(in) :: PTan_Der       ! Compute derivative w.r.t. PTan
+    real(rp), intent(inout), contiguous :: Ptg_Angles(:)
+    real(rp), intent(in), contiguous :: Radiances(:,:) ! (noUsedChannels,no_tan_hts)
+    integer, intent(in) :: Sideband       ! Either zero or from firstSignal
+    integer, intent(in) :: S_T            ! Multiplier for temp derivative sizes, 0 or 1
+    real(rp), intent(in) :: Surf_Angle(1)
+    real(rp), intent(in), contiguous :: Tan_Chi_Out(:)
+    real(rp), intent(in), contiguous :: Tan_Phi(:)
+    type (VectorValue_T), intent(in) :: Temp   ! Temperature component of state vector
+    integer, intent(in) :: ThisSideband   ! -1 = LSB, +1 = USB
+
+    type(matrix_T), intent(inout), optional :: Jacobian
+    type(matrix_T), intent(inout), optional :: ExtraJacobian
+    type(hessian_T), intent(inout), optional :: Hessian
+
+    logical :: Atmos_Der         ! Compute derivative w.r.t. VMR
+    logical :: Atmos_Second_Der  ! Compute 2nd derivative w.r.t. VMR
+    type (Beta_Group_T), pointer :: Beta_Group(:) ! from FwdModelConf%Beta_Group
+    type (Channels_T), pointer :: Channels(:) ! from FwdModelConf%Channels
+    integer ChanInd, Channel, I, J, SigInd, Ptg_I
+    real(rp) :: DeltaPtg         ! Used for patching the pointings
+    integer :: MAF
+    integer :: Me = -1           ! String index for trace
+    integer :: MinSuperset       ! Min. value of superset > 0
+    integer :: No_Tan_Hts        ! Number of tangent heights
+    integer :: NoUsedChannels    ! Number of channels used
+    logical :: PatchedAPtg       ! Used in patching the pointings
+    logical :: Print_Ptg         ! For debugging, from -Sptg
+    integer :: PTG_J             ! Loop counters for patching the pointings
+    real(r8) :: Rad_FFT(s_t*no_fft) ! FFT(I)             ! IGOR
+!     real(r8) :: Rad_Diff_FFT(s_t*no_fft) ! FFT(I-IA)   ! IGOR
+    logical :: Spect_Der, Spect_Der_Center, Spect_Der_Width, Spect_Der_Width_TDep
+    integer :: Superset          ! Output from AreSignalsSuperset
+    real(rp) :: ThisElev         ! An elevation offset
+    real(rp) :: ThisFraction     ! A sideband fraction
+    logical :: Update            ! Just update radiances etc.
+    integer :: WhichPattern      ! Index of antenna pattern
+    type (Coefficients(rp)) :: Coeffs ! For interpolation
+    type (Convolve_Support_T) :: Convolve_Support
+    type (VectorValue_T), pointer :: ElevOffset       ! Elevation offset
+    type (VectorValue_T), pointer :: SidebandFraction ! The sideband fraction to use
+    logical :: Temp_Der          ! Compute derivative w.r.t. Temp
+    type (VectorValue_T), pointer :: ThisRadiance     ! A radiance vector quantity
+
+    call trace_begin ( me, 'ForwardModel.Convolution', &
+      & cond=toggle(emit) .and. levels(emit) > 2 )
+
+    atmos_der = present ( jacobian ) .and. FwdModelConf%atmos_der
+    atmos_second_der = present (hessian ) .and. FwdModelConf%atmos_second_der
+
+    spect_der = present ( jacobian ) .and. FwdModelConf%spect_der
+    spect_der_center = spect_der .and. size(fwdModelConf%lineCenter) > 0
+    spect_der_width = spect_der .and. size(fwdModelConf%lineWidth) > 0
+    spect_der_width_TDep = spect_der .and. size(fwdModelConf%lineWidth_TDep) > 0
+
+    temp_der = present ( jacobian ) .and. FwdModelConf%temp_der
+
+    beta_group => fwdModelConf%beta_group
+    channels => fwdModelConf%channels
+    MAF = fmstat%MAF
+    no_tan_hts = size(ptg_angles)
+    noUsedChannels = size(channels)
+
+    ! Check that the angles are in the correct order.  If they
+    ! are not it means (give or take some approximations in the
+    ! horizontal according to Bill), that the rays crossed over
+    ! between the tangent point and the spacecraft.  One could dream
+    ! up all sorts of elegant schemes to get around that problem, but
+    ! it's simplest just to bail out (and is certainly preferable to
+    ! the infinite loop in the convolution (Hunt on angles) that
+    ! results otherwise).
+
+    print_Ptg = switchDetail(switches, 'ptg') > -1
+    if ( print_Ptg ) &
+      & call Dump ( ptg_angles, 'ptg_angles (before any patch)', format='(1PG22.17)' )
+
+    ! This code is needed to ensure that the ptg_angles are monotonic
+    ! (and not flat even)
+    deltaPtg = 1e-3              ! Some starting value
+    patchedAPtg = .false.
+    do ptg_i = 2, no_tan_hts
+      if ( ptg_angles(ptg_i) <= ptg_angles(ptg_i-1) ) then
+        patchedAPtg = .true.
+        ! This one is at or below its predecessor, find the next one above
+        ! If there is no next one above just use the previous spacing
+        do ptg_j = ptg_i + 1, no_tan_hts
+          if ( ptg_angles(ptg_j) > ptg_angles(ptg_i-1) ) then
+            ! Found one above.  Work out spacing to fill in with
+            deltaPtg = ( ptg_angles(ptg_j) - ptg_angles(ptg_i-1) ) / ( ptg_j - ptg_i + 1 )
+            exit
+          end if
+        end do
+        ptg_angles(ptg_i) = ptg_angles(ptg_i-1) + deltaPtg
+      else
+        ! This value is above the previous one so compute a delta from it
+        ! to use if needed later
+        deltaPtg = ptg_angles(ptg_i) - ptg_angles(ptg_i-1)
+      end if
+    end do
+
+    if ( patchedAPtg ) then
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & 'Had to patch some out-of-order ptg_angles' )
+      fmStat%flags = ior(fmStat%flags,b_ptg_angles)
+      if ( print_Ptg ) &
+        & call dump ( ptg_angles, 'ptg_angles (after patching)', format='(1PG22.17)' )
+    end if
+
+    ! Work out which antenna patterns we're going to need ------------------
+    do i = 1, noUsedChannels
+      channel = channels(i)%used
+      chanInd = channel + 1 - channels(i)%origin
+      sigInd = channels(i)%signal
+      ! Get the radiance
+      thisRadiance =>  &
+        GetQuantityForForwardModel (fwdModelOut, quantityType=l_radiance, &
+        & signal=fwdModelConf%signals(sigInd)%index, sideband=sideband,   &
+        & config=fwdModelConf )
+      ! Get the sideband fraction if we need to
+      if ( firstSignal%sideband == 0 .or. fwdModelConf%forceSidebandFraction ) then
+        sidebandFraction => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+          & quantityType=l_limbSidebandFraction, &
+          & signal=fwdModelConf%signals(sigInd)%index, &
+          & sideband=thisSideband, config=fwdModelConf )
+        thisFraction = sidebandFraction%values(chanInd,1)
+      else                  ! Otherwise, want just unfolded signal
+        thisFraction = 1.0
+      end if
+      ! Get the elevation offset
+      elevOffset => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+        & quantityType=l_elevOffset, signal=fwdModelConf%signals(sigInd)%index, &
+        & sideband=thisSideband, config=fwdModelConf )
+      thisElev = elevOffset%values(chanInd,1) * deg2Rad
+
+      ! Here comes the Convolution (or not) codes
+      update = ( thisSideband /= fwdModelConf%sidebandStart )
+
+      if ( FwdModelConf%do_conv ) then
+
+        whichPattern = -1
+        minSuperset = huge(0)
+        do j = 1, size(antennaPatterns)
+          superset = AreSignalsSuperset ( antennaPatterns(j)%signals, &
+            & fwdModelConf%signals(sigInd:sigInd), sideband=thisSideband, &
+            & channel=channel )
+          if ( superset >= 0 .and. superset <= minSuperset ) then
+            minSuperset = superset
+            whichPattern = j
+          end if
+        end do
+        if ( whichPattern < 0 ) call Announce_Error ( &
+          & "No matching antenna patterns." )
+
+        call fov_convolve_setup ( antennaPatterns(whichPattern), ptg_angles, &
+          & tan_chi_out-thisElev, convolve_support, &
+          & get_r_eq(average(tan_phi), &
+          &          average(earthradc_sq%values(:,MAF))), &  ! Average r_eq
+          & average(0.001_rp*est_scgeocalt), &                ! Average alt
+          & do_dRad_dx=ptan_der, do_Scan_Avg=fwdModelConf%scanAverage )
+
+        if ( temp_der ) then
+
+          ! To turn on/off Temperature Derivatives Normalization:
+          ! comment/uncomment two function calls:
+
+          call convolve_radiance ( convolve_support, maf, chanInd, &
+            & radiances(i,:), thisFraction, update, ptan, thisRadiance, &
+            & L1BMIF_TAI, MIFDeadTime, &
+            & Jacobian, fmStat%rows, dh_dz_out, dx_dh_out, ptan_der, rad_FFT )    ! IGOR
+
+          !call convolve_radiance_normalization ( convolve_support, maf, chanInd, &
+          !  & radiances(i,:), thisFraction, update, ptan, thisRadiance, &
+          !  & L1BMIF_TAI, MIFDeadTime, &
+          !  & Jacobian, fmStat%rows, dh_dz_out, dx_dh_out, ptan_der, rad_FFT, &
+          !  & radiances_diff(i,:), rad_diff_FFT )                                  ! IGOR
+
+          call convolve_temperature_deriv ( convolve_support, maf, chanInd, &
+            & radiances(i,:), rad_fft, thisFraction, update, thisRadiance, &
+            & temp, grids_tmp, surf_angle(1), L1BMIF_TAI, MIFDeadTime, &
+            & real(k_temp(i,:,:),kind=rp), &
+            & dx_dt, d2x_dxdt, dxdt_tan, dxdt_surface, f_and_v, &
+            & Jacobian, fmStat%rows )    ! IGOR
+
+          !call convolve_temperature_deriv_normalization ( convolve_support, maf, chanInd, &
+          !  & radiances_diff(i,:), rad_diff_FFT, thisFraction, update, thisRadiance, &
+          !  & temp, grids_tmp, surf_angle(1), L1BMIF_TAI, MIFDeadTime, &
+          !  & real(k_temp(i,:,:),kind=rp), &
+          !  & dx_dt, d2x_dxdt, dxdt_tan, dxdt_surface, f_and_v,
+          !  & Jacobian, fmStat%rows )   ! IGOR
+
+        else ! No temperature derivative
+          call convolve_radiance ( convolve_support, maf, chanInd, &
+            & radiances(i,:), thisFraction, update, ptan, thisRadiance, &
+            & L1BMIF_TAI, MIFDeadTime, &
+            & Jacobian, fmStat%rows, dh_dz_out, dx_dh_out, ptan_der )
+        end if
+
+        if ( atmos_der ) then
+          call convolve_other_deriv ( convolve_support, maf, chanInd, &
+          & thisFraction, update, thisRadiance, beta_group%qty, Grids_f, &
+          & L1BMIF_TAI, MIFDeadTime, real(k_atmos(i,:,:),kind=rp), &
+          & f_and_v, Jacobian, fmStat%rows, extraJacobian )
+
+          if (atmos_second_der ) then
+            call convolve_other_second_deriv ( convolve_support, maf, chanInd, &
+            & thisFraction, update, thisRadiance, beta_group%qty, Grids_f, &
+            & L1BMIF_TAI, MIFDeadTime, real(h_atmos(i,:,:,:),kind=rp), &
+            & Hessian, fmStat%rows )
+          end if
+        end if
+
+        if ( spect_der_center ) &
+          & call convolve_other_deriv ( convolve_support, maf, chanInd, &
+            & thisFraction, update, thisRadiance, &
+            & fwdModelConf%lineCenter%qty, grids_v, L1BMIF_TAI, MIFDeadTime, &
+            & real(k_spect_dv(i,:,:),kind=rp), f_and_v, Jacobian, fmStat%rows, &
+            & extraJacobian )
+        if ( spect_der_Width ) &
+          & call convolve_other_deriv ( convolve_support, maf, chanInd, &
+            & thisFraction, update, thisRadiance, &
+            & fwdModelConf%lineWidth%qty, grids_w, L1BMIF_TAI, MIFDeadTime, &
+            & real(k_spect_dw(i,:,:),kind=rp), f_and_v, Jacobian, fmStat%rows, &
+            & extraJacobian )
+        if ( spect_der_Width_TDep ) &
+          & call convolve_other_deriv ( convolve_support, maf, chanInd, &
+            & thisFraction, update, thisRadiance, &
+            & fwdModelConf%lineWidth_TDep%qty, grids_n, L1BMIF_TAI, MIFDeadTime, &
+            & real(k_spect_dn(i,:,:),kind=rp), f_and_v, Jacobian, fmStat%rows, &
+            & extraJacobian )
+
+        call fov_convolve_teardown ( convolve_support )
+
+      else          ! No convolution needed ..
+
+        call interpolateArraySetup ( ptg_angles, tan_chi_out-thisElev, &
+          & method='S', extrapolate='C', coeffs=coeffs, &
+          & dyByDx=ptan_der.or.fwdModelConf%scanAverage )
+
+        call interpolate_radiance ( coeffs, maf, chanInd, ptg_angles, &
+          & radiances(i,:), thisFraction, update, ptan, tan_chi_out-thisElev, &
+          & thisRadiance, L1BMIF_TAI, MIFDeadTime, Jacobian, fmStat%rows, &
+          & dh_dz_out, dx_dh_out, ptan_der )
+
+        if ( temp_der ) &
+          & call interpolate_temperature_deriv ( coeffs, maf, chanInd, &
+            & ptg_angles, thisFraction, update, tan_chi_out-thisElev,  &
+            & thisRadiance, temp, grids_tmp, L1BMIF_TAI, MIFDeadTime, &
+            & real(k_temp(i,:,:),kind=rp), f_and_v, Jacobian, fmStat%rows )
+
+        if ( atmos_der ) &
+          call interpolate_other_deriv ( coeffs, maf, chanInd, ptg_angles, &
+            & thisFraction, update, tan_chi_out-thisElev, thisRadiance, &
+            & beta_group%qty, grids_f, L1BMIF_TAI, MIFDeadTime, &
+            & real(k_atmos(i,:,:),kind=rp), f_and_v, Jacobian, fmStat%rows, &
+            & linear=.true., extraJacobian=extraJacobian )
+
+        if ( spect_der_center ) &
+          & call interpolate_other_deriv ( coeffs, maf, chanInd, ptg_angles, &
+            & thisFraction, update, tan_chi_out-thisElev, thisRadiance, &
+            & fwdModelConf%lineCenter%qty, grids_v, L1BMIF_TAI, MIFDeadTime, &
+            & real(k_spect_dv(i,:,:),kind=rp), f_and_v, Jacobian, fmStat%rows, &
+            & linear=.true., extraJacobian=extraJacobian )
+
+        if ( spect_der_Width ) &
+          & call interpolate_other_deriv ( coeffs, maf, chanInd, ptg_angles, &
+            & thisFraction, update, tan_chi_out-thisElev, thisRadiance, &
+            & fwdModelConf%lineWidth%qty, grids_w, L1BMIF_TAI, MIFDeadTime, &
+            & real(k_spect_dw(i,:,:),kind=rp), f_and_v, Jacobian, fmStat%rows, &
+            & linear=.true., extraJacobian=extraJacobian )
+
+        if ( spect_der_Width_TDep ) &
+          & call interpolate_other_deriv ( coeffs, maf, chanInd, ptg_angles, &
+            & thisFraction, update, tan_chi_out-thisElev, thisRadiance, &
+            & fwdModelConf%lineWidth_TDep%qty, grids_n, L1BMIF_TAI, MIFDeadTime, &
+            & real(k_spect_dn(i,:,:),kind=rp), f_and_v, Jacobian, fmStat%rows, &
+            & linear=.true., extraJacobian=extraJacobian )
+
+        call interpolateArrayTeardown ( coeffs )
+
+      end if ! Convolve or interpolate
+
+    end do                            ! Channel loop
+
+    call trace_end ( 'ForwardModel.Convolution', &
+      & cond=toggle(emit) .and. levels(emit) > 2 )
+
+  contains
+
+  ! .............................................  Announce_Error  .....
+    subroutine Announce_Error ( Message )
+    ! Announce Message using MLSMessage.  Include the configuration name
+    ! in the message
+      use MLSMessageModule, only: MLSMSG_Error
+      use MoreMessage, only: MLSMessage
+      character(len=*), intent(in) :: Message
+      call MLSMessage ( MLSMSG_Error, moduleName, &
+        & "With config(%S): " // message, datum=fwdModelConf%name )
+    end subroutine Announce_Error
+
+  end subroutine Convolution
+
+  ! ----------------------------------------  Convolution_Setup  -----
+  subroutine Convolution_Setup ( DH_DZ_Out, DX_DH_Out, DXDT_Surface, &
+                               & DXDT_TAN, EarthRadC_sq, Est_ScGeocAlt, &
+                               & FwdModelConf, FwdModelExtra, FwdModelIn, &
+                               & Grids_f, Grids_tmp, &
+                               & L1BMIF_TAI, MAF, MIFDeadTime, &
+                               & PhiTan, PTan, RefGPH, SCGeocAlt, &
+                               & Surf_Angle, Tan_Chi_Out, Tan_Phi, Tan_Press, &
+                               & WindowFinish, WindowStart, &
+                               & InstRefr, ScECR_MIF, ECRtoFOV )
+  ! set up output pointing angles ------------------------------------
+
+    use Constants, only: Deg2Rad
+    use ForwardModelConfig, only: ForwardModelConfig_T
+    use ForwardModelVectorTools, only: GetQuantityForForwardModel
+    use Geometry, only: Get_R_EQ
+    use Get_Chi_Out_m, only: Get_Chi_Out
+    use Intrinsic, only: L_MIFDEADTIME, L_L1BMIF_TAI
+    use Load_SPS_Data_M, only: Grids_T
+    use MLSKinds, only: RP, RV
+    use Molecules, only: L_H2O
+    use Toggles, only: Emit, Levels, Toggle
+    use Trace_M, only: Trace_Begin, Trace_End
+    use VectorsModule, only: Vector_T, VectorValue_T
+
+    real(rp), intent(out), contiguous :: DH_DZ_Out(:) ! (ptan%template%nosurfs)
+    real(rp), intent(out), contiguous :: DX_DH_Out(:) ! (ptan%template%nosurfs)
+    real(rp), intent(out), contiguous :: DXDT_Surface(:,:) ! (1,s_t*sv_t_len)
+    real(rp), intent(out), contiguous :: DXDT_Tan(:,:) ! (ptan%template%nosurfs,s_t*sv_t_len)
+    type(VectorValue_T), intent(in) :: EarthRadC_sq ! (minor axis of orbit plane projected Earth ellipse)**2
+    real(rp), intent(in), contiguous :: Est_ScGeocAlt(:) ! (no_tan_hts) ! Est S/C geocentric altitude /m
+    type(forwardModelConfig_T), intent(in) :: FwdModelConf
+    type(vector_T), intent(in) :: FwdModelExtra, FwdModelIn
+    type (Grids_T), intent(in) :: Grids_f      ! All the coordinates for VMR
+    type (Grids_T), intent(in) :: Grids_tmp    ! All the coordinates for TEMP
+    real(rv), intent(out), pointer :: L1BMIF_TAI(:,:)   ! MIF Times
+    integer, intent(in) :: MAF
+    real(rv), intent(out), pointer :: MIFDeadTime(:,:)  ! Not collecting data
+    type (VectorValue_T), intent(in) :: PhiTan ! Tangent geodAngle component of state vector
+    type (VectorValue_T), intent(in) :: PTan   ! Tangent pressure component of state vector
+    type (VectorValue_T), intent(in) :: RefGPH ! Reference geopotential height
+    type (VectorValue_T), intent(in) :: SCGeocAlt     ! S/C geocentric altitude /m
+    real(rp), intent(out) :: Surf_Angle(1)
+    real(rp), intent(out), contiguous :: Tan_Chi_Out(:)
+    real(rp), intent(in), contiguous :: Tan_Phi(:) ! Radians
+    real(rp), intent(in) :: Tan_Press(:)       ! Pressures corresponding to Z_PSIG
+    integer, intent(in) :: WindowFinish        ! End of temperature `window'
+    integer, intent(in) :: WindowStart         ! Start of temperature `window'
+! Optional inputs for QTM
+    real(rp), intent(in), optional :: InstRefr ! Index of refraction -1 at inst.
+    type(VectorValue_t), intent(in), optional :: ScECR_MIF
+    type(VectorValue_t), intent(in), optional :: ECRtoFOV
+
+    real(rp) :: D2XDXDT_Surface(1,size(dxdt_surface,2))
+    real(rp) :: D2XDXDT_Tan(size(dxdt_tan,1),size(dxdt_tan,2))
+    integer :: H2O_Ind
+    real(rp) :: One_dhdz(1), One_dxdh(1)
+    real(rp) :: REQ_Out(phitan%template%nosurfs)
+
+    integer :: Me = -1                    ! String index for trace
+    type (VectorValue_T), pointer :: Work ! Temporary stuff
+
+    call trace_begin ( me, 'ForwardModel.Convolution_Setup', &
+      & cond=toggle(emit)  .and. levels(emit) > 0 )
+
+    h2o_ind = grids_f%s_ind(l_h2o)
+
+    ! Compute equivalent earth radius
+
+    ! Although this is the same mathematical formula as used in metrics,
+    ! the phi used here is different: These are on MIFs, not hypothetical
+    ! pointings to the desired tangent zetas.  Therefore, we can't use
+    ! these values in metrics, or where its output r_eq value is
+    ! used.
+
+    req_out = get_R_eq ( phitan%values(:,maf)*Deg2Rad, earthradc_sq%values(:,maf) )
+
+    ! Temperature's windowStart:windowFinish are correct here.
+    ! RefGPH and Temperature have the same horizontal basis.
+    ! Grids_F is only needed for H2O, for calculating refractive index.
+    ! This is only used for convolution, which is done for both sidebands.
+    call get_chi_out ( ptan%values(:,maf), phitan%values(:,maf)*deg2rad,  &
+       & scGeocAlt%values(:,maf), Grids_tmp, refGPH%template%surfs(1,1),  &
+       & refGPH%values(1,windowStart:windowFinish), 0.0_rp,               &
+       & req_out, grids_f, h2o_ind, tan_chi_out, dh_dz_out, dx_dh_out,    &
+       & dxdt_tan=dxdt_tan, d2xdxdt_tan=d2xdxdt_tan, &
+       ! Last four arguments for QTM
+       & instRefr=instRefr, MAF=MAF, ScECR_MIF=ScECR_MIF, ECRtoFOV=ECRtoFOV )
+
+    ! This is a lazy way to get the surface angle
+    ! Temperature's windowStart:windowFinish are correct here.
+    ! refGPH and temperature have the same horizontal basis.
+    ! Grids_tmp is only needed for H2O, for calculating refractive index.
+    ! This is only used for convolution, which is done for both sidebands.
+    call get_chi_out ( tan_press(1:1), tan_phi(1:1),                      &
+       & est_scgeocalt(1:1), Grids_tmp, refGPH%template%surfs(1,1),       &
+       & refGPH%values(1,windowStart:windowFinish), 0.0_rp,               &
+       & req_out(1:1), grids_f, h2o_ind, surf_angle, one_dhdz, one_dxdh,  &
+       & dxdt_tan=dxdt_surface, d2xdxdt_tan=d2xdxdt_surface, &
+       ! Last four arguments for QTM
+       & instRefr=instRefr, MAF=MAF, ScECR_MIF=ScECR_MIF, ECRtoFOV=ECRtoFOV )
+
+    ! This is only used for convolution, which is done for both sidebands.
+    if ( fwdModelConf%scanAverage ) then
+      work => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+        & quantityType=l_l1bMIF_TAI, config=fwdModelConf )
+      l1bMIF_TAI => work%values
+      work => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+        & quantityType=l_MIFDeadTime, config=fwdModelConf )
+      MIFDeadTime => work%values ! Only the (1,1) element is used.
+    else
+      nullify ( l1bMIF_TAI, MIFDeadTime )
+    end if
+
+    call trace_end ( 'ForwardModel.Convolution_Setup', &
+      & cond=toggle(emit) .and. levels(emit) > 0 )
+
+  end subroutine Convolution_Setup
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: Convolution_m.f90,v 2.13 2019/06/24 23:28:16 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Convolution_m
+
+! $Log: Convolution_m.f90,v $
+! Revision 2.13  2019/06/24 23:28:16  pwagner
+! Updated to reflect TA-01-143
+!
+! Revision 2.12  2019/04/17 00:08:50  vsnyder
+! Remove obsolete comments about units of SCgeocAlt and RefGPH
+!
+! Revision 2.11  2018/05/14 23:42:42  vsnyder
+! Move Hessians stuff to Hessians_m
+!
+! Revision 2.10  2017/10/31 23:49:35  vsnyder
+! Make Coefficients a parameterized type
+!
+! Revision 2.9  2017/03/31 00:47:10  vsnyder
+! Use F_and_V to map to Jacobian
+!
+! Revision 2.8  2016/11/11 01:54:36  vsnyder
+! Call Get_Chi_Out with ScGeocAlt and RefGPH in m instead of km, because
+! Get_Chi_Out does the conversion now (to avoid an array temp).  Use
+! SPREAD intrinsic function instead of an array constructor to create an
+! array of all-the-same reference surface values.
+!
+! Revision 2.7  2016/10/24 22:13:42  vsnyder
+! Eliminate orbit inclination because get_chi_out no longer needs it
+!
+! Revision 2.6  2016/08/20 00:53:48  vsnyder
+! Correct a comment about units for Ten_Phi
+!
+! Revision 2.5  2016/07/28 00:44:55  vsnyder
+! Remove unused variable declaration
+!
+! Revision 2.4  2016/06/03 23:49:50  vsnyder
+! Change EarthRadC_sq from a real scalar to a vector quantity.  Use average
+! of tangent phi / average EarthRacC_sq to do FOV_Convolve_Setup.
+!
+! Revision 2.3  2016/05/10 00:02:35  vsnyder
+! Remove unused variable
+!
+! Revision 2.2  2016/05/02 23:32:15  vsnyder
+! Remove unused dummy arguments from Convolution_Setup
+!
+! Revision 2.1  2016/04/21 01:59:12  vsnyder
+! Initial commit
+!
+@
+
+
+2.13
+log
+@Updated to reflect TA-01-143
+@
+text
+@d414 2
+a415 1
+                               & WindowFinish, WindowStart )
+d454 4
+d491 3
+a493 1
+       & dxdt_tan=dxdt_tan, d2xdxdt_tan=d2xdxdt_tan )
+d504 3
+a506 1
+       & dxdt_tan=dxdt_surface, d2xdxdt_tan=d2xdxdt_surface )
+d528 1
+a528 1
+       "$Id: Convolution_m.f90,v 2.12 2019/04/17 00:08:50 vsnyder Exp $"
+d538 3
+@
+
+
+2.12
+log
+@Remove obsolete comments about units of SCgeocAlt and RefGPH
+@
+text
+@d483 1
+a483 2
+       & scGeocAlt%values(:,maf), Grids_tmp,                              &
+       & spread(refGPH%template%surfs(1,1),1,windowFinish-windowStart+1), &
+d494 1
+a494 2
+       & est_scgeocalt(1:1), Grids_tmp,                                   &
+       & spread(refGPH%template%surfs(1,1),1,windowFinish-windowStart+1), &
+d519 1
+a519 1
+       "$Id: Convolution_m.f90,v 2.11 2018/05/14 23:42:42 vsnyder Exp $"
+d529 3
+@
+
+
+2.11
+log
+@Move Hessians stuff to Hessians_m
+@
+text
+@a480 1
+    ! SCgeocAlt and RefGPH are in meters, but Get_Chi_Out wants them in km.
+a492 1
+    ! Est_scgeocalt and RefGPH are in meters, but Get_Chi_Out wants them in km.
+d521 1
+a521 1
+       "$Id: Convolution_m.f90,v 2.10 2017/10/31 23:49:35 vsnyder Exp $"
+d531 3
+@
+
+
+2.10
+log
+@Make Coefficients a parameterized type
+@
+text
+@d47 1
+a47 1
+      & Convolve_Other_Deriv, Convolve_Other_Second_Deriv, Interpolate_Radiance, &
+d59 1
+d523 1
+a523 1
+       "$Id: Convolution_m.f90,v 2.9 2017/03/31 00:47:10 vsnyder Exp $"
+d533 3
+@
+
+
+2.9
+log
+@Use F_and_V to map to Jacobian
+@
+text
+@d64 2
+a65 2
+    use MLSNumerics, only: Average, Coefficients => Coefficients_R8, &
+      & InterpolateArraySetup, InterpolateArrayTeardown
+d141 1
+a141 1
+    type (Coefficients) :: Coeffs ! For interpolation
+d522 1
+a522 1
+       "$Id: Convolution_m.f90,v 2.8 2016/11/11 01:54:36 vsnyder Exp $"
+d532 3
+@
+
+
+2.8
+log
+@Call Get_Chi_Out with ScGeocAlt and RefGPH in m instead of km, because
+Get_Chi_Out does the conversion now (to avoid an array temp).  Use
+SPREAD intrinsic function instead of an array constructor to create an
+array of all-the-same reference surface values.
+@
+text
+@d30 2
+a31 2
+  subroutine Convolution ( DH_DZ_OUT, DX_DH_OUT, DX_DT, DXDT_Surface, &
+                         & DXDT_TAN, D2X_DXDT, &
+d43 9
+a51 9
+    use ANTENNAPATTERNS_M, only: ANTENNAPATTERNS
+    use INTRINSIC, only: L_ELEVOFFSET, L_LIMBSIDEBANDFRACTION
+    use CONSTANTS, only: Deg2Rad
+    use CONVOLVE_ALL_M, only: CONVOLVE_RADIANCE, CONVOLVE_TEMPERATURE_DERIV, &
+      & CONVOLVE_OTHER_DERIV, CONVOLVE_OTHER_SECOND_DERIV, INTERPOLATE_RADIANCE, &
+      & INTERPOLATE_TEMPERATURE_DERIV, INTERPOLATE_OTHER_DERIV
+!     use CONVOLVE_ALL_M, only: CONVOLVE_TEMPERATURE_DERIV_NORMALIZATION, &
+!       & CONVOLVE_RADIANCE_NORMALIZATION
+    use DUMP_0, only: DUMP
+d55 2
+a56 2
+    use FOV_CONVOLVE_M, only: CONVOLVE_SUPPORT_T, FOV_CONVOLVE_SETUP, &
+      & FOV_CONVOLVE_TEARDOWN, NO_FFT
+d63 2
+a64 2
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_WARNING
+    use MLSNUMERICS, only: Average, Coefficients => Coefficients_R8, &
+d68 1
+d73 2
+a74 2
+    real(rp), intent(in), contiguous :: DH_DZ_OUT(:) ! (ptan%template%nosurfs)
+    real(rp), intent(in), contiguous :: DX_DH_OUT(:) ! (ptan%template%nosurfs)
+d77 1
+a77 1
+    real(rp), intent(in), contiguous :: DXDT_TAN(:,:) ! (ptan%template%nosurfs,s_t*sv_t_len)
+d79 4
+d124 1
+a124 1
+    real(rp) :: DELTAPTG         ! Used for patching the pointings
+d127 1
+a127 1
+    integer :: MINSUPERSET       ! Min. value of superset > 0
+d130 1
+a130 1
+    logical :: PATCHEDAPTG       ! Used in patching the pointings
+d133 2
+a134 2
+    real(r8) :: RAD_FFT(s_t*no_fft) ! FFT(I)             ! IGOR
+!     real(r8) :: RAD_DIFF_FFT(s_t*no_fft) ! FFT(I-IA)   ! IGOR
+d136 3
+a138 3
+    integer :: SUPERSET          ! Output from AreSignalsSuperset
+    real(rp) :: THISELEV         ! An elevation offset
+    real(rp) :: THISFRACTION     ! A sideband fraction
+d140 1
+a140 1
+    integer :: WHICHPATTERN      ! Index of antenna pattern
+d143 2
+a144 2
+    type (VectorValue_T), pointer :: ELEVOFFSET       ! Elevation offset
+    type (VectorValue_T), pointer :: SIDEBANDFRACTION ! The sideband fraction to use
+d146 1
+a146 1
+    type (VectorValue_T), pointer :: THISRADIANCE     ! A radiance vector quantity
+d284 2
+a285 1
+            & dx_dt, d2x_dxdt, dxdt_tan, dxdt_surface, Jacobian, fmStat%rows )    ! IGOR
+d291 2
+a292 1
+          !  & dx_dt, d2x_dxdt, dxdt_tan, dxdt_surface, Jacobian, fmStat%rows )     ! IGOR
+d305 1
+a305 1
+          & Jacobian, fmStat%rows, extraJacobian )
+d319 1
+a319 1
+            & real(k_spect_dv(i,:,:),kind=rp), Jacobian, fmStat%rows, &
+d325 1
+a325 1
+            & real(k_spect_dw(i,:,:),kind=rp), Jacobian, fmStat%rows, &
+d331 1
+a331 1
+            & real(k_spect_dn(i,:,:),kind=rp), Jacobian, fmStat%rows, &
+d351 1
+a351 1
+            & real(k_temp(i,:,:),kind=rp), Jacobian, fmStat%rows )
+d357 1
+a357 1
+            & real(k_atmos(i,:,:),kind=rp), Jacobian, fmStat%rows, &
+d364 1
+a364 1
+            & real(k_spect_dv(i,:,:),kind=rp), Jacobian, fmStat%rows, &
+d371 1
+a371 1
+            & real(k_spect_dw(i,:,:),kind=rp), Jacobian, fmStat%rows, &
+d378 1
+a378 1
+            & real(k_spect_dn(i,:,:),kind=rp), Jacobian, fmStat%rows, &
+d406 1
+a406 1
+  subroutine Convolution_Setup ( DH_DZ_OUT, DX_DH_OUT, DXDT_Surface, &
+d412 1
+a412 1
+                               & Surf_Angle, Tan_Chi_Out, Tan_Phi, TAN_Press, &
+d416 1
+a416 1
+    use CONSTANTS, only: Deg2Rad
+d429 2
+a430 2
+    real(rp), intent(out), contiguous :: DH_DZ_OUT(:) ! (ptan%template%nosurfs)
+    real(rp), intent(out), contiguous :: DX_DH_OUT(:) ! (ptan%template%nosurfs)
+d432 1
+a432 1
+    real(rp), intent(out), contiguous :: DXDT_TAN(:,:) ! (ptan%template%nosurfs,s_t*sv_t_len)
+d449 1
+a449 1
+    real(rp), intent(in) :: TAN_Press(:)       ! Pressures corresponding to Z_PSIG
+d453 2
+a454 2
+    real(rp) :: D2XDXDT_SURFACE(1,size(dxdt_surface,2))
+    real(rp) :: D2XDXDT_TAN(size(dxdt_tan,1),size(dxdt_tan,2))
+d457 1
+a457 1
+    real(rp) :: REQ_OUT(phitan%template%nosurfs)
+d460 1
+a460 1
+    type (VectorValue_T), pointer :: WORK ! Temporary stuff
+d522 1
+a522 1
+       "$Id: Convolution_m.f90,v 2.7 2016/10/24 22:13:42 vsnyder Exp $"
+d532 6
+@
+
+
+2.7
+log
+@Eliminate orbit inclination because get_chi_out no longer needs it
+@
+text
+@d448 1
+a448 1
+    integer :: H2O_Ind, J
+d475 5
+a479 5
+    call get_chi_out ( ptan%values(:,maf), phitan%values(:,maf)*deg2rad, &
+       & 0.001_rp*scGeocAlt%values(:,maf), Grids_tmp,                    &
+       & (/ (refGPH%template%surfs(1,1), j=windowStart,windowFinish) /), &
+       & 0.001_rp*refGPH%values(1,windowStart:windowFinish), 0.0_rp,     &
+       & req_out, grids_f, h2o_ind, tan_chi_out, dh_dz_out, dx_dh_out,   &
+d488 5
+a492 5
+    call get_chi_out ( tan_press(1:1), tan_phi(1:1),                     &
+       & 0.001_rp*est_scgeocalt(1:1), Grids_tmp,                         &
+       & (/ (refGPH%template%surfs(1,1), j=windowStart,windowFinish) /), &
+       & 0.001_rp*refGPH%values(1,windowStart:windowFinish), 0.0_rp,     &
+       & req_out(1:1), grids_f, h2o_ind, surf_angle, one_dhdz, one_dxdh, &
+d515 1
+a515 1
+       "$Id: Convolution_m.f90,v 2.6 2016/08/20 00:53:48 vsnyder Exp $"
+d525 3
+@
+
+
+2.6
+log
+@Correct a comment about units for Ten_Phi
+@
+text
+@d404 1
+a404 1
+                               & OrbIncline, PhiTan, PTan, RefGPH, SCGeocAlt, &
+a434 1
+    type (VectorValue_T), intent(in) :: OrbIncline      ! Orbital inclination
+d478 1
+a478 2
+       & 0.001_rp*refGPH%values(1,windowStart:windowFinish),             &
+       & orbIncline%values(1,maf)*Deg2Rad, 0.0_rp,                       &
+d491 1
+a491 2
+       & 0.001_rp*refGPH%values(1,windowStart:windowFinish),             &
+       & orbIncline%values(1,maf)*Deg2Rad, 0.0_rp,                       &
+d515 1
+a515 1
+       "$Id: Convolution_m.f90,v 2.5 2016/07/28 00:44:55 vsnyder Exp $"
+d525 3
+@
+
+
+2.5
+log
+@Remove unused variable declaration
+@
+text
+@d442 1
+a442 1
+    real(rp), intent(in), contiguous :: Tan_Phi(:)
+d518 1
+a518 1
+       "$Id: Convolution_m.f90,v 2.4 2016/06/03 23:49:50 vsnyder Exp $"
+d528 3
+@
+
+
+2.4
+log
+@Change EarthRadC_sq from a real scalar to a vector quantity.  Use average
+of tangent phi / average EarthRacC_sq to do FOV_Convolve_Setup.
+@
+text
+@a121 1
+    integer :: MIFs              ! Number of MIFs in the MAF
+d518 1
+a518 1
+       "$Id: Convolution_m.f90,v 2.3 2016/05/10 00:02:35 vsnyder Exp $"
+d528 4
+@
+
+
+2.3
+log
+@Remove unused variable
+@
+text
+@d64 2
+a65 2
+    use MLSNUMERICS, only: COEFFICIENTS => COEFFICIENTS_R8, &
+      & INTERPOLATEARRAYSETUP, INTERPOLATEARRAYTEARDOWN
+d78 1
+a78 1
+    real(rp), intent(in) :: EarthRadC_sq ! (minor axis of orbit plane projected Earth ellipse)**2
+d122 1
+d255 3
+a257 2
+          & get_r_eq(sum(tan_phi)/no_tan_hts,earthradc_sq), & ! Average r_eq
+          & sum(0.001_rp*est_scgeocalt)/no_tan_hts,         & ! Average alt
+d427 1
+a427 1
+    real(rp), intent(in) :: EarthRadC_sq ! (minor axis of orbit plane projected Earth ellipse)**2
+d470 1
+a470 1
+    req_out = get_R_eq ( phitan%values(:,maf)*Deg2Rad, earthradc_sq )
+d519 1
+a519 1
+       "$Id: Convolution_m.f90,v 2.2 2016/05/02 23:32:15 vsnyder Exp $"
+d529 3
+@
+
+
+2.2
+log
+@Remove unused dummy arguments from Convolution_Setup
+@
+text
+@d448 1
+a448 1
+    integer :: H2O_Ind, J, No_SV_p_T
+a458 1
+    no_sv_p_t = grids_tmp%l_p(1) ! phi == windowFinish - windowStart + 1
+d477 1
+a477 1
+       & (/ (refGPH%template%surfs(1,1), j=1,no_sv_p_t) /),              &
+d517 1
+a517 1
+       "$Id: Convolution_m.f90,v 2.1 2016/04/21 01:59:12 vsnyder Exp $"
+d527 3
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d23 1
+a23 1
+       "$RCSfile: Metrics_3D_m.f90,v $"
+d398 4
+a401 4
+  subroutine Convolution_Setup ( DH_DZ_OUT, DX_DH_OUT, DX_DT, DXDT_Surface, &
+                               & DXDT_TAN, D2X_DXDT, EarthRadC_sq, Est_ScGeocAlt, &
+                               & FwdModelConf, &
+                               & FwdModelExtra, FwdModelIn, Grids_f, Grids_tmp, &
+a422 1
+    real(rp), intent(in), contiguous :: DX_DT(:,:) ! (no_tan_hts,s_t*sv_t_len)     ! (No_tan_hts, nz*np)
+a424 1
+    real(rp), intent(in), contiguous :: D2X_DXDT(:,:) ! (no_tan_hts,s_t*sv_t_len)    ! (No_tan_hts, nz*np)
+d518 1
+a518 1
+       "$Id: Metrics_3D_m.f90,v 2.1 2016/04/16 02:06:23 vsnyder Exp $"
+d527 4
+a530 1
+! $Log: Metrics_3D_m.f90,v $
+@
+

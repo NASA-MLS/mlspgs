@@ -1,0 +1,322 @@
+head	2.6;
+access;
+symbols
+	v5-02-NRT-19:2.6
+	v6-00:2.6
+	v5-02-NRT-18:2.6
+	v5-02:2.6
+	v5-01-NRT-17:2.6
+	v5-01-NRT-16:2.6
+	v5-01-NRT-15:2.6
+	v5-01-NRT-14:2.6
+	neuralnetworks-1-0:2.6.0.10
+	cfm-single-freq-0-1:2.6.0.8
+	v5-01:2.6
+	v5-00:2.6
+	v4-23-TA133:2.6.0.6
+	mus-emls-1-70:2.6.0.4
+	rel-1-0-englocks-work:2.6.0.2
+	VUMLS1-00:2.6
+	VPL1-00:2.5
+	V4-22-NRT-08:2.5
+	VAM1-00:2.5
+	V4-21:2.5.0.4
+	V4-13:2.5
+	V4-12:2.5
+	V4-11:2.5
+	V4-10:2.5
+	V3-43:2.5
+	M4-00:2.5
+	V3-41:2.5
+	V3-40-PlusGM57:2.5.0.2
+	V2-24-NRT-04:2.4
+	V3-33:2.5
+	V2-24:2.4
+	V3-31:2.5
+	V3-30-NRT-05:2.5
+	cfm-01-00:2.5
+	V3-30:2.5
+	V3-20:2.5
+	V3-10:2.5
+	V2-23-NRT-02:2.4
+	V2-23:2.4
+	V2-22-NRT-01:2.4
+	V2-22:2.4
+	V2-21:2.3
+	V2-20:2.3
+	V2-11:2.3
+	V2-10:2.3
+	V2-00:2.3
+	V1-51:2.2
+	V1-50:2.2
+	V1-45:2.2
+	V1-44:2.2
+	V1-43:2.2
+	V1-42:2.2
+	V1-41:2.2
+	V1-32:2.2
+	V1-40:2.2
+	V1-31:2.2
+	V1-30:2.2;
+locks; strict;
+comment	@# @;
+
+
+2.6
+date	2016.09.06.20.37.15;	author vsnyder;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2009.06.23.18.25.43;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2007.06.06.00.21.51;	author vsnyder;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2005.06.22.17.25.51;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2003.05.16.21.59.43;	author vsnyder;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2003.05.16.01.59.53;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.6
+log
+@Add NTrue optional argument to WhereOnly
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Where_M
+
+  implicit NONE
+  private
+  public :: Where, WhereOnly, HereAndThere
+
+  interface Where
+    module procedure WhereOnly, HereAndThere
+  end interface
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: Where_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+contains
+!---------------------------------------------------------------------------
+
+  subroutine WhereOnly ( Log, Int, nTrue )
+
+  ! Produce a list of indices in Int that are subscripts of all of the
+  ! true elements of Log.
+
+    logical, intent(in) :: Log(:)
+    integer, intent(out) :: Int(:)
+    integer, intent(out), optional :: nTrue ! Size of useful part of Int
+
+    integer :: I, P_I
+
+    i = 0
+    do p_i = 1, size(log)
+      if ( log(p_i) ) then
+        i = i + 1
+        int(i) = p_i
+      end if
+    end do
+
+    if ( present(nTrue) ) nTrue = i
+
+  end subroutine WhereOnly
+
+  subroutine HereAndThere ( Log, Here, nHere, There )
+
+  ! Produce a list of indices in Here that are subscripts of all of the
+  ! true elements of Log, the number of true entries in nHere, and a list
+  ! of indices in There that are subscripts of all of the false elements
+  ! of log (the number of these is size(Log) - nHere).
+
+    logical, intent(in) :: Log(:)
+    integer, intent(out) :: Here(:)
+    integer, intent(out) :: nHere
+    integer, intent(out) :: There(:)
+
+    integer :: I, P_I
+
+    i = 0
+    nHere = 0
+    do p_i = 1, size(log)
+      if ( log(p_i) ) then
+        nHere = nHere + 1
+        here(nHere) = p_i
+      else
+        i = i + 1
+        there = p_i
+      end if
+    end do
+
+  end subroutine HereAndThere
+
+!----------------------------------------------------------------------
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: Where_m.f90,v 2.5 2009/06/23 18:25:43 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Where_M
+
+! $Log: Where_m.f90,v $
+! Revision 2.5  2009/06/23 18:25:43  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.4  2007/06/06 00:21:51  vsnyder
+! Make Where generic for WhereOnly, HereAndThere
+!
+! Revision 2.3  2005/06/22 17:25:51  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.2  2003/05/16 21:59:43  vsnyder
+! Fix a subscript error.  Fortunately, nothing uses it yet
+!
+! Revision 2.1  2003/05/16 01:59:53  vsnyder
+! Initial commit
+!
+@
+
+
+2.5
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d24 1
+a24 1
+       "$RCSfile: $"
+d30 1
+a30 1
+  subroutine WhereOnly ( Log, Int )
+d37 1
+d49 2
+d85 1
+a85 1
+       "$Id: read_apriori.f90 is it here $"
+d95 3
+@
+
+
+2.4
+log
+@Make Where generic for WhereOnly, HereAndThere
+@
+text
+@d24 1
+a24 1
+       "$RCSfile: Where_m.f90,v $"
+d79 1
+a80 1
+!---------------------------- RCS Ident Info -------------------------------
+d82 2
+a83 3
+       "$Id: Where_m.f90,v 2.3 2005/06/22 17:25:51 pwagner Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d85 1
+d87 1
+d92 3
+@
+
+
+2.3
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d16 5
+a20 1
+  public :: Where
+d24 1
+a24 1
+       "$RCSfile: $"
+d30 1
+a30 1
+  subroutine Where ( Log, Int )
+d48 29
+a76 1
+  end subroutine Where
+d82 1
+a82 1
+       "$Id: $"
+d91 3
+@
+
+
+2.2
+log
+@Fix a subscript error.  Fortunately, nothing uses it yet
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d18 3
+a20 5
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+    & "$Id: Where_m.f90,v 2.1 2003/05/16 01:59:53 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName = "$RCSfile: Where_m.f90,v $"
+d48 5
+d59 3
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d12 1
+a12 1
+    & "$Id: rad_tran_m.f90,v 2.14 2003/05/15 03:29:00 vsnyder Exp $"
+d14 1
+a14 1
+  character (len=*), parameter :: ModuleName = "$RCSfile: rad_tran_m.f90,v $"
+d32 1
+a32 1
+      if ( log(i) ) then
+d47 4
+a50 1
+! $Log: $
+@
+

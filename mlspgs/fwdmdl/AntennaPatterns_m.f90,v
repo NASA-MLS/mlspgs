@@ -1,0 +1,1688 @@
+head	2.19;
+access;
+symbols
+	v5-02-NRT-19:2.19
+	v6-00:2.19
+	v5-02-NRT-18:2.19
+	v5-02:2.18
+	v5-01-NRT-17:2.19
+	v5-01-NRT-16:2.19
+	v5-01-NRT-15:2.19
+	v5-01-NRT-14:2.19
+	neuralnetworks-1-0:2.19.0.4
+	cfm-single-freq-0-1:2.19.0.2
+	v5-01:2.18
+	v5-00:2.18
+	v4-23-TA133:2.18.0.6
+	mus-emls-1-70:2.18.0.4
+	rel-1-0-englocks-work:2.18.0.2
+	VUMLS1-00:2.18
+	VPL1-00:2.18
+	V4-22-NRT-08:2.18
+	VAM1-00:2.18
+	V4-21:2.17.0.2
+	V4-13:2.17
+	V4-12:2.16
+	V4-11:2.16
+	V4-10:2.16
+	V3-43:2.14
+	M4-00:2.15
+	V3-41:2.14
+	V3-40-PlusGM57:2.14.0.2
+	V2-24-NRT-04:2.12
+	V3-33:2.14
+	V2-24:2.12
+	V3-31:2.14
+	V3-30-NRT-05:2.14
+	cfm-01-00:2.14
+	V3-30:2.14
+	V3-20:2.14
+	V3-10:2.14
+	V2-23-NRT-02:2.12
+	V2-23:2.12
+	V2-22-NRT-01:2.12
+	V2-22:2.12
+	V2-21:2.10
+	V2-20:2.10
+	V2-11:2.10
+	V2-10:2.10
+	V2-00:2.10
+	V1-51:2.9
+	V1-50:2.9
+	V1-45:2.9
+	V1-44:2.9
+	V1-43:2.7
+	V1-32:2.7
+	V1-31:2.7
+	V1-30:2.7
+	V1-13:2.5
+	V1-12:2.5
+	V1-11:2.5
+	V1-10:2.5
+	newfwm-feb03:2.5.0.2
+	V1-04:2.2
+	V1-03:2.2
+	V1-02:2.2
+	JointForwardModel:2.2.0.2
+	V1-00:2.2
+	newfwm-sep01:1.18.0.2
+	V0-7:1.18
+	V0-5-Level2:1.15
+	V0-5-SIPS:1.10;
+locks; strict;
+comment	@# @;
+
+
+2.19
+date	2020.06.25.02.30.00;	author vsnyder;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2015.03.28.01.58.02;	author vsnyder;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2014.09.05.18.38.01;	author vsnyder;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2013.08.30.03.56.23;	author vsnyder;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2011.05.09.17.43.04;	author pwagner;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2009.06.23.18.26.10;	author pwagner;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2009.05.13.20.03.01;	author vsnyder;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2007.10.03.23.58.26;	author vsnyder;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2007.06.25.20.33.02;	author vsnyder;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2005.06.22.18.08.18;	author pwagner;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2004.05.29.02.49.29;	author vsnyder;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2004.05.26.23.54.14;	author vsnyder;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2003.05.19.19.58.07;	author vsnyder;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2003.05.10.22.20.57;	author livesey;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2003.02.07.01.56.53;	author vsnyder;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2002.10.08.17.08.01;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2002.09.06.22.31.06;	author vsnyder;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2002.02.22.00.50.08;	author bill;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2002.02.14.18.39.03;	author livesey;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2001.09.17.20.26.25;	author livesey;	state Exp;
+branches;
+next	1.18;
+
+1.18
+date	2001.05.18.00.00.52;	author livesey;	state Exp;
+branches;
+next	1.17;
+
+1.17
+date	2001.05.17.19.59.38;	author livesey;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2001.05.16.23.04.20;	author livesey;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2001.05.04.00.48.48;	author livesey;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2001.05.03.22.02.47;	author vsnyder;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2001.04.26.02.36.52;	author vsnyder;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2001.04.25.23.52.59;	author livesey;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2001.04.21.01.21.11;	author vsnyder;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2001.04.09.23.45.03;	author livesey;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2001.04.06.00.49.13;	author vsnyder;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2001.04.06.00.48.30;	author vsnyder;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2001.04.06.00.41.50;	author vsnyder;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2001.04.06.00.21.32;	author vsnyder;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2001.04.05.22.54.12;	author vsnyder;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.04.05.00.07.57;	author vsnyder;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2001.03.30.23.19.06;	author vsnyder;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.03.30.20.35.23;	author zvi;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.03.30.02.37.44;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.19
+log
+@Simplify power2 computation, which is moot because it's then set to 2**11
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module AntennaPatterns_m
+
+  ! Read the antenna patterns file.
+
+  use MLSKINDS, only: R8
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
+  use MLSSIGNALS_M, only: MAXSIGLEN, SIGNALS, SIGNAL_T, DISPLAYSIGNALNAME
+
+  implicit NONE
+
+  ! More USEs below in each procedure, if they're only used therein.
+
+  private
+  ! Public procedures:
+  public :: Open_Antenna_Patterns_File, Read_Antenna_Patterns_File
+  public :: Close_Antenna_Patterns_File, Destroy_Ant_Patterns_Database
+  public :: Dump_Antenna_Patterns_Database
+
+  type, public :: AntennaPattern_T
+    real(r8) :: Lambda
+!     ! FFTW_*_Plan are actually places for FFTW to stash C pointers
+!     real(r8) :: FFTW_Forward_Plan, FFTW_Backward_Plan
+!     ! Aaap, DD1aap and D2aap are produced by Math77 DRFT1.
+!     ! The first two elements are the real parts of the first and last
+!     ! Fourier coefficients, for which the imaginary parts are zero.
+!     ! Remaining pairs of elements are real and imaginary parts of
+!     ! subsequent coefficients.  So (3:4) are the real and imaginary
+!     ! parts of the second coefficient, (5:6) for the third, etc.
+    real(r8), dimension(:), pointer :: Aaap => NULL()
+    real(r8), dimension(:), pointer :: D1aap => NULL()
+    real(r8), dimension(:), pointer :: D2aap => NULL()
+    type (Signal_T), pointer, dimension(:) :: Signals => NULL()
+  end type AntennaPattern_T
+
+  ! The antenna pattern database:
+  type(AntennaPattern_T), dimension(:), pointer, save, public :: &
+    & AntennaPatterns => NULL()
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: AntennaPatterns_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  ! ------------------------------------  Open_Antenna_Patterns_File  -----
+  subroutine Open_Antenna_Patterns_File ( Filename, Lun )
+
+    character(len=*), intent(in) :: Filename ! Name of the antenna pattern file
+    integer, intent(out) :: Lun              ! Logical unit number to read it
+
+    logical :: Exist, Opened
+    integer :: Status
+
+    do lun = 20, 99
+      inquire ( unit=lun, exist=exist, opened=opened )
+      if ( exist .and. .not. opened ) exit
+    end do
+    if ( opened .or. .not. exist ) call MLSMessage ( MLSMSG_Error, moduleName, &
+      & "No logical unit numbers available" )
+    open ( unit=lun, file=filename, status='old', form='formatted', &
+      & access='sequential', iostat=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+      & "Unable to open antenna pattern file " // Filename )
+  end subroutine Open_Antenna_Patterns_File
+
+  ! ------------------------------------  Read_Antenna_Patterns_File  -----
+  subroutine Read_Antenna_Patterns_File ( Lun, Where )
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST, &
+      & Test_Allocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+    use MACHINE, only: IO_ERROR
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use PARSE_SIGNAL_M, only: PARSE_SIGNAL
+    use TOGGLES, only: GEN, SWITCHES, TOGGLE
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+    use CONSTANTS, only: PI
+
+    integer, intent(in) :: Lun               ! Logical unit number to read it
+    integer, intent(in) :: Where             ! In the L2CF tree, for tracing
+
+!     ! Parameters for FFTW
+!     integer, parameter :: FFTW_Forward = -1, FFTW_Backward = 1
+!     integer, parameter :: FFTW_Measure = 1
+! 
+!     ! Interface for RFFTW_f77_create_plan
+!     interface
+!       subroutine RFFTW_f77_create_plan ( Plan, NT, Dir, Flags )
+!         use MLSCommon, only: R8
+!         real(r8), intent(out) :: Plan ! Actually a C pointer
+!         integer , intent(in) :: NT    ! Number of points
+!         integer , intent(in) :: Dir   ! Direction, forward or backward
+!         integer , intent(in) :: Flags ! FFTW input flags
+!       end subroutine RFFTW_f77_create_plan
+!     end interface
+
+    real(r8), parameter :: Pi2 = 2.0_r8 * Pi
+
+    integer(c_intptr_t) :: Addr         ! For tracing
+    logical, dimension(:), pointer :: CHANNELS ! From Parse Signal
+    integer :: DataBaseSize                  ! How many antenna patterns?
+    integer :: HowManyPoints(3*size(signals))  ! for each pattern
+    integer :: HowManySignals(3*size(signals)) ! for each pattern
+    integer :: HowManySignalLines(3*size(signals)) ! for each pattern
+    integer :: I, J, K, L                    ! Loop inductors, subscripts
+    integer :: Me = -1                       ! String index for trace
+    integer :: power2                        ! Power 2 size of antenna pattern
+    real(r8) :: Lambda
+    real(r8) :: LambdaX2Pi                   ! 2 * Pi * Lambda
+    real(r8) :: Q                            ! Factor used to scale derivatives
+    character(len=MaxSigLen) :: SigName      ! Signal Name
+    integer :: SIDEBAND                      ! From parse_signal
+    integer :: Status                        ! From read or allocate
+    integer :: DummyInt                      ! Dummy integer to read
+    integer, dimension(:), pointer :: SIGINDS ! From parseSignal
+    integer :: SignalCount
+    integer, pointer, dimension(:) :: Signal_Indices => NULL() ! From Parse_Signal, q.v.
+    !                                          It's never allocated because of
+    !                                          the "only_count_em" argument
+    real(r8) :: V(2)                         ! To read a line from the file
+
+    call trace_begin ( me, "Read_Antenna_Patterns_File", where, cond=toggle(gen) )
+
+    if ( associated(AntennaPatterns) ) call destroy_ant_patterns_database
+
+
+    ! First, read through the file and count how much stuff is there.
+    read ( lun, '(a)', end=98, err=99, iostat=status ) sigName
+    dataBaseSize = 0
+outer1: do
+      dataBaseSize = dataBaseSize + 1
+      if ( dataBaseSize > size(howManySignals) ) &
+        & call MLSMessage ( MLSMSG_Error, moduleName, &
+          & "More patterns in the file than I have space for" )
+      howManySignals(dataBaseSize) = 0
+      howManySignalLines(dataBaseSize) = 0
+      do ! Count how many signals there are
+        sigName = adjustl(sigName)
+        if ( verify(sigName(1:1), '0123456789.+-') == 0 ) exit ! a number
+        call parse_signal ( sigName, signal_indices, &
+          & onlyCountEm=signalCount )
+        if ( signalCount == 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+            & trim(sigName) // " is not a valid signal." )
+        howManySignalLines(dataBaseSize) = howManySignalLines(dataBaseSize) + 1
+        howManySignals(dataBaseSize) = howManySignals(dataBaseSize) + signalCount
+        read ( lun, '(a)', end=98, err=99, iostat=status ) sigName
+      end do
+      read ( sigName, *, err=99, iostat=status ) dummyInt, lambda
+      howManyPoints(dataBaseSize) = 0
+      do ! Count how many points in the pattern
+        read ( lun, '(a)', err=99, iostat=status ) sigName
+        if ( status < 0 ) exit outer1
+        sigName = adjustl(sigName)
+        if ( verify(sigName(1:1), '0123456789.+-') /= 0 ) exit ! not a number
+        read ( sigName, *, err=99, iostat=status ) v ! Check the numbers
+        howManyPoints(dataBaseSize) = howManyPoints(dataBaseSize) + 1
+      end do
+    end do outer1
+
+    ! Now we know how big the database is, and each part of it.
+    allocate ( antennaPatterns(dataBaseSize), stat=status )
+    addr = 0
+    if ( status == 0 .and. dataBaseSize > 0 ) &
+      & addr = transfer(c_loc(antennaPatterns(1)), addr)
+    call test_allocate ( status, moduleName, "AntennaPatterns", &
+      & uBounds = dataBaseSize, elementSize = storage_size(antennaPatterns) / 8, &
+      & address=addr )
+    rewind ( lun )
+    do i = 1, dataBaseSize
+      allocate  ( antennaPatterns(i)%signals(howManySignals(i)), stat=status )
+      addr = 0
+      if ( status == 0 .and. howManySignals(i) > 0 ) &
+        & addr = transfer(c_loc(antennaPatterns(i)%signals(1)), addr)
+      call test_allocate ( status, moduleName, "AntennaPatterns%signals", &
+        & uBounds = howManySignals(i), &
+        & elementSize = storage_size(antennaPatterns(i)%signals) / 8, address=addr )
+
+      power2 = 2**ceiling( log10( real(howManyPoints(i)) ) / log10(2.0) )
+! billsdebug
+      power2 = 2**11
+
+      call Allocate_Test ( antennaPatterns(i)%aaap, 2*power2, &
+        & "AntennaPatterns(?)%Aaap", moduleName )
+      call Allocate_Test ( antennaPatterns(i)%d1aap, 2*power2, &
+        & "AntennaPatterns(?)%D1aap", moduleName )
+      call Allocate_Test ( antennaPatterns(i)%d2aap, 2*power2, &
+        & "AntennaPatterns(?)%D2aap", moduleName )
+
+      ! Fill with zeros, then we'll read the first part
+      antennaPatterns(i)%aaap = 0.0
+      antennaPatterns(i)%d1aap = 0.0
+      antennaPatterns(i)%d2aap = 0.0
+
+!       ! Find FFTW plans for the current size, or create new ones
+!       do j = 1, i-1
+!         if ( size(antennaPatterns(i)%aaap) == size(antennaPatterns(j)%aaap) ) exit
+!       end do
+! 
+!       if ( j < i ) then
+!         antennaPatterns(i)%FFTW_Forward_Plan = antennaPatterns(j)%FFTW_Forward_Plan
+!         antennaPatterns(i)%FFTW_Backward_Plan = antennaPatterns(j)%FFTW_Backward_Plan
+!       else
+!         call rfftw_f77_create_plan ( antennaPatterns(i)%FFTW_Forward_Plan, &
+!           & size(antennaPatterns(i)%aaap), FFTW_Forward, FFTW_Measure )
+!         call rfftw_f77_create_plan ( antennaPatterns(i)%FFTW_Backward_Plan, &
+!           & size(antennaPatterns(i)%aaap), FFTW_Backward, FFTW_Measure )
+!       end if
+
+      k = 1
+      do j = 1, howManySignalLines(i)
+        read ( lun, '(a)', err=99, iostat=status ) SigName
+        nullify ( channels, sigInds )
+        call Parse_Signal ( SigName, sigInds, sideband=sideband, channels=channels )
+        antennaPatterns(i)%signals(k:k+size(sigInds)-1) = &
+          & signals(sigInds)
+        antennaPatterns(i)%signals(k:k+size(sigInds)-1)%sideband = sideband
+        if (associated(channels)) then
+          do l = 1, size(sigInds)
+            ! Now nullify the channels we have.  Don't hose the main database!
+            nullify ( antennaPatterns(i)%signals(k+l-1)%channels )
+            call allocate_test ( antennaPatterns(i)%signals(k+l-1)%channels, &
+              & size(antennaPatterns(i)%signals(k+l-1)%frequencies), &
+              & 'antennaPatterns(?)%signals(?)%channels', &
+              & moduleName )
+            antennaPatterns(i)%signals(k+l-1)%channels = .false.
+            antennaPatterns(i)%signals(k+l-1)%channels ( &
+              & lbound(channels,1):ubound(channels,1) ) = channels
+          end do
+        end if
+        k = k + size(sigInds)
+        call deallocate_test ( sigInds, 'sigInds', ModuleName )
+        call deallocate_test ( channels, 'channels', ModuleName )
+      end do ! j
+      read ( lun, *, err=99, iostat=status ) dummyInt, lambda
+      antennaPatterns(i)%lambda = lambda
+      lambdaX2Pi = pi2 * lambda
+      do j = 1, howManyPoints(i)
+        read ( lun, *, err=99, iostat=status ) v
+        k = 2 * j - 1
+        antennaPatterns(i)%aaap(k:k+1) = v(1:2)
+
+        ! First derivative field:     i*Q * F(S), i = Sqrt(-1)
+
+        q = (j-1) * lambdaX2Pi
+        antennaPatterns(i)%d1aap(k)    = -v(2) * q
+        antennaPatterns(i)%d1aap(k+1)  =  v(1) * q
+
+        ! Second derivative field:    (i*Q)**2 * F(S), i = Sqrt(-1)
+
+        q = -q * q
+        antennaPatterns(i)%d2aap(k:k+1)  =  v(1:2) * q
+      end do ! j
+    end do ! i
+
+    if ( switchDetail(switches,'ant') > -1 ) call dump_Antenna_Patterns_database
+    call trace_end ( "Read_Antenna_Patterns_File", cond=toggle(gen) )
+
+    return
+ 98 call MLSMessage ( MLSMSG_Error, moduleName, "Unexpected end-of-file" )
+ 99 call io_error ( "While reading the antenna pattern file", status )
+    call MLSMessage ( MLSMSG_Error, moduleName, "Input error" )
+  end subroutine Read_Antenna_Patterns_File
+
+  ! -----------------------------------  Close_Antenna_Patterns_File  -----
+  subroutine Close_Antenna_Patterns_File ( Lun )
+    integer, intent(in) :: lun
+    close ( lun )
+  end subroutine Close_Antenna_Patterns_File
+
+  ! ---------------------------------  Destroy_Ant_Patterns_Database  -----
+  subroutine Destroy_Ant_Patterns_Database
+    use Allocate_Deallocate, only: Deallocate_Test, Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+
+!     interface
+!       subroutine RFFTW_f77_destroy_plan ( Plan )
+!         use MLSCommon, only: R8
+!         real(r8), intent(inout) :: Plan
+!       end subroutine RFFTW_f77_destroy_plan
+!     end interface
+
+    integer(c_intptr_t) :: Addr         ! For tracing
+    integer :: I, J, S, Status
+
+    if (.not. associated(AntennaPatterns) ) return
+
+!     ! Destroy FFTW plans
+!     do i = 1, size(AntennaPatterns)
+!       do j = 1, i-1
+!         if ( size(antennaPatterns(i)%aaap) == size(antennaPatterns(j)%aaap) ) exit
+!       end do
+!       if ( j >= i ) then
+!         call rfftw_f77_destroy_plan ( antennaPatterns(i)%FFTW_forward_plan )
+!         call rfftw_f77_destroy_plan ( antennaPatterns(i)%FFTW_backward_plan )
+!       end if
+!     end do
+
+    ! Destroy the rest of the database
+    do i = 1, size(AntennaPatterns)
+      do j = 1, size(AntennaPatterns(i)%signals)
+        if (associated(AntennaPatterns(i)%signals(j)%channels)) then
+          call deallocate_test ( AntennaPatterns(i)%signals(j)%channels, &
+            & "AntennaPatterns(?)%signals(?)%channels", ModuleName )
+        end if
+      end do
+      s = size(AntennaPatterns(i)%signals) * &
+        & storage_size(AntennaPatterns(i)%signals) / 8
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(AntennaPatterns(i)%signals(1)), addr)
+      deallocate ( AntennaPatterns(i)%signals, STAT=status )
+      call test_deallocate ( status, moduleName, 'AntennaPatterns(?)%signals', &
+        & s, address=addr )
+      call deallocate_test ( AntennaPatterns(i)%aaap, &
+        & "AntennaPatterns(?)%aaap", moduleName )
+      call deallocate_test ( AntennaPatterns(i)%d1aap, &
+        & "AntennaPatterns(?)%D1aap", moduleName )
+      call deallocate_test ( AntennaPatterns(i)%d2aap, &
+        & "AntennaPatterns(?)%D2aap", moduleName )
+    end do ! i
+    s = size(AntennaPatterns) * storage_size(AntennaPatterns) / 8
+    addr = 0
+    if ( s > 0 ) addr = transfer(c_loc(AntennaPatterns(1)), addr)
+    deallocate ( AntennaPatterns, stat=status )
+    call test_deallocate ( status, moduleName, 'AntennaPatterns', s, address=addr )
+
+  end subroutine Destroy_Ant_Patterns_Database
+
+  ! --------------------------------  Dump_Antenna_Patterns_Database  -----
+  subroutine Dump_Antenna_Patterns_Database ( where )
+    use Dump_0, only: Dump
+    use MoreTree, only: StartErrorMessage
+    use Output_m, only: Blanks, Output
+
+    integer, intent(in), optional :: Where   ! Tree node index
+
+    integer :: I, J                ! Subscripts, loop inductors
+    if ( associated(antennaPatterns) ) then
+      call output ( 'Antenna Patterns: SIZE = ' )
+      call output ( size(antennaPatterns), advance='yes' )
+      do i = 1, size(AntennaPatterns)
+        call output ( i, 4 )
+        call output ( ':    Signal = ' )
+        do j = 1, size(antennaPatterns(i)%signals)
+          if ( j > 1 ) &
+          call blanks ( 18 )
+          call displaySignalName ( antennaPatterns(i)%signals(j), advance='yes' )
+        end do
+        call output ( ' Lambda = ' )
+        call output ( antennaPatterns(i)%lambda, advance='yes' )
+        call dump ( antennaPatterns(i)%aaap, name='Aaap' )
+        call dump ( antennaPatterns(i)%d1aap, name='D1aap' )
+        call dump ( antennaPatterns(i)%d2aap, name='D2aap' )
+      end do ! i
+    else
+      if ( present(where) ) call startErrorMessage ( where )
+      call output ( 'No antenna patterns database to dump.', advance='yes' )
+    end if
+  end subroutine Dump_Antenna_Patterns_Database
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: AntennaPatterns_m.f90,v 2.18 2015/03/28 01:58:02 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module AntennaPatterns_m
+
+! $Log: AntennaPatterns_m.f90,v $
+! Revision 2.18  2015/03/28 01:58:02  vsnyder
+! Added stuff to trace allocate/deallocate addresses
+!
+! Revision 2.17  2014/09/05 18:38:01  vsnyder
+! More complete and accurate allocate/deallocate size tracking
+!
+! Revision 2.16  2013/08/30 03:56:23  vsnyder
+! Revise use of trace_begin and trace_end
+!
+! Revision 2.15  2011/05/09 17:43:04  pwagner
+! Converted to using switchDetail
+!
+! Revision 2.14  2009/06/23 18:26:10  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.13  2009/05/13 20:03:01  vsnyder
+! Get constants from Constants, kinds from MLSKinds
+!
+! Revision 2.12  2007/10/03 23:58:26  vsnyder
+! Add 'where' for tracing
+!
+! Revision 2.11  2007/06/25 20:33:02  vsnyder
+! Add FFTW plans, as comments, in case we ever need them
+!
+! Revision 2.10  2005/06/22 18:08:18  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.9  2004/05/29 02:49:29  vsnyder
+! Simplifications from using DisplaySignalName
+!
+! Revision 2.8  2004/05/26 23:54:14  vsnyder
+! Don't dump the database if it's not allocated
+!
+! Revision 2.7  2003/05/19 19:58:07  vsnyder
+! Remove USEs for unreferenced symbols, remove unused local variables
+!
+! Revision 2.6  2003/05/10 22:20:57  livesey
+! Tried to calm down -g1..
+!
+! Revision 2.5  2003/02/07 01:56:53  vsnyder
+! Move a USE down
+!
+! Revision 2.4  2002/10/08 17:08:01  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.3  2002/09/06 22:31:06  vsnyder
+! Cosmetic changes
+!
+! Revision 2.2  2002/02/22 00:50:08  bill
+! forced ntr=4096--wgr
+!
+! Revision 2.1  2002/02/14 18:39:03  livesey
+! Fixed bug with single channel antenna patterns
+!
+! Revision 2.0  2001/09/17 20:26:25  livesey
+! New forward model
+!
+! Revision 1.18  2001/05/18 00:00:52  livesey
+! Working version.  Still rewinds in the read, but I think
+! the file format will have to dictate that for a while.
+!
+! Revision 1.17  2001/05/17 19:59:38  livesey
+! Now pads the arrays to next power of two with zeros after the end
+! of the input data.
+!
+! Revision 1.16  2001/05/16 23:04:20  livesey
+! New version, now uses Signal_T, instead of a string
+!
+! Revision 1.15  2001/05/04 00:48:48  livesey
+! Let Destroy database quit if nothing to destroy
+!
+! Revision 1.14  2001/05/03 22:02:47  vsnyder
+! Insert copyright notice and some comments
+!
+! Revision 1.13  2001/04/26 02:36:52  vsnyder
+! Moved *_indices declarations from init_tables_module to intrinsic
+!
+! Revision 1.12  2001/04/25 23:52:59  livesey
+! Added implicit none
+!
+! Revision 1.11  2001/04/21 01:21:11  vsnyder
+! Fix a memory leak
+!
+! Revision 1.10  2001/04/09 23:45:03  livesey
+! Files now two columns rather than 6
+!
+! Revision 1.9  2001/04/06 00:49:13  vsnyder
+! Remove unused variable declarations
+!
+! Revision 1.8  2001/04/06 00:48:30  vsnyder
+! And yet another typo
+!
+! Revision 1.7  2001/04/06 00:41:50  vsnyder
+! Fix another typo
+!
+! Revision 1.6  2001/04/06 00:21:32  vsnyder
+! Fix a typo
+!
+! Revision 1.5  2001/04/05 22:54:12  vsnyder
+! Make array components of AntennaPatterns_T 2-D
+!
+! Revision 1.4  2001/04/05 00:07:57  vsnyder
+! Correct spelling of 'Antenna Pattern'
+!
+! Revision 1.3  2001/03/30 23:19:06  vsnyder
+! Shorten overly-long (standard-violating) subroutine name
+!
+! Revision 1.2  2001/03/30 20:35:23  zvi
+! *** empty log message ***
+!
+! Revision 1.1  2001/03/30 02:37:44  vsnyder
+! Initial Commit
+!
+@
+
+
+2.18
+log
+@Added stuff to trace allocate/deallocate addresses
+@
+text
+@a122 1
+    real(r8) :: Log2                         ! Log 2 of array size
+d190 1
+a190 7
+      log2 = log10( real(howManyPoints(i)) ) / log10(2.0)
+      if ( log2 - nint(log2) /= 0.0 ) then
+        power2 = int(log2)+1
+      else
+        power2 = nint(log2)
+      end if
+      power2 = 2**power2
+d375 1
+a375 1
+       "$Id: AntennaPatterns_m.f90,v 2.17 2014/09/05 18:38:01 vsnyder Exp $"
+d385 3
+@
+
+
+2.17
+log
+@More complete and accurate allocate/deallocate size tracking
+@
+text
+@d83 1
+d111 1
+d175 3
+d179 2
+a180 1
+      & uBounds = dataBaseSize, elementSize = storage_size(antennaPatterns) / 8 )
+d184 3
+d189 1
+a189 1
+        & elementSize = storage_size(antennaPatterns(i)%signals) / 8 )
+d292 1
+d301 1
+d327 2
+d330 2
+a331 1
+      call test_deallocate ( status, moduleName, 'AntennaPatterns(?)%signals', s )
+d340 2
+d343 1
+a343 1
+    call test_deallocate ( status, moduleName, 'AntennaPatterns', s )
+d382 1
+a382 1
+       "$Id: AntennaPatterns_m.f90,v 2.16 2013/08/30 03:56:23 vsnyder Exp $"
+d392 3
+@
+
+
+2.16
+log
+@Revise use of trace_begin and trace_end
+@
+text
+@d17 1
+a17 2
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
+    & MLSMSG_ERROR
+d81 2
+a82 1
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+d173 2
+a174 2
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+      & MLSMSG_Allocate // "AntennaPatterns" )
+d178 3
+a180 2
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+        & MLSMSG_Allocate // "antennaPatterns(?)%signals" )
+d282 1
+a282 1
+    use Allocate_Deallocate, only: Deallocate_Test
+d291 1
+a291 1
+    integer :: I, J, Status
+d314 2
+d317 1
+a317 2
+      if ( status /= 0 ) call MLSMessage( MLSMSG_Error, ModuleName, &
+        & MLSMSG_Deallocate//'AntennaPatterns(?)%signals' )
+d325 1
+d327 1
+a327 2
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+      MLSMSG_DeAllocate // "AntennaPatterns" )
+d366 1
+a366 1
+       "$Id: AntennaPatterns_m.f90,v 2.15 2011/05/09 17:43:04 pwagner Exp $"
+d376 3
+@
+
+
+2.15
+log
+@Converted to using switchDetail
+@
+text
+@d116 1
+d133 1
+a133 1
+    if ( toggle(gen) ) call trace_begin ( "Read_Antenna_Patterns_File", where )
+d265 1
+a265 3
+    if ( toggle(gen) ) then
+      call trace_end ( "Read_Antenna_Patterns_File" )
+    end if
+d268 3
+a270 3
+  98 call MLSMessage ( MLSMSG_Error, moduleName, "Unexpected end-of-file" )
+  99 call io_error ( "While reading the antenna pattern file", status )
+     call MLSMessage ( MLSMSG_Error, moduleName, "Input error" )
+d364 1
+a364 1
+       "$Id: AntennaPatterns_m.f90,v 2.14 2009/06/23 18:26:10 pwagner Exp $"
+d374 3
+@
+
+
+2.14
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@d16 4
+a19 4
+  use MLSCommon, only: R8
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
+    & MLSMSG_Error
+  use MLSSignals_m, only: MaxSigLen, Signals, Signal_T, DisplaySignalName
+d53 1
+a53 1
+       "$RCSfile: $"
+d82 7
+a88 6
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+    use Machine, only: IO_Error
+    use Parse_Signal_m, only: Parse_Signal
+    use Toggles, only: Gen, Switches, Toggle
+    use Trace_M, only: Trace_begin, Trace_end
+    use Constants, only: Pi
+d263 1
+a263 1
+    if ( index(switches,'ant') /= 0 ) call dump_Antenna_Patterns_database
+d365 1
+a365 1
+       "$Id: read_apriori.f90 is it here $"
+d375 3
+@
+
+
+2.13
+log
+@Get constants from Constants, kinds from MLSKinds
+@
+text
+@d53 1
+a53 1
+       "$RCSfile: AntennaPatterns_m.f90,v $"
+d361 1
+a362 1
+!---------------------------- RCS Ident Info -------------------------------
+d364 2
+a365 3
+       "$Id: AntennaPatterns_m.f90,v 2.12 2007/10/03 23:58:26 vsnyder Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+d367 1
+d369 1
+d374 3
+@
+
+
+2.12
+log
+@Add 'where' for tracing
+@
+text
+@d87 1
+a87 1
+    use Units, only: Pi
+d364 1
+a364 1
+       "$Id: AntennaPatterns_m.f90,v 2.11 2007/06/25 20:33:02 vsnyder Exp $"
+d373 3
+@
+
+
+2.11
+log
+@Add FFTW plans, as comments, in case we ever need them
+@
+text
+@d81 1
+a81 1
+  subroutine Read_Antenna_Patterns_File ( Lun )
+d90 1
+d131 1
+a131 1
+    if ( toggle(gen) ) call trace_begin ( "Read_Antenna_Patterns_File" )
+d364 1
+a364 1
+       "$Id: AntennaPatterns_m.f90,v 2.10 2005/06/22 18:08:18 pwagner Exp $"
+d373 3
+@
+
+
+2.10
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d33 8
+d53 1
+a53 1
+       "$RCSfile: $"
+d91 15
+d114 1
+a114 1
+    integer :: power2                   ! Power 2 size of antenna pattern
+d118 1
+a118 1
+    real(r8) :: Log2                    ! Log 2 of array size
+d122 1
+a122 1
+    integer :: DummyInt                 ! Dummy integer to read
+d200 15
+d281 8
+d290 1
+d292 13
+d325 1
+d363 1
+a363 1
+       "$Id: $"
+d372 3
+@
+
+
+2.9
+log
+@Simplifications from using DisplaySignalName
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d43 3
+a45 6
+  !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
+    & "$Id: AntennaPatterns_m.f90,v 2.8 2004/05/26 23:54:14 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter, private :: ModuleName = &
+    & "$RCSfile: AntennaPatterns_m.f90,v $"
+d47 1
+a47 1
+  !---------------------------------------------------------------------------
+d300 5
+d311 3
+@
+
+
+2.8
+log
+@Don't dump the database if it's not allocated
+@
+text
+@d11 1
+a11 1
+  use MLSSignals_m, only: MaxSigLen, Signals, Signal_T, GetNameOfSignal
+d37 1
+a37 1
+    & "$Id: AntennaPatterns_m.f90,v 2.7 2003/05/19 19:58:07 vsnyder Exp $"
+d266 1
+a266 1
+    use Output_m, only: Output
+a270 1
+    character(len=MaxSigLen) :: SIGNAME ! Signal name
+d278 3
+a280 2
+          call GetNameOfSignal ( antennaPatterns(i)%signals(j), SigName )
+          call output ( trim(sigName), advance='yes' )
+d301 3
+@
+
+
+2.7
+log
+@Remove USEs for unreferenced symbols, remove unused local variables
+@
+text
+@d31 1
+a31 1
+  ! The antanna pattern database:
+d37 1
+a37 1
+    & "$Id: AntennaPatterns_m.f90,v 2.6 2003/05/10 22:20:57 livesey Exp $"
+d263 1
+a263 1
+  subroutine Dump_Antenna_Patterns_Database
+d265 1
+d268 2
+d272 20
+a291 15
+    call output ( 'Antenna Patterns: SIZE = ' )
+    call output ( size(AntennaPatterns), advance='yes' )
+    do i = 1, size(AntennaPatterns)
+      call output ( i, 4 )
+      call output ( ':    Signal = ' )
+      do j = 1, size(antennaPatterns(i)%signals)
+        call GetNameOfSignal ( antennaPatterns(i)%signals(j), SigName )
+        call output ( trim(sigName), advance='yes' )
+      end do
+      call output ( ' Lambda = ' )
+      call output ( antennaPatterns(i)%lambda, advance='yes' )
+      call dump ( antennaPatterns(i)%aaap, name='Aaap' )
+      call dump ( antennaPatterns(i)%d1aap, name='D1aap' )
+      call dump ( antennaPatterns(i)%d2aap, name='D2aap' )
+    end do ! i
+d301 3
+@
+
+
+2.6
+log
+@Tried to calm down -g1..
+@
+text
+@d37 1
+a37 1
+    & "$Id$"
+d40 1
+a40 1
+    & "$RCSfile$"
+d72 1
+a72 1
+    use Toggles, only: Gen, Levels, Switches, Toggle
+d265 1
+a265 1
+    use Output_m, only: Blanks, Output
+d292 4
+a295 1
+! $Log$
+@
+
+
+2.5
+log
+@Move a USE down
+@
+text
+@d37 1
+a37 1
+    & "$Id: AntennaPatterns_m.f90,v 2.4 2002/10/08 17:08:01 pwagner Exp $"
+d40 1
+a40 1
+    & "$RCSfile: AntennaPatterns_m.f90,v $"
+d218 1
+a219 2
+      if ( levels(gen) > 0 .or. index(switches,'A') /= 0 ) &
+        & call dump_Antenna_Patterns_database
+d292 4
+a295 1
+! $Log: AntennaPatterns_m.f90,v $
+@
+
+
+2.4
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@a7 1
+  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+d37 1
+a37 1
+    & "$Id: AntennaPatterns_m.f90,v 2.3 2002/09/06 22:31:06 vsnyder Exp $"
+d69 1
+d238 1
+d266 1
+a266 1
+  use Output_m, only: Blanks, Output
+d294 3
+@
+
+
+2.3
+log
+@Cosmetic changes
+@
+text
+@d38 1
+a38 1
+    & "$Id: AntennaPatterns_m.f90,v 2.2 2002/02/22 00:50:08 bill Exp $"
+d42 1
+d286 4
+d293 3
+@
+
+
+2.2
+log
+@forced ntr=4096--wgr
+@
+text
+@d12 1
+a12 1
+  use MLSSignals_m, only: MaxSigLen, Signals, signal_T, GetNameOfSignal
+d14 1
+a14 1
+  implicit none
+d38 1
+a38 1
+    & "$Id: AntennaPatterns_m.f90,v 2.1 2002/02/14 18:39:03 livesey Exp $"
+d154 1
+a154 1
+      endif
+d244 1
+a244 1
+        endif
+d288 3
+@
+
+
+2.1
+log
+@Fixed bug with single channel antenna patterns
+@
+text
+@d38 1
+a38 1
+    & "$Id: AntennaPatterns_m.f90,v 2.0 2001/09/17 20:26:25 livesey Exp $"
+d156 2
+d288 3
+@
+
+
+2.0
+log
+@New forward model
+@
+text
+@d38 1
+a38 1
+    & "$Id: AntennaPatterns_m.f90,v 1.18 2001/05/18 00:00:52 livesey Exp $"
+d182 2
+a183 1
+              & size(channels), 'antennaPatterns(?)%signals(?)%channels', &
+d185 3
+a187 1
+            antennaPatterns(i)%signals(k+l-1)%channels = channels
+d286 3
+@
+
+
+1.18
+log
+@Working version.  Still rewinds in the read, but I think
+the file format will have to dictate that for a while.
+@
+text
+@d38 1
+a38 1
+    & "$Id: AntennaPatterns_m.f90,v 1.17 2001/05/17 19:59:38 livesey Exp $"
+d283 4
+@
+
+
+1.17
+log
+@Now pads the arrays to next power of two with zeros after the end
+of the input data.
+@
+text
+@d38 1
+a38 1
+    & "$Id: AntennaPatterns_m.f90,v 1.16 2001/05/16 23:04:20 livesey Exp $"
+d93 1
+d127 1
+a127 1
+      read ( sigName, *, err=99, iostat=status ) lambda
+d191 1
+a191 1
+      read ( lun, *, err=99, iostat=status ) lambda
+d283 4
+@
+
+
+1.16
+log
+@New version, now uses Signal_T, instead of a string
+@
+text
+@d38 1
+a38 1
+    & "$Id: AntennaPatterns_m.f90,v 1.15 2001/05/04 00:48:48 livesey Exp $"
+d85 1
+d89 1
+d147 10
+a156 1
+      call Allocate_Test ( antennaPatterns(i)%aaap, 2*howManyPoints(i), &
+d158 1
+a158 1
+      call Allocate_Test ( antennaPatterns(i)%d1aap, 2*howManyPoints(i), &
+d160 1
+a160 1
+      call Allocate_Test ( antennaPatterns(i)%d2aap, 2*howManyPoints(i), &
+d162 6
+d282 3
+@
+
+
+1.15
+log
+@Let Destroy database quit if nothing to destroy
+@
+text
+@d12 1
+a12 1
+  use MLSSignals_m, only: MaxSigLen, Signals
+d29 1
+a29 1
+    character(len=MaxSigLen), pointer, dimension(:) :: Signals => NULL()
+d38 1
+a38 1
+    & "$Id: AntennaPatterns_m.f90,v 1.14 2001/05/03 22:02:47 vsnyder Exp $"
+d79 1
+d81 4
+a84 3
+    integer :: HowManyPoints(size(signals))  ! for each pattern
+    integer :: HowManySignals(size(signals)) ! for each pattern
+    integer :: I, J, K                       ! Loop inductors, subscripts
+d89 1
+d91 1
+d110 1
+a110 1
+          & "More patterns in the file than signals in the database" )
+d112 1
+d120 2
+a121 1
+        howManySignals(dataBaseSize) = howManySignals(dataBaseSize) + 1
+d142 3
+a144 2
+      call Allocate_Test ( antennaPatterns(i)%signals, howManySignals(i), &
+        & "AntennaPatterns(?)%Signals", moduleName )
+d151 21
+a171 2
+      do j = 1, howManySignals(i)
+        read ( lun, '(a)', err=99, iostat=status ) antennaPatterns(i)%signals(j)
+d214 1
+a214 1
+    integer :: I, Status
+d217 9
+a225 2
+      call deallocate_test ( AntennaPatterns(i)%signals, &
+        & "AntennaPatterns(?)%Signals", moduleName )
+d244 1
+d250 3
+a252 4
+      call output ( trim(antennaPatterns(i)%signals(1)), advance='yes' )
+      do j = 2, size(antennaPatterns(i)%signals)
+        call blanks ( 18 )
+        call output ( trim(antennaPatterns(i)%signals(i)), advance='yes' )
+d265 3
+@
+
+
+1.14
+log
+@Insert copyright notice and some comments
+@
+text
+@d38 1
+a38 1
+    & "$Id: AntennaPatterns_m.f90,v 1.13 2001/04/26 02:36:52 vsnyder Exp $"
+d189 1
+d232 3
+@
+
+
+1.13
+log
+@Moved *_indices declarations from init_tables_module to intrinsic
+@
+text
+@d1 3
+d33 2
+a34 1
+  type(AntennaPattern_T), dimension(:), pointer, public :: AntennaPatterns => NULL()
+d38 1
+a38 1
+    & "$Id: AntennaPatterns_m.f90,v 1.12 2001/04/25 23:52:59 livesey Exp $"
+d89 3
+a91 1
+    integer, pointer, dimension(:) :: Signal_Indices => NULL()   ! From Parse_Signal, q.v.
+d231 3
+@
+
+
+1.12
+log
+@Added implicit none
+@
+text
+@d34 1
+a34 1
+    & "$Id: AntennaPatterns_m.f90,v 1.11 2001/04/21 01:21:11 vsnyder Exp $"
+d64 1
+a64 1
+  subroutine Read_Antenna_Patterns_File ( Lun, Spec_Indices )
+a71 1
+    integer, intent(in) :: Spec_Indices(:)   ! Needed by Parse_Signal, q.v.
+d105 1
+a105 1
+        call parse_signal ( sigName, signal_indices, spec_indices, &
+d225 3
+@
+
+
+1.11
+log
+@Fix a memory leak
+@
+text
+@d11 2
+d34 1
+a34 1
+    & "$Id: AntennaPatterns_m.f90,v 1.10 2001/04/09 23:45:03 livesey Exp $"
+d177 1
+d226 3
+@
+
+
+1.10
+log
+@Files now two columns rather than 6
+@
+text
+@d32 1
+a32 1
+    & "$Id: AntennaPatterns_m.f90,v 1.9 2001/04/06 00:49:13 vsnyder Exp $"
+d83 1
+d104 3
+a106 3
+        call parse_signal ( sigName, signal_indices, spec_indices )
+        if ( .not. associated(signal_indices) ) &
+          call MLSMessage ( MLSMSG_Error, moduleName, &
+d223 3
+@
+
+
+1.9
+log
+@Remove unused variable declarations
+@
+text
+@d21 3
+a23 3
+    real(r8), dimension(:,:), pointer :: Aaap => NULL()
+    real(r8), dimension(:,:), pointer :: D1aap => NULL()
+    real(r8), dimension(:,:), pointer :: D2aap => NULL()
+d32 1
+a32 1
+    & "$Id: AntennaPatterns_m.f90,v 1.8 2001/04/06 00:48:30 vsnyder Exp $"
+d84 1
+a84 1
+    real(r8) :: V(6)                         ! To read a line from the file
+d130 1
+a130 1
+      call Allocate_Test ( antennaPatterns(i)%aaap, 2*howManyPoints(i), 3, &
+d132 1
+a132 1
+      call Allocate_Test ( antennaPatterns(i)%d1aap, 2*howManyPoints(i), 3, &
+d134 1
+a134 1
+      call Allocate_Test ( antennaPatterns(i)%d2aap, 2*howManyPoints(i), 3, &
+d145 1
+a145 3
+        antennaPatterns(i)%aaap(k:k+1,1) = v(1:2)
+        antennaPatterns(i)%aaap(k:k+1,2) = v(3:4)
+        antennaPatterns(i)%aaap(k:k+1,3) = v(5:6)
+d150 2
+a151 6
+        antennaPatterns(i)%d1aap(k,1)    = -v(2) * q
+        antennaPatterns(i)%d1aap(k+1,1)  =  v(1) * q
+        antennaPatterns(i)%d1aap(k,2)    = -v(4) * q
+        antennaPatterns(i)%d1aap(k+1,2)  =  v(3) * q
+        antennaPatterns(i)%d1aap(k,3)    = -v(6) * q
+        antennaPatterns(i)%d1aap(k+1,3)  =  v(5) * q
+d156 1
+a156 3
+        antennaPatterns(i)%d2aap(k:k+1,1)  =  v(1:2) * q
+        antennaPatterns(i)%d2aap(k:k+1,2)  =  v(3:4) * q
+        antennaPatterns(i)%d2aap(k:k+1,3)  =  v(5:6) * q
+d222 3
+@
+
+
+1.8
+log
+@And yet another typo
+@
+text
+@d32 1
+a32 1
+    & "$Id: AntennaPatterns_m.f90,v 1.7 2001/04/06 00:41:50 vsnyder Exp $"
+d77 1
+a77 1
+    integer :: I, J, K, L, N                 ! Loop inductors, subscripts
+d230 3
+@
+
+
+1.7
+log
+@Fix another typo
+@
+text
+@d32 1
+a32 1
+    & "$Id: AntennaPatterns_m.f90,v 1.6 2001/04/06 00:21:32 vsnyder Exp $"
+d151 1
+a151 1
+        q = (k-1) * lambdaX2Pi
+d230 3
+@
+
+
+1.6
+log
+@Fix a typo
+@
+text
+@d32 1
+a32 1
+    & "$Id: AntennaPatterns_m.f90,v 1.5 2001/04/05 22:54:12 vsnyder Exp $"
+d222 2
+a223 2
+      call dump ( antennaPatterns(i)%aaap, name='D1aap' )
+      call dump ( antennaPatterns(i)%aaap, name='D2aap' )
+d230 3
+@
+
+
+1.5
+log
+@Make array components of AntennaPatterns_T 2-D
+@
+text
+@d32 1
+a32 1
+    & "$Id: AntennaPatterns_m.f90,v 1.4 2001/04/05 00:07:57 vsnyder Exp $"
+d147 1
+a147 1
+        antennaPatterns(i)%aaap(k:k+1,2) = v(5:6)
+d230 3
+@
+
+
+1.4
+log
+@Correct spelling of 'Antenna Pattern'
+@
+text
+@d21 3
+a23 3
+    real(r8), dimension(:), pointer :: Aaap => NULL()
+    real(r8), dimension(:), pointer :: D1aap => NULL()
+    real(r8), dimension(:), pointer :: D2aap => NULL()
+d32 1
+a32 1
+    & "$Id: AntennaPatterns_m.f90,v 1.3 2001/03/30 23:19:06 vsnyder Exp $"
+d130 1
+a130 1
+      call Allocate_Test ( antennaPatterns(i)%aaap, 6*howManyPoints(i), &
+d132 1
+a132 1
+      call Allocate_Test ( antennaPatterns(i)%d1aap, 6*howManyPoints(i), &
+d134 1
+a134 1
+      call Allocate_Test ( antennaPatterns(i)%d2aap, 6*howManyPoints(i), &
+d145 3
+a147 5
+        l = 2 * howManyPoints(i) + k
+        n = 4 * howManyPoints(i) + k
+        antennaPatterns(i)%aaap(k:k+1) = v(1:2)
+        antennaPatterns(i)%aaap(l:l+1) = v(3:4)
+        antennaPatterns(i)%aaap(n:n+1) = v(5:6)
+d152 6
+a157 6
+        antennaPatterns(i)%d1aap(k)    = -v(2) * q
+        antennaPatterns(i)%d1aap(k+1)  =  v(1) * q
+        antennaPatterns(i)%d1aap(l)    = -v(4) * q
+        antennaPatterns(i)%d1aap(l+1)  =  v(3) * q
+        antennaPatterns(i)%d1aap(n)    = -v(6) * q
+        antennaPatterns(i)%d1aap(n+1)  =  v(5) * q
+d162 3
+a164 3
+        antennaPatterns(i)%d2aap(k:k+1)  =  v(1:2) * q
+        antennaPatterns(i)%d2aap(l:l+1)  =  v(3:4) * q
+        antennaPatterns(i)%d2aap(n:n+1)  =  v(5:6) * q
+d230 3
+@
+
+
+1.3
+log
+@Shorten overly-long (standard-violating) subroutine name
+@
+text
+@d27 1
+a27 1
+  ! The filter shape database:
+d32 1
+a32 1
+    & "$Id: AntennaPatterns_m.f90,v 1.2 2001/03/30 20:35:23 zvi Exp $"
+d43 1
+a43 1
+    character(len=*), intent(in) :: Filename ! Name of the filter shape file
+d58 1
+a58 1
+      & "Unable to open filter shapes file " // Filename )
+d178 1
+a178 1
+  99 call io_error ( "While reading the filter shape file", status )
+d211 1
+a211 1
+    call output ( 'Filter Shapes: SIZE = ' )
+d232 3
+@
+
+
+1.2
+log
+@*** empty log message ***
+@
+text
+@d16 1
+a16 2
+  public :: Close_Antenna_Patterns_File
+! public :: Close_Antenna_Patterns_File, Destroy_Antenna_Patterns_Database
+d32 1
+a32 1
+    & "$Id: AntennaPatterns_m.f90,v 1.1 2001/03/30 02:37:44 vsnyder Exp $"
+d88 1
+a88 1
+!   if ( associated(AntennaPatterns) ) call destroy_antenna_patterns_database
+d187 17
+a203 17
+  ! -----------------------------  Destroy_Antenna_Patterns_Database  -----
+! subroutine Destroy_Antenna_Patterns_Database
+!   integer :: I, Status
+!   do i = 1, size(AntennaPatterns)
+!     call deallocate_test ( AntennaPatterns(i)%signals, &
+!       & "AntennaPatterns(?)%Signals", moduleName )
+!     call deallocate_test ( AntennaPatterns(i)%aaap, &
+!       & "AntennaPatterns(?)%aaap", moduleName )
+!     call deallocate_test ( AntennaPatterns(i)%d1aap, &
+!       & "AntennaPatterns(?)%D1aap", moduleName )
+!     call deallocate_test ( AntennaPatterns(i)%d2aap, &
+!       & "AntennaPatterns(?)%D2aap", moduleName )
+!   end do ! i
+!   deallocate ( AntennaPatterns, stat=status )
+!   if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+!     MLSMSG_DeAllocate // "AntennaPatterns" )
+! end subroutine Destroy_Antenna_Patterns_Database
+d232 3
+@
+
+
+1.1
+log
+@Initial Commit
+@
+text
+@d16 2
+a17 1
+  public :: Close_Antenna_Patterns_File, Destroy_Antenna_Patterns_Database
+d33 1
+a33 1
+    & "$Id: AntennaPatterns_m.f90,v 1.4 2001/03/30 00:02:06 livesey Exp $"
+d89 1
+a89 1
+    if ( associated(AntennaPatterns) ) call destroy_antenna_patterns_database
+d189 16
+a204 16
+  subroutine Destroy_Antenna_Patterns_Database
+    integer :: I, Status
+    do i = 1, size(AntennaPatterns)
+      call deallocate_test ( AntennaPatterns(i)%signals, &
+        & "AntennaPatterns(?)%Signals", moduleName )
+      call deallocate_test ( AntennaPatterns(i)%aaap, &
+        & "AntennaPatterns(?)%aaap", moduleName )
+      call deallocate_test ( AntennaPatterns(i)%d1aap, &
+        & "AntennaPatterns(?)%D1aap", moduleName )
+      call deallocate_test ( AntennaPatterns(i)%d2aap, &
+        & "AntennaPatterns(?)%D2aap", moduleName )
+    end do ! i
+    deallocate ( AntennaPatterns, stat=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+      MLSMSG_DeAllocate // "AntennaPatterns" )
+  end subroutine Destroy_Antenna_Patterns_Database
+d232 4
+a235 1
+! $Log: $
+@
+

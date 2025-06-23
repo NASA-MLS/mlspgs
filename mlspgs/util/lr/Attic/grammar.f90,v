@@ -1,0 +1,471 @@
+head	1.3;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.3
+date	2014.01.14.00.09.32;	author vsnyder;	state dead;
+branches;
+next	1.2;
+
+1.2
+date	2013.12.12.01.53.00;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2013.10.24.22.41.14;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@Revised LR doesn't need it
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module GRAMMAR
+
+  implicit NONE
+  private
+  
+  public :: RDGRAM
+  integer, save :: ALTEND, CURPRD, GRMEND, NAMVAL, PRDEND
+  character(len=80), save :: LINBUF
+  integer, save :: LINLEN = 0
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: grammar.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  subroutine RDGRAM
+
+    use SIZES, only: MXPRDC, MXPROD
+    use STRING, only: SHDPTR
+    use S1, only: ENTER, MOVSTR
+    use S3, only: FRSPRD, LFTUSE, PRDIND, PRODCN, RGTUSE, VALUE
+    use TABCOM, only: NTERMS, NUMPRD, NVOC
+
+    ! Perform some initialization and then read the grammar.
+
+    ! *****     External References     **********************************
+
+    ! ENTER   enters an object in the hash table.
+    ! ERROR   prints error messages.
+    ! MOVSTR  moves a string from the symbol table to the message buffer.
+    ! SCAN    gets a token.
+    ! SCNINT  reads an integer token and returns its integer value.
+
+    ! *****     Local Variables     **************************************
+
+    ! CURLHS  is the current left-hand-side.
+    ! I       is a loop induction variable and subscript.
+    ! ITOKEN  is the index of the token fetched by SCAN.
+    ! LINE    is used to assemble messages.
+    ! PRDPTR  is the index of the current symbol in the current production.
+
+    integer :: CURLHS, I, ITOKEN
+    character(len=120) :: LINE
+    integer :: PRDPTR
+
+    ! *****     Procedures     *******************************************
+
+    ! Insert the first production.  It is partially constructed by
+    ! initial data in S1.
+
+    curprd = 1
+    prdptr = 5
+    call enter (1, i)
+    call enter (2, i)
+    call enter (3, i)
+    lftuse(2) = 1
+    rgtuse(1) = 1
+    rgtuse(3) = 1
+
+    ! Now read the user's grammar
+
+    do ! until (grmend  /=  0)
+      call find_left_side_of_production
+      do ! until (prdend  /=  0)
+        call find_right_side_of_production
+        if ( prdend /= 0 ) exit
+      end do
+      if ( grmend /= 0 ) exit
+    end do
+
+    ! Count the terminal symbols.
+
+    nterms = 0
+    do i = 1, shdptr
+      if (lftuse(i) == 0 .and. rgtuse(i) /= 0) nterms = nterms+1
+    end do
+    nvoc = shdptr
+    numprd = curprd
+
+  contains
+
+    subroutine find_left_side_of_production
+
+      use Error_Handler, only: Error
+
+      do
+        call scan (itoken)
+        if (itoken  /=  0) exit
+        if (grmend  /=  0) return
+        if (namval  /=  0) then
+          call scan (itoken)
+          if (itoken  /=  0) call scnint (value(itoken))
+        end if
+      end do
+      if (lftuse(itoken)  /=  0) then
+
+        ! itoken is used in two sets of definitions.
+
+        i = 1
+        call movstr (itoken, line, i, 50)
+        line(i:i+47)=' appears as the left side of a second definition'
+        call error (line(1:i+47), 12)
+      end if
+      lftuse(itoken) = 1
+      curlhs = itoken
+      frsprd(itoken) = curprd + 1
+
+    end subroutine find_left_side_of_production
+
+    subroutine find_right_side_of_production
+
+      use Error_Handler, only: Error
+
+      curprd = curprd + 1
+      if (curprd >= mxprod) call error ('Grammar has too many productions',12)
+      if (prdptr > mxprdc) call error ('Grammar too large',12)
+      prodcn(prdptr) = curlhs
+      prdptr = prdptr + 1
+      do ! until ( altend /= 0 )
+        call scan (itoken)
+        if (itoken /= 0) then
+          rgtuse(itoken) = 1
+          if (prdptr > mxprdc) call error ('Grammar too large',12)
+          prodcn(prdptr) = itoken
+          prdptr = prdptr + 1
+        end if
+        if (namval /= 0) then
+          call scan (itoken)
+          if (itoken /= 0) call scnint (value(itoken))
+        end if
+        if ( altend /= 0 ) exit
+      end do
+      prdind(curprd+1) = prdptr
+
+    end subroutine find_right_side_of_production
+
+  end subroutine RDGRAM
+
+  subroutine SCAN (IENTRY)
+
+    use Error_Handler, only: Error
+    use IO, only: NEW_LINE ! reads a new line of text.
+    use READCM, only: LINENO, LINPTR
+    use SIZES, only: MAXSHD
+    use STRING, only: SHDPTR, SSTPTR
+    use S1, only: BUILD_SYMBOL_TABLE, ENTER, STHEAD
+    use S3, only: ACTION
+    use TOGGLES
+    implicit NONE
+
+    ! Read a grammar symbol.  Return its position in string storage in
+    ! IENTRY.
+
+    integer, intent(out) :: IENTRY
+
+    ! *****     External References     **********************************
+
+    ! ENTER   finds or enters a symbol in the hash table.
+    ! ERROR   prints error messages.
+    ! SCNINT  scans an integer.
+
+    ! *****     Local Variables     **************************************
+
+    ! CHAR    is the character fetched by NXTCHR.
+    ! ITEMP   is a temporary integer variable.
+    ! STOPSC  is the character that stops the scan of the current symbol.
+    ! TYPE    is the type of character provided by NXTCHR.
+
+    character CHAR, STOPSC
+    integer ITEMP, TYPE
+
+    ! *****     Procedures     *******************************************
+
+    altend = 0
+    prdend = 0
+    grmend = 0
+    namval = 0
+    ientry = 0
+    shdptr = shdptr + 1
+    if (shdptr > maxshd) call error ('Too many literal strings',12)
+
+    ! Skip leading blanks.  Then set up the stop character depending on
+    ! whether the first non blank is a left angle bracket.
+    ! The values of TYPE returned by subroutine get next character) are:
+
+    !     1 - Standard character or escaped angle bracket.
+    !     2 - unescaped left angle bracket.
+    !     3 - unescaped right angle bracket.
+    !     4 - grammar, production, or alternate end.
+
+    do
+      call get_next_character
+      select case ( type )
+      case ( 1 ) ! Standard character or escaped angle bracket.
+        if (char == ' ' ) cycle
+        stopsc = ' '
+      case ( 2 ) ! Unescaped left angle bracket
+        stopsc = '>'
+      case ( 3 ) ! Unescaped right angle bracket
+        call error ('Isolated right angle bracket (>)',10)
+        stopsc = ' '
+      case ( 4 ) ! grammar, production, or alternate end
+        shdptr = shdptr - 1
+        return
+      end select
+      exit
+    end do
+
+    ! Check for the end of the symbol.  Add the character to the string
+    ! storage if it isn't the end of a symbol.
+
+    do
+      call build_symbol_table ( char )
+      call get_next_character
+      select case ( type )
+      case ( 1 )
+        if (char == stopsc) exit
+      case ( 2 )
+        call error ('Embedded left angle bracket',10)
+      case ( 3 )
+        if (stopsc == '>' ) then
+          call build_symbol_table ( char )
+          exit
+        end if
+        call error ('Isolated right angle bracket (>)',10)
+      case ( 4 )
+        if (stopsc == '>' ) call error ('Unmatched left angle bracket (<)',10)
+        exit
+      end select
+    end do
+
+    if (sstptr >= sthead(shdptr)) then
+      sthead(shdptr+1) = sstptr + 1
+      call enter ( shdptr, ientry )
+      if (ientry == shdptr) then
+        return
+      end if
+      sstptr = sthead(shdptr) - 1
+    end if
+    shdptr = shdptr - 1
+
+  contains
+
+    subroutine get_next_character
+
+      use Error_Handler, only: Error
+
+      type = 1
+      do
+        if (linptr > linlen) &
+          call new_line ( toggle(ichar('I')), linbuf, linlen, lineno, linptr)
+        char = linbuf(linptr:linptr)
+        if (char == '<' ) then
+          type = 2
+          exit
+        end if
+        if (char == '>' ) then
+          type = 3
+          exit
+        end if
+        if (char .ne. '&' ) then
+          exit
+        end if
+  !     Input is '&'.  Find out which control toggle it is.
+        linptr = linptr + 1
+        if (linptr > linlen) then
+          call error ('Ampersand may not be last on a line',11)
+          cycle
+        end if
+        char = linbuf(linptr:linptr)
+        select case ( char )
+        case ( '&', '<', '>' )
+          exit
+        case ( ' ' )
+          call error ('Ampersand may not be followed by blank',11)
+        case ( 'A' )
+          altend = 1
+          type = 4
+          char = ' '
+          exit
+        case ( 'B' )
+          char = ' '
+          exit
+        case ( 'C' )
+          linptr = 100
+        case ( 'G' )
+          grmend = 1
+          prdend = 1
+          altend = 1
+          type = 4
+          char = ' '
+          exit
+        case ( 'P' )
+          prdend = 1
+          altend = 1
+          type = 4
+          char = ' '
+          exit
+        case ( 'S' )
+          linptr = linptr + 1
+          call scnint (action(curprd))
+        case ( 'V' )
+          namval = 1
+          type = 4
+          char = ' '
+          exit
+        case default
+          itemp = ichar(char)
+          toggle(itemp) = 1 - toggle(itemp)
+          linptr = linptr + 1
+        end select
+      end do
+      linptr = linptr + 1
+    end subroutine get_next_character
+
+  end subroutine SCAN
+
+  subroutine SCNINT (N)
+
+    use Error_Handler, only: Error
+    use IO, only: NEW_LINE ! reads a new line of input.
+    use READCM, only: LINENO, LINPTR
+    use TOGGLES, only: TOGGLE
+
+    implicit NONE
+
+    ! Scan input, converting a digit string into an integer.  The
+    ! integer is stored in N.
+
+    integer, intent(out) :: N
+
+    ! *****     External References     **********************************
+
+    ! ERROR   prints error messages.
+
+    ! *****     Local Variables     **************************************
+
+    ! CTEMP   is the next character of input.
+    ! DIGIT   is an array of decimal digits.
+    ! I       is a loop induction variable and subscript.
+
+    character CTEMP
+    character(len=10) :: DIGIT = '0123456789'
+    integer I
+
+    ! *****     Procedures     *******************************************
+
+    n = 0
+    do
+      if (linptr > linlen) &
+        call new_line ( toggle(ichar('I')), linbuf, linlen, lineno, linptr)
+      if (linbuf(linptr:linptr) /= ' ') exit
+      linptr = linptr + 1
+    end do
+    do while (linptr <= linlen)
+      ctemp = linbuf(linptr:linptr)
+      if (ctemp == ' ') exit
+      if (ctemp == '&') exit
+      i = index(digit, ctemp)
+      if ( i == 0 ) then
+        call error ('Non digit character in an integer',11)
+        n = 0
+        exit
+      end if
+      n = 10*n + i - 1
+      linptr = linptr + 1
+    end do
+
+  end subroutine SCNINT
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: grammar.f90,v 1.2 2013/12/12 01:53:00 vsnyder Exp $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module GRAMMAR
+
+! $Log: grammar.f90,v $
+! Revision 1.2  2013/12/12 01:53:00  vsnyder
+! Remove unused cruft
+!
+! Revision 1.1  2013/10/24 22:41:14  vsnyder
+! Initial commit
+!
+@
+
+
+1.2
+log
+@Remove unused cruft
+@
+text
+@d388 1
+a388 1
+       "$Id: grammar.f90,v 1.1 2013/10/24 22:41:14 vsnyder Exp $"
+d398 3
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d24 1
+a24 1
+       "$RCSfile: parser.f90,v $"
+a31 1
+    use Error_Handler, only: Error
+d158 1
+a158 1
+    use SIZES, only: MAXSHD, MAXSST
+d388 1
+a388 1
+       "$Id: parser.f90,v 2.29 2013/10/02 01:35:46 vsnyder Exp $"
+d397 4
+a400 1
+! $Log: $
+@
+

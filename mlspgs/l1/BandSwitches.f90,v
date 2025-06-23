@@ -1,0 +1,301 @@
+head	2.3;
+access;
+symbols
+	v5-02-NRT-19:2.3
+	v6-00:2.3
+	v5-02-NRT-18:2.3
+	v5-02:2.3
+	v5-01-NRT-17:2.3
+	v5-01-NRT-16:2.3
+	v5-01-NRT-15:2.3
+	v5-01-NRT-14:2.3
+	neuralnetworks-1-0:2.3.0.10
+	cfm-single-freq-0-1:2.3.0.8
+	v5-01:2.3
+	v5-00:2.3
+	v4-23-TA133:2.3.0.6
+	mus-emls-1-70:2.3.0.4
+	rel-1-0-englocks-work:2.3.0.2
+	VUMLS1-00:2.3
+	VPL1-00:2.3
+	V4-22-NRT-08:2.3
+	whdrel10_merged_to_here:2.3
+	merge_whdrel10_from_here:2.2.6.1
+	TAG_TRUNK_AFTER_PW_CHANGES:2.2
+	TAG_TRUNK_BEFORE_PW_CHANGES:2.2
+	VAM1-00:2.2
+	whd-rel-1-0:2.2.0.6
+	V4-21:2.2.0.4
+	V4-13:2.2
+	V4-12:2.2
+	V4-11:2.2
+	V4-10:2.2
+	V3-43:2.2
+	M4-00:2.2
+	V3-41:2.2
+	V3-40-PlusGM57:2.2.0.2
+	V2-24-NRT-04:2.2
+	V3-33:2.2
+	V2-24:2.2
+	V3-31:2.2
+	V3-30-NRT-05:2.2
+	cfm-01-00:2.2
+	V3-30:2.2
+	V3-20:2.2
+	V3-10:2.2
+	V2-23-NRT-02:2.2
+	V2-23:2.2
+	V2-22-NRT-01:2.2
+	V2-22:2.2
+	V2-21:2.2
+	V2-20:2.2
+	V2-11:2.2
+	V2-10:2.2
+	V2-00:2.2;
+locks; strict;
+comment	@# @;
+
+
+2.3
+date	2016.03.15.22.17.59;	author whdaffer;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2006.04.05.18.11.12;	author perun;	state Exp;
+branches
+	2.2.6.1;
+next	2.1;
+
+2.1
+date	2006.03.24.15.04.27;	author perun;	state Exp;
+branches;
+next	;
+
+2.2.6.1
+date	2015.10.09.10.21.37;	author whdaffer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.3
+log
+@Merged whd-rel-1-0 back onto main branch. Most changes
+are to comments, but there's some modification to Calibration.f90
+and MLSL1Common to support some new modules: MLSL1Debug and SnoopMLSL1.
+@
+text
+@! Copyright 2006, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=============================================================================
+MODULE BandSwitches   ! Deal with Band switches in L0 data
+!=============================================================================
+
+  USE SDPToolkit, ONLY: PGS_PC_GetReference, PGS_S_SUCCESS, PGS_IO_Gen_closeF
+  USE MLSCommon, ONLY: r8
+  USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Warning, &
+       MLSMSG_Info
+
+  IMPLICIT NONE
+
+  PRIVATE
+
+  PUBLIC :: bsw_unit, BandSwFmt, GetBandSwitches, OpenBandSwitchesFile
+
+!---------------------------- RCS Module Info ------------------------------
+  CHARACTER (len=*), PRIVATE, PARAMETER :: ModuleName= &
+       "$RCSfile: BandSwitches.f90,v $"
+  PRIVATE :: not_used_here 
+!---------------------------------------------------------------------------
+
+  INTEGER :: bsw_unit
+  CHARACTER (LEN=*), PARAMETER :: BandSwFmt = "(A27, 5x, 5I3)"
+
+  INTEGER, EXTERNAL :: PGS_TD_UTCtoTAI
+
+CONTAINS
+
+!=============================================================================
+  SUBROUTINE OpenBandSwitchesFile (mode)
+!=============================================================================
+
+    USE MLSPCF1, ONLY: mlspcf_bandsw_start
+    USE MLSL1Common, ONLY: FileNameLen
+
+
+    CHARACTER (len=*) :: mode
+
+    CHARACTER (LEN=FileNameLen) :: PhysicalFilename
+
+    INTEGER :: ios, returnStatus, version
+
+    INTEGER, EXTERNAL :: PGS_IO_Gen_Track_LUN
+
+!! Open band switches table:
+
+    WRITE (PhysicalFilename, "(I5.5)") mlspcf_bandsw_start
+    version = 1
+    returnStatus = PGS_PC_getReference (mlspcf_bandsw_start, version, &
+     PhysicalFilename)
+
+    IF (returnStatus /= PGS_S_SUCCESS) THEN
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            & "Could not find Band Switches file entry")
+    ENDIF
+
+    returnStatus = PGS_IO_Gen_Track_LUN (bsw_unit, 0)
+
+! Open with file positioned at EOF:
+
+    OPEN (unit=bsw_unit, file=PhysicalFilename, ACTION=mode, status="OLD", &
+         FORM="FORMATTED", ACCESS="SEQUENTIAL", iostat=ios, POSITION="APPEND")
+
+    IF (ios /= 0) THEN
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            & "Could not open Band Switches file: " // PhysicalFilename)
+    ENDIF
+    
+    CALL MLSMessage (MLSMSG_Info, ModuleName, &
+         & "Opened Band Switches file: " // PhysicalFilename)
+
+  END SUBROUTINE OpenBandSwitchesFile
+
+!=============================================================================
+  SUBROUTINE GetBandSwitches (TAI_in, BandNo) ! Get latest bands from switches
+!=============================================================================
+
+    REAL(r8), INTENT (IN) :: TAI_in
+    INTEGER, INTENT (OUT) :: BandNo(5)
+
+    CHARACTER(len=27) :: asciiUTC
+    INTEGER :: n
+    REAL(r8) :: TAI
+    LOGICAL :: first_read = .TRUE.
+
+!! Open Band Switches file:
+
+    CALL OpenBandSwitchesFile ("READ")   ! Read mode
+
+!! Read data until first TAI in file is less than requested TAI:
+
+    BACKSPACE bsw_unit   ! Beginning of last record
+    DO
+       READ (bsw_unit, fmt=BandSwFmt) asciiUTC, bandno
+       n = PGS_TD_UTCtoTAI (asciiUTC, TAI)
+       IF (TAI <= TAI_in) THEN
+          IF (first_read .AND. ((TAI_in - TAI) > 86400.0)) THEN
+             PRINT *, 'Switch positions not guaranteed for this time request!'
+             CALL MLSMessage (MLSMSG_Warning, ModuleName, &
+                  & 'Time requested is more than 24 hours beyond ' // &
+                  'guaranteed switch positions')
+          ENDIF
+          EXIT
+       ENDIF
+       BACKSPACE bsw_unit    ! Record just read
+       BACKSPACE bsw_unit    ! Previous record to read
+       first_read = .FALSE.  ! First record already read
+    ENDDO
+
+!! Close Band Switches file:
+
+    n = PGS_IO_Gen_CloseF (bsw_unit)
+
+    CALL MLSMessage (MLSMSG_Info, ModuleName, &
+         & "Closed Band Switches file")
+
+  END SUBROUTINE GetBandSwitches
+
+!=============================================================================
+  LOGICAL FUNCTION not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  CHARACTER (len=*), PARAMETER :: IdParm = &
+       "$Id: BandSwitches.f90,v 2.2.6.1 2015/10/09 10:21:37 whdaffer Exp $"
+  CHARACTER (len=LEN(idParm)), SAVE :: Id = idParm
+!---------------------------------------------------------------------------
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  END FUNCTION not_used_here
+
+END MODULE BandSwitches
+!=============================================================================
+! $Log: BandSwitches.f90,v $
+! Revision 2.2.6.1  2015/10/09 10:21:37  whdaffer
+! checkin of continuing work on branch whd-rel-1-0
+!
+! Revision 2.2  2006/04/05 18:11:12  perun
+! Remove unused variables
+!
+! Revision 2.1  2006/03/24 15:04:27  perun
+! Initial release for opening and getting band switches from Switch Network database file
+!
+@
+
+
+2.2
+log
+@Remove unused variables
+@
+text
+@d45 2
+d50 1
+a50 1
+    CHARACTER (LEN=132) :: PhysicalFilename
+d134 1
+a134 1
+       "$Id: BandSwitches.f90,v 2.1 2006/03/24 15:04:27 perun Exp $"
+d143 6
+@
+
+
+2.2.6.1
+log
+@checkin of continuing work on branch whd-rel-1-0
+@
+text
+@a44 2
+    USE MLSL1Common, ONLY: FileNameLen
+
+d48 1
+a48 1
+    CHARACTER (LEN=FileNameLen) :: PhysicalFilename
+d132 1
+a132 1
+       "$Id: BandSwitches.f90,v 2.2 2006/04/05 18:11:12 perun Exp $"
+a140 3
+! Revision 2.2  2006/04/05 18:11:12  perun
+! Remove unused variables
+!
+@
+
+
+2.1
+log
+@Initial release for opening and getting band switches from Switch Network database file
+@
+text
+@d17 1
+a17 1
+  USE MLSCommon, ONLY: TAI93_Range_T, r8
+d29 1
+a29 1
+       "$RCSfile: $"
+d132 1
+a132 1
+       "$Id: $"
+d140 4
+a143 1
+! $Log: $
+@
+

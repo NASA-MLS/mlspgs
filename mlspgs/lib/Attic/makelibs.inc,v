@@ -1,0 +1,77 @@
+head	2.1;
+access;
+symbols
+	V0_1:1.1;
+locks; strict;
+comment	@# @;
+
+
+2.1
+date	2000.11.15.02.09.08;	author vsnyder;	state dead;
+branches;
+next	2.0;
+
+2.0
+date	2000.09.05.17.41.07;	author dcuddy;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	99.12.04.00.27.07;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.1
+log
+@Replaced by Makefile.inc and a Makefile in each compiler/platform directory
+@
+text
+@# $Id: makelibs.inc,v 2.0 2000/09/05 17:41:07 dcuddy Exp $
+#
+# This make include file defines how to make the MLSPGS libraries
+#
+mlslib:
+	cd ${MLSPGS_LIB_PATH} ; ${MAKE} mlslib.a
+mlslib_debug:
+	cd ${MLSPGS_LIB_PATH} ; ${MAKE} mlslib.a_debug
+#
+# $Log: makelibs.inc,v $
+# Revision 2.0  2000/09/05 17:41:07  dcuddy
+# Change revision to 2.0
+#
+# Revision 1.1  1999/12/04 00:27:07  livesey
+# First version
+#
+#
+@
+
+
+2.0
+log
+@Change revision to 2.0
+@
+text
+@d1 1
+a1 1
+# $Id: makelibs.inc,v 1.1 1999/12/04 00:27:07 livesey Exp $
+d11 3
+@
+
+
+1.1
+log
+@First version
+@
+text
+@d1 1
+a1 1
+# $Id: makelibs.inc,v 1.1 1999/12/04 00:27:07 livesey Exp $
+d11 3
+@
+
+

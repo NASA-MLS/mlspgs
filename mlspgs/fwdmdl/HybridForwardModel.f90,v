@@ -1,0 +1,490 @@
+head	2.10;
+access;
+symbols
+	v5-02-NRT-19:2.10
+	v6-00:2.10
+	v5-02-NRT-18:2.10
+	v5-02:2.10
+	v5-01-NRT-17:2.10
+	v5-01-NRT-16:2.10
+	v5-01-NRT-15:2.10
+	v5-01-NRT-14:2.10
+	neuralnetworks-1-0:2.10.0.14
+	cfm-single-freq-0-1:2.10.0.12
+	v5-01:2.10
+	v5-00:2.10
+	v4-23-TA133:2.10.0.10
+	mus-emls-1-70:2.10.0.8
+	rel-1-0-englocks-work:2.10.0.6
+	VUMLS1-00:2.10
+	VPL1-00:2.10
+	V4-22-NRT-08:2.10
+	VAM1-00:2.10
+	V4-21:2.10.0.4
+	V4-13:2.10
+	V4-12:2.10
+	V4-11:2.10
+	V4-10:2.10
+	V3-43:2.10
+	M4-00:2.10
+	V3-41:2.10
+	V3-40-PlusGM57:2.10.0.2
+	V2-24-NRT-04:2.9
+	V3-33:2.10
+	V2-24:2.9
+	V3-31:2.10
+	V3-30-NRT-05:2.10
+	cfm-01-00:2.10
+	V3-30:2.10
+	V3-20:2.10
+	V3-10:2.10
+	V2-23-NRT-02:2.9
+	V2-23:2.9
+	V2-22-NRT-01:2.9
+	V2-22:2.9
+	V2-21:2.6
+	V2-20:2.6
+	V2-11:2.6
+	V2-10:2.6
+	V2-00:2.6
+	V1-51:2.5
+	V1-50:2.5
+	V1-45:2.5
+	V1-44:2.5
+	V1-43:2.5
+	V1-32:2.5
+	V1-31:2.5
+	V1-30:2.2;
+locks; strict;
+comment	@# @;
+
+
+2.10
+date	2009.06.23.18.26.10;	author pwagner;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2007.10.06.00.01.01;	author vsnyder;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2007.06.29.19.32.42;	author vsnyder;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2007.04.03.17.43.35;	author vsnyder;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2005.06.03.01.59.43;	author vsnyder;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2003.10.29.00.44.09;	author livesey;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2003.10.28.23.44.25;	author livesey;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2003.09.11.23.11.28;	author livesey;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2003.08.13.00.47.49;	author livesey;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2003.07.15.22.10.15;	author livesey;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.10
+log
+@Prevent Intel from optimizing ident string away
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module HybridForwardModel_m
+
+  ! This is a 'hybrid' forward model which uses the linear forward model
+  ! for one sideband, and the non-linear forward model for the other.
+
+  implicit none
+  private
+  public :: HybridForwardModel
+
+  !------------------------------- RCS Ident Info ------------------------------
+  character(len=*), parameter :: ModuleName = &
+    & "$RCSfile: HybridForwardModel.f90,v $"
+  private :: not_used_here 
+  !-----------------------------------------------------------------------------
+
+contains ! =====     Public Procedures     =============================
+
+  subroutine HybridForwardModel ( fmConf, FwdModelIn, FwdModelExtra,&
+    & FwdModelOut, fmStat, Jacobian, Vectors )
+
+    ! Import stuff
+    use VectorsModule, only: VECTOR_T, CLONEVECTOR, ADDTOVECTOR, &
+      & DESTROYVECTORINFO
+    use ForwardModelConfig, only: FORWARDMODELCONFIG_T
+    use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T
+    use Intrinsic, only: L_LINEAR, L_FULL
+    use FullForwardModel_m, only: FULLFORWARDMODEL
+    use LinearizedForwardModel_m, only: LINEARIZEDFORWARDMODEL
+    use MatrixModule_1, only: MATRIX_T, ADDTOMATRIX, CREATEEMPTYMATRIX, &
+      & DESTROYMATRIX
+    use MLSSignals_M, only: SIGNAL_T
+
+    ! Dummy arguments
+    type(forwardModelConfig_T), intent(inout) :: FMCONF
+    type(vector_T), intent(in) ::  FWDMODELIN
+    type(vector_T), intent(in) ::  FWDMODELEXTRA
+    type(vector_T), intent(inout) :: FWDMODELOUT  ! Radiances, etc.
+    type(forwardModelStatus_t), intent(inout) :: FMSTAT ! Reverse comm. stuff
+    type(matrix_T), intent(inout), optional :: JACOBIAN
+    type(vector_T), dimension(:), target, optional :: VECTORS
+
+    ! Local variables
+    integer :: SIDEBAND                 ! Loop counter
+    integer :: SIGNAL                   ! Loop counter
+    type(forwardModelConfig_T) :: THISCONFIG
+    type(signal_T), target, dimension(1) :: THISSIGNAL
+    type(Vector_T), target :: LINEARRADIANCE
+    type(Matrix_T), target :: LINEARJACOBIAN
+    ! Executable code
+
+    ! Setup our temporary stuff
+    if ( present(jacobian) ) then
+      call CreateEmptyMatrix ( linearJacobian, 0, &
+        & jacobian%row%vec, jacobian%col%vec, &
+        & .not. jacobian%row%instFirst, .not. jacobian%col%instFirst, &
+        & 'linearJacobian' )
+    end if
+    call CloneVector ( linearRadiance, fwdModelOut )
+
+    ! First we do the linear model.  We do this for both sidebands,
+    ! though the second one we update/overwrite with the full forward model
+    ! results.
+    do sideband = fmConf%linearSideband, -fmConf%linearSideband, -2*fmConf%linearSideband
+      ! i.e. do sideband = 1,-1,-2 or -1,1,2
+      do signal = 1, size ( fmConf%signals )
+        ! Set it up to do this signal
+        thisConfig = fmConf
+        thisConfig%fwmType = l_linear
+        thisConfig%forceFoldedOutput = .true.
+        thisSignal(1) = thisConfig%signals(signal)
+        thisSignal%sideband = sideband
+        thisConfig%signals => thisSignal
+        ! We'll want the linear model to supply all the derivatives it can
+        ! as it's not much of a cost and we want them from somewhere.
+        thisConfig%moleculeDerivatives = .true.
+        thisConfig%forceSidebandFraction = .true.
+        ! Invoke it, tried to do this with temporary pointers
+        ! to avoid so many calls, but was difficult as I didn't want to
+        ! make fwdModelOut a target.
+        if ( sideband == fmConf%linearSideband ) then
+          if ( present(jacobian) ) then
+            call LinearizedForwardModel ( thisConfig, fwdModelIn, fwdModelExtra, &
+              & linearRadiance, fmStat, linearJacobian, vectors=vectors )
+          else
+            call LinearizedForwardModel ( thisConfig, fwdModelIn, fwdModelExtra, &
+              & linearRadiance, fmStat, vectors=vectors )
+          end if
+        else
+          if ( present(jacobian) ) then
+            call LinearizedForwardModel ( thisConfig, fwdModelIn, fwdModelExtra, &
+              & fwdModelOut, fmStat, jacobian, vectors )
+          else
+            call LinearizedForwardModel ( thisConfig, fwdModelIn, fwdModelExtra, &
+              & fwdModelOut, fmStat, vectors=vectors )
+          end if
+        end if
+      end do                              ! Signal loop
+    end do                                ! Sideband loop
+
+    ! At the end of this linearRadiance/linearJacobian contain the results for the
+    ! sideband that's purely linear, and fwdModelOut/Jacobian contain that which
+    ! we're going to overwrite with the full model.
+
+    ! Now we do the full forward model
+    thisConfig = fmConf
+    thisConfig%fwmType = l_full
+    thisConfig%forceFoldedOutput = .true.
+    thisConfig%forceSidebandFraction = .true.
+    thisConfig%signals%sideband = - fmConf%linearSideband
+    thisConfig%sidebandStart = - fmConf%linearSideband
+    thisConfig%sidebandStop = - fmConf%linearSideband
+    call FullForwardModel ( thisConfig, fwdModelIn, fwdModelExtra, &
+      & fwdModelOut, fmStat, Jacobian )
+    ! The sidebands must originally have been marked as folded
+    fmConf%signals%sideband = 0
+
+    ! Now add the terms together and tidy up
+    call AddToVector ( fwdModelOut, linearRadiance )
+    call DestroyVectorInfo ( linearRadiance )
+
+    if ( present(jacobian ) ) then
+      call AddToMatrix ( jacobian, linearJacobian )
+      call DestroyMatrix ( linearJacobian )
+    end if
+
+  end subroutine HybridForwardModel
+
+  ! ----------------------------------------------------------------------------
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id: read_apriori.f90 is it here $"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module HybridForwardModel_m
+
+! $Log: HybridForwardModel.f90,v $
+! Revision 2.9  2007/10/06 00:01:01  vsnyder
+! Delete unused symbols
+!
+! Revision 2.8  2007/06/29 19:32:42  vsnyder
+! Make ForwardModelIntermediate_t private to ScanModelModule
+!
+! Revision 2.7  2007/04/03 17:43:35  vsnyder
+! Replace pointer attribute on VectorDatabase with target attribute
+!
+! Revision 2.6  2005/06/03 01:59:43  vsnyder
+! New copyright notice, move Id to not_used_here to avoid cascades
+!
+! Revision 2.5  2003/10/29 00:44:09  livesey
+! Added forceFoldedOuptut to full forward model call.
+!
+! Revision 2.4  2003/10/28 23:44:25  livesey
+! Various deficiencies and bugs fixed.
+!
+! Revision 2.3  2003/09/11 23:11:28  livesey
+! Now includes the vectors argument to push down into the linear model.
+!
+! Revision 2.2  2003/08/13 00:47:49  livesey
+! Cosmetic change
+!
+! Revision 2.1  2003/07/15 22:10:15  livesey
+! First version
+!
+@
+
+
+2.9
+log
+@Delete unused symbols
+@
+text
+@d141 1
+d143 3
+a145 5
+  !------------------------------- RCS Ident Info ------------------------------
+  character(len=*), parameter :: IdParm = & 
+    "$Id: HybridForwardModel.f90,v 2.8 2007/06/29 19:32:42 vsnyder Exp $"
+  character(len=len(idParm)) :: Id = idParm
+  !-----------------------------------------------------------------------------
+d147 1
+d149 1
+d154 3
+@
+
+
+2.8
+log
+@Make ForwardModelIntermediate_t private to ScanModelModule
+@
+text
+@d33 1
+a33 1
+    use VectorsModule, only: VECTOR_T, VECTORVALUE_T, CLONEVECTOR, ADDTOVECTOR, &
+d40 2
+a41 2
+    use MatrixModule_1, only: MATRIX_T, COPYMATRIX, ADDTOMATRIX, CLEARMATRIX, &
+      & CREATEEMPTYMATRIX, DESTROYMATRIX
+d144 1
+a144 1
+    "$Id: HybridForwardModel.f90,v 2.7 2007/04/03 17:43:35 vsnyder Exp $"
+d153 3
+@
+
+
+2.7
+log
+@Replace pointer attribute on VectorDatabase with target attribute
+@
+text
+@d30 1
+a30 1
+    & FwdModelOut, Ifm, fmStat, Jacobian, Vectors )
+d36 1
+a36 2
+    use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T, &
+      & FORWARDMODELINTERMEDIATE_T
+a48 1
+    type(forwardModelIntermediate_T), intent(inout) :: IFM ! Workspace
+d94 1
+a94 1
+              & linearRadiance, ifm, fmStat, linearJacobian, vectors=vectors )
+d97 1
+a97 1
+              & linearRadiance, ifm, fmStat, vectors=vectors )
+d102 1
+a102 1
+              & fwdModelOut, ifm, fmStat, jacobian, vectors )
+d105 1
+a105 1
+              & fwdModelOut, ifm, fmStat, vectors=vectors )
+d124 1
+a124 1
+      & fwdModelOut, ifm, fmStat, Jacobian )
+d144 1
+a144 1
+    "$Id: HybridForwardModel.f90,v 2.6 2005/06/03 01:59:43 vsnyder Exp $"
+d153 3
+@
+
+
+2.6
+log
+@New copyright notice, move Id to not_used_here to avoid cascades
+@
+text
+@d53 1
+a53 1
+    type(vector_T), dimension(:), pointer, optional :: VECTORS
+d146 1
+a146 1
+    "$Id: HybridForwardModel.f90,v 2.5 2003/10/29 00:44:09 livesey Exp $"
+d155 3
+@
+
+
+2.5
+log
+@Added forceFoldedOuptut to full forward model call.
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+a21 3
+  character(len=*), parameter :: IdParm = & 
+    "$Id: HybridForwardModel.f90,v 2.4 2003/10/28 23:44:25 livesey Exp $"
+  character(len=len(idParm)) :: Id = idParm
+d144 5
+d155 3
+@
+
+
+2.4
+log
+@Various deficiencies and bugs fixed.
+@
+text
+@d15 1
+a15 1
+    "$Id: HybridForwardModel.f90,v 2.3 2003/09/11 23:11:28 livesey Exp $"
+d115 1
+d145 3
+@
+
+
+2.3
+log
+@Now includes the vectors argument to push down into the linear model.
+@
+text
+@d15 1
+a15 1
+    "$Id: HybridForwardModel.f90,v 2.2 2003/08/13 00:47:49 livesey Exp $"
+d28 2
+a29 2
+    use VectorsModule, only: VECTOR_T, VECTORVALUE_T, COPYVECTOR, ADDTOVECTOR, &
+      & CLEARVECTOR, DESTROYVECTORINFO
+d66 1
+a66 2
+    call CopyVector ( linearRadiance, fwdModelOut )
+    call ClearVector ( linearRadiance )
+d77 1
+d144 3
+@
+
+
+2.2
+log
+@Cosmetic change
+@
+text
+@d15 1
+a15 1
+    "$Id: HybridForwardModel.f90,v 2.1 2003/07/15 22:10:15 livesey Exp $"
+d25 1
+a25 1
+    & FwdModelOut, Ifm, fmStat, Jacobian )
+d48 1
+d91 1
+a91 1
+              & linearRadiance, ifm, fmStat, linearJacobian )
+d94 1
+a94 1
+              & linearRadiance, ifm, fmStat )
+d99 1
+a99 1
+              & fwdModelOut, ifm, fmStat, jacobian )
+d102 1
+a102 1
+              & fwdModelOut, ifm, fmStat )
+d144 3
+@
+
+
+2.1
+log
+@First version
+@
+text
+@d15 1
+a15 1
+    "$Id: LinearizedForwardModel_m.f90,v 2.41 2003/07/09 20:16:26 livesey Exp $"
+d18 1
+a18 1
+    & "$RCSfile: LinearizedForwardModel_m.f90,v $"
+d134 2
+d142 4
+a145 1
+! $Log$
+@
+

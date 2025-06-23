@@ -1,0 +1,732 @@
+head	1.17;
+access;
+symbols
+	v5-02-NRT-19:1.17
+	v6-00:1.17
+	v5-02-NRT-18:1.17
+	v5-02:1.15
+	v5-01-NRT-17:1.17
+	v5-01-NRT-16:1.17
+	v5-01-NRT-15:1.17
+	v5-01-NRT-14:1.17
+	neuralnetworks-1-0:1.17.0.4
+	cfm-single-freq-0-1:1.17.0.2
+	TES-MLuo-01:1.16
+	TES-UNKNOWN:1.15
+	v5-01:1.15
+	v5-00:1.15
+	v4-23-TA133:1.15.0.6
+	mus-emls-1-70:1.15.0.4
+	rel-1-0-englocks-work:1.15.0.2
+	VUMLS1-00:1.15
+	VPL1-00:1.15
+	V4-22-NRT-08:1.15
+	VAM1-00:1.15
+	V4-21:1.14.0.2
+	V4-13:1.14
+	V4-12:1.14
+	V4-11:1.14
+	V4-10:1.14
+	V3-43:1.1
+	M4-00:1.14
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.12
+	V3-31:1.12
+	V3-30-NRT-05:1.12
+	cfm-01-00:1.11
+	V3-30:1.1
+	V3-20:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.17
+date	2020.07.16.16.28.51;	author pwagner;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2020.07.15.20.46.50;	author pwagner;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2015.08.05.20.19.24;	author pwagner;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2011.12.14.22.54.18;	author honghanh;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2011.11.03.00.09.10;	author honghanh;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2010.09.21.16.19.11;	author honghanh;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2010.06.29.15.53.45;	author honghanh;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2010.06.28.22.25.09;	author honghanh;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2010.06.16.18.42.35;	author honghanh;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2010.06.15.17.22.39;	author honghanh;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2010.05.25.15.27.55;	author honghanh;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2010.05.22.21.19.25;	author honghanh;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2010.03.24.16.26.17;	author honghanh;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2010.03.16.22.20.53;	author honghanh;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2010.03.14.19.24.26;	author honghanh;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2010.03.09.22.39.38;	author honghanh;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2010.02.17.19.15.01;	author honghanh;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.17
+log
+@Now satisfies idlcfm
+@
+text
+@! Copyright 2010, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Input
+   use MLSCommon, only: r8
+
+   implicit none
+
+   ! StartProfile and endProfile will be converted 
+   ! to MAF number, Pranjit Saha
+   integer, parameter :: startProfile =  1259
+   integer, parameter :: endProfile =  1259
+ 
+   character(len=100) :: l1boa = "/data/emls/l1b/v04.20/2007/207/MLS-Aura_L1BOA_v04-20-c01_2007d207.h5"
+   character(len=100) :: l1brad = "/data/emls/l1b/v04.20/2007/207/MLS-Aura_L1BRADG_v04-20-c01_2007d207.h5"
+ 
+   ! To convert profile to MAF number, Pranjit Saha
+   character(len=100) :: l2GP = "/data/emls/l2gp/v04.20/2007/207/MLS-Aura_L2GP-O3_v04-20-c01_2007d207.he5"
+   ! To read ptan values, Pranjit Saha
+   character(len=100) :: l2dgm = "/data/emls/l2aux/v04.20/2007/207/MLS-Aura_L2AUX-DGM_v04-20-c01_2007d207.h5"
+ 
+   character(len=100) :: spectroscopy = '/data/emls/l2cal/MLS-Aura_L2Cal-Spectroscopy-PFA_v4-0-3_0000d000.h5'
+   character(len=100) :: leapsecFile = '/software/toolkit/LF6.1/toolkit/database/common/TD/leapsec.dat'
+   character(len=100) :: antennaPatterns = '/data/emls/l2cal/MLS-Aura_L2Cal-AAAP_v2-0-0_0000d000.txt'
+   character(len=100) :: filterShapes = '/data/emls/l2cal/MLS-Aura_L2Cal-Filters_v3-0-2_0000d000.txt'
+   character(len=100) :: DACSFilterShapes = '/data/emls/l2cal/MLS-Aura_L2Cal-DACSFilters_v1-5-1_0000d000.txt'
+   character(len=100) :: pointingGrids = '/data/emls/l2cal/MLS-Aura_L2Cal-PFG_v3-0-0_0000d000.txt'
+   character(len=100), dimension(8) :: &
+   pfaFiles= (/ &
+   '/data/emls/l2cal/PFA/PFA_R5V_CA-08.h5                                                                   ', &
+   '/data/emls/l2cal/PFA/PFA_R5H_CA-08.h5                                                                   ', &
+   '/data/emls/l2cal/PFA/PFA_R4_CA-08.h5                                                                    ', &
+   '/data/emls/l2cal/PFA/PFA_R3_CA-08.h5                                                                    ', &
+   '/data/emls/l2cal/PFA/PFA_R2_CA-08.h5                                                                    ', &
+   '/data/emls/l2cal/PFA/PFA_R1B_CA-08.h5                                                                   ', &
+   '/data/emls/l2cal/PFA/PFA_R1A_CA-08.h5                                                                   ', &
+   '/data/emls/l2cal/PFA/PFA_DACS_CA-08.h5                                                                  ' /)
+   character(len=100), dimension(1) :: &
+   l2pc = (/ &
+   '/data/emls/l2cal/l2pc_040CA08/MLS-Aura_L2Cal-L2PC-band7-LATSCALARHIRESO3HR_v4-00-CA-08_m02.h5       '/)
+   real(r8), dimension(55) :: &
+   TemperatureInput= (/       300.150_r8,       289.918_r8,       281.060_r8,       272.966_r8,       265.034_r8, &
+                255.851_r8,       237.844_r8,       226.169_r8,       215.611_r8,       207.645_r8, &
+                204.001_r8,       201.055_r8,       198.594_r8,       198.365_r8,       200.322_r8, &
+                203.076_r8,       206.759_r8,       209.636_r8,       211.445_r8,       213.604_r8, &
+                217.958_r8,       223.254_r8,       226.517_r8,       229.135_r8,       231.166_r8, &
+                232.312_r8,       232.046_r8,       233.874_r8,       235.821_r8,       238.425_r8, &
+                242.082_r8,       248.006_r8,       254.357_r8,       259.690_r8,       263.520_r8, &
+                265.752_r8,       264.551_r8,       259.498_r8,       252.170_r8,       246.055_r8, &
+                242.513_r8,       239.993_r8,       230.524_r8,       212.998_r8,       210.112_r8, &
+                191.580_r8,       173.331_r8,       161.116_r8,       151.806_r8,       151.632_r8, &
+                169.061_r8,       202.305_r8,       259.684_r8,       356.545_r8,       356.545_r8 /)
+   real(r8), dimension(65) :: &
+   O3Input= (/   3.26427E-08_r8,   3.28156E-08_r8,   3.48940E-08_r8,   3.71038E-08_r8,   3.68163E-08_r8, &
+            3.65310E-08_r8,   3.59035E-08_r8,   3.52867E-08_r8,   3.53855E-08_r8,   3.54845E-08_r8, &
+            3.54941E-08_r8,   3.55037E-08_r8,   3.56235E-08_r8,   3.57436E-08_r8,   3.64826E-08_r8, &
+            3.72368E-08_r8,   3.89248E-08_r8,   4.06891E-08_r8,   4.50273E-08_r8,   4.98279E-08_r8, &
+            5.51404E-08_r8,   7.05450E-08_r8,   9.02488E-08_r8,   1.15459E-07_r8,   1.57574E-07_r8, &
+            2.15050E-07_r8,   2.93494E-07_r8,   3.92605E-07_r8,   5.25188E-07_r8,   7.02539E-07_r8, &
+            9.09776E-07_r8,   1.17811E-06_r8,   1.52559E-06_r8,   1.92305E-06_r8,   2.42406E-06_r8, &
+            3.05557E-06_r8,   3.57256E-06_r8,   4.17701E-06_r8,   4.88376E-06_r8,   5.47605E-06_r8, &
+            6.14028E-06_r8,   6.88496E-06_r8,   7.36978E-06_r8,   7.88875E-06_r8,   8.44427E-06_r8, &
+            8.68432E-06_r8,   8.93120E-06_r8,   9.18508E-06_r8,   9.16914E-06_r8,   9.15323E-06_r8, &
+            9.13734E-06_r8,   9.02868E-06_r8,   8.81521E-06_r8,   8.67289E-06_r8,   8.62597E-06_r8, &
+            6.76798E-06_r8,   5.99496E-06_r8,   5.31021E-06_r8,   4.42692E-06_r8,   3.76995E-06_r8, &
+            2.96270E-06_r8,   2.14861E-06_r8,   1.55006E-06_r8,   1.11826E-06_r8,   7.23547E-07_r8 /)
+   real(r8), dimension(37) :: &
+   SO2Input= (/   0.00000E+00_r8,   0.00000E+00_r8,   0.00000E+00_r8,  -1.64908E-08_r8,  -6.87417E-09_r8, &
+           -1.37411E-08_r8,   2.64650E-09_r8,  -4.60870E-09_r8,   2.23168E-09_r8,   8.17165E-09_r8, &
+           -5.64156E-09_r8,   9.52680E-09_r8,  -1.34418E-08_r8,   8.53389E-09_r8,   8.53559E-09_r8, &
+            4.26519E-09_r8,  -6.27082E-09_r8,   2.57639E-09_r8,  -2.73861E-10_r8,  -7.10464E-09_r8, &
+           -1.48396E-09_r8,  -2.60092E-09_r8,  -5.06087E-09_r8,  -2.80760E-09_r8,  -2.50622E-09_r8, &
+           -2.79323E-09_r8,  -1.26484E-09_r8,  -5.31186E-10_r8,  -2.73478E-10_r8,  -1.27632E-10_r8, &
+           -6.47193E-11_r8,   0.00000E+00_r8,   0.00000E+00_r8,   0.00000E+00_r8,   0.00000E+00_r8, &
+            0.00000E+00_r8,   0.00000E+00_r8 /)
+   real(r8), dimension(37) :: &
+   HNO3Input= (/   2.02937E-11_r8,   3.94648E-11_r8,   5.72974E-11_r8,  -1.93186E-09_r8,  -6.88858E-10_r8, &
+            1.36816E-09_r8,   4.68370E-10_r8,   5.37981E-10_r8,   3.25219E-09_r8,   3.10499E-09_r8, &
+            3.83946E-09_r8,   3.17680E-09_r8,   1.85473E-09_r8,   1.80085E-09_r8,   8.60910E-10_r8, &
+            8.23724E-10_r8,   1.03454E-09_r8,  -6.18602E-10_r8,   1.91962E-09_r8,  -1.21803E-09_r8, &
+           -3.40837E-09_r8,  -2.13270E-09_r8,  -7.14335E-09_r8,  -8.39571E-09_r8,  -3.17500E-09_r8, &
+           -2.79427E-09_r8,  -2.93694E-09_r8,  -3.21508E-10_r8,   1.23244E-14_r8,   3.11581E-16_r8, &
+            2.06287E-18_r8,   2.06286E-18_r8,   2.06286E-18_r8,   2.06286E-18_r8,   2.06286E-18_r8, &
+            2.06286E-18_r8,   2.06286E-18_r8 /)
+   real(r8), dimension(55) :: &
+   extinctionV2R3Input= (/   1.00000E-02_r8,   1.00000E-02_r8,   9.99725E-03_r8,   9.00421E-03_r8,   7.88025E-03_r8, &
+            9.37069E-03_r8,   5.20747E-03_r8,   2.90742E-03_r8,   1.55356E-03_r8,   8.82107E-04_r8, &
+            5.40313E-04_r8,   3.55975E-04_r8,   2.34633E-04_r8,   1.51644E-04_r8,   9.79357E-05_r8, &
+            6.20004E-05_r8,   4.12940E-05_r8,   2.62466E-05_r8,   1.55667E-05_r8,   9.49930E-06_r8, &
+            7.08288E-06_r8,   5.16998E-06_r8,   2.21251E-06_r8,   1.70082E-06_r8,  -7.08658E-07_r8, &
+            1.29696E-06_r8,  -1.68620E-06_r8,  -8.84385E-07_r8,  -1.17012E-06_r8,  -4.95608E-07_r8, &
+            1.85951E-07_r8,   7.51485E-07_r8,  -3.71730E-07_r8,  -6.62393E-07_r8,  -1.10324E-06_r8, &
+           -5.16387E-07_r8,  -6.32101E-07_r8,  -8.84112E-08_r8,  -2.76626E-07_r8,  -5.19296E-07_r8, &
+           -2.95020E-07_r8,  -3.76369E-08_r8,  -6.60811E-08_r8,  -8.74369E-09_r8,   1.78002E-10_r8, &
+           -2.84114E-10_r8,   2.23855E-10_r8,   1.03013E-10_r8,   1.03013E-10_r8,   1.03013E-10_r8, &
+            1.03013E-10_r8,   1.03013E-10_r8,   1.03013E-10_r8,   1.03013E-10_r8,   1.03013E-10_r8 /)
+   real(r8) :: refGPHInput = 16514.4_r8
+   real(r8), dimension(:), pointer ::  H2OInput
+end module
+@
+
+
+1.16
+log
+@Copied from MLuo
+@
+text
+@d106 1
+@
+
+
+1.15
+log
+@Copied from /users/akopyan/mlspgs-0403/cfm
+@
+text
+@d13 1
+a13 1
+   use MLSCommon, only: r8, i4, rv
+d19 87
+a105 47
+       integer :: startProfile , endProfile 
+     
+       character(len=512) :: l1boa, l1brad, l2GP,l2dgm
+       character(len=256) :: spectroscopy, &
+        leapsecFile,  antennaPatterns, filterShapes, &
+        DACSFilterShapes, pointingGrids
+       character(len=256), dimension(8) :: pfaFiles
+       !character(len=256), dimension(:), pointer :: pfaFiles
+       character(len=256), dimension(1) :: l2pc 
+       !character(len=256), dimension(:), pointer :: l2pc 
+       
+       real(r8) :: refGPHInput
+       !! Some variables used by mockup with default values
+       real(r8) :: vGridStandard37Start = 1000.0_r8
+       real(r8) :: vGridExtinctionStart=1000.0_r8
+       real(r8) :: hGridStandardVal1 = 0.0_r8
+       real(r8) :: hGridStandardVal2 = 1.5_r8
+       real(r8) :: qH2OMinValue = 0.1E-6_r8
+       character(len=64) :: vGridStandard37formula = "37:6"
+       real(r8), dimension(1) :: vGridRefGPHVals = (/100.0_r8/)
+       real(r8), dimension(55) :: H2O_Sample_Vals
+       
+       character(len=64) :: vGridExtinctionFormula="21:12,14:6,12:3"
+       logical :: outputTxtFile = .TRUE.
+       integer(i4)  MLS_Year, MLS_Day, MLS_ProfileNumber, &
+           Tes_run, Tes_scan, TES_sequnce
+           
+       real(rv), dimension(:,:), pointer :: &
+            Radiance_Calculated => NULL(), &
+            Radiance_Observed => NULL(),  &
+            Radiance_Noise => NULL(),  &
+            Jacobian_Concatenated => NULL(), &
+            Jacobian_Concatenated_out => NULL(), &
+            ptanGHz_save => NULL()
+       
+      real(rv), dimension(:), pointer :: &
+            Radiance_Calculated_out=> NULL(), &
+            Radiance_Noise_out=> NULL(), &
+            Radiance_Observed_out=> NULL()
+            
+
+!Ming: I changed the following profiles to consist Temperature, ExtinctionV2, O3, 3_V1_3, O3_V2 at 55 levels;
+!      HNO3, S_32_O2 at 37 levels; CO at <67 levels.  Note: is O_18_O set somewhere else? Extingction? O3_V1_3 etc?
+    real(r8), dimension(:), pointer ::  TemperatureInput, H2OInput , &
+    O3Input, SO2Input, HNO3Input, COInput, extinctionV2R3Input , &
+    PressureCOInput, PressureStandardInput 
+
+@
+
+
+1.14
+log
+@Add timeRange2MafRange method in CFM.
+@
+text
+@d11 1
+d13 1
+a13 1
+   use MLSCommon, only: r8
+d17 42
+a58 7
+!Ming: Haley is working on startTime, endTime 
+   character(len=27) :: startTime = "2009-040T00:00:00.0000"
+   character(len=27) :: endTime = "2009-040T00:00:00.9999"
+
+   ! Replace startTime and endTime with L1 maf number in L1BOA
+   integer, parameter :: startL1Maf = 7
+   integer, parameter :: endL1Maf = 7
+a59 26
+!Ming: change the example day to 2009 day040
+   character(len=100) :: l1boa = "/data/emls/l1b/v02.23/2009/040/MLS-Aura_L1BOA_v02-23-c01_2009d040.h5"
+   character(len=100) :: l1brad = "/data/emls/l1b/v02.23/2009/040/MLS-Aura_L1BRADG_v02-23-c01_2009d040.h5"
+! this file is for ptan:
+   character(len=100) :: ptandgm = &
+   '/data/emls/l2aux/v03.10/2009/040/MLS-Aura_L2AUX-DGM_v03-10-c01_2009d040.h5                          '
+!Ming: I assume we keep these
+   character(len=100) :: spectroscopy = '/data/emls/l2cal/MLS-Aura_L2Cal-Spectroscopy-PFA_v3-0-5i_0000d000.h5'
+   character(len=100) :: leapsecFile = '/software/toolkit/LF6.1/toolkit/database/common/TD/leapsec.dat'
+   character(len=100) :: antennaPatterns = '/data/emls/l2cal/MLS-Aura_L2Cal-AAAP_v2-0-0_0000d000.txt'
+   character(len=100) :: filterShapes = '/data/emls/l2cal/MLS-Aura_L2Cal-Filters_v3-0-2_0000d000.txt'
+   character(len=100) :: DACSFilterShapes = '/data/emls/l2cal/MLS-Aura_L2Cal-DACSFilters_v1-5-1_0000d000.txt'
+   character(len=100) :: pointingGrids = '/data/emls/l2cal/MLS-Aura_L2Cal-PFG_v3-0-0_0000d000.txt'
+   character(len=100), dimension(8) :: &
+   pfaFiles= (/ &
+   '/data/emls/l2cal/PFA_R5V_ME-03.h5                                                                   ', &
+   '/data/emls/l2cal/PFA_R5H_ME-03.h5                                                                   ', &
+   '/data/emls/l2cal/PFA_R4_ME-03.h5                                                                    ', &
+   '/data/emls/l2cal/PFA_R3_ME-03.h5                                                                    ', &
+   '/data/emls/l2cal/PFA_R2_ME-03.h5                                                                    ', &
+   '/data/emls/l2cal/PFA_R1B_ME-03.h5                                                                   ', &
+   '/data/emls/l2cal/PFA_R1A_ME-03.h5                                                                   ', &
+   '/data/emls/l2cal/PFA_DACS_ME-03.h5                                                                  ' /)
+   character(len=100), dimension(1) :: &
+   l2pc = (/ &
+   '/data/emls/l2cal/l2pc_30H6/MLS-Aura_L2Cal-L2PC-band9-LATSCALARHIRESO3HR_v3-00-HO-06_m02.h5          '/)
+d62 3
+a64 82
+   real(r8), dimension(55) :: &
+   TemperatureInput= (/       297.158_r8,       289.724_r8,       284.356_r8,       276.756_r8,       265.709_r8, &
+                254.132_r8,       249.935_r8,       236.775_r8,       225.171_r8,       214.553_r8, &
+                206.161_r8,       199.582_r8,       194.390_r8,       191.274_r8,       192.612_r8, &
+                197.358_r8,       203.675_r8,       209.069_r8,       212.745_r8,       215.404_r8, &
+                218.021_r8,       221.393_r8,       225.156_r8,       228.391_r8,       230.946_r8, &
+                233.755_r8,       237.216_r8,       241.305_r8,       245.444_r8,       249.706_r8, &
+                254.621_r8,       259.924_r8,       264.561_r8,       267.950_r8,       269.553_r8, &
+                268.795_r8,       264.352_r8,       257.105_r8,       248.433_r8,       242.248_r8, &
+                235.518_r8,       226.208_r8,       221.316_r8,       212.292_r8,       201.969_r8, &
+                192.598_r8,       178.324_r8,       172.662_r8,       169.580_r8,       172.959_r8, &
+                185.157_r8,       212.902_r8,       284.879_r8,       382.289_r8,       382.289_r8 /)
+   real(r8), dimension(55) :: &
+   H2OInput        = (/    0.00241224_r8,    0.00172104_r8,    0.00139789_r8,   0.000935927_r8,   0.000450439_r8, &
+                0.000190159_r8,   8.86722e-05_r8,   3.51943e-06_r8,   0.000137363_r8,   5.49711e-05_r8, &
+                2.05114e-05_r8,   2.01636e-07_r8,   3.24751e-06_r8,   4.51751e-06_r8,   3.87043e-06_r8, &
+                3.14470e-06_r8,   3.48467e-06_r8,   3.93302e-06_r8,   3.98300e-06_r8,   4.19780e-06_r8, &
+                4.75373e-06_r8,   5.03954e-06_r8,   4.90524e-06_r8,   4.78210e-06_r8,   4.91733e-06_r8, &
+                5.10569e-06_r8,   5.20030e-06_r8,   5.26312e-06_r8,   5.53712e-06_r8,   5.87348e-06_r8, &
+                5.91152e-06_r8,   5.69914e-06_r8,   5.67516e-06_r8,   6.01006e-06_r8,   6.38157e-06_r8, &
+                6.61089e-06_r8,   6.13885e-06_r8,   7.04676e-06_r8,   8.08649e-06_r8,   6.43817e-06_r8, &
+                6.35526e-06_r8,   6.83005e-06_r8,   7.75657e-06_r8,   7.30504e-06_r8,   5.95156e-06_r8, &
+                5.06159e-06_r8,   2.75447e-06_r8,   7.92934e-07_r8,   1.28573e-07_r8,   5.27341e-07_r8, &
+                5.27341e-07_r8,   5.27341e-07_r8,   5.27341e-07_r8,   5.27341e-07_r8,   5.27341e-07_r8 /)
+   real(r8), dimension(55) :: &
+   O3Input         = (/  1.25014e-08_r8,   2.18536e-08_r8,   3.12059e-08_r8,   3.77980e-08_r8,   4.43901e-08_r8, &
+                4.81388e-08_r8,   7.53838e-08_r8,  -4.84879e-08_r8,   3.47201e-08_r8,   2.25237e-07_r8, &
+                2.32295e-07_r8,  -5.50474e-09_r8,   3.22532e-08_r8,   3.27599e-07_r8,   5.12197e-07_r8, &
+                1.07709e-06_r8,   1.64005e-06_r8,   2.69266e-06_r8,   3.79579e-06_r8,   5.10495e-06_r8, &
+                6.27606e-06_r8,   7.29860e-06_r8,   8.48605e-06_r8,   8.85052e-06_r8,   9.08717e-06_r8, &
+                8.92521e-06_r8,   8.94099e-06_r8,   8.51976e-06_r8,   8.06099e-06_r8,   7.45707e-06_r8, &
+                6.75821e-06_r8,   5.83119e-06_r8,   4.78850e-06_r8,   4.03797e-06_r8,   3.37683e-06_r8, &
+                3.00758e-06_r8,   2.80204e-06_r8,   2.37477e-06_r8,   1.83857e-06_r8,   1.47623e-06_r8, &
+                1.02984e-06_r8,   4.47357e-07_r8,   5.67443e-07_r8,  -3.06701e-08_r8,  -1.79143e-06_r8, &
+               -1.57880e-06_r8,   2.02320e-06_r8,   2.33698e-06_r8,   2.86198e-06_r8,   1.94295e-06_r8, &
+                1.94295e-06_r8,   1.94295e-06_r8,   1.94295e-06_r8,   1.94295e-06_r8,   1.94295e-06_r8 /)
+   real(r8), dimension(37) :: &
+   SO2Input         = (/0.00000_r8,       0.00000_r8,       0.00000_r8,   3.32686e-08_r8,  -2.60494e-08_r8, &
+               -5.61417e-09_r8,   2.56858e-09_r8,   1.93806e-09_r8,  -1.18218e-09_r8,  -4.93486e-09_r8, &
+                1.64919e-08_r8,  -9.11367e-10_r8,  -4.31667e-10_r8,  -4.67996e-09_r8,   2.79592e-09_r8, &
+                1.19575e-08_r8,   5.17797e-09_r8,   2.99216e-09_r8,   6.40992e-09_r8,   2.37867e-09_r8, &
+               -9.46628e-10_r8,  -1.31347e-09_r8,   6.71434e-11_r8,   6.60937e-10_r8,  -4.07461e-11_r8, &
+                5.35449e-11_r8,  -3.21519e-10_r8,  -3.27190e-10_r8,  -4.46835e-11_r8,   3.85534e-11_r8, &
+               -2.90539e-12_r8,       0.00000_r8,       0.00000_r8,       0.00000_r8,       0.00000_r8, &
+                0.00000_r8,       0.00000_r8 /)
+
+   real(r8), dimension(37) :: &
+   HNO3Input         = (/ 1.09330e-11_r8,   4.07050e-11_r8,   6.55338e-11_r8,  -1.02235e-09_r8,  -4.70137e-10_r8, &
+                4.37410e-10_r8,  -1.24584e-10_r8,   8.45327e-10_r8,   4.55798e-09_r8,   4.16154e-09_r8, &
+                4.20141e-09_r8,   3.71814e-09_r8,   2.73836e-09_r8,   2.15569e-09_r8,   1.99514e-10_r8, &
+                1.70946e-11_r8,  -1.84183e-09_r8,  -8.75599e-10_r8,   1.65315e-09_r8,   2.08126e-09_r8, &
+               -1.37495e-09_r8,   8.02555e-10_r8,  -4.83877e-10_r8,  -7.17038e-09_r8,  -1.03526e-08_r8, &
+               -9.59712e-09_r8,  -4.17081e-09_r8,  -1.30650e-09_r8,   2.10400e-15_r8,   1.43523e-17_r8, &
+                1.93479e-19_r8,   1.93479e-19_r8,   1.93479e-19_r8,   1.93479e-19_r8,   1.93479e-19_r8, &
+                1.93479e-19_r8,   1.93479e-19_r8 /)
+   real(r8), dimension(65) :: &
+   COInput         = (/ 6.80256e-08_r8,    6.79563e-08_r8,    6.74404e-08_r8,    6.69285e-08_r8,    6.64205e-08_r8, &
+                6.59163e-08_r8,    6.48891e-08_r8,    6.38780e-08_r8,    6.28826e-08_r8,    6.30514e-08_r8, &
+                6.32205e-08_r8,    6.33901e-08_r8,    6.34645e-08_r8,    6.35390e-08_r8,    6.36135e-08_r8, &
+                6.32930e-08_r8,    6.29741e-08_r8,    6.26568e-08_r8,    6.16546e-08_r8,    6.06685e-08_r8, &
+                5.96981e-08_r8,    5.77026e-08_r8,    5.57741e-08_r8,    5.39099e-08_r8,    5.26075e-08_r8, &
+                5.13365e-08_r8,    5.00962e-08_r8,    4.41271e-08_r8,    3.88691e-08_r8,    3.42377e-08_r8, &
+                3.01577e-08_r8,    2.65643e-08_r8,    2.33990e-08_r8,    2.17289e-08_r8,    2.01780e-08_r8, &
+                1.87377e-08_r8,    1.74003e-08_r8,    1.61583e-08_r8,    1.50050e-08_r8,    1.56685e-08_r8, &
+                1.63615e-08_r8,    1.70851e-08_r8,    1.78407e-08_r8,    1.86296e-08_r8,    1.94535e-08_r8, &
+                2.03139e-08_r8,    2.12122e-08_r8,    2.21503e-08_r8,    2.31298e-08_r8,    2.41528e-08_r8, &
+                2.52210e-08_r8,    2.63364e-08_r8,    2.87173e-08_r8,    3.26982e-08_r8,    3.41443e-08_r8, &
+                3.42490e-08_r8,    3.43014e-08_r8,    3.43540e-08_r8,    3.44330e-08_r8,    3.44857e-08_r8, &
+                3.45650e-08_r8,    3.46710e-08_r8,    3.48306e-08_r8,    3.49909e-08_r8,    3.52058e-08_r8 /)
+
+    real(r8), dimension(47) :: &
+    extinctionV2R3Input = (/ 1.10044_r8,      0.481280_r8,     0.158084_r8,     5.825650E-02_r8, 2.094034E-02_r8, &
+                        1.018303E-02_r8, 5.922833E-03_r8, 2.936215E-03_r8, 1.437336E-03_r8, 7.931669E-04_r8, &
+                        4.991122E-04_r8, 3.534503E-04_r8, 2.518090E-04_r8, 1.649636E-04_r8, 1.088406E-04_r8, &
+                        6.841273E-05_r8, 4.305684E-05_r8, 2.769214E-05_r8, 1.783691E-05_r8, 1.167463E-05_r8, &
+                        7.642561E-06_r8, 3.310648E-06_r8, 1.435593E-06_r8, 6.105654E-07_r8, 2.500542E-07_r8, &
+                        1.025592E-07_r8, 4.297000E-08_r8, 1.877126E-08_r8, 8.611204E-09_r8, 4.155832E-09_r8, &
+                        2.095296E-09_r8, 1.083296E-09_r8, 5.644514E-10_r8, 2.880354E-10_r8, 1.470881E-10_r8, &
+                        3.675219E-11_r8, 8.514243E-12_r8, 1.923638E-12_r8, 4.633676E-13_r8, 1.155358E-13_r8, &
+                        2.669294E-14_r8, 5.691287E-15_r8, 1.124997E-15_r8, 1.468009E-16_r8, 1.615710E-17_r8, &
+                        2.040401E-18_r8, 1.493425E-19_r8 /)
+
+a65 2
+!Ming: ask Bill/Paul what is this and if we need this:
+   real(r8) :: refGPHInput = 16000.0_r8
+@
+
+
+1.13
+log
+@Commit new input for new mockup.
+@
+text
+@d27 3
+@
+
+
+1.12
+log
+@Give an example of calling the forward model multiple times
+@
+text
+@d16 13
+a28 5
+   character(len=27) :: startTime = "2005-037T00:00:00.0000"
+   character(len=27) :: endTime = "2005-037T00:00:00.9999"
+   character(len=100) :: l1boa = "/data/emls/l1b/v02.23/2005/037/MLS-Aura_L1BOA_v02-23-c01_2005d037.h5"
+   character(len=100) :: l1brad = "/data/emls/l1b/v02.23/2005/037/MLS-Aura_L1BRADG_v02-23-c01_2005d037.h5"
+   character(len=100) :: spectroscopy = '/data/emls/l2cal/MLS-Aura_L2Cal-Spectroscopy-PFA_v3-0-4_0000d000.h5'
+d36 9
+a44 9
+   '/data/emls/l2cal/PFA_R5V_FS-04.h5                                                                   ', &
+   '/data/emls/l2cal/PFA_R5H_FS-04.h5                                                                   ', &
+   '/data/emls/l2cal/PFA_R4_FS-04.h5                                                                    ', &
+   '/data/emls/l2cal/PFA_R3_FS-04.h5                                                                    ', &
+   '/data/emls/l2cal/PFA_R2_FS-04.h5                                                                    ', &
+   '/data/emls/l2cal/PFA_R1B_FS-04.h5                                                                   ', &
+   '/data/emls/l2cal/PFA_R1A_FS-04.h5                                                                   ', &
+   '/data/emls/l2cal/PFA_DACS_FS-04.h5                                                                  ' /)
+   character(len=100), dimension(3) :: &
+d46 49
+a94 3
+   '/data/emls/l2cal/l2pc_30H6/MLS-Aura_L2Cal-L2PC-band7-LATSCALARHIRESO3HR_v3-00-HO-06_m02.h5          ', &
+   '/data/emls/l2cal/l2pc_30H6/MLS-Aura_L2Cal-L2PC-band2-LATSCALARHIRES_v3-00-HO-06_m02.h5              ', &
+   '/data/emls/l2cal/l2pc_30H6/MLS-Aura_L2Cal-L2PC-band8-LATSCALARHIRESO3HR_v3-00-HO-06_m02.h5          '/)
+d96 35
+a130 53
+   TemperatureInput= (/ 2.9128e+02_r8,  2.9149e+02_r8,  2.8439e+02_r8,  2.7649e+02_r8,  2.6942e+02_r8, &
+                2.5727e+02_r8,  2.4453e+02_r8,  2.2941e+02_r8,  2.1723e+02_r8,  2.1070e+02_r8, &
+                2.0637e+02_r8,  2.0195e+02_r8,  1.9559e+02_r8,  1.8838e+02_r8,  1.9129e+02_r8, &
+                2.0175e+02_r8,  2.1001e+02_r8,  2.1052e+02_r8,  2.1138e+02_r8,  2.1788e+02_r8, &
+                2.2112e+02_r8,  2.2371e+02_r8,  2.2438e+02_r8,  2.3447e+02_r8,  2.4688e+02_r8, &
+                2.4973e+02_r8,  2.5171e+02_r8,  2.6056e+02_r8,  2.7136e+02_r8,  2.6748e+02_r8, &
+                1.7861e+02_r8,  1.6997e+02_r8,  1.8009e+02_r8,  2.0964e+02_r8,  2.8234e+02_r8, &
+                3.8117e+02_r8,  3.8117e+02_r8 /)
+   real(r8), dimension(37) :: &
+   H2OInput        = (/ 2.3632e-02_r8,  2.9074e-02_r8,  2.0823e-02_r8,  1.3613e-02_r8,  9.2022e-03_r8, &
+                3.7962e-03_r8,  3.1691e-03_r8,  3.1161e-04_r8,  3.4557e-05_r8,  1.8799e-05_r8, &
+                9.2256e-06_r8,  5.4310e-06_r8,  4.3650e-06_r8,  3.5293e-06_r8,  3.4100e-06_r8, &
+                3.5061e-06_r8,  4.0785e-06_r8,  4.3385e-06_r8,  2.7219e-06_r8,  5.1609e-06_r8, &
+                4.3181e-06_r8,  4.9063e-06_r8,  4.7031e-06_r8,  5.3227e-06_r8,  5.4470e-06_r8, &
+                5.8672e-06_r8,  5.3741e-06_r8,  5.9369e-06_r8,  6.7043e-06_r8,  6.9746e-06_r8, &
+                6.9707e-06_r8,  6.4823e-06_r8,  6.3464e-06_r8,  6.7609e-06_r8,  6.9218e-06_r8, &
+                5.3200e-07_r8,  5.3200e-07_r8 /)
+   real(r8), dimension(37) :: &
+   O3Input         = (/ 1.3001e-08_r8,  3.2795e-08_r8,  4.4579e-08_r8,  4.0661e-07_r8,  8.0144e-08_r8, &
+                9.1738e-08_r8,  1.2884e-07_r8,  3.1488e-07_r8,  1.9350e-06_r8,  3.7353e-06_r8, &
+                6.8007e-06_r8,  8.5696e-06_r8,  9.0027e-06_r8,  9.2723e-06_r8,  8.1097e-06_r8, &
+                6.7720e-06_r8,  5.1827e-06_r8,  3.8637e-06_r8,  3.2787e-06_r8,  2.5215e-06_r8, &
+                1.8182e-06_r8,  1.4148e-06_r8,  1.2598e-06_r8,  1.3303e-06_r8,  1.1685e-06_r8, &
+                1.2587e-06_r8,  4.0577e-07_r8,  1.1117e-06_r8,  2.3770e-06_r8,  1.4602e-06_r8, &
+                1.6944e-06_r8,  1.9545e-06_r8,  1.9545e-06_r8,  1.9545e-06_r8,  1.9545e-06_r8, &
+                1.9545e-06_r8,  1.9545e-06_r8 /)
+   real(r8), dimension(37) :: &
+   TemperatureInput2= (/ 2.7927e+02_r8,  2.7695e+02_r8,  2.7325e+02_r8,  2.6708e+02_r8,  2.5718e+02_r8, &
+                2.4276e+02_r8,  2.2883e+02_r8,  2.1503e+02_r8,  2.0760e+02_r8,  2.1141e+02_r8, &
+                2.2078e+02_r8,  2.2327e+02_r8,  2.1580e+02_r8,  2.0642e+02_r8,  2.0583e+02_r8, &
+                2.1095e+02_r8,  2.1502e+02_r8,  2.1524e+02_r8,  2.1338e+02_r8,  2.1086e+02_r8, &
+                2.1983e+02_r8,  2.1632e+02_r8,  2.1611e+02_r8,  2.2542e+02_r8,  2.2380e+02_r8, &
+                2.2027e+02_r8,  2.3052e+02_r8,  2.3974e+02_r8,  2.4960e+02_r8,  2.4963e+02_r8, &
+                2.4025e+02_r8,  2.3605e+02_r8,  2.4090e+02_r8,  2.4880e+02_r8,  2.3582e+02_r8, &
+                3.5728e+02_r8,  3.5728e+02_r8 /)
+   real(r8), dimension(37) :: &
+   H2OInput2        = (/ 9.1453e-03_r8,  9.2172e-03_r8,  8.2678e-03_r8,  5.9595e-03_r8,  2.9752e-03_r8, &
+                8.7081e-04_r8,  4.3487e-05_r8,  1.7336e-05_r8,  6.6668e-06_r8,  4.3221e-06_r8, &
+                3.6797e-06_r8,  4.7577e-06_r8,  4.8634e-06_r8,  4.0305e-06_r8,  3.8945e-06_r8, &
+                4.1516e-06_r8,  4.7683e-06_r8,  5.2437e-06_r8,  3.4030e-06_r8,  6.0271e-06_r8, &
+                5.4048e-06_r8,  5.9748e-06_r8,  7.4699e-06_r8,  7.9878e-06_r8,  6.5561e-06_r8, &
+                4.8183e-06_r8,  3.3121e-06_r8,  2.8018e-06_r8,  2.7419e-06_r8,  3.2127e-06_r8, &
+                1.0000e-07_r8,  3.5347e-07_r8,  3.5347e-07_r8,  3.5347e-07_r8,  3.5347e-07_r8, &
+                3.5347e-07_r8,  3.5347e-07_r8 /)
+   real(r8), dimension(37) :: &
+   O3Input2         = (/ 4.9074e-08_r8,  5.6807e-08_r8,  7.0802e-08_r8,  1.0482e-07_r8,  1.5493e-07_r8, &
+                4.2987e-07_r8,  4.3618e-07_r8,  1.2536e-06_r8,  3.2734e-06_r8,  5.3652e-06_r8, &
+                5.0849e-06_r8,  5.7286e-06_r8,  5.6696e-06_r8,  6.6899e-06_r8,  6.4951e-06_r8, &
+                7.4254e-06_r8,  7.7712e-06_r8,  5.4279e-06_r8,  4.3685e-06_r8,  2.2732e-06_r8, &
+                1.3391e-06_r8,  1.0155e-06_r8,  9.3310e-07_r8,  8.8999e-07_r8,  3.8050e-07_r8, &
+                2.3795e-07_r8, -9.1263e-07_r8,  9.1669e-07_r8,  1.3863e-06_r8, -1.8748e-06_r8, &
+                1.7927e-06_r8,  2.9872e-06_r8,  2.9872e-06_r8,  2.9872e-06_r8,  2.9872e-06_r8, &
+                2.9872e-06_r8,  2.9872e-06_r8 /)
+d132 1
+@
+
+
+1.11
+log
+@Add copyright comments and support for CVS log in the file
+@
+text
+@d68 28
+@
+
+
+1.10
+log
+@Make refGPH an user-input
+@
+text
+@d1 10
+@
+
+
+1.9
+log
+@Remove Fill for GPH, since the forward model will fill GPH
+Add band 2 and band 8 in the measurement vector
+Change ForwardModel to handle an array of config objects instead of just 1
+@
+text
+@d9 1
+d58 1
+@
+
+
+1.8
+log
+@Fix minor differences in the value of ptan
+@
+text
+@d25 1
+a25 1
+   character(len=100), dimension(2) :: &
+d28 2
+a29 1
+   '/data/emls/l2cal/l2pc_30H6/MLS-Aura_L2Cal-L2PC-band2-LATSCALARHIRES_v3-00-HO-06_m02.h5              '/)
+a39 9
+   GPHInput        = (/ 3.0347e+02_r8,  1.9401e+03_r8,  3.5574e+03_r8,  5.1326e+03_r8,  6.6657e+03_r8, &
+                8.1449e+03_r8,  9.5541e+03_r8,  1.0885e+04_r8,  1.2139e+04_r8,  1.3341e+04_r8, &
+                1.4513e+04_r8,  1.5659e+04_r8,  1.6776e+04_r8,  1.7854e+04_r8,  1.8920e+04_r8, &
+                2.0024e+04_r8,  2.1181e+04_r8,  2.2362e+04_r8,  2.3546e+04_r8,  2.4752e+04_r8, &
+                2.5985e+04_r8,  2.8483e+04_r8,  3.1000e+04_r8,  3.3577e+04_r8,  3.6281e+04_r8, &
+                3.9070e+04_r8,  4.1887e+04_r8,  4.4764e+04_r8,  4.7752e+04_r8,  5.0778e+04_r8, &
+                5.3718e+04_r8,  5.6560e+04_r8,  5.9348e+04_r8,  6.2052e+04_r8,  6.4649e+04_r8, &
+                1.1777e+05_r8,  1.2727e+05_r8 /)
+   real(r8), dimension(37) :: &
+@
+
+
+1.7
+log
+@Add spaces to string to satisfy NAG compiler.
+@
+text
+@d16 13
+a28 10
+   pfaFiles= (/'/data/emls/l2cal/PFA_R5V_FS-04.h5                                                                   ', &
+               '/data/emls/l2cal/PFA_R5H_FS-04.h5                                                                   ', &
+               '/data/emls/l2cal/PFA_R4_FS-04.h5                                                                    ', &
+               '/data/emls/l2cal/PFA_R3_FS-04.h5                                                                    ', &
+               '/data/emls/l2cal/PFA_R2_FS-04.h5                                                                    ', &
+               '/data/emls/l2cal/PFA_R1B_FS-04.h5                                                                   ', &
+               '/data/emls/l2cal/PFA_R1A_FS-04.h5                                                                   ', &
+               '/data/emls/l2cal/PFA_DACS_FS-04.h5                                                                  ' /)
+   character(len=100), dimension(1) :: &
+   l2pc = (/'/data/emls/l2cal/l2pc_30H6/MLS-Aura_L2Cal-L2PC-band7-LATSCALARHIRESO3HR_v3-00-HO-06_m02.h5'/)
+d30 8
+a37 8
+   TemperatureInput= (/ 2.9128e+02,  2.9149e+02,  2.8439e+02,  2.7649e+02,  2.6942e+02, &
+                2.5727e+02,  2.4453e+02,  2.2941e+02,  2.1723e+02,  2.1070e+02, &
+                2.0637e+02,  2.0195e+02,  1.9559e+02,  1.8838e+02,  1.9129e+02, &
+                2.0175e+02,  2.1001e+02,  2.1052e+02,  2.1138e+02,  2.1788e+02, &
+                2.2112e+02,  2.2371e+02,  2.2438e+02,  2.3447e+02,  2.4688e+02, &
+                2.4973e+02,  2.5171e+02,  2.6056e+02,  2.7136e+02,  2.6748e+02, &
+                1.7861e+02,  1.6997e+02,  1.8009e+02,  2.0964e+02,  2.8234e+02, &
+                3.8117e+02,  3.8117e+02 /)
+d39 8
+a46 8
+   GPHInput        = (/ 3.0347e+02,  1.9401e+03,  3.5574e+03,  5.1326e+03,  6.6657e+03, &
+                8.1449e+03,  9.5541e+03,  1.0885e+04,  1.2139e+04,  1.3341e+04, &
+                1.4513e+04,  1.5659e+04,  1.6776e+04,  1.7854e+04,  1.8920e+04, &
+                2.0024e+04,  2.1181e+04,  2.2362e+04,  2.3546e+04,  2.4752e+04, &
+                2.5985e+04,  2.8483e+04,  3.1000e+04,  3.3577e+04,  3.6281e+04, &
+                3.9070e+04,  4.1887e+04,  4.4764e+04,  4.7752e+04,  5.0778e+04, &
+                5.3718e+04,  5.6560e+04,  5.9348e+04,  6.2052e+04,  6.4649e+04, &
+                1.1777e+05,  1.2727e+05 /)
+d48 8
+a55 8
+   H2OInput        = (/ 2.3632e-02,  2.9074e-02,  2.0823e-02,  1.3613e-02,  9.2022e-03, &
+                3.7962e-03,  3.1691e-03,  3.1161e-04,  3.4557e-05,  1.8799e-05, &
+                9.2256e-06,  5.4310e-06,  4.3650e-06,  3.5293e-06,  3.4100e-06, &
+                3.5061e-06,  4.0785e-06,  4.3385e-06,  2.7219e-06,  5.1609e-06, &
+                4.3181e-06,  4.9063e-06,  4.7031e-06,  5.3227e-06,  5.4470e-06, &
+                5.8672e-06,  5.3741e-06,  5.9369e-06,  6.7043e-06,  6.9746e-06, &
+                6.9707e-06,  6.4823e-06,  6.3464e-06,  6.7609e-06,  6.9218e-06, &
+                5.3200e-07,  5.3200e-07 /)
+d57 8
+a64 8
+   O3Input         = (/ 1.3001e-08,  3.2795e-08,  4.4579e-08,  4.0661e-07,  8.0144e-08, &
+                9.1738e-08,  1.2884e-07,  3.1488e-07,  1.9350e-06,  3.7353e-06, &
+                6.8007e-06,  8.5696e-06,  9.0027e-06,  9.2723e-06,  8.1097e-06, &
+                6.7720e-06,  5.1827e-06,  3.8637e-06,  3.2787e-06,  2.5215e-06, &
+                1.8182e-06,  1.4148e-06,  1.2598e-06,  1.3303e-06,  1.1685e-06, &
+                1.2587e-06,  4.0577e-07,  1.1117e-06,  2.3770e-06,  1.4602e-06, &
+                1.6944e-06,  1.9545e-06,  1.9545e-06,  1.9545e-06,  1.9545e-06, &
+                1.9545e-06,  1.9545e-06 /)
+@
+
+
+1.6
+log
+@Add more input files
+@
+text
+@d16 8
+a23 8
+   pfaFiles= (/'/data/emls/l2cal/PFA_R5V_FS-04.h5', &
+    '/data/emls/l2cal/PFA_R5H_FS-04.h5', &
+    '/data/emls/l2cal/PFA_R4_FS-04.h5 ', &
+    '/data/emls/l2cal/PFA_R3_FS-04.h5 ', &
+    '/data/emls/l2cal/PFA_R2_FS-04.h5 ', &
+    '/data/emls/l2cal/PFA_R1B_FS-04.h5', &
+    '/data/emls/l2cal/PFA_R1A_FS-04.h5', &
+    '/data/emls/l2cal/PFA_DACS_FS-04.h5' /)
+@
+
+
+1.5
+log
+@Adjustments made to add startTime and endTime as inputs to CFM_MLSSetup.
+Tested successfully
+@
+text
+@d7 1
+a7 1
+   character(len=27) :: endTime = "2005-037T00:00:59.9999"
+d10 16
+@
+
+
+1.4
+log
+@Fixed, and tested for HGrid creation
+@
+text
+@d3 1
+d5 3
+@
+
+
+1.3
+log
+@Fix bugs in cfm_vgrid.f90, and added testing receipt for vgrid creation
+@
+text
+@d4 1
+a4 1
+   character(len=100) :: l1boa = "/data/emls/l1b/v02.23/2008/037/MLS-Aura_L1BOA_v02-23-c01_2008d037.h5"
+@
+
+
+1.2
+log
+@Example for filling vector
+@
+text
+@d5 1
+@
+
+
+1.1
+log
+@Mockup with an example to create HGrid
+@
+text
+@d2 1
+d5 36
+@
+

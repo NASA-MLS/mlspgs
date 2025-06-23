@@ -1,0 +1,142 @@
+head	2.3;
+access;
+symbols
+	rel-1-0-englocks-work:2.2.0.2
+	VUMLS1-00:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.3
+date	2018.05.14.23.26.39;	author vsnyder;	state dead;
+branches;
+next	2.2;
+
+2.2
+date	2017.08.28.20.27.47;	author livesey;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2016.12.02.01.55.26;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.3
+log
+@Change to sparse eta representation
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! subroutine Eta_List_1D_1D_p_2D_* ( A, NA, B, C, NC, Sorted )
+
+    ! Compute the outer product C of interpolation matrices A and B,
+    ! each represented as a sparse list.
+    ! Values of C for a particular value of C%P are the outer product of
+    ! all elements of A and B for which A%P = B%P = C%P.
+
+!   type(value_1D_p_t(rk)), intent(in) :: A(:)
+!   type(value_1D_p_t(rk)), intent(in) :: B(:)
+!   type(value_1D_p_t(rk)), intent(out) :: C(:)
+!   integer, intent(in) :: NA
+!   integer, intent(out) :: NC ! Number of used elements of C
+!   logical, intent(in), optional :: Sorted
+
+    integer :: I, I1, J
+    logical :: MySorted
+
+    ! Assume all(a%n > 0) and all(a%n <= NA) and all(b%n > 0)
+
+    mySorted = .true.
+    if ( present(sorted) ) mySorted = sorted
+
+    nc = 0
+    i1 = 1
+    if ( mySorted ) then
+      do j = 1, size(b)
+        do i1 = i1, size(a)
+          if ( a(i1)%p >= b(j)%p ) exit
+        end do
+        do i = i1, size(a)
+          if ( a(i)%p /= b(j)%p ) exit
+          nc = nc + 1
+!           c(nc) = value_1D_p_t(rk)(v=a(i)%v * b(j)%p, n=a(i)%n+(b(j)%n-1)*na, &
+!                                  & p=a(i)%p)
+          c(nc) = value_1D_p_t(v=a(i)%v * b(j)%p, j=a(i)%j+(b(j)%j-1)*na, &
+                             & p=a(i)%p)
+        end do
+      end do
+    else
+      block
+        use Sort_m, only: SortP
+        integer :: PA(size(a)), PB(size(b))
+        call sortp ( a%p, 1, size(a), pa )
+        call sortp ( b%p, 1, size(b), pb )
+        do j = 1, size(b)
+          do i1 = i1, size(a)
+            if ( a(pa(i1))%p >= b(pb(j))%p ) exit
+          end do
+          do i = i1, size(a)
+            if ( a(pa(i))%p /= b(pb(j))%p ) exit
+            nc = nc + 1
+!             c(nc) = value_1D_p_t(rk)(v=a(pa(i))%v * b(pb(j))%p, &
+!                                    & n=a(pa(i))%n+(b(pb(j))%n-1)*na, &
+!                                    & p=a(pa(i))%p)
+            c(nc) = value_1D_p_t(v=a(pa(i))%v * b(pb(j))%p, &
+                               & j=a(pa(i))%j+(b(pb(j))%j-1)*na, &
+                               & p=a(pa(i))%p)
+          end do
+        end do
+      end block
+    end if
+
+! $Log: Eta_List_1D_1D_p_2D.f9h,v $
+! Revision 2.2  2017/08/28 20:27:47  livesey
+! Changed the n,nf,np,nz elements to j,jf,...
+!
+! Revision 2.1  2016/12/02 01:55:26  vsnyder
+! Initial commit
+!
+@
+
+
+2.2
+log
+@Changed the n,nf,np,nz elements to j,jf,...
+@
+text
+@d75 3
+@
+
+
+2.1
+log
+@Initial commit
+@
+text
+@d46 1
+a46 1
+          c(nc) = value_1D_p_t(v=a(i)%v * b(j)%p, n=a(i)%n+(b(j)%n-1)*na, &
+d67 1
+a67 1
+                               & n=a(pa(i))%n+(b(pb(j))%n-1)*na, &
+d74 4
+a77 1
+! $Log: $
+@
+

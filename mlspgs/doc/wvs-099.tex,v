@@ -1,0 +1,513 @@
+head	1.1;
+access;
+symbols
+	v5-02-NRT-19:1.1
+	v6-00:1.1
+	v5-02-NRT-18:1.1
+	v5-02:1.1
+	v5-01-NRT-17:1.1
+	v5-01-NRT-16:1.1
+	v5-01-NRT-15:1.1
+	v5-01-NRT-14:1.1
+	neuralnetworks-1-0:1.1.0.12
+	cfm-single-freq-0-1:1.1.0.10
+	v5-01:1.1
+	v5-00:1.1
+	v4-23-TA133:1.1.0.8
+	mus-emls-1-70:1.1.0.6
+	rel-1-0-englocks-work:1.1.0.4
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.2
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	M4-00:1.1
+	V3-33:1.1
+	V3-31:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.1
+date	2010.12.04.02.50.24;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9.0in
+
+\newcommand{\docname}{\bf wvs-099}
+\newcommand{\docdate}{3 December 2010}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@@biblabel#1{#1.}
+\newcommand{\ps@@twolines}{%
+  \renewcommand{\@@oddhead}{%
+    \docdate\hfill\parbox[u]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@@evenhead}{}%
+\renewcommand{\@@oddfoot}{}%
+\renewcommand{\@@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\renewcommand{\d}{\text{d}}
+\newcommand{\T}{\mathcal{T}}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Van\\
+Subject: \>Variational derivatives of first-order linear differential equations\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 5pt
+\vspace{-20pt}
+
+\section{Mathematical generalities}
+
+Consider a function $F(X)$ where $X = \{x_1, \dots, x_n\}$ is a finite set
+of continuous independent variables (also known as ``discrete
+parameters''), with Maclaurin series $c + \sum_j a_j x_j \Delta j +
+\sum_{jk} b_{jk} x_j x_k \Delta j \Delta k + \dots$, where $\Delta j=1$
+and $\Delta k=1$ are inserted to make the parallel with Equation
+(\ref{VAR}) clearer.  The variation $\delta F(X)$ due to variation $\delta
+X = \{\delta x_j\}$ of elements of its argument set is $\delta F(X) =
+\sum_j a_j \delta x_j \Delta j + O(\delta x_j^2)$.  From this, in the
+limit $\delta x_j \rightarrow 0$, it is obvious that the sensitivities of
+$F$ due to variations in its arguments are the partial derivatives
+
+\begin{equation}
+\frac{\delta F(X)}{\delta x_j} \equiv
+ \frac{\partial F(X)}{\Delta j\partial x_j} = a_j\,.
+\end{equation}
+
+If we carry this over to a functional $F[X(\xi)]$ of a continuum $X(\xi)$
+of independent variables instead of a function of the finite set
+$\{x_1,\dots,x_n\}$, i.e., $X(\xi)$ is a function of the continuous
+variable $\xi$ instead of a finite set indexed by the discrete index $j$,
+the summations in the Maclaurin series are replaced with integrals,
+\emph{viz.}
+
+\begin{equation}
+F[X] = c + \int_{\xi_0}^{\xi_1} a(\xi) X(\xi) \,\d \xi +
+ \int_{\xi_0}^{\xi_1} \int_{\xi_0}^{\xi_1} b(\xi,\xi^\prime) X(\xi)
+ X(\xi^\prime) \d \xi \d \xi^\prime + \dots\,.
+\end{equation}
+
+Its variation due to variation $\delta X(\xi)$ of its argument function
+(also known as ``continuous parameter'') $X(\xi)$, for small variation
+$\delta X(\xi)$ (this is variation of the function $X(\xi)$, not variation
+of its value), is
+
+\begin{equation}\label{VAR}
+\delta F[X] = \int_{\xi_0}^{\xi_1} a(\xi) \,\delta X(\xi) \,\d \xi
+  + O(\delta X(\xi)^2)
+ = \lim_{\sup \{\Delta \xi_i\} \rightarrow 0 \atop n \rightarrow \infty}
+  \sum_{i=1}^n a(\xi_i) \delta X(\xi_i) \Delta \xi_i + O(\delta X(\xi)^2)
+\,.
+\end{equation}
+
+Parallel to the case of a function of a discrete set, its sensitivity due
+to variation $\delta X(\xi)$ of its argument function $X(\xi)$,
+throughout the range $\xi_0 \leq \xi \leq \xi_1$, is
+
+\begin{equation}\label{SENS}
+\frac{\delta F[X]}{\delta X(\xi)}
+ \equiv \lim_{\Delta \xi \rightarrow 0 \atop \delta X(\xi) \rightarrow 0}
+  \frac{\partial F[X]}{\Delta \xi \partial X(\xi)}
+ = \lim_{\Delta \xi \rightarrow 0 \atop \delta X(\xi) \rightarrow 0}
+  \frac{a(\xi) \delta X(\xi) \Delta \xi}{\delta X(\xi) \Delta \xi}
+ = a(\xi)\,,
+\end{equation}
+
+where here $\xi$ is the continuous independent variable of the
+continuum $X(\xi)$ while above $j$ is the discrete index of the discrete
+set $X=\{x_j\}$, and here $a(\xi)$ is a function while above $\{a_j\}$
+is a discrete set.  Also see pages 27-29 of {\bf Calculus of Variations}
+by I. M. Gelfand and S. V. Fomin.  We are interested in this variation,
+not in finding $X(\xi)$ so that the variation is zero, so we do not need
+to consider the Euler-Lagrange equation.
+
+%=========================================================================
+
+\section{Linear first-order differential equations}
+
+Consider the linear first-order differential equation
+
+\begin{equation}\label{diff eq}
+y^\prime(x) + f(x) y(x) = g(x)\,.
+\end{equation}
+
+The solution can be written in the form
+
+\begin{equation}\label{one}
+y(x) = \int_{x_0}^x \T(x^\prime,x) g(x^\prime) \, \d x^\prime +
+ \T(x_0,x) y(x_0)
+\end{equation}
+
+where
+
+\begin{equation}\label{two}
+\T(x^\prime,x) = \exp\left( -\int_{x^\prime}^x f(\xi) \,\d \xi \right) \,.
+\end{equation}
+
+%=========================================================================
+
+\section{Sensitivity of $y(x)$ to variation of $f(x)$}
+
+The variation of $y(x)$ as a result of variation of $f(x)$ is
+
+\begin{equation}\label{var y}
+\delta_f y(x) = \delta_f \T(x_0,x) y(x_0) +
+ \int_{x_0}^x \delta_f \T(x^\prime,x) g(x^\prime) \, \d x\,.
+\end{equation}
+
+To compute $\delta_f \mathcal{T}(x^\prime)$, replace $f(\xi)$ in Equation
+(\ref{two}) by $f(\xi) + \delta f(\xi)$ and compute the
+difference from Equation (\ref{two}):
+
+\begin{equation}\begin{split}\label{tau vary}
+\delta_f \T(x^\prime,x)
+=\,& \exp\left( - \int_{x^\prime}^{s_m} (f(\xi) +
+                                       \delta f(\xi) )
+         \, \d \xi \right) -
+     \exp\left( - \int_{x^\prime}^{s_m} f(\xi)
+         \, \d \xi \right) \\
+=\,& \exp\left( - \int_{x^\prime}^{s_m} f(\xi)
+         \, \d \xi \right)
+     \exp\left( - \int_{x^\prime}^{s_m} \delta f(\xi)
+         \, \d \xi \right) -
+     \exp\left( - \int_{x^\prime}^{s_m} f(\xi)
+         \, \d \xi \right) \\
+=\,& \exp\left( - \int_{x^\prime}^{s_m} f(\xi)
+         \, \d \xi \right)
+     \left(
+       \exp\left( - \int_{x^\prime}^{s_m} \delta f(\xi)
+         \, \d \xi \right) -1
+     \right) \\
+=\,& \exp\left( - \int_{x^\prime}^{s_m} f(\xi)
+         \, \d \xi \right)
+     \left(1 - \int_{x^\prime}^{s_m} \delta f(\xi) +
+           O\left( \left( \int_{x^\prime}^{s_m} \delta f(\xi)
+                           \, \d \xi
+            \right)^2 \right) - 1 \right)\,.
+\end{split}\end{equation}
+
+Therefore, in the limit for small perturbation $\delta f(\xi)$
+
+\begin{equation}\label{tau var}
+\delta_f \T(x^\prime,x) =
+ \exp \left( - \int_{x^\prime}^{s_m} f(\xi) \,\d \xi \right)
+ \cdot
+ \left( - \int_{x^\prime}^{s_m} \delta f(\xi) \,\d \xi \right)
+=
+ -\T(x^\prime,x) \int_{x^\prime}^{s_m} \delta f(\xi) \,\d \xi\,.
+\end{equation}
+
+Assume $g(x^\prime)$ depends upon $f(x^\prime)$ and substitute Equation
+(\ref{tau var}) into the integral in Equation (\ref{var y}) (exchanging
+the order of integration in the penultimate step) to get
+
+\begin{equation}\begin{split}\label{var1}
+ \int_{x_0}^{x} \delta_f (\T(\xi,x) \, g(\xi)) \, \d \xi
+=\,&
+ \int_{x_0}^{x} \T(\xi,x) \delta_f (g(\xi)) + \delta_f (\T(\xi,x)) \, \d
+ \xi \\
+=\,&
+   \int_{x_0}^{x} \d \xi \T(\xi,x)
+     \frac{\delta g(\xi)}{\delta f(\xi)} \delta f(\xi)
+  -\int_{x_0}^{x} \d \xi \,\T(\xi,x)\,
+    g(\xi) 
+    \int_\xi^{x} \d \xi^\prime\, \delta
+    f(\xi^\prime) \\
+=\,&
+ \int_{x_0}^{x} \d \xi\, \delta f(\xi)
+   \left[ \T(\xi,x) \frac{\delta g(\xi)}{\delta f(\xi)} -
+   \int_{x_0}^\xi \d \xi^\prime \, \T(\xi^\prime,x) \,
+    g(\xi^\prime) \right] \\
+=\,&
+ \int_{x_0}^{x} \d \xi\, \delta f(\xi)
+   \T(\xi,x) \left[ \frac{\delta g(\xi)}{\delta f(\xi)} -
+   \int_{x_0}^\xi \d \xi^\prime \, \T(\xi^\prime,\xi) \,
+    g(\xi^\prime) \right]
+\,.
+\end{split}\end{equation}
+
+Substituting Equation (\ref{tau var}) into the first term for $\delta_f
+y$ in Equation (\ref{var y}) gives
+
+\begin{equation}\label{var2}
+\delta_f \T(x_0,x) y(x_0)
+= \T(x_0,x) y(x_0)
+  \int_{x_0}^{x} \delta f(\xi)\, \d \xi\,.
+\end{equation}
+
+Collecting Equations (\ref{var1}) and (\ref{var2}) and factoring, the
+resulting variation in $y$ due to variation in $f(\xi)$ is
+
+\begin{equation}
+\delta_f y(x)
+= \int_{x_0}^{x} \d \xi \,\delta f(x)
+ \left\{\T(\xi,x)
+    \left[ \frac{\delta g(\xi)}{\delta f(\xi)} -
+     \int_{x_0}^\xi \T(\xi^\prime,\xi) \,
+    g(\xi^\prime)
+     \d \xi^\prime
+ - \T(x_0,\xi) y(x_0) \right] \right\}
+\,.
+\end{equation}
+
+According to Equations (\ref{VAR}) and (\ref{SENS}), the sensitivity of
+$y$ to variation $\delta f(\xi)$ in $f(\xi)$ is the factor between \{ and
+\}, \emph{viz.}
+
+\begin{equation}\label{y var alpha}\boxed{
+\frac{\delta y(x)}{\delta f(\xi)} =
+ \T(\xi,x) \left[
+ \frac{\delta g(\xi)}{\delta f(\xi)} -
+  \int_{x_0}^\xi \T(\xi^\prime,\xi) \, g(\xi^\prime) \, \d \xi^\prime
+  - \T(x_0,\xi) y(x_0) \right] = \T(\xi,x) \left[
+  \frac{\delta g(\xi)}{\delta f(\xi)} -  y(\xi) \right] }\,.
+\end{equation}
+
+%=========================================================================
+
+\section{Alternative derivation of sensitivity of $y(x)$ to variation of
+$f(x)$}
+
+Taking the partial derivative of Equation (\ref{diff eq}) with respect to
+$f(\xi)$ at some single point $\xi$, where $x_0 \leq \xi
+\leq x$, so we're not trying to take the derivative with respect to a
+function, but rather with respect to a variable, we have
+
+\begin{equation}\label{four}
+\frac{\partial}{\partial f(\xi)} \frac{\d}{\d x} y(x) +
+ \frac{\partial f(x)}{\partial f(\xi)} y(x) +
+  f(x) \frac{\partial y(x)}{\partial f(\xi)}
+= \frac{\partial}{\partial f(\xi)} g(x)
+= \frac{\partial f(x)}{\partial f(\xi)}
+   \frac{\partial g(x)}{\partial f(x)}\,.
+\end{equation}
+
+Replacing $\frac{\partial f(x)}{\partial f(\xi)}$ by
+the Dirac $\delta$ function $\delta(x-\xi)$ and exchanging the order of
+differentiation, we have
+
+\begin{equation}\begin{split}\label{five}
+\frac{\d}{\d x} \frac{\partial y(x)}{\partial f(\xi)} +
+ \delta(x-\xi) y(x) +
+  f(x) \frac{\partial y(x)}{\partial f(\xi)}
+=\,& \delta(x-\xi) \frac{\partial g(x)}{\partial f(x)} \text{ or}\\
+\frac{\d}{\d x} \frac{\partial y(x)}{\partial f(\xi)} +
+ f(x) \frac{\partial y(x)}{\partial f(\xi)}
+=\,&
+ \delta(x-\xi) \left(
+  \frac{\partial g(x)}{\partial f(x)}-y(x) \right)\,.
+\end{split}\end{equation}
+
+Using the initial condition $\frac{\partial y(s_0)}{\partial f(\xi)}=0$
+the solution for Equation (\ref{five}) can be written
+
+\begin{equation}\begin{split}
+\frac{\partial y(x)}{\partial f(\xi)}
+=\,& \int_{s_0}^x \delta(x^\prime-\xi)
+  \left(\frac{\partial g(x^\prime)}{\partial f(x^\prime)}-y(x^\prime)
+  \right)
+   \T(x^\prime,x)\, \d x^\prime \\
+  \,&\\
+=\,& \left ( 
+ \frac{\partial g(\xi)}{\partial f(\xi)}-y(\xi) \right )
+  \T(\xi,x)\,,
+\end{split}\end{equation}
+
+which is the same result as Equation (\ref{y var alpha}).
+
+%=========================================================================
+
+\section{Sensitivity of $y(x)$ to variation of $g(x)$}
+
+The variation of Equation (\ref{one}) as a consequence of variation
+$\delta g(\xi)$ of $g(\xi)$ is
+
+\begin{equation}
+\delta_g y(x) = \int_{x_0}^x \T(\xi,x) \delta g(\xi) \, \d \xi\,.
+\end{equation}
+
+According to Equations (\ref{VAR}) and (\ref{SENS}), the sensitivity of
+$y$ to variation $\delta g(\xi)$ in $g(\xi)$ is
+
+\begin{equation}\label{y var g}\boxed{
+\frac{\delta y(x)}{\delta g(\xi)} = \T(\xi,x) }\,.
+\end{equation}
+
+%=========================================================================
+
+\section{Alternative derivation of sensitivity of $y(x)$ to variation of
+$g(x)$}
+
+Taking the partial derivative of Equation (\ref{diff eq}) with respect to
+$g(\xi)$ at some single point $\xi$, where $x_0 \leq \xi
+\leq x$, so we're not trying to take the derivative with respect to a
+function, but rather with respect to a variable, we have
+
+\begin{equation}\label{four g}
+\frac{\partial}{\partial g(\xi)} \frac{\d}{\d x} y(x) +
+ \frac{\partial f(x)}{\partial g(\xi)} y(x) +
+  f(x) \frac{\partial y(x)}{\partial g(\xi)}
+= \frac{\partial g(x)}{\partial g(\xi)}\,.
+\end{equation}
+
+Replacing $\frac{\partial f(x)}{\partial g(\xi)}$ by zero and
+$\frac{\partial g(x)}{\partial g(\xi)}$ by  the Dirac $\delta$
+function $\delta(x-\xi)$ and exchanging the order of differentiation,
+we have
+
+\begin{equation}\begin{split}\label{five g}
+\frac{\d}{\d x} \frac{\partial y(x)}{\partial g(\xi)} +
+  f(x) \frac{\partial y(x)}{\partial g(\xi)}
+=\,& \delta(x-\xi) \,.
+\end{split}\end{equation}
+
+Using the initial condition $\frac{\partial y(s_0)}{\partial g(\xi)}=0$
+the solution for Equation (\ref{five g}) can be written
+
+\begin{equation}\begin{split}
+\frac{\partial y(x)}{\partial g(\xi)}
+=\,& \int_{s_0}^x \delta(x^\prime-\xi)
+   \T(x^\prime,x)\, \d x^\prime =\T(\xi,x)\,,
+\end{split}\end{equation}
+
+which is the same result as Equation (\ref{y var g}).
+
+%=========================================================================
+
+\section{Sensitivity of $y(x)$ to variation of parameters in $f(x)$ and
+$g(x)$}
+
+If we now assume that $f(x)$ and $g(x)$ depend upon a continuous
+parameter $p(\xi)$, i.e., $f(x) \mapsto f(x;p(\xi))$ and $g(x) \mapsto
+g(x;p(\xi))$, and we want the sensitivity of $y(x)$ to variation in
+$p(\xi)$ we have
+
+\begin{equation}\begin{split}
+\frac{\delta y(x)}{\delta p(\xi)} =\,&
+ \frac{\delta y(x)}{\delta f(x;p(\xi))}
+  \frac{\delta f(x;p(\xi))}{\delta p(\xi)}
+  +\frac{\delta y(x)}{\delta g(x;p(\xi))}
+   \frac{\delta g(x;p(\xi))}{\delta p(\xi)}\\
+=\,&
+  \left[ -\frac{\delta f(x;p(\xi))}{\delta p(\xi)} y(\xi)
+  + \frac{\delta g(x;p(\xi))}{\delta p(\xi)} \right] \T(\xi,x) \,.
+\end{split}\end{equation}
+
+If $p(\xi)$ is instead replaced by a set of discrete parameters $P =\{p_1,
+p_2, \dots p_n\} = \{p_{\xi_1}, p_{\xi_2}, \dots p_{\xi_n}\}$ we have
+
+\begin{equation}\begin{split}
+\frac{\delta y(x)}{\delta p_i} =\,&
+ \frac{\delta y(x)}{\delta f(x;p_i)}
+  \frac{\partial f(x;p_i)}{\partial p_i}
+  +\frac{\delta y(x)}{\delta g(x;p_i)}
+   \frac{\partial g(x;p_i)}{\partial p_i}\\
+=\,&
+  -\left[ \frac{\partial f(x;p_i)}{\partial p_i} y(\xi)
+  + \frac{\partial g(x;p_i)}{\partial p_i} \T(\xi,x) \right] \,.
+\end{split}\end{equation}
+
+That is, one does not need to integrate
+
+\begin{equation}\begin{split}
+\frac{\d}{\d x} \frac{\delta y(x)}{\delta p(\xi)} +
+ \frac{\delta f(x;p(x))}{\delta p(\xi)} y(x) +
+  f(x;p(x)) \frac{\delta y(x)}{\delta p(\xi)}
+=\,& \frac{\delta g(x;p(x))}{\delta p(\xi)} \text{ eqv.} \\
+\frac{\d}{\d x} \frac{\delta y(x)}{\delta p(\xi)} +
+ f(x;p(x)) \frac{\delta y(x)}{\delta p(\xi)}
+=\,& \frac{\delta g(x;p(x))}{\delta p(\xi)} -
+ \frac{\delta f(x;p(x))}{\delta p(\xi)} y(x)
+\end{split}\end{equation}
+
+or
+
+\begin{equation}\begin{split}
+\frac{\d}{\d x} \frac{\partial y(x)}{\partial p_i} +
+ \frac{\partial f(x;P)}{\partial p_i} y(x) +
+  f(x;P) \frac{\partial y(x)}{\partial p_i}
+=\,& \frac{\partial g(x;P)}{\partial p_i} \text{ eqv.} \\
+\frac{\d}{\d x} \frac{\partial y(x)}{\partial p_i} +
+ f(x;P) \frac{\partial y(x)}{\partial p_i}
+=\,& \frac{\partial g(x;P)}{\partial p_i} -
+ \frac{\partial f(x;P)}{\partial p_i} y(x)
+\end{split}\end{equation}
+
+in order to compute $\frac{\delta y(x)}{\delta p(\xi)}$ or $\frac{\partial
+y(x)}{\partial p_i}$.
+
+\label{lastpage}
+\end{document}
+
+% $Id: wvs-093.tex,v 1.4 2010/11/23 22:53:30 vsnyder Exp $
+
+% $Log: wvs-093.tex,v $
+@

@@ -1,0 +1,6719 @@
+head	2.272;
+access;
+symbols
+	v5-02-NRT-19:2.272
+	v6-00:2.272
+	v5-02-NRT-18:2.272
+	v5-02:2.270
+	v5-01-NRT-17:2.272
+	v5-01-NRT-16:2.272
+	v5-01-NRT-15:2.272
+	v5-01-NRT-14:2.272
+	neuralnetworks-1-0:2.272.0.4
+	cfm-single-freq-0-1:2.272.0.2
+	v5-01:2.270
+	v5-00:2.270
+	v4-23-TA133:2.269.0.2
+	mus-emls-1-70:2.268.0.2
+	rel-1-0-englocks-work:2.267.0.2
+	VUMLS1-00:2.263
+	VPL1-00:2.262
+	V4-22-NRT-08:2.262
+	VAM1-00:2.258
+	V4-21:2.253.0.2
+	V4-13:2.251
+	V4-12:2.247
+	V4-11:2.247
+	V4-10:2.246
+	V3-43:2.210.2.1
+	M4-00:2.225
+	V3-41:2.210.2.1
+	V3-40-PlusGM57:2.210.0.2
+	V2-24-NRT-04:2.177
+	V3-33:2.203
+	V2-24:2.177
+	V3-31:2.203
+	V3-30-NRT-05:2.203
+	cfm-01-00:2.202
+	V3-30:2.196
+	V3-20:2.196
+	V3-10:2.191
+	V2-23-NRT-02:2.177
+	V2-23:2.177
+	V2-22-NRT-01:2.177
+	V2-22:2.177
+	V2-21:2.174
+	V2-20:2.174
+	V2-11:2.169
+	V2-10:2.169
+	V2-00:2.167
+	V1-51:2.136
+	V1-50:2.136
+	V1-45:2.129
+	V1-44:2.129
+	V1-43:2.124
+	V1-32:2.115
+	V1-31:2.110
+	V1-30:2.104
+	V1-13:2.84
+	V1-12:2.84
+	V1-11:2.84
+	V1-10:2.76
+	newfwm-feb03:2.77.0.2
+	V1-04:2.32
+	V1-03:2.32
+	V1-02:2.32
+	JointForwardModel:2.40.0.2
+	V1-00:2.30
+	newfwm-sep01:2.2.0.2
+	V0-7:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.272
+date	2020.07.23.22.18.40;	author pwagner;	state Exp;
+branches;
+next	2.271;
+
+2.271
+date	2019.10.07.20.05.16;	author vsnyder;	state Exp;
+branches;
+next	2.270;
+
+2.270
+date	2019.04.24.19.15.25;	author vsnyder;	state Exp;
+branches;
+next	2.269;
+
+2.269
+date	2018.10.17.23.05.04;	author pwagner;	state Exp;
+branches;
+next	2.268;
+
+2.268
+date	2018.04.19.23.43.21;	author pwagner;	state Exp;
+branches;
+next	2.267;
+
+2.267
+date	2017.12.15.18.31.32;	author mmadatya;	state Exp;
+branches;
+next	2.266;
+
+2.266
+date	2017.07.27.16.36.51;	author pwagner;	state Exp;
+branches;
+next	2.265;
+
+2.265
+date	2017.07.10.18.48.28;	author pwagner;	state Exp;
+branches;
+next	2.264;
+
+2.264
+date	2017.04.07.18.45.19;	author pwagner;	state Exp;
+branches;
+next	2.263;
+
+2.263
+date	2017.02.22.01.23.08;	author pwagner;	state Exp;
+branches;
+next	2.262;
+
+2.262
+date	2016.04.01.00.25.13;	author pwagner;	state Exp;
+branches;
+next	2.261;
+
+2.261
+date	2016.02.26.02.06.19;	author vsnyder;	state Exp;
+branches;
+next	2.260;
+
+2.260
+date	2016.01.29.01.08.57;	author vsnyder;	state Exp;
+branches;
+next	2.259;
+
+2.259
+date	2015.09.30.20.31.10;	author pwagner;	state Exp;
+branches;
+next	2.258;
+
+2.258
+date	2015.09.22.01.58.21;	author vsnyder;	state Exp;
+branches;
+next	2.257;
+
+2.257
+date	2015.07.14.23.27.44;	author pwagner;	state Exp;
+branches;
+next	2.256;
+
+2.256
+date	2015.04.21.17.43.33;	author pwagner;	state Exp;
+branches;
+next	2.255;
+
+2.255
+date	2015.03.31.21.00.15;	author pwagner;	state Exp;
+branches;
+next	2.254;
+
+2.254
+date	2015.03.28.02.52.15;	author vsnyder;	state Exp;
+branches;
+next	2.253;
+
+2.253
+date	2015.02.27.23.13.11;	author pwagner;	state Exp;
+branches;
+next	2.252;
+
+2.252
+date	2015.02.05.21.55.21;	author vsnyder;	state Exp;
+branches;
+next	2.251;
+
+2.251
+date	2014.10.06.23.49.29;	author pwagner;	state Exp;
+branches;
+next	2.250;
+
+2.250
+date	2014.09.29.20.18.14;	author vsnyder;	state Exp;
+branches;
+next	2.249;
+
+2.249
+date	2014.09.05.01.25.26;	author vsnyder;	state Exp;
+branches;
+next	2.248;
+
+2.248
+date	2014.08.26.23.23.09;	author pwagner;	state Exp;
+branches;
+next	2.247;
+
+2.247
+date	2014.05.31.00.20.41;	author pwagner;	state Exp;
+branches;
+next	2.246;
+
+2.246
+date	2014.04.22.00.47.37;	author vsnyder;	state Exp;
+branches;
+next	2.245;
+
+2.245
+date	2014.04.07.18.02.36;	author pwagner;	state Exp;
+branches;
+next	2.244;
+
+2.244
+date	2013.11.18.22.25.36;	author pwagner;	state Exp;
+branches;
+next	2.243;
+
+2.243
+date	2013.10.24.21.04.10;	author pwagner;	state Exp;
+branches;
+next	2.242;
+
+2.242
+date	2013.10.15.23.51.52;	author pwagner;	state Exp;
+branches;
+next	2.241;
+
+2.241
+date	2013.10.09.02.27.32;	author vsnyder;	state Exp;
+branches;
+next	2.240;
+
+2.240
+date	2013.09.21.00.37.13;	author vsnyder;	state Exp;
+branches;
+next	2.239;
+
+2.239
+date	2013.09.17.23.03.49;	author pwagner;	state Exp;
+branches;
+next	2.238;
+
+2.238
+date	2013.08.29.19.36.45;	author pwagner;	state Exp;
+branches;
+next	2.237;
+
+2.237
+date	2013.08.17.00.19.27;	author pwagner;	state Exp;
+branches;
+next	2.236;
+
+2.236
+date	2013.08.16.02.34.46;	author vsnyder;	state Exp;
+branches;
+next	2.235;
+
+2.235
+date	2013.08.09.01.03.59;	author vsnyder;	state Exp;
+branches;
+next	2.234;
+
+2.234
+date	2013.07.25.00.24.55;	author vsnyder;	state Exp;
+branches;
+next	2.233;
+
+2.233
+date	2013.07.19.01.19.46;	author vsnyder;	state Exp;
+branches;
+next	2.232;
+
+2.232
+date	2013.06.21.17.37.39;	author pwagner;	state Exp;
+branches;
+next	2.231;
+
+2.231
+date	2013.06.20.22.24.12;	author vsnyder;	state Exp;
+branches;
+next	2.230;
+
+2.230
+date	2013.05.31.00.41.33;	author vsnyder;	state Exp;
+branches;
+next	2.229;
+
+2.229
+date	2013.05.17.00.48.49;	author pwagner;	state Exp;
+branches;
+next	2.228;
+
+2.228
+date	2013.05.07.22.01.30;	author pwagner;	state Exp;
+branches;
+next	2.227;
+
+2.227
+date	2013.04.24.00.35.47;	author pwagner;	state Exp;
+branches;
+next	2.226;
+
+2.226
+date	2013.04.22.17.45.57;	author pwagner;	state Exp;
+branches;
+next	2.225;
+
+2.225
+date	2013.01.17.20.01.14;	author pwagner;	state Exp;
+branches;
+next	2.224;
+
+2.224
+date	2012.11.14.00.57.11;	author pwagner;	state Exp;
+branches;
+next	2.223;
+
+2.223
+date	2012.10.17.00.42.37;	author pwagner;	state Exp;
+branches;
+next	2.222;
+
+2.222
+date	2012.10.09.00.48.30;	author pwagner;	state Exp;
+branches;
+next	2.221;
+
+2.221
+date	2012.08.30.23.01.59;	author vsnyder;	state Exp;
+branches;
+next	2.220;
+
+2.220
+date	2012.07.04.01.53.46;	author vsnyder;	state Exp;
+branches;
+next	2.219;
+
+2.219
+date	2012.06.27.17.53.04;	author pwagner;	state Exp;
+branches;
+next	2.218;
+
+2.218
+date	2012.06.07.22.42.59;	author pwagner;	state Exp;
+branches;
+next	2.217;
+
+2.217
+date	2012.06.06.20.37.19;	author vsnyder;	state Exp;
+branches;
+next	2.216;
+
+2.216
+date	2012.04.26.23.18.11;	author pwagner;	state Exp;
+branches;
+next	2.215;
+
+2.215
+date	2012.04.25.20.32.24;	author pwagner;	state Exp;
+branches;
+next	2.214;
+
+2.214
+date	2012.04.20.16.21.41;	author pwagner;	state Exp;
+branches;
+next	2.213;
+
+2.213
+date	2012.03.15.22.48.42;	author vsnyder;	state Exp;
+branches;
+next	2.212;
+
+2.212
+date	2012.03.07.02.01.08;	author vsnyder;	state Exp;
+branches;
+next	2.211;
+
+2.211
+date	2011.12.21.01.37.01;	author vsnyder;	state Exp;
+branches;
+next	2.210;
+
+2.210
+date	2011.06.16.23.15.25;	author pwagner;	state Exp;
+branches
+	2.210.2.1;
+next	2.209;
+
+2.209
+date	2011.06.16.20.50.49;	author vsnyder;	state Exp;
+branches;
+next	2.208;
+
+2.208
+date	2011.06.16.20.22.16;	author vsnyder;	state Exp;
+branches;
+next	2.207;
+
+2.207
+date	2011.06.02.19.24.34;	author pwagner;	state Exp;
+branches;
+next	2.206;
+
+2.206
+date	2011.03.22.23.47.21;	author pwagner;	state Exp;
+branches;
+next	2.205;
+
+2.205
+date	2011.03.15.22.54.18;	author pwagner;	state Exp;
+branches;
+next	2.204;
+
+2.204
+date	2011.03.10.21.38.34;	author pwagner;	state Exp;
+branches;
+next	2.203;
+
+2.203
+date	2010.08.17.16.37.33;	author yanovsky;	state Exp;
+branches;
+next	2.202;
+
+2.202
+date	2010.06.07.23.27.26;	author vsnyder;	state Exp;
+branches;
+next	2.201;
+
+2.201
+date	2010.04.22.23.36.00;	author pwagner;	state Exp;
+branches;
+next	2.200;
+
+2.200
+date	2010.04.16.01.39.34;	author vsnyder;	state Exp;
+branches;
+next	2.199;
+
+2.199
+date	2010.03.26.23.11.57;	author vsnyder;	state Exp;
+branches;
+next	2.198;
+
+2.198
+date	2010.03.24.20.52.09;	author vsnyder;	state Exp;
+branches;
+next	2.197;
+
+2.197
+date	2010.02.25.18.37.13;	author pwagner;	state Exp;
+branches;
+next	2.196;
+
+2.196
+date	2009.10.27.22.10.36;	author pwagner;	state Exp;
+branches;
+next	2.195;
+
+2.195
+date	2009.09.25.02.37.01;	author vsnyder;	state Exp;
+branches;
+next	2.194;
+
+2.194
+date	2009.09.15.20.03.29;	author pwagner;	state Exp;
+branches;
+next	2.193;
+
+2.193
+date	2009.08.24.18.21.48;	author pwagner;	state Exp;
+branches;
+next	2.192;
+
+2.192
+date	2009.08.17.16.37.39;	author pwagner;	state Exp;
+branches;
+next	2.191;
+
+2.191
+date	2009.04.13.20.45.57;	author pwagner;	state Exp;
+branches;
+next	2.190;
+
+2.190
+date	2008.12.18.18.01.03;	author pwagner;	state Exp;
+branches;
+next	2.189;
+
+2.189
+date	2008.12.02.23.27.22;	author pwagner;	state Exp;
+branches;
+next	2.188;
+
+2.188
+date	2008.09.30.22.30.48;	author vsnyder;	state Exp;
+branches;
+next	2.187;
+
+2.187
+date	2008.08.21.23.42.46;	author vsnyder;	state Exp;
+branches;
+next	2.186;
+
+2.186
+date	2008.07.30.19.08.00;	author vsnyder;	state Exp;
+branches;
+next	2.185;
+
+2.185
+date	2008.06.06.01.56.09;	author vsnyder;	state Exp;
+branches;
+next	2.184;
+
+2.184
+date	2008.06.05.02.06.57;	author vsnyder;	state Exp;
+branches;
+next	2.183;
+
+2.183
+date	2008.05.22.00.25.43;	author pwagner;	state Exp;
+branches;
+next	2.182;
+
+2.182
+date	2008.05.20.00.25.05;	author vsnyder;	state Exp;
+branches;
+next	2.181;
+
+2.181
+date	2008.04.26.00.39.31;	author livesey;	state Exp;
+branches;
+next	2.180;
+
+2.180
+date	2007.12.07.01.12.14;	author pwagner;	state Exp;
+branches;
+next	2.179;
+
+2.179
+date	2007.11.08.03.24.39;	author vsnyder;	state Exp;
+branches;
+next	2.178;
+
+2.178
+date	2007.11.07.03.10.48;	author vsnyder;	state Exp;
+branches;
+next	2.177;
+
+2.177
+date	2007.10.09.00.32.05;	author pwagner;	state Exp;
+branches;
+next	2.176;
+
+2.176
+date	2007.10.02.22.51.54;	author vsnyder;	state Exp;
+branches;
+next	2.175;
+
+2.175
+date	2007.08.23.22.17.05;	author pwagner;	state Exp;
+branches;
+next	2.174;
+
+2.174
+date	2006.10.11.00.28.39;	author pwagner;	state Exp;
+branches;
+next	2.173;
+
+2.173
+date	2006.09.30.00.02.03;	author pwagner;	state Exp;
+branches;
+next	2.172;
+
+2.172
+date	2006.09.19.20.34.37;	author vsnyder;	state Exp;
+branches;
+next	2.171;
+
+2.171
+date	2006.08.04.18.08.48;	author vsnyder;	state Exp;
+branches;
+next	2.170;
+
+2.170
+date	2006.08.02.19.52.08;	author vsnyder;	state Exp;
+branches;
+next	2.169;
+
+2.169
+date	2006.07.19.22.27.47;	author vsnyder;	state Exp;
+branches;
+next	2.168;
+
+2.168
+date	2006.06.15.20.39.59;	author vsnyder;	state Exp;
+branches;
+next	2.167;
+
+2.167
+date	2006.06.12.16.28.25;	author pwagner;	state Exp;
+branches;
+next	2.166;
+
+2.166
+date	2006.06.08.23.54.51;	author vsnyder;	state Exp;
+branches;
+next	2.165;
+
+2.165
+date	2006.05.27.03.00.08;	author vsnyder;	state Exp;
+branches;
+next	2.164;
+
+2.164
+date	2006.05.11.19.37.32;	author pwagner;	state Exp;
+branches;
+next	2.163;
+
+2.163
+date	2006.04.03.23.51.13;	author livesey;	state Exp;
+branches;
+next	2.162;
+
+2.162
+date	2006.03.22.02.22.50;	author vsnyder;	state Exp;
+branches;
+next	2.161;
+
+2.161
+date	2006.03.17.00.06.31;	author pwagner;	state Exp;
+branches;
+next	2.160;
+
+2.160
+date	2006.03.13.23.42.37;	author pwagner;	state Exp;
+branches;
+next	2.159;
+
+2.159
+date	2006.03.07.00.49.42;	author pwagner;	state Exp;
+branches;
+next	2.158;
+
+2.158
+date	2006.03.04.00.14.43;	author pwagner;	state Exp;
+branches;
+next	2.157;
+
+2.157
+date	2006.02.16.16.20.02;	author pwagner;	state Exp;
+branches;
+next	2.156;
+
+2.156
+date	2006.02.10.21.11.29;	author pwagner;	state Exp;
+branches;
+next	2.155;
+
+2.155
+date	2006.02.03.21.26.47;	author pwagner;	state Exp;
+branches;
+next	2.154;
+
+2.154
+date	2006.01.05.01.01.37;	author pwagner;	state Exp;
+branches;
+next	2.153;
+
+2.153
+date	2005.12.21.21.47.33;	author livesey;	state Exp;
+branches;
+next	2.152;
+
+2.152
+date	2005.11.11.21.43.33;	author pwagner;	state Exp;
+branches;
+next	2.151;
+
+2.151
+date	2005.09.23.23.39.16;	author pwagner;	state Exp;
+branches;
+next	2.150;
+
+2.150
+date	2005.09.19.16.55.06;	author pwagner;	state Exp;
+branches;
+next	2.149;
+
+2.149
+date	2005.09.16.23.38.04;	author vsnyder;	state Exp;
+branches;
+next	2.148;
+
+2.148
+date	2005.09.09.23.07.26;	author pwagner;	state Exp;
+branches;
+next	2.147;
+
+2.147
+date	2005.08.19.23.24.55;	author pwagner;	state Exp;
+branches;
+next	2.146;
+
+2.146
+date	2005.08.04.20.59.43;	author pwagner;	state Exp;
+branches;
+next	2.145;
+
+2.145
+date	2005.08.03.18.05.39;	author vsnyder;	state Exp;
+branches;
+next	2.144;
+
+2.144
+date	2005.07.21.23.43.29;	author pwagner;	state Exp;
+branches;
+next	2.143;
+
+2.143
+date	2005.07.12.17.17.13;	author pwagner;	state Exp;
+branches;
+next	2.142;
+
+2.142
+date	2005.06.30.22.42.54;	author livesey;	state Exp;
+branches;
+next	2.141;
+
+2.141
+date	2005.06.03.02.10.17;	author vsnyder;	state Exp;
+branches;
+next	2.140;
+
+2.140
+date	2005.05.02.23.00.40;	author vsnyder;	state Exp;
+branches;
+next	2.139;
+
+2.139
+date	2005.04.01.20.48.28;	author vsnyder;	state Exp;
+branches;
+next	2.138;
+
+2.138
+date	2005.01.27.21.07.53;	author vsnyder;	state Exp;
+branches;
+next	2.137;
+
+2.137
+date	2004.12.31.02.42.21;	author vsnyder;	state Exp;
+branches;
+next	2.136;
+
+2.136
+date	2004.12.13.20.16.41;	author vsnyder;	state Exp;
+branches;
+next	2.135;
+
+2.135
+date	2004.11.08.21.56.35;	author livesey;	state Exp;
+branches;
+next	2.134;
+
+2.134
+date	2004.10.30.00.26.47;	author vsnyder;	state Exp;
+branches;
+next	2.133;
+
+2.133
+date	2004.10.13.02.22.57;	author livesey;	state Exp;
+branches;
+next	2.132;
+
+2.132
+date	2004.09.27.20.10.08;	author livesey;	state Exp;
+branches;
+next	2.131;
+
+2.131
+date	2004.09.25.00.15.06;	author livesey;	state Exp;
+branches;
+next	2.130;
+
+2.130
+date	2004.09.10.23.52.52;	author livesey;	state Exp;
+branches;
+next	2.129;
+
+2.129
+date	2004.08.09.21.43.27;	author livesey;	state Exp;
+branches;
+next	2.128;
+
+2.128
+date	2004.07.17.02.28.19;	author vsnyder;	state Exp;
+branches;
+next	2.127;
+
+2.127
+date	2004.06.08.19.24.48;	author vsnyder;	state Exp;
+branches;
+next	2.126;
+
+2.126
+date	2004.05.29.02.47.57;	author vsnyder;	state Exp;
+branches;
+next	2.125;
+
+2.125
+date	2004.05.22.02.29.02;	author vsnyder;	state Exp;
+branches;
+next	2.124;
+
+2.124
+date	2004.05.04.01.03.17;	author livesey;	state Exp;
+branches;
+next	2.123;
+
+2.123
+date	2004.05.01.04.02.35;	author vsnyder;	state Exp;
+branches;
+next	2.122;
+
+2.122
+date	2004.04.30.21.49.03;	author livesey;	state Exp;
+branches;
+next	2.121;
+
+2.121
+date	2004.04.29.01.26.31;	author livesey;	state Exp;
+branches;
+next	2.120;
+
+2.120
+date	2004.04.28.23.07.23;	author livesey;	state Exp;
+branches;
+next	2.119;
+
+2.119
+date	2004.03.31.03.59.43;	author livesey;	state Exp;
+branches;
+next	2.118;
+
+2.118
+date	2004.03.24.01.02.43;	author livesey;	state Exp;
+branches;
+next	2.117;
+
+2.117
+date	2004.03.22.18.25.50;	author livesey;	state Exp;
+branches;
+next	2.116;
+
+2.116
+date	2004.03.10.22.19.05;	author livesey;	state Exp;
+branches;
+next	2.115;
+
+2.115
+date	2004.02.17.23.25.59;	author pwagner;	state Exp;
+branches;
+next	2.114;
+
+2.114
+date	2004.02.11.00.26.51;	author pwagner;	state Exp;
+branches;
+next	2.113;
+
+2.113
+date	2004.01.29.03.32.54;	author livesey;	state Exp;
+branches;
+next	2.112;
+
+2.112
+date	2004.01.23.19.07.25;	author livesey;	state Exp;
+branches;
+next	2.111;
+
+2.111
+date	2004.01.23.05.47.38;	author livesey;	state Exp;
+branches;
+next	2.110;
+
+2.110
+date	2003.12.04.22.19.32;	author livesey;	state Exp;
+branches;
+next	2.109;
+
+2.109
+date	2003.10.07.20.47.32;	author vsnyder;	state Exp;
+branches;
+next	2.108;
+
+2.108
+date	2003.10.07.15.04.52;	author cvuu;	state Exp;
+branches;
+next	2.107;
+
+2.107
+date	2003.10.07.01.14.12;	author vsnyder;	state Exp;
+branches;
+next	2.106;
+
+2.106
+date	2003.10.06.17.54.38;	author livesey;	state Exp;
+branches;
+next	2.105;
+
+2.105
+date	2003.09.11.23.14.29;	author livesey;	state Exp;
+branches;
+next	2.104;
+
+2.104
+date	2003.08.14.20.25.11;	author livesey;	state Exp;
+branches;
+next	2.103;
+
+2.103
+date	2003.08.11.18.08.16;	author livesey;	state Exp;
+branches;
+next	2.102;
+
+2.102
+date	2003.08.08.23.07.16;	author livesey;	state Exp;
+branches;
+next	2.101;
+
+2.101
+date	2003.07.16.01.06.36;	author vsnyder;	state Exp;
+branches;
+next	2.100;
+
+2.100
+date	2003.07.15.22.11.28;	author livesey;	state Exp;
+branches;
+next	2.99;
+
+2.99
+date	2003.06.23.18.07.03;	author pwagner;	state Exp;
+branches;
+next	2.98;
+
+2.98
+date	2003.06.20.19.39.06;	author pwagner;	state Exp;
+branches;
+next	2.97;
+
+2.97
+date	2003.06.06.01.06.36;	author livesey;	state Exp;
+branches;
+next	2.96;
+
+2.96
+date	2003.06.05.22.13.35;	author pwagner;	state Exp;
+branches;
+next	2.95;
+
+2.95
+date	2003.05.29.20.02.05;	author livesey;	state Exp;
+branches;
+next	2.94;
+
+2.94
+date	2003.05.29.16.44.06;	author livesey;	state Exp;
+branches;
+next	2.93;
+
+2.93
+date	2003.05.07.22.50.29;	author pwagner;	state Exp;
+branches;
+next	2.92;
+
+2.92
+date	2003.05.05.23.00.34;	author livesey;	state Exp;
+branches;
+next	2.91;
+
+2.91
+date	2003.04.30.00.07.59;	author vsnyder;	state Exp;
+branches;
+next	2.90;
+
+2.90
+date	2003.04.17.23.08.28;	author pwagner;	state Exp;
+branches;
+next	2.89;
+
+2.89
+date	2003.04.11.23.14.49;	author livesey;	state Exp;
+branches;
+next	2.88;
+
+2.88
+date	2003.04.11.21.57.02;	author livesey;	state Exp;
+branches;
+next	2.87;
+
+2.87
+date	2003.04.04.22.02.22;	author livesey;	state Exp;
+branches;
+next	2.86;
+
+2.86
+date	2003.04.02.21.47.52;	author jonathan;	state Exp;
+branches;
+next	2.85;
+
+2.85
+date	2003.03.27.20.44.05;	author livesey;	state Exp;
+branches;
+next	2.84;
+
+2.84
+date	2003.03.07.03.18.06;	author livesey;	state Exp;
+branches;
+next	2.83;
+
+2.83
+date	2003.03.05.19.10.56;	author livesey;	state Exp;
+branches;
+next	2.82;
+
+2.82
+date	2003.03.01.00.24.27;	author pwagner;	state Exp;
+branches;
+next	2.81;
+
+2.81
+date	2003.02.27.17.45.11;	author bill;	state Exp;
+branches;
+next	2.80;
+
+2.80
+date	2003.02.20.21.26.21;	author pwagner;	state Exp;
+branches;
+next	2.79;
+
+2.79
+date	2003.02.14.01.56.36;	author livesey;	state Exp;
+branches;
+next	2.78;
+
+2.78
+date	2003.02.13.21.41.58;	author livesey;	state Exp;
+branches;
+next	2.77;
+
+2.77
+date	2003.02.12.02.11.04;	author livesey;	state Exp;
+branches
+	2.77.2.1;
+next	2.76;
+
+2.76
+date	2003.02.06.23.30.25;	author livesey;	state Exp;
+branches;
+next	2.75;
+
+2.75
+date	2003.02.06.22.04.48;	author vsnyder;	state Exp;
+branches;
+next	2.74;
+
+2.74
+date	2003.02.05.21.55.57;	author livesey;	state Exp;
+branches;
+next	2.73;
+
+2.73
+date	2003.02.05.04.07.25;	author dwu;	state Exp;
+branches;
+next	2.72;
+
+2.72
+date	2003.01.30.17.28.45;	author jonathan;	state Exp;
+branches;
+next	2.71;
+
+2.71
+date	2003.01.29.01.48.29;	author vsnyder;	state Exp;
+branches;
+next	2.70;
+
+2.70
+date	2003.01.18.02.37.09;	author livesey;	state Exp;
+branches;
+next	2.69;
+
+2.69
+date	2003.01.16.00.56.09;	author jonathan;	state Exp;
+branches;
+next	2.68;
+
+2.68
+date	2003.01.14.22.15.07;	author dwu;	state Exp;
+branches;
+next	2.67;
+
+2.67
+date	2003.01.13.17.17.42;	author jonathan;	state Exp;
+branches;
+next	2.66;
+
+2.66
+date	2003.01.11.01.02.39;	author livesey;	state Exp;
+branches;
+next	2.65;
+
+2.65
+date	2003.01.10.23.58.08;	author dwu;	state Exp;
+branches;
+next	2.64;
+
+2.64
+date	2003.01.08.23.50.57;	author livesey;	state Exp;
+branches;
+next	2.63;
+
+2.63
+date	2003.01.07.23.46.14;	author livesey;	state Exp;
+branches;
+next	2.62;
+
+2.62
+date	2003.01.06.20.12.57;	author livesey;	state Exp;
+branches;
+next	2.61;
+
+2.61
+date	2002.11.27.19.26.04;	author livesey;	state Exp;
+branches;
+next	2.60;
+
+2.60
+date	2002.11.15.01.33.47;	author livesey;	state Exp;
+branches;
+next	2.59;
+
+2.59
+date	2002.10.25.23.55.56;	author livesey;	state Exp;
+branches;
+next	2.58;
+
+2.58
+date	2002.10.23.01.32.31;	author vsnyder;	state Exp;
+branches;
+next	2.57;
+
+2.57
+date	2002.10.19.23.41.54;	author livesey;	state Exp;
+branches;
+next	2.56;
+
+2.56
+date	2002.10.19.01.51.38;	author livesey;	state Exp;
+branches;
+next	2.55;
+
+2.55
+date	2002.10.17.00.16.40;	author vsnyder;	state Exp;
+branches;
+next	2.54;
+
+2.54
+date	2002.10.16.20.19.13;	author mjf;	state Exp;
+branches;
+next	2.53;
+
+2.53
+date	2002.10.03.13.43.37;	author mjf;	state Exp;
+branches;
+next	2.52;
+
+2.52
+date	2002.10.01.18.30.07;	author mjf;	state Exp;
+branches;
+next	2.51;
+
+2.51
+date	2002.09.25.20.06.59;	author livesey;	state Exp;
+branches;
+next	2.50;
+
+2.50
+date	2002.09.24.21.37.37;	author livesey;	state Exp;
+branches;
+next	2.49;
+
+2.49
+date	2002.09.23.22.14.19;	author vsnyder;	state Exp;
+branches;
+next	2.48;
+
+2.48
+date	2002.09.05.20.49.22;	author livesey;	state Exp;
+branches;
+next	2.47;
+
+2.47
+date	2002.08.26.20.00.57;	author livesey;	state Exp;
+branches;
+next	2.46;
+
+2.46
+date	2002.08.24.01.38.28;	author vsnyder;	state Exp;
+branches;
+next	2.45;
+
+2.45
+date	2002.08.22.00.06.51;	author vsnyder;	state Exp;
+branches;
+next	2.44;
+
+2.44
+date	2002.08.15.03.52.14;	author livesey;	state Exp;
+branches;
+next	2.43;
+
+2.43
+date	2002.08.08.22.03.19;	author vsnyder;	state Exp;
+branches;
+next	2.42;
+
+2.42
+date	2002.08.03.01.14.41;	author vsnyder;	state Exp;
+branches;
+next	2.41;
+
+2.41
+date	2002.07.17.06.02.36;	author livesey;	state Exp;
+branches;
+next	2.40;
+
+2.40
+date	2002.06.26.01.26.30;	author livesey;	state Exp;
+branches;
+next	2.39;
+
+2.39
+date	2002.06.12.17.58.11;	author livesey;	state Exp;
+branches;
+next	2.38;
+
+2.38
+date	2002.06.04.22.41.10;	author livesey;	state Exp;
+branches;
+next	2.37;
+
+2.37
+date	2002.05.17.17.56.23;	author livesey;	state Exp;
+branches;
+next	2.36;
+
+2.36
+date	2002.05.14.00.28.44;	author livesey;	state Exp;
+branches
+	2.36.2.1;
+next	2.35;
+
+2.35
+date	2002.05.07.20.26.27;	author livesey;	state Exp;
+branches;
+next	2.34;
+
+2.34
+date	2002.05.07.01.01.25;	author vsnyder;	state Exp;
+branches;
+next	2.33;
+
+2.33
+date	2002.05.06.21.38.01;	author livesey;	state Exp;
+branches;
+next	2.32;
+
+2.32
+date	2002.04.22.20.55.00;	author vsnyder;	state Exp;
+branches;
+next	2.31;
+
+2.31
+date	2002.04.18.18.40.17;	author pwagner;	state Exp;
+branches;
+next	2.30;
+
+2.30
+date	2002.04.04.16.32.42;	author livesey;	state Exp;
+branches;
+next	2.29;
+
+2.29
+date	2002.03.14.00.38.16;	author pwagner;	state Exp;
+branches;
+next	2.28;
+
+2.28
+date	2002.03.07.17.17.15;	author livesey;	state Exp;
+branches;
+next	2.27;
+
+2.27
+date	2002.02.22.01.07.58;	author pwagner;	state Exp;
+branches;
+next	2.26;
+
+2.26
+date	2002.02.13.02.08.52;	author vsnyder;	state Exp;
+branches;
+next	2.25;
+
+2.25
+date	2002.02.09.19.12.12;	author livesey;	state Exp;
+branches;
+next	2.24;
+
+2.24
+date	2002.02.07.02.55.02;	author vsnyder;	state Exp;
+branches;
+next	2.23;
+
+2.23
+date	2002.01.24.17.45.21;	author pwagner;	state Exp;
+branches;
+next	2.22;
+
+2.22
+date	2002.01.23.21.49.17;	author pwagner;	state Exp;
+branches;
+next	2.21;
+
+2.21
+date	2002.01.21.21.14.35;	author livesey;	state Exp;
+branches;
+next	2.20;
+
+2.20
+date	2002.01.18.00.24.46;	author livesey;	state Exp;
+branches;
+next	2.19;
+
+2.19
+date	2001.12.12.00.59.50;	author zvi;	state Exp;
+branches;
+next	2.18;
+
+2.18
+date	2001.11.15.23.49.58;	author jonathan;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2001.11.15.20.56.10;	author jonathan;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2001.11.09.00.04.09;	author livesey;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2001.10.31.22.00.28;	author livesey;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2001.10.31.19.17.41;	author livesey;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2001.10.23.16.38.56;	author pwagner;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2001.10.18.23.43.13;	author pwagner;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2001.10.16.23.34.05;	author pwagner;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2001.10.15.22.06.12;	author livesey;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2001.10.05.01.18.48;	author vsnyder;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2001.10.02.23.40.37;	author vsnyder;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2001.10.02.20.28.38;	author livesey;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2001.09.20.20.54.25;	author pwagner;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2001.09.19.23.36.52;	author pwagner;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2001.09.18.23.52.14;	author pwagner;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2001.09.14.23.31.50;	author pwagner;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2001.09.04.16.30.47;	author jonathan;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.08.22.22.07.28;	author pwagner;	state Exp;
+branches;
+next	;
+
+2.210.2.1
+date	2011.11.16.23.33.51;	author pwagner;	state Exp;
+branches;
+next	;
+
+2.77.2.1
+date	2003.02.22.00.47.26;	author vsnyder;	state Exp;
+branches;
+next	2.77.2.2;
+
+2.77.2.2
+date	2003.02.27.17.48.39;	author bill;	state Exp;
+branches;
+next	2.77.2.3;
+
+2.77.2.3
+date	2003.03.13.00.06.23;	author vsnyder;	state Exp;
+branches;
+next	2.77.2.4;
+
+2.77.2.4
+date	2003.04.08.23.41.28;	author jonathan;	state Exp;
+branches;
+next	;
+
+2.36.2.1
+date	2002.05.24.21.31.55;	author jonathan;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.272
+log
+@AllowEmptyGrids is a new field in Concatenate; defaults to pre-v5.1 behavior
+@
+text
+@# Copyright 2005, by the California Institute of Technology. ALL
+# RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+# commercial use must be negotiated with the Office of Technology Transfer
+# at the California Institute of Technology.
+
+# This software may be subject to U.S. export control laws. By accepting this
+# software, the user agrees to comply with all applicable U.S. export laws and
+# regulations. User has the responsibility to obtain export licenses, or other
+# export authority as may be required before exporting such information to
+# foreign countries or providing access to foreign persons.
+
+# You can put one or two names on a line, separated by spaces.
+
+# The first name is the parameter name WITHOUT ITS PREFIX.  The
+# prefix comes from the command line.
+
+# The second name is the entity's text -- e.g. a field name.  If
+# it's not present, the first name is used for the entity's text.
+
+# The intent is that you can sort the file, and it will produce the
+# statements in parameter-name order.
+
+# Blank lines don't count.  You can put comments anywhere (including
+# on a line with names) after # or !.
+
+# $Id: field_names.txt,v 2.271 2019/10/07 20:05:16 vsnyder Exp $
+
+a
+absorption
+additional
+adopt
+allBooleans
+allFiles
+allForwardModels
+allGriddedData
+allHessians
+allHGrids
+allL2PCs
+allLines
+allLinesForRadiometer
+allLinesInCatalog
+allMatrices
+allPFA
+allQuantityTemplates
+allRadiometers
+allSignals
+allSpectra
+allVectors
+allVectorTemplates
+allVGrids
+allowEmptyGrids
+allowMissing
+antennaPatterns
+apriori
+aprioriFraction # how much of result is apriori, in [0..1]
+aprioriPrecision
+aprioriScale
+AscDescMode
+ascii
+asPercentage
+atmos
+atmos_der
+atmos_second_der
+attrname
+attrvalue
+AuraInstrument
+autofill
+average
+avoidBrightObjects
+
+b
+badRange
+badValue
+baselineQuantity
+basisFraction
+bin
+binSelectors
+block
+Boolean
+boundarypressure
+boxCarMethod
+
+c
+callStack
+centerVertically
+checkpoint
+chunkDivide
+chunkNumber
+clean
+climatology
+cloud_der
+cloudChannels
+cloudHeight
+cloudRadiance
+cloudRadianceCutOff
+colChannels
+colInstances
+colQuantity
+colSurfaces
+columnAbundance
+columns
+columnScale
+command
+commandLine
+comment
+compareOverlaps
+convergence
+coordinate
+copy
+cost
+count
+covariance
+covSansReg # Compute covariance matrix without regularization
+crashBurn
+crashIfPhiNotMono
+create
+criteria
+criticalBands
+criticalModules
+criticalSignals
+
+dAbsDnc
+dAbsDnu
+dAbsDwc
+DACSfilterShapes
+date
+debug
+default_spectroscopy
+deferReading
+delay
+deleteGrids
+destination
+destroy
+destroyJacobian
+details
+diagnostics
+diagonal
+differentialScan
+dimList
+do_baseline
+do_conv
+do_freq_avg
+do_1d
+dontLatch
+dontMask
+dontPack
+downsample
+dumpFile
+dumpQuantities # of X during Newton iteration
+
+earthRadius
+ECRtoFOV
+eigenVectors
+evaluate
+exact
+exclude
+excludeBelowBottom
+excludePostOverlaps
+excludePriorOverlaps
+extendedAverage
+expandMask
+explicitValues
+expr
+extendible
+extinction
+
+fgrid
+field
+fieldECR
+# file # Already defined in Init_Spectroscopy_m
+fileName
+filterShapes
+flags
+forbidOverspill
+force
+forceSidebandFraction
+formula
+forwardModel
+fraction
+frequencies
+fromPrecision
+frqTol # for selecting Mie tables
+fuzz
+fwdModelExtra
+fwdModelIn
+fwdModelOut
+
+geocAltitudeQuantity
+geodAngle
+geodAlt
+geodLat
+geolocation
+globalAttributes
+gph
+gphQuantity
+geoHeight
+grid
+groupName
+
+h2oquantity
+h2oPrecisionQuantity
+hdfversion
+height
+heightRange
+hessian
+hgrid
+highBound # for the state vector during retrieval
+homeGeodAngle
+homeModule
+horizontal
+hRegOrders
+hRegQuants
+hRegWeights
+hRegWeightVec
+
+i_saturation
+ifAnyCrashedChunks
+ifMissingGMAO
+ignore
+ignoreGeolocation
+ignoreHessian # in quasi-linear forward model
+ignoreNegative
+ignoreQuantities
+ignoreTemplate
+ignoreZero
+igrf          # Earth magnetic field model
+incl_cld
+inclination
+inputBoolean
+inputFile
+inputType
+insetOverlaps
+instances
+integrationGrid
+integrationTime
+internalVGrid
+interpolate
+interpolationFactor
+intrinsic
+invert
+irregular
+isPrecision
+iterations
+
+jacobian
+
+keepChannels
+
+l2pc
+label
+lambda
+lambdamin
+length
+lengthScale
+level
+linearSideband
+lineCenter      # Spectroscopy parameter
+lineWidth       # Spectroscopy parameter
+lineWidth_TDep  # Spectroscopy parameter
+literal
+lockBins
+logBasis
+logSpace
+lon
+losAngle
+losqty
+losVel   # used for MakePFA
+lowBound # for the state vector during retrieval
+lowerOverlap
+lsb
+lsbFraction
+lsbLBLMolecules
+lsbPFAMolecules
+
+manipulation
+mark # CPU time mark for dump command
+mask
+matrix
+maxAddDiag # number of times to increase diagonal of failed Cholesky
+maxGap
+maxIterations
+maxJ # Maximum number of Jacobian evaluations in Retrieve
+maxLength
+maxLowerOverlap
+maxOrbY
+maxUpperOverlap
+maxValue
+measurements
+measurementSD
+memory
+message
+metaDataOnly
+metaName
+method
+model
+MieTables
+mif
+MIFTangent # ECRtoFOV or PTAN, default PTAN
+minChannels
+minNormQty
+minValue
+mirrorHessian
+missingValue
+moleculeDerivatives
+molecules
+moleculeSecondDerivatives
+multiplier
+muMin
+
+nabterms
+nameFragment
+nazimuthangles
+ncloudspecies
+negateSD
+nextChunk
+nmodelsurfs
+noAbsent # Don't dump absent blocks
+noChunks
+no_dup_mol
+noFineGrid
+noiseBandwidth
+noise
+noMagneticField
+noMIFs
+noPCFid
+normQty
+noSlaves
+noZeros
+nscatteringangles
+nsizebins
+number
+
+offsetAmount
+operation
+operational
+opticalDepth
+opticalDepthCutoff
+options
+orbitInclination
+origin
+outputCovariance
+outputOverlaps
+outputSD
+overlap
+overlaps
+oversample # oversampling factor for filter grid for PFA generation
+
+packed
+pathNorm # Normalize path length in the full forward model
+pause
+perturbation
+pfaData
+pfaFiles
+pfaNum # Dump a PFA table given its index in the database, gotten by pfaStru
+pfaStru
+phaseName
+phiTan
+phiWindow
+phiZero
+pointingGrids
+polarized
+polygon
+precision
+precisionFactor
+prefixSignal
+profile
+profileValues
+ptanQuantity
+
+QTMLevel
+quadrature
+quality
+quantities
+quantity
+quantityNames
+quantityType
+
+radianceQuantity
+rank
+ratioQuantity
+referenceMIF
+refGPHPrecisionquantity
+refGPHquantity
+reflector
+refract
+regAfter
+regApriori               ! Regularization is to apriori, not zero
+regOrders
+regQuants
+regular                  ! Magnetic field fill is stacked and coherent
+regWeights
+regWeightVec
+removeQuantities
+removeTemplate
+rename
+repairGeolocations
+replaceMissingValue
+reset
+resetAll
+resetSeed
+residualSupplied
+resolution
+retrievalExtra
+retrievalForwardModel
+retrievalIn
+reverse
+rhiPrecisionQuantity
+rhiQuantity
+rhsOut
+rowChannels
+rowInstances
+rowQuantity
+rows
+rowSurfaces
+
+saveObstructions
+scale
+scaleHeight
+scaleInsts      # for weighted least-squares fill
+scaleRatio      # for weighted least-squares fill
+scaleSurfs      # for weighted least-squares fill
+scanAverage
+scanLowerLimit
+scanUpperLimit
+scECI
+scVel
+scVelECI
+scVelECR
+sdname
+seed
+serial
+sgrid
+shape
+signal
+silent
+single
+singleMAF
+skipDirectWrites
+skipDirectWritesif
+skipL1BCheck
+skipMask
+skipValues
+skipOverlaps
+skipRetrieval
+skipRetrievalif
+solarTime
+solarZenith
+source
+sourceApriori
+sourceGrid
+sourceL2AUX
+sourceL2GP
+sourceMask
+sourceMatrix
+sourceQuantities
+sourceQuantity
+sourceType
+sourcevGrid
+spacing
+sparseQuantities
+species
+specificQuantities
+spectroscopy
+spect_der  # spectroscopy derivatives
+spread
+stamp
+stack
+stacked  # All heights at a particular instance have same Lat and Lon
+state
+stateMax # for the state vector during retrieval
+stateMin # for the state vector during retrieval
+status
+# step already in MLSSignals field set, so can't put it here, too
+stop
+stopWithError
+stride
+structure
+suffixLabel
+sum
+surface
+swath
+switches
+switchingMirror
+systemTemperature
+
+tangentGrid
+temp_der
+temperatureQuantity
+temperatures
+template
+tempPrecisionQuantity
+terms
+test
+text # literal text to dump in Dump command
+tGrid
+threshold # for removing snall Hessian values
+time
+tngtECI
+toAttribute
+toggles
+tolerance
+toleranceA Atolerance
+toleranceF Ftolerance
+toleranceR Rtolerance
+totalMatrixSizes
+totalPowerVector
+totalPowerQuantity
+totalVectorSizes
+transformMIFextinction
+transformMIFRHI
+trapezoid # for trapezoidal quadrature in the full forward model
+truncate # Keep prior MIFgeolocation in Forge
+truthExtra
+truthForwardModel
+truthIn
+TScat
+TScatMIF
+TScatMoleculeDerivatives
+TScatMolecules
+type
+
+unit
+upperOverlap
+usb
+usbFraction
+usbLBLMolecules
+usbPFAMolecules
+useTScat # Use TScat tables + linear model
+
+values
+variable
+vector
+vectorMask
+vectors
+velLin # Velocity linearization
+verbose
+vGrid
+vmrQuantity
+vRegOrders
+vRegQuants
+vRegWeights
+vRegWeightVec
+
+wait
+weightsVector
+where
+whereFill
+whereNotFill
+writeCounterMAF
+
+xGrid
+xStar
+
+yStar
+
+ZOT # Tells dump of HGrid whether to print QTM coordinates in ZOT or Geo
+
+# $Log: field_names.txt,v $
+# Revision 2.271  2019/10/07 20:05:16  vsnyder
+# Add trapezoid field to ForwardModel, for quadrature in FullForwardModel
+#
+# Revision 2.270  2019/04/24 19:15:25  vsnyder
+# Add MIFTangent field to forwardModel
+#
+# Revision 2.269  2018/10/17 23:05:04  pwagner
+# Dump command can take /pause field to wait for user input for, e.g. debugging
+#
+# Revision 2.268  2018/04/19 23:43:21  pwagner
+# Skip may take /nextChunk flag
+#
+# Revision 2.267  2017/12/15 18:31:32  mmadatya
+# Added geoHeight as new quantity template
+#
+# Revision 2.266  2017/07/27 16:36:51  pwagner
+# DirectWrite may place a vectors qties under a named group
+#
+# Revision 2.265  2017/07/10 18:48:28  pwagner
+# Transfer may /expandMask to all masking bits; may /skipValues to transfeer only mask; Fill may replaceMissingValue=
+#
+# Revision 2.264  2017/04/07 18:45:19  pwagner
+# sourceType used when choosing how to Fill ascenddescend
+#
+# Revision 2.263  2017/02/22 01:23:08  pwagner
+# New /resetAll switch clears all Masking bits
+#
+# Revision 2.262  2016/04/01 00:25:13  pwagner
+# Added fields for Execute command
+#
+# Revision 2.261  2016/02/26 02:06:19  vsnyder
+# Add QTM_Level and ZOT
+#
+# Revision 2.260  2016/01/29 01:08:57  vsnyder
+# Add Polygon
+#
+# Revision 2.259  2015/09/30 20:31:10  pwagner
+# With /noZeros field negativePrecision command now resets 0 to -1
+#
+# Revision 2.258  2015/09/22 01:58:21  vsnyder
+# Add Regular fill field
+#
+# Revision 2.257  2015/07/14 23:27:44  pwagner
+# may divert Dump commands to named dumpFile
+#
+# Revision 2.256  2015/04/21 17:43:33  pwagner
+# May DirectRead, DirectWrite files with /noPCFid even when usingPCF
+#
+# Revision 2.255  2015/03/31 21:00:15  pwagner
+# rank is a new field for DirectWrite-ing quantity values as, say, rank3
+#
+# Revision 2.254  2015/03/28 02:52:15  vsnyder
+# Added truncate field to Forge -- maybe should have been save
+#
+# Revision 2.253  2015/02/27 23:13:11  pwagner
+# May Dump global attributes
+#
+# Revision 2.252  2015/02/05 21:55:21  vsnyder
+# Add stacked and xGrid
+#
+# Revision 2.251  2014/10/06 23:49:29  pwagner
+# May now write added file attributes
+#
+# Revision 2.250  2014/09/29 20:18:14  vsnyder
+# Add NoMagneticField switch to ForwardModel
+#
+# Revision 2.249  2014/09/05 01:25:26  vsnyder
+# Add TotalMatrixSizes, TotalVectorSizes
+#
+# Revision 2.248  2014/08/26 23:23:09  pwagner
+# We may Dump memory, time; the /reset option may Dump changes in their use
+#
+# Revision 2.247  2014/05/31 00:20:41  pwagner
+# Ideas which may shrink memory footprint of griddedData
+#
+# Revision 2.246  2014/04/22 00:47:37  vsnyder
+# Move signals field to Init_Spectroscopy
+#
+# Revision 2.245  2014/04/07 18:02:36  pwagner
+# May specify AscDescMode when DirectWrite-ing swaths
+#
+# Revision 2.244  2013/11/18 22:25:36  pwagner
+# phase spec takes optional /debug /verbose fields
+#
+# Revision 2.243  2013/10/24 21:04:10  pwagner
+# /dontLatch in profile Fills retains profile heights as input
+#
+# Revision 2.242  2013/10/15 23:51:52  pwagner
+# May copy quantity values to a file global attribute
+#
+# Revision 2.241  2013/10/09 02:27:32  vsnyder
+# Add 'variable'
+#
+# Revision 2.240  2013/09/21 00:37:13  vsnyder
+# Add ChunkDivide field for Dump
+#
+# Revision 2.239  2013/09/17 23:03:49  pwagner
+# Added block, count, stride fields to select hyperslabs
+#
+# Revision 2.238  2013/08/29 19:36:45  pwagner
+# May Dump plain stack, too
+#
+# Revision 2.237  2013/08/17 00:19:27  pwagner
+# Fixed HGrids may have geolocations overridden
+#
+# Revision 2.236  2013/08/16 02:34:46  vsnyder
+# Remove Model_Plane_MIF
+#
+# Revision 2.235  2013/08/09 01:03:59  vsnyder
+# Add ReferenceMIF component
+#
+# Revision 2.234  2013/07/25 00:24:55  vsnyder
+# Replace TransformRHI with TransformMIFRHI
+#
+# Revision 2.233  2013/07/19 01:19:46  vsnyder
+# Add TransformRHI field
+#
+# Revision 2.232  2013/06/21 17:37:39  pwagner
+# /crashIfPhiNotMono flag added to ChunkDivide config; default is to just warn; removed -Snmono switch
+#
+# Revision 2.231  2013/06/20 22:24:12  vsnyder
+# Add Model_Plane_MIF
+#
+# Revision 2.230  2013/05/31 00:41:33  vsnyder
+# Add geolocation
+#
+# Revision 2.229  2013/05/17 00:48:49  pwagner
+# May constrain Transfer command command to quantitynames by r/t Boolean
+#
+# Revision 2.228  2013/05/07 22:01:30  pwagner
+# run-time Booleans can store arrays of values, formulas can evaluate named terms
+#
+# Revision 2.227  2013/04/24 00:35:47  pwagner
+# Added inputBoolean and made Reevaluate formulas more powerful
+#
+# Revision 2.226  2013/04/22 17:45:57  pwagner
+# Reevaluate may store a literal instead of a Boolean value
+#
+# Revision 2.225  2013/01/17 20:01:14  pwagner
+# Preparing new fields for Tranfer command
+#
+# Revision 2.224  2012/11/14 00:57:11  pwagner
+# Use dimList for choosing which of {csi} to average over
+#
+# Revision 2.223  2012/10/17 00:42:37  pwagner
+# removed unused sourcesGrid
+#
+# Revision 2.222  2012/10/09 00:48:30  pwagner
+# New ignoreTemplate, changed force meaning in Fill
+#
+# Revision 2.221  2012/08/30 23:01:59  vsnyder
+# Add lambdaMin
+#
+# Revision 2.220  2012/07/04 01:53:46  vsnyder
+# Add dumpQuantities field of retrieve spec
+#
+# Revision 2.219  2012/06/27 17:53:04  pwagner
+# May now Dump command line
+#
+# Revision 2.218  2012/06/07 22:42:59  pwagner
+# May remove Quantities, vectorTemplates
+#
+# Revision 2.217  2012/06/06 20:37:19  vsnyder
+# Add toggles
+#
+# Revision 2.216  2012/04/26 23:18:11  pwagner
+# Added chunkNumber
+#
+# Revision 2.215  2012/04/25 20:32:24  pwagner
+# Inserting missing profiles after chunk end now an option controlled by 'extendible' field
+#
+# Revision 2.214  2012/04/20 16:21:41  pwagner
+# May dump callStack from within l2cf
+#
+# Revision 2.213  2012/03/15 22:48:42  vsnyder
+# Add IGRF field name for dump command
+#
+# Revision 2.212  2012/03/07 02:01:08  vsnyder
+# Remove fwmState and fwmJacobian, add transformMIFextinction
+#
+# Revision 2.211  2011/12/21 01:37:01  vsnyder
+# Add fwmJacobian and fwmState
+#
+# Revision 2.210  2011/06/16 23:15:25  pwagner
+# Added /downsample to reduce resolution of gridded data when read
+#
+# Revision 2.209  2011/06/16 20:50:49  vsnyder
+# Uncomment expr
+#
+# Revision 2.208  2011/06/16 20:22:16  vsnyder
+# Add 'expr' as a comment for later use in Fill
+#
+# Revision 2.207  2011/06/02 19:24:34  pwagner
+# May dump allRadiometers
+#
+# Revision 2.206  2011/03/22 23:47:21  pwagner
+# May now reshape qty template field while filling explicitly
+#
+# Revision 2.205  2011/03/15 22:54:18  pwagner
+# /reverse flag reverses which elements are masked by Subset command
+#
+# Revision 2.204  2011/03/10 21:38:34  pwagner
+# May now specify time in explicit hGrids
+#
+# Revision 2.203  2010/08/17 16:37:33  yanovsky
+# Add atmos_second_der, moleculeSecondDerivatives
+#
+# Revision 2.202  2010/06/07 23:27:26  vsnyder
+# Add TScatMolecules, TScatMoleculeDerivatives, UseTScat.  Change name
+# of PhaseFrqTol to FrqTol.
+#
+# Revision 2.201  2010/04/22 23:36:00  pwagner
+# May fill num rads/MIF as a percentage
+#
+# Revision 2.200  2010/04/16 01:39:34  vsnyder
+# Added /allFiles and file fields to dump file database
+#
+# Revision 2.199  2010/03/26 23:11:57  vsnyder
+# Add ignoreHessian
+#
+# Revision 2.198  2010/03/24 20:52:09  vsnyder
+# Add AllHessians
+#
+# Revision 2.197  2010/02/25 18:37:13  pwagner
+# Adds support for new Hessian data type
+#
+# Revision 2.196  2009/10/27 22:10:36  pwagner
+# Added options field used by Dump, Diff commands
+#
+# Revision 2.195  2009/09/25 02:37:01  vsnyder
+# Add badValue, keepChannels
+#
+# Revision 2.194  2009/09/15 20:03:29  pwagner
+# Dump commands take boolean fields /stop, /stopWithError, /crashBurn
+#
+# Revision 2.193  2009/08/24 18:21:48  pwagner
+# May Fill H2O precision from RHI precision
+#
+# Revision 2.192  2009/08/17 16:37:39  pwagner
+# read_apriori may read DELP field and perform sum
+#
+# Revision 2.191  2009/04/13 20:45:57  pwagner
+# heightRange in explicit Fill can fill above or below specified height
+#
+# Revision 2.190  2008/12/18 18:01:03  pwagner
+# Added ability to dump all l2pcs (use with caution)
+#
+# Revision 2.189  2008/12/02 23:27:22  pwagner
+# May automatically label every quantity in a vector now
+#
+# Revision 2.188  2008/09/30 22:30:48  vsnyder
+# Remove AuxGrids -- didn't need them after all
+#
+# Revision 2.187  2008/08/21 23:42:46  vsnyder
+# Remove GenerateTScat from ForwardModel; use TScat on Sids
+#
+# Revision 2.186  2008/07/30 19:08:00  vsnyder
+# Add PhaseFrqTol field to ForwardModel spec
+#
+# Revision 2.185  2008/06/06 01:56:09  vsnyder
+# Add TScat
+#
+# Revision 2.184  2008/06/05 02:06:57  vsnyder
+# Added AuxGrid
+#
+# Revision 2.183  2008/05/22 00:25:43  pwagner
+# Added criticalBands to Chunk Divide
+#
+# Revision 2.182  2008/05/20 00:25:05  vsnyder
+# Add MieTables field for ForwardModelGlobal
+#
+# Revision 2.181  2008/04/26 00:39:31  livesey
+# Added total power stuff
+#
+# Revision 2.180  2007/12/07 01:12:14  pwagner
+# Lets us catch warnings and assign to runtime Booleans
+#
+# Revision 2.179  2007/11/08 03:24:39  vsnyder
+# Add stateMax and stateMin
+#
+# Revision 2.178  2007/11/07 03:10:48  vsnyder
+# Add pathNorm field to forward model config
+#
+# Revision 2.177  2007/10/09 00:32:05  pwagner
+# Added ability to dump masks of quantities, vectors
+#
+# Revision 2.176  2007/10/02 22:51:54  vsnyder
+# Add checkpoint stuff
+#
+# Revision 2.175  2007/08/23 22:17:05  pwagner
+# manipulation Fills can now use statistical functions
+#
+# Revision 2.174  2006/10/11 00:28:39  pwagner
+# Changes to permit new convergence ratio field in L2GP
+#
+# Revision 2.173  2006/09/30 00:02:03  pwagner
+# Added new things for chi^2 ratio measuring convergence
+#
+# Revision 2.172  2006/09/19 20:34:37  vsnyder
+# Add aprioriFraction
+#
+# Revision 2.171  2006/08/04 18:08:48  vsnyder
+# Add where field
+#
+# Revision 2.170  2006/08/02 19:52:08  vsnyder
+# Add destroy field for output command
+#
+# Revision 2.169  2006/07/19 22:27:47  vsnyder
+# Add allMatrices and Structure fields
+#
+# Revision 2.168  2006/06/15 20:39:59  vsnyder
+# Add PFA oversampling
+#
+# Revision 2.167  2006/06/12 16:28:25  pwagner
+# Added ability to dump Gridded Data
+#
+# Revision 2.166  2006/06/08 23:54:51  vsnyder
+# Add switches field to retrieve
+#
+# Revision 2.165  2006/05/27 03:00:08  vsnyder
+# Add a 'clean' option to the 'dump' command
+#
+# Revision 2.164  2006/05/11 19:37:32  pwagner
+# Added option to disallow duplicate molecules
+#
+# Revision 2.163  2006/04/03 23:51:13  livesey
+# Added surface
+#
+# Revision 2.162  2006/03/22 02:22:50  vsnyder
+# Add lsbLBLmolecules, useLBLmolecules
+#
+# Revision 2.161  2006/03/17 00:06:31  pwagner
+# Change default to allowing overlaps outside processingRange
+#
+# Revision 2.160  2006/03/13 23:42:37  pwagner
+# Added c=numeric type field to Fill via manipulation
+#
+# Revision 2.159  2006/03/07 00:49:42  pwagner
+# May dump Booleans
+#
+# Revision 2.158  2006/03/04 00:14:43  pwagner
+# Added things for runtime Booleans to selectively skip phases
+#
+# Revision 2.157  2006/02/16 16:20:02  pwagner
+# Added stamp
+#
+# Revision 2.156  2006/02/10 21:11:29  pwagner
+# May specify skipRetrivel for particular Phases
+#
+# Revision 2.155  2006/02/03 21:26:47  pwagner
+# ChunkDivide adds allowPostOverlaps field
+#
+# Revision 2.154  2006/01/05 01:01:37  pwagner
+# Added silent to suspend printing, e.g. via boolean
+#
+# Revision 2.153  2005/12/21 21:47:33  livesey
+# Added negateSD option
+#
+# Revision 2.152  2005/11/11 21:43:33  pwagner
+# Added avoidBrightObjects for use by FillFromL1B
+#
+# Revision 2.151  2005/09/23 23:39:16  pwagner
+# Added rename field to copy command
+#
+# Revision 2.150  2005/09/19 16:55:06  pwagner
+# Save Obstructions will allow OutputClose to faithfully replicate data gaps
+#
+# Revision 2.149  2005/09/16 23:38:04  vsnyder
+# Add spect_der field to ForwardModel
+#
+# Revision 2.148  2005/09/09 23:07:26  pwagner
+# Changes to allow pre-starttime overlaps in first chunk
+#
+# Revision 2.147  2005/08/19 23:24:55  pwagner
+# Allows HGrid, Copy commands in Output section
+#
+# Revision 2.146  2005/08/04 20:59:43  pwagner
+# Added more for copy command in Output section
+#
+# Revision 2.145  2005/08/03 18:05:39  vsnyder
+# Scan averaging, some spectroscopy derivative stuff
+#
+# Revision 2.144  2005/07/21 23:43:29  pwagner
+# Added extras for explicit fill fields where fillvalued
+#
+# Revision 2.143  2005/07/12 17:17:13  pwagner
+# Added ifMissingGMAO
+#
+# Revision 2.142  2005/06/30 22:42:54  livesey
+# Added residualSupplied
+#
+# Revision 2.141  2005/06/03 02:10:17  vsnyder
+# Add copyright notice, PFAStru, PFANum
+#
+# Revision 2.140  2005/05/02 23:00:40  vsnyder
+# Add PFAFile parameter
+#
+# Revision 2.139  2005/04/01 20:48:28  vsnyder
+# Add mark and text fields to dump command
+#
+# Revision 2.138  2005/01/27 21:07:53  vsnyder
+# Add [LU]SBPFAMolecules, delete PFAMolecules
+#
+# Revision 2.137  2004/12/31 02:42:21  vsnyder
+# Add 'file' field
+#
+# Revision 2.136  2004/12/13 20:16:41  vsnyder
+# Add allLines, allSignals, allSpectra and LosVel fields
+#
+# Revision 2.135  2004/11/08 21:56:35  livesey
+# Added badRange
+#
+# Revision 2.134  2004/10/30 00:26:47  vsnyder
+# Add 'spectroscopy' field to DumpCommand
+#
+# Revision 2.133  2004/10/13 02:22:57  livesey
+# Added geodAlt
+#
+# Revision 2.132  2004/09/27 20:10:08  livesey
+# Added baselineQuantity and quadrature
+#
+# Revision 2.131  2004/09/25 00:15:06  livesey
+# Added sourceMatrix
+#
+# Revision 2.130  2004/09/10 23:52:52  livesey
+# Added centerVertically
+#
+# Revision 2.129  2004/08/09 21:43:27  livesey
+# Added maxOrbY
+#
+# Revision 2.128  2004/07/17 02:28:19  vsnyder
+# Add dump for entire PFA database
+#
+# Revision 2.127  2004/06/08 19:24:48  vsnyder
+# Add tGrid field
+#
+# Revision 2.126  2004/05/29 02:47:57  vsnyder
+# Add some fields to the dump command
+#
+# Revision 2.125  2004/05/22 02:29:02  vsnyder
+# Add fields for PFAData
+#
+# Revision 2.124  2004/05/04 01:03:17  livesey
+# Added excludeBelowBottom flag for binmax/binmin fill.
+#
+# Revision 2.123  2004/05/01 04:02:35  vsnyder
+# Added pfaMolecules, sorted some
+#
+# Revision 2.122  2004/04/30 21:49:03  livesey
+# Added stuff for DisjointEquations command
+#
+# Revision 2.121  2004/04/29 01:26:31  livesey
+# Added regOrders etc. for Algebra
+#
+# Revision 2.120  2004/04/28 23:07:23  livesey
+# Added rhsOut
+#
+# Revision 2.119  2004/03/31 03:59:43  livesey
+# Added singleMAF option
+#
+# Revision 2.118  2004/03/24 01:02:43  livesey
+# Added date
+#
+# Revision 2.117  2004/03/22 18:25:50  livesey
+# Added allLinesInCatalog
+#
+# Revision 2.116  2004/03/10 22:19:05  livesey
+# Added resolution
+#
+# Revision 2.115  2004/02/17 23:25:59  pwagner
+# Added boxcarMethod
+#
+# Revision 2.114  2004/02/11 00:26:51  pwagner
+# Added quality and status
+#
+# Revision 2.113  2004/01/29 03:32:54  livesey
+# Added eigenVectors
+#
+# Revision 2.112  2004/01/23 19:07:25  livesey
+# Tidied up the adoption stuff
+#
+# Revision 2.111  2004/01/23 05:47:38  livesey
+# Added the adoption stuff
+#
+# Revision 2.110  2003/12/04 22:19:32  livesey
+# Added ability to fill from l2gpPrecision field
+#
+# Revision 2.109  2003/10/07 20:47:32  vsnyder
+# Remove redundant ignoreGeolocation
+#
+# Revision 2.108  2003/10/07 15:04:52  cvuu
+# add new logical name ignoreGeolocation
+#
+# Revision 2.107  2003/10/07 01:14:12  vsnyder
+# Add noAbsent field to dumpBlocks
+#
+# Revision 2.106  2003/10/06 17:54:38  livesey
+# Added ignoreGeolocation
+#
+# Revision 2.105  2003/09/11 23:14:29  livesey
+# Added xStar and yStar
+#
+# Revision 2.104  2003/08/14 20:25:11  livesey
+# Added exact
+#
+# Revision 2.103  2003/08/11 18:08:16  livesey
+# Added single
+#
+# Revision 2.102  2003/08/08 23:07:16  livesey
+# Added dontPack, and the rotateField fill stuff
+#
+# Revision 2.101  2003/07/16 01:06:36  vsnyder
+# Add DACS filter shapes
+#
+# Revision 2.100  2003/07/15 22:11:28  livesey
+# Added stuff for hybrid forward model
+#
+# Revision 2.99  2003/06/23 18:07:03  pwagner
+# Added metaDataOnly
+#
+# Revision 2.98  2003/06/20 19:39:06  pwagner
+# Added label field
+#
+# Revision 2.97  2003/06/06 01:06:36  livesey
+# Added grid
+#
+# Revision 2.96  2003/06/05 22:13:35  pwagner
+# Added criticalSignals to ChunkDivide Orbital
+#
+# Revision 2.95  2003/05/29 20:02:05  livesey
+# Added phiZero
+#
+# Revision 2.94  2003/05/29 16:44:06  livesey
+# Added reflector and switchingMirror
+#
+# Revision 2.93  2003/05/07 22:50:29  pwagner
+# Optionally may skipL1BCheck in ChunkDivide
+#
+# Revision 2.92  2003/05/05 23:00:34  livesey
+# Merged in feb03 newfwm branch
+#
+# Revision 2.91  2003/04/30 00:07:59  vsnyder
+# Add 'atmos' and 'frequencies' fields
+#
+# Revision 2.90  2003/04/17 23:08:28  pwagner
+# Added optional AuraInstrument field to l2gp apriori reads
+#
+# Revision 2.89  2003/04/11 23:14:49  livesey
+# Added force field
+#
+# Revision 2.88  2003/04/11 21:57:02  livesey
+# Added wmo tropopause stuff
+#
+# Revision 2.87  2003/04/04 22:02:22  livesey
+# Added stuff for updateMask
+#
+# Revision 2.86  2003/04/02 21:47:52  jonathan
+# remove cloud_fov
+#
+# Revision 2.85  2003/03/27 20:44:05  livesey
+# Added logSpace
+#
+# Revision 2.84  2003/03/07 03:18:06  livesey
+# Added basisFraction and minChannels
+#
+# Revision 2.83  2003/03/05 19:10:56  livesey
+# Added allowMissing
+#
+# Revision 2.82  2003/03/01 00:24:27  pwagner
+# Added missingValue as filed to reading Gridded data
+#
+# Revision 2.81  2003/02/27 17:45:11  bill
+# Added polarized
+#
+# Revision 2.80  2003/02/20 21:26:21  pwagner
+# Lets you read field dimList=x,y,.. w/ griddeddata
+#
+# Revision 2.79  2003/02/14 01:56:36  livesey
+# Added the 'additional' capability in subset
+#
+# Revision 2.78  2003/02/13 21:41:58  livesey
+# Added profile
+#
+# Revision 2.77.2.4  2003/04/08 23:41:28  jonathan
+# remove cloud_fov
+#
+# Revision 2.77.2.3  2003/03/13 00:06:23  vsnyder
+# Delete moleculesPol and moleculeDerivativesPol
+#
+# Revision 2.77.2.2  2003/02/27 17:48:39  bill
+# Added additional, dimlist, etc.
+#
+# Revision 2.80  2003/02/20 21:26:21  pwagner
+# Lets you read field dimList=x,y,.. w/ griddeddata
+#
+# Revision 2.79  2003/02/14 01:56:36  livesey
+# Added the 'additional' capability in subset
+#
+# Revision 2.78  2003/02/13 21:41:58  livesey
+# Added profile
+#
+# Revision 2.77  2003/02/12 02:11:04  livesey
+# Added extendedAverage
+#
+# Revision 2.76  2003/02/06 23:30:25  livesey
+# Added solarTime and solarZenith
+#
+# Revision 2.75  2003/02/06 22:04:48  vsnyder
+# Add f_moleculesPol, f_moleculeDerivativesPol, delete f_polarized
+#
+# Revision 2.74  2003/02/05 21:55:57  livesey
+# Added binSelectors
+#
+# Revision 2.73  2003/02/05 04:07:25  dwu
+# add cloudheight
+#
+# Revision 2.72  2003/01/30 17:28:45  jonathan
+# add logical incl_cld
+#
+# Revision 2.71  2003/01/29 01:48:29  vsnyder
+# Add 'polarized' field to forwardModel
+#
+# Revision 2.70  2003/01/18 02:37:09  livesey
+# Added quantityType
+#
+# Revision 2.69  2003/01/16 00:56:09  jonathan
+# add do_1d
+#
+# Revision 2.68  2003/01/14 22:15:07  dwu
+# make FlagCloud depend on both channels and cloudChannels
+#
+# Revision 2.67  2003/01/13 17:17:42  jonathan
+#  change cloud_width to i_saturation
+#
+# Revision 2.66  2003/01/11 01:02:39  livesey
+# Added maxValue
+#
+# Revision 2.65  2003/01/10 23:58:08  dwu
+# add cloudRadiance cloudRadianceCutOff
+#
+# Revision 2.64  2003/01/08 23:50:57  livesey
+# Added irregular and sparseQuantities
+#
+# Revision 2.63  2003/01/07 23:46:14  livesey
+# Added reset for subset, and stuff for magnetic model
+#
+# Revision 2.62  2003/01/06 20:12:57  livesey
+# Added new fields for upper/lower overlap stuff
+#
+# Revision 2.61  2002/11/27 19:26:04  livesey
+# Added stuff for manipulate fill
+#
+# Revision 2.60  2002/11/15 01:33:47  livesey
+# Added allLinesForRadiometer
+#
+# Revision 2.59  2002/10/25 23:55:56  livesey
+# Added offsetAmount
+#
+# Revision 2.58  2002/10/23 01:32:31  vsnyder
+# Add CovSansReg switch to retrieve spec
+#
+# Revision 2.57  2002/10/19 23:41:54  livesey
+# Added muMin
+#
+# Revision 2.56  2002/10/19 01:51:38  livesey
+# Added serial option for retrieve
+#
+# Revision 2.55  2002/10/17 00:16:40  vsnyder
+# Add lowBound and highBound fields for the Retrieve spec
+#
+# Revision 2.54  2002/10/16 20:19:13  mjf
+# Added GPH precision.
+#
+# Revision 2.53  2002/10/03 13:43:37  mjf
+# Renamed temperaturePrecisionQuantitiy to tempPrecisionQuantity to get
+# names < 31 long.
+#
+# Revision 2.52  2002/10/01 18:30:07  mjf
+# Added new quantitites for new Fill for RHi precision including T
+# error.
+#
+# Revision 2.51  2002/09/25 20:06:59  livesey
+# Added specificQuantities
+#
+# Revision 2.50  2002/09/24 21:37:37  livesey
+# Added minValue
+#
+# Revision 2.49  2002/09/23 22:14:19  vsnyder
+# Delete maxF field name
+#
+# Revision 2.48  2002/09/05 20:49:22  livesey
+# Added skipMask
+#
+# Revision 2.47  2002/08/26 20:00:57  livesey
+# Added instances
+#
+# Revision 2.46  2002/08/24 01:38:28  vsnyder
+# Implement horizontal regularization
+#
+# Revision 2.45  2002/08/22 00:06:51  vsnyder
+# Implement regularize-to-apriori
+#
+# Revision 2.44  2002/08/15 03:52:14  livesey
+# Added stuff for profile fill
+#
+# Revision 2.43  2002/08/08 22:03:19  vsnyder
+# Add regWeightVec field
+#
+# Revision 2.42  2002/08/03 01:14:41  vsnyder
+# Add regAfter to control Tikhonov before/after column scaling -- default false
+#
+# Revision 2.41  2002/07/17 06:02:36  livesey
+# New HDF5 l2pc stuff
+#
+# Revision 2.40  2002/06/26 01:26:30  livesey
+# Added 2D pressure guessing stuff
+#
+# Revision 2.39  2002/06/12 17:58:11  livesey
+# Added ascii
+#
+# Revision 2.38  2002/06/04 22:41:10  livesey
+# Added phiTan fill stuff
+#
+# Revision 2.37  2002/05/17 17:56:23  livesey
+# Stuff for sideband folding fills
+#
+# Revision 2.36  2002/05/14 00:28:44  livesey
+# Added noise bandwidth
+#
+# Revision 2.35  2002/05/07 20:26:27  livesey
+# Added WriteCounterMAF
+#
+# Revision 2.34  2002/05/07 01:01:25  vsnyder
+# Change regWeight to regWeights
+#
+# Revision 2.33  2002/05/06 21:38:01  livesey
+# Added forbid overspill
+#
+# Revision 2.32  2002/04/22 20:55:00  vsnyder
+# Compute and output the averaging kernel
+#
+# Revision 2.31  2002/04/18 18:40:17  pwagner
+# Can fill h2o from an rhiQuantity
+#
+# Revision 2.30  2002/04/04 16:32:42  livesey
+# Added negative error bar stuff
+#
+# Revision 2.29  2002/03/14 00:38:16  pwagner
+# Added scVelECI and scVelECR
+#
+# Revision 2.28  2002/03/07 17:17:15  livesey
+# Removed frqGap
+#
+# Revision 2.27  2002/02/22 01:07:58  pwagner
+# Added metaName
+#
+# Revision 2.26  2002/02/13 02:08:52  vsnyder
+# Add differentialScan
+#
+# Revision 2.25  2002/02/09 19:12:12  livesey
+# Added optical depth stuff
+#
+# Revision 2.24  2002/02/07 02:55:02  vsnyder
+# Add a 'mask' field to the 'setup' spec
+#
+# Revision 2.23  2002/01/24 17:45:21  pwagner
+# Added climatology, operational
+#
+# Revision 2.22  2002/01/23 21:49:17  pwagner
+# Added hdfversion
+#
+# Revision 2.21  2002/01/21 21:14:35  livesey
+# Added stuff for binSelector
+#
+# Revision 2.20  2002/01/18 00:24:46  livesey
+# Added packed field
+#
+# Revision 2.19  2001/12/12 00:59:50  zvi
+# Added stuff for regular hGrids
+#
+# Revision 2.18  2001/11/15 23:49:58  jonathan
+# rename DF_spectroscopy to default_spectroscopy
+#
+# Revision 2.17  2001/11/15 20:56:10  jonathan
+# add df_spectroscopy
+#
+# Revision 2.16  2001/11/09 00:04:09  livesey
+# New ChunkDivide stuff
+#
+# Revision 2.15  2001/10/31 22:00:28  livesey
+# Added phaseName
+#
+# Revision 2.14  2001/10/31 19:17:41  livesey
+# Added fGrid stuff
+#
+# Revision 2.13  2001/10/23 16:38:56  pwagner
+# new isPrecision field
+#
+# Revision 2.12  2001/10/18 23:43:13  pwagner
+# Added multiplier, vector
+#
+# Revision 2.11  2001/10/16 23:34:05  pwagner
+# intrinsic, resetseed, seed fields added to addnoise method
+#
+# Revision 2.10  2001/10/15 22:06:12  livesey
+# Added fields for smoothing
+#
+# Revision 2.9  2001/10/05 01:18:48  vsnyder
+# Added 'level' field for use in Snoop spec
+#
+# Revision 2.8  2001/10/02 23:40:37  vsnyder
+# Add F_Diagnostics
+#
+# Revision 2.7  2001/10/02 20:28:38  livesey
+# Added do_baseline
+#
+# Revision 2.6  2001/09/20 20:54:25  pwagner
+# Replaced ignoreMask with dontMask
+#
+# Revision 2.5  2001/09/19 23:36:52  pwagner
+# Added ignoreMask, ..Negative, ..Zero
+#
+# Revision 2.4  2001/09/18 23:52:14  pwagner
+# Replaced error with noise
+#
+# Revision 2.3  2001/09/14 23:31:50  pwagner
+# Added names needed to fill chi^2
+#
+# Revision 2.2  2001/09/04 16:30:47  jonathan
+# add cloud_fov
+#
+# Revision 2.1  2001/08/22 22:07:28  pwagner
+# First commit
+#
+@
+
+
+2.271
+log
+@Add trapezoid field to ForwardModel, for quadrature in FullForwardModel
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.270 2019/04/24 19:15:25 vsnyder Exp $
+d51 1
+d559 3
+@
+
+
+2.270
+log
+@Add MIFTangent field to forwardModel
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.269 2018/10/17 23:05:04 pwagner Exp $
+d510 1
+d558 3
+@
+
+
+2.269
+log
+@Dump command can take /pause field to wait for user input for, e.g. debugging
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.268 2018/04/19 23:43:21 pwagner Exp $
+d297 1
+d557 3
+@
+
+
+2.268
+log
+@Skip may take /nextChunk flag
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.267 2017/12/15 18:31:32 mmadatya Exp $
+d348 1
+d556 3
+@
+
+
+2.267
+log
+@Added geoHeight as new quantity template
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.266 2017/07/27 16:36:51 pwagner Exp $
+d313 1
+d555 3
+@
+
+
+2.266
+log
+@DirectWrite may place a vectors qties under a named group
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.265 2017/07/10 18:48:28 pwagner Exp $
+d195 1
+d554 3
+@
+
+
+2.265
+log
+@Transfer may /expandMask to all masking bits; may /skipValues to transfeer only mask; Fill may replaceMissingValue=
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.264 2017/04/07 18:45:19 pwagner Exp $
+d196 1
+d553 3
+@
+
+
+2.264
+log
+@sourceType used when choosing how to Fill ascenddescend
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.263 2017/02/22 01:23:08 pwagner Exp $
+d160 1
+d391 1
+d436 1
+d552 3
+@
+
+
+2.263
+log
+@New /resetAll switch clears all Masking bits
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.262 2016/04/01 00:25:13 pwagner Exp $
+d448 1
+d549 3
+@
+
+
+2.262
+log
+@Added fields for Execute command
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.261 2016/02/26 02:06:19 vsnyder Exp $
+d391 1
+d548 3
+@
+
+
+2.261
+log
+@Add QTM_Level and ZOT
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.260 2016/01/29 01:08:57 vsnyder Exp $
+d102 1
+d129 1
+d532 1
+d547 3
+@
+
+
+2.260
+log
+@Add Polygon
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.259 2015/09/30 20:31:10 pwagner Exp $
+d361 1
+d541 2
+d544 3
+@
+
+
+2.259
+log
+@With /noZeros field negativePrecision command now resets 0 to -1
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.258 2015/09/22 01:58:21 vsnyder Exp $
+d353 1
+d541 3
+@
+
+
+2.258
+log
+@Add Regular fill field
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.257 2015/07/14 23:27:44 pwagner Exp $
+d320 1
+d540 3
+@
+
+
+2.257
+log
+@may divert Dump commands to named dumpFile
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.256 2015/04/21 17:43:33 pwagner Exp $
+d273 1
+d378 1
+d539 3
+@
+
+
+2.256
+log
+@May DirectRead, DirectWrite files with /noPCFid even when usingPCF
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.255 2015/03/31 21:00:15 pwagner Exp $
+d145 1
+d537 3
+@
+
+
+2.255
+log
+@rank is a new field for DirectWrite-ing quantity values as, say, rank3
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.254 2015/03/28 02:52:15 vsnyder Exp $
+d315 1
+d536 3
+@
+
+
+2.254
+log
+@Added truncate field to Forge -- maybe should have been save
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.253 2015/02/27 23:13:11 pwagner Exp $
+d364 1
+d535 3
+@
+
+
+2.253
+log
+@May Dump global attributes
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.252 2015/02/05 21:55:21 vsnyder Exp $
+d490 1
+d534 3
+@
+
+
+2.252
+log
+@Add stacked and xGrid
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.251 2014/10/06 23:49:29 pwagner Exp $
+d188 1
+d533 3
+@
+
+
+2.251
+log
+@May now write added file attributes
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.250 2014/09/29 20:18:14 vsnyder Exp $
+d446 1
+d526 1
+d532 3
+@
+
+
+2.250
+log
+@Add NoMagneticField switch to ForwardModel
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.249 2014/09/05 01:25:26 vsnyder Exp $
+d63 2
+d530 3
+@
+
+
+2.249
+log
+@Add TotalMatrixSizes, TotalVectorSizes
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.248 2014/08/26 23:23:09 pwagner Exp $
+d310 1
+d528 3
+@
+
+
+2.248
+log
+@We may Dump memory, time; the /reset option may Dump changes in their use
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.247 2014/05/31 00:20:41 pwagner Exp $
+d479 1
+d482 1
+d527 3
+@
+
+
+2.247
+log
+@Ideas which may shrink memory footprint of griddedData
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.246 2014/04/22 00:47:37 vsnyder Exp $
+d279 1
+d525 3
+@
+
+
+2.246
+log
+@Move signals field to Init_Spectroscopy
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.245 2014/04/07 18:02:36 pwagner Exp $
+d125 2
+d524 3
+@
+
+
+2.245
+log
+@May specify AscDescMode when DirectWrite-ing swaths
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.244 2013/11/18 22:25:36 pwagner Exp $
+a408 1
+signals
+d522 3
+@
+
+
+2.244
+log
+@phase spec takes optional /debug /verbose fields
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.243 2013/10/24 21:04:10 pwagner Exp $
+d57 1
+d523 3
+@
+
+
+2.243
+log
+@/dontLatch in profile Fills retains profile heights as input
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.242 2013/10/15 23:51:52 pwagner Exp $
+d122 1
+d503 1
+d522 3
+@
+
+
+2.242
+log
+@May copy quantity values to a file global attribute
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.241 2013/10/09 02:27:32 vsnyder Exp $
+d135 2
+a137 1
+dontMask
+a449 1
+superDiagonal
+d520 3
+@
+
+
+2.241
+log
+@Add 'variable'
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.240 2013/09/21 00:37:13 vsnyder Exp $
+d469 1
+d520 3
+@
+
+
+2.240
+log
+@Add ChunkDivide field for Dump
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.239 2013/09/17 23:03:49 pwagner Exp $
+d496 1
+d519 3
+@
+
+
+2.239
+log
+@Added block, count, stride fields to select hyperslabs
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.238 2013/08/29 19:36:45 pwagner Exp $
+d83 1
+d518 3
+@
+
+
+2.238
+log
+@May Dump plain stack, too
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.237 2013/08/17 00:19:27 pwagner Exp $
+d74 1
+d105 1
+d444 1
+d517 3
+@
+
+
+2.237
+log
+@Fixed HGrids may have geolocations overridden
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.236 2013/08/16 02:34:46 vsnyder Exp $
+d434 1
+d514 3
+@
+
+
+2.236
+log
+@Remove Model_Plane_MIF
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.235 2013/08/09 01:03:59 vsnyder Exp $
+d176 1
+d246 2
+d513 3
+@
+
+
+2.235
+log
+@Add ReferenceMIF component
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.234 2013/07/25 00:24:55 vsnyder Exp $
+a279 1
+model_plane_MIF
+d510 3
+@
+
+
+2.234
+log
+@Replace TransformRHI with TransformMIFRHI
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.233 2013/07/19 01:19:46 vsnyder Exp $
+d350 1
+d511 3
+@
+
+
+2.233
+log
+@Add TransformRHI field
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.232 2013/06/21 17:37:39 pwagner Exp $
+d469 1
+a469 1
+transformRHI
+d510 3
+@
+
+
+2.232
+log
+@/crashIfPhiNotMono flag added to ChunkDivide config; default is to just warn; removed -Snmono switch
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.231 2013/06/20 22:24:12 vsnyder Exp $
+d469 1
+d510 3
+@
+
+
+2.231
+log
+@Add Model_Plane_MIF
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.230 2013/05/31 00:41:33 vsnyder Exp $
+d107 1
+d509 3
+@
+
+
+2.230
+log
+@Add geolocation
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.229 2013/05/17 00:48:49 pwagner Exp $
+d279 1
+d508 3
+@
+
+
+2.229
+log
+@May constrain Transfer command command to quantitynames by r/t Boolean
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.228 2013/05/07 22:01:30 pwagner Exp $
+d175 1
+d507 3
+@
+
+
+2.228
+log
+@run-time Booleans can store arrays of values, formulas can evaluate named terms
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.227 2013/04/24 00:35:47 pwagner Exp $
+d342 1
+d506 3
+@
+
+
+2.227
+log
+@Added inputBoolean and made Reevaluate formulas more powerful
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.226 2013/04/22 17:45:57 pwagner Exp $
+d139 1
+d505 3
+@
+
+
+2.226
+log
+@Reevaluate may store a literal instead of a Boolean value
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.225 2013/01/17 20:01:14 pwagner Exp $
+d207 1
+d504 3
+@
+
+
+2.225
+log
+@Preparing new fields for Tranfer command
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.224 2012/11/14 00:57:11 pwagner Exp $
+d237 1
+d503 3
+@
+
+
+2.224
+log
+@Use dimList for choosing which of {csi} to average over
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.223 2012/10/17 00:42:37 pwagner Exp $
+d201 1
+d413 1
+d502 3
+@
+
+
+2.223
+log
+@removed unused sourcesGrid
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.222 2012/10/09 00:48:30 pwagner Exp $
+a131 2
+dontSumHeights
+dontSumInstances
+d500 3
+@
+
+
+2.222
+log
+@New ignoreTemplate, changed force meaning in Fill
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.221 2012/08/30 23:01:59 vsnyder Exp $
+a414 1
+sourcesGrid
+d502 3
+@
+
+
+2.221
+log
+@Add lambdaMin
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.220 2012/07/04 01:53:46 vsnyder Exp $
+d203 1
+d503 3
+@
+
+
+2.220
+log
+@Add dumpQuantities field of retrieve spec
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.219 2012/06/27 17:53:04 pwagner Exp $
+d229 1
+d502 3
+@
+
+
+2.219
+log
+@May now Dump command line
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.218 2012/06/07 22:42:59 pwagner Exp $
+d136 1
+d501 3
+@
+
+
+2.218
+log
+@May remove Quantities, vectorTemplates
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.217 2012/06/06 20:37:19 vsnyder Exp $
+d97 1
+d500 3
+@
+
+
+2.217
+log
+@Add toggles
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.216 2012/04/26 23:18:11 pwagner Exp $
+d350 2
+d499 3
+@
+
+
+2.216
+log
+@Added chunkNumber
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.215 2012/04/25 20:32:24 pwagner Exp $
+d449 1
+d497 3
+@
+
+
+2.215
+log
+@Inserting missing profiles after chunk end now an option controlled by 'extendible' field
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.214 2012/04/20 16:21:41 pwagner Exp $
+d82 1
+d496 3
+@
+
+
+2.214
+log
+@May dump callStack from within l2cf
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.213 2012/03/15 22:48:42 vsnyder Exp $
+d146 1
+d495 3
+@
+
+
+2.213
+log
+@Add IGRF field name for dump command
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.212 2012/03/07 02:01:08 vsnyder Exp $
+d79 1
+d494 3
+@
+
+
+2.212
+log
+@Remove fwmState and fwmJacobian, add transformMIFextinction
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.211 2011/12/21 01:37:01 vsnyder Exp $
+d199 1
+d493 3
+@
+
+
+2.211
+log
+@Add fwmJacobian and fwmState
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.210 2011/06/16 23:15:25 pwagner Exp $
+a166 2
+fwmJacobian
+fwmState
+d451 1
+d492 3
+@
+
+
+2.210
+log
+@Added /downsample to reduce resolution of gridded data when read
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.209 2011/06/16 20:50:49 vsnyder Exp $
+d167 2
+d493 3
+@
+
+
+2.210.2.1
+log
+@Can Read GEOS5.7.2 meteorology; based on v3.33
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.210 2011/06/16 23:15:25 pwagner Exp $
+a314 1
+phaseFrqTol
+a490 3
+# Revision 2.210  2011/06/16 23:15:25  pwagner
+# Added /downsample to reduce resolution of gridded data when read
+#
+@
+
+
+2.209
+log
+@Uncomment expr
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.208 2011/06/16 20:22:16 vsnyder Exp $
+d132 1
+d491 3
+@
+
+
+2.208
+log
+@Add 'expr' as a comment for later use in Fill
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.207 2011/06/02 19:24:34 pwagner Exp $
+d143 1
+a143 1
+# expr # for Fill, maybe later
+d490 3
+@
+
+
+2.207
+log
+@May dump allRadiometers
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.206 2011/03/22 23:47:21 pwagner Exp $
+d143 1
+d490 3
+@
+
+
+2.206
+log
+@May now reshape qty template field while filling explicitly
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.205 2011/03/15 22:54:18 pwagner Exp $
+d45 1
+a130 1
+incl_cld
+d197 1
+d489 3
+@
+
+
+2.205
+log
+@/reverse flag reverses which elements are masked by Subset command
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.204 2011/03/10 21:38:34 pwagner Exp $
+d379 1
+d488 3
+@
+
+
+2.204
+log
+@May now specify time in explicit hGrids
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.203 2010/08/17 16:37:33 yanovsky Exp $
+d352 1
+d487 3
+@
+
+
+2.203
+log
+@Add atmos_second_der, moleculeSecondDerivatives
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.202 2010/06/07 23:27:26 vsnyder Exp $
+d438 1
+d486 3
+@
+
+
+2.202
+log
+@Add TScatMolecules, TScatMoleculeDerivatives, UseTScat.  Change name
+of PhaseFrqTol to FrqTol.
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.201 2010/04/22 23:36:00 pwagner Exp $
+d60 1
+d267 1
+d485 4
+@
+
+
+2.201
+log
+@May fill num rads/MIF as a percentage
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.200 2010/04/16 01:39:34 vsnyder Exp $
+d159 1
+a309 1
+phaseFrqTol # for selecting scattering phase function
+d448 2
+d458 1
+d483 3
+@
+
+
+2.200
+log
+@Added /allFiles and file fields to dump file database
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.199 2010/03/26 23:11:57 vsnyder Exp $
+d57 1
+d480 3
+@
+
+
+2.199
+log
+@Add ignoreHessian
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.198 2010/03/24 20:52:09 vsnyder Exp $
+d33 1
+d146 1
+d479 3
+@
+
+
+2.198
+log
+@Add AllHessians
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.197 2010/02/25 18:37:13 pwagner Exp $
+d189 1
+d432 1
+d477 3
+@
+
+
+2.197
+log
+@Adds support for new Hessian data type
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.196 2009/10/27 22:10:36 pwagner Exp $
+d35 1
+d475 3
+@
+
+
+2.196
+log
+@Added options field used by Dump, Diff commands
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.195 2009/09/25 02:37:01 vsnyder Exp $
+d172 1
+d256 1
+d356 1
+d474 3
+@
+
+
+2.195
+log
+@Add badValue, keepChannels
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.194 2009/09/15 20:03:29 pwagner Exp $
+d285 1
+d471 3
+@
+
+
+2.194
+log
+@Dump commands take boolean fields /stop, /stopWithError, /crashBurn
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.193 2009/08/24 18:21:48 pwagner Exp $
+d64 1
+d207 2
+d470 3
+@
+
+
+2.193
+log
+@May Fill H2O precision from RHI precision
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.192 2009/08/17 16:37:39 pwagner Exp $
+d97 1
+d402 1
+d467 3
+@
+
+
+2.192
+log
+@read_apriori may read DELP field and perform sum
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.191 2009/04/13 20:45:57 pwagner Exp $
+d338 1
+d465 3
+@
+
+
+2.191
+log
+@heightRange in explicit Fill can fill above or below specified height
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.190 2008/12/18 18:01:03 pwagner Exp $
+d402 1
+d464 3
+@
+
+
+2.190
+log
+@Added ability to dump all l2pcs (use with caution)
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.189 2008/12/02 23:27:22 pwagner Exp $
+d169 1
+a317 1
+range
+a444 1
+versionRange
+d463 3
+@
+
+
+2.189
+log
+@May automatically label every quantity in a vector now
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.188 2008/09/30 22:30:48 vsnyder Exp $
+d36 1
+d464 3
+@
+
+
+2.188
+log
+@Remove AuxGrids -- didn't need them after all
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.187 2008/08/21 23:42:46 vsnyder Exp $
+d400 1
+d463 3
+@
+
+
+2.187
+log
+@Remove GenerateTScat from ForwardModel; use TScat on Sids
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.186 2008/07/30 19:08:00 vsnyder Exp $
+a57 1
+auxGrid
+d462 3
+@
+
+
+2.186
+log
+@Add PhaseFrqTol field to ForwardModel spec
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.185 2008/06/06 01:56:09 vsnyder Exp $
+a157 1
+generateTScat
+d463 3
+@
+
+
+2.185
+log
+@Add TScat
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.184 2008/06/05 02:06:57 vsnyder Exp $
+d158 1
+d297 1
+d430 1
+d464 3
+@
+
+
+2.184
+log
+@Added AuxGrid
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.183 2008/05/22 00:25:43 pwagner Exp $
+d427 1
+d461 3
+@
+
+
+2.183
+log
+@Added criticalBands to Chunk Divide
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.182 2008/05/20 00:25:05 vsnyder Exp $
+d58 1
+d460 3
+@
+
+
+2.182
+log
+@Add MieTables field for ForwardModelGlobal
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.181 2008/04/26 00:39:31 livesey Exp $
+d98 1
+d459 3
+@
+
+
+2.181
+log
+@Added total power stuff
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.180 2007/12/07 01:12:14 pwagner Exp $
+d243 1
+d458 3
+@
+
+
+2.180
+log
+@Lets us catch warnings and assign to runtime Booleans
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.179 2007/11/08 03:24:39 vsnyder Exp $
+d419 2
+d446 1
+d457 3
+@
+
+
+2.179
+log
+@Add stateMax and stateMin
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.178 2007/11/07 03:10:48 vsnyder Exp $
+d238 1
+d454 3
+@
+
+
+2.178
+log
+@Add pathNorm field to forward model config
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.177 2007/10/09 00:32:05 pwagner Exp $
+d390 2
+d453 3
+@
+
+
+2.177
+log
+@Added ability to dump masks of quantities, vectors
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.176 2007/10/02 22:51:54 vsnyder Exp $
+d286 1
+d451 3
+@
+
+
+2.176
+log
+@Add checkpoint stuff
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.175 2007/08/23 22:17:05 pwagner Exp $
+d429 1
+d450 3
+@
+
+
+2.175
+log
+@manipulation Fills can now use statistical functions
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.174 2006/10/11 00:28:39 pwagner Exp $
+d73 1
+d140 1
+d429 1
+d449 3
+@
+
+
+2.174
+log
+@Changes to permit new convergence ratio field in L2GP
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.173 2006/09/30 00:02:03 pwagner Exp $
+d119 2
+d446 3
+@
+
+
+2.173
+log
+@Added new things for chi^2 ratio measuring convergence
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.172 2006/09/19 20:34:37 vsnyder Exp $
+d89 1
+d444 3
+@
+
+
+2.172
+log
+@Add aprioriFraction
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.171 2006/08/04 18:08:48 vsnyder Exp $
+d137 1
+d239 1
+d260 1
+d443 3
+@
+
+
+2.171
+log
+@Add where field
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.170 2006/08/02 19:52:08 vsnyder Exp $
+d50 1
+d440 3
+@
+
+
+2.170
+log
+@Add destroy field for output command
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.169 2006/07/19 22:27:47 vsnyder Exp $
+d429 1
+d439 3
+@
+
+
+2.169
+log
+@Add allMatrices and Structure fields
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.168 2006/06/15 20:39:59 vsnyder Exp $
+d105 1
+d438 3
+@
+
+
+2.168
+log
+@Add PFA oversampling
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.167 2006/06/12 16:28:25 pwagner Exp $
+d39 1
+d382 1
+d437 3
+@
+
+
+2.167
+log
+@Added ability to dump Gridded Data
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.166 2006/06/08 23:54:51 vsnyder Exp $
+d272 1
+d435 3
+@
+
+
+2.166
+log
+@Add switches field to retrieve
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.165 2006/05/27 03:00:08 vsnyder Exp $
+d34 1
+d434 3
+@
+
+
+2.165
+log
+@Add a 'clean' option to the 'dump' command
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.164 2006/05/11 19:37:32 pwagner Exp $
+d382 1
+d433 3
+@
+
+
+2.164
+log
+@Added option to disallow duplicate molecules
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.163 2006/04/03 23:51:13 livesey Exp $
+d70 1
+d432 3
+@
+
+
+2.163
+log
+@Added surface
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.162 2006/03/22 02:22:50 vsnyder Exp $
+d248 1
+d431 3
+@
+
+
+2.162
+log
+@Add lsbLBLmolecules, useLBLmolecules
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.161 2006/03/17 00:06:31 pwagner Exp $
+d378 1
+d430 3
+@
+
+
+2.161
+log
+@Change default to allowing overlaps outside processingRange
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.160 2006/03/13 23:42:37 pwagner Exp $
+d210 1
+d327 3
+d406 1
+d429 3
+@
+
+
+2.160
+log
+@Added c=numeric type field to Fill via manipulation
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.159 2006/03/07 00:49:42 pwagner Exp $
+a37 2
+allowPostOverlaps
+allowPriorOverlaps
+d122 2
+d424 3
+@
+
+
+2.159
+log
+@May dump Booleans
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.158 2006/03/04 00:14:43 pwagner Exp $
+d70 1
+d424 3
+@
+
+
+2.158
+log
+@Added things for runtime Booleans to selectively skip phases
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.157 2006/02/16 16:20:02 pwagner Exp $
+d32 1
+d423 3
+@
+
+
+2.157
+log
+@Added stamp
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.156 2006/02/10 21:11:29 pwagner Exp $
+d65 1
+d340 2
+d346 1
+d422 3
+@
+
+
+2.156
+log
+@May specify skipRetrivel for particular Phases
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.155 2006/02/03 21:26:47 pwagner Exp $
+d362 1
+d418 3
+@
+
+
+2.155
+log
+@ChunkDivide adds allowPostOverlaps field
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.154 2006/01/05 01:01:37 pwagner Exp $
+d342 1
+d417 3
+@
+
+
+2.154
+log
+@Added silent to suspend printing, e.g. via boolean
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.153 2005/12/21 21:47:33 livesey Exp $
+d37 1
+d416 3
+@
+
+
+2.153
+log
+@Added negateSD option
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.152 2005/11/11 21:43:33 pwagner Exp $
+d335 1
+d415 3
+@
+
+
+2.152
+log
+@Added avoidBrightObjects for use by FillFromL1B
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.151 2005/09/23 23:39:16 pwagner Exp $
+d239 1
+d414 3
+@
+
+
+2.151
+log
+@Added rename field to copy command
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.150 2005/09/19 16:55:06 pwagner Exp $
+d56 1
+d413 3
+@
+
+
+2.150
+log
+@Save Obstructions will allow OutputClose to faithfully replicate data gaps
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.149 2005/09/16 23:38:04 vsnyder Exp $
+d301 1
+d412 3
+@
+
+
+2.149
+log
+@Add spect_der field to ForwardModel
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.148 2005/09/09 23:07:26 pwagner Exp $
+d317 1
+d411 3
+@
+
+
+2.148
+log
+@Changes to allow pre-starttime overlaps in first chunk
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.147 2005/08/19 23:24:55 pwagner Exp $
+d353 1
+d410 3
+@
+
+
+2.147
+log
+@Allows HGrid, Copy commands in Output section
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.146 2005/08/04 20:59:43 pwagner Exp $
+d37 1
+d409 3
+@
+
+
+2.146
+log
+@Added more for copy command in Output section
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.145 2005/08/03 18:05:39 vsnyder Exp $
+d86 1
+d169 1
+d408 3
+@
+
+
+2.145
+log
+@Scan averaging, some spectroscopy derivative stuff
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.144 2005/07/21 23:43:29 pwagner Exp $
+d115 1
+d160 1
+d167 1
+d298 1
+d406 3
+@
+
+
+2.144
+log
+@Added extras for explicit fill fields where fillvalued
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.143 2005/07/12 17:17:13 pwagner Exp $
+d187 3
+d311 1
+a344 1
+spect_der
+d402 3
+@
+
+
+2.143
+log
+@Added ifMissingGMAO
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.142 2005/06/30 22:42:54 livesey Exp $
+d390 2
+d399 3
+@
+
+
+2.142
+log
+@Added residualSupplied
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.141 2005/06/03 02:10:17 vsnyder Exp $
+d159 1
+d397 3
+@
+
+
+2.141
+log
+@Add copyright notice, PFAStru, PFANum
+@
+text
+@d26 1
+a26 1
+# $Id: field_names.txt,v 2.140 2005/05/02 23:00:40 vsnyder Exp $
+d293 1
+d396 3
+@
+
+
+2.140
+log
+@Add PFAFile parameter
+@
+text
+@d1 11
+d26 1
+a26 1
+# $Id: field_names.txt,v 2.139 2005/04/01 20:48:28 vsnyder Exp $
+d257 2
+d395 3
+@
+
+
+2.139
+log
+@Add mark and text fields to dump command
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.138 2005/01/27 21:07:53 vsnyder Exp $
+d245 1
+d382 3
+@
+
+
+2.138
+log
+@Add [LU]SBPFAMolecules, delete PFAMolecules
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.137 2004/12/31 02:42:21 vsnyder Exp $
+d187 1
+d345 1
+d381 3
+@
+
+
+2.137
+log
+@Add 'file' field
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.136 2004/12/13 20:16:41 vsnyder Exp $
+d184 1
+a243 1
+pfaMolecules
+d359 1
+d379 3
+@
+
+
+2.136
+log
+@Add allLines, allSignals, allSpectra and LosVel fields
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.135 2004/11/08 21:56:35 livesey Exp $
+a111 1
+file
+d378 3
+@
+
+
+2.135
+log
+@Added badRange
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.134 2004/10/30 00:26:47 vsnyder Exp $
+d23 1
+d28 2
+d180 1
+d379 3
+@
+
+
+2.134
+log
+@Add 'spectroscopy' field to DumpCommand
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.133 2004/10/13 02:22:57 livesey Exp $
+d43 1
+d375 3
+@
+
+
+2.133
+log
+@Added geodAlt
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.132 2004/09/27 20:10:08 livesey Exp $
+d321 1
+d374 3
+@
+
+
+2.132
+log
+@Added baselineQuantity and quadrature
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.131 2004/09/25 00:15:06 livesey Exp $
+d125 1
+d373 3
+@
+
+
+2.131
+log
+@Added sourceMatrix
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.130 2004/09/10 23:52:52 livesey Exp $
+d43 1
+d252 1
+d372 3
+@
+
+
+2.130
+log
+@Added centerVertically
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.129 2004/08/09 21:43:27 livesey Exp $
+d309 1
+d370 3
+@
+
+
+2.129
+log
+@Added maxOrbY
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.128 2004/07/17 02:28:19 vsnyder Exp $
+d49 1
+d369 3
+@
+
+
+2.128
+log
+@Add dump for entire PFA database
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.127 2004/06/08 19:24:48 vsnyder Exp $
+d186 1
+d368 3
+@
+
+
+2.127
+log
+@Add tGrid field
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.126 2004/05/29 02:47:57 vsnyder Exp $
+d25 1
+d367 3
+@
+
+
+2.126
+log
+@Add some fields to the dump command
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.125 2004/05/22 02:29:02 vsnyder Exp $
+d317 1
+d332 1
+d366 3
+@
+
+
+2.125
+log
+@Add fields for PFAData
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.124 2004/05/04 01:03:17 livesey Exp $
+d21 2
+d25 4
+d364 3
+@
+
+
+2.124
+log
+@Added excludeBelowBottom flag for binmax/binmin fill.
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.123 2004/05/01 04:02:35 vsnyder Exp $
+d18 1
+a43 1
+i_saturation
+d66 3
+d134 1
+d227 1
+d320 1
+d342 1
+d358 3
+@
+
+
+2.123
+log
+@Added pfaMolecules, sorted some
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.122 2004/04/30 21:49:03 livesey Exp $
+d88 1
+d351 3
+@
+
+
+2.122
+log
+@Added stuff for DisjointEquations command
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.121 2004/04/29 01:26:31 livesey Exp $
+d71 1
+a220 1
+polarized
+d222 1
+d224 1
+a225 1
+phiTan
+d228 1
+d244 1
+a245 1
+refGPHPrecisionquantity
+d300 1
+a301 1
+specificQuantities
+d312 1
+d314 1
+a315 2
+template
+temp_der
+d350 3
+@
+
+
+2.121
+log
+@Added regOrders etc. for Algebra
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.120 2004/04/28 23:07:23 livesey Exp $
+d255 3
+d321 3
+d348 3
+@
+
+
+2.120
+log
+@Added rhsOut
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.119 2004/03/31 03:59:43 livesey Exp $
+d123 1
+d248 4
+d342 3
+@
+
+
+2.119
+log
+@Added singleMAF option
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.118 2004/03/24 01:02:43 livesey Exp $
+d251 1
+d337 3
+@
+
+
+2.118
+log
+@Added date
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.117 2004/03/22 18:25:50 livesey Exp $
+d271 1
+d336 3
+@
+
+
+2.117
+log
+@Added allLinesInCatalog
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.116 2004/03/10 22:19:05 livesey Exp $
+d67 1
+d335 3
+@
+
+
+2.116
+log
+@Added resolution
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.115 2004/02/17 23:25:59 pwagner Exp $
+d21 1
+d334 3
+@
+
+
+2.115
+log
+@Added boxcarMethod
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.114 2004/02/11 00:26:51 pwagner Exp $
+d247 1
+d333 3
+@
+
+
+2.114
+log
+@Added quality and status
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.113 2004/01/29 03:32:54 livesey Exp $
+d38 1
+d332 3
+@
+
+
+2.113
+log
+@Added eigenVectors
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.112 2004/01/23 19:07:25 livesey Exp $
+d230 1
+d288 1
+d331 3
+@
+
+
+2.112
+log
+@Tidied up the adoption stuff
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.111 2004/01/23 05:47:38 livesey Exp $
+d82 1
+d329 3
+@
+
+
+2.111
+log
+@Added the adoption stuff
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.110 2003/12/04 22:19:32 livesey Exp $
+a19 3
+adoptBoth
+adoptColumns
+adoptRows
+d328 3
+@
+
+
+2.110
+log
+@Added ability to fill from l2gpPrecision field
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.109 2003/10/07 20:47:32 vsnyder Exp $
+d19 4
+d38 1
+d331 3
+@
+
+
+2.109
+log
+@Remove redundant ignoreGeolocation
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.108 2003/10/07 15:04:52 cvuu Exp $
+d97 1
+d326 3
+@
+
+
+2.108
+log
+@add new logical name ignoreGeolocation
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.107 2003/10/07 01:14:12 vsnyder Exp $
+a123 1
+ignoreGeolocation
+d325 3
+@
+
+
+2.107
+log
+@Add noAbsent field to dumpBlocks
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.106 2003/10/06 17:54:38 livesey Exp $
+d124 1
+d326 3
+@
+
+
+2.106
+log
+@Added ignoreGeolocation
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.105 2003/09/11 23:14:29 livesey Exp $
+d187 1
+d325 3
+@
+
+
+2.105
+log
+@Added xStar and yStar
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.104 2003/08/14 20:25:11 livesey Exp $
+d122 1
+d324 3
+@
+
+
+2.104
+log
+@Added exact
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.103 2003/08/11 18:08:16 livesey Exp $
+d318 4
+d323 3
+@
+
+
+2.103
+log
+@Added single
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.102 2003/08/08 23:07:16 livesey Exp $
+d80 1
+d319 3
+@
+
+
+2.102
+log
+@Added dontPack, and the rotateField fill stuff
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.101 2003/07/16 01:06:36 vsnyder Exp $
+d258 1
+d318 3
+@
+
+
+2.101
+log
+@Add DACS filter shapes
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.100 2003/07/15 22:11:28 livesey Exp $
+d74 1
+d79 1
+d86 1
+d317 3
+@
+
+
+2.100
+log
+@Added stuff for hybrid forward model
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.99 2003/06/23 18:07:03 pwagner Exp $
+d62 1
+d314 3
+@
+
+
+2.99
+log
+@Added metaDataOnly
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.98 2003/06/20 19:39:06 pwagner Exp $
+d87 1
+d141 1
+d313 3
+@
+
+
+2.98
+log
+@Added label field
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.97 2003/06/06 01:06:36 livesey Exp $
+d161 1
+d311 3
+@
+
+
+2.97
+log
+@Added grid
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.96 2003/06/05 22:13:35 pwagner Exp $
+d135 1
+d310 3
+@
+
+
+2.96
+log
+@Added criticalSignals to ChunkDivide Orbital
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.95 2003/05/29 20:02:05 livesey Exp $
+d100 1
+d309 3
+@
+
+
+2.95
+log
+@Added phiZero
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.94 2003/05/29 16:44:06 livesey Exp $
+d60 1
+d308 3
+@
+
+
+2.94
+log
+@Added reflector and switchingMirror
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.93 2003/05/07 22:50:29 pwagner Exp $
+d204 1
+d307 3
+@
+
+
+2.93
+log
+@Optionally may skipL1BCheck in ChunkDivide
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.92 2003/05/05 23:00:34 livesey Exp $
+d221 1
+d271 1
+d306 3
+@
+
+
+2.92
+log
+@Merged in feb03 newfwm branch
+@
+text
+@d15 1
+a15 1
+# $Id$
+d246 2
+a248 1
+skipMask
+d303 4
+a306 1
+# $Log$
+@
+
+
+2.91
+log
+@Add 'atmos' and 'frequencies' fields
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.90 2003/04/17 23:08:28 pwagner Exp $
+a165 1
+moleculeDerivativesPol # want derivatives w.r.t. moleculesPol
+a166 1
+moleculesPol           # That have Zeeman-split lines
+d302 4
+a305 1
+# $Log: field_names.txt,v $
+d335 18
+@
+
+
+2.90
+log
+@Added optional AuraInstrument field to l2gp apriori reads
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.89 2003/04/11 23:14:49 livesey Exp $
+d26 1
+d89 1
+d305 3
+@
+
+
+2.89
+log
+@Added force field
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.88 2003/04/11 21:57:02 livesey Exp $
+d27 1
+d303 3
+@
+
+
+2.88
+log
+@Added wmo tropopause stuff
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.87 2003/04/04 22:02:22 livesey Exp $
+d83 1
+d302 3
+@
+
+
+2.87
+log
+@Added stuff for updateMask
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.86 2003/04/02 21:47:52 jonathan Exp $
+d117 1
+d301 3
+@
+
+
+2.86
+log
+@remove cloud_fov
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.85 2003/03/27 20:44:05 livesey Exp $
+d183 1
+d252 1
+d300 3
+@
+
+
+2.85
+log
+@Added logSpace
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.84 2003/03/07 03:18:06 livesey Exp $
+a37 1
+cloud_fov
+d298 3
+@
+
+
+2.84
+log
+@Added basisFraction and minChannels
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.83 2003/03/05 19:10:56 livesey Exp $
+d135 1
+d299 3
+@
+
+
+2.83
+log
+@Added allowMissing
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.82 2003/03/01 00:24:27 pwagner Exp $
+d31 1
+d157 1
+d298 3
+@
+
+
+2.82
+log
+@Added missingValue as filed to reading Gridded data
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.81 2003/02/27 17:45:11 bill Exp $
+d20 1
+d296 3
+@
+
+
+2.81
+log
+@Added polarized
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.80 2003/02/20 21:26:21 pwagner Exp $
+d156 1
+d295 3
+@
+
+
+2.80
+log
+@Lets you read field dimList=x,y,.. w/ griddeddata
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.79 2003/02/14 01:56:36 livesey Exp $
+d191 1
+d294 3
+@
+
+
+2.79
+log
+@Added the 'additional' capability in subset
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.78 2003/02/13 21:41:58 livesey Exp $
+d64 1
+d293 3
+@
+
+
+2.78
+log
+@Added profile
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.77 2003/02/12 02:11:04 livesey Exp $
+d18 1
+d292 3
+@
+
+
+2.77
+log
+@Added extendedAverage
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.76 2003/02/06 23:30:25 livesey Exp $
+d197 1
+d291 3
+@
+
+
+2.77.2.1
+log
+@Delete moleculesPol, moleculeDerivativesPol, add Polarized to ForwardModelConfig
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.77 2003/02/12 02:11:04 livesey Exp $
+d155 1
+d157 1
+a193 1
+polarized
+a289 3
+# Revision 2.77  2003/02/12 02:11:04  livesey
+# Added extendedAverage
+#
+@
+
+
+2.77.2.2
+log
+@Added additional, dimlist, etc.
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.80 2003/02/20 21:26:21 pwagner Exp $
+a17 1
+additional
+a62 1
+dimList
+a154 1
+moleculeDerivativesPol # want derivatives w.r.t. moleculesPol
+a155 1
+moleculesPol           # That have Zeeman-split lines
+a186 1
+polarized
+d192 1
+a195 1
+profile
+a288 9
+# Revision 2.80  2003/02/20 21:26:21  pwagner
+# Lets you read field dimList=x,y,.. w/ griddeddata
+#
+# Revision 2.79  2003/02/14 01:56:36  livesey
+# Added the 'additional' capability in subset
+#
+# Revision 2.78  2003/02/13 21:41:58  livesey
+# Added profile
+#
+@
+
+
+2.77.2.3
+log
+@Delete moleculesPol and moleculeDerivativesPol
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.77.2.2 2003/02/27 17:48:39 bill Exp $
+d157 1
+d159 1
+a293 3
+# Revision 2.77.2.2  2003/02/27 17:48:39  bill
+# Added additional, dimlist, etc.
+#
+@
+
+
+2.77.2.4
+log
+@remove cloud_fov
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.77.2.3 2003/03/13 00:06:23 vsnyder Exp $
+d36 1
+a291 3
+# Revision 2.77.2.3  2003/03/13 00:06:23  vsnyder
+# Delete moleculesPol and moleculeDerivativesPol
+#
+@
+
+
+2.76
+log
+@Added solarTime and solarZenith
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.75 2003/02/06 22:04:48 vsnyder Exp $
+d71 1
+d290 3
+@
+
+
+2.75
+log
+@Add f_moleculesPol, f_moleculeDerivativesPol, delete f_polarized
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.74 2003/02/05 21:55:57 livesey Exp $
+d235 2
+d289 3
+@
+
+
+2.74
+log
+@Added binSelectors
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.73 2003/02/05 04:07:25 dwu Exp $
+d154 1
+d156 1
+a192 1
+polarized
+d287 3
+@
+
+
+2.73
+log
+@add cloudheight
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.72 2003/01/30 17:28:45 jonathan Exp $
+d29 1
+d286 3
+@
+
+
+2.72
+log
+@add logical incl_cld
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.71 2003/01/29 01:48:29 vsnyder Exp $
+d36 1
+d285 3
+@
+
+
+2.71
+log
+@Add 'polarized' field to forwardModel
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.70 2003/01/18 02:37:09 livesey Exp $
+d65 1
+d284 3
+@
+
+
+2.70
+log
+@Added quantityType
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.69 2003/01/16 00:56:09 jonathan Exp $
+d188 1
+d283 3
+@
+
+
+2.69
+log
+@add do_1d
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.68 2003/01/14 22:15:07 dwu Exp $
+d196 1
+d282 3
+@
+
+
+2.68
+log
+@make FlagCloud depend on both channels and cloudChannels
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.67 2003/01/13 17:17:42 jonathan Exp $
+d64 1
+d281 3
+@
+
+
+2.67
+log
+@ change cloud_width to i_saturation
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.66 2003/01/11 01:02:39 livesey Exp $
+d35 1
+d280 3
+@
+
+
+2.66
+log
+@Added maxValue
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.65 2003/01/10 23:58:08 dwu Exp $
+d33 1
+a33 1
+cloud_width
+d279 3
+@
+
+
+2.65
+log
+@add cloudRadiance cloudRadianceCutOff
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.64 2003/01/08 23:50:57 livesey Exp $
+d140 1
+d279 3
+@
+
+
+2.64
+log
+@Added irregular and sparseQuantities
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.63 2003/01/07 23:46:14 livesey Exp $
+d35 2
+d278 3
+@
+
+
+2.63
+log
+@Added reset for subset, and stuff for magnetic model
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.62 2003/01/06 20:12:57 livesey Exp $
+d110 1
+d233 1
+d276 3
+@
+
+
+2.62
+log
+@Added new fields for upper/lower overlap stuff
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.61 2002/11/27 19:26:04 livesey Exp $
+d83 1
+d199 1
+d274 3
+@
+
+
+2.61
+log
+@Added stuff for manipulate fill
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.60 2002/11/15 01:33:47 livesey Exp $
+d101 1
+d123 1
+d134 2
+d255 1
+d272 3
+@
+
+
+2.60
+log
+@Added allLinesForRadiometer
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.59 2002/10/25 23:55:56 livesey Exp $
+d17 1
+d28 1
+d125 1
+d267 3
+@
+
+
+2.59
+log
+@Added offsetAmount
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.58 2002/10/23 01:32:31 vsnyder Exp $
+d17 1
+d264 3
+@
+
+
+2.58
+log
+@Add CovSansReg switch to retrieve spec
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.57 2002/10/19 23:41:54 livesey Exp $
+d155 1
+d263 3
+@
+
+
+2.57
+log
+@Added muMin
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.56 2002/10/19 01:51:38 livesey Exp $
+d45 1
+d262 3
+@
+
+
+2.56
+log
+@Added serial option for retrieve
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.55 2002/10/17 00:16:40 vsnyder Exp $
+d137 1
+d261 3
+@
+
+
+2.55
+log
+@Add lowBound and highBound fields for the Retrieve spec
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.54 2002/10/16 20:19:13 mjf Exp $
+d204 1
+d260 3
+@
+
+
+2.54
+log
+@Added GPH precision.
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.53 2002/10/03 13:43:37 mjf Exp $
+d85 1
+d117 1
+d259 3
+@
+
+
+2.53
+log
+@Renamed temperaturePrecisionQuantitiy to tempPrecisionQuantity to get
+names < 31 long.
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.52 2002/10/01 18:30:07 mjf Exp $
+d181 1
+d257 4
+@
+
+
+2.52
+log
+@Added new quantitites for new Fill for RHi precision including T
+error.
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.51 2002/09/25 20:06:59 livesey Exp $
+d227 1
+a227 1
+temperaturePrecisionQuantity
+d256 4
+@
+
+
+2.51
+log
+@Added specificQuantities
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.50 2002/09/24 21:37:37 livesey Exp $
+d81 1
+d227 1
+d256 3
+@
+
+
+2.50
+log
+@Added minValue
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.49 2002/09/23 22:14:19 vsnyder Exp $
+d216 1
+d254 3
+@
+
+
+2.49
+log
+@Delete maxF field name
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.48 2002/09/05 20:49:22 livesey Exp $
+d130 1
+d253 3
+@
+
+
+2.48
+log
+@Added skipMask
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.47 2002/08/26 20:00:57 livesey Exp $
+a119 1
+maxF
+d122 1
+a122 1
+maxJ
+d252 3
+@
+
+
+2.47
+log
+@Added instances
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.46 2002/08/24 01:38:28 vsnyder Exp $
+d204 1
+d253 3
+@
+
+
+2.46
+log
+@Implement horizontal regularization
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.45 2002/08/22 00:06:51 vsnyder Exp $
+d95 1
+d252 3
+@
+
+
+2.45
+log
+@Implement regularize-to-apriori
+@
+text
+@d15 1
+a15 1
+# $Id: field_names.txt,v 2.44 2002/08/15 03:52:14 livesey Exp $
+d86 4
+a181 4
+regOrders
+regQuants
+regWeights
+regWeightVec
+d243 4
+d251 3
+@
+
+
+2.44
+log
+@Added stuff for profile fill
+@
+text
+@d12 2
+a13 1
+# Blank lines don't count.
+d15 1
+a15 1
+# $Id: field_names.txt,v 2.43 2002/08/08 22:03:19 vsnyder Exp $
+d177 1
+d247 3
+@
+
+
+2.43
+log
+@Add regWeightVec field
+@
+text
+@d14 1
+a14 1
+# $Id: field_names.txt,v 2.42 2002/08/03 01:14:41 vsnyder Exp $
+d164 1
+d245 3
+@
+
+
+2.42
+log
+@Add regAfter to control Tikhonov before/after column scaling -- default false
+@
+text
+@d14 1
+a14 1
+# $Id: field_names.txt,v 2.41 2002/07/17 06:02:36 livesey Exp $
+d178 1
+d244 3
+@
+
+
+2.41
+log
+@New HDF5 l2pc stuff
+@
+text
+@d14 1
+a14 1
+# $Id: field_names.txt,v 2.40 2002/06/26 01:26:30 livesey Exp $
+d174 1
+d243 3
+@
+
+
+2.40
+log
+@Added 2D pressure guessing stuff
+@
+text
+@d14 1
+a14 1
+# $Id: field_names.txt,v 2.39 2002/06/12 17:58:11 livesey Exp $
+d106 1
+d130 1
+d242 3
+@
+
+
+2.39
+log
+@Added ascii
+@
+text
+@d14 1
+a14 1
+# $Id: field_names.txt,v 2.38 2002/06/04 22:41:10 livesey Exp $
+d145 1
+d157 1
+d240 3
+@
+
+
+2.38
+log
+@Added phiTan fill stuff
+@
+text
+@d14 1
+a14 1
+# $Id: field_names.txt,v 2.37 2002/05/17 17:56:23 livesey Exp $
+d20 1
+d238 3
+@
+
+
+2.37
+log
+@Stuff for sideband folding fills
+@
+text
+@d14 1
+a14 1
+# $Id: field_names.txt,v 2.36 2002/05/14 00:28:44 livesey Exp $
+d168 1
+d237 3
+@
+
+
+2.36
+log
+@Added noise bandwidth
+@
+text
+@d14 1
+a14 1
+# $Id: field_names.txt,v 2.35 2002/05/07 20:26:27 livesey Exp $
+d107 2
+d224 2
+d236 3
+@
+
+
+2.36.2.1
+log
+@*** empty log message ***
+@
+text
+@d14 1
+a14 1
+# $Id: field_names.txt,v 2.37 2002/05/17 17:56:23 livesey Exp $
+a106 2
+lsb
+lsbFraction
+a221 2
+usb
+usbFraction
+a231 6
+# Revision 2.37  2002/05/17 17:56:23  livesey
+# Stuff for sideband folding fills
+#
+# Revision 2.36  2002/05/14 00:28:44  livesey
+# Added noise bandwidth
+#
+@
+
+
+2.35
+log
+@Added WriteCounterMAF
+@
+text
+@d14 1
+a14 1
+# $Id: field_names.txt,v 2.34 2002/05/07 01:01:25 vsnyder Exp $
+d131 1
+d232 3
+@
+
+
+2.34
+log
+@Change regWeight to regWeights
+@
+text
+@d14 1
+a14 1
+# $Id: field_names.txt,v 2.33 2002/05/06 21:38:01 livesey Exp $
+d228 2
+d231 3
+@
+
+
+2.33
+log
+@Added forbid overspill
+@
+text
+@d14 1
+a14 1
+# $Id: field_names.txt,v 2.32 2002/04/22 20:55:00 vsnyder Exp $
+d167 1
+a167 1
+regWeight
+d229 3
+@
+
+
+2.32
+log
+@Compute and output the averaging kernel
+@
+text
+@d14 1
+a14 1
+# $Id: field_names.txt,v 2.31 2002/04/18 18:40:17 pwagner Exp $
+d65 1
+d229 3
+@
+
+
+2.31
+log
+@Can fill h2o from an rhiQuantity
+@
+text
+@d14 1
+a14 1
+# $Id: field_names.txt,v 2.30 2002/04/04 16:32:42 livesey Exp $
+d22 1
+d228 3
+@
+
+
+2.30
+log
+@Added negative error bar stuff
+@
+text
+@d14 1
+a14 1
+# $Id: field_names.txt,v 2.29 2002/03/14 00:38:16 pwagner Exp $
+d167 1
+d227 3
+@
+
+
+2.29
+log
+@Added scVelECI and scVelECR
+@
+text
+@d14 1
+a14 1
+# $Id: field_names.txt,v 2.28 2002/03/07 17:17:15 livesey Exp $
+d18 1
+d152 1
+d226 3
+@
+
+
+2.28
+log
+@Removed frqGap
+@
+text
+@d14 1
+a14 1
+# $Id: field_names.txt,v 2.27 2002/02/22 01:07:58 pwagner Exp $
+d176 2
+d224 3
+@
+
+
+2.27
+log
+@Added metaName
+@
+text
+@d14 1
+a14 1
+# $Id: field_names.txt,v 2.26 2002/02/13 02:08:52 vsnyder Exp $
+a65 1
+frqGap
+d222 3
+@
+
+
+2.26
+log
+@Add differentialScan
+@
+text
+@d14 1
+a14 1
+# $Id: field_names.txt,v 2.25 2002/02/09 19:12:12 livesey Exp $
+d115 1
+d223 3
+@
+
+
+2.25
+log
+@Added optical depth stuff
+@
+text
+@d14 1
+a14 1
+# $Id: field_names.txt,v 2.24 2002/02/07 02:55:02 vsnyder Exp $
+d44 1
+d49 1
+a49 1
+default_spectroscopy
+d222 3
+@
+
+
+2.24
+log
+@Add a 'mask' field to the 'setup' spec
+@
+text
+@d14 1
+a14 1
+# $Id: field_names.txt,v 2.23 2002/01/24 17:45:21 pwagner Exp $
+d136 1
+d221 3
+@
+
+
+2.23
+log
+@Added climatology, operational
+@
+text
+@d14 1
+a14 1
+# $Id: field_names.txt,v 2.22 2002/01/23 21:49:17 pwagner Exp $
+d105 1
+d220 3
+@
+
+
+2.22
+log
+@Added hdfversion
+@
+text
+@d14 1
+a14 1
+# $Id: field_names.txt,v 2.21 2002/01/21 21:14:35 livesey Exp $
+d24 1
+d133 1
+d219 3
+@
+
+
+2.21
+log
+@Added stuff for binSelector
+@
+text
+@d14 1
+a14 1
+# $Id: field_names.txt,v 2.20 2002/01/18 00:24:46 livesey Exp $
+d75 1
+d217 3
+@
+
+
+2.20
+log
+@Added packed field
+@
+text
+@d14 1
+a14 1
+# $Id: field_names.txt,v 2.19 2001/12/12 00:59:50 zvi Exp $
+d38 1
+d216 3
+@
+
+
+2.19
+log
+@Added stuff for regular hGrids
+@
+text
+@d14 1
+a14 1
+# $Id: field_names.txt,v 2.18 2001/11/15 23:49:58 jonathan Exp $
+d138 1
+d215 3
+@
+
+
+2.18
+log
+@rename DF_spectroscopy to default_spectroscopy
+@
+text
+@d14 1
+a14 1
+# $Id: field_names.txt,v 2.17 2001/11/15 20:56:10 jonathan Exp $
+d90 1
+d182 1
+d196 1
+d214 3
+@
+
+
+2.17
+log
+@add df_spectroscopy
+@
+text
+@d14 1
+a14 1
+# $Id: field_names.txt,v 2.16 2001/11/09 00:04:09 livesey Exp $
+d46 1
+a46 1
+df_spectroscopy
+d211 3
+@
+
+
+2.16
+log
+@New ChunkDivide stuff
+@
+text
+@d14 1
+a14 1
+# $Id: field_names.txt,v 2.15 2001/10/31 22:00:28 livesey Exp $
+d46 1
+d211 3
+@
+
+
+2.15
+log
+@Added phaseName
+@
+text
+@d14 1
+a14 1
+# $Id: field_names.txt,v 2.14 2001/10/31 19:17:41 livesey Exp $
+d40 1
+d75 2
+d102 1
+d105 1
+d119 1
+d123 1
+d133 1
+d162 2
+d210 3
+@
+
+
+2.14
+log
+@Added fGrid stuff
+@
+text
+@d14 1
+a14 1
+# $Id: field_names.txt,v 2.13 2001/10/23 16:38:56 pwagner Exp $
+d129 1
+d200 3
+@
+
+
+2.13
+log
+@new isPrecision field
+@
+text
+@d14 1
+a14 1
+# $Id: field_names.txt,v 2.12 2001/10/18 23:43:13 pwagner Exp $
+d54 1
+d199 3
+@
+
+
+2.12
+log
+@Added multiplier, vector
+@
+text
+@d14 1
+a14 1
+# $Id: field_names.txt,v 2.11 2001/10/16 23:34:05 pwagner Exp $
+d84 1
+d198 3
+@
+
+
+2.11
+log
+@intrinsic, resetseed, seed fields added to addnoise method
+@
+text
+@d14 1
+a14 1
+# $Id: field_names.txt,v 2.10 2001/10/15 22:06:12 livesey Exp $
+d106 1
+d191 1
+d197 3
+@
+
+
+2.10
+log
+@Added fields for smoothing
+@
+text
+@d14 1
+a14 1
+# $Id: field_names.txt,v 2.9 2001/10/05 01:18:48 vsnyder Exp $
+d82 1
+d142 1
+d153 1
+d195 3
+@
+
+
+2.9
+log
+@Added 'level' field for use in Snoop spec
+@
+text
+@d14 1
+a14 1
+# $Id: field_names.txt,v 2.8 2001/10/02 23:40:37 vsnyder Exp $
+a40 1
+decay
+d89 1
+d192 3
+@
+
+
+2.8
+log
+@Add F_Diagnostics
+@
+text
+@d14 1
+a14 1
+# $Id: field_names.txt,v 2.7 2001/10/02 20:28:38 livesey Exp $
+d90 1
+d192 3
+@
+
+
+2.7
+log
+@Added do_baseline
+@
+text
+@d14 1
+a14 1
+# $Id: field_names.txt,v 2.6 2001/09/20 20:54:25 pwagner Exp $
+d44 1
+d191 3
+@
+
+
+2.6
+log
+@Replaced ignoreMask with dontMask
+@
+text
+@d14 1
+a14 1
+# $Id: field_names.txt,v 2.5 2001/09/19 23:36:52 pwagner Exp $
+d45 1
+d190 3
+@
+
+
+2.5
+log
+@Added ignoreMask, ..Negative, ..Zero
+@
+text
+@d14 1
+a14 1
+# $Id: field_names.txt,v 2.4 2001/09/18 23:52:14 pwagner Exp $
+d47 1
+a73 1
+ignoreMask
+d189 3
+@
+
+
+2.4
+log
+@Replaced error with noise
+@
+text
+@d14 1
+a14 1
+# $Id: field_names.txt,v 2.3 2001/09/14 23:31:50 pwagner Exp $
+d73 3
+d189 3
+@
+
+
+2.3
+log
+@Added names needed to fill chi^2
+@
+text
+@d14 1
+a14 1
+# $Id: field_names.txt,v 2.2 2001/09/04 16:30:47 jonathan Exp $
+a48 1
+error
+d105 1
+d186 3
+@
+
+
+2.2
+log
+@add cloud_fov
+@
+text
+@d14 1
+a14 1
+# $Id: field_names.txt,v 2.1 2001/08/22 22:07:28 pwagner Exp $
+d49 1
+d96 1
+d186 3
+@
+
+
+2.1
+log
+@First commit
+@
+text
+@d14 1
+a14 1
+# $Id: field_names.txt,v 2.153 2001/08/08 23:49:25 pwagner Exp$
+d26 1
+d183 4
+a186 1
+# $Log: field_names.txt$
+@
+

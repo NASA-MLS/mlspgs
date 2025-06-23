@@ -1,0 +1,306 @@
+head	1.3;
+access;
+symbols
+	v5-02-NRT-19:1.3
+	v6-00:1.3
+	v5-02-NRT-18:1.3
+	v5-02:1.3
+	v5-01-NRT-17:1.3
+	v5-01-NRT-16:1.3
+	v5-01-NRT-15:1.3
+	v5-01-NRT-14:1.3
+	neuralnetworks-1-0:1.3.0.4
+	cfm-single-freq-0-1:1.3.0.2
+	v5-01:1.3
+	v5-00:1.3
+	v4-23-TA133:1.1.0.10
+	mus-emls-1-70:1.1.0.8
+	rel-1-0-englocks-work:1.1.0.6
+	VUMLS1-00:1.1
+	VPL1-00:1.1
+	V4-22-NRT-08:1.1
+	VAM1-00:1.1
+	V4-21:1.1.0.4
+	V4-13:1.1
+	V4-12:1.1
+	V4-11:1.1
+	V4-10:1.1
+	V3-43:1.1
+	M4-00:1.1
+	V3-41:1.1
+	V3-40-PlusGM57:1.1.0.2
+	V3-33:1.1
+	V3-31:1.1
+	V3-30-NRT-05:1.1
+	cfm-01-00:1.1
+	V3-30:1.1
+	V3-20:1.1
+	V3-10:1.1;
+locks; strict;
+comment	@% @;
+
+
+1.3
+date	2019.05.31.17.18.03;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2019.05.23.00.40.51;	author vsnyder;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2008.06.11.20.14.55;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@A workaround for building beamerclass
+@
+text
+@\makeatletter\let\ifGm@@compatii\relax\makeatother
+\documentclass[landscape]{beamer}
+\usepackage[nofancy,notoday]{rcsinfo}
+\usepackage{color}
+\usepackage{amsmath}
+\usepackage{multicol}
+\usepackage{graphicx}
+\usepackage{floatflt}
+
+\renewcommand{\b}{\mathbf}
+\newcommand{\T}{^{T}}
+\newcommand{\cs}[1]{$_{\text{#1}}$}
+\newcommand{\inv}{^{\mathrm -1}}
+\newcommand{\cp}[1]{$^{\text{#1}}$}
+\newcommand{\degsym}{\ensuremath{^\circ}}
+\newcommand{\newframe}[2][]{\begin{frame}\frametitle{\hfill #2 \hfil}}
+
+%
+% -----------------------------------------------------------------------------
+%
+\title{Variable projection and retrievals}
+\subtitle{wvs-072}
+\author{Van Snyder}
+\date{25 February 2008}
+\titlegraphic{\includegraphics[width=1.0in]{eos_mls_logo_onpink}}
+
+\begin{document}
+\sloppy
+%
+% -----------------------------------------------------------------------------
+%
+\begin{frame}
+ \titlepage
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe{Variable Projection}
+%
+The Variable Projection method to solve parameter estimation problems,
+described by Golub and Pereyra in {\bf SIAM J. Numer Anal 10}: 413-432 (1973),
+consists of observing that one can separate solution for parameters that appear
+linearly and nonlinearly.  The problem is to minimize the least-squares
+functional
+%
+\begin{equation}\label{ref}
+r(\mathbf{a},\alpha) = y_i - \sum_{j=1}^n a_j \phi_j(\alpha,t_i)
+\end{equation}
+%
+wherein $t_i$ are independent variables associated with the observations $y_i$,
+and $a_j$ and the $k$-dimensional vector $\alpha$ are parameters to be
+determined.
+
+Equivalently, in matrix form, we have
+%
+\begin{equation}\label{matrix}
+|| r(\mathbf{a},\alpha) ||^2_2 =
+ || \mathbf{y} - \mathbf{\Phi}(\alpha)\mathbf{a} ||^2_2\,.
+\end{equation}
+%
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe{Variable Projection}
+If we knew the nonlinear parameters $\alpha$, the linear parameters
+$\mathbf{a}$ could be obtained by solving the linear least-squares problem
+(\ref{ref}) for $\mathbf{a}$, giving
+%
+\begin{equation}
+\mathbf{a} = \mathbf{\Phi}(\alpha)^+ \mathbf{y}
+\end{equation}
+%
+where $\mathbf{\Phi}(\alpha)^+$ is the Moore-Penrose inverse of
+$\mathbf{\Phi}(\alpha)$.  Substituting this result into Equation (\ref{matrix}),
+gives
+%
+\begin{equation}
+\min_\alpha \frac12\, || r_2(\alpha) ||^2_2 =
+ \min_\alpha \frac12\, || \left( \mathbf{I} -
+  \mathbf{\Phi}(\alpha) \mathbf{\Phi}(\alpha)^+\right) \mathbf{y} ||^2_2\,.
+\end{equation}
+%
+This is the Variable Projection functional, so named because the matrix in
+parentheses is the projector on the orthogonal complement of the column space of
+$\mathbf{\Phi}$.  Its effect is that the linear parameters remain exactly on a
+solution consistent with the current estimate of the nonlinear ones throught the
+iterations.
+
+It has been proven theoretically that this substitution results in a
+better-characterized minimum of the LS functional in Equation (\ref{matrix}),
+and faster convergence to solutions for the nonlinear parameters.
+%
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe{Application to MLS retrieval}
+
+\small
+The radiative transfer equation as posed in MLS is
+%
+\begin{equation}\label{RT}
+\min_{T_i,f_i^k} ||\, \hat I - I \,||^2_2
+ = \min_{T_i,f_i^k} ||\, \hat I -
+    \sum_i \Delta B_i(T_i) \mathcal{T}_i(T_i,f_i^k)\, ||^2_2
+\end{equation}
+%
+wherein $\hat I$ is the measured radiance, $\Delta B_i$ is a nonlinear
+function of the temperature in the $i^\text{th}$ parcel of atmosphere
+along the line of sight, and $\log\mathcal{T}_i$ is a nonlinear function of
+temperature and a linear function of mixing ratios.
+
+If we were to solve initially for $\mathcal{T}_i$ instead of mixing ratios,
+this would be a variable-projection problem with a very much smaller set of
+nonlinear parameters ($\{T_i\}$) than the set for which we currently solve.
+
+Having $\log\mathcal{T}_i$ we could then solve, separately within each parcel,
+for mixing ratios and temperature, where again we have variable-projection
+problems.  This does not, however, give a least-squares solution for the mixing
+ratios, since their statistics now follow a log-normal distribution. 
+Furthermore, the two solutions for temperature follow different statistics, and
+so might differ.
+%
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe{Application to MLS retrieval (Cont.)}
+%
+Since temperature appears in both $\Delta B_i$ and $\mathcal{T}_i$, it would be
+necessary to alternate between the two solutions.  This is the method first
+described as NIPALS by Wold and Lyttkens in {\bf Bull. ISI 43}:29-51 (1969). 
+NIPALS is not as effective as full variable projection, but might well be more
+effective than the full nonlinear treatment we presently use.
+
+If a pure least-squares (instead of a log-normal) solution is desired, the
+result from this NIPALS-like iteration could be used as a starting estimate for
+the present method.  Experiments would be necessary to determine whether this
+results in faster (and better) convergence than the present method.
+
+In any case, the best we can hope for using this method is a small factor of
+improvement in run time, say 3-6, not the 1000 or so needed for SMLS.
+%
+\end{frame}
+%
+% ----------------------------------------------------------------------------
+%
+\end{document}
+% $Id: wvs-072.tex,v 1.2 2019/05/23 00:40:51 vsnyder Exp $
+@
+
+
+1.2
+log
+@Convert to beamer class
+@
+text
+@d1 1
+d150 1
+a150 1
+% $Id: wvs-072.tex,v 1.1 2008/06/11 20:14:55 vsnyder Exp $
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d1 1
+a1 4
+\documentclass[landscape]{slides}
+\usepackage[final]{epsfig}
+\usepackage[mathbf]{euler}
+\usepackage{optima}
+a2 1
+\usepackage{pstcol,pst-plot,pst-char,pst-node}
+a4 1
+\usepackage{moreverb}
+a5 3
+\usepackage[dvips,% pdftoolbar=false, pdfmenubar=false, 
+  pdfwindowui=false, pdffitwindow=true, pdfborder={0 0 0}]{hyperref}
+\usepackage[screen]{njlslides}
+d8 1
+a8 1
+%
+d15 2
+a16 13
+%
+\renewcommand{\footerfont}{\tiny}
+\renewcommand{\slidetitlefont}{\Large\bfseries}
+%
+\newenvironment{smallitemize}{\par\begin{small}\begin{itemize}\vspace{2mm}}%
+   {\end{itemize}\end{small}}
+%
+\newpsobject{showgrid}{psgrid}{subgriddiv=1,griddots=10,gridlabels=6pt}
+%
+\newlength{\halfwidth}
+\setlength{\halfwidth}{4.5in}
+%
+\hypersetup{pdfborder={0 0 0}}
+d23 2
+a24 3
+\talkdate{25 February 2008}
+\email{van.snyder@@jpl.nasa.gov}
+\logo{\begin{center}\epsfig{file=eos_mls_logo_onpink.eps,width=1.0in}\end{center}}
+a27 1
+\maketitle
+d31 7
+a37 1
+\slidetitle[Summary]{Variable Projection}
+d60 1
+a60 1
+\clearpage
+d64 1
+a64 1
+\slidetitle{Variable Projection}
+d93 1
+a93 1
+\clearpage
+d97 3
+a99 2
+\slidetitle[MLS]{Application to MLS retrieval}
+%
+d124 1
+a124 1
+\clearpage
+d128 1
+a128 1
+\slidetitle{Application to MLS retrieval (Cont.)}
+d144 1
+a144 1
+\clearpage
+d149 1
+a149 1
+% $Id: wvs-072r0.tex,v 1.1 2008/06/11 20:14:55 vsnyder Exp $
+@
+

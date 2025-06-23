@@ -1,0 +1,3054 @@
+head	2.27;
+access;
+symbols
+	V1-51:2.25
+	V1-50:2.25
+	V1-45:2.24
+	V1-44:2.24
+	V1-43:2.23
+	V1-32:2.23
+	V1-31:2.23
+	V1-30:2.22
+	V1-13:2.19
+	V1-12:2.19
+	V1-11:2.19
+	V1-10:2.19
+	newfwm-feb03:2.19.0.2
+	V1-04:2.4
+	V1-03:2.4
+	V1-02:2.4
+	JointForwardModel:2.6.0.2
+	V1-00:2.4
+	newfwm-sep01:1.21.0.2
+	V0-7:1.21
+	V0-5-Level2:1.20
+	V0-5-SIPS:1.9;
+locks; strict;
+comment	@# @;
+
+
+2.27
+date	2005.07.06.02.15.57;	author vsnyder;	state dead;
+branches;
+next	2.26;
+
+2.26
+date	2005.06.22.18.08.19;	author pwagner;	state Exp;
+branches;
+next	2.25;
+
+2.25
+date	2004.11.01.20.23.17;	author vsnyder;	state Exp;
+branches;
+next	2.24;
+
+2.24
+date	2004.07.07.19.42.11;	author vsnyder;	state Exp;
+branches;
+next	2.23;
+
+2.23
+date	2003.10.09.22.17.30;	author livesey;	state Exp;
+branches;
+next	2.22;
+
+2.22
+date	2003.05.17.01.17.03;	author vsnyder;	state Exp;
+branches;
+next	2.21;
+
+2.21
+date	2003.05.16.23.52.36;	author livesey;	state Exp;
+branches;
+next	2.20;
+
+2.20
+date	2003.05.05.23.00.26;	author livesey;	state Exp;
+branches;
+next	2.19;
+
+2.19
+date	2002.11.13.17.07.28;	author livesey;	state Exp;
+branches
+	2.19.2.1;
+next	2.18;
+
+2.18
+date	2002.10.08.17.08.05;	author pwagner;	state Exp;
+branches;
+next	2.17;
+
+2.17
+date	2002.10.04.23.46.21;	author vsnyder;	state Exp;
+branches;
+next	2.16;
+
+2.16
+date	2002.09.26.18.02.03;	author livesey;	state Exp;
+branches;
+next	2.15;
+
+2.15
+date	2002.09.11.17.43.39;	author pwagner;	state Exp;
+branches;
+next	2.14;
+
+2.14
+date	2002.09.10.17.05.52;	author livesey;	state Exp;
+branches;
+next	2.13;
+
+2.13
+date	2002.08.21.23.38.56;	author bill;	state Exp;
+branches;
+next	2.12;
+
+2.12
+date	2002.08.20.22.36.47;	author livesey;	state Exp;
+branches;
+next	2.11;
+
+2.11
+date	2002.07.29.23.16.32;	author bill;	state Exp;
+branches;
+next	2.10;
+
+2.10
+date	2002.07.29.21.42.02;	author bill;	state Exp;
+branches;
+next	2.9;
+
+2.9
+date	2002.07.23.22.26.52;	author livesey;	state Exp;
+branches;
+next	2.8;
+
+2.8
+date	2002.07.05.07.52.51;	author zvi;	state Exp;
+branches;
+next	2.7;
+
+2.7
+date	2002.06.28.11.06.49;	author zvi;	state Exp;
+branches;
+next	2.6;
+
+2.6
+date	2002.06.19.11.00.36;	author zvi;	state Exp;
+branches;
+next	2.5;
+
+2.5
+date	2002.05.22.19.43.03;	author zvi;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2002.02.16.06.50.01;	author zvi;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2002.02.15.22.51.58;	author livesey;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2002.01.27.08.37.50;	author zvi;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2001.11.08.00.10.49;	author livesey;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2001.09.17.20.26.27;	author livesey;	state Exp;
+branches;
+next	1.21;
+
+1.21
+date	2001.05.09.19.46.49;	author vsnyder;	state Exp;
+branches;
+next	1.20;
+
+1.20
+date	2001.05.03.22.26.29;	author vsnyder;	state Exp;
+branches;
+next	1.19;
+
+1.19
+date	2001.05.02.20.49.23;	author zvi;	state Exp;
+branches;
+next	1.18;
+
+1.18
+date	2001.05.01.00.42.54;	author zvi;	state Exp;
+branches;
+next	1.17;
+
+1.17
+date	2001.04.28.17.47.57;	author livesey;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2001.04.27.22.02.13;	author vsnyder;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2001.04.27.00.13.29;	author zvi;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2001.04.26.22.54.41;	author zvi;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2001.04.24.21.32.45;	author zvi;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2001.04.20.23.09.29;	author livesey;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2001.04.20.02.57.00;	author livesey;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2001.04.19.23.56.52;	author livesey;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2001.04.10.10.14.16;	author zvi;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2001.04.10.02.25.14;	author livesey;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2001.03.31.23.40.55;	author zvi;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2001.03.29.02.54.49;	author livesey;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2001.03.29.02.54.29;	author livesey;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2001.03.26.17.56.14;	author zvi;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2001.03.21.01.10.38;	author livesey;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2001.03.07.23.45.15;	author zvi;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.03.05.21.37.20;	author zvi;	state Exp;
+branches;
+next	;
+
+2.19.2.1
+date	2003.03.20.01.42.26;	author vsnyder;	state Exp;
+branches;
+next	2.19.2.2;
+
+2.19.2.2
+date	2003.03.21.02.47.03;	author vsnyder;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.27
+log
+@Replaced by Convolve_All_m.f90
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module NO_CONV_AT_ALL_M
+
+  implicit NONE
+  private
+  public :: No_Conv_At_All
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile: no_conv_at_all_m.f90,v $"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+contains
+  !-------------------------------------------------------------------------
+  ! This subroutine transfers the derivatives over from the internal
+  ! convolution grid to the users specified points. This module uses
+  ! cubic spline interpolation to do the job.
+
+  Subroutine No_Conv_At_All ( FwmConf, ForwardModelIn, ForwardModelExtra, maf, &
+           & Channel, WindowStart, WindowFinish, Temp, Ptan, Radiance, update, &
+           & t_deriv_flag, ptg_angles, chi_out, dhdz_out, dx_dh_out, Grids_f,  &
+           & I_raw, sbRatio, qtys, rowFlags, Jacobian, di_dt, di_df, ptan_Der )
+
+    use ForwardModelConfig, only: ForwardModelConfig_T, QtyStuff_T
+    use Load_sps_data_m, only: Grids_T
+    use MatrixModule_0, only: M_ABSENT, M_BANDED, M_FULL, CHECKFORSIMPLEBANDEDLAYOUT
+    use MatrixModule_1, only: CREATEBLOCK, FINDBLOCK, MATRIX_T
+    use MLSCommon, only: R8, RM
+    use MLSMessageModule, only: MLSMSG_Error, MLSMessage
+    use MLSNumerics, ONLY: INTERPOLATEVALUES
+    use VectorsModule, only: Vector_T, VectorValue_T
+
+    type (ForwardModelConfig_T) :: FWMCONF
+    type (Vector_T), intent(in) :: FORWARDMODELIN
+    type (Vector_T), intent(in) :: FORWARDMODELEXTRA
+
+    integer, intent(in) :: MAF
+    integer, intent(in) :: CHANNEL
+    integer, intent(in) :: WINDOWSTART
+    integer, intent(in) :: WINDOWFINISH
+    type(qtyStuff_T), intent(in) :: qtys(:)
+
+    type (VectorValue_T), intent(in) :: TEMP
+    type (VectorValue_T), intent(in) :: PTAN
+    type (VectorValue_T), intent(inout) :: RADIANCE
+
+    type (Grids_T), Intent(in) :: Grids_f
+
+    real(r8), intent(in) :: sbRatio
+    real(r8), intent(in) :: i_raw(:), ptg_angles(:), chi_out(:), dhdz_out(:), &
+                         &  dx_dh_out(:)
+    logical, intent(in), optional :: ptan_Der     ! Flag
+!
+! derivative of radiance w.r.t. temperature on chi_in
+    real(r8), optional, intent(in) :: di_dt(:,:)
+
+! mixing ratio derivatives or any parameter which behaves like VMR
+    real(r8), optional, intent(in) :: di_df(:,:)
+
+    type (matrix_t), intent(inout), optional :: Jacobian
+!
+    logical, dimension(:), pointer :: t_deriv_flag
+    logical, intent(in) :: Update       ! If set just add to radiacnes/derivatives
+
+    logical, dimension(:), intent(inout) :: rowFlags ! Flag to calling code
+
+    ! -----     Local Variables     ------------------------------------
+
+    integer:: No_t, No_tan_hts
+
+    integer :: jf, jz, nfz
+    integer :: is, k, nf, sv_f, sv_t_len
+    integer :: Row, col                     ! Matrix row & column indices
+    integer :: ptg_i,noPtan,noChans,Ind     ! Indices
+
+    real(r8) :: Rad( size(ptg_angles)), q
+    real(r8) :: SRad(ptan%template%noSurfs)
+    real(r8) :: di_dx(ptan%template%noSurfs)
+    real(r8) :: I_star_all(ptan%template%noSurfs)
+    logical :: my_ptan_der
+
+    ! -----  Begin the code  -------------------------------------------
+
+    my_ptan_der = .false.
+    if ( present ( ptan_der ) ) my_ptan_der = ptan_der
+    no_t = temp%template%noSurfs
+    no_tan_hts = size(ptg_angles)
+
+    noPtan = ptan%template%noSurfs
+    noChans = radiance%template%noChans
+
+! Ptan derivative
+
+    col = 0
+    if ( present (Jacobian) ) then
+      row = FindBlock ( Jacobian%row, radiance%index, maf )
+      rowFlags(row) = .TRUE.
+    end if
+
+! Of course, we might not care about ptan
+
+    if ( my_ptan_der ) then
+      col = FindBlock ( Jacobian%col, ptan%index, maf )
+
+      call InterpolateValues ( ptg_angles, i_raw, chi_out, i_star_all, &
+                             & METHOD='S', dyByDx=di_dx )
+
+! Use the chain rule to compute dI/dPtan on the output grid:
+
+      SRad(1:noPtan) = di_dx(1:noPtan) * dx_dh_out(1:noPtan)
+      SRad(1:noPtan) = SRad(1:noPtan) * dhdz_out(1:noPtan)
+
+      select case ( Jacobian%block(Row,col)%kind )
+        case ( m_absent )
+          call CreateBlock ( Jacobian, row, col, m_banded, noPtan*noChans, &
+                           & bandHeight=noChans, init=0.0_rm )
+        case ( m_banded )
+          call CheckForsimpleBandedLayout ( jacobian%block(row,col), noChans, &
+            & 'd[Radiance]/d[ptan] in no convolution case' )
+        case default
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'Wrong matrix type for ptan derivative' )
+      end select
+
+      if ( update ) then
+        do ptg_i = 1, noPtan
+          ind = channel + noChans*(ptg_i-1)
+          q = Jacobian%block(row,col)%values(ind,1)
+          Jacobian%block(row,col)%values(ind,1) = q + sbRatio * SRad(ptg_i)
+        end do
+      else
+        do ptg_i = 1, noPtan
+          ind = channel + noChans*(ptg_i-1)
+          Jacobian%block(row,col)%values(ind,1) = sbRatio * SRad(ptg_i)
+        end do
+      end if
+    else
+
+      call InterpolateValues ( ptg_angles,i_raw,chi_out,i_star_all,METHOD='S', &
+                             & extrapolate = 'C' )
+
+    end if
+
+    if ( update ) then
+      do ptg_i = 1, noPtan
+        ind = channel + noChans*(ptg_i-1)
+        radiance%values( ind, maf ) = &
+          & radiance%values(ind,maf) + sbRatio * i_star_all(ptg_i)
+      end do
+    else
+      do ptg_i = 1, noPtan
+        ind = channel + noChans*(ptg_i-1)
+        radiance%values( ind, maf ) = sbRatio * i_star_all(ptg_i)
+      end do
+    end if
+
+    if ( .not. present(Jacobian) ) return
+
+    if ( .not. any((/fwmConf%temp_der, &
+                   & fwmConf%atmos_der, &
+                   & fwmConf%spect_der/)) ) return
+
+    ! Now transfer the other fwd_mdl derivatives to the output pointing
+    ! values
+
+    ! ********************* Temperature derivatives ******************
+
+    ! check to determine if derivative is desired for this parameter
+
+    if ( fwmConf%temp_der ) then
+
+    ! Derivatives needed continue to process
+
+      sv_t_len = 0
+      Rad(1:) = 0.0
+      SRad(1:) = 0.0
+      k = no_tan_hts
+
+      do nf = windowStart, windowFinish
+
+        col = FindBlock ( Jacobian%col, temp%index, nf )
+        select case ( Jacobian%block(row,col)%kind )
+        case ( m_absent )
+          call CreateBlock ( Jacobian, row, col, m_full, init=0.0_rm )
+        case ( m_full )
+        case default
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'Wrong type for temperature derivative matrix' )
+        end select
+
+        do jz = 1, no_t
+
+! Check if derivatives are needed for this (zeta & phi) :
+
+          sv_t_len = sv_t_len + 1
+          if ( .NOT. t_deriv_flag(sv_t_len) ) cycle
+
+          Rad(1:k) = di_dt(1:k,sv_t_len)
+          call InterpolateValues ( ptg_angles, Rad, chi_out, Srad, 'S', &
+                                 & extrapolate = 'C' )
+          if ( update ) then
+            do ptg_i = 1, noPtan
+              ind = channel + noChans*(ptg_i-1)
+              q = Jacobian%block(row,col)%values(ind,jz)
+              Jacobian%block(row,col)%values(ind,jz) = q + sbRatio*Srad(ptg_i)
+            end do
+          else
+            do ptg_i = 1, noPtan
+              ind = channel + noChans*(ptg_i-1)
+              Jacobian%block(row,col)%values(ind,jz) = sbRatio*Srad(ptg_i)
+            end do
+          end if
+        end do
+
+      end do
+
+    end if
+
+    if ( fwmConf%atmos_der ) then
+
+      ! ****************** atmospheric derivatives ******************
+
+      do is = 1, size(qtys)
+        
+        if ( .not. qtys(is)%foundInFirst ) cycle
+
+        sv_f = grids_f%l_v(is-1)
+        nfz = (Grids_f%l_f(is) - Grids_f%l_f(is-1)) * &
+            & (Grids_f%l_z(is) - Grids_f%l_z(is-1))
+
+        do jf = Grids_f%windowStart(is), Grids_f%windowfinish(is)
+
+          col = FindBlock ( Jacobian%col, qtys(is)%qty%index, jf)
+          select case ( Jacobian%block(row,col)%kind )
+            case ( m_absent )
+              call CreateBlock ( Jacobian, row, col, m_full, init=0.0_rm )
+            case ( m_full )
+            case default
+              call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & 'Wrong type for atmospheric derivative matrix' )
+          end select
+
+          do k = 1, nfz
+
+! Check if derivatives are needed for this (zeta & phi) :
+
+            sv_f = sv_f + 1
+            if ( .NOT. Grids_f%deriv_flags(sv_f) ) cycle
+
+            Rad(1:no_tan_hts) = di_df(1:no_tan_hts,sv_f)
+            call InterpolateValues  ( ptg_angles, Rad, chi_out, Srad, 'L', &
+                                    & extrapolate = 'C' )
+            if ( update ) then
+              do ptg_i = 1, noPtan
+                ind = channel + noChans*(ptg_i-1)
+                q = Jacobian%block(row,col)%values(ind,k)
+                Jacobian%block(row,col)%values(ind,k) = q + sbRatio*Srad(ptg_i)
+              end do
+            else
+              do ptg_i = 1, noPtan
+                ind = channel + noChans*(ptg_i-1)
+                Jacobian%block(row,col)%values(ind,k) = sbRatio*Srad(ptg_i)
+              end do
+            end if
+
+          end do
+
+        end do
+
+      end do
+
+    end if
+
+  end subroutine No_Conv_At_All
+
+  logical function not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id: no_conv_at_all_m.f90,v 2.26 2005/06/22 18:08:19 pwagner Exp $"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
+end module NO_CONV_AT_ALL_M
+! $Log: no_conv_at_all_m.f90,v $
+! Revision 2.26  2005/06/22 18:08:19  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.25  2004/11/01 20:23:17  vsnyder
+! Moved QtyStuff_t and associated dump routine to ForwardModelConfig
+!
+! Revision 2.24  2004/07/07 19:42:11  vsnyder
+! Use new Init argument of CreateBlock
+!
+! Revision 2.23  2003/10/09 22:17:30  livesey
+! Added call to CheckForSimpleBandedLayout
+!
+! Revision 2.22  2003/05/17 01:17:03  vsnyder
+! Remove unused names, futzing
+!
+! Revision 2.21  2003/05/16 23:52:36  livesey
+! Removed obsolete spectag stuff
+!
+! Revision 2.20  2003/05/05 23:00:26  livesey
+! Merged in feb03 newfwm branch
+!
+! Revision 2.19.2.2  2003/03/21 02:47:03  vsnyder
+! Use an array of pointers to quantities instead of GetQuantityForForwardModel
+!
+! Revision 2.19.2.1  2003/03/20 01:42:26  vsnyder
+! Revise Grids_T structure
+!
+! Revision 2.19  2002/11/13 17:07:28  livesey
+! Bug fix, now takes forwardModelExtra
+!
+! Revision 2.18  2002/10/08 17:08:05  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.17  2002/10/04 23:46:21  vsnyder
+! Cosmetic changes
+!
+! Revision 2.16  2002/09/26 18:02:03  livesey
+! Now uses GetQuantityForForwardModel.
+!
+! Revision 2.15  2002/09/11 17:43:39  pwagner
+! Began changes needed to conform with matrix%values type move to rm from r8
+!
+! Revision 2.14  2002/09/10 17:05:52  livesey
+! Added update argument
+!
+! Revision 2.13  2002/08/21 23:38:56  bill
+!  added no extrapolate to interpolation calls
+!
+! Revision 2.12  2002/08/20 22:36:47  livesey
+! Moved uses inside routine
+!
+! Revision 2.11  2002/07/29 23:16:32  bill
+! got rid of debugging write
+!
+! Revision 2.10  2002/07/29 21:42:02  bill
+! no changes, just debugging
+!
+! Revision 2.9  2002/07/23 22:26:52  livesey
+! Added ptan_der handling
+!
+! Revision 2.8  2002/07/05 07:52:51  zvi
+! Fixing bug in filling the Jacobian for atmos
+!
+! Revision 2.7  2002/06/28 11:06:49  zvi
+! compute dI/dPtan using chain rule
+!
+! Revision 2.6  2002/06/19 11:00:36  zvi
+! changing from Cspline to InterpolateValues routine
+!
+! Revision 2.5  2002/05/22 19:43:03  zvi
+! Fix a bug in the mol. index loop
+!
+! Revision 2.4  2002/02/16 06:50:01  zvi
+! Some cosmetic code changes
+!
+! Revision 2.3  2002/02/15 22:51:58  livesey
+! Bug fix for case where no ptan derivative wanted
+!
+! Revision 2.2  2002/01/27 08:37:50  zvi
+! Adding Users selected coefficients for derivatives
+!
+! Revision 2.1  2001/11/08 00:10:49  livesey
+! Updated to include extinction
+!
+! Revision 2.0  2001/09/17 20:26:27  livesey
+! New forward model
+!
+! Revision 1.21  2001/05/09 19:46:49  vsnyder
+! Use new bandHeight argument of createBlock
+!
+! Revision 1.20  2001/05/03 22:26:29  vsnyder
+! Insert copyright notice, some cosmetic changes
+!
+! Revision 1.19  2001/05/02 20:49:23  zvi
+! Cleaning up code
+!
+! Revision 1.18  2001/05/01 00:42:54  zvi
+! Fixing phi window bug
+!
+! Revision 1.17  2001/04/28 17:47:57  livesey
+! Now accepts and sets rowFlags
+!
+! Revision 1.16  2001/04/27 22:02:13  vsnyder
+! Don't compute derivatives if Jacobian isn't present
+!
+! Revision 1.15  2001/04/27 00:13:29  zvi
+! Fixing some phiwindow bug
+!
+! Revision 1.14  2001/04/26 22:54:41  zvi
+! Fixing some phiwindow bug
+!
+! Revision 1.13  2001/04/24 21:32:45  zvi
+! fixing a dimension bug..
+!
+! Revision 1.12  2001/04/20 23:09:29  livesey
+! Now folds in place
+!
+! Revision 1.11  2001/04/20 02:57:00  livesey
+! Writes derivatives in matrix_t
+!
+! Revision 1.10  2001/04/19 23:56:52  livesey
+! New parameters
+!
+! Revision 1.9  2001/04/10 10:14:16  zvi
+! Fixing bug in convolve routines
+!
+! Revision 1.8  2001/04/10 02:25:14  livesey
+! Tidied up some code
+!
+! Revision 1.7  2001/03/31 23:40:55  zvi
+! Eliminate l2pcdim (dimension parameters) move to allocatable ..
+!
+! Revision 1.6  2001/03/29 02:54:49  livesey
+! Removed print statements
+!
+! Revision 1.5  2001/03/29 02:54:29  livesey
+! Changed assumed size to assumed shape
+!
+! Revision 1.4  2001/03/26 17:56:14  zvi
+! New codes to deal with dh_dt_path issue.. now being computed on the fly
+!
+! Revision 1.3  2001/03/21 01:10:38  livesey
+! Now gets Ptan from vector
+!
+! Revision 1.2  2001/03/07 23:45:15  zvi
+! Adding logical flags fro Temp, Atmos & Spect. derivatives
+!
+! Revision 1.1  2000/06/21 21:56:14  zvi
+! First version D.P.
+!
+! Revision 1.1  2000/05/04 18:12:05  vsnyder
+! Initial conversion to Fortran 90
+@
+
+
+2.26
+log
+@Reworded Copyright statement, moved rcs id
+@
+text
+@d20 1
+a20 1
+       "$RCSfile: $"
+d289 1
+a289 1
+       "$Id: $"
+d297 3
+@
+
+
+2.25
+log
+@Moved QtyStuff_t and associated dump routine to ForwardModelConfig
+@
+text
+@d1 10
+a10 2
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+d18 1
+a18 4
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
+       "$Id: no_conv_at_all_m.f90,v 2.24 2004/07/07 19:42:11 vsnyder Exp $"
+  character (len=len(idParm)), private :: Id = idParm
+d20 1
+a20 1
+       "$RCSfile: no_conv_at_all_m.f90,v $"
+d287 5
+d297 3
+@
+
+
+2.24
+log
+@Use new Init argument of CreateBlock
+@
+text
+@d12 1
+a12 1
+       "$Id: no_conv_at_all_m.f90,v 2.23 2003/10/09 22:17:30 livesey Exp $"
+d29 1
+a29 2
+    use ForwardModelConfig, only: ForwardModelConfig_T
+    use ForwardModelVectorTools, only: QtyStuff_T
+d287 3
+@
+
+
+2.23
+log
+@Added call to CheckForSimpleBandedLayout
+@
+text
+@d12 1
+a12 1
+       "$Id: no_conv_at_all_m.f90,v 2.22 2003/05/17 01:17:03 vsnyder Exp $"
+d122 1
+a122 2
+                           & bandHeight=noChans )
+          Jacobian%block(row,col)%values = 0.0_rm
+d190 1
+a190 2
+          call CreateBlock ( Jacobian, row, col, m_full )
+          Jacobian%block(row,col)%values = 0.0_rm
+d242 1
+a242 2
+              call CreateBlock ( Jacobian, row, col, m_full )
+              Jacobian%block(row,col)%values = 0.0_rm
+d288 3
+@
+
+
+2.22
+log
+@Remove unused names, futzing
+@
+text
+@d12 1
+a12 1
+       "$Id: no_conv_at_all_m.f90,v 2.21 2003/05/16 23:52:36 livesey Exp $"
+d32 1
+a32 1
+    use MatrixModule_0, only: M_ABSENT, M_BANDED, M_FULL
+d125 2
+a126 3
+          if ( Jacobian%block(row,col)%r2(1) /= noChans ) &
+            & call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'Wrong band height in matrix for ptan derivative' )
+d291 3
+@
+
+
+2.21
+log
+@Removed obsolete spectag stuff
+@
+text
+@d8 1
+a8 1
+  public :: NO_CONV_AT_ALL
+d12 1
+a12 1
+       "$Id$"
+d15 1
+a15 1
+       "$RCSfile$"
+d24 1
+a24 1
+  Subroutine no_conv_at_all ( FwmConf, ForwardModelIn, ForwardModelExtra, maf, &
+a28 1
+    use dump_0,only:dump
+a30 2
+    use Intrinsic, only: L_VMR
+    use L2PC_PFA_STRUCTURES, only: K_MATRIX_INFO
+d32 3
+a34 3
+    use MatrixModule_0, only: M_ABSENT, M_BANDED, M_FULL, DUMP
+    use MatrixModule_1, only: CREATEBLOCK, FINDBLOCK, MATRIX_T, DUMP
+    use MLSCommon, only: I4, R4, R8, RM
+a36 1
+    use String_Table, only: GET_STRING
+d43 1
+a43 1
+    integer, intent(in) :: maf
+d56 1
+a56 1
+    real(r8), intent(in) :: i_raw(:),ptg_angles(:),chi_out(:),dhdz_out(:), &
+a86 1
+    logical :: foundInFirst
+d112 1
+a112 1
+                             & METHOD='S',dyByDx=di_dx )
+a233 2
+        nfz = (Grids_f%l_f(is) - Grids_f%l_f(is-1)) * &
+            & (Grids_f%l_z(is) - Grids_f%l_z(is-1))
+d284 1
+a284 1
+  end subroutine NO_CONV_AT_ALL
+d291 4
+a294 1
+! $Log$
+@
+
+
+2.20
+log
+@Merged in feb03 newfwm branch
+@
+text
+@a39 1
+    use Molecules, only: spec_tags, L_EXTINCTION
+d299 3
+@
+
+
+2.19
+log
+@Bug fix, now takes forwardModelExtra
+@
+text
+@d12 1
+a12 1
+       "$Id: no_conv_at_all_m.f90,v 2.18 2002/10/08 17:08:05 pwagner Exp $"
+d15 1
+a15 1
+       "$RCSfile: no_conv_at_all_m.f90,v $"
+d26 2
+a27 3
+           & t_deriv_flag,ptg_angles,chi_out,dhdz_out,dx_dh_out,Grids_f,&
+           & I_raw,sbRatio,mol_cat_indx, rowFlags, Jacobian, di_dt, di_df, &
+           & ptan_Der )
+a28 3
+    use MLSCommon, only: I4, R4, R8, RM
+    use L2PC_PFA_STRUCTURES, only: K_MATRIX_INFO
+    use MLSNumerics, ONLY: INTERPOLATEVALUES
+a29 2
+    use VectorsModule, only: Vector_T, VectorValue_T
+    use ForwardModelVectorTools, only: GetQuantityForForwardModel
+d31 1
+d33 2
+a34 1
+    use String_Table, only: GET_STRING
+d37 3
+d41 2
+a42 2
+    use MLSMessageModule, only: MLSMSG_Error, MLSMessage
+    use Load_sps_data_m, only: Grids_T
+d52 1
+a52 1
+    integer, intent(in) :: mol_cat_indx(:)
+d82 1
+a82 3
+    type (VectorValue_T), pointer :: F  ! VMR quantity
+
+    integer :: jf, jz, no_mol
+d238 9
+a246 2
+      sv_f = 0
+      no_mol = size(mol_cat_indx)
+d248 1
+a248 1
+      do is = 1, no_mol
+d250 1
+a250 16
+        jz = mol_cat_indx(is)
+        f => GetQuantityForForwardModel(forwardModelIn, forwardModelExtra, &
+          & quantityType=l_vmr, molIndex=jz, &
+          & radiometer = radiance%template%radiometer, &
+          & noError=.true., config=fwmConf, foundInFirst=foundInFirst )
+        
+        if ( .not. associated(f) .or. .not. foundInFirst ) then
+          jf = Grids_f%windowfinish(is)-Grids_f%windowStart(is)+1
+          k = Grids_f%no_f(is) * Grids_f%no_z(is)
+          sv_f = sv_f + jf * k
+          cycle
+        end if
+!
+        do jf = Grids_f%windowStart(is), Grids_f%windowfinish(is)
+!
+          col = FindBlock ( Jacobian%col, f%index, jf)
+d261 1
+a261 1
+          do k = 1, Grids_f%no_f(is) * Grids_f%no_z(is)
+d285 1
+a285 1
+!
+d287 1
+a287 1
+!
+d299 10
+a308 1
+! $Log: no_conv_at_all_m.f90,v $
+@
+
+
+2.19.2.1
+log
+@Revise Grids_T structure
+@
+text
+@d12 1
+a12 1
+       "$Id: no_conv_at_all_m.f90,v 2.19 2002/11/13 17:07:28 livesey Exp $"
+d26 2
+a27 2
+           & t_deriv_flag, ptg_angles, chi_out, dhdz_out, dx_dh_out, Grids_f,  &
+           & I_raw, sbRatio, mol_cat_indx, rowFlags, Jacobian, di_dt, di_df,   &
+d85 1
+a85 1
+    integer :: jf, jz, no_mol, nfz
+d241 1
+d252 7
+a258 8
+        nfz = (Grids_f%l_f(is) - Grids_f%l_f(is-1)) * &
+            & (Grids_f%l_z(is) - Grids_f%l_z(is-1))
+        if ( .not. associated(f) .or. .not. foundInFirst ) cycle
+
+        sv_f = grids_f%l_v(is-1)
+        nfz = (Grids_f%l_f(is) - Grids_f%l_f(is-1)) * &
+            & (Grids_f%l_z(is) - Grids_f%l_z(is-1))
+
+d260 1
+a260 1
+
+d272 1
+a272 1
+          do k = 1, nfz
+d296 1
+a296 1
+
+d298 1
+a298 1
+
+a310 3
+! Revision 2.19  2002/11/13 17:07:28  livesey
+! Bug fix, now takes forwardModelExtra
+!
+@
+
+
+2.19.2.2
+log
+@Use an array of pointers to quantities instead of GetQuantityForForwardModel
+@
+text
+@d12 1
+a12 1
+       "$Id: no_conv_at_all_m.f90,v 2.19.2.1 2003/03/20 01:42:26 vsnyder Exp $"
+d27 2
+a28 1
+           & I_raw, sbRatio, qtys, rowFlags, Jacobian, di_dt, di_df, ptan_Der )
+d30 3
+d34 2
+a36 1
+    use ForwardModelVectorTools, only: QtyStuff_T
+d38 1
+a38 2
+    use L2PC_PFA_STRUCTURES, only: K_MATRIX_INFO
+    use Load_sps_data_m, only: Grids_T
+d41 1
+a41 1
+    use MLSCommon, only: I4, R4, R8, RM
+d43 1
+a43 4
+    use MLSNumerics, ONLY: INTERPOLATEVALUES
+    use Molecules, only: spec_tags, L_EXTINCTION
+    use String_Table, only: GET_STRING
+    use VectorsModule, only: Vector_T, VectorValue_T
+d53 1
+a53 1
+    type(qtyStuff_T), intent(in) :: qtys(:)
+d83 3
+a85 1
+    integer :: jf, jz, nfz
+d241 9
+a249 1
+      do is = 1, size(qtys)
+d253 1
+a253 1
+        if ( .not. qtys(is)%foundInFirst ) cycle
+d261 1
+a261 1
+          col = FindBlock ( Jacobian%col, qtys(is)%qty%index, jf)
+a310 3
+! Revision 2.19.2.1  2003/03/20 01:42:26  vsnyder
+! Revise Grids_T structure
+!
+@
+
+
+2.18
+log
+@Added idents to survive zealous Lahey optimizer
+@
+text
+@d12 1
+a12 1
+       "$Id: no_conv_at_all_m.f90,v 2.17 2002/10/04 23:46:21 vsnyder Exp $"
+d24 1
+a24 1
+  Subroutine no_conv_at_all ( FwmConf, ForwardModelIn, maf, &
+d47 1
+d95 1
+d247 1
+a247 1
+        f => GetQuantityForForwardModel(forwardModelIn, &
+d250 1
+a250 1
+          & noError=.true., config=fwmConf )
+d252 1
+a252 1
+        if ( .not. associated(f) ) then
+d311 3
+@
+
+
+2.17
+log
+@Cosmetic changes
+@
+text
+@d12 1
+a12 1
+       "$Id: no_conv_at_all_m.f90,v 2.16 2002/09/26 18:02:03 livesey Exp $"
+d16 1
+d303 4
+d309 3
+@
+
+
+2.16
+log
+@Now uses GetQuantityForForwardModel.
+@
+text
+@d12 1
+a12 1
+       "$Id: no_conv_at_all_m.f90,v 2.15 2002/09/11 17:43:39 pwagner Exp $"
+d17 1
+a17 1
+CONTAINS
+d44 2
+a45 2
+    Type (ForwardModelConfig_T) :: FWMCONF
+    Type (Vector_T), intent(in) :: FORWARDMODELIN
+d47 9
+a55 9
+    Integer, INTENT(IN) :: maf
+    Integer, INTENT(IN) :: CHANNEL
+    Integer, INTENT(IN) :: WINDOWSTART
+    Integer, INTENT(IN) :: WINDOWFINISH
+    Integer, INTENT(IN) :: mol_cat_indx(:)
+
+    Type (VectorValue_T), INTENT(IN) :: TEMP
+    Type (VectorValue_T), INTENT(IN) :: PTAN
+    Type (VectorValue_T), INTENT(INOUT) :: RADIANCE
+d57 1
+a57 1
+    Type (Grids_T), INTENT(IN) :: Grids_f
+d59 2
+a60 2
+    Real(r8), INTENT(IN) :: sbRatio
+    Real(r8), INTENT(IN) :: i_raw(:),ptg_angles(:),chi_out(:),dhdz_out(:), &
+d65 1
+a65 1
+    Real(r8), OPTIONAL, INTENT(IN) :: di_dt(:,:)
+d68 1
+a68 1
+    Real(r8), OPTIONAL, INTENT(IN) :: di_df(:,:)
+d70 1
+a70 1
+    Type (Matrix_T), INTENT(INOUT), OPTIONAL :: Jacobian
+d72 1
+a72 1
+    Logical, DIMENSION(:), pointer :: t_deriv_flag
+d75 1
+a75 1
+    Logical, DIMENSION(:), INTENT(INOUT) :: rowFlags ! Flag to calling code
+d79 1
+a79 1
+    Integer:: No_t, No_tan_hts
+d81 1
+a81 1
+    Type (VectorValue_T), pointer :: F  ! VMR quantity
+d83 9
+a91 9
+    Integer :: jf, jz, no_mol, l
+    Integer :: is, k, nf, sv_f, sv_t_len
+    Integer :: Row, col                     ! Matrix row & column indices
+    Integer :: ptg_i,noPtan,noChans,Ind     ! Indices
+
+    Real(r8) :: Rad( size(ptg_angles)), q
+    Real(r8) :: SRad(ptan%template%noSurfs)
+    Real(r8) :: di_dx(ptan%template%noSurfs)
+    Real(r8) :: I_star_all(ptan%template%noSurfs)
+d107 1
+a107 1
+    if ( PRESENT (Jacobian) ) then
+d110 1
+a110 1
+    endif
+d117 2
+a118 2
+      Call InterpolateValues(ptg_angles, i_raw, chi_out, i_star_all, &
+                           & METHOD='S',dyByDx=di_dx)
+d131 3
+d135 1
+a135 1
+          call MLSMessage ( MLSMSG_Error, ModuleName,&
+d153 2
+a154 2
+      CALL InterpolateValues(ptg_angles,i_raw,chi_out,i_star_all,METHOD='S', &
+        & extrapolate = 'C')
+d156 1
+a156 1
+    endif
+d171 1
+a171 1
+    if ( .not. PRESENT(Jacobian) ) Return
+d173 1
+a173 1
+    if ( .not. ANY((/fwmConf%temp_der, &
+d175 1
+a175 1
+                   & fwmConf%spect_der/)) ) Return
+d211 1
+a211 1
+          if(.NOT. t_deriv_flag(sv_t_len)) CYCLE
+d214 2
+a215 2
+          CALL InterpolateValues ( ptg_angles, Rad, chi_out, Srad, 'S', &
+          & extrapolate = 'C')
+d249 1
+a249 1
+        if(.not. associated(f) ) then
+d253 2
+a254 2
+          CYCLE
+        endif
+d256 1
+a256 1
+        DO jf = Grids_f%windowStart(is), Grids_f%windowfinish(is)
+d269 1
+a269 1
+          DO k = 1, Grids_f%no_f(is) * Grids_f%no_z(is)
+d274 1
+a274 1
+            if(.NOT. Grids_f%deriv_flags(sv_f) ) CYCLE
+d277 2
+a278 2
+            CALL InterpolateValues (ptg_angles, Rad, chi_out, Srad, 'L', &
+            & extrapolate = 'C')
+d298 1
+a298 3
+    endif
+
+    Return
+d300 1
+a300 1
+  End Subroutine NO_CONV_AT_ALL
+d302 1
+a302 1
+END module NO_CONV_AT_ALL_M
+d304 3
+@
+
+
+2.15
+log
+@Began changes needed to conform with matrix%values type move to rm from r8
+@
+text
+@d12 1
+a12 1
+       "$Id: no_conv_at_all_m.f90,v 2.14 2002/09/10 17:05:52 livesey Exp $"
+d33 2
+a34 1
+    use VectorsModule, only: Vector_T, VectorValue_T, GETVECTORQUANTITYBYTYPE
+d241 5
+a245 10
+        l = fwmConf%molecules(jz)
+        if ( l == l_extinction ) then
+          f => GetVectorQuantityByType(forwardModelIn, &
+                & quantityType=l_extinction,radiometer = &
+                & radiance%template%radiometer, noError=.TRUE. )
+        else
+          f => GetVectorQuantityByType ( forwardModelIn, quantityType=l_vmr,&
+                & molecule=l, noError=.TRUE. )
+        endif
+
+d303 3
+@
+
+
+2.14
+log
+@Added update argument
+@
+text
+@d1 1
+a1 1
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+d12 1
+a12 1
+       "$Id: no_conv_at_all_m.f90,v 2.13 2002/08/21 23:38:56 bill Exp $"
+d29 1
+a29 1
+    use MLSCommon, only: I4, R4, R8
+d128 1
+a128 1
+          Jacobian%block(row,col)%values = 0.0_r8
+d195 1
+a195 1
+          Jacobian%block(row,col)%values = 0.0_r8
+d263 1
+a263 1
+              Jacobian%block(row,col)%values = 0.0_r8
+d307 3
+@
+
+
+2.13
+log
+@ added no extrapolate to interpolation calls
+@
+text
+@d12 1
+a12 1
+       "$Id: no_conv_at_all_m.f90,v 2.12 2002/08/20 22:36:47 livesey Exp $"
+d24 1
+a24 1
+           & Channel, WindowStart, WindowFinish, Temp, Ptan, Radiance, &
+d72 1
+d135 12
+a146 6
+      do ptg_i = 1, noPtan
+        ind = channel + noChans*(ptg_i-1)
+        q = Jacobian%block(row,col)%values(ind,1)
+        Jacobian%block(row,col)%values(ind,1) = q + sbRatio * SRad(ptg_i)
+      end do
+
+d154 12
+a165 5
+    do ptg_i = 1, noPtan
+      ind = channel + noChans*(ptg_i-1)
+      radiance%values( ind, maf ) = &
+             & radiance%values(ind,maf) + sbRatio * i_star_all(ptg_i)
+    end do
+d212 12
+a223 5
+          do ptg_i = 1, noPtan
+            ind = channel + noChans*(ptg_i-1)
+            q = Jacobian%block(row,col)%values(ind,jz)
+            Jacobian%block(row,col)%values(ind,jz) = q + sbRatio*Srad(ptg_i)
+          end do
+d280 12
+a291 6
+            do ptg_i = 1, noPtan
+              ind = channel + noChans*(ptg_i-1)
+              q = Jacobian%block(row,col)%values(ind,k)
+              Jacobian%block(row,col)%values(ind,k) = &
+                                               &  q + sbRatio*Srad(ptg_i)
+            end do
+d307 3
+@
+
+
+2.12
+log
+@Moved uses inside routine
+@
+text
+@d12 1
+a12 1
+       "$Id: no_conv_at_all_m.f90,v 2.11 2002/07/29 23:16:32 bill Exp $"
+d142 2
+a143 1
+      Call InterpolateValues(ptg_angles,i_raw,chi_out,i_star_all,METHOD='S')
+d196 2
+a197 1
+          Call InterpolateValues ( ptg_angles, Rad, chi_out, Srad, 'S')
+d257 2
+a258 1
+            Call InterpolateValues (ptg_angles, Rad, chi_out, Srad, 'L')
+d280 3
+@
+
+
+2.11
+log
+@got rid of debugging write
+@
+text
+@a4 13
+  use MLSCommon, only: I4, R4, R8
+  use L2PC_PFA_STRUCTURES, only: K_MATRIX_INFO
+  USE MLSNumerics, ONLY: INTERPOLATEVALUES
+  use dump_0,only:dump
+  use VectorsModule, only: Vector_T, VectorValue_T, GETVECTORQUANTITYBYTYPE
+  use ForwardModelConfig, only: ForwardModelConfig_T
+  use Intrinsic, only: L_VMR
+  use String_Table, only: GET_STRING
+  use MatrixModule_0, only: M_ABSENT, M_BANDED, M_FULL, DUMP
+  use MatrixModule_1, only: CREATEBLOCK, FINDBLOCK, MATRIX_T, DUMP
+  use Molecules, only: spec_tags, L_EXTINCTION
+  use MLSMessageModule, only: MLSMSG_Error, MLSMessage
+  USE Load_sps_data_m, only: Grids_T
+a7 1
+
+d12 1
+a12 1
+       "$Id: no_conv_at_all_m.f90,v 2.10 2002/07/29 21:42:02 bill Exp $"
+d23 1
+a23 1
+  Subroutine no_conv_at_all ( ForwardModelConfig, ForwardModelIn, maf, &
+d29 15
+a43 1
+    Type (ForwardModelConfig_T) :: FORWARDMODELCONFIG
+d154 3
+a156 3
+    if ( .not. ANY((/forwardModelConfig%temp_der, &
+                   & forwardModelConfig%atmos_der, &
+                   & forwardModelConfig%spect_der/)) ) Return
+d165 1
+a165 1
+    if ( forwardModelConfig%temp_der ) then
+d207 1
+a207 1
+    if ( forwardModelConfig%atmos_der ) then
+d217 1
+a217 1
+        l = forwardModelConfig%molecules(jz)
+d277 3
+@
+
+
+2.10
+log
+@no changes, just debugging
+@
+text
+@d26 1
+a26 1
+       "$Id: no_conv_at_all_m.f90,v 2.9 2002/07/23 22:26:52 livesey Exp $"
+a150 1
+    WRITE(*,'(f7.2)') radiance%values(channel+125, maf )
+d277 3
+@
+
+
+2.9
+log
+@Added ptan_der handling
+@
+text
+@d26 1
+a26 1
+       "$Id: no_conv_at_all_m.f90,v 2.8 2002/07/05 07:52:51 zvi Exp $"
+d151 1
+d278 3
+@
+
+
+2.8
+log
+@Fixing bug in filling the Jacobian for atmos
+@
+text
+@d26 1
+a26 1
+       "$Id: no_conv_at_all_m.f90,v 2.7 2002/06/28 11:06:49 zvi Exp $"
+d40 2
+a41 1
+           & I_raw,sbRatio,mol_cat_indx, rowFlags, Jacobian, di_dt, di_df )
+d61 1
+d90 1
+d94 2
+a107 1
+      col = FindBlock ( Jacobian%col, ptan%index, maf )
+d112 2
+a113 1
+    if ( col > 0 ) then
+a137 2
+        Jacobian%block(row,col)%r1(ptg_i) = 1 + noChans * (ptg_i - 1)
+        Jacobian%block(row,col)%r2(ptg_i) = noChans * ptg_i
+d277 3
+@
+
+
+2.7
+log
+@compute dI/dPtan using chain rule
+@
+text
+@d15 1
+a15 1
+  use Molecules, only: L_EXTINCTION
+d26 1
+a26 1
+       "$Id: no_conv_at_all_m.f90,v 2.6 2002/06/19 11:00:36 zvi Exp $"
+d80 1
+a80 1
+    Integer :: is, j, k, nf, sv_f, sv_t_len
+d100 7
+a106 2
+    if ( PRESENT (Jacobian) ) &
+      & col = FindBlock ( Jacobian%col, ptan%index, maf )
+d118 1
+a118 4
+      row = FindBlock ( Jacobian%row, radiance%index, maf )
+      rowFlags(row) = .TRUE.
+
+      select case ( jacobian%block(Row,col)%kind )
+d120 3
+a122 3
+          call CreateBlock ( Jacobian, row, col, m_banded, &
+            & radiance%template%noSurfs*noChans,bandHeight=noChans )
+          jacobian%block(row,col)%values = 0.0_r8
+d131 4
+a134 4
+        jacobian%block(row,col)%values(ind,1) = &
+           & jacobian%block(row,col)%values(ind,1) + sbRatio * SRad(ptg_i)
+        jacobian%block(row,col)%r1(ptg_i) = 1 + noChans * (ptg_i - 1)
+        jacobian%block(row,col)%r2(ptg_i) = noChans * ptg_i
+d146 1
+a146 1
+             & radiance%values ( ind, maf ) + sbRatio * i_star_all(ptg_i)
+d177 1
+a177 1
+          jacobian%block(row,col)%values = 0.0_r8
+d195 2
+a196 2
+            q = jacobian%block(row,col)%values(ind,jz)
+            jacobian%block(row,col)%values(ind,jz) = q + sbRatio*Srad(ptg_i)
+d218 1
+a218 1
+                & radiance%template%radiometer, noError=.true. )
+d221 1
+a221 1
+                & molecule=l, noError=.true. )
+d237 1
+a237 1
+              jacobian%block(row,col)%values = 0.0_r8
+d241 1
+a241 1
+              & 'Wrong type for temperature derivative matrix' )
+d249 1
+a249 1
+            if(.NOT. Grids_f%deriv_flags(sv_f)) CYCLE
+d255 2
+a256 2
+              q = jacobian%block(row,col)%values(ind,sv_f)
+              jacobian%block(row,col)%values(ind,sv_f) = &
+d274 3
+@
+
+
+2.6
+log
+@changing from Cspline to InterpolateValues routine
+@
+text
+@d17 1
+d26 1
+a26 1
+       "$Id: no_conv_at_all_m.f90,v 2.5 2002/05/22 19:43:03 zvi Exp $"
+d31 1
+a31 1
+contains
+d39 2
+a40 2
+           & ptg_angles, chi_out, I_raw, K_temp, K_atmos, SbRatio,     &
+           & Jacobian, rowFlags, mol_cat_indx )
+d45 18
+a62 5
+    Integer, intent(in) :: maf
+    Integer, intent(in) :: CHANNEL
+    Integer, intent(in) :: WINDOWSTART
+    Integer, intent(in) :: WINDOWFINISH
+    Integer, intent(IN) :: mol_cat_indx(:)
+d64 2
+a65 3
+    Type (VectorValue_T), intent(in) :: TEMP
+    Type (VectorValue_T), intent(in) :: PTAN
+    Type (VectorValue_T), intent(inout) :: RADIANCE
+d67 1
+a67 2
+    Real(r8), intent(IN) :: SBRATIO
+    Real(r8), intent(IN) :: i_raw(:),ptg_angles(:),chi_out(:)
+d69 1
+a69 4
+    Real(r4), intent(in) :: k_temp(:,:,WindowStart:)
+    Real(r4), intent(in) :: k_atmos(:,:,:,WindowStart:,:)
+
+    Type (Matrix_T), intent(inout), optional :: Jacobian
+d71 1
+a71 1
+    Logical, dimension(:), intent(inout) :: rowFlags ! Flag to calling code
+d77 1
+a77 1
+    Type (VectorValue_T), pointer :: F  ! vmr quantity
+d79 2
+a80 2
+    Integer :: Lk, Uk, jf, jz, no_mol, l
+    Integer :: is, j, k, nf, sv_i
+d84 1
+a84 1
+    Real(r8) :: RAD( size(ptg_angles)), q
+d86 1
+a86 1
+    Real(r8) :: Der_all(ptan%template%noSurfs)
+d94 2
+a95 1
+    ! Compute the ratio of the strengths
+d97 1
+a97 1
+    ! This subroutine is called by channel
+d100 1
+a100 5
+    noPtan = ptan%template%noSurfs
+    noChans = radiance%template%noChans
+
+    ! Ptan derivative
+    if ( present(Jacobian) ) &
+d105 7
+a111 7
+      Call InterpolateValues(ptg_angles, i_raw, chi_out, i_star_all, 'S')
+      do k = 1, noPtan
+        j = 1
+        if(k == noPtan) j = -1
+        q = Ptan%values(k+j,maf) - Ptan%values(k,maf)
+        der_all(k) = (i_star_all(k+j) - i_star_all(k) ) / q
+      end do
+d114 1
+a114 1
+      rowFlags(row) = .true.
+d117 8
+a124 8
+      case ( m_absent )
+        call CreateBlock ( Jacobian, row, col, m_banded, &
+          & radiance%template%noSurfs*noChans,bandHeight=noChans )
+        jacobian%block(row,col)%values = 0.0_r8
+      case ( m_banded )
+      case default
+        call MLSMessage ( MLSMSG_Error, ModuleName,&
+          & 'Wrong matrix type for ptan derivative' )
+d126 1
+d129 4
+a132 2
+        jacobian%block(row,col)%values(ind ,1 ) = &
+          & jacobian%block(row,col)%values( ind ,1 ) + sbRatio*der_all(ptg_i)
+d134 1
+d136 4
+a139 3
+      Call InterpolateValues ( ptg_angles, i_raw, chi_out, i_star_all, &
+                            &  METHOD='S')
+    end if
+d144 1
+a144 1
+        & radiance%values ( ind, maf ) + sbRatio*i_star_all(ptg_i)
+d147 2
+a151 1
+    if ( .not. PRESENT(jacobian) ) Return
+d164 1
+d166 1
+d168 1
+d170 1
+d183 7
+a189 1
+          Rad(1:k) = k_temp(1:k,jz,nf)
+d191 1
+a191 1
+          do ptg_i = 1,noPtan
+d193 2
+a194 2
+            jacobian%block(row,col)%values( ind, jz) = &
+              & jacobian%block(row,col)%values( ind, jz) + sbRatio*Srad(ptg_i)
+d206 1
+a206 2
+      lk = lbound(k_atmos,4)   ! The lower Phi dimension
+      uk = ubound(k_atmos,4)   ! The upper Phi dimension
+d222 11
+a232 15
+        if ( associated(f) ) then
+
+          Rad(1:) = 0.0
+          k = no_tan_hts
+
+          ! Derivatives needed continue to process
+
+          do nf = 1, f%template%noInstances
+
+          ! run through phi representation basis coefficients
+
+            if ( nf+lk-1 > uk) EXIT
+
+            col = FindBlock ( Jacobian%col, f%index, nf+windowStart-1 )
+            select case ( Jacobian%block(row,col)%kind )
+d239 2
+a240 2
+                & 'Wrong type for vmr derivative matrix' )
+            end select
+d242 1
+a242 2
+            sv_i = 0
+            do jz = 1, f%template%noSurfs
+d244 1
+a244 17
+            ! run through zeta representation basis coefficients
+
+              do jf = 1, f%template%noChans
+
+                ! run through Frequencies basis coefficients
+
+                sv_i = sv_i + 1
+                Rad(1:k) = k_atmos(1:k,jf,jz,nf+lk-1,is)
+                Call InterpolateValues (ptg_angles, Rad, chi_out, Srad, 'L')
+                do ptg_i = 1, noPtan
+                  ind = channel + noChans*(ptg_i-1)
+                  q = jacobian%block(row,col)%values( ind, sv_i)
+                  jacobian%block(row,col)%values( ind, sv_i) = &
+                                                  & q + sbRatio*Srad(ptg_i)
+                end do
+
+              end do
+d246 10
+d259 3
+a261 3
+
+        endif
+
+d270 1
+a270 1
+end module NO_CONV_AT_ALL_M
+d272 3
+@
+
+
+2.5
+log
+@Fix a bug in the mol. index loop
+@
+text
+@d7 1
+a7 3
+  use D_LINTRP_M, only: LINTRP
+  use D_CSPLINE_M, only: CSPLINE
+  use DCSPLINE_DER_M, only: CSPLINE_DER
+d25 1
+a25 1
+       "$Id: no_conv_at_all_m.f90,v 2.4 2002/02/16 06:50:01 zvi Exp $"
+d36 17
+a52 14
+  Subroutine no_conv_at_all ( ForwardModelConfig, ForwardModelIn, MAF, &
+    & Channel, WindowStart, WindowFinish, Temp, Ptan, Radiance, Tan_press, &
+    & I_raw, K_temp, K_atmos, SbRatio, Jacobian, rowFlags, mol_cat_indx )
+
+    type (ForwardModelConfig_T) :: FORWARDMODELCONFIG
+    type (Vector_T), intent(in) :: FORWARDMODELIN
+    integer, intent(in) :: MAF
+    integer, intent(in) :: CHANNEL
+    integer, intent(in) :: WINDOWSTART
+    integer, intent(in) :: WINDOWFINISH
+    integer, intent(IN) :: mol_cat_indx(:)
+    type (VectorValue_T), intent(in) :: TEMP
+    type (VectorValue_T), intent(in) :: PTAN
+    type (VectorValue_T), intent(inout) :: RADIANCE
+d54 2
+a55 2
+    real(r8), intent(IN) :: I_RAW(:),TAN_PRESS(:)
+    real(r8), intent(IN) :: SBRATIO
+d60 3
+a62 2
+    type (Matrix_T), intent(inout), optional :: Jacobian
+    logical, dimension(:), intent(inout) :: rowFlags ! Flag to calling code
+d66 13
+a78 12
+    integer:: No_t, No_tan_hts, No_phi_t
+    type (VectorValue_T), pointer :: F  ! vmr quantity
+    integer :: Lk, Uk, jf, jz, no_mol, l
+    integer :: IS, J, K, NF, SV_I, Spectag
+    integer :: Row, col                 ! Indices
+    integer :: Ptg                      ! Index
+    integer :: Ind                      ! Index
+
+    real(r8) :: RAD( size(tan_press)), Q
+    real(r8) :: SRad(ptan%template%noSurfs)
+    real(r8) :: Der_all(ptan%template%noSurfs)
+    real(r8) :: I_star_all(ptan%template%noSurfs)
+d83 1
+a83 2
+    no_phi_t = temp%template%noInstances
+    no_tan_hts = size(tan_press)
+a88 2
+    k = no_tan_hts
+    j = ptan%template%noSurfs
+d90 2
+d96 1
+a96 1
+    
+d98 9
+a106 3
+      Call Cspline_der ( tan_press, Ptan%values(:,maf), i_raw, i_star_all, &
+        & der_all, k, j )
+      
+d109 1
+a109 1
+      
+d113 1
+a113 2
+          & radiance%template%noSurfs*radiance%template%noChans, &
+          & bandHeight=radiance%template%noChans )
+d120 2
+a121 2
+      do ptg = 1, j
+        ind = channel + radiance%template%noChans*(ptg-1)
+d123 1
+a123 1
+          & jacobian%block(row,col)%values( ind ,1 ) + sbRatio*der_all(ptg)
+d126 2
+a127 1
+      Call Cspline ( tan_press, Ptan%values(:,maf), i_raw, i_star_all, k, j )
+d129 3
+a131 2
+    do ptg = 1, j
+      ind = channel + radiance%template%noChans*(ptg-1)
+d133 1
+a133 1
+        & radiance%values ( ind, maf ) + sbRatio*i_star_all(ptg)
+d136 4
+a139 3
+    if ( .not. ANY((/forwardModelConfig%temp_der, forwardModelConfig%atmos_der, &
+      & forwardModelConfig%spect_der/)) ) Return
+    if ( .not. present(jacobian) ) return
+d153 1
+d168 3
+a170 3
+          Call Cspline ( tan_press, Ptan%values(:,maf), Rad, SRad, k, j )
+          do ptg = 1,j
+            ind = channel + radiance%template%noChans*(ptg-1)
+d172 1
+a172 1
+              & jacobian%block(row,col)%values( ind, jz) + sbRatio*Srad(ptg)
+d193 3
+a195 2
+          f => GetVectorQuantityByType(forwardModelIn, quantityType=l_extinction, &
+            &  radiometer=radiance%template%radiometer, noError=.true. )
+d197 2
+a198 2
+          f => GetVectorQuantityByType ( forwardModelIn, quantityType=l_vmr, &
+            &  molecule=l, noError=.true. )
+d204 1
+d236 3
+a238 3
+                Call Lintrp(tan_press,Ptan%values(:,maf),Rad,SRad,k,j)
+                do ptg = 1, j
+                  ind = channel + radiance%template%noChans*(ptg-1)
+d241 1
+a241 1
+                                                       & q + sbRatio*Srad(ptg)
+d262 3
+a344 1
+
+@
+
+
+2.4
+log
+@Some cosmetic code changes
+@
+text
+@d27 1
+a27 1
+       "$Id: no_conv_at_all_m.f90,v 2.3 2002/02/15 22:51:58 livesey Exp $"
+d39 2
+a40 2
+    & Channel, WindowStart, WindowFinish, Temp, Ptan, Radiance, &
+    & Tan_press, I_raw, K_temp, K_atmos, SbRatio, Jacobian, rowFlags )
+d48 1
+d66 1
+a66 1
+    integer :: Lk, Uk, jf, jz, n_sps
+d175 1
+a175 1
+      n_sps = size(ForwardModelConfig%molecules)
+d177 1
+a177 1
+      do is = 1, n_sps
+d179 3
+a181 1
+        if ( forwardModelConfig%molecules(is) == l_extinction ) then
+d186 1
+a186 1
+            &  molecule=forwardModelConfig%molecules(is), noError=.true. )
+d249 3
+@
+
+
+2.3
+log
+@Bug fix for case where no ptan derivative wanted
+@
+text
+@d27 1
+a27 1
+       "$Id: no_conv_at_all_m.f90,v 2.2 2002/01/27 08:37:50 zvi Exp $"
+a125 1
+
+a129 1
+
+a165 1
+
+d246 3
+@
+
+
+2.2
+log
+@Adding Users selected coefficients for derivatives
+@
+text
+@d27 1
+a27 1
+       "$Id: no_conv_at_all_m.f90,v 2.1 2001/11/08 00:10:49 livesey Exp $"
+d88 7
+a94 1
+    if ( present(Jacobian) ) then
+d97 1
+a97 1
+
+a98 1
+      col = FindBlock ( Jacobian%col, ptan%index, maf )
+d100 1
+d249 3
+@
+
+
+2.1
+log
+@Updated to include extinction
+@
+text
+@d27 1
+a27 1
+       "$Id: no_conv_at_all_m.f90,v 2.0 2001/09/17 20:26:27 livesey Exp $"
+d55 2
+a56 2
+    Real(r4), intent(in) :: k_temp(:,:,WindowStart:)    ! (Nptg,mxco,mnp)
+    Real(r4), intent(in) :: k_atmos(:,:,WindowStart:,:) ! (Nptg,mxco,mnp,Nsps)
+d65 1
+a65 1
+    integer :: Lk, Uk
+d71 1
+a71 1
+    real(r8) :: RAD( size(tan_press))
+d119 1
+a119 1
+      
+d140 1
+a140 1
+        select case ( Jacobian%block(row,col)%kind ) 
+d150 2
+a151 2
+        do sv_i = 1, no_t
+          Rad(1:k) = k_temp(1:k,sv_i,nf)
+d154 3
+a156 3
+            ind = channel+ radiance%template%noChans*(ptg-1)
+            jacobian%block(row,col)%values( ind, sv_i) = &
+              & jacobian%block(row,col)%values( ind, sv_i) + sbRatio*Srad(ptg)
+d169 5
+a173 3
+      lk = lbound(k_atmos,3)
+      uk = ubound(k_atmos,3)
+      do is = 1, size(ForwardModelConfig%molecules)
+d176 2
+a177 3
+          f => GetVectorQuantityByType ( forwardModelIn, &
+            & quantityType=l_extinction, radiometer=radiance%template%radiometer, &
+            & noError=.true. )
+d179 2
+a180 2
+          f => GetVectorQuantityByType ( forwardModelIn, &
+            & quantityType=l_vmr, molecule=forwardModelConfig%molecules(is), noError=.true. )
+d182 1
+d190 5
+a194 1
+            if ( nf+lk-1 > uk) exit
+d196 1
+a196 1
+            select case ( Jacobian%block(row,col)%kind ) 
+d206 19
+a224 7
+            do sv_i = 1, f%template%noSurfs
+              Rad(1:k) = k_atmos(1:k,sv_i,nf+lk-1,is)
+              Call Lintrp ( tan_press, Ptan%values(:,maf), Rad, SRad, k, j )
+              do ptg = 1, j
+                ind = channel+ radiance%template%noChans*(ptg-1)
+                jacobian%block(row,col)%values( ind, sv_i) = &
+                  & jacobian%block(row,col)%values( ind, sv_i) + sbRatio*Srad(ptg)
+d226 1
+d231 1
+a231 1
+        end if
+d235 1
+a235 1
+    end if
+d243 3
+d314 1
+@
+
+
+2.0
+log
+@New forward model
+@
+text
+@d17 1
+d27 1
+a27 1
+       "$Id: no_conv_at_all_m.f90,v 1.21 2001/05/09 19:46:49 vsnyder Exp $"
+d173 8
+a180 3
+         f => GetVectorQuantityByType ( forwardModelIn, quantityType=l_vmr, &
+          & molecule=forwardModelConfig%molecules(is), noError=.true. )
+
+d224 3
+@
+
+
+1.21
+log
+@Use new bandHeight argument of createBlock
+@
+text
+@d26 1
+a26 1
+       "$Id: no_conv_at_all_m.f90,v 1.20 2001/05/03 22:26:29 vsnyder Exp $"
+d218 3
+@
+
+
+1.20
+log
+@Insert copyright notice, some cosmetic changes
+@
+text
+@d26 1
+a26 1
+       "$Id: no_conv_at_all_m.f90,v 1.19 2001/05/02 20:49:23 zvi Exp $"
+d97 2
+a98 1
+          &    radiance%template%noSurfs*radiance%template%noChans )
+a99 6
+        do ptg = 1, j
+          jacobian%block(row,col)%r1(ptg) = &
+            & 1 + radiance%template%noChans*(ptg-1)
+          jacobian%block(row,col)%r2(ptg) = &
+            & radiance%template%noChans*ptg
+        end do
+d108 1
+a108 1
+          &   jacobian%block(row,col)%values( ind ,1 ) + sbRatio*der_all(ptg)
+d218 3
+@
+
+
+1.19
+log
+@Cleaning up code
+@
+text
+@d1 3
+d26 1
+a26 1
+       "$Id: no_conv_at_all_m.f90,v 1.18 2001/05/01 00:42:54 zvi Exp $"
+d88 2
+a89 1
+      Call Cspline_der(tan_press,Ptan%values(:,maf),i_raw,i_star_all,der_all,k,j)
+d94 2
+a95 2
+      select case (jacobian%block(Row,col)%kind)
+      case (m_absent)
+d105 1
+a105 1
+      case (m_banded)
+d108 1
+a108 1
+          & 'Wrong matrix type for ptan derivative')
+d116 1
+a116 1
+      Call Cspline(tan_press,Ptan%values(:,maf),i_raw,i_star_all,k,j)
+d125 1
+a125 1
+    if ( .not. ANY((/forwardModelConfig%temp_der,forwardModelConfig%atmos_der, &
+d156 1
+a156 1
+          Call Cspline(tan_press,Ptan%values(:,maf),Rad,SRad,k,j)
+d201 1
+a201 1
+              Call Lintrp(tan_press,Ptan%values(:,maf),Rad,SRad,k,j)
+d223 3
+@
+
+
+1.18
+log
+@Fixing phi window bug
+@
+text
+@d23 1
+a23 1
+       "$Id: no_conv_at_all_m.f90,v 1.17 2001/04/28 17:47:57 livesey Exp $"
+d61 2
+a62 2
+    integer :: Nz, Lk, Uk
+    integer :: N, I, IS, J, K, NF, SV_I, Spectag
+a71 2
+    Character :: CA
+
+a177 1
+          nz = f%template%noSurfs
+a212 60
+!     if ( spect_der ) then
+
+! ! ****************** Spectroscopic derivatives ******************
+! !
+!       do is = 1, n_sps
+! !
+!         i = spect_atmos(is)
+!         if ( i < 1) CYCLE
+!         if ( .not.spectroscopic(i)%DER_CALC(band)) CYCLE
+! !
+! ! Derivatives needed continue to process
+! !
+!         Spectag = atmospheric(is)%spectag
+! !
+!         DO
+! !
+!           if ( spectroscopic(i)%Spectag /= Spectag) EXIT
+!           n = spectroscopic(i)%no_phi_values
+!           nz = spectroscopic(i)%no_zeta_values
+!           CA = spectroscopic(i)%type
+!           ki = ki + 1
+!           kc = kc + 1
+!           k_star_info(kc)%name = spectroscopic(i)%NAME
+!           k_star_info(kc)%first_dim_index = ki
+!           k_star_info(kc)%no_phi_basis = n
+!           k_star_info(kc)%no_zeta_basis = nz
+!           k_star_info(kc)%zeta_basis(1:nz) = &
+!                   &  spectroscopic(i)%zeta_basis(1:nz)
+! !
+!           Rad(1:) = 0.0
+!           do nf = 1, n
+! !
+!             do sv_i = 1, nz
+! !
+!               select case ( CA )
+!                 case ( 'W' )
+!                   Rad(1:k) = k_spect_dw(1:k,sv_i,nf,i)
+!                 case ( 'N' )
+!                   Rad(1:k) = k_spect_dn(1:k,sv_i,nf,i)
+!                 case ( 'V' )
+!                   Rad(1:k) = k_spect_dnu(1:k,sv_i,nf,i)
+!               end select
+! !
+!               Call Lintrp(tan_press,Ptan,Rad,SRad,k,j)
+!               k_star_all(ki,sv_i,nf,1:j) = SRad(1:j)
+! !
+!             end do        ! sv_i loop
+! !
+!           end do          ! nf loop
+! !
+!           i = i + 1
+!           if ( i > 3 * n_sps) EXIT
+! !
+!         END DO
+! !
+!       end do
+! !
+!     end if
+
+
+d219 3
+@
+
+
+1.17
+log
+@Now accepts and sets rowFlags
+@
+text
+@d23 1
+a23 1
+       "$Id: no_conv_at_all_m.f90,v 1.16 2001/04/27 22:02:13 vsnyder Exp $"
+d50 3
+a52 3
+
+    Real(r4) :: k_temp(:,:,:)                    ! (Nptg,mxco,mnp)
+    Real(r4) :: k_atmos(:,:,:,:)                 ! (Nptg,mxco,mnp,Nsps)
+a62 1
+    integer :: PhiWindow
+d140 2
+a141 3
+      phiWindow = windowFinish-windowStart+1
+      do nf = 1, phiWindow
+        col = FindBlock ( Jacobian%col, temp%index, nf+windowStart-1 )
+d153 1
+a153 1
+          Rad(1:k) = k_temp(1:k,sv_i,nf+WindowStart-1)
+d282 3
+@
+
+
+1.16
+log
+@Don't compute derivatives if Jacobian isn't present
+@
+text
+@d23 1
+a23 1
+       "$Id: $"
+d26 1
+a26 1
+       "$RCSfile: $"
+d36 1
+a36 1
+    & Tan_press, I_raw, K_temp, K_atmos, SbRatio, Jacobian )
+d55 1
+d92 1
+a126 1
+    row = FindBlock ( Jacobian%row, radiance%index, maf ) ! Tidy up conditions later !???
+d284 3
+@
+
+
+1.15
+log
+@Fixing some phiwindow bug
+@
+text
+@d15 1
+d18 1
+d20 1
+d22 5
+a26 4
+  CHARACTER (LEN=256) :: Id = &
+  "$Id: no_conv_at_all_m.f90,v 1.14 2001/04/26 22:54:41 zvi Exp $"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= &
+  "$RCSfile: no_conv_at_all_m.f90,v $"
+d29 9
+a37 9
+!---------------------------------------------------------------------------
+! This subroutine transfers the derivatives over from the internal
+! convolution grid to the users specified points. This module uses
+! cubic spline interpolation to do the job.
+!
+  Subroutine no_conv_at_all (forwardModelConfig, forwardModelIn, maf, channel, &
+    & windowStart, windowFinish, temp, ptan, radiance, &
+    & tan_press,i_raw,k_temp,k_atmos, sbRatio, Jacobian )
+!
+d55 4
+a58 4
+!
+! -----     Local Variables     ----------------------------------------
+!
+    integer:: no_t,no_tan_hts,no_phi_t
+d60 1
+a60 1
+    integer :: nz, lk, uk
+d62 5
+a66 5
+    integer :: phiWindow
+    integer :: row, col                 ! Indices
+    integer :: ptg                      ! Index
+    integer :: ind                      ! Index
+!
+d69 6
+a74 4
+    real(r8) :: der_all(ptan%template%noSurfs)
+    real(r8) :: i_star_all(ptan%template%noSurfs)
+!
+    Character(LEN=01) :: CA
+a75 2
+! -----  Begin the code  -----------------------------------------
+!
+d79 5
+a83 5
+!
+! Compute the ratio of the strengths
+!
+! This subroutine is called by channel
+!
+d86 1
+a86 1
+    if (present(Jacobian)) then
+d114 1
+a114 1
+    endif
+d121 4
+a124 3
+!
+    if(.not. ANY((/forwardModelConfig%temp_der,forwardModelConfig%atmos_der,&
+      & forwardModelConfig%spect_der/))) Return
+d127 12
+a138 12
+!
+! Now transfer the other fwd_mdl derivatives to the output pointing
+! values
+!
+! ********************* Temperature derivatives ******************
+!
+! check to determine if derivative is desired for this parameter
+!
+    if (forwardModelConfig%temp_der) then
+!
+! Derivatives needed continue to process
+!
+d166 1
+a166 1
+    endif
+d168 1
+a168 1
+    if(forwardModelConfig%atmos_der) then
+d179 1
+a179 1
+        if (associated(f)) then
+d187 1
+a187 1
+            if(nf+lk-1 > uk) EXIT
+d202 1
+a202 1
+              do ptg = 1,j
+d210 3
+a212 3
+!
+        endif
+!
+d214 5
+a218 5
+!
+    endif
+!
+!     if(spect_der) then
+!
+d224 2
+a225 2
+!         if(i < 1) CYCLE
+!         if(.not.spectroscopic(i)%DER_CALC(band)) CYCLE
+d233 1
+a233 1
+!           if(spectroscopic(i)%Spectag /= Spectag) EXIT
+d268 1
+a268 1
+!           if(i > 3 * n_sps) EXIT
+d274 2
+a275 2
+!     endif
+!
+d278 1
+a278 1
+!
+d280 1
+a280 1
+!
+d283 3
+@
+
+
+1.14
+log
+@Fixing some phiwindow bug
+@
+text
+@d20 1
+a20 1
+  "$Id: no_conv_at_all_m.f90,v 1.13 2001/04/24 21:32:45 zvi Exp $"
+d149 1
+a149 1
+          Rad(1:k) = k_temp(1:k,sv_i,nf)
+d278 3
+@
+
+
+1.13
+log
+@fixing a dimension bug..
+@
+text
+@d20 1
+a20 1
+  "$Id: no_conv_at_all_m.f90,v 1.12 2001/04/20 23:09:29 livesey Exp $"
+d56 1
+a56 1
+    integer :: nz
+d167 2
+d182 1
+d195 1
+a195 1
+              Rad(1:k) = k_atmos(1:k,sv_i,nf,is)
+d278 3
+@
+
+
+1.12
+log
+@Now folds in place
+@
+text
+@d20 1
+a20 1
+  "$Id: no_conv_at_all_m.f90,v 1.11 2001/04/20 02:57:00 livesey Exp $"
+d63 2
+a64 1
+    real(r8) :: RAD(ptan%template%noSurfs), SRad(ptan%template%noSurfs)
+d275 3
+@
+
+
+1.11
+log
+@Writes derivatives in matrix_t
+@
+text
+@d12 1
+a12 1
+  use MatrixModule_0, only: M_BANDED, M_FULL, DUMP
+d14 1
+d20 1
+a20 1
+  "$Id: no_conv_at_all_m.f90,v 1.10 2001/04/19 23:56:52 livesey Exp $"
+d32 1
+a32 1
+    & tan_press,i_raw,k_temp,k_atmos, i_star_all, Jacobian )
+d42 1
+a42 1
+    type (VectorValue_T), intent(in) :: RADIANCE
+d45 1
+a51 4
+! -----     Output Variables   ----------------------------------------
+!
+    real(r8), intent(OUT) :: I_STAR_ALL(:)
+!
+d61 1
+d65 1
+d68 1
+a68 1
+!
+d83 1
+d86 16
+a101 3
+      call CreateBlock ( Jacobian, row, col, m_banded, &
+        & radiance%template%noSurfs*radiance%template%noChans )
+      jacobian%block(row,col)%values = 0.0_r8
+d103 3
+a105 6
+        jacobian%block(row,col)%values( channel + &
+          & radiance%template%noChans*(ptg-1),1 ) = der_all(ptg)
+        jacobian%block(row,col)%r1(ptg) = &
+          & 1 + radiance%template%noChans*(ptg-1)
+        jacobian%block(row,col)%r2(ptg) = &
+          & radiance%template%noChans*ptg
+d110 5
+d137 9
+a145 1
+        call CreateBlock ( Jacobian, row, col, m_full )
+d151 3
+a153 2
+            jacobian%block(row,col)%values( channel+&
+              & radiance%template%noChans*(ptg-1),sv_i) = Srad(ptg)
+d180 9
+a188 1
+            call CreateBlock ( Jacobian, row, col, m_full )
+d194 3
+a196 2
+                jacobian%block(row,col)%values( channel+&
+                  & radiance%template%noChans*(ptg-1),sv_i) = Srad(ptg)
+d274 3
+@
+
+
+1.10
+log
+@New parameters
+@
+text
+@d6 1
+d12 2
+a13 1
+  use MatrixModule_1, only: Matrix_T
+d19 1
+a19 1
+  "$Id: no_conv_at_all_m.f90,v 1.9 2001/04/10 10:14:16 zvi Exp $"
+d29 1
+a29 1
+  Subroutine no_conv_at_all (forwardModelConfig, forwardModelIn, maf, &
+d36 1
+a51 1
+!
+d56 1
+a56 1
+    integer(i4):: no_t,no_tan_hts,no_phi_t
+d58 5
+a62 2
+    integer(i4) :: nz
+    integer(i4) :: N, I, IS, J, K, NF, SV_I, Spectag, ki, kc
+d65 1
+a78 3
+    ki = 0
+    kc = 0
+!
+d81 19
+a99 1
+    Call Cspline(tan_press,Ptan%values(:,maf),i_raw,i_star_all,k,j)
+d103 2
+a116 8
+      ki = ki + 1
+      kc = kc + 1
+!       k_star_info(kc)%name = 'TEMP'
+!       k_star_info(kc)%first_dim_index = ki
+!       k_star_info(kc)%no_zeta_basis = no_t
+!       k_star_info(kc)%no_phi_basis = no_phi_t
+!       k_star_info(kc)%zeta_basis(1:no_t) = t_z_basis(1:no_t)
+!
+d118 5
+a122 2
+      do nf = 1, no_phi_t
+!
+a123 1
+!
+d126 4
+a129 2
+!          k_star_all(ki,sv_i,nf,1:j) = SRad(1:j)
+!
+d131 1
+a131 1
+!
+d133 2
+a134 1
+!
+d136 1
+a136 1
+!
+d138 3
+a140 3
+!
+! ****************** atmospheric derivatives ******************
+!
+d142 1
+a142 1
+!
+d147 1
+a147 3
+!
+          ki = ki + 1
+          kc = kc + 1
+a148 5
+!           call get_string(f%template%name,k_star_info(kc)%name)
+!           k_star_info(kc)%first_dim_index = ki
+!           k_star_info(kc)%no_phi_basis = f%template%noInstances
+!           k_star_info(kc)%no_zeta_basis = nz
+!           k_star_info(kc)%zeta_basis(1:nz) = f%template%surfs(1:nz,1)
+d150 1
+a150 1
+!
+d152 1
+a152 1
+!
+d154 3
+a156 1
+!
+a157 3
+!
+! Derivatives needed continue to process
+!
+d160 4
+a163 2
+!              k_star_all(ki,sv_i,nf,1:j) = SRad(1:j)
+!
+d165 1
+a165 1
+!
+d240 3
+@
+
+
+1.9
+log
+@Fixing bug in convolve routines
+@
+text
+@d11 1
+d17 1
+a17 1
+  "$Id: no_conv_at_all_m.f90,v 1.8 2001/04/10 02:25:14 livesey Exp $"
+d27 3
+a29 3
+  Subroutine no_conv_at_all (forwardModelConfig, forwardModelIn, Ptan, &
+         n_sps,tan_press,i_raw,k_temp,k_atmos,no_tan_hts,k_info_count, &
+         i_star_all, k_star_all, k_star_info,no_t,no_phi_t,t_z_basis)
+d33 8
+a40 5
+    real(r8), intent(in), dimension(:) :: Ptan
+!
+    integer(i4), intent(IN) :: no_t,n_sps,no_tan_hts,no_phi_t
+!
+    real(r8), intent(IN) :: I_RAW(:),TAN_PRESS(:),T_Z_BASIS(:)
+d44 2
+a48 1
+    integer(i4), intent(out) :: K_INFO_COUNT
+a50 2
+    real(r4), intent(OUT) :: K_STAR_ALL(:,:,:,:)
+    type(k_matrix_info), intent(OUT) :: k_star_info(:)
+d54 1
+d59 1
+a59 1
+    real(r8) :: RAD(size(Ptan)), SRad(size(Ptan))
+d65 4
+a74 1
+    K_INFO_COUNT = 0
+d77 2
+a78 2
+    j = size(Ptan)
+    Call Cspline(tan_press,Ptan,i_raw,i_star_all,k,j)
+d96 5
+a100 5
+      k_star_info(kc)%name = 'TEMP'
+      k_star_info(kc)%first_dim_index = ki
+      k_star_info(kc)%no_zeta_basis = no_t
+      k_star_info(kc)%no_phi_basis = no_phi_t
+      k_star_info(kc)%zeta_basis(1:no_t) = t_z_basis(1:no_t)
+d108 2
+a109 2
+          Call Cspline(tan_press,Ptan,Rad,SRad,k,j)
+          k_star_all(ki,sv_i,nf,1:j) = SRad(1:j)
+d121 1
+a121 1
+      do is = 1, n_sps
+d131 5
+a135 5
+          call get_string(f%template%name,k_star_info(kc)%name)
+          k_star_info(kc)%first_dim_index = ki
+          k_star_info(kc)%no_phi_basis = f%template%noInstances
+          k_star_info(kc)%no_zeta_basis = nz
+          k_star_info(kc)%zeta_basis(1:nz) = f%template%surfs(1:nz,1)
+d147 2
+a148 2
+              Call Lintrp(tan_press,Ptan,Rad,SRad,k,j)
+              k_star_all(ki,sv_i,nf,1:j) = SRad(1:j)
+a218 1
+    K_INFO_COUNT = kc
+d226 3
+@
+
+
+1.8
+log
+@Tidied up some code
+@
+text
+@d16 1
+a16 1
+  "$Id: no_conv_at_all_m.f90,v 1.7 2001/03/31 23:40:55 zvi Exp $"
+d26 3
+a28 3
+  Subroutine no_conv_at_all (forwardModelConfig, forwardModelIn, &
+  Ptan,n_sps,tan_press,i_raw,k_temp,k_atmos,no_tan_hts,k_info_count,i_star_all,      &
+           k_star_all, k_star_info,no_t,no_phi_t,t_z_basis)
+d128 1
+a128 1
+          k_star_info(kc)%zeta_basis(1:f%template%noSurfs) = f%template%surfs(:,1)
+d220 3
+@
+
+
+1.7
+log
+@Eliminate l2pcdim (dimension parameters) move to allocatable ..
+@
+text
+@d3 1
+a3 2
+  use L2PC_PFA_STRUCTURES, only: ATMOS_COMP, LIMB_PRESS, SPECTRO_PARAM, &
+                                 K_MATRIX_INFO
+d7 4
+d16 1
+a16 1
+  "$Id: no_conv_at_all_m.f90,v 1.6 2001/03/29 02:54:49 livesey Exp $"
+d26 3
+a28 5
+Subroutine no_conv_at_all (Ptan,n_sps,tan_press,band,temp_der,atmos_der,&
+           spect_der,i_raw,k_temp,k_atmos, k_spect_dw, k_spect_dn,           &
+           k_spect_dnu, spect_atmos,no_tan_hts,k_info_count,i_star_all,      &
+           k_star_all, k_star_info,no_t,no_phi_t,no_phi_f,t_z_basis,         &
+           atmospheric,spectroscopic)
+d30 2
+a32 1
+    Logical, intent(IN) :: temp_der,atmos_der,spect_der
+d34 1
+a34 2
+    integer(i4), intent(IN) :: no_t,n_sps,no_tan_hts,band,no_phi_t
+    integer(i4), intent(IN) :: no_phi_f(:), spect_atmos(:)
+a39 6
+    Real(r4) :: k_spect_dw(:,:,:,:)              ! (Nptg,mxco,mnp,Nsps)
+    Real(r4) :: k_spect_dn(:,:,:,:)              ! (Nptg,mxco,mnp,Nsps)
+    Real(r4) :: k_spect_dnu(:,:,:,:)             ! (Nptg,mxco,mnp,Nsps)
+!
+    type(atmos_comp), intent(IN) :: ATMOSPHERIC(:)
+    type (spectro_param), intent(IN) :: SPECTROSCOPIC(:)
+d51 1
+d73 2
+a74 1
+    if(.not. ANY((/temp_der,atmos_der,spect_der/))) Return
+d83 1
+a83 1
+    if (temp_der) then
+d110 1
+a110 1
+    if(atmos_der) then
+d116 4
+a119 1
+        if (atmospheric(is)%der_calc(band)) then
+d123 2
+a124 2
+          nz = atmospheric(is)%no_lin_values
+          k_star_info(kc)%name = atmospheric(is)%name
+d126 1
+a126 1
+          k_star_info(kc)%no_phi_basis = no_phi_f(is)
+d128 2
+a129 2
+          k_star_info(kc)%zeta_basis(1:nz) = &
+                  &  atmospheric(is)%basis_peaks(1:nz)
+d131 3
+a133 1
+! Derivatives needed continue to process
+d135 1
+a135 2
+          Rad(1:) = 0.0
+          do nf = 1, no_phi_f(is)
+d137 1
+a137 1
+            do sv_i = 1, nz
+d153 1
+a153 13
+    if(spect_der) then
+!
+! ****************** Spectroscopic derivatives ******************
+!
+      do is = 1, n_sps
+!
+        i = spect_atmos(is)
+        if(i < 1) CYCLE
+        if(.not.spectroscopic(i)%DER_CALC(band)) CYCLE
+!
+! Derivatives needed continue to process
+!
+        Spectag = atmospheric(is)%spectag
+d155 56
+a210 44
+        DO
+!
+          if(spectroscopic(i)%Spectag /= Spectag) EXIT
+          n = spectroscopic(i)%no_phi_values
+          nz = spectroscopic(i)%no_zeta_values
+          CA = spectroscopic(i)%type
+          ki = ki + 1
+          kc = kc + 1
+          k_star_info(kc)%name = spectroscopic(i)%NAME
+          k_star_info(kc)%first_dim_index = ki
+          k_star_info(kc)%no_phi_basis = n
+          k_star_info(kc)%no_zeta_basis = nz
+          k_star_info(kc)%zeta_basis(1:nz) = &
+                  &  spectroscopic(i)%zeta_basis(1:nz)
+!
+          Rad(1:) = 0.0
+          do nf = 1, n
+!
+            do sv_i = 1, nz
+!
+              select case ( CA )
+                case ( 'W' )
+                  Rad(1:k) = k_spect_dw(1:k,sv_i,nf,i)
+                case ( 'N' )
+                  Rad(1:k) = k_spect_dn(1:k,sv_i,nf,i)
+                case ( 'V' )
+                  Rad(1:k) = k_spect_dnu(1:k,sv_i,nf,i)
+              end select
+!
+              Call Lintrp(tan_press,Ptan,Rad,SRad,k,j)
+              k_star_all(ki,sv_i,nf,1:j) = SRad(1:j)
+!
+            end do        ! sv_i loop
+!
+          end do          ! nf loop
+!
+          i = i + 1
+          if(i > 3 * n_sps) EXIT
+!
+        END DO
+!
+      end do
+!
+    endif
+d220 3
+@
+
+
+1.6
+log
+@Removed print statements
+@
+text
+@a2 2
+  use L2PCDIM, only: Nlvl, Nsps, Nptg, MNP => max_no_phi
+  use L2PC_FILE_PARAMETERS, only: MXCO => max_no_elmnts_per_sv_component
+d13 1
+a13 1
+  "$Id: no_conv_at_all_m.f90,v 1.5 2001/03/29 02:54:29 livesey Exp $"
+d37 5
+a41 5
+    Real(r4) :: k_temp(Nptg,mxco,mnp)
+    Real(r4) :: k_atmos(Nptg,mxco,mnp,Nsps)
+    Real(r4) :: k_spect_dw(Nptg,mxco,mnp,Nsps),  &
+                k_spect_dn(Nptg,mxco,mnp,Nsps),  &
+                k_spect_dnu(Nptg,mxco,mnp,Nsps)
+d59 1
+a59 1
+    real(r8) :: RAD(Nlvl), SRad(Nlvl)
+d212 1
+d219 3
+@
+
+
+1.5
+log
+@Changed assumed size to assumed shape
+@
+text
+@d15 1
+a15 1
+  "$Id: no_conv_at_all_m.f90,v 1.4 2001/03/26 17:56:14 zvi Exp $"
+a76 7
+    print*,'tan_press:'
+    call dump(tan_press)
+    print*,'PTan:'
+    call dump(ptan)
+    print*,'i_raw'
+    call dump(i_raw)
+    print*,'k,j',k,j
+d220 3
+@
+
+
+1.4
+log
+@New codes to deal with dh_dt_path issue.. now being computed on the fly
+@
+text
+@d9 1
+d15 1
+a15 1
+  "$Id: no_conv_at_all_m.f90,v 1.3 2001/03/21 01:10:38 livesey Exp $"
+d35 1
+a35 1
+    integer(i4), intent(IN) :: no_phi_f(*), spect_atmos(*)
+d37 1
+a37 1
+    real(r8), intent(IN) :: I_RAW(*),TAN_PRESS(*),T_Z_BASIS(*)
+d45 2
+a46 2
+    type(atmos_comp), intent(IN) :: ATMOSPHERIC(*)
+    type (spectro_param), intent(IN) :: SPECTROSCOPIC(*)
+d54 1
+a54 1
+    type(k_matrix_info), intent(OUT) :: k_star_info(*)
+d77 7
+d227 3
+@
+
+
+1.3
+log
+@Now gets ptan from vector
+@
+text
+@d14 1
+a14 1
+  "$Id: no_conv_at_all_m.f90,v 1.2 2001/03/07 23:45:15 zvi Exp $"
+d24 1
+a24 1
+Subroutine no_conv_at_all (ptan,n_sps,tan_press,band,temp_der,atmos_der,&
+d30 1
+a30 1
+    real(r8), intent(in), dimension(:) :: ptan
+d60 1
+a60 1
+    real(r8) :: RAD(Nlvl), SC1(Nlvl), PtP(Nlvl)
+d75 2
+a76 3
+    j = size(ptan)
+    PtP(1:j) = ptan
+    Call Cspline(tan_press,PtP,i_raw,i_star_all,k,j)
+d105 2
+a106 2
+          Call Cspline(tan_press,PtP,Rad,Sc1,k,j)
+          k_star_all(ki,sv_i,nf,1:j) = Sc1(1:j)
+d140 2
+a141 2
+              Call Lintrp(tan_press,PtP,Rad,Sc1,k,j)
+              k_star_all(ki,sv_i,nf,1:j) = Sc1(1:j)
+d196 2
+a197 2
+              Call Lintrp(tan_press,PtP,Rad,Sc1,k,j)
+              k_star_all(ki,sv_i,nf,1:j) = Sc1(1:j)
+d219 3
+@
+
+
+1.2
+log
+@Adding logical flags fro Temp, Atmos & Spect. derivatives
+@
+text
+@d14 1
+a14 1
+  "$Id: no_conv_at_all_m.f90,v 1.1 2000/06/21 21:56:14 zvi Exp $"
+d24 1
+a24 1
+Subroutine no_conv_at_all (ptg_press,n_sps,tan_press,band,temp_der,atmos_der,&
+d30 1
+a43 1
+    type(limb_press), intent(IN) :: PTG_PRESS
+d75 2
+a76 2
+    j = ptg_press%no_lin_values
+    PtP(1:j) = dble(ptg_press%lin_val(1:j))
+d220 3
+@
+
+
+1.1
+log
+@New filter format
+@
+text
+@d24 5
+a28 4
+Subroutine no_conv_at_all (ptg_press,n_sps,tan_press,band,i_raw, k_temp, &
+           k_atmos, k_spect_dw, k_spect_dn,k_spect_dnu, spect_atmos,      &
+           no_tan_hts, k_info_count, i_star_all,k_star_all, k_star_info,  &
+           temp_der,no_t,no_phi_t,no_phi_f,t_z_basis,atmospheric,spectroscopic)
+d30 1
+a30 1
+    Logical, intent(IN) :: temp_der
+d70 1
+d79 2
+d92 1
+a92 1
+      ki = 2
+d115 2
+d119 1
+a119 2
+    ki = 2
+    do is = 1, n_sps
+d121 1
+a121 1
+      if (atmospheric(is)%der_calc(band)) then
+d123 9
+a131 9
+        ki = ki + 1
+        kc = kc + 1
+        nz = atmospheric(is)%no_lin_values
+        k_star_info(kc)%name = atmospheric(is)%name
+        k_star_info(kc)%first_dim_index = ki
+        k_star_info(kc)%no_phi_basis = no_phi_f(is)
+        k_star_info(kc)%no_zeta_basis = nz
+        k_star_info(kc)%zeta_basis(1:nz) = &
+                &  atmospheric(is)%basis_peaks(1:nz)
+d135 4
+a138 2
+        Rad(1:) = 0.0
+        do nf = 1, no_phi_f(is)
+d140 3
+a142 1
+          do sv_i = 1, nz
+d144 1
+a144 3
+            Rad(1:k) = k_atmos(1:k,sv_i,nf,is)
+            Call Lintrp(tan_press,PtP,Rad,Sc1,k,j)
+            k_star_all(ki,sv_i,nf,1:j) = Sc1(1:j)
+d148 1
+a148 1
+        end do
+d150 1
+a150 1
+      endif
+d152 3
+a154 1
+    end do
+d158 1
+a158 1
+    do is = 1, n_sps
+d160 3
+a162 3
+      i = spect_atmos(is)
+      if(i < 1) CYCLE
+      if(.not.spectroscopic(i)%DER_CALC(band)) CYCLE
+d166 3
+a168 1
+      Spectag = atmospheric(is)%spectag
+d170 29
+a198 1
+      DO
+d200 1
+a200 31
+        if(spectroscopic(i)%Spectag /= Spectag) EXIT
+        n = spectroscopic(i)%no_phi_values
+        nz = spectroscopic(i)%no_zeta_values
+        CA = spectroscopic(i)%type
+        ki = ki + 1
+        kc = kc + 1
+        k_star_info(kc)%name = spectroscopic(i)%NAME
+        k_star_info(kc)%first_dim_index = ki
+        k_star_info(kc)%no_phi_basis = n
+        k_star_info(kc)%no_zeta_basis = nz
+        k_star_info(kc)%zeta_basis(1:nz) = &
+                &  spectroscopic(i)%zeta_basis(1:nz)
+!
+        Rad(1:) = 0.0
+        do nf = 1, n
+!
+          do sv_i = 1, nz
+!
+            select case ( CA )
+              case ( 'W' )
+                Rad(1:k) = k_spect_dw(1:k,sv_i,nf,i)
+              case ( 'N' )
+                Rad(1:k) = k_spect_dn(1:k,sv_i,nf,i)
+              case ( 'V' )
+                Rad(1:k) = k_spect_dnu(1:k,sv_i,nf,i)
+            end select
+!
+            Call Lintrp(tan_press,PtP,Rad,Sc1,k,j)
+            k_star_all(ki,sv_i,nf,1:j) = Sc1(1:j)
+!
+          end do        ! sv_i loop
+d202 1
+a202 1
+        end do          ! nf loop
+d204 2
+a205 2
+        i = i + 1
+        if(i > 3 * n_sps) EXIT
+d207 1
+a207 1
+      END DO
+d209 3
+a211 1
+    end do
+@
+

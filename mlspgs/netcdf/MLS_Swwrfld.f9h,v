@@ -1,0 +1,108 @@
+head	1.2;
+access;
+symbols
+	v5-02-NRT-19:1.2
+	v6-00:1.2
+	v5-02-NRT-18:1.2
+	v5-01-NRT-17:1.2
+	v5-01-NRT-16:1.2
+	v5-01-NRT-15:1.2
+	v5-01-NRT-14:1.2
+	neuralnetworks-1-0:1.2.0.4
+	cfm-single-freq-0-1:1.2.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2020.03.19.22.31.52;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2020.03.06.00.24.19;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Optional debugging stuff
+@
+text
+@! Copyright 2020, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id: MLS_Swwrfld.f9h,v 1.1 2020/03/06 00:24:19 pwagner Exp $
+
+!  integer function MLS_Swwrfld_Char_1D ( swathid, fieldname, &
+!    & start, stride, count, values ) result ( returnStatus )
+!    integer, parameter :: RANK = 1
+!    character(len=*), parameter :: ProcName = 'MLS_Swwrfld_Char_1d'
+!    character(len=*), dimension(:), intent(in) :: values
+
+    integer, intent(in)                  :: swathid      ! Swath structure ID
+    character(len=*), intent(in)         :: fieldname     ! Field name
+    integer, dimension(RANK), intent(in) :: start
+    integer, dimension(RANK), intent(in) :: stride
+    integer, dimension(RANK), intent(in) :: count
+    integer                              :: returnStatus
+    ! Internal variables
+    integer :: Me = -1                  ! String index for trace cacheing
+    integer :: grpid
+    integer :: varid
+    integer :: which_group
+    logical, parameter :: DEEBUG = .false.
+    ! Executable code
+    if ( DEEBUG ) then
+      print *, 'shape(values) ', shape(values)
+      print *, start, stride, count
+    endif
+    call trace_begin ( me, ProcName , cond=.false. )
+    returnStatus = -1
+    if ( Is_datafield_in_swath(swathId, fieldname, which_group) ) then
+      ! Must get grpid for Groupname
+      call check( &
+        & nf90_inq_ncid( swathId, trim(SWGroupNames(which_group)), grpId ), &
+        & ProcName )
+      call check( nf90_inq_varid(grpid, Fieldname, varid), &
+        & ProcName // trim(Fieldname) )
+      call check( nf90_put_var(grpid, varid, values, start, count, stride), &
+        & ProcName // trim(Fieldname) )
+      returnStatus = nf90_NoErr
+    endif
+    call trace_end ( cond=.false. )
+
+!   end subroutine MLS_Swwrfld_1D_DOUBLE
+! $Log: MLS_Swwrfld.f9h,v $
+! Revision 1.1  2020/03/06 00:24:19  pwagner
+! First commit
+!
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d12 1
+a12 1
+! $Id: MLS_Swwrfld.f9h,v 2.38 2017/07/31 23:00:25 pwagner Exp $
+d31 1
+d33 4
+d54 3
+@
+

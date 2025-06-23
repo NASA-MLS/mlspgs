@@ -1,0 +1,203 @@
+head	1.6;
+access;
+symbols
+	v5-02-NRT-19:1.6
+	v6-00:1.6
+	v5-02-NRT-18:1.6
+	v5-02:1.6
+	v5-01-NRT-17:1.6
+	v5-01-NRT-16:1.6
+	v5-01-NRT-15:1.6
+	v5-01-NRT-14:1.6
+	neuralnetworks-1-0:1.6.0.14
+	cfm-single-freq-0-1:1.6.0.12
+	v5-01:1.6
+	v5-00:1.6
+	v4-23-TA133:1.6.0.10
+	mus-emls-1-70:1.6.0.8
+	rel-1-0-englocks-work:1.6.0.6
+	VUMLS1-00:1.6
+	VPL1-00:1.6
+	V4-22-NRT-08:1.6
+	VAM1-00:1.6
+	V4-21:1.6.0.4
+	V4-13:1.6
+	V4-12:1.6
+	V4-11:1.6
+	V4-10:1.6
+	V3-43:1.6
+	M4-00:1.6
+	V3-41:1.6
+	V3-40-PlusGM57:1.6.0.2
+	V2-24-NRT-04:1.6
+	V3-33:1.6
+	V2-24:1.6
+	V3-31:1.6
+	V3-30-NRT-05:1.6
+	cfm-01-00:1.6
+	V3-30:1.6
+	V3-20:1.6
+	V3-10:1.6
+	V2-23-NRT-02:1.6
+	V2-23:1.6
+	V2-22-NRT-01:1.6
+	V2-22:1.6
+	V2-21:1.6
+	V2-20:1.6
+	V2-11:1.6
+	V2-10:1.6
+	V2-00:1.6
+	V1-51:1.6
+	V1-50:1.6
+	V1-45:1.6
+	V1-44:1.6
+	V1-43:1.6
+	V1-32:1.5
+	V1-31:1.5
+	V1-30:1.5
+	V1-13:1.5
+	V1-12:1.5
+	V1-11:1.5
+	V1-10:1.5
+	newfwm-feb03:1.5.0.2
+	V1-04:1.1
+	V1-03:1.1
+	V1-02:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.6
+date	2004.02.07.00.46.59;	author livesey;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2002.09.26.23.59.46;	author livesey;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2002.08.22.23.14.28;	author livesey;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2002.08.15.22.46.35;	author livesey;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2002.05.13.17.24.25;	author livesey;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2002.04.29.21.54.58;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.6
+log
+@Now only spectrally flat terms
+@
+text
+@; This l2cf fragment is for defining the fGrids for extinciton
+fGridExtinctionConstant: fGrid, coordinate=IntermediateFrequency, $
+  values = [ 0 GHz ]
+
+@
+
+
+1.5
+log
+@New constant fGrid too
+@
+text
+@a1 14
+fGridExtinctionR1A: fGrid, coordinate=IntermediateFrequency, $
+  values = [ 4 GHz, 13 GHz ]
+fGridExtinctionR1B: fGrid, coordinate=IntermediateFrequency, $
+  values = [ 4 GHz, 13 GHz ]
+fGridExtinctionR2: fGrid, coordinate=IntermediateFrequency, $
+  values = [ 7 GHz, 11.5 GHz, 11.6 GHz, 13.3 GHz, 13.4 GHz, 16 GHz ]
+fGridExtinctionR3:  fGrid, coordinate=IntermediateFrequency, $
+  values = [ 2 GHz, 6.8 GHz, 6.9 GHz, 11 GHz ]
+fGridExtinctionR4:  fGrid, coordinate=IntermediateFrequency, $
+  values = [ 5 GHz, 8.5 GHz, 8.6 GHz, 11.5 GHz, 15 GHz, 20 GHz ]
+fGridExtinctionR5H: fGrid, coordinate=IntermediateFrequency, $
+  values = [ 6 GHz, 10 GHz, 12 GHz, 14 GHz, 19 GHz, 22 GHz ]
+fGridExtinctionR5V: fGrid, coordinate=IntermediateFrequency, $
+  values = [ 6 GHz, 10 GHz, 12 GHz, 14 GHz, 19 GHz, 22 GHz ]
+@
+
+
+1.4
+log
+@Now taken on intermediate frequency.
+@
+text
+@d16 2
+@
+
+
+1.3
+log
+@Moved to simpler single frequency grid
+@
+text
+@d2 14
+a15 7
+fGridExtinctionR1A: fGrid, coordinate=Frequency, values=[ !loR1 ]
+fGridExtinctionR1B: fGrid, coordinate=Frequency, values=[ !loR1 ]
+fGridExtinctionR2:  fGrid, coordinate=Frequency, values=[ !loR2 ]
+fGridExtinctionR3:  fGrid, coordinate=Frequency, values=[ !loR3 ]
+fGridExtinctionR4:  fGrid, coordinate=Frequency, values=[ !loR4 ]
+fGridExtinctionR5H: fGrid, coordinate=Frequency, values=[ !loR5 ]
+fGridExtinctionR5V: fGrid, coordinate=Frequency, values=[ !loR5 ]
+@
+
+
+1.2
+log
+@Getting close to being ready
+@
+text
+@d2 7
+a8 16
+fGridExtinctionR1A: fGrid, coordinate=Frequency, $
+  values=[ !loR1 - 13 GHz, !loR1 ]
+fGridExtinctionR1B: fGrid, coordinate=Frequency, $
+  values=[ !loR1 - 13 GHz, !loR1 ]
+; fGridExtinctionR2:  fGrid, coordinate=Frequency, $
+;   values=[ !loR2 - 16 GHz, !loR2, !loR2 + 16 GHz ]
+fGridExtinctionR2:  fGrid, coordinate=Frequency, $
+   values=[ 183.1 GHz, 183.4 GHz ]
+fGridExtinctionR3:  fGrid, coordinate=Frequency, $
+  values=[ !loR3 - 11 GHz, !loR3, !loR3 + 11 GHz ]
+fGridExtinctionR4:  fGrid, coordinate=Frequency, $
+  values=[ !loR4 - 20 GHz, !loR4, !loR4 + 20 GHz ]
+fGridExtinctionR5H: fGrid, coordinate=Frequency, $
+  values=[ !loR5 - 22 GHz, !loR5, !loR5 + 22 GHz ]
+fGridExtinctionR5V: fGrid, coordinate=Frequency, $
+  values=[ !loR5 - 22 GHz, !loR5, !loR5 + 22 GHz ]
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@a0 4
+!divert(-1)
+; $Id: extinctionfgrids.l2cf,v 2.1 2002/01/08 22:57:01 livesey Exp $
+!divert!dnl
+
+@
+

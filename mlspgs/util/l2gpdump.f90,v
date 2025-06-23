@@ -1,0 +1,2261 @@
+head	1.29;
+access;
+symbols
+	v5-02-NRT-19:1.29
+	v6-00:1.29
+	v5-02-NRT-18:1.29
+	v5-02:1.27
+	v5-01-NRT-17:1.29
+	v5-01-NRT-16:1.29
+	v5-01-NRT-15:1.29
+	v5-01-NRT-14:1.27
+	neuralnetworks-1-0:1.27.0.4
+	cfm-single-freq-0-1:1.27.0.2
+	v5-01:1.27
+	v5-00:1.27
+	v4-23-TA133:1.26.0.2
+	mus-emls-1-70:1.25.0.4
+	rel-1-0-englocks-work:1.25.0.2
+	VUMLS1-00:1.22
+	VPL1-00:1.22
+	V4-22-NRT-08:1.21
+	VAM1-00:1.19
+	V4-21:1.19.0.2
+	V4-13:1.18
+	V4-12:1.18
+	V4-11:1.17
+	V4-10:1.17
+	V3-43:1.8
+	M4-00:1.12
+	V3-41:1.8
+	V3-40-PlusGM57:1.8.0.2
+	V2-24-NRT-04:1.4
+	V3-33:1.10
+	V2-24:1.4
+	V3-31:1.10
+	V3-30-NRT-05:1.9
+	cfm-01-00:1.9
+	V3-30:1.8
+	V3-20:1.8
+	V3-10:1.8
+	V2-23-NRT-02:1.4
+	V2-23:1.4
+	V2-22-NRT-01:1.4
+	V2-22:1.4
+	V2-21:1.2
+	V2-20:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.29
+date	2021.09.17.15.56.47;	author pwagner;	state Exp;
+branches;
+next	1.28;
+
+1.28
+date	2021.09.02.22.53.37;	author pwagner;	state Exp;
+branches;
+next	1.27;
+
+1.27
+date	2019.08.08.16.47.23;	author pwagner;	state Exp;
+branches;
+next	1.26;
+
+1.26
+date	2018.11.01.23.22.20;	author pwagner;	state Exp;
+branches;
+next	1.25;
+
+1.25
+date	2018.02.21.21.19.30;	author pwagner;	state Exp;
+branches;
+next	1.24;
+
+1.24
+date	2018.02.03.00.25.48;	author pwagner;	state Exp;
+branches;
+next	1.23;
+
+1.23
+date	2017.10.12.20.32.36;	author pwagner;	state Exp;
+branches;
+next	1.22;
+
+1.22
+date	2016.08.09.22.45.26;	author pwagner;	state Exp;
+branches;
+next	1.21;
+
+1.21
+date	2016.04.06.00.00.17;	author pwagner;	state Exp;
+branches;
+next	1.20;
+
+1.20
+date	2016.01.22.00.38.40;	author pwagner;	state Exp;
+branches;
+next	1.19;
+
+1.19
+date	2015.01.30.21.05.34;	author pwagner;	state Exp;
+branches;
+next	1.18;
+
+1.18
+date	2014.07.21.23.09.32;	author pwagner;	state Exp;
+branches;
+next	1.17;
+
+1.17
+date	2014.04.02.23.05.57;	author pwagner;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2014.01.09.00.31.26;	author pwagner;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2013.10.18.22.41.15;	author pwagner;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2013.08.23.02.51.48;	author vsnyder;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2013.05.30.20.43.10;	author pwagner;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2013.02.26.00.14.28;	author pwagner;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2011.05.26.20.47.55;	author pwagner;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2011.02.18.23.10.27;	author pwagner;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2010.03.31.18.15.30;	author pwagner;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2009.05.14.22.04.27;	author pwagner;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2009.04.13.20.43.17;	author pwagner;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2008.12.03.00.15.04;	author pwagner;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2008.09.09.16.51.38;	author pwagner;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2007.10.12.23.38.56;	author pwagner;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2007.06.14.21.45.42;	author pwagner;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2007.02.06.23.19.06;	author pwagner;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2006.08.10.23.06.13;	author pwagner;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.29
+log
+@If -profile option, prints Precisions in l2cf style
+@
+text
+@! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=================================
+program L2GPDump ! dumps L2GPData files
+!=================================
+
+   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+   use Bitstuff, only: Isbitset
+   use Dump_0, only: AsExplicitValues
+   use Dump_1, only: Dump
+   use Dump_Options, only: SDFormatDefault, DumpDumpOptions
+   use HDF, only: Dfacc_Read
+   use HDF5, only: H5fclose_F, H5gopen_F, H5gclose_F, H5fis_HDF5_F
+   use HighOutput, only: OutputNamedValue
+   use Intrinsic, only: L_Swath
+   use L2GPData, only: L2GPData_T, L2GPnamelen, Maxswathnamesbufsize, Rgp, &
+     & ContractL2GPrecord, Dump, Dumprange, ReadL2GPData, DestroyL2GPcontents, &
+     & SetupnewL2GPrecord
+   use Machine, only: Hp, Getarg
+   use MLSCommon, only: MLSFile_T
+   use MLSFiles, only: HDFversion_5, InitializeMLSFile, MLS_Inqswath, &
+     & MLS_CloseFile, MLS_OpenFile, Split_Path_Name
+   use MLSFillValues, only: IsNaN
+   use MLSHDF5, only: MLS_H5open, MLS_H5close
+   use MLSHDFeos, only: MLS_Isglatt, He5_Ehrdglatt
+   use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, &
+     & MLSMessage
+   use MLSStats1, only: MLSMean, StatsOnOneLine
+   use MLSStringLists, only: CatLists, ExpandStringRange, &
+     & GetStringElement, Intersection, NumStringElements, ReadIntsFromList, &
+     & StringElement, StringElementNum
+   use MLSStrings, only: Lowercase, Readnumsfromchars
+   use Optional_M, only: Default
+   use Output_M, only: Blanks, Newline, Output, &
+     & ResumeOutput, SuspendOutput
+   use Printit_M, only: Set_Config
+   
+   implicit none
+
+!---------------------------- RCS Ident Info ------------------------------
+  character (len=*), parameter :: ModuleName= &
+       "$RCSfile: l2gpdump.f90,v $"
+  character (len=*), parameter :: IdParm = &
+       "$Id: l2gpdump.f90,v 1.28 2021/09/02 22:53:37 pwagner Exp $"
+  character (len=len(idParm)) :: Id = idParm
+!---------------------------------------------------------------------------
+
+! Brief description of program
+! This program dumps L2GPData files
+
+  ! This is just the maximum num of chunks you wish
+  ! to dump individually in case you don't want to dump them all
+  ! It's not the actual maximum number of chunks.
+  integer, parameter :: MaxNChunks = 50 
+
+  type Options_T
+     character(len=255) ::  Chunks = '*' ! wild card means 'all'
+     integer, dimension(2)::ChunkRange = 0
+     real, dimension(2)  :: HoursRange = 0.
+     logical ::             Debug = .true.
+     logical ::             Verbose = .false.
+     logical ::             OneLine = .false.         ! Print on one line
+     logical ::             SenseInquiry = .true.
+     logical ::             AnyNaNs = .false. ! Just say if any NaNs
+     integer ::             Details = 1
+     integer ::             Width = 5
+     logical ::             ColumnsOnly = .false.
+     logical ::             AttributesToo = .false.
+     character(len=16)  ::  DumpOptions = ''
+     character(len=16)  ::  Format      = ''
+     character(len=255) ::  DsInquiry = ''
+     character(len=255) ::  AttrInquiry = ''
+     character(len=255) ::  Fields = ''
+     character(len=255) ::  Swaths = '*' ! wildcard, meaning all swaths
+     character(len=255) ::  GeoBoxNames = '' ! which geolocation names to box
+     character(len=8)   ::  PrecCutoffRelation = 'above'
+     integer            ::  NGeoBoxDims = 0
+     real, dimension(4) ::  GeoBoxLowBound
+     real, dimension(4) ::  GeoBoxHiBound
+     logical            ::  IgnorePrecisionForStatusBits = .true. ! Any way to change this?
+     real    ::             ConvergenceCutOff = -1. ! Show % above, below this
+     real    ::             PrecisionCutOff = -1. ! Show % above, below this
+     real    ::             QualityCutOff = -1. ! Show % above, below this
+     logical ::             StatusBits = .false. ! Show % with various status bits set
+     logical ::             Merge = .false. ! Show % after merging input files
+     logical ::             IgnoreNegPrecisions = .false. ! Show min, max for pos Precs only
+     logical ::             Profile = .false. ! Show mean profile for precision
+  end type Options_T
+
+  type ( Options_T ) :: options
+  character(len=255) :: filename          ! filename
+  integer            :: n_filenames
+  integer     ::  error ! Counting indices & Error flags
+  logical     :: is_hdf5
+  logical     :: is_present
+  integer, save                   :: numGood = 0
+  integer, save                   :: numGoodPrec = 0
+  integer, save                   :: numNotUseable = 0
+  integer, save                   :: numOddStatus = 0
+  integer, save                   :: numPostProcStatus = 0
+  real, dimension(3), save        :: numTest = 0.
+  integer, parameter              :: PostProcBitIndex = 4
+  integer, parameter              :: MAXNUMBITSUSED = 10 !9
+  ! The bit number starts at 0: bitNumber[1] = 0
+  integer, dimension(MAXNUMBITSUSED), parameter :: bitNumber = &
+    & (/ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 /)
+  integer, dimension(MAXNUMBITSUSED, 2), save :: bitCounts = 0
+  character(len=*), parameter     :: bitNames = &
+    & '  dontuse,   bewary,     info,postprocd,' // &
+    & '    hicld,    locld,   nogmao,abandoned,   toofew,    crash'
+  !   01234567890123456789012345678901234567890123456789012345678901234567890123456789
+  real(rgp), dimension(:), pointer :: values => null()
+  ! Executable
+  call set_config ( useToolkit = .false., logFileUnit = -1 )
+  call mls_h5open(error)
+  n_filenames = 0
+  do      ! Loop over filenames
+     call get_filename(filename, n_filenames, options)
+     if ( filename == ' ' ) exit
+     n_filenames = n_filenames + 1
+     call h5fis_hdf5_f(trim(filename), is_hdf5, error)
+     if ( .not. is_hdf5 ) then
+       print *, 'Sorry--not recognized as hdf5 file: ', trim(filename)
+     endif
+     if ( len_trim(options%format) > 1 ) SDFORMATDEFAULT = options%format
+     if ( options%dsInquiry /= ' ' ) then
+       call suspendOutput
+       is_present = IsDSInFile( trim(filename), trim(options%dsInquiry) )
+       call Respond( options%senseInquiry, is_present, &
+         & trim(filename), trim(options%dsInquiry) )
+     elseif ( options%attrInquiry /= ' ' ) then
+       call suspendOutput
+       is_present = IsAttributeInFile( trim(filename), trim(options%attrInquiry) )
+       call Respond( options%senseInquiry, is_present, &
+         & trim(filename), trim(options%attrInquiry) )
+     else
+       if ( options%verbose ) print *, 'Dumping swaths in ', trim(filename)
+       call OutputNamedValue( 'Dumping L2GP File',  trim(filename), &
+         & options='--Headline' )
+       call dump_one_file( trim(filename), options )
+     endif
+     call resumeOutput
+  enddo
+  if ( options%merge ) then
+    if ( options%ConvergenceCutOff > -1. ) &
+      & call showPercentages( numTest(1), numGood, 'convergence', &
+      & options%ConvergenceCutOff, 'above' )
+    if ( options%QualityCutOff > -1. ) &
+      & call showPercentages( numTest(2), numGood, 'Quality', &
+      & options%QualityCutOff, 'below' )
+    if ( options%PrecisionCutOff > -1. ) &
+      & call showPercentages( numTest(3), numGoodPrec, 'precision', &
+      & options%PrecisionCutOff, options%precCutoffRelation )
+    if ( options%statusBits ) call showStatusPct
+    call ShowSummary
+  endif
+  call mls_h5close(error)
+contains
+!------------------------- get_filename ---------------------
+    subroutine get_filename( filename, n_filenames, options )
+    ! Added for command-line processing
+     character(len=255), intent(out) :: filename          ! filename
+     integer, intent(in) ::             n_filenames
+     type ( Options_T ) :: options
+     integer ::                         error = 1
+     integer, save ::                   i = 1
+     character(len=255) :: argstr
+  ! Get inputfile name, process command-line args
+  ! (which always start with -)
+    do
+      call getarg ( i+hp, filename )
+      ! print *, i, ' th Arg: ', trim(filename)
+      error = 0
+      if ( filename(1:1) /= '-' ) exit
+      if ( filename(1:3) == '-h ' ) then
+        call print_help
+      elseif ( filename(1:3) == '-v ' ) then
+        options%verbose = .true.
+      elseif ( filename(1:3) == '-0 ' ) then
+        options%details = 0
+      elseif ( filename(1:3) == '-1 ' ) then
+        options%details = -1
+      elseif ( filename(1:3) == '-ls' ) then
+        options%details = -2
+      elseif ( filename(1:3) == '-2 ' ) then
+        options%details = -2
+      elseif ( filename(1:3) == '-a ' ) then
+        options%attributesToo = .true.
+      elseif ( filename(1:3) == '-c ' ) then
+        options%columnsOnly = .true.
+      elseif ( filename(1:4) == '-one' ) then
+        options%oneLine = .true.
+        statsOnOneLine = .true.
+        options%dumpOptions = trim(options%dumpOptions) // 'v'
+      else if ( filename(1:6) == '-chunk' ) then
+        call getarg ( i+1+hp, options%chunks )
+        i = i + 1
+        if ( index(options%chunks, '-') > 0 ) then
+          ! call ReadIntsFromList( options%chunks, options%chunks, &
+          !  & inseparator='-' )
+          print *, 'Sorry--ReadIntsFromList not coded for this format'
+          stop
+        else
+          call ReadIntsFromList( options%chunks, options%chunkRange )
+          if ( options%chunkRange(2) < options%chunkRange(1) ) &
+            & options%chunkRange(2) = options%chunkRange(1)
+        endif
+      else if ( filename(1:5) == '-hour' ) then
+        call getarg ( i+1+hp, argstr )
+        call ReadNumsFromChars( StringElement (argstr, 1, .true. ), &
+          & options%hoursRange(1) )
+        call ReadNumsFromChars( StringElement (argstr, 2, .true. ), &
+          & options%hoursRange(2) )
+        if ( options%hoursRange(2) < options%hoursRange(1) ) &
+          & options%hoursRange(2) = options%hoursRange(1)
+        print *, 'argstr: ', argstr
+        print *, 'hours: ', options%hoursRange
+        i = i + 1
+      else if ( filename(1:5) == '-conv' ) then
+        call getarg ( i+1+hp, argstr )
+        read( argstr, * ) options%convergenceCutOff
+        i = i + 1
+      else if ( filename(1:5) == '-form' ) then
+        call getarg ( i+1+hp, options%format )
+        i = i + 1
+      else if ( filename(1:3) == '-d ' ) then
+        call getarg ( i+1+hp, filename )
+        options%dumpOptions = trim(options%dumpOptions) // filename
+        if ( index( options%dumpOptions, '?' ) > 0 ) then
+          call DumpDumpOptions( "?" )
+          stop
+        endif
+        i = i + 1
+      else if ( filename(1:4) == '-geo' ) then
+        call getarg ( i+1+hp, filename )
+        options%geoBoxNames = catLists( options%geoBoxNames, filename )
+        i = i + 1
+        options%nGeoBoxDims = min( options%nGeoBoxDims + 1, 4 )
+        call getarg ( i+1+hp, filename )
+        read( filename, * ) options%geoBoxLowBound(options%nGeoBoxDims), &
+          & options%geoBoxHiBound(options%nGeoBoxDims)
+        i = i + 1
+      else if ( filename(1:8) == '-profile' ) then
+        options%Profile = .true.
+      else if ( filename(1:7) == '-ignore' ) then
+        options%IgnoreNegPrecisions = .true.
+      else if ( filename(1:6) == '-inqat' ) then
+        call getarg ( i+1+hp, options%attrInquiry )
+        i = i + 1
+      elseif ( filename(1:2) == '-m' ) then
+        options%merge = .true.
+      else if ( filename(1:6) == '-inqds' ) then
+        call getarg ( i+1+hp, options%dsInquiry )
+        i = i + 1
+      else if ( filename(1:8) == '-nignore' ) then
+        options%IgnoreNegPrecisions = .false.
+      else if ( filename(1:7) == '-ninqat' ) then
+        options%senseInquiry = .false.
+        call getarg ( i+1+hp, options%attrInquiry )
+        i = i + 1
+      else if ( filename(1:7) == '-ninqds' ) then
+        options%senseInquiry = .false.
+        call getarg ( i+1+hp, options%dsInquiry )
+        i = i + 1
+      else if ( lowercase(filename(1:4)) == '-nan' ) then
+        options%anyNaNs = .true.
+        i = i + 1
+      else if ( filename(1:3) == '-l ' ) then
+        call getarg ( i+1+hp, options%fields )
+        i = i + 1
+      else if ( filename(1:5) == '-prec' ) then
+        call getarg ( i+1+hp, argstr )
+        read( argstr, * ) options%precisionCutOff
+        i = i + 1
+      else if ( filename(1:2) == '-w' ) then
+        call getarg ( i+1+hp, argstr )
+        read( argstr, * ) options%width
+        i = i + 1
+      else if ( filename(1:5) == '-qual' ) then
+        call getarg ( i+1+hp, argstr )
+        read( argstr, * ) options%qualityCutOff
+        i = i + 1
+      else if ( filename(1:5) == '-rel' ) then
+        call getarg ( i+1+hp, options%precCutoffRelation )
+        i = i + 1
+      else if ( filename(1:3) == '-s ' ) then
+        call getarg ( i+1+hp, options%swaths )
+        i = i + 1
+      elseif ( filename(1:5) == '-stat' ) then
+        options%statusBits = .true.
+      else if ( filename(1:3) == '-f ' ) then
+        call getarg ( i+1+hp, filename )
+        error = 0
+        i = i + 1
+        exit
+      else
+        call print_help
+      end if
+      i = i + 1
+    end do
+    if ( error /= 0 ) then
+      call print_help
+    endif
+    i = i + 1
+    if (trim(filename) == ' ' .and. n_filenames == 0) then
+
+    ! Last chance to enter filename
+      print *,  "Enter the name of the HDF5 file. " // &
+       &  "Datasets in the file will be listed shortly."
+      read(*,'(a)') filename
+    endif
+    
+  end subroutine get_filename
+!------------------------- print_help ---------------------
+  subroutine print_help
+  ! Print brief but helpful message
+      write (*,*) &
+      & 'Usage: l2gpdump [options] [filenames]'
+      write (*,*) &
+      & ' If no filenames supplied, you will be prompted to supply one'
+      write (*,*) &
+      & ' optionally restrict dumps to certain fields, chunks, etc.'
+      write (*,*) ' Options:'
+      write (*,*) ' -f filename => use filename'
+      write (*,*) ' -h          => print brief help'
+      write (*,*) ' -ls         => dump only swath names'
+      write (*,*) ' -chunks cl  => dump only chunks named in cl'
+      write (*,*) ' -geo name lo,hi  '
+      write (*,*) '             => dump only geobox low <= geo <= hi'
+      write (*,*) '             where geo can be one of'
+      write (*,*) '              {latitude, longitude, time, pressure}'
+      write (*,*) '             (may be repeated)'
+      write (*,*) '             if hi < lo then dump is outside geobox'
+      write (*,*) ' -d opts     => pass opts to dump routines'
+      write (*,*) '                 e.g., "-rs" to dump only rms, stats'
+      write (*,*) '                 e.g., "?" to list available opts'
+      write (*,*) ' -one        => print statistics on one line (dont)'
+      write (*,*) ' -form form  => format output using form'
+      write (*,*) "                 e.g., '(1pg20.11)'"
+      write (*,*) ' -[n]ignore'
+      write (*,*) '             => print statistics of [neg, 0, and] pos precs'
+      write (*,*) ' -profile    => print mean profile values and precisions'
+      write (*,*) ' -[n]inqattr attr'
+      write (*,*) '             => print only if attribute attr [not] present'
+      write (*,*) ' -[n]inqds ds'
+      write (*,*) '             => print only if dataset ds [not] present'
+      write (*,*) ' -NaN        => just say if there are any NaNs'
+      write (*,*) ' -l list     => dump only fields named in list'
+      write (*,*) ' -s slist    => dump only swaths named in slist'
+      write (*,*) '                (may use \* as wild card)'
+      write (*,*) ' -c          => dump only column abundances'
+      write (*,*) ' -a          => dump attributes, too'
+      write (*,*) ' -v          => verbose'
+      write (*,*) ' -w width    => dump with width items on each line'
+      write (*,*) ' (details level)'
+      write (*,*) ' -0          => dump only scalars, 1-d array'
+      write (*,*) ' -1          => dump only scalars'
+      write (*,*) ' -2          => dump only swath names (same as -ls)'
+
+      write (*,*) ' (The following options print only summaries)'
+      write (*,*) ' -conv x     => show % nonconverged by x cutoff'
+      write (*,*) ' -prec x     => show % with precision > x cutoff'
+      write (*,*) ' -qual x     => show % with quality < x cutoff'
+      write (*,*) ' -status     => show % with various status bits set'
+      write (*,*) ' -rel "eq"   => show % with precision = x cutoff'
+      write (*,*) ' -rel "statuseven" '
+      write (*,*) '             => show % with precision = x cutoff'
+      write (*,*) '                and with status even'
+      write (*,*) ' -m[erge]    => merge data from all files (dont)'
+
+      write (*,*) '    (Notes)'
+      write (*,*) ' (1) by default, dumps all fields in all swaths,'
+      write (*,*) '     but not attributes'
+      write (*,*) ' (2) by default, detail level is -1'
+      write (*,*) ' (3) details levels, -l options are all mutually exclusive'
+      write (*,*) ' (4) the list of chunks may include the range operator "-"'
+      write (*,*) ' (5) -conv, -qual, -prec, and -status'
+      write (*,*) '     all turn off detailed dumps'
+      stop
+  end subroutine print_help
+  
+  function IsAttributeInFile( file, attribute ) result(sooDesu)
+    use MLSHDF5, only: IsHDF5itempresent
+    use HDF5, only: H5fopen_F, H5f_Acc_Rdonly_F
+    ! Dummy args
+    character(len=*), intent(in) :: file
+    character(len=*), intent(in) :: attribute
+    logical :: sooDesu
+    ! Local variables
+    integer :: fileID
+    integer :: grpID
+    integer :: status
+    character(len=len(attribute)) :: path, name
+    ! TRUE if attribute in file
+    call h5fopen_f ( trim(file), H5F_ACC_RDONLY_F, fileID, status )
+    if ( status /= 0 ) call defeat('Opening file')
+    call split_path_name ( attribute, path, name )
+    call h5gopen_f( fileID, trim(path), grpID, status )
+    if ( status /= 0 ) call defeat('Opening group')
+    sooDesu = IsHDF5ItemPresent ( grpID, name, '-a' )
+    call h5gclose_f(grpID, status)
+    if ( status /= 0 ) call defeat('Closing group')
+    call h5fclose_f(fileID, status)
+    if ( status /= 0 ) call defeat('Closing file')
+  end function IsAttributeInFile
+
+  function IsDSInFile( file, DS ) result(sooDesu)
+    use MLSHDF5, only: IsHDF5itempresent
+    use HDF5, only: H5fopen_F, H5f_Acc_Rdonly_F
+    ! Dummy args
+    character(len=*), intent(in) :: file
+    character(len=*), intent(in) :: DS
+    logical :: sooDesu
+    ! Local variables
+    integer :: fileID
+    integer :: status
+    integer :: grpID
+    character(len=len(DS)) :: path, name
+    ! TRUE if DS in file
+    call h5fopen_f ( trim(file), H5F_ACC_RDONLY_F, fileID, status )
+    call split_path_name ( DS, path, name )
+    call h5gopen_f( fileID, trim(path), grpID, status )
+    sooDesu = IsHDF5ItemPresent ( grpID, name, '-d' )
+    call h5gclose_f(grpID, status)
+    call h5fclose_f(fileID, status)
+  end function IsDSInFile
+  
+  subroutine Defeat(msg)
+    character(len=*), intent(in) :: msg
+    call resumeOutput
+    call output('Serious error: ' // msg, advance='yes')
+    call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'stopping' )
+  end subroutine Defeat
+  
+  subroutine Respond( sense, test, file, name )
+    ! print only if sense matches test
+    ! Dummy args
+    logical, intent(in)          :: sense
+    logical, intent(in)          :: test
+    character(len=*), intent(in) :: file
+    character(len=*), intent(in) :: name
+    character(len=*), parameter  :: Found = 'found'
+    character(len=*), parameter  :: notFound = 'not found'
+    character(len=16)            :: answer
+    ! Executable
+    if ( sense .neqv. test ) return
+    if ( sense ) then
+      answer = found
+    else
+      answer = notfound
+    endif
+    call resumeOutput
+    call output(trim(name) // ' ' // trim(answer) &
+      & // ' in ' // trim(file), advance='yes' )
+  end subroutine Respond
+
+   subroutine dump_one_file( filename, options )
+    ! Dummy args
+    character(len=*), intent(in) :: filename          ! filename
+    type ( Options_T ) :: options
+    ! Local variables
+    logical, parameter            :: countEmpty = .true.
+    integer :: File1
+    integer                              :: i
+    integer                              :: listsize
+    type (L2GPData_T)                    :: l2gp
+    character (len=MAXSWATHNAMESBUFSIZE) :: matches
+    type(MLSFile_T)                      :: MLSFile
+    integer                              :: noSwaths
+    integer                              :: status
+    character (len=L2GPNameLen)          :: swath
+    character (len=MAXSWATHNAMESBUFSIZE) :: SwathList
+    ! Get swath list
+    noSwaths = mls_InqSwath ( filename, SwathList, listSize, &
+           & hdfVersion=HDFVERSION_5)
+    if ( options%details < -1 ) then
+      call output('swaths in ' // trim(filename), advance='yes')
+      call dump(trim(swathList))
+      return
+    endif
+    ! Executable code
+    noSwaths = NumStringElements(trim(swathList), countEmpty)
+    if ( noSwaths < 1 ) then
+       call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            & 'No swaths to dump--unable to count swaths in ' // trim(swathList) )
+    endif
+    status = InitializeMLSFile ( MLSFile, type=l_swath, access=DFACC_READ, &
+     & name=filename, HDFVersion=HDFVERSION_5 )
+    ! Loop over swaths in file 1
+    do i = 1, noSwaths
+      call GetStringElement (trim(swathList), swath, i, countEmpty )
+      ! Is this one of the swaths we wished to dump?
+      ! Have we used a 'wild card' (*) to match swath names?
+      ! AA bare wild card matches any string
+      if ( len_trim(options%swaths) > 1 .and. &
+        & index( options%swaths, '*' ) > 0 ) then
+        matches = Intersection( trim(swath), trim(options%swaths), options='-w' )
+        if ( len_trim(matches) < 1 ) cycle
+      elseif ( options%swaths /= '*' ) then
+        status = stringElementNum(options%swaths, trim(swath), countEmpty)
+        if ( status < 1 ) cycle
+      endif
+      ! Allocate and fill l2gp
+      ! print *, 'Reading swath from file: ', trim(swath)
+      call ReadL2GPData ( trim(filename), trim(swath), l2gp, &
+           & hdfVersion=HDFVERSION_5 )
+      ! Dump the swath- and file-level attributes
+      if ( options%attributesToo ) then
+        call MLS_OpenFile( MLSFile )
+        file1 = MLSFile%FileID%f_id
+        call dump( file1, l2gp )
+        ! call output( 'Trying to find Ascend(+1)Descend(-1) attribute', advance='yes' )
+        if ( mls_isglatt ( file1, 'Ascend(+1)Descend(-1)' ) ) then
+          ! call output( 'Found it!', advance='yes' )
+          call Allocate_test ( values, l2gp%nTimes, 'asc/desc values', ModuleName )
+          status = he5_EHrdglatt(file1, &
+            & 'Ascend(+1)Descend(-1)', &
+            &  values )
+          call dump( values, 'Ascend(+1)Descend(-1)' )
+          call DeAllocate_test ( values, 'asc/desc values', ModuleName )
+        endif
+        call MLS_CloseFile ( MLSFile )
+      endif
+      if ( options%anyNaNs ) then
+        if ( any(isNan(l2gp%l2gpValue)) ) &
+          & print *, 'NaNs found in ', trim(swath)
+      elseif ( options%ConvergenceCutOff > -1. .or. options%QualityCutOff > -1. .or. &
+        & options%PrecisionCutOff > -1. .or. options%statusBits ) then
+        call myPcts( options, l2gp, swath )
+      elseif ( options%Profile ) then
+        call myMeanProfile( options, l2gp, swath )
+      else
+        call myDump( options, l2gp, swath )
+      endif
+      call DestroyL2GPContents ( l2gp )
+    enddo
+   end subroutine dump_one_file
+
+   subroutine myMeanProfile( options, inl2gp, swath, silent )
+     ! Args
+     type ( Options_T ), intent(in)  :: options
+     type (L2GPData_T), intent(in)   :: inl2gp
+     character(len=*), intent(in)    :: swath
+     logical, optional, intent(in)   :: silent
+     ! Internal variables
+     integer                         :: bitindex, i, n
+     type (L2GPData_T)               :: l2gp
+     logical                         :: mysilent
+     ! Executable
+     mysilent = Default ( silent, .false. ) 
+     call SetupNewL2GPRecord ( l2gp, proto=inl2gp, &
+       & nTimes=1 )
+     where ( inl2gp%L2GPPrecision <= 0._rgp )
+       inl2gp%L2GPPrecision = inl2gp%MissingValue
+     endwhere
+     do i=1, l2gp%nLevels
+       l2gp%L2GPValue(1,i,1) = &
+         & mlsmean( inl2gp%L2GPValue(1,i,:), FillValue=inl2gp%MissingL2GP )
+       l2gp%L2GPPrecision(1,i,1) = &
+         & mlsmean( inl2gp%L2GPPrecision(1,i,:), FillValue=inl2gp%MissingValue )
+     enddo
+     call output ( 'level          value            precision', advance='yes' )
+     do i=1, l2gp%nLevels
+       call output ( i, advance='no' )
+       call blanks ( 4 )
+       call output ( l2gp%L2GPValue(1,i,1), advance='no' )
+       call blanks ( 4 )
+       call output ( l2gp%L2GPPrecision(1,i,1), advance='yes' )
+     enddo
+     call Dump( l2gp%L2GPValue, 'values' )
+     call Dump( l2gp%L2GPPrecision, 'precisions' )
+     call output ( '*** Mean Precision Profile ***', advance='yes' )
+     call AsExplicitValues ( l2gp%L2GPPrecision(1,:,1), 'K' )
+   end subroutine myMeanProfile
+
+   subroutine myPcts( options, inl2gp, swath, silent )
+     ! Args
+     type ( Options_T ), intent(in)  :: options
+     type (L2GPData_T), intent(in)   :: inl2gp
+     character(len=*), intent(in)    :: swath
+     logical, optional, intent(in)   :: silent
+     ! Internal variables
+     integer                         :: bitindex, i, n
+     type (L2GPData_T)               :: l2gp
+     logical                         :: mysilent
+     logical, dimension(:), pointer  :: negativePrec => null() ! true if all prec < 0
+     logical, dimension(:), pointer  :: oddStatus => null() ! true if all status odd
+     ! Executable
+     mysilent = Default ( silent, .false. ) 
+     if ( options%verbose .and. .not. mysilent ) print *, 'swath: ', trim(swath)
+     ! Contract to just the levels and instances requested
+     n = options%nGeoBoxDims
+     if ( any(options%chunkRange /= 0) ) then
+       call ContractL2GPRecord ( inl2gp, l2gp, chunks=options%chunkRange )
+     elseif ( any(options%hoursRange /= 0.) ) then
+       print *, 'Contracting according to hours in day: ', options%hoursRange
+       call ContractL2GPRecord ( inl2gp, l2gp, hoursInDay=options%hoursRange )
+     elseif ( n > 0 ) then
+       call ContractL2GPRecord ( inl2gp, l2gp, &
+         & options%geoBoxNames, &
+         & options%geoBoxLowBound(1:n), options%geoBoxHiBound(1:n) )
+     else
+       call SetupNewL2GPRecord ( l2gp, proto=inl2gp )
+     endif
+     ! print *, 'chunkRange ', options%chunkRange
+     ! print *, 'Contracted l2gp'
+     ! call dump( l2gp )
+     if ( .not. options%merge ) then
+       bitCounts = 0
+       numGood = 0
+       numGoodPrec = 0
+       numNotUseable = 0
+       numOddStatus = 0
+       numTest = 0.
+     endif
+     call allocate_test( negativePrec, l2gp%nTimes, 'negativePrec', ModuleName )
+     call allocate_test( oddStatus, l2gp%nTimes, 'oddStatus', ModuleName )
+     do i=1, l2gp%nTimes
+       negativePrec(i) = all( l2gp%l2GPPrecision(:,:,i) < 0._rgp )
+     enddo
+     do i=1, l2gp%nTimes
+       oddStatus(i) = mod(l2gp%status(i), 2) > 0
+     enddo
+     numGood = numGood + count( .not. ( negativePrec .or. &
+       & (mod(l2gp%status, 2) > 0) ) )
+     if ( options%ConvergenceCutOff > -1. ) then
+       numTest(1) = numTest(1) + count( .not. ( negativePrec .or. &
+         & (mod(l2gp%status, 2) > 0) .or. &
+         & (l2gp%Convergence < options%ConvergenceCutOff) ) )
+       if ( .not. options%merge ) &
+         & call showPercentages( numTest(1), numGood, 'convergence', &
+         & options%ConvergenceCutOff, 'above' )
+     endif
+     if ( options%QualityCutOff > -1. ) then
+       numTest(2) = numtest(2) + count( .not. ( negativePrec .or. &
+         & (mod(l2gp%status, 2) > 0) .or. &
+         & (l2gp%Quality > options%QualityCutOff) ) )
+       print *, 'numTest(2) ', numTest(2)
+       print *, 'numGood ', numGood
+       if ( .not. options%merge ) &
+         & call showPercentages( numTest(2), numGood, 'Quality', &
+         & options%QualityCutOff, 'below' )
+     endif
+     if ( options%PrecisionCutOff > -1. ) then
+       ! numGood = 0
+       ! numTest = 0
+       do i=1, l2gp%nTimes
+         if ( negativePrec(i) .or. &
+           & mod(l2gp%status(i), 2) > 0 ) cycle
+         numGoodPrec = numGoodPrec + &
+           & l2gp%nLevels*max(1, l2gp%nFreqs)
+         if ( options%precCutoffRelation == 'above' ) then
+           numTest(3) = numTest(3) + &
+             & count( l2gp%l2gpPrecision(:,:,i) > options%PrecisionCutOff )
+         elseif ( options%precCutoffRelation == 'below' ) then
+           numTest(3) = numTest(3) + &
+             & count( l2gp%l2gpPrecision(:,:,i) < options%PrecisionCutOff )
+         elseif ( options%precCutoffRelation == 'statuseven' ) then
+           numTest(3) = numTest(3) + &
+             & count( &
+             & l2gp%l2gpPrecision(:,:,i) == options%PrecisionCutOff &
+             & .and. &
+             & mod(l2gp%status(i), 2) < 1 &
+             & )
+         else
+           numTest(3) = numTest(3) + &
+             & count( l2gp%l2gpPrecision(:,:,i) == options%PrecisionCutOff )
+         endif
+       enddo
+       if ( .not. options%merge .and. .not. mysilent ) &
+         & call showPercentages( numTest(3), numGoodPrec, 'precision', &
+         & options%PrecisionCutOff, options%precCutoffRelation )
+     endif
+     ! numGood = count( .not. ( negativePrec .or. &
+     !   & (mod(l2gp%status, 2) > 0) ) )
+     ! 
+     ! Do we ignore precisions when calculating % for Status bits?
+     if ( options%IgnorePrecisionForStatusBits ) negativePrec = .false.
+     numNotUseable = numNotUseable + count ( negativePrec .or. oddStatus )
+     numOddStatus = numOddStatus + count( oddStatus )
+     numPostProcStatus = numPostProcStatus + count(isBitSet( l2gp%status, bitNumber(PostProcBitIndex) ) )
+     if ( options%statusBits ) then
+       ! First, and last 3 bits are special
+       ! For bit 0 we filter out only points with precision < 0
+       ! For the last 3
+       ! we want % of crashed chunks, so we don't filter out at all
+       bitCounts(1, 2) = bitCounts(1, 2) + count( .not. negativePrec )
+       bitCounts(1, 1) = bitCounts(1, 1) + count( .not. ( negativePrec .or. &
+         & (mod(l2gp%status, 2) == 0) ) )
+       do bitindex=MAXNUMBITSUSED-2, MAXNUMBITSUSED
+         bitCounts(bitindex, 2) = bitCounts(bitindex, 2) + l2gp%nTimes
+         bitCounts(bitindex, 1) = bitCounts(bitindex, 1) + &
+           & count(isBitSet( l2gp%status, bitNumber(bitindex) ) )
+       enddo
+       ! call outputNamedValue ( 'max status', maxval(l2gp%status) )
+       ! call outputNamedValue ( 'min status', minval(l2gp%status) )
+
+       ! Redefine oddStatus:
+       ! Include among it only the ones abandoned, too few, or crashed
+       oddStatus = .false.
+       do i=1, l2gp%nTimes
+         oddStatus(i) = isBitSet( l2gp%status(i), bitNumber(MAXNUMBITSUSED-2) ) &
+           & .or. &
+           & isBitSet( l2gp%status(i), bitNumber(MAXNUMBITSUSED-1) ) &
+           & .or. &
+           & isBitSet( l2gp%status(i), bitNumber(MAXNUMBITSUSED) )
+       enddo
+       ! If we're ignoring precisions, we might as well ignore DoNotUse, too
+       if ( options%IgnorePrecisionForStatusBits ) oddStatus = .false.
+       do bitindex=2, MAXNUMBITSUSED-3
+         if ( bitindex == PostProcBitIndex ) then
+           ! The bit for post-processing is special
+           bitCounts(PostProcBitIndex, 2) = bitCounts(PostProcBitIndex, 2) + &
+             & l2gp%nTimes
+           bitCounts(PostProcBitIndex,1) = numPostProcStatus
+         else
+           ! the other Bits
+           bitCounts(bitindex, 2) = bitCounts(bitindex, 2) + l2gp%nTimes ! numGood
+           bitCounts(bitindex, 1) = bitCounts(bitindex, 1) + &
+             & count( .not. ( negativePrec .or. oddStatus ) .and. &
+             & isBitSet( l2gp%status, bitNumber(bitindex) ) )
+         endif
+       enddo
+       if ( .not. options%merge .and. .not. mysilent ) then
+         call showStatusPct
+         call showSummary
+       endif
+     endif
+     call deallocate_test( negativePrec, 'negativePrec', ModuleName )
+     call deallocate_test( oddStatus, 'oddStatus', ModuleName )
+     call DestroyL2GPContents( l2gp )
+   end subroutine myPcts
+
+   subroutine myDump( options, l2gp, swath )
+     ! Args
+     type ( Options_T ), intent(in)  :: options
+     type (L2GPData_T), intent(in)   :: l2gp
+     character(len=*), intent(in)    :: swath
+     ! Internal variables
+     integer, dimension(MAXNCHUNKS)  :: chunks
+     type (L2GPData_T)               :: contractedl2gp
+     integer                         :: nChunks
+     ! Dump the actual swath
+     if ( options%verbose ) print *, 'swath: ', trim(swath)
+     if ( options%verbose ) print *, 'dumpOptions: ', trim(options%dumpOptions)
+     if ( options%IgnoreNegPrecisions ) then
+       where ( l2gp%L2GPPrecision <= 0._rgp ) 
+         l2gp%L2GPPrecision = -999.99
+       endwhere
+     endif
+     ! This just fills some integer counters
+     call MyPcts ( options, l2gp, swath, silent=.true. )
+     if ( options%nGeoBoxDims > 0 ) then
+       call dumpRange( l2gp, &
+         & options%geoBoxNames, options%geoBoxLowBound, options%geoBoxHiBound, &
+         & columnsOnly=options%columnsOnly, details=options%details, &
+         & fields=options%fields, options=options%dumpOptions )
+     elseif ( any(options%hoursRange /= 0.) ) then
+       print *, 'Contracting according to hours in day: ', options%hoursRange
+       call ContractL2GPRecord ( l2gp, contractedl2gp, &
+         & hoursInDay=options%hoursRange )
+       call dump( contractedl2gp, &
+         & columnsOnly=options%columnsOnly, details=options%details, &
+         & fields=options%fields, &
+         & width=options%width, options=options%dumpOptions )
+       call showSummary
+       call DestroyL2GPContents ( contractedl2gp )
+     elseif ( options%chunks == '*' ) then
+       call dump(l2gp, options%columnsOnly, options%details, options%fields, &
+         & width=options%width, options=options%dumpOptions)
+       call showSummary
+     else
+       call ExpandStringRange(options%chunks, chunks, nchunks)
+       if ( nchunks < 1 ) return
+       call dump(l2gp, chunks(1:nChunks), &
+         & options%columnsOnly, options%details, options%fields, &
+         &width=options%width, options=options%dumpOptions)
+       call showSummary
+     endif
+   end subroutine myDump
+
+   subroutine showPercentages( numTest, numGood, name, CutOff, relat )
+     ! output % figures derived from numTest/numGood
+     ! Args
+     real, intent(in)    ::          numTest
+     integer, intent(in) ::          numGood
+     real, intent(in) ::             cutOff
+     character(len=*), intent(in) :: name
+     character(len=*), intent(in) :: relat ! 'above' or 'below' or 'equal'
+     ! Internal variables
+     ! Executable
+     call output( '% ' )
+     call output( trim(name) )
+     call blanks(2)
+     call output( relat )
+     call blanks(2)
+     call output( cutOff )
+     call blanks(1)
+     call output( (100.*numTest)/max(1, numGood) )
+     if ( options%debug ) then
+       call blanks(3)
+       call output( int(numTest) )
+       call blanks(3)
+       call output( numGood )
+     endif
+     call newline
+   end subroutine showPercentages
+
+   subroutine showStatusPct
+     ! output % figures derived from numTest/numGood
+     ! Internal variables
+     integer :: bitindex
+     logical, parameter :: DEEBUG = .false.
+     ! Executable
+     if ( DEEBUG ) then
+       do bitindex=2, MAXNUMBITSUSED
+         call outputNamedValue ( 'bitNumber(bitindex)', bitNumber(bitindex) )
+       enddo
+     endif
+     if ( options%debug ) then
+       call output( 'valid data counts' )
+       call blanks(4)
+       call output( bitCounts(1, 2), advance='yes' )
+     endif
+     call output( '% valid data with bits set', advance='yes' )
+     call output( 'bit' )
+     call blanks(4)
+     call output( 'desc' )
+     call blanks(4)
+     call output( '%', advance='yes' )
+     do bitindex=1, MAXNUMBITSUSED
+       call output( bitNumber(bitIndex) )
+       call blanks(2)
+       call output( trim( stringElement( bitNames, bitIndex, &
+         & countEmpty=.true. ) ) )
+       call blanks(4)
+       call output( (100.*bitCounts(bitindex, 1)) / max(1, bitCounts(bitindex, 2) ) )
+       if ( options%debug ) then
+         call blanks(4)
+         call output( bitCounts(bitindex, 1) )
+         call blanks(4)
+         call output( bitCounts(bitindex, 2) )
+       endif
+       call newline
+     enddo
+   end subroutine showStatusPct
+
+   subroutine showSummary
+     ! output number good, unuseable profiles
+     call OutputNamedValue( 'Number of good profiles', numGood )
+     call outputNamedValue( 'Number of unuseable profiles', numNotUseable )
+     call outputNamedValue( 'Number with odd status set', numOddStatus )
+   end subroutine showSummary
+
+!==================
+end program L2GPDump
+!==================
+
+! $Log: l2gpdump.f90,v $
+! Revision 1.28  2021/09/02 22:53:37  pwagner
+! Added new options -ignore and -profile
+!
+! Revision 1.27  2019/08/08 16:47:23  pwagner
+! -ls is now the cmdline option to dump a list of swathnames
+!
+! Revision 1.26  2018/11/01 23:22:20  pwagner
+! Housekeeping; try to keep Id from being optimized away
+!
+! Revision 1.25  2018/02/21 21:19:30  pwagner
+! Ignore precision sign when counting Status bits
+!
+! Revision 1.24  2018/02/03 00:25:48  pwagner
+! Correct Status Bit names; add post-processed
+!
+! Revision 1.23  2017/10/12 20:32:36  pwagner
+! More CamelCase is use statements; removed outdated build notes
+!
+! Revision 1.22  2016/08/09 22:45:26  pwagner
+! Consistent with splitting of Dunp_0
+!
+! Revision 1.21  2016/04/06 00:00:17  pwagner
+! -one cmdline option added; prints name on each line
+!
+! Revision 1.20  2016/01/22 00:38:40  pwagner
+! May use wildcard as part of swath names
+!
+! Revision 1.19  2015/01/30 21:05:34  pwagner
+! Added commandline option to detect NaNs in l2gp files
+!
+! Revision 1.18  2014/07/21 23:09:32  pwagner
+! Added option -d '?'
+!
+! Revision 1.17  2014/04/02 23:05:57  pwagner
+! Removed redundant open_ and close_MLSFile
+!
+! Revision 1.16  2014/01/09 00:31:26  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
+! Revision 1.15  2013/10/18 22:41:15  pwagner
+! Will dump global attribute Ascend(+1)Descend(-1) if present
+!
+! Revision 1.14  2013/08/23 02:51:48  vsnyder
+! Move PrintItOut to PrintIt_m
+!
+! Revision 1.13  2013/05/30 20:43:10  pwagner
+! Commandline option -form allows us modify print format
+!
+! Revision 1.12  2013/02/26 00:14:28  pwagner
+! May constrain dump to hoursRange; range dumps also restrict pctages
+!
+! Revision 1.11  2011/05/26 20:47:55  pwagner
+! Repaired use of Cutoffs for Quality and Precision (we hope)
+!
+! Revision 1.10  2011/02/18 23:10:27  pwagner
+! Passes -d opts to dump routines
+!
+! Revision 1.9  2010/03/31 18:15:30  pwagner
+! Removed commented-out, outdated stuff
+!
+! Revision 1.8  2009/05/14 22:04:27  pwagner
+! New commandline arg -w width
+!
+! Revision 1.7  2009/04/13 20:43:17  pwagner
+! Fixed a bug preventing macros file from using its own macros properly
+!
+! Revision 1.6  2008/12/03 00:15:04  pwagner
+! Must use MLSFile_T interfaces instead of mls_io_gen_..
+!
+! Revision 1.5  2008/09/09 16:51:38  pwagner
+! Added geolocation box to dump subsetted data
+!
+! Revision 1.4  2007/10/12 23:38:56  pwagner
+! Shows num profiles good, unuseable, with odd status
+!
+! Revision 1.3  2007/06/14 21:45:42  pwagner
+! Many bugs corrected regarding percentages
+!
+! Revision 1.2  2007/02/06 23:19:06  pwagner
+! Can show percentages with thresholds in convergence, status, prec.
+!
+! Revision 1.1  2006/08/10 23:06:13  pwagner
+! First commit
+!
+@
+
+
+1.28
+log
+@Added new options -ignore and -profile
+@
+text
+@d18 1
+d53 1
+a53 1
+       "$Id: l2gpdump.f90,v 1.27 2019/08/08 16:47:23 pwagner Exp $"
+d582 2
+d870 3
+@
+
+
+1.27
+log
+@-ls is now the cmdline option to dump a list of swathnames
+@
+text
+@d36 1
+a36 1
+   use MLSStats1, only: StatsOnOneLine
+d52 1
+a52 1
+       "$Id: l2gpdump.f90,v 1.26 2018/11/01 23:22:20 pwagner Exp $"
+d62 1
+a62 1
+  integer, parameter :: MAXNCHUNKS = 50 
+d65 24
+a88 24
+     character(len=255) ::  chunks = '*' ! wild card means 'all'
+     integer, dimension(2)::chunkRange = 0
+     real, dimension(2)  :: hoursRange = 0.
+     logical ::             debug = .true.
+     logical ::             verbose = .false.
+     logical ::             oneLine = .false.         ! Print on one line
+     logical ::             senseInquiry = .true.
+     logical ::             anyNaNs = .false. ! Just say if any NaNs
+     integer ::             details = 1
+     integer ::             width = 5
+     logical ::             columnsOnly = .false.
+     logical ::             attributesToo = .false.
+     character(len=16)  ::  dumpOptions = ''
+     character(len=16)  ::  format      = ''
+     character(len=255) ::  dsInquiry = ''
+     character(len=255) ::  attrInquiry = ''
+     character(len=255) ::  fields = ''
+     character(len=255) ::  swaths = '*' ! wildcard, meaning all swaths
+     character(len=255) ::  geoBoxNames = '' ! which geolocation names to box
+     character(len=8)   ::  precCutoffRelation = 'above'
+     integer            ::  nGeoBoxDims = 0
+     real, dimension(4) ::  geoBoxLowBound
+     real, dimension(4) ::  geoBoxHiBound
+     logical            ::  IgnorePrecisionForStatusBits = .true.
+d93 3
+a95 1
+     logical ::             merge = .false. ! Show % after merging input files
+d148 1
+a148 1
+       call dump_one_file(trim(filename), options)
+d251 4
+d263 2
+d348 3
+d466 1
+a466 1
+   subroutine dump_one_file(filename, options)
+d539 2
+d548 35
+d753 5
+d867 3
+@
+
+
+1.26
+log
+@Housekeeping; try to keep Id from being optimized away
+@
+text
+@d50 1
+a50 1
+       "$RCSfile: chunktimes.f90,v $"
+d52 1
+a52 1
+       "$Id: chunktimes.f90,v 1.30 2016/10/04 22:13:34 pwagner Exp $"
+d189 2
+d326 1
+d338 2
+a339 1
+      write (*,*) ' -format form=> format output using form'
+d355 1
+a355 1
+      write (*,*) ' -2          => dump only swath names'
+d814 3
+@
+
+
+1.25
+log
+@Ignore precision sign when counting Status bits
+@
+text
+@d13 1
+a13 1
+PROGRAM L2GPDump ! dumps L2GPData files
+d48 7
+a54 5
+!------------------- RCS Ident Info -----------------------
+   character(len=130) :: Id = &                                                    
+   "$Id: l2gpdump.f90,v 1.24 2018/02/03 00:25:48 pwagner Exp $"
+   character (len=*), parameter :: ModuleName= "$RCSfile: l2gpdump.f90,v $"
+!----------------------------------------------------------
+d810 3
+@
+
+
+1.24
+log
+@Correct Status Bit names; add post-processed
+@
+text
+@d50 1
+a50 1
+   "$Id: l2gpdump.f90,v 1.23 2017/10/12 20:32:36 pwagner Exp $"
+d57 4
+a60 1
+  integer, parameter :: MAXNCHUNKS = 50
+d86 1
+d108 1
+d629 3
+d650 13
+d671 1
+a671 1
+           bitCounts(bitindex, 2) = numGood
+d673 1
+a673 2
+             & count( .not. ( negativePrec .or. &
+             & (mod(l2gp%status, 2) > 0) ) .and. &
+d808 3
+@
+
+
+1.23
+log
+@More CamelCase is use statements; removed outdated build notes
+@
+text
+@d41 1
+d50 1
+a50 1
+   "$Id: l2gpdump.f90,v 1.22 2016/08/09 22:45:26 pwagner Exp $"
+d100 1
+d102 2
+a103 1
+  integer, parameter              :: MAXNUMBITSUSED = 9
+d105 1
+a105 1
+    & (/ 0, 1, 2, 4, 5, 6, 7, 8, 9 /)
+d108 3
+a110 1
+    & '  dontuse,   bewary,     info,    hicld,    locld,   nogmao,abandoned,   toofew,    crash'
+d524 1
+a524 1
+   subroutine myPcts( options, inl2gp, swath )
+d529 1
+d533 1
+d537 2
+a538 1
+     if ( options%verbose ) print *, 'swath: ', trim(swath)
+d618 1
+a618 1
+       if ( .not. options%merge ) &
+d626 1
+d643 13
+a655 6
+         ! Bit 
+         bitCounts(bitindex, 2) = numGood
+         bitCounts(bitindex, 1) = bitCounts(bitindex, 1) + &
+           & count( .not. ( negativePrec .or. &
+           & (mod(l2gp%status, 2) > 0) ) .and. &
+           & isBitSet( l2gp%status, bitNumber(bitindex) ) )
+d657 1
+a657 1
+       if ( .not. options%merge ) then
+d679 2
+d788 3
+@
+
+
+1.22
+log
+@Consistent with splitting of Dunp_0
+@
+text
+@d16 2
+a17 2
+   use Allocate_deallocate, only: allocate_test, deallocate_test
+   use Bitstuff, only: isbitset
+d20 6
+a25 6
+   use HDF, only: dfacc_read
+   use HDF5, only: h5fclose_f, h5gopen_f, h5gclose_f, h5fis_hdf5_f   
+   use Highoutput, only: outputnamedvalue
+   use Intrinsic, only: l_swath
+   use L2GPdata, only: L2GPdata_t, L2GPnamelen, maxswathnamesbufsize, rgp, &
+     & ContractL2GPrecord, dump, dumprange, readL2GPdata, destroyL2GPcontents, &
+d27 7
+a33 7
+   use Machine, only: hp, getarg
+   use MLSCommon, only: MLSfile_t
+   use MLSFiles, only: hdfversion_5, initializeMLSfile, MLS_inqswath, &
+     & MLS_closefile, MLS_openfile, split_path_name
+   use MLSFillvalues, only: isNaN
+   use MLSHdf5, only: MLS_h5open, MLS_h5close
+   use MLSHdfeos, only: MLS_isglatt, he5_ehrdglatt
+d37 7
+a43 7
+   use MLSStringLists, only: catLists, expandStringRange, &
+     & GetStringElement, Intersection, numStringElements, readIntsFromList, &
+     & StringElement, stringElementNum
+   use MLSStrings, only: lowercase, readnumsfromchars
+   use Output_m, only: blanks, newline, output, &
+     & Resumeoutput, suspendoutput
+   use Printit_m, only: set_config
+d48 3
+a50 3
+   CHARACTER(LEN=130) :: Id = &                                                    
+   "$Id: l2gpdump.f90,v 1.21 2016/04/06 00:00:17 pwagner Exp $"
+   CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile: l2gpdump.f90,v $"
+a55 8
+! To use this, copy it into
+! mlspgs/tests/lib
+! then enter "make depends" followed by "make"
+
+
+! Then run it
+! LF95.Linux/test [options] [filenames]
+
+d58 1
+a58 1
+  type options_T
+d87 1
+a87 1
+  end type options_T
+d89 2
+a90 2
+  type ( options_T ) :: options
+  character(LEN=255) :: filename          ! filename
+d132 2
+d154 1
+a154 1
+    subroutine get_filename(filename, n_filenames, options)
+d158 1
+a158 1
+     type ( options_T ) :: options
+d364 2
+a365 2
+    use MLSHDF5, only: ISHDF5ITEMPRESENT
+    use HDF5, only: H5FOPEN_F, H5F_ACC_RDONLY_F
+d389 2
+a390 2
+    use MLSHDF5, only: ISHDF5ITEMPRESENT
+    use HDF5, only: H5FOPEN_F, H5F_ACC_RDONLY_F
+d442 1
+a442 1
+    type ( options_T ) :: options
+d521 1
+a521 1
+     type ( options_T ), intent(in)  :: options
+d653 1
+a653 1
+     type ( options_T ), intent(in)  :: options
+d760 1
+a760 1
+     call outputNamedValue( 'Number of good profiles', numGood )
+d770 3
+@
+
+
+1.21
+log
+@-one cmdline option added; prints name on each line
+@
+text
+@d16 4
+a19 3
+   use allocate_deallocate, only: allocate_test, deallocate_test
+   use bitstuff, only: isbitset
+   use dump_0, only: dump, dumpdumpoptions, sdformatdefault
+d22 2
+a23 2
+   use highoutput, only: outputnamedvalue
+   use intrinsic, only: l_swath
+d25 3
+a27 3
+     & contractL2GPrecord, dump, dumprange, readL2GPdata, destroyL2GPcontents, &
+     & setupnewL2GPrecord
+   use machine, only: hp, getarg
+d38 2
+a39 2
+     & getStringElement, Intersection, numStringElements, readIntsFromList, &
+     & stringElement, stringElementNum
+d41 3
+a43 3
+   use output_m, only: blanks, newline, output, &
+     & resumeoutput, suspendoutput
+   use printit_m, only: set_config
+d49 1
+a49 1
+   "$Id: l2gpdump.f90,v 1.20 2016/01/22 00:38:40 pwagner Exp $"
+d776 3
+@
+
+
+1.20
+log
+@May use wildcard as part of swath names
+@
+text
+@d35 4
+a38 3
+   use MLSStringLists, only: catlists, expandstringrange, &
+     & getstringelement, Intersection, numstringelements, readintsfromlist, &
+     & stringelement, stringelementnum
+d48 1
+a48 1
+   "$Id: l2gpdump.f90,v 1.19 2015/01/30 21:05:34 pwagner Exp $"
+d71 1
+d188 4
+d224 2
+a225 1
+        call getarg ( i+1+hp, options%dumpOptions )
+d327 1
+d667 1
+d775 3
+@
+
+
+1.19
+log
+@Added commandline option to detect NaNs in l2gp files
+@
+text
+@d23 3
+a25 3
+   use l2gpdata, only: l2gpdata_t, l2gpnamelen, maxswathnamesbufsize, rgp, &
+     & contractl2gprecord, dump, dumprange, readl2gpdata, destroyl2gpcontents, &
+     & setupnewl2gprecord
+d33 1
+a33 1
+   use MLSMessagemodule, only: MLSmsg_error, MLSmsg_warning, &
+d35 2
+a36 2
+   use MLSStringlists, only: catlists, expandstringrange, &
+     & getstringelement, numstringelements, readintsfromlist, &
+d47 1
+a47 1
+   "$Id: l2gpdump.f90,v 1.18 2014/07/21 23:09:32 pwagner Exp $"
+d71 1
+a71 1
+     logical             :: anyNaNs = .false. ! Just say if any NaNs
+d83 1
+d150 1
+a150 1
+      & options%PrecisionCutOff, 'above' )
+d267 3
+d307 41
+a347 34
+      write (*,*) ' Options: -f filename => use filename'
+      write (*,*) '          -h          => print brief help'
+      write (*,*) '          -chunks cl  => dump only chunks named in cl'
+      write (*,*) '          -geo name lo,hi  '
+      write (*,*) '                      => dump only geobox low <= geo <= hi'
+      write (*,*) '                      where geo in {latitude, longitude, time, pressure}'
+      write (*,*) '                      (may be repeated)'
+      write (*,*) '                      if hi < lo then dump is outside geobox'
+      write (*,*) '          -d opts     => pass opts to dump routines'
+      write (*,*) '                          e.g., "-rs" to dump only rms, stats'
+      write (*,*) '                          e.g., "?" to list available ones'
+      write (*,*) '          -format form=> format output using form'
+      write (*,*) '          -[n]inqattr attr'
+      write (*,*) '                      => print only if attribute attr [not] present'
+      write (*,*) '          -[n]inqds ds'
+      write (*,*) '                      => print only if dataset ds [not] present'
+      write (*,*) '          -NaN        => just say if there are any NaNs'
+      write (*,*) '          -l list     => dump only fields named in list'
+      write (*,*) '          -s slist    => dump only swaths named in slist'
+      write (*,*) '          -c          => dump only column abundances'
+      write (*,*) '          -a          => dump attributes, too'
+      write (*,*) '          -v          => verbose'
+      write (*,*) '          -w width    => dump with width items on each line'
+      write (*,*) '     (details level)'
+      write (*,*) '          -0          => dump only scalars, 1-d array'
+      write (*,*) '          -1          => dump only scalars'
+      write (*,*) '          -2          => dump only swath names'
+
+      write (*,*) '    (The following options print only summaries)'
+      write (*,*) '          -conv x     => show % nonconverged by x cutoff'
+      write (*,*) '          -prec x     => show % with precision > x cutoff'
+      write (*,*) '          -qual x     => show % with quality < x cutoff'
+      write (*,*) '          -status     => show % with various status bits set'
+      write (*,*) '          -m[erge]    => merge data from all files (dont)'
+d350 2
+a351 1
+      write (*,*) ' (1) by default, dumps all fields in all swaths, but not attributes'
+d355 2
+a356 1
+      write (*,*) ' (5) -conv, -qual, -prec, and -status all turn off detailed dumps'
+d443 8
+a450 7
+    integer :: i
+    integer :: listsize
+    type (L2GPData_T) :: l2gp
+    type(MLSFile_T)                :: MLSFile
+    integer :: noSwaths
+    integer :: status
+    character (len=L2GPNameLen) :: swath
+d472 7
+a478 1
+      if ( options%swaths /= '*' ) then
+d490 1
+a490 1
+        call dump(file1, l2gp)
+d589 17
+a605 2
+         numTest(3) = numTest(3) + &
+           & count( l2gp%l2gpPrecision(:,:,i) > options%PrecisionCutOff )
+d609 1
+a609 1
+         & options%PrecisionCutOff, 'above' )
+d688 1
+a688 1
+   subroutine showPercentages( numTest, numGood, name, CutOff, aorb )
+d695 1
+a695 1
+     character(len=*), intent(in) :: aorb ! 'above' or 'below'
+d701 1
+a701 1
+     call output( aorb )
+d766 3
+@
+
+
+1.18
+log
+@Added option -d '?'
+@
+text
+@d16 26
+a41 25
+   use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+   use BITSTUFF, only: ISBITSET
+   use DUMP_0, only: DUMP, DUMPDUMPOPTIONS, SDFORMATDEFAULT
+   use HDF, only: DFACC_READ
+   use HDF5, only: H5FCLOSE_F, H5GOPEN_F, H5GCLOSE_F, H5FIS_HDF5_F   
+   use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
+   use INTRINSIC, only: L_SWATH
+   use L2GPDATA, only: L2GPDATA_T, L2GPNAMELEN, MAXSWATHNAMESBUFSIZE, RGP, &
+     & CONTRACTL2GPRECORD, DUMP, DUMPRANGE, READL2GPDATA, DESTROYL2GPCONTENTS, &
+     & SETUPNEWL2GPRECORD
+   use MACHINE, only: HP, GETARG
+   use MLSCOMMON, only: MLSFILE_T
+   use MLSFILES, only: HDFVERSION_5, INITIALIZEMLSFILE, MLS_INQSWATH, &
+     & MLS_CloseFile, MLS_OpenFile, SPLIT_PATH_NAME
+   use MLSHDF5, only: MLS_H5OPEN, MLS_H5CLOSE
+   use MLSHDFEOS, only: MLS_ISGLATT, HE5_EHRDGLATT
+   use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_WARNING, &
+     & MLSMESSAGE
+   use MLSSTRINGLISTS, only: CATLISTS, EXPANDSTRINGRANGE, &
+     & GETSTRINGELEMENT, NUMSTRINGELEMENTS, READINTSFROMLIST, &
+     & STRINGELEMENT, STRINGELEMENTNUM
+   use MLSSTRINGS, only: READNUMSFROMCHARS
+   use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT, &
+     & RESUMEOUTPUT, SUSPENDOUTPUT
+   use PRINTIT_M, only: SET_CONFIG
+d47 1
+a47 1
+   "$Id: l2gpdump.f90,v 1.17 2014/04/02 23:05:57 pwagner Exp $"
+d71 1
+d248 3
+d319 1
+d339 1
+a339 1
+      write (*,*) ' (1) by default, dumps all fields in allswaths, but not attributes'
+d483 4
+a486 1
+      if ( options%ConvergenceCutOff > -1. .or. options%QualityCutOff > -1. .or. &
+d731 3
+@
+
+
+1.17
+log
+@Removed redundant open_ and close_MLSFile
+@
+text
+@d18 1
+a18 1
+   use DUMP_0, only: DUMP, SDFORMATDEFAULT
+d46 1
+a46 1
+   "$Id: l2gpdump.f90,v 1.16 2014/01/09 00:31:26 pwagner Exp $"
+d216 4
+d308 1
+d722 3
+@
+
+
+1.16
+log
+@Some procedures formerly in output_m now got from highOutput
+@
+text
+@d29 1
+a29 1
+     & CLOSE_MLSFILE, OPEN_MLSFILE, SPLIT_PATH_NAME
+d46 1
+a46 1
+   "$Id: l2gpdump.f90,v 1.15 2013/10/18 22:41:15 pwagner Exp $"
+d457 1
+a457 1
+        call open_MLSFile( MLSFile )
+d470 1
+a470 1
+        call close_MLSFile ( MLSFile )
+d717 3
+@
+
+
+1.15
+log
+@Will dump global attribute Ascend(+1)Descend(-1) if present
+@
+text
+@d21 1
+d38 1
+a38 1
+   use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT, OUTPUTNAMEDVALUE, &
+d46 1
+a46 1
+   "$Id: l2gpdump.f90,v 1.14 2013/08/23 02:51:48 vsnyder Exp $"
+d717 3
+@
+
+
+1.14
+log
+@Move PrintItOut to PrintIt_m
+@
+text
+@d30 2
+a31 1
+   use MLSMESSAGEMODULE, only: MLSMESSAGECONFIG, MLSMSG_ERROR, MLSMSG_WARNING, &
+d39 1
+a39 1
+   use PrintIt_m, only: Set_Config
+d45 1
+a45 1
+   "$Id: l2gpdump.f90,v 1.13 2013/05/30 20:43:10 pwagner Exp $"
+a59 1
+  integer, parameter ::  max_nsds = 1000  ! Maximum number of datasets in file.
+d107 2
+a108 1
+  ! 
+d336 2
+a337 2
+    use MLSHDF5, only: IsHDF5ItemPresent
+    use HDF5, only: h5fopen_f, H5F_ACC_RDONLY_F
+d361 2
+a362 2
+    use MLSHDF5, only: IsHDF5ItemPresent
+    use HDF5, only: h5fopen_f, H5F_ACC_RDONLY_F
+a422 1
+    integer :: record_length
+d459 10
+d716 3
+@
+
+
+1.13
+log
+@Commandline option -form allows us modify print format
+@
+text
+@d38 1
+d44 1
+a44 1
+   "$Id: l2gpdump.f90,v 1.12 2013/02/26 00:14:28 pwagner Exp $"
+d108 2
+a109 3
+  MLSMessageConfig%useToolkit = .false.   
+  MLSMessageConfig%logFileUnit = -1       
+  CALL mls_h5open(error)
+d706 3
+@
+
+
+1.12
+log
+@May constrain dump to hoursRange; range dumps also restrict pctages
+@
+text
+@d18 1
+a18 1
+   use DUMP_0, only: DUMP
+d43 1
+a43 1
+   "$Id: l2gpdump.f90,v 1.11 2011/05/26 20:47:55 pwagner Exp $"
+d73 1
+d119 1
+d209 3
+d302 1
+d706 3
+@
+
+
+1.11
+log
+@Repaired use of Cutoffs for Quality and Precision (we hope)
+@
+text
+@d16 9
+a24 8
+   use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+   use BitStuff, only: ISBITSET
+   use dump_0, only: dump
+   use Hdf, only: DFACC_READ
+   use HDF5, only: h5fclose_f, h5gopen_f, h5gclose_f, h5fis_hdf5_f   
+   use intrinsic, only: l_swath
+   use L2GPData, only: L2GPData_T, L2GPNameLen, MAXSWATHNAMESBUFSIZE, RGP, &
+     & Dump, DumpRange, ReadL2GPData, DestroyL2GPContents
+d26 12
+a37 11
+   use MLSCommon, only: MLSFile_T
+   use MLSFiles, only: HDFVERSION_5, InitializeMLSFile, MLS_INQSWATH, &
+     & close_MLSFile, open_MLSFile, split_path_name
+   use MLSHDF5, only: mls_h5open, mls_h5close
+   use MLSMessageModule, only: MLSMessageConfig, MLSMSG_Error, MLSMSG_Warning, &
+     & MLSMessage
+   use MLSStringLists, only: catLists, ExpandStringRange, &
+     & GetStringElement, NumStringElements, &
+     & stringElement, stringElementNum
+   use OUTPUT_M, only: blanks, newline, OUTPUT, outputNamedValue, &
+     & resumeOutput, suspendOutput
+d43 1
+a43 1
+   "$Id: l2gpdump.f90,v 1.10 2011/02/18 23:10:27 pwagner Exp $"
+d62 3
+a64 1
+    character(len=255) ::   chunks = '*' ! wild card means 'all'
+d182 21
+d455 6
+a460 1
+      call myDump( options, l2gp, swath )
+d465 1
+a465 1
+   subroutine myDump( options, l2gp, swath )
+d468 2
+a469 2
+     type (L2GPData_T), intent(in)   :: l2gp
+     character(len=*), intent(in) :: swath
+d471 2
+a472 4
+     logical                         :: alreadyDumped
+     integer                         :: bitindex, i
+     integer, dimension(MAXNCHUNKS) :: chunks
+     integer :: nChunks
+a475 1
+     alreadyDumped = .false.
+d477 17
+a512 1
+       alreadyDumped = .true.
+a520 1
+       alreadyDumped = .true.
+d524 2
+a530 1
+       alreadyDumped = .true.
+a549 1
+       alreadyDumped = .true.
+d579 12
+a590 1
+     if ( alreadyDumped ) return
+d592 1
+d598 10
+d700 3
+@
+
+
+1.10
+log
+@Passes -d opts to dump routines
+@
+text
+@d41 1
+a41 1
+   "$Id: l2gpdump.f90,v 1.9 2010/03/31 18:15:30 pwagner Exp $"
+d134 1
+a134 1
+    if ( options%PrecisionCutOff > -1. ) &
+d137 1
+a137 1
+    if ( options%QualityCutOff > -1. ) &
+d468 1
+a468 1
+     if ( options%ConvergenceCutOff > 0. ) then
+d477 1
+a477 1
+     if ( options%QualityCutOff > 0. ) then
+d486 1
+a486 1
+     if ( options%PrecisionCutOff > 0. ) then
+d636 3
+@
+
+
+1.9
+log
+@Removed commented-out, outdated stuff
+@
+text
+@d41 1
+a41 1
+   "$Id: l2gpdump.f90,v 1.8 2009/05/14 22:04:27 pwagner Exp $"
+d68 1
+d182 3
+d270 2
+d543 1
+a543 1
+         & fields=options%fields )
+d545 2
+a546 1
+       call dump(l2gp, options%columnsOnly, options%details, options%fields, width=options%width)
+d552 2
+a553 1
+         & options%columnsOnly, options%details, options%fields, width=options%width)
+d636 3
+@
+
+
+1.8
+log
+@New commandline arg -w width
+@
+text
+@d41 1
+a41 1
+   "$Id: l2gpdump.f90,v 1.7 2009/04/13 20:43:17 pwagner Exp $"
+a420 3
+        ! File1 = mls_io_gen_openF(l_swath, .TRUE., status, &
+        ! & record_length, DFACC_READ, FileName=trim(filename), &
+        ! & hdfVersion=HDFVERSION_5, debugOption=.false. )
+a422 2
+        ! status = mls_io_gen_closeF(l_swath, File1, FileName=Filename, &
+        &! hdfVersion=HDFVERSION_5, debugOption=.false.)
+d628 3
+@
+
+
+1.7
+log
+@Fixed a bug preventing macros file from using its own macros properly
+@
+text
+@d41 1
+a41 1
+   "$Id: l2gpdump.f90,v 1.6 2008/12/03 00:15:04 pwagner Exp $"
+d65 1
+d213 4
+d275 1
+d544 1
+a544 1
+       call dump(l2gp, options%columnsOnly, options%details, options%fields)
+d550 1
+a550 1
+         & options%columnsOnly, options%details, options%fields)
+d633 3
+@
+
+
+1.6
+log
+@Must use MLSFile_T interfaces instead of mls_io_gen_..
+@
+text
+@d41 1
+a41 1
+   "$Id: l2gpdump.f90,v 1.5 2008/09/09 16:51:38 pwagner Exp $"
+d93 1
+a93 1
+  integer, parameter              :: MAXNUMBITSUSED = 8
+d95 1
+a95 1
+    & (/ 0, 1, 2, 4, 5, 6, 8, 9 /)
+d98 1
+a98 1
+    & 'dontuse, bewary,   info,  hicld,  locld, nogmao, toofew,  crash'
+d501 1
+a501 1
+       ! Bits 0 and 8 are special
+d503 2
+a504 1
+       ! For bit 8 we want % of crashed chunks, so we don't filter out at all
+d508 5
+a512 3
+       bitCounts(MAXNUMBITSUSED, 2) = bitCounts(MAXNUMBITSUSED, 2) + l2gp%nTimes
+       bitCounts(MAXNUMBITSUSED, 1) = bitCounts(MAXNUMBITSUSED, 1) + &
+         & count(isBitSet( l2gp%status, bitNumber(MAXNUMBITSUSED) ) )
+d515 2
+a516 1
+       do bitindex=2, MAXNUMBITSUSED-1
+d627 3
+@
+
+
+1.5
+log
+@Added geolocation box to dump subsetted data
+@
+text
+@d25 3
+a27 2
+   use MLSFiles, only: HDFVERSION_5, MLS_INQSWATH, &
+     & mls_io_gen_closeF, mls_io_gen_openF, split_path_name
+d41 1
+a41 1
+   "$Id: l2gpdump.f90,v 1.4 2007/10/12 23:38:56 pwagner Exp $"
+d372 1
+a372 1
+    character (len=MAXSWATHNAMESBUFSIZE) :: SwathList
+d374 1
+a375 1
+    logical, parameter            :: countEmpty = .true.
+d377 1
+a377 1
+    integer :: i
+a378 1
+    character (len=L2GPNameLen) :: swath
+d381 2
+d397 2
+d413 5
+a417 3
+        File1 = mls_io_gen_openF(l_swath, .TRUE., status, &
+         & record_length, DFACC_READ, FileName=trim(filename), &
+         & hdfVersion=HDFVERSION_5, debugOption=.false. )
+d419 3
+a421 2
+        status = mls_io_gen_closeF(l_swath, File1, FileName=Filename, &
+        & hdfVersion=HDFVERSION_5, debugOption=.false.)
+d623 3
+@
+
+
+1.4
+log
+@Shows num profiles good, unuseable, with odd status
+@
+text
+@d22 2
+a23 2
+   use L2GPData, only: Dump, L2GPData_T, ReadL2GPData, DestroyL2GPContents, &
+     & L2GPNameLen, MAXSWATHNAMESBUFSIZE, RGP
+d30 1
+a30 1
+   use MLSStringLists, only: ExpandStringRange, &
+d40 1
+a40 1
+   "$Id: l2gpdump.f90,v 1.3 2007/06/14 21:45:42 pwagner Exp $"
+d70 4
+d179 9
+d255 5
+d521 6
+a526 1
+     if ( options%chunks == '*' ) then
+d616 3
+@
+
+
+1.3
+log
+@Many bugs corrected regarding percentages
+@
+text
+@d19 2
+a20 3
+   use Hdf, only: DFACC_CREATE, DFACC_RDWR, DFACC_READ
+   use HDF5, only: h5fopen_f, h5fclose_f, h5gopen_f, h5gclose_f, h5fis_hdf5_f   
+   use HDFEOS5, only: HE5T_NATIVE_CHAR
+d24 2
+a25 3
+   use MACHINE, only: FILSEP, HP, IO_ERROR, GETARG
+   use MLSCommon, only: R8
+   use MLSFiles, only: HDFVERSION_4, HDFVERSION_5, MLS_INQSWATH, &
+a34 1
+   use PCFHdr, only: GlobalAttributes
+d40 1
+a40 1
+   "$Id: l2gpdump.f90,v 1.2 2007/02/06 23:19:06 pwagner Exp $"
+d80 1
+a80 1
+  integer     ::  i, status, error ! Counting indices & Error flags
+d85 2
+d134 1
+d414 1
+d422 2
+d427 1
+d431 3
+d472 2
+d494 4
+a497 1
+       if ( .not. options%merge ) call showStatusPct
+d500 1
+d505 1
+d511 1
+d580 8
+d593 3
+@
+
+
+1.2
+log
+@Can show percentages with thresholds in convergence, status, prec.
+@
+text
+@d35 1
+a35 1
+   use OUTPUT_M, only: blanks, OUTPUT, outputNamedValue, &
+d39 1
+a39 1
+   IMPLICIT NONE
+d43 1
+a43 1
+   "$Id: l2gpdump.f90,v 1.1 2006/08/10 23:06:13 pwagner Exp $"
+d63 1
+d76 2
+a77 1
+     logical ::             StatusBits ! SHow % with various status bits set
+d86 9
+d124 12
+d178 2
+d257 1
+a257 1
+      write (*,*) '          -conv x     => show % converged according to x cutoff'
+d259 1
+a259 1
+      write (*,*) '          -qual x     => show % with quality > x cutoff'
+d261 1
+a388 7
+!       call ReadL2GPData ( file1, trim(swath), l2gp, &
+!            & hdfVersion=HDFVERSION_5 )
+      ! print *, 'Dumping swath: ', trim(swath)
+      ! print *, 'l2gp%nFreqs:  ', l2gp%nFreqs
+      ! print *, 'l2gp%nLevels: ', l2gp%nLevels
+      ! print *, 'l2gp%nTimes:  ', l2gp%nTimes
+      ! print *, 'shape(l2gp%l2gpvalue):  ', shape(l2gp%l2gpvalue)
+a413 8
+     integer                         :: numGood
+     real                            :: numTest
+     integer, parameter              :: MAXNUMBITSUSED = 8
+     integer, dimension(MAXNUMBITSUSED), parameter :: bitNumber = &
+       & (/ 0, 1, 2, 4, 5, 6, 8, 9 /)
+     integer, dimension(MAXNUMBITSUSED, 2) :: bitCounts
+     character(len=*), parameter     :: bitNames = &
+       & 'dontuse, bewary,   info,  hicld,  locld, nogmao, toofew,  crash'
+d417 6
+d427 1
+a427 1
+     numGood = count( .not. ( negativePrec .or. &
+d431 1
+a431 1
+       numTest = count( .not. ( negativePrec .or. &
+d433 4
+a436 2
+         & (l2gp%Convergence > options%ConvergenceCutOff) ) )
+       call showPercentages( numTest, numGood, 'convergence', options%ConvergenceCutOff )
+d440 1
+a440 1
+       numTest = count( .not. ( negativePrec .or. &
+d443 3
+a445 1
+       call showPercentages( numTest, numGood, 'Quality', options%QualityCutOff )
+d449 2
+a450 2
+       numGood = 0
+       numTest = 0
+d454 1
+a454 1
+         numGood = numGood + &
+d456 1
+a456 1
+         numTest = numTest + &
+d459 3
+a461 1
+       call showPercentages( numTest, numGood, 'precision', options%PrecisionCutOff )
+d463 2
+a464 2
+     numGood = count( .not. ( negativePrec .or. &
+       & (mod(l2gp%status, 2) > 0) ) )
+d467 5
+a471 3
+       ! Bit 0 is special
+       bitCounts(1, 2) = count( .not. negativePrec )
+       bitCounts(1, 1) = count( .not. ( negativePrec .or. &
+d473 6
+a478 4
+       call outputNamedValue ( 'max status', maxval(l2gp%status) )
+       call outputNamedValue ( 'min status', minval(l2gp%status) )
+       do bitindex=2, MAXNUMBITSUSED
+         call outputNamedValue ( 'bitNumber(bitindex)', bitNumber(bitindex) )
+d480 4
+a483 17
+         bitCounts(bitindex, 1) = count( .not. ( negativePrec .or. &
+         & (mod(l2gp%status, 2) > 0) ) .and. &
+         & isBitSet( l2gp%status, bitNumber(bitindex) ) )
+       enddo
+       call output( '% valid data with bits set', advance='yes' )
+       call output( 'bit' )
+       call blanks(4)
+       call output( 'desc' )
+       call blanks(4)
+       call output( '%', advance='yes' )
+       do bitindex=1, MAXNUMBITSUSED
+         call output( bitNumber(bitIndex) )
+         call blanks(2)
+         call output( trim( stringElement( bitNames, bitIndex, &
+           & countEmpty=.true. ) ) )
+         call blanks(4)
+         call output( (100.*bitCounts(bitindex, 1)) / max(1, bitCounts(bitindex, 2) ) , advance='yes' )
+d485 1
+d500 1
+a500 1
+   subroutine showPercentages( numTest, numGood, name, CutOff )
+d507 1
+d513 2
+a514 1
+     call output( 'falling below ' )
+d517 8
+a524 1
+     call output( (100.*numTest)/max(1, numGood), advance='yes' )
+d526 39
+d570 3
+@
+
+
+1.1
+log
+@First commit
+@
+text
+@d16 2
+d24 1
+a24 1
+     & L2GPNameLen, MAXSWATHNAMESBUFSIZE
+d34 3
+a36 2
+     & stringElementNum
+   use OUTPUT_M, only: OUTPUT, resumeOutput, suspendOutput
+d43 2
+a44 2
+   "$Id: L2GPDump.f90,v 1.10 2006/07/29 00:15:50 pwagner Exp $"
+   CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile: L2GPDump.f90,v $"
+d72 4
+d81 1
+a81 1
+  integer     ::  i, count, status, error ! Counting indices & Error flags
+d118 1
+a118 1
+     CHARACTER(LEN=255), intent(out) :: filename          ! filename
+d123 1
+d148 4
+d169 8
+d180 2
+d230 7
+d240 1
+a240 1
+      write (*,*) ' (2) details levels, -l options are all mutually exclusive'
+d242 1
+a326 1
+    integer, dimension(MAXNCHUNKS) :: chunks
+a332 1
+    integer :: nChunks
+d379 1
+a379 10
+      ! Dump the actual swath
+      if ( options%verbose ) print *, 'swath: ', trim(swath)
+      if ( options%chunks == '*' ) then
+        call dump(l2gp, options%columnsOnly, options%details, options%fields)
+      else
+        call ExpandStringRange(options%chunks, chunks, nchunks)
+        if ( nchunks < 1 ) cycle
+        call dump(l2gp, chunks(1:nChunks), &
+          & options%columnsOnly, options%details, options%fields)
+      endif
+d383 119
+d503 1
+a503 1
+END PROGRAM L2GPDump
+d506 4
+a509 1
+! $Log: L2GPDump.f90,v $
+@
+
